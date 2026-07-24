@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { getSupabaseBrowserClient, waitForSupabaseSession } from '@/lib/supabaseBrowserClient';
@@ -38,11 +38,13 @@ function GoogleIcon({ className }) {
  */
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { checkAppState, isAuthenticated, isLoadingAuth } = useAuth();
-  const [email, setEmail] = useState('');
+  const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [flash, setFlash] = useState(location.state?.flash || '');
   const [submitting, setSubmitting] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
@@ -59,7 +61,7 @@ export default function LoginPage() {
     setError('');
     setSubmitting(true);
     try {
-      await base44.auth.login({ email: email.trim(), password });
+      await base44.auth.login({ login: login.trim(), password });
       if (isSupabaseAuthEnabled()) {
         const supabase = getSupabaseBrowserClient();
         const session = await waitForSupabaseSession(supabase);
@@ -100,10 +102,16 @@ export default function LoginPage() {
           <h1 className="text-lg font-semibold text-foreground dark:text-foreground">Entrar</h1>
           <p className="text-sm text-muted-foreground dark:text-muted-foreground">
             {googleEnabled
-              ? 'Use a sua conta Google ou email e palavra-passe.'
-              : 'Use o email e palavra-passe da sua conta P38.'}
+              ? 'Use a sua conta Google ou utilizador e senha.'
+              : 'Utilizador e senha definidos pelo administrador.'}
           </p>
         </div>
+
+        {flash ? (
+          <p className="text-sm text-green-700 dark:text-green-400" role="status">
+            {flash}
+          </p>
+        ) : null}
 
         {error ? (
           <p className="text-sm text-red-600 dark:text-red-400" role="alert">
@@ -134,17 +142,18 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground/90 dark:text-muted-foreground">Email</label>
+            <label className="text-sm font-medium text-foreground/90 dark:text-muted-foreground">Utilizador</label>
             <Input
-              type="email"
+              type="text"
               autoComplete="username"
-              value={email}
-              onChange={(ev) => setEmail(ev.target.value)}
+              value={login}
+              onChange={(ev) => setLogin(ev.target.value)}
+              placeholder="Ex: joao, admin…"
               required
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground/90 dark:text-muted-foreground">Palavra-passe</label>
+            <label className="text-sm font-medium text-foreground/90 dark:text-muted-foreground">Senha</label>
             <Input
               type="password"
               autoComplete="current-password"
@@ -154,9 +163,16 @@ export default function LoginPage() {
             />
           </div>
           <Button type="submit" className="w-full" disabled={busy}>
-            {submitting ? 'A entrar…' : 'Entrar com email'}
+            {submitting ? 'A entrar…' : 'Entrar'}
           </Button>
         </form>
+
+        <p className="text-center text-xs text-muted-foreground">
+          Primeira vez ou senha nova?{' '}
+          <Link to="/ativar-acesso" className="text-primary hover:underline">
+            Activar acesso
+          </Link>
+        </p>
       </div>
     </div>
   );

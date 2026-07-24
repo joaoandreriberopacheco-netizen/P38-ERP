@@ -1,5 +1,6 @@
 import { getSupabaseBrowserClient, isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
 import { buildSupabaseOAuthCallbackUrl } from '@/lib/supabaseAuth';
+import { loginFromAuthEmail, loginToAuthEmail, normalizeP38Login, resolveLoginCredentials } from '@/lib/p38InternalAuth';
 import { createSupabaseEntityLayer } from './supabaseEntityLayer';
 import { isSupabaseAuthEnabled } from './providers';
 
@@ -106,6 +107,23 @@ async function fetchUsuarioOperacional(supabase, authUser) {
       console.warn('[P38][supabaseAdapter] usuario por id:', byIdErr.message);
     } else if (byId) {
       return flattenUsuarioRow(byId);
+    }
+  }
+
+  const loginFromMeta = normalizeP38Login(
+    authUser?.user_metadata?.login ||
+      loginFromAuthEmail(authUser?.email) ||
+      authUser?.user_metadata?.nickname
+  );
+  if (loginFromMeta) {
+    let { data: rowsLogin, error: loginErr } = await queryUsuarioRows(supabase, 'login', 'ilike', loginFromMeta);
+    if (loginErr && /column.*\.login.*does not exist/i.test(loginErr.message)) {
+      ({ data: rowsLogin, error: loginErr } = await queryUsuarioRows(supabase, 'dados->>login', 'ilike', loginFromMeta));
+    }
+    if (loginErr) {
+      console.warn('[P38][supabaseAdapter] usuario por login:', loginErr.message);
+    } else if (rowsLogin?.length >= 1) {
+      return flattenUsuarioRow(rowsLogin[0]);
     }
   }
 
@@ -216,7 +234,10 @@ function buildAuth(supabase) {
     },
     async login(payload = {}) {
       if (useSupabaseAuth) {
-        const { email, password } = payload;
+        const { email, password } = resolveLoginCredentials(payload);
+        if (!email || !password) {
+          throw new Error('Informe usuário e senha.');
+        }
         persistUser(null);
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -265,6 +286,7 @@ function buildAuth(supabase) {
     redirectToLogin(returnUrl) {
       if (typeof window === 'undefined') return;
       if (window.location.pathname === '/login') return;
+      if (window.location.pathname === '/ativar-acesso') return;
       const params = new URLSearchParams();
       if (returnUrl && returnUrl.startsWith('/') && !returnUrl.startsWith('//')) {
         params.set('returnUrl', returnUrl);
@@ -325,6 +347,7 @@ function buildAuth(supabase) {
 /** Mapeia nomes camelCase do Base44 para pastas kebab-case das Edge Functions Supabase. */
 const EDGE_FUNCTION_ALIASES = {
   gerenciarPin: 'gerenciar-pin',
+  p38Auth: 'p38-auth',
   processarVendaCaixa: 'processar-venda-caixa',
   cancelarLancamentoFinanceiro: 'cancelar-lancamento-financeiro',
   auditarSaldosContas: 'auditar-saldos-contas',

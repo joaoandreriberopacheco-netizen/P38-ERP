@@ -2,6 +2,7 @@ import * as React from 'react';
 import { base44, p38 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 import { isSupabaseAuthEnabled } from '@/integrations/p38/providers';
+import { fetchP38AuthStatus } from '@/functions/p38Auth';
 
 const AuthContext = React.createContext();
 
@@ -20,6 +21,8 @@ export const AuthProvider = ({ children }) => {
   const [isLoadingPublicSettings, setIsLoadingPublicSettings] = React.useState(true);
   const [authError, setAuthError] = React.useState(null);
   const [appPublicSettings, setAppPublicSettings] = React.useState(null); // Contains only { id, public_settings }
+  const [p38NeedsBootstrap, setP38NeedsBootstrap] = React.useState(false);
+  const [mustActivateAccess, setMustActivateAccess] = React.useState(false);
 
   React.useEffect(() => {
     checkAppState();
@@ -33,6 +36,9 @@ export const AuthProvider = ({ children }) => {
       if (p38?.bypassBase44 || p38?.providerName === p38?.providers?.SUPABASE) {
         setAppPublicSettings(SUPABASE_PUBLIC_SETTINGS_STUB);
         setIsLoadingPublicSettings(false);
+        if (isSupabaseAuthEnabled()) {
+          await checkP38BootstrapStatus();
+        }
         await checkUserAuth();
         return;
       }
@@ -103,6 +109,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const checkP38BootstrapStatus = async () => {
+    try {
+      const status = await fetchP38AuthStatus();
+      setP38NeedsBootstrap(Boolean(status?.needsBootstrap));
+    } catch (err) {
+      console.warn('[AuthContext] p38-auth status indisponível:', err?.message || err);
+      setP38NeedsBootstrap(false);
+    }
+  };
+
   const checkUserAuth = async () => {
     try {
       setIsLoadingAuth(true);
@@ -110,11 +126,18 @@ export const AuthProvider = ({ children }) => {
       setUser(currentUser);
       setIsAuthenticated(true);
       setAuthError(null);
+
+      const mustActivate =
+        currentUser?.raw?.user_metadata?.must_activate === true &&
+        currentUser?.raw?.user_metadata?.password_set !== true;
+      setMustActivateAccess(mustActivate);
+
       setIsLoadingAuth(false);
     } catch (error) {
       console.error('User auth check failed:', error);
       setIsLoadingAuth(false);
       setIsAuthenticated(false);
+      setMustActivateAccess(false);
 
       const needsSupabaseSession =
         isSupabaseAuthEnabled() &&
@@ -129,6 +152,10 @@ export const AuthProvider = ({ children }) => {
       }
 
       if (typeof window !== 'undefined' && window.location.pathname === '/auth/callback') {
+        return;
+      }
+
+      if (typeof window !== 'undefined' && window.location.pathname === '/ativar-acesso') {
         return;
       }
 
@@ -153,6 +180,7 @@ export const AuthProvider = ({ children }) => {
   const logout = React.useCallback((shouldRedirect = true) => {
     setUser(null);
     setIsAuthenticated(false);
+    setMustActivateAccess(false);
 
     try {
       if (shouldRedirect) {
@@ -176,6 +204,8 @@ export const AuthProvider = ({ children }) => {
       isLoadingPublicSettings,
       authError,
       appPublicSettings,
+      p38NeedsBootstrap,
+      mustActivateAccess,
       logout,
       navigateToLogin,
       checkAppState,
@@ -187,6 +217,8 @@ export const AuthProvider = ({ children }) => {
       isLoadingPublicSettings,
       authError,
       appPublicSettings,
+      p38NeedsBootstrap,
+      mustActivateAccess,
       logout,
       navigateToLogin,
     ]

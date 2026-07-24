@@ -16,6 +16,7 @@ import ModoFlareProvider from '@/features/modo-flare/ModoFlareProvider';
 import CatalogOverlay from '@/features/catalog-overlay/CatalogOverlay';
 import LoginPage from '@/components/auth/LoginPage';
 import AuthCallbackPage from '@/components/auth/AuthCallbackPage';
+import AtivarAcessoPage from '@/components/auth/AtivarAcessoPage';
 import GlobalQuickAccessLaunchers from '@/components/global/GlobalQuickAccessLaunchers';
 import { PageLoadFallback, ChunkErrorBoundary } from '@/lib/lazyPage';
 
@@ -26,8 +27,10 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
   : <>{children}</>;
 
+const AUTH_PUBLIC_PATHS = new Set(['/login', '/auth/callback', '/ativar-acesso']);
+
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, p38NeedsBootstrap, mustActivateAccess } = useAuth();
   const location = useLocation();
 
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -44,8 +47,7 @@ const AuthenticatedApp = () => {
 
   if (
     authError?.type === 'auth_required' &&
-    location.pathname !== '/login' &&
-    location.pathname !== '/auth/callback'
+    !AUTH_PUBLIC_PATHS.has(location.pathname)
   ) {
     const returnPath = `${location.pathname}${location.search}`;
     const loginTo =
@@ -55,6 +57,14 @@ const AuthenticatedApp = () => {
     return <Navigate to={loginTo} replace />;
   }
 
+  if (p38NeedsBootstrap && location.pathname !== '/ativar-acesso') {
+    return <Navigate to="/ativar-acesso?mode=bootstrap" replace />;
+  }
+
+  if (mustActivateAccess && location.pathname !== '/ativar-acesso') {
+    return <Navigate to="/ativar-acesso" replace />;
+  }
+
   return (
     <>
       <ChunkErrorBoundary>
@@ -62,6 +72,7 @@ const AuthenticatedApp = () => {
           <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
+          <Route path="/ativar-acesso" element={<AtivarAcessoPage />} />
           <Route
             path="/"
             element={

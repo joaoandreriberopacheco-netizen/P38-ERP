@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { createP38UserAsAdmin } from '@/functions/p38Auth';
+import { isValidP38Login, normalizeP38Login } from '@/lib/p38InternalAuth';
+import { isSupabaseAuthEnabled } from '@/integrations/p38/providers';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -32,7 +35,14 @@ export default function ListaUsuariosApp() {
   const [selectedTabelaId, setSelectedTabelaId] = useState('');
   const [selectedNickname, setSelectedNickname] = useState('');
   const [orfaos, setOrfaos] = useState([]);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createLogin, setCreateLogin] = useState('');
+  const [createFullName, setCreateFullName] = useState('');
+  const [createPerfilId, setCreatePerfilId] = useState('');
+  const [creating, setCreating] = useState(false);
   const { toast } = useToast();
+
+  const supabaseAuthAtivo = isSupabaseAuthEnabled();
 
   useEffect(() => { carregarDados(); }, []);
 
@@ -79,12 +89,6 @@ export default function ListaUsuariosApp() {
     carregarDados();
   };
 
-  const toggleCaixa = (id) => {
-    setSelectedCaixas(prev =>
-      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
-    );
-  };
-
   const handleMigrarOrfaos = async () => {
     if (!window.confirm(`Vincular automaticamente ${orfaos.length} usuário(s) por nome?`)) return;
     let migrados = 0;
@@ -102,6 +106,61 @@ export default function ListaUsuariosApp() {
     }
     toast({ title: `Migração concluída`, description: `${migrados}/${orfaos.length} vinculados automaticamente.`, className: 'bg-green-50 text-green-800' });
     carregarDados();
+  };
+
+  const toggleCaixa = (id) => {
+    setSelectedCaixas(prev =>
+      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
+    );
+  };
+
+  const abrirCriar = () => {
+    setCreateLogin('');
+    setCreateFullName('');
+    setCreatePerfilId(perfisAcesso.find(p => p.ativo !== false)?.id || '');
+    setIsCreateOpen(true);
+  };
+
+  const handleCriarUtilizador = async () => {
+    const login = normalizeP38Login(createLogin);
+    if (!isValidP38Login(login)) {
+      toast({ title: 'Utilizador inválido', description: 'Mín. 2 caracteres, sem espaços.', variant: 'destructive' });
+      return;
+    }
+    if (!createPerfilId) {
+      toast({ title: 'Selecione um perfil de acesso', variant: 'destructive' });
+      return;
+    }
+    const perfil = perfisAcesso.find(p => p.id === createPerfilId);
+    setCreating(true);
+    try {
+      const result = await createP38UserAsAdmin({
+        login,
+        full_name: createFullName.trim() || login,
+        perfil_acesso_id: createPerfilId,
+        perfil_acesso_nome: perfil?.nome || null,
+      });
+      toast({
+        title: 'Utilizador criado',
+        description: `${result.login}: peça para activar em /ativar-acesso`,
+        className: 'bg-green-50 text-green-800',
+        duration: 8000,
+      });
+      setIsCreateOpen(false);
+      carregarDados();
+    } catch (err) {
+      toast({ title: 'Erro ao criar', description: err?.message || 'Tente novamente.', variant: 'destructive' });
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleConvidarOuCriar = () => {
+    if (supabaseAuthAtivo) {
+      abrirCriar();
+      return;
+    }
+    toast({ title: 'Para convidar usuários', description: 'Use a função convidarUsuarios no dashboard > functions', duration: 6000 });
   };
 
   const getBadgePerfil = (user) => {
@@ -162,10 +221,10 @@ export default function ListaUsuariosApp() {
         <Button
           size="sm"
           className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white gap-1.5 h-8 px-3 text-xs"
-          onClick={() => toast({ title: 'Para convidar usuários', description: 'Use a função convidarUsuarios no dashboard > functions', duration: 6000 })}
+          onClick={handleConvidarOuCriar}
         >
           <UserPlus className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Convidar</span>
+          <span className="hidden sm:inline">{supabaseAuthAtivo ? 'Novo utilizador' : 'Convidar'}</span>
         </Button>
       </div>
 
@@ -193,8 +252,11 @@ export default function ListaUsuariosApp() {
             <TableHeader>
               <TableRow className="hover:bg-transparent border-border/40">
                 <TableHead className="text-xs text-muted-foreground font-medium">Nome</TableHead>
-                <TableHead className="text-xs text-muted-foreground font-medium hidden sm:table-cell">Email</TableHead>
+                <TableHead className="text-xs text-muted-foreground font-medium hidden sm:table-cell">Utilizador</TableHead>
                 <TableHead className="text-xs text-muted-foreground font-medium">Perfil</TableHead>
+                {supabaseAuthAtivo ? (
+                  <TableHead className="text-xs text-muted-foreground font-medium hidden sm:table-cell">Acesso</TableHead>
+                ) : null}
                 <TableHead className="text-xs text-muted-foreground font-medium hidden md:table-cell">Caixas</TableHead>
                 <TableHead className="text-xs text-muted-foreground font-medium hidden desktop-layout:table-cell">Tabela Preço</TableHead>
                 <TableHead className="text-right text-xs text-muted-foreground font-medium">Ações</TableHead>
@@ -222,9 +284,24 @@ export default function ListaUsuariosApp() {
                        )}
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
-                        <div className="text-xs text-muted-foreground">{user.email}</div>
+                        <div className="text-xs text-muted-foreground font-mono">
+                          {user.login || user.nickname || '—'}
+                        </div>
                       </TableCell>
                       <TableCell>{getBadgePerfil(user)}</TableCell>
+                      {supabaseAuthAtivo ? (
+                        <TableCell className="hidden sm:table-cell">
+                          {user.auth_ativado ? (
+                            <Badge className="bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border-0 text-[10px]">
+                              activo
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 border-0 text-[10px]">
+                              pendente
+                            </Badge>
+                          )}
+                        </TableCell>
+                      ) : null}
                       <TableCell className="hidden md:table-cell">
                          {caixasVinculadas > 0 ? (
                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -404,6 +481,71 @@ export default function ListaUsuariosApp() {
               onClick={handleSalvar}
             >
               Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog criar utilizador (login interno) */}
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="max-w-sm dark:bg-background dark:border-border/40">
+          <DialogHeader>
+            <DialogTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <UserPlus className="w-4 h-4 text-muted-foreground" />
+              Novo utilizador
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Cria login e perfil. A pessoa define a senha em <strong>/ativar-acesso</strong>.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <label className="text-xs text-muted-foreground font-medium">Utilizador (login)</label>
+              <Input
+                placeholder="Ex: maria, caixa2…"
+                value={createLogin}
+                onChange={(e) => setCreateLogin(e.target.value)}
+                className="bg-muted/50 border-0 shadow-sm h-9 text-sm font-mono"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs text-muted-foreground font-medium">Nome completo</label>
+              <Input
+                placeholder="Nome para exibir no sistema"
+                value={createFullName}
+                onChange={(e) => setCreateFullName(e.target.value)}
+                className="bg-muted/50 border-0 shadow-sm h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs text-muted-foreground font-medium">Perfil de Acesso</label>
+              <Select value={createPerfilId} onValueChange={setCreatePerfilId}>
+                <SelectTrigger className="bg-muted/50 border-0 shadow-sm h-9 text-sm">
+                  <SelectValue placeholder="Selecione um perfil..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {perfisAcesso.filter(p => p.ativo !== false).map(p => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 pt-1">
+            <Button variant="ghost" size="sm" onClick={() => setIsCreateOpen(false)} className="h-8 text-xs" disabled={creating}>
+              Cancelar
+            </Button>
+            <Button
+              size="sm"
+              className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white h-8 text-xs"
+              onClick={handleCriarUtilizador}
+              disabled={creating}
+            >
+              {creating ? 'A criar…' : 'Criar utilizador'}
             </Button>
           </DialogFooter>
         </DialogContent>
