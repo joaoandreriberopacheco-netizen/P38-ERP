@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { getSupabaseBrowserClient, waitForSupabaseSession } from '@/lib/supabaseBrowserClient';
-import { isSupabaseAuthEnabled } from '@/integrations/p38/providers';
+import { isSupabaseAuthEnabled, isGoogleLoginEnabled } from '@/integrations/p38/providers';
 import { safeAppReturnPath } from '@/lib/supabaseAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -91,6 +91,7 @@ export default function LoginPage() {
   };
 
   const busy = submitting || googleLoading;
+  const googleEnabled = isGoogleLoginEnabled();
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-background">
@@ -98,7 +99,9 @@ export default function LoginPage() {
         <div className="space-y-1">
           <h1 className="text-lg font-semibold text-foreground dark:text-foreground">Entrar</h1>
           <p className="text-sm text-muted-foreground dark:text-muted-foreground">
-            Use a sua conta Google ou email e palavra-passe.
+            {googleEnabled
+              ? 'Use a sua conta Google ou email e palavra-passe.'
+              : 'Use o email e palavra-passe da sua conta P38.'}
           </p>
         </div>
 
@@ -108,22 +111,26 @@ export default function LoginPage() {
           </p>
         ) : null}
 
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full gap-2"
-          disabled={busy}
-          onClick={handleGoogleLogin}
-        >
-          <GoogleIcon className="h-4 w-4 shrink-0" />
-          {googleLoading ? 'A redirecionar…' : 'Continuar com Google'}
-        </Button>
+        {googleEnabled ? (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full gap-2"
+              disabled={busy}
+              onClick={handleGoogleLogin}
+            >
+              <GoogleIcon className="h-4 w-4 shrink-0" />
+              {googleLoading ? 'A redirecionar…' : 'Continuar com Google'}
+            </Button>
 
-        <div className="flex items-center gap-3">
-          <Separator className="flex-1" />
-          <span className="text-xs text-muted-foreground uppercase tracking-wide">ou</span>
-          <Separator className="flex-1" />
-        </div>
+            <div className="flex items-center gap-3">
+              <Separator className="flex-1" />
+              <span className="text-xs text-muted-foreground uppercase tracking-wide">ou</span>
+              <Separator className="flex-1" />
+            </div>
+          </>
+        ) : null}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

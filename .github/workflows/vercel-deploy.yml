@@ -78,6 +78,7 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
           VITE_P38_USE_SUPABASE_AUTH: ${{ secrets.VITE_P38_USE_SUPABASE_AUTH || 'true' }}
+          VITE_P38_ENABLE_GOOGLE_LOGIN: ${{ secrets.VITE_P38_ENABLE_GOOGLE_LOGIN || '' }}
 
       # O `vercel build` não propaga sempre env do shell ao Vite. `.env.production.local`
       # é lido pelo Vite e garante URL/anon key no bundle (sem isto o app cai no stub Base44).
@@ -86,15 +87,18 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
           VITE_P38_USE_SUPABASE_AUTH: ${{ secrets.VITE_P38_USE_SUPABASE_AUTH }}
+          VITE_P38_ENABLE_GOOGLE_LOGIN: ${{ secrets.VITE_P38_ENABLE_GOOGLE_LOGIN }}
         run: |
           set -e
           use_auth="${VITE_P38_USE_SUPABASE_AUTH:-true}"
+          google_login="${VITE_P38_ENABLE_GOOGLE_LOGIN:-}"
           {
             echo "VITE_P38_PROVIDER=supabase"
             echo "VITE_P38_BYPASS_BASE44=true"
             echo "VITE_SUPABASE_URL=${VITE_SUPABASE_URL}"
             echo "VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}"
             echo "VITE_P38_USE_SUPABASE_AUTH=${use_auth}"
+            echo "VITE_P38_ENABLE_GOOGLE_LOGIN=${google_login}"
           } > .env.production.local
           echo "OK: .env.production.local criado (sem imprimir valores)."
 
@@ -107,6 +111,7 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
           VITE_P38_USE_SUPABASE_AUTH: ${{ secrets.VITE_P38_USE_SUPABASE_AUTH || 'true' }}
+          VITE_P38_ENABLE_GOOGLE_LOGIN: ${{ secrets.VITE_P38_ENABLE_GOOGLE_LOGIN || '' }}
 
       - name: Verificar Supabase embutido no bundle
         env:

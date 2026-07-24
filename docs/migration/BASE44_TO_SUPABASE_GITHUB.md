@@ -71,6 +71,12 @@ A tabela `public.usuario` deve vir da entidade **`User`** do Base44 (email, nome
 
 Secrets adicionais para auth: `SUPABASE_SERVICE_ROLE_KEY` (Dashboard → API → service_role).
 
+#### Login com Google (OAuth)
+
+Ver guia completo: [`docs/migration/SUPABASE_GOOGLE_LOGIN.md`](SUPABASE_GOOGLE_LOGIN.md)
+
+Resumo: activar Google em [Supabase → Providers → Google](https://supabase.com/dashboard/project/zhonvxkkqabfdyehyxpu/auth/providers?provider=Google) com Client ID/Secret do Google Cloud. Depois `VITE_P38_ENABLE_GOOGLE_LOGIN=true` nos secrets e redeploy.
+
 ### Notas
 
 - Este fluxo **não** mete `SUPABASE_SERVICE_KEY` no GitHub: a escrita é **direta no Postgres**, não pela API REST do Supabase.

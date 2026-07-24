@@ -113,3 +113,11 @@ export function isSupabaseAuthEnabled() {
   }
   return resolveP38ProviderName() === PROVIDERS.SUPABASE;
 }
+
+/**
+ * Botão Google no /login — só quando o provider estiver activo no Supabase
+ * (VITE_P38_ENABLE_GOOGLE_LOGIN=true após configurar Google Cloud + Supabase).
+ */
+export function isGoogleLoginEnabled() {
+  return parseBooleanEnv(import.meta.env.VITE_P38_ENABLE_GOOGLE_LOGIN, false);
+}
