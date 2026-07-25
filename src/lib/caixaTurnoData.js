@@ -368,6 +368,8 @@ export async function fetchCaixaTurnoSnapshot({
 
 /** Polling / idle sync — menos agressivo que antes */
 export const CAIXA_POLL_MS = 60_000;
+/** Polling ativo no PDV Caixa (fila de vendas + balanço) */
+export const CAIXA_LIVE_POLL_MS = 30_000;
 export const CAIXA_IDLE_SYNC_AFTER_MS = 5 * 60 * 1000;
 export const CAIXA_IDLE_SYNC_TICK_MS = 90_000;
 export const CAIXA_SUBSCRIBE_DEBOUNCE_MS = 600;
