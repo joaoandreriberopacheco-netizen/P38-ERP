@@ -29,6 +29,8 @@ export const BRAND_LOGO_SURFACES = {
   'home.headerMobile': { variant: 'vertical', size: 'xs' },
   'dashboard.header': { variant: 'vertical', size: 'sm' },
   'splash': { variant: 'vertical', size: 'xxl' },
+  'auth.desktop': { variant: 'horizontal', size: 'xxl' },
+  'auth.mobile': { variant: 'vertical', size: 'xl' },
   'navigation.transition': { variant: 'horizontal', size: 'lg' },
   'mobile.functionSelector': { variant: 'mobile', size: 'sm' },
 };
