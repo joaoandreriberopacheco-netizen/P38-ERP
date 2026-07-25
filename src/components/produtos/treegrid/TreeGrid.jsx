@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo, useEffect, useRef, useLayoutEffe
 import { ChevronRight, Package, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useCatalogTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders, aggregateEstoqueDisplay, aggregateMetaEstoqueDisplay, collectSkus, catalogProdutosStructureSig, TREE_GRID_EXPAND_ALL_LEVEL } from './useTreeGrid';
+import { useCatalogTreeGrid, flattenTree, mergeAdjacentDuplicateGroupHeaders, aggregateEstoqueDisplay, aggregateMetaEstoqueDisplay, collectSkus, catalogProdutosStructureSig, TREE_GRID_EXPAND_ALL_LEVEL, resolveExpandedKeysForMasterLevel } from './useTreeGrid';
 import {
   catalogGroupAnalysisSig,
   getCatalogFlattenOptions,
@@ -656,7 +656,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
       pendingScrollRestoreRef.current = scrollEl.scrollTop;
     }
     setExpandedKeys(
-      masterLevel === 1 ? new Set() : buildExpandedForLevel(treeRef.current, masterLevel - 1)
+      resolveExpandedKeysForMasterLevel(treeRef.current, masterLevel, groupByCategory),
     );
   }, [produtosStructureSig, groupByCategory, masterLevel, groupAnalysisSig]);
 

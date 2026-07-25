@@ -38,6 +38,8 @@ export default function ProdutosHeader({
   filteredProdutos = [],
   treeLevel,
   setTreeLevel,
+  sortOrder = 'az',
+  setSortOrder,
   setIsColumnSelectorOpen,
   onGerarRelatorioEstoque,
   gerandoRelatorioEstoque = false,
@@ -633,6 +635,10 @@ export default function ProdutosHeader({
           activeFilterCount={activeFilterCount}
           handleFilterChange={handleFilterChange}
           setFilters={setFilters}
+          treeLevel={treeLevel}
+          setTreeLevel={setTreeLevel}
+          sortOrder={sortOrder}
+          setSortOrder={setSortOrder}
         />
       ) : null}
     </div>

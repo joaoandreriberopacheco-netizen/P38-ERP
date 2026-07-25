@@ -1431,6 +1431,8 @@ function ProdutosPageContent() {
     loadData,
     treeLevel,
     setTreeLevel,
+    sortOrder,
+    setSortOrder,
     setIsColumnSelectorOpen,
     onGerarRelatorioEstoque: handleGerarRelatorioEstoque,
     gerandoRelatorioEstoque,
@@ -1472,7 +1474,7 @@ function ProdutosPageContent() {
             <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
               <div className="desktop-layout:hidden flex flex-col flex-1 min-h-0 h-full w-full min-w-0 max-w-full">
                 <CatalogoMobileScrollShell catalogChrome={<ProdutosHeader key="catalog-mobile" {...produtosHeaderProps} />}>
-                  <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} groupByCategory={groupTreeByCategory} masterLevel={treeLevel} onExpandedKeysChange={handleCatalogExpandedKeysChange} catalogFilters={filters} salesVelocityMap={salesVelocityMap} catalogStockContext={catalogStockContext} />
+                  <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} groupByCategory={groupTreeByCategory} masterLevel={treeLevel} sortOrder={sortOrder} onExpandedKeysChange={handleCatalogExpandedKeysChange} catalogFilters={filters} salesVelocityMap={salesVelocityMap} catalogStockContext={catalogStockContext} />
                 </CatalogoMobileScrollShell>
               </div>
 
