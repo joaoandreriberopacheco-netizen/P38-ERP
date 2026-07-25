@@ -114,6 +114,13 @@ async function main() {
   console.log('[secrets:check] Checklist pré-decolagem P38');
   console.log(`  contexto: ${context}`);
   console.log(`  secrets carregados: ${secretNames}`);
+
+  if (context === 'cloud-agent' || (context === 'all' && secretNames !== '(n/d)')) {
+    console.log('  configuração: Cursor Dashboard → Cloud Agents → varejosync → Secrets');
+    if (secretNames.includes('supabase') && !secretNames.includes('SUPABASE_ACCESS_TOKEN')) {
+      console.log('  ⚠ Detectado secret legado `supabase` — substitui por DATABASE_URL e SUPABASE_ACCESS_TOKEN separados.');
+    }
+  }
   if (secrets.projectRef) console.log(`  project ref: ${secrets.projectRef}`);
 
   console.log('\n[secrets:check] Presença (sem valores):');
@@ -167,6 +174,10 @@ async function main() {
   console.log('\n[secrets:check] Resultado:');
   if (hasErrors) {
     console.log('  ✗ NÃO decolar — corrigir secrets antes de produção.');
+    if (context === 'cloud-agent') {
+      console.log('  → Cursor Dashboard → Cloud Agents → varejosync → Secrets');
+      console.log('  → Após gravar, abre NOVA sessão Cloud Agent');
+    }
     console.log('  → Ver docs/migration/P38_SECRETS_CANONICOS.md');
     process.exit(1);
   }

@@ -50,34 +50,41 @@ tmux -f /exec-daemon/tmux.portal.conf send-keys -t "$SESSION_NAME:0.0" 'cd /work
 
 Vite binds to **localhost:5173** by default (no `--host`). For browser testing from the VM desktop, `http://localhost:5173/` is sufficient.
 
-### Environment variables
+### Environment variables (Cursor Cloud — não local)
 
-- No `.env` files are committed. Copy `.env.example` → `.env.local` for scripts locais.
-- **Mapa canónico de secrets:** [`docs/migration/P38_SECRETS_CANONICOS.md`](docs/migration/P38_SECRETS_CANONICOS.md) — validar com `npm run secrets:check`.
-- For **Base44** API access, configure `VITE_BASE44_APP_ID`, `VITE_BASE44_BACKEND_URL`, and auth per `docs/migration/BASE44_TO_SUPABASE_GITHUB.md`.
+João trabalha **só no Cursor Cloud Agent**. A configuração de credenciais é feita em:
+
+**Cursor → Dashboard → Cloud Agents → ambiente `varejosync` → Secrets**
+
+Não é necessário `.env.local` no PC. Após gravar secrets, abrir **nova sessão** Cloud Agent.
+
+- **Mapa canónico:** [`docs/migration/P38_SECRETS_CANONICOS.md`](docs/migration/P38_SECRETS_CANONICOS.md)
+- **Validar:** `npm run secrets:check -- --context=cloud-agent`
+- O ficheiro `.env.example` serve só de **referência de nomes** (não copiar para o repo).
+- For **Base44** API access (auditoria/flares), configure também `VITE_BASE44_APP_ID`, `VITE_BASE44_BACKEND_URL`, and auth per `docs/migration/BASE44_TO_SUPABASE_GITHUB.md`.
 - Optional **Supabase** hybrid testing: see `docs/migration/SUPABASE_TEST_SETUP.md` (`supabase start`, `VITE_USE_SUPABASE_ENTITIES=true`).
 - Build/dev may log `[base44] Proxy not enabled (VITE_BASE44_APP_BASE_URL not set)` — expected without proxy env; build still succeeds.
 
-### Base44 — acesso à base (Cloud Agent)
+### Base44 + Supabase — secrets no Cloud Agent
 
-Para o agente consultar **dados reais** (lançamentos, auditoria de fluxo, flares):
+Para o agente consultar **dados reais** (lançamentos, auditoria, migrações, flares):
 
-1. **Cursor** → definições do **Cloud Agent** / **Secrets** do repositório (não colar tokens no chat).
-2. Adicionar variáveis (mesmos nomes que `.env.example`):
+1. **Cursor** → **Dashboard** → **Cloud Agents** → ambiente **`varejosync`** → **Secrets** (não colar tokens no chat).
+2. Adicionar variáveis com **nomes exactos** (ver tabela em `P38_SECRETS_CANONICOS.md`):
 
 | Variável | Obrigatório | Valor |
 |----------|-------------|--------|
-| `VITE_BASE44_APP_ID` | Sim | App ID P38 (painel Base44 ou localStorage `app_id`) |
-| `VITE_BASE44_BACKEND_URL` | Sim | `https://p38.base44.app` |
-| `BASE44_ACCESS_TOKEN` | Um dos dois | JWT — no browser logado: DevTools → Application → Local Storage → `base44_access_token` |
-| `BASE44_API_KEY` | Um dos dois | Chave API (mais estável; expira menos que JWT) |
+| `VITE_SUPABASE_URL` | Sim (Supabase) | `https://zhonvxkkqabfdyehyxpu.supabase.co` |
+| `VITE_SUPABASE_ANON_KEY` | Sim (Supabase) | Supabase → API → anon public |
+| `DATABASE_URL` | Sim (migrações) | Supabase → Database → connection string |
+| `SUPABASE_ACCESS_TOKEN` | Sim (functions) | PAT `sbp_…` em supabase.com/account/tokens |
+| `VITE_BASE44_APP_ID` | Para Base44 | App ID P38 |
+| `VITE_BASE44_BACKEND_URL` | Para Base44 | `https://p38.base44.app` |
+| `BASE44_ACCESS_TOKEN` ou `BASE44_API_KEY` | Para Base44 | Um dos dois |
 
-3. Reiniciar ou abrir nova sessão Cloud Agent após gravar secrets.
-4. O agente pode correr, por exemplo:
-   - `npm run audit:fluxo-dia -- --dia=2026-06-19` — audita entradas/saídas de um dia
-   - `npm run flare:export` — exporta flares pendentes
-
-**Segurança:** nunca commitar `.env.local` nem relatórios com dados sensíveis (`docs/audit/` está no `.gitignore`).
+3. **Remover** o secret legado `supabase` (minúsculas) se existir — usar nomes canónicos separados.
+4. Reiniciar ou abrir **nova sessão** Cloud Agent após gravar secrets.
+5. Validar: `npm run secrets:check -- --context=cloud-agent`
 
 ### Lint / typecheck expectations
 

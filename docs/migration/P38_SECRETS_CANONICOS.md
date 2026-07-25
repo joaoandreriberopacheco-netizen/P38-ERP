@@ -2,14 +2,59 @@
 
 João, este documento é o **mapa único** das chaves de ligação. Depois de configurado, o sistema deve funcionar como **avião comercial**: decola uma vez, só pousa — sem “pane” por secret errado ou projecto Supabase diferente.
 
-## Regra de ouro
+## Modo de trabalho: só Cursor Cloud
 
-| Onde | O quê |
-|------|--------|
-| **GitHub Actions** (Settings → Secrets → Actions) | Fonte de verdade para deploy automático |
-| **Vercel** (env de produção) | Só o que o browser e o proxy serverless precisam |
-| **Cursor Cloud Agent** | Mesmos nomes que GitHub — **nunca** o secret ambíguo `supabase` |
-| **`.env.local`** (só na tua máquina) | Desenvolvimento local — **não commitar** |
+**Não precisas de `.env.local` na tua máquina.** Trabalhas no **Cursor Cloud Agent** — a configuração é feita no painel do Cursor, não no computador local.
+
+### Onde configurar (passo a passo)
+
+1. Abre o **Cursor** (browser ou app) → **Dashboard** → **Cloud Agents**
+2. Entra no ambiente **`varejosync`** (repositório P38)
+3. Secção **Secrets** — adiciona cada variável com o **nome exacto** da tabela abaixo
+4. **Grava** e abre uma **nova sessão** Cloud Agent (secrets só carregam ao iniciar)
+
+URL do ambiente (referência):  
+https://cursor.com/dashboard/cloud-agents/environments/e/334db7fa-cbaa-49eb-9dd0-1c1b7a206ced
+
+### Secrets obrigatórios no Cloud Agent
+
+| Secret | Valor (exemplo / onde obter) |
+|--------|------------------------------|
+| `VITE_SUPABASE_URL` | `https://zhonvxkkqabfdyehyxpu.supabase.co` |
+| `VITE_SUPABASE_ANON_KEY` | Supabase → Project Settings → API → **anon public** |
+| `DATABASE_URL` | Supabase → Database → connection string (pooler `:6543`) |
+| `SUPABASE_ACCESS_TOKEN` | https://supabase.com/dashboard/account/tokens (`sbp_…`) |
+
+Opcionais mas úteis no Cloud:
+
+| Secret | Para quê |
+|--------|----------|
+| `VITE_BASE44_APP_ID` + `BASE44_ACCESS_TOKEN` | Auditoria Base44, flares, scripts legado |
+| `SUPABASE_SERVICE_ROLE_KEY` | Scripts admin (nunca no frontend) |
+
+### Validar no Cloud (pede ao agente ou corre na sessão)
+
+```bash
+npm run secrets:check -- --context=cloud-agent
+```
+
+Se aparecer **✓ Pronto**, o ambiente Cloud está configurado. Se falhar, corrige os secrets no painel — **não** copies para ficheiros no repo.
+
+### O que NÃO fazer no Cloud
+
+- **Não** uses o secret `supabase` (minúsculas) — é ambíguo; usa `DATABASE_URL` e `SUPABASE_ACCESS_TOKEN` separados
+- **Não** coles tokens no chat com o agente
+- **Não** cries `.env.local` no repositório — o Cloud Agent lê os Secrets do painel
+
+---
+
+## Regra de ouro (três sítios)
+
+| Onde | O quê | Quem configura |
+|------|--------|----------------|
+| **Cursor Cloud Agent → Secrets** | O agente corre scripts, migrações, auditoria | **Tu (João)** — trabalho diário |
+| **GitHub Actions → Secrets** | Deploy automático (push na `main`) | Tu — uma vez, espelha o Cloud |
+| **Vercel → env produção** | O que o site em produção precisa | Automático via GitHub Actions |
 
 Antes de qualquer deploy: `npm run secrets:check`
 
@@ -19,8 +64,8 @@ Antes de qualquer deploy: `npm run secrets:check`
 
 | Nome canónico | Para quê | Onde colocar | Pode ir no frontend? |
 |---------------|----------|--------------|----------------------|
-| `VITE_SUPABASE_URL` | URL do projecto Supabase | GitHub, Vercel, `.env.local` | Sim (público) |
-| `VITE_SUPABASE_ANON_KEY` | Chave anon (leitura com RLS) | GitHub, Vercel, `.env.local` | Sim (pública por desenho) |
+| `VITE_SUPABASE_URL` | URL do projecto Supabase | **Cloud Agent**, GitHub, Vercel | Sim (público) |
+| `VITE_SUPABASE_ANON_KEY` | Chave anon (leitura com RLS) | **Cloud Agent**, GitHub, Vercel | Sim (pública por desenho) |
 | `VITE_P38_PROVIDER` | `supabase` em produção | Vercel | Sim |
 | `VITE_P38_BYPASS_BASE44` | `true` em produção | Vercel | Sim |
 | `VITE_P38_USE_SUPABASE_AUTH` | `true` — login interno P38 | Vercel | Sim |
@@ -72,25 +117,32 @@ O script `npm run secrets:check` aceita estes nomes antigos mas **avisa**:
 
 ## Checklist por cenário
 
+### Cursor Cloud Agent (o teu dia-a-dia)
+
+```bash
+npm run secrets:check -- --context=cloud-agent
+```
+
+Precisa de: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `DATABASE_URL`, `SUPABASE_ACCESS_TOKEN`.
+
+Configuração: **Cursor Dashboard → Cloud Agents → varejosync → Secrets** (não `.env.local`).
+
 ### Deploy produção (GitHub → Vercel + Supabase)
 
 ```bash
 npm run secrets:check -- --context=github
 ```
 
-Precisa de: `VERCEL_*`, `VITE_SUPABASE_*`, `DATABASE_URL`, `SUPABASE_ACCESS_TOKEN`.
+Precisa de: `VERCEL_*`, `VITE_SUPABASE_*`, `DATABASE_URL`, `SUPABASE_ACCESS_TOKEN`.  
+Os mesmos valores do Cloud Agent devem estar em **GitHub → Settings → Secrets → Actions**.
 
-### Só frontend local
+### Desenvolvimento local (opcional — outros devs)
 
 ```bash
 npm run secrets:check -- --context=local
 ```
 
-Precisa de: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
-
-### Cursor Cloud Agent (auditoria, migrações, flares)
-
-Mesmos nomes que GitHub Actions. Ver também `AGENTS.md` → secção Base44/Supabase.
+Só relevante se alguém correr o repo no PC. **Tu não precisas disto** no fluxo Cloud.
 
 ---
 
@@ -98,6 +150,11 @@ Mesmos nomes que GitHub Actions. Ver também `AGENTS.md` → secção Base44/Sup
 
 ```mermaid
 flowchart LR
+  subgraph cloud [Cursor Cloud Agent]
+    CS[Secrets no painel Cursor]
+    AG[Agente corre scripts]
+  end
+
   subgraph github [GitHub Secrets]
     DB[DATABASE_URL]
     PAT[SUPABASE_ACCESS_TOKEN]
@@ -128,6 +185,9 @@ flowchart LR
   VDEP --> PROXY
   PROXY --> EF
   APP --> PG
+  CS --> AG
+  AG --> MIG
+  AG --> FUN
 ```
 
 ---
@@ -147,7 +207,7 @@ flowchart LR
 
 - Se um token foi partilhado no chat ou commitado: **revogar** no Supabase/Vercel e criar novo.
 - `SUPABASE_SERVICE_ROLE_KEY` ignora RLS — só em serverless/scripts, nunca `VITE_*`.
-- O `.env.example` lista nomes; copiar para `.env.local` e preencher localmente.
+- O `.env.example` é só **referência de nomes** — no Cloud, preenches os Secrets no painel Cursor.
 
 ## Documentos relacionados
 
