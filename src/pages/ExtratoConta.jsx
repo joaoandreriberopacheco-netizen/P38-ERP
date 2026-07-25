@@ -595,7 +595,7 @@ export default function ExtratoContaPage() {
           <div className="flex shrink-0 gap-1 no-pdf-capture">
             <button
               type="button"
-              onClick={() => setPinAjusteOpen(true)}
+              onClick={() => setAjusteDialogOpen(true)}
               className="flex h-8 w-8 items-center justify-center rounded-lg p38-field-surface border-0"
               aria-label="Ajustar saldo"
             >
