@@ -151,7 +151,7 @@ export default function TagsInput({ tags, onChange, disabled = false, defaultExp
       {!expandido && tags.length > 0 && (
         <div className="px-4 pb-3 flex flex-wrap gap-1.5">
           {tags.map(t => (
-            <span key={t} className="px-2.5 py-1 rounded-full bg-primary dark:bg-muted text-xs text-white dark:text-foreground">{t}</span>
+            <span key={t} className="px-2.5 py-1 rounded-full bg-primary dark:bg-muted text-xs text-foreground">{t}</span>
           ))}
         </div>
       )}

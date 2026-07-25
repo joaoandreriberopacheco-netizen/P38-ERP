@@ -71,7 +71,7 @@ export default function ListaConferencias({ onAbrirConferencia, onAbrirAuditoria
         {modoFiltro !== "auditoria" && (
           <Button
             onClick={() => setShowNova(true)}
-            className="bg-background dark:bg-card text-white dark:text-foreground rounded-xl h-9 px-4 text-sm font-medium shadow-none"
+            className="bg-card text-card-foreground rounded-xl h-9 px-4 text-sm font-medium shadow-none"
           >
             <Plus className="w-4 h-4 mr-1.5" />
             Nova

@@ -46,8 +46,9 @@ export const brandSurface = {
   iconCapsule: 'rounded-2xl bg-muted flex items-center justify-center shadow-sm',
   textMuted: 'text-muted-foreground',
   textLabel: 'text-muted-foreground',
-  accent: 'text-[#4a5240] dark:text-[#a4ce33]',
-  accentBg: 'bg-primary/10 text-primary',
+  accent: 'text-p38-olive dark:text-p38-lime',
+  accentBg: 'bg-p38-olive/10 text-p38-olive border border-p38-olive/25 dark:bg-p38-lime/12 dark:text-p38-lime dark:border-p38-lime/30',
+  citrus: 'text-p38-citrus-orange dark:text-p38-citrus-yellow',
   /** Contentor de tabela — ver p38TableSurfaces.js */
   tableShell: 'rounded-xl border border-border bg-background shadow-sm overflow-auto',
 };

@@ -217,7 +217,7 @@ function TreePermissionRow({ item, moduloKey, caminho = [], permissoes, onChange
               <span className="truncate text-sm font-medium text-foreground/90">{item.label}</span>
               {temSubitens && (
                 <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-mono ${
-                  childCount.ativas > 0 ? 'bg-primary text-white dark:bg-muted dark:text-foreground' : 'bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground'
+                  childCount.ativas > 0 ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground' : 'bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground'
                 }`}>
                   {childCount.ativas}/{childCount.total}
                 </span>
@@ -282,7 +282,7 @@ function ModuloCard({ modulo, permissoes, onChange }) {
           </div>
           <span className="truncate text-sm font-semibold text-foreground">{modulo.label}</span>
           <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-mono ${
-            ativas > 0 ? 'bg-primary text-white dark:bg-muted dark:text-foreground' : 'bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground'
+            ativas > 0 ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground' : 'bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground'
           }`}>
             {ativas}/{total}
           </span>
@@ -353,7 +353,7 @@ export default function PerfilFormTela({ perfil, onSalvar, onCancelar }) {
             size="sm"
             onClick={handleSalvar}
             disabled={!form.nome.trim()}
-            className="h-8 text-xs bg-primary hover:bg-background text-white dark:bg-muted dark:text-foreground"
+            className="h-8 text-xs bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:text-foreground"
           >
             {perfil ? 'Salvar Alterações' : 'Criar Perfil'}
           </Button>
@@ -409,7 +409,7 @@ export default function PerfilFormTela({ perfil, onSalvar, onCancelar }) {
             <p className="text-xs text-muted-foreground font-medium">Legenda de permissões</p>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <div className="w-4 h-4 rounded bg-primary dark:bg-muted flex items-center justify-center">
-                <svg className="w-2.5 h-2.5 text-white dark:text-foreground" fill="none" viewBox="0 0 12 12">
+                <svg className="w-2.5 h-2.5 text-foreground" fill="none" viewBox="0 0 12 12">
                   <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>

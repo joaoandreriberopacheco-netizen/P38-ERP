@@ -144,7 +144,7 @@ function CupomImpressao({ itens, calcularPreco, tabelaSelecionada, onClose }) {
                   onClick={() => setFormato(f)}
                   className={`py-2.5 rounded-xl text-sm font-medium transition-all ${
                     formato === f
-                      ? 'bg-primary dark:bg-muted text-white dark:text-foreground'
+                      ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground'
                       : 'bg-muted text-muted-foreground'
                   }`}
                 >
@@ -271,7 +271,7 @@ export default function OrcamentoSheet({ produtos, calcularPreco, tabelaSelecion
           >
             Orçamento
             {totalItens > 0 && (
-              <span className="ml-1.5 bg-primary dark:bg-muted text-white dark:text-foreground text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+              <span className="ml-1.5 bg-primary dark:bg-muted text-foreground text-[9px] font-bold px-1.5 py-0.5 rounded-full">
                 {totalItens}
               </span>
             )}
@@ -322,7 +322,7 @@ export default function OrcamentoSheet({ produtos, calcularPreco, tabelaSelecion
                           </span>
                         )}
                         {noCarrinho ? (
-                          <span className="w-6 h-6 rounded-lg bg-primary dark:bg-muted flex items-center justify-center text-[9px] font-bold text-white dark:text-foreground">
+                          <span className="w-6 h-6 rounded-lg bg-primary dark:bg-muted flex items-center justify-center text-[9px] font-bold text-foreground">
                             {noCarrinho.qtd}
                           </span>
                         ) : (

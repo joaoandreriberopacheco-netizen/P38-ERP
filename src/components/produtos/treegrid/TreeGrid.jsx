@@ -602,7 +602,7 @@ export function LevelControl({ level, onChange }) {
         <button key={value} onClick={() => onChange(value)} title={title}
           className={`min-w-[24px] h-6 px-1.5 rounded text-[10px] font-semibold transition-colors ${
             level === value
-              ? 'bg-muted dark:bg-muted text-white dark:text-foreground'
+              ? 'bg-muted text-foreground'
               : 'bg-muted text-muted-foreground hover:bg-muted dark:hover:bg-primary/90'
           }`}
         >

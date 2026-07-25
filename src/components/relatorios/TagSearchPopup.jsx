@@ -46,7 +46,7 @@ export default function TagSearchPopup({
               <button
                 key={tag}
                 onClick={() => setSelectedTags(prev => prev.filter(t => t !== tag))}
-                className="inline-flex items-center gap-1 px-2 py-1 bg-background dark:bg-card text-white dark:text-foreground rounded text-xs font-medium hover:opacity-80 transition"
+                className="inline-flex items-center gap-1 px-2 py-1 bg-card text-card-foreground rounded text-xs font-medium hover:opacity-80 transition"
               >
                 {tag}
                 <X className="w-3 h-3" />
@@ -77,7 +77,7 @@ export default function TagSearchPopup({
       {!isInline && (
         <button
           onClick={onClose}
-          className="w-full mt-2 py-1.5 bg-background dark:bg-card text-white dark:text-foreground text-xs font-medium rounded hover:opacity-90 transition"
+          className="w-full mt-2 py-1.5 bg-card text-card-foreground text-xs font-medium rounded hover:opacity-90 transition"
         >
           Fechar
         </button>

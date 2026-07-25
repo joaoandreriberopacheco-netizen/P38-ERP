@@ -51,7 +51,7 @@ function BuscarPedidoStep({ onFound, onClose }) {
             onKeyDown={e => e.key === 'Enter' && buscar()}
             className="text-lg font-mono uppercase border-0 border-b border-border/40 rounded-none bg-transparent focus-visible:ring-0"
           />
-          <Button onClick={buscar} disabled={buscando} className="bg-background dark:bg-card text-white dark:text-foreground rounded-xl px-5">
+          <Button onClick={buscar} disabled={buscando} className="bg-card text-card-foreground rounded-xl px-5">
             {buscando ? '...' : <Search className="w-4 h-4" />}
           </Button>
         </div>
@@ -167,7 +167,7 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
       <Button
         disabled={itensSelecionados.length === 0 || totalDevolvido === 0}
         onClick={() => onConfirm({ itensSelecionados, qtds, formaReembolso, motivo, totalDevolvido })}
-        className="w-full h-14 bg-background dark:bg-card text-white dark:text-foreground rounded-2xl font-semibold text-base"
+        className="w-full h-14 bg-card text-card-foreground rounded-2xl font-semibold text-base"
         style={{ minHeight: 56 }}>
         Confirmar {tipo}
       </Button>

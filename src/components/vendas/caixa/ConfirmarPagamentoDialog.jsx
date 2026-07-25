@@ -222,7 +222,7 @@ export default function ConfirmarPagamentoDialog({
                 <button
                   onClick={handleBuscarVale}
                   disabled={buscandoVale}
-                  className="h-11 px-4 bg-background dark:bg-card text-white dark:text-foreground rounded-xl text-sm font-medium disabled:opacity-50"
+                  className="h-11 px-4 bg-card text-card-foreground rounded-xl text-sm font-medium disabled:opacity-50"
                 >
                   {buscandoVale ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Buscar'}
                 </button>
@@ -290,7 +290,7 @@ export default function ConfirmarPagamentoDialog({
             <button
               onClick={handleFinalizarVenda}
               disabled={!pagamentoValido || processandoVenda}
-              className="flex-1 h-12 bg-background dark:bg-card text-white dark:text-foreground rounded-xl font-semibold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
+              className="flex-1 h-12 bg-card text-card-foreground rounded-xl font-semibold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
             >
               {processandoVenda
                 ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</>

@@ -138,7 +138,7 @@ export default function DocumentTypeSearcher({
               />
               <button
                 onClick={handleCreateNew}
-                className="px-3 py-2 rounded-xl bg-background dark:bg-card text-white dark:text-foreground font-medium text-sm hover:opacity-90"
+                className="px-3 py-2 rounded-xl bg-card text-card-foreground font-medium text-sm hover:opacity-90"
               >
                 Criar
               </button>

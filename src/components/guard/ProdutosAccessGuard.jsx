@@ -63,7 +63,7 @@ export default function ProdutosAccessGuard({ children }) {
           </p>
           <a
             href={createPageUrl('Home')}
-            className="inline-block mt-6 px-6 py-2 bg-background dark:bg-muted text-white dark:text-foreground rounded-lg font-medium hover:opacity-90 transition-opacity"
+            className="inline-block mt-6 px-6 py-2 bg-background dark:bg-muted text-foreground rounded-lg font-medium hover:opacity-90 transition-opacity"
           >
             Voltar para Home
           </a>

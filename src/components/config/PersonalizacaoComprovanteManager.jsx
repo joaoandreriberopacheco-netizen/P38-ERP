@@ -126,7 +126,7 @@ export default function PersonalizacaoComprovanteManager() {
           Cancelar
         </Button>
         <Button onClick={handleSalvar} disabled={salvando} size="sm"
-          className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white gap-1.5 h-8 text-xs">
+          className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:text-foreground gap-1.5 h-8 text-xs">
           <Save className="w-3.5 h-3.5" />
           {salvando ? 'Salvando...' : 'Salvar'}
         </Button>

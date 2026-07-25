@@ -31,7 +31,7 @@ export function NovaCategoriaInline({ tipo, onCriada, onCancelar }) {
         className="flex-1 min-w-0 bg-transparent text-sm text-foreground/90 placeholder:text-muted-foreground outline-none p38-data-uppercase"
       />
       <button onClick={handleSalvar} disabled={saving || !nome.trim()}
-        className="px-3 py-1.5 rounded-lg bg-background dark:bg-card text-white dark:text-foreground text-xs font-medium disabled:opacity-40">
+        className="px-3 py-1.5 rounded-lg bg-card text-card-foreground text-xs font-medium disabled:opacity-40">
         OK
       </button>
       <button onClick={onCancelar} className="p-1.5 rounded-lg hover:bg-muted dark:hover:bg-muted">
@@ -169,7 +169,7 @@ export function SeletorCategoria({ tipo, value, onChange, categorias, onCriada, 
 
       {value && (
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-primary dark:bg-muted text-white dark:text-foreground">
+          <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-primary dark:bg-muted text-foreground">
             {value}
             <button type="button" onClick={() => onChange('', '')} className="hover:opacity-70">
               <X className="w-3 h-3" />

@@ -615,7 +615,7 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
                   }`}
                 >
                   {(todosSelecionadosGrupo || algumSelecionado) && (
-                    <Check className="w-3 h-3 text-white dark:text-foreground" />
+                    <Check className="w-3 h-3 text-foreground" />
                   )}
                 </button>
 
@@ -658,7 +658,7 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
                             isSel ? 'bg-primary dark:bg-muted' : 'border-2 border-border/40'
                           }`}
                         >
-                          {isSel && <Check className="w-2.5 h-2.5 text-white dark:text-foreground" />}
+                          {isSel && <Check className="w-2.5 h-2.5 text-foreground" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-foreground/90 truncate">{l.descricao}</p>

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:preview": "node scripts/start-local-preview.mjs",
     "build": "vite build && npm run verify:source-location",
     "build:raw": "vite build",
     "verify:source-location": "node scripts/verify-source-location.mjs",

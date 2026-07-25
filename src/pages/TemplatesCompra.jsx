@@ -260,7 +260,7 @@ export default function TemplatesCompra() {
               <Button
                 onClick={handleDownloadTemplate}
                 disabled={isGenerating}
-                className="bg-background dark:bg-card text-white dark:text-foreground hover:bg-primary"
+                className="bg-card text-card-foreground hover:bg-primary"
               >
                 {isGenerating ? 'Gerando...' : 'Baixar Template'}
               </Button>
@@ -395,7 +395,7 @@ export default function TemplatesCompra() {
               <Button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isImporting}
-                className="bg-background dark:bg-card text-white dark:text-foreground hover:bg-primary"
+                className="bg-card text-card-foreground hover:bg-primary"
               >
                 {isImporting ? 'Importando...' : 'Selecionar Arquivo'}
               </Button>

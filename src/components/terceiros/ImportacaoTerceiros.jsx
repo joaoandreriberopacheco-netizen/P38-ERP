@@ -335,7 +335,7 @@ export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
               <div key={s} className="flex items-center">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
                   step >= s 
-                    ? 'bg-primary dark:bg-card text-white dark:text-foreground shadow-md' 
+                    ? 'bg-primary text-primary-foreground dark:bg-card dark:text-foreground shadow-md' 
                     : 'bg-muted text-muted-foreground'
                 }`}>
                   {step > s ? <CheckCircle className="w-5 h-5" /> : <span className="text-sm font-medium">{s}</span>}

@@ -89,7 +89,7 @@ function MonthPanel({ monthDate, onPrev, onNext, onSelectDay, start, end, mode, 
             row: 'flex w-full mt-2',
             cell: 'h-10 w-10 text-center text-sm p-0 relative [&:has([aria-selected])]:bg-muted dark:[&:has([aria-selected])]:bg-card',
             day: 'h-10 w-10 p-0 rounded-full font-normal text-foreground/90 hover:bg-muted dark:hover:bg-card',
-            day_selected: 'bg-primary text-white hover:bg-primary dark:bg-primary dark:text-primary-foreground dark:hover:bg-muted',
+            day_selected: 'bg-primary text-primary-foreground hover:bg-primary/90 dark:hover:bg-muted',
             day_today: 'bg-muted text-foreground dark:bg-muted dark:text-white',
             day_range_middle: 'aria-selected:bg-muted aria-selected:text-foreground dark:aria-selected:bg-card dark:aria-selected:text-white',
             day_outside: 'text-muted-foreground dark:text-muted-foreground opacity-50',
@@ -104,7 +104,7 @@ function MonthPanel({ monthDate, onPrev, onNext, onSelectDay, start, end, mode, 
               key={month.value}
               type="button"
               onClick={() => onPickMonth(month.value)}
-              className={`h-11 rounded-2xl text-sm capitalize ${monthDate.getMonth() === month.value ? 'bg-primary text-white dark:bg-primary dark:text-primary-foreground' : 'bg-muted dark:bg-muted text-foreground/90'}`}
+              className={`h-11 rounded-2xl text-sm capitalize ${monthDate.getMonth() === month.value ? 'bg-primary text-primary-foreground' : 'bg-muted dark:bg-muted text-foreground/90'}`}
             >
               {month.label}
             </button>
@@ -119,7 +119,7 @@ function MonthPanel({ monthDate, onPrev, onNext, onSelectDay, start, end, mode, 
               key={year}
               type="button"
               onClick={() => onPickYear(year)}
-              className={`h-11 rounded-2xl text-sm ${monthDate.getFullYear() === year ? 'bg-primary text-white dark:bg-primary dark:text-primary-foreground' : 'bg-muted dark:bg-muted text-foreground/90'}`}
+              className={`h-11 rounded-2xl text-sm ${monthDate.getFullYear() === year ? 'bg-primary text-primary-foreground' : 'bg-muted dark:bg-muted text-foreground/90'}`}
             >
               {year}
             </button>
@@ -268,7 +268,7 @@ export default function MobileDateRangePicker({ startDate, endDate, onApply, onC
               </Button>
               <Button
                 type="button"
-                className="flex-1 h-11 rounded-2xl bg-primary hover:bg-card text-white dark:bg-primary dark:text-primary-foreground dark:hover:bg-card"
+                className="flex-1 h-11 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground border border-primary/80 dark:border-transparent"
                 onClick={() => {
                   onApply(tempStart, tempEnd);
                   setOpen(false);

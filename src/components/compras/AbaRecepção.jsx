@@ -406,7 +406,7 @@ export default function AbaRecepção({ pedido }) {
             </div>
             <Button
               onClick={() => setRecebimentoSucesso(null)}
-              className="w-full h-11 bg-background dark:bg-muted text-white dark:text-foreground hover:opacity-90 rounded-xl"
+              className="w-full h-11 bg-background dark:bg-muted text-foreground hover:opacity-90 rounded-xl"
             >
               Fechar
             </Button>

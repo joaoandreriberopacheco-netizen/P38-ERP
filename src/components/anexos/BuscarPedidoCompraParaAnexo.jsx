@@ -112,7 +112,7 @@ export default function BuscarPedidoCompraParaAnexo({ onSelecionar, onVoltar, up
           type="button"
           onClick={() => onSelecionar(selecionado)}
           disabled={uploadando}
-          className="w-full h-14 rounded-2xl bg-background dark:bg-card text-white dark:text-foreground text-sm font-semibold flex items-center justify-center gap-2 mt-auto"
+          className="w-full h-14 rounded-2xl bg-card text-card-foreground text-sm font-semibold flex items-center justify-center gap-2 mt-auto"
         >
           {uploadando ? (
             <>

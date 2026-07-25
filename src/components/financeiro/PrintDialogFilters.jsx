@@ -9,7 +9,7 @@ function FilterChip({ active, icon: Icon, label, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${active ? 'bg-primary dark:bg-muted text-white dark:text-foreground' : 'bg-card dark:bg-muted text-muted-foreground shadow-sm'}`}
+      className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${active ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground' : 'bg-card dark:bg-muted text-muted-foreground shadow-sm'}`}
     >
       <Icon className="w-3.5 h-3.5" />
       {label}
@@ -25,7 +25,7 @@ function MultiSelectPopover({ icon: Icon, label, options, selected, onToggle, on
       <PopoverTrigger asChild>
         <button
           type="button"
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${active ? 'bg-primary dark:bg-muted text-white dark:text-foreground' : 'bg-card dark:bg-muted text-muted-foreground shadow-sm'}`}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${active ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground' : 'bg-card dark:bg-muted text-muted-foreground shadow-sm'}`}
         >
           <Icon className="w-3.5 h-3.5" />
           {active ? `${selected.length} selecionado(s)` : label}

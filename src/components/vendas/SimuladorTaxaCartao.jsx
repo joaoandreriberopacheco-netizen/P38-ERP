@@ -123,7 +123,7 @@ export default function SimuladorTaxaCartao({ open, onClose, valorTotal, valorDe
                       onClick={() => setMaquininhaSel(m)}
                       className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-left transition-all ${
                         maquininhaSel?.id === m.id
-                          ? 'bg-background dark:bg-card text-white dark:text-foreground'
+                          ? 'bg-card text-card-foreground'
                           : 'bg-muted/50 text-foreground/90 hover:bg-muted'
                       }`}
                     >
@@ -147,7 +147,7 @@ export default function SimuladorTaxaCartao({ open, onClose, valorTotal, valorDe
                       onClick={() => setBandeira(b)}
                       className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
                         bandeira === b
-                          ? 'bg-background dark:bg-card text-white dark:text-foreground'
+                          ? 'bg-card text-card-foreground'
                           : 'bg-muted text-muted-foreground'
                       }`}
                     >
@@ -170,7 +170,7 @@ export default function SimuladorTaxaCartao({ open, onClose, valorTotal, valorDe
                       }}
                       className={`px-2 py-2.5 rounded-xl text-xs font-medium transition-all text-center ${
                         modalidade === mod
-                          ? 'bg-background dark:bg-card text-white dark:text-foreground'
+                          ? 'bg-card text-card-foreground'
                           : 'bg-muted text-muted-foreground'
                       }`}
                     >
@@ -191,7 +191,7 @@ export default function SimuladorTaxaCartao({ open, onClose, valorTotal, valorDe
                         onClick={() => setParcelas(n)}
                         className={`w-10 h-10 rounded-xl text-sm font-semibold transition-all ${
                           parcelas === n
-                            ? 'bg-background dark:bg-card text-white dark:text-foreground'
+                            ? 'bg-card text-card-foreground'
                             : 'bg-muted text-muted-foreground'
                         }`}
                       >
@@ -274,7 +274,7 @@ export default function SimuladorTaxaCartao({ open, onClose, valorTotal, valorDe
         </div>
 
         <div className="px-5 pb-5">
-          <Button onClick={onClose} className="w-full h-12 bg-background dark:bg-card text-white dark:text-foreground rounded-2xl font-medium shadow-none border-0">
+          <Button onClick={onClose} className="w-full h-12 bg-card text-card-foreground rounded-2xl font-medium shadow-none border-0">
             Fechar
           </Button>
         </div>

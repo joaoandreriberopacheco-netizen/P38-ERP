@@ -172,7 +172,7 @@ export default function RelatorioFechamentoCaixa({ turno, caixaData, open, onClo
             onClick={onContinuar}
             isLoading={isContinuing}
             loadingText="Finalizando..."
-            className="flex-1 bg-background dark:bg-card text-white dark:text-foreground hover:bg-primary"
+            className="flex-1 bg-card text-card-foreground hover:bg-primary"
           >
             Continuar
           </SafeActionButton>
