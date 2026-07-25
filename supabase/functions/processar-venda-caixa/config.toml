@@ -1,0 +1,3 @@
+# JWT validado dentro da função (requireUser). verify_jwt no gateway bloqueia
+# o preflight OPTIONS do browser (Vercel → Supabase) e quebra o caixa PDV.
+verify_jwt = false
