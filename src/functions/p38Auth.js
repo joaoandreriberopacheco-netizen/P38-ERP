@@ -65,7 +65,7 @@ async function postJson(url, headers, body) {
 
 /**
  * Invoca a Edge Function `p38-auth`.
- * Em produção usa primeiro `/api/p38-auth` (mesmo domínio Vercel).
+ * Em produção usa primeiro `/api/auth-p38` (mesmo domínio Vercel).
  */
 export async function invokeP38Auth(body, { authorized = false } = {}) {
   const supabase = getSupabaseBrowserClient();

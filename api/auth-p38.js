@@ -1,20 +1,46 @@
 /**
  * Proxy same-origin para a Edge Function Supabase `p38-auth`.
- * Não reencaminha apikey nem tokens inválidos (evita erro ES256 no gateway Supabase).
+ * Inclui retentativas — o gateway Supabase falha intermitentemente com JWT inválido.
  */
 const P38_AUTH_URL =
   process.env.P38_AUTH_URL ||
   'https://zhonvxkkqabfdyehyxpu.supabase.co/functions/v1/p38-auth';
 
+const MAX_ATTEMPTS = 5;
+
 function pickSessionAuthorization(req) {
   const raw = req.headers.authorization || req.headers.Authorization;
   if (typeof raw !== 'string') return null;
   const trimmed = raw.trim();
-  // Só JWT de sessão do utilizador (HS256 legado Supabase).
   if (/^Bearer eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(trimmed)) {
     return trimmed;
   }
   return null;
+}
+
+function buildUpstreamHeaders(req) {
+  const headers = { 'Content-Type': 'application/json' };
+  const sessionAuth = pickSessionAuthorization(req);
+  if (sessionAuth) headers.Authorization = sessionAuth;
+  return headers;
+}
+
+async function callUpstream(body, headers) {
+  let lastText = '';
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const upstream = await fetch(P38_AUTH_URL, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body ?? {}),
+    });
+    const text = await upstream.text();
+    if (!/invalid jwt/i.test(text)) {
+      return { status: upstream.status, text };
+    }
+    lastText = text;
+    await new Promise((r) => setTimeout(r, 80 * attempt));
+  }
+  return { status: 502, text: lastText || '{"error":"Serviço de autenticação instável. Tente novamente."}' };
 }
 
 export default async function handler(req, res) {
@@ -33,19 +59,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    const headers = { 'Content-Type': 'application/json' };
-    const sessionAuth = pickSessionAuthorization(req);
-    if (sessionAuth) headers.Authorization = sessionAuth;
-
-    const upstream = await fetch(P38_AUTH_URL, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(req.body ?? {}),
-    });
-
-    const text = await upstream.text();
-    res.status(upstream.status);
-    res.setHeader('Content-Type', upstream.headers.get('content-type') || 'application/json');
+    const { status, text } = await callUpstream(req.body, buildUpstreamHeaders(req));
+    res.status(status);
+    res.setHeader('Content-Type', 'application/json');
     res.send(text);
   } catch (err) {
     res.status(502).json({
