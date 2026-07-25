@@ -18,6 +18,8 @@ npm run secrets:check -- --context=cloud-agent
 
 Ver [`secrets/README.md`](../../secrets/README.md). O ficheiro **não vai para o Git** e **sobrepõe** secrets antigos do painel Cursor.
 
+**Continuidade:** o txt é ferramenta tua no Cloud; a produção vive nos **GitHub Secrets** + **Vercel**. Depois de validar aqui, copia os mesmos valores para o GitHub. Ver [P38_CONTINUIDADE_OPERACIONAL.md](./P38_CONTINUIDADE_OPERACIONAL.md).
+
 ### Opção B — painel Cursor (alternativa)
 
 1. Abre o **Cursor** → **Dashboard** → **Cloud Agents**

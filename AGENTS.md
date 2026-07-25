@@ -67,6 +67,7 @@ Alternativa: **Cursor → Dashboard → Cloud Agents → varejosync → Secrets*
 
 - **Mapa canónico:** [`docs/migration/P38_SECRETS_CANONICOS.md`](docs/migration/P38_SECRETS_CANONICOS.md)
 - O ficheiro `secrets/p38-chaves.txt` está no `.gitignore` — nunca commitar
+- **Continuidade:** após validar no txt, espelhar secrets no GitHub — ver [P38_CONTINUIDADE_OPERACIONAL.md](docs/migration/P38_CONTINUIDADE_OPERACIONAL.md)
 - Optional **Supabase** hybrid testing: see `docs/migration/SUPABASE_TEST_SETUP.md` (`supabase start`, `VITE_USE_SUPABASE_ENTITIES=true`).
 - Build/dev may log `[base44] Proxy not enabled (VITE_BASE44_APP_BASE_URL not set)` — expected without proxy env; build still succeeds.
 
