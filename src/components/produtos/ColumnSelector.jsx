@@ -55,6 +55,7 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
       columns: [
         { id: 'estoque_atual', label: 'Estoque Atual' },
         { id: 'media_30d', label: 'Média 30d' },
+        { id: 'ponto_futuro', label: 'Ponto futuro' },
         { id: 'ponto_esperado_lt', label: 'Ponto esperado (1,5× LT)' },
         { id: 'show_logistica', label: 'Unidade de exibição (sigla)' },
         { id: 'estoque_minimo', label: 'Estoque Mínimo' },

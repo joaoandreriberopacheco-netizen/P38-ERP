@@ -6,7 +6,7 @@ import { MoreHorizontal, Edit, Trash2, Copy, Package } from 'lucide-react';
 import { isCadastroIncompleto, getStockStatusIndicator } from './ProdutosHelpers';
 import { formatEstoqueApresentacao, getUnidadeExibicaoSigla, getCatalogUnitLabels, getCatalogoComercialView, resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
-import { formatCatalogMedia30d, formatCatalogMetaQuantidade, formatCatalogPontoEsperadoLt, getCatalogLeadTimeDias } from '@/lib/catalogSalesVelocity';
+import { formatCatalogMedia30d, formatCatalogMetaQuantidade, formatCatalogPontoEsperadoLt, formatCatalogPontoFuturo, getCatalogLeadTimeDias } from '@/lib/catalogSalesVelocity';
 import { formatQuantidadeCatalogoApresentacao } from '@/lib/productUnits';
 
 const headMap = {
@@ -24,6 +24,7 @@ const headMap = {
   markup: 'Markup %',
   estoque_atual: 'Estoque',
   media_30d: 'Média 30d',
+  ponto_futuro: 'Ponto futuro',
   ponto_esperado_lt: 'Ponto LT',
   estoque_minimo: 'Est. Mín',
   estoque_ideal: 'Est. Ideal',
@@ -53,6 +54,7 @@ const widthMap = {
   markup: 'min-w-[90px]',
   estoque_atual: 'min-w-[110px]',
   media_30d: 'min-w-[100px]',
+  ponto_futuro: 'min-w-[100px]',
   ponto_esperado_lt: 'min-w-[100px]',
   estoque_minimo: 'min-w-[90px]',
   estoque_ideal: 'min-w-[90px]',
@@ -134,6 +136,12 @@ function renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, fo
       return (
         <TableCell key={col} className="text-xs text-foreground/90 tabular-nums">
           {formatCatalogMedia30d(velocity) || '—'}
+        </TableCell>
+      );
+    case 'ponto_futuro':
+      return (
+        <TableCell key={col} className="text-xs text-foreground/90 tabular-nums">
+          {formatCatalogPontoFuturo(produto, velocity) || '—'}
         </TableCell>
       );
     case 'ponto_esperado_lt':

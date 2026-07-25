@@ -25,6 +25,7 @@ const KNOWN_CATALOG_PRODUTO_COLUMNS = new Set([
   'markup',
   'estoque_atual',
   'media_30d',
+  'ponto_futuro',
   'ponto_esperado_lt',
   'estoque_minimo',
   'estoque_ideal',

@@ -15,8 +15,12 @@ import {
   formatCatalogMedia30d,
   formatCatalogMetaQuantidade,
   formatCatalogPontoEsperadoLt,
+  formatCatalogPontoFuturo,
+  formatCatalogPontoFuturoQuantidade,
   formatCatalogSalesQuantity,
   getCatalogLeadTimeDias,
+  getCatalogMedia30dFrom60d,
+  getCatalogPontoFuturo,
 } from '@/lib/catalogSalesVelocity';
 
 // ── Formatação ────────────────────────────────────────────────────────────────
@@ -116,6 +120,7 @@ const COL_DEFS = [
   { id: 'inventario_valorizado', label: 'Inventário R$', w: 108 },
   { id: 'estoque_atual',        label: 'Estoque',        w: 96  },
   { id: 'media_30d',            label: 'Média 30d',      w: 96  },
+  { id: 'ponto_futuro',         label: 'Ponto futuro',   w: 96  },
   { id: 'ponto_esperado_lt',    label: 'Ponto LT',       w: 96  },
   { id: 'estoque_minimo',       label: 'Est. Mín',       w: 80  },
   { id: 'estoque_ideal',        label: 'Est. Ideal',     w: 80  },
@@ -326,6 +331,22 @@ function skuCellValue(colId, produto, margem, lastro, markup, salesVelocityMap =
         </span>
       );
     }
+    case 'ponto_futuro': {
+      const text = formatCatalogPontoFuturo(produto, velocity);
+      const negativo = getCatalogPontoFuturo(produto, velocity) < 0;
+      return (
+        <span
+          className={cn(
+            'text-xs tabular-nums',
+            negativo
+              ? 'text-amber-700 dark:text-amber-300 font-medium'
+              : 'text-muted-foreground',
+          )}
+        >
+          {text || '—'}
+        </span>
+      );
+    }
     case 'ponto_esperado_lt': {
       const lt = getCatalogLeadTimeDias(produto);
       const text = formatCatalogPontoEsperadoLt(velocity, lt);
@@ -405,6 +426,30 @@ function groupCellValue(colId, row, salesVelocityMap = {}) {
       const text = formatCatalogMedia30d(agg, { tilde: true });
       return (
         <span className="text-xs text-muted-foreground tabular-nums">
+          {text || '—'}
+        </span>
+      );
+    }
+    case 'ponto_futuro': {
+      const skus = collectSkus(row.node);
+      const est = aggregateEstoqueDisplay(skus);
+      const velAgg = aggregateCatalogSalesVelocity(skus, salesVelocityMap);
+      const media30 = getCatalogMedia30dFrom60d(velAgg);
+      if (est.mode === 'empty') {
+        return <span className="text-xs text-muted-foreground tabular-nums">—</span>;
+      }
+      const ponto = est.quantidade - media30;
+      const un = velAgg.unidade || est.sigla;
+      const text = formatCatalogPontoFuturoQuantidade(ponto, un, { tilde: true });
+      return (
+        <span
+          className={cn(
+            'text-xs tabular-nums',
+            ponto < 0
+              ? 'text-amber-700 dark:text-amber-300 font-medium'
+              : 'text-muted-foreground',
+          )}
+        >
           {text || '—'}
         </span>
       );
