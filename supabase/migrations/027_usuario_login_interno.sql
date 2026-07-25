@@ -3,16 +3,27 @@
 
 alter table public.usuario add column if not exists login text;
 alter table public.usuario add column if not exists auth_ativado boolean not null default false;
+alter table public.usuario add column if not exists nickname text;
+alter table public.usuario add column if not exists email text;
+
+-- Garantir nickname a partir de dados (produção pode não ter corrido 009)
+update public.usuario
+set nickname = coalesce(nullif(trim(nickname), ''), nullif(trim(dados->>'nickname'), ''))
+where (nickname is null or trim(nickname) = '')
+  and dados->>'nickname' is not null
+  and trim(dados->>'nickname') <> '';
 
 -- Preencher login a partir de nickname ou email local
-update public.usuario set login = lower(trim(nickname))
+update public.usuario
+set login = lower(trim(coalesce(nullif(trim(login), ''), nickname, dados->>'nickname')))
 where (login is null or trim(login) = '')
-  and nickname is not null and trim(nickname) <> '';
+  and coalesce(nullif(trim(nickname), ''), nullif(trim(dados->>'nickname'), '')) is not null;
 
-update public.usuario set login = lower(trim(split_part(email, '@', 1)))
+update public.usuario
+set login = lower(trim(split_part(coalesce(email, dados->>'email', ''), '@', 1)))
 where (login is null or trim(login) = '')
-  and email is not null and trim(email) <> ''
-  and email not like '%@login.p38.internal';
+  and coalesce(nullif(trim(email), ''), nullif(trim(dados->>'email'), '')) is not null
+  and coalesce(nullif(trim(email), ''), nullif(trim(dados->>'email'), '')) not like '%@login.p38.internal';
 
 create unique index if not exists idx_usuario_login_unique
   on public.usuario (lower(login))
