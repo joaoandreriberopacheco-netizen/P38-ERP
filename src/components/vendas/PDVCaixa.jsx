@@ -65,6 +65,7 @@ import {
   fetchCaixaTurnoSnapshot,
   CAIXA_IDLE_SYNC_AFTER_MS,
   CAIXA_IDLE_SYNC_TICK_MS,
+  CAIXA_LIVE_POLL_MS,
   CAIXA_SUBSCRIBE_DEBOUNCE_MS,
 } from '@/lib/caixaTurnoData';
 import {
@@ -351,6 +352,9 @@ export default function PDVCaixa({
   const hasSnapshotRef = useRef(false);
   const subscribeDebounceRef = useRef(null);
   const idleSyncBlockedRef = useRef(false);
+  const rascunhosCountRef = useRef(0);
+  const [ultimaAtualizacao, setUltimaAtualizacao] = useState(null);
+  const [atualizandoSilencioso, setAtualizandoSilencioso] = useState(false);
 
   // Renamed stats to caixaData and updated structure based on outline
   const [caixaData, setCaixaData] = useState({
@@ -597,6 +601,8 @@ export default function PDVCaixa({
 
     const queryKey = [...caixaTurnoQueryKey(turno.id, caixa.id), 'live', 'sem-itens'];
 
+    if (silent) setAtualizandoSilencioso(true);
+
     try {
       if (force) {
         await queryClient.invalidateQueries({ queryKey: caixaTurnoQueryKey(turno.id, caixa.id) });
@@ -613,7 +619,20 @@ export default function PDVCaixa({
           }),
         staleTime: force ? 0 : 30_000,
       });
+
+      const newRascunhosCount = snapshot.rascunhosAguardando?.length ?? 0;
+      if (silent && hasSnapshotRef.current && newRascunhosCount > rascunhosCountRef.current) {
+        const diff = newRascunhosCount - rascunhosCountRef.current;
+        toast({
+          title: diff === 1 ? 'Nova venda na fila!' : `${diff} novas vendas na fila!`,
+          className: CAIXA_TOAST_SUCCESS,
+          duration: 3000,
+        });
+      }
+      rascunhosCountRef.current = newRascunhosCount;
+
       applySnapshot(snapshot);
+      setUltimaAtualizacao(new Date());
     } catch (error) {
       console.error('❌ Erro ao carregar dados:', error);
       const suppressToast =
@@ -626,6 +645,8 @@ export default function PDVCaixa({
           variant: 'destructive',
         });
       }
+    } finally {
+      if (silent) setAtualizandoSilencioso(false);
     }
   }, [caixaSelecionado, turnoAtivo, queryClient, applySnapshot, toast]);
 
@@ -688,6 +709,31 @@ export default function PDVCaixa({
     return () => window.clearInterval(tick);
   }, [showSeletorCaixa, turnoAtivo?.id, caixaSelecionado?.id]);
 
+  // Atualização automática: polling + refetch ao voltar à aba (subscribe é no-op no Supabase).
+  useEffect(() => {
+    if (showSeletorCaixa || !turnoAtivo?.id || !caixaSelecionado?.id) return undefined;
+
+    const poll = () => {
+      if (idleSyncBlockedRef.current) return;
+      const run = loadDataRef.current;
+      if (typeof run === 'function') {
+        void run(undefined, undefined, { silent: true });
+      }
+    };
+
+    const id = window.setInterval(poll, CAIXA_LIVE_POLL_MS);
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') poll();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [showSeletorCaixa, turnoAtivo?.id, caixaSelecionado?.id]);
+
   const handleAbrirPedido = (pedido) => {
     if (modoVisualizacao) {
       toast({
@@ -704,6 +750,8 @@ export default function PDVCaixa({
   const handleSelecionarCaixa = (caixa, turno, somenteLeitura) => {
     lastUserActivityAtRef.current = Date.now();
     hasSnapshotRef.current = false;
+    rascunhosCountRef.current = 0;
+    setUltimaAtualizacao(null);
     setCaixaSelecionado(caixa);
     setTurnoAtivo(turno);
     setModoVisualizacao(somenteLeitura);
@@ -1437,13 +1485,17 @@ export default function PDVCaixa({
           <ArrowLeft className="w-6 h-6 text-foreground/90 dark:text-muted-foreground" />
         </button>
         
-        <div className="flex-1 text-center">
+        <div className="flex-1 text-center min-w-0 px-2">
           <h1 className={`${caixaTypo.title} text-foreground dark:text-white`}>
             {caixaSelecionado?.nome || 'Caixa'}
           </h1>
-          {modoVisualizacao && (
+          {modoVisualizacao ? (
             <p className={`${caixaTypo.labelSm} text-amber-600 dark:text-amber-400`}>Somente visualização</p>
-          )}
+          ) : ultimaAtualizacao ? (
+            <p className={`${caixaTypo.labelSm} text-muted-foreground dark:text-muted-foreground truncate`}>
+              Atualizado · {format(ultimaAtualizacao, 'HH:mm:ss')}
+            </p>
+          ) : null}
         </div>
         
         <div className="flex items-center gap-2">
@@ -1452,7 +1504,7 @@ export default function PDVCaixa({
             className="p-2 hover:bg-muted dark:hover:bg-muted rounded-lg transition-colors"
             style={{ minWidth: '44px', minHeight: '44px' }}
             title="Atualizar (F7)">
-            <RefreshCw className="w-5 h-5 text-muted-foreground dark:text-muted-foreground" />
+            <RefreshCw className={`w-5 h-5 text-muted-foreground dark:text-muted-foreground ${atualizandoSilencioso ? 'animate-spin' : ''}`} />
           </button>
           <div className="text-sm text-muted-foreground dark:text-muted-foreground flex items-center gap-1">
             <Clock className="w-4 h-4" />
@@ -1813,8 +1865,8 @@ export default function PDVCaixa({
                          onClick={() => { loadData(undefined, undefined, { force: true }); toast({ title: "✓ Atualizado!", className: CAIXA_TOAST_SUCCESS, duration: 1000 }); }}
                          className="p-2 hover:bg-muted dark:hover:bg-muted rounded-xl transition-colors self-end sm:self-auto"
                          style={{ minWidth: '44px', minHeight: '44px' }}
-                         title="Atualizar">
-                         <RefreshCw className="w-5 h-5 text-muted-foreground dark:text-muted-foreground" />
+                         title="Atualizar (automático a cada 30s)">
+                         <RefreshCw className={`w-5 h-5 text-muted-foreground dark:text-muted-foreground ${atualizandoSilencioso ? 'animate-spin' : ''}`} />
                        </button>
                      </div>
 
