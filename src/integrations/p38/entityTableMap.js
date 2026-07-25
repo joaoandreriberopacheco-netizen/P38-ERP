@@ -17,13 +17,15 @@ export const ENTITY_TO_TABLE = {
   LancamentoFinanceiro: { table: 'lancamento_financeiro', mode: 'columns' },
   // Produção P38: tabela criada pelo bootstrap 000 (só id + dados jsonb) — order/filter em nome/tipo via dados.
   Terceiro: { table: 'terceiro', mode: 'jsonb' },
-  Produto: { table: 'produto', mode: 'columns' },
+  // Produção P38: bootstrap 000 — dados em `dados` jsonb (sem coluna ativo/nome/etc.).
+  Produto: { table: 'produto', mode: 'jsonb' },
   PedidoVenda: { table: 'pedido_venda', mode: 'columns' },
   PedidoCompra: { table: 'pedido_compra', mode: 'columns' },
   MovimentacaoEstoque: { table: 'movimentacao_estoque', mode: 'columns' },
   ContasFinanceiras: { table: 'contas_financeiras', mode: 'columns' },
   FormasDePagamento: { table: 'formas_de_pagamento', mode: 'columns' },
-  TabelaPreco: { table: 'tabela_preco', mode: 'columns' },
+  // Produção P38: bootstrap 000 — campos (ativo, is_default, fator_ajuste…) em `dados` jsonb.
+  TabelaPreco: { table: 'tabela_preco', mode: 'jsonb' },
   TurnoCaixa: { table: 'turno_caixa', mode: 'columns' },
   Embarque: { table: 'embarque', mode: 'columns' },
   ContaRecorrente: { table: 'conta_recorrente', mode: 'columns' },
