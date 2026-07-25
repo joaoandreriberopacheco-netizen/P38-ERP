@@ -1,0 +1,20 @@
+# Estoque canónico (migração + contagem física)
+
+## Hierarquia (João André)
+
+1. **Migração Base44** — saldo inicial + movimentos até ao corte documentado.
+2. **Movimentos após o corte** — vendas, compras, ajustes com referência.
+3. **Contagem física** — Contagem Express / auditoria: **a quantidade contada prevalece**; gera `Ajuste de Inventário` = físico − extrato completo.
+4. **Estoque virtual** — só trânsito (pedidos não recebidos); não corrige físico.
+
+## Proibido
+
+- Arbitrar `estoque_atual` sem contagem física ou documento.
+- Calcular saldo do extrato com **limite fixo** de movimentos (ex.: 1000) — usar `fetchMovimentacoesEstoqueProduto` / `calcularSaldoExtratoProduto`.
+- Ignorar inventário físico recente.
+
+## Ao trabalhar em estoque
+
+- Contagens: sempre extrato **completo** antes de ajuste.
+- Embarques: alinhar com página de embarques (`Recebido OK` → recebido mesmo com qty 0).
+- Doc: `docs/migration/P38_ESTOQUE_CANONICO.md`

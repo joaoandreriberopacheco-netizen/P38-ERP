@@ -1,5 +1,5 @@
 import { invokeRecalcularEstoqueProduto } from '@/lib/p38StockRecalc';
-import { calcularSaldoMovimentacoes, parseEstoqueCadastro } from '@/lib/movimentacaoEstoqueSaldo';
+import { calcularSaldoExtratoProduto, parseEstoqueCadastro } from '@/lib/movimentacaoEstoqueSaldo';
 import { formatCountQuantity, getEntryBaseQuantity } from '@/lib/inventoryCountUnits';
 import { createContagemExpressSessionId } from '@/lib/contagemExpressStorage';
 
@@ -39,12 +39,7 @@ export async function buildComparativoContagem(base44, itens, produtos) {
   return Promise.all(
     grupos.map(async (grupo) => {
       const produto = mapaProdutos[grupo.produto_id];
-      const movs = await base44.entities.MovimentacaoEstoque.filter(
-        { produto_id: grupo.produto_id },
-        '-created_date',
-        1000
-      );
-      const saldoExtrato = calcularSaldoMovimentacoes(movs);
+      const saldoExtrato = await calcularSaldoExtratoProduto(base44, grupo.produto_id);
       const cadastro = produto ? parseEstoqueCadastro(produto.estoque_atual) : null;
       const diferenca = grupo.totalBase - saldoExtrato;
 
@@ -104,12 +99,7 @@ export async function aplicarContagemExpress(base44, {
       const produto = mapaProdutos[grupo.produto_id];
       if (!produto) return null;
 
-      const movs = await base44.entities.MovimentacaoEstoque.filter(
-        { produto_id: grupo.produto_id },
-        '-created_date',
-        1000
-      );
-      const saldoExtrato = calcularSaldoMovimentacoes(movs);
+      const saldoExtrato = await calcularSaldoExtratoProduto(base44, grupo.produto_id);
       const diferenca = grupo.totalBase - saldoExtrato;
       if (Math.abs(diferenca) < 1e-6) return null;
 

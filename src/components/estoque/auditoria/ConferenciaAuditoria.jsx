@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { invokeRecalcularEstoqueProduto } from "@/lib/p38StockRecalc";
-import { calcularSaldoMovimentacoes, parseEstoqueCadastro } from "@/lib/movimentacaoEstoqueSaldo";
+import { calcularSaldoExtratoProduto, parseEstoqueCadastro } from "@/lib/movimentacaoEstoqueSaldo";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft, Loader2, CheckCircle2, XCircle, Printer,
@@ -28,8 +28,7 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
     const saldos = {};
     await Promise.all(
       ids.map(async (id) => {
-        const movs = await base44.entities.MovimentacaoEstoque.filter({ produto_id: id }, "-created_date", 1000);
-        saldos[id] = calcularSaldoMovimentacoes(movs);
+        saldos[id] = await calcularSaldoExtratoProduto(base44, id);
       })
     );
     setSaldoPorProduto(saldos);
@@ -94,12 +93,7 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
     setAprovando(true);
     const recalcIds = new Set();
     for (const row of comparativo) {
-      const movs = await base44.entities.MovimentacaoEstoque.filter(
-        { produto_id: row.produto_id },
-        "-created_date",
-        1000
-      );
-      const saldo = calcularSaldoMovimentacoes(movs);
+      const saldo = await calcularSaldoExtratoProduto(base44, row.produto_id);
       const delta = row.contado_base - saldo;
       if (Math.abs(delta) < 1e-6) continue;
 

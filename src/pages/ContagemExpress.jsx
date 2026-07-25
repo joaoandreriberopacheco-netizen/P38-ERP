@@ -23,7 +23,7 @@ import {
   updateCountEntryQuantity,
 } from '@/lib/inventoryCountUnits';
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
-import { calcularSaldoMovimentacoes } from '@/lib/movimentacaoEstoqueSaldo';
+import { calcularSaldoExtratoProduto } from '@/lib/movimentacaoEstoqueSaldo';
 import {
   loadContagemExpressDraft,
   saveContagemExpressDraft,
@@ -40,12 +40,7 @@ import { allowProgrammaticFocusBriefly, focusField } from '@/lib/focusPolicy';
 import { toast } from 'sonner';
 
 async function carregarSaldoProduto(produtoId) {
-  const movs = await base44.entities.MovimentacaoEstoque.filter(
-    { produto_id: produtoId },
-    '-created_date',
-    1000
-  );
-  return calcularSaldoMovimentacoes(movs);
+  return calcularSaldoExtratoProduto(base44, produtoId);
 }
 
 export default function ContagemExpress() {

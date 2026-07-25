@@ -8,7 +8,7 @@ import {
   X, Camera, Lock, AlertTriangle, SendHorizonal, RotateCcw, Boxes
 } from "lucide-react";
 import { saveConferenciaItem } from "@/functions/saveConferenciaItem";
-import { calcularSaldoMovimentacoes, parseEstoqueCadastro } from "@/lib/movimentacaoEstoqueSaldo";
+import { calcularSaldoExtratoProduto, parseEstoqueCadastro } from "@/lib/movimentacaoEstoqueSaldo";
 import ProductUnitSelectorDialog from "@/components/produtos/ProductUnitSelectorDialog";
 import {
   buildCountEntry,
@@ -154,12 +154,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
     for (const grupo of itensAgrupados) {
       const prod = produtos.find(p => p.id === grupo.produto_id);
       if (!prod) continue;
-      const movs = await base44.entities.MovimentacaoEstoque.filter(
-        { produto_id: grupo.produto_id },
-        "-created_date",
-        1000
-      );
-      const saldoExtrato = calcularSaldoMovimentacoes(movs);
+      const saldoExtrato = await calcularSaldoExtratoProduto(base44, grupo.produto_id);
       if (Math.abs(grupo.totalBase - saldoExtrato) > 0.001) {
         const cad = parseEstoqueCadastro(prod.estoque_atual);
         const exibicao = getGroupDisplayFromBase(prod, grupo.totalBase);

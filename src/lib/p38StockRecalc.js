@@ -1,8 +1,9 @@
+import { calcularSaldoMovimentacoes, fetchMovimentacoesEstoqueProduto } from '@/lib/movimentacaoEstoqueSaldo';
+
 /**
  * Substitui Edge Functions Base44 que podem não existir em Supabase (`recalcularEstoqueProduto`,
  * `recalcularConclusaoPedidoCompra`). Mantém o mesmo algoritmo que `base44/functions/recalcularEstoqueProduto`.
  */
-
 export async function invokeRecalcularEstoqueProduto(base44, produtoId) {
   if (!produtoId) return;
   try {
@@ -19,18 +20,8 @@ export async function invokeRecalcularEstoqueProduto(base44, produtoId) {
   const produto = Array.isArray(rows) ? rows[0] : rows;
   if (!produto) return;
 
-  const movimentacoes = await base44.entities.MovimentacaoEstoque.filter(
-    { produto_id: produtoId },
-    '-created_date',
-    1000
-  );
-
-  const saldoMovimentos = (movimentacoes || []).reduce((acc, mov) => {
-    const quantidade = Number(mov.quantidade) || 0;
-    if (mov.tipo === 'Entrada') return acc + quantidade;
-    if (mov.tipo === 'Saída') return acc - quantidade;
-    return acc;
-  }, 0);
+  const movimentacoes = await fetchMovimentacoesEstoqueProduto(base44, produtoId);
+  const saldoMovimentos = calcularSaldoMovimentacoes(movimentacoes);
 
   const estoqueAvariado = Number(produto.estoque_avariado) || 0;
   const estoqueAtual = Math.max(0, saldoMovimentos - estoqueAvariado);

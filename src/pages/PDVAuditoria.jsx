@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { invokeRecalcularEstoqueProduto } from "@/lib/p38StockRecalc";
-import { calcularSaldoMovimentacoes, parseEstoqueCadastro } from "@/lib/movimentacaoEstoqueSaldo";
+import { calcularSaldoExtratoProduto, parseEstoqueCadastro } from "@/lib/movimentacaoEstoqueSaldo";
 import { Input } from "@/components/ui/input";
 import {
   ArrowLeft, Search, Plus, Minus, Trash2,
@@ -161,8 +161,7 @@ export default function PDVAuditoria() {
         const produto = mapaProdutos[produtoId];
         if (!produto) return null;
 
-        const movs = await base44.entities.MovimentacaoEstoque.filter({ produto_id: produtoId }, "-created_date", 1000);
-        const saldoExtrato = calcularSaldoMovimentacoes(movs);
+        const saldoExtrato = await calcularSaldoExtratoProduto(base44, produtoId);
         const diferenca = quantidadeContada - saldoExtrato;
         if (Math.abs(diferenca) < 1e-6) return null;
 
