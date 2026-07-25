@@ -25,4 +25,12 @@ add_env VITE_SUPABASE_URL "${VITE_SUPABASE_URL:-}" 1
 add_env VITE_SUPABASE_ANON_KEY "${VITE_SUPABASE_ANON_KEY:-}" 1
 add_env VITE_P38_USE_SUPABASE_AUTH "${VITE_P38_USE_SUPABASE_AUTH:-true}"
 add_env VITE_P38_ENABLE_GOOGLE_LOGIN "${VITE_P38_ENABLE_GOOGLE_LOGIN:-}"
+
+# Serverless proxy auth — deriva de VITE_SUPABASE_URL se P38_AUTH_URL omitido
+if [ -n "${P38_AUTH_URL:-}" ]; then
+  add_env P38_AUTH_URL "${P38_AUTH_URL}"
+elif [ -n "${VITE_SUPABASE_URL:-}" ]; then
+  add_env P38_AUTH_URL "${VITE_SUPABASE_URL%/}/functions/v1/p38-auth"
+fi
+
 echo "[sync-vercel-env] OK."

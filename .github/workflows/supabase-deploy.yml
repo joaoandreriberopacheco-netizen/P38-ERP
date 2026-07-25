@@ -10,6 +10,8 @@
 #   SUPABASE_ACCESS_TOKEN     — Personal Access Token (Account → Access Tokens)
 #   SUPABASE_PROJECT_REF      — opcional se VITE_SUPABASE_URL estiver definido
 #   VITE_SUPABASE_URL         — opcional (extrai project ref da URL)
+#
+# Mapa canónico: docs/migration/P38_SECRETS_CANONICOS.md
 
 name: Supabase Deploy
 
@@ -57,6 +59,16 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Checklist secrets (pré-decolagem)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run != true }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_TOKEN: ${{ secrets.SUPABASE_TOKEN }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: npm run secrets:check -- --context=github
 
       - name: Aplicar migrações SQL
         if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.migrations != false && inputs.dry_run != true) }}

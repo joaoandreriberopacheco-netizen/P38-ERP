@@ -33,6 +33,7 @@ Guidance for AI agents working in this repository (**varejosync** / P38 ERP — 
 | Typecheck | `npm run typecheck` |
 | Production build | `npm run build` |
 | Preview build | `npm run preview` |
+| Secrets checklist | `npm run secrets:check` |
 
 There is **no** `test` script; E2E is manual / migration checklists under `docs/migration/`.
 
@@ -52,6 +53,7 @@ Vite binds to **localhost:5173** by default (no `--host`). For browser testing f
 ### Environment variables
 
 - No `.env` files are committed. Copy `.env.example` → `.env.local` for scripts locais.
+- **Mapa canónico de secrets:** [`docs/migration/P38_SECRETS_CANONICOS.md`](docs/migration/P38_SECRETS_CANONICOS.md) — validar com `npm run secrets:check`.
 - For **Base44** API access, configure `VITE_BASE44_APP_ID`, `VITE_BASE44_BACKEND_URL`, and auth per `docs/migration/BASE44_TO_SUPABASE_GITHUB.md`.
 - Optional **Supabase** hybrid testing: see `docs/migration/SUPABASE_TEST_SETUP.md` (`supabase start`, `VITE_USE_SUPABASE_ENTITIES=true`).
 - Build/dev may log `[base44] Proxy not enabled (VITE_BASE44_APP_BASE_URL not set)` — expected without proxy env; build still succeeds.

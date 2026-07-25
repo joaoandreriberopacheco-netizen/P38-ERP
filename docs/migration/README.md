@@ -24,6 +24,7 @@ Para uma lista técnica de entidades e funções, cruzar com `src/docs/migration
 - **[PARALLEL_REPO_SETUP.md](./PARALLEL_REPO_SETUP.md)** — Setup do repositório paralelo (espelho), governança de branches e política de sincronização com o principal.
 - **[P38_CONSOLIDATION.md](./P38_CONSOLIDATION.md)** — Estado da consolidação da camada P38 e contrato operacional do adapter SubPayze em sandbox.
 - **[SUPABASE_TEST_SETUP.md](./SUPABASE_TEST_SETUP.md)** — Provisionamento do Supabase de homologação com migrações versionadas e seed de teste.
+- **[P38_SECRETS_CANONICOS.md](./P38_SECRETS_CANONICOS.md)** — Mapa único de chaves (GitHub, Vercel, Cloud Agent); checklist `npm run secrets:check`.
 - **[PHASE_1_HOMOLOGACAO.md](./PHASE_1_HOMOLOGACAO.md)** — Fase 1: schema alinhado ao manifesto (18 entidades), homolog local/cloud, **sem cutover** de produção.
 - **[CRITICAL_PARITY_VALIDATION.md](./CRITICAL_PARITY_VALIDATION.md)** — Matriz de testes de paridade dos fluxos críticos e query pack de validação.
 - **[API_DOC_VS_REALITY_CHECKLIST.md](./API_DOC_VS_REALITY_CHECKLIST.md)** — Checklist para validar documentação de APIs externas contra comportamento real (auth, paginação, erros, webhooks) antes de espelhar na casca 2.0.

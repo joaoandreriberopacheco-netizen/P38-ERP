@@ -83,6 +83,8 @@ async function main() {
   }
 
   if (!readyMigrations || !readyFunctions) {
+    console.log('\nMapa canónico: docs/migration/P38_SECRETS_CANONICOS.md');
+    console.log('Checklist completo: npm run secrets:check');
     process.exit(1);
   }
 }

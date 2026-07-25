@@ -2,9 +2,15 @@
  * Proxy same-origin para a Edge Function Supabase `p38-auth`.
  * Inclui retentativas — o gateway Supabase falha intermitentemente com JWT inválido.
  */
-const P38_AUTH_URL =
-  process.env.P38_AUTH_URL ||
-  'https://zhonvxkkqabfdyehyxpu.supabase.co/functions/v1/p38-auth';
+function resolveP38AuthUrl() {
+  const explicit = String(process.env.P38_AUTH_URL || '').trim();
+  if (explicit) return explicit;
+  const base = String(process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '').trim();
+  if (base) return `${base.replace(/\/$/, '')}/functions/v1/p38-auth`;
+  return 'https://zhonvxkkqabfdyehyxpu.supabase.co/functions/v1/p38-auth';
+}
+
+const P38_AUTH_URL = resolveP38AuthUrl();
 
 const MAX_ATTEMPTS = 5;
 
