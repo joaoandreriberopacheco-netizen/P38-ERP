@@ -50,7 +50,7 @@ import { createCatalogStockContext } from '@/lib/catalogEstoqueVirtual';
 import { fetchPedidosCompraParaSugestaoEstoque } from '@/lib/fetchPedidosCompraParaSugestaoEstoque';
 import { buildPendenteAprovadoFinanceiroPorProduto } from '@/lib/sugestaoCompraEstoquePendente';
 import { saveCatalogProdutoFilters } from '@/lib/catalogProdutoFiltersStorage';
-import { sumCatalogStockTotals } from '@/lib/catalogStockTotals';
+import { sumCatalogStockTotals, lineEstoqueQuantidade, lineValorCustoTotal } from '@/lib/catalogStockTotals';
 import {
   loadCatalogProdutoColumns,
   saveCatalogProdutoColumns,
@@ -112,22 +112,24 @@ function applyJustSavedUnitSnapshot(merged, snap) {
   return out;
 }
 
-function calculateProdutoStats(produtosList) {
-  let valorTotal = 0;
-  let valorEstoqueAtivo = 0;
+function calculateProdutoStats(produtosList, catalogStockContext = null) {
   let abaixoMin = 0;
+  const list = Array.isArray(produtosList) ? produtosList : [];
 
-  (Array.isArray(produtosList) ? produtosList : []).forEach((p) => {
-    const estoqueAtual = p.estoque_atual || 0;
-    const valorEstoque = estoqueAtual * (p.preco_custo_calculado || 0);
-    valorTotal += valorEstoque;
-    if (estoqueAtual > 0) valorEstoqueAtivo += valorEstoque;
+  list.forEach((p) => {
     if (p.estoque_atual <= p.estoque_minimo && p.ativo) abaixoMin++;
   });
 
+  const totals = sumCatalogStockTotals(list, catalogStockContext);
+  let valorEstoqueAtivo = 0;
+  for (const p of list) {
+    const qtd = lineEstoqueQuantidade(p, catalogStockContext);
+    if (qtd > 0) valorEstoqueAtivo += lineValorCustoTotal(p, catalogStockContext);
+  }
+
   return {
-    total: Array.isArray(produtosList) ? produtosList.length : 0,
-    valorEstoque: valorTotal,
+    total: totals.count,
+    valorEstoque: totals.totalCusto,
     valorEstoqueAtivo,
     abaixoMinimo: abaixoMin,
   };
@@ -1146,7 +1148,10 @@ function ProdutosPageContent() {
   const unidadesVitrine = useMemo(() => collectCatalogVitrineUnits(produtos), [produtos]);
 
   const activeFilterCount = countActiveProdutoFilters(filters);
-  const filteredStats = useMemo(() => calculateProdutoStats(filteredProdutos), [filteredProdutos]);
+  const filteredStats = useMemo(
+    () => calculateProdutoStats(filteredProdutos, catalogStockContext),
+    [filteredProdutos, catalogStockContext],
+  );
   const headerStats = filteredStats;
 
   const handleGroupTreeByCategoryChange = useCallback((value) => {
@@ -1163,7 +1168,7 @@ function ProdutosPageContent() {
     toast({ title: 'Gerando relatório de estoque...' });
     try {
       const filtersSummary = describeProdutoFilters(filters, { categorias, fornecedores });
-      const totals = sumCatalogStockTotals(filteredProdutos);
+      const totals = sumCatalogStockTotals(filteredProdutos, catalogStockContext);
       const hasCategorizedProducts = filteredProdutos.some(
         (p) => String(p?.categoria_nome || '').trim()
       );
@@ -1195,7 +1200,7 @@ function ProdutosPageContent() {
     } finally {
       setGerandoRelatorioEstoque(false);
     }
-  }, [filteredProdutos, filters, categorias, fornecedores, viewMode, treeLevel, sortOrder, groupTreeByCategory, toast]);
+  }, [filteredProdutos, filters, categorias, fornecedores, viewMode, treeLevel, sortOrder, groupTreeByCategory, catalogStockContext, toast]);
 
   const handleCatalogExpandedKeysChange = useCallback((keys) => {
     catalogExpandedKeysRef.current = keys instanceof Set ? keys : new Set(keys || []);
