@@ -107,7 +107,7 @@ export async function fetchPedidosCompraParaSugestaoEstoque(base44) {
     pedidosAbertos.map((pedido) => pedido.id),
   );
   const embarquesTodos = dedupeEmbarquesPorId([...(embarques || []), ...embarquesExtras]);
-  const recebidosPorPedidoProduto = buildRecebidosPorPedidoProdutoFromEmbarques(embarquesTodos);
+  const recebidosPorPedidoProduto = buildRecebidosPorPedidoProdutoFromEmbarques(embarquesTodos, pedidosTodos);
 
   return {
     pedidosTodos,

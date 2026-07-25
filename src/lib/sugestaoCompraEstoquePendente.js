@@ -70,7 +70,7 @@ function resolveQuantidadeRecebidaItemEmbarque(item = {}, embarque = {}) {
   );
 }
 
-function somarRecebidosItensEmbarque(acc, embarque = {}) {
+function somarRecebidosItensEmbarque(acc, embarque = {}, pedido = null) {
   const itensEmbarcados = Array.isArray(embarque.itens_embarcados)
     ? embarque.itens_embarcados
     : Array.isArray(embarque.itens)
@@ -80,7 +80,11 @@ function somarRecebidosItensEmbarque(acc, embarque = {}) {
     const produtoId = item?.produto_id;
     if (!produtoId) return;
     const produtoKey = String(produtoId);
-    const qty = resolveQuantidadeRecebidaItemEmbarque(item, embarque);
+    const pedidoItem = pedido ? resolvePedidoItemParaEmbarque(pedido, item) : null;
+    const qtyBase = Number(item.quantidade_recebida_base);
+    const qty = Number.isFinite(qtyBase) && qtyBase > 0
+      ? qtyBase
+      : resolveQuantidadeBaseRecebidaItemEmbarque(item, pedidoItem);
     if (qty > 0) {
       acc[produtoKey] = (acc[produtoKey] || 0) + qty;
     }
@@ -153,20 +157,25 @@ export function pedidoCompraAprovadoFinanceiroNaoConcluido(pedido = {}) {
   return pedidoCompraAprovadoNaoConcluido(pedido);
 }
 
-export function buildRecebidosPorPedidoProdutoFromEmbarques(embarques = []) {
+export function buildRecebidosPorPedidoProdutoFromEmbarques(embarques = [], pedidosById = null) {
+  const pedidosMap = pedidosById instanceof Map
+    ? pedidosById
+    : new Map((Array.isArray(pedidosById) ? pedidosById : []).filter((p) => p?.id).map((p) => [String(p.id), p]));
+
   return (embarques || []).reduce((acc, embarque) => {
     const pedidoId = embarque?.pedido_compra_id;
     if (!pedidoId) return acc;
     const pedidoKey = String(pedidoId);
     if (!acc[pedidoKey]) acc[pedidoKey] = {};
-    somarRecebidosItensEmbarque(acc[pedidoKey], embarque);
+    const pedido = pedidosMap.get(pedidoKey) || pedidosMap.get(String(pedidoId)) || null;
+    somarRecebidosItensEmbarque(acc[pedidoKey], embarque, pedido);
     return acc;
   }, {});
 }
 
 function recebidosEmbeddedNoPedido(pedido = {}) {
   const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
-  return embarques.reduce((acc, embarque) => somarRecebidosItensEmbarque(acc, embarque), {});
+  return embarques.reduce((acc, embarque) => somarRecebidosItensEmbarque(acc, embarque, pedido), {});
 }
 
 function mergeRecebidosPorProduto(externo = {}, interno = {}) {
@@ -213,7 +222,11 @@ function resolvePedidoItemParaEmbarque(pedido = {}, item = {}) {
   const itens = Array.isArray(pedido?.itens) ? pedido.itens : [];
   if (!itens.length) return null;
   if (item?.pedido_compra_item_id) {
-    const porId = itens.find((linha) => linha.pedido_compra_item_id === item.pedido_compra_item_id);
+    const porId = itens.find(
+      (linha) =>
+        linha.pedido_compra_item_id === item.pedido_compra_item_id ||
+        linha.id === item.pedido_compra_item_id,
+    );
     if (porId) return porId;
   }
   if (item?.produto_id) {
@@ -247,7 +260,10 @@ export function resolveQuantidadeBaseItemEmbarque(item = {}, pedidoItem = null) 
 }
 
 function resolveQuantidadeBaseRecebidaItemEmbarque(item = {}, pedidoItem = null) {
-  const recebida = Number(item.quantidade_recebida) || 0;
+  const recebidaBase = Number(item.quantidade_recebida_base);
+  if (Number.isFinite(recebidaBase) && recebidaBase > 0) return recebidaBase;
+
+  const recebida = Number(item.quantidade_recebida ?? item.quantidade_recebida_comercial) || 0;
   if (recebida <= 0) return 0;
 
   const baseEmbarcada = resolveQuantidadeBaseItemEmbarque(
