@@ -45,4 +45,14 @@ export default defineConfig({
       'sonner-original': path.resolve(__dirname, 'node_modules/sonner'),
     },
   },
+  server: {
+    proxy: {
+      '/api/p38-auth': {
+        target: 'https://zhonvxkkqabfdyehyxpu.supabase.co/functions/v1/p38-auth',
+        changeOrigin: true,
+        secure: true,
+        rewrite: () => '',
+      },
+    },
+  },
 })

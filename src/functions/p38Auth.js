@@ -1,24 +1,39 @@
 import { getSupabaseBrowserClient, normalizeSupabaseProjectUrl } from '@/lib/supabaseBrowserClient';
 
-function resolveFunctionsUrl() {
+function resolveFunctionUrls() {
+  const urls = [];
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    urls.push(`${window.location.origin}/api/p38-auth`);
+  }
   const base = normalizeSupabaseProjectUrl(import.meta.env.VITE_SUPABASE_URL || '');
-  if (!base) return '';
-  return `${base}/functions/v1/p38-auth`;
+  if (base) {
+    urls.push(`${base}/functions/v1/p38-auth`);
+  }
+  return [...new Set(urls.filter(Boolean))];
 }
 
 function resolveAnonKey() {
   return String(import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
 }
 
+async function postJson(url, headers, body) {
+  return fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+  });
+}
+
 /**
- * Invoca a Edge Function `p38-auth` via fetch directo (mais fiável em mobile que functions.invoke).
+ * Invoca a Edge Function `p38-auth`.
+ * Em produção usa primeiro `/api/p38-auth` (mesmo domínio Vercel) — evita bloqueios mobile ao Supabase.
  */
 export async function invokeP38Auth(body, { authorized = false } = {}) {
   const supabase = getSupabaseBrowserClient();
-  const url = resolveFunctionsUrl();
+  const urls = resolveFunctionUrls();
   const anonKey = resolveAnonKey();
 
-  if (!url || !anonKey) {
+  if (!urls.length || !anonKey) {
     throw new Error('Supabase não configurado neste ambiente.');
   }
 
@@ -36,18 +51,23 @@ export async function invokeP38Auth(body, { authorized = false } = {}) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  let response;
-  try {
-    response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(body),
-    });
-  } catch (err) {
+  let response = null;
+  let lastNetworkError = null;
+
+  for (const url of urls) {
+    try {
+      response = await postJson(url, headers, body);
+      break;
+    } catch (err) {
+      lastNetworkError = err;
+    }
+  }
+
+  if (!response) {
     throw new Error(
-      err?.message?.includes('Failed to fetch')
+      lastNetworkError?.message?.includes('Failed to fetch')
         ? 'Sem ligação ao servidor de autenticação. Verifique a internet e tente novamente.'
-        : err?.message || 'Falha ao contactar o servidor de autenticação.'
+        : lastNetworkError?.message || 'Falha ao contactar o servidor de autenticação.'
     );
   }
 

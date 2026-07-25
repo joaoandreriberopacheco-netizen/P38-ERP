@@ -9,6 +9,10 @@
   "installCommand": "npm ci",
   "ignoreCommand": "bash scripts/vercel-ignore-git-build.sh",
   "rewrites": [
+    {
+      "source": "/api/p38-auth",
+      "destination": "https://zhonvxkkqabfdyehyxpu.supabase.co/functions/v1/p38-auth"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
