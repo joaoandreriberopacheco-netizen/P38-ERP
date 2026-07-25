@@ -40,7 +40,6 @@ export async function invokeP38Auth(body, { authorized = false } = {}) {
   const headers = {
     'Content-Type': 'application/json',
     apikey: anonKey,
-    Authorization: `Bearer ${anonKey}`,
   };
 
   if (authorized) {
