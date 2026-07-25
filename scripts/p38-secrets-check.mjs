@@ -18,7 +18,7 @@ import {
   resolveP38Secrets,
 } from './p38-secrets.mjs';
 
-const CONTEXTS = new Set(['all', 'github', 'vercel', 'local', 'cloud-agent']);
+const CONTEXTS = new Set(['all', 'github', 'vercel', 'vercel-deploy', 'local', 'cloud-agent']);
 
 function parseContext() {
   for (const arg of process.argv.slice(2)) {
@@ -64,13 +64,23 @@ function requiredForContext(context, secrets) {
     push('VITE_SUPABASE_ANON_KEY', Boolean(secrets.viteSupabaseAnonKey));
   }
 
-  if (context === 'all' || context === 'github') {
+  if (context === 'all' || context === 'github' || context === 'vercel-deploy') {
     push('VERCEL_TOKEN', Boolean(secrets.vercelToken), 'https://vercel.com/account/tokens');
     push('VERCEL_ORG_ID', Boolean(secrets.vercelOrgId), 'Vercel → Settings → General');
     push('VERCEL_PROJECT_ID', Boolean(secrets.vercelProjectId), 'Project → Settings → General');
   }
 
-  if (context === 'all' || context === 'vercel' || context === 'github') {
+  // Deploy SPA no Vercel — não precisa de SUPABASE_ACCESS_TOKEN (só Edge Functions / supabase-deploy).
+  if (context === 'vercel-deploy') {
+    push('VITE_SUPABASE_URL', Boolean(secrets.viteSupabaseUrl), 'Supabase → Project Settings → API → Project URL');
+    push(
+      'VITE_SUPABASE_ANON_KEY',
+      Boolean(secrets.viteSupabaseAnonKey),
+      'Supabase → Project Settings → API → anon public'
+    );
+  }
+
+  if (context === 'all' || context === 'vercel' || context === 'github' || context === 'vercel-deploy') {
     push(
       'P38_AUTH_URL (derivável)',
       Boolean(secrets.p38AuthUrl),

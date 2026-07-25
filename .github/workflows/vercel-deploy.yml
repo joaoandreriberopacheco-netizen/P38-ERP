@@ -7,7 +7,7 @@
 #   VITE_SUPABASE_URL       — https://[ref].supabase.co
 #   VITE_SUPABASE_ANON_KEY  — Supabase → Project Settings → API
 #   DATABASE_URL            — migrações + alinhamento project ref
-#   SUPABASE_ACCESS_TOKEN   — deploy Edge Functions
+#   SUPABASE_ACCESS_TOKEN   — opcional aqui (workflow Supabase Deploy); não bloqueia este job
 #
 # Mapa canónico: docs/migration/P38_SECRETS_CANONICOS.md
 # Validação: npm run secrets:check
@@ -77,7 +77,7 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: npm run secrets:check -- --context=github
+        run: npm run secrets:check -- --context=vercel-deploy
 
       - name: Vercel pull (production)
         run: npx --yes vercel@latest pull --yes --environment=production --token "$VERCEL_TOKEN"
