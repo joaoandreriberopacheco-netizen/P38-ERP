@@ -7,7 +7,10 @@ export async function invokeFunction(name, body) {
     channel: 'invokeHelper',
     functionName: name
   });
-  const response = await p38.functions.invoke(name, body, requestContext);
+  // Sempre via legacyClient: com provider=supabase evita p38.functions cair no stub Base44
+  // quando o adapter activo não é Supabase (ex.: ANON_KEY ausente no bundle).
+  const functionsApi = p38.legacyClient?.functions || p38.functions;
+  const response = await functionsApi.invoke(name, body, requestContext);
   if (response && typeof response === 'object' && 'data' in response) {
     return response;
   }

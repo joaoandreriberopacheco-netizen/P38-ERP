@@ -95,7 +95,9 @@ const shouldUseSubpayze =
   subpayzeReadyForTraffic &&
   subpayzeAdapter.isConfigured;
 
-const shouldUseSupabase = providerName === providers.SUPABASE && supabaseAdapter.isConfigured;
+const shouldUseSupabase =
+  providerName === providers.SUPABASE &&
+  (supabaseAdapter.isConfigured || bypassBase44);
 
 const activeAdapter = shouldUseSupabase
   ? supabaseAdapter
