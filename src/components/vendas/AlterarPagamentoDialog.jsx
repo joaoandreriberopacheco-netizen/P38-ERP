@@ -69,7 +69,7 @@ function BuscarPedidoStep({ onFound }) {
           <Button
             onClick={buscar}
             disabled={buscando}
-            className="rounded-xl bg-background px-5 text-white dark:bg-card dark:text-foreground"
+            className="rounded-xl bg-primary px-5 text-primary-foreground dark:bg-card dark:text-foreground"
           >
             {buscando ? '...' : <Search className="h-4 w-4" />}
           </Button>
@@ -325,7 +325,7 @@ function EditarPagamentosStep({ pedido, onConfirm }) {
         <Button
           onClick={handleConfirm}
           disabled={Math.abs(diferenca) > 0.01}
-          className="h-14 w-full rounded-2xl bg-background text-base font-semibold text-white dark:bg-card dark:text-foreground"
+          className="h-14 w-full rounded-2xl bg-primary text-base font-semibold text-primary-foreground dark:bg-card dark:text-foreground"
           style={{ minHeight: 56 }}
         >
           Salvar Alteração

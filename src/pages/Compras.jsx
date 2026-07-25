@@ -192,7 +192,7 @@ const PedidosCompraTab = () => {
                 <FileText className="w-4 h-4" />
                 Importar NF
               </Button>
-              <Button onClick={handleAddNew} className="bg-background hover:bg-primary dark:bg-card dark:hover:bg-muted dark:text-foreground text-white gap-2 w-full sm:w-auto rounded-xl shadow-sm">
+              <Button onClick={handleAddNew} className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-card dark:hover:bg-muted dark:text-foreground gap-2 w-full sm:w-auto rounded-xl shadow-sm">
                 <PlusCircle className="w-4 h-4" />
                 Novo Pedido
               </Button>

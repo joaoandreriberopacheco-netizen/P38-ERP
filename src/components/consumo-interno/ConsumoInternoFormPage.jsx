@@ -290,7 +290,7 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
           <button type="button" onClick={() => setStep(0)} className="flex h-14 items-center justify-center rounded-2xl bg-muted text-base font-semibold text-foreground/90 dark:bg-muted dark:text-foreground">
             Voltar
           </button>
-          <button type="button" onClick={() => setStep(2)} className="flex h-14 items-center justify-center rounded-2xl bg-background text-base font-semibold text-white dark:bg-card dark:text-foreground">
+          <button type="button" onClick={() => setStep(2)} className="flex h-14 items-center justify-center rounded-2xl bg-primary text-base font-semibold text-primary-foreground dark:bg-card dark:text-foreground">
             Próximo <ChevronRight className="ml-1 h-5 w-5" />
           </button>
         </div>
@@ -338,7 +338,7 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
           <button type="button" onClick={() => setStep(1)} className="flex h-16 items-center justify-center rounded-2xl bg-muted text-base font-semibold text-foreground/90 dark:bg-muted dark:text-foreground">
             Voltar
           </button>
-          <SafeActionButton type="button" onClick={onSubmit} isLoading={isSubmitting} loadingText="Processando..." className="flex h-16 items-center justify-center rounded-2xl bg-background text-base font-semibold text-white dark:bg-card dark:text-foreground">
+          <SafeActionButton type="button" onClick={onSubmit} isLoading={isSubmitting} loadingText="Processando..." className="flex h-16 items-center justify-center rounded-2xl bg-primary text-base font-semibold text-primary-foreground dark:bg-card dark:text-foreground">
             Concluir
           </SafeActionButton>
         </div>

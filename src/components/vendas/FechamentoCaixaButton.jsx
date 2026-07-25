@@ -166,7 +166,7 @@ export default function FechamentoCaixaButton({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="rounded-2xl border-0">Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleFechar} className="rounded-2xl bg-background text-white hover:bg-primary dark:bg-card dark:text-foreground">Fechar agora</AlertDialogAction>
+            <AlertDialogAction onClick={handleFechar} className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground">Fechar agora</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

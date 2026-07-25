@@ -5,6 +5,7 @@ import { Dialog } from '@/components/ui/dialog';
 import { CaixaDialogContent } from './CaixaDialogContent';
 import { cn } from '@/lib/utils';
 import { getPrazoLiquidacaoMaquininha } from '@/lib/pagamentoPedidoVendaFinanceiro';
+import { caixaSurface } from '@/lib/caixaP38Theme';
 
 const BANDEIRAS = ['Visa', 'Mastercard', 'Elo', 'Amex', 'Hipercard'];
 
@@ -100,9 +101,7 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
                       key={p}
                       onClick={() => setParcelas(p)}
                       className={`w-10 h-9 rounded-xl text-sm font-semibold transition-colors ${
-                        parcelas === p
-                          ? 'bg-card text-card-foreground'
-                          : 'bg-muted text-muted-foreground hover:bg-muted dark:hover:bg-primary/90'
+                        parcelas === p ? caixaSurface.chipSelected : caixaSurface.chipIdle
                       }`}
                     >
                       {p}x
@@ -120,9 +119,7 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
                   key={maq.id}
                   onClick={() => { setSelecionada(maq); setBandeiraSelecionada(''); }}
                   className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-colors text-left ${
-                    selecionada?.id === maq.id
-                      ? 'bg-card text-card-foreground'
-                      : 'bg-muted/50 text-foreground/90 hover:bg-muted'
+                    selecionada?.id === maq.id ? caixaSurface.itemSelected : caixaSurface.itemIdle
                   }`}
                 >
                   <div>
@@ -146,9 +143,7 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
                         key={b}
                         onClick={() => setBandeiraSelecionada(b)}
                         className={`flex flex-col items-center py-2 px-1 rounded-xl transition-colors text-sm ${
-                          bandeiraSelecionada === b
-                            ? 'bg-card text-card-foreground'
-                            : 'bg-muted/50 text-foreground/90 hover:bg-muted'
+                          bandeiraSelecionada === b ? caixaSurface.chipSelected : caixaSurface.itemIdle
                         }`}
                       >
                         <span className="font-medium">{b}</span>
@@ -177,14 +172,14 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
             <div className="flex gap-2 pt-1">
               <button
                 onClick={onCancel}
-                className="flex-1 h-11 bg-muted text-foreground/90 rounded-xl text-sm font-medium"
+                className={`flex-1 h-11 text-sm font-medium ${caixaSurface.secondaryBtn}`}
               >
                 Cancelar
               </button>
               <button
                 onClick={handleConfirmar}
                 disabled={!selecionada || !bandeiraSelecionada}
-                className="flex-1 h-11 bg-card text-card-foreground rounded-xl text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-1"
+                className={`flex-1 h-11 text-sm flex items-center justify-center gap-1 ${caixaSurface.confirmBtn}`}
               >
                 Confirmar <ChevronRight className="w-4 h-4" />
               </button>

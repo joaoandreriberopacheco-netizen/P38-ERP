@@ -152,16 +152,15 @@ export default function SimuladorCartaoAvancado() {
       </Card>
 
       {/* Resumo Final */}
-      <Card className="p-5 bg-background dark:bg-muted shadow-sm">
-        <h3 className="text-base font-semibold text-white mb-4 font-glacial">
+      <Card className="p-5 bg-card border border-border shadow-sm">
+        <h3 className="text-base font-semibold text-foreground mb-4 font-glacial">
           Resumo da Operação
         </h3>
 
         <div className="space-y-3">
-          {/* Linha 1 */}
           <div className="flex items-center justify-between pb-3 border-b border-border/40">
             <span className="text-muted-foreground">Valor Total da Venda</span>
-            <span className="text-xl font-bold text-white">{formatValor(calculos.vBruto)}</span>
+            <span className="text-xl font-bold text-foreground">{formatValor(calculos.vBruto)}</span>
           </div>
 
           {/* Linha 2 */}

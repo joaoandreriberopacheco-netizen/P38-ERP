@@ -289,7 +289,7 @@ Retorne JSON:
                                 </p>
                                 
                                 <div className="relative">
-                                    <Button size="lg" className="h-14 px-10 bg-background hover:bg-primary text-white rounded-full shadow-xl">
+                                    <Button size="lg" className="h-14 px-10 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shadow-xl">
                                         <ImageIcon className="w-5 h-5 mr-2.5" /> 
                                         Selecionar Imagem
                                     </Button>

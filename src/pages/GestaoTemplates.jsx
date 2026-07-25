@@ -361,7 +361,7 @@ export default function GestaoTemplates() {
       <div className="flex gap-2 flex-wrap">
         <button
           onClick={() => setFiltroTipo('')}
-          className={`text-xs px-3 py-1.5 rounded-full transition-colors ${!filtroTipo ? 'bg-background text-white dark:bg-muted dark:text-foreground' : 'bg-muted text-muted-foreground dark:bg-muted dark:text-foreground/90'}`}
+          className={`text-xs px-3 py-1.5 rounded-full transition-colors ${!filtroTipo ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground' : 'bg-muted text-muted-foreground dark:bg-muted dark:text-foreground/90'}`}
         >
           Todos ({templates.length})
         </button>
@@ -372,7 +372,7 @@ export default function GestaoTemplates() {
             <button
               key={t.value}
               onClick={() => setFiltroTipo(t.value)}
-              className={`text-xs px-3 py-1.5 rounded-full transition-colors ${filtroTipo === t.value ? 'bg-background text-white dark:bg-muted dark:text-foreground' : 'bg-muted text-muted-foreground dark:bg-muted dark:text-foreground/90'}`}
+              className={`text-xs px-3 py-1.5 rounded-full transition-colors ${filtroTipo === t.value ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground' : 'bg-muted text-muted-foreground dark:bg-muted dark:text-foreground/90'}`}
             >
               {t.label} ({count})
             </button>

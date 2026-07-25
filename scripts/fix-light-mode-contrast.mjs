@@ -88,8 +88,92 @@ const REPLACEMENTS = [
     'text-primary-foreground dark:text-foreground/90',
   ],
   [
-    /w-5 h-5 text-white dark:text-foreground/g,
-    'w-5 h-5 text-foreground dark:text-foreground',
+    /bg-background text-white dark:bg-card dark:text-foreground/g,
+    'bg-primary text-primary-foreground dark:bg-card dark:text-foreground',
+  ],
+  [
+    /bg-background text-white dark:bg-muted dark:text-foreground/g,
+    'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground',
+  ],
+  [
+    /bg-background hover:bg-primary dark:bg-muted dark:hover:bg-muted dark:text-foreground text-white/g,
+    'bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:hover:bg-muted dark:text-foreground',
+  ],
+  [
+    /bg-background hover:bg-primary dark:bg-card dark:hover:bg-muted dark:text-foreground text-white/g,
+    'bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-card dark:hover:bg-muted dark:text-foreground',
+  ],
+  [
+    /bg-background hover:bg-primary text-white/g,
+    'bg-primary hover:bg-primary/90 text-primary-foreground',
+  ],
+  [
+    /rounded-xl bg-background text-white hover:bg-primary dark:bg-card dark:text-foreground/g,
+    'rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground',
+  ],
+  [
+    /rounded-2xl bg-background text-white hover:bg-primary dark:bg-card dark:text-foreground/g,
+    'rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground',
+  ],
+  [
+    /rounded-2xl bg-background text-base font-semibold text-white dark:bg-card dark:text-foreground/g,
+    'rounded-2xl bg-primary text-base font-semibold text-primary-foreground dark:bg-card dark:text-foreground',
+  ],
+  [
+    /rounded-2xl bg-background text-white dark:bg-card dark:text-foreground/g,
+    'rounded-2xl bg-primary text-primary-foreground dark:bg-card dark:text-foreground',
+  ],
+  [
+    /rounded-2xl bg-background px-4 text-white hover:bg-primary dark:bg-card dark:text-foreground/g,
+    'rounded-2xl bg-primary px-4 text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground',
+  ],
+  [
+    /rounded-2xl bg-background px-5 text-white hover:bg-primary dark:bg-card dark:text-foreground/g,
+    'rounded-2xl bg-primary px-5 text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground',
+  ],
+  [
+    /bg-background text-white(?!\s+dark:)/g,
+    'bg-primary text-primary-foreground',
+  ],
+  [
+    /\? 'bg-background text-white dark:bg-card dark:text-foreground'/g,
+    "? 'bg-primary text-primary-foreground dark:bg-card dark:text-foreground'",
+  ],
+  [
+    /\? 'bg-background text-white dark:bg-muted dark:text-foreground'/g,
+    "? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground'",
+  ],
+  [
+    /active \? 'bg-background text-white dark:bg-card dark:text-foreground'/g,
+    "active ? 'bg-primary text-primary-foreground dark:bg-card dark:text-foreground'",
+  ],
+  [
+    /active \? 'bg-background text-white dark:bg-muted dark:text-foreground'/g,
+    "active ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground'",
+  ],
+  [
+    /rounded-xl bg-background px-5 text-white dark:bg-card dark:text-foreground/g,
+    'rounded-xl bg-primary px-5 text-primary-foreground dark:bg-card dark:text-foreground',
+  ],
+  [
+    /h-10 rounded-2xl bg-background px-3 text-sm font-medium text-white hover:bg-primary dark:bg-muted dark:text-foreground dark:hover:bg-card/g,
+    'h-10 rounded-2xl bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 dark:bg-muted dark:text-foreground dark:hover:bg-card',
+  ],
+  [
+    /h-10 rounded-2xl bg-background px-3 text-white hover:bg-primary dark:bg-card dark:text-foreground/g,
+    'h-10 rounded-2xl bg-primary px-3 text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground',
+  ],
+  [
+    /h-9 gap-1\.5 rounded-xl bg-background px-4 text-xs text-white hover:bg-primary dark:bg-muted dark:text-foreground/g,
+    'h-9 gap-1.5 rounded-xl bg-primary px-4 text-xs text-primary-foreground hover:bg-primary/90 dark:bg-muted dark:text-foreground',
+  ],
+  [
+    /border-border\/40 bg-background text-white dark:border-white dark:bg-card dark:text-foreground/g,
+    'border-primary/30 bg-primary text-primary-foreground dark:border-white dark:bg-card dark:text-foreground',
+  ],
+  [
+    /text-white dark:text-foreground/g,
+    'text-primary-foreground dark:text-foreground',
   ],
 ];
 

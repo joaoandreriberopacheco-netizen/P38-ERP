@@ -42,7 +42,7 @@ export default function ConsumoItensStep({ formData, totalAtual, onOpenSelector,
         <Button type="button" variant="outline" onClick={onBack} className="h-11 flex-1 rounded-2xl border-0 shadow-sm">
           Voltar
         </Button>
-        <Button type="button" onClick={onNext} className="h-11 flex-1 rounded-2xl bg-background text-white hover:bg-primary dark:bg-card dark:text-foreground">
+        <Button type="button" onClick={onNext} className="h-11 flex-1 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground">
           Próximo
         </Button>
       </div>

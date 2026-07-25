@@ -160,7 +160,7 @@ export default function ConfirmarEntrega({ pedido, open, onClose, onSuccess }) {
       <DialogContent className="max-w-md h-screen m-0 p-0 rounded-none sm:rounded-lg sm:h-auto sm:max-h-[90vh]">
         <div className="flex flex-col h-full bg-card">
           {/* Header */}
-          <div className="bg-background text-white px-3 py-2 flex items-center justify-between flex-shrink-0">
+          <div className="bg-primary text-primary-foreground px-3 py-2 flex items-center justify-between flex-shrink-0">
             <div>
               <p className="text-[10px] text-muted-foreground">EXPEDIÇÃO</p>
               <p className="text-sm font-bold">Confirmar Entrega: {pedido?.numero}</p>

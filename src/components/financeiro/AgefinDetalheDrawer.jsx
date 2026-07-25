@@ -88,7 +88,7 @@ export default function AgefinDetalheDrawer({ open, onClose, recorrente, contaMe
                 <Button
                   type="button"
                   onClick={() => setShowRefreshImport(true)}
-                  className="h-10 rounded-2xl bg-background px-3 text-sm font-medium text-white hover:bg-primary dark:bg-muted dark:text-foreground dark:hover:bg-card"
+                  className="h-10 rounded-2xl bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 dark:bg-muted dark:text-foreground dark:hover:bg-card"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   {hasBoleto ? 'Trocar anexo' : 'Vincular PDF'}

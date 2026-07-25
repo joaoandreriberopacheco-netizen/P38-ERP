@@ -127,7 +127,7 @@ export default function ComprovanteConsumoInterno({ open, onClose, consumo }) {
         <span className="text-sm font-semibold text-foreground">Minuta</span>
         <div className="flex items-center gap-2">
           <Button onClick={handlePrint} size="sm" variant="outline" className="h-9 gap-1.5 rounded-xl px-3 text-xs"><Printer className="h-3.5 w-3.5" /></Button>
-          <Button onClick={handleShare} disabled={gerando} size="sm" className="h-9 gap-1.5 rounded-xl bg-background px-4 text-xs text-white hover:bg-primary dark:bg-muted dark:text-foreground">
+          <Button onClick={handleShare} disabled={gerando} size="sm" className="h-9 gap-1.5 rounded-xl bg-primary px-4 text-xs text-primary-foreground hover:bg-primary/90 dark:bg-muted dark:text-foreground">
             {gerando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Share2 className="h-3.5 w-3.5" />}Compartilhar
           </Button>
         </div>

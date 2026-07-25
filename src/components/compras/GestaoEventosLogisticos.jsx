@@ -188,7 +188,7 @@ export default function GestaoEventosLogisticos() {
                 Necessário agendar evento logístico para recebimento.
               </p>
             </div>
-            <Button size="sm" onClick={handleAbrirNovoEvento} className="bg-background text-white hover:bg-primary h-8 text-xs">
+            <Button size="sm" onClick={handleAbrirNovoEvento} className="bg-primary text-primary-foreground hover:bg-primary h-8 text-xs">
               Agendar
             </Button>
           </div>

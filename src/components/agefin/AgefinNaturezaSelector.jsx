@@ -36,7 +36,7 @@ export default function AgefinNaturezaSelector({ value = 'Único', onChange }) {
             onClick={() => onChange(option.id)}
             className={`relative rounded-2xl px-3 py-4 text-center transition-all ${
               isActive
-                ? 'bg-background text-white shadow-sm dark:bg-card dark:text-foreground'
+                ? 'bg-primary text-primary-foreground shadow-sm dark:bg-card dark:text-foreground'
                 : 'bg-muted text-muted-foreground shadow-sm hover:bg-muted dark:bg-background dark:text-muted-foreground dark:hover:bg-background'
             }`}
           >

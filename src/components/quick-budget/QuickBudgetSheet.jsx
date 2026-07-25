@@ -373,7 +373,7 @@ function BudgetContent({ onClose, isMobile }) {
                   </div>
                 </div>
 
-                <Button onClick={handleAdd} className="h-11 rounded-2xl bg-background text-white hover:bg-primary dark:bg-card dark:text-foreground dark:hover:bg-muted">
+                <Button onClick={handleAdd} className="h-11 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground dark:hover:bg-muted">
                   Adicionar ao orçamento
                 </Button>
               </div>
@@ -398,7 +398,7 @@ function BudgetContent({ onClose, isMobile }) {
                   className="h-11 rounded-2xl border-0 bg-muted/40 text-foreground shadow-none focus-visible:ring-0 dark:bg-[#1f2737] dark:text-white dark:placeholder:text-muted-foreground"
                 />
               </div>
-              <Button onClick={handleGeneratePdf} disabled={items.length === 0} className="h-11 rounded-2xl bg-background px-4 text-white hover:bg-primary dark:bg-card dark:text-foreground dark:hover:bg-muted">
+              <Button onClick={handleGeneratePdf} disabled={items.length === 0} className="h-11 rounded-2xl bg-primary px-4 text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground dark:hover:bg-muted">
                 <FileText className="mr-2 h-4 w-4" /> PDF / WhatsApp
               </Button>
             </div>

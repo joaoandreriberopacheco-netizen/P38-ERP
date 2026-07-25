@@ -677,7 +677,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             onClick={handleShare}
             disabled={gerando}
             size="sm"
-            className="bg-background hover:bg-primary dark:bg-muted dark:hover:bg-muted dark:text-foreground text-white h-9 text-xs gap-1.5 rounded-xl px-4"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:hover:bg-muted dark:text-foreground h-9 text-xs gap-1.5 rounded-xl px-4"
           >
             {gerando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Share2 className="w-3.5 h-3.5" />}
             {gerando ? 'Gerando...' : 'PDF'}

@@ -379,7 +379,7 @@ export default function ConsumoInternoPage() {
             <div className="space-y-4">
               <p className="text-lg font-semibold text-foreground">Novo cadastro interno</p>
               <Input value={novoCadastro.valor} onChange={(e) => setNovoCadastro((prev) => ({ ...prev, valor: e.target.value }))} placeholder={novoCadastro.tipo === 'destinacao' ? 'Nome da destinação' : 'Nome do responsável'} className="h-11 rounded-2xl border-0 bg-muted shadow-sm dark:bg-muted" />
-              <Button onClick={handleSalvarCadastro} className="h-11 w-full rounded-2xl bg-background text-white hover:bg-primary dark:bg-card dark:text-foreground">Salvar</Button>
+              <Button onClick={handleSalvarCadastro} className="h-11 w-full rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground">Salvar</Button>
             </div>
           </DialogContent>
         </Dialog>

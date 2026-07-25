@@ -19,7 +19,7 @@ export default function ItinerarioMobileTopTabs({ value, onChange }) {
               key={tab.value}
               type="button"
               onClick={() => onChange(tab.value)}
-              className={`min-w-0 rounded-2xl px-2 py-2.5 shadow-sm transition-all ${active ? 'bg-background text-white dark:bg-muted dark:text-foreground' : 'bg-card text-muted-foreground dark:bg-muted dark:text-foreground/90'}`}
+              className={`min-w-0 rounded-2xl px-2 py-2.5 shadow-sm transition-all ${active ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground' : 'bg-card text-muted-foreground dark:bg-muted dark:text-foreground/90'}`}
             >
               <div className="flex flex-col items-center justify-center gap-1">
                 <Icon className="w-4 h-4" />

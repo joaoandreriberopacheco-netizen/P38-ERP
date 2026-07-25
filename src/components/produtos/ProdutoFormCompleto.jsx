@@ -1541,7 +1541,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                           title={opt.is_primary ? 'Vitrine na unidade base' : `Vitrine em ${opt.unidade}`}
                           className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all border shadow-sm ${
                             active
-                              ? 'border-border/40 bg-background text-white dark:border-white dark:bg-card dark:text-foreground'
+                              ? 'border-primary/30 bg-primary text-primary-foreground dark:border-white dark:bg-card dark:text-foreground'
                               : 'border-border/40 bg-card text-foreground/90 hover:border-border/40 dark:border-border/40 dark:bg-muted dark:text-foreground dark:hover:border-border/40'
                           }`}
                         >

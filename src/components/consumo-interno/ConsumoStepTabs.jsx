@@ -13,7 +13,7 @@ export default function ConsumoStepTabs({ mobileStep, setMobileStep }) {
         <button
           key={step.key}
           onClick={() => setMobileStep(step.key)}
-          className={`rounded-2xl px-2 py-2 text-[11px] font-semibold shadow-sm ${mobileStep === step.key ? 'bg-background text-white dark:bg-card dark:text-foreground' : 'bg-card text-muted-foreground dark:bg-muted dark:text-muted-foreground'}`}
+          className={`rounded-2xl px-2 py-2 text-[11px] font-semibold shadow-sm ${mobileStep === step.key ? 'bg-primary text-primary-foreground dark:bg-card dark:text-foreground' : 'bg-card text-muted-foreground dark:bg-muted dark:text-muted-foreground'}`}
         >
           {step.label}
         </button>

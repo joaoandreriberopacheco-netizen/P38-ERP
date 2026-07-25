@@ -118,7 +118,7 @@ export default function AssinaturaConsumoDialog({ open, onOpenChange, onConfirm 
             <Button type="button" variant="outline" onClick={clearCanvas} className="flex-1 rounded-2xl border-0 shadow-sm">
               <RotateCcw className="mr-2 h-4 w-4" />Limpar
             </Button>
-            <Button type="button" onClick={handleConfirm} disabled={!nome.trim()} className="flex-1 rounded-2xl bg-background text-white hover:bg-primary dark:bg-card dark:text-foreground">
+            <Button type="button" onClick={handleConfirm} disabled={!nome.trim()} className="flex-1 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground">
               <Check className="mr-2 h-4 w-4" />Confirmar
             </Button>
           </div>

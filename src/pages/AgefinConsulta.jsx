@@ -109,7 +109,7 @@ function CmvQuickToggle({ checked, onChange }) {
 
 function FilterChip({ active, onClick, children, tone = 'default' }) {
   const activeStyles = {
-    default: 'bg-background text-white dark:bg-card dark:text-foreground',
+    default: 'bg-primary text-primary-foreground dark:bg-card dark:text-foreground',
     success: 'bg-emerald-600 text-white dark:bg-emerald-500 dark:text-white',
     danger: 'bg-red-600 text-white dark:bg-red-500 dark:text-white',
   };

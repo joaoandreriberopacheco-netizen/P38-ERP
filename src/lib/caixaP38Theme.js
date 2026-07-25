@@ -129,9 +129,37 @@ export const caixaTypo = {
   labelSm: 'text-sm uppercase tracking-wide text-muted-foreground',
   title: 'text-lg font-semibold uppercase tracking-wide text-foreground',
   section: 'text-base font-semibold uppercase tracking-wide text-foreground',
-  value: 'text-lg font-semibold tabular-nums',
-  valueLg: 'text-2xl font-bold tabular-nums',
+  value: 'text-lg font-semibold tabular-nums text-foreground',
+  valueLg: 'text-2xl font-bold tabular-nums text-foreground',
   meta: 'text-sm uppercase tracking-wide text-muted-foreground',
   tab: 'text-base uppercase tracking-wide',
   groupHeader: 'text-sm font-semibold uppercase tracking-wide text-muted-foreground sm:tracking-widest',
+};
+
+/**
+ * Superfícies do caixa — contraste garantido no modo claro (oliva + texto claro)
+ * e comportamento escuro preservado via dark:*.
+ */
+export const caixaSurface = {
+  /** Botão de acção compacto (maquininha, fiado, chips) */
+  chipBtn:
+    'rounded-xl bg-primary text-primary-foreground border border-primary/70 px-3 py-2 text-xs font-semibold shadow-sm ' +
+    'hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring ' +
+    'dark:bg-card dark:text-foreground dark:border-transparent dark:hover:bg-muted',
+  /** Confirmar / CTA principal */
+  confirmBtn:
+    'rounded-xl bg-primary text-primary-foreground border border-primary/70 font-semibold ' +
+    'hover:bg-primary/90 disabled:opacity-40 ' +
+    'dark:bg-card dark:text-foreground dark:border-transparent',
+  /** Secundário (cancelar, devolver) */
+  secondaryBtn: 'rounded-xl bg-muted text-foreground hover:bg-muted/80',
+  /** Linha de forma de pagamento */
+  paymentRow: 'bg-muted/50 hover:bg-muted',
+  paymentRowActive: 'bg-muted ring-1 ring-primary/35 dark:ring-border/40',
+  /** Chip seleccionado (parcelas, maquininha, bandeira) */
+  chipSelected: 'bg-primary text-primary-foreground ring-1 ring-primary/30',
+  chipIdle: 'bg-muted text-muted-foreground hover:bg-muted dark:hover:bg-primary/20',
+  /** Item seleccionado em lista */
+  itemSelected: 'bg-primary/12 text-foreground ring-1 ring-primary/25 dark:bg-card dark:text-card-foreground dark:ring-border/40',
+  itemIdle: 'bg-muted/50 text-foreground hover:bg-muted',
 };

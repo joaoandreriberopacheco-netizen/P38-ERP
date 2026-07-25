@@ -57,7 +57,7 @@ export default function GerenciarMovimentoDialog({ open, onOpenChange, movimento
           </div>
 
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-            <Button onClick={() => onEdit({ valor, observacao, motivo })} disabled={!motivo.trim()} className="h-11 rounded-2xl bg-background text-white hover:bg-primary dark:bg-card dark:text-foreground">
+            <Button onClick={() => onEdit({ valor, observacao, motivo })} disabled={!motivo.trim()} className="h-11 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground">
               <Pencil className="mr-2 h-4 w-4" />Salvar edição
             </Button>
             <Button onClick={() => onCancel({ motivo })} disabled={!motivo.trim()} variant="outline" className={`h-11 rounded-2xl border-0 shadow-sm ${caixaClasses('danger').text} ${caixaClasses('danger').hover}`}>

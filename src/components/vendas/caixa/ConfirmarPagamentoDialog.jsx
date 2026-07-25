@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import SeletorMaquininhaSheet from './SeletorMaquininhaSheet';
 import SeletorFiadoSheet from './SeletorFiadoSheet';
-import { CAIXA_TOAST_SUCCESS, caixaClasses } from '@/lib/caixaP38Theme';
+import { CAIXA_TOAST_SUCCESS, caixaClasses, caixaSurface } from '@/lib/caixaP38Theme';
 import { resolveValorPedidoVenda } from '@/lib/financialUtils';
 
 export default function ConfirmarPagamentoDialog({
@@ -283,14 +283,14 @@ export default function ConfirmarPagamentoDialog({
           <div className="flex shrink-0 gap-2.5 border-t border-border/40 px-4 pb-4 pt-3 dark:border-border/40">
             <button
               onClick={() => setShowRetornoDialog(true)}
-              className="h-12 px-4 bg-muted text-foreground/90 rounded-xl text-sm font-medium flex items-center gap-2 flex-shrink-0"
+              className={`h-12 px-4 text-sm font-medium flex items-center gap-2 flex-shrink-0 ${caixaSurface.secondaryBtn}`}
             >
               <ArrowLeft className="w-4 h-4" /> Devolver
             </button>
             <button
               onClick={handleFinalizarVenda}
               disabled={!pagamentoValido || processandoVenda}
-              className="flex-1 h-12 bg-card text-card-foreground rounded-xl font-semibold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
+              className={`flex-1 h-12 text-sm flex items-center justify-center gap-2 ${caixaSurface.confirmBtn}`}
             >
               {processandoVenda
                 ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</>
@@ -346,9 +346,7 @@ function InputPagamento({
     <div className="space-y-0.5">
       <div
         className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors cursor-text ${
-          active
-            ? 'bg-muted ring-1 ring-border/40 dark:ring-border/40'
-            : 'bg-muted/50/60 hover:bg-muted'
+          active ? caixaSurface.paymentRowActive : caixaSurface.paymentRow
         }`}
         onClick={() => {
           if (onContainerClick) onContainerClick();
@@ -366,7 +364,7 @@ function InputPagamento({
               onFiadoButtonClick();
             }}
             onFocus={() => onFocus?.()}
-            className="max-w-[11rem] shrink-0 touch-manipulation rounded-xl bg-background px-3 py-2 text-left text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary focus:outline-none focus:ring-2 focus:ring-ring dark:bg-card dark:text-foreground dark:hover:bg-muted dark:focus:ring-ring"
+            className={`max-w-[11rem] shrink-0 touch-manipulation text-left ${caixaSurface.chipBtn}`}
           >
             Prazo · fiado
           </button>
@@ -379,7 +377,7 @@ function InputPagamento({
               onMaquininhaButtonClick();
             }}
             onFocus={() => onFocus?.()}
-            className="max-w-[11rem] shrink-0 touch-manipulation rounded-xl bg-background px-3 py-2 text-left text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary focus:outline-none focus:ring-2 focus:ring-ring dark:bg-card dark:text-foreground dark:hover:bg-muted dark:focus:ring-ring"
+            className={`max-w-[11rem] shrink-0 touch-manipulation text-left ${caixaSurface.chipBtn}`}
           >
             Maquininha / bandeira
           </button>

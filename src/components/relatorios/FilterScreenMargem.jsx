@@ -147,7 +147,7 @@ export default function FilterScreenMargem({
                 onClick={() => setSelectedCategory('all')}
                 className={`w-full py-4 px-4 rounded-lg font-bold text-base transition ${
                   selectedCategory === 'all'
-                    ? 'bg-background text-white dark:bg-card dark:text-foreground'
+                    ? 'bg-primary text-primary-foreground dark:bg-card dark:text-foreground'
                     : 'bg-muted text-foreground dark:bg-muted dark:text-white hover:bg-muted dark:hover:bg-primary/90'
                 }`}
               >
@@ -159,7 +159,7 @@ export default function FilterScreenMargem({
                   onClick={() => setSelectedCategory(cat)}
                   className={`w-full py-4 px-4 rounded-lg font-bold text-base transition text-left ${
                     selectedCategory === cat
-                      ? 'bg-background text-white dark:bg-card dark:text-foreground'
+                      ? 'bg-primary text-primary-foreground dark:bg-card dark:text-foreground'
                       : 'bg-muted text-foreground dark:bg-muted dark:text-white hover:bg-muted dark:hover:bg-primary/90'
                   }`}
                 >
