@@ -27,6 +27,7 @@
     "secrets:check": "node scripts/p38-secrets-check.mjs",
     "secrets:audit": "node scripts/p38-secrets-audit.mjs",
     "benchmark:catalogo": "node scripts/benchmark-catalogo.mjs",
+    "verify:frontend-supabase": "node scripts/verify-frontend-supabase-connectivity.mjs",
     "secrets:init": "node scripts/init-p38-secrets-bundle.mjs",
     "supabase:align:check": "node scripts/verify-supabase-project-alignment.mjs",
     "supabase:deploy:functions": "node scripts/deploy-supabase-functions.mjs",
