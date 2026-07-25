@@ -33,6 +33,13 @@ function listFunctionNames() {
     .sort();
 }
 
+function functionSkipsJwtVerify(name) {
+  const configPath = path.join(functionsDir, name, 'config.toml');
+  if (!fs.existsSync(configPath)) return false;
+  const text = fs.readFileSync(configPath, 'utf8');
+  return /verify_jwt\s*=\s*false/i.test(text);
+}
+
 export async function deploySupabaseFunctions({ dryRun = false } = {}) {
   const { accessToken: token, projectRef } = resolveSupabaseDeployEnv();
 
@@ -64,16 +71,26 @@ export async function deploySupabaseFunctions({ dryRun = false } = {}) {
       continue;
     }
 
-    const result = spawnSync(
-      'npx',
-      ['--yes', 'supabase@latest', 'functions', 'deploy', name, '--project-ref', projectRef, '--use-api'],
-      {
+    const deployArgs = [
+      '--yes',
+      'supabase@latest',
+      'functions',
+      'deploy',
+      name,
+      '--project-ref',
+      projectRef,
+      '--use-api',
+    ];
+    if (functionSkipsJwtVerify(name)) {
+      deployArgs.push('--no-verify-jwt');
+    }
+
+    const result = spawnSync('npx', deployArgs, {
         cwd: root,
         env: { ...process.env, SUPABASE_ACCESS_TOKEN: token },
         encoding: 'utf8',
-        stdio: ['ignore', 'pipe', 'pipe'],
-      }
-    );
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
 
     if (result.status !== 0) {
       console.log('FALHOU');
