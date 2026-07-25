@@ -45,6 +45,7 @@ import {
   normalizeCatalogSalesWindow,
   buildCatalogSalesVelocityMap,
 } from '@/lib/catalogSalesVelocity';
+import { filtersNeedSalesVelocity } from '@/lib/catalogNumericFilters';
 import { saveCatalogProdutoFilters } from '@/lib/catalogProdutoFiltersStorage';
 import { sumCatalogStockTotals } from '@/lib/catalogStockTotals';
 import {
@@ -1088,22 +1089,28 @@ function ProdutosPageContent() {
     }
   };
 
+  const needsSalesVelocity = useMemo(() => {
+    const velocityColumns = ['media_30d', 'ponto_esperado_lt', 'ponto_futuro'];
+    if (visibleColumns.some((col) => velocityColumns.includes(col))) return true;
+    return filtersNeedSalesVelocity(filters);
+  }, [visibleColumns, filters]);
+
+  const { data: pedidosVenda90d = [] } = usePedidosVenda90dQuery({
+    enabled: needsSalesVelocity,
+  });
+
+  const salesVelocityMap = useMemo(() => {
+    if (!needsSalesVelocity) return {};
+    return buildCatalogSalesVelocityMap(produtos, pedidosVenda90d);
+  }, [needsSalesVelocity, produtos, pedidosVenda90d]);
+
   const filteredProdutos = useMemo(() => {
-    let filtered = filterProdutos(produtos, filters);
+    let filtered = filterProdutos(produtos, filters, { salesVelocityMap });
 
     filtered = [...filtered].sort((a, b) => compareProdutosForCatalogSort(a, b, sortOrder));
 
     return filtered;
-  }, [produtos, filters, sortOrder]);
-
-  const needsSalesVelocity = visibleColumns.some((col) => ['media_30d', 'ponto_esperado_lt'].includes(col));
-  const { data: pedidosVenda90d = [] } = usePedidosVenda90dQuery({
-    enabled: needsSalesVelocity,
-  });
-  const salesVelocityMap = useMemo(() => {
-    if (!needsSalesVelocity) return {};
-    return buildCatalogSalesVelocityMap(filteredProdutos, pedidosVenda90d);
-  }, [needsSalesVelocity, filteredProdutos, pedidosVenda90d]);
+  }, [produtos, filters, sortOrder, salesVelocityMap]);
 
   const fornecedorMap = useMemo(() => {
     return fornecedores.reduce((acc, f) => {

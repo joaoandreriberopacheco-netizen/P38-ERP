@@ -1,5 +1,11 @@
 import { getCatalogoComercialView } from '@/lib/productUnits';
 import { calcMarkup } from '@/components/produtos/treegrid/useTreeGrid';
+import {
+  getCatalogLeadTimeDias,
+  getCatalogMedia30dFrom60d,
+  getCatalogPontoEsperadoLt,
+  getCatalogPontoFuturo,
+} from '@/lib/catalogSalesVelocity';
 
 export const NUMERIC_COMPARISON_OPERATORS = [
   { value: 'all', label: 'Qualquer valor' },
@@ -27,7 +33,13 @@ export const CATALOG_NUMERIC_METRIC_FIELDS = [
   { value: 'iep_score_nivel_3', label: 'Média nível 3' },
   { value: 'iep_score_nivel_4', label: 'Média nível 4' },
   { value: 'iep_score_nivel_5', label: 'Média nível 5' },
+  { value: 'media_30d', label: 'Média 30d' },
+  { value: 'ponto_futuro', label: 'Ponto futuro' },
+  { value: 'ponto_esperado_lt', label: 'Ponto LT' },
+  { value: 'tempo_reposicao', label: 'Lead time (dias)' },
 ];
+
+export const CATALOG_VELOCITY_METRIC_FIELDS = ['media_30d', 'ponto_futuro', 'ponto_esperado_lt'];
 
 export const CATALOG_NUMERIC_METRIC_LABELS = Object.fromEntries(
   CATALOG_NUMERIC_METRIC_FIELDS.filter((f) => f.value !== 'all').map((f) => [f.value, f.label]),
@@ -39,6 +51,23 @@ export const DEFAULT_CATALOG_METRIC_FILTER = {
   metricaValor: '',
   metricaValorAte: '',
 };
+
+export const DEFAULT_CATALOG_METRIC_FILTER_2 = {
+  metrica2Campo: 'all',
+  metrica2Operador: 'all',
+  metrica2Valor: '',
+  metrica2ValorAte: '',
+};
+
+export function getCatalogMetricFilterKeys(slot = 1) {
+  const prefix = slot === 2 ? 'metrica2' : 'metrica';
+  return {
+    campo: `${prefix}Campo`,
+    operador: `${prefix}Operador`,
+    valor: `${prefix}Valor`,
+    valorAte: `${prefix}ValorAte`,
+  };
+}
 
 export function parseNumericFilterValue(value) {
   if (value === null || value === undefined || value === '') return null;
@@ -84,18 +113,32 @@ export function matchesNumericComparison(actual, operador, valor, valorAte) {
   }
 }
 
-export function hasActiveCatalogMetricFilter(filters) {
-  if (!filters || filters.metricaCampo === 'all') return false;
-  return hasActiveNumericComparison(
-    filters.metricaOperador,
-    filters.metricaValor,
-    filters.metricaValorAte,
-  );
+export function hasActiveCatalogMetricFilter(filters, slot = 1) {
+  const { campo, operador, valor, valorAte } = getCatalogMetricFilterKeys(slot);
+  if (!filters || filters[campo] === 'all') return false;
+  return hasActiveNumericComparison(filters[operador], filters[valor], filters[valorAte]);
 }
 
-export function getProdutoNumericMetricValue(produto, campo) {
+export function catalogMetricNeedsSalesVelocity(campo) {
+  return CATALOG_VELOCITY_METRIC_FIELDS.includes(campo);
+}
+
+export function filtersNeedSalesVelocity(filters) {
+  if (!filters) return false;
+  for (const slot of [1, 2]) {
+    const { campo } = getCatalogMetricFilterKeys(slot);
+    if (hasActiveCatalogMetricFilter(filters, slot) && catalogMetricNeedsSalesVelocity(filters[campo])) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function getProdutoNumericMetricValue(produto, campo, { salesVelocityMap = {} } = {}) {
   if (!produto || !campo || campo === 'all') return null;
   const cat = getCatalogoComercialView(produto);
+  const velocity = salesVelocityMap[String(produto?.id)];
+
   switch (campo) {
     case 'markup':
       return calcMarkup(produto);
@@ -114,6 +157,14 @@ export function getProdutoNumericMetricValue(produto, campo) {
     case 'iep_score_nivel_4':
     case 'iep_score_nivel_5':
       return Number(produto?.[campo]) || 0;
+    case 'media_30d':
+      return getCatalogMedia30dFrom60d(velocity);
+    case 'ponto_futuro':
+      return getCatalogPontoFuturo(produto, velocity);
+    case 'ponto_esperado_lt':
+      return getCatalogPontoEsperadoLt(velocity, getCatalogLeadTimeDias(produto));
+    case 'tempo_reposicao':
+      return Number(produto?.tempo_reposicao_dias) || 0;
     default:
       return null;
   }

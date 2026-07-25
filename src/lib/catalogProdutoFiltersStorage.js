@@ -2,10 +2,11 @@ import {
   CATALOG_SOMENTE_POSITIVOS_QUANTIDADE,
   DEFAULT_PRODUTO_FILTERS,
 } from '@/lib/filterProdutos';
+import { DEFAULT_CATALOG_METRIC_FILTER_2 } from '@/lib/catalogNumericFilters';
 
 /** Filtros do catálogo partilhados entre Produtos e Relatório de estoque (sessionStorage). */
 export const CATALOG_PRODUTO_FILTERS_STORAGE_KEY = 'varejosync.catalogoProdutoFilters';
-const CATALOG_PRODUTO_FILTERS_STORAGE_VERSION = 6;
+const CATALOG_PRODUTO_FILTERS_STORAGE_VERSION = 7;
 
 export function normalizeCatalogProdutoFilters(raw) {
   const base = { ...DEFAULT_PRODUTO_FILTERS };
@@ -46,6 +47,18 @@ export function normalizeCatalogProdutoFilters(raw) {
     metricaValorAte: isCurrentVersion
       ? String(raw.metricaValorAte ?? '')
       : DEFAULT_PRODUTO_FILTERS.metricaValorAte,
+    metrica2Campo: isCurrentVersion
+      ? (raw.metrica2Campo || DEFAULT_PRODUTO_FILTERS.metrica2Campo)
+      : DEFAULT_CATALOG_METRIC_FILTER_2.metrica2Campo,
+    metrica2Operador: isCurrentVersion
+      ? (raw.metrica2Operador || DEFAULT_PRODUTO_FILTERS.metrica2Operador)
+      : DEFAULT_CATALOG_METRIC_FILTER_2.metrica2Operador,
+    metrica2Valor: isCurrentVersion
+      ? String(raw.metrica2Valor ?? '')
+      : DEFAULT_CATALOG_METRIC_FILTER_2.metrica2Valor,
+    metrica2ValorAte: isCurrentVersion
+      ? String(raw.metrica2ValorAte ?? '')
+      : DEFAULT_CATALOG_METRIC_FILTER_2.metrica2ValorAte,
   };
 }
 

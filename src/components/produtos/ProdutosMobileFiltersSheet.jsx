@@ -273,13 +273,27 @@ export default function ProdutosMobileFiltersSheet({
 
           <MobileFilterSection
             title="Métrica comercial"
-            hint="Markup, margem, preço ou custo — com operador numérico."
+            hint="Markup, margem, preço, custo ou indicadores de estoque — com operador numérico."
           >
             <ProdutosNumericMetricFilter
               filters={filters}
               setFilters={setFilters}
               handleFilterChange={handleFilterChange}
               sectionLabel=""
+              metricSlot={1}
+            />
+          </MobileFilterSection>
+
+          <MobileFilterSection
+            title="Métrica 2 (opcional)"
+            hint="Combine com a primeira: ex. ponto futuro &lt; 0 e lead time = 20."
+          >
+            <ProdutosNumericMetricFilter
+              filters={filters}
+              setFilters={setFilters}
+              handleFilterChange={handleFilterChange}
+              sectionLabel=""
+              metricSlot={2}
             />
           </MobileFilterSection>
 

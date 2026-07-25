@@ -556,6 +556,14 @@ export default function ProdutosHeader({
               handleFilterChange={handleFilterChange}
             />
 
+            <ProdutosNumericMetricFilter
+              filters={filters}
+              setFilters={setFilters}
+              handleFilterChange={handleFilterChange}
+              sectionLabel="Métrica 2"
+              metricSlot={2}
+            />
+
             <div className="flex items-center gap-2 pt-0.5 border-t border-border/30 desktop-layout:col-span-2 desktop-layout:border-0 desktop-layout:pt-0 min-w-0">
               <div className="flex-1 min-w-0">
                 <ProdutosSearchStartsWithToggle

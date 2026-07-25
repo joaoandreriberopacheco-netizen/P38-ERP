@@ -6,7 +6,9 @@ import {
 } from '@/lib/catalogSearchArea';
 import {
   DEFAULT_CATALOG_METRIC_FILTER,
+  DEFAULT_CATALOG_METRIC_FILTER_2,
   describeNumericComparison,
+  getCatalogMetricFilterKeys,
   getProdutoNumericMetricValue,
   hasActiveCatalogMetricFilter,
   hasActiveNumericComparison,
@@ -48,6 +50,7 @@ export const DEFAULT_PRODUTO_FILTERS = {
   unidadeVitrine: 'all',
   ...CATALOG_SOMENTE_POSITIVOS_QUANTIDADE,
   ...DEFAULT_CATALOG_METRIC_FILTER,
+  ...DEFAULT_CATALOG_METRIC_FILTER_2,
 };
 
 /** Estado inicial sempre que o utilizador abre ou reabre o catálogo. */
@@ -119,8 +122,17 @@ export function produtoMatchesVitrineFilter(produto, unidadeVitrine = 'all') {
   return String(sigla).trim().toUpperCase() === String(unidadeVitrine).trim().toUpperCase();
 }
 
+function produtoMatchesCatalogMetricFilter(produto, filters, slot, salesVelocityMap) {
+  if (!hasActiveCatalogMetricFilter(filters, slot)) return true;
+  const { campo, operador, valor, valorAte } = getCatalogMetricFilterKeys(slot);
+  const metricValue = getProdutoNumericMetricValue(produto, filters[campo], { salesVelocityMap });
+  if (metricValue === null) return false;
+  return matchesNumericComparison(metricValue, filters[operador], filters[valor], filters[valorAte]);
+}
+
 /** Mesma lógica de filtros do catálogo (`Produtos.jsx`). */
-export function filterProdutos(produtos, filters) {
+export function filterProdutos(produtos, filters, options = {}) {
+  const { salesVelocityMap = {} } = options;
   if (!Array.isArray(produtos)) return [];
   return produtos.filter((p) => {
     if (!p || typeof p !== 'object') return false;
@@ -154,17 +166,9 @@ export function filterProdutos(produtos, filters) {
       );
     };
 
-    const metricaMatch = () => {
-      if (!hasActiveCatalogMetricFilter(filters)) return true;
-      const valor = getProdutoNumericMetricValue(p, filters.metricaCampo);
-      if (valor === null) return false;
-      return matchesNumericComparison(
-        valor,
-        filters.metricaOperador,
-        filters.metricaValor,
-        filters.metricaValorAte,
-      );
-    };
+    const metricaMatch = () =>
+      produtoMatchesCatalogMetricFilter(p, filters, 1, salesVelocityMap) &&
+      produtoMatchesCatalogMetricFilter(p, filters, 2, salesVelocityMap);
 
     const statusMatch = () => {
       if (filters.statusEstoque === 'all') return true;
@@ -217,7 +221,8 @@ export function countActiveProdutoFilters(filters) {
     hasActiveQuantityFilter(filters) &&
       !isSomentePositivosFilter(filters) &&
       filters.quantidadeOperador,
-    hasActiveCatalogMetricFilter(filters) && filters.metricaCampo,
+    hasActiveCatalogMetricFilter(filters, 1) && filters.metricaCampo,
+    hasActiveCatalogMetricFilter(filters, 2) && filters.metrica2Campo,
   ].filter(Boolean).length;
 }
 
@@ -275,13 +280,16 @@ export function describeProdutoFilters(filters, { categorias = [], fornecedores 
       )}`
     );
   }
-  if (hasActiveCatalogMetricFilter(filters)) {
-    const metricLabel = CATALOG_NUMERIC_METRIC_LABELS[filters.metricaCampo] || filters.metricaCampo;
+  for (const slot of [1, 2]) {
+    if (!hasActiveCatalogMetricFilter(filters, slot)) continue;
+    const { campo, operador, valor, valorAte } = getCatalogMetricFilterKeys(slot);
+    const metricLabel = CATALOG_NUMERIC_METRIC_LABELS[filters[campo]] || filters[campo];
+    const prefix = slot === 2 ? 'métrica 2' : 'métrica';
     parts.push(
-      `${metricLabel} ${describeNumericComparison(
-        filters.metricaOperador,
-        filters.metricaValor,
-        filters.metricaValorAte,
+      `${prefix}: ${metricLabel} ${describeNumericComparison(
+        filters[operador],
+        filters[valor],
+        filters[valorAte],
       )}`
     );
   }
