@@ -234,13 +234,39 @@ function buildAuth(supabase) {
     },
     async login(payload = {}) {
       if (useSupabaseAuth) {
-        const { email, password } = resolveLoginCredentials(payload);
+        const { login, email, password } = resolveLoginCredentials(payload);
         if (!email || !password) {
           throw new Error('Informe usuário e senha.');
         }
         persistUser(null);
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+
+        const trySignIn = async (authEmail) => {
+          return supabase.auth.signInWithPassword({ email: authEmail, password });
+        };
+
+        let { data, error } = await trySignIn(email);
+
+        // Legado: contas antigas ainda com email Gmail (pré-migração 028).
+        if (error && login && email.endsWith('@login.p38.internal')) {
+          const legacyGuess = `${login}@gmail.com`;
+          if (legacyGuess !== email) {
+            const retry = await trySignIn(legacyGuess);
+            if (!retry.error) {
+              data = retry.data;
+              error = null;
+            }
+          }
+        }
+
+        if (error) {
+          const msg = String(error.message || '').toLowerCase();
+          if (msg.includes('invalid login credentials') || msg.includes('invalid credentials')) {
+            throw new Error(
+              'Utilizador ou senha incorrectos. Se ainda não definiu senha, use /ativar-acesso.'
+            );
+          }
+          throw error;
+        }
         return data;
       }
       const merged = { ...readBypassUserFromEnv(), ...readPersistedUser(), ...payload };
