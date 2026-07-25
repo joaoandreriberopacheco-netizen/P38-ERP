@@ -26,7 +26,6 @@ import ListaExtratoConta from '@/components/financeiro/fluxo/ListaExtratoConta';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from '@/components/financeiro/fluxo/FinanceiroListaMeta';
 import { formatFinanceiroGrupoLabel } from '@/components/financeiro/fluxo/FinanceiroListaShared';
 import AjusteSaldoDialog from '@/components/config/AjusteSaldoDialog';
-import PinValidationDialog from '@/components/auth/PinValidationDialog';
 import {
   buildMapaContrapartesTransferencia,
   calcularSaldoContaFinanceira,
@@ -50,7 +49,6 @@ export default function ExtratoContaPage() {
   const [dataFim, setDataFim] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [pinAjusteOpen, setPinAjusteOpen] = useState(false);
   const [ajusteDialogOpen, setAjusteDialogOpen] = useState(false);
   const { toast } = useToast();
 
@@ -543,7 +541,7 @@ export default function ExtratoContaPage() {
             <div className="flex shrink-0 gap-0.5 no-pdf-capture">
               <button
                 type="button"
-                onClick={() => setPinAjusteOpen(true)}
+                onClick={() => setAjusteDialogOpen(true)}
                 className="flex h-8 w-8 items-center justify-center rounded-lg p38-field-surface border-0"
                 aria-label="Ajustar saldo"
               >
@@ -655,17 +653,6 @@ export default function ExtratoContaPage() {
       />
 
       <ListaExtratoConta grupos={grupos} loading={isLoading} />
-
-      <PinValidationDialog
-        isOpen={pinAjusteOpen}
-        onClose={() => setPinAjusteOpen(false)}
-        onSuccess={() => {
-          setPinAjusteOpen(false);
-          setAjusteDialogOpen(true);
-        }}
-        operationName={conta ? `Ajuste de saldo — ${conta.nome}` : 'Ajuste de saldo'}
-        forceEnabled
-      />
 
       <AjusteSaldoDialog
         open={ajusteDialogOpen}

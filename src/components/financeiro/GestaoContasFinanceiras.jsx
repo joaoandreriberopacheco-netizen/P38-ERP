@@ -10,7 +10,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Plus, ArrowRightLeft } from 'lucide-react';
 import ConciliacaoBancaria from './ConciliacaoBancaria';
 import AjusteSaldoDialog from '@/components/config/AjusteSaldoDialog';
-import PinValidationDialog from '@/components/auth/PinValidationDialog';
 import KpiContasBar from './fluxo/KpiContasBar';
 import FiltrosContasFinanceiras, { TIPOS_CONTA } from './fluxo/FiltrosContasFinanceiras';
 import ListaContasFinanceiras from './fluxo/ListaContasFinanceiras';
@@ -56,7 +55,6 @@ function useGestaoContasModel(shared) {
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [conciliacaoConta, setConciliacaoConta] = useState(null);
   const [ajusteConta, setAjusteConta] = useState(null);
-  const [pinAjusteOpen, setPinAjusteOpen] = useState(false);
   const [ajusteDialogOpen, setAjusteDialogOpen] = useState(false);
   const [formData, setFormData] = useState(FORM_VAZIO);
   const [mostrarHistoricoAnterior, setMostrarHistoricoAnterior] = useState(
@@ -248,7 +246,7 @@ function useGestaoContasModel(shared) {
 
   const handleAjuste = (account) => {
     setAjusteConta(account);
-    setPinAjusteOpen(true);
+    setAjusteDialogOpen(true);
   };
 
   return {
@@ -288,8 +286,6 @@ function useGestaoContasModel(shared) {
     resetForm,
     ajusteConta,
     setAjusteConta,
-    pinAjusteOpen,
-    setPinAjusteOpen,
     ajusteDialogOpen,
     setAjusteDialogOpen,
     mostrarHistoricoAnterior,
@@ -351,8 +347,6 @@ export function GestaoContasPane() {
     saldosCalculados,
     ajusteConta,
     setAjusteConta,
-    pinAjusteOpen,
-    setPinAjusteOpen,
     ajusteDialogOpen,
     setAjusteDialogOpen,
     mostrarHistoricoAnterior,
@@ -452,20 +446,6 @@ export function GestaoContasPane() {
           <Plus className={`h-6 w-6 ${fabOpen ? 'text-white' : 'text-white dark:text-[#1f1d22]'}`} />
         </button>
       </div>
-
-      <PinValidationDialog
-        isOpen={pinAjusteOpen}
-        onClose={() => {
-          setPinAjusteOpen(false);
-          setAjusteConta(null);
-        }}
-        onSuccess={() => {
-          setPinAjusteOpen(false);
-          setAjusteDialogOpen(true);
-        }}
-        operationName={ajusteConta ? `Ajuste de saldo — ${ajusteConta.nome}` : 'Ajuste de saldo'}
-        forceEnabled
-      />
 
       <AjusteSaldoDialog
         open={ajusteDialogOpen}

@@ -8,7 +8,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Wallet, Edit, Trash2, PlusCircle, Scale, ArrowRightLeft } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import AjusteSaldoDialog from '@/components/config/AjusteSaldoDialog';
-import PinValidationDialog from '@/components/auth/PinValidationDialog';
 import { resolveContaDestinoCaixaPDV } from '@/lib/contaDestinoCaixaPDV';
 import {
   calcularSaldosTodasContas,
@@ -19,7 +18,6 @@ export default function ContasFinanceirasManager() {
   const [contas, setContas] = useState([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isAjusteOpen, setIsAjusteOpen] = useState(false);
-  const [pinAjusteOpen, setPinAjusteOpen] = useState(false);
   const [selectedConta, setSelectedConta] = useState(null);
   const [saldosCalculados, setSaldosCalculados] = useState({});
   const [formData, setFormData] = useState({
@@ -53,7 +51,7 @@ export default function ContasFinanceirasManager() {
 
   const handleAjusteSaldo = (conta) => {
     setSelectedConta(conta);
-    setPinAjusteOpen(true);
+    setIsAjusteOpen(true);
   };
 
   const handleDelete = async (conta) => {
@@ -203,20 +201,6 @@ export default function ContasFinanceirasManager() {
           ))}
         </div>
       )}
-
-      <PinValidationDialog
-        isOpen={pinAjusteOpen}
-        onClose={() => {
-          setPinAjusteOpen(false);
-          setSelectedConta(null);
-        }}
-        onSuccess={() => {
-          setPinAjusteOpen(false);
-          setIsAjusteOpen(true);
-        }}
-        operationName={selectedConta ? `Ajuste de saldo — ${selectedConta.nome}` : 'Ajuste de saldo'}
-        forceEnabled
-      />
 
       <AjusteSaldoDialog
         open={isAjusteOpen}

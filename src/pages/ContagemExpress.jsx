@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import { createPageUrl } from '@/utils';
 import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
-import PinValidationDialog from '@/components/auth/PinValidationDialog';
 import ContagemExpressCarrinho from '@/components/estoque/contagem-express/ContagemExpressCarrinho';
 import ContagemExpressPainelContagem from '@/components/estoque/contagem-express/ContagemExpressPainelContagem';
 import ContagemExpressPainelSessoes from '@/components/estoque/contagem-express/ContagemExpressPainelSessoes';
@@ -52,7 +51,6 @@ async function carregarSaldoProduto(produtoId) {
 export default function ContagemExpress() {
   const navigate = useNavigate();
   const buscaRef = useRef(null);
-  const pinEntradaOkRef = useRef(false);
 
   const [produtos, setProdutos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -76,8 +74,6 @@ export default function ContagemExpress() {
   const [loadingComparativo, setLoadingComparativo] = useState(false);
   const [finalizando, setFinalizando] = useState(false);
   const [imprimindo, setImprimindo] = useState(false);
-  const [pinAutorizado, setPinAutorizado] = useState(false);
-  const [showPinEntrada, setShowPinEntrada] = useState(false);
   const [focarBuscaAposLimpar, setFocarBuscaAposLimpar] = useState(false);
 
   const persistItens = useCallback(async (novosItens, sid = sessionId, confId = conferenciaId) => {
@@ -91,12 +87,6 @@ export default function ContagemExpress() {
       }
     }
   }, [sessionId, conferenciaId]);
-
-  useEffect(() => {
-    if (!loading && !pinAutorizado) {
-      setShowPinEntrada(true);
-    }
-  }, [loading, pinAutorizado]);
 
   useEffect(() => {
     if (produtoSelecionado || !focarBuscaAposLimpar) return undefined;
@@ -409,30 +399,6 @@ export default function ContagemExpress() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (!pinAutorizado) {
-    return (
-      <div className="flex min-h-dvh flex-col bg-background font-din-1451">
-        <PinValidationDialog
-          forceEnabled
-          useNativeKeyboard
-          isOpen={showPinEntrada}
-          onClose={() => {
-            setShowPinEntrada(false);
-            if (!pinEntradaOkRef.current) {
-              navigate(createPageUrl('Dashboard'));
-            }
-          }}
-          onSuccess={() => {
-            pinEntradaOkRef.current = true;
-            setPinAutorizado(true);
-            setShowPinEntrada(false);
-          }}
-          operationName="Acesso ao Contagem Express"
-        />
       </div>
     );
   }
