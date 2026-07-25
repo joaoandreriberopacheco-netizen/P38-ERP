@@ -1,64 +1,25 @@
 # P38 — Secrets canónicos (checklist pré-decolagem)
 
-João, este documento é o **mapa único** das chaves de ligação. Depois de configurado, o sistema deve funcionar como **avião comercial**: decola uma vez, só pousa — sem “pane” por secret errado ou projecto Supabase diferente.
+Referência técnica dos nomes. **Para configurar pela primeira vez**, usa o guia detalhado:
 
-## Modo de trabalho: só Cursor Cloud
+**→ [P38_CONFIGURAR_SECRETS_PASSO_A_PASSO.md](./P38_CONFIGURAR_SECRETS_PASSO_A_PASSO.md)**
 
-**Não precisas de `.env.local` na tua máquina.** Trabalhas no **Cursor Cloud Agent**.
+**Para auditar depois de configurar:** `npm run secrets:audit`
 
-### Opção A — ficheiro mestre (recomendado para ti)
+---
 
-Cola **todas** as chaves num só ficheiro; o código distribui automaticamente:
+## Modo de trabalho: secrets nos painéis (profissional)
 
-```bash
-npm run secrets:init          # cria secrets/p38-chaves.txt
-# edita secrets/p38-chaves.txt — cola os valores
-npm run secrets:check -- --context=cloud-agent
-```
+Grava cada chave em **dois sítios** (mesmos nomes, mesmos valores):
 
-Ver [`secrets/README.md`](../../secrets/README.md). O ficheiro **não vai para o Git** e **sobrepõe** secrets antigos do painel Cursor.
+| Sítio | URL |
+|-------|-----|
+| **GitHub Actions** | https://github.com/joaoandreriberopacheco-netizen/varejosync/settings/secrets/actions |
+| **Cursor Cloud Agent** | https://cursor.com/dashboard/cloud-agents/environments/e/334db7fa-cbaa-49eb-9dd0-1c1b7a206ced |
 
-**Continuidade:** o txt é ferramenta tua no Cloud; a produção vive nos **GitHub Secrets** + **Vercel**. Depois de validar aqui, copia os mesmos valores para o GitHub. Ver [P38_CONTINUIDADE_OPERACIONAL.md](./P38_CONTINUIDADE_OPERACIONAL.md).
+Depois de gravar no Cursor: **nova sessão** Cloud Agent → `npm run secrets:audit`
 
-### Opção B — painel Cursor (alternativa)
-
-1. Abre o **Cursor** → **Dashboard** → **Cloud Agents**
-2. Entra no ambiente **`varejosync`** (repositório P38)
-3. Secção **Secrets** — adiciona cada variável com o **nome exacto** da tabela abaixo
-4. **Grava** e abre uma **nova sessão** Cloud Agent
-
-URL do ambiente (referência):  
-https://cursor.com/dashboard/cloud-agents/environments/e/334db7fa-cbaa-49eb-9dd0-1c1b7a206ced
-
-### Secrets obrigatórios no Cloud Agent
-
-| Secret | Valor (exemplo / onde obter) |
-|--------|------------------------------|
-| `VITE_SUPABASE_URL` | `https://zhonvxkkqabfdyehyxpu.supabase.co` |
-| `VITE_SUPABASE_ANON_KEY` | Supabase → Project Settings → API → **anon public** |
-| `DATABASE_URL` | Supabase → Database → connection string (pooler `:6543`) |
-| `SUPABASE_ACCESS_TOKEN` | https://supabase.com/dashboard/account/tokens (`sbp_…`) |
-
-Opcionais mas úteis no Cloud:
-
-| Secret | Para quê |
-|--------|----------|
-| `VITE_BASE44_APP_ID` + `BASE44_ACCESS_TOKEN` | Auditoria Base44, flares, scripts legado |
-| `SUPABASE_SERVICE_ROLE_KEY` | Scripts admin (nunca no frontend) |
-
-### Validar no Cloud (pede ao agente ou corre na sessão)
-
-```bash
-npm run secrets:check -- --context=cloud-agent
-```
-
-Se aparecer **✓ Pronto**, o ambiente Cloud está configurado. Se falhar, corrige os secrets no painel — **não** copies para ficheiros no repo.
-
-### O que NÃO fazer no Cloud
-
-- **Não** uses o secret `supabase` (minúsculas) — é ambíguo; usa `DATABASE_URL` e `SUPABASE_ACCESS_TOKEN` separados
-- **Não** coles tokens no chat com o agente
-- **Não** cries `.env.local` no repositório — o Cloud Agent lê os Secrets do painel
+**Continuidade:** [P38_CONTINUIDADE_OPERACIONAL.md](./P38_CONTINUIDADE_OPERACIONAL.md)
 
 ---
 

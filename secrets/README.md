@@ -1,48 +1,21 @@
-# Chaves P38 — ficheiro mestre (Cloud)
+# Chaves P38 — ficheiro mestre (legado / não recomendado)
 
-João, este é o **único sítio** onde colas todas as chaves no Cursor Cloud — sem escrever uma a uma no painel Secrets.
+**Configuração profissional:** usa os painéis **GitHub Secrets** e **Cursor Cloud Secrets**.
 
-## Passo a passo
+Guia passo a passo: [`docs/migration/P38_CONFIGURAR_SECRETS_PASSO_A_PASSO.md`](../docs/migration/P38_CONFIGURAR_SECRETS_PASSO_A_PASSO.md)
 
-```bash
-npm run secrets:init
-```
-
-Isto cria `secrets/p38-chaves.txt` (a partir do modelo `p38-chaves.exemplo.txt`).
-
-1. Abre **`secrets/p38-chaves.txt`** no editor
-2. Cola os valores depois de cada `=` (formato `NOME=valor`)
-3. **Grava** o ficheiro
-4. Valida:
+## Auditar se está tudo certo
 
 ```bash
-npm run secrets:check -- --context=cloud-agent
+npm run secrets:audit
 ```
 
-## Como funciona
+Mostra, para cada chave, se está presente e se o acesso funciona — sem mostrar passwords.
 
-- Todos os scripts do repo leem automaticamente `secrets/p38-chaves.txt`
-- Este ficheiro **sobrepõe** secrets antigos/errados do painel Cursor
-- O código distribui cada chave para onde precisa (`DATABASE_URL`, `VITE_*`, deploy, etc.)
+## Ficheiro txt (opcional, não usar como fonte principal)
 
-## Segurança
+O ficheiro `p38-chaves.txt` foi uma alternativa temporária. Para continuidade da empresa, os secrets devem estar no **GitHub** e no **Cursor Cloud**, não num ficheiro local.
 
-| Fazer | Não fazer |
-|-------|-----------|
-| Editar só `secrets/p38-chaves.txt` | Commitar este ficheiro (está no `.gitignore`) |
-| Correr `secrets:check` depois de gravar | Colar chaves no chat com o agente |
-| Usar o modelo `p38-chaves.exemplo.txt` como referência | Partilhar o ficheiro por email/WhatsApp |
+Se ainda existir `p38-chaves.txt`, podes apagá-lo depois de migrar para os painéis.
 
-## DATABASE_URL — atenção
-
-O project ref P38 é **`zhonvxkkqabfdyehyxpu`**. Na connection string pooler, o utilizador deve ser:
-
-```
-postgres.zhonvxkkqabfdyehyxpu
-```
-
-Se for `postgres.OUTRO_REF`, estás noutro projecto Supabase.
-
-## Documentação completa
-
-[`docs/migration/P38_SECRETS_CANONICOS.md`](../docs/migration/P38_SECRETS_CANONICOS.md)
+Modelo de referência (só nomes): `p38-chaves.exemplo.txt`

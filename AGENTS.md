@@ -34,7 +34,7 @@ Guidance for AI agents working in this repository (**varejosync** / P38 ERP — 
 | Production build | `npm run build` |
 | Preview build | `npm run preview` |
 | Secrets checklist | `npm run secrets:check` |
-| Criar ficheiro de chaves | `npm run secrets:init` |
+| Auditar acessos (recomendado) | `npm run secrets:audit` |
 
 There is **no** `test` script; E2E is manual / migration checklists under `docs/migration/`.
 
@@ -51,46 +51,26 @@ tmux -f /exec-daemon/tmux.portal.conf send-keys -t "$SESSION_NAME:0.0" 'cd /work
 
 Vite binds to **localhost:5173** by default (no `--host`). For browser testing from the VM desktop, `http://localhost:5173/` is sufficient.
 
-### Environment variables (Cursor Cloud — não local)
+### Environment variables (Cursor Cloud)
 
-João trabalha **só no Cursor Cloud Agent**.
+**Guia passo a passo:** [`docs/migration/P38_CONFIGURAR_SECRETS_PASSO_A_PASSO.md`](docs/migration/P38_CONFIGURAR_SECRETS_PASSO_A_PASSO.md)
 
-**Forma mais simples:** ficheiro mestre `secrets/p38-chaves.txt` (ver [`secrets/README.md`](secrets/README.md)):
+Gravar secrets em **GitHub Actions** (produção) e **Cursor Cloud** (agente) — mesmos nomes, mesmos valores.
 
-```bash
-npm run secrets:init
-# editar secrets/p38-chaves.txt com todas as chaves
-npm run secrets:check -- --context=cloud-agent
-```
+**Auditar:** `npm run secrets:audit`
 
-Alternativa: **Cursor → Dashboard → Cloud Agents → varejosync → Secrets** (uma variável de cada vez).
-
-- **Mapa canónico:** [`docs/migration/P38_SECRETS_CANONICOS.md`](docs/migration/P38_SECRETS_CANONICOS.md)
-- O ficheiro `secrets/p38-chaves.txt` está no `.gitignore` — nunca commitar
-- **Continuidade:** após validar no txt, espelhar secrets no GitHub — ver [P38_CONTINUIDADE_OPERACIONAL.md](docs/migration/P38_CONTINUIDADE_OPERACIONAL.md)
+- **Referência:** [`docs/migration/P38_SECRETS_CANONICOS.md`](docs/migration/P38_SECRETS_CANONICOS.md)
+- **Continuidade:** [`docs/migration/P38_CONTINUIDADE_OPERACIONAL.md`](docs/migration/P38_CONTINUIDADE_OPERACIONAL.md)
 - Optional **Supabase** hybrid testing: see `docs/migration/SUPABASE_TEST_SETUP.md` (`supabase start`, `VITE_USE_SUPABASE_ENTITIES=true`).
 - Build/dev may log `[base44] Proxy not enabled (VITE_BASE44_APP_BASE_URL not set)` — expected without proxy env; build still succeeds.
 
 ### Base44 + Supabase — secrets no Cloud Agent
 
-Para o agente consultar **dados reais** (lançamentos, auditoria, migrações, flares):
+Ver guia passo a passo. Mínimo Supabase: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `DATABASE_URL`, `SUPABASE_ACCESS_TOKEN`.
 
-1. **Cursor** → **Dashboard** → **Cloud Agents** → ambiente **`varejosync`** → **Secrets** (não colar tokens no chat).
-2. Adicionar variáveis com **nomes exactos** (ver tabela em `P38_SECRETS_CANONICOS.md`):
+Opcional Base44 (auditoria/flares): `VITE_BASE44_APP_ID`, `VITE_BASE44_BACKEND_URL`, `BASE44_ACCESS_TOKEN` ou `BASE44_API_KEY`.
 
-| Variável | Obrigatório | Valor |
-|----------|-------------|--------|
-| `VITE_SUPABASE_URL` | Sim (Supabase) | `https://zhonvxkkqabfdyehyxpu.supabase.co` |
-| `VITE_SUPABASE_ANON_KEY` | Sim (Supabase) | Supabase → API → anon public |
-| `DATABASE_URL` | Sim (migrações) | Supabase → Database → connection string |
-| `SUPABASE_ACCESS_TOKEN` | Sim (functions) | PAT `sbp_…` em supabase.com/account/tokens |
-| `VITE_BASE44_APP_ID` | Para Base44 | App ID P38 |
-| `VITE_BASE44_BACKEND_URL` | Para Base44 | `https://p38.base44.app` |
-| `BASE44_ACCESS_TOKEN` ou `BASE44_API_KEY` | Para Base44 | Um dos dois |
-
-3. **Remover** o secret legado `supabase` (minúsculas) se existir — usar nomes canónicos separados.
-4. Reiniciar ou abrir **nova sessão** Cloud Agent após gravar secrets.
-5. Validar: `npm run secrets:check -- --context=cloud-agent`
+Após gravar secrets no Cursor: **nova sessão** → `npm run secrets:audit`
 
 ### Lint / typecheck expectations
 
