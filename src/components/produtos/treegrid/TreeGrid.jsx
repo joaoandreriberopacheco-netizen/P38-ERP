@@ -322,16 +322,12 @@ function skuCellValue(colId, produto, margem, lastro, markup, salesVelocityMap =
     case 'estoque_atual': {
       const est = resolveCatalogEstoqueExibicao(produto, catalogStockContext);
       return (
-        <span className="text-xs text-muted-foreground tabular-nums inline-flex flex-col leading-tight items-end">
-          <span>
-            {est.virtual && est.pendente > 0 ? '~' : ''}
-            {fmtN(est.quantidade)} {est.unidade}
-          </span>
-          {est.virtual && est.pendente > 0 ? (
-            <span className="text-[9px] text-sky-700 dark:text-sky-300">
-              {fmtN(est.fisico)} + {fmtN(est.pendente)} trânsito
-            </span>
-          ) : null}
+        <span
+          className="text-xs text-muted-foreground tabular-nums"
+          title={est.virtual && est.pendente > 0 ? 'Estoque virtual (inclui pedidos em trânsito)' : undefined}
+        >
+          {est.virtual && est.pendente > 0 ? '~' : ''}
+          {fmtN(est.quantidade)} {est.unidade}
         </span>
       );
     }

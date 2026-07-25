@@ -113,18 +113,13 @@ function renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, fo
     case 'estoque_atual': {
       const est = resolveCatalogEstoqueExibicao(produto, catalogStockContext);
       return (
-        <TableCell key={col} className="text-xs text-foreground/90">
-          <div className="flex flex-col leading-tight tabular-nums">
-            <span>
-              {est.virtual && est.pendente > 0 ? '~' : ''}
-              {formatarNumero(est.quantidade)} {est.unidade}
-            </span>
-            {est.virtual && est.pendente > 0 ? (
-              <span className="text-[10px] text-sky-700 dark:text-sky-300 mt-0.5">
-                {formatarNumero(est.fisico)} + {formatarNumero(est.pendente)} trânsito
-              </span>
-            ) : null}
-          </div>
+        <TableCell
+          key={col}
+          className="text-xs text-foreground/90 tabular-nums"
+          title={est.virtual && est.pendente > 0 ? 'Estoque virtual (inclui pedidos em trânsito)' : undefined}
+        >
+          {est.virtual && est.pendente > 0 ? '~' : ''}
+          {formatarNumero(est.quantidade)} {est.unidade}
         </TableCell>
       );
     }

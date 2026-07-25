@@ -1,5 +1,4 @@
-import { resolveSugestaoQuantidadeVitrine } from '@/lib/sugestaoCompraVitrineDisplay';
-import { formatEstoqueApresentacao } from '@/lib/productUnits';
+import { formatEstoqueApresentacao, formatQuantidadeCatalogoApresentacao } from '@/lib/productUnits';
 
 export function createCatalogStockContext(estoqueVirtual = false, pendentePorProduto = {}) {
   return {
@@ -59,12 +58,12 @@ export function resolveCatalogEstoqueExibicao(produto, catalogStockContext = nul
     };
   }
 
-  const pendenteDisp = resolveSugestaoQuantidadeVitrine(produto, pendenteBase);
+  const pendenteDisp = formatQuantidadeCatalogoApresentacao(produto, pendenteBase);
   const pendente = Number(pendenteDisp.quantidade) || 0;
 
   return {
     quantidade: fisico.quantidade + pendente,
-    unidade: fisico.unidade || pendenteDisp.unidade,
+    unidade: fisico.unidade || pendenteDisp.sigla,
     rotulo: fisico.rotulo,
     fisico: fisico.quantidade,
     pendente,
