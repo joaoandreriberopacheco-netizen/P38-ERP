@@ -115,6 +115,12 @@ function withSafeFallback(sectionName, candidateSection, fallbackSection) {
     return fallbackSection || {};
   }
 
+  // Com provider Supabase (ou bypass Base44), nunca voltar ao stub Base44 — mascara o erro real
+  // (ex.: PDV Caixa mostrava "Base44 indisponível" quando processar-venda-caixa falhava).
+  if (providerName === providers.SUPABASE || bypassBase44) {
+    return candidateSection;
+  }
+
   if (!safeMode || !fallbackSection) {
     return candidateSection;
   }
