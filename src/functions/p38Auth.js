@@ -85,6 +85,7 @@ export async function invokeP38Auth(body, { authorized = false } = {}) {
   }
 
   let response = null;
+  let data = null;
   let lastNetworkError = null;
   let lastHttpError = null;
 
@@ -92,16 +93,19 @@ export async function invokeP38Auth(body, { authorized = false } = {}) {
     const headers = buildHeaders(url, { authorized, anonKey, sessionToken });
     try {
       const attempt = await postJson(url, headers, body);
-      if (attempt.ok) {
-        response = attempt;
-        break;
-      }
       let payload = null;
       try {
         payload = await attempt.json();
       } catch {
         payload = null;
       }
+
+      if (attempt.ok) {
+        response = attempt;
+        data = payload;
+        break;
+      }
+
       const msg = payload?.error || payload?.message || `HTTP ${attempt.status}`;
       // JWT inválido no proxy → tentar URL directa seguinte.
       if (/invalid jwt/i.test(msg) && urls.length > 1) {
@@ -109,6 +113,7 @@ export async function invokeP38Auth(body, { authorized = false } = {}) {
         continue;
       }
       response = attempt;
+      data = payload;
       break;
     } catch (err) {
       lastNetworkError = err;
@@ -122,13 +127,6 @@ export async function invokeP38Auth(body, { authorized = false } = {}) {
         ? 'Sem ligação ao servidor de autenticação. Verifique a internet e tente novamente.'
         : lastNetworkError?.message || 'Falha ao contactar o servidor de autenticação.'
     );
-  }
-
-  let data = null;
-  try {
-    data = await response.json();
-  } catch {
-    data = null;
   }
 
   if (!response.ok) {
