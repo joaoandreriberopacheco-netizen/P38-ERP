@@ -64,8 +64,20 @@ const CATALOGO_MOBILE_DESC_MIN_H = 'min-h-[3.75rem]';
 const CATALOGO_MOBILE_DESC_GAP = 'mb-2.5';
 const CATALOGO_MOBILE_NOME_TYPO =
   'text-[12px] font-light leading-relaxed uppercase break-words [overflow-wrap:anywhere]';
-const CATALOGO_MOBILE_ROW_H_GROUP = 148;
+const CATALOGO_MOBILE_ROW_H_GROUP = 118;
 const CATALOGO_MOBILE_ROW_H_SKU = 196;
+
+/** Faixa de grupo — faixa analítica compacta (≠ linha de produto). */
+const CATALOG_MOBILE_GROUP_BAND = {
+  root: 'bg-[#4a5240]/10 dark:bg-[#a4ce33]/10 border-b border-[#4a5240]/20 dark:border-[#a4ce33]/25',
+  nested: 'bg-muted/45 dark:bg-muted/20 border-b border-border/50',
+  category: 'bg-muted/60 dark:bg-muted/25 border-b border-border/60',
+};
+/** Linha de SKU — cartão de produto dentro da rua. */
+const CATALOG_MOBILE_SKU_SURFACE = {
+  root: 'bg-background border-b border-border/40',
+  nested: 'bg-background/95 border-b border-border/35 shadow-[inset_0_1px_0_0_hsl(var(--border)/0.35)]',
+};
 
 const CatalogoMobileScrollContext = createContext(null);
 
@@ -180,23 +192,50 @@ function catalogStockAccentKey(stockTone) {
 }
 
 /** Coluna esquerda: qtd + UN empilhados; border-r separa do bloco descrição/valores à direita. */
-function CatalogoMobileQtdUnCol({ quantidade, unidade, stockTone = 'success', virtualActive = false }) {
+function CatalogoMobileQtdUnCol({
+  quantidade,
+  unidade,
+  stockTone = 'success',
+  virtualActive = false,
+  emphasis = false,
+}) {
   const accentKey = catalogStockAccentKey(stockTone);
   const dotClass = p38Accent[accentKey]?.dot || p38Table.accentDot;
+  const qtyClass = emphasis
+    ? `${CATALOGO_MOBILE_BODY_TEXT} tabular-nums leading-none text-foreground font-semibold`
+    : `${CATALOGO_MOBILE_BODY_TEXT} tabular-nums leading-none text-foreground`;
 
   return (
     <CatalogoMobileQtdColShell>
       <span className={`absolute left-0 top-3.5 w-1.5 h-1.5 rounded-full ${dotClass}`} aria-hidden />
-      <p className={`${CATALOGO_MOBILE_BODY_TEXT} tabular-nums leading-none text-foreground`}>
+      <p className={qtyClass}>
         {virtualActive ? '~' : ''}{fmtN(quantidade)}
       </p>
-      <p className={`${CATALOGO_MOBILE_BODY_TEXT} uppercase text-muted-foreground mt-1.5 leading-none truncate`}>
+      <p className={`${CATALOGO_MOBILE_BODY_TEXT} uppercase text-muted-foreground mt-1.5 leading-none truncate ${emphasis ? 'font-medium' : ''}`}>
         {unidade}
       </p>
     </CatalogoMobileQtdColShell>
   );
 }
 
+function catalogoGroupMetricValueClass(key) {
+  if (key === 'markup') return `${MARGIN_ACCENT_VALUE} font-normal`;
+  if (key === 'inventarioValorizado') return 'text-foreground font-medium';
+  return 'text-muted-foreground font-light';
+}
+
+function catalogoGroupBandClass(row) {
+  if (row?.isCategoryBand) return CATALOG_MOBILE_GROUP_BAND.category;
+  if ((row?.level ?? 1) <= 1) return CATALOG_MOBILE_GROUP_BAND.root;
+  return CATALOG_MOBILE_GROUP_BAND.nested;
+}
+
+function catalogoSkuSurfaceClass(row, underOpenGroup = false) {
+  if (underOpenGroup || (row?.level ?? 1) > 1) {
+    return CATALOG_MOBILE_SKU_SURFACE.nested;
+  }
+  return CATALOG_MOBILE_SKU_SURFACE.root;
+}
 function catalogoMetricValueClass(key) {
   if (key === 'markup') {
     return `${MARGIN_ACCENT_VALUE} font-normal`;
@@ -471,8 +510,8 @@ function CatalogoMobileTabulatedValues({ produto, catalogStockContext = null, cl
   );
 }
 
-// ── Linha de SKU (padrão relatório compras / margem mobile expandido) ─────────
-const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing, catalogStockContext = null }) {
+// ── Linha de SKU — cartão de produto (grelha completa, ≠ faixa de família) ─────
+const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing, catalogStockContext = null, underOpenGroup = false }) {
   const p = row.produto;
   const est = resolveCatalogEstoqueExibicao(p, catalogStockContext);
   const estoqueExibicao = est.quantidade;
@@ -482,11 +521,17 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing, catalo
   const stockTone = !p.ativo ? 'muted' : estoqueExibicao <= 0 ? 'danger' : estoqueExibicao <= m ? 'warning' : 'success';
   const tier = getCatalogRowTier(row);
   const apresent = formatEstoqueApresentacao(p);
+  const isNested = underOpenGroup || (row.level ?? 1) > 1;
+
   return (
-    <div className={cn(p38Table.catalogMobileRow, 'flex min-w-0 max-w-full py-5 tablet-portrait:py-6')}>
+    <div className={cn(
+      p38Table.catalogMobileRow,
+      'flex min-w-0 max-w-full py-4 tablet-portrait:py-5',
+      catalogoSkuSurfaceClass(row, underOpenGroup),
+    )}>
       <button
         type="button"
-        className="flex flex-1 min-w-0 text-left active:bg-secondary/30 dark:active:bg-secondary/50"
+        className="flex flex-1 min-w-0 text-left active:bg-secondary/20 dark:active:bg-secondary/40"
         onClick={() => onEdit(p)}
       >
         <div className={cn('flex flex-1 min-w-0 items-stretch', CATALOG_ROW_PL)}>
@@ -497,15 +542,23 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing, catalo
             virtualActive={virtualActive}
           />
           <div
-            className="flex-1 min-w-0 overflow-hidden py-1 pr-2"
+            className={cn(
+              'flex-1 min-w-0 overflow-hidden py-1 pr-2',
+              isNested && 'border-l border-dashed border-border/35 dark:border-white/10',
+            )}
             style={{ paddingLeft: catalogContentPadAfterLine(row.level ?? 1) }}
           >
+            <div className="mb-1 flex items-center gap-1.5">
+              <span className="text-[9px] font-semibold uppercase tracking-wide text-primary/80 dark:text-[#a4ce33]/90">
+                SKU
+              </span>
+              {p.codigo_interno && (
+                <span className="text-[10px] font-mono truncate text-muted-foreground">
+                  #{p.codigo_interno}
+                </span>
+              )}
+            </div>
             <CatalogoMobileDescBlock nome={p.nome} tier={tier} />
-            {p.codigo_interno && (
-              <p className="mb-2 text-[10px] font-mono truncate text-muted-foreground">
-                #{p.codigo_interno}
-              </p>
-            )}
             <CatalogoMobileTabulatedValues produto={p} catalogStockContext={catalogStockContext} className="mt-0.5" />
             {apresent && (
               <p className="mt-2 text-[9px] text-muted-foreground truncate">
@@ -516,7 +569,7 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing, catalo
         </div>
       </button>
 
-      <div className="flex items-start justify-center pt-5 pr-3 w-12 flex-shrink-0">
+      <div className="flex items-start justify-center pt-4 pr-3 w-12 flex-shrink-0">
         <Button
           type="button"
           variant="ghost"
@@ -578,19 +631,39 @@ function groupHierarchyLabel(row) {
   return 'Subfamília';
 }
 
-function CatalogoMobileGroupTabulatedValues({ inventario }) {
-  const inventarioFmt = inventario > 0 ? formatCatalogoMobileNum(inventario) : '—';
-  const values = {
-    valorCompra: '—',
-    custoCalculado: '—',
-    markup: '—',
-    precoVenda: '—',
-    inventarioValorizado: inventarioFmt,
-    estoqueAtual: '—',
+function buildGroupMobileTabulatedValues(row, catalogStockContext = null) {
+  const skus = collectSkus(row?.node);
+  let inventario = 0;
+  for (const sku of skus) {
+    inventario += lineValorCustoTotal(sku, catalogStockContext);
+  }
+  const tildeNum = (value) => {
+    const n = Number(value);
+    return Number.isFinite(n) && n > 0 ? `~${formatCatalogoMobileNum(n)}` : '—';
+  };
+  const tildePct = (value) => {
+    const n = Number(value);
+    return Number.isFinite(n) && n > 0 ? `~${formatCatalogoMobilePct(n)}` : '—';
   };
 
+  return {
+    valorCompra: tildeNum(row?.valorCompraMedio),
+    custoCalculado: tildeNum(row?.custoMedio),
+    markup: tildePct(row?.markupMedio),
+    precoVenda: tildeNum(row?.precoMedio),
+    inventarioValorizado: inventario > 0 ? formatCatalogoMobileNum(inventario) : '—',
+    estoqueAtual: '—',
+  };
+}
+
+function CatalogoMobileGroupAnalyticsStrip({ row, catalogStockContext = null }) {
+  const values = useMemo(
+    () => buildGroupMobileTabulatedValues(row, catalogStockContext),
+    [row, catalogStockContext],
+  );
+
   return (
-    <div className="min-w-0 overflow-hidden mt-0.5">
+    <div className="min-w-0 overflow-hidden mt-1.5">
       {CATALOGO_MOBILE_VALUE_ROWS.map((valueRow, rowIdx) => (
         <div
           key={rowIdx}
@@ -602,9 +675,7 @@ function CatalogoMobileGroupTabulatedValues({ inventario }) {
               className={cn(
                 CATALOGO_MOBILE_BODY_TEXT,
                 'tabular-nums text-right truncate',
-                key === 'inventarioValorizado' && inventario > 0
-                  ? 'text-foreground/90 font-light'
-                  : 'text-muted-foreground/70',
+                catalogoGroupMetricValueClass(key),
               )}
             >
               {values[key]}
@@ -616,50 +687,12 @@ function CatalogoMobileGroupTabulatedValues({ inventario }) {
   );
 }
 
-function CatalogoMobileGroupDescBlock({ nome, tier, hierarchyLabel, skuCount, criticalCount }) {
-  return (
-    <div className="min-w-0 overflow-hidden">
-      <div className="mb-1 flex flex-wrap items-center gap-1.5">
-        <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
-          {hierarchyLabel}
-        </span>
-        <Badge
-          variant="outline"
-          className={cn(
-            'h-5 px-1.5 text-[10px] font-light',
-            tier === 'pai'
-              ? 'border-border/40 text-foreground dark:border-border/40 dark:text-foreground'
-              : 'border-border/40 text-muted-foreground dark:border-border/40 dark:text-muted-foreground',
-          )}
-        >
-          {skuCount} {skuCount === 1 ? 'SKU' : 'SKUs'}
-        </Badge>
-        {criticalCount > 0 && (
-          <Badge variant="outline" className="h-5 truncate border-red-200 px-1.5 text-[10px] font-medium text-red-600 dark:border-red-800 dark:text-red-400">
-            {criticalCount} {criticalCount > 1 ? 'críticos' : 'crítico'}
-          </Badge>
-        )}
-      </div>
-      <p
-        lang="pt-BR"
-        className={cn(
-          'line-clamp-2 min-h-[2.5rem]',
-          CATALOGO_MOBILE_NOME_TYPO,
-          tier === 'pai' ? 'font-medium text-foreground' : catalogNomeColorClass(tier),
-        )}
-      >
-        {nome}
-      </p>
-    </div>
-  );
-}
-
 // ── Barra expandir/colapsar (mobile) ───────────────────────────────────────────
 function CatalogoMobileTreeToolbar({ onExpandAll, onCollapseAll }) {
   return (
     <div className="flex items-center justify-between gap-2 border-b border-border/40 bg-muted/25 px-3 py-2 dark:border-white/10">
       <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-        Grupos
+        Árvore
       </span>
       <div className="flex items-center gap-1.5">
         <Button
@@ -685,9 +718,8 @@ function CatalogoMobileTreeToolbar({ onExpandAll, onCollapseAll }) {
   );
 }
 
-// ── Cabeçalho de grupo ─────────────────────────────────────────────────────────
+// ── Faixa de grupo (resumo analítico — não é linha de produto) ─────────────────
 const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle, catalogStockContext = null }) {
-  const tier = getCatalogRowTier(row);
   const metrics = useMemo(
     () => buildGroupMobileMetrics(row, catalogStockContext),
     [row, catalogStockContext],
@@ -697,15 +729,17 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle,
     [metrics.est, row],
   );
   const hierarchyLabel = groupHierarchyLabel(row);
+  const level = row?.level ?? 1;
 
   return (
     <button
       type="button"
       onClick={() => onToggle(row.key)}
+      aria-expanded={isExpanded}
       className={cn(
         p38Table.catalogMobileRow,
-        'flex w-full min-w-0 text-left overflow-hidden',
-        tier === 'pai' ? 'bg-muted/20 dark:bg-muted/10' : 'bg-transparent',
+        'flex w-full min-w-0 text-left overflow-hidden py-2.5',
+        catalogoGroupBandClass(row),
       )}
     >
       <div className={cn('flex flex-1 min-w-0 items-stretch', CATALOG_ROW_PL)}>
@@ -714,29 +748,43 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle,
           unidade={stockCol.unidade}
           stockTone={stockCol.stockTone}
           virtualActive={stockCol.virtualActive}
+          emphasis
         />
         <div
-          className="flex-1 min-w-0 overflow-hidden py-2 pr-3"
-          style={{ paddingLeft: catalogContentPadAfterLine(row.level ?? 1) }}
+          className="flex-1 min-w-0 overflow-hidden pr-2"
+          style={{ paddingLeft: catalogContentPadAfterLine(level) }}
         >
-          <div className="flex min-w-0 items-start gap-1">
+          <div className="flex min-w-0 items-center gap-1.5">
             <ChevronRight
               className={cn(
-                'mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-muted-foreground md:transition-transform md:duration-150',
+                'h-4 w-4 flex-shrink-0 text-foreground/70 md:transition-transform md:duration-150',
                 isExpanded && 'rotate-90',
               )}
             />
-            <div className="min-w-0 flex-1">
-              <CatalogoMobileGroupDescBlock
-                nome={row.label}
-                tier={tier}
-                hierarchyLabel={hierarchyLabel}
-                skuCount={metrics.skuCount}
-                criticalCount={row.criticalCount || 0}
-              />
-              <CatalogoMobileGroupTabulatedValues inventario={metrics.inventario} />
-            </div>
+            <span className="text-[9px] font-bold uppercase tracking-wider text-foreground/75 dark:text-foreground/85">
+              {hierarchyLabel}
+            </span>
+            <span className="text-[10px] tabular-nums text-muted-foreground">
+              {metrics.skuCount} {metrics.skuCount === 1 ? 'SKU' : 'SKUs'}
+            </span>
+            {row.criticalCount > 0 && (
+              <Badge variant="outline" className="h-5 truncate border-red-200 px-1.5 text-[10px] font-medium text-red-600 dark:border-red-800 dark:text-red-400">
+                {row.criticalCount} crít.
+              </Badge>
+            )}
           </div>
+          <p
+            lang="pt-BR"
+            className={cn(
+              'mt-0.5 line-clamp-1 uppercase tracking-wide',
+              level <= 1
+                ? 'text-[12px] font-semibold text-foreground'
+                : 'text-[11px] font-medium text-foreground/85',
+            )}
+          >
+            {row.label}
+          </p>
+          <CatalogoMobileGroupAnalyticsStrip row={row} catalogStockContext={catalogStockContext} />
         </div>
       </div>
     </button>
@@ -956,25 +1004,33 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
         <CatalogoMobileSacredAxis />
         <div className="relative border-b border-border/40 dark:border-white/10 bg-background">
           {paddingTop > 0 && <div aria-hidden="true" style={{ height: paddingTop }} />}
-          {visibleRows.map(row => (
-            <div key={row.key}>
-              {row.type === 'group' ? (
-                <GroupHeader
-                  row={row}
-                  isExpanded={expandedKeys.has(row.key)}
-                  onToggle={handleToggle}
-                  catalogStockContext={catalogStockContext}
-                />
-              ) : (
-                <SkuCard
-                  row={row}
-                  onEdit={onEdit}
-                  onOpenPricing={setPricingProduto}
-                  catalogStockContext={catalogStockContext}
-                />
-              )}
-            </div>
-          ))}
+          {visibleRows.map((row, index) => {
+            const prev = index > 0 ? visibleRows[index - 1] : null;
+            const underOpenGroup = row.type === 'sku'
+              && prev?.type === 'group'
+              && expandedKeys.has(prev.key);
+
+            return (
+              <div key={row.key}>
+                {row.type === 'group' ? (
+                  <GroupHeader
+                    row={row}
+                    isExpanded={expandedKeys.has(row.key)}
+                    onToggle={handleToggle}
+                    catalogStockContext={catalogStockContext}
+                  />
+                ) : (
+                  <SkuCard
+                    row={row}
+                    onEdit={onEdit}
+                    onOpenPricing={setPricingProduto}
+                    catalogStockContext={catalogStockContext}
+                    underOpenGroup={underOpenGroup}
+                  />
+                )}
+              </div>
+            );
+          })}
           {paddingBottom > 0 && <div aria-hidden="true" style={{ height: paddingBottom }} />}
         </div>
       </div>
