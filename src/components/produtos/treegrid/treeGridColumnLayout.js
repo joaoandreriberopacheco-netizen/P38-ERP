@@ -5,8 +5,11 @@ import {
   formatCatalogMedia30d,
   formatCatalogMetaQuantidade,
   formatCatalogPontoEsperadoLt,
+  formatCatalogPontoFuturo,
+  formatCatalogPontoFuturoQuantidade,
   formatCatalogSalesQuantity,
   getCatalogLeadTimeDias,
+  getCatalogMedia30dFrom60d,
 } from '@/lib/catalogSalesVelocity';
 import { aggregateEstoqueDisplay, collectSkus, aggregateMetaEstoqueDisplay } from './useTreeGrid';
 
@@ -95,6 +98,7 @@ function skuCellText(colId, produto, row, salesVelocityMap = {}) {
       return `${fmtN(qtd)} ${un}`;
     }
     case 'media_30d': return formatCatalogMedia30d(velocity) || '—';
+    case 'ponto_futuro': return formatCatalogPontoFuturo(produto, velocity) || '—';
     case 'ponto_esperado_lt': {
       const lt = getCatalogLeadTimeDias(produto);
       return formatCatalogPontoEsperadoLt(velocity, lt) || '—';
@@ -146,6 +150,16 @@ function groupCellText(colId, row, salesVelocityMap = {}) {
       const skus = collectSkus(row.node);
       const agg = aggregateCatalogSalesVelocity(skus, salesVelocityMap);
       return formatCatalogMedia30d(agg, { tilde: true }) || '—';
+    }
+    case 'ponto_futuro': {
+      const skus = collectSkus(row.node);
+      const est = aggregateEstoqueDisplay(skus);
+      const velAgg = aggregateCatalogSalesVelocity(skus, salesVelocityMap);
+      const media30 = getCatalogMedia30dFrom60d(velAgg);
+      if (est.mode === 'empty') return '—';
+      const ponto = est.quantidade - media30;
+      const un = velAgg.unidade || est.sigla;
+      return formatCatalogPontoFuturoQuantidade(ponto, un, { tilde: true }) || '—';
     }
     case 'ponto_esperado_lt': {
       const skus = collectSkus(row.node);

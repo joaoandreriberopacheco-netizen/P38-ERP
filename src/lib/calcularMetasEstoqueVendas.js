@@ -4,7 +4,7 @@
  * - Média diária: vendas dos últimos 60 dias corridos ÷ 60 (unidade base)
  * - Alinha com a coluna «Média 30d» do catálogo (mesma janela, sem outliers)
  * - Lead time: tempo_reposicao_dias ou 20 dias
- * - Ponto de pedido (mínimo): média × 1,5 × lead time
+ * - Ponto de pedido (mínimo): média × 0,5 × lead time (só com velocidade de venda)
  * - Ideal / pedido: média × lead time
  */
 
@@ -22,7 +22,7 @@ import {
 export const METAS_ESTOQUE_JANELA_DIAS = 90;
 export const METAS_ESTOQUE_LEAD_TIME_PADRAO = 20;
 
-/** Ponto de pedido em unidade base: média diária × 1,5 × dias de reposição. */
+/** Ponto de pedido em unidade base: média diária × 0,5 × dias de reposição. */
 export function calcularPontoPedidoBase(mediaDia, leadTimeDias) {
   const m = Number(mediaDia) || 0;
   const lt = Math.max(1, Number(leadTimeDias) || METAS_ESTOQUE_LEAD_TIME_PADRAO);
@@ -36,9 +36,9 @@ export function calcularQuantidadeReposicaoBase(mediaDia, leadTimeDias) {
   return m * lt;
 }
 
-/** Pedido por ciclo com fator 1,5 × lead time (mesma base do ponto de pedido). */
+/** Pedido por ciclo com fator 1 × lead time (estoque ideal). */
 export function calcularQuantidadePedido15LtBase(mediaDia, leadTimeDias) {
-  return calcularPontoPedidoBase(mediaDia, leadTimeDias);
+  return calcularQuantidadeReposicaoBase(mediaDia, leadTimeDias);
 }
 
 function q3(values) {
@@ -217,6 +217,19 @@ export function calcularMetasEstoqueParaProduto(produto, pedidos90d, options = {
         mediaFallbackDiasJanela,
       });
   if (!media.teveMedia) {
+    if (options.zerarSemVelocidade === true) {
+      return {
+        atualizar: true,
+        estoque_minimo: 0,
+        estoque_ideal: 0,
+        motivo: 'sem_velocidade',
+        lead_time_dias: leadTime,
+        dias_com_estoque: media.diasComEstoque ?? null,
+        ...media,
+        metas_estoque_atualizado_em: new Date().toISOString(),
+        metas_estoque_versao: usarMedia60d ? 'v5-media-60d-sem-velocidade-zero' : 'v3-sem-velocidade-zero',
+      };
+    }
     return {
       atualizar: false,
       motivo: !media.teveVenda
@@ -252,7 +265,7 @@ export function calcularMetasEstoqueParaProduto(produto, pedidos90d, options = {
     outliers_descartados: media.outliersDescartados ?? 0,
     linhas_venda_total: media.linhasTotal ?? null,
     metas_estoque_atualizado_em: new Date().toISOString(),
-    metas_estoque_versao: usarMedia60d ? 'v4-media-60d-calendario' : 'v3-ponto-pedido-media-lead-time',
+    metas_estoque_versao: usarMedia60d ? 'v5-media-60d-calendario-05lt' : 'v3-ponto-pedido-media-lead-time',
   };
 }
 

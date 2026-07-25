@@ -247,7 +247,7 @@ function FiltrosPainel({
         </button>
         {!compact ? (
           <p className="text-[11px] text-muted-foreground leading-snug font-mono">
-            Ponto futuro = estoque projetado daqui a 30 dias (estoque atual − média 30d × 30)
+            Ponto futuro = estoque atual − média 30d
           </p>
         ) : null}
       </FilterSection>

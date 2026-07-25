@@ -127,8 +127,8 @@ export function aggregateCatalogSalesVelocity(skus = [], velocityMap = {}) {
 
 export { DIAS_MEDIA };
 
-/** Fator de segurança do estoque mínimo / ponto de pedido: 1,5 × lead time. */
-export const ESTOQUE_MINIMO_LT_FATOR = 1.5;
+/** Fator do estoque mínimo / ponto de pedido: 0,5 × lead time (com velocidade de venda). */
+export const ESTOQUE_MINIMO_LT_FATOR = 0.5;
 
 /** Projeção de 30 dias a partir da média diária dos últimos 60 dias: (qtd60 / 60) × 30. */
 export function getCatalogMedia30dFrom60d(velocity) {
@@ -154,12 +154,51 @@ export function formatCatalogMedia30d(velocity, options = {}) {
   );
 }
 
+/** Estoque na mesma unidade exibida na coluna «Estoque» do catálogo. */
+export function getCatalogEstoqueExibicaoQuantidade(produto) {
+  const apresent = formatEstoqueApresentacao(produto);
+  if (apresent) {
+    return { quantidade: Number(apresent.quantidade) || 0, unidade: apresent.sigla };
+  }
+  const unidade = String(produto?.unidade_principal || 'UN').trim().toUpperCase() || 'UN';
+  return { quantidade: Number(produto?.estoque_atual) || 0, unidade };
+}
+
+/** Ponto futuro = estoque atual − média 30d (mesmas unidades da coluna Média 30d). */
+export function getCatalogPontoFuturo(produto, velocity) {
+  const { quantidade: estoque } = getCatalogEstoqueExibicaoQuantidade(produto);
+  const media30 = getCatalogMedia30dFrom60d(velocity);
+  return estoque - media30;
+}
+
+export function formatCatalogPontoFuturoQuantidade(ponto, unidade, options = {}) {
+  const qty = Number(ponto);
+  if (!Number.isFinite(qty)) return null;
+  const abs = Math.abs(qty);
+  const text = formatCatalogSalesQuantity(abs, unidade, { ...options, dashIfZero: false });
+  if (!text) {
+    if (qty === 0 && unidade) return `0 ${unidade}`;
+    return null;
+  }
+  if (qty < 0) return `−${text.replace(/^~/, '')}`;
+  return text;
+}
+
+/** Texto da coluna «Ponto futuro» (estoque atual − média 30d). */
+export function formatCatalogPontoFuturo(produto, velocity, options = {}) {
+  const est = getCatalogEstoqueExibicaoQuantidade(produto);
+  const media30 = getCatalogMedia30dFrom60d(velocity);
+  if (est.quantidade === 0 && media30 <= 0) return null;
+  const unidade = velocity?.unidade || est.unidade;
+  return formatCatalogPontoFuturoQuantidade(getCatalogPontoFuturo(produto, velocity), unidade, options);
+}
+
 /** Lead time do produto (tempo_reposicao_dias) ou padrão. */
 export function getCatalogLeadTimeDias(produto, leadTimePadrao = 20) {
   return Math.max(1, Number(produto?.tempo_reposicao_dias) || leadTimePadrao);
 }
 
-/** Ponto de pedido esperado (unidade comercial): Média 30d × 1,5 × (lead time ÷ 30). */
+/** Ponto de pedido esperado (unidade comercial): Média 30d × 0,5 × (lead time ÷ 30). */
 export function getCatalogPontoEsperadoLt(velocity, leadTimeDias = 20) {
   const media30 = getCatalogMedia30dFrom60d(velocity);
   const lt = Math.max(1, Number(leadTimeDias) || 20);
