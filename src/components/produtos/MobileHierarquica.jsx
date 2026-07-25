@@ -6,6 +6,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCatalogTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders, catalogProdutosStructureSig } from './treegrid/useTreeGrid';
 import {
+  catalogGroupAnalysisSig,
+  getCatalogFlattenOptions,
+  pruneTreeForGroupAnalysis,
+} from '@/lib/catalogGroupAnalysis';
+import {
   buildPurchaseUnitOptions,
   buildSaleUnitOptions,
   formatEstoqueApresentacao,
@@ -657,16 +662,33 @@ export function CatalogoMobileScrollShell({ catalogChrome, children }) {
 }
 
 // ── Componente principal ───────────────────────────────────────────────────────
-export default function MobileHierarquica({ produtos, onEdit, groupByCategory = false, masterLevel = 2, onExpandedKeysChange }) {
+export default function MobileHierarquica({ produtos, onEdit, groupByCategory = false, masterLevel = 2, onExpandedKeysChange, catalogFilters = null, salesVelocityMap = {}, catalogStockContext = null }) {
   const scrollRef = useCatalogoMobileScrollRef();
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [pricingProduto, setPricingProduto] = useState(null);
   const pendingScrollRestoreRef = useRef(null);
 
-  const tree = useCatalogTreeGrid(produtos, { groupByCategory });
+  const rawTree = useCatalogTreeGrid(produtos, { groupByCategory });
+  const tree = useMemo(
+    () =>
+      pruneTreeForGroupAnalysis(rawTree, {
+        filters: catalogFilters,
+        salesVelocityMap,
+        catalogStockContext,
+      }),
+    [rawTree, catalogFilters, salesVelocityMap, catalogStockContext],
+  );
   const produtosStructureSig = useMemo(
     () => catalogProdutosStructureSig(produtos, { groupByCategory }),
     [produtos, groupByCategory]
+  );
+  const groupAnalysisSig = useMemo(
+    () => catalogGroupAnalysisSig(catalogFilters),
+    [catalogFilters]
+  );
+  const flattenOptions = useMemo(
+    () => getCatalogFlattenOptions(catalogFilters),
+    [catalogFilters]
   );
 
   // Reinicia expansão só quando filtros/hierarquia mudam — não a cada rebuild por ABCD/IEP ou preços.
@@ -676,16 +698,18 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
     );
     const scrollEl = scrollRef?.current;
     if (scrollEl) scrollEl.scrollTop = 0;
-  }, [produtosStructureSig, groupByCategory, masterLevel, scrollRef]);
+  }, [produtosStructureSig, groupByCategory, masterLevel, groupAnalysisSig, scrollRef, tree]);
 
   useEffect(() => {
     onExpandedKeysChange?.(expandedKeys);
   }, [expandedKeys, onExpandedKeysChange]);
 
   const rows = useMemo(() => {
-    const all = mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expandedKeys));
+    const all = mergeAdjacentDuplicateGroupHeaders(
+      flattenTree(tree, expandedKeys, '', 0, 'az', flattenOptions),
+    );
     return all.filter(r => !(r.type === 'group' && r.count === 0));
-  }, [tree, expandedKeys]);
+  }, [tree, expandedKeys, flattenOptions]);
 
   const shouldVirtualizeRows = rows.length >= CATALOGO_VIRTUALIZE_MIN_ROWS;
 

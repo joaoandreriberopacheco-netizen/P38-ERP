@@ -3,6 +3,11 @@ import { ChevronRight, Package, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCatalogTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders, aggregateEstoqueDisplay, aggregateMetaEstoqueDisplay, collectSkus, catalogProdutosStructureSig, TREE_GRID_EXPAND_ALL_LEVEL } from './useTreeGrid';
+import {
+  catalogGroupAnalysisSig,
+  getCatalogFlattenOptions,
+  pruneTreeForGroupAnalysis,
+} from '@/lib/catalogGroupAnalysis';
 import { formatEstoqueApresentacao, getCatalogoComercialView, getCatalogUnitLabels } from '@/lib/productUnits';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
 import { CATALOGO_VIRTUALIZE_MIN_ROWS } from '@/lib/p38VirtualList';
@@ -22,6 +27,7 @@ import {
   getCatalogMedia30dFrom60d,
   getCatalogPontoFuturo,
 } from '@/lib/catalogSalesVelocity';
+import { aggregateCatalogEstoqueExibicao, resolveCatalogEstoqueExibicao } from '@/lib/catalogEstoqueVirtual';
 
 // ── Formatação ────────────────────────────────────────────────────────────────
 const fmtR   = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -275,7 +281,7 @@ function StatusDot({ produto }) {
 }
 
 // ── Valor de célula SKU ───────────────────────────────────────────────────────
-function skuCellValue(colId, produto, margem, lastro, markup, salesVelocityMap = {}) {
+function skuCellValue(colId, produto, margem, lastro, markup, salesVelocityMap = {}, catalogStockContext = null) {
   const cat = getCatalogoComercialView(produto);
   const velocity = salesVelocityMap[String(produto?.id)];
   switch (colId) {
@@ -314,12 +320,18 @@ function skuCellValue(colId, produto, margem, lastro, markup, salesVelocityMap =
     );
     case 'inventario_valorizado':return <span className="text-xs text-muted-foreground tabular-nums">{lastro > 0 ? fmtR(lastro) : '—'}</span>;
     case 'estoque_atual': {
-      const apresent = formatEstoqueApresentacao(produto);
-      const qtdExibicao = apresent ? apresent.quantidade : produto.estoque_atual;
-      const unExibicao = apresent ? apresent.sigla : (produto.unidade_principal || 'UN');
+      const est = resolveCatalogEstoqueExibicao(produto, catalogStockContext);
       return (
-        <span className="text-xs text-muted-foreground tabular-nums">
-          {fmtN(qtdExibicao)} {unExibicao}
+        <span className="text-xs text-muted-foreground tabular-nums inline-flex flex-col leading-tight items-end">
+          <span>
+            {est.virtual && est.pendente > 0 ? '~' : ''}
+            {fmtN(est.quantidade)} {est.unidade}
+          </span>
+          {est.virtual && est.pendente > 0 ? (
+            <span className="text-[9px] text-sky-700 dark:text-sky-300">
+              {fmtN(est.fisico)} + {fmtN(est.pendente)} trânsito
+            </span>
+          ) : null}
         </span>
       );
     }
@@ -332,8 +344,8 @@ function skuCellValue(colId, produto, margem, lastro, markup, salesVelocityMap =
       );
     }
     case 'ponto_futuro': {
-      const text = formatCatalogPontoFuturo(produto, velocity);
-      const negativo = getCatalogPontoFuturo(produto, velocity) < 0;
+      const text = formatCatalogPontoFuturo(produto, velocity, {}, catalogStockContext);
+      const negativo = getCatalogPontoFuturo(produto, velocity, catalogStockContext) < 0;
       return (
         <span
           className={cn(
@@ -389,7 +401,7 @@ function skuCellValue(colId, produto, margem, lastro, markup, salesVelocityMap =
 }
 
 // ── Valor agregado para grupos ────────────────────────────────────────────────
-function groupCellValue(colId, row, salesVelocityMap = {}) {
+function groupCellValue(colId, row, salesVelocityMap = {}, catalogStockContext = null) {
   const tilde  = v => v > 0 ? <span className="text-xs text-muted-foreground tabular-nums">~{fmtR(v)}</span> : dash();
   const tildeP = v => v > 0 ? <span className="text-xs text-muted-foreground tabular-nums">~{fmtPct(v)}</span> : dash();
   const dash   = () => <span className="text-xs text-muted-foreground dark:text-foreground/90">—</span>;
@@ -404,7 +416,7 @@ function groupCellValue(colId, row, salesVelocityMap = {}) {
       : dash();
     case 'estoque_atual': {
       const skus = collectSkus(row.node);
-      const disp = aggregateEstoqueDisplay(skus);
+      const disp = aggregateCatalogEstoqueExibicao(skus, catalogStockContext);
       if (disp.mode === 'empty') return dash();
       if (disp.mode === 'mixed') {
         return (
@@ -432,7 +444,7 @@ function groupCellValue(colId, row, salesVelocityMap = {}) {
     }
     case 'ponto_futuro': {
       const skus = collectSkus(row.node);
-      const est = aggregateEstoqueDisplay(skus);
+      const est = aggregateCatalogEstoqueExibicao(skus, catalogStockContext);
       const velAgg = aggregateCatalogSalesVelocity(skus, salesVelocityMap);
       const media30 = getCatalogMedia30dFrom60d(velAgg);
       if (est.mode === 'empty') {
@@ -493,7 +505,7 @@ function groupCellValue(colId, row, salesVelocityMap = {}) {
 }
 
 // ── Linha de Grupo ─────────────────────────────────────────────────────────────
-const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activeCols, produtoWidth, readOnly, salesVelocityMap }) {
+const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activeCols, produtoWidth, readOnly, salesVelocityMap, catalogStockContext }) {
   const isPrimeiroNivel = row.level === 1;
   const hierDepth = catalogHierDepth(row.level);
 
@@ -524,7 +536,7 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
       {activeCols.map(col => (
         <td key={col.id} className="text-right py-2 px-2 whitespace-nowrap"
           style={{ width: col.width, minWidth: col.minW }}>
-          {groupCellValue(col.id, row, salesVelocityMap)}
+          {groupCellValue(col.id, row, salesVelocityMap, catalogStockContext)}
         </td>
       ))}
     </tr>
@@ -532,7 +544,7 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
 });
 
 // ── Linha de SKU ───────────────────────────────────────────────────────────────
-const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, produtoWidth, readOnly, salesVelocityMap }) {
+const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, produtoWidth, readOnly, salesVelocityMap, catalogStockContext }) {
   const p = row.produto;
   const isPrimeiroNivel = row.level === 1;
   const hierDepth = catalogHierDepth(row.level);
@@ -570,7 +582,7 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, p
       {activeCols.map(col => (
         <td key={col.id} className="text-right py-1.5 px-2 whitespace-nowrap"
           style={{ width: col.width, minWidth: col.minW }}>
-          {skuCellValue(col.id, p, row.margem, row.lastro, row.markup, salesVelocityMap)}
+          {skuCellValue(col.id, p, row.margem, row.lastro, row.markup, salesVelocityMap, catalogStockContext)}
         </td>
       ))}
     </tr>
@@ -609,19 +621,36 @@ export function LevelControl({ level, onChange }) {
 // masterLevel é controlado pelo pai (painel fixo da página Produtos).
 // expandedKeys é gerenciado internamente — toggle manual do usuário funciona
 // independente do nível selecionado.
-export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = DEFAULT_COLS, masterLevel = TREE_GRID_EXPAND_ALL_LEVEL, readOnly = false, sortOrder = 'az', groupByCategory = false, onExpandedKeysChange, salesVelocityMap = {} }) {
+export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = DEFAULT_COLS, masterLevel = TREE_GRID_EXPAND_ALL_LEVEL, readOnly = false, sortOrder = 'az', groupByCategory = false, onExpandedKeysChange, salesVelocityMap = {}, catalogStockContext = null, catalogFilters = null }) {
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const scrollContainerRef = useRef(null);
   const treeRef = useRef(null);
   const pendingScrollRestoreRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(0);
 
-  const tree = useCatalogTreeGrid(produtos, { groupByCategory });
+  const rawTree = useCatalogTreeGrid(produtos, { groupByCategory });
+  const tree = useMemo(
+    () =>
+      pruneTreeForGroupAnalysis(rawTree, {
+        filters: catalogFilters,
+        salesVelocityMap,
+        catalogStockContext,
+      }),
+    [rawTree, catalogFilters, salesVelocityMap, catalogStockContext],
+  );
   treeRef.current = tree;
 
   const produtosStructureSig = useMemo(
     () => catalogProdutosStructureSig(produtos, { groupByCategory }),
     [produtos, groupByCategory]
+  );
+  const groupAnalysisSig = useMemo(
+    () => catalogGroupAnalysisSig(catalogFilters),
+    [catalogFilters]
+  );
+  const flattenOptions = useMemo(
+    () => getCatalogFlattenOptions(catalogFilters),
+    [catalogFilters]
   );
 
   // Reinicia expansão só quando filtros/hierarquia mudam — não a cada rebuild por ABCD/IEP ou preços.
@@ -633,15 +662,15 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
     setExpandedKeys(
       masterLevel === 1 ? new Set() : buildExpandedForLevel(treeRef.current, masterLevel - 1)
     );
-  }, [produtosStructureSig, groupByCategory, masterLevel]);
+  }, [produtosStructureSig, groupByCategory, masterLevel, groupAnalysisSig]);
 
   useEffect(() => {
     onExpandedKeysChange?.(expandedKeys);
   }, [expandedKeys, onExpandedKeysChange]);
 
   const rows = useMemo(
-    () => mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expandedKeys, '', 0, sortOrder)),
-    [tree, expandedKeys, sortOrder]
+    () => mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expandedKeys, '', 0, sortOrder, flattenOptions)),
+    [tree, expandedKeys, sortOrder, flattenOptions]
   );
 
   useLayoutEffect(() => {
@@ -760,14 +789,16 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
                         activeCols={layoutCols}
                         produtoWidth={produtoWidth}
                         readOnly={readOnly}
-                        salesVelocityMap={salesVelocityMap} />
+                        salesVelocityMap={salesVelocityMap}
+                        catalogStockContext={catalogStockContext} />
                     : <SkuRow key={row.key} row={row}
                         onEdit={onEdit}
                         onDelete={onDelete || noopDelete}
                         activeCols={layoutCols}
                         produtoWidth={produtoWidth}
                         readOnly={readOnly}
-                        salesVelocityMap={salesVelocityMap} />
+                        salesVelocityMap={salesVelocityMap}
+                        catalogStockContext={catalogStockContext} />
                 )}
                 <VirtualPaddingRow height={paddingBottom} produtoWidth={produtoWidth} activeCols={layoutCols} />
               </>

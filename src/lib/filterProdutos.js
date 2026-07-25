@@ -17,7 +17,9 @@ import {
   CATALOG_NUMERIC_METRIC_LABELS,
 } from '@/lib/catalogNumericFilters';
 import { produtoMatchesAbcdFilter } from '@/lib/catalogAbcdEnrichment';
+import { getCatalogEstoqueExibicaoQuantidade } from '@/lib/catalogSalesVelocity';
 import { getUnidadeExibicaoSigla } from '@/lib/productUnits';
+import { isAnalisePorAgrupamento } from '@/lib/catalogGroupAnalysis';
 
 /** Filtro de quantidade do atalho «somente positivos» (estoque > 0). */
 export const CATALOG_SOMENTE_POSITIVOS_QUANTIDADE = {
@@ -48,6 +50,9 @@ export const DEFAULT_PRODUTO_FILTERS = {
   cadastroIncompleto: 'all',
   ativoStatus: 'ativos',
   unidadeVitrine: 'all',
+  estoqueVirtual: false,
+  analisePorAgrupamento: false,
+  analiseAgrupamentoNivel: '2',
   ...CATALOG_SOMENTE_POSITIVOS_QUANTIDADE,
   ...DEFAULT_CATALOG_METRIC_FILTER,
   ...DEFAULT_CATALOG_METRIC_FILTER_2,
@@ -122,88 +127,123 @@ export function produtoMatchesVitrineFilter(produto, unidadeVitrine = 'all') {
   return String(sigla).trim().toUpperCase() === String(unidadeVitrine).trim().toUpperCase();
 }
 
-function produtoMatchesCatalogMetricFilter(produto, filters, slot, salesVelocityMap) {
+function produtoMatchesCatalogMetricFilter(produto, filters, slot, salesVelocityMap, catalogStockContext) {
   if (!hasActiveCatalogMetricFilter(filters, slot)) return true;
   const { campo, operador, valor, valorAte } = getCatalogMetricFilterKeys(slot);
-  const metricValue = getProdutoNumericMetricValue(produto, filters[campo], { salesVelocityMap });
+  const metricValue = getProdutoNumericMetricValue(produto, filters[campo], {
+    salesVelocityMap,
+    catalogStockContext,
+  });
   if (metricValue === null) return false;
   return matchesNumericComparison(metricValue, filters[operador], filters[valor], filters[valorAte]);
 }
 
-/** Mesma lógica de filtros do catálogo (`Produtos.jsx`). */
-export function filterProdutos(produtos, filters, options = {}) {
-  const { salesVelocityMap = {} } = options;
-  if (!Array.isArray(produtos)) return [];
-  return produtos.filter((p) => {
-    if (!p || typeof p !== 'object') return false;
+function resolveProdutoEstoqueFiltro(produto, catalogStockContext) {
+  if (catalogStockContext?.estoqueVirtual) {
+    return getCatalogEstoqueExibicaoQuantidade(produto, catalogStockContext).quantidade;
+  }
+  return Number(produto?.estoque_atual || 0);
+}
 
-    const searchTermMatch = produtoMatchesSearchTerm(p, filters.searchTerm, {
-      startsWith: !!filters.searchStartsWith,
-    });
-    const categoriaMatch = filters.categoria === 'all' || p.categoria_nome === filters.categoria;
-    const tagMatch =
-      !filters.tag ||
-      (Array.isArray(p.tags) &&
-        p.tags.some((t) => t && t.toLowerCase().includes(String(filters.tag).toLowerCase())));
-    const fornecedorMatch =
-      filters.fornecedorId === 'all' || p.fornecedor_padrao_id === filters.fornecedorId;
-    const vitrineMatch = produtoMatchesVitrineFilter(p, filters.unidadeVitrine);
-    const abcdMatch = produtoMatchesAbcdFilter(p, filters.abcd);
-    const ativoMatch =
-      !filters.ativoStatus ||
-      filters.ativoStatus === 'all' ||
-      (filters.ativoStatus === 'ativos' && p.ativo) ||
-      (filters.ativoStatus === 'inativos' && !p.ativo);
+function produtoMatchesStructuralFilters(p, filters, catalogStockContext) {
+  const searchTermMatch = produtoMatchesSearchTerm(p, filters.searchTerm, {
+    startsWith: !!filters.searchStartsWith,
+  });
+  const categoriaMatch = filters.categoria === 'all' || p.categoria_nome === filters.categoria;
+  const tagMatch =
+    !filters.tag ||
+    (Array.isArray(p.tags) &&
+      p.tags.some((t) => t && t.toLowerCase().includes(String(filters.tag).toLowerCase())));
+  const fornecedorMatch =
+    filters.fornecedorId === 'all' || p.fornecedor_padrao_id === filters.fornecedorId;
+  const vitrineMatch = produtoMatchesVitrineFilter(p, filters.unidadeVitrine);
+  const abcdMatch = produtoMatchesAbcdFilter(p, filters.abcd);
+  const ativoMatch =
+    !filters.ativoStatus ||
+    filters.ativoStatus === 'all' ||
+    (filters.ativoStatus === 'ativos' && p.ativo) ||
+    (filters.ativoStatus === 'inativos' && !p.ativo);
 
-    const quantidadeMatch = () => {
-      if (!hasActiveQuantityFilter(filters)) return true;
-      const estoque = Number(p.estoque_atual || 0);
-      return matchesNumericComparison(
+  const statusMatch = () => {
+    if (filters.statusEstoque === 'all') return true;
+    const estoque = resolveProdutoEstoqueFiltro(p, catalogStockContext);
+    const minimo = p.estoque_minimo || 0;
+
+    if (filters.statusEstoque === 'inativo' && !p.ativo) return true;
+    if (filters.statusEstoque === 'ok' && p.ativo && estoque > minimo) return true;
+    if (filters.statusEstoque === 'baixo' && p.ativo && estoque > 0 && estoque <= minimo) return true;
+    if (filters.statusEstoque === 'critico' && p.ativo && (estoque <= 0 || estoque <= minimo / 2))
+      return true;
+    return false;
+  };
+
+  const cadastroMatch = () => {
+    if (filters.cadastroIncompleto === 'all') return true;
+    const { incompleto } = isCadastroIncompleto(p);
+    if (filters.cadastroIncompleto === 'incompleto') return incompleto;
+    if (filters.cadastroIncompleto === 'completo') return !incompleto;
+    return false;
+  };
+
+  return (
+    searchTermMatch &&
+    categoriaMatch &&
+    tagMatch &&
+    fornecedorMatch &&
+    vitrineMatch &&
+    abcdMatch &&
+    ativoMatch &&
+    statusMatch() &&
+    cadastroMatch()
+  );
+}
+
+function produtoMatchesSkuNumericFilters(p, filters, salesVelocityMap, catalogStockContext) {
+  if (hasActiveQuantityFilter(filters)) {
+    const estoque = resolveProdutoEstoqueFiltro(p, catalogStockContext);
+    if (
+      !matchesNumericComparison(
         estoque,
         filters.quantidadeOperador,
         filters.quantidadeValor,
         filters.quantidadeValorAte,
-      );
-    };
-
-    const metricaMatch = () =>
-      produtoMatchesCatalogMetricFilter(p, filters, 1, salesVelocityMap) &&
-      produtoMatchesCatalogMetricFilter(p, filters, 2, salesVelocityMap);
-
-    const statusMatch = () => {
-      if (filters.statusEstoque === 'all') return true;
-      const estoque = p.estoque_atual || 0;
-      const minimo = p.estoque_minimo || 0;
-
-      if (filters.statusEstoque === 'inativo' && !p.ativo) return true;
-      if (filters.statusEstoque === 'ok' && p.ativo && estoque > minimo) return true;
-      if (filters.statusEstoque === 'baixo' && p.ativo && estoque > 0 && estoque <= minimo) return true;
-      if (filters.statusEstoque === 'critico' && p.ativo && (estoque <= 0 || estoque <= minimo / 2))
-        return true;
+      )
+    ) {
       return false;
-    };
+    }
+  }
 
-    const cadastroMatch = () => {
-      if (filters.cadastroIncompleto === 'all') return true;
-      const { incompleto } = isCadastroIncompleto(p);
-      if (filters.cadastroIncompleto === 'incompleto') return incompleto;
-      if (filters.cadastroIncompleto === 'completo') return !incompleto;
-      return false;
-    };
+  if (!produtoMatchesCatalogMetricFilter(p, filters, 1, salesVelocityMap, catalogStockContext)) {
+    return false;
+  }
+  if (!produtoMatchesCatalogMetricFilter(p, filters, 2, salesVelocityMap, catalogStockContext)) {
+    return false;
+  }
 
-    return (
-      searchTermMatch &&
-      categoriaMatch &&
-      tagMatch &&
-      fornecedorMatch &&
-      vitrineMatch &&
-      abcdMatch &&
-      ativoMatch &&
-      quantidadeMatch() &&
-      metricaMatch() &&
-      statusMatch() &&
-      cadastroMatch()
-    );
+  return true;
+}
+
+/** Cadastro, busca e classificação — sem quantidade nem métricas por SKU. */
+export function filterProdutosStructural(produtos, filters, options = {}) {
+  const { catalogStockContext = null } = options;
+  if (!Array.isArray(produtos)) return [];
+  return produtos.filter((p) => {
+    if (!p || typeof p !== 'object') return false;
+    return produtoMatchesStructuralFilters(p, filters, catalogStockContext);
+  });
+}
+
+/** Mesma lógica de filtros do catálogo (`Produtos.jsx`). */
+export function filterProdutos(produtos, filters, options = {}) {
+  const { salesVelocityMap = {}, catalogStockContext = null } = options;
+  if (!Array.isArray(produtos)) return [];
+  const groupMode = isAnalisePorAgrupamento(filters);
+
+  return produtos.filter((p) => {
+    if (!p || typeof p !== 'object') return false;
+    if (!produtoMatchesStructuralFilters(p, filters, catalogStockContext)) return false;
+    if (groupMode) return true;
+    return produtoMatchesSkuNumericFilters(p, filters, salesVelocityMap, catalogStockContext);
   });
 }
 
@@ -223,6 +263,10 @@ export function countActiveProdutoFilters(filters) {
       filters.quantidadeOperador,
     hasActiveCatalogMetricFilter(filters, 1) && filters.metricaCampo,
     hasActiveCatalogMetricFilter(filters, 2) && filters.metrica2Campo,
+    filters.analisePorAgrupamento && 'analisePorAgrupamento',
+    filters.analisePorAgrupamento &&
+      filters.analiseAgrupamentoNivel !== DEFAULT_PRODUTO_FILTERS.analiseAgrupamentoNivel &&
+      filters.analiseAgrupamentoNivel,
   ].filter(Boolean).length;
 }
 
@@ -279,6 +323,11 @@ export function describeProdutoFilters(filters, { categorias = [], fornecedores 
         filters.quantidadeValorAte,
       )}`
     );
+  }
+  if (filters.estoqueVirtual) parts.push('estoque virtual (pedidos em trânsito)');
+  if (filters.analisePorAgrupamento) {
+    const nivel = filters.analiseAgrupamentoNivel || DEFAULT_PRODUTO_FILTERS.analiseAgrupamentoNivel;
+    parts.push(`análise por agrupamento (nível ${nivel})`);
   }
   for (const slot of [1, 2]) {
     if (!hasActiveCatalogMetricFilter(filters, slot)) continue;

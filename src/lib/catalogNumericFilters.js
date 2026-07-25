@@ -137,7 +137,7 @@ export function filtersNeedSalesVelocity(filters) {
   return false;
 }
 
-export function getProdutoNumericMetricValue(produto, campo, { salesVelocityMap = {} } = {}) {
+export function getProdutoNumericMetricValue(produto, campo, { salesVelocityMap = {}, catalogStockContext = null } = {}) {
   if (!produto || !campo || campo === 'all') return null;
   const cat = getCatalogoComercialView(produto);
   const velocity = salesVelocityMap[String(produto?.id)];
@@ -163,7 +163,7 @@ export function getProdutoNumericMetricValue(produto, campo, { salesVelocityMap 
     case 'media_30d':
       return getCatalogMedia30dFrom60d(velocity);
     case 'ponto_futuro':
-      return getCatalogPontoFuturo(produto, velocity);
+      return getCatalogPontoFuturo(produto, velocity, catalogStockContext);
     case 'ponto_esperado_lt':
       return getCatalogPontoEsperadoLt(velocity, getCatalogLeadTimeDias(produto));
     case 'tempo_reposicao':

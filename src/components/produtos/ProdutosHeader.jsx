@@ -8,6 +8,8 @@ import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizont
 import { DEFAULT_PRODUTO_FILTERS, ABCD_FILTER_VALUES, ABCD_FILTER_LABELS } from '@/lib/filterProdutos';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
 import ProdutosSomentePositivosToggle from '@/components/produtos/ProdutosSomentePositivosToggle';
+import ProdutosEstoqueVirtualToggle from '@/components/produtos/ProdutosEstoqueVirtualToggle';
+import ProdutosAnaliseAgrupamentoControl from '@/components/produtos/ProdutosAnaliseAgrupamentoControl';
 import ProdutosAbcdQuickFilter from '@/components/produtos/ProdutosAbcdQuickFilter';
 import ProdutosNumericMetricFilter from '@/components/produtos/ProdutosNumericMetricFilter';
 import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
@@ -15,9 +17,6 @@ import ProdutosTreeByCategoryToggle from '@/components/produtos/ProdutosTreeByCa
 import ProdutosMobileFiltersSheet from '@/components/produtos/ProdutosMobileFiltersSheet';
 import { useCompactShell } from '@/hooks/use-breakpoint';
 import { cn } from '@/components/utils';
-
-const MOBILE_FILTER_SELECT =
-  'bg-muted/80 border-none h-9 text-xs w-full rounded-xl';
 
 export default function ProdutosHeader({
   stats,
@@ -284,6 +283,7 @@ export default function ProdutosHeader({
           </div>
           <div className="flex flex-wrap items-center gap-1.5 desktop-layout:gap-2 min-w-0">
             <ProdutosSomentePositivosToggle filters={filters} setFilters={setFilters} />
+            <ProdutosEstoqueVirtualToggle filters={filters} setFilters={setFilters} />
             <ProdutosAbcdQuickFilter
               abcd={filters.abcd}
               onChange={(value) => handleFilterChange('abcd', value)}
@@ -387,184 +387,216 @@ export default function ProdutosHeader({
         </div>
 
         {isFilterOpen && (
-          <div className="hidden desktop-layout:grid desktop-layout:grid-cols-6 desktop-layout:gap-2 desktop-layout:pb-1">
-            <div className="hidden desktop-layout:flex items-center gap-2 bg-muted rounded-xl md:rounded-lg px-3 h-10 md:h-9 md:col-span-2">
-              <span className="text-xs text-muted-foreground flex-shrink-0">Nível da TreeGrid</span>
-              <LevelControl level={treeLevel} onChange={setTreeLevel} />
+          <div className="hidden desktop-layout:flex desktop-layout:flex-col desktop-layout:gap-3 desktop-layout:pb-1 min-w-0">
+            {/* Visualização da árvore */}
+            <div className="grid grid-cols-4 gap-2 min-w-0">
+              <div className="col-span-2 flex items-center gap-2 bg-muted rounded-lg px-3 h-9 min-w-0">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground flex-shrink-0">
+                  Nível TreeGrid
+                </span>
+                <LevelControl level={treeLevel} onChange={setTreeLevel} />
+              </div>
+              <div className="col-span-2 flex items-center gap-2 bg-muted rounded-lg px-3 h-9 min-w-0">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground flex-shrink-0">
+                  Agrupamento
+                </span>
+                <ProdutosTreeByCategoryToggle
+                  checked={groupTreeByCategory}
+                  onChange={onGroupTreeByCategoryChange}
+                  className="h-9 bg-transparent px-0"
+                />
+              </div>
+              <div className="col-span-4">
+                <ProdutosAnaliseAgrupamentoControl
+                  filters={filters}
+                  setFilters={setFilters}
+                  handleFilterChange={handleFilterChange}
+                />
+              </div>
             </div>
 
-            <div className="hidden desktop-layout:flex items-center gap-2 bg-muted rounded-xl md:rounded-lg px-3 h-10 md:h-9 md:col-span-2">
-              <span className="text-xs text-muted-foreground flex-shrink-0">Agrupamento</span>
-              <ProdutosTreeByCategoryToggle
-                checked={groupTreeByCategory}
-                onChange={onGroupTreeByCategoryChange}
-                className="h-9 bg-transparent px-0"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 desktop-layout:contents">
+            {/* Cadastro e classificação */}
+            <div className="grid grid-cols-4 gap-2 min-w-0">
               <Select value={filters.categoria} onValueChange={v => handleFilterChange('categoria', v)}>
-                <SelectTrigger className={cn(MOBILE_FILTER_SELECT, 'desktop-layout:h-9 desktop-layout:text-xs desktop-layout:rounded-lg')}>
+                <SelectTrigger className="bg-muted border-none h-9 text-xs rounded-lg">
                   <SelectValue placeholder="Categoria" />
                 </SelectTrigger>
                 <SelectContent className="dark:bg-muted dark:border-border/40">
-                  <SelectItem value="all" className="text-sm md:text-xs">Todas as categorias</SelectItem>
-                  {categorias.map(cat => <SelectItem key={cat} value={cat} className="text-sm md:text-xs">{cat}</SelectItem>)}
+                  <SelectItem value="all" className="text-xs">Todas as categorias</SelectItem>
+                  {categorias.map(cat => <SelectItem key={cat} value={cat} className="text-xs">{cat}</SelectItem>)}
                 </SelectContent>
               </Select>
 
               <Select value={filters.fornecedorId} onValueChange={v => handleFilterChange('fornecedorId', v)}>
-                <SelectTrigger className={cn(MOBILE_FILTER_SELECT, 'desktop-layout:h-9 desktop-layout:text-xs desktop-layout:rounded-lg')}>
+                <SelectTrigger className="bg-muted border-none h-9 text-xs rounded-lg">
                   <SelectValue placeholder="Fornecedor" />
                 </SelectTrigger>
                 <SelectContent className="dark:bg-muted dark:border-border/40">
-                  <SelectItem value="all" className="text-sm md:text-xs">Todos os fornecedores</SelectItem>
-                  {fornecedores.map(f => <SelectItem key={f.id} value={f.id} className="text-sm md:text-xs">{f.nome}</SelectItem>)}
+                  <SelectItem value="all" className="text-xs">Todos os fornecedores</SelectItem>
+                  {fornecedores.map(f => <SelectItem key={f.id} value={f.id} className="text-xs">{f.nome}</SelectItem>)}
                 </SelectContent>
               </Select>
-            </div>
 
-            <div className="hidden desktop-layout:block">
               <Select value={filters.unidadeVitrine || 'all'} onValueChange={(v) => handleFilterChange('unidadeVitrine', v)}>
-                <SelectTrigger className="bg-muted border-none h-10 md:h-9 text-sm md:text-xs w-full rounded-xl md:rounded-lg">
+                <SelectTrigger className="bg-muted border-none h-9 text-xs rounded-lg">
                   <SelectValue placeholder="Unidade vitrine" />
                 </SelectTrigger>
                 <SelectContent className="dark:bg-muted dark:border-border/40">
-                  <SelectItem value="all" className="text-sm md:text-xs">Todas as unidades</SelectItem>
+                  <SelectItem value="all" className="text-xs">Todas as unidades</SelectItem>
                   {unidadesVitrine.map((sigla) => (
-                    <SelectItem key={sigla} value={sigla} className="text-sm md:text-xs">
+                    <SelectItem key={sigla} value={sigla} className="text-xs">
                       {sigla}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </div>
 
-            <div className="hidden desktop-layout:block">
               <Select value={filters.statusEstoque} onValueChange={v => handleFilterChange('statusEstoque', v)}>
-                <SelectTrigger className="bg-muted border-none h-10 md:h-9 text-sm md:text-xs w-full rounded-xl md:rounded-lg">
+                <SelectTrigger className="bg-muted border-none h-9 text-xs rounded-lg">
                   <SelectValue placeholder="Status do estoque" />
                 </SelectTrigger>
                 <SelectContent className="dark:bg-muted dark:border-border/40">
-                  <SelectItem value="all" className="text-sm md:text-xs">Todos os status</SelectItem>
-                  <SelectItem value="ok" className="text-sm md:text-xs">OK</SelectItem>
-                  <SelectItem value="baixo" className="text-sm md:text-xs">Baixo</SelectItem>
-                  <SelectItem value="critico" className="text-sm md:text-xs">Crítico</SelectItem>
-                  <SelectItem value="inativo" className="text-sm md:text-xs">Inativo</SelectItem>
+                  <SelectItem value="all" className="text-xs">Todos os status</SelectItem>
+                  <SelectItem value="ok" className="text-xs">OK</SelectItem>
+                  <SelectItem value="baixo" className="text-xs">Baixo</SelectItem>
+                  <SelectItem value="critico" className="text-xs">Crítico</SelectItem>
+                  <SelectItem value="inativo" className="text-xs">Inativo</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
 
-            <div className="hidden desktop-layout:block">
               <Select value={filters.ativoStatus || 'all'} onValueChange={v => handleFilterChange('ativoStatus', v)}>
-                <SelectTrigger className="bg-muted border-none h-10 md:h-9 text-sm md:text-xs w-full rounded-xl md:rounded-lg">
+                <SelectTrigger className="bg-muted border-none h-9 text-xs rounded-lg">
                   <SelectValue placeholder="Ativos/Inativos" />
                 </SelectTrigger>
                 <SelectContent className="dark:bg-muted dark:border-border/40">
-                  <SelectItem value="all" className="text-sm md:text-xs">Ativos e inativos</SelectItem>
-                  <SelectItem value="ativos" className="text-sm md:text-xs">Somente ativos</SelectItem>
-                  <SelectItem value="inativos" className="text-sm md:text-xs">Somente inativos</SelectItem>
+                  <SelectItem value="all" className="text-xs">Ativos e inativos</SelectItem>
+                  <SelectItem value="ativos" className="text-xs">Somente ativos</SelectItem>
+                  <SelectItem value="inativos" className="text-xs">Somente inativos</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
 
-            <div className="hidden desktop-layout:block">
               <Select value={filters.cadastroIncompleto} onValueChange={v => handleFilterChange('cadastroIncompleto', v)}>
-                <SelectTrigger className="bg-muted border-none h-10 md:h-9 text-sm md:text-xs w-full rounded-xl md:rounded-lg">
+                <SelectTrigger className="bg-muted border-none h-9 text-xs rounded-lg">
                   <SelectValue placeholder="Cadastro" />
                 </SelectTrigger>
                 <SelectContent className="dark:bg-muted dark:border-border/40">
-                  <SelectItem value="all" className="text-sm md:text-xs">Todos os cadastros</SelectItem>
-                  <SelectItem value="incompleto" className="text-sm md:text-xs">Incompleto</SelectItem>
-                  <SelectItem value="completo" className="text-sm md:text-xs">Completo</SelectItem>
+                  <SelectItem value="all" className="text-xs">Todos os cadastros</SelectItem>
+                  <SelectItem value="incompleto" className="text-xs">Incompleto</SelectItem>
+                  <SelectItem value="completo" className="text-xs">Completo</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
 
-            <div className="hidden desktop-layout:block">
               <Select value={filters.abcd || 'all'} onValueChange={v => handleFilterChange('abcd', v)}>
-                <SelectTrigger className="bg-muted border-none h-10 md:h-9 text-sm md:text-xs w-full rounded-xl md:rounded-lg">
+                <SelectTrigger className="bg-muted border-none h-9 text-xs rounded-lg">
                   <SelectValue placeholder="Curva ABCD" />
                 </SelectTrigger>
                 <SelectContent className="dark:bg-muted dark:border-border/40">
-                  <SelectItem value="all" className="text-sm md:text-xs">Todas as classes</SelectItem>
+                  <SelectItem value="all" className="text-xs">Todas as classes</SelectItem>
                   {ABCD_FILTER_VALUES.map((value) => (
-                    <SelectItem key={value} value={value} className="text-sm md:text-xs">
+                    <SelectItem key={value} value={value} className="text-xs">
                       {ABCD_FILTER_LABELS[value] || value}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+
+              <Input
+                placeholder="Filtrar por tag..."
+                className="bg-muted/80 border-none h-9 text-xs rounded-lg"
+                value={filters.tag || ''}
+                onChange={e => handleFilterChange('tag', e.target.value)}
+              />
             </div>
 
-            <Input
-              placeholder="Filtrar por tag..."
-              className="bg-muted/80 border-none h-9 text-xs rounded-xl desktop-layout:h-9 desktop-layout:rounded-lg"
-              value={filters.tag || ''}
-              onChange={e => handleFilterChange('tag', e.target.value)}
-            />
+            {/* Filtros numéricos: estoque + duas métricas */}
+            <div className="rounded-lg border border-border/30 bg-muted/15 p-2.5 space-y-2.5 min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Filtros numéricos
+                {filters.estoqueVirtual ? (
+                  <span className="ml-2 normal-case font-medium text-sky-700 dark:text-sky-300">
+                    · estoque virtual ativo
+                  </span>
+                ) : null}
+                {filters.analisePorAgrupamento ? (
+                  <span className="ml-2 normal-case font-medium text-amber-800 dark:text-amber-300">
+                    · por agrupamento (nível {filters.analiseAgrupamentoNivel || '2'})
+                  </span>
+                ) : null}
+              </p>
+              {filters.analisePorAgrupamento ? (
+                <p className="text-[10px] leading-snug text-muted-foreground -mt-1">
+                  Quantidade e métricas avaliam o total do grupo na árvore. Na vista plana, aplicam-se só filtros de cadastro e busca.
+                </p>
+              ) : null}
 
-            <div className="desktop-layout:contents">
-              <div className="grid grid-cols-2 gap-2 desktop-layout:contents">
-                <div className="col-span-2 desktop-layout:col-auto">
-                <Select
-                  value={quantidadeOperador}
-                  onValueChange={v => setFilters(prev => ({
-                    ...prev,
-                    quantidadeOperador: v,
-                    quantidadeValorAte: v === 'between' ? prev.quantidadeValorAte : '',
-                  }))}
-                >
-                  <SelectTrigger className={cn(MOBILE_FILTER_SELECT, 'desktop-layout:h-9 desktop-layout:rounded-lg')}>
-                    <SelectValue placeholder="Quantidade" />
-                  </SelectTrigger>
-                  <SelectContent className="dark:bg-muted dark:border-border/40">
-                    <SelectItem value="all" className="text-sm md:text-xs">Qualquer quantidade</SelectItem>
-                    <SelectItem value="gt" className="text-sm md:text-xs">Maior que</SelectItem>
-                    <SelectItem value="gte" className="text-sm md:text-xs">Maior ou igual a</SelectItem>
-                    <SelectItem value="lt" className="text-sm md:text-xs">Menor que</SelectItem>
-                    <SelectItem value="lte" className="text-sm md:text-xs">Menor ou igual a</SelectItem>
-                    <SelectItem value="between" className="text-sm md:text-xs">Entre</SelectItem>
-                  </SelectContent>
-                </Select>
-                </div>
+              <div className="space-y-1 min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground px-0.5">
+                  Quantidade em estoque
+                </p>
+                <div className="flex flex-wrap items-center gap-2 min-w-0">
+                  <Select
+                    value={quantidadeOperador}
+                    onValueChange={v => setFilters(prev => ({
+                      ...prev,
+                      quantidadeOperador: v,
+                      quantidadeValorAte: v === 'between' ? prev.quantidadeValorAte : '',
+                    }))}
+                  >
+                    <SelectTrigger className="bg-muted/80 border-none h-9 text-xs rounded-lg min-w-0 flex-1">
+                      <SelectValue placeholder="Quantidade" />
+                    </SelectTrigger>
+                    <SelectContent className="dark:bg-muted dark:border-border/40">
+                      <SelectItem value="all" className="text-xs">Qualquer quantidade</SelectItem>
+                      <SelectItem value="gt" className="text-xs">Maior que</SelectItem>
+                      <SelectItem value="gte" className="text-xs">Maior ou igual a</SelectItem>
+                      <SelectItem value="lt" className="text-xs">Menor que</SelectItem>
+                      <SelectItem value="lte" className="text-xs">Menor ou igual a</SelectItem>
+                      <SelectItem value="eq" className="text-xs">Igual a</SelectItem>
+                      <SelectItem value="between" className="text-xs">Entre</SelectItem>
+                    </SelectContent>
+                  </Select>
 
-                <Input
-                  inputMode="decimal"
-                  placeholder={quantidadeOperador === 'between' ? 'De' : 'Qtd.'}
-                  disabled={quantidadeOperador === 'all'}
-                  className="bg-muted/80 border-none h-9 text-xs rounded-xl disabled:opacity-50 desktop-layout:rounded-lg"
-                  value={filters.quantidadeValor || ''}
-                  onChange={e => handleFilterChange('quantidadeValor', e.target.value)}
-                />
-
-                {quantidadeOperador === 'between' && (
                   <Input
                     inputMode="decimal"
-                    placeholder="Até"
-                    className="bg-muted/80 border-none h-9 text-xs rounded-xl desktop-layout:rounded-lg"
-                    value={filters.quantidadeValorAte || ''}
-                    onChange={e => handleFilterChange('quantidadeValorAte', e.target.value)}
+                    placeholder={quantidadeOperador === 'between' ? 'De' : 'Qtd.'}
+                    disabled={quantidadeOperador === 'all'}
+                    className="bg-muted/80 border-none h-9 text-xs rounded-lg disabled:opacity-50 w-full min-w-[4.5rem] flex-[0.7]"
+                    value={filters.quantidadeValor || ''}
+                    onChange={e => handleFilterChange('quantidadeValor', e.target.value)}
                   />
-                )}
+
+                  {quantidadeOperador === 'between' && (
+                    <Input
+                      inputMode="decimal"
+                      placeholder="Até"
+                      className="bg-muted/80 border-none h-9 text-xs rounded-lg w-full min-w-[4.5rem] flex-[0.7]"
+                      value={filters.quantidadeValorAte || ''}
+                      onChange={e => handleFilterChange('quantidadeValorAte', e.target.value)}
+                    />
+                  )}
+                </div>
               </div>
+
+              <ProdutosNumericMetricFilter
+                filters={filters}
+                setFilters={setFilters}
+                handleFilterChange={handleFilterChange}
+                sectionLabel="Métrica 1"
+                metricSlot={1}
+                variant="inline"
+              />
+
+              <ProdutosNumericMetricFilter
+                filters={filters}
+                setFilters={setFilters}
+                handleFilterChange={handleFilterChange}
+                sectionLabel="Métrica 2 (opcional — combina com a 1)"
+                metricSlot={2}
+                variant="inline"
+              />
             </div>
 
-            <ProdutosNumericMetricFilter
-              filters={filters}
-              setFilters={setFilters}
-              handleFilterChange={handleFilterChange}
-            />
-
-            <ProdutosNumericMetricFilter
-              filters={filters}
-              setFilters={setFilters}
-              handleFilterChange={handleFilterChange}
-              sectionLabel="Métrica 2"
-              metricSlot={2}
-            />
-
-            <div className="flex items-center gap-2 pt-0.5 border-t border-border/30 desktop-layout:col-span-2 desktop-layout:border-0 desktop-layout:pt-0 min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
               <div className="flex-1 min-w-0">
                 <ProdutosSearchStartsWithToggle
                   checked={!!filters.searchStartsWith}
