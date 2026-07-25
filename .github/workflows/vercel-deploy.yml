@@ -28,8 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      # VERCEL_* definidos no step "Sanitizar secrets Vercel" via GITHUB_ENV
     steps:
       - uses: actions/checkout@v4
 
@@ -39,9 +38,31 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
 
+      # Copiar/colar secrets no GitHub às vezes inclui newline no fim — Vercel CLI rejeita.
+      - name: Sanitizar secrets Vercel (trim newlines)
+        shell: bash
+        env:
+          RAW_VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          RAW_VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          RAW_VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          set -e
+          trim() { printf '%s' "$1" | tr -d '\n\r'; }
+          token=$(trim "$RAW_VERCEL_TOKEN")
+          org=$(trim "$RAW_VERCEL_ORG_ID")
+          project=$(trim "$RAW_VERCEL_PROJECT_ID")
+          if [ -z "$token" ] || [ -z "$org" ] || [ -z "$project" ]; then
+            echo "::error::VERCEL_TOKEN / VERCEL_ORG_ID / VERCEL_PROJECT_ID vazio após sanitização."
+            exit 1
+          fi
+          {
+            echo "VERCEL_TOKEN=$token"
+            echo "VERCEL_ORG_ID=$org"
+            echo "VERCEL_PROJECT_ID=$project"
+          } >> "$GITHUB_ENV"
+
       - name: Validar secrets Vercel + Supabase
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
         run: |
@@ -70,9 +91,6 @@ jobs:
 
       - name: Checklist secrets (pré-decolagem)
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -81,13 +99,10 @@ jobs:
 
       - name: Vercel pull (production)
         run: npx --yes vercel@latest pull --yes --environment=production --token "$VERCEL_TOKEN"
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
       - name: Sincronizar env Supabase no projecto Vercel
         run: bash scripts/sync-vercel-production-env.sh
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
           VITE_P38_USE_SUPABASE_AUTH: ${{ secrets.VITE_P38_USE_SUPABASE_AUTH || 'true' }}
@@ -118,7 +133,6 @@ jobs:
       - name: Vercel build (production, prebuilt)
         run: npx --yes vercel@latest build --prod --token "$VERCEL_TOKEN"
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VITE_P38_PROVIDER: supabase
           VITE_P38_BYPASS_BASE44: 'true'
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -166,8 +180,6 @@ jobs:
           url=$(npx --yes vercel@latest deploy --prebuilt --prod --yes --token "$VERCEL_TOKEN")
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Deploy URL: $url"
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
       - name: Verificar produção expõe Supabase no bundle
         env:
