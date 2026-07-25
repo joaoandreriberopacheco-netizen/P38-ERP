@@ -37,6 +37,7 @@
     "migrate:base44-to-supabase": "node scripts/migrate-base44-to-supabase.mjs",
     "usuario:resync": "node scripts/resync-usuario-from-base44.mjs",
     "usuario:provision-auth": "node scripts/provision-supabase-auth-users.mjs",
+    "usuario:provision-login-auth": "node scripts/provision-login-auth-users.mjs",
     "auth:enable-google": "node scripts/enable-supabase-google-auth.mjs",
     "retificar:5r8b3": "node scripts/retificar-embarque-5r8b3-once.mjs",
     "corrigir:recepcao": "node scripts/corrigir-recepcao-pedido.mjs",

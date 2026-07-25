@@ -167,6 +167,12 @@ async function handleActivate(body: Record<string, unknown>) {
   const client = serviceClient();
   const authUser = await findAuthUserByLogin(client.auth.admin, login);
   if (!authUser) {
+    const row = await findUsuarioByLogin(client, login);
+    if (row) {
+      return badRequest(
+        'Cadastro encontrado, mas ainda sem credencial de acesso. Peça ao administrador para criar o acesso em Configurações → Usuários.',
+      );
+    }
     return badRequest('Conta não encontrada. Peça ao administrador para criar o seu utilizador.');
   }
 
@@ -193,6 +199,67 @@ async function handleActivate(body: Record<string, unknown>) {
   return jsonResponse({ ok: true, login });
 }
 
+async function provisionAuthForUsuario(
+  client: ReturnType<typeof serviceClient>,
+  row: UsuarioRow,
+  login: string,
+  opts: {
+    fullName: string;
+    perfilAcessoId: string | null;
+    perfilAcessoNome: string | null;
+    role: string;
+  },
+) {
+  const email = loginToAuthEmail(login);
+  const tempPassword = randomPassword(24);
+  const fullName = opts.fullName || row.full_name || row.dados?.full_name || login;
+  const role = opts.role || usuarioRole(row) || 'user';
+  const perfilAcessoId = opts.perfilAcessoId || row.perfil_acesso_id || row.dados?.perfil_acesso_id || null;
+  const perfilAcessoNome = opts.perfilAcessoNome || row.perfil_acesso_nome || row.dados?.perfil_acesso_nome || null;
+
+  const { data: authData, error: authErr } = await client.auth.admin.createUser({
+    email,
+    password: tempPassword,
+    email_confirm: true,
+    user_metadata: {
+      login,
+      nickname: row.nickname || login,
+      full_name: fullName,
+      role,
+      perfil_acesso_id: perfilAcessoId,
+      perfil_acesso_nome: perfilAcessoNome,
+      usuario_operacional_id: row.id,
+      must_activate: true,
+      password_set: false,
+    },
+  });
+  if (authErr) return jsonResponse({ error: authErr.message }, 400);
+
+  const updatePayload: Record<string, unknown> = {
+    login,
+    auth_ativado: false,
+  };
+  if (fullName) updatePayload.full_name = fullName;
+  if (role) updatePayload.role = role;
+  if (perfilAcessoId) updatePayload.perfil_acesso_id = perfilAcessoId;
+  if (perfilAcessoNome) updatePayload.perfil_acesso_nome = perfilAcessoNome;
+
+  const { error: updErr } = await client.from('usuario').update(updatePayload).eq('id', row.id);
+  if (updErr) {
+    await client.auth.admin.deleteUser(authData.user!.id);
+    return jsonResponse({ error: updErr.message }, 400);
+  }
+
+  return jsonResponse({
+    ok: true,
+    login,
+    usuario_id: row.id,
+    auth_user_id: authData.user?.id,
+    provisioned_existing: true,
+    next_step: 'O utilizador deve abrir /ativar-acesso e definir a senha.',
+  });
+}
+
 async function handleCreateUser(req: Request, body: Record<string, unknown>) {
   const adminAuth = await requireAdminUser(req);
   if (adminAuth instanceof Response) return adminAuth;
@@ -207,11 +274,18 @@ async function handleCreateUser(req: Request, body: Record<string, unknown>) {
   if (!perfilAcessoId) return badRequest('Selecione um perfil de acesso.');
 
   const client = serviceClient();
-  const existing = await findUsuarioByLogin(client, login);
-  if (existing) return badRequest('Já existe um utilizador com este login.');
-
   const existingAuth = await findAuthUserByLogin(client.auth.admin, login);
   if (existingAuth) return badRequest('Já existe credencial de acesso para este login.');
+
+  const existing = await findUsuarioByLogin(client, login);
+  if (existing) {
+    return await provisionAuthForUsuario(client, existing, login, {
+      fullName,
+      perfilAcessoId,
+      perfilAcessoNome,
+      role,
+    });
+  }
 
   const usuarioId = crypto.randomUUID();
   const email = loginToAuthEmail(login);
