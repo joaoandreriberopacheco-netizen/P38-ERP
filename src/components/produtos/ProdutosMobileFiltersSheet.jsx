@@ -222,79 +222,75 @@ export default function ProdutosMobileFiltersSheet({
           </MobileFilterSection>
 
           <MobileFilterSection
-            title="Quantidade em estoque"
-            hint="Compara a quantidade disponível (unidade principal)."
+            title="Filtros numéricos"
+            hint="Quantidade em estoque e até duas métricas combináveis (ex.: ponto futuro &lt; 0 e lead time = 20)."
           >
-            <div className="space-y-2">
-              <Select
-                value={quantidadeOperador}
-                onValueChange={(v) =>
-                  setFilters((prev) => ({
-                    ...prev,
-                    quantidadeOperador: v,
-                    quantidadeValorAte: v === 'between' ? prev.quantidadeValorAte : '',
-                  }))
-                }
-              >
-                <SelectTrigger className={MOBILE_FILTER_SELECT}>
-                  <SelectValue placeholder="Condição" />
-                </SelectTrigger>
-                <SelectContent className="dark:bg-muted dark:border-border/40">
-                  <SelectItem value="all" className="text-xs">Qualquer quantidade</SelectItem>
-                  <SelectItem value="gt" className="text-xs">Maior que</SelectItem>
-                  <SelectItem value="gte" className="text-xs">Maior ou igual a</SelectItem>
-                  <SelectItem value="lt" className="text-xs">Menor que</SelectItem>
-                  <SelectItem value="lte" className="text-xs">Menor ou igual a</SelectItem>
-                  <SelectItem value="between" className="text-xs">Entre dois valores</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Quantidade em estoque
+                </p>
+                <Select
+                  value={quantidadeOperador}
+                  onValueChange={(v) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      quantidadeOperador: v,
+                      quantidadeValorAte: v === 'between' ? prev.quantidadeValorAte : '',
+                    }))
+                  }
+                >
+                  <SelectTrigger className={MOBILE_FILTER_SELECT}>
+                    <SelectValue placeholder="Condição" />
+                  </SelectTrigger>
+                  <SelectContent className="dark:bg-muted dark:border-border/40">
+                    <SelectItem value="all" className="text-xs">Qualquer quantidade</SelectItem>
+                    <SelectItem value="gt" className="text-xs">Maior que</SelectItem>
+                    <SelectItem value="gte" className="text-xs">Maior ou igual a</SelectItem>
+                    <SelectItem value="lt" className="text-xs">Menor que</SelectItem>
+                    <SelectItem value="lte" className="text-xs">Menor ou igual a</SelectItem>
+                    <SelectItem value="eq" className="text-xs">Igual a</SelectItem>
+                    <SelectItem value="between" className="text-xs">Entre dois valores</SelectItem>
+                  </SelectContent>
+                </Select>
 
-              <div className={cn('grid gap-2', quantidadeOperador === 'between' ? 'grid-cols-2' : 'grid-cols-1')}>
-                <Input
-                  inputMode="decimal"
-                  placeholder={quantidadeOperador === 'between' ? 'De' : 'Quantidade'}
-                  disabled={quantidadeOperador === 'all'}
-                  className="bg-muted/80 border-none h-10 text-xs rounded-xl disabled:opacity-50"
-                  value={filters.quantidadeValor || ''}
-                  onChange={(e) => handleFilterChange('quantidadeValor', e.target.value)}
-                />
-                {quantidadeOperador === 'between' && (
+                <div className={cn('grid gap-2', quantidadeOperador === 'between' ? 'grid-cols-2' : 'grid-cols-1')}>
                   <Input
                     inputMode="decimal"
-                    placeholder="Até"
-                    className="bg-muted/80 border-none h-10 text-xs rounded-xl"
-                    value={filters.quantidadeValorAte || ''}
-                    onChange={(e) => handleFilterChange('quantidadeValorAte', e.target.value)}
+                    placeholder={quantidadeOperador === 'between' ? 'De' : 'Quantidade'}
+                    disabled={quantidadeOperador === 'all'}
+                    className="bg-muted/80 border-none h-10 text-xs rounded-xl disabled:opacity-50"
+                    value={filters.quantidadeValor || ''}
+                    onChange={(e) => handleFilterChange('quantidadeValor', e.target.value)}
                   />
-                )}
+                  {quantidadeOperador === 'between' && (
+                    <Input
+                      inputMode="decimal"
+                      placeholder="Até"
+                      className="bg-muted/80 border-none h-10 text-xs rounded-xl"
+                      value={filters.quantidadeValorAte || ''}
+                      onChange={(e) => handleFilterChange('quantidadeValorAte', e.target.value)}
+                    />
+                  )}
+                </div>
               </div>
+
+              <ProdutosNumericMetricFilter
+                filters={filters}
+                setFilters={setFilters}
+                handleFilterChange={handleFilterChange}
+                sectionLabel="Métrica 1"
+                metricSlot={1}
+              />
+
+              <ProdutosNumericMetricFilter
+                filters={filters}
+                setFilters={setFilters}
+                handleFilterChange={handleFilterChange}
+                sectionLabel="Métrica 2 (opcional)"
+                metricSlot={2}
+              />
             </div>
-          </MobileFilterSection>
-
-          <MobileFilterSection
-            title="Métrica comercial"
-            hint="Markup, margem, preço, custo ou indicadores de estoque — com operador numérico."
-          >
-            <ProdutosNumericMetricFilter
-              filters={filters}
-              setFilters={setFilters}
-              handleFilterChange={handleFilterChange}
-              sectionLabel=""
-              metricSlot={1}
-            />
-          </MobileFilterSection>
-
-          <MobileFilterSection
-            title="Métrica 2 (opcional)"
-            hint="Combine com a primeira: ex. ponto futuro &lt; 0 e lead time igual a 20."
-          >
-            <ProdutosNumericMetricFilter
-              filters={filters}
-              setFilters={setFilters}
-              handleFilterChange={handleFilterChange}
-              sectionLabel=""
-              metricSlot={2}
-            />
           </MobileFilterSection>
 
           <MobileFilterSection
