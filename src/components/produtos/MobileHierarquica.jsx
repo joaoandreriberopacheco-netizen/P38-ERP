@@ -13,6 +13,7 @@ import {
 import {
   resolveCatalogEstoqueExibicao,
 } from '@/lib/catalogEstoqueVirtual';
+import { lineValorCustoTotal } from '@/lib/catalogStockTotals';
 import {
   buildPurchaseUnitOptions,
   buildSaleUnitOptions,
@@ -141,8 +142,7 @@ function formatCatalogoMobilePct(val) {
 
 function buildCatalogoMobileTabulatedValues(produto, catalogStockContext = null) {
   const cat = getCatalogoComercialView(produto);
-  const custoBase = resolveCustoTotalUnitBaseProduto(produto);
-  const inventario = produto?.inventario_valorizado ?? custoBase * (produto?.estoque_atual || 0);
+  const inventario = lineValorCustoTotal(produto, catalogStockContext);
   const inventarioFmt = inventario > 0 ? formatCatalogoMobileNum(inventario) : '—';
   const markupPct = cat.markupSobreCustoPct > 0
     ? cat.markupSobreCustoPct
