@@ -3,6 +3,11 @@ import { ChevronRight, Package, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCatalogTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders, aggregateEstoqueDisplay, aggregateMetaEstoqueDisplay, collectSkus, catalogProdutosStructureSig, TREE_GRID_EXPAND_ALL_LEVEL } from './useTreeGrid';
+import {
+  catalogGroupAnalysisSig,
+  getCatalogFlattenOptions,
+  pruneTreeForGroupAnalysis,
+} from '@/lib/catalogGroupAnalysis';
 import { formatEstoqueApresentacao, getCatalogoComercialView, getCatalogUnitLabels } from '@/lib/productUnits';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
 import { CATALOGO_VIRTUALIZE_MIN_ROWS } from '@/lib/p38VirtualList';
@@ -616,19 +621,36 @@ export function LevelControl({ level, onChange }) {
 // masterLevel é controlado pelo pai (painel fixo da página Produtos).
 // expandedKeys é gerenciado internamente — toggle manual do usuário funciona
 // independente do nível selecionado.
-export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = DEFAULT_COLS, masterLevel = TREE_GRID_EXPAND_ALL_LEVEL, readOnly = false, sortOrder = 'az', groupByCategory = false, onExpandedKeysChange, salesVelocityMap = {}, catalogStockContext = null }) {
+export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = DEFAULT_COLS, masterLevel = TREE_GRID_EXPAND_ALL_LEVEL, readOnly = false, sortOrder = 'az', groupByCategory = false, onExpandedKeysChange, salesVelocityMap = {}, catalogStockContext = null, catalogFilters = null }) {
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const scrollContainerRef = useRef(null);
   const treeRef = useRef(null);
   const pendingScrollRestoreRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(0);
 
-  const tree = useCatalogTreeGrid(produtos, { groupByCategory });
+  const rawTree = useCatalogTreeGrid(produtos, { groupByCategory });
+  const tree = useMemo(
+    () =>
+      pruneTreeForGroupAnalysis(rawTree, {
+        filters: catalogFilters,
+        salesVelocityMap,
+        catalogStockContext,
+      }),
+    [rawTree, catalogFilters, salesVelocityMap, catalogStockContext],
+  );
   treeRef.current = tree;
 
   const produtosStructureSig = useMemo(
     () => catalogProdutosStructureSig(produtos, { groupByCategory }),
     [produtos, groupByCategory]
+  );
+  const groupAnalysisSig = useMemo(
+    () => catalogGroupAnalysisSig(catalogFilters),
+    [catalogFilters]
+  );
+  const flattenOptions = useMemo(
+    () => getCatalogFlattenOptions(catalogFilters),
+    [catalogFilters]
   );
 
   // Reinicia expansão só quando filtros/hierarquia mudam — não a cada rebuild por ABCD/IEP ou preços.
@@ -640,15 +662,15 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
     setExpandedKeys(
       masterLevel === 1 ? new Set() : buildExpandedForLevel(treeRef.current, masterLevel - 1)
     );
-  }, [produtosStructureSig, groupByCategory, masterLevel]);
+  }, [produtosStructureSig, groupByCategory, masterLevel, groupAnalysisSig]);
 
   useEffect(() => {
     onExpandedKeysChange?.(expandedKeys);
   }, [expandedKeys, onExpandedKeysChange]);
 
   const rows = useMemo(
-    () => mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expandedKeys, '', 0, sortOrder)),
-    [tree, expandedKeys, sortOrder]
+    () => mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expandedKeys, '', 0, sortOrder, flattenOptions)),
+    [tree, expandedKeys, sortOrder, flattenOptions]
   );
 
   useLayoutEffect(() => {

@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { DEFAULT_PRODUTO_FILTERS } from '@/lib/filterProdutos';
 import ProdutosEstoqueVirtualToggle from '@/components/produtos/ProdutosEstoqueVirtualToggle';
+import ProdutosAnaliseAgrupamentoControl from '@/components/produtos/ProdutosAnaliseAgrupamentoControl';
 import ProdutosNumericMetricFilter from '@/components/produtos/ProdutosNumericMetricFilter';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
 import { cn } from '@/components/utils';
@@ -237,8 +238,24 @@ export default function ProdutosMobileFiltersSheet({
           </MobileFilterSection>
 
           <MobileFilterSection
+            title="Análise por agrupamento"
+            hint="Com este modo, quantidade e métricas avaliam o total do grupo no nível escolhido — não cada SKU."
+          >
+            <ProdutosAnaliseAgrupamentoControl
+              filters={filters}
+              setFilters={setFilters}
+              handleFilterChange={handleFilterChange}
+              compact
+            />
+          </MobileFilterSection>
+
+          <MobileFilterSection
             title="Filtros numéricos"
-            hint="Quantidade em estoque e até duas métricas combináveis (ex.: ponto futuro &lt; 0 e lead time = 20)."
+            hint={
+              filters.analisePorAgrupamento
+                ? 'Aplicam-se ao total do grupo na árvore. Na lista plana, só filtros de cadastro e busca.'
+                : 'Quantidade em estoque e até duas métricas combináveis (ex.: ponto futuro < 0 e lead time = 20).'
+            }
           >
             <div className="space-y-3">
               <div className="space-y-1.5">

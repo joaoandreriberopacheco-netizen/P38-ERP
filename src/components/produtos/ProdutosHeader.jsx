@@ -9,6 +9,7 @@ import { DEFAULT_PRODUTO_FILTERS, ABCD_FILTER_VALUES, ABCD_FILTER_LABELS } from 
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
 import ProdutosSomentePositivosToggle from '@/components/produtos/ProdutosSomentePositivosToggle';
 import ProdutosEstoqueVirtualToggle from '@/components/produtos/ProdutosEstoqueVirtualToggle';
+import ProdutosAnaliseAgrupamentoControl from '@/components/produtos/ProdutosAnaliseAgrupamentoControl';
 import ProdutosAbcdQuickFilter from '@/components/produtos/ProdutosAbcdQuickFilter';
 import ProdutosNumericMetricFilter from '@/components/produtos/ProdutosNumericMetricFilter';
 import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
@@ -405,6 +406,13 @@ export default function ProdutosHeader({
                   className="h-9 bg-transparent px-0"
                 />
               </div>
+              <div className="col-span-4">
+                <ProdutosAnaliseAgrupamentoControl
+                  filters={filters}
+                  setFilters={setFilters}
+                  handleFilterChange={handleFilterChange}
+                />
+              </div>
             </div>
 
             {/* Cadastro e classificação */}
@@ -509,7 +517,17 @@ export default function ProdutosHeader({
                     · estoque virtual ativo
                   </span>
                 ) : null}
+                {filters.analisePorAgrupamento ? (
+                  <span className="ml-2 normal-case font-medium text-amber-800 dark:text-amber-300">
+                    · por agrupamento (nível {filters.analiseAgrupamentoNivel || '2'})
+                  </span>
+                ) : null}
               </p>
+              {filters.analisePorAgrupamento ? (
+                <p className="text-[10px] leading-snug text-muted-foreground -mt-1">
+                  Quantidade e métricas avaliam o total do grupo na árvore. Na vista plana, aplicam-se só filtros de cadastro e busca.
+                </p>
+              ) : null}
 
               <div className="space-y-1 min-w-0">
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground px-0.5">
