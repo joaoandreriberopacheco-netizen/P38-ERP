@@ -1,40 +1,81 @@
 /**
  * Mapeamento Entidade (PascalCase Base44) → tabela `public.*` no Supabase.
- *
- * Dois modos suportados:
- *  - `'columns'` (default): a tabela tem colunas dedicadas para os campos.
- *    `columns` lista os campos físicos para o supabaseEntityLayer saber o que vai
- *    em coluna real e o que (eventualmente) cai em `dados` JSONB durante a transição.
- *  - `'jsonb'`: a tabela só tem `id, created_at, updated_at, created_by, dados jsonb`
- *    (+ algumas colunas indexadas). Tudo que não for coluna dedicada é serializado
- *    em `dados` automaticamente. Usado para entidades em que ainda não inferimos os
- *    campos a partir do código.
- *
- * Aceita string (modo `'columns'` legado) por retrocompatibilidade.
  */
+import {
+  PRODUTO_COLUMNS,
+  TERCEIRO_COLUMNS,
+  LANCAMENTO_FINANCEIRO_COLUMNS,
+  PEDIDO_VENDA_COLUMNS,
+  PEDIDO_COMPRA_COLUMNS,
+  EMBARQUE_COLUMNS,
+  MOVIMENTACAO_ESTOQUE_COLUMNS,
+  TURNO_CAIXA_COLUMNS,
+  MOVIMENTOS_CAIXA_COLUMNS,
+  FORMAS_DE_PAGAMENTO_COLUMNS,
+  CONTAS_FINANCEIRAS_COLUMNS,
+  TABELA_PRECO_COLUMNS,
+  CATEGORIA_FINANCEIRA_COLUMNS,
+  PEDIDO_VENDA_ITEM_COLUMNS,
+  PEDIDO_COMPRA_ITEM_COLUMNS,
+  EMBARQUE_ITEM_COLUMNS,
+  DADOS_EMPRESA_COLUMNS,
+  CONFERENCIA_ESTOQUE_COLUMNS,
+  CONSUMO_INTERNO_COLUMNS,
+  EVENTO_LOGISTICO_SANDBOX_COLUMNS,
+  TABLE_PROMOTION_MANIFEST,
+} from './entityColumnManifest.js';
+
 export const ENTITY_TO_TABLE = {
-  // === Núcleo (modo 'columns', migrations 001–006) ===
-  LancamentoFinanceiro: { table: 'lancamento_financeiro', mode: 'columns' },
-  // Produção P38: tabela criada pelo bootstrap 000 (só id + dados jsonb) — order/filter em nome/tipo via dados.
-  Terceiro: { table: 'terceiro', mode: 'jsonb' },
-  // Produção P38: bootstrap 000 — dados em `dados` jsonb (sem coluna ativo/nome/etc.).
-  Produto: { table: 'produto', mode: 'jsonb' },
-  PedidoVenda: { table: 'pedido_venda', mode: 'columns' },
-  PedidoCompra: { table: 'pedido_compra', mode: 'columns' },
-  MovimentacaoEstoque: { table: 'movimentacao_estoque', mode: 'columns' },
-  ContasFinanceiras: { table: 'contas_financeiras', mode: 'columns' },
-  FormasDePagamento: { table: 'formas_de_pagamento', mode: 'columns' },
-  // Produção P38: bootstrap 000 — campos (ativo, is_default, fator_ajuste…) em `dados` jsonb.
-  TabelaPreco: { table: 'tabela_preco', mode: 'jsonb' },
-  TurnoCaixa: { table: 'turno_caixa', mode: 'columns' },
-  Embarque: { table: 'embarque', mode: 'columns' },
+  // === Núcleo (colunas dedicadas + overflow em `dados`) ===
+  LancamentoFinanceiro: {
+    table: 'lancamento_financeiro',
+    mode: 'columns',
+    columns: LANCAMENTO_FINANCEIRO_COLUMNS,
+  },
+  Terceiro: { table: 'terceiro', mode: 'columns', columns: TERCEIRO_COLUMNS },
+  Produto: { table: 'produto', mode: 'columns', columns: PRODUTO_COLUMNS },
+  PedidoVenda: { table: 'pedido_venda', mode: 'columns', columns: PEDIDO_VENDA_COLUMNS },
+  PedidoCompra: { table: 'pedido_compra', mode: 'columns', columns: PEDIDO_COMPRA_COLUMNS },
+  PedidoVendaItem: { table: 'pedido_venda_item', mode: 'columns', columns: PEDIDO_VENDA_ITEM_COLUMNS },
+  PedidoCompraItem: { table: 'pedido_compra_item', mode: 'columns', columns: PEDIDO_COMPRA_ITEM_COLUMNS },
+  MovimentacaoEstoque: {
+    table: 'movimentacao_estoque',
+    mode: 'columns',
+    columns: MOVIMENTACAO_ESTOQUE_COLUMNS,
+  },
+  ContasFinanceiras: {
+    table: 'contas_financeiras',
+    mode: 'columns',
+    columns: CONTAS_FINANCEIRAS_COLUMNS,
+  },
+  FormasDePagamento: {
+    table: 'formas_de_pagamento',
+    mode: 'columns',
+    columns: FORMAS_DE_PAGAMENTO_COLUMNS,
+  },
+  TabelaPreco: { table: 'tabela_preco', mode: 'columns', columns: TABELA_PRECO_COLUMNS },
+  TurnoCaixa: { table: 'turno_caixa', mode: 'columns', columns: TURNO_CAIXA_COLUMNS },
+  Embarque: { table: 'embarque', mode: 'columns', columns: EMBARQUE_COLUMNS },
+  EmbarqueItem: { table: 'embarque_item', mode: 'columns', columns: EMBARQUE_ITEM_COLUMNS },
   ContaRecorrente: { table: 'conta_recorrente', mode: 'columns' },
   ContaPrevista: { table: 'conta_prevista', mode: 'columns' },
   CategoriaProduto: { table: 'categoria_produto', mode: 'columns' },
-  CategoriaFinanceira: { table: 'categoria_financeira', mode: 'columns' },
+  CategoriaFinanceira: {
+    table: 'categoria_financeira',
+    mode: 'columns',
+    columns: CATEGORIA_FINANCEIRA_COLUMNS,
+  },
   AgendaLogistica: { table: 'agenda_logistica', mode: 'columns' },
-  MovimentosCaixa: { table: 'movimentos_caixa', mode: 'columns' },
-  TargetFlare: { table: 'target_flare', mode: 'columns' },
+  MovimentosCaixa: {
+    table: 'movimentos_caixa',
+    mode: 'columns',
+    columns: MOVIMENTOS_CAIXA_COLUMNS,
+  },
+  TargetFlare: {
+    table: 'target_flare',
+    mode: 'columns',
+    columns: TABLE_PROMOTION_MANIFEST.target_flare,
+  },
   CatalogoInterface: { table: 'catalogo_interface', mode: 'columns' },
   PagamentoCartaoDetalhe: { table: 'pagamento_cartao_detalhe', mode: 'jsonb' },
 
@@ -113,15 +154,7 @@ export const ENTITY_TO_TABLE = {
   ConferenciaEstoque: {
     table: 'conferencia_estoque',
     mode: 'columns',
-    columns: [
-      'ajuste_aplicado',
-      'data_fim',
-      'data_inicio',
-      'itens_conferidos',
-      'responsavel_id',
-      'responsavel_nome',
-      'status'
-    ]
+    columns: CONFERENCIA_ESTOQUE_COLUMNS,
   },
   ConfigAutoAtendimento: {
     table: 'config_auto_atendimento',
@@ -131,7 +164,7 @@ export const ENTITY_TO_TABLE = {
   ConsumoInterno: {
     table: 'consumo_interno',
     mode: 'columns',
-    columns: ['numero']
+    columns: CONSUMO_INTERNO_COLUMNS,
   },
   Cotacao: {
     table: 'cotacao',
@@ -287,7 +320,7 @@ export const ENTITY_TO_TABLE = {
   RascunhoPedidoVenda: {
     table: 'rascunho_pedido_venda',
     mode: 'columns',
-    columns: ['data_retorno', 'motivo_retorno', 'status']
+    columns: RASCUNHO_PEDIDO_VENDA_COLUMNS,
   },
   ResponsavelConsumoInterno: {
     table: 'responsavel_consumo_interno',
@@ -417,27 +450,63 @@ export const ENTITY_TO_TABLE = {
     columns: ['data_registro', 'motivo', 'origem', 'produto_nome', 'quantidade_desejada', 'vendedor_id']
   },
 
-  // === Estendidas que ainda não tiveram campos descobertos no código ===
-  // Mantêm `dados jsonb` por enquanto; se o app exercitá-las, basta rodar o
-  // gerador (`scripts/infer-entity-fields.mjs` + `scripts/generate-migration-009.mjs`)
-  // e promover por migration adicional.
+  // === Config / sandbox promovidos por migration 031 ===
+  DadosEmpresa: { table: 'dados_empresa', mode: 'columns', columns: DADOS_EMPRESA_COLUMNS },
+  EventoLogisticoSandbox: {
+    table: 'evento_logistico_sandbox',
+    mode: 'columns',
+    columns: EVENTO_LOGISTICO_SANDBOX_COLUMNS,
+  },
+  ConfiguracoesEstoque: {
+    table: 'configuracoes_estoque',
+    mode: 'columns',
+    columns: TABLE_PROMOTION_MANIFEST.configuracoes_estoque,
+  },
+  ConfiguracoesVenda: {
+    table: 'configuracoes_venda',
+    mode: 'columns',
+    columns: TABLE_PROMOTION_MANIFEST.configuracoes_venda,
+  },
+  PerfilDeAcesso: {
+    table: 'perfil_de_acesso',
+    mode: 'columns',
+    columns: TABLE_PROMOTION_MANIFEST.perfil_de_acesso,
+  },
+  PoliticasDesconto: { table: 'politicas_desconto', mode: 'jsonb' },
+  StatusPedidoCompra: {
+    table: 'status_pedido_compra',
+    mode: 'columns',
+    columns: TABLE_PROMOTION_MANIFEST.status_pedido_compra,
+  },
   AvisosAuto: { table: 'avisos_auto', mode: 'jsonb' },
   Campanha: { table: 'campanha', mode: 'jsonb' },
-  ConfiguracoesEstoque: { table: 'configuracoes_estoque', mode: 'jsonb' },
-  ConfiguracoesVenda: { table: 'configuracoes_venda', mode: 'jsonb' },
-  DadosEmpresa: { table: 'dados_empresa', mode: 'jsonb' },
-  EventoLogisticoSandbox: { table: 'evento_logistico_sandbox', mode: 'jsonb' },
-  PerfilDeAcesso: { table: 'perfil_de_acesso', mode: 'jsonb', columns: ['nome'] },
-  PoliticasDesconto: { table: 'politicas_desconto', mode: 'jsonb' },
-  StatusPedidoCompra: { table: 'status_pedido_compra', mode: 'jsonb' },
-
-  FolhaPrevisaoModelo: { table: 'folha_previsao_modelo', mode: 'jsonb' },
-  FolhaPrevisaoCompetencia: { table: 'folha_previsao_competencia', mode: 'jsonb' },
+  FolhaPrevisaoModelo: {
+    table: 'folha_previsao_modelo',
+    mode: 'columns',
+    columns: TABLE_PROMOTION_MANIFEST.folha_previsao_modelo,
+  },
+  FolhaPrevisaoCompetencia: {
+    table: 'folha_previsao_competencia',
+    mode: 'columns',
+    columns: TABLE_PROMOTION_MANIFEST.folha_previsao_competencia,
+  },
   AgefinSerieModelo: { table: 'agefin_serie_modelo', mode: 'jsonb' },
   AgefinSerieCompetencia: { table: 'agefin_serie_competencia', mode: 'jsonb' },
-  BudgetModelo: { table: 'budget_modelo', mode: 'jsonb' },
-  BudgetCompetencia: { table: 'budget_competencia', mode: 'jsonb' },
-  FolhaCentroCusto: { table: 'folha_centro_custo', mode: 'jsonb' },
+  BudgetModelo: {
+    table: 'budget_modelo',
+    mode: 'columns',
+    columns: TABLE_PROMOTION_MANIFEST.budget_modelo,
+  },
+  BudgetCompetencia: {
+    table: 'budget_competencia',
+    mode: 'columns',
+    columns: TABLE_PROMOTION_MANIFEST.budget_competencia,
+  },
+  FolhaCentroCusto: {
+    table: 'folha_centro_custo',
+    mode: 'columns',
+    columns: TABLE_PROMOTION_MANIFEST.folha_centro_custo,
+  },
   AgendaItem: { table: 'agenda_item', mode: 'jsonb' },
 };
 

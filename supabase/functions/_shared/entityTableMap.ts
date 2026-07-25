@@ -1,37 +1,76 @@
 /**
  * Mapeamento Entidade (PascalCase Base44) → tabela `public.*` no Supabase.
- *
- * Dois modos suportados:
- *  - `'columns'` (default): a tabela tem colunas dedicadas para os campos.
- *    `columns` lista os campos físicos para o supabaseEntityLayer saber o que vai
- *    em coluna real e o que (eventualmente) cai em `dados` JSONB durante a transição.
- *  - `'jsonb'`: a tabela só tem `id, created_at, updated_at, created_by, dados jsonb`
- *    (+ algumas colunas indexadas). Tudo que não for coluna dedicada é serializado
- *    em `dados` automaticamente. Usado para entidades em que ainda não inferimos os
- *    campos a partir do código.
- *
- * Aceita string (modo `'columns'` legado) por retrocompatibilidade.
  */
+import {
+  PRODUTO_COLUMNS,
+  TERCEIRO_COLUMNS,
+  LANCAMENTO_FINANCEIRO_COLUMNS,
+  PEDIDO_VENDA_COLUMNS,
+  PEDIDO_COMPRA_COLUMNS,
+  EMBARQUE_COLUMNS,
+  MOVIMENTACAO_ESTOQUE_COLUMNS,
+  TURNO_CAIXA_COLUMNS,
+  MOVIMENTOS_CAIXA_COLUMNS,
+  FORMAS_DE_PAGAMENTO_COLUMNS,
+  CONTAS_FINANCEIRAS_COLUMNS,
+  TABELA_PRECO_COLUMNS,
+  CATEGORIA_FINANCEIRA_COLUMNS,
+  PEDIDO_VENDA_ITEM_COLUMNS,
+  PEDIDO_COMPRA_ITEM_COLUMNS,
+  EMBARQUE_ITEM_COLUMNS,
+  TABLE_PROMOTION_MANIFEST,
+} from './entityColumnManifest.ts';
+
 export const ENTITY_TO_TABLE = {
-  // === Núcleo (modo 'columns', migrations 001–006) ===
-  LancamentoFinanceiro: { table: 'lancamento_financeiro', mode: 'columns' },
-  Terceiro: { table: 'terceiro', mode: 'columns' },
-  Produto: { table: 'produto', mode: 'columns' },
-  PedidoVenda: { table: 'pedido_venda', mode: 'columns' },
-  PedidoCompra: { table: 'pedido_compra', mode: 'columns' },
-  MovimentacaoEstoque: { table: 'movimentacao_estoque', mode: 'columns' },
-  ContasFinanceiras: { table: 'contas_financeiras', mode: 'columns' },
-  FormasDePagamento: { table: 'formas_de_pagamento', mode: 'columns' },
-  TabelaPreco: { table: 'tabela_preco', mode: 'columns' },
-  TurnoCaixa: { table: 'turno_caixa', mode: 'columns' },
-  Embarque: { table: 'embarque', mode: 'columns' },
+  LancamentoFinanceiro: {
+    table: 'lancamento_financeiro',
+    mode: 'columns',
+    columns: LANCAMENTO_FINANCEIRO_COLUMNS,
+  },
+  Terceiro: { table: 'terceiro', mode: 'columns', columns: TERCEIRO_COLUMNS },
+  Produto: { table: 'produto', mode: 'columns', columns: PRODUTO_COLUMNS },
+  PedidoVenda: { table: 'pedido_venda', mode: 'columns', columns: PEDIDO_VENDA_COLUMNS },
+  PedidoCompra: { table: 'pedido_compra', mode: 'columns', columns: PEDIDO_COMPRA_COLUMNS },
+  PedidoVendaItem: { table: 'pedido_venda_item', mode: 'columns', columns: PEDIDO_VENDA_ITEM_COLUMNS },
+  PedidoCompraItem: { table: 'pedido_compra_item', mode: 'columns', columns: PEDIDO_COMPRA_ITEM_COLUMNS },
+  MovimentacaoEstoque: {
+    table: 'movimentacao_estoque',
+    mode: 'columns',
+    columns: MOVIMENTACAO_ESTOQUE_COLUMNS,
+  },
+  ContasFinanceiras: {
+    table: 'contas_financeiras',
+    mode: 'columns',
+    columns: CONTAS_FINANCEIRAS_COLUMNS,
+  },
+  FormasDePagamento: {
+    table: 'formas_de_pagamento',
+    mode: 'columns',
+    columns: FORMAS_DE_PAGAMENTO_COLUMNS,
+  },
+  TabelaPreco: { table: 'tabela_preco', mode: 'columns', columns: TABELA_PRECO_COLUMNS },
+  TurnoCaixa: { table: 'turno_caixa', mode: 'columns', columns: TURNO_CAIXA_COLUMNS },
+  Embarque: { table: 'embarque', mode: 'columns', columns: EMBARQUE_COLUMNS },
+  EmbarqueItem: { table: 'embarque_item', mode: 'columns', columns: EMBARQUE_ITEM_COLUMNS },
   ContaRecorrente: { table: 'conta_recorrente', mode: 'columns' },
   ContaPrevista: { table: 'conta_prevista', mode: 'columns' },
   CategoriaProduto: { table: 'categoria_produto', mode: 'columns' },
-  CategoriaFinanceira: { table: 'categoria_financeira', mode: 'columns' },
+  CategoriaFinanceira: {
+    table: 'categoria_financeira',
+    mode: 'columns',
+    columns: CATEGORIA_FINANCEIRA_COLUMNS,
+  },
   AgendaLogistica: { table: 'agenda_logistica', mode: 'columns' },
-  MovimentosCaixa: { table: 'movimentos_caixa', mode: 'columns' },
-  TargetFlare: { table: 'target_flare', mode: 'columns' },
+  MovimentosCaixa: {
+    table: 'movimentos_caixa',
+    mode: 'columns',
+    columns: MOVIMENTOS_CAIXA_COLUMNS,
+  },
+  TargetFlare: {
+    table: 'target_flare',
+    mode: 'columns',
+    columns: TABLE_PROMOTION_MANIFEST.target_flare,
+  },
   CatalogoInterface: { table: 'catalogo_interface', mode: 'columns' },
   PagamentoCartaoDetalhe: { table: 'pagamento_cartao_detalhe', mode: 'jsonb' },
 
