@@ -184,7 +184,7 @@ function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis,
         <Button type="button" variant="outline" onClick={onBack} className="h-14 flex-1 rounded-2xl border-0 bg-card text-base shadow-sm dark:bg-muted">
           Cancelar
         </Button>
-        <SafeActionButton type="button" onClick={onSubmit} isLoading={isSubmitting} loadingText="Processando..." className="h-14 flex-[2] rounded-2xl bg-background text-base text-white shadow-sm hover:bg-primary dark:bg-card dark:text-foreground">
+        <SafeActionButton type="button" onClick={onSubmit} isLoading={isSubmitting} loadingText="Processando..." className="h-14 flex-[2] rounded-2xl bg-primary text-base text-primary-foreground shadow-sm hover:bg-primary/90 dark:bg-card dark:text-foreground">
           Concluir
         </SafeActionButton>
       </div>

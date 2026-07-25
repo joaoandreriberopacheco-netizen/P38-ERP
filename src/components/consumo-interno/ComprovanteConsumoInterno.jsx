@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Printer, Share2, Loader2 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { ArrowLeft, Printer, Share2, Loader2, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { printOrShareElementAsPdf, shareOrDownloadBlob } from '@/lib/mobilePrintAndShare';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import { CONSUMO_FORM_COMPROVANTE_Z } from '@/lib/consumoInternoOverlay';
 
 const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
@@ -54,13 +56,17 @@ function MinutaA4({ consumo, dadosEmpresa }) {
   );
 }
 
-export default function ComprovanteConsumoInterno({ open, onClose, consumo }) {
+export default function ComprovanteConsumoInterno({ open, onClose, consumo, autoPrint = true }) {
   const [formato, setFormato] = useState('80mm');
   const [gerando, setGerando] = useState(false);
   const [dadosEmpresa, setDadosEmpresa] = useState(null);
+  const autoPrintDoneRef = useRef(false);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      autoPrintDoneRef.current = false;
+      return;
+    }
     base44.entities.DadosEmpresa.list().then((r) => r?.length && setDadosEmpresa(r[0]));
   }, [open]);
 
@@ -88,6 +94,16 @@ export default function ComprovanteConsumoInterno({ open, onClose, consumo }) {
       toast.error('Não foi possível exportar');
     }
   };
+
+  useEffect(() => {
+    if (!open || !consumo || !autoPrint || autoPrintDoneRef.current) return;
+    const timer = window.setTimeout(() => {
+      autoPrintDoneRef.current = true;
+      handlePrint();
+    }, 600);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- autoPrint once per open
+  }, [open, consumo?.id, autoPrint]);
 
   const handleShare = async () => {
     setGerando(true);
@@ -118,24 +134,37 @@ export default function ComprovanteConsumoInterno({ open, onClose, consumo }) {
 
   if (!open || !consumo) return null;
 
-  return (
-    <div className="fixed inset-0 z-[70] flex flex-col bg-muted dark:bg-background">
+  const panel = (
+    <div className={`fixed inset-0 ${CONSUMO_FORM_COMPROVANTE_Z} flex flex-col bg-muted dark:bg-background`}>
       <div className="flex items-center justify-between border-b border-border/40 bg-card px-4 py-3 dark:border-border/40 dark:bg-background">
-        <button onClick={onClose} className="flex items-center gap-2 text-sm text-muted-foreground">
+        <button type="button" onClick={onClose} className="flex items-center gap-2 text-sm text-muted-foreground">
           <ArrowLeft className="h-4 w-4" />Voltar
         </button>
         <span className="text-sm font-semibold text-foreground">Minuta</span>
         <div className="flex items-center gap-2">
-          <Button onClick={handlePrint} size="sm" variant="outline" className="h-9 gap-1.5 rounded-xl px-3 text-xs"><Printer className="h-3.5 w-3.5" /></Button>
-          <Button onClick={handleShare} disabled={gerando} size="sm" className="h-9 gap-1.5 rounded-xl bg-primary px-4 text-xs text-primary-foreground hover:bg-primary/90 dark:bg-muted dark:text-foreground">
+          <Button type="button" onClick={handlePrint} size="sm" className="h-9 gap-1.5 rounded-xl bg-primary px-3 text-xs text-primary-foreground hover:bg-primary/90">
+            <Printer className="h-3.5 w-3.5" />Imprimir
+          </Button>
+          <Button type="button" onClick={handleShare} disabled={gerando} size="sm" variant="outline" className="h-9 gap-1.5 rounded-xl px-3 text-xs">
             {gerando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Share2 className="h-3.5 w-3.5" />}Compartilhar
           </Button>
         </div>
       </div>
+
+      <div className="border-b border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-900/40 dark:bg-emerald-950/40">
+        <div className="mx-auto flex max-w-3xl items-center gap-3">
+          <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+          <div>
+            <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">Consumo registrado com sucesso</p>
+            <p className="text-xs text-emerald-800/80 dark:text-emerald-200/80">{consumo.numero} · {formatCurrency(consumo.valor_total)}</p>
+          </div>
+        </div>
+      </div>
+
       <div className="border-b border-border/40 bg-card px-4 py-2 dark:border-border/40 dark:bg-background">
         <div className="flex items-center gap-2">
-          <Button onClick={() => setFormato('80mm')} size="sm" variant={formato === '80mm' ? 'default' : 'outline'} className="h-8 text-xs">80mm</Button>
-          <Button onClick={() => setFormato('a4')} size="sm" variant={formato === 'a4' ? 'default' : 'outline'} className="h-8 text-xs">A4</Button>
+          <Button type="button" onClick={() => setFormato('80mm')} size="sm" variant={formato === '80mm' ? 'default' : 'outline'} className="h-8 text-xs">80mm</Button>
+          <Button type="button" onClick={() => setFormato('a4')} size="sm" variant={formato === 'a4' ? 'default' : 'outline'} className="h-8 text-xs">A4</Button>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto p-4">
@@ -145,4 +174,7 @@ export default function ComprovanteConsumoInterno({ open, onClose, consumo }) {
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined') return panel;
+  return createPortal(panel, document.body);
 }

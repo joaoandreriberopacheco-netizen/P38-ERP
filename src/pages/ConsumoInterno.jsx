@@ -13,7 +13,8 @@ import ConsumoInternoFormPage from '@/components/consumo-interno/ConsumoInternoF
 import ComprovanteConsumoInterno from '@/components/consumo-interno/ComprovanteConsumoInterno';
 import ConsumoInternoPainelInicial from '@/components/consumo-interno/ConsumoInternoPainelInicial';
 import ConsumoAnexosDialog from '@/components/consumo-interno/ConsumoAnexosDialog';
-import { CONSUMO_FORM_OVERLAY_Z, CONSUMO_FORM_DIALOG_CONTENT_Z } from '@/lib/consumoInternoOverlay';
+import ConsumoSubmittingOverlay from '@/components/consumo-interno/ConsumoSubmittingOverlay';
+import { CONSUMO_FORM_OVERLAY_Z, CONSUMO_FORM_DIALOG_CONTENT_Z, dismissConsumoOverlayHistory } from '@/lib/consumoInternoOverlay';
 import { buildAnexoMovimentoTag } from '@/components/anexos/buildAnexoMovimentoTag';
 import { renderTaggedImage } from '@/components/anexos/renderTaggedImage';
 
@@ -277,6 +278,26 @@ export default function ConsumoInternoPage() {
     });
   };
 
+  const resetFormData = () => ({
+    turno_caixa_id: turnos[0]?.id || '',
+    destinacao: '',
+    responsavel_recebimento: '',
+    tags: [],
+    observacoes: '',
+    itens: [],
+    assinatura_recolhedor_url: '',
+    assinatura_recolhedor_nome: '',
+    anexos_temporarios: [],
+    fotos_temporarias: [],
+  });
+
+  const fecharFormulario = () => {
+    dismissConsumoOverlayHistory();
+    setShowForm(false);
+    setEditandoConsumo(null);
+    setFormData(resetFormData());
+  };
+
   const handleSubmit = async () => {
     if (isSubmitting) return;
     if (!formData.destinacao || !formData.responsavel_recebimento || !formData.itens.length) {
@@ -298,36 +319,34 @@ export default function ConsumoInternoPage() {
         data_confirmacao: new Date().toISOString(),
       };
       let created;
+      let abrirComprovante = false;
+
       if (editandoConsumo) {
         created = await base44.entities.ConsumoInterno.update(editandoConsumo.id, payload);
-        toast.success('Consumo atualizado');
+        toast.success('Consumo atualizado com sucesso');
       } else {
         const response = await base44.functions.invoke('gerarNumeroSequencial', { tipo: 'CI' });
         const numero = response?.data?.numero || `CI-${Date.now()}`;
         created = await base44.entities.ConsumoInterno.create({ ...payload, numero });
 
         await Promise.all(formData.itens.map(async (item) => {
-          try {
-            const movimento = await base44.entities.MovimentacaoEstoque.create({
-              produto_id: item.produto_id,
-              produto_nome: item.produto_nome,
-              tipo: 'Saída',
-              motivo: 'Consumo Interno',
-              quantidade: item.quantidade,
-              custo_unitario: item.custo_unitario,
-              referencia_tipo: 'ConsumoInterno',
-              referencia_id: created.id,
-              referencia_numero: numero,
-              observacoes: `Consumo interno: ${formData.destinacao} — ${formData.responsavel_recebimento}`,
-              usuario_responsavel: currentUser?.full_name || currentUser?.email,
-            });
-            const produtoAtual = produtos.find((p) => p.id === item.produto_id);
-            if (produtoAtual) {
-              const novoEstoque = (produtoAtual.estoque_atual || 0) - item.quantidade;
-              await base44.entities.Produto.update(item.produto_id, { estoque_atual: novoEstoque });
-            }
-          } catch (error) {
-            throw error;
+          await base44.entities.MovimentacaoEstoque.create({
+            produto_id: item.produto_id,
+            produto_nome: item.produto_nome,
+            tipo: 'Saída',
+            motivo: 'Consumo Interno',
+            quantidade: item.quantidade,
+            custo_unitario: item.custo_unitario,
+            referencia_tipo: 'ConsumoInterno',
+            referencia_id: created.id,
+            referencia_numero: numero,
+            observacoes: `Consumo interno: ${formData.destinacao} — ${formData.responsavel_recebimento}`,
+            usuario_responsavel: currentUser?.full_name || currentUser?.email,
+          });
+          const produtoAtual = produtos.find((p) => p.id === item.produto_id);
+          if (produtoAtual) {
+            const novoEstoque = (produtoAtual.estoque_atual || 0) - item.quantidade;
+            await base44.entities.Produto.update(item.produto_id, { estoque_atual: novoEstoque });
           }
         }));
 
@@ -342,25 +361,51 @@ export default function ConsumoInternoPage() {
           anexos: formData.anexos_temporarios || [],
           fotos: formData.fotos_temporarias || [],
         });
-        toast.success('Consumo interno registrado');
+
+        const consumoSalvo = { ...payload, ...created, numero: created?.numero || numero };
+        setConsumoSelecionado(consumoSalvo);
+        setConsumos((prev) => [consumoSalvo, ...prev.filter((item) => item.id !== consumoSalvo.id)]);
+        dismissConsumoOverlayHistory();
+        setShowForm(false);
+        setEditandoConsumo(null);
+        setFormData(resetFormData());
         setShowComprovante(true);
+        toast.success('Consumo registrado! Abrindo comprovante…');
+        abrirComprovante = true;
+        await loadData();
       }
-      setConsumoSelecionado(created);
-      setConsumos((prev) => [created, ...prev.filter((item) => item.id !== created.id)]);
-      setEditandoConsumo(null);
-      setShowForm(false);
-      setFormData({ turno_caixa_id: turnos[0]?.id || '', destinacao: '', responsavel_recebimento: '', tags: [], observacoes: '', itens: [], assinatura_recolhedor_url: '', assinatura_recolhedor_nome: '', anexos_temporarios: [], fotos_temporarias: [] });
-      await loadData();
+
+      if (!abrirComprovante) {
+        const consumoSalvo = { ...payload, ...created };
+        setConsumoSelecionado(consumoSalvo);
+        setConsumos((prev) => [consumoSalvo, ...prev.filter((item) => item.id !== consumoSalvo.id)]);
+        fecharFormulario();
+        await loadData();
+      }
+    } catch (error) {
+      console.error('Erro ao salvar consumo interno:', error);
+      toast.error(error?.message || 'Não foi possível registrar o consumo. Tente novamente.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const overlays = (
+    <>
+      <ConsumoSubmittingOverlay open={isSubmitting} />
+      <ComprovanteConsumoInterno
+        open={showComprovante}
+        onClose={() => setShowComprovante(false)}
+        consumo={consumoSelecionado}
+      />
+    </>
+  );
+
   if (showForm) {
     return (
       <>
         <ConsumoInternoFormPage
-          onBack={() => { setShowForm(false); setEditandoConsumo(null); setFormData({ turno_caixa_id: turnos[0]?.id || '', destinacao: '', responsavel_recebimento: '', tags: [], observacoes: '', itens: [], assinatura_recolhedor_url: '', assinatura_recolhedor_nome: '' }); }}
+          onBack={fecharFormulario}
           formData={formData}
           setFormData={setFormData}
           turnos={turnos}
@@ -385,6 +430,7 @@ export default function ConsumoInternoPage() {
         </Dialog>
         <AssinaturaConsumoDialog open={showAssinatura} onOpenChange={setShowAssinatura} onConfirm={handleAssinaturaConfirm} />
         <ConsumoProdutoSelectorPDV open={showProdutoSelector} onOpenChange={setShowProdutoSelector} produtos={produtos} onAddItem={addItem} />
+        {overlays}
       </>
     );
   }
@@ -415,7 +461,7 @@ export default function ConsumoInternoPage() {
       <input ref={anexoInputRef} type="file" multiple accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={handleAnexoFileChange} />
       <ConsumoResumoDialog open={showResumo} onOpenChange={setShowResumo} consumo={consumoSelecionado} anexos={anexosResumo} />
       <ConsumoAnexosDialog open={showAnexosDialog} onOpenChange={setShowAnexosDialog} anexos={anexosResumo} consumoNumero={consumoSelecionado?.numero} />
-      <ComprovanteConsumoInterno open={showComprovante} onClose={() => setShowComprovante(false)} consumo={consumoSelecionado} />
+      {overlays}
     </>
   );
 }
