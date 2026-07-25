@@ -42,6 +42,7 @@ function computeLocalUpdates(produtos, pedidos90d, options = {}) {
 
     const metas = calcularMetasEstoqueParaProduto(produto, pedidos90d, {
       mediaFallbackDiasJanela,
+      zerarSemVelocidade: sobrescrever,
     });
 
     if (!metas.atualizar) {

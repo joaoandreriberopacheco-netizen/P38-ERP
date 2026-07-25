@@ -73,26 +73,27 @@ function buildGapReposicao(produto, pontoPedidoBase, estoqueAtual) {
 }
 
 /**
- * Quantidade sugerida = déficit até o ponto de pedido + um ciclo de 1,5 × lead time.
- * O ciclo usa a mesma base do ponto de pedido (média × 1,5 × LT).
+ * Quantidade sugerida = déficit até o ponto de pedido + um ciclo de reposição (estoque ideal).
  */
 export function calcularQuantidadeSugeridaNovoCiclo(
   estoqueAtual,
   pontoPedido,
+  estoqueIdeal,
   projecaoEstoque30d,
 ) {
   const estoque = Number(estoqueAtual) || 0;
   const ponto = Number(pontoPedido) || 0;
+  const ideal = Number(estoqueIdeal) || 0;
   const projecao = Number(projecaoEstoque30d);
-  const ciclo15Lt = ponto;
-  if (ciclo15Lt <= 0) return 0;
+  const cicloReposicao = ideal > 0 ? ideal : ponto;
+  if (cicloReposicao <= 0) return 0;
 
   const gapPonto = ponto > 0 ? Math.max(0, ponto - estoque) : 0;
   const rupturaEm30d = Number.isFinite(projecao) && projecao < 0;
   const abaixoPonto = ponto > 0 && estoque < ponto;
 
   if (!abaixoPonto && !rupturaEm30d) return 0;
-  return gapPonto + ciclo15Lt;
+  return gapPonto + cicloReposicao;
 }
 
 export function sugestaoPrecisaReposicao(sugestao) {
@@ -277,6 +278,7 @@ export function calcularSugestaoCompraProdutoVelocidade(
     ? calcularQuantidadeSugeridaNovoCiclo(
         estoqueAtual,
         pontoPedido,
+        estoqueIdeal,
         projecao.projecao_estoque_30d_base,
       )
     : 0;
@@ -436,6 +438,7 @@ export function calcularSugestaoCompraGrupoVelocidade(
     ? calcularQuantidadeSugeridaNovoCiclo(
         estoqueAtual,
         pontoPedido,
+        estoqueIdeal,
         projecao.projecao_estoque_30d_base,
       )
     : 0;

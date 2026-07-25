@@ -3,7 +3,7 @@ import type { createP38Client } from '../p38Client.ts';
 
 const JANELA_VENDAS_DIAS = 60;
 const LEAD_TIME_PADRAO = 20;
-const ESTOQUE_MINIMO_LT_FATOR = 1.5;
+const ESTOQUE_MINIMO_LT_FATOR = 0.5;
 
 function normalizeUnitCode(value: unknown) {
   return String(value || '')
@@ -132,11 +132,27 @@ function calcularVendas60dCalendario(produto: Record<string, unknown>, pedidos: 
   };
 }
 
-function calcularMetas(produto: Record<string, unknown>, pedidos: Record<string, unknown>[]) {
+function calcularMetas(
+  produto: Record<string, unknown>,
+  pedidos: Record<string, unknown>[],
+  options: { zerarSemVelocidade?: boolean } = {},
+) {
   const leadTime = Math.max(1, Number(produto?.tempo_reposicao_dias) || LEAD_TIME_PADRAO);
   const vendas = calcularVendas60dCalendario(produto, pedidos);
 
   if (!vendas.teveVenda) {
+    if (options?.zerarSemVelocidade === true) {
+      return {
+        atualizar: true,
+        estoque_minimo: 0,
+        estoque_ideal: 0,
+        motivo: 'sem_velocidade',
+        leadTime,
+        quantidade_limpa_60d: 0,
+        metas_estoque_atualizado_em: new Date().toISOString(),
+        metas_estoque_versao: 'v5-media-60d-sem-velocidade-zero',
+      };
+    }
     return {
       atualizar: false,
       motivo: 'sem_venda',
@@ -164,7 +180,7 @@ function calcularMetas(produto: Record<string, unknown>, pedidos: Record<string,
     lote_compra_vitrine: resolveLoteCompraVitrine(produto) || null,
     quantidade_limpa_60d: vendas.qtd60,
     metas_estoque_atualizado_em: new Date().toISOString(),
-    metas_estoque_versao: 'v4-media-60d-calendario',
+    metas_estoque_versao: 'v5-media-60d-calendario-05lt',
   };
 }
 
@@ -304,7 +320,7 @@ async function clearJobCache(db: ReturnType<typeof createClientFromRequest>['ent
 
 function regrasResposta() {
   return {
-    estoque_minimo: 'vendas 60d ÷ 60 × 1,5 × lead time',
+    estoque_minimo: 'vendas 60d ÷ 60 × 0,5 × lead time',
     estoque_ideal: 'vendas 60d ÷ 60 × lead time',
   };
 }
@@ -326,7 +342,9 @@ function computeSnapshot(
     }
     if (somenteMetasVazias && !produtoMetasVazio(produto)) continue;
 
-    const metas = calcularMetas(produto, pedidos);
+    const metas = calcularMetas(produto, pedidos, {
+      zerarSemVelocidade: !somenteMetasVazias,
+    });
     if (!metas.atualizar) {
       ignorados_sem_venda += 1;
       continue;
