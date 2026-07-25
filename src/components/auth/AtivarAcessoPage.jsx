@@ -129,9 +129,12 @@ export default function AtivarAcessoPage() {
               autoComplete="username"
               value={login}
               onChange={(ev) => setLogin(ev.target.value)}
-              placeholder="Ex: admin, joao…"
+              placeholder="Ex: joaoandreriberopacheco"
               required
             />
+            <p className="text-[10px] text-muted-foreground">
+              Use exactamente o utilizador que o administrador passou (sem @gmail.com).
+            </p>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground/90">Nova senha</label>

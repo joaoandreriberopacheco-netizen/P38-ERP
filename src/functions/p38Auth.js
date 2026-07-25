@@ -16,6 +16,45 @@ function resolveAnonKey() {
   return String(import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
 }
 
+function isSameOriginProxy(url) {
+  if (typeof window === 'undefined') return false;
+  try {
+    return new URL(url).origin === window.location.origin;
+  } catch {
+    return false;
+  }
+}
+
+function isJwtAnonKey(key) {
+  return key.startsWith('eyJ');
+}
+
+function buildHeaders(url, { authorized, anonKey, sessionToken }) {
+  const headers = { 'Content-Type': 'application/json' };
+
+  // Proxy Vercel → Supabase: sem apikey/JWT (evita erro ES256 no gateway).
+  if (isSameOriginProxy(url)) {
+    if (authorized && sessionToken) {
+      headers.Authorization = `Bearer ${sessionToken}`;
+    }
+    return headers;
+  }
+
+  if (anonKey && isJwtAnonKey(anonKey)) {
+    headers.apikey = anonKey;
+    if (!authorized) {
+      // Função pública com verify_jwt=false — não enviar Authorization com anon key.
+      return headers;
+    }
+  }
+
+  if (authorized && sessionToken) {
+    headers.Authorization = `Bearer ${sessionToken}`;
+  }
+
+  return headers;
+}
+
 async function postJson(url, headers, body) {
   return fetch(url, {
     method: 'POST',
@@ -26,36 +65,50 @@ async function postJson(url, headers, body) {
 
 /**
  * Invoca a Edge Function `p38-auth`.
- * Em produção usa primeiro `/api/p38-auth` (mesmo domínio Vercel) — evita bloqueios mobile ao Supabase.
+ * Em produção usa primeiro `/api/p38-auth` (mesmo domínio Vercel).
  */
 export async function invokeP38Auth(body, { authorized = false } = {}) {
   const supabase = getSupabaseBrowserClient();
   const urls = resolveFunctionUrls();
   const anonKey = resolveAnonKey();
 
-  if (!urls.length || !anonKey) {
+  if (!urls.length) {
     throw new Error('Supabase não configurado neste ambiente.');
   }
 
-  const headers = {
-    'Content-Type': 'application/json',
-    apikey: anonKey,
-  };
-
+  let sessionToken = null;
   if (authorized) {
     if (!supabase) throw new Error('Supabase não configurado.');
     const { data } = await supabase.auth.getSession();
-    const token = data?.session?.access_token;
-    if (!token) throw new Error('Sessão ausente.');
-    headers.Authorization = `Bearer ${token}`;
+    sessionToken = data?.session?.access_token;
+    if (!sessionToken) throw new Error('Sessão ausente.');
   }
 
   let response = null;
   let lastNetworkError = null;
+  let lastHttpError = null;
 
   for (const url of urls) {
+    const headers = buildHeaders(url, { authorized, anonKey, sessionToken });
     try {
-      response = await postJson(url, headers, body);
+      const attempt = await postJson(url, headers, body);
+      if (attempt.ok) {
+        response = attempt;
+        break;
+      }
+      let payload = null;
+      try {
+        payload = await attempt.json();
+      } catch {
+        payload = null;
+      }
+      const msg = payload?.error || payload?.message || `HTTP ${attempt.status}`;
+      // JWT inválido no proxy → tentar URL directa seguinte.
+      if (/invalid jwt/i.test(msg) && urls.length > 1) {
+        lastHttpError = new Error(msg);
+        continue;
+      }
+      response = attempt;
       break;
     } catch (err) {
       lastNetworkError = err;
@@ -63,6 +116,7 @@ export async function invokeP38Auth(body, { authorized = false } = {}) {
   }
 
   if (!response) {
+    if (lastHttpError) throw lastHttpError;
     throw new Error(
       lastNetworkError?.message?.includes('Failed to fetch')
         ? 'Sem ligação ao servidor de autenticação. Verifique a internet e tente novamente.'
