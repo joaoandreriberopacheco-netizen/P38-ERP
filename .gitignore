@@ -42,3 +42,4 @@ scripts/.cache/
 
 .env
 base44/.app.jsonc
+supabase/.temp/
