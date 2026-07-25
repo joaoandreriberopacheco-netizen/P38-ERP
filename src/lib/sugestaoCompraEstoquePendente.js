@@ -84,7 +84,7 @@ function somarRecebidosItensEmbarque(acc, embarque = {}, pedido = null) {
     const qtyBase = Number(item.quantidade_recebida_base);
     const qty = Number.isFinite(qtyBase) && qtyBase > 0
       ? qtyBase
-      : resolveQuantidadeBaseRecebidaItemEmbarque(item, pedidoItem);
+      : resolveQuantidadeBaseRecebidaItemEmbarque(item, pedidoItem, embarque);
     if (qty > 0) {
       acc[produtoKey] = (acc[produtoKey] || 0) + qty;
     }
@@ -259,11 +259,14 @@ export function resolveQuantidadeBaseItemEmbarque(item = {}, pedidoItem = null) 
   return qtdComercial * fator;
 }
 
-function resolveQuantidadeBaseRecebidaItemEmbarque(item = {}, pedidoItem = null) {
+function resolveQuantidadeBaseRecebidaItemEmbarque(item = {}, pedidoItem = null, embarque = null) {
   const recebidaBase = Number(item.quantidade_recebida_base);
   if (Number.isFinite(recebidaBase) && recebidaBase > 0) return recebidaBase;
 
-  const recebida = Number(item.quantidade_recebida ?? item.quantidade_recebida_comercial) || 0;
+  let recebida = Number(item.quantidade_recebida ?? item.quantidade_recebida_comercial) || 0;
+  if (recebida <= 0 && embarque) {
+    recebida = resolveQuantidadeRecebidaItemEmbarque(item, embarque);
+  }
   if (recebida <= 0) return 0;
 
   const baseEmbarcada = resolveQuantidadeBaseItemEmbarque(
@@ -294,7 +297,7 @@ export function buildPendenteEmbarcadoNaoRecebidoPorProduto(embarques = [], pedi
       if (!produtoId) continue;
       const pedidoItem = pedido ? resolvePedidoItemParaEmbarque(pedido, item) : null;
       const embarcadoBase = resolveQuantidadeBaseItemEmbarque(item, pedidoItem);
-      const recebidoBase = resolveQuantidadeBaseRecebidaItemEmbarque(item, pedidoItem);
+      const recebidoBase = resolveQuantidadeBaseRecebidaItemEmbarque(item, pedidoItem, embarque);
       const pendente = Math.max(0, embarcadoBase - recebidoBase);
       if (pendente <= 0) continue;
       const key = String(produtoId);
