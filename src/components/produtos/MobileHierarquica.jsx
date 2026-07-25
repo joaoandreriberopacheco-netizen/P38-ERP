@@ -64,7 +64,7 @@ const CATALOGO_MOBILE_DESC_MIN_H = 'min-h-[3.75rem]';
 const CATALOGO_MOBILE_DESC_GAP = 'mb-2.5';
 const CATALOGO_MOBILE_NOME_TYPO =
   'text-[12px] font-light leading-relaxed uppercase break-words [overflow-wrap:anywhere]';
-const CATALOGO_MOBILE_ROW_H_GROUP = 80;
+const CATALOGO_MOBILE_ROW_H_GROUP = 148;
 const CATALOGO_MOBILE_ROW_H_SKU = 196;
 
 const CatalogoMobileScrollContext = createContext(null);
@@ -542,16 +542,116 @@ function buildGroupMobileMetrics(row, catalogStockContext = null) {
   for (const sku of skus) {
     inventario += lineValorCustoTotal(sku, catalogStockContext);
   }
-  return { est, inventario };
+  return { est, inventario, skuCount: row?.count ?? skus.length };
 }
 
-function formatGroupMobileEstoque(est) {
-  if (!est || est.mode === 'empty') return null;
-  if (est.mode === 'mixed') {
-    return `${fmtN(est.quantidade)} un. base`;
+function resolveGroupStockColumn(est, row) {
+  if (!est || est.mode === 'empty') {
+    return {
+      quantidade: 0,
+      unidade: '—',
+      virtualActive: false,
+      stockTone: 'muted',
+    };
   }
-  const prefix = est.virtual && est.pendente > 0 ? '~' : '';
-  return `${prefix}${fmtN(est.quantidade)} ${est.sigla || 'UN'}`;
+  if (est.mode === 'mixed') {
+    return {
+      quantidade: est.quantidade,
+      unidade: 'MIX',
+      virtualActive: est.virtual === true,
+      stockTone: row?.criticalCount > 0 ? 'warning' : 'muted',
+    };
+  }
+  return {
+    quantidade: est.quantidade,
+    unidade: est.sigla || 'UN',
+    virtualActive: est.virtual && est.pendente > 0,
+    stockTone: row?.criticalCount > 0 ? 'danger' : 'success',
+  };
+}
+
+function groupHierarchyLabel(row) {
+  if (row?.isCategoryBand) return 'Categoria';
+  const level = row?.level ?? 1;
+  if (level <= 1) return 'Família';
+  if (row?.isLeafGroup) return 'Grupo';
+  return 'Subfamília';
+}
+
+function CatalogoMobileGroupTabulatedValues({ inventario }) {
+  const inventarioFmt = inventario > 0 ? formatCatalogoMobileNum(inventario) : '—';
+  const values = {
+    valorCompra: '—',
+    custoCalculado: '—',
+    markup: '—',
+    precoVenda: '—',
+    inventarioValorizado: inventarioFmt,
+    estoqueAtual: '—',
+  };
+
+  return (
+    <div className="min-w-0 overflow-hidden mt-0.5">
+      {CATALOGO_MOBILE_VALUE_ROWS.map((valueRow, rowIdx) => (
+        <div
+          key={rowIdx}
+          className={`${CATALOGO_MOBILE_VALUES_GRID} ${rowIdx === 0 ? '' : 'mt-1.5'}`}
+        >
+          {valueRow.map(({ key }) => (
+            <p
+              key={key}
+              className={cn(
+                CATALOGO_MOBILE_BODY_TEXT,
+                'tabular-nums text-right truncate',
+                key === 'inventarioValorizado' && inventario > 0
+                  ? 'text-foreground/90 font-light'
+                  : 'text-muted-foreground/70',
+              )}
+            >
+              {values[key]}
+            </p>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CatalogoMobileGroupDescBlock({ nome, tier, hierarchyLabel, skuCount, criticalCount }) {
+  return (
+    <div className="min-w-0 overflow-hidden">
+      <div className="mb-1 flex flex-wrap items-center gap-1.5">
+        <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+          {hierarchyLabel}
+        </span>
+        <Badge
+          variant="outline"
+          className={cn(
+            'h-5 px-1.5 text-[10px] font-light',
+            tier === 'pai'
+              ? 'border-border/40 text-foreground dark:border-border/40 dark:text-foreground'
+              : 'border-border/40 text-muted-foreground dark:border-border/40 dark:text-muted-foreground',
+          )}
+        >
+          {skuCount} {skuCount === 1 ? 'SKU' : 'SKUs'}
+        </Badge>
+        {criticalCount > 0 && (
+          <Badge variant="outline" className="h-5 truncate border-red-200 px-1.5 text-[10px] font-medium text-red-600 dark:border-red-800 dark:text-red-400">
+            {criticalCount} {criticalCount > 1 ? 'críticos' : 'crítico'}
+          </Badge>
+        )}
+      </div>
+      <p
+        lang="pt-BR"
+        className={cn(
+          'line-clamp-2 min-h-[2.5rem]',
+          CATALOGO_MOBILE_NOME_TYPO,
+          tier === 'pai' ? 'font-medium text-foreground' : catalogNomeColorClass(tier),
+        )}
+      >
+        {nome}
+      </p>
+    </div>
+  );
 }
 
 // ── Barra expandir/colapsar (mobile) ───────────────────────────────────────────
@@ -592,8 +692,11 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle,
     () => buildGroupMobileMetrics(row, catalogStockContext),
     [row, catalogStockContext],
   );
-  const estoqueLabel = formatGroupMobileEstoque(metrics.est);
-  const inventarioLabel = metrics.inventario > 0 ? `R$ ${formatCatalogoMobileNum(metrics.inventario)}` : null;
+  const stockCol = useMemo(
+    () => resolveGroupStockColumn(metrics.est, row),
+    [metrics.est, row],
+  );
+  const hierarchyLabel = groupHierarchyLabel(row);
 
   return (
     <button
@@ -602,63 +705,38 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle,
       className={cn(
         p38Table.catalogMobileRow,
         'flex w-full min-w-0 text-left overflow-hidden',
+        tier === 'pai' ? 'bg-muted/20 dark:bg-muted/10' : 'bg-transparent',
       )}
     >
       <div className={cn('flex flex-1 min-w-0 items-stretch', CATALOG_ROW_PL)}>
-        <CatalogoMobileQtdColShell className="flex items-center justify-end !pr-2">
-          <ChevronRight
-            className={`w-3.5 h-3.5 text-muted-foreground flex-shrink-0 md:transition-transform md:duration-150 ${isExpanded ? 'rotate-90' : ''}`}
-          />
-        </CatalogoMobileQtdColShell>
+        <CatalogoMobileQtdUnCol
+          quantidade={stockCol.quantidade}
+          unidade={stockCol.unidade}
+          stockTone={stockCol.stockTone}
+          virtualActive={stockCol.virtualActive}
+        />
         <div
-          className="flex-1 min-w-0 py-2.5 pr-3"
+          className="flex-1 min-w-0 overflow-hidden py-2 pr-3"
           style={{ paddingLeft: catalogContentPadAfterLine(row.level ?? 1) }}
         >
-          <div className="flex min-w-0 items-start gap-2">
-            <span
+          <div className="flex min-w-0 items-start gap-1">
+            <ChevronRight
               className={cn(
-                'flex-1 min-w-0 line-clamp-2',
-                CATALOGO_MOBILE_NOME_TYPO,
-                catalogNomeColorClass(tier),
+                'mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-muted-foreground md:transition-transform md:duration-150',
+                isExpanded && 'rotate-90',
               )}
-            >
-              {row.label}
-            </span>
-            <div className="flex max-w-[45%] flex-shrink-0 items-center gap-1.5">
-              {row.criticalCount > 0 && (
-                <Badge variant="outline" className="h-5 truncate border-red-200 px-1.5 text-[10px] font-medium text-red-600 dark:border-red-800 dark:text-red-400">
-                  {row.criticalCount} {row.criticalCount > 1 ? 'críticos' : 'crítico'}
-                </Badge>
-              )}
-              <Badge
-                variant="outline"
-                className={cn(
-                  'h-5 flex-shrink-0 px-1.5 text-[10px] font-light',
-                  tier === 'pai'
-                    ? 'border-border/40 text-foreground dark:border-border/40 dark:text-foreground'
-                    : 'border-border/40 text-muted-foreground dark:border-border/40 dark:text-muted-foreground',
-                )}
-              >
-                {row.count}
-              </Badge>
+            />
+            <div className="min-w-0 flex-1">
+              <CatalogoMobileGroupDescBlock
+                nome={row.label}
+                tier={tier}
+                hierarchyLabel={hierarchyLabel}
+                skuCount={metrics.skuCount}
+                criticalCount={row.criticalCount || 0}
+              />
+              <CatalogoMobileGroupTabulatedValues inventario={metrics.inventario} />
             </div>
           </div>
-          {(estoqueLabel || inventarioLabel) && (
-            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] tabular-nums text-muted-foreground">
-              {estoqueLabel ? (
-                <span>
-                  <span className="uppercase tracking-tight">Est.</span>{' '}
-                  <span className="text-foreground/80">{estoqueLabel}</span>
-                </span>
-              ) : null}
-              {inventarioLabel ? (
-                <span>
-                  <span className="uppercase tracking-tight">Inv.</span>{' '}
-                  <span className="font-medium text-foreground/80">{inventarioLabel}</span>
-                </span>
-              ) : null}
-            </div>
-          )}
         </div>
       </div>
     </button>
