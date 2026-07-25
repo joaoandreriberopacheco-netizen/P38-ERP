@@ -175,7 +175,7 @@ jobs:
       - name: Vercel deploy (production)
         id: deploy
         run: |
-          url=$(npx --yes vercel@latest deploy --prebuilt --prod --yes --token "$VERCEL_TOKEN")
+          url=$(npx --yes vercel@latest deploy --prebuilt --prod --yes --archive=tgz --token "$VERCEL_TOKEN")
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Deploy URL: $url"
 
