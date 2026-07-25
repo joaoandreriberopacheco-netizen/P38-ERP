@@ -44,8 +44,18 @@ function decorateRow(row, entityName, mapping) {
     if ('flare_line' in out) out.line = out.flare_line;
     if ('flare_column' in out) out.column = out.flare_column;
   }
-  if (entityName === 'PedidoVenda' && out.total != null && out.valor_total == null) {
-    out.valor_total = out.total;
+  if (entityName === 'PedidoVenda') {
+    const totalCol = out.total != null ? Number(out.total) : NaN;
+    const totalLegado = out.valor_total != null ? Number(out.valor_total) : NaN;
+    if (Number.isFinite(totalCol) && totalCol > 0) {
+      out.valor_total = totalCol;
+      out.total = totalCol;
+    } else if (Number.isFinite(totalLegado) && totalLegado > 0) {
+      out.valor_total = totalLegado;
+      if (out.total == null) out.total = totalLegado;
+    } else if (out.total != null && out.valor_total == null) {
+      out.valor_total = out.total;
+    }
   }
   return out;
 }

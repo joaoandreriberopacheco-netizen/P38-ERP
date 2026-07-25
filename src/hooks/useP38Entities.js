@@ -11,11 +11,11 @@ import {
 
 export { fetchPedidosVenda90d, fetchDadosVendaAbcd90d };
 import { unifyLogisticaEventos } from '@/components/logistica-sandbox/fluvialDataUtils';
-import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { resolveValorPedidoVenda, roundToTwoDecimals } from '@/lib/financialUtils';
 import { dataHoje, toLocalDateKey } from '@/components/utils/dateUtils';
 
 function valorPedidoVenda(pedido) {
-  return Number(pedido?.valor_total ?? pedido?.total ?? 0) || 0;
+  return resolveValorPedidoVenda(pedido);
 }
 
 const entityQueryDefaults = {

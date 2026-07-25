@@ -15,7 +15,7 @@ import { useToast } from "@/components/ui/use-toast";
 
 import ComprovanteCompra from './ComprovanteCompra';
 import { dataHoje } from '@/components/utils/dateUtils';
-import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { roundToTwoDecimals, resolveValorPedidoVenda, pagamentosCobremTotal, formatCurrency } from '@/lib/financialUtils';
 
 export default function ConfirmarPagamento({ pedido, open, onClose, onSuccess }) {
   const [pagamentos, setPagamentos] = useState([{ forma_pagamento: 'Dinheiro', valor: '' }]);
@@ -74,11 +74,12 @@ export default function ConfirmarPagamento({ pedido, open, onClose, onSuccess })
     setPagamentos(newPagamentos);
   };
 
+  const valorTotalPedido = resolveValorPedidoVenda(pedido);
   const totalPago = roundToTwoDecimals(
     pagamentos.reduce((sum, p) => sum + (parseFloat(p.valor) || 0), 0)
   );
-  const faltaPagar = roundToTwoDecimals((pedido?.valor_total || 0) - totalPago);
-  const pagamentoCompleto = Math.abs(faltaPagar) < 0.01;
+  const faltaPagar = roundToTwoDecimals(valorTotalPedido - totalPago);
+  const pagamentoCompleto = pagamentosCobremTotal(totalPago, valorTotalPedido);
 
   const handleConfirmar = async () => {
     // Validar se todas as formas estão preenchidas
@@ -142,7 +143,7 @@ export default function ConfirmarPagamento({ pedido, open, onClose, onSuccess })
         descricao: `Venda - ${pedido.numero}`,
         terceiro_id: pedido.cliente_id,
         terceiro_nome: pedido.cliente_nome,
-        valor: pedido.valor_total,
+        valor: valorTotalPedido,
         data_vencimento: dataHoje(),
         data_pagamento: dataHoje(),
         status: 'Pago',
@@ -216,7 +217,7 @@ export default function ConfirmarPagamento({ pedido, open, onClose, onSuccess })
             <div className="text-right">
               <p className="text-sm text-muted-foreground">Valor Total:</p>
               <p className="text-2xl font-bold text-green-600">
-                R$ {pedido?.valor_total?.toFixed(2)}
+                R$ {formatCurrency(valorTotalPedido)}
               </p>
             </div>
           </div>

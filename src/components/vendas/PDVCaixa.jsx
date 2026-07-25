@@ -52,7 +52,7 @@ import AutorizacoesEstornoPendentes from './AutorizacoesEstornoPendentes';
 import { processarVendaCaixa } from '@/functions/processarVendaCaixa';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 import ConfirmarImpressaoDialog from '@/components/vendas/ConfirmarImpressaoDialog';
-import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { roundToTwoDecimals, resolveValorPedidoVenda, pagamentosCobremTotal } from '@/lib/financialUtils';
 import {
   descricaoPadraoVale,
   listarPessoasFolhaParaVale,
@@ -374,15 +374,17 @@ export default function PDVCaixa({
   const [showComprovanteDespesa, setShowComprovanteDespesa] = useState(false);
   const { toast } = useToast();
 
+  const valorTotalPedido = pedidoSelecionado ? resolveValorPedidoVenda(pedidoSelecionado) : 0;
+
   const totalPago = roundToTwoDecimals(
     pagamentosDinheiro + pagamentosPix + pagamentosDebito + pagamentosCredito + pagamentosVale + pagamentosContaPagar
   );
   const valorRestante = pedidoSelecionado
-    ? roundToTwoDecimals((pedidoSelecionado.valor_total || 0) - totalPago)
+    ? roundToTwoDecimals(valorTotalPedido - totalPago)
     : 0;
   const troco = valorRestante < 0 ? Math.abs(valorRestante) : 0;
   const pagamentoValido = pedidoSelecionado
-    ? roundToTwoDecimals(totalPago) >= roundToTwoDecimals(pedidoSelecionado.valor_total || 0)
+    ? pagamentosCobremTotal(totalPago, valorTotalPedido)
     : false;
 
   // Formatar valor para exibição (1234.56 -> "1.234,56")
@@ -471,8 +473,9 @@ export default function PDVCaixa({
 
   useEffect(() => {
     if (pedidoSelecionado) {
-      const valorFormatado = formatarValorExibicao(pedidoSelecionado.valor_total);
-      setPagamentosDinheiro(pedidoSelecionado.valor_total);
+      const totalArredondado = resolveValorPedidoVenda(pedidoSelecionado);
+      const valorFormatado = formatarValorExibicao(totalArredondado);
+      setPagamentosDinheiro(totalArredondado);
       setInputDinheiro(valorFormatado);
       setPagamentosPix(0);
       setInputPix('0,00');
