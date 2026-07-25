@@ -423,7 +423,11 @@ function groupCellValue(colId, row, salesVelocityMap = {}, catalogStockContext =
         );
       }
       return (
-        <span className="text-xs text-muted-foreground tabular-nums">
+        <span
+          className="text-xs text-muted-foreground tabular-nums"
+          title={disp.virtual && disp.pendente > 0 ? 'Estoque virtual (inclui pedidos em trânsito)' : undefined}
+        >
+          {disp.virtual && disp.pendente > 0 ? '~' : ''}
           {fmtN(disp.quantidade)} {disp.sigla || (skus[0]?.unidade_principal || 'UN')}
         </span>
       );

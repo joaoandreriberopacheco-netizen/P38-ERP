@@ -164,6 +164,11 @@ function applyFilters(query, where, mapping) {
         q = ops.$options === 'i' ? q.ilike(target, `%${pattern}%`) : q.like(target, `%${pattern}%`);
         applied = true;
       }
+      if ('$in' in ops) {
+        const values = Array.isArray(ops.$in) ? ops.$in : [ops.$in];
+        if (values.length) q = q.in(target, values);
+        applied = true;
+      }
       if (applied) continue;
     }
 
