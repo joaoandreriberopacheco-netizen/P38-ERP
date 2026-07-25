@@ -10,6 +10,8 @@
  *   npm run secrets:check -- --context=local
  */
 import pg from 'pg';
+import fs from 'node:fs';
+import { P38_SECRETS_BUNDLE_PATH } from './load-p38-secrets-bundle.mjs';
 import {
   checkProjectRefAlignment,
   maskPresence,
@@ -118,7 +120,12 @@ async function main() {
   console.log(`  secrets carregados: ${secretNames}`);
 
   if (context === 'cloud-agent' || (context === 'all' && secretNames !== '(n/d)')) {
-    console.log('  configuração: Cursor Dashboard → Cloud Agents → varejosync → Secrets');
+    console.log('  configuração: secrets/p38-chaves.txt (recomendado) ou Cursor → Cloud Agents → Secrets');
+    if (fs.existsSync(P38_SECRETS_BUNDLE_PATH)) {
+      console.log('  ficheiro mestre: secrets/p38-chaves.txt (carregado — sobrepõe painel Cursor)');
+    } else {
+      console.log('  ficheiro mestre: secrets/p38-chaves.txt (não existe — corre npm run secrets:init)');
+    }
     if (secretNames.includes('supabase') && !secretNames.includes('SUPABASE_ACCESS_TOKEN')) {
       console.log('  ⚠ Detectado secret legado `supabase` — substitui por DATABASE_URL e SUPABASE_ACCESS_TOKEN separados.');
     }

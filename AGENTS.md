@@ -34,6 +34,7 @@ Guidance for AI agents working in this repository (**varejosync** / P38 ERP — 
 | Production build | `npm run build` |
 | Preview build | `npm run preview` |
 | Secrets checklist | `npm run secrets:check` |
+| Criar ficheiro de chaves | `npm run secrets:init` |
 
 There is **no** `test` script; E2E is manual / migration checklists under `docs/migration/`.
 
@@ -52,16 +53,20 @@ Vite binds to **localhost:5173** by default (no `--host`). For browser testing f
 
 ### Environment variables (Cursor Cloud — não local)
 
-João trabalha **só no Cursor Cloud Agent**. A configuração de credenciais é feita em:
+João trabalha **só no Cursor Cloud Agent**.
 
-**Cursor → Dashboard → Cloud Agents → ambiente `varejosync` → Secrets**
+**Forma mais simples:** ficheiro mestre `secrets/p38-chaves.txt` (ver [`secrets/README.md`](secrets/README.md)):
 
-Não é necessário `.env.local` no PC. Após gravar secrets, abrir **nova sessão** Cloud Agent.
+```bash
+npm run secrets:init
+# editar secrets/p38-chaves.txt com todas as chaves
+npm run secrets:check -- --context=cloud-agent
+```
+
+Alternativa: **Cursor → Dashboard → Cloud Agents → varejosync → Secrets** (uma variável de cada vez).
 
 - **Mapa canónico:** [`docs/migration/P38_SECRETS_CANONICOS.md`](docs/migration/P38_SECRETS_CANONICOS.md)
-- **Validar:** `npm run secrets:check -- --context=cloud-agent`
-- O ficheiro `.env.example` serve só de **referência de nomes** (não copiar para o repo).
-- For **Base44** API access (auditoria/flares), configure também `VITE_BASE44_APP_ID`, `VITE_BASE44_BACKEND_URL`, and auth per `docs/migration/BASE44_TO_SUPABASE_GITHUB.md`.
+- O ficheiro `secrets/p38-chaves.txt` está no `.gitignore` — nunca commitar
 - Optional **Supabase** hybrid testing: see `docs/migration/SUPABASE_TEST_SETUP.md` (`supabase start`, `VITE_USE_SUPABASE_ENTITIES=true`).
 - Build/dev may log `[base44] Proxy not enabled (VITE_BASE44_APP_BASE_URL not set)` — expected without proxy env; build still succeeds.
 

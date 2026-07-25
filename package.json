@@ -25,6 +25,7 @@
     "supabase:deploy": "node scripts/deploy-supabase.mjs",
     "supabase:deploy:check": "node scripts/supabase-deploy-check.mjs",
     "secrets:check": "node scripts/p38-secrets-check.mjs",
+    "secrets:init": "node scripts/init-p38-secrets-bundle.mjs",
     "supabase:align:check": "node scripts/verify-supabase-project-alignment.mjs",
     "supabase:deploy:functions": "node scripts/deploy-supabase-functions.mjs",
     "supabase:port-functions": "node scripts/port-base44-functions.mjs",

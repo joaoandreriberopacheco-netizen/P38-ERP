@@ -3,6 +3,7 @@
  * Usado por flare:*, audit:fluxo-dia, etc.
  */
 import { createClient } from '@base44/sdk';
+import { loadP38SecretsBundle } from './load-p38-secrets-bundle.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -39,6 +40,8 @@ export function loadDotEnvFiles() {
       process.env[key] = val;
     }
   }
+  // Ficheiro mestre João (secrets/p38-chaves.txt) — prioridade sobre painel Cursor
+  loadP38SecretsBundle();
 }
 
 export function getBase44Env() {

@@ -4,14 +4,26 @@ João, este documento é o **mapa único** das chaves de ligação. Depois de co
 
 ## Modo de trabalho: só Cursor Cloud
 
-**Não precisas de `.env.local` na tua máquina.** Trabalhas no **Cursor Cloud Agent** — a configuração é feita no painel do Cursor, não no computador local.
+**Não precisas de `.env.local` na tua máquina.** Trabalhas no **Cursor Cloud Agent**.
 
-### Onde configurar (passo a passo)
+### Opção A — ficheiro mestre (recomendado para ti)
 
-1. Abre o **Cursor** (browser ou app) → **Dashboard** → **Cloud Agents**
+Cola **todas** as chaves num só ficheiro; o código distribui automaticamente:
+
+```bash
+npm run secrets:init          # cria secrets/p38-chaves.txt
+# edita secrets/p38-chaves.txt — cola os valores
+npm run secrets:check -- --context=cloud-agent
+```
+
+Ver [`secrets/README.md`](../../secrets/README.md). O ficheiro **não vai para o Git** e **sobrepõe** secrets antigos do painel Cursor.
+
+### Opção B — painel Cursor (alternativa)
+
+1. Abre o **Cursor** → **Dashboard** → **Cloud Agents**
 2. Entra no ambiente **`varejosync`** (repositório P38)
 3. Secção **Secrets** — adiciona cada variável com o **nome exacto** da tabela abaixo
-4. **Grava** e abre uma **nova sessão** Cloud Agent (secrets só carregam ao iniciar)
+4. **Grava** e abre uma **nova sessão** Cloud Agent
 
 URL do ambiente (referência):  
 https://cursor.com/dashboard/cloud-agents/environments/e/334db7fa-cbaa-49eb-9dd0-1c1b7a206ced
