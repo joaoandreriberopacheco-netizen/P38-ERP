@@ -11,6 +11,9 @@ import {
   pruneTreeForGroupAnalysis,
 } from '@/lib/catalogGroupAnalysis';
 import {
+  resolveCatalogEstoqueExibicao,
+} from '@/lib/catalogEstoqueVirtual';
+import {
   buildPurchaseUnitOptions,
   buildSaleUnitOptions,
   formatEstoqueApresentacao,
@@ -136,7 +139,7 @@ function formatCatalogoMobilePct(val) {
   return `${n.toFixed(1).replace('.', ',')}%`;
 }
 
-function buildCatalogoMobileTabulatedValues(produto) {
+function buildCatalogoMobileTabulatedValues(produto, catalogStockContext = null) {
   const cat = getCatalogoComercialView(produto);
   const custoBase = resolveCustoTotalUnitBaseProduto(produto);
   const inventario = produto?.inventario_valorizado ?? custoBase * (produto?.estoque_atual || 0);
@@ -144,6 +147,10 @@ function buildCatalogoMobileTabulatedValues(produto) {
   const markupPct = cat.markupSobreCustoPct > 0
     ? cat.markupSobreCustoPct
     : (produto?.preco_venda_percentual || 0);
+  const est = resolveCatalogEstoqueExibicao(produto, catalogStockContext);
+  const estoqueFmt = est.virtual && est.pendente > 0
+    ? `~${fmtN(est.quantidade)}`
+    : fmtN(est.quantidade);
 
   return {
     valorCompra: cat.valorCompraNaEmbalagem > 0 ? formatCatalogoMobileNum(cat.valorCompraNaEmbalagem) : '—',
@@ -151,9 +158,7 @@ function buildCatalogoMobileTabulatedValues(produto) {
     markup: formatCatalogoMobilePct(markupPct),
     inventarioValorizado: inventarioFmt,
     precoVenda: cat.precoVenda > 0 ? formatCatalogoMobileNum(cat.precoVenda) : '—',
-    estoqueAtual: formatEstoqueApresentacao(produto)?.quantidade != null
-      ? fmtN(formatEstoqueApresentacao(produto).quantidade)
-      : fmtN(produto?.estoque_atual || 0),
+    estoqueAtual: estoqueFmt,
   };
 }
 
@@ -165,7 +170,7 @@ function catalogStockAccentKey(stockTone) {
 }
 
 /** Coluna esquerda: qtd + UN empilhados; border-r separa do bloco descrição/valores à direita. */
-function CatalogoMobileQtdUnCol({ quantidade, unidade, stockTone = 'success' }) {
+function CatalogoMobileQtdUnCol({ quantidade, unidade, stockTone = 'success', virtualActive = false }) {
   const accentKey = catalogStockAccentKey(stockTone);
   const dotClass = p38Accent[accentKey]?.dot || p38Table.accentDot;
 
@@ -173,7 +178,7 @@ function CatalogoMobileQtdUnCol({ quantidade, unidade, stockTone = 'success' }) 
     <CatalogoMobileQtdColShell>
       <span className={`absolute left-0 top-3.5 w-1.5 h-1.5 rounded-full ${dotClass}`} aria-hidden />
       <p className={`${CATALOGO_MOBILE_BODY_TEXT} tabular-nums leading-none text-foreground`}>
-        {fmtN(quantidade)}
+        {virtualActive ? '~' : ''}{fmtN(quantidade)}
       </p>
       <p className={`${CATALOGO_MOBILE_BODY_TEXT} uppercase text-muted-foreground mt-1.5 leading-none truncate`}>
         {unidade}
@@ -432,8 +437,8 @@ export function CatalogoMobileColumnHeader({ className = '', invisible = false, 
   );
 }
 
-function CatalogoMobileTabulatedValues({ produto, className = '' }) {
-  const values = buildCatalogoMobileTabulatedValues(produto);
+function CatalogoMobileTabulatedValues({ produto, catalogStockContext = null, className = '' }) {
+  const values = buildCatalogoMobileTabulatedValues(produto, catalogStockContext);
 
   return (
     <div className={cn('min-w-0 overflow-hidden', className)}>
@@ -457,16 +462,16 @@ function CatalogoMobileTabulatedValues({ produto, className = '' }) {
 }
 
 // ── Linha de SKU (padrão relatório compras / margem mobile expandido) ─────────
-const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
+const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing, catalogStockContext = null }) {
   const p = row.produto;
-  const e = p.estoque_atual || 0;
+  const est = resolveCatalogEstoqueExibicao(p, catalogStockContext);
+  const estoqueExibicao = est.quantidade;
+  const unidadeExibicao = est.unidade || p.unidade_principal || 'UN';
+  const virtualActive = est.virtual && est.pendente > 0;
   const m = p.estoque_minimo || 0;
-  const stockTone = !p.ativo ? 'muted' : e <= 0 ? 'danger' : e <= m ? 'warning' : 'success';
+  const stockTone = !p.ativo ? 'muted' : estoqueExibicao <= 0 ? 'danger' : estoqueExibicao <= m ? 'warning' : 'success';
   const tier = getCatalogRowTier(row);
-
   const apresent = formatEstoqueApresentacao(p);
-  const estoqueExibicao = apresent ? apresent.quantidade : e;
-  const unidadeExibicao = apresent ? apresent.sigla : (p.unidade_principal || 'UN');
   return (
     <div className={cn(p38Table.catalogMobileRow, 'flex min-w-0 max-w-full py-5 tablet-portrait:py-6')}>
       <button
@@ -479,6 +484,7 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
             quantidade={estoqueExibicao}
             unidade={unidadeExibicao}
             stockTone={stockTone}
+            virtualActive={virtualActive}
           />
           <div
             className="flex-1 min-w-0 overflow-hidden py-1 pr-2"
@@ -490,7 +496,7 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
                 #{p.codigo_interno}
               </p>
             )}
-            <CatalogoMobileTabulatedValues produto={p} className="mt-0.5" />
+            <CatalogoMobileTabulatedValues produto={p} catalogStockContext={catalogStockContext} className="mt-0.5" />
             {apresent && (
               <p className="mt-2 text-[9px] text-muted-foreground truncate">
                 {apresent.rotulo || 'unidade de exibição'}
@@ -786,6 +792,7 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
                   row={row}
                   onEdit={onEdit}
                   onOpenPricing={setPricingProduto}
+                  catalogStockContext={catalogStockContext}
                 />
               )}
             </div>
