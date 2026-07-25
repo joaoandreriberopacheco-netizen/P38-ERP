@@ -181,34 +181,65 @@ function normalizeOrderColumn(field, mapping) {
   return field;
 }
 
+/** PostgREST/Supabase devolve no máximo 1000 linhas por pedido. */
+const SUPABASE_PAGE_SIZE = 1000;
+
+/**
+ * Executa select com paginação (range). Sem `limit`, busca todas as páginas.
+ * @param {() => import('@supabase/supabase-js').PostgrestFilterBuilder} buildQuery
+ * @param {{ limit?: number, skip?: number, context: string }} opts
+ */
+async function fetchPagedRows(buildQuery, { limit, skip = 0, context }) {
+  const all = [];
+  let offset = Number(skip) || 0;
+  const maxRows =
+    limit != null && limit !== '' && Number.isFinite(Number(limit)) ? Number(limit) : Infinity;
+
+  while (all.length < maxRows) {
+    const remaining = maxRows === Infinity ? SUPABASE_PAGE_SIZE : maxRows - all.length;
+    const pageSize = Math.min(SUPABASE_PAGE_SIZE, remaining);
+    const from = offset;
+    const to = offset + pageSize - 1;
+
+    const res = await buildQuery().range(from, to);
+    throwIfError(res, context);
+    const rows = res.data || [];
+    all.push(...rows);
+
+    if (rows.length < pageSize) break;
+    offset += rows.length;
+  }
+
+  return all;
+}
+
 function createEntityApi(supabase, entityName, mapping) {
   const { table } = mapping;
 
-  async function list(order, limit) {
+  async function list(order, limit, skip) {
     const { column, ascending } = parseOrder(order);
     const orderCol = normalizeOrderColumn(column, mapping);
-    let q = supabase.from(table).select('*').order(orderCol, { ascending, nullsFirst: false });
-    if (limit != null && Number.isFinite(Number(limit))) {
-      q = q.limit(Number(limit));
-    }
-    const res = await q;
-    throwIfError(res, `${entityName}.list`);
-    return (res.data || []).map((row) => decorateRow(row, entityName, mapping));
+    const rows = await fetchPagedRows(
+      () => supabase.from(table).select('*').order(orderCol, { ascending, nullsFirst: false }),
+      { limit, skip, context: `${entityName}.list` }
+    );
+    return rows.map((row) => decorateRow(row, entityName, mapping));
   }
 
-  async function filter(where, order, limit) {
-    let q = supabase.from(table).select('*');
-    q = applyFilters(q, where, mapping);
-    if (order !== undefined && order !== null && order !== '') {
-      const { column, ascending } = parseOrder(order);
-      q = q.order(normalizeOrderColumn(column, mapping), { ascending, nullsFirst: false });
-    }
-    if (limit != null && Number.isFinite(Number(limit))) {
-      q = q.limit(Number(limit));
-    }
-    const res = await q;
-    throwIfError(res, `${entityName}.filter`);
-    return (res.data || []).map((row) => decorateRow(row, entityName, mapping));
+  async function filter(where, order, limit, skip) {
+    const rows = await fetchPagedRows(
+      () => {
+        let q = supabase.from(table).select('*');
+        q = applyFilters(q, where, mapping);
+        if (order !== undefined && order !== null && order !== '') {
+          const { column, ascending } = parseOrder(order);
+          q = q.order(normalizeOrderColumn(column, mapping), { ascending, nullsFirst: false });
+        }
+        return q;
+      },
+      { limit, skip, context: `${entityName}.filter` }
+    );
+    return rows.map((row) => decorateRow(row, entityName, mapping));
   }
 
   async function get(id) {
