@@ -15,6 +15,7 @@ import ConsumoInternoPainelInicial from '@/components/consumo-interno/ConsumoInt
 import ConsumoAnexosDialog from '@/components/consumo-interno/ConsumoAnexosDialog';
 import ConsumoSubmittingOverlay from '@/components/consumo-interno/ConsumoSubmittingOverlay';
 import { CONSUMO_FORM_OVERLAY_Z, CONSUMO_FORM_DIALOG_CONTENT_Z, dismissConsumoOverlayHistory } from '@/lib/consumoInternoOverlay';
+import { gerarNumeroSequencial } from '@/lib/gerarNumeroSequencial';
 import { buildAnexoMovimentoTag } from '@/components/anexos/buildAnexoMovimentoTag';
 import { renderTaggedImage } from '@/components/anexos/renderTaggedImage';
 
@@ -325,8 +326,7 @@ export default function ConsumoInternoPage() {
         created = await base44.entities.ConsumoInterno.update(editandoConsumo.id, payload);
         toast.success('Consumo atualizado com sucesso');
       } else {
-        const response = await base44.functions.invoke('gerarNumeroSequencial', { tipo: 'CI' });
-        const numero = response?.data?.numero || `CI-${Date.now()}`;
+        const numero = await gerarNumeroSequencial('CI');
         created = await base44.entities.ConsumoInterno.create({ ...payload, numero });
 
         await Promise.all(formData.itens.map(async (item) => {
