@@ -19,6 +19,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
+import { p38Dashboard } from '@/lib/p38DashboardSurfaces';
+import { useDashboardChartTheme } from '@/lib/useDashboardChartTheme';
 import { toLocalDateKey } from '@/components/utils/dateUtils';
 import { AlertCircle, Gauge, Layers, Package, Truck } from 'lucide-react';
 import {
@@ -78,8 +80,6 @@ const LOCATION_COLORS = {
 };
 
 const STOCK_BAR_COLORS = ['#b5d061', '#aac459', '#9eb851', '#93ab48', '#879f41', '#7d933b'];
-const CARD_SURFACE = 'bg-gradient-to-br from-[#2b3342] via-[#2a3140] to-[#242c39]';
-const INNER_SURFACE = 'bg-[#313a4a]/65 border border-slate-400/10';
 
 const PEDIDO_VENDA_STATUSES_CMV = new Set([
   'financeiro ok',
@@ -422,6 +422,7 @@ function getMovimentoDeltaQuantidade(movimento = {}) {
 }
 
 export default function EstoqueTab() {
+  const chartTheme = useDashboardChartTheme();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [metrics, setMetrics] = useState(null);
@@ -857,15 +858,15 @@ export default function EstoqueTab() {
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-3">
-        <Card className={`border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] ${CARD_SURFACE}`}>
+        <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-100 uppercase tracking-wide">
-              <Package className="w-4 h-4 text-lime-400" />
+            <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+              <Package className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               Nível de Estoque (Base Hoje)
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
-            <div className={`h-[205px] md:h-[210px] rounded-xl px-2 py-2 ${INNER_SURFACE}`}>
+            <div className={`h-[205px] md:h-[210px] rounded-xl px-2 py-2 ${p38Dashboard.inner}`}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={metrics.nivelEstoqueSeries} barCategoryGap="24%">
                   <defs>
@@ -874,30 +875,26 @@ export default function EstoqueTab() {
                       <stop offset="100%" stopColor="#7d933b" />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.14)" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} vertical={false} />
                   <XAxis
                     dataKey="periodo"
-                    tick={{ fontSize: 11, fill: '#d7deea', fontWeight: 600 }}
+                    tick={chartTheme.tick}
                     axisLine={false}
                     tickLine={false}
                     interval={isMobile ? 1 : 0}
                   />
                   <YAxis
                     tickFormatter={(value) => formatShort(value)}
-                    tick={{ fontSize: 11, fill: '#d7deea', fontWeight: 600 }}
+                    tick={chartTheme.tick}
                     axisLine={false}
                     tickLine={false}
                   />
                   <Tooltip
                     formatter={(value) => BRL.format(Number(value || 0))}
-                    cursor={{ fill: 'rgba(132, 204, 22, 0.14)' }}
-                    contentStyle={{
-                      backgroundColor: '#1e2532',
-                      border: '1px solid rgba(148,163,184,0.28)',
-                      borderRadius: 12,
-                      color: '#edf2f7',
-                      boxShadow: '0 10px 24px rgba(0,0,0,0.28)',
-                    }}
+                    cursor={{ fill: chartTheme.cursor }}
+                    contentStyle={chartTheme.tooltip.contentStyle}
+                    labelStyle={chartTheme.tooltip.labelStyle}
+                    itemStyle={chartTheme.tooltip.itemStyle}
                   />
                   <Bar dataKey="valor" radius={[8, 8, 0, 0]} maxBarSize={42}>
                     {metrics.nivelEstoqueSeries.map((entry, idx) => (
@@ -910,20 +907,20 @@ export default function EstoqueTab() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="mt-2 flex items-center justify-between text-[10px] text-slate-300/80">
+            <div className={`mt-2 flex items-center justify-between text-[10px] ${p38Dashboard.legend}`}>
               <span className="flex items-center gap-1.5">
                 <span className="inline-block h-[2px] w-5 rounded-full bg-[#9eb851]" />
                 tendência mensal
               </span>
-              <span className="font-semibold text-slate-100">{formatShort(metrics.nivelEstoqueSeries.at(-1)?.valor || 0)}</span>
+              <span className={`font-semibold ${p38Dashboard.title}`}>{formatShort(metrics.nivelEstoqueSeries.at(-1)?.valor || 0)}</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className={`border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] ${CARD_SURFACE}`}>
+        <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-100 uppercase tracking-wide">
-              <Gauge className="w-4 h-4 text-lime-400" />
+            <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+              <Gauge className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               Razão de Abastecimento (3 meses)
             </CardTitle>
           </CardHeader>
@@ -950,7 +947,7 @@ export default function EstoqueTab() {
                 ];
 
                 return (
-                  <div key={monthSupply.key} className={`rounded-xl p-2 min-h-44 sm:min-h-0 ${INNER_SURFACE}`}>
+                  <div key={monthSupply.key} className={`rounded-xl p-2 min-h-44 sm:min-h-0 ${p38Dashboard.inner}`}>
                     <p className="text-[10px] font-semibold text-muted-foreground tracking-wide mb-1">{monthSupply.label}</p>
                     <div className="h-[108px] sm:h-[120px] relative">
                       <ResponsiveContainer width="100%" height="100%">
@@ -997,14 +994,14 @@ export default function EstoqueTab() {
                           <span className="inline-block h-[2px] w-3 rounded-full bg-[#7a8498]" />
                           vendido
                         </span>
-                        <span className="font-semibold text-slate-100">{formatShort(monthSupply.cmvVendido)}</span>
+                        <span className={`font-semibold ${p38Dashboard.title}`}>{formatShort(monthSupply.cmvVendido)}</span>
                       </p>
                       <p className="text-[9px] text-muted-foreground flex items-center justify-between gap-1.5">
                         <span className="flex items-center gap-1.5">
                           <span className="inline-block h-[2px] w-3 rounded-full bg-[#abc85a]" />
                           pago
                         </span>
-                        <span className="font-semibold text-slate-100">{formatShort(monthSupply.cmvEfetivo)}</span>
+                        <span className={`font-semibold ${p38Dashboard.title}`}>{formatShort(monthSupply.cmvEfetivo)}</span>
                       </p>
                     </div>
                   </div>
@@ -1016,14 +1013,14 @@ export default function EstoqueTab() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-3">
-        <Card className={`border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] ${CARD_SURFACE}`}>
+        <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
             <div className="flex items-center justify-between gap-3">
-              <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-100 uppercase tracking-wide">
-                <Layers className="w-4 h-4 text-lime-400" />
+              <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+                <Layers className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
                 Qualidade do Estoque
               </CardTitle>
-              <label className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-slate-300">
+              <label className={`flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide ${p38Dashboard.titleMuted}`}>
                 Geral
                 <Switch
                   checked={incluirTransitoQualidade}
@@ -1035,7 +1032,7 @@ export default function EstoqueTab() {
             </div>
           </CardHeader>
           <CardContent className="pt-1">
-            <div className={`h-[170px] md:h-[180px] relative rounded-xl px-2 py-1 ${INNER_SURFACE}`}>
+            <div className={`h-[170px] md:h-[180px] relative rounded-xl px-2 py-1 ${p38Dashboard.inner}`}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -1060,7 +1057,7 @@ export default function EstoqueTab() {
                     strokeWidth={0}
                   >
                     {qualityHalfDonutData.map((entry) => (
-                      <Cell key={entry.name} fill={entry.color} stroke="#2b3342" strokeWidth={2} />
+                      <Cell key={entry.name} fill={entry.color} stroke={chartTheme.pieStroke} strokeWidth={2} />
                     ))}
                   </Pie>
                 </PieChart>
@@ -1072,7 +1069,7 @@ export default function EstoqueTab() {
             </div>
             <div className="grid grid-cols-2 gap-2 mt-1.5">
               {qualityHalfDonutData.map((entry) => (
-                <div key={entry.name} className="flex items-center justify-between rounded-md px-2 py-1 bg-[#1f2734]/55 border border-slate-500/15">
+                <div key={entry.name} className={`flex items-center justify-between ${p38Dashboard.legendRow}`}>
                   <div className="flex items-center gap-1.5">
                     <span className="inline-block h-[2px] w-4 rounded-full" style={{ backgroundColor: entry.color }} />
                     <span className="text-[10px] text-muted-foreground">{entry.name}</span>
@@ -1084,15 +1081,15 @@ export default function EstoqueTab() {
           </CardContent>
         </Card>
 
-        <Card className={`border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] ${CARD_SURFACE}`}>
+        <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-100 uppercase tracking-wide">
+            <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
               <Truck className="w-4 h-4 text-[#b8c973]" />
               Localização do Estoque
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
-            <div className={`h-[170px] md:h-[180px] relative rounded-xl px-2 py-1 ${INNER_SURFACE}`}>
+            <div className={`h-[170px] md:h-[180px] relative rounded-xl px-2 py-1 ${p38Dashboard.inner}`}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -1117,7 +1114,7 @@ export default function EstoqueTab() {
                     strokeWidth={0}
                   >
                     {locationHalfDonutData.map((entry) => (
-                      <Cell key={entry.name} fill={entry.color} stroke="#2b3342" strokeWidth={3} />
+                      <Cell key={entry.name} fill={entry.color} stroke={chartTheme.pieStroke} strokeWidth={3} />
                     ))}
                   </Pie>
                 </PieChart>
@@ -1131,7 +1128,7 @@ export default function EstoqueTab() {
             </div>
             <div className="grid grid-cols-2 gap-2 mt-1.5">
               {locationHalfDonutData.map((entry) => (
-                <div key={entry.name} className="flex items-center justify-between rounded-md px-2 py-1 bg-[#1f2734]/55 border border-slate-500/15">
+                <div key={entry.name} className={`flex items-center justify-between ${p38Dashboard.legendRow}`}>
                   <div className="flex items-center gap-1.5">
                     <span className="inline-block h-[2px] w-4 rounded-full" style={{ backgroundColor: entry.color }} />
                     <span className="text-[10px] text-muted-foreground">{entry.name}</span>
@@ -1143,22 +1140,22 @@ export default function EstoqueTab() {
           </CardContent>
         </Card>
 
-        <Card className="border border-slate-500/20 border-dashed shadow-[0_10px_24px_rgba(0,0,0,0.2)] bg-[#252d3a]/55">
+        <Card className={p38Dashboard.placeholder}>
           <CardHeader className="pb-1">
-            <CardTitle className="text-sm font-medium text-slate-300 uppercase tracking-wide">Em breve</CardTitle>
+            <CardTitle className={`text-sm font-medium uppercase tracking-wide ${p38Dashboard.titleMuted}`}>Em breve</CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
-            <div className="h-[180px] rounded-xl border border-slate-500/20 border-dashed bg-[#1f2734]/45 p-3">
-              <div className="h-2 w-24 rounded bg-slate-500/25 mb-3" />
+            <div className={`h-[180px] rounded-xl p-3 ${p38Dashboard.placeholderInner}`}>
+              <div className={`h-2 w-24 rounded mb-3 ${p38Dashboard.skeletonHeader}`} />
               <div className="grid grid-cols-5 gap-1 items-end h-16 mb-3">
                 {[30, 44, 26, 52, 36].map((h, idx) => (
-                  <div key={`ph-top-${idx}`} className="rounded-sm bg-slate-400/20" style={{ height: `${h}%` }} />
+                  <div key={`ph-top-${idx}`} className={`rounded-sm ${p38Dashboard.skeletonBar}`} style={{ height: `${h}%` }} />
                 ))}
               </div>
               <div className="space-y-2">
-                <div className="h-1.5 rounded bg-slate-500/20 w-full" />
-                <div className="h-1.5 rounded bg-slate-500/20 w-4/5" />
-                <div className="h-1.5 rounded bg-slate-500/20 w-3/5" />
+                <div className={`h-1.5 rounded w-full ${p38Dashboard.skeletonLine}`} />
+                <div className={`h-1.5 rounded w-4/5 ${p38Dashboard.skeletonLine}`} />
+                <div className={`h-1.5 rounded w-3/5 ${p38Dashboard.skeletonLine}`} />
               </div>
             </div>
           </CardContent>
@@ -1169,20 +1166,20 @@ export default function EstoqueTab() {
         {[1, 2, 3].map((slot) => (
           <Card
             key={`empty-slot-${slot}`}
-            className="border border-slate-500/20 border-dashed shadow-[0_10px_24px_rgba(0,0,0,0.2)] bg-[#252d3a]/55"
+            className={p38Dashboard.placeholder}
           >
             <CardHeader className="pb-1">
-              <CardTitle className="text-sm font-medium text-slate-300 uppercase tracking-wide">Em breve</CardTitle>
+              <CardTitle className={`text-sm font-medium uppercase tracking-wide ${p38Dashboard.titleMuted}`}>Em breve</CardTitle>
             </CardHeader>
             <CardContent className="pt-1">
-              <div className="h-[90px] rounded-xl border border-slate-500/20 border-dashed bg-[#1f2734]/45 p-2.5">
-                <div className="h-1.5 w-16 rounded bg-slate-500/25 mb-2" />
+              <div className={`h-[90px] rounded-xl p-2.5 ${p38Dashboard.placeholderInner}`}>
+                <div className={`h-1.5 w-16 rounded mb-2 ${p38Dashboard.skeletonHeader}`} />
                 <div className="grid grid-cols-4 gap-1 items-end h-8 mb-2">
                   {[40, 68, 52, 74].map((h, idx) => (
-                    <div key={`ph-bottom-${slot}-${idx}`} className="rounded-sm bg-slate-400/20" style={{ height: `${h}%` }} />
+                    <div key={`ph-bottom-${slot}-${idx}`} className={`rounded-sm ${p38Dashboard.skeletonBar}`} style={{ height: `${h}%` }} />
                   ))}
                 </div>
-                <div className="h-1.5 rounded bg-slate-500/20 w-4/5" />
+                <div className={`h-1.5 rounded w-4/5 ${p38Dashboard.skeletonLine}`} />
               </div>
             </CardContent>
           </Card>

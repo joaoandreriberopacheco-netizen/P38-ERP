@@ -31,6 +31,8 @@ import {
 } from '@/paiol/components/dashboard/charts/DashboardKpiCharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { p38Dashboard } from '@/lib/p38DashboardSurfaces';
+import { useDashboardChartTheme } from '@/lib/useDashboardChartTheme';
 import {
   BarChart,
   Bar,
@@ -50,8 +52,6 @@ const BRL = new Intl.NumberFormat('pt-BR', {
   maximumFractionDigits: 0,
 });
 
-const CARD_SURFACE = 'bg-gradient-to-br from-[#2b3342] via-[#2a3140] to-[#242c39]';
-const INNER_SURFACE = 'bg-[#313a4a]/65 border border-slate-400/10';
 const RING_COLORS = {
   primary: '#abc85a',
   primaryDark: '#89a246',
@@ -168,6 +168,7 @@ function getSaleDate(sale = {}) {
 }
 
 export default function VendasTab() {
+  const chartTheme = useDashboardChartTheme();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [metrics, setMetrics] = useState(null);
@@ -487,40 +488,34 @@ export default function VendasTab() {
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-3">
-        <Card className={`border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] ${CARD_SURFACE}`}>
+        <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-100 uppercase tracking-wide">
-              <CalendarDays className="w-4 h-4 text-lime-400" />
+            <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+              <CalendarDays className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               Venda diária (mês atual + 3 anteriores)
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
-            <div className={`h-[230px] rounded-xl px-2 py-2 ${INNER_SURFACE}`}>
+            <div className={`h-[230px] rounded-xl px-2 py-2 ${p38Dashboard.inner}`}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={dailyFocusedData} barCategoryGap="26%">
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.14)" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} vertical={false} />
                   <XAxis
                     dataKey="diaNumero"
                     tickFormatter={(value) => `D${String(value).padStart(2, '0')}`}
-                    tick={{ fontSize: 11, fill: '#d7deea', fontWeight: 600 }}
+                    tick={chartTheme.tick}
                     axisLine={false}
                     tickLine={false}
                     interval={isMobile ? 2 : 1}
                   />
-                  <YAxis tickFormatter={(value) => formatShort(value)} tick={{ fontSize: 11, fill: '#d7deea', fontWeight: 600 }} axisLine={false} tickLine={false} />
+                  <YAxis tickFormatter={(value) => formatShort(value)} tick={chartTheme.tick} axisLine={false} tickLine={false} />
                   <Tooltip
                     labelFormatter={dayTooltipLabel}
                     formatter={(value) => [BRL.format(Number(value || 0)), focusedMonthLabel]}
-                    cursor={{ fill: 'rgba(148,163,184,0.16)' }}
-                    contentStyle={{
-                      backgroundColor: 'rgba(3,7,18,0.95)',
-                      border: '1px solid rgba(148,163,184,0.35)',
-                      borderRadius: 10,
-                      color: '#edf2f7',
-                      boxShadow: '0 12px 26px rgba(0,0,0,0.45)',
-                    }}
-                    labelStyle={{ color: '#e2e8f0', fontWeight: 700 }}
-                    itemStyle={{ color: '#cbd5e1' }}
+                    cursor={{ fill: chartTheme.cursor }}
+                    contentStyle={chartTheme.tooltip.contentStyle}
+                    labelStyle={chartTheme.tooltip.labelStyle}
+                    itemStyle={chartTheme.tooltip.itemStyle}
                   />
                   <Bar dataKey="valor" radius={[4, 4, 0, 0]} maxBarSize={16} fill={monthStyleMap[focusedMonthKey]?.stroke || MONTH_HIGHLIGHT_COLORS.current} />
                 </BarChart>
@@ -536,8 +531,8 @@ export default function VendasTab() {
                   onClick={() => setSelectedMonthKey(bucket.key)}
                   className={`flex items-center justify-between rounded-md px-2 py-1 border min-h-11 transition ${
                     monthStyleMap[bucket.key]?.isFocused
-                      ? 'bg-[#1f2734]/80 border-slate-300/25'
-                      : 'bg-[#1f2734]/45 border-slate-500/15 hover:bg-[#1f2734]/65'
+                      ? p38Dashboard.chipFocused
+                      : p38Dashboard.chip
                   }`}
                 >
                   <div className="flex items-center gap-1.5">
@@ -553,10 +548,10 @@ export default function VendasTab() {
           </CardContent>
         </Card>
 
-        <Card className={`border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] ${CARD_SURFACE}`}>
+        <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-100 uppercase tracking-wide">
-              <TrendingUp className="w-4 h-4 text-lime-400" />
+            <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+              <TrendingUp className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               Venda acumulada do mês atual
             </CardTitle>
           </CardHeader>
@@ -565,24 +560,24 @@ export default function VendasTab() {
               data={metrics.currentAccumulatedData}
               xKey="dia"
               valueKey="valor"
-              innerSurfaceClassName={`h-[230px] rounded-xl px-2 py-2 ${INNER_SURFACE}`}
+              innerSurfaceClassName={`h-[230px] rounded-xl px-2 py-2 ${p38Dashboard.inner}`}
               seriesLabels={{
                 valor: 'Venda acumulada',
                 breakEven: 'Mínimo acumulado',
                 meta: 'Meta acumulada',
               }}
             />
-            <div className="flex flex-wrap gap-3 mt-2 text-[10px] text-slate-300/80">
+            <div className={`flex flex-wrap gap-3 mt-2 text-[10px] ${p38Dashboard.legend}`}>
               <span className="inline-flex items-center gap-1">
                 <span className="inline-block h-[2px] w-4 rounded-full bg-[#ef4444]" />
-                Mínima/dia: <strong className="text-slate-100">{formatShort(metrics.vendaMinimaDaily)}</strong>
+                Mínima/dia: <strong className={p38Dashboard.title}>{formatShort(metrics.vendaMinimaDaily)}</strong>
               </span>
               <span className="inline-flex items-center gap-1">
                 <span className="inline-block h-[2px] w-4 rounded-full bg-[#22c55e]" />
-                Meta/dia: <strong className="text-slate-100">{formatShort(metrics.metaVendaDaily)}</strong>
+                Meta/dia: <strong className={p38Dashboard.title}>{formatShort(metrics.metaVendaDaily)}</strong>
               </span>
               <span>
-                Último acumulado: <strong className="text-slate-100">{formatShort(metrics.currentAccumulatedData.at(-1)?.valor || 0)}</strong>
+                Último acumulado: <strong className={p38Dashboard.title}>{formatShort(metrics.currentAccumulatedData.at(-1)?.valor || 0)}</strong>
               </span>
             </div>
           </CardContent>
@@ -590,15 +585,15 @@ export default function VendasTab() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-3">
-        <Card className={`border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] ${CARD_SURFACE}`}>
+        <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-100 uppercase tracking-wide">
-              <CircleGauge className="w-4 h-4 text-lime-400" />
+            <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+              <CircleGauge className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               Lucro bruto mensal (atual x anterior)
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
-            <div className="rounded-xl p-2.5 bg-[#313a4a]/65 border border-slate-400/10 space-y-2.5">
+            <div className={p38Dashboard.innerPanel}>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
                 Fórmula: Venda - descontos - custo calculado
               </p>
@@ -646,34 +641,34 @@ export default function VendasTab() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <div className="rounded-md px-2 py-1 bg-[#1f2734]/55 border border-slate-500/15">
+                  <div className={p38Dashboard.stat}>
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-[10px] text-muted-foreground uppercase">{metrics.lucroKpi.currentMonthLabel}</p>
                       <span className="text-[10px] text-lime-300/90 uppercase">Atual</span>
                     </div>
-                    <p className="text-sm font-semibold text-slate-100">{formatShort(metrics.lucroKpi.currentProfit)}</p>
+                    <p className={`text-sm font-semibold ${p38Dashboard.title}`}>{formatShort(metrics.lucroKpi.currentProfit)}</p>
                   </div>
 
-                  <div className="rounded-md px-2 py-1 bg-[#1f2734]/55 border border-slate-500/15">
+                  <div className={p38Dashboard.stat}>
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-[10px] text-muted-foreground uppercase">{metrics.lucroKpi.previousMonthLabel}</p>
                       <span className="text-[10px] text-blue-300/90 uppercase">Anterior</span>
                     </div>
-                    <p className="text-sm font-semibold text-slate-100">{formatShort(metrics.lucroKpi.previousProfit)}</p>
+                    <p className={`text-sm font-semibold ${p38Dashboard.title}`}>{formatShort(metrics.lucroKpi.previousProfit)}</p>
                   </div>
 
                   <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-                    <div className="rounded-md px-1.5 py-1 bg-[#1f2734]/50 border border-slate-500/10">
+                    <div className={p38Dashboard.statSm}>
                       <p className="text-muted-foreground uppercase">Venda</p>
-                      <p className="text-slate-100 font-medium">{formatShort(metrics.lucroKpi.currentSalesNet)}</p>
+                      <p className={`${p38Dashboard.title} font-medium`}>{formatShort(metrics.lucroKpi.currentSalesNet)}</p>
                     </div>
-                    <div className="rounded-md px-1.5 py-1 bg-[#1f2734]/50 border border-slate-500/10">
+                    <div className={p38Dashboard.statSm}>
                       <p className="text-muted-foreground uppercase">Desc</p>
-                      <p className="text-slate-100 font-medium">{formatShort(metrics.lucroKpi.currentDiscounts)}</p>
+                      <p className={`${p38Dashboard.title} font-medium`}>{formatShort(metrics.lucroKpi.currentDiscounts)}</p>
                     </div>
-                    <div className="rounded-md px-1.5 py-1 bg-[#1f2734]/50 border border-slate-500/10">
+                    <div className={p38Dashboard.statSm}>
                       <p className="text-muted-foreground uppercase">Custo</p>
-                      <p className="text-slate-100 font-medium">{formatShort(metrics.lucroKpi.currentCost)}</p>
+                      <p className={`${p38Dashboard.title} font-medium`}>{formatShort(metrics.lucroKpi.currentCost)}</p>
                     </div>
                   </div>
                 </div>
@@ -682,30 +677,26 @@ export default function VendasTab() {
           </CardContent>
         </Card>
 
-        <Card className={`border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] ${CARD_SURFACE}`}>
+        <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-100 uppercase tracking-wide">
-              <TrendingUp className="w-4 h-4 text-lime-400" />
+            <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+              <TrendingUp className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               Vendas mensais (últimos 6 meses)
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
-            <div className={`h-[230px] rounded-xl px-2 py-2 ${INNER_SURFACE}`}>
+            <div className={`h-[230px] rounded-xl px-2 py-2 ${p38Dashboard.inner}`}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={metrics.monthlySalesData} barCategoryGap="24%">
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.14)" vertical={false} />
-                  <XAxis dataKey="periodo" tick={{ fontSize: 11, fill: '#d7deea', fontWeight: 600 }} axisLine={false} tickLine={false} />
-                  <YAxis tickFormatter={(value) => formatShort(value)} tick={{ fontSize: 11, fill: '#d7deea', fontWeight: 600 }} axisLine={false} tickLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} vertical={false} />
+                  <XAxis dataKey="periodo" tick={chartTheme.tick} axisLine={false} tickLine={false} />
+                  <YAxis tickFormatter={(value) => formatShort(value)} tick={chartTheme.tick} axisLine={false} tickLine={false} />
                   <Tooltip
                     formatter={(value) => BRL.format(Number(value || 0))}
-                    cursor={{ fill: 'rgba(132, 204, 22, 0.14)' }}
-                    contentStyle={{
-                      backgroundColor: '#1e2532',
-                      border: '1px solid rgba(148,163,184,0.28)',
-                      borderRadius: 12,
-                      color: '#edf2f7',
-                      boxShadow: '0 10px 24px rgba(0,0,0,0.28)',
-                    }}
+                    cursor={{ fill: chartTheme.cursor }}
+                    contentStyle={chartTheme.tooltip.contentStyle}
+                    labelStyle={chartTheme.tooltip.labelStyle}
+                    itemStyle={chartTheme.tooltip.itemStyle}
                   />
                   <Bar dataKey="valor" radius={[8, 8, 0, 0]} maxBarSize={42}>
                     {metrics.monthlySalesData.map((entry, idx) => (
@@ -721,22 +712,22 @@ export default function VendasTab() {
           </CardContent>
         </Card>
 
-        <Card className="border border-slate-500/20 border-dashed shadow-[0_10px_24px_rgba(0,0,0,0.2)] bg-[#252d3a]/55">
+        <Card className={p38Dashboard.placeholder}>
           <CardHeader className="pb-1">
-            <CardTitle className="text-sm font-medium text-slate-300 uppercase tracking-wide">Em breve</CardTitle>
+            <CardTitle className={`text-sm font-medium uppercase tracking-wide ${p38Dashboard.titleMuted}`}>Em breve</CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
-            <div className="h-[180px] rounded-xl border border-slate-500/20 border-dashed bg-[#1f2734]/45 p-3">
-              <div className="h-2 w-24 rounded bg-slate-500/25 mb-3" />
+            <div className={`h-[180px] rounded-xl p-3 ${p38Dashboard.placeholderInner}`}>
+              <div className={`h-2 w-24 rounded mb-3 ${p38Dashboard.skeletonHeader}`} />
               <div className="grid grid-cols-5 gap-1 items-end h-16 mb-3">
                 {[30, 44, 26, 52, 36].map((h, idx) => (
-                  <div key={`placeholder-top-${idx}`} className="rounded-sm bg-slate-400/20" style={{ height: `${h}%` }} />
+                  <div key={`placeholder-top-${idx}`} className={`rounded-sm ${p38Dashboard.skeletonBar}`} style={{ height: `${h}%` }} />
                 ))}
               </div>
               <div className="space-y-2">
-                <div className="h-1.5 rounded bg-slate-500/20 w-full" />
-                <div className="h-1.5 rounded bg-slate-500/20 w-4/5" />
-                <div className="h-1.5 rounded bg-slate-500/20 w-3/5" />
+                <div className={`h-1.5 rounded w-full ${p38Dashboard.skeletonLine}`} />
+                <div className={`h-1.5 rounded w-4/5 ${p38Dashboard.skeletonLine}`} />
+                <div className={`h-1.5 rounded w-3/5 ${p38Dashboard.skeletonLine}`} />
               </div>
             </div>
           </CardContent>
@@ -744,38 +735,38 @@ export default function VendasTab() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-3">
-        <Card className={`border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] ${CARD_SURFACE}`}>
+        <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-100 uppercase tracking-wide">
-              <TrendingUp className="w-4 h-4 text-lime-400" />
+            <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+              <TrendingUp className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               Lucro acumulado do mês atual
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
             <LucroAcumuladoChart
               data={metrics.accumulatedProfitData}
-              innerSurfaceClassName={`h-[230px] rounded-xl px-2 py-2 ${INNER_SURFACE}`}
+              innerSurfaceClassName={`h-[230px] rounded-xl px-2 py-2 ${p38Dashboard.inner}`}
             />
-            <div className="flex flex-wrap gap-3 mt-2 text-[10px] text-slate-300/80">
+            <div className={`flex flex-wrap gap-3 mt-2 text-[10px] ${p38Dashboard.legend}`}>
               <span className="inline-flex items-center gap-1">
                 <span className="inline-block h-[2px] w-4 rounded-full bg-[#ef4444]" />
-                Break-even/dia: <strong className="text-slate-100">{formatShort(metrics.breakEvenDaily)}</strong>
+                Break-even/dia: <strong className={p38Dashboard.title}>{formatShort(metrics.breakEvenDaily)}</strong>
               </span>
               <span className="inline-flex items-center gap-1">
                 <span className="inline-block h-[2px] w-4 rounded-full bg-[#22c55e]" />
-                Meta/dia: <strong className="text-slate-100">{formatShort(metrics.metaLucroDaily)}</strong>
+                Meta/dia: <strong className={p38Dashboard.title}>{formatShort(metrics.metaLucroDaily)}</strong>
               </span>
               <span>
-                Acumulado atual: <strong className="text-slate-100">{formatShort(metrics.accumulatedProfitData.at(-1)?.lucro || 0)}</strong>
+                Acumulado atual: <strong className={p38Dashboard.title}>{formatShort(metrics.accumulatedProfitData.at(-1)?.lucro || 0)}</strong>
               </span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className={`border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] ${CARD_SURFACE}`}>
+        <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-100 uppercase tracking-wide">
-              <CircleGauge className="w-4 h-4 text-lime-400" />
+            <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+              <CircleGauge className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               KPIs diários — Lucro
             </CardTitle>
           </CardHeader>
@@ -797,10 +788,10 @@ export default function VendasTab() {
           </CardContent>
         </Card>
 
-        <Card className={`border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] ${CARD_SURFACE}`}>
+        <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-100 uppercase tracking-wide">
-              <CircleGauge className="w-4 h-4 text-lime-400" />
+            <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+              <CircleGauge className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               KPIs diários — Vendas
             </CardTitle>
           </CardHeader>
