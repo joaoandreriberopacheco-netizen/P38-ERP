@@ -403,7 +403,10 @@ export default function PedidosCompraPage() {
       const [pcs, embarquesDb, fns] = await Promise.all([
         base44.entities.PedidoCompra.list('-created_date', 300),
         base44.entities.Embarque.list('-created_date', 600),
-        base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] }, 'nome', 300),
+        base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] }, 'nome', 300).catch((err) => {
+          console.warn('[PedidosCompra] Terceiro.filter falhou — lista de fornecedores vazia:', err?.message || err);
+          return [];
+        }),
       ]);
       const produtoIds = [...new Set([
         ...pcs.flatMap((p) => (p.itens || []).map((i) => i.produto_id).filter(Boolean)),
@@ -535,6 +538,7 @@ export default function PedidosCompraPage() {
       setFornecedores(fns);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
+      toast.error(error?.message || 'Erro ao carregar embarques');
     }
     setLoading(false);
   };

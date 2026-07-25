@@ -15,7 +15,8 @@
 export const ENTITY_TO_TABLE = {
   // === Núcleo (modo 'columns', migrations 001–006) ===
   LancamentoFinanceiro: { table: 'lancamento_financeiro', mode: 'columns' },
-  Terceiro: { table: 'terceiro', mode: 'columns' },
+  // Produção P38: tabela criada pelo bootstrap 000 (só id + dados jsonb) — order/filter em nome/tipo via dados.
+  Terceiro: { table: 'terceiro', mode: 'jsonb' },
   Produto: { table: 'produto', mode: 'columns' },
   PedidoVenda: { table: 'pedido_venda', mode: 'columns' },
   PedidoCompra: { table: 'pedido_compra', mode: 'columns' },
