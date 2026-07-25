@@ -7,6 +7,7 @@ import {
 import SeletorMaquininhaSheet from './SeletorMaquininhaSheet';
 import SeletorFiadoSheet from './SeletorFiadoSheet';
 import { CAIXA_TOAST_SUCCESS, caixaClasses } from '@/lib/caixaP38Theme';
+import { resolveValorPedidoVenda } from '@/lib/financialUtils';
 
 export default function ConfirmarPagamentoDialog({
   open, onOpenChange,
@@ -90,7 +91,7 @@ export default function ConfirmarPagamentoDialog({
       if (valeValido) {
         const saldoDisponivel = valeValido.valor_disponivel ?? valeValido.saldo ?? 0;
         setValeEncontrado(valeValido);
-        const maxVale = Math.min(saldoDisponivel, pedidoSelecionado.valor_total);
+        const maxVale = Math.min(saldoDisponivel, resolveValorPedidoVenda(pedidoSelecionado));
         setPagamentosVale(maxVale);
         setInputVale(formatarValorExibicao(maxVale));
         toast({ title: `Vale encontrado: ${formatValor(saldoDisponivel)}`, className: CAIXA_TOAST_SUCCESS, duration: 2000 });
@@ -132,7 +133,7 @@ export default function ConfirmarPagamentoDialog({
                   )}
                 </button>
                 <span className="text-2xl font-bold text-foreground font-glacial tabular-nums">
-                  {valoresVisiveis ? formatValor(pedidoSelecionado.valor_total) : '••••••'}
+                  {valoresVisiveis ? formatValor(resolveValorPedidoVenda(pedidoSelecionado)) : '••••••'}
                 </span>
               </div>
             </DialogTitle>
@@ -319,7 +320,7 @@ export default function ConfirmarPagamentoDialog({
       <SeletorFiadoSheet
         visible={showSeletorFiado}
         clienteNome={pedidoSelecionado?.cliente_nome}
-        valorTotal={pedidoSelecionado?.valor_total}
+        valorTotal={resolveValorPedidoVenda(pedidoSelecionado)}
         formatValor={formatValor}
         onConfirm={(config) => {
           setFiadoConfig(config);

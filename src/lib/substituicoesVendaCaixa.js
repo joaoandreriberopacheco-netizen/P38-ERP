@@ -3,6 +3,8 @@
  * Detecção: substitui_pedido_* no pedido, vale (id/código/histórico), devolução do dia.
  */
 
+import { resolveValorPedidoVenda } from '@/lib/financialUtils';
+
 export function dataCivilISO(dateLike) {
   if (!dateLike) return null;
   const d = new Date(dateLike);
@@ -24,7 +26,7 @@ function round2(n) {
 }
 
 function valorPedido(v) {
-  return Number(v?.valor_total ?? v?.total ?? 0) || 0;
+  return resolveValorPedidoVenda(v);
 }
 
 function normCodigo(c) {

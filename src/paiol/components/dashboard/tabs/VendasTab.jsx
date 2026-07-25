@@ -22,6 +22,7 @@ import {
   getDailyMetaFromMonthly,
   normalizeDashboardKpiConfig,
 } from '@/lib/dashboardKpiConfig';
+import { resolveValorPedidoVenda } from '@/lib/financialUtils';
 import {
   AcumuladoKpiChart,
   DualDonutKpiModule,
@@ -129,9 +130,7 @@ function extractSaleGrossAmount(sale = {}) {
     : 0;
   if (itemTotal > 0) return itemTotal;
 
-  const valorTotal = Number(
-    sale.valor_total ??
-    sale.total ??
+  const valorTotal = resolveValorPedidoVenda(sale) || Number(
     sale.total_geral ??
     sale.total_final ??
     0

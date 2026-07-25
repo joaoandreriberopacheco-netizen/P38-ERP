@@ -18,6 +18,29 @@ export const roundToTwoDecimals = (value) => {
 };
 
 /**
+ * Valor monetário de pedido de venda: coluna `total` (pós-migração 029) tem prioridade
+ * sobre `valor_total` legado em `dados` (muitos registos têm dados.valor_total=0).
+ */
+export function resolveValorPedidoVenda(pedido) {
+  if (!pedido) return 0;
+  const col = Number(pedido.total);
+  const legado = Number(pedido.valor_total);
+  let v = 0;
+  if (Number.isFinite(col) && col > 0) v = col;
+  else if (Number.isFinite(legado) && legado > 0) v = legado;
+  else if (Number.isFinite(col)) v = col;
+  else if (Number.isFinite(legado)) v = legado;
+  return roundToTwoDecimals(v);
+}
+
+/** Comparação de pagamento no caixa — tolerância de 1 centavo (ex.: 5000,00 vs 4999,999744). */
+export function pagamentosCobremTotal(totalPago, valorTotal, toleranciaCentavos = 0.01) {
+  const pago = roundToTwoDecimals(totalPago);
+  const total = roundToTwoDecimals(valorTotal);
+  return pago + toleranciaCentavos >= total;
+}
+
+/**
  * Exibe quantidade com no máximo 2 decimais (pt-BR), sem poluir a UI com IEEE 754.
  */
 export const formatQuantity = (value) => {
