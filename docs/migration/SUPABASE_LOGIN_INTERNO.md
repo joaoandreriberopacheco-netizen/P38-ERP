@@ -83,6 +83,7 @@ A função `p38-auth` expõe:
 |---------|-----------|
 | "Configuração em falta" no build | Env Supabase no workflow Vercel |
 | Bootstrap diz utilizador não encontrado | `public.usuario` com admin e `login`/`nickname` |
+| Activar diz conta não encontrada (mas utilizador existe) | Correr `npm run usuario:provision-login-auth` ou admin recriar em Configurações → Usuários |
 | `create_user` 403 | Sessão admin; `role=admin` em metadata ou `usuario` |
 | Função indisponível | `npm run supabase:deploy:functions` e `verify_jwt = false` em `p38-auth` |
 | Login inválido | Utilizador normalizado (minúsculas, sem espaços) |
