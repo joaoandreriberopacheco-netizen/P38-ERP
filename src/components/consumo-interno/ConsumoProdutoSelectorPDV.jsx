@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Plus, Minus, Package, ChevronLeft, X } from 'lucide-react';
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
+import { CONSUMO_FORM_OVERLAY_Z } from '@/lib/consumoInternoOverlay';
 
 const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
@@ -67,8 +69,8 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
 
   if (!open) return null;
 
-  return (
-    <div className="fixed inset-0 z-[200] flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center">
+  const overlay = (
+    <div className={`fixed inset-0 ${CONSUMO_FORM_OVERLAY_Z} flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center`}>
       <button
         type="button"
         aria-label="Fechar seletor"
@@ -190,4 +192,7 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined') return overlay;
+  return createPortal(overlay, document.body);
 }

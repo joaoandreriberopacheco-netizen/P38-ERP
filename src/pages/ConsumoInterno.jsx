@@ -13,6 +13,7 @@ import ConsumoInternoFormPage from '@/components/consumo-interno/ConsumoInternoF
 import ComprovanteConsumoInterno from '@/components/consumo-interno/ComprovanteConsumoInterno';
 import ConsumoInternoPainelInicial from '@/components/consumo-interno/ConsumoInternoPainelInicial';
 import ConsumoAnexosDialog from '@/components/consumo-interno/ConsumoAnexosDialog';
+import { CONSUMO_FORM_OVERLAY_Z, CONSUMO_FORM_DIALOG_CONTENT_Z } from '@/lib/consumoInternoOverlay';
 import { buildAnexoMovimentoTag } from '@/components/anexos/buildAnexoMovimentoTag';
 import { renderTaggedImage } from '@/components/anexos/renderTaggedImage';
 
@@ -374,7 +375,7 @@ export default function ConsumoInternoPage() {
           isSubmitting={isSubmitting}
         />
         <Dialog open={!!novoCadastro.tipo} onOpenChange={() => setNovoCadastro({ tipo: '', valor: '' })}>
-          <DialogContent className="max-w-sm rounded-[28px] border-0 bg-card p-5 shadow-2xl dark:bg-background">
+          <DialogContent overlayClassName={CONSUMO_FORM_OVERLAY_Z} className={`${CONSUMO_FORM_DIALOG_CONTENT_Z} max-w-sm rounded-[28px] border-0 bg-card p-5 shadow-2xl dark:bg-background`}>
             <div className="space-y-4">
               <p className="text-lg font-semibold text-foreground">Novo cadastro interno</p>
               <Input value={novoCadastro.valor} onChange={(e) => setNovoCadastro((prev) => ({ ...prev, valor: e.target.value }))} placeholder={novoCadastro.tipo === 'destinacao' ? 'Nome da destinação' : 'Nome do responsável'} className="h-11 rounded-2xl border-0 bg-muted shadow-sm dark:bg-muted" />

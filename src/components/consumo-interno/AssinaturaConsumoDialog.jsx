@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RotateCcw, Check, X } from 'lucide-react';
+import { CONSUMO_FORM_OVERLAY_Z } from '@/lib/consumoInternoOverlay';
 
 export default function AssinaturaConsumoDialog({ open, onOpenChange, onConfirm }) {
   const canvasRef = useRef(null);
@@ -74,8 +76,8 @@ export default function AssinaturaConsumoDialog({ open, onOpenChange, onConfirm 
 
   if (!open) return null;
 
-  return (
-    <div className="fixed inset-0 z-[210] flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center">
+  const overlay = (
+    <div className={`fixed inset-0 ${CONSUMO_FORM_OVERLAY_Z} flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center`}>
       <button type="button" aria-label="Fechar assinatura" className="absolute inset-0" onClick={() => onOpenChange(false)} />
       <div className="relative z-10 flex h-[92dvh] w-full max-w-xl flex-col overflow-hidden rounded-t-[32px] bg-card shadow-2xl dark:bg-background md:h-auto md:max-h-[90vh] md:rounded-[32px]">
         <button
@@ -126,4 +128,7 @@ export default function AssinaturaConsumoDialog({ open, onOpenChange, onConfirm 
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined') return overlay;
+  return createPortal(overlay, document.body);
 }
