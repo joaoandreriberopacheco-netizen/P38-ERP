@@ -13,6 +13,7 @@
     "flare:api": "node scripts/flare-local-api.mjs",
     "audit:fluxo-dia": "node scripts/audit-fluxo-dia.mjs",
     "audit:pedido-sugestao": "node scripts/audit-pedido-sugestao-estoque.mjs",
+    "audit:estoque-canonico": "node scripts/audit-estoque-canonico.mjs",
     "auditar:cartao-conta": "node scripts/auditar-cartao-conta-pdv.mjs",
     "check:pci-entity": "node scripts/check-pedido-compra-item-entity.mjs",
     "lint": "eslint .",
