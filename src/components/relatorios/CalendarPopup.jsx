@@ -189,7 +189,7 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose, isModa
           disabled={!dateRange.from || !dateRange.to}
           className={`w-full py-2.5 rounded-xl font-semibold text-sm transition ${
             dateRange.from && dateRange.to
-              ? 'bg-background dark:bg-card text-white dark:text-foreground hover:opacity-90'
+              ? 'bg-card text-card-foreground hover:opacity-90'
               : 'bg-muted text-muted-foreground cursor-not-allowed'
           }`}
         >

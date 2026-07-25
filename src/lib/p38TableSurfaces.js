@@ -35,7 +35,7 @@ export const p38Table = {
   stickyCellLeft: 'sticky left-0 z-20 bg-background [transform:translateZ(0)] [backface-visibility:hidden]',
 
   /** Painéis mobile / resumo */
-  panel: 'bg-card text-white rounded-lg border border-border/40 dark:border-white/10',
+  panel: 'bg-card text-card-foreground rounded-lg border border-border/40 dark:border-white/10 shadow-sm',
   panelAccentBar: 'bg-[#4a5240] dark:bg-[#a4ce33]',
   accentDot: 'w-1.5 h-1.5 rounded-full bg-[#4a5240] dark:bg-[#a4ce33]',
 

@@ -470,7 +470,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
           <Button
             onClick={abrirConfirmacao}
             disabled={verificandoDivergencias || itens.length === 0}
-            className="w-full h-12 rounded-2xl bg-background dark:bg-card hover:bg-primary/90 dark:hover:bg-muted text-white dark:text-foreground shadow-none font-semibold disabled:opacity-30"
+            className="w-full h-12 rounded-2xl bg-background dark:bg-card hover:bg-primary/90 dark:hover:bg-muted text-foreground shadow-none font-semibold disabled:opacity-30"
           >
             {verificandoDivergencias
               ? <Loader2 className="w-4 h-4 animate-spin" />
@@ -546,7 +546,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
               <Button
                 onClick={finalizar}
                 disabled={finalizando}
-                className="flex-1 h-11 rounded-2xl bg-background dark:bg-card hover:bg-primary/90 dark:hover:bg-muted text-white dark:text-foreground shadow-none font-semibold"
+                className="flex-1 h-11 rounded-2xl bg-background dark:bg-card hover:bg-primary/90 dark:hover:bg-muted text-foreground shadow-none font-semibold"
               >
                 {finalizando
                   ? <Loader2 className="w-4 h-4 animate-spin" />
@@ -594,7 +594,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
             </div>
             <div className="flex gap-2">
               <Button variant="ghost" onClick={() => setModalQtd(null)} className="flex-1 h-12 rounded-2xl bg-muted text-muted-foreground hover:bg-muted dark:hover:bg-primary/90">Cancelar</Button>
-              <Button onClick={confirmarQtd} className="flex-1 h-12 rounded-2xl bg-background dark:bg-card hover:bg-primary/90 dark:hover:bg-muted text-white dark:text-foreground shadow-none font-semibold">
+              <Button onClick={confirmarQtd} className="flex-1 h-12 rounded-2xl bg-background dark:bg-card hover:bg-primary/90 dark:hover:bg-muted text-foreground shadow-none font-semibold">
                 <CheckCircle2 className="w-4 h-4 mr-1.5" /> Confirmar
               </Button>
             </div>

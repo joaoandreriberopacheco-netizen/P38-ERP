@@ -139,7 +139,7 @@ export default function OrcamentosRecentesSheet({ isOpen, onClose, currentUser, 
                     {/* Botão carregar */}
                     <button
                       onClick={() => handleCarregar(orc)}
-                      className="w-full flex items-center justify-center gap-2 py-3.5 bg-background dark:bg-muted text-white dark:text-foreground rounded-2xl text-sm font-semibold active:scale-[0.98] transition-all"
+                      className="w-full flex items-center justify-center gap-2 py-3.5 bg-background dark:bg-muted text-foreground rounded-2xl text-sm font-semibold active:scale-[0.98] transition-all"
                     >
                       <ShoppingCart className="w-4 h-4" />
                       Carregar no PDV

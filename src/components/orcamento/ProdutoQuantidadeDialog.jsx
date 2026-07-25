@@ -203,7 +203,7 @@ export default function ProdutoQuantidadeDialog({
                 })}
                 className="w-11 h-11 rounded-full bg-background dark:bg-muted flex items-center justify-center active:opacity-70 flex-shrink-0"
               >
-                <Plus className="w-4 h-4 text-white dark:text-foreground" />
+                <Plus className="w-4 h-4 text-foreground" />
               </button>
             </div>
           </div>
@@ -261,7 +261,7 @@ export default function ProdutoQuantidadeDialog({
               type="button"
               onClick={handleConfirm}
               disabled={qtdNum <= 0}
-              className="flex-1 h-12 rounded-2xl bg-background dark:bg-muted text-white dark:text-foreground text-sm font-semibold flex items-center justify-center gap-2 active:opacity-80 disabled:opacity-40"
+              className="flex-1 h-12 rounded-2xl bg-background dark:bg-muted text-foreground text-sm font-semibold flex items-center justify-center gap-2 active:opacity-80 disabled:opacity-40"
             >
               <Check className="w-4 h-4" />
               {confirmLabel}

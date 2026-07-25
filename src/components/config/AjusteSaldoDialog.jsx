@@ -134,7 +134,7 @@ export default function AjusteSaldoDialog({ open, onOpenChange, conta, saldoCalc
 
         <DialogFooter className="gap-2 pt-1">
           <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="h-8 text-xs">Cancelar</Button>
-          <Button size="sm" onClick={handleSalvar} className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white h-8 text-xs">
+          <Button size="sm" onClick={handleSalvar} className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:text-foreground h-8 text-xs">
             Confirmar Ajuste
           </Button>
         </DialogFooter>

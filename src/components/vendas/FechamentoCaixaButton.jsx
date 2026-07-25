@@ -150,7 +150,7 @@ export default function FechamentoCaixaButton({
         onClick={() => setShowConfirmacao(true)}
         isLoading={isClosing}
         loadingText="Fechando..."
-        className="flex-1 h-12 bg-background dark:bg-card text-white dark:text-foreground rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm"
+        className="flex-1 h-12 bg-card text-card-foreground rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm"
         style={{ minHeight: '48px' }}
       >
         <Lock className="w-4 h-4" /> Fechar Caixa

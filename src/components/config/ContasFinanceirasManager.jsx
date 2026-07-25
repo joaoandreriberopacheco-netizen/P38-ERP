@@ -113,7 +113,7 @@ export default function ContasFinanceirasManager() {
           <p className="text-xs text-muted-foreground mt-0.5">Caixas físicos, contas bancárias e carteiras digitais</p>
         </div>
         <Button onClick={handleAddNew} size="sm"
-          className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white gap-1.5 h-8 px-3 text-xs">
+          className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:text-foreground gap-1.5 h-8 px-3 text-xs">
           <PlusCircle className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">Nova Conta</span>
         </Button>
@@ -296,7 +296,7 @@ export default function ContasFinanceirasManager() {
           <DialogFooter className="gap-2 pt-1">
             <Button variant="ghost" size="sm" onClick={() => setIsDialogOpen(false)} className="h-8 text-xs">Cancelar</Button>
             <Button size="sm" onClick={handleSave}
-              className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white h-8 text-xs">
+              className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:text-foreground h-8 text-xs">
               Salvar
             </Button>
           </DialogFooter>

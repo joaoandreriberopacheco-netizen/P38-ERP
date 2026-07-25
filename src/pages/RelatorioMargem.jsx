@@ -1815,7 +1815,7 @@ export default function RelatorioMargemVendas() {
               <button
                 type="button"
                 onClick={handleApplySearchFilter}
-                className="h-10 px-3 rounded-xl bg-background dark:bg-secondary text-white dark:text-foreground hover:bg-primary dark:hover:bg-muted transition text-xs font-semibold whitespace-nowrap flex-shrink-0"
+                className="h-10 px-3 rounded-xl bg-background dark:bg-secondary text-foreground hover:bg-primary dark:hover:bg-muted transition text-xs font-semibold whitespace-nowrap flex-shrink-0"
                 title="Aplicar busca"
               >
                 Filtrar
@@ -1828,7 +1828,7 @@ export default function RelatorioMargemVendas() {
               >
                 <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
                 {activeFilterCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-muted dark:bg-muted text-white dark:text-foreground text-[10px] rounded-full flex items-center justify-center font-bold">
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-muted text-foreground text-[10px] rounded-full flex items-center justify-center font-bold">
                     {activeFilterCount}
                   </span>
                 )}

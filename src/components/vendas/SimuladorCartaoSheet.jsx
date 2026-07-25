@@ -219,7 +219,7 @@ export default function SimuladorCartaoSheet({ open, onClose, valorTotal, valorD
                   <button key={b} onClick={() => setBandeira(b)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
                       bandeira === b
-                        ? 'bg-background dark:bg-card text-white dark:text-foreground'
+                        ? 'bg-card text-card-foreground'
                         : 'bg-muted text-muted-foreground'
                     }`}
                   >{b}</button>
@@ -240,7 +240,7 @@ export default function SimuladorCartaoSheet({ open, onClose, valorTotal, valorD
                     }}
                       className={`flex-1 h-10 rounded-xl text-xs font-medium transition-all ${
                         modalidade === mod
-                          ? 'bg-background dark:bg-card text-white dark:text-foreground'
+                          ? 'bg-card text-card-foreground'
                           : 'bg-muted/50 text-muted-foreground'
                       }`}
                     >{mod === 'Crédito à Vista' ? 'Créd. 1x' : mod === 'Crédito Parcelado' ? 'Crédito Parc.' : mod}</button>
@@ -262,7 +262,7 @@ export default function SimuladorCartaoSheet({ open, onClose, valorTotal, valorD
                       onClick={() => setParcelas(n)}
                       className={`h-14 rounded-xl text-xs font-medium flex flex-col items-center justify-center transition-all ${
                         parcelas === n
-                          ? 'bg-background dark:bg-card text-white dark:text-foreground'
+                          ? 'bg-card text-card-foreground'
                           : 'bg-muted/50 text-muted-foreground hover:bg-muted'
                       }`}
                     >

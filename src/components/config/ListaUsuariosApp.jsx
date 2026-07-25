@@ -220,7 +220,7 @@ export default function ListaUsuariosApp() {
         </div>
         <Button
           size="sm"
-          className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white gap-1.5 h-8 px-3 text-xs"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:text-foreground gap-1.5 h-8 px-3 text-xs"
           onClick={handleConvidarOuCriar}
         >
           <UserPlus className="w-3.5 h-3.5" />
@@ -446,7 +446,7 @@ export default function ListaUsuariosApp() {
                         onClick={() => toggleCaixa(conta.id)}
                         className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors ${
                           ativo
-                            ? 'bg-primary text-white dark:bg-muted dark:text-foreground'
+                            ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground'
                             : 'bg-muted/50 text-foreground/90 hover:bg-muted'
                         }`}
                       >
@@ -454,7 +454,7 @@ export default function ListaUsuariosApp() {
                           ativo ? 'bg-card/20 dark:bg-black/10' : 'border border-border/40 dark:border-border/40'
                         }`}>
                           {ativo && (
-                            <svg className="w-2.5 h-2.5 text-white dark:text-foreground" fill="none" viewBox="0 0 12 12">
+                            <svg className="w-2.5 h-2.5 text-foreground" fill="none" viewBox="0 0 12 12">
                               <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           )}
@@ -477,7 +477,7 @@ export default function ListaUsuariosApp() {
             </Button>
             <Button
               size="sm"
-              className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white h-8 text-xs"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:text-foreground h-8 text-xs"
               onClick={handleSalvar}
             >
               Salvar
@@ -541,7 +541,7 @@ export default function ListaUsuariosApp() {
             </Button>
             <Button
               size="sm"
-              className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white h-8 text-xs"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:text-foreground h-8 text-xs"
               onClick={handleCriarUtilizador}
               disabled={creating}
             >

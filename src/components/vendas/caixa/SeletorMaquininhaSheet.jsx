@@ -101,7 +101,7 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
                       onClick={() => setParcelas(p)}
                       className={`w-10 h-9 rounded-xl text-sm font-semibold transition-colors ${
                         parcelas === p
-                          ? 'bg-background dark:bg-card text-white dark:text-foreground'
+                          ? 'bg-card text-card-foreground'
                           : 'bg-muted text-muted-foreground hover:bg-muted dark:hover:bg-primary/90'
                       }`}
                     >
@@ -121,7 +121,7 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
                   onClick={() => { setSelecionada(maq); setBandeiraSelecionada(''); }}
                   className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-colors text-left ${
                     selecionada?.id === maq.id
-                      ? 'bg-background dark:bg-card text-white dark:text-foreground'
+                      ? 'bg-card text-card-foreground'
                       : 'bg-muted/50 text-foreground/90 hover:bg-muted'
                   }`}
                 >
@@ -147,7 +147,7 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
                         onClick={() => setBandeiraSelecionada(b)}
                         className={`flex flex-col items-center py-2 px-1 rounded-xl transition-colors text-sm ${
                           bandeiraSelecionada === b
-                            ? 'bg-background dark:bg-card text-white dark:text-foreground'
+                            ? 'bg-card text-card-foreground'
                             : 'bg-muted/50 text-foreground/90 hover:bg-muted'
                         }`}
                       >
@@ -184,7 +184,7 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
               <button
                 onClick={handleConfirmar}
                 disabled={!selecionada || !bandeiraSelecionada}
-                className="flex-1 h-11 bg-background dark:bg-card text-white dark:text-foreground rounded-xl text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-1"
+                className="flex-1 h-11 bg-card text-card-foreground rounded-xl text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-1"
               >
                 Confirmar <ChevronRight className="w-4 h-4" />
               </button>

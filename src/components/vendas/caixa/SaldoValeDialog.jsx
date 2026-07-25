@@ -67,7 +67,7 @@ export default function SaldoValeDialog({ saldoResidualVale, onClose, formatValo
                   /* popup bloqueado */
                 }
               }}
-              className="flex-1 h-12 bg-background dark:bg-card text-white dark:text-foreground rounded-2xl font-medium text-sm flex items-center justify-center gap-2">
+              className="flex-1 h-12 bg-card text-card-foreground rounded-2xl font-medium text-sm flex items-center justify-center gap-2">
               <Printer className="w-4 h-4" /> Imprimir
             </button>
           </div>

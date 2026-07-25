@@ -142,7 +142,7 @@ export default function PeriodoPicker({ periodo, onPeriodo, customStart, customE
               key={p.value}
               onClick={() => { onPeriodo(p.value); setShowCal(false); }}
               style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 99, fontSize: '0.78rem', fontWeight: 500, whiteSpace: 'nowrap', border: 'none', cursor: 'pointer', transition: 'background 0.15s' }}
-              className={periodo === p.value && !isPeriodoAtivo ? 'bg-primary dark:bg-muted text-white dark:text-foreground' : 'bg-muted text-muted-foreground dark:text-foreground/90'}
+              className={periodo === p.value && !isPeriodoAtivo ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground' : 'bg-muted text-muted-foreground dark:text-foreground/90'}
             >
               {p.label}
             </button>
@@ -152,7 +152,7 @@ export default function PeriodoPicker({ periodo, onPeriodo, customStart, customE
           <button
             onClick={() => { onPeriodo('periodo'); setShowCal(s => !s); }}
             style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, padding: '6px 14px', borderRadius: 99, fontSize: '0.78rem', fontWeight: 500, whiteSpace: 'nowrap', border: 'none', cursor: 'pointer', transition: 'background 0.15s' }}
-            className={isPeriodoAtivo ? 'bg-primary dark:bg-muted text-white dark:text-foreground' : 'bg-muted text-muted-foreground dark:text-foreground/90'}
+            className={isPeriodoAtivo ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground' : 'bg-muted text-muted-foreground dark:text-foreground/90'}
           >
             {isPeriodoAtivo ? formatRange() : 'Período'}
             {isPeriodoAtivo && (rangeStart || rangeEnd) && (

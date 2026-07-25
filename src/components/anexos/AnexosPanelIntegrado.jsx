@@ -112,9 +112,9 @@ export default function AnexosPanelIntegrado({
     : 'fixed right-6 z-[55] flex h-12 w-12 items-center justify-center rounded-full bg-primary shadow-lg transition-colors hover:bg-primary/90 dark:bg-muted dark:hover:bg-card p38-bottom-fab1';
   const iconClass = inline
     ? 'w-4 h-4 text-muted-foreground dark:text-foreground/90'
-    : 'w-5 h-5 text-white dark:text-foreground';
+    : 'w-5 h-5 text-foreground dark:text-foreground';
   const badgeClass = inline
-    ? 'absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-muted dark:bg-card text-white dark:text-foreground text-[0.5rem] font-bold flex items-center justify-center'
+    ? 'absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-muted text-foreground dark:bg-card dark:text-foreground text-[0.5rem] font-bold flex items-center justify-center'
     : 'absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-card text-foreground text-[0.55rem] font-bold flex items-center justify-center shadow';
 
   return (

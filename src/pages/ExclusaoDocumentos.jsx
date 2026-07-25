@@ -208,7 +208,7 @@ export default function ExclusaoDocumentosPage() {
                 onKeyDown={e => e.key === 'Enter' && buscar()}
                 className="bg-muted/40 dark:bg-muted border-0 rounded-xl h-11 uppercase font-mono"
               />
-              <Button onClick={buscar} disabled={buscando} className="bg-background dark:bg-card text-white dark:text-foreground rounded-xl px-5 h-11">
+              <Button onClick={buscar} disabled={buscando} className="bg-card text-card-foreground rounded-xl px-5 h-11">
                 {buscando ? '...' : <Search className="w-4 h-4" />}
               </Button>
             </div>

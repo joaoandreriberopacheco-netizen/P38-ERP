@@ -372,7 +372,7 @@ export default function ProdutosHeader({
               title="Mais filtros"
             >
               <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
-              {activeFilterCount > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-muted dark:bg-muted text-white dark:text-foreground text-[10px] rounded-full flex items-center justify-center font-bold">{activeFilterCount}</span>}
+              {activeFilterCount > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-muted text-foreground text-[10px] rounded-full flex items-center justify-center font-bold">{activeFilterCount}</span>}
             </Button>
             <Button
               variant="ghost"

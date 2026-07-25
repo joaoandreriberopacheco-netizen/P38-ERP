@@ -838,7 +838,7 @@ function VendasGestaoPage() {
               </Button>
               <Button
                 size="sm"
-                className="flex-1 h-11 rounded-2xl bg-primary hover:bg-card text-white dark:bg-primary dark:text-primary-foreground"
+                className="flex-1 h-11 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground border border-primary/80 dark:border-transparent"
                 onClick={() => setShowFiltros(false)}
               >
                 Aplicar
