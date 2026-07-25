@@ -6,6 +6,9 @@ import { loadDotEnvFiles } from './base44-env.mjs';
 
 loadDotEnvFiles();
 
+/** Project ref canónico do P38 em produção (Supabase). */
+export const P38_CANONICAL_PROJECT_REF = 'zhonvxkkqabfdyehyxpu';
+
 /** @typedef {'github' | 'vercel' | 'local' | 'cloud-agent'} SecretContext */
 
 /**
@@ -17,23 +20,82 @@ function trim(value) {
 }
 
 /**
+ * Extrai metadados seguros de uma connection string (sem expor password).
+ * @param {string | undefined} databaseUrl
+ */
+export function parseDatabaseUrlMeta(databaseUrl) {
+  if (!databaseUrl) {
+    return {
+      ok: false,
+      projectRef: null,
+      host: null,
+      user: null,
+      port: null,
+      fingerprint: null,
+      parseError: 'vazio',
+    };
+  }
+
+  const trimmed = databaseUrl.trim();
+  const hadQuotes = /^['"]/.test(trimmed) || /['"]$/.test(trimmed);
+  const normalized = trimmed.replace(/^['"]|['"]$/g, '');
+
+  try {
+    const url = new URL(normalized.replace(/^postgresql:/, 'postgres:'));
+    const user = url.username || null;
+    const host = url.hostname || null;
+    const port = url.port || '5432';
+    const userRef = user?.match(/^postgres\.(.+)$/)?.[1] || null;
+    const projectRef = userRef || parseProjectRefFromHost(host);
+    const fingerprint = `${host}|${user}|${port}`;
+
+    return {
+      ok: true,
+      projectRef,
+      host,
+      user,
+      port,
+      fingerprint,
+      hasPassword: Boolean(url.password),
+      hadQuotes,
+      hadOuterWhitespace: trimmed !== databaseUrl,
+      parseError: null,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      projectRef: null,
+      host: null,
+      user: null,
+      port: null,
+      fingerprint: null,
+      parseError: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+/**
+ * @param {string | null | undefined} host
+ * @returns {string | null}
+ */
+function parseProjectRefFromHost(host) {
+  if (!host) return null;
+  const pooler = host.match(/^postgres\.([^.]+)\./);
+  if (pooler) return pooler[1];
+  if (host.startsWith('db.') && host.endsWith('.supabase.co')) {
+    return host.slice(3, -'.supabase.co'.length);
+  }
+  const direct = host.match(/^([^.]+)\.supabase\.co$/);
+  return direct ? direct[1] : null;
+}
+
+/**
  * @param {string | undefined} databaseUrl
  * @returns {string | null}
  */
 export function parseProjectRefFromDatabaseUrl(databaseUrl) {
-  if (!databaseUrl) return null;
-  try {
-    const host = new URL(databaseUrl.replace(/^postgresql:/, 'postgres:')).hostname;
-    const pooler = host.match(/^postgres\.([^.]+)\./);
-    if (pooler) return pooler[1];
-    if (host.startsWith('db.') && host.endsWith('.supabase.co')) {
-      return host.slice(3, -'.supabase.co'.length);
-    }
-    const direct = host.match(/^([^.]+)\.supabase\.co$/);
-    return direct ? direct[1] : null;
-  } catch {
-    return null;
-  }
+  const meta = parseDatabaseUrlMeta(databaseUrl);
+  return meta.projectRef;
 }
 
 /**
@@ -163,6 +225,24 @@ export function checkProjectRefAlignment(secrets) {
       level: 'error',
       code: 'REF_MISMATCH',
       message: `DATABASE_URL (${refFromDb}) ≠ VITE_SUPABASE_URL (${refFromVite}) — devem ser o MESMO projecto Supabase.`,
+    });
+  } else if (!refFromVite && refFromDb && refFromDb !== P38_CANONICAL_PROJECT_REF) {
+    issues.push({
+      level: 'error',
+      code: 'WRONG_SUPABASE_PROJECT',
+      message:
+        `DATABASE_URL aponta para o projecto Supabase "${refFromDb}", mas o P38 canónico é "${P38_CANONICAL_PROJECT_REF}". ` +
+        'O secret guardado no Cloud parece ser de outro projecto — copiar no chat funciona porque aí colas a URL correcta.',
+    });
+  }
+
+  const dbMeta = parseDatabaseUrlMeta(secrets.databaseUrl);
+  if (dbMeta.ok && dbMeta.hadQuotes) {
+    issues.push({
+      level: 'warn',
+      code: 'DATABASE_URL_QUOTED',
+      message:
+        'DATABASE_URL tem aspas à volta — remove aspas ao gravar no painel Cursor (só o valor, sem " ").',
     });
   }
 

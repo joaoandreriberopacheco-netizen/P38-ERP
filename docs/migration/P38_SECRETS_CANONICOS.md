@@ -102,6 +102,42 @@ Antes de qualquer deploy: `npm run secrets:check`
 
 ---
 
+## DATABASE_URL — o problema mais comum (e por que “no chat funciona”)
+
+A connection string do Supabase **pooler** tem o project ref no **utilizador**, não no hostname:
+
+```
+postgresql://postgres.zhonvxkkqabfdyehyxpu:SENHA@aws-0-....pooler.supabase.com:6543/postgres
+              ^^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^
+              fixo     ESTE é o project ref P38
+```
+
+### Sintoma que já aconteceu contigo
+
+- O `secrets:check` diz “password authentication failed”
+- Tu copias a URL no chat → **funciona**
+- Parece que a senha está certa, mas o Cloud “não vê”
+
+### Causa real (diagnosticada)
+
+O secret **guardado no Cursor Cloud** muitas vezes é de **outro projecto Supabase** (ref diferente no utilizador `postgres.XXXX`). Quando colas no chat, colas a URL **correcta do P38** — por isso funciona na hora, mas o secret antigo continua errado na próxima sessão.
+
+**Project ref P38 canónico:** `zhonvxkkqabfdyehyxpu`  
+Se o utilizador na URL for `postgres.OUTRO_REF`, está no projecto errado.
+
+### Como corrigir (uma vez)
+
+1. Supabase → projecto **P38** (`zhonvxkkqabfdyehyxpu`) → Database → Connection string → **URI** (pooler, porta 6543)
+2. Cursor → Cloud Agents → `varejosync` → Secrets:
+   - **Apagar** `DATABASE_URL` e o legado `supabase`
+   - **Criar** só `DATABASE_URL` com a URI nova (sem aspas, sem espaços)
+3. Abrir **nova sessão** Cloud Agent
+4. `npm run secrets:check -- --context=cloud-agent` — deve mostrar `projecto: zhonvxkkqabfdyehyxpu` e ligação OK
+
+**Nunca colar a connection string no chat** — só gravar no painel Secrets.
+
+---
+
 ## Aliases legados (evitar)
 
 O script `npm run secrets:check` aceita estes nomes antigos mas **avisa**:

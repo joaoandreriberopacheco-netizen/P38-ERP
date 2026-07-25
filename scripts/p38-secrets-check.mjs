@@ -13,6 +13,8 @@ import pg from 'pg';
 import {
   checkProjectRefAlignment,
   maskPresence,
+  P38_CANONICAL_PROJECT_REF,
+  parseDatabaseUrlMeta,
   resolveP38Secrets,
 } from './p38-secrets.mjs';
 
@@ -123,6 +125,23 @@ async function main() {
   }
   if (secrets.projectRef) console.log(`  project ref: ${secrets.projectRef}`);
 
+  if (secrets.databaseUrl) {
+    const dbMeta = parseDatabaseUrlMeta(secrets.databaseUrl);
+    if (dbMeta.ok) {
+      console.log(`  DATABASE_URL → projecto: ${dbMeta.projectRef || '(não detectado)'}`);
+      console.log(`  DATABASE_URL → host: ${dbMeta.host}:${dbMeta.port}, user: ${dbMeta.user}`);
+      if (dbMeta.projectRef && dbMeta.projectRef !== P38_CANONICAL_PROJECT_REF) {
+        console.log(
+          `  ✗ PROJECTO ERRADO: secret aponta para "${dbMeta.projectRef}", P38 é "${P38_CANONICAL_PROJECT_REF}"`
+        );
+        console.log('    → No Supabase, abre o projecto P38 (zhonvxkkqabfdyehyxpu), não outro.');
+        console.log('    → Copiar no chat funciona; o secret guardado no Cloud é que está desactualizado.');
+      }
+    } else if (dbMeta.parseError) {
+      console.log(`  DATABASE_URL → formato inválido: ${dbMeta.parseError}`);
+    }
+  }
+
   console.log('\n[secrets:check] Presença (sem valores):');
   console.log(' ', maskPresence('VITE_SUPABASE_URL', secrets.viteSupabaseUrl));
   console.log(' ', maskPresence('VITE_SUPABASE_ANON_KEY', secrets.viteSupabaseAnonKey));
@@ -163,7 +182,18 @@ async function main() {
     } else {
       console.log('FALHOU');
       console.log(`  erro: ${db.error}`);
-      console.log('  → Supabase Dashboard → Database → copiar connection string nova.');
+      const dbMeta = parseDatabaseUrlMeta(secrets.databaseUrl);
+      if (dbMeta.projectRef && dbMeta.projectRef !== P38_CANONICAL_PROJECT_REF) {
+        console.log(
+          `  causa provável: DATABASE_URL é do projecto "${dbMeta.projectRef}", não do P38 "${P38_CANONICAL_PROJECT_REF}".`
+        );
+        console.log('  acção: Cursor → Cloud Agents → Secrets → apagar DATABASE_URL e `supabase` → gravar só DATABASE_URL do projecto P38.');
+      } else if (/password authentication failed/i.test(db.error || '')) {
+        console.log('  causa provável: senha expirada ou connection string antiga no secret do Cloud.');
+        console.log('  acção: Supabase → Database → Reset password → copiar URI nova → gravar no secret (sem colar no chat).');
+      } else {
+        console.log('  → Supabase Dashboard → Database → copiar connection string nova.');
+      }
     }
     if (!db.ok) process.exitCode = 1;
   }
