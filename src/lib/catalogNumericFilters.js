@@ -13,6 +13,7 @@ export const NUMERIC_COMPARISON_OPERATORS = [
   { value: 'gte', label: 'Maior ou igual a' },
   { value: 'lt', label: 'Menor que' },
   { value: 'lte', label: 'Menor ou igual a' },
+  { value: 'eq', label: 'Igual a' },
   { value: 'between', label: 'Entre' },
 ];
 
@@ -103,6 +104,8 @@ export function matchesNumericComparison(actual, operador, valor, valorAte) {
       return bound === null ? true : numericActual < bound;
     case 'lte':
       return bound === null ? true : numericActual <= bound;
+    case 'eq':
+      return bound === null ? true : numericActual === bound;
     case 'between': {
       const min = bound !== null ? bound : -Infinity;
       const max = boundAte !== null ? boundAte : Infinity;

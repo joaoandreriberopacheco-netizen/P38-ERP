@@ -286,7 +286,7 @@ export default function ProdutosMobileFiltersSheet({
 
           <MobileFilterSection
             title="Métrica 2 (opcional)"
-            hint="Combine com a primeira: ex. ponto futuro &lt; 0 e lead time = 20."
+            hint="Combine com a primeira: ex. ponto futuro &lt; 0 e lead time igual a 20."
           >
             <ProdutosNumericMetricFilter
               filters={filters}
