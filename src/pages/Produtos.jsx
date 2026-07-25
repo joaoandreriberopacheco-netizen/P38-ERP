@@ -46,6 +46,9 @@ import {
   buildCatalogSalesVelocityMap,
 } from '@/lib/catalogSalesVelocity';
 import { filtersNeedSalesVelocity } from '@/lib/catalogNumericFilters';
+import { createCatalogStockContext } from '@/lib/catalogEstoqueVirtual';
+import { fetchPedidosCompraParaSugestaoEstoque } from '@/lib/fetchPedidosCompraParaSugestaoEstoque';
+import { buildPendenteAprovadoFinanceiroPorProduto } from '@/lib/sugestaoCompraEstoquePendente';
 import { saveCatalogProdutoFilters } from '@/lib/catalogProdutoFiltersStorage';
 import { sumCatalogStockTotals } from '@/lib/catalogStockTotals';
 import {
@@ -54,7 +57,7 @@ import {
 } from '@/lib/catalogProdutoColumnsStorage';
 import { compareProdutosForCatalogSort } from '@/lib/catalogProdutoPerformance';
 import { useDesktopContent } from '@/hooks/use-breakpoint';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { p38Keys } from '@/lib/p38QueryConfig';
 import { downloadBlob } from '@/lib/mobilePrintAndShare';
 import {
@@ -1089,6 +1092,27 @@ function ProdutosPageContent() {
     }
   };
 
+  const estoqueVirtualAtivo = filters.estoqueVirtual === true;
+
+  const { data: pendentePorProduto = {} } = useQuery({
+    queryKey: ['catalogo', 'pendente-estoque'],
+    enabled: estoqueVirtualAtivo,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const data = await fetchPedidosCompraParaSugestaoEstoque(base44);
+      return buildPendenteAprovadoFinanceiroPorProduto(
+        data.pedidosAbertos,
+        data.recebidosPorPedidoProduto,
+        { embarques: data.embarques, pedidosParaEmbarque: data.pedidosTodos },
+      );
+    },
+  });
+
+  const catalogStockContext = useMemo(
+    () => createCatalogStockContext(estoqueVirtualAtivo, pendentePorProduto),
+    [estoqueVirtualAtivo, pendentePorProduto],
+  );
+
   const needsSalesVelocity = useMemo(() => {
     const velocityColumns = ['media_30d', 'ponto_esperado_lt', 'ponto_futuro'];
     if (visibleColumns.some((col) => velocityColumns.includes(col))) return true;
@@ -1105,12 +1129,12 @@ function ProdutosPageContent() {
   }, [needsSalesVelocity, produtos, pedidosVenda90d]);
 
   const filteredProdutos = useMemo(() => {
-    let filtered = filterProdutos(produtos, filters, { salesVelocityMap });
+    let filtered = filterProdutos(produtos, filters, { salesVelocityMap, catalogStockContext });
 
     filtered = [...filtered].sort((a, b) => compareProdutosForCatalogSort(a, b, sortOrder));
 
     return filtered;
-  }, [produtos, filters, sortOrder, salesVelocityMap]);
+  }, [produtos, filters, sortOrder, salesVelocityMap, catalogStockContext]);
 
   const fornecedorMap = useMemo(() => {
     return fornecedores.reduce((acc, f) => {
@@ -1449,7 +1473,7 @@ function ProdutosPageContent() {
 
               {isDesktop && viewMode === 'dinamica' && (
                 <div className="flex flex-col w-full h-full min-h-0">
-                  <TreeGrid produtos={filteredProdutos} onEdit={handleEdit} onDelete={setProdutoParaExcluir} visibleColumns={visibleColumns} masterLevel={treeLevel} sortOrder={sortOrder} groupByCategory={groupTreeByCategory} onExpandedKeysChange={handleCatalogExpandedKeysChange} salesVelocityMap={salesVelocityMap} />
+                  <TreeGrid produtos={filteredProdutos} onEdit={handleEdit} onDelete={setProdutoParaExcluir} visibleColumns={visibleColumns} masterLevel={treeLevel} sortOrder={sortOrder} groupByCategory={groupTreeByCategory} onExpandedKeysChange={handleCatalogExpandedKeysChange} salesVelocityMap={salesVelocityMap} catalogStockContext={catalogStockContext} />
                 </div>
               )}
 
@@ -1463,6 +1487,7 @@ function ProdutosPageContent() {
                   fornecedorMap={fornecedorMap}
                   handleCreateSimilar={handleCreateSimilar}
                   salesVelocityMap={salesVelocityMap}
+                  catalogStockContext={catalogStockContext}
                 />
               )}
             </div>

@@ -7,6 +7,7 @@ import { isCadastroIncompleto, getStockStatusIndicator } from './ProdutosHelpers
 import { formatEstoqueApresentacao, getUnidadeExibicaoSigla, getCatalogUnitLabels, getCatalogoComercialView, resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
 import { formatCatalogMedia30d, formatCatalogMetaQuantidade, formatCatalogPontoEsperadoLt, formatCatalogPontoFuturo, getCatalogLeadTimeDias } from '@/lib/catalogSalesVelocity';
+import { resolveCatalogEstoqueExibicao } from '@/lib/catalogEstoqueVirtual';
 import { formatQuantidadeCatalogoApresentacao } from '@/lib/productUnits';
 
 const headMap = {
@@ -70,7 +71,7 @@ const widthMap = {
   inventario_valorizado: 'min-w-[120px]',
 };
 
-function renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, formatarNumero, fornecedorMap, salesVelocityMap = {} }) {
+function renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, formatarNumero, fornecedorMap, salesVelocityMap = {}, catalogStockContext = null }) {
   const velocity = salesVelocityMap[String(produto?.id)];
   switch (col) {
     case 'codigo_interno':
@@ -109,29 +110,24 @@ function renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, fo
       );
     case 'markup':
       return <TableCell key={col} className="text-xs text-foreground/90">{cat.markupSobreCustoPct > 0 ? `${formatarNumero(cat.markupSobreCustoPct)}%` : `${produto.preco_venda_percentual || 0}%`}</TableCell>;
-    case 'estoque_atual':
+    case 'estoque_atual': {
+      const est = resolveCatalogEstoqueExibicao(produto, catalogStockContext);
       return (
         <TableCell key={col} className="text-xs text-foreground/90">
-          <div className="flex flex-col leading-tight">
+          <div className="flex flex-col leading-tight tabular-nums">
             <span>
-              {(() => {
-                const apresent = formatEstoqueApresentacao(produto);
-                if (apresent) return `${formatarNumero(apresent.quantidade)} ${apresent.sigla}`;
-                return `${formatarNumero(produto.estoque_atual)} ${(produto.unidade_principal || 'UN').toUpperCase()}`;
-              })()}
+              {est.virtual && est.pendente > 0 ? '~' : ''}
+              {formatarNumero(est.quantidade)} {est.unidade}
             </span>
-            {(() => {
-              const apresent = formatEstoqueApresentacao(produto);
-              if (!apresent) return null;
-              return (
-                <span className="text-[10px] text-muted-foreground mt-0.5">
-                  {apresent.rotulo ? `(${apresent.rotulo})` : 'unidade de exibição'}
-                </span>
-              );
-            })()}
+            {est.virtual && est.pendente > 0 ? (
+              <span className="text-[10px] text-sky-700 dark:text-sky-300 mt-0.5">
+                {formatarNumero(est.fisico)} + {formatarNumero(est.pendente)} trânsito
+              </span>
+            ) : null}
           </div>
         </TableCell>
       );
+    }
     case 'media_30d':
       return (
         <TableCell key={col} className="text-xs text-foreground/90 tabular-nums">
@@ -141,7 +137,7 @@ function renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, fo
     case 'ponto_futuro':
       return (
         <TableCell key={col} className="text-xs text-foreground/90 tabular-nums">
-          {formatCatalogPontoFuturo(produto, velocity) || '—'}
+          {formatCatalogPontoFuturo(produto, velocity, {}, catalogStockContext) || '—'}
         </TableCell>
       );
     case 'ponto_esperado_lt':
@@ -224,6 +220,7 @@ export default function ProdutosPlanaTable({
   readOnly = false,
   embedded = false,
   salesVelocityMap = {},
+  catalogStockContext = null,
 }) {
   const scrollContainerRef = useRef(null);
   const virtualRows = useVirtualRows({
@@ -299,7 +296,7 @@ export default function ProdutosPlanaTable({
                   <div className="font-medium text-sm text-foreground/90 uppercase">{produto.nome}</div>
                   <div className="text-xs text-muted-foreground uppercase">{produto.codigo_interno}</div>
                 </TableCell>
-                {visibleColumns.map((col) => renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, formatarNumero, fornecedorMap, salesVelocityMap }))}
+                {visibleColumns.map((col) => renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, formatarNumero, fornecedorMap, salesVelocityMap, catalogStockContext }))}
               </TableRow>
             );
           })}

@@ -1,4 +1,8 @@
 import {
+  isCatalogEstoqueVirtualAtivo,
+  resolveCatalogEstoqueExibicao,
+} from '@/lib/catalogEstoqueVirtual';
+import {
   formatEstoqueApresentacao,
   formatQuantidadeCatalogoApresentacao,
   resolveCommercialDisplay,
@@ -155,7 +159,10 @@ export function formatCatalogMedia30d(velocity, options = {}) {
 }
 
 /** Estoque na mesma unidade exibida na coluna «Estoque» do catálogo. */
-export function getCatalogEstoqueExibicaoQuantidade(produto) {
+export function getCatalogEstoqueExibicaoQuantidade(produto, catalogStockContext = null) {
+  if (isCatalogEstoqueVirtualAtivo(catalogStockContext)) {
+    return resolveCatalogEstoqueExibicao(produto, catalogStockContext);
+  }
   const apresent = formatEstoqueApresentacao(produto);
   if (apresent) {
     return { quantidade: Number(apresent.quantidade) || 0, unidade: apresent.sigla };
@@ -165,10 +172,23 @@ export function getCatalogEstoqueExibicaoQuantidade(produto) {
 }
 
 /** Ponto futuro = estoque atual − média 30d (mesmas unidades da coluna Média 30d). */
-export function getCatalogPontoFuturo(produto, velocity) {
-  const { quantidade: estoque } = getCatalogEstoqueExibicaoQuantidade(produto);
+export function getCatalogPontoFuturo(produto, velocity, catalogStockContext = null) {
+  const { quantidade: estoque } = getCatalogEstoqueExibicaoQuantidade(produto, catalogStockContext);
   const media30 = getCatalogMedia30dFrom60d(velocity);
   return estoque - media30;
+}
+
+/** Texto da coluna «Ponto futuro» (estoque atual − média 30d). */
+export function formatCatalogPontoFuturo(produto, velocity, options = {}, catalogStockContext = null) {
+  const est = getCatalogEstoqueExibicaoQuantidade(produto, catalogStockContext);
+  const media30 = getCatalogMedia30dFrom60d(velocity);
+  if (est.quantidade === 0 && media30 <= 0) return null;
+  const unidade = velocity?.unidade || est.unidade;
+  return formatCatalogPontoFuturoQuantidade(
+    getCatalogPontoFuturo(produto, velocity, catalogStockContext),
+    unidade,
+    options,
+  );
 }
 
 export function formatCatalogPontoFuturoQuantidade(ponto, unidade, options = {}) {
@@ -182,15 +202,6 @@ export function formatCatalogPontoFuturoQuantidade(ponto, unidade, options = {})
   }
   if (qty < 0) return `−${text.replace(/^~/, '')}`;
   return text;
-}
-
-/** Texto da coluna «Ponto futuro» (estoque atual − média 30d). */
-export function formatCatalogPontoFuturo(produto, velocity, options = {}) {
-  const est = getCatalogEstoqueExibicaoQuantidade(produto);
-  const media30 = getCatalogMedia30dFrom60d(velocity);
-  if (est.quantidade === 0 && media30 <= 0) return null;
-  const unidade = velocity?.unidade || est.unidade;
-  return formatCatalogPontoFuturoQuantidade(getCatalogPontoFuturo(produto, velocity), unidade, options);
 }
 
 /** Lead time do produto (tempo_reposicao_dias) ou padrão. */

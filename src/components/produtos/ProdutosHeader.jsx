@@ -8,6 +8,7 @@ import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizont
 import { DEFAULT_PRODUTO_FILTERS, ABCD_FILTER_VALUES, ABCD_FILTER_LABELS } from '@/lib/filterProdutos';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
 import ProdutosSomentePositivosToggle from '@/components/produtos/ProdutosSomentePositivosToggle';
+import ProdutosEstoqueVirtualToggle from '@/components/produtos/ProdutosEstoqueVirtualToggle';
 import ProdutosAbcdQuickFilter from '@/components/produtos/ProdutosAbcdQuickFilter';
 import ProdutosNumericMetricFilter from '@/components/produtos/ProdutosNumericMetricFilter';
 import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
@@ -281,6 +282,7 @@ export default function ProdutosHeader({
           </div>
           <div className="flex flex-wrap items-center gap-1.5 desktop-layout:gap-2 min-w-0">
             <ProdutosSomentePositivosToggle filters={filters} setFilters={setFilters} />
+            <ProdutosEstoqueVirtualToggle filters={filters} setFilters={setFilters} />
             <ProdutosAbcdQuickFilter
               abcd={filters.abcd}
               onChange={(value) => handleFilterChange('abcd', value)}
@@ -502,6 +504,11 @@ export default function ProdutosHeader({
             <div className="rounded-lg border border-border/30 bg-muted/15 p-2.5 space-y-2.5 min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Filtros numéricos
+                {filters.estoqueVirtual ? (
+                  <span className="ml-2 normal-case font-medium text-sky-700 dark:text-sky-300">
+                    · estoque virtual ativo
+                  </span>
+                ) : null}
               </p>
 
               <div className="space-y-1 min-w-0">

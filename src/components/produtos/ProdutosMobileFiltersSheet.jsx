@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { DEFAULT_PRODUTO_FILTERS } from '@/lib/filterProdutos';
+import ProdutosEstoqueVirtualToggle from '@/components/produtos/ProdutosEstoqueVirtualToggle';
 import ProdutosNumericMetricFilter from '@/components/produtos/ProdutosNumericMetricFilter';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
 import { cn } from '@/components/utils';
@@ -125,6 +126,20 @@ export default function ProdutosMobileFiltersSheet({
         </div>
 
         <div className="max-h-[calc(88dvh-9rem)] space-y-3 overflow-y-auto overscroll-y-contain px-4 pb-2">
+          <MobileFilterSection
+            title="Estoque virtual"
+            hint="Inclui pedidos em trânsito na visualização — ativação com confirmação."
+          >
+            <div className="flex items-center gap-3">
+              <ProdutosEstoqueVirtualToggle filters={filters} setFilters={setFilters} />
+              <p className="text-[11px] leading-snug text-muted-foreground">
+                {filters.estoqueVirtual
+                  ? 'Ligado: estoque e ponto futuro incluem pedidos a caminho.'
+                  : 'Desligado: mostra só estoque físico.'}
+              </p>
+            </div>
+          </MobileFilterSection>
+
           <MobileFilterSection
             title="Estoque"
             hint="Situação da quantidade em relação ao mínimo."
