@@ -47,7 +47,7 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api/p38-auth': {
+      '/api/auth-p38': {
         target: 'https://zhonvxkkqabfdyehyxpu.supabase.co/functions/v1/p38-auth',
         changeOrigin: true,
         secure: true,

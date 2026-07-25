@@ -3,7 +3,7 @@ import { getSupabaseBrowserClient, normalizeSupabaseProjectUrl } from '@/lib/sup
 function resolveFunctionUrls() {
   const urls = [];
   if (typeof window !== 'undefined' && window.location?.origin) {
-    urls.push(`${window.location.origin}/api/p38-auth`);
+    urls.push(`${window.location.origin}/api/auth-p38`);
   }
   const base = normalizeSupabaseProjectUrl(import.meta.env.VITE_SUPABASE_URL || '');
   if (base) {
