@@ -95,7 +95,9 @@ const shouldUseSubpayze =
   subpayzeReadyForTraffic &&
   subpayzeAdapter.isConfigured;
 
-const shouldUseSupabase = providerName === providers.SUPABASE && supabaseAdapter.isConfigured;
+const shouldUseSupabase =
+  providerName === providers.SUPABASE &&
+  (supabaseAdapter.isConfigured || bypassBase44);
 
 const activeAdapter = shouldUseSupabase
   ? supabaseAdapter
@@ -113,6 +115,12 @@ const activeLegacyClient = wrapLegacyClientLancamentoFinanceiro(
 function withSafeFallback(sectionName, candidateSection, fallbackSection) {
   if (!candidateSection) {
     return fallbackSection || {};
+  }
+
+  // Com provider Supabase (ou bypass Base44), nunca voltar ao stub Base44 — mascara o erro real
+  // (ex.: PDV Caixa mostrava "Base44 indisponível" quando processar-venda-caixa falhava).
+  if (providerName === providers.SUPABASE || bypassBase44) {
+    return candidateSection;
   }
 
   if (!safeMode || !fallbackSection) {

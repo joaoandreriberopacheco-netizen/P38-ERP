@@ -1,7 +1,16 @@
 // Port de base44/functions/processarVendaCaixa → Edge + RPC transacional.
-import { requireUser, resolveUserName, jsonResponse, badRequest } from '../_shared/auth.ts';
+import {
+  requireUser,
+  resolveUserName,
+  jsonResponse,
+  badRequest,
+  handleCorsPreflight,
+} from '../_shared/auth.ts';
 
 Deno.serve(async (req) => {
+  const preflight = handleCorsPreflight(req);
+  if (preflight) return preflight;
+
   const auth = await requireUser(req);
   if (auth instanceof Response) return auth;
   const { user, client } = auth;

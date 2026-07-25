@@ -50,11 +50,24 @@ export async function resolveUserName(
   return String(dados?.full_name || email || userId);
 }
 
+export const CORS_HEADERS: Record<string, string> = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+/** Preflight CORS para chamadas do browser (Vercel → Supabase). */
+export function handleCorsPreflight(req: Request): Response | null {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: CORS_HEADERS });
+  }
+  return null;
+}
+
 /** Resposta JSON canónica (paridade com o Base44 Response.json). */
 export function jsonResponse(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
   });
 }
 

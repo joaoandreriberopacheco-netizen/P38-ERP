@@ -386,6 +386,27 @@ function toSupabaseEdgeFunctionName(name) {
   return String(name).replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
+async function resolveSupabaseFunctionErrorMessage(error, name) {
+  let message = error?.message || `Falha ao invocar Edge Function "${name}".`;
+  const ctx = error?.context;
+  if (ctx && typeof ctx.json === 'function') {
+    try {
+      const body = await ctx.json();
+      if (body?.error) message = String(body.error);
+      else if (body?.message) message = String(body.message);
+    } catch {
+      // corpo já consumido ou inválido
+    }
+  }
+  if (/not\.found|404/i.test(message)) {
+    return `Função "${name}" ainda não foi migrada para Supabase Edge Functions.`;
+  }
+  if (/não autenticado|missing authorization|unauthorized/i.test(message)) {
+    return 'Sessão expirada ou ausente. Saia e entre novamente em /login.';
+  }
+  return message;
+}
+
 function buildFunctions(supabase) {
   return {
     async invoke(name, body, _requestContext = {}) {
@@ -402,15 +423,14 @@ function buildFunctions(supabase) {
       const edgeName = toSupabaseEdgeFunctionName(name);
       const { data, error } = await supabase.functions.invoke(edgeName, { body });
       if (error) {
-        const message = error.message || `Falha ao invocar Edge Function "${name}".`;
-        const enhanced = new Error(
-          /not.found|404/i.test(message)
-            ? `Função "${name}" ainda não foi migrada para Supabase Edge Functions.`
-            : `[P38][supabase] functions.invoke(${name}) falhou: ${message}`
-        );
+        const message = await resolveSupabaseFunctionErrorMessage(error, name);
+        const enhanced = new Error(message);
         enhanced.code = 'P38_SUPABASE_FUNCTION_ERROR';
         enhanced.cause = error;
         throw enhanced;
+      }
+      if (data && typeof data === 'object' && data.error && data.success !== true) {
+        throw new Error(String(data.error));
       }
       return data;
     }
