@@ -72,7 +72,7 @@ function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis,
         <p className="mb-5 text-xl font-bold text-foreground">Dados do consumo</p>
         <div className="grid grid-cols-2 gap-4">
           <Field label="Caixa ativo do dia">
-            <Select value={formData.turno_caixa_id} onValueChange={(v) => setFormData((p) => ({ ...p, turno_caixa_id: v }))}>
+            <Select value={formData.turno_caixa_id || undefined} onValueChange={(v) => setFormData((p) => ({ ...p, turno_caixa_id: v }))}>
               <SelectTrigger className="h-12 rounded-2xl border-0 bg-muted text-sm shadow-sm dark:bg-background">
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
@@ -200,7 +200,7 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
     <div className="flex h-full flex-col">
       <div className="flex-1 space-y-4 overflow-y-auto p-5">
         <Field label="Caixa ativo do dia">
-          <Select value={formData.turno_caixa_id} onValueChange={(v) => setFormData((p) => ({ ...p, turno_caixa_id: v }))}>
+          <Select value={formData.turno_caixa_id || undefined} onValueChange={(v) => setFormData((p) => ({ ...p, turno_caixa_id: v }))}>
             <SelectTrigger className="h-14 rounded-2xl border-0 bg-muted text-base shadow-sm dark:bg-muted">
               <SelectValue placeholder="Selecione o caixa" />
             </SelectTrigger>

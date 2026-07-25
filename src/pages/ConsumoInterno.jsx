@@ -32,7 +32,6 @@ export default function ConsumoInternoPage() {
   const [showProdutoSelector, setShowProdutoSelector] = useState(false);
   const [showComprovante, setShowComprovante] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [showFabMenu, setShowFabMenu] = useState(false);
   const [consumoSelecionado, setConsumoSelecionado] = useState(null);
   const [formData, setFormData] = useState({
     turno_caixa_id: '',
@@ -409,12 +408,7 @@ export default function ConsumoInternoPage() {
         onEdit={handleEditar}
         onAttach={handleAnexarDocumento}
         onDelete={handleDelete}
-        showFabMenu={showFabMenu}
-        setShowFabMenu={setShowFabMenu}
-        onNovoFormulario={() => {
-          setShowFabMenu(false);
-          setShowForm(true);
-        }}
+        onNovoFormulario={() => setShowForm(true)}
       />
 
       <input ref={anexoInputRef} type="file" multiple accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={handleAnexoFileChange} />
