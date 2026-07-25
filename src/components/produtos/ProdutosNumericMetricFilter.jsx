@@ -3,6 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/components/utils';
 import {
   CATALOG_NUMERIC_METRIC_FIELDS,
+  getCatalogMetricFilterKeys,
   NUMERIC_COMPARISON_OPERATORS,
 } from '@/lib/catalogNumericFilters';
 
@@ -19,21 +20,26 @@ function FilterSectionLabel({ children }) {
 
 /**
  * Filtro numérico reutilizável: métrica (markup, margem, preços…) + operador + valor(es).
+ * `metricSlot` 1 ou 2 — use os dois em conjunto (e/ou) com os restantes filtros.
  */
 export default function ProdutosNumericMetricFilter({
   filters,
   setFilters,
   handleFilterChange,
   sectionLabel = 'Métrica numérica',
+  metricSlot = 1,
 }) {
-  const metricaCampo = filters.metricaCampo || 'all';
-  const metricaOperador = filters.metricaOperador || 'all';
+  const { campo: campoKey, operador: operadorKey, valor: valorKey, valorAte: valorAteKey } =
+    getCatalogMetricFilterKeys(metricSlot);
+
+  const metricaCampo = filters[campoKey] || 'all';
+  const metricaOperador = filters[operadorKey] || 'all';
   const metricActive = metricaCampo !== 'all' && metricaOperador !== 'all';
 
   return (
     <div className="space-y-1.5 desktop-layout:contents">
       <div className="desktop-layout:hidden">
-        <FilterSectionLabel>{sectionLabel}</FilterSectionLabel>
+        {sectionLabel ? <FilterSectionLabel>{sectionLabel}</FilterSectionLabel> : null}
       </div>
       <div className="grid grid-cols-2 gap-2 desktop-layout:contents">
         <div className="col-span-2 desktop-layout:col-auto">
@@ -42,12 +48,12 @@ export default function ProdutosNumericMetricFilter({
             onValueChange={(v) =>
               setFilters((prev) => ({
                 ...prev,
-                metricaCampo: v,
+                [campoKey]: v,
                 ...(v === 'all'
                   ? {
-                      metricaOperador: 'all',
-                      metricaValor: '',
-                      metricaValorAte: '',
+                      [operadorKey]: 'all',
+                      [valorKey]: '',
+                      [valorAteKey]: '',
                     }
                   : null),
               }))
@@ -72,8 +78,8 @@ export default function ProdutosNumericMetricFilter({
             onValueChange={(v) =>
               setFilters((prev) => ({
                 ...prev,
-                metricaOperador: v,
-                metricaValorAte: v === 'between' ? prev.metricaValorAte : '',
+                [operadorKey]: v,
+                [valorAteKey]: v === 'between' ? prev[valorAteKey] : '',
               }))
             }
             disabled={metricaCampo === 'all'}
@@ -101,8 +107,8 @@ export default function ProdutosNumericMetricFilter({
           placeholder={metricaOperador === 'between' ? 'De' : 'Valor'}
           disabled={!metricActive}
           className="bg-muted/80 border-none h-9 text-xs rounded-xl disabled:opacity-50 desktop-layout:rounded-lg"
-          value={filters.metricaValor || ''}
-          onChange={(e) => handleFilterChange('metricaValor', e.target.value)}
+          value={filters[valorKey] || ''}
+          onChange={(e) => handleFilterChange(valorKey, e.target.value)}
         />
 
         {metricaOperador === 'between' && (
@@ -111,8 +117,8 @@ export default function ProdutosNumericMetricFilter({
             placeholder="Até"
             disabled={!metricActive}
             className="bg-muted/80 border-none h-9 text-xs rounded-xl disabled:opacity-50 desktop-layout:rounded-lg"
-            value={filters.metricaValorAte || ''}
-            onChange={(e) => handleFilterChange('metricaValorAte', e.target.value)}
+            value={filters[valorAteKey] || ''}
+            onChange={(e) => handleFilterChange(valorAteKey, e.target.value)}
           />
         )}
       </div>
