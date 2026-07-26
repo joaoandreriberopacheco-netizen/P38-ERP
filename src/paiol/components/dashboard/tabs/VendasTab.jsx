@@ -32,6 +32,12 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { p38Dashboard } from '@/lib/p38DashboardSurfaces';
+import {
+  buildCartesianGridProps,
+  buildXAxisProps,
+  buildYAxisProps,
+  DASHBOARD_CHART_MARGIN,
+} from '@/lib/dashboardChartLayout';
 import { useDashboardChartTheme } from '@/lib/useDashboardChartTheme';
 import {
   BarChart,
@@ -496,19 +502,22 @@ export default function VendasTab() {
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
-            <div className={`h-[230px] rounded-xl px-2 py-2 ${p38Dashboard.inner}`}>
+            <div className={`h-[252px] sm:h-[240px] rounded-xl px-1 py-1.5 ${p38Dashboard.inner}`}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dailyFocusedData} barCategoryGap="26%">
-                  <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} vertical={false} />
+                <BarChart
+                  data={dailyFocusedData}
+                  margin={DASHBOARD_CHART_MARGIN.daily}
+                  barCategoryGap={isMobile ? '18%' : '12%'}
+                >
+                  <CartesianGrid {...buildCartesianGridProps(chartTheme)} />
                   <XAxis
-                    dataKey="diaNumero"
-                    tickFormatter={(value) => `D${String(value).padStart(2, '0')}`}
-                    tick={chartTheme.tick}
-                    axisLine={false}
-                    tickLine={false}
-                    interval={isMobile ? 2 : 1}
+                    {...buildXAxisProps(chartTheme, {
+                      dataKey: 'diaNumero',
+                      tickFormatter: (value) => `D${String(value).padStart(2, '0')}`,
+                      interval: isMobile ? 3 : 2,
+                    })}
                   />
-                  <YAxis tickFormatter={(value) => formatShort(value)} tick={chartTheme.tick} axisLine={false} tickLine={false} />
+                  <YAxis {...buildYAxisProps(chartTheme, { width: 28, tickCount: 4 })} />
                   <Tooltip
                     labelFormatter={dayTooltipLabel}
                     formatter={(value) => [BRL.format(Number(value || 0)), focusedMonthLabel]}
@@ -517,11 +526,16 @@ export default function VendasTab() {
                     labelStyle={chartTheme.tooltip.labelStyle}
                     itemStyle={chartTheme.tooltip.itemStyle}
                   />
-                  <Bar dataKey="valor" radius={[4, 4, 0, 0]} maxBarSize={16} fill={monthStyleMap[focusedMonthKey]?.stroke || MONTH_HIGHLIGHT_COLORS.current} />
+                  <Bar
+                    dataKey="valor"
+                    radius={[3, 3, 0, 0]}
+                    maxBarSize={isMobile ? 10 : 14}
+                    fill={monthStyleMap[focusedMonthKey]?.stroke || MONTH_HIGHLIGHT_COLORS.current}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="grid grid-cols-2 gap-2 mt-1.5">
+            <div className="flex flex-wrap gap-1 mt-1.5">
               {metrics.monthBuckets4.map((bucket, idx) => (
                 <button
                   type="button"
@@ -529,19 +543,17 @@ export default function VendasTab() {
                   onMouseEnter={() => setHoverMonthKey(bucket.key)}
                   onMouseLeave={() => setHoverMonthKey(null)}
                   onClick={() => setSelectedMonthKey(bucket.key)}
-                  className={`flex items-center justify-between rounded-md px-2 py-1 border min-h-11 transition ${
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 border text-[10px] transition ${
                     monthStyleMap[bucket.key]?.isFocused
                       ? p38Dashboard.chipFocused
                       : p38Dashboard.chip
                   }`}
                 >
-                  <div className="flex items-center gap-1.5">
-                    <span
-                      className="inline-block h-[2px] w-4 rounded-full"
-                      style={{ backgroundColor: monthStyleMap[bucket.key]?.stroke || MONTH_LINES[idx % MONTH_LINES.length] }}
-                    />
-                    <span className="text-[10px] text-muted-foreground">{bucket.shortLabel}</span>
-                  </div>
+                  <span
+                    className="inline-block h-[2px] w-3 rounded-full shrink-0"
+                    style={{ backgroundColor: monthStyleMap[bucket.key]?.stroke || MONTH_LINES[idx % MONTH_LINES.length] }}
+                  />
+                  <span className="text-muted-foreground">{bucket.shortLabel}</span>
                 </button>
               ))}
             </div>
@@ -560,7 +572,7 @@ export default function VendasTab() {
               data={metrics.currentAccumulatedData}
               xKey="dia"
               valueKey="valor"
-              innerSurfaceClassName={`h-[230px] rounded-xl px-2 py-2 ${p38Dashboard.inner}`}
+              innerSurfaceClassName={`h-[252px] sm:h-[240px] rounded-xl px-1 py-1.5 ${p38Dashboard.inner}`}
               seriesLabels={{
                 valor: 'Venda acumulada',
                 breakEven: 'Mínimo acumulado',
@@ -685,12 +697,16 @@ export default function VendasTab() {
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
-            <div className={`h-[230px] rounded-xl px-2 py-2 ${p38Dashboard.inner}`}>
+            <div className={`h-[252px] sm:h-[240px] rounded-xl px-1 py-1.5 ${p38Dashboard.inner}`}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={metrics.monthlySalesData} barCategoryGap="24%">
-                  <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} vertical={false} />
-                  <XAxis dataKey="periodo" tick={chartTheme.tick} axisLine={false} tickLine={false} />
-                  <YAxis tickFormatter={(value) => formatShort(value)} tick={chartTheme.tick} axisLine={false} tickLine={false} />
+                <BarChart
+                  data={metrics.monthlySalesData}
+                  margin={DASHBOARD_CHART_MARGIN.categorical}
+                  barCategoryGap="20%"
+                >
+                  <CartesianGrid {...buildCartesianGridProps(chartTheme)} />
+                  <XAxis {...buildXAxisProps(chartTheme, { dataKey: 'periodo' })} />
+                  <YAxis {...buildYAxisProps(chartTheme)} />
                   <Tooltip
                     formatter={(value) => BRL.format(Number(value || 0))}
                     cursor={{ fill: chartTheme.cursor }}
@@ -698,7 +714,7 @@ export default function VendasTab() {
                     labelStyle={chartTheme.tooltip.labelStyle}
                     itemStyle={chartTheme.tooltip.itemStyle}
                   />
-                  <Bar dataKey="valor" radius={[8, 8, 0, 0]} maxBarSize={42}>
+                  <Bar dataKey="valor" radius={[6, 6, 0, 0]} maxBarSize={48}>
                     {metrics.monthlySalesData.map((entry, idx) => (
                       <Cell
                         key={`${entry.periodo}-${idx}`}
@@ -745,7 +761,7 @@ export default function VendasTab() {
           <CardContent className="pt-1">
             <LucroAcumuladoChart
               data={metrics.accumulatedProfitData}
-              innerSurfaceClassName={`h-[230px] rounded-xl px-2 py-2 ${p38Dashboard.inner}`}
+              innerSurfaceClassName={`h-[252px] sm:h-[240px] rounded-xl px-1 py-1.5 ${p38Dashboard.inner}`}
             />
             <div className={`flex flex-wrap gap-3 mt-2 text-[10px] ${p38Dashboard.legend}`}>
               <span className="inline-flex items-center gap-1">

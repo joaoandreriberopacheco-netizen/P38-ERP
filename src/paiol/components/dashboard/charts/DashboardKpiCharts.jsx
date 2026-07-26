@@ -12,6 +12,12 @@ import {
   YAxis,
 } from 'recharts';
 import { p38Dashboard } from '@/lib/p38DashboardSurfaces';
+import {
+  buildCartesianGridProps,
+  buildXAxisProps,
+  buildYAxisProps,
+  DASHBOARD_CHART_MARGIN,
+} from '@/lib/dashboardChartLayout';
 import { useDashboardChartTheme } from '@/lib/useDashboardChartTheme';
 
 const BRL = new Intl.NumberFormat('pt-BR', {
@@ -48,15 +54,10 @@ export function AcumuladoKpiChart({
   return (
     <div className={innerSurfaceClassName}>
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} vertical={false} />
-          <XAxis dataKey={xKey} tick={chartTheme.tick} axisLine={false} tickLine={false} />
-          <YAxis
-            tickFormatter={(value) => formatDashboardCurrency(value)}
-            tick={chartTheme.tick}
-            axisLine={false}
-            tickLine={false}
-          />
+        <LineChart data={data} margin={DASHBOARD_CHART_MARGIN.line}>
+          <CartesianGrid {...buildCartesianGridProps(chartTheme)} />
+          <XAxis {...buildXAxisProps(chartTheme, { dataKey: xKey })} />
+          <YAxis {...buildYAxisProps(chartTheme)} />
           <Tooltip
             formatter={(value, name) => [BRL.format(Number(value || 0)), seriesLabels[name] || name]}
             contentStyle={chartTheme.tooltip.contentStyle}
@@ -69,8 +70,8 @@ export function AcumuladoKpiChart({
               dataKey="breakEven"
               name="breakEven"
               stroke={chartTheme.lineBreakEven}
-              strokeWidth={2}
-              strokeDasharray="6 4"
+              strokeWidth={1.75}
+              strokeDasharray="5 5"
               dot={false}
               activeDot={false}
             />
@@ -81,8 +82,8 @@ export function AcumuladoKpiChart({
               dataKey="meta"
               name="meta"
               stroke={chartTheme.lineMeta}
-              strokeWidth={2}
-              strokeDasharray="6 4"
+              strokeWidth={1.75}
+              strokeDasharray="5 5"
               dot={false}
               activeDot={false}
             />
@@ -92,9 +93,9 @@ export function AcumuladoKpiChart({
             dataKey={valueKey}
             name={valueKey}
             stroke={chartTheme.linePrimary}
-            strokeWidth={3}
+            strokeWidth={2.5}
             dot={false}
-            activeDot={{ r: 4 }}
+            activeDot={{ r: 3.5 }}
           />
         </LineChart>
       </ResponsiveContainer>

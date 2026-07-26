@@ -20,6 +20,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { p38Dashboard } from '@/lib/p38DashboardSurfaces';
+import {
+  buildCartesianGridProps,
+  buildXAxisProps,
+  buildYAxisProps,
+  DASHBOARD_CHART_MARGIN,
+} from '@/lib/dashboardChartLayout';
 import { useDashboardChartTheme } from '@/lib/useDashboardChartTheme';
 import { toLocalDateKey } from '@/components/utils/dateUtils';
 import { AlertCircle, Gauge, Layers, Package, Truck } from 'lucide-react';
@@ -866,29 +872,27 @@ export default function EstoqueTab() {
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
-            <div className={`h-[205px] md:h-[210px] rounded-xl px-2 py-2 ${p38Dashboard.inner}`}>
+            <div className={`h-[220px] sm:h-[210px] rounded-xl px-1 py-1.5 ${p38Dashboard.inner}`}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={metrics.nivelEstoqueSeries} barCategoryGap="24%">
+                <BarChart
+                  data={metrics.nivelEstoqueSeries}
+                  margin={DASHBOARD_CHART_MARGIN.categorical}
+                  barCategoryGap="20%"
+                >
                   <defs>
                     <linearGradient id="stockBarGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#c3dd74" />
                       <stop offset="100%" stopColor="#7d933b" />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} vertical={false} />
+                  <CartesianGrid {...buildCartesianGridProps(chartTheme)} />
                   <XAxis
-                    dataKey="periodo"
-                    tick={chartTheme.tick}
-                    axisLine={false}
-                    tickLine={false}
-                    interval={isMobile ? 1 : 0}
+                    {...buildXAxisProps(chartTheme, {
+                      dataKey: 'periodo',
+                      interval: isMobile ? 1 : 0,
+                    })}
                   />
-                  <YAxis
-                    tickFormatter={(value) => formatShort(value)}
-                    tick={chartTheme.tick}
-                    axisLine={false}
-                    tickLine={false}
-                  />
+                  <YAxis {...buildYAxisProps(chartTheme)} />
                   <Tooltip
                     formatter={(value) => BRL.format(Number(value || 0))}
                     cursor={{ fill: chartTheme.cursor }}
@@ -896,7 +900,7 @@ export default function EstoqueTab() {
                     labelStyle={chartTheme.tooltip.labelStyle}
                     itemStyle={chartTheme.tooltip.itemStyle}
                   />
-                  <Bar dataKey="valor" radius={[8, 8, 0, 0]} maxBarSize={42}>
+                  <Bar dataKey="valor" radius={[6, 6, 0, 0]} maxBarSize={48}>
                     {metrics.nivelEstoqueSeries.map((entry, idx) => (
                       <Cell
                         key={`${entry.periodo}-${idx}`}
