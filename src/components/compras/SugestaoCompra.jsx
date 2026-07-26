@@ -11,7 +11,9 @@ import SugestaoCompraTreeGrid, { TREE_GRID_EXPAND_ALL_LEVEL } from '@/components
 import SugestaoCompraMobileCatalog, { SugestaoCompraMobileScrollShell } from '@/components/compras/SugestaoCompraMobileCatalog';
 import SugestaoCompraMobileToolbar from '@/components/compras/SugestaoCompraMobileToolbar';
 import SugestaoCompraDesktopToolbar from '@/components/compras/SugestaoCompraDesktopToolbar';
-import SugestaoCompraRelatorioDialog from '@/components/compras/SugestaoCompraRelatorioDialog';
+import SugestaoCompraRelatorioDialog, {
+  SUGESTAO_RELATORIO_TIPOS,
+} from '@/components/compras/SugestaoCompraRelatorioDialog';
 import SugestaoCompraFamiliasRadar from '@/components/compras/SugestaoCompraFamiliasRadar';
 import { ShoppingCart, RefreshCw, CheckCircle, FileText } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
@@ -27,6 +29,7 @@ import {
 } from '@/lib/calcularSugestaoCompraHierarquia';
 import { fetchPedidosVenda90d, fetchDadosVendaAbcd90d } from '@/lib/fetchPedidosVenda90d';
 import { buildCatalogSalesVelocityMap } from '@/lib/catalogSalesVelocity';
+import { buildFamiliasNivel2FromLinhas } from '@/lib/sugestaoFamiliasNivel2';
 import {
   applySugestaoOperationalMode,
   SUGESTAO_OPERATIONAL_MODES,
@@ -511,6 +514,14 @@ export default function SugestaoCompra({ onStatsChange }) {
     [linhas],
   );
 
+  const familiaCountExecutivo = useMemo(() => {
+    if (!filteredLinhas.length) return 0;
+    return buildFamiliasNivel2FromLinhas(filteredLinhas, {
+      incluirPedidosAprovados: filters.considerarPedidosAprovadosEstoque === true,
+      salesVelocityMap,
+    }).length;
+  }, [filteredLinhas, filters.considerarPedidosAprovadosEstoque, salesVelocityMap]);
+
   const activeFilterCount = useMemo(
     () => countActiveSugestaoCompraFilters(filters),
     [filters],
@@ -570,7 +581,11 @@ export default function SugestaoCompra({ onStatsChange }) {
     }
   }, [columnSort, filters.considerarPedidosAprovadosEstoque, groupByCategory, treeLevel]);
 
-  const handleGerarRelatorio = useCallback(async ({ format = 'pdf', agruparNivel = 0 } = {}) => {
+  const handleGerarRelatorio = useCallback(async ({
+    format = 'pdf',
+    agruparNivel = 0,
+    reportTipo = SUGESTAO_RELATORIO_TIPOS.EXECUTIVO,
+  } = {}) => {
     if (!filteredLinhas.length) {
       toast({
         title: 'Nada para exportar',
@@ -580,12 +595,15 @@ export default function SugestaoCompra({ onStatsChange }) {
       return;
     }
 
+    const isExecutivo = reportTipo === SUGESTAO_RELATORIO_TIPOS.EXECUTIVO;
     const isPdf = format === 'pdf';
     setGerandoRelatorio(true);
     toast({
-      title: isPdf
-        ? 'Gerando PDF da sugestão de compra...'
-        : 'Gerando planilha da sugestão de compra...',
+      title: isExecutivo
+        ? 'Gerando relatório para a diretoria...'
+        : isPdf
+          ? 'Gerando PDF da sugestão de compra...'
+          : 'Gerando planilha da sugestão de compra...',
     });
     try {
       const filtersSummary = describeSugestaoCompraFilters(filters, { categorias, fornecedores });
@@ -602,10 +620,22 @@ export default function SugestaoCompra({ onStatsChange }) {
           resolveFornecedorId: resolveFornecedorIdLinha,
           fornecedorNomeById,
           fornecedores,
+          salesVelocityMap,
         },
       };
 
-      if (isPdf) {
+      if (isExecutivo && isPdf) {
+        const { generateRelatorioFamiliasExecutivoPdf } = await import(
+          '@/lib/relatorioSugestaoCompra/generateRelatorioFamiliasExecutivoPdf.js'
+        );
+        const resposta = await generateRelatorioFamiliasExecutivoPdf(reportPayload);
+        const blob = new Blob([resposta.data], { type: 'application/pdf' });
+        downloadBlob(blob, `RitmoCompra_Familias_${dataHoje()}.pdf`);
+        toast({
+          title: 'Relatório da diretoria gerado',
+          description: `${resposta.rowCount} família(s) · ${resposta.summary?.comRuptura || 0} com ruptura prevista${resposta?.version ? ` · ${resposta.version}` : ''}`,
+        });
+      } else if (isPdf) {
         const { generateRelatorioSugestaoCompraPdf } = await import(
           '@/lib/relatorioSugestaoCompra/generateRelatorioSugestaoCompraPdf.js'
         );
@@ -650,6 +680,7 @@ export default function SugestaoCompra({ onStatsChange }) {
     fornecedores,
     calcQuantityLinha,
     resolveFornecedorIdLinha,
+    salesVelocityMap,
     toast,
   ]);
 
@@ -963,6 +994,7 @@ export default function SugestaoCompra({ onStatsChange }) {
       open={relatorioDialogOpen}
       onOpenChange={setRelatorioDialogOpen}
       filteredCount={filteredLinhas.length}
+      familiaCount={familiaCountExecutivo}
       isGenerating={gerandoRelatorio}
       onConfirm={handleGerarRelatorio}
     />
