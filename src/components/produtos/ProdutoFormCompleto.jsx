@@ -40,6 +40,7 @@ import { cn } from '@/components/utils';
 import { useCompactShell } from '@/hooks/use-breakpoint';
 import { useBottomNavScrollVisibility } from '@/hooks/useBottomNavScrollVisibility';
 import { formatProductCode, generateRandomProductCode } from '@/lib/productCode';
+import ProdutoGradeCompraFields from '@/components/produtos/ProdutoGradeCompraFields';
 
 const P38_FORM_ROOT = 'flex flex-col h-full overflow-hidden font-din-1451 bg-background dark:bg-[#1f1d22]';
 const P38_FORM_HEADER = 'flex-none border-b border-border/40 dark:border-white/10 bg-card dark:bg-[#2d333b]';
@@ -165,6 +166,8 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     ...buildFormDataFromProduto(produto)
   } : {
     campo_hierarquico_1: '', campo_hierarquico_2: '', campo_hierarquico_3: '', campo_hierarquico_4: '', campo_hierarquico_5: '',
+    linha_compra_id: '', produto_compra_id: '', eixo_a_valor_id: '', eixo_b_valor_id: '',
+    eixo_a_texto: '', eixo_b_texto: '', no_mix_ativo: false, celula_obrigatoria: false,
     nome: '', codigo_barras: '', codigo_interno: '', tipo: 'Produto',
     categoria_id: '', categoria_nome: '', marca: '', tags: [], valor_compra: 0, preco_venda_padrao: 0,
     preco_venda_tipo: 'percentual', preco_venda_percentual: 0, preco_custo_calculado: 0,
@@ -1356,10 +1359,22 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
               </div>
             </div>
 
-            {/* Campos Hierárquicos */}
+            {/* Linha de compra + grelha (novo cadastro) */}
+            <ProdutoGradeCompraFields
+              formData={formData}
+              onPatch={(patch) => {
+                setFormData((prev) => {
+                  saveToHistory(prev);
+                  return { ...prev, ...patch };
+                });
+                setTemAlteracoesNaoSalvas(true);
+              }}
+            />
+
+            {/* Campos Hierárquicos (legado — manter até migração completa) */}
             <div className="space-y-1">
               <div className="flex items-center gap-2 mb-3">
-                <Label className="text-sm font-semibold p38-text-accent">Descrição Hierárquica</Label>
+                <Label className="text-sm font-semibold text-muted-foreground">Descrição hierárquica (legado)</Label>
               </div>
 
               {/* Preview do nome gerado */}
