@@ -70,7 +70,7 @@ export default function ProdutosHeader({
       <div className="w-full min-w-0 px-3 py-2 space-y-2">
         <div className="flex items-center gap-2">
           <div className="flex-1 min-w-0">
-            <h1 className="text-sm font-semibold text-foreground truncate font-glacial">Catálogo</h1>
+            <h1 className="text-sm font-semibold text-foreground truncate font-glacial">Catálogo legado</h1>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground min-w-0">
               {isSummaryFiltered && (
                 <Filter
@@ -88,6 +88,28 @@ export default function ProdutosHeader({
           </div>
 
           <div className="flex items-center gap-1 flex-shrink-0 min-w-0 max-w-[58vw] sm:max-w-none overflow-x-auto overscroll-x-contain">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 flex-shrink-0 gap-1.5 text-xs hidden sm:inline-flex"
+              asChild
+            >
+              <Link to={createPageUrl('CatalogoLinhaCompra')} title="Catálogo por linha de compra">
+                <Grid3x3 className="w-3.5 h-3.5 p38-text-accent" />
+                Por linha
+              </Link>
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 flex-shrink-0 sm:hidden"
+              asChild
+            >
+              <Link to={createPageUrl('CatalogoLinhaCompra')} title="Catálogo por linha" aria-label="Catálogo por linha">
+                <Grid3x3 className="w-4 h-4 p38-text-accent" />
+              </Link>
+            </Button>
             <Button
               type="button"
               variant="ghost"
