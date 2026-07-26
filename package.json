@@ -54,6 +54,7 @@
     "produto:codigo:aplicar": "node scripts/backfill-produto-codigo.mjs --apply",
     "produto:cadastro:export-lote": "node scripts/export-lote-cadastro-hierarquia.mjs",
     "produto:cadastro:aplicar-lote": "node scripts/aplicar-lote-cadastro-hierarquia.mjs",
+    "produto:cadastro:refinar-ia": "node scripts/refinar-lotes-cadastro-ia.mjs",
     "git:ship": "node scripts/git-ship.mjs",
     "p38:color-audit": "node scripts/p38-color-audit.mjs",
     "p38:color-fix": "node scripts/p38-color-audit.mjs --fix",

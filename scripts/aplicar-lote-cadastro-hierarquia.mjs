@@ -2,11 +2,12 @@
 /**
  * Aplica correções de hierarquia a partir de CSV revisado (colunas sugestao_h* ou h*_final).
  *
- * Por defeito grava no Base44 (o que o app usa hoje). Use --supabase só se souber que é a fonte.
+ * Por defeito grava no Supabase. Base44 só com --base44 (legado).
  *
  * Uso:
  *   npm run produto:cadastro:aplicar-lote -- --file=docs/tmp/cadastro-hierarquia-lote-01.csv
  *   npm run produto:cadastro:aplicar-lote -- --file=... --apply
+ *   npm run produto:cadastro:aplicar-lote -- --file=... --apply --base44
  */
 import fs from 'node:fs';
 import pg from 'pg';
@@ -17,12 +18,12 @@ loadDotEnvFiles();
 function parseArgs(argv) {
   const file = argv.find((a) => a.startsWith('--file='))?.slice(7);
   const apply = argv.includes('--apply');
-  const supabase = argv.includes('--supabase');
+  const base44 = argv.includes('--base44');
   if (!file) {
-    console.error('Uso: --file=caminho.csv [--apply] [--supabase]');
+    console.error('Uso: --file=caminho.csv [--apply] [--base44]');
     process.exit(1);
   }
-  return { file, apply, supabase };
+  return { file, apply, base44 };
 }
 
 function parseCsv(text) {
@@ -96,12 +97,29 @@ async function main() {
   }, null, 2));
 
   if (!apply) {
-    console.log('\nDry-run. Reveja o CSV e use --apply para gravar no Base44.');
+    console.log('\nDry-run. Reveja o CSV e use --apply para gravar no Supabase.');
     return;
   }
 
   let ok = 0;
-  if (args.supabase) {
+  if (args.base44) {
+    const base44Client = requireBase44Client();
+    for (const u of updates) {
+      const nome = [u.h1, u.h2, u.h3, u.h4, u.h5].filter(Boolean).join(' ').trim();
+      await base44Client.entities.Produto.update(u.id, {
+        campo_hierarquico_1: u.h1,
+        campo_hierarquico_2: u.h2,
+        campo_hierarquico_3: u.h3 || '',
+        campo_hierarquico_4: u.h4 || '',
+        campo_hierarquico_5: u.h5 || '',
+        nome: nome || u.nome,
+      });
+      ok += 1;
+      if (ok % 25 === 0 || ok === updates.length) {
+        console.log(`[produto:cadastro:aplicar-lote] ${ok}/${updates.length}`);
+      }
+    }
+  } else {
     if (!process.env.DATABASE_URL) {
       console.error('DATABASE_URL não definido');
       process.exit(1);
@@ -122,25 +140,11 @@ async function main() {
         [u.id, u.h1, u.h2, u.h3, u.h4, u.h5, nome || u.nome],
       );
       ok += 1;
-    }
-    await pool.end();
-  } else {
-    const base44 = requireBase44Client();
-    for (const u of updates) {
-      const nome = [u.h1, u.h2, u.h3, u.h4, u.h5].filter(Boolean).join(' ').trim();
-      await base44.entities.Produto.update(u.id, {
-        campo_hierarquico_1: u.h1,
-        campo_hierarquico_2: u.h2,
-        campo_hierarquico_3: u.h3 || '',
-        campo_hierarquico_4: u.h4 || '',
-        campo_hierarquico_5: u.h5 || '',
-        nome: nome || u.nome,
-      });
-      ok += 1;
       if (ok % 25 === 0 || ok === updates.length) {
         console.log(`[produto:cadastro:aplicar-lote] ${ok}/${updates.length}`);
       }
     }
+    await pool.end();
   }
 
   console.log(`\nAplicados: ${ok} produto(s).`);
