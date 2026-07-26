@@ -55,6 +55,71 @@ export function derivarStatusEmbarqueAgregado(pctDespachado) {
   return 'Nenhum';
 }
 
+const EMBARQUE_ITEM_PEDIDO_CHUNK = 40;
+
+/**
+ * Hidrata `itens` / `itens_embarcados` em lote a partir de `embarque_item` (Supabase).
+ */
+export async function hydrateEmbarquesLinhasEmLote(client, embarques = [], pedidoIds = []) {
+  if (!client?.entities?.EmbarqueItem?.filter || !Array.isArray(embarques) || !embarques.length) {
+    return embarques;
+  }
+
+  const embarquesSemItens = embarques.filter((emb) => {
+    const it = emb?.itens_embarcados?.length ? emb.itens_embarcados : emb?.itens;
+    return !Array.isArray(it) || it.length === 0;
+  });
+  if (!embarquesSemItens.length) return embarques;
+
+  const pedidoKeys = [
+    ...new Set(
+      [
+        ...pedidoIds,
+        ...embarquesSemItens.map((emb) => emb?.pedido_compra_id),
+      ]
+        .filter(Boolean)
+        .map((id) => String(id)),
+    ),
+  ];
+  if (!pedidoKeys.length) return embarques;
+
+  let canonical = [];
+  for (let i = 0; i < pedidoKeys.length; i += EMBARQUE_ITEM_PEDIDO_CHUNK) {
+    const chunk = pedidoKeys.slice(i, i + EMBARQUE_ITEM_PEDIDO_CHUNK);
+    try {
+      const rows = await client.entities.EmbarqueItem.filter({ pedido_compra_id: chunk }, 'ordem', 2000);
+      canonical = canonical.concat(rows || []);
+    } catch (e) {
+      console.warn('[hydrateEmbarquesLinhasEmLote] EmbarqueItem.filter:', e?.message || e);
+    }
+  }
+  if (!canonical.length) return embarques;
+
+  const byEmbarqueId = {};
+  canonical.forEach((row) => {
+    const eid = row?.embarque_id;
+    if (!eid) return;
+    const key = String(eid);
+    if (!byEmbarqueId[key]) byEmbarqueId[key] = [];
+    byEmbarqueId[key].push(row);
+  });
+
+  return embarques.map((emb) => {
+    const rows = byEmbarqueId[String(emb?.id)];
+    if (!rows?.length) return emb;
+    const hasMirror =
+      (Array.isArray(emb.itens) && emb.itens.length > 0) ||
+      (Array.isArray(emb.itens_embarcados) && emb.itens_embarcados.length > 0);
+    if (hasMirror) return emb;
+    const mirror = rebuildEmbarqueItensMirror(rows);
+    return {
+      ...emb,
+      itens: mirror,
+      itens_embarcados: mirror,
+    };
+  });
+}
+
 /**
  * Preenche `itens` / `itens_embarcados` no espelho legado quando só existem linhas em EmbarqueItem.
  */

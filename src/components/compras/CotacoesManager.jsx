@@ -21,6 +21,7 @@ import {
   p38AccentKeyFromTone,
   p38StatusTone,
 } from '@/components/ui/p38-mobile-line';
+import { syncPedidoCompraItensReplaceAll } from '@/lib/pedidoCompraCanonicoSync';
 
 function cotacaoAccent(status) {
   if (status === 'Finalizada') return 'success';
@@ -129,7 +130,7 @@ export default function CotacoesManager() {
         const fornecedor = fornecedores.find(f => f.id === fornecedorId);
         const total = itens.reduce((sum, i) => sum + i.total, 0);
 
-        await base44.entities.PedidoCompra.create({
+        const created = await base44.entities.PedidoCompra.create({
           numero: `PC-${String(nextNumber++).padStart(5, '0')}`,
           fornecedor_id: fornecedorId,
           fornecedor_nome: fornecedor?.nome || 'Desconhecido',
@@ -138,6 +139,12 @@ export default function CotacoesManager() {
           valor_total: total,
           observacoes: `Gerado a partir da Cotação ${cotacao.numero}`
         });
+        if (created?.id && itens.length > 0) {
+          const sync = await syncPedidoCompraItensReplaceAll(created.id, itens, { valorTotal: total });
+          if (!sync.ok && !sync.skipped) {
+            console.warn('[CotacoesManager] sync SQL linhas:', sync.error);
+          }
+        }
       }
 
       await base44.entities.Cotacao.update(cotacao.id, { status: 'Finalizada' });

@@ -36,6 +36,8 @@ import {
   FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT,
   passaFiltroVisibilidadePedidosCompra,
 } from '@/lib/filtroVisibilidadePedidosCompra';
+import { loadPedidosComItens, loadEmbarquesComItens } from '@/lib/pedidoCompraLoaders';
+import { preparePedidoCompraEntityPayload, syncPedidoCompraItensReplaceAll } from '@/lib/pedidoCompraCanonicoSync';
 const toLocalDate = (d) => toLocalDateKey(new Date(d));
 
 const etaMatchesFilter = (embarque, modo, dataRef, inicial, final) => {
@@ -400,13 +402,17 @@ export default function PedidosCompraPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [pcs, embarquesDb, fns] = await Promise.all([
+      const [pcsRaw, embarquesRaw, fns] = await Promise.all([
         base44.entities.PedidoCompra.list('-created_date', 300),
         base44.entities.Embarque.list('-created_date', 600),
         base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] }, 'nome', 300).catch((err) => {
           console.warn('[PedidosCompra] Terceiro.filter falhou — lista de fornecedores vazia:', err?.message || err);
           return [];
         }),
+      ]);
+      const [pcs, embarquesDb] = await Promise.all([
+        loadPedidosComItens(base44, pcsRaw || []),
+        loadEmbarquesComItens(base44, embarquesRaw || []),
       ]);
       const produtoIds = [...new Set([
         ...pcs.flatMap((p) => (p.itens || []).map((i) => i.produto_id).filter(Boolean)),
@@ -552,16 +558,34 @@ export default function PedidosCompraPage() {
       ? { ...sanitizedDataBase, itens: sanitizedDataBase.itens.map((item) => normalizeItemToCanonicalFactorOne(item, 'custo')) }
       : sanitizedDataBase;
 
-    if (sanitizedData.id) {
-      await base44.entities.PedidoCompra.update(sanitizedData.id, sanitizedData);
+    let pedidoId = sanitizedData.id;
+    const itensParaSync = Array.isArray(sanitizedData.itens) ? sanitizedData.itens : [];
+    const entityPayload = preparePedidoCompraEntityPayload(sanitizedData);
+
+    if (pedidoId) {
+      await base44.entities.PedidoCompra.update(pedidoId, entityPayload);
     } else {
-      const { id, ...newPedido } = sanitizedData;
+      const { id, ...newPedido } = entityPayload;
       if (!newPedido.numero) {
         const resp = await base44.functions.invoke('gerarNumeroSequencial', { tipo: 'PC' });
         newPedido.numero = resp?.data?.numero;
       }
-      await base44.entities.PedidoCompra.create(newPedido);
+      const created = await base44.entities.PedidoCompra.create(newPedido);
+      pedidoId = created?.id;
     }
+
+    if (pedidoId && itensParaSync.length > 0) {
+      const sync = await syncPedidoCompraItensReplaceAll(pedidoId, itensParaSync, {
+        valorItens: calcValorItensPedidoCompra(sanitizedData),
+        valorTotal: sanitizedData.valor_total,
+        valorDesconto: sanitizedData.valor_desconto,
+      });
+      if (!sync.ok && !sync.skipped) {
+        console.warn('[PedidosCompra] sync SQL linhas:', sync.error);
+        toast.warning('Pedido salvo, mas a sincronia SQL das linhas falhou. Verifique no detalhe do pedido.');
+      }
+    }
+
     await loadData();
   };
 

@@ -3,6 +3,7 @@ import {
   hydratePedidosCompraItens,
   pedidoCompraAprovadoNaoConcluido,
 } from '@/lib/sugestaoCompraEstoquePendente';
+import { hydrateEmbarquesLinhasEmLote } from '@/lib/embarqueLogisticaHelpers';
 
 /** Status logísticos em aberto — alinhado a `pedidoCompraAprovadoNaoConcluido`. */
 export const PEDIDO_COMPRA_STATUS_QUERY_ESTOQUE = [
@@ -106,7 +107,12 @@ export async function fetchPedidosCompraParaSugestaoEstoque(base44) {
     base44,
     pedidosAbertos.map((pedido) => pedido.id),
   );
-  const embarquesTodos = dedupeEmbarquesPorId([...(embarques || []), ...embarquesExtras]);
+  let embarquesTodos = dedupeEmbarquesPorId([...(embarques || []), ...embarquesExtras]);
+  embarquesTodos = await hydrateEmbarquesLinhasEmLote(
+    base44,
+    embarquesTodos,
+    pedidosAbertos.map((pedido) => pedido.id),
+  );
   const recebidosPorPedidoProduto = buildRecebidosPorPedidoProdutoFromEmbarques(embarquesTodos, pedidosTodos);
 
   return {

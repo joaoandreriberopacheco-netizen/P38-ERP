@@ -356,34 +356,67 @@ export function resolvePendentePorProduto(pendentePorProduto = {}, produtoId) {
   return Number(pendentePorProduto[produtoId] ?? pendentePorProduto[String(produtoId)]) || 0;
 }
 
-/** Preenche `pedido.itens` a partir de PedidoCompraItem quando o espelho legado vier vazio. */
-export async function hydratePedidosCompraItens(base44, pedidos = []) {
-  const semItens = (pedidos || []).filter((p) => !Array.isArray(p.itens) || p.itens.length === 0);
-  if (!semItens.length) return pedidos;
+/**
+ * Hidrata `pedido.itens[]` a partir de `pedido_compra_item`.
+ * Quando `preferSql` (default true), linhas SQL prevalecem sobre o espelho JSON.
+ */
+export async function hydratePedidosCompraItens(base44, pedidos = [], options = {}) {
+  const preferSql = options.preferSql !== false;
+  const list = (pedidos || []).filter((p) => p?.id);
+  if (!list.length) return pedidos || [];
 
   const pci = base44?.entities?.PedidoCompraItem;
   if (!pci?.filter) return pedidos;
 
-  const hydratedById = new Map();
-  await Promise.all(
-    semItens.map(async (pedido) => {
-      if (!pedido?.id) return;
-      try {
-        const rows = await pci.filter({ pedido_compra_id: pedido.id });
-        const itens = (rows || []).map(pedidoCompraItemToLegacyMirror).filter((item) => item?.produto_id);
-        if (itens.length) hydratedById.set(pedido.id, itens);
-      } catch {
-        // mantém pedido sem itens
-      }
-    }),
-  );
+  const ids = list.map((p) => String(p.id));
+  let rows = [];
 
-  if (!hydratedById.size) return pedidos;
+  try {
+    if (ids.length === 1) {
+      rows = await pci.filter({ pedido_compra_id: ids[0] });
+    } else {
+      rows = await pci.filter({ pedido_compra_id: { $in: ids } });
+    }
+  } catch {
+    const chunks = await Promise.all(
+      list.map(async (pedido) => {
+        try {
+          return await pci.filter({ pedido_compra_id: pedido.id });
+        } catch {
+          return [];
+        }
+      }),
+    );
+    rows = chunks.flat();
+  }
 
-  return pedidos.map((pedido) => {
-    const itens = hydratedById.get(pedido.id);
-    if (!itens?.length) return pedido;
-    return { ...pedido, itens };
+  const byPedido = new Map();
+  for (const row of rows || []) {
+    const pid = String(row.pedido_compra_id || '');
+    if (!pid) continue;
+    if (!byPedido.has(pid)) byPedido.set(pid, []);
+    byPedido.get(pid).push(row);
+  }
+
+  if (!byPedido.size) return pedidos;
+
+  return (pedidos || []).map((pedido) => {
+    const sqlRows = byPedido.get(String(pedido.id));
+    if (!sqlRows?.length) return pedido;
+
+    const sqlItens = sqlRows
+      .slice()
+      .sort((a, b) => (Number(a.ordem) || 0) - (Number(b.ordem) || 0))
+      .map(pedidoCompraItemToLegacyMirror)
+      .filter((item) => item?.produto_id);
+
+    if (!sqlItens.length) return pedido;
+
+    const jsonVazio = !Array.isArray(pedido.itens) || pedido.itens.length === 0;
+    if (preferSql || jsonVazio) {
+      return { ...pedido, itens: sqlItens, _itens_fonte: 'sql' };
+    }
+    return pedido;
   });
 }
 

@@ -45,6 +45,7 @@ import {
 import { buildUltimoFornecedorPorProduto } from '@/lib/buildUltimoFornecedorPorProduto';
 import { buildPendenteAprovadoFinanceiroPorProduto } from '@/lib/sugestaoCompraEstoquePendente';
 import { fetchPedidosCompraParaSugestaoEstoque } from '@/lib/fetchPedidosCompraParaSugestaoEstoque';
+import { syncPedidoCompraItensReplaceAll } from '@/lib/pedidoCompraCanonicoSync';
 import {
   collectSugestaoTags,
   collectSugestaoVitrineUnits,
@@ -771,16 +772,25 @@ export default function SugestaoCompra({ onStatsChange }) {
 
       const numerosCriados = [];
       await Promise.all(
-        Object.values(bySupplier).map((data) => {
+        Object.values(bySupplier).map(async (data) => {
           const total = data.itens.reduce((sum, i) => sum + i.total, 0);
           const numero = `PC-${String(num++).padStart(5, '0')}`;
           numerosCriados.push(numero);
-          return base44.entities.PedidoCompra.create({
+          const created = await base44.entities.PedidoCompra.create({
             ...data,
             numero,
             status: 'Rascunho',
             valor_total: total,
           });
+          if (created?.id && Array.isArray(data.itens) && data.itens.length > 0) {
+            const sync = await syncPedidoCompraItensReplaceAll(created.id, data.itens, {
+              valorTotal: total,
+            });
+            if (!sync.ok && !sync.skipped) {
+              console.warn('[SugestaoCompra] sync SQL linhas:', sync.error);
+            }
+          }
+          return created;
         }),
       );
 

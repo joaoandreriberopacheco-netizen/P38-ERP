@@ -7,6 +7,7 @@ import { Upload, FileText, Check, AlertTriangle, Loader2, Plus } from 'lucide-re
 import { base44 } from '@/api/base44Client';
 import { useToast } from "@/components/ui/use-toast";
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
+import { syncPedidoCompraItensReplaceAll } from '@/lib/pedidoCompraCanonicoSync';
 
 export default function ImportadorNotaFiscal({ isOpen, onClose, onSuccess }) {
   const [step, setStep] = useState('upload'); // upload, review
@@ -201,7 +202,7 @@ export default function ImportadorNotaFiscal({ isOpen, onClose, onSuccess }) {
         total: item.quantidade * item.custo_ajustado
       }));
 
-      await base44.entities.PedidoCompra.create({
+      const created = await base44.entities.PedidoCompra.create({
         numero: extractedData.numero_nota || `AUT-${Date.now()}`,
         fornecedor_id: fornecedorId,
         fornecedor_nome: extractedData.fornecedor_nome,
@@ -210,6 +211,15 @@ export default function ImportadorNotaFiscal({ isOpen, onClose, onSuccess }) {
         valor_total: extractedData.valor_total_nota,
         observacoes: `Importado via Nota Fiscal em ${new Date().toLocaleDateString()}`
       });
+
+      if (created?.id && pedidoItens.length > 0) {
+        const sync = await syncPedidoCompraItensReplaceAll(created.id, pedidoItens, {
+          valorTotal: extractedData.valor_total_nota,
+        });
+        if (!sync.ok && !sync.skipped) {
+          console.warn('[ImportadorNotaFiscal] sync SQL linhas:', sync.error);
+        }
+      }
 
       toast({ title: "Pedido Criado com Sucesso!", className: "bg-emerald-100 text-emerald-800" });
       onSuccess();
