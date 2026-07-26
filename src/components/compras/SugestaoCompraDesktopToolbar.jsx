@@ -5,6 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import SugestaoCompraQuickChips from '@/components/compras/SugestaoCompraQuickChips';
 import ProdutosTreeByCategoryToggle from '@/components/produtos/ProdutosTreeByCategoryToggle';
 import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
+import { SUGESTAO_VIEW_MODES } from '@/lib/sugestaoCompraOperationalMode';
 import { cn } from '@/components/utils';
 
 export default function SugestaoCompraDesktopToolbar({
@@ -23,6 +24,8 @@ export default function SugestaoCompraDesktopToolbar({
   onToggleConsiderarPedidos,
   operationalMode,
   onOperationalModeChange,
+  viewMode = 'familias',
+  onViewModeChange,
   onOpenRelatorio,
   gerandoRelatorio,
   activeFilterCount,
@@ -42,6 +45,8 @@ export default function SugestaoCompraDesktopToolbar({
           onToggleConsiderarPedidos={onToggleConsiderarPedidos}
           operationalMode={operationalMode}
           onOperationalModeChange={onOperationalModeChange}
+          viewMode={viewMode}
+          onViewModeChange={onViewModeChange}
           columnSort={columnSort}
           onSortColumn={onSortColumn}
           onOpenRelatorio={onOpenRelatorio}
@@ -54,15 +59,19 @@ export default function SugestaoCompraDesktopToolbar({
           size="md"
         />
         <div className="flex flex-wrap items-center gap-2 shrink-0">
-          <ProdutosTreeByCategoryToggle
-            checked={groupByCategory}
-            onChange={onGroupByCategoryChange}
-            className="h-9"
-          />
-          <div className="flex items-center gap-1 rounded-xl bg-card/80 dark:bg-card/40 border border-border/30 px-2 h-9">
-            <span className="text-[10px] text-muted-foreground">nível</span>
-            <LevelControl level={treeLevel} onChange={onTreeLevelChange} />
-          </div>
+          {viewMode === SUGESTAO_VIEW_MODES.detalhe ? (
+            <>
+              <ProdutosTreeByCategoryToggle
+                checked={groupByCategory}
+                onChange={onGroupByCategoryChange}
+                className="h-9"
+              />
+              <div className="flex items-center gap-1 rounded-xl bg-card/80 dark:bg-card/40 border border-border/30 px-2 h-9">
+                <span className="text-[10px] text-muted-foreground">nível</span>
+                <LevelControl level={treeLevel} onChange={onTreeLevelChange} />
+              </div>
+            </>
+          ) : null}
         </div>
       </div>
 

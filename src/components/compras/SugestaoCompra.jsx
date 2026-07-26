@@ -12,6 +12,7 @@ import SugestaoCompraMobileCatalog, { SugestaoCompraMobileScrollShell } from '@/
 import SugestaoCompraMobileToolbar from '@/components/compras/SugestaoCompraMobileToolbar';
 import SugestaoCompraDesktopToolbar from '@/components/compras/SugestaoCompraDesktopToolbar';
 import SugestaoCompraRelatorioDialog from '@/components/compras/SugestaoCompraRelatorioDialog';
+import SugestaoCompraFamiliasRadar from '@/components/compras/SugestaoCompraFamiliasRadar';
 import { ShoppingCart, RefreshCw, CheckCircle, FileText } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { createPageUrl } from '@/components/utils';
@@ -29,6 +30,7 @@ import { buildCatalogSalesVelocityMap } from '@/lib/catalogSalesVelocity';
 import {
   applySugestaoOperationalMode,
   SUGESTAO_OPERATIONAL_MODES,
+  SUGESTAO_VIEW_MODES,
 } from '@/lib/sugestaoCompraOperationalMode';
 import { fetchProdutosAtivos } from '@/lib/fetchProdutosAtivos';
 import { withRateLimitRetry } from '@/lib/p38ApiErrors';
@@ -58,6 +60,7 @@ const SUGESTAO_TREE_LEVEL_KEY = 'sugestaoCompra.treeLevel';
 const SUGESTAO_GROUP_CATEGORY_KEY = 'sugestaoCompra.groupByCategory';
 const SUGESTAO_OPERATIONAL_MODE_KEY = 'sugestaoCompra.operationalMode';
 const SUGESTAO_COLUMN_SORT_KEY = 'sugestaoCompra.columnSort';
+const SUGESTAO_VIEW_MODE_KEY = 'sugestaoCompra.viewMode';
 
 function readColumnSort() {
   try {
@@ -91,6 +94,16 @@ function readSugestaoGroupByCategory() {
     return localStorage.getItem(SUGESTAO_GROUP_CATEGORY_KEY) === '1';
   } catch {
     return false;
+  }
+}
+
+function readSugestaoViewMode() {
+  try {
+    const raw = localStorage.getItem(SUGESTAO_VIEW_MODE_KEY);
+    if (raw === SUGESTAO_VIEW_MODES.detalhe) return SUGESTAO_VIEW_MODES.detalhe;
+    return SUGESTAO_VIEW_MODES.familias;
+  } catch {
+    return SUGESTAO_VIEW_MODES.familias;
   }
 }
 
@@ -144,6 +157,7 @@ export default function SugestaoCompra({ onStatsChange }) {
   const [treeLevel, setTreeLevel] = useState(readSugestaoTreeLevel);
   const [groupByCategory, setGroupByCategory] = useState(readSugestaoGroupByCategory);
   const [operationalMode, setOperationalMode] = useState(readSugestaoOperationalMode);
+  const [viewMode, setViewMode] = useState(readSugestaoViewMode);
   const [filtersDrawerOpen, setFiltersDrawerOpen] = useState(false);
   const [gerandoRelatorio, setGerandoRelatorio] = useState(false);
   const [relatorioDialogOpen, setRelatorioDialogOpen] = useState(false);
@@ -673,6 +687,18 @@ export default function SugestaoCompra({ onStatsChange }) {
     }
   }, []);
 
+  const handleViewModeChange = useCallback((mode) => {
+    const next = mode === SUGESTAO_VIEW_MODES.detalhe
+      ? SUGESTAO_VIEW_MODES.detalhe
+      : SUGESTAO_VIEW_MODES.familias;
+    setViewMode(next);
+    try {
+      localStorage.setItem(SUGESTAO_VIEW_MODE_KEY, next);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   const selectedCount = Object.keys(selectedItems).length;
   const allVisibleSelected =
     filteredLinhas.length > 0 && filteredLinhas.every((l) => selectedItems[l.id]);
@@ -983,6 +1009,8 @@ export default function SugestaoCompra({ onStatsChange }) {
                   gerandoRelatorio={gerandoRelatorio}
                   onRefresh={loadData}
                   isLoading={isLoading}
+                  viewMode={viewMode}
+                  onViewModeChange={handleViewModeChange}
                 />
               ) : null}
             </>
@@ -992,7 +1020,23 @@ export default function SugestaoCompra({ onStatsChange }) {
             ? emptyCatalogo
             : filteredLinhas.length === 0
               ? semFiltro
-              : (
+              : viewMode === SUGESTAO_VIEW_MODES.familias ? (
+                <SugestaoCompraFamiliasRadar
+                  linhas={filteredLinhas}
+                  salesVelocityMap={salesVelocityMap}
+                  incluirPedidosAprovados={filters.considerarPedidosAprovadosEstoque === true}
+                  somenteUrgentes={filters.somenteAbaixoPontoFuturo === true}
+                  selectedItems={selectedItems}
+                  onToggleSelected={(id, checked) =>
+                    setSelectedItems((prev) =>
+                      checked ? { ...prev, [id]: true } : { ...prev, [id]: undefined },
+                    )
+                  }
+                  sugestaoDisplayLinha={sugestaoDisplayLinha}
+                  onQuantidadeLinhaChange={handleQuantidadeLinhaChange}
+                  renderFornecedorSelect={(linha) => renderFornecedorSelect(linha, mobileFornecedorClass)}
+                />
+              ) : (
                 <SugestaoCompraMobileCatalog
                   linhas={mobileLinhas}
                   incluirPedidosAprovados={filters.considerarPedidosAprovadosEstoque === true}
@@ -1106,6 +1150,8 @@ export default function SugestaoCompra({ onStatsChange }) {
             onToggleConsiderarPedidos={handleToggleConsiderarPedidos}
             operationalMode={operationalMode}
             onOperationalModeChange={applyOperationalMode}
+            viewMode={viewMode}
+            onViewModeChange={handleViewModeChange}
             onOpenRelatorio={() => setRelatorioDialogOpen(true)}
             gerandoRelatorio={gerandoRelatorio}
             activeFilterCount={activeFilterCount}
@@ -1115,6 +1161,25 @@ export default function SugestaoCompra({ onStatsChange }) {
             treeLevel={treeLevel}
             onTreeLevelChange={handleTreeLevelChange}
           />
+          {viewMode === SUGESTAO_VIEW_MODES.familias ? (
+            <SugestaoCompraFamiliasRadar
+              linhas={filteredLinhas}
+              salesVelocityMap={salesVelocityMap}
+              incluirPedidosAprovados={filters.considerarPedidosAprovadosEstoque === true}
+              somenteUrgentes={filters.somenteAbaixoPontoFuturo === true}
+              selectedItems={selectedItems}
+              onToggleSelected={(id, checked) =>
+                setSelectedItems((prev) =>
+                  checked ? { ...prev, [id]: true } : { ...prev, [id]: undefined },
+                )
+              }
+              sugestaoDisplayLinha={sugestaoDisplayLinha}
+              onQuantidadeLinhaChange={handleQuantidadeLinhaChange}
+              renderFornecedorSelect={(linha) =>
+                renderFornecedorSelect(linha, 'h-8 w-full max-w-[14rem] rounded-md border-0 bg-muted/30 text-xs')
+              }
+            />
+          ) : (
           <SugestaoCompraTreeGrid
             produtos={treeProdutos}
             linhaLookup={linhaLookup}
@@ -1142,6 +1207,7 @@ export default function SugestaoCompra({ onStatsChange }) {
               renderFornecedorSelect(linha, 'h-8 w-full max-w-[14rem] rounded-md border-0 bg-muted/30 text-xs')
             }
           />
+          )}
         </div>
       )}
       {relatorioDialog}

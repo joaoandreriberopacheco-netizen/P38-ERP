@@ -17,6 +17,8 @@ export default function SugestaoCompraMobileToolbar({
   gerandoRelatorio,
   considerarPedidosAprovadosEstoque,
   onToggleConsiderarPedidos,
+  viewMode,
+  onViewModeChange,
   onRefresh,
   isLoading,
 }) {
@@ -27,6 +29,8 @@ export default function SugestaoCompraMobileToolbar({
         onToggleSomenteAbaixo={onToggleSomenteAbaixo}
         considerarPedidosAprovadosEstoque={considerarPedidosAprovadosEstoque}
         onToggleConsiderarPedidos={onToggleConsiderarPedidos}
+        viewMode={viewMode}
+        onViewModeChange={onViewModeChange}
         columnSort={columnSort}
         onSortColumn={onSortColumn}
         onOpenRelatorio={onOpenRelatorio}

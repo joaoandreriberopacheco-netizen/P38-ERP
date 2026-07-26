@@ -9,6 +9,11 @@ export const SUGESTAO_OPERATIONAL_MODES = {
   bisturi: 'bisturi',
 };
 
+export const SUGESTAO_VIEW_MODES = {
+  familias: 'familias',
+  detalhe: 'detalhe',
+};
+
 /** Gatilho operacional: QTD SUG > 0 ou P.FUT < 0 (projeção 30d negativa). */
 export function linhaExigeAcaoCompra(linha) {
   return sugestaoPrecisaReposicao(linha?.sugestao);
