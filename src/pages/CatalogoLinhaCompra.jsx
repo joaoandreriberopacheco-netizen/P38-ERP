@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Grid3x3, Loader2, Package, Plus, RefreshCw, Search } from 'lucide-react';
+import { Grid3x3, Loader2, Package, Plus, RefreshCw, Search, Sparkles } from 'lucide-react';
 import ProdutosAccessGuard from '@/components/guard/ProdutosAccessGuard';
 import ProdutoFormCompleto from '@/components/produtos/ProdutoFormCompleto';
 import GradeSkuMatrix from '@/components/catalogoLinha/GradeSkuMatrix';
 import CatalogoLinhaListaSolo from '@/components/catalogoLinha/CatalogoLinhaListaSolo';
 import MassGradeCompraDialog from '@/components/produtos/MassGradeCompraDialog';
+import MigracaoGradeIADialog from '@/components/catalogoLinha/MigracaoGradeIADialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -50,6 +51,7 @@ export default function CatalogoLinhaCompra() {
   const [selectedProduto, setSelectedProduto] = useState(null);
   const [produtoSimilarBase, setProdutoSimilarBase] = useState(null);
   const [isMassOpen, setIsMassOpen] = useState(false);
+  const [isMigracaoIAOpen, setIsMigracaoIAOpen] = useState(false);
 
   const semLinhaCount = useMemo(() => countProdutosSemLinha(produtos), [produtos]);
 
@@ -226,8 +228,14 @@ export default function CatalogoLinhaCompra() {
                 Actualizar
               </Button>
               {semLinhaCount > 0 ? (
+                <Button variant="outline" size="sm" onClick={() => setIsMigracaoIAOpen(true)} className="gap-1.5">
+                  <Sparkles className="w-4 h-4 p38-text-accent" />
+                  Migrar com IA ({semLinhaCount})
+                </Button>
+              ) : null}
+              {semLinhaCount > 0 ? (
                 <Button variant="outline" size="sm" onClick={() => setIsMassOpen(true)} className="gap-1.5">
-                  Migrar pendentes ({semLinhaCount})
+                  Atribuir manual ({semLinhaCount})
                 </Button>
               ) : null}
               <Button size="sm" className="p38-bg-accent text-white gap-1.5" onClick={() => handleCreateSibling({})}>
@@ -355,6 +363,14 @@ export default function CatalogoLinhaCompra() {
           products={produtosPendentes}
           open={isMassOpen}
           onOpenChange={setIsMassOpen}
+          onComplete={() => refetchProdutos()}
+          hideTrigger
+        />
+
+        <MigracaoGradeIADialog
+          products={produtos}
+          open={isMigracaoIAOpen}
+          onOpenChange={setIsMigracaoIAOpen}
           onComplete={() => refetchProdutos()}
           hideTrigger
         />
