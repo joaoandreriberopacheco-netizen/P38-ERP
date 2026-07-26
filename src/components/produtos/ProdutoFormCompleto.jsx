@@ -41,6 +41,7 @@ import { useCompactShell } from '@/hooks/use-breakpoint';
 import { useBottomNavScrollVisibility } from '@/hooks/useBottomNavScrollVisibility';
 import { formatProductCode, generateRandomProductCode } from '@/lib/productCode';
 import ProdutoGradeCompraFields from '@/components/produtos/ProdutoGradeCompraFields';
+import { validarGradeCompraParaSalvar } from '@/lib/produtoGradeCompra/validarGradeCompra';
 
 const P38_FORM_ROOT = 'flex flex-col h-full overflow-hidden font-din-1451 bg-background dark:bg-[#1f1d22]';
 const P38_FORM_HEADER = 'flex-none border-b border-border/40 dark:border-white/10 bg-card dark:bg-[#2d333b]';
@@ -168,6 +169,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     campo_hierarquico_1: '', campo_hierarquico_2: '', campo_hierarquico_3: '', campo_hierarquico_4: '', campo_hierarquico_5: '',
     linha_compra_id: '', produto_compra_id: '', eixo_a_valor_id: '', eixo_b_valor_id: '',
     eixo_a_texto: '', eixo_b_texto: '', no_mix_ativo: false, celula_obrigatoria: false,
+    produto_compra_avulso: false,
     nome: '', codigo_barras: '', codigo_interno: '', tipo: 'Produto',
     categoria_id: '', categoria_nome: '', marca: '', tags: [], valor_compra: 0, preco_venda_padrao: 0,
     preco_venda_tipo: 'percentual', preco_venda_percentual: 0, preco_custo_calculado: 0,
@@ -906,8 +908,19 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         return;
       }
 
+      const gradeValidation = await validarGradeCompraParaSalvar({
+        formData,
+        isNew: !produto?.id,
+        avulso: formData.produto_compra_avulso === true,
+      });
+      if (!gradeValidation.ok) {
+        toastSaveBlocked('Linha de compra', gradeValidation.message);
+        return;
+      }
+
+      const { produto_compra_avulso: _avulso, ...formDataSemAvulso } = formData;
       const produtoData = {
-        ...formData,
+        ...formDataSemAvulso,
         codigo_interno: formatProductCode(codigoInterno),
         nome: formData.nome?.toUpperCase(),
         marca: formData.marca?.toUpperCase(),

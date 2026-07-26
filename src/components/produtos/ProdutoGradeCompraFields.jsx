@@ -24,7 +24,7 @@ const TIPO_LABEL = {
  * Cadastro por LINHA + PRODUTO_COMPRA + eixos A×B.
  * Hierarquia h1-h5 fica legado (fora deste bloco).
  */
-export default function ProdutoGradeCompraFields({ formData, onPatch }) {
+export default function ProdutoGradeCompraFields({ formData, onPatch, showAvulso = true }) {
   const [linhas, setLinhas] = useState([]);
   const [produtosCompra, setProdutosCompra] = useState([]);
   const [eixosA, setEixosA] = useState([]);
@@ -131,6 +131,37 @@ export default function ProdutoGradeCompraFields({ formData, onPatch }) {
         <p className="text-xs text-destructive">{loadErr}</p>
       ) : null}
 
+      {showAvulso ? (
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="produto_compra_avulso"
+            checked={formData.produto_compra_avulso === true}
+            onCheckedChange={(c) => {
+              if (c === true) {
+                onPatch({
+                  produto_compra_avulso: true,
+                  linha_compra_id: '',
+                  produto_compra_id: '',
+                  eixo_a_valor_id: '',
+                  eixo_b_valor_id: '',
+                  eixo_a_texto: '',
+                  eixo_b_texto: '',
+                  no_mix_ativo: false,
+                  celula_obrigatoria: false,
+                });
+              } else {
+                onPatch({ produto_compra_avulso: false });
+              }
+            }}
+          />
+          <Label htmlFor="produto_compra_avulso" className="text-xs cursor-pointer">
+            Produto avulso (diversos) — fora da linha de compra
+          </Label>
+        </div>
+      ) : null}
+
+      {formData.produto_compra_avulso ? null : (
+      <>
       <div>
         <Label className="text-xs text-muted-foreground mb-1 block">Linha *</Label>
         <Select
@@ -308,6 +339,8 @@ export default function ProdutoGradeCompraFields({ formData, onPatch }) {
           <p className="text-sm font-medium uppercase tracking-wide">{previewNome}</p>
         </div>
       ) : null}
+      </>
+      )}
     </div>
   );
 }

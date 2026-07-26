@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { createPageUrl } from '@/components/utils';
-import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter, Percent, Loader2, Tag, Tags, LayoutGrid, TrendingUp, Gauge } from 'lucide-react';
+import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter, Percent, Loader2, Tag, Tags, LayoutGrid, TrendingUp, Gauge, Grid3x3 } from 'lucide-react';
 import { DEFAULT_PRODUTO_FILTERS, ABCD_FILTER_VALUES, ABCD_FILTER_LABELS } from '@/lib/filterProdutos';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
 import ProdutosSomentePositivosToggle from '@/components/produtos/ProdutosSomentePositivosToggle';
@@ -53,6 +53,7 @@ export default function ProdutosHeader({
   onOpenMassTag,
   onOpenMassCategory,
   onOpenMassMarkup,
+  onOpenMassGradeCompra,
   onOpenPontosPedido,
   groupTreeByCategory = false,
   onGroupTreeByCategoryChange,
@@ -219,6 +220,16 @@ export default function ProdutosHeader({
                   {filteredProdutos.length > 0 && (
                     <DropdownMenuItem
                       onClick={() => {
+                        window.setTimeout(() => onOpenMassGradeCompra?.(), 0);
+                      }}
+                      className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
+                    >
+                      <Grid3x3 className="w-4 h-4 mr-2 p38-text-accent" />Atribuir linha de compra aos filtrados
+                    </DropdownMenuItem>
+                  )}
+                  {filteredProdutos.length > 0 && (
+                    <DropdownMenuItem
+                      onClick={() => {
                         window.setTimeout(() => onOpenMassMarkup?.(), 0);
                       }}
                       className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
@@ -341,6 +352,27 @@ export default function ProdutosHeader({
                 >
                   <Tag className="w-3.5 h-3.5 p38-text-accent" />
                   Tags IA
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 flex-shrink-0 rounded-xl bg-muted desktop-layout:hidden"
+                  onClick={() => onOpenMassGradeCompra?.()}
+                  title="Atribuir linha de compra aos produtos do filtro actual"
+                  aria-label="Atribuir linha de compra aos produtos do filtro actual"
+                >
+                  <Grid3x3 className="w-4 h-4 p38-text-accent" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="hidden desktop-layout:inline-flex h-10 flex-shrink-0 gap-1.5 rounded-xl text-xs font-medium border-[#4a5240]/30 dark:border-[#a4ce33]/30"
+                  onClick={() => onOpenMassGradeCompra?.()}
+                  title="Atribuir linha de compra aos produtos do filtro actual"
+                >
+                  <Grid3x3 className="w-3.5 h-3.5 p38-text-accent" />
+                  Linha compra
                 </Button>
                 <Button
                   type="button"
