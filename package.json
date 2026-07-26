@@ -52,6 +52,8 @@
     "abcd:executar-console": "node scripts/executar-abcd-job-console.mjs",
     "produto:codigo:backfill": "node scripts/backfill-produto-codigo.mjs",
     "produto:codigo:aplicar": "node scripts/backfill-produto-codigo.mjs --apply",
+    "produto:cadastro:export-lote": "node scripts/export-lote-cadastro-hierarquia.mjs",
+    "produto:cadastro:aplicar-lote": "node scripts/aplicar-lote-cadastro-hierarquia.mjs",
     "git:ship": "node scripts/git-ship.mjs",
     "p38:color-audit": "node scripts/p38-color-audit.mjs",
     "p38:color-fix": "node scripts/p38-color-audit.mjs --fix",
