@@ -8,9 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { Sparkles, StopCircle } from 'lucide-react';
+import { ListTree, Sparkles, StopCircle } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import { isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
@@ -21,6 +20,11 @@ import {
   resolveGradeIAUpdate,
 } from '@/lib/produtoGradeCompra/catalogoGradeIA';
 import { applyGradeIAAssignment } from '@/lib/produtoGradeCompra/applyGradeIAAssignment';
+import { planMigracaoPorRegrasBatch } from '@/lib/produtoGradeCompra/migrarPorRegras';
+import {
+  describeInvokeLlmError,
+  normalizeInvokeLlmJsonResponse,
+} from '@/lib/invokeLLM/normalizeInvokeLlmResponse';
 
 const BATCH_SIZE = 8;
 const DIALOG_Z = 'z-[100]';
@@ -34,6 +38,7 @@ export default function MigracaoGradeIADialog({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [migrationMode, setMigrationMode] = useState(null);
   const [isPreparing, setIsPreparing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [processedCount, setProcessedCount] = useState(0);
@@ -61,6 +66,7 @@ export default function MigracaoGradeIADialog({
       setLogs([]);
       setProgress(0);
       setProcessedCount(0);
+      setMigrationMode(null);
       setCatalogoReady(false);
       setCatalogo({ linhas: [], produtosCompra: [] });
       setIsPreparing(false);
@@ -100,40 +106,69 @@ export default function MigracaoGradeIADialog({
 
   const appendLog = (msg) => setLogs((prev) => [msg, ...prev]);
 
-  const processBatch = async (batch, linhas) => {
+  const applyResolvedPatch = async (original, patch, linhasRef) => {
+    if (somenteAltaConfianca && patch.confianca !== 'alta') {
+      appendLog(`◌ ${original.nome}: confiança ${patch.confianca} (só alta activa)`);
+      return { applied: 0, skipped: 1 };
+    }
+
+    const resolved = resolveGradeIAUpdate(
+      { acao: 'atribuir', ...patch },
+      linhasRef,
+    );
+    if (!resolved.ok || resolved.skip) {
+      appendLog(`⚠ ${original.nome}: ${resolved.reason || 'ignorado'}`);
+      return { applied: 0, skipped: 1 };
+    }
+
+    const { produtoPatch } = await applyGradeIAAssignment(original, resolved.patch);
+    await base44.entities.Produto.update(original.id, produtoPatch);
+    appendLog(
+      `✓ ${original.nome} → ${resolved.patch.linha_codigo} / ${resolved.patch.produto_compra_nome}`,
+    );
+    return { applied: 1, skipped: 0 };
+  };
+
+  const processBatchIA = async (batch, linhas) => {
     const prompt = buildGradeMigrationPrompt(batch, catalogo);
 
-    const response = await base44.integrations.Core.InvokeLLM({
-      prompt,
-      response_json_schema: {
-        type: 'object',
-        properties: {
-          updates: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                id: { type: 'string' },
-                acao: { type: 'string' },
-                linha_codigo: { type: 'string' },
-                linha_nome: { type: 'string' },
-                linha_tipo: { type: 'string' },
-                produto_compra_nome: { type: 'string' },
-                eixo_a: { type: 'string' },
-                eixo_b: { type: 'string' },
-                eixo_a_rotulo: { type: 'string' },
-                eixo_b_rotulo: { type: 'string' },
-                confianca: { type: 'string' },
-                motivo_curto: { type: 'string' },
+    let raw;
+    try {
+      raw = await base44.integrations.Core.InvokeLLM({
+        prompt,
+        response_json_schema: {
+          type: 'object',
+          properties: {
+            updates: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  acao: { type: 'string' },
+                  linha_codigo: { type: 'string' },
+                  linha_nome: { type: 'string' },
+                  linha_tipo: { type: 'string' },
+                  produto_compra_nome: { type: 'string' },
+                  eixo_a: { type: 'string' },
+                  eixo_b: { type: 'string' },
+                  eixo_a_rotulo: { type: 'string' },
+                  eixo_b_rotulo: { type: 'string' },
+                  confianca: { type: 'string' },
+                  motivo_curto: { type: 'string' },
+                },
+                required: ['id'],
               },
-              required: ['id'],
             },
           },
+          required: ['updates'],
         },
-        required: ['updates'],
-      },
-    });
+      });
+    } catch (error) {
+      throw new Error(describeInvokeLlmError(error));
+    }
 
+    const response = normalizeInvokeLlmJsonResponse(raw);
     if (!response?.updates?.length) return { applied: 0, skipped: batch.length };
 
     let applied = 0;
@@ -180,7 +215,7 @@ export default function MigracaoGradeIADialog({
     return { applied, skipped };
   };
 
-  const handleMigrate = async () => {
+  const runMigration = async (mode) => {
     if (!pendentes.length) {
       toast({ title: 'Nenhum produto pendente', variant: 'destructive' });
       return;
@@ -190,6 +225,7 @@ export default function MigracaoGradeIADialog({
       return;
     }
 
+    setMigrationMode(mode);
     setIsProcessing(true);
     setProgress(0);
     setProcessedCount(0);
@@ -198,32 +234,65 @@ export default function MigracaoGradeIADialog({
     const controller = new AbortController();
     setAbortController(controller);
 
-    const batches = [];
-    for (let i = 0; i < pendentes.length; i += BATCH_SIZE) {
-      batches.push(pendentes.slice(i, i + BATCH_SIZE));
-    }
-
     let appliedTotal = 0;
     let linhasRef = [...catalogo.linhas];
 
     try {
-      for (let i = 0; i < batches.length; i++) {
-        if (controller.signal.aborted) break;
+      if (mode === 'regras') {
+        appendLog(`Migração por regras (${pendentes.length} produtos)…`);
+        const { updates, skipped } = planMigracaoPorRegrasBatch(pendentes);
+        const total = updates.length + skipped.length;
+        let done = 0;
 
-        appendLog(`Lote ${i + 1}/${batches.length} (${batches[i].length} produtos)…`);
-        const { applied } = await processBatch(batches[i], linhasRef);
-        appliedTotal += applied;
-        setProcessedCount((i + 1) * BATCH_SIZE);
-        setProgress(((i + 1) / batches.length) * 100);
+        for (const { produto, patch } of updates) {
+          if (controller.signal.aborted) break;
+          try {
+            const { applied } = await applyResolvedPatch(produto, patch, linhasRef);
+            appliedTotal += applied;
+          } catch (err) {
+            appendLog(`✗ ${produto.nome}: ${err.message}`);
+          }
+          done += 1;
+          setProcessedCount(done);
+          setProgress((done / total) * 100);
+        }
+
+        for (const { produto, reason } of skipped) {
+          if (controller.signal.aborted) break;
+          appendLog(`— ${produto.nome}: ${reason}`);
+          done += 1;
+          setProcessedCount(done);
+          setProgress((done / total) * 100);
+        }
 
         const freshLinhas = await fetchLinhasCompra();
         linhasRef = freshLinhas;
         setCatalogo((prev) => ({ ...prev, linhas: freshLinhas }));
+      } else {
+        const batches = [];
+        for (let i = 0; i < pendentes.length; i += BATCH_SIZE) {
+          batches.push(pendentes.slice(i, i + BATCH_SIZE));
+        }
+
+        for (let i = 0; i < batches.length; i++) {
+          if (controller.signal.aborted) break;
+
+          appendLog(`Lote IA ${i + 1}/${batches.length} (${batches[i].length} produtos)…`);
+          const { applied } = await processBatchIA(batches[i], linhasRef);
+          appliedTotal += applied;
+          setProcessedCount(Math.min((i + 1) * BATCH_SIZE, pendentes.length));
+          setProgress(((i + 1) / batches.length) * 100);
+
+          const freshLinhas = await fetchLinhasCompra();
+          linhasRef = freshLinhas;
+          setCatalogo((prev) => ({ ...prev, linhas: freshLinhas }));
+        }
       }
 
       if (!controller.signal.aborted) {
+        const label = mode === 'regras' ? 'por regras' : 'IA';
         toast({
-          title: 'Migração IA concluída',
+          title: `Migração ${label} concluída`,
           description: `${appliedTotal} produto(s) atribuído(s) a linhas de compra.`,
         });
         onComplete?.();
@@ -231,10 +300,15 @@ export default function MigracaoGradeIADialog({
       }
     } catch (error) {
       console.error(error);
-      toast({ title: 'Erro na migração IA', description: error.message, variant: 'destructive' });
+      toast({
+        title: mode === 'regras' ? 'Erro na migração por regras' : 'Erro na migração IA',
+        description: error.message,
+        variant: 'destructive',
+      });
     } finally {
       setIsProcessing(false);
       setAbortController(null);
+      setMigrationMode(null);
     }
   };
 
@@ -245,7 +319,7 @@ export default function MigracaoGradeIADialog({
       {!hideTrigger && (
         <Button variant="outline" size="sm" onClick={() => setDialogOpen?.(true)} className="gap-2">
           <Sparkles className="w-4 h-4" />
-          Migrar com IA
+          Migrar catálogo
         </Button>
       )}
 
@@ -254,7 +328,7 @@ export default function MigracaoGradeIADialog({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 p38-text-accent" />
-              Migração para linha de compra (IA)
+              Migração para linha de compra
             </DialogTitle>
           </DialogHeader>
 
@@ -263,13 +337,16 @@ export default function MigracaoGradeIADialog({
               <p>
                 <strong>{pendentes.length}</strong>
                 {' '}
-                produto(s) sem linha de compra serão analisados em lotes de
-                {' '}
-                {BATCH_SIZE}
-                .
+                produto(s) sem linha de compra.
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                A IA usa hierarquia h1–h5 + nome para sugerir linha, produto de compra e eixos.
+                <strong>Migrar por regras</strong>
+                {' '}
+                usa h1–h5 (sem IA, recomendado).
+                {' '}
+                <strong>Migrar com IA</strong>
+                {' '}
+                precisa da Edge Function p38-core no Supabase.
               </p>
             </div>
 
@@ -293,6 +370,17 @@ export default function MigracaoGradeIADialog({
             {isProcessing && (
               <div className="space-y-2">
                 <Progress value={progress} className="h-2" />
+                <p className="text-xs text-muted-foreground">
+                  {processedCount}
+                  {' '}
+                  /
+                  {' '}
+                  {pendentes.length}
+                  {' '}
+                  —
+                  {' '}
+                  {migrationMode === 'regras' ? 'regras' : 'IA'}
+                </p>
                 <div className="h-32 overflow-y-auto rounded border p-2 text-xs font-mono bg-muted/30">
                   {logs.map((log, i) => (
                     <div key={i}>{log}</div>
@@ -302,7 +390,7 @@ export default function MigracaoGradeIADialog({
             )}
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
             {isProcessing ? (
               <Button variant="destructive" onClick={() => abortController?.abort()}>
                 <StopCircle className="w-4 h-4 mr-2" />
@@ -312,11 +400,21 @@ export default function MigracaoGradeIADialog({
               <>
                 <Button variant="outline" onClick={() => setDialogOpen?.(false)}>Fechar</Button>
                 <Button
-                  onClick={handleMigrate}
+                  variant="secondary"
+                  onClick={() => runMigration('regras')}
                   disabled={!pendentes.length || isPreparing || !catalogoReady}
-                  className="p38-bg-accent text-white"
+                  className="gap-2"
                 >
-                  Iniciar migração
+                  <ListTree className="w-4 h-4" />
+                  Migrar por regras
+                </Button>
+                <Button
+                  onClick={() => runMigration('ia')}
+                  disabled={!pendentes.length || isPreparing || !catalogoReady}
+                  className="p38-bg-accent text-white gap-2"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Migrar com IA
                 </Button>
               </>
             )}
