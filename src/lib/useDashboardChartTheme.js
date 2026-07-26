@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 
 const LIGHT = {
   tick: { fontSize: 11, fill: '#434a40', fontWeight: 600 },
-  grid: 'rgba(74, 82, 64, 0.12)',
-  cursor: 'rgba(74, 82, 64, 0.08)',
+  axisTickY: { fontSize: 9, fill: '#9aa094', fontWeight: 400 },
+  axisTickX: { fontSize: 9, fill: '#a8afa4', fontWeight: 400 },
+  grid: 'rgba(74, 82, 64, 0.07)',
+  cursor: 'rgba(74, 82, 64, 0.06)',
   pieStroke: '#ffffff',
   tooltip: {
     contentStyle: {
@@ -23,8 +25,10 @@ const LIGHT = {
 
 const DARK = {
   tick: { fontSize: 11, fill: '#d7deea', fontWeight: 600 },
-  grid: 'rgba(148, 163, 184, 0.14)',
-  cursor: 'rgba(148, 163, 184, 0.16)',
+  axisTickY: { fontSize: 9, fill: '#64748b', fontWeight: 400 },
+  axisTickX: { fontSize: 9, fill: '#6b7a90', fontWeight: 400 },
+  grid: 'rgba(148, 163, 184, 0.08)',
+  cursor: 'rgba(148, 163, 184, 0.1)',
   pieStroke: '#2b3342',
   tooltip: {
     contentStyle: {
