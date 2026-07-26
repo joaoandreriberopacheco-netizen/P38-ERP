@@ -121,11 +121,31 @@ export default function CatalogoLinhaCompra() {
       produtos,
       linhaId,
       produtoCompraId: produtoCompraId || undefined,
+      produtosCompra,
       eixosA,
       eixosB,
     }),
-    [produtos, linhaId, produtoCompraId, eixosA, eixosB],
+    [produtos, linhaId, produtoCompraId, produtosCompra, eixosA, eixosB],
   );
+
+  const matricesPorProdutoCompra = useMemo(() => {
+    if (!usaGrelha || produtoCompraId || produtosCompra.length <= 1) return [];
+    if (matrix.gridMode === 'produto_compra_x_b') return [];
+
+    return produtosCompra
+      .map((pc) => ({
+        pc,
+        matrix: buildGradeMatrix({
+          produtos,
+          linhaId,
+          produtoCompraId: pc.id,
+          produtosCompra,
+          eixosA,
+          eixosB,
+        }),
+      }))
+      .filter(({ matrix: m }) => m.hasGrid);
+  }, [usaGrelha, produtoCompraId, produtosCompra, matrix.gridMode, produtos, linhaId, eixosA, eixosB]);
 
   const eixoARotulo = produtoCompraSel?.eixo_a_rotulo || linhaSel?.eixo_a_rotulo || 'Eixo A';
   const eixoBRotulo = produtoCompraSel?.eixo_b_rotulo || linhaSel?.eixo_b_rotulo || 'Eixo B';
@@ -149,26 +169,30 @@ export default function CatalogoLinhaCompra() {
   }, []);
 
   const handleCreateSibling = useCallback(({ irmao, eixoA, eixoB } = {}) => {
+    const pcFromGrid = eixoA?.isProdutoCompra
+      ? produtosCompra.find((p) => p.id === eixoA.id)
+      : null;
+    const effectivePcId = pcFromGrid?.id || produtoCompraId;
     const pool = produtos.filter((p) => p.linha_compra_id === linhaId);
     const base = irmao || pickSiblingForCell(pool, {
       linhaId,
-      produtoCompraId,
-      eixoA,
+      produtoCompraId: effectivePcId,
+      eixoA: pcFromGrid ? null : eixoA,
     }) || pool[0] || null;
 
     const draft = buildSiblingDraft(base || {}, {
       linha: linhaSel,
-      produtoCompra: produtoCompraSel,
-      eixoA,
+      produtoCompra: pcFromGrid || produtoCompraSel,
+      eixoA: pcFromGrid ? null : eixoA,
       eixoB,
-      limparEixoA: !eixoA && !base,
+      limparEixoA: Boolean(pcFromGrid) || (!eixoA && !base),
       limparEixoB: !eixoB && !base,
     });
 
     setSelectedProduto(null);
     setProdutoSimilarBase(draft);
     setIsFormOpen(true);
-  }, [produtos, linhaId, produtoCompraId, linhaSel, produtoCompraSel]);
+  }, [produtos, linhaId, produtoCompraId, produtosCompra, linhaSel, produtoCompraSel]);
 
   const handleSave = useCallback(async () => {
     await refetchProdutos();
@@ -210,7 +234,9 @@ export default function CatalogoLinhaCompra() {
                 <h1 className="text-lg font-semibold text-foreground">Catálogo por linha</h1>
               </div>
               <p className="text-xs text-muted-foreground mt-1 max-w-xl">
-                Grelha de compra — cada célula é um SKU independente (preço e estoque próprios).
+                Vista em grelha — cada célula é um SKU (preço e estoque próprios).
+                {' '}
+                Ex.: soldável = peças × medidas; argamassa = classe × embalagem.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -307,10 +333,13 @@ export default function CatalogoLinhaCompra() {
               <Badge variant="secondary">{produtosLinha.length} SKU(s) nesta vista</Badge>
               {usaGrelha && matrix.hasGrid ? (
                 <Badge variant="outline">
-                  {matrix.rowsA.length}
-                  {' × '}
-                  {matrix.colsB.length}
-                  {' células'}
+                  Grelha
+                  {' '}
+                  {matrix.gridMode === 'produto_compra_x_b'
+                    ? `${matrix.rowsA.length} peças × ${matrix.colsB.length} medidas`
+                    : matrix.gridMode === 'cols_only'
+                      ? `${matrix.colsB.length} medidas`
+                      : `${matrix.rowsA.length} × ${matrix.colsB.length}`}
                 </Badge>
               ) : null}
             </div>
@@ -325,13 +354,36 @@ export default function CatalogoLinhaCompra() {
             </div>
           ) : !linhaSel ? (
             <p className="text-sm text-muted-foreground text-center py-12">Seleccione uma linha de compra.</p>
+          ) : usaGrelha && matricesPorProdutoCompra.length > 0 ? (
+            <div className="space-y-8">
+              {matricesPorProdutoCompra.map(({ pc, matrix: sub }) => (
+                <GradeSkuMatrix
+                  key={pc.id}
+                  rowsA={sub.rowsA}
+                  colsB={sub.colsB}
+                  cells={sub.cells}
+                  gridMode={sub.gridMode}
+                  eixoARotulo={pc.eixo_a_rotulo || eixoARotulo}
+                  eixoBRotulo={pc.eixo_b_rotulo || eixoBRotulo}
+                  sectionTitle={pc.nome}
+                  onOpenProduto={handleOpenProduto}
+                  onCreateSibling={handleCreateSibling}
+                />
+              ))}
+            </div>
           ) : usaGrelha && matrix.hasGrid ? (
             <GradeSkuMatrix
               rowsA={matrix.rowsA}
               colsB={matrix.colsB}
               cells={matrix.cells}
+              gridMode={matrix.gridMode}
               eixoARotulo={eixoARotulo}
               eixoBRotulo={eixoBRotulo}
+              sectionTitle={
+                matrix.gridMode === 'cols_only' && produtoCompraSel?.nome
+                  ? produtoCompraSel.nome
+                  : ''
+              }
               onOpenProduto={handleOpenProduto}
               onCreateSibling={handleCreateSibling}
             />
