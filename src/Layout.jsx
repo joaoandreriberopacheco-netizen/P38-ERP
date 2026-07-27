@@ -26,7 +26,6 @@ import { isSupabaseAuthEnabled } from '@/integrations/p38/providers';
 /** Páginas com scroll interno no mobile (evita body + nested scroll e zoom por overflow). */
 const MOBILE_FULL_VIEWPORT_PAGES = new Set([
   'Produtos',
-  'CatalogoLinhaCompra',
   'RelatorioMargem',
   'RelatorioCatalogoEstoque',
   'CaixasAtivos',
@@ -41,7 +40,7 @@ const MOBILE_FULL_VIEWPORT_PAGES = new Set([
 /** Rotas PDV no mobile: mantêm GlacialBottomNav (atalho rápido em overlay continua fullscreen). */
 const MOBILE_PDV_IN_SHELL_ROUTES = new Set(['PDV', 'PDVCaixa', 'PDVVendedor']);
 /** Páginas pesadas onde expandir o menu não deve reflowar todo o conteúdo. */
-const DESKTOP_OVERLAY_SIDEBAR_PAGES = new Set(['VendasGestao', 'Produtos', 'CatalogoLinhaCompra']);
+const DESKTOP_OVERLAY_SIDEBAR_PAGES = new Set(['VendasGestao', 'Produtos']);
 
 const LayoutOutlet = React.memo(function LayoutOutlet({ children }) {
   return children;

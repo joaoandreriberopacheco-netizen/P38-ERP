@@ -51,51 +51,20 @@ export function buildCoreIntegrations() {
       return { signed_url: data.signedUrl };
     },
 
-    async InvokeLLM({
-      prompt,
-      model,
-      response_json_schema,
-    }: {
-      prompt: string;
-      model?: string;
-      response_json_schema?: unknown;
-    }) {
+    async InvokeLLM({ prompt, model }: { prompt: string; model?: string }) {
       const key = env('OPENAI_API_KEY');
-      if (!key) throw new Error('OPENAI_API_KEY não configurado na Edge Function p38-core');
-
-      const wantsJson = Boolean(response_json_schema);
-      const payload: Record<string, unknown> = {
-        model: model || 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: wantsJson
-              ? 'Responde apenas com JSON válido, sem markdown nem texto extra.'
-              : 'You are a helpful assistant.',
-          },
-          { role: 'user', content: prompt },
-        ],
-      };
-      if (wantsJson) {
-        payload.response_format = { type: 'json_object' };
-      }
-
+      if (!key) throw new Error('OPENAI_API_KEY não configurado');
       const res = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          model: model || 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+        }),
       });
       if (!res.ok) throw new Error(`OpenAI: ${await res.text()}`);
       const json = await res.json();
-      const content = String(json.choices?.[0]?.message?.content ?? '').trim();
-      if (wantsJson) {
-        try {
-          return JSON.parse(content);
-        } catch {
-          throw new Error('OpenAI não devolveu JSON válido');
-        }
-      }
-      return { result: content };
+      return { result: json.choices?.[0]?.message?.content ?? '' };
     },
 
     async GenerateImage({ prompt }: { prompt: string }) {

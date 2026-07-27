@@ -50,8 +50,6 @@
     "abcd:executar-console": "node scripts/executar-abcd-job-console.mjs",
     "produto:codigo:backfill": "node scripts/backfill-produto-codigo.mjs",
     "produto:codigo:aplicar": "node scripts/backfill-produto-codigo.mjs --apply",
-    "produto:grade:migrar": "node scripts/migrar-produto-grade-compra.mjs",
-    "produto:grade:migrar:apply": "node scripts/migrar-produto-grade-compra.mjs --apply",
     "git:ship": "node scripts/git-ship.mjs",
     "p38:color-audit": "node scripts/p38-color-audit.mjs",
     "p38:color-fix": "node scripts/p38-color-audit.mjs --fix",

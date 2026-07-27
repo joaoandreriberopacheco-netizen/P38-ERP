@@ -24,7 +24,7 @@ import {
   DollarSign, BookOpen, Settings, ShoppingCart, Warehouse, Truck, ClipboardPenLine,
   Users, TrendingDown, Lightbulb, FileText, PackageSearch, Ship,
   ScanLine, ClipboardList, Tags, Upload, CheckSquare, Search, Activity,
-  ArrowLeftRight, CreditCard, Clock, Wallet, ReceiptText, AlertCircle, Repeat2, CalendarClock, Target, LineChart, Grid3x3
+  ArrowLeftRight, CreditCard, Clock, Wallet, ReceiptText, AlertCircle, Repeat2, CalendarClock, Target, LineChart
 } from 'lucide-react';
 
 export { resolverPermissoes };
@@ -175,21 +175,8 @@ export const ALL_MENU_ITEMS = [
   {
     name: 'Produtos',
     icon: Package,
-    permissaoCheck: (p) => p?.estoque?.visualizar_produtos === true,
-    submenu: [
-      {
-        name: 'Catálogo por linha',
-        page: 'CatalogoLinhaCompra',
-        icon: Grid3x3,
-        permissaoCheck: (p) => p?.estoque?.visualizar_produtos === true,
-      },
-      {
-        name: 'Catálogo legado',
-        page: 'Produtos',
-        icon: Package,
-        permissaoCheck: (p) => p?.estoque?.visualizar_produtos === true,
-      },
-    ],
+    page: 'Produtos',
+    permissaoCheck: (p) => p?.estoque?.visualizar_produtos === true
   },
   {
     name: 'Compras',

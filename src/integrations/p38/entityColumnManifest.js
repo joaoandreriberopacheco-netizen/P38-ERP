@@ -17,8 +17,6 @@ export const PRODUTO_COLUMNS = [
   'metas_estoque_atualizado_em', 'metas_estoque_dias_com_estoque', 'metas_estoque_unidade_compra',
   'metas_estoque_outliers_descartados', 'metas_estoque_quantidade_limpa_90d', 'estoque_trava_manual',
   'metas_estoque_versao', 'metas_estoque_lead_time_dias',
-  'linha_compra_id', 'produto_compra_id', 'eixo_a_valor_id', 'eixo_b_valor_id',
-  'eixo_a_texto', 'eixo_b_texto', 'no_mix_ativo', 'celula_obrigatoria',
 ];
 
 export const TERCEIRO_COLUMNS = [

@@ -23,7 +23,6 @@ import MassImageUploader from '../components/produtos/MassImageUploader';
 import MassTagGenerator from '../components/produtos/MassTagGenerator';
 import MassCategoryClassifier from '../components/produtos/MassCategoryClassifier';
 import MassMarkupDialog from '../components/produtos/MassMarkupDialog';
-import MassGradeCompraDialog from '../components/produtos/MassGradeCompraDialog';
 import PontosPedidoCatalogoDialog from '../components/produtos/PontosPedidoCatalogoDialog';
 import TreeGrid, { TREE_GRID_EXPAND_ALL_LEVEL } from '../components/produtos/treegrid/TreeGrid';
 import MobileHierarquica, { CatalogoMobileScrollShell } from '../components/produtos/MobileHierarquica';
@@ -166,7 +165,6 @@ function ProdutosPageContent() {
   const [isMassTagOpen, setIsMassTagOpen] = useState(false);
   const [isMassCategoryOpen, setIsMassCategoryOpen] = useState(false);
   const [isMassMarkupOpen, setIsMassMarkupOpen] = useState(false);
-  const [isMassGradeCompraOpen, setIsMassGradeCompraOpen] = useState(false);
   const [isPontosPedidoOpen, setIsPontosPedidoOpen] = useState(false);
   const [isCatalogTagPrintOpen, setIsCatalogTagPrintOpen] = useState(false);
   // States for unified import (products + costs)
@@ -1448,7 +1446,6 @@ function ProdutosPageContent() {
     onOpenMassTag: () => setIsMassTagOpen(true),
     onOpenMassCategory: () => setIsMassCategoryOpen(true),
     onOpenMassMarkup: () => setIsMassMarkupOpen(true),
-    onOpenMassGradeCompra: () => setIsMassGradeCompraOpen(true),
     onOpenPontosPedido: () => setIsPontosPedidoOpen(true),
     groupTreeByCategory,
     onGroupTreeByCategoryChange: handleGroupTreeByCategoryChange,
@@ -1783,14 +1780,6 @@ function ProdutosPageContent() {
         onComplete={loadData}
         open={isMassMarkupOpen}
         onOpenChange={setIsMassMarkupOpen}
-        hideTrigger
-      />
-
-      <MassGradeCompraDialog
-        products={filteredProdutos}
-        onComplete={loadData}
-        open={isMassGradeCompraOpen}
-        onOpenChange={setIsMassGradeCompraOpen}
         hideTrigger
       />
 
