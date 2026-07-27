@@ -19,6 +19,7 @@ import { useUnsavedChangesWarning } from '@/components/utils/useUnsavedChangesWa
 import { calculateBaseQuantity, getItemUnitKey, pickDefaultSaleUnit, getUnidadeExibicaoSigla } from '@/lib/productUnits';
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
 import { productCodesMatch } from '@/lib/productCode';
+import { isVendaSemEstoquePermitida } from '@/lib/configFlags';
 
 export default function PDVSupermercado() {
   const [carrinho, setCarrinho] = useState([]);
@@ -42,6 +43,11 @@ export default function PDVSupermercado() {
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [produtoSelecionadoIndex, setProdutoSelecionadoIndex] = useState(0);
   const [configVenda, setConfigVenda] = useState(null);
+  const [configEstoque, setConfigEstoque] = useState(null);
+  const vendaSemEstoquePermitida = useMemo(
+    () => isVendaSemEstoquePermitida(configVenda, configEstoque),
+    [configVenda, configEstoque]
+  );
 
   // Payment States
   const [pagamentosDinheiro, setPagamentosDinheiro] = useState(0);
@@ -122,20 +128,21 @@ export default function PDVSupermercado() {
 
   const loadDependencies = async () => {
     try {
-      const [produtosData, userData, clientesData, configsVendas] = await Promise.all([
+      const [produtosData, userData, clientesData, configsVendas, configsEstoque] = await Promise.all([
         base44.entities.Produto.filter({ ativo: true }),
         base44.auth.me(),
         base44.entities.Terceiro.filter({ tipo: ['Cliente', 'Ambos'] }),
-        base44.entities.ConfiguracoesVenda.list()
+        base44.entities.ConfiguracoesVenda.list(),
+        base44.entities.ConfiguracoesEstoque.list(),
       ]);
       setProdutos(produtosData);
       setCurrentUser(userData);
       setClientes(clientesData);
       if (configsVendas.length > 0) {
-        console.log('PDV Supermercado - ConfigVenda carregada:', configsVendas[0]);
         setConfigVenda(configsVendas[0]);
-      } else {
-        console.log('PDV Supermercado - Nenhuma configuração de venda encontrada');
+      }
+      if (configsEstoque.length > 0) {
+        setConfigEstoque(configsEstoque[0]);
       }
       if (userData.tabela_preco_id) {
         const tabela = await TabelaPreco.get(userData.tabela_preco_id);
@@ -181,9 +188,7 @@ export default function PDVSupermercado() {
     const quantidadeBaseAdd = calculateBaseQuantity(quantidade, fator);
     const itemKey = getItemUnitKey(produtoSelecionado.id, unidade);
     
-    console.log('PDV Supermercado - Config:', configVenda, 'Vender sem estoque:', configVenda?.vender_sem_estoque, 'Estoque:', produtoSelecionado.estoque_atual, 'Quantidade:', quantidade);
-    
-    if (configVenda?.vender_sem_estoque !== true && produtoSelecionado.estoque_atual < quantidadeBaseAdd) {
+    if (!vendaSemEstoquePermitida && produtoSelecionado.estoque_atual < quantidadeBaseAdd) {
       toast({ title: `Estoque insuficiente: ${produtoSelecionado.estoque_atual} ${produtoSelecionado.unidade_principal || 'UN'} disponível`, variant: "destructive" });
       return;
     }
@@ -521,7 +526,7 @@ export default function PDVSupermercado() {
                         <button onClick={() => {
                            const newQtd = item.quantidade + 1;
                            const newBase = calculateBaseQuantity(newQtd, item.fator_conversao || 1);
-                           if (configVenda?.vender_sem_estoque === true || newBase <= item.estoque_disponivel) {
+                           if (vendaSemEstoquePermitida || newBase <= item.estoque_disponivel) {
                              setCarrinho(carrinho.map(i => (i.item_key || i.produto_id) === (item.item_key || item.produto_id)
                                ? {...i, quantidade: newQtd, quantidade_base: newBase, total: newQtd * i.preco_unitario_praticado}
                                : i));

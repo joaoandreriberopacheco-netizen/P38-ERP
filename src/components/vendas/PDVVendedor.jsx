@@ -40,6 +40,7 @@ import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelector
 import { buildSaleUnitOptions, calculateBaseQuantity, formatEstoqueDisponivelLabel, getItemUnitKey, pickDefaultSaleUnit } from '@/lib/productUnits';
 import { filterAndSortProducts, sortProductsAlphabetically } from '@/components/compras/productMatchingUtils';
 import { productCodesMatch } from '@/lib/productCode';
+import { isVendaSemEstoquePermitida } from '@/lib/configFlags';
 
 export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   const navigate = useNavigate();
@@ -88,6 +89,11 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [sugestoesContextuais, setSugestoesContextuais] = useState([]);
   const [configVenda, setConfigVenda] = useState(null);
+  const [configEstoque, setConfigEstoque] = useState(null);
+  const vendaSemEstoquePermitida = useMemo(
+    () => isVendaSemEstoquePermitida(configVenda, configEstoque),
+    [configVenda, configEstoque]
+  );
   const [showReeditarDialog, setShowReeditarDialog] = useState(false);
   const [senhaReeditar, setSenhaReeditar] = useState('');
   const [rascunhoEmEdicaoId, setRascunhoEmEdicaoId] = useState(null);
@@ -236,15 +242,18 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
 
   const loadConfiguracoesVenda = async () => {
     try {
-      const configs = await base44.entities.ConfiguracoesVenda.list();
-      if (configs.length > 0) {
-        console.log('ConfigVenda carregada:', configs[0]);
-        setConfigVenda(configs[0]);
-        if (configs[0].auto_delivery_balcao) {
+      const [configsVenda, configsEstoque] = await Promise.all([
+        base44.entities.ConfiguracoesVenda.list(),
+        base44.entities.ConfiguracoesEstoque.list(),
+      ]);
+      if (configsVenda.length > 0) {
+        setConfigVenda(configsVenda[0]);
+        if (configsVenda[0].auto_delivery_balcao) {
           setMetodoEntrega('Retirada');
         }
-      } else {
-        console.log('Nenhuma configuração de venda encontrada');
+      }
+      if (configsEstoque.length > 0) {
+        setConfigEstoque(configsEstoque[0]);
       }
     } catch (error) {
       console.error('Erro ao carregar configurações:', error);
@@ -561,9 +570,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
     const fatorConversao = produtoSelecionado.fator_conversao || 1;
     const quantidadeBase = calculateBaseQuantity(quantidade, fatorConversao);
 
-    console.log('Verificando estoque - Config:', configVenda, 'Vender sem estoque:', configVenda?.vender_sem_estoque, 'Estoque:', produtoSelecionado.estoque_atual, 'Quantidade base:', quantidadeBase);
-
-    if (configVenda?.vender_sem_estoque !== true && produtoSelecionado.estoque_atual < quantidadeBase) {
+    if (!vendaSemEstoquePermitida && produtoSelecionado.estoque_atual < quantidadeBase) {
       showFeedback('error', `Estoque insuficiente: ${formatEstoqueDisponivelLabel(produtoSelecionado)} disponível`, 3000);
       return;
     }
@@ -662,7 +669,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
     } else {
       const item = carrinho.find((i) => i.item_key === itemKey);
       const quantidadeBase = calculateBaseQuantity(novaQuantidade, item?.fator_conversao || 1);
-      if (configVenda?.vender_sem_estoque === true || item && quantidadeBase <= item.estoque_disponivel) {
+      if (vendaSemEstoquePermitida || item && quantidadeBase <= item.estoque_disponivel) {
         setCarrinho(carrinho.map((item) =>
         item.item_key === itemKey ?
         { ...item, quantidade: novaQuantidade, quantidade_base: quantidadeBase, total: novaQuantidade * item.preco_unitario } :
@@ -1323,7 +1330,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                         </button>
                         <span className="text-sm font-bold w-9 text-center text-foreground">{item.quantidade}</span>
                         <button onClick={() => handleUpdateQuantity(item.item_key, item.quantidade + 1)}
-                          disabled={!configVenda?.vender_sem_estoque && calculateBaseQuantity(item.quantidade + 1, item.fator_conversao || 1) > item.estoque_disponivel}
+                          disabled={!vendaSemEstoquePermitida && calculateBaseQuantity(item.quantidade + 1, item.fator_conversao || 1) > item.estoque_disponivel}
                           className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:bg-muted dark:hover:bg-card transition-colors disabled:opacity-40">
                           <Plus className="w-3.5 h-3.5" />
                         </button>
@@ -1801,7 +1808,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                       </button>
                       <span className="text-base font-bold w-10 text-center text-foreground dark:text-white">{item.quantidade}</span>
                       <button onClick={() => handleUpdateQuantity(item.item_key, item.quantidade + 1)}
-                        disabled={!configVenda?.vender_sem_estoque && calculateBaseQuantity(item.quantidade + 1, item.fator_conversao || 1) > item.estoque_disponivel}
+                        disabled={!vendaSemEstoquePermitida && calculateBaseQuantity(item.quantidade + 1, item.fator_conversao || 1) > item.estoque_disponivel}
                         className="w-10 h-10 flex items-center justify-center text-muted-foreground active:bg-muted dark:active:bg-muted disabled:opacity-40">
                         <Plus className="w-4 h-4" />
                       </button>
