@@ -13,7 +13,7 @@ import ExcelJS from 'exceljs';
 
 const OUT_DEFAULT = path.resolve(
   process.env.EXPORT_LINHAS_OUT
-  || '/opt/cursor/artifacts/linhas-por-categoria.xlsx',
+  || path.join(process.cwd(), 'artifacts', 'P38-linhas-catalogo-por-categoria.xlsx'),
 );
 
 function parseOutArg() {
@@ -150,7 +150,32 @@ async function main() {
     .forEach((r) => resumo.addRow(r));
 
   await wb.xlsx.writeFile(outPath);
+
+  const csvPath = outPath.replace(/\.xlsx$/i, '.csv');
+  const csvHeader = ['Categoria', 'Linha (h1)', 'SKUs ativos', 'Com estoque', 'Subtipos (h2)', 'Exemplo SKU', 'Categoria ID'];
+  const esc = (v) => {
+    const s = String(v ?? '');
+    return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const csvLines = [
+    csvHeader.join(';'),
+    ...linhas.map((r) => [
+      r.categoria, r.linha, r.skus_ativos, r.skus_com_estoque, r.subtipos_h2 || '', r.exemplo_sku || '', r.categoria_id || '',
+    ].map(esc).join(';')),
+  ];
+  fs.writeFileSync(csvPath, `\uFEFF${csvLines.join('\n')}`, 'utf8');
+
+  const mirror = '/opt/cursor/artifacts/P38-linhas-catalogo-por-categoria.xlsx';
+  try {
+    fs.mkdirSync(path.dirname(mirror), { recursive: true });
+    fs.copyFileSync(outPath, mirror);
+    fs.copyFileSync(csvPath, mirror.replace(/\.xlsx$/i, '.csv'));
+  } catch {
+    // ambiente sem pasta de artefactos
+  }
+
   console.log(`[export-linhas] ${linhas.length} linha(s) → ${outPath}`);
+  console.log(`[export-linhas] CSV → ${csvPath}`);
 }
 
 main().catch((err) => {

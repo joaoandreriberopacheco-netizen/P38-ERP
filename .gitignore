@@ -13,6 +13,9 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+
+# Exportações locais (dados do catálogo — não versionar)
+artifacts/
 dist
 dist-ssr
 *.local
