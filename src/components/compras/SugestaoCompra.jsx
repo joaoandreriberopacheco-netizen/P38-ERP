@@ -11,7 +11,10 @@ import SugestaoCompraTreeGrid, { TREE_GRID_EXPAND_ALL_LEVEL } from '@/components
 import SugestaoCompraMobileCatalog, { SugestaoCompraMobileScrollShell } from '@/components/compras/SugestaoCompraMobileCatalog';
 import SugestaoCompraMobileToolbar from '@/components/compras/SugestaoCompraMobileToolbar';
 import SugestaoCompraDesktopToolbar from '@/components/compras/SugestaoCompraDesktopToolbar';
-import SugestaoCompraRelatorioDialog from '@/components/compras/SugestaoCompraRelatorioDialog';
+import SugestaoCompraRelatorioDialog, {
+  SUGESTAO_RELATORIO_TIPOS,
+} from '@/components/compras/SugestaoCompraRelatorioDialog';
+import SugestaoCompraFamiliasRadar from '@/components/compras/SugestaoCompraFamiliasRadar';
 import { ShoppingCart, RefreshCw, CheckCircle, FileText } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { createPageUrl } from '@/components/utils';
@@ -26,9 +29,11 @@ import {
 } from '@/lib/calcularSugestaoCompraHierarquia';
 import { fetchPedidosVenda90d, fetchDadosVendaAbcd90d } from '@/lib/fetchPedidosVenda90d';
 import { buildCatalogSalesVelocityMap } from '@/lib/catalogSalesVelocity';
+import { buildFamiliasNivel2FromLinhas } from '@/lib/sugestaoFamiliasNivel2';
 import {
   applySugestaoOperationalMode,
   SUGESTAO_OPERATIONAL_MODES,
+  SUGESTAO_VIEW_MODES,
 } from '@/lib/sugestaoCompraOperationalMode';
 import { fetchProdutosAtivos } from '@/lib/fetchProdutosAtivos';
 import { withRateLimitRetry } from '@/lib/p38ApiErrors';
@@ -45,6 +50,7 @@ import {
 import { buildUltimoFornecedorPorProduto } from '@/lib/buildUltimoFornecedorPorProduto';
 import { buildPendenteAprovadoFinanceiroPorProduto } from '@/lib/sugestaoCompraEstoquePendente';
 import { fetchPedidosCompraParaSugestaoEstoque } from '@/lib/fetchPedidosCompraParaSugestaoEstoque';
+import { syncPedidoCompraItensReplaceAll } from '@/lib/pedidoCompraCanonicoSync';
 import {
   collectSugestaoTags,
   collectSugestaoVitrineUnits,
@@ -57,6 +63,7 @@ const SUGESTAO_TREE_LEVEL_KEY = 'sugestaoCompra.treeLevel';
 const SUGESTAO_GROUP_CATEGORY_KEY = 'sugestaoCompra.groupByCategory';
 const SUGESTAO_OPERATIONAL_MODE_KEY = 'sugestaoCompra.operationalMode';
 const SUGESTAO_COLUMN_SORT_KEY = 'sugestaoCompra.columnSort';
+const SUGESTAO_VIEW_MODE_KEY = 'sugestaoCompra.viewMode';
 
 function readColumnSort() {
   try {
@@ -90,6 +97,16 @@ function readSugestaoGroupByCategory() {
     return localStorage.getItem(SUGESTAO_GROUP_CATEGORY_KEY) === '1';
   } catch {
     return false;
+  }
+}
+
+function readSugestaoViewMode() {
+  try {
+    const raw = localStorage.getItem(SUGESTAO_VIEW_MODE_KEY);
+    if (raw === SUGESTAO_VIEW_MODES.detalhe) return SUGESTAO_VIEW_MODES.detalhe;
+    return SUGESTAO_VIEW_MODES.familias;
+  } catch {
+    return SUGESTAO_VIEW_MODES.familias;
   }
 }
 
@@ -143,6 +160,7 @@ export default function SugestaoCompra({ onStatsChange }) {
   const [treeLevel, setTreeLevel] = useState(readSugestaoTreeLevel);
   const [groupByCategory, setGroupByCategory] = useState(readSugestaoGroupByCategory);
   const [operationalMode, setOperationalMode] = useState(readSugestaoOperationalMode);
+  const [viewMode, setViewMode] = useState(readSugestaoViewMode);
   const [filtersDrawerOpen, setFiltersDrawerOpen] = useState(false);
   const [gerandoRelatorio, setGerandoRelatorio] = useState(false);
   const [relatorioDialogOpen, setRelatorioDialogOpen] = useState(false);
@@ -496,6 +514,14 @@ export default function SugestaoCompra({ onStatsChange }) {
     [linhas],
   );
 
+  const familiaCountExecutivo = useMemo(() => {
+    if (!filteredLinhas.length) return 0;
+    return buildFamiliasNivel2FromLinhas(filteredLinhas, {
+      incluirPedidosAprovados: filters.considerarPedidosAprovadosEstoque === true,
+      salesVelocityMap,
+    }).length;
+  }, [filteredLinhas, filters.considerarPedidosAprovadosEstoque, salesVelocityMap]);
+
   const activeFilterCount = useMemo(
     () => countActiveSugestaoCompraFilters(filters),
     [filters],
@@ -555,7 +581,11 @@ export default function SugestaoCompra({ onStatsChange }) {
     }
   }, [columnSort, filters.considerarPedidosAprovadosEstoque, groupByCategory, treeLevel]);
 
-  const handleGerarRelatorio = useCallback(async ({ format = 'pdf', agruparNivel = 0 } = {}) => {
+  const handleGerarRelatorio = useCallback(async ({
+    format = 'pdf',
+    agruparNivel = 0,
+    reportTipo = SUGESTAO_RELATORIO_TIPOS.EXECUTIVO,
+  } = {}) => {
     if (!filteredLinhas.length) {
       toast({
         title: 'Nada para exportar',
@@ -565,12 +595,15 @@ export default function SugestaoCompra({ onStatsChange }) {
       return;
     }
 
+    const isExecutivo = reportTipo === SUGESTAO_RELATORIO_TIPOS.EXECUTIVO;
     const isPdf = format === 'pdf';
     setGerandoRelatorio(true);
     toast({
-      title: isPdf
-        ? 'Gerando PDF da sugestão de compra...'
-        : 'Gerando planilha da sugestão de compra...',
+      title: isExecutivo
+        ? 'Gerando relatório para a diretoria...'
+        : isPdf
+          ? 'Gerando PDF da sugestão de compra...'
+          : 'Gerando planilha da sugestão de compra...',
     });
     try {
       const filtersSummary = describeSugestaoCompraFilters(filters, { categorias, fornecedores });
@@ -587,10 +620,22 @@ export default function SugestaoCompra({ onStatsChange }) {
           resolveFornecedorId: resolveFornecedorIdLinha,
           fornecedorNomeById,
           fornecedores,
+          salesVelocityMap,
         },
       };
 
-      if (isPdf) {
+      if (isExecutivo && isPdf) {
+        const { generateRelatorioFamiliasExecutivoPdf } = await import(
+          '@/lib/relatorioSugestaoCompra/generateRelatorioFamiliasExecutivoPdf.js'
+        );
+        const resposta = await generateRelatorioFamiliasExecutivoPdf(reportPayload);
+        const blob = new Blob([resposta.data], { type: 'application/pdf' });
+        downloadBlob(blob, `RitmoCompra_Familias_${dataHoje()}.pdf`);
+        toast({
+          title: 'Relatório da diretoria gerado',
+          description: `${resposta.rowCount} família(s) · ${resposta.summary?.comRuptura || 0} com ruptura prevista${resposta?.version ? ` · ${resposta.version}` : ''}`,
+        });
+      } else if (isPdf) {
         const { generateRelatorioSugestaoCompraPdf } = await import(
           '@/lib/relatorioSugestaoCompra/generateRelatorioSugestaoCompraPdf.js'
         );
@@ -635,6 +680,7 @@ export default function SugestaoCompra({ onStatsChange }) {
     fornecedores,
     calcQuantityLinha,
     resolveFornecedorIdLinha,
+    salesVelocityMap,
     toast,
   ]);
 
@@ -667,6 +713,18 @@ export default function SugestaoCompra({ onStatsChange }) {
     setGroupByCategory(next);
     try {
       localStorage.setItem(SUGESTAO_GROUP_CATEGORY_KEY, next ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const handleViewModeChange = useCallback((mode) => {
+    const next = mode === SUGESTAO_VIEW_MODES.detalhe
+      ? SUGESTAO_VIEW_MODES.detalhe
+      : SUGESTAO_VIEW_MODES.familias;
+    setViewMode(next);
+    try {
+      localStorage.setItem(SUGESTAO_VIEW_MODE_KEY, next);
     } catch {
       /* ignore */
     }
@@ -771,16 +829,25 @@ export default function SugestaoCompra({ onStatsChange }) {
 
       const numerosCriados = [];
       await Promise.all(
-        Object.values(bySupplier).map((data) => {
+        Object.values(bySupplier).map(async (data) => {
           const total = data.itens.reduce((sum, i) => sum + i.total, 0);
           const numero = `PC-${String(num++).padStart(5, '0')}`;
           numerosCriados.push(numero);
-          return base44.entities.PedidoCompra.create({
+          const created = await base44.entities.PedidoCompra.create({
             ...data,
             numero,
             status: 'Rascunho',
             valor_total: total,
           });
+          if (created?.id && Array.isArray(data.itens) && data.itens.length > 0) {
+            const sync = await syncPedidoCompraItensReplaceAll(created.id, data.itens, {
+              valorTotal: total,
+            });
+            if (!sync.ok && !sync.skipped) {
+              console.warn('[SugestaoCompra] sync SQL linhas:', sync.error);
+            }
+          }
+          return created;
         }),
       );
 
@@ -927,6 +994,7 @@ export default function SugestaoCompra({ onStatsChange }) {
       open={relatorioDialogOpen}
       onOpenChange={setRelatorioDialogOpen}
       filteredCount={filteredLinhas.length}
+      familiaCount={familiaCountExecutivo}
       isGenerating={gerandoRelatorio}
       onConfirm={handleGerarRelatorio}
     />
@@ -973,6 +1041,8 @@ export default function SugestaoCompra({ onStatsChange }) {
                   gerandoRelatorio={gerandoRelatorio}
                   onRefresh={loadData}
                   isLoading={isLoading}
+                  viewMode={viewMode}
+                  onViewModeChange={handleViewModeChange}
                 />
               ) : null}
             </>
@@ -982,7 +1052,23 @@ export default function SugestaoCompra({ onStatsChange }) {
             ? emptyCatalogo
             : filteredLinhas.length === 0
               ? semFiltro
-              : (
+              : viewMode === SUGESTAO_VIEW_MODES.familias ? (
+                <SugestaoCompraFamiliasRadar
+                  linhas={filteredLinhas}
+                  salesVelocityMap={salesVelocityMap}
+                  incluirPedidosAprovados={filters.considerarPedidosAprovadosEstoque === true}
+                  somenteUrgentes={filters.somenteAbaixoPontoFuturo === true}
+                  selectedItems={selectedItems}
+                  onToggleSelected={(id, checked) =>
+                    setSelectedItems((prev) =>
+                      checked ? { ...prev, [id]: true } : { ...prev, [id]: undefined },
+                    )
+                  }
+                  sugestaoDisplayLinha={sugestaoDisplayLinha}
+                  onQuantidadeLinhaChange={handleQuantidadeLinhaChange}
+                  renderFornecedorSelect={(linha) => renderFornecedorSelect(linha, mobileFornecedorClass)}
+                />
+              ) : (
                 <SugestaoCompraMobileCatalog
                   linhas={mobileLinhas}
                   incluirPedidosAprovados={filters.considerarPedidosAprovadosEstoque === true}
@@ -1096,6 +1182,8 @@ export default function SugestaoCompra({ onStatsChange }) {
             onToggleConsiderarPedidos={handleToggleConsiderarPedidos}
             operationalMode={operationalMode}
             onOperationalModeChange={applyOperationalMode}
+            viewMode={viewMode}
+            onViewModeChange={handleViewModeChange}
             onOpenRelatorio={() => setRelatorioDialogOpen(true)}
             gerandoRelatorio={gerandoRelatorio}
             activeFilterCount={activeFilterCount}
@@ -1105,6 +1193,25 @@ export default function SugestaoCompra({ onStatsChange }) {
             treeLevel={treeLevel}
             onTreeLevelChange={handleTreeLevelChange}
           />
+          {viewMode === SUGESTAO_VIEW_MODES.familias ? (
+            <SugestaoCompraFamiliasRadar
+              linhas={filteredLinhas}
+              salesVelocityMap={salesVelocityMap}
+              incluirPedidosAprovados={filters.considerarPedidosAprovadosEstoque === true}
+              somenteUrgentes={filters.somenteAbaixoPontoFuturo === true}
+              selectedItems={selectedItems}
+              onToggleSelected={(id, checked) =>
+                setSelectedItems((prev) =>
+                  checked ? { ...prev, [id]: true } : { ...prev, [id]: undefined },
+                )
+              }
+              sugestaoDisplayLinha={sugestaoDisplayLinha}
+              onQuantidadeLinhaChange={handleQuantidadeLinhaChange}
+              renderFornecedorSelect={(linha) =>
+                renderFornecedorSelect(linha, 'h-8 w-full max-w-[14rem] rounded-md border-0 bg-muted/30 text-xs')
+              }
+            />
+          ) : (
           <SugestaoCompraTreeGrid
             produtos={treeProdutos}
             linhaLookup={linhaLookup}
@@ -1132,6 +1239,7 @@ export default function SugestaoCompra({ onStatsChange }) {
               renderFornecedorSelect(linha, 'h-8 w-full max-w-[14rem] rounded-md border-0 bg-muted/30 text-xs')
             }
           />
+          )}
         </div>
       )}
       {relatorioDialog}

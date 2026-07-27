@@ -20,6 +20,7 @@ import GestaoCodigosConferencia from '../components/logistica/GestaoCodigosConfe
 import PainelConferencias from '../components/compras/PainelConferencias';
 import { cn } from '@/components/utils';
 import { useCompactShell } from '@/hooks/use-breakpoint';
+import { preparePedidoCompraEntityPayload, syncPedidoCompraItensReplaceAll } from '@/lib/pedidoCompraCanonicoSync';
 
 const getStatusBadge = (status) => {
   const variants = {
@@ -101,17 +102,36 @@ const PedidosCompraTab = () => {
         valor_desconto: Number(pedidoData.valor_desconto) || 0
       };
 
+      const itensParaSync = Array.isArray(sanitizedData.itens) ? sanitizedData.itens : [];
+      const entityPayload = preparePedidoCompraEntityPayload(sanitizedData);
+
       if (sanitizedData.id) {
-        await base44.entities.PedidoCompra.update(sanitizedData.id, sanitizedData);
+        await base44.entities.PedidoCompra.update(sanitizedData.id, entityPayload);
+        if (itensParaSync.length > 0) {
+          const sync = await syncPedidoCompraItensReplaceAll(sanitizedData.id, itensParaSync, {
+            valorTotal: sanitizedData.valor_total,
+          });
+          if (!sync.ok && !sync.skipped) {
+            console.warn('[Compras] sync SQL linhas:', sync.error);
+          }
+        }
       } else {
-        const { id, ...newPedido } = sanitizedData;
+        const { id, ...newPedido } = entityPayload;
         
         if (!newPedido.numero) {
            const count = pedidos.length + 1;
            newPedido.numero = `PC-${new Date().getFullYear()}-${String(count).padStart(4, '0')}`;
         }
         
-        await base44.entities.PedidoCompra.create(newPedido);
+        const created = await base44.entities.PedidoCompra.create(newPedido);
+        if (created?.id && itensParaSync.length > 0) {
+          const sync = await syncPedidoCompraItensReplaceAll(created.id, itensParaSync, {
+            valorTotal: sanitizedData.valor_total,
+          });
+          if (!sync.ok && !sync.skipped) {
+            console.warn('[Compras] sync SQL linhas:', sync.error);
+          }
+        }
       }
       await loadPedidos();
       // setIsFormOpen(false); // Mantendo aberto para feedback

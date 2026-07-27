@@ -62,7 +62,7 @@ import {
   syncItemDescontoApresentacao,
   calcTotalItemCompraPedido,
 } from '@/lib/productUnits';
-import { savePedidoCompraItem } from '@/functions/savePedidoCompraItem';
+import { syncPedidoCompraItensReplaceAll } from '@/lib/pedidoCompraCanonicoSync';
 import { uploadAnexoParaPedidoCompra } from '@/lib/uploadAnexoReferencia';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefresh, abaInicial = 'dados-gerais', autoOpenImporter = false }) {
@@ -984,54 +984,20 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
         );
       }
 
-      // ── Sincroniza linhas canonicas em PedidoCompraItem ──
-      // O servico replaceAll persiste cada linha com produto_unidade_id, recompoe
-      // o espelho `PedidoCompra.itens[]` e atualiza `valor_total`. Os erros nao
-      // bloqueiam o save legado — apenas geram um aviso pra o usuario.
+      // ── Sincroniza linhas canónicas em pedido_compra_item ──
       if (pedidoId && Array.isArray(dataToSave?.itens)) {
-        try {
-          const itensCanonicos = dataToSave.itens.map((it, idx) => {
-            const synced = syncItemDescontoApresentacao(it);
-            const totalLinha = calcTotalItemCompraPedido(synced);
-            const descontoF1 =
-              Number(synced?.valor_desconto_item ?? synced?.desconto_unitario) || 0;
-            return {
-              id: synced?.pedido_compra_item_id || synced?.id || undefined,
-              produto_id: synced?.produto_id || '',
-              produto_unidade_id: synced?.produto_unidade_id || '',
-              unidade_sigla: synced?.unidade_medida || synced?.unidade_apresentacao || '',
-              quantidade_comercial: Number(synced?.quantidade) || 0,
-              custo_unitario_fator1: Number(synced?.custo_unitario) || 0,
-              frete_unitario_fator1: Number(synced?.custo_frete_unitario) || 0,
-              outros_unitario_fator1: Number(synced?.custo_outros_unitario) || 0,
-              desconto_unitario_fator1: descontoF1,
-              valor_desconto_item: descontoF1,
-              total: Number(synced?.total) > 0 ? Number(synced.total) : totalLinha,
-              quantidade_vinculada: Number(synced?.quantidade_vinculada) || 0,
-              ordem: idx,
-              observacoes: typeof synced?.observacoes === 'string' ? synced.observacoes : '',
-              status_recebimento: synced?.status_recebimento || 'Pendente',
-            };
-          }).filter((it) => it.produto_id && it.quantidade_comercial > 0);
-
-          if (itensCanonicos.length > 0) {
-            await savePedidoCompraItem({
-              action: 'replaceAll',
-              pedido_compra_id: pedidoId,
-              items: itensCanonicos,
-            });
-            // replaceAll/recomporPedido pode recalcular totais sem desconto de linha — reafirmar o do formulário.
-            await base44.entities.PedidoCompra.update(pedidoId, {
-              valor_itens: valorItens,
-              valor_total: valorTotal,
-              valor_desconto: roundToTwoDecimals(parseFloat(formData.valor_desconto) || 0),
-            });
-          }
-        } catch (canonicalErr) {
-          console.warn('Sincronia canonica de PedidoCompraItem falhou:', canonicalErr?.message || canonicalErr);
+        const sync = await syncPedidoCompraItensReplaceAll(pedidoId, dataToSave.itens, {
+          valorItens,
+          valorTotal,
+          valorDesconto: roundToTwoDecimals(parseFloat(formData.valor_desconto) || 0),
+        });
+        if (!sync.ok && !sync.skipped) {
+          console.warn('Sincronia canonica de PedidoCompraItem falhou:', sync.error?.message || sync.error);
           toast({
             title: 'Aviso de sincronia canonica',
-            description: 'O pedido foi salvo, mas a entidade canonica PedidoCompraItem nao pode ser sincronizada. O espelho legado segue valido. Detalhe: ' + (canonicalErr?.message || ''),
+            description:
+              'O pedido foi salvo, mas a entidade canonica PedidoCompraItem nao pode ser sincronizada. O espelho legado segue valido. Detalhe: ' +
+              (sync.error?.message || String(sync.error)),
           });
         }
       }

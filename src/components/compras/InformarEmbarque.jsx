@@ -11,7 +11,8 @@ import FluvialTripSelectorFullscreen from '@/components/compras/FluvialTripSelec
 import { agora, dataHoje, meioDiaSistemaISO, toLocalDateKey, formatarLogTime } from '@/components/utils/dateUtils';
 import { logDespachoAudit, InformarDespachoAuditStrip } from '@/components/compras/informarEmbarqueAudit.jsx';
 import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
-import { saveEmbarqueItem } from '@/functions/saveEmbarqueItem';
+import { syncEmbarqueItensReplaceAll } from '@/lib/embarqueCanonicoSync';
+import { stripItensFromEmbarquePayload } from '@/lib/pedidoCompraLineItemsFlags';
 import { invokeRecalcularConclusaoPedidoCompra } from '@/lib/p38StockRecalc';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -446,9 +447,9 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
 
       let embarqueIdSalvo = embarqueExistente?.id || null;
       if (isEdicao) {
-        await base44.entities.Embarque.update(embarqueExistente.id, payloadEmbarque);
+        await base44.entities.Embarque.update(embarqueExistente.id, stripItensFromEmbarquePayload(payloadEmbarque));
       } else {
-        const embCriado = await base44.entities.Embarque.create({
+        const embCriado = await base44.entities.Embarque.create(stripItensFromEmbarquePayload({
           pedido_compra_id: pedido.id,
           pedido_compra_numero: pedido.numero,
           fornecedor_id: fornecedorIdFinal,
@@ -458,7 +459,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
           tipo: 'Embarque',
           status_recebimento: 'Pendente',
           ...payloadEmbarque
-        });
+        }));
         embarqueIdSalvo = embCriado?.id || null;
       }
 
@@ -475,38 +476,14 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
       let sincroniaCanonical = 'nao_aplicavel';
       if (embarqueIdSalvo && Array.isArray(payloadEmbarque?.itens) && nProdutosVinculados > 0) {
         sincroniaCanonical = 'pendente';
-        try {
-          const itensCanonicos = payloadEmbarque.itens
-            .map((it, idx) => ({
-              id: it?.embarque_item_id || it?.id || undefined,
-              produto_id: it?.produto_id || '',
-              produto_unidade_id: it?.produto_unidade_id || '',
-              pedido_compra_item_id: it?.pedido_compra_item_id || '',
-              unidade_sigla: it?.unidade_medida || '',
-              quantidade_pedida_comercial: Number(it?.quantidade_pedida) || 0,
-              quantidade_embarcada_comercial: Number(it?.quantidade_embarcada) || 0,
-              quantidade_recebida_comercial: Number(it?.quantidade_recebida) || 0,
-              divergencia_tipo: it?.divergencia_tipo || 'Nenhuma',
-              produto_id_recebido_diferente: it?.produto_id_recebido_diferente || '',
-              produto_nome_recebido_diferente: it?.produto_nome_recebido_diferente || '',
-              acordo_financeiro_lancamento_id: it?.acordo_financeiro_lancamento_id || '',
-              ordem: idx,
-            }))
-            .filter((it) => it.produto_id && it.quantidade_embarcada_comercial > 0);
-
-          if (itensCanonicos.length > 0) {
-            await saveEmbarqueItem({
-              action: 'replaceAll',
-              embarque_id: embarqueIdSalvo,
-              items: itensCanonicos,
-            });
-            sincroniaCanonical = 'ok';
-          } else {
-            sincroniaCanonical = 'linhas_invalidas';
-          }
-        } catch (canonicalErr) {
+        const sync = await syncEmbarqueItensReplaceAll(embarqueIdSalvo, payloadEmbarque.itens);
+        if (sync.ok) {
+          sincroniaCanonical = 'ok';
+        } else if (sync.skipped) {
+          sincroniaCanonical = 'linhas_invalidas';
+        } else {
           sincroniaCanonical = 'erro';
-          console.warn('Sincronia canonica de EmbarqueItem falhou:', canonicalErr?.message || canonicalErr);
+          console.warn('Sincronia canonica de EmbarqueItem falhou:', sync.error?.message || sync.error);
         }
       }
 

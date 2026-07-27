@@ -5,6 +5,8 @@ import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
 import { filterEmbarquesVisiveisParaPedido } from '@/components/compras/embarqueFilters';
 import { normalizeItemToCanonicalFactorOne } from '@/lib/productUnits';
 import { hydrateEmbarquesLinhasDesdeCanonical } from '@/lib/embarqueLogisticaHelpers';
+import { loadPedidoComItens } from '@/lib/pedidoCompraLoaders';
+import { preparePedidoCompraEntityPayload } from '@/lib/pedidoCompraCanonicoSync';
 
 /**
  * Página inteira de detalhe/criação de Pedido de Compra — fullscreen em todos os viewports.
@@ -31,12 +33,14 @@ export default function PedidoCompraDetalhe() {
       base44.entities.Embarque.filter({ pedido_compra_id: id })
     ]);
 
-    const pedidoBase = pedidoRes?.[0] || null;
+    let pedidoBase = pedidoRes?.[0] || null;
     if (!pedidoBase) {
       setPedido(null);
       setLoading(false);
       return null;
     }
+
+    pedidoBase = await loadPedidoComItens(base44, pedidoBase);
 
     let embarques = filterEmbarquesVisiveisParaPedido(embarquesRes || []);
     embarques = await hydrateEmbarquesLinhasDesdeCanonical(base44, pedidoBase.id, embarques);
@@ -92,7 +96,7 @@ export default function PedidoCompraDetalhe() {
     if (sanitizedData.id) {
       const atual = await base44.entities.PedidoCompra.filter({ id: sanitizedData.id });
       const pedidoAtual = atual?.[0] || {};
-      saved = await base44.entities.PedidoCompra.update(sanitizedData.id, {
+      saved = await base44.entities.PedidoCompra.update(sanitizedData.id, preparePedidoCompraEntityPayload({
         ...pedidoAtual,
         ...sanitizedData,
         embarques_registrados: sanitizedData.embarques_registrados ?? pedidoAtual.embarques_registrados,
@@ -103,14 +107,14 @@ export default function PedidoCompraDetalhe() {
         conferencia_id: sanitizedData.conferencia_id ?? pedidoAtual.conferencia_id,
         manifesto_entrada_id: sanitizedData.manifesto_entrada_id ?? pedidoAtual.manifesto_entrada_id,
         tem_divergencias: sanitizedData.tem_divergencias ?? pedidoAtual.tem_divergencias,
-      });
+      }));
     } else {
       const { id: _id, ...newPedido } = sanitizedData;
       if (!newPedido.numero) {
         const resp = await base44.functions.invoke('gerarNumeroSequencial', { tipo: 'PC' });
         newPedido.numero = resp?.data?.numero;
       }
-      saved = await base44.entities.PedidoCompra.create(newPedido);
+      saved = await base44.entities.PedidoCompra.create(preparePedidoCompraEntityPayload(newPedido));
     }
 
     // Após salvar, recarregar sempre usando a verdade do Embarque

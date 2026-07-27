@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SUGESTAO_COMPRA_SORT_COLUMNS } from '@/lib/sugestaoCompraColumnSort';
-import { SUGESTAO_OPERATIONAL_MODES } from '@/lib/sugestaoCompraOperationalMode';
+import { SUGESTAO_OPERATIONAL_MODES, SUGESTAO_VIEW_MODES } from '@/lib/sugestaoCompraOperationalMode';
 import { cn } from '@/components/utils';
 
 const CHIP_ACTIVE =
@@ -24,6 +24,8 @@ export default function SugestaoCompraQuickChips({
   onToggleConsiderarPedidos,
   operationalMode = 'livre',
   onOperationalModeChange,
+  viewMode = SUGESTAO_VIEW_MODES.familias,
+  onViewModeChange,
   columnSort,
   onSortColumn,
   onOpenRelatorio,
@@ -44,6 +46,21 @@ export default function SugestaoCompraQuickChips({
 
   return (
     <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+      <button
+        type="button"
+        onClick={() => onViewModeChange?.(
+          viewMode === SUGESTAO_VIEW_MODES.familias
+            ? SUGESTAO_VIEW_MODES.detalhe
+            : SUGESTAO_VIEW_MODES.familias,
+        )}
+        className={cn(
+          chipClass,
+          viewMode === SUGESTAO_VIEW_MODES.familias ? CHIP_ACTIVE : CHIP_IDLE,
+        )}
+        title="Famílias nível 2 falam primeiro (ex.: PISO › 45×45)"
+      >
+        Famílias
+      </button>
       <button
         type="button"
         onClick={onToggleSomenteAbaixo}
