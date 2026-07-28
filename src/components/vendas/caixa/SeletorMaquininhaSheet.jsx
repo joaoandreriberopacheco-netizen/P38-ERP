@@ -5,6 +5,7 @@ import { Dialog } from '@/components/ui/dialog';
 import { CaixaDialogContent } from './CaixaDialogContent';
 import { cn } from '@/lib/utils';
 import { getPrazoLiquidacaoMaquininha } from '@/lib/pagamentoPedidoVendaFinanceiro';
+import { calcularTaxaFromMaquininha } from '@/lib/taxaMaquininha';
 import { caixaSurface } from '@/lib/caixaP38Theme';
 
 const BANDEIRAS = ['Visa', 'Mastercard', 'Elo', 'Amex', 'Hipercard'];
@@ -36,12 +37,8 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
   };
 
   const getTaxaParaMaquininha = (maq, bandeira) => {
-    const cfg = (maq.bandeiras || []).find(b => b.bandeira === bandeira);
-    if (!cfg) return 0;
-    if (modalidade === 'debito') return cfg.taxa_debito || 0;
-    if (parcelas === 1) return cfg.taxa_credito_1x || 0;
-    if (parcelas <= 6) return cfg.taxa_credito_2_6x || 0;
-    return cfg.taxa_credito_7_12x || 0;
+    const mod = modalidade === 'debito' ? 'Débito' : (parcelas === 1 ? 'Crédito à Vista' : 'Crédito Parcelado');
+    return calcularTaxaFromMaquininha(maq, bandeira, mod, parcelas).taxa_total;
   };
 
   const getPrazoDias = () => getPrazoLiquidacaoMaquininha();

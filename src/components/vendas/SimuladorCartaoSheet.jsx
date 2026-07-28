@@ -2,50 +2,20 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { CreditCard, X, AlertTriangle, CheckCircle, ChevronDown, Users, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  calcularTaxaCartao,
+  calcularTaxaFromMaquininha,
+  calcularValorLiquidoAposTarifa,
+  calcularValorTarifa,
+  TAXA_MENSAL_PARCELAMENTO_PADRAO,
+} from '@/lib/taxaMaquininha';
 
 const BANDEIRAS = ['Visa', 'Mastercard', 'Elo', 'Amex', 'Hipercard'];
 
 const fmt = (valor) =>
   valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-// Dado as faixas de parcelamento, retorna a taxa mensal para N parcelas
-function getTaxaMensalParFaixa(faixas, parcelas) {
-  if (!faixas || faixas.length === 0) return 0;
-  for (const f of faixas) {
-    if (parcelas >= f.min_parcelas && parcelas <= f.max_parcelas) {
-      return f.taxa_mensal_percentual || 0;
-    }
-  }
-  return 0;
-}
-
-// Taxa acumulada do vendedor para N parcelas (ex: 3x a 2,55%/mês = 2 * 2,55 = 5,10%)
-function getTaxaAcumuladaVendedor(faixas, parcelas) {
-  const mensal = getTaxaMensalParFaixa(faixas, parcelas);
-  return (parcelas - 1) * mensal;
-}
-
-// Calcula taxa total e valor líquido para o VENDEDOR (sem juros do cliente)
-export function calcularTaxaCartao(maquininha, bandeira, modalidade, parcelas) {
-  if (!maquininha) return { taxa_intermediacao: 0, taxa_parcelamento: 0, taxa_total: 0 };
-  const confBandeira = (maquininha.bandeiras || []).find(b => b.bandeira === bandeira);
-  if (!confBandeira) return { taxa_intermediacao: 0, taxa_parcelamento: 0, taxa_total: 0 };
-
-  let taxa_intermediacao = 0;
-  let taxa_parcelamento = 0;
-
-  if (modalidade === 'Débito') {
-    taxa_intermediacao = confBandeira.taxa_debito || 0;
-  } else if (modalidade === 'Crédito à Vista') {
-    taxa_intermediacao = confBandeira.taxa_credito_1x || 0;
-  } else if (modalidade === 'Crédito Parcelado') {
-    taxa_intermediacao = confBandeira.taxa_intermediacao_parcelado || 0;
-    taxa_parcelamento = getTaxaAcumuladaVendedor(confBandeira.faixas_parcelamento, parcelas);
-  }
-
-  const taxa_total = taxa_intermediacao + taxa_parcelamento;
-  return { taxa_intermediacao, taxa_parcelamento, taxa_total };
-}
+export { calcularTaxaFromMaquininha as calcularTaxaCartao };
 
 // Calcula o máximo de parcelas sem juros que cabe no desconto disponível
 function calcularMaxParcelasSemJuros(maqSelecionada, bandeira, valorTotal, valorDesconto) {
@@ -55,10 +25,8 @@ function calcularMaxParcelasSemJuros(maqSelecionada, bandeira, valorTotal, valor
 
   let maxParcelas = 1; // 1x sempre (crédito à vista)
   for (let n = 2; n <= 12; n++) {
-    const taxaIntermediacao = confBandeira.taxa_intermediacao_parcelado || 0;
-    const taxaParc = getTaxaAcumuladaVendedor(confBandeira.faixas_parcelamento, n);
-    const taxaTotal = taxaIntermediacao + taxaParc;
-    const valorTaxa = valorTotal * taxaTotal / 100;
+    const { taxa_total: taxaTotal } = calcularTaxaCartao(confBandeira, 'Crédito Parcelado', n);
+    const valorTaxa = calcularValorTarifa(valorTotal, taxaTotal);
     if (valorTaxa <= valorDesconto) {
       maxParcelas = n;
     }
@@ -96,11 +64,11 @@ export default function SimuladorCartaoSheet({ open, onClose, valorTotal, valorD
   // Cálculo para modo vendedor (empresa paga a taxa)
   const { taxa_intermediacao, taxa_parcelamento, taxa_total } = useMemo(() => {
     if (!maqSelecionada || modoJurosCliente) return { taxa_intermediacao: 0, taxa_parcelamento: 0, taxa_total: 0 };
-    return calcularTaxaCartao(maqSelecionada, bandeira, modalidade, parcelas);
+    return calcularTaxaFromMaquininha(maqSelecionada, bandeira, modalidade, parcelas);
   }, [maqSelecionada, bandeira, modalidade, parcelas, modoJurosCliente]);
 
-  const valor_taxa = valorTotal * (taxa_total / 100);
-  const valor_liquido = valorTotal - valor_taxa;
+  const valor_taxa = calcularValorTarifa(valorTotal, taxa_total);
+  const valor_liquido = calcularValorLiquidoAposTarifa(valorTotal, taxa_total);
   const taxaMaiorQueDesconto = !modoJurosCliente && valorDesconto > 0 && valor_taxa > valorDesconto;
 
   // Máximo de parcelas sem juros
@@ -110,7 +78,7 @@ export default function SimuladorCartaoSheet({ open, onClose, valorTotal, valorD
   );
 
   // Taxa juros cliente
-  const taxaJurosClienteMensal = maqSelecionada?.taxa_juros_cliente_mensal ?? 1.81;
+  const taxaJurosClienteMensal = maqSelecionada?.taxa_juros_cliente_mensal ?? TAXA_MENSAL_PARCELAMENTO_PADRAO;
 
   // Parcelas disponíveis com suas taxas
   const parcelasDisponiveis = useMemo(() => {
@@ -123,9 +91,8 @@ export default function SimuladorCartaoSheet({ open, onClose, valorTotal, valorD
         const parcela = calcularParcelaComJuros(valorTotal, taxaJurosClienteMensal, n);
         return { parcelas: n, valorParcela: parcela, taxaMensal: taxaJurosClienteMensal };
       } else {
-        const taxaIntermediacao = confBandeira.taxa_intermediacao_parcelado || 0;
-        const taxaAcum = getTaxaAcumuladaVendedor(confBandeira.faixas_parcelamento, n);
-        return { parcelas: n, taxaTotal: taxaIntermediacao + taxaAcum };
+        const { taxa_total: taxaTotal } = calcularTaxaFromMaquininha(maqSelecionada, bandeira, 'Crédito Parcelado', n);
+        return { parcelas: n, taxaTotal };
       }
     });
   }, [maqSelecionada, bandeira, modalidade, modoJurosCliente, taxaJurosClienteMensal, valorTotal]);
@@ -139,7 +106,7 @@ export default function SimuladorCartaoSheet({ open, onClose, valorTotal, valorD
   // Taxa intermediação do vendedor no modo cliente (empresa paga apenas intermediação)
   const { taxa_intermediacao: taxa_interm_vendor_modo_cliente } = useMemo(() => {
     if (!modoJurosCliente || !maqSelecionada) return { taxa_intermediacao: 0 };
-    return calcularTaxaCartao(maqSelecionada, bandeira, 'Crédito Parcelado', parcelas);
+    return calcularTaxaFromMaquininha(maqSelecionada, bandeira, 'Crédito Parcelado', parcelas);
   }, [modoJurosCliente, maqSelecionada, bandeira, parcelas]);
 
   const prazoStr = () => (maqSelecionada ? 'D+1 (próximo dia útil)' : '');

@@ -362,10 +362,10 @@ Deno.serve(async (req) => {
 
       // ── CARTÃO (DÉBITO / CRÉDITO): conta a receber com prazo da maquininha ──
       if (isCartao) {
-        // Calcular taxa e valor líquido
         const taxa = pag.taxa_maquininha || 0;
         const valorBruto = pag.valor;
-        const valorLiquido = parseFloat((valorBruto * (1 - taxa / 100)).toFixed(2));
+        const valorTarifa = parseFloat((valorBruto * taxa / 100).toFixed(2));
+        const valorLiquido = parseFloat((valorBruto - valorTarifa).toFixed(2));
 
         // Data de vencimento = próximo dia útil (D+1; sexta–domingo credita na segunda)
         const prazoDias = pag.prazo_maquininha_dias ?? 1;
@@ -387,7 +387,6 @@ Deno.serve(async (req) => {
           valor_liquido: valorLiquido,
           data_vencimento: dataVencimento,
           data_liquidacao_prevista: dataVencimento,
-          // Em Aberto (Contas Abertas) até liquidação automática 08:00 (débito e crédito)
           status: 'Em Aberto',
           status_conciliacao: 'Pendente',
           forma_pagamento: pag.forma_pagamento,
@@ -405,7 +404,6 @@ Deno.serve(async (req) => {
           referencia_id: pedidoVenda.id,
           referencia_tipo: 'PedidoVenda',
           referencia_numero: numeroPedido,
-          // Metadados da maquininha para agrupamento futuro
           observacoes: JSON.stringify({
             maquininha_id: pag.maquininha_id,
             maquininha_nome: maquininhaNome,
@@ -415,10 +413,97 @@ Deno.serve(async (req) => {
             data_venda: hoje,
           }),
         });
+
+        if (valorTarifa > 0) {
+          await svc.entities.LancamentoFinanceiro.create({
+            tipo: 'Despesa',
+            descricao: `Tarifa Maquininha ${maquininhaNome} — ${taxa.toFixed(2)}% — ${bandeira} ${pag.forma_pagamento} — Venda ${numeroPedido}`,
+            valor: valorTarifa,
+            valor_liquido: valorTarifa,
+            data_vencimento: dataVencimento,
+            data_liquidacao_prevista: dataVencimento,
+            status: 'Em Aberto',
+            status_conciliacao: 'Pendente',
+            categoria: 'Custos de Maquininha',
+            tags: ['tarifa', 'taxa-maquininha', maquininhaNome, ...(bandeira ? [bandeira] : [])],
+            conta_financeira_id: contaDestinoId,
+            conta_financeira_nome: contaDestinoNome,
+            turno_caixa_id: turno_id,
+            referencia_id: pedidoVenda.id,
+            referencia_tipo: 'PedidoVenda',
+            referencia_numero: numeroPedido,
+          });
+        }
         continue;
       }
 
-      // ── DINHEIRO / PIX / Outros: Pago imediatamente ─────────────────────────
+      // ── PIX: receita líquida + despesa de tarifa ─────────────────────────────
+      if (pag.forma_pagamento === 'PIX') {
+        const taxaPix = pag.taxa_tarifa ?? 0.2;
+        const valorBruto = pag.valor;
+        const valorTarifa = parseFloat((valorBruto * taxaPix / 100).toFixed(2));
+        const valorLiquido = parseFloat((valorBruto - valorTarifa).toFixed(2));
+
+        let contaDestinoId = conta_caixa_id;
+        let contaDestinoNome = 'Caixa';
+        let formaPgId = null;
+
+        const formasList = await svc.entities.FormasDePagamento.filter({ nome: 'PIX' });
+        const forma = formasList[0];
+        if (forma) {
+          contaDestinoId = forma.conta_destino_id;
+          contaDestinoNome = forma.conta_destino_nome || 'PIX';
+          formaPgId = forma.id;
+        }
+
+        await svc.entities.LancamentoFinanceiro.create({
+          tipo: 'Receita',
+          descricao: `PIX - Venda ${numeroPedido}${rascunho.cliente_nome ? ` - ${rascunho.cliente_nome}` : ''}`,
+          terceiro_id: rascunho.cliente_id || null,
+          terceiro_nome: rascunho.cliente_nome || null,
+          valor: valorBruto,
+          valor_liquido: valorLiquido,
+          data_vencimento: hoje,
+          data_pagamento: hoje,
+          status: 'Pago',
+          status_conciliacao: 'Pendente',
+          forma_pagamento: 'PIX',
+          forma_pagamento_id: formaPgId,
+          forma_pagamento_tipo: 'PIX',
+          categoria: 'Venda de Produto',
+          conta_financeira_id: contaDestinoId,
+          conta_financeira_nome: contaDestinoNome,
+          turno_caixa_id: turno_id,
+          referencia_id: pedidoVenda.id,
+          referencia_tipo: 'PedidoVenda',
+          referencia_numero: numeroPedido,
+          observacoes: JSON.stringify({ taxa_pct: taxaPix, data_venda: hoje }),
+        });
+
+        if (valorTarifa > 0) {
+          await svc.entities.LancamentoFinanceiro.create({
+            tipo: 'Despesa',
+            descricao: `Tarifa PIX — ${taxaPix.toFixed(2)}% — Venda ${numeroPedido}`,
+            valor: valorTarifa,
+            valor_liquido: valorTarifa,
+            data_vencimento: hoje,
+            data_pagamento: hoje,
+            status: 'Pago',
+            status_conciliacao: 'Pendente',
+            categoria: 'Custos Financeiros',
+            tags: ['tarifa', 'taxa-pix', 'PIX'],
+            conta_financeira_id: contaDestinoId,
+            conta_financeira_nome: contaDestinoNome,
+            turno_caixa_id: turno_id,
+            referencia_id: pedidoVenda.id,
+            referencia_tipo: 'PedidoVenda',
+            referencia_numero: numeroPedido,
+          });
+        }
+        continue;
+      }
+
+      // ── DINHEIRO / Outros: Pago imediatamente ─────────────────────────────
       let contaDestinoId = conta_caixa_id;
       let contaDestinoNome = 'Caixa';
       let formaPgId = null;

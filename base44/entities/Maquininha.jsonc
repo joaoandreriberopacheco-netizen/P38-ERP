@@ -58,6 +58,16 @@
             "default": 0,
             "description": "Taxa de intermedia\u00e7\u00e3o para cr\u00e9dito \u00e0 vista 1x (%)"
           },
+          "taxa_credito_2_6x": {
+            "type": "number",
+            "default": 0,
+            "description": "Taxa base parcelado 2x a 6x (%)"
+          },
+          "taxa_credito_7_12x": {
+            "type": "number",
+            "default": 0,
+            "description": "Taxa base parcelado 7x a 12x (%)"
+          },
           "taxa_intermediacao_parcelado": {
             "type": "number",
             "default": 0,
@@ -99,12 +109,6 @@
                   "default": 0
                 }
               }
-            }
-          },
-          "taxa_credito_7_12x": {
-            "type": "number",
-            "default": 0,
-            "description": "Legado"
           }
         }
       }

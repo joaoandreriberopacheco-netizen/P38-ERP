@@ -59,7 +59,7 @@ import {
   montarTagsValeFolha,
   registrarValeNoFolhaAposLancamento,
 } from '@/lib/folhaValeFluxo';
-import { getPrazoLiquidacaoMaquininha } from '@/lib/pagamentoPedidoVendaFinanceiro';
+import { getPrazoLiquidacaoMaquininha, buildPagamentoPix } from '@/lib/pagamentoPedidoVendaFinanceiro';
 import {
   caixaTurnoQueryKey,
   fetchCaixaTurnoSnapshot,
@@ -836,7 +836,7 @@ export default function PDVCaixa({
        const pagamentosArray = [];
        // Dinheiro: registra o valor líquido (pago menos troco)
        if (pagamentosDinheiro > 0) pagamentosArray.push({ forma_pagamento: 'Dinheiro', valor: pagamentosDinheiro - troco, parcelas: 1 });
-       if (pagamentosPix > 0) pagamentosArray.push({ forma_pagamento: 'PIX', valor: pagamentosPix, parcelas: 1 });
+       if (pagamentosPix > 0) pagamentosArray.push(buildPagamentoPix(pagamentosPix));
        if (pagamentosDebito > 0) pagamentosArray.push({
          forma_pagamento: 'Cartão de Débito',
          valor: pagamentosDebito,
