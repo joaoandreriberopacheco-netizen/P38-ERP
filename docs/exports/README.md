@@ -1,6 +1,21 @@
 # Exportações do catálogo
 
-## Análise LINHA de compra (recomendado)
+## LINHAS mestre — aprovação (próximo passo BD)
+
+Tabela **LINHA** + tipo (solo/mix/portfolio) antes de SQL. Marque **STATUS** na folha.
+
+| Ficheiro | Descrição |
+|----------|-----------|
+| [P38-linhas-mestre-aprovacao.xlsx](./P38-linhas-mestre-aprovacao.xlsx) | Lista de linhas para aprovar + mapa h1→LINHA + amostra SKUs |
+
+Regenerar: `npm run export:linhas-mestre`
+
+**Download directo:**  
+https://github.com/joaoandreriberopacheco-netizen/varejosync/raw/main/docs/exports/P38-linhas-mestre-aprovacao.xlsx
+
+---
+
+## Análise LINHA de compra (modelo completo — referência)
 
 Modelo: **LINHA** → **produto de compra** → **eixos A×B** + marca.  
 Ex.: h1=JOELHO + h2=SOLDÁVEL → LINHA **CONEXÃO SOLDÁVEL**, produto de compra **JOELHO 90° SOLDÁVEL**, eixo B = medida.
