@@ -60,6 +60,9 @@ export interface P38Client {
   asServiceRole: {
     entities: ReturnType<typeof createSupabaseEntityLayer>;
     functions: ReturnType<typeof buildFunctions>;
+    connectors?: {
+      getConnection: (name: string) => Promise<{ accessToken: string }>;
+    };
   };
   entities: ReturnType<typeof createSupabaseEntityLayer>;
   integrations: { Core: ReturnType<typeof buildCoreIntegrations> };
