@@ -31,6 +31,10 @@ import ConfirmarImpressaoDialog from './ConfirmarImpressaoDialog';
 import LostSalesForm from './LostSalesForm';
 import OrcamentosRecentesSheet from './OrcamentosRecentesSheet';
 import SimuladorTaxaCartao from './SimuladorTaxaCartao';
+import {
+  getLimiteDescontoEfetivo,
+  getPoliticaCondicao,
+} from '@/lib/condicaoComercialVenda';
 import BarcodeScanner from './BarcodeScanner';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { createPageUrl } from '@/utils';
@@ -78,6 +82,8 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
     observacoes: ''
   });
   const [metodoEntrega, setMetodoEntrega] = useState('Retirada');
+  /** Condição comercial folga: true = com entrega (5%), false = retirada (10%). Obrigatório antes do caixa. */
+  const [condicaoComEntrega, setCondicaoComEntrega] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [ultimaPreVenda, setUltimaPreVenda] = useState(null);
   const [showComprovante, setShowComprovante] = useState(false);
@@ -183,7 +189,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   const isMobile = useMobileLayout();
   const inAppLayout = isMobile && !overlayMode;
 
-  const { subtotal, valorTotal, valorAjusteCalculado, percentualAjuste, ajusteExcedido } = useMemo(() => {
+  const { subtotal, valorTotal, valorAjusteCalculado, percentualAjuste, ajusteExcedido, limiteDescontoEfetivo } = useMemo(() => {
     const sub = carrinho.reduce((acc, item) => acc + (item.total || 0), 0);
 
     let valorAjusteCalc = 0;
@@ -200,11 +206,13 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
     }
 
     const percent = sub > 0 ? valorAjusteCalc / sub * 100 : 0;
-    // Limite efetivo = maior entre o limite do usuário e o percentual_desconto_maximo da tabela
     const limiteUsuario = currentUser?.limite_desconto || 0;
     const limiteTabela = tabelaPreco?.percentual_desconto_maximo || 0;
-    const limite = Math.max(limiteUsuario, limiteTabela);
-    const excedido = tipoAjuste === 'desconto' && currentUser && limite > 0 && percent > limite;
+    const limiteCondicao = condicaoComEntrega === null
+      ? null
+      : getLimiteDescontoEfetivo(condicaoComEntrega, limiteUsuario, limiteTabela);
+    const limite = limiteCondicao ?? Math.max(limiteUsuario, limiteTabela);
+    const excedido = tipoAjuste === 'desconto' && condicaoComEntrega !== null && limite > 0 && percent > limite;
 
     let total = sub;
     if (tipoAjuste === 'desconto') {
@@ -218,9 +226,10 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
       valorTotal: total,
       valorAjusteCalculado: valorAjusteCalc,
       percentualAjuste: percent,
-      ajusteExcedido: excedido
+      ajusteExcedido: excedido,
+      limiteDescontoEfetivo: limite,
     };
-  }, [carrinho, valorAjuste, tipoValorAjuste, tipoAjuste, currentUser]);
+  }, [carrinho, valorAjuste, tipoValorAjuste, tipoAjuste, currentUser, condicaoComEntrega, tabelaPreco]);
 
   const totalItens = carrinho.reduce((sum, item) => sum + item.quantidade, 0);
 
@@ -297,6 +306,9 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
           // Definir método de entrega
           if (rascunho.metodo_entrega) {
             setMetodoEntrega(rascunho.metodo_entrega);
+          }
+          if (rascunho.condicao_com_entrega === true || rascunho.condicao_com_entrega === false) {
+            setCondicaoComEntrega(rascunho.condicao_com_entrega);
           }
           
           // Definir desconto se houver
@@ -730,6 +742,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   const handleLimparCarrinho = () => {
     setCarrinho([]);
     setProdutoSelecionado(null);
+    setCondicaoComEntrega(null);
     setValorAjuste(0);
     setAjustePercentual('');
     setAjusteValor('');
@@ -743,8 +756,12 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
       showFeedback('error', 'Adicione produtos antes de continuar', 3000);
       return;
     }
+    if (condicaoComEntrega === null) {
+      showFeedback('error', 'Selecione Com entrega ou Retirada (condição comercial)', 3000);
+      return;
+    }
     if (ajusteExcedido) {
-      showFeedback('error', `Desconto excede seu limite de ${currentUser?.limite_desconto || 0}%`, 3000);
+      showFeedback('error', `Desconto excede o limite de ${limiteDescontoEfetivo}%`, 3000);
       return;
     }
     setShowClienteDialog(true);
@@ -847,6 +864,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
           tabela_preco_id: tabelaPreco?.id,
           status: 'Aguardando Caixa',
           metodo_entrega: metodoEntrega,
+          condicao_com_entrega: condicaoComEntrega,
           itens: carrinho.map((item) => ({
             produto_id: item.produto_id,
             produto_nome: item.produto_nome,
@@ -898,6 +916,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
           tabela_preco_id: tabelaPreco?.id,
           status: 'Aguardando Caixa',
           metodo_entrega: metodoEntrega,
+          condicao_com_entrega: condicaoComEntrega,
           itens: carrinho.map((item) => ({
             produto_id: item.produto_id,
             produto_nome: item.produto_nome,
@@ -926,6 +945,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
       setClienteSelecionado(null);
       setShowClienteDialog(false);
       setMetodoEntrega('Retirada');
+      setCondicaoComEntrega(null);
       setValorAjuste(0);
       setAjustePercentual('');
       setAjusteValor('');
@@ -1013,6 +1033,9 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
       // Definir método de entrega
       if (rascunhoEncontrado.metodo_entrega) {
         setMetodoEntrega(rascunhoEncontrado.metodo_entrega);
+      }
+      if (rascunhoEncontrado.condicao_com_entrega === true || rascunhoEncontrado.condicao_com_entrega === false) {
+        setCondicaoComEntrega(rascunhoEncontrado.condicao_com_entrega);
       }
       
       // Definir desconto se houver
@@ -1361,6 +1384,47 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
             )}
 
             <div className="space-y-2.5">
+              {/* Condição comercial — folga desconto/cartão (não gera entrega) */}
+              <div className="bg-muted/40 dark:bg-muted/60 rounded-xl p-3 space-y-2">
+                <div>
+                  <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Condição comercial</span>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Define limite de desconto e cartão. Não aparece na nota.</p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCondicaoComEntrega(true)}
+                    className={`flex-1 h-10 rounded-lg text-xs font-semibold transition-colors ${
+                      condicaoComEntrega === true
+                        ? 'bg-card dark:bg-background text-foreground shadow-sm ring-1 ring-border/40'
+                        : 'bg-card/50 dark:bg-background/50 text-muted-foreground hover:bg-card'
+                    }`}
+                  >
+                    Com entrega
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCondicaoComEntrega(false)}
+                    className={`flex-1 h-10 rounded-lg text-xs font-semibold transition-colors ${
+                      condicaoComEntrega === false
+                        ? 'bg-card dark:bg-background text-foreground shadow-sm ring-1 ring-border/40'
+                        : 'bg-card/50 dark:bg-background/50 text-muted-foreground hover:bg-card'
+                    }`}
+                  >
+                    Retirada
+                  </button>
+                </div>
+                {condicaoComEntrega !== null && (
+                  <p className="text-[10px] text-muted-foreground leading-snug">
+                    {getPoliticaCondicao(condicaoComEntrega).resumo_caixa}
+                    {' · '}Juros do comprador: sempre liberado no caixa.
+                  </p>
+                )}
+                {condicaoComEntrega === null && (
+                  <p className="text-[10px] text-amber-600 dark:text-amber-400">Obrigatório para avançar</p>
+                )}
+              </div>
+
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>Subtotal</span>
                 <span>R$ {subtotal.toFixed(2)}</span>
@@ -1370,7 +1434,10 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
               <div className="bg-muted/40 dark:bg-muted/60 rounded-xl p-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Desconto</span>
-                  {tabelaPreco?.percentual_desconto_maximo > 0 && (
+                  {condicaoComEntrega !== null && (
+                    <span className="text-[10px] text-muted-foreground">máx {limiteDescontoEfetivo}%</span>
+                  )}
+                  {condicaoComEntrega === null && tabelaPreco?.percentual_desconto_maximo > 0 && (
                     <span className="text-[10px] text-muted-foreground">máx {tabelaPreco.percentual_desconto_maximo}%</span>
                   )}
                 </div>
@@ -1391,7 +1458,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                       placeholder="0,00" />
                   </div>
                 </div>
-                {ajusteExcedido && <p className="text-xs text-red-500">Excede limite de {Math.max(currentUser?.limite_desconto || 0, tabelaPreco?.percentual_desconto_maximo || 0)}%</p>}
+                {ajusteExcedido && <p className="text-xs text-red-500">Excede limite de {limiteDescontoEfetivo}%</p>}
               </div>
 
               <div className="flex justify-between items-center pt-1">
@@ -1400,7 +1467,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
               </div>
             </div>
 
-            <Button onClick={handleAvancarParaCliente} disabled={carrinho.length === 0 || ajusteExcedido}
+            <Button onClick={handleAvancarParaCliente} disabled={carrinho.length === 0 || ajusteExcedido || condicaoComEntrega === null}
               className="w-full h-12 p38-btn-primary rounded-xl shadow-none border-0 text-base disabled:opacity-40">
               Avançar
               <ArrowRight className="w-4 h-4 ml-2" />
@@ -1440,7 +1507,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                 </span>
               )}
             </button>
-            <button onClick={handleAvancarParaCliente} disabled={carrinho.length === 0 || ajusteExcedido}
+            <button onClick={handleAvancarParaCliente} disabled={carrinho.length === 0 || ajusteExcedido || condicaoComEntrega === null}
               className="flex items-center gap-1.5 h-10 px-4 bg-primary/20 border border-primary/35 hover:bg-primary/30 text-foreground font-semibold text-sm rounded-xl disabled:opacity-40 flex-shrink-0 shadow-none">
               <UserPlus className="w-4 h-4" />
               Cliente
@@ -1828,11 +1895,54 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
               <span>R$ {subtotal.toFixed(2).replace('.', ',')}</span>
             </div>
 
+            {/* Condição comercial — mobile */}
+            <div className="bg-muted/40 dark:bg-card rounded-2xl p-3 space-y-2">
+              <div>
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">Condição comercial</span>
+                <p className="text-[9px] text-muted-foreground mt-0.5">Não aparece na nota. Obrigatório.</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCondicaoComEntrega(true)}
+                  className={`flex-1 h-10 rounded-xl text-xs font-semibold transition-colors ${
+                    condicaoComEntrega === true
+                      ? 'bg-card dark:bg-background text-foreground shadow-sm ring-1 ring-border/40'
+                      : 'bg-card/50 dark:bg-background/50 text-muted-foreground'
+                  }`}
+                >
+                  Com entrega
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCondicaoComEntrega(false)}
+                  className={`flex-1 h-10 rounded-xl text-xs font-semibold transition-colors ${
+                    condicaoComEntrega === false
+                      ? 'bg-card dark:bg-background text-foreground shadow-sm ring-1 ring-border/40'
+                      : 'bg-card/50 dark:bg-background/50 text-muted-foreground'
+                  }`}
+                >
+                  Retirada
+                </button>
+              </div>
+              {condicaoComEntrega !== null && (
+                <p className="text-[9px] text-muted-foreground leading-snug">
+                  {getPoliticaCondicao(condicaoComEntrega).resumo_caixa}
+                </p>
+              )}
+              {condicaoComEntrega === null && (
+                <p className="text-[9px] text-amber-600 dark:text-amber-400">Selecione para avançar</p>
+              )}
+            </div>
+
             {/* Desconto Two-Way - Mobile */}
             <div className="bg-muted/40 dark:bg-card rounded-2xl p-3 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">Desconto</span>
-                {tabelaPreco?.percentual_desconto_maximo > 0 && (
+                {condicaoComEntrega !== null && (
+                  <span className="text-[9px] text-muted-foreground">máx {limiteDescontoEfetivo}%</span>
+                )}
+                {condicaoComEntrega === null && tabelaPreco?.percentual_desconto_maximo > 0 && (
                   <span className="text-[9px] text-muted-foreground">máx {tabelaPreco.percentual_desconto_maximo}%</span>
                 )}
               </div>
@@ -1853,7 +1963,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                     placeholder="0,00" />
                 </div>
               </div>
-              {ajusteExcedido && <p className="text-[10px] text-red-500">Excede limite de {Math.max(currentUser?.limite_desconto || 0, tabelaPreco?.percentual_desconto_maximo || 0)}%</p>}
+              {ajusteExcedido && <p className="text-[10px] text-red-500">Excede limite de {limiteDescontoEfetivo}%</p>}
             </div>
 
             <div className="flex items-center justify-between">
@@ -1862,7 +1972,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
             </div>
 
             <Button onClick={() => { setShowCarrinhoMobile(false); handleAvancarParaCliente(); }}
-              disabled={carrinho.length === 0 || ajusteExcedido}
+              disabled={carrinho.length === 0 || ajusteExcedido || condicaoComEntrega === null}
               className="w-full h-12 p38-btn-primary rounded-2xl shadow-none border-0 disabled:opacity-40">
               Avançar <ArrowRight className="w-4 h-4 ml-1.5 inline" />
             </Button>

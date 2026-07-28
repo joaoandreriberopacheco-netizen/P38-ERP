@@ -60,6 +60,7 @@ import {
   registrarValeNoFolhaAposLancamento,
 } from '@/lib/folhaValeFluxo';
 import { getPrazoLiquidacaoMaquininha, buildPagamentoPix } from '@/lib/pagamentoPedidoVendaFinanceiro';
+import { validarPagamentoCartaoLoja } from '@/lib/condicaoComercialVenda';
 import {
   caixaTurnoQueryKey,
   fetchCaixaTurnoSnapshot,
@@ -828,6 +829,53 @@ export default function PDVCaixa({
       toast({ title: "Conta de Caixa PDV não encontrada", variant: "destructive" });
       return;
     }
+    if (pedidoSelecionado?.condicao_com_entrega !== true && pedidoSelecionado?.condicao_com_entrega !== false) {
+      toast({
+        title: 'Forma não autorizada',
+        description: 'Pedido sem condição comercial. Devolva ao vendedor.',
+        variant: 'destructive',
+        duration: 4000,
+      });
+      return;
+    }
+    const subtotalPedido = pedidoSelecionado?.subtotal ?? valorTotalPedido;
+    const valorDescontoPedido = pedidoSelecionado?.valor_desconto ?? 0;
+    if (pagamentosDebito > 0 && maquininhaDebito?.taxa != null) {
+      const validacaoDebito = validarPagamentoCartaoLoja({
+        condicaoComEntrega: pedidoSelecionado.condicao_com_entrega,
+        subtotal: subtotalPedido,
+        valorDesconto: valorDescontoPedido,
+        taxaTotalPct: maquininhaDebito.taxa,
+        parcelas: 1,
+      });
+      if (!validacaoDebito.ok) {
+        toast({
+          title: 'Forma não autorizada',
+          description: validacaoDebito.motivo,
+          variant: 'destructive',
+          duration: 4500,
+        });
+        return;
+      }
+    }
+    if (pagamentosCredito > 0 && maquininhaCredito?.taxa != null && !maquininhaCredito?.juros_cliente) {
+      const validacaoCredito = validarPagamentoCartaoLoja({
+        condicaoComEntrega: pedidoSelecionado.condicao_com_entrega,
+        subtotal: subtotalPedido,
+        valorDesconto: valorDescontoPedido,
+        taxaTotalPct: maquininhaCredito.taxa,
+        parcelas: parcelasCredito,
+      });
+      if (!validacaoCredito.ok) {
+        toast({
+          title: 'Forma não autorizada',
+          description: validacaoCredito.motivo,
+          variant: 'destructive',
+          duration: 4500,
+        });
+        return;
+      }
+    }
     // Trava de duplo clique no frontend
     if (processandoVenda) return;
     setProcessandoVenda(true);
@@ -860,6 +908,7 @@ export default function PDVCaixa({
          bandeira: maquininhaCredito?.bandeira,
          taxa_maquininha: maquininhaCredito?.taxa || 0,
          prazo_maquininha_dias: maquininhaCredito?.prazo_dias ?? getPrazoLiquidacaoMaquininha(),
+         juros_cliente: !!maquininhaCredito?.juros_cliente,
        });
        if (pagamentosVale > 0 && valeEncontrado) {
          pagamentosArray.push({ forma_pagamento: 'Vale Troca', valor: pagamentosVale, parcelas: 1, vale_codigo: valeEncontrado.codigo, vale_id: valeEncontrado.id });

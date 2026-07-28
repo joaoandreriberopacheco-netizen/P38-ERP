@@ -8,6 +8,7 @@ import SeletorMaquininhaSheet from './SeletorMaquininhaSheet';
 import SeletorFiadoSheet from './SeletorFiadoSheet';
 import { CAIXA_TOAST_SUCCESS, caixaClasses, caixaSurface } from '@/lib/caixaP38Theme';
 import { resolveValorPedidoVenda } from '@/lib/financialUtils';
+import { politicaFromPedidoOuRascunho } from '@/lib/condicaoComercialVenda';
 
 export default function ConfirmarPagamentoDialog({
   open, onOpenChange,
@@ -77,6 +78,9 @@ export default function ConfirmarPagamentoDialog({
   };
 
   const dialogOpen = open && !!pedidoSelecionado;
+  const politicaVenda = politicaFromPedidoOuRascunho(pedidoSelecionado);
+  const subtotalPedido = pedidoSelecionado?.subtotal ?? resolveValorPedidoVenda(pedidoSelecionado);
+  const valorDescontoPedido = pedidoSelecionado?.valor_desconto ?? 0;
 
   const handleBuscarVale = async () => {
     if (!codigoVale.trim()) return;
@@ -138,6 +142,22 @@ export default function ConfirmarPagamentoDialog({
               </div>
             </DialogTitle>
           </DialogHeader>
+
+          {politicaVenda ? (
+            <div className="shrink-0 border-b border-border/40 bg-muted/30 px-4 py-2.5 dark:border-border/40">
+              <p className="text-[11px] leading-snug text-muted-foreground">
+                <span className="font-medium text-foreground/90">Condição (vendedor):</span>{' '}
+                {politicaVenda.label} — desconto máx. {politicaVenda.max_desconto_pct}%, cartão loja até {politicaVenda.max_parcelas_loja}x.
+                {' '}Juros do comprador: sempre liberado.
+              </p>
+            </div>
+          ) : (
+            <div className="shrink-0 border-b border-amber-200 bg-amber-50 px-4 py-2.5 dark:border-amber-800 dark:bg-amber-900/20">
+              <p className="text-[11px] text-amber-800 dark:text-amber-200">
+                Pedido sem condição comercial. Devolva ao vendedor para definir Com entrega ou Retirada.
+              </p>
+            </div>
+          )}
 
           {/* Formas de pagamento */}
           <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto overflow-x-hidden overscroll-contain px-4 py-3 [scrollbar-gutter:stable]">
@@ -305,6 +325,9 @@ export default function ConfirmarPagamentoDialog({
         visible={!!seletorMaquininha}
         modalidade={seletorMaquininha || 'debito'}
         parcelas={seletorMaquininha === 'credito' ? parcelasCredito : 1}
+        politicaVenda={politicaVenda}
+        subtotalPedido={subtotalPedido}
+        valorDescontoPedido={valorDescontoPedido}
         onSelect={(dados) => {
           if (seletorMaquininha === 'debito') {
             setMaquininhaDebito(dados);
