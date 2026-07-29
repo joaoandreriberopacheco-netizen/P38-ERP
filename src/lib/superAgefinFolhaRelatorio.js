@@ -3,8 +3,7 @@
  *
  * No vencimento dia 5 do mês M paga-se a competência M−1 (regra FOLHA_DIA_VENCIMENTO).
  * Inclui apenas **funcionários** — sócios ficam de fora (retirada costuma ser semanal / aos sábados).
- * O gestor usa o papel de forma analógica: nome + salário impressos e coluna em branco
- * para adiantamentos, faltas e observações à mão.
+ * No papel: **3 colunas de blocos** (cada bloco = nome + salário + espaço para anotar à mão).
  */
 
 import {
@@ -107,7 +106,9 @@ export function pagamentoBateComRegraFolha(competencia, dataPagamentoIso) {
 }
 
 /**
- * HTML da secção analógica (3 colunas) + linha de conta “Folha de pagamento”.
+ * HTML da secção analógica: **3 colunas de blocos de funcionários**
+ * (cada bloco = nome + salário + espaço em branco para anotar à mão)
+ * + linha de conta “Folha de pagamento”.
  * @param {{
  *   folha: Awaited<ReturnType<typeof carregarFolhaParaRelatorioDia5>>,
  *   spx: (n: number) => string,
@@ -136,34 +137,32 @@ export function montarHtmlSecaoFolhaAnaloga({ folha, spx, escapeHtml, formatCurr
     _superagefin_folha: true,
   };
 
-  const cabecalho = `<thead><tr>
-    <th style="text-align:left;font-size:${spx(11)};line-height:1.2;font-weight:700;color:#000;padding:6px 8px;border-bottom:1px solid #94a3b8;width:34%">Funcionário</th>
-    <th style="text-align:right;font-size:${spx(11)};line-height:1.2;font-weight:700;color:#000;padding:6px 8px;border-bottom:1px solid #94a3b8;width:16%">Salário</th>
-    <th style="text-align:left;font-size:${spx(11)};line-height:1.2;font-weight:700;color:#000;padding:6px 8px;border-bottom:1px solid #94a3b8;width:50%">Anotações (adiantamentos, faltas, observações)</th>
-  </tr></thead>`;
-
-  const corpo = folha.linhas
+  /** Cada funcionário = um bloco; layout em 3 colunas no papel */
+  const blocosHtml = folha.linhas
     .map((row) => {
       const salarioLabel = row.salario > 0 ? formatCurrency(row.salario) : '—';
-      return `<tr>
-        <td style="vertical-align:middle;padding:10px 8px;border-bottom:1px solid #cbd5e1;font-size:${spx(12)};line-height:1.25;color:#000;font-weight:600">${escapeHtml(row.nome)}</td>
-        <td style="vertical-align:middle;padding:10px 8px;border-bottom:1px solid #cbd5e1;text-align:right;font-size:${spx(12)};line-height:1.25;color:#000;white-space:nowrap">${escapeHtml(salarioLabel)}</td>
-        <td style="vertical-align:middle;padding:10px 8px;border-bottom:1px solid #cbd5e1;height:36px">
-          <div style="min-height:28px;border-bottom:1px dotted #94a3b8"></div>
-        </td>
-      </tr>`;
+      return `<article style="break-inside:avoid;page-break-inside:avoid;border:1px solid #cbd5e1;border-radius:8px;background:#fff;padding:8px 9px;min-height:88px;box-sizing:border-box">
+        <p style="margin:0;font-size:${spx(12)};line-height:1.2;font-weight:700;color:#000;text-transform:uppercase;letter-spacing:0.01em">${escapeHtml(row.nome)}</p>
+        <p style="margin:4px 0 0;font-size:${spx(12)};line-height:1.2;font-weight:400;color:#000">${escapeHtml(salarioLabel)}</p>
+        <p style="margin:8px 0 2px;font-size:${spx(9)};line-height:1.1;color:#64748b;text-transform:uppercase;letter-spacing:0.06em">Anotações</p>
+        <div aria-hidden="true" style="margin-top:2px">
+          <div style="height:14px;border-bottom:1px dotted #94a3b8"></div>
+          <div style="height:14px;border-bottom:1px dotted #94a3b8"></div>
+          <div style="height:14px;border-bottom:1px dotted #94a3b8"></div>
+        </div>
+      </article>`;
     })
     .join('');
 
-  const secaoHtml = `<section style="margin-top:10px;border-radius:10px;overflow:visible;background:#eef2f7;break-inside:avoid;page-break-inside:avoid">
-    <div style="padding:10px 12px;background:#e2e8f0;border-bottom:1px solid #cbd5e1">
-      <p style="margin:0;font-size:${spx(13)};line-height:1.25;font-weight:700;color:#000">Folha de pagamento (funcionários) — anotações à mão</p>
+  const secaoHtml = `<section style="margin-top:10px;border-radius:10px;overflow:visible;background:#eef2f7">
+    <div style="padding:10px 12px;background:#e2e8f0;border-bottom:1px solid #cbd5e1;break-after:avoid;page-break-after:avoid">
+      <p style="margin:0;font-size:${spx(13)};line-height:1.25;font-weight:700;color:#000">Folha de pagamento (funcionários) — 3 colunas no papel</p>
       <p style="margin:4px 0 0;font-size:${spx(11)};line-height:1.25;color:#334155">
-        Vencimento ${escapeHtml(labelData)} · Competência ${escapeHtml(folha.competencia)} · Sócios não entram nesta folha (retirada semanal) · 3ª coluna: adiantamentos, faltas, observações
+        Vencimento ${escapeHtml(labelData)} · Competência ${escapeHtml(folha.competencia)} · Sócios não entram · Em cada bloco: nome, salário e espaço para adiantamentos / faltas / observações
       </p>
     </div>
-    <div style="padding:8px;background:#ffffff">
-      <table style="width:100%;border-collapse:collapse;table-layout:fixed">${cabecalho}<tbody>${corpo}</tbody></table>
+    <div style="padding:10px;background:#f8fafc;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:stretch">
+      ${blocosHtml}
     </div>
   </section>`;
 
