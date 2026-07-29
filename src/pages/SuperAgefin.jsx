@@ -23,6 +23,13 @@ import {
   montarHtmlSecaoFolhaAnaloga,
 } from '@/lib/superAgefinFolhaRelatorio';
 import {
+  carregarBudgetsAgrupadosParaRelatorio,
+  carregarModelosFolhaParaSuperAgefin,
+  contaSuperAgefinSomenteLeitura,
+  montarContasSinteticasSociosSabado,
+  montarHtmlSecaoBudgetsAnaloga,
+} from '@/lib/superAgefinCompromissos';
+import {
   lancamentoEhContaPagar,
   lancamentoEhCmv,
   lancamentoEhFreteItinerario,
@@ -42,6 +49,7 @@ import {
   P38_VIRTUAL_MIN_ROWS,
   P38_VIRTUAL_OVERSCAN,
 } from '@/lib/p38VirtualList';
+import { toast } from 'sonner';
 
 function formatCurrency(value) {
   return `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -283,7 +291,7 @@ function SuperAgefinGruposVirtualList({
   modoSelecao,
   selecionadosIds,
   toggleSelecaoConta,
-  setSelectedConta,
+  abrirConta,
   idsComAvisoDuplicadoGrupo,
 }) {
   const flatRows = useMemo(() => {
@@ -358,7 +366,7 @@ function SuperAgefinGruposVirtualList({
                   modoSelecao={modoSelecao}
                   selecionado={selecionadosIds.includes(conta.id)}
                   onToggleSelecao={toggleSelecaoConta}
-                  onOpen={() => setSelectedConta(conta)}
+                  onOpen={() => abrirConta(conta)}
                   avisoMesmoGrupoDuplicado={idsComAvisoDuplicadoGrupo.has(conta.id)}
                 />
               </div>
@@ -369,7 +377,7 @@ function SuperAgefinGruposVirtualList({
                   modoSelecao={modoSelecao}
                   selecionado={selecionadosIds.includes(conta.id)}
                   onToggleSelecao={toggleSelecaoConta}
-                  onOpen={() => setSelectedConta(conta)}
+                  onOpen={() => abrirConta(conta)}
                   avisoMesmoGrupoDuplicado={idsComAvisoDuplicadoGrupo.has(conta.id)}
                 />
               </div>
@@ -385,6 +393,7 @@ function SuperAgefinGruposVirtualList({
 export default function SuperAgefin() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [contas, setContas] = useState([]);
+  const [modelosFolha, setModelosFolha] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedConta, setSelectedConta] = useState(null);
   const [pagamentoFilter, setPagamentoFilter] = useState('todos');
@@ -401,6 +410,18 @@ export default function SuperAgefin() {
   const [selecionadosIds, setSelecionadosIds] = useState([]);
   const debounceRef = useRef(null);
   const scrollMesAplicadoRef = useRef('');
+
+  const abrirConta = useCallback((conta) => {
+    if (contaSuperAgefinSomenteLeitura(conta)) {
+      toast.message('Compromisso previsto', {
+        description: conta?._superagefin_socio
+          ? 'Retirada semanal de sócio (sábado). Figura na consulta e no relatório; edição pela Folha.'
+          : 'Compromisso sintético da SUPERAGEFIN — só para consulta/impressão.',
+      });
+      return;
+    }
+    setSelectedConta(conta);
+  }, []);
 
   const loadContas = useCallback(async () => {
     setLoading(true);
@@ -428,6 +449,16 @@ export default function SuperAgefin() {
   }, [loadContas]);
 
   useEffect(() => {
+    let cancelled = false;
+    carregarModelosFolhaParaSuperAgefin().then((modelos) => {
+      if (!cancelled) setModelosFolha(modelos || []);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     const unsub = base44.entities.LancamentoFinanceiro.subscribe(() => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => loadContas(), 450);
@@ -446,16 +477,23 @@ export default function SuperAgefin() {
     Boolean(dateFrom) ||
     Boolean(dateTo);
 
+  const contasSociosSabado = useMemo(
+    () => montarContasSinteticasSociosSabado(currentMonth, modelosFolha),
+    [currentMonth, modelosFolha],
+  );
+
   const monthData = useMemo(() => {
     const { start, end } = boundsMesCivil(currentMonth.getFullYear(), currentMonth.getMonth());
-    return contas
-      .filter((conta) => {
-        if (!conta?.data_vencimento) return false;
-        const vencimento = `${conta.data_vencimento}`.slice(0, 10);
-        return vencimento >= start && vencimento <= end;
-      })
-      .sort((a, b) => new Date(`${a.data_vencimento}T12:00:00-05:00`) - new Date(`${b.data_vencimento}T12:00:00-05:00`));
-  }, [contas, currentMonth]);
+    const reais = contas.filter((conta) => {
+      if (!conta?.data_vencimento) return false;
+      const vencimento = `${conta.data_vencimento}`.slice(0, 10);
+      return vencimento >= start && vencimento <= end;
+    });
+    return [...reais, ...contasSociosSabado].sort(
+      (a, b) =>
+        new Date(`${a.data_vencimento}T12:00:00-05:00`) - new Date(`${b.data_vencimento}T12:00:00-05:00`),
+    );
+  }, [contas, currentMonth, contasSociosSabado]);
 
   const filteredData = useMemo(() => {
     const todayKey = dataHoje();
@@ -721,6 +759,20 @@ export default function SuperAgefin() {
       console.error('SUPERAGEFIN: falha ao carregar folha para o relatório', err);
     }
 
+    /** Budgets por centro de custo — secção analógica após contas obrigatórias */
+    let budgetsSecaoHtml = '';
+    try {
+      const budgetsAgrupados = await carregarBudgetsAgrupadosParaRelatorio(currentMonth);
+      budgetsSecaoHtml = montarHtmlSecaoBudgetsAnaloga({
+        budgetsAgrupados,
+        spx,
+        escapeHtml,
+        formatCurrency,
+      });
+    } catch (err) {
+      console.error('SUPERAGEFIN: falha ao carregar budgets para o relatório', err);
+    }
+
     const gruposComFolha = (() => {
       const cloned = gruposParaImpressao.map((g) => ({ ...g, contas: [...g.contas] }));
       if (!folhaContaSintetica) return cloned;
@@ -826,8 +878,14 @@ export default function SuperAgefin() {
     const notaFolhaHtml = folhaContaSintetica
       ? `<p style="margin:2px 0 0;color:#000;font-size:${spx(12)};line-height:1.2">Inclui Folha de pagamento no dia ${escapeHtml(formatarSoData(dataPagamentoFolha))} (total + grelha para anotações à mão)</p>`
       : '';
+    const notaSociosHtml = contasSociosSabado.length
+      ? `<p style="margin:2px 0 0;color:#000;font-size:${spx(12)};line-height:1.2">Inclui retiradas semanais de sócios nos sábados (${contasSociosSabado.length} compromisso${contasSociosSabado.length !== 1 ? 's' : ''})</p>`
+      : '';
+    const notaBudgetsHtml = budgetsSecaoHtml
+      ? `<p style="margin:2px 0 0;color:#000;font-size:${spx(12)};line-height:1.2">Inclui secção Budgets por centro de custo (anotações à mão)</p>`
+      : '';
 
-    const html = `<html><head><meta charset="UTF-8" /><title>SUPERAGEFIN ${escapeHtml(formatMonth(currentMonth))}</title></head><body style="font-family:'Noto Sans','NotoSans',Arial,sans-serif;padding:${spx(18)};color:#000;font-size:${spx(12)};line-height:1.3"><div style="width:1000px;min-width:1000px;max-width:1000px"><div style="background:#f8fafc;border:1px solid #d5dde8;border-radius:8px;padding:8px 10px;margin-bottom:8px"><h2 style="margin:0 0 2px;font-size:${spx(18)};line-height:1.1;color:#000">SUPERAGEFIN - ${escapeHtml(formatMonth(currentMonth))}</h2><p style="margin:0 0 2px;color:#000;font-size:${spx(12)};line-height:1.2">Contas filtradas da consulta financeira</p><p style="margin:0 0 2px;color:#000;font-size:${spx(12)};line-height:1.2">Quantidade: ${quantidadeImpressa} conta${quantidadeImpressa !== 1 ? 's' : ''}</p><p style="margin:0;color:#000;font-size:${spx(12)};line-height:1.2">Total impresso: <span style="font-weight:400;color:#000">${escapeHtml(formatCurrency(totalImpressoComFolha))}</span></p>${notaFolhaHtml}${modoSelecao ? `<p style="margin:2px 0 0;color:#000;font-size:${spx(12)};line-height:1.2">Modo Somar: apenas contas selecionadas</p>` : ''}</div>${filtrosHtml}${cabecalhoColunasHtml}${gruposHtml}${rodapeAnotacoesHtml}</div></body></html>`;
+    const html = `<html><head><meta charset="UTF-8" /><title>SUPERAGEFIN ${escapeHtml(formatMonth(currentMonth))}</title></head><body style="font-family:'Noto Sans','NotoSans',Arial,sans-serif;padding:${spx(18)};color:#000;font-size:${spx(12)};line-height:1.3"><div style="width:1000px;min-width:1000px;max-width:1000px"><div style="background:#f8fafc;border:1px solid #d5dde8;border-radius:8px;padding:8px 10px;margin-bottom:8px"><h2 style="margin:0 0 2px;font-size:${spx(18)};line-height:1.1;color:#000">SUPERAGEFIN - ${escapeHtml(formatMonth(currentMonth))}</h2><p style="margin:0 0 2px;color:#000;font-size:${spx(12)};line-height:1.2">Contas filtradas da consulta financeira</p><p style="margin:0 0 2px;color:#000;font-size:${spx(12)};line-height:1.2">Quantidade: ${quantidadeImpressa} conta${quantidadeImpressa !== 1 ? 's' : ''}</p><p style="margin:0;color:#000;font-size:${spx(12)};line-height:1.2">Total impresso: <span style="font-weight:400;color:#000">${escapeHtml(formatCurrency(totalImpressoComFolha))}</span></p>${notaFolhaHtml}${notaSociosHtml}${notaBudgetsHtml}${modoSelecao ? `<p style="margin:2px 0 0;color:#000;font-size:${spx(12)};line-height:1.2">Modo Somar: apenas contas selecionadas</p>` : ''}</div>${filtrosHtml}${cabecalhoColunasHtml}${gruposHtml}${budgetsSecaoHtml}${rodapeAnotacoesHtml}</div></body></html>`;
     try {
       await openPrintWindowOrShareHtml(html, `superagefin-${currentMonth.getTime()}.html`, `SUPERAGEFIN ${formatMonth(currentMonth)}`);
     } catch {
@@ -1003,7 +1061,7 @@ export default function SuperAgefin() {
             modoSelecao={modoSelecao}
             selecionadosIds={selecionadosIds}
             toggleSelecaoConta={toggleSelecaoConta}
-            setSelectedConta={setSelectedConta}
+            abrirConta={abrirConta}
             idsComAvisoDuplicadoGrupo={idsComAvisoDuplicadoGrupo}
           />
         ) : (
@@ -1025,7 +1083,7 @@ export default function SuperAgefin() {
                       modoSelecao={modoSelecao}
                       selecionado={selecionadosIds.includes(conta.id)}
                       onToggleSelecao={toggleSelecaoConta}
-                      onOpen={() => setSelectedConta(conta)}
+                      onOpen={() => abrirConta(conta)}
                       avisoMesmoGrupoDuplicado={idsComAvisoDuplicadoGrupo.has(conta.id)}
                     />
                   ))}
@@ -1039,7 +1097,7 @@ export default function SuperAgefin() {
                       modoSelecao={modoSelecao}
                       selecionado={selecionadosIds.includes(conta.id)}
                       onToggleSelecao={toggleSelecaoConta}
-                      onOpen={() => setSelectedConta(conta)}
+                      onOpen={() => abrirConta(conta)}
                       avisoMesmoGrupoDuplicado={idsComAvisoDuplicadoGrupo.has(conta.id)}
                     />
                   ))}
