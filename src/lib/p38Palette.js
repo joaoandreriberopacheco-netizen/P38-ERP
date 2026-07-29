@@ -3,6 +3,10 @@
  * Valores alinhados a index.css e p38-identity.css.
  *
  * Regra de contraste: usar p38Contrast.js para escolher foreground sobre qualquer fundo.
+ *
+ * Feeling mobile de referência (aprovado): Planejamento financeiro no dark —
+ * carvão + limão com parcimónia. Ver .cursor/rules/p38-mobile-referencia-planejamento.mdc
+ * e docs/p38-mobile-rollout.md §0.
  */
 
 export const P38_PALETTE = {
