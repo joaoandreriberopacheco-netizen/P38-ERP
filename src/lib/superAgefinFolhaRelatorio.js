@@ -2,6 +2,7 @@
  * SUPERAGEFIN — bloco de Folha no relatório impresso (dia 05).
  *
  * No vencimento dia 5 do mês M paga-se a competência M−1 (regra FOLHA_DIA_VENCIMENTO).
+ * Inclui apenas **funcionários** — sócios ficam de fora (retirada costuma ser semanal / aos sábados).
  * O gestor usa o papel de forma analógica: nome + salário impressos e coluna em branco
  * para adiantamentos, faltas e observações à mão.
  */
@@ -11,6 +12,7 @@ import {
   dataVencimentoPagamentoFolha,
   extrairSalarioBase,
   FOLHA_DIA_VENCIMENTO,
+  isSocio,
   mapaModelosPorColaborador,
   montarCompetenciasVisao,
   nomeColaboradorCompetencia,
@@ -69,6 +71,9 @@ export async function carregarFolhaParaRelatorioDia5(dataPagamentoIso) {
   const linhas = [];
   for (const comp of competencias) {
     const modelo = modelosMap[comp.colaborador_id] || null;
+    // Dia 5 = folha de funcionários. Sócios (ex.: retirada semanal aos sábados) não entram.
+    if (isSocio(modelo || comp)) continue;
+
     const nome = nomeColaboradorCompetencia(comp, modelosMap) || '—';
     const salario =
       (modelo ? extrairSalarioBase(modelo) : 0) ||
@@ -152,9 +157,9 @@ export function montarHtmlSecaoFolhaAnaloga({ folha, spx, escapeHtml, formatCurr
 
   const secaoHtml = `<section style="margin-top:10px;border-radius:10px;overflow:visible;background:#eef2f7;break-inside:avoid;page-break-inside:avoid">
     <div style="padding:10px 12px;background:#e2e8f0;border-bottom:1px solid #cbd5e1">
-      <p style="margin:0;font-size:${spx(13)};line-height:1.25;font-weight:700;color:#000">Folha de pagamento — detalhe para anotações à mão</p>
+      <p style="margin:0;font-size:${spx(13)};line-height:1.25;font-weight:700;color:#000">Folha de pagamento (funcionários) — anotações à mão</p>
       <p style="margin:4px 0 0;font-size:${spx(11)};line-height:1.25;color:#334155">
-        Vencimento ${escapeHtml(labelData)} · Competência ${escapeHtml(folha.competencia)} · Use a 3ª coluna para adiantamentos, faltas e observações
+        Vencimento ${escapeHtml(labelData)} · Competência ${escapeHtml(folha.competencia)} · Sócios não entram nesta folha (retirada semanal) · 3ª coluna: adiantamentos, faltas, observações
       </p>
     </div>
     <div style="padding:8px;background:#ffffff">
