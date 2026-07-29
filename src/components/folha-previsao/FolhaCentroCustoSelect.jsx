@@ -17,12 +17,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { salvarCentroCustoRegistro } from '@/lib/folhaPrevisaoService';
 import { useToast } from '@/components/ui/use-toast';
+import { useCompactShell } from '@/hooks/use-breakpoint';
 
 function FolhaCentroCustoFormDialog({ open, onClose, centro, onSave, saving }) {
   const [nome, setNome] = useState('');
@@ -45,7 +47,7 @@ function FolhaCentroCustoFormDialog({ open, onClose, centro, onSave, saving }) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose?.()}>
-      <DialogContent className="max-w-sm rounded-2xl">
+      <DialogContent className="w-[calc(100vw-1.25rem)] max-w-sm rounded-2xl">
         <DialogHeader>
           <DialogTitle>{centro?.id ? 'Editar centro de custo' : 'Novo centro de custo'}</DialogTitle>
         </DialogHeader>
@@ -58,17 +60,18 @@ function FolhaCentroCustoFormDialog({ open, onClose, centro, onSave, saving }) {
               placeholder="Ex: Loja, Casa, Fábrica"
               required
               autoFocus
+              className="h-11"
             />
           </div>
           <label className="flex items-center gap-2">
             <Checkbox checked={ativo} onCheckedChange={(v) => setAtivo(Boolean(v))} />
             <span className="text-sm">Ativo</span>
           </label>
-          <DialogFooter className="gap-2">
-            <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
+          <DialogFooter className="gap-2 flex-col-reverse sm:flex-row">
+            <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={onClose} disabled={saving}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={saving || !nome.trim()}>
+            <Button type="submit" className="w-full sm:w-auto" disabled={saving || !nome.trim()}>
               {saving ? 'Salvando…' : 'Salvar'}
             </Button>
           </DialogFooter>
@@ -85,12 +88,14 @@ export default function FolhaCentroCustoSelect({
   onCentrosChange,
   disabled,
   allowEmpty = true,
+  placeholder = 'Escolher centro de custo',
 }) {
   const [open, setOpen] = useState(false);
   const [busca, setBusca] = useState('');
   const [centroForm, setCentroForm] = useState(null);
   const [salvando, setSalvando] = useState(false);
   const { toast } = useToast();
+  const compact = useCompactShell();
 
   const ativos = useMemo(
     () => (centros || []).filter((c) => c?.ativo !== false && String(c?.nome || '').trim()),
@@ -100,9 +105,11 @@ export default function FolhaCentroCustoSelect({
   const selecionado = useMemo(() => {
     const nome = String(value || '').trim();
     if (!nome) return null;
-    return ativos.find((c) => String(c.nome).toLocaleLowerCase('pt-BR') === nome.toLocaleLowerCase('pt-BR')) || {
-      nome,
-    };
+    return (
+      ativos.find(
+        (c) => String(c.nome).toLocaleLowerCase('pt-BR') === nome.toLocaleLowerCase('pt-BR'),
+      ) || { nome }
+    );
   }, [ativos, value]);
 
   const filtrados = useMemo(() => {
@@ -144,97 +151,229 @@ export default function FolhaCentroCustoSelect({
     setCentroForm(centro || {});
   };
 
+  const triggerClass = cn(
+    'w-full justify-between font-normal h-11 px-3 rounded-xl',
+    !selecionado && 'text-muted-foreground',
+  );
+
+  const listaMobile = (
+    <>
+      {allowEmpty && (
+        <button
+          type="button"
+          onClick={() => handleSelect({ nome: '' })}
+          className={cn(
+            'flex w-full items-center gap-2 rounded-xl px-3 py-3 text-left text-sm transition-colors',
+            !value ? 'bg-primary/15 text-foreground' : 'text-foreground/90 hover:bg-muted',
+          )}
+        >
+          <Check className={cn('h-4 w-4 shrink-0', !value ? 'opacity-100' : 'opacity-0')} />
+          <span className="text-muted-foreground">Sem centro</span>
+        </button>
+      )}
+      {filtrados.map((centro) => {
+        const selected =
+          String(value).toLocaleLowerCase('pt-BR') ===
+          String(centro.nome).toLocaleLowerCase('pt-BR');
+        return (
+          <button
+            key={centro.id || centro.nome}
+            type="button"
+            onClick={() => handleSelect(centro)}
+            className={cn(
+              'flex w-full items-center gap-2 rounded-xl px-3 py-3 text-left text-sm transition-colors',
+              selected
+                ? 'bg-primary/15 text-foreground'
+                : 'text-foreground/90 hover:bg-muted',
+            )}
+          >
+            <Check className={cn('h-4 w-4 shrink-0', selected ? 'opacity-100' : 'opacity-0')} />
+            <span className="flex-1 truncate">{centro.nome}</span>
+            {centro.id && (
+              <span
+                role="button"
+                tabIndex={0}
+                className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                aria-label={`Editar ${centro.nome}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  abrirFormCentro(centro);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    abrirFormCentro(centro);
+                  }
+                }}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </span>
+            )}
+          </button>
+        );
+      })}
+      {filtrados.length === 0 && (
+        <p className="px-3 py-8 text-center text-sm text-muted-foreground">
+          Nenhum centro encontrado.
+        </p>
+      )}
+    </>
+  );
+
   return (
     <>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
+      {compact ? (
+        <>
           <Button
             type="button"
             variant="outline"
             role="combobox"
             aria-expanded={open}
             disabled={disabled}
-            className={cn(
-              'w-full justify-between font-normal h-10 px-3',
-              !selecionado && 'text-muted-foreground',
-            )}
+            className={triggerClass}
+            onClick={() => setOpen(true)}
           >
-            <span className="truncate">{selecionado?.nome || 'Selecione'}</span>
+            <span className="truncate">{selecionado?.nome || placeholder}</span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-          <Command shouldFilter={false}>
-            <div className="flex items-center gap-1 border-b px-2">
-              <div className="flex min-w-0 flex-1 items-center gap-2 px-1">
-                <Search className="h-4 w-4 shrink-0 opacity-50" />
-                <CommandPrimitive.Input
-                  value={busca}
-                  onValueChange={setBusca}
-                  placeholder="Buscar centro..."
-                  className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
-                />
-              </div>
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                className="h-8 w-8 shrink-0"
-                aria-label="Novo centro de custo"
-                onClick={() => abrirFormCentro({})}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-            <CommandList>
-              <CommandEmpty>Nenhum centro encontrado.</CommandEmpty>
-              <CommandGroup>
-                {allowEmpty && (
-                  <CommandItem value="__none__" onSelect={() => handleSelect({ nome: '' })}>
-                    <Check
-                      className={cn('h-4 w-4 shrink-0', !value ? 'opacity-100' : 'opacity-0')}
+
+          <Drawer
+            open={open}
+            onOpenChange={(v) => {
+              setOpen(v);
+              if (!v) setBusca('');
+            }}
+          >
+            <DrawerContent className="rounded-t-[28px] border-0 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+              <DrawerHeader className="px-0 pb-2 text-left">
+                <DrawerTitle>Centro de custo</DrawerTitle>
+              </DrawerHeader>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="relative min-w-0 flex-1">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={busca}
+                      onChange={(e) => setBusca(e.target.value)}
+                      placeholder="Buscar centro…"
+                      className="h-12 rounded-xl border-0 bg-muted pl-9"
+                      autoFocus
                     />
-                    <span className="text-muted-foreground">Sem centro</span>
-                  </CommandItem>
-                )}
-                {filtrados.map((centro) => (
-                  <CommandItem
-                    key={centro.id || centro.nome}
-                    value={centro.nome}
-                    onSelect={() => handleSelect(centro)}
-                    className="flex items-center gap-2"
+                  </div>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="secondary"
+                    className="h-12 w-12 shrink-0 rounded-xl"
+                    aria-label="Novo centro de custo"
+                    onClick={() => abrirFormCentro({})}
                   >
-                    <Check
-                      className={cn(
-                        'h-4 w-4 shrink-0',
-                        String(value).toLocaleLowerCase('pt-BR') ===
-                          String(centro.nome).toLocaleLowerCase('pt-BR')
-                          ? 'opacity-100'
-                          : 'opacity-0',
+                    <Plus className="h-5 w-5" />
+                  </Button>
+                </div>
+                <div className="max-h-[48vh] space-y-1 overflow-y-auto rounded-2xl bg-muted/40 p-2">
+                  {listaMobile}
+                </div>
+              </div>
+            </DrawerContent>
+          </Drawer>
+        </>
+      ) : (
+        <Popover
+          open={open}
+          onOpenChange={(v) => {
+            setOpen(v);
+            if (!v) setBusca('');
+          }}
+        >
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              disabled={disabled}
+              className={triggerClass}
+            >
+              <span className="truncate">{selecionado?.nome || placeholder}</span>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+            <Command shouldFilter={false}>
+              <div className="flex items-center gap-1 border-b px-2">
+                <div className="flex min-w-0 flex-1 items-center gap-2 px-1">
+                  <Search className="h-4 w-4 shrink-0 opacity-50" />
+                  <CommandPrimitive.Input
+                    value={busca}
+                    onValueChange={setBusca}
+                    placeholder="Buscar centro…"
+                    className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 shrink-0"
+                  aria-label="Novo centro de custo"
+                  onClick={() => abrirFormCentro({})}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <CommandList>
+                <CommandEmpty>Nenhum centro encontrado.</CommandEmpty>
+                <CommandGroup>
+                  {allowEmpty && (
+                    <CommandItem value="__none__" onSelect={() => handleSelect({ nome: '' })}>
+                      <Check
+                        className={cn('h-4 w-4 shrink-0', !value ? 'opacity-100' : 'opacity-0')}
+                      />
+                      <span className="text-muted-foreground">Sem centro</span>
+                    </CommandItem>
+                  )}
+                  {filtrados.map((centro) => (
+                    <CommandItem
+                      key={centro.id || centro.nome}
+                      value={centro.nome}
+                      onSelect={() => handleSelect(centro)}
+                      className="flex items-center gap-2"
+                    >
+                      <Check
+                        className={cn(
+                          'h-4 w-4 shrink-0',
+                          String(value).toLocaleLowerCase('pt-BR') ===
+                            String(centro.nome).toLocaleLowerCase('pt-BR')
+                            ? 'opacity-100'
+                            : 'opacity-0',
+                        )}
+                      />
+                      <span className="flex-1 truncate">{centro.nome}</span>
+                      {centro.id && (
+                        <button
+                          type="button"
+                          className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                          aria-label={`Editar ${centro.nome}`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            abrirFormCentro(centro);
+                          }}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
                       )}
-                    />
-                    <span className="flex-1 truncate">{centro.nome}</span>
-                    {centro.id && (
-                      <button
-                        type="button"
-                        className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-                        aria-label={`Editar ${centro.nome}`}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          abrirFormCentro(centro);
-                        }}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                    )}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      )}
 
       <FolhaCentroCustoFormDialog
         open={Boolean(centroForm)}
