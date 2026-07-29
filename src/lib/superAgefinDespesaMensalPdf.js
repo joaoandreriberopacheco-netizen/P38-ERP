@@ -4,7 +4,8 @@
  * Margens: topo 25 mm (2,5 cm — grampeamento), base 15 mm (1,5 cm — numeração).
  * Cabeçalho: «DESPESA MENSAL - MÊS / ANO» | «TOTAL R$ …»
  * Card do dia: «08/08/2026 (04)» à esquerda · valor à direita.
- * Folha / budgets: 1 coluna; cada bloco só desenha se couber (senão nova página).
+ * Folha: 3 colunas; se a linha de cards não cabe, inteira na página seguinte.
+ * Budgets: 1 coluna; cada bloco só desenha se couber.
  */
 
 import { jsPDF } from 'jspdf';
@@ -21,7 +22,8 @@ const MARGIN_BOTTOM = 15;
 const MARGIN_X = 8;
 /** Conteúdo começa abaixo da margem superior (cabeçalho vive dentro da margem) */
 const CONTENT_TOP = MARGIN_TOP + 1;
-const CONTENT_BOTTOM = PAGE_H - MARGIN_BOTTOM;
+/** Limite útil: deixa a margem inferior intacta (numeração) + folga anti-sobreposição */
+const CONTENT_BOTTOM = PAGE_H - MARGIN_BOTTOM - 1;
 
 function formatCurrency(value) {
   return `R$ ${(Number(value) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -125,11 +127,12 @@ export async function gerarDespesaMensalPdf(opts) {
     y = CONTENT_TOP;
   };
 
-  /** Garante espaço; se não couber, começa página nova (nunca desenha para além da margem). */
+  /** Garante espaço; se não couber, página nova. Nunca desenhar abaixo de CONTENT_BOTTOM. */
   const ensureSpace = (neededMm) => {
-    if (y + neededMm <= CONTENT_BOTTOM) return true;
+    const need = Math.max(0, Number(neededMm) || 0);
+    if (y + need <= CONTENT_BOTTOM) return true;
     newPage();
-    return y + neededMm <= CONTENT_BOTTOM;
+    return true;
   };
 
   drawHeader();
@@ -327,11 +330,17 @@ export async function gerarDespesaMensalPdf(opts) {
   return { blob, filename };
 }
 
-/** Folha em 1 coluna: cada cartão cabe inteiro ou vai para a página seguinte. */
+/**
+ * Folha em 3 colunas.
+ * Quebra por **linha de até 3 cards**: se a linha não cabe inteira na página,
+ * começa na página seguinte (card nunca é cortado a meio / sob a numeração).
+ */
 function desenharFolhaPdf(pdf, { folha, setFont, y, ensureSpace, contentW, formatCurrency }) {
-  const cardH = 68;
+  const COLS = 3;
+  const gap = 2.5;
+  const cardW = (contentW - gap * (COLS - 1)) / COLS;
+  const cardH = 72;
   const headerH = 11;
-  const gap = 3;
 
   ensureSpace(headerH + 4);
   pdf.setFillColor(226, 232, 240);
@@ -339,7 +348,7 @@ function desenharFolhaPdf(pdf, { folha, setFont, y, ensureSpace, contentW, forma
   setFont('bold');
   pdf.setFontSize(10);
   pdf.setTextColor(0, 0, 0);
-  pdf.text(normalizePdfText('Folha de pagamento (funcionários) — 1 coluna'), MARGIN_X + 2, y + 4.2);
+  pdf.text(normalizePdfText('Folha de pagamento (funcionários) — 3 colunas'), MARGIN_X + 2, y + 4.2);
   setFont('normal');
   pdf.setFontSize(7.5);
   pdf.setTextColor(51, 65, 85);
@@ -352,43 +361,49 @@ function desenharFolhaPdf(pdf, { folha, setFont, y, ensureSpace, contentW, forma
   );
   y += headerH + 2;
 
-  for (const row of folha.linhas || []) {
+  const linhas = folha.linhas || [];
+  for (let i = 0; i < linhas.length; i += COLS) {
+    // Linha completa (até 3 cards) — ou vai toda para a página seguinte
     ensureSpace(cardH + gap);
-    const x = MARGIN_X;
-    const w = contentW;
+    const slice = linhas.slice(i, i + COLS);
 
-    pdf.setDrawColor(203, 213, 225);
-    pdf.setFillColor(255, 255, 255);
-    pdf.roundedRect(x, y, w, cardH, 1.2, 1.2, 'FD');
+    slice.forEach((row, idx) => {
+      const x = MARGIN_X + idx * (cardW + gap);
 
-    setFont('bold');
-    pdf.setFontSize(10);
-    pdf.setTextColor(0, 0, 0);
-    const nomeLines = pdf.splitTextToSize(
-      normalizePdfText(String(row.nome || '').toUpperCase()),
-      w - 6,
-    );
-    pdf.text(nomeLines.slice(0, 2), x + 3, y + 6);
+      pdf.setDrawColor(203, 213, 225);
+      pdf.setFillColor(255, 255, 255);
+      pdf.roundedRect(x, y, cardW, cardH, 1.2, 1.2, 'FD');
 
-    setFont('normal');
-    pdf.setFontSize(10);
-    const sal = row.salario > 0 ? formatCurrency(row.salario) : '—';
-    pdf.text(normalizePdfText(sal), x + 3, y + 16);
+      setFont('bold');
+      pdf.setFontSize(7.5);
+      pdf.setTextColor(0, 0, 0);
+      const nomeLines = pdf.splitTextToSize(
+        normalizePdfText(String(row.nome || '').toUpperCase()),
+        cardW - 4,
+      );
+      pdf.text(nomeLines.slice(0, 2), x + 2, y + 5);
 
-    pdf.setFontSize(7);
-    pdf.setTextColor(100, 116, 139);
-    pdf.text(normalizePdfText('ANOTAÇÕES'), x + 3, y + 22);
+      setFont('normal');
+      pdf.setFontSize(8);
+      const sal = row.salario > 0 ? formatCurrency(row.salario) : '—';
+      pdf.text(normalizePdfText(sal), x + 2, y + 14);
 
-    pdf.setDrawColor(148, 163, 184);
-    pdf.setLineWidth(0.18);
-    let ly = y + 24;
-    for (let n = 0; n < 10; n += 1) {
-      ly += 4;
-      if (ly > y + cardH - 2) break;
-      pdf.setLineDashPattern([0.7, 0.7], 0);
-      pdf.line(x + 3, ly, x + w - 3, ly);
-    }
-    pdf.setLineDashPattern([], 0);
+      pdf.setFontSize(6.5);
+      pdf.setTextColor(100, 116, 139);
+      pdf.text(normalizePdfText('ANOTAÇÕES'), x + 2, y + 19);
+
+      pdf.setDrawColor(148, 163, 184);
+      pdf.setLineWidth(0.18);
+      let ly = y + 21;
+      for (let n = 0; n < 11; n += 1) {
+        ly += 4;
+        if (ly > y + cardH - 2) break;
+        pdf.setLineDashPattern([0.7, 0.7], 0);
+        pdf.line(x + 2, ly, x + cardW - 2, ly);
+      }
+      pdf.setLineDashPattern([], 0);
+    });
+
     y += cardH + gap;
   }
 
