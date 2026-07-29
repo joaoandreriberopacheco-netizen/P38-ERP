@@ -18,6 +18,11 @@ import SuperAgefinConsultaOrganizer from '@/components/superagefin/SuperAgefinCo
 import { boundsMesCivil, dataHoje, formatarSoData } from '@/components/utils/dateUtils';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import {
+  carregarFolhaParaRelatorioDia5,
+  dataDia5DoMes,
+  montarHtmlSecaoFolhaAnaloga,
+} from '@/lib/superAgefinFolhaRelatorio';
+import {
   lancamentoEhContaPagar,
   lancamentoEhCmv,
   lancamentoEhFreteItinerario,
@@ -694,13 +699,62 @@ export default function SuperAgefin() {
     /** Grupos com muitas contas podem ultrapassar uma página: `avoid` só em grupos pequenos evita empurrar páginas inteiras em branco */
     const maxContasQuebraEvitadaNoGrupo = 12;
 
+    /** Dia 05 do mês em ecrã: total da folha como conta + grelha analógica (anotações à mão) */
+    const dataPagamentoFolha = dataDia5DoMes(currentMonth);
+    let folhaRelatorio = null;
+    let folhaContaSintetica = null;
+    let folhaSecaoHtml = '';
+    let folhaTotalConta = 0;
+    try {
+      folhaRelatorio = await carregarFolhaParaRelatorioDia5(dataPagamentoFolha);
+      const montado = montarHtmlSecaoFolhaAnaloga({
+        folha: folhaRelatorio,
+        spx,
+        escapeHtml,
+        formatCurrency,
+        labelData: formatarSoData(dataPagamentoFolha),
+      });
+      folhaContaSintetica = montado.contaSintetica;
+      folhaSecaoHtml = montado.secaoHtml;
+      folhaTotalConta = montado.totalConta || 0;
+    } catch (err) {
+      console.error('SUPERAGEFIN: falha ao carregar folha para o relatório', err);
+    }
+
+    const gruposComFolha = (() => {
+      const cloned = gruposParaImpressao.map((g) => ({ ...g, contas: [...g.contas] }));
+      if (!folhaContaSintetica) return cloned;
+
+      const idx = cloned.findIndex((g) => g.key === dataPagamentoFolha);
+      if (idx >= 0) {
+        const jaTem = cloned[idx].contas.some((c) => c?._superagefin_folha || /folha\s+de\s+pagamento/i.test(String(c.descricao || '')));
+        if (!jaTem) cloned[idx].contas = [folhaContaSintetica, ...cloned[idx].contas];
+        return cloned;
+      }
+
+      const novoGrupo = {
+        key: dataPagamentoFolha,
+        label: formatarSoData(dataPagamentoFolha),
+        orderValue: dataPagamentoFolha,
+        contas: [folhaContaSintetica],
+      };
+      const withNew = [...cloned, novoGrupo];
+      return withNew.sort((a, b) => {
+        const cmp = String(a.orderValue).localeCompare(String(b.orderValue), 'pt-BR', { sensitivity: 'base' });
+        return sortOrder === 'asc' ? cmp : -cmp;
+      });
+    })();
+
+    const quantidadeImpressa = contasParaImpressao.length + (folhaContaSintetica ? 1 : 0);
+    const totalImpressoComFolha = totalParaImpressao + (folhaContaSintetica ? folhaTotalConta : 0);
+
     const filtrosHtml = filtrosAtivosResumo.length > 0
       ? `<div style="margin:${spx(14)} 0 ${spx(14)}"><p style="margin:0 0 6px;font-size:${spx(12)};font-weight:600;color:#000">Filtros ativos</p><div style="display:flex;flex-wrap:wrap;gap:6px">${filtrosAtivosResumo.map((filtro) => `<span style="display:inline-block;padding:4px 9px;border-radius:999px;background:#f8fafc;color:#000;font-size:${spx(12)};line-height:1.3;border:1px solid #e2e8f0">${escapeHtml(filtro)}</span>`).join('')}</div></div>`
       : '';
 
     const cabecalhoColunasHtml = `<table style="width:100%;border-collapse:collapse;table-layout:fixed;margin:8px 0 10px"><colgroup><col style="width:132px" /><col style="width:auto" /><col style="width:136px" /></colgroup><thead><tr><th style="text-align:left;font-size:${spx(12)};line-height:1.25;font-weight:700;color:#000;padding:0 8px 6px 8px;border-bottom:1px solid #cbd5e1">Status</th><th style="text-align:left;font-size:${spx(12)};line-height:1.25;font-weight:700;color:#000;padding:0 8px 6px 8px;border-bottom:1px solid #cbd5e1">Conta</th><th style="text-align:right;font-size:${spx(12)};line-height:1.25;font-weight:700;color:#000;padding:0 8px 6px 8px;border-bottom:1px solid #cbd5e1">Valor</th></tr></thead></table>`;
 
-    const gruposHtml = gruposParaImpressao.map((grupo) => {
+    const gruposHtml = gruposComFolha.map((grupo) => {
       const subtotal = grupo.contas.reduce((acc, conta) => acc + (Number(conta.valor) || 0), 0);
       const linhas = grupo.contas.map((conta) => {
         const pago = lancamentoPago(conta);
@@ -738,7 +792,11 @@ export default function SuperAgefin() {
       const bloqueioQuebra = evitarQuebraGrupo ? 'break-inside:avoid;page-break-inside:avoid;' : '';
 
       /** Cabeçalho da data costuma ficar colado ao início da tabela; grupos grandes podem partir linhas entre páginas */
-      return `<section style="margin-top:12px;border-radius:10px;overflow:visible;background:#f2f4f7;${bloqueioQuebra}"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;background:#edf0f4;break-after:avoid;page-break-after:avoid"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:${spx(13)};line-height:1.25;font-weight:700;color:#000">${escapeHtml(grupo.label)}</span><span style="font-size:${spx(13)};line-height:1.25;font-weight:400;color:#000">${escapeHtml(formatCurrency(subtotal))}</span></div><div style="text-align:right"><span style="font-size:${spx(13)};line-height:1.25;color:#000">${grupo.contas.length} conta${grupo.contas.length !== 1 ? 's' : ''}</span></div></div><div style="padding:8px 8px;${bloqueioQuebra}"><table style="width:100%;border-collapse:collapse;table-layout:fixed;background:#ffffff"><colgroup><col style="width:132px" /><col style="width:auto" /><col style="width:136px" /></colgroup><tbody>${linhas}</tbody></table></div></section>`;
+      const secaoGrupo = `<section style="margin-top:12px;border-radius:10px;overflow:visible;background:#f2f4f7;${bloqueioQuebra}"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;background:#edf0f4;break-after:avoid;page-break-after:avoid"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:${spx(13)};line-height:1.25;font-weight:700;color:#000">${escapeHtml(grupo.label)}</span><span style="font-size:${spx(13)};line-height:1.25;font-weight:400;color:#000">${escapeHtml(formatCurrency(subtotal))}</span></div><div style="text-align:right"><span style="font-size:${spx(13)};line-height:1.25;color:#000">${grupo.contas.length} conta${grupo.contas.length !== 1 ? 's' : ''}</span></div></div><div style="padding:8px 8px;${bloqueioQuebra}"><table style="width:100%;border-collapse:collapse;table-layout:fixed;background:#ffffff"><colgroup><col style="width:132px" /><col style="width:auto" /><col style="width:136px" /></colgroup><tbody>${linhas}</tbody></table></div></section>`;
+      if (grupo.key === dataPagamentoFolha && folhaSecaoHtml) {
+        return `${secaoGrupo}${folhaSecaoHtml}`;
+      }
+      return secaoGrupo;
     }).join('');
 
     /** Guia de escrita: linhas próximas no topo, espaçamento aumenta e some — sem “caixa” fechada */
@@ -765,7 +823,11 @@ export default function SuperAgefin() {
       <div aria-hidden="true" style="margin-top:${spx(10)};width:100%">${guiaSvgHtml}</div>
     </section>`;
 
-    const html = `<html><head><meta charset="UTF-8" /><title>SUPERAGEFIN ${escapeHtml(formatMonth(currentMonth))}</title></head><body style="font-family:'Noto Sans','NotoSans',Arial,sans-serif;padding:${spx(18)};color:#000;font-size:${spx(12)};line-height:1.3"><div style="width:1000px;min-width:1000px;max-width:1000px"><div style="background:#f8fafc;border:1px solid #d5dde8;border-radius:8px;padding:8px 10px;margin-bottom:8px"><h2 style="margin:0 0 2px;font-size:${spx(18)};line-height:1.1;color:#000">SUPERAGEFIN - ${escapeHtml(formatMonth(currentMonth))}</h2><p style="margin:0 0 2px;color:#000;font-size:${spx(12)};line-height:1.2">Contas filtradas da consulta financeira</p><p style="margin:0 0 2px;color:#000;font-size:${spx(12)};line-height:1.2">Quantidade: ${contasParaImpressao.length} conta${contasParaImpressao.length !== 1 ? 's' : ''}</p><p style="margin:0;color:#000;font-size:${spx(12)};line-height:1.2">Total impresso: <span style="font-weight:400;color:#000">${escapeHtml(formatCurrency(totalParaImpressao))}</span></p>${modoSelecao ? `<p style="margin:2px 0 0;color:#000;font-size:${spx(12)};line-height:1.2">Modo Somar: apenas contas selecionadas</p>` : ''}</div>${filtrosHtml}${cabecalhoColunasHtml}${gruposHtml}${rodapeAnotacoesHtml}</div></body></html>`;
+    const notaFolhaHtml = folhaContaSintetica
+      ? `<p style="margin:2px 0 0;color:#000;font-size:${spx(12)};line-height:1.2">Inclui Folha de pagamento no dia ${escapeHtml(formatarSoData(dataPagamentoFolha))} (total + grelha para anotações à mão)</p>`
+      : '';
+
+    const html = `<html><head><meta charset="UTF-8" /><title>SUPERAGEFIN ${escapeHtml(formatMonth(currentMonth))}</title></head><body style="font-family:'Noto Sans','NotoSans',Arial,sans-serif;padding:${spx(18)};color:#000;font-size:${spx(12)};line-height:1.3"><div style="width:1000px;min-width:1000px;max-width:1000px"><div style="background:#f8fafc;border:1px solid #d5dde8;border-radius:8px;padding:8px 10px;margin-bottom:8px"><h2 style="margin:0 0 2px;font-size:${spx(18)};line-height:1.1;color:#000">SUPERAGEFIN - ${escapeHtml(formatMonth(currentMonth))}</h2><p style="margin:0 0 2px;color:#000;font-size:${spx(12)};line-height:1.2">Contas filtradas da consulta financeira</p><p style="margin:0 0 2px;color:#000;font-size:${spx(12)};line-height:1.2">Quantidade: ${quantidadeImpressa} conta${quantidadeImpressa !== 1 ? 's' : ''}</p><p style="margin:0;color:#000;font-size:${spx(12)};line-height:1.2">Total impresso: <span style="font-weight:400;color:#000">${escapeHtml(formatCurrency(totalImpressoComFolha))}</span></p>${notaFolhaHtml}${modoSelecao ? `<p style="margin:2px 0 0;color:#000;font-size:${spx(12)};line-height:1.2">Modo Somar: apenas contas selecionadas</p>` : ''}</div>${filtrosHtml}${cabecalhoColunasHtml}${gruposHtml}${rodapeAnotacoesHtml}</div></body></html>`;
     try {
       await openPrintWindowOrShareHtml(html, `superagefin-${currentMonth.getTime()}.html`, `SUPERAGEFIN ${formatMonth(currentMonth)}`);
     } catch {
