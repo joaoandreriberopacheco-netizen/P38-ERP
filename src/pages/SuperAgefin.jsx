@@ -16,19 +16,17 @@ import { Input } from '@/components/ui/input';
 import SuperAgefinConsultaDrawer from '@/components/superagefin/SuperAgefinConsultaDrawer';
 import SuperAgefinConsultaOrganizer from '@/components/superagefin/SuperAgefinConsultaOrganizer';
 import { boundsMesCivil, dataHoje, formatarSoData } from '@/components/utils/dateUtils';
-import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import {
   carregarFolhaParaRelatorioDia5,
   dataDia5DoMes,
-  montarHtmlSecaoFolhaAnaloga,
 } from '@/lib/superAgefinFolhaRelatorio';
 import {
   carregarBudgetsAgrupadosParaRelatorio,
   carregarModelosFolhaParaSuperAgefin,
   contaSuperAgefinSomenteLeitura,
   montarContasSinteticasSociosSabado,
-  montarHtmlSecaoBudgetsAnaloga,
 } from '@/lib/superAgefinCompromissos';
+import { gerarDespesaMensalPdf } from '@/lib/superAgefinDespesaMensalPdf';
 import {
   lancamentoEhContaPagar,
   lancamentoEhCmv,
@@ -57,15 +55,6 @@ function formatCurrency(value) {
 
 function formatMonth(date) {
   return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-}
-
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
 }
 
 function KpiCard({ label, value, tone = 'default' }) {
@@ -731,45 +720,33 @@ export default function SuperAgefin() {
       return;
     }
 
-    /** Relatório impresso: mais uma ampliação de +15% sobre o tamanho já escalonado (≈ 1,15 × 1,15 na base em px) */
-    const scalePrint = 1.15 * 1.15;
-    const spx = (n) => `${Math.round(n * scalePrint * 100) / 100}px`;
-    /** Grupos pequenos: evita partir a tabela no meio. Com muitas contas (ou folha no dia 5),
-     *  NÃO usar avoid no grupo inteiro — senão o browser empurra tudo e deixa vazios grandes. */
-    const maxContasQuebraEvitadaNoGrupo = 6;
-
-    /** Dia 05 do mês em ecrã: total da folha como conta + grelha analógica (anotações à mão) */
+    /** Dia 05: total da folha como conta + grelha analógica no PDF */
     const dataPagamentoFolha = dataDia5DoMes(currentMonth);
     let folhaRelatorio = null;
     let folhaContaSintetica = null;
-    let folhaSecaoHtml = '';
     let folhaTotalConta = 0;
     try {
       folhaRelatorio = await carregarFolhaParaRelatorioDia5(dataPagamentoFolha);
-      const montado = montarHtmlSecaoFolhaAnaloga({
-        folha: folhaRelatorio,
-        spx,
-        escapeHtml,
-        formatCurrency,
-        labelData: formatarSoData(dataPagamentoFolha),
-      });
-      folhaContaSintetica = montado.contaSintetica;
-      folhaSecaoHtml = montado.secaoHtml;
-      folhaTotalConta = montado.totalConta || 0;
+      if (folhaRelatorio?.linhas?.length) {
+        folhaTotalConta =
+          folhaRelatorio.totalLiquido > 0 ? folhaRelatorio.totalLiquido : folhaRelatorio.totalSalarios;
+        folhaContaSintetica = {
+          id: `superagefin-folha-${folhaRelatorio.dataPagamento}`,
+          descricao: 'FOLHA DE PAGAMENTO',
+          valor: folhaTotalConta,
+          data_vencimento: folhaRelatorio.dataPagamento,
+          status: 'Em Aberto',
+          _superagefin_folha: true,
+        };
+      }
     } catch (err) {
       console.error('SUPERAGEFIN: falha ao carregar folha para o relatório', err);
     }
 
-    /** Budgets por centro de custo — secção analógica após contas obrigatórias */
-    let budgetsSecaoHtml = '';
+    let budgetsAgrupados = null;
     try {
-      const budgetsAgrupados = await carregarBudgetsAgrupadosParaRelatorio(currentMonth);
-      budgetsSecaoHtml = montarHtmlSecaoBudgetsAnaloga({
-        budgetsAgrupados,
-        spx,
-        escapeHtml,
-        formatCurrency,
-      });
+      budgetsAgrupados = await carregarBudgetsAgrupadosParaRelatorio(currentMonth);
+      if (!budgetsAgrupados?.grupos?.length) budgetsAgrupados = null;
     } catch (err) {
       console.error('SUPERAGEFIN: falha ao carregar budgets para o relatório', err);
     }
@@ -780,7 +757,9 @@ export default function SuperAgefin() {
 
       const idx = cloned.findIndex((g) => g.key === dataPagamentoFolha);
       if (idx >= 0) {
-        const jaTem = cloned[idx].contas.some((c) => c?._superagefin_folha || /folha\s+de\s+pagamento/i.test(String(c.descricao || '')));
+        const jaTem = cloned[idx].contas.some(
+          (c) => c?._superagefin_folha || /folha\s+de\s+pagamento/i.test(String(c.descricao || '')),
+        );
         if (!jaTem) cloned[idx].contas = [folhaContaSintetica, ...cloned[idx].contas];
         return cloned;
       }
@@ -798,113 +777,20 @@ export default function SuperAgefin() {
       });
     })();
 
-    const quantidadeImpressa = contasParaImpressao.length + (folhaContaSintetica ? 1 : 0);
     const totalImpressoComFolha = totalParaImpressao + (folhaContaSintetica ? folhaTotalConta : 0);
 
-    const filtrosHtml = filtrosAtivosResumo.length > 0
-      ? `<div style="margin:${spx(14)} 0 ${spx(14)}"><p style="margin:0 0 6px;font-size:${spx(12)};font-weight:600;color:#000">Filtros ativos</p><div style="display:flex;flex-wrap:wrap;gap:6px">${filtrosAtivosResumo.map((filtro) => `<span style="display:inline-block;padding:4px 9px;border-radius:999px;background:#f8fafc;color:#000;font-size:${spx(12)};line-height:1.3;border:1px solid #e2e8f0">${escapeHtml(filtro)}</span>`).join('')}</div></div>`
-      : '';
-
-    const cabecalhoColunasHtml = `<table style="width:100%;border-collapse:collapse;table-layout:fixed;margin:8px 0 10px"><colgroup><col style="width:72px" /><col style="width:auto" /><col style="width:120px" /></colgroup><thead><tr><th style="text-align:left;font-size:${spx(12)};line-height:1.25;font-weight:700;color:#000;padding:0 4px 6px 4px;border-bottom:1px solid #cbd5e1">Status</th><th style="text-align:left;font-size:${spx(12)};line-height:1.25;font-weight:700;color:#000;padding:0 4px 6px 2px;border-bottom:1px solid #cbd5e1">Conta</th><th style="text-align:right;font-size:${spx(12)};line-height:1.25;font-weight:700;color:#000;padding:0 4px 6px 4px;border-bottom:1px solid #cbd5e1">Valor</th></tr></thead></table>`;
-
-    const gruposHtml = gruposComFolha.map((grupo) => {
-      const subtotal = grupo.contas.reduce((acc, conta) => acc + (Number(conta.valor) || 0), 0);
-      const linhas = grupo.contas.map((conta) => {
-        const pago = lancamentoPago(conta);
-        const vencido = lancamentoVencidoOuAtrasado(conta);
-        const statusLabel = pago ? 'Pago' : vencido ? 'Vencido' : '';
-        const statusColor = pago ? '#556b2f' : '#8b2f2f';
-        const hasBoleto = conta.forma_pagamento_tipo === 'Boleto' || conta.forma_pagamento === 'Boleto';
-        const isAutomatica = conta.is_recorrente === true || conta.natureza === 'Recorrente';
-
-        const statusIconSvg = pago
-          ? `<svg width="${spx(12)}" height="${spx(12)}" viewBox="0 0 24 24" fill="none" stroke="${statusColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>`
-          : `<svg width="${spx(12)}" height="${spx(12)}" viewBox="0 0 24 24" fill="none" stroke="${statusColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>`;
-
-        const metaIconSvg = isAutomatica
-          ? `<svg width="${spx(13)}" height="${spx(13)}" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`
-          : hasBoleto
-            ? `<svg width="${spx(13)}" height="${spx(13)}" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>`
-            : '';
-
-        return `<tr>
-          <td style="vertical-align:middle;padding:14px 4px;border-bottom:1px solid #dde5ef">
-            ${statusLabel ? `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 5px;border-radius:999px;border:1px solid #d8e1ec;background:#f8fafc;color:${statusColor};font-size:${spx(10)};line-height:1.15;font-weight:700;white-space:nowrap">${statusIconSvg}<span>${statusLabel}</span></span>` : ''}
-          </td>
-          <td style="vertical-align:middle;padding:14px 4px 14px 2px;border-bottom:1px solid #e6ebf2">
-            <div style="display:flex;align-items:center;gap:4px;min-width:0">
-              ${metaIconSvg ? `<span style="display:inline-flex;align-items:center;justify-content:center;flex:none">${metaIconSvg}</span>` : ''}
-              <span style="font-size:${spx(13)};line-height:1.3;font-weight:400;color:#000;letter-spacing:0.01em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(conta.descricao || '-')}</span>
-            </div>
-          </td>
-          <td style="vertical-align:middle;padding:14px 4px;border-bottom:1px solid #e6ebf2;text-align:right;font-size:${spx(13)};line-height:1.3;font-weight:400;color:#000">${escapeHtml(formatCurrency(conta.valor))}</td>
-        </tr>`;
-      }).join('');
-
-      // Dia 5 traz a grelha da folha a seguir: nunca “grudar” o grupo inteiro numa página.
-      const temFolhaAseguir = grupo.key === dataPagamentoFolha && Boolean(folhaSecaoHtml);
-      const evitarQuebraGrupo =
-        !temFolhaAseguir && grupo.contas.length <= maxContasQuebraEvitadaNoGrupo;
-      const bloqueioQuebra = evitarQuebraGrupo ? 'break-inside:avoid;page-break-inside:avoid;' : 'break-inside:auto;page-break-inside:auto;';
-
-      /** Cabeçalho da data; recuo do conteúdo sob a data = 1/3 do padding anterior (8px → ~2.7px) */
-      const recuoAposData = Math.max(1, Math.round((8 / 3) * 10) / 10);
-      const secaoGrupo = `<section style="margin-top:12px;border-radius:10px;overflow:visible;background:#f2f4f7;${bloqueioQuebra}"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 6px;background:#edf0f4"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:${spx(13)};line-height:1.25;font-weight:700;color:#000">${escapeHtml(grupo.label)}</span><span style="font-size:${spx(13)};line-height:1.25;font-weight:400;color:#000">${escapeHtml(formatCurrency(subtotal))}</span></div><div style="text-align:right"><span style="font-size:${spx(13)};line-height:1.25;color:#000">${grupo.contas.length} conta${grupo.contas.length !== 1 ? 's' : ''}</span></div></div><div style="padding:${recuoAposData}px ${recuoAposData}px"><table style="width:100%;border-collapse:collapse;table-layout:fixed;background:#ffffff"><colgroup><col style="width:72px" /><col style="width:auto" /><col style="width:120px" /></colgroup><tbody>${linhas}</tbody></table></div></section>`;
-      if (temFolhaAseguir) {
-        return `${secaoGrupo}${folhaSecaoHtml}`;
-      }
-      return secaoGrupo;
-    }).join('');
-
-    /** Guia de escrita: linhas próximas no topo, espaçamento aumenta e some — sem “caixa” fechada */
-    let guiaY = 8;
-    const linhasGuiaSvg = [];
-    for (let i = 0; i < 48; i++) {
-      const fade = Math.max(0, 1 - (i / 38) ** 1.12);
-      if (fade < 0.012) break;
-      linhasGuiaSvg.push(
-        `<line x1="0" y1="${guiaY}" x2="1000" y2="${guiaY}" stroke="#cbd5e1" stroke-width="1" opacity="${fade.toFixed(3)}"/>`
-      );
-      guiaY += 8 + i * 1.35;
-      if (guiaY > 320) break;
-    }
-    const guiaAltura = Math.ceil(guiaY + 16);
-    const guiaSvgHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="${guiaAltura}" viewBox="0 0 1000 ${guiaAltura}" preserveAspectRatio="none" aria-hidden="true" style="display:block">${linhasGuiaSvg.join('')}</svg>`;
-
-    const rodapeAnotacoesHtml = `<section style="margin-top:${spx(14)};padding:0;break-inside:auto;page-break-inside:auto">
-      <div style="display:inline-flex;align-items:center;gap:6px;color:#000;break-after:avoid;page-break-after:avoid">
-        <svg width="${spx(14)}" height="${spx(14)}" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/><path d="M8 12h8"/><path d="M8 16h5"/></svg>
-        <span style="font-size:${spx(13)};line-height:1.2;font-weight:700">Anotações &gt;</span>
-      </div>
-      <p style="margin:4px 0 0;font-size:${spx(12)};line-height:1.25;color:#334155">escreva abaixo</p>
-      <div aria-hidden="true" style="margin-top:${spx(10)};width:100%">${guiaSvgHtml}</div>
-    </section>`;
-
-    const notaFolhaHtml = folhaContaSintetica
-      ? `<p style="margin:2px 0 0;color:#000;font-size:${spx(12)};line-height:1.2">Inclui Folha de pagamento no dia ${escapeHtml(formatarSoData(dataPagamentoFolha))} (total + grelha para anotações à mão)</p>`
-      : '';
-    const notaSociosHtml = contasSociosSabado.length
-      ? `<p style="margin:2px 0 0;color:#000;font-size:${spx(12)};line-height:1.2">Inclui sócios nos sábados (${contasSociosSabado.length} compromisso${contasSociosSabado.length !== 1 ? 's' : ''})</p>`
-      : '';
-    const notaBudgetsHtml = budgetsSecaoHtml
-      ? `<p style="margin:2px 0 0;color:#000;font-size:${spx(12)};line-height:1.2">Inclui secção Budgets por centro de custo (anotações à mão)</p>`
-      : '';
-
-    /** A4: margens laterais ~½ da vertical; conteúdo a 100% da página útil */
-    const padVert = spx(18);
-    const padLat = spx(9);
-    const html = `<html><head><meta charset="UTF-8" /><title>SUPERAGEFIN ${escapeHtml(formatMonth(currentMonth))}</title><style>
-@page { size: A4 portrait; margin: 6mm 4mm; }
-html, body { margin: 0; padding: 0; }
-body { box-sizing: border-box; }
-* { box-sizing: border-box; }
-/* Preferir preencher a página: só artigos/linhas de cards evitam quebra no meio */
-tr { break-inside: avoid; page-break-inside: avoid; }
-</style></head><body style="font-family:'Noto Sans','NotoSans',Arial,sans-serif;padding:${padVert} ${padLat};color:#000;font-size:${spx(12)};line-height:1.3"><div style="width:100%;max-width:100%"><div style="background:#f8fafc;border:1px solid #d5dde8;border-radius:8px;padding:8px 6px;margin-bottom:8px"><h2 style="margin:0 0 2px;font-size:${spx(18)};line-height:1.1;color:#000">SUPERAGEFIN - ${escapeHtml(formatMonth(currentMonth))}</h2><p style="margin:0 0 2px;color:#000;font-size:${spx(12)};line-height:1.2">Contas filtradas da consulta financeira</p><p style="margin:0 0 2px;color:#000;font-size:${spx(12)};line-height:1.2">Quantidade: ${quantidadeImpressa} conta${quantidadeImpressa !== 1 ? 's' : ''}</p><p style="margin:0;color:#000;font-size:${spx(12)};line-height:1.2">Total impresso: <span style="font-weight:400;color:#000">${escapeHtml(formatCurrency(totalImpressoComFolha))}</span></p>${notaFolhaHtml}${notaSociosHtml}${notaBudgetsHtml}${modoSelecao ? `<p style="margin:2px 0 0;color:#000;font-size:${spx(12)};line-height:1.2">Modo Somar: apenas contas selecionadas</p>` : ''}</div>${filtrosHtml}${cabecalhoColunasHtml}${gruposHtml}${budgetsSecaoHtml}${rodapeAnotacoesHtml}</div></body></html>`;
     try {
-      await openPrintWindowOrShareHtml(html, `superagefin-${currentMonth.getTime()}.html`, `SUPERAGEFIN ${formatMonth(currentMonth)}`);
-    } catch {
-      /* popup bloqueado no desktop */
+      await gerarDespesaMensalPdf({
+        currentMonth,
+        totalImpresso: totalImpressoComFolha,
+        grupos: gruposComFolha,
+        dataPagamentoFolha,
+        folha: folhaRelatorio,
+        budgetsAgrupados,
+      });
+    } catch (err) {
+      console.error('SUPERAGEFIN: falha ao gerar PDF Despesa Mensal', err);
+      window.alert('Não foi possível gerar o PDF. Tente novamente.');
     }
   };
 
@@ -948,7 +834,7 @@ tr { break-inside: avoid; page-break-inside: avoid; }
                     </Button>
                     <Button onClick={imprimirRelatorio} variant="ghost" size="sm" className="h-10 rounded-2xl px-3 text-xs bg-muted">
                       <Printer className="w-4 h-4 mr-1.5 text-muted-foreground" />
-                      Imprimir
+                      PDF
                     </Button>
                   </div>
                 </div>
