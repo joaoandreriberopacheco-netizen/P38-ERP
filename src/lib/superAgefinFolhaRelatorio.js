@@ -137,15 +137,15 @@ export function montarHtmlSecaoFolhaAnaloga({ folha, spx, escapeHtml, formatCurr
     _superagefin_folha: true,
   };
 
-  /** Cada funcionário = um bloco; layout em 3 colunas no papel */
-  const linhasAnotacao = Array.from({ length: 7 }, () =>
-    `<div style="height:18px;border-bottom:1px dotted #94a3b8"></div>`,
+  /** Cada funcionário = um bloco; 3 colunas; altura ~2× para anotar à mão em A4 */
+  const linhasAnotacao = Array.from({ length: 14 }, () =>
+    `<div style="height:20px;border-bottom:1px dotted #94a3b8"></div>`,
   ).join('');
 
   const blocosHtml = folha.linhas
     .map((row) => {
       const salarioLabel = row.salario > 0 ? formatCurrency(row.salario) : '—';
-      return `<article style="break-inside:avoid;page-break-inside:avoid;border:1px solid #cbd5e1;border-radius:8px;background:#fff;padding:9px 10px 12px;min-height:168px;box-sizing:border-box">
+      return `<article style="break-inside:avoid;page-break-inside:avoid;border:1px solid #cbd5e1;border-radius:8px;background:#fff;padding:10px 10px 14px;min-height:336px;box-sizing:border-box">
         <p style="margin:0;font-size:${spx(12)};line-height:1.2;font-weight:700;color:#000;text-transform:uppercase;letter-spacing:0.01em">${escapeHtml(row.nome)}</p>
         <p style="margin:4px 0 0;font-size:${spx(12)};line-height:1.2;font-weight:400;color:#000">${escapeHtml(salarioLabel)}</p>
         <p style="margin:10px 0 4px;font-size:${spx(9)};line-height:1.1;color:#64748b;text-transform:uppercase;letter-spacing:0.06em">Anotações</p>
@@ -155,13 +155,13 @@ export function montarHtmlSecaoFolhaAnaloga({ folha, spx, escapeHtml, formatCurr
     .join('');
 
   const secaoHtml = `<section style="margin-top:10px;border-radius:10px;overflow:visible;background:#eef2f7">
-    <div style="padding:10px 12px;background:#e2e8f0;border-bottom:1px solid #cbd5e1;break-after:avoid;page-break-after:avoid">
+    <div style="padding:8px 6px;background:#e2e8f0;border-bottom:1px solid #cbd5e1;break-after:avoid;page-break-after:avoid">
       <p style="margin:0;font-size:${spx(13)};line-height:1.25;font-weight:700;color:#000">Folha de pagamento (funcionários) — 3 colunas no papel</p>
       <p style="margin:4px 0 0;font-size:${spx(11)};line-height:1.25;color:#334155">
         Vencimento ${escapeHtml(labelData)} · Competência ${escapeHtml(folha.competencia)} · Sócios não entram · Em cada bloco: nome, salário e espaço para adiantamentos / faltas / observações
       </p>
     </div>
-    <div style="padding:10px;background:#f8fafc;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:stretch">
+    <div style="padding:6px 2px;background:#f8fafc;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;align-items:stretch">
       ${blocosHtml}
     </div>
   </section>`;

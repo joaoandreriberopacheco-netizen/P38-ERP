@@ -81,7 +81,7 @@ export function montarContasSinteticasSociosSabado(currentMonth, modelosFolha) {
       const colaboradorId = modelo.colaborador_id || modelo.id || 'x';
       contas.push({
         id: `superagefin-socio-${colaboradorId}-${sabado}`,
-        descricao: `RETIRADA SÓCIO — ${nome}`,
+        descricao: nome,
         valor,
         data_vencimento: sabado,
         status: 'Em Aberto',
@@ -214,7 +214,7 @@ export function montarHtmlSecaoBudgetsAnaloga({
     .join('');
 
   return `<section style="margin-top:${spx(18)};border-radius:10px;overflow:visible;background:#f1f5f9">
-    <div style="padding:10px 12px;background:#e2e8f0;border-bottom:1px solid #cbd5e1">
+    <div style="padding:10px 6px;background:#e2e8f0;border-bottom:1px solid #cbd5e1">
       <p style="margin:0;font-size:${spx(14)};line-height:1.25;font-weight:700;color:#000">Budgets — anotações por centro de custo</p>
       <p style="margin:4px 0 0;font-size:${spx(11)};line-height:1.25;color:#334155">
         Após as contas obrigatórias do mês · Competência ${escapeHtml(budgetsAgrupados.competencia || '')} · Cada bloco (meia página): nome, valor orçado e espaço para rascunhos
@@ -223,6 +223,6 @@ export function montarHtmlSecaoBudgetsAnaloga({
         Total orçado: ${escapeHtml(formatFn(budgetsAgrupados.totalOrcado || 0))}
       </p>
     </div>
-    <div style="padding:10px 12px 14px;background:#f8fafc">${secoes}</div>
+    <div style="padding:8px 2px 12px;background:#f8fafc">${secoes}</div>
   </section>`;
 }

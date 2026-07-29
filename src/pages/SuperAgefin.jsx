@@ -415,7 +415,7 @@ export default function SuperAgefin() {
     if (contaSuperAgefinSomenteLeitura(conta)) {
       toast.message('Compromisso previsto', {
         description: conta?._superagefin_socio
-          ? 'Retirada semanal de sócio (sábado). Figura na consulta e no relatório; edição pela Folha.'
+          ? 'Sócio (pagamento semanal aos sábados). Figura na consulta e no relatório; edição pela Folha.'
           : 'Compromisso sintético da SUPERAGEFIN — só para consulta/impressão.',
       });
       return;
@@ -843,8 +843,9 @@ export default function SuperAgefin() {
       const evitarQuebraGrupo = grupo.contas.length <= maxContasQuebraEvitadaNoGrupo;
       const bloqueioQuebra = evitarQuebraGrupo ? 'break-inside:avoid;page-break-inside:avoid;' : '';
 
-      /** Cabeçalho da data costuma ficar colado ao início da tabela; grupos grandes podem partir linhas entre páginas */
-      const secaoGrupo = `<section style="margin-top:12px;border-radius:10px;overflow:visible;background:#f2f4f7;${bloqueioQuebra}"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;background:#edf0f4;break-after:avoid;page-break-after:avoid"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:${spx(13)};line-height:1.25;font-weight:700;color:#000">${escapeHtml(grupo.label)}</span><span style="font-size:${spx(13)};line-height:1.25;font-weight:400;color:#000">${escapeHtml(formatCurrency(subtotal))}</span></div><div style="text-align:right"><span style="font-size:${spx(13)};line-height:1.25;color:#000">${grupo.contas.length} conta${grupo.contas.length !== 1 ? 's' : ''}</span></div></div><div style="padding:8px 8px;${bloqueioQuebra}"><table style="width:100%;border-collapse:collapse;table-layout:fixed;background:#ffffff"><colgroup><col style="width:132px" /><col style="width:auto" /><col style="width:136px" /></colgroup><tbody>${linhas}</tbody></table></div></section>`;
+      /** Cabeçalho da data; recuo do conteúdo sob a data = 1/3 do padding anterior (8px → ~2.7px) */
+      const recuoAposData = Math.max(1, Math.round((8 / 3) * 10) / 10);
+      const secaoGrupo = `<section style="margin-top:12px;border-radius:10px;overflow:visible;background:#f2f4f7;${bloqueioQuebra}"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 6px;background:#edf0f4;break-after:avoid;page-break-after:avoid"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:${spx(13)};line-height:1.25;font-weight:700;color:#000">${escapeHtml(grupo.label)}</span><span style="font-size:${spx(13)};line-height:1.25;font-weight:400;color:#000">${escapeHtml(formatCurrency(subtotal))}</span></div><div style="text-align:right"><span style="font-size:${spx(13)};line-height:1.25;color:#000">${grupo.contas.length} conta${grupo.contas.length !== 1 ? 's' : ''}</span></div></div><div style="padding:${recuoAposData}px ${recuoAposData}px;${bloqueioQuebra}"><table style="width:100%;border-collapse:collapse;table-layout:fixed;background:#ffffff"><colgroup><col style="width:132px" /><col style="width:auto" /><col style="width:136px" /></colgroup><tbody>${linhas}</tbody></table></div></section>`;
       if (grupo.key === dataPagamentoFolha && folhaSecaoHtml) {
         return `${secaoGrupo}${folhaSecaoHtml}`;
       }
@@ -879,13 +880,21 @@ export default function SuperAgefin() {
       ? `<p style="margin:2px 0 0;color:#000;font-size:${spx(12)};line-height:1.2">Inclui Folha de pagamento no dia ${escapeHtml(formatarSoData(dataPagamentoFolha))} (total + grelha para anotações à mão)</p>`
       : '';
     const notaSociosHtml = contasSociosSabado.length
-      ? `<p style="margin:2px 0 0;color:#000;font-size:${spx(12)};line-height:1.2">Inclui retiradas semanais de sócios nos sábados (${contasSociosSabado.length} compromisso${contasSociosSabado.length !== 1 ? 's' : ''})</p>`
+      ? `<p style="margin:2px 0 0;color:#000;font-size:${spx(12)};line-height:1.2">Inclui sócios nos sábados (${contasSociosSabado.length} compromisso${contasSociosSabado.length !== 1 ? 's' : ''})</p>`
       : '';
     const notaBudgetsHtml = budgetsSecaoHtml
       ? `<p style="margin:2px 0 0;color:#000;font-size:${spx(12)};line-height:1.2">Inclui secção Budgets por centro de custo (anotações à mão)</p>`
       : '';
 
-    const html = `<html><head><meta charset="UTF-8" /><title>SUPERAGEFIN ${escapeHtml(formatMonth(currentMonth))}</title></head><body style="font-family:'Noto Sans','NotoSans',Arial,sans-serif;padding:${spx(18)};color:#000;font-size:${spx(12)};line-height:1.3"><div style="width:1000px;min-width:1000px;max-width:1000px"><div style="background:#f8fafc;border:1px solid #d5dde8;border-radius:8px;padding:8px 10px;margin-bottom:8px"><h2 style="margin:0 0 2px;font-size:${spx(18)};line-height:1.1;color:#000">SUPERAGEFIN - ${escapeHtml(formatMonth(currentMonth))}</h2><p style="margin:0 0 2px;color:#000;font-size:${spx(12)};line-height:1.2">Contas filtradas da consulta financeira</p><p style="margin:0 0 2px;color:#000;font-size:${spx(12)};line-height:1.2">Quantidade: ${quantidadeImpressa} conta${quantidadeImpressa !== 1 ? 's' : ''}</p><p style="margin:0;color:#000;font-size:${spx(12)};line-height:1.2">Total impresso: <span style="font-weight:400;color:#000">${escapeHtml(formatCurrency(totalImpressoComFolha))}</span></p>${notaFolhaHtml}${notaSociosHtml}${notaBudgetsHtml}${modoSelecao ? `<p style="margin:2px 0 0;color:#000;font-size:${spx(12)};line-height:1.2">Modo Somar: apenas contas selecionadas</p>` : ''}</div>${filtrosHtml}${cabecalhoColunasHtml}${gruposHtml}${budgetsSecaoHtml}${rodapeAnotacoesHtml}</div></body></html>`;
+    /** A4: margens laterais ~½ da vertical; conteúdo a 100% da página útil */
+    const padVert = spx(18);
+    const padLat = spx(9);
+    const html = `<html><head><meta charset="UTF-8" /><title>SUPERAGEFIN ${escapeHtml(formatMonth(currentMonth))}</title><style>
+@page { size: A4 portrait; margin: 6mm 4mm; }
+html, body { margin: 0; padding: 0; }
+body { box-sizing: border-box; }
+* { box-sizing: border-box; }
+</style></head><body style="font-family:'Noto Sans','NotoSans',Arial,sans-serif;padding:${padVert} ${padLat};color:#000;font-size:${spx(12)};line-height:1.3"><div style="width:100%;max-width:100%"><div style="background:#f8fafc;border:1px solid #d5dde8;border-radius:8px;padding:8px 6px;margin-bottom:8px"><h2 style="margin:0 0 2px;font-size:${spx(18)};line-height:1.1;color:#000">SUPERAGEFIN - ${escapeHtml(formatMonth(currentMonth))}</h2><p style="margin:0 0 2px;color:#000;font-size:${spx(12)};line-height:1.2">Contas filtradas da consulta financeira</p><p style="margin:0 0 2px;color:#000;font-size:${spx(12)};line-height:1.2">Quantidade: ${quantidadeImpressa} conta${quantidadeImpressa !== 1 ? 's' : ''}</p><p style="margin:0;color:#000;font-size:${spx(12)};line-height:1.2">Total impresso: <span style="font-weight:400;color:#000">${escapeHtml(formatCurrency(totalImpressoComFolha))}</span></p>${notaFolhaHtml}${notaSociosHtml}${notaBudgetsHtml}${modoSelecao ? `<p style="margin:2px 0 0;color:#000;font-size:${spx(12)};line-height:1.2">Modo Somar: apenas contas selecionadas</p>` : ''}</div>${filtrosHtml}${cabecalhoColunasHtml}${gruposHtml}${budgetsSecaoHtml}${rodapeAnotacoesHtml}</div></body></html>`;
     try {
       await openPrintWindowOrShareHtml(html, `superagefin-${currentMonth.getTime()}.html`, `SUPERAGEFIN ${formatMonth(currentMonth)}`);
     } catch {
