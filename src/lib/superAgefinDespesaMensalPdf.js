@@ -6,6 +6,9 @@
  * Card do dia: «08/08/2026 (04)» à esquerda · valor à direita.
  * Folha: 3 colunas; se a linha de cards não cabe, inteira na página seguinte.
  * Budgets: 1 coluna; cada bloco só desenha se couber.
+ *
+ * Importante: ensureSpace(y, need) devolve o y correcto após eventual nova página
+ * (nunca desenhar com um y “antigo” — isso mordia os cards na margem).
  */
 
 import { jsPDF } from 'jspdf';
@@ -99,7 +102,6 @@ export async function gerarDespesaMensalPdf(opts) {
     setFont('bold');
     pdf.setFontSize(11);
     pdf.setTextColor(0, 0, 0);
-    // Dentro da margem superior (abaixo da zona de grampeamento)
     const headerY = MARGIN_TOP - 8;
     pdf.text(tituloEsq, MARGIN_X, headerY);
     pdf.text(tituloDir, PAGE_W - MARGIN_X, headerY, { align: 'right' });
@@ -116,23 +118,24 @@ export async function gerarDespesaMensalPdf(opts) {
       pdf.setFontSize(9);
       pdf.setTextColor(80, 80, 80);
       const label = normalizePdfText(`${i} / ${total}`);
-      // Centrado na margem inferior de 1,5 cm
       pdf.text(label, PAGE_W / 2, PAGE_H - MARGIN_BOTTOM / 2, { align: 'center' });
     }
   };
 
-  const newPage = () => {
+  const beginPage = () => {
     pdf.addPage();
     drawHeader();
-    y = CONTENT_TOP;
   };
 
-  /** Garante espaço; se não couber, página nova. Nunca desenhar abaixo de CONTENT_BOTTOM. */
-  const ensureSpace = (neededMm) => {
+  /**
+   * Se não há espaço para `neededMm` a partir de `yPos`, abre página nova
+   * e devolve o y do topo útil. Sempre usar: `y = ensureSpace(y, altura)`.
+   */
+  const ensureSpace = (yPos, neededMm) => {
     const need = Math.max(0, Number(neededMm) || 0);
-    if (y + need <= CONTENT_BOTTOM) return true;
-    newPage();
-    return true;
+    if (yPos + need <= CONTENT_BOTTOM) return yPos;
+    beginPage();
+    return CONTENT_TOP;
   };
 
   drawHeader();
@@ -143,8 +146,7 @@ export async function gerarDespesaMensalPdf(opts) {
     const subtotal = contas.reduce((acc, c) => acc + (Number(c.valor) || 0), 0);
     const diaH = 7.5;
 
-    ensureSpace(diaH + 12);
-    // Card do dia: «08/08/2026 (04)» esquerda · valor direita
+    y = ensureSpace(y, diaH + 12);
     pdf.setFillColor(237, 240, 244);
     pdf.rect(MARGIN_X, y, contentW, diaH, 'F');
     setFont('bold');
@@ -158,14 +160,13 @@ export async function gerarDespesaMensalPdf(opts) {
     });
     y += diaH + 1.5;
 
-    // Status estreito → menos recuo na descrição; mais respiro vertical
     const colStatus = MARGIN_X + 1;
     const colConta = MARGIN_X + 18;
     const colValor = PAGE_W - MARGIN_X - 1;
     const rowH = 9.5;
 
     for (const conta of contas) {
-      ensureSpace(rowH + 0.5);
+      y = ensureSpace(y, rowH + 0.5);
       const st = statusConta(conta);
       const desc = normalizePdfText(String(conta.descricao || '-').toUpperCase());
       const valor = normalizePdfText(formatCurrency(conta.valor));
@@ -193,7 +194,6 @@ export async function gerarDespesaMensalPdf(opts) {
 
     y += 3;
 
-    /** Folha analógica após o dia 5 — 1 coluna, quebra por cartão */
     if (grupo.key === dataPagamentoFolha && folha?.linhas?.length) {
       y = desenharFolhaPdf(pdf, {
         folha,
@@ -210,7 +210,7 @@ export async function gerarDespesaMensalPdf(opts) {
   /** —— Budgets (1 coluna) —— */
   if (budgetsAgrupados?.grupos?.length) {
     const budgetsHeaderH = 11;
-    ensureSpace(budgetsHeaderH + 4);
+    y = ensureSpace(y, budgetsHeaderH + 4);
     pdf.setFillColor(226, 232, 240);
     pdf.rect(MARGIN_X, y, contentW, budgetsHeaderH, 'F');
     setFont('bold');
@@ -230,7 +230,7 @@ export async function gerarDespesaMensalPdf(opts) {
     y += budgetsHeaderH + 2;
 
     for (const g of budgetsAgrupados.grupos) {
-      ensureSpace(10);
+      y = ensureSpace(y, 10);
       setFont('bold');
       pdf.setFontSize(9);
       pdf.setTextColor(0, 0, 0);
@@ -250,7 +250,7 @@ export async function gerarDespesaMensalPdf(opts) {
 
       for (const v of g.itens) {
         const cardH = 44;
-        ensureSpace(cardH + 2);
+        y = ensureSpace(y, cardH + 2);
         const nome = normalizePdfText(
           String(v.modelo?.nome || v.modelo?.categoria_nome || 'Budget').toUpperCase(),
         );
@@ -332,8 +332,8 @@ export async function gerarDespesaMensalPdf(opts) {
 
 /**
  * Folha em 3 colunas.
- * Quebra por **linha de até 3 cards**: se a linha não cabe inteira na página,
- * começa na página seguinte (card nunca é cortado a meio / sob a numeração).
+ * Quebra por **linha de até 3 cards**: se não cabe, a linha inteira vai para a página seguinte.
+ * `ensureSpace(y, need)` devolve o y a usar — obrigatório reatribuir.
  */
 function desenharFolhaPdf(pdf, { folha, setFont, y, ensureSpace, contentW, formatCurrency }) {
   const COLS = 3;
@@ -342,7 +342,7 @@ function desenharFolhaPdf(pdf, { folha, setFont, y, ensureSpace, contentW, forma
   const cardH = 72;
   const headerH = 11;
 
-  ensureSpace(headerH + 4);
+  y = ensureSpace(y, headerH + 4);
   pdf.setFillColor(226, 232, 240);
   pdf.rect(MARGIN_X, y, contentW, headerH, 'F');
   setFont('bold');
@@ -363,8 +363,7 @@ function desenharFolhaPdf(pdf, { folha, setFont, y, ensureSpace, contentW, forma
 
   const linhas = folha.linhas || [];
   for (let i = 0; i < linhas.length; i += COLS) {
-    // Linha completa (até 3 cards) — ou vai toda para a página seguinte
-    ensureSpace(cardH + gap);
+    y = ensureSpace(y, cardH + gap);
     const slice = linhas.slice(i, i + COLS);
 
     slice.forEach((row, idx) => {
