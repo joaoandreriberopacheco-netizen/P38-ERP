@@ -48,14 +48,17 @@ export default function ContasFixasTab({
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <P38HelpPopover label="Ajuda: contas fixas" side="bottom" align="start">
-          <p className="font-medium text-foreground">Lançamento recorrente = chave</p>
+          <p className="font-medium text-foreground">Série = fonte de verdade</p>
           <p className="text-muted-foreground">
-            Cada conta fixa é um <strong className="text-foreground">grupo de lançamentos recorrentes</strong>{' '}
-            no financeiro (energia, telefone, aluguel…). A frequência — mensal, bimestral, anual — vem do
-            próprio lançamento.
+            Cada conta fixa é uma <strong className="text-foreground">série</strong> (aluguel, energia,
+            telefone…). Aqui defines valor, dia, frequência e centro de custo.
           </p>
           <p className="text-muted-foreground mt-2">
-            Fretes e despesas avulsas não entram aqui; aparecem na AGEFIN Consulta conforme o vencimento.
+            A <strong className="text-foreground">Previsão do mês</strong> é só projeção virtual. O
+            lançamento real nasce quando <strong className="text-foreground">abres o mês</strong>.
+          </p>
+          <p className="text-muted-foreground mt-2">
+            Fretes e despesas avulsas não entram aqui — ficam na AGEFIN Consulta pelo vencimento.
           </p>
         </P38HelpPopover>
         <AgefinConsultaOrganizer
@@ -70,7 +73,7 @@ export default function ContasFixasTab({
       <FinanceiroListaEstado
         loading={loading}
         vazio={!loading && seriesAtivas.length === 0}
-        vazioMensagem="Nenhum template de conta recorrente cadastrado."
+        vazioMensagem="Nenhuma série / conta fixa cadastrada."
         vazioIcon={Repeat2}
       >
         <AgefinContasFixasGrupos

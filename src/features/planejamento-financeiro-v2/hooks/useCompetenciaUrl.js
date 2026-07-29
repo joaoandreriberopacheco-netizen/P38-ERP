@@ -3,10 +3,9 @@ import { useSearchParams } from 'react-router-dom';
 import { getCompetenciaAtual } from '@/lib/agefinPrevisaoCalculos';
 
 const COMPETENCIA_RE = /^\d{4}-\d{2}$/;
-const ABAS_VALIDAS = new Set(['previsao', 'projecao']);
+const ABAS_VALIDAS = new Set(['contas', 'previsao', 'projecao']);
 
 function normalizarAba(abaParam) {
-  if (abaParam === 'contas') return 'previsao';
   if (abaParam && ABAS_VALIDAS.has(abaParam)) return abaParam;
   return 'previsao';
 }

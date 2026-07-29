@@ -8,6 +8,7 @@ import {
   listarModelos,
 } from '@/lib/agefinPrevisaoService';
 import { listarParcelamentos } from '@/lib/agefinParcelamentoService';
+import { listarCategoriasDespesa } from '@/lib/budgetService';
 import { agefinQueryKeys } from '../constants/queryKeys';
 
 const STALE_MODELOS = 60_000;
@@ -16,12 +17,14 @@ const STALE_CONTAS = 300_000;
 
 /**
  * Carrega só o necessário para a aba activa.
- * - previsao: modelos + centros + lançamentos do mês + parcelamentos + recorrentes (frequência)
- * - projecao: modelos + recorrentes (sem histórico do mês)
+ * - contas: modelos (séries) + centros + categorias — fonte de verdade da recorrência
+ * - previsao: + lançamentos do mês + parcelamentos + recorrentes (projeção virtual do mês)
+ * - projecao: modelos + recorrentes
  * - contas financeiras: só quando o drawer pede sync
  */
 export function useAgefinPrevisaoQueries({ abaAtiva, competenciaMes, precisaContas = false }) {
-  const precisaCentros = abaAtiva === 'previsao';
+  const precisaCentros = abaAtiva === 'contas' || abaAtiva === 'previsao';
+  const precisaCategorias = precisaCentros;
   const precisaLancamentos = abaAtiva === 'previsao';
   const precisaParcelamentos = abaAtiva === 'previsao';
   const precisaRecorrentes = abaAtiva === 'projecao' || abaAtiva === 'previsao';
@@ -37,6 +40,13 @@ export function useAgefinPrevisaoQueries({ abaAtiva, competenciaMes, precisaCont
     queryKey: agefinQueryKeys.centros,
     queryFn: listarCentrosCustoRegistros,
     enabled: precisaCentros,
+    staleTime: STALE_PADRAO,
+  });
+
+  const categoriasQuery = useQuery({
+    queryKey: agefinQueryKeys.categorias,
+    queryFn: listarCategoriasDespesa,
+    enabled: precisaCategorias,
     staleTime: STALE_PADRAO,
   });
 
@@ -84,6 +94,8 @@ export function useAgefinPrevisaoQueries({ abaAtiva, competenciaMes, precisaCont
     centrosCustoRegistros: centrosQuery.data ?? [],
     centrosRegistrados,
     refetchCentros: centrosQuery.refetch,
+    categorias: categoriasQuery.data ?? [],
+    refetchCategorias: categoriasQuery.refetch,
     lancamentosMes: lancamentosQuery.data ?? [],
     loadingLancamentos: lancamentosQuery.isLoading,
     parcelamentos: parcelamentosQuery.data ?? [],

@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import AgefinPrevisaoDetalheDrawer from '@/components/agefin-previsao/AgefinPrevisaoDetalheDrawer';
 import AgefinParcelamentoDialog from '@/components/agefin-previsao/AgefinParcelamentoDialog';
+import AgefinSerieDialog from '@/components/agefin-previsao/AgefinSerieDialog';
 import FolhaCentrosCustoDialog from '@/components/folha-previsao/FolhaCentrosCustoDialog';
+import FolhaCentroCustoDragOverlay from '@/components/folha-previsao/FolhaCentroCustoDragOverlay';
 import AgefinImportador from '@/components/agefin/AgefinImportador';
 
-export function PlanejamentoFab({ onCentros, onImportar, onNovoLancamento }) {
+export function PlanejamentoFab({ onCentros, onImportar, onNovaConta }) {
   const [fabOpen, setFabOpen] = useState(false);
 
   return (
@@ -41,10 +43,10 @@ export function PlanejamentoFab({ onCentros, onImportar, onNovoLancamento }) {
             className="rounded-full shadow-md"
             onClick={() => {
               setFabOpen(false);
-              onNovoLancamento();
+              onNovaConta();
             }}
           >
-            Novo lançamento financeiro
+            Nova conta fixa
           </Button>
         </div>
       )}
@@ -59,6 +61,15 @@ export default function PlanejamentoDialogs({
   selectedComp,
   selectedModelo,
   onCloseSelected,
+  centrosRegistrados,
+  centrosCustoRegistros,
+  categorias,
+  onCategoriasChange,
+  onCentrosChange,
+  serieDialog,
+  onCloseSerieDialog,
+  onSaveSerie,
+  saving,
   parcelamentoDialog,
   onCloseParcelamentoDialog,
   onCriarParcelamento,
@@ -66,6 +77,12 @@ export default function PlanejamentoDialogs({
   centroDialogOpen,
   onCloseCentroDialog,
   onCentrosChanged,
+  draggingSerieId,
+  serieArrastando,
+  dropCentroAtual,
+  onHoverCentro,
+  onLeaveCentro,
+  onDropCentro,
   showImportador,
   onCloseImportador,
   importadorLancamentoId,
@@ -112,7 +129,29 @@ export default function PlanejamentoDialogs({
         saving={salvandoParcelamento}
       />
 
+      <AgefinSerieDialog
+        open={Boolean(serieDialog)}
+        onClose={onCloseSerieDialog}
+        serie={serieDialog}
+        categorias={categorias}
+        centrosCustoRegistros={centrosCustoRegistros}
+        onCategoriasChange={onCategoriasChange}
+        onCentrosChange={onCentrosChange}
+        onSave={onSaveSerie}
+        saving={saving}
+      />
+
       <FolhaCentrosCustoDialog open={centroDialogOpen} onClose={onCloseCentroDialog} onChanged={onCentrosChanged} />
+
+      <FolhaCentroCustoDragOverlay
+        open={Boolean(draggingSerieId)}
+        centros={centrosRegistrados}
+        pessoaNome={serieArrastando?.nome}
+        dropCentroAtual={dropCentroAtual}
+        onHoverCentro={onHoverCentro}
+        onLeaveCentro={(chave) => onLeaveCentro(chave)}
+        onDropCentro={onDropCentro}
+      />
 
       <Dialog open={showImportador} onOpenChange={(open) => !open && onCloseImportador()}>
         <DialogContent className="flex min-h-0 max-h-[92vh] w-full max-w-2xl flex-col gap-0 overflow-hidden rounded-3xl border-0 p-0 shadow-xl">
