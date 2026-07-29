@@ -81,7 +81,8 @@ export function montarContasSinteticasSociosSabado(currentMonth, modelosFolha) {
       const colaboradorId = modelo.colaborador_id || modelo.id || 'x';
       contas.push({
         id: `superagefin-socio-${colaboradorId}-${sabado}`,
-        descricao: nome,
+        // Prefixo "-" para a ordenação alfabética colocar as retiradas dos sócios antes dos demais nomes.
+        descricao: `- ${nome}`,
         valor,
         data_vencimento: sabado,
         status: 'Em Aberto',

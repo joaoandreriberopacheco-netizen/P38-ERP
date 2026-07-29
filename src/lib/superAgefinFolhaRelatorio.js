@@ -13,6 +13,7 @@ import {
   FOLHA_DIA_VENCIMENTO,
   isSocio,
   mapaModelosPorColaborador,
+  modeloEstaAtivoNaCompetencia,
   montarCompetenciasVisao,
   nomeColaboradorCompetencia,
   shiftCompetencia,
@@ -66,23 +67,36 @@ export async function carregarFolhaParaRelatorioDia5(dataPagamentoIso) {
 
   const competencias = montarCompetenciasVisao(competencia, modelos, competenciasPersistidas);
   const modelosMap = mapaModelosPorColaborador(modelos);
+  const modelosPorId = Object.fromEntries(
+    (modelos || []).filter((m) => m?.id != null).map((m) => [String(m.id), m]),
+  );
 
   const linhas = [];
   for (const comp of competencias) {
-    const modelo = modelosMap[comp.colaborador_id] || null;
-    // Dia 5 = folha de funcionários. Sócios (ex.: retirada semanal aos sábados) não entram.
-    if (isSocio(modelo || comp)) continue;
+    // Só entra quem ainda tem modelo ativo na Folha. Linhas órfãs em
+    // folha_previsao_competencia (pessoa removida/excluída) ficam de fora.
+    const modelo =
+      (comp.modelo_id != null && modelosPorId[String(comp.modelo_id)]) ||
+      modelosMap[comp.colaborador_id] ||
+      null;
+    if (!modelo || modelo.ativo === false) continue;
+    if (!modeloEstaAtivoNaCompetencia(modelo, competencia)) continue;
+    // Dia 5 = folha de funcionários. Sócios (retirada semanal aos sábados) não entram.
+    if (isSocio(modelo)) continue;
 
-    const nome = nomeColaboradorCompetencia(comp, modelosMap) || '—';
+    const nome = nomeColaboradorCompetencia(comp, modelosMap) || modelo.colaborador_nome || '—';
     const salario =
-      (modelo ? extrairSalarioBase(modelo) : 0) ||
+      extrairSalarioBase(modelo) ||
       extrairSalarioBase({ rubricas: comp.rubricas }) ||
       0;
     const totais = calcularTotaisCompetencia(comp, modelo);
+    const liquido = Number(totais.liquido) || 0;
+    if (!(liquido > 0) && !(Number(salario) > 0)) continue;
+
     linhas.push({
       nome,
       salario: Number(salario) || 0,
-      liquido: Number(totais.liquido) || 0,
+      liquido,
     });
   }
 

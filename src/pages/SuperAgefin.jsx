@@ -804,7 +804,7 @@ export default function SuperAgefin() {
       ? `<div style="margin:${spx(14)} 0 ${spx(14)}"><p style="margin:0 0 6px;font-size:${spx(12)};font-weight:600;color:#000">Filtros ativos</p><div style="display:flex;flex-wrap:wrap;gap:6px">${filtrosAtivosResumo.map((filtro) => `<span style="display:inline-block;padding:4px 9px;border-radius:999px;background:#f8fafc;color:#000;font-size:${spx(12)};line-height:1.3;border:1px solid #e2e8f0">${escapeHtml(filtro)}</span>`).join('')}</div></div>`
       : '';
 
-    const cabecalhoColunasHtml = `<table style="width:100%;border-collapse:collapse;table-layout:fixed;margin:8px 0 10px"><colgroup><col style="width:132px" /><col style="width:auto" /><col style="width:136px" /></colgroup><thead><tr><th style="text-align:left;font-size:${spx(12)};line-height:1.25;font-weight:700;color:#000;padding:0 8px 6px 8px;border-bottom:1px solid #cbd5e1">Status</th><th style="text-align:left;font-size:${spx(12)};line-height:1.25;font-weight:700;color:#000;padding:0 8px 6px 8px;border-bottom:1px solid #cbd5e1">Conta</th><th style="text-align:right;font-size:${spx(12)};line-height:1.25;font-weight:700;color:#000;padding:0 8px 6px 8px;border-bottom:1px solid #cbd5e1">Valor</th></tr></thead></table>`;
+    const cabecalhoColunasHtml = `<table style="width:100%;border-collapse:collapse;table-layout:fixed;margin:8px 0 10px"><colgroup><col style="width:72px" /><col style="width:auto" /><col style="width:120px" /></colgroup><thead><tr><th style="text-align:left;font-size:${spx(12)};line-height:1.25;font-weight:700;color:#000;padding:0 4px 6px 4px;border-bottom:1px solid #cbd5e1">Status</th><th style="text-align:left;font-size:${spx(12)};line-height:1.25;font-weight:700;color:#000;padding:0 4px 6px 2px;border-bottom:1px solid #cbd5e1">Conta</th><th style="text-align:right;font-size:${spx(12)};line-height:1.25;font-weight:700;color:#000;padding:0 4px 6px 4px;border-bottom:1px solid #cbd5e1">Valor</th></tr></thead></table>`;
 
     const gruposHtml = gruposComFolha.map((grupo) => {
       const subtotal = grupo.contas.reduce((acc, conta) => acc + (Number(conta.valor) || 0), 0);
@@ -827,16 +827,16 @@ export default function SuperAgefin() {
             : '';
 
         return `<tr>
-          <td style="vertical-align:top;padding:7px 8px;border-bottom:1px solid #dde5ef">
-            ${statusLabel ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:999px;border:1px solid #d8e1ec;background:#f8fafc;color:${statusColor};font-size:${spx(11)};line-height:1.15;font-weight:700;white-space:nowrap">${statusIconSvg}<span>${statusLabel}</span></span>` : ''}
+          <td style="vertical-align:middle;padding:14px 4px;border-bottom:1px solid #dde5ef">
+            ${statusLabel ? `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 5px;border-radius:999px;border:1px solid #d8e1ec;background:#f8fafc;color:${statusColor};font-size:${spx(10)};line-height:1.15;font-weight:700;white-space:nowrap">${statusIconSvg}<span>${statusLabel}</span></span>` : ''}
           </td>
-          <td style="vertical-align:middle;padding:9px 8px;border-bottom:1px solid #e6ebf2">
-            <div style="display:flex;align-items:center;gap:6px;min-width:0">
+          <td style="vertical-align:middle;padding:14px 4px 14px 2px;border-bottom:1px solid #e6ebf2">
+            <div style="display:flex;align-items:center;gap:4px;min-width:0">
               ${metaIconSvg ? `<span style="display:inline-flex;align-items:center;justify-content:center;flex:none">${metaIconSvg}</span>` : ''}
-              <span style="font-size:${spx(13)};line-height:1.25;font-weight:400;color:#000;letter-spacing:0.01em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(conta.descricao || '-')}</span>
+              <span style="font-size:${spx(13)};line-height:1.3;font-weight:400;color:#000;letter-spacing:0.01em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(conta.descricao || '-')}</span>
             </div>
           </td>
-          <td style="vertical-align:middle;padding:9px 8px;border-bottom:1px solid #e6ebf2;text-align:right;font-size:${spx(13)};line-height:1.25;font-weight:400;color:#000">${escapeHtml(formatCurrency(conta.valor))}</td>
+          <td style="vertical-align:middle;padding:14px 4px;border-bottom:1px solid #e6ebf2;text-align:right;font-size:${spx(13)};line-height:1.3;font-weight:400;color:#000">${escapeHtml(formatCurrency(conta.valor))}</td>
         </tr>`;
       }).join('');
 
@@ -845,7 +845,7 @@ export default function SuperAgefin() {
 
       /** Cabeçalho da data; recuo do conteúdo sob a data = 1/3 do padding anterior (8px → ~2.7px) */
       const recuoAposData = Math.max(1, Math.round((8 / 3) * 10) / 10);
-      const secaoGrupo = `<section style="margin-top:12px;border-radius:10px;overflow:visible;background:#f2f4f7;${bloqueioQuebra}"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 6px;background:#edf0f4;break-after:avoid;page-break-after:avoid"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:${spx(13)};line-height:1.25;font-weight:700;color:#000">${escapeHtml(grupo.label)}</span><span style="font-size:${spx(13)};line-height:1.25;font-weight:400;color:#000">${escapeHtml(formatCurrency(subtotal))}</span></div><div style="text-align:right"><span style="font-size:${spx(13)};line-height:1.25;color:#000">${grupo.contas.length} conta${grupo.contas.length !== 1 ? 's' : ''}</span></div></div><div style="padding:${recuoAposData}px ${recuoAposData}px;${bloqueioQuebra}"><table style="width:100%;border-collapse:collapse;table-layout:fixed;background:#ffffff"><colgroup><col style="width:132px" /><col style="width:auto" /><col style="width:136px" /></colgroup><tbody>${linhas}</tbody></table></div></section>`;
+      const secaoGrupo = `<section style="margin-top:12px;border-radius:10px;overflow:visible;background:#f2f4f7;${bloqueioQuebra}"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 6px;background:#edf0f4;break-after:avoid;page-break-after:avoid"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:${spx(13)};line-height:1.25;font-weight:700;color:#000">${escapeHtml(grupo.label)}</span><span style="font-size:${spx(13)};line-height:1.25;font-weight:400;color:#000">${escapeHtml(formatCurrency(subtotal))}</span></div><div style="text-align:right"><span style="font-size:${spx(13)};line-height:1.25;color:#000">${grupo.contas.length} conta${grupo.contas.length !== 1 ? 's' : ''}</span></div></div><div style="padding:${recuoAposData}px ${recuoAposData}px;${bloqueioQuebra}"><table style="width:100%;border-collapse:collapse;table-layout:fixed;background:#ffffff"><colgroup><col style="width:72px" /><col style="width:auto" /><col style="width:120px" /></colgroup><tbody>${linhas}</tbody></table></div></section>`;
       if (grupo.key === dataPagamentoFolha && folhaSecaoHtml) {
         return `${secaoGrupo}${folhaSecaoHtml}`;
       }
