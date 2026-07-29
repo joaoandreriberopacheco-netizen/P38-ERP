@@ -138,18 +138,18 @@ export function montarHtmlSecaoFolhaAnaloga({ folha, spx, escapeHtml, formatCurr
   };
 
   /** Cada funcionário = um bloco; layout em 3 colunas no papel */
+  const linhasAnotacao = Array.from({ length: 7 }, () =>
+    `<div style="height:18px;border-bottom:1px dotted #94a3b8"></div>`,
+  ).join('');
+
   const blocosHtml = folha.linhas
     .map((row) => {
       const salarioLabel = row.salario > 0 ? formatCurrency(row.salario) : '—';
-      return `<article style="break-inside:avoid;page-break-inside:avoid;border:1px solid #cbd5e1;border-radius:8px;background:#fff;padding:8px 9px;min-height:88px;box-sizing:border-box">
+      return `<article style="break-inside:avoid;page-break-inside:avoid;border:1px solid #cbd5e1;border-radius:8px;background:#fff;padding:9px 10px 12px;min-height:168px;box-sizing:border-box">
         <p style="margin:0;font-size:${spx(12)};line-height:1.2;font-weight:700;color:#000;text-transform:uppercase;letter-spacing:0.01em">${escapeHtml(row.nome)}</p>
         <p style="margin:4px 0 0;font-size:${spx(12)};line-height:1.2;font-weight:400;color:#000">${escapeHtml(salarioLabel)}</p>
-        <p style="margin:8px 0 2px;font-size:${spx(9)};line-height:1.1;color:#64748b;text-transform:uppercase;letter-spacing:0.06em">Anotações</p>
-        <div aria-hidden="true" style="margin-top:2px">
-          <div style="height:14px;border-bottom:1px dotted #94a3b8"></div>
-          <div style="height:14px;border-bottom:1px dotted #94a3b8"></div>
-          <div style="height:14px;border-bottom:1px dotted #94a3b8"></div>
-        </div>
+        <p style="margin:10px 0 4px;font-size:${spx(9)};line-height:1.1;color:#64748b;text-transform:uppercase;letter-spacing:0.06em">Anotações</p>
+        <div aria-hidden="true" style="margin-top:2px">${linhasAnotacao}</div>
       </article>`;
     })
     .join('');
