@@ -13,11 +13,11 @@ export default function ProjecaoTab({
   const semModelos = !loading && modelos.filter((m) => m.ativo !== false).length === 0;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 min-w-0">
       <FinanceiroListaEstado
         loading={loading}
         vazio={semModelos}
-        vazioMensagem="Cadastre despesas recorrentes pelo botão + para ver a projeção de 12 meses."
+        vazioMensagem="Cadastre contas fixas pelo botão + para ver a projeção de 12 meses."
         vazioIcon={TrendingUp}
       >
         <AgefinPrevisaoProjecao
@@ -28,9 +28,9 @@ export default function ProjecaoTab({
       </FinanceiroListaEstado>
 
       {semModelos && (
-        <div className="flex justify-center -mt-6 pb-4">
-          <Button variant="outline" onClick={onNovoLancamento}>
-            Novo lançamento financeiro
+        <div className="flex justify-center -mt-6 pb-4 px-1">
+          <Button variant="outline" className="w-full max-w-xs" onClick={onNovoLancamento}>
+            Nova conta fixa
           </Button>
         </div>
       )}

@@ -92,11 +92,11 @@ export default function AgefinSerieDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose?.()}>
-      <DialogContent className="max-w-md rounded-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-1.25rem)] max-w-md rounded-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>{serie?.id ? 'Editar conta fixa' : 'Nova conta fixa'}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-3 min-w-0">
           <div>
             <Label>Nome da conta</Label>
             <Input
@@ -180,7 +180,7 @@ export default function AgefinSerieDialog({
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div>
+            <div className="min-w-0">
               <Label>Valor previsto (R$)</Label>
               <Input
                 type="number"
@@ -190,7 +190,7 @@ export default function AgefinSerieDialog({
                 onChange={(e) => setForm((f) => ({ ...f, valor_previsto: e.target.value }))}
               />
             </div>
-            <div>
+            <div className="min-w-0">
               <Label>Dia vencimento</Label>
               <Input
                 type="number"
@@ -201,11 +201,15 @@ export default function AgefinSerieDialog({
               />
             </div>
           </div>
-          <DialogFooter className="gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+          <DialogFooter className="gap-2 pt-2 flex-col-reverse sm:flex-row">
+            <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={saving || !form.nome.trim() || !form.categoria_id}>
+            <Button
+              type="submit"
+              className="w-full sm:w-auto"
+              disabled={saving || !form.nome.trim() || !form.categoria_id}
+            >
               {saving ? 'Salvando…' : 'Salvar'}
             </Button>
           </DialogFooter>

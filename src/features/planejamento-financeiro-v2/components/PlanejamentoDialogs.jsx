@@ -13,13 +13,13 @@ export function PlanejamentoFab({ onCentros, onImportar, onNovaConta }) {
   const [fabOpen, setFabOpen] = useState(false);
 
   return (
-    <div className="fixed right-4 z-[55] bottom-[calc(var(--p38-bottom-nav-h,0px)+1rem)] lg:bottom-8 lg:right-8">
+    <div className="fixed right-3 z-[55] bottom-[calc(var(--p38-bottom-nav-h,0px)+0.75rem)] flex flex-col items-end sm:right-4 sm:bottom-[calc(var(--p38-bottom-nav-h,0px)+1rem)] lg:bottom-8 lg:right-8">
       {fabOpen && (
-        <div className="mb-2 flex flex-col items-end gap-2">
+        <div className="mb-2 flex w-[min(calc(100vw-1.5rem),16.5rem)] flex-col items-stretch gap-2">
           <Button
             variant="secondary"
             size="sm"
-            className="rounded-full shadow-md"
+            className="rounded-full shadow-md justify-center"
             onClick={() => {
               setFabOpen(false);
               onCentros();
@@ -30,7 +30,7 @@ export function PlanejamentoFab({ onCentros, onImportar, onNovaConta }) {
           <Button
             variant="secondary"
             size="sm"
-            className="rounded-full shadow-md"
+            className="rounded-full shadow-md justify-center"
             onClick={() => {
               setFabOpen(false);
               onImportar();
@@ -40,7 +40,7 @@ export function PlanejamentoFab({ onCentros, onImportar, onNovaConta }) {
           </Button>
           <Button
             size="sm"
-            className="rounded-full shadow-md"
+            className="rounded-full shadow-md justify-center"
             onClick={() => {
               setFabOpen(false);
               onNovaConta();
@@ -50,7 +50,12 @@ export function PlanejamentoFab({ onCentros, onImportar, onNovaConta }) {
           </Button>
         </div>
       )}
-      <Button size="icon" className="h-14 w-14 rounded-full shadow-lg" onClick={() => setFabOpen((v) => !v)}>
+      <Button
+        size="icon"
+        className="h-14 w-14 rounded-full shadow-lg"
+        onClick={() => setFabOpen((v) => !v)}
+        aria-label={fabOpen ? 'Fechar menu' : 'Abrir menu'}
+      >
         <Plus className="h-6 w-6" />
       </Button>
     </div>

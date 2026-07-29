@@ -68,10 +68,12 @@ export default function PlanejamentoFinanceiroV2Page() {
   }, [queryClient]);
 
   return (
-    <div className="w-full min-w-0 overflow-x-hidden font-din-1451 bg-background p-4 lg:p-6 pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
+    <div className="w-full min-w-0 overflow-x-hidden font-din-1451 bg-background px-3 py-3 sm:p-4 lg:p-6 pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
       <div className="pb-3 border-b border-border/40">
-        <div className="flex items-center gap-1.5">
-          <h1 className="text-xl font-medium text-foreground">Planejamento financeiro</h1>
+        <div className="flex items-center gap-1.5 min-w-0">
+          <h1 className="text-lg sm:text-xl font-medium text-foreground truncate">
+            Planejamento financeiro
+          </h1>
           <P38HelpPopover label="Ajuda: planejamento financeiro" side="bottom" align="start">
             <p className="font-medium text-foreground">Uma fonte de verdade</p>
             <p className="text-muted-foreground mt-2">
@@ -90,40 +92,43 @@ export default function PlanejamentoFinanceiroV2Page() {
             </p>
           </P38HelpPopover>
         </div>
-        <p className="text-sm text-muted-foreground mt-0.5">
+        <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-snug">
           Série manda · Previsão é virtual · Abrir mês materializa
         </p>
       </div>
 
-      <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="w-full mt-4">
+      <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="w-full mt-3 sm:mt-4">
         <TabsList
           className={cn(
-            'w-full h-auto p-1 rounded-xl flex-nowrap overflow-x-auto md:overflow-visible md:flex-wrap',
+            'w-full h-auto p-1 rounded-xl grid grid-cols-3 gap-1 md:flex md:flex-wrap md:overflow-visible',
             P38_FIELD_SURFACE,
           )}
         >
           <TabsTrigger
             value="contas"
-            className="shrink-0 md:flex-1 gap-2 rounded-lg py-2 min-h-[40px] min-w-[100px] md:min-w-[120px]"
+            title="Contas fixas"
+            className="gap-1.5 rounded-lg py-2 min-h-[40px] min-w-0 px-1.5 sm:px-2 md:flex-1 md:min-w-[120px]"
           >
-            <Repeat2 className="w-4 h-4" />
-            <span className="text-xs md:hidden">Contas</span>
+            <Repeat2 className="w-4 h-4 shrink-0" />
+            <span className="text-xs truncate md:hidden">Contas</span>
             <span className="hidden md:inline text-sm">Contas fixas</span>
           </TabsTrigger>
           <TabsTrigger
             value="previsao"
-            className="shrink-0 md:flex-1 gap-2 rounded-lg py-2 min-h-[40px] min-w-[86px] md:min-w-[120px]"
+            title="Previsão do mês"
+            className="gap-1.5 rounded-lg py-2 min-h-[40px] min-w-0 px-1.5 sm:px-2 md:flex-1 md:min-w-[120px]"
           >
-            <CalendarClock className="w-4 h-4" />
-            <span className="text-xs md:hidden">Mês</span>
+            <CalendarClock className="w-4 h-4 shrink-0" />
+            <span className="text-xs truncate md:hidden">Mês</span>
             <span className="hidden md:inline text-sm">Previsão do mês</span>
           </TabsTrigger>
           <TabsTrigger
             value="projecao"
-            className="shrink-0 md:flex-1 gap-2 rounded-lg py-2 min-h-[40px] min-w-[86px] md:min-w-[120px]"
+            title="Projeção 12 meses"
+            className="gap-1.5 rounded-lg py-2 min-h-[40px] min-w-0 px-1.5 sm:px-2 md:flex-1 md:min-w-[120px]"
           >
-            <TrendingUp className="w-4 h-4" />
-            <span className="text-xs md:hidden">12m</span>
+            <TrendingUp className="w-4 h-4 shrink-0" />
+            <span className="text-xs truncate md:hidden">12m</span>
             <span className="hidden md:inline text-sm">Projeção 12 meses</span>
           </TabsTrigger>
         </TabsList>
