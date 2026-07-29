@@ -1,9 +1,8 @@
 /**
- * Bloqueia rotação para retrato (sem mensagem / overlay).
- * Eficaz sobretudo em PWA instalado (atalho no ecrã) e browsers Android.
- * Em aba normal do Safari iOS o sistema pode ignorar o lock — limitação da plataforma.
+ * Bloqueia rotação para retrato (comportamento histórico do PWA Android).
+ * Manifest: portrait-primary. Sem overlay de mensagem.
  */
-const PORTRAIT_LOCKS = ['portrait', 'portrait-primary'];
+const PORTRAIT_LOCK = 'portrait-primary';
 
 function isCoarsePointer() {
   if (typeof window === 'undefined' || !window.matchMedia) return false;
@@ -16,23 +15,22 @@ function canUseScreenOrientationLock() {
 
 export async function lockPortraitOrientation() {
   if (!canUseScreenOrientationLock()) return false;
-
-  for (const type of PORTRAIT_LOCKS) {
+  try {
+    await screen.orientation.lock(PORTRAIT_LOCK);
+    return true;
+  } catch {
     try {
-      await screen.orientation.lock(type);
+      await screen.orientation.lock('portrait');
       return true;
     } catch {
-      /* tenta o próximo tipo / browser pode exigir gesto do utilizador */
+      return false;
     }
   }
-  return false;
 }
 
 /**
- * Instala tentativas de lock em retrato:
- * - ao carregar
- * - após o primeiro toque (gesto — exigido por vários browsers)
- * - ao voltar ao app / mudança de orientação
+ * Mantém retrato em dispositivos touch (PWA Android / Chrome).
+ * Re-tenta após gesto, ao voltar ao app e se a orientação mudar.
  */
 export function installPortraitOrientationLock() {
   if (typeof window === 'undefined' || !isCoarsePointer()) return undefined;
@@ -50,7 +48,6 @@ export function installPortraitOrientationLock() {
     if (document.visibilityState === 'visible') tryLock();
   };
 
-  /** Um gesto do utilizador desbloqueia o lock em Chrome/Android. */
   const onFirstGesture = () => {
     tryLock();
     window.removeEventListener('pointerdown', onFirstGesture, true);
