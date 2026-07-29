@@ -8,6 +8,7 @@ export const FINANCEIRO_PROTECTED_PAGES = new Set([
   'TurnosFechados',
   'Agefin',
   'AgefinConsulta',
+  'SuperAgefin',
   'ExtratoConta',
   'FinanceiroModulo',
   'Financeiro',
