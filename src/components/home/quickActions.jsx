@@ -128,7 +128,7 @@ export const ALL_QUICK_ACTIONS = [
     id: 'agefin_consulta',
     icon: ReceiptText,
     label: 'AGEFIN',
-    page: 'AgefinConsulta',
+    page: 'SuperAgefin',
     permissaoCheck: (p) => p?.financeiro?.acesso || p?.dashboard?.acesso,
   },
   {

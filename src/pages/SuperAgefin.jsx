@@ -1,10 +1,8 @@
 /**
- * SUPERAGEFIN — cópia isolada da AgefinConsulta para experimentar alterações
- * sem afetar a AGEFIN em produção (/AgefinConsulta).
- * Rota: /SuperAgefin | Menu: Financeiro → SUPERAGEFIN
+ * AGEFIN — consulta de contas recorrentes e compromissos (SuperAgefin).
+ * Rota: /SuperAgefin | Menu: Financeiro → AGEFIN
  *
- * Componentes próprios em src/components/superagefin/
- * (Agefin original permanece em src/pages/AgefinConsulta.jsx).
+ * Componentes em src/components/superagefin/
  */
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -799,8 +797,8 @@ export default function SuperAgefin() {
       <div className="mx-auto max-w-5xl space-y-2 md:space-y-3">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-[0.16em]">Laboratório SUPERAGEFIN</p>
-            <h1 className="mt-0.5 text-xl leading-none md:text-2xl font-semibold text-foreground font-glacial">SUPERAGEFIN</h1>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-[0.16em]">Financeiro</p>
+            <h1 className="mt-0.5 text-xl leading-none md:text-2xl font-semibold text-foreground font-glacial">AGEFIN</h1>
           </div>
           <Drawer>
             <DrawerTrigger asChild>
@@ -813,7 +811,7 @@ export default function SuperAgefin() {
             </DrawerTrigger>
             <DrawerContent className="border-0 rounded-t-[32px] bg-card px-4 pb-6">
               <DrawerHeader className="px-0 text-left">
-                <DrawerTitle className="font-glacial text-foreground">Menu SUPERAGEFIN</DrawerTitle>
+                <DrawerTitle className="font-glacial text-foreground">Menu AGEFIN</DrawerTitle>
                 <DrawerDescription className="text-sm text-muted-foreground">
                   Organize, some, imprima e ajuste filtros.
                 </DrawerDescription>

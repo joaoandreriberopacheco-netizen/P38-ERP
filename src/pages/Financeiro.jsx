@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ExecucaoOrcamentaria from '../components/financeiro/ExecucaoOrcamentaria';
-import AgefinConsulta from './AgefinConsulta';
+import SuperAgefin from './SuperAgefin';
 import AgefinImportador from '../components/agefin/AgefinImportador';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -40,7 +40,7 @@ export default function FinanceiroPage() {
           </TabsContent>
 
           <TabsContent value="agefin" className="mt-0">
-            <AgefinConsulta />
+            <SuperAgefin />
           </TabsContent>
 
           <TabsContent value="movimentos">

@@ -393,7 +393,7 @@ function montarLinhasPauta({
         nome: String(lancamento.descricao || '').trim() || 'Conta sem descrição',
         detalhe: '',
         valor: valorLancamento(lancamento),
-        link: `/AgefinConsulta?competencia=${competencia}`,
+        link: `/SuperAgefin?competencia=${competencia}`,
         destaque: frete || !lancamentoPago(lancamento),
         centroCusto,
         categoria,

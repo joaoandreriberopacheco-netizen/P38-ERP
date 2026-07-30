@@ -182,23 +182,6 @@ export default function ConfiguracoesPage() {
               </div>
             </div>
 
-            {/* Auditoria de Código */}
-            <div className="rounded-2xl bg-muted/50/60 p-4 space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Manutenção</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Link
-                  to="/AuditoriaCodigoProjeto"
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl bg-card/60 shadow-sm hover:shadow transition-shadow"
-                >
-                  <BarChart3 className="w-5 h-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium text-foreground/90">Auditoria de Código</p>
-                    <p className="text-xs text-muted-foreground">Checklist de código morto e detritos</p>
-                  </div>
-                </Link>
-              </div>
-            </div>
-
             <MetasEstoqueConfigTool />
             <CodigoProdutoBackfillTool />
 
