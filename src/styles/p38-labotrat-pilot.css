@@ -22,7 +22,7 @@
     --citrus-yellow: #fce181;
   }
 
-  /* Título fora do quadro */
+  /* Título fora do quadro — alinhado ao px-4 do cartão */
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-title {
     display: block;
     max-width: 100%;

@@ -68,9 +68,9 @@ export default function PlanejamentoFinanceiroV2Page() {
   }, [queryClient]);
 
   return (
-    <div className="p38-labotrat-pilot w-full min-w-0 overflow-x-hidden bg-[#1A1A1A] px-3 py-3 sm:p-4 lg:p-6 pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
-      <div className="pb-3">
-        <div className="flex items-center gap-2 min-w-0">
+    <div className="p38-labotrat-pilot min-h-screen w-full m-0 overflow-x-hidden bg-[#1A1A1A] p-0 pb-[var(--p38-scroll-pad-below-nav)] md:pb-8">
+      <div className="px-4 pt-4">
+        <div className="flex min-w-0 items-center gap-2">
           <h1 className="p38-labotrat-title truncate">
             Planejamento financeiro
           </h1>
@@ -92,18 +92,19 @@ export default function PlanejamentoFinanceiroV2Page() {
             </p>
           </P38HelpPopover>
         </div>
-        <p className="text-xs sm:text-sm text-muted-foreground mt-2 leading-snug">
+        <p className="mt-2 text-xs font-normal leading-snug text-white/55 sm:text-sm">
           Série manda · Previsão é virtual · Abrir mês materializa
         </p>
       </div>
 
-      <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="w-full mt-3 sm:mt-4">
-        <TabsList
-          className={cn(
-            'w-full h-auto p-1 rounded-xl grid grid-cols-3 gap-1 md:flex md:flex-wrap md:overflow-visible p38-labotrat-frost',
-            P38_FIELD_SURFACE,
-          )}
-        >
+      <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="mt-4 w-full">
+        <div className="px-4">
+          <TabsList
+            className={cn(
+              'grid h-auto w-full grid-cols-3 gap-1 rounded-xl p-1 md:flex md:flex-wrap md:overflow-visible p38-labotrat-frost',
+              P38_FIELD_SURFACE,
+            )}
+          >
           <TabsTrigger
             value="contas"
             title="Contas fixas"
@@ -131,9 +132,10 @@ export default function PlanejamentoFinanceiroV2Page() {
             <span className="text-xs truncate md:hidden">12m</span>
             <span className="hidden md:inline text-sm">Projeção 12 meses</span>
           </TabsTrigger>
-        </TabsList>
+          </TabsList>
+        </div>
 
-        <TabsContent value="contas" className="mt-4">
+        <TabsContent value="contas" className="mt-0">
           <ContasFixasTab
             loading={queries.loadingModelos}
             modelos={queries.modelos}
@@ -169,7 +171,7 @@ export default function PlanejamentoFinanceiroV2Page() {
           />
         </TabsContent>
 
-        <TabsContent value="previsao" className="mt-4">
+        <TabsContent value="previsao" className="mt-0">
           <PrevisaoMesTab
             competenciaMes={competenciaMes}
             onMesAnterior={() => setCompetenciaMes(shiftCompetencia(competenciaMes, -1))}
@@ -196,7 +198,7 @@ export default function PlanejamentoFinanceiroV2Page() {
           />
         </TabsContent>
 
-        <TabsContent value="projecao" className="mt-4">
+        <TabsContent value="projecao" className="mt-0">
           <ProjecaoTab
             loading={queries.loadingModelos || queries.loadingRecorrentes}
             modelos={queries.modelos}
