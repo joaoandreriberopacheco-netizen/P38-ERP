@@ -18,6 +18,8 @@ node_modules
 artifacts/
 dist
 dist-ssr
+.next
+next-env.d.ts
 *.local
 
 # Editor directories and files

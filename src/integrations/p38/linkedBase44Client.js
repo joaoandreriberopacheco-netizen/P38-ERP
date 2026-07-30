@@ -1,4 +1,5 @@
 import { isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
+import { isP38Dev, p38PublicEnv } from '@/lib/p38PublicEnv';
 import { createLegacyClientWithoutSupabaseEnv, createSupabaseLegacyClient } from './supabaseAdapter';
 import { getP38Providers, hasBase44Credentials, resolveP38ProviderName } from './providers';
 
@@ -35,8 +36,8 @@ export function resolveLegacyClient(base44SdkClient) {
   }
 
   if (
-    import.meta.env.DEV &&
-    String(import.meta.env.VITE_USE_SUPABASE_ENTITIES || '').toLowerCase().trim() === 'true'
+    isP38Dev() &&
+    String(p38PublicEnv('VITE_USE_SUPABASE_ENTITIES') || '').toLowerCase().trim() === 'true'
   ) {
     console.warn(
       '[P38] VITE_USE_SUPABASE_ENTITIES ignorado: modo híbrido foi removido. ' +

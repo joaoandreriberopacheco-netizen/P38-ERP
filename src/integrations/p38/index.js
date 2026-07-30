@@ -1,5 +1,6 @@
 import { createClient } from '@base44/sdk';
 import { appParams } from '@/lib/app-params';
+import { p38PublicEnv } from '@/lib/p38PublicEnv';
 import { createBase44Adapter } from './base44Adapter';
 import { createSubpayzeAdapter } from './subpayzeAdapter';
 import { createSupabaseAdapter } from './supabaseAdapter';
@@ -79,9 +80,9 @@ const linkedLegacyClient = resolveLegacyClient(base44SdkClient);
 
 const base44Adapter = createBase44Adapter(base44SdkClient);
 const subpayzeAdapter = createSubpayzeAdapter({
-  apiUrl: import.meta.env.VITE_SUBPAYZE_API_URL,
-  apiKey: import.meta.env.VITE_SUBPAYZE_API_KEY,
-  webhookSecret: import.meta.env.VITE_SUBPAYZE_WEBHOOK_SECRET
+  apiUrl: p38PublicEnv('VITE_SUBPAYZE_API_URL'),
+  apiKey: p38PublicEnv('VITE_SUBPAYZE_API_KEY'),
+  webhookSecret: p38PublicEnv('VITE_SUBPAYZE_WEBHOOK_SECRET')
 });
 const supabaseAdapter = createSupabaseAdapter();
 

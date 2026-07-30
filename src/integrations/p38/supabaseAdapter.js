@@ -1,6 +1,7 @@
 import { getSupabaseBrowserClient, isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
 import { buildSupabaseOAuthCallbackUrl } from '@/lib/supabaseAuth';
 import { loginFromAuthEmail, loginToAuthEmail, normalizeP38Login, resolveLoginCredentials } from '@/lib/p38InternalAuth';
+import { p38PublicEnv } from '@/lib/p38PublicEnv';
 import { createSupabaseEntityLayer } from './supabaseEntityLayer';
 import { isSupabaseAuthEnabled } from './providers';
 
@@ -19,8 +20,7 @@ const DEFAULT_BYPASS_USER = Object.freeze({
 });
 
 function readBypassUserFromEnv() {
-  const env = import.meta.env || {};
-  const raw = env.VITE_P38_BYPASS_USER_JSON;
+  const raw = p38PublicEnv('VITE_P38_BYPASS_USER_JSON');
   if (raw) {
     try {
       return { ...DEFAULT_BYPASS_USER, ...JSON.parse(raw) };
@@ -30,12 +30,12 @@ function readBypassUserFromEnv() {
   }
   return {
     ...DEFAULT_BYPASS_USER,
-    ...(env.VITE_P38_BYPASS_USER_ID ? { id: env.VITE_P38_BYPASS_USER_ID } : {}),
-    ...(env.VITE_P38_BYPASS_USER_EMAIL ? { email: env.VITE_P38_BYPASS_USER_EMAIL } : {}),
-    ...(env.VITE_P38_BYPASS_USER_NAME ? { full_name: env.VITE_P38_BYPASS_USER_NAME } : {}),
-    ...(env.VITE_P38_BYPASS_USER_ROLE ? { role: env.VITE_P38_BYPASS_USER_ROLE } : {}),
-    ...(env.VITE_P38_BYPASS_USER_PERFIL_ID
-      ? { perfil_acesso_id: env.VITE_P38_BYPASS_USER_PERFIL_ID }
+    ...(p38PublicEnv('VITE_P38_BYPASS_USER_ID') ? { id: p38PublicEnv('VITE_P38_BYPASS_USER_ID') } : {}),
+    ...(p38PublicEnv('VITE_P38_BYPASS_USER_EMAIL') ? { email: p38PublicEnv('VITE_P38_BYPASS_USER_EMAIL') } : {}),
+    ...(p38PublicEnv('VITE_P38_BYPASS_USER_NAME') ? { full_name: p38PublicEnv('VITE_P38_BYPASS_USER_NAME') } : {}),
+    ...(p38PublicEnv('VITE_P38_BYPASS_USER_ROLE') ? { role: p38PublicEnv('VITE_P38_BYPASS_USER_ROLE') } : {}),
+    ...(p38PublicEnv('VITE_P38_BYPASS_USER_PERFIL_ID')
+      ? { perfil_acesso_id: p38PublicEnv('VITE_P38_BYPASS_USER_PERFIL_ID') }
       : {})
   };
 }
