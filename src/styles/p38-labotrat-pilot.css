@@ -1,34 +1,35 @@
 /**
- * Piloto visual Labotrat — só Planejamento financeiro (modo claro).
+ * Piloto visual Planejamento (modo claro).
  *
- * Referência: embalagem labotrat (branco limpo + faixa verde oliva + tipografia
- * geométrica robusta). Não altera o resto do app nem o dark aprovado.
+ * - Corpo / dados: DIN 1451 (técnica, profissional)
+ * - Títulos: Century Gothic (toque sofisticado; fallback Didact Gothic)
+ * - Fundo branco; verde vivo estilo Palmeiras / palmeira (não oliva)
+ * - Dark: carvão + limão intacto
  *
  * Uso: class="p38-labotrat-pilot" no contentor da página.
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Didact+Gothic&display=swap');
 
 @layer components {
+  /* Corpo = DIN (não Outfit) */
   .p38-labotrat-pilot {
-    font-family: 'Outfit', system-ui, sans-serif;
-    letter-spacing: 0.005em;
+    font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
+    letter-spacing: var(--p38-tracking, 0.01em);
   }
 
-  /* Força Outfit sobre DIN condensada nesta página (piloto) */
-  .p38-labotrat-pilot,
-  .p38-labotrat-pilot .font-din-1451,
-  .p38-labotrat-pilot .font-din1451,
-  .p38-labotrat-pilot .font-din-native,
-  .p38-labotrat-pilot .p38-font,
-  .p38-labotrat-pilot .font-din-1451 *,
-  .p38-labotrat-pilot .font-din1451 * {
-    font-family: 'Outfit', system-ui, sans-serif;
+  /* Títulos — Century Gothic (sistema) + Didact Gothic (web) */
+  .p38-labotrat-pilot .p38-labotrat-title,
+  .p38-labotrat-pilot .p38-labotrat-mes-label,
+  .p38-labotrat-pilot h1,
+  .p38-labotrat-pilot h2,
+  .p38-labotrat-pilot [role='tab'] {
+    font-family: 'Century Gothic', CenturyGothic, AppleGothic, 'URW Gothic', 'Didact Gothic',
+      Futura, 'Trebuchet MS', sans-serif;
   }
 
   /*
-   * Modo claro: branco puro, verde só em destaques.
-   * html.dark continua com carvão + limão (não mexer no feeling aprovado).
+   * Modo claro: branco + verde Palmeiras vivo (#00A651).
    */
   html:not(.dark) .p38-labotrat-pilot {
     --background: 0 0% 100%;
@@ -37,26 +38,26 @@
     --card-foreground: 0 0% 8%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 8%;
-    /* Verde Labotrat — botões / banners */
-    --primary: 95 30% 38%;
+    /* Verde Palmeiras / palmeira — vivo, não oliva */
+    --primary: 145 100% 33%;
     --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 96%;
     --secondary-foreground: 0 0% 12%;
     --muted: 0 0% 96%;
     --muted-foreground: 0 0% 38%;
-    --accent: 95 28% 94%;
-    --accent-foreground: 95 30% 28%;
+    --accent: 145 45% 94%;
+    --accent-foreground: 145 80% 22%;
     --border: 0 0% 88%;
     --input: 0 0% 88%;
-    --ring: 95 30% 38%;
+    --ring: 145 100% 33%;
     --p38-bg: 0 0% 100%;
     --p38-surface: 0 0% 100%;
     --p38-search: 0 0% 96%;
     --p38-table-head: 0 0% 94%;
-    --p38-accent-olive: 95 30% 38%;
+    --p38-accent-olive: 145 100% 33%;
     --p38-divider: 0 0% 88% / 1;
-    --p38-olive: 95 30% 38%;
-    --p38-mediterranean: 95 27% 49%;
+    --p38-olive: 145 100% 33%;
+    --p38-mediterranean: 145 70% 40%;
     --p38-font-weight-body: 500;
     --p38-font-weight-strong: 600;
     --p38-font-weight-heading: 700;
@@ -65,35 +66,34 @@
     color: #141414;
   }
 
-  /* Superfícies neutras (cinza claro) — sem lavagem verde no fundo */
   html:not(.dark) .p38-labotrat-pilot .p38-field-surface,
   html:not(.dark) .p38-labotrat-pilot .p38-search-field {
     background-color: #f5f5f5;
   }
 
-  /* Título de página — faixa verde + texto branco (caixa Labotrat) */
+  /* Título — faixa verde vivo + texto branco + Century Gothic */
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-title {
     display: inline-flex;
     align-items: center;
     max-width: 100%;
-    padding: 0.45rem 0.85rem;
+    padding: 0.5rem 0.9rem;
     border-radius: 0.5rem;
-    background-color: #5c7e44;
+    background-color: #00a651;
     color: #ffffff;
     font-weight: 700;
     font-size: 1.05rem;
     line-height: 1.25;
-    letter-spacing: 0.01em;
+    letter-spacing: 0.02em;
   }
 
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-title + button,
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-title ~ button {
-    color: #5c7e44;
+    color: #00a651;
   }
 
-  /* Banner do mês — destaque verde */
+  /* Banner do mês */
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-mes {
-    background-color: #5c7e44 !important;
+    background-color: #00a651 !important;
     color: #ffffff;
   }
 
@@ -102,51 +102,59 @@
   }
 
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-mes button:hover {
-    background-color: rgba(255, 255, 255, 0.12);
+    background-color: rgba(255, 255, 255, 0.14);
   }
 
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-mes .p38-labotrat-mes-label {
     color: #ffffff;
     font-weight: 700;
+    letter-spacing: 0.04em;
   }
 
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-mes .p38-labotrat-mes-status {
-    color: rgba(255, 255, 255, 0.82);
+    color: rgba(255, 255, 255, 0.88);
+    font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
   }
 
-  /* CTA principal — verde sólido (classe dedicada, evita conflito Tailwind) */
+  /* CTA — verde Palmeiras */
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-cta {
-    background-color: #5c7e44;
+    background-color: #00a651;
     color: #ffffff;
-    border-color: #4a6a36;
+    border-color: #008c45;
     font-weight: 600;
   }
 
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-cta:hover {
-    background-color: #4f6f3a;
+    background-color: #008c45;
   }
 
-  /* Tab activa — texto verde, fundo branco */
   html:not(.dark) .p38-labotrat-pilot [role='tab'][data-state='active'] {
-    color: #5c7e44;
-    font-weight: 600;
+    color: #00a651;
+    font-weight: 700;
   }
 
-  /* Dados da lista — peso mais firme */
+  /* Dados — DIN firme */
   html:not(.dark) .p38-labotrat-pilot .p38-data,
   html:not(.dark) .p38-labotrat-pilot .p38-line-title {
+    font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
     font-weight: 600;
     letter-spacing: 0.02em;
   }
 
-  /* Cabeçalhos de grupo (datas) — acento verde discreto */
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-grupo-label {
-    color: #5c7e44;
+    color: #00a651;
+    font-family: 'Century Gothic', CenturyGothic, AppleGothic, 'Didact Gothic', sans-serif;
     font-weight: 700;
   }
 
-  /* Dark: tipografia Outfit, paleta carvão+limão intacta */
+  /* Dark: DIN + limão (sem Outfit) */
   html.dark .p38-labotrat-pilot {
-    font-family: 'Outfit', system-ui, sans-serif;
+    font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
+  }
+
+  html.dark .p38-labotrat-pilot .p38-labotrat-title,
+  html.dark .p38-labotrat-pilot .p38-labotrat-mes-label,
+  html.dark .p38-labotrat-pilot h1 {
+    font-family: 'Century Gothic', CenturyGothic, AppleGothic, 'Didact Gothic', sans-serif;
   }
 }

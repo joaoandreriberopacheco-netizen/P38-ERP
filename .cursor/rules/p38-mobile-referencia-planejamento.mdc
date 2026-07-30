@@ -38,5 +38,5 @@ Documento irmão (rollout geral): [`docs/p38-mobile-rollout.md`](docs/p38-mobile
 
 - **Relatório de Margem** continua a referência de **linhas densas / grelha** (`P38MobileLine`, divisores finos).
 - **Planejamento** é a referência de **composição + paleta + CTA + calma financeira** no dark mobile.
-- **Piloto Labotrat (claro):** na página Planejamento, class `p38-labotrat-pilot` — fundo branco, fonte Outfit, verde `#5c7e44` só em destaques (título, banner do mês, botões). Ver `src/styles/p38-labotrat-pilot.css`.
-- Os dois partilham a mesma paleta mediterrânea no dark; no claro o piloto ousa mais perto da embalagem Labotrat.
+- **Piloto claro (Planejamento):** fundo branco; **DIN 1451** no corpo/dados; **Century Gothic** nos títulos; verde vivo `#00A651` (Palmeiras/palmeira) só em destaques. Ver `src/styles/p38-labotrat-pilot.css`.
+- Dark continua carvão + limão.
