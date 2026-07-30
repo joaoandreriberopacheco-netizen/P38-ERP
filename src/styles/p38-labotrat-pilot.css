@@ -159,32 +159,43 @@
     color: var(--citrus-green);
   }
 
-  /* Banner do mês — verde sólido */
+  /*
+   * Navegador do mês — mesmo “pill claro” da tab Mês (branco/cinza + verde),
+   * sem o bloco verde sólido.
+   */
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-mes {
-    background-color: var(--citrus-green) !important;
-    color: #ffffff;
+    background-color: #ffffff !important;
+    color: var(--citrus-green);
     border-width: 0 !important;
     border-color: transparent !important;
     box-shadow: none;
   }
 
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-mes button {
-    color: #ffffff;
+    color: var(--citrus-green);
   }
 
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-mes button:hover {
-    background-color: rgba(255, 255, 255, 0.14);
+    background-color: rgba(27, 77, 46, 0.08);
   }
 
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-mes .p38-labotrat-mes-label {
-    color: #ffffff;
+    color: var(--citrus-green);
     font-weight: 700;
     letter-spacing: 0.04em;
   }
 
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-mes .p38-labotrat-mes-status {
-    color: rgba(255, 255, 255, 0.88);
+    color: hsl(0 0% 38%);
     font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
+  }
+
+  /* Tab activa — pill branco no trilho cinza (ref. botão Mês) */
+  html:not(.dark) .p38-labotrat-pilot [role='tab'][data-state='active'] {
+    background-color: #ffffff !important;
+    color: var(--citrus-green);
+    font-weight: 700;
+    box-shadow: none;
   }
 
   /* CTA — verde rolha */
@@ -199,13 +210,6 @@
 
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-cta:hover {
     background-color: var(--citrus-green-deep);
-  }
-
-  /* Tab activa — verde + detalhe cítrico (underline, não outline de caixa) */
-  html:not(.dark) .p38-labotrat-pilot [role='tab'][data-state='active'] {
-    color: var(--citrus-green);
-    font-weight: 700;
-    box-shadow: inset 0 -2px 0 var(--citrus-yellow);
   }
 
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-citrus {

@@ -118,9 +118,12 @@ export default function AgefinPrevisaoDetalheDrawer({
   };
 
   return (
-    <Drawer open={open} onOpenChange={(v) => !v && onClose()}>
-      <DrawerContent className="max-h-[92vh]">
-        <DrawerHeader className="border-b border-border/40 pb-3">
+    <Drawer open={open} onOpenChange={(v) => !v && onClose()} shouldScaleBackground>
+      <DrawerContent
+        overlayClassName="bg-[#1b4d2e]/25 backdrop-blur-md supports-[backdrop-filter]:bg-[#1b4d2e]/18"
+        className="max-h-[92vh] border-0 bg-white/80 text-foreground shadow-none backdrop-blur-xl supports-[backdrop-filter]:bg-white/70 dark:bg-[#1c1f24]/85 dark:supports-[backdrop-filter]:bg-[#1c1f24]/75"
+      >
+        <DrawerHeader className="pb-3">
           <DrawerTitle className="flex flex-wrap items-center gap-2">
             <P38Data as="span">{competencia.serie_nome}</P38Data>
             <Badge variant="outline">{formatCompetenciaLabel(competencia.competencia)}</Badge>
@@ -145,13 +148,15 @@ export default function AgefinPrevisaoDetalheDrawer({
             {parcela
               ? parcelaLabel
               : formatCicloAgefinCompetencia(competencia.competencia, dia)}
-            {competencia.terceiro_nome && (
-              <>
-                {' · '}
-                <P38Data as="span">{competencia.terceiro_nome}</P38Data>
-              </>
-            )}
           </p>
+          {competencia.terceiro_nome && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Fornecedor:{' '}
+              <P38Data as="span" className="text-foreground font-medium">
+                {competencia.terceiro_nome}
+              </P38Data>
+            </p>
+          )}
           {bloqueada && paga && (
             <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
               Conta já paga pelo financeiro — valor e vencimento não podem mais ser alterados aqui.
@@ -186,7 +191,7 @@ export default function AgefinPrevisaoDetalheDrawer({
           )}
 
           {!fantasma && (
-            <div className="rounded-xl bg-muted/40 p-3 mt-2 space-y-3">
+            <div className="rounded-xl bg-white/55 p-3 mt-2 space-y-3 backdrop-blur-md dark:bg-white/5">
               {podeEditar ? (
                 <>
                   <div>
@@ -197,7 +202,7 @@ export default function AgefinPrevisaoDetalheDrawer({
                       min="0"
                       value={valorInput}
                       onChange={(e) => setValorInput(e.target.value)}
-                      className="mt-1 h-11 w-full rounded-xl bg-card px-3 text-base font-semibold text-foreground outline-none"
+                      className="mt-1 h-11 w-full rounded-xl bg-white/70 px-3 text-base font-semibold text-foreground outline-none backdrop-blur-sm dark:bg-black/20"
                     />
                   </div>
                   <div>
@@ -206,7 +211,7 @@ export default function AgefinPrevisaoDetalheDrawer({
                       type="date"
                       value={vencimentoInput}
                       onChange={(e) => setVencimentoInput(e.target.value)}
-                      className="mt-1 h-11 w-full rounded-xl bg-card px-3 text-sm text-foreground outline-none"
+                      className="mt-1 h-11 w-full rounded-xl bg-white/70 px-3 text-sm text-foreground outline-none backdrop-blur-sm dark:bg-black/20"
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">

@@ -1,20 +1,17 @@
 import React from 'react';
 import {
   P38MobileLine,
-  P38StatusLabel,
   p38AccentKeyFromTone,
 } from '@/components/ui/p38-mobile-line';
-import { P38Data } from '@/components/ui/p38-data';
-import { formatFinanceiroValor } from '@/components/financeiro/fluxo/FinanceiroListaShared';
 import {
-  formatCicloAgefinCompetencia,
+  dataVencimentoNaCompetencia,
+  formatDataBr,
   isCompetenciaPlanejamento,
-  statusCompetenciaEfetivo,
-  tagFrequenciaSerie,
   valorEfetivoCompetencia,
   SITUACAO_SERIE,
 } from '@/lib/agefinPrevisaoCalculos';
 import { labelParcelaCurta } from '@/lib/agefinParcelamentoCalculos';
+import { formatFinanceiroValor } from '@/components/financeiro/fluxo/FinanceiroListaShared';
 
 const LINE_TITLE_CLASS =
   '[&>div>div:first-child]:text-[15px] [&>div>div:first-child]:font-semibold sm:[&>div>div:first-child]:text-base';
@@ -26,11 +23,21 @@ function rowAccent(competencia, modelo) {
   return 'warning';
 }
 
-const ORIGEM_LABELS = {
-  pdf: 'Boleto PDF',
-  auto: 'Previsto auto',
-};
+function labelVencimento(competencia, modelo, parcela) {
+  const dia = modelo?.dia_vencimento || competencia.dia_vencimento || 10;
+  const venc = parcela
+    ? competencia._parcelaDataVencimento ||
+      dataVencimentoNaCompetencia(competencia.competencia, dia)
+    : competencia.lancamento_id && competencia._lancamento?.data_vencimento
+      ? (competencia._lancamento.data_vencimento || '').slice(0, 10)
+      : dataVencimentoNaCompetencia(competencia.competencia, dia);
+  return formatDataBr(venc) || 'Sem vencimento';
+}
 
+/**
+ * Linha limpa na lista: descrição + vencimento + valor.
+ * Fornecedor, CC, tags e estado vão para o drawer ao tocar.
+ */
 export default function AgefinPrevisaoRow({ competencia, modelo, onClick, striped }) {
   const fantasma = Boolean(competencia._fantasmaParcelamento);
   const parcela = Boolean(competencia._modoParcela);
@@ -38,39 +45,12 @@ export default function AgefinPrevisaoRow({ competencia, modelo, onClick, stripe
     parcela && competencia.valor_previsto != null
       ? Number(competencia.valor_previsto) || 0
       : valorEfetivoCompetencia(competencia, modelo);
-  const statusEfetivo = statusCompetenciaEfetivo(competencia);
   const planejamento = isCompetenciaPlanejamento(competencia);
-  const dia = modelo?.dia_vencimento || competencia.dia_vencimento || 10;
-  const tagFreq = tagFrequenciaSerie(modelo || competencia);
   const parcelaLabel = labelParcelaCurta(competencia);
 
-  const meta = (
-    <>
-      {competencia.terceiro_nome && (
-        <P38Data as="span">{competencia.terceiro_nome}</P38Data>
-      )}
-      {fantasma && <P38StatusLabel tone="muted">Parcelada</P38StatusLabel>}
-      {parcela && parcelaLabel && <P38StatusLabel tone="info">{parcelaLabel}</P38StatusLabel>}
-      {tagFreq && <P38StatusLabel tone="muted">{tagFreq}</P38StatusLabel>}
-      {planejamento ? (
-        <P38StatusLabel tone="info">Planejamento</P38StatusLabel>
-      ) : (
-        <P38StatusLabel tone={statusEfetivo === 'fechado' ? 'success' : 'warning'}>
-          {statusEfetivo === 'fechado' ? 'Fechada' : 'Em aberto'}
-        </P38StatusLabel>
-      )}
-      {competencia.origem_boleto && (
-        <P38StatusLabel tone={competencia.origem_boleto === 'pdf' ? 'success' : 'muted'}>
-          {ORIGEM_LABELS[competencia.origem_boleto] || competencia.origem_boleto}
-        </P38StatusLabel>
-      )}
-      {modelo?.centro_custo && (
-        <span>
-          CC <P38Data as="span">{modelo.centro_custo}</P38Data>
-        </span>
-      )}
-    </>
-  );
+  const title = parcela && parcelaLabel
+    ? `${competencia.serie_nome} · ${parcelaLabel}`
+    : competencia.serie_nome;
 
   return (
     <P38MobileLine
@@ -81,13 +61,8 @@ export default function AgefinPrevisaoRow({ competencia, modelo, onClick, stripe
       accent={p38AccentKeyFromTone(rowAccent(competencia, modelo))}
       onClick={() => onClick?.(competencia)}
       className={`w-full text-left ${LINE_TITLE_CLASS} max-md:!py-3.5 max-md:min-h-[58px] ${planejamento ? 'opacity-95' : ''} ${fantasma ? 'opacity-70' : ''}`}
-      title={parcela ? `${competencia.serie_nome} — ${parcelaLabel}` : competencia.serie_nome}
-      subtitle={
-        parcela
-          ? parcelaLabel
-          : formatCicloAgefinCompetencia(competencia.competencia, dia)
-      }
-      meta={meta}
+      title={title}
+      subtitle={labelVencimento(competencia, modelo, parcela)}
       value={
         fantasma ? (
           <span className="text-muted-foreground line-through tabular-nums">

@@ -6,24 +6,14 @@ import {
   P38StatusLabel,
   p38AccentKeyFromTone,
 } from '@/components/ui/p38-mobile-line';
-import { P38Data } from '@/components/ui/p38-data';
-import { SITUACAO_SERIE, labelFrequenciaSerie, labelValorSerie } from '@/lib/agefinPrevisaoCalculos';
+import { SITUACAO_SERIE, labelValorSerie } from '@/lib/agefinPrevisaoCalculos';
 
+/**
+ * Lista de contas fixas: nome + valor/vencimento. Detalhe (fornecedor, CC) no editar.
+ */
 export default function AgefinPrevisaoModeloRow({ modelo, onEdit, onDelete, striped = false }) {
   const encerrada = (modelo.situacao || '') === SITUACAO_SERIE.ENCERRADA || modelo.ativo === false;
-  const centroCusto = String(modelo.centro_custo || '').trim();
-
-  const meta = (
-    <>
-      {modelo.terceiro_nome && <P38Data as="span">{modelo.terceiro_nome}</P38Data>}
-      <span>
-        CC {centroCusto ? <P38Data as="span">{centroCusto}</P38Data> : 'não informado'}
-      </span>
-      <span>{labelFrequenciaSerie(modelo)}</span>
-      <span>Vence dia {modelo.dia_vencimento || 10}</span>
-      {encerrada && <P38StatusLabel tone="muted">Encerrada</P38StatusLabel>}
-    </>
-  );
+  const dia = modelo.dia_vencimento || 10;
 
   return (
     <P38MobileLine
@@ -32,8 +22,8 @@ export default function AgefinPrevisaoModeloRow({ modelo, onEdit, onDelete, stri
       accent={p38AccentKeyFromTone(encerrada ? 'muted' : 'danger')}
       className="max-md:!py-3.5"
       title={modelo.nome}
-      subtitle={labelValorSerie(modelo)}
-      meta={meta}
+      subtitle={`${labelValorSerie(modelo)} · Vence dia ${dia}`}
+      meta={encerrada ? <P38StatusLabel tone="muted">Encerrada</P38StatusLabel> : null}
       value={
         <div className="flex items-center gap-1">
           <Button
