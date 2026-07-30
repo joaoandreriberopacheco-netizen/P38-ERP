@@ -61,6 +61,7 @@ export default function NovoLancamentoDialog({
   lancamentoExistente = null,
   modoPlanejamento = false,
   centroCusto = '',
+  centroCustoId = '',
   onCentroCustoChange,
   centrosCustoRegistros = [],
   onCentrosCustoChange,
@@ -727,6 +728,7 @@ export default function NovoLancamentoDialog({
         bloquearRecorrencia={modoEdicao}
         modoPlanejamento={modoPlanejamento}
         centroCusto={centroCusto}
+        centroCustoId={centroCustoId}
         onCentroCustoChange={onCentroCustoChange}
         centrosCustoRegistros={centrosCustoRegistros}
         onCentrosCustoChange={onCentrosCustoChange}

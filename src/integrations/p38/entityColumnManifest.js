@@ -27,7 +27,8 @@ export const TERCEIRO_COLUMNS = [
 export const LANCAMENTO_FINANCEIRO_COLUMNS = [
   'tipo', 'descricao', 'terceiro_id', 'terceiro_nome', 'valor', 'valor_liquido', 'data_vencimento',
   'data_pagamento', 'data_liquidacao_prevista', 'data_liquidacao_efetiva', 'data_lancamento',
-  'status', 'status_conciliacao', 'categoria', 'categoria_id', 'conta_financeira_id',
+  'status', 'status_conciliacao', 'categoria', 'categoria_id', 'centro_custo', 'centro_custo_id',
+  'conta_financeira_id',
   'conta_financeira_nome', 'forma_pagamento', 'forma_pagamento_id', 'forma_pagamento_tipo',
   'turno_caixa_id', 'grupo_lancamento_id', 'is_recorrente', 'is_custo_mercadoria',
   'frequencia_recorrencia', 'data_fim_recorrencia', 'numero_parcelas_total', 'parcela_atual',
@@ -265,7 +266,7 @@ export const TABLE_PROMOTION_MANIFEST = {
   ],
   venda_perdida: ['data_registro', 'motivo', 'origem', 'produto_nome', 'quantidade_desejada', 'vendedor_id'],
   folha_previsao_modelo: [
-    'nome', 'descricao', 'ativo', 'colaborador_id', 'colaborador_nome', 'centro_custo',
+    'nome', 'descricao', 'ativo', 'colaborador_id', 'colaborador_nome', 'centro_custo', 'centro_custo_id',
     'classificacao_despesa', 'custo_direto', 'data_desligamento', 'decimo_mes_parcela_1',
     'decimo_mes_parcela_2', 'decimo_percentual_parcela', 'decimo_terceiro_ativo', 'dia_vencimento',
     'ferias_programadas', 'retirada_frequencia', 'retirada_valor_fixo', 'rubricas', 'situacao',
@@ -277,8 +278,8 @@ export const TABLE_PROMOTION_MANIFEST = {
   ],
   folha_centro_custo: ['nome', 'ativo', 'ordem'],
   budget_modelo: [
-    'nome', 'ativo', 'categoria_id', 'categoria_nome', 'centro_custo', 'ciclo_dias', 'modo_estimativa',
-    'observacoes', 'ordem', 'usa_dias_uteis', 'valor_entrada',
+    'nome', 'ativo', 'categoria_id', 'categoria_nome', 'centro_custo', 'centro_custo_id', 'ciclo_dias',
+    'modo_estimativa', 'observacoes', 'ordem', 'usa_dias_uteis', 'valor_entrada',
   ],
   budget_competencia: ['modelo_id', 'competencia', 'status', 'linhas', 'total'],
   perfil_de_acesso: ['nome', 'descricao', 'ativo', 'cor', 'menu_compacto', 'permissoes'],

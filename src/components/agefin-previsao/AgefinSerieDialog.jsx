@@ -60,6 +60,7 @@ export default function AgefinSerieDialog({
     categoria_id: '',
     categoria_nome: '',
     centro_custo: '',
+    centro_custo_id: '',
     valor_previsto: 0,
     dia_vencimento: 10,
     frequencia: FREQUENCIA_SERIE.MENSAL,
@@ -85,6 +86,7 @@ export default function AgefinSerieDialog({
       categoria_id: categoriaId,
       categoria_nome: categoriaNome,
       centro_custo: serie?.centro_custo || '',
+      centro_custo_id: serie?.centro_custo_id || '',
       valor_previsto: Number(serie?.valor_previsto) || 0,
       dia_vencimento: Number(serie?.dia_vencimento) || 10,
       frequencia: serie?.frequencia || FREQUENCIA_SERIE.MENSAL,
@@ -211,7 +213,14 @@ export default function AgefinSerieDialog({
             <FolhaCentroCustoSelect
               centros={centrosCustoRegistros}
               value={form.centro_custo || ''}
-              onValueChange={(nome) => setForm((f) => ({ ...f, centro_custo: nome }))}
+              valueId={form.centro_custo_id || ''}
+              onValueChange={(centro) =>
+                setForm((f) => ({
+                  ...f,
+                  centro_custo: centro?.nome || '',
+                  centro_custo_id: centro?.id || '',
+                }))
+              }
               onCentrosChange={onCentrosChange}
               placeholder="Escolher centro de custo"
             />

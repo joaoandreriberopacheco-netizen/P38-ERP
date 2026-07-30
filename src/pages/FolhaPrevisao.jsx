@@ -785,7 +785,10 @@ export default function FolhaPrevisaoPage() {
         onClose={() => setPessoaDialog(null)}
         cadastro={pessoaDialog?.id ? pessoaDialog : null}
         colaboradoresDisponiveis={colaboradoresDisponiveis}
-        centrosCustoRegistrados={centrosRegistrados}
+        centrosCustoRegistros={centrosCustoRegistros}
+        onCentrosCustoChange={async () => {
+          await refetchCentros();
+        }}
         onSave={handleSavePessoa}
         onDesligar={setDesligamentoModelo}
         onReativar={handleReativar}

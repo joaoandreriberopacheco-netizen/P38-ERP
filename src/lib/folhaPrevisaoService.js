@@ -53,6 +53,11 @@ function ordenarCentrosRegistros(rows) {
   });
 }
 
+/** Id legado sintético (antes da tabela FolhaCentroCusto). */
+function isCentroCustoIdLegado(id) {
+  return String(id || '').startsWith('cc:');
+}
+
 function idCentroCustoFromNome(nome) {
   return `cc:${normalizarNomeCentro(nome).toLocaleLowerCase('pt-BR')}`;
 }
@@ -60,12 +65,20 @@ function idCentroCustoFromNome(nome) {
 function enrichCentroCustoRecord(row, idx = 0) {
   const nome = normalizarNomeCentro(typeof row === 'string' ? row : row?.nome);
   if (!nome) return null;
+  const idBruto = typeof row === 'object' && row?.id ? String(row.id) : '';
   return {
-    id: idCentroCustoFromNome(nome),
+    id: idBruto || idCentroCustoFromNome(nome),
     nome,
     ativo: typeof row === 'object' && row ? row.ativo !== false : true,
-    ordem: typeof row?.ordem === 'number' ? row.ordem : idx,
+    ordem:
+      typeof row?.ordem === 'number'
+        ? row.ordem
+        : Number(row?.ordem) || idx,
   };
+}
+
+function normalizarCentroEntidade(row, idx = 0) {
+  return enrichCentroCustoRecord(row, idx);
 }
 
 async function obterRegistroDadosEmpresa() {
@@ -89,37 +102,70 @@ function extrairCentrosCustoDaEmpresa(empresa) {
   );
 }
 
-async function persistirCentrosCustoEmpresa(registros) {
+/** Espelho de nomes activos em DadosEmpresa — compat com código que ainda lê só o array. */
+async function espelharCentrosEmDadosEmpresa(registros) {
   const ordenados = ordenarCentrosRegistros(registros);
-  const folha_centros_custo = ordenados.map(({ nome, ativo, ordem }) => ({
-    nome,
-    ativo: ativo !== false,
-    ordem,
-  }));
   const centros_custo_financeiros = ordenarNomesCentro(
     ordenados.filter((row) => row.ativo !== false).map((row) => row.nome),
   );
-
-  const empresa = await obterRegistroDadosEmpresa();
+  const folha_centros_custo = ordenados.map(({ id, nome, ativo, ordem }) => ({
+    id,
+    nome,
+    ativo: ativo !== false,
+    ordem: Number(ordem) || 0,
+  }));
   await atualizarDadosEmpresa(base44, { folha_centros_custo, centros_custo_financeiros });
+  return ordenados;
+}
 
-  return ordenados.map((row, idx) => enrichCentroCustoRecord(row, idx)).filter(Boolean);
+async function listarCentrosDaTabela() {
+  try {
+    const rows = await base44.entities.FolhaCentroCusto.list();
+    return ordenarCentrosRegistros(
+      (rows || []).map((row, idx) => normalizarCentroEntidade(row, idx)).filter(Boolean),
+    );
+  } catch (err) {
+    console.warn('[folha] FolhaCentroCusto.list falhou — a usar DadosEmpresa:', err?.message || err);
+    return null;
+  }
+}
+
+async function migrarCentrosEmpresaParaTabela(empresa) {
+  const legado = extrairCentrosCustoDaEmpresa(empresa);
+  if (!legado.length) return [];
+
+  const criados = [];
+  for (let i = 0; i < legado.length; i += 1) {
+    const row = legado[i];
+    const saved = await base44.entities.FolhaCentroCusto.create({
+      nome: row.nome,
+      ativo: row.ativo !== false,
+      ordem: Number(row.ordem) || i,
+    });
+    criados.push(normalizarCentroEntidade(saved, i));
+  }
+  await espelharCentrosEmDadosEmpresa(criados);
+  return ordenarCentrosRegistros(criados);
 }
 
 export async function listarCentrosCustoRegistros() {
-  const empresa = await obterRegistroDadosEmpresa();
-  const registros = extrairCentrosCustoDaEmpresa(empresa);
-
-  if (
-    registros.length &&
-    empresa?.id &&
-    !Array.isArray(empresa?.folha_centros_custo)?.length &&
-    Array.isArray(empresa?.centros_custo_financeiros)?.length
-  ) {
-    return persistirCentrosCustoEmpresa(registros);
+  const daTabela = await listarCentrosDaTabela();
+  if (daTabela === null) {
+    const empresa = await obterRegistroDadosEmpresa();
+    return extrairCentrosCustoDaEmpresa(empresa);
   }
+  if (daTabela.length) return daTabela;
 
-  return registros;
+  const empresa = await obterRegistroDadosEmpresa();
+  const legado = extrairCentrosCustoDaEmpresa(empresa);
+  if (!legado.length) return [];
+
+  try {
+    return await migrarCentrosEmpresaParaTabela(empresa);
+  } catch (err) {
+    console.warn('[folha] migração de centros para FolhaCentroCusto falhou:', err?.message || err);
+    return legado;
+  }
 }
 
 export async function listarCentrosCustoFinanceiros() {
@@ -147,6 +193,29 @@ export async function salvarCentroCustoRegistro({ id = null, nome, ativo = true,
   );
   if (dup) throw new Error('Já existe um centro com este nome.');
 
+  const body = {
+    nome: nomeLimpo,
+    ativo: ativo !== false,
+    ...(typeof ordem === 'number' ? { ordem } : {}),
+  };
+
+  const usarTabela = (await listarCentrosDaTabela()) !== null;
+
+  if (usarTabela) {
+    if (id && !isCentroCustoIdLegado(id)) {
+      await base44.entities.FolhaCentroCusto.update(id, body);
+    } else {
+      await base44.entities.FolhaCentroCusto.create({
+        ...body,
+        ordem: typeof ordem === 'number' ? ordem : todos.length,
+      });
+    }
+    const lista = await listarCentrosCustoRegistros();
+    await espelharCentrosEmDadosEmpresa(lista);
+    return lista;
+  }
+
+  // Fallback: só DadosEmpresa (ambiente sem entidade)
   let atualizados;
   if (id) {
     const idx = todos.findIndex((row) => row.id === id);
@@ -162,25 +231,40 @@ export async function salvarCentroCustoRegistro({ id = null, nome, ativo = true,
     atualizados = [
       ...todos,
       {
+        id: idCentroCustoFromNome(nomeLimpo),
         nome: nomeLimpo,
         ativo: ativo !== false,
         ordem: typeof ordem === 'number' ? ordem : todos.length,
       },
     ];
   }
-
-  return persistirCentrosCustoEmpresa(atualizados);
+  return espelharCentrosEmDadosEmpresa(atualizados);
 }
 
 export async function excluirCentroCustoRegistro(id) {
   if (!id) return listarCentrosCustoRegistros();
 
   const todos = await listarCentrosCustoRegistros();
-  const filtrado = todos.filter((row) => row.id !== id);
-  if (filtrado.length === todos.length) {
-    throw new Error('Centro não encontrado.');
+  const alvo = todos.find((row) => row.id === id);
+  if (!alvo) throw new Error('Centro não encontrado.');
+
+  const daTabela = await listarCentrosDaTabela();
+  if (daTabela !== null && !isCentroCustoIdLegado(id)) {
+    try {
+      await base44.entities.FolhaCentroCusto.delete(id);
+    } catch {
+      await base44.entities.FolhaCentroCusto.update(id, { ...alvo, ativo: false });
+      const lista = await listarCentrosCustoRegistros();
+      await espelharCentrosEmDadosEmpresa(lista);
+      return lista;
+    }
+    const lista = await listarCentrosCustoRegistros();
+    await espelharCentrosEmDadosEmpresa(lista);
+    return lista;
   }
-  return persistirCentrosCustoEmpresa(filtrado);
+
+  const filtrado = todos.filter((row) => row.id !== id);
+  return espelharCentrosEmDadosEmpresa(filtrado);
 }
 
 /** Cria colaborador mínimo para cadastro na folha (quando a pessoa ainda não existe no sistema). */
@@ -265,10 +349,30 @@ export async function salvarCadastroPessoaFolha(payload, modeloId = null) {
   return modelo;
 }
 
-export async function atualizarCentroCustoPessoaFolha(modeloId, centroCusto, custoDireto = null) {
+export async function atualizarCentroCustoPessoaFolha(
+  modeloId,
+  centroCusto,
+  custoDireto = null,
+  centroCustoId = '',
+) {
   if (!modeloId) throw new Error('Modelo da folha não informado.');
+  const nome = String(centroCusto || '').trim();
+  let idResolvido = centroCustoId || '';
+  if (!idResolvido && nome) {
+    try {
+      const centros = await listarCentrosCustoRegistros();
+      const match = (centros || []).find(
+        (c) =>
+          String(c.nome || '').toLocaleLowerCase('pt-BR') === nome.toLocaleLowerCase('pt-BR'),
+      );
+      idResolvido = match?.id || '';
+    } catch {
+      /* ignore */
+    }
+  }
   const payload = {
-    centro_custo: String(centroCusto || '').trim(),
+    centro_custo: nome,
+    centro_custo_id: nome ? idResolvido : '',
   };
   if (typeof custoDireto === 'boolean') {
     payload.custo_direto = custoDireto;
@@ -523,6 +627,7 @@ export async function sincronizarLancamentoFinanceiro(competencia, opcoes = {}) 
     categoria_id: categoriaId || '',
     categoria: categoriaNome || (modelo?.tipo_vinculo === 'socio' ? 'Retirada sócio' : 'Salários'),
     centro_custo: String(modelo?.centro_custo || '').trim() || '',
+    centro_custo_id: modelo?.centro_custo_id || '',
     custo_direto:
       typeof modelo?.custo_direto === 'boolean'
         ? modelo.custo_direto

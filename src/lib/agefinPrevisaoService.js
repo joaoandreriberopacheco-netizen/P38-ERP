@@ -249,6 +249,7 @@ function aplicarOverlaySerie(serie, overlay) {
         ? Number(overlay.valor_previsto)
         : serie.valor_previsto,
     centro_custo: overlay.centro_custo || serie.centro_custo,
+    centro_custo_id: overlay.centro_custo_id || serie.centro_custo_id,
     observacoes: overlay.observacoes || serie.observacoes,
     situacao: overlay.situacao || serie.situacao,
     data_encerramento: overlay.data_encerramento || serie.data_encerramento,
@@ -637,6 +638,8 @@ async function sincronizarSerieNoFinanceiro(modelo) {
       data_vencimento: ven,
       categoria: modelo.categoria_nome || lf.categoria,
       categoria_id: modelo.categoria_id || lf.categoria_id,
+      centro_custo: modelo.centro_custo || lf.centro_custo || '',
+      centro_custo_id: modelo.centro_custo_id || lf.centro_custo_id || '',
       referencia_id: serieIdFromGrupoLancamento(modelo.grupo_lancamento_id) || modelo.id,
       is_recorrente: true,
       frequencia_recorrencia: freq,
@@ -734,12 +737,31 @@ export async function removerSerie(serieId, serieMeta = null) {
   invalidarCacheLancamentosFinanceiros();
 }
 
-export async function atualizarCentroCustoSerie(serieId, centroCusto) {
+export async function atualizarCentroCustoSerie(serieId, centroCusto, centroCustoId = '') {
   const existente = (await obterSeriesParaEdicao()).find((s) => s.id === serieId);
   if (!existente) throw new Error('Conta não encontrada.');
+
+  let idResolvido = centroCustoId || '';
+  const nome =
+    centroCusto === '__sem__' || centroCusto === '__none__' ? '' : String(centroCusto || '').trim();
+
+  if (!idResolvido && nome) {
+    try {
+      const centros = await listarCentrosCustoRegistros();
+      const match = (centros || []).find(
+        (c) =>
+          String(c.nome || '').toLocaleLowerCase('pt-BR') === nome.toLocaleLowerCase('pt-BR'),
+      );
+      idResolvido = match?.id || '';
+    } catch {
+      /* ignore */
+    }
+  }
+
   const atualizada = criarSerieComDefaults({
     ...existente,
-    centro_custo: centroCusto || '',
+    centro_custo: nome,
+    centro_custo_id: nome ? idResolvido : '',
   });
   await persistirSeriesModelo([atualizada]);
   await sincronizarSerieNoFinanceiro(atualizada);
@@ -803,6 +825,8 @@ function payloadLancamentoAuto(modelo, competencia) {
     status_conciliacao: 'N/A',
     categoria: modelo.categoria_nome || undefined,
     categoria_id: modelo.categoria_id || undefined,
+    centro_custo: String(modelo.centro_custo || '').trim() || undefined,
+    centro_custo_id: modelo.centro_custo_id || undefined,
     referencia_tipo: 'Manual',
     referencia_id: serieIdFromGrupoLancamento(modelo.grupo_lancamento_id) || modelo.id,
     observacoes: `Competência ${competencia} — aberta pelo planejamento financeiro. Conta financeira será definida na execução.`,

@@ -11,8 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import BudgetCategoriaSelect from '@/components/budget-previsao/BudgetCategoriaSelect';
+import FolhaCentroCustoSelect from '@/components/folha-previsao/FolhaCentroCustoSelect';
 import { P38HelpPopover } from '@/components/ui/p38-help-popover';
 import { cn } from '@/lib/utils';
 import { P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
@@ -35,10 +35,12 @@ export default function BudgetModeloDialog({
   onClose,
   modelo,
   categorias = [],
+  centrosCustoRegistros = [],
   centrosRegistrados = [],
   onSave,
   saving,
   onCategoriasChange,
+  onCentrosChange,
 }) {
   const draftIdRef = useRef(null);
 
@@ -57,6 +59,7 @@ export default function BudgetModeloDialog({
     categoria_id: '',
     categoria_nome: '',
     centro_custo: '',
+    centro_custo_id: '',
     modo_estimativa: MODO_ESTIMATIVA.POR_MES,
     valor_entrada: '',
     ciclo_dias: '',
@@ -65,6 +68,13 @@ export default function BudgetModeloDialog({
     observacoes: '',
   });
 
+  const centrosParaSelect = useMemo(() => {
+    if (centrosCustoRegistros?.length) return centrosCustoRegistros;
+    return (centrosRegistrados || []).map((nome, idx) =>
+      typeof nome === 'string' ? { id: '', nome, ativo: true, ordem: idx } : nome,
+    );
+  }, [centrosCustoRegistros, centrosRegistrados]);
+
   useEffect(() => {
     if (!open) return;
     setForm({
@@ -72,6 +82,7 @@ export default function BudgetModeloDialog({
       categoria_id: modelo?.categoria_id || '',
       categoria_nome: modelo?.categoria_nome || '',
       centro_custo: modelo?.centro_custo || '',
+      centro_custo_id: modelo?.centro_custo_id || '',
       modo_estimativa: modelo?.modo_estimativa || MODO_ESTIMATIVA.POR_MES,
       valor_entrada: modelo?.valor_entrada != null ? String(modelo.valor_entrada) : '',
       ciclo_dias: modelo?.ciclo_dias ? String(modelo.ciclo_dias) : '',
@@ -167,22 +178,21 @@ export default function BudgetModeloDialog({
             </div>
             <div>
               <Label>Centro de custo</Label>
-              <Select
-                value={form.centro_custo || '__none__'}
-                onValueChange={(v) => setForm((f) => ({ ...f, centro_custo: v === '__none__' ? '' : v }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Opcional" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">Nenhum</SelectItem>
-                  {centrosRegistrados.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FolhaCentroCustoSelect
+                centros={centrosParaSelect}
+                value={form.centro_custo || ''}
+                valueId={form.centro_custo_id || ''}
+                onValueChange={(centro) =>
+                  setForm((f) => ({
+                    ...f,
+                    centro_custo: centro?.nome || '',
+                    centro_custo_id: centro?.id || '',
+                  }))
+                }
+                onCentrosChange={onCentrosChange}
+                emptyLabel="Nenhum"
+                placeholder="Nenhum — tocar + para criar"
+              />
             </div>
           </div>
 
