@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react'
 import './App.css'
 import { Toaster } from "@/components/ui/sonner"
+import { SpeedInsights } from '@vercel/speed-insights/react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { FLARE_AND_INSPECTION_UI_ENABLED } from '@/config/devToolsFlags';
@@ -123,6 +124,7 @@ function App() {
             )}
           </Router>
           <Toaster />
+          <SpeedInsights />
           {FLARE_AND_INSPECTION_UI_ENABLED ? <VisualEditAgent /> : null}
         </NavigationTransitionProvider>
       </QueryClientProvider>
