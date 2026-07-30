@@ -2,11 +2,10 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
-import { TrendingUp, ShoppingCart, Warehouse, DollarSign, Download, FileText, ChevronRight, BarChart3, LayoutTemplate, ClipboardPenLine } from 'lucide-react';
+import { TrendingUp, ShoppingCart, Warehouse, DollarSign, Download, FileText, ChevronRight, BarChart3, ClipboardPenLine } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import RelatorioPerformance from './RelatorioPerformance';
 import SeletorProdutoRPP from '@/components/relatorios/SeletorProdutoRPP';
-import GestaoTemplates from './GestaoTemplates';
 
 export default function RelatoriosPage() {
   const [showSeletor, setShowSeletor] = useState(false);
@@ -258,13 +257,6 @@ export default function RelatoriosPage() {
               >
                 Financeiro
               </TabsTrigger>
-              <TabsTrigger 
-                value="templates" 
-                className="px-0 py-3 text-xs md:text-sm font-medium border-b-2 border-transparent data-[state=active]:border-green-500 data-[state=active]:text-green-600 dark:data-[state=active]:text-green-400 rounded-none flex items-center gap-1"
-              >
-                <LayoutTemplate className="w-3.5 h-3.5" />
-                Templates
-              </TabsTrigger>
             </TabsList>
           </div>
         </div>
@@ -331,10 +323,6 @@ export default function RelatoriosPage() {
                 <RelatorioCard key={rel.id} relatorio={rel} />
               ))}
             </div>
-          </TabsContent>
-
-          <TabsContent value="templates" className="-mx-4 md:-mx-6">
-            <GestaoTemplates />
           </TabsContent>
         </div>
       </Tabs>

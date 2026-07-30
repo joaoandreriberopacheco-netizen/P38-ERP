@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { ShieldAlert } from 'lucide-react';
-import { TrendingUp, Package, DollarSign, BarChart3, Settings, Building2, Users, Sliders, Tags, Wallet, CreditCard, Smartphone, Bookmark, Wrench, Shield, MapPin, Receipt, Printer, Trash2 } from 'lucide-react';
+import { TrendingUp, Package, DollarSign, BarChart3, Settings, Building2, Users, Sliders, Tags, Wallet, CreditCard, Smartphone, Bookmark, Wrench, Shield, MapPin, Printer, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
 import { GlacialTabsList, GlacialTabsTrigger, GlacialSubTabsList, GlacialSubTabsTrigger } from '@/components/ui/GlacialTabs';
@@ -21,9 +21,6 @@ import RecomecarDoZero from '@/components/config/RecomecarDoZero';
 import MetasEstoqueConfigTool from '@/components/config/MetasEstoqueConfigTool';
 import CodigoProdutoBackfillTool from '@/components/config/CodigoProdutoBackfillTool';
 import { useNavigate } from 'react-router-dom';
-import PersonalizacaoComprovanteManager from '@/components/config/PersonalizacaoComprovanteManager';
-import EditorLayoutsTres from '@/pages/EditorLayoutsTres';
-
 export default function ConfiguracoesPage() {
   const [userLoaded, setUserLoaded] = useState(false);
   const [user, setUser] = useState(null);
@@ -68,7 +65,6 @@ export default function ConfiguracoesPage() {
         <GlacialTabsTrigger value="vendas"     activeValue={tab} onSelect={setTab} icon={TrendingUp}  label="Vendas" />
         <GlacialTabsTrigger value="operacoes"  activeValue={tab} onSelect={setTab} icon={Package}     label="Operações" />
         <GlacialTabsTrigger value="financeiro" activeValue={tab} onSelect={setTab} icon={DollarSign}  label="Financeiro" />
-        <GlacialTabsTrigger value="relatorios" activeValue={tab} onSelect={setTab} icon={BarChart3}   label="Relatórios" />
         <GlacialTabsTrigger value="geral"      activeValue={tab} onSelect={setTab} icon={Settings}    label="Parâmetros" />
         <GlacialTabsTrigger value="sistema"    activeValue={tab} onSelect={setTab} icon={Wrench}      label="Ferramentas" />
       </GlacialTabsList>
@@ -81,13 +77,11 @@ export default function ConfiguracoesPage() {
               <GlacialSubTabsTrigger value="fluxo"       activeValue={vendaTab} onSelect={setVendaTab} icon={Sliders}  label="Fluxo & Parâmetros" />
               <GlacialSubTabsTrigger value="metas"       activeValue={vendaTab} onSelect={setVendaTab} icon={BarChart3} label="Metas Dashboard" />
               <GlacialSubTabsTrigger value="tabelas"     activeValue={vendaTab} onSelect={setVendaTab} icon={Tags}     label="Tabelas & Políticas" />
-              <GlacialSubTabsTrigger value="comprovante" activeValue={vendaTab} onSelect={setVendaTab} icon={Receipt}  label="Comprovante" />
             </GlacialSubTabsList>
             <div>
               {vendaTab === 'fluxo'       && <ConfiguracoesVendaManager />}
               {vendaTab === 'metas'       && <MetasDashboardKpiManager />}
               {vendaTab === 'tabelas'     && <TabelasPrecoManager />}
-              {vendaTab === 'comprovante' && <PersonalizacaoComprovanteManager />}
             </div>
           </div>
         )}
@@ -121,13 +115,6 @@ export default function ConfiguracoesPage() {
               {finTab === 'maquininhas' && <MaquininhasManager />}
               {finTab === 'categorias'  && <CategoriasFinanceirasManager />}
             </div>
-          </div>
-        )}
-
-        {/* RELATÓRIOS */}
-        {tab === 'relatorios' && (
-          <div className="space-y-4">
-            <EditorLayoutsTres />
           </div>
         )}
 

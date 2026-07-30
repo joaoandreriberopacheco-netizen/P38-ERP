@@ -8,7 +8,6 @@ import { toast } from 'sonner';
 import { imprimirCupomTermico } from '@/functions/imprimirCupomTermico';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { renderTemplate, prepararDadosVenda, ordenarItensComprovante } from '@/lib/templateEngine';
 import { getUnidadeMedidaItemPedidoVenda } from '@/lib/productUnits';
 import { TIMEZONE_SISTEMA } from '@/components/utils/dateUtils';
 import { shareOrDownloadBlob, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
@@ -71,6 +70,11 @@ const fmtV = (v) => {
   return parts.join(',');
 };
 const PRETO_CUPOM = '#000';
+
+const ordenarItensComprovante = (itens = []) =>
+  [...itens].sort((a, b) =>
+    String(a?.produto_nome || '').localeCompare(String(b?.produto_nome || ''), 'pt-BR', { sensitivity: 'base' })
+  );
 
 // ── Cupom Térmico 80mm ────────────────────────────────────────────────────────
 function CupomTermico({ pedido, dadosEmpresa }) {
@@ -471,17 +475,6 @@ function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
 }
 
 // ── Componente principal ──────────────────────────────────────────────────────
-// ── Renderizador de Template HTML ────────────────────────────────────────────
-function TemplateRenderer({ htmlContent }) {
-  return (
-    <div
-      id="cupom-print"
-      dangerouslySetInnerHTML={{ __html: htmlContent }}
-      style={{ background: '#fff', color: '#000' }}
-    />
-  );
-}
-
 export default function ComprovanteCompra({ pedido, open, onClose }) {
   const nestedZ = useCaixaNestedDialogZ();
   const [dadosEmpresa, setDadosEmpresa] = useState(null);
@@ -490,7 +483,6 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
   const [imprimindoTermica, setImprimindoTermica] = useState(false);
   const [formato, setFormato] = useState(() => localStorage.getItem('comprovante_formato_venda') || 'a4');
   const [gerando, setGerando] = useState(false);
-  const [templates, setTemplates] = useState({ '80mm': null, 'a4': null });
 
   const escolherFormato = (novoFormato) => {
     setFormato(novoFormato);
@@ -507,14 +499,6 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
     }
     const ip = localStorage.getItem('ip_impressora_termica');
     if (ip) setIpImpressora(ip);
-    base44.entities.ComprovanteTemplate.filter({ is_default: true }).then(tpls => {
-      const map = { '80mm': null, 'a4': null };
-      tpls.forEach(t => {
-        if (t.tipo === 'venda_80mm') map['80mm'] = t;
-        if (t.tipo === 'venda_a4') map['a4'] = t;
-      });
-      setTemplates(map);
-    }).catch(() => {});
   }, [open]);
 
   const handlePrint = async () => {
@@ -730,11 +714,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
         {formato === '80mm' ? (
           <div className="w-full h-full flex justify-center py-4 px-4">
             <div style={{ width: '275px', transformOrigin: 'top center', transform: 'scale(1)' }} className="shadow-2xl rounded-sm overflow-hidden">
-              {templates['80mm'] && dadosEmpresa !== undefined ? (
-                <TemplateRenderer htmlContent={renderTemplate(templates['80mm'].html_template, prepararDadosVenda(pedido, dadosEmpresa))} />
-              ) : (
-                <CupomTermico pedido={pedido} dadosEmpresa={dadosEmpresa} />
-              )}
+              <CupomTermico pedido={pedido} dadosEmpresa={dadosEmpresa} />
             </div>
           </div>
         ) : (
