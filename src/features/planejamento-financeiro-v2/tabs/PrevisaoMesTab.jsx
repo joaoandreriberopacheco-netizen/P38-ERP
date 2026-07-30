@@ -81,7 +81,7 @@ export default function PrevisaoMesTab({
 
   return (
     <div className="min-w-0">
-      <div className="p38-single-sheet mx-4 mt-4 mb-6 rounded-[32px] bg-white p-5 shadow-2xl">
+      <div className="premium-card mt-4 mb-6 p-5 sm:p-6">
         <AgefinPrevisaoCabecalho
           competenciaMes={competenciaMes}
           onMesAnterior={onMesAnterior}

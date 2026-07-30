@@ -68,10 +68,10 @@ export default function PlanejamentoFinanceiroV2Page() {
   }, [queryClient]);
 
   return (
-    <div className="p38-labotrat-pilot min-h-screen w-full m-0 overflow-x-hidden bg-[#1A1A1A] p-0 pb-[var(--p38-scroll-pad-below-nav)] md:pb-8">
-      <div className="px-4 pt-4">
+    <div className="p38-dashboard min-h-screen w-full mx-auto max-w-md md:max-w-7xl overflow-x-hidden bg-background px-4 pt-4 pb-[var(--p38-scroll-pad-below-nav)] md:pb-8">
+      <div>
         <div className="flex min-w-0 items-center gap-2">
-          <h1 className="p38-labotrat-title truncate">
+          <h1 className="p38-dashboard-title truncate">
             Planejamento financeiro
           </h1>
           <P38HelpPopover label="Ajuda: planejamento financeiro" side="bottom" align="start">
@@ -92,19 +92,18 @@ export default function PlanejamentoFinanceiroV2Page() {
             </p>
           </P38HelpPopover>
         </div>
-        <p className="mt-2 text-xs font-normal leading-snug text-white/55 sm:text-sm">
+        <p className="p38-dashboard-subtitle">
           Série manda · Previsão é virtual · Abrir mês materializa
         </p>
       </div>
 
       <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="mt-4 w-full">
-        <div className="px-4">
-          <TabsList
-            className={cn(
-              'grid h-auto w-full grid-cols-3 gap-1 rounded-xl p-1 md:flex md:flex-wrap md:overflow-visible p38-labotrat-frost',
-              P38_FIELD_SURFACE,
-            )}
-          >
+        <TabsList
+          className={cn(
+            'p38-dashboard-tabs grid h-auto w-full grid-cols-3 gap-1 rounded-xl p-1 md:flex md:flex-wrap md:overflow-visible',
+            P38_FIELD_SURFACE,
+          )}
+        >
           <TabsTrigger
             value="contas"
             title="Contas fixas"
@@ -132,10 +131,9 @@ export default function PlanejamentoFinanceiroV2Page() {
             <span className="text-xs truncate md:hidden">12m</span>
             <span className="hidden md:inline text-sm">Projeção 12 meses</span>
           </TabsTrigger>
-          </TabsList>
-        </div>
+        </TabsList>
 
-        <TabsContent value="contas" className="mt-0">
+        <TabsContent value="contas" className="mt-4">
           <ContasFixasTab
             loading={queries.loadingModelos}
             modelos={queries.modelos}

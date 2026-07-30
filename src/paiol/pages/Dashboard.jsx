@@ -9,32 +9,16 @@ import VendasTab from '@/paiol/components/dashboard/tabs/VendasTab';
 import ComprasTab from '@/paiol/components/dashboard/tabs/ComprasTab';
 import EstoqueTab from '@/paiol/components/dashboard/tabs/EstoqueTab';
 import FinanceiroTab from '@/paiol/components/dashboard/tabs/FinanceiroTab';
-import { P38DashboardLightProvider } from '@/paiol/components/dashboard/P38DashboardLightContext';
 import DashboardVendedor from '@/pages/DashboardVendedor';
 import DashboardCaixa from '@/pages/DashboardCaixa';
 
-const LIGHT_SHELL_TABS = new Set(['vendas', 'estoque']);
-
 const TAB_META = {
+  geral: { title: 'Dashboard', subtitle: 'Visão geral do negócio' },
   vendas: { title: 'Dashboard de Vendas', subtitle: 'Indicadores e metas do mês' },
-  estoque: { title: 'Dashboard de Estoque', subtitle: 'Nível, qualidade e abastecimento' },
+  compras: { title: 'Dashboard de Compras', subtitle: 'Pedidos e abastecimento' },
+  estoque: { title: 'Dashboard de Estoque', subtitle: 'Nível, qualidade e cobertura' },
+  financeiro: { title: 'Dashboard Financeiro', subtitle: 'Fluxo e resultados' },
 };
-
-function useIsDarkMode() {
-  const [isDark, setIsDark] = useState(
-    () => typeof document !== 'undefined' && document.documentElement.classList.contains('dark'),
-  );
-
-  useEffect(() => {
-    const root = document.documentElement;
-    const update = () => setIsDark(root.classList.contains('dark'));
-    const observer = new MutationObserver(update);
-    observer.observe(root, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, []);
-
-  return isDark;
-}
 
 function DashboardTabContent({ activeTab }) {
   if (activeTab === 'geral') return <GeralTab />;
@@ -49,9 +33,7 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('geral');
   const [currentUser, setCurrentUser] = useState(null);
   const isMobile = useIsMobile();
-  const isDark = useIsDarkMode();
-  const useLightShell = isMobile && !isDark && LIGHT_SHELL_TABS.has(activeTab);
-  const tabMeta = TAB_META[activeTab];
+  const tabMeta = TAB_META[activeTab] || TAB_META.geral;
 
   useEffect(() => {
     const loadUser = async () => {
@@ -71,7 +53,7 @@ export default function DashboardPage() {
   if (perfilLower === 'caixa' || perfilLower === 'operador de caixa') return <DashboardCaixa />;
 
   const tabsList = (
-    <GlacialTabsList scrollable className={useLightShell ? 'p38-dashboard-light__tabs' : undefined}>
+    <GlacialTabsList scrollable className="p38-dashboard-tabs">
       <GlacialTabsTrigger value="geral" activeValue={activeTab} onSelect={setActiveTab} icon={BarChart3} label="Geral" />
       <GlacialTabsTrigger value="vendas" activeValue={activeTab} onSelect={setActiveTab} icon={TrendingUp} label="Vendas" />
       <GlacialTabsTrigger value="compras" activeValue={activeTab} onSelect={setActiveTab} icon={ShoppingCart} label="Compras" />
@@ -81,43 +63,24 @@ export default function DashboardPage() {
   );
 
   return (
-    <P38DashboardLightProvider enabled={useLightShell}>
-      {useLightShell ? (
-        <div className="p38-dashboard-light -mx-4 -mt-4 min-w-0 overflow-x-hidden">
-          <div className="bg-[#121212] px-3 pt-1 pb-5 sm:px-4">
-            <div className="pb-3 pt-1">
-              <h1 className="p38-dashboard-light__title">{tabMeta?.title || 'Dashboard'}</h1>
-              {tabMeta?.subtitle ? (
-                <p className="p38-dashboard-light__subtitle">{tabMeta.subtitle}</p>
-              ) : null}
-            </div>
-
-            {tabsList}
-
-            <div className="p38-dashboard-light__sheet mt-4 p-4 sm:p-6">
-              <DashboardTabContent activeTab={activeTab} />
-            </div>
-          </div>
+    <div className="p38-dashboard mx-auto w-full min-w-0 max-w-md md:max-w-7xl space-y-4 pb-2">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="p38-dashboard-title truncate">{tabMeta.title}</h1>
+          <p className="p38-dashboard-subtitle">{tabMeta.subtitle}</p>
         </div>
-      ) : (
-        <div className="max-w-7xl mx-auto space-y-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-lg font-semibold text-foreground font-glacial">Dashboard</h1>
-              <p className="text-xs text-muted-foreground">Visão geral do negócio</p>
-            </div>
-            <div className="hidden md:block">
-              <P38Logo surface="dashboard.header" />
-            </div>
+        {!isMobile ? (
+          <div className="hidden md:block shrink-0">
+            <P38Logo surface="dashboard.header" />
           </div>
+        ) : null}
+      </div>
 
-          {tabsList}
+      {tabsList}
 
-          <div>
-            <DashboardTabContent activeTab={activeTab} />
-          </div>
-        </div>
-      )}
-    </P38DashboardLightProvider>
+      <div className="space-y-4">
+        <DashboardTabContent activeTab={activeTab} />
+      </div>
+    </div>
   );
 }

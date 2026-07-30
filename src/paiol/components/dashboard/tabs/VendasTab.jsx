@@ -59,22 +59,22 @@ const BRL = new Intl.NumberFormat('pt-BR', {
 });
 
 const RING_COLORS = {
-  primary: '#abc85a',
-  primaryDark: '#89a246',
-  secondary: '#6f82a1',
-  muted: '#465267',
+  primary: '#84CC16',
+  primaryDark: '#65A30D',
+  secondary: '#9CA3AF',
+  muted: '#E5E7EB',
 };
 
-const SALES_BAR_COLORS = ['#c3dd74', '#b6d05f', '#a9c24d', '#9cb53f', '#90a835', '#7f9531'];
-const MONTH_LINES = ['#abc85a', '#6f82a1', '#f59e0b', '#f97316'];
+const SALES_BAR_COLORS = ['#BEF264', '#A3E635', '#84CC16', '#65A30D', '#4D7C0F', '#3F6212'];
+const MONTH_LINES = ['#84CC16', '#9CA3AF', '#FBBF24', '#F97316'];
 const MONTH_HIGHLIGHT_COLORS = {
-  default: '#6f82a1',
-  current: '#abc85a',
-  older1: '#93a5be',
-  older2: '#f59e0b',
-  older3: '#f97316',
+  default: '#9CA3AF',
+  current: '#84CC16',
+  older1: '#A1A1AA',
+  older2: '#FBBF24',
+  older3: '#F97316',
 };
-const MONTH_MUTED_COLOR = '#536178';
+const MONTH_MUTED_COLOR = '#D1D5DB';
 
 const NORMALIZED_EXCLUDED_STATUSES = new Set(['cancelado']);
 const NORMALIZED_EXCLUDED_TYPES = new Set(['orçamento', 'orcamento']);
@@ -586,7 +586,7 @@ export default function VendasTab() {
                 Mínima/dia: <strong className={p38Dashboard.title}>{formatShort(metrics.vendaMinimaDaily)}</strong>
               </span>
               <span className="inline-flex items-center gap-1">
-                <span className="inline-block h-[2px] w-4 rounded-full bg-[#22c55e]" />
+                <span className="inline-block h-[2px] w-4 rounded-full bg-primary" />
                 Meta/dia: <strong className={p38Dashboard.title}>{formatShort(metrics.metaVendaDaily)}</strong>
               </span>
               <span>
@@ -719,7 +719,7 @@ export default function VendasTab() {
                     {metrics.monthlySalesData.map((entry, idx) => (
                       <Cell
                         key={`${entry.periodo}-${idx}`}
-                        fill={idx === metrics.monthlySalesData.length - 1 ? '#abc85a' : SALES_BAR_COLORS[idx % SALES_BAR_COLORS.length]}
+                        fill={idx === metrics.monthlySalesData.length - 1 ? '#84CC16' : SALES_BAR_COLORS[idx % SALES_BAR_COLORS.length]}
                       />
                     ))}
                   </Bar>

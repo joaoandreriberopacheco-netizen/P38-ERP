@@ -1,0 +1,126 @@
+/**
+ * P38 Premium Theme — Carbon Balance (claro branco total · escuro carvão + limão).
+ * Mobile-first · tipografia fluida · cartões premium.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    /* Semântica premium (hex → referência em comentário) */
+    --p38-text-primary: 220 13% 9%; /* #111827 */
+    --p38-text-secondary: 220 9% 46%; /* #6B7280 */
+    --p38-text-tertiary: 220 9% 64%; /* #9CA3AF */
+    --p38-accent-green: 84 81% 44%; /* #84CC16 */
+    --p38-accent-green-soft: 84 60% 95%; /* #F0FDF4 */
+    --p38-accent-yellow: 43 96% 56%; /* #FBBF24 */
+    --p38-accent-yellow-soft: 54 92% 95%; /* #FEF9C3 */
+    --p38-chart-track: 220 13% 23%; /* #374151 */
+    --p38-input-bg: 210 20% 98%; /* #F9FAFB */
+    --p38-card-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.08);
+    --p38-radius-card: 2rem;
+  }
+
+  .dark {
+    --p38-text-primary: 210 20% 98%;
+    --p38-text-secondary: 240 5% 65%;
+    --p38-text-tertiary: 240 4% 46%;
+    --p38-accent-green: 75 96% 53%; /* #C3FB12 */
+    --p38-accent-green-soft: 75 96% 53% / 0.15;
+    --p38-accent-yellow: 43 96% 56%;
+    --p38-accent-yellow-soft: 43 96% 56% / 0.15;
+    --p38-chart-track: 240 4% 26%;
+    --p38-input-bg: 240 6% 4%;
+    --p38-card-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.5);
+    --p38-glow-green: 0 0 20px hsl(75 96% 53% / 0.35);
+  }
+
+  html,
+  body {
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+}
+
+@layer components {
+  /* Cartão principal — flutua no branco (claro) ou grafite (escuro) */
+  .premium-card {
+    @apply bg-card text-card-foreground rounded-[var(--p38-radius-card)] border border-border/60;
+    box-shadow: var(--p38-card-shadow);
+  }
+
+  .dark .premium-card {
+    @apply border-white/10;
+  }
+
+  /* Dashboard — mobile-first, centrado em desktop */
+  .p38-dashboard {
+    font-family: Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+    letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .p38-dashboard-title {
+    @apply text-foreground font-semibold tracking-tight;
+    font-size: clamp(1.125rem, 4vw, 1.375rem);
+    line-height: 1.25;
+  }
+
+  .p38-dashboard-subtitle {
+    @apply text-muted-foreground mt-1;
+    font-size: 0.75rem;
+    line-height: 1.35;
+  }
+
+  /* Valor KPI — tipografia fluida */
+  .p38-metric-value {
+    @apply text-foreground font-bold tabular-nums;
+    font-size: clamp(1.25rem, 5vw, 1.75rem);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+
+  .p38-metric-label {
+    @apply text-muted-foreground font-normal;
+    font-size: 0.6875rem;
+    line-height: 1.3;
+  }
+
+  .p38-metric-grid {
+    @apply grid grid-cols-3 gap-3 text-center;
+  }
+
+  /* Área interna de gráficos */
+  .p38-chart-surface {
+    @apply rounded-2xl border border-border/50;
+    background-color: hsl(var(--p38-input-bg));
+  }
+
+  .dark .p38-chart-surface {
+    @apply border-white/5;
+    background-color: hsl(var(--p38-input-bg) / 0.6);
+  }
+
+  /* Tabs do dashboard — pill suave */
+  .p38-dashboard-tabs {
+    @apply bg-muted/80 border-0;
+  }
+
+  .dark .p38-dashboard-tabs {
+    @apply bg-white/5;
+  }
+
+  /* Glow limão — só escuro, elementos de foco */
+  .dark .p38-accent-glow {
+    box-shadow: var(--p38-glow-green);
+  }
+
+  /* Secção do dashboard */
+  .p38-dash-section-title {
+    @apply text-foreground font-semibold flex items-center gap-2 tracking-tight;
+    font-size: 0.9375rem;
+  }
+
+  .p38-dash-icon-accent {
+    color: hsl(var(--p38-accent-green));
+  }
+}

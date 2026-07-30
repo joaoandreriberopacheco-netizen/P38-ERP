@@ -62,7 +62,7 @@ export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentP
             <div className="flex flex-col items-center justify-center gap-1 w-full h-full pt-1">
               <div
                 className={`h-0.5 w-8 rounded-full transition-all duration-200 ${
-                  active ? 'bg-[#5c7e44]/65 dark:bg-[#a4ce33]/60' : 'bg-transparent'
+                  active ? 'bg-primary/80 dark:bg-primary/70' : 'bg-transparent'
                 }`}
               />
               <div className="flex items-center justify-center w-12 h-7">

@@ -46,7 +46,7 @@ export default function ContasFixasTab({
 
   return (
     <div className="min-w-0">
-      <div className="p38-single-sheet mx-4 mt-4 mb-6 rounded-[32px] bg-white p-5 shadow-2xl">
+        <div className="premium-card mt-4 mb-6 p-5 sm:p-6">
         <div className="mb-4 flex min-w-0 items-center justify-between gap-2">
           <div className="min-w-0">
             <P38HelpPopover label="Ajuda: contas fixas" side="bottom" align="start">

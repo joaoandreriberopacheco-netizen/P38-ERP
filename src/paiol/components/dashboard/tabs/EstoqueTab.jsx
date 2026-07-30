@@ -63,29 +63,29 @@ const QUALITY_LABELS = {
 };
 
 const QUALITY_COLORS = {
-  A: '#abc85a',
-  B: '#7f9850',
-  C: '#6f82a1',
-  D: '#8f6f63',
-  E: '#64748b',
+  A: '#84CC16',
+  B: '#65A30D',
+  C: '#9CA3AF',
+  D: '#A8A29E',
+  E: '#6B7280',
 };
 
 const SUPPLY_RING_COLORS = {
-  healthy: '#abc85a',
-  healthyDark: '#89a246',
-  high: '#9aad63',
-  highDark: '#7f8f53',
-  low: '#6f819e',
-  lowDark: '#5d6d86',
-  muted: '#465267',
+  healthy: '#84CC16',
+  healthyDark: '#65A30D',
+  high: '#A3E635',
+  highDark: '#84CC16',
+  low: '#9CA3AF',
+  lowDark: '#6B7280',
+  muted: '#E5E7EB',
 };
 
 const LOCATION_COLORS = {
-  fisico: '#abc85a',
-  transito: '#6f82a1',
+  fisico: '#84CC16',
+  transito: '#9CA3AF',
 };
 
-const STOCK_BAR_COLORS = ['#b5d061', '#aac459', '#9eb851', '#93ab48', '#879f41', '#7d933b'];
+const STOCK_BAR_COLORS = ['#BEF264', '#A3E635', '#84CC16', '#65A30D', '#4D7C0F', '#3F6212'];
 
 const PEDIDO_VENDA_STATUSES_CMV = new Set([
   'financeiro ok',
@@ -882,8 +882,8 @@ export default function EstoqueTab() {
                 >
                   <defs>
                     <linearGradient id="stockBarGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#c3dd74" />
-                      <stop offset="100%" stopColor="#7d933b" />
+                      <stop offset="0%" stopColor="#BEF264" />
+                      <stop offset="100%" stopColor="#65A30D" />
                     </linearGradient>
                   </defs>
                   <CartesianGrid {...buildCartesianGridProps(chartTheme)} />
@@ -914,7 +914,7 @@ export default function EstoqueTab() {
             </div>
             <div className={`mt-2 flex items-center justify-between text-[10px] ${p38Dashboard.legend}`}>
               <span className="flex items-center gap-1.5">
-                <span className="inline-block h-[2px] w-5 rounded-full bg-[#9eb851]" />
+                <span className="inline-block h-[2px] w-5 rounded-full bg-primary" />
                 tendência mensal
               </span>
               <span className={`font-semibold ${p38Dashboard.title}`}>{formatShort(metrics.nivelEstoqueSeries.at(-1)?.valor || 0)}</span>
@@ -1003,7 +1003,7 @@ export default function EstoqueTab() {
                       </p>
                       <p className="text-[9px] text-muted-foreground flex items-center justify-between gap-1.5">
                         <span className="flex items-center gap-1.5">
-                          <span className="inline-block h-[2px] w-3 rounded-full bg-[#abc85a]" />
+                          <span className="inline-block h-[2px] w-3 rounded-full bg-primary" />
                           pago
                         </span>
                         <span className={`font-semibold ${p38Dashboard.title}`}>{formatShort(monthSupply.cmvEfetivo)}</span>
@@ -1089,7 +1089,7 @@ export default function EstoqueTab() {
         <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
             <CardTitle className={p38Dashboard.sectionTitle}>
-              <Truck className="w-4 h-4 text-[#b8c973]" />
+              <Truck className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               Localização do Estoque
             </CardTitle>
           </CardHeader>
