@@ -1,9 +1,9 @@
 /**
- * SUPERAGEFIN — compromissos sintéticos (sócios aos sábados) e Budgets no papel.
+ * SUPERAGEFIN — compromissos sintéticos (sócios aos sábados) e Provisões no papel.
  *
  * - Sócios com retirada semanal: um compromisso em cada sábado do mês
  *   (aparece na consulta e no relatório impresso).
- * - Budgets: secção analógica por centro de custo, após as contas do mês.
+ * - Provisões: secção analógica por centro de custo, após as contas do mês.
  */
 
 import {
@@ -124,7 +124,7 @@ export function contaSuperAgefinSomenteLeitura(conta) {
 }
 
 /**
- * Budgets activos do mês, agrupados por centro de custo.
+ * Provisões activas do mês, agrupadas por centro de custo.
  */
 export async function carregarBudgetsAgrupadosParaRelatorio(currentMonth) {
   const competencia = competenciaDoMes(currentMonth);
@@ -168,7 +168,7 @@ export function agruparVisoesBudgetPorCentro(visoes) {
 }
 
 /**
- * HTML: Budgets em **1 coluna** (bloco a bloco),
+ * HTML: Provisões em **1 coluna** (bloco a bloco),
  * com espaço para anotações à mão. Quebra de página só no artigo
  * (não no centro de custo inteiro) — evita grandes vazios no papel.
  */
@@ -188,9 +188,11 @@ export function montarHtmlSecaoBudgetsAnaloga({
 
   const secoes = grupos
     .map((grupo) => {
+      const qtdItens = grupo.itens.length;
+      const labelQtd = qtdItens === 1 ? '1 PROVISÃO' : `${qtdItens} PROVISÕES`;
       const blocos = grupo.itens
         .map((v) => {
-          const nome = v.modelo?.nome || v.modelo?.categoria_nome || 'Budget';
+          const nome = v.modelo?.nome || v.modelo?.categoria_nome || 'PROVISÃO';
           const catLabel = String(v.modelo?.categoria_nome || '').trim();
           const valor = Number(v.orcado) || 0;
           return `<article style="break-inside:avoid;page-break-inside:avoid;border:1px solid #cbd5e1;border-radius:8px;background:#fff;padding:10px 12px 14px;min-height:196px;box-sizing:border-box">
@@ -206,7 +208,7 @@ export function montarHtmlSecaoBudgetsAnaloga({
       return `<section style="margin-top:14px;break-inside:auto;page-break-inside:auto">
         <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:8px 4px 6px;border-bottom:1px solid #94a3b8">
           <p style="margin:0;font-size:${spx(13)};line-height:1.2;font-weight:700;color:#000;text-transform:uppercase;letter-spacing:0.04em">${escapeHtml(grupo.centro)}</p>
-          <p style="margin:0;font-size:${spx(12)};line-height:1.2;color:#000">${escapeHtml(formatFn(grupo.totalOrcado))} · ${grupo.itens.length} budget${grupo.itens.length !== 1 ? 's' : ''}</p>
+          <p style="margin:0;font-size:${spx(12)};line-height:1.2;color:#000">${escapeHtml(formatFn(grupo.totalOrcado))} · ${labelQtd}</p>
         </div>
         <div style="margin-top:8px;display:flex;flex-direction:column;gap:10px">
           ${blocos}
@@ -217,7 +219,7 @@ export function montarHtmlSecaoBudgetsAnaloga({
 
   return `<section style="margin-top:${spx(18)};border-radius:10px;overflow:visible;background:#f1f5f9;break-inside:auto;page-break-inside:auto">
     <div style="padding:10px 6px;background:#e2e8f0;border-bottom:1px solid #cbd5e1">
-      <p style="margin:0;font-size:${spx(14)};line-height:1.25;font-weight:700;color:#000">Budgets — anotações por centro de custo</p>
+      <p style="margin:0;font-size:${spx(14)};line-height:1.25;font-weight:700;color:#000">PROVISÕES — anotações por centro de custo</p>
       <p style="margin:4px 0 0;font-size:${spx(11)};line-height:1.25;color:#334155">
         Após as contas obrigatórias do mês · Competência ${escapeHtml(budgetsAgrupados.competencia || '')} · 1 coluna · Cada bloco: nome, valor orçado e espaço para rascunhos
       </p>

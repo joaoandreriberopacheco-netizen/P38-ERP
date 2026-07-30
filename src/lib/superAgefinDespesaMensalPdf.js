@@ -5,7 +5,7 @@
  * Cabeçalho: «DESPESA MENSAL - MÊS / ANO» | «TOTAL R$ …»
  * Card do dia: «08/08/2026 (04)» à esquerda · valor à direita.
  * Folha: 3 colunas; se a linha de cards não cabe, inteira na página seguinte.
- * Budgets: 1 coluna; cada bloco só desenha se couber.
+ * Provisões: 1 coluna; cada bloco só desenha se couber.
  *
  * Importante: ensureSpace(y, need) devolve o y correcto após eventual nova página
  * (nunca desenhar com um y “antigo” — isso mordia os cards na margem).
@@ -207,7 +207,7 @@ export async function gerarDespesaMensalPdf(opts) {
     }
   }
 
-  /** —— Budgets (1 coluna) —— */
+  /** —— Provisões (1 coluna) —— */
   if (budgetsAgrupados?.grupos?.length) {
     const budgetsHeaderH = 11;
     y = ensureSpace(y, budgetsHeaderH + 4);
@@ -216,7 +216,7 @@ export async function gerarDespesaMensalPdf(opts) {
     setFont('bold');
     pdf.setFontSize(11);
     pdf.setTextColor(0, 0, 0);
-    pdf.text(normalizePdfText('Budgets — anotações por centro de custo'), MARGIN_X + 2, y + 4.5);
+    pdf.text(normalizePdfText('PROVISÕES — anotações por centro de custo'), MARGIN_X + 2, y + 4.5);
     setFont('normal');
     pdf.setFontSize(8);
     pdf.setTextColor(51, 65, 85);
@@ -236,10 +236,10 @@ export async function gerarDespesaMensalPdf(opts) {
       pdf.setTextColor(0, 0, 0);
       pdf.text(normalizePdfText(String(g.centro || '').toUpperCase()), MARGIN_X + 1, y + 4);
       setFont('normal');
+      const qtdItens = g.itens.length;
+      const labelQtd = qtdItens === 1 ? '1 PROVISÃO' : `${qtdItens} PROVISÕES`;
       pdf.text(
-        normalizePdfText(
-          `${formatCurrency(g.totalOrcado)} · ${g.itens.length} budget${g.itens.length !== 1 ? 's' : ''}`,
-        ),
+        normalizePdfText(`${formatCurrency(g.totalOrcado)} · ${labelQtd}`),
         PAGE_W - MARGIN_X - 1,
         y + 4,
         { align: 'right' },
@@ -252,7 +252,7 @@ export async function gerarDespesaMensalPdf(opts) {
         const cardH = 44;
         y = ensureSpace(y, cardH + 2);
         const nome = normalizePdfText(
-          String(v.modelo?.nome || v.modelo?.categoria_nome || 'Budget').toUpperCase(),
+          String(v.modelo?.nome || v.modelo?.categoria_nome || 'PROVISÃO').toUpperCase(),
         );
         const cat = normalizePdfText(String(v.modelo?.categoria_nome || '').trim());
         const valor = Number(v.orcado) || 0;
