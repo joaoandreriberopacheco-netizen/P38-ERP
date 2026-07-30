@@ -69,7 +69,7 @@ const CATALOGO_MOBILE_ROW_H_SKU = 196;
 
 /** Faixa de grupo — faixa analítica compacta (≠ linha de produto). */
 const CATALOG_MOBILE_GROUP_BAND = {
-  root: 'bg-[#5c7e44]/10 dark:bg-[#a4ce33]/10 border-b border-[#5c7e44]/20 dark:border-[#a4ce33]/25',
+  root: 'bg-[#4a5240]/10 dark:bg-[#a4ce33]/10 border-b border-[#4a5240]/20 dark:border-[#a4ce33]/25',
   nested: 'bg-muted/45 dark:bg-muted/20 border-b border-border/50',
   category: 'bg-muted/60 dark:bg-muted/25 border-b border-border/60',
 };

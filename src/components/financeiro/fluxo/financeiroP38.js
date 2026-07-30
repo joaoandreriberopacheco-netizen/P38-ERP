@@ -8,7 +8,7 @@
  */
 
 export const P38_CHIP_ACTIVE =
-  'bg-[#5c7e44] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]';
+  'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]';
 export const P38_CHIP_INACTIVE =
   'bg-secondary/80 text-muted-foreground dark:bg-[#26262e] dark:text-foreground/80 hover:bg-secondary dark:hover:bg-[#383e47]';
 /** Superfície operacional — mesma cor da busca, altura automática (KPIs, pills, painéis). */
@@ -19,7 +19,7 @@ export const P38_POPOVER =
   'border border-border/40 dark:border-white/10 shadow-xl rounded-2xl bg-card dark:bg-[#2d333b]';
 export const P38_KPI_SHELL =
   `rounded-xl ${P38_FIELD_SURFACE} px-3 py-2.5 sm:px-3 sm:py-2.5`;
-export const P38_ACCENT = 'text-[#5c7e44] dark:text-[#a4ce33]';
+export const P38_ACCENT = 'text-[#4a5240] dark:text-[#a4ce33]';
 /** Mobile: busca + ícones fixos ao rolar; desktop sem sticky. */
 export const P38_FILTROS_STICKY =
   'sticky top-0 z-30 bg-background/95 py-2 backdrop-blur-sm md:static md:z-auto md:bg-transparent md:py-0 md:backdrop-blur-none';

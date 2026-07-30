@@ -162,7 +162,7 @@ export default function NotificacoesPage() {
               onClick={() => setFilter(chip.id)}
               className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                 filter === chip.id
-                  ? 'bg-[#5c7e44]/12 text-foreground dark:bg-[#a4ce33]/15'
+                  ? 'bg-[#4a5240]/12 text-foreground dark:bg-[#a4ce33]/15'
                   : 'bg-muted/60 text-muted-foreground'
               }`}
             >

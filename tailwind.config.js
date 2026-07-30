@@ -18,9 +18,6 @@ module.exports = {
   			sans: ['"DIN 1451"', 'DINish', 'Barlow Condensed', 'system-ui', 'sans-serif'],
   			'din-1451': ['"DIN 1451"', 'DINish', 'Barlow Condensed', 'system-ui', 'sans-serif'],
   			din1451: ['"DIN 1451"', 'DINish', 'Barlow Condensed', 'system-ui', 'sans-serif'],
-  			outfit: ['Outfit', 'system-ui', 'sans-serif'],
-  			labotrat: ['Outfit', 'system-ui', 'sans-serif'],
-  			gothic: ['"Century Gothic"', 'CenturyGothic', 'AppleGothic', '"Didact Gothic"', 'Futura', 'sans-serif'],
   		},
   		fontSize: {
   			/* Piso 14px (1rem com html=14px); lg+ proporcional */

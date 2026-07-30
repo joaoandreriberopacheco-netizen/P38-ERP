@@ -66,7 +66,7 @@ export default function FinanceiroFiltrosShell({
             >
               <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
               {hasActiveFilters && (
-                <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#5c7e44] dark:bg-[#a4ce33]" />
+                <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#4a5240] dark:bg-[#a4ce33]" />
               )}
             </button>
           </CollapsibleTrigger>

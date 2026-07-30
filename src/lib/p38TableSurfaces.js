@@ -12,7 +12,7 @@ export const p38Table = {
   header: 'sticky top-0 z-30 backdrop-blur-sm bg-background text-foreground [&_tr]:border-b [&_tr]:border-border/40 dark:[&_tr]:border-white/10 [&_tr]:hover:bg-transparent',
   /** thead sem blur — evita artefactos de composição com colunas sticky (TreeGrid) */
   headerSolid: 'sticky top-0 z-30 bg-background text-foreground [&_tr]:border-b [&_tr]:border-border/40 dark:[&_tr]:border-white/10 [&_tr]:hover:bg-transparent',
-  head: 'h-auto py-2 px-2 align-middle text-xs font-bold tracking-wide text-muted-foreground dark:text-muted-foreground/90',
+  head: 'h-auto py-2 px-2 align-middle text-xs font-bold uppercase tracking-wide text-muted-foreground dark:text-muted-foreground/90',
   headSortable: 'cursor-pointer hover:text-foreground dark:hover:text-white',
   headRight: 'text-right',
   headCenter: 'text-center',
@@ -26,7 +26,7 @@ export const p38Table = {
   cellNumeric: 'tabular-nums text-right',
   cellMuted: 'text-muted-foreground',
   cellStrong: 'font-semibold text-foreground',
-  cellAccent: 'font-semibold text-[#5c7e44] dark:text-[#a4ce33]',
+  cellAccent: 'font-semibold text-[#4a5240] dark:text-[#a4ce33]',
 
   /** Colunas sticky (TreeGrid, catálogo) */
   stickyHead: 'sticky z-40 bg-background text-foreground',
@@ -36,8 +36,8 @@ export const p38Table = {
 
   /** Painéis mobile / resumo */
   panel: 'bg-card text-card-foreground rounded-lg border border-border/40 dark:border-white/10 shadow-sm',
-  panelAccentBar: 'bg-[#5c7e44] dark:bg-[#a4ce33]',
-  accentDot: 'w-1.5 h-1.5 rounded-full bg-[#5c7e44] dark:bg-[#a4ce33]',
+  panelAccentBar: 'bg-[#4a5240] dark:bg-[#a4ce33]',
+  accentDot: 'w-1.5 h-1.5 rounded-full bg-[#4a5240] dark:bg-[#a4ce33]',
 
   bodyText: 'text-base font-din-1451',
   microText: 'text-xs',
@@ -47,20 +47,17 @@ export const p38Table = {
   /** Catálogo mobile — fundo transparente; evita blocos cinza sobre a lista */
   catalogMobileRow: 'border-b border-border/50 dark:border-white/10 py-4.5 tablet-portrait:py-5 min-w-0 bg-transparent font-din-1451',
   catalogMobileHeader:
-    'flex-shrink-0 border-t-2 border-t-[#5c7e44] dark:border-t-[#a4ce33] border-b border-border/40 dark:border-white/10 bg-muted dark:bg-[#383e47] text-foreground shadow-[0_2px_10px_rgba(0,0,0,0.14)] dark:shadow-[0_4px_14px_rgba(0,0,0,0.45)]',
+    'flex-shrink-0 border-t-2 border-t-[#4a5240] dark:border-t-[#a4ce33] border-b border-border/40 dark:border-white/10 bg-muted dark:bg-[#383e47] text-foreground shadow-[0_2px_10px_rgba(0,0,0,0.14)] dark:shadow-[0_4px_14px_rgba(0,0,0,0.45)]',
   /** Mesma linha com barra lateral semântica mais fina (1px) — financeiro */
   mobileLineThin: 'border-b border-border/50 dark:border-white/10 border-l py-3 pr-3 pl-4 min-w-0 bg-background font-din-1451',
   mobileLineInteractive: 'active:bg-secondary/30 cursor-pointer select-none min-h-[52px] tablet-portrait:min-h-[60px] touch-pan-y',
-  /** Título = dado da BD → maiúsculas */
-  mobileLineTitle: 'font-din-1451 font-semibold text-base tablet-portrait:text-lg uppercase tracking-wide text-foreground leading-tight break-words p38-data',
-  /** Subtítulo / ciclo — UI meta (minúsculas ok) */
+  mobileLineTitle: 'font-din-1451 font-medium text-base tablet-portrait:text-lg uppercase tracking-wide text-foreground leading-tight break-words',
   mobileLineSubtitle: 'text-xs tablet-portrait:text-sm text-muted-foreground break-all mt-0.5 font-din-1451',
-  mobileLineMeta: 'text-xs tablet-portrait:text-sm tracking-wide text-muted-foreground font-din-1451',
+  mobileLineMeta: 'text-xs tablet-portrait:text-sm uppercase tracking-wide text-muted-foreground font-din-1451',
   mobileLineMetaInline: 'text-xs tablet-portrait:text-sm normal-case tracking-normal text-muted-foreground font-din-1451',
   mobileLineValue: 'font-semibold text-base tablet-portrait:text-lg text-foreground text-right tabular-nums font-din-1451',
   mobileLineValueSub: 'text-xs tablet-portrait:text-sm text-muted-foreground text-right font-din-1451',
-  /** Micro label = UI */
-  mobileMicroLabel: 'text-xs tablet-portrait:text-sm tracking-wide text-muted-foreground leading-none font-din-1451',
+  mobileMicroLabel: 'text-xs tablet-portrait:text-sm uppercase tracking-wide text-muted-foreground leading-none font-din-1451',
   /** Lista mobile: telemóvel + tablet retrato; tabelas em desktop + tablet paisagem. */
   mobileListShell: 'desktop-layout:hidden overflow-y-auto rounded-lg border border-border/40 dark:border-white/10 bg-background',
   /** Lista de linhas em todos os viewports (caixa, home-style lists). */

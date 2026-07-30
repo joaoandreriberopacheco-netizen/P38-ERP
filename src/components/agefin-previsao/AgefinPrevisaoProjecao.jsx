@@ -13,7 +13,7 @@ export default function AgefinPrevisaoProjecao({ modelos, competenciaInicio, lan
   return (
     <div className="space-y-3 sm:space-y-4 min-w-0">
       <div className={cn(P38_KPI_SHELL, 'p-3 sm:p-4')}>
-        <p className="text-xs tracking-wide text-muted-foreground">Total 12 meses</p>
+        <p className="text-xs uppercase tracking-wide text-muted-foreground">Total 12 meses</p>
         <p className="text-xl sm:text-2xl font-semibold tabular-nums">
           {formatFinanceiroValor(totalAno)}
         </p>

@@ -35,7 +35,7 @@ const CADASTRO_FILTER_CHIPS = [
 const CHIP_BASE =
   'h-9 rounded-xl text-xs font-medium transition-colors border border-transparent';
 const CHIP_ACTIVE =
-  'bg-[#5c7e44] text-white border-[#5c7e44] dark:bg-[#a4ce33] dark:text-[#1f1d22] dark:border-[#a4ce33]';
+  'bg-[#4a5240] text-white border-[#4a5240] dark:bg-[#a4ce33] dark:text-[#1f1d22] dark:border-[#a4ce33]';
 const CHIP_IDLE = 'bg-muted/80 text-muted-foreground active:bg-muted';
 
 const MOBILE_FILTER_SELECT =
@@ -390,7 +390,7 @@ export default function ProdutosMobileFiltersSheet({
           <Button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="h-10 flex-1 rounded-xl text-xs bg-[#5c7e44] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]"
+            className="h-10 flex-1 rounded-xl text-xs bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]"
           >
             Ver resultados
           </Button>

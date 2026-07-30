@@ -2,17 +2,18 @@
  * Paleta canónica P38 — verde mediterrâneo, oliva, limão, cítricos.
  * Valores alinhados a index.css e p38-identity.css.
  *
- * Modo claro: oliva mais saturado (inspiração Labotrat) + texto quase preto.
- * Modo escuro: carvão + limão (referência Planejamento).
- *
  * Regra de contraste: usar p38Contrast.js para escolher foreground sobre qualquer fundo.
+ *
+ * Feeling mobile de referência (aprovado): Planejamento financeiro no dark —
+ * carvão + limão com parcimónia. Ver .cursor/rules/p38-mobile-referencia-planejamento.mdc
+ * e docs/p38-mobile-rollout.md §0.
  */
 
 export const P38_PALETTE = {
-  /** Verde oliva saturado — primário no modo claro */
+  /** Verde mediterrâneo / oliva queimado — primário no modo claro */
   olive: {
-    hex: '#5c7e44',
-    hsl: '95 30% 38%',
+    hex: '#4a5240',
+    hsl: '82 18% 28%',
   },
   /** Limão P38 — acento no modo escuro */
   lime: {
@@ -29,19 +30,19 @@ export const P38_PALETTE = {
     hex: '#f07a1a',
     hsl: '27 87% 52%',
   },
-  /** Verde faixa Labotrat — fundos tintados, hover, success suave */
+  /** Verde mediterrâneo claro — fundos tintados, hover */
   mediterranean: {
-    hex: '#7ba05b',
-    hsl: '95 27% 49%',
+    hex: '#5c6b4a',
+    hsl: '82 18% 36%',
   },
   /** Superfícies modo claro */
   light: {
-    bg: '#f3f5ee',
+    bg: '#f7f8f5',
     surface: '#ffffff',
-    surfaceMuted: '#e6ebdc',
-    border: '#c5ceb8',
-    text: '#161a14',
-    textMuted: '#3f4a38',
+    surfaceMuted: '#f0f2ec',
+    border: '#dce0d4',
+    text: '#2a2f28',
+    textMuted: '#5c6358',
   },
   /** Superfícies modo escuro */
   dark: {

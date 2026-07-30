@@ -39,17 +39,8 @@ import {
   lancamentoEntraEmContasFixas,
 } from '@/lib/agefinConsultaData';
 import { competenciaParaIntervalo } from '@/lib/relatorioMargemCalculos';
-import { normalizeDataFields, normalizeDataText } from '@/lib/normalizeDataText';
 
 export { listarCentrosCustoRegistros };
-
-const SERIE_TEXT_FIELDS = [
-  'nome',
-  'terceiro_nome',
-  'categoria_nome',
-  'centro_custo',
-  'observacoes',
-];
 
 const DADOS_EMPRESA_SERIES_KEY = 'agefin_series_modelo';
 const DADOS_EMPRESA_SERIES_EXCLUIDAS_KEY = 'agefin_series_excluidas';
@@ -692,15 +683,12 @@ export async function salvarSerie(payload) {
     : null;
   const grupoId =
     payload.grupo_lancamento_id || existente?.grupo_lancamento_id || gerarGrupoLancamentoId();
-  const body = normalizeDataFields(
-    criarSerieComDefaults({
-      ...(existente || {}),
-      ...payload,
-      id: serieIdFromGrupoLancamento(grupoId) || payload.id || existente?.id || undefined,
-      grupo_lancamento_id: grupoId,
-    }),
-    SERIE_TEXT_FIELDS,
-  );
+  const body = criarSerieComDefaults({
+    ...(existente || {}),
+    ...payload,
+    id: serieIdFromGrupoLancamento(grupoId) || payload.id || existente?.id || undefined,
+    grupo_lancamento_id: grupoId,
+  });
 
   await sincronizarSerieNoFinanceiro(body);
 
@@ -751,7 +739,7 @@ export async function atualizarCentroCustoSerie(serieId, centroCusto) {
   if (!existente) throw new Error('Conta não encontrada.');
   const atualizada = criarSerieComDefaults({
     ...existente,
-    centro_custo: normalizeDataText(centroCusto || '') || '',
+    centro_custo: centroCusto || '',
   });
   await persistirSeriesModelo([atualizada]);
   await sincronizarSerieNoFinanceiro(atualizada);

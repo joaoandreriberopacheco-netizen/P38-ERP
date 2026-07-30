@@ -373,7 +373,7 @@ export default function LancamentoFormUnico({
           type="button"
           onClick={onSalvar}
           disabled={saving}
-          className="flex-[2] h-12 rounded-2xl bg-[#5c7e44] text-sm font-semibold text-white disabled:opacity-50 dark:bg-[#a4ce33] dark:text-[#1f1d22]"
+          className="flex-[2] h-12 rounded-2xl bg-[#4a5240] text-sm font-semibold text-white disabled:opacity-50 dark:bg-[#a4ce33] dark:text-[#1f1d22]"
         >
           {saving ? 'Salvando…' : salvarLabel}
         </button>

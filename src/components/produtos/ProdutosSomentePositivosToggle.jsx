@@ -33,7 +33,7 @@ export default function ProdutosSomentePositivosToggle({ filters, setFilters }) 
       size="icon"
       className={cn(
         'h-10 w-10 flex-shrink-0 rounded-xl bg-muted',
-        active && 'text-[#5c7e44] dark:text-[#a4ce33] ring-2 ring-[#5c7e44]/40 dark:ring-[#a4ce33]/40',
+        active && 'text-[#4a5240] dark:text-[#a4ce33] ring-2 ring-[#4a5240]/40 dark:ring-[#a4ce33]/40',
       )}
       onClick={toggle}
       title={

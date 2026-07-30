@@ -6,7 +6,6 @@ import {
   P38StatusLabel,
   p38AccentKeyFromTone,
 } from '@/components/ui/p38-mobile-line';
-import { P38Data } from '@/components/ui/p38-data';
 import { SITUACAO_SERIE, labelFrequenciaSerie, labelValorSerie } from '@/lib/agefinPrevisaoCalculos';
 
 export default function AgefinPrevisaoModeloRow({ modelo, onEdit, onDelete, striped = false }) {
@@ -15,10 +14,8 @@ export default function AgefinPrevisaoModeloRow({ modelo, onEdit, onDelete, stri
 
   const meta = (
     <>
-      {modelo.terceiro_nome && <P38Data as="span">{modelo.terceiro_nome}</P38Data>}
-      <span>
-        CC {centroCusto ? <P38Data as="span">{centroCusto}</P38Data> : 'não informado'}
-      </span>
+      {modelo.terceiro_nome && <span>{modelo.terceiro_nome}</span>}
+      <span>CC {centroCusto || 'não informado'}</span>
       <span>{labelFrequenciaSerie(modelo)}</span>
       <span>Vence dia {modelo.dia_vencimento || 10}</span>
       {encerrada && <P38StatusLabel tone="muted">Encerrada</P38StatusLabel>}

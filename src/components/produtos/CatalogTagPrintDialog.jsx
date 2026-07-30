@@ -84,7 +84,7 @@ export default function CatalogTagPrintDialog({
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#a4ce33]/15 text-[#5c7e44] dark:text-[#a4ce33]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#a4ce33]/15 text-[#4a5240] dark:text-[#a4ce33]">
               <Tags className="h-5 w-5" />
             </span>
             Etiquetas para impressão
@@ -135,7 +135,7 @@ export default function CatalogTagPrintDialog({
             </div>
 
             <div className="flex items-start gap-2 rounded-xl bg-[#a4ce33]/10 p-3 text-xs text-foreground/80">
-              <Scissors className="mt-0.5 h-4 w-4 flex-none text-[#5c7e44] dark:text-[#a4ce33]" />
+              <Scissors className="mt-0.5 h-4 w-4 flex-none text-[#4a5240] dark:text-[#a4ce33]" />
               <span>Sem espaço entre etiquetas: cada linha de corte é compartilhada. O círculo tracejado indica o furo.</span>
             </div>
 
@@ -160,7 +160,7 @@ export default function CatalogTagPrintDialog({
           <Button
             onClick={handleGeneratePdf}
             disabled={!productCount || isGenerating}
-            className="gap-2 bg-[#5c7e44] text-white hover:bg-[#3c4334] dark:bg-[#a4ce33] dark:text-slate-950 dark:hover:bg-[#b2dc3e]"
+            className="gap-2 bg-[#4a5240] text-white hover:bg-[#3c4334] dark:bg-[#a4ce33] dark:text-slate-950 dark:hover:bg-[#b2dc3e]"
           >
             {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
             Gerar PDF A4

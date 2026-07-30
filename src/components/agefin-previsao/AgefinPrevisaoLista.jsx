@@ -36,7 +36,7 @@ function SecaoGrupo({ label, items, modelosMap, onOpen }) {
   return (
     <FinanceiroGrupo
       label={`${label} (${items.length})`}
-      labelClassName="text-[10px] font-medium normal-case tracking-normal text-muted-foreground p38-labotrat-grupo-label"
+      labelClassName="text-[10px] font-medium normal-case tracking-normal text-muted-foreground"
       receitas={0}
       despesas={totais.total}
       liquido={-totais.total}
