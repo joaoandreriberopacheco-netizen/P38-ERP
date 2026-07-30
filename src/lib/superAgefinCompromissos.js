@@ -191,13 +191,13 @@ export function montarHtmlSecaoBudgetsAnaloga({
           const nome = v.modelo?.nome || v.modelo?.categoria_nome || 'PROVISÃO';
           const catLabel = String(v.modelo?.categoria_nome || '').trim();
           const valor = Number(v.orcado) || 0;
-          return `<article style="break-inside:avoid;page-break-inside:avoid;border:1px solid #cbd5e1;border-radius:8px;background:#fff;padding:8px 12px 12px;min-height:72px;box-sizing:border-box">
+          return `<article style="break-inside:avoid;page-break-inside:avoid;border:1px solid #cbd5e1;border-radius:8px;background:#fff;padding:10px 12px 14px;min-height:196px;box-sizing:border-box">
             <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
               <p style="margin:0;flex:1;min-width:0;font-size:${spx(12)};line-height:1.2;font-weight:700;color:#000;text-transform:uppercase;letter-spacing:0.01em">${escapeHtml(nome)}</p>
               <p style="margin:0;flex-shrink:0;font-size:${spx(13)};line-height:1.2;font-weight:700;color:#000">${escapeHtml(formatFn(valor))}</p>
             </div>
             ${catLabel ? `<p style="margin:3px 0 0;font-size:${spx(10)};line-height:1.2;color:#475569">${escapeHtml(catLabel)}</p>` : ''}
-            <p style="margin:8px 0 0;font-size:${spx(9)};line-height:1.1;color:#64748b;text-transform:uppercase;letter-spacing:0.06em">Anotações / rascunhos</p>
+            <p style="margin:12px 0 0;font-size:${spx(9)};line-height:1.1;color:#64748b;text-transform:uppercase;letter-spacing:0.06em">Anotações / rascunhos</p>
           </article>`;
         })
         .join('');

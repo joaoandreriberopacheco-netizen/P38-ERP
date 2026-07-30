@@ -1,15 +1,15 @@
 /**
  * SUPERAGEFIN — PDF «Despesa Mensal» (A4).
  *
- * Tipografia: Noto Sans; título e TOTAL do cabeçalho com esticamento vertical 2×
- * (glyphs ~2× mais altos, mesma banda do cabeçalho / linha separadora).
+ * Tipografia: Noto Sans; título e TOTAL do cabeçalho em negrito (tamanho reforçado).
  * Margens: topo 25 mm (2,5 cm — grampeamento), base 15 mm (1,5 cm — numeração).
  * Cabeçalho: «DESPESA MENSAL - MÊS / ANO» | «TOTAL R$ …» — desenhado em TODAS as
- * páginas no fecho (evita sumir após quebras a meio do conteúdo).
+ * páginas no fecho (e também ao abrir página nova), sem matriz de escala (a scaleY
+ * escondia o texto com a fonte embutida).
  * Card do dia: «08/08/2026 (04)» à esquerda · valor à direita.
  * Folha: 3 colunas; se a linha de cards não cabe, inteira na página seguinte.
  * Quadrinhos de anotações (folha e provisões): nome|valor na mesma linha,
- * sem linhas tracejadas internas (área em branco para escrever).
+ * sem linhas tracejadas; mesma altura de antes (área em branco para escrever).
  * Provisões: 1 coluna; cabeçalho do centro de custo fica com pelo menos 1 card
  * (não deixa «cabeça sem corpo» no fim da página).
  *
@@ -34,10 +34,8 @@ const CONTENT_TOP = MARGIN_TOP + 1;
 /** Limite útil: deixa a margem inferior intacta (numeração) + folga anti-sobreposição */
 const CONTENT_BOTTOM = PAGE_H - MARGIN_BOTTOM - 1;
 
-/** Título do relatório — tamanho base (esticamento vertical aplicado no desenho) */
+/** Título do relatório — negrito, sem transform (visível em todas as páginas) */
 const TITLE_SIZE = 15;
-/** Escala vertical do título/TOTAL — 2× a altura visual, mesma posição de linha */
-const TITLE_STRETCH_Y = 2;
 
 function formatCurrency(value) {
   return `R$ ${(Number(value) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -114,21 +112,9 @@ export async function gerarDespesaMensalPdf(opts) {
     pdf.setFontSize(TITLE_SIZE);
     pdf.setTextColor(0, 0, 0);
     const headerY = MARGIN_TOP - 7;
-    // scaleY em torno da linha de base: cresce para cima (margem do grampeamento),
-    // sem empurrar a linha separadora nem o conteúdo.
-    // q/Q por página — o cabeçalho é desenhado no fecho em cada página.
-    pdf.saveGraphicsState();
-    pdf.setCurrentTransformationMatrix(
-      1,
-      0,
-      0,
-      TITLE_STRETCH_Y,
-      0,
-      headerY * (1 - TITLE_STRETCH_Y),
-    );
+    // Texto directo — sem scaleY/CTM (com Noto a matriz escondia o título).
     pdf.text(tituloEsq, MARGIN_X, headerY);
     pdf.text(tituloDir, PAGE_W - MARGIN_X, headerY, { align: 'right' });
-    pdf.restoreGraphicsState();
     pdf.setDrawColor(180, 180, 180);
     pdf.setLineWidth(0.3);
     pdf.line(MARGIN_X, MARGIN_TOP - 2, PAGE_W - MARGIN_X, MARGIN_TOP - 2);
@@ -162,7 +148,7 @@ export async function gerarDespesaMensalPdf(opts) {
     return CONTENT_TOP;
   };
 
-  // Cabeçalho + numeração: só no fecho (drawPageChrome), para todas as páginas.
+  // Cabeçalho + numeração: drawPageChrome no fecho (todas as páginas).
 
   /** —— Contas por data —— */
   for (const grupo of grupos) {
@@ -255,8 +241,8 @@ export async function gerarDespesaMensalPdf(opts) {
 
     for (const g of budgetsAgrupados.grupos) {
       const centroHeaderH = 8;
-      /** Compacto: nome|valor + área de anotações sem linhas */
-      const cardH = 26;
+      /** Altura original (com linhas); agora limpo, sem tracejado */
+      const cardH = 44;
       const cardGap = 3;
       // Não deixar o nome do centro sozinho no fim da página («cabeça sem corpo»):
       // exige espaço para o cabeçalho + pelo menos o 1.º card.
@@ -361,8 +347,8 @@ function desenharFolhaPdf(pdf, { folha, setFont, y, ensureSpace, contentW, forma
   const COLS = 3;
   const gap = 2.5;
   const cardW = (contentW - gap * (COLS - 1)) / COLS;
-  /** Compacto: nome|valor numa linha, área de anotações sem linhas tracejadas */
-  const cardH = 30;
+  /** Altura original (com linhas); nome|valor na mesma linha, área em branco */
+  const cardH = 72;
   const headerH = 11;
 
   y = ensureSpace(y, headerH + 4);
