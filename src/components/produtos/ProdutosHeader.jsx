@@ -314,7 +314,7 @@ export default function ProdutosHeader({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="hidden desktop-layout:inline-flex h-10 flex-shrink-0 gap-1.5 rounded-xl text-xs font-medium border-[#4a5240]/30 dark:border-[#a4ce33]/30"
+                  className="hidden desktop-layout:inline-flex h-10 flex-shrink-0 gap-1.5 rounded-xl text-xs font-medium border-[#5c7e44]/30 dark:border-[#a4ce33]/30"
                   onClick={() => onOpenMassCategory?.()}
                   title="Classificar categorias com IA"
                 >
@@ -335,7 +335,7 @@ export default function ProdutosHeader({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="hidden desktop-layout:inline-flex h-10 flex-shrink-0 gap-1.5 rounded-xl text-xs font-medium border-[#4a5240]/30 dark:border-[#a4ce33]/30"
+                  className="hidden desktop-layout:inline-flex h-10 flex-shrink-0 gap-1.5 rounded-xl text-xs font-medium border-[#5c7e44]/30 dark:border-[#a4ce33]/30"
                   onClick={() => onOpenMassTag?.()}
                   title="Tagificação em massa com IA"
                 >
@@ -356,7 +356,7 @@ export default function ProdutosHeader({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="hidden desktop-layout:inline-flex h-10 flex-shrink-0 gap-1.5 rounded-xl text-xs font-medium border-[#4a5240]/30 dark:border-[#a4ce33]/30"
+                  className="hidden desktop-layout:inline-flex h-10 flex-shrink-0 gap-1.5 rounded-xl text-xs font-medium border-[#5c7e44]/30 dark:border-[#a4ce33]/30"
                   onClick={() => onOpenMassMarkup?.()}
                   title="Aplicar markup aos produtos do filtro atual"
                 >
@@ -370,8 +370,8 @@ export default function ProdutosHeader({
               size="icon"
               className={cn(
                 'h-10 w-10 flex-shrink-0 rounded-xl relative bg-muted',
-                isFilterOpen && 'ring-2 ring-[#4a5240]/40 dark:ring-[#a4ce33]/40',
-                activeFilterCount > 0 && 'text-[#4a5240] dark:text-[#a4ce33]',
+                isFilterOpen && 'ring-2 ring-[#5c7e44]/40 dark:ring-[#a4ce33]/40',
+                activeFilterCount > 0 && 'text-[#5c7e44] dark:text-[#a4ce33]',
               )}
               onClick={() => setIsFilterOpen(v => !v)}
               title="Mais filtros"

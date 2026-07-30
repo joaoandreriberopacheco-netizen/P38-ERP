@@ -142,7 +142,7 @@ export function ChunkLoadErrorScreen({ onRetry }) {
       <button
         type="button"
         onClick={onRetry}
-        className="rounded-2xl bg-[#4a5240] px-5 py-2.5 text-sm font-semibold text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]"
+        className="rounded-2xl bg-[#5c7e44] px-5 py-2.5 text-sm font-semibold text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]"
       >
         Recarregar página
       </button>

@@ -763,14 +763,14 @@ export function ContasAbertasListaPane() {
             <button
               type="button"
               onClick={entrarModoCorrigirDataLote}
-              className={`rounded-full px-2 py-0.5 text-[10px] transition-colors ${modoCorrigirDataLote ? 'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]' : 'bg-secondary/80 text-muted-foreground dark:bg-[#383e47]'}`}
+              className={`rounded-full px-2 py-0.5 text-[10px] transition-colors ${modoCorrigirDataLote ? 'bg-[#5c7e44] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]' : 'bg-secondary/80 text-muted-foreground dark:bg-[#383e47]'}`}
             >
               {modoCorrigirDataLote ? 'Cancelar' : 'Corrigir data'}
             </button>
             <button
               type="button"
               onClick={entrarModoPagarLote}
-              className={`rounded-full px-2 py-0.5 text-[10px] transition-colors ${modoSelecaoLote ? 'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]' : 'bg-secondary/80 text-muted-foreground dark:bg-[#383e47]'}`}
+              className={`rounded-full px-2 py-0.5 text-[10px] transition-colors ${modoSelecaoLote ? 'bg-[#5c7e44] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]' : 'bg-secondary/80 text-muted-foreground dark:bg-[#383e47]'}`}
             >
               {modoSelecaoLote ? 'Cancelar lote' : 'Pagar em lote'}
             </button>
@@ -810,7 +810,7 @@ export function ContasAbertasListaPane() {
                 type="button"
                 onClick={() => setShowCorrigirDataLote(true)}
                 disabled={lancamentosSelecionados.length === 0}
-                className="h-9 shrink-0 rounded-xl bg-[#4a5240] px-4 text-sm font-medium text-white disabled:opacity-40 dark:bg-[#a4ce33] dark:text-[#1f1d22]"
+                className="h-9 shrink-0 rounded-xl bg-[#5c7e44] px-4 text-sm font-medium text-white disabled:opacity-40 dark:bg-[#a4ce33] dark:text-[#1f1d22]"
               >
                 Continuar
               </button>
@@ -846,7 +846,7 @@ export function ContasAbertasListaPane() {
                 type="button"
                 onClick={() => setShowPagamentoLote(true)}
                 disabled={lancamentosSelecionados.length === 0}
-                className="h-9 shrink-0 rounded-xl bg-[#4a5240] px-4 text-sm font-medium text-white disabled:opacity-40 dark:bg-[#a4ce33] dark:text-[#1f1d22]"
+                className="h-9 shrink-0 rounded-xl bg-[#5c7e44] px-4 text-sm font-medium text-white disabled:opacity-40 dark:bg-[#a4ce33] dark:text-[#1f1d22]"
               >
                 Continuar
               </button>
@@ -881,7 +881,7 @@ export function ContasAbertasListaPane() {
         <button
           type="button"
           onClick={() => setFabOpen(o => !o)}
-          className={`flex h-[52px] w-[52px] items-center justify-center rounded-full shadow-xl transition-all active:scale-95 ${fabOpen ? 'rotate-45 bg-[#383e47]' : 'bg-[#4a5240] dark:bg-[#a4ce33]'}`}
+          className={`flex h-[52px] w-[52px] items-center justify-center rounded-full shadow-xl transition-all active:scale-95 ${fabOpen ? 'rotate-45 bg-[#383e47]' : 'bg-[#5c7e44] dark:bg-[#a4ce33]'}`}
         >
           <Plus className={`h-6 w-6 ${fabOpen ? 'text-white' : 'text-white dark:text-[#1f1d22]'}`} />
         </button>

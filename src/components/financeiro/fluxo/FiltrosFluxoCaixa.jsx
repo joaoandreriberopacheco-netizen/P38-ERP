@@ -21,9 +21,9 @@ import {
 } from './financeiroP38';
 
 const P38_CAL_SELECTED =
-  'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22] font-bold';
+  'bg-[#5c7e44] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22] font-bold';
 const P38_CAL_IN_RANGE =
-  'bg-[#4a5240]/15 text-foreground/90 dark:bg-[#a4ce33]/15 dark:text-foreground';
+  'bg-[#5c7e44]/15 text-foreground/90 dark:bg-[#a4ce33]/15 dark:text-foreground';
 
 export const PERIODO_LABELS = {
   hoje: 'Hoje',

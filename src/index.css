@@ -89,52 +89,52 @@ button:focus-visible {
 
 @layer base {
   :root {
-    /* P38 claro — fundo verde-cinza suave + oliva mediterrâneo + cítricos */
-    --background: 82 12% 97%;
-    --foreground: 82 14% 16%;
+    /* P38 claro — branco + oliva vivo (Labotrat) + cítricos */
+    --background: 80 22% 95%;
+    --foreground: 90 12% 9%;
     --card: 0 0% 100%;
-    --card-foreground: 82 14% 16%;
+    --card-foreground: 90 12% 9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 82 14% 16%;
-    --primary: 82 18% 28%;
+    --popover-foreground: 90 12% 9%;
+    --primary: 95 30% 38%;
     --primary-foreground: 0 0% 99%;
-    --secondary: 82 10% 94%;
-    --secondary-foreground: 82 16% 22%;
-    --muted: 82 8% 94%;
-    --muted-foreground: 82 6% 38%;
-    --accent: 43 55% 92%;
-    --accent-foreground: 82 18% 24%;
+    --secondary: 80 18% 90%;
+    --secondary-foreground: 90 14% 18%;
+    --muted: 80 16% 90%;
+    --muted-foreground: 90 14% 32%;
+    --accent: 43 55% 90%;
+    --accent-foreground: 95 28% 28%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 82 10% 86%;
-    --input: 82 10% 86%;
-    --ring: 82 18% 28%;
-    --chart-1: 82 18% 32%;
+    --border: 85 16% 76%;
+    --input: 85 16% 76%;
+    --ring: 95 30% 38%;
+    --chart-1: 95 30% 38%;
     --chart-2: 173 58% 39%;
-    --chart-3: 82 14% 22%;
+    --chart-3: 95 28% 28%;
     --chart-4: 43 74% 52%;
     --chart-5: 27 87% 52%;
-    /* Paleta P38 — acentos cítricos e oliva (uso em utilitários Tailwind) */
-    --p38-olive: 82 18% 28%;
+    /* Paleta P38 — oliva saturado + limão/cítricos */
+    --p38-olive: 95 30% 38%;
     --p38-lime: 78 55% 51%;
     --p38-citrus-yellow: 43 74% 52%;
     --p38-citrus-orange: 27 87% 52%;
-    --p38-mediterranean: 82 18% 36%;
-    /* Tipografia — claro mais robusto que escuro */
-    --p38-font-weight-body: 400;
-    --p38-font-weight-strong: 500;
-    --p38-font-weight-heading: 600;
+    --p38-mediterranean: 95 27% 49%;
+    /* Tipografia — claro robusto (Medium/SemiBold/Bold reais) */
+    --p38-font-weight-body: 500;
+    --p38-font-weight-strong: 600;
+    --p38-font-weight-heading: 700;
     --app-font-scale: 1;
     --radius: 0.75rem;
-    /* Sidebar claro — oliva suave, não carvão */
-    --sidebar-background: 82 12% 97%;
-    --sidebar-foreground: 82 14% 16%;
-    --sidebar-primary: 82 18% 28%;
+    /* Sidebar claro — mesmo fundo vivo */
+    --sidebar-background: 80 22% 95%;
+    --sidebar-foreground: 90 12% 9%;
+    --sidebar-primary: 95 30% 38%;
     --sidebar-primary-foreground: 0 0% 99%;
-    --sidebar-accent: 82 10% 92%;
-    --sidebar-accent-foreground: 82 16% 22%;
-    --sidebar-border: 82 10% 86%;
-    --sidebar-ring: 82 18% 28%;
+    --sidebar-accent: 80 18% 90%;
+    --sidebar-accent-foreground: 90 14% 18%;
+    --sidebar-border: 85 16% 76%;
+    --sidebar-ring: 95 30% 38%;
 
     /* GlacialBottomNav: alinhar FAB + padding de scroll (mobile) */
     --p38-bottom-nav-bar: 68px;
@@ -196,9 +196,9 @@ button:focus-visible {
     --scrollbar-thumb-hover: rgba(191, 191, 191, 0.72);
     --scrollbar-thumb-active: rgba(212, 212, 212, 0.88);
 
-    --p38-font-weight-body: 300;
-    --p38-font-weight-strong: 400;
-    --p38-font-weight-heading: 500;
+    --p38-font-weight-body: 400;
+    --p38-font-weight-strong: 500;
+    --p38-font-weight-heading: 600;
   }
 }
 

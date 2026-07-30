@@ -30,8 +30,24 @@
 
 @font-face {
   font-family: 'DIN 1451';
-  src: url('/fonts/dinish/DINish-Regular.ttf') format('truetype');
+  src: url('/fonts/dinish/DINish-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DIN 1451';
+  src: url('/fonts/dinish/DINish-SemiBold.ttf') format('truetype');
   font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DIN 1451';
+  src: url('/fonts/dinish/DINish-Bold.ttf') format('truetype');
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
@@ -39,14 +55,14 @@
 .font-din-1451,
 .font-din-1451 * {
   font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
-  font-weight: 300;
-  letter-spacing: 0.02em;
+  font-weight: var(--p38-font-weight-body, 500);
+  letter-spacing: var(--p38-tracking, 0.01em);
 }
 
 .font-din-1451 strong,
 .font-din-1451 .font-semibold,
 .font-din-1451 th {
-  font-weight: 400;
+  font-weight: var(--p38-font-weight-strong, 600);
 }
 
 @tailwind base;

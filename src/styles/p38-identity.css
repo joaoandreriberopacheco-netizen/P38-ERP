@@ -19,7 +19,15 @@
 @font-face {
   font-family: 'DIN 1451';
   src: url('/fonts/dinish/DINish-Regular.ttf') format('truetype');
-  font-weight: 300;
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DIN 1451';
+  src: url('/fonts/dinish/DINish-Medium.ttf') format('truetype');
+  font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
@@ -32,21 +40,29 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'DIN 1451';
+  src: url('/fonts/dinish/DINish-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 @layer base {
   :root {
-    /* Superfícies — tom verde-cinza suave no claro */
-    --p38-bg: 82 12% 97%;
+    /* Superfícies — branco + verde oliva mais vivo (inspiração Labotrat) */
+    --p38-bg: 80 22% 95%;
     --p38-surface: 0 0% 100%;
-    --p38-search: 82 8% 94%;
-    --p38-table-head: 82 10% 92%;
-    /* Claro: mediterrâneo queimado · escuro: limão */
-    --p38-accent-olive: 82 18% 28%;
+    --p38-search: 80 20% 90%;
+    --p38-table-head: 85 18% 86%;
+    /* Claro: oliva saturado · escuro: limão */
+    --p38-accent-olive: 95 30% 38%;
     --p38-accent-lime: 78 55% 51%;
     --p38-accent-citrus: 27 87% 52%;
     --p38-accent-citrus-yellow: 43 74% 52%;
-    --p38-divider: 82 10% 86% / 0.6;
-    /* Tipografia mobile */
-    --p38-tracking: 0.02em;
+    --p38-divider: 85 16% 76% / 0.85;
+    /* Tipografia mobile — tracking mais curto = menos “esmilinguida” */
+    --p38-tracking: 0.01em;
     --p38-body-size: 1rem;
     --p38-title-size: 1rem;
     --p38-label-size: 1rem;
@@ -64,6 +80,7 @@
     --p38-accent-olive: 78 55% 51%;
     --p38-accent-lime: 78 55% 51%;
     --p38-divider: 0 0% 100% / 0.06;
+    --p38-tracking: 0.02em;
   }
 }
 
@@ -157,7 +174,7 @@
   /* Título de linha mobile — tipicamente dado da BD (maiúsculas) */
   .p38-line-title {
     font-size: var(--p38-title-size);
-    @apply font-din1451 font-medium uppercase tracking-wide text-foreground leading-tight break-words;
+    @apply font-din1451 font-semibold uppercase tracking-wide text-foreground leading-tight break-words;
   }
 
   /* Linha compacta (substitui card em smartphone) */

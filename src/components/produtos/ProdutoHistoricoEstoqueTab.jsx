@@ -369,7 +369,7 @@ function ExtratoTabelaLinha({ mov, saldoApos, estoqueAuxiliar, fatorAuxiliar }) 
         <Badge
           className={`max-w-[8rem] truncate rounded-full border-0 text-[9px] ${
             isEntrada
-              ? 'bg-[#4a5240]/10 text-[#4a5240] dark:bg-[#a4ce33]/15 dark:text-[#a4ce33]'
+              ? 'bg-[#5c7e44]/10 text-[#5c7e44] dark:bg-[#a4ce33]/15 dark:text-[#a4ce33]'
               : 'bg-red-500/10 text-red-700 dark:bg-red-950/40 dark:text-red-400'
           }`}
           title={origem}
@@ -610,7 +610,7 @@ export default function ProdutoHistoricoEstoqueTab({
       >
         <ListFilter className="h-4 w-4" />
         {temFiltrosExtras ? (
-          <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-[#4a5240] dark:bg-[#a4ce33]" />
+          <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-[#5c7e44] dark:bg-[#a4ce33]" />
         ) : null}
       </button>
       <button
@@ -723,7 +723,7 @@ export default function ProdutoHistoricoEstoqueTab({
             <SlidersHorizontal className="mr-1.5 h-4 w-4" />
             Filtros
             {temFiltrosExtras ? (
-              <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#4a5240] text-[8px] font-bold text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]">
+              <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#5c7e44] text-[8px] font-bold text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]">
                 ·
               </span>
             ) : null}
@@ -785,7 +785,7 @@ export default function ProdutoHistoricoEstoqueTab({
               </Button>
               <Button
                 type="button"
-                className="h-12 flex-1 rounded-lg bg-[#4a5240] text-white hover:bg-[#4a5240]/90 dark:bg-[#a4ce33] dark:text-[#1f1d22] dark:hover:bg-[#a4ce33]/90"
+                className="h-12 flex-1 rounded-lg bg-[#5c7e44] text-white hover:bg-[#5c7e44]/90 dark:bg-[#a4ce33] dark:text-[#1f1d22] dark:hover:bg-[#a4ce33]/90"
                 onClick={() => setFiltrosAbertos(false)}
               >
                 Aplicar

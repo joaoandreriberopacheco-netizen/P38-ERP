@@ -57,7 +57,7 @@ const MARGIN_MOBILE_ROW_H_PRODUTO = 112;
 /** Paleta e colunas alinhadas ao PDF mobile (`exportToPDF('expandida_mobile')`). */
 const MARGIN_MOBILE_STORM = '#2d333b';
 /** Destaque de lucro/markup: oliva (claro) e limão (escuro). */
-const MARGIN_ACCENT_HEX_LIGHT = '#4a5240';
+const MARGIN_ACCENT_HEX_LIGHT = '#5c7e44';
 const MARGIN_ACCENT_HEX_DARK = '#a4ce33';
 const MARGIN_ACCENT_RGB = [74, 82, 64];
 /** Limão — destaque no painel/PDF mobile escuro. */

@@ -757,7 +757,7 @@ export default function NovoLancamentoDialog({
           <button
             type="button"
             onClick={confirmarData}
-            className="h-11 flex-1 rounded-xl bg-[#4a5240] text-sm font-semibold text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]"
+            className="h-11 flex-1 rounded-xl bg-[#5c7e44] text-sm font-semibold text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]"
           >
             Confirmar
           </button>

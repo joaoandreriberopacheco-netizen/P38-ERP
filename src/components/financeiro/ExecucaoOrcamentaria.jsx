@@ -771,7 +771,7 @@ export default function ExecucaoOrcamentaria() {
               <button
                 type="button"
                 onClick={lote.entrarModoPagarLote}
-                className={`rounded-full px-2 py-0.5 text-[10px] transition-colors ${lote.modoSelecaoLote ? 'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]' : 'bg-secondary/80 text-muted-foreground dark:bg-[#383e47]'}`}
+                className={`rounded-full px-2 py-0.5 text-[10px] transition-colors ${lote.modoSelecaoLote ? 'bg-[#5c7e44] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]' : 'bg-secondary/80 text-muted-foreground dark:bg-[#383e47]'}`}
               >
                 {lote.modoSelecaoLote ? 'Cancelar lote' : 'Pagar em lote'}
               </button>
@@ -805,7 +805,7 @@ export default function ExecucaoOrcamentaria() {
                     type="button"
                     onClick={() => lote.setShowPagamentoLote(true)}
                     disabled={lote.lancamentosSelecionados.length === 0}
-                    className="h-9 shrink-0 rounded-xl bg-[#4a5240] px-4 text-sm font-medium text-white disabled:opacity-40 dark:bg-[#a4ce33] dark:text-[#1f1d22]"
+                    className="h-9 shrink-0 rounded-xl bg-[#5c7e44] px-4 text-sm font-medium text-white disabled:opacity-40 dark:bg-[#a4ce33] dark:text-[#1f1d22]"
                   >
                     Continuar
                   </button>
@@ -843,7 +843,7 @@ export default function ExecucaoOrcamentaria() {
             ))}
             <button
               onClick={() => setFabOpen(o => !o)}
-              className={`w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-xl active:scale-95 transition-all ${fabOpen ? 'bg-[#383e47] rotate-45' : 'bg-[#4a5240] dark:bg-[#a4ce33]'}`}>
+              className={`w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-xl active:scale-95 transition-all ${fabOpen ? 'bg-[#383e47] rotate-45' : 'bg-[#5c7e44] dark:bg-[#a4ce33]'}`}>
               <Plus className={`w-6 h-6 ${fabOpen ? 'text-white' : 'text-white dark:text-[#1f1d22]'}`} />
             </button>
           </div>

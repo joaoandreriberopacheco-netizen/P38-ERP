@@ -20,7 +20,7 @@ const LIGHT = {
   },
   linePrimary: '#6b7a52',
   lineBreakEven: '#dc2626',
-  lineMeta: '#4a5240',
+  lineMeta: '#5c7e44',
 };
 
 const DARK = {

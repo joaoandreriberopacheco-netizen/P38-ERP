@@ -2,8 +2,8 @@
  * Contraste P38 — fórmula WCAG 2.x (luminância relativa + razão de contraste).
  *
  * Uso:
- *   pickForeground('#4a5240')           → '#ffffff' (texto legível sobre oliva)
- *   contrastRatio('#fafafa', '#2a2f28') → ~14.5
+ *   pickForeground('#5c7e44')           → '#ffffff' (texto legível sobre oliva)
+ *   contrastRatio('#fafafa', '#161a14') → ~16
  *   meetsContrast('#ffffff', '#fafafa') → false (problema clássico modo claro)
  */
 
@@ -75,16 +75,16 @@ export function p38ButtonPair(tone, isDark) {
   const pairs = {
     olive: isDark
       ? { bg: '#a4ce33', fg: '#1f1d22', border: '#8fb82a' }
-      : { bg: '#4a5240', fg: '#fafafa', border: '#3d4435' },
+      : { bg: '#5c7e44', fg: '#fafafa', border: '#4a6a36' },
     lime: isDark
       ? { bg: '#a4ce33', fg: '#1f1d22', border: '#8fb82a' }
-      : { bg: '#6b7a52', fg: '#ffffff', border: '#4a5240' },
+      : { bg: '#7ba05b', fg: '#ffffff', border: '#5c7e44' },
     citrus: isDark
       ? { bg: '#f07a1a', fg: '#1f1d22', border: '#d96a10' }
       : { bg: '#f07a1a', fg: '#1f1d22', border: '#c45e0e' },
     muted: isDark
       ? { bg: '#26262e', fg: '#fafafa', border: 'rgba(255,255,255,0.12)' }
-      : { bg: '#f0f2ec', fg: '#2a2f28', border: '#dce0d4' },
+      : { bg: '#e6ebdc', fg: '#161a14', border: '#c5ceb8' },
   };
   return pairs[tone] ?? pairs.olive;
 }

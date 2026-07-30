@@ -7,7 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 const CHIP_BASE =
   'h-8 min-w-[2rem] px-2 rounded-lg text-xs font-semibold transition-colors border border-transparent';
 const CHIP_ACTIVE =
-  'bg-[#4a5240] text-white border-[#4a5240] dark:bg-[#a4ce33] dark:text-[#1f1d22] dark:border-[#a4ce33]';
+  'bg-[#5c7e44] text-white border-[#5c7e44] dark:bg-[#a4ce33] dark:text-[#1f1d22] dark:border-[#a4ce33]';
 const CHIP_IDLE = 'bg-muted/80 text-muted-foreground hover:bg-muted active:bg-muted';
 
 function mobileAbcdSummary(abcd) {
@@ -65,7 +65,7 @@ export default function ProdutosAbcdQuickFilter({ abcd = 'all', onChange }) {
             className={cn(
               'desktop-layout:hidden flex h-10 max-w-[7.5rem] flex-shrink-0 items-center gap-1 rounded-xl bg-muted/80 px-2.5 text-left transition-colors',
               isActive
-                ? 'text-[#4a5240] ring-2 ring-[#4a5240]/40 dark:text-[#a4ce33] dark:ring-[#a4ce33]/40'
+                ? 'text-[#5c7e44] ring-2 ring-[#5c7e44]/40 dark:text-[#a4ce33] dark:ring-[#a4ce33]/40'
                 : 'text-muted-foreground',
             )}
             title={`Curva ABCD: ${summary.detail}`}

@@ -44,13 +44,13 @@ import { formatProductCode, generateRandomProductCode } from '@/lib/productCode'
 const P38_FORM_ROOT = 'flex flex-col h-full overflow-hidden font-din-1451 bg-background dark:bg-[#1f1d22]';
 const P38_FORM_HEADER = 'flex-none border-b border-border/40 dark:border-white/10 bg-card dark:bg-[#2d333b]';
 const P38_TAB_LIST = 'grid grid-cols-6 w-full bg-transparent border-b border-border/40 dark:border-white/10 rounded-none h-auto p-0 flex-shrink-0';
-const P38_TAB_TRIGGER = 'group border-b-2 border-transparent data-[state=active]:border-[#4a5240] dark:data-[state=active]:border-[#a4ce33] data-[state=active]:bg-[#26262e]/35 dark:data-[state=active]:bg-[#26262e]/70 rounded-none py-3 text-xs md:text-sm';
-const P38_TAB_ICON = 'w-4 h-4 md:w-5 md:h-5 text-muted-foreground group-data-[state=active]:text-[#4a5240] dark:group-data-[state=active]:text-[#a4ce33]';
+const P38_TAB_TRIGGER = 'group border-b-2 border-transparent data-[state=active]:border-[#5c7e44] dark:data-[state=active]:border-[#a4ce33] data-[state=active]:bg-[#26262e]/35 dark:data-[state=active]:bg-[#26262e]/70 rounded-none py-3 text-xs md:text-sm';
+const P38_TAB_ICON = 'w-4 h-4 md:w-5 md:h-5 text-muted-foreground group-data-[state=active]:text-[#5c7e44] dark:group-data-[state=active]:text-[#a4ce33]';
 const P38_TAB_LABEL = 'hidden sm:inline ml-2 text-muted-foreground group-data-[state=active]:text-foreground';
 const P38_INPUT = 'bg-secondary/80 dark:bg-[#26262e] border-0 rounded-lg h-10 text-sm text-foreground shadow-none focus-visible:ring-1 focus-visible:ring-border/60';
-const P38_INPUT_UNDERLINE = 'bg-transparent border-0 border-b border-border/40 dark:border-white/10 rounded-none px-0 h-9 text-sm text-foreground focus:border-[#4a5240] dark:focus:border-[#a4ce33]';
+const P38_INPUT_UNDERLINE = 'bg-transparent border-0 border-b border-border/40 dark:border-white/10 rounded-none px-0 h-9 text-sm text-foreground focus:border-[#5c7e44] dark:focus:border-[#a4ce33]';
 const P38_SECTION = 'rounded-lg border border-border/40 dark:border-white/10 bg-card/70 dark:bg-[#2d333b]/90 p-4';
-const P38_SAVE_BTN = 'bg-[#4a5240] hover:bg-[#4a5240]/90 text-white dark:bg-[#a4ce33] dark:hover:bg-[#a4ce33]/90 dark:text-[#1f1d22] h-10 w-10';
+const P38_SAVE_BTN = 'bg-[#5c7e44] hover:bg-[#5c7e44]/90 text-white dark:bg-[#a4ce33] dark:hover:bg-[#a4ce33]/90 dark:text-[#1f1d22] h-10 w-10';
 /** Portal do Select fica no body; precisa ficar acima do shell do formulário (z-[70] / z-[80]). */
 const P38_FORM_SELECT_CONTENT = 'z-[90] max-h-96 dark:bg-muted dark:border-border/40';
 
@@ -1209,8 +1209,8 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                         title={opt.is_primary ? 'Precificação na unidade base' : `Precificação em ${opt.unidade}`}
                         className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all border shadow-sm ${
                           active
-                            ? 'border-[#4a5240]/40 bg-[#4a5240] text-white dark:border-[#a4ce33]/40 dark:bg-[#a4ce33] dark:text-[#1f1d22]'
-                            : 'border-border/40 bg-card dark:bg-[#26262e] text-foreground/90 hover:border-[#4a5240]/30 dark:hover:border-[#a4ce33]/30'
+                            ? 'border-[#5c7e44]/40 bg-[#5c7e44] text-white dark:border-[#a4ce33]/40 dark:bg-[#a4ce33] dark:text-[#1f1d22]'
+                            : 'border-border/40 bg-card dark:bg-[#26262e] text-foreground/90 hover:border-[#5c7e44]/30 dark:hover:border-[#a4ce33]/30'
                         }`}
                       >
                         {opt.unidade}

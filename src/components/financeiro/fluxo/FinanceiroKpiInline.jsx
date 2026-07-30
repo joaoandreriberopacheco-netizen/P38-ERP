@@ -56,7 +56,7 @@ export function FinanceiroKpiSaldo({ label = 'Saldo', value, percent, positive, 
         <div className="flex items-center gap-2.5">
           <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-secondary/80 dark:bg-[#383e47]">
             <div
-              className="h-full rounded-full bg-[#4a5240] transition-all dark:bg-[#a4ce33]"
+              className="h-full rounded-full bg-[#5c7e44] transition-all dark:bg-[#a4ce33]"
               style={{ width: `${Math.min(Number(percent), 100)}%` }}
             />
           </div>
@@ -75,7 +75,7 @@ export function FinanceiroKpiSaldo({ label = 'Saldo', value, percent, positive, 
       <div className="flex min-w-[3.5rem] items-center gap-1">
         <div className="h-1 w-10 overflow-hidden rounded-full bg-secondary/80 dark:bg-[#383e47] sm:w-12">
           <div
-            className="h-full rounded-full bg-[#4a5240] transition-all dark:bg-[#a4ce33]"
+            className="h-full rounded-full bg-[#5c7e44] transition-all dark:bg-[#a4ce33]"
             style={{ width: `${Math.min(Number(percent), 100)}%` }}
           />
         </div>
