@@ -14,7 +14,7 @@ import { labelParcelaCurta } from '@/lib/agefinParcelamentoCalculos';
 import { formatFinanceiroValor } from '@/components/financeiro/fluxo/FinanceiroListaShared';
 
 const LINE_TITLE_CLASS =
-  '[&>div>div:first-child]:text-[15px] [&>div>div:first-child]:font-semibold sm:[&>div>div:first-child]:text-base';
+  '[&>div>div:first-child]:text-[15px] [&>div>div:first-child]:font-medium sm:[&>div>div:first-child]:text-base';
 
 function rowAccent(competencia, modelo) {
   if (isCompetenciaPlanejamento(competencia)) return 'info';

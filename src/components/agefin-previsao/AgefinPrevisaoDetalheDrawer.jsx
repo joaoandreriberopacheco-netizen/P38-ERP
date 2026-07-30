@@ -172,7 +172,7 @@ export default function AgefinPrevisaoDetalheDrawer({
                 Esta conta foi parcelada neste mês. O valor abaixo não entra na soma — as parcelas aparecem nas
                 linhas seguintes da lista.
               </p>
-              <p className="mt-2 text-base font-semibold text-foreground tabular-nums line-through">
+              <p className="mt-2 text-base font-medium text-foreground tabular-nums line-through">
                 {formatCurrency(valor)}
               </p>
               {onRemoverParcelamento && (
@@ -202,7 +202,7 @@ export default function AgefinPrevisaoDetalheDrawer({
                       min="0"
                       value={valorInput}
                       onChange={(e) => setValorInput(e.target.value)}
-                      className="mt-1 h-11 w-full rounded-xl bg-white/70 px-3 text-base font-semibold text-foreground outline-none backdrop-blur-sm dark:bg-black/20"
+                      className="mt-1 h-11 w-full rounded-xl bg-white/70 px-3 text-base font-medium text-foreground outline-none backdrop-blur-sm dark:bg-black/20"
                     />
                   </div>
                   <div>

@@ -1,15 +1,17 @@
 /**
- * Piloto visual Planejamento (modo claro) — referência garrafa Citrus Blend.
+ * Piloto visual Planejamento (modo claro) — Citrus Blend + regra 60-30-10.
  *
- * Paleta:
- *   - Fundo página: #FFFFFF
- *   - Cards / superfícies: #F2F2F2 (cinza bem claro) — sem contorno
- *   - Verde rolha / palmeira: #1B4D2E
- *   - Amarelo cítrico (sumo): #FCE181
- *   - Laranja (acento pontual): #F39C12
+ * Hierarquia de pesos visuais:
+ *   ~60%  Branco puro (#FFFFFF)     — fundo da página (respiração)
+ *   ~30%  Cinza gelo (#F2F2F2) +
+ *         grafite (#141414)         — cards / conteúdo / texto
+ *   ~10%  Destaques cítricos:
+ *         ~7% Verde palmeira (#1B4D2E) — CTAs primários, tab activa, ícones de acção
+ *         ~3% Amarelo suco (#FCE181)   — chips / atenção secundária (nunca fundos grandes)
  *
  * Tipografia: DIN 1451 no corpo; Century Gothic nos títulos.
- * Superfícies: preenchimento + fosco leve; sem linhas/bordas delineadas.
+ * Pesos leves (evitar negrito pesado) — leitura calma.
+ * Superfícies: preenchimento sem contorno.
  *
  * Uso: class="p38-labotrat-pilot" no contentor da página.
  */
@@ -20,6 +22,7 @@
   .p38-labotrat-pilot {
     font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
     letter-spacing: var(--p38-tracking, 0.01em);
+    font-weight: 400;
   }
 
   .p38-labotrat-pilot .p38-labotrat-title,
@@ -31,10 +34,7 @@
       Futura, 'Trebuchet MS', sans-serif;
   }
 
-  /*
-   * Modo claro — paleta Citrus Blend.
-   * Contraste por preenchimento (branco vs #F2F2F2), nunca por outline.
-   */
+  /* —— Tokens 60-30-10 —— */
   html:not(.dark) .p38-labotrat-pilot {
     --background: 0 0% 100%;
     --foreground: 0 0% 8%;
@@ -47,10 +47,9 @@
     --secondary: 0 0% 95%;
     --secondary-foreground: 0 0% 12%;
     --muted: 0 0% 95%;
-    --muted-foreground: 0 0% 38%;
+    --muted-foreground: 0 0% 40%;
     --accent: 48 95% 75%;
     --accent-foreground: 145 48% 16%;
-    /* Borders “invisíveis” — fallback se alguma classe Tailwind ainda pintar stroke */
     --border: 0 0% 95%;
     --input: 0 0% 95%;
     --ring: 145 48% 20%;
@@ -64,33 +63,45 @@
     --p38-mediterranean: 145 40% 28%;
     --p38-citrus-yellow: 48 95% 75%;
     --p38-citrus-orange: 37 90% 51%;
-    --p38-font-weight-body: 500;
-    --p38-font-weight-strong: 600;
-    --p38-font-weight-heading: 700;
+    /* Pesos tipográficos leves (menos negrito) */
+    --p38-font-weight-body: 400;
+    --p38-font-weight-strong: 500;
+    --p38-font-weight-heading: 500;
     --p38-tracking: 0.01em;
     --citrus-green: #1b4d2e;
     --citrus-green-deep: #143d24;
     --citrus-yellow: #fce181;
+    --citrus-yellow-soft: rgba(252, 225, 129, 0.4);
     --citrus-orange: #f39c12;
     --citrus-card: #f2f2f2;
-    --citrus-frost: rgba(242, 242, 242, 0.85);
+    --citrus-frost: rgba(242, 242, 242, 0.88);
+    --citrus-ink: #141414;
     background-color: #ffffff;
-    color: #141414;
+    color: var(--citrus-ink);
   }
 
-  /* —— Superfícies: só fill / fosco, sem contorno —— */
+  /* Menos negrito: suavizar utilitários Tailwind dentro do piloto */
+  html:not(.dark) .p38-labotrat-pilot .font-bold,
+  html:not(.dark) .p38-labotrat-pilot .font-semibold {
+    font-weight: 500 !important;
+  }
+
+  html:not(.dark) .p38-labotrat-pilot .font-medium {
+    font-weight: 500;
+  }
+
+  /* —— ~30% estrutura: superfícies cinza gelo, sem contorno —— */
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-frost,
   html:not(.dark) .p38-labotrat-pilot .p38-field-surface,
   html:not(.dark) .p38-labotrat-pilot .p38-search-field {
     background-color: var(--citrus-frost);
-    backdrop-filter: blur(14px) saturate(1.1);
-    -webkit-backdrop-filter: blur(14px) saturate(1.1);
+    backdrop-filter: blur(12px) saturate(1.05);
+    -webkit-backdrop-filter: blur(12px) saturate(1.05);
     border-width: 0 !important;
     border-color: transparent !important;
     box-shadow: none;
   }
 
-  /* Cards / grupos / shells — cinza claro, sem linha */
   html:not(.dark) .p38-labotrat-pilot .rounded-xl.border,
   html:not(.dark) .p38-labotrat-pilot .rounded-lg.border,
   html:not(.dark) .p38-labotrat-pilot .rounded-2xl.border {
@@ -104,17 +115,13 @@
     background-color: var(--citrus-card);
   }
 
-  /* Remover delineados e divisórias que “sujam” a tela */
   html:not(.dark) .p38-labotrat-pilot .border,
   html:not(.dark) .p38-labotrat-pilot .border-t,
   html:not(.dark) .p38-labotrat-pilot .border-b,
   html:not(.dark) .p38-labotrat-pilot .border-l,
   html:not(.dark) .p38-labotrat-pilot .border-r,
   html:not(.dark) .p38-labotrat-pilot .border-x,
-  html:not(.dark) .p38-labotrat-pilot .border-y {
-    border-color: transparent !important;
-  }
-
+  html:not(.dark) .p38-labotrat-pilot .border-y,
   html:not(.dark) .p38-labotrat-pilot .border-border\/50,
   html:not(.dark) .p38-labotrat-pilot .border-border\/60,
   html:not(.dark) .p38-labotrat-pilot .border-border\/40,
@@ -122,7 +129,6 @@
     border-color: transparent !important;
   }
 
-  /* Linhas de lista: contraste por fundo, sem border-b */
   html:not(.dark) .p38-labotrat-pilot .p38-mobile-line,
   html:not(.dark) .p38-labotrat-pilot .border-b {
     border-bottom-color: transparent !important;
@@ -132,24 +138,22 @@
     border-top-color: transparent !important;
   }
 
-  html:not(.dark) .p38-labotrat-pilot .border-b.border-border\/50,
-  html:not(.dark) .p38-labotrat-pilot .border-b.dark\:border-white\/10 {
-    background-color: transparent;
-  }
-
-  /* Título — verde rolha + texto branco */
+  /*
+   * Título da página (~30% conteúdo): grafite, sem bloco verde.
+   * Verde fica reservado aos ~7% de acção.
+   */
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-title {
     display: inline-flex;
     align-items: center;
     max-width: 100%;
-    padding: 0.5rem 0.9rem;
-    border-radius: 0.5rem;
-    background-color: var(--citrus-green);
-    color: #ffffff;
-    font-weight: 700;
-    font-size: 1.05rem;
-    line-height: 1.25;
-    letter-spacing: 0.02em;
+    padding: 0.15rem 0;
+    border-radius: 0;
+    background-color: transparent;
+    color: var(--citrus-ink);
+    font-weight: 500;
+    font-size: 1.15rem;
+    line-height: 1.3;
+    letter-spacing: 0.01em;
     box-shadow: none;
     border: 0;
   }
@@ -159,13 +163,10 @@
     color: var(--citrus-green);
   }
 
-  /*
-   * Navegador do mês — mesmo “pill claro” da tab Mês (branco/cinza + verde),
-   * sem o bloco verde sólido.
-   */
+  /* Navegador do mês — pill branco; rótulo grafite; setas verdes (acento) */
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-mes {
     background-color: #ffffff !important;
-    color: var(--citrus-green);
+    color: var(--citrus-ink);
     border-width: 0 !important;
     border-color: transparent !important;
     box-shadow: none;
@@ -176,35 +177,40 @@
   }
 
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-mes button:hover {
-    background-color: rgba(27, 77, 46, 0.08);
+    background-color: rgba(27, 77, 46, 0.07);
   }
 
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-mes .p38-labotrat-mes-label {
-    color: var(--citrus-green);
-    font-weight: 700;
-    letter-spacing: 0.04em;
+    color: var(--citrus-ink);
+    font-weight: 500;
+    letter-spacing: 0.03em;
   }
 
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-mes .p38-labotrat-mes-status {
-    color: hsl(0 0% 38%);
+    color: hsl(0 0% 42%);
     font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
+    font-weight: 400;
   }
 
-  /* Tab activa — pill branco no trilho cinza (ref. botão Mês) */
+  /* Tab activa — pill branco + verde (acento ~7%, área pequena) */
+  html:not(.dark) .p38-labotrat-pilot [role='tab'] {
+    font-weight: 400;
+  }
+
   html:not(.dark) .p38-labotrat-pilot [role='tab'][data-state='active'] {
     background-color: #ffffff !important;
     color: var(--citrus-green);
-    font-weight: 700;
+    font-weight: 500;
     box-shadow: none;
   }
 
-  /* CTA — verde rolha */
+  /* —— ~7% Verde: CTAs primários —— */
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-cta {
     background-color: var(--citrus-green);
     color: #ffffff;
     border-color: transparent;
     border-width: 0;
-    font-weight: 600;
+    font-weight: 500;
     box-shadow: none;
   }
 
@@ -212,38 +218,62 @@
     background-color: var(--citrus-green-deep);
   }
 
-  html:not(.dark) .p38-labotrat-pilot .p38-labotrat-citrus {
+  /* —— ~3% Amarelo: atenção secundária (chips / soft CTA) —— */
+  html:not(.dark) .p38-labotrat-pilot .p38-labotrat-citrus,
+  html:not(.dark) .p38-labotrat-pilot .p38-labotrat-cta-soft {
     background-color: var(--citrus-yellow);
     color: var(--citrus-green);
+    border-color: transparent;
+    font-weight: 500;
+  }
+
+  html:not(.dark) .p38-labotrat-pilot .p38-labotrat-cta-soft:hover {
+    background-color: #f5d56a;
   }
 
   html:not(.dark) .p38-labotrat-pilot .p38-text-accent,
   html:not(.dark) .p38-labotrat-pilot .text-\[\#5c7e44\],
-  html:not(.dark) .p38-labotrat-pilot .text-\[\#00a651\] {
+  html:not(.dark) .p38-labotrat-pilot .text-\[\#00a651\],
+  html:not(.dark) .p38-labotrat-pilot .text-\[\#4A5D23\] {
     color: var(--citrus-green) !important;
   }
 
+  /* Dados / títulos de linha — médios, não bold */
   html:not(.dark) .p38-labotrat-pilot .p38-data,
   html:not(.dark) .p38-labotrat-pilot .p38-line-title {
     font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
-    font-weight: 600;
-    letter-spacing: 0.02em;
+    font-weight: 500;
+    letter-spacing: 0.015em;
   }
 
+  /* Labels de grupo — grafite (estrutura), não verde em massa */
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-grupo-label {
-    color: var(--citrus-green);
+    color: hsl(0 0% 38%);
     font-family: 'Century Gothic', CenturyGothic, AppleGothic, 'Didact Gothic', sans-serif;
-    font-weight: 700;
+    font-weight: 500;
   }
 
+  /* Chip planejamento / atenção — amarelo cítrico (~3%) */
   html:not(.dark) .p38-labotrat-pilot .text-cyan-800 {
     color: var(--citrus-green) !important;
-    background-color: rgba(252, 225, 129, 0.45);
+    background-color: var(--citrus-yellow-soft);
+    font-weight: 500;
   }
 
-  /* Drop target: anel suave sem “caixa” permanente */
+  html:not(.dark) .p38-labotrat-pilot .text-amber-800 {
+    color: var(--citrus-green) !important;
+    background-color: var(--citrus-yellow-soft);
+    font-weight: 500;
+  }
+
+  html:not(.dark) .p38-labotrat-pilot .text-emerald-800 {
+    color: var(--citrus-green) !important;
+    background-color: rgba(27, 77, 46, 0.08);
+    font-weight: 500;
+  }
+
   html:not(.dark) .p38-labotrat-pilot .ring-2 {
-    --tw-ring-color: rgba(27, 77, 46, 0.35);
+    --tw-ring-color: rgba(27, 77, 46, 0.28);
   }
 
   html.dark .p38-labotrat-pilot {

@@ -109,7 +109,7 @@ export default function AgefinPrevisaoCabecalho({
         <Button
           variant="outline"
           size="sm"
-          className="h-10 gap-1.5 rounded-xl px-2"
+          className="h-10 gap-1.5 rounded-xl px-2 border-0 p38-labotrat-cta-soft"
           onClick={onDesfazerAbrirMes}
           disabled={saving || !hasLancamentosMes}
           title="Desfazer abrir mês"

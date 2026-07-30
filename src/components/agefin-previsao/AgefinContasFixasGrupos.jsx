@@ -46,7 +46,7 @@ function BlocoGrupo({
     >
       <div className="flex items-center justify-between px-3 py-2">
         <div>
-          <p className="text-xs font-semibold text-foreground">{grupoLabel}</p>
+          <p className="text-xs font-medium text-foreground">{grupoLabel}</p>
           <p className="text-[11px] text-muted-foreground">{sublabel || `${series.length} conta(s)`}</p>
         </div>
       </div>
@@ -121,7 +121,7 @@ export default function AgefinContasFixasGrupos({
           <FinanceiroGrupo
             key={frequencia}
             label={`Recorrência ${frequencia} (${totalSecao})`}
-            labelClassName="text-xs font-semibold normal-case tracking-normal text-foreground p38-labotrat-grupo-label"
+            labelClassName="text-xs font-medium normal-case tracking-normal text-foreground p38-labotrat-grupo-label"
             despesas={totalValor}
             liquido={-totalValor}
             card
