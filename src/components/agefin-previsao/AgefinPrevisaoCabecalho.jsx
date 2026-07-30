@@ -86,7 +86,7 @@ export default function AgefinPrevisaoCabecalho({
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1 min-w-0 px-1 py-2 text-center">
-            <p className="text-sm font-semibold uppercase tracking-wide text-foreground sm:text-base truncate">
+            <p className="text-sm font-semibold tracking-wide text-foreground sm:text-base truncate">
               {competenciaLabel}
             </p>
             <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug line-clamp-2">

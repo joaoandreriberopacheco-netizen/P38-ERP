@@ -4,6 +4,7 @@ import {
   P38StatusLabel,
   p38AccentKeyFromTone,
 } from '@/components/ui/p38-mobile-line';
+import { P38Data } from '@/components/ui/p38-data';
 import { formatFinanceiroValor } from '@/components/financeiro/fluxo/FinanceiroListaShared';
 import {
   formatCicloAgefinCompetencia,
@@ -45,7 +46,9 @@ export default function AgefinPrevisaoRow({ competencia, modelo, onClick, stripe
 
   const meta = (
     <>
-      {competencia.terceiro_nome && <span>{competencia.terceiro_nome}</span>}
+      {competencia.terceiro_nome && (
+        <P38Data as="span">{competencia.terceiro_nome}</P38Data>
+      )}
       {fantasma && <P38StatusLabel tone="muted">Parcelada</P38StatusLabel>}
       {parcela && parcelaLabel && <P38StatusLabel tone="info">{parcelaLabel}</P38StatusLabel>}
       {tagFreq && <P38StatusLabel tone="muted">{tagFreq}</P38StatusLabel>}
@@ -61,7 +64,11 @@ export default function AgefinPrevisaoRow({ competencia, modelo, onClick, stripe
           {ORIGEM_LABELS[competencia.origem_boleto] || competencia.origem_boleto}
         </P38StatusLabel>
       )}
-      {modelo?.centro_custo && <span>CC {modelo.centro_custo}</span>}
+      {modelo?.centro_custo && (
+        <span>
+          CC <P38Data as="span">{modelo.centro_custo}</P38Data>
+        </span>
+      )}
     </>
   );
 

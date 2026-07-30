@@ -2,6 +2,7 @@ import React from 'react';
 import { cn } from '@/components/utils';
 import { p38Table } from '@/lib/p38TableSurfaces';
 import { p38Accent } from '@/lib/p38ThemeSurfaces';
+import { P38Data } from '@/components/ui/p38-data';
 
 const ACCENT_BORDER = {
   default: 'border-l-transparent',
@@ -71,7 +72,7 @@ export function P38MobileLine({
       <div className="flex-1 min-w-0">
         {title ? (
           <div className={p38Table.mobileLineTitle}>
-            {typeof title === 'string' ? title.toUpperCase() : title}
+            {typeof title === 'string' ? <P38Data>{title}</P38Data> : title}
           </div>
         ) : null}
         {subtitle ? <div className={p38Table.mobileLineSubtitle}>{subtitle}</div> : null}

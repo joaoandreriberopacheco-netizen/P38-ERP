@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link2, FileText, SplitSquareHorizontal, Undo2 } from 'lucide-react';
 import { P38HelpPopover } from '@/components/ui/p38-help-popover';
+import { P38Data } from '@/components/ui/p38-data';
 import {
   formatCurrency,
   formatCicloAgefinCompetencia,
@@ -121,7 +122,7 @@ export default function AgefinPrevisaoDetalheDrawer({
       <DrawerContent className="max-h-[92vh]">
         <DrawerHeader className="border-b border-border/40 pb-3">
           <DrawerTitle className="flex flex-wrap items-center gap-2">
-            <span>{competencia.serie_nome}</span>
+            <P38Data as="span">{competencia.serie_nome}</P38Data>
             <Badge variant="outline">{formatCompetenciaLabel(competencia.competencia)}</Badge>
             {fantasma && <Badge variant="secondary">Parcelada</Badge>}
             {parcela && parcelaLabel && <Badge variant="secondary">{parcelaLabel}</Badge>}
@@ -144,7 +145,12 @@ export default function AgefinPrevisaoDetalheDrawer({
             {parcela
               ? parcelaLabel
               : formatCicloAgefinCompetencia(competencia.competencia, dia)}
-            {competencia.terceiro_nome && ` · ${competencia.terceiro_nome}`}
+            {competencia.terceiro_nome && (
+              <>
+                {' · '}
+                <P38Data as="span">{competencia.terceiro_nome}</P38Data>
+              </>
+            )}
           </p>
           {bloqueada && paga && (
             <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
@@ -226,12 +232,18 @@ export default function AgefinPrevisaoDetalheDrawer({
 
           {modelo?.centro_custo && (
             <p className="mt-3 text-sm text-muted-foreground">
-              Centro de custo: <span className="text-foreground font-medium">{modelo.centro_custo}</span>
+              Centro de custo:{' '}
+              <P38Data as="span" className="text-foreground font-medium">
+                {modelo.centro_custo}
+              </P38Data>
             </p>
           )}
           {modelo?.categoria_nome && (
             <p className="mt-1 text-sm text-muted-foreground">
-              Categoria: <span className="text-foreground">{modelo.categoria_nome}</span>
+              Categoria:{' '}
+              <P38Data as="span" className="text-foreground">
+                {modelo.categoria_nome}
+              </P38Data>
             </p>
           )}
 

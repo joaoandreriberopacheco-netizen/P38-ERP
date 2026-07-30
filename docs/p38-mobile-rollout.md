@@ -61,7 +61,7 @@ Regra: **não misturar** cards com sombra pesada e lista Margem na mesma vista �
 | Superfície / painel | branco / `card` | `#2d333b` | Header de colunas, KPI strip |
 | Divisor | preto 6% | branco 6–10% | `border-border/50`, `dark:border-white/10` |
 | Acento dados | oliva `#4A5D23` | limão `#a4ce33` | Lucro, status ok, barra resumo |
-| Texto | `foreground` | `foreground` | Títulos DIN uppercase |
+| Texto | `foreground` | `foreground` | Dados da BD em maiúsculas (`P38Data`); títulos/rótulos UI em caixa mista |
 | Meta | `muted-foreground` | idem | Subtítulo, UN, datas |
 
 **Verde (regra igual ao desktop):** KPI, lucro, status positivo, ponto ●, barra fina no item ativo da bottom nav — **não** em todos os ícones do Home nem em cada linha de menu.

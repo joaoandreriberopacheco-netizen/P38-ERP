@@ -143,18 +143,18 @@
     @apply text-red-600 dark:text-red-400;
   }
 
-  /* Labels micro (KPI, colunas) */
+  /* Labels micro (KPI, colunas) — interface UI, minúsculas permitidas */
   .p38-micro-label {
     font-size: var(--p38-label-size);
-    @apply uppercase tracking-wide text-muted-foreground leading-none font-din1451;
+    @apply tracking-wide text-muted-foreground leading-none font-din1451;
   }
 
   .p38-meta-label {
     font-size: var(--p38-meta-size);
-    @apply uppercase tracking-wide text-muted-foreground font-din1451;
+    @apply tracking-wide text-muted-foreground font-din1451;
   }
 
-  /* Título de linha mobile */
+  /* Título de linha mobile — tipicamente dado da BD (maiúsculas) */
   .p38-line-title {
     font-size: var(--p38-title-size);
     @apply font-din1451 font-medium uppercase tracking-wide text-foreground leading-tight break-words;
@@ -199,9 +199,12 @@
     @apply overflow-y-auto rounded-lg border border-border/40 dark:border-white/10 bg-background;
   }
 
-  /* Inputs operacionais — visual maiúsculo instantâneo; valor normalizado no onChange/blur */
-  .p38-data-uppercase {
+  /* Dados da BD / campos operacionais — sempre maiúsculas (CSS + normalizeDataText) */
+  .p38-data,
+  .p38-data-uppercase,
+  [data-p38='data'] {
     text-transform: uppercase;
+    letter-spacing: var(--p38-tracking);
   }
 
   /* Superfície operacional (KPIs, pills, painéis) — só cor, altura automática */
@@ -249,12 +252,11 @@
     @apply uppercase tracking-wide;
   }
 
-  /* Menu lateral e seletor mobile de funções */
+  /* Menu lateral — interface UI (minúsculas permitidas) */
   .p38-sidebar nav button,
   .p38-sidebar nav a[href],
   .p38-nav-menu a[href],
   .p38-nav-menu button {
-    text-transform: uppercase;
     letter-spacing: var(--p38-tracking);
   }
 
@@ -388,9 +390,11 @@
     border-color: hsl(var(--p38-accent-citrus-yellow) / 0.25);
   }
 
-  /* Shell da aplicação — interface inteira em maiúsculas */
+  /*
+   * Shell da aplicação — UI com caixa mista (títulos/rótulos/botões).
+   * Dados da BD usam .p38-data / P38Data / inputs operacionais (sempre maiúsculas).
+   */
   .p38-app {
-    text-transform: uppercase;
     letter-spacing: var(--p38-tracking);
   }
 
@@ -417,7 +421,7 @@
     letter-spacing: normal;
   }
 
-  /* Inputs de texto — maiúsculas visuais (valor normalizado no onChange/blur) */
+  /* Inputs de texto operacional — maiúsculas (valor também normalizado no onChange) */
   .p38-app input:not([type='email']):not([type='url']):not([type='password']):not([type='number']):not([type='date']):not([type='time']):not([type='datetime-local']):not([type='month']):not([type='week']):not([type='hidden']):not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):not([type='file']),
   .p38-app textarea {
     text-transform: uppercase;

@@ -17,6 +17,7 @@ import {
   FREQUENCIAS_SERIE_OPCOES,
   MESES_VENCIMENTO_LABELS,
 } from '@/lib/agefinPrevisaoCalculos';
+import { normalizeDataFields } from '@/lib/normalizeDataText';
 import { cn } from '@/lib/utils';
 
 const MESES_CURTOS = [
@@ -106,13 +107,18 @@ export default function AgefinSerieDialog({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave?.({
-      ...serie,
-      ...form,
-      valor_previsto: parseFloat(form.valor_previsto) || 0,
-      dia_vencimento: parseInt(form.dia_vencimento, 10) || 10,
-      mes_vencimento: parseInt(form.mes_vencimento, 10) || 1,
-    });
+    onSave?.(
+      normalizeDataFields(
+        {
+          ...serie,
+          ...form,
+          valor_previsto: parseFloat(form.valor_previsto) || 0,
+          dia_vencimento: parseInt(form.dia_vencimento, 10) || 10,
+          mes_vencimento: parseInt(form.mes_vencimento, 10) || 1,
+        },
+        ['nome', 'terceiro_nome', 'categoria_nome', 'centro_custo', 'observacoes'],
+      ),
+    );
   };
 
   return (

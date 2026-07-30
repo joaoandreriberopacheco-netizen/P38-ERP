@@ -16,9 +16,10 @@ Documento irmão (rollout geral): [`docs/p38-mobile-rollout.md`](docs/p38-mobile
 3. **Despesas / saídas** em coral-vermelho suave — legível, sem gritar.
 4. **Superfícies** `P38_FIELD_SURFACE` / `P38_KPI_SHELL` — painéis arredondados, sem cartões com sombra pesada em cascata.
 5. **Chips de estado** pequenos (com boleto / sem boleto) — cor semântica, não decoração.
-6. **Tipografia DIN 1451** — títulos e labels em caixa alta com tracking leve; meta em `muted-foreground`.
+6. **Tipografia DIN 1451** — títulos e rótulos de UI em caixa mista; **dados da BD** sempre em maiúsculas (`P38Data` / `normalizeDataText`); meta em `muted-foreground`.
 7. **Uma composição por zona** — cabeçalho + abas + bloco do mês + resumo + filtros + lista; sem poluir o primeiro ecrã com widgets extras.
 8. **Toque** — botões ~40–44px, abas em grelha 3 colunas no telemóvel, FAB limão acima da bottom nav.
+9. **Caixa de texto (regra)** — interface fixa (títulos, labels, botões) pode ter minúsculas; nomes/descrições/categorias da base aparecem e gravam-se em maiúsculas.
 
 ## O que NÃO fazer ao “inspirar-se”
 
