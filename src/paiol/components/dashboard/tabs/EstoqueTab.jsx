@@ -19,7 +19,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
-import { p38Dashboard } from '@/lib/p38DashboardSurfaces';
+import { useP38DashboardSurfaces } from '@/paiol/components/dashboard/useP38DashboardSurfaces';
 import {
   buildCartesianGridProps,
   buildXAxisProps,
@@ -428,6 +428,7 @@ function getMovimentoDeltaQuantidade(movimento = {}) {
 }
 
 export default function EstoqueTab() {
+  const p38Dashboard = useP38DashboardSurfaces();
   const chartTheme = useDashboardChartTheme();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -862,11 +863,11 @@ export default function EstoqueTab() {
   ];
 
   return (
-    <div className="space-y-3">
+    <div className={p38Dashboard.gridRoot}>
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-3">
         <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
-            <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+            <CardTitle className={p38Dashboard.sectionTitle}>
               <Package className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               Nível de Estoque (Base Hoje)
             </CardTitle>
@@ -923,7 +924,7 @@ export default function EstoqueTab() {
 
         <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
-            <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+            <CardTitle className={p38Dashboard.sectionTitle}>
               <Gauge className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               Razão de Abastecimento (3 meses)
             </CardTitle>
@@ -989,7 +990,7 @@ export default function EstoqueTab() {
                         </PieChart>
                       </ResponsiveContainer>
                       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span className="text-base sm:text-lg font-bold text-foreground">{monthSupply.ratioPercent.toFixed(1)}%</span>
+                        <span className={p38Dashboard.metricValue}>{monthSupply.ratioPercent.toFixed(1)}%</span>
                       </div>
                     </div>
                     <div className="space-y-1">
@@ -1020,7 +1021,7 @@ export default function EstoqueTab() {
         <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
             <div className="flex items-center justify-between gap-3">
-              <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+              <CardTitle className={p38Dashboard.sectionTitle}>
                 <Layers className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
                 Qualidade do Estoque
               </CardTitle>
@@ -1068,7 +1069,7 @@ export default function EstoqueTab() {
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pt-5">
                 <span className="text-[11px] tracking-wide uppercase text-muted-foreground">Total</span>
-                <span className="text-lg font-semibold text-foreground tabular-nums">{BRL.format(totalQualidade)}</span>
+                <span className={`${p38Dashboard.metricValue} font-semibold`}>{BRL.format(totalQualidade)}</span>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-1.5">
@@ -1087,7 +1088,7 @@ export default function EstoqueTab() {
 
         <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
-            <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+            <CardTitle className={p38Dashboard.sectionTitle}>
               <Truck className="w-4 h-4 text-[#b8c973]" />
               Localização do Estoque
             </CardTitle>
@@ -1125,7 +1126,7 @@ export default function EstoqueTab() {
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pt-5">
                 <span className="text-[11px] tracking-wide uppercase text-muted-foreground">Total</span>
-                <span className="text-lg font-semibold text-foreground tabular-nums">
+                <span className={`${p38Dashboard.metricValue} font-semibold`}>
                   {BRL.format(metrics.totalLocalizacao)}
                 </span>
               </div>
