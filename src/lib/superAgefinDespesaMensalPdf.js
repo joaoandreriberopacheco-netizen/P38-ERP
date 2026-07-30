@@ -1,18 +1,25 @@
 /**
  * SUPERAGEFIN — PDF «Despesa Mensal» (A4).
  *
- * Tipografia: Nunito (OFL, terminais arredondados — tom amigável tipo Arial Rounded).
+ * Tipografia:
+ * - Título do relatório: Nunito (tom amigável).
+ * - Corpo: Arimo (substituto livre do Arial / Arial Nova — métricas compatíveis).
  * Piso: nenhuma fonte abaixo de FONT_MIN (11pt).
  * Cabeçalho / rótulos: frase em minúsculas; dados em maiúsculas.
  * Cards: padding generoso («respiro») para não sufocar o texto nas bordas.
  * Rodapé: data/hora de geração + numeração de páginas.
+ * Secções: título nunca fica sozinho no fim da página (vai com o 1.º bloco).
  * Margens: topo 25 mm, base 15 mm.
  *
  * Importante: ensureSpace(y, need) devolve o y correcto após eventual nova página.
  */
 
 import { jsPDF } from 'jspdf';
-import { registerJsPdfNunitoFonts, normalizePdfText } from '@/lib/jspdfNotoFont';
+import {
+  registerJsPdfNunitoFonts,
+  registerJsPdfArimoFonts,
+  normalizePdfText,
+} from '@/lib/jspdfNotoFont';
 import { shareOrDownloadBlob, shouldUseMobileDocumentExport, downloadBlob } from '@/lib/mobilePrintAndShare';
 import { lancamentoPago, lancamentoVencidoOuAtrasado } from '@/lib/agefinConsultaFilters';
 
@@ -126,8 +133,13 @@ export async function gerarDespesaMensalPdf(opts) {
   } = opts;
 
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const fontFamily = await registerJsPdfNunitoFonts(pdf);
-  const setFont = (style = 'normal') => pdf.setFont(fontFamily, style);
+  const [titleFont, bodyFont] = await Promise.all([
+    registerJsPdfNunitoFonts(pdf),
+    registerJsPdfArimoFonts(pdf),
+  ]);
+  /** @param {'normal'|'bold'} style @param {'body'|'title'} role */
+  const setFont = (style = 'normal', role = 'body') =>
+    pdf.setFont(role === 'title' ? titleFont : bodyFont, style);
 
   const contentW = PAGE_W - MARGIN_X * 2;
   const mesAno = formatMesAnoTitulo(currentMonth);
@@ -138,7 +150,7 @@ export async function gerarDespesaMensalPdf(opts) {
   let y = CONTENT_TOP;
 
   const drawHeader = () => {
-    setFont('bold');
+    setFont('bold', 'title');
     pdf.setFontSize(TITLE_SIZE);
     pdf.setTextColor(0, 0, 0);
     const headerY = MARGIN_TOP - 7;
@@ -254,7 +266,18 @@ export async function gerarDespesaMensalPdf(opts) {
   /** —— Provisões (1 coluna) —— */
   if (budgetsAgrupados?.grupos?.length) {
     const budgetsHeaderH = 13;
-    y = ensureSpace(y, budgetsHeaderH + 4);
+    const centroHeaderH = 9;
+    /** Altura original (com linhas); agora limpo, sem tracejado */
+    const cardH = 44;
+    const cardGap = 3;
+    // Título da secção nunca fica sozinho no fim da página: leva o 1.º centro + 1.º card.
+    const primeiroGrupo = budgetsAgrupados.grupos[0];
+    const keepSecaoComCorpo =
+      budgetsHeaderH +
+      2 +
+      centroHeaderH +
+      (primeiroGrupo?.itens?.length ? cardH + 2 : 0);
+    y = ensureSpace(y, keepSecaoComCorpo);
     pdf.setFillColor(226, 232, 240);
     pdf.rect(MARGIN_X, y, contentW, budgetsHeaderH, 'F');
     setFont('bold');
@@ -274,10 +297,6 @@ export async function gerarDespesaMensalPdf(opts) {
     y += budgetsHeaderH + 2;
 
     for (const g of budgetsAgrupados.grupos) {
-      const centroHeaderH = 9;
-      /** Altura original (com linhas); agora limpo, sem tracejado */
-      const cardH = 44;
-      const cardGap = 3;
       // Não deixar o nome do centro sozinho no fim da página («cabeça sem corpo»):
       // exige espaço para o cabeçalho + pelo menos o 1.º card.
       const primeiroCard = g.itens?.length ? cardH + 2 : 0;
@@ -389,7 +408,8 @@ function desenharFolhaPdf(pdf, { folha, setFont, y, ensureSpace, contentW, forma
   const cardH = 72;
   const headerH = 13;
 
-  y = ensureSpace(y, headerH + 4);
+  // Título da secção Folha nunca fica sozinho: exige espaço para o cabeçalho + 1.ª linha de cards.
+  y = ensureSpace(y, headerH + 2 + cardH + gap);
   pdf.setFillColor(226, 232, 240);
   pdf.rect(MARGIN_X, y, contentW, headerH, 'F');
   setFont('bold');

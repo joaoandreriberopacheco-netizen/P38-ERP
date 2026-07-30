@@ -25,6 +25,14 @@ const NUNITO_ASSET_BASE = `${readAssetBaseUrl()}fonts/nunito/`;
 const NUNITO_REGULAR_URL = `${NUNITO_ASSET_BASE}Nunito-Regular.ttf`;
 const NUNITO_BOLD_URL = `${NUNITO_ASSET_BASE}Nunito-Bold.ttf`;
 
+/**
+ * Arimo (Apache 2.0 / OFL no repo) — métricas compatíveis com Arial.
+ * Usado como substituto livre do «Arial Nova» (fonte Microsoft, não redistribuível).
+ */
+const ARIMO_ASSET_BASE = `${readAssetBaseUrl()}fonts/arimo/`;
+const ARIMO_REGULAR_URL = `${ARIMO_ASSET_BASE}Arimo-Regular.ttf`;
+const ARIMO_BOLD_URL = `${ARIMO_ASSET_BASE}Arimo-Bold.ttf`;
+
 const fontCache = {
   regular: null,
   bold: null,
@@ -34,6 +42,8 @@ const fontCache = {
   dinBold: null,
   nunitoRegular: null,
   nunitoBold: null,
+  arimoRegular: null,
+  arimoBold: null,
 };
 
 const arrayBufferToBase64 = (buffer) => {
@@ -124,6 +134,28 @@ export async function registerJsPdfNunitoFonts(doc) {
     return 'Nunito';
   } catch (err) {
     console.error('jspdfNotoFont: falha ao carregar Nunito, fallback Noto Sans:', err);
+    return registerJsPdfNotoFonts(doc);
+  }
+}
+
+/**
+ * Arimo — corpo estilo Arial / Arial Nova (substituto livre).
+ * Fallback: Noto Sans.
+ */
+export async function registerJsPdfArimoFonts(doc) {
+  try {
+    const [regularBase64, boldBase64] = await Promise.all([
+      loadFontBase64(ARIMO_REGULAR_URL, 'arimoRegular'),
+      loadFontBase64(ARIMO_BOLD_URL, 'arimoBold'),
+    ]);
+    doc.addFileToVFS('Arimo-Regular.ttf', regularBase64);
+    doc.addFont('Arimo-Regular.ttf', 'Arimo', 'normal');
+    doc.addFileToVFS('Arimo-Bold.ttf', boldBase64);
+    doc.addFont('Arimo-Bold.ttf', 'Arimo', 'bold');
+    doc.setFont('Arimo', 'normal');
+    return 'Arimo';
+  } catch (err) {
+    console.error('jspdfNotoFont: falha ao carregar Arimo, fallback Noto Sans:', err);
     return registerJsPdfNotoFonts(doc);
   }
 }
