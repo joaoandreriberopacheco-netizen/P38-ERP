@@ -6,8 +6,7 @@ import { format } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { imprimirCupomTermico } from '@/functions/imprimirCupomTermico';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
+import { loadHtml2Canvas, loadJsPDF } from '@/lib/lazyPdfLibs';
 import { getUnidadeMedidaItemPedidoVenda } from '@/lib/productUnits';
 import { TIMEZONE_SISTEMA } from '@/components/utils/dateUtils';
 import { shareOrDownloadBlob, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
@@ -567,6 +566,9 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
     const isA4 = formato === 'a4';
 
+    const html2canvas = await loadHtml2Canvas();
+    const JsPDF = await loadJsPDF();
+
     const canvas = await html2canvas(el, {
       scale: 3,
       useCORS: true,
@@ -578,7 +580,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
     let pdf;
     if (isA4) {
-      pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const pageW = 210;
       const pageH = 297;
       const ratio = canvas.width / canvas.height;
@@ -588,7 +590,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
       // 80mm cupom: largura fixa 80mm, altura proporcional
       const widthMm = 80;
       const heightMm = (canvas.height / canvas.width) * widthMm;
-      pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [widthMm, heightMm] });
+      pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: [widthMm, heightMm] });
       pdf.addImage(imgData, 'PNG', 0, 0, widthMm, heightMm);
     }
 

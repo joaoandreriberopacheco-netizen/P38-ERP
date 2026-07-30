@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { printOrShareElementAsPdf, shareOrDownloadBlob } from '@/lib/mobilePrintAndShare';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
+import { loadHtml2Canvas, loadJsPDF } from '@/lib/lazyPdfLibs';
 import { CONSUMO_FORM_COMPROVANTE_Z } from '@/lib/consumoInternoOverlay';
 
 const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -110,16 +109,18 @@ export default function ComprovanteConsumoInterno({ open, onClose, consumo, auto
     try {
       const el = document.getElementById('consumo-print');
       if (!el) return;
+      const html2canvas = await loadHtml2Canvas();
+      const JsPDF = await loadJsPDF();
       const canvas = await html2canvas(el, { scale: 3, useCORS: true, backgroundColor: '#ffffff', logging: false });
       const imgData = canvas.toDataURL('image/png');
       let pdf;
       if (formato === 'a4') {
-        pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
         pdf.addImage(imgData, 'PNG', 0, 0, 210, Math.min((canvas.height / canvas.width) * 210, 297));
       } else {
         const widthMm = 80;
         const heightMm = (canvas.height / canvas.width) * widthMm;
-        pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [widthMm, heightMm] });
+        pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: [widthMm, heightMm] });
         pdf.addImage(imgData, 'PNG', 0, 0, widthMm, heightMm);
       }
       const fileName = `minuta-${consumo?.numero || 'consumo'}.pdf`;

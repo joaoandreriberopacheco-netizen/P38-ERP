@@ -3,8 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Save, Download, Printer, X } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import FormularioPedidoImpresso from './FormularioPedidoImpresso';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
+import { loadHtml2Canvas, loadJsPDF } from '@/lib/lazyPdfLibs';
 import { openPrintWindowOrShareHtml, shareOrDownloadBlob, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
 
 export default function PedidoFAB({ pedido, onSave, isSaving, isDisabled, empresa }) {
@@ -42,13 +41,16 @@ export default function PedidoFAB({ pedido, onSave, isSaving, isDisabled, empres
     const element = document.getElementById('formulario-impresso');
     if (!element) return;
 
+    const html2canvas = await loadHtml2Canvas();
+    const JsPDF = await loadJsPDF();
+
     const canvas = await html2canvas(element, {
       scale: 2,
       backgroundColor: '#ffffff',
       logging: false,
     });
 
-    const pdf = new jsPDF({
+    const pdf = new JsPDF({
       orientation: 'portrait',
       unit: 'mm',
       format: 'a4',

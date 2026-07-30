@@ -12,7 +12,7 @@ import {
 } from '@/lib/marginTree';
 import { format, startOfMonth, endOfMonth, subDays } from 'date-fns';
 import { Link } from 'react-router-dom';
-import { jsPDF } from 'jspdf';
+import { loadJsPDF } from '@/lib/lazyPdfLibs';
 import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import CalendarPopup from '@/components/relatorios/CalendarPopup';
@@ -1059,7 +1059,8 @@ export default function RelatorioMargemVendas() {
     }
 
     if (isMobilePdf) {
-      const pdf = new jsPDF({
+      const JsPDF = await loadJsPDF();
+      const pdf = new JsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: [MOBILE_PDF_W_MM, MOBILE_PDF_H_MM],
@@ -1439,7 +1440,8 @@ export default function RelatorioMargemVendas() {
       return;
     }
 
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const JsPDF = await loadJsPDF();
+    const pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const pdfFontFamily = await registerJsPdfDin1451Fonts(pdf);
     const setPdfFont = (style = 'normal') => pdf.setFont(pdfFontFamily, style);
     const pageWidth = pdf.internal.pageSize.getWidth();

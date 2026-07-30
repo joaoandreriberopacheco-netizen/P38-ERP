@@ -1,5 +1,5 @@
-import { jsPDF } from 'jspdf';
 import { loadPdfJsBrowser } from '@/lib/loadPdfJsBrowser';
+import { loadJsPDF } from '@/lib/lazyPdfLibs';
 
 function loadImage(url) {
   return new Promise((resolve, reject) => {
@@ -75,7 +75,8 @@ function addTextFallbackPage(doc, title, message) {
 }
 
 export default async function exportAnexosToPdf(anexos = []) {
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const JsPDF = await loadJsPDF();
+  const doc = new JsPDF({ unit: 'mm', format: 'a4' });
   let hasPage = false;
 
   for (const anexo of anexos) {
