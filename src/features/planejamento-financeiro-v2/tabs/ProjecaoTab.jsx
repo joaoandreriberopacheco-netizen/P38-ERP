@@ -20,13 +20,11 @@ export default function ProjecaoTab({
         vazioMensagem="Cadastre contas fixas pelo botão + para ver a projeção de 12 meses."
         vazioIcon={TrendingUp}
       >
-        <div className="p38-single-sheet mx-4 mt-4 mb-6 rounded-[32px] bg-white p-5 shadow-2xl">
-          <AgefinPrevisaoProjecao
-            modelos={modelos}
-            competenciaInicio={competenciaMes}
-            lancamentos={lancamentosRecorrentes}
-          />
-        </div>
+        <AgefinPrevisaoProjecao
+          modelos={modelos}
+          competenciaInicio={competenciaMes}
+          lancamentos={lancamentosRecorrentes}
+        />
       </FinanceiroListaEstado>
 
       {semModelos && (

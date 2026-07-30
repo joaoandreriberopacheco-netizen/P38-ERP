@@ -1,20 +1,32 @@
 import React from 'react';
-import { calcularTotaisGrupo, formatCurrency } from '@/lib/agefinPrevisaoCalculos';
+import { FinanceiroGrupo } from '@/components/financeiro/fluxo/FinanceiroListaShared';
+import { calcularTotaisGrupo } from '@/lib/agefinPrevisaoCalculos';
 import AgefinPrevisaoRow from './AgefinPrevisaoRow';
 
-function ListaLinhas({ items, modelosMap, onOpen }) {
-  return (
-    <div>
-      {items.map((c) => (
+function ListaLinhas({ items, modelosMap, onOpen, flat = false }) {
+  const content = (
+    <>
+      {items.map((c, i) => (
         <AgefinPrevisaoRow
           key={c.id}
           competencia={c}
           modelo={modelosMap[c.serie_id]}
           onClick={onOpen}
+          striped={i % 2 === 1}
         />
       ))}
-    </div>
+    </>
   );
+
+  if (flat) {
+    return (
+      <div className="min-w-0 w-full max-w-full overflow-x-hidden rounded-xl border border-border/50">
+        {content}
+      </div>
+    );
+  }
+
+  return content;
 }
 
 function SecaoGrupo({ label, items, modelosMap, onOpen }) {
@@ -22,17 +34,19 @@ function SecaoGrupo({ label, items, modelosMap, onOpen }) {
   const totais = calcularTotaisGrupo(items, modelosMap);
 
   return (
-    <div>
-      <div className="flex items-baseline justify-between gap-2 pb-1 pt-3">
-        <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-          {label} ({items.length})
-        </p>
-        <p className="shrink-0 text-xs font-normal tabular-nums text-gray-400">
-          −{formatCurrency(totais.total || 0)}
-        </p>
+    <FinanceiroGrupo
+      label={`${label} (${items.length})`}
+      labelClassName="text-[10px] font-medium normal-case tracking-normal text-muted-foreground p38-labotrat-grupo-label"
+      receitas={0}
+      despesas={totais.total}
+      liquido={-totais.total}
+      card={false}
+      defaultOpen
+    >
+      <div className="pl-1 sm:pl-2">
+        <ListaLinhas items={items} modelosMap={modelosMap} onOpen={onOpen} />
       </div>
-      <ListaLinhas items={items} modelosMap={modelosMap} onOpen={onOpen} />
-    </div>
+    </FinanceiroGrupo>
   );
 }
 
@@ -43,12 +57,16 @@ export default function AgefinPrevisaoLista({
   onOpen,
   semAgrupamento = false,
 }) {
-  if (semAgrupamento || !grupos.length) {
-    return <ListaLinhas items={competencias} modelosMap={modelosMap} onOpen={onOpen} />;
+  if (semAgrupamento) {
+    return <ListaLinhas items={competencias} modelosMap={modelosMap} onOpen={onOpen} flat />;
+  }
+
+  if (!grupos.length) {
+    return <ListaLinhas items={competencias} modelosMap={modelosMap} onOpen={onOpen} flat />;
   }
 
   return (
-    <div className="min-w-0 w-full max-w-full overflow-x-hidden">
+    <div className="min-w-0 w-full max-w-full space-y-2 overflow-x-hidden pb-2 md:pb-0">
       {grupos.map((grupo) => (
         <SecaoGrupo
           key={grupo.key}

@@ -45,64 +45,63 @@ export default function ContasFixasTab({
   );
 
   return (
-    <div className="min-w-0">
-      <div className="p38-single-sheet mx-4 mt-4 mb-6 rounded-[32px] bg-white p-5 shadow-2xl">
-        <div className="mb-4 flex min-w-0 items-center justify-between gap-2">
-          <div className="min-w-0">
-            <P38HelpPopover label="Ajuda: contas fixas" side="bottom" align="start">
-              <p className="font-medium text-foreground">Série = fonte de verdade</p>
-              <p className="text-muted-foreground">
-                Cada conta fixa é uma <strong className="text-foreground">série</strong>. Aqui defines
-                valor, dia, frequência e centro de custo.
-              </p>
-            </P38HelpPopover>
-          </div>
-          <div className="shrink-0">
-            <AgefinConsultaOrganizer
-              variant="contasFixas"
-              groupBy={groupBy}
-              sortOrder={sortOrder}
-              onGroupByChange={onGroupByChange}
-              onSortOrderToggle={onSortOrderToggle}
-            />
-          </div>
+    <div className="space-y-3 min-w-0">
+      <div className="flex items-center justify-between gap-2 min-w-0">
+        <div className="min-w-0">
+          <P38HelpPopover label="Ajuda: contas fixas" side="bottom" align="start">
+            <p className="font-medium text-foreground">Série = fonte de verdade</p>
+            <p className="text-muted-foreground">
+              Cada conta fixa é uma <strong className="text-foreground">série</strong> (aluguel, energia,
+              telefone…). Aqui defines valor, dia, frequência e centro de custo.
+            </p>
+            <p className="text-muted-foreground mt-2">
+              A <strong className="text-foreground">Previsão do mês</strong> é só projeção virtual. O
+              lançamento real nasce quando <strong className="text-foreground">abres o mês</strong>.
+            </p>
+            <p className="text-muted-foreground mt-2">
+              Fretes e despesas avulsas não entram aqui — ficam na AGEFIN Consulta pelo vencimento.
+            </p>
+          </P38HelpPopover>
         </div>
-
-        <div className="mb-2 h-px bg-gray-50" role="presentation" />
-
-        <FinanceiroListaEstado
-          loading={loading}
-          vazio={!loading && seriesAtivas.length === 0}
-          vazioMensagem="Nenhuma série / conta fixa cadastrada."
-          vazioIcon={Repeat2}
-        >
-          <AgefinContasFixasGrupos
-            agrupamento={agrupamento}
+        <div className="shrink-0">
+          <AgefinConsultaOrganizer
+            variant="contasFixas"
             groupBy={groupBy}
-            draggingSerieId={draggingSerieId}
-            dropCentroAtual={dropCentroAtual}
-            onDragStart={onDragStart}
-            onDragEnd={onDragEnd}
-            onHoverCentro={onHoverCentro}
-            onLeaveCentro={onLeaveCentro}
-            onDropCentro={onDropCentro}
-            onEdit={onEdit}
-            onDelete={onDelete}
+            sortOrder={sortOrder}
+            onGroupByChange={onGroupByChange}
+            onSortOrderToggle={onSortOrderToggle}
           />
-        </FinanceiroListaEstado>
-
-        {!loading && seriesAtivas.length === 0 && (
-          <div className="flex justify-center pt-4">
-            <Button
-              variant="outline"
-              className="w-full max-w-xs rounded-xl border-gray-100 bg-gray-50 text-gray-900"
-              onClick={onCadastrar}
-            >
-              Cadastrar conta fixa
-            </Button>
-          </div>
-        )}
+        </div>
       </div>
+
+      <FinanceiroListaEstado
+        loading={loading}
+        vazio={!loading && seriesAtivas.length === 0}
+        vazioMensagem="Nenhuma série / conta fixa cadastrada."
+        vazioIcon={Repeat2}
+      >
+        <AgefinContasFixasGrupos
+          agrupamento={agrupamento}
+          groupBy={groupBy}
+          draggingSerieId={draggingSerieId}
+          dropCentroAtual={dropCentroAtual}
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+          onHoverCentro={onHoverCentro}
+          onLeaveCentro={onLeaveCentro}
+          onDropCentro={onDropCentro}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
+      </FinanceiroListaEstado>
+
+      {!loading && seriesAtivas.length === 0 && (
+        <div className="flex justify-center -mt-6 pb-4 px-1">
+          <Button variant="outline" className="w-full max-w-xs" onClick={onCadastrar}>
+            Cadastrar conta fixa
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

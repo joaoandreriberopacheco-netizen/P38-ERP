@@ -14,7 +14,7 @@ export default function AgefinPrevisaoProjecao({ modelos, competenciaInicio, lan
     <div className="space-y-3 sm:space-y-4 min-w-0">
       <div className={cn(P38_KPI_SHELL, 'p-3 sm:p-4')}>
         <p className="text-xs tracking-wide text-muted-foreground">Total 12 meses</p>
-        <p className="text-xl sm:text-2xl font-medium tabular-nums">
+        <p className="text-xl sm:text-2xl font-semibold tabular-nums">
           {formatFinanceiroValor(totalAno)}
         </p>
         <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-snug">
@@ -23,10 +23,10 @@ export default function AgefinPrevisaoProjecao({ modelos, competenciaInicio, lan
         </p>
       </div>
 
-      <div className="rounded-xl bg-card/40 overflow-x-auto -mx-0.5">
+      <div className="rounded-xl border border-border/50 overflow-x-auto -mx-0.5">
         <table className="w-full min-w-[280px] text-sm">
           <thead>
-            <tr className="bg-muted/30">
+            <tr className="border-b border-border/50 bg-muted/30">
               <th className="text-left px-2.5 sm:px-3 py-2 font-medium text-muted-foreground">Mês</th>
               <th className="text-right px-2.5 sm:px-3 py-2 font-medium text-muted-foreground">
                 Contas
@@ -38,7 +38,7 @@ export default function AgefinPrevisaoProjecao({ modelos, competenciaInicio, lan
           </thead>
           <tbody>
             {meses.map((m) => (
-              <tr key={m.competencia}>
+              <tr key={m.competencia} className="border-b border-border/30 last:border-0">
                 <td className="px-2.5 sm:px-3 py-2.5 whitespace-nowrap">
                   {formatCompetenciaLabel(m.competencia)}
                 </td>

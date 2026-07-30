@@ -22,7 +22,6 @@ import { armGlobalSearchOpenGuard, registerOpenSearchOverlaySync } from '@/lib/o
 import FinanceiroAccessGuard from '@/components/guard/FinanceiroAccessGuard';
 import { isFinanceiroProtectedPage } from '@/config/financeiroGate';
 import { isSupabaseAuthEnabled } from '@/integrations/p38/providers';
-import { cn } from '@/lib/utils';
 
 /** Páginas com scroll interno no mobile (evita body + nested scroll e zoom por overflow). */
 const MOBILE_FULL_VIEWPORT_PAGES = new Set([
@@ -37,9 +36,6 @@ const MOBILE_FULL_VIEWPORT_PAGES = new Set([
   'TabelaPrecosConsulta',
   'Compras',
 ]);
-
-/** Shell charcoal edge-to-edge — sem padding claro do Layout (piloto Planejamento). */
-const CHARCOAL_EDGE_PAGES = new Set(['PlanejamentoFinanceiro', 'PlanejamentoFinanceiroV2']);
 
 /** Rotas PDV no mobile: mantêm GlacialBottomNav (atalho rápido em overlay continua fullscreen). */
 const MOBILE_PDV_IN_SHELL_ROUTES = new Set(['PDV', 'PDVCaixa', 'PDVVendedor']);
@@ -324,7 +320,6 @@ export default function Layout({ children, currentPageName }) {
   );
 
   const financeGateActive = isFinanceiroProtectedPage(currentPageName);
-  const charcoalEdge = CHARCOAL_EDGE_PAGES.has(currentPageName);
   const pageContent = financeGateActive ? (
     <FinanceiroAccessGuard>{children}</FinanceiroAccessGuard>
   ) : (
@@ -345,10 +340,7 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className={darkMode ? 'dark' : ''}>
       <FontScaleInitializer />
-      <div className={cn(
-        'min-h-screen flex font-din-1451 p38-app',
-        charcoalEdge ? 'bg-[#1A1A1A]' : 'bg-background',
-      )}>
+      <div className="min-h-screen flex font-din-1451 p38-app bg-background">
 
 
         {/* Sidebar Desktop */}
@@ -385,9 +377,7 @@ export default function Layout({ children, currentPageName }) {
             isMobile 
               ? `ml-0 pt-12 ${MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' : 'p38-layout-mobile-scroll-pad'}`
               : (useDesktopOverlaySidebar ? 'ml-16' : (isOpen ? 'ml-[300px]' : 'ml-16'))
-          } ${MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) && !isMobile ? 'h-screen max-h-screen overflow-hidden' : ''} ${
-            charcoalEdge ? 'bg-[#1A1A1A]' : ''
-          }`}
+          } ${MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) && !isMobile ? 'h-screen max-h-screen overflow-hidden' : ''}`}
           style={{ willChange: 'margin', paddingTop: isMobile ? `calc(3rem + env(safe-area-inset-top))` : undefined }}
         >
           {MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) ? (
@@ -395,13 +385,7 @@ export default function Layout({ children, currentPageName }) {
               <LayoutOutlet>{pageContent}</LayoutOutlet>
             </div>
           ) : (
-            <div
-              className={
-                charcoalEdge
-                  ? 'm-0 max-w-full overflow-x-hidden p-0'
-                  : 'p-4 md:p-6 tablet-landscape:p-7 overflow-x-hidden max-w-full'
-              }
-            >
+            <div className="p-4 md:p-6 tablet-landscape:p-7 overflow-x-hidden max-w-full">
               <LayoutOutlet>{pageContent}</LayoutOutlet>
             </div>
           )}

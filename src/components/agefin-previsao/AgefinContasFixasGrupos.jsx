@@ -1,5 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
+import { FinanceiroGrupo } from '@/components/financeiro/fluxo/FinanceiroListaShared';
 import AgefinPrevisaoModeloRow from '@/components/agefin-previsao/AgefinPrevisaoModeloRow';
 import {
   DESCRICAO_FREQUENCIA_SERIE,
@@ -8,6 +10,10 @@ import {
 
 function chaveDrop(frequencia, centroKey) {
   return `${frequencia}::${centroKey}`;
+}
+
+function totalValorSeries(series) {
+  return (series || []).reduce((s, item) => s + (Number(item.valor_previsto) || 0), 0);
 }
 
 function BlocoGrupo({
@@ -32,20 +38,21 @@ function BlocoGrupo({
       onDragLeave={draggable ? onDragLeave : undefined}
       onDrop={draggable ? onDrop : undefined}
       className={cn(
+        'rounded-xl border border-border/60 bg-card/40',
         draggable && dropCentroAtual === dropKey && draggingSerieId
-          ? 'rounded-xl ring-2 ring-[#1B4D2E]/35'
+          ? 'ring-2 ring-primary/50 border-primary/50'
           : '',
       )}
     >
-      <div className="pb-1 pt-4">
-        <p className="text-xs font-medium uppercase tracking-wide text-gray-400">{grupoLabel}</p>
-        <p className="mt-0.5 text-xs font-normal text-gray-400">
-          {sublabel || `${series.length} conta(s)`}
-        </p>
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border/50">
+        <div>
+          <p className="text-xs font-semibold text-foreground">{grupoLabel}</p>
+          <p className="text-[11px] text-muted-foreground">{sublabel || `${series.length} conta(s)`}</p>
+        </div>
       </div>
       {series.length > 0 ? (
-        <div>
-          {series.map((s) => (
+        <P38MobileLineList className="block md:!block rounded-none overflow-hidden">
+          {series.map((s, idx) => (
             <div
               key={s.id}
               draggable={draggable}
@@ -59,12 +66,17 @@ function BlocoGrupo({
               }
               onDragEnd={draggable ? onDragEnd : undefined}
             >
-              <AgefinPrevisaoModeloRow modelo={s} onEdit={onEdit} onDelete={onDelete} />
+              <AgefinPrevisaoModeloRow
+                modelo={s}
+                striped={idx % 2 === 1}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
             </div>
           ))}
-        </div>
+        </P38MobileLineList>
       ) : (
-        <p className="py-4 text-xs text-gray-400">Arraste uma conta para este centro.</p>
+        <p className="px-3 py-4 text-xs text-muted-foreground">Arraste uma conta para este centro.</p>
       )}
     </div>
   );
@@ -92,60 +104,66 @@ export default function AgefinContasFixasGrupos({
 
   if (!secoesComContas.length) {
     return (
-      <p className="py-4 text-xs text-gray-400">
+      <p className="text-xs text-muted-foreground px-1">
         Nenhuma conta fixa cadastrada. Use o botão + para criar e escolha a recorrência no formulário.
       </p>
     );
   }
 
   return (
-    <div className="min-w-0">
+    <div className="space-y-3">
       {secoesComContas.map((frequencia) => {
         const grupos = (agrupamento[frequencia] || []).filter((g) => (g.items || []).length > 0);
         const totalSecao = grupos.reduce((n, g) => n + (g.items?.length || 0), 0);
+        const totalValor = grupos.reduce((n, g) => n + totalValorSeries(g.items), 0);
 
         return (
-          <div key={frequencia}>
-            <div className="pb-1 pt-2">
-              <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                Recorrência {frequencia} ({totalSecao})
-              </p>
-              <p className="mt-0.5 text-xs font-normal text-gray-400">
+          <FinanceiroGrupo
+            key={frequencia}
+            label={`Recorrência ${frequencia} (${totalSecao})`}
+            labelClassName="text-xs font-semibold normal-case tracking-normal text-foreground p38-labotrat-grupo-label"
+            despesas={totalValor}
+            liquido={-totalValor}
+            card
+            defaultOpen
+          >
+            <div className="space-y-3 px-1 pb-1">
+              <p className="text-[11px] text-muted-foreground -mt-1">
                 {DESCRICAO_FREQUENCIA_SERIE[frequencia]}
               </p>
-            </div>
-            {grupos.map((grupo) => {
-              const centroKey = grupo.centroKey || grupo.key?.replace(/^cc:/, '') || '__sem__';
-              const dropKey = chaveDrop(frequencia, centroKey);
+              {grupos.map((grupo) => {
+                const centroKey = grupo.centroKey || grupo.key?.replace(/^cc:/, '') || '__sem__';
+                const dropKey = chaveDrop(frequencia, centroKey);
 
-              return (
-                <BlocoGrupo
-                  key={`${frequencia}::${grupo.key}`}
-                  dropKey={dropKey}
-                  grupoLabel={grupo.label}
-                  sublabel={`${grupo.items.length} conta(s)`}
-                  series={grupo.items}
-                  draggable={permiteArrastar}
-                  draggingSerieId={draggingSerieId}
-                  dropCentroAtual={dropCentroAtual}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    if (draggingSerieId) onHoverCentro(dropKey);
-                  }}
-                  onDragLeave={onLeaveCentro}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    const serieId = e.dataTransfer.getData('text/plain');
-                    onDropCentro(serieId, centroKey === '__sem__' ? '' : centroKey);
-                  }}
-                  onDragStart={onDragStart}
-                  onDragEnd={onDragEnd}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                />
-              );
-            })}
-          </div>
+                return (
+                  <BlocoGrupo
+                    key={`${frequencia}::${grupo.key}`}
+                    dropKey={dropKey}
+                    grupoLabel={grupo.label}
+                    sublabel={`${grupo.items.length} conta(s)`}
+                    series={grupo.items}
+                    draggable={permiteArrastar}
+                    draggingSerieId={draggingSerieId}
+                    dropCentroAtual={dropCentroAtual}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      if (draggingSerieId) onHoverCentro(dropKey);
+                    }}
+                    onDragLeave={onLeaveCentro}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const serieId = e.dataTransfer.getData('text/plain');
+                      onDropCentro(serieId, centroKey === '__sem__' ? '' : centroKey);
+                    }}
+                    onDragStart={onDragStart}
+                    onDragEnd={onDragEnd}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                  />
+                );
+              })}
+            </div>
+          </FinanceiroGrupo>
         );
       })}
     </div>

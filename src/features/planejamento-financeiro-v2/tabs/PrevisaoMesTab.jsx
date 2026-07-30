@@ -80,73 +80,63 @@ export default function PrevisaoMesTab({
   const semFiltros = !filtroBusca && filtroCentro === '__todos__';
 
   return (
-    <div className="min-w-0">
-      <div className="p38-single-sheet mx-4 mt-4 mb-6 rounded-[32px] bg-white p-5 shadow-2xl">
-        <AgefinPrevisaoCabecalho
-          competenciaMes={competenciaMes}
-          onMesAnterior={onMesAnterior}
-          onMesProximo={onMesProximo}
-          onAbrirMes={onAbrirMes}
-          onDesfazerAbrirMes={onDesfazerAbrirMes}
-          saving={saving}
-          hasLancamentosMes={hasLancamentosMes}
-          mesFuturo={mesFuturo}
-          totais={totaisGrupo}
-          count={totaisGrupo.count}
-          countPlanejamento={qtdPlanejamento}
-        />
+    <div className="space-y-3 min-w-0">
+      <AgefinPrevisaoCabecalho
+        competenciaMes={competenciaMes}
+        onMesAnterior={onMesAnterior}
+        onMesProximo={onMesProximo}
+        onAbrirMes={onAbrirMes}
+        onDesfazerAbrirMes={onDesfazerAbrirMes}
+        saving={saving}
+        hasLancamentosMes={hasLancamentosMes}
+        mesFuturo={mesFuturo}
+        totais={totaisGrupo}
+        count={totaisGrupo.count}
+        countPlanejamento={qtdPlanejamento}
+      />
 
-        <div className="my-5 h-px bg-gray-50" role="presentation" />
-
-        <AgefinPrevisaoFiltros
-          busca={filtroBusca}
-          onBuscaChange={onBuscaChange}
-          centro={filtroCentro}
-          onCentroChange={onCentroChange}
-          centrosRegistrados={centrosRegistrados}
-          organizer={
-            <AgefinConsultaOrganizer
-              variant="previsao"
-              groupBy={groupBy}
-              sortOrder={sortOrder}
-              onGroupByChange={onGroupByChange}
-              onSortOrderToggle={onSortOrderToggle}
-            />
-          }
-        />
-
-        <div className="my-5 h-px bg-gray-50" role="presentation" />
-
-        <FinanceiroListaEstado
-          loading={loading}
-          vazio={!loading && competenciasExibidas.length === 0}
-          vazioMensagem={
-            !semFiltros
-              ? 'Nenhuma conta encontrada com estes filtros.'
-              : `Nenhuma despesa recorrente para ${formatCompetenciaLabel(competenciaMes)}. Cadastre pelo botão +.`
-          }
-          vazioIcon={Repeat2}
-        >
-          <AgefinPrevisaoLista
-            grupos={gruposExibicao}
-            competencias={competenciasExibidas}
-            modelosMap={modelosMap}
-            onOpen={onOpenCompetencia}
+      <AgefinPrevisaoFiltros
+        busca={filtroBusca}
+        onBuscaChange={onBuscaChange}
+        centro={filtroCentro}
+        onCentroChange={onCentroChange}
+        centrosRegistrados={centrosRegistrados}
+        organizer={
+          <AgefinConsultaOrganizer
+            variant="previsao"
+            groupBy={groupBy}
+            sortOrder={sortOrder}
+            onGroupByChange={onGroupByChange}
+            onSortOrderToggle={onSortOrderToggle}
           />
-        </FinanceiroListaEstado>
+        }
+      />
 
-        {!loading && competenciasExibidas.length === 0 && semFiltros && (
-          <div className="flex justify-center pt-4">
-            <Button
-              variant="outline"
-              className="w-full max-w-xs rounded-xl border-gray-100 bg-gray-50 text-gray-900"
-              onClick={onNovoLancamento}
-            >
-              Nova conta fixa
-            </Button>
-          </div>
-        )}
-      </div>
+      <FinanceiroListaEstado
+        loading={loading}
+        vazio={!loading && competenciasExibidas.length === 0}
+        vazioMensagem={
+          !semFiltros
+            ? 'Nenhuma conta encontrada com estes filtros.'
+            : `Nenhuma despesa recorrente para ${formatCompetenciaLabel(competenciaMes)}. Cadastre pelo botão +.`
+        }
+        vazioIcon={Repeat2}
+      >
+        <AgefinPrevisaoLista
+          grupos={gruposExibicao}
+          competencias={competenciasExibidas}
+          modelosMap={modelosMap}
+          onOpen={onOpenCompetencia}
+        />
+      </FinanceiroListaEstado>
+
+      {!loading && competenciasExibidas.length === 0 && semFiltros && (
+        <div className="flex justify-center -mt-6 pb-4 gap-2 px-1">
+          <Button variant="outline" className="w-full max-w-xs" onClick={onNovoLancamento}>
+            Nova conta fixa
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
