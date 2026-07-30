@@ -20,9 +20,13 @@ export default function AgefinPrevisaoModeloRow({ modelo, onEdit, onDelete, stri
       thinAccent
       striped={striped}
       accent={p38AccentKeyFromTone(encerrada ? 'muted' : 'danger')}
-      className="max-md:!py-2.5 max-md:min-h-[48px] [&>div>div:first-child]:text-[13px] [&>div>div:first-child]:font-normal sm:[&>div>div:first-child]:text-sm [&>div>div:nth-child(2)]:text-[11px]"
+      className="max-md:!py-3 max-md:min-h-[52px] p38-line-title"
       title={modelo.nome}
-      subtitle={`${labelValorSerie(modelo)} · Vence dia ${dia}`}
+      subtitle={
+        <span className="p38-line-subtitle">
+          {labelValorSerie(modelo)} · Vence dia {dia}
+        </span>
+      }
       meta={encerrada ? <P38StatusLabel tone="muted">Encerrada</P38StatusLabel> : null}
       value={
         <div className="flex items-center gap-1">

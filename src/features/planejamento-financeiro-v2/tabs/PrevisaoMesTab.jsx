@@ -80,65 +80,71 @@ export default function PrevisaoMesTab({
   const semFiltros = !filtroBusca && filtroCentro === '__todos__';
 
   return (
-    <div className="space-y-3 min-w-0">
-      <AgefinPrevisaoCabecalho
-        competenciaMes={competenciaMes}
-        onMesAnterior={onMesAnterior}
-        onMesProximo={onMesProximo}
-        onAbrirMes={onAbrirMes}
-        onDesfazerAbrirMes={onDesfazerAbrirMes}
-        saving={saving}
-        hasLancamentosMes={hasLancamentosMes}
-        mesFuturo={mesFuturo}
-        totais={totaisGrupo}
-        count={totaisGrupo.count}
-        countPlanejamento={qtdPlanejamento}
-      />
+    <div className="min-w-0">
+      <div className="p38-single-sheet">
+        <AgefinPrevisaoCabecalho
+          competenciaMes={competenciaMes}
+          onMesAnterior={onMesAnterior}
+          onMesProximo={onMesProximo}
+          onAbrirMes={onAbrirMes}
+          onDesfazerAbrirMes={onDesfazerAbrirMes}
+          saving={saving}
+          hasLancamentosMes={hasLancamentosMes}
+          mesFuturo={mesFuturo}
+          totais={totaisGrupo}
+          count={totaisGrupo.count}
+          countPlanejamento={qtdPlanejamento}
+        />
 
-      <AgefinPrevisaoFiltros
-        busca={filtroBusca}
-        onBuscaChange={onBuscaChange}
-        centro={filtroCentro}
-        onCentroChange={onCentroChange}
-        centrosRegistrados={centrosRegistrados}
-        organizer={
-          <AgefinConsultaOrganizer
-            variant="previsao"
-            groupBy={groupBy}
-            sortOrder={sortOrder}
-            onGroupByChange={onGroupByChange}
-            onSortOrderToggle={onSortOrderToggle}
+        <div className="p38-sheet-divider" role="presentation" />
+
+        <div className="p38-sheet-block">
+          <AgefinPrevisaoFiltros
+            busca={filtroBusca}
+            onBuscaChange={onBuscaChange}
+            centro={filtroCentro}
+            onCentroChange={onCentroChange}
+            centrosRegistrados={centrosRegistrados}
+            organizer={
+              <AgefinConsultaOrganizer
+                variant="previsao"
+                groupBy={groupBy}
+                sortOrder={sortOrder}
+                onGroupByChange={onGroupByChange}
+                onSortOrderToggle={onSortOrderToggle}
+              />
+            }
           />
-        }
-      />
+        </div>
 
-      <FinanceiroListaEstado
-        loading={loading}
-        vazio={!loading && competenciasExibidas.length === 0}
-        vazioMensagem={
-          !semFiltros
-            ? 'Nenhuma conta encontrada com estes filtros.'
-            : `Nenhuma despesa recorrente para ${formatCompetenciaLabel(competenciaMes)}. Cadastre pelo botão +.`
-        }
-        vazioIcon={Repeat2}
-      >
-        <div className="p38-single-sheet">
+        <div className="p38-sheet-divider" role="presentation" />
+
+        <FinanceiroListaEstado
+          loading={loading}
+          vazio={!loading && competenciasExibidas.length === 0}
+          vazioMensagem={
+            !semFiltros
+              ? 'Nenhuma conta encontrada com estes filtros.'
+              : `Nenhuma despesa recorrente para ${formatCompetenciaLabel(competenciaMes)}. Cadastre pelo botão +.`
+          }
+          vazioIcon={Repeat2}
+        >
           <AgefinPrevisaoLista
             grupos={gruposExibicao}
             competencias={competenciasExibidas}
             modelosMap={modelosMap}
             onOpen={onOpenCompetencia}
           />
-        </div>
-      </FinanceiroListaEstado>
+        </FinanceiroListaEstado>
 
-      {!loading && competenciasExibidas.length === 0 && semFiltros && (
-        <div className="flex justify-center -mt-6 pb-4 gap-2 px-1">
-          <Button variant="outline" className="w-full max-w-xs" onClick={onNovoLancamento}>
-            Nova conta fixa
-          </Button>
-        </div>
-      )}
+        {!loading && competenciasExibidas.length === 0 && semFiltros && (
+          <div className="flex justify-center px-4 pb-5 pt-2">
+            <Button variant="outline" className="w-full max-w-xs border-0 bg-[#F4F4F5]" onClick={onNovoLancamento}>
+              Nova conta fixa
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

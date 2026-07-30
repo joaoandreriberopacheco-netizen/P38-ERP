@@ -13,8 +13,7 @@ import {
 import { labelParcelaCurta } from '@/lib/agefinParcelamentoCalculos';
 import { formatFinanceiroValor } from '@/components/financeiro/fluxo/FinanceiroListaShared';
 
-const LINE_TITLE_CLASS =
-  '[&>div>div:first-child]:text-[13px] [&>div>div:first-child]:font-normal sm:[&>div>div:first-child]:text-sm [&>div>div:nth-child(2)]:text-[11px] [&_.tabular-nums]:text-[13px] [&_.tabular-nums]:font-medium';
+const LINE_TITLE_CLASS = 'p38-line-title';
 
 function rowAccent(competencia, modelo) {
   if (isCompetenciaPlanejamento(competencia)) return 'info';
@@ -60,19 +59,19 @@ export default function AgefinPrevisaoRow({ competencia, modelo, onClick, stripe
       striped={striped}
       accent={p38AccentKeyFromTone(rowAccent(competencia, modelo))}
       onClick={() => onClick?.(competencia)}
-      className={`w-full text-left ${LINE_TITLE_CLASS} max-md:!py-2.5 max-md:min-h-[48px] ${planejamento ? 'opacity-95' : ''} ${fantasma ? 'opacity-70' : ''}`}
+      className={`w-full text-left ${LINE_TITLE_CLASS} max-md:!py-3 max-md:min-h-[52px] ${planejamento ? 'opacity-95' : ''} ${fantasma ? 'opacity-70' : ''}`}
       title={title}
-      subtitle={labelVencimento(competencia, modelo, parcela)}
+      subtitle={<span className="p38-line-subtitle">{labelVencimento(competencia, modelo, parcela)}</span>}
       value={
         fantasma ? (
-          <span className="text-muted-foreground line-through tabular-nums">
+          <span className="p38-line-value text-muted-foreground line-through">
             {formatFinanceiroValor(valor)}
           </span>
         ) : (
-          <>
-            <span className="text-foreground/85">−</span>
+          <span className="p38-line-value">
+            <span className="text-foreground/70">−</span>
             {formatFinanceiroValor(valor)}
-          </>
+          </span>
         )
       }
     />
