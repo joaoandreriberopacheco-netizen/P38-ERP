@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { base44 } from '@/api/base44Client';
 import { Printer, Loader2, ArrowLeft, Search, X, ChevronDown, ChevronRight, Type, TrendingUp, DollarSign, Percent, Package, BarChart3, SlidersHorizontal } from 'lucide-react';
-import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
+import { LevelControl } from '@/components/produtos/treegrid/LevelControl';
 import {
   buildMarginTree,
   flattenMarginTree,
@@ -40,6 +39,7 @@ import {
 } from '@/lib/p38TableSurfaces';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
 import { parseSearchTerms } from '@/lib/searchTokens';
+import { isP38Dev } from '@/lib/p38PublicEnv';
 
 
 const PDF_COL_GAP_MM = 2;
@@ -632,6 +632,7 @@ export default function RelatorioMargemVendas() {
   const processedData = useMemo(() => {
     if (!sales.length || !products.length) return [];
 
+    try {
     const prodMap = products.reduce((acc, p) => {
       acc[p.id] = p;
       return acc;
@@ -646,7 +647,8 @@ export default function RelatorioMargemVendas() {
        const itens = Array.isArray(sale.itens) ? sale.itens : [];
        const descontoPorItem = (sale.valor_desconto || 0) / (itens.length || 1);
 
-       itens.forEach(item => {
+       itens.forEach((item) => {
+         if (!item || typeof item !== 'object') return;
          const prodKey = resolveMargemProdutoKey(item);
          const prodId = item.produto_id;
          const product = prodId ? prodMap[prodId] : null;
@@ -749,6 +751,10 @@ export default function RelatorioMargemVendas() {
     }
 
     return sorted;
+    } catch (error) {
+      console.error('Erro ao processar dados do relatório de margem', error);
+      return [];
+    }
   }, [sales, products, dateRange, searchTerm, sortField, sortOrder]);
 
   const marginTree = useMemo(
@@ -1709,7 +1715,7 @@ export default function RelatorioMargemVendas() {
     pdf.save('relatorio_margem.pdf');
     } catch (error) {
       console.error('Erro ao gerar PDF do relatório de margem', error);
-      const devDetail = import.meta.env.DEV && error?.message ? ` (${error.message})` : '';
+      const devDetail = isP38Dev() && error?.message ? ` (${error.message})` : '';
       toast.error(`Não foi possível gerar o PDF. Tente novamente.${devDetail}`);
     }
   };
@@ -2122,11 +2128,13 @@ export default function RelatorioMargemVendas() {
                       onToggle={() => handleToggleGroup(treeRow.key)}
                     />
                   ) : (
+                    treeRow.item ? (
                     <MargemLinhaMobile
                       key={treeRow.key}
                       row={treeRow.item}
                       level={treeRow.level}
                     />
+                    ) : null
                   )
                 )}
                 {mobilePadBottom > 0 && (

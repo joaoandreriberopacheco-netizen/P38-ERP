@@ -28,6 +28,9 @@ import {
   getCatalogPontoFuturo,
 } from '@/lib/catalogSalesVelocity';
 import { aggregateCatalogEstoqueExibicao, resolveCatalogEstoqueExibicao } from '@/lib/catalogEstoqueVirtual';
+import { LevelControl } from './LevelControl';
+
+export { LevelControl };
 
 // ── Formatação ────────────────────────────────────────────────────────────────
 const fmtR   = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -584,34 +587,6 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, p
     </tr>
   );
 });
-
-// ── Controle de Nível (exportado para uso externo no painel fixo) ─────────────
-export function LevelControl({ level, onChange }) {
-  const levels = [
-    { value: 1, label: '1', title: 'Mostrar apenas famílias principais' },
-    { value: 2, label: '2', title: 'Expandir até o 2º nível' },
-    { value: 3, label: '3', title: 'Expandir até o 3º nível' },
-    { value: 4, label: '4', title: 'Expandir até o 4º nível' },
-    { value: TREE_GRID_EXPAND_ALL_LEVEL, label: 'todos', title: 'Expandir todos os níveis' },
-  ];
-
-  return (
-    <div className="flex items-center gap-1 select-none">
-      <span className="text-[10px] text-muted-foreground mr-1">nível</span>
-      {levels.map(({ value, label, title }) => (
-        <button key={value} onClick={() => onChange(value)} title={title}
-          className={`min-w-[24px] h-6 px-1.5 rounded text-[10px] font-semibold transition-colors ${
-            level === value
-              ? 'bg-muted text-foreground'
-              : 'bg-muted text-muted-foreground hover:bg-muted dark:hover:bg-primary/90'
-          }`}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
-  );
-}
 
 // ── Componente Principal ───────────────────────────────────────────────────────
 // masterLevel é controlado pelo pai (painel fixo da página Produtos).
