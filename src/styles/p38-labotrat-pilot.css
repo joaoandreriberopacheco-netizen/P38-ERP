@@ -202,10 +202,10 @@
     font-weight: 700;
   }
 
-  /* Chips / meta — fosco + borda cítrica suave */
-  html:not(.dark) .p38-labotrat-pilot .rounded-full {
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+  /* Chip de planejamento — amarelo cítrico suave */
+  html:not(.dark) .p38-labotrat-pilot .text-cyan-800 {
+    color: var(--citrus-green) !important;
+    background-color: rgba(252, 225, 129, 0.45);
   }
 
   /* Dark intacto (carvão + limão) */

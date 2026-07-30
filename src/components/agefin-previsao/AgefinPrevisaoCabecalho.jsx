@@ -146,7 +146,6 @@ export default function AgefinPrevisaoCabecalho({
           total={count}
           totalLabel={count === 1 ? 'conta' : 'contas'}
           summaryChips={chips}
-          className="p38-labotrat-frost"
         />
       </div>
     </div>
