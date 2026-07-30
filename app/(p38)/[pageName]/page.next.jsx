@@ -1,7 +1,7 @@
 'use client';
 
 import { use } from 'react';
-import P38NextRoutePage from '@/next/P38NextRoutePage';
+import P38LazyPage from '@/next/P38LazyPage';
 import { P38_PAGE_NAMES } from '@/next/pageRegistry.generated';
 import PageNotFound from '@/lib/PageNotFound';
 
@@ -12,5 +12,5 @@ export default function DynamicP38Page({ params }) {
     return <PageNotFound />;
   }
 
-  return <P38NextRoutePage pageName={pageName} />;
+  return <P38LazyPage pageName={pageName} />;
 }

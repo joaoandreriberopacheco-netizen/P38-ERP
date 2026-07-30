@@ -15,6 +15,21 @@
   }
 }
 
+@keyframes p38-nav-progress {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(420%);
+  }
+}
+
+.p38-nav-pending {
+  opacity: 0.72;
+  transform: scale(0.98);
+  transition: opacity 80ms ease-out, transform 80ms ease-out;
+}
+
 
 /* :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
