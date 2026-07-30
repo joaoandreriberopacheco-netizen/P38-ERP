@@ -1,11 +1,13 @@
 import { getSupabaseBrowserClient, normalizeSupabaseProjectUrl } from '@/lib/supabaseBrowserClient';
 
+import { p38PublicEnv } from '@/lib/p38PublicEnv';
+
 function resolveFunctionUrls() {
   const urls = [];
   if (typeof window !== 'undefined' && window.location?.origin) {
     urls.push(`${window.location.origin}/api/auth-p38`);
   }
-  const base = normalizeSupabaseProjectUrl(import.meta.env.VITE_SUPABASE_URL || '');
+  const base = normalizeSupabaseProjectUrl(p38PublicEnv('VITE_SUPABASE_URL') || '');
   if (base) {
     urls.push(`${base}/functions/v1/p38-auth`);
   }
@@ -13,7 +15,7 @@ function resolveFunctionUrls() {
 }
 
 function resolveAnonKey() {
-  return String(import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
+  return String(p38PublicEnv('VITE_SUPABASE_ANON_KEY') || '').trim();
 }
 
 function isSameOriginProxy(url) {

@@ -12,12 +12,14 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+.vercel
 node_modules
 
 # Exportações locais (dados do catálogo — não versionar)
 artifacts/
 dist
 dist-ssr
+.next
 *.local
 
 # Editor directories and files

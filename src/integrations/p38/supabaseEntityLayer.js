@@ -1,4 +1,5 @@
 import { ENTITY_TO_TABLE, resolveEntityMapping } from './entityTableMap.js';
+import { isP38Dev } from '@/lib/p38PublicEnv';
 
 /** Colunas físicas comuns às tabelas managed pelo app. */
 const META_COLUMNS = new Set(['id', 'created_at', 'updated_at', 'created_by']);
@@ -295,7 +296,7 @@ function createEntityApi(supabase, entityName, mapping) {
   }
 
   function subscribe(_callback) {
-    if (import.meta.env.DEV) {
+    if (isP38Dev()) {
       console.debug(`[P38][supabase] ${entityName}.subscribe — realtime não ligado (usar Base44 ou canal postgres depois)`);
     }
     return () => {};

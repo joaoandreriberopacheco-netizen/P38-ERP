@@ -1,3 +1,5 @@
+import { p38PublicEnv, p38PublicEnvBool } from '@/lib/p38PublicEnv';
+
 const PROVIDERS = {
   BASE44: 'base44',
   SUBPAYZE: 'subpayze',
@@ -22,8 +24,10 @@ function nonEmptyString(value) {
  * (foi exatamente o que estourava o PDV no Vercel).
  */
 export function hasBase44Credentials() {
-  const env = import.meta.env || {};
-  return nonEmptyString(env.VITE_BASE44_APP_ID) && nonEmptyString(env.VITE_BASE44_BACKEND_URL);
+  return (
+    nonEmptyString(p38PublicEnv('VITE_BASE44_APP_ID'))
+    && nonEmptyString(p38PublicEnv('VITE_BASE44_BACKEND_URL'))
+  );
 }
 
 /**
@@ -39,12 +43,14 @@ export function hasBase44RuntimeCredentials(appId, serverUrl) {
  * usado apenas para autodetecção de provider.
  */
 export function hasSupabaseCredentials() {
-  const env = import.meta.env || {};
-  return nonEmptyString(env.VITE_SUPABASE_URL) && nonEmptyString(env.VITE_SUPABASE_ANON_KEY);
+  return (
+    nonEmptyString(p38PublicEnv('VITE_SUPABASE_URL'))
+    && nonEmptyString(p38PublicEnv('VITE_SUPABASE_ANON_KEY'))
+  );
 }
 
 export function resolveP38ProviderName() {
-  const rawProvider = import.meta.env.VITE_P38_PROVIDER;
+  const rawProvider = p38PublicEnv('VITE_P38_PROVIDER');
   const provider = rawProvider ? String(rawProvider).toLowerCase().trim() : '';
 
   if (provider === PROVIDERS.SUBPAYZE) {
@@ -68,15 +74,15 @@ export function getP38Providers() {
 }
 
 export function isP38SafeModeEnabled() {
-  return parseBooleanEnv(import.meta.env.VITE_P38_SAFE_MODE, true);
+  return p38PublicEnvBool('VITE_P38_SAFE_MODE', true);
 }
 
 export function isSubpayzeRolloutEnabled() {
-  return parseBooleanEnv(import.meta.env.VITE_P38_ENABLE_SUBPAYZE, false);
+  return p38PublicEnvBool('VITE_P38_ENABLE_SUBPAYZE', false);
 }
 
 export function isSubpayzeReadyForTraffic() {
-  return parseBooleanEnv(import.meta.env.VITE_P38_SUBPAYZE_READY, false);
+  return p38PublicEnvBool('VITE_P38_SUBPAYZE_READY', false);
 }
 
 /**
@@ -92,10 +98,11 @@ export function isSubpayzeReadyForTraffic() {
  */
 export function isBase44BypassEnabled() {
   if (resolveP38ProviderName() === PROVIDERS.SUPABASE) {
-    return parseBooleanEnv(import.meta.env.VITE_P38_BYPASS_BASE44, true);
+    return p38PublicEnvBool('VITE_P38_BYPASS_BASE44', true);
   }
-  if (import.meta.env.VITE_P38_BYPASS_BASE44 !== undefined) {
-    return parseBooleanEnv(import.meta.env.VITE_P38_BYPASS_BASE44, false);
+  const explicitBypass = p38PublicEnv('VITE_P38_BYPASS_BASE44');
+  if (explicitBypass !== undefined) {
+    return parseBooleanEnv(explicitBypass, false);
   }
   return false;
 }
@@ -106,8 +113,7 @@ export function isBase44BypassEnabled() {
  * quando `VITE_P38_USE_SUPABASE_AUTH` não entrou no bundle do Vercel.
  */
 export function isSupabaseAuthEnabled() {
-  const env = import.meta.env || {};
-  const explicit = env.VITE_P38_USE_SUPABASE_AUTH;
+  const explicit = p38PublicEnv('VITE_P38_USE_SUPABASE_AUTH');
   if (explicit !== undefined && explicit !== null && explicit !== '') {
     return parseBooleanEnv(explicit, false);
   }
@@ -119,5 +125,5 @@ export function isSupabaseAuthEnabled() {
  * (VITE_P38_ENABLE_GOOGLE_LOGIN=true após configurar Google Cloud + Supabase).
  */
 export function isGoogleLoginEnabled() {
-  return parseBooleanEnv(import.meta.env.VITE_P38_ENABLE_GOOGLE_LOGIN, false);
+  return p38PublicEnvBool('VITE_P38_ENABLE_GOOGLE_LOGIN', false);
 }
