@@ -82,8 +82,7 @@ No preview Vercel, gravar os mesmos nomes `NEXT_PUBLIC_*` no projecto de preview
 
 ## Checklist do corte
 
-- [ ] Rotas críticas migradas e testadas no preview Next
-- [ ] `npm run build:next` no CI
-- [ ] Workflow Vercel usa `build:next`
-- [ ] Domínio de produção aponta para Next
-- [ ] Remover Vite (`vite.config.js`, `index.html`, scripts antigos)
+- [x] 95 páginas + layout no Next
+- [x] `vercel.json` e workflow GitHub → Next.js
+- [x] `NEXT_PUBLIC_*` no sync Vercel
+- [ ] Validar login + PDV em https://p-38erp.vercel.app após deploy
