@@ -295,7 +295,7 @@ export default function Layout({ children, currentPageName }) {
         </h2>
         <p className="text-muted-foreground text-center mb-6 max-w-md">
           {isConfigError
-            ? 'O servidor não está configurado para ligar ao Supabase. Verifique as variáveis VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no deploy.'
+            ? 'O servidor não está configurado para ligar ao Supabase. Verifique NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY (ou VITE_SUPABASE_*) no deploy.'
             : 'Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.'}
         </p>
         <Button onClick={() => window.location.reload()}>
