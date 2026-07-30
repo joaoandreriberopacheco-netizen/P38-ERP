@@ -1,8 +1,10 @@
 /**
- * SUPERAGEFIN — compromissos sintéticos (sócios aos sábados) e Provisões no papel.
+ * SUPERAGEFIN — compromissos sintéticos (sócios aos sábados, folha dia 05)
+ * e Provisões no papel.
  *
  * - Sócios com retirada semanal: um compromisso em cada sábado do mês
  *   (aparece na consulta e no relatório impresso).
+ * - Folha de funcionários: um compromisso no dia 05 do mês (consulta + PDF).
  * - Provisões: secção analógica por centro de custo, após as contas do mês.
  */
 
@@ -113,6 +115,49 @@ export async function carregarModelosFolhaParaSuperAgefin() {
     console.error('SUPERAGEFIN: falha ao carregar modelos de folha', err);
     return [];
   }
+}
+
+/**
+ * Conta sintética «Folha de pagamento» no dia 05 — total dos funcionários
+ * (sócios ficam nos sábados). Usada na consulta Agefin e no PDF.
+ *
+ * @param {{ dataPagamento?: string, linhas?: unknown[], totalLiquido?: number, totalSalarios?: number } | null} folhaRelatorio
+ * @returns {object | null}
+ */
+export function montarContaSinteticaFolhaDia5(folhaRelatorio) {
+  if (!folhaRelatorio?.linhas?.length) return null;
+  const dataPagamento = String(folhaRelatorio.dataPagamento || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dataPagamento)) return null;
+  const totalLiquido = Number(folhaRelatorio.totalLiquido) || 0;
+  const totalSalarios = Number(folhaRelatorio.totalSalarios) || 0;
+  const valor = totalLiquido > 0 ? totalLiquido : totalSalarios;
+  if (!(valor > 0)) return null;
+
+  return {
+    id: `superagefin-folha-${dataPagamento}`,
+    descricao: 'FOLHA DE PAGAMENTO',
+    valor,
+    data_vencimento: dataPagamento,
+    status: 'Em Aberto',
+    tipo: 'Despesa',
+    tags: ['conta_pagar', 'folha_previsao', 'superagefin_sintetico'],
+    terceiro_nome: 'Folha',
+    categoria: 'Folha de pagamento',
+    natureza: 'Recorrente',
+    is_recorrente: true,
+    frequencia_recorrencia: 'Mensal',
+    _superagefin_folha: true,
+    _superagefin_sintetico: true,
+  };
+}
+
+/** Já existe linha de folha (real ou sintética) neste conjunto? */
+export function listaJaTemFolhaPagamento(contas) {
+  return (contas || []).some(
+    (c) =>
+      c?._superagefin_folha ||
+      /folha\s+de\s+pagamento/i.test(String(c?.descricao || '')),
+  );
 }
 
 export function contaSuperAgefinSomenteLeitura(conta) {
