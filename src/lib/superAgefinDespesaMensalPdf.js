@@ -4,10 +4,12 @@
  * Tipografia: Noto Sans; título e TOTAL do cabeçalho com esticamento vertical 2×
  * (glyphs ~2× mais altos, mesma banda do cabeçalho / linha separadora).
  * Margens: topo 25 mm (2,5 cm — grampeamento), base 15 mm (1,5 cm — numeração).
- * Cabeçalho: «DESPESA MENSAL - MÊS / ANO» | «TOTAL R$ …»
+ * Cabeçalho: «DESPESA MENSAL - MÊS / ANO» | «TOTAL R$ …» — desenhado em TODAS as
+ * páginas no fecho (evita sumir após quebras a meio do conteúdo).
  * Card do dia: «08/08/2026 (04)» à esquerda · valor à direita.
  * Folha: 3 colunas; se a linha de cards não cabe, inteira na página seguinte.
- * Provisões: 1 coluna; cada bloco só desenha se couber.
+ * Provisões: 1 coluna; cabeçalho do centro de custo fica com pelo menos 1 card
+ * (não deixa «cabeça sem corpo» no fim da página).
  *
  * Importante: ensureSpace(y, need) devolve o y correcto após eventual nova página
  * (nunca desenhar com um y “antigo” — isso mordia os cards na margem).
@@ -112,6 +114,7 @@ export async function gerarDespesaMensalPdf(opts) {
     const headerY = MARGIN_TOP - 7;
     // scaleY em torno da linha de base: cresce para cima (margem do grampeamento),
     // sem empurrar a linha separadora nem o conteúdo.
+    // q/Q por página — o cabeçalho é desenhado no fecho em cada página.
     pdf.saveGraphicsState();
     pdf.setCurrentTransformationMatrix(
       1,
@@ -129,10 +132,11 @@ export async function gerarDespesaMensalPdf(opts) {
     pdf.line(MARGIN_X, MARGIN_TOP - 2, PAGE_W - MARGIN_X, MARGIN_TOP - 2);
   };
 
-  const drawPageNumbers = () => {
+  const drawPageChrome = () => {
     const total = pdf.internal.getNumberOfPages();
     for (let i = 1; i <= total; i += 1) {
       pdf.setPage(i);
+      drawHeader();
       setFont('normal');
       pdf.setFontSize(9);
       pdf.setTextColor(80, 80, 80);
@@ -143,7 +147,6 @@ export async function gerarDespesaMensalPdf(opts) {
 
   const beginPage = () => {
     pdf.addPage();
-    drawHeader();
   };
 
   /**
@@ -157,7 +160,7 @@ export async function gerarDespesaMensalPdf(opts) {
     return CONTENT_TOP;
   };
 
-  drawHeader();
+  // Cabeçalho + numeração: só no fecho (drawPageChrome), para todas as páginas.
 
   /** —— Contas por data —— */
   for (const grupo of grupos) {
@@ -249,7 +252,13 @@ export async function gerarDespesaMensalPdf(opts) {
     y += budgetsHeaderH + 2;
 
     for (const g of budgetsAgrupados.grupos) {
-      y = ensureSpace(y, 10);
+      const centroHeaderH = 8;
+      const cardH = 44;
+      const cardGap = 3;
+      // Não deixar o nome do centro sozinho no fim da página («cabeça sem corpo»):
+      // exige espaço para o cabeçalho + pelo menos o 1.º card.
+      const primeiroCard = g.itens?.length ? cardH + 2 : 0;
+      y = ensureSpace(y, centroHeaderH + primeiroCard);
       setFont('bold');
       pdf.setFontSize(9);
       pdf.setTextColor(0, 0, 0);
@@ -265,10 +274,9 @@ export async function gerarDespesaMensalPdf(opts) {
       );
       pdf.setDrawColor(148, 163, 184);
       pdf.line(MARGIN_X, y + 5.5, PAGE_W - MARGIN_X, y + 5.5);
-      y += 8;
+      y += centroHeaderH;
 
       for (const v of g.itens) {
-        const cardH = 44;
         y = ensureSpace(y, cardH + 2);
         const nome = normalizePdfText(
           String(v.modelo?.nome || v.modelo?.categoria_nome || 'PROVISÃO').toUpperCase(),
@@ -311,7 +319,7 @@ export async function gerarDespesaMensalPdf(opts) {
           pdf.line(MARGIN_X + 3, ty, PAGE_W - MARGIN_X - 3, ty);
         }
         pdf.setLineDashPattern([], 0);
-        y += cardH + 3;
+        y += cardH + cardGap;
       }
       y += 2;
     }
@@ -339,7 +347,7 @@ export async function gerarDespesaMensalPdf(opts) {
     pdf.setLineDashPattern([], 0);
   }
 
-  drawPageNumbers();
+  drawPageChrome();
 
   const blob = pdf.output('blob');
   const ym = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`;
