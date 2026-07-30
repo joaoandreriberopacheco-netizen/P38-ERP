@@ -6,10 +6,12 @@ O **prédio novo** (Next.js App Router) vive neste repo ao lado do Vite em produ
 
 | Pasta | Papel |
 |-------|--------|
-| `app/` | Rotas Next (ficheiros `*.next.jsx` — não confundir com `src/pages/` do Vite) |
-| `src/next/` | Páginas/adapters só do Next |
-| `src/components/`, `src/lib/`, `src/integrations/` | **Partilhado** entre Vite e Next |
-| `src/pages/` | Rotas Vite (produção até ao corte) |
+| `app/*.next.jsx` | Rotas Next (extensão `.next.jsx` — não confunde com `src/pages/`) |
+| `app/[pageName]/` | **Todas as 95 páginas** via rota dinâmica + lazy load |
+| `src/next/P38NextRoutePage.jsx` | Auth + Layout + página Vite |
+| `src/next/shims/react-router-dom.jsx` | Link/navigate compatível com Next |
+| `src/next/pageRegistry.generated.js` | Loaders lazy (gerado pelo script) |
+| `src/pages/` | Componentes de página (partilhados Vite + Next) |
 
 ## Comandos
 
@@ -37,6 +39,18 @@ Durante a transição, gravar **as duas convenções** no Vercel/GitHub (ou só 
 
 A leitura unificada está em `src/lib/p38PublicEnv.js`.
 
+## Rotas disponíveis no Next
+
+- `/` — Home
+- `/Produtos`, `/PDVCaixa`, `/Financeiro`, … (95 páginas — mesmo nome que no Vite)
+- `/login`, `/auth/callback`, `/ativar-acesso`
+
+Regenerar registry após adicionar ficheiro em `src/pages/`:
+
+```bash
+node scripts/generate-next-page-registry.mjs
+```
+
 ## Build Next (CI / local)
 
 O `npm run build:next` exige as variáveis `NEXT_PUBLIC_*` (mínimo Supabase + provider).
@@ -59,11 +73,11 @@ No preview Vercel, gravar os mesmos nomes `NEXT_PUBLIC_*` no projecto de preview
 
 ## Ordem de migração de rotas
 
-1. Login + Home (feito — shell inicial)
-2. Layout (menu lateral / bottom nav mobile)
-3. PDV Caixa / Vendedor
-4. Produtos, Compras, Financeiro
-5. Restante do `src/pages/`
+1. ~~Login + Home~~ (feito)
+2. ~~Layout + 95 páginas via `[pageName]`~~ (feito — lazy load)
+3. Testes E2E por módulo (PDV, compras, financeiro)
+4. Preview Vercel com `build:next`
+5. Corte de produção Vite → Next
 
 ## Checklist do corte
 

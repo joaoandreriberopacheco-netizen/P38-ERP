@@ -1,4 +1,5 @@
 import { jsPDF } from 'jspdf';
+import { loadPdfJsBrowser } from '@/lib/loadPdfJsBrowser';
 
 function loadImage(url) {
   return new Promise((resolve, reject) => {
@@ -11,8 +12,7 @@ function loadImage(url) {
 }
 
 async function renderPdfPagesToImages(fileUrl) {
-  const pdfjsLib = await import('https://esm.sh/pdfjs-dist@4.4.168/build/pdf.min.mjs');
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://esm.sh/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs';
+  const pdfjsLib = await loadPdfJsBrowser();
 
   const response = await fetch(fileUrl);
   if (!response.ok) {

@@ -1,7 +1,8 @@
-export const dynamic = 'force-dynamic';
+'use client';
 
-import HomeNext from '@/next/home/HomeNext';
+import P38NextRoutePage from '@/next/P38NextRoutePage';
+import { P38_MAIN_PAGE } from '@/next/pageRegistry.generated';
 
-export default function Page() {
-  return <HomeNext />;
+export default function HomePage() {
+  return <P38NextRoutePage pageName={P38_MAIN_PAGE} />;
 }
