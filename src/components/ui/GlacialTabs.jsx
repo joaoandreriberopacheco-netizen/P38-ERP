@@ -29,9 +29,9 @@ export function GlacialTabsTrigger({ value, activeValue, onSelect, icon: Icon, l
       type="button"
       onClick={() => onSelect(value)}
       className={cn(
-        'flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 whitespace-nowrap flex-shrink-0 min-h-[36px]',
+        'flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 whitespace-nowrap flex-shrink-0 min-h-[40px] min-w-[2.75rem]',
         isActive
-          ? 'bg-card dark:bg-muted text-foreground shadow-sm'
+          ? 'bg-card dark:bg-card text-foreground shadow-sm ring-1 ring-primary/20'
           : 'text-muted-foreground hover:text-foreground/90 dark:hover:text-muted-foreground',
         className
       )}

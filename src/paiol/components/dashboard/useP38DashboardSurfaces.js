@@ -1,8 +1,6 @@
-import { p38Dashboard, p38DashboardLight } from '@/lib/p38DashboardSurfaces';
-import { useP38DashboardLightShell } from '@/paiol/components/dashboard/P38DashboardLightContext';
+import { p38Dashboard } from '@/lib/p38DashboardSurfaces';
 
-/** Devolve superfícies do dashboard conforme shell modo claro mobile. */
+/** Superfícies premium do dashboard (alias estável para os tabs). */
 export function useP38DashboardSurfaces() {
-  const isLightShell = useP38DashboardLightShell();
-  return isLightShell ? p38DashboardLight : p38Dashboard;
+  return p38Dashboard;
 }
