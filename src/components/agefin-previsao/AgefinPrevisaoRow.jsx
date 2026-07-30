@@ -1,26 +1,14 @@
 import React from 'react';
-import {
-  P38MobileLine,
-  p38AccentKeyFromTone,
-} from '@/components/ui/p38-mobile-line';
+import { P38Data } from '@/components/ui/p38-data';
 import {
   dataVencimentoNaCompetencia,
   formatDataBr,
   isCompetenciaPlanejamento,
   valorEfetivoCompetencia,
-  SITUACAO_SERIE,
 } from '@/lib/agefinPrevisaoCalculos';
 import { labelParcelaCurta } from '@/lib/agefinParcelamentoCalculos';
 import { formatFinanceiroValor } from '@/components/financeiro/fluxo/FinanceiroListaShared';
-
-const LINE_TITLE_CLASS = 'p38-line-title';
-
-function rowAccent(competencia, modelo) {
-  if (isCompetenciaPlanejamento(competencia)) return 'info';
-  if (competencia.origem_boleto === 'pdf') return 'success';
-  if ((modelo?.situacao || '') === SITUACAO_SERIE.ENCERRADA) return 'muted';
-  return 'warning';
-}
+import { cn } from '@/lib/utils';
 
 function labelVencimento(competencia, modelo, parcela) {
   const dia = modelo?.dia_vencimento || competencia.dia_vencimento || 10;
@@ -34,10 +22,9 @@ function labelVencimento(competencia, modelo, parcela) {
 }
 
 /**
- * Linha limpa na lista: descrição + vencimento + valor.
- * Fornecedor, CC, tags e estado vão para o drawer ao tocar.
+ * Linha da lista — Tailwind rigoroso (flex + hierarquia Dado > Contexto).
  */
-export default function AgefinPrevisaoRow({ competencia, modelo, onClick, striped }) {
+export default function AgefinPrevisaoRow({ competencia, modelo, onClick }) {
   const fantasma = Boolean(competencia._fantasmaParcelamento);
   const parcela = Boolean(competencia._modoParcela);
   const valor =
@@ -47,33 +34,38 @@ export default function AgefinPrevisaoRow({ competencia, modelo, onClick, stripe
   const planejamento = isCompetenciaPlanejamento(competencia);
   const parcelaLabel = labelParcelaCurta(competencia);
 
-  const title = parcela && parcelaLabel
-    ? `${competencia.serie_nome} · ${parcelaLabel}`
-    : competencia.serie_nome;
+  const title =
+    parcela && parcelaLabel
+      ? `${competencia.serie_nome} · ${parcelaLabel}`
+      : competencia.serie_nome;
+
+  // Contas de previsão são despesas → valor negativo (vermelho suave)
+  const valueClass = fantasma
+    ? 'text-base font-semibold text-gray-400 line-through'
+    : 'text-base font-semibold text-red-500';
 
   return (
-    <P38MobileLine
-      as="button"
+    <button
       type="button"
-      thinAccent
-      striped={striped}
-      accent={p38AccentKeyFromTone(rowAccent(competencia, modelo))}
       onClick={() => onClick?.(competencia)}
-      className={`w-full text-left ${LINE_TITLE_CLASS} max-md:!py-3 max-md:min-h-[52px] ${planejamento ? 'opacity-95' : ''} ${fantasma ? 'opacity-70' : ''}`}
-      title={title}
-      subtitle={<span className="p38-line-subtitle">{labelVencimento(competencia, modelo, parcela)}</span>}
-      value={
-        fantasma ? (
-          <span className="p38-line-value text-muted-foreground line-through">
-            {formatFinanceiroValor(valor)}
-          </span>
-        ) : (
-          <span className="p38-line-value">
-            <span className="text-foreground/70">−</span>
-            {formatFinanceiroValor(valor)}
-          </span>
-        )
-      }
-    />
+      className={cn(
+        'flex w-full items-center justify-between gap-3 border-b border-gray-50 py-4 text-left',
+        'last:border-b-0 active:bg-gray-50/80',
+        planejamento && 'opacity-95',
+        fantasma && 'opacity-70',
+      )}
+    >
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <P38Data as="span" className="truncate text-sm font-medium text-gray-900">
+          {title}
+        </P38Data>
+        <span className="text-xs font-normal text-gray-400">
+          {labelVencimento(competencia, modelo, parcela)}
+        </span>
+      </div>
+      <span className={cn('shrink-0 tabular-nums', valueClass)}>
+        −{formatFinanceiroValor(valor)}
+      </span>
+    </button>
   );
 }

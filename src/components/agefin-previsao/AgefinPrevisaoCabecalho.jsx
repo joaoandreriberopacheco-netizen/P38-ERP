@@ -6,10 +6,6 @@ import FinanceiroListaMeta, { FinanceiroSummaryChip } from '@/components/finance
 import { formatCompetenciaLabel, formatCurrency } from '@/lib/agefinPrevisaoCalculos';
 import { cn } from '@/lib/utils';
 
-/**
- * Cabeçalho da previsão — pensado para viver DENTRO de `.p38-single-sheet`
- * (sem cartões aninhados; hierarquia Dado > Contexto).
- */
 export default function AgefinPrevisaoCabecalho({
   competenciaMes,
   onMesAnterior,
@@ -36,7 +32,7 @@ export default function AgefinPrevisaoCabecalho({
   if (countPlanejamento > 0) {
     chips.push(
       <span key="plan" className="inline-flex items-center gap-0.5">
-        <FinanceiroSummaryChip className="p38-citrus-chip border-0">
+        <FinanceiroSummaryChip className="border-0 bg-[#FEF6D4] text-[#8A6A12]">
           {countPlanejamento} em planejamento
         </FinanceiroSummaryChip>
         <P38HelpPopover label="Ajuda: modo planejamento" side="bottom" align="end" size="sm">
@@ -50,46 +46,50 @@ export default function AgefinPrevisaoCabecalho({
   }
   if (totais?.comBoleto > 0) {
     chips.push(
-      <FinanceiroSummaryChip key="pdf" className="p38-citrus-chip border-0">
+      <FinanceiroSummaryChip key="pdf" className="border-0 bg-[#FEF6D4] text-[#8A6A12]">
         {totais.comBoleto} com boleto
       </FinanceiroSummaryChip>,
     );
   }
   if (totais?.semBoleto > 0) {
     chips.push(
-      <FinanceiroSummaryChip key="auto" className="p38-citrus-chip border-0">
+      <FinanceiroSummaryChip key="auto" className="border-0 bg-[#FEF6D4] text-[#8A6A12]">
         {totais.semBoleto} sem boleto
       </FinanceiroSummaryChip>,
     );
   }
   if (totais?.vencidas > 0) {
     chips.push(
-      <FinanceiroSummaryChip key="venc" className="text-red-800 border-0">
+      <FinanceiroSummaryChip key="venc" className="border-0 bg-red-50 text-red-700">
         {totais.vencidas} vencida(s)
       </FinanceiroSummaryChip>,
     );
   }
 
   return (
-    <div className="p38-sheet-block space-y-4 min-w-0">
-      <div className="flex min-w-0 items-center rounded-xl bg-[#F4F4F5] px-0.5 p38-labotrat-mes">
+    <div className="min-w-0 space-y-5">
+      <div className="flex min-w-0 items-center rounded-xl bg-gray-50 px-1">
         <Button
           variant="ghost"
           size="icon"
-          className="h-10 w-10 shrink-0"
+          className="h-10 w-10 shrink-0 text-[#1B4D2E]"
           onClick={onMesAnterior}
           aria-label="Mês anterior"
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <div className="min-w-0 flex-1 px-1 py-2 text-center">
-          <p className="p38-labotrat-mes-label truncate">{competenciaLabel}</p>
-          <p className="p38-labotrat-mes-status mt-0.5 line-clamp-2 leading-snug">{statusMes}</p>
+        <div className="min-w-0 flex-1 px-1 py-2.5 text-center">
+          <p className="truncate text-sm font-semibold tracking-wide text-gray-900 sm:text-base">
+            {competenciaLabel}
+          </p>
+          <p className="mt-0.5 line-clamp-2 text-xs font-normal leading-snug text-gray-400">
+            {statusMes}
+          </p>
         </div>
         <Button
           variant="ghost"
           size="icon"
-          className="h-10 w-10 shrink-0"
+          className="h-10 w-10 shrink-0 text-[#1B4D2E]"
           onClick={onMesProximo}
           aria-label="Próximo mês"
         >
@@ -97,11 +97,11 @@ export default function AgefinPrevisaoCabecalho({
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-3">
         <Button
           variant="outline"
           size="sm"
-          className="h-10 gap-1.5 rounded-xl border-0 px-2 p38-labotrat-cta-soft"
+          className="h-11 gap-1.5 rounded-xl border-0 bg-[#FCE181] px-2 font-medium text-[#1B4D2E] hover:bg-[#f5d56a]"
           onClick={onDesfazerAbrirMes}
           disabled={saving || !hasLancamentosMes}
           title="Desfazer abrir mês"
@@ -111,7 +111,7 @@ export default function AgefinPrevisaoCabecalho({
         </Button>
         <Button
           size="sm"
-          className="h-10 gap-1.5 rounded-xl px-2 p38-labotrat-cta"
+          className="h-11 gap-1.5 rounded-xl border-0 bg-[#1B4D2E] px-2 font-medium text-white hover:bg-[#143d24]"
           onClick={onAbrirMes}
           disabled={saving}
           title="Abrir mês"
@@ -121,29 +121,28 @@ export default function AgefinPrevisaoCabecalho({
         </Button>
       </div>
 
-      {/* KPI principal — Dado > Contexto */}
-      <div className="min-w-0 pt-1">
+      <div className="min-w-0">
         <p
           className={cn(
-            'p38-sheet-kpi-value',
-            total > 0 ? 'is-negative' : 'is-positive',
+            'text-[26px] font-semibold leading-tight tracking-tight tabular-nums',
+            total > 0 ? 'text-red-500' : 'text-[#1B4D2E]',
           )}
         >
           {total > 0 ? '−' : ''}
           {formatCurrency(Math.abs(total))}
         </p>
-        <p className="p38-sheet-kpi-label">Comprometido no mês · previsto</p>
+        <p className="mt-1 text-xs font-normal text-gray-400">Comprometido no mês · previsto</p>
 
-        <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span className="text-[15px] font-semibold tabular-nums text-[#1B4D2E]">+R$ 0,00</span>
-          <span className="text-[12px] font-normal text-[#71717A]">receitas</span>
-          <span className="text-[15px] font-semibold tabular-nums text-[#111111]">
+        <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span className="text-sm font-semibold tabular-nums text-[#1B4D2E]">+R$ 0,00</span>
+          <span className="text-xs font-normal text-gray-400">receitas</span>
+          <span className="text-sm font-semibold tabular-nums text-gray-900">
             −{formatCurrency(Math.abs(total)).replace(/^R\$\s*/, '')}
           </span>
-          <span className="text-[12px] font-normal text-[#71717A]">previsto</span>
+          <span className="text-xs font-normal text-gray-400">previsto</span>
         </div>
 
-        <div className="mt-3">
+        <div className="mt-4">
           <FinanceiroListaMeta
             total={count}
             totalLabel={count === 1 ? 'conta' : 'contas'}

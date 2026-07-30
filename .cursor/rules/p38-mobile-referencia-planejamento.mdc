@@ -38,5 +38,5 @@ Documento irmão (rollout geral): [`docs/p38-mobile-rollout.md`](docs/p38-mobile
 
 - **Relatório de Margem** continua a referência de **linhas densas / grelha** (`P38MobileLine`, divisores finos).
 - **Planejamento** é a referência de **composição + paleta + CTA + calma financeira** no dark mobile.
-- **Piloto Planejamento — Contêiner Único + Dado>Contexto:** fundo charcoal `#1A1A1A`; título fora; **um** quadro branco com cabeçalho+resumo+filtros+lista; divisores `#F4F4F5`; fonte **Inter**; KPI 26px/600; título conta 15px/500; valor 17px/600; data 12px/400 `#71717A`; verde CTA; amarelo chips. Ver `src/styles/p38-labotrat-pilot.css`.
+- **Piloto Planejamento:** fundo `bg-[#1A1A1A]`; sheet `bg-white rounded-[32px] p-6 shadow-xl`; inputs `bg-gray-50 border-gray-100`; linhas `flex justify-between py-4 border-b border-gray-50`; nome `text-sm font-medium text-gray-900`; data `text-xs text-gray-400`; valor `text-base font-semibold`. Inter. Ver componentes Agefin + `p38-labotrat-pilot.css`.
 - Dark continua carvão + limão.

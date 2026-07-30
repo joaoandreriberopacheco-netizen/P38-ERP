@@ -1,6 +1,5 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import AgefinPrevisaoModeloRow from '@/components/agefin-previsao/AgefinPrevisaoModeloRow';
 import {
   DESCRICAO_FREQUENCIA_SERIE,
@@ -33,16 +32,20 @@ function BlocoGrupo({
       onDragLeave={draggable ? onDragLeave : undefined}
       onDrop={draggable ? onDrop : undefined}
       className={cn(
-        draggable && dropCentroAtual === dropKey && draggingSerieId ? 'ring-2 ring-primary/40' : '',
+        draggable && dropCentroAtual === dropKey && draggingSerieId
+          ? 'rounded-xl ring-2 ring-[#1B4D2E]/35'
+          : '',
       )}
     >
-      <div className="p38-sheet-section">
-        <p className="p38-sheet-section-title">{grupoLabel}</p>
-        <p className="p38-sheet-section-sub">{sublabel || `${series.length} conta(s)`}</p>
+      <div className="pb-1 pt-4">
+        <p className="text-xs font-medium uppercase tracking-wide text-gray-400">{grupoLabel}</p>
+        <p className="mt-0.5 text-xs font-normal text-gray-400">
+          {sublabel || `${series.length} conta(s)`}
+        </p>
       </div>
       {series.length > 0 ? (
-        <P38MobileLineList className="!block rounded-none border-0 bg-transparent overflow-hidden md:!block">
-          {series.map((s, idx) => (
+        <div>
+          {series.map((s) => (
             <div
               key={s.id}
               draggable={draggable}
@@ -56,17 +59,12 @@ function BlocoGrupo({
               }
               onDragEnd={draggable ? onDragEnd : undefined}
             >
-              <AgefinPrevisaoModeloRow
-                modelo={s}
-                striped={false}
-                onEdit={onEdit}
-                onDelete={onDelete}
-              />
+              <AgefinPrevisaoModeloRow modelo={s} onEdit={onEdit} onDelete={onDelete} />
             </div>
           ))}
-        </P38MobileLineList>
+        </div>
       ) : (
-        <p className="px-3 py-4 text-xs text-muted-foreground">Arraste uma conta para este centro.</p>
+        <p className="py-4 text-xs text-gray-400">Arraste uma conta para este centro.</p>
       )}
     </div>
   );
@@ -94,7 +92,7 @@ export default function AgefinContasFixasGrupos({
 
   if (!secoesComContas.length) {
     return (
-      <p className="text-xs text-muted-foreground px-3 py-4">
+      <p className="py-4 text-xs text-gray-400">
         Nenhuma conta fixa cadastrada. Use o botão + para criar e escolha a recorrência no formulário.
       </p>
     );
@@ -108,11 +106,13 @@ export default function AgefinContasFixasGrupos({
 
         return (
           <div key={frequencia}>
-            <div className="p38-sheet-section">
-              <p className="p38-sheet-section-title p38-labotrat-grupo-label">
+            <div className="pb-1 pt-2">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
                 Recorrência {frequencia} ({totalSecao})
               </p>
-              <p className="p38-sheet-section-sub">{DESCRICAO_FREQUENCIA_SERIE[frequencia]}</p>
+              <p className="mt-0.5 text-xs font-normal text-gray-400">
+                {DESCRICAO_FREQUENCIA_SERIE[frequencia]}
+              </p>
             </div>
             {grupos.map((grupo) => {
               const centroKey = grupo.centroKey || grupo.key?.replace(/^cc:/, '') || '__sem__';

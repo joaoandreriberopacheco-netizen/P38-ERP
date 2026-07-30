@@ -46,8 +46,8 @@ export default function ContasFixasTab({
 
   return (
     <div className="min-w-0">
-      <div className="p38-single-sheet">
-        <div className="p38-sheet-block flex items-center justify-between gap-2 min-w-0">
+      <div className="p38-single-sheet bg-white rounded-[32px] p-6 shadow-xl">
+        <div className="mb-4 flex min-w-0 items-center justify-between gap-2">
           <div className="min-w-0">
             <P38HelpPopover label="Ajuda: contas fixas" side="bottom" align="start">
               <p className="font-medium text-foreground">Série = fonte de verdade</p>
@@ -68,7 +68,7 @@ export default function ContasFixasTab({
           </div>
         </div>
 
-        <div className="p38-sheet-divider" role="presentation" />
+        <div className="mb-2 h-px bg-gray-50" role="presentation" />
 
         <FinanceiroListaEstado
           loading={loading}
@@ -92,8 +92,12 @@ export default function ContasFixasTab({
         </FinanceiroListaEstado>
 
         {!loading && seriesAtivas.length === 0 && (
-          <div className="flex justify-center px-4 pb-5 pt-2">
-            <Button variant="outline" className="w-full max-w-xs border-0 bg-[#F4F4F5]" onClick={onCadastrar}>
+          <div className="flex justify-center pt-4">
+            <Button
+              variant="outline"
+              className="w-full max-w-xs rounded-xl border-gray-100 bg-gray-50 text-gray-900"
+              onClick={onCadastrar}
+            >
               Cadastrar conta fixa
             </Button>
           </div>

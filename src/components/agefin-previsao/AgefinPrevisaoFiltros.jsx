@@ -3,7 +3,9 @@ import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
+
+const FIELD =
+  'bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm text-gray-900 shadow-none focus:ring-0 focus-visible:ring-0';
 
 export default function AgefinPrevisaoFiltros({
   busca,
@@ -15,15 +17,15 @@ export default function AgefinPrevisaoFiltros({
   className,
 }) {
   return (
-    <div className={cn('flex flex-col gap-2 min-w-0 sm:flex-row sm:flex-wrap sm:items-center', className)}>
+    <div className={cn('flex flex-col gap-3 min-w-0 sm:flex-row sm:flex-wrap sm:items-center', className)}>
       <div className="flex min-w-0 items-center gap-2">
-        <div className={cn('relative min-w-0 flex-1 sm:min-w-[200px] sm:max-w-xs rounded-xl', P38_FIELD_SURFACE)}>
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <div className="relative min-w-0 flex-1 sm:min-w-[200px] sm:max-w-xs">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <Input
             value={busca}
             onChange={(e) => onBuscaChange?.(e.target.value)}
             placeholder="Buscar conta ou fornecedor"
-            className="border-0 bg-transparent pl-9 shadow-none focus-visible:ring-0"
+            className={cn(FIELD, 'h-auto pl-9')}
             aria-label="Buscar conta"
           />
         </div>
@@ -31,7 +33,7 @@ export default function AgefinPrevisaoFiltros({
       </div>
 
       <Select value={centro || '__todos__'} onValueChange={onCentroChange}>
-        <SelectTrigger className={cn('w-full sm:w-[200px] rounded-xl', P38_FIELD_SURFACE)}>
+        <SelectTrigger className={cn('w-full sm:w-[200px] h-auto', FIELD)}>
           <SelectValue placeholder="Centro de custo" />
         </SelectTrigger>
         <SelectContent>
