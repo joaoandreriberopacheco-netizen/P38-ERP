@@ -100,7 +100,7 @@ export default function PlanejamentoFinanceiroV2Page() {
       <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="w-full mt-3 sm:mt-4">
         <TabsList
           className={cn(
-            'w-full h-auto p-1 rounded-xl grid grid-cols-3 gap-1 md:flex md:flex-wrap md:overflow-visible',
+            'w-full h-auto p-1 rounded-xl grid grid-cols-3 gap-1 md:flex md:flex-wrap md:overflow-visible p38-labotrat-frost',
             P38_FIELD_SURFACE,
           )}
         >

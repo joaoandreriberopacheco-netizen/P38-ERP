@@ -38,5 +38,5 @@ Documento irmão (rollout geral): [`docs/p38-mobile-rollout.md`](docs/p38-mobile
 
 - **Relatório de Margem** continua a referência de **linhas densas / grelha** (`P38MobileLine`, divisores finos).
 - **Planejamento** é a referência de **composição + paleta + CTA + calma financeira** no dark mobile.
-- **Piloto claro (Planejamento):** fundo branco; **DIN 1451** no corpo/dados; **Century Gothic** nos títulos; verde vivo `#00A651` (Palmeiras/palmeira) só em destaques. Ver `src/styles/p38-labotrat-pilot.css`.
+- **Piloto claro (Planejamento):** fundo `#FFFFFF`; cards `#F2F2F2`; verde rolha `#1B4D2E`; amarelo cítrico `#FCE181`; superfícies foscas (blur). DIN no corpo; Century Gothic nos títulos. Ver `src/styles/p38-labotrat-pilot.css` (ref. garrafa Citrus Blend).
 - Dark continua carvão + limão.

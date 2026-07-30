@@ -73,7 +73,7 @@ export default function AgefinPrevisaoCabecalho({
   }
 
   return (
-    <div className={cn(P38_KPI_SHELL, 'space-y-2.5 sm:space-y-3 min-w-0')}>
+    <div className={cn(P38_KPI_SHELL, 'p38-labotrat-frost space-y-2.5 sm:space-y-3 min-w-0')}>
       <div className="flex items-stretch gap-2 min-w-0">
         <div className={cn('flex flex-1 min-w-0 items-center rounded-xl px-0.5 p38-labotrat-mes', P38_FIELD_SURFACE)}>
           <Button
@@ -146,6 +146,7 @@ export default function AgefinPrevisaoCabecalho({
           total={count}
           totalLabel={count === 1 ? 'conta' : 'contas'}
           summaryChips={chips}
+          className="p38-labotrat-frost"
         />
       </div>
     </div>

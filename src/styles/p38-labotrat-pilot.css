@@ -1,10 +1,15 @@
 /**
- * Piloto visual Planejamento (modo claro).
+ * Piloto visual Planejamento (modo claro) — referência garrafa Citrus Blend.
  *
- * - Corpo / dados: DIN 1451 (técnica, profissional)
- * - Títulos: Century Gothic (toque sofisticado; fallback Didact Gothic)
- * - Fundo branco; verde vivo estilo Palmeiras / palmeira (não oliva)
- * - Dark: carvão + limão intacto
+ * Paleta:
+ *   - Fundo: #FFFFFF (branco vivo)
+ *   - Cards / superfícies: #F2F2F2 (branco-cinza clarinho)
+ *   - Verde rolha / palmeira: #1B4D2E
+ *   - Amarelo cítrico (sumo): #FCE181
+ *   - Laranja (acento pontual): #F39C12
+ *
+ * Tipografia: DIN 1451 no corpo; Century Gothic nos títulos.
+ * Efeito: fosco / semi-transparente (glass) nas superfícies — como a garrafa.
  *
  * Uso: class="p38-labotrat-pilot" no contentor da página.
  */
@@ -12,13 +17,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Didact+Gothic&display=swap');
 
 @layer components {
-  /* Corpo = DIN (não Outfit) */
   .p38-labotrat-pilot {
     font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
     letter-spacing: var(--p38-tracking, 0.01em);
   }
 
-  /* Títulos — Century Gothic (sistema) + Didact Gothic (web) */
   .p38-labotrat-pilot .p38-labotrat-title,
   .p38-labotrat-pilot .p38-labotrat-mes-label,
   .p38-labotrat-pilot h1,
@@ -29,72 +32,109 @@
   }
 
   /*
-   * Modo claro: branco + verde Palmeiras vivo (#00A651).
+   * Modo claro — paleta Citrus Blend.
+   * Verde #1B4D2E ≈ hsl(145 48% 20%)
+   * Amarelo #FCE181 ≈ hsl(48 95% 75%)
+   * Card #F2F2F2 ≈ hsl(0 0% 95%)
    */
   html:not(.dark) .p38-labotrat-pilot {
     --background: 0 0% 100%;
     --foreground: 0 0% 8%;
-    --card: 0 0% 100%;
+    --card: 0 0% 95%;
     --card-foreground: 0 0% 8%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 8%;
-    /* Verde Palmeiras / palmeira — vivo, não oliva */
-    --primary: 145 100% 33%;
+    --primary: 145 48% 20%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 96%;
+    --secondary: 0 0% 95%;
     --secondary-foreground: 0 0% 12%;
-    --muted: 0 0% 96%;
+    --muted: 0 0% 95%;
     --muted-foreground: 0 0% 38%;
-    --accent: 145 45% 94%;
-    --accent-foreground: 145 80% 22%;
-    --border: 0 0% 88%;
-    --input: 0 0% 88%;
-    --ring: 145 100% 33%;
+    --accent: 48 95% 75%;
+    --accent-foreground: 145 48% 16%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 145 48% 20%;
     --p38-bg: 0 0% 100%;
-    --p38-surface: 0 0% 100%;
-    --p38-search: 0 0% 96%;
+    --p38-surface: 0 0% 95%;
+    --p38-search: 0 0% 95%;
     --p38-table-head: 0 0% 94%;
-    --p38-accent-olive: 145 100% 33%;
+    --p38-accent-olive: 145 48% 20%;
     --p38-divider: 0 0% 88% / 1;
-    --p38-olive: 145 100% 33%;
-    --p38-mediterranean: 145 70% 40%;
+    --p38-olive: 145 48% 20%;
+    --p38-mediterranean: 145 40% 28%;
+    --p38-citrus-yellow: 48 95% 75%;
+    --p38-citrus-orange: 37 90% 51%;
     --p38-font-weight-body: 500;
     --p38-font-weight-strong: 600;
     --p38-font-weight-heading: 700;
     --p38-tracking: 0.01em;
+    /* Tokens piloto explícitos */
+    --citrus-green: #1b4d2e;
+    --citrus-green-deep: #143d24;
+    --citrus-yellow: #fce181;
+    --citrus-orange: #f39c12;
+    --citrus-card: #f2f2f2;
+    --citrus-frost: rgba(242, 242, 242, 0.72);
     background-color: #ffffff;
     color: #141414;
   }
 
+  /* —— Fosco / semi-transparente (garrafa) —— */
+  html:not(.dark) .p38-labotrat-pilot .p38-labotrat-frost,
   html:not(.dark) .p38-labotrat-pilot .p38-field-surface,
   html:not(.dark) .p38-labotrat-pilot .p38-search-field {
-    background-color: #f5f5f5;
+    background-color: var(--citrus-frost);
+    backdrop-filter: blur(14px) saturate(1.1);
+    -webkit-backdrop-filter: blur(14px) saturate(1.1);
+    border: 1px solid rgba(27, 77, 46, 0.08);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.65) inset;
   }
 
-  /* Título — faixa verde vivo + texto branco + Century Gothic */
+  /* Listas / “cards” de contas — branco-cinza vs fundo branco */
+  html:not(.dark) .p38-labotrat-pilot .rounded-xl.border {
+    background-color: var(--citrus-card);
+    border-color: rgba(27, 77, 46, 0.1);
+    box-shadow: 0 8px 24px rgba(27, 77, 46, 0.04);
+  }
+
+  html:not(.dark) .p38-labotrat-pilot .bg-card {
+    background-color: var(--citrus-card);
+  }
+
+  /* Linhas de lista sobre card — leve fosco */
+  html:not(.dark) .p38-labotrat-pilot .border-b.border-border\/50,
+  html:not(.dark) .p38-labotrat-pilot .border-b.dark\:border-white\/10 {
+    background-color: rgba(255, 255, 255, 0.55);
+  }
+
+  /* Título — verde rolha + texto branco */
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-title {
     display: inline-flex;
     align-items: center;
     max-width: 100%;
     padding: 0.5rem 0.9rem;
     border-radius: 0.5rem;
-    background-color: #00a651;
+    background-color: var(--citrus-green);
     color: #ffffff;
     font-weight: 700;
     font-size: 1.05rem;
     line-height: 1.25;
     letter-spacing: 0.02em;
+    box-shadow: 0 6px 16px rgba(27, 77, 46, 0.18);
   }
 
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-title + button,
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-title ~ button {
-    color: #00a651;
+    color: var(--citrus-green);
   }
 
-  /* Banner do mês */
+  /* Banner do mês — verde sólido (como “CITRUS BLEND”) */
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-mes {
-    background-color: #00a651 !important;
+    background-color: var(--citrus-green) !important;
     color: #ffffff;
+    border-color: transparent !important;
+    box-shadow: 0 8px 20px rgba(27, 77, 46, 0.16);
   }
 
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-mes button {
@@ -116,24 +156,39 @@
     font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
   }
 
-  /* CTA — verde Palmeiras */
+  /* CTA — verde rolha */
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-cta {
-    background-color: #00a651;
+    background-color: var(--citrus-green);
     color: #ffffff;
-    border-color: #008c45;
+    border-color: var(--citrus-green-deep);
     font-weight: 600;
+    box-shadow: 0 6px 14px rgba(27, 77, 46, 0.2);
   }
 
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-cta:hover {
-    background-color: #008c45;
+    background-color: var(--citrus-green-deep);
   }
 
+  /* Tab activa — verde + detalhe cítrico */
   html:not(.dark) .p38-labotrat-pilot [role='tab'][data-state='active'] {
-    color: #00a651;
+    color: var(--citrus-green);
     font-weight: 700;
+    box-shadow: inset 0 -2px 0 var(--citrus-yellow);
   }
 
-  /* Dados — DIN firme */
+  /* Acento amarelo cítrico (pontual) */
+  html:not(.dark) .p38-labotrat-pilot .p38-labotrat-citrus {
+    background-color: var(--citrus-yellow);
+    color: var(--citrus-green);
+  }
+
+  html:not(.dark) .p38-labotrat-pilot .p38-text-accent,
+  html:not(.dark) .p38-labotrat-pilot .text-\[\#5c7e44\],
+  html:not(.dark) .p38-labotrat-pilot .text-\[\#00a651\] {
+    color: var(--citrus-green) !important;
+  }
+
+  /* Dados — DIN */
   html:not(.dark) .p38-labotrat-pilot .p38-data,
   html:not(.dark) .p38-labotrat-pilot .p38-line-title {
     font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
@@ -142,12 +197,18 @@
   }
 
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-grupo-label {
-    color: #00a651;
+    color: var(--citrus-green);
     font-family: 'Century Gothic', CenturyGothic, AppleGothic, 'Didact Gothic', sans-serif;
     font-weight: 700;
   }
 
-  /* Dark: DIN + limão (sem Outfit) */
+  /* Chips / meta — fosco + borda cítrica suave */
+  html:not(.dark) .p38-labotrat-pilot .rounded-full {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  /* Dark intacto (carvão + limão) */
   html.dark .p38-labotrat-pilot {
     font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
   }
