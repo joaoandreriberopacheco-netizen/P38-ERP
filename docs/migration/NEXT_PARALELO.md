@@ -68,8 +68,9 @@ No preview Vercel, gravar os mesmos nomes `NEXT_PUBLIC_*` no projecto de preview
 
 ## Deploy
 
-- **Produção** (`p-38erp.vercel.app`): continua Vite até ao corte.
-- **Preview Next**: projecto ou branch Vercel separado com `build:next` e env `NEXT_PUBLIC_*`.
+- **Produção** (`https://p-38erp.vercel.app`): **Next.js** via GitHub Actions `Vercel Deploy`.
+- Build: `npm run build` (= `next build` + registry).
+- Legado Vite: `npm run dev:vite` / `vercel.vite.legacy.json`.
 
 ## Ordem de migração de rotas
 
