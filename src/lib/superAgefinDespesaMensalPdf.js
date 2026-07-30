@@ -1,7 +1,8 @@
 /**
  * SUPERAGEFIN — PDF «Despesa Mensal» (A4).
  *
- * Tipografia: Noto Sans; título do cabeçalho com tamanho/peso reforçados.
+ * Tipografia: Noto Sans; título e TOTAL do cabeçalho com esticamento vertical 2×
+ * (glyphs ~2× mais altos, mesma banda do cabeçalho / linha separadora).
  * Margens: topo 25 mm (2,5 cm — grampeamento), base 15 mm (1,5 cm — numeração).
  * Cabeçalho: «DESPESA MENSAL - MÊS / ANO» | «TOTAL R$ …»
  * Card do dia: «08/08/2026 (04)» à esquerda · valor à direita.
@@ -29,8 +30,10 @@ const CONTENT_TOP = MARGIN_TOP + 1;
 /** Limite útil: deixa a margem inferior intacta (numeração) + folga anti-sobreposição */
 const CONTENT_BOTTOM = PAGE_H - MARGIN_BOTTOM - 1;
 
-/** Título do relatório — maior e em negrito */
+/** Título do relatório — tamanho base (esticamento vertical aplicado no desenho) */
 const TITLE_SIZE = 15;
+/** Escala vertical do título/TOTAL — 2× a altura visual, mesma posição de linha */
+const TITLE_STRETCH_Y = 2;
 
 function formatCurrency(value) {
   return `R$ ${(Number(value) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -107,8 +110,20 @@ export async function gerarDespesaMensalPdf(opts) {
     pdf.setFontSize(TITLE_SIZE);
     pdf.setTextColor(0, 0, 0);
     const headerY = MARGIN_TOP - 7;
+    // scaleY em torno da linha de base: cresce para cima (margem do grampeamento),
+    // sem empurrar a linha separadora nem o conteúdo.
+    pdf.saveGraphicsState();
+    pdf.setCurrentTransformationMatrix(
+      1,
+      0,
+      0,
+      TITLE_STRETCH_Y,
+      0,
+      headerY * (1 - TITLE_STRETCH_Y),
+    );
     pdf.text(tituloEsq, MARGIN_X, headerY);
     pdf.text(tituloDir, PAGE_W - MARGIN_X, headerY, { align: 'right' });
+    pdf.restoreGraphicsState();
     pdf.setDrawColor(180, 180, 180);
     pdf.setLineWidth(0.3);
     pdf.line(MARGIN_X, MARGIN_TOP - 2, PAGE_W - MARGIN_X, MARGIN_TOP - 2);
