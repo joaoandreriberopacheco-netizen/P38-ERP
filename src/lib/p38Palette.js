@@ -1,47 +1,63 @@
 /**
- * Paleta canónica P38 — tema premium Carbon Balance.
- * Limão moderno (claro + escuro) · sem mediterrâneo/oliva legado.
+ * Paleta canónica P38 — verde mediterrâneo, oliva, limão, cítricos.
+ * Valores alinhados a index.css e p38-identity.css.
+ *
+ * Modo claro: oliva mais saturado (inspiração Labotrat) + texto quase preto.
+ * Modo escuro: carvão + limão (referência Planejamento).
+ *
+ * Regra de contraste: usar p38Contrast.js para escolher foreground sobre qualquer fundo.
  */
 
 export const P38_PALETTE = {
+  /** Verde oliva saturado — primário no modo claro */
+  olive: {
+    hex: '#5c7e44',
+    hsl: '95 30% 38%',
+  },
+  /** Limão P38 — acento no modo escuro */
   lime: {
-    hex: '#84CC16',
-    hsl: '84 81% 44%',
+    hex: '#a4ce33',
+    hsl: '78 55% 51%',
   },
-  limeNeon: {
-    hex: '#C3FB12',
-    hsl: '75 96% 53%',
-  },
+  /** Amarelo cítrico — destaques, badges, gráficos */
   citrusYellow: {
-    hex: '#FBBF24',
-    hsl: '43 96% 56%',
+    hex: '#e8b824',
+    hsl: '43 74% 52%',
   },
+  /** Laranja cítrico — alertas quentes, CTAs secundários */
   citrusOrange: {
-    hex: '#F97316',
+    hex: '#f07a1a',
     hsl: '27 87% 52%',
   },
-  light: {
-    bg: '#FFFFFF',
-    surface: '#FFFFFF',
-    surfaceMuted: '#F9FAFB',
-    border: '#E5E7EB',
-    text: '#111827',
-    textMuted: '#6B7280',
+  /** Verde faixa Labotrat — fundos tintados, hover, success suave */
+  mediterranean: {
+    hex: '#7ba05b',
+    hsl: '95 27% 49%',
   },
+  /** Superfícies modo claro */
+  light: {
+    bg: '#f3f5ee',
+    surface: '#ffffff',
+    surfaceMuted: '#e6ebdc',
+    border: '#c5ceb8',
+    text: '#161a14',
+    textMuted: '#3f4a38',
+  },
+  /** Superfícies modo escuro */
   dark: {
-    bg: '#09090B',
-    surface: '#1C1C1E',
-    surfaceMuted: '#27272A',
-    border: 'rgba(255,255,255,0.1)',
-    text: '#F9FAFB',
-    textMuted: '#A1A1AA',
+    bg: '#1f1d22',
+    surface: '#2d333b',
+    surfaceMuted: '#26262e',
+    border: 'rgba(255,255,255,0.08)',
+    text: '#fafafa',
+    textMuted: '#94949c',
   },
 };
 
-/** @deprecated Use primary/lime — mantido para compatibilidade */
+/** Classes Tailwind para acentos semânticos P38 (claro/escuro). */
 export const p38PaletteClasses = {
-  accent: 'text-primary',
-  accentBg: 'bg-primary/10 text-primary border border-primary/25',
+  accent: 'text-p38-olive dark:text-p38-lime',
+  accentBg: 'bg-p38-olive/10 text-p38-olive border border-p38-olive/25 dark:bg-p38-lime/12 dark:text-p38-lime dark:border-p38-lime/30',
   citrus: 'text-p38-citrus-orange dark:text-p38-citrus-yellow',
-  citrusBg: 'bg-p38-citrus-yellow/15 text-p38-citrus-orange border border-p38-citrus-yellow/35',
+  citrusBg: 'bg-p38-citrus-yellow/15 text-p38-citrus-orange border border-p38-citrus-yellow/35 dark:bg-p38-citrus-yellow/10 dark:text-p38-citrus-yellow dark:border-p38-citrus-yellow/25',
 };

@@ -50,16 +50,17 @@
 
 @layer base {
   :root {
-    /* Superfícies — premium branco + limão */
-    --p38-bg: 0 0% 100%;
+    /* Superfícies — branco + verde oliva mais vivo (inspiração Labotrat) */
+    --p38-bg: 80 22% 95%;
     --p38-surface: 0 0% 100%;
-    --p38-search: 220 14% 96%;
-    --p38-table-head: 220 14% 96%;
-    --p38-accent-olive: 84 81% 44%;
-    --p38-accent-lime: 84 81% 44%;
+    --p38-search: 80 20% 90%;
+    --p38-table-head: 85 18% 86%;
+    /* Claro: oliva saturado · escuro: limão */
+    --p38-accent-olive: 95 30% 38%;
+    --p38-accent-lime: 78 55% 51%;
     --p38-accent-citrus: 27 87% 52%;
     --p38-accent-citrus-yellow: 43 74% 52%;
-    --p38-divider: 220 13% 91% / 0.85;
+    --p38-divider: 85 16% 76% / 0.85;
     /* Tipografia mobile — tracking mais curto = menos “esmilinguida” */
     --p38-tracking: 0.01em;
     --p38-body-size: 1rem;
@@ -72,12 +73,12 @@
   }
 
   .dark {
-    --p38-bg: 240 6% 4%;
-    --p38-surface: 240 4% 11%;
-    --p38-search: 240 4% 14%;
-    --p38-table-head: 240 4% 14%;
-    --p38-accent-olive: 75 96% 53%;
-    --p38-accent-lime: 75 96% 53%;
+    --p38-bg: 264 8% 12%;
+    --p38-surface: 214 13% 20%;
+    --p38-search: 240 6% 16%;
+    --p38-table-head: 216 10% 25%;
+    --p38-accent-olive: 78 55% 51%;
+    --p38-accent-lime: 78 55% 51%;
     --p38-divider: 0 0% 100% / 0.06;
     --p38-tracking: 0.02em;
   }

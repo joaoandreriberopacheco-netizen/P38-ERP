@@ -15,8 +15,7 @@ module.exports = {
   	},
   	extend: {
   		fontFamily: {
-  			sans: ['Inter', '"DIN 1451"', 'DINish', 'system-ui', 'sans-serif'],
-  			inter: ['Inter', 'system-ui', 'sans-serif'],
+  			sans: ['"DIN 1451"', 'DINish', 'Barlow Condensed', 'system-ui', 'sans-serif'],
   			'din-1451': ['"DIN 1451"', 'DINish', 'Barlow Condensed', 'system-ui', 'sans-serif'],
   			din1451: ['"DIN 1451"', 'DINish', 'Barlow Condensed', 'system-ui', 'sans-serif'],
   			outfit: ['Outfit', 'system-ui', 'sans-serif'],
