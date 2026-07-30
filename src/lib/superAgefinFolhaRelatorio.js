@@ -152,21 +152,15 @@ export function montarHtmlSecaoFolhaAnaloga({ folha, spx, escapeHtml, formatCurr
     _superagefin_folha: true,
   };
 
-  /** Cada funcionário = um bloco; 3 colunas; altura ~2× para anotar à mão em A4.
-   *  Quebra de página: grelha CSS inteira NÃO evita quebra (cria vazios).
-   *  Em vez disso, empacotamos em linhas de 3 — cada linha evita quebra no meio,
-   *  mas linhas sucessivas podem ir para a página seguinte e preencher o papel. */
-  const linhasAnotacao = Array.from({ length: 14 }, () =>
-    `<div style="height:20px;border-bottom:1px dotted #94a3b8"></div>`,
-  ).join('');
-
+  /** Cada funcionário = um bloco; 3 colunas; nome|valor na mesma linha; anotações sem linhas. */
   const artigoDeLinha = (row) => {
     const salarioLabel = row.salario > 0 ? formatCurrency(row.salario) : '—';
-    return `<article style="break-inside:avoid;page-break-inside:avoid;border:1px solid #cbd5e1;border-radius:8px;background:#fff;padding:10px 10px 14px;min-height:336px;box-sizing:border-box">
-      <p style="margin:0;font-size:${spx(12)};line-height:1.2;font-weight:700;color:#000;text-transform:uppercase;letter-spacing:0.01em">${escapeHtml(row.nome)}</p>
-      <p style="margin:4px 0 0;font-size:${spx(12)};line-height:1.2;font-weight:400;color:#000">${escapeHtml(salarioLabel)}</p>
-      <p style="margin:10px 0 4px;font-size:${spx(9)};line-height:1.1;color:#64748b;text-transform:uppercase;letter-spacing:0.06em">Anotações</p>
-      <div aria-hidden="true" style="margin-top:2px">${linhasAnotacao}</div>
+    return `<article style="break-inside:avoid;page-break-inside:avoid;border:1px solid #cbd5e1;border-radius:8px;background:#fff;padding:8px 10px 10px;min-height:96px;box-sizing:border-box">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+        <p style="margin:0;flex:1;min-width:0;font-size:${spx(12)};line-height:1.2;font-weight:700;color:#000;text-transform:uppercase;letter-spacing:0.01em">${escapeHtml(row.nome)}</p>
+        <p style="margin:0;flex-shrink:0;font-size:${spx(12)};line-height:1.2;font-weight:700;color:#000">${escapeHtml(salarioLabel)}</p>
+      </div>
+      <p style="margin:8px 0 0;font-size:${spx(9)};line-height:1.1;color:#64748b;text-transform:uppercase;letter-spacing:0.06em">Anotações</p>
     </article>`;
   };
 
