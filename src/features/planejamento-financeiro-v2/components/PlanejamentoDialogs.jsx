@@ -13,7 +13,7 @@ export function PlanejamentoFab({ onCentros, onImportar, onNovaConta }) {
   const [fabOpen, setFabOpen] = useState(false);
 
   return (
-    <div className="fixed right-4 z-[55] flex flex-col items-end p38-bottom-fab1 lg:right-8">
+    <div className="fixed right-4 z-[55] flex flex-col items-end gap-2 bottom-[var(--p38-scroll-pad-below-nav)] transition-[bottom] duration-300 ease-out desktop-layout:bottom-6 lg:right-8">
       {fabOpen && (
         <div className="mb-2 flex w-[min(calc(100vw-1.5rem),16.5rem)] flex-col items-stretch gap-2">
           <Button
