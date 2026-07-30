@@ -1,6 +1,7 @@
 /**
  * Cálculos do relatório de margem — reutilizáveis (ex.: Plano completo em Budgets).
- * Alinhado à Consulta de Vendas (VendasGestao): mesmos pedidos, data e totais de linha.
+ * Receita: valor_total do pedido (como Consulta de Vendas), rateado nas linhas.
+ * Custo: preço de custo calculado atual do catálogo (preco_custo_calculado).
  */
 
 import { toLocalDateKey } from '@/components/utils/dateUtils';
@@ -70,9 +71,100 @@ export function resolveMargemProdutoKey(item = {}) {
   return `nome:${nome || 'sem-nome'}`;
 }
 
+/** Custo unitário na unidade base — catálogo atual quando o produto existe. */
 export function resolveCustoUnitarioMargem(item = {}, product = null) {
   if (product) return resolveCustoTotalUnitBaseProduto(product);
   return Number(item.custo_unitario_momento ?? item.custo_unitario ?? item.custo_calculado ?? 0) || 0;
+}
+
+function roundMoney(value) {
+  return Math.round((Number(value) || 0) * 100) / 100;
+}
+
+function itensPedidoValidos(pedido = {}) {
+  return (Array.isArray(pedido.itens) ? pedido.itens : []).filter(
+    (item) => item && typeof item === 'object',
+  );
+}
+
+/** Mesmo total da Consulta de Vendas (`valor_total` / `total` do pedido). */
+export function resolverValorTotalPedido(pedido = {}) {
+  const direto = Number(pedido.valor_total ?? pedido.total ?? 0);
+  if (direto > 0) return roundMoney(direto);
+
+  const somaLinhas = itensPedidoValidos(pedido).reduce(
+    (acc, item) => acc + resolverTotalLinhaVenda(item),
+    0,
+  );
+  return roundMoney(somaLinhas);
+}
+
+function distribuirValorProporcional(total, pesos = []) {
+  const alvo = roundMoney(total);
+  if (!pesos.length) return [];
+
+  const somaPesos = pesos.reduce((acc, peso) => acc + (Number(peso) || 0), 0);
+  if (somaPesos <= 0) {
+    const partes = Array(pesos.length).fill(alvo / pesos.length);
+    return distribuirValorProporcional(alvo, partes.map(() => 1));
+  }
+
+  const brutos = pesos.map((peso) => (Number(peso) / somaPesos) * alvo);
+  const arredondados = brutos.map(roundMoney);
+  let diffCentavos = Math.round((alvo - arredondados.reduce((acc, v) => acc + v, 0)) * 100);
+  if (!diffCentavos) return arredondados;
+
+  const ordem = brutos
+    .map((bruto, index) => ({ index, resto: bruto - arredondados[index] }))
+    .sort((a, b) => (diffCentavos > 0 ? b.resto - a.resto : a.resto - b.resto));
+
+  let cursor = 0;
+  while (diffCentavos !== 0 && ordem.length > 0) {
+    const { index } = ordem[cursor % ordem.length];
+    arredondados[index] = roundMoney(arredondados[index] + (diffCentavos > 0 ? 0.01 : -0.01));
+    diffCentavos += diffCentavos > 0 ? -1 : 1;
+    cursor += 1;
+  }
+
+  return arredondados;
+}
+
+/**
+ * Rateia o valor_total do pedido nas linhas (peso = total bruto da linha).
+ * Garante que a soma da receita líquida = valor do pedido na Consulta de Vendas.
+ */
+export function alocarReceitaPedidoNasLinhas(pedido = {}) {
+  const itens = itensPedidoValidos(pedido);
+  if (!itens.length) return [];
+
+  const brutos = itens.map((item) => resolverTotalLinhaVenda(item));
+  const somaBruta = brutos.reduce((acc, valor) => acc + valor, 0);
+  const valorPedido = resolverValorTotalPedido(pedido);
+
+  if (valorPedido <= 0 && somaBruta <= 0) {
+    return itens.map(() => ({
+      total_recebido: 0,
+      total_desconto_venda: 0,
+      receita_liquida: 0,
+    }));
+  }
+
+  if (somaBruta <= 0) {
+    const receitas = distribuirValorProporcional(valorPedido, Array(itens.length).fill(1));
+    return receitas.map((receita_liquida) => ({
+      total_recebido: receita_liquida,
+      total_desconto_venda: 0,
+      receita_liquida,
+    }));
+  }
+
+  const receitas = distribuirValorProporcional(valorPedido, brutos);
+  return brutos.map((bruto, index) => {
+    const receita_liquida = receitas[index] ?? 0;
+    const total_recebido = roundMoney(bruto);
+    const total_desconto_venda = roundMoney(total_recebido - receita_liquida);
+    return { total_recebido, total_desconto_venda, receita_liquida };
+  });
 }
 
 function vendaNoIntervalo(sale, from, to) {
@@ -95,14 +187,19 @@ export function calcularLinhasMargemVendas(sales = [], products = [], intervalo 
     if (!pedidoElegivelMargem(sale)) continue;
     if (!vendaNoIntervalo(sale, from, to)) continue;
 
-    const itens = Array.isArray(sale.itens) ? sale.itens : [];
-    const descontoPorItem = (Number(sale.valor_desconto) || 0) / (itens.length || 1);
+    const itens = itensPedidoValidos(sale);
+    const alocacoes = alocarReceitaPedidoNasLinhas(sale);
 
-    for (const item of itens) {
+    for (let index = 0; index < itens.length; index += 1) {
+      const item = itens[index];
       const prodKey = resolveMargemProdutoKey(item);
       const product = item.produto_id ? prodMap[item.produto_id] : null;
       const custoCalculado = resolveCustoUnitarioMargem(item, product);
-      const lineTotal = resolverTotalLinhaVenda(item);
+      const alloc = alocacoes[index] || {
+        total_recebido: 0,
+        total_desconto_venda: 0,
+        receita_liquida: 0,
+      };
 
       if (!reportMap[prodKey]) {
         reportMap[prodKey] = {
@@ -123,8 +220,8 @@ export function calcularLinhasMargemVendas(sales = [], products = [], intervalo 
             0,
         ) || 0;
       entry.quantidade_base_vendida += quantidadeBase;
-      entry.total_recebido += lineTotal;
-      entry.total_desconto_venda += descontoPorItem;
+      entry.total_recebido += alloc.total_recebido;
+      entry.total_desconto_venda += alloc.total_desconto_venda;
     }
   }
 

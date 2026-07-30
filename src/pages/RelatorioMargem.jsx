@@ -20,7 +20,7 @@ import { fetchPedidosVendaParaMargem } from '@/lib/fetchPedidosVenda90d';
 import { fetchAllProdutosCatalogo } from '@/lib/fetchProdutosAtivos';
 import {
   pedidoElegivelMargem,
-  resolverTotalLinhaVenda,
+  alocarReceitaPedidoNasLinhas,
   resolveMargemProdutoKey,
   resolveCustoUnitarioMargem,
   vendaNoIntervaloConsulta,
@@ -644,11 +644,15 @@ export default function RelatorioMargemVendas() {
        if (!pedidoElegivelMargem(sale)) return;
        if (!vendaNoIntervaloConsulta(sale, dateRange?.from, dateRange?.to)) return;
 
-       const itens = Array.isArray(sale.itens) ? sale.itens : [];
-       const descontoPorItem = (sale.valor_desconto || 0) / (itens.length || 1);
+       const itens = Array.isArray(sale.itens) ? sale.itens.filter((item) => item && typeof item === 'object') : [];
+       const alocacoes = alocarReceitaPedidoNasLinhas(sale);
 
-       itens.forEach((item) => {
-         if (!item || typeof item !== 'object') return;
+       itens.forEach((item, index) => {
+         const alloc = alocacoes[index] || {
+           total_recebido: 0,
+           total_desconto_venda: 0,
+           receita_liquida: 0,
+         };
          const prodKey = resolveMargemProdutoKey(item);
          const prodId = item.produto_id;
          const product = prodId ? prodMap[prodId] : null;
@@ -685,10 +689,10 @@ export default function RelatorioMargemVendas() {
           : { quantidade: Number(item.quantidade) || quantidadeBase, unidade: item.unidade_medida || 'UN' };
          entry.vendas_count += 1;
         entry.quantidade_base_vendida += quantidadeBase;
-        entry.quantidade_vendida += quantidadeResolvida.quantidade;
+         entry.quantidade_vendida += quantidadeResolvida.quantidade;
         entry.unidade_exibicao = quantidadeResolvida.unidade || entry.unidade_exibicao || 'UN';
-         entry.total_recebido += resolverTotalLinhaVenda(item);
-         entry.total_desconto_venda += descontoPorItem;
+         entry.total_recebido += alloc.total_recebido;
+         entry.total_desconto_venda += alloc.total_desconto_venda;
        });
      });
 
