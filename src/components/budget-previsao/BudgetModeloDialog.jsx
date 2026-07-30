@@ -190,7 +190,8 @@ export default function BudgetModeloDialog({
                   }))
                 }
                 onCentrosChange={onCentrosChange}
-                placeholder="Opcional — criar ou escolher"
+                emptyLabel="Nenhum"
+                placeholder="Nenhum — tocar + para criar"
               />
             </div>
           </div>

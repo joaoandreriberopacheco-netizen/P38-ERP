@@ -89,6 +89,7 @@ export default function FolhaCentroCustoSelect({
   onCentrosChange,
   disabled,
   allowEmpty = true,
+  emptyLabel = 'Sem centro',
   placeholder = 'Escolher centro de custo',
 }) {
   const [open, setOpen] = useState(false);
@@ -199,7 +200,7 @@ export default function FolhaCentroCustoSelect({
           )}
         >
           <Check className={cn('h-4 w-4 shrink-0', semCentro ? 'opacity-100' : 'opacity-0')} />
-          <span className="text-muted-foreground">Sem centro</span>
+          <span className="text-muted-foreground">{emptyLabel}</span>
         </button>
       )}
       {filtrados.map((centro) => {
@@ -361,7 +362,7 @@ export default function FolhaCentroCustoSelect({
                       <Check
                         className={cn('h-4 w-4 shrink-0', semCentro ? 'opacity-100' : 'opacity-0')}
                       />
-                      <span className="text-muted-foreground">Sem centro</span>
+                      <span className="text-muted-foreground">{emptyLabel}</span>
                     </CommandItem>
                   )}
                   {filtrados.map((centro) => (
