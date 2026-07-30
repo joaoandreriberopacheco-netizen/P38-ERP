@@ -58,7 +58,7 @@ export function FinanceiroGrupo({
   const saldoNode = (
     <span
       className={cn(
-        'shrink-0 text-[11px] font-bold tabular-nums whitespace-nowrap',
+        'shrink-0 text-[11px] font-bold tabular-nums',
         liquido >= 0 ? 'text-[#4A5D23] dark:text-[#a4ce33]' : negClass,
       )}
     >
@@ -77,8 +77,8 @@ export function FinanceiroGrupo({
           balancoDia
             ? 'flex flex-col gap-2.5 px-1 py-3 md:flex-row md:items-center md:justify-between md:gap-2 md:py-1.5'
             : cn(
-                'flex items-center justify-between gap-2 py-1.5',
-                card && 'gap-3 py-2.5',
+                'grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 py-1.5',
+                card && 'gap-x-3 py-2.5',
               ),
           card ? 'px-3 py-2.5' : 'mb-0.5 border-b border-border/50 dark:border-white/10',
         )}
@@ -86,14 +86,14 @@ export function FinanceiroGrupo({
         <div
           className={cn(
             'flex min-w-0 items-center gap-2',
-            balancoDia ? 'w-full justify-between md:w-auto md:flex-1' : 'flex-1',
+            balancoDia ? 'w-full justify-between md:w-auto md:flex-1' : 'min-w-0',
           )}
         >
           <p
             className={cn(
               'min-w-0 text-left text-[11px] font-semibold uppercase tracking-wide text-foreground/75 sm:tracking-widest',
-              !balancoDia && !card && 'max-w-[42%] truncate sm:max-w-none',
-              (!balancoDia && card) && 'min-w-0 flex-1 truncate',
+              !balancoDia && !card && 'truncate',
+              (!balancoDia && card) && 'truncate',
               balancoDia && 'truncate',
               labelClassName,
             )}
@@ -111,8 +111,9 @@ export function FinanceiroGrupo({
         </div>
         <div
           className={cn(
-            'flex min-w-0 items-center gap-1 sm:gap-1.5',
+            'flex min-w-0 items-center justify-end gap-1 sm:gap-1.5',
             balancoDia && 'w-full md:w-auto md:shrink md:justify-end',
+            !balancoDia && 'shrink-0',
           )}
         >
           {balancoDia ? (

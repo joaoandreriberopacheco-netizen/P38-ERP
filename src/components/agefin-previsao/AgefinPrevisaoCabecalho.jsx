@@ -2,9 +2,9 @@ import React from 'react';
 import { ChevronLeft, ChevronRight, Repeat2, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { P38HelpPopover } from '@/components/ui/p38-help-popover';
-import FinanceiroResumoBar from '@/components/financeiro/fluxo/FinanceiroResumoBar';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from '@/components/financeiro/fluxo/FinanceiroListaMeta';
-import { P38_KPI_SHELL, P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
+import { formatFinanceiroValor } from '@/components/financeiro/fluxo/FinanceiroListaShared';
+import { P38_ACCENT, P38_KPI_SHELL, P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
 import { formatCompetenciaLabel } from '@/lib/agefinPrevisaoCalculos';
 import { cn } from '@/lib/utils';
 
@@ -130,18 +130,20 @@ export default function AgefinPrevisaoCabecalho({
       </div>
 
       <div className="space-y-2 border-t border-border/40 pt-2.5 sm:pt-3 min-w-0">
-        <FinanceiroResumoBar
-          receitas={0}
-          despesas={totais?.total || 0}
-          variacao={-(totais?.total || 0)}
-          saldo={totais?.total || 0}
-          saldoComSinal
-          labels={{
-            receitas: '—',
-            despesas: 'Previsto',
-            saldo: 'Comprometido',
-          }}
-        />
+        <div className="rounded-xl bg-secondary/30 px-3 py-3 dark:bg-[#383e47]/40 sm:px-4 sm:py-3.5">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:text-[11px]">
+            Total previsto no mês
+          </p>
+          <p
+            className={cn(
+              'mt-1 font-semibold tabular-nums leading-none tracking-tight',
+              'text-[clamp(1.375rem,5.5vw,1.875rem)]',
+              (totais?.total || 0) > 0 ? 'text-red-600 dark:text-red-400' : P38_ACCENT,
+            )}
+          >
+            −{formatFinanceiroValor(totais?.total || 0)}
+          </p>
+        </div>
         <FinanceiroListaMeta
           total={count}
           totalLabel={count === 1 ? 'conta' : 'contas'}
