@@ -1066,7 +1066,8 @@ export default function SuperAgefin() {
                       {formatCurrency(grupo.contas.reduce((acc, c) => acc + (Number(c.valor) || 0), 0))}
                     </span>
                   </div>
-                  <P38MobileLineList className="rounded-lg">
+                  {/* allViewports: sem desktop-layout:hidden — Agefin usa linhas em todos os ecrãs */}
+                  <P38MobileLineList allViewports className="rounded-lg">
                     {grupo.contas.map((conta, index) => (
                       <ContaLinhaP38
                         key={conta.id}
