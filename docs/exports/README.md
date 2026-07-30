@@ -6,7 +6,7 @@ Tabela **LINHA** + tipo (solo/mix/portfolio) antes de SQL. Marque **STATUS** na 
 
 | Ficheiro | Descrição |
 |----------|-----------|
-| [P38-linhas-mestre-aprovacao.xlsx](./P38-linhas-mestre-aprovacao.xlsx) | Lista de linhas para aprovar + mapa h1→LINHA + amostra SKUs |
+| [P38-linhas-mestre-aprovacao.xlsx](./P38-linhas-mestre-aprovacao.xlsx) | **15 linhas enxutas** (chave comum h2, ex. SOLDÁVEL) + mapa h1+h2→LINHA + exemplo SOLDÁVEL |
 
 Regenerar: `npm run export:linhas-mestre`
 
