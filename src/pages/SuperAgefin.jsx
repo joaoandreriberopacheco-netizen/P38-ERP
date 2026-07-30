@@ -15,12 +15,14 @@ import {
   CheckCircle2,
   CircleAlert,
   Printer,
-  Paperclip,
   Wallet,
   CircleSlash,
   X,
   Calculator,
   Menu,
+  Users,
+  Package,
+  CalendarClock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -52,14 +54,14 @@ import {
   lancamentoEhContaPagar,
   lancamentoEhCmv,
   lancamentoEhFreteItinerario,
+  lancamentoEhCompraMercadoriaPedido,
   lancamentoPago,
   lancamentoCancelado,
   lancamentoVencidoOuAtrasado,
   lancamentoEmDia,
   lancamentoCompraMercadoriaPedidoPagamentoAVista,
 } from '@/lib/agefinConsultaFilters';
-import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
-import { p38Accent } from '@/lib/p38ThemeSurfaces';
+import { P38MobileLine, P38MobileLineList, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import {
   P38_ACCENT,
   P38_CHIP_ACTIVE,
@@ -157,15 +159,42 @@ function grupoDomId(key) {
   return `agefin-grupo-${String(key).replace(/[^a-zA-Z0-9_-]/g, '_')}`;
 }
 
-function ContaLinhaP38({ conta, onOpen, modoSelecao, selecionado, onToggleSelecao, avisoMesmoGrupoDuplicado, striped }) {
+/** Origem da conta para ícone Lucide na lista (só descrição + origem). */
+function origemContaAgefin(conta) {
+  if (lancamentoEhCmv(conta) || lancamentoEhCompraMercadoriaPedido(conta)) {
+    return { key: 'cmv', label: 'CMV', Icon: Package };
+  }
+  const tags = Array.isArray(conta?.tags)
+    ? conta.tags.map((t) => String(t).toLowerCase())
+    : [];
+  if (
+    conta?._superagefin_folha ||
+    conta?._superagefin_socio ||
+    tags.includes('folha_socio') ||
+    tags.includes('folha_previsao') ||
+    tags.includes('folha') ||
+    /folha\s+de\s+pagamento/i.test(String(conta?.descricao || ''))
+  ) {
+    return { key: 'pessoas', label: 'Pessoas', Icon: Users };
+  }
+  if (
+    tags.includes('agefin_previsao') ||
+    tags.includes('recorrente') ||
+    tags.includes('lf_gerado_auto') ||
+    conta?.is_recorrente === true
+  ) {
+    return { key: 'planejamento', label: 'Planejamento', Icon: CalendarClock };
+  }
+  return null;
+}
+
+function ContaLinhaP38({ conta, onOpen, modoSelecao, selecionado, onToggleSelecao, striped }) {
   const todayKey = dataHoje();
   const isPaid = lancamentoPago(conta);
   const isOverdue = lancamentoVencidoOuAtrasado(conta, todayKey);
-  const hasBoleto = conta.forma_pagamento_tipo === 'Boleto' || conta.forma_pagamento === 'Boleto';
-  const ehCmv = lancamentoEhCmv(conta);
-  const ehFrete = lancamentoEhFreteItinerario(conta);
-  const tone = isPaid ? 'success' : isOverdue ? 'danger' : hasBoleto ? 'info' : 'warning';
-  const statusLabel = isPaid ? 'Pago' : isOverdue ? 'Vencido' : hasBoleto ? 'Boleto' : 'Pendente';
+  const tone = isPaid ? 'success' : isOverdue ? 'danger' : 'muted';
+  const origem = origemContaAgefin(conta);
+  const OrigemIcon = origem?.Icon;
 
   return (
     <P38MobileLine
@@ -174,23 +203,16 @@ function ContaLinhaP38({ conta, onOpen, modoSelecao, selecionado, onToggleSeleca
       accent={modoSelecao && selecionado ? 'success' : p38AccentKeyFromTone(tone)}
       onClick={() => (modoSelecao ? onToggleSelecao?.(conta) : onOpen())}
       title={conta.descricao}
-      subtitle={`${conta.terceiro_nome || 'Sem favorecido'} · ${conta.categoria || 'Sem categoria'}`}
-      meta={
-        <>
-          <P38StatusLabel tone={tone}>{statusLabel}</P38StatusLabel>
-          <span>{formatarSoData(conta.data_vencimento)}</span>
-          {ehFrete ? <span>Frete</span> : null}
-          {ehCmv ? <span>CMV</span> : null}
-          {avisoMesmoGrupoDuplicado ? <span>Duplicado?</span> : null}
-          {modoSelecao ? (
-            <span className={selecionado ? p38Accent.success.text : 'text-muted-foreground'}>
-              {selecionado ? 'Selecionado' : 'Toque para selecionar'}
-            </span>
-          ) : null}
-        </>
-      }
       value={formatCurrency(conta.valor)}
-      trailing={<Paperclip className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
+      trailing={
+        OrigemIcon ? (
+          <OrigemIcon
+            className="h-4 w-4 shrink-0 text-muted-foreground"
+            aria-label={origem.label}
+            title={origem.label}
+          />
+        ) : null
+      }
     />
   );
 }
@@ -201,7 +223,6 @@ function SuperAgefinGruposVirtualList({
   selecionadosIds,
   toggleSelecaoConta,
   abrirConta,
-  idsComAvisoDuplicadoGrupo,
 }) {
   const flatRows = useMemo(() => {
     const rows = [];
@@ -218,7 +239,7 @@ function SuperAgefinGruposVirtualList({
   const virtualizer = useVirtualizer({
     count: flatRows.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: (index) => (flatRows[index]?.kind === 'header' ? 44 : 88),
+    estimateSize: (index) => (flatRows[index]?.kind === 'header' ? 36 : 52),
     getItemKey: (index) => flatRows[index]?.key ?? index,
     measureElement: measureVirtualItem,
     overscan: P38_VIRTUAL_OVERSCAN,
@@ -275,7 +296,6 @@ function SuperAgefinGruposVirtualList({
                 selecionado={selecionadosIds.includes(conta.id)}
                 onToggleSelecao={toggleSelecaoConta}
                 onOpen={() => abrirConta(conta)}
-                avisoMesmoGrupoDuplicado={idsComAvisoDuplicadoGrupo.has(conta.id)}
               />
             </div>
           );
@@ -425,23 +445,6 @@ export default function SuperAgefin() {
     });
     return list;
   }, [filteredData, sortOrder]);
-
-  const idsComAvisoDuplicadoGrupo = useMemo(() => {
-    const counts = new Map();
-    for (const c of contasOrdenadas) {
-      if (!lancamentoEhContaPagar(c) || !c.grupo_lancamento_id) continue;
-      const k = `${(c.data_vencimento || '').slice(0, 10)}|${(c.descricao || '').trim().toLowerCase()}|${c.grupo_lancamento_id}`;
-      counts.set(k, (counts.get(k) || 0) + 1);
-    }
-    const ids = new Set();
-    for (const c of contasOrdenadas) {
-      const k = `${(c.data_vencimento || '').slice(0, 10)}|${(c.descricao || '').trim().toLowerCase()}|${c.grupo_lancamento_id}`;
-      if (lancamentoEhContaPagar(c) && c.grupo_lancamento_id && (counts.get(k) || 0) > 1) {
-        ids.add(c.id);
-      }
-    }
-    return ids;
-  }, [contasOrdenadas]);
 
   const grupos = useMemo(() => {
     const todayKey = dataHoje();
@@ -1047,7 +1050,6 @@ export default function SuperAgefin() {
               selecionadosIds={selecionadosIds}
               toggleSelecaoConta={toggleSelecaoConta}
               abrirConta={abrirConta}
-              idsComAvisoDuplicadoGrupo={idsComAvisoDuplicadoGrupo}
             />
           ) : (
             <div className="mx-auto w-full max-w-3xl space-y-5 md:max-w-4xl">
@@ -1077,7 +1079,6 @@ export default function SuperAgefin() {
                         selecionado={selecionadosIds.includes(conta.id)}
                         onToggleSelecao={toggleSelecaoConta}
                         onOpen={() => abrirConta(conta)}
-                        avisoMesmoGrupoDuplicado={idsComAvisoDuplicadoGrupo.has(conta.id)}
                       />
                     ))}
                   </P38MobileLineList>
