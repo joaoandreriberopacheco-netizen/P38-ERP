@@ -613,11 +613,15 @@ export default function BudgetsPage() {
         onClose={() => setModeloDialog(null)}
         modelo={modeloDialog}
         categorias={categorias}
+        centrosCustoRegistros={centrosCustoRegistros}
         centrosRegistrados={centrosRegistrados}
         onSave={handleSaveModelo}
         saving={saving}
         onCategoriasChange={async () => {
           await queryClient.invalidateQueries({ queryKey: ['budgets', 'categorias'] });
+        }}
+        onCentrosChange={async () => {
+          await queryClient.invalidateQueries({ queryKey: ['budgets', 'centros'] });
         }}
       />
 

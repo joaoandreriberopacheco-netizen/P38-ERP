@@ -11,6 +11,7 @@ export default function PlanejamentoNovoLancamentoDialog({ open, onClose, onSave
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [centroCusto, setCentroCusto] = useState('');
+  const [centroCustoId, setCentroCustoId] = useState('');
 
   const categoriasQuery = useQuery({
     queryKey: agefinQueryKeys.categorias,
@@ -36,6 +37,7 @@ export default function PlanejamentoNovoLancamentoDialog({ open, onClose, onSave
 
   const handleClose = () => {
     setCentroCusto('');
+    setCentroCustoId('');
     onClose?.();
   };
 
@@ -49,6 +51,7 @@ export default function PlanejamentoNovoLancamentoDialog({ open, onClose, onSave
           categoria_id: resultado.categoria_id,
           categoria: resultado.categoria,
           centro_custo: centroCusto,
+          centro_custo_id: centroCustoId,
           frequencia: resultado.frequencia,
           data_vencimento: resultado.data_vencimento,
         });
@@ -62,6 +65,7 @@ export default function PlanejamentoNovoLancamentoDialog({ open, onClose, onSave
       });
     }
     setCentroCusto('');
+    setCentroCustoId('');
     await onSaved?.(resultado);
   };
 
@@ -73,7 +77,16 @@ export default function PlanejamentoNovoLancamentoDialog({ open, onClose, onSave
       tipoInicial="Despesa"
       modoPlanejamento
       centroCusto={centroCusto}
-      onCentroCustoChange={setCentroCusto}
+      centroCustoId={centroCustoId}
+      onCentroCustoChange={(v) => {
+        if (v && typeof v === 'object') {
+          setCentroCusto(v.nome || '');
+          setCentroCustoId(v.id || '');
+          return;
+        }
+        setCentroCusto(typeof v === 'string' ? v : '');
+        setCentroCustoId('');
+      }}
       centrosCustoRegistros={centrosQuery.data ?? []}
       onCentrosCustoChange={reloadCentros}
       categoriasDespesa={categoriasQuery.data ?? []}

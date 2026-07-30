@@ -789,6 +789,7 @@ export function criarModeloComDefaults(extra = {}) {
     ...DECIMO_PADRAO,
     decimo_terceiro_ativo: socio ? false : true,
     centro_custo: '',
+    centro_custo_id: '',
     custo_direto: custoDiretoExtra,
     classificacao_despesa: custoDiretoExtra
       ? CLASSIFICACAO_DESPESA_FOLHA.DIRETA

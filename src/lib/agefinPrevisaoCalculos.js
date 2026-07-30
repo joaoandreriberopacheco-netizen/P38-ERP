@@ -828,6 +828,7 @@ export function criarSerieComDefaults(partial = {}) {
     categoria_id: partial.categoria_id || '',
     categoria_nome: partial.categoria_nome || '',
     centro_custo: partial.centro_custo || '',
+    centro_custo_id: partial.centro_custo_id || '',
     valor_previsto: Number(partial.valor_previsto) || 0,
     dia_vencimento: Number(partial.dia_vencimento) || 10,
     frequencia,

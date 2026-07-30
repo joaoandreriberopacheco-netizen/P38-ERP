@@ -84,6 +84,7 @@ function FolhaCentroCustoFormDialog({ open, onClose, centro, onSave, saving }) {
 export default function FolhaCentroCustoSelect({
   centros = [],
   value = '',
+  valueId = '',
   onValueChange,
   onCentrosChange,
   disabled,
@@ -103,14 +104,19 @@ export default function FolhaCentroCustoSelect({
   );
 
   const selecionado = useMemo(() => {
+    const id = String(valueId || '').trim();
+    if (id) {
+      const byId = ativos.find((c) => String(c.id) === id);
+      if (byId) return byId;
+    }
     const nome = String(value || '').trim();
     if (!nome) return null;
     return (
       ativos.find(
         (c) => String(c.nome).toLocaleLowerCase('pt-BR') === nome.toLocaleLowerCase('pt-BR'),
-      ) || { nome }
+      ) || { id: '', nome }
     );
-  }, [ativos, value]);
+  }, [ativos, value, valueId]);
 
   const filtrados = useMemo(() => {
     const q = busca.trim().toLocaleLowerCase('pt-BR');
@@ -118,8 +124,16 @@ export default function FolhaCentroCustoSelect({
     return ativos.filter((c) => String(c.nome || '').toLocaleLowerCase('pt-BR').includes(q));
   }, [ativos, busca]);
 
+  const emitChange = (centro) => {
+    if (!centro?.nome) {
+      onValueChange?.({ id: '', nome: '' });
+      return;
+    }
+    onValueChange?.({ id: centro.id || '', nome: centro.nome });
+  };
+
   const handleSelect = (centro) => {
-    onValueChange?.(centro?.nome || '');
+    emitChange(centro?.nome ? centro : null);
     setOpen(false);
     setBusca('');
   };
@@ -134,7 +148,13 @@ export default function FolhaCentroCustoSelect({
         ordem: payload.ordem,
       });
       await onCentrosChange?.(lista);
-      onValueChange?.(payload.nome);
+      const nomeLimpo = String(payload.nome || '').trim();
+      const criado =
+        (lista || []).find(
+          (c) =>
+            String(c.nome || '').toLocaleLowerCase('pt-BR') === nomeLimpo.toLocaleLowerCase('pt-BR'),
+        ) || { id: payload.id || '', nome: nomeLimpo };
+      emitChange(criado);
       setCentroForm(null);
       setOpen(false);
       setBusca('');
@@ -151,6 +171,17 @@ export default function FolhaCentroCustoSelect({
     setCentroForm(centro || {});
   };
 
+  const isSelectedCentro = (centro) => {
+    if (!selecionado?.nome && !selecionado?.id) return false;
+    if (selecionado.id && centro?.id && String(selecionado.id) === String(centro.id)) return true;
+    return (
+      String(selecionado.nome || '').toLocaleLowerCase('pt-BR') ===
+      String(centro?.nome || '').toLocaleLowerCase('pt-BR')
+    );
+  };
+
+  const semCentro = !selecionado?.nome && !selecionado?.id;
+
   const triggerClass = cn(
     'w-full justify-between font-normal h-11 px-3 rounded-xl',
     !selecionado && 'text-muted-foreground',
@@ -164,17 +195,15 @@ export default function FolhaCentroCustoSelect({
           onClick={() => handleSelect({ nome: '' })}
           className={cn(
             'flex w-full items-center gap-2 rounded-xl px-3 py-3 text-left text-sm transition-colors',
-            !value ? 'bg-primary/15 text-foreground' : 'text-foreground/90 hover:bg-muted',
+            semCentro ? 'bg-primary/15 text-foreground' : 'text-foreground/90 hover:bg-muted',
           )}
         >
-          <Check className={cn('h-4 w-4 shrink-0', !value ? 'opacity-100' : 'opacity-0')} />
+          <Check className={cn('h-4 w-4 shrink-0', semCentro ? 'opacity-100' : 'opacity-0')} />
           <span className="text-muted-foreground">Sem centro</span>
         </button>
       )}
       {filtrados.map((centro) => {
-        const selected =
-          String(value).toLocaleLowerCase('pt-BR') ===
-          String(centro.nome).toLocaleLowerCase('pt-BR');
+        const selected = isSelectedCentro(centro);
         return (
           <button
             key={centro.id || centro.nome}
@@ -330,7 +359,7 @@ export default function FolhaCentroCustoSelect({
                   {allowEmpty && (
                     <CommandItem value="__none__" onSelect={() => handleSelect({ nome: '' })}>
                       <Check
-                        className={cn('h-4 w-4 shrink-0', !value ? 'opacity-100' : 'opacity-0')}
+                        className={cn('h-4 w-4 shrink-0', semCentro ? 'opacity-100' : 'opacity-0')}
                       />
                       <span className="text-muted-foreground">Sem centro</span>
                     </CommandItem>
@@ -345,10 +374,7 @@ export default function FolhaCentroCustoSelect({
                       <Check
                         className={cn(
                           'h-4 w-4 shrink-0',
-                          String(value).toLocaleLowerCase('pt-BR') ===
-                            String(centro.nome).toLocaleLowerCase('pt-BR')
-                            ? 'opacity-100'
-                            : 'opacity-0',
+                          isSelectedCentro(centro) ? 'opacity-100' : 'opacity-0',
                         )}
                       />
                       <span className="flex-1 truncate">{centro.nome}</span>
