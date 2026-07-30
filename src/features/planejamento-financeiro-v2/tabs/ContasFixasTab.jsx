@@ -80,19 +80,21 @@ export default function ContasFixasTab({
         vazioMensagem="Nenhuma série / conta fixa cadastrada."
         vazioIcon={Repeat2}
       >
-        <AgefinContasFixasGrupos
-          agrupamento={agrupamento}
-          groupBy={groupBy}
-          draggingSerieId={draggingSerieId}
-          dropCentroAtual={dropCentroAtual}
-          onDragStart={onDragStart}
-          onDragEnd={onDragEnd}
-          onHoverCentro={onHoverCentro}
-          onLeaveCentro={onLeaveCentro}
-          onDropCentro={onDropCentro}
-          onEdit={onEdit}
-          onDelete={onDelete}
-        />
+        <div className="p38-single-sheet">
+          <AgefinContasFixasGrupos
+            agrupamento={agrupamento}
+            groupBy={groupBy}
+            draggingSerieId={draggingSerieId}
+            dropCentroAtual={dropCentroAtual}
+            onDragStart={onDragStart}
+            onDragEnd={onDragEnd}
+            onHoverCentro={onHoverCentro}
+            onLeaveCentro={onLeaveCentro}
+            onDropCentro={onDropCentro}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        </div>
       </FinanceiroListaEstado>
 
       {!loading && seriesAtivas.length === 0 && (

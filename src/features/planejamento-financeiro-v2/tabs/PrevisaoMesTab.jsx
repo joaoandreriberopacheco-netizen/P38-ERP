@@ -122,12 +122,14 @@ export default function PrevisaoMesTab({
         }
         vazioIcon={Repeat2}
       >
-        <AgefinPrevisaoLista
-          grupos={gruposExibicao}
-          competencias={competenciasExibidas}
-          modelosMap={modelosMap}
-          onOpen={onOpenCompetencia}
-        />
+        <div className="p38-single-sheet">
+          <AgefinPrevisaoLista
+            grupos={gruposExibicao}
+            competencias={competenciasExibidas}
+            modelosMap={modelosMap}
+            onOpen={onOpenCompetencia}
+          />
+        </div>
       </FinanceiroListaEstado>
 
       {!loading && competenciasExibidas.length === 0 && semFiltros && (

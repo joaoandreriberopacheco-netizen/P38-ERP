@@ -1,32 +1,21 @@
 import React from 'react';
-import { FinanceiroGrupo } from '@/components/financeiro/fluxo/FinanceiroListaShared';
 import { calcularTotaisGrupo } from '@/lib/agefinPrevisaoCalculos';
 import AgefinPrevisaoRow from './AgefinPrevisaoRow';
 
-function ListaLinhas({ items, modelosMap, onOpen, flat = false }) {
-  const content = (
+function ListaLinhas({ items, modelosMap, onOpen }) {
+  return (
     <>
-      {items.map((c, i) => (
+      {items.map((c) => (
         <AgefinPrevisaoRow
           key={c.id}
           competencia={c}
           modelo={modelosMap[c.serie_id]}
           onClick={onOpen}
-          striped={i % 2 === 1}
+          striped={false}
         />
       ))}
     </>
   );
-
-  if (flat) {
-    return (
-      <div className="min-w-0 w-full max-w-full overflow-x-hidden rounded-xl bg-card/40">
-        {content}
-      </div>
-    );
-  }
-
-  return content;
 }
 
 function SecaoGrupo({ label, items, modelosMap, onOpen }) {
@@ -34,22 +23,28 @@ function SecaoGrupo({ label, items, modelosMap, onOpen }) {
   const totais = calcularTotaisGrupo(items, modelosMap);
 
   return (
-    <FinanceiroGrupo
-      label={`${label} (${items.length})`}
-      labelClassName="text-[10px] font-medium normal-case tracking-normal text-muted-foreground p38-labotrat-grupo-label"
-      receitas={0}
-      despesas={totais.total}
-      liquido={-totais.total}
-      card={false}
-      defaultOpen
-    >
-      <div className="pl-1 sm:pl-2">
-        <ListaLinhas items={items} modelosMap={modelosMap} onOpen={onOpen} />
+    <div>
+      <div className="p38-sheet-section flex items-baseline justify-between gap-2">
+        <p className="p38-sheet-section-title p38-labotrat-grupo-label">
+          {label} ({items.length})
+        </p>
+        <p className="p38-sheet-section-sub tabular-nums shrink-0">
+          −R${' '}
+          {(totais.total || 0).toLocaleString('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
+        </p>
       </div>
-    </FinanceiroGrupo>
+      <ListaLinhas items={items} modelosMap={modelosMap} onOpen={onOpen} />
+    </div>
   );
 }
 
+/**
+ * Lista de previsão — pensada para viver dentro de `.p38-single-sheet`
+ * (um quadro branco contínuo, sem cartões separados).
+ */
 export default function AgefinPrevisaoLista({
   grupos = [],
   competencias = [],
@@ -57,16 +52,12 @@ export default function AgefinPrevisaoLista({
   onOpen,
   semAgrupamento = false,
 }) {
-  if (semAgrupamento) {
-    return <ListaLinhas items={competencias} modelosMap={modelosMap} onOpen={onOpen} flat />;
-  }
-
-  if (!grupos.length) {
-    return <ListaLinhas items={competencias} modelosMap={modelosMap} onOpen={onOpen} flat />;
+  if (semAgrupamento || !grupos.length) {
+    return <ListaLinhas items={competencias} modelosMap={modelosMap} onOpen={onOpen} />;
   }
 
   return (
-    <div className="min-w-0 w-full max-w-full space-y-2 overflow-x-hidden pb-2 md:pb-0">
+    <div className="min-w-0 w-full max-w-full overflow-x-hidden">
       {grupos.map((grupo) => (
         <SecaoGrupo
           key={grupo.key}

@@ -1,17 +1,11 @@
 /**
- * Piloto visual Planejamento (modo claro) — Citrus Blend + regra 60-30-10.
+ * Piloto Planejamento — Contêiner Único (Single Container) + cítricos 60-30-10.
  *
- * Hierarquia de pesos visuais:
- *   ~60%  Branco puro (#FFFFFF)     — fundo da página (respiração)
- *   ~30%  Cinza gelo (#F2F2F2) +
- *         grafite (#141414)         — cards / conteúdo / texto
- *   ~10%  Destaques cítricos:
- *         ~7% Verde palmeira (#1B4D2E) — CTAs primários, tab activa, ícones de acção
- *         ~3% Amarelo suco (#FCE181)   — chips / atenção secundária (nunca fundos grandes)
- *
- * Tipografia: DIN 1451 no corpo; Century Gothic nos títulos.
- * Pesos leves (evitar negrito pesado) — leitura calma.
- * Superfícies: preenchimento sem contorno.
+ * Página: charcoal #1A1A1A (fundo).
+ * Lista: um único quadro branco flutuante (.p38-single-sheet), cantos arredondados + sombra.
+ * Itens: sem cartões separados; divisores internos #EBEBEB (ou whitespace).
+ * Destaques: verde ~7% CTAs; amarelo ~3% chips.
+ * Tipografia: leve (400/500), tamanhos compactos no padrão dashboard.
  *
  * Uso: class="p38-labotrat-pilot" no contentor da página.
  */
@@ -34,53 +28,53 @@
       Futura, 'Trebuchet MS', sans-serif;
   }
 
-  /* —— Tokens 60-30-10 —— */
+  /* —— Página charcoal + tokens —— */
   html:not(.dark) .p38-labotrat-pilot {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 8%;
-    --card: 0 0% 95%;
+    --background: 0 0% 10%;
+    --foreground: 0 0% 96%;
+    --card: 0 0% 100%;
     --card-foreground: 0 0% 8%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 8%;
     --primary: 145 48% 20%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 95%;
-    --secondary-foreground: 0 0% 12%;
-    --muted: 0 0% 95%;
-    --muted-foreground: 0 0% 40%;
+    --secondary: 0 0% 16%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 0 0% 16%;
+    --muted-foreground: 0 0% 68%;
     --accent: 48 95% 75%;
     --accent-foreground: 145 48% 16%;
-    --border: 0 0% 95%;
-    --input: 0 0% 95%;
-    --ring: 145 48% 20%;
-    --p38-bg: 0 0% 100%;
-    --p38-surface: 0 0% 95%;
-    --p38-search: 0 0% 95%;
-    --p38-table-head: 0 0% 94%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 145 48% 28%;
+    --p38-bg: 0 0% 10%;
+    --p38-surface: 0 0% 14%;
+    --p38-search: 0 0% 14%;
+    --p38-table-head: 0 0% 14%;
     --p38-accent-olive: 145 48% 20%;
-    --p38-divider: 0 0% 95% / 0;
+    --p38-divider: 0 0% 92% / 1;
     --p38-olive: 145 48% 20%;
     --p38-mediterranean: 145 40% 28%;
     --p38-citrus-yellow: 48 95% 75%;
     --p38-citrus-orange: 37 90% 51%;
-    /* Pesos tipográficos leves (menos negrito) */
     --p38-font-weight-body: 400;
     --p38-font-weight-strong: 500;
     --p38-font-weight-heading: 500;
     --p38-tracking: 0.01em;
+    --citrus-charcoal: #1a1a1a;
     --citrus-green: #1b4d2e;
     --citrus-green-deep: #143d24;
     --citrus-yellow: #fce181;
-    --citrus-yellow-soft: rgba(252, 225, 129, 0.4);
+    --citrus-yellow-soft: rgba(252, 225, 129, 0.45);
     --citrus-orange: #f39c12;
-    --citrus-card: #f2f2f2;
-    --citrus-frost: rgba(242, 242, 242, 0.88);
+    --citrus-sheet: #ffffff;
+    --citrus-divider: #ebebeb;
     --citrus-ink: #141414;
-    background-color: #ffffff;
-    color: var(--citrus-ink);
+    --citrus-muted: #6b6b6b;
+    background-color: var(--citrus-charcoal);
+    color: #f2f2f2;
   }
 
-  /* Menos negrito: suavizar utilitários Tailwind dentro do piloto */
   html:not(.dark) .p38-labotrat-pilot .font-bold,
   html:not(.dark) .p38-labotrat-pilot .font-semibold {
     font-weight: 500 !important;
@@ -90,85 +84,62 @@
     font-weight: 500;
   }
 
-  /* —— ~30% estrutura: superfícies cinza gelo, sem contorno —— */
-  html:not(.dark) .p38-labotrat-pilot .p38-labotrat-frost,
-  html:not(.dark) .p38-labotrat-pilot .p38-field-surface,
-  html:not(.dark) .p38-labotrat-pilot .p38-search-field {
-    background-color: var(--citrus-frost);
-    backdrop-filter: blur(12px) saturate(1.05);
-    -webkit-backdrop-filter: blur(12px) saturate(1.05);
-    border-width: 0 !important;
-    border-color: transparent !important;
-    box-shadow: none;
-  }
-
-  html:not(.dark) .p38-labotrat-pilot .rounded-xl.border,
-  html:not(.dark) .p38-labotrat-pilot .rounded-lg.border,
-  html:not(.dark) .p38-labotrat-pilot .rounded-2xl.border {
-    background-color: var(--citrus-card);
-    border-width: 0 !important;
-    border-color: transparent !important;
-    box-shadow: none;
-  }
-
-  html:not(.dark) .p38-labotrat-pilot .bg-card {
-    background-color: var(--citrus-card);
-  }
-
-  html:not(.dark) .p38-labotrat-pilot .border,
-  html:not(.dark) .p38-labotrat-pilot .border-t,
-  html:not(.dark) .p38-labotrat-pilot .border-b,
-  html:not(.dark) .p38-labotrat-pilot .border-l,
-  html:not(.dark) .p38-labotrat-pilot .border-r,
-  html:not(.dark) .p38-labotrat-pilot .border-x,
-  html:not(.dark) .p38-labotrat-pilot .border-y,
-  html:not(.dark) .p38-labotrat-pilot .border-border\/50,
-  html:not(.dark) .p38-labotrat-pilot .border-border\/60,
-  html:not(.dark) .p38-labotrat-pilot .border-border\/40,
-  html:not(.dark) .p38-labotrat-pilot .border-border\/30 {
-    border-color: transparent !important;
-  }
-
-  html:not(.dark) .p38-labotrat-pilot .p38-mobile-line,
-  html:not(.dark) .p38-labotrat-pilot .border-b {
-    border-bottom-color: transparent !important;
-  }
-
-  html:not(.dark) .p38-labotrat-pilot .border-t {
-    border-top-color: transparent !important;
-  }
-
-  /*
-   * Título da página (~30% conteúdo): grafite, sem bloco verde.
-   * Verde fica reservado aos ~7% de acção.
-   */
+  /* Título fora do quadro — branco no charcoal */
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-title {
     display: inline-flex;
     align-items: center;
     max-width: 100%;
-    padding: 0.15rem 0;
-    border-radius: 0;
-    background-color: transparent;
-    color: var(--citrus-ink);
+    padding: 0.1rem 0;
+    background: transparent;
+    color: #ffffff;
     font-weight: 500;
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     line-height: 1.3;
-    letter-spacing: 0.01em;
+    letter-spacing: 0.02em;
     box-shadow: none;
     border: 0;
   }
 
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-title + button,
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-title ~ button {
-    color: var(--citrus-green);
+    color: var(--citrus-yellow);
   }
 
-  /* Navegador do mês — pill branco; rótulo grafite; setas verdes (acento) */
-  html:not(.dark) .p38-labotrat-pilot .p38-labotrat-mes {
-    background-color: #ffffff !important;
-    color: var(--citrus-ink);
+  html:not(.dark) .p38-labotrat-pilot > .pb-3 > p,
+  html:not(.dark) .p38-labotrat-pilot .text-muted-foreground {
+    color: rgba(242, 242, 242, 0.62);
+  }
+
+  /* Controles flutuantes sobre charcoal (tabs / campos) */
+  html:not(.dark) .p38-labotrat-pilot .p38-labotrat-frost,
+  html:not(.dark) .p38-labotrat-pilot .p38-field-surface,
+  html:not(.dark) .p38-labotrat-pilot .p38-search-field {
+    background-color: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px) saturate(1.05);
+    -webkit-backdrop-filter: blur(12px) saturate(1.05);
     border-width: 0 !important;
     border-color: transparent !important;
+    box-shadow: none;
+    color: #f2f2f2;
+  }
+
+  html:not(.dark) .p38-labotrat-pilot [role='tab'] {
+    font-weight: 400;
+    color: rgba(242, 242, 242, 0.7);
+  }
+
+  html:not(.dark) .p38-labotrat-pilot [role='tab'][data-state='active'] {
+    background-color: #ffffff !important;
+    color: var(--citrus-green);
+    font-weight: 500;
+    box-shadow: none;
+  }
+
+  /* Mês — pill claro sobre charcoal */
+  html:not(.dark) .p38-labotrat-pilot .p38-labotrat-mes {
+    background-color: rgba(255, 255, 255, 0.94) !important;
+    color: var(--citrus-ink);
+    border-width: 0 !important;
     box-shadow: none;
   }
 
@@ -187,29 +158,25 @@
   }
 
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-mes .p38-labotrat-mes-status {
-    color: hsl(0 0% 42%);
-    font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
+    color: var(--citrus-muted);
     font-weight: 400;
   }
 
-  /* Tab activa — pill branco + verde (acento ~7%, área pequena) */
-  html:not(.dark) .p38-labotrat-pilot [role='tab'] {
-    font-weight: 400;
+  /* KPI shell sobre charcoal — superfície clara contínua */
+  html:not(.dark) .p38-labotrat-pilot .p38-labotrat-frost.p38-field-surface {
+    background-color: rgba(255, 255, 255, 0.95);
+    color: var(--citrus-ink);
   }
 
-  html:not(.dark) .p38-labotrat-pilot [role='tab'][data-state='active'] {
-    background-color: #ffffff !important;
-    color: var(--citrus-green);
-    font-weight: 500;
-    box-shadow: none;
+  html:not(.dark) .p38-labotrat-pilot .p38-labotrat-frost.p38-field-surface .text-muted-foreground {
+    color: var(--citrus-muted);
   }
 
-  /* —— ~7% Verde: CTAs primários —— */
+  /* CTAs */
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-cta {
     background-color: var(--citrus-green);
     color: #ffffff;
-    border-color: transparent;
-    border-width: 0;
+    border: 0;
     font-weight: 500;
     box-shadow: none;
   }
@@ -218,7 +185,6 @@
     background-color: var(--citrus-green-deep);
   }
 
-  /* —— ~3% Amarelo: atenção secundária (chips / soft CTA) —— */
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-citrus,
   html:not(.dark) .p38-labotrat-pilot .p38-labotrat-cta-soft {
     background-color: var(--citrus-yellow);
@@ -238,22 +204,6 @@
     color: var(--citrus-green) !important;
   }
 
-  /* Dados / títulos de linha — médios, não bold */
-  html:not(.dark) .p38-labotrat-pilot .p38-data,
-  html:not(.dark) .p38-labotrat-pilot .p38-line-title {
-    font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
-    font-weight: 500;
-    letter-spacing: 0.015em;
-  }
-
-  /* Labels de grupo — grafite (estrutura), não verde em massa */
-  html:not(.dark) .p38-labotrat-pilot .p38-labotrat-grupo-label {
-    color: hsl(0 0% 38%);
-    font-family: 'Century Gothic', CenturyGothic, AppleGothic, 'Didact Gothic', sans-serif;
-    font-weight: 500;
-  }
-
-  /* Chip planejamento / atenção — amarelo cítrico (~3%) */
   html:not(.dark) .p38-labotrat-pilot .text-cyan-800 {
     color: var(--citrus-green) !important;
     background-color: var(--citrus-yellow-soft);
@@ -268,12 +218,120 @@
 
   html:not(.dark) .p38-labotrat-pilot .text-emerald-800 {
     color: var(--citrus-green) !important;
-    background-color: rgba(27, 77, 46, 0.08);
+    background-color: rgba(27, 77, 46, 0.1);
     font-weight: 500;
   }
 
+  /*
+   * Contêiner único — quadro branco flutuante.
+   * Toda a lista fica DENTRO; o charcoal não aparece entre itens.
+   */
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet {
+    background-color: var(--citrus-sheet);
+    color: var(--citrus-ink);
+    border-radius: 1.25rem;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+    overflow: hidden;
+    border: 0;
+  }
+
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .text-muted-foreground {
+    color: var(--citrus-muted) !important;
+  }
+
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .text-foreground,
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .p38-data,
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .p38-line-title {
+    color: var(--citrus-ink);
+  }
+
+  /* Sem cartões internos / sem gaps escuros */
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .rounded-xl.border,
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .rounded-lg.border,
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .bg-card,
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .bg-card\/40,
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .bg-background,
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .p38-field-surface {
+    background-color: transparent !important;
+    border-width: 0 !important;
+    box-shadow: none !important;
+  }
+
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .p38-mobile-line,
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet [class*='mobileLine'] {
+    background-color: transparent !important;
+  }
+
+  /* Divisor ultra-fino gelo entre contas */
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .border-b,
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .p38-mobile-line {
+    border-bottom-width: 1px !important;
+    border-bottom-style: solid !important;
+    border-bottom-color: var(--citrus-divider) !important;
+    border-left-color: transparent !important;
+  }
+
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .border-t,
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .border,
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .border-border\/40,
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .border-border\/50 {
+    border-color: var(--citrus-divider) !important;
+  }
+
+  /* Shells de lista: transparentes dentro do quadro */
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .rounded-lg,
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .rounded-xl {
+    border-radius: 0;
+  }
+
+  /* Tipografia delicada da lista (padrão dashboard) */
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .p38-data,
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .p38-line-title {
+    font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
+    font-weight: 400;
+    font-size: 0.8125rem; /* 13px */
+    letter-spacing: 0.02em;
+    line-height: 1.35;
+  }
+
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .p38-labotrat-grupo-label {
+    color: var(--citrus-muted);
+    font-family: 'Century Gothic', CenturyGothic, AppleGothic, 'Didact Gothic', sans-serif;
+    font-weight: 500;
+    font-size: 0.6875rem; /* 11px */
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .p38-sheet-section {
+    padding: 0.65rem 0.9rem 0.35rem;
+  }
+
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .p38-sheet-section-title {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--citrus-muted);
+  }
+
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .p38-sheet-section-sub {
+    font-size: 0.6875rem;
+    font-weight: 400;
+    color: var(--citrus-muted);
+    margin-top: 0.15rem;
+  }
+
+  /* Linhas mais compactas */
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet button.p38-mobile-line,
+  html:not(.dark) .p38-labotrat-pilot .p38-single-sheet .p38-mobile-line {
+    min-height: 48px !important;
+    padding-top: 0.65rem !important;
+    padding-bottom: 0.65rem !important;
+  }
+
   html:not(.dark) .p38-labotrat-pilot .ring-2 {
-    --tw-ring-color: rgba(27, 77, 46, 0.28);
+    --tw-ring-color: rgba(27, 77, 46, 0.3);
   }
 
   html.dark .p38-labotrat-pilot {

@@ -14,7 +14,7 @@ import { labelParcelaCurta } from '@/lib/agefinParcelamentoCalculos';
 import { formatFinanceiroValor } from '@/components/financeiro/fluxo/FinanceiroListaShared';
 
 const LINE_TITLE_CLASS =
-  '[&>div>div:first-child]:text-[15px] [&>div>div:first-child]:font-medium sm:[&>div>div:first-child]:text-base';
+  '[&>div>div:first-child]:text-[13px] [&>div>div:first-child]:font-normal sm:[&>div>div:first-child]:text-sm [&>div>div:nth-child(2)]:text-[11px] [&_.tabular-nums]:text-[13px] [&_.tabular-nums]:font-medium';
 
 function rowAccent(competencia, modelo) {
   if (isCompetenciaPlanejamento(competencia)) return 'info';
@@ -60,7 +60,7 @@ export default function AgefinPrevisaoRow({ competencia, modelo, onClick, stripe
       striped={striped}
       accent={p38AccentKeyFromTone(rowAccent(competencia, modelo))}
       onClick={() => onClick?.(competencia)}
-      className={`w-full text-left ${LINE_TITLE_CLASS} max-md:!py-3.5 max-md:min-h-[58px] ${planejamento ? 'opacity-95' : ''} ${fantasma ? 'opacity-70' : ''}`}
+      className={`w-full text-left ${LINE_TITLE_CLASS} max-md:!py-2.5 max-md:min-h-[48px] ${planejamento ? 'opacity-95' : ''} ${fantasma ? 'opacity-70' : ''}`}
       title={title}
       subtitle={labelVencimento(competencia, modelo, parcela)}
       value={
