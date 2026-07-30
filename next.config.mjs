@@ -9,9 +9,13 @@ const nextConfig = {
   poweredByHeader: false,
   // Evita que `src/pages/*.jsx` (rotas Vite) sejam tratadas como Pages Router do Next.
   pageExtensions: ['next.jsx', 'next.js', 'next.tsx', 'next.ts'],
-  // Prédio novo: auth/Supabase só no browser durante a migração paralela.
   experimental: {
-    disableOptimizedLoading: true,
+    optimizePackageImports: [
+      'lucide-react',
+      'date-fns',
+      '@radix-ui/react-icons',
+      'recharts',
+    ],
   },
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },

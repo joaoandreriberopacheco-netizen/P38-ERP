@@ -3,15 +3,27 @@
 import React, { Suspense, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import Layout from '@/Layout';
 import { useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-import GlobalQuickAccessLaunchers from '@/components/global/GlobalQuickAccessLaunchers';
-import NavigationTracker from '@/lib/NavigationTracker';
 import { NavigationTransitionProvider } from '@/lib/NavigationTransitionContext';
 import { ChunkErrorBoundary, PageLoadFallback } from '@/lib/lazyPage';
 import PageNotFound from '@/lib/PageNotFound';
+import DeferredMount from '@/lib/DeferredMount';
 import { P38_PAGE_LOADERS } from '@/next/pageRegistry.generated';
+
+const Layout = dynamic(() => import('@/Layout'), {
+  ssr: false,
+  loading: () => <PageLoadFallback />,
+});
+
+const NavigationTracker = dynamic(() => import('@/lib/NavigationTracker'), {
+  ssr: false,
+});
+
+const GlobalQuickAccessLaunchers = dynamic(
+  () => import('@/components/global/GlobalQuickAccessLaunchers'),
+  { ssr: false },
+);
 
 /**
  * Renderiza uma página Vite (`src/pages/*.jsx`) dentro do Layout P38 no Next.
@@ -36,6 +48,12 @@ export default function P38NextRoutePage({ pageName }) {
       loading: () => <PageLoadFallback />,
     });
   }, [loader, pageName]);
+
+  useEffect(() => {
+    if (isLoadingPublicSettings || isLoadingAuth) {
+      void import('@/Layout');
+    }
+  }, [isLoadingAuth, isLoadingPublicSettings]);
 
   useEffect(() => {
     if (isLoadingPublicSettings || isLoadingAuth) return;
@@ -111,7 +129,9 @@ export default function P38NextRoutePage({ pageName }) {
           </Layout>
         </Suspense>
       </ChunkErrorBoundary>
-      <GlobalQuickAccessLaunchers />
+      <DeferredMount waitForIdle>
+        <GlobalQuickAccessLaunchers />
+      </DeferredMount>
     </NavigationTransitionProvider>
   );
 }
