@@ -2,15 +2,38 @@
  * AGEFIN — consulta de contas recorrentes e compromissos (SuperAgefin).
  * Rota: /SuperAgefin | Menu: Financeiro → AGEFIN
  *
+ * Visual: mesmo esquema do Planejamento financeiro (tokens financeiroP38,
+ * DIN 1451, superfícies calmas, lista P38MobileLine — sem cards com sombra).
  * Componentes em src/components/superagefin/
  */
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { base44 } from '@/api/base44Client';
-import { ChevronLeft, ChevronRight, Calendar, CheckCircle2, CircleAlert, Printer, Paperclip, Wallet, CircleSlash, X, Layers, Anchor, Check, Calculator, Copy, Menu } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle2,
+  CircleAlert,
+  Printer,
+  Paperclip,
+  Wallet,
+  CircleSlash,
+  X,
+  Calculator,
+  Menu,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer';
 import { Input } from '@/components/ui/input';
+import { P38HelpPopover } from '@/components/ui/p38-help-popover';
 import SuperAgefinConsultaDrawer from '@/components/superagefin/SuperAgefinConsultaDrawer';
 import SuperAgefinConsultaOrganizer from '@/components/superagefin/SuperAgefinConsultaOrganizer';
 import { boundsMesCivil, dataHoje, formatarSoData } from '@/components/utils/dateUtils';
@@ -35,16 +58,24 @@ import {
   lancamentoEmDia,
   lancamentoCompraMercadoriaPedidoPagamentoAVista,
 } from '@/lib/agefinConsultaFilters';
-import { brandSurface } from '@/lib/brandSurfaces';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import { p38Accent } from '@/lib/p38ThemeSurfaces';
-import { p38Mobile } from '@/lib/p38MobileSurfaces';
+import {
+  P38_ACCENT,
+  P38_CHIP_ACTIVE,
+  P38_CHIP_INACTIVE,
+  P38_FIELD_SURFACE,
+  P38_KPI_SHELL,
+} from '@/components/financeiro/fluxo/financeiroP38';
+import FinanceiroListaMeta, { FinanceiroSummaryChip } from '@/components/financeiro/fluxo/FinanceiroListaMeta';
+import { FinanceiroListaEstado } from '@/components/financeiro/fluxo/FinanceiroListaShared';
 import {
   measureVirtualItem,
   P38_VIRTUAL_LIST_MAX_HEIGHT,
   P38_VIRTUAL_MIN_ROWS,
   P38_VIRTUAL_OVERSCAN,
 } from '@/lib/p38VirtualList';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 function formatCurrency(value) {
@@ -56,26 +87,12 @@ function formatMonth(date) {
 }
 
 function KpiCard({ label, value, tone = 'default' }) {
-  const toneMap = {
-    default: `${brandSurface.card} text-foreground`,
-    danger: `${brandSurface.card} text-foreground`,
-    success: `${brandSurface.card} text-foreground`,
-    muted: `${brandSurface.card} text-foreground`,
-  };
-
-  const labelToneMap = {
-    default: 'text-muted-foreground dark:text-muted-foreground',
-    success: 'text-emerald-700/80 dark:text-emerald-300/90',
-    danger: 'text-red-700/80 dark:text-red-300/90',
-    muted: 'text-muted-foreground dark:text-muted-foreground',
-  };
-
-  const iconToneMap = {
-    default: 'text-muted-foreground dark:text-muted-foreground',
-    success: 'text-emerald-700/80 dark:text-emerald-300/90',
-    danger: 'text-red-700/80 dark:text-red-300/90',
-    muted: 'text-muted-foreground dark:text-muted-foreground',
-  };
+  const valueTone = {
+    default: 'text-foreground',
+    success: P38_ACCENT,
+    danger: 'text-red-600 dark:text-red-400',
+    muted: 'text-muted-foreground',
+  }[tone] || 'text-foreground';
 
   const Icon = {
     default: Wallet,
@@ -85,12 +102,16 @@ function KpiCard({ label, value, tone = 'default' }) {
   }[tone] || Wallet;
 
   return (
-    <div className={`min-w-0 rounded-[18px] px-2.5 py-2 shadow-sm md:rounded-[20px] md:px-3 md:py-2.5 ${toneMap[tone]}`}>
-      <div className="flex items-center justify-between gap-3">
-        <p className={`text-[10px] uppercase tracking-[0.16em] truncate ${labelToneMap[tone]}`}>{label}</p>
-        <Icon className={`w-3.5 h-3.5 shrink-0 ${iconToneMap[tone]}`} />
+    <div className={cn('min-w-0 rounded-xl px-2.5 py-2 md:px-3 md:py-2.5', P38_FIELD_SURFACE)}>
+      <div className="flex items-center justify-between gap-2">
+        <p className="truncate text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          {label}
+        </p>
+        <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
       </div>
-      <p className="mt-0.5 text-sm md:text-[15px] font-semibold font-glacial truncate">{value}</p>
+      <p className={cn('mt-1 truncate text-sm font-semibold tabular-nums md:text-[15px]', valueTone)}>
+        {value}
+      </p>
     </div>
   );
 }
@@ -102,35 +123,30 @@ function CmvQuickToggle({ checked, onChange }) {
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-        checked ? 'bg-background dark:bg-card' : 'bg-muted dark:bg-muted'
-      }`}
+      className={cn(
+        'relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        checked ? 'bg-[#4a5240] dark:bg-[#a4ce33]' : 'bg-secondary dark:bg-[#383e47]',
+      )}
     >
       <span
-        className={`inline-block h-5 w-5 rounded-full bg-card shadow transform transition-transform ${
-          checked ? 'translate-x-6' : 'translate-x-1'
-        }`}
+        className={cn(
+          'inline-block h-5 w-5 rounded-full bg-card transform transition-transform',
+          checked ? 'translate-x-6' : 'translate-x-1',
+        )}
       />
     </button>
   );
 }
 
-function FilterChip({ active, onClick, children, tone = 'default' }) {
-  const activeStyles = {
-    default: 'bg-primary text-primary-foreground dark:bg-card dark:text-foreground',
-    success: 'bg-emerald-600 text-white dark:bg-emerald-500 dark:text-white',
-    danger: 'bg-red-600 text-white dark:bg-red-500 dark:text-white',
-  };
-
+function FilterChip({ active, onClick, children }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`h-9 px-3 rounded-2xl text-xs font-medium shadow-sm transition-all whitespace-nowrap ${
-        active
-          ? activeStyles[tone]
-          : 'bg-muted text-muted-foreground dark:bg-muted dark:text-foreground/90'
-      }`}
+      className={cn(
+        'h-9 px-3 rounded-full text-xs font-medium whitespace-nowrap transition-colors',
+        active ? P38_CHIP_ACTIVE : P38_CHIP_INACTIVE,
+      )}
     >
       {children}
     </button>
@@ -139,100 +155,6 @@ function FilterChip({ active, onClick, children, tone = 'default' }) {
 
 function grupoDomId(key) {
   return `agefin-grupo-${String(key).replace(/[^a-zA-Z0-9_-]/g, '_')}`;
-}
-
-function ContaCard({ conta, onOpen, modoSelecao, selecionado, onToggleSelecao, avisoMesmoGrupoDuplicado }) {
-  const todayKey = dataHoje();
-  const isPaid = lancamentoPago(conta);
-  const isOverdue = lancamentoVencidoOuAtrasado(conta, todayKey);
-  const hasBoleto = conta.forma_pagamento_tipo === 'Boleto' || conta.forma_pagamento === 'Boleto';
-  const iconClass = isPaid
-    ? 'w-4 h-4 text-emerald-600 shrink-0'
-    : isOverdue
-      ? 'w-4 h-4 text-pink-500 shrink-0'
-      : hasBoleto
-        ? 'w-4 h-4 text-lime-500 shrink-0'
-        : 'w-4 h-4 text-muted-foreground shrink-0';
-  const ehCmv = lancamentoEhCmv(conta);
-  const ehFrete = lancamentoEhFreteItinerario(conta);
-
-  return (
-    <button
-      type="button"
-      onClick={() => {
-        if (modoSelecao) onToggleSelecao?.(conta);
-        else onOpen();
-      }}
-      className={`relative w-full text-left rounded-2xl p-0.5 shadow-sm transition-all hover:shadow-md md:rounded-[28px] md:p-1 ${brandSurface.card}`}
-    >
-      {modoSelecao && selecionado && (
-        <div className="pointer-events-none absolute inset-0 rounded-[20px] bg-emerald-500/10 dark:bg-emerald-500/15 md:rounded-[24px]" />
-      )}
-      <div className={`rounded-[20px] px-3 py-2.5 md:rounded-[24px] md:px-4 md:py-3.5 ${brandSurface.cardInset}`}>
-        <div className="flex items-start justify-between gap-2 md:gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="mb-1.5 flex flex-wrap items-center gap-1.5 md:mb-2 md:gap-2">
-              {modoSelecao && (
-                <span
-                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-border/40 ${
-                    selecionado ? 'border-emerald-500 bg-emerald-500 text-white' : 'bg-card'
-                  }`}
-                >
-                  {selecionado ? <Check className="h-3 w-3" strokeWidth={3} /> : null}
-                </span>
-              )}
-              {isPaid ? <CheckCircle2 className={iconClass} /> : isOverdue ? <CircleAlert className={iconClass} /> : <Wallet className={iconClass} />}
-              <p className="line-clamp-2 text-[14px] font-semibold text-foreground md:text-[15px]">{conta.descricao}</p>
-              <Paperclip className="h-3.5 w-3.5 shrink-0 text-muted-foreground dark:text-muted-foreground md:h-4 md:w-4" />
-              {ehFrete && (
-                <span className="inline-flex items-center gap-0.5 rounded-md bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-sky-900 dark:bg-sky-950/50 dark:text-sky-200">
-                  <Anchor className="h-3 w-3" /> Frete
-                </span>
-              )}
-              {ehCmv && (
-                <span className="inline-flex items-center gap-0.5 rounded-md bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-violet-900 dark:bg-violet-950/50 dark:text-violet-200">
-                  <Layers className="h-3 w-3" /> CMV
-                </span>
-              )}
-              {avisoMesmoGrupoDuplicado && (
-                <span
-                  title="Mesma série e mesma descrição neste vencimento. Se são obrigações distintas, confira o vínculo no detalhe."
-                  className="inline-flex items-center gap-0.5 rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-950 dark:bg-amber-950/40 dark:text-amber-100"
-                >
-                  <Copy className="h-3 w-3" /> Duplicado?
-                </span>
-              )}
-            </div>
-            <p className="line-clamp-1 text-[11px] text-muted-foreground dark:text-muted-foreground md:text-xs">
-              {conta.terceiro_nome || 'Sem favorecido'} · {conta.categoria || 'Sem categoria'}
-            </p>
-            <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground dark:text-muted-foreground md:mt-3 md:gap-2 md:text-xs">
-              <span className="inline-flex items-center gap-1 rounded-full bg-card px-2 py-0.5 shadow-sm dark:bg-background/80 dark:ring-1 dark:ring-border">
-                <Calendar className="h-3 w-3 md:h-3.5 md:w-3.5" /> {formatarSoData(conta.data_vencimento)}
-              </span>
-              <span
-                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 shadow-sm md:px-2.5 md:py-1 ${
-                  isPaid
-                    ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200'
-                    : isOverdue
-                      ? 'bg-pink-50 text-pink-800 dark:bg-red-950/35 dark:text-red-200'
-                      : hasBoleto
-                        ? 'bg-lime-50 text-lime-800 dark:bg-lime-950/30 dark:text-lime-200'
-                        : 'bg-card text-muted-foreground dark:bg-background/80 dark:text-muted-foreground dark:ring-1 dark:ring-border'
-                }`}
-              >
-                {isPaid ? 'Pago' : isOverdue ? 'Vencido' : hasBoleto ? 'Atualizado' : 'Pendente'}
-              </span>
-            </div>
-          </div>
-          <div className="shrink-0 pl-1 text-right md:pl-2">
-            <p className="text-[10px] text-muted-foreground dark:text-muted-foreground md:text-xs">Valor</p>
-            <p className="text-base font-semibold text-foreground md:text-lg">{formatCurrency(conta.valor)}</p>
-          </div>
-        </div>
-      </div>
-    </button>
-  );
 }
 
 function ContaLinhaP38({ conta, onOpen, modoSelecao, selecionado, onToggleSelecao, avisoMesmoGrupoDuplicado, striped }) {
@@ -325,11 +247,11 @@ function SuperAgefinGruposVirtualList({
                 className="absolute left-0 top-0 w-full scroll-mt-24 px-0.5 pt-4 first:pt-0"
                 style={{ transform: `translateY(${virtualRow.start}px)` }}
               >
-                <div className="flex items-baseline justify-between gap-2">
-                  <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground dark:text-muted-foreground">
+                <div className="flex items-baseline justify-between gap-2 px-0.5">
+                  <h2 className="text-[11px] font-medium uppercase tracking-wide text-foreground/50">
                     {grupo.label}
                   </h2>
-                  <span className="text-[11px] text-muted-foreground">
+                  <span className="text-[11px] tabular-nums text-muted-foreground">
                     {grupo.contas.length} · {formatCurrency(grupo.contas.reduce((acc, c) => acc + (Number(c.valor) || 0), 0))}
                   </span>
                 </div>
@@ -346,28 +268,15 @@ function SuperAgefinGruposVirtualList({
               className="absolute left-0 top-0 w-full px-0.5 py-0.5"
               style={{ transform: `translateY(${virtualRow.start}px)` }}
             >
-              <div className="block desktop-layout:hidden">
-                <ContaLinhaP38
-                  conta={conta}
-                  striped={index % 2 === 1}
-                  modoSelecao={modoSelecao}
-                  selecionado={selecionadosIds.includes(conta.id)}
-                  onToggleSelecao={toggleSelecaoConta}
-                  onOpen={() => abrirConta(conta)}
-                  avisoMesmoGrupoDuplicado={idsComAvisoDuplicadoGrupo.has(conta.id)}
-                />
-              </div>
-              <div className="hidden desktop-layout:block">
-                <ContaCard
-                  conta={conta}
-                  striped={index % 2 === 1}
-                  modoSelecao={modoSelecao}
-                  selecionado={selecionadosIds.includes(conta.id)}
-                  onToggleSelecao={toggleSelecaoConta}
-                  onOpen={() => abrirConta(conta)}
-                  avisoMesmoGrupoDuplicado={idsComAvisoDuplicadoGrupo.has(conta.id)}
-                />
-              </div>
+              <ContaLinhaP38
+                conta={conta}
+                striped={index % 2 === 1}
+                modoSelecao={modoSelecao}
+                selecionado={selecionadosIds.includes(conta.id)}
+                onToggleSelecao={toggleSelecaoConta}
+                onOpen={() => abrirConta(conta)}
+                avisoMesmoGrupoDuplicado={idsComAvisoDuplicadoGrupo.has(conta.id)}
+              />
             </div>
           );
         })}
@@ -792,53 +701,108 @@ export default function SuperAgefin() {
     }
   };
 
+  const summaryChips = [];
+  if (kpis.overdueValue > 0) {
+    summaryChips.push(
+      <FinanceiroSummaryChip key="venc" className="text-red-800 dark:text-red-300">
+        {formatCurrency(kpis.overdueValue)} vencido
+      </FinanceiroSummaryChip>,
+    );
+  }
+  if (kpis.paidValue > 0) {
+    summaryChips.push(
+      <FinanceiroSummaryChip key="pago" className="text-emerald-800 dark:text-emerald-300">
+        {formatCurrency(kpis.paidValue)} pago
+      </FinanceiroSummaryChip>,
+    );
+  }
+
   return (
-    <div className={`min-h-screen p-2.5 md:p-4 ${modoSelecao ? 'pb-36' : 'pb-20'} ${brandSurface.pageScreen}`}>
-      <div className="mx-auto max-w-5xl space-y-2 md:space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-[0.16em]">Financeiro</p>
-            <h1 className="mt-0.5 text-xl leading-none md:text-2xl font-semibold text-foreground font-glacial">AGEFIN</h1>
+    <div
+      className={cn(
+        'w-full min-w-0 overflow-x-hidden font-din-1451 bg-background px-3 py-3 sm:p-4 lg:p-6',
+        modoSelecao ? 'pb-36' : 'pb-[var(--p38-scroll-pad-below-nav)] md:pb-6',
+      )}
+    >
+      <div className="mx-auto max-w-5xl space-y-3">
+        <div className="flex items-start justify-between gap-3 border-b border-border/40 pb-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <h1 className="truncate text-lg font-medium text-foreground sm:text-xl">Agefin</h1>
+              <P38HelpPopover label="Ajuda: Agefin" side="bottom" align="start">
+                <p className="font-medium text-foreground">Consulta do que já é real</p>
+                <p className="mt-2 text-muted-foreground">
+                  Aqui entram contas a pagar do mês civil — incluindo fretes, CMV e compromissos
+                  previstos da SUPERAGEFIN.
+                </p>
+                <p className="mt-2 text-muted-foreground">
+                  Para criar ou editar séries recorrentes, use o{' '}
+                  <strong className="text-foreground">Planejamento financeiro</strong>.
+                </p>
+              </P38HelpPopover>
+            </div>
+            <p className="mt-0.5 text-xs leading-snug text-muted-foreground sm:text-sm">
+              Contas reais do mês · filtrar · somar · PDF
+            </p>
           </div>
           <Drawer>
             <DrawerTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-xl bg-muted">
-                <Menu className="w-4 h-4 text-muted-foreground" />
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn('relative h-10 w-10 shrink-0 rounded-xl', P38_FIELD_SURFACE)}
+              >
+                <Menu className="h-4 w-4 text-muted-foreground" />
                 {hasActiveFilters && (
-                  <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-blue-600 dark:bg-blue-400 ring-2 ring-white dark:ring-border/40" aria-hidden />
+                  <span
+                    className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#4a5240] ring-2 ring-background dark:bg-[#a4ce33]"
+                    aria-hidden
+                  />
                 )}
               </Button>
             </DrawerTrigger>
-            <DrawerContent className="border-0 rounded-t-[32px] bg-card px-4 pb-6">
+            <DrawerContent className="rounded-t-2xl border-0 bg-card px-4 pb-6 font-din-1451">
               <DrawerHeader className="px-0 text-left">
-                <DrawerTitle className="font-glacial text-foreground">Menu AGEFIN</DrawerTitle>
+                <DrawerTitle className="text-foreground">Menu Agefin</DrawerTitle>
                 <DrawerDescription className="text-sm text-muted-foreground">
                   Organize, some, imprima e ajuste filtros.
                 </DrawerDescription>
               </DrawerHeader>
-              <div className="space-y-5 px-0 max-h-[65vh] overflow-y-auto">
+              <div className="max-h-[65vh] space-y-5 overflow-y-auto px-0">
                 <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">Ações rápidas</p>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Ações rápidas
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
                       onClick={() => setModoSelecao((v) => !v)}
-                      className={`h-10 gap-1.5 rounded-2xl px-3 text-xs font-medium ${modoSelecao ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-100' : 'bg-muted text-foreground/90'}`}
+                      className={cn(
+                        'h-10 gap-1.5 rounded-xl px-3 text-xs font-medium',
+                        modoSelecao ? P38_CHIP_ACTIVE : P38_CHIP_INACTIVE,
+                      )}
                     >
                       <Calculator className="h-4 w-4" />
                       {modoSelecao ? 'Somando' : 'Somar'}
                     </Button>
-                    <Button onClick={imprimirRelatorio} variant="ghost" size="sm" className="h-10 rounded-2xl px-3 text-xs bg-muted">
-                      <Printer className="w-4 h-4 mr-1.5 text-muted-foreground" />
+                    <Button
+                      onClick={imprimirRelatorio}
+                      variant="ghost"
+                      size="sm"
+                      className={cn('h-10 rounded-xl px-3 text-xs', P38_CHIP_INACTIVE)}
+                    >
+                      <Printer className="mr-1.5 h-4 w-4" />
                       PDF
                     </Button>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">Organização</p>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Organização
+                  </p>
                   <SuperAgefinConsultaOrganizer
                     groupBy={groupBy}
                     sortOrder={sortOrder}
@@ -847,62 +811,122 @@ export default function SuperAgefin() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between rounded-2xl bg-muted/50 px-3 py-2">
+                <div
+                  className={cn(
+                    'flex items-center justify-between rounded-xl px-3 py-2.5',
+                    P38_FIELD_SURFACE,
+                  )}
+                >
                   <div className="min-w-0">
                     <p className="text-xs font-medium text-foreground">CMV na lista</p>
-                    <p className="text-[11px] text-muted-foreground">Desligue para ocultar sem abrir filtros</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Desligue para ocultar sem abrir filtros
+                    </p>
                   </div>
                   <CmvQuickToggle checked={mostrarCmvRapido} onChange={setMostrarCmvRapido} />
                 </div>
 
                 <div>
-                  <p className="text-xs text-muted-foreground mb-2">Pagamento</p>
+                  <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Pagamento
+                  </p>
                   <div className="flex flex-wrap gap-2">
-                    <FilterChip active={pagamentoFilter === 'todos'} onClick={() => setPagamentoFilter('todos')}>Todos</FilterChip>
-                    <FilterChip active={pagamentoFilter === 'pagos'} onClick={() => setPagamentoFilter('pagos')} tone="success">Pagos</FilterChip>
-                    <FilterChip active={pagamentoFilter === 'nao_pagos'} onClick={() => setPagamentoFilter('nao_pagos')}>Não pagos</FilterChip>
+                    <FilterChip active={pagamentoFilter === 'todos'} onClick={() => setPagamentoFilter('todos')}>
+                      Todos
+                    </FilterChip>
+                    <FilterChip active={pagamentoFilter === 'pagos'} onClick={() => setPagamentoFilter('pagos')}>
+                      Pagos
+                    </FilterChip>
+                    <FilterChip
+                      active={pagamentoFilter === 'nao_pagos'}
+                      onClick={() => setPagamentoFilter('nao_pagos')}
+                    >
+                      Não pagos
+                    </FilterChip>
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground mb-2">Prazo (vencimento)</p>
+                  <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Prazo (vencimento)
+                  </p>
                   <div className="flex flex-wrap gap-2">
-                    <FilterChip active={prazoFilter === 'todos'} onClick={() => setPrazoFilter('todos')}>Todos</FilterChip>
-                    <FilterChip active={prazoFilter === 'vencidas'} onClick={() => setPrazoFilter('vencidas')} tone="danger">Vencidas</FilterChip>
-                    <FilterChip active={prazoFilter === 'em_dia'} onClick={() => setPrazoFilter('em_dia')} tone="success">Em dia</FilterChip>
+                    <FilterChip active={prazoFilter === 'todos'} onClick={() => setPrazoFilter('todos')}>
+                      Todos
+                    </FilterChip>
+                    <FilterChip active={prazoFilter === 'vencidas'} onClick={() => setPrazoFilter('vencidas')}>
+                      Vencidas
+                    </FilterChip>
+                    <FilterChip active={prazoFilter === 'em_dia'} onClick={() => setPrazoFilter('em_dia')}>
+                      Em dia
+                    </FilterChip>
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground mb-2">Tipo</p>
+                  <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Tipo
+                  </p>
                   <div className="flex flex-wrap gap-2">
-                    <FilterChip active={cmvFilter === 'todos'} onClick={() => setCmvFilter('todos')}>Todos</FilterChip>
-                    <FilterChip active={cmvFilter === 'cmv'} onClick={() => setCmvFilter('cmv')}>CMV</FilterChip>
-                    <FilterChip active={cmvFilter === 'normal'} onClick={() => setCmvFilter('normal')}>Normal</FilterChip>
+                    <FilterChip active={cmvFilter === 'todos'} onClick={() => setCmvFilter('todos')}>
+                      Todos
+                    </FilterChip>
+                    <FilterChip active={cmvFilter === 'cmv'} onClick={() => setCmvFilter('cmv')}>
+                      CMV
+                    </FilterChip>
+                    <FilterChip active={cmvFilter === 'normal'} onClick={() => setCmvFilter('normal')}>
+                      Normal
+                    </FilterChip>
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground mb-2">Itinerário / fretes</p>
+                  <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Itinerário / fretes
+                  </p>
                   <div className="flex flex-wrap gap-2">
-                    <FilterChip active={freteFilter === 'todos'} onClick={() => setFreteFilter('todos')}>Todos</FilterChip>
-                    <FilterChip active={freteFilter === 'fretes'} onClick={() => setFreteFilter('fretes')}>Fretes</FilterChip>
-                    <FilterChip active={freteFilter === 'sem_fretes'} onClick={() => setFreteFilter('sem_fretes')}>Sem fretes</FilterChip>
+                    <FilterChip active={freteFilter === 'todos'} onClick={() => setFreteFilter('todos')}>
+                      Todos
+                    </FilterChip>
+                    <FilterChip active={freteFilter === 'fretes'} onClick={() => setFreteFilter('fretes')}>
+                      Fretes
+                    </FilterChip>
+                    <FilterChip
+                      active={freteFilter === 'sem_fretes'}
+                      onClick={() => setFreteFilter('sem_fretes')}
+                    >
+                      Sem fretes
+                    </FilterChip>
                   </div>
-                  <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed">
-                    Fretes: lançamentos com referência ao evento logístico (aba Fretes do Itinerário Fluvial) ou tags frete / conta_frete.
+                  <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+                    Fretes: lançamentos com referência ao evento logístico (aba Fretes do Itinerário
+                    Fluvial) ou tags frete / conta_frete.
                   </p>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
-                    <p className="text-xs text-muted-foreground">Data inicial (opcional)</p>
-                    <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="rounded-2xl border-0 bg-muted h-12" />
+                    <p className="text-[11px] text-muted-foreground">Data inicial (opcional)</p>
+                    <Input
+                      type="date"
+                      value={dateFrom}
+                      onChange={(e) => setDateFrom(e.target.value)}
+                      className={cn('h-11 rounded-xl border-0', P38_FIELD_SURFACE)}
+                    />
                   </div>
                   <div className="space-y-1.5">
-                    <p className="text-xs text-muted-foreground">Data final (opcional)</p>
-                    <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="rounded-2xl border-0 bg-muted h-12" />
+                    <p className="text-[11px] text-muted-foreground">Data final (opcional)</p>
+                    <Input
+                      type="date"
+                      value={dateTo}
+                      onChange={(e) => setDateTo(e.target.value)}
+                      className={cn('h-11 rounded-xl border-0', P38_FIELD_SURFACE)}
+                    />
                   </div>
                 </div>
               </div>
               <DrawerFooter className="px-0 pb-0 pt-5">
-                <Button variant="ghost" onClick={limparFiltros} className="w-full rounded-2xl h-12 bg-muted">
+                <Button
+                  variant="ghost"
+                  onClick={limparFiltros}
+                  className={cn('h-11 w-full rounded-xl', P38_CHIP_INACTIVE)}
+                >
                   Limpar filtros
                 </Button>
               </DrawerFooter>
@@ -910,117 +934,187 @@ export default function SuperAgefin() {
           </Drawer>
         </div>
 
-        <div className="flex items-center justify-between gap-2">
-          <Button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))} variant="ghost" size="sm" className="rounded-full h-8 w-8 p-0 md:h-9 md:w-9">
-            <ChevronLeft className="w-5 h-5" />
-          </Button>
-          <div className="text-center min-w-0">
-            <p className="text-sm font-semibold text-foreground capitalize">{formatMonth(currentMonth)}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Período civil · {monthData.length} conta{monthData.length !== 1 ? 's' : ''}</p>
+        <div className={cn(P38_KPI_SHELL, 'space-y-2.5 sm:space-y-3')}>
+          <div className={cn('flex min-w-0 items-center rounded-xl px-0.5', P38_FIELD_SURFACE)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 shrink-0"
+              onClick={() =>
+                setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))
+              }
+              aria-label="Mês anterior"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="min-w-0 flex-1 px-1 py-2 text-center">
+              <p className="truncate text-sm font-semibold uppercase tracking-wide text-foreground sm:text-base">
+                {formatMonth(currentMonth)}
+              </p>
+              <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground">
+                Período civil · {monthData.length} conta{monthData.length !== 1 ? 's' : ''}
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 shrink-0"
+              onClick={() =>
+                setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))
+              }
+              aria-label="Próximo mês"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
-          <Button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))} variant="ghost" size="sm" className="rounded-full h-8 w-8 p-0 md:h-9 md:w-9">
-            <ChevronRight className="w-5 h-5" />
-          </Button>
+
+          <div className="space-y-2 border-t border-border/40 pt-2.5 sm:pt-3">
+            <div className="rounded-xl bg-secondary/30 px-3 py-3 dark:bg-[#383e47]/40 sm:px-4 sm:py-3.5">
+              <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:text-[11px]">
+                Total no filtro
+              </p>
+              <p
+                className={cn(
+                  'mt-1 font-semibold tabular-nums leading-none tracking-tight',
+                  'text-[clamp(1.375rem,5.5vw,1.875rem)]',
+                  kpis.totalValue > 0 ? 'text-red-600 dark:text-red-400' : P38_ACCENT,
+                )}
+              >
+                {kpis.totalValue > 0 ? `−${formatCurrency(kpis.totalValue)}` : formatCurrency(0)}
+              </p>
+            </div>
+            <FinanceiroListaMeta
+              total={contasOrdenadas.length}
+              totalLabel={contasOrdenadas.length === 1 ? 'conta' : 'contas'}
+              hasActiveFilters={hasActiveFilters}
+              onLimparFiltros={limparFiltros}
+              summaryChips={summaryChips}
+            />
+          </div>
         </div>
 
         {hasActiveFilters && (
-          <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-            <span className="rounded-full bg-muted px-2.5 py-1">Filtros ativos</span>
-            {pagamentoFilter !== 'todos' && <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-blue-800 dark:text-blue-200">Pag.: {pagamentoFilter}</span>}
-            {prazoFilter !== 'todos' && <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-blue-800 dark:text-blue-200">Prazo: {prazoFilter}</span>}
-            {cmvFilter !== 'todos' && <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-blue-800 dark:text-blue-200">Tipo: {cmvFilter}</span>}
-            {freteFilter !== 'todos' && <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-blue-800 dark:text-blue-200">Frete: {freteFilter}</span>}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {pagamentoFilter !== 'todos' && (
+              <FinanceiroSummaryChip>Pag.: {pagamentoFilter}</FinanceiroSummaryChip>
+            )}
+            {prazoFilter !== 'todos' && (
+              <FinanceiroSummaryChip>Prazo: {prazoFilter}</FinanceiroSummaryChip>
+            )}
+            {cmvFilter !== 'todos' && (
+              <FinanceiroSummaryChip>Tipo: {cmvFilter}</FinanceiroSummaryChip>
+            )}
+            {freteFilter !== 'todos' && (
+              <FinanceiroSummaryChip>Frete: {freteFilter}</FinanceiroSummaryChip>
+            )}
             {(dateFrom || dateTo) && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5">
-                {dateFrom || '…'} → {dateTo || '…'}
-                <button type="button" onClick={() => { setDateFrom(''); setDateTo(''); }} className="p-0.5 rounded-full hover:bg-muted dark:hover:bg-primary/90" aria-label="Limpar datas">
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
+              <FinanceiroSummaryChip>
+                <span className="inline-flex items-center gap-1">
+                  {dateFrom || '…'} → {dateTo || '…'}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDateFrom('');
+                      setDateTo('');
+                    }}
+                    className="rounded-full p-0.5 hover:text-foreground"
+                    aria-label="Limpar datas"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              </FinanceiroSummaryChip>
             )}
           </div>
         )}
 
         <div className="grid grid-cols-2 gap-1.5 md:grid-cols-4 md:gap-2">
-          <KpiCard label="Total (filtro)" value={formatCurrency(kpis.totalValue)} />
+          <KpiCard label="Total (filtro)" value={formatCurrency(kpis.totalValue)} tone="danger" />
           <KpiCard label="Pago" value={formatCurrency(kpis.paidValue)} tone="success" />
           <KpiCard label="Não pago" value={formatCurrency(kpis.unpaidValue)} tone="muted" />
           <KpiCard label="Vencido" value={formatCurrency(kpis.overdueValue)} tone="danger" />
         </div>
 
-        {loading ? (
-          <div className="flex justify-center items-center py-16"><div className="w-8 h-8 border-4 border-border/40 border-t-primary dark:border-border/40 dark:border-t-foreground rounded-full animate-spin" /></div>
-        ) : contasOrdenadas.length === 0 ? (
-          <div className={`rounded-[24px] p-10 text-center md:rounded-[28px] md:p-12 ${brandSurface.textMuted} ${brandSurface.card}`}>
-            Nenhuma conta a pagar encontrada para esse mês e filtros.
-          </div>
-        ) : grupos.reduce((acc, g) => acc + g.contas.length, 0) >= P38_VIRTUAL_MIN_ROWS ? (
-          <SuperAgefinGruposVirtualList
-            grupos={grupos}
-            modoSelecao={modoSelecao}
-            selecionadosIds={selecionadosIds}
-            toggleSelecaoConta={toggleSelecaoConta}
-            abrirConta={abrirConta}
-            idsComAvisoDuplicadoGrupo={idsComAvisoDuplicadoGrupo}
-          />
-        ) : (
-          <div className="mx-auto w-full max-w-3xl space-y-6 md:max-w-4xl">
-            {grupos.map((grupo) => (
-              <section key={grupo.key} id={grupoDomId(grupo.key)} className="scroll-mt-24 space-y-2 md:space-y-3">
-                <div className="flex items-baseline justify-between gap-2 px-0.5">
-                  <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground dark:text-muted-foreground">{grupo.label}</h2>
-                  <span className="text-[11px] text-muted-foreground">
-                    {grupo.contas.length} · {formatCurrency(grupo.contas.reduce((acc, c) => acc + (Number(c.valor) || 0), 0))}
-                  </span>
-                </div>
-                <P38MobileLineList className="block desktop-layout:hidden rounded-lg">
-                  {grupo.contas.map((conta, index) => (
-                    <ContaLinhaP38
-                      key={conta.id}
-                      conta={conta}
-                      striped={index % 2 === 1}
-                      modoSelecao={modoSelecao}
-                      selecionado={selecionadosIds.includes(conta.id)}
-                      onToggleSelecao={toggleSelecaoConta}
-                      onOpen={() => abrirConta(conta)}
-                      avisoMesmoGrupoDuplicado={idsComAvisoDuplicadoGrupo.has(conta.id)}
-                    />
-                  ))}
-                </P38MobileLineList>
-                <div className="hidden desktop-layout:block space-y-2">
-                  {grupo.contas.map((conta, index) => (
-                    <ContaCard
-                      key={conta.id}
-                      conta={conta}
-                      striped={index % 2 === 1}
-                      modoSelecao={modoSelecao}
-                      selecionado={selecionadosIds.includes(conta.id)}
-                      onToggleSelecao={toggleSelecaoConta}
-                      onOpen={() => abrirConta(conta)}
-                      avisoMesmoGrupoDuplicado={idsComAvisoDuplicadoGrupo.has(conta.id)}
-                    />
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
-        )}
+        <FinanceiroListaEstado
+          loading={loading}
+          vazio={!loading && contasOrdenadas.length === 0}
+          vazioMensagem="Nenhuma conta a pagar encontrada para esse mês e filtros."
+        >
+          {grupos.reduce((acc, g) => acc + g.contas.length, 0) >= P38_VIRTUAL_MIN_ROWS ? (
+            <SuperAgefinGruposVirtualList
+              grupos={grupos}
+              modoSelecao={modoSelecao}
+              selecionadosIds={selecionadosIds}
+              toggleSelecaoConta={toggleSelecaoConta}
+              abrirConta={abrirConta}
+              idsComAvisoDuplicadoGrupo={idsComAvisoDuplicadoGrupo}
+            />
+          ) : (
+            <div className="mx-auto w-full max-w-3xl space-y-5 md:max-w-4xl">
+              {grupos.map((grupo) => (
+                <section
+                  key={grupo.key}
+                  id={grupoDomId(grupo.key)}
+                  className="scroll-mt-24 space-y-1.5"
+                >
+                  <div className="flex items-baseline justify-between gap-2 px-0.5">
+                    <h2 className="text-[11px] font-medium uppercase tracking-wide text-foreground/50">
+                      {grupo.label}
+                    </h2>
+                    <span className="text-[11px] tabular-nums text-muted-foreground">
+                      {grupo.contas.length} ·{' '}
+                      {formatCurrency(grupo.contas.reduce((acc, c) => acc + (Number(c.valor) || 0), 0))}
+                    </span>
+                  </div>
+                  <P38MobileLineList className="rounded-lg">
+                    {grupo.contas.map((conta, index) => (
+                      <ContaLinhaP38
+                        key={conta.id}
+                        conta={conta}
+                        striped={index % 2 === 1}
+                        modoSelecao={modoSelecao}
+                        selecionado={selecionadosIds.includes(conta.id)}
+                        onToggleSelecao={toggleSelecaoConta}
+                        onOpen={() => abrirConta(conta)}
+                        avisoMesmoGrupoDuplicado={idsComAvisoDuplicadoGrupo.has(conta.id)}
+                      />
+                    ))}
+                  </P38MobileLineList>
+                </section>
+              ))}
+            </div>
+          )}
+        </FinanceiroListaEstado>
       </div>
 
       {modoSelecao && (
-        <div className="fixed inset-x-0 bottom-0 z-[60] border-t border-border/40 bg-card/95 px-4 py-3 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur-md dark:border-border/40 dark:bg-muted/95 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="fixed inset-x-0 bottom-0 z-[60] border-t border-border/40 bg-background/95 px-4 py-3 backdrop-blur-md pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <div className="mx-auto flex max-w-lg flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Seleção para pagar</p>
-              <p className="text-lg font-semibold text-foreground">
-                {selecionadosIds.length} conta{selecionadosIds.length !== 1 ? 's' : ''} · {formatCurrency(somaSelecionados)}
+              <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                Seleção para pagar
+              </p>
+              <p className="text-lg font-semibold tabular-nums text-foreground">
+                {selecionadosIds.length} conta{selecionadosIds.length !== 1 ? 's' : ''} ·{' '}
+                {formatCurrency(somaSelecionados)}
               </p>
             </div>
             <div className="flex gap-2">
-              <Button type="button" variant="outline" size="sm" className="h-11 flex-1 rounded-2xl sm:flex-none" onClick={() => setSelecionadosIds([])}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-11 flex-1 rounded-xl sm:flex-none"
+                onClick={() => setSelecionadosIds([])}
+              >
                 Limpar
               </Button>
-              <Button type="button" size="sm" className="h-11 flex-1 rounded-2xl sm:flex-none" onClick={() => setModoSelecao(false)}>
+              <Button
+                type="button"
+                size="sm"
+                className="h-11 flex-1 rounded-xl sm:flex-none"
+                onClick={() => setModoSelecao(false)}
+              >
                 Pronto
               </Button>
             </div>
