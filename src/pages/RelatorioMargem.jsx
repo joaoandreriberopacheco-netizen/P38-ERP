@@ -23,6 +23,12 @@ import {
   alocarReceitaPedidoNasLinhas,
   resolveMargemProdutoKey,
   resolveCustoUnitarioMargem,
+  resolveCustoComponentesUnitBaseMargem,
+  acumularCustoComponentesMargem,
+  calcularCustoTotalDosComponentes,
+  criarCamposCustoComponentesZerados,
+  somarCamposCustoComponentes,
+  CUSTO_MARGEM_CAMPOS,
   vendaNoIntervaloConsulta,
 } from '@/lib/relatorioMargemCalculos';
 import { registerJsPdfDin1451Fonts, normalizePdfText } from '@/lib/jspdfNotoFont';
@@ -49,10 +55,10 @@ const MOBILE_PDF_H_MM = 1200;
 const MARGIN_VIRTUALIZE_MIN_ROWS = 50;
 const MARGIN_TABLE_COL_COUNT = 9;
 const MARGIN_DESKTOP_ROW_H_GROUP = 42;
-const MARGIN_DESKTOP_ROW_H_PRODUTO = 52;
+const MARGIN_DESKTOP_ROW_H_PRODUTO = 64;
 const MARGIN_MOBILE_ROW_H_GROUP = 104;
 const MARGIN_MOBILE_ROW_H_GROUP_COLLAPSED = 50;
-const MARGIN_MOBILE_ROW_H_PRODUTO = 112;
+const MARGIN_MOBILE_ROW_H_PRODUTO = 128;
 
 /** Paleta e colunas alinhadas ao PDF mobile (`exportToPDF('expandida_mobile')`). */
 const MARGIN_MOBILE_STORM = '#2d333b';
@@ -159,6 +165,56 @@ function marginDesktopQuantClass(tier) {
   return `${MARGIN_BODY_TEXT} tabular-nums text-center text-foreground font-semibold`;
 }
 
+function buildCustoBreakdownLine(row, mode = 'unit') {
+  const keyType = mode === 'unit' ? 'unitKey' : 'totalKey';
+  const parts = CUSTO_MARGEM_CAMPOS.map((campo) => {
+    const raw = Number(row?.[campo[keyType]]) || 0;
+    if (Math.abs(raw) < 0.0001) return null;
+    const signed = campo.subtract ? -raw : raw;
+    return `${campo.shortLabel} ${formatNumDisplay(signed)}`;
+  }).filter(Boolean);
+  return parts.join(' · ');
+}
+
+function MargemCustoBreakdownMini({ row, mode = 'unit', className = '' }) {
+  const line = buildCustoBreakdownLine(row, mode);
+  if (!line) return null;
+  return (
+    <p className={`text-[9px] leading-tight text-muted-foreground/90 truncate ${className}`} title={line}>
+      {line}
+    </p>
+  );
+}
+
+function MargemCustoDetalheTotais({ totals }) {
+  const items = CUSTO_MARGEM_CAMPOS.map((campo) => ({
+    label: campo.label,
+    value: campo.subtract ? -(totals?.[campo.totalKey] || 0) : (totals?.[campo.totalKey] || 0),
+  })).filter((item) => Math.abs(item.value) > 0.0001);
+
+  if (!items.length) return null;
+
+  return (
+    <div className={`mx-3 md:mx-0 mt-2 rounded-lg border ${MARGIN_TABLE_BORDER} ${MARGIN_TABLE_PANEL} px-3 py-2.5`}>
+      <p className={`${MARGIN_TABLE_MICRO} uppercase tracking-wide text-muted-foreground`}>
+        Composição do custo (preços de hoje)
+      </p>
+      <div className="mt-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-3 gap-y-2">
+        {items.map((item) => (
+          <div key={item.label} className="min-w-0">
+            <p className={`${MARGIN_TABLE_MICRO} uppercase tracking-wide text-muted-foreground leading-none truncate`}>
+              {item.label}
+            </p>
+            <p className={`${MARGIN_BODY_TEXT} tabular-nums mt-1 truncate ${MARGIN_MUTED_VALUE}`}>
+              {formatMoneyDisplay(item.value)}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function MargemDesktopMetricCells({ dataRow, showMetrics = true, tier = 'filho' }) {
   if (!showMetrics) {
     return MARGIN_METRIC_KEYS.map((key) => <td key={key} className="py-1.5 px-1.5" />);
@@ -170,7 +226,11 @@ function MargemDesktopMetricCells({ dataRow, showMetrics = true, tier = 'filho' 
       className={`py-1.5 px-1.5 text-right ${MARGIN_BODY_TEXT} tabular-nums ${marginMetricValueClass(key, tier)}`}
       style={{ lineHeight: 1.2 }}
     >
-      {values[key]}
+      <div className="min-w-0">
+        <p>{values[key]}</p>
+        {key === 'custoUnit' ? <MargemCustoBreakdownMini row={dataRow} mode="unit" /> : null}
+        {key === 'custoTotal' ? <MargemCustoBreakdownMini row={dataRow} mode="total" /> : null}
+      </div>
     </td>
   ));
 }
@@ -470,12 +530,15 @@ function MargemMobileTabulatedValues({ row, className = '', tier = 'filho' }) {
           className={`${MARGIN_MOBILE_VALUES_GRID} ${rowIdx === 0 ? '' : 'mt-1'}`}
         >
           {valueRow.map(({ key }) => (
-            <p
-              key={key}
-              className={`${MARGIN_BODY_TEXT} tabular-nums text-right truncate ${marginMetricValueClass(key, tier)}`}
-            >
-              {values[key]}
-            </p>
+            <div key={key} className="min-w-0">
+              <p
+                className={`${MARGIN_BODY_TEXT} tabular-nums text-right truncate ${marginMetricValueClass(key, tier)}`}
+              >
+                {values[key]}
+              </p>
+              {key === 'custoUnit' ? <MargemCustoBreakdownMini row={row} mode="unit" className="text-right" /> : null}
+              {key === 'custoTotal' ? <MargemCustoBreakdownMini row={row} mode="total" className="text-right" /> : null}
+            </div>
           ))}
         </div>
       ))}
@@ -678,7 +741,8 @@ export default function RelatorioMargemVendas() {
              quantidade_base_vendida: 0,
              total_recebido: 0,
              total_desconto_venda: 0,
-             custo_unitario_cadastro: custoCalculado
+             custo_unitario_cadastro: custoCalculado,
+             ...criarCamposCustoComponentesZerados(),
            };
          }
 
@@ -693,11 +757,16 @@ export default function RelatorioMargemVendas() {
         entry.unidade_exibicao = quantidadeResolvida.unidade || entry.unidade_exibicao || 'UN';
          entry.total_recebido += alloc.total_recebido;
          entry.total_desconto_venda += alloc.total_desconto_venda;
+         acumularCustoComponentesMargem(
+           entry,
+           resolveCustoComponentesUnitBaseMargem(product, item),
+           quantidadeBase,
+         );
        });
      });
 
     let sorted = Object.values(reportMap).map(item => {
-       const custo_total = item.custo_unitario_cadastro * item.quantidade_base_vendida;
+       const custo_total = calcularCustoTotalDosComponentes(item);
        const receita_liquida = item.total_recebido - item.total_desconto_venda;
        const lucro_total = receita_liquida - custo_total;
        const valor_unitario_medio =
@@ -978,10 +1047,11 @@ export default function RelatorioMargemVendas() {
         receita_liquida: 0,
         custo_total: 0,
         lucro_total: 0,
+        ...criarCamposCustoComponentesZerados(),
       };
     }
     const desconto = processedData.reduce((d, item) => d + (item.total_desconto_venda || 0), 0);
-    return processedData.reduce(
+    const base = processedData.reduce(
       (acc, item) => ({
         quantidade_vendida: acc.quantidade_vendida + (item.quantidade_vendida || 0),
         total_recebido: acc.total_recebido + (item.total_recebido || 0),
@@ -999,6 +1069,11 @@ export default function RelatorioMargemVendas() {
         lucro_total: 0,
       }
     );
+    const custoComponentes = processedData.reduce(
+      (acc, item) => somarCamposCustoComponentes(acc, item),
+      criarCamposCustoComponentesZerados(),
+    );
+    return { ...base, ...custoComponentes };
   }, [processedData]);
 
   const totalMarkup = totals.custo_total > 0 ? (totals.lucro_total / totals.custo_total) * 100 : 0;
@@ -1015,11 +1090,16 @@ export default function RelatorioMargemVendas() {
   const exportToCSV = () => {
     const flat = exportRows.length ? exportRows : processedData;
     const headers =
-      'Produto;Categoria;Quant;Un;Custo Un Calc;Preço Venda Médio;Markup %;Custo Total;Receita Total;Lucro\n';
+      `Produto;Categoria;Quant;Un;Custo Un Calc;Preço Venda Médio;Markup %;Custo Total;Receita Total;Lucro;${CUSTO_MARGEM_CAMPOS.map((c) => c.label).join(';')}\n`;
     const rows = flat
       .map((row) => {
         const values = buildMarginMobileTabulatedValues(row);
-        return `${row.nome};${row.categoria};${row.quantidade_vendida};${row.unidade_exibicao || 'UN'};${values.custoUnit};${values.precoVenda};${values.markup};${values.custoTotal};${values.vendaTotal};${values.lucro}`;
+        const custoPartes = CUSTO_MARGEM_CAMPOS.map((campo) => {
+          const raw = Number(row[campo.totalKey]) || 0;
+          const signed = campo.subtract ? -raw : raw;
+          return (signed).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }).join(';');
+        return `${row.nome};${row.categoria};${row.quantidade_vendida};${row.unidade_exibicao || 'UN'};${values.custoUnit};${values.precoVenda};${values.markup};${values.custoTotal};${values.vendaTotal};${values.lucro};${custoPartes}`;
       })
       .join('\n');
     const csvContent = "data:text/csv;charset=utf-8," + headers + rows;
@@ -2018,6 +2098,7 @@ export default function RelatorioMargemVendas() {
                   })}
                 />
                 <MargemMobileKpis totals={totals} totalMarkup={totalMarkup} />
+                <MargemCustoDetalheTotais totals={totals} />
               </div>
               {/* Desktop Table View */}
               <div
@@ -2116,6 +2197,7 @@ export default function RelatorioMargemVendas() {
                   })}
                 />
                 <MargemMobileKpis totals={totals} totalMarkup={totalMarkup} />
+                <MargemCustoDetalheTotais totals={totals} />
                 <MargemMobileColumnHeader className="sticky top-0 z-20 shadow-sm" />
                 {mobilePadTop > 0 && (
                   <div aria-hidden="true" style={{ height: mobilePadTop, flexShrink: 0 }} />
