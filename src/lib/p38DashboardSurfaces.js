@@ -4,9 +4,14 @@
  */
 
 export const p38Dashboard = {
-  card: 'premium-card border-border/40 shadow-sm dark:border-white/10 dark:shadow-lg',
+  card:
+    'premium-card min-w-0 overflow-hidden border-border/40 shadow-sm ' +
+    'dark:border-white/10 dark:shadow-lg',
 
-  inner: 'p38-chart-surface',
+  cardHeader: 'space-y-1.5 px-3 pt-3 pb-1 sm:px-6 sm:pt-6',
+  cardContent: 'px-3 pb-4 pt-1 sm:px-6 sm:pb-6',
+
+  inner: 'p38-chart-surface min-w-0',
 
   innerPanel:
     'p38-chart-surface rounded-2xl p-3 space-y-3',
@@ -49,7 +54,11 @@ export const p38Dashboard = {
   skeletonLine: 'bg-muted-foreground/10 dark:bg-white/5',
   skeletonHeader: 'bg-muted-foreground/20 dark:bg-white/10',
 
-  sectionTitle: 'p38-dash-section-title',
+  sectionTitle: 'p38-dash-section-title min-w-0 break-words',
 
-  gridRoot: 'space-y-4',
+  gridRoot: 'space-y-3 sm:space-y-4',
+  grid2: 'grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2',
+  grid3: 'grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2 xl:grid-cols-3',
+  chartH: 'h-[200px] min-h-[180px] sm:h-[232px] md:h-[240px]',
+  chartHSm: 'h-[168px] min-h-[150px] sm:h-[180px]',
 };

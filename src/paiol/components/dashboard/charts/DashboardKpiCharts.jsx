@@ -119,7 +119,7 @@ function DonutGauge({ ring, label, actualLabel, targetLabel, actualValue, target
   return (
     <div className={p38Dashboard.stat}>
       <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">{label}</p>
-      <div className="grid grid-cols-[96px,1fr] gap-2 items-center">
+      <div className="grid grid-cols-1 sm:grid-cols-[88px,1fr] gap-2 items-center">
         <div className="h-[96px] relative">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>

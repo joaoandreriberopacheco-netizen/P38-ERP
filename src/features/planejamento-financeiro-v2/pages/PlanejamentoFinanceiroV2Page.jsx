@@ -68,7 +68,7 @@ export default function PlanejamentoFinanceiroV2Page() {
   }, [queryClient]);
 
   return (
-    <div className="p38-dashboard min-h-screen w-full mx-auto max-w-md md:max-w-7xl overflow-x-hidden bg-background px-4 pt-4 pb-[var(--p38-scroll-pad-below-nav)] md:pb-8">
+    <div className="p38-dashboard min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-background px-0 pt-0 pb-[var(--p38-scroll-pad-below-nav)] md:pb-8 lg:max-w-7xl lg:mx-auto">
       <div>
         <div className="flex min-w-0 items-center gap-2">
           <h1 className="p38-dashboard-title truncate">

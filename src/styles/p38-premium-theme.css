@@ -44,7 +44,7 @@
 @layer components {
   /* Cartão principal — flutua no branco (claro) ou grafite (escuro) */
   .premium-card {
-    @apply bg-card text-card-foreground rounded-[var(--p38-radius-card)] border border-border/60;
+    @apply min-w-0 overflow-hidden bg-card text-card-foreground rounded-2xl border border-border/60 md:rounded-[var(--p38-radius-card)];
     box-shadow: var(--p38-card-shadow);
   }
 
@@ -52,11 +52,18 @@
     @apply border-white/10;
   }
 
-  /* Dashboard — mobile-first, centrado em desktop */
+  /* Dashboard — mobile-first, largura total no telemóvel */
   .p38-dashboard {
+    @apply min-w-0 w-full max-w-full overflow-x-hidden;
     font-family: Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
     letter-spacing: -0.01em;
     -webkit-font-smoothing: antialiased;
+  }
+
+  @media (min-width: 1024px) {
+    .p38-dashboard {
+      max-width: 80rem;
+    }
   }
 
   .p38-dashboard-title {
@@ -86,7 +93,7 @@
   }
 
   .p38-metric-grid {
-    @apply grid grid-cols-3 gap-3 text-center;
+    @apply grid grid-cols-3 gap-2 text-center sm:gap-3;
   }
 
   /* Área interna de gráficos */
@@ -116,8 +123,8 @@
 
   /* Secção do dashboard */
   .p38-dash-section-title {
-    @apply text-foreground font-semibold flex items-center gap-2 tracking-tight;
-    font-size: 0.9375rem;
+    @apply min-w-0 flex flex-wrap items-center gap-x-2 gap-y-1 text-foreground font-semibold tracking-tight leading-snug;
+    font-size: clamp(0.8125rem, 3.2vw, 0.9375rem);
   }
 
   .p38-dash-icon-accent {

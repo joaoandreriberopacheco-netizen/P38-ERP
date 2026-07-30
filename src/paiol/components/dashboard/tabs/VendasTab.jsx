@@ -411,7 +411,7 @@ export default function VendasTab() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      <div className={p38Dashboard.grid2}>
         {[1, 2, 3, 4].map((card) => (
           <Card key={card} className="border-0 shadow-sm bg-card">
             <CardHeader>
@@ -494,16 +494,16 @@ export default function VendasTab() {
 
   return (
     <div className={p38Dashboard.gridRoot}>
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-3">
+      <div className={p38Dashboard.grid2}>
         <Card className={p38Dashboard.card}>
-          <CardHeader className="pb-1">
+          <CardHeader className={p38Dashboard.cardHeader}>
             <CardTitle className={p38Dashboard.sectionTitle}>
               <CalendarDays className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               Venda diária (mês atual + 3 anteriores)
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-1">
-            <div className={`h-[252px] sm:h-[240px] rounded-xl px-1 py-1.5 ${p38Dashboard.inner}`}>
+          <CardContent className={p38Dashboard.cardContent}>
+            <div className={`${p38Dashboard.chartH} rounded-xl px-1 py-1.5 ${p38Dashboard.inner}`}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={dailyFocusedData}
@@ -562,18 +562,18 @@ export default function VendasTab() {
         </Card>
 
         <Card className={p38Dashboard.card}>
-          <CardHeader className="pb-1">
+          <CardHeader className={p38Dashboard.cardHeader}>
             <CardTitle className={p38Dashboard.sectionTitle}>
               <TrendingUp className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               Venda acumulada do mês atual
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-1">
+          <CardContent className={p38Dashboard.cardContent}>
             <AcumuladoKpiChart
               data={metrics.currentAccumulatedData}
               xKey="dia"
               valueKey="valor"
-              innerSurfaceClassName={`h-[252px] sm:h-[240px] rounded-xl px-1 py-1.5 ${p38Dashboard.inner}`}
+              innerSurfaceClassName={`${p38Dashboard.chartH} rounded-xl px-1 py-1.5 ${p38Dashboard.inner}`}
               seriesLabels={{
                 valor: 'Venda acumulada',
                 breakEven: 'Mínimo acumulado',
@@ -597,15 +597,15 @@ export default function VendasTab() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-3">
+      <div className={p38Dashboard.grid3}>
         <Card className={p38Dashboard.card}>
-          <CardHeader className="pb-1">
+          <CardHeader className={p38Dashboard.cardHeader}>
             <CardTitle className={p38Dashboard.sectionTitle}>
               <CircleGauge className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               Lucro bruto mensal (atual x anterior)
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-1">
+          <CardContent className={p38Dashboard.cardContent}>
             <div className={p38Dashboard.innerPanel}>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
                 Fórmula: Venda - descontos - custo calculado
@@ -691,14 +691,14 @@ export default function VendasTab() {
         </Card>
 
         <Card className={p38Dashboard.card}>
-          <CardHeader className="pb-1">
+          <CardHeader className={p38Dashboard.cardHeader}>
             <CardTitle className={p38Dashboard.sectionTitle}>
               <TrendingUp className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               Vendas mensais (últimos 6 meses)
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-1">
-            <div className={`h-[252px] sm:h-[240px] rounded-xl px-1 py-1.5 ${p38Dashboard.inner}`}>
+          <CardContent className={p38Dashboard.cardContent}>
+            <div className={`${p38Dashboard.chartH} rounded-xl px-1 py-1.5 ${p38Dashboard.inner}`}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={metrics.monthlySalesData}
@@ -730,10 +730,10 @@ export default function VendasTab() {
         </Card>
 
         <Card className={p38Dashboard.placeholder}>
-          <CardHeader className="pb-1">
+          <CardHeader className={p38Dashboard.cardHeader}>
             <CardTitle className={`text-sm font-medium uppercase tracking-wide ${p38Dashboard.titleMuted}`}>Em breve</CardTitle>
           </CardHeader>
-          <CardContent className="pt-1">
+          <CardContent className={p38Dashboard.cardContent}>
             <div className={`h-[180px] rounded-xl p-3 ${p38Dashboard.placeholderInner}`}>
               <div className={`h-2 w-24 rounded mb-3 ${p38Dashboard.skeletonHeader}`} />
               <div className="grid grid-cols-5 gap-1 items-end h-16 mb-3">
@@ -751,18 +751,18 @@ export default function VendasTab() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-3">
+      <div className={p38Dashboard.grid3}>
         <Card className={p38Dashboard.card}>
-          <CardHeader className="pb-1">
+          <CardHeader className={p38Dashboard.cardHeader}>
             <CardTitle className={p38Dashboard.sectionTitle}>
               <TrendingUp className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               Lucro acumulado do mês atual
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-1">
+          <CardContent className={p38Dashboard.cardContent}>
             <LucroAcumuladoChart
               data={metrics.accumulatedProfitData}
-              innerSurfaceClassName={`h-[252px] sm:h-[240px] rounded-xl px-1 py-1.5 ${p38Dashboard.inner}`}
+              innerSurfaceClassName={`${p38Dashboard.chartH} rounded-xl px-1 py-1.5 ${p38Dashboard.inner}`}
             />
             <div className={`flex flex-wrap gap-3 mt-2 text-[10px] ${p38Dashboard.legend}`}>
               <span className="inline-flex items-center gap-1">
@@ -781,13 +781,13 @@ export default function VendasTab() {
         </Card>
 
         <Card className={p38Dashboard.card}>
-          <CardHeader className="pb-1">
+          <CardHeader className={p38Dashboard.cardHeader}>
             <CardTitle className={p38Dashboard.sectionTitle}>
               <CircleGauge className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               KPIs diários — Lucro
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-1">
+          <CardContent className={p38Dashboard.cardContent}>
             <DualDonutKpiModule
               title={`Média em ${metrics.elapsedWorkingDays} dias úteis (mês: ${metrics.workingDaysInMonth})`}
               icon={Target}
@@ -806,13 +806,13 @@ export default function VendasTab() {
         </Card>
 
         <Card className={p38Dashboard.card}>
-          <CardHeader className="pb-1">
+          <CardHeader className={p38Dashboard.cardHeader}>
             <CardTitle className={p38Dashboard.sectionTitle}>
               <CircleGauge className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               KPIs diários — Vendas
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-1">
+          <CardContent className={p38Dashboard.cardContent}>
             <DualDonutKpiModule
               title={`Média em ${metrics.elapsedWorkingDays} dias úteis (mês: ${metrics.workingDaysInMonth})`}
               icon={Target}

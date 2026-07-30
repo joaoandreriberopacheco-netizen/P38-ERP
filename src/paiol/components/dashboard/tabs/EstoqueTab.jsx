@@ -813,7 +813,7 @@ export default function EstoqueTab() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      <div className={p38Dashboard.grid2}>
         {[1, 2, 3, 4].map((card) => (
           <Card key={card} className="border-0 shadow-sm bg-card">
             <CardHeader>
@@ -864,16 +864,16 @@ export default function EstoqueTab() {
 
   return (
     <div className={p38Dashboard.gridRoot}>
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-3">
+      <div className={p38Dashboard.grid2}>
         <Card className={p38Dashboard.card}>
-          <CardHeader className="pb-1">
+          <CardHeader className={p38Dashboard.cardHeader}>
             <CardTitle className={p38Dashboard.sectionTitle}>
               <Package className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               Nível de Estoque (Base Hoje)
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-1">
-            <div className={`h-[220px] sm:h-[210px] rounded-xl px-1 py-1.5 ${p38Dashboard.inner}`}>
+          <CardContent className={p38Dashboard.cardContent}>
+            <div className={`${p38Dashboard.chartHSm} sm:h-[210px] rounded-xl px-1 py-1.5 ${p38Dashboard.inner}`}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={metrics.nivelEstoqueSeries}
@@ -923,13 +923,13 @@ export default function EstoqueTab() {
         </Card>
 
         <Card className={p38Dashboard.card}>
-          <CardHeader className="pb-1">
+          <CardHeader className={p38Dashboard.cardHeader}>
             <CardTitle className={p38Dashboard.sectionTitle}>
               <Gauge className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               Razão de Abastecimento (3 meses)
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-1">
+          <CardContent className={p38Dashboard.cardContent}>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {metrics.supplyByMonth.map((monthSupply) => {
                 const supplyColor = getSupplyColorByStatus(monthSupply.status);
@@ -1017,9 +1017,9 @@ export default function EstoqueTab() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-3">
+      <div className={p38Dashboard.grid3}>
         <Card className={p38Dashboard.card}>
-          <CardHeader className="pb-1">
+          <CardHeader className={p38Dashboard.cardHeader}>
             <div className="flex items-center justify-between gap-3">
               <CardTitle className={p38Dashboard.sectionTitle}>
                 <Layers className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
@@ -1036,8 +1036,8 @@ export default function EstoqueTab() {
               </label>
             </div>
           </CardHeader>
-          <CardContent className="pt-1">
-            <div className={`h-[170px] md:h-[180px] relative rounded-xl px-2 py-1 ${p38Dashboard.inner}`}>
+          <CardContent className={p38Dashboard.cardContent}>
+            <div className={`${p38Dashboard.chartHSm} md:h-[180px] relative rounded-xl px-2 py-1 ${p38Dashboard.inner}`}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -1087,14 +1087,14 @@ export default function EstoqueTab() {
         </Card>
 
         <Card className={p38Dashboard.card}>
-          <CardHeader className="pb-1">
+          <CardHeader className={p38Dashboard.cardHeader}>
             <CardTitle className={p38Dashboard.sectionTitle}>
               <Truck className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               Localização do Estoque
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-1">
-            <div className={`h-[170px] md:h-[180px] relative rounded-xl px-2 py-1 ${p38Dashboard.inner}`}>
+          <CardContent className={p38Dashboard.cardContent}>
+            <div className={`${p38Dashboard.chartHSm} md:h-[180px] relative rounded-xl px-2 py-1 ${p38Dashboard.inner}`}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -1146,10 +1146,10 @@ export default function EstoqueTab() {
         </Card>
 
         <Card className={p38Dashboard.placeholder}>
-          <CardHeader className="pb-1">
+          <CardHeader className={p38Dashboard.cardHeader}>
             <CardTitle className={`text-sm font-medium uppercase tracking-wide ${p38Dashboard.titleMuted}`}>Em breve</CardTitle>
           </CardHeader>
-          <CardContent className="pt-1">
+          <CardContent className={p38Dashboard.cardContent}>
             <div className={`h-[180px] rounded-xl p-3 ${p38Dashboard.placeholderInner}`}>
               <div className={`h-2 w-24 rounded mb-3 ${p38Dashboard.skeletonHeader}`} />
               <div className="grid grid-cols-5 gap-1 items-end h-16 mb-3">
@@ -1167,16 +1167,16 @@ export default function EstoqueTab() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-3">
+      <div className={p38Dashboard.grid3}>
         {[1, 2, 3].map((slot) => (
           <Card
             key={`empty-slot-${slot}`}
             className={p38Dashboard.placeholder}
           >
-            <CardHeader className="pb-1">
+            <CardHeader className={p38Dashboard.cardHeader}>
               <CardTitle className={`text-sm font-medium uppercase tracking-wide ${p38Dashboard.titleMuted}`}>Em breve</CardTitle>
             </CardHeader>
-            <CardContent className="pt-1">
+            <CardContent className={p38Dashboard.cardContent}>
               <div className={`h-[90px] rounded-xl p-2.5 ${p38Dashboard.placeholderInner}`}>
                 <div className={`h-1.5 w-16 rounded mb-2 ${p38Dashboard.skeletonHeader}`} />
                 <div className="grid grid-cols-4 gap-1 items-end h-8 mb-2">
