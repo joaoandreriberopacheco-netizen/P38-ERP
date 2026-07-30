@@ -75,7 +75,7 @@ export default function AgefinPrevisaoCabecalho({
   return (
     <div className={cn(P38_KPI_SHELL, 'space-y-2.5 sm:space-y-3 min-w-0')}>
       <div className="flex items-stretch gap-2 min-w-0">
-        <div className={cn('flex flex-1 min-w-0 items-center rounded-xl px-0.5', P38_FIELD_SURFACE)}>
+        <div className={cn('flex flex-1 min-w-0 items-center rounded-xl px-0.5 p38-labotrat-mes', P38_FIELD_SURFACE)}>
           <Button
             variant="ghost"
             size="icon"
@@ -86,10 +86,10 @@ export default function AgefinPrevisaoCabecalho({
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1 min-w-0 px-1 py-2 text-center">
-            <p className="text-sm font-semibold tracking-wide text-foreground sm:text-base truncate">
+            <p className="p38-labotrat-mes-label text-sm tracking-wide sm:text-base truncate">
               {competenciaLabel}
             </p>
-            <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug line-clamp-2">
+            <p className="p38-labotrat-mes-status text-[10px] mt-0.5 leading-snug line-clamp-2">
               {statusMes}
             </p>
           </div>
@@ -119,7 +119,7 @@ export default function AgefinPrevisaoCabecalho({
         </Button>
         <Button
           size="sm"
-          className="h-10 gap-1.5 rounded-xl px-2"
+          className="h-10 gap-1.5 rounded-xl px-2 p38-labotrat-cta"
           onClick={onAbrirMes}
           disabled={saving}
           title="Abrir mês"

@@ -34,8 +34,9 @@ Documento irmão (rollout geral): [`docs/p38-mobile-rollout.md`](docs/p38-mobile
 - Refactors de UI mobile onde o utilizador peça “como o Planejamento” ou “a paleta bonita”.
 - Em dúvida: abrir a ecrã de referência e alinhar tokens existentes — não inventar um segundo visual system.
 
-## Relação com Margem
+## Relação com Margem e Labotrat (modo claro)
 
 - **Relatório de Margem** continua a referência de **linhas densas / grelha** (`P38MobileLine`, divisores finos).
 - **Planejamento** é a referência de **composição + paleta + CTA + calma financeira** no dark mobile.
-- Os dois partilham a mesma paleta mediterrânea; diferem no *job* visual (dados densos vs. planeamento/ação).
+- **Piloto Labotrat (claro):** na página Planejamento, class `p38-labotrat-pilot` — fundo branco, fonte Outfit, verde `#5c7e44` só em destaques (título, banner do mês, botões). Ver `src/styles/p38-labotrat-pilot.css`.
+- Os dois partilham a mesma paleta mediterrânea no dark; no claro o piloto ousa mais perto da embalagem Labotrat.

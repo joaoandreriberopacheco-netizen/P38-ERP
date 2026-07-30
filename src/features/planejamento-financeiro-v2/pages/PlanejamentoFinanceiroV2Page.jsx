@@ -68,10 +68,10 @@ export default function PlanejamentoFinanceiroV2Page() {
   }, [queryClient]);
 
   return (
-    <div className="w-full min-w-0 overflow-x-hidden font-din-1451 bg-background px-3 py-3 sm:p-4 lg:p-6 pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
+    <div className="p38-labotrat-pilot w-full min-w-0 overflow-x-hidden bg-background px-3 py-3 sm:p-4 lg:p-6 pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
       <div className="pb-3 border-b border-border/40">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <h1 className="text-lg sm:text-xl font-medium text-foreground truncate">
+        <div className="flex items-center gap-2 min-w-0">
+          <h1 className="p38-labotrat-title truncate">
             Planejamento financeiro
           </h1>
           <P38HelpPopover label="Ajuda: planejamento financeiro" side="bottom" align="start">
@@ -92,7 +92,7 @@ export default function PlanejamentoFinanceiroV2Page() {
             </p>
           </P38HelpPopover>
         </div>
-        <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-snug">
+        <p className="text-xs sm:text-sm text-muted-foreground mt-2 leading-snug">
           Série manda · Previsão é virtual · Abrir mês materializa
         </p>
       </div>

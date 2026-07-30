@@ -121,7 +121,7 @@ export default function AgefinContasFixasGrupos({
           <FinanceiroGrupo
             key={frequencia}
             label={`Recorrência ${frequencia} (${totalSecao})`}
-            labelClassName="text-xs font-semibold normal-case tracking-normal text-foreground"
+            labelClassName="text-xs font-semibold normal-case tracking-normal text-foreground p38-labotrat-grupo-label"
             despesas={totalValor}
             liquido={-totalValor}
             card

@@ -40,7 +40,7 @@ export function PlanejamentoFab({ onCentros, onImportar, onNovaConta }) {
           </Button>
           <Button
             size="sm"
-            className="rounded-full shadow-md justify-center"
+            className="rounded-full shadow-md justify-center p38-labotrat-cta"
             onClick={() => {
               setFabOpen(false);
               onNovaConta();
@@ -52,7 +52,7 @@ export function PlanejamentoFab({ onCentros, onImportar, onNovaConta }) {
       )}
       <Button
         size="icon"
-        className="h-14 w-14 rounded-full shadow-lg"
+        className="h-14 w-14 rounded-full shadow-lg p38-labotrat-cta"
         onClick={() => setFabOpen((v) => !v)}
         aria-label={fabOpen ? 'Fechar menu' : 'Abrir menu'}
       >

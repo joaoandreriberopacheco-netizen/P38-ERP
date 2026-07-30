@@ -1,6 +1,7 @@
 @import './styles/p38-identity.css';
 @import './styles/p38-typography.css';
 @import './styles/p38-tablet.css';
+@import './styles/p38-labotrat-pilot.css';
 
 @tailwind base;
 @tailwind components;
