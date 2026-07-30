@@ -5,7 +5,8 @@
  * Piso: nenhuma fonte abaixo de FONT_MIN (11pt ≈ corpo do comprovante de referência).
  * Sem dados / rótulos de UI: minúsculas para suavizar; dados reais mantêm maiúsculas.
  * Margens: topo 25 mm (2,5 cm — grampeamento), base 15 mm (1,5 cm — numeração).
- * Cabeçalho: «DESPESA MENSAL - MÊS / ANO» | «TOTAL R$ …» — em todas as páginas.
+ * Cabeçalho / rótulos: frase em minúsculas («Despesa mensal», «Total», «Anotações»).
+ * Dados (contas, nomes, centros): maiúsculas para leitura rápida.
  * Card do dia: «08/08/2026 (04)» à esquerda · valor à direita.
  * Folha: 3 colunas; se a linha de cards não cabe, inteira na página seguinte.
  * Quadrinhos: nome|valor na mesma linha; sem linhas tracejadas; altura generosa.
@@ -47,10 +48,11 @@ function formatCurrency(value) {
   return `R$ ${(Number(value) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 }
 
-/** Ex.: «AGOSTO / 2026» */
+/** Ex.: «Agosto / 2026» (cabeçalho suave, não ALL CAPS) */
 export function formatMesAnoTitulo(date) {
   const d = date instanceof Date ? date : new Date(date);
-  const mes = d.toLocaleDateString('pt-BR', { month: 'long' }).toLocaleUpperCase('pt-BR');
+  const mesRaw = d.toLocaleDateString('pt-BR', { month: 'long' });
+  const mes = mesRaw.charAt(0).toLocaleUpperCase('pt-BR') + mesRaw.slice(1);
   return `${mes} / ${d.getFullYear()}`;
 }
 
@@ -115,8 +117,8 @@ export async function gerarDespesaMensalPdf(opts) {
 
   const contentW = PAGE_W - MARGIN_X * 2;
   const mesAno = formatMesAnoTitulo(currentMonth);
-  const tituloEsq = normalizePdfText(`DESPESA MENSAL - ${mesAno}`);
-  const tituloDir = normalizePdfText(`TOTAL ${formatCurrency(totalImpresso)}`);
+  const tituloEsq = normalizePdfText(`Despesa mensal - ${mesAno}`);
+  const tituloDir = normalizePdfText(`Total ${formatCurrency(totalImpresso)}`);
 
   let y = CONTENT_TOP;
 
