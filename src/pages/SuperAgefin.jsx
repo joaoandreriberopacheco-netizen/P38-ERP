@@ -47,6 +47,8 @@ import {
   carregarBudgetsAgrupadosParaRelatorio,
   carregarModelosFolhaParaSuperAgefin,
   contaSuperAgefinSomenteLeitura,
+  listaJaTemFolhaPagamento,
+  montarContaSinteticaFolhaDia5,
   montarContasSinteticasSociosSabado,
 } from '@/lib/superAgefinCompromissos';
 import { gerarDespesaMensalPdf } from '@/lib/superAgefinDespesaMensalPdf';
@@ -310,6 +312,8 @@ export default function SuperAgefin() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [contas, setContas] = useState([]);
   const [modelosFolha, setModelosFolha] = useState([]);
+  /** Conta sintética «Folha de pagamento» no dia 05 do mês civil */
+  const [contaFolhaDia5, setContaFolhaDia5] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedConta, setSelectedConta] = useState(null);
   const [pagamentoFilter, setPagamentoFilter] = useState('todos');
@@ -330,9 +334,11 @@ export default function SuperAgefin() {
   const abrirConta = useCallback((conta) => {
     if (contaSuperAgefinSomenteLeitura(conta)) {
       toast.message('Compromisso previsto', {
-        description: conta?._superagefin_socio
-          ? 'Sócio (pagamento semanal aos sábados). Figura na consulta e no relatório; edição pela Folha.'
-          : 'Compromisso sintético da SUPERAGEFIN — só para consulta/impressão.',
+        description: conta?._superagefin_folha
+          ? 'Folha de pagamento (vencimento dia 05). Figura na consulta e no relatório; edição pela Folha.'
+          : conta?._superagefin_socio
+            ? 'Sócio (pagamento semanal aos sábados). Figura na consulta e no relatório; edição pela Folha.'
+            : 'Compromisso sintético da SUPERAGEFIN — só para consulta/impressão.',
       });
       return;
     }
@@ -375,6 +381,24 @@ export default function SuperAgefin() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    const dataPagamento = dataDia5DoMes(currentMonth);
+    setContaFolhaDia5(null);
+    carregarFolhaParaRelatorioDia5(dataPagamento)
+      .then((folha) => {
+        if (cancelled) return;
+        setContaFolhaDia5(montarContaSinteticaFolhaDia5(folha));
+      })
+      .catch((err) => {
+        console.error('SUPERAGEFIN: falha ao carregar folha dia 05 para a consulta', err);
+        if (!cancelled) setContaFolhaDia5(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentMonth]);
+
+  useEffect(() => {
     const unsub = base44.entities.LancamentoFinanceiro.subscribe(() => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => loadContas(), 450);
@@ -405,11 +429,14 @@ export default function SuperAgefin() {
       const vencimento = `${conta.data_vencimento}`.slice(0, 10);
       return vencimento >= start && vencimento <= end;
     });
-    return [...reais, ...contasSociosSabado].sort(
+    // Folha dia 05: entra na consulta como os sócios aos sábados (sem duplicar se já houver LF).
+    const folha =
+      contaFolhaDia5 && !listaJaTemFolhaPagamento(reais) ? [contaFolhaDia5] : [];
+    return [...reais, ...contasSociosSabado, ...folha].sort(
       (a, b) =>
         new Date(`${a.data_vencimento}T12:00:00-05:00`) - new Date(`${b.data_vencimento}T12:00:00-05:00`),
     );
-  }, [contas, currentMonth, contasSociosSabado]);
+  }, [contas, currentMonth, contasSociosSabado, contaFolhaDia5]);
 
   const filteredData = useMemo(() => {
     const todayKey = dataHoje();
@@ -637,18 +664,8 @@ export default function SuperAgefin() {
     let folhaTotalConta = 0;
     try {
       folhaRelatorio = await carregarFolhaParaRelatorioDia5(dataPagamentoFolha);
-      if (folhaRelatorio?.linhas?.length) {
-        folhaTotalConta =
-          folhaRelatorio.totalLiquido > 0 ? folhaRelatorio.totalLiquido : folhaRelatorio.totalSalarios;
-        folhaContaSintetica = {
-          id: `superagefin-folha-${folhaRelatorio.dataPagamento}`,
-          descricao: 'FOLHA DE PAGAMENTO',
-          valor: folhaTotalConta,
-          data_vencimento: folhaRelatorio.dataPagamento,
-          status: 'Em Aberto',
-          _superagefin_folha: true,
-        };
-      }
+      folhaContaSintetica = montarContaSinteticaFolhaDia5(folhaRelatorio);
+      folhaTotalConta = Number(folhaContaSintetica?.valor) || 0;
     } catch (err) {
       console.error('SUPERAGEFIN: falha ao carregar folha para o relatório', err);
     }
@@ -667,9 +684,7 @@ export default function SuperAgefin() {
 
       const idx = cloned.findIndex((g) => g.key === dataPagamentoFolha);
       if (idx >= 0) {
-        const jaTem = cloned[idx].contas.some(
-          (c) => c?._superagefin_folha || /folha\s+de\s+pagamento/i.test(String(c.descricao || '')),
-        );
+          const jaTem = listaJaTemFolhaPagamento(cloned[idx].contas);
         if (!jaTem) cloned[idx].contas = [folhaContaSintetica, ...cloned[idx].contas];
         return cloned;
       }
