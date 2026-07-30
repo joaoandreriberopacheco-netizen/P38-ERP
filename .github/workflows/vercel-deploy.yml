@@ -98,6 +98,9 @@ jobs:
       - name: Vercel pull (production)
         run: npx --yes vercel@latest pull --yes --environment=production --token "$VERCEL_TOKEN"
 
+      - name: Alinhar projecto Vercel (Next.js — sem outputDirectory dist)
+        run: bash scripts/sync-vercel-project-settings.sh
+
       - name: Sincronizar env Supabase no projecto Vercel
         run: bash scripts/sync-vercel-production-env.sh
         env:

@@ -1,4 +1,6 @@
 /** Páginas do módulo Financeiro protegidas por senha / biometria. */
+import { p38PublicEnv } from '@/lib/p38PublicEnv';
+
 export const FINANCEIRO_PROTECTED_PAGES = new Set([
   'FluxoCaixa',
   'ContasFinanceiras',
@@ -28,7 +30,7 @@ export const FINANCEIRO_UNLOCK_TTL_MS = 15 * 60 * 1000;
 
 /** Definir `VITE_FINANCEIRO_GATE_PASSWORD` no deploy (ex.: Vercel). Comparação sem maiúsc./minúsc. */
 export const FINANCEIRO_GATE_PASSWORD = String(
-  import.meta.env.VITE_FINANCEIRO_GATE_PASSWORD ?? '',
+  p38PublicEnv('VITE_FINANCEIRO_GATE_PASSWORD') ?? '',
 ).trim();
 
 export const FINANCEIRO_GATE_ENABLED = FINANCEIRO_GATE_PASSWORD.length > 0;

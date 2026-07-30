@@ -3,7 +3,18 @@ const NOTO_REGULAR_URL =
 const NOTO_BOLD_URL =
   'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSans/NotoSans-Bold.ttf';
 
-const PDF_FONT_ASSET_BASE = `${import.meta.env.BASE_URL || '/'}fonts/dinish/`;
+function readAssetBaseUrl() {
+  try {
+    if (typeof import.meta !== 'undefined' && import.meta.env?.BASE_URL) {
+      return import.meta.env.BASE_URL;
+    }
+  } catch {
+    /* Next SSR */
+  }
+  return '/';
+}
+
+const PDF_FONT_ASSET_BASE = `${readAssetBaseUrl()}fonts/dinish/`;
 const DIN1451_LIGHT_URL = `${PDF_FONT_ASSET_BASE}DINish-Light.ttf`;
 const DIN1451_REGULAR_URL = `${PDF_FONT_ASSET_BASE}DINish-Regular.ttf`;
 const DIN1451_SEMIBOLD_URL = `${PDF_FONT_ASSET_BASE}DINish-SemiBold.ttf`;
