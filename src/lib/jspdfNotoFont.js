@@ -6,8 +6,17 @@ const NOTO_BOLD_URL =
 const PDF_FONT_ASSET_BASE = `${import.meta.env.BASE_URL || '/'}fonts/dinish/`;
 const DIN1451_LIGHT_URL = `${PDF_FONT_ASSET_BASE}DINish-Light.ttf`;
 const DIN1451_REGULAR_URL = `${PDF_FONT_ASSET_BASE}DINish-Regular.ttf`;
+const DIN1451_SEMIBOLD_URL = `${PDF_FONT_ASSET_BASE}DINish-SemiBold.ttf`;
+const DIN1451_BOLD_URL = `${PDF_FONT_ASSET_BASE}DINish-Bold.ttf`;
 
-const fontCache = { regular: null, bold: null, dinLight: null, dinRegular: null };
+const fontCache = {
+  regular: null,
+  bold: null,
+  dinLight: null,
+  dinRegular: null,
+  dinSemiBold: null,
+  dinBold: null,
+};
 
 const arrayBufferToBase64 = (buffer) => {
   let binary = '';
@@ -49,19 +58,28 @@ export async function registerJsPdfNotoFonts(doc) {
 }
 
 /**
- * DIN 1451 Light (via DINish Light, OFL) — relatório mobile de margem.
- * Retorna família jsPDF `DIN1451` ou fallback Noto Sans.
+ * DIN 1451 (via DINish, OFL) — tipografia densa para relatórios PDF.
+ * - normal → Light (corpo compacto)
+ * - bold → SemiBold (secções / ênfase)
+ * - heavy → Bold (títulos de capa / cabeçalho forte)
+ * Fallback: Noto Sans.
  */
 export async function registerJsPdfDin1451Fonts(doc) {
   try {
-    const [lightBase64, regularBase64] = await Promise.all([
+    const [lightBase64, regularBase64, semiBoldBase64, boldBase64] = await Promise.all([
       loadFontBase64(DIN1451_LIGHT_URL, 'dinLight'),
       loadFontBase64(DIN1451_REGULAR_URL, 'dinRegular'),
+      loadFontBase64(DIN1451_SEMIBOLD_URL, 'dinSemiBold'),
+      loadFontBase64(DIN1451_BOLD_URL, 'dinBold'),
     ]);
     doc.addFileToVFS('DINish-Light.ttf', lightBase64);
     doc.addFont('DINish-Light.ttf', 'DIN1451', 'normal');
     doc.addFileToVFS('DINish-Regular.ttf', regularBase64);
-    doc.addFont('DINish-Regular.ttf', 'DIN1451', 'bold');
+    doc.addFont('DINish-Regular.ttf', 'DIN1451', 'regular');
+    doc.addFileToVFS('DINish-SemiBold.ttf', semiBoldBase64);
+    doc.addFont('DINish-SemiBold.ttf', 'DIN1451', 'bold');
+    doc.addFileToVFS('DINish-Bold.ttf', boldBase64);
+    doc.addFont('DINish-Bold.ttf', 'DIN1451', 'heavy');
     doc.setFont('DIN1451', 'normal');
     return 'DIN1451';
   } catch (err) {

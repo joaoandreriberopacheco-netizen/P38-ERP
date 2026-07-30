@@ -1,8 +1,9 @@
 /**
  * SUPERAGEFIN — PDF «Despesa Mensal» (A4).
  *
+ * Tipografia: DIN 1451 (DINish) — Light no corpo, Bold no título.
  * Margens: topo 25 mm (2,5 cm — grampeamento), base 15 mm (1,5 cm — numeração).
- * Cabeçalho: «DESPESA MENSAL - MÊS / ANO» | «TOTAL R$ …»
+ * Cabeçalho: «DESPESA MENSAL - MÊS / ANO» | «TOTAL R$ …» (peso/tamanho reforçados)
  * Card do dia: «08/08/2026 (04)» à esquerda · valor à direita.
  * Folha: 3 colunas; se a linha de cards não cabe, inteira na página seguinte.
  * Provisões: 1 coluna; cada bloco só desenha se couber.
@@ -12,7 +13,7 @@
  */
 
 import { jsPDF } from 'jspdf';
-import { registerJsPdfNotoFonts, normalizePdfText } from '@/lib/jspdfNotoFont';
+import { registerJsPdfDin1451Fonts, normalizePdfText } from '@/lib/jspdfNotoFont';
 import { shareOrDownloadBlob, shouldUseMobileDocumentExport, downloadBlob } from '@/lib/mobilePrintAndShare';
 import { lancamentoPago, lancamentoVencidoOuAtrasado } from '@/lib/agefinConsultaFilters';
 
@@ -27,6 +28,13 @@ const MARGIN_X = 8;
 const CONTENT_TOP = MARGIN_TOP + 1;
 /** Limite útil: deixa a margem inferior intacta (numeração) + folga anti-sobreposição */
 const CONTENT_BOTTOM = PAGE_H - MARGIN_BOTTOM - 1;
+
+/** Título do relatório — DIN Bold + tamanho maior */
+const TITLE_SIZE = 15;
+const TITLE_STYLE = 'heavy';
+/** Corpo / meta — DIN Light (mais compacta) */
+const BODY_SIZE = 8.5;
+const META_SIZE = 7.5;
 
 function formatCurrency(value) {
   return `R$ ${(Number(value) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -88,8 +96,20 @@ export async function gerarDespesaMensalPdf(opts) {
   } = opts;
 
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const fontFamily = await registerJsPdfNotoFonts(pdf);
-  const setFont = (style = 'normal') => pdf.setFont(fontFamily, style);
+  const fontFamily = await registerJsPdfDin1451Fonts(pdf);
+  const setFont = (style = 'normal') => {
+    const safe =
+      style === 'heavy' && fontFamily !== 'DIN1451'
+        ? 'bold'
+        : style === 'regular' && fontFamily !== 'DIN1451'
+          ? 'normal'
+          : style;
+    try {
+      pdf.setFont(fontFamily, safe);
+    } catch {
+      pdf.setFont(fontFamily, style === 'heavy' ? 'bold' : 'normal');
+    }
+  };
 
   const contentW = PAGE_W - MARGIN_X * 2;
   const mesAno = formatMesAnoTitulo(currentMonth);
@@ -99,14 +119,14 @@ export async function gerarDespesaMensalPdf(opts) {
   let y = CONTENT_TOP;
 
   const drawHeader = () => {
-    setFont('bold');
-    pdf.setFontSize(11);
+    setFont(TITLE_STYLE);
+    pdf.setFontSize(TITLE_SIZE);
     pdf.setTextColor(0, 0, 0);
-    const headerY = MARGIN_TOP - 8;
+    const headerY = MARGIN_TOP - 7;
     pdf.text(tituloEsq, MARGIN_X, headerY);
     pdf.text(tituloDir, PAGE_W - MARGIN_X, headerY, { align: 'right' });
     pdf.setDrawColor(180, 180, 180);
-    pdf.setLineWidth(0.25);
+    pdf.setLineWidth(0.3);
     pdf.line(MARGIN_X, MARGIN_TOP - 2, PAGE_W - MARGIN_X, MARGIN_TOP - 2);
   };
 
@@ -115,7 +135,7 @@ export async function gerarDespesaMensalPdf(opts) {
     for (let i = 1; i <= total; i += 1) {
       pdf.setPage(i);
       setFont('normal');
-      pdf.setFontSize(9);
+      pdf.setFontSize(META_SIZE);
       pdf.setTextColor(80, 80, 80);
       const label = normalizePdfText(`${i} / ${total}`);
       pdf.text(label, PAGE_W / 2, PAGE_H - MARGIN_BOTTOM / 2, { align: 'center' });
@@ -150,7 +170,7 @@ export async function gerarDespesaMensalPdf(opts) {
     pdf.setFillColor(237, 240, 244);
     pdf.rect(MARGIN_X, y, contentW, diaH, 'F');
     setFont('bold');
-    pdf.setFontSize(10);
+    pdf.setFontSize(9.5);
     pdf.setTextColor(0, 0, 0);
     const labelDia = normalizePdfText(`${grupo.label || ''} (${pad2(contas.length)})`);
     pdf.text(labelDia, MARGIN_X + 2, y + 5);
@@ -163,7 +183,7 @@ export async function gerarDespesaMensalPdf(opts) {
     const colStatus = MARGIN_X + 1;
     const colConta = MARGIN_X + 18;
     const colValor = PAGE_W - MARGIN_X - 1;
-    const rowH = 9.5;
+    const rowH = 8.6;
 
     for (const conta of contas) {
       y = ensureSpace(y, rowH + 0.5);
@@ -173,17 +193,18 @@ export async function gerarDespesaMensalPdf(opts) {
       const textY = y + rowH * 0.62;
 
       setFont('normal');
-      pdf.setFontSize(8);
+      pdf.setFontSize(META_SIZE);
       if (st === 'Pago') pdf.setTextColor(85, 107, 47);
       else if (st === 'Vencido') pdf.setTextColor(139, 47, 47);
       else pdf.setTextColor(120, 120, 120);
       if (st) pdf.text(st, colStatus, textY);
 
       pdf.setTextColor(0, 0, 0);
-      pdf.setFontSize(9.5);
+      pdf.setFontSize(BODY_SIZE);
       const maxDescW = colValor - colConta - 34;
       const descLines = pdf.splitTextToSize(desc, maxDescW);
       pdf.text(descLines[0] || '-', colConta, textY);
+      setFont('bold');
       pdf.text(valor, colValor, textY, { align: 'right' });
 
       pdf.setDrawColor(230, 235, 242);
