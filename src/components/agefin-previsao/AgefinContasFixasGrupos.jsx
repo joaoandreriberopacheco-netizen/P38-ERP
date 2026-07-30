@@ -38,13 +38,13 @@ function BlocoGrupo({
       onDragLeave={draggable ? onDragLeave : undefined}
       onDrop={draggable ? onDrop : undefined}
       className={cn(
-        'rounded-xl border border-border/60 bg-card/40',
+        'rounded-xl bg-card/40',
         draggable && dropCentroAtual === dropKey && draggingSerieId
-          ? 'ring-2 ring-primary/50 border-primary/50'
+          ? 'ring-2 ring-primary/50'
           : '',
       )}
     >
-      <div className="flex items-center justify-between px-3 py-2 border-b border-border/50">
+      <div className="flex items-center justify-between px-3 py-2">
         <div>
           <p className="text-xs font-semibold text-foreground">{grupoLabel}</p>
           <p className="text-[11px] text-muted-foreground">{sublabel || `${series.length} conta(s)`}</p>

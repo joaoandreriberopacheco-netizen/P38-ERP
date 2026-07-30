@@ -23,10 +23,10 @@ export default function AgefinPrevisaoProjecao({ modelos, competenciaInicio, lan
         </p>
       </div>
 
-      <div className="rounded-xl border border-border/50 overflow-x-auto -mx-0.5">
+      <div className="rounded-xl bg-card/40 overflow-x-auto -mx-0.5">
         <table className="w-full min-w-[280px] text-sm">
           <thead>
-            <tr className="border-b border-border/50 bg-muted/30">
+            <tr className="bg-muted/30">
               <th className="text-left px-2.5 sm:px-3 py-2 font-medium text-muted-foreground">Mês</th>
               <th className="text-right px-2.5 sm:px-3 py-2 font-medium text-muted-foreground">
                 Contas
@@ -38,7 +38,7 @@ export default function AgefinPrevisaoProjecao({ modelos, competenciaInicio, lan
           </thead>
           <tbody>
             {meses.map((m) => (
-              <tr key={m.competencia} className="border-b border-border/30 last:border-0">
+              <tr key={m.competencia}>
                 <td className="px-2.5 sm:px-3 py-2.5 whitespace-nowrap">
                   {formatCompetenciaLabel(m.competencia)}
                 </td>

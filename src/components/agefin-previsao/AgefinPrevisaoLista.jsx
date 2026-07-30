@@ -20,7 +20,7 @@ function ListaLinhas({ items, modelosMap, onOpen, flat = false }) {
 
   if (flat) {
     return (
-      <div className="min-w-0 w-full max-w-full overflow-x-hidden rounded-xl border border-border/50">
+      <div className="min-w-0 w-full max-w-full overflow-x-hidden rounded-xl bg-card/40">
         {content}
       </div>
     );

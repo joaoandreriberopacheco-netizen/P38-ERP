@@ -129,7 +129,7 @@ export default function AgefinPrevisaoCabecalho({
         </Button>
       </div>
 
-      <div className="space-y-2 border-t border-border/40 pt-2.5 sm:pt-3 min-w-0">
+      <div className="space-y-2 pt-2.5 sm:pt-3 min-w-0">
         <FinanceiroResumoBar
           receitas={0}
           despesas={totais?.total || 0}
