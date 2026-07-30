@@ -31,7 +31,7 @@ import {
 } from '@/paiol/components/dashboard/charts/DashboardKpiCharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { p38Dashboard } from '@/lib/p38DashboardSurfaces';
+import { useP38DashboardSurfaces } from '@/paiol/components/dashboard/useP38DashboardSurfaces';
 import {
   buildCartesianGridProps,
   buildXAxisProps,
@@ -174,6 +174,7 @@ function getSaleDate(sale = {}) {
 }
 
 export default function VendasTab() {
+  const p38Dashboard = useP38DashboardSurfaces();
   const chartTheme = useDashboardChartTheme();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -492,11 +493,11 @@ export default function VendasTab() {
   }));
 
   return (
-    <div className="space-y-3">
+    <div className={p38Dashboard.gridRoot}>
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-3">
         <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
-            <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+            <CardTitle className={p38Dashboard.sectionTitle}>
               <CalendarDays className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               Venda diária (mês atual + 3 anteriores)
             </CardTitle>
@@ -562,7 +563,7 @@ export default function VendasTab() {
 
         <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
-            <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+            <CardTitle className={p38Dashboard.sectionTitle}>
               <TrendingUp className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               Venda acumulada do mês atual
             </CardTitle>
@@ -599,7 +600,7 @@ export default function VendasTab() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-3">
         <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
-            <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+            <CardTitle className={p38Dashboard.sectionTitle}>
               <CircleGauge className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               Lucro bruto mensal (atual x anterior)
             </CardTitle>
@@ -648,7 +649,7 @@ export default function VendasTab() {
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                     <span className="text-[11px] text-muted-foreground uppercase tracking-wide">Atual/Ant</span>
-                    <span className="text-lg font-bold text-foreground">{metrics.lucroKpi.ratioPercent.toFixed(1)}%</span>
+                    <span className={p38Dashboard.metricValue}>{metrics.lucroKpi.ratioPercent.toFixed(1)}%</span>
                   </div>
                 </div>
 
@@ -691,7 +692,7 @@ export default function VendasTab() {
 
         <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
-            <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+            <CardTitle className={p38Dashboard.sectionTitle}>
               <TrendingUp className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               Vendas mensais (últimos 6 meses)
             </CardTitle>
@@ -753,7 +754,7 @@ export default function VendasTab() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-3">
         <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
-            <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+            <CardTitle className={p38Dashboard.sectionTitle}>
               <TrendingUp className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               Lucro acumulado do mês atual
             </CardTitle>
@@ -781,7 +782,7 @@ export default function VendasTab() {
 
         <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
-            <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+            <CardTitle className={p38Dashboard.sectionTitle}>
               <CircleGauge className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               KPIs diários — Lucro
             </CardTitle>
@@ -806,7 +807,7 @@ export default function VendasTab() {
 
         <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
-            <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+            <CardTitle className={p38Dashboard.sectionTitle}>
               <CircleGauge className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               KPIs diários — Vendas
             </CardTitle>

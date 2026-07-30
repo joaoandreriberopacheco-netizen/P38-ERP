@@ -11,7 +11,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { p38Dashboard } from '@/lib/p38DashboardSurfaces';
+import { useP38DashboardSurfaces } from '@/paiol/components/dashboard/useP38DashboardSurfaces';
 import {
   buildCartesianGridProps,
   buildXAxisProps,
@@ -115,6 +115,7 @@ export function LucroAcumuladoChart({ data, innerSurfaceClassName }) {
 }
 
 function DonutGauge({ ring, label, actualLabel, targetLabel, actualValue, targetValue }) {
+  const p38Dashboard = useP38DashboardSurfaces();
   return (
     <div className={p38Dashboard.stat}>
       <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">{label}</p>
@@ -175,6 +176,7 @@ function DonutGauge({ ring, label, actualLabel, targetLabel, actualValue, target
 }
 
 export function DualDonutKpiModule({ title, icon: Icon, ringA, ringB, labels }) {
+  const p38Dashboard = useP38DashboardSurfaces();
   return (
     <div className={p38Dashboard.innerPanel}>
       <p className="text-[10px] text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">

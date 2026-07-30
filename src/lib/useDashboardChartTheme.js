@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useP38DashboardLightShell } from '@/paiol/components/dashboard/P38DashboardLightContext';
 
 const LIGHT = {
   tick: { fontSize: 11, fill: '#434a40', fontWeight: 600 },
@@ -21,6 +22,30 @@ const LIGHT = {
   linePrimary: '#6b7a52',
   lineBreakEven: '#dc2626',
   lineMeta: '#5c7e44',
+};
+
+/** Gráficos na folha branca (modo claro mobile — shell Labotrat). */
+const LIGHT_SHEET = {
+  tick: { fontSize: 11, fill: '#111827', fontWeight: 600 },
+  axisTickY: { fontSize: 9, fill: '#9ca3af', fontWeight: 400 },
+  axisTickX: { fontSize: 9, fill: '#9ca3af', fontWeight: 400 },
+  grid: 'rgba(0, 0, 0, 0.06)',
+  cursor: 'rgba(0, 0, 0, 0.04)',
+  pieStroke: '#ffffff',
+  tooltip: {
+    contentStyle: {
+      backgroundColor: 'rgba(255, 255, 255, 0.98)',
+      border: '1px solid rgba(0, 0, 0, 0.08)',
+      borderRadius: 12,
+      color: '#111827',
+      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+    },
+    labelStyle: { color: '#111827', fontWeight: 700 },
+    itemStyle: { color: '#6b7280' },
+  },
+  linePrimary: '#84cc16',
+  lineBreakEven: '#dc2626',
+  lineMeta: '#65a30d',
 };
 
 const DARK = {
@@ -51,8 +76,9 @@ function readIsDark() {
   return document.documentElement.classList.contains('dark');
 }
 
-/** Tema Recharts para dashboard — reage a html.dark. */
+/** Tema Recharts para dashboard — reage a html.dark e shell modo claro mobile. */
 export function useDashboardChartTheme() {
+  const isLightShell = useP38DashboardLightShell();
   const [isDark, setIsDark] = useState(readIsDark);
 
   useEffect(() => {
@@ -63,5 +89,6 @@ export function useDashboardChartTheme() {
     return () => observer.disconnect();
   }, []);
 
+  if (isLightShell) return LIGHT_SHEET;
   return isDark ? DARK : LIGHT;
 }
