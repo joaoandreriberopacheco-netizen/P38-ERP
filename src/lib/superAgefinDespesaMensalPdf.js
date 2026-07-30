@@ -1,17 +1,14 @@
 /**
  * SUPERAGEFIN — PDF «Despesa Mensal» (A4).
  *
- * Tipografia: Noto Sans; título e TOTAL do cabeçalho em negrito (tamanho reforçado).
+ * Tipografia: Noto Sans (sans limpa, próxima do corpo Mercado Pago / Mercado Livre).
+ * Piso: nenhuma fonte abaixo de FONT_MIN (≈ corpo do comprovante de referência).
  * Margens: topo 25 mm (2,5 cm — grampeamento), base 15 mm (1,5 cm — numeração).
- * Cabeçalho: «DESPESA MENSAL - MÊS / ANO» | «TOTAL R$ …» — desenhado em TODAS as
- * páginas no fecho (e também ao abrir página nova), sem matriz de escala (a scaleY
- * escondia o texto com a fonte embutida).
+ * Cabeçalho: «DESPESA MENSAL - MÊS / ANO» | «TOTAL R$ …» — em todas as páginas.
  * Card do dia: «08/08/2026 (04)» à esquerda · valor à direita.
  * Folha: 3 colunas; se a linha de cards não cabe, inteira na página seguinte.
- * Quadrinhos de anotações (folha e provisões): nome|valor na mesma linha,
- * sem linhas tracejadas; mesma altura de antes (área em branco para escrever).
- * Provisões: 1 coluna; cabeçalho do centro de custo fica com pelo menos 1 card
- * (não deixa «cabeça sem corpo» no fim da página).
+ * Quadrinhos: nome|valor na mesma linha; sem linhas tracejadas; altura generosa.
+ * Provisões: 1 coluna; centro de custo fica com pelo menos 1 card.
  *
  * Importante: ensureSpace(y, need) devolve o y correcto após eventual nova página
  * (nunca desenhar com um y “antigo” — isso mordia os cards na margem).
@@ -34,7 +31,15 @@ const CONTENT_TOP = MARGIN_TOP + 1;
 /** Limite útil: deixa a margem inferior intacta (numeração) + folga anti-sobreposição */
 const CONTENT_BOTTOM = PAGE_H - MARGIN_BOTTOM - 1;
 
-/** Título do relatório — negrito, sem transform (visível em todas as páginas) */
+/**
+ * Escala tipográfica (pt).
+ * FONT_MIN ≈ corpo do comprovante Mercado Pago (referência impressa) — nada abaixo disso.
+ */
+const FONT_MIN = 10;
+const FONT_BODY = 10;
+const FONT_LABEL = 10;
+const FONT_DAY = 11;
+const FONT_SECTION = 12;
 const TITLE_SIZE = 15;
 
 function formatCurrency(value) {
@@ -126,7 +131,7 @@ export async function gerarDespesaMensalPdf(opts) {
       pdf.setPage(i);
       drawHeader();
       setFont('normal');
-      pdf.setFontSize(9);
+      pdf.setFontSize(FONT_MIN);
       pdf.setTextColor(80, 80, 80);
       const label = normalizePdfText(`${i} / ${total}`);
       pdf.text(label, PAGE_W / 2, PAGE_H - MARGIN_BOTTOM / 2, { align: 'center' });
@@ -154,26 +159,26 @@ export async function gerarDespesaMensalPdf(opts) {
   for (const grupo of grupos) {
     const contas = grupo.contas || [];
     const subtotal = contas.reduce((acc, c) => acc + (Number(c.valor) || 0), 0);
-    const diaH = 7.5;
+    const diaH = 8.5;
 
     y = ensureSpace(y, diaH + 12);
     pdf.setFillColor(237, 240, 244);
     pdf.rect(MARGIN_X, y, contentW, diaH, 'F');
     setFont('bold');
-    pdf.setFontSize(10);
+    pdf.setFontSize(FONT_DAY);
     pdf.setTextColor(0, 0, 0);
     const labelDia = normalizePdfText(`${grupo.label || ''} (${pad2(contas.length)})`);
-    pdf.text(labelDia, MARGIN_X + 2, y + 5);
+    pdf.text(labelDia, MARGIN_X + 2, y + 5.5);
     setFont('normal');
-    pdf.text(normalizePdfText(formatCurrency(subtotal)), PAGE_W - MARGIN_X - 2, y + 5, {
+    pdf.text(normalizePdfText(formatCurrency(subtotal)), PAGE_W - MARGIN_X - 2, y + 5.5, {
       align: 'right',
     });
     y += diaH + 1.5;
 
     const colStatus = MARGIN_X + 1;
-    const colConta = MARGIN_X + 18;
+    const colConta = MARGIN_X + 22;
     const colValor = PAGE_W - MARGIN_X - 1;
-    const rowH = 9.5;
+    const rowH = 11;
 
     for (const conta of contas) {
       y = ensureSpace(y, rowH + 0.5);
@@ -183,15 +188,15 @@ export async function gerarDespesaMensalPdf(opts) {
       const textY = y + rowH * 0.62;
 
       setFont('normal');
-      pdf.setFontSize(8);
+      pdf.setFontSize(FONT_MIN);
       if (st === 'Pago') pdf.setTextColor(85, 107, 47);
       else if (st === 'Vencido') pdf.setTextColor(139, 47, 47);
       else pdf.setTextColor(120, 120, 120);
       if (st) pdf.text(st, colStatus, textY);
 
       pdf.setTextColor(0, 0, 0);
-      pdf.setFontSize(9.5);
-      const maxDescW = colValor - colConta - 34;
+      pdf.setFontSize(FONT_BODY);
+      const maxDescW = colValor - colConta - 36;
       const descLines = pdf.splitTextToSize(desc, maxDescW);
       pdf.text(descLines[0] || '-', colConta, textY);
       pdf.text(valor, colValor, textY, { align: 'right' });
@@ -219,28 +224,28 @@ export async function gerarDespesaMensalPdf(opts) {
 
   /** —— Provisões (1 coluna) —— */
   if (budgetsAgrupados?.grupos?.length) {
-    const budgetsHeaderH = 11;
+    const budgetsHeaderH = 13;
     y = ensureSpace(y, budgetsHeaderH + 4);
     pdf.setFillColor(226, 232, 240);
     pdf.rect(MARGIN_X, y, contentW, budgetsHeaderH, 'F');
     setFont('bold');
-    pdf.setFontSize(11);
+    pdf.setFontSize(FONT_SECTION);
     pdf.setTextColor(0, 0, 0);
-    pdf.text(normalizePdfText('PROVISÕES — anotações por centro de custo'), MARGIN_X + 2, y + 4.5);
+    pdf.text(normalizePdfText('PROVISÕES — anotações por centro de custo'), MARGIN_X + 2, y + 5);
     setFont('normal');
-    pdf.setFontSize(8);
+    pdf.setFontSize(FONT_MIN);
     pdf.setTextColor(51, 65, 85);
     pdf.text(
       normalizePdfText(
         `Competência ${budgetsAgrupados.competencia || ''} · 1 coluna · Total orçado: ${formatCurrency(budgetsAgrupados.totalOrcado || 0)}`,
       ),
       MARGIN_X + 2,
-      y + 9,
+      y + 10.5,
     );
     y += budgetsHeaderH + 2;
 
     for (const g of budgetsAgrupados.grupos) {
-      const centroHeaderH = 8;
+      const centroHeaderH = 9;
       /** Altura original (com linhas); agora limpo, sem tracejado */
       const cardH = 44;
       const cardGap = 3;
@@ -249,20 +254,20 @@ export async function gerarDespesaMensalPdf(opts) {
       const primeiroCard = g.itens?.length ? cardH + 2 : 0;
       y = ensureSpace(y, centroHeaderH + primeiroCard);
       setFont('bold');
-      pdf.setFontSize(9);
+      pdf.setFontSize(FONT_BODY);
       pdf.setTextColor(0, 0, 0);
-      pdf.text(normalizePdfText(String(g.centro || '').toUpperCase()), MARGIN_X + 1, y + 4);
+      pdf.text(normalizePdfText(String(g.centro || '').toUpperCase()), MARGIN_X + 1, y + 4.5);
       setFont('normal');
       const qtdItens = g.itens.length;
       const labelQtd = qtdItens === 1 ? '1 PROVISÃO' : `${qtdItens} PROVISÕES`;
       pdf.text(
         normalizePdfText(`${formatCurrency(g.totalOrcado)} · ${labelQtd}`),
         PAGE_W - MARGIN_X - 1,
-        y + 4,
+        y + 4.5,
         { align: 'right' },
       );
       pdf.setDrawColor(148, 163, 184);
-      pdf.line(MARGIN_X, y + 5.5, PAGE_W - MARGIN_X, y + 5.5);
+      pdf.line(MARGIN_X, y + 6.2, PAGE_W - MARGIN_X, y + 6.2);
       y += centroHeaderH;
 
       for (const v of g.itens) {
@@ -279,24 +284,24 @@ export async function gerarDespesaMensalPdf(opts) {
         pdf.roundedRect(MARGIN_X, y, contentW, cardH, 1.5, 1.5, 'FD');
 
         setFont('bold');
-        pdf.setFontSize(9);
+        pdf.setFontSize(FONT_BODY);
         pdf.setTextColor(0, 0, 0);
         const valorW = pdf.getTextWidth(valorStr);
         const nomeMaxW = Math.max(40, contentW - pad * 2 - valorW - 4);
         const nomeLines = pdf.splitTextToSize(nome, nomeMaxW).slice(0, 1);
-        pdf.text(nomeLines[0] || nome, MARGIN_X + pad, y + 5);
-        pdf.text(valorStr, PAGE_W - MARGIN_X - pad, y + 5, { align: 'right' });
+        pdf.text(nomeLines[0] || nome, MARGIN_X + pad, y + 6);
+        pdf.text(valorStr, PAGE_W - MARGIN_X - pad, y + 6, { align: 'right' });
 
-        let ty = y + 9;
+        let ty = y + 11;
         if (cat) {
           setFont('normal');
-          pdf.setFontSize(7);
+          pdf.setFontSize(FONT_MIN);
           pdf.setTextColor(71, 85, 105);
           pdf.text(cat, MARGIN_X + pad, ty);
-          ty += 3.5;
+          ty += 4.5;
         }
         setFont('normal');
-        pdf.setFontSize(7);
+        pdf.setFontSize(FONT_LABEL);
         pdf.setTextColor(100, 116, 139);
         pdf.text(normalizePdfText('ANOTAÇÕES / RASCUNHOS'), MARGIN_X + pad, ty + 1);
         // Sem linhas internas — área em branco para anotar à mão
@@ -310,14 +315,14 @@ export async function gerarDespesaMensalPdf(opts) {
   const anotacoesMin = 24;
   if (y + anotacoesMin <= CONTENT_BOTTOM) {
     setFont('bold');
-    pdf.setFontSize(10);
+    pdf.setFontSize(FONT_DAY);
     pdf.setTextColor(0, 0, 0);
-    pdf.text(normalizePdfText('Anotações >'), MARGIN_X, y + 4);
+    pdf.text(normalizePdfText('Anotações >'), MARGIN_X, y + 4.5);
     setFont('normal');
-    pdf.setFontSize(8);
+    pdf.setFontSize(FONT_MIN);
     pdf.setTextColor(51, 65, 85);
-    pdf.text(normalizePdfText('escreva abaixo'), MARGIN_X, y + 8);
-    y += 12;
+    pdf.text(normalizePdfText('escreva abaixo'), MARGIN_X, y + 9.5);
+    y += 14;
     pdf.setDrawColor(203, 213, 225);
     pdf.setLineWidth(0.2);
     while (y + 2 < CONTENT_BOTTOM) {
@@ -349,24 +354,24 @@ function desenharFolhaPdf(pdf, { folha, setFont, y, ensureSpace, contentW, forma
   const cardW = (contentW - gap * (COLS - 1)) / COLS;
   /** Altura original (com linhas); nome|valor na mesma linha, área em branco */
   const cardH = 72;
-  const headerH = 11;
+  const headerH = 13;
 
   y = ensureSpace(y, headerH + 4);
   pdf.setFillColor(226, 232, 240);
   pdf.rect(MARGIN_X, y, contentW, headerH, 'F');
   setFont('bold');
-  pdf.setFontSize(10);
+  pdf.setFontSize(FONT_SECTION);
   pdf.setTextColor(0, 0, 0);
-  pdf.text(normalizePdfText('Folha de pagamento (funcionários) — 3 colunas'), MARGIN_X + 2, y + 4.2);
+  pdf.text(normalizePdfText('Folha de pagamento (funcionários) — 3 colunas'), MARGIN_X + 2, y + 5);
   setFont('normal');
-  pdf.setFontSize(7.5);
+  pdf.setFontSize(FONT_MIN);
   pdf.setTextColor(51, 65, 85);
   pdf.text(
     normalizePdfText(
       `Competência ${folha.competencia || ''} · Sócios não entram · Espaço para anotações à mão`,
     ),
     MARGIN_X + 2,
-    y + 8.5,
+    y + 10.5,
   );
   y += headerH + 2;
 
@@ -387,7 +392,7 @@ function desenharFolhaPdf(pdf, { folha, setFont, y, ensureSpace, contentW, forma
       const valorStr = normalizePdfText(sal);
 
       setFont('bold');
-      pdf.setFontSize(7.5);
+      pdf.setFontSize(FONT_MIN);
       pdf.setTextColor(0, 0, 0);
       const valorW = pdf.getTextWidth(valorStr);
       const nomeMaxW = Math.max(12, cardW - pad * 2 - valorW - 3);
@@ -395,12 +400,12 @@ function desenharFolhaPdf(pdf, { folha, setFont, y, ensureSpace, contentW, forma
         normalizePdfText(String(row.nome || '').toUpperCase()),
         nomeMaxW,
       ).slice(0, 2);
-      pdf.text(nomeLines, x + pad, y + 5);
-      pdf.text(valorStr, x + cardW - pad, y + 5, { align: 'right' });
+      pdf.text(nomeLines, x + pad, y + 6);
+      pdf.text(valorStr, x + cardW - pad, y + 6, { align: 'right' });
 
-      const labelY = y + 5 + (nomeLines.length > 1 ? 3.8 : 0) + 4;
+      const labelY = y + 6 + (nomeLines.length > 1 ? 4.2 : 0) + 5;
       setFont('normal');
-      pdf.setFontSize(6.5);
+      pdf.setFontSize(FONT_LABEL);
       pdf.setTextColor(100, 116, 139);
       pdf.text(normalizePdfText('ANOTAÇÕES'), x + pad, labelY);
       // Área em branco abaixo (sem linhas internas) para escrever à mão
