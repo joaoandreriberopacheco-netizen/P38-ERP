@@ -74,12 +74,13 @@ Lista completa: [`p38-ui/INVENTARIO.md`](./p38-ui/INVENTARIO.md).
 ```
 mirror/
 ├── README.md           ← este ficheiro
-├── live/               ← carimbos (mirrorpass, stamp)
-├── legacy/             ← PACOTE COMPLETO → colar em a29-erp/legacy/varejosync/
-└── p38-ui/             ← espelho UI antigo (scaffold; preferir legacy/)
+├── live/               ← carimbos (mirrorpass, stamp) — manter no Git para A29
+└── p38-ui/             ← espelho UI (scaffold; gerado por mirror:pack)
 ```
 
-## Pacote completo (`mirror/legacy/`)
+O pacote `mirror/legacy/` foi removido do repositório (duplicata pesada). Para gerar de novo: `npm run mirror:pack-legacy`.
+
+## Pacote completo (`mirror/legacy/` — gerado localmente)
 
 Para sync **manual** com o A29 (substituir `legacy/varejosync/`):
 

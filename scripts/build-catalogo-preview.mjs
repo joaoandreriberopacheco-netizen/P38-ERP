@@ -391,11 +391,7 @@ function main() {
 
   const out = join(root, 'docs', 'migration', 'catalogo_interface_preview.html');
   writeFileSync(out, html, 'utf8');
-  const overlayOut = join(root, 'src', 'generated', 'catalog-overlay-index.json');
-  mkdirSync(join(root, 'src', 'generated'), { recursive: true });
-  writeFileSync(overlayOut, JSON.stringify(overlayManifest, null, 2), 'utf8');
   console.log('Gerado:', out);
-  console.log('Overlay:', overlayOut);
   console.log('Páginas AST:', Object.keys(payload.pageDetails).length);
 }
 

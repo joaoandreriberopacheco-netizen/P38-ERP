@@ -43,7 +43,7 @@ export default function LancamentoAnexos() {
   }, [id]);
 
   const voltar = () => {
-    window.location.href = createPageUrl('Financeiro');
+    window.location.href = createPageUrl('FluxoCaixa');
   };
 
   if (!id) {
@@ -55,7 +55,7 @@ export default function LancamentoAnexos() {
           onClick={voltar}
           className="rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
         >
-          Ir para Financeiro
+          Ir para Fluxo de Caixa
         </button>
       </div>
     );

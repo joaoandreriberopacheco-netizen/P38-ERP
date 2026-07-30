@@ -1,8 +1,0 @@
-{
-  "name": "CustoDetalhado",
-  "type": "object",
-  "properties": {
-    "id": { "type": "string" },
-    "valor": { "type": "number" }
-  }
-}

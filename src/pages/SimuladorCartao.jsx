@@ -1,5 +1,7 @@
-import SimuladorCartaoAvancado from '@/components/vendas/caixa/SimuladorCartaoAvancado';
+import { Navigate } from 'react-router-dom';
+import { createPageUrl } from '@/components/utils';
 
-export default function SimuladorCartao() {
-  return <SimuladorCartaoAvancado />;
+/** Legado: simulador em página removido — usar sheet no PDV/Orçamento. */
+export default function SimuladorCartaoPage() {
+  return <Navigate to={createPageUrl('PDV')} replace />;
 }
