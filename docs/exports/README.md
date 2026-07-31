@@ -15,6 +15,21 @@ https://github.com/joaoandreriberopacheco-netizen/varejosync/raw/main/docs/expor
 
 ---
 
+## Painel Blade Ranger (simulação Excel)
+
+Metáfora do chefe bombeiro: luz **amarela** = risco no ponto futuro; **vermelha** = ruptura já ocorreu. Árvore LINHA → produto compra → SKU.
+
+| Ficheiro | Descrição |
+|----------|-----------|
+| [P38-painel-blade-ranger-simulacao.xlsx](./P38-painel-blade-ranger-simulacao.xlsx) | Resumo LINHAS, incêndios, painel árvore, retratos SOLDÁVEL e TINTA |
+
+Regenerar: `npm run export:painel-ranger`
+
+**Download directo:**  
+https://github.com/joaoandreriberopacheco-netizen/varejosync/raw/main/docs/exports/P38-painel-blade-ranger-simulacao.xlsx
+
+---
+
 ## Análise LINHA de compra (modelo completo — referência)
 
 Modelo: **LINHA** → **produto de compra** → **eixos A×B** + marca.  

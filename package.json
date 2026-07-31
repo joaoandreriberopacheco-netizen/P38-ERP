@@ -58,6 +58,7 @@
     "export:linhas-categoria": "node scripts/export-linhas-por-categoria.mjs",
     "export:analise-linhas": "node scripts/export-catalogo-analise-linhas.mjs",
     "export:linhas-mestre": "node scripts/export-linhas-mestre.mjs",
+    "export:painel-ranger": "node scripts/export-painel-blade-ranger.mjs",
     "produto:nome:restaurar": "node scripts/restaurar-nomes-produto-hierarquia.mjs",
     "produto:nome:restaurar:apply": "node scripts/restaurar-nomes-produto-hierarquia.mjs --apply",
     "git:ship": "node scripts/git-ship.mjs",
