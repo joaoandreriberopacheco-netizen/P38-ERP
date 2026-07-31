@@ -3,6 +3,7 @@ import { addDays, subDays, format } from 'date-fns';
 import { Plus, Route, Ship, StickyNote, User, Phone } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import { findOrCreateTransportadora, buildTransportadoraPersistPayload } from '@/lib/resolveTransportadora';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -55,7 +56,7 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
-
+    try {
     const saida = new Date(`${form.data_saida_origem}T00:00:00`);
     const diasAteETA = form.usar_ciclo_padrao ? defaultCycle.diasAteETA : Number(form.ciclo_personalizado_duracao || 0);
     const diasAteRetornoManaus = form.usar_ciclo_padrao ? defaultCycle.diasAteRetornoManaus : Number(form.ciclo_personalizado_duracao || 0) * 2;
@@ -63,11 +64,23 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
     const chegadaManaus = subDays(saida, diasAteETA);
     const chegada = addDays(saida, diasAteETA);
 
+    const transportadora = await findOrCreateTransportadora(base44, form.embarcacao_nome);
+    const transportadoraPayload = buildTransportadoraPersistPayload(
+      {
+        transportadora_id: transportadora?.id,
+        transportadora_nome: transportadora?.nome || form.embarcacao_nome,
+        embarcacao_nome: form.embarcacao_nome,
+      },
+      transportadora ? [transportadora] : [],
+    );
+
     const payload = {
-      embarcacao_nome: form.embarcacao_nome,
-      nome: `${form.embarcacao_nome} · ETA ${format(chegada, 'dd/MM/yyyy')}`,
+      embarcacao_nome: transportadoraPayload.embarcacao_nome,
+      nome: `${transportadoraPayload.embarcacao_nome} · ETA ${format(chegada, 'dd/MM/yyyy')}`,
       codigo: `ETA-${format(chegada, 'ddMMyy')}`,
-      embarcacao_nome: form.embarcacao_nome,
+      transportadora_id: transportadoraPayload.transportadora_id,
+      transportadora_nome: transportadoraPayload.transportadora_nome,
+      embarcacao_template_id: transportadoraPayload.embarcacao_template_id,
       rota_nome: 'Manaus → Tabatinga',
       status_operacao: 'Atracado na Origem',
       data_chegada_manaus: format(chegadaManaus, 'yyyy-MM-dd'),
@@ -92,6 +105,13 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
     toast.success('Transportadora e recorrência salvas com sucesso', {
       description: 'O ciclo considera chegada em Manaus 7 dias antes da saída, depois saída de Manaus e ETA em Tabatinga 7 dias depois.'
     });
+    } catch (err) {
+      toast.error('Não foi possível salvar a viagem', {
+        description: err?.message || 'Erro desconhecido',
+      });
+      setSaving(false);
+      return;
+    }
     setSaving(false);
     setOpen(false);
     setForm({
