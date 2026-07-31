@@ -77,52 +77,6 @@ async function downloadStorageObjectBytes(
   return { bytes, mimeType };
 }
 
-async function buildVisionContentParts(
-  prompt: string,
-  fileUrls: string[],
-  wantsJson: boolean,
-): Promise<unknown[]> {
-  const text = wantsJson ? `${prompt}\n\nResponda somente com JSON válido.` : prompt;
-  const parts: unknown[] = [{ type: 'text', text }];
-
-  for (const url of fileUrls) {
-    const res = await fetch(url);
-    if (!res.ok) {
-      throw new Error(`Não foi possível ler o arquivo para análise (${res.status})`);
-    }
-    const mime = (res.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
-
-    if (isPdfUrl(url, mime)) {
-      const bytes = new Uint8Array(await res.arrayBuffer());
-      const base64 = bytesToBase64(bytes);
-      parts.push({
-        type: 'file',
-        file: {
-          filename: 'documento.pdf',
-          file_data: `data:application/pdf;base64,${base64}`,
-        },
-      });
-      continue;
-    }
-
-    if (isImageUrl(url, mime)) {
-      parts.push({
-        type: 'image_url',
-        image_url: { url, detail: 'high' },
-      });
-      continue;
-    }
-
-    // Fallback: tenta como imagem (URLs sem extensão, ex. storage Supabase)
-    parts.push({
-      type: 'image_url',
-      image_url: { url, detail: 'high' },
-    });
-  }
-
-  return parts;
-}
-
 function parseInvokeLlmContent(content: string, wantsJson: boolean): unknown {
   if (!wantsJson) return { result: content };
   try {
@@ -148,6 +102,64 @@ function resolveGeminiModel(useVision: boolean): string {
   if (env('GEMINI_MODEL')) return env('GEMINI_MODEL');
   // gemini-2.0-flash foi descontinuado (404 em jul/2026); 3.6 para PDF/imagem, lite para texto.
   return useVision ? 'gemini-3.6-flash' : 'gemini-3.5-flash-lite';
+}
+
+function geminiVisionFallbackModels(primary: string): string[] {
+  const chain = [primary, 'gemini-3.5-flash', 'gemini-3.5-flash-lite'];
+  return [...new Set(chain.filter(Boolean))];
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isGeminiRetryableStatus(status: number): boolean {
+  return status === 429 || status === 500 || status === 503 || status === 504;
+}
+
+function humanizeGeminiApiError(status: number, body: string): string {
+  const lower = String(body || '').toLowerCase();
+  if (status === 503 || /unavailable|spike|overloaded|high demand|try again later/i.test(lower)) {
+    return 'O Gemini está com pico de demanda agora. Aguarde 30–60 segundos e tente importar de novo.';
+  }
+  if (status === 429 || /quota|rate limit|resource exhausted/i.test(lower)) {
+    return 'Limite de chamadas ao Gemini atingido. Aguarde um minuto e tente novamente.';
+  }
+  if (/billing|credit|prepay|payment/i.test(lower)) {
+    return 'Créditos ou faturação do Gemini precisam de atenção no Google AI Studio.';
+  }
+  const snippet = String(body || '').trim().slice(0, 180);
+  return snippet ? `Gemini (${status}): ${snippet}` : `Gemini indisponível (${status}). Tente novamente em instantes.`;
+}
+
+async function postGeminiGenerateContent(
+  model: string,
+  key: string,
+  requestBody: Record<string, unknown>,
+): Promise<Response> {
+  const endpoint =
+    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`;
+  const maxAttempts = 4;
+  let lastStatus = 503;
+  let lastBody = '';
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody),
+    });
+    if (res.ok) return res;
+
+    lastStatus = res.status;
+    lastBody = await res.text();
+    if (!isGeminiRetryableStatus(res.status) || attempt >= maxAttempts - 1) {
+      throw new Error(humanizeGeminiApiError(res.status, lastBody));
+    }
+    await sleep(1500 * (2 ** attempt));
+  }
+
+  throw new Error(humanizeGeminiApiError(lastStatus, lastBody));
 }
 
 async function fetchFileInlineData(url: string): Promise<{ mimeType: string; data: string }> {
@@ -220,93 +232,48 @@ async function invokeGeminiLLM({
     generationConfig.responseMimeType = 'application/json';
   }
 
-  const endpoint =
-    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(effectiveModel)}:generateContent?key=${encodeURIComponent(key)}`;
-
-  const res = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ role: 'user', parts }],
-      generationConfig,
-    }),
-  });
-
-  if (!res.ok) throw new Error(`Gemini: ${await res.text()}`);
-  const json = await res.json();
-  const content = (json.candidates?.[0]?.content?.parts ?? [])
-    .map((part: { text?: string }) => part.text || '')
-    .join('');
-  const meta = json.usageMetadata || {};
-  const inputTokens = Number(meta.promptTokenCount) || 0;
-  const outputTokens = Number(meta.candidatesTokenCount) || 0;
-  const usage: LlmUsage = {
-    provider: 'gemini',
-    model: effectiveModel,
-    input_tokens: inputTokens,
-    output_tokens: outputTokens,
-    total_tokens: Number(meta.totalTokenCount) || inputTokens + outputTokens,
-  };
-  return {
-    data: parseInvokeLlmContent(content, wantsJson),
-    usage,
-  };
-}
-
-async function invokeOpenAiLLM({
-  prompt,
-  model,
-  file_urls,
-  response_json_schema,
-}: {
-  prompt: string;
-  model?: string;
-  file_urls?: string[];
-  response_json_schema?: Record<string, unknown>;
-}) {
-  const key = env('OPENAI_API_KEY');
-  if (!key) throw new Error('OPENAI_API_KEY não configurado');
-
-  const fileUrls = Array.isArray(file_urls) ? file_urls.filter(Boolean) : [];
-  const wantsJson = Boolean(response_json_schema);
-  const useVision = fileUrls.length > 0;
-  const effectiveModel = model || (useVision ? 'gpt-4o' : 'gpt-4o-mini');
-
-  const body: Record<string, unknown> = {
-    model: effectiveModel,
-    messages: [
-      {
-        role: 'user',
-        content: useVision
-          ? await buildVisionContentParts(prompt, fileUrls, wantsJson)
-          : (wantsJson ? `${prompt}\n\nResponda somente com JSON válido.` : prompt),
-      },
-    ],
+  const requestBody = {
+    contents: [{ role: 'user', parts }],
+    generationConfig,
   };
 
-  if (wantsJson) {
-    body.response_format = { type: 'json_object' };
+  const modelsToTry = fileUrls.length > 0
+    ? geminiVisionFallbackModels(effectiveModel)
+    : [effectiveModel];
+
+  let lastError: Error | null = null;
+  for (const modelName of modelsToTry) {
+    try {
+      const res = await postGeminiGenerateContent(modelName, key, requestBody);
+      const json = await res.json();
+      const content = (json.candidates?.[0]?.content?.parts ?? [])
+        .map((part: { text?: string }) => part.text || '')
+        .join('');
+      const meta = json.usageMetadata || {};
+      const inputTokens = Number(meta.promptTokenCount) || 0;
+      const outputTokens = Number(meta.candidatesTokenCount) || 0;
+      const usage: LlmUsage = {
+        provider: 'gemini',
+        model: modelName,
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
+        total_tokens: Number(meta.totalTokenCount) || inputTokens + outputTokens,
+      };
+      return {
+        data: parseInvokeLlmContent(content, wantsJson),
+        usage,
+      };
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      lastError = error;
+      const retryable = /pico de demanda|limite de chamadas|503|429|504/i.test(error.message);
+      if (!retryable || modelName === modelsToTry[modelsToTry.length - 1]) {
+        throw error;
+      }
+    }
   }
 
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error(`OpenAI: ${await res.text()}`);
-  const json = await res.json();
-  const content = String(json.choices?.[0]?.message?.content ?? '');
-  const usage: LlmUsage = {
-    provider: 'openai',
-    model: effectiveModel,
-    input_tokens: Number(json.usage?.prompt_tokens) || 0,
-    output_tokens: Number(json.usage?.completion_tokens) || 0,
-    total_tokens: Number(json.usage?.total_tokens) || 0,
-  };
-  return {
-    data: parseInvokeLlmContent(content, wantsJson),
-    usage,
-  };
+  throw lastError || new Error('Gemini indisponível. Tente novamente em instantes.');
 }
 
 export function buildCoreIntegrations() {
@@ -359,29 +326,18 @@ export function buildCoreIntegrations() {
       response_json_schema?: Record<string, unknown>;
     }) {
       const geminiKey = resolveGeminiApiKey();
-      const openAiKey = env('OPENAI_API_KEY');
-      if (geminiKey) {
-        return invokeGeminiLLM({ prompt, model, file_urls, response_json_schema });
+      if (!geminiKey) {
+        throw new Error(
+          'Leitura com IA indisponível. Defina GEMINI_API_KEY (ou GOOGLE_API_KEY) no Supabase → Edge Functions → Secrets.',
+        );
       }
-      if (openAiKey) {
-        return invokeOpenAiLLM({ prompt, model, file_urls, response_json_schema });
-      }
-      throw new Error(
-        'Nenhum provedor de IA configurado. Defina GEMINI_API_KEY (recomendado) ou OPENAI_API_KEY no Supabase → Edge Functions → Secrets.',
-      );
+      return invokeGeminiLLM({ prompt, model, file_urls, response_json_schema });
     },
 
-    async GenerateImage({ prompt }: { prompt: string }) {
-      const key = env('OPENAI_API_KEY');
-      if (!key) throw new Error('OPENAI_API_KEY não configurado');
-      const res = await fetch('https://api.openai.com/v1/images/generations', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size: '1024x1024' }),
-      });
-      if (!res.ok) throw new Error(`OpenAI image: ${await res.text()}`);
-      const json = await res.json();
-      return { url: json.data?.[0]?.url ?? '' };
+    async GenerateImage(_args: { prompt: string }) {
+      throw new Error(
+        'Geração de imagem por IA não está disponível. Faça upload do logo ou imagem manualmente.',
+      );
     },
 
     async ExtractDataFromUploadedFile(_args: Record<string, unknown>) {

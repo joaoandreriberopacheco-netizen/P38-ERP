@@ -51,8 +51,11 @@ function humanizeP38CoreError(payload, status) {
   if (/não autenticado|missing authorization|unauthorized/i.test(msg) || status === 401) {
     return 'Sessão expirada ou ausente. Saia e entre novamente em /login.';
   }
-  if (/OPENAI_API_KEY|GEMINI_API_KEY|GOOGLE_API_KEY/i.test(msg)) {
-    return 'Leitura com IA indisponível: configure GEMINI_API_KEY (recomendado) ou OPENAI_API_KEY no Supabase → Edge Functions → Secrets.';
+  if (/GEMINI_API_KEY|GOOGLE_API_KEY/i.test(msg)) {
+    return 'Leitura com IA indisponível: configure GEMINI_API_KEY no Supabase → Edge Functions → Secrets.';
+  }
+  if (/pico de demanda|spike|unavailable|503|429|try again/i.test(msg)) {
+    return 'O Gemini está sobrecarregado neste momento. Aguarde 30–60 segundos e tente de novo.';
   }
   if (msg) return msg;
   if (status === 502) return 'Serviço de análise indisponível. Tente novamente em instantes.';

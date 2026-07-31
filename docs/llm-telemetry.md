@@ -1,12 +1,12 @@
 # Telemetria de IA (plano em 3 passos)
 
-Controlo de custo das leituras com Gemini/OpenAI (OCR de pedidos, boletos, cotações).
+Controlo de custo das leituras com Gemini (OCR de pedidos, boletos, cotações).
 
 ## Passo 1 — Instrumentar
 
 Cada chamada `InvokeLLM` no `p38-core` regista:
 
-- provedor e modelo (Gemini / OpenAI)
+- provedor e modelo (Gemini)
 - tokens de entrada, saída e total
 - duração, sucesso/erro
 - contexto opcional enviado pelo cliente (`source`, `catalog_product_count`, `file_count`)

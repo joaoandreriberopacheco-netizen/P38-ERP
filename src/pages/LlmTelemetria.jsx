@@ -60,7 +60,7 @@ export default function LlmTelemetria() {
             Telemetria de IA (OCR)
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Acompanhe tokens e custo estimado das leituras com Gemini/OpenAI. Meta saudável: abaixo de{' '}
+            Acompanhe tokens e custo estimado das leituras com Gemini. Meta saudável: abaixo de{' '}
             {formatTokens(data?.meta_saudavel_tokens || 12000)} tokens por chamada, sem catálogo no prompt.
           </p>
         </div>
