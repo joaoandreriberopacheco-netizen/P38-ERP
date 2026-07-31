@@ -170,6 +170,9 @@ function applyFilters(query, where, mapping) {
 
     if (Array.isArray(val)) {
       q = q.in(target, val);
+    } else if (key === 'tipo' && typeof val === 'string') {
+      // BD usa PRODUTO em maiúsculas; formulários usam Produto.
+      q = q.ilike(target, val);
     } else {
       q = q.eq(target, val);
     }

@@ -4,6 +4,7 @@ import { normalizeProductCodeForSearch, productCodesMatch } from '@/lib/productC
 const MATCH_STOPWORDS = new Set([
   'a', 'o', 'as', 'os', 'de', 'da', 'do', 'das', 'dos', 'e', 'em', 'com', 'para', 'por', 'no', 'na', 'nos', 'nas',
   'un', 'und', 'uni', 'unid', 'pc', 'pç', 'pct', 'cx', 'caixa', 'kg', 'g', 'ml', 'l', 'lt', 'm', 'mt', 'mm', 'cm',
+  'colante', // PDF traz "argamassa colante"; catálogo costuma ser só "ARGAMASSA … AC-n"
 ]);
 
 const MATERIAL_ABBREVIATIONS = {
@@ -26,9 +27,21 @@ const MATERIAL_ABBREVIATIONS = {
   porcel: 'porcelanato',
 };
 
+function preprocessMatchText(value) {
+  return String(value || '')
+    .replace(/\bac[\s-]*iii\b/gi, ' ac3 ')
+    .replace(/\bac[\s-]*ii\b/gi, ' ac2 ')
+    .replace(/\bac[\s-]*iv\b/gi, ' ac4 ')
+    .replace(/\bac[\s-]*i\b/gi, ' ac1 ')
+    .replace(/\bac[\s-]*1\b/gi, ' ac1 ')
+    .replace(/\bac[\s-]*2\b/gi, ' ac2 ')
+    .replace(/\bac[\s-]*3\b/gi, ' ac3 ')
+    .replace(/\b(\d+)\s*kg\b/gi, ' $1kg ');
+}
+
 function normalizeMatchText(value) {
   return normalizeProductSearchText(
-    String(value || '')
+    preprocessMatchText(value)
       .replace(/[²³]/g, '2')
       .replace(/[,;:/|()[\]{}]/g, ' ')
       .replace(/(\d)([a-z]{2,})/gi, '$1 $2')
@@ -131,7 +144,7 @@ export function normalizeProductSearchText(value) {
 
 export function getProductSearchText(produto) {
   const codigoInternoRaw = normalizeProductCodeForSearch(produto?.codigo_interno);
-  return normalizeProductSearchText([
+  return normalizeMatchText([
     produto?.nome,
     produto?.codigo_interno,
     codigoInternoRaw,
@@ -153,7 +166,7 @@ export function getSemicolonSearchTokens(query) {
 export function matchesProductQuery(produto, query) {
   if (!query?.trim()) return true;
   const searchable = getProductSearchText(produto);
-  const terms = getSemicolonSearchTokens(query);
+  const terms = parseSearchTerms(query, normalizeMatchText);
   return terms.every((term) => searchable.includes(term));
 }
 
