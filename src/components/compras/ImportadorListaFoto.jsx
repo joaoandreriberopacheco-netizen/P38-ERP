@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Camera, Image as ImageIcon, Sparkles, Calculator, X } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
-import { buildProdutoMatchingPromptBase, matchesProductQuery, findLocalBestProductMatch } from '@/components/compras/productMatchingUtils';
+import { buildProdutoMatchingPromptBase, findLocalBestProductMatch } from '@/components/compras/productMatchingUtils';
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
 import { P38TableShell } from '@/components/ui/table';
 import { P38MobileLine, P38MobileLineList, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
