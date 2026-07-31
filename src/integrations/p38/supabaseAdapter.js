@@ -438,7 +438,45 @@ function buildFunctions(supabase) {
 }
 
 function buildIntegrations(supabase) {
-  const bucket = 'anexos';
+  const bucket = p38PublicEnv('VITE_SUPABASE_ANEXOS_BUCKET') || 'anexos';
+
+  function normalizeInvokeLlmResponse(data) {
+    if (data == null) return data;
+    if (typeof data === 'string') {
+      try {
+        return JSON.parse(data);
+      } catch {
+        return data;
+      }
+    }
+    if (typeof data !== 'object') return data;
+    if (data.response_json && typeof data.response_json === 'object') return data.response_json;
+    if (data.response && typeof data.response === 'object') return data.response;
+    if (data.data && typeof data.data === 'object') return data.data;
+    if (data.result != null) {
+      if (typeof data.result === 'object') return data.result;
+      if (typeof data.result === 'string') {
+        try {
+          return JSON.parse(data.result);
+        } catch {
+          return data;
+        }
+      }
+    }
+    return data;
+  }
+
+  function formatStorageUploadError(error) {
+    const message = error?.message || String(error);
+    if (/bucket not found/i.test(message)) {
+      return (
+        `Bucket de anexos "${bucket}" não existe no Supabase Storage. ` +
+        'Aplique a migração supabase/migrations/045_storage_buckets.sql (npm run supabase:deploy) ' +
+        'ou crie o bucket no Dashboard → Storage.'
+      );
+    }
+    return message;
+  }
 
   async function invokeCore(op, payload) {
     if (!supabase) throw new Error('Supabase não configurado para integrações Core');
@@ -451,7 +489,8 @@ function buildIntegrations(supabase) {
   return {
     Core: {
       async InvokeLLM(payload) {
-        return invokeCore('InvokeLLM', payload);
+        const data = await invokeCore('InvokeLLM', payload);
+        return normalizeInvokeLlmResponse(data);
       },
       async SendEmail(payload) {
         return invokeCore('SendEmail', payload);
@@ -465,8 +504,12 @@ function buildIntegrations(supabase) {
       async UploadPrivateFile({ file, path }) {
         if (!supabase) throw new Error('Supabase não configurado');
         const name = path || `uploads/${crypto.randomUUID()}_${file.name || 'file'}`;
-        const { error } = await supabase.storage.from(bucket).upload(name, file, { upsert: true });
-        if (error) throw new Error(error.message);
+        const contentType = file.type || 'application/octet-stream';
+        const { error } = await supabase.storage.from(bucket).upload(name, file, {
+          upsert: true,
+          contentType,
+        });
+        if (error) throw new Error(formatStorageUploadError(error));
         const { data } = supabase.storage.from(bucket).getPublicUrl(name);
         return { file_url: data.publicUrl };
       },
