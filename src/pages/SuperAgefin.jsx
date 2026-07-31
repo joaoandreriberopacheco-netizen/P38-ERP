@@ -64,6 +64,7 @@ import {
   lancamentoCompraMercadoriaPedidoPagamentoAVista,
 } from '@/lib/agefinConsultaFilters';
 import { P38MobileLine, P38MobileLineList, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
+import { p38Table } from '@/lib/p38TableSurfaces';
 import {
   P38_ACCENT,
   P38_CHIP_ACTIVE,
@@ -161,6 +162,13 @@ function grupoDomId(key) {
   return `agefin-grupo-${String(key).replace(/[^a-zA-Z0-9_-]/g, '_')}`;
 }
 
+/** Remove prefixo «- » dos sócios para alinhar com as outras linhas. */
+function descricaoContaExibicao(conta) {
+  const raw = String(conta?.descricao || '').trim();
+  const limpa = raw.replace(/^[-–—]\s+/, '').trim();
+  return limpa || 'sem descrição';
+}
+
 /** Origem da conta para ícone Lucide na lista (só descrição + origem). */
 function origemContaAgefin(conta) {
   if (lancamentoEhCmv(conta) || lancamentoEhCompraMercadoriaPedido(conta)) {
@@ -190,6 +198,52 @@ function origemContaAgefin(conta) {
   return null;
 }
 
+const GRUPO_META_LABEL = {
+  vencimento: 'Vencimento',
+  favorecido: 'Favorecido',
+  status: 'Status',
+  categoria: 'Categoria',
+};
+
+/** Resumo do grupo — visual distinto das linhas de conta (não parece item da lista). */
+function AgefinGrupoCabecalho({ grupo, groupBy = 'vencimento' }) {
+  const qtd = grupo.contas?.length || 0;
+  const total = (grupo.contas || []).reduce((acc, c) => acc + (Number(c.valor) || 0), 0);
+  const labelQtd = qtd === 1 ? '1 conta' : `${qtd} contas`;
+  const metaLabel = GRUPO_META_LABEL[groupBy] || 'Grupo';
+
+  return (
+    <div
+      className={cn(
+        'flex min-w-0 items-center justify-between gap-3 rounded-xl px-3 py-2.5',
+        P38_FIELD_SURFACE,
+      )}
+    >
+      <div className="min-w-0">
+        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          {metaLabel}
+        </p>
+        <p className="truncate text-sm font-semibold uppercase tracking-wide text-foreground">
+          {grupo.label}
+        </p>
+      </div>
+      <div className="shrink-0 text-right">
+        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          {labelQtd}
+        </p>
+        <p
+          className={cn(
+            'text-sm font-semibold tabular-nums',
+            total > 0 ? 'text-red-600 dark:text-red-400' : P38_ACCENT,
+          )}
+        >
+          {formatCurrency(total)}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function ContaLinhaP38({ conta, onOpen, modoSelecao, selecionado, onToggleSelecao, striped }) {
   const todayKey = dataHoje();
   const isPaid = lancamentoPago(conta);
@@ -197,30 +251,37 @@ function ContaLinhaP38({ conta, onOpen, modoSelecao, selecionado, onToggleSeleca
   const tone = isPaid ? 'success' : isOverdue ? 'danger' : 'muted';
   const origem = origemContaAgefin(conta);
   const OrigemIcon = origem?.Icon;
+  const titulo = descricaoContaExibicao(conta);
 
   return (
     <P38MobileLine
+      as="button"
+      type="button"
       thinAccent
       striped={striped}
       accent={modoSelecao && selecionado ? 'success' : p38AccentKeyFromTone(tone)}
       onClick={() => (modoSelecao ? onToggleSelecao?.(conta) : onOpen())}
-      title={conta.descricao}
-      value={formatCurrency(conta.valor)}
-      trailing={
-        OrigemIcon ? (
-          <OrigemIcon
-            className="h-4 w-4 shrink-0 text-muted-foreground"
-            aria-label={origem.label}
-            title={origem.label}
-          />
-        ) : null
-      }
-    />
+      className="w-full text-left"
+    >
+      <div className="flex w-full min-w-0 items-center gap-2.5">
+        {/* Coluna fixa do ícone — todas as descrições alinham no mesmo X */}
+        <span
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary/40 text-muted-foreground dark:bg-[#383e47]/50"
+          aria-label={origem?.label || undefined}
+          title={origem?.label || undefined}
+        >
+          {OrigemIcon ? <OrigemIcon className="h-4 w-4" strokeWidth={2} /> : null}
+        </span>
+        <div className={cn('min-w-0 flex-1', p38Table.mobileLineTitle)}>{titulo.toUpperCase()}</div>
+        <div className={cn('shrink-0', p38Table.mobileLineValue)}>{formatCurrency(conta.valor)}</div>
+      </div>
+    </P38MobileLine>
   );
 }
 
 function SuperAgefinGruposVirtualList({
   grupos,
+  groupBy = 'vencimento',
   modoSelecao,
   selecionadosIds,
   toggleSelecaoConta,
@@ -241,7 +302,7 @@ function SuperAgefinGruposVirtualList({
   const virtualizer = useVirtualizer({
     count: flatRows.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: (index) => (flatRows[index]?.kind === 'header' ? 36 : 52),
+    estimateSize: (index) => (flatRows[index]?.kind === 'header' ? 64 : 56),
     getItemKey: (index) => flatRows[index]?.key ?? index,
     measureElement: measureVirtualItem,
     overscan: P38_VIRTUAL_OVERSCAN,
@@ -267,17 +328,10 @@ function SuperAgefinGruposVirtualList({
                 data-index={virtualRow.index}
                 ref={virtualizer.measureElement}
                 id={grupoDomId(grupo.key)}
-                className="absolute left-0 top-0 w-full scroll-mt-24 px-0.5 pt-4 first:pt-0"
+                className="absolute left-0 top-0 w-full scroll-mt-24 px-0.5 pt-3 first:pt-0"
                 style={{ transform: `translateY(${virtualRow.start}px)` }}
               >
-                <div className="flex items-baseline justify-between gap-2 px-0.5">
-                  <h2 className="text-[11px] font-medium uppercase tracking-wide text-foreground/50">
-                    {grupo.label}
-                  </h2>
-                  <span className="text-[11px] tabular-nums text-muted-foreground">
-                    {grupo.contas.length} · {formatCurrency(grupo.contas.reduce((acc, c) => acc + (Number(c.valor) || 0), 0))}
-                  </span>
-                </div>
+                <AgefinGrupoCabecalho grupo={grupo} groupBy={groupBy} />
               </div>
             );
           }
@@ -1061,28 +1115,21 @@ export default function SuperAgefin() {
           {grupos.reduce((acc, g) => acc + g.contas.length, 0) >= P38_VIRTUAL_MIN_ROWS ? (
             <SuperAgefinGruposVirtualList
               grupos={grupos}
+              groupBy={groupBy}
               modoSelecao={modoSelecao}
               selecionadosIds={selecionadosIds}
               toggleSelecaoConta={toggleSelecaoConta}
               abrirConta={abrirConta}
             />
           ) : (
-            <div className="mx-auto w-full max-w-3xl space-y-5 md:max-w-4xl">
+            <div className="mx-auto w-full max-w-3xl space-y-4 md:max-w-4xl">
               {grupos.map((grupo) => (
                 <section
                   key={grupo.key}
                   id={grupoDomId(grupo.key)}
-                  className="scroll-mt-24 space-y-1.5"
+                  className="scroll-mt-24 space-y-2"
                 >
-                  <div className="flex items-baseline justify-between gap-2 px-0.5">
-                    <h2 className="text-[11px] font-medium uppercase tracking-wide text-foreground/50">
-                      {grupo.label}
-                    </h2>
-                    <span className="text-[11px] tabular-nums text-muted-foreground">
-                      {grupo.contas.length} ·{' '}
-                      {formatCurrency(grupo.contas.reduce((acc, c) => acc + (Number(c.valor) || 0), 0))}
-                    </span>
-                  </div>
+                  <AgefinGrupoCabecalho grupo={grupo} groupBy={groupBy} />
                   {/* allViewports: sem desktop-layout:hidden — Agefin usa linhas em todos os ecrãs */}
                   <P38MobileLineList allViewports className="rounded-lg">
                     {grupo.contas.map((conta, index) => (
