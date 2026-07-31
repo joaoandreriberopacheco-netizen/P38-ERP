@@ -65,12 +65,12 @@ import {
 } from '@/lib/agefinConsultaFilters';
 import { P38MobileLine, P38MobileLineList, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import { p38Table } from '@/lib/p38TableSurfaces';
-import { p38PaletteClasses } from '@/lib/p38Palette';
 import {
   P38_ACCENT,
   P38_CHIP_ACTIVE,
   P38_CHIP_INACTIVE,
   P38_FIELD_SURFACE,
+  P38_KPI_SHELL,
 } from '@/components/financeiro/fluxo/financeiroP38';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from '@/components/financeiro/fluxo/FinanceiroListaMeta';
 import { FinanceiroListaEstado } from '@/components/financeiro/fluxo/FinanceiroListaShared';
@@ -96,15 +96,8 @@ function KpiCard({ label, value, tone = 'default' }) {
     default: 'text-foreground',
     success: P38_ACCENT,
     danger: 'text-red-600 dark:text-red-400',
-    muted: 'text-foreground/80',
-  }[tone] || 'text-foreground';
-
-  const iconTone = {
-    default: 'text-[#4a5240]/70 dark:text-[#a4ce33]/80',
-    success: 'text-[#4a5240] dark:text-[#a4ce33]',
-    danger: 'text-red-600 dark:text-red-400',
     muted: 'text-muted-foreground',
-  }[tone] || 'text-muted-foreground';
+  }[tone] || 'text-foreground';
 
   const Icon = {
     default: Wallet,
@@ -114,12 +107,12 @@ function KpiCard({ label, value, tone = 'default' }) {
   }[tone] || Wallet;
 
   return (
-    <div className="min-w-0 rounded-xl border border-[#dce0d4]/80 bg-card px-2.5 py-2 shadow-sm dark:border-white/10 dark:bg-[#2d333b] md:px-3 md:py-2.5">
+    <div className={cn('min-w-0 rounded-xl px-2.5 py-2 md:px-3 md:py-2.5', P38_FIELD_SURFACE)}>
       <div className="flex items-center justify-between gap-2">
-        <p className="truncate text-[10px] font-medium uppercase tracking-wide text-[#5c6358] dark:text-muted-foreground">
+        <p className="truncate text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
           {label}
         </p>
-        <Icon className={cn('h-3.5 w-3.5 shrink-0', iconTone)} />
+        <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
       </div>
       <p className={cn('mt-1 truncate text-sm font-semibold tabular-nums md:text-[15px]', valueTone)}>
         {value}
@@ -212,14 +205,7 @@ const GRUPO_META_LABEL = {
   categoria: 'Categoria',
 };
 
-/** Tint do ícone de origem — parcimónia (referência Carbon Balance / P38). */
-const ORIGEM_ICON_TINT = {
-  pessoas: 'bg-[#4a5240]/12 text-[#4a5240] dark:bg-[#a4ce33]/15 dark:text-[#a4ce33]',
-  cmv: 'bg-[#e8b824]/20 text-[#c4890a] dark:bg-[#e8b824]/12 dark:text-[#e8b824]',
-  planejamento: 'bg-[#5c6b4a]/15 text-[#4a5240] dark:bg-[#a4ce33]/10 dark:text-[#c5e06a]',
-};
-
-/** Resumo do grupo — cartão branco + barra oliva (modo claro mais vivo). */
+/** Resumo do grupo — visual distinto das linhas de conta (não parece item da lista). */
 function AgefinGrupoCabecalho({ grupo, groupBy = 'vencimento' }) {
   const qtd = grupo.contas?.length || 0;
   const total = (grupo.contas || []).reduce((acc, c) => acc + (Number(c.valor) || 0), 0);
@@ -227,30 +213,32 @@ function AgefinGrupoCabecalho({ grupo, groupBy = 'vencimento' }) {
   const metaLabel = GRUPO_META_LABEL[groupBy] || 'Grupo';
 
   return (
-    <div className="p38-panel shadow-sm">
-      <div className="p38-panel__accent-bar" aria-hidden />
-      <div className="flex min-w-0 items-center justify-between gap-3 p38-panel__body py-2.5">
-        <div className="min-w-0">
-          <p className="text-[10px] font-medium uppercase tracking-wide text-[#5c6358] dark:text-muted-foreground">
-            {metaLabel}
-          </p>
-          <p className="truncate text-sm font-semibold uppercase tracking-wide text-[#2a2f28] dark:text-foreground">
-            {grupo.label}
-          </p>
-        </div>
-        <div className="shrink-0 text-right">
-          <p className="text-[10px] font-medium uppercase tracking-wide text-[#5c6358] dark:text-muted-foreground">
-            {labelQtd}
-          </p>
-          <p
-            className={cn(
-              'text-sm font-semibold tabular-nums',
-              total > 0 ? 'text-red-600 dark:text-red-400' : P38_ACCENT,
-            )}
-          >
-            {formatCurrency(total)}
-          </p>
-        </div>
+    <div
+      className={cn(
+        'flex min-w-0 items-center justify-between gap-3 rounded-xl px-3 py-2.5',
+        P38_FIELD_SURFACE,
+      )}
+    >
+      <div className="min-w-0">
+        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          {metaLabel}
+        </p>
+        <p className="truncate text-sm font-semibold uppercase tracking-wide text-foreground">
+          {grupo.label}
+        </p>
+      </div>
+      <div className="shrink-0 text-right">
+        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          {labelQtd}
+        </p>
+        <p
+          className={cn(
+            'text-sm font-semibold tabular-nums',
+            total > 0 ? 'text-red-600 dark:text-red-400' : P38_ACCENT,
+          )}
+        >
+          {formatCurrency(total)}
+        </p>
       </div>
     </div>
   );
@@ -264,9 +252,6 @@ function ContaLinhaP38({ conta, onOpen, modoSelecao, selecionado, onToggleSeleca
   const origem = origemContaAgefin(conta);
   const OrigemIcon = origem?.Icon;
   const titulo = descricaoContaExibicao(conta);
-  const iconTint =
-    (origem && ORIGEM_ICON_TINT[origem.key]) ||
-    'bg-[#f0f2ec] text-[#5c6358] dark:bg-[#383e47]/50 dark:text-muted-foreground';
 
   return (
     <P38MobileLine
@@ -279,29 +264,16 @@ function ContaLinhaP38({ conta, onOpen, modoSelecao, selecionado, onToggleSeleca
       className="w-full text-left"
     >
       <div className="flex w-full min-w-0 items-center gap-2.5">
-        {/* Coluna fixa do ícone — tint por origem; descrições alinhadas */}
+        {/* Coluna fixa do ícone — todas as descrições alinham no mesmo X */}
         <span
-          className={cn(
-            'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
-            iconTint,
-          )}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary/40 text-muted-foreground dark:bg-[#383e47]/50"
           aria-label={origem?.label || undefined}
           title={origem?.label || undefined}
         >
-          {OrigemIcon ? <OrigemIcon className="h-4 w-4" strokeWidth={2.25} /> : null}
+          {OrigemIcon ? <OrigemIcon className="h-4 w-4" strokeWidth={2} /> : null}
         </span>
-        <div className={cn('min-w-0 flex-1 text-[#2a2f28] dark:text-foreground', p38Table.mobileLineTitle)}>
-          {titulo.toUpperCase()}
-        </div>
-        <div
-          className={cn(
-            'shrink-0',
-            p38Table.mobileLineValue,
-            isPaid ? P38_ACCENT : isOverdue ? 'text-red-600 dark:text-red-400' : 'text-[#2a2f28] dark:text-foreground',
-          )}
-        >
-          {formatCurrency(conta.valor)}
-        </div>
+        <div className={cn('min-w-0 flex-1', p38Table.mobileLineTitle)}>{titulo.toUpperCase()}</div>
+        <div className={cn('shrink-0', p38Table.mobileLineValue)}>{formatCurrency(conta.valor)}</div>
       </div>
     </P38MobileLine>
   );
@@ -1034,21 +1006,12 @@ export default function SuperAgefin() {
           </Drawer>
         </div>
 
-        <div
-          className={cn(
-            'space-y-2.5 rounded-2xl border border-[#dce0d4]/90 bg-card p-3 shadow-sm sm:space-y-3 sm:p-3.5',
-            'dark:border-white/10 dark:bg-[#2d333b]',
-          )}
-        >
-          <div
-            className={cn(
-              'flex min-w-0 items-center rounded-xl bg-[#f0f2ec] px-0.5 dark:bg-[#26262e]',
-            )}
-          >
+        <div className={cn(P38_KPI_SHELL, 'space-y-2.5 sm:space-y-3')}>
+          <div className={cn('flex min-w-0 items-center rounded-xl px-0.5', P38_FIELD_SURFACE)}>
             <Button
               variant="ghost"
               size="icon"
-              className="h-10 w-10 shrink-0 text-[#4a5240] dark:text-[#a4ce33]"
+              className="h-10 w-10 shrink-0"
               onClick={() =>
                 setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))
               }
@@ -1057,17 +1020,17 @@ export default function SuperAgefin() {
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <div className="min-w-0 flex-1 px-1 py-2 text-center">
-              <p className="truncate text-sm font-semibold uppercase tracking-wide text-[#2a2f28] dark:text-foreground sm:text-base">
+              <p className="truncate text-sm font-semibold uppercase tracking-wide text-foreground sm:text-base">
                 {formatMonth(currentMonth)}
               </p>
-              <p className="mt-0.5 text-[10px] leading-snug text-[#5c6358] dark:text-muted-foreground">
+              <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground">
                 Período civil · {monthData.length} conta{monthData.length !== 1 ? 's' : ''}
               </p>
             </div>
             <Button
               variant="ghost"
               size="icon"
-              className="h-10 w-10 shrink-0 text-[#4a5240] dark:text-[#a4ce33]"
+              className="h-10 w-10 shrink-0"
               onClick={() =>
                 setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))
               }
@@ -1077,31 +1040,20 @@ export default function SuperAgefin() {
             </Button>
           </div>
 
-          <div className="space-y-2 border-t border-[#dce0d4]/80 pt-2.5 dark:border-white/10 sm:pt-3">
-            <div className="relative overflow-hidden rounded-xl bg-[#f7f8f5] px-3 py-3 dark:bg-[#383e47]/40 sm:px-4 sm:py-3.5">
-              <div
-                className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-[#4a5240] dark:bg-[#a4ce33]"
-                aria-hidden
-              />
-              <div className="pl-2.5">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-[#5c6358] dark:text-muted-foreground sm:text-[11px]">
-                  Total no filtro
-                </p>
-                <p
-                  className={cn(
-                    'mt-1 font-semibold tabular-nums leading-none tracking-tight',
-                    'text-[clamp(1.375rem,5.5vw,1.875rem)]',
-                    kpis.totalValue > 0 ? 'text-red-600 dark:text-red-400' : P38_ACCENT,
-                  )}
-                >
-                  {kpis.totalValue > 0 ? `−${formatCurrency(kpis.totalValue)}` : formatCurrency(0)}
-                </p>
-                {kpis.paidValue > 0 && kpis.totalValue > 0 ? (
-                  <p className={cn('mt-1.5 text-[11px] font-medium', p38PaletteClasses.accent)}>
-                    {Math.round((kpis.paidValue / kpis.totalValue) * 100)}% pago
-                  </p>
-                ) : null}
-              </div>
+          <div className="space-y-2 border-t border-border/40 pt-2.5 sm:pt-3">
+            <div className="rounded-xl bg-secondary/30 px-3 py-3 dark:bg-[#383e47]/40 sm:px-4 sm:py-3.5">
+              <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:text-[11px]">
+                Total no filtro
+              </p>
+              <p
+                className={cn(
+                  'mt-1 font-semibold tabular-nums leading-none tracking-tight',
+                  'text-[clamp(1.375rem,5.5vw,1.875rem)]',
+                  kpis.totalValue > 0 ? 'text-red-600 dark:text-red-400' : P38_ACCENT,
+                )}
+              >
+                {kpis.totalValue > 0 ? `−${formatCurrency(kpis.totalValue)}` : formatCurrency(0)}
+              </p>
             </div>
             <FinanceiroListaMeta
               total={contasOrdenadas.length}
