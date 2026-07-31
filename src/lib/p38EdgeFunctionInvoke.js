@@ -60,8 +60,20 @@ function humanizeEdgeFunctionError(payload, status, functionName) {
   return `Erro ao invocar "${functionName}" (${status || 'servidor'}).`;
 }
 
+function isBinaryContentType(contentType) {
+  const ct = String(contentType || '').toLowerCase();
+  return (
+    ct.includes('application/pdf') ||
+    ct.includes('application/octet-stream') ||
+    ct.includes('application/zip')
+  );
+}
+
 async function parseResponsePayload(response) {
   const contentType = response.headers.get('content-type') || '';
+  if (isBinaryContentType(contentType)) {
+    return { __binary: true, data: await response.arrayBuffer() };
+  }
   if (contentType.includes('application/json')) {
     try {
       return await response.json();
@@ -122,6 +134,9 @@ export async function invokeP38EdgeFunction(functionName, body, { supabase: supa
       const payload = await parseResponsePayload(response);
 
       if (response.ok) {
+        if (payload?.__binary) {
+          return { data: payload.data };
+        }
         if (payload && typeof payload === 'object' && payload.error && payload.success !== true) {
           throw new Error(String(payload.error));
         }

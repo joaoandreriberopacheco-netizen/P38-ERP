@@ -393,6 +393,20 @@ async function resolveSupabaseFunctionErrorMessage(error, name) {
   return message;
 }
 
+/** Paridade com `@base44/sdk` functions.invoke → `{ data }`. */
+function normalizeBase44FunctionsResponse(result) {
+  if (result == null) return { data: null };
+  if (result instanceof ArrayBuffer) return { data: result };
+  if (typeof result === 'object' && result.data instanceof ArrayBuffer) return result;
+  if (typeof result === 'object' && 'data' in result && !('error' in result)) {
+    const keys = Object.keys(result);
+    if (keys.length === 1 || (keys.length === 2 && 'response' in result)) {
+      return result;
+    }
+  }
+  return { data: result };
+}
+
 function buildFunctions(supabase) {
   return {
     async invoke(name, body, _requestContext = {}) {
@@ -407,7 +421,8 @@ function buildFunctions(supabase) {
         throw err;
       }
       // Proxy same-origin (/api/p38-edge/*) — evita FunctionsFetchError no browser.
-      return invokeP38EdgeFunction(name, body, { supabase });
+      const result = await invokeP38EdgeFunction(name, body, { supabase });
+      return normalizeBase44FunctionsResponse(result);
     }
   };
 }
@@ -509,8 +524,7 @@ function buildIntegrations(supabase) {
         return buildIntegrations(supabase).Core.UploadPrivateFile({ file, path });
       },
       async ExtractDataFromUploadedFile(payload) {
-        const { data, error } = await supabase.functions.invoke('extract-data-file', { body: payload });
-        if (error) throw new Error(error.message || 'ExtractDataFromUploadedFile falhou');
+        const data = await invokeP38EdgeFunction('extract-data-file', payload, { supabase });
         return data;
       },
     },
