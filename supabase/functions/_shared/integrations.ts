@@ -108,7 +108,9 @@ function resolveGeminiApiKey(): string {
 }
 
 function resolveGeminiModel(useVision: boolean): string {
-  return env('GEMINI_MODEL') || (useVision ? 'gemini-2.0-flash' : 'gemini-2.0-flash');
+  if (env('GEMINI_MODEL')) return env('GEMINI_MODEL');
+  // gemini-2.0-flash foi descontinuado (404 em jul/2026); 3.6 para PDF/imagem, lite para texto.
+  return useVision ? 'gemini-3.6-flash' : 'gemini-3.5-flash-lite';
 }
 
 async function fetchFileInlineData(url: string): Promise<{ mimeType: string; data: string }> {
