@@ -6,6 +6,11 @@ import { createSupabaseEntityLayer } from './supabaseEntityLayer';
 import { isSupabaseAuthEnabled } from './providers';
 import { invokeP38Core } from '@/lib/p38CoreInvoke';
 import { invokeP38EdgeFunction } from '@/lib/p38EdgeFunctionInvoke';
+import {
+  deletarAnexoSupabase,
+  listarAnexosSupabase,
+  uploadAnexoDriveSupabase,
+} from '@/lib/anexosSupabase';
 
 const STORAGE_KEYS = {
   bypassUser: 'p38_bypass_user_v1',
@@ -419,6 +424,19 @@ function buildFunctions(supabase) {
         );
         err.code = 'P38_SUPABASE_NOT_CONFIGURED';
         throw err;
+      }
+      // Anexos: Storage + entidades no browser (edge upload-anexo-drive falha ao arrancar).
+      if (name === 'uploadAnexoDrive') {
+        const result = await uploadAnexoDriveSupabase({ supabase, body });
+        return normalizeBase44FunctionsResponse(result);
+      }
+      if (name === 'listarAnexos') {
+        const result = await listarAnexosSupabase({ supabase, body });
+        return normalizeBase44FunctionsResponse(result);
+      }
+      if (name === 'deletarAnexo') {
+        const result = await deletarAnexoSupabase({ supabase, body });
+        return normalizeBase44FunctionsResponse(result);
       }
       // Proxy same-origin (/api/p38-edge/*) — evita FunctionsFetchError no browser.
       const result = await invokeP38EdgeFunction(name, body, { supabase });
