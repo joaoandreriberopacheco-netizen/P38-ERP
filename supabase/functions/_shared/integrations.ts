@@ -40,6 +40,43 @@ function isImageUrl(url: string, mime = ''): boolean {
   return /\.(png|jpe?g|gif|webp|bmp|tiff?)(\?|$)/i.test(url);
 }
 
+function parseSupabaseStorageObjectUrl(url: string): { bucket: string; path: string } | null {
+  try {
+    const parsed = new URL(url);
+    const publicMatch = parsed.pathname.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)$/);
+    if (publicMatch) {
+      return {
+        bucket: decodeURIComponent(publicMatch[1]),
+        path: decodeURIComponent(publicMatch[2]),
+      };
+    }
+    const signedMatch = parsed.pathname.match(/\/storage\/v1\/object\/sign\/([^/]+)\/(.+)$/);
+    if (signedMatch) {
+      return {
+        bucket: decodeURIComponent(signedMatch[1]),
+        path: decodeURIComponent(signedMatch[2]),
+      };
+    }
+  } catch {
+    // segue para null
+  }
+  return null;
+}
+
+async function downloadStorageObjectBytes(
+  bucket: string,
+  path: string,
+): Promise<{ bytes: Uint8Array; mimeType: string }> {
+  const client = serviceClient();
+  const { data, error } = await client.storage.from(bucket).download(path);
+  if (error || !data) {
+    throw new Error(error?.message || `Arquivo não encontrado em ${bucket}/${path}`);
+  }
+  const bytes = new Uint8Array(await data.arrayBuffer());
+  const mimeType = (data.type || '').split(';')[0].trim().toLowerCase() || 'application/octet-stream';
+  return { bytes, mimeType };
+}
+
 async function buildVisionContentParts(
   prompt: string,
   fileUrls: string[],
@@ -114,18 +151,40 @@ function resolveGeminiModel(useVision: boolean): string {
 }
 
 async function fetchFileInlineData(url: string): Promise<{ mimeType: string; data: string }> {
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`Não foi possível ler o arquivo para análise (${res.status})`);
+  let res: Response | null = null;
+  try {
+    res = await fetch(url);
+  } catch {
+    res = null;
   }
-  let mimeType = (res.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
-  if (!mimeType || mimeType === 'application/octet-stream') {
-    if (isPdfUrl(url)) mimeType = 'application/pdf';
-    else if (isImageUrl(url)) mimeType = 'image/jpeg';
-    else mimeType = 'application/octet-stream';
+
+  if (res?.ok) {
+    let mimeType = (res.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+    if (!mimeType || mimeType === 'application/octet-stream') {
+      if (isPdfUrl(url, mimeType)) mimeType = 'application/pdf';
+      else if (isImageUrl(url, mimeType)) mimeType = 'image/jpeg';
+      else mimeType = 'application/octet-stream';
+    }
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    return { mimeType, data: bytesToBase64(bytes) };
   }
-  const bytes = new Uint8Array(await res.arrayBuffer());
-  return { mimeType, data: bytesToBase64(bytes) };
+
+  const parsed = parseSupabaseStorageObjectUrl(url);
+  if (parsed) {
+    const { bytes, mimeType } = await downloadStorageObjectBytes(parsed.bucket, parsed.path);
+    let effectiveMime = mimeType;
+    if (!effectiveMime || effectiveMime === 'application/octet-stream') {
+      if (isPdfUrl(url, effectiveMime) || parsed.path.toLowerCase().endsWith('.pdf')) {
+        effectiveMime = 'application/pdf';
+      } else if (isImageUrl(url, effectiveMime)) {
+        effectiveMime = 'image/jpeg';
+      }
+    }
+    return { mimeType: effectiveMime, data: bytesToBase64(bytes) };
+  }
+
+  const status = res?.status || 'rede';
+  throw new Error(`Não foi possível ler o arquivo para análise (${status})`);
 }
 
 async function invokeGeminiLLM({
@@ -266,8 +325,15 @@ export function buildCoreIntegrations() {
         contentType: 'application/octet-stream',
       });
       if (error) throw new Error(error.message);
-      const { data: pub } = client.storage.from(b || bucket).getPublicUrl(data.path);
-      return { file_url: pub.publicUrl, path: data.path };
+      const bucketName = b || bucket;
+      const { data: signed, error: signError } = await client.storage
+        .from(bucketName)
+        .createSignedUrl(data.path, 3600);
+      if (!signError && signed?.signedUrl) {
+        return { file_url: signed.signedUrl, path: data.path, bucket: bucketName };
+      }
+      const { data: pub } = client.storage.from(bucketName).getPublicUrl(data.path);
+      return { file_url: pub.publicUrl, path: data.path, bucket: bucketName };
     },
 
     async UploadPrivateFile({ file, path, bucket: b }: { file: Uint8Array | ArrayBuffer; path: string; bucket?: string }) {

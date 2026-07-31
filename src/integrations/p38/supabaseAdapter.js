@@ -511,6 +511,15 @@ function buildIntegrations(supabase) {
     return data;
   }
 
+  function sanitizeStorageFileName(name) {
+    return String(name || 'file')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9._-]/g, '_')
+      .replace(/_+/g, '_')
+      .slice(0, 120) || 'file';
+  }
+
   return {
     Core: {
       async InvokeLLM(payload) {
@@ -528,15 +537,22 @@ function buildIntegrations(supabase) {
       },
       async UploadPrivateFile({ file, path }) {
         if (!supabase) throw new Error('Supabase não configurado');
-        const name = path || `uploads/${crypto.randomUUID()}_${file.name || 'file'}`;
+        const safeName = sanitizeStorageFileName(file.name);
+        const name = path || `uploads/${crypto.randomUUID()}_${safeName}`;
         const contentType = file.type || 'application/octet-stream';
         const { error } = await supabase.storage.from(bucket).upload(name, file, {
           upsert: true,
           contentType,
         });
         if (error) throw new Error(formatStorageUploadError(error));
+        const { data: signed, error: signError } = await supabase.storage
+          .from(bucket)
+          .createSignedUrl(name, 3600);
+        if (!signError && signed?.signedUrl) {
+          return { file_url: signed.signedUrl, path: name, bucket };
+        }
         const { data } = supabase.storage.from(bucket).getPublicUrl(name);
-        return { file_url: data.publicUrl };
+        return { file_url: data.publicUrl, path: name, bucket };
       },
       async UploadFile({ file, path }) {
         return buildIntegrations(supabase).Core.UploadPrivateFile({ file, path });
