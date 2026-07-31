@@ -63,20 +63,45 @@ export function resolveTransportadoraFromRecord(record) {
 /** Alias semântico para eventos logísticos. */
 export const resolveTransportadoraFromEvento = resolveTransportadoraFromRecord;
 
-export function buildTransportadoraCatalogIndex(transportadoras = []) {
+export function buildTransportadoraCatalogIndex(transportadoras = [], nameById = null) {
   const byId = new Map();
   const byNome = new Map();
 
   for (const item of transportadoras) {
     if (!item?.id) continue;
-    byId.set(item.id, item);
-    const norm = normalizeTransportadoraNome(item.nome);
+    const nomeCanonico = item.nome || nameById?.get(item.id) || '';
+    const enriched = nomeCanonico ? { ...item, nome: nomeCanonico } : item;
+    byId.set(item.id, enriched);
+    const norm = normalizeTransportadoraNome(nomeCanonico);
     if (norm && !byNome.has(norm)) {
-      byNome.set(norm, item);
+      byNome.set(norm, enriched);
+    }
+  }
+
+  if (nameById) {
+    for (const [id, nome] of nameById.entries()) {
+      if (!id || !nome || byId.has(id)) continue;
+      const stub = { id, nome };
+      byId.set(id, stub);
+      const norm = normalizeTransportadoraNome(nome);
+      if (norm && !byNome.has(norm)) byNome.set(norm, stub);
     }
   }
 
   return { byId, byNome };
+}
+
+/** Nome canónico por transportadora_id, derivado de viagens/embarques legados. */
+export function buildCanonicalTransportadoraNamesFromRecords(records = []) {
+  const byId = new Map();
+  for (const record of records) {
+    const resolved = resolveTransportadoraFromRecord(record);
+    const id = resolved.transportadora_id;
+    const nome = resolved.transportadora_nome || resolved.embarcacao_nome;
+    if (!id || !nome) continue;
+    if (!byId.has(id)) byId.set(id, nome);
+  }
+  return byId;
 }
 
 /**
@@ -88,10 +113,11 @@ export function matchTransportadoraFromCatalog(resolved, catalog) {
 
   if (base.transportadora_id && byId.has(base.transportadora_id)) {
     const found = byId.get(base.transportadora_id);
+    const nome = found.nome || base.transportadora_nome || base.embarcacao_nome || '';
     return {
       transportadora_id: found.id,
-      transportadora_nome: found.nome,
-      embarcacao_nome: base.embarcacao_nome || found.nome,
+      transportadora_nome: nome,
+      embarcacao_nome: base.embarcacao_nome || nome,
       match_source: 'catalog_id',
     };
   }
@@ -116,8 +142,8 @@ export function matchTransportadoraFromCatalog(resolved, catalog) {
   };
 }
 
-export function resolveAndMatchTransportadora(record, transportadoras = []) {
-  const catalog = buildTransportadoraCatalogIndex(transportadoras);
+export function resolveAndMatchTransportadora(record, transportadoras = [], nameById = null) {
+  const catalog = buildTransportadoraCatalogIndex(transportadoras, nameById);
   const resolved = resolveTransportadoraFromRecord(record);
   return matchTransportadoraFromCatalog(resolved, catalog);
 }
@@ -138,8 +164,8 @@ export function normalizeEventoTransportadoraFields(evento) {
 }
 
 /** Payload canónico para gravar em EventoLogisticoSandbox ou Embarque. */
-export function buildTransportadoraPersistPayload(record, transportadoras = []) {
-  const matched = resolveAndMatchTransportadora(record, transportadoras);
+export function buildTransportadoraPersistPayload(record, transportadoras = [], nameById = null) {
+  const matched = resolveAndMatchTransportadora(record, transportadoras, nameById);
   return {
     transportadora_id: matched.transportadora_id || '',
     transportadora_nome: matched.transportadora_nome || '',

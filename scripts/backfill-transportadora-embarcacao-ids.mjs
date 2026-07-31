@@ -1,42 +1,75 @@
 #!/usr/bin/env node
 /**
- * Normaliza transportadora_id / embarcacao_template_id em viagens e embarques legados.
+ * Normaliza transportadora_id / embarcacao_template_id em viagens e embarques (Supabase/Postgres).
  *
- * A tabela Transportadora é a fonte canónica de embarcações (barcos).
- * Histórico: embarcacao_template_id = transportadora_id (overload de nomenclatura).
+ * Fonte canónica: tabela `transportadora` (cada embarcação/barco tem ID próprio).
+ * Legado: `embarcacao_template_id` = mesmo ID que `transportadora_id`.
  *
  * Uso:
  *   npm run transportadora:embarcacao:backfill            # dry-run
- *   npm run transportadora:embarcacao:backfill -- --apply   # aplica updates
- *   npm run transportadora:embarcacao:aplicar             # atalho para aplicar
+ *   npm run transportadora:embarcacao:aplicar             # aplica updates
  *   npm run transportadora:embarcacao:backfill -- --apply --create-missing
  */
-import { requireBase44Client } from './base44-env.mjs';
+import pg from 'pg';
+import { randomBytes } from 'node:crypto';
+import { loadDotEnvFiles } from './base44-env.mjs';
 import {
   buildTransportadoraCatalogIndex,
   buildTransportadoraPersistPayload,
+  buildCanonicalTransportadoraNamesFromRecords,
   matchTransportadoraFromCatalog,
   normalizeTransportadoraNome,
   resolveTransportadoraFromRecord,
 } from '../src/lib/resolveTransportadora.js';
 
+loadDotEnvFiles();
+
 const args = new Set(process.argv.slice(2));
 const apply = args.has('--apply');
 const createMissing = args.has('--create-missing');
-const base44 = requireBase44Client();
-const PAGE_SIZE = 200;
 
-async function listAll(entity, sort = '-created_date') {
-  const all = [];
-  let offset = 0;
-  while (true) {
-    const chunk = await entity.list(sort, PAGE_SIZE, offset);
-    if (!Array.isArray(chunk) || chunk.length === 0) break;
-    all.push(...chunk);
-    if (chunk.length < PAGE_SIZE) break;
-    offset += PAGE_SIZE;
-  }
-  return all;
+if (!process.env.DATABASE_URL?.trim()) {
+  console.error('[transportadora:embarcacao:backfill] DATABASE_URL em falta (Supabase Postgres).');
+  process.exit(1);
+}
+
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+
+function flattenRow(row) {
+  if (!row) return row;
+  const dados = row.dados && typeof row.dados === 'object' ? row.dados : {};
+  return { ...dados, ...row, dados };
+}
+
+function newId() {
+  return randomBytes(12).toString('hex');
+}
+
+async function listTransportadoras() {
+  const { rows } = await pool.query(`
+    select id, nome, ativo, saida_referencia, dados
+    from public.transportadora
+    order by updated_at desc nulls last, created_at desc
+  `);
+  return rows.map(flattenRow);
+}
+
+async function listEventos() {
+  const { rows } = await pool.query(`
+    select *
+    from public.evento_logistico_sandbox
+    order by data_saida_origem desc nulls last, created_at desc
+  `);
+  return rows.map(flattenRow);
+}
+
+async function listEmbarques() {
+  const { rows } = await pool.query(`
+    select *
+    from public.embarque
+    order by created_at desc
+  `);
+  return rows.map(flattenRow);
 }
 
 function needsEventoUpdate(evento, payload) {
@@ -55,15 +88,92 @@ function needsEmbarqueUpdate(embarque, payload) {
   );
 }
 
-const transportadoras = await listAll(base44.entities.Transportadora, '-updated_date');
-let catalog = buildTransportadoraCatalogIndex(transportadoras);
+async function createTransportadora(nome) {
+  const id = newId();
+  await pool.query(
+    `insert into public.transportadora (id, nome, ativo, dados, created_at, updated_at)
+     values ($1, $2, true, '{}'::jsonb, now(), now())`,
+    [id, nome.toUpperCase()],
+  );
+  return { id, nome: nome.toUpperCase(), ativo: true };
+}
+
+async function updateTransportadoraNome(id, nome) {
+  await pool.query(
+    `update public.transportadora set
+      nome = $2,
+      updated_at = now(),
+      dados = coalesce(dados, '{}'::jsonb) || jsonb_build_object('nome', $2::text)
+    where id = $1`,
+    [id, nome],
+  );
+}
+
+async function updateEvento(id, payload) {
+  await pool.query(
+    `update public.evento_logistico_sandbox set
+      transportadora_id = $2,
+      transportadora_nome = $3,
+      embarcacao_template_id = $4,
+      embarcacao_nome = $5,
+      updated_at = now(),
+      dados = coalesce(dados, '{}'::jsonb)
+        || jsonb_build_object(
+          'transportadora_id', $2::text,
+          'transportadora_nome', $3::text,
+          'embarcacao_template_id', $4::text,
+          'embarcacao_nome', $5::text
+        )
+    where id = $1`,
+    [
+      id,
+      payload.transportadora_id || null,
+      payload.transportadora_nome || null,
+      payload.embarcacao_template_id || null,
+      payload.embarcacao_nome || null,
+    ],
+  );
+}
+
+async function updateEmbarque(id, payload) {
+  await pool.query(
+    `update public.embarque set
+      transportadora_id = $2,
+      transportadora_nome = $3,
+      updated_at = now(),
+      dados = coalesce(dados, '{}'::jsonb)
+        || jsonb_build_object(
+          'transportadora_id', $2::text,
+          'transportadora_nome', $3::text
+        )
+    where id = $1`,
+    [id, payload.transportadora_id || null, payload.transportadora_nome || null],
+  );
+}
+
+let transportadoras = await listTransportadoras();
+const eventos = await listEventos();
+const embarques = await listEmbarques();
+
+const canonicalNames = buildCanonicalTransportadoraNamesFromRecords([...eventos, ...embarques]);
+let catalog = buildTransportadoraCatalogIndex(transportadoras, canonicalNames);
 const createdTransportadoras = [];
+const transportadoraNomeUpdates = [];
+
+for (const t of transportadoras) {
+  const nomeCanonico = canonicalNames.get(t.id);
+  if (!nomeCanonico || (t.nome || '').trim() === nomeCanonico.trim()) continue;
+  transportadoraNomeUpdates.push({
+    id: t.id,
+    antes: t.nome || '',
+    depois: nomeCanonico,
+  });
+}
 
 if (createMissing) {
-  const eventosPreview = await listAll(base44.entities.EventoLogisticoSandbox, '-data_saida_origem');
   const nomesPendentes = new Set();
 
-  for (const evento of eventosPreview) {
+  for (const evento of eventos) {
     const resolved = resolveTransportadoraFromRecord(evento);
     const matched = matchTransportadoraFromCatalog(resolved, catalog);
     if (matched.transportadora_id || matched.match_source !== 'unmatched') continue;
@@ -79,24 +189,20 @@ if (createMissing) {
       createdTransportadoras.push({ nome, action: 'would_create' });
       continue;
     }
-    const created = await base44.entities.Transportadora.create({
-      nome: nome.toUpperCase(),
-      ativo: true,
-    });
+    const created = await createTransportadora(nome);
     transportadoras.push(created);
+    canonicalNames.set(created.id, created.nome);
     createdTransportadoras.push({ id: created.id, nome: created.nome, action: 'created' });
   }
 
-  catalog = buildTransportadoraCatalogIndex(transportadoras);
+  catalog = buildTransportadoraCatalogIndex(transportadoras, canonicalNames);
 }
 
-const eventos = await listAll(base44.entities.EventoLogisticoSandbox, '-data_saida_origem');
-const embarques = await listAll(base44.entities.Embarque, '-created_date');
 const eventoById = new Map(eventos.map((e) => [e.id, e]));
 
 const eventoUpdates = [];
 for (const evento of eventos) {
-  const payload = buildTransportadoraPersistPayload(evento, transportadoras);
+  const payload = buildTransportadoraPersistPayload(evento, transportadoras, canonicalNames);
   if (!needsEventoUpdate(evento, payload)) continue;
   eventoUpdates.push({
     id: evento.id,
@@ -114,13 +220,15 @@ for (const evento of eventos) {
 const embarqueUpdates = [];
 for (const embarque of embarques) {
   const evento = embarque.evento_logistico_id ? eventoById.get(embarque.evento_logistico_id) : null;
-  const source = evento || embarque;
-  const payload = buildTransportadoraPersistPayload(source, transportadoras);
+  const source = evento
+    ? { ...embarque, ...resolveTransportadoraFromRecord(evento) }
+    : embarque;
+  const payload = buildTransportadoraPersistPayload(source, transportadoras, canonicalNames);
   if (!payload.transportadora_id && !payload.transportadora_nome) continue;
   if (!needsEmbarqueUpdate(embarque, payload)) continue;
   embarqueUpdates.push({
     id: embarque.id,
-    codigo_exibicao: embarque.codigo_exibicao,
+    numero: embarque.numero,
     evento_logistico_id: embarque.evento_logistico_id || '',
     antes: {
       transportadora_id: embarque.transportadora_id || '',
@@ -137,7 +245,9 @@ for (const embarque of embarques) {
 console.log(
   JSON.stringify(
     {
+      fonte: 'supabase',
       transportadoras_cadastradas: transportadoras.length,
+      transportadoras_nome_atualizar: transportadoraNomeUpdates.length,
       transportadoras_criadas: createdTransportadoras.length,
       eventos_analisados: eventos.length,
       eventos_atualizar: eventoUpdates.length,
@@ -145,6 +255,7 @@ console.log(
       embarques_atualizar: embarqueUpdates.length,
       apply,
       createMissing,
+      amostra_transportadoras: transportadoraNomeUpdates.slice(0, 8),
       amostra_eventos: eventoUpdates.slice(0, 8),
       amostra_embarques: embarqueUpdates.slice(0, 8),
       amostra_transportadoras_criadas: createdTransportadoras.slice(0, 8),
@@ -155,14 +266,23 @@ console.log(
 );
 
 if (!apply) {
-  console.log('\nDry-run concluído. Para aplicar: npm run transportadora:embarcacao:backfill -- --apply');
-  console.log('Atalho: npm run transportadora:embarcacao:aplicar');
+  console.log('\nDry-run concluído. Para aplicar: npm run transportadora:embarcacao:aplicar');
+  await pool.end();
   process.exit(0);
 }
 
 let done = 0;
+for (const item of transportadoraNomeUpdates) {
+  await updateTransportadoraNome(item.id, item.depois);
+  done += 1;
+  if (done % 25 === 0 || done === transportadoraNomeUpdates.length) {
+    console.log(`[transportadoras] ${done}/${transportadoraNomeUpdates.length}`);
+  }
+}
+
+done = 0;
 for (const item of eventoUpdates) {
-  await base44.entities.EventoLogisticoSandbox.update(item.id, item.depois);
+  await updateEvento(item.id, item.depois);
   done += 1;
   if (done % 25 === 0 || done === eventoUpdates.length) {
     console.log(`[eventos] ${done}/${eventoUpdates.length}`);
@@ -171,11 +291,12 @@ for (const item of eventoUpdates) {
 
 done = 0;
 for (const item of embarqueUpdates) {
-  await base44.entities.Embarque.update(item.id, item.depois);
+  await updateEmbarque(item.id, item.depois);
   done += 1;
   if (done % 25 === 0 || done === embarqueUpdates.length) {
     console.log(`[embarques] ${done}/${embarqueUpdates.length}`);
   }
 }
 
-console.log('[transportadora:embarcacao:backfill] Concluído.');
+await pool.end();
+console.log('[transportadora:embarcacao:backfill] Concluído (Supabase).');
