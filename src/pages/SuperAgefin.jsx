@@ -65,13 +65,14 @@ import {
 } from '@/lib/agefinConsultaFilters';
 import { P38MobileLine, P38MobileLineList, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import { p38Table } from '@/lib/p38TableSurfaces';
+import { p38PaletteClasses } from '@/lib/p38Palette';
 import {
   P38_ACCENT,
   P38_CHIP_ACTIVE,
   P38_CHIP_INACTIVE,
   P38_FIELD_SURFACE,
 } from '@/components/financeiro/fluxo/financeiroP38';
-import FinanceiroListaMeta from '@/components/financeiro/fluxo/FinanceiroListaMeta';
+import FinanceiroListaMeta, { FinanceiroSummaryChip } from '@/components/financeiro/fluxo/FinanceiroListaMeta';
 import { FinanceiroListaEstado } from '@/components/financeiro/fluxo/FinanceiroListaShared';
 import {
   measureVirtualItem,
@@ -90,48 +91,19 @@ function formatMonth(date) {
   return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 }
 
-/** Chip de destaque — folha / cítrico / carvão (parcimónia). */
-function AgefinChip({ tone = 'leaf', children, className }) {
-  const tones = {
-    leaf: 'bg-[#a4ce33] text-[#1f1d22] border border-[#8fb82a]/80',
-    olive: 'bg-[#4a5240] text-white border border-[#4a5240]',
-    citrus: 'bg-[#e8b824]/30 text-[#1f1d22] border border-[#e8b824]/70',
-    charcoal: 'bg-[#1f1d22] text-[#a4ce33] border border-[#1f1d22]',
-    soft: 'bg-[#f0f2ec] text-[#2a2f28] border border-[#dce0d4] dark:bg-[#383e47] dark:text-foreground dark:border-white/10',
-  };
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
-        tones[tone] || tones.soft,
-        className,
-      )}
-    >
-      {children}
-    </span>
-  );
-}
-
 function KpiCard({ label, value, tone = 'default' }) {
   const valueTone = {
-    default: 'text-[#1f1d22] dark:text-foreground',
-    success: 'text-[#4a5240] dark:text-[#a4ce33]',
+    default: 'text-foreground',
+    success: P38_ACCENT,
     danger: 'text-red-600 dark:text-red-400',
-    muted: 'text-[#2a2f28] dark:text-foreground/80',
-  }[tone] || 'text-[#1f1d22]';
-
-  const barTone = {
-    default: 'bg-[#4a5240] dark:bg-[#a4ce33]',
-    success: 'bg-[#a4ce33]',
-    danger: 'bg-[#e8b824]',
-    muted: 'bg-[#5c6358]/50 dark:bg-muted-foreground/40',
-  }[tone] || 'bg-[#4a5240]';
+    muted: 'text-foreground/80',
+  }[tone] || 'text-foreground';
 
   const iconTone = {
-    default: 'text-[#4a5240] dark:text-[#a4ce33]',
+    default: 'text-[#4a5240]/70 dark:text-[#a4ce33]/80',
     success: 'text-[#4a5240] dark:text-[#a4ce33]',
-    danger: 'text-[#c4890a] dark:text-[#e8b824]',
-    muted: 'text-[#5c6358] dark:text-muted-foreground',
+    danger: 'text-red-600 dark:text-red-400',
+    muted: 'text-muted-foreground',
   }[tone] || 'text-muted-foreground';
 
   const Icon = {
@@ -142,15 +114,14 @@ function KpiCard({ label, value, tone = 'default' }) {
   }[tone] || Wallet;
 
   return (
-    <div className="relative min-w-0 overflow-hidden rounded-xl border border-[#dce0d4] bg-[#f0f2ec] px-2.5 py-2 shadow-sm dark:border-white/10 dark:bg-[#2d333b] md:px-3 md:py-2.5">
-      <div className={cn('absolute inset-x-0 top-0 h-[3px]', barTone)} aria-hidden />
-      <div className="flex items-center justify-between gap-2 pt-0.5">
-        <p className="truncate text-[10px] font-semibold uppercase tracking-wide text-[#5c6358] dark:text-muted-foreground">
+    <div className="min-w-0 rounded-xl border border-[#dce0d4]/80 bg-card px-2.5 py-2 shadow-sm dark:border-white/10 dark:bg-[#2d333b] md:px-3 md:py-2.5">
+      <div className="flex items-center justify-between gap-2">
+        <p className="truncate text-[10px] font-medium uppercase tracking-wide text-[#5c6358] dark:text-muted-foreground">
           {label}
         </p>
         <Icon className={cn('h-3.5 w-3.5 shrink-0', iconTone)} />
       </div>
-      <p className={cn('mt-1 truncate text-sm font-bold tabular-nums md:text-[15px]', valueTone)}>
+      <p className={cn('mt-1 truncate text-sm font-semibold tabular-nums md:text-[15px]', valueTone)}>
         {value}
       </p>
     </div>
@@ -241,52 +212,40 @@ const GRUPO_META_LABEL = {
   categoria: 'Categoria',
 };
 
-/** Tint do ícone — folha / cítrico / oliva (mais vida no claro). */
+/** Tint do ícone de origem — parcimónia (referência Carbon Balance / P38). */
 const ORIGEM_ICON_TINT = {
-  pessoas: 'bg-[#4a5240] text-[#a4ce33] dark:bg-[#a4ce33]/20 dark:text-[#a4ce33]',
-  cmv: 'bg-[#e8b824]/35 text-[#1f1d22] dark:bg-[#e8b824]/18 dark:text-[#e8b824]',
-  planejamento: 'bg-[#a4ce33]/35 text-[#1f1d22] dark:bg-[#a4ce33]/15 dark:text-[#c5e06a]',
+  pessoas: 'bg-[#4a5240]/12 text-[#4a5240] dark:bg-[#a4ce33]/15 dark:text-[#a4ce33]',
+  cmv: 'bg-[#e8b824]/20 text-[#c4890a] dark:bg-[#e8b824]/12 dark:text-[#e8b824]',
+  planejamento: 'bg-[#5c6b4a]/15 text-[#4a5240] dark:bg-[#a4ce33]/10 dark:text-[#c5e06a]',
 };
 
-/** Resumo do grupo — card «branco escuro» + chips de vida. */
+/** Resumo do grupo — cartão branco + barra oliva (modo claro mais vivo). */
 function AgefinGrupoCabecalho({ grupo, groupBy = 'vencimento' }) {
-  const todayKey = dataHoje();
   const qtd = grupo.contas?.length || 0;
   const total = (grupo.contas || []).reduce((acc, c) => acc + (Number(c.valor) || 0), 0);
-  const vencidas = (grupo.contas || []).filter((c) => lancamentoVencidoOuAtrasado(c, todayKey)).length;
   const labelQtd = qtd === 1 ? '1 conta' : `${qtd} contas`;
   const metaLabel = GRUPO_META_LABEL[groupBy] || 'Grupo';
 
   return (
-    <div className="overflow-hidden rounded-xl border border-[#dce0d4] bg-[#f0f2ec] shadow-sm dark:border-white/10 dark:bg-[#2d333b]">
-      <div className="flex min-w-0 items-center justify-between gap-3 px-3 py-2.5">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <span
-            className="h-9 w-[3px] shrink-0 rounded-full bg-[#a4ce33] dark:bg-[#a4ce33]"
-            aria-hidden
-          />
-          <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-[#5c6358] dark:text-muted-foreground">
-              {metaLabel}
-            </p>
-            <p className="truncate text-sm font-bold uppercase tracking-wide text-[#1f1d22] dark:text-foreground">
-              {grupo.label}
-            </p>
-          </div>
+    <div className="p38-panel shadow-sm">
+      <div className="p38-panel__accent-bar" aria-hidden />
+      <div className="flex min-w-0 items-center justify-between gap-3 p38-panel__body py-2.5">
+        <div className="min-w-0">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-[#5c6358] dark:text-muted-foreground">
+            {metaLabel}
+          </p>
+          <p className="truncate text-sm font-semibold uppercase tracking-wide text-[#2a2f28] dark:text-foreground">
+            {grupo.label}
+          </p>
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-1">
-          <div className="flex flex-wrap items-center justify-end gap-1">
-            <AgefinChip tone="olive">{labelQtd}</AgefinChip>
-            {vencidas > 0 ? (
-              <AgefinChip tone="citrus">
-                {vencidas} vencida{vencidas === 1 ? '' : 's'}
-              </AgefinChip>
-            ) : null}
-          </div>
+        <div className="shrink-0 text-right">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-[#5c6358] dark:text-muted-foreground">
+            {labelQtd}
+          </p>
           <p
             className={cn(
-              'text-sm font-bold tabular-nums',
-              total > 0 ? 'text-red-600 dark:text-red-400' : 'text-[#4a5240] dark:text-[#a4ce33]',
+              'text-sm font-semibold tabular-nums',
+              total > 0 ? 'text-red-600 dark:text-red-400' : P38_ACCENT,
             )}
           >
             {formatCurrency(total)}
@@ -307,7 +266,7 @@ function ContaLinhaP38({ conta, onOpen, modoSelecao, selecionado, onToggleSeleca
   const titulo = descricaoContaExibicao(conta);
   const iconTint =
     (origem && ORIGEM_ICON_TINT[origem.key]) ||
-    'bg-[#1f1d22]/8 text-[#1f1d22] dark:bg-[#383e47]/50 dark:text-muted-foreground';
+    'bg-[#f0f2ec] text-[#5c6358] dark:bg-[#383e47]/50 dark:text-muted-foreground';
 
   return (
     <P38MobileLine
@@ -320,6 +279,7 @@ function ContaLinhaP38({ conta, onOpen, modoSelecao, selecionado, onToggleSeleca
       className="w-full text-left"
     >
       <div className="flex w-full min-w-0 items-center gap-2.5">
+        {/* Coluna fixa do ícone — tint por origem; descrições alinhadas */}
         <span
           className={cn(
             'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
@@ -330,25 +290,14 @@ function ContaLinhaP38({ conta, onOpen, modoSelecao, selecionado, onToggleSeleca
         >
           {OrigemIcon ? <OrigemIcon className="h-4 w-4" strokeWidth={2.25} /> : null}
         </span>
-        <div className="min-w-0 flex-1">
-          <div className={cn('text-[#1f1d22] dark:text-foreground', p38Table.mobileLineTitle)}>
-            {titulo.toUpperCase()}
-          </div>
-          {origem ? (
-            <span className="mt-0.5 inline-block text-[10px] font-semibold uppercase tracking-wide text-[#5c6b4a] dark:text-[#a4ce33]/90">
-              {origem.label}
-            </span>
-          ) : null}
+        <div className={cn('min-w-0 flex-1 text-[#2a2f28] dark:text-foreground', p38Table.mobileLineTitle)}>
+          {titulo.toUpperCase()}
         </div>
         <div
           className={cn(
-            'shrink-0 font-bold',
+            'shrink-0',
             p38Table.mobileLineValue,
-            isPaid
-              ? 'text-[#4a5240] dark:text-[#a4ce33]'
-              : isOverdue
-                ? 'text-[#c4890a] dark:text-[#e8b824]'
-                : 'text-[#1f1d22] dark:text-foreground',
+            isPaid ? P38_ACCENT : isOverdue ? 'text-red-600 dark:text-red-400' : 'text-[#2a2f28] dark:text-foreground',
           )}
         >
           {formatCurrency(conta.valor)}
@@ -855,43 +804,31 @@ export default function SuperAgefin() {
   const summaryChips = [];
   if (kpis.overdueValue > 0) {
     summaryChips.push(
-      <AgefinChip key="venc" tone="citrus">
+      <FinanceiroSummaryChip key="venc" className="text-red-800 dark:text-red-300">
         {formatCurrency(kpis.overdueValue)} vencido
-      </AgefinChip>,
+      </FinanceiroSummaryChip>,
     );
   }
   if (kpis.paidValue > 0) {
     summaryChips.push(
-      <AgefinChip key="pago" tone="leaf">
+      <FinanceiroSummaryChip key="pago" className="text-emerald-800 dark:text-emerald-300">
         {formatCurrency(kpis.paidValue)} pago
-      </AgefinChip>,
-    );
-  }
-  if (kpis.unpaidValue > 0 && kpis.paidValue === 0) {
-    summaryChips.push(
-      <AgefinChip key="aberto" tone="charcoal">
-        em aberto
-      </AgefinChip>,
+      </FinanceiroSummaryChip>,
     );
   }
 
   return (
     <div
       className={cn(
-        'w-full min-w-0 overflow-x-hidden font-din-1451 bg-white px-3 py-3 sm:p-4 lg:p-6 dark:bg-background',
+        'w-full min-w-0 overflow-x-hidden font-din-1451 bg-background px-3 py-3 sm:p-4 lg:p-6',
         modoSelecao ? 'pb-36' : 'pb-[var(--p38-scroll-pad-below-nav)] md:pb-6',
       )}
     >
       <div className="mx-auto max-w-5xl space-y-3">
-        <div className="flex items-start justify-between gap-3 border-b border-[#dce0d4] pb-3 dark:border-border/40">
+        <div className="flex items-start justify-between gap-3 border-b border-border/40 pb-3">
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 min-w-0">
-              <h1 className="truncate text-lg font-bold tracking-tight text-[#1f1d22] sm:text-xl dark:text-foreground">
-                Agefin
-              </h1>
-              <AgefinChip tone="leaf" className="hidden xs:inline-flex sm:inline-flex">
-                real
-              </AgefinChip>
+              <h1 className="truncate text-lg font-medium text-foreground sm:text-xl">Agefin</h1>
               <P38HelpPopover label="Ajuda: Agefin" side="bottom" align="start">
                 <p className="font-medium text-foreground">Consulta do que já é real</p>
                 <p className="mt-2 text-muted-foreground">
@@ -904,7 +841,7 @@ export default function SuperAgefin() {
                 </p>
               </P38HelpPopover>
             </div>
-            <p className="mt-0.5 text-xs font-medium leading-snug text-[#5c6358] sm:text-sm dark:text-muted-foreground">
+            <p className="mt-0.5 text-xs leading-snug text-muted-foreground sm:text-sm">
               Contas reais do mês · filtrar · somar · PDF
             </p>
           </div>
@@ -913,12 +850,12 @@ export default function SuperAgefin() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="relative h-10 w-10 shrink-0 rounded-xl border border-[#dce0d4] bg-[#f0f2ec] text-[#1f1d22] dark:border-white/10 dark:bg-[#2d333b] dark:text-foreground"
+                className={cn('relative h-10 w-10 shrink-0 rounded-xl', P38_FIELD_SURFACE)}
               >
-                <Menu className="h-4 w-4" />
+                <Menu className="h-4 w-4 text-muted-foreground" />
                 {hasActiveFilters && (
                   <span
-                    className="absolute top-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-[#a4ce33] ring-2 ring-white dark:ring-[#2d333b]"
+                    className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#4a5240] ring-2 ring-background dark:bg-[#a4ce33]"
                     aria-hidden
                   />
                 )}
@@ -1097,12 +1034,21 @@ export default function SuperAgefin() {
           </Drawer>
         </div>
 
-        <div className="space-y-2.5 rounded-2xl border border-[#dce0d4] bg-[#f0f2ec] p-3 shadow-sm sm:space-y-3 sm:p-3.5 dark:border-white/10 dark:bg-[#2d333b]">
-          <div className="flex min-w-0 items-center rounded-xl bg-white px-0.5 dark:bg-[#26262e]">
+        <div
+          className={cn(
+            'space-y-2.5 rounded-2xl border border-[#dce0d4]/90 bg-card p-3 shadow-sm sm:space-y-3 sm:p-3.5',
+            'dark:border-white/10 dark:bg-[#2d333b]',
+          )}
+        >
+          <div
+            className={cn(
+              'flex min-w-0 items-center rounded-xl bg-[#f0f2ec] px-0.5 dark:bg-[#26262e]',
+            )}
+          >
             <Button
               variant="ghost"
               size="icon"
-              className="h-10 w-10 shrink-0 text-[#1f1d22] dark:text-[#a4ce33]"
+              className="h-10 w-10 shrink-0 text-[#4a5240] dark:text-[#a4ce33]"
               onClick={() =>
                 setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))
               }
@@ -1111,17 +1057,17 @@ export default function SuperAgefin() {
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <div className="min-w-0 flex-1 px-1 py-2 text-center">
-              <p className="truncate text-sm font-bold uppercase tracking-wide text-[#1f1d22] dark:text-foreground sm:text-base">
+              <p className="truncate text-sm font-semibold uppercase tracking-wide text-[#2a2f28] dark:text-foreground sm:text-base">
                 {formatMonth(currentMonth)}
               </p>
-              <p className="mt-0.5 text-[10px] font-medium leading-snug text-[#5c6358] dark:text-muted-foreground">
+              <p className="mt-0.5 text-[10px] leading-snug text-[#5c6358] dark:text-muted-foreground">
                 Período civil · {monthData.length} conta{monthData.length !== 1 ? 's' : ''}
               </p>
             </div>
             <Button
               variant="ghost"
               size="icon"
-              className="h-10 w-10 shrink-0 text-[#1f1d22] dark:text-[#a4ce33]"
+              className="h-10 w-10 shrink-0 text-[#4a5240] dark:text-[#a4ce33]"
               onClick={() =>
                 setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))
               }
@@ -1131,33 +1077,27 @@ export default function SuperAgefin() {
             </Button>
           </div>
 
-          <div className="space-y-2 border-t border-[#dce0d4] pt-2.5 dark:border-white/10 sm:pt-3">
-            <div className="relative overflow-hidden rounded-xl bg-white px-3 py-3 dark:bg-[#383e47]/50 sm:px-4 sm:py-3.5">
+          <div className="space-y-2 border-t border-[#dce0d4]/80 pt-2.5 dark:border-white/10 sm:pt-3">
+            <div className="relative overflow-hidden rounded-xl bg-[#f7f8f5] px-3 py-3 dark:bg-[#383e47]/40 sm:px-4 sm:py-3.5">
               <div
-                className="absolute left-0 top-0 bottom-0 w-[4px] bg-[#a4ce33]"
+                className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-[#4a5240] dark:bg-[#a4ce33]"
                 aria-hidden
               />
               <div className="pl-2.5">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[#5c6358] dark:text-muted-foreground sm:text-[11px]">
-                    Total no filtro
-                  </p>
-                  {kpis.overdueValue > 0 ? <AgefinChip tone="citrus">atenção</AgefinChip> : null}
-                  {kpis.paidValue > 0 && kpis.unpaidValue === 0 ? (
-                    <AgefinChip tone="leaf">em dia</AgefinChip>
-                  ) : null}
-                </div>
+                <p className="text-[10px] font-medium uppercase tracking-wide text-[#5c6358] dark:text-muted-foreground sm:text-[11px]">
+                  Total no filtro
+                </p>
                 <p
                   className={cn(
-                    'mt-1 font-bold tabular-nums leading-none tracking-tight text-[#1f1d22] dark:text-foreground',
+                    'mt-1 font-semibold tabular-nums leading-none tracking-tight',
                     'text-[clamp(1.375rem,5.5vw,1.875rem)]',
-                    kpis.totalValue > 0 && 'text-red-600 dark:text-red-400',
+                    kpis.totalValue > 0 ? 'text-red-600 dark:text-red-400' : P38_ACCENT,
                   )}
                 >
                   {kpis.totalValue > 0 ? `−${formatCurrency(kpis.totalValue)}` : formatCurrency(0)}
                 </p>
                 {kpis.paidValue > 0 && kpis.totalValue > 0 ? (
-                  <p className="mt-1.5 text-[11px] font-bold text-[#4a5240] dark:text-[#a4ce33]">
+                  <p className={cn('mt-1.5 text-[11px] font-medium', p38PaletteClasses.accent)}>
                     {Math.round((kpis.paidValue / kpis.totalValue) * 100)}% pago
                   </p>
                 ) : null}
@@ -1176,18 +1116,20 @@ export default function SuperAgefin() {
         {hasActiveFilters && (
           <div className="flex flex-wrap items-center gap-1.5">
             {pagamentoFilter !== 'todos' && (
-              <AgefinChip tone="olive">Pag.: {pagamentoFilter}</AgefinChip>
+              <FinanceiroSummaryChip>Pag.: {pagamentoFilter}</FinanceiroSummaryChip>
             )}
             {prazoFilter !== 'todos' && (
-              <AgefinChip tone={prazoFilter === 'vencidas' ? 'citrus' : 'leaf'}>
-                Prazo: {prazoFilter}
-              </AgefinChip>
+              <FinanceiroSummaryChip>Prazo: {prazoFilter}</FinanceiroSummaryChip>
             )}
-            {cmvFilter !== 'todos' && <AgefinChip tone="citrus">Tipo: {cmvFilter}</AgefinChip>}
-            {freteFilter !== 'todos' && <AgefinChip tone="soft">Frete: {freteFilter}</AgefinChip>}
+            {cmvFilter !== 'todos' && (
+              <FinanceiroSummaryChip>Tipo: {cmvFilter}</FinanceiroSummaryChip>
+            )}
+            {freteFilter !== 'todos' && (
+              <FinanceiroSummaryChip>Frete: {freteFilter}</FinanceiroSummaryChip>
+            )}
             {(dateFrom || dateTo) && (
-              <AgefinChip tone="soft">
-                <span className="inline-flex items-center gap-1 normal-case">
+              <FinanceiroSummaryChip>
+                <span className="inline-flex items-center gap-1">
                   {dateFrom || '…'} → {dateTo || '…'}
                   <button
                     type="button"
@@ -1195,13 +1137,13 @@ export default function SuperAgefin() {
                       setDateFrom('');
                       setDateTo('');
                     }}
-                    className="rounded-full p-0.5 hover:opacity-70"
+                    className="rounded-full p-0.5 hover:text-foreground"
                     aria-label="Limpar datas"
                   >
                     <X className="h-3 w-3" />
                   </button>
                 </span>
-              </AgefinChip>
+              </FinanceiroSummaryChip>
             )}
           </div>
         )}
