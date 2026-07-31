@@ -1,8 +1,11 @@
 // Core integrations proxy (LLM, email, storage helpers server-side)
-import { requireUser, jsonResponse, badRequest, serviceClient } from '../_shared/auth.ts';
+import { requireUser, jsonResponse, badRequest, handleCorsPreflight } from '../_shared/auth.ts';
 import { buildCoreIntegrations } from '../_shared/integrations.ts';
 
 Deno.serve(async (req) => {
+  const preflight = handleCorsPreflight(req);
+  if (preflight) return preflight;
+
   const auth = await requireUser(req);
   if (auth instanceof Response) return auth;
 
