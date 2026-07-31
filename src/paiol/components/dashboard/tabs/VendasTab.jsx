@@ -19,6 +19,8 @@ import {
   buildDonutRingData,
   countElapsedWorkingDaysInMonth,
   countWorkingDaysInMonth,
+  countWorkingDaysUpToCalendarDay,
+  DONUT_GAUGE_RADII,
   getDailyMetaFromMonthly,
   normalizeDashboardKpiConfig,
 } from '@/lib/dashboardKpiConfig';
@@ -121,28 +123,9 @@ function getMonthBuckets(monthCount) {
 
 const formatShort = formatDashboardCurrency;
 
-function extractSaleGrossAmount(sale = {}) {
-  const itemTotal = Array.isArray(sale.itens)
-    ? sale.itens.reduce((sum, item) => {
-      const lineTotal = Number(
-        item?.total ??
-        item?.valor_total ??
-        item?.subtotal ??
-        item?.valor_subtotal ??
-        0
-      );
-      return sum + lineTotal;
-    }, 0)
-    : 0;
-  if (itemTotal > 0) return itemTotal;
-
-  const valorTotal = resolveValorPedidoVenda(sale) || Number(
-    sale.total_geral ??
-    sale.total_final ??
-    0
-  );
-  const valorDesconto = Number(sale.valor_desconto || 0);
-  return valorTotal + valorDesconto;
+/** Valor líquido cobrado — mesma fonte da Gestão de Vendas (`valor_total`). */
+function extractSaleNetAmount(sale = {}) {
+  return resolveValorPedidoVenda(sale);
 }
 
 function extractSaleCostAmount(sale = {}, productCostMap = new Map()) {
@@ -253,9 +236,9 @@ export default function VendasTab() {
           if (!monthlyTotals[monthKey]) return;
 
           const day = getDate(saleDate);
-          const grossAmount = extractSaleGrossAmount(sale);
           const discountAmount = Number(sale.valor_desconto || 0);
-          const netAmount = grossAmount - discountAmount;
+          const netAmount = extractSaleNetAmount(sale);
+          const grossAmount = netAmount + discountAmount;
           const costAmount = extractSaleCostAmount(sale, productCostMap);
           const profitAmount = netAmount - costAmount;
 
@@ -295,11 +278,12 @@ export default function VendasTab() {
         const currentAccumulatedData = Array.from({ length: currentMonthDays }, (_, idx) => {
           const day = idx + 1;
           runningSales += Number(salesByMonthDay[currentMonthKey]?.[day] || 0);
+          const workingDaysElapsed = countWorkingDaysUpToCalendarDay(referenceDate, day);
           return {
             dia: `D${day}`,
             valor: runningSales,
-            breakEven: vendaMinimaDaily * day,
-            meta: metaVendaDaily * day,
+            breakEven: vendaMinimaDaily * workingDaysElapsed,
+            meta: metaVendaDaily * workingDaysElapsed,
           };
         });
 
@@ -318,11 +302,12 @@ export default function VendasTab() {
         const accumulatedProfitData = Array.from({ length: currentMonthDays }, (_, idx) => {
           const day = idx + 1;
           runningProfit += Number(profitByMonthDay[currentMonthKey]?.[day] || 0);
+          const workingDaysElapsed = countWorkingDaysUpToCalendarDay(referenceDate, day);
           return {
             diaLabel: `D${String(day).padStart(2, '0')}`,
             lucro: runningProfit,
-            breakEven: breakEvenDaily * day,
-            meta: metaLucroDaily * day,
+            breakEven: breakEvenDaily * workingDaysElapsed,
+            meta: metaLucroDaily * workingDaysElapsed,
           };
         });
         const avgDailyProfit = elapsedWorkingDays > 0 ? currentProfit / elapsedWorkingDays : 0;
@@ -607,7 +592,7 @@ export default function VendasTab() {
           <CardContent className="pt-1">
             <div className={p38Dashboard.innerPanel}>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
-                Fórmula: Venda - descontos - custo calculado
+                Fórmula: Venda líquida (valor cobrado) − custo calculado
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-[150px,1fr] gap-2.5 items-center">
@@ -616,8 +601,8 @@ export default function VendasTab() {
                     <PieChart>
                       <Pie
                         data={metrics.lucroKpi.ringData}
-                        innerRadius={36}
-                        outerRadius={56}
+                        innerRadius={DONUT_GAUGE_RADII.lg.inner}
+                        outerRadius={DONUT_GAUGE_RADII.lg.outer}
                         dataKey="value"
                         startAngle={90}
                         endAngle={-270}
@@ -631,8 +616,8 @@ export default function VendasTab() {
                       {metrics.lucroKpi.ringOverflow > 0 ? (
                         <Pie
                           data={metrics.lucroKpi.ringOverflowData}
-                          innerRadius={28}
-                          outerRadius={32}
+                          innerRadius={DONUT_GAUGE_RADII.lg.overflowInner}
+                          outerRadius={DONUT_GAUGE_RADII.lg.overflowOuter}
                           dataKey="value"
                           startAngle={90}
                           endAngle={-270}

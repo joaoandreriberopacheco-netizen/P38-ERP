@@ -12,6 +12,7 @@ import {
   YAxis,
 } from 'recharts';
 import { p38Dashboard } from '@/lib/p38DashboardSurfaces';
+import { DONUT_GAUGE_RADII } from '@/lib/dashboardKpiConfig';
 import {
   buildCartesianGridProps,
   buildXAxisProps,
@@ -115,6 +116,9 @@ export function LucroAcumuladoChart({ data, innerSurfaceClassName }) {
 }
 
 function DonutGauge({ ring, label, actualLabel, targetLabel, actualValue, targetValue }) {
+  const radii = DONUT_GAUGE_RADII.sm;
+  const isAboveTarget = ring.percent > 100;
+
   return (
     <div className={p38Dashboard.stat}>
       <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">{label}</p>
@@ -124,8 +128,8 @@ function DonutGauge({ ring, label, actualLabel, targetLabel, actualValue, target
             <PieChart>
               <Pie
                 data={ring.ringData}
-                innerRadius={28}
-                outerRadius={42}
+                innerRadius={radii.inner}
+                outerRadius={radii.outer}
                 dataKey="value"
                 startAngle={90}
                 endAngle={-270}
@@ -139,8 +143,8 @@ function DonutGauge({ ring, label, actualLabel, targetLabel, actualValue, target
               {ring.ringOverflowData.length > 0 ? (
                 <Pie
                   data={ring.ringOverflowData}
-                  innerRadius={22}
-                  outerRadius={26}
+                  innerRadius={radii.overflowInner}
+                  outerRadius={radii.overflowOuter}
                   dataKey="value"
                   startAngle={90}
                   endAngle={-270}
@@ -156,7 +160,9 @@ function DonutGauge({ ring, label, actualLabel, targetLabel, actualValue, target
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <span className="text-[10px] text-muted-foreground uppercase">%</span>
-            <span className={`text-sm font-bold ${p38Dashboard.title}`}>{ring.percent.toFixed(0)}%</span>
+            <span className={`text-sm font-bold ${isAboveTarget ? 'text-lime-300' : p38Dashboard.title}`}>
+              {ring.percent.toFixed(0)}%
+            </span>
           </div>
         </div>
         <div className="space-y-1 text-[10px]">
