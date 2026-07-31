@@ -10,6 +10,7 @@ import { buildProdutoMatchingPromptBase, matchesProductQuery } from '@/component
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
 import { P38TableShell } from '@/components/ui/table';
 import { P38MobileLine, P38MobileLineList, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
+import { buildLlmTelemetryContext } from '@/lib/p38LlmTelemetry';
 
 export default function ImportadorListaFoto({ isOpen, onClose, onImportComplete, mode = 'create' }) {
     const [step, setStep] = useState('upload');
@@ -157,6 +158,11 @@ Retorne JSON:
             const aiRes = await base44.integrations.Core.InvokeLLM({
                 prompt: prompt,
                 file_urls: [fileUrl],
+                telemetry: buildLlmTelemetryContext({
+                  source: 'import_lista_foto',
+                  catalogProductCount: products.length,
+                  fileCount: 1,
+                }),
                 response_json_schema: {
                     type: "object",
                     properties: {

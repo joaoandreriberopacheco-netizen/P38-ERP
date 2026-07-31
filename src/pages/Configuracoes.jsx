@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { ShieldAlert } from 'lucide-react';
-import { TrendingUp, Package, DollarSign, BarChart3, Settings, Building2, Users, Sliders, Tags, Wallet, CreditCard, Smartphone, Bookmark, Wrench, Shield, MapPin, Printer, Trash2 } from 'lucide-react';
+import { TrendingUp, Package, DollarSign, BarChart3, Settings, Building2, Users, Sliders, Tags, Wallet, CreditCard, Smartphone, Bookmark, Wrench, Shield, MapPin, Printer, Trash2, Activity } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
 import { GlacialTabsList, GlacialTabsTrigger, GlacialSubTabsList, GlacialSubTabsTrigger } from '@/components/ui/GlacialTabs';
@@ -171,6 +171,20 @@ export default function ConfiguracoesPage() {
 
             <MetasEstoqueConfigTool />
             <CodigoProdutoBackfillTool />
+
+            <div className="rounded-2xl bg-muted/50/60 p-4 space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Inteligência artificial</p>
+              <Link
+                to={createPageUrl('LlmTelemetria')}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-card/60 shadow-sm hover:shadow transition-shadow"
+              >
+                <Activity className="w-5 h-5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium text-foreground/90">Telemetria de IA (OCR)</p>
+                  <p className="text-xs text-muted-foreground">Tokens, custo estimado e alertas de uso</p>
+                </div>
+              </Link>
+            </div>
 
             <RecomecarDoZero />
           </div>

@@ -1,5 +1,6 @@
 // Integrações Core (substituem base44.integrations.Core.*)
 import { serviceClient } from './auth.ts';
+import type { LlmUsage } from './llmTelemetry.ts';
 
 const env = (k: string): string => Deno.env.get(k) ?? '';
 
@@ -175,7 +176,20 @@ async function invokeGeminiLLM({
   const content = (json.candidates?.[0]?.content?.parts ?? [])
     .map((part: { text?: string }) => part.text || '')
     .join('');
-  return parseInvokeLlmContent(content, wantsJson);
+  const meta = json.usageMetadata || {};
+  const inputTokens = Number(meta.promptTokenCount) || 0;
+  const outputTokens = Number(meta.candidatesTokenCount) || 0;
+  const usage: LlmUsage = {
+    provider: 'gemini',
+    model: effectiveModel,
+    input_tokens: inputTokens,
+    output_tokens: outputTokens,
+    total_tokens: Number(meta.totalTokenCount) || inputTokens + outputTokens,
+  };
+  return {
+    data: parseInvokeLlmContent(content, wantsJson),
+    usage,
+  };
 }
 
 async function invokeOpenAiLLM({
@@ -221,7 +235,17 @@ async function invokeOpenAiLLM({
   if (!res.ok) throw new Error(`OpenAI: ${await res.text()}`);
   const json = await res.json();
   const content = String(json.choices?.[0]?.message?.content ?? '');
-  return parseInvokeLlmContent(content, wantsJson);
+  const usage: LlmUsage = {
+    provider: 'openai',
+    model: effectiveModel,
+    input_tokens: Number(json.usage?.prompt_tokens) || 0,
+    output_tokens: Number(json.usage?.completion_tokens) || 0,
+    total_tokens: Number(json.usage?.total_tokens) || 0,
+  };
+  return {
+    data: parseInvokeLlmContent(content, wantsJson),
+    usage,
+  };
 }
 
 export function buildCoreIntegrations() {

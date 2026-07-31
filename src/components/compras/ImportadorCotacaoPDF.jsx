@@ -12,6 +12,7 @@ import { buildProdutoMatchingPromptBase, getProdutoLabel, matchesProductQuery } 
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
 import { P38TableShell } from '@/components/ui/table';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
+import { buildLlmTelemetryContext } from '@/lib/p38LlmTelemetry';
 
 export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImportComplete }) {
     const [step, setStep] = useState('upload');
@@ -131,6 +132,11 @@ Retorne um JSON com:
             const aiRes = await base44.integrations.Core.InvokeLLM({
                 prompt: prompt,
                 file_urls: [fileUrl],
+                telemetry: buildLlmTelemetryContext({
+                  source: 'import_cotacao_pdf',
+                  catalogProductCount: produtos.length,
+                  fileCount: 1,
+                }),
                 response_json_schema: {
                     type: "object",
                     properties: {

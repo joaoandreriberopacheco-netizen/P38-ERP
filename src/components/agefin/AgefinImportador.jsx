@@ -14,6 +14,7 @@ import {
 } from '@/lib/agefinLancamentosRecorrencia';
 import { uploadAnexoParaContaPrevista, uploadAnexoParaLancamentoFinanceiro } from '@/lib/uploadAnexoReferencia';
 import { extrairTextoPdfBrowser, normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
+import { buildLlmTelemetryContext } from '@/lib/p38LlmTelemetry';
 
 function normalizarTexto(value) {
   return String(value || '')
@@ -223,6 +224,7 @@ ${textoPdfLocal.slice(0, 14000)}`
 
       const extractedRaw = await base44.integrations.Core.InvokeLLM({
         file_urls: [file_url],
+        telemetry: buildLlmTelemetryContext({ source: 'agefin_importador', fileCount: 1 }),
         prompt: `Leia visualmente este documento brasileiro de cobran?a e extraia dados REAIS do conte?do do documento, nunca do nome do arquivo.
 
 Regras obrigat?rias:
@@ -273,6 +275,7 @@ Campos a interpretar do documento:
         // Segunda tentativa com prompt enxuto para documentos dif?ceis.
         const retryRaw = await base44.integrations.Core.InvokeLLM({
           file_urls: [file_url],
+          telemetry: buildLlmTelemetryContext({ source: 'agefin_importador_retry', fileCount: 1 }),
           prompt: `Extraia APENAS os campos listados (sem texto extra):
 - descricao
 - valor_pagamento (number)

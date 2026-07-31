@@ -18,6 +18,7 @@ import {
 } from '@/lib/productUnits';
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
 import { consumirArquivoPedidoImportDoBridge } from '@/lib/torrePedidoImportBridge';
+import { buildLlmTelemetryContext } from '@/lib/p38LlmTelemetry';
 
 export default function ImportadorPedidoCompra({
   isOpen,
@@ -218,6 +219,11 @@ Retorne JSON:
       const aiRes = await base44.integrations.Core.InvokeLLM({
         prompt,
         file_urls: [fileUrl],
+        telemetry: buildLlmTelemetryContext({
+          source: 'import_pedido_compra',
+          catalogProductCount: produtos.length,
+          fileCount: 1,
+        }),
         response_json_schema: {
           type: 'object',
           properties: {
