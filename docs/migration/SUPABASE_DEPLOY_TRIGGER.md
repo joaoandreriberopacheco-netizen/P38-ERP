@@ -85,8 +85,15 @@ O deploy publica o código; no **Supabase Dashboard → Edge Functions → Secre
 
 | Secret | Função |
 |--------|--------|
+| `OPENAI_API_KEY` | **Obrigatório para OCR/importador** (`p38-core` → InvokeLLM) |
 | `RESEND_API_KEY` | `gerenciar-pin` (email PIN) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Todas (já injectada pelo Supabase em runtime) |
+
+**OCR / importar pedido:** sem `OPENAI_API_KEY` no Supabase, a análise devolve erro 500 (`OPENAI_API_KEY não configurado`).
+
+1. [platform.openai.com/api-keys](https://platform.openai.com/api-keys) → criar/copiar chave
+2. Supabase → **Edge Functions** → **Secrets** → `OPENAI_API_KEY` = a chave
+3. `npm run supabase:deploy:functions` (ou redeploy só `p38-core`)
 
 ## Verificação rápida
 
