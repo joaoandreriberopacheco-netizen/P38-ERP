@@ -298,9 +298,79 @@ export function findLocalBestFornecedorMatch({ nome, cnpj } = {}, fornecedores =
   return bestScore >= Math.max(2, Math.ceil(words.length / 2)) ? best : null;
 }
 
+export function buildCompactFornecedoresTsv(fornecedores = []) {
+  if (!fornecedores.length) return '(nenhum)';
+  return fornecedores
+    .map((f) => {
+      const id = String(f.id || '').trim();
+      const nome = String(f.nome || '').replace(/\|/g, '/').trim();
+      const cnpj = String(f.cpf_cnpj || '').replace(/\D/g, '');
+      return `${id}|${nome}|${cnpj}`;
+    })
+    .join('\n');
+}
+
+/** Catálogo mínimo em TSV — ~60% menos tokens que JSON repetindo chaves. */
+export function buildCompactProdutosTsv(produtos = [], { maxNomeChars = 96 } = {}) {
+  return (produtos || [])
+    .map((p) => {
+      const id = String(p.id || '').trim();
+      const codigo = String(p.codigo_interno || '').replace(/\|/g, '/').trim();
+      let nome = getProdutoLabel(p).replace(/\|/g, '/').replace(/\s+/g, ' ').trim();
+      if (maxNomeChars > 0 && nome.length > maxNomeChars) {
+        nome = `${nome.slice(0, maxNomeChars - 1)}…`;
+      }
+      const marca = String(p.marca || '').replace(/\|/g, '/').trim();
+      return `${id}|${codigo}|${nome}|${marca}`;
+    })
+    .join('\n');
+}
+
+/**
+ * Prompt enxuto para import pedido: 1 leitura do PDF + match no catálogo compacto.
+ */
+export function buildEfficientPedidoCompraPrompt({
+  produtos = [],
+  fornecedores = [],
+  mode = 'pdf',
+} = {}) {
+  const catalogoTsv = buildCompactProdutosTsv(produtos);
+  const fornecedoresTsv = buildCompactFornecedoresTsv(fornecedores);
+  const docTipo = mode === 'pdf' ? 'PDF de orçamento/pedido' : 'imagem de lista de compra';
+
+  return `Analise este ${docTipo}. Extraia fornecedor e itens do documento e associe cada item ao catálogo interno.
+
+REGRAS DE MATCH (produtos):
+- Correspondência semântica: ignore maiúsculas, acentos e abreviações (ex.: CIM→cimento, AC-I→AC-1, ARGAM→argamassa).
+- produto_id_match = id exato da coluna 1 do catálogo, ou string vazia se não houver similar.
+- Prefira confiança "baixa" a deixar vazio; só vazio se realmente não existir equivalente.
+- fornecedor.id_match = id exato da lista de fornecedores, ou vazio.
+
+FORNECEDORES (id|nome|cnpj):
+${fornecedoresTsv}
+
+CATALOGO (${produtos.length} produtos — id|codigo|nome|marca):
+${catalogoTsv}
+
+Retorne JSON:
+{
+  "fornecedor": {"nome_identificado": "string", "cnpj_identificado": "string", "id_match": "id ou vazio"},
+  "itens": [{
+    "descricao": "texto do documento",
+    "codigo": "código no documento",
+    "marca": "marca se visível",
+    "quantidade": number,
+    "preco_unitario": number,
+    "unidade_medida_documento": "M2, CX, UN…",
+    "produto_id_match": "id do catálogo ou vazio",
+    "confianca": "alta|media|baixa"
+  }]
+}`;
+}
+
 export function buildProdutoMatchingPromptBase({ produtos, fornecedores, contextLabel = 'CATALOGO DE PRODUTOS' }) {
-  const catalogoStr = JSON.stringify((produtos || []).map(getProdutoCatalogEntry));
-  const fornecedoresStr = JSON.stringify((fornecedores || []).map(getFornecedorCatalogEntry));
+  const catalogoStr = buildCompactProdutosTsv(produtos);
+  const fornecedoresStr = buildCompactFornecedoresTsv(fornecedores);
 
   return `Você é um especialista em materiais de construção e loja de materiais.
 
@@ -308,17 +378,13 @@ Tarefa: analisar o documento e para CADA item identificado, encontrar o produto 
 
 REGRAS OBRIGATÓRIAS DE MATCHING:
 1. Use correspondência SEMÂNTICA - ignore abreviações, acentos, maiúsculas/minúsculas e variações ortográficas.
-2. Exemplos de correspondência esperada:
-   - "CIM CPIV 50KG VOTO" -> produto com "Cimento Portland CP IV 50kg Votorantim"
-   - "ARGAM AC III 20KG" -> produto com "Argamassa Colante AC-III 20kg"
-   - "PLACA DRYWALL ST 12,5" -> produto com "Placa Dry Wall Standard 12.5mm"
-3. Se houver dúvida entre dois produtos, escolha o que tiver MAIS campos coincidentes (tipo, gramatura, dimensão, marca e código).
-4. Prefira confiança "baixa" a deixar o match vazio - só deixe vazio se não existir NENHUM produto similar.
-5. O id do match deve conter EXATAMENTE o id do produto do catálogo, sem alterações.
+2. Exemplos: "CIM CPIV 50KG"→cimento CP IV 50kg; "ARGAM AC III 20KG"→argamassa AC-III 20kg; "AC-I"→AC-1.
+3. produto_id_match = id exato (coluna 1) ou vazio.
+4. Prefira confiança "baixa" a deixar o match vazio.
 
-Fornecedores cadastrados:
+Fornecedores (id|nome|cnpj):
 ${fornecedoresStr}
 
-${contextLabel} (id | nome completo | marca | código):
+${contextLabel} (${produtos.length} produtos — id|codigo|nome|marca):
 ${catalogoStr}`;
 }

@@ -49,7 +49,7 @@ Se `alerta_catalogo_no_prompt` estiver ativo, o próximo passo de otimização �
 
 | source | Onde |
 |--------|------|
-| `import_pedido_compra` | Importar pedido (PDF/foto) — **sem catálogo no prompt**; matching local |
+| `import_pedido_compra` | Importar pedido — catálogo compacto TSV no prompt (match semântico Gemini) |
 | `import_cotacao_pdf` | Cotação PDF |
 | `import_lista_foto` | Lista por foto |
 | `agefin_importador` | Agefin — leitura de boleto |

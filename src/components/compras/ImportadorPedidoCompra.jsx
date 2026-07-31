@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Upload, Loader2, Check, X, ArrowLeft, Package, FileText, Camera, Sparkles } from 'lucide-react';
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
 import {
+  buildEfficientPedidoCompraPrompt,
   findLocalBestFornecedorMatch,
   findLocalBestProductMatch,
 } from '@/components/compras/productMatchingUtils';
@@ -195,7 +196,24 @@ export default function ImportadorPedidoCompra({
       setProcessingStep(2);
       setProcessingStatus('Lendo documento');
 
-      const extractionSchema = {
+      let catalogoProdutos = produtos;
+      let listaFornecedores = fornecedores;
+      if (!catalogoProdutos.length || !listaFornecedores.length) {
+        const [prods, fns] = await Promise.all([
+          catalogoProdutos.length
+            ? Promise.resolve(catalogoProdutos)
+            : base44.entities.Produto.filter({ tipo: 'Produto', ativo: true }),
+          listaFornecedores.length
+            ? Promise.resolve(listaFornecedores)
+            : base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] }),
+        ]);
+        catalogoProdutos = prods;
+        listaFornecedores = fns;
+        setProdutos(prods);
+        setFornecedores(fns);
+      }
+
+      const matchingSchema = {
         type: 'object',
         properties: {
           fornecedor: {
@@ -203,6 +221,7 @@ export default function ImportadorPedidoCompra({
             properties: {
               nome_identificado: { type: 'string' },
               cnpj_identificado: { type: 'string' },
+              id_match: { type: 'string' },
             },
           },
           itens: {
@@ -216,81 +235,75 @@ export default function ImportadorPedidoCompra({
                 quantidade: { type: 'number' },
                 preco_unitario: { type: 'number' },
                 unidade_medida_documento: { type: 'string' },
+                produto_id_match: { type: 'string' },
+                confianca: { type: 'string' },
               },
             },
           },
         },
       };
 
-      const promptBase = `Extraia do documento o fornecedor e a lista de itens.
-Preserve acentos e caracteres do português nos campos textuais.
-NÃO invente dados — transcreva apenas o que estiver visível no documento.
-NÃO tente adivinhar produtos do nosso catálogo interno.
-
-Retorne JSON:
-{
-  "fornecedor": {"nome_identificado": "string", "cnpj_identificado": "string"},
-  "itens": [{
-    "descricao": "descrição original",
-    "codigo": "código no documento",
-    "marca": "marca se visível",
-    "quantidade": number,
-    "preco_unitario": number,
-    "unidade_medida_documento": "sigla opcional ex.: M2, M², CX, PAC, UN — como no documento"
-  }]
-}`;
-
-      const prompt = mode === 'pdf'
-        ? `Analise este PDF de orçamento/pedido de fornecedor.\n${promptBase}`
-        : `Analise esta imagem de lista de compra.\n${promptBase}`;
+      const prompt = buildEfficientPedidoCompraPrompt({
+        produtos: catalogoProdutos,
+        fornecedores: listaFornecedores,
+        mode,
+      });
 
       setProcessingStep(3);
-      setProcessingStatus('Identificando itens');
+      setProcessingStatus('Identificando itens e catálogo');
 
       const aiRes = await base44.integrations.Core.InvokeLLM({
         prompt,
         file_urls: [fileUrl],
         telemetry: buildLlmTelemetryContext({
           source: 'import_pedido_compra',
-          catalogProductCount: 0,
+          catalogProductCount: catalogoProdutos.length,
           fileCount: 1,
         }),
-        response_json_schema: extractionSchema,
+        response_json_schema: matchingSchema,
       });
 
       setProcessingStep(4);
       setProcessingStatus('Identificando fornecedor');
 
-      let catalogoProdutos = produtos;
-      if (!catalogoProdutos.length) {
-        catalogoProdutos = await base44.entities.Produto.filter({ tipo: 'Produto', ativo: true });
-        setProdutos(catalogoProdutos);
-      }
-
       const result = typeof aiRes === 'string' ? JSON.parse(aiRes) : aiRes;
-      const fornecedorMatch = findLocalBestFornecedorMatch(
-        {
-          nome: result.fornecedor?.nome_identificado,
-          cnpj: result.fornecedor?.cnpj_identificado,
-        },
-        fornecedores,
-      );
+      const catalogoIds = new Set(catalogoProdutos.map((p) => p.id));
+      const fornecedorIds = new Set(listaFornecedores.map((f) => f.id));
+      const fornecedorIdLlm = result.fornecedor?.id_match;
+      const fornecedorMatch = fornecedorIdLlm && fornecedorIds.has(fornecedorIdLlm)
+        ? listaFornecedores.find((f) => f.id === fornecedorIdLlm)
+        : findLocalBestFornecedorMatch(
+          {
+            nome: result.fornecedor?.nome_identificado,
+            cnpj: result.fornecedor?.cnpj_identificado,
+          },
+          listaFornecedores,
+        );
       setFornecedorInfo({
         id: fornecedorMatch?.id || 'new',
         nome: result.fornecedor?.nome_identificado || '',
         cnpj: result.fornecedor?.cnpj_identificado || '',
       });
       setProcessingStep(5);
-      setProcessingStatus('Buscando correspondências no catálogo');
+      setProcessingStatus('Validando correspondências');
 
       setItems((result.itens || []).map((item) => {
-        const match = findLocalBestProductMatch(null, catalogoProdutos, item);
-        const produtoId = match?.produto?.id || '';
+        let produtoId = item.produto_id_match && catalogoIds.has(item.produto_id_match)
+          ? item.produto_id_match
+          : '';
+        let confianca = item.confianca || '';
+        if (!produtoId) {
+          const fallback = findLocalBestProductMatch(null, catalogoProdutos, item);
+          if (fallback?.produto?.id) {
+            produtoId = fallback.produto.id;
+            confianca = fallback.confianca || 'baixa';
+          }
+        }
         return {
           ...item,
           produto_id_match: produtoId,
           selected_product_id: produtoId,
-          confianca: match?.confianca || '',
+          confianca,
           ignored: false,
         };
       }));
