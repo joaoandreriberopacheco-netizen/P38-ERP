@@ -16,7 +16,11 @@ export const PRODUTO_COLUMNS = [
   'volume_cm3', 'dimensoes_cm', 'ativo', 'tempo_reposicao_dias', 'venda_media_dia',
   'metas_estoque_atualizado_em', 'metas_estoque_dias_com_estoque', 'metas_estoque_unidade_compra',
   'metas_estoque_outliers_descartados', 'metas_estoque_quantidade_limpa_90d', 'estoque_trava_manual',
-  'metas_estoque_versao', 'metas_estoque_lead_time_dias',
+  'metas_estoque_versao', 'metas_estoque_lead_time_dias', 'linha_id',
+];
+
+export const LINHA_COLUMNS = [
+  'codigo', 'nome', 'tipo', 'eixo_a_rotulo', 'eixo_b_rotulo', 'chave_agrupamento', 'ordem', 'ativo', 'notas',
 ];
 
 export const TERCEIRO_COLUMNS = [
@@ -165,6 +169,7 @@ export const ANEXO_DOCUMENTO_EXTRA_COLUMNS = ['url_thumbnail', 'drive_file_id'];
 export const TABLE_PROMOTION_MANIFEST = {
   // re-promoção idempotente (limpa dados duplicado)
   produto: PRODUTO_COLUMNS,
+  linha: LINHA_COLUMNS,
   terceiro: TERCEIRO_COLUMNS,
   lancamento_financeiro: LANCAMENTO_FINANCEIRO_COLUMNS,
   turno_caixa: TURNO_CAIXA_COLUMNS,
