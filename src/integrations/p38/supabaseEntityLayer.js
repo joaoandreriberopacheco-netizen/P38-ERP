@@ -61,6 +61,28 @@ function decorateRow(row, entityName, mapping) {
   return out;
 }
 
+function isLikelyDateField(key) {
+  if (key === 'eta' || key === 'data_validade') return true;
+  if (key.startsWith('data_')) return true;
+  if (key.endsWith('_date')) return true;
+  if (key.startsWith('previsao_')) return true;
+  return false;
+}
+
+/** Postgres rejeita `""` em colunas date/timestamptz — converte para null. */
+function sanitizeEmptyDateValues(payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return payload;
+  const out = { ...payload };
+  for (const [k, v] of Object.entries(out)) {
+    if (v === '' && isLikelyDateField(k)) {
+      out[k] = null;
+    } else if (k === 'dados' && v && typeof v === 'object' && !Array.isArray(v)) {
+      out.dados = sanitizeEmptyDateValues(v);
+    }
+  }
+  return out;
+}
+
 export function prepareWritePayload(payload, entityName, mapping) {
   if (!payload || typeof payload !== 'object') return payload;
   const p = { ...payload };
@@ -94,7 +116,7 @@ export function prepareWritePayload(payload, entityName, mapping) {
   // Caso 3: modo 'jsonb' puro — só META + `columns` viram coluna; resto em dados.
   const hasOverflowJsonb = mapping?.mode === 'jsonb' || Array.isArray(mapping?.columns);
   if (!hasOverflowJsonb) {
-    return p;
+    return sanitizeEmptyDateValues(p);
   }
 
   const allowedColumns = new Set([...(mapping.columns || []), ...META_COLUMNS]);
@@ -113,7 +135,7 @@ export function prepareWritePayload(payload, entityName, mapping) {
   if (out.created_by === undefined) delete out.created_by;
   // Se nada foi parar em `dados`, remove para não sobrescrever JSONB existente desnecessariamente
   if (Object.keys(out.dados).length === 0) delete out.dados;
-  return out;
+  return sanitizeEmptyDateValues(out);
 }
 
 function normalizeFilterColumn(field, mapping) {
