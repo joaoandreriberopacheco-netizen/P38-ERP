@@ -51,8 +51,8 @@ function humanizeP38CoreError(payload, status) {
   if (/não autenticado|missing authorization|unauthorized/i.test(msg) || status === 401) {
     return 'Sessão expirada ou ausente. Saia e entre novamente em /login.';
   }
-  if (/OPENAI_API_KEY/i.test(msg)) {
-    return 'Leitura com IA indisponível: chave OpenAI não configurada no Supabase (secret OPENAI_API_KEY).';
+  if (/OPENAI_API_KEY|GEMINI_API_KEY|GOOGLE_API_KEY/i.test(msg)) {
+    return 'Leitura com IA indisponível: configure GEMINI_API_KEY (recomendado) ou OPENAI_API_KEY no Supabase → Edge Functions → Secrets.';
   }
   if (msg) return msg;
   if (status === 502) return 'Serviço de análise indisponível. Tente novamente em instantes.';

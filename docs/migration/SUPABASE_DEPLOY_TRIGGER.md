@@ -85,14 +85,16 @@ O deploy publica o código; no **Supabase Dashboard → Edge Functions → Secre
 
 | Secret | Função |
 |--------|--------|
-| `OPENAI_API_KEY` | **Obrigatório para OCR/importador** (`p38-core` → InvokeLLM) |
+| `OPENAI_API_KEY` | Fallback para InvokeLLM (se não houver Gemini) |
+| `GEMINI_API_KEY` ou `GOOGLE_API_KEY` | **Recomendado** — OCR/importador (`p38-core` → InvokeLLM via Gemini) |
+| `GEMINI_MODEL` | Opcional — default `gemini-2.0-flash` |
 | `RESEND_API_KEY` | `gerenciar-pin` (email PIN) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Todas (já injectada pelo Supabase em runtime) |
 
-**OCR / importar pedido:** sem `OPENAI_API_KEY` no Supabase, a análise devolve erro 500 (`OPENAI_API_KEY não configurado`).
+**OCR / importar pedido:** configure `GEMINI_API_KEY` (Google AI Studio) **ou** `OPENAI_API_KEY`.
 
-1. [platform.openai.com/api-keys](https://platform.openai.com/api-keys) → criar/copiar chave
-2. Supabase → **Edge Functions** → **Secrets** → `OPENAI_API_KEY` = a chave
+1. [aistudio.google.com/apikey](https://aistudio.google.com/apikey) → criar/copiar chave Gemini
+2. Supabase → **Edge Functions** → **Secrets** → `GEMINI_API_KEY` = a chave
 3. `npm run supabase:deploy:functions` (ou redeploy só `p38-core`)
 
 ## Verificação rápida
@@ -115,6 +117,7 @@ DATABASE_URL="..." SUPABASE_ACCESS_TOKEN="..." npm run supabase:deploy
 |---------|---------|
 | `SUPABASE_ACCESS_TOKEN em falta` | Criar PAT em [Account → Access Tokens](https://supabase.com/dashboard/account/tokens) e gravar em **Cursor Cloud Secrets** + **GitHub Actions** |
 | `password authentication failed` | Copiar de novo a connection string em **Project Settings → Database** (a password pode ter sido resetada) |
+| `OPENAI_API_KEY não configurado` / OCR falha após upload | Gravar `GEMINI_API_KEY` (recomendado) ou `OPENAI_API_KEY` em **Edge Functions → Secrets** e redeploy `p38-core` |
 | `PROJECT_REF` em falta | Adicionar `VITE_SUPABASE_URL=https://[ref].supabase.co` nos secrets |
 
 Após deploy, no SQL Editor:

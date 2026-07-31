@@ -102,6 +102,128 @@ function parseInvokeLlmContent(content: string, wantsJson: boolean): unknown {
   }
 }
 
+function resolveGeminiApiKey(): string {
+  return env('GEMINI_API_KEY') || env('GOOGLE_API_KEY');
+}
+
+function resolveGeminiModel(useVision: boolean): string {
+  return env('GEMINI_MODEL') || (useVision ? 'gemini-2.0-flash' : 'gemini-2.0-flash');
+}
+
+async function fetchFileInlineData(url: string): Promise<{ mimeType: string; data: string }> {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Não foi possível ler o arquivo para análise (${res.status})`);
+  }
+  let mimeType = (res.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+  if (!mimeType || mimeType === 'application/octet-stream') {
+    if (isPdfUrl(url)) mimeType = 'application/pdf';
+    else if (isImageUrl(url)) mimeType = 'image/jpeg';
+    else mimeType = 'application/octet-stream';
+  }
+  const bytes = new Uint8Array(await res.arrayBuffer());
+  return { mimeType, data: bytesToBase64(bytes) };
+}
+
+async function invokeGeminiLLM({
+  prompt,
+  file_urls,
+  response_json_schema,
+  model,
+}: {
+  prompt: string;
+  model?: string;
+  file_urls?: string[];
+  response_json_schema?: Record<string, unknown>;
+}) {
+  const key = resolveGeminiApiKey();
+  if (!key) throw new Error('GEMINI_API_KEY não configurado');
+
+  const fileUrls = Array.isArray(file_urls) ? file_urls.filter(Boolean) : [];
+  const wantsJson = Boolean(response_json_schema);
+  const effectiveModel = model || resolveGeminiModel(fileUrls.length > 0);
+
+  const parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = [];
+  parts.push({
+    text: wantsJson ? `${prompt}\n\nResponda somente com JSON válido.` : prompt,
+  });
+
+  for (const url of fileUrls) {
+    const inline = await fetchFileInlineData(url);
+    parts.push({ inlineData: inline });
+  }
+
+  const generationConfig: Record<string, unknown> = {};
+  if (wantsJson) {
+    generationConfig.responseMimeType = 'application/json';
+  }
+
+  const endpoint =
+    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(effectiveModel)}:generateContent?key=${encodeURIComponent(key)}`;
+
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ role: 'user', parts }],
+      generationConfig,
+    }),
+  });
+
+  if (!res.ok) throw new Error(`Gemini: ${await res.text()}`);
+  const json = await res.json();
+  const content = (json.candidates?.[0]?.content?.parts ?? [])
+    .map((part: { text?: string }) => part.text || '')
+    .join('');
+  return parseInvokeLlmContent(content, wantsJson);
+}
+
+async function invokeOpenAiLLM({
+  prompt,
+  model,
+  file_urls,
+  response_json_schema,
+}: {
+  prompt: string;
+  model?: string;
+  file_urls?: string[];
+  response_json_schema?: Record<string, unknown>;
+}) {
+  const key = env('OPENAI_API_KEY');
+  if (!key) throw new Error('OPENAI_API_KEY não configurado');
+
+  const fileUrls = Array.isArray(file_urls) ? file_urls.filter(Boolean) : [];
+  const wantsJson = Boolean(response_json_schema);
+  const useVision = fileUrls.length > 0;
+  const effectiveModel = model || (useVision ? 'gpt-4o' : 'gpt-4o-mini');
+
+  const body: Record<string, unknown> = {
+    model: effectiveModel,
+    messages: [
+      {
+        role: 'user',
+        content: useVision
+          ? await buildVisionContentParts(prompt, fileUrls, wantsJson)
+          : (wantsJson ? `${prompt}\n\nResponda somente com JSON válido.` : prompt),
+      },
+    ],
+  };
+
+  if (wantsJson) {
+    body.response_format = { type: 'json_object' };
+  }
+
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`OpenAI: ${await res.text()}`);
+  const json = await res.json();
+  const content = String(json.choices?.[0]?.message?.content ?? '');
+  return parseInvokeLlmContent(content, wantsJson);
+}
+
 export function buildCoreIntegrations() {
   const bucket = env('SUPABASE_ANEXOS_BUCKET') || 'anexos';
 
@@ -144,39 +266,17 @@ export function buildCoreIntegrations() {
       file_urls?: string[];
       response_json_schema?: Record<string, unknown>;
     }) {
-      const key = env('OPENAI_API_KEY');
-      if (!key) throw new Error('OPENAI_API_KEY não configurado');
-
-      const fileUrls = Array.isArray(file_urls) ? file_urls.filter(Boolean) : [];
-      const wantsJson = Boolean(response_json_schema);
-      const useVision = fileUrls.length > 0;
-      const effectiveModel = model || (useVision ? 'gpt-4o' : 'gpt-4o-mini');
-
-      const body: Record<string, unknown> = {
-        model: effectiveModel,
-        messages: [
-          {
-            role: 'user',
-            content: useVision
-              ? await buildVisionContentParts(prompt, fileUrls, wantsJson)
-              : (wantsJson ? `${prompt}\n\nResponda somente com JSON válido.` : prompt),
-          },
-        ],
-      };
-
-      if (wantsJson) {
-        body.response_format = { type: 'json_object' };
+      const geminiKey = resolveGeminiApiKey();
+      const openAiKey = env('OPENAI_API_KEY');
+      if (geminiKey) {
+        return invokeGeminiLLM({ prompt, model, file_urls, response_json_schema });
       }
-
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) throw new Error(`OpenAI: ${await res.text()}`);
-      const json = await res.json();
-      const content = String(json.choices?.[0]?.message?.content ?? '');
-      return parseInvokeLlmContent(content, wantsJson);
+      if (openAiKey) {
+        return invokeOpenAiLLM({ prompt, model, file_urls, response_json_schema });
+      }
+      throw new Error(
+        'Nenhum provedor de IA configurado. Defina GEMINI_API_KEY (recomendado) ou OPENAI_API_KEY no Supabase → Edge Functions → Secrets.',
+      );
     },
 
     async GenerateImage({ prompt }: { prompt: string }) {
