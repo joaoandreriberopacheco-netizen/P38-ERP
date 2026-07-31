@@ -4,6 +4,7 @@ import { loginFromAuthEmail, loginToAuthEmail, normalizeP38Login, resolveLoginCr
 import { p38PublicEnv } from '@/lib/p38PublicEnv';
 import { createSupabaseEntityLayer } from './supabaseEntityLayer';
 import { isSupabaseAuthEnabled } from './providers';
+import { invokeP38Core } from '@/lib/p38CoreInvoke';
 
 const STORAGE_KEYS = {
   bypassUser: 'p38_bypass_user_v1',
@@ -480,8 +481,25 @@ function buildIntegrations(supabase) {
 
   async function invokeCore(op, payload) {
     if (!supabase) throw new Error('Supabase não configurado para integrações Core');
-    const { data, error } = await supabase.functions.invoke('p38-core', { body: { op, ...payload } });
-    if (error) throw new Error(error.message || `p38-core.${op} falhou`);
+
+    if (typeof window !== 'undefined') {
+      const data = await invokeP38Core({ op, ...payload });
+      return data;
+    }
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const sessionToken = sessionData?.session?.access_token;
+    const invokeOptions = {
+      body: { op, ...payload },
+      ...(sessionToken
+        ? { headers: { Authorization: `Bearer ${sessionToken}` } }
+        : {}),
+    };
+    const { data, error } = await supabase.functions.invoke('p38-core', invokeOptions);
+    if (error) {
+      const message = await resolveSupabaseFunctionErrorMessage(error, `p38-core.${op}`);
+      throw new Error(message);
+    }
     if (data?.error) throw new Error(data.error);
     return data;
   }
