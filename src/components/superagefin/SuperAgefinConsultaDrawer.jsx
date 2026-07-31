@@ -9,6 +9,8 @@ import { salvarEdicaoLancamentoFinanceiro } from '@/lib/editarLancamentoFinancei
 import { isLancamentoPago } from '@/lib/lancamentoFinanceiroStatus';
 import { dataHoje, formatarSoData } from '@/components/utils/dateUtils';
 import { useToast } from '@/components/ui/use-toast';
+import { P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
+import { cn } from '@/lib/utils';
 
 function formatDate(value) {
   if (!value) return '—';
@@ -136,19 +138,23 @@ export default function SuperAgefinConsultaDrawer({ open, onClose, conta, onSave
 
   return (
     <Drawer open={open} onOpenChange={onClose}>
-      <DrawerContent className="border-0 rounded-t-[28px] bg-card px-4 pb-6">
+      <DrawerContent className="rounded-t-2xl border-0 bg-card px-4 pb-6 font-din-1451">
         <DrawerHeader className="px-0 pb-2 text-left">
-          <DrawerTitle className="font-glacial text-foreground">{conta.descricao}</DrawerTitle>
-          <DrawerDescription className="text-sm text-muted-foreground mt-1">
+          <DrawerTitle className="text-base font-medium text-foreground sm:text-lg">
+            {conta.descricao}
+          </DrawerTitle>
+          <DrawerDescription className="mt-1 text-sm text-muted-foreground">
             {conta.terceiro_nome || 'Sem favorecido'}
           </DrawerDescription>
         </DrawerHeader>
 
         <div className="space-y-3">
-          <div className="rounded-[22px] bg-muted/50/70 p-4 space-y-3 shadow-sm">
+          <div className={cn('space-y-3 rounded-xl p-4', P38_FIELD_SURFACE)}>
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <p className="text-xs text-muted-foreground">Valor da conta</p>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Valor da conta
+                </p>
                 {podeEditar ? (
                   <input
                     type="number"
@@ -156,99 +162,107 @@ export default function SuperAgefinConsultaDrawer({ open, onClose, conta, onSave
                     min="0"
                     value={valorInput}
                     onChange={(e) => setValorInput(e.target.value)}
-                    className="mt-1 h-12 w-full rounded-2xl bg-card px-3 text-xl font-semibold text-foreground shadow-sm outline-none ring-0"
+                    className="mt-1 h-12 w-full rounded-xl bg-background px-3 text-xl font-semibold tabular-nums text-foreground outline-none ring-0"
                   />
                 ) : (
-                  <p className="text-xl font-semibold text-foreground">{formatCurrency(conta.valor)}</p>
+                  <p className="text-xl font-semibold tabular-nums text-foreground">
+                    {formatCurrency(conta.valor)}
+                  </p>
                 )}
               </div>
               {isPaid ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-200">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Pago
+                  <CheckCircle2 className="h-3.5 w-3.5" /> Pago
                 </span>
               ) : isOverdue ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 dark:bg-red-400/10 dark:text-red-200">
-                  <CircleAlert className="w-3.5 h-3.5" /> Vencido
+                  <CircleAlert className="h-3.5 w-3.5" /> Vencido
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground/90 dark:bg-muted dark:text-foreground">
-                  <Wallet className="w-3.5 h-3.5" /> {conta.status || 'Pendente'}
+                <span className="inline-flex items-center gap-1 rounded-full bg-secondary/80 px-2.5 py-1 text-xs font-medium text-foreground/90 dark:bg-[#383e47]">
+                  <Wallet className="h-3.5 w-3.5" /> {conta.status || 'Pendente'}
                 </span>
               )}
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="rounded-2xl bg-card p-3 shadow-sm">
-                <p className="text-xs text-muted-foreground">Vencimento</p>
+              <div className="rounded-xl bg-background/60 p-3 dark:bg-[#1f1d22]/40">
+                <p className="text-[11px] text-muted-foreground">Vencimento</p>
                 {podeEditar ? (
                   <input
                     type="date"
                     value={vencimentoInput}
                     onChange={(e) => setVencimentoInput(e.target.value)}
-                    className="mt-1 h-10 w-full rounded-xl bg-muted px-2 text-sm font-medium text-foreground outline-none"
+                    className="mt-1 h-10 w-full rounded-xl bg-secondary/50 px-2 text-sm font-medium text-foreground outline-none"
                   />
                 ) : (
                   <p className="mt-1 font-medium text-foreground">{formatDate(conta.data_vencimento)}</p>
                 )}
               </div>
-              <div className="rounded-2xl bg-card p-3 shadow-sm">
-                <p className="text-xs text-muted-foreground">Pagamento</p>
+              <div className="rounded-xl bg-background/60 p-3 dark:bg-[#1f1d22]/40">
+                <p className="text-[11px] text-muted-foreground">Pagamento</p>
                 <p className="mt-1 font-medium text-foreground">{formatDate(conta.data_pagamento)}</p>
               </div>
             </div>
 
             {podeEditar && (
               <p className="text-xs text-muted-foreground">
-                Digite o valor e o vencimento à mão. O boleto em anexo é só referência — não altera estes campos.
+                Digite o valor e o vencimento à mão. O boleto em anexo é só referência — não altera
+                estes campos.
               </p>
             )}
 
             {temAlteracao && (
-              <Button className="w-full rounded-2xl" onClick={handleSalvar} disabled={saving}>
+              <Button className="h-11 w-full rounded-xl" onClick={handleSalvar} disabled={saving}>
                 {saving ? 'Guardando...' : 'Guardar alterações'}
               </Button>
             )}
 
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="rounded-2xl bg-card p-3 shadow-sm">
-                <p className="text-xs text-muted-foreground">Categoria</p>
+              <div className="rounded-xl bg-background/60 p-3 dark:bg-[#1f1d22]/40">
+                <p className="text-[11px] text-muted-foreground">Categoria</p>
                 <p className="mt-1 font-medium text-foreground">{conta.categoria || '—'}</p>
               </div>
-              <div className="rounded-2xl bg-card p-3 shadow-sm">
-                <p className="text-xs text-muted-foreground">Recorrência</p>
-                <p className="mt-1 font-medium text-foreground">{conta.is_recorrente ? (conta.frequencia_recorrencia || 'Recorrente') : 'Avulso'}</p>
+              <div className="rounded-xl bg-background/60 p-3 dark:bg-[#1f1d22]/40">
+                <p className="text-[11px] text-muted-foreground">Recorrência</p>
+                <p className="mt-1 font-medium text-foreground">
+                  {conta.is_recorrente
+                    ? conta.frequencia_recorrencia || 'Recorrente'
+                    : 'Avulso'}
+                </p>
               </div>
             </div>
 
-            <div className="rounded-2xl bg-card p-3 shadow-sm">
-              <p className="text-xs text-muted-foreground">Resumo</p>
+            <div className="rounded-xl bg-background/60 p-3 dark:bg-[#1f1d22]/40">
+              <p className="text-[11px] text-muted-foreground">Resumo</p>
               <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1">
-                  <Calendar className="w-3.5 h-3.5" /> {formatDate(vencimentoInput || conta.data_vencimento)}
+                <span className="inline-flex items-center gap-1 rounded-full bg-secondary/80 px-2.5 py-1 dark:bg-[#383e47]">
+                  <Calendar className="h-3.5 w-3.5" />{' '}
+                  {formatDate(vencimentoInput || conta.data_vencimento)}
                 </span>
                 {(conta.forma_pagamento_tipo === 'Boleto' || conta.forma_pagamento === 'Boleto') && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-lime-50 dark:bg-lime-500/10 px-2.5 py-1 text-lime-700 dark:text-lime-300">
-                    <Receipt className="w-3.5 h-3.5" /> Boleto
+                  <span className="inline-flex items-center gap-1 rounded-full bg-lime-50 px-2.5 py-1 text-lime-700 dark:bg-lime-500/10 dark:text-lime-300">
+                    <Receipt className="h-3.5 w-3.5" /> Boleto
                   </span>
                 )}
                 {conta.data_pagamento && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 text-emerald-700 dark:text-emerald-300">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Pagamento registrado
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                    <CheckCircle2 className="h-3.5 w-3.5" /> Pagamento registrado
                   </span>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="rounded-[22px] bg-muted/50/70 p-4 shadow-sm space-y-3">
+          <div className={cn('space-y-3 rounded-xl p-4', P38_FIELD_SURFACE)}>
             <div className="flex items-center gap-2">
-              <Paperclip className="w-4 h-4 text-muted-foreground" />
+              <Paperclip className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm font-medium text-foreground">Anexos e comprovantes</p>
             </div>
             <p className="text-xs text-muted-foreground">
               Vincule o boleto (PDF) como anexo opcional. Ele não atualiza valor nem vencimento.
             </p>
-            <div className="flex items-center justify-between rounded-2xl bg-card p-3 shadow-sm">
+            <div className="flex items-center justify-between rounded-xl bg-background/60 p-3 dark:bg-[#1f1d22]/40">
               <div className="text-sm text-foreground/90">
                 Ver boleto, comprovantes e documentos da conta
               </div>

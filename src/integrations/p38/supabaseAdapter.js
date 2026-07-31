@@ -4,6 +4,13 @@ import { loginFromAuthEmail, loginToAuthEmail, normalizeP38Login, resolveLoginCr
 import { p38PublicEnv } from '@/lib/p38PublicEnv';
 import { createSupabaseEntityLayer } from './supabaseEntityLayer';
 import { isSupabaseAuthEnabled } from './providers';
+import { invokeP38Core } from '@/lib/p38CoreInvoke';
+import { invokeP38EdgeFunction } from '@/lib/p38EdgeFunctionInvoke';
+import {
+  deletarAnexoSupabase,
+  listarAnexosSupabase,
+  uploadAnexoDriveSupabase,
+} from '@/lib/anexosSupabase';
 
 const STORAGE_KEYS = {
   bypassUser: 'p38_bypass_user_v1',
@@ -370,22 +377,6 @@ function buildAuth(supabase) {
   };
 }
 
-/** Mapeia nomes camelCase do Base44 para pastas kebab-case das Edge Functions Supabase. */
-const EDGE_FUNCTION_ALIASES = {
-  gerenciarPin: 'gerenciar-pin',
-  p38Auth: 'p38-auth',
-  processarVendaCaixa: 'processar-venda-caixa',
-  cancelarLancamentoFinanceiro: 'cancelar-lancamento-financeiro',
-  auditarSaldosContas: 'auditar-saldos-contas',
-  enviarFinanceiroLote: 'enviar-financeiro-lote',
-  corrigirMovimentosRecepcaoRetroativos: 'corrigir-movimentos-recepcao-retroativos',
-};
-
-function toSupabaseEdgeFunctionName(name) {
-  if (EDGE_FUNCTION_ALIASES[name]) return EDGE_FUNCTION_ALIASES[name];
-  return String(name).replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
-}
-
 async function resolveSupabaseFunctionErrorMessage(error, name) {
   let message = error?.message || `Falha ao invocar Edge Function "${name}".`;
   const ctx = error?.context;
@@ -407,6 +398,20 @@ async function resolveSupabaseFunctionErrorMessage(error, name) {
   return message;
 }
 
+/** Paridade com `@base44/sdk` functions.invoke → `{ data }`. */
+function normalizeBase44FunctionsResponse(result) {
+  if (result == null) return { data: null };
+  if (result instanceof ArrayBuffer) return { data: result };
+  if (typeof result === 'object' && result.data instanceof ArrayBuffer) return result;
+  if (typeof result === 'object' && 'data' in result && !('error' in result)) {
+    const keys = Object.keys(result);
+    if (keys.length === 1 || (keys.length === 2 && 'response' in result)) {
+      return result;
+    }
+  }
+  return { data: result };
+}
+
 function buildFunctions(supabase) {
   return {
     async invoke(name, body, _requestContext = {}) {
@@ -420,38 +425,106 @@ function buildFunctions(supabase) {
         err.code = 'P38_SUPABASE_NOT_CONFIGURED';
         throw err;
       }
-      const edgeName = toSupabaseEdgeFunctionName(name);
-      const { data, error } = await supabase.functions.invoke(edgeName, { body });
-      if (error) {
-        const message = await resolveSupabaseFunctionErrorMessage(error, name);
-        const enhanced = new Error(message);
-        enhanced.code = 'P38_SUPABASE_FUNCTION_ERROR';
-        enhanced.cause = error;
-        throw enhanced;
+      // Anexos: Storage + entidades no browser (edge upload-anexo-drive falha ao arrancar).
+      if (name === 'uploadAnexoDrive') {
+        const result = await uploadAnexoDriveSupabase({ supabase, body });
+        return normalizeBase44FunctionsResponse(result);
       }
-      if (data && typeof data === 'object' && data.error && data.success !== true) {
-        throw new Error(String(data.error));
+      if (name === 'listarAnexos') {
+        const result = await listarAnexosSupabase({ supabase, body });
+        return normalizeBase44FunctionsResponse(result);
       }
-      return data;
+      if (name === 'deletarAnexo') {
+        const result = await deletarAnexoSupabase({ supabase, body });
+        return normalizeBase44FunctionsResponse(result);
+      }
+      // Proxy same-origin (/api/p38-edge/*) — evita FunctionsFetchError no browser.
+      const result = await invokeP38EdgeFunction(name, body, { supabase });
+      return normalizeBase44FunctionsResponse(result);
     }
   };
 }
 
 function buildIntegrations(supabase) {
-  const bucket = 'anexos';
+  const bucket = p38PublicEnv('VITE_SUPABASE_ANEXOS_BUCKET') || 'anexos';
+
+  function normalizeInvokeLlmResponse(data) {
+    if (data == null) return data;
+    if (typeof data === 'string') {
+      try {
+        return JSON.parse(data);
+      } catch {
+        return data;
+      }
+    }
+    if (typeof data !== 'object') return data;
+    if (data.response_json && typeof data.response_json === 'object') return data.response_json;
+    if (data.response && typeof data.response === 'object') return data.response;
+    if (data.data && typeof data.data === 'object') return data.data;
+    if (data.result != null) {
+      if (typeof data.result === 'object') return data.result;
+      if (typeof data.result === 'string') {
+        try {
+          return JSON.parse(data.result);
+        } catch {
+          return data;
+        }
+      }
+    }
+    return data;
+  }
+
+  function formatStorageUploadError(error) {
+    const message = error?.message || String(error);
+    if (/bucket not found/i.test(message)) {
+      return (
+        `Bucket de anexos "${bucket}" não existe no Supabase Storage. ` +
+        'Aplique a migração supabase/migrations/045_storage_buckets.sql (npm run supabase:deploy) ' +
+        'ou crie o bucket no Dashboard → Storage.'
+      );
+    }
+    return message;
+  }
 
   async function invokeCore(op, payload) {
     if (!supabase) throw new Error('Supabase não configurado para integrações Core');
-    const { data, error } = await supabase.functions.invoke('p38-core', { body: { op, ...payload } });
-    if (error) throw new Error(error.message || `p38-core.${op} falhou`);
+
+    if (typeof window !== 'undefined') {
+      const data = await invokeP38Core({ op, ...payload });
+      return data;
+    }
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const sessionToken = sessionData?.session?.access_token;
+    const invokeOptions = {
+      body: { op, ...payload },
+      ...(sessionToken
+        ? { headers: { Authorization: `Bearer ${sessionToken}` } }
+        : {}),
+    };
+    const { data, error } = await supabase.functions.invoke('p38-core', invokeOptions);
+    if (error) {
+      const message = await resolveSupabaseFunctionErrorMessage(error, `p38-core.${op}`);
+      throw new Error(message);
+    }
     if (data?.error) throw new Error(data.error);
     return data;
+  }
+
+  function sanitizeStorageFileName(name) {
+    return String(name || 'file')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9._-]/g, '_')
+      .replace(/_+/g, '_')
+      .slice(0, 120) || 'file';
   }
 
   return {
     Core: {
       async InvokeLLM(payload) {
-        return invokeCore('InvokeLLM', payload);
+        const data = await invokeCore('InvokeLLM', payload);
+        return normalizeInvokeLlmResponse(data);
       },
       async SendEmail(payload) {
         return invokeCore('SendEmail', payload);
@@ -464,18 +537,28 @@ function buildIntegrations(supabase) {
       },
       async UploadPrivateFile({ file, path }) {
         if (!supabase) throw new Error('Supabase não configurado');
-        const name = path || `uploads/${crypto.randomUUID()}_${file.name || 'file'}`;
-        const { error } = await supabase.storage.from(bucket).upload(name, file, { upsert: true });
-        if (error) throw new Error(error.message);
+        const safeName = sanitizeStorageFileName(file.name);
+        const name = path || `uploads/${crypto.randomUUID()}_${safeName}`;
+        const contentType = file.type || 'application/octet-stream';
+        const { error } = await supabase.storage.from(bucket).upload(name, file, {
+          upsert: true,
+          contentType,
+        });
+        if (error) throw new Error(formatStorageUploadError(error));
+        const { data: signed, error: signError } = await supabase.storage
+          .from(bucket)
+          .createSignedUrl(name, 3600);
+        if (!signError && signed?.signedUrl) {
+          return { file_url: signed.signedUrl, path: name, bucket };
+        }
         const { data } = supabase.storage.from(bucket).getPublicUrl(name);
-        return { file_url: data.publicUrl };
+        return { file_url: data.publicUrl, path: name, bucket };
       },
       async UploadFile({ file, path }) {
         return buildIntegrations(supabase).Core.UploadPrivateFile({ file, path });
       },
       async ExtractDataFromUploadedFile(payload) {
-        const { data, error } = await supabase.functions.invoke('extract-data-file', { body: payload });
-        if (error) throw new Error(error.message || 'ExtractDataFromUploadedFile falhou');
+        const data = await invokeP38EdgeFunction('extract-data-file', payload, { supabase });
         return data;
       },
     },

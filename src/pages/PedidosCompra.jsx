@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { buildBypassAuthPayload } from '@/components/auth/operacaoAuthFlags';
 import { enviarPedidoCompraFinanceiroLote } from '@/lib/enviarPedidoCompraFinanceiro';
 import { pedidoLiberadoParaLogistica } from '@/lib/aprovarPedidoCompraFinanceiro';
+import { gerarNumeroSequencial } from '@/lib/gerarNumeroSequencial';
 import {
   calcValorItensPedidoCompra,
   calcValorTotalPedidoCompra,
@@ -557,8 +558,7 @@ export default function PedidosCompraPage() {
     } else {
       const { id, ...newPedido } = sanitizedData;
       if (!newPedido.numero) {
-        const resp = await base44.functions.invoke('gerarNumeroSequencial', { tipo: 'PC' });
-        newPedido.numero = resp?.data?.numero;
+        newPedido.numero = await gerarNumeroSequencial('PC');
       }
       await base44.entities.PedidoCompra.create(newPedido);
     }

@@ -55,6 +55,8 @@
     "abcd:executar-console": "node scripts/executar-abcd-job-console.mjs",
     "produto:codigo:backfill": "node scripts/backfill-produto-codigo.mjs",
     "produto:codigo:aplicar": "node scripts/backfill-produto-codigo.mjs --apply",
+    "transportadora:embarcacao:backfill": "node scripts/backfill-transportadora-embarcacao-ids.mjs",
+    "transportadora:embarcacao:aplicar": "node scripts/backfill-transportadora-embarcacao-ids.mjs --apply",
     "export:linhas-categoria": "node scripts/export-linhas-por-categoria.mjs",
     "export:analise-linhas": "node scripts/export-catalogo-analise-linhas.mjs",
     "export:linhas-mestre": "node scripts/export-linhas-mestre.mjs",

@@ -8,7 +8,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/use-toast';
 import { Upload, Loader2, Check, X, ArrowLeft, Package, FileText, Camera, Sparkles } from 'lucide-react';
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
-import { buildProdutoMatchingPromptBase } from '@/components/compras/productMatchingUtils';
+import {
+  buildEfficientPedidoCompraPrompt,
+  findLocalBestFornecedorMatch,
+  findLocalBestProductMatch,
+} from '@/components/compras/productMatchingUtils';
 import {
   buildPurchaseUnitOptions,
   pickDefaultPurchaseUnit,
@@ -18,6 +22,7 @@ import {
 } from '@/lib/productUnits';
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
 import { consumirArquivoPedidoImportDoBridge } from '@/lib/torrePedidoImportBridge';
+import { buildLlmTelemetryContext } from '@/lib/p38LlmTelemetry';
 
 export default function ImportadorPedidoCompra({
   isOpen,
@@ -73,7 +78,7 @@ export default function ImportadorPedidoCompra({
     setDiscountValue('0');
     setFornecedorInfo({ id: '', nome: '', cnpj: '' });
     Promise.all([
-      base44.entities.Produto.list(),
+      base44.entities.Produto.filter({ tipo: 'Produto', ativo: true }),
       base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] })
     ]).then(([prods, fns]) => {
       setProdutos(prods);
@@ -191,81 +196,117 @@ export default function ImportadorPedidoCompra({
       setProcessingStep(2);
       setProcessingStatus('Lendo documento');
 
-      const promptBase = `${buildProdutoMatchingPromptBase({ produtos, fornecedores })}
+      let catalogoProdutos = produtos;
+      let listaFornecedores = fornecedores;
+      if (!catalogoProdutos.length || !listaFornecedores.length) {
+        const [prods, fns] = await Promise.all([
+          catalogoProdutos.length
+            ? Promise.resolve(catalogoProdutos)
+            : base44.entities.Produto.filter({ tipo: 'Produto', ativo: true }),
+          listaFornecedores.length
+            ? Promise.resolve(listaFornecedores)
+            : base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] }),
+        ]);
+        catalogoProdutos = prods;
+        listaFornecedores = fns;
+        setProdutos(prods);
+        setFornecedores(fns);
+      }
 
-Retorne JSON:
-{
-  "fornecedor": {"nome_identificado": "string", "cnpj_identificado": "string", "id_match": "id ou vazio"},
-  "itens": [{
-    "descricao": "descrição original",
-    "codigo": "código no documento",
-    "marca": "marca se visível",
-    "quantidade": number,
-    "preco_unitario": number,
-    "unidade_medida_documento": "sigla opcional ex.: M2, M², CX, PAC, UN — como no documento",
-    "produto_id_match": "id exato do catálogo ou vazio",
-    "confianca": "alta|media|baixa"
-  }]
-}`;
+      const matchingSchema = {
+        type: 'object',
+        properties: {
+          fornecedor: {
+            type: 'object',
+            properties: {
+              nome_identificado: { type: 'string' },
+              cnpj_identificado: { type: 'string' },
+              id_match: { type: 'string' },
+            },
+          },
+          itens: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                descricao: { type: 'string' },
+                codigo: { type: 'string' },
+                marca: { type: 'string' },
+                quantidade: { type: 'number' },
+                preco_unitario: { type: 'number' },
+                unidade_medida_documento: { type: 'string' },
+                produto_id_match: { type: 'string' },
+                confianca: { type: 'string' },
+              },
+            },
+          },
+        },
+      };
 
-      const prompt = mode === 'pdf'
-        ? `Analise este PDF de orçamento/pedido de fornecedor.\nPreserve acentos e caracteres do português nos campos textuais.\n${promptBase}`
-        : `Analise esta imagem de lista de compra.\nPreserve acentos e caracteres do português nos campos textuais.\n${promptBase}`;
+      const prompt = buildEfficientPedidoCompraPrompt({
+        produtos: catalogoProdutos,
+        fornecedores: listaFornecedores,
+        mode,
+      });
 
       setProcessingStep(3);
-      setProcessingStatus('Identificando itens');
+      setProcessingStatus('Identificando itens e catálogo');
 
       const aiRes = await base44.integrations.Core.InvokeLLM({
         prompt,
         file_urls: [fileUrl],
-        response_json_schema: {
-          type: 'object',
-          properties: {
-            fornecedor: {
-              type: 'object',
-              properties: {
-                nome_identificado: { type: 'string' },
-                cnpj_identificado: { type: 'string' },
-                id_match: { type: 'string' }
-              }
-            },
-            itens: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  descricao: { type: 'string' },
-                  codigo: { type: 'string' },
-                  marca: { type: 'string' },
-                  quantidade: { type: 'number' },
-                  preco_unitario: { type: 'number' },
-                  unidade_medida_documento: { type: 'string' },
-                  produto_id_match: { type: 'string' },
-                  confianca: { type: 'string' }
-                }
-              }
-            }
-          }
-        }
+        telemetry: buildLlmTelemetryContext({
+          source: 'import_pedido_compra',
+          catalogProductCount: catalogoProdutos.length,
+          fileCount: 1,
+        }),
+        response_json_schema: matchingSchema,
       });
 
       setProcessingStep(4);
       setProcessingStatus('Identificando fornecedor');
 
       const result = typeof aiRes === 'string' ? JSON.parse(aiRes) : aiRes;
+      const catalogoIds = new Set(catalogoProdutos.map((p) => p.id));
+      const fornecedorIds = new Set(listaFornecedores.map((f) => f.id));
+      const fornecedorIdLlm = result.fornecedor?.id_match;
+      const fornecedorMatch = fornecedorIdLlm && fornecedorIds.has(fornecedorIdLlm)
+        ? listaFornecedores.find((f) => f.id === fornecedorIdLlm)
+        : findLocalBestFornecedorMatch(
+          {
+            nome: result.fornecedor?.nome_identificado,
+            cnpj: result.fornecedor?.cnpj_identificado,
+          },
+          listaFornecedores,
+        );
       setFornecedorInfo({
-        id: result.fornecedor?.id_match || 'new',
+        id: fornecedorMatch?.id || 'new',
         nome: result.fornecedor?.nome_identificado || '',
-        cnpj: result.fornecedor?.cnpj_identificado || ''
+        cnpj: result.fornecedor?.cnpj_identificado || '',
       });
       setProcessingStep(5);
-      setProcessingStatus('Buscando correspondências no catálogo');
+      setProcessingStatus('Validando correspondências');
 
-      setItems((result.itens || []).map(item => ({
-        ...item,
-        selected_product_id: item.produto_id_match || '',
-        ignored: false
-      })));
+      setItems((result.itens || []).map((item) => {
+        let produtoId = item.produto_id_match && catalogoIds.has(item.produto_id_match)
+          ? item.produto_id_match
+          : '';
+        let confianca = item.confianca || '';
+        if (!produtoId) {
+          const fallback = findLocalBestProductMatch(null, catalogoProdutos, item);
+          if (fallback?.produto?.id) {
+            produtoId = fallback.produto.id;
+            confianca = fallback.confianca || 'baixa';
+          }
+        }
+        return {
+          ...item,
+          produto_id_match: produtoId,
+          selected_product_id: produtoId,
+          confianca,
+          ignored: false,
+        };
+      }));
       setProductSearch({});
       setStep('review');
     } catch (error) {

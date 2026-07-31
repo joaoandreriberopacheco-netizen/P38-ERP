@@ -8,10 +8,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Upload, Loader2, AlertCircle, Check, FileText, X, ArrowLeft, Package } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
-import { buildProdutoMatchingPromptBase, getProdutoLabel, matchesProductQuery } from '@/components/compras/productMatchingUtils';
+import { buildProdutoMatchingPromptBase, getProdutoLabel, matchesProductQuery, findLocalBestProductMatch } from '@/components/compras/productMatchingUtils';
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
 import { P38TableShell } from '@/components/ui/table';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
+import { buildLlmTelemetryContext } from '@/lib/p38LlmTelemetry';
 
 export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImportComplete }) {
     const [step, setStep] = useState('upload');
@@ -38,34 +39,6 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
 
     const updateMappings = (updater) => {
         setMappings((prev) => (typeof updater === 'function' ? updater(prev) : updater));
-    };
-
-    const findLocalBestMatch = (textoIdentificado, catalogoProdutos) => {
-        const query = (textoIdentificado || '').trim();
-        if (!query) return null;
-
-        const direct = catalogoProdutos.find((produto) => matchesProductQuery(produto, query));
-        if (direct) return direct;
-
-        const words = query.toLowerCase().split(/\s+/).filter(Boolean);
-        let best = null;
-        let bestScore = 0;
-
-        catalogoProdutos.forEach((produto) => {
-            const searchable = [
-                produto.nome,
-                produto.codigo_interno,
-                produto.codigo_barras,
-                produto.marca
-            ].filter(Boolean).join(' ').toLowerCase();
-            const score = words.reduce((sum, word) => sum + (searchable.includes(word) ? 1 : 0), 0);
-            if (score > bestScore) {
-                bestScore = score;
-                best = produto;
-            }
-        });
-
-        return bestScore >= Math.max(2, Math.ceil(words.length / 2)) ? best : null;
     };
 
     const handleArquivoSelecionado = async (file) => {
@@ -131,6 +104,11 @@ Retorne um JSON com:
             const aiRes = await base44.integrations.Core.InvokeLLM({
                 prompt: prompt,
                 file_urls: [fileUrl],
+                telemetry: buildLlmTelemetryContext({
+                  source: 'import_cotacao_pdf',
+                  catalogProductCount: produtos.length,
+                  fileCount: 1,
+                }),
                 response_json_schema: {
                     type: "object",
                     properties: {
@@ -175,7 +153,9 @@ Retorne um JSON com:
             // Defensive check for itens array
             const itens = Array.isArray(result.itens) ? result.itens : [];
             setMappings(itens.map(item => {
-                const fallback = !item.produto_sistema_match_id ? findLocalBestMatch(item.descricao_pdf, produtos) : null;
+                const fallback = !item.produto_sistema_match_id
+                    ? findLocalBestProductMatch(null, produtos, item)?.produto
+                    : null;
                 const selectedId = item.produto_sistema_match_id || fallback?.id || '';
                 return {
                     ...item,

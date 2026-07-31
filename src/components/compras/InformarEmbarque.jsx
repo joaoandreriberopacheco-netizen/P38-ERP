@@ -13,6 +13,10 @@ import { logDespachoAudit, InformarDespachoAuditStrip } from '@/components/compr
 import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
 import { saveEmbarqueItem } from '@/functions/saveEmbarqueItem';
 import { invokeRecalcularConclusaoPedidoCompra } from '@/lib/p38StockRecalc';
+import {
+  buildTransportadoraPersistPayload,
+  resolveAndMatchTransportadora,
+} from '@/lib/resolveTransportadora';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -76,7 +80,7 @@ function getItensEmbarque(embarque) {
 
 // ── TransportadoraSearch ──────────────────────────────────────────────────────
 
-function TransportadoraSearch({ transportadoras, value, onChange, onCriarNova }) {
+function TransportadoraSearch({ transportadoras, value, onChange, onCriarNova, displayNome }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [criando, setCriando] = useState(false);
@@ -85,6 +89,7 @@ function TransportadoraSearch({ transportadoras, value, onChange, onCriarNova })
   const ref = useRef(null);
 
   const selected = transportadoras.find(t => t.id === value);
+  const labelExibicao = selected?.nome || (value && displayNome) || null;
 
   const filtered = useMemo(() => {
     if (!query.trim()) return transportadoras.slice(0, 10);
@@ -124,8 +129,8 @@ function TransportadoraSearch({ transportadoras, value, onChange, onCriarNova })
         className="w-full h-12 rounded-xl bg-muted/50 shadow-sm px-4 flex items-center gap-3 text-left"
       >
         <Truck className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-        <span className={`flex-1 text-sm truncate ${selected ? 'text-foreground' : 'text-muted-foreground'}`}>
-          {selected ? selected.nome : 'Selecione ou busque...'}
+        <span className={`flex-1 text-sm truncate ${labelExibicao ? 'text-foreground' : 'text-muted-foreground'}`}>
+          {labelExibicao || 'Selecione ou busque...'}
         </span>
         {value && <button type="button" onClick={e => { e.stopPropagation(); onChange(''); }} className="p-1"><X className="w-3.5 h-3.5 text-muted-foreground" /></button>}
         <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -210,6 +215,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
   const [eventoLogisticoId, setEventoLogisticoId] = useState('');
   const [eventoVinculado, setEventoVinculado] = useState(null);
   const [transportadoraId, setTransportadoraId] = useState('');
+  const [transportadoraNome, setTransportadoraNome] = useState('');
   const [dataDespacho, setDataDespacho] = useState('');
   const [eta, setEta] = useState('');
   const [volumes, setVolumes] = useState([]);
@@ -251,6 +257,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
     if (isEdicao) {
       setDataDespacho(embarqueExistente.data_embarque ? toLocalDateKey(new Date(embarqueExistente.data_embarque)) : dataHoje());
       setTransportadoraId(embarqueExistente.transportadora_id || '');
+      setTransportadoraNome(embarqueExistente.transportadora_nome || '');
       setEventoLogisticoId(embarqueExistente.evento_logistico_id || '');
       const etaVal = embarqueExistente.eta
         ? toLocalDateKey(new Date(embarqueExistente.eta))
@@ -275,6 +282,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
     } else {
       setDataDespacho(dataHoje());
       setTransportadoraId('');
+      setTransportadoraNome('');
       setEventoLogisticoId('');
       setEventoVinculado(null);
       setEta('');
@@ -333,7 +341,9 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
     logDespachoAudit({ action: 'viagem_selecionada', eventoId: evento?.id, codigo: evento?.codigo });
     setEventoVinculado(evento || null);
     setEventoLogisticoId(evento?.id || '');
-    setTransportadoraId(evento?.transportadora_id || '');
+    const matched = resolveAndMatchTransportadora(evento, transportadoras);
+    setTransportadoraId(matched.transportadora_id || '');
+    setTransportadoraNome(matched.transportadora_nome || '');
     const dataSaida = evento?.data_saida_origem || evento?.data_referencia;
     const dataEta = evento?.previsao_chegada || evento?.data_chegada_destino;
     if (dataSaida) setDataDespacho(String(dataSaida).slice(0, 10));
@@ -398,6 +408,14 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
       }
 
       const transportadora = transportadoras.find(t => t.id === transportadoraId);
+      const transportadoraPayload = buildTransportadoraPersistPayload(
+        {
+          transportadora_id: transportadoraId,
+          transportadora_nome: transportadora?.nome || transportadoraNome,
+          embarcacao_nome: transportadoraNome,
+        },
+        transportadoras,
+      );
       const embarquesExistentes = Array.isArray(pedido._embarques) ? pedido._embarques : (pedido.embarques_registrados || []);
       const letraExibicao = String.fromCharCode(65 + embarquesExistentes.length);
       const itensEmbarcados = (pedido.itens || [])
@@ -430,8 +448,8 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
       const payloadEmbarque = {
         data_embarque: dataDespacho ? meioDiaSistemaISO(dataDespacho) : (embarqueExistente?.data_embarque || agora()),
         eta: meioDiaSistemaISO(eta),
-        transportadora_id: transportadoraId,
-        transportadora_nome: transportadora?.nome || '',
+        transportadora_id: transportadoraPayload.transportadora_id,
+        transportadora_nome: transportadoraPayload.transportadora_nome,
         fornecedor_id: fornecedorIdFinal,
         fornecedor_nome: fornecedorNomeFinal,
         evento_logistico_id: eventoLogisticoId || '',
@@ -690,7 +708,12 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                   <TransportadoraSearch
                     transportadoras={transportadoras}
                     value={transportadoraId}
-                    onChange={setTransportadoraId}
+                    displayNome={transportadoraNome}
+                    onChange={(id) => {
+                      setTransportadoraId(id);
+                      const encontrada = transportadoras.find((t) => t.id === id);
+                      setTransportadoraNome(encontrada?.nome || '');
+                    }}
                     onCriarNova={nova => setTransportadoras(prev => [...prev, nova])}
                   />
                 </div>
@@ -718,7 +741,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                       <p className="text-xs text-muted-foreground">
                         Ao escolher a viagem, datas e transportadora foram preenchidas; você pode ajustar manualmente.
                       </p>
-                      <button type="button" onClick={() => { setEventoLogisticoId(''); setEventoVinculado(null); }} className="shrink-0 text-xs text-teal-400 hover:text-teal-300">
+                      <button type="button" onClick={() => { setEventoLogisticoId(''); setEventoVinculado(null); setTransportadoraNome(''); }} className="shrink-0 text-xs text-teal-400 hover:text-teal-300">
                         Limpar vínculo
                       </button>
                     </div>

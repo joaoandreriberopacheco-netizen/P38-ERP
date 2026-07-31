@@ -6,6 +6,8 @@ import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
+const supabaseProjectUrl = String(process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '')
+
 /** Falha o build em produção se provider=supabase sem credenciais (evita bundle quebrado no Vercel). */
 function requireSupabaseEnvForProduction() {
   return {
@@ -46,12 +48,28 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api/auth-p38': {
-        target: 'https://zhonvxkkqabfdyehyxpu.supabase.co/functions/v1/p38-auth',
-        changeOrigin: true,
-        secure: true,
-        rewrite: () => '',
-      },
+      ...(supabaseProjectUrl
+        ? {
+            '/api/auth-p38': {
+              target: `${supabaseProjectUrl}/functions/v1/p38-auth`,
+              changeOrigin: true,
+              secure: true,
+              rewrite: () => '',
+            },
+            '/api/p38-core': {
+              target: `${supabaseProjectUrl}/functions/v1/p38-core`,
+              changeOrigin: true,
+              secure: true,
+              rewrite: () => '',
+            },
+            '^/api/p38-edge': {
+              target: supabaseProjectUrl,
+              changeOrigin: true,
+              secure: true,
+              rewrite: (path) => path.replace(/^\/api\/p38-edge/, '/functions/v1'),
+            },
+          }
+        : {}),
     },
   },
 })

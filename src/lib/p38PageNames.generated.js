@@ -56,6 +56,7 @@ export const P38_PAGE_NAMES = [
   "ItinerarioFluvial",
   "LancamentoAnexos",
   "LixeiraLancamentos",
+  "LlmTelemetria",
   "LogsAutenticacao",
   "Manual",
   "MapaFuncionalidades",
