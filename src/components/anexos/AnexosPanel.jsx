@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Paperclip, Loader2 } from 'lucide-react';
 import { listarAnexos } from '@/functions/listarAnexos';
 import { deletarAnexo } from '@/functions/deletarAnexo';
-import { base44 } from '@/api/base44Client';
+import { uploadAnexoDrive } from '@/functions/uploadAnexoDrive';
 import AnexosModal from './AnexosModal';
 
 export default function AnexosPanel({ referenciaId, referenciaTipo, referenciaNomero = '', inline = false, readOnly = false }) {
@@ -24,24 +24,21 @@ export default function AnexosPanel({ referenciaId, referenciaTipo, referenciaNo
 
   const handleUpload = async (file, tipoSelecionado, e) => {
     setUploading(true);
-    const buffer = await file.arrayBuffer();
-    const bytes = new Uint8Array(buffer);
-    let binary = '';
-    bytes.forEach(b => binary += String.fromCharCode(b));
-    const base64 = btoa(binary);
-
-    await base44.functions.invoke('uploadAnexoDrive', {
-      file_base64: base64,
-      file_name: file.name,
-      file_type: file.type || 'application/octet-stream',
-      file_size: file.size,
-      referencia_tipo: referenciaTipo,
-      referencia_id: referenciaId,
-      referencia_numero: referenciaNomero,
-      tipo_documento: tipoSelecionado,
-    });
-    await carregar();
-    setUploading(false);
+    try {
+      await uploadAnexoDrive({
+        file,
+        file_name: file.name,
+        file_type: file.type || 'application/octet-stream',
+        file_size: file.size,
+        referencia_tipo: referenciaTipo,
+        referencia_id: referenciaId,
+        referencia_numero: referenciaNomero,
+        tipo_documento: tipoSelecionado,
+      });
+      await carregar();
+    } finally {
+      setUploading(false);
+    }
     if (e) e.target.value = '';
     return tipoSelecionado;
   };

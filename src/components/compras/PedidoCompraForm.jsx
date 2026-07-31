@@ -63,7 +63,7 @@ import {
   calcTotalItemCompraPedido,
 } from '@/lib/productUnits';
 import { savePedidoCompraItem } from '@/functions/savePedidoCompraItem';
-import { uploadAnexoParaPedidoCompra } from '@/lib/uploadAnexoReferencia';
+import { uploadAnexoParaPedidoCompra, stabilizeUploadFile } from '@/lib/uploadAnexoReferencia';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefresh, abaInicial = 'dados-gerais', autoOpenImporter = false }) {
   const isPhone = useCompactShell();
@@ -268,8 +268,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
     async (pedidoId, pedidoNumero, pending = pendingAnexoImportRef.current) => {
       if (!pedidoId || !pending?.file || anexoImportUploadedRef.current) return;
       try {
+        const file = await stabilizeUploadFile(pending.file, 'pedido-importado.pdf');
         await uploadAnexoParaPedidoCompra(base44, {
-          file: pending.file,
+          file,
           pedidoId,
           pedidoNumero: pedidoNumero || '',
           tipoDocumento: pending.tipoDocumentoAnexo || 'Comprovante',
@@ -949,7 +950,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
       
       // Salvar pedido primeiro
       const pedidoSalvo = await onSave(dataToSave);
-      const pedidoId = pedidoSalvo?.id || pedido?.id;
+      let pedidoId = pedidoSalvo?.id || pedido?.id || dataToSave?.id;
+
+      if (!pedidoId && dataToSave?.numero) {
+        const encontrados = await base44.entities.PedidoCompra.filter({ numero: dataToSave.numero });
+        pedidoId = encontrados?.[0]?.id || pedidoId;
+      }
 
       if (pedidoId && gerarAjusteFinanceiro) {
         const motivoAjuste = formData.solicitacao_edicao_motivo || pedido?.solicitacao_edicao_motivo || '';

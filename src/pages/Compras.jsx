@@ -101,8 +101,9 @@ const PedidosCompraTab = () => {
         valor_desconto: Number(pedidoData.valor_desconto) || 0
       };
 
+      let saved;
       if (sanitizedData.id) {
-        await base44.entities.PedidoCompra.update(sanitizedData.id, sanitizedData);
+        saved = await base44.entities.PedidoCompra.update(sanitizedData.id, sanitizedData);
       } else {
         const { id, ...newPedido } = sanitizedData;
         
@@ -111,10 +112,10 @@ const PedidosCompraTab = () => {
            newPedido.numero = `PC-${new Date().getFullYear()}-${String(count).padStart(4, '0')}`;
         }
         
-        await base44.entities.PedidoCompra.create(newPedido);
+        saved = await base44.entities.PedidoCompra.create(newPedido);
       }
       await loadPedidos();
-      // setIsFormOpen(false); // Mantendo aberto para feedback
+      return saved;
     } catch (error) {
       console.error("Erro ao salvar pedido:", error);
       throw error; 

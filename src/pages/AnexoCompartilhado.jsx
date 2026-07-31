@@ -13,6 +13,7 @@ import {
   FolderOpen,
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { uploadAnexoDrive } from '@/functions/uploadAnexoDrive';
 import { createPageUrl } from '@/utils';
 import BuscarLancamentoSheet from '@/components/anexos/BuscarLancamentoSheet';
 import BuscarPedidoCompraParaAnexo from '@/components/anexos/BuscarPedidoCompraParaAnexo';
@@ -140,16 +141,6 @@ export default function AnexoCompartilhado() {
   const voltarWidgetOverlay = (etapaOverlay) => {
     setWidgetPath(TORRE_WIDGET_RETURN_PATH[etapaOverlay] || []);
     setEtapa('opcoes');
-  };
-
-  // NOVO: Função super segura para converter o ficheiro para o servidor
-  const converterParaBase64 = (blob) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(blob);
-      reader.onload = () => resolve(reader.result.split(',')[1]); // Pega só o código Base64
-      reader.onerror = error => reject(error);
-    });
   };
 
   const prepararArquivo = (blob, fileName) => {
@@ -556,11 +547,8 @@ export default function AnexoCompartilhado() {
     if (!arquivo?.file) return;
     setUploadando(true);
     try {
-      // Usa o conversor novo!
-      const base64 = await converterParaBase64(arquivo.file);
-
-      await base44.functions.invoke('uploadAnexoDrive', {
-        file_base64: base64,
+      await uploadAnexoDrive({
+        file: arquivo.file,
         file_name: arquivo.nome,
         file_type: arquivo.tipo || 'application/pdf',
         file_size: arquivo.file.size,
@@ -584,9 +572,8 @@ export default function AnexoCompartilhado() {
     if (!arquivo?.file) return;
     setUploadando(true);
     try {
-      const base64 = await converterParaBase64(arquivo.file);
-      await base44.functions.invoke('uploadAnexoDrive', {
-        file_base64: base64,
+      await uploadAnexoDrive({
+        file: arquivo.file,
         file_name: arquivo.nome,
         file_type: arquivo.tipo || 'application/pdf',
         file_size: arquivo.file.size,
@@ -610,9 +597,8 @@ export default function AnexoCompartilhado() {
     if (!arquivo?.file) return;
     setUploadando(true);
     try {
-      const base64 = await converterParaBase64(arquivo.file);
-      await base44.functions.invoke('uploadAnexoDrive', {
-        file_base64: base64,
+      await uploadAnexoDrive({
+        file: arquivo.file,
         file_name: arquivo.nome,
         file_type: arquivo.tipo || 'application/pdf',
         file_size: arquivo.file.size,
