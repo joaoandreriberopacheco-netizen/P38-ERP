@@ -1,5 +1,107 @@
 import { parseSearchTerms } from '@/lib/searchTokens';
-import { normalizeProductCodeForSearch } from '@/lib/productCode';
+import { normalizeProductCodeForSearch, productCodesMatch } from '@/lib/productCode';
+
+const MATCH_STOPWORDS = new Set([
+  'a', 'o', 'as', 'os', 'de', 'da', 'do', 'das', 'dos', 'e', 'em', 'com', 'para', 'por', 'no', 'na', 'nos', 'nas',
+  'un', 'und', 'uni', 'unid', 'pc', 'pç', 'pct', 'cx', 'caixa', 'kg', 'g', 'ml', 'l', 'lt', 'm', 'mt', 'mm', 'cm',
+]);
+
+const MATERIAL_ABBREVIATIONS = {
+  cim: 'cimento',
+  argam: 'argamassa',
+  cpiv: 'cp iv',
+  cpi: 'cp',
+  drywall: 'dry wall',
+  dry: 'dry',
+  wall: 'wall',
+  placa: 'placa',
+  tijolo: 'tijolo',
+  telha: 'telha',
+  tinta: 'tinta',
+  verniz: 'verniz',
+  massa: 'massa',
+  rejunte: 'rejunte',
+  piso: 'piso',
+  porc: 'porcelanato',
+  porcel: 'porcelanato',
+};
+
+function normalizeMatchText(value) {
+  return normalizeProductSearchText(
+    String(value || '')
+      .replace(/[²³]/g, '2')
+      .replace(/[,;:/|()[\]{}]/g, ' ')
+      .replace(/(\d)([a-z]{2,})/gi, '$1 $2')
+      .replace(/([a-z]{2,})(\d)/gi, '$1 $2'),
+  );
+}
+
+function tokenizeForProductMatch(value) {
+  const normalized = normalizeMatchText(value);
+  if (!normalized) return [];
+
+  const tokens = [];
+  for (const raw of normalized.split(/\s+/)) {
+    if (!raw || raw.length < 2) continue;
+    if (MATCH_STOPWORDS.has(raw)) continue;
+    tokens.push(raw);
+    const expanded = MATERIAL_ABBREVIATIONS[raw];
+    if (expanded) {
+      for (const part of expanded.split(/\s+/)) {
+        if (part && !MATCH_STOPWORDS.has(part)) tokens.push(part);
+      }
+    }
+  }
+  return [...new Set(tokens)];
+}
+
+function tokenMatchScore(queryToken, catalogToken) {
+  if (!queryToken || !catalogToken) return 0;
+  if (queryToken === catalogToken) return 1;
+  if (queryToken.length >= 3 && catalogToken.startsWith(queryToken)) return 0.9;
+  if (catalogToken.length >= 3 && queryToken.startsWith(catalogToken)) return 0.8;
+  if (queryToken.length >= 4 && catalogToken.includes(queryToken)) return 0.65;
+  if (catalogToken.length >= 4 && queryToken.includes(catalogToken)) return 0.55;
+  return 0;
+}
+
+function scoreProductAgainstTokens(queryTokens, produto) {
+  const catalogTokens = tokenizeForProductMatch(getProductSearchText(produto));
+  if (!queryTokens.length || !catalogTokens.length) return 0;
+
+  let total = 0;
+  for (const queryToken of queryTokens) {
+    let best = 0;
+    for (const catalogToken of catalogTokens) {
+      best = Math.max(best, tokenMatchScore(queryToken, catalogToken));
+    }
+    total += best;
+  }
+  return total / queryTokens.length;
+}
+
+function buildOcrItemMatchQueries(item = {}) {
+  const queries = [];
+  const descricao = String(item.descricao || item.descricao_pdf || item.texto_identificado || '').trim();
+  const codigo = String(item.codigo || item.codigo_pdf || '').trim();
+  const marca = String(item.marca || item.marca_pdf || '').trim();
+
+  if (codigo) queries.push(codigo);
+  if (descricao) queries.push(descricao);
+  if (descricao && marca) queries.push(`${descricao} ${marca}`);
+  if (codigo && descricao) queries.push(`${codigo} ${descricao}`);
+  return [...new Set(queries.filter(Boolean))];
+}
+
+function findByProductCode(item, catalogoProdutos = []) {
+  const codigo = String(item.codigo || item.codigo_pdf || '').trim();
+  if (!codigo) return null;
+  const hit = catalogoProdutos.find((produto) =>
+    productCodesMatch(codigo, produto.codigo_interno)
+    || productCodesMatch(codigo, produto.codigo_barras),
+  );
+  return hit ? { produto: hit, confianca: 'alta' } : null;
+}
 
 export function getProdutoLabel(produto) {
   if (!produto) return '';
@@ -99,29 +201,51 @@ function normalizeFornecedorSearchText(value) {
 }
 
 /** Matching local de produto após OCR — sem enviar catálogo ao LLM. */
-export function findLocalBestProductMatch(textoIdentificado, catalogoProdutos = []) {
-  const query = String(textoIdentificado || '').trim();
-  if (!query || !catalogoProdutos.length) return null;
+export function findLocalBestProductMatch(textoIdentificado, catalogoProdutos = [], item = null) {
+  if (!catalogoProdutos.length) return null;
 
-  const direct = catalogoProdutos.find((produto) => matchesProductQuery(produto, query));
-  if (direct) return { produto: direct, confianca: 'media' };
+  const ocrItem = item || { descricao: textoIdentificado };
+  const byCode = findByProductCode(ocrItem, catalogoProdutos);
+  if (byCode) return byCode;
 
-  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const queries = buildOcrItemMatchQueries(ocrItem);
+  if (!queries.length && textoIdentificado) queries.push(String(textoIdentificado).trim());
+  if (!queries.length) return null;
+
   let best = null;
   let bestScore = 0;
+  let secondScore = 0;
 
-  catalogoProdutos.forEach((produto) => {
-    const searchable = getProductSearchText(produto);
-    const score = words.reduce((sum, word) => sum + (searchable.includes(word) ? 1 : 0), 0);
-    if (score > bestScore) {
-      bestScore = score;
-      best = produto;
+  for (const query of queries) {
+    const queryTokens = tokenizeForProductMatch(query);
+    if (!queryTokens.length) continue;
+
+    const direct = catalogoProdutos.find((produto) => matchesProductQuery(produto, query));
+    if (direct) return { produto: direct, confianca: 'media' };
+
+    for (const produto of catalogoProdutos) {
+      const score = scoreProductAgainstTokens(queryTokens, produto);
+      if (score > bestScore) {
+        secondScore = bestScore;
+        bestScore = score;
+        best = produto;
+      } else if (score > secondScore) {
+        secondScore = score;
+      }
     }
-  });
+  }
 
-  const threshold = Math.max(2, Math.ceil(words.length / 2));
-  if (!best || bestScore < threshold) return null;
-  return { produto: best, confianca: bestScore >= words.length ? 'media' : 'baixa' };
+  const minWords = Math.max(...queries.map((q) => tokenizeForProductMatch(q).length), 1);
+  const minScore = minWords <= 2 ? 0.45 : minWords <= 4 ? 0.38 : 0.32;
+  const marginOk = bestScore - secondScore >= 0.08 || secondScore === 0;
+
+  if (!best || bestScore < minScore || !marginOk) return null;
+
+  let confianca = 'baixa';
+  if (bestScore >= 0.75) confianca = 'alta';
+  else if (bestScore >= 0.55) confianca = 'media';
+
+  return { produto: best, confianca, score: bestScore };
 }
 
 /** Matching local de fornecedor por CNPJ ou nome após OCR. */

@@ -154,7 +154,7 @@ Retorne JSON:
             const itens = Array.isArray(result.itens) ? result.itens : [];
             const processedItems = itens.map(item => {
                 const fallbackProduct = !item.produto_id_match
-                    ? findLocalBestProductMatch(item.texto_identificado, products)?.produto
+                    ? findLocalBestProductMatch(null, products, { texto_identificado: item.texto_identificado })?.produto
                     : null;
                 const selectedProductId = item.produto_id_match || fallbackProduct?.id || null;
                 const matchedProduct = products.find(p => p.id === selectedProductId);

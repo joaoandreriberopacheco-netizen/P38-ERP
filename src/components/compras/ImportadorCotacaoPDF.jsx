@@ -154,7 +154,7 @@ Retorne um JSON com:
             const itens = Array.isArray(result.itens) ? result.itens : [];
             setMappings(itens.map(item => {
                 const fallback = !item.produto_sistema_match_id
-                    ? findLocalBestProductMatch(item.descricao_pdf, produtos)?.produto
+                    ? findLocalBestProductMatch(null, produtos, item)?.produto
                     : null;
                 const selectedId = item.produto_sistema_match_id || fallback?.id || '';
                 return {

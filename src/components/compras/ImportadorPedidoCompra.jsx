@@ -77,7 +77,7 @@ export default function ImportadorPedidoCompra({
     setDiscountValue('0');
     setFornecedorInfo({ id: '', nome: '', cnpj: '' });
     Promise.all([
-      base44.entities.Produto.list(),
+      base44.entities.Produto.filter({ tipo: 'Produto', ativo: true }),
       base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] })
     ]).then(([prods, fns]) => {
       setProdutos(prods);
@@ -261,6 +261,12 @@ Retorne JSON:
       setProcessingStep(4);
       setProcessingStatus('Identificando fornecedor');
 
+      let catalogoProdutos = produtos;
+      if (!catalogoProdutos.length) {
+        catalogoProdutos = await base44.entities.Produto.filter({ tipo: 'Produto', ativo: true });
+        setProdutos(catalogoProdutos);
+      }
+
       const result = typeof aiRes === 'string' ? JSON.parse(aiRes) : aiRes;
       const fornecedorMatch = findLocalBestFornecedorMatch(
         {
@@ -278,8 +284,7 @@ Retorne JSON:
       setProcessingStatus('Buscando correspondências no catálogo');
 
       setItems((result.itens || []).map((item) => {
-        const textoBusca = [item.descricao, item.codigo, item.marca].filter(Boolean).join(' ');
-        const match = findLocalBestProductMatch(textoBusca, produtos);
+        const match = findLocalBestProductMatch(null, catalogoProdutos, item);
         const produtoId = match?.produto?.id || '';
         return {
           ...item,
