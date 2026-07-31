@@ -37,11 +37,16 @@ export function normalizeEventoLogisticoRecord(item) {
     item.data_chegada_manaus || item.data_retorno_origem || item.previsao_retorno,
   );
 
+  const transportadoraId = item.transportadora_id || item.embarcacao_template_id || '';
+  const transportadoraNome =
+    item.transportadora_nome || item.transportadora || item.embarcacao_nome || item.nome || '';
+
   return {
     ...item,
     codigo: item.codigo || item.lancamento_financeiro_numero || (item.id ? String(item.id).slice(0, 8) : null),
-    embarcacao_nome: item.embarcacao_nome || item.nome || item.transportadora,
-    transportadora_nome: item.transportadora_nome || item.transportadora || item.embarcacao_nome,
+    embarcacao_nome: item.embarcacao_nome || item.nome || item.transportadora || transportadoraNome,
+    transportadora_id: transportadoraId,
+    transportadora_nome: transportadoraNome,
     data_saida_origem: dataSaida || item.data_saida_origem,
     data_referencia: normalizeFluvialDateKey(item.data_referencia) || dataSaida,
     data_chegada_destino: chegadaDestino || item.data_chegada_destino,
