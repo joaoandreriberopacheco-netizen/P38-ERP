@@ -809,9 +809,15 @@ export default function AnexoCompartilhado() {
       portalAlvo
     );
 
+  const overlayEtapaAtiva =
+    etapa === 'vincular' || etapa === 'vincular_pedido' || etapa === 'vincular_evento';
+
   return (
     <>
-    <div className={`relative flex min-h-[100dvh] flex-col ${brandSurface.pageScreen}`}>
+    <div
+      className={`relative flex min-h-[100dvh] flex-col ${brandSurface.pageScreen} ${overlayEtapaAtiva ? 'pointer-events-none invisible' : ''}`}
+      aria-hidden={overlayEtapaAtiva || undefined}
+    >
       {/* Scroll só aqui: overlays fullscreen vão para document.body (portal). */}
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-[calc(7rem+env(safe-area-inset-bottom))]">
       {etapa === 'torre_controle' ? (
