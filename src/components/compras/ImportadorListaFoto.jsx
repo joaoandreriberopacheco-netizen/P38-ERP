@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Camera, Image as ImageIcon, Sparkles, Calculator, X } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
-import { buildProdutoMatchingPromptBase, matchesProductQuery } from '@/components/compras/productMatchingUtils';
+import { buildProdutoMatchingPromptBase, matchesProductQuery, findLocalBestProductMatch } from '@/components/compras/productMatchingUtils';
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
 import { P38TableShell } from '@/components/ui/table';
 import { P38MobileLine, P38MobileLineList, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
@@ -66,39 +66,6 @@ export default function ImportadorListaFoto({ isOpen, onClose, onImportComplete,
     const getSuggestedProduct = (item) => {
         if (!item.produto_id_match) return null;
         return products.find((product) => product.id === item.produto_id_match) || null;
-    };
-
-    const findLocalBestMatch = (textoIdentificado) => {
-        const query = (textoIdentificado || '').trim();
-        if (!query) return null;
-
-        const direct = products.find((produto) => matchesProductQuery(produto, query));
-        if (direct) return direct;
-
-        const queryWords = query.toLowerCase().split(/\s+/).filter(Boolean);
-        let best = null;
-        let bestScore = 0;
-
-        products.forEach((produto) => {
-            const baseText = [
-                produto.nome,
-                produto.codigo_interno,
-                produto.codigo_barras,
-                produto.marca
-            ].filter(Boolean).join(' ').toLowerCase();
-
-            const score = queryWords.reduce((sum, word) => {
-                if (baseText.includes(word)) return sum + 1;
-                return sum;
-            }, 0);
-
-            if (score > bestScore) {
-                bestScore = score;
-                best = produto;
-            }
-        });
-
-        return bestScore >= Math.max(2, Math.ceil(queryWords.length / 2)) ? best : null;
     };
 
     const updateAnalyzedItems = (updater) => {
@@ -186,7 +153,9 @@ Retorne JSON:
 
             const itens = Array.isArray(result.itens) ? result.itens : [];
             const processedItems = itens.map(item => {
-                const fallbackProduct = !item.produto_id_match ? findLocalBestMatch(item.texto_identificado) : null;
+                const fallbackProduct = !item.produto_id_match
+                    ? findLocalBestProductMatch(item.texto_identificado, products)?.produto
+                    : null;
                 const selectedProductId = item.produto_id_match || fallbackProduct?.id || null;
                 const matchedProduct = products.find(p => p.id === selectedProductId);
                 const suggestedQty = calculateSuggestion(matchedProduct);

@@ -90,6 +90,77 @@ export function getFornecedorCatalogEntry(fornecedor) {
   };
 }
 
+function normalizeCnpjDigits(value) {
+  return String(value || '').replace(/\D/g, '');
+}
+
+function normalizeFornecedorSearchText(value) {
+  return normalizeProductSearchText(value);
+}
+
+/** Matching local de produto após OCR — sem enviar catálogo ao LLM. */
+export function findLocalBestProductMatch(textoIdentificado, catalogoProdutos = []) {
+  const query = String(textoIdentificado || '').trim();
+  if (!query || !catalogoProdutos.length) return null;
+
+  const direct = catalogoProdutos.find((produto) => matchesProductQuery(produto, query));
+  if (direct) return { produto: direct, confianca: 'media' };
+
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  let best = null;
+  let bestScore = 0;
+
+  catalogoProdutos.forEach((produto) => {
+    const searchable = getProductSearchText(produto);
+    const score = words.reduce((sum, word) => sum + (searchable.includes(word) ? 1 : 0), 0);
+    if (score > bestScore) {
+      bestScore = score;
+      best = produto;
+    }
+  });
+
+  const threshold = Math.max(2, Math.ceil(words.length / 2));
+  if (!best || bestScore < threshold) return null;
+  return { produto: best, confianca: bestScore >= words.length ? 'media' : 'baixa' };
+}
+
+/** Matching local de fornecedor por CNPJ ou nome após OCR. */
+export function findLocalBestFornecedorMatch({ nome, cnpj } = {}, fornecedores = []) {
+  if (!fornecedores.length) return null;
+
+  const cnpjDigits = normalizeCnpjDigits(cnpj);
+  if (cnpjDigits.length >= 11) {
+    const byCnpj = fornecedores.find(
+      (f) => normalizeCnpjDigits(f.cpf_cnpj) === cnpjDigits,
+    );
+    if (byCnpj) return byCnpj;
+  }
+
+  const nomeNorm = normalizeFornecedorSearchText(nome);
+  if (!nomeNorm) return null;
+
+  const exact = fornecedores.find(
+    (f) => normalizeFornecedorSearchText(f.nome) === nomeNorm,
+  );
+  if (exact) return exact;
+
+  const words = nomeNorm.split(/\s+/).filter((w) => w.length > 2);
+  if (!words.length) return null;
+
+  let best = null;
+  let bestScore = 0;
+  fornecedores.forEach((f) => {
+    const searchable = normalizeFornecedorSearchText(f.nome);
+    const score = words.reduce((sum, word) => sum + (searchable.includes(word) ? 1 : 0), 0);
+    if (score > bestScore) {
+      bestScore = score;
+      best = f;
+    }
+  });
+
+  return bestScore >= Math.max(2, Math.ceil(words.length / 2)) ? best : null;
+}
+
 export function buildProdutoMatchingPromptBase({ produtos, fornecedores, contextLabel = 'CATALOGO DE PRODUTOS' }) {
   const catalogoStr = JSON.stringify((produtos || []).map(getProdutoCatalogEntry));
   const fornecedoresStr = JSON.stringify((fornecedores || []).map(getFornecedorCatalogEntry));

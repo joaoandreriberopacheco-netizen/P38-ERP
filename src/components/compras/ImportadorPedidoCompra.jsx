@@ -8,7 +8,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/use-toast';
 import { Upload, Loader2, Check, X, ArrowLeft, Package, FileText, Camera, Sparkles } from 'lucide-react';
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
-import { buildProdutoMatchingPromptBase } from '@/components/compras/productMatchingUtils';
+import {
+  findLocalBestFornecedorMatch,
+  findLocalBestProductMatch,
+} from '@/components/compras/productMatchingUtils';
 import {
   buildPurchaseUnitOptions,
   pickDefaultPurchaseUnit,
@@ -192,26 +195,54 @@ export default function ImportadorPedidoCompra({
       setProcessingStep(2);
       setProcessingStatus('Lendo documento');
 
-      const promptBase = `${buildProdutoMatchingPromptBase({ produtos, fornecedores })}
+      const extractionSchema = {
+        type: 'object',
+        properties: {
+          fornecedor: {
+            type: 'object',
+            properties: {
+              nome_identificado: { type: 'string' },
+              cnpj_identificado: { type: 'string' },
+            },
+          },
+          itens: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                descricao: { type: 'string' },
+                codigo: { type: 'string' },
+                marca: { type: 'string' },
+                quantidade: { type: 'number' },
+                preco_unitario: { type: 'number' },
+                unidade_medida_documento: { type: 'string' },
+              },
+            },
+          },
+        },
+      };
+
+      const promptBase = `Extraia do documento o fornecedor e a lista de itens.
+Preserve acentos e caracteres do português nos campos textuais.
+NÃO invente dados — transcreva apenas o que estiver visível no documento.
+NÃO tente adivinhar produtos do nosso catálogo interno.
 
 Retorne JSON:
 {
-  "fornecedor": {"nome_identificado": "string", "cnpj_identificado": "string", "id_match": "id ou vazio"},
+  "fornecedor": {"nome_identificado": "string", "cnpj_identificado": "string"},
   "itens": [{
     "descricao": "descrição original",
     "codigo": "código no documento",
     "marca": "marca se visível",
     "quantidade": number,
     "preco_unitario": number,
-    "unidade_medida_documento": "sigla opcional ex.: M2, M², CX, PAC, UN — como no documento",
-    "produto_id_match": "id exato do catálogo ou vazio",
-    "confianca": "alta|media|baixa"
+    "unidade_medida_documento": "sigla opcional ex.: M2, M², CX, PAC, UN — como no documento"
   }]
 }`;
 
       const prompt = mode === 'pdf'
-        ? `Analise este PDF de orçamento/pedido de fornecedor.\nPreserve acentos e caracteres do português nos campos textuais.\n${promptBase}`
-        : `Analise esta imagem de lista de compra.\nPreserve acentos e caracteres do português nos campos textuais.\n${promptBase}`;
+        ? `Analise este PDF de orçamento/pedido de fornecedor.\n${promptBase}`
+        : `Analise esta imagem de lista de compra.\n${promptBase}`;
 
       setProcessingStep(3);
       setProcessingStatus('Identificando itens');
@@ -221,57 +252,43 @@ Retorne JSON:
         file_urls: [fileUrl],
         telemetry: buildLlmTelemetryContext({
           source: 'import_pedido_compra',
-          catalogProductCount: produtos.length,
+          catalogProductCount: 0,
           fileCount: 1,
         }),
-        response_json_schema: {
-          type: 'object',
-          properties: {
-            fornecedor: {
-              type: 'object',
-              properties: {
-                nome_identificado: { type: 'string' },
-                cnpj_identificado: { type: 'string' },
-                id_match: { type: 'string' }
-              }
-            },
-            itens: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  descricao: { type: 'string' },
-                  codigo: { type: 'string' },
-                  marca: { type: 'string' },
-                  quantidade: { type: 'number' },
-                  preco_unitario: { type: 'number' },
-                  unidade_medida_documento: { type: 'string' },
-                  produto_id_match: { type: 'string' },
-                  confianca: { type: 'string' }
-                }
-              }
-            }
-          }
-        }
+        response_json_schema: extractionSchema,
       });
 
       setProcessingStep(4);
       setProcessingStatus('Identificando fornecedor');
 
       const result = typeof aiRes === 'string' ? JSON.parse(aiRes) : aiRes;
+      const fornecedorMatch = findLocalBestFornecedorMatch(
+        {
+          nome: result.fornecedor?.nome_identificado,
+          cnpj: result.fornecedor?.cnpj_identificado,
+        },
+        fornecedores,
+      );
       setFornecedorInfo({
-        id: result.fornecedor?.id_match || 'new',
+        id: fornecedorMatch?.id || 'new',
         nome: result.fornecedor?.nome_identificado || '',
-        cnpj: result.fornecedor?.cnpj_identificado || ''
+        cnpj: result.fornecedor?.cnpj_identificado || '',
       });
       setProcessingStep(5);
       setProcessingStatus('Buscando correspondências no catálogo');
 
-      setItems((result.itens || []).map(item => ({
-        ...item,
-        selected_product_id: item.produto_id_match || '',
-        ignored: false
-      })));
+      setItems((result.itens || []).map((item) => {
+        const textoBusca = [item.descricao, item.codigo, item.marca].filter(Boolean).join(' ');
+        const match = findLocalBestProductMatch(textoBusca, produtos);
+        const produtoId = match?.produto?.id || '';
+        return {
+          ...item,
+          produto_id_match: produtoId,
+          selected_product_id: produtoId,
+          confianca: match?.confianca || '',
+          ignored: false,
+        };
+      }));
       setProductSearch({});
       setStep('review');
     } catch (error) {
