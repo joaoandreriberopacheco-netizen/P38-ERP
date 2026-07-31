@@ -13,6 +13,10 @@ import { logDespachoAudit, InformarDespachoAuditStrip } from '@/components/compr
 import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
 import { saveEmbarqueItem } from '@/functions/saveEmbarqueItem';
 import { invokeRecalcularConclusaoPedidoCompra } from '@/lib/p38StockRecalc';
+import {
+  buildTransportadoraPersistPayload,
+  resolveAndMatchTransportadora,
+} from '@/lib/resolveTransportadora';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -337,11 +341,9 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
     logDespachoAudit({ action: 'viagem_selecionada', eventoId: evento?.id, codigo: evento?.codigo });
     setEventoVinculado(evento || null);
     setEventoLogisticoId(evento?.id || '');
-    const transportadoraIdViagem = evento?.transportadora_id || evento?.embarcacao_template_id || '';
-    const transportadoraNomeViagem =
-      evento?.transportadora_nome || evento?.embarcacao_nome || evento?.nome || '';
-    setTransportadoraId(transportadoraIdViagem);
-    setTransportadoraNome(transportadoraNomeViagem);
+    const matched = resolveAndMatchTransportadora(evento, transportadoras);
+    setTransportadoraId(matched.transportadora_id || '');
+    setTransportadoraNome(matched.transportadora_nome || '');
     const dataSaida = evento?.data_saida_origem || evento?.data_referencia;
     const dataEta = evento?.previsao_chegada || evento?.data_chegada_destino;
     if (dataSaida) setDataDespacho(String(dataSaida).slice(0, 10));
@@ -406,6 +408,14 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
       }
 
       const transportadora = transportadoras.find(t => t.id === transportadoraId);
+      const transportadoraPayload = buildTransportadoraPersistPayload(
+        {
+          transportadora_id: transportadoraId,
+          transportadora_nome: transportadora?.nome || transportadoraNome,
+          embarcacao_nome: transportadoraNome,
+        },
+        transportadoras,
+      );
       const embarquesExistentes = Array.isArray(pedido._embarques) ? pedido._embarques : (pedido.embarques_registrados || []);
       const letraExibicao = String.fromCharCode(65 + embarquesExistentes.length);
       const itensEmbarcados = (pedido.itens || [])
@@ -438,8 +448,8 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
       const payloadEmbarque = {
         data_embarque: dataDespacho ? meioDiaSistemaISO(dataDespacho) : (embarqueExistente?.data_embarque || agora()),
         eta: meioDiaSistemaISO(eta),
-        transportadora_id: transportadoraId,
-        transportadora_nome: transportadora?.nome || transportadoraNome || eventoSelecionado?.transportadora_nome || '',
+        transportadora_id: transportadoraPayload.transportadora_id,
+        transportadora_nome: transportadoraPayload.transportadora_nome,
         fornecedor_id: fornecedorIdFinal,
         fornecedor_nome: fornecedorNomeFinal,
         evento_logistico_id: eventoLogisticoId || '',
