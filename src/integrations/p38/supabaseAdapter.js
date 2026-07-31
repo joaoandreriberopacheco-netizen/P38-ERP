@@ -5,6 +5,7 @@ import { p38PublicEnv } from '@/lib/p38PublicEnv';
 import { createSupabaseEntityLayer } from './supabaseEntityLayer';
 import { isSupabaseAuthEnabled } from './providers';
 import { invokeP38Core } from '@/lib/p38CoreInvoke';
+import { invokeP38EdgeFunction } from '@/lib/p38EdgeFunctionInvoke';
 
 const STORAGE_KEYS = {
   bypassUser: 'p38_bypass_user_v1',
@@ -371,22 +372,6 @@ function buildAuth(supabase) {
   };
 }
 
-/** Mapeia nomes camelCase do Base44 para pastas kebab-case das Edge Functions Supabase. */
-const EDGE_FUNCTION_ALIASES = {
-  gerenciarPin: 'gerenciar-pin',
-  p38Auth: 'p38-auth',
-  processarVendaCaixa: 'processar-venda-caixa',
-  cancelarLancamentoFinanceiro: 'cancelar-lancamento-financeiro',
-  auditarSaldosContas: 'auditar-saldos-contas',
-  enviarFinanceiroLote: 'enviar-financeiro-lote',
-  corrigirMovimentosRecepcaoRetroativos: 'corrigir-movimentos-recepcao-retroativos',
-};
-
-function toSupabaseEdgeFunctionName(name) {
-  if (EDGE_FUNCTION_ALIASES[name]) return EDGE_FUNCTION_ALIASES[name];
-  return String(name).replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
-}
-
 async function resolveSupabaseFunctionErrorMessage(error, name) {
   let message = error?.message || `Falha ao invocar Edge Function "${name}".`;
   const ctx = error?.context;
@@ -421,19 +406,8 @@ function buildFunctions(supabase) {
         err.code = 'P38_SUPABASE_NOT_CONFIGURED';
         throw err;
       }
-      const edgeName = toSupabaseEdgeFunctionName(name);
-      const { data, error } = await supabase.functions.invoke(edgeName, { body });
-      if (error) {
-        const message = await resolveSupabaseFunctionErrorMessage(error, name);
-        const enhanced = new Error(message);
-        enhanced.code = 'P38_SUPABASE_FUNCTION_ERROR';
-        enhanced.cause = error;
-        throw enhanced;
-      }
-      if (data && typeof data === 'object' && data.error && data.success !== true) {
-        throw new Error(String(data.error));
-      }
-      return data;
+      // Proxy same-origin (/api/p38-edge/*) — evita FunctionsFetchError no browser.
+      return invokeP38EdgeFunction(name, body, { supabase });
     }
   };
 }

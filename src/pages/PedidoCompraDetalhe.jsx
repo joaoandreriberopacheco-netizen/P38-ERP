@@ -5,6 +5,7 @@ import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
 import { filterEmbarquesVisiveisParaPedido } from '@/components/compras/embarqueFilters';
 import { normalizeItemToCanonicalFactorOne } from '@/lib/productUnits';
 import { hydrateEmbarquesLinhasDesdeCanonical } from '@/lib/embarqueLogisticaHelpers';
+import { gerarNumeroSequencial } from '@/lib/gerarNumeroSequencial';
 
 /**
  * Página inteira de detalhe/criação de Pedido de Compra — fullscreen em todos os viewports.
@@ -107,8 +108,7 @@ export default function PedidoCompraDetalhe() {
     } else {
       const { id: _id, ...newPedido } = sanitizedData;
       if (!newPedido.numero) {
-        const resp = await base44.functions.invoke('gerarNumeroSequencial', { tipo: 'PC' });
-        newPedido.numero = resp?.data?.numero;
+        newPedido.numero = await gerarNumeroSequencial('PC');
       }
       saved = await base44.entities.PedidoCompra.create(newPedido);
     }

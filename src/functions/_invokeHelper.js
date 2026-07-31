@@ -1,6 +1,6 @@
-import { getAccessToken } from '@base44/sdk';
-import { appParams } from '@/lib/app-params';
 import { p38 } from '@/api/base44Client';
+import { isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
+import { invokeP38EdgeFunctionBinary } from '@/lib/p38EdgeFunctionInvoke';
 
 export async function invokeFunction(name, body) {
   const requestContext = p38.createRequestContext({
@@ -22,6 +22,12 @@ export async function invokeFunction(name, body) {
  * que pode corromper bytes ou falhar ao interpretar o corpo como JSON/texto.
  */
 export async function invokeFunctionBinary(name, body) {
+  if (isSupabaseBrowserConfigured()) {
+    return invokeP38EdgeFunctionBinary(name, body);
+  }
+
+  const { getAccessToken } = await import('@base44/sdk');
+  const { appParams } = await import('@/lib/app-params');
   const { serverUrl, appId, functionsVersion } = appParams;
   const base = String(serverUrl || '').replace(/\/+$/, '');
   const url = `${base}/api/apps/${encodeURIComponent(appId)}/functions/${encodeURIComponent(name)}`;

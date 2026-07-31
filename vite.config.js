@@ -62,6 +62,12 @@ export default defineConfig({
               secure: true,
               rewrite: () => '',
             },
+            '^/api/p38-edge': {
+              target: supabaseProjectUrl,
+              changeOrigin: true,
+              secure: true,
+              rewrite: (path) => path.replace(/^\/api\/p38-edge/, '/functions/v1'),
+            },
           }
         : {}),
     },
