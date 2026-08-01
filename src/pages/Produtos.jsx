@@ -148,7 +148,7 @@ function ProdutosPageContent() {
 
   const [filters, setFilters] = useState(() => getCatalogProdutoEntryFilters());
   const [sortOrder, setSortOrder] = useState('az');
-  const [viewMode, setViewMode] = useState('dinamica'); // 'dinamica' | 'plana'
+  const [viewMode, setViewMode] = useState('plana'); // 'dinamica' | 'plana'
   const [groupTreeByCategory, setGroupTreeByCategory] = useState(readGroupTreeByCategoryPreference);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
