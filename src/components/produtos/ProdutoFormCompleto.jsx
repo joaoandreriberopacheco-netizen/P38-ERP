@@ -53,6 +53,23 @@ const P38_SECTION = 'rounded-lg border border-border/40 dark:border-white/10 bg-
 const P38_SAVE_BTN = 'bg-[#4a5240] hover:bg-[#4a5240]/90 text-white dark:bg-[#a4ce33] dark:hover:bg-[#a4ce33]/90 dark:text-[#1f1d22] h-10 w-10';
 /** Portal do Select fica no body; precisa ficar acima do shell do formulário (z-[70] / z-[80]). */
 const P38_FORM_SELECT_CONTENT = 'z-[90] max-h-96 dark:bg-muted dark:border-border/40';
+const SELECT_NONE = '__none__';
+const SELECT_ORPHAN_CAT_PREFIX = '__orphan_cat__:';
+const SELECT_ORPHAN_FORN_PREFIX = '__orphan_forn__:';
+
+function normalizeTipoProduto(tipo) {
+  const t = String(tipo || '').trim();
+  if (t === 'Serviço' || t === 'Servico' || t === '1') return 'Serviço';
+  return 'Produto';
+}
+
+/** Evita crash do Radix Select quando o valor ainda não está na lista de opções. */
+function resolveEntitySelectValue(selectedId, options, { noneValue = SELECT_NONE, orphanPrefix } = {}) {
+  const id = String(selectedId || '').trim();
+  if (!id) return noneValue;
+  if (!Array.isArray(options) || options.length === 0) return noneValue;
+  return options.some((o) => String(o?.id || '') === id) ? id : `${orphanPrefix}${id}`;
+}
 
 /** Id estável para linhas legadas sem `id` (evita novo UUID a cada render / reabrir formulário). */
 function hashString(s) {
@@ -148,7 +165,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       codigo_interno: formatProductCode(produtoData?.codigo_interno || ''),
       tags: Array.isArray(produtoData?.tags) ? produtoData.tags : [],
       unidades_alternativas: altsComIsComercial,
-      tipo: produtoData?.tipo || 'Produto',
+      tipo: normalizeTipoProduto(produtoData?.tipo),
       valor_compra: produtoData?.valor_compra || 0,
       preco_venda_padrao: produtoData?.preco_venda_padrao || 0,
       preco_venda_tipo: produtoData?.preco_venda_tipo || 'percentual',
@@ -589,6 +606,23 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     }
     return '';
   }, [comercialSelectValue, unitOptions]);
+
+  const categoriaSelectValue = useMemo(
+    () => resolveEntitySelectValue(formData.categoria_id, categorias, { orphanPrefix: SELECT_ORPHAN_CAT_PREFIX }),
+    [formData.categoria_id, categorias],
+  );
+
+  const fornecedorSelectValue = useMemo(
+    () => resolveEntitySelectValue(formData.fornecedor_padrao_id, fornecedores, { orphanPrefix: SELECT_ORPHAN_FORN_PREFIX }),
+    [formData.fornecedor_padrao_id, fornecedores],
+  );
+
+  const tipoSelectValue = useMemo(() => normalizeTipoProduto(formData.tipo), [formData.tipo]);
+
+  const tagsLista = useMemo(
+    () => (Array.isArray(formData.tags) ? formData.tags : []),
+    [formData.tags],
+  );
 
   /** Só id/sigla/rótulo: evita re-disparar o efeito de correção a cada mudança de fator/preço (combativo com o editor). */
   const unidadesAlternativasLayoutKey = useMemo(
@@ -1428,14 +1462,22 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             <div>
               <Label className="text-sm text-muted-foreground mb-2 block">Categoria (opcional)</Label>
               <Select
-                value={formData.categoria_id || '__none__'}
-                onValueChange={v => handleChange('categoria_id', v === '__none__' ? '' : v)}
+                value={categoriaSelectValue}
+                onValueChange={v => {
+                  if (String(v).startsWith(SELECT_ORPHAN_CAT_PREFIX)) return;
+                  handleChange('categoria_id', v === SELECT_NONE ? '' : v);
+                }}
               >
                 <SelectTrigger className={`${P38_INPUT_UNDERLINE} h-10`}>
                   <SelectValue placeholder="Categoria" />
                 </SelectTrigger>
                 <SelectContent className={P38_FORM_SELECT_CONTENT}>
-                  <SelectItem value="__none__" className="dark:text-foreground dark:hover:bg-primary/90">Sem categoria</SelectItem>
+                  <SelectItem value={SELECT_NONE} className="dark:text-foreground dark:hover:bg-primary/90">Sem categoria</SelectItem>
+                  {categoriaSelectValue.startsWith(SELECT_ORPHAN_CAT_PREFIX) ? (
+                    <SelectItem value={categoriaSelectValue} className="dark:text-foreground dark:hover:bg-primary/90">
+                      {formData.categoria_nome || 'Categoria atual (não listada)'}
+                    </SelectItem>
+                  ) : null}
                   {categorias.map(cat => (
                     <SelectItem key={cat.id} value={cat.id} className="dark:text-foreground dark:hover:bg-primary/90">{cat.nome}</SelectItem>
                   ))}
@@ -1446,18 +1488,24 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             <div>
               <Label className="text-sm text-muted-foreground mb-2 block">Fornecedor padrão (opcional)</Label>
               <Select
-                value={formData.fornecedor_padrao_id || '__none__'}
+                value={fornecedorSelectValue}
                 onValueChange={v => {
+                  if (String(v).startsWith(SELECT_ORPHAN_FORN_PREFIX)) return;
                   const forn = fornecedores.find(f => f.id === v);
-                  handleChange('fornecedor_padrao_id', v === '__none__' ? '' : v);
-                  handleChange('fornecedor_padrao_codigo', v === '__none__' ? '' : (forn?.codigo_interno || ''));
+                  handleChange('fornecedor_padrao_id', v === SELECT_NONE ? '' : v);
+                  handleChange('fornecedor_padrao_codigo', v === SELECT_NONE ? '' : (forn?.codigo_interno || ''));
                 }}
               >
                 <SelectTrigger className={`${P38_INPUT_UNDERLINE} h-10`}>
                   <SelectValue placeholder="Fornecedor" />
                 </SelectTrigger>
                 <SelectContent className={P38_FORM_SELECT_CONTENT}>
-                  <SelectItem value="__none__" className="dark:text-foreground dark:hover:bg-primary/90 text-sm">Sem fornecedor</SelectItem>
+                  <SelectItem value={SELECT_NONE} className="dark:text-foreground dark:hover:bg-primary/90 text-sm">Sem fornecedor</SelectItem>
+                  {fornecedorSelectValue.startsWith(SELECT_ORPHAN_FORN_PREFIX) ? (
+                    <SelectItem value={fornecedorSelectValue} className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
+                      {formData.fornecedor_padrao_nome || formData.fornecedor_padrao_codigo || 'Fornecedor atual (não listado)'}
+                    </SelectItem>
+                  ) : null}
                   {fornecedores.map(f => (
                     <SelectItem key={f.id} value={f.id} className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
                       {f.nome}
@@ -1492,7 +1540,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 </Button>
               </div>
               <div className="flex flex-wrap gap-2 mt-3">
-                {formData.tags.map(tag => (
+                {tagsLista.map(tag => (
                   <Badge key={tag} className="bg-muted text-foreground/90 border border-border/40 dark:bg-muted dark:text-foreground/90 dark:border-border/40 text-sm py-1 px-3">
                     #{tag}
                     <button onClick={() => handleRemoveTag(tag)} className="ml-2 hover:text-foreground dark:hover:text-foreground">
@@ -1999,7 +2047,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
           <TabsContent value="sistema" className="space-y-6 mt-0">
             <div>
               <Label className="text-sm text-muted-foreground mb-2 block">Tipo de Produto *</Label>
-              <Select value={formData.tipo} onValueChange={v => handleChange('tipo', v)}>
+              <Select value={tipoSelectValue} onValueChange={v => handleChange('tipo', v)}>
                 <SelectTrigger className={`${P38_INPUT_UNDERLINE} h-10`}>
                   <SelectValue />
                 </SelectTrigger>
