@@ -35,6 +35,31 @@ export function formatDashboardCurrency(value) {
   return BRL.format(value);
 }
 
+/** Média diária compacta para legenda — ex.: 2,1k */
+export function formatDashboardDailyRate(value) {
+  if (!Number.isFinite(value) || value === 0) return '0';
+  const abs = Math.abs(value);
+  const sign = value < 0 ? '-' : '';
+  if (abs >= 1_000_000) {
+    return `${sign}${(abs / 1_000_000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M`;
+  }
+  if (abs >= 1_000) {
+    return `${sign}${(abs / 1_000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}k`;
+  }
+  return `${sign}${Math.round(abs).toLocaleString('pt-BR')}`;
+}
+
+export function AccumulatedLegendLine({ label, total, dailyAvg, titleClassName }) {
+  return (
+    <span>
+      {label}: <strong className={titleClassName}>{formatDashboardCurrency(total)}</strong>
+      <span className="text-muted-foreground ml-1.5">
+        ({formatDashboardDailyRate(dailyAvg)} dia)
+      </span>
+    </span>
+  );
+}
+
 const DEFAULT_SERIES_LABELS = {
   lucro: 'Lucro acumulado',
   valor: 'Venda acumulada',

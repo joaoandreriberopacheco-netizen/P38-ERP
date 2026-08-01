@@ -33,6 +33,7 @@ import {
 import { resolveValorPedidoVenda } from '@/lib/financialUtils';
 import {
   AcumuladoKpiChart,
+  AccumulatedLegendLine,
   DualDonutKpiModule,
   formatDashboardCurrency,
   LucroAcumuladoChart,
@@ -274,6 +275,8 @@ function computeVendasMetrics({ pedidos, productCostMap, kpiConfig, selectedMont
     vendaMinimaDaily,
     elapsedWorkingDays,
     workingDaysInMonth,
+    avgDailySales,
+    avgDailyProfit,
     lucroDonutKpis: {
       ringA: {
         actual: avgDailyProfit,
@@ -525,9 +528,12 @@ export default function VendasTab() {
                   <span className="inline-block h-[2px] w-4 rounded-full bg-[#22c55e]" />
                   Meta/dia: <strong className={p38Dashboard.title}>{formatShort(metrics.metaVendaDaily)}</strong>
                 </span>
-                <span>
-                  Último acumulado: <strong className={p38Dashboard.title}>{formatShort(metrics.accumulatedSalesData.at(-1)?.valor || 0)}</strong>
-                </span>
+                <AccumulatedLegendLine
+                  label="Acumulado"
+                  total={metrics.accumulatedSalesData.at(-1)?.valor || 0}
+                  dailyAvg={metrics.avgDailySales}
+                  titleClassName={p38Dashboard.title}
+                />
               </div>
             </CardContent>
           </Card>
@@ -705,9 +711,12 @@ export default function VendasTab() {
                   <span className="inline-block h-[2px] w-4 rounded-full bg-[#22c55e]" />
                   Meta/dia: <strong className={p38Dashboard.title}>{formatShort(metrics.metaLucroDaily)}</strong>
                 </span>
-                <span>
-                  Acumulado: <strong className={p38Dashboard.title}>{formatShort(metrics.accumulatedProfitData.at(-1)?.lucro || 0)}</strong>
-                </span>
+                <AccumulatedLegendLine
+                  label="Acumulado"
+                  total={metrics.accumulatedProfitData.at(-1)?.lucro || 0}
+                  dailyAvg={metrics.avgDailyProfit}
+                  titleClassName={p38Dashboard.title}
+                />
               </div>
             </CardContent>
           </Card>
