@@ -65,7 +65,7 @@ export function AcumuladoKpiChart({
         <LineChart data={data} margin={DASHBOARD_CHART_MARGIN.line}>
           <CartesianGrid {...buildCartesianGridProps(chartTheme)} />
           <XAxis {...buildXAxisProps(chartTheme, { dataKey: xKey })} />
-          <YAxis {...buildYAxisProps(chartTheme, { domain: yDomain, width: 38 })} />
+          <YAxis {...buildYAxisProps(chartTheme, { domain: yDomain, width: 44 })} />
           <Tooltip
             formatter={(value, name) => [BRL.format(Number(value || 0)), seriesLabels[name] || name]}
             contentStyle={chartTheme.tooltip.contentStyle}

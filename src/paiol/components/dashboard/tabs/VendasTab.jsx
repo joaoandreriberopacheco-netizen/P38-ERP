@@ -304,7 +304,6 @@ function computeVendasMetrics({ pedidos, productCostMap, kpiConfig, selectedMont
       selectedProfit,
       previousProfit,
       selectedSalesNet: Number(monthlyTotals[selectedMonthKey]?.salesNet || 0),
-      selectedDiscounts: Number(monthlyTotals[selectedMonthKey]?.discounts || 0),
       selectedCost: Number(monthlyTotals[selectedMonthKey]?.cost || 0),
       ratioPercent,
       ringFill,
@@ -477,7 +476,7 @@ export default function VendasTab() {
                         interval: isMobile ? 4 : 2,
                       })}
                     />
-                    <YAxis {...buildYAxisProps(chartTheme, { domain: dailyYDomain, width: 38, tickCount: 5 })} />
+                    <YAxis {...buildYAxisProps(chartTheme, { domain: dailyYDomain, width: 44, tickCount: 5 })} />
                     <Tooltip
                       labelFormatter={dayTooltipLabel}
                       formatter={(value) => [BRL.format(Number(value || 0)), metrics.selectedBucket.shortLabel]}
@@ -607,14 +606,10 @@ export default function VendasTab() {
                       <p className={`text-sm font-semibold ${p38Dashboard.title}`}>{formatShort(metrics.lucroKpi.previousProfit)}</p>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                    <div className="grid grid-cols-2 gap-1.5 text-[10px]">
                       <div className={p38Dashboard.statSm}>
-                        <p className="text-muted-foreground uppercase">Venda</p>
+                        <p className="text-muted-foreground uppercase">Venda líquida</p>
                         <p className={`${p38Dashboard.title} font-medium`}>{formatShort(metrics.lucroKpi.selectedSalesNet)}</p>
-                      </div>
-                      <div className={p38Dashboard.statSm}>
-                        <p className="text-muted-foreground uppercase">Desc</p>
-                        <p className={`${p38Dashboard.title} font-medium`}>{formatShort(metrics.lucroKpi.selectedDiscounts)}</p>
                       </div>
                       <div className={p38Dashboard.statSm}>
                         <p className="text-muted-foreground uppercase">Custo</p>
@@ -644,7 +639,7 @@ export default function VendasTab() {
                   >
                     <CartesianGrid {...buildCartesianGridProps(chartTheme)} />
                     <XAxis {...buildXAxisProps(chartTheme, { dataKey: 'periodo' })} />
-                    <YAxis {...buildYAxisProps(chartTheme, { domain: monthlyYDomain, width: 38, tickCount: 5 })} />
+                    <YAxis {...buildYAxisProps(chartTheme, { domain: monthlyYDomain, width: 44, tickCount: 5 })} />
                     <Tooltip
                       formatter={(value) => BRL.format(Number(value || 0))}
                       cursor={{ fill: chartTheme.cursor }}

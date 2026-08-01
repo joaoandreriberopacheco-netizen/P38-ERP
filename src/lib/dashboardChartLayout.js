@@ -15,11 +15,11 @@ export function formatDashboardAxisCurrency(value) {
 
 export const DASHBOARD_CHART_MARGIN = {
   /** Barras densas (ex.: 31 dias). */
-  daily: { top: 2, right: 6, left: -20, bottom: -2 },
+  daily: { top: 4, right: 8, left: 2, bottom: 0 },
   /** Barras mensais / poucos pontos. */
-  categorical: { top: 4, right: 6, left: -18, bottom: -2 },
+  categorical: { top: 6, right: 8, left: 2, bottom: 0 },
   /** Linhas acumuladas. */
-  line: { top: 4, right: 8, left: -18, bottom: -2 },
+  line: { top: 8, right: 8, left: 2, bottom: 0 },
 };
 
 /** Domínio Y compacto — usa quase toda a altura útil do gráfico. */
@@ -48,7 +48,7 @@ export function buildDashboardYDomain(data, valueKeys, { floorZero = true } = {}
 
 export function buildYAxisProps(chartTheme, options = {}) {
   const {
-    width = 36,
+    width = 44,
     tickCount = 4,
     formatter = formatDashboardAxisCurrency,
     domain,
@@ -56,7 +56,7 @@ export function buildYAxisProps(chartTheme, options = {}) {
   } = options;
   return {
     tickFormatter: formatter,
-    tick: { ...chartTheme.axisTickY, fontSize: 8 },
+    tick: { ...chartTheme.axisTickY, fontSize: 9 },
     axisLine: false,
     tickLine: false,
     width,
