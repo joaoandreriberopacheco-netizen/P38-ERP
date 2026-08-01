@@ -1,5 +1,20 @@
 # Exportações do catálogo
 
+## Hierarquia catálogo — trabalho braçal (PASSO 1)
+
+Ordenar **Categoria → LINHA → produto compra → SKU**, definir eixos e comportamentos (solo/mix/portfolio). **Antes** do painel Ranger e antes de mudar cadastro/interface.
+
+| Ficheiro | Descrição |
+|----------|-----------|
+| [P38-hierarquia-catalogo-trabalho.xlsx](./P38-hierarquia-catalogo-trabalho.xlsx) | Comportamentos, categorias, LINHAS, produto compra, eixos candidatos, árvore + SKUs |
+
+Regenerar: `npm run export:hierarquia-catalogo`
+
+**Download directo:**  
+https://github.com/joaoandreriberopacheco-netizen/varejosync/raw/main/docs/exports/P38-hierarquia-catalogo-trabalho.xlsx
+
+---
+
 ## LINHAS mestre — aprovação (próximo passo BD)
 
 Tabela **LINHA** + tipo (solo/mix/portfolio) antes de SQL. Marque **STATUS** na folha.
