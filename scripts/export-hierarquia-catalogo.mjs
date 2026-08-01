@@ -237,23 +237,18 @@ async function main() {
 
   const leiame = wb.addWorksheet('LEIA-ME');
   [
-    ['P38 — Hierarquia catálogo (trabalho braçal — ANTES do painel)'],
+    ['P38 — Hierarquia catálogo (Excel nestes termos)'],
     [''],
-    ['Ordem do trabalho:'],
-    ['  1. Comportamentos LINHA — entender solo / mix / portfolio'],
-    ['  2. Categorias — ordenar e validar campo de batalha'],
-    ['  3. LINHAS — tipo, categoria principal, rótulos eixo A/B da LINHA, STATUS'],
-    ['  4. Produto compra — nome, código, rótulos eixo A/B de cada esquadra, STATUS'],
-    ['  5. Eixos candidatos — ajuda a escolher o que é A vs B (h2/h3/h4 hoje)'],
-    ['  6. Árvore trabalho — coluna ORDEM: reordenar formação (categ > linha > prod > sku)'],
-    ['  7. SKUs mapa — massa crítica e tipo de ruptura por SKU'],
+    ['★ = SUBJETIVIDADE (você edita) — só em LINHAS (comportamento) e Produto compra'],
+    ['SKUs = herdado + sistema — NÃO definir critério por SKU (exc. solo raro)'],
     [''],
-    ['Regras: produto compra (mix/portfolio) = até 2 eixos. Terceiro eixo = outro produto compra.'],
-    ['Mix = composição plena. Portfolio = cobertura % + tamanho do time (ex. 11 opções).'],
-    ['Ruptura ≠ só estoque zero — inclui perda de massa crítica (ex. cerâmica com 3 caixas).'],
+    ['PASSO 1 — Agrupar: Categorias → Cat×LINHA×PC → Árvore (conferir SKU no lugar)'],
+    ['PASSO 2 — LINHAS: tipo solo/mix/portfolio (qualitativo)'],
+    ['PASSO 3 — Produto compra: meta time, limiar, tipo ruptura (quantitativo)'],
+    ['PASSO 4 — SKUs: só conferir agrupamento; colunas herdadas circulam do produto compra'],
     [''],
-    ['O painel Blade Ranger vem DEPOIS desta hierarquia está madura.'],
-    ['Cadastro e interface absorvem o Excel quando STATUS = SIM nas folhas.'],
+    ['Circulação: editar Produto compra → na importação futura todos os SKUs filhos recebem a regra.'],
+    ['Portfolio: meta 11 mas 15 cadastrados → coluna Excedente vs meta; saldável = estoque ≥ limiar.'],
     [''],
     [`Gerado: ${new Date().toLocaleString('pt-BR')} · ${produtos.length} SKUs`],
   ].forEach((line, i) => {
@@ -261,6 +256,45 @@ async function main() {
     if (i === 0) leiame.getCell(i + 1, 1).font = { bold: true, size: 12 };
   });
   leiame.getColumn(1).width = 95;
+
+  const wsLegenda = wb.addWorksheet('Legenda colunas');
+  wsLegenda.columns = [
+    { header: 'Aba', key: 'aba', width: 22 },
+    { header: 'Coluna', key: 'col', width: 28 },
+    { header: 'Editar?', key: 'edit', width: 10 },
+    { header: 'Função', key: 'func', width: 56 },
+  ];
+  styleHeader(wsLegenda.getRow(1));
+  [
+    { aba: 'LINHAS', col: 'Tipo', edit: 'SIM ★', func: 'Comportamento qualitativo: solo / mix / portfolio' },
+    { aba: 'Produto compra', col: '★ Meta opções', edit: 'SIM', func: 'Portfolio: tamanho do time (ex. 11). Mix: já definido pelos SKUs.' },
+    { aba: 'Produto compra', col: '★ Limiar massa crítica', edit: 'SIM', func: 'Número único para TODOS os SKUs desta esquadra (16 m², 10 cx…)' },
+    { aba: 'Produto compra', col: '★ Tipo ruptura', edit: 'SIM', func: 'estoque_zero | ponto_futuro_negativo | massa_critica' },
+    { aba: 'Produto compra', col: 'SKUs cadastrados', edit: 'não', func: 'Sistema: quantos SKUs existem hoje no cadastro' },
+    { aba: 'Produto compra', col: 'SKUs saldáveis hoje', edit: 'não', func: 'Após preencher limiar + import: quantos passam massa crítica' },
+    { aba: 'SKUs', col: 'Limiar herdado', edit: 'não', func: 'Copia do produto compra — não editar aqui' },
+    { aba: 'SKUs', col: 'Saldável hoje', edit: 'não', func: 'estoque ≥ limiar do produto compra' },
+    { aba: 'SKUs', col: 'Conta no time', edit: 'não', func: 'Portfolio: saldável e dentro do elenco ativo' },
+  ].forEach((r) => wsLegenda.addRow(r));
+
+  const wsExemplo = wb.addWorksheet('EXEMPLO antiderrapante');
+  [
+    ['Exemplo portfolio — piso antiderrapante econômico 45×45'],
+    [''],
+    ['Produto compra', 'PISO ANTID SLIP 45×45 ECON'],
+    ['★ Meta opções (time)', '11'],
+    ['★ Unidade limiar', 'm²'],
+    ['★ Limiar massa crítica', '16'],
+    ['★ Tipo ruptura', 'massa_critica'],
+    ['SKUs cadastrados (hoje)', '15 (sistema)'],
+    ['SKUs saldáveis (meta)', 'contar só ≥ 16 m² — provavelmente < 11'],
+    ['OBS', 'Cadastro > time → enxugar ou desativar zumbis; critério só nesta linha'],
+  ].forEach((line, i) => {
+    wsExemplo.getCell(i + 1, 1).value = line[0];
+    wsExemplo.getCell(i + 1, 2).value = line[1] ?? '';
+  });
+  wsExemplo.getColumn(1).width = 28;
+  wsExemplo.getColumn(2).width = 48;
 
   const wsComp = wb.addWorksheet('Comportamentos LINHA');
   wsComp.columns = [
@@ -288,7 +322,8 @@ async function main() {
     { conceito: 'Mix — controle', def: 'Composição plena: a grelha do produto compra deve estar coberta (cada célula relevante).' },
     { conceito: 'Portfolio — controle', def: 'Nível de cobertura (ex. 80% das opções saldáveis). Tamanho do time: qtd máx de SKUs/opções por produto compra (ex. 11 jogadores).' },
     { conceito: 'Portfolio — mínimo saldável', def: 'Quantas opções “contam” para dizer que o leque está ok (abaixo disso = formação fraca).' },
-    { conceito: 'Massa crítica (SKU)', def: 'Quantidade mínima para o SKU ser relevante no balcão — mesmo com estoque > 0.' },
+    { conceito: 'Massa crítica', def: 'Número + unidade no PRODUTO COMPRA (ex. 16 m²). Todos os SKUs filhos herdam — não editar no SKU.' },
+    { conceito: 'Portfolio — cadastro vs time', def: 'meta_opcoes = 11 (serviço). SKUs cadastrados pode ser 15; só os saldáveis (≥ limiar) contam. Excedente = enxugar cadastro.' },
     { conceito: 'Ruptura estoque zero', def: TIPOS_RUPTURA.estoque_zero },
     { conceito: 'Ruptura ponto futuro', def: TIPOS_RUPTURA.ponto_futuro_negativo },
     { conceito: 'Ruptura massa crítica', def: TIPOS_RUPTURA.massa_critica + ' — cerâmica: 3 caixas não sustenta a opção no portfólio.' },
@@ -319,6 +354,78 @@ async function main() {
       obs: '',
     });
   });
+
+  const wsCatLinPc = wb.addWorksheet('Cat × LINHA × PC', { views: [{ state: 'frozen', ySplit: 1 }] });
+  wsCatLinPc.columns = [
+    { header: 'Categoria', key: 'categoria', width: 24 },
+    { header: 'LINHA', key: 'linha_codigo', width: 12 },
+    { header: 'Tipo', key: 'tipo', width: 10 },
+    { header: 'Produto compra', key: 'produto_compra', width: 28 },
+    { header: 'Cód. PC', key: 'pc_codigo', width: 16 },
+    { header: 'SKUs cadastrados', key: 'skus', width: 12 },
+    { header: 'Sistema reconheceu?', key: 'reconhecido', width: 14 },
+    { header: 'STATUS agrupamento', key: 'status', width: 14 },
+    { header: 'OBS', key: 'obs', width: 28 },
+  ];
+  styleHeader(wsCatLinPc.getRow(1));
+
+  for (const cat of catsSorted) {
+    const linhasInCat = [...cat.linhas.entries()].sort((a, b) => {
+      const oa = LINHAS_MESTRE.find((l) => l.codigo === a[0])?.ordem ?? 999;
+      const ob = LINHAS_MESTRE.find((l) => l.codigo === b[0])?.ordem ?? 999;
+      return oa - ob;
+    });
+    for (const [linhaCod, skuCount] of linhasInCat) {
+      const meta = findLinhaMeta(linhaCod);
+      const comprasInLinha = [...compraMap.values()].filter(
+        (c) =>
+          c.linha_codigo === linhaCod &&
+          [...c.categorias.keys()].some((k) => k === cat.nome || c.categorias.has(cat.nome)),
+      );
+      if (pulaProdutoCompra(meta.tipo)) {
+        wsCatLinPc.addRow({
+          categoria: cat.nome,
+          linha_codigo: linhaCod,
+          tipo: meta.tipo,
+          produto_compra: '(solo — SKUs diretos)',
+          pc_codigo: linhaCod,
+          skus: skuCount,
+          reconhecido: linhaCod === 'OUTROS' ? 'REVISAR' : 'SIM',
+          status: '',
+          obs: '',
+        });
+        continue;
+      }
+      const matched = comprasInLinha.filter((c) => c.categorias.has(cat.nome));
+      if (!matched.length) {
+        wsCatLinPc.addRow({
+          categoria: cat.nome,
+          linha_codigo: linhaCod,
+          tipo: meta.tipo,
+          produto_compra: '(sem PC nesta categoria?)',
+          pc_codigo: '',
+          skus: skuCount,
+          reconhecido: 'REVISAR',
+          status: '',
+          obs: '',
+        });
+        continue;
+      }
+      for (const pc of matched.sort((a, b) => a.produto_compra_nome.localeCompare(b.produto_compra_nome, 'pt-BR'))) {
+        wsCatLinPc.addRow({
+          categoria: cat.nome,
+          linha_codigo: linhaCod,
+          tipo: meta.tipo,
+          produto_compra: pc.produto_compra_nome,
+          pc_codigo: pc.produto_compra_codigo,
+          skus: pc.categorias.get(cat.nome) || 0,
+          reconhecido: linhaCod === 'OUTROS' ? 'REVISAR' : 'SIM',
+          status: '',
+          obs: '',
+        });
+      }
+    }
+  }
 
   const wsLin = wb.addWorksheet('LINHAS', { views: [{ state: 'frozen', ySplit: 1 }] });
   wsLin.columns = [
@@ -374,22 +481,30 @@ async function main() {
   const wsPc = wb.addWorksheet('Produto compra', { views: [{ state: 'frozen', ySplit: 1 }] });
   wsPc.columns = [
     { header: 'Ordem', key: 'ordem', width: 8 },
-    { header: 'LINHA código', key: 'linha_codigo', width: 14 },
-    { header: 'LINHA nome', key: 'linha_nome', width: 26 },
-    { header: 'Tipo', key: 'tipo', width: 10 },
-    { header: 'Cód. prod. compra', key: 'codigo', width: 18 },
-    { header: 'Nome produto compra', key: 'nome', width: 28 },
-    { header: 'Rótulo eixo A', key: 'eixo_a', width: 16 },
-    { header: 'Rótulo eixo B', key: 'eixo_b', width: 16 },
-    { header: 'Meta opções (time)', key: 'meta_opcoes', width: 14 },
-    { header: 'Cobertura mín %', key: 'cobertura_pct', width: 14 },
-    { header: 'Massa crítica SKU', key: 'massa_critica', width: 14 },
-    { header: 'Tipo ruptura', key: 'tipo_ruptura', width: 18 },
-    { header: 'SKUs', key: 'skus', width: 8 },
+    { header: 'LINHA código', key: 'linha_codigo', width: 12 },
+    { header: 'LINHA nome', key: 'linha_nome', width: 22 },
+    { header: 'Tipo', key: 'tipo', width: 8 },
+    { header: 'Cód. prod. compra', key: 'codigo', width: 16 },
+    { header: 'Nome produto compra', key: 'nome', width: 26 },
+    { header: 'Rótulo eixo A', key: 'eixo_a', width: 14 },
+    { header: 'Rótulo eixo B', key: 'eixo_b', width: 14 },
+    { header: '★ Meta opções (time)', key: 'meta_opcoes', width: 18 },
+    { header: '★ Unidade limiar', key: 'unidade_limiar', width: 12 },
+    { header: '★ Limiar massa crítica', key: 'limiar_massa_critica', width: 14 },
+    { header: '★ Tipo ruptura', key: 'tipo_ruptura', width: 18 },
+    { header: '★ Limiar ruptura p.fut.', key: 'limiar_ruptura_pf', width: 14 },
+    { header: 'SKUs cadastrados', key: 'skus_cadastrados', width: 12 },
+    { header: 'SKUs saldáveis hoje', key: 'skus_saldaveis_hoje', width: 14 },
+    { header: 'Excedente vs meta', key: 'excedente_vs_meta', width: 18 },
     { header: 'STATUS', key: 'status', width: 10 },
-    { header: 'OBS', key: 'obs', width: 32 },
+    { header: 'OBS', key: 'obs', width: 28 },
   ];
   styleHeader(wsPc.getRow(1));
+  wsPc.getRow(1).getCell('meta_opcoes').fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FFFEF3C7' },
+  };
 
   const comprasSorted = [...compraMap.values()]
     .filter((c) => !pulaProdutoCompra(c.tipo))
@@ -410,15 +525,47 @@ async function main() {
       nome: pc.produto_compra_nome,
       eixo_a: '',
       eixo_b: '',
-      meta_opcoes: pc.tipo === 'portfolio' ? '' : '',
-      cobertura_pct: pc.tipo === 'portfolio' ? '' : '',
-      massa_critica: '',
-      tipo_ruptura: pc.tipo === 'portfolio' ? 'massa_critica' : 'ponto_futuro_negativo',
-      skus: pc.skus,
+      meta_opcoes: pc.tipo === 'portfolio' ? '' : '(mix: time = SKUs da grelha)',
+      unidade_limiar: pc.tipo === 'portfolio' ? 'm² ou cx' : '',
+      limiar_massa_critica: '',
+      tipo_ruptura:
+        pc.tipo === 'portfolio'
+          ? 'massa_critica'
+          : pc.tipo === 'solo'
+            ? 'estoque_zero'
+            : 'ponto_futuro_negativo',
+      limiar_ruptura_pf: pc.tipo === 'mix' ? '0' : '',
+      skus_cadastrados: pc.skus,
+      skus_saldaveis_hoje: '',
+      excedente_vs_meta: pc.tipo === 'portfolio' ? `cadastrados ${pc.skus} — definir meta` : '',
       status: '',
-      obs: `h2: ${[...pc.h2].slice(0, 4).join(' | ')}`,
+      obs: `h2: ${[...pc.h2].slice(0, 3).join(' | ')}`,
     });
   });
+
+  for (const l of LINHAS_MESTRE.filter((x) => x.tipo === 'solo')) {
+    const n = linhaSkuCount.get(l.codigo) || 0;
+    wsPc.addRow({
+      ordem: 900 + l.ordem,
+      linha_codigo: l.codigo,
+      linha_nome: l.nome,
+      tipo: 'solo',
+      codigo: l.codigo,
+      nome: l.nome,
+      eixo_a: '',
+      eixo_b: '',
+      meta_opcoes: '(solo — sem time)',
+      unidade_limiar: '',
+      limiar_massa_critica: '',
+      tipo_ruptura: 'estoque_zero',
+      limiar_ruptura_pf: '0',
+      skus_cadastrados: n,
+      skus_saldaveis_hoje: '',
+      excedente_vs_meta: '',
+      status: '',
+      obs: 'Exceção: critério na LINHA/solo — revisar caso a caso',
+    });
+  }
 
   const wsEixo = wb.addWorksheet('Eixos candidatos', { views: [{ state: 'frozen', ySplit: 1 }] });
   wsEixo.columns = [
@@ -473,46 +620,47 @@ async function main() {
   styleHeader(wsTree.getRow(1));
   treeRows.forEach((r) => wsTree.addRow(r));
 
-  const wsSku = wb.addWorksheet('SKUs mapa', { views: [{ state: 'frozen', ySplit: 1 }] });
+  const wsSku = wb.addWorksheet('SKUs (herdado)', { views: [{ state: 'frozen', ySplit: 1 }] });
   wsSku.columns = [
-    { header: 'Categoria', key: 'categoria', width: 22 },
-    { header: 'LINHA', key: 'linha_codigo', width: 12 },
-    { header: 'Tipo', key: 'tipo', width: 10 },
+    { header: 'Categoria', key: 'categoria', width: 20 },
+    { header: 'LINHA', key: 'linha_codigo', width: 11 },
+    { header: 'Tipo', key: 'tipo', width: 8 },
     { header: 'Produto compra', key: 'produto_compra', width: 22 },
-    { header: 'id', key: 'id', width: 14 },
-    { header: 'Nome', key: 'nome', width: 40 },
-    { header: 'h1', key: 'h1', width: 16 },
-    { header: 'h2', key: 'h2', width: 14 },
-    { header: 'h3', key: 'h3', width: 14 },
-    { header: 'h4', key: 'h4', width: 14 },
-    { header: 'h5', key: 'h5', width: 12 },
-    { header: 'Estoque', key: 'estoque', width: 10 },
-    { header: 'Massa crítica', key: 'massa_critica', width: 12 },
-    { header: 'Tipo ruptura', key: 'tipo_ruptura', width: 18 },
-    { header: 'STATUS', key: 'status', width: 10 },
+    { header: 'Cód. PC', key: 'pc_codigo', width: 14 },
+    { header: 'id', key: 'id', width: 12 },
+    { header: 'Nome', key: 'nome', width: 36 },
+    { header: 'Estoque', key: 'estoque', width: 9 },
+    { header: '→ Limiar herdado', key: 'limiar_herdado', width: 14 },
+    { header: '→ Tipo ruptura herdado', key: 'tipo_ruptura_herdado', width: 20 },
+    { header: 'Saldável hoje?', key: 'saldavel', width: 12 },
+    { header: 'Conta no time?', key: 'conta_time', width: 12 },
+    { header: 'Conferir agrup.', key: 'status', width: 12 },
   ];
   styleHeader(wsSku.getRow(1));
   for (const p of produtos) {
     const lc = inferirLinhaCodigo(p);
     const meta = findLinhaMeta(lc);
-    const pc = inferirProdutoCompraLabel(p, lc, meta.tipo);
+    const pcLabel = inferirProdutoCompraLabel(p, lc, meta.tipo);
+    const pcCod = pulaProdutoCompra(meta.tipo) ? lc : slugCodigo(pcLabel);
     const tipoRupt =
-      meta.tipo === 'portfolio' ? 'massa_critica' : meta.tipo === 'solo' ? 'estoque_zero' : 'ponto_futuro_negativo';
+      meta.tipo === 'portfolio'
+        ? 'massa_critica'
+        : meta.tipo === 'solo'
+          ? 'estoque_zero'
+          : 'ponto_futuro_negativo';
     wsSku.addRow({
       categoria: trim(p.categoria_nome),
       linha_codigo: lc,
       tipo: meta.tipo,
-      produto_compra: pulaProdutoCompra(meta.tipo) ? '(solo)' : pc,
+      produto_compra: pulaProdutoCompra(meta.tipo) ? '(solo)' : pcLabel,
+      pc_codigo: pcCod,
       id: p.id,
       nome: p.nome,
-      h1: trim(p.campo_hierarquico_1),
-      h2: trim(p.campo_hierarquico_2),
-      h3: trim(p.campo_hierarquico_3),
-      h4: trim(p.campo_hierarquico_4),
-      h5: trim(p.campo_hierarquico_5),
       estoque: Number(p.estoque_atual) || 0,
-      massa_critica: '',
-      tipo_ruptura: tipoRupt,
+      limiar_herdado: '← folha Produto compra',
+      tipo_ruptura_herdado: tipoRupt,
+      saldavel: '← após limiar na PC',
+      conta_time: meta.tipo === 'portfolio' ? '← após meta+limiar' : meta.tipo === 'mix' ? 'SIM (grelha)' : '—',
       status: '',
     });
   }
