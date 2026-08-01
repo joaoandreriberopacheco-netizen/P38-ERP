@@ -44,7 +44,10 @@ export default function UnidadesAlternativasEditor({
     }
     onChange([
       ...unidades,
-      { id: crypto.randomUUID(), nome: '', unidade: '', fator_conversao: 2, fator_preco: 1, preco_venda: 0, rotulo: '', ajuste_percentual: 0, ativo: true },
+      {
+        id: (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `row-${Date.now()}`),
+        nome: '', unidade: '', fator_conversao: 2, fator_preco: 1, preco_venda: 0, rotulo: '', ajuste_percentual: 0, ativo: true,
+      },
     ]);
   };
 

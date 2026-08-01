@@ -19,13 +19,20 @@ export function normalizeUnitCode(value) {
 
 const MAX_ALTERNATIVE_UNITS = 5;
 
+function newAlternativeUnitId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `u_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
 function normalizeAlternativeUnitRow(item = {}) {
   const unidade = String(item.unidade || "").trim().toUpperCase();
   const fatorConversao = normalizeNumber(item.fator_conversao, 1);
   const ajustePercentual = normalizeNumber(item.ajuste_percentual, 0);
   const fatorPrecoRaw = normalizeNumber(item.fator_preco, 0);
   const row = {
-    id: String(item.id || "").trim() || crypto.randomUUID(),
+    id: String(item.id || "").trim() || newAlternativeUnitId(),
     nome: typeof item.nome === "string" ? item.nome.trim() : "",
     unidade,
     fator_conversao: fatorConversao,
