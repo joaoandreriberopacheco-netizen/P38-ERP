@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Printer, Loader2, ArrowLeft, Search, X, ChevronDown, ChevronRight, Type, TrendingUp, DollarSign, Percent, Package, BarChart3, SlidersHorizontal } from 'lucide-react';
+import { Printer, Loader2, ArrowLeft, Search, X, ChevronDown, ChevronRight, Type, TrendingUp, DollarSign, Percent, Package, BarChart3, SlidersHorizontal, PanelTopClose, PanelTopOpen } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { LevelControl } from '@/components/produtos/treegrid/LevelControl';
 import {
   buildMarginTree,
@@ -55,10 +56,10 @@ const MOBILE_PDF_H_MM = 1200;
 const MARGIN_VIRTUALIZE_MIN_ROWS = 50;
 const MARGIN_TABLE_COL_COUNT = 9;
 const MARGIN_DESKTOP_ROW_H_GROUP = 42;
-const MARGIN_DESKTOP_ROW_H_PRODUTO = 64;
-const MARGIN_MOBILE_ROW_H_GROUP = 104;
+const MARGIN_DESKTOP_ROW_H_PRODUTO = 48;
+const MARGIN_MOBILE_ROW_H_GROUP = 88;
 const MARGIN_MOBILE_ROW_H_GROUP_COLLAPSED = 50;
-const MARGIN_MOBILE_ROW_H_PRODUTO = 128;
+const MARGIN_MOBILE_ROW_H_PRODUTO = 100;
 
 /** Paleta e colunas alinhadas ao PDF mobile (`exportToPDF('expandida_mobile')`). */
 const MARGIN_MOBILE_STORM = '#2d333b';
@@ -176,13 +177,27 @@ function buildCustoBreakdownLine(row, mode = 'unit') {
   return parts.join(' · ');
 }
 
-function MargemCustoBreakdownMini({ row, mode = 'unit', className = '' }) {
+function MargemCustoValorTooltip({ row, mode = 'unit', children, className = '' }) {
   const line = buildCustoBreakdownLine(row, mode);
-  if (!line) return null;
+  if (!line) {
+    return <span className={className}>{children}</span>;
+  }
   return (
-    <p className={`text-[9px] leading-tight text-muted-foreground/90 truncate ${className}`} title={line}>
-      {line}
-    </p>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className={`cursor-default underline decoration-dotted decoration-muted-foreground/35 underline-offset-2 ${className}`}
+        >
+          {children}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent
+        side="top"
+        className="max-w-[min(100vw-2rem,28rem)] bg-popover text-popover-foreground border border-border text-xs font-normal normal-case tracking-normal"
+      >
+        {line}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -220,19 +235,26 @@ function MargemDesktopMetricCells({ dataRow, showMetrics = true, tier = 'filho' 
     return MARGIN_METRIC_KEYS.map((key) => <td key={key} className="py-1.5 px-1.5" />);
   }
   const values = buildMarginMobileTabulatedValues(dataRow);
-  return MARGIN_METRIC_KEYS.map((key) => (
-    <td
-      key={key}
-      className={`py-1.5 px-1.5 text-right ${MARGIN_BODY_TEXT} tabular-nums ${marginMetricValueClass(key, tier)}`}
-      style={{ lineHeight: 1.2 }}
-    >
-      <div className="min-w-0">
-        <p>{values[key]}</p>
-        {key === 'custoUnit' ? <MargemCustoBreakdownMini row={dataRow} mode="unit" /> : null}
-        {key === 'custoTotal' ? <MargemCustoBreakdownMini row={dataRow} mode="total" /> : null}
-      </div>
-    </td>
-  ));
+  return MARGIN_METRIC_KEYS.map((key) => {
+    const value = values[key];
+    const isCusto = key === 'custoUnit' || key === 'custoTotal';
+    const content = isCusto ? (
+      <MargemCustoValorTooltip row={dataRow} mode={key === 'custoUnit' ? 'unit' : 'total'}>
+        {value}
+      </MargemCustoValorTooltip>
+    ) : (
+      value
+    );
+    return (
+      <td
+        key={key}
+        className={`py-1.5 px-1.5 text-right ${MARGIN_BODY_TEXT} tabular-nums ${marginMetricValueClass(key, tier)}`}
+        style={{ lineHeight: 1.2 }}
+      >
+        {content}
+      </td>
+    );
+  });
 }
 
 function buildMarginFiltrosDesc({ dateRange, searchTerm, treeLevel }) {
@@ -473,9 +495,14 @@ function MargemMobileKpis({ totals, totalMarkup }) {
   );
 }
 
-function MargemMobileColumnHeader({ className = '' }) {
+function MargemMobileColumnHeader({ className = '', invisible = false, pinStyle = null }) {
   return (
-    <div className={`mx-3 md:mx-0 mt-3 mb-1 rounded-lg overflow-hidden ${MARGIN_TABLE_PANEL} border ${MARGIN_TABLE_BORDER} ${className}`}>
+    <div
+      className={`mx-3 md:mx-0 mt-3 mb-1 rounded-lg overflow-hidden ${MARGIN_TABLE_PANEL} border ${MARGIN_TABLE_BORDER} ${
+        invisible ? 'invisible pointer-events-none' : ''
+      } ${pinStyle ? 'fixed z-[60]' : ''} ${className}`}
+      style={pinStyle || undefined}
+    >
       <div className="flex">
         <div className="w-[3.25rem] flex-shrink-0 border-r border-white/15 px-1.5 py-2 text-right">
           <p className={`${MARGIN_MOBILE_HEADER_LABEL} text-right`}>Qtd</p>
@@ -529,17 +556,26 @@ function MargemMobileTabulatedValues({ row, className = '', tier = 'filho' }) {
           key={rowIdx}
           className={`${MARGIN_MOBILE_VALUES_GRID} ${rowIdx === 0 ? '' : 'mt-1'}`}
         >
-          {valueRow.map(({ key }) => (
-            <div key={key} className="min-w-0">
-              <p
-                className={`${MARGIN_BODY_TEXT} tabular-nums text-right truncate ${marginMetricValueClass(key, tier)}`}
-              >
-                {values[key]}
-              </p>
-              {key === 'custoUnit' ? <MargemCustoBreakdownMini row={row} mode="unit" className="text-right" /> : null}
-              {key === 'custoTotal' ? <MargemCustoBreakdownMini row={row} mode="total" className="text-right" /> : null}
-            </div>
-          ))}
+          {valueRow.map(({ key }) => {
+            const value = values[key];
+            const isCusto = key === 'custoUnit' || key === 'custoTotal';
+            const content = isCusto ? (
+              <MargemCustoValorTooltip row={row} mode={key === 'custoUnit' ? 'unit' : 'total'} className="block truncate text-right">
+                {value}
+              </MargemCustoValorTooltip>
+            ) : (
+              value
+            );
+            return (
+              <div key={key} className="min-w-0">
+                <p
+                  className={`${MARGIN_BODY_TEXT} tabular-nums text-right truncate ${marginMetricValueClass(key, tier)}`}
+                >
+                  {content}
+                </p>
+              </div>
+            );
+          })}
         </div>
       ))}
     </div>
@@ -657,6 +693,56 @@ function MargemLinhaMobile({
   );
 }
 
+function useMarginColumnHeaderPin(scrollRef) {
+  const sentinelRef = useRef(null);
+  const [pinned, setPinned] = useState(false);
+  const [pinFrame, setPinFrame] = useState({ top: 0, left: 0, width: 0 });
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const sync = () => {
+      const scrollEl = scrollRef.current;
+      const sentinelRect = sentinel.getBoundingClientRect();
+      const usesInnerScroll = Boolean(
+        scrollEl && scrollEl.scrollHeight > scrollEl.clientHeight + 1,
+      );
+      const scrollRect = scrollEl?.getBoundingClientRect();
+      const anchorTop = usesInnerScroll && scrollRect ? scrollRect.top : 48;
+      const anchorLeft = scrollRect?.left ?? 0;
+      const anchorWidth = scrollRect?.width ?? window.innerWidth;
+
+      setPinned(sentinelRect.top < anchorTop + 0.5);
+      setPinFrame({
+        top: anchorTop,
+        left: anchorLeft,
+        width: anchorWidth,
+      });
+    };
+
+    const scrollEl = scrollRef.current;
+    scrollEl?.addEventListener('scroll', sync, { passive: true });
+    window.addEventListener('resize', sync);
+    window.addEventListener('orientationchange', sync);
+    const resizeObserver = new ResizeObserver(sync);
+    if (scrollEl) resizeObserver.observe(scrollEl);
+    resizeObserver.observe(sentinel);
+    sync();
+    const frame = window.requestAnimationFrame(sync);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      scrollEl?.removeEventListener('scroll', sync);
+      window.removeEventListener('resize', sync);
+      window.removeEventListener('orientationchange', sync);
+      resizeObserver.disconnect();
+    };
+  }, [scrollRef]);
+
+  return { sentinelRef, pinned, pinFrame };
+}
+
 export default function RelatorioMargemVendas() {
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
@@ -670,7 +756,7 @@ export default function RelatorioMargemVendas() {
   const [sortOrder, setSortOrder] = useState('desc');
   const [showFilterDrawer, setShowFilterDrawer] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
-  
+  const [toolsCollapsed, setToolsCollapsed] = useState(false);
   useEffect(() => {
     loadData();
   }, []);
@@ -850,10 +936,13 @@ export default function RelatorioMargemVendas() {
     [marginTree, expandedKeys, sortField, sortOrder]
   );
 
-  const desktopScrollRef = useRef(null);
-  const mobileScrollRef = useRef(null);
-  const pendingDesktopScrollRef = useRef(null);
-  const pendingMobileScrollRef = useRef(null);
+  const mainScrollRef = useRef(null);
+  const pendingScrollRef = useRef(null);
+  const { sentinelRef: mobileHeaderSentinelRef, pinned: mobileHeaderPinned, pinFrame: mobilePinFrame } =
+    useMarginColumnHeaderPin(mainScrollRef);
+  const mobilePinStyle = mobileHeaderPinned
+    ? { top: mobilePinFrame.top, left: mobilePinFrame.left, width: mobilePinFrame.width }
+    : null;
 
   const shouldVirtualizeRows = displayRows.length >= MARGIN_VIRTUALIZE_MIN_ROWS;
 
@@ -883,14 +972,14 @@ export default function RelatorioMargemVendas() {
     itemCount: displayRows.length,
     estimateSize: estimateDesktopRowSize,
     overscan: 12,
-    scrollElementRef: desktopScrollRef,
+    scrollElementRef: mainScrollRef,
   });
 
   const mobileVirtual = useVirtualRows({
     itemCount: displayRows.length,
     estimateSize: estimateMobileRowSize,
     overscan: 6,
-    scrollElementRef: mobileScrollRef,
+    scrollElementRef: mainScrollRef,
   });
 
   const visibleDesktopRows = useMemo(
@@ -910,24 +999,16 @@ export default function RelatorioMargemVendas() {
   );
 
   useLayoutEffect(() => {
-    const desktopEl = desktopScrollRef.current;
-    const mobileEl = mobileScrollRef.current;
-    if (desktopEl) pendingDesktopScrollRef.current = desktopEl.scrollTop;
-    if (mobileEl) pendingMobileScrollRef.current = mobileEl.scrollTop;
+    const scrollEl = mainScrollRef.current;
+    if (scrollEl) pendingScrollRef.current = scrollEl.scrollTop;
   }, [expandedKeys, treeLevel, displayRows.length]);
 
   useLayoutEffect(() => {
-    const desktopEl = desktopScrollRef.current;
-    const mobileEl = mobileScrollRef.current;
-    const desktopTop = pendingDesktopScrollRef.current;
-    const mobileTop = pendingMobileScrollRef.current;
-    if (desktopEl != null && desktopTop != null) {
-      desktopEl.scrollTop = desktopTop;
-      pendingDesktopScrollRef.current = null;
-    }
-    if (mobileEl != null && mobileTop != null) {
-      mobileEl.scrollTop = mobileTop;
-      pendingMobileScrollRef.current = null;
+    const scrollEl = mainScrollRef.current;
+    const top = pendingScrollRef.current;
+    if (scrollEl != null && top != null) {
+      scrollEl.scrollTop = top;
+      pendingScrollRef.current = null;
     }
   }, [expandedKeys, displayRows.length]);
 
@@ -986,7 +1067,7 @@ export default function RelatorioMargemVendas() {
             <td
               lang="pt-BR"
               className={`py-1.5 px-2 min-w-0 ${marginDesktopDescClass(tier)}`}
-              style={{ lineHeight: 1.2, minHeight: 46 }}
+              style={{ lineHeight: 1.2, minHeight: 36 }}
             >
               <MargemDescricaoTexto
                 textStart={marginDescTextStart(treeRow.level)}
@@ -1827,12 +1908,15 @@ export default function RelatorioMargemVendas() {
   const desktopRowOffset = shouldVirtualizeRows ? desktopVirtual.startIndex : 0;
   const mobileRowOffset = shouldVirtualizeRows ? mobileVirtual.startIndex : 0;
 
+  const filtrosDesc = buildMarginFiltrosDesc({ dateRange, searchTerm, treeLevel });
+
   return (
+    <TooltipProvider delayDuration={200}>
     <div className="font-din-1451 h-full min-h-0 flex flex-col overflow-hidden bg-background md:overflow-x-hidden">
       <div className="max-w-full mx-auto min-w-0 flex flex-col flex-1 min-h-0 overflow-hidden">
-        {/* Header */}
-        <div className="flex-none bg-background border-b border-border z-10">
-          <div className="w-full min-w-0 px-3 py-2 space-y-2">
+        {/* Cabeçalho fixo — só título e ações */}
+        <div className="flex-none bg-background border-b border-border z-20">
+          <div className="w-full min-w-0 px-3 py-2">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <Link to="/Relatorios">
@@ -1860,123 +1944,49 @@ export default function RelatorioMargemVendas() {
                   </p>
                 </div>
               </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="h-9 w-9 rounded-xl hover:bg-muted dark:hover:bg-secondary/80 transition text-foreground/90 flex items-center justify-center flex-shrink-0" title="Opções de impressão">
-                    <Printer className="w-4 h-4" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="dark:bg-secondary dark:border-border text-sm">
-                  <DropdownMenuItem onClick={() => exportToPDF('a4')} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer">
-                    PDF (A4)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => exportToPDF('a4_enxuto')}
-                    className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer"
-                  >
-                    PDF enxuto (A4)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => exportToPDF('expandida_mobile')}
-                    className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer"
-                  >
-                    PDF mobile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={exportToCSV} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer">
-                    CSV
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            <div className="flex gap-2 min-w-0 items-center">
-              <div className="relative flex-1 min-w-0">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                <input
-                  autoComplete="off"
-                  type="text"
-                  placeholder="Produto, código, categoria ou tag (espaço ou ; para combinar termos)..."
-                  value={searchDraft}
-                  onChange={(event) => setSearchDraft(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') handleApplySearchFilter();
-                  }}
-                  className="border-none bg-muted dark:bg-secondary h-10 text-sm pl-9 pr-3 text-foreground/90 shadow-none focus:outline-none focus:ring-0 w-full min-w-0 rounded-xl"
-                />
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setToolsCollapsed((collapsed) => !collapsed)}
+                  className="h-9 w-9 rounded-xl hover:bg-muted dark:hover:bg-secondary/80 transition text-foreground/90 flex items-center justify-center"
+                  title={toolsCollapsed ? 'Mostrar filtros e ferramentas' : 'Ocultar filtros e ferramentas'}
+                  aria-expanded={!toolsCollapsed}
+                >
+                  {toolsCollapsed ? (
+                    <PanelTopOpen className="w-4 h-4" />
+                  ) : (
+                    <PanelTopClose className="w-4 h-4" />
+                  )}
+                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="h-9 w-9 rounded-xl hover:bg-muted dark:hover:bg-secondary/80 transition text-foreground/90 flex items-center justify-center flex-shrink-0" title="Opções de impressão">
+                      <Printer className="w-4 h-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="dark:bg-secondary dark:border-border text-sm">
+                    <DropdownMenuItem onClick={() => exportToPDF('a4')} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer">
+                      PDF (A4)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => exportToPDF('a4_enxuto')}
+                      className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer"
+                    >
+                      PDF enxuto (A4)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => exportToPDF('expandida_mobile')}
+                      className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer"
+                    >
+                      PDF mobile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={exportToCSV} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer">
+                      CSV
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-              <button
-                type="button"
-                onClick={handleApplySearchFilter}
-                className="h-10 px-3 rounded-xl bg-background dark:bg-secondary text-foreground hover:bg-primary dark:hover:bg-muted transition text-xs font-semibold whitespace-nowrap flex-shrink-0"
-                title="Aplicar busca"
-              >
-                Filtrar
-              </button>
-              <button
-                type="button"
-                className={`h-10 w-10 flex-shrink-0 rounded-xl relative flex items-center justify-center ${showFilterDrawer || activeFilterCount > 0 ? 'bg-muted dark:bg-muted' : 'bg-muted dark:bg-secondary'}`}
-                onClick={() => setShowFilterDrawer((open) => !open)}
-                title="Filtros"
-              >
-                <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
-                {activeFilterCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-muted text-foreground text-[10px] rounded-full flex items-center justify-center font-bold">
-                    {activeFilterCount}
-                  </span>
-                )}
-              </button>
-              {activeFilterCount > 0 && (
-                <button
-                  onClick={handleClearFilters}
-                  className="h-10 w-10 flex-shrink-0 rounded-xl text-muted-foreground bg-muted dark:bg-secondary hover:bg-muted dark:hover:bg-muted/80 transition flex items-center justify-center"
-                  title="Limpar filtros"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
             </div>
-
-            {showFilterDrawer && (
-              <div className="grid grid-cols-1 md:grid-cols-6 gap-2 pb-1">
-                <div className="flex items-center gap-2 bg-muted dark:bg-secondary rounded-xl md:rounded-lg px-3 h-10 md:h-9 md:col-span-2 overflow-x-auto">
-                  <span className="text-xs text-muted-foreground flex-shrink-0">Nível da TreeGrid</span>
-                  <LevelControl level={treeLevel} onChange={setTreeLevel} />
-                </div>
-                <button
-                  onClick={() => {
-                    const today = new Date();
-                    setDateRange({ from: today, to: today });
-                  }}
-                  className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-muted dark:bg-secondary text-foreground/90 hover:bg-muted dark:hover:bg-muted/80 transition"
-                >
-                  Hoje
-                </button>
-                <button
-                  onClick={() => {
-                    const today = new Date();
-                    setDateRange({ from: subDays(today, 30), to: today });
-                  }}
-                  className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-muted dark:bg-secondary text-foreground/90 hover:bg-muted dark:hover:bg-muted/80 transition"
-                >
-                  30 dias
-                </button>
-                <button
-                  onClick={() => {
-                    const today = new Date();
-                    setDateRange({ from: startOfMonth(today), to: endOfMonth(today) });
-                  }}
-                  className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-muted dark:bg-secondary text-foreground/90 hover:bg-muted dark:hover:bg-muted/80 transition"
-                >
-                  Mês atual
-                </button>
-                <button
-                  onClick={() => setShowCalendar(true)}
-                  className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-muted dark:bg-secondary text-foreground/90 hover:bg-muted dark:hover:bg-muted/80 transition"
-                >
-                  {dateRange.from ? `${format(dateRange.from, 'dd/MM')} - ${dateRange.to ? format(dateRange.to, 'dd/MM') : '...'}` : 'Selecionar período'}
-                </button>
-              </div>
-            )}
           </div>
         </div>
 
@@ -2009,76 +2019,169 @@ export default function RelatorioMargemVendas() {
             document.body
           )}
 
-<div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-           {/* Toolbar */}
-           <div className="px-3 md:mx-4 mb-2 py-2 min-w-0 max-w-full">
-             <div className="flex flex-wrap items-center gap-2 min-w-0 [&_button]:!min-h-9 [&_button]:!min-w-9 md:[&_button]:!min-h-6 md:[&_button]:!min-w-6">
-            <div className="hidden md:contents">
-            <LevelControl level={treeLevel} onChange={setTreeLevel} />
-            <div className="w-px h-8 bg-muted dark:bg-muted mx-0.5 flex-shrink-0" />
-            </div>
-            {/* Critério selecionado - ícone apenas */}
-            <div className="relative">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="flex items-center justify-center w-10 h-10 rounded-xl border border-border/40/80 dark:border-border bg-card dark:bg-secondary hover:bg-muted/40 dark:hover:bg-muted/80 shadow-sm transition" title="Critério de ordenação">
-                    {sortField === 'nome' && <Type className="w-4 h-4 text-foreground/90" />}
-                    {sortField === 'lucro_total' && <DollarSign className="w-4 h-4 text-foreground/90" />}
-                    {sortField === 'total_recebido' && <TrendingUp className="w-4 h-4 text-foreground/90" />}
-                    {sortField === 'markup_percentual' && <Percent className="w-4 h-4 text-foreground/90" />}
-                    {sortField === 'valor_unitario_medio' && <DollarSign className="w-4 h-4 text-foreground/90" />}
-                    {sortField === 'quantidade_vendida' && <Package className="w-4 h-4 text-foreground/90" />}
-                    {sortField === 'custo_total' && <TrendingUp className="w-4 h-4 text-foreground/90 rotate-180" />}
+        {/* Área rolável — filtros sobem; cabeçalho da tabela fixa ao rolar (mobile) */}
+        <div
+          ref={mainScrollRef}
+          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y pb-[var(--p38-scroll-pad-below-nav)]"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
+          {!toolsCollapsed && (
+            <div className="px-3 pt-2 pb-2 space-y-2 border-b border-border/50 bg-background">
+              <div className="flex gap-2 min-w-0 items-center">
+                <div className="relative flex-1 min-w-0">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                  <input
+                    autoComplete="off"
+                    type="text"
+                    placeholder="Produto, código, categoria ou tag (espaço ou ; para combinar termos)..."
+                    value={searchDraft}
+                    onChange={(event) => setSearchDraft(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') handleApplySearchFilter();
+                    }}
+                    className="border-none bg-muted dark:bg-secondary h-10 text-sm pl-9 pr-3 text-foreground/90 shadow-none focus:outline-none focus:ring-0 w-full min-w-0 rounded-xl"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleApplySearchFilter}
+                  className="h-10 px-3 rounded-xl bg-background dark:bg-secondary text-foreground hover:bg-primary dark:hover:bg-muted transition text-xs font-semibold whitespace-nowrap flex-shrink-0"
+                  title="Aplicar busca"
+                >
+                  Filtrar
+                </button>
+                <button
+                  type="button"
+                  className={`h-10 w-10 flex-shrink-0 rounded-xl relative flex items-center justify-center ${showFilterDrawer || activeFilterCount > 0 ? 'bg-muted dark:bg-muted' : 'bg-muted dark:bg-secondary'}`}
+                  onClick={() => setShowFilterDrawer((open) => !open)}
+                  title="Filtros"
+                >
+                  <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
+                  {activeFilterCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-muted text-foreground text-[10px] rounded-full flex items-center justify-center font-bold">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
+                {activeFilterCount > 0 && (
+                  <button
+                    onClick={handleClearFilters}
+                    className="h-10 w-10 flex-shrink-0 rounded-xl text-muted-foreground bg-muted dark:bg-secondary hover:bg-muted dark:hover:bg-muted/80 transition flex items-center justify-center"
+                    title="Limpar filtros"
+                  >
+                    <X className="w-4 h-4" />
                   </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="dark:bg-secondary dark:border-border">
-                  <DropdownMenuItem onClick={() => { setSortField('nome'); setSortOrder('asc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
-                    <Type className="w-4 h-4" />
-                    <span>Descrição</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setSortField('quantidade_vendida'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
-                    <Package className="w-4 h-4" />
-                    <span>Quant</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setSortField('valor_unitario_medio'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
-                    <DollarSign className="w-4 h-4" />
-                    <span>Preço un médio</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setSortField('total_recebido'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4" />
-                    <span>Receita</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setSortField('custo_total'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 rotate-180" />
-                    <span>Custo</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setSortField('lucro_total'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
-                    <DollarSign className="w-4 h-4" />
-                    <span>Lucro</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setSortField('markup_percentual'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
-                    <Percent className="w-4 h-4" />
-                    <span>Markup</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                )}
+              </div>
+
+              {showFilterDrawer && (
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-2">
+                  <div className="flex items-center gap-2 bg-muted dark:bg-secondary rounded-xl md:rounded-lg px-3 h-10 md:h-9 md:col-span-2 overflow-x-auto">
+                    <span className="text-xs text-muted-foreground flex-shrink-0">Nível da TreeGrid</span>
+                    <LevelControl level={treeLevel} onChange={setTreeLevel} />
+                  </div>
+                  <button
+                    onClick={() => {
+                      const today = new Date();
+                      setDateRange({ from: today, to: today });
+                    }}
+                    className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-muted dark:bg-secondary text-foreground/90 hover:bg-muted dark:hover:bg-muted/80 transition"
+                  >
+                    Hoje
+                  </button>
+                  <button
+                    onClick={() => {
+                      const today = new Date();
+                      setDateRange({ from: subDays(today, 30), to: today });
+                    }}
+                    className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-muted dark:bg-secondary text-foreground/90 hover:bg-muted dark:hover:bg-muted/80 transition"
+                  >
+                    30 dias
+                  </button>
+                  <button
+                    onClick={() => {
+                      const today = new Date();
+                      setDateRange({ from: startOfMonth(today), to: endOfMonth(today) });
+                    }}
+                    className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-muted dark:bg-secondary text-foreground/90 hover:bg-muted dark:hover:bg-muted/80 transition"
+                  >
+                    Mês atual
+                  </button>
+                  <button
+                    onClick={() => setShowCalendar(true)}
+                    className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-muted dark:bg-secondary text-foreground/90 hover:bg-muted dark:hover:bg-muted/80 transition"
+                  >
+                    {dateRange.from ? `${format(dateRange.from, 'dd/MM')} - ${dateRange.to ? format(dateRange.to, 'dd/MM') : '...'}` : 'Selecionar período'}
+                  </button>
+                </div>
+              )}
+
+              <div className="min-w-0 max-w-full">
+                <div className="flex flex-wrap items-center gap-2 min-w-0 [&_button]:!min-h-9 [&_button]:!min-w-9 md:[&_button]:!min-h-6 md:[&_button]:!min-w-6">
+                  <div className="hidden md:contents">
+                    <LevelControl level={treeLevel} onChange={setTreeLevel} />
+                    <div className="w-px h-8 bg-muted dark:bg-muted mx-0.5 flex-shrink-0" />
+                  </div>
+                  <div className="relative">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="flex items-center justify-center w-10 h-10 rounded-xl border border-border/40/80 dark:border-border bg-card dark:bg-secondary hover:bg-muted/40 dark:hover:bg-muted/80 shadow-sm transition" title="Critério de ordenação">
+                          {sortField === 'nome' && <Type className="w-4 h-4 text-foreground/90" />}
+                          {sortField === 'lucro_total' && <DollarSign className="w-4 h-4 text-foreground/90" />}
+                          {sortField === 'total_recebido' && <TrendingUp className="w-4 h-4 text-foreground/90" />}
+                          {sortField === 'markup_percentual' && <Percent className="w-4 h-4 text-foreground/90" />}
+                          {sortField === 'valor_unitario_medio' && <DollarSign className="w-4 h-4 text-foreground/90" />}
+                          {sortField === 'quantidade_vendida' && <Package className="w-4 h-4 text-foreground/90" />}
+                          {sortField === 'custo_total' && <TrendingUp className="w-4 h-4 text-foreground/90 rotate-180" />}
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="dark:bg-secondary dark:border-border">
+                        <DropdownMenuItem onClick={() => { setSortField('nome'); setSortOrder('asc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
+                          <Type className="w-4 h-4" />
+                          <span>Descrição</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setSortField('quantidade_vendida'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
+                          <Package className="w-4 h-4" />
+                          <span>Quant</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setSortField('valor_unitario_medio'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
+                          <DollarSign className="w-4 h-4" />
+                          <span>Preço un médio</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setSortField('total_recebido'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4" />
+                          <span>Receita</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setSortField('custo_total'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4 rotate-180" />
+                          <span>Custo</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setSortField('lucro_total'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
+                          <DollarSign className="w-4 h-4" />
+                          <span>Lucro</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setSortField('markup_percentual'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
+                          <Percent className="w-4 h-4" />
+                          <span>Markup</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <button
+                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                    className="flex items-center justify-center w-11 h-11 md:w-10 md:h-10 flex-shrink-0 rounded-xl border border-border/40/80 dark:border-border bg-card dark:bg-secondary hover:bg-muted/40 dark:hover:bg-muted/80 shadow-sm transition"
+                    title="Alternar direção"
+                  >
+                    <ChevronDown className={`w-4 h-4 text-foreground/90 transition ${
+                      sortOrder === 'desc' ? 'rotate-180' : ''
+                    }`} />
+                  </button>
+                </div>
+              </div>
             </div>
+          )}
 
-            {/* Seta para direção */}
-            <button
-              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              className="flex items-center justify-center w-11 h-11 md:w-10 md:h-10 flex-shrink-0 rounded-xl border border-border/40/80 dark:border-border bg-card dark:bg-secondary hover:bg-muted/40 dark:hover:bg-muted/80 shadow-sm transition"
-              title="Alternar direção"
-            >
-              <ChevronDown className={`w-4 h-4 text-foreground/90 transition ${
-                sortOrder === 'desc' ? 'rotate-180' : ''
-              }`} />
-            </button>
-             </div>
-           </div>
-
-           {/* Table - Desktop Table / Mobile Cards */}
-        <div className="flex-1 min-h-0 p-3 desktop-layout:px-4 desktop-layout:pt-0 desktop-layout:pb-4 min-w-0 max-w-full overflow-hidden" id="relatorio-table">
+          <div className="min-w-0 max-w-full p-3 desktop-layout:px-4 desktop-layout:pb-4" id="relatorio-table">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 px-4 text-center rounded-2xl border border-dashed border-border/40 dark:border-border bg-card/60 dark:bg-background/60">
               <Loader2 className="w-9 h-9 animate-spin text-muted-foreground mb-4" />
@@ -2088,24 +2191,16 @@ export default function RelatorioMargemVendas() {
           ) : processedData.length > 0 ? (
             <>
 
-              {/* Desktop: painel resumo + KPIs (mesmo visual mobile) */}
-              <div className="hidden desktop-layout:block mb-3 space-y-3">
-                <MargemMobileReportHeader
-                  filtrosDesc={buildMarginFiltrosDesc({
-                    dateRange,
-                    searchTerm,
-                    treeLevel,
-                  })}
-                />
-                <MargemMobileKpis totals={totals} totalMarkup={totalMarkup} />
-                <MargemCustoDetalheTotais totals={totals} />
-              </div>
+              {/* Desktop: painel resumo + KPIs (rola com a página) */}
+              {!toolsCollapsed && (
+                <div className="hidden desktop-layout:block mb-3 space-y-3">
+                  <MargemMobileReportHeader filtrosDesc={filtrosDesc} />
+                  <MargemMobileKpis totals={totals} totalMarkup={totalMarkup} />
+                  <MargemCustoDetalheTotais totals={totals} />
+                </div>
+              )}
               {/* Desktop Table View */}
-              <div
-                ref={desktopScrollRef}
-                className="hidden desktop-layout:block h-full min-h-0 min-w-0 overflow-auto overscroll-contain rounded-xl border border-border bg-background shadow-sm"
-                style={{ WebkitOverflowScrolling: 'touch' }}
-              >
+              <div className="hidden desktop-layout:block min-w-0 rounded-xl border border-border bg-background shadow-sm overflow-hidden">
                 <table className={`w-full table-fixed ${MARGIN_BODY_TEXT}`}>
                   <colgroup>
                     <col className="w-[72px]" />
@@ -2183,22 +2278,20 @@ export default function RelatorioMargemVendas() {
                           </table>
               </div>
 
-              {/* Mobile: mesma diagramação do PDF mobile */}
-              <div
-                ref={mobileScrollRef}
-                className="desktop-layout:hidden h-full min-h-0 min-w-0 max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain rounded-lg border border-border bg-background pb-[var(--p38-scroll-pad-below-nav)]"
-                style={{ WebkitOverflowScrolling: 'touch' }}
-              >
-                <MargemMobileReportHeader
-                  filtrosDesc={buildMarginFiltrosDesc({
-                    dateRange,
-                    searchTerm,
-                    treeLevel,
-                  })}
-                />
-                <MargemMobileKpis totals={totals} totalMarkup={totalMarkup} />
-                <MargemCustoDetalheTotais totals={totals} />
-                <MargemMobileColumnHeader className="sticky top-0 z-20 shadow-sm" />
+              {/* Mobile: diagramação do PDF mobile com cabeçalho de colunas fixo ao rolar */}
+              <div className="desktop-layout:hidden min-w-0 max-w-full">
+                {!toolsCollapsed && (
+                  <>
+                    <MargemMobileReportHeader filtrosDesc={filtrosDesc} />
+                    <MargemMobileKpis totals={totals} totalMarkup={totalMarkup} />
+                    <MargemCustoDetalheTotais totals={totals} />
+                  </>
+                )}
+                <div ref={mobileHeaderSentinelRef} className="h-px w-full shrink-0" aria-hidden />
+                <MargemMobileColumnHeader invisible={mobileHeaderPinned} />
+                {mobileHeaderPinned ? (
+                  <MargemMobileColumnHeader pinStyle={mobilePinStyle} className="shadow-sm" />
+                ) : null}
                 {mobilePadTop > 0 && (
                   <div aria-hidden="true" style={{ height: mobilePadTop, flexShrink: 0 }} />
                 )}
@@ -2244,9 +2337,10 @@ export default function RelatorioMargemVendas() {
               </p>
             </div>
           )}
-        </div>
+          </div>
         </div>
       </div>
     </div>
+    </TooltipProvider>
   );
 }
