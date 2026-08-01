@@ -11,7 +11,7 @@ import pg from 'pg';
 import ExcelJS from 'exceljs';
 import { LINHAS_MESTRE, inferirLinhaCodigo, findLinhaMeta, norm, trim } from './lib/inferirLinha.mjs';
 import { inferirProdutoCompraLabel } from './lib/bladeRangerPanel.mjs';
-import { LINHA_COMPORTAMENTOS, pulaProdutoCompra } from './lib/linhaComportamento.mjs';
+import { LINHA_COMPORTAMENTOS, pulaProdutoCompra, TIPOS_RUPTURA, MAX_EIXOS_PRODUTO_COMPRA } from './lib/linhaComportamento.mjs';
 
 const OUT = path.join(process.cwd(), 'docs', 'exports', 'P38-hierarquia-catalogo-trabalho.xlsx');
 
@@ -39,7 +39,7 @@ async function main() {
   const { rows: produtos } = await client.query(`
     select id, nome, codigo_interno, categoria_nome,
            campo_hierarquico_1, campo_hierarquico_2, campo_hierarquico_3,
-           campo_hierarquico_4, campo_hierarquico_5, linha_id
+           campo_hierarquico_4, campo_hierarquico_5, linha_id, estoque_atual
     from produto where ativo = true
   `);
 
@@ -246,7 +246,11 @@ async function main() {
     ['  4. Produto compra — nome, código, rótulos eixo A/B de cada esquadra, STATUS'],
     ['  5. Eixos candidatos — ajuda a escolher o que é A vs B (h2/h3/h4 hoje)'],
     ['  6. Árvore trabalho — coluna ORDEM: reordenar formação (categ > linha > prod > sku)'],
-    ['  7. SKUs mapa — revisão fina por SKU'],
+    ['  7. SKUs mapa — massa crítica e tipo de ruptura por SKU'],
+    [''],
+    ['Regras: produto compra (mix/portfolio) = até 2 eixos. Terceiro eixo = outro produto compra.'],
+    ['Mix = composição plena. Portfolio = cobertura % + tamanho do time (ex. 11 opções).'],
+    ['Ruptura ≠ só estoque zero — inclui perda de massa crítica (ex. cerâmica com 3 caixas).'],
     [''],
     ['O painel Blade Ranger vem DEPOIS desta hierarquia está madura.'],
     ['Cadastro e interface absorvem o Excel quando STATUS = SIM nas folhas.'],
@@ -260,16 +264,37 @@ async function main() {
 
   const wsComp = wb.addWorksheet('Comportamentos LINHA');
   wsComp.columns = [
-    { header: 'Tipo', key: 'tipo', width: 12 },
-    { header: 'Nome', key: 'nome', width: 22 },
-    { header: 'Níveis na árvore', key: 'niveis', width: 36 },
-    { header: 'Pula nível', key: 'pula', width: 18 },
-    { header: 'Descrição', key: 'descricao', width: 42 },
-    { header: 'Eixos', key: 'eixos', width: 36 },
-    { header: 'Exemplo', key: 'exemplo', width: 32 },
+    { header: 'Tipo', key: 'tipo', width: 10 },
+    { header: 'Nome', key: 'nome', width: 20 },
+    { header: 'Níveis árvore', key: 'niveis', width: 32 },
+    { header: 'Pula nível', key: 'pula', width: 14 },
+    { header: 'Forma de controle', key: 'controle', width: 36 },
+    { header: 'Intersubstituibilidade', key: 'intersubstituibilidade', width: 32 },
+    { header: 'Ruptura típica', key: 'ruptura_tipica', width: 36 },
+    { header: 'Eixos máx', key: 'eixos_max', width: 28 },
+    { header: 'Exemplo', key: 'exemplo', width: 28 },
   ];
   styleHeader(wsComp.getRow(1));
   Object.values(LINHA_COMPORTAMENTOS).forEach((c) => wsComp.addRow(c));
+
+  const wsDoutrina = wb.addWorksheet('Doutrina ruptura');
+  wsDoutrina.columns = [
+    { header: 'Conceito', key: 'conceito', width: 28 },
+    { header: 'Definição', key: 'def', width: 72 },
+  ];
+  styleHeader(wsDoutrina.getRow(1));
+  [
+    { conceito: 'Eixos produto compra', def: `Máximo ${MAX_EIXOS_PRODUTO_COMPRA} (A e B). Precisa de terceiro? Crie outro produto compra — não um terceiro eixo.` },
+    { conceito: 'Mix — controle', def: 'Composição plena: a grelha do produto compra deve estar coberta (cada célula relevante).' },
+    { conceito: 'Portfolio — controle', def: 'Nível de cobertura (ex. 80% das opções saldáveis). Tamanho do time: qtd máx de SKUs/opções por produto compra (ex. 11 jogadores).' },
+    { conceito: 'Portfolio — mínimo saldável', def: 'Quantas opções “contam” para dizer que o leque está ok (abaixo disso = formação fraca).' },
+    { conceito: 'Massa crítica (SKU)', def: 'Quantidade mínima para o SKU ser relevante no balcão — mesmo com estoque > 0.' },
+    { conceito: 'Ruptura estoque zero', def: TIPOS_RUPTURA.estoque_zero },
+    { conceito: 'Ruptura ponto futuro', def: TIPOS_RUPTURA.ponto_futuro_negativo },
+    { conceito: 'Ruptura massa crítica', def: TIPOS_RUPTURA.massa_critica + ' — cerâmica: 3 caixas não sustenta a opção no portfólio.' },
+    { conceito: 'Solo', def: 'Também exige massa crítica por SKU; ruptura costuma ser zero ou ponto futuro.' },
+  ].forEach((r) => wsDoutrina.addRow(r));
+  wsDoutrina.getColumn(2).width = 80;
 
   const wsCat = wb.addWorksheet('Categorias', { views: [{ state: 'frozen', ySplit: 1 }] });
   wsCat.columns = [
@@ -305,6 +330,8 @@ async function main() {
     { header: 'Categoria principal (sugestão)', key: 'cat_sug', width: 28 },
     { header: 'Rótulo eixo A (LINHA)', key: 'eixo_a', width: 18 },
     { header: 'Rótulo eixo B (LINHA)', key: 'eixo_b', width: 18 },
+    { header: 'Forma controle', key: 'controle', width: 28 },
+    { header: 'Ruptura predominante', key: 'ruptura', width: 22 },
     { header: 'SKUs', key: 'skus', width: 8 },
     { header: 'STATUS', key: 'status', width: 10 },
     { header: 'OBS', key: 'obs', width: 24 },
@@ -336,6 +363,8 @@ async function main() {
       cat_sug: topCat,
       eixo_a: db?.eixo_a_rotulo ?? '',
       eixo_b: db?.eixo_b_rotulo ?? '',
+      controle: LINHA_COMPORTAMENTOS[l.tipo]?.controle ?? '',
+      ruptura: LINHA_COMPORTAMENTOS[l.tipo]?.ruptura_tipica ?? '',
       skus: linhaSkuCount.get(l.codigo) || 0,
       status: '',
       obs: l.chave,
@@ -352,6 +381,10 @@ async function main() {
     { header: 'Nome produto compra', key: 'nome', width: 28 },
     { header: 'Rótulo eixo A', key: 'eixo_a', width: 16 },
     { header: 'Rótulo eixo B', key: 'eixo_b', width: 16 },
+    { header: 'Meta opções (time)', key: 'meta_opcoes', width: 14 },
+    { header: 'Cobertura mín %', key: 'cobertura_pct', width: 14 },
+    { header: 'Massa crítica SKU', key: 'massa_critica', width: 14 },
+    { header: 'Tipo ruptura', key: 'tipo_ruptura', width: 18 },
     { header: 'SKUs', key: 'skus', width: 8 },
     { header: 'STATUS', key: 'status', width: 10 },
     { header: 'OBS', key: 'obs', width: 32 },
@@ -377,6 +410,10 @@ async function main() {
       nome: pc.produto_compra_nome,
       eixo_a: '',
       eixo_b: '',
+      meta_opcoes: pc.tipo === 'portfolio' ? '' : '',
+      cobertura_pct: pc.tipo === 'portfolio' ? '' : '',
+      massa_critica: '',
+      tipo_ruptura: pc.tipo === 'portfolio' ? 'massa_critica' : 'ponto_futuro_negativo',
       skus: pc.skus,
       status: '',
       obs: `h2: ${[...pc.h2].slice(0, 4).join(' | ')}`,
@@ -449,6 +486,9 @@ async function main() {
     { header: 'h3', key: 'h3', width: 14 },
     { header: 'h4', key: 'h4', width: 14 },
     { header: 'h5', key: 'h5', width: 12 },
+    { header: 'Estoque', key: 'estoque', width: 10 },
+    { header: 'Massa crítica', key: 'massa_critica', width: 12 },
+    { header: 'Tipo ruptura', key: 'tipo_ruptura', width: 18 },
     { header: 'STATUS', key: 'status', width: 10 },
   ];
   styleHeader(wsSku.getRow(1));
@@ -456,6 +496,8 @@ async function main() {
     const lc = inferirLinhaCodigo(p);
     const meta = findLinhaMeta(lc);
     const pc = inferirProdutoCompraLabel(p, lc, meta.tipo);
+    const tipoRupt =
+      meta.tipo === 'portfolio' ? 'massa_critica' : meta.tipo === 'solo' ? 'estoque_zero' : 'ponto_futuro_negativo';
     wsSku.addRow({
       categoria: trim(p.categoria_nome),
       linha_codigo: lc,
@@ -468,6 +510,9 @@ async function main() {
       h3: trim(p.campo_hierarquico_3),
       h4: trim(p.campo_hierarquico_4),
       h5: trim(p.campo_hierarquico_5),
+      estoque: Number(p.estoque_atual) || 0,
+      massa_critica: '',
+      tipo_ruptura: tipoRupt,
       status: '',
     });
   }
