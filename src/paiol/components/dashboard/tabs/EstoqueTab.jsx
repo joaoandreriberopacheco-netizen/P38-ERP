@@ -4,6 +4,12 @@ import { ptBR } from 'date-fns/locale';
 import { base44 } from '@/api/base44Client';
 import { pedidoLiberadoParaLogistica } from '@/lib/aprovarPedidoCompraFinanceiro';
 import { enrichProdutosComIep } from '@/lib/calcularIepProdutos';
+import {
+  buildPendenteEmbarcadoNaoRecebidoPorProduto,
+  buildRecebidosPorPedidoProdutoFromEmbarques,
+  pedidoCompraAprovadoNaoConcluido as pedidoCompraAprovadoNaoConcluidoCanonico,
+  quantidadePendenteItemPedidoCompra,
+} from '@/lib/sugestaoCompraEstoquePendente';
 import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
 import { fetchDadosVendaAbcd90d } from '@/lib/fetchPedidosVenda90d';
 import {
@@ -183,27 +189,124 @@ function pedidoVendaContaNoCMV(pedido = {}) {
 }
 
 function pedidoCompraAprovadoNaoConcluido(pedido = {}) {
+  return pedidoCompraAprovadoNaoConcluidoCanonico(pedido);
+}
+
+function pedidoContaNoEstoqueVirtualHistorico(pedido = {}) {
   const statusDisplay = String(pedido.status || '').trim();
-  const ehAguardandoPagamento = [
-    'Aguardando Aprovação Financeira',
-    'Aguardando Liberação Financeira',
-    'Aguardando Liberação',
-    'Aguardando',
-  ].includes(statusDisplay);
-  if (ehAguardandoPagamento) return false;
-
+  const status = normalizeStatus(statusDisplay);
+  if (['rascunho', 'cancelado', 'rejeitado', 'rejeitado financeiramente'].includes(status)) {
+    return false;
+  }
+  if (
+    [
+      'aguardando aprovação financeira',
+      'aguardando aprovacao financeira',
+      'aguardando liberação financeira',
+      'aguardando liberacao financeira',
+      'aguardando liberação',
+      'aguardando liberacao',
+      'aguardando',
+    ].includes(status)
+  ) {
+    return false;
+  }
   const statusAprovacao = normalizeStatus(pedido.status_aprovacao_financeira || pedido.status);
-  const aprovadoViaStatus = pedidoLiberadoParaLogistica(pedido);
-  const aprovado = PEDIDO_COMPRA_APPROVED_STATUSES.has(statusAprovacao);
-  if (!aprovado && !aprovadoViaStatus) return false;
+  return (
+    PEDIDO_COMPRA_APPROVED_STATUSES.has(statusAprovacao) ||
+    pedidoLiberadoParaLogistica(pedido) ||
+    pedidoCompraAprovadoNaoConcluido(pedido)
+  );
+}
 
-  const statusRecebimento = normalizeStatus(pedido.status_recebimento_geral);
-  const statusPedido = normalizeStatus(pedido.status);
-  const concluidoRecebimento =
-    statusRecebimento.startsWith('concluído') || statusRecebimento.startsWith('concluido');
-  const concluidoPedido = statusPedido === 'concluído' || statusPedido === 'concluido';
+function embarqueRecebidoAte(embarque = {}, monthEnd) {
+  const statusReceb = normalizeStatus(embarque?.status_recebimento);
+  const statusEmbarque = normalizeStatus(embarque?.status);
+  const recebido =
+    statusReceb === 'recebido ok' ||
+    statusReceb === 'com divergencia' ||
+    statusReceb === 'recebido parcial' ||
+    statusEmbarque === 'concluido';
+  if (!recebido) return false;
 
-  return !concluidoRecebimento && !concluidoPedido;
+  const dataReceb = parseDate(
+    embarque.data_recebimento || embarque.data_conclusao || embarque.updated_date || embarque.created_date
+  );
+  return dataReceb && !isAfter(dataReceb, monthEnd);
+}
+
+function embarqueEmTransitoNoFimDoMes(embarque = {}, monthEnd) {
+  const dataEmbarque = parseDate(embarque.data_embarque || embarque.eta || embarque.created_date);
+  if (!dataEmbarque || isAfter(dataEmbarque, monthEnd)) return false;
+  if (embarqueRecebidoAte(embarque, monthEnd)) return false;
+  return true;
+}
+
+function mergePendentePorProdutoMaps(...maps) {
+  const out = {};
+  for (const map of maps) {
+    for (const [key, qty] of Object.entries(map || {})) {
+      const atual = Number(out[key] || 0);
+      const novo = Number(qty) || 0;
+      out[key] = Math.max(atual, novo);
+    }
+  }
+  return out;
+}
+
+function buildPendenteVirtualPorProdutoNoFimDoMes(
+  monthEnd,
+  pedidosCompra = [],
+  embarquesCompra = [],
+  recebidosPorPedidoProduto = {},
+) {
+  const pedidosAteMes = pedidosCompra.filter((pedido) => {
+    const dataPedido = parseDate(pedido.data_emissao || pedido.created_date);
+    return dataPedido && !isAfter(dataPedido, monthEnd);
+  });
+  const pedidosById = new Map(pedidosAteMes.filter((p) => p?.id).map((p) => [String(p.id), p]));
+  const pedidoMap = {};
+
+  pedidosAteMes.forEach((pedido) => {
+    if (!pedidoContaNoEstoqueVirtualHistorico(pedido)) return;
+    const recebidosPedido = recebidosPorPedidoProduto[String(pedido.id)] || {};
+    (pedido.itens || []).forEach((item) => {
+      const produtoId = item?.produto_id;
+      if (!produtoId) return;
+      const pendente = quantidadePendenteItemPedidoCompra(item, recebidosPedido);
+      if (pendente <= 0) return;
+      const produtoKey = String(produtoId);
+      pedidoMap[produtoKey] = (pedidoMap[produtoKey] || 0) + pendente;
+    });
+  });
+
+  const embarquesTransito = embarquesCompra.filter((embarque) => embarqueEmTransitoNoFimDoMes(embarque, monthEnd));
+  const embarqueMap = buildPendenteEmbarcadoNaoRecebidoPorProduto(embarquesTransito, pedidosById);
+  return mergePendentePorProdutoMaps(pedidoMap, embarqueMap);
+}
+
+function calcularValorEstoqueVirtualNoFimDoMes(
+  monthEnd,
+  pedidosCompra = [],
+  embarquesCompra = [],
+  custoProdutoMap = new Map(),
+) {
+  const embarquesRecebidosAteMes = embarquesCompra.filter((embarque) => embarqueRecebidoAte(embarque, monthEnd));
+  const recebidosPorPedidoProduto = buildRecebidosPorPedidoProdutoFromEmbarques(
+    embarquesRecebidosAteMes,
+    pedidosCompra,
+  );
+  const pendentePorProduto = buildPendenteVirtualPorProdutoNoFimDoMes(
+    monthEnd,
+    pedidosCompra,
+    embarquesCompra,
+    recebidosPorPedidoProduto,
+  );
+
+  return Object.entries(pendentePorProduto).reduce((total, [produtoId, qty]) => {
+    const custo = Number(custoProdutoMap.get(produtoId) ?? custoProdutoMap.get(Number(produtoId)) ?? 0);
+    return total + (Number(qty) || 0) * Math.max(0, custo);
+  }, 0);
 }
 
 function percentualPendentePedidoCompra(pedido = {}) {
@@ -433,6 +536,7 @@ export default function EstoqueTab() {
   const [error, setError] = useState(null);
   const [metrics, setMetrics] = useState(null);
   const [incluirTransitoQualidade, setIncluirTransitoQualidade] = useState(false);
+  const [incluirEstoqueVirtualNivel, setIncluirEstoqueVirtualNivel] = useState(false);
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window === 'undefined') return false;
     return window.innerWidth < 640;
@@ -567,6 +671,10 @@ export default function EstoqueTab() {
           }))
           .filter((movimento) => movimento.skuId && movimento.date && movimento.deltaQuantidade !== 0);
 
+        const custoProdutoMap = new Map(
+          produtosLista.map((produto) => [produto.id, Number(produto.preco_custo_calculado || produto.valor_compra || 0)])
+        );
+
         const nivelEstoqueSeries = monthBuckets.map((bucket) => {
           const monthEnd = bucket.end;
           const deltaAfterMonthBySku = new Map();
@@ -585,15 +693,21 @@ export default function EstoqueTab() {
             monthValue += estoqueGerencial * skuData.custoAtual;
           });
 
+          const valorVirtual = calcularValorEstoqueVirtualNoFimDoMes(
+            monthEnd,
+            pedidosCompraLista,
+            embarquesCompraLista,
+            custoProdutoMap,
+          );
+
           return {
             periodo: bucket.label,
             valor: monthValue,
+            valorFisico: monthValue,
+            valorVirtual,
+            valorGeral: monthValue + valorVirtual,
           };
         });
-
-        const custoProdutoMap = new Map(
-          produtosLista.map((produto) => [produto.id, Number(produto.preco_custo_calculado || produto.valor_compra || 0)])
-        );
 
         const supplyByMonth = supplyMonthBuckets.map((bucket) => {
           const cmvEfetivo = lancamentosLista.reduce((sum, lancamento) => {
@@ -850,6 +964,11 @@ export default function EstoqueTab() {
     ? (metrics.qualityDistributionGeral || metrics.qualityDistribution)
     : metrics.qualityDistribution;
   const totalQualidade = qualityBase.reduce((sum, bucket) => sum + Number(bucket.valor || 0), 0);
+  const nivelEstoqueChartData = (metrics.nivelEstoqueSeries || []).map((entry) => ({
+    ...entry,
+    valor: incluirEstoqueVirtualNivel ? Number(entry.valorGeral ?? entry.valor) : Number(entry.valorFisico ?? entry.valor),
+  }));
+  const nivelEstoqueAtual = nivelEstoqueChartData.at(-1)?.valor || 0;
   const qualityHalfDonutData = qualityBase.map((bucket) => ({
     name: bucket.label,
     value: Number(bucket.valor || 0),
@@ -866,16 +985,27 @@ export default function EstoqueTab() {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-3">
         <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
-            <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
-              <Package className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
-              Nível de Estoque (Base Hoje)
-            </CardTitle>
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+                <Package className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
+                Nível de Estoque (Base Hoje)
+              </CardTitle>
+              <label className={`flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide ${p38Dashboard.titleMuted}`}>
+                Virtual
+                <Switch
+                  checked={incluirEstoqueVirtualNivel}
+                  onCheckedChange={setIncluirEstoqueVirtualNivel}
+                  aria-label="Incluir estoque virtual no nível de estoque"
+                  className="scale-[0.85]"
+                />
+              </label>
+            </div>
           </CardHeader>
           <CardContent className="pt-1">
             <div className={`h-[220px] sm:h-[210px] rounded-xl px-1 py-1.5 ${p38Dashboard.inner}`}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={metrics.nivelEstoqueSeries}
+                  data={nivelEstoqueChartData}
                   margin={DASHBOARD_CHART_MARGIN.categorical}
                   barCategoryGap="20%"
                 >
@@ -901,10 +1031,10 @@ export default function EstoqueTab() {
                     itemStyle={chartTheme.tooltip.itemStyle}
                   />
                   <Bar dataKey="valor" radius={[6, 6, 0, 0]} maxBarSize={48}>
-                    {metrics.nivelEstoqueSeries.map((entry, idx) => (
+                    {nivelEstoqueChartData.map((entry, idx) => (
                       <Cell
                         key={`${entry.periodo}-${idx}`}
-                        fill={idx === metrics.nivelEstoqueSeries.length - 1 ? 'url(#stockBarGradient)' : STOCK_BAR_COLORS[idx % STOCK_BAR_COLORS.length]}
+                        fill={idx === nivelEstoqueChartData.length - 1 ? 'url(#stockBarGradient)' : STOCK_BAR_COLORS[idx % STOCK_BAR_COLORS.length]}
                       />
                     ))}
                   </Bar>
@@ -914,9 +1044,9 @@ export default function EstoqueTab() {
             <div className={`mt-2 flex items-center justify-between text-[10px] ${p38Dashboard.legend}`}>
               <span className="flex items-center gap-1.5">
                 <span className="inline-block h-[2px] w-5 rounded-full bg-[#9eb851]" />
-                tendência mensal
+                {incluirEstoqueVirtualNivel ? 'tendência mensal (físico + trânsito)' : 'tendência mensal'}
               </span>
-              <span className={`font-semibold ${p38Dashboard.title}`}>{formatShort(metrics.nivelEstoqueSeries.at(-1)?.valor || 0)}</span>
+              <span className={`font-semibold ${p38Dashboard.title}`}>{formatShort(nivelEstoqueAtual)}</span>
             </div>
           </CardContent>
         </Card>
