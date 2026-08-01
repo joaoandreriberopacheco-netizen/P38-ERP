@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   CartesianGrid,
   Cell,
@@ -15,6 +15,7 @@ import { p38Dashboard } from '@/lib/p38DashboardSurfaces';
 import { DONUT_GAUGE_RADII } from '@/lib/dashboardKpiConfig';
 import {
   buildCartesianGridProps,
+  buildDashboardYDomain,
   buildXAxisProps,
   buildYAxisProps,
   DASHBOARD_CHART_MARGIN,
@@ -51,6 +52,12 @@ export function AcumuladoKpiChart({
   const chartTheme = useDashboardChartTheme();
   const hasBreakEven = data.some((point) => Number(point.breakEven) > 0);
   const hasMeta = data.some((point) => Number(point.meta) > 0);
+  const yDomain = useMemo(() => {
+    const keys = [valueKey];
+    if (hasBreakEven) keys.push('breakEven');
+    if (hasMeta) keys.push('meta');
+    return buildDashboardYDomain(data, keys);
+  }, [data, valueKey, hasBreakEven, hasMeta]);
 
   return (
     <div className={innerSurfaceClassName}>
@@ -58,7 +65,7 @@ export function AcumuladoKpiChart({
         <LineChart data={data} margin={DASHBOARD_CHART_MARGIN.line}>
           <CartesianGrid {...buildCartesianGridProps(chartTheme)} />
           <XAxis {...buildXAxisProps(chartTheme, { dataKey: xKey })} />
-          <YAxis {...buildYAxisProps(chartTheme)} />
+          <YAxis {...buildYAxisProps(chartTheme, { domain: yDomain, width: 38 })} />
           <Tooltip
             formatter={(value, name) => [BRL.format(Number(value || 0)), seriesLabels[name] || name]}
             contentStyle={chartTheme.tooltip.contentStyle}

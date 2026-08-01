@@ -43,6 +43,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { p38Dashboard } from '@/lib/p38DashboardSurfaces';
 import {
   buildCartesianGridProps,
+  buildDashboardYDomain,
   buildXAxisProps,
   buildYAxisProps,
   DASHBOARD_CHART_MARGIN,
@@ -391,6 +392,16 @@ export default function VendasTab() {
     });
   }, [rawData, selectedMonthKey]);
 
+  const dailyYDomain = useMemo(
+    () => buildDashboardYDomain(metrics?.dailyData, 'valor'),
+    [metrics?.dailyData],
+  );
+  const monthlyYDomain = useMemo(
+    () => buildDashboardYDomain(metrics?.monthlySalesData, 'valor'),
+    [metrics?.monthlySalesData],
+  );
+  const chartSurface = `h-[280px] sm:h-[268px] rounded-xl ${p38Dashboard.inner}`;
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
@@ -451,22 +462,22 @@ export default function VendasTab() {
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-1">
-              <div className={`h-[252px] sm:h-[240px] rounded-xl px-1 py-1.5 ${p38Dashboard.inner}`}>
+              <div className={chartSurface}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={metrics.dailyData}
                     margin={DASHBOARD_CHART_MARGIN.daily}
-                    barCategoryGap={isMobile ? '18%' : '12%'}
+                    barCategoryGap={isMobile ? '14%' : '8%'}
                   >
                     <CartesianGrid {...buildCartesianGridProps(chartTheme)} />
                     <XAxis
                       {...buildXAxisProps(chartTheme, {
                         dataKey: 'diaNumero',
                         tickFormatter: (value) => `D${String(value).padStart(2, '0')}`,
-                        interval: isMobile ? 3 : 2,
+                        interval: isMobile ? 4 : 2,
                       })}
                     />
-                    <YAxis {...buildYAxisProps(chartTheme, { width: 28, tickCount: 4 })} />
+                    <YAxis {...buildYAxisProps(chartTheme, { domain: dailyYDomain, width: 38, tickCount: 5 })} />
                     <Tooltip
                       labelFormatter={dayTooltipLabel}
                       formatter={(value) => [BRL.format(Number(value || 0)), metrics.selectedBucket.shortLabel]}
@@ -478,7 +489,7 @@ export default function VendasTab() {
                     <Bar
                       dataKey="valor"
                       radius={[3, 3, 0, 0]}
-                      maxBarSize={isMobile ? 10 : 14}
+                      maxBarSize={isMobile ? 14 : 22}
                       fill="#abc85a"
                     />
                   </BarChart>
@@ -499,7 +510,7 @@ export default function VendasTab() {
                 data={metrics.accumulatedSalesData}
                 xKey="dia"
                 valueKey="valor"
-                innerSurfaceClassName={`h-[252px] sm:h-[240px] rounded-xl px-1 py-1.5 ${p38Dashboard.inner}`}
+                innerSurfaceClassName={chartSurface}
                 seriesLabels={{
                   valor: 'Venda acumulada',
                   breakEven: 'Mínimo acumulado',
@@ -624,16 +635,16 @@ export default function VendasTab() {
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-1">
-              <div className={`h-[252px] sm:h-[240px] rounded-xl px-1 py-1.5 ${p38Dashboard.inner}`}>
+              <div className={chartSurface}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={metrics.monthlySalesData}
                     margin={DASHBOARD_CHART_MARGIN.categorical}
-                    barCategoryGap="20%"
+                    barCategoryGap="12%"
                   >
                     <CartesianGrid {...buildCartesianGridProps(chartTheme)} />
                     <XAxis {...buildXAxisProps(chartTheme, { dataKey: 'periodo' })} />
-                    <YAxis {...buildYAxisProps(chartTheme)} />
+                    <YAxis {...buildYAxisProps(chartTheme, { domain: monthlyYDomain, width: 38, tickCount: 5 })} />
                     <Tooltip
                       formatter={(value) => BRL.format(Number(value || 0))}
                       cursor={{ fill: chartTheme.cursor }}
@@ -641,7 +652,7 @@ export default function VendasTab() {
                       labelStyle={chartTheme.tooltip.labelStyle}
                       itemStyle={chartTheme.tooltip.itemStyle}
                     />
-                    <Bar dataKey="valor" radius={[6, 6, 0, 0]} maxBarSize={48}>
+                    <Bar dataKey="valor" radius={[6, 6, 0, 0]} maxBarSize={56}>
                       {metrics.monthlySalesData.map((entry) => (
                         <Cell
                           key={entry.periodo}
@@ -688,7 +699,7 @@ export default function VendasTab() {
             <CardContent className="pt-1">
               <LucroAcumuladoChart
                 data={metrics.accumulatedProfitData}
-                innerSurfaceClassName={`h-[252px] sm:h-[240px] rounded-xl px-1 py-1.5 ${p38Dashboard.inner}`}
+                innerSurfaceClassName={chartSurface}
               />
               <div className={`flex flex-wrap gap-3 mt-2 text-[10px] ${p38Dashboard.legend}`}>
                 <span className="inline-flex items-center gap-1">
