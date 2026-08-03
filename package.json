@@ -47,6 +47,7 @@
     "auth:enable-google": "node scripts/enable-supabase-google-auth.mjs",
     "retificar:5r8b3": "node scripts/retificar-embarque-5r8b3-once.mjs",
     "corrigir:recepcao": "node scripts/corrigir-recepcao-pedido.mjs",
+    "compras:normalizar-rascunho-desconto": "node scripts/normalizar-pedidos-compra-rascunho-desconto.mjs",
     "corrigir:wx7-console": "node scripts/corrigir-wx7-a5n-console.mjs",
     "iep:calcular": "node scripts/invoke-calcular-iep.mjs",
     "estoque:atualizar-metas": "node scripts/invoke-atualizar-metas-estoque.mjs",
