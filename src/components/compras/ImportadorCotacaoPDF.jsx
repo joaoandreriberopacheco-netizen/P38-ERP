@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,7 @@ import { P38TableShell } from '@/components/ui/table';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import { buildLlmTelemetryContext } from '@/lib/p38LlmTelemetry';
 import {
+    aplicarDescontoUnitarioCotacaoPdf,
     calcularRatioDescontoCotacaoPdf,
     normalizarFinanceiroCotacaoPdf,
 } from '@/lib/cotacaoExpressUtils';
@@ -33,6 +34,31 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
     const formatCurrency = (value) => {
         const num = parseFloat(value) || 0;
         return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
+    const financeiroRevisao = useMemo(
+        () => normalizarFinanceiroCotacaoPdf(aiData?.financeiro),
+        [aiData?.financeiro],
+    );
+
+    const precosComDesconto = useMemo(() => {
+        if (!aiData?.itens?.length) return [];
+        const ativos = mappings.filter((m) => !m.ignored);
+        return aplicarDescontoUnitarioCotacaoPdf(ativos, financeiroRevisao);
+    }, [aiData?.itens, mappings, financeiroRevisao]);
+
+    const ratioDescontoRevisao = useMemo(() => {
+        const subtotalAtivos = mappings
+            .filter((m) => !m.ignored)
+            .reduce((sum, m) => sum + ((Number(m.quantidade_pdf) || 0) * (Number(m.preco_unitario_pdf) || 0)), 0);
+        return calcularRatioDescontoCotacaoPdf(subtotalAtivos, financeiroRevisao);
+    }, [mappings, financeiroRevisao]);
+
+    const getPrecoLiquidoPreview = (item) => {
+        const ativos = mappings.filter((m) => !m.ignored);
+        const ativoIndex = ativos.findIndex((m) => m === item);
+        if (ativoIndex < 0) return null;
+        return precosComDesconto[ativoIndex]?.preco_unitario_liquido ?? null;
     };
 
     const getSuggestedProduct = (item) => {
@@ -89,6 +115,7 @@ FINANCEIRO — REGRAS CRÍTICAS:
   * Exemplo: subtotal R$ 8.993,75 → desconto comercial → R$ 5.576,13 → ICMS SUFRAMA 20% → total_final R$ 4.460,90.
 - "desconto_global": diferença entre subtotal e total_final (soma de TODOS os descontos).
 - Quando identificável, preencha também "desconto_comercial" e "desconto_suframa" (ou "desconto_icms_suframa").
+- "preco_unitario_pdf": preço unitário BRUTO de cada linha, ANTES de descontos (use a coluna de preço bruto/unitário original; não use o total líquido da linha).
 
 Retorne um JSON com:
 {
@@ -242,12 +269,21 @@ Retorne um JSON com:
             }
 
             const validItems = mappings.filter(m => !m.ignored && m.selected_product_id);
+            const financeiro = normalizarFinanceiroCotacaoPdf(aiData.financeiro);
+            const descontoGlobal = financeiro.desconto_global || 0;
+            const subtotalValidos = validItems.reduce(
+                (sum, m) => sum + ((Number(m.quantidade_pdf) || 0) * (Number(m.preco_unitario_pdf) || 0)),
+                0,
+            );
+            const ratioDesconto = calcularRatioDescontoCotacaoPdf(subtotalValidos, financeiro);
+            const precoLiquido = (precoBruto) => Math.round((Number(precoBruto) || 0) * ratioDesconto * 100) / 100;
             
             const processedItems = [];
             const novosItensCotacao = [];
 
             for (const m of validItems) {
                 let produtoId = m.selected_product_id;
+                const precoComDesconto = precoLiquido(m.preco_unitario_pdf);
 
                 if (produtoId === 'create_new') {
                     try {
@@ -256,8 +292,8 @@ Retorne um JSON com:
                             marca: m.marca_pdf || '',
                             codigo_interno: 'IMP-' + Math.floor(Math.random() * 10000),
                             tipo: 'Produto',
-                            preco_venda_padrao: m.preco_unitario_pdf * 1.5,
-                            valor_compra: m.preco_unitario_pdf,
+                            preco_venda_padrao: precoComDesconto * 1.5,
+                            valor_compra: precoComDesconto,
                             unidade_principal: 'UN',
                             ativo: true
                         });
@@ -276,18 +312,13 @@ Retorne um JSON com:
                     }
                 }
 
-                processedItems.push({ ...m, final_product_id: produtoId });
+                processedItems.push({ ...m, final_product_id: produtoId, preco_com_desconto: precoComDesconto });
             }
-
-            const subtotalItens = processedItems.reduce((sum, m) => sum + (m.quantidade_pdf * m.preco_unitario_pdf), 0);
-            const financeiro = normalizarFinanceiroCotacaoPdf(aiData.financeiro);
-            const descontoGlobal = financeiro.desconto_global || 0;
-            const discountRatio = calcularRatioDescontoCotacaoPdf(subtotalItens, financeiro);
 
             const respostas = processedItems.map(m => ({
                 fornecedor_id: finalFornecedorId,
                 produto_id: m.final_product_id,
-                preco_unitario: m.preco_unitario_pdf * discountRatio,
+                preco_unitario: m.preco_com_desconto,
                 quantidade_ofertada: m.quantidade_pdf,
                 marca: m.marca_pdf || m.descricao_pdf,
                 observacao: `Importado via PDF. Preço original: R$ ${m.preco_unitario_pdf.toFixed(2)}${m.marca_pdf ? '. Marca: ' + m.marca_pdf : ''}`,
@@ -449,30 +480,31 @@ Retorne um JSON com:
                             <div className="p-6 bg-muted/50/50 rounded-2xl">
                                 <p className="text-sm text-muted-foreground mb-2">Subtotal (Itens)</p>
                                 <p className="text-2xl font-light text-foreground">
-                                    R$ {formatCurrency(aiData.financeiro?.subtotal || 0)}
+                                    R$ {formatCurrency(financeiroRevisao.subtotal || 0)}
                                 </p>
                             </div>
                             <div className="p-6 bg-orange-50 dark:bg-orange-900/20 rounded-2xl">
                                 <p className="text-sm text-orange-700 dark:text-orange-400 mb-2">Desconto Global Detectado</p>
                                 <p className="text-2xl font-light text-orange-700 dark:text-orange-400">
-                                    R$ {formatCurrency(aiData.financeiro?.desconto_global || 0)}
+                                    R$ {formatCurrency(financeiroRevisao.desconto_global || 0)}
                                 </p>
                             </div>
                             <div className="p-6 bg-green-50 dark:bg-green-900/20 rounded-2xl">
                                 <p className="text-sm text-green-700 dark:text-green-400 mb-2">Total Final</p>
                                 <p className="text-2xl font-light text-green-700 dark:text-green-400">
-                                    R$ {formatCurrency(aiData.financeiro?.total_final || 0)}
+                                    R$ {formatCurrency(financeiroRevisao.total_final || 0)}
                                 </p>
                             </div>
                         </div>
-                        {(aiData.financeiro?.desconto_suframa || 0) > 0 && (
+                        {(financeiroRevisao.desconto_suframa || 0) > 0 && (
                             <p className="text-sm text-teal-700 dark:text-teal-400 -mt-4">
-                                Benefício SUFRAMA/ICMS detectado: R$ {formatCurrency(aiData.financeiro.desconto_suframa)} incluído no total final.
+                                Benefício SUFRAMA/ICMS detectado: R$ {formatCurrency(financeiroRevisao.desconto_suframa)} incluído no total final.
                             </p>
                         )}
-                        {(aiData.financeiro?.desconto_global || 0) > 0 && (
+                        {(financeiroRevisao.desconto_global || 0) > 0 && (
                             <p className="text-sm text-muted-foreground italic -mt-4">
-                                * O desconto global (comercial + SUFRAMA, quando houver) será rateado proporcionalmente no preço unitário de cada item importado.
+                                * O desconto global (comercial + SUFRAMA, quando houver) será rateado proporcionalmente no preço unitário de cada item importado
+                                {ratioDescontoRevisao < 1 ? ` (fator ${(ratioDescontoRevisao * 100).toFixed(1)}% do preço bruto).` : '.'}
                             </p>
                         )}
 
@@ -524,6 +556,11 @@ Retorne um JSON com:
                                                     <div className="text-foreground/90 mb-1">
                                                         {m.quantidade_pdf} × R$ {formatCurrency(m.preco_unitario_pdf)}
                                                     </div>
+                                                    {!m.ignored && getPrecoLiquidoPreview(m) != null && ratioDescontoRevisao < 1 && (
+                                                        <div className="text-sm text-green-700 dark:text-green-400 mb-1">
+                                                            Com desconto: R$ {formatCurrency(getPrecoLiquidoPreview(m))} / un
+                                                        </div>
+                                                    )}
                                                     <div className="font-medium text-foreground">
                                                         Total: R$ {formatCurrency(m.quantidade_pdf * m.preco_unitario_pdf)}
                                                     </div>
@@ -585,6 +622,11 @@ Retorne um JSON com:
                                         </div>
                                         <div className="text-xs text-muted-foreground w-full">
                                             {m.quantidade_pdf} × R$ {formatCurrency(m.preco_unitario_pdf)}
+                                            {!m.ignored && getPrecoLiquidoPreview(m) != null && ratioDescontoRevisao < 1 && (
+                                                <span className="ml-2 font-semibold text-green-700 dark:text-green-400">
+                                                    → R$ {formatCurrency(getPrecoLiquidoPreview(m))} / un
+                                                </span>
+                                            )}
                                             <span className="ml-2 font-semibold text-foreground">
                                                 Total: R$ {formatCurrency(m.quantidade_pdf * m.preco_unitario_pdf)}
                                             </span>
