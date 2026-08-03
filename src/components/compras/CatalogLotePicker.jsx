@@ -14,6 +14,7 @@ import {
   getDefaultPurchaseUnitLabel,
   parseLoteQuantidade,
 } from '@/lib/catalogLoteUtils';
+import CatalogProductStockLine from '@/components/compras/CatalogProductStockLine';
 
 /**
  * Seleção em lote a partir do universo filtrado pela busca.
@@ -133,6 +134,7 @@ export default function CatalogLotePicker({
               <span className="ml-2">· {formatCurrency(editingProduct.valor_compra)}</span>
             )}
           </p>
+          <CatalogProductStockLine product={editingProduct} className="mt-4 justify-center" size="md" />
           <p className="mt-6 text-center text-xs text-muted-foreground max-w-xs">
             Deixe em branco ou confirme para usar <strong>1</strong>. Enter também salva.
           </p>
@@ -268,6 +270,7 @@ export default function CatalogLotePicker({
                         </>
                       )}
                     </p>
+                    <CatalogProductStockLine product={product} className="mt-2" />
                     {inDraft && (
                       <p className="mt-2 text-sm font-semibold text-[#4a5240] dark:text-[#a4ce33]">
                         Qtd: {parseLoteQuantidade(inDraft.quantidade)} {unidade}
