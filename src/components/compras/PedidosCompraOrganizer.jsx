@@ -46,7 +46,7 @@ export default function PedidosCompraOrganizer({ groupBy, sortOrder, onGroupByCh
       <button
         onClick={onSortOrderToggle}
         className="flex items-center justify-center w-10 h-10 rounded-xl bg-card shadow-sm hover:shadow-md transition text-foreground/90"
-        title={sortOrder === 'desc' ? 'Ordem decrescente' : 'Ordem crescente'}
+        title={sortOrder === 'desc' ? 'Mais recente primeiro' : 'Mais antigo primeiro'}
       >
         <ArrowDownUp className={`w-4 h-4 transition-transform ${sortOrder === 'desc' ? 'rotate-180' : ''}`} />
       </button>
