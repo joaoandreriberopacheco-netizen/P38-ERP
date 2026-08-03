@@ -248,6 +248,8 @@ export const COLUNAS_CONFIG = [
 
   { key: 'custo_imposto2_padrao',   label: 'Imposto 2',              editavel: true,  width: 14, tipo: 'numero' },
 
+  { key: 'avaria_percentual',       label: 'Avaria (%)',             editavel: true,  width: 14, tipo: 'numero' },
+
   { key: 'desconto_compra_padrao',  label: 'Desc. Comercial (R$)',  editavel: true,  width: 16, tipo: 'numero' },
 
   // coluna calculada (bloqueada) — injetada após os custos na exportação

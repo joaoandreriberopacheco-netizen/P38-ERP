@@ -21,9 +21,11 @@ import { applyUnidadesToProduto, makeUnidade, normalizeSigla } from '@/lib/produ
 import {
   buildProductSnapshotForPricing,
   buildSaleUnitOptions,
+  calcPrecoCustoFromComponents,
   custoDisplayScale,
   getPrecoVendaNaUnidadeCatalogo,
   precoVendaPadraoFromPrecoCatalogo,
+  resolveAvariaCompraFator1,
   resolvePrimaryFromFactorOne,
   resolveUnidadeExibicao,
   resolveCommercialDisplay,
@@ -331,13 +333,8 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
 
   // Custo calculado direto dos campos do produto
   const custoBase = parseFloat(formData.valor_compra) || 0;
-  const precoCustoCalculado =
-    custoBase +
-    (parseFloat(formData.custo_frete_padrao) || 0) +
-    (parseFloat(formData.custo_imposto1_padrao) || 0) +
-    (parseFloat(formData.custo_imposto2_padrao) || 0) +
-    (parseFloat(formData.custo_outros_padrao) || 0) -
-    (parseFloat(formData.desconto_compra_padrao) || 0);
+  const precoCustoCalculado = calcPrecoCustoFromComponents(formData);
+  const avariaValorBase = resolveAvariaCompraFator1(formData, custoBase);
 
   const precoVendaCalculado = formData.preco_venda_tipo === 'numerico'
     ? (parseFloat(formData.preco_venda_padrao) || 0)
@@ -463,14 +460,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     const novoBase = typeof conv === 'number' ? conv : precoVendaCalculado;
     setFormData((prev) => {
       saveToHistory(prev);
-      const custoBaseLoc = parseFloat(prev.valor_compra) || 0;
-      const precoCustoLoc =
-        custoBaseLoc +
-        (parseFloat(prev.custo_frete_padrao) || 0) +
-        (parseFloat(prev.custo_imposto1_padrao) || 0) +
-        (parseFloat(prev.custo_imposto2_padrao) || 0) +
-        (parseFloat(prev.custo_outros_padrao) || 0) -
-        (parseFloat(prev.desconto_compra_padrao) || 0);
+      const precoCustoLoc = calcPrecoCustoFromComponents(prev);
       let markup = prev.preco_venda_percentual;
       if (precoCustoLoc > 0) {
         markup = ((novoBase - precoCustoLoc) / precoCustoLoc) * 100;
@@ -964,6 +954,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         custo_imposto2_padrao: parseFloat(formData.custo_imposto2_padrao) || 0,
         custo_outros_padrao: parseFloat(formData.custo_outros_padrao) || 0,
         desconto_compra_padrao: parseFloat(formData.desconto_compra_padrao) || 0,
+        avaria_percentual: parseFloat(formData.avaria_percentual) || 0,
       };
 
       let savedPayload = produtoData;
@@ -1665,11 +1656,15 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     { label: 'Imposto 1', field: 'custo_imposto1_padrao', icon: <FileText className="w-3.5 h-3.5" />, isCurrency: true },
                     { label: 'Imposto 2', field: 'custo_imposto2_padrao', icon: <FileText className="w-3.5 h-3.5" />, isCurrency: true },
                     { label: 'Outros Custos', field: 'custo_outros_padrao', icon: <Plus className="w-3.5 h-3.5" />, isCurrency: true },
+                    { label: 'Avaria', field: 'avaria_percentual', icon: <Package className="w-3.5 h-3.5" />, isPercent: true },
                     { label: 'Desconto Comercial', field: 'desconto_compra_padrao', icon: <Tag className="w-3.5 h-3.5" />, isCurrency: true, isNegativo: true },
-                  ].map(({ label, field, icon, isNegativo }, custoIdx) => {
+                  ].map(({ label, field, icon, isNegativo, isPercent }, custoIdx) => {
                     const sc = custoCatalogoScale > 0 ? custoCatalogoScale : 1;
                     const baseVal = parseFloat(formData[field]) || 0;
-                    const displayVal = baseVal * sc;
+                    const displayVal = isPercent ? baseVal : baseVal * sc;
+                    const displayMoney = isPercent
+                      ? avariaValorBase * sc
+                      : displayVal;
                     return (
                       <div key={field} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 py-2.5 border-b border-border/40 last:border-0">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
@@ -1679,15 +1674,16 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                         <div className="flex items-center gap-2 shrink-0">
                           <CurrencyInput
                             value={displayVal}
-                            onChange={(val) => handleChange(field, sc !== 1 ? val / sc : val)}
+                            onChange={(val) => handleChange(field, isPercent ? val : (sc !== 1 ? val / sc : val))}
                             navIndex={custoIdx}
                             placeholder="0"
+                            isPercentage={isPercent}
                             className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none px-0 h-8 text-sm w-28 text-right text-foreground focus:border-border/40 font-glacial"
                           />
-                          <span className="text-xs text-muted-foreground w-8 shrink-0">(R$)</span>
+                          <span className="text-xs text-muted-foreground w-8 shrink-0">{isPercent ? '%' : '(R$)'}</span>
                         </div>
                         <span className="text-sm font-medium text-foreground text-right tabular-nums font-glacial whitespace-nowrap w-[5.75rem] shrink-0">
-                          {isNegativo ? '-' : ''}R$ {formatarNumero(displayVal)}
+                          {isPercent ? `R$ ${formatarNumero(displayMoney)}` : `${isNegativo ? '-' : ''}R$ ${formatarNumero(displayVal)}`}
                         </span>
                       </div>
                     );

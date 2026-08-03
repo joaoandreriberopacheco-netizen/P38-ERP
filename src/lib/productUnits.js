@@ -488,17 +488,45 @@ export function pickDefaultPurchaseUnit(product) {
 }
 
 /** Custo total por unidade base (catálogo / TreeGrid). */
+export function resolveAvariaCompraFator1(product = {}, valorCompraOverride = null) {
+  const base =
+    normalizeNumber(valorCompraOverride, NaN) > 0
+      ? normalizeNumber(valorCompraOverride, 0)
+      : normalizeNumber(product?.valor_compra, 0);
+  const pct = normalizeNumber(product?.avaria_percentual, 0);
+  if (pct <= 0 || base <= 0) return 0;
+  return roundToTwoDecimals((base * pct) / 100);
+}
+
+/** Avaria fator-1 na linha de compra (% sobre custo_unitario da linha). */
+export function resolveAvariaLinhaCompraFator1(item = {}, product = null) {
+  const pct = normalizeNumber(item?.avaria_pct_item, NaN);
+  const pctEff = Number.isFinite(pct) && pct > 0
+    ? pct
+    : normalizeNumber(product?.avaria_percentual, 0);
+  const base = normalizeNumber(item?.custo_unitario_fator1 ?? item?.custo_unitario, 0);
+  if (pctEff <= 0 || base <= 0) return 0;
+  return roundToTwoDecimals((base * pctEff) / 100);
+}
+
+/** Soma componentes de custo do produto (fator-1), incluindo avaria %. */
+export function calcPrecoCustoFromComponents(p = {}) {
+  const valorCompra = normalizeNumber(p?.valor_compra, 0);
+  return roundToTwoDecimals(
+    valorCompra +
+      normalizeNumber(p?.custo_frete_padrao, 0) +
+      normalizeNumber(p?.custo_imposto1_padrao, 0) +
+      normalizeNumber(p?.custo_imposto2_padrao, 0) +
+      normalizeNumber(p?.custo_outros_padrao, 0) +
+      resolveAvariaCompraFator1(p, valorCompra) -
+      normalizeNumber(p?.desconto_compra_padrao, 0),
+  );
+}
+
 export function resolveCustoTotalUnitBaseProduto(p) {
   const salvo = normalizeNumber(p?.preco_custo_calculado, 0);
   if (salvo > 0) return salvo;
-  return (
-    normalizeNumber(p?.valor_compra, 0) +
-    normalizeNumber(p?.custo_frete_padrao, 0) +
-    normalizeNumber(p?.custo_imposto1_padrao, 0) +
-    normalizeNumber(p?.custo_imposto2_padrao, 0) +
-    normalizeNumber(p?.custo_outros_padrao, 0) -
-    normalizeNumber(p?.desconto_compra_padrao, 0)
-  );
+  return calcPrecoCustoFromComponents(p);
 }
 
 /**
@@ -932,7 +960,8 @@ export function getCustoCompraLiquidoFator1(item = {}) {
     item?.desconto_unitario_fator1 ?? item?.valor_desconto_item ?? item?.desconto_unitario,
     0,
   );
-  return roundToTwoDecimals(custoF1 - ajusteF1);
+  const avariaF1 = resolveAvariaLinhaCompraFator1(item);
+  return roundToTwoDecimals(custoF1 - ajusteF1 + avariaF1);
 }
 
 /** Total da linha: quantidade_base × custo final fator-1 (contrato PedidoCompra). */
@@ -943,7 +972,8 @@ export function calcTotalItemCompraPedido(item = {}) {
   const qBase = Number.isFinite(qb) && qb > 0 ? qb : qty * fator;
   const custoF1 = normalizeNumber(item?.custo_unitario, 0);
   const descF1 = normalizeNumber(item?.valor_desconto_item, 0);
-  const custoLiquidoF1 = custoF1 - descF1;
+  const avariaF1 = resolveAvariaLinhaCompraFator1(item);
+  const custoLiquidoF1 = custoF1 - descF1 + avariaF1;
 
   const totalViaBase = () => roundToTwoDecimals(qBase * custoLiquidoF1);
 

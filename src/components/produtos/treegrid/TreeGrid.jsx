@@ -126,6 +126,7 @@ const COL_DEFS = [
   { id: 'margem',               label: 'Margem',         w: 80  },
   { id: 'preco_custo',          label: 'Custo Total',    w: 104 },
   { id: 'valor_compra',         label: 'Vl. Compra',     w: 100 },
+  { id: 'avaria_percentual',    label: 'Avaria %',       w: 80  },
   { id: 'markup',               label: 'Markup %',       w: 80  },
   { id: 'inventario_valorizado', label: 'Inventário R$', w: 108 },
   { id: 'estoque_atual',        label: 'Estoque',        w: 96  },
@@ -330,6 +331,11 @@ function skuCellValue(colId, produto, margem, lastro, markup, salesVelocityMap =
         {lastro >= 0 && markup > 0 ? `${fmtN(markup)}%` : (produto.preco_venda_percentual > 0 ? `${fmtN(produto.preco_venda_percentual)}%` : '—')}
       </span>
     );
+    case 'avaria_percentual':    return (
+      <span className="text-xs text-muted-foreground tabular-nums">
+        {(produto.avaria_percentual || 0) > 0 ? `${fmtN(produto.avaria_percentual)}%` : '—'}
+      </span>
+    );
     case 'inventario_valorizado':return <span className="text-xs text-muted-foreground tabular-nums">{lastro > 0 ? fmtR(lastro) : '—'}</span>;
     case 'estoque_atual': {
       const est = resolveCatalogEstoqueExibicao(produto, catalogStockContext);
@@ -418,6 +424,7 @@ function groupCellValue(colId, row, salesVelocityMap = {}, catalogStockContext =
     case 'preco_custo':           return tilde(row.custoMedio);
     case 'valor_compra':          return tilde(row.valorCompraMedio);
     case 'markup':                return tildeP(row.markupMedio);
+    case 'avaria_percentual':     return row.avariaMedia > 0 ? `~${fmtN(row.avariaMedia)}%` : '—';
     case 'margem':                return tildeP(row.margemMedia);
     case 'inventario_valorizado': return row.lastroTotal > 0
       ? <span className="text-xs font-semibold text-muted-foreground tabular-nums">{fmtR(row.lastroTotal)}</span>

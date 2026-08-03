@@ -51,11 +51,15 @@ export function calcCusto(p) {
   const salvo = p.preco_custo_calculado || 0;
   if (salvo > 0) return salvo;
   const vc = p.valor_compra || 0;
+  const avaria = vc > 0 && (p.avaria_percentual || 0) > 0
+    ? (vc * (p.avaria_percentual || 0)) / 100
+    : 0;
   return vc
     + (p.custo_frete_padrao || 0)
     + (p.custo_imposto1_padrao || 0)
     + (p.custo_imposto2_padrao || 0)
     + (p.custo_outros_padrao || 0)
+    + avaria
     - (p.desconto_compra_padrao || 0);
 }
 
@@ -188,6 +192,7 @@ export function aggregateSkus(skus) {
   const custos = skus.map((p) => getCatalogoComercialView(p).custoNaEmbalagem).filter((v) => v > 0);
   const valorCompras = skus.map((p) => getCatalogoComercialView(p).valorCompraNaEmbalagem).filter((v) => v > 0);
   const markups = skus.map((p) => calcMarkup(p)).filter((v) => v > 0);
+  const avarias = skus.map((p) => Number(p.avaria_percentual) || 0).filter((v) => v > 0);
   const margens = skus
     .map((p) => {
       const cat = getCatalogoComercialView(p);
@@ -202,6 +207,7 @@ export function aggregateSkus(skus) {
     custoMedio:      iqrMean(custos),
     valorCompraMedio:iqrMean(valorCompras),
     markupMedio:     iqrMean(markups),
+    avariaMedia:     iqrMean(avarias),
     margemMedia:     iqrMean(margens),
     lastroTotal:     lastros.reduce((s, v) => s + v, 0),
     estoqueTotal:    skus.reduce((s, p) => s + (p.estoque_atual || 0), 0),

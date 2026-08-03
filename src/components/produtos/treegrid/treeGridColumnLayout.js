@@ -63,6 +63,8 @@ function skuCellText(colId, produto, row, salesVelocityMap = {}) {
       return lastro >= 0 && markup > 0
         ? `${fmtN(markup)}%`
         : (produto.preco_venda_percentual > 0 ? `${fmtN(produto.preco_venda_percentual)}%` : '—');
+    case 'avaria_percentual':
+      return (produto.avaria_percentual || 0) > 0 ? `${fmtN(produto.avaria_percentual)}%` : '—';
     case 'inventario_valorizado': return lastro > 0 ? fmtR(lastro) : '—';
     case 'estoque_atual': {
       const apresent = formatEstoqueApresentacao(produto);
@@ -110,6 +112,7 @@ function groupCellText(colId, row, salesVelocityMap = {}) {
     case 'preco_custo': return row.custoMedio > 0 ? `~${fmtR(row.custoMedio)}` : '—';
     case 'valor_compra': return row.valorCompraMedio > 0 ? `~${fmtR(row.valorCompraMedio)}` : '—';
     case 'markup': return row.markupMedio > 0 ? `~${fmtPct(row.markupMedio)}` : '—';
+    case 'avaria_percentual': return row.avariaMedia > 0 ? `~${fmtPct(row.avariaMedia)}` : '—';
     case 'margem': return row.margemMedia > 0 ? `~${fmtPct(row.margemMedia)}` : '—';
     case 'inventario_valorizado': return row.lastroTotal > 0 ? fmtR(row.lastroTotal) : '—';
     case 'estoque_atual': {
