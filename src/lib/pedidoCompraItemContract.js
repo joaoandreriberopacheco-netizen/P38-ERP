@@ -9,7 +9,8 @@
  *   - sigla, fator_conversao e fator_preco viram snapshots do produto
  *   - quantidade_base = quantidade_comercial x fator_aplicado
  *   - custo_unitario_comercial = custo_unitario_fator1 x fator_aplicado (apenas display)
- *   - custo_total_unitario_fator1 = custo + frete + outros - desconto
+ *   - Na persistência, custo_unitario_fator1 é o valor líquido (bruto − desconto + avaria)
+ *   - custo_total_unitario_fator1 = custo líquido + frete + outros
  *   - total = quantidade_base x custo_total_unitario_fator1
  *
  * Sem regex, sem heuristica, sem "adivinhar" — o id e a unica fonte. Se o id
@@ -23,6 +24,7 @@ import {
   getUnidadeComercialCanonical,
   getUnidadePrincipalCanonical,
   normalizeUnitCode,
+  normalizePedidoCompraItemCustoLiquidoParaPersist,
 } from "./productUnits";
 
 const round6 = (n) => Math.round((Number(n) || 0) * 1_000_000) / 1_000_000;
@@ -100,7 +102,7 @@ export function derivePedidoCompraItem({ pedido = {}, produto = {}, input = {} }
   const custoTotalUnitFator1 = round6(custoUnitarioFator1 + freteFator1 + outrosFator1 - descontoFator1);
   const total = round6(quantidadeBase * custoTotalUnitFator1);
 
-  const item = {
+  const itemBruto = {
     pedido_compra_id: pedido?.id || "",
     pedido_compra_numero: pedido?.numero || "",
     produto_id: produto?.id || "",
@@ -123,6 +125,8 @@ export function derivePedidoCompraItem({ pedido = {}, produto = {}, input = {} }
     observacoes: typeof input.observacoes === "string" ? input.observacoes : "",
     status_recebimento: input.status_recebimento || "Pendente",
   };
+
+  const item = normalizePedidoCompraItemCustoLiquidoParaPersist(itemBruto);
 
   return { item, valid: errors.length === 0, errors };
 }

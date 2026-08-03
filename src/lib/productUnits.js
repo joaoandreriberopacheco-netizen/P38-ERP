@@ -964,6 +964,49 @@ export function getCustoCompraLiquidoFator1(item = {}) {
   return roundToTwoDecimals(custoF1 - ajusteF1 + avariaF1);
 }
 
+/**
+ * Persistência canônica: `valor de compra` na BD é o líquido (bruto − desconto + avaria em R$).
+ * Incorpora ajustes no `custo_unitario_fator1` e zera desconto para não duplicar na leitura.
+ */
+export function normalizePedidoCompraItemCustoLiquidoParaPersist(item = {}) {
+  const frete = normalizeNumber(item?.frete_unitario_fator1 ?? item?.custo_frete_unitario, 0);
+  const outros = normalizeNumber(item?.outros_unitario_fator1 ?? item?.custo_outros_unitario, 0);
+  const custoBruto = normalizeNumber(item?.custo_unitario_fator1 ?? item?.custo_unitario, 0);
+  const desconto = normalizeNumber(
+    item?.desconto_unitario_fator1 ?? item?.valor_desconto_item ?? item?.desconto_unitario,
+    0,
+  );
+  const avaria = resolveAvariaLinhaCompraFator1(item);
+  const custoLiquidoF1 = roundToTwoDecimals(custoBruto - desconto + avaria);
+  const fator = normalizeNumber(item?.fator_aplicado ?? item?.fator_conversao, 1) || 1;
+  const custoTotalUnit = roundToTwoDecimals(custoLiquidoF1 + frete + outros);
+  const qb = normalizeNumber(item?.quantidade_base, NaN);
+  const qty = normalizeNumber(item?.quantidade ?? item?.quantidade_comercial, 0);
+  const qBase = Number.isFinite(qb) && qb > 0 ? qb : qty * fator;
+  const totalExplicito = normalizeNumber(item?.total ?? item?.valor_total_item ?? item?.subtotal, 0);
+  const total = totalExplicito > 0
+    ? roundToTwoDecimals(totalExplicito)
+    : roundToTwoDecimals(qBase * custoTotalUnit);
+
+  return {
+    ...item,
+    custo_unitario_fator1: custoLiquidoF1,
+    custo_unitario: custoLiquidoF1,
+    custo_unitario_base: custoLiquidoF1,
+    custo_unitario_comercial: roundToTwoDecimals(custoLiquidoF1 * fator),
+    custo_unitario_apresentacao: roundToTwoDecimals(custoLiquidoF1 * fator),
+    desconto_unitario_fator1: 0,
+    valor_desconto_item: 0,
+    desconto_unitario: 0,
+    desconto_pct_item: 0,
+    custo_total_unitario_fator1: custoTotalUnit,
+    custo_final_unitario: custoTotalUnit,
+    custo_final_unitario_base: custoTotalUnit,
+    custo_final_unitario_apresentacao: roundToTwoDecimals(custoTotalUnit * fator),
+    total,
+  };
+}
+
 /** Total da linha: quantidade_base × custo final fator-1 (contrato PedidoCompra). */
 export function calcTotalItemCompraPedido(item = {}) {
   const qb = normalizeNumber(item?.quantidade_base, NaN);
