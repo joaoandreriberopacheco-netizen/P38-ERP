@@ -13,6 +13,10 @@ import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser'
 import { P38TableShell } from '@/components/ui/table';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import { buildLlmTelemetryContext } from '@/lib/p38LlmTelemetry';
+import {
+    calcularRatioDescontoCotacaoPdf,
+    normalizarFinanceiroCotacaoPdf,
+} from '@/lib/cotacaoExpressUtils';
 
 export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImportComplete }) {
     const [step, setStep] = useState('upload');
@@ -76,6 +80,16 @@ PRIORIDADE DE MATCH:
 ${JSON.stringify(cotacao.itens.map((item) => ({ id: item.produto_id, nome: item.produto_nome, qtd: item.quantidade })))}
 2. Se não encontrar na cotação atual, use o catálogo geral acima.
 
+FINANCEIRO — REGRAS CRÍTICAS:
+- "subtotal": soma bruta dos itens ANTES de qualquer desconto (ex.: TOTAL BRUTO).
+- "total_final": valor ABSOLUTO que o cliente pagará — o ÚLTIMO total do documento, após TODOS os descontos.
+  * Procure rótulos como "TOTAL DA NF", "TOTAL FINAL", "VALOR TOTAL A PAGAR", "TOTAL NOTA FISCAL".
+  * Se houver benefício SUFRAMA / desconto ICMS (ex.: "ICMS (DEVE TER SUFRAMA)", "DESCONTO SUFRAMA"), aplique sobre o total líquido anterior.
+  * NÃO pare no "TOTAL LÍQUIDO" se existir um total menor depois (ex.: com SUFRAMA).
+  * Exemplo: subtotal R$ 8.993,75 → desconto comercial → R$ 5.576,13 → ICMS SUFRAMA 20% → total_final R$ 4.460,90.
+- "desconto_global": diferença entre subtotal e total_final (soma de TODOS os descontos).
+- Quando identificável, preencha também "desconto_comercial" e "desconto_suframa" (ou "desconto_icms_suframa").
+
 Retorne um JSON com:
 {
     "fornecedor": { 
@@ -86,7 +100,9 @@ Retorne um JSON com:
     "financeiro": {
         "subtotal": number,
         "desconto_global": number,
-        "total_final": number
+        "total_final": number,
+        "desconto_comercial": number,
+        "desconto_suframa": number
     },
     "itens": [
         {
@@ -125,7 +141,10 @@ Retorne um JSON com:
                             properties: {
                                 subtotal: { type: "number" },
                                 desconto_global: { type: "number" },
-                                total_final: { type: "number" }
+                                total_final: { type: "number" },
+                                desconto_comercial: { type: "number" },
+                                desconto_suframa: { type: "number" },
+                                desconto_icms_suframa: { type: "number" }
                             }
                         },
                         itens: {
@@ -148,7 +167,12 @@ Retorne um JSON com:
             });
 
             const result = typeof aiRes === 'string' ? JSON.parse(aiRes) : aiRes;
-            setAiData(result);
+            const financeiroNormalizado = normalizarFinanceiroCotacaoPdf(result.financeiro);
+            const resultNormalizado = {
+                ...result,
+                financeiro: financeiroNormalizado,
+            };
+            setAiData(resultNormalizado);
             
             // Defensive check for itens array
             const itens = Array.isArray(result.itens) ? result.itens : [];
@@ -256,11 +280,9 @@ Retorne um JSON com:
             }
 
             const subtotalItens = processedItems.reduce((sum, m) => sum + (m.quantidade_pdf * m.preco_unitario_pdf), 0);
-            let discountRatio = 1;
-            const descontoGlobal = aiData.financeiro?.desconto_global || 0;
-            if (descontoGlobal > 0 && subtotalItens > 0) {
-                discountRatio = 1 - (descontoGlobal / subtotalItens);
-            }
+            const financeiro = normalizarFinanceiroCotacaoPdf(aiData.financeiro);
+            const descontoGlobal = financeiro.desconto_global || 0;
+            const discountRatio = calcularRatioDescontoCotacaoPdf(subtotalItens, financeiro);
 
             const respostas = processedItems.map(m => ({
                 fornecedor_id: finalFornecedorId,
@@ -278,7 +300,7 @@ Retorne um JSON com:
                 await base44.entities.Cotacao.update(cotacao.id, { itens: itensAtualizados });
             }
 
-            onImportComplete(finalFornecedorId, respostas, aiData.financeiro.desconto_global);
+            onImportComplete(finalFornecedorId, respostas, descontoGlobal);
             onClose();
             toast({ title: "Importação concluída com sucesso!", className: "bg-green-100 text-green-800" });
 
@@ -443,9 +465,14 @@ Retorne um JSON com:
                                 </p>
                             </div>
                         </div>
+                        {(aiData.financeiro?.desconto_suframa || 0) > 0 && (
+                            <p className="text-sm text-teal-700 dark:text-teal-400 -mt-4">
+                                Benefício SUFRAMA/ICMS detectado: R$ {formatCurrency(aiData.financeiro.desconto_suframa)} incluído no total final.
+                            </p>
+                        )}
                         {(aiData.financeiro?.desconto_global || 0) > 0 && (
                             <p className="text-sm text-muted-foreground italic -mt-4">
-                                * O desconto global será rateado proporcionalmente no preço unitário de cada item importado.
+                                * O desconto global (comercial + SUFRAMA, quando houver) será rateado proporcionalmente no preço unitário de cada item importado.
                             </p>
                         )}
 
