@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +8,7 @@ import { createPageUrl } from '@/components/utils';
 import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter, Percent, Loader2, Tag, Tags, LayoutGrid, TrendingUp, Gauge } from 'lucide-react';
 import { DEFAULT_PRODUTO_FILTERS, ABCD_FILTER_VALUES, ABCD_FILTER_LABELS } from '@/lib/filterProdutos';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
+import CatalogSearchInput from '@/components/produtos/CatalogSearchInput';
 import ProdutosSomentePositivosToggle from '@/components/produtos/ProdutosSomentePositivosToggle';
 import ProdutosEstoqueVirtualToggle from '@/components/produtos/ProdutosEstoqueVirtualToggle';
 import ProdutosAnaliseAgrupamentoControl from '@/components/produtos/ProdutosAnaliseAgrupamentoControl';
@@ -18,7 +20,7 @@ import ProdutosMobileFiltersSheet from '@/components/produtos/ProdutosMobileFilt
 import { useCompactShell } from '@/hooks/use-breakpoint';
 import { cn } from '@/components/utils';
 
-export default function ProdutosHeader({
+function ProdutosHeader({
   stats,
   filters,
   categorias,
@@ -35,7 +37,7 @@ export default function ProdutosHeader({
   handleAddNew,
   setFilters,
   formatarNumero,
-  filteredProdutos = [],
+  hasFilteredProdutos = false,
   treeLevel,
   setTreeLevel,
   sortOrder = 'az',
@@ -201,7 +203,7 @@ export default function ProdutosHeader({
               className="h-9 w-9 flex-shrink-0"
               title="Classificar categorias com IA"
               onClick={() => onOpenMassCategory?.()}
-              disabled={filteredProdutos.length === 0}
+              disabled={!hasFilteredProdutos}
             >
               <LayoutGrid className="w-4 h-4 p38-text-accent" />
             </Button>
@@ -216,7 +218,7 @@ export default function ProdutosHeader({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="dark:bg-muted dark:border-border/40">
-                  {filteredProdutos.length > 0 && (
+                  {hasFilteredProdutos && (
                     <DropdownMenuItem
                       onClick={() => {
                         window.setTimeout(() => onOpenMassMarkup?.(), 0);
@@ -246,7 +248,7 @@ export default function ProdutosHeader({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="dark:bg-muted dark:border-border/40">
-                  {filteredProdutos.length > 0 && (
+                  {hasFilteredProdutos && (
                     <DropdownMenuItem
                       onClick={() => {
                         window.setTimeout(() => onOpenMassTag?.(), 0);
@@ -279,11 +281,11 @@ export default function ProdutosHeader({
         <div className="flex flex-col gap-2 min-w-0">
           <div className="relative w-full min-w-0">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none desktop-layout:left-3" />
-            <Input
+            <CatalogSearchInput
               placeholder="Nome ou descrição (espaço ou ; para combinar). XXmolhadas ou XXj- filtra por categoria..."
               className="border-none bg-muted h-10 desktop-layout:h-11 text-sm pl-9 desktop-layout:pl-10 text-foreground/90 shadow-none focus-visible:ring-0 w-full min-w-0 rounded-xl"
               value={filters.searchTerm}
-              onChange={e => handleFilterChange('searchTerm', e.target.value)}
+              onChange={(value) => handleFilterChange('searchTerm', value)}
             />
           </div>
           <div className="flex flex-wrap items-center gap-1.5 desktop-layout:gap-2 min-w-0">
@@ -298,7 +300,7 @@ export default function ProdutosHeader({
               onChange={onGroupTreeByCategoryChange}
               className="desktop-layout:hidden"
             />
-            {filteredProdutos.length > 0 && (
+            {hasFilteredProdutos && (
               <>
                 <Button
                   type="button"
@@ -644,3 +646,5 @@ export default function ProdutosHeader({
     </div>
   );
 }
+
+export default memo(ProdutosHeader);

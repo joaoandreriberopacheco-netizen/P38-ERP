@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback, Suspense, startTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import ProdutosAccessGuard from '@/components/guard/ProdutosAccessGuard';
 import { Input } from '@/components/ui/input';
@@ -227,7 +227,8 @@ function ProdutosPageContent() {
   }, [produtosQuery, fornecedoresQuery, applyCatalogSnapshot]);
 
   useEffect(() => {
-    saveCatalogProdutoFilters(filters);
+    const timer = window.setTimeout(() => saveCatalogProdutoFilters(filters), 250);
+    return () => window.clearTimeout(timer);
   }, [filters]);
 
   useEffect(() => {
@@ -322,7 +323,12 @@ function ProdutosPageContent() {
   }, []);
 
   const handleFilterChange = React.useCallback((key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    const apply = (prev) => ({ ...prev, [key]: value });
+    if (key === 'searchTerm') {
+      startTransition(() => setFilters(apply));
+      return;
+    }
+    setFilters(apply);
   }, []);
 
   const formatarNumero = React.useCallback((numero) => {
@@ -1427,7 +1433,7 @@ function ProdutosPageContent() {
     handleAddNew,
     setFilters,
     formatarNumero,
-    filteredProdutos,
+    hasFilteredProdutos: filteredProdutos.length > 0,
     loadData,
     treeLevel,
     setTreeLevel,
