@@ -66,6 +66,93 @@ const etaMatchesFilter = (embarque, modo, dataRef, inicial, final) => {
   return true;
 };
 
+const STATUS_EMBARQUE_VIRTUAIS = [
+  'Rascunho',
+  'Aguardando',
+  'Aguardando Aprovação Financeira',
+  'Aguardando Liberação Financeira',
+  'Aguardando Liberação',
+  'Aprovado',
+  'Despachado',
+  'Concluído',
+];
+
+const normalizeStatusFiltro = (status) => {
+  if (status === 'Aguardando Liberação') {
+    return ['Aguardando Liberação', 'Aguardando Aprovação Financeira', 'Aguardando Liberação Financeira'];
+  }
+  return [status];
+};
+
+const cardMatchesSearch = (card, searchLower, { includeProdutos = false } = {}) => {
+  const embarque = card._embarque;
+  if (card.numero?.toLowerCase().includes(searchLower)) return true;
+  if (card.fornecedor_nome?.toLowerCase().includes(searchLower)) return true;
+  if (embarque?.transportadora_nome?.toLowerCase().includes(searchLower)) return true;
+  if (includeProdutos && (card.itens || []).some((item) => item.produto_nome?.toLowerCase().includes(searchLower))) {
+    return true;
+  }
+  return false;
+};
+
+const passaFiltrosEmbarqueCard = (
+  card,
+  {
+    search,
+    statusSel,
+    filtroUltimos30Dias,
+    filtroSomenteNaoConcluidos,
+    fornecedorSel,
+    tagsSel,
+    dataInicial,
+    dataFinal,
+    etaFiltroModo,
+    etaData,
+    etaInicial,
+    etaFinal,
+    skipSearch = false,
+    searchIncludeProdutos = false,
+  },
+) => {
+  const searchLower = search.toLowerCase();
+  const dataPedido = card.data_emissao || (card.created_date ? toLocalDate(card.created_date) : '');
+  const statusExplicitos = statusSel.filter((status) => status !== '__nao_concluido__');
+  const statusPaiSel = statusExplicitos.filter((s) => !STATUS_EMBARQUE_VIRTUAIS.includes(s));
+  const statusEmbSel = statusExplicitos.filter((s) => STATUS_EMBARQUE_VIRTUAIS.includes(s));
+  const embarque = card._embarque;
+
+  if (!skipSearch && search && !cardMatchesSearch(card, searchLower, { includeProdutos: searchIncludeProdutos })) {
+    return false;
+  }
+
+  const ocultarConcluidos = filtroSomenteNaoConcluidos || statusSel.includes('__nao_concluido__');
+  if (!passaFiltroVisibilidadePedidosCompra(card, {
+    somenteNaoConcluidos: ocultarConcluidos,
+    ultimos30Dias: filtroUltimos30Dias,
+    getDataPedido: (item) => item.data_emissao || (item.created_date ? toLocalDate(item.created_date) : ''),
+    isConcluido: (item) => item._display_status === 'Concluído',
+  })) return false;
+
+  if (statusExplicitos.length > 0) {
+    const statusPaiExpandido = statusPaiSel.flatMap(normalizeStatusFiltro);
+    const statusEmbExpandido = statusEmbSel.flatMap(normalizeStatusFiltro);
+    const matchPai = statusPaiExpandido.includes(card.status) || statusPaiExpandido.includes(card._display_status);
+    const matchEmbarque = statusEmbExpandido.some((s) => {
+      if (s === 'Aguardando Embarque') return !embarque?.transportadora_nome && !embarque?.eta;
+      if (s === 'Original') return false;
+      return embarque?.status_recebimento === s || embarque?.status === s || card._display_status === s;
+    });
+    if (!matchPai && !matchEmbarque) return false;
+  }
+
+  if (fornecedorSel.length > 0 && !fornecedorSel.includes(card.fornecedor_id)) return false;
+  if (tagsSel.length > 0 && !tagsSel.some((t) => (card.tags || []).includes(t))) return false;
+  if (dataInicial && (!dataPedido || dataPedido < dataInicial)) return false;
+  if (dataFinal && (!dataPedido || dataPedido > dataFinal)) return false;
+  if (!etaMatchesFilter(embarque, etaFiltroModo, etaData, etaInicial, etaFinal)) return false;
+  return true;
+};
+
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 const isNecessidadeRenderizada = (embarque) => {
@@ -665,54 +752,46 @@ export default function PedidosCompraPage() {
 
   const cardsFonte = useMemo(() => embarques, [embarques]);
 
-  const STATUS_EMBARQUE_VIRTUAIS = ['Rascunho', 'Aguardando', 'Aguardando Aprovação Financeira', 'Aguardando Liberação Financeira', 'Aguardando Liberação', 'Aprovado', 'Despachado', 'Concluído'];
+  const filtrosCompras = useMemo(
+    () => ({
+      search,
+      statusSel,
+      filtroUltimos30Dias,
+      filtroSomenteNaoConcluidos,
+      fornecedorSel,
+      tagsSel,
+      dataInicial,
+      dataFinal,
+      etaFiltroModo,
+      etaData,
+      etaInicial,
+      etaFinal,
+    }),
+    [
+      search,
+      statusSel,
+      filtroUltimos30Dias,
+      filtroSomenteNaoConcluidos,
+      fornecedorSel,
+      tagsSel,
+      dataInicial,
+      dataFinal,
+      etaFiltroModo,
+      etaData,
+      etaInicial,
+      etaFinal,
+    ],
+  );
 
-  const normalizeStatusFiltro = (status) => {
-    if (status === 'Aguardando Liberação') {
-      return ['Aguardando Liberação', 'Aguardando Aprovação Financeira', 'Aguardando Liberação Financeira'];
-    }
-    return [status];
-  };
+  const filtrados = useMemo(
+    () => cardsFonte.filter((card) => passaFiltrosEmbarqueCard(card, filtrosCompras)),
+    [cardsFonte, filtrosCompras],
+  );
 
-  const filtrados = useMemo(() => {
-    return cardsFonte.filter((p) => {
-      const searchLower = search.toLowerCase();
-      const dataPedido = p.data_emissao || (p.created_date ? toLocalDate(p.created_date) : '');
-      const statusExplicitos = statusSel.filter((status) => status !== '__nao_concluido__');
-      const statusPaiSel = statusExplicitos.filter((s) => !STATUS_EMBARQUE_VIRTUAIS.includes(s));
-      const statusEmbSel = statusExplicitos.filter((s) => STATUS_EMBARQUE_VIRTUAIS.includes(s));
-      const embarque = p._embarque;
-
-      if (search && !(p.numero?.toLowerCase().includes(searchLower) || p.fornecedor_nome?.toLowerCase().includes(searchLower) || embarque?.transportadora_nome?.toLowerCase().includes(searchLower))) return false;
-
-      const ocultarConcluidos = filtroSomenteNaoConcluidos || statusSel.includes('__nao_concluido__');
-      if (!passaFiltroVisibilidadePedidosCompra(p, {
-        somenteNaoConcluidos: ocultarConcluidos,
-        ultimos30Dias: filtroUltimos30Dias,
-        getDataPedido: (item) => item.data_emissao || (item.created_date ? toLocalDate(item.created_date) : ''),
-        isConcluido: (item) => item._display_status === 'Concluído',
-      })) return false;
-
-      if (statusExplicitos.length > 0) {
-        const statusPaiExpandido = statusPaiSel.flatMap(normalizeStatusFiltro);
-        const statusEmbExpandido = statusEmbSel.flatMap(normalizeStatusFiltro);
-        const matchPai = statusPaiExpandido.includes(p.status) || statusPaiExpandido.includes(p._display_status);
-        const matchEmbarque = statusEmbExpandido.some((s) => {
-          if (s === 'Aguardando Embarque') return !embarque?.transportadora_nome && !embarque?.eta;
-          if (s === 'Original') return false;
-          return embarque?.status_recebimento === s || embarque?.status === s || p._display_status === s;
-        });
-        if (!matchPai && !matchEmbarque) return false;
-      }
-
-      if (fornecedorSel.length > 0 && !fornecedorSel.includes(p.fornecedor_id)) return false;
-      if (tagsSel.length > 0 && !tagsSel.some((t) => (p.tags || []).includes(t))) return false;
-      if (dataInicial && (!dataPedido || dataPedido < dataInicial)) return false;
-      if (dataFinal && (!dataPedido || dataPedido > dataFinal)) return false;
-      if (!etaMatchesFilter(embarque, etaFiltroModo, etaData, etaInicial, etaFinal)) return false;
-      return true;
-    });
-  }, [cardsFonte, search, statusSel, filtroUltimos30Dias, filtroSomenteNaoConcluidos, fornecedorSel, tagsSel, dataInicial, dataFinal, etaFiltroModo, etaData, etaInicial, etaFinal]);
+  const filtradosSemBusca = useMemo(
+    () => cardsFonte.filter((card) => passaFiltrosEmbarqueCard(card, { ...filtrosCompras, skipSearch: true })),
+    [cardsFonte, filtrosCompras],
+  );
 
   const calcularValorPendentePedido = (pedido) => {
     const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
@@ -850,37 +929,20 @@ export default function PedidosCompraPage() {
     || filtroSomenteNaoConcluidos !== FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT;
 
   const pedidosConsulta = useMemo(() => {
-    const statusExplicitos = statusSel.filter((status) => status !== '__nao_concluido__');
-    const ocultarConcluidos = filtroSomenteNaoConcluidos || statusSel.includes('__nao_concluido__');
+    const idsVisiveis = new Set(filtrados.map((card) => card.id));
 
-    return pedidos.filter((p) => {
+    if (search) {
       const searchLower = search.toLowerCase();
-      const dataPedido = p.data_emissao || (p.created_date ? toLocalDate(p.created_date) : '');
+      filtradosSemBusca.forEach((card) => {
+        if (idsVisiveis.has(card.id)) return;
+        if (cardMatchesSearch(card, searchLower, { includeProdutos: true })) {
+          idsVisiveis.add(card.id);
+        }
+      });
+    }
 
-      if (search && !(p.numero?.toLowerCase().includes(searchLower) || p.fornecedor_nome?.toLowerCase().includes(searchLower))) {
-        return false;
-      }
-
-      if (!passaFiltroVisibilidadePedidosCompra(p, {
-        somenteNaoConcluidos: ocultarConcluidos,
-        ultimos30Dias: filtroUltimos30Dias,
-        getDataPedido: (item) => item.data_emissao || (item.created_date ? toLocalDate(item.created_date) : ''),
-        isConcluido: (item) => item.status === 'Concluído',
-      })) return false;
-
-      if (statusExplicitos.length > 0) {
-        const statusExpandido = statusExplicitos.flatMap(normalizeStatusFiltro);
-        if (!statusExpandido.includes(p.status)) return false;
-      }
-
-      if (fornecedorSel.length > 0 && !fornecedorSel.includes(p.fornecedor_id)) return false;
-      if (tagsSel.length > 0 && !tagsSel.some((t) => (p.tags || []).includes(t))) return false;
-      if (dataInicial && (!dataPedido || dataPedido < dataInicial)) return false;
-      if (dataFinal && (!dataPedido || dataPedido > dataFinal)) return false;
-
-      return true;
-    });
-  }, [pedidos, search, statusSel, filtroUltimos30Dias, filtroSomenteNaoConcluidos, fornecedorSel, tagsSel, dataInicial, dataFinal]);
+    return pedidos.filter((p) => idsVisiveis.has(p.id));
+  }, [filtrados, filtradosSemBusca, pedidos, search]);
 
   return (
     <div className={cn('w-full min-w-0 max-w-full overflow-x-hidden space-y-4 font-din-1451 bg-background', isPhone && 'pb-[var(--p38-scroll-pad-below-nav)]')}>
