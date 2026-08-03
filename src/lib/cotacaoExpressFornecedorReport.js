@@ -1,6 +1,7 @@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { registerJsPdfDin1451Fonts, normalizePdfText } from '@/lib/jspdfNotoFont';
+import { sortCotacaoItensAlfabeticamente } from '@/lib/cotacaoExpressUtils';
 import {
   openPrintWindowOrShareHtml,
   shareOrDownloadBlob,
@@ -51,82 +52,176 @@ function buildReportStyles() {
     body {
       margin: 0;
       font-family: 'DINish', 'DIN 1451', system-ui, -apple-system, sans-serif;
-      font-size: 14px;
-      line-height: 1.45;
+      font-size: 15px;
+      line-height: 1.5;
       color: #1f1d22;
-      background: #f8f8f9;
-      padding: 16px;
+      background: #f3f4f6;
+      padding: 20px 16px 32px;
     }
     .doc {
-      max-width: 820px;
+      max-width: 860px;
       margin: 0 auto;
       background: #fff;
-      border-radius: 16px;
-      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+      border-radius: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
       overflow: hidden;
     }
-    .doc-inner { padding: 24px 20px 28px; }
+    .doc-inner { padding: 28px 20px 32px; }
     .empresa-nome {
-      font-size: clamp(1.15rem, 4vw, 1.5rem);
+      font-size: clamp(1.25rem, 4.5vw, 1.625rem);
       font-weight: 700;
       letter-spacing: -0.02em;
-      margin: 0 0 4px;
+      margin: 0 0 6px;
       color: #1f1d22;
     }
     .empresa-meta {
-      font-size: 12px;
+      font-size: 13px;
       color: #6b7280;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
+      line-height: 1.6;
     }
     .doc-title {
-      font-size: clamp(1rem, 3.5vw, 1.125rem);
+      font-size: clamp(1.05rem, 3.5vw, 1.2rem);
       font-weight: 600;
-      margin: 0 0 6px;
+      margin: 0 0 8px;
       color: #4a5240;
     }
     .doc-sub {
-      font-size: 12px;
+      font-size: 13px;
       color: #6b7280;
-      margin-bottom: 20px;
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+    .itens-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 28px 0 14px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e8ebe4;
+    }
+    .itens-header h3 {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #4a5240;
+    }
+    .itens-header .count {
+      font-size: 12px;
+      color: #9ca3af;
+      white-space: nowrap;
     }
     .destinatario {
       background: #f4f5f2;
-      border-radius: 12px;
-      padding: 12px 14px;
-      margin-bottom: 20px;
-      font-size: 13px;
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin: 20px 0 0;
+      font-size: 14px;
+      line-height: 1.5;
     }
     .destinatario strong { color: #4a5240; }
     .instrucoes {
-      font-size: 12px;
+      font-size: 13px;
       color: #4b5563;
       background: #fafafa;
-      border-left: 3px solid #a4ce33;
-      padding: 10px 12px;
-      border-radius: 0 8px 8px 0;
-      margin: 20px 0 0;
+      border-left: 4px solid #a4ce33;
+      padding: 14px 16px;
+      border-radius: 0 12px 12px 0;
+      margin: 28px 0 0;
+      line-height: 1.55;
     }
     .table-wrap { display: none; }
-    .cards { display: flex; flex-direction: column; gap: 10px; }
-    .item-card {
-      border: 1px solid #ececf0;
-      border-radius: 12px;
-      padding: 12px 14px;
-      background: #fff;
+    .cards {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
     }
-    .item-card .nome { font-weight: 600; font-size: 14px; margin-bottom: 6px; }
-    .item-card .meta { font-size: 12px; color: #6b7280; display: flex; flex-wrap: wrap; gap: 8px 14px; }
-    .item-card .meta span strong { color: #374151; }
-  .p38-footer {
-      margin-top: 28px;
-      padding-top: 16px;
+    .item-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 0;
+      background: #fff;
+      overflow: hidden;
+    }
+    .item-card-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px 16px 12px;
+      background: #fafaf9;
+      border-bottom: 1px solid #f0f0f2;
+    }
+    .item-index {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: #4a5240;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .item-nome {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.35;
+      color: #1f1d22;
+      flex: 1;
+      min-width: 0;
+    }
+    .item-grid {
+      margin: 0;
+      padding: 4px 16px 14px;
+      display: grid;
+      gap: 0;
+    }
+    .item-row {
+      display: grid;
+      grid-template-columns: 96px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 11px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .item-row:last-child { border-bottom: none; }
+    .item-row dt {
+      margin: 0;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #9ca3af;
+    }
+    .item-row dd {
+      margin: 0;
+      font-size: 15px;
+      color: #374151;
+      text-align: right;
+    }
+    .item-row-highlight dd {
+      font-size: 17px;
+      font-weight: 700;
+      color: #1f1d22;
+      font-variant-numeric: tabular-nums;
+    }
+    .item-row-qty dd { color: #4a5240; }
+    .p38-footer {
+      margin-top: 32px;
+      padding-top: 18px;
       border-top: 1px solid #ececf0;
       text-align: center;
       font-size: 11px;
       color: #9ca3af;
     }
     .p38-mark { font-weight: 700; color: #4a5240; letter-spacing: -0.02em; }
-    .p38-sep { opacity: 0.45; margin: 0 5px; font-weight: 300; }
+    .p38-sep { opacity: 0.45; margin: 0 6px; font-weight: 300; }
     .p38-erp {
       font-weight: 400;
       letter-spacing: 0.14em;
@@ -134,29 +229,47 @@ function buildReportStyles() {
       font-size: 10px;
       color: #6b7280;
     }
+    .gerado-em {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 11px;
+      color: #c4c4c4;
+    }
     @media (min-width: 640px) {
-      body { padding: 28px 20px; }
-      .doc-inner { padding: 32px 36px 36px; }
+      body { padding: 36px 24px 48px; }
+      .doc-inner { padding: 40px 40px 44px; }
       .table-wrap { display: block; overflow-x: auto; }
       .cards { display: none; }
-      table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; }
       thead th {
         text-align: left;
-        padding: 10px 12px;
-        font-size: 10px;
+        padding: 14px 16px;
+        font-size: 11px;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
+        letter-spacing: 0.06em;
         color: #6b7280;
         background: #f4f5f2;
-        border-bottom: 1px solid #e5e7eb;
+        border-bottom: 2px solid #e5e7eb;
       }
+      thead th:first-child { border-radius: 12px 0 0 0; }
+      thead th:last-child { border-radius: 0 12px 0 0; }
       thead th.num { text-align: right; }
       tbody td {
-        padding: 10px 12px;
-        border-bottom: 1px solid #f3f4f6;
-        vertical-align: top;
+        padding: 16px;
+        border-bottom: 1px solid #f0f0f2;
+        vertical-align: middle;
       }
-      tbody td.num { text-align: right; white-space: nowrap; }
+      tbody tr:nth-child(even) td { background: #fafaf9; }
+      tbody td.num {
+        text-align: right;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+        font-size: 15px;
+      }
+      tbody td.produto { font-weight: 600; line-height: 1.4; }
+      tbody td.qtd { color: #4a5240; font-size: 16px; }
+      tbody td.un { font-weight: 500; }
       tbody tr:last-child td { border-bottom: none; }
     }
     @media print {
@@ -168,6 +281,14 @@ function buildReportStyles() {
       @page { size: A4 portrait; margin: 12mm; }
     }
   `;
+}
+
+function getItensOrdenados(cotacao) {
+  return sortCotacaoItensAlfabeticamente(cotacao?.itens || []);
+}
+
+function padItemIndex(idx) {
+  return String(idx + 1).padStart(2, '0');
 }
 
 /**
@@ -185,24 +306,37 @@ export function buildCotacaoFornecedorReportHtml({
     { locale: ptBR },
   );
   const geradoEm = format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR });
-  const itens = cotacao?.itens || [];
+  const itens = getItensOrdenados(cotacao);
 
   const tableRows = itens.map((item, idx) => `
     <tr>
-      <td class="num">${idx + 1}</td>
-      <td>${escapeHtml(item.produto_nome)}</td>
+      <td class="num">${padItemIndex(idx)}</td>
+      <td class="produto">${escapeHtml(item.produto_nome)}</td>
       <td>${escapeHtml(item.codigo_interno || '—')}</td>
-      <td class="num">${formatQty(item.quantidade)}</td>
-      <td>${escapeHtml(item.unidade || 'UN')}</td>
+      <td class="num qtd">${formatQty(item.quantidade)}</td>
+      <td class="un">${escapeHtml(item.unidade || 'UN')}</td>
     </tr>`).join('');
 
   const cards = itens.map((item, idx) => `
     <article class="item-card">
-      <div class="nome">${idx + 1}. ${escapeHtml(item.produto_nome)}</div>
-      <div class="meta">
-        <span>Cód. <strong>${escapeHtml(item.codigo_interno || '—')}</strong></span>
-        <span>Qtd <strong>${formatQty(item.quantidade)} ${escapeHtml(item.unidade || 'UN')}</strong></span>
+      <div class="item-card-head">
+        <div class="item-index" aria-hidden="true">${padItemIndex(idx)}</div>
+        <h3 class="item-nome">${escapeHtml(item.produto_nome)}</h3>
       </div>
+      <dl class="item-grid">
+        <div class="item-row">
+          <dt>Código</dt>
+          <dd>${escapeHtml(item.codigo_interno || '—')}</dd>
+        </div>
+        <div class="item-row item-row-highlight item-row-qty">
+          <dt>Quantidade</dt>
+          <dd>${formatQty(item.quantidade)}</dd>
+        </div>
+        <div class="item-row item-row-highlight">
+          <dt>Unidade</dt>
+          <dd>${escapeHtml(item.unidade || 'UN')}</dd>
+        </div>
+      </dl>
     </article>`).join('');
 
   const empresaExtras = [
@@ -234,6 +368,10 @@ export function buildCotacaoFornecedorReportHtml({
           <strong>Para:</strong> ${escapeHtml(fornecedor.nome)}
           ${fornecedor.email ? `<br /><span style="color:#6b7280">${escapeHtml(fornecedor.email)}</span>` : ''}
         </div>` : ''}
+      <div class="itens-header">
+        <h3>Itens solicitados</h3>
+        <span class="count">${itens.length} produto${itens.length !== 1 ? 's' : ''} · ordem alfabética</span>
+      </div>
       <div class="table-wrap">
         <table>
           <thead>
@@ -242,18 +380,18 @@ export function buildCotacaoFornecedorReportHtml({
               <th>Produto</th>
               <th>Código</th>
               <th class="num">Quantidade</th>
-              <th>Un.</th>
+              <th>Unidade</th>
             </tr>
           </thead>
-          <tbody>${tableRows || '<tr><td colspan="5" style="text-align:center;color:#9ca3af">Nenhum item</td></tr>'}</tbody>
+          <tbody>${tableRows || '<tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:24px">Nenhum item</td></tr>'}</tbody>
         </table>
       </div>
-      <div class="cards">${cards || '<p style="color:#9ca3af;text-align:center">Nenhum item</p>'}</div>
+      <div class="cards">${cards || '<p style="color:#9ca3af;text-align:center;padding:24px">Nenhum item</p>'}</div>
       <p class="instrucoes">
         Favor enviar proposta com <strong>preços unitários</strong>, prazo de entrega, marca/referência quando aplicável e condições de pagamento.
       </p>
       ${buildP38FooterHtml()}
-      <p style="margin-top:8px;text-align:center;font-size:10px;color:#c4c4c4">Gerado em ${geradoEm}</p>
+      <p class="gerado-em">Gerado em ${geradoEm}</p>
     </div>
   </div>
 </body>
@@ -386,13 +524,13 @@ export async function generateCotacaoFornecedorPdf({
   ensureSpace(14);
   drawTableHeader();
 
-  const itens = cotacao?.itens || [];
+  const itens = getItensOrdenados(cotacao);
   itens.forEach((item, idx) => {
     const nomeLines = doc.splitTextToSize(safePdf(item.produto_nome || ''), 82);
     const rowH = Math.max(nomeLines.length, 1) * 4.2 + 2;
     ensureSpace(rowH + 2);
     doc.setFontSize(9);
-    doc.text(String(idx + 1), col.num + 1, y);
+    doc.text(String(idx + 1).padStart(2, '0'), col.num + 1, y);
     doc.text(nomeLines, col.prod, y);
     doc.text(safePdf(item.codigo_interno || '—'), col.cod, y);
     doc.text(formatQty(item.quantidade), col.qtd, y);
@@ -436,12 +574,14 @@ export async function exportCotacaoFornecedorPdf(payload) {
  * Monta payload de cotação com códigos do catálogo quando disponíveis.
  */
 export function enrichCotacaoItensComCatalogo(cotacao, produtosMap = {}) {
-  const itens = (cotacao?.itens || []).map((item) => {
-    const produto = produtosMap[item.produto_id];
-    return {
-      ...item,
-      codigo_interno: produto?.codigo_interno || item.codigo_interno || '',
-    };
-  });
+  const itens = sortCotacaoItensAlfabeticamente(
+    (cotacao?.itens || []).map((item) => {
+      const produto = produtosMap[item.produto_id];
+      return {
+        ...item,
+        codigo_interno: produto?.codigo_interno || item.codigo_interno || '',
+      };
+    }),
+  );
   return { ...cotacao, itens };
 }

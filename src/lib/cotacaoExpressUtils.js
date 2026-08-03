@@ -15,6 +15,18 @@ export function isCotacaoConcluida(status) {
   return COTACAO_CONCLUIDA_STATUSES.includes(status);
 }
 
+/** Ordem alfabética pt-BR — cotação, exportação e exibição. */
+export function compareCotacaoItemNome(a, b) {
+  return (a?.produto_nome || '').localeCompare(b?.produto_nome || '', 'pt-BR', {
+    sensitivity: 'base',
+    numeric: true,
+  });
+}
+
+export function sortCotacaoItensAlfabeticamente(itens = []) {
+  return [...itens].sort(compareCotacaoItemNome);
+}
+
 export function cotacaoAccent(status) {
   if (status === COTACAO_STATUS_FINALIZADA) return 'success';
   if (status === COTACAO_STATUS_ANALISE) return 'info';
@@ -218,7 +230,10 @@ export function buildResumoAprovacao(cotacao, fornecedoresMap = {}, produtosMap 
     porFornecedor[fid].total += subtotal;
   });
 
-  const grupos = Object.values(porFornecedor);
+  const grupos = Object.values(porFornecedor).map((grupo) => ({
+    ...grupo,
+    itens: sortCotacaoItensAlfabeticamente(grupo.itens),
+  }));
   const totalGeral = grupos.reduce((s, g) => s + g.total, 0);
   const economiaTotal = grupos.reduce(
     (s, g) => s + g.itens.reduce((si, it) => si + (it.economia_vs_custo > 0 ? it.economia_vs_custo : 0), 0),
