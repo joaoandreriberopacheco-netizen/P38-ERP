@@ -29,6 +29,7 @@ import {
   mergeCotacaoItemsByProduct,
   selectorItemToCotacaoItem,
   sincronizarRegistrosDisputa,
+  sortCotacaoItensAlfabeticamente,
 } from '@/lib/cotacaoExpressUtils';
 import { mergeLoteIntoItems, parseLoteQuantidade } from '@/lib/catalogLoteUtils';
 
@@ -77,6 +78,14 @@ export default function CotacoesManager() {
     return buildResumoAprovacao(selectedCotacao, fornecedoresMap, produtosMap);
   }, [selectedCotacao, fornecedoresMap, produtosMap]);
 
+  const cotacaoExibicao = useMemo(() => {
+    if (!selectedCotacao) return null;
+    return {
+      ...selectedCotacao,
+      itens: sortCotacaoItensAlfabeticamente(selectedCotacao.itens || []),
+    };
+  }, [selectedCotacao]);
+
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -111,14 +120,18 @@ export default function CotacoesManager() {
     });
     setPrecosInput(inputs);
     setSelectorItems(
-      (updated.itens || []).map((item) => cotacaoItemToSelectorItem(item, produtosMap[item.produto_id])),
+      sortCotacaoItensAlfabeticamente(
+        (updated.itens || []).map((item) => cotacaoItemToSelectorItem(item, produtosMap[item.produto_id])),
+      ),
     );
     return updated;
   };
 
   const syncSelectorFromCotacao = (cotacao) => {
     setSelectorItems(
-      (cotacao?.itens || []).map((item) => cotacaoItemToSelectorItem(item, produtosMap[item.produto_id])),
+      sortCotacaoItensAlfabeticamente(
+        (cotacao?.itens || []).map((item) => cotacaoItemToSelectorItem(item, produtosMap[item.produto_id])),
+      ),
     );
   };
 
@@ -190,9 +203,11 @@ export default function CotacoesManager() {
     if (!selectedCotacao) return;
     setSalvando(true);
     try {
-      const itensValidos = selectorItems
-        .map(selectorItemToCotacaoItem)
-        .filter((item) => (parseFloat(item.quantidade) || 0) > 0);
+      const itensValidos = sortCotacaoItensAlfabeticamente(
+        selectorItems
+          .map(selectorItemToCotacaoItem)
+          .filter((item) => (parseFloat(item.quantidade) || 0) > 0),
+      );
 
       if (itensValidos.length === 0) {
         toast({ title: 'Sem itens válidos', description: 'Adicione pelo menos um item.', variant: 'destructive' });
@@ -219,9 +234,11 @@ export default function CotacoesManager() {
 
     setAbrindoDisputa(true);
     try {
-      const itensValidos = selectorItems
-        .map(selectorItemToCotacaoItem)
-        .filter((item) => (parseFloat(item.quantidade) || 0) > 0);
+      const itensValidos = sortCotacaoItensAlfabeticamente(
+        selectorItems
+          .map(selectorItemToCotacaoItem)
+          .filter((item) => (parseFloat(item.quantidade) || 0) > 0),
+      );
 
       await base44.entities.Cotacao.update(selectedCotacao.id, {
         itens: itensValidos,
@@ -319,9 +336,9 @@ export default function CotacoesManager() {
           const qty = parseFloat(merged.quantidade) || 0;
           merged.quantidade_base = roundToTwoDecimals(qty * fator);
           next[idx] = merged;
-          return next;
+          return sortCotacaoItensAlfabeticamente(next);
         }
-        return [...prev, payload];
+        return sortCotacaoItensAlfabeticamente([...prev, payload]);
       });
       return;
     }
@@ -344,7 +361,7 @@ export default function CotacoesManager() {
           quantidade: newQty,
           quantidade_base: roundToTwoDecimals(newQty * fator),
         };
-        return next;
+        return sortCotacaoItensAlfabeticamente(next);
       }
       if (!product?.id && !product?.nome) return prev;
       const resolved = product.id
@@ -361,7 +378,7 @@ export default function CotacoesManager() {
             desconto_pct_item: 0,
             total: 0,
           };
-      return [...prev, resolved];
+      return sortCotacaoItensAlfabeticamente([...prev, resolved]);
     });
   };
 
@@ -387,7 +404,7 @@ export default function CotacoesManager() {
       } else if (afterIds.size > beforeIds.size) {
         mergedCount = Math.max(validIncoming.length, afterIds.size - beforeIds.size);
       }
-      return next;
+      return sortCotacaoItensAlfabeticamente(next);
     });
 
     const skipped = incoming.length - incoming.filter((row) =>
@@ -421,7 +438,7 @@ export default function CotacoesManager() {
       const qty = parseFloat(item.quantidade) || 0;
       item.quantidade_base = roundToTwoDecimals(qty * fator);
       next[index] = item;
-      return next;
+      return sortCotacaoItensAlfabeticamente(next);
     });
   };
 
@@ -757,9 +774,9 @@ export default function CotacoesManager() {
         />
       ) : (
     <div className="flex h-[calc(100dvh-var(--p38-scroll-pad-below-nav,0px)-10rem)] min-h-[480px] flex-col overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm md:h-[calc(100dvh-12rem)]">
-      {view === 'montagem' && selectedCotacao && (
+      {view === 'montagem' && selectedCotacao && cotacaoExibicao && (
         <CotacaoExpressMontagem
-          cotacao={selectedCotacao}
+          cotacao={cotacaoExibicao}
           selectorItems={selectorItems}
           produtos={produtosCatalogo}
           salvando={salvando}
@@ -777,9 +794,9 @@ export default function CotacoesManager() {
         />
       )}
 
-      {view === 'disputa' && selectedCotacao && (
+      {view === 'disputa' && selectedCotacao && cotacaoExibicao && (
         <CotacaoExpressDisputa
-          cotacao={selectedCotacao}
+          cotacao={cotacaoExibicao}
           produtosMap={produtosMap}
           fornecedoresDisponiveis={fornecedores}
           precosInput={precosInput}
@@ -803,9 +820,9 @@ export default function CotacoesManager() {
         />
       )}
 
-      {view === 'aprovar' && selectedCotacao && (
+      {view === 'aprovar' && selectedCotacao && cotacaoExibicao && (
         <CotacaoExpressAprovar
-          cotacao={selectedCotacao}
+          cotacao={cotacaoExibicao}
           resumo={resumoAprovacao}
           gerando={gerandoPedidos}
           pedidosGerados={pedidosGerados}
@@ -839,7 +856,7 @@ export default function CotacoesManager() {
       <CotacaoFornecedorExportDialog
         open={exportDialogOpen}
         onOpenChange={setExportDialogOpen}
-        cotacao={selectedCotacao}
+        cotacao={cotacaoExibicao || selectedCotacao}
         fornecedoresOpcoes={selectedCotacao?.fornecedores || []}
         exporting={exportandoSolicitacao}
         onExportHtml={handleExportSolicitacaoHtml}
