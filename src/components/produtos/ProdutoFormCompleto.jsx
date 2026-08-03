@@ -38,7 +38,7 @@ import { embalagensRowsToLegacyProdutoPatch, legacyProdutoToEmbalagensRows } fro
 import { syncIsComercialOnAlternativas } from '@/components/produtos/massa/embalagensPlanilhaUtils';
 import { cn } from '@/components/utils';
 import { useCompactShell } from '@/hooks/use-breakpoint';
-import { useBottomNavScrollVisibility } from '@/hooks/useBottomNavScrollVisibility';
+import { useScrollVisibility } from '@/hooks/useScrollVisibility';
 import { formatProductCode, generateRandomProductCode } from '@/lib/productCode';
 
 const P38_FORM_ROOT = 'flex flex-col h-full overflow-hidden font-din-1451 bg-background dark:bg-[#1f1d22]';
@@ -68,7 +68,12 @@ function resolveEntitySelectValue(selectedId, options, { noneValue = SELECT_NONE
   const id = String(selectedId || '').trim();
   if (!id) return noneValue;
   if (!Array.isArray(options) || options.length === 0) return noneValue;
-  return options.some((o) => String(o?.id || '') === id) ? id : `${orphanPrefix}${id}`;
+  return options.some((o) => String(o?.id || '').trim() === id) ? id : `${orphanPrefix}${id}`;
+}
+
+function isValidSelectItemValue(value) {
+  const v = String(value ?? '').trim();
+  return v.length > 0;
 }
 
 /** Id estável para linhas legadas sem `id` (evita novo UUID a cada render / reabrir formulário). */
@@ -202,7 +207,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
   const [loadingMovimentacoes, setLoadingMovimentacoes] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState('descritivo');
   const isMobile = useCompactShell();
-  const historicoChromeExpanded = useBottomNavScrollVisibility(isMobile && abaAtiva === 'historico');
+  const historicoChromeExpanded = useScrollVisibility(isMobile && abaAtiva === 'historico');
   const collapseHistoricoShell = isMobile && abaAtiva === 'historico';
   const [temAlteracoesNaoSalvas, setTemAlteracoesNaoSalvas] = useState(false);
   const { toast } = useToast();
@@ -1478,8 +1483,8 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                       {formData.categoria_nome || 'Categoria atual (não listada)'}
                     </SelectItem>
                   ) : null}
-                  {categorias.map(cat => (
-                    <SelectItem key={cat.id} value={cat.id} className="dark:text-foreground dark:hover:bg-primary/90">{cat.nome}</SelectItem>
+                  {categorias.filter((cat) => isValidSelectItemValue(cat?.id)).map(cat => (
+                    <SelectItem key={cat.id} value={String(cat.id)} className="dark:text-foreground dark:hover:bg-primary/90">{cat.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -1506,8 +1511,8 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                       {formData.fornecedor_padrao_nome || formData.fornecedor_padrao_codigo || 'Fornecedor atual (não listado)'}
                     </SelectItem>
                   ) : null}
-                  {fornecedores.map(f => (
-                    <SelectItem key={f.id} value={f.id} className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
+                  {fornecedores.filter((f) => isValidSelectItemValue(f?.id)).map(f => (
+                    <SelectItem key={f.id} value={String(f.id)} className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
                       {f.nome}
                     </SelectItem>
                   ))}
@@ -1927,7 +1932,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     <SelectValue placeholder="Sigla" />
                   </SelectTrigger>
                   <SelectContent className={P38_FORM_SELECT_CONTENT}>
-                    {commercialSelectOptions.map((sigla) => (
+                    {commercialSelectOptions.filter(isValidSelectItemValue).map((sigla) => (
                       <SelectItem key={`com-${sigla}`} value={sigla}>
                         {sigla}
                       </SelectItem>

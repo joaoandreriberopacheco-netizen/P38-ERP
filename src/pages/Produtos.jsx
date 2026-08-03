@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import ProdutosAccessGuard from '@/components/guard/ProdutosAccessGuard';
 import { Input } from '@/components/ui/input';
@@ -1505,12 +1505,18 @@ function ProdutosPageContent() {
       {/* Tela completa para o formulário */}
       {isFormOpen && (
         <div className="fixed inset-0 z-[70] bg-background dark:bg-[#1f1d22]">
-          <ProdutoFormCompleto
-            produto={selectedProduto}
-            produtoSimilarBase={produtoSimilarBase}
-            onSave={handleSave}
-            onClose={() => { setIsFormOpen(false); setProdutoSimilarBase(null); }}
-          />
+          <Suspense fallback={
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              A carregar formulário…
+            </div>
+          }>
+            <ProdutoFormCompleto
+              produto={selectedProduto}
+              produtoSimilarBase={produtoSimilarBase}
+              onSave={handleSave}
+              onClose={() => { setIsFormOpen(false); setProdutoSimilarBase(null); }}
+            />
+          </Suspense>
         </div>
       )}
 
