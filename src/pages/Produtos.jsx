@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback, Suspense, startTransition } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback, Suspense, startTransition, lazy } from 'react';
 import { Button } from '@/components/ui/button';
 import ProdutosAccessGuard from '@/components/guard/ProdutosAccessGuard';
 import { Input } from '@/components/ui/input';
@@ -18,19 +18,19 @@ import { base44 } from '@/api/base44Client';
 import { roundToTwoDecimals, formatCurrency } from '@/lib/financialUtils';
 import { dataHoje } from '@/components/utils/dateUtils';
 import ProdutoFormCompleto from '../components/produtos/ProdutoFormCompleto';
-import ColumnSelector from '../components/produtos/ColumnSelector';
-import MassImageUploader from '../components/produtos/MassImageUploader';
-import MassTagGenerator from '../components/produtos/MassTagGenerator';
-import MassCategoryClassifier from '../components/produtos/MassCategoryClassifier';
-import MassMarkupDialog from '../components/produtos/MassMarkupDialog';
-import PontosPedidoCatalogoDialog from '../components/produtos/PontosPedidoCatalogoDialog';
+const ColumnSelector = lazy(() => import('../components/produtos/ColumnSelector'));
+const MassImageUploader = lazy(() => import('../components/produtos/MassImageUploader'));
+const MassTagGenerator = lazy(() => import('../components/produtos/MassTagGenerator'));
+const MassCategoryClassifier = lazy(() => import('../components/produtos/MassCategoryClassifier'));
+const MassMarkupDialog = lazy(() => import('../components/produtos/MassMarkupDialog'));
+const PontosPedidoCatalogoDialog = lazy(() => import('../components/produtos/PontosPedidoCatalogoDialog'));
+const CatalogTagPrintDialog = lazy(() => import('../components/produtos/CatalogTagPrintDialog'));
 import TreeGrid, { TREE_GRID_EXPAND_ALL_LEVEL } from '../components/produtos/treegrid/TreeGrid';
 import MobileHierarquica, { CatalogoMobileScrollShell } from '../components/produtos/MobileHierarquica';
 import ProdutoFAB from '../components/produtos/ProdutoFAB';
 import ExcluirProdutoDialog from '../components/produtos/ExcluirProdutoDialog';
 import ProdutosHeader from '../components/produtos/ProdutosHeader';
 import ProdutosCommandBar from '../components/produtos/ProdutosCommandBar';
-import CatalogTagPrintDialog from '../components/produtos/CatalogTagPrintDialog';
 import ProdutosPlanaTable from '../components/produtos/ProdutosPlanaTable';
 import { isCadastroIncompleto } from '../components/produtos/ProdutosHelpers';
 import {
@@ -39,6 +39,7 @@ import {
   describeProdutoFilters,
   getCatalogProdutoEntryFilters,
   collectCatalogVitrineUnits,
+  DEFAULT_PRODUTO_FILTERS,
 } from '@/lib/filterProdutos';
 import {
   CATALOG_SALES_WINDOW_LABELS,
@@ -68,6 +69,19 @@ import {
 
 const CATALOG_GROUP_BY_CATEGORY_KEY = 'catalogo.groupTreeByCategory';
 const EMPTY_PRODUCTS = [];
+
+/** Selects do painel de filtros — feedback imediato no controlo. */
+const IMMEDIATE_CATALOG_FILTER_KEYS = new Set([
+  'categoria',
+  'fornecedorId',
+  'statusEstoque',
+  'abcd',
+  'cadastroIncompleto',
+  'ativoStatus',
+  'unidadeVitrine',
+  'searchStartsWith',
+  'quantidadeOperador',
+]);
 
 function catalogRowsShallowEqual(a, b) {
   if (a === b) return true;
@@ -349,12 +363,20 @@ function ProdutosPageContent() {
 
   const handleFilterChange = React.useCallback((key, value) => {
     const apply = (prev) => ({ ...prev, [key]: value });
-    if (key === 'searchTerm') {
-      startTransition(() => setFilters(apply));
+    if (IMMEDIATE_CATALOG_FILTER_KEYS.has(key)) {
+      setFilters(apply);
       return;
     }
-    setFilters(apply);
+    startTransition(() => setFilters(apply));
   }, []);
+
+  const setFiltersDeferred = useCallback((update) => {
+    startTransition(() => setFilters(update));
+  }, []);
+
+  const handleClearCatalogFilters = useCallback(() => {
+    setFiltersDeferred({ ...DEFAULT_PRODUTO_FILTERS });
+  }, [setFiltersDeferred]);
 
   const formatarNumero = React.useCallback((numero) => {
     return formatCurrency(numero);
@@ -1490,6 +1512,7 @@ function ProdutosPageContent() {
     onOpenPontosPedido: handleOpenPontosPedido,
     groupTreeByCategory,
     onGroupTreeByCategoryChange: handleGroupTreeByCategoryChange,
+    onClearFilters: handleClearCatalogFilters,
   }), [
     headerStats,
     filters,
@@ -1524,6 +1547,7 @@ function ProdutosPageContent() {
     handleOpenPontosPedido,
     groupTreeByCategory,
     handleGroupTreeByCategoryChange,
+    handleClearCatalogFilters,
   ]);
 
   const mobileCatalogChrome = useMemo(
@@ -1828,59 +1852,87 @@ function ProdutosPageContent() {
       </Dialog>
 
       {/* Column Selector */}
-      <ColumnSelector
-        visibleColumns={visibleColumns}
-        onColumnsChange={(columns) => {
-          setVisibleColumns(columns);
-          saveCatalogProdutoColumns(columns);
-        }}
-        open={isColumnSelectorOpen}
-        onClose={() => setIsColumnSelectorOpen(false)}
-      />
+      {isColumnSelectorOpen && (
+        <Suspense fallback={null}>
+          <ColumnSelector
+            visibleColumns={visibleColumns}
+            onColumnsChange={(columns) => {
+              setVisibleColumns(columns);
+              saveCatalogProdutoColumns(columns);
+            }}
+            open={isColumnSelectorOpen}
+            onClose={() => setIsColumnSelectorOpen(false)}
+          />
+        </Suspense>
+      )}
 
-      <MassImageUploader 
-        isOpen={isMassImageUploaderOpen}
-        onClose={() => setIsMassImageUploaderOpen(false)}
-        onComplete={() => { loadData(); }}
-      />
+      {isMassImageUploaderOpen && (
+        <Suspense fallback={null}>
+          <MassImageUploader
+            isOpen={isMassImageUploaderOpen}
+            onClose={() => setIsMassImageUploaderOpen(false)}
+            onComplete={() => { loadData(); }}
+          />
+        </Suspense>
+      )}
 
-      <MassTagGenerator
-        products={isMassTagOpen ? filteredProdutos : EMPTY_PRODUCTS}
-        onComplete={loadData}
-        open={isMassTagOpen}
-        onOpenChange={setIsMassTagOpen}
-        hideTrigger
-      />
+      {isMassTagOpen && (
+        <Suspense fallback={null}>
+          <MassTagGenerator
+            products={filteredProdutos}
+            onComplete={loadData}
+            open={isMassTagOpen}
+            onOpenChange={setIsMassTagOpen}
+            hideTrigger
+          />
+        </Suspense>
+      )}
 
-      <CatalogTagPrintDialog
-        open={isCatalogTagPrintOpen}
-        onOpenChange={setIsCatalogTagPrintOpen}
-        products={isCatalogTagPrintOpen ? filteredProdutos : EMPTY_PRODUCTS}
-        filtersSummary={catalogTagFiltersSummary}
-      />
+      {isCatalogTagPrintOpen && (
+        <Suspense fallback={null}>
+          <CatalogTagPrintDialog
+            open={isCatalogTagPrintOpen}
+            onOpenChange={setIsCatalogTagPrintOpen}
+            products={filteredProdutos}
+            filtersSummary={catalogTagFiltersSummary}
+          />
+        </Suspense>
+      )}
 
-      <MassCategoryClassifier
-        products={isMassCategoryOpen ? filteredProdutos : EMPTY_PRODUCTS}
-        onComplete={loadData}
-        open={isMassCategoryOpen}
-        onOpenChange={setIsMassCategoryOpen}
-        hideTrigger
-      />
+      {isMassCategoryOpen && (
+        <Suspense fallback={null}>
+          <MassCategoryClassifier
+            products={filteredProdutos}
+            onComplete={loadData}
+            open={isMassCategoryOpen}
+            onOpenChange={setIsMassCategoryOpen}
+            hideTrigger
+          />
+        </Suspense>
+      )}
 
-      <MassMarkupDialog
-        products={isMassMarkupOpen ? filteredProdutos : EMPTY_PRODUCTS}
-        onComplete={loadData}
-        open={isMassMarkupOpen}
-        onOpenChange={setIsMassMarkupOpen}
-        hideTrigger
-      />
+      {isMassMarkupOpen && (
+        <Suspense fallback={null}>
+          <MassMarkupDialog
+            products={filteredProdutos}
+            onComplete={loadData}
+            open={isMassMarkupOpen}
+            onOpenChange={setIsMassMarkupOpen}
+            hideTrigger
+          />
+        </Suspense>
+      )}
 
-      <PontosPedidoCatalogoDialog
-        products={isPontosPedidoOpen ? produtos : EMPTY_PRODUCTS}
-        open={isPontosPedidoOpen}
-        onOpenChange={setIsPontosPedidoOpen}
-        onComplete={loadData}
-      />
+      {isPontosPedidoOpen && (
+        <Suspense fallback={null}>
+          <PontosPedidoCatalogoDialog
+            products={produtos}
+            open={isPontosPedidoOpen}
+            onOpenChange={setIsPontosPedidoOpen}
+            onComplete={loadData}
+          />
+        </Suspense>
+      )}
 
       <ExcluirProdutoDialog
         produto={produtoParaExcluir}
