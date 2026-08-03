@@ -8,9 +8,9 @@ import { formatCatalogMedia30d, formatCatalogPontoEsperadoLt, formatCatalogPonto
 import { resolveCatalogEstoqueExibicao } from '@/lib/catalogEstoqueVirtual';
 import { formatQuantidadeCatalogoApresentacao } from '@/lib/productUnits';
 import { p38Table } from '@/lib/p38TableSurfaces';
+import { catalogProdutoColStyle, estimateCatalogProdutoRowHeight } from '@/lib/catalogProdutoColumnLayout';
 import { cn } from '@/components/utils';
 
-const PRODUTO_MIN_WIDTH = 280;
 const PRODUTO_STICKY_SHADOW = 'shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)] dark:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.45)]';
 
 const CATALOG_ROW_LABEL_CLASS =
@@ -18,7 +18,9 @@ const CATALOG_ROW_LABEL_CLASS =
 
 /** Descrição do produto em linhas de dados — no escuro, tom igual às demais células */
 const CATALOG_ROW_DESC_CLASS =
-  'text-xs font-semibold text-foreground/90 dark:text-muted-foreground whitespace-nowrap uppercase tracking-wide';
+  'text-xs font-semibold text-foreground/90 dark:text-muted-foreground uppercase tracking-wide break-words leading-snug';
+
+const PRODUTO_CELL_STYLE = catalogProdutoColStyle();
 
 const DATA_CELL_CLASS = 'text-right py-1.5 px-2 whitespace-nowrap align-middle';
 
@@ -304,7 +306,13 @@ export default function ProdutosPlanaTable({
   const scrollContainerRef = useRef(null);
   const virtualRows = useVirtualRows({
     itemCount: filteredProdutos.length,
-    estimateSize: 46,
+    estimateSize: (index) => {
+      const produto = filteredProdutos[index];
+      if (!produto) return 52;
+      return estimateCatalogProdutoRowHeight(produto.nome, {
+        codigoInterno: Boolean(produto.codigo_interno),
+      });
+    },
     overscan: 10,
     scrollElementRef: scrollContainerRef,
   });
@@ -335,7 +343,7 @@ export default function ProdutosPlanaTable({
                 CATALOG_ROW_LABEL_CLASS,
                 'text-left py-2',
               )}
-              style={{ left: 0, paddingLeft: 8, paddingRight: 8, width: PRODUTO_MIN_WIDTH, minWidth: PRODUTO_MIN_WIDTH }}
+              style={{ left: 0, paddingLeft: 8, paddingRight: 8, ...PRODUTO_CELL_STYLE }}
             >
               Produto
             </th>
@@ -366,13 +374,13 @@ export default function ProdutosPlanaTable({
             return (
               <tr key={produto.id} className={cn(p38Table.row, 'group')}>
                 <td
-                  className={cn(p38Table.stickyCellLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, 'py-1.5')}
-                  style={{ left: 0, paddingRight: 8, width: PRODUTO_MIN_WIDTH, minWidth: PRODUTO_MIN_WIDTH }}
+                  className={cn(p38Table.stickyCellLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, 'py-2 px-2 align-top')}
+                  style={{ left: 0, ...PRODUTO_CELL_STYLE }}
                 >
-                  <div className="flex items-center gap-1 w-max max-w-none">
-                    <div className="flex items-center gap-1.5">
+                  <div className="flex items-start gap-1 min-w-0 w-full">
+                    <div className="flex items-start gap-1.5 min-w-0 flex-1">
                       <span
-                        className="rounded bg-muted overflow-hidden inline-flex items-center justify-center flex-shrink-0"
+                        className="rounded bg-muted overflow-hidden inline-flex items-center justify-center flex-shrink-0 mt-0.5"
                         style={{ width: 32, height: 32 }}
                       >
                         {produto.imagem_url ? (
@@ -381,10 +389,10 @@ export default function ProdutosPlanaTable({
                           <Package className="w-3.5 h-3.5 text-muted-foreground" />
                         )}
                       </span>
-                      <div className="flex items-center gap-1.5 ml-1.5">
+                      <div className="flex flex-col min-w-0 flex-1 gap-0.5">
                         <span className={CATALOG_ROW_DESC_CLASS}>{produto.nome}</span>
                         {produto.codigo_interno && (
-                          <span className="text-[10px] flex-shrink-0 font-mono whitespace-nowrap text-foreground/70 dark:text-foreground/80">
+                          <span className="text-[10px] font-mono text-muted-foreground break-all leading-tight">
                             {produto.codigo_interno}
                           </span>
                         )}

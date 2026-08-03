@@ -13,9 +13,8 @@ import {
 } from '@/lib/catalogSalesVelocity';
 import { aggregateEstoqueDisplay, collectSkus, aggregateMetaEstoqueDisplay } from './useTreeGrid';
 
-const HIER_STEP = 20;
-const CELL_PAD = 4;
-const PRODUTO_MIN_WIDTH = 180;
+import { CATALOG_PRODUTO_COL_WIDTH } from '@/lib/catalogProdutoColumnLayout';
+
 const COL_PAD_X = 16;
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -36,31 +35,6 @@ function createTextMeasurer() {
     ctx.font = `${weight} ${size}px ${family}`;
     return Math.ceil(ctx.measureText(value).width);
   };
-}
-
-const catalogHierDepth = (level) => Math.max(0, (level ?? 1) - 1);
-
-function produtoCellWidth(row, readOnly, measure) {
-  const hierDepth = catalogHierDepth(row.level);
-  let width = CELL_PAD + hierDepth * HIER_STEP + COL_PAD_X;
-
-  if (row.type === 'group') {
-    width += 14 + 6 + 6; // chevron + dot + gaps
-    width += measure(String(row.label || '').toUpperCase(), { size: 12, weight: 600 });
-    width += 12 + measure(String(row.count ?? ''), { size: 10, weight: 500 });
-    return Math.max(PRODUTO_MIN_WIDTH, width);
-  }
-
-  const p = row.produto || {};
-  const isPrimeiroNivel = row.level === 1;
-  if (isPrimeiroNivel) width += 6;
-  width += 32 + 6; // ícone SKU
-  width += measure(String(p.nome || '').toUpperCase(), { size: 12, weight: isPrimeiroNivel ? 600 : 400 });
-  if (p.codigo_interno) {
-    width += 8 + measure(String(p.codigo_interno), { size: 10, weight: 400, family: 'ui-monospace, monospace' });
-  }
-  if (!readOnly) width += 52;
-  return Math.max(PRODUTO_MIN_WIDTH, width);
 }
 
 function skuCellText(colId, produto, row, salesVelocityMap = {}) {
@@ -211,11 +185,7 @@ function dataCellWidth(colId, row, measure, salesVelocityMap = {}) {
 export function computeTreeGridColumnLayout({ rows, activeCols, readOnly, containerWidth, salesVelocityMap = {} }) {
   const measure = createTextMeasurer();
 
-  let produtoWidth = PRODUTO_MIN_WIDTH;
-  for (const row of rows || []) {
-    produtoWidth = Math.max(produtoWidth, produtoCellWidth(row, readOnly, measure));
-  }
-  produtoWidth = Math.ceil(produtoWidth);
+  const produtoWidth = CATALOG_PRODUTO_COL_WIDTH;
 
   const cols = (activeCols || []).map((col) => {
     let minW = Math.max(col.w || 72, measure(col.label, { size: 12, weight: 700 }) + COL_PAD_X);

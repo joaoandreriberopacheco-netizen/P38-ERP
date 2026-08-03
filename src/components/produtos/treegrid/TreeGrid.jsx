@@ -12,6 +12,7 @@ import { formatEstoqueApresentacao, getCatalogoComercialView, getCatalogUnitLabe
 import { useVirtualRows } from '@/hooks/useVirtualRows';
 import { CATALOGO_VIRTUALIZE_MIN_ROWS } from '@/lib/p38VirtualList';
 import { cn } from '@/components/utils';
+import { catalogProdutoColStyle, estimateCatalogProdutoRowHeight } from '@/lib/catalogProdutoColumnLayout';
 import { p38Table } from '@/lib/p38TableSurfaces';
 import { computeTreeGridColumnLayout } from './treeGridColumnLayout';
 import {
@@ -179,11 +180,17 @@ const CATALOG_ROW_LABEL_CLASS =
 
 /** Descrição do produto em linhas de dados — no escuro, tom igual às demais células */
 const CATALOG_ROW_DESC_CLASS =
-  'text-xs font-semibold text-foreground/90 dark:text-muted-foreground whitespace-nowrap uppercase tracking-wide';
+  'text-xs font-semibold text-foreground/90 dark:text-muted-foreground uppercase tracking-wide break-words leading-snug';
 
 /** Filhos (nível ≥ 2) — tom mais suave que o pai */
 const CATALOG_CHILD_LABEL_CLASS =
-  'text-xs font-normal text-muted-foreground whitespace-nowrap uppercase';
+  'text-xs font-normal text-muted-foreground uppercase break-words leading-snug';
+
+/** Grupos na árvore — quebra dentro da coluna fixa */
+const CATALOG_GROUP_LABEL_CLASS =
+  'text-xs font-semibold text-foreground/90 dark:text-foreground uppercase tracking-wide break-words leading-snug';
+
+const PRODUTO_CELL_STYLE = catalogProdutoColStyle();
 
 /** Marcador verde mediterrâneo — pais e solteiros de 1º nível na árvore */
 function CatalogTierDot() {
@@ -212,11 +219,11 @@ function CatalogProdutoCell({
 
   return (
     <div
-      className="flex items-center w-max max-w-none"
+      className="flex items-start min-w-0 w-full"
       style={{ paddingLeft: CELL_PAD + hierDepth * HIER_STEP }}
     >
       {hasRail && (
-        <div className="flex items-center gap-1.5 flex-shrink-0">
+        <div className="flex items-start gap-1.5 flex-shrink-0 pt-0.5">
           {showChevron && (
             <span className="w-3.5 h-3.5 inline-flex items-center justify-center flex-shrink-0">
               <ChevronRight
@@ -246,7 +253,7 @@ function CatalogProdutoCell({
           )}
         </div>
       )}
-      <div className={cn('flex items-center gap-1.5', hasRail && 'ml-1.5')}>
+      <div className={cn('flex flex-col min-w-0 flex-1 gap-0.5', hasRail && 'ml-1.5')}>
         {children}
       </div>
     </div>
@@ -518,8 +525,8 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
       onClick={() => onToggle(row.key)}
     >
       <td
-        className={cn(p38Table.stickyCellLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, 'py-2')}
-        style={{ left: 0, paddingRight: 8, width: produtoWidth, minWidth: produtoWidth }}
+        className={cn(p38Table.stickyCellLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, 'py-2 px-2 align-top')}
+        style={{ left: 0, ...PRODUTO_CELL_STYLE }}
       >
         <CatalogProdutoCell
           hierDepth={hierDepth}
@@ -528,12 +535,14 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
           showTierDot={isPrimeiroNivel}
           showIcon={false}
         >
-          <span className={CATALOG_ROW_LABEL_CLASS}>
-            {row.label}
-          </span>
-          <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-medium border-border/40 text-muted-foreground dark:border-border/40 dark:text-muted-foreground flex-shrink-0 ml-0.5">
-            {row.count}
-          </Badge>
+          <div className="flex items-start gap-1 min-w-0 w-full">
+            <span className={cn(CATALOG_GROUP_LABEL_CLASS, 'flex-1 min-w-0')}>
+              {row.label}
+            </span>
+            <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-medium border-border/40 text-muted-foreground dark:border-border/40 dark:text-muted-foreground flex-shrink-0">
+              {row.count}
+            </Badge>
+          </div>
         </CatalogProdutoCell>
       </td>
       {activeCols.map(col => (
@@ -555,10 +564,10 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, p
   return (
     <tr className={cn(p38Table.row, 'group')}>
       <td
-        className={cn(p38Table.stickyCellLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, 'py-1.5')}
-        style={{ left: 0, paddingRight: 8, width: produtoWidth, minWidth: produtoWidth }}
+        className={cn(p38Table.stickyCellLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, 'py-2 px-2 align-top')}
+        style={{ left: 0, ...PRODUTO_CELL_STYLE }}
       >
-        <div className="flex items-center gap-1 w-max max-w-none">
+        <div className="flex items-start gap-1 min-w-0 w-full">
           <CatalogProdutoCell
             hierDepth={hierDepth}
             showTierDot={isPrimeiroNivel}
@@ -569,10 +578,7 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, p
               {p.nome}
             </span>
             {p.codigo_interno && (
-              <span className={cn(
-                'text-[10px] flex-shrink-0 font-mono whitespace-nowrap',
-                isPrimeiroNivel ? 'text-foreground/70 dark:text-foreground/80' : 'text-muted-foreground',
-              )}>
+              <span className="text-[10px] font-mono text-muted-foreground break-all leading-tight">
                 {p.codigo_interno}
               </span>
             )}
@@ -694,8 +700,17 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
   const { produtoWidth, cols: layoutCols, tableWidth } = columnLayout;
 
   const estimateRowSize = useCallback(
-    (index) => (rows[index]?.type === 'group' ? 38 : 46),
-    [rows]
+    (index) => {
+      const row = rows[index];
+      if (!row) return 52;
+      if (row.type === 'group') {
+        return estimateCatalogProdutoRowHeight(row.label, { isGroup: true });
+      }
+      return estimateCatalogProdutoRowHeight(row.produto?.nome, {
+        codigoInterno: Boolean(row.produto?.codigo_interno),
+      });
+    },
+    [rows],
   );
   const virtualRows = useVirtualRows({
     itemCount: rows.length,
@@ -732,7 +747,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
             <tr className="border-b border-border/40 dark:border-white/10">
               <th
                 className={cn(p38Table.stickyHeadLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, p38Table.head, CATALOG_ROW_LABEL_CLASS, "text-left py-2")}
-                style={{ left: 0, paddingLeft: 8, paddingRight: 8, width: produtoWidth, minWidth: produtoWidth }}
+                style={{ left: 0, paddingLeft: 8, paddingRight: 8, ...PRODUTO_CELL_STYLE }}
               >
                 Produto
               </th>
