@@ -268,11 +268,3 @@ export async function gerarProximoNumeroCotacao(base44) {
   return `COT-${String(nextNumber).padStart(5, '0')}`;
 }
 
-export async function gerarProximoNumeroPedido(base44) {
-  const allPOs = await base44.entities.PedidoCompra.list();
-  const nextNumber = (allPOs.length > 0
-    ? Math.max(...allPOs.map((p) => parseInt(p.numero?.split('-')[1] || 0, 10)))
-    : 0) + 1;
-  return nextNumber;
-}
-
