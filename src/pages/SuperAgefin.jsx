@@ -715,11 +715,9 @@ export default function SuperAgefin() {
     const dataPagamentoFolha = dataDia5DoMes(currentMonth);
     let folhaRelatorio = null;
     let folhaContaSintetica = null;
-    let folhaTotalConta = 0;
     try {
       folhaRelatorio = await carregarFolhaParaRelatorioDia5(dataPagamentoFolha);
       folhaContaSintetica = montarContaSinteticaFolhaDia5(folhaRelatorio);
-      folhaTotalConta = Number(folhaContaSintetica?.valor) || 0;
     } catch (err) {
       console.error('SUPERAGEFIN: falha ao carregar folha para o relatório', err);
     }
@@ -756,7 +754,13 @@ export default function SuperAgefin() {
       });
     })();
 
-    const totalImpressoComFolha = totalParaImpressao + (folhaContaSintetica ? folhaTotalConta : 0);
+    // O total do cabeçalho deve bater com a soma das linhas impressas (inclui folha sintética
+    // só quando ela entrou nos grupos — evita somar a folha duas vezes).
+    const totalImpressoComFolha = gruposComFolha.reduce(
+      (sum, grupo) =>
+        sum + (grupo.contas || []).reduce((acc, conta) => acc + (Number(conta.valor) || 0), 0),
+      0,
+    );
 
     try {
       await gerarDespesaMensalPdf({
