@@ -447,4 +447,24 @@
     color: hsl(0 0% 100% / 0.2) !important;
   }
 
+  /* Catálogo desktop — coluna Produto sticky visível ao rolar (não atrás da sidebar recolhida) */
+  .p38-catalog-table-scroll {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .p38-catalog-sticky-left {
+    background-color: hsl(var(--background));
+  }
+
+  tr.group:hover .p38-catalog-sticky-left,
+  tr.select-none.group:hover .p38-catalog-sticky-left {
+    background-color: hsl(var(--secondary) / 0.25);
+  }
+
+  .dark tr.group:hover .p38-catalog-sticky-left,
+  .dark tr.select-none.group:hover .p38-catalog-sticky-left {
+    background-color: hsl(var(--secondary) / 0.3);
+  }
+
 }

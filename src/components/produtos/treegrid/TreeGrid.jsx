@@ -12,7 +12,7 @@ import { formatEstoqueApresentacao, getCatalogoComercialView, getCatalogUnitLabe
 import { useVirtualRows } from '@/hooks/useVirtualRows';
 import { CATALOGO_VIRTUALIZE_MIN_ROWS } from '@/lib/p38VirtualList';
 import { cn } from '@/components/utils';
-import { catalogProdutoColStyle, estimateCatalogProdutoRowHeight } from '@/lib/catalogProdutoColumnLayout';
+import { catalogProdutoColStyle, computeCatalogProdutoColWidth, estimateCatalogProdutoRowHeight, CATALOG_PRODUTO_STICKY_CELL, CATALOG_PRODUTO_STICKY_HEAD } from '@/lib/catalogProdutoColumnLayout';
 import { p38Table } from '@/lib/p38TableSurfaces';
 import { computeTreeGridColumnLayout } from './treeGridColumnLayout';
 import {
@@ -189,8 +189,6 @@ const CATALOG_CHILD_LABEL_CLASS =
 /** Grupos na árvore — quebra dentro da coluna fixa */
 const CATALOG_GROUP_LABEL_CLASS =
   'text-xs font-semibold text-foreground/90 dark:text-foreground uppercase tracking-wide break-words leading-snug';
-
-const PRODUTO_CELL_STYLE = catalogProdutoColStyle();
 
 /** Marcador verde mediterrâneo — pais e solteiros de 1º nível na árvore */
 function CatalogTierDot() {
@@ -515,7 +513,7 @@ function groupCellValue(colId, row, salesVelocityMap = {}, catalogStockContext =
 }
 
 // ── Linha de Grupo ─────────────────────────────────────────────────────────────
-const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activeCols, produtoWidth, readOnly, salesVelocityMap, catalogStockContext }) {
+const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activeCols, produtoWidth, produtoCellStyle, readOnly, salesVelocityMap, catalogStockContext }) {
   const isPrimeiroNivel = row.level === 1;
   const hierDepth = catalogHierDepth(row.level);
 
@@ -525,8 +523,8 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
       onClick={() => onToggle(row.key)}
     >
       <td
-        className={cn(p38Table.stickyCellLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, 'py-2 px-2 align-top')}
-        style={{ left: 0, ...PRODUTO_CELL_STYLE }}
+        className={cn(CATALOG_PRODUTO_STICKY_CELL, PRODUTO_STICKY_SHADOW, 'py-2 px-2 align-top')}
+        style={{ left: 0, ...produtoCellStyle }}
       >
         <CatalogProdutoCell
           hierDepth={hierDepth}
@@ -556,7 +554,7 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
 });
 
 // ── Linha de SKU ───────────────────────────────────────────────────────────────
-const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, produtoWidth, readOnly, salesVelocityMap, catalogStockContext }) {
+const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, produtoWidth, produtoCellStyle, readOnly, salesVelocityMap, catalogStockContext }) {
   const p = row.produto;
   const isPrimeiroNivel = row.level === 1;
   const hierDepth = catalogHierDepth(row.level);
@@ -564,8 +562,8 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, p
   return (
     <tr className={cn(p38Table.row, 'group')}>
       <td
-        className={cn(p38Table.stickyCellLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, 'py-2 px-2 align-top')}
-        style={{ left: 0, ...PRODUTO_CELL_STYLE }}
+        className={cn(CATALOG_PRODUTO_STICKY_CELL, PRODUTO_STICKY_SHADOW, 'py-2 px-2 align-top')}
+        style={{ left: 0, ...produtoCellStyle }}
       >
         <div className="flex items-start gap-1 min-w-0 w-full">
           <CatalogProdutoCell
@@ -654,6 +652,21 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
     [tree, expandedKeys, sortOrder, flattenOptions]
   );
 
+  const produtoColWidth = useMemo(() => {
+    let maxHierDepth = 0;
+    const labels = [];
+    for (const row of rows) {
+      maxHierDepth = Math.max(maxHierDepth, catalogHierDepth(row.level));
+      if (row.type === 'group') labels.push(row.label);
+      else labels.push(row.produto?.nome);
+    }
+    return computeCatalogProdutoColWidth(labels, {
+      readOnly,
+      maxHierDepth,
+      includeGroupBadge: rows.some((row) => row.type === 'group'),
+    });
+  }, [rows, readOnly]);
+
   useLayoutEffect(() => {
     const scrollEl = scrollContainerRef.current;
     const top = pendingScrollRestoreRef.current;
@@ -694,23 +707,35 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
   }, []);
 
   const columnLayout = useMemo(
-    () => computeTreeGridColumnLayout({ rows, activeCols, readOnly, containerWidth, salesVelocityMap }),
-    [rows, activeCols, readOnly, containerWidth, salesVelocityMap],
+    () => computeTreeGridColumnLayout({
+      rows,
+      activeCols,
+      readOnly,
+      containerWidth,
+      salesVelocityMap,
+      produtoWidth: produtoColWidth,
+    }),
+    [rows, activeCols, readOnly, containerWidth, salesVelocityMap, produtoColWidth],
   );
   const { produtoWidth, cols: layoutCols, tableWidth } = columnLayout;
+  const produtoCellStyle = useMemo(
+    () => catalogProdutoColStyle(produtoWidth),
+    [produtoWidth],
+  );
 
   const estimateRowSize = useCallback(
     (index) => {
       const row = rows[index];
       if (!row) return 52;
       if (row.type === 'group') {
-        return estimateCatalogProdutoRowHeight(row.label, { isGroup: true });
+        return estimateCatalogProdutoRowHeight(row.label, { colWidth: produtoWidth, isGroup: true });
       }
       return estimateCatalogProdutoRowHeight(row.produto?.nome, {
+        colWidth: produtoWidth,
         codigoInterno: Boolean(row.produto?.codigo_interno),
       });
     },
-    [rows],
+    [rows, produtoWidth],
   );
   const virtualRows = useVirtualRows({
     itemCount: rows.length,
@@ -730,7 +755,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
     <div className="flex flex-col h-full w-full">
       {/* Scroll container — tabela rola livremente; coluna Produto é sticky */}
       <div
-        className="flex-1 overflow-auto overscroll-contain [overflow-anchor:none] [scrollbar-gutter:stable]"
+        className="flex-1 overflow-auto p38-catalog-table-scroll overscroll-contain [overflow-anchor:none] [scrollbar-gutter:stable]"
         style={{ WebkitOverflowScrolling: 'touch' }}
         ref={scrollContainerRef}
       >
@@ -746,8 +771,8 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
           <thead className={p38Table.headerSolid}>
             <tr className="border-b border-border/40 dark:border-white/10">
               <th
-                className={cn(p38Table.stickyHeadLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, p38Table.head, CATALOG_ROW_LABEL_CLASS, "text-left py-2")}
-                style={{ left: 0, paddingLeft: 8, paddingRight: 8, ...PRODUTO_CELL_STYLE }}
+                className={cn(CATALOG_PRODUTO_STICKY_HEAD, PRODUTO_STICKY_SHADOW, p38Table.head, CATALOG_ROW_LABEL_CLASS, "text-left py-2")}
+                style={{ left: 0, paddingLeft: 8, paddingRight: 8, ...produtoCellStyle }}
               >
                 Produto
               </th>
@@ -778,6 +803,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
                         onToggle={handleToggle}
                         activeCols={layoutCols}
                         produtoWidth={produtoWidth}
+                        produtoCellStyle={produtoCellStyle}
                         readOnly={readOnly}
                         salesVelocityMap={salesVelocityMap}
                         catalogStockContext={catalogStockContext} />
@@ -786,6 +812,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
                         onDelete={onDelete || noopDelete}
                         activeCols={layoutCols}
                         produtoWidth={produtoWidth}
+                        produtoCellStyle={produtoCellStyle}
                         readOnly={readOnly}
                         salesVelocityMap={salesVelocityMap}
                         catalogStockContext={catalogStockContext} />

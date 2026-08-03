@@ -387,10 +387,11 @@ export default function Layout({ children, currentPageName }) {
         )}
 
         <div 
+          data-p38-overlay-sidebar={useDesktopOverlaySidebar ? 'true' : undefined}
           className={`flex-1 transition-[margin] duration-200 ease-out ${
             isMobile 
               ? `ml-0 pt-12 ${MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' : 'p38-layout-mobile-scroll-pad'}`
-              : (useDesktopOverlaySidebar ? 'ml-16' : (isOpen ? 'ml-[300px]' : 'ml-16'))
+              : (useDesktopOverlaySidebar ? 'ml-[64px]' : (isOpen ? 'ml-[300px]' : 'ml-[64px]'))
           } ${MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) && !isMobile ? 'h-screen max-h-screen overflow-hidden' : ''}`}
           style={{ willChange: 'margin', paddingTop: isMobile ? `calc(3rem + env(safe-area-inset-top))` : undefined }}
         >

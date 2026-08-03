@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Copy, Edit, Package, Trash2 } from 'lucide-react';
 import { isCadastroIncompleto, getStockStatusIndicator } from './ProdutosHelpers';
@@ -8,7 +8,7 @@ import { formatCatalogMedia30d, formatCatalogPontoEsperadoLt, formatCatalogPonto
 import { resolveCatalogEstoqueExibicao } from '@/lib/catalogEstoqueVirtual';
 import { formatQuantidadeCatalogoApresentacao } from '@/lib/productUnits';
 import { p38Table } from '@/lib/p38TableSurfaces';
-import { catalogProdutoColStyle, estimateCatalogProdutoRowHeight } from '@/lib/catalogProdutoColumnLayout';
+import { catalogProdutoColStyle, computeCatalogProdutoColWidth, estimateCatalogProdutoRowHeight, CATALOG_PRODUTO_STICKY_CELL, CATALOG_PRODUTO_STICKY_HEAD } from '@/lib/catalogProdutoColumnLayout';
 import { cn } from '@/components/utils';
 
 const PRODUTO_STICKY_SHADOW = 'shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)] dark:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.45)]';
@@ -19,8 +19,6 @@ const CATALOG_ROW_LABEL_CLASS =
 /** Descrição do produto em linhas de dados — no escuro, tom igual às demais células */
 const CATALOG_ROW_DESC_CLASS =
   'text-xs font-semibold text-foreground/90 dark:text-muted-foreground uppercase tracking-wide break-words leading-snug';
-
-const PRODUTO_CELL_STYLE = catalogProdutoColStyle();
 
 const DATA_CELL_CLASS = 'text-right py-1.5 px-2 whitespace-nowrap align-middle';
 
@@ -304,12 +302,24 @@ export default function ProdutosPlanaTable({
   catalogStockContext = null,
 }) {
   const scrollContainerRef = useRef(null);
+  const produtoColWidth = useMemo(
+    () => computeCatalogProdutoColWidth(
+      filteredProdutos.map((p) => p.nome),
+      { readOnly },
+    ),
+    [filteredProdutos, readOnly],
+  );
+  const produtoCellStyle = useMemo(
+    () => catalogProdutoColStyle(produtoColWidth),
+    [produtoColWidth],
+  );
   const virtualRows = useVirtualRows({
     itemCount: filteredProdutos.length,
     estimateSize: (index) => {
       const produto = filteredProdutos[index];
       if (!produto) return 52;
       return estimateCatalogProdutoRowHeight(produto.nome, {
+        colWidth: produtoColWidth,
         codigoInterno: Boolean(produto.codigo_interno),
       });
     },
@@ -325,7 +335,7 @@ export default function ProdutosPlanaTable({
   return (
     <div
       ref={scrollContainerRef}
-      className={cn(containerClass, 'overscroll-contain [overflow-anchor:none] [scrollbar-gutter:stable]')}
+      className={cn(containerClass, 'p38-catalog-table-scroll overscroll-contain [overflow-anchor:none] [scrollbar-gutter:stable]')}
       style={{ WebkitOverflowScrolling: 'touch' }}
     >
       <table
@@ -336,14 +346,13 @@ export default function ProdutosPlanaTable({
           <tr className="border-b border-border/40 dark:border-white/10">
             <th
               className={cn(
-                p38Table.stickyHeadLeft,
-                p38Table.stickyCell,
+                CATALOG_PRODUTO_STICKY_HEAD,
                 PRODUTO_STICKY_SHADOW,
                 p38Table.head,
                 CATALOG_ROW_LABEL_CLASS,
                 'text-left py-2',
               )}
-              style={{ left: 0, paddingLeft: 8, paddingRight: 8, ...PRODUTO_CELL_STYLE }}
+              style={{ left: 0, paddingLeft: 8, paddingRight: 8, ...produtoCellStyle }}
             >
               Produto
             </th>
@@ -374,8 +383,8 @@ export default function ProdutosPlanaTable({
             return (
               <tr key={produto.id} className={cn(p38Table.row, 'group')}>
                 <td
-                  className={cn(p38Table.stickyCellLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, 'py-2 px-2 align-top')}
-                  style={{ left: 0, ...PRODUTO_CELL_STYLE }}
+                  className={cn(CATALOG_PRODUTO_STICKY_CELL, PRODUTO_STICKY_SHADOW, 'py-2 px-2 align-top')}
+                  style={{ left: 0, ...produtoCellStyle }}
                 >
                   <div className="flex items-start gap-1 min-w-0 w-full">
                     <div className="flex items-start gap-1.5 min-w-0 flex-1">

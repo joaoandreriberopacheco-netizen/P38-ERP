@@ -12,8 +12,7 @@ import {
   getCatalogMedia30dFrom60d,
 } from '@/lib/catalogSalesVelocity';
 import { aggregateEstoqueDisplay, collectSkus, aggregateMetaEstoqueDisplay } from './useTreeGrid';
-
-import { CATALOG_PRODUTO_COL_WIDTH } from '@/lib/catalogProdutoColumnLayout';
+import { CATALOG_PRODUTO_COL_MIN } from '@/lib/catalogProdutoColumnLayout';
 
 const COL_PAD_X = 16;
 
@@ -182,10 +181,10 @@ function dataCellWidth(colId, row, measure, salesVelocityMap = {}) {
   return measure(text, { size: 12, weight: 400 }) + COL_PAD_X;
 }
 
-export function computeTreeGridColumnLayout({ rows, activeCols, readOnly, containerWidth, salesVelocityMap = {} }) {
+export function computeTreeGridColumnLayout({ rows, activeCols, readOnly, containerWidth, salesVelocityMap = {}, produtoWidth }) {
   const measure = createTextMeasurer();
 
-  const produtoWidth = CATALOG_PRODUTO_COL_WIDTH;
+  const resolvedProdutoWidth = produtoWidth || CATALOG_PRODUTO_COL_MIN;
 
   const cols = (activeCols || []).map((col) => {
     let minW = Math.max(col.w || 72, measure(col.label, { size: 12, weight: 700 }) + COL_PAD_X);
@@ -196,7 +195,7 @@ export function computeTreeGridColumnLayout({ rows, activeCols, readOnly, contai
   });
 
   const dataMinSum = cols.reduce((sum, col) => sum + col.minW, 0);
-  const contentMinWidth = produtoWidth + dataMinSum;
+  const contentMinWidth = resolvedProdutoWidth + dataMinSum;
   const viewport = Math.max(0, Number(containerWidth) || 0);
   const tableWidth = Math.max(contentMinWidth, viewport);
 
@@ -208,5 +207,5 @@ export function computeTreeGridColumnLayout({ rows, activeCols, readOnly, contai
     }
   }
 
-  return { produtoWidth, cols, tableWidth, contentMinWidth };
+  return { produtoWidth: resolvedProdutoWidth, cols, tableWidth, contentMinWidth };
 }
