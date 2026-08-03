@@ -58,11 +58,16 @@ function ProdutosHeader({
   onOpenPontosPedido,
   groupTreeByCategory = false,
   onGroupTreeByCategoryChange,
+  onClearFilters,
 }) {
   const isMobileLayout = useCompactShell();
   const quantidadeOperador = filters.quantidadeOperador || 'all';
 
   const clearFilters = () => {
+    if (onClearFilters) {
+      onClearFilters();
+      return;
+    }
     setFilters({ ...DEFAULT_PRODUTO_FILTERS });
   };
 
