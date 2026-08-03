@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
@@ -54,6 +54,10 @@ export default function CotacoesManager() {
     () => Object.fromEntries(produtosCatalogo.map((p) => [p.id, p])),
     [produtosCatalogo],
   );
+  const produtosCatalogoRef = useRef(produtosCatalogo);
+  useEffect(() => {
+    produtosCatalogoRef.current = produtosCatalogo;
+  }, [produtosCatalogo]);
   const fornecedoresMap = useMemo(
     () => Object.fromEntries(fornecedores.map((f) => [f.id, f])),
     [fornecedores],
@@ -227,66 +231,127 @@ export default function CotacoesManager() {
     }
   };
 
-  const handleAddItem = (product = null) => {
-    if (!product) return;
+  const buildSelectorItemFromProduct = useCallback((product, quantidade = 1) => {
     const pu = pickDefaultPurchaseUnit(product);
     const fator = pu?.fator_conversao ?? 1;
     const unidade = pu?.unidade || product.unidade_principal || 'UN';
+    const qty = parseLoteQuantidade(quantidade);
+    return {
+      produto_id: product.id,
+      produto_nome: product.nome,
+      quantidade: qty,
+      unidade_medida: unidade,
+      fator_conversao: fator,
+      quantidade_base: roundToTwoDecimals(qty * fator),
+      custo_unitario: parseFloat(product.valor_compra) || 0,
+      valor_desconto_item: 0,
+      desconto_pct_item: 0,
+      total: 0,
+    };
+  }, []);
+
+  const handleAddItem = (payload = null) => {
+    if (!payload) return;
+
+    // Item completo vindo do MobileProductSelector (tela de edição / modo rápido)
+    if (payload.produto_id && (payload.unidade_medida != null || payload.quantidade_base != null)) {
+      setSelectorItems((prev) => {
+        const idx = prev.findIndex((i) => i.produto_id === payload.produto_id);
+        if (idx >= 0) {
+          const next = [...prev];
+          const merged = { ...next[idx], ...payload };
+          const fator = parseFloat(merged.fator_conversao) || 1;
+          const qty = parseFloat(merged.quantidade) || 0;
+          merged.quantidade_base = roundToTwoDecimals(qty * fator);
+          next[idx] = merged;
+          return next;
+        }
+        return [...prev, payload];
+      });
+      return;
+    }
+
+    const productId = payload.produto_id || payload.id;
+    if (!productId) return;
+
+    const catalog = produtosCatalogoRef.current;
+    const product = catalog.find((p) => p.id === productId) || payload;
+    const qty = parseLoteQuantidade(payload.quantidade ?? 1);
+
     setSelectorItems((prev) => {
-      const idx = prev.findIndex((i) => i.produto_id === product.id);
+      const idx = prev.findIndex((i) => i.produto_id === productId);
       if (idx >= 0) {
         const next = [...prev];
+        const fator = parseFloat(next[idx].fator_conversao) || 1;
+        const newQty = (parseFloat(next[idx].quantidade) || 0) + qty;
         next[idx] = {
           ...next[idx],
-          quantidade: (parseFloat(next[idx].quantidade) || 0) + 1,
-          quantidade_base: ((parseFloat(next[idx].quantidade) || 0) + 1) * fator,
+          quantidade: newQty,
+          quantidade_base: roundToTwoDecimals(newQty * fator),
         };
         return next;
       }
-      return [
-        ...prev,
-        {
-          produto_id: product.id,
-          produto_nome: product.nome,
-          quantidade: 1,
-          unidade_medida: unidade,
-          fator_conversao: fator,
-          quantidade_base: fator,
-          custo_unitario: parseFloat(product.valor_compra) || 0,
-          valor_desconto_item: 0,
-          desconto_pct_item: 0,
-          total: 0,
-        },
-      ];
+      if (!product?.id && !product?.nome) return prev;
+      const resolved = product.id
+        ? buildSelectorItemFromProduct(product, qty)
+        : {
+            produto_id: productId,
+            produto_nome: payload.produto_nome || product.nome || 'Produto',
+            quantidade: qty,
+            unidade_medida: payload.unidade || payload.unidade_medida || 'UN',
+            fator_conversao: 1,
+            quantidade_base: qty,
+            custo_unitario: 0,
+            valor_desconto_item: 0,
+            desconto_pct_item: 0,
+            total: 0,
+          };
+      return [...prev, resolved];
     });
   };
 
-  const handleAddItemsBatch = useCallback((incoming = []) => {
-    if (!incoming.length) return;
-    setSelectorItems((prev) => mergeLoteIntoItems(
-      prev,
-      incoming,
-      (product, qty) => {
-        const pu = pickDefaultPurchaseUnit(product);
-        const fator = pu?.fator_conversao ?? 1;
-        const unidade = pu?.unidade || product.unidade_principal || 'UN';
-        const quantidade = parseLoteQuantidade(qty);
-        return {
-          produto_id: product.id,
-          produto_nome: product.nome,
-          quantidade,
-          unidade_medida: unidade,
-          fator_conversao: fator,
-          quantidade_base: roundToTwoDecimals(quantidade * fator),
-          custo_unitario: parseFloat(product.valor_compra) || 0,
-          valor_desconto_item: 0,
-          desconto_pct_item: 0,
-          total: 0,
-        };
-      },
-      produtosCatalogo,
-    ));
-  }, [produtosCatalogo]);
+  const handleAddItemsBatch = useCallback((incoming = [], productsSource) => {
+    if (!incoming.length) return 0;
+    const catalog = productsSource?.length ? productsSource : produtosCatalogoRef.current;
+    let mergedCount = 0;
+
+    setSelectorItems((prev) => {
+      const beforeIds = new Set(prev.map((i) => i.produto_id).filter(Boolean));
+      const next = mergeLoteIntoItems(
+        prev,
+        incoming,
+        (product, qty) => buildSelectorItemFromProduct(product, qty),
+        catalog,
+      );
+      const validIncoming = incoming.filter((row) => catalog.some((p) => p.id === row.produto_id));
+      mergedCount = validIncoming.length;
+      const afterIds = new Set(next.map((i) => i.produto_id).filter(Boolean));
+      if (afterIds.size === beforeIds.size && validIncoming.length > 0) {
+        // Todos já existiam — qty foi somada
+        mergedCount = validIncoming.length;
+      } else if (afterIds.size > beforeIds.size) {
+        mergedCount = Math.max(validIncoming.length, afterIds.size - beforeIds.size);
+      }
+      return next;
+    });
+
+    const skipped = incoming.length - incoming.filter((row) =>
+      catalog.some((p) => p.id === row.produto_id)).length;
+    if (mergedCount > 0) {
+      toast({
+        title: 'Carrinho atualizado',
+        description: `${mergedCount} produto(s) adicionado(s) ao carrinho.`,
+        className: 'bg-green-100 text-green-800',
+      });
+    } else if (skipped > 0) {
+      toast({
+        title: 'Não foi possível adicionar',
+        description: 'Catálogo ainda a carregar ou produto não encontrado. Tente de novo.',
+        variant: 'destructive',
+      });
+    }
+    return mergedCount;
+  }, [buildSelectorItemFromProduct, toast]);
 
   const handleUpdateItem = (index, field, value) => {
     setSelectorItems((prev) => {

@@ -287,7 +287,7 @@ export default function MobileProductSelector({
     const incoming = buildLoteIncomingFromDraft(loteDraft);
     if (incoming.length === 0) return;
     if (onAddItemsBatch) {
-      onAddItemsBatch(incoming);
+      onAddItemsBatch(incoming, products);
     } else {
       incoming.forEach(({ produto_id, quantidade }) => {
         const product = products.find((p) => p.id === produto_id);

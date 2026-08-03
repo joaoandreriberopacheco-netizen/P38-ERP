@@ -566,8 +566,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
     setFormData(newData);
   };
 
-  const handleAddItemsBatch = (incoming = []) => {
+  const handleAddItemsBatch = (incoming = [], productsSource) => {
     if (!incoming.length) return;
+    const catalog = productsSource?.length ? productsSource : produtos;
 
     const calculateItemTotals = (item) => {
       const qty = parseFloat(item.quantidade) || 0;
@@ -614,7 +615,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
       return calculateItemTotals(base);
     };
 
-    const merged = mergeLoteIntoItems(formData.itens, incoming, buildFromProduct, produtos);
+    const merged = mergeLoteIntoItems(formData.itens, incoming, buildFromProduct, catalog);
     const recalc = merged.map((item) => calculateItemTotals(item));
     const newData = { ...formData, itens: recalc };
     saveToHistory(newData);
