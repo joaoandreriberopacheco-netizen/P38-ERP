@@ -68,7 +68,6 @@ import {
 } from '@/hooks/useP38Entities';
 
 const CATALOG_GROUP_BY_CATEGORY_KEY = 'catalogo.groupTreeByCategory';
-const EMPTY_PRODUCTS = [];
 
 /** Selects do painel de filtros — feedback imediato no controlo. */
 const IMMEDIATE_CATALOG_FILTER_KEYS = new Set([
