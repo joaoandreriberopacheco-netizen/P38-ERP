@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  AlertCircle, ArrowLeft, CheckCircle, MessageSquarePlus, Plus, Trophy, UploadCloud, UserPlus,
+  AlertCircle, ArrowLeft, CheckCircle, FileOutput, MessageSquarePlus, Plus, Trophy, UploadCloud, UserPlus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,6 +53,7 @@ export default function CotacaoExpressDisputa({
   onAdicionarFornecedor,
   onAdicionarRegistro,
   onIrAprovar,
+  onExportarSolicitacao,
 }) {
   const [fornecedorDialogOpen, setFornecedorDialogOpen] = useState(false);
   const [buscaFornecedor, setBuscaFornecedor] = useState('');
@@ -105,6 +106,16 @@ export default function CotacaoExpressDisputa({
               {cotacao?.titulo} · {vencedoresCount}/{totalItens} vencedores
             </p>
           </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onExportarSolicitacao}
+            className="h-9 shrink-0 rounded-xl"
+            title="Gerar solicitação HTML/PDF"
+          >
+            <FileOutput className="h-4 w-4" />
+          </Button>
           <Button
             type="button"
             variant="outline"
@@ -290,7 +301,18 @@ export default function CotacaoExpressDisputa({
         </div>
       </div>
 
-      <div className="shrink-0 border-t border-border/40 bg-card/80 p-3 backdrop-blur-sm">
+      <div className="shrink-0 border-t border-border/40 bg-card/80 p-3 backdrop-blur-sm space-y-2">
+        {onExportarSolicitacao && (
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-10 w-full rounded-xl text-muted-foreground"
+            onClick={onExportarSolicitacao}
+          >
+            <FileOutput className="mr-2 h-4 w-4" />
+            Solicitação para fornecedor (HTML / PDF)
+          </Button>
+        )}
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button
             type="button"

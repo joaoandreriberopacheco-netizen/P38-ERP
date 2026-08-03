@@ -1,4 +1,4 @@
-import { ArrowLeft, Camera, Loader2, Send } from 'lucide-react';
+import { ArrowLeft, Camera, FileOutput, Loader2, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/financialUtils';
 import MobileProductSelector from '@/components/compras/MobileProductSelector';
@@ -18,6 +18,7 @@ export default function CotacaoExpressMontagem({
   onImportarLista,
   onAbrirDisputa,
   onAddItemsBatch,
+  onExportarSolicitacao,
 }) {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
@@ -65,7 +66,7 @@ export default function CotacaoExpressMontagem({
         />
       </div>
 
-      <div className="shrink-0 border-t border-border/40 bg-card/80 p-3 backdrop-blur-sm">
+      <div className="shrink-0 border-t border-border/40 bg-card/80 p-3 backdrop-blur-sm space-y-2">
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button
             type="button"
@@ -92,6 +93,17 @@ export default function CotacaoExpressMontagem({
             )}
           </Button>
         </div>
+        {selectorItems.length > 0 && onExportarSolicitacao && (
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-10 w-full rounded-xl text-muted-foreground"
+            onClick={onExportarSolicitacao}
+          >
+            <FileOutput className="mr-2 h-4 w-4" />
+            Gerar solicitação para fornecedor (HTML / PDF)
+          </Button>
+        )}
       </div>
     </div>
   );

@@ -12,6 +12,12 @@ import CotacaoExpressHub from './cotacao-express/CotacaoExpressHub';
 import CotacaoExpressMontagem from './cotacao-express/CotacaoExpressMontagem';
 import CotacaoExpressDisputa from './cotacao-express/CotacaoExpressDisputa';
 import CotacaoExpressAprovar from './cotacao-express/CotacaoExpressAprovar';
+import CotacaoFornecedorExportDialog from './cotacao-express/CotacaoFornecedorExportDialog';
+import {
+  enrichCotacaoItensComCatalogo,
+  exportCotacaoFornecedorHtml,
+  exportCotacaoFornecedorPdf,
+} from '@/lib/cotacaoExpressFornecedorReport';
 import {
   buildResumoAprovacao,
   cotacaoItemToSelectorItem,
@@ -49,6 +55,9 @@ export default function CotacoesManager() {
   const [salvando, setSalvando] = useState(false);
   const [abrindoDisputa, setAbrindoDisputa] = useState(false);
   const [gerandoPedidos, setGerandoPedidos] = useState(false);
+  const [dadosEmpresa, setDadosEmpresa] = useState(null);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportandoSolicitacao, setExportandoSolicitacao] = useState(false);
 
   const produtosMap = useMemo(
     () => Object.fromEntries(produtosCatalogo.map((p) => [p.id, p])),
@@ -71,14 +80,16 @@ export default function CotacoesManager() {
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [cotacoesData, fornecedoresData, produtosData] = await Promise.all([
+      const [cotacoesData, fornecedoresData, produtosData, empresaData] = await Promise.all([
         base44.entities.Cotacao.list('-created_date'),
         base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] }),
         base44.entities.Produto.filter({ tipo: 'Produto', ativo: true }),
+        base44.entities.DadosEmpresa.list().catch(() => []),
       ]);
       setCotacoes(cotacoesData);
       setFornecedores(fornecedoresData);
       setProdutosCatalogo(produtosData);
+      setDadosEmpresa(empresaData?.[0] || null);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     } finally {
@@ -224,10 +235,54 @@ export default function CotacoesManager() {
       await loadData();
       await refreshCotacao(selectedCotacao.id);
       setView('disputa');
+      setExportDialogOpen(true);
     } catch (error) {
       toast({ title: 'Erro', description: error.message, variant: 'destructive' });
     } finally {
       setAbrindoDisputa(false);
+    }
+  };
+
+  const buildExportPayload = useCallback((fornecedorDestino = null) => {
+    const cotacaoEnriquecida = enrichCotacaoItensComCatalogo(
+      {
+        ...selectedCotacao,
+        itens: selectorItems.length > 0
+          ? selectorItems.map(selectorItemToCotacaoItem).filter((i) => (parseFloat(i.quantidade) || 0) > 0)
+          : selectedCotacao?.itens || [],
+      },
+      produtosMap,
+    );
+    return {
+      cotacao: cotacaoEnriquecida,
+      empresa: dadosEmpresa,
+      fornecedor: fornecedorDestino,
+    };
+  }, [selectedCotacao, selectorItems, produtosMap, dadosEmpresa]);
+
+  const handleExportSolicitacaoHtml = async (fornecedorDestino) => {
+    if (!selectedCotacao) return;
+    setExportandoSolicitacao(true);
+    try {
+      await exportCotacaoFornecedorHtml(buildExportPayload(fornecedorDestino));
+      toast({ title: 'HTML gerado', description: 'Compartilhe ou salve o arquivo.', className: 'bg-green-100 text-green-800' });
+    } catch (error) {
+      toast({ title: 'Erro ao gerar HTML', description: error.message, variant: 'destructive' });
+    } finally {
+      setExportandoSolicitacao(false);
+    }
+  };
+
+  const handleExportSolicitacaoPdf = async (fornecedorDestino) => {
+    if (!selectedCotacao) return;
+    setExportandoSolicitacao(true);
+    try {
+      await exportCotacaoFornecedorPdf(buildExportPayload(fornecedorDestino));
+      toast({ title: 'PDF gerado', description: 'Documento A4 pronto para enviar.', className: 'bg-green-100 text-green-800' });
+    } catch (error) {
+      toast({ title: 'Erro ao gerar PDF', description: error.message, variant: 'destructive' });
+    } finally {
+      setExportandoSolicitacao(false);
     }
   };
 
@@ -718,6 +773,7 @@ export default function CotacoesManager() {
           onSalvarItens={handleSalvarItens}
           onImportarLista={handleOpenImportadorLista}
           onAbrirDisputa={handleAbrirDisputa}
+          onExportarSolicitacao={() => setExportDialogOpen(true)}
         />
       )}
 
@@ -743,6 +799,7 @@ export default function CotacoesManager() {
           onAdicionarFornecedor={handleAdicionarFornecedor}
           onAdicionarRegistro={handleAdicionarRegistro}
           onIrAprovar={() => setView('aprovar')}
+          onExportarSolicitacao={() => setExportDialogOpen(true)}
         />
       )}
 
@@ -777,6 +834,16 @@ export default function CotacoesManager() {
           setTargetCotacaoImportacaoLista(null);
         }}
         onImportComplete={handleImportFotoComplete}
+      />
+
+      <CotacaoFornecedorExportDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        cotacao={selectedCotacao}
+        fornecedoresOpcoes={selectedCotacao?.fornecedores || []}
+        exporting={exportandoSolicitacao}
+        onExportHtml={handleExportSolicitacaoHtml}
+        onExportPdf={handleExportSolicitacaoPdf}
       />
     </>
   );
