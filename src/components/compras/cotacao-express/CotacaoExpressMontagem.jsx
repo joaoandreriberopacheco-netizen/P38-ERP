@@ -2,6 +2,14 @@ import { ArrowLeft, Camera, FileOutput, Loader2, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/financialUtils';
 import MobileProductSelector from '@/components/compras/MobileProductSelector';
+import {
+  cotacaoExpressFooterButtonsClass,
+  cotacaoExpressFooterClass,
+  cotacaoExpressHeaderClass,
+  cotacaoExpressPrimaryBtnClass,
+  cotacaoExpressSecondaryBtnClass,
+  cotacaoExpressShellClass,
+} from './cotacaoExpressLayout';
 
 export default function CotacaoExpressMontagem({
   cotacao,
@@ -21,8 +29,8 @@ export default function CotacaoExpressMontagem({
   onExportarSolicitacao,
 }) {
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
-      <div className="shrink-0 border-b border-border/40 px-3 py-2.5">
+    <div className={cotacaoExpressShellClass}>
+      <div className={cotacaoExpressHeaderClass}>
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -52,7 +60,7 @@ export default function CotacaoExpressMontagem({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-hidden">
+      <div className="min-h-0 flex-1 overflow-hidden pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] sm:pb-0">
         <MobileProductSelector
           items={selectorItems}
           products={produtos}
@@ -66,12 +74,12 @@ export default function CotacaoExpressMontagem({
         />
       </div>
 
-      <div className="shrink-0 border-t border-border/40 bg-card/80 p-3 backdrop-blur-sm space-y-2">
-        <div className="flex flex-col gap-2 sm:flex-row">
+      <div className={`${cotacaoExpressFooterClass} space-y-2`}>
+        <div className={cotacaoExpressFooterButtonsClass}>
           <Button
             type="button"
             variant="outline"
-            className="h-12 flex-1 rounded-2xl"
+            className={cotacaoExpressSecondaryBtnClass}
             onClick={onSalvarItens}
             disabled={salvando}
           >
@@ -79,7 +87,7 @@ export default function CotacaoExpressMontagem({
           </Button>
           <Button
             type="button"
-            className="h-12 flex-1 rounded-2xl p38-btn-primary"
+            className={`${cotacaoExpressPrimaryBtnClass} p38-btn-primary`}
             onClick={onAbrirDisputa}
             disabled={abrindoDisputa || selectorItems.length === 0}
           >
@@ -87,7 +95,7 @@ export default function CotacaoExpressMontagem({
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <>
-                <Send className="mr-2 h-4 w-4" />
+                <Send className="mr-2 h-4 w-4 shrink-0" />
                 Enviar para disputa
               </>
             )}
@@ -97,11 +105,11 @@ export default function CotacaoExpressMontagem({
           <Button
             type="button"
             variant="ghost"
-            className="h-10 w-full rounded-xl text-muted-foreground"
+            className="h-10 w-full rounded-xl px-2 text-sm text-muted-foreground"
             onClick={onExportarSolicitacao}
           >
-            <FileOutput className="mr-2 h-4 w-4" />
-            Gerar solicitação para fornecedor (HTML / PDF)
+            <FileOutput className="mr-2 h-4 w-4 shrink-0" />
+            <span className="truncate">Gerar solicitação (HTML / PDF)</span>
           </Button>
         )}
       </div>

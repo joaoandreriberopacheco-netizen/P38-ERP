@@ -137,7 +137,7 @@ export default function CotacaoExpressHub({
   }
 
   return (
-    <div className="relative min-h-0 flex-1 space-y-3 overflow-y-auto pb-24">
+    <div className="relative min-h-0 flex-1 space-y-3 overflow-y-auto pb-[calc(6.5rem+var(--p38-bottom-nav-total,0px))] md:pb-24">
       <div className={cn(P38_KPI_SHELL, 'space-y-2.5 sm:space-y-3 min-w-0')}>
         <p className="text-[10px] text-muted-foreground leading-snug">
           Monte a lista · Dispute preços · Aprove e gere pedido de compra

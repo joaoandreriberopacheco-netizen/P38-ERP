@@ -6,6 +6,13 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { formatCurrency } from '@/lib/financialUtils';
+import {
+  cotacaoExpressFooterClass,
+  cotacaoExpressHeaderClass,
+  cotacaoExpressPrimaryBtnClass,
+  cotacaoExpressScrollClass,
+  cotacaoExpressShellClass,
+} from './cotacaoExpressLayout';
 
 export default function CotacaoExpressAprovar({
   cotacao,
@@ -20,14 +27,14 @@ export default function CotacaoExpressAprovar({
 
   if (pedidosGerados.length > 0) {
     return (
-      <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
-        <div className="shrink-0 border-b border-border/40 px-3 py-2.5">
+      <div className={cotacaoExpressShellClass}>
+        <div className={cotacaoExpressHeaderClass}>
           <h2 className="text-base font-semibold font-glacial text-foreground">
             Pedidos gerados
           </h2>
           <p className="text-xs text-muted-foreground">{cotacao?.titulo}</p>
         </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div className={`${cotacaoExpressScrollClass} space-y-3`}>
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-center dark:bg-emerald-950/30">
             <CheckCircle className="mx-auto mb-2 h-10 w-10 text-emerald-600" />
             <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
@@ -54,8 +61,8 @@ export default function CotacaoExpressAprovar({
             </button>
           ))}
         </div>
-        <div className="shrink-0 border-t border-border/40 p-3">
-          <Button type="button" className="h-12 w-full rounded-2xl" variant="outline" onClick={onVoltar}>
+        <div className={cotacaoExpressFooterClass}>
+          <Button type="button" className={`${cotacaoExpressPrimaryBtnClass} w-full`} variant="outline" onClick={onVoltar}>
             Voltar ao hub
           </Button>
         </div>
@@ -66,8 +73,8 @@ export default function CotacaoExpressAprovar({
   const { grupos = [], totalGeral = 0, economiaTotal = 0, itensPendentesCount = 0 } = resumo || {};
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
-      <div className="shrink-0 border-b border-border/40 px-3 py-2.5">
+    <div className={cotacaoExpressShellClass}>
+      <div className={cotacaoExpressHeaderClass}>
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -85,7 +92,7 @@ export default function CotacaoExpressAprovar({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 space-y-4">
+      <div className={cotacaoExpressScrollClass}>
         {itensPendentesCount > 0 && (
           <div className="rounded-2xl border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-800">
             {itensPendentesCount} produto(s) sem vencedor definido — não entrarão no pedido.
@@ -130,10 +137,10 @@ export default function CotacaoExpressAprovar({
         ))}
       </div>
 
-      <div className="shrink-0 border-t border-border/40 bg-card/80 p-3 backdrop-blur-sm">
+      <div className={cotacaoExpressFooterClass}>
         <Button
           type="button"
-          className="h-14 w-full rounded-2xl p38-btn-primary text-base"
+          className={`${cotacaoExpressPrimaryBtnClass} w-full p38-btn-primary`}
           onClick={() => setConfirmOpen(true)}
           disabled={gerando || grupos.length === 0}
         >

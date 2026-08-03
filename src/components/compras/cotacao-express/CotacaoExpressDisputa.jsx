@@ -17,6 +17,16 @@ import {
   getPrecoCompraAtual,
   getResposta,
 } from '@/lib/cotacaoExpressUtils';
+import { useCompactShell } from '@/hooks/use-breakpoint';
+import {
+  cotacaoExpressFooterButtonsClass,
+  cotacaoExpressFooterClass,
+  cotacaoExpressHeaderClass,
+  cotacaoExpressPrimaryBtnClass,
+  cotacaoExpressScrollClass,
+  cotacaoExpressSecondaryBtnClass,
+  cotacaoExpressShellClass,
+} from './cotacaoExpressLayout';
 
 function DisputaTipoBadge({ tipo }) {
   const map = {
@@ -55,6 +65,7 @@ export default function CotacaoExpressDisputa({
   onIrAprovar,
   onExportarSolicitacao,
 }) {
+  const isMobile = useCompactShell();
   const [fornecedorDialogOpen, setFornecedorDialogOpen] = useState(false);
   const [buscaFornecedor, setBuscaFornecedor] = useState('');
   const [registroDialogOpen, setRegistroDialogOpen] = useState(false);
@@ -88,13 +99,14 @@ export default function CotacaoExpressDisputa({
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
-      <div className="shrink-0 border-b border-border/40 px-3 py-2.5">
+    <div className={cotacaoExpressShellClass}>
+      <div className={cotacaoExpressHeaderClass}>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={onVoltar}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted/50 text-muted-foreground"
+            aria-label="Voltar"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
@@ -121,15 +133,16 @@ export default function CotacaoExpressDisputa({
             variant="outline"
             size="sm"
             onClick={() => setFornecedorDialogOpen(true)}
-            className="h-9 shrink-0 rounded-xl"
+            className="h-9 shrink-0 rounded-xl px-2 sm:px-3"
+            aria-label="Adicionar fornecedor"
           >
-            <UserPlus className="mr-1 h-4 w-4" />
-            Forn.
+            <UserPlus className="h-4 w-4 sm:mr-1" />
+            <span className="hidden sm:inline">Forn.</span>
           </Button>
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 space-y-4">
+      <div className={cotacaoExpressScrollClass}>
         {fornecedoresNaCotacao.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 p-6 text-center">
             <p className="text-sm text-muted-foreground mb-3">
@@ -142,18 +155,18 @@ export default function CotacaoExpressDisputa({
           </div>
         ) : (
           <>
-            <div className="flex flex-wrap gap-2">
+            <div className="-mx-1 flex gap-2 overflow-x-auto overscroll-x-contain px-1 pb-1 no-scrollbar">
               {fornecedoresNaCotacao.map((f) => (
                 <Button
                   key={f.fornecedor_id}
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="rounded-xl"
+                  className="shrink-0 rounded-xl whitespace-nowrap"
                   onClick={() => onImportarResposta(f.fornecedor_id)}
                 >
-                  <UploadCloud className="mr-1 h-3.5 w-3.5" />
-                  OCR · {f.fornecedor_nome}
+                  <UploadCloud className="mr-1 h-3.5 w-3.5 shrink-0" />
+                  <span className="max-w-[9rem] truncate sm:max-w-none">OCR · {f.fornecedor_nome}</span>
                 </Button>
               ))}
             </div>
@@ -175,8 +188,8 @@ export default function CotacaoExpressDisputa({
                         <p className="text-xs text-muted-foreground">
                           {item.quantidade} {item.unidade || 'UN'}
                           {precoCompra > 0 && (
-                            <span className="ml-2">
-                              · Custo atual: {formatCurrency(precoCompra)}
+                            <span className="block sm:ml-2 sm:inline">
+                              Custo atual: {formatCurrency(precoCompra)}
                             </span>
                           )}
                         </p>
@@ -301,36 +314,38 @@ export default function CotacaoExpressDisputa({
         </div>
       </div>
 
-      <div className="shrink-0 border-t border-border/40 bg-card/80 p-3 backdrop-blur-sm space-y-2">
+      <div className={`${cotacaoExpressFooterClass} space-y-2`}>
         {onExportarSolicitacao && (
           <Button
             type="button"
             variant="ghost"
-            className="h-10 w-full rounded-xl text-muted-foreground"
+            className="h-10 w-full rounded-xl px-2 text-sm text-muted-foreground"
             onClick={onExportarSolicitacao}
           >
-            <FileOutput className="mr-2 h-4 w-4" />
-            Solicitação para fornecedor (HTML / PDF)
+            <FileOutput className="mr-2 h-4 w-4 shrink-0" />
+            <span className="truncate">
+              {isMobile ? 'Solicitação (HTML/PDF)' : 'Solicitação para fornecedor (HTML / PDF)'}
+            </span>
           </Button>
         )}
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <div className={cotacaoExpressFooterButtonsClass}>
           <Button
             type="button"
             variant="outline"
-            className="h-12 flex-1 rounded-2xl"
+            className={cotacaoExpressSecondaryBtnClass}
             onClick={onSalvarPrecos}
             disabled={salvando}
           >
-            Salvar preços
+            {isMobile ? 'Salvar' : 'Salvar preços'}
           </Button>
           <Button
             type="button"
-            className="h-12 flex-1 rounded-2xl p38-btn-primary"
+            className={`${cotacaoExpressPrimaryBtnClass} p38-btn-primary`}
             onClick={onIrAprovar}
             disabled={vencedoresCount === 0}
           >
-            <CheckCircle className="mr-2 h-4 w-4" />
-            Revisar aprovação ({vencedoresCount})
+            <CheckCircle className="mr-2 h-4 w-4 shrink-0" />
+            {isMobile ? `Aprovar (${vencedoresCount})` : `Revisar aprovação (${vencedoresCount})`}
           </Button>
         </div>
       </div>

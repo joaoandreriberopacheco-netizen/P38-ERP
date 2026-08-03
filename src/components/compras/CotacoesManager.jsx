@@ -773,7 +773,7 @@ export default function CotacoesManager() {
           criando={criando}
         />
       ) : (
-    <div className="flex h-[calc(100dvh-var(--p38-scroll-pad-below-nav,0px)-10rem)] min-h-[480px] flex-col overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm md:h-[calc(100dvh-12rem)]">
+    <div className="flex h-full min-h-[min(70dvh,720px)] flex-col overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm sm:min-h-[480px]">
       {view === 'montagem' && selectedCotacao && cotacaoExibicao && (
         <CotacaoExpressMontagem
           cotacao={cotacaoExibicao}

@@ -367,6 +367,8 @@ export default function ComprasPage() {
   const [activeTab, setActiveTab] = useState('sugestoes');
   const isMobile = useCompactShell();
   const sugestoesFullHeight = isMobile && activeTab === 'sugestoes';
+  const cotacoesFullHeight = isMobile && activeTab === 'cotacoes';
+  const tabFullHeight = sugestoesFullHeight || cotacoesFullHeight;
 
   const handleTabChange = (value) => {
     setActiveTab(value);
@@ -385,19 +387,19 @@ export default function ComprasPage() {
   return (
     <div
       className={cn(
-        sugestoesFullHeight
+        tabFullHeight
           ? 'flex flex-col h-full min-h-0 overflow-hidden w-full max-w-full bg-background'
           : 'max-w-7xl mx-auto space-y-0 px-0 md:px-2 py-2 md:py-4',
       )}
     >
       {/* Header */}
-      <div className={cn('shrink-0', sugestoesFullHeight ? 'px-4 pb-2 pt-0' : 'px-4 md:px-0 pb-4')}>
+      <div className={cn('shrink-0', tabFullHeight ? 'px-4 pb-2 pt-0' : 'px-4 md:px-0 pb-4')}>
         <h1 className="text-xl md:text-2xl font-semibold text-foreground font-glacial">Compras</h1>
         <p className="text-xs text-muted-foreground mt-0.5">Gestão completa do ciclo de suprimentos</p>
       </div>
 
       {/* Tab Bar - PDV Style pill tabs */}
-      <div className={cn('shrink-0', sugestoesFullHeight ? 'px-4' : 'px-4 md:px-0')}>
+      <div className={cn('shrink-0', tabFullHeight ? 'px-4' : 'px-4 md:px-0')}>
         <div className="flex gap-1 bg-muted rounded-2xl p-1 w-full overflow-x-auto no-scrollbar">
           {tabs.map(tab => {
             const Icon = tab.icon;
@@ -423,7 +425,7 @@ export default function ComprasPage() {
       {/* Tab Content */}
       <div
         className={cn(
-          sugestoesFullHeight
+          tabFullHeight
             ? 'flex-1 min-h-0 overflow-hidden'
             : 'px-4 md:px-0 pt-4 min-w-0 max-w-full overflow-x-clip',
         )}
