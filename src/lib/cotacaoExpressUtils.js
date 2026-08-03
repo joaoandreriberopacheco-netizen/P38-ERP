@@ -249,3 +249,64 @@ export async function gerarProximoNumeroPedido(base44) {
     : 0) + 1;
   return nextNumber;
 }
+
+function roundFinanceiroCotacao(value) {
+  return Math.round((Number(value) || 0) * 100) / 100;
+}
+
+/**
+ * Normaliza totais extraídos de PDF de cotação.
+ * Garante que total_final reflita o valor a pagar após TODOS os descontos
+ * (comercial, SUFRAMA/ICMS, etc.) e que desconto_global = subtotal - total_final.
+ */
+export function normalizarFinanceiroCotacaoPdf(financeiro = {}) {
+  const subtotal = roundFinanceiroCotacao(financeiro.subtotal);
+  let totalFinal = roundFinanceiroCotacao(financeiro.total_final);
+  let descontoGlobal = roundFinanceiroCotacao(financeiro.desconto_global);
+  const descontoComercial = roundFinanceiroCotacao(financeiro.desconto_comercial);
+  const descontoSuframa = roundFinanceiroCotacao(
+    financeiro.desconto_suframa ?? financeiro.desconto_icms_suframa,
+  );
+
+  if (descontoSuframa > 0 && totalFinal > descontoSuframa) {
+    const totalComSuframa = roundFinanceiroCotacao(totalFinal - descontoSuframa);
+    if (totalComSuframa > 0 && totalComSuframa < totalFinal) {
+      totalFinal = totalComSuframa;
+    }
+  }
+
+  if (subtotal > 0 && totalFinal > 0 && totalFinal < subtotal) {
+    const descontoImplied = roundFinanceiroCotacao(subtotal - totalFinal);
+    if (descontoImplied > descontoGlobal) {
+      descontoGlobal = descontoImplied;
+    }
+  } else if (subtotal > 0 && descontoGlobal > 0 && (totalFinal <= 0 || totalFinal >= subtotal)) {
+    totalFinal = roundFinanceiroCotacao(subtotal - descontoGlobal);
+  }
+
+  return {
+    subtotal,
+    desconto_global: descontoGlobal,
+    total_final: totalFinal,
+    ...(descontoComercial > 0 ? { desconto_comercial: descontoComercial } : {}),
+    ...(descontoSuframa > 0 ? { desconto_suframa: descontoSuframa } : {}),
+  };
+}
+
+/** Ratio para ratear desconto nos preços unitários (0..1). */
+export function calcularRatioDescontoCotacaoPdf(subtotalItens, financeiro = {}) {
+  const subtotal = roundFinanceiroCotacao(subtotalItens);
+  if (subtotal <= 0) return 1;
+
+  const totalFinal = roundFinanceiroCotacao(financeiro.total_final);
+  if (totalFinal > 0 && totalFinal < subtotal) {
+    return totalFinal / subtotal;
+  }
+
+  const descontoGlobal = roundFinanceiroCotacao(financeiro.desconto_global);
+  if (descontoGlobal > 0) {
+    return 1 - descontoGlobal / subtotal;
+  }
+
+  return 1;
+}
