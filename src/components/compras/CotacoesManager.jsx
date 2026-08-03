@@ -594,8 +594,8 @@ export default function CotacoesManager() {
   };
 
   return (
-    <div className="flex h-[calc(100dvh-var(--p38-scroll-pad-below-nav,0px)-8rem)] min-h-[480px] flex-col overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm md:h-[calc(100dvh-10rem)]">
-      {view === 'hub' && (
+    <>
+      {view === 'hub' ? (
         <CotacaoExpressHub
           cotacoes={cotacoes}
           loading={isLoading}
@@ -607,8 +607,8 @@ export default function CotacoesManager() {
           onExcluirCotacao={handleDeleteCotacao}
           criando={criando}
         />
-      )}
-
+      ) : (
+    <div className="flex h-[calc(100dvh-var(--p38-scroll-pad-below-nav,0px)-10rem)] min-h-[480px] flex-col overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm md:h-[calc(100dvh-12rem)]">
       {view === 'montagem' && selectedCotacao && (
         <CotacaoExpressMontagem
           cotacao={selectedCotacao}
@@ -663,6 +663,8 @@ export default function CotacoesManager() {
           onVerPedido={() => navigate(createPageUrl('PedidosCompra'))}
         />
       )}
+    </div>
+      )}
 
       {selectedCotacao && (
         <ImportadorCotacaoPDF
@@ -682,6 +684,6 @@ export default function CotacoesManager() {
         }}
         onImportComplete={handleImportFotoComplete}
       />
-    </div>
+    </>
   );
 }
