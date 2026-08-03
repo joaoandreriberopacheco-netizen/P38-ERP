@@ -25,12 +25,12 @@ import {
   COTACAO_STATUS_FINALIZADA,
   COTACAO_STATUS_RASCUNHO,
   gerarProximoNumeroCotacao,
-  gerarProximoNumeroPedido,
   mergeCotacaoItemsByProduct,
   selectorItemToCotacaoItem,
   sincronizarRegistrosDisputa,
   sortCotacaoItensAlfabeticamente,
 } from '@/lib/cotacaoExpressUtils';
+import { gerarNumeroSequencial } from '@/lib/gerarNumeroSequencial';
 import { mergeLoteIntoItems, parseLoteQuantidade } from '@/lib/catalogLoteUtils';
 
 export default function CotacoesManager() {
@@ -609,16 +609,16 @@ export default function CotacoesManager() {
         }
       });
 
-      let nextNumber = await gerarProximoNumeroPedido(base44);
       const criados = [];
 
       for (const fornecedorId of Object.keys(itensPorFornecedor)) {
         const itens = itensPorFornecedor[fornecedorId];
         const fornecedor = fornecedoresMap[fornecedorId];
         const total = itens.reduce((sum, i) => sum + i.total, 0);
+        const numero = await gerarNumeroSequencial('PC');
 
         const po = await base44.entities.PedidoCompra.create({
-          numero: `PC-${String(nextNumber++).padStart(5, '0')}`,
+          numero,
           fornecedor_id: fornecedorId,
           fornecedor_nome: fornecedor?.nome || 'Desconhecido',
           status: 'Rascunho',
