@@ -64,6 +64,7 @@ import {
 } from '@/lib/productUnits';
 import { savePedidoCompraItem } from '@/functions/savePedidoCompraItem';
 import { uploadAnexoParaPedidoCompra } from '@/lib/uploadAnexoReferencia';
+import { mergeLoteIntoItems, parseLoteQuantidade } from '@/lib/catalogLoteUtils';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefresh, abaInicial = 'dados-gerais', autoOpenImporter = false }) {
   const isPhone = useCompactShell();
@@ -561,6 +562,61 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
       ...formData,
       itens: [...formData.itens, newItem],
     };
+    saveToHistory(newData);
+    setFormData(newData);
+  };
+
+  const handleAddItemsBatch = (incoming = []) => {
+    if (!incoming.length) return;
+
+    const calculateItemTotals = (item) => {
+      const qty = parseFloat(item.quantidade) || 0;
+      const fatorConversao = parseFloat(item.fator_conversao) || 1;
+      const synced = syncItemDescontoApresentacao({
+        ...item,
+        quantidade_base: qty * fatorConversao,
+      });
+      const cost = roundToTwoDecimals(parseFloat(synced.custo_unitario) || 0);
+      const descUnit = roundToTwoDecimals(parseFloat(synced.valor_desconto_item) || 0);
+      const custoFinalUnitario = roundToTwoDecimals(cost - descUnit);
+
+      return {
+        ...synced,
+        subtotal: roundToTwoDecimals(qty * fatorConversao * cost),
+        total: calcTotalItemCompraPedido(synced),
+        custo_final_unitario: custoFinalUnitario,
+        ...normalizeItemToCanonicalFactorOne({
+          ...synced,
+          custo_final_unitario: custoFinalUnitario,
+        }, 'custo'),
+      };
+    };
+
+    const buildFromProduct = (product, quantidade) => {
+      const qty = parseLoteQuantidade(quantidade);
+      const pu = pickDefaultPurchaseUnit(product);
+      const fatorPu = pu?.fator_conversao ?? 1;
+      const custoF1 = pu
+        ? custoApresentacaoParaFator1(pu.valor_unitario ?? 0, fatorPu)
+        : (product?.valor_compra || 0);
+      const base = {
+        produto_id: product.id,
+        produto_nome: product.nome,
+        codigo_produto: product.codigo_interno || product.codigo_barras || '',
+        quantidade: qty,
+        unidade_medida: pu?.unidade || product.unidade_compra || 'UN',
+        fator_conversao: fatorPu,
+        custo_unitario: custoF1,
+        valor_desconto_item: resolveValorDescontoCompraPadraoFator1(product, custoF1),
+        desconto_pct_item: resolveDescontoPctCompraProduto(product, custoF1),
+        observacao_item: '',
+      };
+      return calculateItemTotals(base);
+    };
+
+    const merged = mergeLoteIntoItems(formData.itens, incoming, buildFromProduct, produtos);
+    const recalc = merged.map((item) => calculateItemTotals(item));
+    const newData = { ...formData, itens: recalc };
     saveToHistory(newData);
     setFormData(newData);
   };
@@ -1442,6 +1498,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
                 items={formData.itens}
                 products={produtos}
                 onAddItem={handleAddItem}
+                onAddItemsBatch={handleAddItemsBatch}
                 onUpdateItem={handleItemChange}
                 onRemoveItem={handleRemoveItem}
                 formatCurrency={formatCurrency}

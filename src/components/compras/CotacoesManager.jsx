@@ -24,6 +24,7 @@ import {
   selectorItemToCotacaoItem,
   sincronizarRegistrosDisputa,
 } from '@/lib/cotacaoExpressUtils';
+import { mergeLoteIntoItems, parseLoteQuantidade } from '@/lib/catalogLoteUtils';
 
 export default function CotacoesManager() {
   const navigate = useNavigate();
@@ -259,6 +260,33 @@ export default function CotacoesManager() {
       ];
     });
   };
+
+  const handleAddItemsBatch = useCallback((incoming = []) => {
+    if (!incoming.length) return;
+    setSelectorItems((prev) => mergeLoteIntoItems(
+      prev,
+      incoming,
+      (product, qty) => {
+        const pu = pickDefaultPurchaseUnit(product);
+        const fator = pu?.fator_conversao ?? 1;
+        const unidade = pu?.unidade || product.unidade_principal || 'UN';
+        const quantidade = parseLoteQuantidade(qty);
+        return {
+          produto_id: product.id,
+          produto_nome: product.nome,
+          quantidade,
+          unidade_medida: unidade,
+          fator_conversao: fator,
+          quantidade_base: roundToTwoDecimals(quantidade * fator),
+          custo_unitario: parseFloat(product.valor_compra) || 0,
+          valor_desconto_item: 0,
+          desconto_pct_item: 0,
+          total: 0,
+        };
+      },
+      produtosCatalogo,
+    ));
+  }, [produtosCatalogo]);
 
   const handleUpdateItem = (index, field, value) => {
     setSelectorItems((prev) => {
@@ -618,6 +646,7 @@ export default function CotacoesManager() {
           abrindoDisputa={abrindoDisputa}
           onVoltar={handleVoltarHub}
           onAddItem={handleAddItem}
+          onAddItemsBatch={handleAddItemsBatch}
           onUpdateItem={handleUpdateItem}
           onRemoveItem={handleRemoveItem}
           onProductCreated={(p) => setProdutosCatalogo((prev) => [...prev, p])}

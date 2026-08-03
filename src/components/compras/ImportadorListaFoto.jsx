@@ -11,6 +11,8 @@ import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser'
 import { P38TableShell } from '@/components/ui/table';
 import { P38MobileLine, P38MobileLineList, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import { buildLlmTelemetryContext } from '@/lib/p38LlmTelemetry';
+import CatalogLoteDialog from '@/components/compras/CatalogLoteDialog';
+import { parseLoteQuantidade } from '@/lib/catalogLoteUtils';
 
 export default function ImportadorListaFoto({ isOpen, onClose, onImportComplete, mode = 'create' }) {
     const [step, setStep] = useState('upload');
@@ -18,6 +20,7 @@ export default function ImportadorListaFoto({ isOpen, onClose, onImportComplete,
     const [analyzedItems, setAnalyzedItems] = useState([]);
     const [products, setProducts] = useState([]);
     const [productSearch, setProductSearch] = useState({});
+    const [loteDialogOpen, setLoteDialogOpen] = useState(false);
 
     const { toast } = useToast();
 
@@ -84,6 +87,28 @@ export default function ImportadorListaFoto({ isOpen, onClose, onImportComplete,
                     ignored: false,
                 };
             });
+        });
+    };
+
+    const appendLoteImportRows = (incoming = []) => {
+        const newRows = incoming.map(({ produto_id, quantidade }) => {
+            const p = products.find((x) => x.id === produto_id);
+            const qty = parseLoteQuantidade(quantidade);
+            return {
+                texto_identificado: p?.nome || 'Item em lote',
+                produto_id_match: produto_id,
+                selected_product_id: produto_id,
+                quantity: qty,
+                quantidade_escrita: String(qty),
+                confianca: 'alta',
+                ignored: false,
+            };
+        });
+        setAnalyzedItems((prev) => [...prev, ...newRows]);
+        toast({
+            title: 'Linhas adicionadas',
+            description: `${newRows.length} produto(s) incluído(s) via lote.`,
+            className: 'bg-green-100 text-green-800',
         });
     };
 
@@ -234,6 +259,14 @@ Retorne JSON:
                             </div>
                             {step === 'review' && (
                                 <div className="flex items-center justify-between md:justify-end gap-3">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="hidden md:inline-flex rounded-lg"
+                                        onClick={() => setLoteDialogOpen(true)}
+                                    >
+                                        Buscar em lote
+                                    </Button>
                                     <div className="hidden md:flex items-center gap-2 text-xs font-medium text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 px-4 py-2 rounded-full">
                                         <Calculator className="w-3.5 h-3.5" />
                                         <span>Sugestão Automática Ativa</span>
@@ -342,6 +375,8 @@ Retorne JSON:
                                                                 setProductSearch={setProductSearch}
                                                                 productSearch={productSearch}
                                                                 onProductCreated={(novoProduto) => setProducts((prev) => [...prev, novoProduto])}
+                                                                enableLotePicker
+                                                                onLoteRows={appendLoteImportRows}
                                                             />
                                                         </td>
                                                         <td className="px-6 py-4 text-center">
@@ -416,6 +451,8 @@ Retorne JSON:
                                                     setProductSearch={setProductSearch}
                                                     productSearch={productSearch}
                                                     onProductCreated={(novoProduto) => setProducts((prev) => [...prev, novoProduto])}
+                                                    enableLotePicker
+                                                    onLoteRows={appendLoteImportRows}
                                                 />
                                                 <div className="flex items-center justify-between gap-3 text-xs w-full">
                                                     <div className="text-muted-foreground">
@@ -456,6 +493,14 @@ Retorne JSON:
                 </div>
             </div>
 
+        <CatalogLoteDialog
+            open={loteDialogOpen}
+            onOpenChange={setLoteDialogOpen}
+            products={products}
+            initialSearch=""
+            onConfirm={appendLoteImportRows}
+            confirmLabel="Adicionar linhas à lista"
+        />
         </>
     );
 }

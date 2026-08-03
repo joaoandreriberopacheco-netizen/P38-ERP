@@ -17,6 +17,7 @@ export default function CotacaoExpressMontagem({
   onSalvarItens,
   onImportarLista,
   onAbrirDisputa,
+  onAddItemsBatch,
 }) {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
@@ -55,6 +56,7 @@ export default function CotacaoExpressMontagem({
           items={selectorItems}
           products={produtos}
           onAddItem={onAddItem}
+          onAddItemsBatch={onAddItemsBatch}
           onUpdateItem={onUpdateItem}
           onRemoveItem={onRemoveItem}
           formatCurrency={formatCurrency}

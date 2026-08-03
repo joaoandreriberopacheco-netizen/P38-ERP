@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
+import CatalogLotePicker, { CatalogLoteModeToggle } from '@/components/compras/CatalogLotePicker';
+import { buildLoteIncomingFromDraft } from '@/lib/catalogLoteUtils';
 import {
   buildPurchaseUnitOptions,
   pickDefaultPurchaseUnit,
@@ -42,10 +44,13 @@ export default function MobileProductSelector({
   onOpenAdjustPrices,
   isLocked,
   onProductCreated,
-  onOpenImporter
+  onOpenImporter,
+  onAddItemsBatch,
 }) {
   const [view, setView] = useState('menu'); // 'menu' | 'discount-entry' | 'catalog' | 'cart' | 'edit'
   const [search, setSearch] = useState('');
+  const [modoLote, setModoLote] = useState(false);
+  const [loteDraft, setLoteDraft] = useState({});
   const [editingItem, setEditingItem] = useState(null);
   const [editingIndex, setEditingIndex] = useState(-1);
   const [quantidadeInput, setQuantidadeInput] = useState('');
@@ -272,6 +277,30 @@ export default function MobileProductSelector({
   };
 
   const calculateTotal = (item) => calcTotalItemCompraPedido(syncItemQuantidadeBaseComercial(item));
+
+  const cartProductIds = useMemo(
+    () => items.map((i) => i.produto_id).filter(Boolean),
+    [items],
+  );
+
+  const handleConfirmLote = () => {
+    const incoming = buildLoteIncomingFromDraft(loteDraft);
+    if (incoming.length === 0) return;
+    if (onAddItemsBatch) {
+      onAddItemsBatch(incoming);
+    } else {
+      incoming.forEach(({ produto_id, quantidade }) => {
+        const product = products.find((p) => p.id === produto_id);
+        if (!product) return;
+        onAddItem({
+          produto_id: product.id,
+          produto_nome: product.nome,
+          quantidade,
+        });
+      });
+    }
+    setLoteDraft({});
+  };
 
   const patchEditingQuantidade = (quantidade) => {
     setEditingItem((prev) => {
@@ -860,6 +889,14 @@ export default function MobileProductSelector({
               <ChevronLeft className="w-5 h-5" />
             </Button>
             <div className="ml-2 font-medium flex-1 text-foreground">Buscar Produtos</div>
+            <CatalogLoteModeToggle
+              active={modoLote}
+              disabled={isLocked}
+              onClick={() => {
+                setModoLote((v) => !v);
+                setLoteDraft({});
+              }}
+            />
             {items.length > 0 && (
               <Button 
                 variant="ghost" 
@@ -875,7 +912,26 @@ export default function MobileProductSelector({
             )}
           </div>
 
-          <div ref={catalogScrollRef} className="flex-1 overflow-y-auto">
+          <div ref={catalogScrollRef} className="flex-1 overflow-y-auto flex flex-col min-h-0">
+            {modoLote ? (
+              <CatalogLotePicker
+                products={products}
+                search={search}
+                onSearchChange={setSearch}
+                draft={loteDraft}
+                onDraftChange={setLoteDraft}
+                onConfirm={handleConfirmLote}
+                onExit={() => {
+                  setModoLote(false);
+                  setLoteDraft({});
+                }}
+                formatCurrency={formatCurrency}
+                cartProductIds={cartProductIds}
+                isLocked={isLocked}
+                confirmLabel="Adicionar selecionados"
+              />
+            ) : (
+            <>
             <div className="sticky top-0 bg-card z-10 p-4 pb-3 border-b border-border/40">
               {/* Badge de desconto global ativo */}
               {descontoGlobalPct !== 0 && (
@@ -992,9 +1048,11 @@ export default function MobileProductSelector({
                 </div>
               )}
             </div>
+            </>
+            )}
           </div>
           {/* FAB - Criar Produto */}
-          {!isLocked && (
+          {!isLocked && !modoLote && (
             <button
               onClick={() => {
                 document.activeElement?.blur();

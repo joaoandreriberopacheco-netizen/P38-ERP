@@ -1,12 +1,25 @@
 import { useState, useRef, useMemo } from 'react';
-import { Search, Plus, Wand2, X, Pencil } from 'lucide-react';
+import { Search, Plus, Wand2, X, Pencil, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import NovoProdutoRapidoDialog from '@/components/compras/NovoProdutoRapidoDialog';
+import CatalogLoteDialog from '@/components/compras/CatalogLoteDialog';
 import { filterAndSortProducts, getProdutoLabel } from '@/components/compras/productMatchingUtils';
 
-export default function ProductSearchInputPDV({ item, index, produtos, getSuggestedProduct, setItems, setProductSearch, productSearch, onProductCreated }) {
+export default function ProductSearchInputPDV({
+  item,
+  index,
+  produtos,
+  getSuggestedProduct,
+  setItems,
+  setProductSearch,
+  productSearch,
+  onProductCreated,
+  enableLotePicker = false,
+  onLoteRows,
+}) {
   const [isFocused, setIsFocused] = useState(false);
   const [showNovoProduto, setShowNovoProduto] = useState(false);
+  const [loteDialogOpen, setLoteDialogOpen] = useState(false);
   const inputRef = useRef(null);
   const containerRef = useRef(null);
 
@@ -193,6 +206,20 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
                     Nenhum produto no catálogo
                   </div>
                 )}
+                {enableLotePicker && onLoteRows && currentQuery.trim().length >= 2 && (
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-center gap-2 border-t border-border/40 bg-muted/30 px-4 py-3 text-xs font-medium text-foreground hover:bg-muted/50"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setIsFocused(false);
+                      setLoteDialogOpen(true);
+                    }}
+                  >
+                    <Layers className="h-4 w-4" />
+                    Seleção em lote desta busca
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -205,6 +232,17 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
         onSuccess={handleNovoProdutoSuccess}
         nomeInicial={currentQuery}
       />
+
+      {enableLotePicker && onLoteRows && (
+        <CatalogLoteDialog
+          open={loteDialogOpen}
+          onOpenChange={setLoteDialogOpen}
+          products={produtos}
+          initialSearch={currentQuery}
+          onConfirm={onLoteRows}
+          confirmLabel="Adicionar linhas"
+        />
+      )}
     </>
   );
 }
