@@ -1,18 +1,17 @@
-import React from 'react';
 import CotacoesManager from '@/components/compras/CotacoesManager';
 
 export default function CotacoesPage() {
   return (
-    <div className="min-h-screen bg-background font-din-1451 pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
-      <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground font-glacial">
-            Cotações
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Comparação de preços e fornecedores
-          </p>
-        </div>
+    <div className="flex h-dvh flex-col overflow-hidden bg-background font-din-1451 pb-[var(--p38-bottom-nav-total,0px)] md:pb-0">
+      <div className="shrink-0 border-b border-border/40 px-4 py-3 md:px-6">
+        <h1 className="text-lg font-semibold text-foreground font-glacial md:text-2xl">
+          Cotações
+        </h1>
+        <p className="text-xs text-muted-foreground mt-0.5 md:text-sm">
+          Compare propostas, registre disputas e gere pedidos de compra
+        </p>
+      </div>
+      <div className="min-h-0 flex-1 p-3 md:p-6 md:pt-4">
         <CotacoesManager />
       </div>
     </div>
