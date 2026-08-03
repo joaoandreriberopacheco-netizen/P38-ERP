@@ -75,11 +75,6 @@ function ConsultaProdutoRow({
   );
 }
 
-function parseNumeroPedido(numero) {
-  const digits = String(numero || '').replace(/\D/g, '');
-  return digits ? parseInt(digits, 10) : 0;
-}
-
 function aggregateByProduto(pedidos) {
   const map = new Map();
   (pedidos || []).forEach((pedido) => {
@@ -103,15 +98,6 @@ function aggregateByProduto(pedidos) {
   return [...map.values()].sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' }));
 }
 
-function sortByPedido(pedidos) {
-  return [...(pedidos || [])].sort((a, b) => {
-    const na = parseNumeroPedido(a.numero);
-    const nb = parseNumeroPedido(b.numero);
-    if (na !== nb) return na - nb;
-    return String(a.numero || '').localeCompare(String(b.numero || ''), 'pt-BR');
-  });
-}
-
 export default function ConsultaComprasPedidos({
   pedidosFiltrados = [],
   onVerPedido,
@@ -121,7 +107,7 @@ export default function ConsultaComprasPedidos({
   const [modo, setModo] = useState('produto');
 
   const produtosAgregados = useMemo(() => aggregateByProduto(pedidosFiltrados), [pedidosFiltrados]);
-  const pedidosOrdenados = useMemo(() => sortByPedido(pedidosFiltrados), [pedidosFiltrados]);
+  const pedidosOrdenados = pedidosFiltrados;
 
   const totalGeral = useMemo(
     () => roundToTwoDecimals(pedidosFiltrados.reduce((acc, p) => acc + calcValorTotalPedidoCompra(p), 0)),
@@ -192,6 +178,7 @@ export default function ConsultaComprasPedidos({
                   <p className={`${p38Table.mobileLineSubtitle} truncate`}>
                     {pedido.fornecedor_nome || 'Fornecedor não informado'}
                     {pedido.data_emissao ? ` · ${formatarSoData(pedido.data_emissao)}` : ''}
+                    {pedido.data_prevista_entrega ? ` · ETA ${formatarSoData(pedido.data_prevista_entrega)}` : ''}
                   </p>
                   {pedido.status ? (
                     <p className={`${caixaTypo.meta} mt-1`}>{pedido.status}</p>

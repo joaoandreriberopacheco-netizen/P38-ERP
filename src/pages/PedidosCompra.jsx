@@ -153,6 +153,50 @@ const passaFiltrosEmbarqueCard = (
   return true;
 };
 
+const getConsultaPedidoSortMeta = (pedido, groupBy, filtradosCards) => {
+  if (groupBy === 'fornecedor') {
+    return { value: (pedido.fornecedor_nome || '').toLowerCase(), missing: false };
+  }
+  if (groupBy === 'status') {
+    return { value: (pedido.status || '').toLowerCase(), missing: false };
+  }
+  if (groupBy === 'data_pedido') {
+    const data = pedido.data_emissao || (pedido.created_date ? toLocalDate(pedido.created_date) : '');
+    return { value: data || '0000-00-00', missing: !data };
+  }
+
+  const cards = filtradosCards.filter((card) => card.id === pedido.id);
+  const etaKeys = cards
+    .map((card) => (card._embarque?.eta ? toLocalDate(card._embarque.eta) : null))
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+  if (etaKeys.length > 0) {
+    return { value: etaKeys[0], missing: false };
+  }
+
+  const fallbackEta = pedido.data_prevista_entrega
+    || (pedido._embarque_principal?.eta ? toLocalDate(pedido._embarque_principal.eta) : '');
+  return { value: fallbackEta || '', missing: !fallbackEta };
+};
+
+const comparePedidosConsulta = (a, b, sortOrder, groupBy, filtradosCards) => {
+  const metaA = getConsultaPedidoSortMeta(a, groupBy, filtradosCards);
+  const metaB = getConsultaPedidoSortMeta(b, groupBy, filtradosCards);
+
+  if (metaA.missing && metaB.missing) {
+    return String(a.numero || '').localeCompare(String(b.numero || ''), 'pt-BR');
+  }
+  if (metaA.missing) return 1;
+  if (metaB.missing) return -1;
+
+  const cmp = sortOrder === 'asc'
+    ? String(metaA.value).localeCompare(String(metaB.value), 'pt-BR')
+    : String(metaB.value).localeCompare(String(metaA.value), 'pt-BR');
+  if (cmp !== 0) return cmp;
+  return String(a.numero || '').localeCompare(String(b.numero || ''), 'pt-BR');
+};
+
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 const isNecessidadeRenderizada = (embarque) => {
@@ -941,8 +985,10 @@ export default function PedidosCompraPage() {
       });
     }
 
-    return pedidos.filter((p) => idsVisiveis.has(p.id));
-  }, [filtrados, filtradosSemBusca, pedidos, search]);
+    return pedidos
+      .filter((p) => idsVisiveis.has(p.id))
+      .sort((a, b) => comparePedidosConsulta(a, b, sortOrder, groupBy, filtrados));
+  }, [filtrados, filtradosSemBusca, pedidos, search, sortOrder, groupBy]);
 
   return (
     <div className={cn('w-full min-w-0 max-w-full overflow-x-hidden space-y-4 font-din-1451 bg-background', isPhone && 'pb-[var(--p38-scroll-pad-below-nav)]')}>
@@ -963,7 +1009,7 @@ export default function PedidosCompraPage() {
             </>
           )}
         </div>
-        {activeView === 'embarques' ? (
+        {activeView === 'embarques' || activeView === 'consulta' ? (
           <PedidosCompraOrganizer
             groupBy={groupBy}
             sortOrder={sortOrder}
