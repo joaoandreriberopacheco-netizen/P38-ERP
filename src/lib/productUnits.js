@@ -807,12 +807,16 @@ export function reconcileItemCustoCompra(item = {}, custoApresExplicit = null) {
       ? custoApresExplicit
       : getCustoApresentacaoItem(item),
   );
-  const custoF1 = roundToTwoDecimals(custoApresentacaoParaFator1(custoApres, fator));
+  // Não arredondar fator-1 aqui: CX 73,50÷200 → 0,37×200 infla para 74,00 na UI.
+  const custoF1 = custoApresentacaoParaFator1(custoApres, fator);
   const patched = {
     ...item,
     custo_unitario: custoF1,
     custo_unitario_base: custoF1,
     custo_unitario_apresentacao: custoApres,
+    custo_final_unitario_apresentacao: roundToTwoDecimals(
+      custoApres - Math.abs(getDescontoApresentacaoItem({ ...item, custo_unitario_apresentacao: custoApres })),
+    ),
   };
   return normalizeItemToCanonicalFactorOne(patched, 'custo');
 }
@@ -1065,11 +1069,26 @@ export function normalizeItemToCanonicalFactorOne(item = {}, axisPrefix = "custo
 
   const unitField = axisPrefix === "preco" ? "preco_unitario_praticado" : "custo_unitario";
   const finalField = axisPrefix === "preco" ? "preco_unitario_praticado" : "custo_final_unitario";
-  const unitVal = normalizeNumber(item?.[unitField], 0);
-  const finalVal = normalizeNumber(item?.[finalField], unitVal);
+  const apresField = axisPrefix === "preco" ? "preco_unitario_apresentacao" : "custo_unitario_apresentacao";
+  const finalApresField = axisPrefix === "preco" ? "preco_unitario_apresentacao" : "custo_final_unitario_apresentacao";
+  const apresExplicit = normalizeNumber(item?.[apresField], NaN);
+  const finalApresExplicit = normalizeNumber(item?.[finalApresField], NaN);
 
-  const unitApresentacao = unitVal * fator;
-  const finalApresentacao = finalVal * fator;
+  let unitVal = normalizeNumber(item?.[unitField], 0);
+  let finalVal = normalizeNumber(item?.[finalField], unitVal);
+
+  // Preço da embalagem (CX/PAC) é fonte da verdade quando já veio do documento/importação.
+  if (fator > 1 && Number.isFinite(apresExplicit) && apresExplicit > 0) {
+    unitVal = apresExplicit / fator;
+  }
+  if (fator > 1 && Number.isFinite(finalApresExplicit) && finalApresExplicit > 0) {
+    finalVal = finalApresExplicit / fator;
+  }
+
+  const unitApresentacao =
+    Number.isFinite(apresExplicit) && apresExplicit > 0 ? apresExplicit : unitVal * fator;
+  const finalApresentacao =
+    Number.isFinite(finalApresExplicit) && finalApresExplicit > 0 ? finalApresExplicit : finalVal * fator;
 
   const payload = {
     ...item,
@@ -1080,9 +1099,13 @@ export function normalizeItemToCanonicalFactorOne(item = {}, axisPrefix = "custo
   };
 
   if (axisPrefix === "preco") {
+    payload[unitField] = unitVal;
+    payload[finalField] = finalVal;
     payload.preco_unitario_base = unitVal;
     payload.preco_unitario_apresentacao = unitApresentacao;
   } else {
+    payload[unitField] = unitVal;
+    payload[finalField] = finalVal;
     payload.custo_unitario_base = unitVal;
     payload.custo_final_unitario_base = finalVal;
     payload.custo_unitario_apresentacao = unitApresentacao;
@@ -1223,8 +1246,14 @@ export function normalizePurchaseItemToCommercial(product, item = {}) {
   const custoUnitarioFator1 = normalizeNumber(item.custo_unitario, 0);
   const custoFinalUnitarioInput = normalizeNumber(item.custo_final_unitario, NaN);
   const custoFinalUnitarioFator1 = Number.isFinite(custoFinalUnitarioInput) ? custoFinalUnitarioInput : custoUnitarioFator1;
-  const custoUnitarioApresentacao = custoUnitarioFator1 * fatorDisplay;
-  const custoFinalUnitarioApresentacao = custoFinalUnitarioFator1 * fatorDisplay;
+  const apresExplicit = normalizeNumber(item.custo_unitario_apresentacao, NaN);
+  const finalApresExplicit = normalizeNumber(item.custo_final_unitario_apresentacao, NaN);
+  const custoUnitarioApresentacao =
+    Number.isFinite(apresExplicit) && apresExplicit > 0 ? apresExplicit : custoUnitarioFator1 * fatorDisplay;
+  const custoFinalUnitarioApresentacao =
+    Number.isFinite(finalApresExplicit) && finalApresExplicit > 0
+      ? finalApresExplicit
+      : custoFinalUnitarioFator1 * fatorDisplay;
 
   return {
     ...item,
