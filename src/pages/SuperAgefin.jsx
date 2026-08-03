@@ -754,13 +754,14 @@ export default function SuperAgefin() {
       });
     })();
 
-    // O total do cabeçalho deve bater com a soma das linhas impressas (inclui folha sintética
-    // só quando ela entrou nos grupos — evita somar a folha duas vezes).
-    const totalImpressoComFolha = gruposComFolha.reduce(
+    // Total = contas impressas + provisões (budgets) do mês.
+    const totalContasImpressas = gruposComFolha.reduce(
       (sum, grupo) =>
         sum + (grupo.contas || []).reduce((acc, conta) => acc + (Number(conta.valor) || 0), 0),
       0,
     );
+    const totalBudgets = Number(budgetsAgrupados?.totalOrcado) || 0;
+    const totalImpressoComFolha = totalContasImpressas + totalBudgets;
 
     try {
       await gerarDespesaMensalPdf({
