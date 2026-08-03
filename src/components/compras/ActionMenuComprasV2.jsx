@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, FileText, X, Download, Send, CheckSquare, FileSpreadsheet, Smartphone, Loader2, List } from 'lucide-react';
+import { Plus, FileText, X, Download, Send, CheckSquare, FileSpreadsheet, Smartphone, Loader2, List, FileUp } from 'lucide-react';
 import { gerarRelatorioPedidosCompra } from '@/functions/gerarRelatorioPedidosCompra';
 import { toast } from 'sonner';
 import { dataHoje } from '@/components/utils/dateUtils';
@@ -120,7 +120,7 @@ function normalizarGruposParaRelatorio(grupos = [], produtosMap = {}) {
   return walk(grupos);
 }
 
-export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDownloadTemplate, onEnviarFinanceiroLote, onToggleModoSelecao, modoSelecao = false, quantidadeSelecionados = 0, enviandoLote = false, pedidos = [], filtrosDesc = 'Pedidos filtrados na tela', kpis = {}, grupos = [] }) {
+export default function ActionMenuComprasV2({ onNovopedido, onImportarPedido, onImportarNF, onDownloadTemplate, onEnviarFinanceiroLote, onToggleModoSelecao, modoSelecao = false, quantidadeSelecionados = 0, enviandoLote = false, pedidos = [], filtrosDesc = 'Pedidos filtrados na tela', kpis = {}, grupos = [] }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [gerando, setGerando] = useState(null);
   const getActionVersion = (label) => {
@@ -206,6 +206,12 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
       icon: <Plus className="w-5 h-5" />,
       label: 'Novo Pedido',
       onClick: () => { onNovopedido(); setIsExpanded(false); },
+      color: 'bg-card dark:bg-muted text-foreground/90',
+    },
+    {
+      icon: <FileUp className="w-5 h-5" />,
+      label: 'Importar pedido (PDF)',
+      onClick: () => { onImportarPedido?.(); setIsExpanded(false); },
       color: 'bg-card dark:bg-muted text-foreground/90',
     },
     {

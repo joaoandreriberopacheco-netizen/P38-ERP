@@ -708,6 +708,10 @@ export default function PedidosCompraPage() {
     navigate('/PedidoCompraDetalhe?id=novo');
   };
 
+  const handleImportarPedido = () => {
+    navigate('/PedidoCompraDetalhe?id=novo&autoImportador=1');
+  };
+
   const handleToggleSelecao = (pedido) => {
     setSelecionadosIds((prev) => prev.includes(pedido.id)
       ? prev.filter((id) => id !== pedido.id)
@@ -1089,6 +1093,7 @@ export default function PedidosCompraPage() {
       {/* Menu de ações FAB */}
       <ActionMenuComprasV2
         onNovopedido={handleNovoPedido}
+        onImportarPedido={handleImportarPedido}
         onImportarNF={() => setShowImportador(true)}
         onDownloadTemplate={handleDownloadTemplate}
         onEnviarFinanceiroLote={handleAbrirEnvioFinanceiroLote}

@@ -64,6 +64,7 @@ import {
 } from '@/lib/productUnits';
 import { savePedidoCompraItem } from '@/functions/savePedidoCompraItem';
 import { uploadAnexoParaPedidoCompra } from '@/lib/uploadAnexoReferencia';
+import { limparArquivoPedidoImportBridge } from '@/lib/torrePedidoImportBridge';
 import { mergeLoteIntoItems, parseLoteQuantidade } from '@/lib/catalogLoteUtils';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefresh, abaInicial = 'dados-gerais', autoOpenImporter = false }) {
@@ -279,8 +280,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
         anexoImportUploadedRef.current = true;
         pendingAnexoImportRef.current = null;
         toast({
-          title: 'PDF anexado ao pedido',
-          description: `Documento classificado como ${pending.tipoDocumentoAnexo || 'Comprovante'}.`,
+          title: 'Documento anexado ao pedido',
+          description: `Arquivo classificado como ${pending.tipoDocumentoAnexo || 'Comprovante'}.`,
         });
       } catch (anexoErr) {
         console.warn('Anexo PDF (importação pedido):', anexoErr);
@@ -1678,6 +1679,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
       <ImportadorPedidoCompra
         isOpen={isImportadorPedidoOpen}
         onClose={() => {
+          limparArquivoPedidoImportBridge();
           setImporterLaunchPdfPicker(false);
           setIsImportadorPedidoOpen(false);
         }}
@@ -1691,6 +1693,11 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
             };
             if (pedido?.id) {
               void enviarAnexoImportacaoPendente(pedido.id, pedido.numero, pendingAnexoImportRef.current);
+            } else {
+              toast({
+                title: 'Documento guardado para anexo',
+                description: `O ${anexoFonte.type?.startsWith('image/') ? 'arquivo de imagem' : 'PDF'} será anexado ao pedido quando você salvar.`,
+              });
             }
           }
           setFormData(prev => {

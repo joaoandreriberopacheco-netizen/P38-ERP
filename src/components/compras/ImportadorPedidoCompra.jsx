@@ -21,7 +21,7 @@ import {
   normalizePurchaseItemToCommercial,
 } from '@/lib/productUnits';
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
-import { consumirArquivoPedidoImportDoBridge } from '@/lib/torrePedidoImportBridge';
+import { lerArquivoPedidoImportDoBridge, limparArquivoPedidoImportBridge } from '@/lib/torrePedidoImportBridge';
 import { buildLlmTelemetryContext } from '@/lib/p38LlmTelemetry';
 
 export default function ImportadorPedidoCompra({
@@ -69,11 +69,15 @@ export default function ImportadorPedidoCompra({
     }
     modalEstavaAbertoRef.current = true;
 
+    const temArquivoBridge = !!lerArquivoPedidoImportDoBridge();
+
     setMode('pdf');
     setStep('upload');
     setItems([]);
-    setSelectedFile(null);
-    selectedFileRef.current = null;
+    if (!temArquivoBridge && !selectedFileRef.current) {
+      setSelectedFile(null);
+      selectedFileRef.current = null;
+    }
     setAdjustMode('desconto');
     setDiscountValue('0');
     setFornecedorInfo({ id: '', nome: '', cnpj: '' });
@@ -347,13 +351,14 @@ export default function ImportadorPedidoCompra({
   /** PDF guardado na Torre (sessionStorage) + cópia opcional para clipboard ao navegar */
   useEffect(() => {
     if (!isOpen) return;
-    const fromTorre = consumirArquivoPedidoImportDoBridge();
+    const fromTorre = lerArquivoPedidoImportDoBridge();
     if (!fromTorre?.file) return;
     arquivoDaTorreRef.current = true;
     tipoDocumentoTorreRef.current = fromTorre.tipoDocumento || 'Comprovante';
-    void aplicarArquivoSelecionado(fromTorre.file, { assumePdf: true }).finally(() => {
-      onLaunchPdfFilePickerConsumed?.();
-    });
+    void aplicarArquivoSelecionado(fromTorre.file, { assumePdf: true })
+      .finally(() => {
+        onLaunchPdfFilePickerConsumed?.();
+      });
   }, [isOpen]);
 
   /** Novo pedido via ?autoImportador=1 sem ficheiro da Torre: abre o seletor de PDF */
@@ -453,6 +458,7 @@ export default function ImportadorPedidoCompra({
         anexoFonte: selectedFileRef.current,
         tipoDocumentoAnexo: tipoDocumentoTorreRef.current || 'Comprovante',
       });
+      limparArquivoPedidoImportBridge();
       onClose();
       toast({ title: 'Itens importados com sucesso' });
     } catch (error) {
