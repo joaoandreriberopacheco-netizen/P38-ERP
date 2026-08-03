@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import AnexosModal from '@/components/anexos/AnexosModal';
 import { listarAnexos } from '@/functions/listarAnexos';
+import { uploadAnexoDrive } from '@/functions/uploadAnexoDrive';
 
 export default function PedidoCompraFAB({
   pedido,
@@ -28,23 +29,21 @@ export default function PedidoCompraFAB({
 
   const handleAnexoUpload = async (file, tipoSelecionado, e) => {
     setAnexoUploading(true);
-    const buffer = await file.arrayBuffer();
-    const bytes = new Uint8Array(buffer);
-    let binary = '';
-    bytes.forEach(b => binary += String.fromCharCode(b));
-    const base64 = btoa(binary);
-    await base44.functions.invoke('uploadAnexoDrive', {
-      file_base64: base64,
-      file_name: file.name,
-      file_type: file.type || 'application/octet-stream',
-      file_size: file.size,
-      referencia_tipo: 'PedidoCompra',
-      referencia_id: pedido.id,
-      referencia_numero: pedido.numero,
-      tipo_documento: tipoSelecionado,
-    });
-    await carregarAnexos();
-    setAnexoUploading(false);
+    try {
+      await uploadAnexoDrive({
+        file,
+        file_name: file.name,
+        file_type: file.type || 'application/octet-stream',
+        file_size: file.size,
+        referencia_tipo: 'PedidoCompra',
+        referencia_id: pedido.id,
+        referencia_numero: pedido.numero,
+        tipo_documento: tipoSelecionado,
+      });
+      await carregarAnexos();
+    } finally {
+      setAnexoUploading(false);
+    }
     if (e) e.target.value = '';
   };
 

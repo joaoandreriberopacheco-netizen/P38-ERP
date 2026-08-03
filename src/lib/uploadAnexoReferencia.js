@@ -1,8 +1,7 @@
 /**
  * Upload de ficheiro para o pipeline de anexos numa referência.
  */
-import { getSupabaseBrowserClient, isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
-import { uploadAnexoDriveSupabase } from '@/lib/anexosSupabase';
+import { uploadAnexoDrive } from '@/functions/uploadAnexoDrive';
 
 export function fileBlobToBase64(blob) {
   return new Promise((resolve, reject) => {
@@ -13,31 +12,46 @@ export function fileBlobToBase64(blob) {
   });
 }
 
-async function invokeUploadAnexoDrive(base44Client, payload) {
-  if (isSupabaseBrowserConfigured()) {
-    const supabase = getSupabaseBrowserClient();
-    if (supabase) {
-      await uploadAnexoDriveSupabase({ supabase, body: payload });
-      return;
-    }
-  }
-  await base44Client.functions.invoke('uploadAnexoDrive', payload);
+/** Copia bytes para um File estável (sobrevive a fechar modal / input file). */
+export async function stabilizeUploadFile(file, fallbackName = 'documento.pdf') {
+  if (!(file instanceof Blob)) return file;
+  const buffer = await file.arrayBuffer();
+  const name = file.name || fallbackName;
+  const type = file.type || 'application/octet-stream';
+  return new File([buffer], name, { type });
 }
 
-export async function uploadAnexoParaLancamentoFinanceiro(base44Client, { file, lancamentoId, descricao = '', tipoDocumento = 'Boleto', origem = 'varejosync' }) {
-  if (!file || !lancamentoId) return;
-  const base64 = await fileBlobToBase64(file);
-  await invokeUploadAnexoDrive(base44Client, {
-    file_base64: base64,
+function buildUploadPayload({ file, referencia_tipo, referencia_id, referencia_numero, descricao, tipoDocumento, origem }) {
+  return {
+    file,
     file_name: file.name || 'documento.pdf',
     file_type: file.type || 'application/pdf',
     file_size: file.size,
-    referencia_tipo: 'LancamentoFinanceiro',
-    referencia_id: lancamentoId,
-    referencia_numero: descricao || '',
+    referencia_tipo,
+    referencia_id,
+    referencia_numero: referencia_numero || '',
+    descricao,
     tipo_documento: tipoDocumento,
     origem,
-  });
+  };
+}
+
+export async function uploadAnexoParaLancamentoFinanceiro(
+  base44Client,
+  { file, lancamentoId, descricao = '', tipoDocumento = 'Boleto', origem = 'varejosync' }
+) {
+  if (!file || !lancamentoId) return;
+  await uploadAnexoDrive(
+    buildUploadPayload({
+      file,
+      referencia_tipo: 'LancamentoFinanceiro',
+      referencia_id: lancamentoId,
+      referencia_numero: descricao || '',
+      descricao,
+      tipoDocumento,
+      origem,
+    })
+  );
 }
 
 export async function uploadAnexoParaPedidoCompra(
@@ -45,32 +59,32 @@ export async function uploadAnexoParaPedidoCompra(
   { file, pedidoId, pedidoNumero = '', tipoDocumento = 'Comprovante', origem = 'varejosync' }
 ) {
   if (!file || !pedidoId) return;
-  const base64 = await fileBlobToBase64(file);
-  await invokeUploadAnexoDrive(base44Client, {
-    file_base64: base64,
-    file_name: file.name || 'documento.pdf',
-    file_type: file.type || 'application/pdf',
-    file_size: file.size,
-    referencia_tipo: 'PedidoCompra',
-    referencia_id: pedidoId,
-    referencia_numero: pedidoNumero || '',
-    tipo_documento: tipoDocumento,
-    origem,
-  });
+  await uploadAnexoDrive(
+    buildUploadPayload({
+      file,
+      referencia_tipo: 'PedidoCompra',
+      referencia_id: pedidoId,
+      referencia_numero: pedidoNumero || '',
+      tipoDocumento,
+      origem,
+    })
+  );
 }
 
-export async function uploadAnexoParaContaPrevista(base44Client, { file, contaPrevistaId, descricao = '', tipoDocumento = 'Boleto', origem = 'varejosync' }) {
+export async function uploadAnexoParaContaPrevista(
+  base44Client,
+  { file, contaPrevistaId, descricao = '', tipoDocumento = 'Boleto', origem = 'varejosync' }
+) {
   if (!file || !contaPrevistaId) return;
-  const base64 = await fileBlobToBase64(file);
-  await invokeUploadAnexoDrive(base44Client, {
-    file_base64: base64,
-    file_name: file.name || 'documento.pdf',
-    file_type: file.type || 'application/pdf',
-    file_size: file.size,
-    referencia_tipo: 'ContaPrevista',
-    referencia_id: contaPrevistaId,
-    referencia_numero: descricao || '',
-    tipo_documento: tipoDocumento,
-    origem,
-  });
+  await uploadAnexoDrive(
+    buildUploadPayload({
+      file,
+      referencia_tipo: 'ContaPrevista',
+      referencia_id: contaPrevistaId,
+      referencia_numero: descricao || '',
+      descricao,
+      tipoDocumento,
+      origem,
+    })
+  );
 }
