@@ -115,7 +115,7 @@ export async function entregarPdfBlob(blob, filename, title) {
 /**
  * @param {{
  *   currentMonth: Date,
- *   totalImpresso: number,
+ *   totalImpresso: number, // contas do mês + total orçado das provisões (quando houver)
  *   grupos: Array<{ key: string, label: string, contas: object[] }>,
  *   dataPagamentoFolha?: string,
  *   folha?: { competencia: string, linhas: Array<{ nome: string, salario: number, liquido: number }>, dataPagamento: string } | null,
