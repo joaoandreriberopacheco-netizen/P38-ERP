@@ -284,6 +284,14 @@ export function normalizarFinanceiroCotacaoPdf(financeiro = {}) {
     totalFinal = roundFinanceiroCotacao(subtotal - descontoGlobal);
   }
 
+  // desconto_global completo (ex.: com SUFRAMA) pode implicar total menor que total_final intermediário
+  if (subtotal > 0 && descontoGlobal > 0) {
+    const totalFromDesconto = roundFinanceiroCotacao(subtotal - descontoGlobal);
+    if (totalFromDesconto > 0 && (totalFinal <= 0 || totalFromDesconto < totalFinal)) {
+      totalFinal = totalFromDesconto;
+    }
+  }
+
   return {
     subtotal,
     desconto_global: descontoGlobal,
@@ -295,18 +303,57 @@ export function normalizarFinanceiroCotacaoPdf(financeiro = {}) {
 
 /** Ratio para ratear desconto nos preços unitários (0..1). */
 export function calcularRatioDescontoCotacaoPdf(subtotalItens, financeiro = {}) {
-  const subtotal = roundFinanceiroCotacao(subtotalItens);
-  if (subtotal <= 0) return 1;
+  const fin = normalizarFinanceiroCotacaoPdf(financeiro);
+  const itemSum = roundFinanceiroCotacao(subtotalItens);
+  const totalFinal = fin.total_final;
+  const docSubtotal = fin.subtotal;
 
-  const totalFinal = roundFinanceiroCotacao(financeiro.total_final);
-  if (totalFinal > 0 && totalFinal < subtotal) {
-    return totalFinal / subtotal;
+  if (totalFinal <= 0) return 1;
+
+  const tolerance = (base) => Math.max(Math.abs(base) * 0.025, 0.5);
+
+  // Preços brutos alinhados ao subtotal do documento
+  if (docSubtotal > 0 && Math.abs(itemSum - docSubtotal) <= tolerance(docSubtotal)) {
+    if (totalFinal < docSubtotal) return totalFinal / docSubtotal;
+    return 1;
   }
 
-  const descontoGlobal = roundFinanceiroCotacao(financeiro.desconto_global);
-  if (descontoGlobal > 0) {
-    return 1 - descontoGlobal / subtotal;
+  // Preços já com desconto comercial (total líquido intermediário)
+  if (docSubtotal > 0 && fin.desconto_comercial > 0) {
+    const liquidoComercial = roundFinanceiroCotacao(docSubtotal - fin.desconto_comercial);
+    if (Math.abs(itemSum - liquidoComercial) <= tolerance(liquidoComercial)) {
+      if (totalFinal < liquidoComercial) return totalFinal / liquidoComercial;
+      return 1;
+    }
+  }
+
+  // Fallback: soma dos itens selecionados
+  if (itemSum > 0 && totalFinal < itemSum) {
+    return totalFinal / itemSum;
+  }
+
+  // Último recurso: ratio do documento quando linhas divergem levemente
+  if (docSubtotal > 0 && totalFinal < docSubtotal) {
+    return totalFinal / docSubtotal;
   }
 
   return 1;
+}
+
+/** Aplica desconto global nos preços unitários extraídos do PDF. */
+export function aplicarDescontoUnitarioCotacaoPdf(itens, financeiro = {}) {
+  const fin = normalizarFinanceiroCotacaoPdf(financeiro);
+  const rows = (itens || []).map((item) => ({
+    ...item,
+    quantidade: Number(item.quantidade_pdf) || 0,
+    precoBruto: Number(item.preco_unitario_pdf) || 0,
+  }));
+  const subtotalItens = rows.reduce((sum, row) => sum + row.quantidade * row.precoBruto, 0);
+  const ratio = calcularRatioDescontoCotacaoPdf(subtotalItens, fin);
+
+  return rows.map((row) => ({
+    ...row,
+    preco_unitario_liquido: roundFinanceiroCotacao(row.precoBruto * ratio),
+    ratio_desconto: ratio,
+  }));
 }
