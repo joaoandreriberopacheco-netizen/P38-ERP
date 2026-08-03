@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, memo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Copy, Edit, Package, Trash2 } from 'lucide-react';
 import { isCadastroIncompleto, getStockStatusIndicator } from './ProdutosHelpers';
@@ -288,7 +288,7 @@ function renderPlanaCellContent(col, { produto, cadastroStatus, cat, margem, for
   }
 }
 
-export default function ProdutosPlanaTable({
+function ProdutosPlanaTable({
   filteredProdutos,
   visibleColumns,
   handleEdit,
@@ -439,3 +439,5 @@ export default function ProdutosPlanaTable({
     </div>
   );
 }
+
+export default memo(ProdutosPlanaTable);
