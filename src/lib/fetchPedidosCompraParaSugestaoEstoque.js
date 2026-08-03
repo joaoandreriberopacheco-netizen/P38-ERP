@@ -1,3 +1,4 @@
+import { hydrateEmbarquesLinhasEmLote } from '@/lib/embarqueLogisticaHelpers';
 import {
   buildRecebidosPorPedidoProdutoFromEmbarques,
   hydratePedidosCompraItens,
@@ -70,8 +71,9 @@ async function fetchEmbarquesForPedidoIds(base44, pedidoIds = []) {
 }
 
 /**
- * Carrega pedidos de compra relevantes para pendente de estoque na Sugestão de Compra.
- * Inclui pedidos referenciados por embarques em trânsito (ex. E62-67G) mesmo fora do top N recentes.
+ * Carrega pedidos de compra relevantes para pendente de estoque (catálogo / sugestão).
+ * Fonte: Supabase via `p38.legacyClient` (parâmetro mantém nome legado `base44`).
+ * Inclui pedidos referenciados por embarques em trânsito mesmo fora do top N recentes.
  */
 export async function fetchPedidosCompraParaSugestaoEstoque(base44) {
   const [porStatus, recentes, embarques] = await Promise.all([
@@ -106,7 +108,12 @@ export async function fetchPedidosCompraParaSugestaoEstoque(base44) {
     base44,
     pedidosAbertos.map((pedido) => pedido.id),
   );
-  const embarquesTodos = dedupeEmbarquesPorId([...(embarques || []), ...embarquesExtras]);
+  let embarquesTodos = dedupeEmbarquesPorId([...(embarques || []), ...embarquesExtras]);
+  embarquesTodos = await hydrateEmbarquesLinhasEmLote(
+    base44,
+    embarquesTodos,
+    pedidosAbertos.map((pedido) => pedido.id),
+  );
   const recebidosPorPedidoProduto = buildRecebidosPorPedidoProdutoFromEmbarques(embarquesTodos, pedidosTodos);
 
   return {

@@ -1096,10 +1096,15 @@ function ProdutosPageContent() {
 
   const estoqueVirtualAtivo = filters.estoqueVirtual === true;
 
-  const { data: pendentePorProduto = {} } = useQuery({
+  const {
+    data: pendentePorProduto = {},
+    isFetching: pendenteEstoqueCarregando,
+    isError: pendenteEstoqueErro,
+  } = useQuery({
     queryKey: ['catalogo', 'pendente-estoque'],
     enabled: estoqueVirtualAtivo,
     staleTime: 5 * 60 * 1000,
+    retry: 2,
     queryFn: async () => {
       const data = await fetchPedidosCompraParaSugestaoEstoque(base44);
       return buildPendenteAprovadoFinanceiroPorProduto(
@@ -1449,6 +1454,8 @@ function ProdutosPageContent() {
     onOpenPontosPedido: () => setIsPontosPedidoOpen(true),
     groupTreeByCategory,
     onGroupTreeByCategoryChange: handleGroupTreeByCategoryChange,
+    estoqueVirtualCarregando: estoqueVirtualAtivo && pendenteEstoqueCarregando,
+    estoqueVirtualErro: estoqueVirtualAtivo && pendenteEstoqueErro,
   };
 
   return (
