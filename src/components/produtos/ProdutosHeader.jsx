@@ -54,7 +54,7 @@ function ProdutosHeader({
   onOpenCatalogTagPrint,
   onOpenMassTag,
   onOpenMassCategory,
-  onOpenMassMarkup,
+  onOpenMassPrecificacao,
   onOpenPontosPedido,
   groupTreeByCategory = false,
   onGroupTreeByCategoryChange,
@@ -226,11 +226,11 @@ function ProdutosHeader({
                   {hasFilteredProdutos && (
                     <DropdownMenuItem
                       onClick={() => {
-                        window.setTimeout(() => onOpenMassMarkup?.(), 0);
+                        window.setTimeout(() => onOpenMassPrecificacao?.(), 0);
                       }}
                       className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
                     >
-                      <Percent className="w-4 h-4 mr-2 p38-text-accent" />Aplicar markup aos filtrados
+                      <SlidersHorizontal className="w-4 h-4 mr-2 p38-text-accent" />Ajustar precificação nos filtrados
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem onClick={handleBaixarTemplateUnificado} className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
@@ -354,21 +354,21 @@ function ProdutosHeader({
                   variant="ghost"
                   size="icon"
                   className="h-10 w-10 flex-shrink-0 rounded-xl bg-muted desktop-layout:hidden"
-                  onClick={() => onOpenMassMarkup?.()}
-                  title="Aplicar markup aos produtos do filtro atual"
-                  aria-label="Aplicar markup aos produtos do filtro atual"
+                  onClick={() => onOpenMassPrecificacao?.()}
+                  title="Ajustar precificação nos produtos do filtro atual"
+                  aria-label="Ajustar precificação nos produtos do filtro atual"
                 >
-                  <Percent className="w-4 h-4 p38-text-accent" />
+                  <SlidersHorizontal className="w-4 h-4 p38-text-accent" />
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   className="hidden desktop-layout:inline-flex h-10 flex-shrink-0 gap-1.5 rounded-xl text-xs font-medium border-[#4a5240]/30 dark:border-[#a4ce33]/30"
-                  onClick={() => onOpenMassMarkup?.()}
-                  title="Aplicar markup aos produtos do filtro atual"
+                  onClick={() => onOpenMassPrecificacao?.()}
+                  title="Ajustar precificação nos produtos do filtro atual"
                 >
-                  <Percent className="w-3.5 h-3.5 p38-text-accent" />
-                  Markup
+                  <SlidersHorizontal className="w-3.5 h-3.5 p38-text-accent" />
+                  Precificação
                 </Button>
               </>
             )}

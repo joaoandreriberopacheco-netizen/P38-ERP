@@ -463,6 +463,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
                   item.custo_unitario,
                 );
                 item.desconto_pct_item = resolveDescontoPctCompraProduto(produto, item.custo_unitario);
+                item.avaria_pct_item = Number(produto.avaria_percentual) || 0;
             }
         }
     }
@@ -552,6 +553,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
             desconto_pct_item: product
               ? resolveDescontoPctCompraProduto(product, custoF1)
               : 0,
+            avaria_pct_item: product ? (Number(product.avaria_percentual) || 0) : 0,
             observacao_item: ''
         };
         newItem = calculateItemTotals(newItem);

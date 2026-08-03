@@ -173,6 +173,7 @@ export default function MobileProductSelector({
         desconto_pct_item: descontoGlobalPct !== 0
           ? Math.abs(descontoGlobalPct)
           : resolveDescontoPctCompraProduto(product, custoF1),
+        avaria_pct_item: Number(product.avaria_percentual) || 0,
       },
       product,
       selectedUnit,

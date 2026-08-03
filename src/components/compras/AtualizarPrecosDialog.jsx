@@ -18,6 +18,7 @@ import {
   getCustoCompraLiquidoFator1,
   getDescontoPctApresentacaoItem,
   isItemAcrescimoCompra,
+  calcPrecoCustoFromComponents,
 } from '@/lib/productUnits';
 
 const findProduto = (produtos, produtoId) =>
@@ -34,9 +35,7 @@ const parse = (s) => {
 };
 
 // Calcula custo total a partir dos campos
-const calcCusto = (c) =>
-  (c.valor_compra || 0) + (c.custo_frete_padrao || 0) + (c.custo_imposto1_padrao || 0) +
-  (c.custo_imposto2_padrao || 0) + (c.custo_outros_padrao || 0) - (c.desconto_compra_padrao || 0);
+const calcCusto = (c) => calcPrecoCustoFromComponents(c);
 
 // Calcula preço venda a partir do custo e markup
 const calcPreco = (custo, markup) => custo > 0 ? custo * (1 + markup / 100) : 0;
@@ -44,7 +43,7 @@ const calcPreco = (custo, markup) => custo > 0 ? custo * (1 + markup / 100) : 0;
 // Calcula markup a partir do custo e preço venda
 const calcMarkup = (custo, preco) => custo > 0 ? ((preco / custo) - 1) * 100 : 0;
 
-const COST_FIELDS = ['valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'custo_outros_padrao'];
+const COST_FIELDS = ['valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'custo_outros_padrao', 'avaria_percentual'];
 
 /** Normalização de siglas para casar unidades equivalentes no cadastro / linha do pedido. */
 function normalizarSiglaUnidade(raw) {
@@ -197,6 +196,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens = [], pro
         custo_imposto1_padrao: p.custo_imposto1_padrao || 0,
         custo_imposto2_padrao: p.custo_imposto2_padrao || 0,
         custo_outros_padrao: p.custo_outros_padrao || 0,
+        avaria_percentual: p.avaria_percentual || 0,
         desconto_pct: descontoPct,
         desconto_compra_padrao: 0,
         preco_venda_percentual: p.preco_venda_percentual || 40,
@@ -210,7 +210,10 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens = [], pro
 
       const mult = multiplicadorVisual(modoInicial, resolveFatorLinha(item, p));
       COST_FIELDS.forEach(field => {
-        initialInputs[`${item.produto_id}_${field}`] = fmt((c[field] || 0) * mult);
+        const multField = field === 'avaria_percentual' ? 1 : mult;
+        initialInputs[`${item.produto_id}_${field}`] = field === 'avaria_percentual'
+          ? String(c[field] || 0)
+          : fmt((c[field] || 0) * multField);
       });
       initialInputs[`${item.produto_id}_desconto_pct`] = String(Math.round((c.desconto_pct || 0) * 100) / 100);
       initialInputs[`${item.produto_id}_markup`] = String(Math.round((c.preco_venda_percentual || 40) * 100) / 100);
@@ -234,7 +237,10 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens = [], pro
     setInputs((prev) => {
       const next = { ...prev };
       COST_FIELDS.forEach((field) => {
-        next[`${produtoId}_${field}`] = fmt((c[field] || 0) * mult);
+        const multField = field === 'avaria_percentual' ? 1 : mult;
+        next[`${produtoId}_${field}`] = field === 'avaria_percentual'
+          ? String(c[field] || 0)
+          : fmt((c[field] || 0) * multField);
       });
       next[`${produtoId}_desconto_pct`] = String(Math.round((c.desconto_pct || 0) * 100) / 100);
       next[`${produtoId}_markup`] = String(Math.round((c.preco_venda_percentual || 40) * 100) / 100);
@@ -268,7 +274,10 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens = [], pro
         const pRow = findProduto(produtos, id);
         const mult = multiplicadorVisual(modo, resolveFatorLinha(item, pRow));
         COST_FIELDS.forEach((field) => {
-          next[`${id}_${field}`] = fmt((c[field] || 0) * mult);
+          const multField = field === 'avaria_percentual' ? 1 : mult;
+          next[`${id}_${field}`] = field === 'avaria_percentual'
+            ? String(c[field] || 0)
+            : fmt((c[field] || 0) * multField);
         });
         next[`${id}_desconto_pct`] = String(Math.round((c.desconto_pct || 0) * 100) / 100);
         next[`${id}_markup`] = String(Math.round((c.preco_venda_percentual || 40) * 100) / 100);
@@ -284,7 +293,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens = [], pro
     const item = itens.find((i) => String(i.produto_id) === String(produtoId));
     const prodRow = findProduto(produtos, produtoId);
     const m = multiplicadorVisual(unidadeVisualizacao, resolveFatorLinha(item || {}, prodRow));
-    const val = parse(raw) / m;
+    const val = field === 'avaria_percentual' ? parse(raw) : parse(raw) / m;
     setCosts(prev => {
       if (!prev[produtoId]) return prev;
       const c = { ...prev[produtoId], [field]: val };
@@ -299,7 +308,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens = [], pro
       const dm = multiplicadorVisual(unidadeVisualizacao, resolveFatorLinha(item || {}, prodRow));
       setInputs(p2 => ({
         ...p2,
-        [`${produtoId}_${field}`]: fmt(val * dm),
+        [`${produtoId}_${field}`]: field === 'avaria_percentual' ? String(val) : fmt(val * dm),
         [`${produtoId}_preco`]: fmt(novoPreco * dm),
       }));
       return { ...prev, [produtoId]: next };
@@ -469,6 +478,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens = [], pro
           custo_imposto1_padrao: c.custo_imposto1_padrao,
           custo_imposto2_padrao: c.custo_imposto2_padrao,
           custo_outros_padrao: c.custo_outros_padrao,
+          avaria_percentual: c.avaria_percentual || 0,
           desconto_compra_padrao: c.desconto_compra_padrao,
           preco_custo_calculado: calcCusto(c),
           preco_venda_percentual: c.preco_venda_percentual,
@@ -687,7 +697,8 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens = [], pro
                       { label: 'Imp 1', field: 'custo_imposto1_padrao' },
                       { label: 'Imp 2', field: 'custo_imposto2_padrao' },
                       { label: 'Outros', field: 'custo_outros_padrao' },
-                    ].map(({ label, field }) => (
+                      { label: 'Avaria %', field: 'avaria_percentual', isPercent: true },
+                    ].map(({ label, field, isPercent }) => (
                       <div key={field} className="space-y-1">
                         <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
                           {label}

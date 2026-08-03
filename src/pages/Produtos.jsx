@@ -22,7 +22,7 @@ const ColumnSelector = lazy(() => import('../components/produtos/ColumnSelector'
 const MassImageUploader = lazy(() => import('../components/produtos/MassImageUploader'));
 const MassTagGenerator = lazy(() => import('../components/produtos/MassTagGenerator'));
 const MassCategoryClassifier = lazy(() => import('../components/produtos/MassCategoryClassifier'));
-const MassMarkupDialog = lazy(() => import('../components/produtos/MassMarkupDialog'));
+const MassPrecificacaoDialog = lazy(() => import('../components/produtos/MassPrecificacaoDialog'));
 const PontosPedidoCatalogoDialog = lazy(() => import('../components/produtos/PontosPedidoCatalogoDialog'));
 const CatalogTagPrintDialog = lazy(() => import('../components/produtos/CatalogTagPrintDialog'));
 import TreeGrid, { TREE_GRID_EXPAND_ALL_LEVEL } from '../components/produtos/treegrid/TreeGrid';
@@ -187,7 +187,7 @@ function ProdutosPageContent() {
   const [isMassImageUploaderOpen, setIsMassImageUploaderOpen] = useState(false);
   const [isMassTagOpen, setIsMassTagOpen] = useState(false);
   const [isMassCategoryOpen, setIsMassCategoryOpen] = useState(false);
-  const [isMassMarkupOpen, setIsMassMarkupOpen] = useState(false);
+  const [isMassPrecificacaoOpen, setIsMassPrecificacaoOpen] = useState(false);
   const [isPontosPedidoOpen, setIsPontosPedidoOpen] = useState(false);
   const [isCatalogTagPrintOpen, setIsCatalogTagPrintOpen] = useState(false);
   // States for unified import (products + costs)
@@ -1469,7 +1469,7 @@ function ProdutosPageContent() {
   const handleOpenCatalogTagPrint = useCallback(() => setIsCatalogTagPrintOpen(true), []);
   const handleOpenMassTag = useCallback(() => setIsMassTagOpen(true), []);
   const handleOpenMassCategory = useCallback(() => setIsMassCategoryOpen(true), []);
-  const handleOpenMassMarkup = useCallback(() => setIsMassMarkupOpen(true), []);
+  const handleOpenMassPrecificacao = useCallback(() => setIsMassPrecificacaoOpen(true), []);
   const handleOpenPontosPedido = useCallback(() => setIsPontosPedidoOpen(true), []);
 
   const produtosHeaderProps = useMemo(() => ({
@@ -1507,7 +1507,7 @@ function ProdutosPageContent() {
     onOpenCatalogTagPrint: handleOpenCatalogTagPrint,
     onOpenMassTag: handleOpenMassTag,
     onOpenMassCategory: handleOpenMassCategory,
-    onOpenMassMarkup: handleOpenMassMarkup,
+    onOpenMassPrecificacao: handleOpenMassPrecificacao,
     onOpenPontosPedido: handleOpenPontosPedido,
     groupTreeByCategory,
     onGroupTreeByCategoryChange: handleGroupTreeByCategoryChange,
@@ -1542,7 +1542,7 @@ function ProdutosPageContent() {
     handleOpenCatalogTagPrint,
     handleOpenMassTag,
     handleOpenMassCategory,
-    handleOpenMassMarkup,
+    handleOpenMassPrecificacao,
     handleOpenPontosPedido,
     groupTreeByCategory,
     handleGroupTreeByCategoryChange,
@@ -1910,13 +1910,13 @@ function ProdutosPageContent() {
         </Suspense>
       )}
 
-      {isMassMarkupOpen && (
+      {isMassPrecificacaoOpen && (
         <Suspense fallback={null}>
-          <MassMarkupDialog
+          <MassPrecificacaoDialog
             products={filteredProdutos}
             onComplete={loadData}
-            open={isMassMarkupOpen}
-            onOpenChange={setIsMassMarkupOpen}
+            open={isMassPrecificacaoOpen}
+            onOpenChange={setIsMassPrecificacaoOpen}
             hideTrigger
           />
         </Suspense>
