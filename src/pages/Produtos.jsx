@@ -67,6 +67,16 @@ import {
 } from '@/hooks/useP38Entities';
 
 const CATALOG_GROUP_BY_CATEGORY_KEY = 'catalogo.groupTreeByCategory';
+const EMPTY_PRODUCTS = [];
+
+function catalogRowsShallowEqual(a, b) {
+  if (a === b) return true;
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
 
 function readGroupTreeByCategoryPreference() {
   try {
@@ -207,16 +217,31 @@ function ProdutosPageContent() {
       ? fornecedoresData.filter((f) => f && typeof f === 'object' && f !== null)
       : [];
 
-    setProdutos(safeProdutos);
-    setFornecedores(safeFornecedores);
+    setProdutos((prev) => (catalogRowsShallowEqual(prev, safeProdutos) ? prev : safeProdutos));
+    setFornecedores((prev) => (catalogRowsShallowEqual(prev, safeFornecedores) ? prev : safeFornecedores));
 
     const catSet = new Set();
     safeProdutos.forEach((p) => {
       if (p.categoria_nome) catSet.add(p.categoria_nome);
     });
+    const nextCategorias = Array.from(catSet);
+    setCategorias((prev) => {
+      if (prev.length === nextCategorias.length && prev.every((c, i) => c === nextCategorias[i])) return prev;
+      return nextCategorias;
+    });
 
-    setStats(calculateProdutoStats(safeProdutos));
-    setCategorias(Array.from(catSet));
+    const nextStats = calculateProdutoStats(safeProdutos);
+    setStats((prev) => {
+      if (
+        prev.total === nextStats.total
+        && prev.valorEstoque === nextStats.valorEstoque
+        && prev.valorEstoqueAtivo === nextStats.valorEstoqueAtivo
+        && prev.abaixoMinimo === nextStats.abaixoMinimo
+      ) {
+        return prev;
+      }
+      return nextStats;
+    });
     return safeProdutos;
   }, []);
 
@@ -235,7 +260,7 @@ function ProdutosPageContent() {
     saveCatalogProdutoColumns(visibleColumns);
   }, [visibleColumns]);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     const [{ data: produtosData }, { data: fornecedoresData }] = await Promise.all([
       refetchProdutos(),
       refetchFornecedores(),
@@ -271,7 +296,7 @@ function ProdutosPageContent() {
       }
     }
 
-  };
+  }, [refetchProdutos, refetchFornecedores, applyCatalogSnapshot, isFormOpen, selectedProduto?.id]);
 
   const handleSave = async (unitSnapshot) => {
     if (unitSnapshot?.id) {
@@ -335,7 +360,7 @@ function ProdutosPageContent() {
     return formatCurrency(numero);
   }, []);
 
-  const handleExportarCatalogo = () => {
+  const handleExportarCatalogo = useCallback(() => {
     const headers = [
       "codigo_interno",
       "codigo_barras",
@@ -457,11 +482,11 @@ function ProdutosPageContent() {
       className: "bg-card border border-border/40 dark:bg-muted dark:text-foreground dark:border-border/40",
       duration: 3000
     });
-  };
+  }, [produtos, fornecedores, formatarNumero, toast]);
 
 
 
-  const handleBaixarTemplateUnificado = () => {
+  const handleBaixarTemplateUnificado = useCallback(() => {
     const headers = [
       "codigo_interno",
       "codigo_barras",
@@ -572,7 +597,7 @@ function ProdutosPageContent() {
       className: "bg-card border border-border/40 dark:bg-muted dark:text-foreground dark:border-border/40",
       duration: 3000
     });
-  };
+  }, [toast]);
 
   const handleProcessarImportacaoUnificada = async () => {
     if (!importFile) {
@@ -1136,13 +1161,17 @@ function ProdutosPageContent() {
     return buildCatalogSalesVelocityMap(produtos, pedidosVenda90d);
   }, [needsSalesVelocity, produtos, pedidosVenda90d]);
 
-  const filteredProdutos = useMemo(() => {
-    let filtered = filterProdutos(produtos, filters, { salesVelocityMap, catalogStockContext });
+  const filteredProdutosBase = useMemo(
+    () => filterProdutos(produtos, filters, { salesVelocityMap, catalogStockContext }),
+    [produtos, filters, salesVelocityMap, catalogStockContext],
+  );
 
-    filtered = [...filtered].sort((a, b) => compareProdutosForCatalogSort(a, b, sortOrder));
+  const filteredProdutos = useMemo(
+    () => [...filteredProdutosBase].sort((a, b) => compareProdutosForCatalogSort(a, b, sortOrder)),
+    [filteredProdutosBase, sortOrder],
+  );
 
-    return filtered;
-  }, [produtos, filters, sortOrder, salesVelocityMap, catalogStockContext]);
+  const hasFilteredProdutos = filteredProdutos.length > 0;
 
   const fornecedorMap = useMemo(() => {
     return fornecedores.reduce((acc, f) => {
@@ -1416,7 +1445,13 @@ function ProdutosPageContent() {
     handleGerarRelatorioVendas(salesWindow);
   }, [produtos.length, handleGerarRelatorioVendas]);
 
-  const produtosHeaderProps = {
+  const handleOpenCatalogTagPrint = useCallback(() => setIsCatalogTagPrintOpen(true), []);
+  const handleOpenMassTag = useCallback(() => setIsMassTagOpen(true), []);
+  const handleOpenMassCategory = useCallback(() => setIsMassCategoryOpen(true), []);
+  const handleOpenMassMarkup = useCallback(() => setIsMassMarkupOpen(true), []);
+  const handleOpenPontosPedido = useCallback(() => setIsPontosPedidoOpen(true), []);
+
+  const produtosHeaderProps = useMemo(() => ({
     stats: headerStats,
     filters,
     categorias,
@@ -1433,7 +1468,7 @@ function ProdutosPageContent() {
     handleAddNew,
     setFilters,
     formatarNumero,
-    hasFilteredProdutos: filteredProdutos.length > 0,
+    hasFilteredProdutos,
     loadData,
     treeLevel,
     setTreeLevel,
@@ -1448,41 +1483,86 @@ function ProdutosPageContent() {
     gerandoRelatorioVendasV2,
     onGerarRelatorioIep: handleGerarRelatorioIep,
     gerandoRelatorioIep,
-    onOpenCatalogTagPrint: () => setIsCatalogTagPrintOpen(true),
-    onOpenMassTag: () => setIsMassTagOpen(true),
-    onOpenMassCategory: () => setIsMassCategoryOpen(true),
-    onOpenMassMarkup: () => setIsMassMarkupOpen(true),
-    onOpenPontosPedido: () => setIsPontosPedidoOpen(true),
+    onOpenCatalogTagPrint: handleOpenCatalogTagPrint,
+    onOpenMassTag: handleOpenMassTag,
+    onOpenMassCategory: handleOpenMassCategory,
+    onOpenMassMarkup: handleOpenMassMarkup,
+    onOpenPontosPedido: handleOpenPontosPedido,
     groupTreeByCategory,
     onGroupTreeByCategoryChange: handleGroupTreeByCategoryChange,
-  };
+  }), [
+    headerStats,
+    filters,
+    categorias,
+    fornecedores,
+    unidadesVitrine,
+    activeFilterCount,
+    filteredStats.total,
+    stats.total,
+    isFilterOpen,
+    handleFilterChange,
+    handleExportarCatalogo,
+    handleBaixarTemplateUnificado,
+    handleAddNew,
+    formatarNumero,
+    hasFilteredProdutos,
+    loadData,
+    treeLevel,
+    sortOrder,
+    handleGerarRelatorioEstoque,
+    gerandoRelatorioEstoque,
+    handleGerarRelatorioVendas,
+    gerandoRelatorioVendas,
+    handleGerarRelatorioVendasV2,
+    gerandoRelatorioVendasV2,
+    handleGerarRelatorioIep,
+    gerandoRelatorioIep,
+    handleOpenCatalogTagPrint,
+    handleOpenMassTag,
+    handleOpenMassCategory,
+    handleOpenMassMarkup,
+    handleOpenPontosPedido,
+    groupTreeByCategory,
+    handleGroupTreeByCategoryChange,
+  ]);
+
+  const mobileCatalogChrome = useMemo(
+    () => <ProdutosHeader key="catalog-mobile" {...produtosHeaderProps} />,
+    [produtosHeaderProps],
+  );
 
   return (
     <div className="flex flex-col h-full overflow-hidden w-full max-w-full bg-background">
-      <div className="hidden desktop-layout:block flex-none">
-        <ProdutosHeader key="catalog-desktop" {...produtosHeaderProps} />
-      </div>
+      {isDesktop && (
+        <div className="flex-none">
+          <ProdutosHeader key="catalog-desktop" {...produtosHeaderProps} />
+        </div>
+      )}
 
       <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
         <div className="h-full w-full min-w-0 max-w-full px-0 pb-0">
           <div className="h-full flex flex-col min-h-0 min-w-0 max-w-full">
-            <div className="hidden desktop-layout:block">
-              <ProdutosCommandBar
-                sortOrder={sortOrder}
-                setSortOrder={setSortOrder}
-                viewMode={viewMode}
-                setViewMode={setViewMode}
-                groupTreeByCategory={groupTreeByCategory}
-                onGroupTreeByCategoryChange={handleGroupTreeByCategoryChange}
-              />
-            </div>
+            {isDesktop && (
+              <div>
+                <ProdutosCommandBar
+                  sortOrder={sortOrder}
+                  setSortOrder={setSortOrder}
+                  viewMode={viewMode}
+                  setViewMode={setViewMode}
+                  groupTreeByCategory={groupTreeByCategory}
+                  onGroupTreeByCategoryChange={handleGroupTreeByCategoryChange}
+                />
+              </div>
+            )}
 
             <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
-              <div className="desktop-layout:hidden flex flex-col flex-1 min-h-0 h-full w-full min-w-0 max-w-full">
-                <CatalogoMobileScrollShell catalogChrome={<ProdutosHeader key="catalog-mobile" {...produtosHeaderProps} />}>
-                  <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} groupByCategory={groupTreeByCategory} masterLevel={treeLevel} sortOrder={sortOrder} onExpandedKeysChange={handleCatalogExpandedKeysChange} catalogFilters={filters} salesVelocityMap={salesVelocityMap} catalogStockContext={catalogStockContext} />
-                </CatalogoMobileScrollShell>
-              </div>
+              {!isDesktop && (
+                <div className="flex flex-col flex-1 min-h-0 h-full w-full min-w-0 max-w-full">
+                  <CatalogoMobileScrollShell catalogChrome={mobileCatalogChrome}>
+                    <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} groupByCategory={groupTreeByCategory} masterLevel={treeLevel} sortOrder={sortOrder} onExpandedKeysChange={handleCatalogExpandedKeysChange} catalogFilters={filters} salesVelocityMap={salesVelocityMap} catalogStockContext={catalogStockContext} />
+                  </CatalogoMobileScrollShell>
+                </div>
+              )}
 
               {isDesktop && viewMode === 'dinamica' && (
                 <div className="flex flex-col w-full h-full min-h-0">
@@ -1490,7 +1570,7 @@ function ProdutosPageContent() {
                 </div>
               )}
 
-              {viewMode === 'plana' && (
+              {isDesktop && viewMode === 'plana' && (
                 <ProdutosPlanaTable
                   filteredProdutos={filteredProdutos}
                   visibleColumns={visibleColumns}
@@ -1765,7 +1845,7 @@ function ProdutosPageContent() {
       />
 
       <MassTagGenerator
-        products={filteredProdutos}
+        products={isMassTagOpen ? filteredProdutos : EMPTY_PRODUCTS}
         onComplete={loadData}
         open={isMassTagOpen}
         onOpenChange={setIsMassTagOpen}
@@ -1775,12 +1855,12 @@ function ProdutosPageContent() {
       <CatalogTagPrintDialog
         open={isCatalogTagPrintOpen}
         onOpenChange={setIsCatalogTagPrintOpen}
-        products={filteredProdutos}
+        products={isCatalogTagPrintOpen ? filteredProdutos : EMPTY_PRODUCTS}
         filtersSummary={catalogTagFiltersSummary}
       />
 
       <MassCategoryClassifier
-        products={filteredProdutos}
+        products={isMassCategoryOpen ? filteredProdutos : EMPTY_PRODUCTS}
         onComplete={loadData}
         open={isMassCategoryOpen}
         onOpenChange={setIsMassCategoryOpen}
@@ -1788,7 +1868,7 @@ function ProdutosPageContent() {
       />
 
       <MassMarkupDialog
-        products={filteredProdutos}
+        products={isMassMarkupOpen ? filteredProdutos : EMPTY_PRODUCTS}
         onComplete={loadData}
         open={isMassMarkupOpen}
         onOpenChange={setIsMassMarkupOpen}
@@ -1796,7 +1876,7 @@ function ProdutosPageContent() {
       />
 
       <PontosPedidoCatalogoDialog
-        products={produtos}
+        products={isPontosPedidoOpen ? produtos : EMPTY_PRODUCTS}
         open={isPontosPedidoOpen}
         onOpenChange={setIsPontosPedidoOpen}
         onComplete={loadData}
