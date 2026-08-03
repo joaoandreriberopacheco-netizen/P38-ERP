@@ -16,6 +16,10 @@ const PRODUTO_STICKY_SHADOW = 'shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)] dark:sh
 const CATALOG_ROW_LABEL_CLASS =
   'text-xs font-semibold text-foreground/90 dark:text-foreground whitespace-nowrap uppercase tracking-wide';
 
+/** Descrição do produto em linhas de dados — no escuro, tom igual às demais células */
+const CATALOG_ROW_DESC_CLASS =
+  'text-xs font-semibold text-foreground/90 dark:text-muted-foreground whitespace-nowrap uppercase tracking-wide';
+
 const DATA_CELL_CLASS = 'text-right py-1.5 px-2 whitespace-nowrap align-middle';
 
 const headMap = {
@@ -378,7 +382,7 @@ export default function ProdutosPlanaTable({
                         )}
                       </span>
                       <div className="flex items-center gap-1.5 ml-1.5">
-                        <span className={CATALOG_ROW_LABEL_CLASS}>{produto.nome}</span>
+                        <span className={CATALOG_ROW_DESC_CLASS}>{produto.nome}</span>
                         {produto.codigo_interno && (
                           <span className="text-[10px] flex-shrink-0 font-mono whitespace-nowrap text-foreground/70 dark:text-foreground/80">
                             {produto.codigo_interno}

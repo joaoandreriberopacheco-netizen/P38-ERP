@@ -177,6 +177,10 @@ const catalogHierDepth = (level) => Math.max(0, (level ?? 1) - 1);
 const CATALOG_ROW_LABEL_CLASS =
   'text-xs font-semibold text-foreground/90 dark:text-foreground whitespace-nowrap uppercase tracking-wide';
 
+/** Descrição do produto em linhas de dados — no escuro, tom igual às demais células */
+const CATALOG_ROW_DESC_CLASS =
+  'text-xs font-semibold text-foreground/90 dark:text-muted-foreground whitespace-nowrap uppercase tracking-wide';
+
 /** Filhos (nível ≥ 2) — tom mais suave que o pai */
 const CATALOG_CHILD_LABEL_CLASS =
   'text-xs font-normal text-muted-foreground whitespace-nowrap uppercase';
@@ -561,7 +565,7 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, p
             showIcon
             produto={p}
           >
-            <span className={isPrimeiroNivel ? CATALOG_ROW_LABEL_CLASS : CATALOG_CHILD_LABEL_CLASS}>
+            <span className={isPrimeiroNivel ? CATALOG_ROW_DESC_CLASS : CATALOG_CHILD_LABEL_CLASS}>
               {p.nome}
             </span>
             {p.codigo_interno && (
