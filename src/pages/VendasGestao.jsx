@@ -50,6 +50,24 @@ const dateRangeMatches = (valor, inicio, fim) => {
   return true;
 };
 
+/** Evita crash do Radix Select quando o status não existe nas opções da aba ativa. */
+const STATUS_OPCOES_POR_ABA = {
+  rascunhos: ['Criado', 'Em Edição', 'Aguardando Caixa', 'Convertido', 'Cancelado'],
+  pedidos: ['Orçamento', 'Aguardando Caixa', 'Financeiro OK', 'Em Separação', 'Pedido Concluído', 'Cancelado'],
+  consulta: ['Financeiro OK', 'Em Separação', 'Em Rota de Entrega', 'Pedido Concluído'],
+  vales: ['Ativo', 'Utilizado Parcialmente', 'Utilizado', 'Expirado', 'Cancelado'],
+};
+
+function resolveStatusFiltroParaAba(statusFiltro, activeTab) {
+  if (statusFiltro === 'todos') return 'todos';
+  const opcoes = STATUS_OPCOES_POR_ABA[activeTab] || STATUS_OPCOES_POR_ABA.pedidos;
+  return opcoes.includes(statusFiltro) ? statusFiltro : 'todos';
+}
+
+/** Acima do Drawer (z-310) para o dropdown não ficar atrás do painel de filtros. */
+const FILTRO_SELECT_CONTENT =
+  'z-[320] max-h-[min(50vh,20rem)] border border-border/40 bg-popover shadow-lg dark:border-white/10 dark:bg-card';
+
 const VIRTUAL_LIST_STYLE = { maxHeight: 'calc(100vh - 260px)' };
 const VIRTUAL_OVERSCAN = 8;
 
@@ -469,6 +487,15 @@ function VendasGestaoPage() {
     [pedidos],
   );
 
+  const statusFiltroResolvido = useMemo(
+    () => resolveStatusFiltroParaAba(statusFiltro, activeTab),
+    [statusFiltro, activeTab],
+  );
+
+  useEffect(() => {
+    setStatusFiltro((prev) => resolveStatusFiltroParaAba(prev, activeTab));
+  }, [activeTab]);
+
   const toggleFormaPagamentoFiltro = (forma) => {
     setFormasPagamentoFiltro((prev) =>
       prev.includes(forma) ? prev.filter((f) => f !== forma) : [...prev, forma],
@@ -512,8 +539,8 @@ function VendasGestaoPage() {
       );
     }
 
-    if (statusFiltro !== 'todos') {
-      currentFiltered = currentFiltered.filter(p => p.status === statusFiltro);
+    if (statusFiltroResolvido !== 'todos') {
+      currentFiltered = currentFiltered.filter(p => p.status === statusFiltroResolvido);
     }
 
     // Filtro de data
@@ -528,7 +555,7 @@ function VendasGestaoPage() {
     }
 
     setPedidosFiltrados(currentFiltered);
-  }, [pedidos, searchTerm, statusFiltro, dataInicio, dataFim, formasPagamentoFiltro]);
+  }, [pedidos, searchTerm, statusFiltroResolvido, dataInicio, dataFim, formasPagamentoFiltro]);
 
   useEffect(() => {
     let currentFiltered = rascunhos;
@@ -540,8 +567,8 @@ function VendasGestaoPage() {
       );
     }
 
-    if (statusFiltro !== 'todos') {
-      currentFiltered = currentFiltered.filter(r => r.status === statusFiltro);
+    if (statusFiltroResolvido !== 'todos') {
+      currentFiltered = currentFiltered.filter(r => r.status === statusFiltroResolvido);
     }
 
     if (dataInicio || dataFim) {
@@ -549,7 +576,7 @@ function VendasGestaoPage() {
     }
 
     setRascunhosFiltrados(currentFiltered);
-  }, [rascunhos, searchTerm, statusFiltro, dataInicio, dataFim]);
+  }, [rascunhos, searchTerm, statusFiltroResolvido, dataInicio, dataFim]);
 
   const vendasConsulta = useMemo(() => {
     let list = pedidos.filter((p) => STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA.includes(p.status));
@@ -562,8 +589,8 @@ function VendasGestaoPage() {
       );
     }
 
-    if (statusFiltro !== 'todos') {
-      list = list.filter((p) => p.status === statusFiltro);
+    if (statusFiltroResolvido !== 'todos') {
+      list = list.filter((p) => p.status === statusFiltroResolvido);
     }
 
     if (dataInicio || dataFim) {
@@ -575,7 +602,7 @@ function VendasGestaoPage() {
     }
 
     return list;
-  }, [pedidos, searchTerm, statusFiltro, dataInicio, dataFim, formasPagamentoFiltro]);
+  }, [pedidos, searchTerm, statusFiltroResolvido, dataInicio, dataFim, formasPagamentoFiltro]);
 
   // Calcular subtotal dos pedidos filtrados
   const subtotalFiltrado = activeTab === 'pedidos'
@@ -729,11 +756,11 @@ function VendasGestaoPage() {
 
             <div>
               <label className="block text-xs text-muted-foreground mb-2">Status</label>
-              <Select value={statusFiltro} onValueChange={setStatusFiltro}>
+              <Select value={statusFiltroResolvido} onValueChange={setStatusFiltro}>
                 <SelectTrigger className="h-12 rounded-2xl bg-muted dark:bg-muted border-0">
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-card dark:border-border/40">
+                <SelectContent className={FILTRO_SELECT_CONTENT}>
                   <SelectItem value="todos">Todos</SelectItem>
                   {activeTab === 'rascunhos' ? (
                     <>
@@ -950,7 +977,7 @@ function VendasGestaoPage() {
         {activeTab === 'vales' && (
           <ValesTrocaTab
             searchTerm={searchTerm}
-            statusFiltro={statusFiltro}
+            statusFiltro={statusFiltroResolvido}
             dataInicio={dataInicio}
             dataFim={dataFim}
             activeTab={activeTab}
