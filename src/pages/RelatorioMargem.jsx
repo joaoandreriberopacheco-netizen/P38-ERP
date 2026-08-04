@@ -7,6 +7,7 @@ import {
   buildMarginTree,
   flattenMarginTree,
   buildExpandedForLevel,
+  buildMarginFlatRows,
   collectAllMarginLeaves,
   formatMarginGroupUnidadeLabel,
 } from '@/lib/marginTree';
@@ -257,7 +258,7 @@ function MargemDesktopMetricCells({ dataRow, showMetrics = true, tier = 'filho' 
   });
 }
 
-function buildMarginFiltrosDesc({ dateRange, searchTerm, treeLevel }) {
+function buildMarginFiltrosDesc({ dateRange, searchTerm, treeLevel, viewMode = 'plana' }) {
   const parts = [];
   if (dateRange?.from && dateRange?.to) {
     parts.push(
@@ -265,7 +266,11 @@ function buildMarginFiltrosDesc({ dateRange, searchTerm, treeLevel }) {
     );
   }
   if (searchTerm?.trim()) parts.push(`Busca: ${searchTerm.trim()}`);
-  if (treeLevel !== 99) parts.push(`Nível: ${treeLevel}`);
+  if (viewMode === 'plana') {
+    parts.push('Lista plana');
+  } else if (treeLevel !== 99) {
+    parts.push(`Nível: ${treeLevel}`);
+  }
   return parts.length ? parts.join(' · ') : 'Sem filtros adicionais';
 }
 
@@ -747,6 +752,7 @@ export default function RelatorioMargemVendas() {
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState('plana'); // 'dinamica' | 'plana'
   const [treeLevel, setTreeLevel] = useState(99);
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [dateRange, setDateRange] = useState({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) });
@@ -931,10 +937,13 @@ export default function RelatorioMargemVendas() {
     );
   }, [treeLevel, marginTree, processedData?.length]);
 
-  const displayRows = useMemo(
-    () => flattenMarginTree(marginTree, expandedKeys ?? new Set(), '', 0, sortField, sortOrder),
-    [marginTree, expandedKeys, sortField, sortOrder]
-  );
+  const displayRows = useMemo(() => {
+    if (!processedData?.length) return [];
+    if (viewMode === 'plana') {
+      return buildMarginFlatRows(processedData);
+    }
+    return flattenMarginTree(marginTree, expandedKeys ?? new Set(), '', 0, sortField, sortOrder);
+  }, [viewMode, processedData, marginTree, expandedKeys, sortField, sortOrder]);
 
   const mainScrollRef = useRef(null);
   const pendingScrollRef = useRef(null);
@@ -1001,7 +1010,7 @@ export default function RelatorioMargemVendas() {
   useLayoutEffect(() => {
     const scrollEl = mainScrollRef.current;
     if (scrollEl) pendingScrollRef.current = scrollEl.scrollTop;
-  }, [expandedKeys, treeLevel, displayRows.length]);
+  }, [expandedKeys, treeLevel, viewMode, displayRows.length]);
 
   useLayoutEffect(() => {
     const scrollEl = mainScrollRef.current;
@@ -1012,10 +1021,11 @@ export default function RelatorioMargemVendas() {
     }
   }, [expandedKeys, displayRows.length]);
 
-  const exportRows = useMemo(
-    () => (processedData.length ? collectAllMarginLeaves(marginTree, sortField, sortOrder) : []),
-    [marginTree, processedData.length, sortField, sortOrder]
-  );
+  const exportRows = useMemo(() => {
+    if (!processedData.length) return [];
+    if (viewMode === 'plana') return processedData;
+    return collectAllMarginLeaves(marginTree, sortField, sortOrder);
+  }, [viewMode, processedData, marginTree, sortField, sortOrder]);
 
   const handleMetricSort = useCallback(
     (metricKey) => {
@@ -1162,7 +1172,7 @@ export default function RelatorioMargemVendas() {
   const productCount = processedData.length;
   const activeFilterCount = [
     searchTerm.trim(),
-    treeLevel !== 99,
+    viewMode === 'dinamica' && treeLevel !== 99,
   ].filter(Boolean).length;
 
   const formatMoney = (val) => `R$ ${val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -1214,7 +1224,7 @@ export default function RelatorioMargemVendas() {
         totals,
         totalMarkup,
         productCount,
-        filtersDesc: buildMarginFiltrosDesc({ dateRange, searchTerm, treeLevel }),
+        filtersDesc: buildMarginFiltrosDesc({ dateRange, searchTerm, treeLevel, viewMode }),
         generatedAt: format(new Date(), 'dd/MM/yyyy HH:mm'),
       });
       const blob = new Blob([resposta.data], { type: 'application/pdf' });
@@ -1263,6 +1273,7 @@ export default function RelatorioMargemVendas() {
         dateRange,
         searchTerm,
         treeLevel,
+        viewMode,
       });
 
       const formatNumPdf = (val) =>
@@ -1908,7 +1919,7 @@ export default function RelatorioMargemVendas() {
   const desktopRowOffset = shouldVirtualizeRows ? desktopVirtual.startIndex : 0;
   const mobileRowOffset = shouldVirtualizeRows ? mobileVirtual.startIndex : 0;
 
-  const filtrosDesc = buildMarginFiltrosDesc({ dateRange, searchTerm, treeLevel });
+  const filtrosDesc = buildMarginFiltrosDesc({ dateRange, searchTerm, treeLevel, viewMode });
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -2076,10 +2087,12 @@ export default function RelatorioMargemVendas() {
 
               {showFilterDrawer && (
                 <div className="grid grid-cols-1 md:grid-cols-6 gap-2">
-                  <div className="flex items-center gap-2 bg-muted dark:bg-secondary rounded-xl md:rounded-lg px-3 h-10 md:h-9 md:col-span-2 overflow-x-auto">
-                    <span className="text-xs text-muted-foreground flex-shrink-0">Nível da TreeGrid</span>
-                    <LevelControl level={treeLevel} onChange={setTreeLevel} />
-                  </div>
+                  {viewMode === 'dinamica' && (
+                    <div className="flex items-center gap-2 bg-muted dark:bg-secondary rounded-xl md:rounded-lg px-3 h-10 md:h-9 md:col-span-2 overflow-x-auto">
+                      <span className="text-xs text-muted-foreground flex-shrink-0">Nível da TreeGrid</span>
+                      <LevelControl level={treeLevel} onChange={setTreeLevel} />
+                    </div>
+                  )}
                   <button
                     onClick={() => {
                       const today = new Date();
@@ -2118,10 +2131,38 @@ export default function RelatorioMargemVendas() {
 
               <div className="min-w-0 max-w-full">
                 <div className="flex flex-wrap items-center gap-2 min-w-0 [&_button]:!min-h-9 [&_button]:!min-w-9 md:[&_button]:!min-h-6 md:[&_button]:!min-w-6">
-                  <div className="hidden md:contents">
-                    <LevelControl level={treeLevel} onChange={setTreeLevel} />
-                    <div className="w-px h-8 bg-muted dark:bg-muted mx-0.5 flex-shrink-0" />
+                  <div className="flex items-center bg-muted dark:bg-secondary rounded-lg p-0.5 gap-0.5 flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('dinamica')}
+                      className={`text-[10px] px-2 py-1 rounded transition-colors ${
+                        viewMode === 'dinamica'
+                          ? 'bg-white dark:bg-muted text-foreground/90 shadow-sm font-medium'
+                          : 'text-muted-foreground'
+                      }`}
+                    >
+                      Tree Grid
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('plana')}
+                      className={`text-[10px] px-2 py-1 rounded transition-colors ${
+                        viewMode === 'plana'
+                          ? 'bg-white dark:bg-muted text-foreground/90 shadow-sm font-medium'
+                          : 'text-muted-foreground'
+                      }`}
+                    >
+                      Plana
+                    </button>
                   </div>
+                  {viewMode === 'dinamica' && (
+                    <>
+                      <div className="hidden md:contents">
+                        <LevelControl level={treeLevel} onChange={setTreeLevel} />
+                        <div className="w-px h-8 bg-muted dark:bg-muted mx-0.5 flex-shrink-0" />
+                      </div>
+                    </>
+                  )}
                   <div className="relative">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
