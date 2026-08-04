@@ -285,6 +285,12 @@ function makeMarginProductRow(item, level) {
   };
 }
 
+/** Lista plana A-Z (ou conforme ordenação já aplicada em `items`). */
+export function buildMarginFlatRows(items) {
+  if (!Array.isArray(items)) return [];
+  return items.map((item) => makeMarginProductRow(item, 1));
+}
+
 function flattenMarginGroupBranch(
   key,
   node,
