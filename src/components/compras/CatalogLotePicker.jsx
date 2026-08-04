@@ -33,15 +33,28 @@ export default function CatalogLotePicker({
   isLocked = false,
   showSelectAll = true,
   confirmLabel = 'Adicionar ao carrinho',
+  getUnitLabel,
+  searchPlaceholder = 'Ex: REJU QUART; quartzolit...',
+  exitModeLabel = 'Modo rápido',
+  emptySearchTitle = 'Busque para montar o lote',
+  emptySearchHint = 'Combine termos com espaço — ex:',
+  emptySearchExample = 'REJU QUART',
+  sortResultsAlphabetically = false,
+  showStockLine = true,
 }) {
+  const resolveUnitLabel = getUnitLabel || getDefaultPurchaseUnitLabel;
   const [editingProduct, setEditingProduct] = useState(null);
   const [qtyInput, setQtyInput] = useState('1');
   const qtyRef = useRef(null);
 
   const filteredProducts = useMemo(() => {
     if (!search.trim()) return [];
-    return filterAndSortProducts(products, search);
-  }, [products, search]);
+    const list = filterAndSortProducts(products, search);
+    if (!sortResultsAlphabetically) return list;
+    return [...list].sort((a, b) =>
+      (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base', numeric: true }),
+    );
+  }, [products, search, sortResultsAlphabetically]);
 
   const { itens: draftCount, unidades: draftUnits } = countLoteDraft(draft);
 
@@ -89,7 +102,7 @@ export default function CatalogLotePicker({
   };
 
   if (editingProduct) {
-    const unidade = getDefaultPurchaseUnitLabel(editingProduct);
+    const unidade = resolveUnitLabel(editingProduct);
     return (
       <div className="flex h-full min-h-0 flex-col bg-card">
         <div className="shrink-0 border-b border-border/40 px-4 py-3">
@@ -134,7 +147,9 @@ export default function CatalogLotePicker({
               <span className="ml-2">· {formatCurrency(editingProduct.valor_compra)}</span>
             )}
           </p>
-          <CatalogProductStockLine product={editingProduct} className="mt-4 justify-center" size="md" />
+          {showStockLine && (
+            <CatalogProductStockLine product={editingProduct} className="mt-4 justify-center" size="md" />
+          )}
           <p className="mt-6 text-center text-xs text-muted-foreground max-w-xs">
             Deixe em branco ou confirme para usar <strong>1</strong>. Enter também salva.
           </p>
@@ -170,7 +185,7 @@ export default function CatalogLotePicker({
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Ex: REJU QUART; quartzolit..."
+            placeholder={searchPlaceholder}
             className="h-12 border-0 bg-transparent pl-11 shadow-none focus-visible:ring-0"
             value={search}
             onChange={(e) => onSearchChange?.(e.target.value)}
@@ -217,9 +232,9 @@ export default function CatalogLotePicker({
         {!search.trim() ? (
           <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
             <Search className="mb-4 h-14 w-14 opacity-20" />
-            <p className="font-medium text-foreground/80">Busque para montar o lote</p>
+            <p className="font-medium text-foreground/80">{emptySearchTitle}</p>
             <p className="mt-1 max-w-xs text-sm">
-              Combine termos com espaço — ex: <span className="font-mono">REJU QUART</span>
+              {emptySearchHint} <span className="font-mono">{emptySearchExample}</span>
             </p>
           </div>
         ) : filteredProducts.length === 0 ? (
@@ -230,7 +245,7 @@ export default function CatalogLotePicker({
           filteredProducts.map((product) => {
             const inDraft = draft[product.id];
             const inCart = cartProductIds.includes(product.id);
-            const unidade = getDefaultPurchaseUnitLabel(product);
+            const unidade = resolveUnitLabel(product);
             return (
               <button
                 key={product.id}
@@ -270,7 +285,9 @@ export default function CatalogLotePicker({
                         </>
                       )}
                     </p>
-                    <CatalogProductStockLine product={product} className="mt-2" />
+                    {showStockLine && (
+                      <CatalogProductStockLine product={product} className="mt-2" />
+                    )}
                     {inDraft && (
                       <p className="mt-2 text-sm font-semibold text-[#4a5240] dark:text-[#a4ce33]">
                         Qtd: {parseLoteQuantidade(inDraft.quantidade)} {unidade}
@@ -295,7 +312,7 @@ export default function CatalogLotePicker({
             className="flex items-center gap-1 text-muted-foreground hover:text-foreground"
           >
             <ChevronLeft className="h-4 w-4" />
-            Modo rápido
+            {exitModeLabel}
           </button>
           {draftCount > 0 && (
             <span className="tabular-nums text-muted-foreground">
