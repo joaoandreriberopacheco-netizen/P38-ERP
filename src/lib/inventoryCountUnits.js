@@ -5,6 +5,7 @@ import {
   pickDefaultSaleUnit,
   resolvePrimaryFromFactorOne,
 } from "@/lib/productUnits";
+import { parseLoteQuantidade } from "@/lib/catalogLoteUtils";
 
 const round6 = (value) => Math.round((Number(value) || 0) * 1_000_000) / 1_000_000;
 
@@ -53,6 +54,10 @@ export function getDefaultCountUnit(product) {
     valor_unitario: 0,
     is_primary: true,
   };
+}
+
+export function getDefaultCountUnitLabel(product) {
+  return getDefaultCountUnit(product)?.unidade || product?.unidade_principal || 'UN';
 }
 
 export function getCountUnitForEntry(product, entry = {}) {
@@ -185,4 +190,37 @@ export function getGroupDisplayFromBase(product, baseQuantity = 0) {
     quantidade_base: round6(baseQuantity),
     unidade_base: normalizeUnitCode(unidadeBase) || "UN",
   };
+}
+
+/**
+ * Incorpora draft de lote na lista de entradas de contagem (soma por produto).
+ */
+export function mergeLoteDraftIntoCountItens(existingItens = [], draft = {}, products = []) {
+  const productMap = Object.fromEntries(products.map((p) => [p.id, p]));
+  let next = [...existingItens];
+
+  Object.entries(draft || {}).forEach(([produtoId, entry]) => {
+    const product = productMap[produtoId];
+    if (!product) return;
+    const addQty = parseLoteQuantidade(entry?.quantidade);
+    const existingEntries = next.filter((i) => i.produto_id === produtoId);
+
+    if (existingEntries.length === 0) {
+      next.push(buildCountEntry(product, addQty));
+      return;
+    }
+
+    const refEntry = existingEntries[0];
+    const totalBase = existingEntries.reduce(
+      (sum, item) => sum + getEntryBaseQuantity(item, product),
+      0,
+    );
+    const display = getGroupDisplayFromBase(product, totalBase);
+    const unit = getCountUnitForEntry(product, refEntry);
+    const newCommercialQty = round6(display.quantidade + addQty);
+    const consolidated = buildCountEntry(product, newCommercialQty, unit);
+    next = [...next.filter((i) => i.produto_id !== produtoId), consolidated];
+  });
+
+  return next;
 }
