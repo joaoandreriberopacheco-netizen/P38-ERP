@@ -444,6 +444,8 @@ export default function ImportadorPedidoCompra({
           fator_conversao: fator,
           quantidade_base: calculateBaseQuantity(qtd, fator),
           custo_unitario: custoFator1,
+          custo_unitario_apresentacao: precoAjustado,
+          custo_final_unitario_apresentacao: precoAjustado,
           total: totalEconomico,
           valor_desconto_item: 0,
           observacao_item: `${mode === 'pdf' ? 'Importado via PDF' : 'Importado via foto'}${discountNumber ? ` • ${isAcrescimo ? 'acréscimo' : 'desconto'} ${discountNumber}%` : ''}`
