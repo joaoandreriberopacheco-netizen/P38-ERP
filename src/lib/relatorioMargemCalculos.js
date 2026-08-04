@@ -1,12 +1,13 @@
 /**
  * Cálculos do relatório de margem — reutilizáveis (ex.: Plano completo em Budgets).
  * Receita: valor_total do pedido (como Consulta de Vendas), rateado nas linhas.
- * Custo: componentes do cadastro atual (compra, frete, impostos, outros, desconto).
+ * Custo: componentes do cadastro atual (compra líquida, frete, impostos, outros).
+ * Desconto comercial diluído no valor de compra — não exibido como linha separada.
  */
 
 import { toLocalDateKey } from '@/components/utils/dateUtils';
 import { STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA } from '@/lib/pdvCaixaTurnoVendas';
-import { resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
+import { resolveCustoTotalUnitBaseProduto, resolveValorDescontoCompraPadraoFator1 } from '@/lib/productUnits';
 
 export const CUSTO_MARGEM_CAMPOS = [
   {
@@ -43,14 +44,6 @@ export const CUSTO_MARGEM_CAMPOS = [
     unitKey: 'custo_outros_unit',
     label: 'Outros',
     shortLabel: 'Out',
-  },
-  {
-    sourceKey: 'desconto_compra',
-    totalKey: 'custo_desconto_total',
-    unitKey: 'custo_desconto_unit',
-    label: 'Desconto compra',
-    shortLabel: 'Desc',
-    subtract: true,
   },
 ];
 
@@ -125,21 +118,22 @@ export function resolveMargemProdutoKey(item = {}) {
 /** Componentes de custo unitário na unidade base — cadastro atual (preços de hoje). */
 export function resolveCustoComponentesUnitBaseMargem(product = null, item = {}) {
   if (product) {
+    const valorCompraBruto = normalizeCustoNum(product.valor_compra);
+    const desconto = resolveValorDescontoCompraPadraoFator1(product, valorCompraBruto);
+    const valorCompraLiquido = roundMoney(Math.max(0, valorCompraBruto - desconto));
     const componentes = {
-      valor_compra: normalizeCustoNum(product.valor_compra),
+      valor_compra: valorCompraLiquido,
       custo_frete: normalizeCustoNum(product.custo_frete_padrao),
       custo_imposto1: normalizeCustoNum(product.custo_imposto1_padrao),
       custo_imposto2: normalizeCustoNum(product.custo_imposto2_padrao),
       custo_outros: normalizeCustoNum(product.custo_outros_padrao),
-      desconto_compra: normalizeCustoNum(product.desconto_compra_padrao),
     };
     const somaComponentes =
       componentes.valor_compra +
       componentes.custo_frete +
       componentes.custo_imposto1 +
       componentes.custo_imposto2 +
-      componentes.custo_outros -
-      componentes.desconto_compra;
+      componentes.custo_outros;
     const salvo = normalizeCustoNum(product.preco_custo_calculado);
     if (somaComponentes <= 0 && salvo > 0) {
       return {
@@ -148,7 +142,6 @@ export function resolveCustoComponentesUnitBaseMargem(product = null, item = {})
         custo_imposto1: 0,
         custo_imposto2: 0,
         custo_outros: 0,
-        desconto_compra: 0,
       };
     }
     return componentes;
@@ -163,7 +156,6 @@ export function resolveCustoComponentesUnitBaseMargem(product = null, item = {})
     custo_imposto1: 0,
     custo_imposto2: 0,
     custo_outros: 0,
-    desconto_compra: 0,
   };
 }
 
@@ -188,8 +180,7 @@ export function acumularCustoComponentesMargem(entry, componentesUnit, quantidad
 export function calcularCustoTotalDosComponentes(row = {}) {
   let total = 0;
   for (const campo of CUSTO_MARGEM_CAMPOS) {
-    const valor = normalizeCustoNum(row[campo.totalKey]);
-    total += campo.subtract ? -valor : valor;
+    total += normalizeCustoNum(row[campo.totalKey]);
   }
   return roundMoney(total);
 }
@@ -210,8 +201,7 @@ export function resolveCustoUnitarioMargem(item = {}, product = null) {
     componentes.custo_frete +
     componentes.custo_imposto1 +
     componentes.custo_imposto2 +
-    componentes.custo_outros -
-    componentes.desconto_compra;
+    componentes.custo_outros;
   if (total > 0) return roundMoney(total);
   if (product) return resolveCustoTotalUnitBaseProduto(product);
   return normalizeCustoNum(item.custo_unitario_momento ?? item.custo_unitario ?? item.custo_calculado);
