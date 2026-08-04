@@ -1185,6 +1185,23 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       y += 32;
     };
 
+    const getPedidosNoRelatorio = () => {
+      if (Array.isArray(grupos) && grupos.length > 0) {
+        return grupos.flatMap((grupo) => grupo.pedidos || []);
+      }
+      return pedidos;
+    };
+
+    const getResumoPedidosListados = () => {
+      const pedidosListados = getPedidosNoRelatorio();
+      const quantidade = pedidosListados.length;
+      const soma = pedidosListados.reduce(
+        (acc, pedido) => acc + getValorRelatorio(pedido, produtosMap),
+        0,
+      );
+      return { quantidade, soma };
+    };
+
     // ════════════════════════════════════════════════════════════════════════
     //  KPIs
     // ════════════════════════════════════════════════════════════════════════
@@ -1197,15 +1214,13 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       ];
 
       if (isEnxuta) {
+        const { quantidade, soma } = getResumoPedidosListados();
         ensureSpace(14);
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
         doc.setFontSize(ENXUTO_FONT.kpi);
         doc.setTextColor(...ENXUTO.black);
-        doc.text(`Pedidos: ${kpis.totalPedidos || pedidos.length || 0}`, M, y);
-        doc.text(`Pendente: ${moeda(kpis.totalGeral || 0)}`, M + 50, y);
-        doc.text(`Em aberto: ${moeda(kpis.totalEmAberto || 0)}`, M + 100, y);
-        doc.setTextColor(...ENXUTO.muted);
-        doc.text(`Pago/nao entregue: ${moeda(kpis.totalPagoNaoEntregue || 0)}`, M + CW, y, { align: 'right' });
+        doc.text(`Pedidos listados: ${quantidade}`, M, y);
+        doc.text(`Total: ${moeda(soma)}`, M + CW, y, { align: 'right' });
         y += 8;
         return;
       }
@@ -2330,6 +2345,17 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       grupos.forEach(renderGrupo);
     } else {
       pedidos.forEach(renderPedido);
+    }
+
+    if (isEnxuta) {
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let page = 1; page <= pageCount; page += 1) {
+        doc.setPage(page);
+        doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+        doc.setFontSize(ENXUTO_FONT.footer);
+        doc.setTextColor(...ENXUTO.muted);
+        doc.text(`Página ${page}/${pageCount}`, pageW / 2, pageH - 6, { align: 'center' });
+      }
     }
 
     const pdfBytes = doc.output('arraybuffer');
