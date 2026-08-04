@@ -902,6 +902,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       black: [0, 0, 0],
       muted: [72, 72, 72],
       line: [110, 110, 110],
+      section: [236, 236, 236],
     };
     /** Recuos do mind map enxuto: 1 embarque → 2 pedido → 3 produtos. */
     const ENXUTO_INDENT = {
@@ -913,6 +914,8 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
     /** Tipografia enxuta — corpo bem legível (DIN 1451 com tamanhos maiores). */
     const ENXUTO_FONT = {
       kpi: 9.5,
+      kpiHighlightLabel: 8.2,
+      kpiHighlightValue: 14.5,
       grupo: 10.5,
       grupoMeta: 8.5,
       pedidoCodigo: 9,
@@ -1215,13 +1218,36 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
 
       if (isEnxuta) {
         const { quantidade, soma } = getResumoPedidosListados();
-        ensureSpace(14);
+        const boxH = 20;
+        const boxPadX = 5;
+        const colW = (CW - boxPadX * 2) / 2;
+        ensureSpace(boxH + 6);
+        const boxY = y;
+
+        doc.setFillColor(...ENXUTO.section);
+        doc.roundedRect(M, boxY, CW, boxH, 2.5, 2.5, 'F');
+        doc.setDrawColor(...ENXUTO.black);
+        doc.setLineWidth(ENXUTO_LINE_W);
+        doc.roundedRect(M, boxY, CW, boxH, 2.5, 2.5, 'S');
+
+        const labelY = boxY + 6.2;
+        const valueY = boxY + 14.5;
+        const leftX = M + boxPadX;
+        const rightX = M + boxPadX + colW;
+
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-        doc.setFontSize(ENXUTO_FONT.kpi);
+        doc.setFontSize(ENXUTO_FONT.kpiHighlightLabel);
+        doc.setTextColor(...ENXUTO.muted);
+        doc.text('Pedidos listados', leftX, labelY);
+        doc.text('Total', rightX, labelY);
+
+        doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+        doc.setFontSize(ENXUTO_FONT.kpiHighlightValue);
         doc.setTextColor(...ENXUTO.black);
-        doc.text(`Pedidos listados: ${quantidade}`, M, y);
-        doc.text(`Total: ${moeda(soma)}`, M + CW, y, { align: 'right' });
-        y += 8;
+        doc.text(String(quantidade), leftX, valueY);
+        doc.text(moeda(soma), M + CW - boxPadX, valueY, { align: 'right' });
+
+        y = boxY + boxH + 6;
         return;
       }
 
