@@ -4,7 +4,7 @@
     "deploymentEnabled": false
   },
   "framework": "nextjs",
-  "buildCommand": "node scripts/generate-next-page-registry.mjs && next build",
+  "buildCommand": "node scripts/generate-next-page-registry.mjs && node scripts/write-p38-build-info.mjs && next build",
   "installCommand": "npm ci",
   "ignoreCommand": "bash scripts/vercel-ignore-git-build.sh",
   "headers": [
