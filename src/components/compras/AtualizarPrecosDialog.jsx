@@ -188,7 +188,6 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens = [], pro
       if (!p) return;
 
       const valorCompraLiquidoBase = getCustoCompraLiquidoFator1(item) || (p.valor_compra || 0);
-      const descontoPct = resolveDescontoPctItem(item);
 
       const c = {
         valor_compra: valorCompraLiquidoBase,
@@ -197,12 +196,11 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens = [], pro
         custo_imposto2_padrao: p.custo_imposto2_padrao || 0,
         custo_outros_padrao: p.custo_outros_padrao || 0,
         avaria_percentual: p.avaria_percentual || 0,
-        desconto_pct: descontoPct,
+        desconto_pct: 0,
         desconto_compra_padrao: 0,
         preco_venda_percentual: p.preco_venda_percentual || 40,
         preco_venda_padrao: p.preco_venda_padrao || 0,
       };
-      c.desconto_compra_padrao = recalcDesconto(c);
       if (!c.preco_venda_padrao) {
         c.preco_venda_padrao = calcPreco(calcCusto(c), c.preco_venda_percentual);
       }
@@ -479,7 +477,8 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens = [], pro
           custo_imposto2_padrao: c.custo_imposto2_padrao,
           custo_outros_padrao: c.custo_outros_padrao,
           avaria_percentual: c.avaria_percentual || 0,
-          desconto_compra_padrao: c.desconto_compra_padrao,
+          desconto_compra_padrao: 0,
+          desconto_perc: 0,
           preco_custo_calculado: calcCusto(c),
           preco_venda_percentual: c.preco_venda_percentual,
           preco_venda_padrao: c.preco_venda_padrao,

@@ -61,6 +61,7 @@ import {
   resolveDescontoPctCompraProduto,
   syncItemDescontoApresentacao,
   calcTotalItemCompraPedido,
+  normalizePedidoCompraItemCustoLiquidoParaPersist,
 } from '@/lib/productUnits';
 import { savePedidoCompraItem } from '@/functions/savePedidoCompraItem';
 import { uploadAnexoParaPedidoCompra } from '@/lib/uploadAnexoReferencia';
@@ -1053,20 +1054,29 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
           const itensCanonicos = dataToSave.itens.map((it, idx) => {
             const synced = syncItemDescontoApresentacao(it);
             const totalLinha = calcTotalItemCompraPedido(synced);
-            const descontoF1 =
-              Number(synced?.valor_desconto_item ?? synced?.desconto_unitario) || 0;
+            const normalizado = normalizePedidoCompraItemCustoLiquidoParaPersist({
+              ...synced,
+              custo_unitario_fator1: Number(synced?.custo_unitario) || 0,
+              quantidade_comercial: Number(synced?.quantidade) || 0,
+              quantidade_base: Number(synced?.quantidade_base) || 0,
+              fator_aplicado: Number(synced?.fator_conversao) || 1,
+              frete_unitario_fator1: Number(synced?.custo_frete_unitario) || 0,
+              outros_unitario_fator1: Number(synced?.custo_outros_unitario) || 0,
+              desconto_unitario_fator1: Number(synced?.valor_desconto_item ?? synced?.desconto_unitario) || 0,
+              total: Number(synced?.total) > 0 ? Number(synced.total) : totalLinha,
+            });
             return {
               id: synced?.pedido_compra_item_id || synced?.id || undefined,
               produto_id: synced?.produto_id || '',
               produto_unidade_id: synced?.produto_unidade_id || '',
               unidade_sigla: synced?.unidade_medida || synced?.unidade_apresentacao || '',
-              quantidade_comercial: Number(synced?.quantidade) || 0,
-              custo_unitario_fator1: Number(synced?.custo_unitario) || 0,
-              frete_unitario_fator1: Number(synced?.custo_frete_unitario) || 0,
-              outros_unitario_fator1: Number(synced?.custo_outros_unitario) || 0,
-              desconto_unitario_fator1: descontoF1,
-              valor_desconto_item: descontoF1,
-              total: Number(synced?.total) > 0 ? Number(synced.total) : totalLinha,
+              quantidade_comercial: (normalizado.quantidade_comercial ?? Number(synced?.quantidade)) || 0,
+              custo_unitario_fator1: normalizado.custo_unitario_fator1,
+              frete_unitario_fator1: normalizado.frete_unitario_fator1 ?? 0,
+              outros_unitario_fator1: normalizado.outros_unitario_fator1 ?? 0,
+              desconto_unitario_fator1: 0,
+              valor_desconto_item: 0,
+              total: normalizado.total ?? totalLinha,
               quantidade_vinculada: Number(synced?.quantidade_vinculada) || 0,
               ordem: idx,
               observacoes: typeof synced?.observacoes === 'string' ? synced.observacoes : '',
