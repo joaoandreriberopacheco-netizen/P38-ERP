@@ -15,6 +15,7 @@ import HomeQuickActionLink, {
   HomeAlertsPanelLazy,
   HomeSalesSummaryLazy,
 } from '@/components/home/HomeQuickActionLink';
+import HomeBuildStamp from '@/components/home/HomeBuildStamp';
 import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCache';
 import {
   resolverPermissoes,
@@ -244,6 +245,8 @@ export default function HomePage() {
             </div>
           );
         })()}
+
+        <HomeBuildStamp />
       </div>
 
       {showPersonalizar && (

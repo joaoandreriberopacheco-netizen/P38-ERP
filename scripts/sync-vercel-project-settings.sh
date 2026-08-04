@@ -5,7 +5,7 @@ set -euo pipefail
 : "${VERCEL_TOKEN:?VERCEL_TOKEN em falta}"
 
 project_name="${VERCEL_PROJECT_NAME:-p-38_erp}"
-build_cmd="${VERCEL_BUILD_COMMAND:-node scripts/generate-next-page-registry.mjs && next build}"
+build_cmd="${VERCEL_BUILD_COMMAND:-node scripts/generate-next-page-registry.mjs && node scripts/write-p38-build-info.mjs && next build}"
 install_cmd="${VERCEL_INSTALL_COMMAND:-npm ci}"
 
 echo "[sync-vercel-project] A alinhar framework/build do projecto ${project_name}…"
@@ -33,7 +33,7 @@ if [ -f .vercel/project.json ]; then
     const j = JSON.parse(fs.readFileSync(p, 'utf8'));
     if (j.settings) {
       j.settings.framework = 'nextjs';
-      j.settings.buildCommand = process.env.VERCEL_BUILD_COMMAND || 'node scripts/generate-next-page-registry.mjs && next build';
+      j.settings.buildCommand = process.env.VERCEL_BUILD_COMMAND || 'node scripts/generate-next-page-registry.mjs && node scripts/write-p38-build-info.mjs && next build';
       j.settings.installCommand = process.env.VERCEL_INSTALL_COMMAND || 'npm ci';
       delete j.settings.outputDirectory;
     }
