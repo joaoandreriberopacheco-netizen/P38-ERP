@@ -1,8 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Boxes, CheckCircle2, Loader2, Minus, Plus, Trash2, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { allowProgrammaticFocusBriefly, focusField } from '@/lib/focusPolicy';
 import { formatCountQuantity, getGroupDisplayFromBase } from '@/lib/inventoryCountUnits';
+import { P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
 
 function CelulaInfo({ label, valor, unidade, tone = 'default' }) {
   const toneClass = tone === 'ok'
@@ -12,7 +14,7 @@ function CelulaInfo({ label, valor, unidade, tone = 'default' }) {
       : 'text-foreground';
 
   return (
-    <div className="rounded-xl bg-muted/50 px-3 py-2.5 text-center">
+    <div className={cn('rounded-xl px-3 py-2.5 text-center', P38_FIELD_SURFACE)}>
       <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className={`mt-1 text-lg font-bold font-glacial ${toneClass}`}>
         {valor}
@@ -92,7 +94,7 @@ export default function ContagemExpressPainelContagem({
   }
 
   return (
-    <div className="mx-auto w-full max-w-lg rounded-3xl bg-muted/50 p-5">
+    <div className={cn('mx-auto w-full max-w-lg rounded-3xl p-5', P38_FIELD_SURFACE)}>
       <div className="flex items-start justify-between gap-3">
         <h2 className="min-w-0 flex-1 line-clamp-3 text-base font-semibold text-foreground">{produtoNome}</h2>
         <button
@@ -172,7 +174,7 @@ export default function ContagemExpressPainelContagem({
         <button
           type="submit"
           disabled={!quantidadeValida}
-          className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-semibold text-white disabled:opacity-40"
+          className="mt-5 flex h-14 w-full items-center justify-center gap-2 rounded-2xl p38-btn-primary text-sm font-semibold disabled:opacity-40"
         >
           <CheckCircle2 className="h-4 w-4" />
           {confirmLabel}

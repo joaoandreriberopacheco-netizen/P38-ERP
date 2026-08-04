@@ -6,7 +6,10 @@ import {
   ArrowLeft, ClipboardList, Search, Loader2, Package, ShoppingCart,
 } from 'lucide-react';
 import { createPageUrl } from '@/utils';
+import { cn } from '@/lib/utils';
 import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
+import CatalogLotePicker, { CatalogLoteModeToggle } from '@/components/compras/CatalogLotePicker';
+import CatalogProductStockLine from '@/components/compras/CatalogProductStockLine';
 import ContagemExpressCarrinho from '@/components/estoque/contagem-express/ContagemExpressCarrinho';
 import ContagemExpressPainelContagem from '@/components/estoque/contagem-express/ContagemExpressPainelContagem';
 import ContagemExpressPainelSessoes from '@/components/estoque/contagem-express/ContagemExpressPainelSessoes';
@@ -16,14 +19,21 @@ import {
   changeCountEntryUnit,
   formatCountQuantity,
   getCountUnitForEntry,
+  getDefaultCountUnit,
   getEntryBaseQuantity,
   getEntryDisplayQuantity,
   getGroupDisplayFromBase,
+  mergeLoteDraftIntoCountItens,
   resolveInventoryProductName,
   updateCountEntryQuantity,
 } from '@/lib/inventoryCountUnits';
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
+import { getDefaultCountUnitLabel } from '@/lib/inventoryCountUnits';
 import { calcularSaldoExtratoProduto } from '@/lib/movimentacaoEstoqueSaldo';
+import {
+  P38_ACCENT,
+  P38_FIELD_SURFACE,
+} from '@/components/financeiro/fluxo/financeiroP38';
 import {
   loadContagemExpressDraft,
   saveContagemExpressDraft,
@@ -70,6 +80,8 @@ export default function ContagemExpress() {
   const [finalizando, setFinalizando] = useState(false);
   const [imprimindo, setImprimindo] = useState(false);
   const [focarBuscaAposLimpar, setFocarBuscaAposLimpar] = useState(false);
+  const [modoLote, setModoLote] = useState(false);
+  const [loteDraft, setLoteDraft] = useState({});
 
   const persistItens = useCallback(async (novosItens, sid = sessionId, confId = conferenciaId) => {
     setItens(novosItens);
@@ -125,7 +137,16 @@ export default function ContagemExpress() {
       setProdutosFiltrados([]);
       return;
     }
-    setProdutosFiltrados(filterAndSortProducts(produtos, busca));
+    const list = filterAndSortProducts(produtos, busca);
+    setProdutosFiltrados(
+      [...list].sort((a, b) =>
+        resolveInventoryProductName(a).localeCompare(
+          resolveInventoryProductName(b),
+          'pt-BR',
+          { sensitivity: 'base', numeric: true },
+        ),
+      ),
+    );
   }, [busca, produtos]);
 
   const itensAgrupados = useMemo(() => {
@@ -159,7 +180,12 @@ export default function ContagemExpress() {
       grupoAtual.display = getGroupDisplayFromBase(produto, grupoAtual.totalBase);
       grupoAtual._produto = produto;
       return acc;
-    }, []);
+    }, []).sort((a, b) =>
+      (a.produto_nome || '').localeCompare(b.produto_nome || '', 'pt-BR', {
+        sensitivity: 'base',
+        numeric: true,
+      }),
+    );
   }, [itens, produtos]);
 
   const totalCarrinhoProduto = useCallback((produtoId) => {
@@ -258,6 +284,24 @@ export default function ContagemExpress() {
   const unidadePainel = entradaPreview
     ? getCountUnitForEntry(produtoSelecionado, entradaPreview).unidade
     : 'UN';
+
+  const cartProductIds = useMemo(
+    () => itensAgrupados.map((g) => g.produto_id),
+    [itensAgrupados],
+  );
+
+  const handleConfirmLote = async () => {
+    const draftCount = Object.keys(loteDraft).length;
+    if (draftCount === 0) return;
+    const novosItens = mergeLoteDraftIntoCountItens(itens, loteDraft, produtos);
+    allowProgrammaticFocusBriefly();
+    await persistItens(novosItens);
+    setLoteDraft({});
+    setModoLote(false);
+    setBusca('');
+    setProdutosFiltrados([]);
+    toast.success(`${draftCount} produto(s) adicionado(s) à contagem.`);
+  };
 
   const confirmarProduto = () => {
     if (!produtoSelecionado || !entradaPreview) return;
@@ -452,6 +496,15 @@ export default function ContagemExpress() {
         <h1 className="min-w-0 flex-1 truncate text-base font-semibold font-glacial text-foreground">
           Contagem Express
         </h1>
+        {!produtoSelecionado && (
+          <CatalogLoteModeToggle
+            active={modoLote}
+            onClick={() => {
+              setModoLote((v) => !v);
+              setLoteDraft({});
+            }}
+          />
+        )}
         <button
           type="button"
           onClick={pausarEAbrirSessoes}
@@ -468,16 +521,16 @@ export default function ContagemExpress() {
         >
           <ShoppingCart className="h-4 w-4" />
           {itensAgrupados.length > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-0.5 text-[9px] font-bold text-white">
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#a4ce33] px-0.5 text-[9px] font-bold text-[#1f1d22]">
               {itensAgrupados.length}
             </span>
           )}
         </button>
       </div>
 
-      {!produtoSelecionado && (
+      {!produtoSelecionado && !modoLote && (
         <div className="shrink-0 px-3 pt-3">
-          <div className="relative">
+          <div className={cn('relative rounded-2xl', P38_FIELD_SURFACE)}>
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <Input
               ref={buscaRef}
@@ -485,14 +538,16 @@ export default function ContagemExpress() {
               placeholder="Buscar produto..."
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              className="h-14 rounded-2xl border-0 bg-card pl-12 text-base shadow-sm focus-visible:ring-1 focus-visible:ring-border/40 dark:bg-secondary"
+              className="h-14 border-0 bg-transparent pl-12 text-base shadow-none focus-visible:ring-0"
             />
           </div>
         </div>
       )}
 
       <div
-        className={`min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 ${
+        className={`min-h-0 flex-1 overflow-hidden flex flex-col ${
+          modoLote && !produtoSelecionado ? '' : 'overflow-y-auto overscroll-contain px-3 py-3'
+        } ${
           itens.length > 0
             ? 'pb-[calc(var(--p38-bottom-nav-total,0px)+5.5rem)]'
             : 'pb-[calc(var(--p38-bottom-nav-total,0px)+0.5rem)]'
@@ -524,12 +579,39 @@ export default function ContagemExpress() {
               : undefined}
             confirmLabel={modoContagem === 'substituir' ? 'Atualizar' : 'Confirmar'}
           />
+        ) : modoLote ? (
+          <CatalogLotePicker
+            products={produtos}
+            search={busca}
+            onSearchChange={setBusca}
+            draft={loteDraft}
+            onDraftChange={setLoteDraft}
+            onConfirm={handleConfirmLote}
+            onExit={() => {
+              setModoLote(false);
+              setLoteDraft({});
+            }}
+            cartProductIds={cartProductIds}
+            getUnitLabel={getDefaultCountUnitLabel}
+            confirmLabel="Confirmar contagens"
+            searchPlaceholder="Ex: areia fina; cimento..."
+            exitModeLabel="Contagem unitária"
+            emptySearchTitle="Busque para contar em lote"
+            emptySearchHint="Combine termos — ex:"
+            emptySearchExample="AREIA FINA"
+            sortResultsAlphabetically
+            showStockLine
+          />
         ) : produtosFiltrados.length > 0 ? (
-          <div className="divide-y divide-border/30 overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm">
+          <div className="space-y-3">
+            <p className="px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              {produtosFiltrados.length} resultado{produtosFiltrados.length !== 1 ? 's' : ''} · ordem alfabética
+            </p>
             {produtosFiltrados.map((prod) => {
               const nome = resolveInventoryProductName(prod);
               const noCarrinho = itensAgrupados.find((g) => g.produto_id === prod.id);
               const estoqueDisplay = getGroupDisplayFromBase(prod, prod.estoque_atual || 0);
+              const unidade = getDefaultCountUnit(prod).unidade;
               return (
                 <button
                   key={prod.id}
@@ -538,35 +620,36 @@ export default function ContagemExpress() {
                     allowProgrammaticFocusBriefly();
                     iniciarSelecao(prod);
                   }}
-                  className="flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/50"
+                  className={cn(
+                    'w-full rounded-2xl p-5 text-left transition-all active:scale-[0.99]',
+                    P38_FIELD_SURFACE,
+                    noCarrinho && 'ring-2 ring-[#a4ce33]/40 dark:ring-[#a4ce33]/30',
+                  )}
                 >
-                  <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted">
-                    <Package className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium leading-snug text-foreground break-words whitespace-normal">
-                      {nome}
-                    </p>
-                    <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                      <span>
-                        Estoque{' '}
-                        <span className="font-semibold text-foreground">
-                          {formatCountQuantity(estoqueDisplay.quantidade)} {estoqueDisplay.unidade}
-                        </span>
+                  <p className="text-base font-medium leading-snug text-foreground">{nome}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    <span className="font-mono text-xs">#{prod.codigo_interno || '—'}</span>
+                    <span className="mx-2">·</span>
+                    <span>{unidade}</span>
+                  </p>
+                  <CatalogProductStockLine product={prod} className="mt-2" />
+                  {noCarrinho ? (
+                    <p className={cn('mt-2 text-sm font-semibold', P38_ACCENT)}>
+                      Já contado: {formatCountQuantity(noCarrinho.display?.quantidade)}{' '}
+                      {noCarrinho.display?.unidade}
+                      <span className="ml-2 font-normal text-muted-foreground">
+                        (sistema {formatCountQuantity(estoqueDisplay.quantidade)} {estoqueDisplay.unidade})
                       </span>
-                      {noCarrinho ? (
-                        <span>
-                          Contada{' '}
-                          <span className="font-semibold text-[#4A5D23] dark:text-[#a4ce33]">
-                            {formatCountQuantity(noCarrinho.display?.quantidade)} {noCarrinho.display?.unidade}
-                          </span>
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
+                    </p>
+                  ) : null}
                 </button>
               );
             })}
+          </div>
+        ) : busca.trim() ? (
+          <div className="py-16 text-center text-muted-foreground">
+            <Package className="mx-auto mb-4 h-14 w-14 opacity-20" />
+            <p className="font-medium">Nenhum produto para &quot;{busca}&quot;</p>
           </div>
         ) : null}
       </div>
