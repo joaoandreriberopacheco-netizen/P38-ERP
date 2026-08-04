@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { registerJsPdfDin1451Fonts } from '@/lib/jspdfNotoFont';
+import { appendAnexosToPdfDoc } from '@/lib/appendAnexosToPdfDoc';
 
 /** Escala só no eixo Y (glifos mais altos, largura inalterada). PDF Tm: sx=1, sy>1. */
 const PDF_GLYPH_STRETCH_Y = 1.1;
@@ -859,6 +860,7 @@ const normalizeReportVersion = (version) => {
   if (version === 'expandida_mobile_claro') return 'expandida_mobile_claro';
   if (version === 'expandida_mobile') return 'expandida_mobile';
   if (version === 'expandida') return 'expandida';
+  if (version === 'expandida_com_anexos') return 'expandida_com_anexos';
   return 'expandida';
 };
 
@@ -871,13 +873,17 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       kpis = {},
       grupos = [],
       produtos_map: produtosMapFromPayload = {},
+      anexos_por_pedido: anexosPorPedido = {},
     } = payload;
     const normalizedVersion = normalizeReportVersion(version);
 
-    const isMobileClaro = normalizedVersion === 'expandida_mobile_claro';
-    const isMobileClassico = normalizedVersion === 'expandida_mobile';
+    const includeAnexos = normalizedVersion === 'expandida_com_anexos';
+    const layoutVersion = includeAnexos ? 'expandida' : normalizedVersion;
+
+    const isMobileClaro = layoutVersion === 'expandida_mobile_claro';
+    const isMobileClassico = layoutVersion === 'expandida_mobile';
     const isMobile = isMobileClaro || isMobileClassico;
-    const isEnxuta = normalizedVersion === 'expandida_enxuta';
+    const isEnxuta = layoutVersion === 'expandida_enxuta';
 
     const produtosMap = { ...produtosMapFromPayload };
 
@@ -1162,17 +1168,21 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       doc.setTextColor(...C.text);
       doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
       doc.setFontSize(16);
-      const titulo = normalizedVersion === 'expandida_mobile'
-        ? 'Relatorio mobile de embarques'
-        : normalizedVersion === 'expandida_enxuta'
-          ? 'Relatorio ENXUTO de embarques'
-          : 'Relatorio EXPANDIDO de embarques';
+      const titulo = includeAnexos
+        ? 'Relatorio COMPLETO de embarques'
+        : layoutVersion === 'expandida_mobile'
+          ? 'Relatorio mobile de embarques'
+          : layoutVersion === 'expandida_enxuta'
+            ? 'Relatorio ENXUTO de embarques'
+            : 'Relatorio EXPANDIDO de embarques';
       doc.text(safe(titulo), M + 11, y + 9);
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(8);
       doc.setTextColor(...C.muted);
-      const subtitulo = normalizedVersion === 'expandida'
-        ? 'A4 completo · tabela com colunas QTD, UN, VLR, FRETE, CUSTO, VENDA, MARKUP'
+      const subtitulo = layoutVersion === 'expandida'
+        ? includeAnexos
+          ? 'A4 completo · minuta do pedido + comprovantes e anexos embutidos'
+          : 'A4 completo · tabela com colunas QTD, UN, VLR, FRETE, CUSTO, VENDA, MARKUP'
         : '';
       if (subtitulo) {
         doc.text(safe(subtitulo), M + 11, y + 14);
@@ -2287,7 +2297,21 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       return drawExpandido(pedido);
     };
 
-    const renderGrupo = (grupo) => {
+    const appendAnexosDoPedido = async (pedido) => {
+      if (!includeAnexos || !pedido?.id) return;
+      const anexos = anexosPorPedido[pedido.id] || [];
+      if (!anexos.length) return;
+      await appendAnexosToPdfDoc(doc, anexos, {
+        sectionTitle: `Anexos — ${getPedidoNumeroRelatorio(pedido)}`,
+      });
+    };
+
+    const renderPedidoComAnexos = async (pedido) => {
+      renderPedido(pedido);
+      await appendAnexosDoPedido(pedido);
+    };
+
+    const renderGrupo = async (grupo) => {
       ensureSpace(14);
       if (isMobileClassico) {
         y += 2;
@@ -2340,7 +2364,9 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
           { align: 'right' },
         );
         y += bandH + 2;
-        (grupo.pedidos || []).forEach(renderPedido);
+        for (const pedido of grupo.pedidos || []) {
+          await renderPedidoComAnexos(pedido);
+        }
         y += 4;
         return;
       } else {
@@ -2357,20 +2383,28 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         M += pedidoInset;
         TM += pedidoInset;
         syncLayoutWidths();
-        (grupo.pedidos || []).forEach(renderPedido);
+        for (const pedido of grupo.pedidos || []) {
+          await renderPedidoComAnexos(pedido);
+        }
         M = m0;
         TM = tm0;
         syncLayoutWidths();
         y += 5;
         return;
       }
-      (grupo.pedidos || []).forEach(renderPedido);
+      for (const pedido of grupo.pedidos || []) {
+        await renderPedidoComAnexos(pedido);
+      }
     };
 
     if (Array.isArray(grupos) && grupos.length > 0) {
-      grupos.forEach(renderGrupo);
+      for (const grupo of grupos) {
+        await renderGrupo(grupo);
+      }
     } else {
-      pedidos.forEach(renderPedido);
+      for (const pedido of pedidos) {
+        await renderPedidoComAnexos(pedido);
+      }
     }
 
     if (isEnxuta) {
