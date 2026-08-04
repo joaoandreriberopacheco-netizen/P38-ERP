@@ -184,7 +184,7 @@ jobs:
           ok=0
           for attempt in 1 2 3 4 5 6 8 10; do
             html=$(curl -fsSL "https://p-38erp.vercel.app/login" || true)
-            js_paths=$(echo "$html" | grep -oE '/_next/static/[^"]+\.js' | head -5 || true)
+            js_paths=$(echo "$html" | grep -oE '/_next/static/[^"]+\.js' || true)
             for js in $js_paths; do
               if curl -fsSL "https://p-38erp.vercel.app$js" 2>/dev/null | grep -q "$ref"; then
                 ok=1
