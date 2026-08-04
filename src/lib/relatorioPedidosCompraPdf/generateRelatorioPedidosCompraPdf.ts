@@ -2445,8 +2445,15 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       });
     };
 
+    let pedidoBlocoIndex = 0;
+
     const renderPedidoComAnexos = async (pedido) => {
       const chrome = buildPedidoChrome(pedido);
+      if (includeAnexos && pedidoBlocoIndex > 0) {
+        doc.addPage();
+        y = getNewPageY();
+      }
+      pedidoBlocoIndex += 1;
       const startPage = doc.internal.getNumberOfPages();
       renderPedido(pedido);
       await appendAnexosDoPedido(pedido);
