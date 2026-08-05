@@ -61,6 +61,7 @@ import {
 } from '@/lib/folhaValeFluxo';
 import { getPrazoLiquidacaoMaquininha } from '@/lib/pagamentoPedidoVendaFinanceiro';
 import {
+  appendTurnoArrayId,
   caixaTurnoQueryKey,
   fetchCaixaTurnoSnapshot,
   CAIXA_IDLE_SYNC_AFTER_MS,
@@ -1057,9 +1058,7 @@ export default function PDVCaixa({
         observacoes: `Despesa registrada via PDV Caixa por ${currentUser?.full_name}`
       });
       if (turnoAtivo) {
-        await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
-          despesas_ids: [...(turnoAtivo.despesas_ids || []), lancamento.id]
-        });
+        await appendTurnoArrayId(base44, turnoAtivo.id, 'despesas_ids', lancamento.id);
       }
 
       if (isValeFolhaDespesa && valeFolhaModeloIdDespesa && lancamento?.id) {
@@ -1138,9 +1137,7 @@ export default function PDVCaixa({
 
       // Atualizar turno com despesa
       if (turnoAtivo) {
-        await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
-          despesas_ids: [...(turnoAtivo.despesas_ids || []), lancamento.id]
-        });
+        await appendTurnoArrayId(base44, turnoAtivo.id, 'despesas_ids', lancamento.id);
       }
 
       toast({
@@ -1224,9 +1221,7 @@ export default function PDVCaixa({
       });
 
       if (turnoAtivo) {
-        await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
-          movimentos_ids: [...(turnoAtivo.movimentos_ids || []), movimento.id]
-        });
+        await appendTurnoArrayId(base44, turnoAtivo.id, 'movimentos_ids', movimento.id);
       }
 
       setMovimentoCriado(movimento);
@@ -1247,9 +1242,7 @@ export default function PDVCaixa({
 
       // Atualizar turno com movimento
       if (turnoAtivo) {
-        await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
-          movimentos_ids: [...(turnoAtivo.movimentos_ids || []), movimento.id]
-        });
+        await appendTurnoArrayId(base44, turnoAtivo.id, 'movimentos_ids', movimento.id);
       }
       }
 

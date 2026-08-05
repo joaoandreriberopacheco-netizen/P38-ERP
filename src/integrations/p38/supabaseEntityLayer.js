@@ -149,6 +149,9 @@ function normalizeFilterColumn(field, mapping) {
   return field;
 }
 
+/** Campos promovidos que ainda podem existir só em `dados` (legado pós-migração). */
+const FILTER_DADOS_OR_COLUMN = new Set(['turno_caixa_id']);
+
 function applyFilters(query, where, mapping) {
   if (!where || typeof where !== 'object') return query;
   let q = query;
@@ -158,6 +161,20 @@ function applyFilters(query, where, mapping) {
     // Operadores especiais do Base44 (ex: $or) não são suportados aqui — ignorar.
     if (key.startsWith('$')) continue;
     const target = normalizeFilterColumn(key, mapping);
+    const cols = new Set([...(mapping?.columns || []), ...META_COLUMNS]);
+    const hasOverflowJsonb = mapping?.mode === 'jsonb' || Array.isArray(mapping?.columns);
+
+    if (
+      FILTER_DADOS_OR_COLUMN.has(key) &&
+      hasOverflowJsonb &&
+      cols.has(key) &&
+      val !== null &&
+      typeof val !== 'object'
+    ) {
+      const encoded = String(val).replace(/,/g, '\\,');
+      q = q.or(`${target}.eq.${encoded},dados->>${key}.eq.${encoded}`);
+      continue;
+    }
 
     if (val !== null && typeof val === 'object' && !Array.isArray(val) && !(val instanceof Date)) {
       const ops = val;
