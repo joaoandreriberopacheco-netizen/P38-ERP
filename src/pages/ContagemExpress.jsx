@@ -601,6 +601,7 @@ export default function ContagemExpress() {
             emptySearchExample="AREIA FINA"
             sortResultsAlphabetically
             showStockLine
+            stockApresentacao
           />
         ) : produtosFiltrados.length > 0 ? (
           <div className="space-y-3">
@@ -632,7 +633,7 @@ export default function ContagemExpress() {
                     <span className="mx-2">·</span>
                     <span>{unidade}</span>
                   </p>
-                  <CatalogProductStockLine product={prod} className="mt-2" />
+                  <CatalogProductStockLine product={prod} className="mt-2" apresentacao />
                   {noCarrinho ? (
                     <p className={cn('mt-2 text-sm font-semibold', P38_ACCENT)}>
                       Já contado: {formatCountQuantity(noCarrinho.display?.quantidade)}{' '}

@@ -7,22 +7,39 @@ import {
   getEstoqueMinimo,
   getEstoqueStatus,
 } from '@/lib/catalogProductUi';
+import { formatQuantidadeCatalogoApresentacao } from '@/lib/productUnits';
 
 /**
  * Linha compacta de estoque para cards de catálogo (compras / cotação).
+ * `apresentacao`: exibe na unidade de vitrine/padrão do produto (não na base fator-1).
  */
 export default function CatalogProductStockLine({
   product,
   className,
   showMinimo = true,
   size = 'sm',
+  apresentacao = false,
 }) {
   if (!product) return null;
 
-  const atual = getEstoqueAtual(product);
-  const minimo = getEstoqueMinimo(product);
+  const atualBase = getEstoqueAtual(product);
+  const minimoBase = getEstoqueMinimo(product);
   const status = getEstoqueStatus(product);
   const textSize = size === 'md' ? 'text-sm' : 'text-xs';
+
+  const atualApresentacao = apresentacao
+    ? formatQuantidadeCatalogoApresentacao(product, atualBase)
+    : null;
+  const minimoApresentacao = apresentacao && minimoBase > 0
+    ? formatQuantidadeCatalogoApresentacao(product, minimoBase)
+    : null;
+
+  const atualLabel = apresentacao && atualApresentacao
+    ? `${formatEstoqueQty(atualApresentacao.quantidade)} ${atualApresentacao.sigla}`
+    : formatEstoqueQty(atualBase);
+  const minimoLabel = apresentacao && minimoApresentacao
+    ? `${formatEstoqueQty(minimoApresentacao.quantidade)} ${minimoApresentacao.sigla}`
+    : formatEstoqueQty(minimoBase);
 
   return (
     <div className={cn('flex flex-wrap items-center gap-2', textSize, className)}>
@@ -33,11 +50,11 @@ export default function CatalogProductStockLine({
           ESTOQUE_BADGE_CLASS[status],
         )}
       >
-        {formatEstoqueQty(atual)}
+        {atualLabel}
       </span>
-      {showMinimo && minimo > 0 && (
+      {showMinimo && minimoBase > 0 && (
         <span className={cn('tabular-nums', ESTOQUE_STATUS_CLASS[status])}>
-          Mín. {formatEstoqueQty(minimo)}
+          Mín. {minimoLabel}
         </span>
       )}
       {status === 'critical' && (
