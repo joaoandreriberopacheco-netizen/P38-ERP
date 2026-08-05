@@ -122,6 +122,7 @@ export default function ContagemExpressPainelContagem({
               type="number"
               inputMode="decimal"
               enterKeyHint="go"
+              min={0}
               value={quantidade}
               onChange={(e) => onQuantidadeChange(e.target.value)}
               onKeyDown={(e) => {

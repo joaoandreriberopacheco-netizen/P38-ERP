@@ -24,6 +24,7 @@ import {
   getEntryDisplayQuantity,
   getGroupDisplayFromBase,
   mergeLoteDraftIntoCountItens,
+  parseCountQuantity,
   resolveInventoryProductName,
   updateCountEntryQuantity,
 } from '@/lib/inventoryCountUnits';
@@ -208,12 +209,22 @@ export default function ContagemExpress() {
     }
   }, []);
 
-  const iniciarSelecao = (produto, { modo = 'adicionar', quantidadeInicial = '' } = {}) => {
+  const iniciarSelecao = (produto, { modo = 'adicionar', quantidadeInicial = null } = {}) => {
     allowProgrammaticFocusBriefly();
-    const entry = buildCountEntry(produto, 1);
+    const qtdInicial = quantidadeInicial === null || quantidadeInicial === ''
+      ? 0
+      : Number(quantidadeInicial);
+    const entry = buildCountEntry(
+      produto,
+      Number.isFinite(qtdInicial) ? qtdInicial : 0,
+    );
     setProdutoSelecionado(produto);
     setModoContagem(modo);
-    setQuantidadePendente(quantidadeInicial === '' ? '' : String(quantidadeInicial));
+    setQuantidadePendente(
+      quantidadeInicial === null || quantidadeInicial === ''
+        ? ''
+        : String(quantidadeInicial),
+    );
     setEntradaPendente(entry);
     setBusca('');
     setProdutosFiltrados([]);
@@ -269,7 +280,8 @@ export default function ContagemExpress() {
 
   const entradaPreview = useMemo(() => {
     if (!produtoSelecionado || !entradaPendente) return null;
-    const qtd = parseFloat(quantidadePendente) || 0;
+    const qtd = parseCountQuantity(quantidadePendente);
+    if (qtd === null) return updateCountEntryQuantity(entradaPendente, produtoSelecionado, 0);
     return updateCountEntryQuantity(entradaPendente, produtoSelecionado, qtd);
   }, [produtoSelecionado, entradaPendente, quantidadePendente]);
 
@@ -305,18 +317,13 @@ export default function ContagemExpress() {
 
   const confirmarProduto = () => {
     if (!produtoSelecionado || !entradaPreview) return;
-    const qtd = parseFloat(quantidadePendente);
-    if (quantidadePendente === '' || Number.isNaN(qtd) || qtd < 0) return;
+    const qtd = parseCountQuantity(quantidadePendente);
+    if (qtd === null) return;
 
-    let novosItens;
-    if (modoContagem === 'substituir') {
-      novosItens = [
-        ...itens.filter((i) => i.produto_id !== produtoSelecionado.id),
-        entradaPreview,
-      ];
-    } else {
-      novosItens = [...itens, entradaPreview];
-    }
+    const novosItens = [
+      ...itens.filter((i) => i.produto_id !== produtoSelecionado.id),
+      entradaPreview,
+    ];
 
     allowProgrammaticFocusBriefly();
     persistItens(novosItens);
@@ -564,12 +571,14 @@ export default function ContagemExpress() {
             pendenteBase={pendenteBase}
             onQuantidadeChange={setQuantidadePendente}
             onMenos={() => {
-              const q = Math.max(0, (parseFloat(quantidadePendente) || 0) - 1);
-              setQuantidadePendente(String(q));
+              const atual = parseCountQuantity(quantidadePendente);
+              const base = atual === null ? 0 : atual;
+              setQuantidadePendente(String(Math.max(0, base - 1)));
             }}
             onMais={() => {
-              const q = (parseFloat(quantidadePendente) || 0) + 1;
-              setQuantidadePendente(String(q));
+              const atual = parseCountQuantity(quantidadePendente);
+              const base = atual === null ? 0 : atual;
+              setQuantidadePendente(String(base + 1));
             }}
             onTrocarUnidade={() => setUnitSelector({ open: true, product: produtoSelecionado })}
             onConfirmar={confirmarProduto}
@@ -602,6 +611,7 @@ export default function ContagemExpress() {
             sortResultsAlphabetically
             showStockLine
             stockApresentacao
+            allowZeroQty
           />
         ) : produtosFiltrados.length > 0 ? (
           <div className="space-y-3">
@@ -619,7 +629,10 @@ export default function ContagemExpress() {
                   type="button"
                   onClick={() => {
                     allowProgrammaticFocusBriefly();
-                    iniciarSelecao(prod);
+                    iniciarSelecao(prod, noCarrinho ? {
+                      modo: 'substituir',
+                      quantidadeInicial: noCarrinho.display?.quantidade ?? 0,
+                    } : { modo: 'adicionar' });
                   }}
                   className={cn(
                     'w-full rounded-2xl p-5 text-left transition-all active:scale-[0.99]',
