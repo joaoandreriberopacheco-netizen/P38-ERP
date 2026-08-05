@@ -14,6 +14,7 @@ import {
   getDefaultPurchaseUnitLabel,
   parseLoteQuantidade,
 } from '@/lib/catalogLoteUtils';
+import { parseCountQuantity } from '@/lib/inventoryCountUnits';
 import CatalogProductStockLine from '@/components/compras/CatalogProductStockLine';
 
 /**
@@ -42,8 +43,10 @@ export default function CatalogLotePicker({
   sortResultsAlphabetically = false,
   showStockLine = true,
   stockApresentacao = false,
+  allowZeroQty = false,
 }) {
   const resolveUnitLabel = getUnitLabel || getDefaultPurchaseUnitLabel;
+  const resolveQty = (raw) => (allowZeroQty ? parseCountQuantity(raw) : parseLoteQuantidade(raw));
   const [editingProduct, setEditingProduct] = useState(null);
   const [qtyInput, setQtyInput] = useState('1');
   const qtyRef = useRef(null);
@@ -57,12 +60,23 @@ export default function CatalogLotePicker({
     );
   }, [products, search, sortResultsAlphabetically]);
 
-  const { itens: draftCount, unidades: draftUnits } = countLoteDraft(draft);
+  const { itens: draftCount, unidades: draftUnits } = useMemo(() => {
+    const entries = Object.values(draft);
+    if (!allowZeroQty) return countLoteDraft(draft);
+    return {
+      itens: entries.length,
+      unidades: entries.reduce((sum, entry) => sum + (parseCountQuantity(entry?.quantidade) ?? 0), 0),
+    };
+  }, [draft, allowZeroQty]);
 
   const openQtyPanel = (product) => {
     const existing = draft[product.id];
     setEditingProduct(product);
-    setQtyInput(String(existing?.quantidade ?? 1));
+    setQtyInput(
+      existing != null
+        ? String(existing.quantidade ?? '')
+        : (allowZeroQty ? '' : '1'),
+    );
   };
 
   useEffect(() => {
@@ -76,7 +90,8 @@ export default function CatalogLotePicker({
 
   const handleSaveQty = () => {
     if (!editingProduct) return;
-    const quantidade = parseLoteQuantidade(qtyInput);
+    const quantidade = resolveQty(qtyInput);
+    if (allowZeroQty && quantidade === null) return;
     onDraftChange({
       ...draft,
       [editingProduct.id]: { quantidade },
@@ -125,8 +140,9 @@ export default function CatalogLotePicker({
           <Input
             ref={qtyRef}
             type="text"
-            inputMode="decimal"
-            enterKeyHint="done"
+              inputMode="decimal"
+              enterKeyHint="done"
+              min={allowZeroQty ? 0 : undefined}
             value={qtyInput}
             onChange={(e) => setQtyInput(e.target.value)}
             onKeyDown={(e) => {
@@ -157,7 +173,11 @@ export default function CatalogLotePicker({
             />
           )}
           <p className="mt-6 text-center text-xs text-muted-foreground max-w-xs">
-            Deixe em branco ou confirme para usar <strong>1</strong>. Enter também salva.
+            {allowZeroQty ? (
+              <>Informe <strong>0</strong> quando o produto estiver zerado. Enter também salva.</>
+            ) : (
+              <>Deixe em branco ou confirme para usar <strong>1</strong>. Enter também salva.</>
+            )}
           </p>
         </div>
 
@@ -300,7 +320,7 @@ export default function CatalogLotePicker({
                     )}
                     {inDraft && (
                       <p className="mt-2 text-sm font-semibold text-[#4a5240] dark:text-[#a4ce33]">
-                        Qtd: {parseLoteQuantidade(inDraft.quantidade)} {unidade}
+                        Qtd: {resolveQty(inDraft.quantidade) ?? 0} {unidade}
                       </p>
                     )}
                     {inCart && !inDraft && (

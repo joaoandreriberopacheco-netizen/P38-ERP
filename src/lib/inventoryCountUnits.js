@@ -5,9 +5,17 @@ import {
   pickDefaultSaleUnit,
   resolvePrimaryFromFactorOne,
 } from "@/lib/productUnits";
-import { parseLoteQuantidade } from "@/lib/catalogLoteUtils";
 
 const round6 = (value) => Math.round((Number(value) || 0) * 1_000_000) / 1_000_000;
+
+/** Quantidade de contagem: aceita 0; vazio ou inválido → null. */
+export function parseCountQuantity(raw) {
+  const str = String(raw ?? "").trim().replace(",", ".");
+  if (!str) return null;
+  const n = parseFloat(str);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return n;
+}
 
 function getProdutoUnidadeId(unit, unidade) {
   if (unit?.is_primary || unit?.id === "primary") return "principal";
@@ -122,7 +130,7 @@ export function getEntryDisplayQuantity(entry = {}, product = null) {
   return round6(base / factor);
 }
 
-export function buildCountEntry(product, quantityDisplay = 1, unitOption = null) {
+export function buildCountEntry(product, quantityDisplay = 0, unitOption = null) {
   const unit = unitOption || getDefaultCountUnit(product);
   const factor = Number(unit.fator_conversao) > 0 ? Number(unit.fator_conversao) : 1;
   const quantidadeComercial = round6(quantityDisplay);
@@ -202,7 +210,8 @@ export function mergeLoteDraftIntoCountItens(existingItens = [], draft = {}, pro
   Object.entries(draft || {}).forEach(([produtoId, entry]) => {
     const product = productMap[produtoId];
     if (!product) return;
-    const addQty = parseLoteQuantidade(entry?.quantidade);
+    const addQty = parseCountQuantity(entry?.quantidade);
+    if (addQty === null) return;
     const existingEntries = next.filter((i) => i.produto_id === produtoId);
 
     if (existingEntries.length === 0) {
