@@ -41,6 +41,7 @@ export default function CatalogLotePicker({
   emptySearchExample = 'REJU QUART',
   sortResultsAlphabetically = false,
   showStockLine = true,
+  stockApresentacao = false,
 }) {
   const resolveUnitLabel = getUnitLabel || getDefaultPurchaseUnitLabel;
   const [editingProduct, setEditingProduct] = useState(null);
@@ -148,7 +149,12 @@ export default function CatalogLotePicker({
             )}
           </p>
           {showStockLine && (
-            <CatalogProductStockLine product={editingProduct} className="mt-4 justify-center" size="md" />
+            <CatalogProductStockLine
+              product={editingProduct}
+              className="mt-4 justify-center"
+              size="md"
+              apresentacao={stockApresentacao}
+            />
           )}
           <p className="mt-6 text-center text-xs text-muted-foreground max-w-xs">
             Deixe em branco ou confirme para usar <strong>1</strong>. Enter também salva.
@@ -286,7 +292,11 @@ export default function CatalogLotePicker({
                       )}
                     </p>
                     {showStockLine && (
-                      <CatalogProductStockLine product={product} className="mt-2" />
+                      <CatalogProductStockLine
+                        product={product}
+                        className="mt-2"
+                        apresentacao={stockApresentacao}
+                      />
                     )}
                     {inDraft && (
                       <p className="mt-2 text-sm font-semibold text-[#4a5240] dark:text-[#a4ce33]">
