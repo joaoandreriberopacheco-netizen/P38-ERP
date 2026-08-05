@@ -232,7 +232,18 @@ export async function fetchCaixaTurnoRawData({
     receitasTurno,
   });
 
-  const despesas = (despesasRaw || []).filter((d) => d.referencia_tipo !== 'MovimentosCaixa');
+  const dataAberturaTurno = (turnoFresh || turno)?.data_abertura
+    ? new Date((turnoFresh || turno).data_abertura)
+    : null;
+
+  const despesas = (despesasRaw || []).filter((d) => {
+    if (d.referencia_tipo === 'MovimentosCaixa') return false;
+    if (!dataAberturaTurno) return true;
+    const raw = d.created_date || d.created_at;
+    const criado = raw ? new Date(raw) : null;
+    if (!criado || Number.isNaN(criado.getTime())) return true;
+    return criado >= dataAberturaTurno;
+  });
 
   return {
     turno: turnoFresh || turno,
