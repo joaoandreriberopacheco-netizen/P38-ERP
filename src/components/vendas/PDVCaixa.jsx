@@ -69,6 +69,7 @@ import {
   CAIXA_LIVE_POLL_MS,
   CAIXA_SUBSCRIBE_DEBOUNCE_MS,
 } from '@/lib/caixaTurnoData';
+import { findTurnoAbertoParaCaixa } from '@/lib/turnoCaixaAberto';
 import {
   CAIXA_PRINT,
   CAIXA_TOAST_SUCCESS,
@@ -890,10 +891,21 @@ export default function PDVCaixa({
       }
 
       // ── CHAMADA AO BACKEND (atômico + selo frio + número único) ──
+      let turnoIdProcessamento = turnoAtivo?.id;
+      if (contaCaixaPDV?.id) {
+        const turnoCanonico = await findTurnoAbertoParaCaixa(contaCaixaPDV.id);
+        if (turnoCanonico?.id) {
+          if (turnoCanonico.id !== turnoIdProcessamento) {
+            setTurnoAtivo(turnoCanonico);
+          }
+          turnoIdProcessamento = turnoCanonico.id;
+        }
+      }
+
       const { data } = await processarVendaCaixa({
         rascunho_id: pedidoSelecionado.id,
         pagamentos: pagamentosArray,
-        turno_id: turnoAtivo?.id,
+        turno_id: turnoIdProcessamento,
         conta_caixa_id: contaCaixaPDV?.id,
         saldo_atual_caixa: contaCaixaPDV?.saldo_atual,
         config_venda: configVenda ? { fluxo_venda_padrao: configVenda.fluxo_venda_padrao, auto_delivery_balcao: configVenda.auto_delivery_balcao } : null,
