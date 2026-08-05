@@ -219,6 +219,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens = [], pro
     });
     setCosts(initialCosts);
     setInputs(initialInputs);
+    setSelecionados({});
   }, [isOpen, itens, produtos]);
 
   const resolveSiglaLinha = (item, produto, fallbackLegenda) => {
@@ -447,9 +448,15 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens = [], pro
 
   const handleToggle = (id) => setSelecionados(prev => ({ ...prev, [id]: !prev[id] }));
 
-  const handleSelecionarTodos = () => {
+  const handleSelecionarAlterados = () => {
     const todos = {};
     itensCalc.forEach(i => { if (i.temDiferenca) todos[i.produto_id] = true; });
+    setSelecionados(todos);
+  };
+
+  const handleSelecionarTodos = () => {
+    const todos = {};
+    itensCalc.forEach(i => { todos[i.produto_id] = true; });
     setSelecionados(todos);
   };
 
@@ -509,8 +516,8 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens = [], pro
           </DialogTitle>
           <p className="text-sm text-foreground/90 mt-1">
             {qtdComDiferenca > 0
-              ? `${qtdComDiferenca} produto(s) com alteração de custo detectada. Revise e selecione quais preços deseja atualizar.`
-              : 'Nenhuma alteração de custo detectada. Você pode revisar os preços atuais dos produtos.'}
+              ? `${qtdComDiferenca} produto(s) com alteração de custo detectada. Selecione quais preços deseja atualizar — você também pode ajustar e aplicar qualquer outro produto do pedido.`
+              : 'Nenhuma alteração de custo detectada. Você pode revisar, ajustar e aplicar preços em qualquer produto do pedido.'}
           </p>
           <p className="text-xs text-muted-foreground mt-2">
             Para cada produto, os valores monetários usam a <strong className="font-semibold text-foreground">unidade de compra definida no cadastro</strong> (alternativas e conversões, como no lançamento do pedido) — veja a coluna <strong className="font-semibold text-foreground">Unidade</strong> para a sigla de cada linha.
@@ -551,11 +558,16 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens = [], pro
                 </span>
               )}
             </p>
-            {qtdComDiferenca > 0 && (
+            <div className="flex items-center gap-2">
+              {qtdComDiferenca > 0 && (
+                <Button variant="ghost" size="sm" onClick={handleSelecionarAlterados} className="text-xs h-7 shadow-sm">
+                  Selecionar Alterados
+                </Button>
+              )}
               <Button variant="ghost" size="sm" onClick={handleSelecionarTodos} className="text-xs h-7 shadow-sm">
-                Selecionar Alterados
+                Selecionar Todos
               </Button>
-            )}
+            </div>
           </div>
 
           {itensSemCadastro > 0 && (
@@ -615,12 +627,10 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens = [], pro
                         </div>
                       )}
                     </div>
-                    {item.temDiferenca && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">Atualizar</span>
-                        <Checkbox checked={selecionados[item.produto_id] || false} onCheckedChange={() => handleToggle(item.produto_id)} />
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Atualizar</span>
+                      <Checkbox checked={selecionados[item.produto_id] || false} onCheckedChange={() => handleToggle(item.produto_id)} />
+                    </div>
                   </div>
 
                   {/* Grid de custos */}
@@ -819,9 +829,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens = [], pro
                   {itensCalc.map(item => (
                     <tr key={item.produto_id} className="border-b border-border/40/70 hover:bg-muted/40 dark:hover:bg-muted/50">
                       <td className="p-2 text-center">
-                        {item.temDiferenca && (
-                          <Checkbox checked={selecionados[item.produto_id] || false} onCheckedChange={() => handleToggle(item.produto_id)} />
-                        )}
+                        <Checkbox checked={selecionados[item.produto_id] || false} onCheckedChange={() => handleToggle(item.produto_id)} />
                       </td>
                       <td className="p-2 align-top bg-muted/40/90 dark:bg-background/35 border-r border-border/40">
                         {hasAlternativeUnits(item.produto) && buildPurchaseUnitOptions(item.produto).length > 1 && (
@@ -956,9 +964,9 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens = [], pro
 
         <div className={`flex items-center justify-between gap-3 mt-6 pt-4 border-t border-border/40 ${isMobile ? 'px-4 pb-4' : ''}`}>
           <Button variant="outline" onClick={() => onClose(false)} disabled={processando} className="border-0 shadow-sm">
-            {qtdComDiferenca > 0 ? 'Ignorar' : 'Fechar'}
+            Ignorar
           </Button>
-          {qtdComDiferenca > 0 && (
+          {itensCalc.length > 0 && (
             <Button onClick={handleInitiateUpdate} disabled={processando || numSel === 0} className="shadow-sm">
               {processando ? 'Aplicando...' : `Aplicar ${numSel} Selecionado(s)`}
             </Button>
