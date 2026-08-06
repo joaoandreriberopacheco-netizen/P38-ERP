@@ -27,7 +27,7 @@ Checklist para o P38 deixar de parecer “app de garagem”.
 | 2.2 | `CHANGELOG.md` + semver | ✅ v1.1.0 |
 | 2.3 | Versão no app (build stamp) | ✅ |
 | 2.4 | CI build + smoke | ✅ |
-| 2.5 | Sentry opcional | ✅ código — activar DSN: [`SENTRY_SETUP.md`](./SENTRY_SETUP.md) |
+| 2.5 | Sentry opcional | ⏳ sem DSN nos secrets — ver [`SENTRY_SETUP.md`](./SENTRY_SETUP.md) |
 | 2.6 | Staging | ✅ branch + doc [`STAGING_SETUP.md`](./STAGING_SETUP.md) |
 | 2.7 | `@base44/sdk` fora do bundle prod | ✅ devDependency + shim Next |
 | 2.8 | Smoke HTTP `/login` + `/landing.html` | ✅ `npm run smoke:http` |
@@ -41,10 +41,12 @@ Checklist para o P38 deixar de parecer “app de garagem”.
 | 3.1 | Módulos e perfis | ✅ [`P38_MODULOS_E_PERFIS.md`](./P38_MODULOS_E_PERFIS.md) |
 | 3.2 | Template case study | ✅ |
 | 3.3 | Piloto externo | 📋 [`PILOTO_EXTERNO_CHECKLIST.md`](./PILOTO_EXTERNO_CHECKLIST.md) |
-| 3.4 | Multi-tenant | ✅ migração `054` + [`MULTI_TENANT_ROADMAP.md`](./MULTI_TENANT_ROADMAP.md) |
+| 3.4 | Multi-tenant | ✅ migração `054` em produção + backfill `usuario.empresa_id` |
 | 3.5 | Parceiro | 📋 [`marketing/PARCEIRO_ROTEIRO.md`](./marketing/PARCEIRO_ROTEIRO.md) |
 
-**Deploy migração 054:** push `supabase/**` → workflow Supabase Deploy, ou `npm run supabase:deploy`.
+**Deploy migração 054:** ✅ aplicada em produção (2026-08-06) — tabela `empresa` + `usuario.empresa_id`; 8 utilizadores ligados à «Operação principal».
+
+**Produção Vercel:** ✅ deploy manual v1.1.0 → https://p-38erp.vercel.app
 
 ---
 
