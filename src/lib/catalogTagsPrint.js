@@ -99,48 +99,39 @@ function drawCategoryMarginMarker(doc, marker) {
     .toUpperCase()
     .replace(/\s+/g, ' ')
     .trim();
-  const glyphs = (normalizedLabel || 'SEM CATEGORIA').split('');
-  const availableHeight = Math.max(8, yBottom - yTop - 2.2);
+  const availableHeight = Math.max(8, yBottom - yTop - 2.4);
   const labelX = CATEGORY_LABEL_X_MM;
+  const labelY = (yTop + yBottom) / 2;
+  const maxTextLength = availableHeight - 0.8;
+  const minFontSize = 4.6;
 
   doc.setDrawColor(74, 82, 64);
   doc.setLineWidth(0.18);
   doc.line(CATEGORY_MARKER_X_MM, yTop, CATEGORY_MARKER_X_MM, yBottom);
 
   doc.setFont('DIN1451', 'bold');
-  let fontSize = 6.4;
-  let step = 2.05;
-  const minFontSize = 4.0;
-  const minStep = 1.35;
-
-  const fitsGlyphs = (count) => count * step <= availableHeight;
-  const trimGlyphsToFit = () => {
-    if (fitsGlyphs(glyphs.length)) return glyphs;
-    const maxCount = Math.max(3, Math.floor(availableHeight / step));
-    const sliceSize = Math.max(0, maxCount - 1);
-    return [...glyphs.slice(0, sliceSize), '…'];
-  };
-
+  let fontSize = 8.4;
+  let labelText = normalizedLabel || 'SEM CATEGORIA';
   doc.setFontSize(fontSize);
-  while (!fitsGlyphs(glyphs.length) && (fontSize > minFontSize || step > minStep)) {
-    if (fontSize > minFontSize) {
-      fontSize -= 0.2;
-    }
-    if (step > minStep) {
-      step -= 0.08;
-    }
+
+  while (fontSize > minFontSize && doc.getTextWidth(labelText) > maxTextLength) {
+    fontSize -= 0.2;
     doc.setFontSize(fontSize);
   }
 
-  const drawableGlyphs = trimGlyphsToFit();
-  const textBlockHeight = drawableGlyphs.length * step;
-  const textStartY = yTop + (availableHeight - textBlockHeight) / 2 + step * 0.76;
+  // Se ainda não couber no mínimo, corta com reticências para evitar sobreposição.
+  if (doc.getTextWidth(labelText) > maxTextLength) {
+    while (labelText.length > 3 && doc.getTextWidth(`${labelText}…`) > maxTextLength) {
+      labelText = labelText.slice(0, -1);
+    }
+    labelText = `${labelText}…`;
+  }
 
   doc.setTextColor(74, 82, 64);
-  drawableGlyphs.forEach((glyph, index) => {
-    doc.text(glyph === ' ' ? ' ' : String(glyph), labelX, textStartY + index * step, {
-      align: 'center',
-    });
+  doc.text(labelText, labelX, labelY, {
+    align: 'center',
+    baseline: 'middle',
+    angle: 90,
   });
 }
 
