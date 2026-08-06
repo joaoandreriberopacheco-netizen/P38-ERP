@@ -13,9 +13,9 @@ Checklist para o P38 deixar de parecer “app de garagem”.
 | 1.2 | `package.json` → nome `p38-erp`, versão `1.0.0` | ✅ |
 | 1.3 | Limpar artefactos temporários da raiz (`_mcp_*`) | ✅ |
 | 1.4 | `.gitignore` para impedir lixo de agente | ✅ |
-| 1.5 | Landing pública `/landing.html` | ✅ |
-| 1.6 | Domínio próprio (`app.tuamarca.com.br`) | ⏳ manual — Vercel → Settings → Domains |
-| 1.7 | Renomear repositório GitHub para `p38-erp` | ⏳ manual — GitHub → Settings → Repository name |
+| 1.5 | Landing pública `/landing.html` | ✅ em produção após deploy |
+| 1.6 | Domínio próprio | ⏸️ **adiado** (decisão do dono) |
+| 1.7 | Renomear repositório GitHub → `p38-erp` | ⏳ **2 min no browser** — ver [`RENOMEAR_REPOSITORIO.md`](./RENOMEAR_REPOSITORIO.md) |
 
 ---
 
@@ -62,11 +62,16 @@ npm run secrets:audit       # secrets configurados
 
 ---
 
-## Próxima acção recomendada (manual, 30 min)
+## Estado do deploy (2026-08-06)
 
-1. GitHub → renomear repo para `p38-erp`
-2. Vercel → domínio customizado (opcional)
-3. Partilhar `https://p-38erp.vercel.app/landing.html` em vez do URL cru do app
+- PR **#423** merged na `main` ✅
+- CI + Vercel Deploy disparam automaticamente no push
+- Landing: `https://p-38erp.vercel.app/landing.html`
+
+## Próxima acção (só tu, ~2 min)
+
+1. Renomear repo → [`RENOMEAR_REPOSITORIO.md`](./RENOMEAR_REPOSITORIO.md)
+2. Partilhar a landing em conversas com parceiros (em vez do URL cru do app)
 
 ---
 
