@@ -1,13 +1,13 @@
-# CI — build e smoke estrutural (sem deploy)
-# Complementa "Vercel Deploy" (produção) com gate em PRs e pushes.
+# CI — build e smoke (estrutural + HTTP)
+# Complementa "Vercel Deploy" (produção).
 
 name: CI
 
 on:
   push:
-    branches: [main, 'cursor/**']
+    branches: [main, staging, 'cursor/**']
   pull_request:
-    branches: [main]
+    branches: [main, staging]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -16,7 +16,7 @@ concurrency:
 jobs:
   build-and-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
 
@@ -44,3 +44,10 @@ jobs:
 
       - name: Verificar output Next
         run: test -d .next
+
+      - name: Smoke HTTP — /login e /landing.html
+        env:
+          NEXT_PUBLIC_P38_PROVIDER: supabase
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ci1wbGFjZWhvbGRlcg
+        run: npm run smoke:http

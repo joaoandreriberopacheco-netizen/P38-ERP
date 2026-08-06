@@ -1,5 +1,3 @@
-import { createClient } from '@base44/sdk';
-import { appParams } from '@/lib/app-params';
 import { p38PublicEnv } from '@/lib/p38PublicEnv';
 import { createBase44Adapter } from './base44Adapter';
 import { createSubpayzeAdapter } from './subpayzeAdapter';
@@ -7,10 +5,10 @@ import { createSupabaseAdapter } from './supabaseAdapter';
 import { createRequestContext } from './requestContext';
 import { resolveLegacyClient } from './linkedBase44Client';
 import { wrapLegacyClientLancamentoFinanceiro } from '@/lib/lancamentoFinanceiroEntityHook';
+import { createBase44StubClient } from './base44StubClient';
 import {
   getP38Providers,
   hasBase44Credentials,
-  hasBase44RuntimeCredentials,
   hasSupabaseCredentials,
   isBase44BypassEnabled,
   isP38SafeModeEnabled,
@@ -24,56 +22,11 @@ const providers = getP38Providers();
 const providerName = resolveP38ProviderName();
 const bypassBase44 = isBase44BypassEnabled();
 
-const { appId, serverUrl, token, functionsVersion } = appParams;
-
-/**
- * Quando estamos em modo bypass total, evitamos sequer instanciar o SDK do Base44
- * com URL real — devolvemos um stub que joga erro caso alguém ainda chame.
- *
- * Crítico: o `createClient()` do `@base44/sdk` instancia um analytics tracker
- * que dispara `fetch(${serverUrl}/api/apps/${appId}/analytics/track/batch)`
- * automaticamente. Quando essas envs estão vazias, vira `null/api/apps/null/...`
- * e o Vercel devolve HTML 404, derrubando o app inteiro. Por isso usamos stub.
- */
-function createBase44StubClient(reason) {
-  const fail = () => {
-    throw new Error(
-      `[P38] Base44 indisponível (${reason}). ` +
-        'Confirme VITE_BASE44_APP_ID e VITE_BASE44_BACKEND_URL no build do Vercel ' +
-        'e que VITE_P38_PROVIDER não está como supabase.'
-    );
-  };
-  const handler = {
-    get: () =>
-      new Proxy(function () {}, {
-        get: () => handler.get(),
-        apply: fail
-      })
-  };
-  return new Proxy({ name: 'base44-stub' }, handler);
-}
-
-// Guarda extra: mesmo que `bypassBase44` esteja false por algum motivo, NUNCA
-// instanciamos o SDK real sem credenciais Base44 — caso contrário o analytics
-// tracker do SDK começa a martelar `null/api/apps/null/...` e o app quebra.
-const canUseBase44Sdk =
-  providerName !== providers.SUPABASE &&
-  !bypassBase44 &&
-  (hasBase44Credentials() || hasBase44RuntimeCredentials(appId, serverUrl));
-
-const base44SdkClient = canUseBase44Sdk
-  ? createClient({
-      appId,
-      serverUrl,
-      token,
-      functionsVersion,
-      requiresAuth: false
-    })
-  : createBase44StubClient(
-      bypassBase44
-        ? 'VITE_P38_BYPASS_BASE44=true'
-        : 'credenciais Base44 ausentes (VITE_BASE44_APP_ID/VITE_BASE44_BACKEND_URL)'
-    );
+const base44SdkClient = createBase44StubClient(
+  providerName === providers.SUPABASE || bypassBase44
+    ? 'produção Supabase (VITE_P38_PROVIDER=supabase)'
+    : 'app Next não carrega SDK Base44 — use scripts/ ou legacy Vite se necessário',
+);
 
 /** Exportado como `base44` em `base44Client.js` — pode incluir datalink Supabase nas entidades mapeadas. */
 const linkedLegacyClient = resolveLegacyClient(base44SdkClient);
@@ -198,7 +151,7 @@ if (typeof window !== 'undefined') {
     requestedProvider: providerName,
     activeProvider: activeAdapter.name,
     bypassBase44,
-    base44Sdk: canUseBase44Sdk ? 'real' : 'stub',
+    base44Sdk: 'stub',
     base44Credentials: hasBase44Credentials(),
     supabaseCredentials: hasSupabaseCredentials(),
     supabaseAuth: isSupabaseAuthEnabled(),
@@ -206,7 +159,7 @@ if (typeof window !== 'undefined') {
   };
   if (activeAdapter.name === providers.SUPABASE) {
     console.info('[P38] boot OK — provider=supabase', summary);
-  } else if (activeAdapter.name === providers.BASE44 && !canUseBase44Sdk) {
+  } else if (activeAdapter.name === providers.BASE44) {
     console.error(
       '[P38] boot CRÍTICO — Base44 sem credenciais no build nem em runtime. ' +
         'Gravações (senhas, despesas, lançamentos) vão falhar. ' +

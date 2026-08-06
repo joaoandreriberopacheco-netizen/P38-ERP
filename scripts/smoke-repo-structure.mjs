@@ -18,7 +18,12 @@ const required = [
   'public/landing.html',
   'legacy/README.md',
   'legacy/vite/vite.config.js',
+  'docs/SENTRY_SETUP.md',
+  'docs/STAGING_SETUP.md',
+  'docs/MULTI_TENANT_ROADMAP.md',
+  'docs/PILOTO_EXTERNO_CHECKLIST.md',
   'docs/PROFISSIONALIZACAO_P38.md',
+  'supabase/migrations/054_tenant_empresa_foundation.sql',
   'docs/P38_MODULOS_E_PERFIS.md',
   'supabase/migrations',
 ];
@@ -55,3 +60,6 @@ if (failed > 0) {
 }
 
 console.log('[smoke] Estrutura OK — p38-erp v' + (pkg.version || '?'));
+if (pkg.version && !pkg.version.startsWith('1.')) {
+  console.warn('[smoke] versão inesperada:', pkg.version);
+}

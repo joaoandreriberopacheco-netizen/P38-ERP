@@ -75,7 +75,10 @@ Push na `main` → GitHub Actions **Vercel Deploy** (build com secrets) + **Supa
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [`docs/PROFISSIONALIZACAO_P38.md`](docs/PROFISSIONALIZACAO_P38.md) | Plano de maturidade do produto |
+| [`docs/PROFISSIONALIZACAO_P38.md`](docs/PROFISSIONALIZACAO_P38.md) | Plano de maturidade (fases 1–3) |
+| [`docs/SENTRY_SETUP.md`](docs/SENTRY_SETUP.md) | Monitorização de erros (opcional) |
+| [`docs/STAGING_SETUP.md`](docs/STAGING_SETUP.md) | Ambiente de homologação |
+| [`docs/PILOTO_EXTERNO_CHECKLIST.md`](docs/PILOTO_EXTERNO_CHECKLIST.md) | Primeiro cliente piloto |
 | [`docs/P38_MODULOS_E_PERFIS.md`](docs/P38_MODULOS_E_PERFIS.md) | Módulos e perfis de utilizador |
 | [`docs/p38-mobile-rollout.md`](docs/p38-mobile-rollout.md) | Padrões mobile |
 | [`AGENTS.md`](AGENTS.md) | Guia para agentes de IA / desenvolvimento |

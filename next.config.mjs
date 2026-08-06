@@ -23,6 +23,7 @@ const nextConfig = {
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': path.resolve(__dirname, './src'),
+      '@base44/sdk': path.resolve(__dirname, './src/integrations/p38/base44SdkShim.js'),
       'react-router-dom': path.resolve(__dirname, './src/next/shims/react-router-dom.jsx'),
       sonner: path.resolve(__dirname, './src/lib/sonner-shim.js'),
       'sonner-original': path.resolve(__dirname, 'node_modules/sonner'),

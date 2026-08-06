@@ -1,7 +1,7 @@
 {
   "name": "p38-erp",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
     "dev": "node scripts/generate-next-page-registry.mjs && node scripts/write-p38-build-info.mjs && next dev --port 3000",
@@ -15,6 +15,7 @@
     "build:raw": "vite build --config legacy/vite/vite.config.js",
     "verify:source-location": "node scripts/verify-source-location.mjs",
     "smoke:structure": "node scripts/smoke-repo-structure.mjs",
+    "smoke:http": "node scripts/smoke-http-routes.mjs",
     "flare:export": "node scripts/export-flare-pending.mjs",
     "flare:api": "node scripts/flare-local-api.mjs",
     "audit:fluxo-dia": "node scripts/audit-fluxo-dia.mjs",
@@ -74,8 +75,6 @@
     "mirror:pack-legacy": "node scripts/mirror-pack-legacy.mjs"
   },
   "dependencies": {
-    "@base44/sdk": "^0.8.40",
-    "@base44/vite-plugin": "^1.0.30",
     "@fontsource-variable/inter": "^5.2.8",
     "@hookform/resolvers": "^4.1.2",
     "@radix-ui/react-accordion": "^1.2.3",
@@ -105,6 +104,7 @@
     "@radix-ui/react-toggle": "^1.1.2",
     "@radix-ui/react-toggle-group": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.1.8",
+    "@sentry/browser": "^9.22.0",
     "@supabase/supabase-js": "^2.103.2",
     "@tanstack/react-query": "^5.84.1",
     "@tanstack/react-virtual": "^3.14.2",
@@ -139,6 +139,8 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@base44/sdk": "^0.8.40",
+    "@base44/vite-plugin": "^1.0.30",
     "@babel/parser": "^7.29.2",
     "@babel/traverse": "^7.29.0",
     "@eslint/js": "^9.19.0",
