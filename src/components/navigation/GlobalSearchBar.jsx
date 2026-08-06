@@ -12,15 +12,15 @@ import {
 } from '@/lib/focusPolicy';
 import { SEARCH_INPUT_PROPS } from '@/lib/searchInputProps';
 import { registerGlobalSearchInput, shouldSuppressGlobalSearchBackdropClose } from '@/lib/openGlobalSearch';
+import { searchTextIncludes } from '@/lib/normalizeSearchText';
 
 function filterSearchItems(items, query) {
   const trimmed = String(query || '').trim();
   if (!trimmed) return [];
-  const lower = trimmed.toLowerCase();
   return items.filter(
     (item) =>
-      item.name.toLowerCase().includes(lower) ||
-      (item.parent && item.parent.toLowerCase().includes(lower))
+      searchTextIncludes(item.name, trimmed) ||
+      (item.parent && searchTextIncludes(item.parent, trimmed))
   );
 }
 

@@ -4,6 +4,7 @@
 
 import { tagsOrigemBoleto } from '@/lib/agefinLancamentosRecorrencia';
 import { lancamentoPago, lancamentoCancelado, lancamentoVencidoOuAtrasado } from '@/lib/agefinConsultaFilters';
+import { normalizeSearchText } from '@/lib/normalizeSearchText';
 
 export const SITUACAO_SERIE = {
   ATIVA: 'ativa',
@@ -592,10 +593,12 @@ export function mapaModelosPorId(modelos) {
 }
 
 export function filtrarCompetenciasPrevisao(competencias, { busca = '', centro = '__todos__' } = {}) {
-  const q = busca.trim().toLowerCase();
+  const q = normalizeSearchText(busca);
   return (competencias || []).filter((c) => {
     if (q) {
-      const text = `${c.serie_nome || ''} ${c.terceiro_nome || ''} ${c.categoria_nome || ''}`.toLowerCase();
+      const text = normalizeSearchText(
+        `${c.serie_nome || ''} ${c.terceiro_nome || ''} ${c.categoria_nome || ''}`,
+      );
       if (!text.includes(q)) return false;
     }
     if (centro === '__todos__') return true;

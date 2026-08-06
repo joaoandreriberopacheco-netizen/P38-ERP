@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { searchTextIncludes } from '@/lib/normalizeSearchText';
 
 export default function SearchableFilterSelect({
   value,
@@ -21,8 +22,7 @@ export default function SearchableFilterSelect({
   }, [options, value, placeholder]);
 
   const filteredOptions = useMemo(() => {
-    const normalized = query.toLowerCase();
-    return options.filter((option) => option.label.toLowerCase().includes(normalized));
+    return options.filter((option) => searchTextIncludes(option.label, query));
   }, [options, query]);
 
   return (

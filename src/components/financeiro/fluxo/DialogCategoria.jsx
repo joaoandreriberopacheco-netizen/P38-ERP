@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { X, Plus, Search, ChevronDown, Check } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { normalizeDataText } from '@/lib/normalizeDataText';
+import { searchTextIncludes } from '@/lib/normalizeSearchText';
 import { createUppercaseInputChangeHandler } from '@/lib/uppercaseInputHandlers';
 
 // Mini modal para criar categoria rapidamente inline
@@ -63,9 +64,9 @@ export function SeletorCategoria({ tipo, value, onChange, categorias, onCriada, 
 
   const filtradas = useMemo(() => {
     const doTipo = categorias.filter(c => c.tipo === tipo);
-    const q = busca.trim().toLowerCase();
+    const q = busca.trim();
     if (!q) return doTipo;
-    return doTipo.filter(c => c.nome.toLowerCase().includes(q));
+    return doTipo.filter(c => searchTextIncludes(c.nome, q));
   }, [categorias, tipo, busca]);
 
   const selecionar = (nome, id) => {

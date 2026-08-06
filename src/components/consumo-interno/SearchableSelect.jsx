@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, Plus, X } from 'lucide-react';
+import { searchTextIncludes } from '@/lib/normalizeSearchText';
 
 export default function SearchableSelect({
   items = [],
@@ -30,7 +31,7 @@ export default function SearchableSelect({
   const filtered = items.filter((item) => {
     const label = String(item?.[displayField] ?? '').trim();
     if (!label) return false;
-    return label.toLowerCase().includes(search.toLowerCase());
+    return searchTextIncludes(label, search);
   });
 
   const handleSelect = (item) => {

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Search, Plus, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { searchTextIncludes } from '@/lib/normalizeSearchText';
 
 const DEFAULT_TYPES = [
   'Comprovante',
@@ -29,9 +30,7 @@ export default function DocumentTypeSearcher({
   }, [customTypes]);
 
   const filteredTypes = useMemo(() => {
-    return allTypes.filter(type =>
-      type.toLowerCase().includes(search.toLowerCase())
-    );
+    return allTypes.filter((type) => searchTextIncludes(type, search));
   }, [allTypes, search]);
 
   const handleAddType = (type) => {
