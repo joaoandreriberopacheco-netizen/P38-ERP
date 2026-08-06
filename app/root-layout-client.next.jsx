@@ -2,6 +2,7 @@
 
 import '@/index.css';
 import { Providers } from './providers.next';
+import { Analytics } from '@vercel/analytics/next';
 
 const themeBootScript = `
 try {
@@ -25,6 +26,7 @@ export default function RootLayoutClient({ children }) {
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased">
         <Providers>{children}</Providers>
+        <Analytics />
       </body>
     </html>
   );
