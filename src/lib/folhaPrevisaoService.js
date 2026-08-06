@@ -323,6 +323,12 @@ export async function salvarCadastroPessoaFolha(payload, modeloId = null) {
 
   const body = {
     ...payload,
+    mais_de_um_ano:
+      typeof payload.mais_de_um_ano === 'boolean' ? payload.mais_de_um_ano : true,
+    data_admissao:
+      typeof payload.mais_de_um_ano === 'boolean' && payload.mais_de_um_ano === false
+        ? String(payload.data_admissao || '').slice(0, 10)
+        : '',
     custo_direto:
       typeof payload.custo_direto === 'boolean'
         ? payload.custo_direto

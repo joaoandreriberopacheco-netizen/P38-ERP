@@ -164,6 +164,8 @@ export default function FolhaPessoaDialog({
     (editando && form.colaborador_id && String(form.colaborador_nome || form.nome || '').trim()) ||
     (modoPessoa === 'existente' && form.colaborador_id) ||
     (modoPessoa === 'nova' && novoNome.trim());
+  const bloqueioAdmissao =
+    !ehSocio && form.mais_de_um_ano === false && !String(form.data_admissao || '').trim();
 
   const updateFerias = (idx, f) => {
     const ferias_programadas = [...(form.ferias_programadas || [])];
@@ -222,6 +224,48 @@ export default function FolhaPessoaDialog({
               </SelectContent>
             </Select>
           </div>
+
+          {!ehSocio && (
+            <div className="rounded-lg ring-1 ring-border/40 p-3 space-y-3">
+              <Label className="font-medium">Tempo de empresa</Label>
+              <div className="flex items-start gap-2 rounded-lg border border-border/60 px-3 py-2.5">
+                <Checkbox
+                  id="mais-de-um-ano"
+                  checked={form.mais_de_um_ano !== false}
+                  onCheckedChange={(checked) => {
+                    const maisDeUmAno = Boolean(checked);
+                    setForm((prev) => ({
+                      ...prev,
+                      mais_de_um_ano: maisDeUmAno,
+                      data_admissao: maisDeUmAno ? '' : prev.data_admissao,
+                    }));
+                  }}
+                  disabled={desligado}
+                />
+                <div className="min-w-0">
+                  <Label htmlFor="mais-de-um-ano" className="font-medium">
+                    Já tem mais de 1 ano de empresa
+                  </Label>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Se desativar, informe a admissão para calcular avos de 13º e 1/3 de férias.
+                  </p>
+                </div>
+              </div>
+
+              {form.mais_de_um_ano === false && (
+                <div>
+                  <Label>Data de admissão</Label>
+                  <Input
+                    className="mt-1.5"
+                    type="date"
+                    value={String(form.data_admissao || '').slice(0, 10)}
+                    onChange={(e) => setForm({ ...form, data_admissao: e.target.value })}
+                    disabled={desligado}
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
           {editando ? (
             <div>
@@ -507,7 +551,7 @@ export default function FolhaPessoaDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleSave} disabled={!podeSalvar || saving || desligado}>
+          <Button onClick={handleSave} disabled={!podeSalvar || bloqueioAdmissao || saving || desligado}>
             {saving ? 'Salvando…' : 'Salvar'}
           </Button>
         </DialogFooter>

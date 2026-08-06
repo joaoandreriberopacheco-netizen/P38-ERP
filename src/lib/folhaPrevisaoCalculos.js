@@ -127,6 +127,47 @@ export function formatDataBr(data) {
   return `${d}/${m}/${y}`;
 }
 
+function parseDataIso(data) {
+  const raw = String(data || '').slice(0, 10);
+  const [y, m, d] = raw.split('-').map(Number);
+  if (!y || !m || !d) return null;
+  return { y, m, d };
+}
+
+export function modeloTemMaisDeUmAno(modelo) {
+  if (typeof modelo?.mais_de_um_ano === 'boolean') return modelo.mais_de_um_ano;
+  return true;
+}
+
+export function totalAvosNoAno(ano, modelo) {
+  if (!ano || modeloTemMaisDeUmAno(modelo)) return 12;
+  const adm = parseDataIso(modelo?.data_admissao);
+  if (!adm) return 12;
+  if (ano < adm.y) return 0;
+  if (ano > adm.y) return 12;
+
+  // Regra prática: mês de admissão conta 1/12 se admissão até dia 15.
+  const mesInicialContagem = adm.d <= 15 ? adm.m : adm.m + 1;
+  if (mesInicialContagem > 12) return 0;
+  return Math.max(0, 13 - mesInicialContagem);
+}
+
+export function competenciaContaAvo(competencia, modelo) {
+  if (!competencia) return false;
+  if (modeloTemMaisDeUmAno(modelo)) return true;
+  const [anoStr, mesStr] = String(competencia).slice(0, 7).split('-');
+  const ano = Number(anoStr);
+  const mes = Number(mesStr);
+  if (!ano || !mes) return false;
+  const adm = parseDataIso(modelo?.data_admissao);
+  if (!adm) return true;
+  if (ano < adm.y) return false;
+  if (ano > adm.y) return true;
+  if (mes > adm.m) return true;
+  if (mes < adm.m) return false;
+  return adm.d <= 15;
+}
+
 export function getCompetenciaAtual() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -283,6 +324,10 @@ export function obterSalarioBase(rubricas) {
 
 export function modeloEstaAtivoNaCompetencia(modelo, competencia) {
   if (!modelo) return true;
+  if (modelo?.data_admissao) {
+    const mesAdmissao = String(modelo.data_admissao).slice(0, 7);
+    if (competencia < mesAdmissao) return false;
+  }
   if (modelo.situacao === SITUACAO_FOLHA.DESLIGADO && modelo.data_desligamento) {
     const mesDeslig = String(modelo.data_desligamento).slice(0, 7);
     return competencia <= mesDeslig;
@@ -339,21 +384,22 @@ export function calcularProvisoesEventos(competencia, modelo) {
     const p2 = modelo.decimo_mes_parcela_2 ?? DECIMO_PADRAO.decimo_mes_parcela_2;
     const pct = (modelo.decimo_percentual_parcela ?? DECIMO_PADRAO.decimo_percentual_parcela) / 100;
 
-    if (mesNum === p1) {
+    const avosAno = totalAvosNoAno(Number(String(competenciaStr).slice(0, 4)), modelo);
+    if (mesNum === p1 && avosAno > 0) {
       provisoes.push({
         id: `decimo-1-${competenciaStr}`,
         tipo: 'provento',
         nome: '13º salário — 1ª parcela',
-        valor: salarioBase * pct,
+        valor: salarioBase * (avosAno / 12) * pct,
         categoria: 'decimo_terceiro',
       });
     }
-    if (mesNum === p2) {
+    if (mesNum === p2 && avosAno > 0) {
       provisoes.push({
         id: `decimo-2-${competenciaStr}`,
         tipo: 'provento',
         nome: '13º salário — 2ª parcela',
-        valor: salarioBase * pct,
+        valor: salarioBase * (avosAno / 12) * pct,
         categoria: 'decimo_terceiro',
       });
     }
@@ -550,7 +596,7 @@ export function calcularProjecaoCaixa(modelos, meses = 12, competenciaInicio = n
         (modelo?.tipo_vinculo || TIPO_VINCULO.FUNCIONARIO) === TIPO_VINCULO.FUNCIONARIO;
       const salarioBaseFuncionario = ehFuncionario ? extrairSalarioBase(modelo) : 0;
       // Provisão mensal do 1/3 adicional de férias: (salário / 3) / 12 = salário / 36.
-      const provisaoTercoFeriasMensal = salarioBaseFuncionario > 0
+      const provisaoTercoFeriasMensal = salarioBaseFuncionario > 0 && competenciaContaAvo(competencia, modelo)
         ? salarioBaseFuncionario / 36
         : 0;
       const custoTotalComProvisao = t.custoTotalEmpresa + provisaoTercoFeriasMensal;
@@ -788,6 +834,8 @@ export function criarModeloComDefaults(extra = {}) {
     retirada_valor_fixo: 0,
     ...DECIMO_PADRAO,
     decimo_terceiro_ativo: socio ? false : true,
+    mais_de_um_ano: true,
+    data_admissao: '',
     centro_custo: '',
     centro_custo_id: '',
     custo_direto: custoDiretoExtra,
