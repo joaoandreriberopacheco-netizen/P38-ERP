@@ -6,6 +6,7 @@ import { createPageUrl } from '@/components/utils';
 const RELATORIOS = [
   { icon: TrendingUp, label: 'Performance', description: 'Análise de desempenho de vendas', page: 'RelatorioPerformance' },
   { icon: DollarSign, label: 'Margem', description: 'Margem de lucro por produto', page: 'RelatorioMargem' },
+  { icon: FileText, label: 'Preço Justo', description: 'Simulador de markup global 40%', page: 'PrecoJustoDashboard' },
   { icon: FileText, label: 'Vendas', description: 'Relatório detalhado de vendas', page: 'Relatorios' },
 ];
 

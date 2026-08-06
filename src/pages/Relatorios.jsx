@@ -71,6 +71,13 @@ export default function RelatoriosPage() {
       icon: TrendingUp,
       highlight: true
     },
+    { 
+      id: 'preco-justo',
+      nome: "Preço Justo (Simulador)", 
+      descricao: "Backtest de markup global 40% com subsídio KVI × pisos × conveniência",
+      icon: BarChart3,
+      highlight: true
+    },
   ];
 
   const relatoriosCompras = [
@@ -272,6 +279,8 @@ export default function RelatoriosPage() {
                   onClickAbrir={(id) => {
                     if (id === 'markup-margem') {
                       window.location.href = '/RelatorioMargem';
+                    } else if (id === 'preco-justo') {
+                      window.location.href = '/PrecoJustoDashboard';
                     }
                   }}
                 />

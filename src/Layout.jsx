@@ -27,6 +27,7 @@ const MobileFunctionSelector = React.lazy(() => import('@/components/navigation/
 const MOBILE_FULL_VIEWPORT_PAGES = new Set([
   'Produtos',
   'RelatorioMargem',
+  'PrecoJustoDashboard',
   'RelatorioCatalogoEstoque',
   'CaixasAtivos',
   'TurnosFechados',

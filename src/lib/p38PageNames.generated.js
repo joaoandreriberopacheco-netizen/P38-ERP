@@ -73,6 +73,7 @@ export const P38_PAGE_NAMES = [
   "PedidosCompra",
   "PlanejamentoFinanceiro",
   "PlanejamentoFinanceiroV2",
+  "PrecoJustoDashboard",
   "PreviewTemaClaro",
   "Produtos",
   "ReimpressaoDocumentos",
