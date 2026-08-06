@@ -5,18 +5,20 @@ import { base44 } from '@/api/base44Client';
 import { pedidoLiberadoParaLogistica } from '@/lib/aprovarPedidoCompraFinanceiro';
 import { enrichProdutosComIep } from '@/lib/calcularIepProdutos';
 import {
+  buildPendenteAprovadoFinanceiroPorProduto,
   buildPendenteEmbarcadoNaoRecebidoPorProduto,
   buildRecebidosPorPedidoProdutoFromEmbarques,
   pedidoCompraAprovadoNaoConcluido as pedidoCompraAprovadoNaoConcluidoCanonico,
   quantidadePendenteItemPedidoCompra,
 } from '@/lib/sugestaoCompraEstoquePendente';
+import { fetchPedidosCompraParaSugestaoEstoque } from '@/lib/fetchPedidosCompraParaSugestaoEstoque';
+import {
+  resolveProdutoCustoUnitarioBase,
+  sumCatalogTransitStockValue,
+  sumCatalogTransitStockValueByAbcd,
+} from '@/lib/catalogStockTotals';
 import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
 import { fetchDadosVendaAbcd90d } from '@/lib/fetchPedidosVenda90d';
-import {
-  FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT,
-  FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT,
-  passaFiltroVisibilidadePedidosCompra,
-} from '@/lib/filtroVisibilidadePedidosCompra';
 import {
   calcValorItensPedidoCompra,
   calcValorTotalPedidoCompra,
@@ -569,7 +571,7 @@ export default function EstoqueTab() {
         const supplyStartISO = format(supplyMonthBuckets[0]?.start || startDate, 'yyyy-MM-dd');
         const supplyEndISO = format(supplyMonthBuckets[supplyMonthBuckets.length - 1]?.end || endDate, 'yyyy-MM-dd');
 
-        const [produtos, movimentacoesEstoqueRaw, lancamentosFinanceiros, pedidosVenda, pedidosCompra, embarquesCompraRaw, dadosVendaAbcd90d] =
+        const [produtos, movimentacoesEstoqueRaw, lancamentosFinanceiros, pedidosVenda, pedidosCompra, embarquesCompraRaw, dadosVendaAbcd90d, sugestaoEstoqueData] =
           await Promise.all([
             base44.entities.Produto.filter({}, '-created_date', 5000),
             base44.entities.MovimentacaoEstoque.list('-created_date', 50000),
@@ -586,6 +588,7 @@ export default function EstoqueTab() {
             base44.entities.PedidoCompra.list('-created_date', 300),
             base44.entities.Embarque.list('-created_date', 600),
             fetchDadosVendaAbcd90d().catch(() => null),
+            fetchPedidosCompraParaSugestaoEstoque(base44).catch(() => null),
           ]);
 
         const produtosLista = Array.isArray(produtos) ? produtos : [];
@@ -631,17 +634,27 @@ export default function EstoqueTab() {
           D: 0,
           E: 0,
         };
-        const qualityTransitRawAccumulator = {
-          A: 0,
-          B: 0,
-          C: 0,
-          D: 0,
-          E: 0,
-        };
+        const pendentePorProdutoCatalogo = sugestaoEstoqueData
+          ? buildPendenteAprovadoFinanceiroPorProduto(
+            sugestaoEstoqueData.pedidosAbertos,
+            sugestaoEstoqueData.recebidosPorPedidoProduto,
+            {
+              embarques: sugestaoEstoqueData.embarques,
+              pedidosParaEmbarque: sugestaoEstoqueData.pedidosTodos,
+            },
+          )
+          : {};
+
+        const qualityTransitRawAccumulator = sumCatalogTransitStockValueByAbcd(
+          produtosComAbcdCatalogo,
+          pendentePorProdutoCatalogo,
+          QUALITY_ORDER,
+        );
 
         let estoqueFisico = 0;
         produtosComAbcdCatalogo.forEach((produto) => {
-          const custoUnitario = Number(produto.preco_custo_calculado || produto.valor_compra || 0);
+          if (!produto?.ativo) return;
+          const custoUnitario = resolveProdutoCustoUnitarioBase(produto);
           const estoqueAtual = Number(produto.estoque_atual || 0);
           const estoqueGerencial = Math.max(0, estoqueAtual);
           const valorEstoque = estoqueGerencial * custoUnitario;
@@ -746,114 +759,10 @@ export default function EstoqueTab() {
             status: getSupplyStatus(ratioPercent),
           };
         });
-        const embarquesPorPedido = embarquesCompraLista.reduce((acc, embarque) => {
-          const pedidoId = embarque?.pedido_compra_id;
-          if (!pedidoId) return acc;
-          if (!acc[pedidoId]) acc[pedidoId] = [];
-          acc[pedidoId].push(embarque);
-          return acc;
-        }, {});
-
-        const cardsDeEmbarque = pedidosCompraLista.flatMap((pedido) => {
-          const embarquesDoPedido = (embarquesPorPedido[pedido.id] || []).slice()
-            .sort((a, b) => new Date(a.created_date || 0) - new Date(b.created_date || 0));
-          const embarquesReais = embarquesDoPedido.filter((embarque) => !isNecessidadeRenderizada(embarque));
-          const embarquesNecessidade = embarquesDoPedido.filter((embarque) => isNecessidadeRenderizada(embarque));
-          const necessidadeVirtual =
-            embarquesNecessidade.length === 0 ? buildVirtualNecessidade(pedido, embarquesDoPedido) : null;
-
-          const embarquesRenderizados = embarquesDoPedido.length > 0
-            ? [...embarquesReais, ...embarquesNecessidade, ...(necessidadeVirtual ? [necessidadeVirtual] : [])]
-            : [
-                {
-                  id: `original-${pedido.id}`,
-                  pedido_compra_id: pedido.id,
-                  tipo: 'Original',
-                  status: 'Pendente',
-                  status_recebimento: 'Pendente',
-                  itens: [],
-                  itens_embarcados: [],
-                  observacoes: '',
-                  created_date: pedido.created_date,
-                },
-              ];
-
-          return embarquesRenderizados.map((embarque) => {
-            const ehNecessidade = isNecessidadeRenderizada(embarque);
-            return {
-              ...pedido,
-              _embarque: embarque,
-              _is_necessidade: ehNecessidade,
-              _display_status: getBorrowedStatus(pedido, embarque),
-              _display_valor:
-                hasLinkedItems(embarque) || ehNecessidade
-                  ? getDisplayValorEmbarque(pedido, embarque)
-                  : calcValorTotalPedidoCompra(pedido),
-            };
-          });
-        });
-
-        const filtradosPadrao = cardsDeEmbarque.filter((p) =>
-          passaFiltroVisibilidadePedidosCompra(p, {
-            somenteNaoConcluidos: FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT,
-            ultimos30Dias: FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT,
-            getDataPedido: (item) => item.data_emissao || (item.created_date ? toLocalDate(item.created_date) : ''),
-            isConcluido: (item) => item._display_status === 'Concluído',
-          })
+        const transitoFinanceiroAprovado = sumCatalogTransitStockValue(
+          produtosComAbcdCatalogo,
+          pendentePorProdutoCatalogo,
         );
-
-        const pedidosPagosPendentes = filtradosPadrao.filter((pedido) => {
-          const aprovadoFinanceiro = pedidoLiberadoParaLogistica(pedido) || pedido._display_status === 'Aprovado';
-          const ehNecessidade = !!pedido._is_necessidade || pedido._embarque?.tipo === 'Necessidade';
-          const aindaNaoRecebido = pedido._display_status !== 'Concluído';
-          const aindaNaoEhAguardandoPagamento =
-            ehNecessidade ||
-            ![
-              'Aguardando Aprovação Financeira',
-              'Aguardando Liberação Financeira',
-              'Aguardando Liberação',
-              'Aguardando',
-            ].includes(pedido._display_status);
-          return aprovadoFinanceiro && aindaNaoRecebido && aindaNaoEhAguardandoPagamento;
-        });
-
-        const transitoFinanceiroAprovado = pedidosPagosPendentes.reduce(
-          (acc, pedido) => acc + Number(pedido._display_valor || 0),
-          0
-        );
-
-        const produtoById = new Map(
-          produtosComAbcdCatalogo.map((produto) => [String(produto.id), produto])
-        );
-
-        pedidosCompraLista
-          .filter((pedido) => pedidoCompraAprovadoNaoConcluido(pedido))
-          .forEach((pedido) => {
-            const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
-            const recebidosPedido = recebidosPorPedidoProduto[String(pedido.id)] || {};
-
-            itens.forEach((item) => {
-              const produtoId = String(item?.produto_id || '');
-              if (!produtoId) return;
-              const quantidadeTotal = Number(item.quantidade_base || item.quantidade || 0);
-              if (!Number.isFinite(quantidadeTotal) || quantidadeTotal <= 0) return;
-
-              const quantidadeRecebida = Number(recebidosPedido[produtoId] || 0);
-              const quantidadePendente = Math.max(0, quantidadeTotal - quantidadeRecebida);
-              if (!quantidadePendente) return;
-
-              const totalItem = Number(item.total || 0);
-              const custoViaTotal = quantidadeTotal > 0 ? totalItem / quantidadeTotal : 0;
-              const custoUnitario = Number(item.custo_final_unitario || item.custo_unitario || custoViaTotal || 0);
-              const valorPendenteItem = quantidadePendente * Math.max(0, custoUnitario);
-              if (valorPendenteItem <= 0) return;
-
-              const produto = produtoById.get(produtoId) || item;
-              const curva = resolveProdutoAbcdClasse(produto);
-              if (!QUALITY_ORDER.includes(curva)) return;
-              qualityTransitRawAccumulator[curva] += valorPendenteItem;
-            });
-          });
 
         const totalLocalizacao = estoqueFisico + transitoFinanceiroAprovado;
         const qualityTotal = QUALITY_ORDER.reduce((sum, key) => sum + qualityAccumulator[key], 0);
@@ -869,15 +778,9 @@ export default function EstoqueTab() {
             color: QUALITY_COLORS[key],
           };
         });
-        const qualityTransitRawTotal = QUALITY_ORDER.reduce(
-          (sum, key) => sum + Number(qualityTransitRawAccumulator[key] || 0),
-          0
-        );
-        const qualityTransitScale =
-          qualityTransitRawTotal > 0 ? transitoFinanceiroAprovado / qualityTransitRawTotal : 0;
         const qualityDistributionGeral = QUALITY_ORDER.map((key) => {
           const valorFisico = qualityAccumulator[key];
-          const valorTransito = Number(qualityTransitRawAccumulator[key] || 0) * qualityTransitScale;
+          const valorTransito = Number(qualityTransitRawAccumulator[key] || 0);
           const valor = valorFisico + valorTransito;
           return {
             key,

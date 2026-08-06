@@ -1,6 +1,67 @@
 import { formatEstoqueApresentacao, getCatalogoComercialView } from '@/lib/productUnits';
 import { calcCusto } from '@/components/produtos/treegrid/useTreeGrid';
-import { resolveCatalogEstoqueExibicao } from '@/lib/catalogEstoqueVirtual';
+import { createCatalogStockContext, resolveCatalogEstoqueExibicao } from '@/lib/catalogEstoqueVirtual';
+import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
+
+/** Custo unitário na unidade base do cadastro (totais gerenciais / dashboard). */
+export function resolveProdutoCustoUnitarioBase(produto) {
+  const salvo = Number(produto?.preco_custo_calculado);
+  if (Number.isFinite(salvo) && salvo > 0) return salvo;
+  return Number(produto?.valor_compra) || 0;
+}
+
+function transitValorProdutoCatalogo(produto, catalogStockContext) {
+  const qVirt = lineEstoqueQuantidade(produto, catalogStockContext);
+  if (qVirt <= 0) return 0;
+  const vVirt = lineValorCustoTotal(produto, catalogStockContext);
+  const qFis = lineEstoqueQuantidade(produto, null);
+  if (qFis <= 0) return vVirt;
+  return vVirt - lineValorCustoTotal(produto, null);
+}
+
+/**
+ * Valor em trânsito com a mesma regra do catálogo (pendente × custo na embalagem comercial).
+ * Só produtos ativos — alinha ao filtro padrão do catálogo.
+ */
+export function sumCatalogTransitStockValue(produtos = [], pendentePorProduto = {}) {
+  const catalogStockContext = createCatalogStockContext(true, pendentePorProduto);
+  let total = 0;
+  for (const produto of produtos) {
+    if (!produto?.ativo) continue;
+    total += transitValorProdutoCatalogo(produto, catalogStockContext);
+  }
+  return total;
+}
+
+/** Mesma regra que `valorEstoqueAtivo` no cabeçalho do catálogo (estoque virtual). */
+export function sumCatalogVirtualStockValueAtivo(produtos = [], pendentePorProduto = {}) {
+  const catalogStockContext = createCatalogStockContext(true, pendentePorProduto);
+  let total = 0;
+  for (const produto of produtos) {
+    if (!produto?.ativo) continue;
+    const qtd = lineEstoqueQuantidade(produto, catalogStockContext);
+    if (qtd > 0) total += lineValorCustoTotal(produto, catalogStockContext);
+  }
+  return total;
+}
+
+/** Trânsito por curva ABCD — mesma base que o catálogo virtual. */
+export function sumCatalogTransitStockValueByAbcd(
+  produtos = [],
+  pendentePorProduto = {},
+  qualityOrder = ['A', 'B', 'C', 'D', 'E'],
+) {
+  const catalogStockContext = createCatalogStockContext(true, pendentePorProduto);
+  const accum = Object.fromEntries(qualityOrder.map((key) => [key, 0]));
+  for (const produto of produtos) {
+    if (!produto?.ativo) continue;
+    const valor = transitValorProdutoCatalogo(produto, catalogStockContext);
+    if (valor <= 0) continue;
+    const curva = resolveProdutoAbcdClasse(produto);
+    if (qualityOrder.includes(curva)) accum[curva] += valor;
+  }
+  return accum;
+}
 
 /** Quantidade de estoque nos totais (vitrine comercial; respeita estoque virtual quando activo). */
 export function lineEstoqueQuantidade(produto, catalogStockContext = null) {
