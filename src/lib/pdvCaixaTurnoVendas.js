@@ -52,8 +52,13 @@ export function isPedidoVendaNoTurnoCaixa(pedido, opts) {
   if (!statusOk.includes(pedido.status)) return false;
 
   if (String(pedido.turno_caixa_id ?? "") === String(turno.id ?? "")) return true;
+  if (String(pedido.dados?.turno_caixa_id ?? "") === String(turno.id ?? "")) return true;
 
-  const vendasIds = Array.isArray(turno.vendas_ids) ? turno.vendas_ids : [];
+  const vendasIds = Array.isArray(turno.vendas_ids)
+    ? turno.vendas_ids
+    : Array.isArray(turno.dados?.vendas_ids)
+      ? turno.dados.vendas_ids
+      : [];
   const pid = pedido.id != null ? String(pedido.id) : "";
   if (pid && vendasIds.some((vid) => String(vid) === pid)) return true;
 
@@ -63,7 +68,7 @@ export function isPedidoVendaNoTurnoCaixa(pedido, opts) {
 
   if (!incluirRetrocompatSemTurno) return false;
   if (turno.data_fechamento) return false;
-  if (pedido.turno_caixa_id) return false;
+  if (pedido.turno_caixa_id || pedido.dados?.turno_caixa_id) return false;
 
   const contaTurno = String(turno.conta_caixa_pdv_id ?? "");
   const contaCaixa = String(caixa?.id ?? "");
