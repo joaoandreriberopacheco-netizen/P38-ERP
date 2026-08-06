@@ -14,7 +14,7 @@ Grava cada chave em **dois sítios** (mesmos nomes, mesmos valores):
 
 | Sítio | URL |
 |-------|-----|
-| **GitHub Actions** | https://github.com/joaoandreriberopacheco-netizen/varejosync/settings/secrets/actions |
+| **GitHub Actions** | https://github.com/joaoandreriberopacheco-netizen/P38-ERP/settings/secrets/actions |
 | **Cursor Cloud Agent** | https://cursor.com/dashboard/cloud-agents/environments/e/334db7fa-cbaa-49eb-9dd0-1c1b7a206ced |
 
 Depois de gravar no Cursor: **nova sessão** Cloud Agent → `npm run secrets:audit`

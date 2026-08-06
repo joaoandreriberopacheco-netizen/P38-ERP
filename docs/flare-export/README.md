@@ -11,7 +11,7 @@
     "generated_by": "base44/exportFlareToGithub",
     "exported_at": "ISO8601",
     "environment": "production",
-    "app": "varejosync",
+    "app": "p38-erp",
     "count": 0,
     "content_hash": "hex8chars",
     "valid_statuses": ["pending","in_progress","ready_for_verify","resolved","reopened","ignored"],

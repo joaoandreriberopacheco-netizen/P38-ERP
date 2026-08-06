@@ -56,11 +56,11 @@ Snippet para colar no `AGENTS.md` do a29: [`docs/reference-a29-erp/MIRRORPASS_AG
 
 ## Sync automático (GitHub Actions)
 
-Com secrets `A29_ERP_GIT_URL` e `A29_ERP_DEPLOY_TOKEN` no varejosync: **Actions → Sync mirror to a29-erp → Run workflow**.
+Com secrets `A29_ERP_GIT_URL` e `A29_ERP_DEPLOY_TOKEN` no **P38-ERP**: **Actions → Sync mirror to a29-erp → Run workflow**.
 
 ## O que vai no espelho
 
-| Origem (varejosync) | Destino (a29-erp) |
+| Origem (**P38-ERP**) | Destino (a29-erp) |
 |---------------------|-------------------|
 | `mirror/p38-ui/` | `legacy/varejosync/` |
 

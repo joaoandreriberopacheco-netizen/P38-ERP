@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Guidance for AI agents working in this repository (**varejosync** / P38 ERP — Vite + React + Base44).
+Guidance for AI agents working in this repository (**P38-ERP** — Vite/React UI + Supabase, produção Next.js).
 
 ## CRITICAL: validation artifact policy (João André)
 

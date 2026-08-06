@@ -22,4 +22,4 @@ Versão segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 - Artefactos temporários de agente (`_mcp_*`) da raiz do repositório
 
-[1.0.0]: https://github.com/joaoandreriberopacheco-netizen/varejosync/releases/tag/v1.0.0
+[1.0.0]: https://github.com/joaoandreriberopacheco-netizen/P38-ERP/releases/tag/v1.0.0

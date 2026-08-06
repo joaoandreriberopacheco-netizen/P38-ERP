@@ -4,6 +4,7 @@
 
 | | |
 |--|--|
+| **Repositório** | [github.com/joaoandreriberopacheco-netizen/P38-ERP](https://github.com/joaoandreriberopacheco-netizen/P38-ERP) |
 | **Produção** | [p-38erp.vercel.app](https://p-38erp.vercel.app) |
 | **Apresentação** | [/landing.html](https://p-38erp.vercel.app/landing.html) |
 | **Stack** | Next.js 15 · Supabase (Postgres) · Vercel |

@@ -11,7 +11,7 @@ Tabela **LINHA** + tipo (solo/mix/portfolio) antes de SQL. Marque **STATUS** na 
 Regenerar: `npm run export:linhas-mestre`
 
 **Download directo:**  
-https://github.com/joaoandreriberopacheco-netizen/varejosync/raw/main/docs/exports/P38-linhas-mestre-aprovacao.xlsx
+https://github.com/joaoandreriberopacheco-netizen/P38-ERP/raw/main/docs/exports/P38-linhas-mestre-aprovacao.xlsx
 
 ---
 
@@ -27,7 +27,7 @@ Ex.: h1=JOELHO + h2=SOLDÁVEL → LINHA **CONEXÃO SOLDÁVEL**, produto de compr
 Regenerar: `npm run export:analise-linhas`
 
 **Download directo:**  
-https://github.com/joaoandreriberopacheco-netizen/varejosync/raw/main/docs/exports/P38-analise-linhas-compra.xlsx
+https://github.com/joaoandreriberopacheco-netizen/P38-ERP/raw/main/docs/exports/P38-analise-linhas-compra.xlsx
 
 ---
 

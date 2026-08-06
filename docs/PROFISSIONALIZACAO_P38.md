@@ -15,7 +15,7 @@ Checklist para o P38 deixar de parecer “app de garagem”.
 | 1.4 | `.gitignore` para impedir lixo de agente | ✅ |
 | 1.5 | Landing pública `/landing.html` | ✅ em produção após deploy |
 | 1.6 | Domínio próprio | ⏸️ **adiado** (decisão do dono) |
-| 1.7 | Renomear repositório GitHub → `p38-erp` | ⏳ **2 min no browser** — ver [`RENOMEAR_REPOSITORIO.md`](./RENOMEAR_REPOSITORIO.md) |
+| 1.7 | Renomear repositório GitHub → `P38-ERP` | ✅ 2026-08-06 |
 
 ---
 
@@ -68,10 +68,11 @@ npm run secrets:audit       # secrets configurados
 - CI + Vercel Deploy disparam automaticamente no push
 - Landing: `https://p-38erp.vercel.app/landing.html`
 
-## Próxima acção (só tu, ~2 min)
+## Próxima acção (quando quiseres)
 
-1. Renomear repo → [`RENOMEAR_REPOSITORIO.md`](./RENOMEAR_REPOSITORIO.md)
-2. Partilhar a landing em conversas com parceiros (em vez do URL cru do app)
+1. Partilhar a landing em conversas com parceiros: `https://p-38erp.vercel.app/landing.html`
+2. Fase 2 opcional: Sentry, staging — ver tabela acima
+3. Fase 3: utilizador piloto externo — ver [`marketing/CASE_STUDY_TEMPLATE.md`](./marketing/CASE_STUDY_TEMPLATE.md)
 
 ---
 
