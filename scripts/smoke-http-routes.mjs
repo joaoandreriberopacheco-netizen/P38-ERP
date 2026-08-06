@@ -8,7 +8,7 @@ import { setTimeout as sleep } from 'timers/promises';
 
 const PORT = Number(process.env.SMOKE_PORT || 3099);
 const BASE = `http://127.0.0.1:${PORT}`;
-const ROUTES = ['/login', '/landing.html'];
+const ROUTES = ['/login', '/landing.html', '/lab.html'];
 
 async function waitForServer(maxMs = 60000) {
   const start = Date.now();
