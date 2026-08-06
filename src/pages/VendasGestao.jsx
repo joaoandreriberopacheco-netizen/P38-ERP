@@ -58,9 +58,18 @@ const STATUS_OPCOES_POR_ABA = {
   vales: ['Ativo', 'Utilizado Parcialmente', 'Utilizado', 'Expirado', 'Cancelado'],
 };
 
+const STATUS_LABEL_CURTO = {
+  'Aguardando Caixa': 'Ag. Caixa',
+  'Pedido Concluído': 'Concluído',
+};
+
+function statusOpcoesParaAba(activeTab) {
+  return STATUS_OPCOES_POR_ABA[activeTab] || STATUS_OPCOES_POR_ABA.pedidos;
+}
+
 function resolveStatusFiltroParaAba(statusFiltro, activeTab) {
   if (statusFiltro === 'todos') return 'todos';
-  const opcoes = STATUS_OPCOES_POR_ABA[activeTab] || STATUS_OPCOES_POR_ABA.pedidos;
+  const opcoes = statusOpcoesParaAba(activeTab);
   return opcoes.includes(statusFiltro) ? statusFiltro : 'todos';
 }
 
@@ -492,9 +501,18 @@ function VendasGestaoPage() {
     [statusFiltro, activeTab],
   );
 
-  useEffect(() => {
-    setStatusFiltro((prev) => resolveStatusFiltroParaAba(prev, activeTab));
-  }, [activeTab]);
+  const statusOpcoesAtivas = useMemo(
+    () => statusOpcoesParaAba(activeTab),
+    [activeTab],
+  );
+
+  const handleActiveTabChange = (tab) => {
+    setActiveTab(tab);
+    setStatusFiltro((prev) => resolveStatusFiltroParaAba(prev, tab));
+    if (tab !== 'pedidos' && tab !== 'consulta') {
+      setFormasPagamentoFiltro([]);
+    }
+  };
 
   const toggleFormaPagamentoFiltro = (forma) => {
     setFormasPagamentoFiltro((prev) =>
@@ -731,13 +749,14 @@ function VendasGestaoPage() {
       </div>
 
       <GlacialTabsList className="w-full" scrollable>
-        <GlacialTabsTrigger value="rascunhos" activeValue={activeTab} onSelect={setActiveTab} label="Senhas" icon={FileText} />
-        <GlacialTabsTrigger value="pedidos" activeValue={activeTab} onSelect={setActiveTab} label="Pedidos" icon={ShoppingCart} />
-        <GlacialTabsTrigger value="consulta" activeValue={activeTab} onSelect={setActiveTab} label="Consulta" icon={Receipt} />
-        <GlacialTabsTrigger value="vales" activeValue={activeTab} onSelect={setActiveTab} label="Vales" icon={Ticket} />
+        <GlacialTabsTrigger value="rascunhos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Senhas" icon={FileText} />
+        <GlacialTabsTrigger value="pedidos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Pedidos" icon={ShoppingCart} />
+        <GlacialTabsTrigger value="consulta" activeValue={activeTab} onSelect={handleActiveTabChange} label="Consulta" icon={Receipt} />
+        <GlacialTabsTrigger value="vales" activeValue={activeTab} onSelect={handleActiveTabChange} label="Vales" icon={Ticket} />
       </GlacialTabsList>
 
       <Drawer open={showFiltros} onOpenChange={setShowFiltros}>
+        {showFiltros ? (
         <DrawerContent className="border-0 rounded-t-[28px] bg-card dark:bg-card px-4 pb-6">
           <DrawerHeader className="px-0 pb-2 text-left">
             <DrawerTitle className="font-glacial text-foreground">Filtros</DrawerTitle>
@@ -747,54 +766,30 @@ function VendasGestaoPage() {
             <div>
               <label className="block text-xs text-muted-foreground mb-2">Tipo</label>
               <GlacialTabsList className="w-full" scrollable>
-                <GlacialTabsTrigger value="rascunhos" activeValue={activeTab} onSelect={setActiveTab} label="Senhas" icon={FileText} />
-                <GlacialTabsTrigger value="pedidos" activeValue={activeTab} onSelect={setActiveTab} label="Pedidos" icon={ShoppingCart} />
-                <GlacialTabsTrigger value="consulta" activeValue={activeTab} onSelect={setActiveTab} label="Consulta" icon={Receipt} />
-                <GlacialTabsTrigger value="vales" activeValue={activeTab} onSelect={setActiveTab} label="Vales" icon={Ticket} />
+                <GlacialTabsTrigger value="rascunhos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Senhas" icon={FileText} />
+                <GlacialTabsTrigger value="pedidos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Pedidos" icon={ShoppingCart} />
+                <GlacialTabsTrigger value="consulta" activeValue={activeTab} onSelect={handleActiveTabChange} label="Consulta" icon={Receipt} />
+                <GlacialTabsTrigger value="vales" activeValue={activeTab} onSelect={handleActiveTabChange} label="Vales" icon={Ticket} />
               </GlacialTabsList>
             </div>
 
             <div>
               <label className="block text-xs text-muted-foreground mb-2">Status</label>
-              <Select value={statusFiltroResolvido} onValueChange={setStatusFiltro}>
+              <Select
+                key={`status-filtro-${activeTab}`}
+                value={statusFiltroResolvido}
+                onValueChange={setStatusFiltro}
+              >
                 <SelectTrigger className="h-12 rounded-2xl bg-muted dark:bg-muted border-0">
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent className={FILTRO_SELECT_CONTENT}>
                   <SelectItem value="todos">Todos</SelectItem>
-                  {activeTab === 'rascunhos' ? (
-                    <>
-                      <SelectItem value="Criado">Criado</SelectItem>
-                      <SelectItem value="Em Edição">Em Edição</SelectItem>
-                      <SelectItem value="Aguardando Caixa">Ag. Caixa</SelectItem>
-                      <SelectItem value="Convertido">Convertido</SelectItem>
-                      <SelectItem value="Cancelado">Cancelado</SelectItem>
-                    </>
-                  ) : activeTab === 'vales' ? (
-                    <>
-                      <SelectItem value="Ativo">Ativo</SelectItem>
-                      <SelectItem value="Utilizado Parcialmente">Utilizado Parcialmente</SelectItem>
-                      <SelectItem value="Utilizado">Utilizado</SelectItem>
-                      <SelectItem value="Expirado">Expirado</SelectItem>
-                      <SelectItem value="Cancelado">Cancelado</SelectItem>
-                    </>
-                  ) : activeTab === 'consulta' ? (
-                    <>
-                      <SelectItem value="Financeiro OK">Financeiro OK</SelectItem>
-                      <SelectItem value="Em Separação">Em Separação</SelectItem>
-                      <SelectItem value="Em Rota de Entrega">Em Rota de Entrega</SelectItem>
-                      <SelectItem value="Pedido Concluído">Concluído</SelectItem>
-                    </>
-                  ) : (
-                    <>
-                      <SelectItem value="Orçamento">Orçamento</SelectItem>
-                      <SelectItem value="Aguardando Caixa">Ag. Caixa</SelectItem>
-                      <SelectItem value="Financeiro OK">Financeiro OK</SelectItem>
-                      <SelectItem value="Em Separação">Em Separação</SelectItem>
-                      <SelectItem value="Pedido Concluído">Concluído</SelectItem>
-                      <SelectItem value="Cancelado">Cancelado</SelectItem>
-                    </>
-                  )}
+                  {statusOpcoesAtivas.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {STATUS_LABEL_CURTO[status] || status}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -841,6 +836,7 @@ function VendasGestaoPage() {
             <div>
               <label className="block text-xs text-muted-foreground mb-2">Período</label>
               <MobileDateRangePicker
+                nested
                 startDate={dataInicio}
                 endDate={dataFim}
                 onApply={(inicio, fim) => {
@@ -873,6 +869,7 @@ function VendasGestaoPage() {
             </div>
           </div>
         </DrawerContent>
+        ) : null}
       </Drawer>
 
       <div>

@@ -13,17 +13,20 @@ const MONTHS = Array.from({ length: 12 }, (_, index) => ({
 
 const toDate = (value) => {
   if (!value) return undefined;
-  const [year, month, day] = value.split('-').map(Number);
-  return new Date(year, month - 1, day);
+  const parts = value.split('-').map(Number);
+  if (parts.length < 3 || parts.some((n) => Number.isNaN(n))) return undefined;
+  const [year, month, day] = parts;
+  const date = new Date(year, month - 1, day);
+  return Number.isNaN(date.getTime()) ? undefined : date;
 };
 
 const toValue = (date) => {
-  if (!date) return '';
+  if (!date || Number.isNaN(date.getTime())) return '';
   return format(date, 'yyyy-MM-dd');
 };
 
 const formatLabel = (date) => {
-  if (!date) return 'Selecionar';
+  if (!date || Number.isNaN(date.getTime())) return 'Selecionar';
   return format(date, 'dd MMM yyyy', { locale: ptBR });
 };
 
@@ -130,7 +133,7 @@ function MonthPanel({ monthDate, onPrev, onNext, onSelectDay, start, end, mode, 
   );
 }
 
-export default function MobileDateRangePicker({ startDate, endDate, onApply, onClear }) {
+export default function MobileDateRangePicker({ startDate, endDate, onApply, onClear, nested = false }) {
   const [open, setOpen] = useState(false);
   const [tempStart, setTempStart] = useState(startDate);
   const [tempEnd, setTempEnd] = useState(endDate);
@@ -189,7 +192,7 @@ export default function MobileDateRangePicker({ startDate, endDate, onApply, onC
         </span>
       </Button>
 
-      <Drawer open={open} onOpenChange={setOpen}>
+      <Drawer nested={nested} open={open} onOpenChange={setOpen}>
         <DrawerContent className="border-0 rounded-t-[28px] bg-card dark:bg-card px-4 pb-6">
           <DrawerHeader className="px-0 pb-2 text-left">
             <DrawerTitle className="font-glacial text-foreground">Período</DrawerTitle>
