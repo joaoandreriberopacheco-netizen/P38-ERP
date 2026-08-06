@@ -11,9 +11,15 @@ export function lineEstoqueQuantidade(produto, catalogStockContext = null) {
   return ap ? ap.quantidade : produto?.estoque_atual || 0;
 }
 
+/** Quantidade usada em KPIs de valorização (ignora saldo negativo). */
+export function lineEstoqueQuantidadeValorizada(produto, catalogStockContext = null) {
+  const qtd = lineEstoqueQuantidade(produto, catalogStockContext);
+  return qtd > 0 ? qtd : 0;
+}
+
 /** estoque × valor de compra (alinha coluna Vl. Compra do TreeGrid). */
 export function lineValorCompraTotal(produto, catalogStockContext = null) {
-  const qtd = lineEstoqueQuantidade(produto, catalogStockContext);
+  const qtd = lineEstoqueQuantidadeValorizada(produto, catalogStockContext);
   const ap = formatEstoqueApresentacao(produto);
   if (ap) {
     return qtd * getCatalogoComercialView(produto).valorCompraNaEmbalagem;
@@ -23,7 +29,7 @@ export function lineValorCompraTotal(produto, catalogStockContext = null) {
 
 /** estoque × custo total (alinha coluna Custo Total / Inventário R$). */
 export function lineValorCustoTotal(produto, catalogStockContext = null) {
-  const qtd = lineEstoqueQuantidade(produto, catalogStockContext);
+  const qtd = lineEstoqueQuantidadeValorizada(produto, catalogStockContext);
   const ap = formatEstoqueApresentacao(produto);
   if (ap) {
     return qtd * getCatalogoComercialView(produto).custoNaEmbalagem;
@@ -33,7 +39,7 @@ export function lineValorCustoTotal(produto, catalogStockContext = null) {
 
 /** estoque × preço de venda (alinha coluna Preço de venda do TreeGrid). */
 export function lineValorVendaTotal(produto, catalogStockContext = null) {
-  const qtd = lineEstoqueQuantidade(produto, catalogStockContext);
+  const qtd = lineEstoqueQuantidadeValorizada(produto, catalogStockContext);
   const cat = getCatalogoComercialView(produto);
   return qtd * (cat.precoVenda || 0);
 }

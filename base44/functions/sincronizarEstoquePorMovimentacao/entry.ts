@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
     const movimentacoes = await base44.asServiceRole.entities.MovimentacaoEstoque.filter({ produto_id: produtoId }, '-created_date', 1000);
     const saldoMovimentos = calcularSaldo(movimentacoes);
     const estoqueAvariado = Number(produto.estoque_avariado) || 0;
-    const estoqueCorreto = Math.max(0, saldoMovimentos - estoqueAvariado);
+    const estoqueCorreto = saldoMovimentos - estoqueAvariado;
     const estoqueAtual = Number(produto.estoque_atual) || 0;
 
     if (estoqueAtual === estoqueCorreto) {
