@@ -397,7 +397,7 @@ export default function TabelaDinamica({ produtos, visibleColumns, fornecedorMap
                 ...l1Node.items,
                 ...Object.values(l1Node.children).flatMap(c => c.items)
               ];
-              const l1ValorEstoque = allL1Items.reduce((s, p) => s + (p.estoque_atual || 0) * (p.preco_custo_calculado || 0), 0);
+              const l1ValorEstoque = allL1Items.reduce((s, p) => s + Math.max(0, p.estoque_atual || 0) * (p.preco_custo_calculado || 0), 0);
               const l1AbaixoMin = allL1Items.filter(p => p.ativo && p.estoque_atual <= p.estoque_minimo).length;
               const l1EstoqueTotal = allL1Items.reduce((s, p) => s + (p.estoque_atual || 0), 0);
               const hasChildren = Object.keys(l1Node.children).length > 0;
@@ -434,7 +434,7 @@ export default function TabelaDinamica({ produtos, visibleColumns, fornecedorMap
                       {Object.entries(l1Node.children).map(([l2Key, l2Node]) => {
                         const l2FullKey = `${l1Key}::${l2Key}`;
                         const l2Expanded = expanded[l2FullKey] !== false;
-                        const l2ValorEstoque = l2Node.items.reduce((s, p) => s + (p.estoque_atual || 0) * (p.preco_custo_calculado || 0), 0);
+                        const l2ValorEstoque = l2Node.items.reduce((s, p) => s + Math.max(0, p.estoque_atual || 0) * (p.preco_custo_calculado || 0), 0);
                         const l2AbaixoMin = l2Node.items.filter(p => p.ativo && p.estoque_atual <= p.estoque_minimo).length;
                         const l2EstoqueTotal = l2Node.items.reduce((s, p) => s + (p.estoque_atual || 0), 0);
 

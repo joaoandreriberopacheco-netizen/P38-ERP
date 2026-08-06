@@ -228,7 +228,7 @@ export function buildCategoryTree(produtos) {
 
   for (const p of produtos) {
     const custo = calcCusto(p);
-    p.inventario_valorizado = custo * (p.estoque_atual || 0);
+    p.inventario_valorizado = custo * Math.max(0, Number(p.estoque_atual) || 0);
     const label = (p.categoria_nome || 'Sem categoria').trim() || 'Sem categoria';
     if (!byCategory.has(label)) byCategory.set(label, []);
     byCategory.get(label).push(p);
@@ -271,7 +271,7 @@ export function buildTree(produtos) {
 
   for (const p of produtos) {
     const custo = calcCusto(p);
-    p.inventario_valorizado = custo * (p.estoque_atual || 0);
+    p.inventario_valorizado = custo * Math.max(0, Number(p.estoque_atual) || 0);
     const h1 = (p.campo_hierarquico_1 || '(sem grupo)').trim();
     const h2 = (p.campo_hierarquico_2 || '').trim();
     const h3 = (p.campo_hierarquico_3 || '').trim();

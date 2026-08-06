@@ -302,7 +302,7 @@ export default function PDVSupermercado() {
         const produto = await base44.entities.Produto.get(item.produto_id);
         if (produto) {
           await base44.entities.Produto.update(item.produto_id, {
-            estoque_atual: Math.max(0, (produto.estoque_atual || 0) - (item.quantidade_base || item.quantidade))
+            estoque_atual: (produto.estoque_atual || 0) - (item.quantidade_base || item.quantidade)
           });
         }
       }
