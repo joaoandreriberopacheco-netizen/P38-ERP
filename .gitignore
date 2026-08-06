@@ -55,6 +55,10 @@ src/generated/catalog-overlay-index.json
 secrets/p38-chaves.txt
 secrets/p38-chaves.local.txt
 
+# Artefactos temporários de agentes / sessões (nunca versionar)
+_mcp*
+.cursor-tmp-mcp-*
+
 .env
 base44/.app.jsonc
 supabase/.temp/

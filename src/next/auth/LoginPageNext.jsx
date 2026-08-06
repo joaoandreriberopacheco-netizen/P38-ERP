@@ -219,6 +219,12 @@ export default function LoginPageNext() {
                 Activar acesso
               </Link>
             </p>
+
+            <p className="text-center text-xs text-neutral-400 dark:text-neutral-500 pt-2">
+              <a href="/landing.html" className="hover:underline underline-offset-4">
+                Sobre o P38
+              </a>
+            </p>
           </div>
         </main>
       </div>
