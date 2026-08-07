@@ -509,7 +509,10 @@ export function resolveAvariaLinhaCompraFator1(item = {}, product = null) {
   return roundToTwoDecimals((base * pctEff) / 100);
 }
 
-/** Soma componentes de custo do produto (fator-1), incluindo avaria %. */
+/**
+ * Pré-visualização no formulário/import — espelha `p38_calc_preco_custo_fator1` (SQL).
+ * Após gravar, use apenas `preco_custo_calculado` via `resolveCustoTotalUnitBaseProduto`.
+ */
 export function calcPrecoCustoFromComponents(p = {}) {
   const valorCompra = normalizeNumber(p?.valor_compra, 0);
   return roundToTwoDecimals(
@@ -523,10 +526,12 @@ export function calcPrecoCustoFromComponents(p = {}) {
   );
 }
 
+/**
+ * Custo unitário fator-1 canónico — coluna dorsal `produto.preco_custo_calculado` (SQL).
+ * Mantida pelo trigger `p38_calc_preco_custo_fator1`; relatórios e dashboards leem daqui.
+ */
 export function resolveCustoTotalUnitBaseProduto(p) {
-  const salvo = normalizeNumber(p?.preco_custo_calculado, 0);
-  if (salvo > 0) return salvo;
-  return calcPrecoCustoFromComponents(p);
+  return normalizeNumber(p?.preco_custo_calculado, 0);
 }
 
 /**

@@ -19,6 +19,7 @@ import {
   getDescontoPctApresentacaoItem,
   isItemAcrescimoCompra,
   calcPrecoCustoFromComponents,
+  resolveCustoTotalUnitBaseProduto,
 } from '@/lib/productUnits';
 
 const findProduto = (produtos, produtoId) =>
@@ -394,7 +395,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens = [], pro
     if (!p) return null;
     const c = costs[item.produto_id] || {};
     const novoCusto = calcCusto(c);
-    const custoAtual = p.preco_custo_calculado || p.valor_compra || 0;
+    const custoAtual = resolveCustoTotalUnitBaseProduto(p);
     const diferencaCusto = novoCusto - custoAtual;
     const temDiferenca = Math.abs(diferencaCusto) > 0.01;
     const principal = resolvePrimaryFromFactorOne(p, 'UN');

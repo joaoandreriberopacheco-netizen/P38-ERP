@@ -18,6 +18,7 @@ import {
   sumCatalogTransitStockValueByAbcd,
 } from '@/lib/catalogStockTotals';
 import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
+import { resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
 import { fetchDadosVendaAbcd90d } from '@/lib/fetchPedidosVenda90d';
 import {
   calcValorItensPedidoCompra,
@@ -671,7 +672,7 @@ export default function EstoqueTab() {
             produto.id,
             {
               estoqueAtual: Number(produto.estoque_atual || 0),
-              custoAtual: Number(produto.preco_custo_calculado || produto.valor_compra || 0),
+              custoAtual: Number(resolveCustoTotalUnitBaseProduto(produto)),
             },
           ])
         );
@@ -685,7 +686,7 @@ export default function EstoqueTab() {
           .filter((movimento) => movimento.skuId && movimento.date && movimento.deltaQuantidade !== 0);
 
         const custoProdutoMap = new Map(
-          produtosLista.map((produto) => [produto.id, Number(produto.preco_custo_calculado || produto.valor_compra || 0)])
+          produtosLista.map((produto) => [produto.id, Number(resolveCustoTotalUnitBaseProduto(produto))])
         );
 
         const nivelEstoqueSeries = monthBuckets.map((bucket) => {

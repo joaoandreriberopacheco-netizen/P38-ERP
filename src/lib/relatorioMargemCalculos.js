@@ -194,6 +194,11 @@ export function acumularCustoComponentesMargem(entry, componentesUnit, quantidad
 }
 
 export function calcularCustoTotalDosComponentes(row = {}) {
+  const unit = normalizeCustoNum(row.custo_unitario_cadastro);
+  const qtdBase = normalizeCustoNum(row.quantidade_base_vendida);
+  if (unit > 0 && qtdBase > 0) {
+    return roundMoney(unit * qtdBase);
+  }
   let total = 0;
   for (const campo of CUSTO_MARGEM_CAMPOS) {
     total += normalizeCustoNum(row[campo.totalKey]);
@@ -209,21 +214,11 @@ export function somarCamposCustoComponentes(acc = {}, row = {}) {
   return out;
 }
 
-/** Custo unitário na unidade base — referência canónica do cadastro (SQL + app). */
+/** Custo unitário na unidade base — lê `preco_custo_calculado` (SQL). */
 export function resolveCustoUnitarioMargem(item = {}, product = null) {
   if (product) {
-    const canon = resolveCustoTotalUnitBaseProduto(product);
-    if (canon > 0) return roundMoney(canon);
+    return roundMoney(resolveCustoTotalUnitBaseProduto(product));
   }
-  const componentes = resolveCustoComponentesUnitBaseMargem(product, item);
-  const total =
-    componentes.valor_compra +
-    componentes.custo_avaria +
-    componentes.custo_frete +
-    componentes.custo_imposto1 +
-    componentes.custo_imposto2 +
-    componentes.custo_outros;
-  if (total > 0) return roundMoney(total);
   return normalizeCustoNum(item.custo_unitario_momento ?? item.custo_unitario ?? item.custo_calculado);
 }
 

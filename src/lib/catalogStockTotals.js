@@ -1,13 +1,10 @@
-import { formatEstoqueApresentacao, getCatalogoComercialView } from '@/lib/productUnits';
-import { calcCusto } from '@/components/produtos/treegrid/useTreeGrid';
+import { formatEstoqueApresentacao, getCatalogoComercialView, resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
 import { createCatalogStockContext, resolveCatalogEstoqueExibicao } from '@/lib/catalogEstoqueVirtual';
 import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
 
 /** Custo unitário na unidade base do cadastro (totais gerenciais / dashboard). */
 export function resolveProdutoCustoUnitarioBase(produto) {
-  const salvo = Number(produto?.preco_custo_calculado);
-  if (Number.isFinite(salvo) && salvo > 0) return salvo;
-  return Number(produto?.valor_compra) || 0;
+  return resolveCustoTotalUnitBaseProduto(produto);
 }
 
 function transitValorProdutoCatalogo(produto, catalogStockContext) {
@@ -95,7 +92,7 @@ export function lineValorCustoTotal(produto, catalogStockContext = null) {
   if (ap) {
     return qtd * getCatalogoComercialView(produto).custoNaEmbalagem;
   }
-  return qtd * calcCusto(produto);
+  return qtd * resolveCustoTotalUnitBaseProduto(produto);
 }
 
 /** estoque × preço de venda (alinha coluna Preço de venda do TreeGrid). */
