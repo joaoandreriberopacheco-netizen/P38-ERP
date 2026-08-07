@@ -116,11 +116,10 @@ export function passaFiltroCorteHistorico(dataKey, { mostrarHistoricoAnterior, d
   return dataKey >= dataCorte;
 }
 
+import { normalizeSearchText } from '@/lib/normalizeSearchText';
+
 function normalizarTextoConta(s) {
-  return String(s || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/\p{M}/gu, '');
+  return normalizeSearchText(s);
 }
 
 /** Contas de migração / transição — ocultas por defeito em Caixas e Bancos. */

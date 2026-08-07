@@ -1,8 +1,10 @@
+import { normalizeSearchText } from '@/lib/normalizeSearchText';
+
 /** Prefixo na busca do catálogo para filtrar por categoria de cadastro (área A–J). */
 export const CATALOG_AREA_SEARCH_PREFIX = 'xx';
 
 function normalizeAreaText(value) {
-  return String(value || '').trim().toLocaleLowerCase('pt-BR');
+  return normalizeSearchText(value);
 }
 
 /**

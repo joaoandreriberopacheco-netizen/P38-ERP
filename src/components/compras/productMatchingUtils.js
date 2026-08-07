@@ -1,4 +1,5 @@
 import { parseSearchTerms } from '@/lib/searchTokens';
+import { normalizeSearchText } from '@/lib/normalizeSearchText';
 import { normalizeProductCodeForSearch, productCodesMatch } from '@/lib/productCode';
 
 const MATCH_STOPWORDS = new Set([
@@ -135,11 +136,7 @@ export function getProdutoLabel(produto) {
 }
 
 export function normalizeProductSearchText(value) {
-  return String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
+  return normalizeSearchText(value);
 }
 
 export function getProductSearchText(produto) {

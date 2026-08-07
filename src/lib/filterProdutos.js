@@ -1,5 +1,6 @@
 import { isCadastroIncompleto } from '@/components/produtos/ProdutosHelpers';
 import { parseSearchTerms } from '@/lib/searchTokens';
+import { normalizeSearchText, searchTextIncludes } from '@/lib/normalizeSearchText';
 import {
   produtoMatchesCategoryAreaTokens,
   splitCatalogSearchTokens,
@@ -104,9 +105,9 @@ export function produtoMatchesSearchTerm(produto, rawTerm, options = {}) {
     ...(Array.isArray(produto?.tags) ? produto.tags : []),
   ]
     .filter(Boolean)
-    .map((s) => String(s).toLowerCase());
+    .map((s) => normalizeSearchText(s));
   return textTerms.every((term) =>
-    haystack.some((s) => (startsWith ? s.startsWith(term) : s.includes(term)))
+    haystack.some((s) => searchTextIncludes(s, term, { startsWith }))
   );
 }
 
@@ -153,7 +154,7 @@ function produtoMatchesStructuralFilters(p, filters, catalogStockContext) {
   const tagMatch =
     !filters.tag ||
     (Array.isArray(p.tags) &&
-      p.tags.some((t) => t && t.toLowerCase().includes(String(filters.tag).toLowerCase())));
+      p.tags.some((t) => t && searchTextIncludes(t, filters.tag)));
   const fornecedorMatch =
     filters.fornecedorId === 'all' || p.fornecedor_padrao_id === filters.fornecedorId;
   const vitrineMatch = produtoMatchesVitrineFilter(p, filters.unidadeVitrine);

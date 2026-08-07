@@ -9,11 +9,11 @@ import {
   produtoMatchesVitrineFilter,
 } from '@/lib/filterProdutos';
 import { getUnidadeExibicaoSigla } from '@/lib/productUnits';
-import {
-  sugestaoPrecisaReposicao,
+import { sugestaoPrecisaReposicao,
   sugestaoTemGiroVelocidade,
 } from '@/lib/calcularSugestaoCompraVelocidade';
 import { linhaExigeAcaoCompra } from '@/lib/sugestaoCompraOperationalMode';
+import { searchTextIncludes } from '@/lib/normalizeSearchText';
 
 export const SUGESTAO_STATUS_ESTOQUE_OPTIONS = [
   { value: 'all', label: 'Todos' },
@@ -127,8 +127,7 @@ function linhaMatchesSearch(linha, filters) {
   const term = String(filters?.searchTerm || '').trim();
   if (!term) return true;
 
-  const label = String(linha?.label || '').toLowerCase();
-  const haystackLabel = label.includes(term.toLowerCase());
+  const haystackLabel = searchTextIncludes(linha?.label || '', term);
   if (haystackLabel) return true;
 
   return (linha?.skus || []).some((produto) =>

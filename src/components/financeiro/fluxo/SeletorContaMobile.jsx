@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Search, Check, ChevronRight, Wallet } from 'lucide-react';
 
+import { searchTextIncludes } from '@/lib/normalizeSearchText';
+
 function ListaBuscaContas({ busca, onBuscaChange, opcoes, value, onSelect, listClassName }) {
   return (
     <>
@@ -68,9 +70,9 @@ export default function SeletorContaMobile({
 
   const opcoes = useMemo(() => {
     const base = contas.filter((c) => !excludeIds.includes(c.id));
-    const q = busca.trim().toLowerCase();
+    const q = busca.trim();
     if (!q) return base;
-    return base.filter((c) => (c.nome || '').toLowerCase().includes(q));
+    return base.filter((c) => searchTextIncludes(c.nome || '', q));
   }, [contas, busca, excludeIds]);
 
   const selecionada = contas.find((c) => c.id === value);

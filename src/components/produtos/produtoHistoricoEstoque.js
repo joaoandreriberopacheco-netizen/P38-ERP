@@ -2,6 +2,8 @@
  * Extrato de estoque: saldo após cada movimentação reconciliado com estoque_atual do produto.
  */
 
+import { normalizeSearchText } from '@/lib/normalizeSearchText';
+
 function localDateKey(value) {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return 'sem-data';
@@ -156,25 +158,26 @@ export function buildExtratoItensVirtuais(diasExtratoMobile) {
 }
 
 export function movimentacaoPassaFiltros(mov, { busca, tipoFiltro, refTipo, dataIni, dataFim }) {
-  const q = (busca || '').trim().toLowerCase();
+  const q = normalizeSearchText(busca);
   if (q) {
-    const blob = [
-      mov?.referencia_numero,
-      mov?.documento_referencia,
-      mov?.referencia_id,
-      mov?.cliente_nome,
-      mov?.terceiro_nome,
-      mov?.referencia_cliente_nome,
-      mov?.fornecedor_nome,
-      mov?.nome_terceiro,
-      mov?.produto_nome,
-      mov?.referencia_tipo,
-      mov?.motivo,
-      mov?.usuario_responsavel,
-    ]
-      .filter(Boolean)
-      .join(' ')
-      .toLowerCase();
+    const blob = normalizeSearchText(
+      [
+        mov?.referencia_numero,
+        mov?.documento_referencia,
+        mov?.referencia_id,
+        mov?.cliente_nome,
+        mov?.terceiro_nome,
+        mov?.referencia_cliente_nome,
+        mov?.fornecedor_nome,
+        mov?.nome_terceiro,
+        mov?.produto_nome,
+        mov?.referencia_tipo,
+        mov?.motivo,
+        mov?.usuario_responsavel,
+      ]
+        .filter(Boolean)
+        .join(' '),
+    );
     if (!blob.includes(q)) return false;
   }
 

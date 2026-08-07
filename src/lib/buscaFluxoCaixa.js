@@ -1,3 +1,5 @@
+import { normalizeSearchText } from '@/lib/normalizeSearchText';
+
 /**
  * Busca no Fluxo de Caixa.
  * Prefixo \\ (duas barras) filtra por conta: \\PP → "CAIXA PP".
@@ -18,23 +20,19 @@ export function parseBuscaFluxoCaixa(search = '') {
   return { modo: 'texto', contaQuery: null, texto: raw };
 }
 
-function normalizarBusca(s) {
-  return String(s || '').toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
-}
-
 export function contaFinanceiraMatchBusca(conta, contaQuery) {
   if (!conta || !contaQuery) return false;
-  const q = normalizarBusca(contaQuery);
-  const nome = normalizarBusca(conta.nome);
+  const q = normalizeSearchText(contaQuery);
+  const nome = normalizeSearchText(conta.nome);
   return nome.includes(q);
 }
 
 /** Resolve se o lançamento pertence à conta indicada na busca \\conta. */
 export function lancamentoMatchBuscaConta(l, contaQuery, contas = [], contasById = {}) {
   if (!contaQuery) return true;
-  const q = normalizarBusca(contaQuery);
+  const q = normalizeSearchText(contaQuery);
 
-  const nomeLanc = normalizarBusca(l.conta_financeira_nome);
+  const nomeLanc = normalizeSearchText(l.conta_financeira_nome);
   if (nomeLanc && nomeLanc.includes(q)) return true;
 
   if (l.conta_financeira_id) {
@@ -51,13 +49,13 @@ export function lancamentoMatchBuscaConta(l, contaQuery, contas = [], contasById
 
 export function lancamentoMatchBuscaTexto(l, texto) {
   if (!texto) return true;
-  const q = normalizarBusca(texto);
+  const q = normalizeSearchText(texto);
   return (
-    normalizarBusca(l.descricao).includes(q) ||
-    normalizarBusca(l.categoria).includes(q) ||
-    normalizarBusca(l.conta_financeira_nome).includes(q) ||
-    normalizarBusca(l.referencia_numero).includes(q) ||
-    (Array.isArray(l.tags) && l.tags.some((t) => normalizarBusca(t).includes(q)))
+    normalizeSearchText(l.descricao).includes(q) ||
+    normalizeSearchText(l.categoria).includes(q) ||
+    normalizeSearchText(l.conta_financeira_nome).includes(q) ||
+    normalizeSearchText(l.referencia_numero).includes(q) ||
+    (Array.isArray(l.tags) && l.tags.some((t) => normalizeSearchText(t).includes(q)))
   );
 }
 
