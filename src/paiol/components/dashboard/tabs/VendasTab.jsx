@@ -31,6 +31,7 @@ import {
   saleWithinMonthTemporalCut,
 } from '@/lib/dashboardVendasPeriod';
 import { resolveValorPedidoVenda } from '@/lib/financialUtils';
+import { resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
 import {
   AcumuladoKpiChart,
   AccumulatedLegendLine,
@@ -359,7 +360,7 @@ export default function VendasTab() {
         const productCostMap = new Map(
           produtosLista.map((produto) => [
             produto.id,
-            Number(produto.preco_custo_calculado || produto.valor_compra || 0),
+            Number(resolveCustoTotalUnitBaseProduto(produto)),
           ])
         );
 

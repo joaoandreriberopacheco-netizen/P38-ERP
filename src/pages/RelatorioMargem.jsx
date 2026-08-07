@@ -30,6 +30,9 @@ import {
   calcularCustoTotalDosComponentes,
   criarCamposCustoComponentesZerados,
   somarCamposCustoComponentes,
+  buildCustoBreakdownLineMargem,
+  labelComposicaoCustoMargem,
+  escalarValorCustoMargemUnidadeExibicao,
   CUSTO_MARGEM_CAMPOS,
   vendaNoIntervaloConsulta,
 } from '@/lib/relatorioMargemCalculos';
@@ -168,18 +171,12 @@ function marginDesktopQuantClass(tier) {
 }
 
 function buildCustoBreakdownLine(row, mode = 'unit') {
-  const keyType = mode === 'unit' ? 'unitKey' : 'totalKey';
-  const parts = CUSTO_MARGEM_CAMPOS.map((campo) => {
-    const raw = Number(row?.[campo[keyType]]) || 0;
-    if (Math.abs(raw) < 0.0001) return null;
-    const signed = campo.subtract ? -raw : raw;
-    return `${campo.shortLabel} ${formatNumDisplay(signed)}`;
-  }).filter(Boolean);
-  return parts.join(' · ');
+  return buildCustoBreakdownLineMargem(row, { mode, formatNum: formatNumDisplay });
 }
 
 function MargemCustoValorTooltip({ row, mode = 'unit', children, className = '' }) {
   const line = buildCustoBreakdownLine(row, mode);
+  const unidade = String(row?.unidade_exibicao || '').trim().toUpperCase();
   if (!line) {
     return <span className={className}>{children}</span>;
   }
@@ -196,6 +193,9 @@ function MargemCustoValorTooltip({ row, mode = 'unit', children, className = '' 
         side="top"
         className="max-w-[min(100vw-2rem,28rem)] bg-popover text-popover-foreground border border-border text-xs font-normal normal-case tracking-normal"
       >
+        {mode === 'unit' && unidade ? (
+          <p className="text-[10px] text-muted-foreground mb-1">Valores por {unidade}</p>
+        ) : null}
         {line}
       </TooltipContent>
     </Tooltip>
@@ -213,7 +213,7 @@ function MargemCustoDetalheTotais({ totals }) {
   return (
     <div className={`mx-3 md:mx-0 mt-2 rounded-lg border ${MARGIN_TABLE_BORDER} ${MARGIN_TABLE_PANEL} px-3 py-2.5`}>
       <p className={`${MARGIN_TABLE_MICRO} uppercase tracking-wide text-muted-foreground`}>
-        Composição do custo (preços de hoje)
+        {labelComposicaoCustoMargem(totals, { porUnidade: false })}
       </p>
       <div className="mt-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-3 gap-y-2">
         {items.map((item) => (
@@ -869,7 +869,7 @@ export default function RelatorioMargemVendas() {
        const custo_unitario_calc =
          item.quantidade_vendida > 0
            ? custo_total / item.quantidade_vendida
-           : item.custo_unitario_cadastro ?? 0;
+           : escalarValorCustoMargemUnidadeExibicao(item.custo_unitario_cadastro ?? 0, item);
 
       return {
          ...item,
@@ -878,6 +878,7 @@ export default function RelatorioMargemVendas() {
          lucro_total,
          valor_unitario_medio,
          custo_unitario_calc,
+         custo_unitario_exibicao: custo_unitario_calc,
          margem_percentual,
          markup_percentual,
          lucro_marginal

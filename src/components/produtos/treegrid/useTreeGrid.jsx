@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { getCatalogoComercialView, formatEstoqueApresentacao, formatQuantidadeCatalogoApresentacao } from '@/lib/productUnits';
+import { getCatalogoComercialView, formatEstoqueApresentacao, formatQuantidadeCatalogoApresentacao, resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
 import { compareTreeLabels, sortedTreeChildEntries } from '@/lib/treeSort';
 import {
   aggregatePerformanceFromSkus,
@@ -45,22 +45,9 @@ export function isSoloFamilyBranch(node) {
   return collectSkus(node).length === 1;
 }
 
-// ── Calcula o custo real de um produto (usa preco_custo_calculado se válido,
-//    senão reconstrói a partir dos componentes) ────────────────────────────────
+// ── Custo fator-1: coluna SQL preco_custo_calculado ─────────────────────────
 export function calcCusto(p) {
-  const salvo = p.preco_custo_calculado || 0;
-  if (salvo > 0) return salvo;
-  const vc = p.valor_compra || 0;
-  const avaria = vc > 0 && (p.avaria_percentual || 0) > 0
-    ? (vc * (p.avaria_percentual || 0)) / 100
-    : 0;
-  return vc
-    + (p.custo_frete_padrao || 0)
-    + (p.custo_imposto1_padrao || 0)
-    + (p.custo_imposto2_padrao || 0)
-    + (p.custo_outros_padrao || 0)
-    + avaria
-    - (p.desconto_compra_padrao || 0);
+  return resolveCustoTotalUnitBaseProduto(p);
 }
 
 // ── Markup % sobre custo na embalagem comercial (alinha ao catálogo A29) ─────
