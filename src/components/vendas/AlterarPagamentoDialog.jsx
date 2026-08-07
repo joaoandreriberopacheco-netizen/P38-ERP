@@ -410,7 +410,7 @@ export default function AlterarPagamentoDialog({ open, onClose }) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={(nextOpen) => { if (!nextOpen) handleClose(); }}>
       <DialogContent className="m-0 flex h-full max-h-none w-full max-w-none flex-col rounded-none bg-muted/40 p-0 dark:bg-background">
         <div className="flex flex-shrink-0 items-center border-b border-border/40 bg-card px-4 py-3 dark:border-border/40 dark:bg-muted">
           <button

@@ -1,4 +1,4 @@
-import { memo, useState, useEffect, useRef, useMemo } from 'react';
+import { memo, useState, useRef, useMemo } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { base44 } from '@/api/base44Client';
 import {
@@ -79,8 +79,6 @@ const FILTRO_SELECT_CONTENT =
 
 const VIRTUAL_LIST_STYLE = { maxHeight: 'calc(100vh - 260px)' };
 const VIRTUAL_OVERSCAN = 8;
-
-const measureVirtualItem = (element) => element?.getBoundingClientRect().height ?? 0;
 
 const getVirtualPadding = (virtualItems, totalSize) => {
   if (virtualItems.length === 0) {
@@ -167,7 +165,6 @@ function VirtualizedPedidoCards({ pedidos, onVerDetalhes, onEdit, onReimprimir, 
     getScrollElement: () => parentRef.current,
     estimateSize: () => 76,
     getItemKey: (index) => pedidos[index]?.id ?? index,
-    measureElement: measureVirtualItem,
     overscan: VIRTUAL_OVERSCAN,
   });
   const virtualItems = rowVirtualizer.getVirtualItems();
@@ -182,7 +179,6 @@ function VirtualizedPedidoCards({ pedidos, onVerDetalhes, onEdit, onReimprimir, 
             <div
               key={virtualRow.key}
               data-index={virtualRow.index}
-              ref={rowVirtualizer.measureElement}
               className="absolute left-0 top-0 w-full"
               style={{ transform: `translateY(${virtualRow.start}px)` }}
             >
@@ -209,7 +205,6 @@ function VirtualizedPedidosTable({ pedidos, onVerDetalhes, onEdit, onReimprimir,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 74,
     getItemKey: (index) => pedidos[index]?.id ?? index,
-    measureElement: measureVirtualItem,
     overscan: VIRTUAL_OVERSCAN,
   });
   const virtualItems = rowVirtualizer.getVirtualItems();
@@ -243,7 +238,6 @@ function VirtualizedPedidosTable({ pedidos, onVerDetalhes, onEdit, onReimprimir,
                 <TableRow
                   key={virtualRow.key}
                   data-index={virtualRow.index}
-                  ref={rowVirtualizer.measureElement}
                 >
                   <TableCell>
                     <PedidoActionsMenu
@@ -338,7 +332,6 @@ function VirtualizedRascunhoLines({ rascunhos, onInutilizar }) {
     getScrollElement: () => parentRef.current,
     estimateSize: () => 88,
     getItemKey: (index) => rascunhos[index]?.id ?? index,
-    measureElement: measureVirtualItem,
     overscan: VIRTUAL_OVERSCAN,
   });
   const virtualItems = rowVirtualizer.getVirtualItems();
@@ -353,7 +346,6 @@ function VirtualizedRascunhoLines({ rascunhos, onInutilizar }) {
             <div
               key={virtualRow.key}
               data-index={virtualRow.index}
-              ref={rowVirtualizer.measureElement}
               className="absolute left-0 top-0 w-full"
               style={{ transform: `translateY(${virtualRow.start}px)` }}
             >
@@ -377,7 +369,6 @@ function VirtualizedRascunhosTable({ rascunhos, onInutilizar }) {
     getScrollElement: () => parentRef.current,
     estimateSize: () => 92,
     getItemKey: (index) => rascunhos[index]?.id ?? index,
-    measureElement: measureVirtualItem,
     overscan: VIRTUAL_OVERSCAN,
   });
   const virtualItems = rowVirtualizer.getVirtualItems();
@@ -410,7 +401,6 @@ function VirtualizedRascunhosTable({ rascunhos, onInutilizar }) {
               <TableRow
                 key={virtualRow.key}
                 data-index={virtualRow.index}
-                ref={rowVirtualizer.measureElement}
                 className="border-b border-border/40 hover:bg-muted/40 dark:hover:bg-muted/50"
               >
                 <TableCell>
@@ -463,15 +453,12 @@ function VendasGestaoPage() {
     isLoading: rascunhosLoading,
     refetch: refetchRascunhos,
   } = useRascunhosPedidoVendaListQuery();
-  const [pedidosFiltrados, setPedidosFiltrados] = useState([]);
-  const [rascunhosFiltrados, setRascunhosFiltrados] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFiltro, setStatusFiltro] = useState('todos');
   const [formasPagamentoFiltro, setFormasPagamentoFiltro] = useState([]);
   const [dataInicio, setDataInicio] = useState(() => getPeriodoMesCorrente().start);
   const [dataFim, setDataFim] = useState(() => getPeriodoMesCorrente().end);
-  const [isLoading, setIsLoading] = useState(true);
-
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [pedidoDetalhes, setPedidoDetalhes] = useState(null);
@@ -484,12 +471,8 @@ function VendasGestaoPage() {
   const [showComprovante, setShowComprovante] = useState(false);
   const [pedidoParaImprimir, setPedidoParaImprimir] = useState(null);
   const [showFiltros, setShowFiltros] = useState(false);
-  const [stats, setStats] = useState({
-    orcamentos: 0,
-    aprovados: 0,
-    finalizados: 0,
-    totalMes: 0
-  });
+
+  const isLoading = pedidosLoading || rascunhosLoading || isRefreshing;
 
   const formasPagamentoOpcoes = useMemo(
     () => listarFormasPagamentoParaFiltro(pedidos),
@@ -521,33 +504,16 @@ function VendasGestaoPage() {
   };
 
   const loadPedidos = async () => {
-    setIsLoading(true);
-    await Promise.all([refetchPedidos(), refetchRascunhos()]);
-    await Promise.all([invalidateHomeKpis()]);
-    setIsLoading(false);
+    setIsRefreshing(true);
+    try {
+      await Promise.all([refetchPedidos(), refetchRascunhos()]);
+      await invalidateHomeKpis();
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
-  useEffect(() => {
-    setIsLoading(pedidosLoading || rascunhosLoading);
-  }, [pedidosLoading, rascunhosLoading]);
-
-  useEffect(() => {
-    const nextStats = {
-      orcamentos: pedidos.filter((p) => p.status === 'Orçamento').length,
-      aprovados: pedidos.filter((p) => p.status === 'Aprovado').length,
-      finalizados: pedidos.filter((p) => p.status === 'Finalizado').length,
-      totalMes: pedidos
-        .filter(
-          (p) =>
-            p.status === 'Finalizado' &&
-            toLocalDateKey(p.created_date).startsWith(dataHoje().slice(0, 7))
-        )
-        .reduce((acc, p) => acc + (p.valor_total || 0), 0),
-    };
-    setStats(nextStats);
-  }, [pedidos]);
-
-  useEffect(() => {
+  const pedidosFiltrados = useMemo(() => {
     let currentFiltered = pedidos;
 
     if (searchTerm) {
@@ -561,7 +527,6 @@ function VendasGestaoPage() {
       currentFiltered = currentFiltered.filter(p => p.status === statusFiltroResolvido);
     }
 
-    // Filtro de data
     if (dataInicio || dataFim) {
       currentFiltered = currentFiltered.filter(p => dateRangeMatches(p.created_date, dataInicio, dataFim));
     }
@@ -572,10 +537,10 @@ function VendasGestaoPage() {
       );
     }
 
-    setPedidosFiltrados(currentFiltered);
+    return currentFiltered;
   }, [pedidos, searchTerm, statusFiltroResolvido, dataInicio, dataFim, formasPagamentoFiltro]);
 
-  useEffect(() => {
+  const rascunhosFiltrados = useMemo(() => {
     let currentFiltered = rascunhos;
 
     if (searchTerm) {
@@ -593,7 +558,7 @@ function VendasGestaoPage() {
       currentFiltered = currentFiltered.filter(r => dateRangeMatches(r.created_date, dataInicio, dataFim));
     }
 
-    setRascunhosFiltrados(currentFiltered);
+    return currentFiltered;
   }, [rascunhos, searchTerm, statusFiltroResolvido, dataInicio, dataFim]);
 
   const vendasConsulta = useMemo(() => {
@@ -982,9 +947,12 @@ function VendasGestaoPage() {
         )}
       </div>
 
-      {/* Dialogs de operações */}
-      <AlterarPagamentoDialog open={showAlterarPagamento} onClose={() => setShowAlterarPagamento(false)} />
-      <AlterarClientePedidoDialog
+      {/* Dialogs de operações — montar só quando abertos (evita loops Radix/portals) */}
+      {showAlterarPagamento ? (
+        <AlterarPagamentoDialog open={showAlterarPagamento} onClose={() => setShowAlterarPagamento(false)} />
+      ) : null}
+      {showAlterarCliente && pedidoParaAlterarCliente ? (
+        <AlterarClientePedidoDialog
         open={showAlterarCliente}
         pedido={pedidoParaAlterarCliente}
         onClose={() => {
@@ -1006,16 +974,19 @@ function VendasGestaoPage() {
           loadPedidos();
         }}
       />
+      ) : null}
 
-      {/* Dialog de Detalhes */}
-      <DetalhesPedidoVenda
-        pedido={pedidoDetalhes}
-        isOpen={showDetalhes}
-        onClose={() => {
-          setShowDetalhes(false);
-          setPedidoDetalhes(null);
-        }}
-      />
+      {/* Dialog de Detalhes — montar só quando aberto (evita loop de updates com outros dialogs) */}
+      {showDetalhes && pedidoDetalhes ? (
+        <DetalhesPedidoVenda
+          pedido={pedidoDetalhes}
+          isOpen={showDetalhes}
+          onClose={() => {
+            setShowDetalhes(false);
+            setPedidoDetalhes(null);
+          }}
+        />
+      ) : null}
 
       {/* Dialog de Reimpressão */}
       {showComprovante && pedidoParaImprimir && (
