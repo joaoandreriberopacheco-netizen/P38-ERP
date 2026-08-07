@@ -214,6 +214,60 @@ export function somarCamposCustoComponentes(acc = {}, row = {}) {
   return out;
 }
 
+/**
+ * Fator de conversão fator-1 → unidade de vitrine/exibição da linha.
+ * Ex.: 54 m² em 27 CX → escala 2 (custo e componentes do hover em R$/CX).
+ */
+export function resolveMargemEscalaUnidadeExibicao(row = {}) {
+  const qtdExib = Number(row.quantidade_vendida) || 0;
+  const qtdBase = Number(row.quantidade_base_vendida) || 0;
+  if (qtdExib > 0 && qtdBase > 0) {
+    return qtdBase / qtdExib;
+  }
+  return 1;
+}
+
+export function escalarValorCustoMargemUnidadeExibicao(valorUnitBase, row = {}) {
+  return roundMoney((Number(valorUnitBase) || 0) * resolveMargemEscalaUnidadeExibicao(row));
+}
+
+/** Detalhe de custo para tooltip — mesma unidade da coluna Qtd/UN (vitrine). */
+export function buildCustoBreakdownLineMargem(row, { mode = 'unit', formatNum } = {}) {
+  const fmt =
+    formatNum ||
+    ((val) =>
+      (val ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+  const qtdExib = Number(row.quantidade_vendida) || 0;
+  const escala = resolveMargemEscalaUnidadeExibicao(row);
+
+  const parts = CUSTO_MARGEM_CAMPOS.map((campo) => {
+    let value;
+    if (mode === 'unit') {
+      const total = Number(row?.[campo.totalKey]) || 0;
+      if (qtdExib > 0 && total !== 0) {
+        value = total / qtdExib;
+      } else {
+        value = (Number(row?.[campo.unitKey]) || 0) * escala;
+      }
+    } else {
+      value = Number(row?.[campo.totalKey]) || 0;
+    }
+    if (Math.abs(value) < 0.0001) return null;
+    const signed = campo.subtract ? -value : value;
+    return `${campo.shortLabel} ${fmt(signed)}`;
+  }).filter(Boolean);
+
+  return parts.join(' · ');
+}
+
+export function labelComposicaoCustoMargem(row = {}, { porUnidade = true } = {}) {
+  const un = String(row.unidade_exibicao || '').trim().toUpperCase();
+  if (porUnidade && un) {
+    return `Composição do custo por ${un} (preços de hoje)`;
+  }
+  return 'Composição do custo (preços de hoje)';
+}
+
 /** Custo unitário na unidade base — lê `preco_custo_calculado` (SQL). */
 export function resolveCustoUnitarioMargem(item = {}, product = null) {
   if (product) {
