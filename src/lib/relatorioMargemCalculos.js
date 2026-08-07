@@ -268,6 +268,19 @@ export function labelComposicaoCustoMargem(row = {}, { porUnidade = true } = {})
   return 'Composição do custo (preços de hoje)';
 }
 
+/** Preço de venda unitário líquido — após rateio do desconto do pedido (receita ÷ qtd vitrine). */
+export function resolvePrecoVendaLiquidoUnitarioMargem(row = {}) {
+  if (row.valor_unitario_medio != null && !Number.isNaN(row.valor_unitario_medio)) {
+    return row.valor_unitario_medio;
+  }
+  const qtd = Number(row.quantidade_vendida) || 0;
+  if (qtd <= 0) return 0;
+  const receita =
+    Number(row.receita_liquida) ||
+    (Number(row.total_recebido) || 0) - (Number(row.total_desconto_venda) || 0);
+  return roundMoney(receita / qtd);
+}
+
 /** Custo unitário na unidade base — lê `preco_custo_calculado` (SQL). */
 export function resolveCustoUnitarioMargem(item = {}, product = null) {
   if (product) {

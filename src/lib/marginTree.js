@@ -186,7 +186,7 @@ export function aggregateMarginItems(items) {
     lucro_total,
     ...custoComponentes,
     valor_unitario_medio:
-      quantidade_vendida > 0 ? total_recebido / quantidade_vendida : 0,
+      quantidade_vendida > 0 ? receita_liquida / quantidade_vendida : 0,
     markup_percentual: custo_total > 0 ? (lucro_total / custo_total) * 100 : 0,
     margem_percentual: receita_liquida > 0 ? (lucro_total / receita_liquida) * 100 : 0,
     count: items.length,

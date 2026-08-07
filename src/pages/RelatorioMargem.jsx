@@ -33,6 +33,7 @@ import {
   buildCustoBreakdownLineMargem,
   labelComposicaoCustoMargem,
   escalarValorCustoMargemUnidadeExibicao,
+  resolvePrecoVendaLiquidoUnitarioMargem,
   CUSTO_MARGEM_CAMPOS,
   vendaNoIntervaloConsulta,
 } from '@/lib/relatorioMargemCalculos';
@@ -97,7 +98,7 @@ const MARGIN_METRIC_SORT_FIELD = {
   precoVenda: 'valor_unitario_medio',
   markup: 'markup_percentual',
   custoTotal: 'custo_total',
-  vendaTotal: 'total_recebido',
+  vendaTotal: 'receita_liquida',
   lucro: 'lucro_total',
 };
 
@@ -110,11 +111,7 @@ function getRowMarkup(row) {
 }
 
 function getRowPrecoMedio(row) {
-  if (row.valor_unitario_medio != null && !Number.isNaN(row.valor_unitario_medio)) {
-    return row.valor_unitario_medio;
-  }
-  const qtd = row.quantidade_vendida || 0;
-  return qtd > 0 ? (row.total_recebido || 0) / qtd : 0;
+  return resolvePrecoVendaLiquidoUnitarioMargem(row);
 }
 
 function getRowCustoUnitCalc(row) {
@@ -136,7 +133,7 @@ function buildMarginMobileTabulatedValues(row) {
     precoVenda: formatNumDisplay(getRowPrecoMedio(row)),
     markup: formatPctShortDisplay(getRowMarkup(row)),
     custoTotal: formatNumDisplay(row.custo_total || 0),
-    vendaTotal: formatNumDisplay(row.total_recebido || 0),
+    vendaTotal: formatNumDisplay(row.receita_liquida || 0),
     lucro: formatNumDisplay(row.lucro_total || 0),
   };
 }
@@ -862,7 +859,7 @@ export default function RelatorioMargemVendas() {
        const receita_liquida = item.total_recebido - item.total_desconto_venda;
        const lucro_total = receita_liquida - custo_total;
        const valor_unitario_medio =
-         item.quantidade_vendida > 0 ? item.total_recebido / item.quantidade_vendida : 0;
+         item.quantidade_vendida > 0 ? receita_liquida / item.quantidade_vendida : 0;
        const margem_percentual = receita_liquida > 0 ? (lucro_total / receita_liquida) * 100 : 0;
        const markup_percentual = custo_total > 0 ? (lucro_total / custo_total) * 100 : 0;
        const lucro_marginal = lucro_total / item.quantidade_vendida;
@@ -1438,7 +1435,7 @@ export default function RelatorioMargemVendas() {
           precoVenda: formatNumPdf(getRowPrecoMedio(dataRow)),
           markup: formatPctPdf(getRowMarkup(dataRow)),
           custoTotal: formatNumPdf(dataRow.custo_total || 0),
-          vendaTotal: formatNumPdf(dataRow.total_recebido || 0),
+          vendaTotal: formatNumPdf(dataRow.receita_liquida || 0),
           lucro: formatNumPdf(dataRow.lucro_total || 0),
         };
         const row2Y = valoresY + 5.2;
@@ -1829,7 +1826,7 @@ export default function RelatorioMargemVendas() {
         precoVenda: formatNumPdf(getRowPrecoMedio(dataRow)),
         markup: formatPctPdf(getRowMarkup(dataRow)),
         custoTotal: formatNumPdf(dataRow.custo_total || 0),
-        vendaTotal: formatNumPdf(dataRow.total_recebido || 0),
+        vendaTotal: formatNumPdf(dataRow.receita_liquida || 0),
         lucro: formatNumPdf(dataRow.lucro_total || 0),
       };
 
@@ -2170,7 +2167,7 @@ export default function RelatorioMargemVendas() {
                         <button className="flex items-center justify-center w-10 h-10 rounded-xl border border-border/40/80 dark:border-border bg-card dark:bg-secondary hover:bg-muted/40 dark:hover:bg-muted/80 shadow-sm transition" title="Critério de ordenação">
                           {sortField === 'nome' && <Type className="w-4 h-4 text-foreground/90" />}
                           {sortField === 'lucro_total' && <DollarSign className="w-4 h-4 text-foreground/90" />}
-                          {sortField === 'total_recebido' && <TrendingUp className="w-4 h-4 text-foreground/90" />}
+                          {sortField === 'receita_liquida' && <TrendingUp className="w-4 h-4 text-foreground/90" />}
                           {sortField === 'markup_percentual' && <Percent className="w-4 h-4 text-foreground/90" />}
                           {sortField === 'valor_unitario_medio' && <DollarSign className="w-4 h-4 text-foreground/90" />}
                           {sortField === 'quantidade_vendida' && <Package className="w-4 h-4 text-foreground/90" />}
@@ -2190,7 +2187,7 @@ export default function RelatorioMargemVendas() {
                           <DollarSign className="w-4 h-4" />
                           <span>Preço un médio</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => { setSortField('total_recebido'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
+                        <DropdownMenuItem onClick={() => { setSortField('receita_liquida'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
                           <TrendingUp className="w-4 h-4" />
                           <span>Receita</span>
                         </DropdownMenuItem>
