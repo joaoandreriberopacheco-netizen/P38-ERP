@@ -1,7 +1,8 @@
 /**
  * Cálculos do relatório de margem — reutilizáveis (ex.: Plano completo em Budgets).
  * Receita: valor_total do pedido (como Consulta de Vendas), rateado nas linhas.
- * Custo: componentes do cadastro atual (compra líquida, avaria %, frete, impostos, outros).
+ * Custo: `preco_custo_calculado` do cadastro (fator-1, mantido pelo trigger SQL
+ * `p38_calc_preco_custo_fator1`). Componentes abaixo são só para detalhe na UI.
  * Desconto comercial diluído no valor de compra — não exibido como linha separada.
  */
 
@@ -208,8 +209,12 @@ export function somarCamposCustoComponentes(acc = {}, row = {}) {
   return out;
 }
 
-/** Custo unitário na unidade base — soma dos componentes do cadastro atual. */
+/** Custo unitário na unidade base — referência canónica do cadastro (SQL + app). */
 export function resolveCustoUnitarioMargem(item = {}, product = null) {
+  if (product) {
+    const canon = resolveCustoTotalUnitBaseProduto(product);
+    if (canon > 0) return roundMoney(canon);
+  }
   const componentes = resolveCustoComponentesUnitBaseMargem(product, item);
   const total =
     componentes.valor_compra +
@@ -219,7 +224,6 @@ export function resolveCustoUnitarioMargem(item = {}, product = null) {
     componentes.custo_imposto2 +
     componentes.custo_outros;
   if (total > 0) return roundMoney(total);
-  if (product) return resolveCustoTotalUnitBaseProduto(product);
   return normalizeCustoNum(item.custo_unitario_momento ?? item.custo_unitario ?? item.custo_calculado);
 }
 
