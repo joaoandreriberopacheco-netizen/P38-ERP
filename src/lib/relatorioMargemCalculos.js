@@ -1,13 +1,17 @@
 /**
  * Cálculos do relatório de margem — reutilizáveis (ex.: Plano completo em Budgets).
  * Receita: valor_total do pedido (como Consulta de Vendas), rateado nas linhas.
- * Custo: componentes do cadastro atual (compra líquida, frete, impostos, outros).
+ * Custo: componentes do cadastro atual (compra líquida, avaria %, frete, impostos, outros).
  * Desconto comercial diluído no valor de compra — não exibido como linha separada.
  */
 
 import { toLocalDateKey } from '@/components/utils/dateUtils';
 import { STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA } from '@/lib/pdvCaixaTurnoVendas';
-import { resolveCustoTotalUnitBaseProduto, resolveValorDescontoCompraPadraoFator1 } from '@/lib/productUnits';
+import {
+  resolveAvariaCompraFator1,
+  resolveCustoTotalUnitBaseProduto,
+  resolveValorDescontoCompraPadraoFator1,
+} from '@/lib/productUnits';
 
 export const CUSTO_MARGEM_CAMPOS = [
   {
@@ -16,6 +20,13 @@ export const CUSTO_MARGEM_CAMPOS = [
     unitKey: 'custo_compra_unit',
     label: 'Compra',
     shortLabel: 'Cmp',
+  },
+  {
+    sourceKey: 'custo_avaria',
+    totalKey: 'custo_avaria_total',
+    unitKey: 'custo_avaria_unit',
+    label: 'Avaria',
+    shortLabel: 'Av',
   },
   {
     sourceKey: 'custo_frete',
@@ -123,6 +134,7 @@ export function resolveCustoComponentesUnitBaseMargem(product = null, item = {})
     const valorCompraLiquido = roundMoney(Math.max(0, valorCompraBruto - desconto));
     const componentes = {
       valor_compra: valorCompraLiquido,
+      custo_avaria: roundMoney(resolveAvariaCompraFator1(product, valorCompraBruto)),
       custo_frete: normalizeCustoNum(product.custo_frete_padrao),
       custo_imposto1: normalizeCustoNum(product.custo_imposto1_padrao),
       custo_imposto2: normalizeCustoNum(product.custo_imposto2_padrao),
@@ -130,6 +142,7 @@ export function resolveCustoComponentesUnitBaseMargem(product = null, item = {})
     };
     const somaComponentes =
       componentes.valor_compra +
+      componentes.custo_avaria +
       componentes.custo_frete +
       componentes.custo_imposto1 +
       componentes.custo_imposto2 +
@@ -138,6 +151,7 @@ export function resolveCustoComponentesUnitBaseMargem(product = null, item = {})
     if (somaComponentes <= 0 && salvo > 0) {
       return {
         valor_compra: salvo,
+        custo_avaria: 0,
         custo_frete: 0,
         custo_imposto1: 0,
         custo_imposto2: 0,
@@ -152,6 +166,7 @@ export function resolveCustoComponentesUnitBaseMargem(product = null, item = {})
   );
   return {
     valor_compra: fallback,
+    custo_avaria: 0,
     custo_frete: 0,
     custo_imposto1: 0,
     custo_imposto2: 0,
@@ -198,6 +213,7 @@ export function resolveCustoUnitarioMargem(item = {}, product = null) {
   const componentes = resolveCustoComponentesUnitBaseMargem(product, item);
   const total =
     componentes.valor_compra +
+    componentes.custo_avaria +
     componentes.custo_frete +
     componentes.custo_imposto1 +
     componentes.custo_imposto2 +
