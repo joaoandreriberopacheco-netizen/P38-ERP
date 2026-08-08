@@ -24,7 +24,10 @@ import {
   commercialQuantityFromBase,
   formatCommercialQuantity,
   getItemCompraExibicaoVitrine,
+  getUnidadeBySiglaCanonical,
   hasAlternativeUnits,
+  normalizeUnitCode,
+  resolvePrimaryFromFactorOne,
 } from '@/lib/productUnits';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -57,21 +60,91 @@ function pedidaBaseItem(item = {}) {
 }
 
 function buildUnidadeLinhaInicial(item, produto, embItem = null) {
-  if (embItem?.unidade_medida) {
+  if (embItem?.unidade_apresentacao) {
+    return {
+      unidade: embItem.unidade_apresentacao,
+      fator: Number(embItem.fator_apresentacao) || 1,
+      produto_unidade_id: embItem.produto_unidade_id || '',
+    };
+  }
+  if (embItem?.unidade_medida && Number(embItem.fator_conversao) > 1) {
     return {
       unidade: embItem.unidade_medida,
       fator: Number(embItem.fator_conversao) || 1,
+      produto_unidade_id: embItem.produto_unidade_id || '',
+    };
+  }
+  if (embItem && Number(embItem.fator_conversao) === 1 && produto) {
+    const exib = getItemCompraExibicaoVitrine(item, produto);
+    return {
+      unidade: exib.unidade_medida || item.unidade_medida || 'UN',
+      fator: Number(exib.fator_conversao) || 1,
+      produto_unidade_id: embItem.produto_unidade_id || '',
     };
   }
   const exib = getItemCompraExibicaoVitrine(item, produto);
+  const unidade = exib.unidade_medida || item.unidade_medida || 'UN';
+  const canon = produto ? getUnidadeBySiglaCanonical(produto, unidade) : null;
   return {
-    unidade: exib.unidade_medida || item.unidade_medida || 'UN',
+    unidade,
     fator: Number(exib.fator_conversao) || Number(item.fator_conversao) || 1,
+    produto_unidade_id: canon?.id || item.produto_unidade_id || '',
+  };
+}
+
+function resolveFatorLinhaDespacho(produto, linha = {}) {
+  const unidade = normalizeUnitCode(linha.unidade);
+  if (produto && unidade) {
+    const opt = buildPurchaseUnitOptions(produto).find(
+      (o) => normalizeUnitCode(o.unidade) === unidade,
+    );
+    if (opt && Number(opt.fator_conversao) > 0) {
+      return Number(opt.fator_conversao);
+    }
+  }
+  return Number(linha.fator) || 1;
+}
+
+function enrichLinhaDespacho(produto, linha = {}) {
+  const fator = resolveFatorLinhaDespacho(produto, linha);
+  const unidade = linha.unidade || 'UN';
+  const canon = produto ? getUnidadeBySiglaCanonical(produto, unidade) : null;
+  return {
+    ...linha,
+    unidade,
+    fator,
+    produto_unidade_id: linha.produto_unidade_id || canon?.id || '',
+  };
+}
+
+/** Persistência canónica fator-1 + espelho comercial (vitrine/seletor). */
+function buildItemEmbarquePersistido(item, produto, linha, qEmb) {
+  const linhaOk = enrichLinhaDespacho(produto, linha);
+  const qBase = roundToTwoDecimals(calculateBaseQuantity(qEmb, linhaOk.fator));
+  const pedidaBase = pedidaBaseItem(item);
+  const unidadeBase = resolvePrimaryFromFactorOne(produto, item.unidade_medida || 'UN');
+  const canonUnidade = produto ? getUnidadeBySiglaCanonical(produto, linhaOk.unidade) : null;
+
+  return {
+    produto_id: item.produto_id,
+    produto_nome: item.produto_nome,
+    pedido_compra_item_id: item.id || item.pedido_compra_item_id || '',
+    produto_unidade_id: linhaOk.produto_unidade_id || canonUnidade?.id || item.produto_unidade_id || '',
+    quantidade_pedida: pedidaBase,
+    quantidade_embarcada: qBase,
+    quantidade_base: qBase,
+    fator_conversao: 1,
+    unidade_medida: unidadeBase,
+    unidade_apresentacao: linhaOk.unidade,
+    fator_apresentacao: linhaOk.fator,
+    quantidade_pedida_apresentacao: commercialQuantityFromBase(pedidaBase, linhaOk.fator, linhaOk.unidade),
+    quantidade_embarcada_apresentacao: roundToTwoDecimals(qEmb),
   };
 }
 
 function resolveUnidadeLinha(item, produto, unidadeLinhaMap, produtoId) {
-  return unidadeLinhaMap[produtoId] || buildUnidadeLinhaInicial(item, produto);
+  const base = unidadeLinhaMap[produtoId] || buildUnidadeLinhaInicial(item, produto);
+  return enrichLinhaDespacho(produto, base);
 }
 
 function calcularStatusEmbarque(itens, jaEmbarcadoBase, qtdEmbarque, selectedItems, unidadeLinhaMap, produtosMap) {
@@ -92,6 +165,16 @@ function calcularStatusEmbarque(itens, jaEmbarcadoBase, qtdEmbarque, selectedIte
   if (totalEmbarcadoBase <= 0) return 'Nenhum';
   if (totalEmbarcadoBase >= totalPedidoBase - 0.01) return 'Total';
   return 'Parcial';
+}
+
+function quantidadeApresentacaoEmbarqueItem(embItem, linha) {
+  const apres = Number(embItem?.quantidade_embarcada_apresentacao);
+  if (Number.isFinite(apres) && apres >= 0) return apres;
+  if (Number(embItem?.fator_conversao) > 1 && embItem?.quantidade_embarcada != null) {
+    return Number(embItem.quantidade_embarcada) || 0;
+  }
+  const baseEmb = quantidadeBaseEmbarqueItem(embItem);
+  return commercialQuantityFromBase(baseEmb, linha.fator, linha.unidade);
 }
 
 async function carregarProdutosMap(itens = []) {
@@ -352,11 +435,8 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
         const linha = buildUnidadeLinhaInicial(item, produto, embItem);
         initUnidade[item.produto_id] = linha;
         if (embItem) {
-          const baseEmb = quantidadeBaseEmbarqueItem(embItem);
-          initQtd[item.produto_id] = String(
-            commercialQuantityFromBase(baseEmb, linha.fator, linha.unidade),
-          );
-          initSel[item.produto_id] = baseEmb > 0;
+          initQtd[item.produto_id] = String(quantidadeApresentacaoEmbarqueItem(embItem, linha));
+          initSel[item.produto_id] = quantidadeBaseEmbarqueItem(embItem) > 0;
         } else {
           initQtd[item.produto_id] = '0';
           initSel[item.produto_id] = false;
@@ -398,16 +478,13 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
         if (isEdicao) {
           const itensDoEmbarque = getItensEmbarque(embarqueExistente);
           const embItem = itensDoEmbarque.find((i) => i.produto_id === item.produto_id);
-          const linha = buildUnidadeLinhaInicial(item, produto, embItem);
+          const linha = enrichLinhaDespacho(produto, buildUnidadeLinhaInicial(item, produto, embItem));
           unidadeAtualizada[item.produto_id] = linha;
           if (embItem) {
-            const baseEmb = quantidadeBaseEmbarqueItem(embItem);
-            qtdAtualizada[item.produto_id] = String(
-              commercialQuantityFromBase(baseEmb, linha.fator, linha.unidade),
-            );
+            qtdAtualizada[item.produto_id] = String(quantidadeApresentacaoEmbarqueItem(embItem, linha));
           }
         } else {
-          const linha = buildUnidadeLinhaInicial(item, produto);
+          const linha = enrichLinhaDespacho(produto, buildUnidadeLinhaInicial(item, produto));
           unidadeAtualizada[item.produto_id] = linha;
           const pedidaBase = pedidaBaseItem(item);
           const anteriorBase = jaBase[item.produto_id] || 0;
@@ -498,11 +575,18 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
     const linhaAtual = unidadeLinha[produtoId] || buildUnidadeLinhaInicial(item, produtosMap[produtoId]);
     const qtyAtual = parseFloat(qtdEmbarque[produtoId]) || 0;
     const baseAtual = calculateBaseQuantity(qtyAtual, linhaAtual.fator);
-    const fatorNovo = Number(unitOption.fator_conversao) || 1;
+    const fatorNovo = resolveFatorLinhaDespacho(produtosMap[produtoId], {
+      unidade: unitOption.unidade,
+      fator: Number(unitOption.fator_conversao) || 1,
+    });
     const qtyNova = commercialQuantityFromBase(baseAtual, fatorNovo, unitOption.unidade);
     setUnidadeLinha((prev) => ({
       ...prev,
-      [produtoId]: { unidade: unitOption.unidade, fator: fatorNovo },
+      [produtoId]: enrichLinhaDespacho(produtosMap[produtoId], {
+        unidade: unitOption.unidade,
+        fator: fatorNovo,
+        produto_unidade_id: getUnidadeBySiglaCanonical(produtosMap[produtoId], unitOption.unidade)?.id || '',
+      }),
     }));
     setQtdEmbarque((prev) => ({ ...prev, [produtoId]: String(qtyNova) }));
     setUnitSelector({ open: false, produtoId: null, product: null });
@@ -568,20 +652,10 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
       const itensEmbarcados = (pedido.itens || [])
         .filter(item => selectedItems[item.produto_id])
         .map(item => {
-          const linha = resolveUnidadeLinha(item, produtosMap[item.produto_id], unidadeLinha, item.produto_id);
+          const produto = produtosMap[item.produto_id];
+          const linha = resolveUnidadeLinha(item, produto, unidadeLinha, item.produto_id);
           const qEmb = roundToTwoDecimals(parseFloat(qtdEmbarque[item.produto_id]) || 0);
-          const qBase = roundToTwoDecimals(calculateBaseQuantity(qEmb, linha.fator));
-          return {
-            produto_id: item.produto_id,
-            produto_nome: item.produto_nome,
-            quantidade_pedida: commercialQuantityFromBase(pedidaBaseItem(item), linha.fator, linha.unidade),
-            quantidade_embarcada: qEmb,
-            quantidade_base: qBase,
-            fator_conversao: linha.fator,
-            unidade_medida: linha.unidade,
-            pedido_compra_item_id: item.id || item.pedido_compra_item_id || '',
-            produto_unidade_id: item.produto_unidade_id || '',
-          };
+          return buildItemEmbarquePersistido(item, produto, linha, qEmb);
         })
         .filter(i => i.quantidade_embarcada > 0);
       const itensJaLancados = (embarqueExistente?.itens_embarcados || embarqueExistente?.itens || []).filter(
@@ -656,9 +730,9 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
               produto_id: it?.produto_id || '',
               produto_unidade_id: it?.produto_unidade_id || '',
               pedido_compra_item_id: it?.pedido_compra_item_id || '',
-              unidade_sigla: it?.unidade_medida || '',
-              quantidade_pedida_comercial: Number(it?.quantidade_pedida) || 0,
-              quantidade_embarcada_comercial: Number(it?.quantidade_embarcada) || 0,
+              unidade_sigla: it?.unidade_apresentacao || it?.unidade_medida || '',
+              quantidade_pedida_comercial: Number(it?.quantidade_pedida_apresentacao) || 0,
+              quantidade_embarcada_comercial: Number(it?.quantidade_embarcada_apresentacao) || 0,
               quantidade_recebida_comercial: Number(it?.quantidade_recebida) || 0,
               divergencia_tipo: it?.divergencia_tipo || 'Nenhuma',
               produto_id_recebido_diferente: it?.produto_id_recebido_diferente || '',
