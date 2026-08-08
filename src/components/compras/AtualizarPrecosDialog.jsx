@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
-import AtualizarPrecosMobileView from '@/components/compras/AtualizarPrecosMobileView';
+import AtualizarPrecosMobileView, { COMPRAS_CHIP_ACTIVE, COMPRAS_CHIP_INACTIVE, COMPRAS_CTA } from '@/components/compras/AtualizarPrecosMobileView';
 import { base44 } from '@/api/base44Client';
 import { toast } from '@/components/ui/use-toast';
 import { runOperacaoAuthBypass } from '@/components/auth/runOperacaoAuthBypass';
@@ -530,13 +530,13 @@ export default function AtualizarPrecosDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(false); }}>
-      <DialogContent className={`${isMobile ? '!max-w-[100vw] !w-[100vw] h-[100vh] !rounded-none p-0' : '!max-w-[95vw]'} max-h-[90vh] overflow-y-auto`}>
-        <DialogHeader className={isMobile ? 'px-4 pt-4 pb-3' : ''}>
-          <DialogTitle className="flex items-center gap-2 text-foreground">
-            <DollarSign className="w-5 h-5 text-foreground" />
+      <DialogContent className={`${isMobile ? '!max-w-[100vw] !w-[100vw] h-[100vh] !rounded-none p-0 font-din-1451 bg-background' : '!max-w-[95vw]'} max-h-[90vh] overflow-y-auto`}>
+        <DialogHeader className={isMobile ? 'px-4 pt-4 pb-2 border-b border-border/40 dark:border-white/10' : ''}>
+          <DialogTitle className="flex items-center gap-2 text-foreground text-lg font-medium">
+            <DollarSign className={`w-5 h-5 ${isMobile ? 'text-cyan-600 dark:text-cyan-400' : 'text-foreground'}`} />
             {titulo || 'Revisar Preços de Venda'}
           </DialogTitle>
-          <p className="text-sm text-foreground/90 mt-1">
+          <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground mt-1 leading-snug`}>
             {subtitulo || (qtdComDiferenca > 0
               ? `${qtdComDiferenca} produto(s) com alteração de custo detectada. Revise e selecione quais preços deseja atualizar.`
               : 'Nenhuma alteração de custo detectada. Você pode revisar os preços atuais dos produtos.')}
@@ -551,29 +551,30 @@ export default function AtualizarPrecosDialog({
 
         <div className={isMobile ? 'mt-2' : 'mt-4'}>
           {algumItemComConversao && (
-            <div className={`flex flex-wrap items-center gap-2 mb-3 ${isMobile ? 'px-4' : ''}`}>
-              <span className="text-xs text-muted-foreground">Alternar apenas a visualização:</span>
+            <div className={`flex flex-wrap items-center gap-2 mb-3 ${isMobile ? 'px-4 pt-3' : ''}`}>
+              {!isMobile && <span className="text-xs text-muted-foreground">Alternar apenas a visualização:</span>}
               <Button
                 type="button"
-                variant={unidadeVisualizacao === 'comercial' ? 'default' : 'outline'}
+                variant="ghost"
                 size="sm"
-                className="h-8 text-xs"
+                className={`h-9 text-xs rounded-full px-3 ${unidadeVisualizacao === 'comercial' ? COMPRAS_CHIP_ACTIVE : COMPRAS_CHIP_INACTIVE}`}
                 onClick={() => alternarUnidadeVisualizacao('comercial')}
               >
-                Unidade de compra (cadastro){siglasComerciais.length ? ` · ${siglasComerciais.join(', ')}` : ''}
+                {isMobile ? 'Un. compra' : `Unidade de compra (cadastro)${siglasComerciais.length ? ` · ${siglasComerciais.join(', ')}` : ''}`}
               </Button>
               <Button
                 type="button"
-                variant={unidadeVisualizacao === 'base' ? 'default' : 'outline'}
+                variant="ghost"
                 size="sm"
-                className="h-8 text-xs"
+                className={`h-9 text-xs rounded-full px-3 ${unidadeVisualizacao === 'base' ? COMPRAS_CHIP_ACTIVE : COMPRAS_CHIP_INACTIVE}`}
                 onClick={() => alternarUnidadeVisualizacao('base')}
               >
-                Apenas na unidade base do produto
+                {isMobile ? 'Un. base' : 'Apenas na unidade base do produto'}
               </Button>
             </div>
           )}
-          <div className={`flex items-center justify-between mb-3 ${isMobile ? 'px-4' : ''}`}>
+          {!isMobile && (
+          <div className="flex items-center justify-between mb-3">
             <p className="text-xs text-foreground/90 font-medium">
               {itensCalc.length} produto(s) no pedido
               {qtdComDiferenca > 0 && (
@@ -588,6 +589,7 @@ export default function AtualizarPrecosDialog({
               </Button>
             )}
           </div>
+          )}
 
           {itensSemCadastro > 0 && (
             <div className={`mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200 ${isMobile ? 'mx-4' : ''}`}>
@@ -610,6 +612,7 @@ export default function AtualizarPrecosDialog({
                 onToggleSelect={handleToggle}
                 onSelecionarTodos={handleSelecionarTodos}
                 qtdComDiferenca={qtdComDiferenca}
+                totalItens={itensCalc.length}
                 unidadeVisualizacao={unidadeVisualizacao}
                 onCostBlur={handleCostBlur}
                 onDescontoPctBlur={handleDescontoPctBlur}
@@ -828,12 +831,12 @@ export default function AtualizarPrecosDialog({
           )}
         </div>
 
-        <div className={`flex items-center justify-between gap-3 mt-6 pt-4 border-t border-border/40 ${isMobile ? 'px-4 pb-4' : ''}`}>
+        <div className={`flex items-center justify-between gap-3 mt-6 pt-4 border-t border-border/40 dark:border-white/10 ${isMobile ? 'px-4 pb-4' : ''}`}>
           <Button variant="outline" onClick={() => onClose(false)} disabled={processando} className="border-0 shadow-sm">
             {qtdComDiferenca > 0 ? 'Ignorar' : 'Fechar'}
           </Button>
           {qtdComDiferenca > 0 && (
-            <Button onClick={handleInitiateUpdate} disabled={processando || numSel === 0} className="shadow-sm">
+            <Button onClick={handleInitiateUpdate} disabled={processando || numSel === 0} className={isMobile ? COMPRAS_CTA : 'shadow-sm'}>
               {processando ? 'Aplicando...' : `Aplicar ${numSel} Selecionado(s)`}
             </Button>
           )}
