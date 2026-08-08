@@ -16,6 +16,7 @@ import {
 
 import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
 import { hydrateEmbarquesFromSql } from '@/lib/fetchEmbarqueItens';
+import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
 import ListaPedidosCompra from '@/components/compras/ListaPedidosCompra';
 import ConsultaComprasPedidos from '@/components/compras/ConsultaComprasPedidos';
