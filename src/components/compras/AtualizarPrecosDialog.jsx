@@ -2,10 +2,10 @@ import { useState, useEffect, Fragment } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog.jsx";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { TrendingUp, TrendingDown, DollarSign, Boxes } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
+import AtualizarPrecosMobileView from '@/components/compras/AtualizarPrecosMobileView';
 import { base44 } from '@/api/base44Client';
 import { toast } from '@/components/ui/use-toast';
 import { runOperacaoAuthBypass } from '@/components/auth/runOperacaoAuthBypass';
@@ -353,26 +353,30 @@ export default function AtualizarPrecosDialog({
     });
   };
 
-  // Ao sair do markup: recalcula preço venda
-  const handleMarkupBlur = (produtoId) => {
-    const raw = inputs[`${produtoId}_markup`];
-    const markup = parseFloat(raw) || 0;
+  const handleMarkupBlurDirect = (produtoId, markup) => {
     const linha = itens.find((i) => String(i.produto_id) === String(produtoId));
     const prodRow = findProduto(produtos, produtoId);
     const dm = multiplicadorVisual(unidadeVisualizacao, resolveFatorLinha(linha || {}, prodRow));
-    setCosts(prev => {
+    setCosts((prev) => {
       if (!prev[produtoId]) return prev;
       const c = { ...prev[produtoId], preco_venda_percentual: markup };
       const custo = calcCusto(c);
       const novoPreco = calcPreco(custo, markup);
       const next = { ...c, preco_venda_padrao: novoPreco };
-      setInputs(p2 => ({
+      setInputs((p2) => ({
         ...p2,
         [`${produtoId}_markup`]: String(Math.round(markup * 100) / 100),
         [`${produtoId}_preco`]: fmt(novoPreco * dm),
       }));
       return { ...prev, [produtoId]: next };
     });
+  };
+
+  // Ao sair do markup: recalcula preço venda
+  const handleMarkupBlur = (produtoId) => {
+    const raw = inputs[`${produtoId}_markup`];
+    const markup = parseFloat(raw) || 0;
+    handleMarkupBlurDirect(produtoId, markup);
   };
 
   // Ao sair do preço venda: recalcula markup
@@ -537,10 +541,12 @@ export default function AtualizarPrecosDialog({
               ? `${qtdComDiferenca} produto(s) com alteração de custo detectada. Revise e selecione quais preços deseja atualizar.`
               : 'Nenhuma alteração de custo detectada. Você pode revisar os preços atuais dos produtos.')}
           </p>
-          <p className="text-xs text-muted-foreground mt-2">
-            Para cada produto, os valores monetários usam a <strong className="font-semibold text-foreground">unidade de compra definida no cadastro</strong> (alternativas e conversões, como no lançamento do pedido) — veja a coluna <strong className="font-semibold text-foreground">Unidade</strong> para a sigla de cada linha.
-            Ao salvar, o sistema grava custos e preços na <strong className="font-semibold text-foreground">unidade base</strong> do produto. Sem alternativa com conversão, a grade permanece na unidade base (fator 1).
-          </p>
+          {!isMobile && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Para cada produto, os valores monetários usam a <strong className="font-semibold text-foreground">unidade de compra definida no cadastro</strong> (alternativas e conversões, como no lançamento do pedido) — veja a coluna <strong className="font-semibold text-foreground">Unidade</strong> para a sigla de cada linha.
+              Ao salvar, o sistema grava custos e preços na <strong className="font-semibold text-foreground">unidade base</strong> do produto. Sem alternativa com conversão, a grade permanece na unidade base (fator 1).
+            </p>
+          )}
         </DialogHeader>
 
         <div className={isMobile ? 'mt-2' : 'mt-4'}>
@@ -594,209 +600,26 @@ export default function AtualizarPrecosDialog({
               Nenhum produto do pedido pôde ser carregado para revisão. Verifique se os itens têm produto vinculado no cadastro.
             </div>
           ) : isMobile ? (
-            <div className="space-y-3 px-4 pb-4">
-              {secoesRender.map((secao) => (
-                <div key={secao.label || 'all'} className="space-y-3">
-                  {secao.label ? (
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pt-2 border-t border-border/40">
-                      {secao.label}
-                    </p>
-                  ) : null}
-              {secao.items.map(item => (
-                <div key={item.produto_id} className="bg-card rounded-2xl shadow-md p-4 space-y-4">
-                  <div className={`rounded-lg border px-3 py-2 ${unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 ? 'bg-background/40 border-border/40' : 'bg-muted/50/50 border-border/40'}`}>
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Referência dos valores</div>
-                      {hasAlternativeUnits(item.produto) && buildPurchaseUnitOptions(item.produto).length > 1 && (
-                        <button
-                          type="button"
-                          className="text-[10px] font-medium text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
-                          onClick={() => setUnitSelectorPreco({ open: true, product: item.produto, produtoId: item.produto_id })}
-                        >
-                          <Boxes className="w-3 h-3" aria-hidden />
-                          Outra unidade
-                        </button>
-                      )}
-                    </div>
-                    {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 && item.unidadeComercialLegenda ? (
-                      <div className="mt-1">
-                        <span className="text-sm font-bold text-foreground dark:text-foreground">{item.unidadeComercialLegenda}</span>
-                        <span className="text-xs text-muted-foreground ml-1.5">
-                          {formatUnitConversion({ unidade: item.unidadeComercialLegenda, fator_conversao: item.fatorExibicao }, item.unidadeBase)}
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="text-sm font-medium text-foreground mt-0.5">
-                        {item.unidadeBase}
-                        <span className="text-xs font-normal text-muted-foreground ml-1">(unidade base do cadastro)</span>
-                      </div>
-                    )}
-                  </div>
-                  {/* Header do produto */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[10px] uppercase text-muted-foreground font-medium">Produto</div>
-                      <div className="font-semibold text-foreground text-sm leading-snug mt-0.5">{item.produto_nome}</div>
-                      {getItemSubtitulo?.(item) ? (
-                        <p className="text-[11px] text-muted-foreground mt-0.5">{getItemSubtitulo(item)}</p>
-                      ) : null}
-                      {item.temDiferenca && (
-                        <div className="flex items-center gap-1 text-xs mt-1">
-                          {item.diferencaCusto > 0 ? (
-                            <><TrendingUp className="w-3.5 h-3.5 text-red-500" /><span className="text-red-500 font-semibold">+R$ {fmt(item.diferencaCusto * item.multDisplay)} no custo</span></>
-                          ) : (
-                            <><TrendingDown className="w-3.5 h-3.5 text-emerald-500" /><span className="text-emerald-500 font-semibold">-R$ {fmt(Math.abs(item.diferencaCusto * item.multDisplay))} no custo</span></>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    {item.temDiferenca && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">Atualizar</span>
-                        <Checkbox checked={selecionados[item.produto_id] || false} onCheckedChange={() => handleToggle(item.produto_id)} />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Grid de custos */}
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* Preço Compra */}
-                    <div className="space-y-1">
-                      <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-                        Preço Compra
-                        {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 && item.unidadeComercialLegenda ? ` (${item.unidadeComercialLegenda})` : ''}
-                        {unidadeVisualizacao === 'base' ? ` (${item.unidadeBase})` : ''}
-                      </Label>
-                      <Input
-                        type="text"
-                        inputMode="decimal"
-                        value={inp(item.produto_id, 'valor_compra')}
-                        onChange={(e) => setInp(item.produto_id, 'valor_compra', e.target.value)}
-                        onFocus={(e) => e.target.select()}
-                        onBlur={() => handleCostBlur(item.produto_id, 'valor_compra')}
-                        className="h-11 text-base font-medium border border-input bg-background shadow-sm rounded-xl"
-                      />
-                    </div>
-                    {/* Desconto/Acréscimo % com toggle */}
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <Label className={`text-[11px] font-medium uppercase tracking-wide ${
-                          (costs[item.produto_id]?.desconto_pct || 0) < 0
-                            ? 'text-red-500 dark:text-red-400'
-                            : 'text-muted-foreground'
-                        }`}>{(costs[item.produto_id]?.desconto_pct || 0) < 0 ? 'Acréscimo %' : 'Desconto %'}</Label>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const rawInput = inputs[`${item.produto_id}_desconto_pct`];
-                            const currentTyped = Math.round((parseFloat(String(rawInput).replace(',', '.')) || 0) * 100) / 100;
-                            const currentState = costs[item.produto_id]?.desconto_pct || 0;
-                            const baseValue = currentTyped || currentState;
-                            const flipped = baseValue === 0
-                              ? (currentState < 0 ? 1 : -1)
-                              : -baseValue;
-                            setInputs(p => ({ ...p, [`${item.produto_id}_desconto_pct`]: String(Math.round(flipped * 100) / 100) }));
-                            handleDescontoPctBlurDirect(item.produto_id, flipped);
-                          }}
-                          className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold transition-colors ${
-                            (costs[item.produto_id]?.desconto_pct || 0) < 0
-                              ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-                              : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
-                          }`}
-                        >
-                          {(costs[item.produto_id]?.desconto_pct || 0) < 0
-                            ? <><TrendingUp className="w-3 h-3" /> ACR</>
-                            : <><TrendingDown className="w-3 h-3" /> DESC</>}
-                        </button>
-                      </div>
-                      <Input
-                        type="text"
-                        inputMode="decimal"
-                        value={inp(item.produto_id, 'desconto_pct')}
-                        onChange={(e) => setInp(item.produto_id, 'desconto_pct', sanitizeTwoDecimalInput(e.target.value))}
-                        onFocus={(e) => e.target.select()}
-                        onBlur={() => handleDescontoPctBlur(item.produto_id)}
-                        className={`h-11 text-base font-medium rounded-xl shadow-sm border ${
-                          (costs[item.produto_id]?.desconto_pct || 0) < 0
-                            ? 'border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
-                            : (costs[item.produto_id]?.desconto_pct || 0) > 0
-                            ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-900/50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
-                            : 'border-input bg-background'
-                        }`}
-                      />
-                    </div>
-                    {/* Frete, Imp1, Imp2, Outros */}
-                    {[
-                      { label: 'Frete', field: 'custo_frete_padrao' },
-                      { label: 'Imp 1', field: 'custo_imposto1_padrao' },
-                      { label: 'Imp 2', field: 'custo_imposto2_padrao' },
-                      { label: 'Outros', field: 'custo_outros_padrao' },
-                      { label: 'Avaria %', field: 'avaria_percentual', isPercent: true },
-                    ].map(({ label, field, isPercent }) => (
-                      <div key={field} className="space-y-1">
-                        <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-                          {label}
-                          {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 && item.unidadeComercialLegenda ? ` (${item.unidadeComercialLegenda})` : ''}
-                          {unidadeVisualizacao === 'base' ? ` (${item.unidadeBase})` : ''}
-                        </Label>
-                        <Input
-                          type="text"
-                          inputMode="decimal"
-                          value={inp(item.produto_id, field)}
-                          onChange={(e) => setInp(item.produto_id, field, e.target.value)}
-                          onFocus={(e) => e.target.select()}
-                          onBlur={() => handleCostBlur(item.produto_id, field)}
-                          className="h-11 text-base font-medium border border-input bg-background shadow-sm rounded-xl"
-                        />
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Custo total + markup + preço venda */}
-                  <div className="rounded-xl bg-muted/50/60 p-3 space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-                        Custo Total
-                        {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 && item.unidadeComercialLegenda ? ` (${item.unidadeComercialLegenda})` : ''}
-                        {unidadeVisualizacao === 'base' ? ` (${item.unidadeBase})` : ''}
-                      </span>
-                      <span className="text-base font-bold text-foreground">R$ {fmt(item.novoCusto * item.multDisplay)}</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Markup %</Label>
-                        <Input
-                          type="text"
-                          inputMode="decimal"
-                          value={inp(item.produto_id, 'markup')}
-                          onChange={(e) => setInp(item.produto_id, 'markup', e.target.value)}
-                          onFocus={(e) => e.target.select()}
-                          onBlur={() => handleMarkupBlur(item.produto_id)}
-                          className="h-11 text-base font-medium border border-input bg-background shadow-sm rounded-xl"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-                          Preço Venda
-                          {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 && item.unidadeComercialLegenda ? ` (${item.unidadeComercialLegenda})` : ''}
-                          {unidadeVisualizacao === 'base' ? ` (${item.unidadeBase})` : ''}
-                        </Label>
-                        <Input
-                          type="text"
-                          inputMode="decimal"
-                          value={inp(item.produto_id, 'preco')}
-                          onChange={(e) => setInp(item.produto_id, 'preco', e.target.value)}
-                          onFocus={(e) => e.target.select()}
-                          onBlur={() => handlePrecoBlur(item.produto_id)}
-                          className="h-11 text-base font-bold border border-input bg-background text-foreground shadow-sm rounded-xl"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-                </div>
-              ))}
+            <div className="px-4 pb-4">
+              <AtualizarPrecosMobileView
+                secoesRender={secoesRender}
+                costs={costs}
+                inputs={inputs}
+                setInputs={setInputs}
+                selecionados={selecionados}
+                onToggleSelect={handleToggle}
+                onSelecionarTodos={handleSelecionarTodos}
+                qtdComDiferenca={qtdComDiferenca}
+                unidadeVisualizacao={unidadeVisualizacao}
+                onCostBlur={handleCostBlur}
+                onDescontoPctBlur={handleDescontoPctBlur}
+                onDescontoPctBlurDirect={handleDescontoPctBlurDirect}
+                onMarkupBlur={handleMarkupBlur}
+                onMarkupBlurDirect={handleMarkupBlurDirect}
+                onPrecoBlur={handlePrecoBlur}
+                getItemSubtitulo={getItemSubtitulo}
+                onOpenUnitSelector={(item) => setUnitSelectorPreco({ open: true, product: item.produto, produtoId: item.produto_id })}
+              />
             </div>
           ) : (
             <div className="rounded-lg overflow-x-auto shadow-sm">
