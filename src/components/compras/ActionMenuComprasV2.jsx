@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, FileText, X, Download, Send, CheckSquare, FileSpreadsheet, Smartphone, Loader2, List, FileUp, Files } from 'lucide-react';
+import { Plus, FileText, X, Download, Send, CheckSquare, FileSpreadsheet, Smartphone, Loader2, List, FileUp, Files, DollarSign } from 'lucide-react';
 import { gerarRelatorioPedidosCompra } from '@/functions/gerarRelatorioPedidosCompra';
 import { fetchAnexosPorPedidos, coletarPedidoIdsParaRelatorio } from '@/lib/fetchAnexosPorPedidos';
 import { toast } from 'sonner';
@@ -121,7 +121,7 @@ function normalizarGruposParaRelatorio(grupos = [], produtosMap = {}) {
   return walk(grupos);
 }
 
-export default function ActionMenuComprasV2({ onNovopedido, onImportarPedido, onImportarNF, onDownloadTemplate, onEnviarFinanceiroLote, onToggleModoSelecao, modoSelecao = false, quantidadeSelecionados = 0, enviandoLote = false, pedidos = [], filtrosDesc = 'Pedidos filtrados na tela', kpis = {}, grupos = [] }) {
+export default function ActionMenuComprasV2({ onNovopedido, onImportarPedido, onImportarNF, onDownloadTemplate, onEnviarFinanceiroLote, onToggleModoSelecao, onAtualizarPrecosFiltrados, modoSelecao = false, quantidadeSelecionados = 0, enviandoLote = false, pedidos = [], filtrosDesc = 'Pedidos filtrados na tela', kpis = {}, grupos = [] }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [gerando, setGerando] = useState(null);
 
@@ -192,6 +192,13 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarPedido, on
   };
 
   const actions = [
+    {
+      icon: <DollarSign className="w-5 h-5" />,
+      label: 'Atualizar preços (filtrados)',
+      onClick: () => { onAtualizarPrecosFiltrados?.(); setIsExpanded(false); },
+      color: 'bg-card dark:bg-muted text-foreground/90',
+      title: 'Revisar e aplicar custos dos produtos dos pedidos visíveis no filtro (fonte SQL)',
+    },
     {
       icon: <CheckSquare className="w-5 h-5" />,
       label: modoSelecao ? 'Cancelar seleção' : 'Selecionar embarques',

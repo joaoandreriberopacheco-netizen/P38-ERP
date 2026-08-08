@@ -14,12 +14,14 @@ import {
   getTotalLinhaPedidoCompra,
 } from '@/lib/pedidoCompraFinanceiro';
 
-import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
+import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
+import { hydrateEmbarquesFromSql } from '@/lib/fetchEmbarqueItens';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
 import ListaPedidosCompra from '@/components/compras/ListaPedidosCompra';
 import ConsultaComprasPedidos from '@/components/compras/ConsultaComprasPedidos';
 import ActionMenuComprasV2 from '@/components/compras/ActionMenuComprasV2';
 import EnvioFinanceiroLoteDialog from '@/components/compras/EnvioFinanceiroLoteDialog';
+import AtualizarPrecosFiltradosDialog from '@/components/compras/AtualizarPrecosFiltradosDialog';
 import PedidosCompraOrganizer from '@/components/compras/PedidosCompraOrganizer';
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
 import { Package, Receipt } from 'lucide-react';
@@ -524,6 +526,7 @@ export default function PedidosCompraPage() {
   const [groupBy, setGroupBy] = useState('eta_transportadora');
   const [sortOrder, setSortOrder] = useState('desc');
   const [activeView, setActiveView] = useState('embarques');
+  const [showAtualizarPrecosFiltrados, setShowAtualizarPrecosFiltrados] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -532,7 +535,7 @@ export default function PedidosCompraPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [pcs, embarquesDb, fns] = await Promise.all([
+      const [pcsRaw, embarquesDbRaw, fns] = await Promise.all([
         base44.entities.PedidoCompra.list('-created_date', 300),
         base44.entities.Embarque.list('-created_date', 600),
         base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] }, 'nome', 300).catch((err) => {
@@ -540,6 +543,9 @@ export default function PedidosCompraPage() {
           return [];
         }),
       ]);
+
+      const pcs = await hydratePedidosCompraItensFromSql(base44, pcsRaw);
+      const embarquesDb = await hydrateEmbarquesFromSql(base44, embarquesDbRaw);
       const produtoIds = [...new Set([
         ...pcs.flatMap((p) => (p.itens || []).map((i) => i.produto_id).filter(Boolean)),
         ...embarquesDb.flatMap((e) => (e.itens || e.itens_embarcados || []).map((i) => i.produto_id).filter(Boolean)),
@@ -1014,12 +1020,23 @@ export default function PedidosCompraPage() {
           )}
         </div>
         {activeView === 'embarques' || activeView === 'consulta' ? (
-          <PedidosCompraOrganizer
-            groupBy={groupBy}
-            sortOrder={sortOrder}
-            onGroupByChange={setGroupBy}
-            onSortOrderToggle={() => setSortOrder((prev) => prev === 'asc' ? 'desc' : 'asc')}
-          />
+          <div className="flex items-center gap-2">
+            {activeView === 'consulta' && pedidosConsulta.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setShowAtualizarPrecosFiltrados(true)}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-card shadow-sm text-sm font-medium text-foreground hover:shadow-md transition"
+              >
+                Atualizar preços
+              </button>
+            ) : null}
+            <PedidosCompraOrganizer
+              groupBy={groupBy}
+              sortOrder={sortOrder}
+              onGroupByChange={setGroupBy}
+              onSortOrderToggle={() => setSortOrder((prev) => prev === 'asc' ? 'desc' : 'asc')}
+            />
+          </div>
         ) : null}
       </div>
 
@@ -1098,6 +1115,7 @@ export default function PedidosCompraPage() {
         onDownloadTemplate={handleDownloadTemplate}
         onEnviarFinanceiroLote={handleAbrirEnvioFinanceiroLote}
         onToggleModoSelecao={handleToggleModoSelecao}
+        onAtualizarPrecosFiltrados={() => setShowAtualizarPrecosFiltrados(true)}
         modoSelecao={modoSelecao}
         quantidadeSelecionados={selecionadosIds.length}
         enviandoLote={enviandoLote}
@@ -1122,6 +1140,15 @@ export default function PedidosCompraPage() {
         quantidadeSelecionados={selecionadosIds.length}
         onConfirm={confirmarEnvioFinanceiroLote}
         loading={enviandoLote}
+      />
+
+      <AtualizarPrecosFiltradosDialog
+        isOpen={showAtualizarPrecosFiltrados}
+        onClose={(updated) => {
+          setShowAtualizarPrecosFiltrados(false);
+          if (updated) loadData();
+        }}
+        pedidosFiltrados={pedidosConsulta}
       />
 
     </div>

@@ -1,5 +1,5 @@
 import { pedidoLiberadoParaLogistica } from '@/lib/aprovarPedidoCompraFinanceiro';
-import { pedidoCompraItemToLegacyMirror } from '@/lib/pedidoCompraItemContract';
+import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
 
 const PEDIDO_COMPRA_APPROVED_STATUSES = new Set([
   'aprovado financeiramente',
@@ -356,35 +356,9 @@ export function resolvePendentePorProduto(pendentePorProduto = {}, produtoId) {
   return Number(pendentePorProduto[produtoId] ?? pendentePorProduto[String(produtoId)]) || 0;
 }
 
-/** Preenche `pedido.itens` a partir de PedidoCompraItem quando o espelho legado vier vazio. */
+/** Preenche `pedido.itens` a partir de PedidoCompraItem (SQL primeiro; espelho se SQL vazio). */
 export async function hydratePedidosCompraItens(base44, pedidos = []) {
-  const semItens = (pedidos || []).filter((p) => !Array.isArray(p.itens) || p.itens.length === 0);
-  if (!semItens.length) return pedidos;
-
-  const pci = base44?.entities?.PedidoCompraItem;
-  if (!pci?.filter) return pedidos;
-
-  const hydratedById = new Map();
-  await Promise.all(
-    semItens.map(async (pedido) => {
-      if (!pedido?.id) return;
-      try {
-        const rows = await pci.filter({ pedido_compra_id: pedido.id });
-        const itens = (rows || []).map(pedidoCompraItemToLegacyMirror).filter((item) => item?.produto_id);
-        if (itens.length) hydratedById.set(pedido.id, itens);
-      } catch {
-        // mantém pedido sem itens
-      }
-    }),
-  );
-
-  if (!hydratedById.size) return pedidos;
-
-  return pedidos.map((pedido) => {
-    const itens = hydratedById.get(pedido.id);
-    if (!itens?.length) return pedido;
-    return { ...pedido, itens };
-  });
+  return hydratePedidosCompraItensFromSql(base44, pedidos);
 }
 
 /** estoque_atual efetivo = físico + pendente aprovado (quando o toggle está ligado). */

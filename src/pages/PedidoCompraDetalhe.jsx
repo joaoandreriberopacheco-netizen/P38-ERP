@@ -4,7 +4,8 @@ import { base44 } from '@/api/base44Client';
 import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
 import { filterEmbarquesVisiveisParaPedido } from '@/components/compras/embarqueFilters';
 import { normalizeItemToCanonicalFactorOne } from '@/lib/productUnits';
-import { hydrateEmbarquesLinhasDesdeCanonical } from '@/lib/embarqueLogisticaHelpers';
+import { hydrateEmbarquesPedidoFromSql } from '@/lib/fetchEmbarqueItens';
+import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
 import { gerarNumeroSequencial } from '@/lib/gerarNumeroSequencial';
 
 /**
@@ -39,8 +40,11 @@ export default function PedidoCompraDetalhe() {
       return null;
     }
 
+    const [pedidoHydrated] = await hydratePedidosCompraItensFromSql(base44, [pedidoBase]);
+    const pedidoComItens = pedidoHydrated || pedidoBase;
+
     let embarques = filterEmbarquesVisiveisParaPedido(embarquesRes || []);
-    embarques = await hydrateEmbarquesLinhasDesdeCanonical(base44, pedidoBase.id, embarques);
+    embarques = await hydrateEmbarquesPedidoFromSql(base44, pedidoComItens.id, embarques);
     const ultimoEmbarque = [...embarques]
       .filter((emb) => emb.status !== 'Concluído')
       .sort((a, b) => new Date(a.eta || a.created_date) - new Date(b.eta || b.created_date))[0]
@@ -48,10 +52,10 @@ export default function PedidoCompraDetalhe() {
       || null;
 
     const pedidoComVerdade = {
-      ...pedidoBase,
+      ...pedidoComItens,
       _embarques: embarques,
       _embarque_principal: ultimoEmbarque,
-      data_prevista_entrega: ultimoEmbarque?.eta ? String(ultimoEmbarque.eta).slice(0, 10) : pedidoBase.data_prevista_entrega,
+      data_prevista_entrega: ultimoEmbarque?.eta ? String(ultimoEmbarque.eta).slice(0, 10) : pedidoComItens.data_prevista_entrega,
     };
 
     setPedido(pedidoComVerdade);
