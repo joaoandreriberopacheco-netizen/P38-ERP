@@ -1002,6 +1002,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                               inputMode="decimal"
                               disabled={!selecionado}
                               value={qtdEmbarque[item.produto_id] ?? ''}
+                              onFocus={(e) => e.target.select()}
                               onChange={e => setQtdEmbarque(prev => ({ ...prev, [item.produto_id]: e.target.value.replace(',', '.') }))}
                               className={`w-14 h-8 text-xs text-right rounded-lg bg-card dark:bg-muted text-foreground dark:text-foreground disabled:opacity-40 placeholder:text-muted-foreground px-2 border-0 shadow-sm ${excede && selecionado ? 'ring-1 ring-red-400' : ''}`}
                               placeholder="0"
