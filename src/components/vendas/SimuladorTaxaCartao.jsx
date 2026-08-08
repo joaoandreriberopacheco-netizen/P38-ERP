@@ -2,47 +2,16 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { X, CreditCard, TrendingDown, AlertTriangle, CheckCircle2, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  calcularTaxaCartao,
+  calcularTaxaFromMaquininha,
+  calcularValorLiquidoAposTarifa,
+  calcularValorTarifa,
+} from '@/lib/taxaMaquininha';
 
 const BANDEIRAS = ['Visa', 'Mastercard', 'Elo', 'Amex', 'Hipercard', 'Outra'];
 
-/**
- * Calcula o custo total da taxa para uma modalidade/parcelas
- * Lógica confirmada pelas simulações:
- * - Débito: taxa_debito simples
- * - Crédito 1x: taxa_credito_1x (apenas intermediação)
- * - Crédito parcelado: taxa_intermediacao_parcelado + taxa_parcelamento_vendedor[parcelas]
- */
-export function calcularTaxaCartao(bandeiraCfg, modalidade, parcelas) {
-  if (!bandeiraCfg) return { taxa_intermediacao: 0, taxa_parcelamento: 0, taxa_total: 0 };
-
-  if (modalidade === 'Débito') {
-    return {
-      taxa_intermediacao: bandeiraCfg.taxa_debito || 0,
-      taxa_parcelamento: 0,
-      taxa_total: bandeiraCfg.taxa_debito || 0
-    };
-  }
-
-  if (modalidade === 'Crédito à Vista' || parcelas === 1) {
-    return {
-      taxa_intermediacao: bandeiraCfg.taxa_credito_1x || 0,
-      taxa_parcelamento: 0,
-      taxa_total: bandeiraCfg.taxa_credito_1x || 0
-    };
-  }
-
-  // Crédito parcelado
-  const taxaInter = bandeiraCfg.taxa_intermediacao_parcelado || 0;
-  const entrada = (bandeiraCfg.taxas_parcelamento_vendedor || []).find(t => t.parcelas === parcelas);
-  const taxaParcela = entrada?.taxa_parcelamento_percentual || 0;
-  const total = taxaInter + taxaParcela;
-
-  return {
-    taxa_intermediacao: taxaInter,
-    taxa_parcelamento: taxaParcela,
-    taxa_total: total
-  };
-}
+export { calcularTaxaCartao };
 
 export default function SimuladorTaxaCartao({ open, onClose, valorTotal, valorDesconto }) {
   const [maquininhas, setMaquininhas] = useState([]);

@@ -17,7 +17,7 @@ import { createPageUrl } from '@/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUnsavedChangesWarning } from '@/components/utils/useUnsavedChangesWarning';
 import { calculateBaseQuantity, getItemUnitKey, pickDefaultSaleUnit, getUnidadeExibicaoSigla } from '@/lib/productUnits';
-import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
+import { buildPagamentoPix } from '@/lib/pagamentoPedidoVendaFinanceiro';
 import { productCodesMatch } from '@/lib/productCode';
 import { isVendaSemEstoquePermitida } from '@/lib/configFlags';
 
@@ -256,7 +256,7 @@ export default function PDVSupermercado() {
     try {
       const pagamentos = [];
       if (pagamentosDinheiro > 0) pagamentos.push({ forma_pagamento: 'Dinheiro', valor: pagamentosDinheiro, parcelas: 1 });
-      if (pagamentosPix > 0) pagamentos.push({ forma_pagamento: 'PIX', valor: pagamentosPix, parcelas: 1 });
+      if (pagamentosPix > 0) pagamentos.push(buildPagamentoPix(pagamentosPix));
       if (pagamentosDebito > 0) pagamentos.push({ forma_pagamento: 'Cartão de Débito', valor: pagamentosDebito, parcelas: 1 });
       if (pagamentosCredito > 0) pagamentos.push({ forma_pagamento: 'Cartão de Crédito', valor: pagamentosCredito, parcelas: parcelasCredito });
 

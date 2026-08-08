@@ -1,13 +1,17 @@
 /**
  * Regras alinhadas a base44/functions/processarVendaCaixa/entry.ts para receitas de PedidoVenda.
- *
- * Nota sobre PagamentoCartaoDetalhe / gerarLancamentosCartao: o fluxo PDV atual cria
- * LancamentoFinanceiro diretamente (receita única com valor líquido já deduzido da taxa).
- * Registros em PagamentoCartaoDetalhe vêm de outro pipeline; não duplicar aqui.
+ * Cartão e PIX geram receita (valor bruto / líquido) + despesa de tarifa quando aplicável.
  */
 
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { resolveContaDestinoCartao } from '@/lib/resolveContaDestinoCartao';
+import {
+  TAXA_PIX_PERCENTUAL,
+  calcularValorLiquidoAposTarifa,
+  calcularValorTarifa,
+} from '@/lib/taxaMaquininha';
+
+export { TAXA_PIX_PERCENTUAL };
 
 /** Mesmo offset que processarVendaCaixa (America/Rio_Branco simplificado). */
 export function getHojeBr() {
@@ -47,6 +51,16 @@ export function isCartaoForma(forma) {
 /**
  * Monta objeto de pagamento de cartão igual ao PDVCaixa.handleFinalizarVenda.
  */
+export function buildPagamentoPix(valor) {
+  const v = roundToTwoDecimals(parseFloat(valor) || 0);
+  return {
+    forma_pagamento: 'PIX',
+    valor: v,
+    parcelas: 1,
+    taxa_tarifa: TAXA_PIX_PERCENTUAL,
+  };
+}
+
 export function buildPagamentoCartaoFromSelecao(forma, valor, dados) {
   const v = roundToTwoDecimals(parseFloat(valor) || 0);
   const m = dados?.maquininha;
@@ -91,6 +105,7 @@ export function stripCartaoFields(pag) {
   delete next.maquininha_conta_nome;
   delete next.bandeira;
   delete next.taxa_maquininha;
+  delete next.taxa_tarifa;
   delete next.prazo_maquininha_dias;
   if (!isCartaoForma(next.forma_pagamento)) {
     next.parcelas = 1;
@@ -125,6 +140,41 @@ async function resolveContaCaixaPDV(base44, pedido, receitas) {
   return null;
 }
 
+async function criarDespesaTarifa(base44, {
+  descricao,
+  valorTarifa,
+  contaDestinoId,
+  contaDestinoNome,
+  dataVencimento,
+  dataPagamento,
+  status,
+  tags,
+  pedidoId,
+  numeroPedido,
+  turnoCaixaId,
+  categoria = 'Custos de Maquininha',
+}) {
+  if (!valorTarifa || valorTarifa <= 0) return;
+  await base44.entities.LancamentoFinanceiro.create({
+    tipo: 'Despesa',
+    descricao,
+    valor: valorTarifa,
+    valor_liquido: valorTarifa,
+    data_vencimento: dataVencimento,
+    ...(dataPagamento ? { data_pagamento: dataPagamento } : {}),
+    status: status || 'Em Aberto',
+    status_conciliacao: 'Pendente',
+    categoria,
+    tags: ['tarifa', ...(tags || [])],
+    conta_financeira_id: contaDestinoId,
+    conta_financeira_nome: contaDestinoNome,
+    turno_caixa_id: turnoCaixaId,
+    referencia_id: pedidoId,
+    referencia_tipo: 'PedidoVenda',
+    referencia_numero: numeroPedido,
+  });
+}
+
 /**
  * Recria todos os lançamentos de Receita do pedido a partir do array de pagamentos
  * (mesma semântica de processarVendaCaixa, sem alterar estoque nem vale).
@@ -139,13 +189,12 @@ export async function rebuildReceitasLancamentosPedidoVenda(
     referencia_id: pedido.id,
     referencia_tipo: 'PedidoVenda',
   });
-  const receitas = todos.filter((l) => l.tipo === 'Receita');
   const turnoCaixaId =
-    receitas.find((l) => l.turno_caixa_id)?.turno_caixa_id ?? pedido.turno_caixa_id ?? null;
+    todos.find((l) => l.turno_caixa_id)?.turno_caixa_id ?? pedido.turno_caixa_id ?? null;
 
-  const contaCaixaPDV = await resolveContaCaixaPDV(base44, pedido, receitas);
+  const contaCaixaPDV = await resolveContaCaixaPDV(base44, pedido, todos);
 
-  for (const l of receitas) {
+  for (const l of todos) {
     await base44.entities.LancamentoFinanceiro.delete(l.id);
   }
 
@@ -189,7 +238,8 @@ export async function rebuildReceitasLancamentosPedidoVenda(
     if (isCartaoForma(pag.forma_pagamento)) {
       const taxa = pag.taxa_maquininha || 0;
       const valorBruto = valor;
-      const valorLiquido = roundToTwoDecimals(valorBruto * (1 - taxa / 100));
+      const valorTarifa = calcularValorTarifa(valorBruto, taxa);
+      const valorLiquido = calcularValorLiquidoAposTarifa(valorBruto, taxa);
       const prazoDias = pag.prazo_maquininha_dias ?? getPrazoLiquidacaoMaquininha();
       const dataVencimento = addDiasUteis(hoje, prazoDias);
       const isCredito = pag.forma_pagamento === 'Cartão de Crédito';
@@ -233,6 +283,19 @@ export async function rebuildReceitasLancamentosPedidoVenda(
           data_venda: hoje,
         }),
       });
+
+      await criarDespesaTarifa(base44, {
+        descricao: `Tarifa Maquininha ${maquininhaNome} — ${taxa.toFixed(2)}% — ${bandeira} ${pag.forma_pagamento} — Venda ${numeroPedido}`,
+        valorTarifa,
+        contaDestinoId,
+        contaDestinoNome,
+        dataVencimento,
+        status: 'Em Aberto',
+        tags: ['taxa-maquininha', maquininhaNome, ...(bandeira ? [bandeira] : [])],
+        pedidoId: pedido.id,
+        numeroPedido,
+        turnoCaixaId,
+      });
       continue;
     }
 
@@ -260,13 +323,23 @@ export async function rebuildReceitasLancamentosPedidoVenda(
       );
     }
 
+    const isPix = pag.forma_pagamento === 'PIX';
+    const taxaPix = isPix ? (pag.taxa_tarifa ?? TAXA_PIX_PERCENTUAL) : 0;
+    const valorBruto = valor;
+    const valorTarifaPix = isPix ? calcularValorTarifa(valorBruto, taxaPix) : 0;
+    const valorLiquido = isPix
+      ? calcularValorLiquidoAposTarifa(valorBruto, taxaPix)
+      : (pag.valor_liquido_recebido != null ? roundToTwoDecimals(pag.valor_liquido_recebido) : valor);
+
     await base44.entities.LancamentoFinanceiro.create({
       tipo: 'Receita',
-      descricao: `Venda ${numeroPedido}${clienteNome ? ` - ${clienteNome}` : ''}`,
+      descricao: isPix
+        ? `PIX - Venda ${numeroPedido}${clienteNome ? ` - ${clienteNome}` : ''}`
+        : `Venda ${numeroPedido}${clienteNome ? ` - ${clienteNome}` : ''}`,
       terceiro_id: clienteId,
       terceiro_nome: clienteNome,
-      valor,
-      valor_liquido: pag.valor_liquido_recebido != null ? roundToTwoDecimals(pag.valor_liquido_recebido) : valor,
+      valor: valorBruto,
+      valor_liquido: valorLiquido,
       data_vencimento: hoje,
       data_pagamento: hoje,
       status: 'Pago',
@@ -281,6 +354,31 @@ export async function rebuildReceitasLancamentosPedidoVenda(
       referencia_id: pedido.id,
       referencia_tipo: 'PedidoVenda',
       referencia_numero: numeroPedido,
+      ...(isPix
+        ? {
+            observacoes: JSON.stringify({
+              taxa_pct: taxaPix,
+              data_venda: hoje,
+            }),
+          }
+        : {}),
     });
+
+    if (isPix && valorTarifaPix > 0) {
+      await criarDespesaTarifa(base44, {
+        descricao: `Tarifa PIX — ${taxaPix.toFixed(2)}% — Venda ${numeroPedido}`,
+        valorTarifa: valorTarifaPix,
+        contaDestinoId,
+        contaDestinoNome,
+        dataVencimento: hoje,
+        dataPagamento: hoje,
+        status: 'Pago',
+        tags: ['taxa-pix', 'PIX'],
+        pedidoId: pedido.id,
+        numeroPedido,
+        turnoCaixaId,
+        categoria: 'Custos Financeiros',
+      });
+    }
   }
 }

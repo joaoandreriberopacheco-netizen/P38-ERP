@@ -5,20 +5,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import {
+  bandeiraTarifasPadrao,
+  TAXA_MENSAL_PARCELAMENTO_PADRAO,
+  calcularTaxaCartao,
+} from '@/lib/taxaMaquininha';
 
 const BANDEIRAS = ['Visa', 'Mastercard', 'Elo', 'Amex', 'Hipercard'];
 
-const faixaPadrao = () => ({ min_parcelas: 2, max_parcelas: 6, taxa_mensal_percentual: 0 });
+const faixaPadrao = (min, max) => ({
+  min_parcelas: min,
+  max_parcelas: max,
+  taxa_mensal_percentual: TAXA_MENSAL_PARCELAMENTO_PADRAO,
+});
 
 const bandeiraPadrao = (b) => ({
-  bandeira: b,
-  taxa_debito: 0,
-  taxa_credito_1x: 0,
-  taxa_intermediacao_parcelado: 0,
-  faixas_parcelamento: [
-    { min_parcelas: 2, max_parcelas: 6, taxa_mensal_percentual: 0 },
-    { min_parcelas: 7, max_parcelas: 12, taxa_mensal_percentual: 0 },
-  ],
+  ...bandeiraTarifasPadrao(b),
 });
 
 const maqVazia = () => ({
@@ -29,7 +31,7 @@ const maqVazia = () => ({
   prazo_debito_dias: 1,
   prazo_credito_vista_dias: 1,
   prazo_credito_parcelado_dias: 1,
-  taxa_juros_cliente_mensal: 1.81,
+  taxa_juros_cliente_mensal: TAXA_MENSAL_PARCELAMENTO_PADRAO,
   bandeiras: BANDEIRAS.map(bandeiraPadrao),
   ativo: true,
 });
@@ -40,8 +42,8 @@ const normalizarBandeira = (b) => {
   // Se não tem faixas mas tem o legado, converte
   if (!base.faixas_parcelamento || base.faixas_parcelamento.length === 0) {
     base.faixas_parcelamento = [
-      { min_parcelas: 2, max_parcelas: 6, taxa_mensal_percentual: 0 },
-      { min_parcelas: 7, max_parcelas: 12, taxa_mensal_percentual: 0 },
+      faixaPadrao(2, 6),
+      faixaPadrao(7, 12),
     ];
   }
   return base;
@@ -58,15 +60,14 @@ function calcularAcumuladoPorFaixa(faixas, parcelas) {
   return 0;
 }
 
-function PreviewParcelamento({ faixas, taxaIntermediacao }) {
+function PreviewParcelamento({ faixas, bandeiraCfg }) {
   if (!faixas || faixas.length === 0) return null;
   return (
     <div className="mt-2">
       <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-1.5">Preview — Taxa total vendedor por parcelas</p>
       <div className="grid grid-cols-6 gap-1">
         {[2,3,4,5,6,7,8,9,10,11,12].map(n => {
-          const acum = calcularAcumuladoPorFaixa(faixas, n);
-          const total = (taxaIntermediacao || 0) + acum;
+          const total = calcularTaxaCartao(bandeiraCfg, 'Crédito Parcelado', n).taxa_total;
           return (
             <div key={n} className="bg-card dark:bg-muted/60 rounded-lg p-1 text-center">
               <div className="text-[9px] text-muted-foreground">{n}x</div>
@@ -153,7 +154,7 @@ export default function MaquininhasManager() {
       ...prev,
       bandeiras: prev.bandeiras.map(b =>
         b.bandeira === bandeira
-          ? { ...b, faixas_parcelamento: [...(b.faixas_parcelamento || []), faixaPadrao()] }
+          ? { ...b, faixas_parcelamento: [...(b.faixas_parcelamento || []), faixaPadrao(2, 6)] }
           : b
       ),
     }));
@@ -303,7 +304,7 @@ export default function MaquininhasManager() {
                 <div className="flex items-center gap-2">
                   <Input
                     type="number" step="0.01"
-                    value={editando.taxa_juros_cliente_mensal ?? 1.81}
+                    value={editando.taxa_juros_cliente_mensal ?? TAXA_MENSAL_PARCELAMENTO_PADRAO}
                     onChange={e => setEditando(p => ({ ...p, taxa_juros_cliente_mensal: parseFloat(e.target.value) || 0 }))}
                     className="w-32"
                   />
@@ -320,7 +321,7 @@ export default function MaquininhasManager() {
                       {/* Linha principal: débito, crédito 1x, intermediação parcelado */}
                       <div className="px-3 py-2 flex items-center gap-2">
                         <span className="text-xs font-semibold text-foreground/90 w-20">{b.bandeira}</span>
-                        <div className="flex-1 grid grid-cols-3 gap-1.5">
+                        <div className="flex-1 grid grid-cols-5 gap-1.5">
                           <div>
                             <div className="text-[9px] text-muted-foreground mb-0.5 text-center">Débito</div>
                             <input autoComplete="off" type="number" step="0.01" value={b.taxa_debito ?? 0}
@@ -334,9 +335,25 @@ export default function MaquininhasManager() {
                               className="w-full h-7 text-center text-xs bg-card dark:bg-muted rounded-lg focus:outline-none focus:ring-1 focus:ring-border/40 dark:text-foreground" />
                           </div>
                           <div>
-                            <div className="text-[9px] text-muted-foreground mb-0.5 text-center">Interm. Parc.</div>
-                            <input autoComplete="off" type="number" step="0.01" value={b.taxa_intermediacao_parcelado ?? 0}
-                              onChange={e => updateBandeira(b.bandeira, 'taxa_intermediacao_parcelado', e.target.value)}
+                            <div className="text-[9px] text-muted-foreground mb-0.5 text-center">Parc 2-6x</div>
+                            <input autoComplete="off" type="number" step="0.01" value={b.taxa_credito_2_6x ?? b.taxa_intermediacao_parcelado ?? 0}
+                              onChange={e => updateBandeira(b.bandeira, 'taxa_credito_2_6x', e.target.value)}
+                              className="w-full h-7 text-center text-xs bg-card dark:bg-muted rounded-lg focus:outline-none focus:ring-1 focus:ring-border/40 dark:text-foreground" />
+                          </div>
+                          <div>
+                            <div className="text-[9px] text-muted-foreground mb-0.5 text-center">Parc 7-12x</div>
+                            <input autoComplete="off" type="number" step="0.01" value={b.taxa_credito_7_12x ?? 0}
+                              onChange={e => updateBandeira(b.bandeira, 'taxa_credito_7_12x', e.target.value)}
+                              className="w-full h-7 text-center text-xs bg-card dark:bg-muted rounded-lg focus:outline-none focus:ring-1 focus:ring-border/40 dark:text-foreground" />
+                          </div>
+                          <div>
+                            <div className="text-[9px] text-muted-foreground mb-0.5 text-center">+%/mês</div>
+                            <input autoComplete="off" type="number" step="0.01" value={(b.faixas_parcelamento?.[0]?.taxa_mensal_percentual) ?? TAXA_MENSAL_PARCELAMENTO_PADRAO}
+                              onChange={e => {
+                                const v = parseFloat(e.target.value) || 0;
+                                const faixas = (b.faixas_parcelamento || []).map(f => ({ ...f, taxa_mensal_percentual: v }));
+                                updateBandeira(b.bandeira, 'faixas_parcelamento', faixas);
+                              }}
                               className="w-full h-7 text-center text-xs bg-card dark:bg-muted rounded-lg focus:outline-none focus:ring-1 focus:ring-border/40 dark:text-foreground" />
                           </div>
                         </div>
@@ -377,7 +394,7 @@ export default function MaquininhasManager() {
                             </div>
                           ))}
 
-                          <PreviewParcelamento faixas={b.faixas_parcelamento} taxaIntermediacao={b.taxa_intermediacao_parcelado} />
+                          <PreviewParcelamento faixas={b.faixas_parcelamento} bandeiraCfg={b} />
                         </div>
                       )}
                     </div>
