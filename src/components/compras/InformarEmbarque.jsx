@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Truck, Package, Calendar, AlertTriangle, CheckCircle2, ChevronDown, Plus, Check, X, Search, Anchor, Route, ClipboardList, ShipWheel, Loader2 } from 'lucide-react';
+import { Truck, Package, Calendar, AlertTriangle, CheckCircle2, ChevronDown, Plus, Check, X, Search, Route, ClipboardList, ShipWheel, Loader2, Boxes } from 'lucide-react';
 import { toast } from 'sonner';
 import FluvialTripSelectorFullscreen from '@/components/compras/FluvialTripSelectorFullscreen';
+import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
 import { agora, dataHoje, meioDiaSistemaISO, toLocalDateKey, formatarLogTime } from '@/components/utils/dateUtils';
 import { logDespachoAudit, InformarDespachoAuditStrip } from '@/components/compras/informarEmbarqueAudit.jsx';
 import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
@@ -17,36 +18,102 @@ import {
   buildTransportadoraPersistPayload,
   resolveAndMatchTransportadora,
 } from '@/lib/resolveTransportadora';
+import {
+  buildPurchaseUnitOptions,
+  calculateBaseQuantity,
+  commercialQuantityFromBase,
+  formatCommercialQuantity,
+  getItemCompraExibicaoVitrine,
+  hasAlternativeUnits,
+} from '@/lib/productUnits';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
-function calcularJaEmbarcadoSemEmbarque(pedido, embarqueExistenteId) {
+function quantidadeBaseEmbarqueItem(item = {}) {
+  const qb = Number(item.quantidade_base);
+  if (Number.isFinite(qb) && qb > 0) return qb;
+  const q = Number(item.quantidade_embarcada) || 0;
+  const f = Number(item.fator_conversao) || 1;
+  return calculateBaseQuantity(q, f);
+}
+
+function calcularJaEmbarcadoBaseSemEmbarque(pedido, embarqueExistenteId) {
   const map = {};
   const embarques = Array.isArray(pedido?._embarques) ? pedido._embarques : (pedido?.embarques_registrados || []);
   embarques.forEach((emb) => {
     if (embarqueExistenteId && emb.id === embarqueExistenteId) return;
     (emb.itens || emb.itens_embarcados || []).forEach((item) => {
       const prev = map[item.produto_id] || 0;
-      map[item.produto_id] = roundToTwoDecimals(prev + (Number(item.quantidade_embarcada) || 0));
+      map[item.produto_id] = roundToTwoDecimals(prev + quantidadeBaseEmbarqueItem(item));
     });
   });
   return map;
 }
 
-function calcularStatusEmbarque(itens, jaEmbarcado, qtdEmbarque, selectedItems) {
-  let totalPedido = 0;
-  let totalEmbarcado = 0;
+function pedidaBaseItem(item = {}) {
+  const qb = Number(item.quantidade_base);
+  if (Number.isFinite(qb) && qb > 0) return qb;
+  return calculateBaseQuantity(Number(item.quantidade) || 0, Number(item.fator_conversao) || 1);
+}
+
+function buildUnidadeLinhaInicial(item, produto, embItem = null) {
+  if (embItem?.unidade_medida) {
+    return {
+      unidade: embItem.unidade_medida,
+      fator: Number(embItem.fator_conversao) || 1,
+    };
+  }
+  const exib = getItemCompraExibicaoVitrine(item, produto);
+  return {
+    unidade: exib.unidade_medida || item.unidade_medida || 'UN',
+    fator: Number(exib.fator_conversao) || Number(item.fator_conversao) || 1,
+  };
+}
+
+function resolveUnidadeLinha(item, produto, unidadeLinhaMap, produtoId) {
+  return unidadeLinhaMap[produtoId] || buildUnidadeLinhaInicial(item, produto);
+}
+
+function calcularStatusEmbarque(itens, jaEmbarcadoBase, qtdEmbarque, selectedItems, unidadeLinhaMap, produtosMap) {
+  let totalPedidoBase = 0;
+  let totalEmbarcadoBase = 0;
   itens.forEach((item) => {
-    const pedida = item.quantidade || 0;
-    const anterior = jaEmbarcado[item.produto_id] || 0;
+    const pedidaBase = pedidaBaseItem(item);
+    const anteriorBase = jaEmbarcadoBase[item.produto_id] || 0;
     const selecionado = selectedItems[item.produto_id] !== false;
-    const nova = selecionado ? roundToTwoDecimals(parseFloat(qtdEmbarque[item.produto_id]) || 0) : 0;
-    totalPedido = roundToTwoDecimals(totalPedido + pedida);
-    totalEmbarcado = roundToTwoDecimals(totalEmbarcado + Math.min(anterior + nova, pedida));
+    const produto = produtosMap[item.produto_id];
+    const linha = resolveUnidadeLinha(item, produto, unidadeLinhaMap, item.produto_id);
+    const novaBase = selecionado
+      ? calculateBaseQuantity(parseFloat(qtdEmbarque[item.produto_id]) || 0, linha.fator)
+      : 0;
+    totalPedidoBase = roundToTwoDecimals(totalPedidoBase + pedidaBase);
+    totalEmbarcadoBase = roundToTwoDecimals(totalEmbarcadoBase + Math.min(anteriorBase + novaBase, pedidaBase));
   });
-  if (totalEmbarcado <= 0) return 'Nenhum';
-  if (totalEmbarcado >= totalPedido) return 'Total';
+  if (totalEmbarcadoBase <= 0) return 'Nenhum';
+  if (totalEmbarcadoBase >= totalPedidoBase - 0.01) return 'Total';
   return 'Parcial';
+}
+
+async function carregarProdutosMap(itens = []) {
+  const ids = [...new Set((itens || []).map((i) => i.produto_id).filter(Boolean))];
+  const map = {};
+  if (!ids.length) return map;
+  try {
+    const rows = await base44.entities.Produto.filter({ id: ids });
+    (rows || []).forEach((p) => {
+      if (p?.id) map[p.id] = p;
+    });
+  } catch {
+    const chunkSize = 25;
+    for (let i = 0; i < ids.length; i += chunkSize) {
+      const slice = ids.slice(i, i + chunkSize);
+      const batch = await Promise.all(slice.map((id) => base44.entities.Produto.get(id).catch(() => null)));
+      batch.filter(Boolean).forEach((p) => {
+        map[p.id] = p;
+      });
+    }
+  }
+  return map;
 }
 
 function calcularPercentualValorEmbarcado(pedido, embarquesAtualizados) {
@@ -225,6 +292,9 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
   const [showTripSelector, setShowTripSelector] = useState(false);
   const [qtdEmbarque, setQtdEmbarque] = useState({});
   const [selectedItems, setSelectedItems] = useState({});
+  const [unidadeLinha, setUnidadeLinha] = useState({});
+  const [produtosMap, setProdutosMap] = useState({});
+  const [unitSelector, setUnitSelector] = useState({ open: false, produtoId: null, product: null });
   const [fornecedores, setFornecedores] = useState([]);
   const [fornecedorLocal, setFornecedorLocal] = useState({ id: '', nome: '' });
   const [podeEscolherFornecedor, setPodeEscolherFornecedor] = useState(false);
@@ -234,8 +304,8 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
     return eventosLogisticos.find((evento) => evento.id === eventoLogisticoId) || eventoVinculado || null;
   }, [eventosLogisticos, eventoLogisticoId, eventoVinculado]);
 
-  const jaEmbarcado = useMemo(() =>
-    calcularJaEmbarcadoSemEmbarque(pedido, embarqueExistente?.id),
+  const jaEmbarcadoBase = useMemo(() =>
+    calcularJaEmbarcadoBaseSemEmbarque(pedido, embarqueExistente?.id),
     [pedido, embarqueExistente]
   );
 
@@ -254,6 +324,13 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
     setFornecedorLocal({ id: pedido.fornecedor_id || '', nome: pedido.fornecedor_nome || '' });
     setPodeEscolherFornecedor(false);
     setActiveTab('transporte');
+    setUnidadeLinha({});
+
+    const jaBase = calcularJaEmbarcadoBaseSemEmbarque(pedido, embarqueExistente?.id);
+    const initUnidade = {};
+    const initQtd = {};
+    const initSel = {};
+
     if (isEdicao) {
       setDataDespacho(embarqueExistente.data_embarque ? toLocalDateKey(new Date(embarqueExistente.data_embarque)) : dataHoje());
       setTransportadoraId(embarqueExistente.transportadora_id || '');
@@ -263,22 +340,28 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
         ? toLocalDateKey(new Date(embarqueExistente.eta))
         : '';
       setEta(etaVal);
-      // Carrega volumes — verifica ambos campos (retrocompatibilidade)
       const volsCarregados = (embarqueExistente.volumes_detalhados && Array.isArray(embarqueExistente.volumes_detalhados) && embarqueExistente.volumes_detalhados.length > 0)
         ? embarqueExistente.volumes_detalhados
         : [];
       setVolumes(volsCarregados);
       setObservacoes(embarqueExistente.observacoes || '');
-      const initQtd = {};
-      const initSel = {};
       const itensDoEmbarque = getItensEmbarque(embarqueExistente);
       (pedido.itens || []).forEach((item) => {
-        const embItem = itensDoEmbarque.find(i => i.produto_id === item.produto_id);
-        initQtd[item.produto_id] = embItem ? String(embItem.quantidade_embarcada) : '0';
-        initSel[item.produto_id] = !!embItem;
+        const produto = null;
+        const embItem = itensDoEmbarque.find((i) => i.produto_id === item.produto_id);
+        const linha = buildUnidadeLinhaInicial(item, produto, embItem);
+        initUnidade[item.produto_id] = linha;
+        if (embItem) {
+          const baseEmb = quantidadeBaseEmbarqueItem(embItem);
+          initQtd[item.produto_id] = String(
+            commercialQuantityFromBase(baseEmb, linha.fator, linha.unidade),
+          );
+          initSel[item.produto_id] = baseEmb > 0;
+        } else {
+          initQtd[item.produto_id] = '0';
+          initSel[item.produto_id] = false;
+        }
       });
-      setQtdEmbarque(initQtd);
-      setSelectedItems(initSel);
     } else {
       setDataDespacho(dataHoje());
       setTransportadoraId('');
@@ -288,16 +371,55 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
       setEta('');
       setVolumes([]);
       setObservacoes('');
-      const initQtd = {};
-      const initSel = {};
       (pedido.itens || []).forEach((item) => {
-        const pendente = Math.max(0, (item.quantidade || 0) - (jaEmbarcado[item.produto_id] || 0));
-        initQtd[item.produto_id] = pendente > 0 ? String(pendente) : '0';
-        initSel[item.produto_id] = pendente > 0;
+        const linha = buildUnidadeLinhaInicial(item, null);
+        initUnidade[item.produto_id] = linha;
+        const pedidaBase = pedidaBaseItem(item);
+        const anteriorBase = jaBase[item.produto_id] || 0;
+        const pendenteBase = Math.max(0, pedidaBase - anteriorBase);
+        initQtd[item.produto_id] = pendenteBase > 0
+          ? String(commercialQuantityFromBase(pendenteBase, linha.fator, linha.unidade))
+          : '0';
+        initSel[item.produto_id] = pendenteBase > 0;
       });
-      setQtdEmbarque(initQtd);
-      setSelectedItems(initSel);
     }
+
+    setQtdEmbarque(initQtd);
+    setSelectedItems(initSel);
+    setUnidadeLinha(initUnidade);
+
+    carregarProdutosMap(pedido.itens || []).then((map) => {
+      setProdutosMap(map);
+      const unidadeAtualizada = { ...initUnidade };
+      const qtdAtualizada = { ...initQtd };
+      (pedido.itens || []).forEach((item) => {
+        const produto = map[item.produto_id];
+        if (!produto) return;
+        if (isEdicao) {
+          const itensDoEmbarque = getItensEmbarque(embarqueExistente);
+          const embItem = itensDoEmbarque.find((i) => i.produto_id === item.produto_id);
+          const linha = buildUnidadeLinhaInicial(item, produto, embItem);
+          unidadeAtualizada[item.produto_id] = linha;
+          if (embItem) {
+            const baseEmb = quantidadeBaseEmbarqueItem(embItem);
+            qtdAtualizada[item.produto_id] = String(
+              commercialQuantityFromBase(baseEmb, linha.fator, linha.unidade),
+            );
+          }
+        } else {
+          const linha = buildUnidadeLinhaInicial(item, produto);
+          unidadeAtualizada[item.produto_id] = linha;
+          const pedidaBase = pedidaBaseItem(item);
+          const anteriorBase = jaBase[item.produto_id] || 0;
+          const pendenteBase = Math.max(0, pedidaBase - anteriorBase);
+          qtdAtualizada[item.produto_id] = pendenteBase > 0
+            ? String(commercialQuantityFromBase(pendenteBase, linha.fator, linha.unidade))
+            : '0';
+        }
+      });
+      setUnidadeLinha(unidadeAtualizada);
+      setQtdEmbarque(qtdAtualizada);
+    });
   }, [isOpen, pedido, embarqueExistente]);
 
   const loadTransportadoras = async () => {
@@ -357,13 +479,38 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
   };
 
   const statusPreview = useMemo(() =>
-    calcularStatusEmbarque(pedido?.itens || [], jaEmbarcado, qtdEmbarque, selectedItems),
-    [pedido, jaEmbarcado, qtdEmbarque, selectedItems]
+    calcularStatusEmbarque(
+      pedido?.itens || [],
+      jaEmbarcadoBase,
+      qtdEmbarque,
+      selectedItems,
+      unidadeLinha,
+      produtosMap,
+    ),
+    [pedido, jaEmbarcadoBase, qtdEmbarque, selectedItems, unidadeLinha, produtosMap]
   );
+
+  const handleConfirmUnitDespacho = (unitOption) => {
+    const produtoId = unitSelector.produtoId;
+    if (!produtoId || !unitOption) return;
+    const item = (pedido.itens || []).find((i) => i.produto_id === produtoId);
+    if (!item) return;
+    const linhaAtual = unidadeLinha[produtoId] || buildUnidadeLinhaInicial(item, produtosMap[produtoId]);
+    const qtyAtual = parseFloat(qtdEmbarque[produtoId]) || 0;
+    const baseAtual = calculateBaseQuantity(qtyAtual, linhaAtual.fator);
+    const fatorNovo = Number(unitOption.fator_conversao) || 1;
+    const qtyNova = commercialQuantityFromBase(baseAtual, fatorNovo, unitOption.unidade);
+    setUnidadeLinha((prev) => ({
+      ...prev,
+      [produtoId]: { unidade: unitOption.unidade, fator: fatorNovo },
+    }));
+    setQtdEmbarque((prev) => ({ ...prev, [produtoId]: String(qtyNova) }));
+    setUnitSelector({ open: false, produtoId: null, product: null });
+  };
 
   const totalPesoKg = roundToTwoDecimals(volumes.reduce((s, v) => s + (v.peso_total_kg || 0), 0));
 
-  const bloquearFecharPorPortalAberto = showTripSelector;
+  const bloquearFecharPorPortalAberto = showTripSelector || unitSelector.open;
 
   useEffect(() => {
     if (!isOpen || !pedido) return;
@@ -420,13 +567,22 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
       const letraExibicao = String.fromCharCode(65 + embarquesExistentes.length);
       const itensEmbarcados = (pedido.itens || [])
         .filter(item => selectedItems[item.produto_id])
-        .map(item => ({
-          produto_id: item.produto_id,
-          produto_nome: item.produto_nome,
-          quantidade_pedida: item.quantidade,
-          quantidade_embarcada: roundToTwoDecimals(parseFloat(qtdEmbarque[item.produto_id]) || 0),
-          unidade_medida: item.unidade_medida
-        }))
+        .map(item => {
+          const linha = resolveUnidadeLinha(item, produtosMap[item.produto_id], unidadeLinha, item.produto_id);
+          const qEmb = roundToTwoDecimals(parseFloat(qtdEmbarque[item.produto_id]) || 0);
+          const qBase = roundToTwoDecimals(calculateBaseQuantity(qEmb, linha.fator));
+          return {
+            produto_id: item.produto_id,
+            produto_nome: item.produto_nome,
+            quantidade_pedida: commercialQuantityFromBase(pedidaBaseItem(item), linha.fator, linha.unidade),
+            quantidade_embarcada: qEmb,
+            quantidade_base: qBase,
+            fator_conversao: linha.fator,
+            unidade_medida: linha.unidade,
+            pedido_compra_item_id: item.id || item.pedido_compra_item_id || '',
+            produto_unidade_id: item.produto_unidade_id || '',
+          };
+        })
         .filter(i => i.quantidade_embarcada > 0);
       const itensJaLancados = (embarqueExistente?.itens_embarcados || embarqueExistente?.itens || []).filter(
         (item) => (Number(item?.quantidade_embarcada) || 0) > 0
@@ -592,6 +748,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
             if (!bloquearFecharPorPortalAberto) return;
             e.preventDefault();
             if (showTripSelector) setShowTripSelector(false);
+            if (unitSelector.open) setUnitSelector({ open: false, produtoId: null, product: null });
             logDespachoAudit({ action: 'escape_fechou_portal' });
           }}
         >
@@ -777,12 +934,19 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
 
                 <div className="space-y-2">
                   {(pedido.itens || []).map(item => {
-                    const pedida = item.quantidade || 0;
-                    const anterior = jaEmbarcado[item.produto_id] || 0;
-                    const pendente = Math.max(0, pedida - anterior);
+                    const produto = produtosMap[item.produto_id];
+                    const linha = resolveUnidadeLinha(item, produto, unidadeLinha, item.produto_id);
+                    const pedidaBase = pedidaBaseItem(item);
+                    const anteriorBase = jaEmbarcadoBase[item.produto_id] || 0;
+                    const pendenteBase = Math.max(0, pedidaBase - anteriorBase);
+                    const pedidaExib = commercialQuantityFromBase(pedidaBase, linha.fator, linha.unidade);
+                    const pendenteExib = commercialQuantityFromBase(pendenteBase, linha.fator, linha.unidade);
+                    const anteriorExib = commercialQuantityFromBase(anteriorBase, linha.fator, linha.unidade);
                     const selecionado = selectedItems[item.produto_id] !== false;
                     const emb = parseFloat(qtdEmbarque[item.produto_id]) || 0;
-                    const excede = emb > pendente;
+                    const excede = emb > pendenteExib + 0.02;
+                    const podeTrocarUnidade = produto && hasAlternativeUnits(produto) && buildPurchaseUnitOptions(produto).length > 1;
+                    const exibVitrine = getItemCompraExibicaoVitrine(item, produto);
 
                     return (
                       <div
@@ -799,13 +963,37 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                           </button>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-foreground leading-tight">{item.produto_nome}</p>
+                            {exibVitrine.unidade_medida !== (item.unidade_medida || '') && (
+                              <p className="text-[10px] text-muted-foreground mt-0.5">
+                                Pedido em {item.unidade_medida || 'UN'} · vitrine {exibVitrine.unidade_medida}
+                              </p>
+                            )}
                           </div>
+                          {podeTrocarUnidade ? (
+                            <button
+                              type="button"
+                              onClick={() => setUnitSelector({ open: true, produtoId: item.produto_id, product: produto })}
+                              className="shrink-0 inline-flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-[10px] font-semibold text-cyan-700 dark:text-cyan-300 hover:bg-muted/80"
+                            >
+                              <Boxes className="w-3 h-3" aria-hidden />
+                              {linha.unidade}
+                            </button>
+                          ) : (
+                            <span className="shrink-0 text-[10px] font-semibold uppercase text-muted-foreground px-1">
+                              {linha.unidade}
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex items-center justify-between gap-3 pl-8">
                           <p className="text-xs text-muted-foreground flex-1">
-                            Ped: <span className="font-medium">{pedida}</span> {item.unidade_medida}
-                            {anterior > 0 && <span className="ml-1.5">· já emb: {anterior}</span>}
+                            Ped: <span className="font-medium">{formatCommercialQuantity(pedidaExib, linha.unidade)}</span> {linha.unidade}
+                            {pendenteExib < pedidaExib && (
+                              <span className="ml-1.5">· pend: {formatCommercialQuantity(pendenteExib, linha.unidade)}</span>
+                            )}
+                            {anteriorExib > 0 && (
+                              <span className="ml-1.5">· já emb: {formatCommercialQuantity(anteriorExib, linha.unidade)}</span>
+                            )}
                             {excede && selecionado && <span className="ml-1.5 text-red-400">· excede!</span>}
                           </p>
                           <div className="flex-shrink-0 flex flex-col items-end gap-0.5">
@@ -818,7 +1006,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                               className={`w-14 h-8 text-xs text-right rounded-lg bg-card dark:bg-muted text-foreground dark:text-foreground disabled:opacity-40 placeholder:text-muted-foreground px-2 border-0 shadow-sm ${excede && selecionado ? 'ring-1 ring-red-400' : ''}`}
                               placeholder="0"
                             />
-                            <span className="text-[9px] text-muted-foreground uppercase">{item.unidade_medida}</span>
+                            <span className="text-[9px] text-muted-foreground uppercase">{linha.unidade}</span>
                           </div>
                         </div>
                       </div>
@@ -863,6 +1051,14 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
           onSelect={handleSelectTrip}
         />
       ) : null}
+
+      <ProductUnitSelectorDialog
+        open={unitSelector.open}
+        product={unitSelector.product}
+        mode="purchase"
+        onClose={() => setUnitSelector({ open: false, produtoId: null, product: null })}
+        onConfirm={handleConfirmUnitDespacho}
+      />
 
       <InformarDespachoAuditStrip isOpen={isOpen} />
     </>
