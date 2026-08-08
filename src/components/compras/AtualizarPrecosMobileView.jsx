@@ -163,6 +163,7 @@ function MobileProdutoCard({
 
           <div className="flex gap-2 overflow-x-auto pb-0.5 -mx-1 px-1">
             <P38MobileMetric label="Compra" value={`R$ ${inp(item.produto_id, 'valor_compra') || '0,00'}`} />
+            <P38MobileMetric label="Avaria" value={`${inp(item.produto_id, 'avaria_percentual') || '0'}%`} />
             <P38MobileMetric label="Markup" value={`${inp(item.produto_id, 'markup') || '0'}%`} tone="info" />
             <P38MobileMetric label="Venda" value={`R$ ${fmt(precoVenda)}`} tone="info" />
           </div>
@@ -212,6 +213,18 @@ function MobileProdutoCard({
               />
             </div>
             <div className="space-y-1">
+              <Label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Avaria %</Label>
+              <Input
+                type="text"
+                inputMode="decimal"
+                value={inp(item.produto_id, 'avaria_percentual')}
+                onChange={(e) => setInp(item.produto_id, 'avaria_percentual', e.target.value)}
+                onFocus={(e) => e.target.select()}
+                onBlur={() => onCostBlur(item.produto_id, 'avaria_percentual')}
+                className={INPUT_SURFACE}
+              />
+            </div>
+            <div className="space-y-1">
               <Label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Markup %</Label>
               <Input
                 type="text"
@@ -251,7 +264,6 @@ function MobileProdutoCard({
                   { label: 'Imp 1', field: 'custo_imposto1_padrao' },
                   { label: 'Imp 2', field: 'custo_imposto2_padrao' },
                   { label: 'Outros', field: 'custo_outros_padrao' },
-                  { label: 'Avaria %', field: 'avaria_percentual' },
                 ].map(({ label, field }) => (
                   <div key={field} className="space-y-1">
                     <Label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</Label>

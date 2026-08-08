@@ -664,6 +664,7 @@ export default function AtualizarPrecosDialog({
                         {unidadeVisualizacao === 'comercial' ? 'unid. compra' : 'base'}
                       </span>
                     </th>
+                    <th className="text-center p-2 w-[80px]">Avaria %</th>
                     <th className="text-center p-2 w-[110px] bg-muted font-bold">
                       <span className="block">Custo total</span>
                       <span className="block text-[10px] font-normal opacity-90">
@@ -684,7 +685,7 @@ export default function AtualizarPrecosDialog({
                     <Fragment key={secao.label || 'all'}>
                       {secao.label ? (
                         <tr className="bg-muted/60">
-                          <td colSpan={12} className="p-2 text-xs font-semibold uppercase tracking-wide text-foreground/80">
+                          <td colSpan={13} className="p-2 text-xs font-semibold uppercase tracking-wide text-foreground/80">
                             {secao.label}
                           </td>
                         </tr>
@@ -799,6 +800,16 @@ export default function AtualizarPrecosDialog({
                           />
                         </td>
                       ))}
+                      <td className="p-2">
+                        <Input
+                          type="text"
+                          value={inp(item.produto_id, 'avaria_percentual')}
+                          onChange={(e) => setInp(item.produto_id, 'avaria_percentual', e.target.value)}
+                          onFocus={(e) => e.target.select()}
+                          onBlur={() => handleCostBlur(item.produto_id, 'avaria_percentual')}
+                          className="h-8 text-center text-sm bg-background border border-input shadow-sm"
+                        />
+                      </td>
                       <td className="p-2 bg-muted/50">
                         <div className="text-center font-bold text-foreground dark:text-foreground">R$ {fmt(item.novoCusto * item.multDisplay)}</div>
                       </td>
