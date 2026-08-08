@@ -185,11 +185,13 @@ export function P38MobileMetric({ label, value, tone = 'default', className }) {
   const valueClass =
     tone === 'success'
       ? cn('font-semibold', p38Accent.success.text)
-      : tone === 'danger'
-        ? cn('font-semibold', p38Accent.danger.text)
-        : tone === 'muted'
-          ? 'text-muted-foreground'
-          : 'text-foreground font-medium';
+      : tone === 'info'
+        ? cn('font-semibold', p38Accent.info.text)
+        : tone === 'danger'
+          ? cn('font-semibold', p38Accent.danger.text)
+          : tone === 'muted'
+            ? 'text-muted-foreground'
+            : 'text-foreground font-medium';
 
   return (
     <div className={cn('flex-shrink-0 min-w-[4.25rem] max-w-[5.75rem]', className)}>

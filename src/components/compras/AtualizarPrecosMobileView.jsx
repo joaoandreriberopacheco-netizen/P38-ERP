@@ -10,9 +10,14 @@ import {
   P38MobileLine,
   P38MobileLineList,
   P38MobileMetric,
-  P38StatusPill,
-  p38AccentKeyFromTone,
 } from '@/components/ui/p38-mobile-line';
+import {
+  COMPRAS_CHIP_ACTIVE,
+  COMPRAS_CHIP_INACTIVE,
+  COMPRAS_CTA,
+  COMPRAS_PILL,
+  comprasAccentBorderClass,
+} from '@/lib/comprasEmbarquesPalette';
 import { cn } from '@/lib/utils';
 import {
   buildPurchaseUnitOptions,
@@ -20,13 +25,20 @@ import {
   hasAlternativeUnits,
 } from '@/lib/productUnits';
 
-/** Paleta da lista de Embarques (ListaPedidosCompra) — não a limão do Planejamento. */
-const COMPRAS_CHIP_ACTIVE =
-  'bg-cyan-50 text-cyan-800 ring-1 ring-cyan-500/25 dark:bg-cyan-950/40 dark:text-cyan-300';
-const COMPRAS_CHIP_INACTIVE =
-  'bg-secondary/80 text-muted-foreground dark:bg-[#26262e] dark:text-foreground/80';
-const COMPRAS_CTA =
-  'bg-cyan-600 hover:bg-cyan-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-400 dark:text-[#1f1d22]';
+function ComprasStatusPill({ tone = 'muted', children, className }) {
+  return (
+    <span
+      className={cn(
+        'inline-flex max-w-full items-center rounded-full px-2 py-0.5 text-[11px] font-semibold leading-normal whitespace-nowrap',
+        COMPRAS_PILL[tone] ?? COMPRAS_PILL.muted,
+        className,
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
 const INPUT_SURFACE =
   'h-10 border-0 shadow-none bg-background dark:bg-[#26262e] rounded-lg text-sm tabular-nums';
 
@@ -90,20 +102,21 @@ function MobileProdutoCard({
     <div className="min-w-0">
       <P38MobileLine
         striped={striped}
-        accent={p38AccentKeyFromTone(tone)}
+        accent="none"
+        className={comprasAccentBorderClass(tone)}
         onClick={onToggleExpand}
         title={item.produto_nome}
         subtitle={getItemSubtitulo?.(item) || `Un. ${unidadeLabel}`}
         meta={
           <>
             {item.temDiferenca ? (
-              <P38StatusPill tone={item.diferencaCusto > 0 ? 'danger' : 'success'}>
+              <ComprasStatusPill tone={item.diferencaCusto > 0 ? 'danger' : 'success'}>
                 {item.diferencaCusto > 0 ? '+' : '-'}R$ {fmt(Math.abs(item.diferencaCusto * item.multDisplay))}
-              </P38StatusPill>
+              </ComprasStatusPill>
             ) : (
-              <P38StatusPill tone="muted">Sem alteração</P38StatusPill>
+              <ComprasStatusPill tone="muted">Sem alteração</ComprasStatusPill>
             )}
-            <P38StatusPill tone="info">Venda</P38StatusPill>
+            <ComprasStatusPill tone="info">Venda</ComprasStatusPill>
           </>
         }
         value={`R$ ${fmt(precoVenda)}`}
@@ -315,9 +328,9 @@ export default function AtualizarPrecosMobileView({
             {totalItens} produto(s)
           </p>
           {qtdComDiferenca > 0 ? (
-            <P38StatusPill tone="warning">{qtdComDiferenca} com alteração</P38StatusPill>
+            <ComprasStatusPill tone="warning">{qtdComDiferenca} com alteração</ComprasStatusPill>
           ) : (
-            <P38StatusPill tone="muted">Revisão</P38StatusPill>
+            <ComprasStatusPill tone="muted">Revisão</ComprasStatusPill>
           )}
         </div>
 
@@ -359,7 +372,7 @@ export default function AtualizarPrecosMobileView({
               <p className="text-sm font-bold uppercase tracking-wide text-foreground/80 truncate min-w-0">
                 {secao.label}
               </p>
-              <P38StatusPill tone="info">{secao.items.length} itens</P38StatusPill>
+              <ComprasStatusPill tone="info">{secao.items.length} itens</ComprasStatusPill>
             </div>
           ) : null}
 
@@ -397,4 +410,3 @@ export default function AtualizarPrecosMobileView({
   );
 }
 
-export { COMPRAS_CHIP_ACTIVE, COMPRAS_CHIP_INACTIVE, COMPRAS_CTA };
