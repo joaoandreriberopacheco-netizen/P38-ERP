@@ -52,6 +52,7 @@
     "compras:audit-linhas-sql": "node scripts/audit-compras-linhas-sql.mjs",
     "compras:migrar-pci-legacy": "node scripts/migrar-pedido-compra-itens-legacy.mjs",
     "compras:migrar-embarque-legacy": "node scripts/migrar-embarque-itens-legacy.mjs",
+    "compras:migrar-embarque-local": "node scripts/migrar-embarque-itens-local.mjs",
     "corrigir:wx7-console": "node scripts/corrigir-wx7-a5n-console.mjs",
     "iep:calcular": "node scripts/invoke-calcular-iep.mjs",
     "estoque:atualizar-metas": "node scripts/invoke-atualizar-metas-estoque.mjs",
