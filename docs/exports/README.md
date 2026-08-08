@@ -1,5 +1,19 @@
 # Exportações do catálogo
 
+## Hierarquia transição — 1 planilha (Categoria → LINHA → Produto compra → SKU)
+
+Ficheiro único para revisar a migração ao esquema novo. Uma linha por SKU; colunas **STATUS** e **OBS** para aprovação manual.
+
+| Ficheiro | Descrição |
+|----------|-----------|
+| [P38-hierarquia-transicao.xlsx](./P38-hierarquia-transicao.xlsx) | Aba **Hierarquia** — proposta automática de linha + produto compra |
+
+Regenerar: `npm run export:hierarquia-transicao`
+
+**solo:** `produto_compra_*` vazio (SKU ligado só à LINHA).
+
+---
+
 ## LINHAS mestre — aprovação (próximo passo BD)
 
 Tabela **LINHA** + tipo (solo/mix/portfolio) antes de SQL. Marque **STATUS** na folha.
