@@ -1,4 +1,4 @@
-import { useState, useEffect, Fragment } from 'react';
+import { useState, useEffect, useRef, Fragment } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog.jsx";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -139,7 +139,9 @@ export default function AtualizarPrecosDialog({
   subtitulo,
   getItemSubtitulo,
   secoesAgrupamento = null,
+  toolbarExtra = null,
 }) {
+  const sessionInitializedRef = useRef(false);
   const [selecionados, setSelecionados] = useState({});
   const [processando, setProcessando] = useState(false);
   const [pendingUpdate, setPendingUpdate] = useState(null);
@@ -187,7 +189,14 @@ export default function AtualizarPrecosDialog({
 
   // Inicializa estado ao abrir — custos sempre na unidade base do cadastro; custo_unitario da linha pode estar na unidade do pedido
   useEffect(() => {
-    if (!isOpen || !itens.length) return;
+    if (!isOpen) {
+      sessionInitializedRef.current = false;
+      return;
+    }
+    if (!itens.length) return;
+    if (sessionInitializedRef.current) return;
+    sessionInitializedRef.current = true;
+
     const modoInicial = 'comercial';
     setUnidadeVisualizacao(modoInicial);
     setUnidadeExibicaoLinha({});
@@ -549,6 +558,10 @@ export default function AtualizarPrecosDialog({
             </p>
           )}
         </DialogHeader>
+
+        {toolbarExtra ? (
+          <div className={isMobile ? 'px-4' : 'mt-1'}>{toolbarExtra}</div>
+        ) : null}
 
         <div className={isMobile ? 'mt-2' : 'mt-4'}>
           {algumItemComConversao && (

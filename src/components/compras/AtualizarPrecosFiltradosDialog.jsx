@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from '@/components/ui/use-toast';
@@ -11,6 +11,8 @@ import {
 } from '@/lib/collectItensAtualizarPrecosFiltrados';
 import { agruparItensAtualizarPrecos } from '@/lib/agruparItensAtualizarPrecos';
 import { formatarSoData } from '@/components/utils/dateUtils';
+import { COMPRAS_CHIP_ACTIVE, COMPRAS_CHIP_INACTIVE } from '@/lib/comprasEmbarquesPalette';
+import { cn } from '@/lib/utils';
 
 const AGRUPAMENTO_OPCOES = [
   { value: 'alfabetica', label: 'Alfabética' },
@@ -59,6 +61,8 @@ export default function AtualizarPrecosFiltradosDialog({
   const [produtos, setProdutos] = useState([]);
   const [itensBrutos, setItensBrutos] = useState([]);
   const [agrupamento, setAgrupamento] = useState('alfabetica');
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!isOpen) {
@@ -81,7 +85,7 @@ export default function AtualizarPrecosFiltradosDialog({
             title: 'Nenhum item nos pedidos filtrados',
             description: 'Ajuste os filtros ou confirme se os pedidos têm itens migrados em SQL.',
           });
-          onClose?.(false);
+          onCloseRef.current?.(false);
           return;
         }
 
@@ -99,7 +103,7 @@ export default function AtualizarPrecosFiltradosDialog({
             description: error?.message || 'Tente novamente',
             variant: 'destructive',
           });
-          onClose?.(false);
+          onCloseRef.current?.(false);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -109,7 +113,7 @@ export default function AtualizarPrecosFiltradosDialog({
     return () => {
       cancelled = true;
     };
-  }, [isOpen, pedidosFiltrados, onClose]);
+  }, [isOpen, pedidosFiltrados]);
 
   const itensDedup = useMemo(
     () => deduplicarItensAtualizarPrecosPorProduto(itensBrutos),
@@ -131,6 +135,39 @@ export default function AtualizarPrecosFiltradosDialog({
     );
   }, [itensDedup, agrupamento]);
 
+  const agrupamentoToolbar = (
+    <div className="rounded-xl border border-border/40 dark:border-white/10 bg-muted/30 dark:bg-muted/20 p-3 space-y-2">
+      <p className="text-xs font-medium text-muted-foreground">Agrupar visualização</p>
+      <div className="flex flex-wrap gap-2">
+        {AGRUPAMENTO_OPCOES.map((op) => (
+          <Button
+            key={op.value}
+            type="button"
+            size="sm"
+            variant="ghost"
+            className={cn(
+              'h-8 text-xs rounded-full px-3',
+              agrupamento === op.value ? COMPRAS_CHIP_ACTIVE : COMPRAS_CHIP_INACTIVE,
+            )}
+            onClick={() => setAgrupamento(op.value)}
+          >
+            {op.label}
+          </Button>
+        ))}
+      </div>
+      {agrupamento !== 'alfabetica' && gruposResumo.length > 0 && (
+        <p className="text-[11px] text-muted-foreground">
+          {gruposResumo.length} grupo{gruposResumo.length === 1 ? '' : 's'}
+          {' · '}
+          {itensDedup.length} produto{itensDedup.length === 1 ? '' : 's'} únicos
+          {itensBrutos.length > itensDedup.length
+            ? ` (${itensBrutos.length} linhas nos pedidos)`
+            : ''}
+        </p>
+      )}
+    </div>
+  );
+
   if (!isOpen) return null;
 
   if (loading) {
@@ -147,47 +184,16 @@ export default function AtualizarPrecosFiltradosDialog({
   if (!itensDedup.length) return null;
 
   return (
-    <>
-      <div className="fixed inset-x-0 top-0 z-[61] flex justify-center pointer-events-none px-4 pt-20">
-        <div className="pointer-events-auto w-full max-w-3xl rounded-2xl bg-card border border-border/50 shadow-lg p-3 space-y-2">
-          <p className="text-xs font-medium text-muted-foreground px-1">Agrupar visualização</p>
-          <div className="flex flex-wrap gap-2">
-            {AGRUPAMENTO_OPCOES.map((op) => (
-              <Button
-                key={op.value}
-                type="button"
-                size="sm"
-                variant={agrupamento === op.value ? 'default' : 'outline'}
-                className="h-8 text-xs rounded-xl"
-                onClick={() => setAgrupamento(op.value)}
-              >
-                {op.label}
-              </Button>
-            ))}
-          </div>
-          {agrupamento !== 'alfabetica' && gruposResumo.length > 0 && (
-            <p className="text-[11px] text-muted-foreground px-1">
-              {gruposResumo.length} grupo{gruposResumo.length === 1 ? '' : 's'}
-              {' · '}
-              {itensDedup.length} produto{itensDedup.length === 1 ? '' : 's'} únicos
-              {itensBrutos.length > itensDedup.length
-                ? ` (${itensBrutos.length} linhas nos pedidos)`
-                : ''}
-            </p>
-          )}
-        </div>
-      </div>
-
-      <AtualizarPrecosDialog
-        isOpen={isOpen}
-        onClose={onClose}
-        itens={itensOrdenados}
-        produtos={produtos}
-        titulo="Atualizar preços — pedidos filtrados"
-        subtitulo={`${pedidosFiltrados.length} pedido(s) · ${itensDedup.length} produto(s) · fonte SQL`}
-        getItemSubtitulo={(item) => buildSubtituloItem(item, agrupamento)}
-        secoesAgrupamento={agrupamento !== 'alfabetica' ? gruposResumo : null}
-      />
-    </>
+    <AtualizarPrecosDialog
+      isOpen={isOpen}
+      onClose={onClose}
+      itens={itensOrdenados}
+      produtos={produtos}
+      titulo="Atualizar preços — pedidos filtrados"
+      subtitulo={`${pedidosFiltrados.length} pedido(s) · ${itensDedup.length} produto(s) · fonte SQL`}
+      getItemSubtitulo={(item) => buildSubtituloItem(item, agrupamento)}
+      secoesAgrupamento={agrupamento !== 'alfabetica' ? gruposResumo : null}
+      toolbarExtra={agrupamentoToolbar}
+    />
   );
 }
