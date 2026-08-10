@@ -98,6 +98,9 @@ jobs:
       - name: Vercel pull (production)
         run: npx --yes vercel@latest pull --yes --environment=production --token "$VERCEL_TOKEN"
 
+      - name: Alinhar projecto Vercel (Next.js — sem outputDirectory dist)
+        run: bash scripts/sync-vercel-project-settings.sh
+
       - name: Sincronizar env Supabase no projecto Vercel
         run: bash scripts/sync-vercel-production-env.sh
         env:
@@ -106,9 +109,8 @@ jobs:
           VITE_P38_USE_SUPABASE_AUTH: ${{ secrets.VITE_P38_USE_SUPABASE_AUTH || 'true' }}
           VITE_P38_ENABLE_GOOGLE_LOGIN: ${{ secrets.VITE_P38_ENABLE_GOOGLE_LOGIN || '' }}
 
-      # O `vercel build` não propaga sempre env do shell ao Vite. `.env.production.local`
-      # é lido pelo Vite e garante URL/anon key no bundle (sem isto o app cai no stub Base44).
-      - name: Escrever env de produção para o Vite
+      # Next.js lê NEXT_PUBLIC_*; p38PublicEnv aceita também VITE_* como fallback.
+      - name: Escrever env de produção para o Next
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
@@ -119,6 +121,12 @@ jobs:
           use_auth="${VITE_P38_USE_SUPABASE_AUTH:-true}"
           google_login="${VITE_P38_ENABLE_GOOGLE_LOGIN:-}"
           {
+            echo "NEXT_PUBLIC_P38_PROVIDER=supabase"
+            echo "NEXT_PUBLIC_P38_BYPASS_BASE44=true"
+            echo "NEXT_PUBLIC_SUPABASE_URL=${VITE_SUPABASE_URL}"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}"
+            echo "NEXT_PUBLIC_P38_USE_SUPABASE_AUTH=${use_auth}"
+            echo "NEXT_PUBLIC_P38_ENABLE_GOOGLE_LOGIN=${google_login}"
             echo "VITE_P38_PROVIDER=supabase"
             echo "VITE_P38_BYPASS_BASE44=true"
             echo "VITE_SUPABASE_URL=${VITE_SUPABASE_URL}"
@@ -128,9 +136,15 @@ jobs:
           } > .env.production.local
           echo "OK: .env.production.local criado (sem imprimir valores)."
 
-      - name: Vercel build (production, prebuilt)
+      - name: Vercel build (production, prebuilt — Next.js)
         run: npx --yes vercel@latest build --prod --token "$VERCEL_TOKEN"
         env:
+          NEXT_PUBLIC_P38_PROVIDER: supabase
+          NEXT_PUBLIC_P38_BYPASS_BASE44: 'true'
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_P38_USE_SUPABASE_AUTH: ${{ secrets.VITE_P38_USE_SUPABASE_AUTH || 'true' }}
+          NEXT_PUBLIC_P38_ENABLE_GOOGLE_LOGIN: ${{ secrets.VITE_P38_ENABLE_GOOGLE_LOGIN || '' }}
           VITE_P38_PROVIDER: supabase
           VITE_P38_BYPASS_BASE44: 'true'
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -138,39 +152,21 @@ jobs:
           VITE_P38_USE_SUPABASE_AUTH: ${{ secrets.VITE_P38_USE_SUPABASE_AUTH || 'true' }}
           VITE_P38_ENABLE_GOOGLE_LOGIN: ${{ secrets.VITE_P38_ENABLE_GOOGLE_LOGIN || '' }}
 
-      - name: Verificar Supabase embutido no bundle
+      - name: Verificar Supabase embutido no bundle Next
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
         run: |
           set -e
           ref=$(echo "$VITE_SUPABASE_URL" | sed -E 's#https?://([^.]+)\.supabase\.co.*#\1#')
           found=0
-          for f in dist/assets/*.js .vercel/output/static/assets/*.js; do
-            [ -f "$f" ] || continue
-            if grep -q "$ref" "$f"; then found=1; break; fi
-          done
+          while IFS= read -r -d '' f; do
+            if grep -q "$ref" "$f" 2>/dev/null; then found=1; break; fi
+          done < <(find .vercel/output/static/_next -name '*.js' -print0 2>/dev/null)
           if [ "$found" -ne 1 ]; then
-            echo "::error::Build sem VITE_SUPABASE_URL no bundle (ref esperada: $ref)."
+            echo "::error::Build Next sem referência Supabase ($ref) em .vercel/output/static/_next."
             exit 1
           fi
-          echo "OK: bundle contém referência Supabase ($ref)."
-
-      - name: Verificar login Supabase activo no bundle
-        run: |
-          set -e
-          found=0
-          for f in dist/assets/*.js .vercel/output/static/assets/*.js; do
-            [ -f "$f" ] || continue
-            if grep -qE 'VITE_P38_USE_SUPABASE_AUTH.{0,6}true|USE_SUPABASE_AUTH.{0,6}true' "$f" 2>/dev/null; then
-              found=1
-              break
-            fi
-          done
-          if [ "$found" -ne 1 ]; then
-            echo "::warning::Bundle sem VITE_P38_USE_SUPABASE_AUTH=true explícito — runtime usa default true com provider=supabase."
-          else
-            echo "OK: VITE_P38_USE_SUPABASE_AUTH=true no bundle."
-          fi
+          echo "OK: bundle Next contém referência Supabase ($ref)."
 
       - name: Vercel deploy (production)
         id: deploy
@@ -179,7 +175,7 @@ jobs:
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Deploy URL: $url"
 
-      - name: Verificar produção expõe Supabase no bundle
+      - name: Verificar produção expõe Supabase no bundle Next
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
         run: |
@@ -187,17 +183,19 @@ jobs:
           ref=$(echo "$VITE_SUPABASE_URL" | sed -E 's#https?://([^.]+)\.supabase\.co.*#\1#')
           ok=0
           for attempt in 1 2 3 4 5 6 8 10; do
-            html=$(curl -fsSL "https://p-38erp.vercel.app/" || true)
-            js=$(echo "$html" | grep -oE '/assets/index-[^"]+\.js' | head -1 || true)
-            if [ -n "$js" ] && curl -fsSL "https://p-38erp.vercel.app$js" | grep -q "$ref"; then
-              ok=1
-              break
-            fi
+            html=$(curl -fsSL "https://p-38erp.vercel.app/login" || true)
+            js_paths=$(echo "$html" | grep -oE '/_next/static/[^"]+\.js' || true)
+            for js in $js_paths; do
+              if curl -fsSL "https://p-38erp.vercel.app$js" 2>/dev/null | grep -q "$ref"; then
+                ok=1
+                break 2
+              fi
+            done
             echo "Tentativa $attempt: produção ainda sem ref Supabase — aguardar propagação…"
             sleep 15
           done
           if [ "$ok" -ne 1 ]; then
-            echo "::error::Produção sem ref Supabase ($ref) no bundle após deploy. Desactiva deploy Git nativo do Vercel OU define VITE_SUPABASE_URL/ANON_KEY nas env vars do projecto Vercel."
+            echo "::error::Produção sem ref Supabase ($ref) no bundle Next após deploy."
             exit 1
           fi
-          echo "OK: produção contém ref Supabase ($ref)."
+          echo "OK: produção Next contém ref Supabase ($ref)."

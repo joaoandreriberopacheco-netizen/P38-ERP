@@ -1,18 +1,32 @@
-import React from 'react';
 import CotacoesManager from '@/components/compras/CotacoesManager';
+import { P38HelpPopover } from '@/components/ui/p38-help-popover';
 
 export default function CotacoesPage() {
   return (
-    <div className="min-h-screen bg-background font-din-1451 pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
-      <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground font-glacial">
+    <div className="w-full min-w-0 overflow-x-hidden font-din-1451 bg-background px-3 py-3 sm:p-4 lg:p-6 pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
+      <div className="pb-3 border-b border-border/40">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <h1 className="text-lg sm:text-xl font-medium text-foreground truncate">
             Cotações
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Comparação de preços e fornecedores
-          </p>
+          <P38HelpPopover label="Ajuda: cotações" side="bottom" align="start">
+            <p className="font-medium text-foreground">Fluxo em 4 passos</p>
+            <p className="text-muted-foreground mt-2">
+              <strong className="text-foreground">Montagem</strong> — busque produtos ou importe lista por OCR (foto/PDF).
+            </p>
+            <p className="text-muted-foreground mt-2">
+              <strong className="text-foreground">Disputa</strong> — compare propostas dos fornecedores com o custo de compra atual e registre observações.
+            </p>
+            <p className="text-muted-foreground mt-2">
+              <strong className="text-foreground">Aprovação</strong> — confirme os vencedores e gere pedido(s) de compra em rascunho.
+            </p>
+          </P38HelpPopover>
         </div>
+        <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-snug">
+          Lista manda · Disputa compara · Aprovar gera pedido
+        </p>
+      </div>
+      <div className="mt-3 flex min-h-[min(70dvh,720px)] flex-col sm:mt-4 sm:min-h-[480px]">
         <CotacoesManager />
       </div>
     </div>

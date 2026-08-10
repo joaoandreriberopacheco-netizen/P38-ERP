@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>P38 ERP — Varejo e distribuição no telemóvel</title>
+  <meta name="description" content="ERP vertical para varejo e distribuição. Operação mobile-first, pulso do negócio em qualquer lugar." />
+  <link rel="icon" type="image/png" href="/brand/p38-app-icon.png" />
+  <meta name="theme-color" content="#1f1d22" />
+  <style>
+    :root {
+      --bg: #1f1d22;
+      --surface: #2d333b;
+      --text: #e8eaed;
+      --muted: #9aa0a6;
+      --accent: #a4ce33;
+      --accent-dark: #4a5d23;
+      --border: rgba(255,255,255,0.1);
+      --max: 960px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .wrap { max-width: var(--max); margin: 0 auto; padding: 0 1.25rem; }
+    header {
+      padding: 1.25rem 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .logo { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; font-size: 1.125rem; letter-spacing: 0.04em; }
+    .logo img { width: 36px; height: 36px; border-radius: 8px; }
+    .btn {
+      display: inline-block;
+      background: var(--accent);
+      color: #1a1a1a;
+      font-weight: 600;
+      padding: 0.625rem 1.25rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 0.9375rem;
+    }
+    .btn:hover { filter: brightness(1.05); text-decoration: none; }
+    .btn-outline {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+    }
+    .hero { padding: 3.5rem 0 2.5rem; }
+    .hero h1 {
+      font-size: clamp(1.75rem, 5vw, 2.5rem);
+      line-height: 1.2;
+      font-weight: 700;
+      max-width: 18ch;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero p {
+      margin-top: 1.25rem;
+      color: var(--muted);
+      font-size: 1.0625rem;
+      max-width: 42ch;
+    }
+    .hero-cta { margin-top: 2rem; display: flex; flex-wrap: wrap; gap: 0.75rem; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+      padding: 2rem 0 3rem;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+    .card h3 { font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.5rem; }
+    .card p { font-size: 0.9375rem; color: var(--muted); }
+    section h2 {
+      font-size: 1.125rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      padding: 2rem 0 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      padding-bottom: 2.5rem;
+    }
+    @media (max-width: 600px) { .compare { grid-template-columns: 1fr; } }
+    .compare-col h3 { font-size: 0.875rem; margin-bottom: 0.75rem; }
+    .compare-col ul { list-style: none; font-size: 0.875rem; color: var(--muted); }
+    .compare-col li { padding: 0.35rem 0; border-bottom: 1px solid var(--border); }
+    .compare-col.them li::before { content: "✕ "; color: #e57373; }
+    .compare-col.us li::before { content: "✓ "; color: var(--accent); }
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem 0;
+      font-size: 0.8125rem;
+      color: var(--muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">
+        <img src="/brand/p38-app-icon.png" alt="" width="36" height="36" />
+        P38 ERP
+      </div>
+      <a class="btn" href="/login">Entrar</a>
+    </header>
+
+    <section class="hero">
+      <h1>O varejo não vive no <span>escritório</span></h1>
+      <p>
+        ERP vertical para varejo e distribuição — mobile-first, do balcão à doca.
+        Operação, financeiro e reabastecimento no mesmo sistema, para quem trabalha e para quem manda.
+      </p>
+      <div class="hero-cta">
+        <a class="btn" href="/login">Aceder ao sistema</a>
+        <a class="btn btn-outline" href="mailto:contato@p38erp.com.br?subject=Demo%20P38">Pedir demonstração</a>
+      </div>
+    </section>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Operação</h3>
+        <p>PDV, caixa, conferência, separação e compras — rápido no telemóvel, no chão de loja.</p>
+      </div>
+      <div class="card">
+        <h3>Dono em qualquer lugar</h3>
+        <p>Margem, fluxo, planejamento e aprovações — casa, viagem, docas. Mesmo pulso, mesmos dados.</p>
+      </div>
+      <div class="card">
+        <h3>Reabastecimento</h3>
+        <p>Metas de estoque, sugestão de compra, pedidos em trânsito — saber se cumpre o plano hoje.</p>
+      </div>
+    </div>
+
+    <section>
+      <h2>Por que existe</h2>
+      <div class="compare">
+        <div class="compare-col them">
+          <h3>ERPs genéricos</h3>
+          <ul>
+            <li>Financeiro de escritório</li>
+            <li>App mobile fraco</li>
+            <li>Estoque como número</li>
+            <li>Relatório no fim do mês</li>
+          </ul>
+        </div>
+        <div class="compare-col us">
+          <h3>P38</h3>
+          <ul>
+            <li>Processo operacional completo</li>
+            <li>Mobile-first quase total</li>
+            <li>Cotas de reabastecimento</li>
+            <li>Lucro operacional no dia</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      P38 ERP · Next.js + Supabase · <a href="/login">Entrar</a>
+    </footer>
+  </div>
+</body>
+</html>

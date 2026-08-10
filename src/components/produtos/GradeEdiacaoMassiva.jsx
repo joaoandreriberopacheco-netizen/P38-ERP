@@ -284,7 +284,7 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
                         <div className={`inline-flex items-center justify-center w-6 h-6 rounded cursor-pointer transition-colors ${
                           valor ? 'bg-primary dark:bg-muted' : 'bg-muted border border-border/40 dark:border-border/40'
                         }`}>
-                          {valor && <span className="text-white dark:text-foreground text-xs font-bold">✓</span>}
+                          {valor && <span className="text-foreground text-xs font-bold">✓</span>}
                         </div>
                       </td>
                     );
@@ -305,7 +305,7 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
                               onClick={() => handleSetDecimais(linha.id, col.key, n)}
                               className={`w-7 h-6 text-xs rounded transition-colors ${
                                 (valor ?? 0) === n
-                                  ? 'bg-primary dark:bg-muted text-white dark:text-foreground font-bold'
+                                  ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground font-bold'
                                   : 'text-muted-foreground hover:bg-muted'
                               }`}
                             >
@@ -402,7 +402,7 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
           </div>
           <div className="flex items-center gap-2">
             <div className="inline-flex items-center justify-center w-5 h-5 rounded bg-primary dark:bg-muted">
-              <span className="text-white dark:text-foreground text-[10px] font-bold">✓</span>
+              <span className="text-foreground text-[10px] font-bold">✓</span>
             </div>
             Preço Livre
           </div>

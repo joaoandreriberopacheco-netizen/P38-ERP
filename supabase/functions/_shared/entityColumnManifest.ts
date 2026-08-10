@@ -12,7 +12,7 @@ export const PRODUTO_COLUMNS = [
   'estoque_ideal', 'estoque_maximo', 'estoque_avariado', 'unidade_principal', 'unidade_vitrine',
   'unidades_por_pacote', 'unidades_alternativas', 'fornecedor_padrao_id', 'fornecedor_padrao_codigo',
   'custo_frete_padrao', 'custo_outros_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao',
-  'desconto_compra_padrao', 'controla_serial', 'controla_lote', 'controla_validade', 'peso_kg',
+  'desconto_compra_padrao', 'avaria_percentual', 'controla_serial', 'controla_lote', 'controla_validade', 'peso_kg',
   'volume_cm3', 'dimensoes_cm', 'ativo', 'tempo_reposicao_dias', 'venda_media_dia',
   'metas_estoque_atualizado_em', 'metas_estoque_dias_com_estoque', 'metas_estoque_unidade_compra',
   'metas_estoque_outliers_descartados', 'metas_estoque_quantidade_limpa_90d', 'estoque_trava_manual',

@@ -21,9 +21,11 @@ import { applyUnidadesToProduto, makeUnidade, normalizeSigla } from '@/lib/produ
 import {
   buildProductSnapshotForPricing,
   buildSaleUnitOptions,
+  calcPrecoCustoFromComponents,
   custoDisplayScale,
   getPrecoVendaNaUnidadeCatalogo,
   precoVendaPadraoFromPrecoCatalogo,
+  resolveAvariaCompraFator1,
   resolvePrimaryFromFactorOne,
   resolveUnidadeExibicao,
   resolveCommercialDisplay,
@@ -38,7 +40,7 @@ import { embalagensRowsToLegacyProdutoPatch, legacyProdutoToEmbalagensRows } fro
 import { syncIsComercialOnAlternativas } from '@/components/produtos/massa/embalagensPlanilhaUtils';
 import { cn } from '@/components/utils';
 import { useCompactShell } from '@/hooks/use-breakpoint';
-import { useBottomNavScrollVisibility } from '@/hooks/useBottomNavScrollVisibility';
+import { useScrollVisibility } from '@/hooks/useScrollVisibility';
 import { formatProductCode, generateRandomProductCode } from '@/lib/productCode';
 
 const P38_FORM_ROOT = 'flex flex-col h-full overflow-hidden font-din-1451 bg-background dark:bg-[#1f1d22]';
@@ -53,6 +55,28 @@ const P38_SECTION = 'rounded-lg border border-border/40 dark:border-white/10 bg-
 const P38_SAVE_BTN = 'bg-[#4a5240] hover:bg-[#4a5240]/90 text-white dark:bg-[#a4ce33] dark:hover:bg-[#a4ce33]/90 dark:text-[#1f1d22] h-10 w-10';
 /** Portal do Select fica no body; precisa ficar acima do shell do formulário (z-[70] / z-[80]). */
 const P38_FORM_SELECT_CONTENT = 'z-[90] max-h-96 dark:bg-muted dark:border-border/40';
+const SELECT_NONE = '__none__';
+const SELECT_ORPHAN_CAT_PREFIX = '__orphan_cat__:';
+const SELECT_ORPHAN_FORN_PREFIX = '__orphan_forn__:';
+
+function normalizeTipoProduto(tipo) {
+  const t = String(tipo || '').trim();
+  if (t === 'Serviço' || t === 'Servico' || t === '1') return 'Serviço';
+  return 'Produto';
+}
+
+/** Evita crash do Radix Select quando o valor ainda não está na lista de opções. */
+function resolveEntitySelectValue(selectedId, options, { noneValue = SELECT_NONE, orphanPrefix } = {}) {
+  const id = String(selectedId || '').trim();
+  if (!id) return noneValue;
+  if (!Array.isArray(options) || options.length === 0) return noneValue;
+  return options.some((o) => String(o?.id || '').trim() === id) ? id : `${orphanPrefix}${id}`;
+}
+
+function isValidSelectItemValue(value) {
+  const v = String(value ?? '').trim();
+  return v.length > 0;
+}
 
 /** Id estável para linhas legadas sem `id` (evita novo UUID a cada render / reabrir formulário). */
 function hashString(s) {
@@ -148,7 +172,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       codigo_interno: formatProductCode(produtoData?.codigo_interno || ''),
       tags: Array.isArray(produtoData?.tags) ? produtoData.tags : [],
       unidades_alternativas: altsComIsComercial,
-      tipo: produtoData?.tipo || 'Produto',
+      tipo: normalizeTipoProduto(produtoData?.tipo),
       valor_compra: produtoData?.valor_compra || 0,
       preco_venda_padrao: produtoData?.preco_venda_padrao || 0,
       preco_venda_tipo: produtoData?.preco_venda_tipo || 'percentual',
@@ -185,7 +209,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
   const [loadingMovimentacoes, setLoadingMovimentacoes] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState('descritivo');
   const isMobile = useCompactShell();
-  const historicoChromeExpanded = useBottomNavScrollVisibility(isMobile && abaAtiva === 'historico');
+  const historicoChromeExpanded = useScrollVisibility(isMobile && abaAtiva === 'historico');
   const collapseHistoricoShell = isMobile && abaAtiva === 'historico';
   const [temAlteracoesNaoSalvas, setTemAlteracoesNaoSalvas] = useState(false);
   const { toast } = useToast();
@@ -309,13 +333,8 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
 
   // Custo calculado direto dos campos do produto
   const custoBase = parseFloat(formData.valor_compra) || 0;
-  const precoCustoCalculado =
-    custoBase +
-    (parseFloat(formData.custo_frete_padrao) || 0) +
-    (parseFloat(formData.custo_imposto1_padrao) || 0) +
-    (parseFloat(formData.custo_imposto2_padrao) || 0) +
-    (parseFloat(formData.custo_outros_padrao) || 0) -
-    (parseFloat(formData.desconto_compra_padrao) || 0);
+  const precoCustoCalculado = calcPrecoCustoFromComponents(formData);
+  const avariaValorBase = resolveAvariaCompraFator1(formData, custoBase);
 
   const precoVendaCalculado = formData.preco_venda_tipo === 'numerico'
     ? (parseFloat(formData.preco_venda_padrao) || 0)
@@ -441,14 +460,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     const novoBase = typeof conv === 'number' ? conv : precoVendaCalculado;
     setFormData((prev) => {
       saveToHistory(prev);
-      const custoBaseLoc = parseFloat(prev.valor_compra) || 0;
-      const precoCustoLoc =
-        custoBaseLoc +
-        (parseFloat(prev.custo_frete_padrao) || 0) +
-        (parseFloat(prev.custo_imposto1_padrao) || 0) +
-        (parseFloat(prev.custo_imposto2_padrao) || 0) +
-        (parseFloat(prev.custo_outros_padrao) || 0) -
-        (parseFloat(prev.desconto_compra_padrao) || 0);
+      const precoCustoLoc = calcPrecoCustoFromComponents(prev);
       let markup = prev.preco_venda_percentual;
       if (precoCustoLoc > 0) {
         markup = ((novoBase - precoCustoLoc) / precoCustoLoc) * 100;
@@ -589,6 +601,23 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     }
     return '';
   }, [comercialSelectValue, unitOptions]);
+
+  const categoriaSelectValue = useMemo(
+    () => resolveEntitySelectValue(formData.categoria_id, categorias, { orphanPrefix: SELECT_ORPHAN_CAT_PREFIX }),
+    [formData.categoria_id, categorias],
+  );
+
+  const fornecedorSelectValue = useMemo(
+    () => resolveEntitySelectValue(formData.fornecedor_padrao_id, fornecedores, { orphanPrefix: SELECT_ORPHAN_FORN_PREFIX }),
+    [formData.fornecedor_padrao_id, fornecedores],
+  );
+
+  const tipoSelectValue = useMemo(() => normalizeTipoProduto(formData.tipo), [formData.tipo]);
+
+  const tagsLista = useMemo(
+    () => (Array.isArray(formData.tags) ? formData.tags : []),
+    [formData.tags],
+  );
 
   /** Só id/sigla/rótulo: evita re-disparar o efeito de correção a cada mudança de fator/preço (combativo com o editor). */
   const unidadesAlternativasLayoutKey = useMemo(
@@ -925,6 +954,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         custo_imposto2_padrao: parseFloat(formData.custo_imposto2_padrao) || 0,
         custo_outros_padrao: parseFloat(formData.custo_outros_padrao) || 0,
         desconto_compra_padrao: parseFloat(formData.desconto_compra_padrao) || 0,
+        avaria_percentual: parseFloat(formData.avaria_percentual) || 0,
       };
 
       let savedPayload = produtoData;
@@ -1428,16 +1458,24 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             <div>
               <Label className="text-sm text-muted-foreground mb-2 block">Categoria (opcional)</Label>
               <Select
-                value={formData.categoria_id || '__none__'}
-                onValueChange={v => handleChange('categoria_id', v === '__none__' ? '' : v)}
+                value={categoriaSelectValue}
+                onValueChange={v => {
+                  if (String(v).startsWith(SELECT_ORPHAN_CAT_PREFIX)) return;
+                  handleChange('categoria_id', v === SELECT_NONE ? '' : v);
+                }}
               >
                 <SelectTrigger className={`${P38_INPUT_UNDERLINE} h-10`}>
                   <SelectValue placeholder="Categoria" />
                 </SelectTrigger>
                 <SelectContent className={P38_FORM_SELECT_CONTENT}>
-                  <SelectItem value="__none__" className="dark:text-foreground dark:hover:bg-primary/90">Sem categoria</SelectItem>
-                  {categorias.map(cat => (
-                    <SelectItem key={cat.id} value={cat.id} className="dark:text-foreground dark:hover:bg-primary/90">{cat.nome}</SelectItem>
+                  <SelectItem value={SELECT_NONE} className="dark:text-foreground dark:hover:bg-primary/90">Sem categoria</SelectItem>
+                  {categoriaSelectValue.startsWith(SELECT_ORPHAN_CAT_PREFIX) ? (
+                    <SelectItem value={categoriaSelectValue} className="dark:text-foreground dark:hover:bg-primary/90">
+                      {formData.categoria_nome || 'Categoria atual (não listada)'}
+                    </SelectItem>
+                  ) : null}
+                  {categorias.filter((cat) => isValidSelectItemValue(cat?.id)).map(cat => (
+                    <SelectItem key={cat.id} value={String(cat.id)} className="dark:text-foreground dark:hover:bg-primary/90">{cat.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -1446,20 +1484,26 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             <div>
               <Label className="text-sm text-muted-foreground mb-2 block">Fornecedor padrão (opcional)</Label>
               <Select
-                value={formData.fornecedor_padrao_id || '__none__'}
+                value={fornecedorSelectValue}
                 onValueChange={v => {
+                  if (String(v).startsWith(SELECT_ORPHAN_FORN_PREFIX)) return;
                   const forn = fornecedores.find(f => f.id === v);
-                  handleChange('fornecedor_padrao_id', v === '__none__' ? '' : v);
-                  handleChange('fornecedor_padrao_codigo', v === '__none__' ? '' : (forn?.codigo_interno || ''));
+                  handleChange('fornecedor_padrao_id', v === SELECT_NONE ? '' : v);
+                  handleChange('fornecedor_padrao_codigo', v === SELECT_NONE ? '' : (forn?.codigo_interno || ''));
                 }}
               >
                 <SelectTrigger className={`${P38_INPUT_UNDERLINE} h-10`}>
                   <SelectValue placeholder="Fornecedor" />
                 </SelectTrigger>
                 <SelectContent className={P38_FORM_SELECT_CONTENT}>
-                  <SelectItem value="__none__" className="dark:text-foreground dark:hover:bg-primary/90 text-sm">Sem fornecedor</SelectItem>
-                  {fornecedores.map(f => (
-                    <SelectItem key={f.id} value={f.id} className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
+                  <SelectItem value={SELECT_NONE} className="dark:text-foreground dark:hover:bg-primary/90 text-sm">Sem fornecedor</SelectItem>
+                  {fornecedorSelectValue.startsWith(SELECT_ORPHAN_FORN_PREFIX) ? (
+                    <SelectItem value={fornecedorSelectValue} className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
+                      {formData.fornecedor_padrao_nome || formData.fornecedor_padrao_codigo || 'Fornecedor atual (não listado)'}
+                    </SelectItem>
+                  ) : null}
+                  {fornecedores.filter((f) => isValidSelectItemValue(f?.id)).map(f => (
+                    <SelectItem key={f.id} value={String(f.id)} className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
                       {f.nome}
                     </SelectItem>
                   ))}
@@ -1492,7 +1536,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 </Button>
               </div>
               <div className="flex flex-wrap gap-2 mt-3">
-                {formData.tags.map(tag => (
+                {tagsLista.map(tag => (
                   <Badge key={tag} className="bg-muted text-foreground/90 border border-border/40 dark:bg-muted dark:text-foreground/90 dark:border-border/40 text-sm py-1 px-3">
                     #{tag}
                     <button onClick={() => handleRemoveTag(tag)} className="ml-2 hover:text-foreground dark:hover:text-foreground">
@@ -1541,7 +1585,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                           title={opt.is_primary ? 'Vitrine na unidade base' : `Vitrine em ${opt.unidade}`}
                           className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all border shadow-sm ${
                             active
-                              ? 'border-border/40 bg-background text-white dark:border-white dark:bg-card dark:text-foreground'
+                              ? 'border-primary/30 bg-primary text-primary-foreground dark:border-white dark:bg-card dark:text-foreground'
                               : 'border-border/40 bg-card text-foreground/90 hover:border-border/40 dark:border-border/40 dark:bg-muted dark:text-foreground dark:hover:border-border/40'
                           }`}
                         >
@@ -1612,11 +1656,15 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     { label: 'Imposto 1', field: 'custo_imposto1_padrao', icon: <FileText className="w-3.5 h-3.5" />, isCurrency: true },
                     { label: 'Imposto 2', field: 'custo_imposto2_padrao', icon: <FileText className="w-3.5 h-3.5" />, isCurrency: true },
                     { label: 'Outros Custos', field: 'custo_outros_padrao', icon: <Plus className="w-3.5 h-3.5" />, isCurrency: true },
+                    { label: 'Avaria', field: 'avaria_percentual', icon: <Package className="w-3.5 h-3.5" />, isPercent: true },
                     { label: 'Desconto Comercial', field: 'desconto_compra_padrao', icon: <Tag className="w-3.5 h-3.5" />, isCurrency: true, isNegativo: true },
-                  ].map(({ label, field, icon, isNegativo }, custoIdx) => {
+                  ].map(({ label, field, icon, isNegativo, isPercent }, custoIdx) => {
                     const sc = custoCatalogoScale > 0 ? custoCatalogoScale : 1;
                     const baseVal = parseFloat(formData[field]) || 0;
-                    const displayVal = baseVal * sc;
+                    const displayVal = isPercent ? baseVal : baseVal * sc;
+                    const displayMoney = isPercent
+                      ? avariaValorBase * sc
+                      : displayVal;
                     return (
                       <div key={field} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 py-2.5 border-b border-border/40 last:border-0">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
@@ -1626,15 +1674,16 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                         <div className="flex items-center gap-2 shrink-0">
                           <CurrencyInput
                             value={displayVal}
-                            onChange={(val) => handleChange(field, sc !== 1 ? val / sc : val)}
+                            onChange={(val) => handleChange(field, isPercent ? val : (sc !== 1 ? val / sc : val))}
                             navIndex={custoIdx}
                             placeholder="0"
+                            isPercentage={isPercent}
                             className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none px-0 h-8 text-sm w-28 text-right text-foreground focus:border-border/40 font-glacial"
                           />
-                          <span className="text-xs text-muted-foreground w-8 shrink-0">(R$)</span>
+                          <span className="text-xs text-muted-foreground w-8 shrink-0">{isPercent ? '%' : '(R$)'}</span>
                         </div>
                         <span className="text-sm font-medium text-foreground text-right tabular-nums font-glacial whitespace-nowrap w-[5.75rem] shrink-0">
-                          {isNegativo ? '-' : ''}R$ {formatarNumero(displayVal)}
+                          {isPercent ? `R$ ${formatarNumero(displayMoney)}` : `${isNegativo ? '-' : ''}R$ ${formatarNumero(displayVal)}`}
                         </span>
                       </div>
                     );
@@ -1879,7 +1928,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     <SelectValue placeholder="Sigla" />
                   </SelectTrigger>
                   <SelectContent className={P38_FORM_SELECT_CONTENT}>
-                    {commercialSelectOptions.map((sigla) => (
+                    {commercialSelectOptions.filter(isValidSelectItemValue).map((sigla) => (
                       <SelectItem key={`com-${sigla}`} value={sigla}>
                         {sigla}
                       </SelectItem>
@@ -1999,7 +2048,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
           <TabsContent value="sistema" className="space-y-6 mt-0">
             <div>
               <Label className="text-sm text-muted-foreground mb-2 block">Tipo de Produto *</Label>
-              <Select value={formData.tipo} onValueChange={v => handleChange('tipo', v)}>
+              <Select value={tipoSelectValue} onValueChange={v => handleChange('tipo', v)}>
                 <SelectTrigger className={`${P38_INPUT_UNDERLINE} h-10`}>
                   <SelectValue />
                 </SelectTrigger>
@@ -2046,7 +2095,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                         onClick={() => handleChange('casas_decimais', n)}
                         className={`w-10 h-9 text-sm font-medium transition-colors ${
                           (formData.casas_decimais ?? 0) === n
-                            ? 'bg-muted dark:bg-muted text-white dark:text-foreground'
+                            ? 'bg-muted text-foreground'
                             : 'text-muted-foreground hover:bg-muted'
                         }`}
                       >

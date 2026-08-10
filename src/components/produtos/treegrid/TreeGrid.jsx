@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo, useEffect, useRef, useLayoutEffe
 import { ChevronRight, Package, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useCatalogTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders, aggregateEstoqueDisplay, aggregateMetaEstoqueDisplay, collectSkus, catalogProdutosStructureSig, TREE_GRID_EXPAND_ALL_LEVEL } from './useTreeGrid';
+import { useCatalogTreeGrid, flattenTree, mergeAdjacentDuplicateGroupHeaders, aggregateEstoqueDisplay, aggregateMetaEstoqueDisplay, collectSkus, catalogProdutosStructureSig, TREE_GRID_EXPAND_ALL_LEVEL, resolveExpandedKeysForMasterLevel } from './useTreeGrid';
 import {
   catalogGroupAnalysisSig,
   getCatalogFlattenOptions,
@@ -12,6 +12,7 @@ import { formatEstoqueApresentacao, getCatalogoComercialView, getCatalogUnitLabe
 import { useVirtualRows } from '@/hooks/useVirtualRows';
 import { CATALOGO_VIRTUALIZE_MIN_ROWS } from '@/lib/p38VirtualList';
 import { cn } from '@/components/utils';
+import { catalogProdutoColStyle, computeCatalogProdutoColWidth, estimateCatalogProdutoRowHeight, CATALOG_PRODUTO_STICKY_CELL, CATALOG_PRODUTO_STICKY_HEAD } from '@/lib/catalogProdutoColumnLayout';
 import { p38Table } from '@/lib/p38TableSurfaces';
 import { computeTreeGridColumnLayout } from './treeGridColumnLayout';
 import {
@@ -28,6 +29,9 @@ import {
   getCatalogPontoFuturo,
 } from '@/lib/catalogSalesVelocity';
 import { aggregateCatalogEstoqueExibicao, resolveCatalogEstoqueExibicao } from '@/lib/catalogEstoqueVirtual';
+import { LevelControl } from './LevelControl';
+
+export { LevelControl };
 
 // ── Formatação ────────────────────────────────────────────────────────────────
 const fmtR   = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -122,6 +126,7 @@ const COL_DEFS = [
   { id: 'margem',               label: 'Margem',         w: 80  },
   { id: 'preco_custo',          label: 'Custo Total',    w: 104 },
   { id: 'valor_compra',         label: 'Vl. Compra',     w: 100 },
+  { id: 'avaria_percentual',    label: 'Avaria %',       w: 80  },
   { id: 'markup',               label: 'Markup %',       w: 80  },
   { id: 'inventario_valorizado', label: 'Inventário R$', w: 108 },
   { id: 'estoque_atual',        label: 'Estoque',        w: 96  },
@@ -174,9 +179,17 @@ const catalogHierDepth = (level) => Math.max(0, (level ?? 1) - 1);
 const CATALOG_ROW_LABEL_CLASS =
   'text-xs font-semibold text-foreground/90 dark:text-foreground whitespace-nowrap uppercase tracking-wide';
 
+/** Descrição do produto em linhas de dados — no escuro, tom igual às demais células */
+const CATALOG_ROW_DESC_CLASS =
+  'text-xs font-semibold text-foreground/90 dark:text-muted-foreground uppercase tracking-wide break-words leading-snug';
+
 /** Filhos (nível ≥ 2) — tom mais suave que o pai */
 const CATALOG_CHILD_LABEL_CLASS =
-  'text-xs font-normal text-muted-foreground whitespace-nowrap uppercase';
+  'text-xs font-normal text-muted-foreground uppercase break-words leading-snug';
+
+/** Grupos na árvore — quebra dentro da coluna fixa */
+const CATALOG_GROUP_LABEL_CLASS =
+  'text-xs font-semibold text-foreground/90 dark:text-foreground uppercase tracking-wide break-words leading-snug';
 
 /** Marcador verde mediterrâneo — pais e solteiros de 1º nível na árvore */
 function CatalogTierDot() {
@@ -205,11 +218,11 @@ function CatalogProdutoCell({
 
   return (
     <div
-      className="flex items-center w-max max-w-none"
+      className="flex items-start min-w-0 w-full"
       style={{ paddingLeft: CELL_PAD + hierDepth * HIER_STEP }}
     >
       {hasRail && (
-        <div className="flex items-center gap-1.5 flex-shrink-0">
+        <div className="flex items-start gap-1.5 flex-shrink-0 pt-0.5">
           {showChevron && (
             <span className="w-3.5 h-3.5 inline-flex items-center justify-center flex-shrink-0">
               <ChevronRight
@@ -239,7 +252,7 @@ function CatalogProdutoCell({
           )}
         </div>
       )}
-      <div className={cn('flex items-center gap-1.5', hasRail && 'ml-1.5')}>
+      <div className={cn('flex flex-col min-w-0 flex-1 gap-0.5', hasRail && 'ml-1.5')}>
         {children}
       </div>
     </div>
@@ -316,6 +329,11 @@ function skuCellValue(colId, produto, margem, lastro, markup, salesVelocityMap =
     case 'markup':               return (
       <span className="text-xs text-muted-foreground tabular-nums">
         {lastro >= 0 && markup > 0 ? `${fmtN(markup)}%` : (produto.preco_venda_percentual > 0 ? `${fmtN(produto.preco_venda_percentual)}%` : '—')}
+      </span>
+    );
+    case 'avaria_percentual':    return (
+      <span className="text-xs text-muted-foreground tabular-nums">
+        {(produto.avaria_percentual || 0) > 0 ? `${fmtN(produto.avaria_percentual)}%` : '—'}
       </span>
     );
     case 'inventario_valorizado':return <span className="text-xs text-muted-foreground tabular-nums">{lastro > 0 ? fmtR(lastro) : '—'}</span>;
@@ -406,6 +424,7 @@ function groupCellValue(colId, row, salesVelocityMap = {}, catalogStockContext =
     case 'preco_custo':           return tilde(row.custoMedio);
     case 'valor_compra':          return tilde(row.valorCompraMedio);
     case 'markup':                return tildeP(row.markupMedio);
+    case 'avaria_percentual':     return row.avariaMedia > 0 ? `~${fmtN(row.avariaMedia)}%` : '—';
     case 'margem':                return tildeP(row.margemMedia);
     case 'inventario_valorizado': return row.lastroTotal > 0
       ? <span className="text-xs font-semibold text-muted-foreground tabular-nums">{fmtR(row.lastroTotal)}</span>
@@ -501,7 +520,7 @@ function groupCellValue(colId, row, salesVelocityMap = {}, catalogStockContext =
 }
 
 // ── Linha de Grupo ─────────────────────────────────────────────────────────────
-const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activeCols, produtoWidth, readOnly, salesVelocityMap, catalogStockContext }) {
+const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activeCols, produtoWidth, produtoCellStyle, readOnly, salesVelocityMap, catalogStockContext }) {
   const isPrimeiroNivel = row.level === 1;
   const hierDepth = catalogHierDepth(row.level);
 
@@ -511,8 +530,8 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
       onClick={() => onToggle(row.key)}
     >
       <td
-        className={cn(p38Table.stickyCellLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, 'py-2')}
-        style={{ left: 0, paddingRight: 8, width: produtoWidth, minWidth: produtoWidth }}
+        className={cn(CATALOG_PRODUTO_STICKY_CELL, PRODUTO_STICKY_SHADOW, 'py-2 px-2 align-top')}
+        style={{ left: 0, ...produtoCellStyle }}
       >
         <CatalogProdutoCell
           hierDepth={hierDepth}
@@ -521,12 +540,14 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
           showTierDot={isPrimeiroNivel}
           showIcon={false}
         >
-          <span className={CATALOG_ROW_LABEL_CLASS}>
-            {row.label}
-          </span>
-          <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-medium border-border/40 text-muted-foreground dark:border-border/40 dark:text-muted-foreground flex-shrink-0 ml-0.5">
-            {row.count}
-          </Badge>
+          <div className="flex items-start gap-1 min-w-0 w-full">
+            <span className={cn(CATALOG_GROUP_LABEL_CLASS, 'flex-1 min-w-0')}>
+              {row.label}
+            </span>
+            <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-medium border-border/40 text-muted-foreground dark:border-border/40 dark:text-muted-foreground flex-shrink-0">
+              {row.count}
+            </Badge>
+          </div>
         </CatalogProdutoCell>
       </td>
       {activeCols.map(col => (
@@ -540,7 +561,7 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
 });
 
 // ── Linha de SKU ───────────────────────────────────────────────────────────────
-const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, produtoWidth, readOnly, salesVelocityMap, catalogStockContext }) {
+const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, produtoWidth, produtoCellStyle, readOnly, salesVelocityMap, catalogStockContext }) {
   const p = row.produto;
   const isPrimeiroNivel = row.level === 1;
   const hierDepth = catalogHierDepth(row.level);
@@ -548,24 +569,21 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, p
   return (
     <tr className={cn(p38Table.row, 'group')}>
       <td
-        className={cn(p38Table.stickyCellLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, 'py-1.5')}
-        style={{ left: 0, paddingRight: 8, width: produtoWidth, minWidth: produtoWidth }}
+        className={cn(CATALOG_PRODUTO_STICKY_CELL, PRODUTO_STICKY_SHADOW, 'py-2 px-2 align-top')}
+        style={{ left: 0, ...produtoCellStyle }}
       >
-        <div className="flex items-center gap-1 w-max max-w-none">
+        <div className="flex items-start gap-1 min-w-0 w-full">
           <CatalogProdutoCell
             hierDepth={hierDepth}
             showTierDot={isPrimeiroNivel}
             showIcon
             produto={p}
           >
-            <span className={isPrimeiroNivel ? CATALOG_ROW_LABEL_CLASS : CATALOG_CHILD_LABEL_CLASS}>
+            <span className={isPrimeiroNivel ? CATALOG_ROW_DESC_CLASS : CATALOG_CHILD_LABEL_CLASS}>
               {p.nome}
             </span>
             {p.codigo_interno && (
-              <span className={cn(
-                'text-[10px] flex-shrink-0 font-mono whitespace-nowrap',
-                isPrimeiroNivel ? 'text-foreground/70 dark:text-foreground/80' : 'text-muted-foreground',
-              )}>
+              <span className="text-[10px] font-mono text-muted-foreground break-all leading-tight">
                 {p.codigo_interno}
               </span>
             )}
@@ -584,34 +602,6 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, p
     </tr>
   );
 });
-
-// ── Controle de Nível (exportado para uso externo no painel fixo) ─────────────
-export function LevelControl({ level, onChange }) {
-  const levels = [
-    { value: 1, label: '1', title: 'Mostrar apenas famílias principais' },
-    { value: 2, label: '2', title: 'Expandir até o 2º nível' },
-    { value: 3, label: '3', title: 'Expandir até o 3º nível' },
-    { value: 4, label: '4', title: 'Expandir até o 4º nível' },
-    { value: TREE_GRID_EXPAND_ALL_LEVEL, label: 'todos', title: 'Expandir todos os níveis' },
-  ];
-
-  return (
-    <div className="flex items-center gap-1 select-none">
-      <span className="text-[10px] text-muted-foreground mr-1">nível</span>
-      {levels.map(({ value, label, title }) => (
-        <button key={value} onClick={() => onChange(value)} title={title}
-          className={`min-w-[24px] h-6 px-1.5 rounded text-[10px] font-semibold transition-colors ${
-            level === value
-              ? 'bg-muted dark:bg-muted text-white dark:text-foreground'
-              : 'bg-muted text-muted-foreground hover:bg-muted dark:hover:bg-primary/90'
-          }`}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
-  );
-}
 
 // ── Componente Principal ───────────────────────────────────────────────────────
 // masterLevel é controlado pelo pai (painel fixo da página Produtos).
@@ -656,7 +646,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
       pendingScrollRestoreRef.current = scrollEl.scrollTop;
     }
     setExpandedKeys(
-      masterLevel === 1 ? new Set() : buildExpandedForLevel(treeRef.current, masterLevel - 1)
+      resolveExpandedKeysForMasterLevel(treeRef.current, masterLevel, groupByCategory),
     );
   }, [produtosStructureSig, groupByCategory, masterLevel, groupAnalysisSig]);
 
@@ -668,6 +658,21 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
     () => mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expandedKeys, '', 0, sortOrder, flattenOptions)),
     [tree, expandedKeys, sortOrder, flattenOptions]
   );
+
+  const produtoColWidth = useMemo(() => {
+    let maxHierDepth = 0;
+    const labels = [];
+    for (const row of rows) {
+      maxHierDepth = Math.max(maxHierDepth, catalogHierDepth(row.level));
+      if (row.type === 'group') labels.push(row.label);
+      else labels.push(row.produto?.nome);
+    }
+    return computeCatalogProdutoColWidth(labels, {
+      readOnly,
+      maxHierDepth,
+      includeGroupBadge: rows.some((row) => row.type === 'group'),
+    });
+  }, [rows, readOnly]);
 
   useLayoutEffect(() => {
     const scrollEl = scrollContainerRef.current;
@@ -709,14 +714,35 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
   }, []);
 
   const columnLayout = useMemo(
-    () => computeTreeGridColumnLayout({ rows, activeCols, readOnly, containerWidth, salesVelocityMap }),
-    [rows, activeCols, readOnly, containerWidth, salesVelocityMap],
+    () => computeTreeGridColumnLayout({
+      rows,
+      activeCols,
+      readOnly,
+      containerWidth,
+      salesVelocityMap,
+      produtoWidth: produtoColWidth,
+    }),
+    [rows, activeCols, readOnly, containerWidth, salesVelocityMap, produtoColWidth],
   );
   const { produtoWidth, cols: layoutCols, tableWidth } = columnLayout;
+  const produtoCellStyle = useMemo(
+    () => catalogProdutoColStyle(produtoWidth),
+    [produtoWidth],
+  );
 
   const estimateRowSize = useCallback(
-    (index) => (rows[index]?.type === 'group' ? 38 : 46),
-    [rows]
+    (index) => {
+      const row = rows[index];
+      if (!row) return 52;
+      if (row.type === 'group') {
+        return estimateCatalogProdutoRowHeight(row.label, { colWidth: produtoWidth, isGroup: true });
+      }
+      return estimateCatalogProdutoRowHeight(row.produto?.nome, {
+        colWidth: produtoWidth,
+        codigoInterno: Boolean(row.produto?.codigo_interno),
+      });
+    },
+    [rows, produtoWidth],
   );
   const virtualRows = useVirtualRows({
     itemCount: rows.length,
@@ -736,7 +762,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
     <div className="flex flex-col h-full w-full">
       {/* Scroll container — tabela rola livremente; coluna Produto é sticky */}
       <div
-        className="flex-1 overflow-auto overscroll-contain [overflow-anchor:none] [scrollbar-gutter:stable]"
+        className="flex-1 overflow-auto p38-catalog-table-scroll overscroll-contain [overflow-anchor:none] [scrollbar-gutter:stable]"
         style={{ WebkitOverflowScrolling: 'touch' }}
         ref={scrollContainerRef}
       >
@@ -752,8 +778,8 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
           <thead className={p38Table.headerSolid}>
             <tr className="border-b border-border/40 dark:border-white/10">
               <th
-                className={cn(p38Table.stickyHeadLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, p38Table.head, CATALOG_ROW_LABEL_CLASS, "text-left py-2")}
-                style={{ left: 0, paddingLeft: 8, paddingRight: 8, width: produtoWidth, minWidth: produtoWidth }}
+                className={cn(CATALOG_PRODUTO_STICKY_HEAD, PRODUTO_STICKY_SHADOW, p38Table.head, CATALOG_ROW_LABEL_CLASS, "text-left py-2")}
+                style={{ left: 0, paddingLeft: 8, paddingRight: 8, ...produtoCellStyle }}
               >
                 Produto
               </th>
@@ -784,6 +810,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
                         onToggle={handleToggle}
                         activeCols={layoutCols}
                         produtoWidth={produtoWidth}
+                        produtoCellStyle={produtoCellStyle}
                         readOnly={readOnly}
                         salesVelocityMap={salesVelocityMap}
                         catalogStockContext={catalogStockContext} />
@@ -792,6 +819,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
                         onDelete={onDelete || noopDelete}
                         activeCols={layoutCols}
                         produtoWidth={produtoWidth}
+                        produtoCellStyle={produtoCellStyle}
                         readOnly={readOnly}
                         salesVelocityMap={salesVelocityMap}
                         catalogStockContext={catalogStockContext} />

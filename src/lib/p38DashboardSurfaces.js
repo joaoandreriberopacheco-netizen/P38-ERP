@@ -1,0 +1,56 @@
+/**
+ * Superfícies do Dashboard P38 — claro com oliva/cítrico; escuro mantém gradiente slate.
+ */
+
+export const p38Dashboard = {
+  card:
+    'bg-card text-card-foreground border border-border shadow-sm ' +
+    'dark:bg-gradient-to-br dark:from-[#2b3342] dark:via-[#2a3140] dark:to-[#242c39] ' +
+    'dark:border-slate-500/25 dark:shadow-[0_10px_24px_rgba(0,0,0,0.25)]',
+
+  inner:
+    'bg-muted/50 border border-border/60 rounded-xl ' +
+    'dark:bg-[#313a4a]/65 dark:border-slate-400/10',
+
+  innerPanel:
+    'rounded-xl p-2.5 bg-muted/40 border border-border/50 space-y-2.5 ' +
+    'dark:bg-[#313a4a]/65 dark:border-slate-400/10',
+
+  chip:
+    'bg-secondary/90 border-border/70 text-foreground ' +
+    'dark:bg-[#1f2734]/45 dark:border-slate-500/15 dark:hover:bg-[#1f2734]/65',
+
+  chipFocused:
+    'bg-accent border-primary/25 text-foreground ' +
+    'dark:bg-[#1f2734]/80 dark:border-slate-300/25',
+
+  stat:
+    'rounded-md px-2 py-1 bg-muted/60 border border-border/50 ' +
+    'dark:bg-[#1f2734]/55 dark:border-slate-500/15',
+
+  statSm:
+    'rounded-md px-1.5 py-1 bg-muted/50 border border-border/40 ' +
+    'dark:bg-[#1f2734]/50 dark:border-slate-500/10',
+
+  legendRow:
+    'rounded-md px-2 py-1 bg-muted/60 border border-border/50 ' +
+    'dark:bg-[#1f2734]/55 dark:border-slate-500/15',
+
+  placeholder:
+    'border border-dashed border-border bg-muted/30 shadow-sm ' +
+    'dark:border-slate-500/20 dark:bg-[#252d3a]/55 dark:shadow-[0_10px_24px_rgba(0,0,0,0.2)]',
+
+  placeholderInner:
+    'border border-dashed border-border bg-muted/25 ' +
+    'dark:border-slate-500/20 dark:bg-[#1f2734]/45',
+
+  title: 'text-foreground dark:text-slate-100',
+  titleMuted: 'text-muted-foreground dark:text-slate-300',
+  textStrong: 'text-foreground font-semibold dark:text-slate-100',
+  legend: 'text-muted-foreground dark:text-slate-300/80',
+  iconAccent: 'text-p38-olive dark:text-lime-400',
+
+  skeletonBar: 'bg-muted-foreground/15 dark:bg-slate-400/20',
+  skeletonLine: 'bg-muted-foreground/10 dark:bg-slate-500/20',
+  skeletonHeader: 'bg-muted-foreground/20 dark:bg-slate-500/25',
+};

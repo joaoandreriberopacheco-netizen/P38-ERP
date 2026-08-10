@@ -313,7 +313,7 @@ export default function BuscarEventoLogisticoParaAnexo({ onSelecionar, onVoltar,
               onClick={() => setSelecionado(ev)}
               className={`flex w-full flex-col rounded-2xl px-4 py-3 text-left text-sm shadow-sm transition-colors ${
                 selecionado?.id === ev.id
-                  ? 'bg-background text-white ring-2 ring-border/40 dark:bg-card dark:text-foreground dark:ring-white'
+                  ? 'bg-primary text-primary-foreground ring-2 ring-border/40 dark:bg-card dark:text-foreground dark:ring-white'
                   : 'bg-card text-foreground dark:bg-background dark:text-foreground'
               }`}
             >

@@ -8,22 +8,47 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
-import { CheckCircle, AlertTriangle, Package, Search, Plus, X, Play, Copy, Eye, EyeOff, Loader2, Undo2 } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Package, Search, Plus, X, Play, Copy, Eye, EyeOff, Loader2, Undo2, Boxes } from 'lucide-react';
 import { dataHoje, formatarLogTime } from '@/components/utils/dateUtils';
-import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
+import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { saveEmbarqueItem } from '@/functions/saveEmbarqueItem';
+import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
+import {
+  buildPurchaseUnitOptions,
+  calculateBaseQuantity,
+  commercialQuantityFromBase,
+  formatCommercialQuantity,
+  getUnidadeBySiglaCanonical,
+  hasAlternativeUnits,
+} from '@/lib/productUnits';
+import {
+  buildItemRecepcaoAtualizado,
+  buildUnidadeLinhaInicial,
+  carregarProdutosMap,
+  enrichLinhaEmbarque,
+  quantidadeApresentacaoEmbarqueItem,
+  quantidadeBaseEmbarqueItem,
+  quantidadeRecebidaApresentacaoEmbarqueItem,
+  resolveFatorLinhaEmbarque,
+  resolveUnidadeLinha,
+} from '@/lib/embarqueVitrineHelpers';
 import {
   invokeRecalcularConclusaoPedidoCompra,
   invokeRecalcularEstoqueProduto,
 } from '@/lib/p38StockRecalc';
 import { buildMovimentacaoRecepcaoCompraPayload } from '@/lib/movimentacaoRecepcaoCompra';
 import { reverterRecepcaoEmbarque } from '@/lib/reverterRecepcaoEmbarque';
-import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
+import { buildItensCanonicosEmbarque } from '@/lib/buildEmbarqueItensCanonicos';
+import { hydrateEmbarquesFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
+
+function pedidoItemParaEmbarque(pedido, embItem) {
+  return (Array.isArray(pedido?.itens) ? pedido.itens : []).find(
+    (pi) => String(pi?.produto_id) === String(embItem?.produto_id),
+  ) || embItem;
+}
 
 function getItensDoEmbarque(embarque) {
-  const baseItens = Array.isArray(embarque?.itens_embarcados) && embarque.itens_embarcados.length > 0
-    ? embarque.itens_embarcados
-    : (Array.isArray(embarque?.itens) ? embarque.itens : []);
+  const baseItens = getEmbarqueItensLinhas(embarque);
   const statusRec = embarque?.status_recebimento || embarque?.status_recebimento_embarque || 'Pendente';
   const aguardandoRecepcao = !statusRec || statusRec === 'Pendente';
 
@@ -55,6 +80,10 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
   const [showModoDialog, setShowModoDialog] = useState(false);
   const [selectedItemIndex, setSelectedItemIndex] = useState(null);
   const [produtos, setProdutos] = useState([]);
+  const [produtosMap, setProdutosMap] = useState({});
+  const [unidadeLinha, setUnidadeLinha] = useState({});
+  const [qtdRecebidaApres, setQtdRecebidaApres] = useState({});
+  const [unitSelector, setUnitSelector] = useState({ open: false, produtoId: null, product: null });
   const [searchProduto, setSearchProduto] = useState('');
   const [showNovoProduct, setShowNovoProduct] = useState(false);
   const [novoProduto, setNovoProduto] = useState({ nome: '', hierarquico_1: '' });
@@ -72,41 +101,129 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
     }
   }, [isOpen]);
 
+  const inicializarVitrineRecepcao = (baseItens) => {
+    const initUnidade = {};
+    const initQtd = {};
+    baseItens.forEach((item) => {
+      const pedidoItem = pedidoItemParaEmbarque(pedido, item);
+      const linha = buildUnidadeLinhaInicial(pedidoItem, null, item);
+      initUnidade[item.produto_id] = linha;
+      initQtd[item.produto_id] = String(quantidadeRecebidaApresentacaoEmbarqueItem(item, linha));
+    });
+    setUnidadeLinha(initUnidade);
+    setQtdRecebidaApres(initQtd);
+    setProdutosMap({});
+
+    carregarProdutosMap(baseItens).then((map) => {
+      setProdutosMap(map);
+      const unidadeAtualizada = { ...initUnidade };
+      const qtdAtualizada = { ...initQtd };
+      baseItens.forEach((item) => {
+        const produto = map[item.produto_id];
+        if (!produto) return;
+        const pedidoItem = pedidoItemParaEmbarque(pedido, item);
+        const linha = enrichLinhaEmbarque(produto, buildUnidadeLinhaInicial(pedidoItem, produto, item));
+        unidadeAtualizada[item.produto_id] = linha;
+        qtdAtualizada[item.produto_id] = String(quantidadeRecebidaApresentacaoEmbarqueItem(item, linha));
+      });
+      setUnidadeLinha(unidadeAtualizada);
+      setQtdRecebidaApres(qtdAtualizada);
+    });
+  };
+
   useEffect(() => {
-    if (!isOpen) return;
-    setItens(getItensDoEmbarque(embarque));
+    if (!isOpen || !embarque?.id) return;
+    let cancelled = false;
     setDataEntrada(dataHoje());
-  }, [isOpen, embarque]);
+
+    (async () => {
+      const [hydrated] = await hydrateEmbarquesFromSql(base44, [embarque]);
+      if (cancelled) return;
+      const baseItens = getItensDoEmbarque(hydrated || embarque);
+      setItens(baseItens);
+      inicializarVitrineRecepcao(baseItens);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, embarque?.id, pedido?.id]);
 
   const copiarQuantidadesEmbarcado = () => {
+    const qtdAtualizada = { ...qtdRecebidaApres };
     setItens((prev) =>
       prev.map((item) => {
-        const qtdEmb = roundToTwoDecimals(Number(item.quantidade_embarcada) || 0);
+        const produto = produtosMap[item.produto_id];
+        const pedidoItem = pedidoItemParaEmbarque(pedido, item);
+        const linha = resolveUnidadeLinha(pedidoItem, produto, unidadeLinha, item.produto_id);
+        const qEmbApres = quantidadeApresentacaoEmbarqueItem(item, linha);
+        const qEmbBase = quantidadeBaseEmbarqueItem(item);
+        qtdAtualizada[item.produto_id] = String(qEmbApres);
         return {
           ...item,
-          quantidade_recebida: qtdEmb,
+          quantidade_recebida: qEmbBase,
+          quantidade_recebida_apresentacao: qEmbApres,
           divergencia_tipo: item.divergencia_tipo === 'Quantidade A Menor' ? 'Nenhuma' : item.divergencia_tipo,
         };
       })
     );
+    setQtdRecebidaApres(qtdAtualizada);
     toast({ title: 'Quantidades iguais ao embarcado', className: 'bg-green-100 text-green-800' });
   };
 
   const handleQuantidadeChange = (index, value) => {
+    const item = itens[index];
+    const produto = produtosMap[item.produto_id];
+    const pedidoItem = pedidoItemParaEmbarque(pedido, item);
+    const linha = resolveUnidadeLinha(pedidoItem, produto, unidadeLinha, item.produto_id);
+    const qApres = roundToTwoDecimals(parseFloat(String(value).replace(',', '.')) || 0);
+    const qBase = roundToTwoDecimals(calculateBaseQuantity(qApres, linha.fator));
+    const qEmbBase = quantidadeBaseEmbarqueItem(item);
+
     const newItens = [...itens];
-    newItens[index].quantidade_recebida = roundToTwoDecimals(parseFloat(value) || 0);
-    
-    // Auto-detectar divergência de quantidade
-    const qtdEmb = newItens[index].quantidade_embarcada;
-    const qtdRec = newItens[index].quantidade_recebida;
-    
-    if (qtdRec < qtdEmb && newItens[index].divergencia_tipo === 'Nenhuma') {
+    newItens[index] = {
+      ...newItens[index],
+      quantidade_recebida: qBase,
+      quantidade_recebida_apresentacao: qApres,
+    };
+
+    if (qBase < qEmbBase - 0.01 && newItens[index].divergencia_tipo === 'Nenhuma') {
       newItens[index].divergencia_tipo = 'Quantidade A Menor';
-    } else if (qtdRec === qtdEmb && newItens[index].divergencia_tipo === 'Quantidade A Menor') {
+    } else if (qBase >= qEmbBase - 0.01 && newItens[index].divergencia_tipo === 'Quantidade A Menor') {
       newItens[index].divergencia_tipo = 'Nenhuma';
     }
-    
+
     setItens(newItens);
+    setQtdRecebidaApres((prev) => ({ ...prev, [item.produto_id]: String(value).replace(',', '.') }));
+  };
+
+  const handleConfirmUnitRecepcao = (unitOption) => {
+    const produtoId = unitSelector.produtoId;
+    if (!produtoId || !unitOption) return;
+    const index = itens.findIndex((i) => i.produto_id === produtoId);
+    if (index < 0) return;
+    const item = itens[index];
+    const produto = produtosMap[produtoId];
+    const pedidoItem = pedidoItemParaEmbarque(pedido, item);
+    const linhaAtual = unidadeLinha[produtoId] || buildUnidadeLinhaInicial(pedidoItem, produto, item);
+    const qtyAtual = parseFloat(qtdRecebidaApres[produtoId]) || 0;
+    const baseAtual = calculateBaseQuantity(qtyAtual, linhaAtual.fator);
+    const fatorNovo = resolveFatorLinhaEmbarque(produto, {
+      unidade: unitOption.unidade,
+      fator: Number(unitOption.fator_conversao) || 1,
+    });
+    const qtyNova = commercialQuantityFromBase(baseAtual, fatorNovo, unitOption.unidade);
+
+    setUnidadeLinha((prev) => ({
+      ...prev,
+      [produtoId]: enrichLinhaEmbarque(produto, {
+        unidade: unitOption.unidade,
+        fator: fatorNovo,
+        produto_unidade_id: getUnidadeBySiglaCanonical(produto, unitOption.unidade)?.id || '',
+      }),
+    }));
+    handleQuantidadeChange(index, String(qtyNova));
+    setUnitSelector({ open: false, produtoId: null, product: null });
   };
 
   const abrirDivergencia = (index) => {
@@ -169,18 +286,19 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
 
   const handleConfirmarRecebimento = async () => {
     setIsSaving(true);
-    let avisoSincroniaEmbarqueItem = null;
     try {
-      const itensNorm = itens.map((item) => ({
-        ...item,
-        quantidade_embarcada: roundToTwoDecimals(item.quantidade_embarcada),
-        quantidade_recebida: roundToTwoDecimals(item.quantidade_recebida),
-      }));
+      const itensNorm = itens.map((item) => {
+        const produto = produtosMap[item.produto_id];
+        const pedidoItem = pedidoItemParaEmbarque(pedido, item);
+        const linha = resolveUnidadeLinha(pedidoItem, produto, unidadeLinha, item.produto_id);
+        const qApres = roundToTwoDecimals(parseFloat(qtdRecebidaApres[item.produto_id]) || 0);
+        return buildItemRecepcaoAtualizado(item, pedidoItem, produto, linha, qApres);
+      });
       if (!embarque?.id) {
         toast({
           title: 'Embarque sem identificador',
           description:
-            'Não é possível concluir a receção sem o id do embarque na Base44. Recarregue o pedido ou abra de novo na aba Logística.',
+            'Não é possível concluir a receção sem o id do embarque. Recarregue o pedido ou abra de novo na aba Logística.',
           variant: 'destructive',
         });
         return;
@@ -205,43 +323,49 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         });
         return;
       }
-      const novoEmbarque = { ...embarque, itens: itensNorm, itens_embarcados: itensNorm };
-      const temDivergencia = itensNorm.some(i => i.divergencia_tipo !== 'Nenhuma');
+
+      const temDivergencia = itensNorm.some((i) => i.divergencia_tipo !== 'Nenhuma');
       const todosRecebidos = itensNorm.every(
-        (i) => Number(i.quantidade_recebida || 0) >= Number(i.quantidade_embarcada || 0)
+        (i) => Number(i.quantidade_recebida || 0) >= Number(i.quantidade_embarcada || 0),
       );
-      
+
       let statusRecebimento = 'Recebido OK';
       if (temDivergencia) {
         statusRecebimento = 'Com Divergência';
       } else if (!todosRecebidos) {
         statusRecebimento = 'Recebido Parcial';
       }
-      
-      novoEmbarque.status_recebimento = statusRecebimento;
-      novoEmbarque.status = 'Concluído';
 
-      const embarques = Array.isArray(pedido._embarques) ? pedido._embarques : (Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : []);
-      const outrosEmbarques = embarques.filter(e => e.id !== embarque.id);
+      const embarques = Array.isArray(pedido._embarques) ? pedido._embarques : [];
+      const outrosEmbarques = embarques.filter((e) => e.id !== embarque.id);
+      const pedidoItens = Array.isArray(pedido?.itens) ? pedido.itens : [];
 
-      const itensOrfaos = itensNorm.map((item) => {
-        const saldo = roundToTwoDecimals(
-          Math.max(0, Number(item.quantidade_embarcada || 0) - Number(item.quantidade_recebida || 0))
-        );
-        if (!saldo) return null;
-        return {
-          produto_id: item.produto_id,
-          produto_nome: item.produto_nome,
-          quantidade_pedida: saldo,
-          quantidade_embarcada: saldo,
-          quantidade_recebida: 0,
-          unidade_medida: item.unidade_medida,
-          divergencia_tipo: 'Nenhuma'
-        };
-      }).filter(Boolean);
+      const itensOrfaosNorm = itensNorm
+        .map((item) => {
+          const pedidoItem = pedidoItemParaEmbarque(pedido, item);
+          const produto = produtosMap[item.produto_id];
+          const linha = resolveUnidadeLinha(pedidoItem, produto, unidadeLinha, item.produto_id);
+          const qEmbApres = Number(item.quantidade_embarcada_apresentacao) ?? quantidadeApresentacaoEmbarqueItem(item, linha);
+          const qRecApres = Number(item.quantidade_recebida_apresentacao) ?? 0;
+          const saldoApres = roundToTwoDecimals(Math.max(0, qEmbApres - qRecApres));
+          if (saldoApres <= 0) return null;
+          const saldoBase = roundToTwoDecimals(calculateBaseQuantity(saldoApres, linha.fator));
+          return {
+            ...item,
+            quantidade_pedida: saldoBase,
+            quantidade_embarcada: saldoBase,
+            quantidade_recebida: 0,
+            quantidade_embarcada_apresentacao: saldoApres,
+            quantidade_recebida_apresentacao: 0,
+            unidade_apresentacao: linha.unidade,
+            fator_apresentacao: linha.fator,
+            divergencia_tipo: 'Nenhuma',
+          };
+        })
+        .filter(Boolean);
 
       const proximaLetra = String.fromCharCode(65 + outrosEmbarques.length + 1);
-      const embarqueOrfao = itensOrfaos.length > 0 ? {
+      const embarqueOrfaoMeta = itensOrfaosNorm.length > 0 ? {
         pedido_compra_id: pedido.id,
         pedido_compra_numero: pedido.numero,
         fornecedor_id: pedido.fornecedor_id,
@@ -260,13 +384,27 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         observacoes: 'Gerado automaticamente por saldo não recebido do embarque original.',
         status_recebimento: 'Pendente',
         status_recebimento_embarque: 'Pendente',
-        itens: itensOrfaos,
-        itens_embarcados: itensOrfaos
       } : null;
 
-      const pedidoItensParaCusto = Array.isArray(pedido?.itens) ? pedido.itens : [];
+      const itensCanonicos = buildItensCanonicosEmbarque(itensNorm, pedidoItens);
+      if (itensCanonicos.length <= 0) {
+        toast({
+          title: 'Linhas inválidas',
+          description: 'Não foi possível gravar as linhas do embarque. Verifique produto e quantidades.',
+          variant: 'destructive',
+        });
+        return;
+      }
 
-      // 1) Entrada em stock na DB Base44 (antes de fechar o embarque — se falhar, receção não fica «Concluída»).
+      // 1) SQL canónico (EmbarqueItem) — obrigatório; recomporEmbarque actualiza espelho JSON
+      await saveEmbarqueItem({
+        action: 'replaceAll',
+        embarque_id: embarque.id,
+        items: itensCanonicos,
+      });
+
+      // 2) Entrada em stock
+      const pedidoItensParaCusto = pedidoItens;
       for (const item of itensNorm) {
         if (item.quantidade_recebida > 0) {
           const produtoId = item.produto_id_recebido_diferente || item.produto_id;
@@ -280,82 +418,48 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
               embarque,
               purchaseItem: linhaPedido || item,
               receiptItem: item,
-            })
+            }),
           );
           await invokeRecalcularEstoqueProduto(base44, produtoId);
         }
       }
 
+      // 3) Metadados do embarque (sem duplicar itens — espelho vem do SQL)
       await base44.entities.Embarque.update(embarque.id, {
-        status: novoEmbarque.status,
+        status: 'Concluído',
         status_recebimento: statusRecebimento,
-        itens: itensNorm,
-        itens_embarcados: itensNorm,
-        observacoes: novoEmbarque.observacoes,
+        observacoes: embarque?.observacoes,
       });
 
-      const pedidoItens = Array.isArray(pedido?.itens) ? pedido.itens : [];
-      try {
-        const itensCanonicos = itensNorm
-          .map((it, idx) => {
-            const linhaPedido = pedidoItens.find((pi) => pi.produto_id === it?.produto_id);
-            const qPedida =
-              Number(it?.quantidade_pedida) ||
-              Number(linhaPedido?.quantidade) ||
-              0;
-            return {
-              produto_id: it?.produto_id || '',
-              produto_unidade_id: it?.produto_unidade_id || '',
-              pedido_compra_item_id: it?.pedido_compra_item_id || '',
-              unidade_sigla: it?.unidade_medida || '',
-              quantidade_pedida_comercial: qPedida,
-              quantidade_embarcada_comercial: Number(it?.quantidade_embarcada) || 0,
-              quantidade_recebida_comercial: Number(it?.quantidade_recebida) || 0,
-              divergencia_tipo: it?.divergencia_tipo || 'Nenhuma',
-              produto_id_recebido_diferente: it?.produto_id_recebido_diferente || '',
-              produto_nome_recebido_diferente: it?.produto_nome_recebido_diferente || '',
-              acordo_financeiro_lancamento_id: it?.acordo_financeiro_lancamento_id || '',
-              ordem: idx,
-            };
-          })
-          .filter((it) => it.produto_id && it.quantidade_embarcada_comercial > 0);
-        if (itensCanonicos.length > 0) {
+      if (embarqueOrfaoMeta) {
+        const orphanCreated = await base44.entities.Embarque.create(embarqueOrfaoMeta);
+        const orphanCanonicos = buildItensCanonicosEmbarque(itensOrfaosNorm, pedidoItens);
+        if (orphanCreated?.id && orphanCanonicos.length > 0) {
           await saveEmbarqueItem({
             action: 'replaceAll',
-            embarque_id: embarque.id,
-            items: itensCanonicos,
+            embarque_id: orphanCreated.id,
+            items: orphanCanonicos,
           });
         }
-      } catch (canonicalErr) {
-        console.warn('Sincronia canonica de EmbarqueItem (recepcao) falhou:', canonicalErr?.message || canonicalErr);
-        avisoSincroniaEmbarqueItem = String(canonicalErr?.message || canonicalErr);
       }
 
-      if (embarqueOrfao) {
-        await base44.entities.Embarque.create(embarqueOrfao);
-      }
-
-      const divergenciasCount = itensNorm.filter(i => i.divergencia_tipo !== 'Nenhuma').length;
+      const divergenciasCount = itensNorm.filter((i) => i.divergencia_tipo !== 'Nenhuma').length;
       const divergenciasDesc = divergenciasCount > 0 ? ` | ${divergenciasCount} divergência(s)` : '';
-      const resumoItens = itensNorm.map(i => `${i.produto_nome}: ${formatQuantity(i.quantidade_recebida)}/${formatQuantity(i.quantidade_embarcada)}`).join('; ');
+      const resumoItens = itensNorm.map((i) => {
+        const un = i.unidade_apresentacao || i.unidade_medida || '';
+        const rec = i.quantidade_recebida_apresentacao ?? i.quantidade_recebida;
+        const emb = i.quantidade_embarcada_apresentacao ?? i.quantidade_embarcada;
+        return `${i.produto_nome}: ${formatCommercialQuantity(rec, un)}/${formatCommercialQuantity(emb, un)} ${un}`;
+      }).join('; ');
 
       await base44.entities.PedidoCompra.update(pedido.id, {
-        historico: (pedido.historico || '') + `\n[RECEPÇÃO EMBARQUE ${embarque.codigo_exibicao || ''} | Status: ${statusRecebimento}${divergenciasDesc} | Data: ${dataEntrada} | Itens: ${resumoItens}${embarqueOrfao ? ' | split automático gerou novo embarque' : ''} | ${formatarLogTime()}]`
+        historico: (pedido.historico || '') + `\n[RECEPÇÃO EMBARQUE ${embarque.codigo_exibicao || ''} | Status: ${statusRecebimento}${divergenciasDesc} | Data: ${dataEntrada} | Itens: ${resumoItens}${embarqueOrfaoMeta ? ' | split automático gerou novo embarque' : ''} | ${formatarLogTime()}]`,
       });
 
       await invokeRecalcularConclusaoPedidoCompra(base44, pedido.id);
 
       const recebimentoNumero = `REC-${String(embarque?.id || '').slice(-6) || String(Date.now()).slice(-6)}`;
-      if (avisoSincroniaEmbarqueItem) {
-        toast({
-          title: 'Recebimento concluído com ressalvas',
-          description: `Entrada em stock e embarque guardados. Sincronização EmbarqueItem falhou: ${avisoSincroniaEmbarqueItem.slice(0, 200)}`,
-          variant: 'destructive',
-          duration: 12000,
-        });
-      } else {
-        toast({ title: 'Recebimento concluído', className: 'bg-green-100 text-green-800' });
-      }
+      toast({ title: 'Recebimento concluído', className: 'bg-green-100 text-green-800' });
       onRecebido?.({ recebimentoNumero });
       onClose();
     } catch (error) {
@@ -472,6 +576,11 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
                 )}
               {itens.map((item, idx) => {
                 const hasDivergencia = item.divergencia_tipo !== 'Nenhuma';
+                const produto = produtosMap[item.produto_id];
+                const pedidoItem = pedidoItemParaEmbarque(pedido, item);
+                const linha = resolveUnidadeLinha(pedidoItem, produto, unidadeLinha, item.produto_id);
+                const qEmbApres = quantidadeApresentacaoEmbarqueItem(item, linha);
+                const podeTrocarUnidade = produto && hasAlternativeUnits(produto) && buildPurchaseUnitOptions(produto).length > 1;
                 return (
                   <div key={idx} className="bg-muted/50/50 rounded-2xl p-5 space-y-4 shadow-sm">
                     {/* Produto */}
@@ -481,22 +590,43 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
                           {item.produto_nome}
                         </p>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Embarcado: <span className="font-medium text-foreground">{formatQuantity(item.quantidade_embarcada)} {item.unidade_medida}</span>
+                          Embarcado:{' '}
+                          <span className="font-medium text-foreground">
+                            {formatCommercialQuantity(qEmbApres, linha.unidade)} {linha.unidade}
+                          </span>
                         </p>
                       </div>
-                      {hasDivergencia && (
-                        <AlertTriangle className="w-5 h-5 text-amber-500 dark:text-amber-400 flex-shrink-0 mt-1" />
-                      )}
+                      <div className="flex items-center gap-2 shrink-0">
+                        {podeTrocarUnidade && !isReadOnly ? (
+                          <button
+                            type="button"
+                            onClick={() => setUnitSelector({ open: true, produtoId: item.produto_id, product: produto })}
+                            className="inline-flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-[10px] font-semibold text-cyan-700 dark:text-cyan-300 hover:bg-muted/80"
+                          >
+                            <Boxes className="w-3 h-3" aria-hidden />
+                            {linha.unidade}
+                          </button>
+                        ) : (
+                          <span className="text-[10px] font-semibold uppercase text-muted-foreground px-1">
+                            {linha.unidade}
+                          </span>
+                        )}
+                        {hasDivergencia && (
+                          <AlertTriangle className="w-5 h-5 text-amber-500 dark:text-amber-400 flex-shrink-0" />
+                        )}
+                      </div>
                     </div>
 
                     {/* Quantidade Recebida */}
                     <div>
-                      <Label className="text-xs text-muted-foreground font-semibold block mb-2">Quantidade Recebida</Label>
+                      <Label className="text-xs text-muted-foreground font-semibold block mb-2">
+                        Quantidade Recebida ({linha.unidade})
+                      </Label>
                       <Input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={item.quantidade_recebida || ''}
+                        type="text"
+                        inputMode="decimal"
+                        value={qtdRecebidaApres[item.produto_id] ?? ''}
+                        onFocus={(e) => e.target.select()}
                         onChange={e => handleQuantidadeChange(idx, e.target.value)}
                         disabled={isReadOnly}
                         className="h-14 text-lg bg-card border-0 rounded-xl shadow-sm font-semibold text-foreground text-center placeholder:text-muted-foreground disabled:opacity-60 disabled:cursor-not-allowed"
@@ -604,6 +734,14 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
           </div>
           </DialogContent>
           </Dialog>
+
+      <ProductUnitSelectorDialog
+        open={unitSelector.open}
+        product={unitSelector.product}
+        mode="purchase"
+        onClose={() => setUnitSelector({ open: false, produtoId: null, product: null })}
+        onConfirm={handleConfirmUnitRecepcao}
+      />
 
       <AlertDialog open={showRevertDialog} onOpenChange={setShowRevertDialog}>
         <AlertDialogContent className="max-w-lg bg-card border-0 rounded-3xl">

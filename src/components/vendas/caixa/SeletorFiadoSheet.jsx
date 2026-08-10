@@ -4,6 +4,7 @@ import { format, addDays } from 'date-fns';
 import { Dialog } from '@/components/ui/dialog';
 import { CaixaDialogContent } from './CaixaDialogContent';
 import { cn } from '@/lib/utils';
+import { selectAllOnFocus } from '@/lib/inputFocusUtils';
 
 /**
  * Modal Radix aninhado — fiado sobre o dialog de pagamento (clique/toque confiáveis).
@@ -98,7 +99,7 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
                 }}
                 className={`h-10 px-4 rounded-xl text-sm font-semibold transition-colors ${
                   prazoDias === p.dias && !dataSelecionada
-                    ? 'bg-background dark:bg-card text-white dark:text-foreground'
+                    ? 'bg-card text-card-foreground'
                     : 'bg-muted text-muted-foreground hover:bg-muted dark:hover:bg-primary/90'
                 }`}
               >
@@ -109,7 +110,7 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
               onClick={gerarDataAleatoria}
               className={`h-10 px-4 rounded-xl text-sm font-semibold transition-colors flex items-center gap-1.5 ${
                 dataSelecionada
-                  ? 'bg-background dark:bg-card text-white dark:text-foreground'
+                  ? 'bg-card text-card-foreground'
                   : 'bg-muted text-muted-foreground hover:bg-muted dark:hover:bg-primary/90'
               }`}
             >
@@ -155,6 +156,7 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
               const formatado = (parseFloat(numeros || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
               setValor(formatado);
             }}
+            onFocus={selectAllOnFocus}
             placeholder="Ex: R$ 100,00"
             className="w-full px-3 py-2.5 bg-muted/50 rounded-xl text-sm text-foreground/90 border border-border/40 focus:outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring"
           />
@@ -191,7 +193,7 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
           </button>
           <button
             onClick={handleConfirmar}
-            className="flex-1 h-11 bg-background dark:bg-card text-white dark:text-foreground rounded-xl text-sm font-semibold flex items-center justify-center gap-1"
+            className="flex-1 h-11 bg-card text-card-foreground rounded-xl text-sm font-semibold flex items-center justify-center gap-1"
           >
             Confirmar <ChevronRight className="w-4 h-4" />
           </button>

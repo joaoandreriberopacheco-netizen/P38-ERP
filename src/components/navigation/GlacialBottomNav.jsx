@@ -114,7 +114,7 @@ export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentP
             <Link
               key={item.id}
               to={createPageUrl(item.page)}
-              className="flex-1 relative"
+              className="flex-1 relative touch-manipulation"
             >
               {content}
             </Link>

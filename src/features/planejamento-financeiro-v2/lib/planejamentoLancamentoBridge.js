@@ -11,6 +11,7 @@ export async function persistirOverlayPlanejamentoAposLancamento({
   categoria_id,
   categoria,
   centro_custo,
+  centro_custo_id,
   frequencia,
   data_vencimento,
 }) {
@@ -23,6 +24,7 @@ export async function persistirOverlayPlanejamentoAposLancamento({
     categoria_id: categoria_id || '',
     categoria_nome: categoria || '',
     centro_custo: centro_custo || '',
+    centro_custo_id: centro_custo_id || '',
     frequencia: normalizarFrequenciaSerie(frequencia),
     grupo_lancamento_id,
     dia_vencimento: Number(ven.slice(8, 10)) || 10,

@@ -147,7 +147,7 @@ export default function GestaoCaixa() {
             <p className="text-sm text-muted-foreground">Resumo das movimentações e atalhos rápidos</p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={() => handleAbrirDialog('Sangria')} className="h-11 rounded-2xl bg-background hover:bg-primary text-white dark:bg-primary dark:text-primary-foreground">
+            <Button onClick={() => handleAbrirDialog('Sangria')} className="h-11 rounded-2xl bg-background hover:bg-primary text-primary-foreground">
               Sangria
             </Button>
             <Button onClick={() => handleAbrirDialog('Reforço')} variant="ghost" className="h-11 rounded-2xl bg-muted dark:bg-muted text-foreground/90 hover:bg-muted dark:hover:bg-muted">
@@ -208,7 +208,7 @@ export default function GestaoCaixa() {
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setIsDialogOpen(false)} className="rounded-2xl">Cancelar</Button>
-            <Button onClick={handleRegistrarMovimento} className="rounded-2xl bg-primary hover:bg-card text-white dark:bg-primary dark:text-primary-foreground">Confirmar</Button>
+            <Button onClick={handleRegistrarMovimento} className="rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground border border-primary/80 dark:border-transparent">Confirmar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

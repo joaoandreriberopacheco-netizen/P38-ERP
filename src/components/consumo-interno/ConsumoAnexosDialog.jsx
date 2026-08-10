@@ -41,7 +41,7 @@ export default function ConsumoAnexosDialog({ open, onOpenChange, anexos = [], c
                     <p className="truncate text-sm font-medium text-foreground">{anexo.nome_arquivo || 'Arquivo'}</p>
                     <p className="truncate text-xs text-muted-foreground">{anexo.descricao || anexo.tipo_documento || 'Anexo'}</p>
                   </div>
-                  <Button asChild className="h-10 rounded-2xl bg-background px-3 text-white hover:bg-primary dark:bg-card dark:text-foreground">
+                  <Button asChild className="h-10 rounded-2xl bg-primary px-3 text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground">
                     <a href={anexo.url_drive} target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="h-4 w-4" />
                     </a>

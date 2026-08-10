@@ -31,7 +31,7 @@ const ETA_FILTRO_MODOS = [
 ];
 
 const STATUS_OPTIONS = [
-  { codigo: '__nao_concluido__', label: 'Somente não concluídos', cor: 'bg-primary text-white dark:bg-muted dark:text-foreground' },
+  { codigo: '__nao_concluido__', label: 'Somente não concluídos', cor: 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground' },
   { codigo: 'Rascunho', label: 'Rascunho', cor: 'bg-muted text-foreground/90' },
   { codigo: 'Aguardando Liberação', label: 'Aguardando Liberação', cor: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-200' },
   { codigo: 'Aguardando Aprovação Financeira', label: 'Aguardando Liberação', cor: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-200' },

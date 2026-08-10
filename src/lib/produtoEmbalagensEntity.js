@@ -2,6 +2,7 @@
  * Entidade auxiliar Base44 `ProdutoEmbalagem` (máx. 3 linhas por produto).
  * Comportamento: no-op se a entidade não existir no cliente ou se o flag estiver off.
  */
+import { p38PublicEnvBool } from '@/lib/p38PublicEnv';
 
 export const ENTITY_PRODUTO_EMBALAGEM = "ProdutoEmbalagem";
 
@@ -20,7 +21,7 @@ export function embalagemRowRole(row) {
 }
 
 export function isProdutoEmbalagemEntityFlagOn() {
-  return import.meta.env.VITE_USE_PRODUTO_EMBALAGEM_ENTITY === "true";
+  return p38PublicEnvBool('VITE_USE_PRODUTO_EMBALAGEM_ENTITY', false);
 }
 
 /**

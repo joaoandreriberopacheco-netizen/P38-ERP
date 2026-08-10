@@ -81,7 +81,7 @@ export default function ConsumoDestinacaoStep({
       </div>
 
       <div className="mt-4 flex justify-end">
-        <Button type="button" onClick={onNext} className="h-11 w-full rounded-2xl bg-background text-white hover:bg-primary dark:bg-card dark:text-foreground md:w-44">
+        <Button type="button" onClick={onNext} className="h-11 w-full rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground md:w-44">
           Próximo
         </Button>
       </div>

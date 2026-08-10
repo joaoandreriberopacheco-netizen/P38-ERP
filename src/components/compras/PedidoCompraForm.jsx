@@ -42,6 +42,7 @@ import PainelCentralFinanceiroPedido from './PainelCentralFinanceiroPedido.jsx';
 import PedidoCompraLogisticaTab from './PedidoCompraLogisticaTab.jsx';
 import AbaRecepção from './AbaRecepção.jsx';
 import { filterEmbarquesVisiveisParaPedido } from './embarqueFilters';
+import { hydrateEmbarquesPedidoFromSql } from '@/lib/fetchEmbarqueItens';
 import {
   calcValorTotalPedidoCompra,
   cancelarLancamentosNaoPagosPedidoCompra,
@@ -61,9 +62,12 @@ import {
   resolveDescontoPctCompraProduto,
   syncItemDescontoApresentacao,
   calcTotalItemCompraPedido,
+  normalizePedidoCompraItemCustoLiquidoParaPersist,
 } from '@/lib/productUnits';
 import { savePedidoCompraItem } from '@/functions/savePedidoCompraItem';
 import { uploadAnexoParaPedidoCompra } from '@/lib/uploadAnexoReferencia';
+import { limparArquivoPedidoImportBridge } from '@/lib/torrePedidoImportBridge';
+import { mergeLoteIntoItems, parseLoteQuantidade } from '@/lib/catalogLoteUtils';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefresh, abaInicial = 'dados-gerais', autoOpenImporter = false }) {
   const isPhone = useCompactShell();
@@ -278,8 +282,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
         anexoImportUploadedRef.current = true;
         pendingAnexoImportRef.current = null;
         toast({
-          title: 'PDF anexado ao pedido',
-          description: `Documento classificado como ${pending.tipoDocumentoAnexo || 'Comprovante'}.`,
+          title: 'Documento anexado ao pedido',
+          description: `Arquivo classificado como ${pending.tipoDocumentoAnexo || 'Comprovante'}.`,
         });
       } catch (anexoErr) {
         console.warn('Anexo PDF (importação pedido):', anexoErr);
@@ -463,6 +467,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
                   item.custo_unitario,
                 );
                 item.desconto_pct_item = resolveDescontoPctCompraProduto(produto, item.custo_unitario);
+                item.avaria_pct_item = Number(produto.avaria_percentual) || 0;
             }
         }
     }
@@ -552,6 +557,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
             desconto_pct_item: product
               ? resolveDescontoPctCompraProduto(product, custoF1)
               : 0,
+            avaria_pct_item: product ? (Number(product.avaria_percentual) || 0) : 0,
             observacao_item: ''
         };
         newItem = calculateItemTotals(newItem);
@@ -561,6 +567,62 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
       ...formData,
       itens: [...formData.itens, newItem],
     };
+    saveToHistory(newData);
+    setFormData(newData);
+  };
+
+  const handleAddItemsBatch = (incoming = [], productsSource) => {
+    if (!incoming.length) return;
+    const catalog = productsSource?.length ? productsSource : produtos;
+
+    const calculateItemTotals = (item) => {
+      const qty = parseFloat(item.quantidade) || 0;
+      const fatorConversao = parseFloat(item.fator_conversao) || 1;
+      const synced = syncItemDescontoApresentacao({
+        ...item,
+        quantidade_base: qty * fatorConversao,
+      });
+      const cost = roundToTwoDecimals(parseFloat(synced.custo_unitario) || 0);
+      const descUnit = roundToTwoDecimals(parseFloat(synced.valor_desconto_item) || 0);
+      const custoFinalUnitario = roundToTwoDecimals(cost - descUnit);
+
+      return {
+        ...synced,
+        subtotal: roundToTwoDecimals(qty * fatorConversao * cost),
+        total: calcTotalItemCompraPedido(synced),
+        custo_final_unitario: custoFinalUnitario,
+        ...normalizeItemToCanonicalFactorOne({
+          ...synced,
+          custo_final_unitario: custoFinalUnitario,
+        }, 'custo'),
+      };
+    };
+
+    const buildFromProduct = (product, quantidade) => {
+      const qty = parseLoteQuantidade(quantidade);
+      const pu = pickDefaultPurchaseUnit(product);
+      const fatorPu = pu?.fator_conversao ?? 1;
+      const custoF1 = pu
+        ? custoApresentacaoParaFator1(pu.valor_unitario ?? 0, fatorPu)
+        : (product?.valor_compra || 0);
+      const base = {
+        produto_id: product.id,
+        produto_nome: product.nome,
+        codigo_produto: product.codigo_interno || product.codigo_barras || '',
+        quantidade: qty,
+        unidade_medida: pu?.unidade || product.unidade_compra || 'UN',
+        fator_conversao: fatorPu,
+        custo_unitario: custoF1,
+        valor_desconto_item: resolveValorDescontoCompraPadraoFator1(product, custoF1),
+        desconto_pct_item: resolveDescontoPctCompraProduto(product, custoF1),
+        observacao_item: '',
+      };
+      return calculateItemTotals(base);
+    };
+
+    const merged = mergeLoteIntoItems(formData.itens, incoming, buildFromProduct, catalog);
+    const recalc = merged.map((item) => calculateItemTotals(item));
+    const newData = { ...formData, itens: recalc };
     saveToHistory(newData);
     setFormData(newData);
   };
@@ -984,29 +1046,36 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
         );
       }
 
-      // ── Sincroniza linhas canonicas em PedidoCompraItem ──
-      // O servico replaceAll persiste cada linha com produto_unidade_id, recompoe
-      // o espelho `PedidoCompra.itens[]` e atualiza `valor_total`. Os erros nao
-      // bloqueiam o save legado — apenas geram um aviso pra o usuario.
+      // ── Sincroniza linhas canónicas em PedidoCompraItem (SQL) ──
+      // replaceAll persiste cada linha; recomporPedido actualiza só totais (sem espelho JSON).
       if (pedidoId && Array.isArray(dataToSave?.itens)) {
         try {
           const itensCanonicos = dataToSave.itens.map((it, idx) => {
             const synced = syncItemDescontoApresentacao(it);
             const totalLinha = calcTotalItemCompraPedido(synced);
-            const descontoF1 =
-              Number(synced?.valor_desconto_item ?? synced?.desconto_unitario) || 0;
+            const normalizado = normalizePedidoCompraItemCustoLiquidoParaPersist({
+              ...synced,
+              custo_unitario_fator1: Number(synced?.custo_unitario) || 0,
+              quantidade_comercial: Number(synced?.quantidade) || 0,
+              quantidade_base: Number(synced?.quantidade_base) || 0,
+              fator_aplicado: Number(synced?.fator_conversao) || 1,
+              frete_unitario_fator1: Number(synced?.custo_frete_unitario) || 0,
+              outros_unitario_fator1: Number(synced?.custo_outros_unitario) || 0,
+              desconto_unitario_fator1: Number(synced?.valor_desconto_item ?? synced?.desconto_unitario) || 0,
+              total: Number(synced?.total) > 0 ? Number(synced.total) : totalLinha,
+            });
             return {
               id: synced?.pedido_compra_item_id || synced?.id || undefined,
               produto_id: synced?.produto_id || '',
               produto_unidade_id: synced?.produto_unidade_id || '',
               unidade_sigla: synced?.unidade_medida || synced?.unidade_apresentacao || '',
-              quantidade_comercial: Number(synced?.quantidade) || 0,
-              custo_unitario_fator1: Number(synced?.custo_unitario) || 0,
-              frete_unitario_fator1: Number(synced?.custo_frete_unitario) || 0,
-              outros_unitario_fator1: Number(synced?.custo_outros_unitario) || 0,
-              desconto_unitario_fator1: descontoF1,
-              valor_desconto_item: descontoF1,
-              total: Number(synced?.total) > 0 ? Number(synced.total) : totalLinha,
+              quantidade_comercial: (normalizado.quantidade_comercial ?? Number(synced?.quantidade)) || 0,
+              custo_unitario_fator1: normalizado.custo_unitario_fator1,
+              frete_unitario_fator1: normalizado.frete_unitario_fator1 ?? 0,
+              outros_unitario_fator1: normalizado.outros_unitario_fator1 ?? 0,
+              desconto_unitario_fator1: 0,
+              valor_desconto_item: 0,
+              total: normalizado.total ?? totalLinha,
               quantidade_vinculada: Number(synced?.quantidade_vinculada) || 0,
               ordem: idx,
               observacoes: typeof synced?.observacoes === 'string' ? synced.observacoes : '',
@@ -1031,7 +1100,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
           console.warn('Sincronia canonica de PedidoCompraItem falhou:', canonicalErr?.message || canonicalErr);
           toast({
             title: 'Aviso de sincronia canonica',
-            description: 'O pedido foi salvo, mas a entidade canonica PedidoCompraItem nao pode ser sincronizada. O espelho legado segue valido. Detalhe: ' + (canonicalErr?.message || ''),
+            description: 'O pedido foi salvo, mas a entidade canonica PedidoCompraItem nao pode ser sincronizada. Detalhe: ' + (canonicalErr?.message || ''),
           });
         }
       }
@@ -1442,6 +1511,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
                 items={formData.itens}
                 products={produtos}
                 onAddItem={handleAddItem}
+                onAddItemsBatch={handleAddItemsBatch}
                 onUpdateItem={handleItemChange}
                 onRemoveItem={handleRemoveItem}
                 formatCurrency={formatCurrency}
@@ -1560,7 +1630,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
                     base44.entities.Embarque.filter({ pedido_compra_id: pedidoId })
                   ]);
                   if (atualizado?.[0]) {
-                    const embarquesVisiveis = filterEmbarquesVisiveisParaPedido(embarquesAtualizados || []);
+                    const embarquesHidratados = await hydrateEmbarquesPedidoFromSql(
+                      base44,
+                      pedidoId,
+                      embarquesAtualizados || [],
+                    );
+                    const embarquesVisiveis = filterEmbarquesVisiveisParaPedido(embarquesHidratados);
                     const pedidoCompleto = { ...atualizado[0], _embarques: embarquesVisiveis };
                     setPedidoLogistica(pedidoCompleto);
                     setFormData(prev => ({ ...prev, ...pedidoCompleto }));
@@ -1618,6 +1693,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
       <ImportadorPedidoCompra
         isOpen={isImportadorPedidoOpen}
         onClose={() => {
+          limparArquivoPedidoImportBridge();
           setImporterLaunchPdfPicker(false);
           setIsImportadorPedidoOpen(false);
         }}
@@ -1631,6 +1707,11 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
             };
             if (pedido?.id) {
               void enviarAnexoImportacaoPendente(pedido.id, pedido.numero, pendingAnexoImportRef.current);
+            } else {
+              toast({
+                title: 'Documento guardado para anexo',
+                description: `O ${anexoFonte.type?.startsWith('image/') ? 'arquivo de imagem' : 'PDF'} será anexado ao pedido quando você salvar.`,
+              });
             }
           }
           setFormData(prev => {

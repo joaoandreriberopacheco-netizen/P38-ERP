@@ -1,4 +1,4 @@
-import { memo, useState, useEffect, useRef, useMemo } from 'react';
+import { memo, useState, useRef, useMemo } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { base44 } from '@/api/base44Client';
 import {
@@ -50,10 +50,35 @@ const dateRangeMatches = (valor, inicio, fim) => {
   return true;
 };
 
+/** Evita crash do Radix Select quando o status não existe nas opções da aba ativa. */
+const STATUS_OPCOES_POR_ABA = {
+  rascunhos: ['Criado', 'Em Edição', 'Aguardando Caixa', 'Convertido', 'Cancelado'],
+  pedidos: ['Orçamento', 'Aguardando Caixa', 'Financeiro OK', 'Em Separação', 'Pedido Concluído', 'Cancelado'],
+  consulta: ['Financeiro OK', 'Em Separação', 'Em Rota de Entrega', 'Pedido Concluído'],
+  vales: ['Ativo', 'Utilizado Parcialmente', 'Utilizado', 'Expirado', 'Cancelado'],
+};
+
+const STATUS_LABEL_CURTO = {
+  'Aguardando Caixa': 'Ag. Caixa',
+  'Pedido Concluído': 'Concluído',
+};
+
+function statusOpcoesParaAba(activeTab) {
+  return STATUS_OPCOES_POR_ABA[activeTab] || STATUS_OPCOES_POR_ABA.pedidos;
+}
+
+function resolveStatusFiltroParaAba(statusFiltro, activeTab) {
+  if (statusFiltro === 'todos') return 'todos';
+  const opcoes = statusOpcoesParaAba(activeTab);
+  return opcoes.includes(statusFiltro) ? statusFiltro : 'todos';
+}
+
+/** Acima do Drawer (z-310) para o dropdown não ficar atrás do painel de filtros. */
+const FILTRO_SELECT_CONTENT =
+  'z-[320] max-h-[min(50vh,20rem)] border border-border/40 bg-popover shadow-lg dark:border-white/10 dark:bg-card';
+
 const VIRTUAL_LIST_STYLE = { maxHeight: 'calc(100vh - 260px)' };
 const VIRTUAL_OVERSCAN = 8;
-
-const measureVirtualItem = (element) => element?.getBoundingClientRect().height ?? 0;
 
 const getVirtualPadding = (virtualItems, totalSize) => {
   if (virtualItems.length === 0) {
@@ -140,7 +165,6 @@ function VirtualizedPedidoCards({ pedidos, onVerDetalhes, onEdit, onReimprimir, 
     getScrollElement: () => parentRef.current,
     estimateSize: () => 76,
     getItemKey: (index) => pedidos[index]?.id ?? index,
-    measureElement: measureVirtualItem,
     overscan: VIRTUAL_OVERSCAN,
   });
   const virtualItems = rowVirtualizer.getVirtualItems();
@@ -155,7 +179,6 @@ function VirtualizedPedidoCards({ pedidos, onVerDetalhes, onEdit, onReimprimir, 
             <div
               key={virtualRow.key}
               data-index={virtualRow.index}
-              ref={rowVirtualizer.measureElement}
               className="absolute left-0 top-0 w-full"
               style={{ transform: `translateY(${virtualRow.start}px)` }}
             >
@@ -182,7 +205,6 @@ function VirtualizedPedidosTable({ pedidos, onVerDetalhes, onEdit, onReimprimir,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 74,
     getItemKey: (index) => pedidos[index]?.id ?? index,
-    measureElement: measureVirtualItem,
     overscan: VIRTUAL_OVERSCAN,
   });
   const virtualItems = rowVirtualizer.getVirtualItems();
@@ -216,7 +238,6 @@ function VirtualizedPedidosTable({ pedidos, onVerDetalhes, onEdit, onReimprimir,
                 <TableRow
                   key={virtualRow.key}
                   data-index={virtualRow.index}
-                  ref={rowVirtualizer.measureElement}
                 >
                   <TableCell>
                     <PedidoActionsMenu
@@ -311,7 +332,6 @@ function VirtualizedRascunhoLines({ rascunhos, onInutilizar }) {
     getScrollElement: () => parentRef.current,
     estimateSize: () => 88,
     getItemKey: (index) => rascunhos[index]?.id ?? index,
-    measureElement: measureVirtualItem,
     overscan: VIRTUAL_OVERSCAN,
   });
   const virtualItems = rowVirtualizer.getVirtualItems();
@@ -326,7 +346,6 @@ function VirtualizedRascunhoLines({ rascunhos, onInutilizar }) {
             <div
               key={virtualRow.key}
               data-index={virtualRow.index}
-              ref={rowVirtualizer.measureElement}
               className="absolute left-0 top-0 w-full"
               style={{ transform: `translateY(${virtualRow.start}px)` }}
             >
@@ -350,7 +369,6 @@ function VirtualizedRascunhosTable({ rascunhos, onInutilizar }) {
     getScrollElement: () => parentRef.current,
     estimateSize: () => 92,
     getItemKey: (index) => rascunhos[index]?.id ?? index,
-    measureElement: measureVirtualItem,
     overscan: VIRTUAL_OVERSCAN,
   });
   const virtualItems = rowVirtualizer.getVirtualItems();
@@ -383,7 +401,6 @@ function VirtualizedRascunhosTable({ rascunhos, onInutilizar }) {
               <TableRow
                 key={virtualRow.key}
                 data-index={virtualRow.index}
-                ref={rowVirtualizer.measureElement}
                 className="border-b border-border/40 hover:bg-muted/40 dark:hover:bg-muted/50"
               >
                 <TableCell>
@@ -436,15 +453,12 @@ function VendasGestaoPage() {
     isLoading: rascunhosLoading,
     refetch: refetchRascunhos,
   } = useRascunhosPedidoVendaListQuery();
-  const [pedidosFiltrados, setPedidosFiltrados] = useState([]);
-  const [rascunhosFiltrados, setRascunhosFiltrados] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFiltro, setStatusFiltro] = useState('todos');
   const [formasPagamentoFiltro, setFormasPagamentoFiltro] = useState([]);
   const [dataInicio, setDataInicio] = useState(() => getPeriodoMesCorrente().start);
   const [dataFim, setDataFim] = useState(() => getPeriodoMesCorrente().end);
-  const [isLoading, setIsLoading] = useState(true);
-
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [pedidoDetalhes, setPedidoDetalhes] = useState(null);
@@ -457,17 +471,31 @@ function VendasGestaoPage() {
   const [showComprovante, setShowComprovante] = useState(false);
   const [pedidoParaImprimir, setPedidoParaImprimir] = useState(null);
   const [showFiltros, setShowFiltros] = useState(false);
-  const [stats, setStats] = useState({
-    orcamentos: 0,
-    aprovados: 0,
-    finalizados: 0,
-    totalMes: 0
-  });
+
+  const isLoading = pedidosLoading || rascunhosLoading || isRefreshing;
 
   const formasPagamentoOpcoes = useMemo(
     () => listarFormasPagamentoParaFiltro(pedidos),
     [pedidos],
   );
+
+  const statusFiltroResolvido = useMemo(
+    () => resolveStatusFiltroParaAba(statusFiltro, activeTab),
+    [statusFiltro, activeTab],
+  );
+
+  const statusOpcoesAtivas = useMemo(
+    () => statusOpcoesParaAba(activeTab),
+    [activeTab],
+  );
+
+  const handleActiveTabChange = (tab) => {
+    setActiveTab(tab);
+    setStatusFiltro((prev) => resolveStatusFiltroParaAba(prev, tab));
+    if (tab !== 'pedidos' && tab !== 'consulta') {
+      setFormasPagamentoFiltro([]);
+    }
+  };
 
   const toggleFormaPagamentoFiltro = (forma) => {
     setFormasPagamentoFiltro((prev) =>
@@ -476,33 +504,16 @@ function VendasGestaoPage() {
   };
 
   const loadPedidos = async () => {
-    setIsLoading(true);
-    await Promise.all([refetchPedidos(), refetchRascunhos()]);
-    await Promise.all([invalidateHomeKpis()]);
-    setIsLoading(false);
+    setIsRefreshing(true);
+    try {
+      await Promise.all([refetchPedidos(), refetchRascunhos()]);
+      await invalidateHomeKpis();
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
-  useEffect(() => {
-    setIsLoading(pedidosLoading || rascunhosLoading);
-  }, [pedidosLoading, rascunhosLoading]);
-
-  useEffect(() => {
-    const nextStats = {
-      orcamentos: pedidos.filter((p) => p.status === 'Orçamento').length,
-      aprovados: pedidos.filter((p) => p.status === 'Aprovado').length,
-      finalizados: pedidos.filter((p) => p.status === 'Finalizado').length,
-      totalMes: pedidos
-        .filter(
-          (p) =>
-            p.status === 'Finalizado' &&
-            toLocalDateKey(p.created_date).startsWith(dataHoje().slice(0, 7))
-        )
-        .reduce((acc, p) => acc + (p.valor_total || 0), 0),
-    };
-    setStats(nextStats);
-  }, [pedidos]);
-
-  useEffect(() => {
+  const pedidosFiltrados = useMemo(() => {
     let currentFiltered = pedidos;
 
     if (searchTerm) {
@@ -512,11 +523,10 @@ function VendasGestaoPage() {
       );
     }
 
-    if (statusFiltro !== 'todos') {
-      currentFiltered = currentFiltered.filter(p => p.status === statusFiltro);
+    if (statusFiltroResolvido !== 'todos') {
+      currentFiltered = currentFiltered.filter(p => p.status === statusFiltroResolvido);
     }
 
-    // Filtro de data
     if (dataInicio || dataFim) {
       currentFiltered = currentFiltered.filter(p => dateRangeMatches(p.created_date, dataInicio, dataFim));
     }
@@ -527,10 +537,10 @@ function VendasGestaoPage() {
       );
     }
 
-    setPedidosFiltrados(currentFiltered);
-  }, [pedidos, searchTerm, statusFiltro, dataInicio, dataFim, formasPagamentoFiltro]);
+    return currentFiltered;
+  }, [pedidos, searchTerm, statusFiltroResolvido, dataInicio, dataFim, formasPagamentoFiltro]);
 
-  useEffect(() => {
+  const rascunhosFiltrados = useMemo(() => {
     let currentFiltered = rascunhos;
 
     if (searchTerm) {
@@ -540,16 +550,16 @@ function VendasGestaoPage() {
       );
     }
 
-    if (statusFiltro !== 'todos') {
-      currentFiltered = currentFiltered.filter(r => r.status === statusFiltro);
+    if (statusFiltroResolvido !== 'todos') {
+      currentFiltered = currentFiltered.filter(r => r.status === statusFiltroResolvido);
     }
 
     if (dataInicio || dataFim) {
       currentFiltered = currentFiltered.filter(r => dateRangeMatches(r.created_date, dataInicio, dataFim));
     }
 
-    setRascunhosFiltrados(currentFiltered);
-  }, [rascunhos, searchTerm, statusFiltro, dataInicio, dataFim]);
+    return currentFiltered;
+  }, [rascunhos, searchTerm, statusFiltroResolvido, dataInicio, dataFim]);
 
   const vendasConsulta = useMemo(() => {
     let list = pedidos.filter((p) => STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA.includes(p.status));
@@ -562,8 +572,8 @@ function VendasGestaoPage() {
       );
     }
 
-    if (statusFiltro !== 'todos') {
-      list = list.filter((p) => p.status === statusFiltro);
+    if (statusFiltroResolvido !== 'todos') {
+      list = list.filter((p) => p.status === statusFiltroResolvido);
     }
 
     if (dataInicio || dataFim) {
@@ -575,7 +585,7 @@ function VendasGestaoPage() {
     }
 
     return list;
-  }, [pedidos, searchTerm, statusFiltro, dataInicio, dataFim, formasPagamentoFiltro]);
+  }, [pedidos, searchTerm, statusFiltroResolvido, dataInicio, dataFim, formasPagamentoFiltro]);
 
   // Calcular subtotal dos pedidos filtrados
   const subtotalFiltrado = activeTab === 'pedidos'
@@ -704,13 +714,14 @@ function VendasGestaoPage() {
       </div>
 
       <GlacialTabsList className="w-full" scrollable>
-        <GlacialTabsTrigger value="rascunhos" activeValue={activeTab} onSelect={setActiveTab} label="Senhas" icon={FileText} />
-        <GlacialTabsTrigger value="pedidos" activeValue={activeTab} onSelect={setActiveTab} label="Pedidos" icon={ShoppingCart} />
-        <GlacialTabsTrigger value="consulta" activeValue={activeTab} onSelect={setActiveTab} label="Consulta" icon={Receipt} />
-        <GlacialTabsTrigger value="vales" activeValue={activeTab} onSelect={setActiveTab} label="Vales" icon={Ticket} />
+        <GlacialTabsTrigger value="rascunhos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Senhas" icon={FileText} />
+        <GlacialTabsTrigger value="pedidos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Pedidos" icon={ShoppingCart} />
+        <GlacialTabsTrigger value="consulta" activeValue={activeTab} onSelect={handleActiveTabChange} label="Consulta" icon={Receipt} />
+        <GlacialTabsTrigger value="vales" activeValue={activeTab} onSelect={handleActiveTabChange} label="Vales" icon={Ticket} />
       </GlacialTabsList>
 
       <Drawer open={showFiltros} onOpenChange={setShowFiltros}>
+        {showFiltros ? (
         <DrawerContent className="border-0 rounded-t-[28px] bg-card dark:bg-card px-4 pb-6">
           <DrawerHeader className="px-0 pb-2 text-left">
             <DrawerTitle className="font-glacial text-foreground">Filtros</DrawerTitle>
@@ -720,54 +731,30 @@ function VendasGestaoPage() {
             <div>
               <label className="block text-xs text-muted-foreground mb-2">Tipo</label>
               <GlacialTabsList className="w-full" scrollable>
-                <GlacialTabsTrigger value="rascunhos" activeValue={activeTab} onSelect={setActiveTab} label="Senhas" icon={FileText} />
-                <GlacialTabsTrigger value="pedidos" activeValue={activeTab} onSelect={setActiveTab} label="Pedidos" icon={ShoppingCart} />
-                <GlacialTabsTrigger value="consulta" activeValue={activeTab} onSelect={setActiveTab} label="Consulta" icon={Receipt} />
-                <GlacialTabsTrigger value="vales" activeValue={activeTab} onSelect={setActiveTab} label="Vales" icon={Ticket} />
+                <GlacialTabsTrigger value="rascunhos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Senhas" icon={FileText} />
+                <GlacialTabsTrigger value="pedidos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Pedidos" icon={ShoppingCart} />
+                <GlacialTabsTrigger value="consulta" activeValue={activeTab} onSelect={handleActiveTabChange} label="Consulta" icon={Receipt} />
+                <GlacialTabsTrigger value="vales" activeValue={activeTab} onSelect={handleActiveTabChange} label="Vales" icon={Ticket} />
               </GlacialTabsList>
             </div>
 
             <div>
               <label className="block text-xs text-muted-foreground mb-2">Status</label>
-              <Select value={statusFiltro} onValueChange={setStatusFiltro}>
+              <Select
+                key={`status-filtro-${activeTab}`}
+                value={statusFiltroResolvido}
+                onValueChange={setStatusFiltro}
+              >
                 <SelectTrigger className="h-12 rounded-2xl bg-muted dark:bg-muted border-0">
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-card dark:border-border/40">
+                <SelectContent className={FILTRO_SELECT_CONTENT}>
                   <SelectItem value="todos">Todos</SelectItem>
-                  {activeTab === 'rascunhos' ? (
-                    <>
-                      <SelectItem value="Criado">Criado</SelectItem>
-                      <SelectItem value="Em Edição">Em Edição</SelectItem>
-                      <SelectItem value="Aguardando Caixa">Ag. Caixa</SelectItem>
-                      <SelectItem value="Convertido">Convertido</SelectItem>
-                      <SelectItem value="Cancelado">Cancelado</SelectItem>
-                    </>
-                  ) : activeTab === 'vales' ? (
-                    <>
-                      <SelectItem value="Ativo">Ativo</SelectItem>
-                      <SelectItem value="Utilizado Parcialmente">Utilizado Parcialmente</SelectItem>
-                      <SelectItem value="Utilizado">Utilizado</SelectItem>
-                      <SelectItem value="Expirado">Expirado</SelectItem>
-                      <SelectItem value="Cancelado">Cancelado</SelectItem>
-                    </>
-                  ) : activeTab === 'consulta' ? (
-                    <>
-                      <SelectItem value="Financeiro OK">Financeiro OK</SelectItem>
-                      <SelectItem value="Em Separação">Em Separação</SelectItem>
-                      <SelectItem value="Em Rota de Entrega">Em Rota de Entrega</SelectItem>
-                      <SelectItem value="Pedido Concluído">Concluído</SelectItem>
-                    </>
-                  ) : (
-                    <>
-                      <SelectItem value="Orçamento">Orçamento</SelectItem>
-                      <SelectItem value="Aguardando Caixa">Ag. Caixa</SelectItem>
-                      <SelectItem value="Financeiro OK">Financeiro OK</SelectItem>
-                      <SelectItem value="Em Separação">Em Separação</SelectItem>
-                      <SelectItem value="Pedido Concluído">Concluído</SelectItem>
-                      <SelectItem value="Cancelado">Cancelado</SelectItem>
-                    </>
-                  )}
+                  {statusOpcoesAtivas.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {STATUS_LABEL_CURTO[status] || status}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -814,6 +801,7 @@ function VendasGestaoPage() {
             <div>
               <label className="block text-xs text-muted-foreground mb-2">Período</label>
               <MobileDateRangePicker
+                nested
                 startDate={dataInicio}
                 endDate={dataFim}
                 onApply={(inicio, fim) => {
@@ -838,7 +826,7 @@ function VendasGestaoPage() {
               </Button>
               <Button
                 size="sm"
-                className="flex-1 h-11 rounded-2xl bg-primary hover:bg-card text-white dark:bg-primary dark:text-primary-foreground"
+                className="flex-1 h-11 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground border border-primary/80 dark:border-transparent"
                 onClick={() => setShowFiltros(false)}
               >
                 Aplicar
@@ -846,6 +834,7 @@ function VendasGestaoPage() {
             </div>
           </div>
         </DrawerContent>
+        ) : null}
       </Drawer>
 
       <div>
@@ -950,7 +939,7 @@ function VendasGestaoPage() {
         {activeTab === 'vales' && (
           <ValesTrocaTab
             searchTerm={searchTerm}
-            statusFiltro={statusFiltro}
+            statusFiltro={statusFiltroResolvido}
             dataInicio={dataInicio}
             dataFim={dataFim}
             activeTab={activeTab}
@@ -958,9 +947,12 @@ function VendasGestaoPage() {
         )}
       </div>
 
-      {/* Dialogs de operações */}
-      <AlterarPagamentoDialog open={showAlterarPagamento} onClose={() => setShowAlterarPagamento(false)} />
-      <AlterarClientePedidoDialog
+      {/* Dialogs de operações — montar só quando abertos (evita loops Radix/portals) */}
+      {showAlterarPagamento ? (
+        <AlterarPagamentoDialog open={showAlterarPagamento} onClose={() => setShowAlterarPagamento(false)} />
+      ) : null}
+      {showAlterarCliente && pedidoParaAlterarCliente ? (
+        <AlterarClientePedidoDialog
         open={showAlterarCliente}
         pedido={pedidoParaAlterarCliente}
         onClose={() => {
@@ -982,16 +974,19 @@ function VendasGestaoPage() {
           loadPedidos();
         }}
       />
+      ) : null}
 
-      {/* Dialog de Detalhes */}
-      <DetalhesPedidoVenda
-        pedido={pedidoDetalhes}
-        isOpen={showDetalhes}
-        onClose={() => {
-          setShowDetalhes(false);
-          setPedidoDetalhes(null);
-        }}
-      />
+      {/* Dialog de Detalhes — montar só quando aberto (evita loop de updates com outros dialogs) */}
+      {showDetalhes && pedidoDetalhes ? (
+        <DetalhesPedidoVenda
+          pedido={pedidoDetalhes}
+          isOpen={showDetalhes}
+          onClose={() => {
+            setShowDetalhes(false);
+            setPedidoDetalhes(null);
+          }}
+        />
+      ) : null}
 
       {/* Dialog de Reimpressão */}
       {showComprovante && pedidoParaImprimir && (

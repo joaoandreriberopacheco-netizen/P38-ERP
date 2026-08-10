@@ -69,7 +69,7 @@ export default function ProcessarVendasView({ rascunhosAguardando = [], onBack, 
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); onAbrirPedido(rascunho); }}
-                      className="flex-1 h-12 bg-background dark:bg-card text-white dark:text-foreground rounded-xl font-medium hover:shadow-md transition-shadow"
+                      className="flex-1 h-12 bg-card text-card-foreground rounded-xl font-medium hover:shadow-md transition-shadow"
                       style={{ minHeight: '48px' }}>
                       Confirmar
                     </button>

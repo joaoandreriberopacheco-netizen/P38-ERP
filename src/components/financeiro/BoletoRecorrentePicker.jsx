@@ -124,7 +124,7 @@ export default function BoletoRecorrentePicker({ onSelectCard, onVoltar }) {
 
   const chip = (active) =>
     `px-3 py-2 rounded-full whitespace-nowrap text-xs font-medium transition-all md:text-sm ${
-      active ? 'bg-background text-white dark:bg-muted dark:text-foreground' : 'bg-card text-muted-foreground shadow-sm dark:bg-background dark:text-foreground/90'
+      active ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground' : 'bg-card text-muted-foreground shadow-sm dark:bg-background dark:text-foreground/90'
     }`;
 
   return (

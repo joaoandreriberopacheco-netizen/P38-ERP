@@ -123,6 +123,7 @@ export function criarModeloComDefaults(partial = {}) {
     categoria_id: partial.categoria_id || '',
     categoria_nome: partial.categoria_nome || '',
     centro_custo: String(partial.centro_custo || '').trim(),
+    centro_custo_id: partial.centro_custo_id || '',
     modo_estimativa: partial.modo_estimativa || MODO_ESTIMATIVA.POR_MES,
     valor_entrada: Number(partial.valor_entrada) || 0,
     ciclo_dias: Number(partial.ciclo_dias) || 0,

@@ -27,7 +27,7 @@ export default function DashboardCaixa() {
       </div>
 
       <Link to={createPageUrl('PDV?mode=caixa')}>
-        <Button className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white gap-2 h-12 px-8 text-base shadow-sm">
+        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:text-foreground gap-2 h-12 px-8 text-base shadow-sm">
           <Monitor className="w-5 h-5" />
           Abrir PDV — Caixa
           <ArrowRight className="w-4 h-4" />

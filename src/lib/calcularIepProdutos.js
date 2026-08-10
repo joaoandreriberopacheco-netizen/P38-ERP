@@ -10,7 +10,7 @@ import {
   classificarGruposAbcdPareto,
   grupoAbcdKey,
 } from '@/lib/abcdCurvaOrganizacao';
-import { resolveCommercialDisplay } from '@/lib/productUnits';
+import { resolveCommercialDisplay, resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
 
 export { ABCD_CURVA_VERSAO, grupoAbcdKey };
 
@@ -47,16 +47,7 @@ function hierarchyKey(parts) {
 }
 
 export function resolveCustoCalculadoProduto(produto) {
-  const salvo = Number(produto?.preco_custo_calculado) || 0;
-  if (salvo > 0) return salvo;
-  return (
-    (Number(produto?.valor_compra) || 0) +
-    (Number(produto?.custo_frete_padrao) || 0) +
-    (Number(produto?.custo_imposto1_padrao) || 0) +
-    (Number(produto?.custo_imposto2_padrao) || 0) +
-    (Number(produto?.custo_outros_padrao) || 0) -
-    (Number(produto?.desconto_compra_padrao) || 0)
-  );
+  return resolveCustoTotalUnitBaseProduto(produto);
 }
 
 export function lineQuantityBase(item) {

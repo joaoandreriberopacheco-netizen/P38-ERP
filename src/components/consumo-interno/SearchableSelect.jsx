@@ -27,9 +27,11 @@ export default function SearchableSelect({
   }, [value, items, idField, displayField]);
 
   // Filtra itens por busca
-  const filtered = items.filter(item =>
-    item[displayField].toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = items.filter((item) => {
+    const label = String(item?.[displayField] ?? '').trim();
+    if (!label) return false;
+    return label.toLowerCase().includes(search.toLowerCase());
+  });
 
   const handleSelect = (item) => {
     onChange(item[displayField]);

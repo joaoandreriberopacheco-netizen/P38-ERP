@@ -6,6 +6,21 @@ Documento irmão: [`p38-desktop-rollout.md`](p38-desktop-rollout.md) (tablet/des
 
 ---
 
+## 0. Referência viva — Planejamento financeiro (aprovada)
+
+Em **2026-07-29**, João André validou a ecrã **Planejamento financeiro** no telemóvel (modo escuro) como **muito satisfatória** — paleta, hierarquia e “pleasantness” que quer ver a inspirar outras ecrãs mobile. Pediu que esta impressão ficasse registada no projecto.
+
+| | |
+|--|--|
+| **URL** | https://p-38erp.vercel.app/PlanejamentoFinanceiro |
+| **Feeling** | Carvão `#1f1d22` + limão `#a4ce33` nos CTAs; coral suave nas saídas; superfícies `P38_FIELD_SURFACE` / `P38_KPI_SHELL`; chips de estado; DIN 1451; composição calma (mês → Abrir mês → resumo → lista). |
+| **Código** | `src/features/planejamento-financeiro-v2/` · `src/components/financeiro/fluxo/financeiroP38.js` · `src/lib/p38Palette.js` |
+| **Regra Cursor** | [`.cursor/rules/p38-mobile-referencia-planejamento.mdc`](../.cursor/rules/p38-mobile-referencia-planejamento.mdc) |
+
+**Como usar:** Margem = referência de **linhas densas**; Planejamento = referência de **composição + paleta + CTA** em ecrãs financeiras/operacionais. Não inventar segunda paleta — reutilizar tokens.
+
+---
+
 ## 1. Referência visual — o que copiar do Margem mobile
 
 | Elemento | Implementação atual | Token / classe |

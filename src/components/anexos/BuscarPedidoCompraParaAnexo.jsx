@@ -96,7 +96,7 @@ export default function BuscarPedidoCompraParaAnexo({ onSelecionar, onVoltar, up
               onClick={() => setSelecionado(p)}
               className={`w-full text-left rounded-2xl px-4 py-3 text-sm shadow-sm transition-colors ${
                 selecionado?.id === p.id
-                  ? 'bg-background text-white dark:bg-card dark:text-foreground'
+                  ? 'bg-primary text-primary-foreground dark:bg-card dark:text-foreground'
                   : 'bg-card text-foreground'
               }`}
             >
@@ -112,7 +112,7 @@ export default function BuscarPedidoCompraParaAnexo({ onSelecionar, onVoltar, up
           type="button"
           onClick={() => onSelecionar(selecionado)}
           disabled={uploadando}
-          className="w-full h-14 rounded-2xl bg-background dark:bg-card text-white dark:text-foreground text-sm font-semibold flex items-center justify-center gap-2 mt-auto"
+          className="w-full h-14 rounded-2xl bg-card text-card-foreground text-sm font-semibold flex items-center justify-center gap-2 mt-auto"
         >
           {uploadando ? (
             <>

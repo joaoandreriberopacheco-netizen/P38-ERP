@@ -9,12 +9,13 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
 import { calcularPercentuaisLogistica, derivarStatusEmbarqueAgregado } from '@/lib/embarqueLogisticaHelpers';
+import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 
 // Calcula total embarcado por produto em TODOS os embarques
 function calcularTotalEmbarcado(embarques) {
   const map = {};
   (embarques || []).forEach((emb) => {
-    (emb.itens_embarcados || emb.itens || []).forEach((item) => {
+    getEmbarqueItensLinhas(emb).forEach((item) => {
       const prev = map[item.produto_id] || 0;
       const add = Number(item.quantidade_embarcada) || 0;
       map[item.produto_id] = roundToTwoDecimals(prev + add);
@@ -37,7 +38,7 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
   };
   const dataEmb = parseValidDate(embarque.data_embarque);
   const eta = parseValidDate(embarque.eta);
-  const itensEmbarque = embarque.itens || embarque.itens_embarcados || [];
+  const itensEmbarque = getEmbarqueItensLinhas(embarque);
   const totalItens = roundToTwoDecimals(
     itensEmbarque.reduce((s, i) => s + (Number(i.quantidade_embarcada) || 0), 0)
   );
@@ -198,9 +199,9 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated, onIr
   const [embarqueEditando, setEmbarqueEditando] = useState(null);
   const [acordoOpen, setAcordoOpen] = useState(false);
 
-  const embarques = Array.isArray(pedido?._embarques) ? pedido._embarques : (pedido?.embarques_registrados || []);
+  const embarques = Array.isArray(pedido?._embarques) ? pedido._embarques : [];
   const embarquesComDespacho = embarques.filter((emb) => !!(emb?.data_embarque || emb?.eta || emb?.transportadora_id || emb?.transportadora_nome));
-  const embarquesComItensAssociados = embarquesComDespacho.filter((emb) => (emb.itens || emb.itens_embarcados || []).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0));
+  const embarquesComItensAssociados = embarquesComDespacho.filter((emb) => getEmbarqueItensLinhas(emb).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0));
   const percentuaisCalculados = useMemo(
     () => calcularPercentuaisLogistica(pedido, embarques),
     [pedido?.id, pedido?.itens, embarques]

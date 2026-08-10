@@ -56,7 +56,7 @@ export default function PersonalizarHomeDialog({ isOpen, onClose, selected, onSa
                   onClick={() => toggle(action.id)}
                   className={`relative flex min-h-[5.25rem] flex-col items-center justify-center gap-2 rounded-2xl px-2 py-3 text-center transition-all ${
                     isSelected
-                      ? 'bg-background text-white dark:bg-card dark:text-foreground'
+                      ? 'bg-primary text-primary-foreground dark:bg-card dark:text-foreground'
                       : 'border border-border/40 bg-muted/40 text-foreground hover:bg-muted dark:border-border/40 dark:bg-muted/80 dark:text-foreground dark:hover:bg-primary/90'
                   }`}
                 >

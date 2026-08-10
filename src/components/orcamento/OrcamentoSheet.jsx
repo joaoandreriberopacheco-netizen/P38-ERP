@@ -163,7 +163,7 @@ function TelaBusca({ produtos, calcularPreco, itens, onSetQtd, onVerCarrinho, on
         <div className="absolute bottom-4 left-4 right-4">
           <button
             onClick={onVerCarrinho}
-            className="w-full flex items-center justify-between bg-background dark:bg-muted text-white dark:text-foreground px-5 py-4 rounded-2xl shadow-xl active:scale-[0.98] transition-all"
+            className="w-full flex items-center justify-between bg-background dark:bg-muted text-foreground px-5 py-4 rounded-2xl shadow-xl active:scale-[0.98] transition-all"
           >
             <div className="flex items-center gap-3">
               <div className="relative">
@@ -376,7 +376,7 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
                 onClick={() => setFormatoCupom(fmt)}
                 className={`flex-1 py-2.5 rounded-2xl text-xs font-semibold transition-all ${
                   formatoCupom === fmt
-                    ? 'bg-background dark:bg-muted text-white dark:text-foreground'
+                    ? 'bg-muted text-foreground dark:bg-muted dark:text-foreground'
                     : 'bg-muted text-muted-foreground'
                 }`}
               >
@@ -397,7 +397,7 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
           {/* Botão gerar */}
           <button
             onClick={onGerar}
-            className="w-full flex items-center justify-center gap-2 bg-background dark:bg-muted text-white dark:text-foreground py-4 rounded-2xl text-sm font-bold shadow-lg active:scale-[0.98] transition-all"
+            className="w-full flex items-center justify-center gap-2 bg-background dark:bg-muted text-foreground py-4 rounded-2xl text-sm font-bold shadow-lg active:scale-[0.98] transition-all"
           >
             <Printer className="w-5 h-5" />
             Gerar Orçamento

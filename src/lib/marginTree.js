@@ -1,4 +1,5 @@
 import { compareTreeLabels, sortedTreeChildEntries } from '@/lib/treeSort';
+import { CUSTO_MARGEM_CAMPOS, criarCamposCustoComponentesZerados } from '@/lib/relatorioMargemCalculos';
 
 function getMarginSortValue(entity, sortField) {
   if (!entity) return sortField === 'nome' ? '' : 0;
@@ -155,6 +156,7 @@ export function aggregateMarginItems(items) {
       markup_percentual: 0,
       count: 0,
       unidade_exibicao: null,
+      ...criarCamposCustoComponentesZerados(),
     };
   }
 
@@ -164,6 +166,16 @@ export function aggregateMarginItems(items) {
   const receita_liquida = items.reduce((s, r) => s + (r.receita_liquida || 0), 0);
   const custo_total = items.reduce((s, r) => s + (r.custo_total || 0), 0);
   const lucro_total = items.reduce((s, r) => s + (r.lucro_total || 0), 0);
+  const custoComponentes = items.reduce(
+    (acc, row) => {
+      const next = { ...acc };
+      for (const campo of CUSTO_MARGEM_CAMPOS) {
+        next[campo.totalKey] = (next[campo.totalKey] || 0) + (row[campo.totalKey] || 0);
+      }
+      return next;
+    },
+    criarCamposCustoComponentesZerados(),
+  );
 
   return {
     quantidade_vendida,
@@ -172,8 +184,9 @@ export function aggregateMarginItems(items) {
     receita_liquida,
     custo_total,
     lucro_total,
+    ...custoComponentes,
     valor_unitario_medio:
-      quantidade_vendida > 0 ? total_recebido / quantidade_vendida : 0,
+      quantidade_vendida > 0 ? receita_liquida / quantidade_vendida : 0,
     markup_percentual: custo_total > 0 ? (lucro_total / custo_total) * 100 : 0,
     margem_percentual: receita_liquida > 0 ? (lucro_total / receita_liquida) * 100 : 0,
     count: items.length,
@@ -270,6 +283,12 @@ function makeMarginProductRow(item, level) {
     item,
     level,
   };
+}
+
+/** Lista plana A-Z (ou conforme ordenação já aplicada em `items`). */
+export function buildMarginFlatRows(items) {
+  if (!Array.isArray(items)) return [];
+  return items.map((item) => makeMarginProductRow(item, 1));
 }
 
 function flattenMarginGroupBranch(

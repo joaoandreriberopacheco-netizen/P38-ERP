@@ -1,4 +1,12 @@
-/** Tokens P38 partilhados — fluxo de caixa e contas abertas. */
+/**
+ * Tokens P38 partilhados — fluxo de caixa, contas abertas e Planejamento.
+ *
+ * Referência visual mobile (aprovada 2026-07-29 — João André):
+ * Planejamento financeiro dark — limão nos CTAs, carvão de fundo, superfícies
+ * P38_FIELD_SURFACE / P38_KPI_SHELL. Ver .cursor/rules/p38-mobile-referencia-planejamento.mdc
+ * e docs/p38-mobile-rollout.md §0.
+ */
+
 export const P38_CHIP_ACTIVE =
   'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]';
 export const P38_CHIP_INACTIVE =

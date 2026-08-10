@@ -239,7 +239,7 @@ export default function DiscriminarVolumes() {
         {/* Botão Adicionar */}
         <Button
           onClick={handleAddVolume}
-          className="w-full bg-background hover:bg-primary text-white rounded-xl py-6 text-base font-medium"
+          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl py-6 text-base font-medium"
         >
           Adicionar
         </Button>
@@ -308,7 +308,7 @@ export default function DiscriminarVolumes() {
               <Button
                 onClick={handleSave}
                 disabled={saving}
-                className="w-full bg-background hover:bg-primary text-white rounded-xl py-6 text-base font-medium"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl py-6 text-base font-medium"
               >
                 <Save className="w-5 h-5 mr-2" />
                 Salvar Volumes

@@ -1,19 +1,17 @@
 // adormecido — autenticação de operação (PIN/foto) desligada por defeito
 // VITE_OPERACAO_AUTH_ENABLED=true → exige PIN; foto só com VITE_OPERACAO_AUTH_PHOTO_ENABLED=true
+import { p38PublicEnvBool } from '@/lib/p38PublicEnv';
 
-export const OPERACAO_AUTH_ENABLED =
-    String(import.meta.env.VITE_OPERACAO_AUTH_ENABLED ?? 'false').toLowerCase() === 'true';
+export const OPERACAO_AUTH_ENABLED = p38PublicEnvBool('VITE_OPERACAO_AUTH_ENABLED', false);
 
 export const OPERACAO_AUTH_PHOTO_ENABLED =
-    OPERACAO_AUTH_ENABLED &&
-    String(import.meta.env.VITE_OPERACAO_AUTH_PHOTO_ENABLED ?? 'false').toLowerCase() === 'true';
+    OPERACAO_AUTH_ENABLED && p38PublicEnvBool('VITE_OPERACAO_AUTH_PHOTO_ENABLED', false);
 
 /**
  * Enviar pedido de compra ao financeiro — PIN desligado por defeito.
  * Para reativar: VITE_PEDIDO_COMPRA_SAVE_AUTH_PIN=true
  */
-export const PEDIDO_COMPRA_SAVE_AUTH_ENABLED =
-    String(import.meta.env.VITE_PEDIDO_COMPRA_SAVE_AUTH_PIN ?? 'false').toLowerCase() === 'true';
+export const PEDIDO_COMPRA_SAVE_AUTH_ENABLED = p38PublicEnvBool('VITE_PEDIDO_COMPRA_SAVE_AUTH_PIN', false);
 
 export const PEDIDO_COMPRA_STATUS_AGUARDANDO_FINANCEIRO = 'Aguardando Aprovação Financeira';
 

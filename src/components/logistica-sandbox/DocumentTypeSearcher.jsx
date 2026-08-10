@@ -102,7 +102,7 @@ export default function DocumentTypeSearcher({
                 onClick={() => handleAddType(type)}
                 className={`w-full text-left px-4 py-2.5 rounded-xl transition-colors ${
                   selectedTypes.includes(type)
-                    ? 'bg-background text-white dark:bg-card dark:text-foreground'
+                    ? 'bg-primary text-primary-foreground dark:bg-card dark:text-foreground'
                     : 'bg-muted text-foreground dark:text-foreground hover:bg-muted dark:hover:bg-muted'
                 }`}
               >
@@ -138,7 +138,7 @@ export default function DocumentTypeSearcher({
               />
               <button
                 onClick={handleCreateNew}
-                className="px-3 py-2 rounded-xl bg-background dark:bg-card text-white dark:text-foreground font-medium text-sm hover:opacity-90"
+                className="px-3 py-2 rounded-xl bg-card text-card-foreground font-medium text-sm hover:opacity-90"
               >
                 Criar
               </button>

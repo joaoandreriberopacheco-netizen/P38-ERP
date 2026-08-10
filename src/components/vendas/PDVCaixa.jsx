@@ -53,6 +53,7 @@ import { processarVendaCaixa } from '@/functions/processarVendaCaixa';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 import ConfirmarImpressaoDialog from '@/components/vendas/ConfirmarImpressaoDialog';
 import { roundToTwoDecimals, resolveValorPedidoVenda, pagamentosCobremTotal } from '@/lib/financialUtils';
+import { selectAllOnFocus, handleCentavosMaskKeyDown } from '@/lib/inputFocusUtils';
 import {
   descricaoPadraoVale,
   listarPessoasFolhaParaVale,
@@ -61,12 +62,15 @@ import {
 } from '@/lib/folhaValeFluxo';
 import { getPrazoLiquidacaoMaquininha } from '@/lib/pagamentoPedidoVendaFinanceiro';
 import {
+  appendTurnoArrayId,
   caixaTurnoQueryKey,
   fetchCaixaTurnoSnapshot,
   CAIXA_IDLE_SYNC_AFTER_MS,
   CAIXA_IDLE_SYNC_TICK_MS,
+  CAIXA_LIVE_POLL_MS,
   CAIXA_SUBSCRIBE_DEBOUNCE_MS,
 } from '@/lib/caixaTurnoData';
+import { findTurnoAbertoParaCaixa } from '@/lib/turnoCaixaAberto';
 import {
   CAIXA_PRINT,
   CAIXA_TOAST_SUCCESS,
@@ -271,15 +275,26 @@ export default function PDVCaixa({
   const [inputVale, setInputVale] = useState('');
   const [inputContaPagar, setInputContaPagar] = useState('');
 
-  // Refs para os inputs
-  const inputRefs = {
-    dinheiro: React.useRef(null),
-    pix: React.useRef(null),
-    debito: React.useRef(null),
-    credito: React.useRef(null),
-    vale: React.useRef(null),
-    contaPagar: React.useRef(null),
-  };
+  // Refs estáveis — o objeto não pode ser recriado cada render (quebrava foco no pagamento)
+  const dinheiroInputRef = React.useRef(null);
+  const pixInputRef = React.useRef(null);
+  const debitoInputRef = React.useRef(null);
+  const creditoInputRef = React.useRef(null);
+  const valeInputRef = React.useRef(null);
+  const contaPagarInputRef = React.useRef(null);
+  const inputRefs = useMemo(
+    () => ({
+      dinheiro: dinheiroInputRef,
+      pix: pixInputRef,
+      debito: debitoInputRef,
+      credito: creditoInputRef,
+      vale: valeInputRef,
+      contaPagar: contaPagarInputRef,
+    }),
+    []
+  );
+  const conferenciaDinheiroFocusedRef = useRef(false);
+  const conferenciaDinheiroEditadoRef = useRef(false);
 
   const [showLiberacaoEntrega, setShowLiberacaoEntrega] = useState(false);
   const [vendaFinalizada, setVendaFinalizada] = useState(null);
@@ -351,6 +366,9 @@ export default function PDVCaixa({
   const hasSnapshotRef = useRef(false);
   const subscribeDebounceRef = useRef(null);
   const idleSyncBlockedRef = useRef(false);
+  const rascunhosCountRef = useRef(0);
+  const [ultimaAtualizacao, setUltimaAtualizacao] = useState(null);
+  const [atualizandoSilencioso, setAtualizandoSilencioso] = useState(false);
 
   // Renamed stats to caixaData and updated structure based on outline
   const [caixaData, setCaixaData] = useState({
@@ -394,45 +412,15 @@ export default function PDVCaixa({
   };
 
   // Máscara de valor - digita números e formata automaticamente (centavos -> reais)
-  const aplicarMascaraValor = (valorAtual, tecla) => {
-    // Remove tudo que não é número
-    let numeros = valorAtual.replace(/\D/g, '');
-
-    // Adiciona o novo dígito
-    if (/^\d$/.test(tecla)) {
-      numeros += tecla;
-    }
-
-    // Converte para número e divide por 100 (centavos)
-    const valor = parseInt(numeros) / 100;
-    return formatarValorExibicao(valor);
-  };
-
   const handleInputMascara = (e, setInput, setValor) => {
+    const handled = handleCentavosMaskKeyDown(e, {
+      setInput,
+      setValor,
+      formatDisplay: formatarValorExibicao,
+    });
+    if (handled) return;
+
     const tecla = e.key;
-
-    // Backspace - remove último dígito
-    if (tecla === 'Backspace') {
-      e.preventDefault();
-      let numeros = e.target.value.replace(/\D/g, '');
-      numeros = numeros.slice(0, -1) || '0';
-      const valor = parseInt(numeros) / 100;
-      setInput(formatarValorExibicao(valor));
-      setValor(valor);
-      return;
-    }
-
-    // Só aceita números
-    if (/^\d$/.test(tecla)) {
-      e.preventDefault();
-      const novoValor = aplicarMascaraValor(e.target.value, tecla);
-      setInput(novoValor);
-      const valorNumerico = parseFloat(novoValor.replace(/\./g, '').replace(',', '.'));
-      setValor(valorNumerico);
-      return;
-    }
-
-    // Navegação
     if (tecla === 'ArrowUp' || tecla === 'ArrowDown') {
       handleNavegacaoPagamento(e);
     }
@@ -493,9 +481,6 @@ export default function PDVCaixa({
       setFormaPagamentoAtiva(0);
       setMaquininhaDebito(null);
       setMaquininhaCredito(null);
-
-      // Auto-focus no primeiro input
-      setTimeout(() => inputRefs.dinheiro.current?.focus(), 100);
     }
   }, [pedidoSelecionado]);
 
@@ -597,6 +582,8 @@ export default function PDVCaixa({
 
     const queryKey = [...caixaTurnoQueryKey(turno.id, caixa.id), 'live', 'sem-itens'];
 
+    if (silent) setAtualizandoSilencioso(true);
+
     try {
       if (force) {
         await queryClient.invalidateQueries({ queryKey: caixaTurnoQueryKey(turno.id, caixa.id) });
@@ -613,7 +600,20 @@ export default function PDVCaixa({
           }),
         staleTime: force ? 0 : 30_000,
       });
+
+      const newRascunhosCount = snapshot.rascunhosAguardando?.length ?? 0;
+      if (silent && hasSnapshotRef.current && newRascunhosCount > rascunhosCountRef.current) {
+        const diff = newRascunhosCount - rascunhosCountRef.current;
+        toast({
+          title: diff === 1 ? 'Nova venda na fila!' : `${diff} novas vendas na fila!`,
+          className: CAIXA_TOAST_SUCCESS,
+          duration: 3000,
+        });
+      }
+      rascunhosCountRef.current = newRascunhosCount;
+
       applySnapshot(snapshot);
+      setUltimaAtualizacao(new Date());
     } catch (error) {
       console.error('❌ Erro ao carregar dados:', error);
       const suppressToast =
@@ -626,6 +626,8 @@ export default function PDVCaixa({
           variant: 'destructive',
         });
       }
+    } finally {
+      if (silent) setAtualizandoSilencioso(false);
     }
   }, [caixaSelecionado, turnoAtivo, queryClient, applySnapshot, toast]);
 
@@ -688,6 +690,31 @@ export default function PDVCaixa({
     return () => window.clearInterval(tick);
   }, [showSeletorCaixa, turnoAtivo?.id, caixaSelecionado?.id]);
 
+  // Atualização automática: polling + refetch ao voltar à aba (subscribe é no-op no Supabase).
+  useEffect(() => {
+    if (showSeletorCaixa || !turnoAtivo?.id || !caixaSelecionado?.id) return undefined;
+
+    const poll = () => {
+      if (idleSyncBlockedRef.current) return;
+      const run = loadDataRef.current;
+      if (typeof run === 'function') {
+        void run(undefined, undefined, { silent: true });
+      }
+    };
+
+    const id = window.setInterval(poll, CAIXA_LIVE_POLL_MS);
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') poll();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [showSeletorCaixa, turnoAtivo?.id, caixaSelecionado?.id]);
+
   const handleAbrirPedido = (pedido) => {
     if (modoVisualizacao) {
       toast({
@@ -704,11 +731,14 @@ export default function PDVCaixa({
   const handleSelecionarCaixa = (caixa, turno, somenteLeitura) => {
     lastUserActivityAtRef.current = Date.now();
     hasSnapshotRef.current = false;
+    rascunhosCountRef.current = 0;
+    setUltimaAtualizacao(null);
     setCaixaSelecionado(caixa);
     setTurnoAtivo(turno);
     setModoVisualizacao(somenteLeitura);
     setShowSeletorCaixa(false);
     setContaCaixaPDV(caixa);
+    conferenciaDinheiroEditadoRef.current = false;
     if (turno) {
       loadData(caixa, turno);
     }
@@ -841,10 +871,21 @@ export default function PDVCaixa({
       }
 
       // ── CHAMADA AO BACKEND (atômico + selo frio + número único) ──
+      let turnoIdProcessamento = turnoAtivo?.id;
+      if (contaCaixaPDV?.id) {
+        const turnoCanonico = await findTurnoAbertoParaCaixa(contaCaixaPDV.id);
+        if (turnoCanonico?.id) {
+          if (turnoCanonico.id !== turnoIdProcessamento) {
+            setTurnoAtivo(turnoCanonico);
+          }
+          turnoIdProcessamento = turnoCanonico.id;
+        }
+      }
+
       const { data } = await processarVendaCaixa({
         rascunho_id: pedidoSelecionado.id,
         pagamentos: pagamentosArray,
-        turno_id: turnoAtivo?.id,
+        turno_id: turnoIdProcessamento,
         conta_caixa_id: contaCaixaPDV?.id,
         saldo_atual_caixa: contaCaixaPDV?.saldo_atual,
         config_venda: configVenda ? { fluxo_venda_padrao: configVenda.fluxo_venda_padrao, auto_delivery_balcao: configVenda.auto_delivery_balcao } : null,
@@ -1009,9 +1050,7 @@ export default function PDVCaixa({
         observacoes: `Despesa registrada via PDV Caixa por ${currentUser?.full_name}`
       });
       if (turnoAtivo) {
-        await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
-          despesas_ids: [...(turnoAtivo.despesas_ids || []), lancamento.id]
-        });
+        await appendTurnoArrayId(base44, turnoAtivo.id, 'despesas_ids', lancamento.id);
       }
 
       if (isValeFolhaDespesa && valeFolhaModeloIdDespesa && lancamento?.id) {
@@ -1090,9 +1129,7 @@ export default function PDVCaixa({
 
       // Atualizar turno com despesa
       if (turnoAtivo) {
-        await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
-          despesas_ids: [...(turnoAtivo.despesas_ids || []), lancamento.id]
-        });
+        await appendTurnoArrayId(base44, turnoAtivo.id, 'despesas_ids', lancamento.id);
       }
 
       toast({
@@ -1176,9 +1213,7 @@ export default function PDVCaixa({
       });
 
       if (turnoAtivo) {
-        await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
-          movimentos_ids: [...(turnoAtivo.movimentos_ids || []), movimento.id]
-        });
+        await appendTurnoArrayId(base44, turnoAtivo.id, 'movimentos_ids', movimento.id);
       }
 
       setMovimentoCriado(movimento);
@@ -1199,9 +1234,7 @@ export default function PDVCaixa({
 
       // Atualizar turno com movimento
       if (turnoAtivo) {
-        await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
-          movimentos_ids: [...(turnoAtivo.movimentos_ids || []), movimento.id]
-        });
+        await appendTurnoArrayId(base44, turnoAtivo.id, 'movimentos_ids', movimento.id);
       }
       }
 
@@ -1244,7 +1277,8 @@ export default function PDVCaixa({
   };
 
   useEffect(() => {
-    // Auto-preencher recebimentos: Dinheiro = Liquidez - (PIX + Crédito + Débito + Vale)
+    if (conferenciaDinheiroFocusedRef.current || conferenciaDinheiroEditadoRef.current) return;
+    // Auto-preencher conferência: Dinheiro = Liquidez - (PIX + Crédito + Débito + Vale)
     const dinheiroCalculado = roundToTwoDecimals(
       caixaData.liquidez -
         (caixaData.recebimentos?.pix || 0) -
@@ -1437,13 +1471,17 @@ export default function PDVCaixa({
           <ArrowLeft className="w-6 h-6 text-foreground/90 dark:text-muted-foreground" />
         </button>
         
-        <div className="flex-1 text-center">
+        <div className="flex-1 text-center min-w-0 px-2">
           <h1 className={`${caixaTypo.title} text-foreground dark:text-white`}>
             {caixaSelecionado?.nome || 'Caixa'}
           </h1>
-          {modoVisualizacao && (
+          {modoVisualizacao ? (
             <p className={`${caixaTypo.labelSm} text-amber-600 dark:text-amber-400`}>Somente visualização</p>
-          )}
+          ) : ultimaAtualizacao ? (
+            <p className={`${caixaTypo.labelSm} text-muted-foreground dark:text-muted-foreground truncate`}>
+              Atualizado · {format(ultimaAtualizacao, 'HH:mm:ss')}
+            </p>
+          ) : null}
         </div>
         
         <div className="flex items-center gap-2">
@@ -1452,7 +1490,7 @@ export default function PDVCaixa({
             className="p-2 hover:bg-muted dark:hover:bg-muted rounded-lg transition-colors"
             style={{ minWidth: '44px', minHeight: '44px' }}
             title="Atualizar (F7)">
-            <RefreshCw className="w-5 h-5 text-muted-foreground dark:text-muted-foreground" />
+            <RefreshCw className={`w-5 h-5 text-muted-foreground dark:text-muted-foreground ${atualizandoSilencioso ? 'animate-spin' : ''}`} />
           </button>
           <div className="text-sm text-muted-foreground dark:text-muted-foreground flex items-center gap-1">
             <Clock className="w-4 h-4" />
@@ -1570,8 +1608,18 @@ export default function PDVCaixa({
                         type="text"
                         inputMode="decimal"
                         value={recebimentosDinheiro}
-                        onChange={(e) => !modoVisualizacao && setRecebimentosDinheiro(e.target.value)}
-                        onFocus={(e) => e.target.select()}
+                        onChange={(e) => {
+                          if (modoVisualizacao) return;
+                          conferenciaDinheiroEditadoRef.current = true;
+                          setRecebimentosDinheiro(e.target.value);
+                        }}
+                        onFocus={(e) => {
+                          conferenciaDinheiroFocusedRef.current = true;
+                          selectAllOnFocus(e);
+                        }}
+                        onBlur={() => {
+                          conferenciaDinheiroFocusedRef.current = false;
+                        }}
                         disabled={modoVisualizacao}
                         className={`w-36 text-right text-lg font-bold bg-transparent border-0 focus:outline-none text-foreground dark:text-white ${modoVisualizacao ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
                         placeholder={formatarValorExibicao(caixaData.saldoAtual || 0)}
@@ -1813,8 +1861,8 @@ export default function PDVCaixa({
                          onClick={() => { loadData(undefined, undefined, { force: true }); toast({ title: "✓ Atualizado!", className: CAIXA_TOAST_SUCCESS, duration: 1000 }); }}
                          className="p-2 hover:bg-muted dark:hover:bg-muted rounded-xl transition-colors self-end sm:self-auto"
                          style={{ minWidth: '44px', minHeight: '44px' }}
-                         title="Atualizar">
-                         <RefreshCw className="w-5 h-5 text-muted-foreground dark:text-muted-foreground" />
+                         title="Atualizar (automático a cada 30s)">
+                         <RefreshCw className={`w-5 h-5 text-muted-foreground dark:text-muted-foreground ${atualizandoSilencioso ? 'animate-spin' : ''}`} />
                        </button>
                      </div>
 
@@ -1916,9 +1964,13 @@ export default function PDVCaixa({
           />
         )}
 
+        {(isDialogOpen && pedidoSelecionado) && (
         <ConfirmarPagamentoDialog
           open={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
+          onOpenChange={(nextOpen) => {
+            setIsDialogOpen(nextOpen);
+            if (!nextOpen) setPedidoSelecionado(null);
+          }}
           pedidoSelecionado={pedidoSelecionado}
           pagamentosDinheiro={pagamentosDinheiro}
           setPagamentosDinheiro={setPagamentosDinheiro}
@@ -1971,6 +2023,7 @@ export default function PDVCaixa({
           toast={toast}
           base44={base44}
         />
+        )}
 
         {/* Dialogs extraídos */}
         <MovimentoDialog

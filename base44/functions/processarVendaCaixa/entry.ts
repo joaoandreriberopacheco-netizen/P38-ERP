@@ -268,7 +268,7 @@ Deno.serve(async (req) => {
       const produto = await svc.entities.Produto.get(item.produto_id);
       if (produto) {
         await svc.entities.Produto.update(item.produto_id, {
-          estoque_atual: Math.max(0, (produto.estoque_atual || 0) - quantidadeBase),
+          estoque_atual: (produto.estoque_atual || 0) - quantidadeBase,
         });
       }
     } catch (err) { erros.push(`Estoque ${item.produto_nome}: ${err.message}`); }

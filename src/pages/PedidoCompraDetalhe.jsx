@@ -4,7 +4,9 @@ import { base44 } from '@/api/base44Client';
 import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
 import { filterEmbarquesVisiveisParaPedido } from '@/components/compras/embarqueFilters';
 import { normalizeItemToCanonicalFactorOne } from '@/lib/productUnits';
-import { hydrateEmbarquesLinhasDesdeCanonical } from '@/lib/embarqueLogisticaHelpers';
+import { hydrateEmbarquesPedidoFromSql } from '@/lib/fetchEmbarqueItens';
+import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
+import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
 
 /**
  * Página inteira de detalhe/criação de Pedido de Compra — fullscreen em todos os viewports.
@@ -38,8 +40,11 @@ export default function PedidoCompraDetalhe() {
       return null;
     }
 
+    const [pedidoHydrated] = await hydratePedidosCompraItensFromSql(base44, [pedidoBase]);
+    const pedidoComItens = pedidoHydrated || pedidoBase;
+
     let embarques = filterEmbarquesVisiveisParaPedido(embarquesRes || []);
-    embarques = await hydrateEmbarquesLinhasDesdeCanonical(base44, pedidoBase.id, embarques);
+    embarques = await hydrateEmbarquesPedidoFromSql(base44, pedidoComItens.id, embarques);
     const ultimoEmbarque = [...embarques]
       .filter((emb) => emb.status !== 'Concluído')
       .sort((a, b) => new Date(a.eta || a.created_date) - new Date(b.eta || b.created_date))[0]
@@ -47,10 +52,10 @@ export default function PedidoCompraDetalhe() {
       || null;
 
     const pedidoComVerdade = {
-      ...pedidoBase,
+      ...pedidoComItens,
       _embarques: embarques,
       _embarque_principal: ultimoEmbarque,
-      data_prevista_entrega: ultimoEmbarque?.eta ? String(ultimoEmbarque.eta).slice(0, 10) : pedidoBase.data_prevista_entrega,
+      data_prevista_entrega: ultimoEmbarque?.eta ? String(ultimoEmbarque.eta).slice(0, 10) : pedidoComItens.data_prevista_entrega,
     };
 
     setPedido(pedidoComVerdade);
@@ -92,10 +97,9 @@ export default function PedidoCompraDetalhe() {
     if (sanitizedData.id) {
       const atual = await base44.entities.PedidoCompra.filter({ id: sanitizedData.id });
       const pedidoAtual = atual?.[0] || {};
-      saved = await base44.entities.PedidoCompra.update(sanitizedData.id, {
+      saved = await base44.entities.PedidoCompra.update(sanitizedData.id, omitPedidoCompraEspelho({
         ...pedidoAtual,
         ...sanitizedData,
-        embarques_registrados: sanitizedData.embarques_registrados ?? pedidoAtual.embarques_registrados,
         status_embarque: sanitizedData.status_embarque ?? pedidoAtual.status_embarque,
         status_recebimento_geral: sanitizedData.status_recebimento_geral ?? pedidoAtual.status_recebimento_geral,
         data_despacho: sanitizedData.data_despacho ?? pedidoAtual.data_despacho,
@@ -103,12 +107,11 @@ export default function PedidoCompraDetalhe() {
         conferencia_id: sanitizedData.conferencia_id ?? pedidoAtual.conferencia_id,
         manifesto_entrada_id: sanitizedData.manifesto_entrada_id ?? pedidoAtual.manifesto_entrada_id,
         tem_divergencias: sanitizedData.tem_divergencias ?? pedidoAtual.tem_divergencias,
-      });
+      }));
     } else {
-      const { id: _id, ...newPedido } = sanitizedData;
+      const { id: _id, ...newPedido } = omitPedidoCompraEspelho(sanitizedData);
       if (!newPedido.numero) {
-        const resp = await base44.functions.invoke('gerarNumeroSequencial', { tipo: 'PC' });
-        newPedido.numero = resp?.data?.numero;
+        newPedido.numero = await gerarNumeroSequencial('PC');
       }
       saved = await base44.entities.PedidoCompra.create(newPedido);
     }

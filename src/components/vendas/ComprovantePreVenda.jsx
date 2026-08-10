@@ -254,7 +254,7 @@ export default function ComprovantePreVenda({ preVenda, open, onClose }) {
           onClick={handlePrint}
           disabled={exportingPdf}
           size="sm"
-          className="bg-background hover:bg-primary dark:bg-muted dark:hover:bg-muted dark:text-foreground text-white h-9 text-xs gap-1.5 rounded-xl px-4"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:hover:bg-muted dark:text-foreground h-9 text-xs gap-1.5 rounded-xl px-4"
         >
           {exportingPdf ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Printer className="w-3.5 h-3.5" />}
           {exportingPdf ? 'Gerando…' : 'Imprimir'}

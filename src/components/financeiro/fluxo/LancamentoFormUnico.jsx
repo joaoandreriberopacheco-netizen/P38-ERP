@@ -107,6 +107,7 @@ export default function LancamentoFormUnico({
   salvarLabel = 'Salvar',
   modoPlanejamento = false,
   centroCusto = '',
+  centroCustoId = '',
   onCentroCustoChange,
   centrosCustoRegistros = [],
   onCentrosCustoChange,
@@ -284,6 +285,7 @@ export default function LancamentoFormUnico({
               <FolhaCentroCustoSelect
                 centros={centrosCustoRegistros}
                 value={centroCusto}
+                valueId={centroCustoId}
                 onValueChange={onCentroCustoChange}
                 onCentrosChange={onCentrosCustoChange}
               />

@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Plus, Minus, Package, ChevronLeft, X } from 'lucide-react';
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
+import { CONSUMO_FORM_OVERLAY_Z } from '@/lib/consumoInternoOverlay';
 
 const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
@@ -67,8 +69,8 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
 
   if (!open) return null;
 
-  return (
-    <div className="fixed inset-0 z-[200] flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center">
+  const overlay = (
+    <div className={`fixed inset-0 ${CONSUMO_FORM_OVERLAY_Z} flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center`}>
       <button
         type="button"
         aria-label="Fechar seletor"
@@ -166,7 +168,7 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
                     }}
                     className="h-16 w-24 rounded-2xl border-0 bg-card text-center text-3xl font-bold text-foreground shadow-sm dark:bg-background dark:text-white"
                   />
-                  <Button type="button" size="icon" className="h-12 w-12 rounded-full bg-background text-white shadow-sm hover:bg-primary dark:bg-card dark:text-foreground" onClick={() => setQuantidade(String((Number(String(quantidade).replace(',', '.')) || 0) + 1))}>
+                  <Button type="button" size="icon" className="h-12 w-12 rounded-full bg-primary text-primary-foreground shadow-sm hover:bg-primary dark:bg-card dark:text-foreground" onClick={() => setQuantidade(String((Number(String(quantidade).replace(',', '.')) || 0) + 1))}>
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
@@ -181,7 +183,7 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
                   <span>{formatCurrency((produtoSelecionado.preco_custo_calculado || 0) * ((Number(String(quantidade).replace(',', '.')) || 0)))}</span>
                 </div>
               </div>
-              <Button type="button" onClick={handleAdd} className="h-12 w-full rounded-2xl bg-background text-white hover:bg-primary dark:bg-card dark:text-foreground">
+              <Button type="button" onClick={handleAdd} className="h-12 w-full rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground">
                 Adicionar item
               </Button>
             </div>
@@ -190,4 +192,7 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined') return overlay;
+  return createPortal(overlay, document.body);
 }

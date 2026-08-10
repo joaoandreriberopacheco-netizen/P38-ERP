@@ -163,6 +163,8 @@ export default function ListaUsuariosApp() {
     toast({ title: 'Para convidar usuários', description: 'Use a função convidarUsuarios no dashboard > functions', duration: 6000 });
   };
 
+  const perfisAtivos = perfisAcesso.filter((p) => p.ativo !== false);
+
   const getBadgePerfil = (user) => {
     if (user.perfil_acesso_nome) {
       return <Badge className="bg-muted text-foreground/90 dark:bg-muted dark:text-foreground/90 border-0 font-normal text-xs">{user.perfil_acesso_nome}</Badge>;
@@ -220,7 +222,7 @@ export default function ListaUsuariosApp() {
         </div>
         <Button
           size="sm"
-          className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white gap-1.5 h-8 px-3 text-xs"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:text-foreground gap-1.5 h-8 px-3 text-xs"
           onClick={handleConvidarOuCriar}
         >
           <UserPlus className="w-3.5 h-3.5" />
@@ -374,23 +376,39 @@ export default function ListaUsuariosApp() {
             {/* Perfil de acesso */}
             <div className="space-y-1.5">
               <label className="text-xs text-muted-foreground font-medium">Perfil de Acesso</label>
-              {perfisAcesso.length === 0 ? (
+              {perfisAtivos.length === 0 ? (
                 <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/10 p-2 rounded-lg">
                   Crie Perfis de Acesso primeiro na aba "Perfis de Acesso".
                 </p>
               ) : (
-                <Select value={selectedPerfilId} onValueChange={setSelectedPerfilId}>
-                  <SelectTrigger className="bg-muted/50 border-0 shadow-sm h-9 text-sm">
-                    <SelectValue placeholder="Selecione um perfil..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {perfisAcesso.filter(p => p.ativo !== false).map(p => (
-                      <SelectItem key={p.id} value={p.id}>
-                        <span className="font-medium text-sm">{p.nome}</span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="space-y-1 max-h-40 overflow-y-auto pr-0.5">
+                  {perfisAtivos.map((p) => {
+                    const ativo = selectedPerfilId === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setSelectedPerfilId(p.id)}
+                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors ${
+                          ativo
+                            ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground'
+                            : 'bg-muted/50 text-foreground/90 hover:bg-muted'
+                        }`}
+                      >
+                        <div className={`w-4 h-4 rounded flex-shrink-0 flex items-center justify-center ${
+                          ativo ? 'bg-card/20 dark:bg-black/10' : 'border border-border/40 dark:border-border/40'
+                        }`}>
+                          {ativo && (
+                            <svg className="w-2.5 h-2.5 text-primary-foreground dark:text-foreground" fill="none" viewBox="0 0 12 12">
+                              <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          )}
+                        </div>
+                        <span className="text-xs font-medium">{p.nome}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               )}
             </div>
 
@@ -405,12 +423,15 @@ export default function ListaUsuariosApp() {
                   Crie Tabelas de Preço primeiro na aba "Tabelas de Preço".
                 </p>
               ) : (
-                <Select value={selectedTabelaId} onValueChange={setSelectedTabelaId}>
+                <Select
+                  value={selectedTabelaId || '__default__'}
+                  onValueChange={(value) => setSelectedTabelaId(value === '__default__' ? '' : value)}
+                >
                   <SelectTrigger className="bg-muted/50 border-0 shadow-sm h-9 text-sm">
                     <SelectValue placeholder="Usar tabela padrão do sistema" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={null}>
+                  <SelectContent className="z-[100] dark:bg-card dark:border-border/40">
+                    <SelectItem value="__default__">
                       <span className="text-muted-foreground italic text-xs">Usar tabela padrão do sistema</span>
                     </SelectItem>
                     {tabelasPreco.map(t => (
@@ -446,7 +467,7 @@ export default function ListaUsuariosApp() {
                         onClick={() => toggleCaixa(conta.id)}
                         className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors ${
                           ativo
-                            ? 'bg-primary text-white dark:bg-muted dark:text-foreground'
+                            ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground'
                             : 'bg-muted/50 text-foreground/90 hover:bg-muted'
                         }`}
                       >
@@ -454,7 +475,7 @@ export default function ListaUsuariosApp() {
                           ativo ? 'bg-card/20 dark:bg-black/10' : 'border border-border/40 dark:border-border/40'
                         }`}>
                           {ativo && (
-                            <svg className="w-2.5 h-2.5 text-white dark:text-foreground" fill="none" viewBox="0 0 12 12">
+                            <svg className="w-2.5 h-2.5 text-foreground" fill="none" viewBox="0 0 12 12">
                               <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           )}
@@ -477,7 +498,7 @@ export default function ListaUsuariosApp() {
             </Button>
             <Button
               size="sm"
-              className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white h-8 text-xs"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:text-foreground h-8 text-xs"
               onClick={handleSalvar}
             >
               Salvar
@@ -520,18 +541,40 @@ export default function ListaUsuariosApp() {
             </div>
             <div className="space-y-1.5">
               <label className="text-xs text-muted-foreground font-medium">Perfil de Acesso</label>
-              <Select value={createPerfilId} onValueChange={setCreatePerfilId}>
-                <SelectTrigger className="bg-muted/50 border-0 shadow-sm h-9 text-sm">
-                  <SelectValue placeholder="Selecione um perfil..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {perfisAcesso.filter(p => p.ativo !== false).map(p => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {perfisAtivos.length === 0 ? (
+                <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/10 p-2 rounded-lg">
+                  Crie Perfis de Acesso primeiro na aba "Perfis de Acesso".
+                </p>
+              ) : (
+                <div className="space-y-1 max-h-40 overflow-y-auto pr-0.5">
+                  {perfisAtivos.map((p) => {
+                    const ativo = createPerfilId === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setCreatePerfilId(p.id)}
+                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors ${
+                          ativo
+                            ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground'
+                            : 'bg-muted/50 text-foreground/90 hover:bg-muted'
+                        }`}
+                      >
+                        <div className={`w-4 h-4 rounded flex-shrink-0 flex items-center justify-center ${
+                          ativo ? 'bg-card/20 dark:bg-black/10' : 'border border-border/40 dark:border-border/40'
+                        }`}>
+                          {ativo && (
+                            <svg className="w-2.5 h-2.5 text-primary-foreground dark:text-foreground" fill="none" viewBox="0 0 12 12">
+                              <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          )}
+                        </div>
+                        <span className="text-xs font-medium">{p.nome}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
@@ -541,7 +584,7 @@ export default function ListaUsuariosApp() {
             </Button>
             <Button
               size="sm"
-              className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white h-8 text-xs"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:text-foreground h-8 text-xs"
               onClick={handleCriarUtilizador}
               disabled={creating}
             >

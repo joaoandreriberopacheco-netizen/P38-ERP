@@ -124,6 +124,7 @@
         { "name": "custo_imposto2_padrao", "type": "number", "default": 0, "pg_type": "NUMERIC(15,4) DEFAULT 0" },
         { "name": "custo_outros_padrao", "type": "number", "default": 0, "pg_type": "NUMERIC(15,4) DEFAULT 0" },
         { "name": "desconto_compra_padrao", "type": "number", "default": 0, "pg_type": "NUMERIC(15,4) DEFAULT 0" },
+        { "name": "avaria_percentual", "type": "number", "default": 0, "pg_type": "NUMERIC(15,4) DEFAULT 0" },
         { "name": "preco_venda_padrao", "type": "number", "pg_type": "NUMERIC(15,4) NOT NULL" },
         { "name": "preco_venda_tipo", "type": "enum", "values": ["numerico","percentual"], "default": "percentual", "pg_type": "TEXT DEFAULT 'percentual'" },
         { "name": "preco_venda_percentual", "type": "number", "default": 40, "pg_type": "NUMERIC(8,2) DEFAULT 40" },

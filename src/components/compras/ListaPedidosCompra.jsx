@@ -19,6 +19,7 @@ import {
   P38MobileLineList,
   p38AccentKeyFromTone,
 } from '@/components/ui/p38-mobile-line';
+import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 
 const R = (v) => {
   const n = v || 0;
@@ -98,7 +99,7 @@ if (typeof document !== 'undefined' && !document.getElementById('blink-animation
 
 function EmbarquesInfo({ pedido }) {
   const embarque = pedido._embarque;
-  const itensEmbarque = embarque?.itens || embarque?.itens_embarcados || [];
+  const itensEmbarque = getEmbarqueItensLinhas(embarque);
   const itensDisplay = pedido._display_itens || [];
   const unidadesCard = [...new Set(itensDisplay.map((i) => String(i.unidade_medida || '').trim()).filter(Boolean))];
   const sufixoUnidade = unidadesCard.length === 1 ? unidadesCard[0] : 'un.';

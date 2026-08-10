@@ -8,6 +8,14 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
+import CatalogLotePicker, { CatalogLoteModeToggle } from '@/components/compras/CatalogLotePicker';
+import CatalogProductStockLine from '@/components/compras/CatalogProductStockLine';
+import { buildLoteIncomingFromDraft } from '@/lib/catalogLoteUtils';
+import { cn } from '@/lib/utils';
+import {
+  P38_ACCENT,
+  P38_FIELD_SURFACE,
+} from '@/components/financeiro/fluxo/financeiroP38';
 import {
   buildPurchaseUnitOptions,
   pickDefaultPurchaseUnit,
@@ -42,10 +50,13 @@ export default function MobileProductSelector({
   onOpenAdjustPrices,
   isLocked,
   onProductCreated,
-  onOpenImporter
+  onOpenImporter,
+  onAddItemsBatch,
 }) {
   const [view, setView] = useState('menu'); // 'menu' | 'discount-entry' | 'catalog' | 'cart' | 'edit'
   const [search, setSearch] = useState('');
+  const [modoLote, setModoLote] = useState(false);
+  const [loteDraft, setLoteDraft] = useState({});
   const [editingItem, setEditingItem] = useState(null);
   const [editingIndex, setEditingIndex] = useState(-1);
   const [quantidadeInput, setQuantidadeInput] = useState('');
@@ -173,6 +184,7 @@ export default function MobileProductSelector({
         desconto_pct_item: descontoGlobalPct !== 0
           ? Math.abs(descontoGlobalPct)
           : resolveDescontoPctCompraProduto(product, custoF1),
+        avaria_pct_item: Number(product.avaria_percentual) || 0,
       },
       product,
       selectedUnit,
@@ -272,6 +284,30 @@ export default function MobileProductSelector({
   };
 
   const calculateTotal = (item) => calcTotalItemCompraPedido(syncItemQuantidadeBaseComercial(item));
+
+  const cartProductIds = useMemo(
+    () => items.map((i) => i.produto_id).filter(Boolean),
+    [items],
+  );
+
+  const handleConfirmLote = () => {
+    const incoming = buildLoteIncomingFromDraft(loteDraft);
+    if (incoming.length === 0) return;
+    if (onAddItemsBatch) {
+      onAddItemsBatch(incoming, products);
+    } else {
+      incoming.forEach(({ produto_id, quantidade }) => {
+        const product = products.find((p) => p.id === produto_id);
+        if (!product) return;
+        onAddItem({
+          produto_id: product.id,
+          produto_nome: product.nome,
+          quantidade,
+        });
+      });
+    }
+    setLoteDraft({});
+  };
 
   const patchEditingQuantidade = (quantidade) => {
     setEditingItem((prev) => {
@@ -413,83 +449,90 @@ export default function MobileProductSelector({
 
   // Menu Principal
   if (view === 'menu') {
+    const menuCardClass = cn(
+      'w-full rounded-2xl p-5 text-left shadow-sm transition-all active:scale-[0.99]',
+      P38_FIELD_SURFACE,
+    );
+  const cartBadgeClass =
+    'absolute -top-1 -right-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-[#a4ce33] px-1 text-xs font-bold text-[#1f1d22]';
+
     return (
       <div className="flex flex-col h-full bg-card">
         <div className="flex-1 flex flex-col p-4 space-y-3">
           {/* Buscar Produtos */}
           <button
             onClick={() => setView('discount-entry')}
-            className="bg-muted/50 rounded-xl p-6 shadow-sm active:scale-[0.98] transition-transform flex items-center gap-4"
+            className={cn(menuCardClass, 'flex items-center gap-4')}
             disabled={isLocked}
           >
-            <div className="w-12 h-12 rounded-full bg-card dark:bg-muted flex items-center justify-center shadow-sm">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-muted/50">
               <Search className="w-6 h-6 text-foreground/90" />
             </div>
-            <div className="flex-1 text-left">
+            <div className="flex-1 text-left min-w-0">
               <div className="font-medium text-foreground">Buscar Produtos</div>
               <div className="text-xs text-muted-foreground mt-0.5">Adicionar itens ao pedido</div>
             </div>
-            <ChevronLeft className="w-5 h-5 text-muted-foreground rotate-180" />
+            <ChevronLeft className="w-5 h-5 text-muted-foreground rotate-180 shrink-0" />
           </button>
 
           {/* Resumo do Pedido */}
           <button
             onClick={() => setView('cart')}
-            className="bg-muted/50 rounded-xl p-6 shadow-sm active:scale-[0.98] transition-transform flex items-center gap-4"
+            className={cn(menuCardClass, 'flex items-center gap-4')}
           >
-            <div className="w-12 h-12 rounded-full bg-card dark:bg-muted flex items-center justify-center shadow-sm relative">
+            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-muted/50">
               <ShoppingCart className="w-6 h-6 text-foreground/90" />
               {items.length > 0 && (
-                <div className="absolute -top-1 -right-1 w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                <div className={cartBadgeClass}>
                   {items.length}
                 </div>
               )}
             </div>
-            <div className="flex-1 text-left">
+            <div className="flex-1 text-left min-w-0">
               <div className="font-medium text-foreground">Resumo do Pedido</div>
               <div className="text-xs text-muted-foreground mt-0.5">
                 {items.length > 0 ? `${items.length} ${items.length === 1 ? 'item' : 'itens'}` : 'Nenhum item adicionado'}
               </div>
             </div>
-            <ChevronLeft className="w-5 h-5 text-muted-foreground rotate-180" />
+            <ChevronLeft className="w-5 h-5 text-muted-foreground rotate-180 shrink-0" />
           </button>
 
           {/* Importar itens */}
           <button
             onClick={() => onOpenImporter?.()}
-            className="bg-muted/50 rounded-xl p-6 shadow-sm active:scale-[0.98] transition-transform flex items-center gap-4"
+            className={cn(menuCardClass, 'flex items-center gap-4')}
             disabled={isLocked}
           >
-            <div className="w-12 h-12 rounded-full bg-card dark:bg-muted flex items-center justify-center shadow-sm">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-muted/50">
               <Plus className="w-6 h-6 text-foreground/90" />
             </div>
-            <div className="flex-1 text-left">
+            <div className="flex-1 text-left min-w-0">
               <div className="font-medium text-foreground">Importar Itens</div>
               <div className="text-xs text-muted-foreground mt-0.5">Abre já em PDF — ou escolha foto</div>
             </div>
-            <ChevronLeft className="w-5 h-5 text-muted-foreground rotate-180" />
+            <ChevronLeft className="w-5 h-5 text-muted-foreground rotate-180 shrink-0" />
           </button>
 
           {/* Ajustar Preços */}
           <button
             onClick={() => onOpenAdjustPrices?.()}
             disabled={items.length === 0}
-            className={`rounded-xl p-6 shadow-sm active:scale-[0.98] transition-transform flex items-center gap-4 ${
-              items.length === 0 
-                ? 'bg-muted/50 opacity-50' 
-                : 'bg-muted/50'
-            }`}
+            className={cn(
+              menuCardClass,
+              'flex items-center gap-4',
+              items.length === 0 && 'opacity-50',
+            )}
           >
-            <div className="w-12 h-12 rounded-full bg-card dark:bg-muted flex items-center justify-center shadow-sm">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-muted/50">
               <DollarSign className="w-6 h-6 text-foreground/90" />
             </div>
-            <div className="flex-1 text-left">
+            <div className="flex-1 text-left min-w-0">
               <div className="font-medium text-foreground">Ajustar Preços</div>
               <div className="text-xs text-muted-foreground mt-0.5">
                 {items.length === 0 ? 'Adicione itens primeiro' : 'Atualizar custos dos produtos'}
               </div>
             </div>
-            <ChevronLeft className="w-5 h-5 text-muted-foreground rotate-180" />
+            <ChevronLeft className="w-5 h-5 text-muted-foreground rotate-180 shrink-0" />
           </button>
         </div>
       </div>
@@ -546,7 +589,7 @@ export default function MobileProductSelector({
             </div>
           )}
           {/* Quantity Stepper */}
-          <div className="flex flex-col items-center justify-center p-3 bg-muted/50 rounded-xl">
+          <div className={cn('flex flex-col items-center justify-center rounded-2xl p-5', P38_FIELD_SURFACE)}>
              <Label className="mb-3 text-xs uppercase tracking-wide text-muted-foreground">Quantidade ({editingItem.unidade_medida})</Label>
              <div className="flex items-center gap-5">
                 <Button 
@@ -604,6 +647,9 @@ export default function MobileProductSelector({
                  <Plus className="w-5 h-5" />
                 </Button>
              </div>
+             {editProduct && (
+               <CatalogProductStockLine product={editProduct} className="mt-4 justify-center" size="md" />
+             )}
           </div>
 
           {/* Pricing Field */}
@@ -770,7 +816,7 @@ export default function MobileProductSelector({
 
           <div className="p-3 bg-muted rounded-lg flex justify-between items-center">
              <span className="font-medium text-muted-foreground text-sm">Total do Item</span>
-             <span className="text-xl font-bold text-foreground">{formatCurrency(total)}</span>
+             <span className={cn('text-xl font-bold', P38_ACCENT)}>{formatCurrency(total)}</span>
           </div>
         </div>
 
@@ -778,7 +824,7 @@ export default function MobileProductSelector({
           {editingIndex >= 0 ? (
             <div className="space-y-2">
               <Button 
-                className="w-full h-12" 
+                className="w-full h-14 rounded-2xl text-base p38-btn-primary" 
                 onClick={handleSaveEdit}
                 disabled={isLocked}
               >
@@ -787,7 +833,7 @@ export default function MobileProductSelector({
               <div className="flex gap-2">
                 <Button 
                   variant="outline" 
-                  className="flex-1 h-12"
+                  className="flex-1 h-14 rounded-2xl text-base"
                   onClick={() => {
                     setEditingItem(null);
                     setEditingIndex(-1);
@@ -798,7 +844,7 @@ export default function MobileProductSelector({
                 </Button>
                 <Button 
                   variant="destructive" 
-                  className="flex-1 h-12"
+                  className="flex-1 h-14 rounded-2xl text-base"
                   onClick={() => {
                      onRemoveItem(editingIndex);
                      setEditingItem(null);
@@ -816,7 +862,7 @@ export default function MobileProductSelector({
             <div className="flex gap-3">
               <Button 
                 variant="outline"
-                className="flex-1 h-14 text-base"
+                className="flex-1 h-14 rounded-2xl text-base"
                 onClick={() => {
                   setEditingItem(null);
                   setEditingIndex(-1);
@@ -826,7 +872,7 @@ export default function MobileProductSelector({
                 Cancelar
               </Button>
               <Button 
-                className="flex-1 h-14 text-base"
+                className="flex-1 h-14 rounded-2xl text-base p38-btn-primary"
                 onClick={handleSaveEdit}
                 disabled={isLocked}
               >
@@ -860,6 +906,14 @@ export default function MobileProductSelector({
               <ChevronLeft className="w-5 h-5" />
             </Button>
             <div className="ml-2 font-medium flex-1 text-foreground">Buscar Produtos</div>
+            <CatalogLoteModeToggle
+              active={modoLote}
+              disabled={isLocked}
+              onClick={() => {
+                setModoLote((v) => !v);
+                setLoteDraft({});
+              }}
+            />
             {items.length > 0 && (
               <Button 
                 variant="ghost" 
@@ -868,15 +922,34 @@ export default function MobileProductSelector({
                 className="h-10 w-10 relative"
               >
                 <ShoppingCart className="w-5 h-5 text-foreground/90" />
-                <div className="absolute -top-1 -right-1 w-5 h-5 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                <div className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#a4ce33] px-1 text-[10px] font-bold text-[#1f1d22]">
                   {items.length}
                 </div>
               </Button>
             )}
           </div>
 
-          <div ref={catalogScrollRef} className="flex-1 overflow-y-auto">
-            <div className="sticky top-0 bg-card z-10 p-4 pb-3 border-b border-border/40">
+          <div ref={catalogScrollRef} className="flex-1 overflow-y-auto flex flex-col min-h-0">
+            {modoLote ? (
+              <CatalogLotePicker
+                products={products}
+                search={search}
+                onSearchChange={setSearch}
+                draft={loteDraft}
+                onDraftChange={setLoteDraft}
+                onConfirm={handleConfirmLote}
+                onExit={() => {
+                  setModoLote(false);
+                  setLoteDraft({});
+                }}
+                formatCurrency={formatCurrency}
+                cartProductIds={cartProductIds}
+                isLocked={isLocked}
+                confirmLabel="Adicionar selecionados"
+              />
+            ) : (
+            <>
+            <div className={cn('sticky top-0 z-10 p-4 pb-3 border-b border-border/40', P38_FIELD_SURFACE, 'rounded-none')}>
               {/* Badge de desconto global ativo */}
               {descontoGlobalPct !== 0 && (
                 <button
@@ -893,7 +966,7 @@ export default function MobileProductSelector({
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   placeholder="Buscar produto..."
-                  className="pl-11 bg-muted/50 border-0 shadow-sm h-12 rounded-xl text-foreground placeholder:text-muted-foreground"
+                  className="pl-11 h-12 border-0 bg-transparent shadow-none focus-visible:ring-0 rounded-xl text-foreground placeholder:text-muted-foreground"
                   value={search}
                   onChange={e => { setSearch(e.target.value); setSelectedIndex(-1); }}
                   onKeyDown={e => {
@@ -907,9 +980,14 @@ export default function MobileProductSelector({
                   disabled={isLocked}
                 />
               </div>
+              {search.trim() && filteredProducts.length > 0 && (
+                <p className="mt-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  {filteredProducts.length} resultado{filteredProducts.length !== 1 ? 's' : ''}
+                </p>
+              )}
             </div>
 
-            <div className="p-4 space-y-2">
+            <div className="p-4 space-y-3">
               {search.trim() === '' ? (
                 <div className="text-center py-16 text-muted-foreground">
                   <Search className="w-16 h-16 mx-auto mb-4 opacity-20" />
@@ -928,33 +1006,34 @@ export default function MobileProductSelector({
                       key={product.id}
                       ref={(el) => { catalogItemRefs.current[idx] = el; }}
                       onClick={() => { if (!isLocked) handleSelectProduct(product); }}
-                      className={`p-4 rounded-xl shadow-sm cursor-pointer transition-all active:scale-[0.98] ${
-                        isSelected
-                          ? 'bg-indigo-100 border-2 border-indigo-400 dark:bg-indigo-900/40 dark:border-indigo-600'
-                          : inCart
-                          ? 'bg-indigo-50 border border-indigo-100 dark:bg-indigo-900/20 dark:border-indigo-800'
-                          : 'bg-muted/50'
-                      } ${isLocked ? 'opacity-50 pointer-events-none' : ''}`}
+                      className={cn(
+                        'rounded-2xl p-5 cursor-pointer transition-all active:scale-[0.99]',
+                        P38_FIELD_SURFACE,
+                        isSelected && 'ring-2 ring-[#a4ce33]/70 dark:ring-[#a4ce33]/50',
+                        inCart && !isSelected && 'ring-2 ring-[#a4ce33]/40 dark:ring-[#a4ce33]/30',
+                        isLocked && 'opacity-50 pointer-events-none',
+                      )}
                     >
                       <div className="flex items-start gap-3">
                         <div className="flex-1 min-w-0">
-                          <div className={`font-medium truncate ${inCart ? 'text-indigo-900 dark:text-indigo-200' : 'text-foreground'}`}>
+                          <div className="text-base font-medium leading-snug text-foreground truncate">
                             {product.nome}
                           </div>
-                          <div className="text-sm text-muted-foreground mt-1">
+                          <div className="text-sm text-muted-foreground mt-2">
                             <span className="truncate block">
-                              <span className="font-mono text-[10px] tracking-wide text-muted-foreground/80">
+                              <span className="font-mono text-xs">
                                 #{product.codigo_interno || '—'}
                               </span>
-                              <span className="mx-1">•</span>
+                              <span className="mx-2">·</span>
                               <span>{formatCurrency(custoApresentacao)}</span>
                             </span>
+                            <CatalogProductStockLine product={product} className="mt-2" />
                             {variasUnidades && (
-                              <span className="mt-1 flex items-center gap-2 flex-wrap">
+                              <span className="mt-2 flex items-center gap-2 flex-wrap">
                                 <Boxes className="w-3.5 h-3.5 text-muted-foreground shrink-0" aria-hidden />
                                 <button
                                   type="button"
-                                  className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                                  className={cn('text-xs font-medium hover:underline', P38_ACCENT)}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setUnitSelector({ open: true, product });
@@ -969,16 +1048,16 @@ export default function MobileProductSelector({
                         {inCart && (() => {
                           const exibCart = getItemCompraExibicaoVitrine(inCart, product);
                           return (
-                          <Badge className="bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200 border-0">
+                          <Badge className="bg-[#a4ce33]/20 text-[#4a5240] dark:text-[#a4ce33] border-0 shrink-0">
                             {exibCart.quantidade_formatada} {exibCart.unidade_medida}
                           </Badge>
                           );
                         })()}
                       </div>
                       {inCart && (
-                        <div className="mt-3 pt-3 border-t border-indigo-100 dark:border-indigo-800 flex justify-between items-center">
-                          <span className="text-xs text-indigo-700 dark:text-indigo-300">Total do item</span>
-                          <span className="text-sm font-bold text-indigo-900 dark:text-indigo-100">{formatCurrency(inCart.total || 0)}</span>
+                        <div className="mt-3 pt-3 border-t border-border/40 flex justify-between items-center">
+                          <span className="text-xs text-muted-foreground">Total do item</span>
+                          <span className={cn('text-sm font-bold', P38_ACCENT)}>{formatCurrency(inCart.total || 0)}</span>
                         </div>
                       )}
                     </div>
@@ -992,15 +1071,17 @@ export default function MobileProductSelector({
                 </div>
               )}
             </div>
+            </>
+            )}
           </div>
           {/* FAB - Criar Produto */}
-          {!isLocked && (
+          {!isLocked && !modoLote && (
             <button
               onClick={() => {
                 document.activeElement?.blur();
                 setShowNovoProduto(true);
               }}
-              className="fixed right-6 z-[70] flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-shadow hover:shadow-xl dark:bg-card dark:text-foreground p38-bottom-fab1"
+              className="fixed right-6 z-[70] flex h-14 w-14 items-center justify-center rounded-full p38-btn-primary shadow-lg transition-shadow hover:shadow-xl p38-bottom-fab1"
               title="Criar novo produto"
             >
               <Plus className="w-6 h-6" />
@@ -1040,21 +1121,24 @@ export default function MobileProductSelector({
   return (
     <div className="fixed inset-0 bg-card z-[60] flex flex-col">
       <div className="flex items-center p-4 border-b border-border/40 flex-shrink-0 gap-2">
-        <Button variant="ghost" size="icon" onClick={() => setView('catalog')} className="h-10 w-10">
+        <Button variant="ghost" size="icon" onClick={() => setView('menu')} className="h-10 w-10">
           <ChevronLeft className="w-5 h-5" />
         </Button>
         <div className="ml-2 font-medium flex-1 text-foreground">Carrinho</div>
+        <span className="text-sm tabular-nums text-muted-foreground">
+          {totalItems} {totalItems === 1 ? 'item' : 'itens'}
+        </span>
       </div>
 
       <div className="flex-1 p-4 overflow-y-auto">
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <ShoppingCart className="w-16 h-16 mb-4 opacity-20" />
-            <p className="font-medium mb-1">Nenhum item adicionado</p>
+            <p className="font-medium mb-1 text-foreground/80">Nenhum item adicionado</p>
             <p className="text-sm mb-6">Adicione produtos ao pedido</p>
             <Button 
               onClick={() => setView('catalog')}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              className="h-14 rounded-2xl px-6 p38-btn-primary"
               disabled={isLocked}
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -1073,19 +1157,25 @@ export default function MobileProductSelector({
                 onClick={() => {
                   if (!isLocked) handleEditItem(originalIndex);
                 }}
-                className="bg-muted/50 p-4 rounded-xl shadow-sm active:scale-[0.98] transition-transform cursor-pointer"
+                className={cn(
+                  'rounded-2xl p-5 cursor-pointer transition-all active:scale-[0.99]',
+                  P38_FIELD_SURFACE,
+                )}
               >
                 <div className="flex items-start gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-foreground mb-2 line-clamp-2">
+                    <div className="text-base font-medium text-foreground mb-2 line-clamp-2 leading-snug">
                       {item.produto_nome || "Produto"}
                     </div>
-                    <div className="text-sm text-muted-foreground mb-1">
+                    <div className="text-sm text-muted-foreground mb-2">
                       {exibVitrine.quantidade_formatada} {exibVitrine.unidade_medida} × {formatCurrency(exibVitrine.preco_unitario)}
                     </div>
-                    <div className="flex justify-between items-center">
+                    {produtoItem && (
+                      <CatalogProductStockLine product={produtoItem} className="mb-2" />
+                    )}
+                    <div className="flex justify-between items-center pt-2 border-t border-border/40">
                       <span className="text-xs text-muted-foreground">Total</span>
-                      <span className="font-bold text-foreground">
+                      <span className={cn('font-bold text-base', P38_ACCENT)}>
                         {formatCurrency(item.total || 0)}
                       </span>
                     </div>
@@ -1111,12 +1201,11 @@ export default function MobileProductSelector({
         )}
       </div>
 
-      <div className="bg-card border-t border-border/40 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+      <div className="border-t border-border/40 bg-card/95 p-4 backdrop-blur-sm">
         <div className="flex justify-between items-center">
-          <span className="text-sm text-muted-foreground">{totalItems} {totalItems === 1 ? 'item' : 'itens'}</span>
+          <span className="text-sm text-muted-foreground">Total do pedido</span>
           <div className="text-right">
-            <div className="text-xs text-muted-foreground mb-0.5">Total</div>
-            <div className="text-2xl font-bold text-foreground">{formatCurrency(totalValue)}</div>
+            <div className={cn('text-2xl font-bold tabular-nums', P38_ACCENT)}>{formatCurrency(totalValue)}</div>
           </div>
         </div>
       </div>

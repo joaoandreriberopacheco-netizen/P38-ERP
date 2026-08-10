@@ -150,7 +150,7 @@ export default function FechamentoCaixaButton({
         onClick={() => setShowConfirmacao(true)}
         isLoading={isClosing}
         loadingText="Fechando..."
-        className="flex-1 h-12 bg-background dark:bg-card text-white dark:text-foreground rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm"
+        className="flex-1 h-12 bg-card text-card-foreground rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm"
         style={{ minHeight: '48px' }}
       >
         <Lock className="w-4 h-4" /> Fechar Caixa
@@ -166,7 +166,7 @@ export default function FechamentoCaixaButton({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="rounded-2xl border-0">Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleFechar} className="rounded-2xl bg-background text-white hover:bg-primary dark:bg-card dark:text-foreground">Fechar agora</AlertDialogAction>
+            <AlertDialogAction onClick={handleFechar} className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground">Fechar agora</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

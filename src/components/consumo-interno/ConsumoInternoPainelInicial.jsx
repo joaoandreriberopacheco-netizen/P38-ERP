@@ -178,8 +178,6 @@ export default function ConsumoInternoPainelInicial({
   onEdit,
   onAttach,
   onDelete,
-  showFabMenu,
-  setShowFabMenu,
   onNovoFormulario,
 }) {
   const acoesProps = { onView, onEdit, onViewAttachments, onAttach, onDelete };
@@ -196,6 +194,17 @@ export default function ConsumoInternoPainelInicial({
               <p className="mt-1 text-sm text-muted-foreground">Movimentações internas.</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <Link
+                to="/AnexoCompartilhado"
+                className={cn(
+                  'flex items-center gap-2 rounded-2xl border border-border/40 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-primary/10',
+                  brandSurface.card
+                )}
+                title="Página antiga de anexos"
+              >
+                <Paperclip className={cn('h-5 w-5', brandSurface.accent)} />
+                <span className="hidden sm:inline">Página antiga</span>
+              </Link>
               <Link
                 to="/RelatorioConsumoInterno"
                 className={cn(
@@ -285,28 +294,9 @@ export default function ConsumoInternoPainelInicial({
       </div>
 
       <div className="fixed right-4 z-[55] flex flex-col items-end gap-3 p38-bottom-fab1 lg:bottom-10 lg:right-6">
-        {showFabMenu && (
-          <div className={cn('flex flex-col gap-2 rounded-[28px] border border-border/40 p-2 shadow-2xl', brandSurface.card)}>
-            <button
-              type="button"
-              onClick={onNovoFormulario}
-              className="min-h-[48px] rounded-2xl px-4 py-3 text-left text-sm font-medium text-foreground transition-colors hover:bg-primary/10"
-            >
-              Novo formulário
-            </button>
-            <Link
-              to="/AnexoCompartilhado"
-              onClick={() => setShowFabMenu(false)}
-              className="min-h-[48px] rounded-2xl px-4 py-3 text-left text-sm font-medium text-foreground transition-colors hover:bg-primary/10"
-            >
-              Página antiga
-            </Link>
-          </div>
-        )}
-
         <button
           type="button"
-          onClick={() => setShowFabMenu((prev) => !prev)}
+          onClick={onNovoFormulario}
           className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-2xl transition-transform hover:scale-105 hover:bg-primary/90"
           aria-label="Novo consumo interno"
         >

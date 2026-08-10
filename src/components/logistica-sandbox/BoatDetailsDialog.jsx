@@ -240,7 +240,7 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
                       {hasRecords ? 'Inativar' : 'Excluir'}
                     </Button>
                     {isEditing && (
-                      <Button type="button" onClick={handleSave} className="rounded-2xl bg-background text-white hover:bg-primary dark:bg-muted dark:text-foreground dark:hover:bg-muted">
+                      <Button type="button" onClick={handleSave} className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary dark:bg-muted dark:text-foreground dark:hover:bg-muted">
                         <Save className="w-4 h-4 mr-2" />Salvar
                       </Button>
                     )}

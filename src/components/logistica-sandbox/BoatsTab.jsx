@@ -162,7 +162,7 @@ export default function BoatsTab() {
           <button
             key={item.value}
             onClick={() => setFilter(item.value)}
-            className={`px-4 py-2 rounded-2xl text-sm shadow-sm transition ${filter === item.value ? 'bg-primary text-white dark:bg-muted dark:text-foreground' : 'bg-card text-muted-foreground'}`}
+            className={`px-4 py-2 rounded-2xl text-sm shadow-sm transition ${filter === item.value ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground' : 'bg-card text-muted-foreground'}`}
           >
             {item.label}
           </button>

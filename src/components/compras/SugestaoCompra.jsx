@@ -19,7 +19,7 @@ import { cn } from '@/components/utils';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { downloadBlob } from '@/lib/mobilePrintAndShare';
 import { useCompactShell } from '@/hooks/use-breakpoint';
-import { buildSnapshotExibicaoComercial, resolveCommercialDisplay } from '@/lib/productUnits';
+import { buildSnapshotExibicaoComercial, resolveCommercialDisplay, resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
 import {
   buildLinhasSugestaoCompra,
   distribuirQuantidadeGrupo,
@@ -749,7 +749,7 @@ export default function SugestaoCompra({ onStatsChange }) {
       expandirLinhaItens(linha).forEach(({ produto, quantidade_base, nome }) => {
         const snap = produtoParaCompra(produto);
         const disp = resolveCommercialDisplay(snap, quantidade_base, produto.unidade_principal || 'UN');
-        const custoBase = produto.preco_custo_calculado || produto.valor_compra || 0;
+        const custoBase = resolveCustoTotalUnitBaseProduto(produto);
         const custoUnitCompra = custoBase * (disp.fator_conversao || 1);
         bySupplier[sid].itens.push({
           produto_id: produto.id,

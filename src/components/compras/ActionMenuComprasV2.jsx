@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Plus, FileText, X, Download, Send, CheckSquare, FileSpreadsheet, Smartphone, Loader2, List } from 'lucide-react';
+import { Plus, FileText, X, Download, Send, CheckSquare, FileSpreadsheet, Smartphone, Loader2, List, FileUp, Files, DollarSign } from 'lucide-react';
 import { gerarRelatorioPedidosCompra } from '@/functions/gerarRelatorioPedidosCompra';
+import { fetchAnexosPorPedidos, coletarPedidoIdsParaRelatorio } from '@/lib/fetchAnexosPorPedidos';
 import { toast } from 'sonner';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { normalizeItemCompraParaExibicao, custoApresentacaoParaFator1 } from '@/lib/productUnits';
@@ -120,16 +121,9 @@ function normalizarGruposParaRelatorio(grupos = [], produtosMap = {}) {
   return walk(grupos);
 }
 
-export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDownloadTemplate, onEnviarFinanceiroLote, onToggleModoSelecao, modoSelecao = false, quantidadeSelecionados = 0, enviandoLote = false, pedidos = [], filtrosDesc = 'Pedidos filtrados na tela', kpis = {}, grupos = [] }) {
+export default function ActionMenuComprasV2({ onNovopedido, onImportarPedido, onImportarNF, onDownloadTemplate, onEnviarFinanceiroLote, onToggleModoSelecao, onAtualizarPrecosFiltrados, modoSelecao = false, quantidadeSelecionados = 0, enviandoLote = false, pedidos = [], filtrosDesc = 'Pedidos filtrados na tela', kpis = {}, grupos = [] }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [gerando, setGerando] = useState(null);
-  const getActionVersion = (label) => {
-    if (label === 'PDF expandido') return 'expandida';
-    if (label === 'PDF enxuto') return 'expandida_enxuta';
-    if (label === 'PDF mobile clássico') return 'expandida_mobile';
-    if (label === 'PDF mobile claro') return 'expandida_mobile_claro';
-    return null;
-  };
 
   const handleGerarRelatorio = async (version) => {
     setGerando(version);
@@ -157,6 +151,14 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
       const pedidosNormalizados = (pedidos || []).map((p) => normalizarPedidoParaRelatorio(p, produtosMap));
       const gruposNormalizados = normalizarGruposParaRelatorio(grupos || [], produtosMap);
 
+      let anexosPorPedido = {};
+      if (version === 'expandida_com_anexos') {
+        toast.loading('Carregando anexos dos pedidos filtrados...', { id: 'gerando-relatorio' });
+        const pedidoIds = coletarPedidoIdsParaRelatorio(pedidos, grupos);
+        anexosPorPedido = await fetchAnexosPorPedidos(pedidoIds);
+        toast.loading('Montando PDF completo (minuta + anexos)...', { id: 'gerando-relatorio' });
+      }
+
       const resposta = await gerarRelatorioPedidosCompra({
         pedidos: pedidosNormalizados,
         version,
@@ -164,6 +166,7 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
         kpis,
         grupos: gruposNormalizados,
         produtos_map: produtosMap,
+        anexos_por_pedido: anexosPorPedido,
       });
 
       const blob = new Blob([resposta.data], { type: 'application/pdf' });
@@ -190,6 +193,13 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
 
   const actions = [
     {
+      icon: <DollarSign className="w-5 h-5" />,
+      label: 'Atualizar preços (filtrados)',
+      onClick: () => { onAtualizarPrecosFiltrados?.(); setIsExpanded(false); },
+      color: 'bg-card dark:bg-muted text-foreground/90',
+      title: 'Revisar e aplicar custos dos produtos dos pedidos visíveis no filtro (fonte SQL)',
+    },
+    {
       icon: <CheckSquare className="w-5 h-5" />,
       label: modoSelecao ? 'Cancelar seleção' : 'Selecionar embarques',
       onClick: () => { onToggleModoSelecao?.(); setIsExpanded(false); },
@@ -209,6 +219,12 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
       color: 'bg-card dark:bg-muted text-foreground/90',
     },
     {
+      icon: <FileUp className="w-5 h-5" />,
+      label: 'Importar pedido (PDF)',
+      onClick: () => { onImportarPedido?.(); setIsExpanded(false); },
+      color: 'bg-card dark:bg-muted text-foreground/90',
+    },
+    {
       icon: <FileText className="w-5 h-5" />,
       label: 'Importar NF',
       onClick: () => { onImportarNF(); setIsExpanded(false); },
@@ -223,13 +239,24 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
     {
       icon: <FileSpreadsheet className="w-5 h-5" />,
       label: 'PDF expandido',
+      reportVersion: 'expandida',
       onClick: () => handleGerarRelatorio('expandida'),
       color: 'bg-card dark:bg-muted text-foreground/90',
       disabled: !!gerando,
     },
     {
+      icon: <Files className="w-5 h-5" />,
+      label: 'PDF completo (minuta + anexos)',
+      reportVersion: 'expandida_com_anexos',
+      onClick: () => handleGerarRelatorio('expandida_com_anexos'),
+      color: 'bg-card dark:bg-muted text-foreground/90',
+      disabled: !!gerando,
+      title: 'Minuta de cada embarque filtrado + comprovantes e anexos embutidos',
+    },
+    {
       icon: <List className="w-5 h-5" />,
       label: 'PDF enxuto',
+      reportVersion: 'expandida_enxuta',
       onClick: () => handleGerarRelatorio('expandida_enxuta'),
       color: 'bg-card dark:bg-muted text-foreground/90',
       disabled: !!gerando,
@@ -237,6 +264,7 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
     {
       icon: <Smartphone className="w-5 h-5" />,
       label: 'PDF mobile clássico',
+      reportVersion: 'expandida_mobile',
       onClick: () => handleGerarRelatorio('expandida_mobile'),
       color: 'bg-card dark:bg-muted text-foreground/90',
       disabled: !!gerando,
@@ -245,6 +273,7 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
     {
       icon: <Smartphone className="w-5 h-5" />,
       label: 'PDF mobile claro',
+      reportVersion: 'expandida_mobile_claro',
       onClick: () => handleGerarRelatorio('expandida_mobile_claro'),
       color: 'bg-card dark:bg-muted text-foreground/90',
       disabled: !!gerando,
@@ -288,7 +317,7 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
               animationDelay: `${idx * 30}ms`,
             }}
           >
-            {gerando && gerando === getActionVersion(action.label)
+            {gerando && action.reportVersion === gerando
               ? <Loader2 className="w-5 h-5 animate-spin" />
               : action.icon}
             {action.label}

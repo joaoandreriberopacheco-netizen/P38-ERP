@@ -69,7 +69,7 @@ function BuscarPedidoStep({ onFound }) {
           <Button
             onClick={buscar}
             disabled={buscando}
-            className="rounded-xl bg-background px-5 text-white dark:bg-card dark:text-foreground"
+            className="rounded-xl bg-primary px-5 text-primary-foreground dark:bg-card dark:text-foreground"
           >
             {buscando ? '...' : <Search className="h-4 w-4" />}
           </Button>
@@ -325,7 +325,7 @@ function EditarPagamentosStep({ pedido, onConfirm }) {
         <Button
           onClick={handleConfirm}
           disabled={Math.abs(diferenca) > 0.01}
-          className="h-14 w-full rounded-2xl bg-background text-base font-semibold text-white dark:bg-card dark:text-foreground"
+          className="h-14 w-full rounded-2xl bg-primary text-base font-semibold text-primary-foreground dark:bg-card dark:text-foreground"
           style={{ minHeight: 56 }}
         >
           Salvar Alteração
@@ -410,7 +410,7 @@ export default function AlterarPagamentoDialog({ open, onClose }) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={(nextOpen) => { if (!nextOpen) handleClose(); }}>
       <DialogContent className="m-0 flex h-full max-h-none w-full max-w-none flex-col rounded-none bg-muted/40 p-0 dark:bg-background">
         <div className="flex flex-shrink-0 items-center border-b border-border/40 bg-card px-4 py-3 dark:border-border/40 dark:bg-muted">
           <button

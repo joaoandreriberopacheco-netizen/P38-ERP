@@ -5,43 +5,74 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Truck, Package, Calendar, AlertTriangle, CheckCircle2, ChevronDown, Plus, Check, X, Search, Anchor, Route, ClipboardList, ShipWheel, Loader2 } from 'lucide-react';
+import { Truck, Package, Calendar, AlertTriangle, CheckCircle2, ChevronDown, Plus, Check, X, Search, Route, ClipboardList, ShipWheel, Loader2, Boxes } from 'lucide-react';
 import { toast } from 'sonner';
 import FluvialTripSelectorFullscreen from '@/components/compras/FluvialTripSelectorFullscreen';
+import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
 import { agora, dataHoje, meioDiaSistemaISO, toLocalDateKey, formatarLogTime } from '@/components/utils/dateUtils';
 import { logDespachoAudit, InformarDespachoAuditStrip } from '@/components/compras/informarEmbarqueAudit.jsx';
 import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
 import { saveEmbarqueItem } from '@/functions/saveEmbarqueItem';
+import { buildItensCanonicosEmbarque } from '@/lib/buildEmbarqueItensCanonicos';
+import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 import { invokeRecalcularConclusaoPedidoCompra } from '@/lib/p38StockRecalc';
+import {
+  buildTransportadoraPersistPayload,
+  resolveAndMatchTransportadora,
+} from '@/lib/resolveTransportadora';
+import {
+  buildPurchaseUnitOptions,
+  calculateBaseQuantity,
+  commercialQuantityFromBase,
+  formatCommercialQuantity,
+  getItemCompraExibicaoVitrine,
+  getUnidadeBySiglaCanonical,
+  hasAlternativeUnits,
+} from '@/lib/productUnits';
+import {
+  buildItemEmbarquePersistido,
+  buildUnidadeLinhaInicial,
+  carregarProdutosMap,
+  enrichLinhaEmbarque as enrichLinhaDespacho,
+  pedidaBaseItem,
+  quantidadeApresentacaoEmbarqueItem,
+  quantidadeBaseEmbarqueItem,
+  resolveFatorLinhaEmbarque as resolveFatorLinhaDespacho,
+  resolveUnidadeLinha,
+} from '@/lib/embarqueVitrineHelpers';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
-function calcularJaEmbarcadoSemEmbarque(pedido, embarqueExistenteId) {
+function calcularJaEmbarcadoBaseSemEmbarque(pedido, embarqueExistenteId) {
   const map = {};
-  const embarques = Array.isArray(pedido?._embarques) ? pedido._embarques : (pedido?.embarques_registrados || []);
+  const embarques = Array.isArray(pedido?._embarques) ? pedido._embarques : [];
   embarques.forEach((emb) => {
     if (embarqueExistenteId && emb.id === embarqueExistenteId) return;
-    (emb.itens || emb.itens_embarcados || []).forEach((item) => {
+    getEmbarqueItensLinhas(emb).forEach((item) => {
       const prev = map[item.produto_id] || 0;
-      map[item.produto_id] = roundToTwoDecimals(prev + (Number(item.quantidade_embarcada) || 0));
+      map[item.produto_id] = roundToTwoDecimals(prev + quantidadeBaseEmbarqueItem(item));
     });
   });
   return map;
 }
 
-function calcularStatusEmbarque(itens, jaEmbarcado, qtdEmbarque, selectedItems) {
-  let totalPedido = 0;
-  let totalEmbarcado = 0;
+function calcularStatusEmbarque(itens, jaEmbarcadoBase, qtdEmbarque, selectedItems, unidadeLinhaMap, produtosMap) {
+  let totalPedidoBase = 0;
+  let totalEmbarcadoBase = 0;
   itens.forEach((item) => {
-    const pedida = item.quantidade || 0;
-    const anterior = jaEmbarcado[item.produto_id] || 0;
+    const pedidaBase = pedidaBaseItem(item);
+    const anteriorBase = jaEmbarcadoBase[item.produto_id] || 0;
     const selecionado = selectedItems[item.produto_id] !== false;
-    const nova = selecionado ? roundToTwoDecimals(parseFloat(qtdEmbarque[item.produto_id]) || 0) : 0;
-    totalPedido = roundToTwoDecimals(totalPedido + pedida);
-    totalEmbarcado = roundToTwoDecimals(totalEmbarcado + Math.min(anterior + nova, pedida));
+    const produto = produtosMap[item.produto_id];
+    const linha = resolveUnidadeLinha(item, produto, unidadeLinhaMap, item.produto_id);
+    const novaBase = selecionado
+      ? calculateBaseQuantity(parseFloat(qtdEmbarque[item.produto_id]) || 0, linha.fator)
+      : 0;
+    totalPedidoBase = roundToTwoDecimals(totalPedidoBase + pedidaBase);
+    totalEmbarcadoBase = roundToTwoDecimals(totalEmbarcadoBase + Math.min(anteriorBase + novaBase, pedidaBase));
   });
-  if (totalEmbarcado <= 0) return 'Nenhum';
-  if (totalEmbarcado >= totalPedido) return 'Total';
+  if (totalEmbarcadoBase <= 0) return 'Nenhum';
+  if (totalEmbarcadoBase >= totalPedidoBase - 0.01) return 'Total';
   return 'Parcial';
 }
 
@@ -53,7 +84,7 @@ function calcularPercentualValorEmbarcado(pedido, embarquesAtualizados) {
   const qtdPorProduto = {};
   (embarquesAtualizados || []).forEach((emb) => {
     if (emb.status === 'Pendente') return;
-    (emb.itens_embarcados || []).forEach((item) => {
+    getEmbarqueItensLinhas(emb).forEach((item) => {
       const prevQ = qtdPorProduto[item.produto_id] || 0;
       qtdPorProduto[item.produto_id] = roundToTwoDecimals(prevQ + (Number(item.quantidade_embarcada) || 0));
     });
@@ -67,16 +98,9 @@ function calcularPercentualValorEmbarcado(pedido, embarquesAtualizados) {
   return Math.min(100, Number(((valorEmbarcado / valorTotalPedido) * 100).toFixed(2)));
 }
 
-function getItensEmbarque(embarque) {
-  if (Array.isArray(embarque?.itens_embarcados) && embarque.itens_embarcados.length > 0) {
-    return embarque.itens_embarcados;
-  }
-  return Array.isArray(embarque?.itens) ? embarque.itens : [];
-}
-
 // ── TransportadoraSearch ──────────────────────────────────────────────────────
 
-function TransportadoraSearch({ transportadoras, value, onChange, onCriarNova }) {
+function TransportadoraSearch({ transportadoras, value, onChange, onCriarNova, displayNome }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [criando, setCriando] = useState(false);
@@ -85,6 +109,7 @@ function TransportadoraSearch({ transportadoras, value, onChange, onCriarNova })
   const ref = useRef(null);
 
   const selected = transportadoras.find(t => t.id === value);
+  const labelExibicao = selected?.nome || (value && displayNome) || null;
 
   const filtered = useMemo(() => {
     if (!query.trim()) return transportadoras.slice(0, 10);
@@ -124,8 +149,8 @@ function TransportadoraSearch({ transportadoras, value, onChange, onCriarNova })
         className="w-full h-12 rounded-xl bg-muted/50 shadow-sm px-4 flex items-center gap-3 text-left"
       >
         <Truck className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-        <span className={`flex-1 text-sm truncate ${selected ? 'text-foreground' : 'text-muted-foreground'}`}>
-          {selected ? selected.nome : 'Selecione ou busque...'}
+        <span className={`flex-1 text-sm truncate ${labelExibicao ? 'text-foreground' : 'text-muted-foreground'}`}>
+          {labelExibicao || 'Selecione ou busque...'}
         </span>
         {value && <button type="button" onClick={e => { e.stopPropagation(); onChange(''); }} className="p-1"><X className="w-3.5 h-3.5 text-muted-foreground" /></button>}
         <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -210,6 +235,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
   const [eventoLogisticoId, setEventoLogisticoId] = useState('');
   const [eventoVinculado, setEventoVinculado] = useState(null);
   const [transportadoraId, setTransportadoraId] = useState('');
+  const [transportadoraNome, setTransportadoraNome] = useState('');
   const [dataDespacho, setDataDespacho] = useState('');
   const [eta, setEta] = useState('');
   const [volumes, setVolumes] = useState([]);
@@ -219,6 +245,9 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
   const [showTripSelector, setShowTripSelector] = useState(false);
   const [qtdEmbarque, setQtdEmbarque] = useState({});
   const [selectedItems, setSelectedItems] = useState({});
+  const [unidadeLinha, setUnidadeLinha] = useState({});
+  const [produtosMap, setProdutosMap] = useState({});
+  const [unitSelector, setUnitSelector] = useState({ open: false, produtoId: null, product: null });
   const [fornecedores, setFornecedores] = useState([]);
   const [fornecedorLocal, setFornecedorLocal] = useState({ id: '', nome: '' });
   const [podeEscolherFornecedor, setPodeEscolherFornecedor] = useState(false);
@@ -228,8 +257,8 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
     return eventosLogisticos.find((evento) => evento.id === eventoLogisticoId) || eventoVinculado || null;
   }, [eventosLogisticos, eventoLogisticoId, eventoVinculado]);
 
-  const jaEmbarcado = useMemo(() =>
-    calcularJaEmbarcadoSemEmbarque(pedido, embarqueExistente?.id),
+  const jaEmbarcadoBase = useMemo(() =>
+    calcularJaEmbarcadoBaseSemEmbarque(pedido, embarqueExistente?.id),
     [pedido, embarqueExistente]
   );
 
@@ -248,48 +277,96 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
     setFornecedorLocal({ id: pedido.fornecedor_id || '', nome: pedido.fornecedor_nome || '' });
     setPodeEscolherFornecedor(false);
     setActiveTab('transporte');
+    setUnidadeLinha({});
+
+    const jaBase = calcularJaEmbarcadoBaseSemEmbarque(pedido, embarqueExistente?.id);
+    const initUnidade = {};
+    const initQtd = {};
+    const initSel = {};
+
     if (isEdicao) {
       setDataDespacho(embarqueExistente.data_embarque ? toLocalDateKey(new Date(embarqueExistente.data_embarque)) : dataHoje());
       setTransportadoraId(embarqueExistente.transportadora_id || '');
+      setTransportadoraNome(embarqueExistente.transportadora_nome || '');
       setEventoLogisticoId(embarqueExistente.evento_logistico_id || '');
       const etaVal = embarqueExistente.eta
         ? toLocalDateKey(new Date(embarqueExistente.eta))
         : '';
       setEta(etaVal);
-      // Carrega volumes — verifica ambos campos (retrocompatibilidade)
       const volsCarregados = (embarqueExistente.volumes_detalhados && Array.isArray(embarqueExistente.volumes_detalhados) && embarqueExistente.volumes_detalhados.length > 0)
         ? embarqueExistente.volumes_detalhados
         : [];
       setVolumes(volsCarregados);
       setObservacoes(embarqueExistente.observacoes || '');
-      const initQtd = {};
-      const initSel = {};
-      const itensDoEmbarque = getItensEmbarque(embarqueExistente);
+      const itensDoEmbarque = getEmbarqueItensLinhas(embarqueExistente);
       (pedido.itens || []).forEach((item) => {
-        const embItem = itensDoEmbarque.find(i => i.produto_id === item.produto_id);
-        initQtd[item.produto_id] = embItem ? String(embItem.quantidade_embarcada) : '0';
-        initSel[item.produto_id] = !!embItem;
+        const produto = null;
+        const embItem = itensDoEmbarque.find((i) => i.produto_id === item.produto_id);
+        const linha = buildUnidadeLinhaInicial(item, produto, embItem);
+        initUnidade[item.produto_id] = linha;
+        if (embItem) {
+          initQtd[item.produto_id] = String(quantidadeApresentacaoEmbarqueItem(embItem, linha));
+          initSel[item.produto_id] = quantidadeBaseEmbarqueItem(embItem) > 0;
+        } else {
+          initQtd[item.produto_id] = '0';
+          initSel[item.produto_id] = false;
+        }
       });
-      setQtdEmbarque(initQtd);
-      setSelectedItems(initSel);
     } else {
       setDataDespacho(dataHoje());
       setTransportadoraId('');
+      setTransportadoraNome('');
       setEventoLogisticoId('');
       setEventoVinculado(null);
       setEta('');
       setVolumes([]);
       setObservacoes('');
-      const initQtd = {};
-      const initSel = {};
       (pedido.itens || []).forEach((item) => {
-        const pendente = Math.max(0, (item.quantidade || 0) - (jaEmbarcado[item.produto_id] || 0));
-        initQtd[item.produto_id] = pendente > 0 ? String(pendente) : '0';
-        initSel[item.produto_id] = pendente > 0;
+        const linha = buildUnidadeLinhaInicial(item, null);
+        initUnidade[item.produto_id] = linha;
+        const pedidaBase = pedidaBaseItem(item);
+        const anteriorBase = jaBase[item.produto_id] || 0;
+        const pendenteBase = Math.max(0, pedidaBase - anteriorBase);
+        initQtd[item.produto_id] = pendenteBase > 0
+          ? String(commercialQuantityFromBase(pendenteBase, linha.fator, linha.unidade))
+          : '0';
+        initSel[item.produto_id] = pendenteBase > 0;
       });
-      setQtdEmbarque(initQtd);
-      setSelectedItems(initSel);
     }
+
+    setQtdEmbarque(initQtd);
+    setSelectedItems(initSel);
+    setUnidadeLinha(initUnidade);
+
+    carregarProdutosMap(pedido.itens || []).then((map) => {
+      setProdutosMap(map);
+      const unidadeAtualizada = { ...initUnidade };
+      const qtdAtualizada = { ...initQtd };
+      (pedido.itens || []).forEach((item) => {
+        const produto = map[item.produto_id];
+        if (!produto) return;
+        if (isEdicao) {
+          const itensDoEmbarque = getEmbarqueItensLinhas(embarqueExistente);
+          const embItem = itensDoEmbarque.find((i) => i.produto_id === item.produto_id);
+          const linha = enrichLinhaDespacho(produto, buildUnidadeLinhaInicial(item, produto, embItem));
+          unidadeAtualizada[item.produto_id] = linha;
+          if (embItem) {
+            qtdAtualizada[item.produto_id] = String(quantidadeApresentacaoEmbarqueItem(embItem, linha));
+          }
+        } else {
+          const linha = enrichLinhaDespacho(produto, buildUnidadeLinhaInicial(item, produto));
+          unidadeAtualizada[item.produto_id] = linha;
+          const pedidaBase = pedidaBaseItem(item);
+          const anteriorBase = jaBase[item.produto_id] || 0;
+          const pendenteBase = Math.max(0, pedidaBase - anteriorBase);
+          qtdAtualizada[item.produto_id] = pendenteBase > 0
+            ? String(commercialQuantityFromBase(pendenteBase, linha.fator, linha.unidade))
+            : '0';
+        }
+      });
+      setUnidadeLinha(unidadeAtualizada);
+      setQtdEmbarque(qtdAtualizada);
+    });
   }, [isOpen, pedido, embarqueExistente]);
 
   const loadTransportadoras = async () => {
@@ -333,7 +410,9 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
     logDespachoAudit({ action: 'viagem_selecionada', eventoId: evento?.id, codigo: evento?.codigo });
     setEventoVinculado(evento || null);
     setEventoLogisticoId(evento?.id || '');
-    setTransportadoraId(evento?.transportadora_id || '');
+    const matched = resolveAndMatchTransportadora(evento, transportadoras);
+    setTransportadoraId(matched.transportadora_id || '');
+    setTransportadoraNome(matched.transportadora_nome || '');
     const dataSaida = evento?.data_saida_origem || evento?.data_referencia;
     const dataEta = evento?.previsao_chegada || evento?.data_chegada_destino;
     if (dataSaida) setDataDespacho(String(dataSaida).slice(0, 10));
@@ -347,13 +426,45 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
   };
 
   const statusPreview = useMemo(() =>
-    calcularStatusEmbarque(pedido?.itens || [], jaEmbarcado, qtdEmbarque, selectedItems),
-    [pedido, jaEmbarcado, qtdEmbarque, selectedItems]
+    calcularStatusEmbarque(
+      pedido?.itens || [],
+      jaEmbarcadoBase,
+      qtdEmbarque,
+      selectedItems,
+      unidadeLinha,
+      produtosMap,
+    ),
+    [pedido, jaEmbarcadoBase, qtdEmbarque, selectedItems, unidadeLinha, produtosMap]
   );
+
+  const handleConfirmUnitDespacho = (unitOption) => {
+    const produtoId = unitSelector.produtoId;
+    if (!produtoId || !unitOption) return;
+    const item = (pedido.itens || []).find((i) => i.produto_id === produtoId);
+    if (!item) return;
+    const linhaAtual = unidadeLinha[produtoId] || buildUnidadeLinhaInicial(item, produtosMap[produtoId]);
+    const qtyAtual = parseFloat(qtdEmbarque[produtoId]) || 0;
+    const baseAtual = calculateBaseQuantity(qtyAtual, linhaAtual.fator);
+    const fatorNovo = resolveFatorLinhaDespacho(produtosMap[produtoId], {
+      unidade: unitOption.unidade,
+      fator: Number(unitOption.fator_conversao) || 1,
+    });
+    const qtyNova = commercialQuantityFromBase(baseAtual, fatorNovo, unitOption.unidade);
+    setUnidadeLinha((prev) => ({
+      ...prev,
+      [produtoId]: enrichLinhaDespacho(produtosMap[produtoId], {
+        unidade: unitOption.unidade,
+        fator: fatorNovo,
+        produto_unidade_id: getUnidadeBySiglaCanonical(produtosMap[produtoId], unitOption.unidade)?.id || '',
+      }),
+    }));
+    setQtdEmbarque((prev) => ({ ...prev, [produtoId]: String(qtyNova) }));
+    setUnitSelector({ open: false, produtoId: null, product: null });
+  };
 
   const totalPesoKg = roundToTwoDecimals(volumes.reduce((s, v) => s + (v.peso_total_kg || 0), 0));
 
-  const bloquearFecharPorPortalAberto = showTripSelector;
+  const bloquearFecharPorPortalAberto = showTripSelector || unitSelector.open;
 
   useEffect(() => {
     if (!isOpen || !pedido) return;
@@ -398,19 +509,26 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
       }
 
       const transportadora = transportadoras.find(t => t.id === transportadoraId);
-      const embarquesExistentes = Array.isArray(pedido._embarques) ? pedido._embarques : (pedido.embarques_registrados || []);
+      const transportadoraPayload = buildTransportadoraPersistPayload(
+        {
+          transportadora_id: transportadoraId,
+          transportadora_nome: transportadora?.nome || transportadoraNome,
+          embarcacao_nome: transportadoraNome,
+        },
+        transportadoras,
+      );
+      const embarquesExistentes = Array.isArray(pedido._embarques) ? pedido._embarques : [];
       const letraExibicao = String.fromCharCode(65 + embarquesExistentes.length);
       const itensEmbarcados = (pedido.itens || [])
         .filter(item => selectedItems[item.produto_id])
-        .map(item => ({
-          produto_id: item.produto_id,
-          produto_nome: item.produto_nome,
-          quantidade_pedida: item.quantidade,
-          quantidade_embarcada: roundToTwoDecimals(parseFloat(qtdEmbarque[item.produto_id]) || 0),
-          unidade_medida: item.unidade_medida
-        }))
+        .map(item => {
+          const produto = produtosMap[item.produto_id];
+          const linha = resolveUnidadeLinha(item, produto, unidadeLinha, item.produto_id);
+          const qEmb = roundToTwoDecimals(parseFloat(qtdEmbarque[item.produto_id]) || 0);
+          return buildItemEmbarquePersistido(item, produto, linha, qEmb);
+        })
         .filter(i => i.quantidade_embarcada > 0);
-      const itensJaLancados = (embarqueExistente?.itens_embarcados || embarqueExistente?.itens || []).filter(
+      const itensJaLancados = getEmbarqueItensLinhas(embarqueExistente).filter(
         (item) => (Number(item?.quantidade_embarcada) || 0) > 0
       );
       const podeSalvarSoTransporte = isEdicao && itensEmbarcados.length === 0 && itensJaLancados.length > 0;
@@ -420,18 +538,16 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
         return;
       }
 
-      // Volumes: texto descritivo resumido para campo legado
-      // Volumes: salvar no campo volumes_detalhados (estruturado) + volumes (legado texto)
       const volumesTexto = volumes.length > 0
         ? volumes.map(v => `${v.quantidade}x ${v.descricao || 'sem descrição'}`).join(', ')
         : '';
       const volumesDetalhados = volumes.length > 0 ? volumes : [];
 
-      const payloadEmbarque = {
+      const payloadMetadados = {
         data_embarque: dataDespacho ? meioDiaSistemaISO(dataDespacho) : (embarqueExistente?.data_embarque || agora()),
         eta: meioDiaSistemaISO(eta),
-        transportadora_id: transportadoraId,
-        transportadora_nome: transportadora?.nome || '',
+        transportadora_id: transportadoraPayload.transportadora_id,
+        transportadora_nome: transportadoraPayload.transportadora_nome,
         fornecedor_id: fornecedorIdFinal,
         fornecedor_nome: fornecedorNomeFinal,
         evento_logistico_id: eventoLogisticoId || '',
@@ -439,15 +555,11 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
         volumes_detalhados: volumesDetalhados,
         peso_kg: totalPesoKg,
         observacoes,
-        itens: podeSalvarSoTransporte ? (embarqueExistente?.itens || embarqueExistente?.itens_embarcados || []) : itensEmbarcados,
-        itens_embarcados: podeSalvarSoTransporte ? (embarqueExistente?.itens_embarcados || embarqueExistente?.itens || []) : itensEmbarcados,
-        status: 'Pendente'
+        status: 'Pendente',
       };
 
       let embarqueIdSalvo = embarqueExistente?.id || null;
-      if (isEdicao) {
-        await base44.entities.Embarque.update(embarqueExistente.id, payloadEmbarque);
-      } else {
+      if (!isEdicao) {
         const embCriado = await base44.entities.Embarque.create({
           pedido_compra_id: pedido.id,
           pedido_compra_numero: pedido.numero,
@@ -457,60 +569,42 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
           codigo_exibicao: `${pedido.numero}-${letraExibicao}`,
           tipo: 'Embarque',
           status_recebimento: 'Pendente',
-          ...payloadEmbarque
+          ...payloadMetadados,
         });
         embarqueIdSalvo = embCriado?.id || null;
       }
 
-      const linhasComQuantidade = (payloadEmbarque.itens_embarcados || payloadEmbarque.itens || []).filter(
-        (it) => it?.produto_id && (Number(it?.quantidade_embarcada) || 0) > 0
-      );
+      if (!embarqueIdSalvo) {
+        toast.error('Não foi possível identificar o embarque para gravar as linhas.');
+        return;
+      }
+
+      if (!podeSalvarSoTransporte) {
+        const itensCanonicos = buildItensCanonicosEmbarque(itensEmbarcados, pedido.itens || []);
+        if (itensCanonicos.length === 0) {
+          toast.error('Não foi possível gravar as linhas do despacho. Verifique produto e quantidades.');
+          return;
+        }
+        await saveEmbarqueItem({
+          action: 'replaceAll',
+          embarque_id: embarqueIdSalvo,
+          items: itensCanonicos,
+        });
+      }
+
+      if (isEdicao) {
+        await base44.entities.Embarque.update(embarqueExistente.id, payloadMetadados);
+      }
+
+      const linhasComQuantidade = podeSalvarSoTransporte
+        ? itensJaLancados
+        : itensEmbarcados.filter((it) => it?.produto_id && (Number(it?.quantidade_embarcada) || 0) > 0);
       const nProdutosVinculados = linhasComQuantidade.length;
       const totalUnidadesEmbarcadas = linhasComQuantidade.reduce(
         (s, i) => s + (Number(i.quantidade_embarcada) || 0),
         0
       );
 
-      // Sincronia canonica de EmbarqueItem (espelho recomposto pelo backend).
-      let sincroniaCanonical = 'nao_aplicavel';
-      if (embarqueIdSalvo && Array.isArray(payloadEmbarque?.itens) && nProdutosVinculados > 0) {
-        sincroniaCanonical = 'pendente';
-        try {
-          const itensCanonicos = payloadEmbarque.itens
-            .map((it, idx) => ({
-              id: it?.embarque_item_id || it?.id || undefined,
-              produto_id: it?.produto_id || '',
-              produto_unidade_id: it?.produto_unidade_id || '',
-              pedido_compra_item_id: it?.pedido_compra_item_id || '',
-              unidade_sigla: it?.unidade_medida || '',
-              quantidade_pedida_comercial: Number(it?.quantidade_pedida) || 0,
-              quantidade_embarcada_comercial: Number(it?.quantidade_embarcada) || 0,
-              quantidade_recebida_comercial: Number(it?.quantidade_recebida) || 0,
-              divergencia_tipo: it?.divergencia_tipo || 'Nenhuma',
-              produto_id_recebido_diferente: it?.produto_id_recebido_diferente || '',
-              produto_nome_recebido_diferente: it?.produto_nome_recebido_diferente || '',
-              acordo_financeiro_lancamento_id: it?.acordo_financeiro_lancamento_id || '',
-              ordem: idx,
-            }))
-            .filter((it) => it.produto_id && it.quantidade_embarcada_comercial > 0);
-
-          if (itensCanonicos.length > 0) {
-            await saveEmbarqueItem({
-              action: 'replaceAll',
-              embarque_id: embarqueIdSalvo,
-              items: itensCanonicos,
-            });
-            sincroniaCanonical = 'ok';
-          } else {
-            sincroniaCanonical = 'linhas_invalidas';
-          }
-        } catch (canonicalErr) {
-          sincroniaCanonical = 'erro';
-          console.warn('Sincronia canonica de EmbarqueItem falhou:', canonicalErr?.message || canonicalErr);
-        }
-      }
-
-      // Cloud opcional: falha não deve invalidar despacho já gravado (mesmo padrão que RecepcionarEmbarque)
       await invokeRecalcularConclusaoPedidoCompra(base44, pedido.id);
 
       const msgOk = isEdicao ? 'Despacho atualizado com sucesso.' : 'Despacho registrado com sucesso.';
@@ -519,22 +613,11 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
           ? `${nProdutosVinculados} produto(s) com quantidades embarcadas (${formatQuantity(totalUnidadesEmbarcadas)} un.). `
           : 'Sem linhas novas por produto neste envio (apenas transporte/dados logísticos). ';
       const seguirRecepcao = 'A seguir abrimos a Recepção.';
-      const avisoSync =
-        sincroniaCanonical === 'erro' || sincroniaCanonical === 'linhas_invalidas'
-          ? ' Atenção: a sincronização extra das linhas (EmbarqueItem) falhou ou ficou incompleta — confira na Recepção.'
-          : '';
 
-      if (sincroniaCanonical === 'erro' || sincroniaCanonical === 'linhas_invalidas') {
-        toast.warning(isEdicao ? 'Despacho guardado com ressalvas' : 'Despacho registado com ressalvas', {
-          description: `${resumoItens}${seguirRecepcao}${avisoSync}`,
-          duration: 9000,
-        });
-      } else {
-        toast.success(msgOk, {
-          description: `${resumoItens}${seguirRecepcao}`,
-          duration: 6500,
-        });
-      }
+      toast.success(msgOk, {
+        description: `${resumoItens}${seguirRecepcao}`,
+        duration: 6500,
+      });
       await new Promise((r) => setTimeout(r, PAUSA_ANTES_RECEPCAO_MS));
       onSuccess?.();
       onIrParaRecepcao?.();
@@ -574,6 +657,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
             if (!bloquearFecharPorPortalAberto) return;
             e.preventDefault();
             if (showTripSelector) setShowTripSelector(false);
+            if (unitSelector.open) setUnitSelector({ open: false, produtoId: null, product: null });
             logDespachoAudit({ action: 'escape_fechou_portal' });
           }}
         >
@@ -690,7 +774,12 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                   <TransportadoraSearch
                     transportadoras={transportadoras}
                     value={transportadoraId}
-                    onChange={setTransportadoraId}
+                    displayNome={transportadoraNome}
+                    onChange={(id) => {
+                      setTransportadoraId(id);
+                      const encontrada = transportadoras.find((t) => t.id === id);
+                      setTransportadoraNome(encontrada?.nome || '');
+                    }}
                     onCriarNova={nova => setTransportadoras(prev => [...prev, nova])}
                   />
                 </div>
@@ -718,7 +807,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                       <p className="text-xs text-muted-foreground">
                         Ao escolher a viagem, datas e transportadora foram preenchidas; você pode ajustar manualmente.
                       </p>
-                      <button type="button" onClick={() => { setEventoLogisticoId(''); setEventoVinculado(null); }} className="shrink-0 text-xs text-teal-400 hover:text-teal-300">
+                      <button type="button" onClick={() => { setEventoLogisticoId(''); setEventoVinculado(null); setTransportadoraNome(''); }} className="shrink-0 text-xs text-teal-400 hover:text-teal-300">
                         Limpar vínculo
                       </button>
                     </div>
@@ -754,12 +843,19 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
 
                 <div className="space-y-2">
                   {(pedido.itens || []).map(item => {
-                    const pedida = item.quantidade || 0;
-                    const anterior = jaEmbarcado[item.produto_id] || 0;
-                    const pendente = Math.max(0, pedida - anterior);
+                    const produto = produtosMap[item.produto_id];
+                    const linha = resolveUnidadeLinha(item, produto, unidadeLinha, item.produto_id);
+                    const pedidaBase = pedidaBaseItem(item);
+                    const anteriorBase = jaEmbarcadoBase[item.produto_id] || 0;
+                    const pendenteBase = Math.max(0, pedidaBase - anteriorBase);
+                    const pedidaExib = commercialQuantityFromBase(pedidaBase, linha.fator, linha.unidade);
+                    const pendenteExib = commercialQuantityFromBase(pendenteBase, linha.fator, linha.unidade);
+                    const anteriorExib = commercialQuantityFromBase(anteriorBase, linha.fator, linha.unidade);
                     const selecionado = selectedItems[item.produto_id] !== false;
                     const emb = parseFloat(qtdEmbarque[item.produto_id]) || 0;
-                    const excede = emb > pendente;
+                    const excede = emb > pendenteExib + 0.02;
+                    const podeTrocarUnidade = produto && hasAlternativeUnits(produto) && buildPurchaseUnitOptions(produto).length > 1;
+                    const exibVitrine = getItemCompraExibicaoVitrine(item, produto);
 
                     return (
                       <div
@@ -776,13 +872,37 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                           </button>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-foreground leading-tight">{item.produto_nome}</p>
+                            {exibVitrine.unidade_medida !== (item.unidade_medida || '') && (
+                              <p className="text-[10px] text-muted-foreground mt-0.5">
+                                Pedido em {item.unidade_medida || 'UN'} · vitrine {exibVitrine.unidade_medida}
+                              </p>
+                            )}
                           </div>
+                          {podeTrocarUnidade ? (
+                            <button
+                              type="button"
+                              onClick={() => setUnitSelector({ open: true, produtoId: item.produto_id, product: produto })}
+                              className="shrink-0 inline-flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-[10px] font-semibold text-cyan-700 dark:text-cyan-300 hover:bg-muted/80"
+                            >
+                              <Boxes className="w-3 h-3" aria-hidden />
+                              {linha.unidade}
+                            </button>
+                          ) : (
+                            <span className="shrink-0 text-[10px] font-semibold uppercase text-muted-foreground px-1">
+                              {linha.unidade}
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex items-center justify-between gap-3 pl-8">
                           <p className="text-xs text-muted-foreground flex-1">
-                            Ped: <span className="font-medium">{pedida}</span> {item.unidade_medida}
-                            {anterior > 0 && <span className="ml-1.5">· já emb: {anterior}</span>}
+                            Ped: <span className="font-medium">{formatCommercialQuantity(pedidaExib, linha.unidade)}</span> {linha.unidade}
+                            {pendenteExib < pedidaExib && (
+                              <span className="ml-1.5">· pend: {formatCommercialQuantity(pendenteExib, linha.unidade)}</span>
+                            )}
+                            {anteriorExib > 0 && (
+                              <span className="ml-1.5">· já emb: {formatCommercialQuantity(anteriorExib, linha.unidade)}</span>
+                            )}
                             {excede && selecionado && <span className="ml-1.5 text-red-400">· excede!</span>}
                           </p>
                           <div className="flex-shrink-0 flex flex-col items-end gap-0.5">
@@ -791,11 +911,12 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                               inputMode="decimal"
                               disabled={!selecionado}
                               value={qtdEmbarque[item.produto_id] ?? ''}
+                              onFocus={(e) => e.target.select()}
                               onChange={e => setQtdEmbarque(prev => ({ ...prev, [item.produto_id]: e.target.value.replace(',', '.') }))}
                               className={`w-14 h-8 text-xs text-right rounded-lg bg-card dark:bg-muted text-foreground dark:text-foreground disabled:opacity-40 placeholder:text-muted-foreground px-2 border-0 shadow-sm ${excede && selecionado ? 'ring-1 ring-red-400' : ''}`}
                               placeholder="0"
                             />
-                            <span className="text-[9px] text-muted-foreground uppercase">{item.unidade_medida}</span>
+                            <span className="text-[9px] text-muted-foreground uppercase">{linha.unidade}</span>
                           </div>
                         </div>
                       </div>
@@ -840,6 +961,14 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
           onSelect={handleSelectTrip}
         />
       ) : null}
+
+      <ProductUnitSelectorDialog
+        open={unitSelector.open}
+        product={unitSelector.product}
+        mode="purchase"
+        onClose={() => setUnitSelector({ open: false, produtoId: null, product: null })}
+        onConfirm={handleConfirmUnitDespacho}
+      />
 
       <InformarDespachoAuditStrip isOpen={isOpen} />
     </>

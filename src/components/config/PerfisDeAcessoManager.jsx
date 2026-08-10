@@ -91,7 +91,7 @@ export default function PerfisDeAcessoManager() {
         <Button
           onClick={() => setEditando('novo')}
           size="sm"
-          className="bg-primary hover:bg-background text-white dark:bg-muted dark:text-foreground gap-1.5 h-8 px-3"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:text-foreground gap-1.5 h-8 px-3"
         >
           <Plus className="w-3.5 h-3.5" />
           <span className="text-xs">Novo Perfil</span>

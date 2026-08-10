@@ -25,16 +25,8 @@ function hierarchyKey(parts) {
 }
 
 function resolveCustoCalculado(produto) {
-  const salvo = Number(produto?.preco_custo_calculado) || 0;
-  if (salvo > 0) return salvo;
-  return (
-    (Number(produto?.valor_compra) || 0) +
-    (Number(produto?.custo_frete_padrao) || 0) +
-    (Number(produto?.custo_imposto1_padrao) || 0) +
-    (Number(produto?.custo_imposto2_padrao) || 0) +
-    (Number(produto?.custo_outros_padrao) || 0) -
-    (Number(produto?.desconto_compra_padrao) || 0)
-  );
+  const salvo = Number(produto?.preco_custo_calculado);
+  return Number.isFinite(salvo) ? salvo : 0;
 }
 
 function lineQuantityBase(item) {

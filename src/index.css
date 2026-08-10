@@ -15,6 +15,21 @@
   }
 }
 
+@keyframes p38-nav-progress {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(420%);
+  }
+}
+
+.p38-nav-pending {
+  opacity: 0.72;
+  transform: scale(0.98);
+  transition: opacity 80ms ease-out, transform 80ms ease-out;
+}
+
 
 /* :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -89,41 +104,52 @@ button:focus-visible {
 
 @layer base {
   :root {
-    /* P38 claro — branco limpo + cinza editorial + verde mediterrâneo queimado */
-    --background: 220 8% 98%;
-    --foreground: 220 16% 18%;
+    /* P38 claro — fundo verde-cinza suave + oliva mediterrâneo + cítricos */
+    --background: 82 12% 97%;
+    --foreground: 82 14% 16%;
     --card: 0 0% 100%;
-    --card-foreground: 220 16% 18%;
+    --card-foreground: 82 14% 16%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 16% 18%;
+    --popover-foreground: 82 14% 16%;
     --primary: 82 18% 28%;
     --primary-foreground: 0 0% 99%;
-    --secondary: 220 10% 95%;
-    --secondary-foreground: 82 16% 24%;
-    --muted: 220 10% 96%;
-    --muted-foreground: 220 8% 42%;
-    --accent: 82 10% 93%;
-    --accent-foreground: 82 18% 26%;
+    --secondary: 82 10% 94%;
+    --secondary-foreground: 82 16% 22%;
+    --muted: 82 8% 94%;
+    --muted-foreground: 82 6% 38%;
+    --accent: 43 55% 92%;
+    --accent-foreground: 82 18% 24%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 220 12% 90%;
-    --input: 220 12% 90%;
+    --border: 82 10% 86%;
+    --input: 82 10% 86%;
     --ring: 82 18% 28%;
     --chart-1: 82 18% 32%;
     --chart-2: 173 58% 39%;
-    --chart-3: 221 39% 22%;
-    --chart-4: 43 74% 55%;
-    --chart-5: 27 87% 55%;
+    --chart-3: 82 14% 22%;
+    --chart-4: 43 74% 52%;
+    --chart-5: 27 87% 52%;
+    /* Paleta P38 — acentos cítricos e oliva (uso em utilitários Tailwind) */
+    --p38-olive: 82 18% 28%;
+    --p38-lime: 78 55% 51%;
+    --p38-citrus-yellow: 43 74% 52%;
+    --p38-citrus-orange: 27 87% 52%;
+    --p38-mediterranean: 82 18% 36%;
+    /* Tipografia — claro mais robusto que escuro */
+    --p38-font-weight-body: 400;
+    --p38-font-weight-strong: 500;
+    --p38-font-weight-heading: 600;
     --app-font-scale: 1;
     --radius: 0.75rem;
-    --sidebar-background: 264 8% 12%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 76 61% 50%;
-    --sidebar-primary-foreground: 264 8% 12%;
-    --sidebar-accent: 240 10% 16%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 216 10% 28%;
-    --sidebar-ring: 76 61% 50%;
+    /* Sidebar claro — oliva suave, não carvão */
+    --sidebar-background: 82 12% 97%;
+    --sidebar-foreground: 82 14% 16%;
+    --sidebar-primary: 82 18% 28%;
+    --sidebar-primary-foreground: 0 0% 99%;
+    --sidebar-accent: 82 10% 92%;
+    --sidebar-accent-foreground: 82 16% 22%;
+    --sidebar-border: 82 10% 86%;
+    --sidebar-ring: 82 18% 28%;
 
     /* GlacialBottomNav: alinhar FAB + padding de scroll (mobile) */
     --p38-bottom-nav-bar: 68px;
@@ -184,6 +210,10 @@ button:focus-visible {
     --scrollbar-thumb: rgba(161, 161, 161, 0.55);
     --scrollbar-thumb-hover: rgba(191, 191, 191, 0.72);
     --scrollbar-thumb-active: rgba(212, 212, 212, 0.88);
+
+    --p38-font-weight-body: 300;
+    --p38-font-weight-strong: 400;
+    --p38-font-weight-heading: 500;
   }
 }
 
@@ -200,8 +230,16 @@ button:focus-visible {
   html,
   body {
     @apply bg-background text-foreground font-sans;
-    font-weight: 300;
+    font-weight: var(--p38-font-weight-body);
     letter-spacing: 0.02em;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: var(--p38-font-weight-heading);
+  }
+
+  strong, b, th {
+    font-weight: var(--p38-font-weight-strong);
   }
 }
 

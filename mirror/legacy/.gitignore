@@ -1,6 +1,0 @@
-# Gerado por mirror:pack-legacy — não versionar artefactos locais
-node_modules/
-dist/
-dist-ssr/
-.env
-.env.*

@@ -3,8 +3,6 @@ import './App.css'
 import { Toaster } from "@/components/ui/sonner"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { FLARE_AND_INSPECTION_UI_ENABLED } from '@/config/devToolsFlags';
-import VisualEditAgent from '@/lib/VisualEditAgent'
 import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
@@ -12,8 +10,6 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { NavigationTransitionProvider } from '@/lib/NavigationTransitionContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-import ModoFlareProvider from '@/features/modo-flare/ModoFlareProvider';
-import CatalogOverlay from '@/features/catalog-overlay/CatalogOverlay';
 import LoginPage from '@/components/auth/LoginPage';
 import AuthCallbackPage from '@/components/auth/AuthCallbackPage';
 import AtivarAcessoPage from '@/components/auth/AtivarAcessoPage';
@@ -109,21 +105,10 @@ function App() {
       <QueryClientProvider client={queryClientInstance}>
         <NavigationTransitionProvider>
           <Router>
-            {FLARE_AND_INSPECTION_UI_ENABLED ? (
-              <ModoFlareProvider>
-                <NavigationTracker />
-                <AuthenticatedApp />
-                <CatalogOverlay />
-              </ModoFlareProvider>
-            ) : (
-              <>
-                <NavigationTracker />
-                <AuthenticatedApp />
-              </>
-            )}
+            <NavigationTracker />
+            <AuthenticatedApp />
           </Router>
           <Toaster />
-          {FLARE_AND_INSPECTION_UI_ENABLED ? <VisualEditAgent /> : null}
         </NavigationTransitionProvider>
       </QueryClientProvider>
     </AuthProvider>

@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { registerJsPdfDin1451Fonts } from '@/lib/jspdfNotoFont';
+import { appendAnexosToPdfDoc } from '@/lib/appendAnexosToPdfDoc';
 
 /** Escala só no eixo Y (glifos mais altos, largura inalterada). PDF Tm: sx=1, sy>1. */
 const PDF_GLYPH_STRETCH_Y = 1.1;
@@ -859,6 +860,7 @@ const normalizeReportVersion = (version) => {
   if (version === 'expandida_mobile_claro') return 'expandida_mobile_claro';
   if (version === 'expandida_mobile') return 'expandida_mobile';
   if (version === 'expandida') return 'expandida';
+  if (version === 'expandida_com_anexos') return 'expandida_com_anexos';
   return 'expandida';
 };
 
@@ -871,13 +873,27 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       kpis = {},
       grupos = [],
       produtos_map: produtosMapFromPayload = {},
+      anexos_por_pedido: anexosPorPedido = {},
     } = payload;
     const normalizedVersion = normalizeReportVersion(version);
 
-    const isMobileClaro = normalizedVersion === 'expandida_mobile_claro';
-    const isMobileClassico = normalizedVersion === 'expandida_mobile';
+    const includeAnexos = normalizedVersion === 'expandida_com_anexos';
+    const layoutVersion = includeAnexos ? 'expandida_enxuta' : normalizedVersion;
+
+    const isMobileClaro = layoutVersion === 'expandida_mobile_claro';
+    const isMobileClassico = layoutVersion === 'expandida_mobile';
     const isMobile = isMobileClaro || isMobileClassico;
-    const isEnxuta = normalizedVersion === 'expandida_enxuta';
+    const isEnxuta = layoutVersion === 'expandida_enxuta';
+
+    const generatedAtStr = new Date().toLocaleString('pt-BR');
+    /** Páginas do relatório completo → metadados do pedido no cabeçalho. */
+    const pagePedidoChrome = {};
+    const RELATORIO_COMPLETO_CHROME = {
+      headerH: 13,
+      footerH: 8,
+      topContentY: 17,
+      bottomPad: 11,
+    };
 
     const produtosMap = { ...produtosMapFromPayload };
 
@@ -902,6 +918,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       black: [0, 0, 0],
       muted: [72, 72, 72],
       line: [110, 110, 110],
+      section: [236, 236, 236],
     };
     /** Recuos do mind map enxuto: 1 embarque → 2 pedido → 3 produtos. */
     const ENXUTO_INDENT = {
@@ -913,6 +930,8 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
     /** Tipografia enxuta — corpo bem legível (DIN 1451 com tamanhos maiores). */
     const ENXUTO_FONT = {
       kpi: 9.5,
+      kpiHighlightLabel: 8.2,
+      kpiHighlightValue: 14.5,
       grupo: 10.5,
       grupoMeta: 8.5,
       pedidoCodigo: 9,
@@ -980,13 +999,21 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       track: [228, 228, 228],
     };
 
-    let y = 16;
+    let y = includeAnexos ? RELATORIO_COMPLETO_CHROME.topContentY : 16;
+
+    const getBottomPad = () => {
+      if (includeAnexos) return RELATORIO_COMPLETO_CHROME.bottomPad;
+      return isMobile ? 4 : 10;
+    };
+    const getNewPageY = () => {
+      if (includeAnexos) return RELATORIO_COMPLETO_CHROME.topContentY;
+      return 14;
+    };
 
     const ensureSpace = (needed = 24) => {
-      const bottomPad = isMobile ? 4 : 10;
-      if (y + needed > pageH - bottomPad) {
+      if (y + needed > pageH - getBottomPad()) {
         doc.addPage();
-        y = 14;
+        y = getNewPageY();
       }
     };
 
@@ -1070,19 +1097,29 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
         doc.setFontSize(13);
         doc.setTextColor(...ENXUTO.black);
-        doc.text('Relatorio de embarques — ENXUTO', M, y);
+        doc.text(
+          includeAnexos ? 'Relatorio COMPLETO de embarques' : 'Relatorio de embarques — ENXUTO',
+          M,
+          y,
+        );
         y += 5.5;
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
         doc.setFontSize(8);
         doc.setTextColor(...ENXUTO.muted);
-        doc.text('A4 compacto   mind map vertical   DIN 1451', M, y);
+        doc.text(
+          includeAnexos
+            ? 'Minuta enxuta + comprovantes embutidos por pedido'
+            : 'A4 compacto   mind map vertical   DIN 1451',
+          M,
+          y,
+        );
         y += 4.5;
         const filtrosLinhas = doc.splitTextToSize(safe(filtros_desc || '-'), CW);
         doc.setFontSize(8.8);
         doc.text(filtrosLinhas[0] || '-', M, y);
         y += 4.5;
         doc.setFontSize(8.2);
-        doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, M, y);
+        doc.text(`Gerado em ${generatedAtStr}`, M, y);
         y += 7;
         return;
       }
@@ -1159,17 +1196,21 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       doc.setTextColor(...C.text);
       doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
       doc.setFontSize(16);
-      const titulo = normalizedVersion === 'expandida_mobile'
-        ? 'Relatorio mobile de embarques'
-        : normalizedVersion === 'expandida_enxuta'
-          ? 'Relatorio ENXUTO de embarques'
-          : 'Relatorio EXPANDIDO de embarques';
+      const titulo = includeAnexos
+        ? 'Relatorio COMPLETO de embarques'
+        : layoutVersion === 'expandida_mobile'
+          ? 'Relatorio mobile de embarques'
+          : layoutVersion === 'expandida_enxuta'
+            ? 'Relatorio ENXUTO de embarques'
+            : 'Relatorio EXPANDIDO de embarques';
       doc.text(safe(titulo), M + 11, y + 9);
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(8);
       doc.setTextColor(...C.muted);
-      const subtitulo = normalizedVersion === 'expandida'
-        ? 'A4 completo · tabela com colunas QTD, UN, VLR, FRETE, CUSTO, VENDA, MARKUP'
+      const subtitulo = layoutVersion === 'expandida'
+        ? includeAnexos
+          ? 'A4 completo · minuta do pedido + comprovantes e anexos embutidos'
+          : 'A4 completo · tabela com colunas QTD, UN, VLR, FRETE, CUSTO, VENDA, MARKUP'
         : '';
       if (subtitulo) {
         doc.text(safe(subtitulo), M + 11, y + 14);
@@ -1185,6 +1226,23 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       y += 32;
     };
 
+    const getPedidosNoRelatorio = () => {
+      if (Array.isArray(grupos) && grupos.length > 0) {
+        return grupos.flatMap((grupo) => grupo.pedidos || []);
+      }
+      return pedidos;
+    };
+
+    const getResumoPedidosListados = () => {
+      const pedidosListados = getPedidosNoRelatorio();
+      const quantidade = pedidosListados.length;
+      const soma = pedidosListados.reduce(
+        (acc, pedido) => acc + getValorRelatorio(pedido, produtosMap),
+        0,
+      );
+      return { quantidade, soma };
+    };
+
     // ════════════════════════════════════════════════════════════════════════
     //  KPIs
     // ════════════════════════════════════════════════════════════════════════
@@ -1197,16 +1255,37 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       ];
 
       if (isEnxuta) {
-        ensureSpace(14);
+        const { quantidade, soma } = getResumoPedidosListados();
+        const boxH = 20;
+        const boxPadX = 5;
+        const colW = (CW - boxPadX * 2) / 2;
+        ensureSpace(boxH + 6);
+        const boxY = y;
+
+        doc.setFillColor(...ENXUTO.section);
+        doc.roundedRect(M, boxY, CW, boxH, 2.5, 2.5, 'F');
+        doc.setDrawColor(...ENXUTO.black);
+        doc.setLineWidth(ENXUTO_LINE_W);
+        doc.roundedRect(M, boxY, CW, boxH, 2.5, 2.5, 'S');
+
+        const labelY = boxY + 6.2;
+        const valueY = boxY + 14.5;
+        const leftX = M + boxPadX;
+        const rightX = M + boxPadX + colW;
+
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-        doc.setFontSize(ENXUTO_FONT.kpi);
-        doc.setTextColor(...ENXUTO.black);
-        doc.text(`Pedidos: ${kpis.totalPedidos || pedidos.length || 0}`, M, y);
-        doc.text(`Pendente: ${moeda(kpis.totalGeral || 0)}`, M + 50, y);
-        doc.text(`Em aberto: ${moeda(kpis.totalEmAberto || 0)}`, M + 100, y);
+        doc.setFontSize(ENXUTO_FONT.kpiHighlightLabel);
         doc.setTextColor(...ENXUTO.muted);
-        doc.text(`Pago/nao entregue: ${moeda(kpis.totalPagoNaoEntregue || 0)}`, M + CW, y, { align: 'right' });
-        y += 8;
+        doc.text('Pedidos listados', leftX, labelY);
+        doc.text('Total', rightX, labelY);
+
+        doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+        doc.setFontSize(ENXUTO_FONT.kpiHighlightValue);
+        doc.setTextColor(...ENXUTO.black);
+        doc.text(String(quantidade), leftX, valueY);
+        doc.text(moeda(soma), M + CW - boxPadX, valueY, { align: 'right' });
+
+        y = boxY + boxH + 6;
         return;
       }
 
@@ -1374,7 +1453,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         valor_total: getValorRelatorio(pedido, produtosMap)
       };
       drawPedidoHeaderCompacto(pedidoParaHeader);
-      const embarque = pedido._embarque || (pedido.embarques_registrados || [])[0] || null;
+      const embarque = pedido._embarque || null;
       const itensEfetivos = itensTela;
       doc.setFontSize(8);
       doc.setTextColor(...C.muted);
@@ -2104,6 +2183,51 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
       const statusRelatorio = normalizarStatusRelatorio(pedido._display_status || pedido.status);
       const itens = mapItensRelatorioComercial(pedido);
+
+      if (includeAnexos) {
+        const colHdrBaselineOffset = 4.2;
+        const colHdrBlockH = 6.2;
+        const headerBlockH = colHdrBlockH + 3;
+        const minPrimeiroItemH = itens.length > 0 ? computeExpandedItemRowH(pedido, itens[0], 'narrow_enxuto', 0) : 0;
+        ensureSpace(headerBlockH + minPrimeiroItemH + 12);
+
+        const blockTop = y;
+        const enxutoTableX = M + ENXUTO_INDENT.produto;
+        drawWideValueColumnHeaders(blockTop + colHdrBaselineOffset, {
+          fontSize: ENXUTO_FONT.colHdr,
+          tableX: enxutoTableX,
+          mutedColor: ENXUTO.muted,
+        });
+        y = blockTop + headerBlockH + 1.5;
+
+        let totCusto = 0;
+        let totVenda = 0;
+        itens.forEach((item) => {
+          const rowH = computeExpandedItemRowH(pedido, item, 'narrow_enxuto', y);
+          ensureSpace(rowH + 5);
+          const drawn = drawExpandedItemRowClean(pedido, item, 'narrow_enxuto', y, 0);
+          totCusto += drawn.totCustoAdd;
+          totVenda += drawn.totVendaAdd;
+          y += drawn.rowBlockH;
+        });
+
+        if (itens.length > 0) {
+          ensureSpace(8);
+          y += 2;
+          doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+          doc.setFontSize(ENXUTO_FONT.footer);
+          doc.setTextColor(...ENXUTO.muted);
+          doc.text(
+            `Custo: ${moedaOuTraco(totCusto)}   Venda ref.: ${moeda(totVenda)}`,
+            M + ENXUTO_INDENT.produto,
+            y,
+          );
+          y += 5;
+        }
+        y += 4;
+        return;
+      }
+
       const pedidoX = M + ENXUTO_INDENT.pedido;
       const pedidoW = CW - ENXUTO_INDENT.pedido;
 
@@ -2232,6 +2356,66 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       y += 6;
     };
 
+    const buildPedidoChrome = (pedido) => ({
+      codigo: getPedidoNumeroRelatorio(pedido),
+      fornecedor: getFornecedorRelatorio(pedido),
+      data: dataFmt(getDataRelatorio(pedido)),
+      eta: dataFmt(getEtaRelatorio(pedido)),
+      transportadora: getTransportadoraRelatorio(pedido),
+      valor: moeda(getValorRelatorio(pedido, produtosMap)),
+      status: normalizarStatusRelatorio(pedido._display_status || pedido.status),
+    });
+
+    const marcarPaginasPedido = (startPage, endPage, chrome) => {
+      for (let page = startPage; page <= endPage; page += 1) {
+        pagePedidoChrome[page] = chrome;
+      }
+    };
+
+    const applyRelatorioCompletoChrome = () => {
+      const total = doc.internal.getNumberOfPages();
+      for (let page = 1; page <= total; page += 1) {
+        doc.setPage(page);
+        const ctx = pagePedidoChrome[page];
+
+        doc.setDrawColor(180, 180, 180);
+        doc.setLineWidth(0.2);
+        doc.line(M, RELATORIO_COMPLETO_CHROME.headerH, pageW - M, RELATORIO_COMPLETO_CHROME.headerH);
+
+        doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+        doc.setFontSize(8);
+        doc.setTextColor(...ENXUTO.black);
+
+        if (ctx) {
+          doc.text(safe(ctx.codigo), M, 5);
+          doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+          doc.setFontSize(7);
+          const metaLine = [ctx.fornecedor, ctx.data, ctx.valor].filter(Boolean).join('  ·  ');
+          doc.text(doc.splitTextToSize(safe(metaLine), CW - 4)[0], M, 9);
+          const linha2 = ctx.transportadora && ctx.transportadora !== 'Sem transportadora'
+            ? `Transportadora: ${safe(ctx.transportadora)}`
+            : `ETA: ${safe(ctx.eta || '-')}   Status: ${safe(ctx.status)}`;
+          doc.setFontSize(6.8);
+          doc.setTextColor(...ENXUTO.muted);
+          doc.text(doc.splitTextToSize(linha2, CW - 4)[0], M, 12.5);
+        } else {
+          doc.text('Relatorio completo de embarques', M, 5);
+          doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+          doc.setFontSize(7);
+          doc.setTextColor(...ENXUTO.muted);
+          doc.text('Indice e resumo do periodo filtrado', M, 9);
+        }
+
+        doc.setDrawColor(200, 200, 200);
+        doc.line(M, pageH - RELATORIO_COMPLETO_CHROME.footerH, pageW - M, pageH - RELATORIO_COMPLETO_CHROME.footerH);
+        doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+        doc.setFontSize(7);
+        doc.setTextColor(...ENXUTO.muted);
+        doc.text(`Gerado em ${generatedAtStr}`, M, pageH - 3.5);
+        doc.text(`Pagina ${page} de ${total}`, pageW - M, pageH - 3.5, { align: 'right' });
+      }
+    };
+
     // ════════════════════════════════════════════════════════════════════════
     //  RENDER PRINCIPAL
     // ════════════════════════════════════════════════════════════════════════
@@ -2246,7 +2430,38 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       return drawExpandido(pedido);
     };
 
-    const renderGrupo = (grupo) => {
+    const appendAnexosDoPedido = async (pedido) => {
+      if (!includeAnexos || !pedido?.id) return;
+      const anexos = anexosPorPedido[pedido.id] || [];
+      if (!anexos.length) return;
+      await appendAnexosToPdfDoc(doc, anexos, {
+        sectionPrefix: `Anexos ${getPedidoNumeroRelatorio(pedido)}`,
+        layout: {
+          margin: M,
+          titleY: RELATORIO_COMPLETO_CHROME.topContentY + 1,
+          contentTop: RELATORIO_COMPLETO_CHROME.topContentY + 6,
+          contentBottom: pageH - RELATORIO_COMPLETO_CHROME.bottomPad,
+        },
+      });
+    };
+
+    let pedidoBlocoIndex = 0;
+
+    const renderPedidoComAnexos = async (pedido) => {
+      const chrome = buildPedidoChrome(pedido);
+      if (includeAnexos && pedidoBlocoIndex > 0) {
+        doc.addPage();
+        y = getNewPageY();
+      }
+      pedidoBlocoIndex += 1;
+      const startPage = doc.internal.getNumberOfPages();
+      renderPedido(pedido);
+      await appendAnexosDoPedido(pedido);
+      const endPage = doc.internal.getNumberOfPages();
+      marcarPaginasPedido(startPage, endPage, chrome);
+    };
+
+    const renderGrupo = async (grupo) => {
       ensureSpace(14);
       if (isMobileClassico) {
         y += 2;
@@ -2299,7 +2514,9 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
           { align: 'right' },
         );
         y += bandH + 2;
-        (grupo.pedidos || []).forEach(renderPedido);
+        for (const pedido of grupo.pedidos || []) {
+          await renderPedidoComAnexos(pedido);
+        }
         y += 4;
         return;
       } else {
@@ -2316,20 +2533,41 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         M += pedidoInset;
         TM += pedidoInset;
         syncLayoutWidths();
-        (grupo.pedidos || []).forEach(renderPedido);
+        for (const pedido of grupo.pedidos || []) {
+          await renderPedidoComAnexos(pedido);
+        }
         M = m0;
         TM = tm0;
         syncLayoutWidths();
         y += 5;
         return;
       }
-      (grupo.pedidos || []).forEach(renderPedido);
+      for (const pedido of grupo.pedidos || []) {
+        await renderPedidoComAnexos(pedido);
+      }
     };
 
     if (Array.isArray(grupos) && grupos.length > 0) {
-      grupos.forEach(renderGrupo);
+      for (const grupo of grupos) {
+        await renderGrupo(grupo);
+      }
     } else {
-      pedidos.forEach(renderPedido);
+      for (const pedido of pedidos) {
+        await renderPedidoComAnexos(pedido);
+      }
+    }
+
+    if (includeAnexos) {
+      applyRelatorioCompletoChrome();
+    } else if (isEnxuta) {
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let page = 1; page <= pageCount; page += 1) {
+        doc.setPage(page);
+        doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+        doc.setFontSize(ENXUTO_FONT.footer);
+        doc.setTextColor(...ENXUTO.muted);
+        doc.text(`Página ${page}/${pageCount}`, pageW / 2, pageH - 6, { align: 'center' });
+      }
     }
 
     const pdfBytes = doc.output('arraybuffer');

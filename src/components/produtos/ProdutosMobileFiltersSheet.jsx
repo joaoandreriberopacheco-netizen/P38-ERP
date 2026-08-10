@@ -6,6 +6,8 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { DEFAULT_PRODUTO_FILTERS } from '@/lib/filterProdutos';
 import ProdutosEstoqueVirtualToggle from '@/components/produtos/ProdutosEstoqueVirtualToggle';
 import ProdutosAnaliseAgrupamentoControl from '@/components/produtos/ProdutosAnaliseAgrupamentoControl';
+import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
+import { CATALOG_SORT_OPTIONS } from '@/lib/catalogProdutoPerformance';
 import ProdutosNumericMetricFilter from '@/components/produtos/ProdutosNumericMetricFilter';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
 import { cn } from '@/components/utils';
@@ -85,6 +87,10 @@ export default function ProdutosMobileFiltersSheet({
   activeFilterCount,
   handleFilterChange,
   setFilters,
+  treeLevel,
+  setTreeLevel,
+  sortOrder,
+  setSortOrder,
 }) {
   const quantidadeOperador = filters.quantidadeOperador || 'all';
 
@@ -138,6 +144,37 @@ export default function ProdutosMobileFiltersSheet({
                   ? 'Ligado: estoque e ponto futuro incluem pedidos a caminho.'
                   : 'Desligado: mostra só estoque físico.'}
               </p>
+            </div>
+          </MobileFilterSection>
+
+          <MobileFilterSection
+            title="Visualização da árvore"
+            hint="Define quantos níveis abrem ao carregar e como os grupos se ordenam."
+          >
+            <div className="space-y-3">
+              <div className="rounded-xl bg-muted/60 px-3 py-2.5">
+                <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Nível inicial
+                </p>
+                <LevelControl level={treeLevel} onChange={setTreeLevel} />
+              </div>
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Ordenação
+                </p>
+                <Select value={sortOrder || 'az'} onValueChange={setSortOrder}>
+                  <SelectTrigger className={MOBILE_FILTER_SELECT}>
+                    <SelectValue placeholder="Ordenar catálogo" />
+                  </SelectTrigger>
+                  <SelectContent className="dark:bg-muted dark:border-border/40">
+                    {CATALOG_SORT_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.id} value={opt.id} className="text-xs">
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </MobileFilterSection>
 

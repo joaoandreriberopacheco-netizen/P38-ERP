@@ -132,7 +132,7 @@ export default function ConfirmarPagamento({ pedido, open, onClose, onSuccess })
       const updates = produtosAtuais.map(produto => {
         const itemVendido = pedido.itens.find(i => i.produto_id === produto.id);
         const novoEstoque = (produto.estoque_atual || 0) - (itemVendido.quantidade || 0);
-        return Produto.update(produto.id, { estoque_atual: Math.max(0, novoEstoque) });
+        return Produto.update(produto.id, { estoque_atual: novoEstoque });
       });
       
       await Promise.all(updates);

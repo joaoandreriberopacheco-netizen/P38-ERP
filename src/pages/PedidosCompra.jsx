@@ -7,18 +7,24 @@ import { toast } from 'sonner';
 import { buildBypassAuthPayload } from '@/components/auth/operacaoAuthFlags';
 import { enviarPedidoCompraFinanceiroLote } from '@/lib/enviarPedidoCompraFinanceiro';
 import { pedidoLiberadoParaLogistica } from '@/lib/aprovarPedidoCompraFinanceiro';
+import { gerarNumeroSequencial } from '@/lib/gerarNumeroSequencial';
 import {
   calcValorItensPedidoCompra,
   calcValorTotalPedidoCompra,
   getTotalLinhaPedidoCompra,
 } from '@/lib/pedidoCompraFinanceiro';
 
+import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
+import { hydrateEmbarquesFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
+import { carregarProdutosMap } from '@/lib/embarqueVitrineHelpers';
+import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
 import ListaPedidosCompra from '@/components/compras/ListaPedidosCompra';
 import ConsultaComprasPedidos from '@/components/compras/ConsultaComprasPedidos';
 import ActionMenuComprasV2 from '@/components/compras/ActionMenuComprasV2';
 import EnvioFinanceiroLoteDialog from '@/components/compras/EnvioFinanceiroLoteDialog';
+import AtualizarPrecosFiltradosDialog from '@/components/compras/AtualizarPrecosFiltradosDialog';
 import PedidosCompraOrganizer from '@/components/compras/PedidosCompraOrganizer';
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
 import { Package, Receipt } from 'lucide-react';
@@ -65,6 +71,137 @@ const etaMatchesFilter = (embarque, modo, dataRef, inicial, final) => {
   return true;
 };
 
+const STATUS_EMBARQUE_VIRTUAIS = [
+  'Rascunho',
+  'Aguardando',
+  'Aguardando Aprovação Financeira',
+  'Aguardando Liberação Financeira',
+  'Aguardando Liberação',
+  'Aprovado',
+  'Despachado',
+  'Concluído',
+];
+
+const normalizeStatusFiltro = (status) => {
+  if (status === 'Aguardando Liberação') {
+    return ['Aguardando Liberação', 'Aguardando Aprovação Financeira', 'Aguardando Liberação Financeira'];
+  }
+  return [status];
+};
+
+const cardMatchesSearch = (card, searchLower, { includeProdutos = false } = {}) => {
+  const embarque = card._embarque;
+  if (card.numero?.toLowerCase().includes(searchLower)) return true;
+  if (card.fornecedor_nome?.toLowerCase().includes(searchLower)) return true;
+  if (embarque?.transportadora_nome?.toLowerCase().includes(searchLower)) return true;
+  if (includeProdutos && (card.itens || []).some((item) => item.produto_nome?.toLowerCase().includes(searchLower))) {
+    return true;
+  }
+  return false;
+};
+
+const passaFiltrosEmbarqueCard = (
+  card,
+  {
+    search,
+    statusSel,
+    filtroUltimos30Dias,
+    filtroSomenteNaoConcluidos,
+    fornecedorSel,
+    tagsSel,
+    dataInicial,
+    dataFinal,
+    etaFiltroModo,
+    etaData,
+    etaInicial,
+    etaFinal,
+    skipSearch = false,
+    searchIncludeProdutos = false,
+  },
+) => {
+  const searchLower = search.toLowerCase();
+  const dataPedido = card.data_emissao || (card.created_date ? toLocalDate(card.created_date) : '');
+  const statusExplicitos = statusSel.filter((status) => status !== '__nao_concluido__');
+  const statusPaiSel = statusExplicitos.filter((s) => !STATUS_EMBARQUE_VIRTUAIS.includes(s));
+  const statusEmbSel = statusExplicitos.filter((s) => STATUS_EMBARQUE_VIRTUAIS.includes(s));
+  const embarque = card._embarque;
+
+  if (!skipSearch && search && !cardMatchesSearch(card, searchLower, { includeProdutos: searchIncludeProdutos })) {
+    return false;
+  }
+
+  const ocultarConcluidos = filtroSomenteNaoConcluidos || statusSel.includes('__nao_concluido__');
+  if (!passaFiltroVisibilidadePedidosCompra(card, {
+    somenteNaoConcluidos: ocultarConcluidos,
+    ultimos30Dias: filtroUltimos30Dias,
+    getDataPedido: (item) => item.data_emissao || (item.created_date ? toLocalDate(item.created_date) : ''),
+    isConcluido: (item) => item._display_status === 'Concluído',
+  })) return false;
+
+  if (statusExplicitos.length > 0) {
+    const statusPaiExpandido = statusPaiSel.flatMap(normalizeStatusFiltro);
+    const statusEmbExpandido = statusEmbSel.flatMap(normalizeStatusFiltro);
+    const matchPai = statusPaiExpandido.includes(card.status) || statusPaiExpandido.includes(card._display_status);
+    const matchEmbarque = statusEmbExpandido.some((s) => {
+      if (s === 'Aguardando Embarque') return !embarque?.transportadora_nome && !embarque?.eta;
+      if (s === 'Original') return false;
+      return embarque?.status_recebimento === s || embarque?.status === s || card._display_status === s;
+    });
+    if (!matchPai && !matchEmbarque) return false;
+  }
+
+  if (fornecedorSel.length > 0 && !fornecedorSel.includes(card.fornecedor_id)) return false;
+  if (tagsSel.length > 0 && !tagsSel.some((t) => (card.tags || []).includes(t))) return false;
+  if (dataInicial && (!dataPedido || dataPedido < dataInicial)) return false;
+  if (dataFinal && (!dataPedido || dataPedido > dataFinal)) return false;
+  if (!etaMatchesFilter(embarque, etaFiltroModo, etaData, etaInicial, etaFinal)) return false;
+  return true;
+};
+
+const getConsultaPedidoSortMeta = (pedido, groupBy, filtradosCards) => {
+  if (groupBy === 'fornecedor') {
+    return { value: (pedido.fornecedor_nome || '').toLowerCase(), missing: false };
+  }
+  if (groupBy === 'status') {
+    return { value: (pedido.status || '').toLowerCase(), missing: false };
+  }
+  if (groupBy === 'data_pedido') {
+    const data = pedido.data_emissao || (pedido.created_date ? toLocalDate(pedido.created_date) : '');
+    return { value: data || '0000-00-00', missing: !data };
+  }
+
+  const cards = filtradosCards.filter((card) => card.id === pedido.id);
+  const etaKeys = cards
+    .map((card) => (card._embarque?.eta ? toLocalDate(card._embarque.eta) : null))
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+  if (etaKeys.length > 0) {
+    return { value: etaKeys[0], missing: false };
+  }
+
+  const fallbackEta = pedido.data_prevista_entrega
+    || (pedido._embarque_principal?.eta ? toLocalDate(pedido._embarque_principal.eta) : '');
+  return { value: fallbackEta || '', missing: !fallbackEta };
+};
+
+const comparePedidosConsulta = (a, b, sortOrder, groupBy, filtradosCards) => {
+  const metaA = getConsultaPedidoSortMeta(a, groupBy, filtradosCards);
+  const metaB = getConsultaPedidoSortMeta(b, groupBy, filtradosCards);
+
+  if (metaA.missing && metaB.missing) {
+    return String(a.numero || '').localeCompare(String(b.numero || ''), 'pt-BR');
+  }
+  if (metaA.missing) return 1;
+  if (metaB.missing) return -1;
+
+  const cmp = sortOrder === 'asc'
+    ? String(metaA.value).localeCompare(String(metaB.value), 'pt-BR')
+    : String(metaB.value).localeCompare(String(metaA.value), 'pt-BR');
+  if (cmp !== 0) return cmp;
+  return String(a.numero || '').localeCompare(String(b.numero || ''), 'pt-BR');
+};
+
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 const isNecessidadeRenderizada = (embarque) => {
@@ -90,14 +227,14 @@ const getDisplayEmbarqueCode = (pedido, embarque) => {
 
 const getDisplayEmbarqueOrdinal = (embarque, pedido) => `#${String(getEmbarqueSuffixIndex(embarque, pedido) + 1).padStart(2, '0')}`;
 
-const hasLinkedItems = (embarque) => Array.isArray(embarque?.itens || embarque?.itens_embarcados) && (embarque.itens || embarque.itens_embarcados || []).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0 || (Number(item?.quantidade_recebida) || 0) > 0);
+const hasLinkedItems = (embarque) => getEmbarqueItensLinhas(embarque).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0 || (Number(item?.quantidade_recebida) || 0) > 0);
 
 const hasDespachoVinculado = (embarque) => !!(embarque?.data_embarque || embarque?.eta || embarque?.transportadora_id || embarque?.transportadora_nome);
 
 const getQuantidadePendenteNecessidade = (pedido, embarque) => {
   if (!isNecessidadeRenderizada(embarque)) return 0;
 
-  const itensNecessidade = embarque?.itens || embarque?.itens_embarcados || [];
+  const itensNecessidade = getEmbarqueItensLinhas(embarque);
   const quantidadeDoEmbarque = itensNecessidade.reduce((acc, item) => {
     return acc + (Number(item?.quantidade_embarcada) || Number(item?.quantidade_pedida) || 0);
   }, 0);
@@ -279,7 +416,7 @@ const normalizeDisplayItemCommercial = (produto = null, pedidoItem = {}, item = 
 };
 
 const buildDisplayItensFromEmbarque = (pedido, embarque, produtosMap = {}) => {
-  return (embarque?.itens || embarque?.itens_embarcados || []).map((item) => {
+  return getEmbarqueItensLinhas(embarque).map((item) => {
     const pedidoItem = (pedido.itens || []).find((pedidoItem) => pedidoItem.produto_id === item.produto_id);
     const produto = produtosMap[item.produto_id] || produtosMap[pedidoItem?.produto_id] || null;
     return normalizeDisplayItemCommercial(produto, pedidoItem, item);
@@ -288,7 +425,7 @@ const buildDisplayItensFromEmbarque = (pedido, embarque, produtosMap = {}) => {
 
 /** Valor do card de embarque: parcela proporcional do total do pedido (itens + frete/desconto rateados). */
 const getDisplayValorEmbarque = (pedido, embarque) => {
-  const itensEmbarque = embarque?.itens || embarque?.itens_embarcados || [];
+  const itensEmbarque = getEmbarqueItensLinhas(embarque);
   const valorItensPedido = calcValorItensPedidoCompra(pedido);
   if (!itensEmbarque.length) return calcValorTotalPedidoCompra(pedido);
 
@@ -324,7 +461,7 @@ const buildVirtualNecessidade = (pedido, embarquesDoPedido) => {
   if (!temDespachoReal) return null;
 
   const recebidosPorProduto = embarquesReais.reduce((acc, embarque) => {
-    (embarque?.itens || embarque?.itens_embarcados || []).forEach((item) => {
+    getEmbarqueItensLinhas(embarque).forEach((item) => {
       const produtoId = item.produto_id;
       if (!produtoId) return;
       acc[produtoId] = (acc[produtoId] || 0) + (Number(item.quantidade_recebida) || Number(item.quantidade_embarcada) || 0);
@@ -357,8 +494,8 @@ const buildVirtualNecessidade = (pedido, embarquesDoPedido) => {
     status: 'Pendente',
     status_recebimento: 'Pendente',
     observacoes: 'Embarque de necessidade criado automaticamente para itens pendentes.',
-    itens: itensPendentes,
-    itens_embarcados: itensPendentes,
+    _linhas: itensPendentes,
+    _itens_fonte: 'virtual',
     created_date: new Date().toISOString(),
   };
 };
@@ -392,6 +529,7 @@ export default function PedidosCompraPage() {
   const [groupBy, setGroupBy] = useState('eta_transportadora');
   const [sortOrder, setSortOrder] = useState('desc');
   const [activeView, setActiveView] = useState('embarques');
+  const [showAtualizarPrecosFiltrados, setShowAtualizarPrecosFiltrados] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -400,7 +538,7 @@ export default function PedidosCompraPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [pcs, embarquesDb, fns] = await Promise.all([
+      const [pcsRaw, embarquesDbRaw, fns] = await Promise.all([
         base44.entities.PedidoCompra.list('-created_date', 300),
         base44.entities.Embarque.list('-created_date', 600),
         base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] }, 'nome', 300).catch((err) => {
@@ -408,21 +546,16 @@ export default function PedidosCompraPage() {
           return [];
         }),
       ]);
+
+      const [pcs, embarquesDb] = await Promise.all([
+        hydratePedidosCompraItensFromSql(base44, pcsRaw),
+        hydrateEmbarquesFromSql(base44, embarquesDbRaw),
+      ]);
       const produtoIds = [...new Set([
         ...pcs.flatMap((p) => (p.itens || []).map((i) => i.produto_id).filter(Boolean)),
-        ...embarquesDb.flatMap((e) => (e.itens || e.itens_embarcados || []).map((i) => i.produto_id).filter(Boolean)),
+        ...embarquesDb.flatMap((e) => getEmbarqueItensLinhas(e).map((i) => i.produto_id).filter(Boolean)),
       ])];
-      const produtos = produtoIds.length
-        ? await Promise.all(produtoIds.map(async (id) => {
-            const viaGet = await base44.entities.Produto.get(id).catch(() => null);
-            if (viaGet) return viaGet;
-            const viaFilter = await base44.entities.Produto.filter({ id }).catch(() => []);
-            return Array.isArray(viaFilter) ? (viaFilter[0] || null) : null;
-          }))
-        : [];
-      const produtosMap = Object.fromEntries((produtos || []).filter(Boolean).map((p) => [p.id, p]));
-
-      const pedidoMap = new Map(pcs.map((pedido) => [pedido.id, pedido]));
+      const produtosMap = await carregarProdutosMap(produtoIds.map((id) => ({ produto_id: id })));
       const embarquesPorPedido = embarquesDb.reduce((acc, embarque) => {
         const pedidoId = embarque.pedido_compra_id;
         if (!pedidoId) return acc;
@@ -435,7 +568,7 @@ export default function PedidosCompraPage() {
         const embarquesDoPedido = embarquesPorPedido[pedido.id] || [];
         const totalPedido = calcValorTotalPedidoCompra(pedido);
         const valorEmbarcado = embarquesDoPedido.reduce((acc, embarque) => {
-            const valorEmbarque = (embarque.itens || embarque.itens_embarcados || []).reduce((itemAcc, item) => {
+            const valorEmbarque = getEmbarqueItensLinhas(embarque).reduce((itemAcc, item) => {
             const pedidoItem = (pedido.itens || []).find((candidate) => candidate.produto_id === item.produto_id);
             const custoUnitarioEfetivo = getValorUnitarioEfetivoItemPedido(pedidoItem || {}, pedido);
             return itemAcc + ((Number(item.quantidade_embarcada) || 0) * custoUnitarioEfetivo);
@@ -488,8 +621,6 @@ export default function PedidosCompraPage() {
               tipo: 'Original',
               status: 'Pendente',
               status_recebimento: 'Pendente',
-              itens: [],
-              itens_embarcados: [],
               observacoes: '',
               created_date: pedido.created_date,
             }];
@@ -548,17 +679,18 @@ export default function PedidosCompraPage() {
       ...pedidoData,
       valor_total: Number(pedidoData.valor_total) || 0,
     };
-    const sanitizedData = (pedidoNaoConcluido(sanitizedDataBase) && Array.isArray(sanitizedDataBase.itens))
-      ? { ...sanitizedDataBase, itens: sanitizedDataBase.itens.map((item) => normalizeItemToCanonicalFactorOne(item, 'custo')) }
-      : sanitizedDataBase;
+    const sanitizedData = omitPedidoCompraEspelho(
+      (pedidoNaoConcluido(sanitizedDataBase) && Array.isArray(sanitizedDataBase.itens))
+        ? { ...sanitizedDataBase, itens: sanitizedDataBase.itens.map((item) => normalizeItemToCanonicalFactorOne(item, 'custo')) }
+        : sanitizedDataBase,
+    );
 
     if (sanitizedData.id) {
       await base44.entities.PedidoCompra.update(sanitizedData.id, sanitizedData);
     } else {
       const { id, ...newPedido } = sanitizedData;
       if (!newPedido.numero) {
-        const resp = await base44.functions.invoke('gerarNumeroSequencial', { tipo: 'PC' });
-        newPedido.numero = resp?.data?.numero;
+        newPedido.numero = await gerarNumeroSequencial('PC');
       }
       await base44.entities.PedidoCompra.create(newPedido);
     }
@@ -575,6 +707,10 @@ export default function PedidosCompraPage() {
 
   const handleNovoPedido = () => {
     navigate('/PedidoCompraDetalhe?id=novo');
+  };
+
+  const handleImportarPedido = () => {
+    navigate('/PedidoCompraDetalhe?id=novo&autoImportador=1');
   };
 
   const handleToggleSelecao = (pedido) => {
@@ -663,64 +799,53 @@ export default function PedidosCompraPage() {
     return [...set].sort((a, b) => a.localeCompare(b, 'pt-BR'));
   }, [pedidos]);
 
-  const cardsFonte = useMemo(() => embarques, [embarques]);
+  const filtrosCompras = useMemo(
+    () => ({
+      search,
+      statusSel,
+      filtroUltimos30Dias,
+      filtroSomenteNaoConcluidos,
+      fornecedorSel,
+      tagsSel,
+      dataInicial,
+      dataFinal,
+      etaFiltroModo,
+      etaData,
+      etaInicial,
+      etaFinal,
+    }),
+    [
+      search,
+      statusSel,
+      filtroUltimos30Dias,
+      filtroSomenteNaoConcluidos,
+      fornecedorSel,
+      tagsSel,
+      dataInicial,
+      dataFinal,
+      etaFiltroModo,
+      etaData,
+      etaInicial,
+      etaFinal,
+    ],
+  );
 
-  const STATUS_EMBARQUE_VIRTUAIS = ['Rascunho', 'Aguardando', 'Aguardando Aprovação Financeira', 'Aguardando Liberação Financeira', 'Aguardando Liberação', 'Aprovado', 'Despachado', 'Concluído'];
+  const filtrados = useMemo(
+    () => embarques.filter((card) => passaFiltrosEmbarqueCard(card, filtrosCompras)),
+    [embarques, filtrosCompras],
+  );
 
-  const normalizeStatusFiltro = (status) => {
-    if (status === 'Aguardando Liberação') {
-      return ['Aguardando Liberação', 'Aguardando Aprovação Financeira', 'Aguardando Liberação Financeira'];
-    }
-    return [status];
-  };
-
-  const filtrados = useMemo(() => {
-    return cardsFonte.filter((p) => {
-      const searchLower = search.toLowerCase();
-      const dataPedido = p.data_emissao || (p.created_date ? toLocalDate(p.created_date) : '');
-      const statusExplicitos = statusSel.filter((status) => status !== '__nao_concluido__');
-      const statusPaiSel = statusExplicitos.filter((s) => !STATUS_EMBARQUE_VIRTUAIS.includes(s));
-      const statusEmbSel = statusExplicitos.filter((s) => STATUS_EMBARQUE_VIRTUAIS.includes(s));
-      const embarque = p._embarque;
-
-      if (search && !(p.numero?.toLowerCase().includes(searchLower) || p.fornecedor_nome?.toLowerCase().includes(searchLower) || embarque?.transportadora_nome?.toLowerCase().includes(searchLower))) return false;
-
-      const ocultarConcluidos = filtroSomenteNaoConcluidos || statusSel.includes('__nao_concluido__');
-      if (!passaFiltroVisibilidadePedidosCompra(p, {
-        somenteNaoConcluidos: ocultarConcluidos,
-        ultimos30Dias: filtroUltimos30Dias,
-        getDataPedido: (item) => item.data_emissao || (item.created_date ? toLocalDate(item.created_date) : ''),
-        isConcluido: (item) => item._display_status === 'Concluído',
-      })) return false;
-
-      if (statusExplicitos.length > 0) {
-        const statusPaiExpandido = statusPaiSel.flatMap(normalizeStatusFiltro);
-        const statusEmbExpandido = statusEmbSel.flatMap(normalizeStatusFiltro);
-        const matchPai = statusPaiExpandido.includes(p.status) || statusPaiExpandido.includes(p._display_status);
-        const matchEmbarque = statusEmbExpandido.some((s) => {
-          if (s === 'Aguardando Embarque') return !embarque?.transportadora_nome && !embarque?.eta;
-          if (s === 'Original') return false;
-          return embarque?.status_recebimento === s || embarque?.status === s || p._display_status === s;
-        });
-        if (!matchPai && !matchEmbarque) return false;
-      }
-
-      if (fornecedorSel.length > 0 && !fornecedorSel.includes(p.fornecedor_id)) return false;
-      if (tagsSel.length > 0 && !tagsSel.some((t) => (p.tags || []).includes(t))) return false;
-      if (dataInicial && (!dataPedido || dataPedido < dataInicial)) return false;
-      if (dataFinal && (!dataPedido || dataPedido > dataFinal)) return false;
-      if (!etaMatchesFilter(embarque, etaFiltroModo, etaData, etaInicial, etaFinal)) return false;
-      return true;
-    });
-  }, [cardsFonte, search, statusSel, filtroUltimos30Dias, filtroSomenteNaoConcluidos, fornecedorSel, tagsSel, dataInicial, dataFinal, etaFiltroModo, etaData, etaInicial, etaFinal]);
+  const filtradosSemBusca = useMemo(
+    () => embarques.filter((card) => passaFiltrosEmbarqueCard(card, { ...filtrosCompras, skipSearch: true })),
+    [embarques, filtrosCompras],
+  );
 
   const calcularValorPendentePedido = (pedido) => {
     const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
-    const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
+    const embarques = Array.isArray(pedido._embarques) ? pedido._embarques : [];
 
     const recebidosPorProduto = embarques.reduce((acc, embarque) => {
-      const itensEmbarcados = Array.isArray(embarque.itens_embarcados) ? embarque.itens_embarcados : [];
-      itensEmbarcados.forEach((item) => {
+      getEmbarqueItensLinhas(embarque).forEach((item) => {
         const produtoId = item.produto_id;
         if (!produtoId) return;
         acc[produtoId] = (acc[produtoId] || 0) + (Number(item.quantidade_recebida) || 0);
@@ -737,14 +862,6 @@ export default function PedidosCompraPage() {
     }, 0);
   };
 
-  const pedidosVisiveisLista = useMemo(() => {
-    return filtrados;
-  }, [filtrados]);
-
-  const pedidosVisiveisPendentes = useMemo(() => {
-    return pedidosVisiveisLista;
-  }, [pedidosVisiveisLista]);
-
   const pedidosPagosPendentes = useMemo(() => {
     return filtrados.filter((pedido) => {
       const aprovadoFinanceiro =
@@ -758,8 +875,8 @@ export default function PedidosCompraPage() {
   }, [filtrados]);
 
   const valorTotal = useMemo(() => {
-    return pedidosVisiveisPendentes.reduce((acc, pedido) => acc + (pedido._display_valor ?? pedido.valor_total ?? 0), 0);
-  }, [pedidosVisiveisPendentes]);
+    return filtrados.reduce((acc, pedido) => acc + (pedido._display_valor ?? pedido.valor_total ?? 0), 0);
+  }, [filtrados]);
 
   const valorPagoNaoEntregue = useMemo(() => {
     return pedidosPagosPendentes.reduce((acc, pedido) => acc + Number(pedido._display_valor || 0), 0);
@@ -807,7 +924,7 @@ export default function PedidosCompraPage() {
 
     const map = {};
 
-    pedidosVisiveisLista.forEach((pedido) => {
+    filtrados.forEach((pedido) => {
       const embarque = pedido._embarque;
       const meta = getGroupMeta(pedido, embarque);
 
@@ -838,7 +955,7 @@ export default function PedidosCompraPage() {
           _total_eta: pedidosSort.reduce((acc, p) => acc + (p._display_valor || 0), 0)
         };
       });
-  }, [pedidosVisiveisLista, groupBy, sortOrder]);
+  }, [filtrados, groupBy, sortOrder]);
 
   const hasEtaFilter = etaFiltroModo && (
     (['antes', 'depois'].includes(etaFiltroModo) && etaData) ||
@@ -850,37 +967,22 @@ export default function PedidosCompraPage() {
     || filtroSomenteNaoConcluidos !== FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT;
 
   const pedidosConsulta = useMemo(() => {
-    const statusExplicitos = statusSel.filter((status) => status !== '__nao_concluido__');
-    const ocultarConcluidos = filtroSomenteNaoConcluidos || statusSel.includes('__nao_concluido__');
+    const idsVisiveis = new Set(filtrados.map((card) => card.id));
 
-    return pedidos.filter((p) => {
+    if (search) {
       const searchLower = search.toLowerCase();
-      const dataPedido = p.data_emissao || (p.created_date ? toLocalDate(p.created_date) : '');
+      filtradosSemBusca.forEach((card) => {
+        if (idsVisiveis.has(card.id)) return;
+        if (cardMatchesSearch(card, searchLower, { includeProdutos: true })) {
+          idsVisiveis.add(card.id);
+        }
+      });
+    }
 
-      if (search && !(p.numero?.toLowerCase().includes(searchLower) || p.fornecedor_nome?.toLowerCase().includes(searchLower))) {
-        return false;
-      }
-
-      if (!passaFiltroVisibilidadePedidosCompra(p, {
-        somenteNaoConcluidos: ocultarConcluidos,
-        ultimos30Dias: filtroUltimos30Dias,
-        getDataPedido: (item) => item.data_emissao || (item.created_date ? toLocalDate(item.created_date) : ''),
-        isConcluido: (item) => item.status === 'Concluído',
-      })) return false;
-
-      if (statusExplicitos.length > 0) {
-        const statusExpandido = statusExplicitos.flatMap(normalizeStatusFiltro);
-        if (!statusExpandido.includes(p.status)) return false;
-      }
-
-      if (fornecedorSel.length > 0 && !fornecedorSel.includes(p.fornecedor_id)) return false;
-      if (tagsSel.length > 0 && !tagsSel.some((t) => (p.tags || []).includes(t))) return false;
-      if (dataInicial && (!dataPedido || dataPedido < dataInicial)) return false;
-      if (dataFinal && (!dataPedido || dataPedido > dataFinal)) return false;
-
-      return true;
-    });
-  }, [pedidos, search, statusSel, filtroUltimos30Dias, filtroSomenteNaoConcluidos, fornecedorSel, tagsSel, dataInicial, dataFinal]);
+    return pedidos
+      .filter((p) => idsVisiveis.has(p.id))
+      .sort((a, b) => comparePedidosConsulta(a, b, sortOrder, groupBy, filtrados));
+  }, [filtrados, filtradosSemBusca, pedidos, search, sortOrder, groupBy]);
 
   return (
     <div className={cn('w-full min-w-0 max-w-full overflow-x-hidden space-y-4 font-din-1451 bg-background', isPhone && 'pb-[var(--p38-scroll-pad-below-nav)]')}>
@@ -896,18 +998,29 @@ export default function PedidosCompraPage() {
             </p>
           ) : (
             <>
-              <p className="text-sm leading-normal text-foreground/85 font-din-1451">{pedidosVisiveisPendentes.length} embarques visíveis · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              <p className="text-sm leading-normal text-foreground/85 font-din-1451">{filtrados.length} embarques visíveis · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
               <p className="text-sm leading-normal text-emerald-600 dark:text-emerald-400">Aprovados financeiramente e ainda não recebidos no filtro: R$ {valorPagoNaoEntregue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
             </>
           )}
         </div>
-        {activeView === 'embarques' ? (
-          <PedidosCompraOrganizer
-            groupBy={groupBy}
-            sortOrder={sortOrder}
-            onGroupByChange={setGroupBy}
-            onSortOrderToggle={() => setSortOrder((prev) => prev === 'asc' ? 'desc' : 'asc')}
-          />
+        {activeView === 'embarques' || activeView === 'consulta' ? (
+          <div className="flex items-center gap-2">
+            {activeView === 'consulta' && pedidosConsulta.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setShowAtualizarPrecosFiltrados(true)}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-card shadow-sm text-sm font-medium text-foreground hover:shadow-md transition"
+              >
+                Atualizar preços
+              </button>
+            ) : null}
+            <PedidosCompraOrganizer
+              groupBy={groupBy}
+              sortOrder={sortOrder}
+              onGroupByChange={setGroupBy}
+              onSortOrderToggle={() => setSortOrder((prev) => prev === 'asc' ? 'desc' : 'asc')}
+            />
+          </div>
         ) : null}
       </div>
 
@@ -981,17 +1094,19 @@ export default function PedidosCompraPage() {
       {/* Menu de ações FAB */}
       <ActionMenuComprasV2
         onNovopedido={handleNovoPedido}
+        onImportarPedido={handleImportarPedido}
         onImportarNF={() => setShowImportador(true)}
         onDownloadTemplate={handleDownloadTemplate}
         onEnviarFinanceiroLote={handleAbrirEnvioFinanceiroLote}
         onToggleModoSelecao={handleToggleModoSelecao}
+        onAtualizarPrecosFiltrados={() => setShowAtualizarPrecosFiltrados(true)}
         modoSelecao={modoSelecao}
         quantidadeSelecionados={selecionadosIds.length}
         enviandoLote={enviandoLote}
         pedidos={filtrados}
         filtrosDesc={`Busca: ${search || 'todas'} · Status: ${statusSel.join(', ') || 'todos'} · Fornecedores: ${fornecedorSel.length || 0} · Tags: ${tagsSel.length || 0} · Período: ${dataInicial || '-'} até ${dataFinal || '-'} · ETA: ${etaFiltroModo || 'todos'}${etaFiltroModo === 'antes' || etaFiltroModo === 'depois' ? ` (${etaData || '-'})` : ''}${etaFiltroModo === 'entre' || etaFiltroModo === 'personalizado' ? ` (${etaInicial || '-'} até ${etaFinal || '-'})` : ''}`}
         kpis={{
-          totalPedidos: pedidosVisiveisPendentes.length,
+          totalPedidos: filtrados.length,
           totalGeral: valorTotal,
           totalEmAberto: filtrados.filter(p => ['Rascunho', 'Aguardando Aprovação Financeira', 'Aprovado'].includes(p.status)).reduce((acc, p) => acc + Number(p._display_valor || p.valor_total || 0), 0),
           totalPagoNaoEntregue: valorPagoNaoEntregue
@@ -1009,6 +1124,15 @@ export default function PedidosCompraPage() {
         quantidadeSelecionados={selecionadosIds.length}
         onConfirm={confirmarEnvioFinanceiroLote}
         loading={enviandoLote}
+      />
+
+      <AtualizarPrecosFiltradosDialog
+        isOpen={showAtualizarPrecosFiltrados}
+        onClose={(updated) => {
+          setShowAtualizarPrecosFiltrados(false);
+          if (updated) loadData();
+        }}
+        pedidosFiltrados={pedidosConsulta}
       />
 
     </div>

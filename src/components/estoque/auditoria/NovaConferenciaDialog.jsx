@@ -70,7 +70,7 @@ export default function NovaConferenciaDialog({ open, onClose, onCriada }) {
             <Button
               onClick={handleCriar}
               disabled={loading || !form.nome_conferencia.trim()}
-              className="flex-1 rounded-xl bg-background dark:bg-card text-white dark:text-foreground shadow-none"
+              className="flex-1 rounded-xl bg-card text-card-foreground shadow-none"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Iniciar"}
             </Button>

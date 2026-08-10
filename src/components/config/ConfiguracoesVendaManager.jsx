@@ -68,7 +68,7 @@ export default function ConfiguracoesVendaManager() {
               <button key={value} onClick={() => setConfig({ ...config, fluxo_venda_padrao: value })}
                 className={`text-left p-3 rounded-xl transition-all ${
                   ativo
-                    ? 'bg-primary dark:bg-muted text-white dark:text-foreground shadow-sm'
+                    ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground shadow-sm'
                     : 'bg-muted/50/60 text-muted-foreground hover:bg-muted/60'
                 }`}>
                 <div className="flex items-center gap-2 mb-1">
@@ -111,7 +111,7 @@ export default function ConfiguracoesVendaManager() {
                   onClick={() => setConfig({ ...config, casas_decimais_quantidade: n })}
                   className={`w-9 h-9 text-sm font-medium transition-colors ${
                     config.casas_decimais_quantidade === n
-                      ? 'bg-primary dark:bg-muted text-white dark:text-foreground'
+                      ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground'
                       : 'text-muted-foreground hover:bg-muted dark:hover:bg-muted'
                   }`}
                 >
@@ -132,7 +132,7 @@ export default function ConfiguracoesVendaManager() {
 
       <div className="flex justify-end pt-2">
         <Button onClick={handleSave}
-          className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white gap-2 h-9 text-sm">
+          className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:text-foreground gap-2 h-9 text-sm">
           <Save className="w-4 h-4" /> Salvar
         </Button>
       </div>

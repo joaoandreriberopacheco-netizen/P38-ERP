@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CaixaDialogContent } from './CaixaDialogContent';
 import {
@@ -6,8 +6,9 @@ import {
 } from 'lucide-react';
 import SeletorMaquininhaSheet from './SeletorMaquininhaSheet';
 import SeletorFiadoSheet from './SeletorFiadoSheet';
-import { CAIXA_TOAST_SUCCESS, caixaClasses } from '@/lib/caixaP38Theme';
+import { CAIXA_TOAST_SUCCESS, caixaClasses, caixaSurface } from '@/lib/caixaP38Theme';
 import { resolveValorPedidoVenda } from '@/lib/financialUtils';
+import { selectAllOnFocusOnceUntilBlur, clearSelectOnFocusOnceFlag, focusAndSelect } from '@/lib/inputFocusUtils';
 
 export default function ConfirmarPagamentoDialog({
   open, onOpenChange,
@@ -33,12 +34,25 @@ export default function ConfirmarPagamentoDialog({
   const [showSeletorFiado, setShowSeletorFiado] = useState(false);
   const [fiadoConfig, setFiadoConfig] = useState(null);
   const [valoresVisiveis, setValoresVisiveis] = useState(true);
+  const dialogOpen = open && !!pedidoSelecionado;
+  const initialFocusDoneRef = useRef(false);
 
   useEffect(() => {
     setFiadoConfig(null);
     setShowSeletorFiado(false);
     setSeletorMaquininha(null);
   }, [pedidoSelecionado?.id]);
+
+  useEffect(() => {
+    if (!dialogOpen) {
+      initialFocusDoneRef.current = false;
+      return;
+    }
+    if (initialFocusDoneRef.current) return;
+    initialFocusDoneRef.current = true;
+    const t = setTimeout(() => focusAndSelect(inputRefs?.dinheiro?.current), 220);
+    return () => clearTimeout(t);
+  }, [dialogOpen, pedidoSelecionado?.id]);
 
   // Bloqueia dígitos sem maquininha (valor só após botão + seleção); não abre o seletor automaticamente
   const handleInputMascaraComMaquininha = (e, setInput, setValor, modalidade) => {
@@ -76,8 +90,6 @@ export default function ConfirmarPagamentoDialog({
     handleInputMascara(e, setInput, setValor);
   };
 
-  const dialogOpen = open && !!pedidoSelecionado;
-
   const handleBuscarVale = async () => {
     if (!codigoVale.trim()) return;
     setBuscandoVale(true);
@@ -112,7 +124,16 @@ export default function ConfirmarPagamentoDialog({
 
   return (
     <>
-      <Dialog open={dialogOpen} onOpenChange={onOpenChange}>
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(nextOpen) => {
+          onOpenChange(nextOpen);
+          if (!nextOpen) {
+            setSeletorMaquininha(null);
+            setShowSeletorFiado(false);
+          }
+        }}
+      >
         <CaixaDialogContent className="flex max-h-[min(92dvh,52rem)] min-h-0 max-w-lg flex-col gap-0 overflow-hidden rounded-2xl border-0 bg-card p-0 shadow-2xl dark:bg-background">
           {/* Header */}
           <DialogHeader className="shrink-0 border-b border-border/40 px-5 pb-4 pt-5 dark:border-border/40">
@@ -222,7 +243,7 @@ export default function ConfirmarPagamentoDialog({
                 <button
                   onClick={handleBuscarVale}
                   disabled={buscandoVale}
-                  className="h-11 px-4 bg-background dark:bg-card text-white dark:text-foreground rounded-xl text-sm font-medium disabled:opacity-50"
+                  className="h-11 px-4 bg-card text-card-foreground rounded-xl text-sm font-medium disabled:opacity-50"
                 >
                   {buscandoVale ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Buscar'}
                 </button>
@@ -283,14 +304,14 @@ export default function ConfirmarPagamentoDialog({
           <div className="flex shrink-0 gap-2.5 border-t border-border/40 px-4 pb-4 pt-3 dark:border-border/40">
             <button
               onClick={() => setShowRetornoDialog(true)}
-              className="h-12 px-4 bg-muted text-foreground/90 rounded-xl text-sm font-medium flex items-center gap-2 flex-shrink-0"
+              className={`h-12 px-4 text-sm font-medium flex items-center gap-2 flex-shrink-0 ${caixaSurface.secondaryBtn}`}
             >
               <ArrowLeft className="w-4 h-4" /> Devolver
             </button>
             <button
               onClick={handleFinalizarVenda}
               disabled={!pagamentoValido || processandoVenda}
-              className="flex-1 h-12 bg-background dark:bg-card text-white dark:text-foreground rounded-xl font-semibold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
+              className={`flex-1 h-12 text-sm flex items-center justify-center gap-2 ${caixaSurface.confirmBtn}`}
             >
               {processandoVenda
                 ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</>
@@ -346,13 +367,16 @@ function InputPagamento({
     <div className="space-y-0.5">
       <div
         className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors cursor-text ${
-          active
-            ? 'bg-muted ring-1 ring-border/40 dark:ring-border/40'
-            : 'bg-muted/50/60 hover:bg-muted'
+          active ? caixaSurface.paymentRowActive : caixaSurface.paymentRow
         }`}
         onClick={() => {
           if (onContainerClick) onContainerClick();
           else onFocus?.();
+          if (!maquininhaPendente && !fiadoPendente && inputRef?.current) {
+            if (document.activeElement !== inputRef.current) {
+              focusAndSelect(inputRef.current);
+            }
+          }
         }}
       >
         <Icon className="w-4 h-4 flex-shrink-0 text-muted-foreground" />
@@ -366,7 +390,7 @@ function InputPagamento({
               onFiadoButtonClick();
             }}
             onFocus={() => onFocus?.()}
-            className="max-w-[11rem] shrink-0 touch-manipulation rounded-xl bg-background px-3 py-2 text-left text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary focus:outline-none focus:ring-2 focus:ring-ring dark:bg-card dark:text-foreground dark:hover:bg-muted dark:focus:ring-ring"
+            className={`max-w-[11rem] shrink-0 touch-manipulation text-left ${caixaSurface.chipBtn}`}
           >
             Prazo · fiado
           </button>
@@ -379,7 +403,7 @@ function InputPagamento({
               onMaquininhaButtonClick();
             }}
             onFocus={() => onFocus?.()}
-            className="max-w-[11rem] shrink-0 touch-manipulation rounded-xl bg-background px-3 py-2 text-left text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary focus:outline-none focus:ring-2 focus:ring-ring dark:bg-card dark:text-foreground dark:hover:bg-muted dark:focus:ring-ring"
+            className={`max-w-[11rem] shrink-0 touch-manipulation text-left ${caixaSurface.chipBtn}`}
           >
             Maquininha / bandeira
           </button>
@@ -390,7 +414,11 @@ function InputPagamento({
             inputMode="numeric"
             value={valoresVisiveis ? value : value ? '••••••' : ''}
             onChange={() => {}}
-            onFocus={(e) => { e.target.select(); onFocus?.(); }}
+            onFocus={(e) => {
+              selectAllOnFocusOnceUntilBlur(e);
+              onFocus?.();
+            }}
+            onBlur={clearSelectOnFocusOnceFlag}
             onKeyDown={onKeyDown}
             className="w-24 text-right text-base font-semibold bg-transparent border-0 focus:outline-none text-foreground cursor-text tabular-nums"
           />

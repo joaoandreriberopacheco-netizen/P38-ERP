@@ -52,7 +52,7 @@ export default function TimelinePeriodPicker({ range, onChange }) {
               ref={isCenter ? centerRef : null}
               type="button"
               onClick={() => onChange({ from: day, to: addDays(day, 30) })}
-              className={`flex-shrink-0 rounded-2xl shadow-sm min-w-[70px] min-h-[70px] ${active ? 'bg-background text-white dark:bg-card dark:text-foreground' : 'bg-muted/40 text-foreground/90 dark:bg-muted dark:text-foreground'}`}
+              className={`flex-shrink-0 rounded-2xl shadow-sm min-w-[70px] min-h-[70px] ${active ? 'bg-primary text-primary-foreground dark:bg-card dark:text-foreground' : 'bg-muted/40 text-foreground/90 dark:bg-muted dark:text-foreground'}`}
             >
               <div className="text-[10px] uppercase tracking-wide opacity-70">{format(day, 'MMM')}</div>
               <div className="text-base font-semibold leading-none mt-1">{format(day, 'dd')}</div>

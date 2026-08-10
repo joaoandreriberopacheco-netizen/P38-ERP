@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   CartesianGrid,
   Cell,
@@ -11,6 +11,16 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { p38Dashboard } from '@/lib/p38DashboardSurfaces';
+import { DONUT_GAUGE_RADII } from '@/lib/dashboardKpiConfig';
+import {
+  buildCartesianGridProps,
+  buildDashboardYDomain,
+  buildXAxisProps,
+  buildYAxisProps,
+  DASHBOARD_CHART_MARGIN,
+} from '@/lib/dashboardChartLayout';
+import { useDashboardChartTheme } from '@/lib/useDashboardChartTheme';
 
 const BRL = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -25,13 +35,30 @@ export function formatDashboardCurrency(value) {
   return BRL.format(value);
 }
 
-const TOOLTIP_STYLE = {
-  backgroundColor: 'rgba(3,7,18,0.95)',
-  border: '1px solid rgba(148,163,184,0.35)',
-  borderRadius: 10,
-  color: '#edf2f7',
-  boxShadow: '0 12px 26px rgba(0,0,0,0.45)',
-};
+/** Média diária compacta para legenda — ex.: 2,1k */
+export function formatDashboardDailyRate(value) {
+  if (!Number.isFinite(value) || value === 0) return '0';
+  const abs = Math.abs(value);
+  const sign = value < 0 ? '-' : '';
+  if (abs >= 1_000_000) {
+    return `${sign}${(abs / 1_000_000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M`;
+  }
+  if (abs >= 1_000) {
+    return `${sign}${(abs / 1_000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}k`;
+  }
+  return `${sign}${Math.round(abs).toLocaleString('pt-BR')}`;
+}
+
+export function AccumulatedLegendLine({ label, total, dailyAvg, titleClassName }) {
+  return (
+    <span>
+      {label}: <strong className={titleClassName}>{formatDashboardCurrency(total)}</strong>
+      <span className="text-muted-foreground ml-1.5">
+        ({formatDashboardDailyRate(dailyAvg)} dia)
+      </span>
+    </span>
+  );
+}
 
 const DEFAULT_SERIES_LABELS = {
   lucro: 'Lucro acumulado',
@@ -47,40 +74,37 @@ export function AcumuladoKpiChart({
   innerSurfaceClassName,
   seriesLabels = DEFAULT_SERIES_LABELS,
 }) {
+  const chartTheme = useDashboardChartTheme();
   const hasBreakEven = data.some((point) => Number(point.breakEven) > 0);
   const hasMeta = data.some((point) => Number(point.meta) > 0);
+  const yDomain = useMemo(() => {
+    const keys = [valueKey];
+    if (hasBreakEven) keys.push('breakEven');
+    if (hasMeta) keys.push('meta');
+    return buildDashboardYDomain(data, keys);
+  }, [data, valueKey, hasBreakEven, hasMeta]);
 
   return (
     <div className={innerSurfaceClassName}>
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.14)" vertical={false} />
-          <XAxis
-            dataKey={xKey}
-            tick={{ fontSize: 11, fill: '#d7deea', fontWeight: 600 }}
-            axisLine={false}
-            tickLine={false}
-          />
-          <YAxis
-            tickFormatter={(value) => formatDashboardCurrency(value)}
-            tick={{ fontSize: 11, fill: '#d7deea', fontWeight: 600 }}
-            axisLine={false}
-            tickLine={false}
-          />
+        <LineChart data={data} margin={DASHBOARD_CHART_MARGIN.line}>
+          <CartesianGrid {...buildCartesianGridProps(chartTheme)} />
+          <XAxis {...buildXAxisProps(chartTheme, { dataKey: xKey })} />
+          <YAxis {...buildYAxisProps(chartTheme, { domain: yDomain, width: 44 })} />
           <Tooltip
             formatter={(value, name) => [BRL.format(Number(value || 0)), seriesLabels[name] || name]}
-            contentStyle={TOOLTIP_STYLE}
-            labelStyle={{ color: '#e2e8f0', fontWeight: 700 }}
-            itemStyle={{ color: '#cbd5e1' }}
+            contentStyle={chartTheme.tooltip.contentStyle}
+            labelStyle={chartTheme.tooltip.labelStyle}
+            itemStyle={chartTheme.tooltip.itemStyle}
           />
           {hasBreakEven ? (
             <Line
               type="monotone"
               dataKey="breakEven"
               name="breakEven"
-              stroke="#ef4444"
-              strokeWidth={2}
-              strokeDasharray="6 4"
+              stroke={chartTheme.lineBreakEven}
+              strokeWidth={1.75}
+              strokeDasharray="5 5"
               dot={false}
               activeDot={false}
             />
@@ -90,9 +114,9 @@ export function AcumuladoKpiChart({
               type="monotone"
               dataKey="meta"
               name="meta"
-              stroke="#22c55e"
-              strokeWidth={2}
-              strokeDasharray="6 4"
+              stroke={chartTheme.lineMeta}
+              strokeWidth={1.75}
+              strokeDasharray="5 5"
               dot={false}
               activeDot={false}
             />
@@ -101,10 +125,10 @@ export function AcumuladoKpiChart({
             type="monotone"
             dataKey={valueKey}
             name={valueKey}
-            stroke="#abc85a"
-            strokeWidth={3}
+            stroke={chartTheme.linePrimary}
+            strokeWidth={2.5}
             dot={false}
-            activeDot={{ r: 4 }}
+            activeDot={{ r: 3.5 }}
           />
         </LineChart>
       </ResponsiveContainer>
@@ -124,8 +148,11 @@ export function LucroAcumuladoChart({ data, innerSurfaceClassName }) {
 }
 
 function DonutGauge({ ring, label, actualLabel, targetLabel, actualValue, targetValue }) {
+  const radii = DONUT_GAUGE_RADII.sm;
+  const isAboveTarget = ring.percent > 100;
+
   return (
-    <div className="rounded-md px-2 py-2 bg-[#1f2734]/55 border border-slate-500/15">
+    <div className={p38Dashboard.stat}>
       <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">{label}</p>
       <div className="grid grid-cols-[96px,1fr] gap-2 items-center">
         <div className="h-[96px] relative">
@@ -133,8 +160,8 @@ function DonutGauge({ ring, label, actualLabel, targetLabel, actualValue, target
             <PieChart>
               <Pie
                 data={ring.ringData}
-                innerRadius={28}
-                outerRadius={42}
+                innerRadius={radii.inner}
+                outerRadius={radii.outer}
                 dataKey="value"
                 startAngle={90}
                 endAngle={-270}
@@ -148,8 +175,8 @@ function DonutGauge({ ring, label, actualLabel, targetLabel, actualValue, target
               {ring.ringOverflowData.length > 0 ? (
                 <Pie
                   data={ring.ringOverflowData}
-                  innerRadius={22}
-                  outerRadius={26}
+                  innerRadius={radii.overflowInner}
+                  outerRadius={radii.overflowOuter}
                   dataKey="value"
                   startAngle={90}
                   endAngle={-270}
@@ -165,17 +192,19 @@ function DonutGauge({ ring, label, actualLabel, targetLabel, actualValue, target
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <span className="text-[10px] text-muted-foreground uppercase">%</span>
-            <span className="text-sm font-bold text-slate-100">{ring.percent.toFixed(0)}%</span>
+            <span className={`text-sm font-bold ${isAboveTarget ? 'text-lime-300' : p38Dashboard.title}`}>
+              {ring.percent.toFixed(0)}%
+            </span>
           </div>
         </div>
         <div className="space-y-1 text-[10px]">
           <div>
             <p className="text-muted-foreground uppercase">{actualLabel}</p>
-            <p className="text-slate-100 font-semibold">{formatDashboardCurrency(actualValue)}</p>
+            <p className={p38Dashboard.textStrong}>{formatDashboardCurrency(actualValue)}</p>
           </div>
           <div>
             <p className="text-muted-foreground uppercase">{targetLabel}</p>
-            <p className="text-slate-100 font-semibold">{formatDashboardCurrency(targetValue)}</p>
+            <p className={p38Dashboard.textStrong}>{formatDashboardCurrency(targetValue)}</p>
           </div>
         </div>
       </div>
@@ -185,9 +214,9 @@ function DonutGauge({ ring, label, actualLabel, targetLabel, actualValue, target
 
 export function DualDonutKpiModule({ title, icon: Icon, ringA, ringB, labels }) {
   return (
-    <div className="rounded-xl p-2.5 bg-[#313a4a]/65 border border-slate-400/10 space-y-2.5">
+    <div className={p38Dashboard.innerPanel}>
       <p className="text-[10px] text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-        {Icon ? <Icon className="w-3.5 h-3.5 text-lime-400" /> : null}
+        {Icon ? <Icon className={`w-3.5 h-3.5 ${p38Dashboard.iconAccent}`} /> : null}
         {title}
       </p>
       <div className="grid grid-cols-1 gap-2">

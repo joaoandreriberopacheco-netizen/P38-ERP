@@ -67,7 +67,7 @@ export default function FilterScreenMargem({
                   <button
                     key={tag}
                     onClick={() => setSelectedTags(prev => prev.filter(t => t !== tag))}
-                    className="px-3 py-2 bg-background dark:bg-card text-white dark:text-foreground rounded-lg text-sm font-medium flex items-center gap-2 hover:opacity-80 transition"
+                    className="px-3 py-2 bg-card text-card-foreground rounded-lg text-sm font-medium flex items-center gap-2 hover:opacity-80 transition"
                   >
                     {tag}
                     <X className="w-3 h-3" />
@@ -110,7 +110,7 @@ export default function FilterScreenMargem({
         {/* Action Button */}
         <button
           onClick={() => setCurrentStep('main')}
-          className="w-full mt-6 py-4 bg-background dark:bg-card text-white dark:text-foreground rounded-lg font-bold text-base hover:opacity-90 transition"
+          className="w-full mt-6 py-4 bg-card text-card-foreground rounded-lg font-bold text-base hover:opacity-90 transition"
         >
           Voltar
         </button>
@@ -147,7 +147,7 @@ export default function FilterScreenMargem({
                 onClick={() => setSelectedCategory('all')}
                 className={`w-full py-4 px-4 rounded-lg font-bold text-base transition ${
                   selectedCategory === 'all'
-                    ? 'bg-background text-white dark:bg-card dark:text-foreground'
+                    ? 'bg-primary text-primary-foreground dark:bg-card dark:text-foreground'
                     : 'bg-muted text-foreground dark:bg-muted dark:text-white hover:bg-muted dark:hover:bg-primary/90'
                 }`}
               >
@@ -159,7 +159,7 @@ export default function FilterScreenMargem({
                   onClick={() => setSelectedCategory(cat)}
                   className={`w-full py-4 px-4 rounded-lg font-bold text-base transition text-left ${
                     selectedCategory === cat
-                      ? 'bg-background text-white dark:bg-card dark:text-foreground'
+                      ? 'bg-primary text-primary-foreground dark:bg-card dark:text-foreground'
                       : 'bg-muted text-foreground dark:bg-muted dark:text-white hover:bg-muted dark:hover:bg-primary/90'
                   }`}
                 >
@@ -188,7 +188,7 @@ export default function FilterScreenMargem({
                     <button
                       key={tag}
                       onClick={() => setSelectedTags(prev => prev.filter(t => t !== tag))}
-                      className="px-3 py-2 bg-background dark:bg-card text-white dark:text-foreground rounded-lg text-xs font-medium flex items-center gap-2 hover:opacity-80 transition"
+                      className="px-3 py-2 bg-card text-card-foreground rounded-lg text-xs font-medium flex items-center gap-2 hover:opacity-80 transition"
                     >
                       {tag}
                       <X className="w-3 h-3" />
@@ -204,7 +204,7 @@ export default function FilterScreenMargem({
       {/* Action Button */}
       <button
         onClick={onClose}
-        className="w-full mt-8 py-4 bg-background dark:bg-card text-white dark:text-foreground rounded-lg font-bold text-base hover:opacity-90 transition"
+        className="w-full mt-8 py-4 bg-card text-card-foreground rounded-lg font-bold text-base hover:opacity-90 transition"
       >
         Aplicar Filtros
       </button>

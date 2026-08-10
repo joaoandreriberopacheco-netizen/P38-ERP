@@ -117,7 +117,7 @@ export default function ConfirmarImpressaoDialog({
           <Button
             ref={simRef}
             type="button"
-            className="w-full rounded-2xl bg-background text-white hover:bg-primary dark:bg-card dark:text-foreground sm:w-auto sm:min-w-[120px]"
+            className="w-full rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground sm:w-auto sm:min-w-[120px]"
             onClick={() => fecharCom('sim')}
           >
             Sim <span className="ml-1 text-xs opacity-80">(S / Enter)</span>

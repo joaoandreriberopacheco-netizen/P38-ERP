@@ -1,4 +1,5 @@
 import { ENTITY_TO_TABLE, resolveEntityMapping } from './entityTableMap.js';
+import { isP38Dev } from '@/lib/p38PublicEnv';
 
 /** Colunas físicas comuns às tabelas managed pelo app. */
 const META_COLUMNS = new Set(['id', 'created_at', 'updated_at', 'created_by']);
@@ -60,6 +61,28 @@ function decorateRow(row, entityName, mapping) {
   return out;
 }
 
+function isLikelyDateField(key) {
+  if (key === 'eta' || key === 'data_validade') return true;
+  if (key.startsWith('data_')) return true;
+  if (key.endsWith('_date')) return true;
+  if (key.startsWith('previsao_')) return true;
+  return false;
+}
+
+/** Postgres rejeita `""` em colunas date/timestamptz — converte para null. */
+function sanitizeEmptyDateValues(payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return payload;
+  const out = { ...payload };
+  for (const [k, v] of Object.entries(out)) {
+    if (v === '' && isLikelyDateField(k)) {
+      out[k] = null;
+    } else if (k === 'dados' && v && typeof v === 'object' && !Array.isArray(v)) {
+      out.dados = sanitizeEmptyDateValues(v);
+    }
+  }
+  return out;
+}
+
 export function prepareWritePayload(payload, entityName, mapping) {
   if (!payload || typeof payload !== 'object') return payload;
   const p = { ...payload };
@@ -93,7 +116,7 @@ export function prepareWritePayload(payload, entityName, mapping) {
   // Caso 3: modo 'jsonb' puro — só META + `columns` viram coluna; resto em dados.
   const hasOverflowJsonb = mapping?.mode === 'jsonb' || Array.isArray(mapping?.columns);
   if (!hasOverflowJsonb) {
-    return p;
+    return sanitizeEmptyDateValues(p);
   }
 
   const allowedColumns = new Set([...(mapping.columns || []), ...META_COLUMNS]);
@@ -112,7 +135,7 @@ export function prepareWritePayload(payload, entityName, mapping) {
   if (out.created_by === undefined) delete out.created_by;
   // Se nada foi parar em `dados`, remove para não sobrescrever JSONB existente desnecessariamente
   if (Object.keys(out.dados).length === 0) delete out.dados;
-  return out;
+  return sanitizeEmptyDateValues(out);
 }
 
 function normalizeFilterColumn(field, mapping) {
@@ -126,6 +149,9 @@ function normalizeFilterColumn(field, mapping) {
   return field;
 }
 
+/** Campos promovidos que ainda podem existir só em `dados` (legado pós-migração). */
+const FILTER_DADOS_OR_COLUMN = new Set(['turno_caixa_id']);
+
 function applyFilters(query, where, mapping) {
   if (!where || typeof where !== 'object') return query;
   let q = query;
@@ -135,6 +161,20 @@ function applyFilters(query, where, mapping) {
     // Operadores especiais do Base44 (ex: $or) não são suportados aqui — ignorar.
     if (key.startsWith('$')) continue;
     const target = normalizeFilterColumn(key, mapping);
+    const cols = new Set([...(mapping?.columns || []), ...META_COLUMNS]);
+    const hasOverflowJsonb = mapping?.mode === 'jsonb' || Array.isArray(mapping?.columns);
+
+    if (
+      FILTER_DADOS_OR_COLUMN.has(key) &&
+      hasOverflowJsonb &&
+      cols.has(key) &&
+      val !== null &&
+      typeof val !== 'object'
+    ) {
+      const encoded = String(val).replace(/,/g, '\\,');
+      q = q.or(`${target}.eq.${encoded},dados->>${key}.eq.${encoded}`);
+      continue;
+    }
 
     if (val !== null && typeof val === 'object' && !Array.isArray(val) && !(val instanceof Date)) {
       const ops = val;
@@ -169,6 +209,9 @@ function applyFilters(query, where, mapping) {
 
     if (Array.isArray(val)) {
       q = q.in(target, val);
+    } else if (key === 'tipo' && typeof val === 'string') {
+      // BD usa PRODUTO em maiúsculas; formulários usam Produto.
+      q = q.ilike(target, val);
     } else {
       q = q.eq(target, val);
     }
@@ -295,7 +338,7 @@ function createEntityApi(supabase, entityName, mapping) {
   }
 
   function subscribe(_callback) {
-    if (import.meta.env.DEV) {
+    if (isP38Dev()) {
       console.debug(`[P38][supabase] ${entityName}.subscribe — realtime não ligado (usar Base44 ou canal postgres depois)`);
     }
     return () => {};

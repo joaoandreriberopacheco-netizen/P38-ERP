@@ -76,14 +76,8 @@ function rowsFromApi(batch) {
 function hydratePedidosComItens(pedidos, itensPorPedido) {
   return pedidos.map((pedido) => {
     const carregados = itensPorPedido[String(pedido.id)] || [];
-    const espelho = Array.isArray(pedido.itens) ? pedido.itens : [];
-    const itens =
-      carregados.length > espelho.length
-        ? carregados
-        : espelho.length
-          ? espelho
-          : carregados;
-    return { ...pedido, itens };
+    const { itens: _i, ...rest } = pedido;
+    return { ...rest, itens: carregados, _itens_fonte: carregados.length ? 'sql' : 'vazio' };
   });
 }
 

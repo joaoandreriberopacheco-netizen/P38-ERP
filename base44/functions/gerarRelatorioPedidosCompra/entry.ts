@@ -1267,7 +1267,7 @@ Deno.serve(async (req) => {
         valor_total: getValorRelatorio(pedido, produtosMap)
       };
       drawPedidoHeaderCompacto(pedidoParaHeader);
-      const embarque = pedido._embarque || (pedido.embarques_registrados || [])[0] || null;
+      const embarque = pedido._embarque || null;
       const itensEfetivos = itensTela;
       doc.setFontSize(8);
       doc.setTextColor(...C.muted);

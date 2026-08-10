@@ -151,11 +151,32 @@ Deno.serve(async (req) => {
     if (!pedidos?.length) return Response.json({ error: 'Pedido nao encontrado' }, { status: 404 });
 
     const pedido = pedidos[0];
+
+    const linhasSql = await base44.asServiceRole.entities.PedidoCompraItem.filter({ pedido_compra_id: pedido.id });
+    const itensPedido = (Array.isArray(linhasSql) ? linhasSql : [])
+      .slice()
+      .sort((a, b) => (Number(a.ordem) || 0) - (Number(b.ordem) || 0))
+      .map((linha) => ({
+        produto_id: linha.produto_id,
+        produto_nome: linha.produto_nome,
+        quantidade: Number(linha.quantidade_comercial) || 0,
+        quantidade_base: Number(linha.quantidade_base) || 0,
+        unidade_medida: linha.unidade_sigla || 'UN',
+        custo_unitario: Number(linha.custo_unitario_fator1) || 0,
+        custo_final_unitario: Number(linha.custo_total_unitario_fator1) || 0,
+        total: Number(linha.total) || 0,
+        fator_conversao: Number(linha.fator_aplicado) || 1,
+      }));
+    const pedidoComItens = { ...pedido, itens: itensPedido };
+
+    const embarquesRows = await base44.asServiceRole.entities.Embarque.filter({ pedido_compra_id: pedido.id });
+    const embarques = Array.isArray(embarquesRows) ? embarquesRows : [];
+
     const fornecedor = pedido.fornecedor_id
       ? await base44.asServiceRole.entities.Terceiro.get(pedido.fornecedor_id).catch(() => null)
       : null;
 
-    const produtosIds = [...new Set((pedido.itens || []).map((item) => item.produto_id).filter(Boolean))];
+    const produtosIds = [...new Set(itensPedido.map((item) => item.produto_id).filter(Boolean))];
     const produtos = await Promise.all(
       produtosIds.map((id) => base44.asServiceRole.entities.Produto.get(id).catch(() => null))
     );
@@ -245,12 +266,11 @@ Deno.serve(async (req) => {
       y += blockHeight + 5;
     };
 
-    const subtotalItens = getTotalItensEfetivoPedido(pedido, produtosMap);
+    const subtotalItens = getTotalItensEfetivoPedido(pedidoComItens, produtosMap);
     const frete = 0;
     const desconto = Number(pedido.valor_desconto) || 0;
     const totalPedido = Number(pedido.valor_total) || subtotalItens;
-    const quantidadeItens = (pedido.itens || []).reduce((sum, item) => sum + (Number(item.quantidade) || 0), 0);
-    const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
+    const quantidadeItens = itensPedido.reduce((sum, item) => sum + (Number(item.quantidade) || 0), 0);
     const criador = pedido.created_by_nome || pedido.created_by_nickname || pedido.created_by || user.email || '-';
 
     doc.setFillColor(255, 255, 255);
@@ -290,7 +310,7 @@ Deno.serve(async (req) => {
     ]);
 
     const operacaoHeight = drawCard(page.marginX + colWidth + colGap, y, colWidth, 'Operacao', [
-      ['Itens', `${pedido.itens?.length || 0} produtos / ${quantidadeItens} unidades`],
+      ['Itens', `${itensPedido.length} produtos / ${quantidadeItens} unidades`],
       ['Embarques', `${embarques.length} registrado(s)`],
     ]);
     y += Math.max(rastreioHeight, operacaoHeight) + 5;
@@ -314,9 +334,9 @@ Deno.serve(async (req) => {
     drawText('TOTAL', tableColumns.total - 3, y + 6.3, { align: 'right' });
     y += 13;
 
-    (pedido.itens || []).forEach((item) => {
+    itensPedido.forEach((item) => {
       const produto = item.produto_id ? produtosMap[item.produto_id] : null;
-      const nome = item.produto_nome || '-';
+      const nome = item.produto_nome || produto?.nome || '-';
       const nomeLines = doc.splitTextToSize(safe(nome), 86);
       const infoExtra = `${item.unidade_medida || 'UN'}${item.fator_conversao ? ` | fator ${item.fator_conversao}` : ''}`;
       const custoAumentado = Number(produto?.preco_custo_calculado) || 0;
@@ -343,7 +363,7 @@ Deno.serve(async (req) => {
       drawText(infoExtra, tableColumns.produto + 3, y + rowHeight - 3.8);
 
       setText(10, 'bold', [17, 24, 39]);
-      const valorUnitarioEfetivo = getValorUnitarioEfetivoItem(item, produto || {}, pedido);
+      const valorUnitarioEfetivo = getValorUnitarioEfetivoItem(item, produto || {}, pedidoComItens);
       drawText(String(item.quantidade || 0), tableColumns.qtd, y + 6.8);
       drawText(fmtCur(valorUnitarioEfetivo), tableColumns.unit, y + 6.8);
       drawText(fmtCur(valorUnitarioEfetivo * (Number(item.quantidade) || 0)), tableColumns.total - 3, y + 6.8, { align: 'right' });

@@ -4,13 +4,23 @@ import { ptBR } from 'date-fns/locale';
 import { base44 } from '@/api/base44Client';
 import { pedidoLiberadoParaLogistica } from '@/lib/aprovarPedidoCompraFinanceiro';
 import { enrichProdutosComIep } from '@/lib/calcularIepProdutos';
-import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
-import { fetchDadosVendaAbcd90d } from '@/lib/fetchPedidosVenda90d';
 import {
-  FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT,
-  FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT,
-  passaFiltroVisibilidadePedidosCompra,
-} from '@/lib/filtroVisibilidadePedidosCompra';
+  buildPendenteAprovadoFinanceiroPorProduto,
+  buildPendenteEmbarcadoNaoRecebidoPorProduto,
+  buildRecebidosPorPedidoProdutoFromEmbarques,
+  pedidoCompraAprovadoNaoConcluido as pedidoCompraAprovadoNaoConcluidoCanonico,
+  quantidadePendenteItemPedidoCompra,
+} from '@/lib/sugestaoCompraEstoquePendente';
+import { fetchPedidosCompraParaSugestaoEstoque } from '@/lib/fetchPedidosCompraParaSugestaoEstoque';
+import { hydrateEmbarquesFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
+import {
+  resolveProdutoCustoUnitarioBase,
+  sumCatalogTransitStockValue,
+  sumCatalogTransitStockValueByAbcd,
+} from '@/lib/catalogStockTotals';
+import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
+import { resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
+import { fetchDadosVendaAbcd90d } from '@/lib/fetchPedidosVenda90d';
 import {
   calcValorItensPedidoCompra,
   calcValorTotalPedidoCompra,
@@ -19,6 +29,14 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
+import { p38Dashboard } from '@/lib/p38DashboardSurfaces';
+import {
+  buildCartesianGridProps,
+  buildXAxisProps,
+  buildYAxisProps,
+  DASHBOARD_CHART_MARGIN,
+} from '@/lib/dashboardChartLayout';
+import { useDashboardChartTheme } from '@/lib/useDashboardChartTheme';
 import { toLocalDateKey } from '@/components/utils/dateUtils';
 import { AlertCircle, Gauge, Layers, Package, Truck } from 'lucide-react';
 import {
@@ -78,8 +96,6 @@ const LOCATION_COLORS = {
 };
 
 const STOCK_BAR_COLORS = ['#b5d061', '#aac459', '#9eb851', '#93ab48', '#879f41', '#7d933b'];
-const CARD_SURFACE = 'bg-gradient-to-br from-[#2b3342] via-[#2a3140] to-[#242c39]';
-const INNER_SURFACE = 'bg-[#313a4a]/65 border border-slate-400/10';
 
 const PEDIDO_VENDA_STATUSES_CMV = new Set([
   'financeiro ok',
@@ -177,27 +193,124 @@ function pedidoVendaContaNoCMV(pedido = {}) {
 }
 
 function pedidoCompraAprovadoNaoConcluido(pedido = {}) {
+  return pedidoCompraAprovadoNaoConcluidoCanonico(pedido);
+}
+
+function pedidoContaNoEstoqueVirtualHistorico(pedido = {}) {
   const statusDisplay = String(pedido.status || '').trim();
-  const ehAguardandoPagamento = [
-    'Aguardando Aprovação Financeira',
-    'Aguardando Liberação Financeira',
-    'Aguardando Liberação',
-    'Aguardando',
-  ].includes(statusDisplay);
-  if (ehAguardandoPagamento) return false;
-
+  const status = normalizeStatus(statusDisplay);
+  if (['rascunho', 'cancelado', 'rejeitado', 'rejeitado financeiramente'].includes(status)) {
+    return false;
+  }
+  if (
+    [
+      'aguardando aprovação financeira',
+      'aguardando aprovacao financeira',
+      'aguardando liberação financeira',
+      'aguardando liberacao financeira',
+      'aguardando liberação',
+      'aguardando liberacao',
+      'aguardando',
+    ].includes(status)
+  ) {
+    return false;
+  }
   const statusAprovacao = normalizeStatus(pedido.status_aprovacao_financeira || pedido.status);
-  const aprovadoViaStatus = pedidoLiberadoParaLogistica(pedido);
-  const aprovado = PEDIDO_COMPRA_APPROVED_STATUSES.has(statusAprovacao);
-  if (!aprovado && !aprovadoViaStatus) return false;
+  return (
+    PEDIDO_COMPRA_APPROVED_STATUSES.has(statusAprovacao) ||
+    pedidoLiberadoParaLogistica(pedido) ||
+    pedidoCompraAprovadoNaoConcluido(pedido)
+  );
+}
 
-  const statusRecebimento = normalizeStatus(pedido.status_recebimento_geral);
-  const statusPedido = normalizeStatus(pedido.status);
-  const concluidoRecebimento =
-    statusRecebimento.startsWith('concluído') || statusRecebimento.startsWith('concluido');
-  const concluidoPedido = statusPedido === 'concluído' || statusPedido === 'concluido';
+function embarqueRecebidoAte(embarque = {}, monthEnd) {
+  const statusReceb = normalizeStatus(embarque?.status_recebimento);
+  const statusEmbarque = normalizeStatus(embarque?.status);
+  const recebido =
+    statusReceb === 'recebido ok' ||
+    statusReceb === 'com divergencia' ||
+    statusReceb === 'recebido parcial' ||
+    statusEmbarque === 'concluido';
+  if (!recebido) return false;
 
-  return !concluidoRecebimento && !concluidoPedido;
+  const dataReceb = parseDate(
+    embarque.data_recebimento || embarque.data_conclusao || embarque.updated_date || embarque.created_date
+  );
+  return dataReceb && !isAfter(dataReceb, monthEnd);
+}
+
+function embarqueEmTransitoNoFimDoMes(embarque = {}, monthEnd) {
+  const dataEmbarque = parseDate(embarque.data_embarque || embarque.eta || embarque.created_date);
+  if (!dataEmbarque || isAfter(dataEmbarque, monthEnd)) return false;
+  if (embarqueRecebidoAte(embarque, monthEnd)) return false;
+  return true;
+}
+
+function mergePendentePorProdutoMaps(...maps) {
+  const out = {};
+  for (const map of maps) {
+    for (const [key, qty] of Object.entries(map || {})) {
+      const atual = Number(out[key] || 0);
+      const novo = Number(qty) || 0;
+      out[key] = Math.max(atual, novo);
+    }
+  }
+  return out;
+}
+
+function buildPendenteVirtualPorProdutoNoFimDoMes(
+  monthEnd,
+  pedidosCompra = [],
+  embarquesCompra = [],
+  recebidosPorPedidoProduto = {},
+) {
+  const pedidosAteMes = pedidosCompra.filter((pedido) => {
+    const dataPedido = parseDate(pedido.data_emissao || pedido.created_date);
+    return dataPedido && !isAfter(dataPedido, monthEnd);
+  });
+  const pedidosById = new Map(pedidosAteMes.filter((p) => p?.id).map((p) => [String(p.id), p]));
+  const pedidoMap = {};
+
+  pedidosAteMes.forEach((pedido) => {
+    if (!pedidoContaNoEstoqueVirtualHistorico(pedido)) return;
+    const recebidosPedido = recebidosPorPedidoProduto[String(pedido.id)] || {};
+    (pedido.itens || []).forEach((item) => {
+      const produtoId = item?.produto_id;
+      if (!produtoId) return;
+      const pendente = quantidadePendenteItemPedidoCompra(item, recebidosPedido);
+      if (pendente <= 0) return;
+      const produtoKey = String(produtoId);
+      pedidoMap[produtoKey] = (pedidoMap[produtoKey] || 0) + pendente;
+    });
+  });
+
+  const embarquesTransito = embarquesCompra.filter((embarque) => embarqueEmTransitoNoFimDoMes(embarque, monthEnd));
+  const embarqueMap = buildPendenteEmbarcadoNaoRecebidoPorProduto(embarquesTransito, pedidosById);
+  return mergePendentePorProdutoMaps(pedidoMap, embarqueMap);
+}
+
+function calcularValorEstoqueVirtualNoFimDoMes(
+  monthEnd,
+  pedidosCompra = [],
+  embarquesCompra = [],
+  custoProdutoMap = new Map(),
+) {
+  const embarquesRecebidosAteMes = embarquesCompra.filter((embarque) => embarqueRecebidoAte(embarque, monthEnd));
+  const recebidosPorPedidoProduto = buildRecebidosPorPedidoProdutoFromEmbarques(
+    embarquesRecebidosAteMes,
+    pedidosCompra,
+  );
+  const pendentePorProduto = buildPendenteVirtualPorProdutoNoFimDoMes(
+    monthEnd,
+    pedidosCompra,
+    embarquesCompra,
+    recebidosPorPedidoProduto,
+  );
+
+  return Object.entries(pendentePorProduto).reduce((total, [produtoId, qty]) => {
+    const custo = Number(custoProdutoMap.get(produtoId) ?? custoProdutoMap.get(Number(produtoId)) ?? 0);
+    return total + (Number(qty) || 0) * Math.max(0, custo);
+  }, 0);
 }
 
 function percentualPendentePedidoCompra(pedido = {}) {
@@ -209,14 +322,9 @@ function percentualPendentePedidoCompra(pedido = {}) {
 
 function calcularValorPendentePedidoCompra(pedido = {}, recebidosPorProdutoExterno = null) {
   const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
-  const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
+  const embarques = Array.isArray(pedido?._embarques) ? pedido._embarques : [];
   const recebidosPorProduto = recebidosPorProdutoExterno || embarques.reduce((acc, embarque) => {
-    const itensEmbarcados = Array.isArray(embarque.itens_embarcados)
-      ? embarque.itens_embarcados
-      : Array.isArray(embarque.itens)
-        ? embarque.itens
-        : [];
-    itensEmbarcados.forEach((item) => {
+    getEmbarqueItensLinhas(embarque).forEach((item) => {
       const produtoId = item.produto_id;
       if (!produtoId) return;
       acc[produtoId] = (acc[produtoId] || 0) + (Number(item.quantidade_recebida) || 0);
@@ -249,7 +357,7 @@ function isNecessidadeRenderizada(embarque = {}) {
 }
 
 function hasLinkedItems(embarque = {}) {
-  const itens = embarque?.itens || embarque?.itens_embarcados || [];
+  const itens = getEmbarqueItensLinhas(embarque);
   return Array.isArray(itens) && itens.some((item) => (Number(item?.quantidade_embarcada) || 0) > 0);
 }
 
@@ -265,7 +373,7 @@ function hasDespachoVinculado(embarque = {}) {
 function getQuantidadePendenteNecessidade(pedido = {}, embarque = {}) {
   if (!isNecessidadeRenderizada(embarque)) return 0;
 
-  const itensNecessidade = embarque?.itens || embarque?.itens_embarcados || [];
+  const itensNecessidade = getEmbarqueItensLinhas(embarque);
   const quantidadeDoEmbarque = itensNecessidade.reduce((acc, item) => {
     return acc + (Number(item?.quantidade_embarcada) || Number(item?.quantidade_pedida) || 0);
   }, 0);
@@ -320,7 +428,7 @@ function getBorrowedStatus(pedido = {}, embarque = {}) {
 }
 
 function getDisplayValorEmbarque(pedido = {}, embarque = {}) {
-  const itensEmbarque = embarque?.itens || embarque?.itens_embarcados || [];
+  const itensEmbarque = getEmbarqueItensLinhas(embarque);
   const valorItensPedido = calcValorItensPedidoCompra(pedido);
   if (!itensEmbarque.length) return calcValorTotalPedidoCompra(pedido);
 
@@ -358,7 +466,7 @@ function buildVirtualNecessidade(pedido = {}, embarquesDoPedido = []) {
   if (!temDespachoReal) return null;
 
   const recebidosPorProduto = embarquesReais.reduce((acc, embarque) => {
-    (embarque?.itens || embarque?.itens_embarcados || []).forEach((item) => {
+    getEmbarqueItensLinhas(embarque).forEach((item) => {
       const produtoId = item.produto_id;
       if (!produtoId) return;
       acc[produtoId] =
@@ -391,8 +499,8 @@ function buildVirtualNecessidade(pedido = {}, embarquesDoPedido = []) {
     status: 'Pendente',
     status_recebimento: 'Pendente',
     observacoes: 'Embarque de necessidade criado automaticamente para itens pendentes.',
-    itens: itensPendentes,
-    itens_embarcados: itensPendentes,
+    _linhas: itensPendentes,
+    _itens_fonte: 'virtual',
     created_date: new Date().toISOString(),
   };
 }
@@ -422,10 +530,12 @@ function getMovimentoDeltaQuantidade(movimento = {}) {
 }
 
 export default function EstoqueTab() {
+  const chartTheme = useDashboardChartTheme();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [metrics, setMetrics] = useState(null);
   const [incluirTransitoQualidade, setIncluirTransitoQualidade] = useState(false);
+  const [incluirEstoqueVirtualNivel, setIncluirEstoqueVirtualNivel] = useState(false);
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window === 'undefined') return false;
     return window.innerWidth < 640;
@@ -458,7 +568,7 @@ export default function EstoqueTab() {
         const supplyStartISO = format(supplyMonthBuckets[0]?.start || startDate, 'yyyy-MM-dd');
         const supplyEndISO = format(supplyMonthBuckets[supplyMonthBuckets.length - 1]?.end || endDate, 'yyyy-MM-dd');
 
-        const [produtos, movimentacoesEstoqueRaw, lancamentosFinanceiros, pedidosVenda, pedidosCompra, embarquesCompraRaw, dadosVendaAbcd90d] =
+        const [produtos, movimentacoesEstoqueRaw, lancamentosFinanceiros, pedidosVenda, pedidosCompra, embarquesCompraRaw, dadosVendaAbcd90d, sugestaoEstoqueData] =
           await Promise.all([
             base44.entities.Produto.filter({}, '-created_date', 5000),
             base44.entities.MovimentacaoEstoque.list('-created_date', 50000),
@@ -475,6 +585,7 @@ export default function EstoqueTab() {
             base44.entities.PedidoCompra.list('-created_date', 300),
             base44.entities.Embarque.list('-created_date', 600),
             fetchDadosVendaAbcd90d().catch(() => null),
+            fetchPedidosCompraParaSugestaoEstoque(base44).catch(() => null),
           ]);
 
         const produtosLista = Array.isArray(produtos) ? produtos : [];
@@ -491,19 +602,17 @@ export default function EstoqueTab() {
         const lancamentosLista = Array.isArray(lancamentosFinanceiros) ? lancamentosFinanceiros : [];
         const pedidosVendaLista = Array.isArray(pedidosVenda) ? pedidosVenda : [];
         const pedidosCompraLista = Array.isArray(pedidosCompra) ? pedidosCompra : [];
-        const embarquesCompraLista = Array.isArray(embarquesCompraRaw) ? embarquesCompraRaw : [];
+        const embarquesCompraLista = await hydrateEmbarquesFromSql(
+          base44,
+          Array.isArray(embarquesCompraRaw) ? embarquesCompraRaw : [],
+        );
 
         const recebidosPorPedidoProduto = embarquesCompraLista.reduce((acc, embarque) => {
           const pedidoId = embarque?.pedido_compra_id;
           if (!pedidoId) return acc;
           const pedidoKey = String(pedidoId);
           if (!acc[pedidoKey]) acc[pedidoKey] = {};
-          const itensEmbarcados = Array.isArray(embarque.itens_embarcados)
-            ? embarque.itens_embarcados
-            : Array.isArray(embarque.itens)
-              ? embarque.itens
-              : [];
-          itensEmbarcados.forEach((item) => {
+          getEmbarqueItensLinhas(embarque).forEach((item) => {
             const produtoId = item?.produto_id;
             if (!produtoId) return;
             const produtoKey = String(produtoId);
@@ -520,17 +629,27 @@ export default function EstoqueTab() {
           D: 0,
           E: 0,
         };
-        const qualityTransitRawAccumulator = {
-          A: 0,
-          B: 0,
-          C: 0,
-          D: 0,
-          E: 0,
-        };
+        const pendentePorProdutoCatalogo = sugestaoEstoqueData
+          ? buildPendenteAprovadoFinanceiroPorProduto(
+            sugestaoEstoqueData.pedidosAbertos,
+            sugestaoEstoqueData.recebidosPorPedidoProduto,
+            {
+              embarques: sugestaoEstoqueData.embarques,
+              pedidosParaEmbarque: sugestaoEstoqueData.pedidosTodos,
+            },
+          )
+          : {};
+
+        const qualityTransitRawAccumulator = sumCatalogTransitStockValueByAbcd(
+          produtosComAbcdCatalogo,
+          pendentePorProdutoCatalogo,
+          QUALITY_ORDER,
+        );
 
         let estoqueFisico = 0;
         produtosComAbcdCatalogo.forEach((produto) => {
-          const custoUnitario = Number(produto.preco_custo_calculado || produto.valor_compra || 0);
+          if (!produto?.ativo) return;
+          const custoUnitario = resolveProdutoCustoUnitarioBase(produto);
           const estoqueAtual = Number(produto.estoque_atual || 0);
           const estoqueGerencial = Math.max(0, estoqueAtual);
           const valorEstoque = estoqueGerencial * custoUnitario;
@@ -547,7 +666,7 @@ export default function EstoqueTab() {
             produto.id,
             {
               estoqueAtual: Number(produto.estoque_atual || 0),
-              custoAtual: Number(produto.preco_custo_calculado || produto.valor_compra || 0),
+              custoAtual: Number(resolveCustoTotalUnitBaseProduto(produto)),
             },
           ])
         );
@@ -559,6 +678,10 @@ export default function EstoqueTab() {
             deltaQuantidade: getMovimentoDeltaQuantidade(movimento),
           }))
           .filter((movimento) => movimento.skuId && movimento.date && movimento.deltaQuantidade !== 0);
+
+        const custoProdutoMap = new Map(
+          produtosLista.map((produto) => [produto.id, Number(resolveCustoTotalUnitBaseProduto(produto))])
+        );
 
         const nivelEstoqueSeries = monthBuckets.map((bucket) => {
           const monthEnd = bucket.end;
@@ -578,15 +701,21 @@ export default function EstoqueTab() {
             monthValue += estoqueGerencial * skuData.custoAtual;
           });
 
+          const valorVirtual = calcularValorEstoqueVirtualNoFimDoMes(
+            monthEnd,
+            pedidosCompraLista,
+            embarquesCompraLista,
+            custoProdutoMap,
+          );
+
           return {
             periodo: bucket.label,
             valor: monthValue,
+            valorFisico: monthValue,
+            valorVirtual,
+            valorGeral: monthValue + valorVirtual,
           };
         });
-
-        const custoProdutoMap = new Map(
-          produtosLista.map((produto) => [produto.id, Number(produto.preco_custo_calculado || produto.valor_compra || 0)])
-        );
 
         const supplyByMonth = supplyMonthBuckets.map((bucket) => {
           const cmvEfetivo = lancamentosLista.reduce((sum, lancamento) => {
@@ -625,114 +754,10 @@ export default function EstoqueTab() {
             status: getSupplyStatus(ratioPercent),
           };
         });
-        const embarquesPorPedido = embarquesCompraLista.reduce((acc, embarque) => {
-          const pedidoId = embarque?.pedido_compra_id;
-          if (!pedidoId) return acc;
-          if (!acc[pedidoId]) acc[pedidoId] = [];
-          acc[pedidoId].push(embarque);
-          return acc;
-        }, {});
-
-        const cardsDeEmbarque = pedidosCompraLista.flatMap((pedido) => {
-          const embarquesDoPedido = (embarquesPorPedido[pedido.id] || []).slice()
-            .sort((a, b) => new Date(a.created_date || 0) - new Date(b.created_date || 0));
-          const embarquesReais = embarquesDoPedido.filter((embarque) => !isNecessidadeRenderizada(embarque));
-          const embarquesNecessidade = embarquesDoPedido.filter((embarque) => isNecessidadeRenderizada(embarque));
-          const necessidadeVirtual =
-            embarquesNecessidade.length === 0 ? buildVirtualNecessidade(pedido, embarquesDoPedido) : null;
-
-          const embarquesRenderizados = embarquesDoPedido.length > 0
-            ? [...embarquesReais, ...embarquesNecessidade, ...(necessidadeVirtual ? [necessidadeVirtual] : [])]
-            : [
-                {
-                  id: `original-${pedido.id}`,
-                  pedido_compra_id: pedido.id,
-                  tipo: 'Original',
-                  status: 'Pendente',
-                  status_recebimento: 'Pendente',
-                  itens: [],
-                  itens_embarcados: [],
-                  observacoes: '',
-                  created_date: pedido.created_date,
-                },
-              ];
-
-          return embarquesRenderizados.map((embarque) => {
-            const ehNecessidade = isNecessidadeRenderizada(embarque);
-            return {
-              ...pedido,
-              _embarque: embarque,
-              _is_necessidade: ehNecessidade,
-              _display_status: getBorrowedStatus(pedido, embarque),
-              _display_valor:
-                hasLinkedItems(embarque) || ehNecessidade
-                  ? getDisplayValorEmbarque(pedido, embarque)
-                  : calcValorTotalPedidoCompra(pedido),
-            };
-          });
-        });
-
-        const filtradosPadrao = cardsDeEmbarque.filter((p) =>
-          passaFiltroVisibilidadePedidosCompra(p, {
-            somenteNaoConcluidos: FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT,
-            ultimos30Dias: FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT,
-            getDataPedido: (item) => item.data_emissao || (item.created_date ? toLocalDate(item.created_date) : ''),
-            isConcluido: (item) => item._display_status === 'Concluído',
-          })
+        const transitoFinanceiroAprovado = sumCatalogTransitStockValue(
+          produtosComAbcdCatalogo,
+          pendentePorProdutoCatalogo,
         );
-
-        const pedidosPagosPendentes = filtradosPadrao.filter((pedido) => {
-          const aprovadoFinanceiro = pedidoLiberadoParaLogistica(pedido) || pedido._display_status === 'Aprovado';
-          const ehNecessidade = !!pedido._is_necessidade || pedido._embarque?.tipo === 'Necessidade';
-          const aindaNaoRecebido = pedido._display_status !== 'Concluído';
-          const aindaNaoEhAguardandoPagamento =
-            ehNecessidade ||
-            ![
-              'Aguardando Aprovação Financeira',
-              'Aguardando Liberação Financeira',
-              'Aguardando Liberação',
-              'Aguardando',
-            ].includes(pedido._display_status);
-          return aprovadoFinanceiro && aindaNaoRecebido && aindaNaoEhAguardandoPagamento;
-        });
-
-        const transitoFinanceiroAprovado = pedidosPagosPendentes.reduce(
-          (acc, pedido) => acc + Number(pedido._display_valor || 0),
-          0
-        );
-
-        const produtoById = new Map(
-          produtosComAbcdCatalogo.map((produto) => [String(produto.id), produto])
-        );
-
-        pedidosCompraLista
-          .filter((pedido) => pedidoCompraAprovadoNaoConcluido(pedido))
-          .forEach((pedido) => {
-            const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
-            const recebidosPedido = recebidosPorPedidoProduto[String(pedido.id)] || {};
-
-            itens.forEach((item) => {
-              const produtoId = String(item?.produto_id || '');
-              if (!produtoId) return;
-              const quantidadeTotal = Number(item.quantidade_base || item.quantidade || 0);
-              if (!Number.isFinite(quantidadeTotal) || quantidadeTotal <= 0) return;
-
-              const quantidadeRecebida = Number(recebidosPedido[produtoId] || 0);
-              const quantidadePendente = Math.max(0, quantidadeTotal - quantidadeRecebida);
-              if (!quantidadePendente) return;
-
-              const totalItem = Number(item.total || 0);
-              const custoViaTotal = quantidadeTotal > 0 ? totalItem / quantidadeTotal : 0;
-              const custoUnitario = Number(item.custo_final_unitario || item.custo_unitario || custoViaTotal || 0);
-              const valorPendenteItem = quantidadePendente * Math.max(0, custoUnitario);
-              if (valorPendenteItem <= 0) return;
-
-              const produto = produtoById.get(produtoId) || item;
-              const curva = resolveProdutoAbcdClasse(produto);
-              if (!QUALITY_ORDER.includes(curva)) return;
-              qualityTransitRawAccumulator[curva] += valorPendenteItem;
-            });
-          });
 
         const totalLocalizacao = estoqueFisico + transitoFinanceiroAprovado;
         const qualityTotal = QUALITY_ORDER.reduce((sum, key) => sum + qualityAccumulator[key], 0);
@@ -748,15 +773,9 @@ export default function EstoqueTab() {
             color: QUALITY_COLORS[key],
           };
         });
-        const qualityTransitRawTotal = QUALITY_ORDER.reduce(
-          (sum, key) => sum + Number(qualityTransitRawAccumulator[key] || 0),
-          0
-        );
-        const qualityTransitScale =
-          qualityTransitRawTotal > 0 ? transitoFinanceiroAprovado / qualityTransitRawTotal : 0;
         const qualityDistributionGeral = QUALITY_ORDER.map((key) => {
           const valorFisico = qualityAccumulator[key];
-          const valorTransito = Number(qualityTransitRawAccumulator[key] || 0) * qualityTransitScale;
+          const valorTransito = Number(qualityTransitRawAccumulator[key] || 0);
           const valor = valorFisico + valorTransito;
           return {
             key,
@@ -843,6 +862,11 @@ export default function EstoqueTab() {
     ? (metrics.qualityDistributionGeral || metrics.qualityDistribution)
     : metrics.qualityDistribution;
   const totalQualidade = qualityBase.reduce((sum, bucket) => sum + Number(bucket.valor || 0), 0);
+  const nivelEstoqueChartData = (metrics.nivelEstoqueSeries || []).map((entry) => ({
+    ...entry,
+    valor: incluirEstoqueVirtualNivel ? Number(entry.valorGeral ?? entry.valor) : Number(entry.valorFisico ?? entry.valor),
+  }));
+  const nivelEstoqueAtual = nivelEstoqueChartData.at(-1)?.valor || 0;
   const qualityHalfDonutData = qualityBase.map((bucket) => ({
     name: bucket.label,
     value: Number(bucket.valor || 0),
@@ -857,73 +881,78 @@ export default function EstoqueTab() {
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-3">
-        <Card className={`border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] ${CARD_SURFACE}`}>
+        <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-100 uppercase tracking-wide">
-              <Package className="w-4 h-4 text-lime-400" />
-              Nível de Estoque (Base Hoje)
-            </CardTitle>
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+                <Package className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
+                Nível de Estoque (Base Hoje)
+              </CardTitle>
+              <label className={`flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide ${p38Dashboard.titleMuted}`}>
+                Virtual
+                <Switch
+                  checked={incluirEstoqueVirtualNivel}
+                  onCheckedChange={setIncluirEstoqueVirtualNivel}
+                  aria-label="Incluir estoque virtual no nível de estoque"
+                  className="scale-[0.85]"
+                />
+              </label>
+            </div>
           </CardHeader>
           <CardContent className="pt-1">
-            <div className={`h-[205px] md:h-[210px] rounded-xl px-2 py-2 ${INNER_SURFACE}`}>
+            <div className={`h-[220px] sm:h-[210px] rounded-xl px-1 py-1.5 ${p38Dashboard.inner}`}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={metrics.nivelEstoqueSeries} barCategoryGap="24%">
+                <BarChart
+                  data={nivelEstoqueChartData}
+                  margin={DASHBOARD_CHART_MARGIN.categorical}
+                  barCategoryGap="20%"
+                >
                   <defs>
                     <linearGradient id="stockBarGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#c3dd74" />
                       <stop offset="100%" stopColor="#7d933b" />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.14)" vertical={false} />
+                  <CartesianGrid {...buildCartesianGridProps(chartTheme)} />
                   <XAxis
-                    dataKey="periodo"
-                    tick={{ fontSize: 11, fill: '#d7deea', fontWeight: 600 }}
-                    axisLine={false}
-                    tickLine={false}
-                    interval={isMobile ? 1 : 0}
+                    {...buildXAxisProps(chartTheme, {
+                      dataKey: 'periodo',
+                      interval: isMobile ? 1 : 0,
+                    })}
                   />
-                  <YAxis
-                    tickFormatter={(value) => formatShort(value)}
-                    tick={{ fontSize: 11, fill: '#d7deea', fontWeight: 600 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
+                  <YAxis {...buildYAxisProps(chartTheme)} />
                   <Tooltip
                     formatter={(value) => BRL.format(Number(value || 0))}
-                    cursor={{ fill: 'rgba(132, 204, 22, 0.14)' }}
-                    contentStyle={{
-                      backgroundColor: '#1e2532',
-                      border: '1px solid rgba(148,163,184,0.28)',
-                      borderRadius: 12,
-                      color: '#edf2f7',
-                      boxShadow: '0 10px 24px rgba(0,0,0,0.28)',
-                    }}
+                    cursor={{ fill: chartTheme.cursor }}
+                    contentStyle={chartTheme.tooltip.contentStyle}
+                    labelStyle={chartTheme.tooltip.labelStyle}
+                    itemStyle={chartTheme.tooltip.itemStyle}
                   />
-                  <Bar dataKey="valor" radius={[8, 8, 0, 0]} maxBarSize={42}>
-                    {metrics.nivelEstoqueSeries.map((entry, idx) => (
+                  <Bar dataKey="valor" radius={[6, 6, 0, 0]} maxBarSize={48}>
+                    {nivelEstoqueChartData.map((entry, idx) => (
                       <Cell
                         key={`${entry.periodo}-${idx}`}
-                        fill={idx === metrics.nivelEstoqueSeries.length - 1 ? 'url(#stockBarGradient)' : STOCK_BAR_COLORS[idx % STOCK_BAR_COLORS.length]}
+                        fill={idx === nivelEstoqueChartData.length - 1 ? 'url(#stockBarGradient)' : STOCK_BAR_COLORS[idx % STOCK_BAR_COLORS.length]}
                       />
                     ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="mt-2 flex items-center justify-between text-[10px] text-slate-300/80">
+            <div className={`mt-2 flex items-center justify-between text-[10px] ${p38Dashboard.legend}`}>
               <span className="flex items-center gap-1.5">
                 <span className="inline-block h-[2px] w-5 rounded-full bg-[#9eb851]" />
-                tendência mensal
+                {incluirEstoqueVirtualNivel ? 'tendência mensal (físico + trânsito)' : 'tendência mensal'}
               </span>
-              <span className="font-semibold text-slate-100">{formatShort(metrics.nivelEstoqueSeries.at(-1)?.valor || 0)}</span>
+              <span className={`font-semibold ${p38Dashboard.title}`}>{formatShort(nivelEstoqueAtual)}</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className={`border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] ${CARD_SURFACE}`}>
+        <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-100 uppercase tracking-wide">
-              <Gauge className="w-4 h-4 text-lime-400" />
+            <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+              <Gauge className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
               Razão de Abastecimento (3 meses)
             </CardTitle>
           </CardHeader>
@@ -950,7 +979,7 @@ export default function EstoqueTab() {
                 ];
 
                 return (
-                  <div key={monthSupply.key} className={`rounded-xl p-2 min-h-44 sm:min-h-0 ${INNER_SURFACE}`}>
+                  <div key={monthSupply.key} className={`rounded-xl p-2 min-h-44 sm:min-h-0 ${p38Dashboard.inner}`}>
                     <p className="text-[10px] font-semibold text-muted-foreground tracking-wide mb-1">{monthSupply.label}</p>
                     <div className="h-[108px] sm:h-[120px] relative">
                       <ResponsiveContainer width="100%" height="100%">
@@ -997,14 +1026,14 @@ export default function EstoqueTab() {
                           <span className="inline-block h-[2px] w-3 rounded-full bg-[#7a8498]" />
                           vendido
                         </span>
-                        <span className="font-semibold text-slate-100">{formatShort(monthSupply.cmvVendido)}</span>
+                        <span className={`font-semibold ${p38Dashboard.title}`}>{formatShort(monthSupply.cmvVendido)}</span>
                       </p>
                       <p className="text-[9px] text-muted-foreground flex items-center justify-between gap-1.5">
                         <span className="flex items-center gap-1.5">
                           <span className="inline-block h-[2px] w-3 rounded-full bg-[#abc85a]" />
                           pago
                         </span>
-                        <span className="font-semibold text-slate-100">{formatShort(monthSupply.cmvEfetivo)}</span>
+                        <span className={`font-semibold ${p38Dashboard.title}`}>{formatShort(monthSupply.cmvEfetivo)}</span>
                       </p>
                     </div>
                   </div>
@@ -1016,14 +1045,14 @@ export default function EstoqueTab() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-3">
-        <Card className={`border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] ${CARD_SURFACE}`}>
+        <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
             <div className="flex items-center justify-between gap-3">
-              <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-100 uppercase tracking-wide">
-                <Layers className="w-4 h-4 text-lime-400" />
+              <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+                <Layers className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
                 Qualidade do Estoque
               </CardTitle>
-              <label className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-slate-300">
+              <label className={`flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide ${p38Dashboard.titleMuted}`}>
                 Geral
                 <Switch
                   checked={incluirTransitoQualidade}
@@ -1035,7 +1064,7 @@ export default function EstoqueTab() {
             </div>
           </CardHeader>
           <CardContent className="pt-1">
-            <div className={`h-[170px] md:h-[180px] relative rounded-xl px-2 py-1 ${INNER_SURFACE}`}>
+            <div className={`h-[170px] md:h-[180px] relative rounded-xl px-2 py-1 ${p38Dashboard.inner}`}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -1060,7 +1089,7 @@ export default function EstoqueTab() {
                     strokeWidth={0}
                   >
                     {qualityHalfDonutData.map((entry) => (
-                      <Cell key={entry.name} fill={entry.color} stroke="#2b3342" strokeWidth={2} />
+                      <Cell key={entry.name} fill={entry.color} stroke={chartTheme.pieStroke} strokeWidth={2} />
                     ))}
                   </Pie>
                 </PieChart>
@@ -1072,7 +1101,7 @@ export default function EstoqueTab() {
             </div>
             <div className="grid grid-cols-2 gap-2 mt-1.5">
               {qualityHalfDonutData.map((entry) => (
-                <div key={entry.name} className="flex items-center justify-between rounded-md px-2 py-1 bg-[#1f2734]/55 border border-slate-500/15">
+                <div key={entry.name} className={`flex items-center justify-between ${p38Dashboard.legendRow}`}>
                   <div className="flex items-center gap-1.5">
                     <span className="inline-block h-[2px] w-4 rounded-full" style={{ backgroundColor: entry.color }} />
                     <span className="text-[10px] text-muted-foreground">{entry.name}</span>
@@ -1084,15 +1113,15 @@ export default function EstoqueTab() {
           </CardContent>
         </Card>
 
-        <Card className={`border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] ${CARD_SURFACE}`}>
+        <Card className={p38Dashboard.card}>
           <CardHeader className="pb-1">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-100 uppercase tracking-wide">
+            <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
               <Truck className="w-4 h-4 text-[#b8c973]" />
               Localização do Estoque
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
-            <div className={`h-[170px] md:h-[180px] relative rounded-xl px-2 py-1 ${INNER_SURFACE}`}>
+            <div className={`h-[170px] md:h-[180px] relative rounded-xl px-2 py-1 ${p38Dashboard.inner}`}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -1117,7 +1146,7 @@ export default function EstoqueTab() {
                     strokeWidth={0}
                   >
                     {locationHalfDonutData.map((entry) => (
-                      <Cell key={entry.name} fill={entry.color} stroke="#2b3342" strokeWidth={3} />
+                      <Cell key={entry.name} fill={entry.color} stroke={chartTheme.pieStroke} strokeWidth={3} />
                     ))}
                   </Pie>
                 </PieChart>
@@ -1131,7 +1160,7 @@ export default function EstoqueTab() {
             </div>
             <div className="grid grid-cols-2 gap-2 mt-1.5">
               {locationHalfDonutData.map((entry) => (
-                <div key={entry.name} className="flex items-center justify-between rounded-md px-2 py-1 bg-[#1f2734]/55 border border-slate-500/15">
+                <div key={entry.name} className={`flex items-center justify-between ${p38Dashboard.legendRow}`}>
                   <div className="flex items-center gap-1.5">
                     <span className="inline-block h-[2px] w-4 rounded-full" style={{ backgroundColor: entry.color }} />
                     <span className="text-[10px] text-muted-foreground">{entry.name}</span>
@@ -1143,22 +1172,22 @@ export default function EstoqueTab() {
           </CardContent>
         </Card>
 
-        <Card className="border border-slate-500/20 border-dashed shadow-[0_10px_24px_rgba(0,0,0,0.2)] bg-[#252d3a]/55">
+        <Card className={p38Dashboard.placeholder}>
           <CardHeader className="pb-1">
-            <CardTitle className="text-sm font-medium text-slate-300 uppercase tracking-wide">Em breve</CardTitle>
+            <CardTitle className={`text-sm font-medium uppercase tracking-wide ${p38Dashboard.titleMuted}`}>Em breve</CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
-            <div className="h-[180px] rounded-xl border border-slate-500/20 border-dashed bg-[#1f2734]/45 p-3">
-              <div className="h-2 w-24 rounded bg-slate-500/25 mb-3" />
+            <div className={`h-[180px] rounded-xl p-3 ${p38Dashboard.placeholderInner}`}>
+              <div className={`h-2 w-24 rounded mb-3 ${p38Dashboard.skeletonHeader}`} />
               <div className="grid grid-cols-5 gap-1 items-end h-16 mb-3">
                 {[30, 44, 26, 52, 36].map((h, idx) => (
-                  <div key={`ph-top-${idx}`} className="rounded-sm bg-slate-400/20" style={{ height: `${h}%` }} />
+                  <div key={`ph-top-${idx}`} className={`rounded-sm ${p38Dashboard.skeletonBar}`} style={{ height: `${h}%` }} />
                 ))}
               </div>
               <div className="space-y-2">
-                <div className="h-1.5 rounded bg-slate-500/20 w-full" />
-                <div className="h-1.5 rounded bg-slate-500/20 w-4/5" />
-                <div className="h-1.5 rounded bg-slate-500/20 w-3/5" />
+                <div className={`h-1.5 rounded w-full ${p38Dashboard.skeletonLine}`} />
+                <div className={`h-1.5 rounded w-4/5 ${p38Dashboard.skeletonLine}`} />
+                <div className={`h-1.5 rounded w-3/5 ${p38Dashboard.skeletonLine}`} />
               </div>
             </div>
           </CardContent>
@@ -1169,20 +1198,20 @@ export default function EstoqueTab() {
         {[1, 2, 3].map((slot) => (
           <Card
             key={`empty-slot-${slot}`}
-            className="border border-slate-500/20 border-dashed shadow-[0_10px_24px_rgba(0,0,0,0.2)] bg-[#252d3a]/55"
+            className={p38Dashboard.placeholder}
           >
             <CardHeader className="pb-1">
-              <CardTitle className="text-sm font-medium text-slate-300 uppercase tracking-wide">Em breve</CardTitle>
+              <CardTitle className={`text-sm font-medium uppercase tracking-wide ${p38Dashboard.titleMuted}`}>Em breve</CardTitle>
             </CardHeader>
             <CardContent className="pt-1">
-              <div className="h-[90px] rounded-xl border border-slate-500/20 border-dashed bg-[#1f2734]/45 p-2.5">
-                <div className="h-1.5 w-16 rounded bg-slate-500/25 mb-2" />
+              <div className={`h-[90px] rounded-xl p-2.5 ${p38Dashboard.placeholderInner}`}>
+                <div className={`h-1.5 w-16 rounded mb-2 ${p38Dashboard.skeletonHeader}`} />
                 <div className="grid grid-cols-4 gap-1 items-end h-8 mb-2">
                   {[40, 68, 52, 74].map((h, idx) => (
-                    <div key={`ph-bottom-${slot}-${idx}`} className="rounded-sm bg-slate-400/20" style={{ height: `${h}%` }} />
+                    <div key={`ph-bottom-${slot}-${idx}`} className={`rounded-sm ${p38Dashboard.skeletonBar}`} style={{ height: `${h}%` }} />
                   ))}
                 </div>
-                <div className="h-1.5 rounded bg-slate-500/20 w-4/5" />
+                <div className={`h-1.5 rounded w-4/5 ${p38Dashboard.skeletonLine}`} />
               </div>
             </CardContent>
           </Card>

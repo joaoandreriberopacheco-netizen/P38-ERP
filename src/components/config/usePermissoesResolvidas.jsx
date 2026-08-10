@@ -312,7 +312,7 @@ export const ALL_MENU_ITEMS = [
       },
       {
         name: 'AGEFIN',
-        page: 'AgefinConsulta',
+        page: 'SuperAgefin',
         icon: Repeat2,
         permissaoCheck: (p) => p?.financeiro?.acesso === true
       },

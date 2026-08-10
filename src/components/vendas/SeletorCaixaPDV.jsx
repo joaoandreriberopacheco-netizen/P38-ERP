@@ -9,11 +9,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Monitor, Lock, X, ChevronRight, ArrowLeft } from 'lucide-react';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { selectAllOnFocus, focusAndSelect } from '@/lib/inputFocusUtils';
 import {
   caixaTurnoQueryKey,
   fetchCaixaTurnoSnapshot,
   buildPainelCaixaResumo,
 } from '@/lib/caixaTurnoData';
+import { findTurnoAbertoParaCaixa, turnoAbertoMaisAntigo } from '@/lib/turnoCaixaAberto';
 import { getCachedUserSession } from '@/lib/userSessionCache';
 import { QUICK_ACCESS_NESTED_DIALOG_CLASS } from '@/lib/quickAccessOverlay';
 
@@ -49,11 +51,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
   }, []);
 
   const focusSaldoInput = useCallback(() => {
-    const input = saldoInputRef.current;
-    if (!input) return;
-    input.focus();
-    const len = input.value.length;
-    input.setSelectionRange(len, len);
+    focusAndSelect(saldoInputRef.current);
   }, []);
 
   useEffect(() => {
@@ -84,18 +82,10 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
     loadCaixas();
   }, [open, currentUser]);
 
-  const findTurnoAbertoParaCaixa = useCallback(async (caixaId) => {
-    const cached = turnosAbertosRef.current.find(
-      (t) => t.status === 'Aberto' && t.conta_caixa_pdv_id === caixaId
-    );
+  const findTurnoAbertoParaCaixaCached = useCallback(async (caixaId) => {
+    const cached = turnoAbertoMaisAntigo(turnosAbertosRef.current, caixaId);
     if (cached) return cached;
-
-    const rows = await base44.entities.TurnoCaixa.filter({
-      status: 'Aberto',
-      conta_caixa_pdv_id: caixaId,
-    });
-    const turno = Array.isArray(rows) ? rows[0] : rows;
-    return turno?.id ? turno : null;
+    return findTurnoAbertoParaCaixa(caixaId);
   }, []);
 
   const enrichLiquidezEmBackground = useCallback(
@@ -107,7 +97,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
       for (const caixa of comTurno) {
         if (loadGenerationRef.current !== generation) return;
 
-        const turnoAberto = todosTurnos.find((t) => t.conta_caixa_pdv_id === caixa.id);
+        const turnoAberto = turnoAbertoMaisAntigo(todosTurnos, caixa.id);
         if (!turnoAberto) continue;
 
         try {
@@ -186,7 +176,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
 
       const liquidezBasica = {};
       for (const caixa of caixasPDV) {
-        const turnoAberto = todosTurnos.find((t) => t.conta_caixa_pdv_id === caixa.id);
+        const turnoAberto = turnoAbertoMaisAntigo(todosTurnos, caixa.id);
         if (turnoAberto) {
           liquidezBasica[caixa.id] = {
             turnoAberto: true,
@@ -223,7 +213,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
   };
 
   const handleSelecionarCaixa = async (caixa) => {
-    const turnoAberto = await findTurnoAbertoParaCaixa(caixa.id);
+    const turnoAberto = await findTurnoAbertoParaCaixaCached(caixa.id);
 
     if (turnoAberto) {
       // Turno já existe, apenas conectar
@@ -253,6 +243,13 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
 
     setAbrirTurnoLoading(true);
     try {
+      const existente = await findTurnoAbertoParaCaixa(caixaSelecionado.id);
+      if (existente?.id) {
+        onSelect(caixaSelecionado, existente, false);
+        setShowSaldoDialog(false);
+        return;
+      }
+
       const todosTurnos = await base44.entities.TurnoCaixa.list();
       const numeroTurno = `TC-${String((todosTurnos.length || 0) + 1).padStart(5, '0')}`;
       
@@ -437,6 +434,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
                     enterKeyHint="done"
                     value={saldoInicial}
                     onChange={handleSaldoChange}
+                    onFocus={selectAllOnFocus}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();

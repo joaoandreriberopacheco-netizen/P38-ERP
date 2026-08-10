@@ -217,7 +217,7 @@ async function main() {
   if (hasErrors) {
     console.log('  ✗ NÃO decolar — corrigir secrets antes de produção.');
     if (context === 'cloud-agent') {
-      console.log('  → Cursor Dashboard → Cloud Agents → varejosync → Secrets');
+      console.log('  → Cursor Dashboard → Cloud Agents → P38-ERP → Secrets');
       console.log('  → Após gravar, abre NOVA sessão Cloud Agent');
     }
     console.log('  → Ver docs/migration/P38_SECRETS_CANONICOS.md');

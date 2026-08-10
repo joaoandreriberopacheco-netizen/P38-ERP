@@ -13,7 +13,6 @@ import { Ticket } from 'lucide-react';
 import { formatarDataHora, formatarSoData } from '@/components/utils/dateUtils';
 import {
   getVirtualPadding,
-  measureVirtualItem,
   P38_VIRTUAL_LIST_MAX_HEIGHT,
   P38_VIRTUAL_MIN_ROWS,
   P38_VIRTUAL_OVERSCAN,
@@ -61,7 +60,6 @@ function VirtualizedValesMobile({ vales }) {
     getScrollElement: () => parentRef.current,
     estimateSize: () => 96,
     getItemKey: (index) => vales[index]?.id ?? index,
-    measureElement: measureVirtualItem,
     overscan: P38_VIRTUAL_OVERSCAN,
   });
   const virtualItems = rowVirtualizer.getVirtualItems();
@@ -75,7 +73,6 @@ function VirtualizedValesMobile({ vales }) {
             <div
               key={virtualRow.key}
               data-index={virtualRow.index}
-              ref={rowVirtualizer.measureElement}
               className="absolute left-0 top-0 w-full"
               style={{ transform: `translateY(${virtualRow.start}px)` }}
             >
@@ -95,7 +92,6 @@ function VirtualizedValesTable({ vales }) {
     getScrollElement: () => parentRef.current,
     estimateSize: () => 56,
     getItemKey: (index) => vales[index]?.id ?? index,
-    measureElement: measureVirtualItem,
     overscan: P38_VIRTUAL_OVERSCAN,
   });
   const virtualItems = rowVirtualizer.getVirtualItems();
@@ -128,7 +124,7 @@ function VirtualizedValesTable({ vales }) {
               const vale = vales[virtualRow.index];
               const tone = p38StatusTone(vale.status);
               return (
-                <TableRow key={virtualRow.key} data-index={virtualRow.index} ref={rowVirtualizer.measureElement}>
+                <TableRow key={virtualRow.key} data-index={virtualRow.index}>
                   <TableCell>
                     <span className="inline-flex items-center gap-2 font-mono font-semibold">
                       <Ticket className="w-4 h-4 text-muted-foreground" />

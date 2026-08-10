@@ -56,11 +56,11 @@ Snippet para colar no `AGENTS.md` do a29: [`docs/reference-a29-erp/MIRRORPASS_AG
 
 ## Sync automático (GitHub Actions)
 
-Com secrets `A29_ERP_GIT_URL` e `A29_ERP_DEPLOY_TOKEN` no varejosync: **Actions → Sync mirror to a29-erp → Run workflow**.
+Com secrets `A29_ERP_GIT_URL` e `A29_ERP_DEPLOY_TOKEN` no **P38-ERP**: **Actions → Sync mirror to a29-erp → Run workflow**.
 
 ## O que vai no espelho
 
-| Origem (varejosync) | Destino (a29-erp) |
+| Origem (**P38-ERP**) | Destino (a29-erp) |
 |---------------------|-------------------|
 | `mirror/p38-ui/` | `legacy/varejosync/` |
 
@@ -74,12 +74,13 @@ Lista completa: [`p38-ui/INVENTARIO.md`](./p38-ui/INVENTARIO.md).
 ```
 mirror/
 ├── README.md           ← este ficheiro
-├── live/               ← carimbos (mirrorpass, stamp)
-├── legacy/             ← PACOTE COMPLETO → colar em a29-erp/legacy/varejosync/
-└── p38-ui/             ← espelho UI antigo (scaffold; preferir legacy/)
+├── live/               ← carimbos (mirrorpass, stamp) — manter no Git para A29
+└── p38-ui/             ← espelho UI (scaffold; gerado por mirror:pack)
 ```
 
-## Pacote completo (`mirror/legacy/`)
+O pacote `mirror/legacy/` foi removido do repositório (duplicata pesada). Para gerar de novo: `npm run mirror:pack-legacy`.
+
+## Pacote completo (`mirror/legacy/` — gerado localmente)
 
 Para sync **manual** com o A29 (substituir `legacy/varejosync/`):
 

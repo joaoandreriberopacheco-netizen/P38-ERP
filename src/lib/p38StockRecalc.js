@@ -24,7 +24,7 @@ export async function invokeRecalcularEstoqueProduto(base44, produtoId) {
   const saldoMovimentos = calcularSaldoMovimentacoes(movimentacoes);
 
   const estoqueAvariado = Number(produto.estoque_avariado) || 0;
-  const estoqueAtual = Math.max(0, saldoMovimentos - estoqueAvariado);
+  const estoqueAtual = saldoMovimentos - estoqueAvariado;
 
   await base44.entities.Produto.update(produtoId, {
     estoque_atual: estoqueAtual,

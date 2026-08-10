@@ -228,7 +228,7 @@ export default function TabelaPrecosConsulta() {
         className="fixed right-4 z-[55] flex h-14 w-14 items-center justify-center rounded-2xl bg-background shadow-xl transition-all hover:bg-primary/90 active:scale-95 dark:bg-muted dark:hover:bg-muted p38-bottom-fab1 lg:right-6"
         title="Novo Orçamento"
       >
-        <Calculator className="w-6 h-6 text-white dark:text-foreground" />
+        <Calculator className="w-6 h-6 text-foreground" />
       </button>
 
       <OrcamentoSheet

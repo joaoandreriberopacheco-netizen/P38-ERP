@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,10 +8,16 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Upload, Loader2, AlertCircle, Check, FileText, X, ArrowLeft, Package } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
-import { buildProdutoMatchingPromptBase, getProdutoLabel, matchesProductQuery } from '@/components/compras/productMatchingUtils';
+import { buildProdutoMatchingPromptBase, getProdutoLabel, matchesProductQuery, findLocalBestProductMatch } from '@/components/compras/productMatchingUtils';
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
 import { P38TableShell } from '@/components/ui/table';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
+import { buildLlmTelemetryContext } from '@/lib/p38LlmTelemetry';
+import {
+    aplicarDescontoUnitarioCotacaoPdf,
+    calcularRatioDescontoCotacaoPdf,
+    normalizarFinanceiroCotacaoPdf,
+} from '@/lib/cotacaoExpressUtils';
 
 export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImportComplete }) {
     const [step, setStep] = useState('upload');
@@ -30,6 +36,31 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
         return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
 
+    const financeiroRevisao = useMemo(
+        () => normalizarFinanceiroCotacaoPdf(aiData?.financeiro),
+        [aiData?.financeiro],
+    );
+
+    const precosComDesconto = useMemo(() => {
+        if (!aiData?.itens?.length) return [];
+        const ativos = mappings.filter((m) => !m.ignored);
+        return aplicarDescontoUnitarioCotacaoPdf(ativos, financeiroRevisao);
+    }, [aiData?.itens, mappings, financeiroRevisao]);
+
+    const ratioDescontoRevisao = useMemo(() => {
+        const subtotalAtivos = mappings
+            .filter((m) => !m.ignored)
+            .reduce((sum, m) => sum + ((Number(m.quantidade_pdf) || 0) * (Number(m.preco_unitario_pdf) || 0)), 0);
+        return calcularRatioDescontoCotacaoPdf(subtotalAtivos, financeiroRevisao);
+    }, [mappings, financeiroRevisao]);
+
+    const getPrecoLiquidoPreview = (item) => {
+        const ativos = mappings.filter((m) => !m.ignored);
+        const ativoIndex = ativos.findIndex((m) => m === item);
+        if (ativoIndex < 0) return null;
+        return precosComDesconto[ativoIndex]?.preco_unitario_liquido ?? null;
+    };
+
     const getSuggestedProduct = (item) => {
         const suggestedId = item.produto_sistema_match_id || item.produto_id_match;
         if (!suggestedId) return null;
@@ -38,34 +69,6 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
 
     const updateMappings = (updater) => {
         setMappings((prev) => (typeof updater === 'function' ? updater(prev) : updater));
-    };
-
-    const findLocalBestMatch = (textoIdentificado, catalogoProdutos) => {
-        const query = (textoIdentificado || '').trim();
-        if (!query) return null;
-
-        const direct = catalogoProdutos.find((produto) => matchesProductQuery(produto, query));
-        if (direct) return direct;
-
-        const words = query.toLowerCase().split(/\s+/).filter(Boolean);
-        let best = null;
-        let bestScore = 0;
-
-        catalogoProdutos.forEach((produto) => {
-            const searchable = [
-                produto.nome,
-                produto.codigo_interno,
-                produto.codigo_barras,
-                produto.marca
-            ].filter(Boolean).join(' ').toLowerCase();
-            const score = words.reduce((sum, word) => sum + (searchable.includes(word) ? 1 : 0), 0);
-            if (score > bestScore) {
-                bestScore = score;
-                best = produto;
-            }
-        });
-
-        return bestScore >= Math.max(2, Math.ceil(words.length / 2)) ? best : null;
     };
 
     const handleArquivoSelecionado = async (file) => {
@@ -103,6 +106,17 @@ PRIORIDADE DE MATCH:
 ${JSON.stringify(cotacao.itens.map((item) => ({ id: item.produto_id, nome: item.produto_nome, qtd: item.quantidade })))}
 2. Se não encontrar na cotação atual, use o catálogo geral acima.
 
+FINANCEIRO — REGRAS CRÍTICAS:
+- "subtotal": soma bruta dos itens ANTES de qualquer desconto (ex.: TOTAL BRUTO).
+- "total_final": valor ABSOLUTO que o cliente pagará — o ÚLTIMO total do documento, após TODOS os descontos.
+  * Procure rótulos como "TOTAL DA NF", "TOTAL FINAL", "VALOR TOTAL A PAGAR", "TOTAL NOTA FISCAL".
+  * Se houver benefício SUFRAMA / desconto ICMS (ex.: "ICMS (DEVE TER SUFRAMA)", "DESCONTO SUFRAMA"), aplique sobre o total líquido anterior.
+  * NÃO pare no "TOTAL LÍQUIDO" se existir um total menor depois (ex.: com SUFRAMA).
+  * Exemplo: subtotal R$ 8.993,75 → desconto comercial → R$ 5.576,13 → ICMS SUFRAMA 20% → total_final R$ 4.460,90.
+- "desconto_global": diferença entre subtotal e total_final (soma de TODOS os descontos).
+- Quando identificável, preencha também "desconto_comercial" e "desconto_suframa" (ou "desconto_icms_suframa").
+- "preco_unitario_pdf": preço unitário BRUTO de cada linha, ANTES de descontos (use a coluna de preço bruto/unitário original; não use o total líquido da linha).
+
 Retorne um JSON com:
 {
     "fornecedor": { 
@@ -113,7 +127,9 @@ Retorne um JSON com:
     "financeiro": {
         "subtotal": number,
         "desconto_global": number,
-        "total_final": number
+        "total_final": number,
+        "desconto_comercial": number,
+        "desconto_suframa": number
     },
     "itens": [
         {
@@ -131,6 +147,11 @@ Retorne um JSON com:
             const aiRes = await base44.integrations.Core.InvokeLLM({
                 prompt: prompt,
                 file_urls: [fileUrl],
+                telemetry: buildLlmTelemetryContext({
+                  source: 'import_cotacao_pdf',
+                  catalogProductCount: produtos.length,
+                  fileCount: 1,
+                }),
                 response_json_schema: {
                     type: "object",
                     properties: {
@@ -147,7 +168,10 @@ Retorne um JSON com:
                             properties: {
                                 subtotal: { type: "number" },
                                 desconto_global: { type: "number" },
-                                total_final: { type: "number" }
+                                total_final: { type: "number" },
+                                desconto_comercial: { type: "number" },
+                                desconto_suframa: { type: "number" },
+                                desconto_icms_suframa: { type: "number" }
                             }
                         },
                         itens: {
@@ -170,12 +194,19 @@ Retorne um JSON com:
             });
 
             const result = typeof aiRes === 'string' ? JSON.parse(aiRes) : aiRes;
-            setAiData(result);
+            const financeiroNormalizado = normalizarFinanceiroCotacaoPdf(result.financeiro);
+            const resultNormalizado = {
+                ...result,
+                financeiro: financeiroNormalizado,
+            };
+            setAiData(resultNormalizado);
             
             // Defensive check for itens array
             const itens = Array.isArray(result.itens) ? result.itens : [];
             setMappings(itens.map(item => {
-                const fallback = !item.produto_sistema_match_id ? findLocalBestMatch(item.descricao_pdf, produtos) : null;
+                const fallback = !item.produto_sistema_match_id
+                    ? findLocalBestProductMatch(null, produtos, item)?.produto
+                    : null;
                 const selectedId = item.produto_sistema_match_id || fallback?.id || '';
                 return {
                     ...item,
@@ -238,12 +269,21 @@ Retorne um JSON com:
             }
 
             const validItems = mappings.filter(m => !m.ignored && m.selected_product_id);
+            const financeiro = normalizarFinanceiroCotacaoPdf(aiData.financeiro);
+            const descontoGlobal = financeiro.desconto_global || 0;
+            const subtotalValidos = validItems.reduce(
+                (sum, m) => sum + ((Number(m.quantidade_pdf) || 0) * (Number(m.preco_unitario_pdf) || 0)),
+                0,
+            );
+            const ratioDesconto = calcularRatioDescontoCotacaoPdf(subtotalValidos, financeiro);
+            const precoLiquido = (precoBruto) => Math.round((Number(precoBruto) || 0) * ratioDesconto * 100) / 100;
             
             const processedItems = [];
             const novosItensCotacao = [];
 
             for (const m of validItems) {
                 let produtoId = m.selected_product_id;
+                const precoComDesconto = precoLiquido(m.preco_unitario_pdf);
 
                 if (produtoId === 'create_new') {
                     try {
@@ -252,8 +292,8 @@ Retorne um JSON com:
                             marca: m.marca_pdf || '',
                             codigo_interno: 'IMP-' + Math.floor(Math.random() * 10000),
                             tipo: 'Produto',
-                            preco_venda_padrao: m.preco_unitario_pdf * 1.5,
-                            valor_compra: m.preco_unitario_pdf,
+                            preco_venda_padrao: precoComDesconto * 1.5,
+                            valor_compra: precoComDesconto,
                             unidade_principal: 'UN',
                             ativo: true
                         });
@@ -272,20 +312,13 @@ Retorne um JSON com:
                     }
                 }
 
-                processedItems.push({ ...m, final_product_id: produtoId });
-            }
-
-            const subtotalItens = processedItems.reduce((sum, m) => sum + (m.quantidade_pdf * m.preco_unitario_pdf), 0);
-            let discountRatio = 1;
-            const descontoGlobal = aiData.financeiro?.desconto_global || 0;
-            if (descontoGlobal > 0 && subtotalItens > 0) {
-                discountRatio = 1 - (descontoGlobal / subtotalItens);
+                processedItems.push({ ...m, final_product_id: produtoId, preco_com_desconto: precoComDesconto });
             }
 
             const respostas = processedItems.map(m => ({
                 fornecedor_id: finalFornecedorId,
                 produto_id: m.final_product_id,
-                preco_unitario: m.preco_unitario_pdf * discountRatio,
+                preco_unitario: m.preco_com_desconto,
                 quantidade_ofertada: m.quantidade_pdf,
                 marca: m.marca_pdf || m.descricao_pdf,
                 observacao: `Importado via PDF. Preço original: R$ ${m.preco_unitario_pdf.toFixed(2)}${m.marca_pdf ? '. Marca: ' + m.marca_pdf : ''}`,
@@ -298,7 +331,7 @@ Retorne um JSON com:
                 await base44.entities.Cotacao.update(cotacao.id, { itens: itensAtualizados });
             }
 
-            onImportComplete(finalFornecedorId, respostas, aiData.financeiro.desconto_global);
+            onImportComplete(finalFornecedorId, respostas, descontoGlobal);
             onClose();
             toast({ title: "Importação concluída com sucesso!", className: "bg-green-100 text-green-800" });
 
@@ -447,25 +480,31 @@ Retorne um JSON com:
                             <div className="p-6 bg-muted/50/50 rounded-2xl">
                                 <p className="text-sm text-muted-foreground mb-2">Subtotal (Itens)</p>
                                 <p className="text-2xl font-light text-foreground">
-                                    R$ {formatCurrency(aiData.financeiro?.subtotal || 0)}
+                                    R$ {formatCurrency(financeiroRevisao.subtotal || 0)}
                                 </p>
                             </div>
                             <div className="p-6 bg-orange-50 dark:bg-orange-900/20 rounded-2xl">
                                 <p className="text-sm text-orange-700 dark:text-orange-400 mb-2">Desconto Global Detectado</p>
                                 <p className="text-2xl font-light text-orange-700 dark:text-orange-400">
-                                    R$ {formatCurrency(aiData.financeiro?.desconto_global || 0)}
+                                    R$ {formatCurrency(financeiroRevisao.desconto_global || 0)}
                                 </p>
                             </div>
                             <div className="p-6 bg-green-50 dark:bg-green-900/20 rounded-2xl">
                                 <p className="text-sm text-green-700 dark:text-green-400 mb-2">Total Final</p>
                                 <p className="text-2xl font-light text-green-700 dark:text-green-400">
-                                    R$ {formatCurrency(aiData.financeiro?.total_final || 0)}
+                                    R$ {formatCurrency(financeiroRevisao.total_final || 0)}
                                 </p>
                             </div>
                         </div>
-                        {(aiData.financeiro?.desconto_global || 0) > 0 && (
+                        {(financeiroRevisao.desconto_suframa || 0) > 0 && (
+                            <p className="text-sm text-teal-700 dark:text-teal-400 -mt-4">
+                                Benefício SUFRAMA/ICMS detectado: R$ {formatCurrency(financeiroRevisao.desconto_suframa)} incluído no total final.
+                            </p>
+                        )}
+                        {(financeiroRevisao.desconto_global || 0) > 0 && (
                             <p className="text-sm text-muted-foreground italic -mt-4">
-                                * O desconto global será rateado proporcionalmente no preço unitário de cada item importado.
+                                * O desconto global (comercial + SUFRAMA, quando houver) será rateado proporcionalmente no preço unitário de cada item importado
+                                {ratioDescontoRevisao < 1 ? ` (fator ${(ratioDescontoRevisao * 100).toFixed(1)}% do preço bruto).` : '.'}
                             </p>
                         )}
 
@@ -517,6 +556,11 @@ Retorne um JSON com:
                                                     <div className="text-foreground/90 mb-1">
                                                         {m.quantidade_pdf} × R$ {formatCurrency(m.preco_unitario_pdf)}
                                                     </div>
+                                                    {!m.ignored && getPrecoLiquidoPreview(m) != null && ratioDescontoRevisao < 1 && (
+                                                        <div className="text-sm text-green-700 dark:text-green-400 mb-1">
+                                                            Com desconto: R$ {formatCurrency(getPrecoLiquidoPreview(m))} / un
+                                                        </div>
+                                                    )}
                                                     <div className="font-medium text-foreground">
                                                         Total: R$ {formatCurrency(m.quantidade_pdf * m.preco_unitario_pdf)}
                                                     </div>
@@ -578,6 +622,11 @@ Retorne um JSON com:
                                         </div>
                                         <div className="text-xs text-muted-foreground w-full">
                                             {m.quantidade_pdf} × R$ {formatCurrency(m.preco_unitario_pdf)}
+                                            {!m.ignored && getPrecoLiquidoPreview(m) != null && ratioDescontoRevisao < 1 && (
+                                                <span className="ml-2 font-semibold text-green-700 dark:text-green-400">
+                                                    → R$ {formatCurrency(getPrecoLiquidoPreview(m))} / un
+                                                </span>
+                                            )}
                                             <span className="ml-2 font-semibold text-foreground">
                                                 Total: R$ {formatCurrency(m.quantidade_pdf * m.preco_unitario_pdf)}
                                             </span>

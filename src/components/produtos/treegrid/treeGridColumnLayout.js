@@ -12,10 +12,8 @@ import {
   getCatalogMedia30dFrom60d,
 } from '@/lib/catalogSalesVelocity';
 import { aggregateEstoqueDisplay, collectSkus, aggregateMetaEstoqueDisplay } from './useTreeGrid';
+import { CATALOG_PRODUTO_COL_MIN } from '@/lib/catalogProdutoColumnLayout';
 
-const HIER_STEP = 20;
-const CELL_PAD = 4;
-const PRODUTO_MIN_WIDTH = 180;
 const COL_PAD_X = 16;
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -36,31 +34,6 @@ function createTextMeasurer() {
     ctx.font = `${weight} ${size}px ${family}`;
     return Math.ceil(ctx.measureText(value).width);
   };
-}
-
-const catalogHierDepth = (level) => Math.max(0, (level ?? 1) - 1);
-
-function produtoCellWidth(row, readOnly, measure) {
-  const hierDepth = catalogHierDepth(row.level);
-  let width = CELL_PAD + hierDepth * HIER_STEP + COL_PAD_X;
-
-  if (row.type === 'group') {
-    width += 14 + 6 + 6; // chevron + dot + gaps
-    width += measure(String(row.label || '').toUpperCase(), { size: 12, weight: 600 });
-    width += 12 + measure(String(row.count ?? ''), { size: 10, weight: 500 });
-    return Math.max(PRODUTO_MIN_WIDTH, width);
-  }
-
-  const p = row.produto || {};
-  const isPrimeiroNivel = row.level === 1;
-  if (isPrimeiroNivel) width += 6;
-  width += 32 + 6; // ícone SKU
-  width += measure(String(p.nome || '').toUpperCase(), { size: 12, weight: isPrimeiroNivel ? 600 : 400 });
-  if (p.codigo_interno) {
-    width += 8 + measure(String(p.codigo_interno), { size: 10, weight: 400, family: 'ui-monospace, monospace' });
-  }
-  if (!readOnly) width += 52;
-  return Math.max(PRODUTO_MIN_WIDTH, width);
 }
 
 function skuCellText(colId, produto, row, salesVelocityMap = {}) {
@@ -90,6 +63,8 @@ function skuCellText(colId, produto, row, salesVelocityMap = {}) {
       return lastro >= 0 && markup > 0
         ? `${fmtN(markup)}%`
         : (produto.preco_venda_percentual > 0 ? `${fmtN(produto.preco_venda_percentual)}%` : '—');
+    case 'avaria_percentual':
+      return (produto.avaria_percentual || 0) > 0 ? `${fmtN(produto.avaria_percentual)}%` : '—';
     case 'inventario_valorizado': return lastro > 0 ? fmtR(lastro) : '—';
     case 'estoque_atual': {
       const apresent = formatEstoqueApresentacao(produto);
@@ -137,6 +112,7 @@ function groupCellText(colId, row, salesVelocityMap = {}) {
     case 'preco_custo': return row.custoMedio > 0 ? `~${fmtR(row.custoMedio)}` : '—';
     case 'valor_compra': return row.valorCompraMedio > 0 ? `~${fmtR(row.valorCompraMedio)}` : '—';
     case 'markup': return row.markupMedio > 0 ? `~${fmtPct(row.markupMedio)}` : '—';
+    case 'avaria_percentual': return row.avariaMedia > 0 ? `~${fmtPct(row.avariaMedia)}` : '—';
     case 'margem': return row.margemMedia > 0 ? `~${fmtPct(row.margemMedia)}` : '—';
     case 'inventario_valorizado': return row.lastroTotal > 0 ? fmtR(row.lastroTotal) : '—';
     case 'estoque_atual': {
@@ -208,14 +184,10 @@ function dataCellWidth(colId, row, measure, salesVelocityMap = {}) {
   return measure(text, { size: 12, weight: 400 }) + COL_PAD_X;
 }
 
-export function computeTreeGridColumnLayout({ rows, activeCols, readOnly, containerWidth, salesVelocityMap = {} }) {
+export function computeTreeGridColumnLayout({ rows, activeCols, readOnly, containerWidth, salesVelocityMap = {}, produtoWidth }) {
   const measure = createTextMeasurer();
 
-  let produtoWidth = PRODUTO_MIN_WIDTH;
-  for (const row of rows || []) {
-    produtoWidth = Math.max(produtoWidth, produtoCellWidth(row, readOnly, measure));
-  }
-  produtoWidth = Math.ceil(produtoWidth);
+  const resolvedProdutoWidth = produtoWidth || CATALOG_PRODUTO_COL_MIN;
 
   const cols = (activeCols || []).map((col) => {
     let minW = Math.max(col.w || 72, measure(col.label, { size: 12, weight: 700 }) + COL_PAD_X);
@@ -226,7 +198,7 @@ export function computeTreeGridColumnLayout({ rows, activeCols, readOnly, contai
   });
 
   const dataMinSum = cols.reduce((sum, col) => sum + col.minW, 0);
-  const contentMinWidth = produtoWidth + dataMinSum;
+  const contentMinWidth = resolvedProdutoWidth + dataMinSum;
   const viewport = Math.max(0, Number(containerWidth) || 0);
   const tableWidth = Math.max(contentMinWidth, viewport);
 
@@ -238,5 +210,5 @@ export function computeTreeGridColumnLayout({ rows, activeCols, readOnly, contai
     }
   }
 
-  return { produtoWidth, cols, tableWidth, contentMinWidth };
+  return { produtoWidth: resolvedProdutoWidth, cols, tableWidth, contentMinWidth };
 }

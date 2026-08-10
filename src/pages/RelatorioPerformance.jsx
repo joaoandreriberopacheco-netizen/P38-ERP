@@ -275,7 +275,7 @@ const RelatorioPerformance = ({ dados, onClose }) => {
           </Button>
           <Button
             onClick={handleImprimir}
-            className="flex-1 bg-background hover:bg-primary text-white text-sm flex items-center justify-center gap-2 dark:bg-muted dark:hover:bg-muted"
+            className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground text-sm flex items-center justify-center gap-2 dark:bg-muted dark:hover:bg-muted"
           >
             <Download className="w-4 h-4" /> PDF
           </Button>

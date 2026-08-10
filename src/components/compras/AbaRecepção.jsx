@@ -8,7 +8,7 @@ import {
   movimentoCombinaCodigoEmbarque,
 } from '@/lib/movimentacaoRecepcaoCompra';
 import { invokeRecalcularConclusaoPedidoCompra } from '@/lib/p38StockRecalc';
-import RecepcionarEmbarque from './RecepcionarEmbarque';
+import { hydrateEmbarquesPedidoFromSql, getEmbarqueItensLinhas, hydrateEmbarquesFromSql } from '@/lib/fetchEmbarqueItens';
 
 function motivoEntradaCompraOk(mov) {
   const m = mov?.motivo;
@@ -106,7 +106,7 @@ export default function AbaRecepção({ pedido }) {
 
   useEffect(() => {
     setSelectedEmbarque(null);
-  }, [pedidoAtual?.embarques_registrados]);
+  }, [pedidoAtual?._embarques]);
 
   const handleRetificarStockEmbarque = useCallback(
     async (embarqueEl, codigoExibicaoVal, evt) => {
@@ -120,9 +120,10 @@ export default function AbaRecepção({ pedido }) {
       setRetificandoEmbId(id);
       try {
         const pedidoRef = pedidoAtual || pedido;
+        const [embarqueHidratado] = await hydrateEmbarquesFromSql(base44, [embarqueEl]);
         const n = await criarMovimentosStockRecepcaoEmFalta(base44, {
           pedido: pedidoRef,
-          embarque: { ...embarqueEl, codigo_exibicao: codigoExibicaoVal },
+          embarque: { ...embarqueHidratado, codigo_exibicao: codigoExibicaoVal },
           movimentosExistentes: movimentos,
         });
         if (n === 0) {
@@ -146,18 +147,8 @@ export default function AbaRecepção({ pedido }) {
 
   const embarques = useMemo(() => {
     if (Array.isArray(pedidoAtual?._embarques)) return pedidoAtual._embarques.filter(Boolean);
-    const raw = pedidoAtual?.embarques_registrados;
-    if (Array.isArray(raw)) return raw.filter(Boolean);
-    if (typeof raw === 'string') {
-      try {
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
-      } catch {
-        return [];
-      }
-    }
     return [];
-  }, [pedidoAtual?._embarques, pedidoAtual?.embarques_registrados]);
+  }, [pedidoAtual?._embarques]);
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -204,7 +195,7 @@ export default function AbaRecepção({ pedido }) {
         const statusRecebimento = embarque.status_recebimento || embarque.status_recebimento_embarque || 'Pendente';
         const dataEmbarque = embarque.data_embarque ? new Date(embarque.data_embarque).toLocaleDateString('pt-BR') : '-';
         const eta = embarque.eta ? new Date(embarque.eta).toLocaleDateString('pt-BR') : '-';
-        const itensEmbarque = embarque.itens || embarque.itens_embarcados || [];
+        const itensEmbarque = getEmbarqueItensLinhas(embarque);
         const qtdItens = itensEmbarque.length || 0;
         const codigoExibicao = embarque.codigo_exibicao || `${pedidoAtual?.numero || pedido?.numero || '-----'}-${String.fromCharCode(65 + idx)}`;
 
@@ -364,10 +355,15 @@ export default function AbaRecepção({ pedido }) {
             if (pedidoId) {
               const [atualizado, embarquesAtualizados] = await Promise.all([
                 base44.entities.PedidoCompra.filter({ id: pedidoId }),
-                base44.entities.Embarque.filter({ pedido_compra_id: pedidoId })
+                base44.entities.Embarque.filter({ pedido_compra_id: pedidoId }),
               ]);
+              const embarquesHidratados = await hydrateEmbarquesPedidoFromSql(
+                base44,
+                pedidoId,
+                embarquesAtualizados || [],
+              );
               if (atualizado?.[0]) {
-                setPedidoAtual({ ...atualizado[0], _embarques: embarquesAtualizados || [] });
+                setPedidoAtual({ ...atualizado[0], _embarques: embarquesHidratados });
               }
             }
             loadMovimentos();
@@ -382,8 +378,13 @@ export default function AbaRecepção({ pedido }) {
                 base44.entities.PedidoCompra.filter({ id: pedidoId }),
                 base44.entities.Embarque.filter({ pedido_compra_id: pedidoId }),
               ]);
+              const embarquesHidratados = await hydrateEmbarquesPedidoFromSql(
+                base44,
+                pedidoId,
+                embarquesAtualizados || [],
+              );
               if (atualizado?.[0]) {
-                setPedidoAtual({ ...atualizado[0], _embarques: embarquesAtualizados || [] });
+                setPedidoAtual({ ...atualizado[0], _embarques: embarquesHidratados });
               }
             }
             setSelectedEmbarque(null);
@@ -406,7 +407,7 @@ export default function AbaRecepção({ pedido }) {
             </div>
             <Button
               onClick={() => setRecebimentoSucesso(null)}
-              className="w-full h-11 bg-background dark:bg-muted text-white dark:text-foreground hover:opacity-90 rounded-xl"
+              className="w-full h-11 bg-background dark:bg-muted text-foreground hover:opacity-90 rounded-xl"
             >
               Fechar
             </Button>

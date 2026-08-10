@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { flushSync } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCache';
@@ -7,13 +7,9 @@ import { base44, p38 } from '@/api/base44Client';
 import FontScaleInitializer from '@/components/accessibility/FontScaleInitializer';
 import { buildMenuItems } from '@/components/config/usePermissoesResolvidas';
 import { WifiOff } from 'lucide-react';
-import PinSetupDialog from '@/components/auth/PinSetupDialog';
 import { Button } from '@/components/ui/button';
 import GlacialBottomNav from '@/components/navigation/GlacialBottomNav';
-import GlacialSidebar from '@/components/navigation/GlacialSidebar';
-import GlobalSearchOverlay from '@/components/navigation/GlobalSearchOverlay';
 import MobileUserMenu from '@/components/layout/MobileUserMenu';
-import MobileFunctionSelector from '@/components/navigation/MobileFunctionSelector';
 import { useCompactShell } from '@/hooks/use-breakpoint';
 import { useBottomNavScrollVisibility } from '@/hooks/useBottomNavScrollVisibility';
 import { shouldHideBottomNavOnScroll } from '@/config/bottomNavScrollPolicy';
@@ -23,10 +19,15 @@ import FinanceiroAccessGuard from '@/components/guard/FinanceiroAccessGuard';
 import { isFinanceiroProtectedPage } from '@/config/financeiroGate';
 import { isSupabaseAuthEnabled } from '@/integrations/p38/providers';
 
+const GlacialSidebar = React.lazy(() => import('@/components/navigation/GlacialSidebar'));
+const PinSetupDialog = React.lazy(() => import('@/components/auth/PinSetupDialog'));
+const MobileFunctionSelector = React.lazy(() => import('@/components/navigation/MobileFunctionSelector'));
+
 /** Páginas com scroll interno no mobile (evita body + nested scroll e zoom por overflow). */
 const MOBILE_FULL_VIEWPORT_PAGES = new Set([
   'Produtos',
   'RelatorioMargem',
+  'PrecoJustoDashboard',
   'RelatorioCatalogoEstoque',
   'CaixasAtivos',
   'TurnosFechados',
@@ -63,6 +64,18 @@ export default function Layout({ children, currentPageName }) {
   const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false);
   const [showMobileUserMenu, setShowMobileUserMenu] = useState(false);
   const [showDesktopUserPanel, setShowDesktopUserPanel] = useState(false);
+  const [SearchOverlayComponent, setSearchOverlayComponent] = useState(null);
+
+  useEffect(() => {
+    if (!searchOverlayOpen || SearchOverlayComponent) return undefined;
+    let cancelled = false;
+    import('@/components/navigation/GlobalSearchOverlay').then((mod) => {
+      if (!cancelled) setSearchOverlayComponent(() => mod.default);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [searchOverlayOpen, SearchOverlayComponent]);
 
   const fullscreenPages = ['PDV', 'PDVVendedor', 'PDVCaixa', 'AutoAtendimento', 'PedidoCompraDetalhe', 'AnexoCompartilhado'];
   const routePage = location.pathname.split('/').filter(Boolean)[0] || '';
@@ -295,7 +308,7 @@ export default function Layout({ children, currentPageName }) {
         </h2>
         <p className="text-muted-foreground text-center mb-6 max-w-md">
           {isConfigError
-            ? 'O servidor não está configurado para ligar ao Supabase. Verifique as variáveis VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no deploy.'
+            ? 'O servidor não está configurado para ligar ao Supabase. Verifique NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY (ou VITE_SUPABASE_*) no deploy.'
             : 'Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.'}
         </p>
         <Button onClick={() => window.location.reload()}>
@@ -305,8 +318,8 @@ export default function Layout({ children, currentPageName }) {
     );
   }
 
-  const searchOverlay = (
-    <GlobalSearchOverlay
+  const searchOverlay = SearchOverlayComponent ? (
+    <SearchOverlayComponent
       open={searchOverlayOpen}
       onClose={closeSearchOverlay}
       isMobile={isMobile}
@@ -317,7 +330,7 @@ export default function Layout({ children, currentPageName }) {
         setIsOpen(false);
       }}
     />
-  );
+  ) : null;
 
   const financeGateActive = isFinanceiroProtectedPage(currentPageName);
   const pageContent = financeGateActive ? (
@@ -358,25 +371,28 @@ export default function Layout({ children, currentPageName }) {
               transition: 'width 0.22s ease-out',
             }}
           >
-            <GlacialSidebar
-              isOpen={isOpen}
-              menuItems={menuItems}
-              currentPageName={currentPageName}
-              isMobile={false}
-              currentUser={currentUser}
-              darkMode={darkMode}
-              toggleDarkMode={toggleDarkMode}
-              searchableItems={allSearchableItems}
-              onSearchCollapsedActivate={openSearchOverlay}
-            />
+            <Suspense fallback={<div className="h-full w-full bg-background" aria-hidden />}>
+              <GlacialSidebar
+                isOpen={isOpen}
+                menuItems={menuItems}
+                currentPageName={currentPageName}
+                isMobile={false}
+                currentUser={currentUser}
+                darkMode={darkMode}
+                toggleDarkMode={toggleDarkMode}
+                searchableItems={allSearchableItems}
+                onSearchCollapsedActivate={openSearchOverlay}
+              />
+            </Suspense>
           </div>
         )}
 
         <div 
+          data-p38-overlay-sidebar={useDesktopOverlaySidebar ? 'true' : undefined}
           className={`flex-1 transition-[margin] duration-200 ease-out ${
             isMobile 
               ? `ml-0 pt-12 ${MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' : 'p38-layout-mobile-scroll-pad'}`
-              : (useDesktopOverlaySidebar ? 'ml-16' : (isOpen ? 'ml-[300px]' : 'ml-16'))
+              : (useDesktopOverlaySidebar ? 'ml-[64px]' : (isOpen ? 'ml-[300px]' : 'ml-[64px]'))
           } ${MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) && !isMobile ? 'h-screen max-h-screen overflow-hidden' : ''}`}
           style={{ willChange: 'margin', paddingTop: isMobile ? `calc(3rem + env(safe-area-inset-top))` : undefined }}
         >
@@ -398,14 +414,16 @@ export default function Layout({ children, currentPageName }) {
             visible={bottomNavVisible}
           />
         )}
-        {!isFullscreen && (
-          <MobileFunctionSelector
-            isOpen={showMobileMenu}
-            onClose={() => setShowMobileMenu(false)}
-            menuItems={menuItems}
-            currentUser={currentUser}
-            searchableItems={allSearchableItems}
-          />
+        {!isFullscreen && showMobileMenu && (
+          <Suspense fallback={null}>
+            <MobileFunctionSelector
+              isOpen={showMobileMenu}
+              onClose={() => setShowMobileMenu(false)}
+              menuItems={menuItems}
+              currentUser={currentUser}
+              searchableItems={allSearchableItems}
+            />
+          </Suspense>
         )}
         {!isFullscreen && (
           <MobileUserMenu
@@ -417,11 +435,13 @@ export default function Layout({ children, currentPageName }) {
         )}
       </div>
       {showPinSetup && (
-        <PinSetupDialog
-          isOpen={showPinSetup}
-          onClose={() => { setShowPinSetup(false); loadUser(); }}
-          user={currentUser}
-        />
+        <Suspense fallback={null}>
+          <PinSetupDialog
+            isOpen={showPinSetup}
+            onClose={() => { setShowPinSetup(false); loadUser(); }}
+            user={currentUser}
+          />
+        </Suspense>
       )}
       {searchOverlay}
     </div>

@@ -36,6 +36,23 @@ export function countElapsedWorkingDaysInMonth(referenceDate = new Date()) {
   return eachDayOfInterval({ start, end }).filter(isWorkingDay).length;
 }
 
+/** Dias úteis decorridos até um dia civil do mês (inclusive). Usado nas réguas acumuladas. */
+export function countWorkingDaysUpToCalendarDay(referenceDate = new Date(), calendarDay = 1) {
+  const start = startOfMonth(referenceDate);
+  const monthEnd = endOfMonth(referenceDate);
+  const day = Math.max(1, Math.floor(Number(calendarDay) || 1));
+  const target = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), day);
+  const end = target > monthEnd ? monthEnd : target;
+  if (end < start) return 0;
+  return eachDayOfInterval({ start, end }).filter(isWorkingDay).length;
+}
+
+/** Raios das roscas KPI — excedente acima de 100% renderiza fora do anel principal. */
+export const DONUT_GAUGE_RADII = {
+  sm: { inner: 28, outer: 42, overflowInner: 44, overflowOuter: 48 },
+  lg: { inner: 36, outer: 56, overflowInner: 58, overflowOuter: 63 },
+};
+
 export function getDailyMetaFromMonthly(monthlyValue, referenceDate = new Date()) {
   const workingDays = countWorkingDaysInMonth(referenceDate);
   const monthly = Number(monthlyValue) || 0;

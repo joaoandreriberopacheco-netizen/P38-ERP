@@ -6,9 +6,7 @@ import { format } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { imprimirCupomTermico } from '@/functions/imprimirCupomTermico';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
-import { renderTemplate, prepararDadosVenda, ordenarItensComprovante } from '@/lib/templateEngine';
+import { loadHtml2Canvas, loadJsPDF } from '@/lib/lazyPdfLibs';
 import { getUnidadeMedidaItemPedidoVenda } from '@/lib/productUnits';
 import { TIMEZONE_SISTEMA } from '@/components/utils/dateUtils';
 import { shareOrDownloadBlob, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
@@ -71,6 +69,11 @@ const fmtV = (v) => {
   return parts.join(',');
 };
 const PRETO_CUPOM = '#000';
+
+const ordenarItensComprovante = (itens = []) =>
+  [...itens].sort((a, b) =>
+    String(a?.produto_nome || '').localeCompare(String(b?.produto_nome || ''), 'pt-BR', { sensitivity: 'base' })
+  );
 
 // ── Cupom Térmico 80mm ────────────────────────────────────────────────────────
 function CupomTermico({ pedido, dadosEmpresa }) {
@@ -471,17 +474,6 @@ function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
 }
 
 // ── Componente principal ──────────────────────────────────────────────────────
-// ── Renderizador de Template HTML ────────────────────────────────────────────
-function TemplateRenderer({ htmlContent }) {
-  return (
-    <div
-      id="cupom-print"
-      dangerouslySetInnerHTML={{ __html: htmlContent }}
-      style={{ background: '#fff', color: '#000' }}
-    />
-  );
-}
-
 export default function ComprovanteCompra({ pedido, open, onClose }) {
   const nestedZ = useCaixaNestedDialogZ();
   const [dadosEmpresa, setDadosEmpresa] = useState(null);
@@ -490,7 +482,6 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
   const [imprimindoTermica, setImprimindoTermica] = useState(false);
   const [formato, setFormato] = useState(() => localStorage.getItem('comprovante_formato_venda') || 'a4');
   const [gerando, setGerando] = useState(false);
-  const [templates, setTemplates] = useState({ '80mm': null, 'a4': null });
 
   const escolherFormato = (novoFormato) => {
     setFormato(novoFormato);
@@ -507,14 +498,6 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
     }
     const ip = localStorage.getItem('ip_impressora_termica');
     if (ip) setIpImpressora(ip);
-    base44.entities.ComprovanteTemplate.filter({ is_default: true }).then(tpls => {
-      const map = { '80mm': null, 'a4': null };
-      tpls.forEach(t => {
-        if (t.tipo === 'venda_80mm') map['80mm'] = t;
-        if (t.tipo === 'venda_a4') map['a4'] = t;
-      });
-      setTemplates(map);
-    }).catch(() => {});
   }, [open]);
 
   const handlePrint = async () => {
@@ -583,6 +566,9 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
     const isA4 = formato === 'a4';
 
+    const html2canvas = await loadHtml2Canvas();
+    const JsPDF = await loadJsPDF();
+
     const canvas = await html2canvas(el, {
       scale: 3,
       useCORS: true,
@@ -594,7 +580,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
     let pdf;
     if (isA4) {
-      pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const pageW = 210;
       const pageH = 297;
       const ratio = canvas.width / canvas.height;
@@ -604,7 +590,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
       // 80mm cupom: largura fixa 80mm, altura proporcional
       const widthMm = 80;
       const heightMm = (canvas.height / canvas.width) * widthMm;
-      pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [widthMm, heightMm] });
+      pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: [widthMm, heightMm] });
       pdf.addImage(imgData, 'PNG', 0, 0, widthMm, heightMm);
     }
 
@@ -677,7 +663,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             onClick={handleShare}
             disabled={gerando}
             size="sm"
-            className="bg-background hover:bg-primary dark:bg-muted dark:hover:bg-muted dark:text-foreground text-white h-9 text-xs gap-1.5 rounded-xl px-4"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:hover:bg-muted dark:text-foreground h-9 text-xs gap-1.5 rounded-xl px-4"
           >
             {gerando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Share2 className="w-3.5 h-3.5" />}
             {gerando ? 'Gerando...' : 'PDF'}
@@ -730,11 +716,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
         {formato === '80mm' ? (
           <div className="w-full h-full flex justify-center py-4 px-4">
             <div style={{ width: '275px', transformOrigin: 'top center', transform: 'scale(1)' }} className="shadow-2xl rounded-sm overflow-hidden">
-              {templates['80mm'] && dadosEmpresa !== undefined ? (
-                <TemplateRenderer htmlContent={renderTemplate(templates['80mm'].html_template, prepararDadosVenda(pedido, dadosEmpresa))} />
-              ) : (
-                <CupomTermico pedido={pedido} dadosEmpresa={dadosEmpresa} />
-              )}
+              <CupomTermico pedido={pedido} dadosEmpresa={dadosEmpresa} />
             </div>
           </div>
         ) : (

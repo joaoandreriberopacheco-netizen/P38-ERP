@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +8,7 @@ import { createPageUrl } from '@/components/utils';
 import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter, Percent, Loader2, Tag, Tags, LayoutGrid, TrendingUp, Gauge } from 'lucide-react';
 import { DEFAULT_PRODUTO_FILTERS, ABCD_FILTER_VALUES, ABCD_FILTER_LABELS } from '@/lib/filterProdutos';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
+import CatalogSearchInput from '@/components/produtos/CatalogSearchInput';
 import ProdutosSomentePositivosToggle from '@/components/produtos/ProdutosSomentePositivosToggle';
 import ProdutosEstoqueVirtualToggle from '@/components/produtos/ProdutosEstoqueVirtualToggle';
 import ProdutosAnaliseAgrupamentoControl from '@/components/produtos/ProdutosAnaliseAgrupamentoControl';
@@ -18,7 +20,7 @@ import ProdutosMobileFiltersSheet from '@/components/produtos/ProdutosMobileFilt
 import { useCompactShell } from '@/hooks/use-breakpoint';
 import { cn } from '@/components/utils';
 
-export default function ProdutosHeader({
+function ProdutosHeader({
   stats,
   filters,
   categorias,
@@ -35,9 +37,11 @@ export default function ProdutosHeader({
   handleAddNew,
   setFilters,
   formatarNumero,
-  filteredProdutos = [],
+  hasFilteredProdutos = false,
   treeLevel,
   setTreeLevel,
+  sortOrder = 'az',
+  setSortOrder,
   setIsColumnSelectorOpen,
   onGerarRelatorioEstoque,
   gerandoRelatorioEstoque = false,
@@ -50,15 +54,20 @@ export default function ProdutosHeader({
   onOpenCatalogTagPrint,
   onOpenMassTag,
   onOpenMassCategory,
-  onOpenMassMarkup,
+  onOpenMassPrecificacao,
   onOpenPontosPedido,
   groupTreeByCategory = false,
   onGroupTreeByCategoryChange,
+  onClearFilters,
 }) {
   const isMobileLayout = useCompactShell();
   const quantidadeOperador = filters.quantidadeOperador || 'all';
 
   const clearFilters = () => {
+    if (onClearFilters) {
+      onClearFilters();
+      return;
+    }
     setFilters({ ...DEFAULT_PRODUTO_FILTERS });
   };
 
@@ -200,7 +209,7 @@ export default function ProdutosHeader({
               className="h-9 w-9 flex-shrink-0"
               title="Classificar categorias com IA"
               onClick={() => onOpenMassCategory?.()}
-              disabled={filteredProdutos.length === 0}
+              disabled={!hasFilteredProdutos}
             >
               <LayoutGrid className="w-4 h-4 p38-text-accent" />
             </Button>
@@ -215,14 +224,14 @@ export default function ProdutosHeader({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="dark:bg-muted dark:border-border/40">
-                  {filteredProdutos.length > 0 && (
+                  {hasFilteredProdutos && (
                     <DropdownMenuItem
                       onClick={() => {
-                        window.setTimeout(() => onOpenMassMarkup?.(), 0);
+                        window.setTimeout(() => onOpenMassPrecificacao?.(), 0);
                       }}
                       className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
                     >
-                      <Percent className="w-4 h-4 mr-2 p38-text-accent" />Aplicar markup aos filtrados
+                      <SlidersHorizontal className="w-4 h-4 mr-2 p38-text-accent" />Ajustar precificação nos filtrados
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem onClick={handleBaixarTemplateUnificado} className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
@@ -245,7 +254,7 @@ export default function ProdutosHeader({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="dark:bg-muted dark:border-border/40">
-                  {filteredProdutos.length > 0 && (
+                  {hasFilteredProdutos && (
                     <DropdownMenuItem
                       onClick={() => {
                         window.setTimeout(() => onOpenMassTag?.(), 0);
@@ -278,11 +287,11 @@ export default function ProdutosHeader({
         <div className="flex flex-col gap-2 min-w-0">
           <div className="relative w-full min-w-0">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none desktop-layout:left-3" />
-            <Input
+            <CatalogSearchInput
               placeholder="Nome ou descrição (espaço ou ; para combinar). XXmolhadas ou XXj- filtra por categoria..."
               className="border-none bg-muted h-10 desktop-layout:h-11 text-sm pl-9 desktop-layout:pl-10 text-foreground/90 shadow-none focus-visible:ring-0 w-full min-w-0 rounded-xl"
               value={filters.searchTerm}
-              onChange={e => handleFilterChange('searchTerm', e.target.value)}
+              onChange={(value) => handleFilterChange('searchTerm', value)}
             />
           </div>
           <div className="flex flex-wrap items-center gap-1.5 desktop-layout:gap-2 min-w-0">
@@ -297,7 +306,7 @@ export default function ProdutosHeader({
               onChange={onGroupTreeByCategoryChange}
               className="desktop-layout:hidden"
             />
-            {filteredProdutos.length > 0 && (
+            {hasFilteredProdutos && (
               <>
                 <Button
                   type="button"
@@ -346,21 +355,21 @@ export default function ProdutosHeader({
                   variant="ghost"
                   size="icon"
                   className="h-10 w-10 flex-shrink-0 rounded-xl bg-muted desktop-layout:hidden"
-                  onClick={() => onOpenMassMarkup?.()}
-                  title="Aplicar markup aos produtos do filtro atual"
-                  aria-label="Aplicar markup aos produtos do filtro atual"
+                  onClick={() => onOpenMassPrecificacao?.()}
+                  title="Ajustar precificação nos produtos do filtro atual"
+                  aria-label="Ajustar precificação nos produtos do filtro atual"
                 >
-                  <Percent className="w-4 h-4 p38-text-accent" />
+                  <SlidersHorizontal className="w-4 h-4 p38-text-accent" />
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   className="hidden desktop-layout:inline-flex h-10 flex-shrink-0 gap-1.5 rounded-xl text-xs font-medium border-[#4a5240]/30 dark:border-[#a4ce33]/30"
-                  onClick={() => onOpenMassMarkup?.()}
-                  title="Aplicar markup aos produtos do filtro atual"
+                  onClick={() => onOpenMassPrecificacao?.()}
+                  title="Ajustar precificação nos produtos do filtro atual"
                 >
-                  <Percent className="w-3.5 h-3.5 p38-text-accent" />
-                  Markup
+                  <SlidersHorizontal className="w-3.5 h-3.5 p38-text-accent" />
+                  Precificação
                 </Button>
               </>
             )}
@@ -376,7 +385,7 @@ export default function ProdutosHeader({
               title="Mais filtros"
             >
               <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
-              {activeFilterCount > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-muted dark:bg-muted text-white dark:text-foreground text-[10px] rounded-full flex items-center justify-center font-bold">{activeFilterCount}</span>}
+              {activeFilterCount > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-muted text-foreground text-[10px] rounded-full flex items-center justify-center font-bold">{activeFilterCount}</span>}
             </Button>
             <Button
               variant="ghost"
@@ -634,8 +643,14 @@ export default function ProdutosHeader({
           activeFilterCount={activeFilterCount}
           handleFilterChange={handleFilterChange}
           setFilters={setFilters}
+          treeLevel={treeLevel}
+          setTreeLevel={setTreeLevel}
+          sortOrder={sortOrder}
+          setSortOrder={setSortOrder}
         />
       ) : null}
     </div>
   );
 }
+
+export default memo(ProdutosHeader);

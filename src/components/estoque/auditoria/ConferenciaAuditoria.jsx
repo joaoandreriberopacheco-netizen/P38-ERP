@@ -318,7 +318,7 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
               <Button
                 onClick={aprovar}
                 disabled={aprovando}
-                className="flex-1 h-12 rounded-2xl bg-background dark:bg-card hover:bg-primary dark:hover:bg-muted text-white dark:text-foreground shadow-none font-semibold"
+                className="flex-1 h-12 rounded-2xl bg-background dark:bg-card hover:bg-primary dark:hover:bg-muted text-foreground shadow-none font-semibold"
               >
                 {aprovando ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4 mr-2" /> Aprovar</>}
               </Button>

@@ -19,6 +19,8 @@ import { useUnsavedChangesWarning } from '@/components/utils/useUnsavedChangesWa
 import { calculateBaseQuantity, getItemUnitKey, pickDefaultSaleUnit, getUnidadeExibicaoSigla } from '@/lib/productUnits';
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
 import { productCodesMatch } from '@/lib/productCode';
+import { isVendaSemEstoquePermitida } from '@/lib/configFlags';
+import { selectAllOnFocus, focusAndSelect, selectAllOnMouseDown, handleCentavosMaskKeyDown } from '@/lib/inputFocusUtils';
 
 export default function PDVSupermercado() {
   const [carrinho, setCarrinho] = useState([]);
@@ -42,6 +44,11 @@ export default function PDVSupermercado() {
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [produtoSelecionadoIndex, setProdutoSelecionadoIndex] = useState(0);
   const [configVenda, setConfigVenda] = useState(null);
+  const [configEstoque, setConfigEstoque] = useState(null);
+  const vendaSemEstoquePermitida = useMemo(
+    () => isVendaSemEstoquePermitida(configVenda, configEstoque),
+    [configVenda, configEstoque]
+  );
 
   // Payment States
   const [pagamentosDinheiro, setPagamentosDinheiro] = useState(0);
@@ -122,20 +129,21 @@ export default function PDVSupermercado() {
 
   const loadDependencies = async () => {
     try {
-      const [produtosData, userData, clientesData, configsVendas] = await Promise.all([
+      const [produtosData, userData, clientesData, configsVendas, configsEstoque] = await Promise.all([
         base44.entities.Produto.filter({ ativo: true }),
         base44.auth.me(),
         base44.entities.Terceiro.filter({ tipo: ['Cliente', 'Ambos'] }),
-        base44.entities.ConfiguracoesVenda.list()
+        base44.entities.ConfiguracoesVenda.list(),
+        base44.entities.ConfiguracoesEstoque.list(),
       ]);
       setProdutos(produtosData);
       setCurrentUser(userData);
       setClientes(clientesData);
       if (configsVendas.length > 0) {
-        console.log('PDV Supermercado - ConfigVenda carregada:', configsVendas[0]);
         setConfigVenda(configsVendas[0]);
-      } else {
-        console.log('PDV Supermercado - Nenhuma configuração de venda encontrada');
+      }
+      if (configsEstoque.length > 0) {
+        setConfigEstoque(configsEstoque[0]);
       }
       if (userData.tabela_preco_id) {
         const tabela = await TabelaPreco.get(userData.tabela_preco_id);
@@ -181,9 +189,7 @@ export default function PDVSupermercado() {
     const quantidadeBaseAdd = calculateBaseQuantity(quantidade, fator);
     const itemKey = getItemUnitKey(produtoSelecionado.id, unidade);
     
-    console.log('PDV Supermercado - Config:', configVenda, 'Vender sem estoque:', configVenda?.vender_sem_estoque, 'Estoque:', produtoSelecionado.estoque_atual, 'Quantidade:', quantidade);
-    
-    if (configVenda?.vender_sem_estoque !== true && produtoSelecionado.estoque_atual < quantidadeBaseAdd) {
+    if (!vendaSemEstoquePermitida && produtoSelecionado.estoque_atual < quantidadeBaseAdd) {
       toast({ title: `Estoque insuficiente: ${produtoSelecionado.estoque_atual} ${produtoSelecionado.unidade_principal || 'UN'} disponível`, variant: "destructive" });
       return;
     }
@@ -297,7 +303,7 @@ export default function PDVSupermercado() {
         const produto = await base44.entities.Produto.get(item.produto_id);
         if (produto) {
           await base44.entities.Produto.update(item.produto_id, {
-            estoque_atual: Math.max(0, (produto.estoque_atual || 0) - (item.quantidade_base || item.quantidade))
+            estoque_atual: (produto.estoque_atual || 0) - (item.quantidade_base || item.quantidade)
           });
         }
       }
@@ -320,26 +326,13 @@ export default function PDVSupermercado() {
 
   // Formatter helpers
   const formatarValorExibicao = (valor) => valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const aplicarMascaraValor = (valorAtual, tecla) => {
-    let numeros = valorAtual.replace(/\D/g, '');
-    if (/^\d$/.test(tecla)) numeros += tecla;
-    return formatarValorExibicao(parseInt(numeros) / 100);
-  };
 
   const handleInputMascara = (e, setInput, setValor) => {
-    const tecla = e.key;
-    if (tecla === 'Backspace') {
-      e.preventDefault();
-      let numeros = e.target.value.replace(/\D/g, '').slice(0, -1) || '0';
-      const valor = parseInt(numeros) / 100;
-      setInput(formatarValorExibicao(valor));
-      setValor(valor);
-    } else if (/^\d$/.test(tecla)) {
-      e.preventDefault();
-      const novoValor = aplicarMascaraValor(e.target.value, tecla);
-      setInput(novoValor);
-      setValor(parseFloat(novoValor.replace(/\./g, '').replace(',', '.')));
-    }
+    handleCentavosMaskKeyDown(e, {
+      setInput,
+      setValor,
+      formatDisplay: formatarValorExibicao,
+    });
   };
 
   return (
@@ -400,6 +393,7 @@ export default function PDVSupermercado() {
                 className="w-20 md:w-24 bg-card dark:bg-card border border-border/40 dark:border-border/40 rounded-xl text-foreground dark:text-muted-foreground h-14 md:h-14 text-center text-lg font-semibold focus:ring-2 focus:ring-border/40"
                 value={quantidadeAtual}
                 onChange={(e) => setQuantidadeAtual(parseInt(e.target.value) || 1)}
+                onFocus={selectAllOnFocus}
                 onKeyDown={handleQuantidadeKeyDown}
                 min="1"
                 disabled={!produtoSelecionado}
@@ -521,7 +515,7 @@ export default function PDVSupermercado() {
                         <button onClick={() => {
                            const newQtd = item.quantidade + 1;
                            const newBase = calculateBaseQuantity(newQtd, item.fator_conversao || 1);
-                           if (configVenda?.vender_sem_estoque === true || newBase <= item.estoque_disponivel) {
+                           if (vendaSemEstoquePermitida || newBase <= item.estoque_disponivel) {
                              setCarrinho(carrinho.map(i => (i.item_key || i.produto_id) === (item.item_key || item.produto_id)
                                ? {...i, quantidade: newQtd, quantidade_base: newBase, total: newQtd * i.preco_unitario_praticado}
                                : i));
@@ -625,7 +619,7 @@ export default function PDVSupermercado() {
                    return (
                      <div key={label} 
                         className={`flex items-center justify-between p-3 rounded-lg cursor-pointer ${formaPagamentoAtiva === i ? 'bg-muted border border-indigo-200' : 'border border-transparent'}`}
-                        onClick={() => { setFormaPagamentoAtiva(i); refs[i].current?.focus(); }}
+                        onClick={() => { setFormaPagamentoAtiva(i); focusAndSelect(refs[i].current); }}
                      >
                         <div className="flex items-center gap-2">
                            <Icon className="w-5 h-5 text-muted-foreground" />
@@ -636,7 +630,8 @@ export default function PDVSupermercado() {
                            value={vals[i]}
                            onChange={() => {}}
                            onKeyDown={(e) => handleInputMascara(e, setters[i], numSetters[i])}
-                           onFocus={(e) => { e.target.select(); setFormaPagamentoAtiva(i); }}
+                           onFocus={(e) => { selectAllOnFocus(e); setFormaPagamentoAtiva(i); }}
+                           onMouseDown={selectAllOnMouseDown}
                            className="w-24 text-right bg-transparent font-bold outline-none"
                         />
                      </div>

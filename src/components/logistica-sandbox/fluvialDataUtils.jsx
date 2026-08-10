@@ -1,5 +1,6 @@
 import { format, subDays, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { normalizeEventoTransportadoraFields, resolveTransportadoraFromRecord } from '@/lib/resolveTransportadora';
 
 export const FLUVIAL_DEFAULT_PERIOD = '30d';
 export const FLUVIAL_FETCH_WINDOW_ALL_DAYS = 365;
@@ -10,6 +11,20 @@ export const FLUVIAL_PERIOD_OPTIONS = [
   { id: '90d', label: '±90 dias', dias: 90 },
   { id: 'todas', label: 'Todas', dias: null },
 ];
+
+export const FLUVIAL_VIEW_MODES = [
+  { value: 'saida_manaus', label: 'Saída de Manaus', shortLabel: 'Saída Manaus' },
+  { value: 'chegada_tabatinga', label: 'Chegada em Tabatinga', shortLabel: 'Chegada Tabatinga' },
+  { value: 'chegada_manaus', label: 'Chegada em Manaus', shortLabel: 'Chegada Manaus' },
+];
+
+export const FLUVIAL_DEFAULT_VIEW_MODE = 'saida_manaus';
+
+export function getFluvialViewModeLabel(viewMode, { short = false } = {}) {
+  const option = FLUVIAL_VIEW_MODES.find((item) => item.value === viewMode);
+  if (!option) return short ? 'Saída Manaus' : 'Saída de Manaus';
+  return short ? option.shortLabel : option.label;
+}
 
 export function normalizeFluvialDateKey(value) {
   if (!value) return null;
@@ -37,11 +52,12 @@ export function normalizeEventoLogisticoRecord(item) {
     item.data_chegada_manaus || item.data_retorno_origem || item.previsao_retorno,
   );
 
+  const withTransportadora = normalizeEventoTransportadoraFields(item);
+
   return {
-    ...item,
+    ...withTransportadora,
     codigo: item.codigo || item.lancamento_financeiro_numero || (item.id ? String(item.id).slice(0, 8) : null),
-    embarcacao_nome: item.embarcacao_nome || item.nome || item.transportadora,
-    transportadora_nome: item.transportadora_nome || item.transportadora || item.embarcacao_nome,
+    embarcacao_nome: withTransportadora.embarcacao_nome || item.nome || item.transportadora,
     data_saida_origem: dataSaida || item.data_saida_origem,
     data_referencia: normalizeFluvialDateKey(item.data_referencia) || dataSaida,
     data_chegada_destino: chegadaDestino || item.data_chegada_destino,
@@ -298,7 +314,7 @@ export function buildFluvialEvents({ eventosLogisticos = [], embarques = [], lan
 export function buildBoatViewModels({ transportadoras = [], eventos = [] }) {
   const eventosPorTransportadora = new Map();
   (eventos || []).forEach((evento) => {
-    const transportadoraId = evento.transportadora_id;
+    const transportadoraId = resolveTransportadoraFromRecord(evento).transportadora_id;
     if (!transportadoraId) return;
     if (!eventosPorTransportadora.has(transportadoraId)) {
       eventosPorTransportadora.set(transportadoraId, []);

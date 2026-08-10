@@ -24,6 +24,22 @@ function mergeById(items = []) {
   return [...map.values()];
 }
 
+/** Arrays do turno podem estar na coluna ou só em dados (legado Supabase). */
+export function resolveTurnoArrayField(turno, field) {
+  const direct = turno?.[field];
+  if (Array.isArray(direct) && direct.length > 0) return direct;
+  const nested = turno?.dados?.[field];
+  return Array.isArray(nested) ? nested : [];
+}
+
+function movimentoValor(m) {
+  return Number(m?.valor ?? 0) || 0;
+}
+
+function matchesContaMovimento(m, caixaId) {
+  return String(m?.conta_id ?? '') === caixaId;
+}
+
 function parsePagamentosVenda(venda) {
   let p = venda?.pagamentos;
   if (p == null) return [];
@@ -97,7 +113,7 @@ export async function fetchPedidosParaCaixaTurno({ turno, caixa, receitasTurno }
   const pedidos = mergeById(batches.flat());
 
   const pedidoIdsReceita = buildPedidoIdsReceitasTurno(receitas);
-  const vendasIds = Array.isArray(turno.vendas_ids) ? turno.vendas_ids : [];
+  const vendasIds = resolveTurnoArrayField(turno, 'vendas_ids');
   const extraIds = new Set([
     ...pedidoIdsReceita,
     ...vendasIds.map((id) => String(id)),
@@ -114,18 +130,35 @@ export async function fetchPedidosParaCaixaTurno({ turno, caixa, receitasTurno }
 
 export async function fetchMovimentosTurno({ turno, caixa }) {
   const caixaId = String(caixa?.id ?? '');
-  const filtered = await safeFilter(base44.entities.MovimentosCaixa, {
+  const turnoId = String(turno?.id ?? '');
+  if (!turnoId || !caixaId) return [];
+
+  const byTurno = await safeFilter(base44.entities.MovimentosCaixa, {
     turno_caixa_id: turno.id,
   });
 
-  if (filtered.length > 0) {
-    return filtered.filter((m) => String(m.conta_id ?? '') === caixaId);
+  const movimentoIds = resolveTurnoArrayField(turno, 'movimentos_ids');
+  const byIds = (
+    await Promise.all(
+      movimentoIds.map((id) =>
+        base44.entities.MovimentosCaixa.get(id).catch(() => null)
+      )
+    )
+  ).filter(Boolean);
+
+  let merged = mergeById([...byTurno, ...byIds]);
+  let result = merged.filter((m) => matchesContaMovimento(m, caixaId));
+
+  if (result.length === 0) {
+    const fallback = await base44.entities.MovimentosCaixa.list('-created_date', LIST_LIMIT);
+    result = (fallback || []).filter(
+      (m) =>
+        String(m.turno_caixa_id ?? m.dados?.turno_caixa_id ?? '') === turnoId &&
+        matchesContaMovimento(m, caixaId)
+    );
   }
 
-  const fallback = await base44.entities.MovimentosCaixa.list('-created_date', LIST_LIMIT);
-  return (fallback || []).filter(
-    (m) => String(m.turno_caixa_id ?? '') === String(turno.id) && String(m.conta_id ?? '') === caixaId
-  );
+  return result;
 }
 
 async function fetchValesParaTurno(turno) {
@@ -199,7 +232,18 @@ export async function fetchCaixaTurnoRawData({
     receitasTurno,
   });
 
-  const despesas = (despesasRaw || []).filter((d) => d.referencia_tipo !== 'MovimentosCaixa');
+  const dataAberturaTurno = (turnoFresh || turno)?.data_abertura
+    ? new Date((turnoFresh || turno).data_abertura)
+    : null;
+
+  const despesas = (despesasRaw || []).filter((d) => {
+    if (d.referencia_tipo === 'MovimentosCaixa') return false;
+    if (!dataAberturaTurno) return true;
+    const raw = d.created_date || d.created_at;
+    const criado = raw ? new Date(raw) : null;
+    if (!criado || Number.isNaN(criado.getTime())) return true;
+    return criado >= dataAberturaTurno;
+  });
 
   return {
     turno: turnoFresh || turno,
@@ -291,24 +335,25 @@ export function buildCaixaTurnoSnapshot(raw, { incluirRascunhos = true, rascunho
 
   vendasTurno.forEach((venda) => {
     parsePagamentosVenda(venda).forEach((pag) => {
+      const valor = Number(pag.valor ?? 0) || 0;
       const fp = (pag.forma_pagamento || '').toLowerCase();
-      if (fp === 'dinheiro') totalDinheiro += pag.valor || 0;
-      else if (fp === 'pix') totalPix += pag.valor || 0;
-      else if (fp.includes('crédito') || fp.includes('credito')) totalCredito += pag.valor || 0;
-      else if (fp.includes('débito') || fp.includes('debito')) totalDebito += pag.valor || 0;
-      else if (fp.includes('vale')) totalVale += pag.valor || 0;
-      else if (fp.includes('conta a pagar') || fp.includes('fiado')) totalFiado += pag.valor || 0;
+      if (fp === 'dinheiro') totalDinheiro += valor;
+      else if (fp === 'pix') totalPix += valor;
+      else if (fp.includes('crédito') || fp.includes('credito')) totalCredito += valor;
+      else if (fp.includes('débito') || fp.includes('debito')) totalDebito += valor;
+      else if (fp.includes('vale')) totalVale += valor;
+      else if (fp.includes('conta a pagar') || fp.includes('fiado')) totalFiado += valor;
     });
   });
 
   const totalVendasMonetarias = totalDinheiro + totalPix + totalCredito + totalDebito + totalVale;
   const totalReforcos = movimentos
     .filter((m) => m.tipo === 'Reforço')
-    .reduce((sum, m) => sum + (m.valor || 0), 0);
+    .reduce((sum, m) => sum + movimentoValor(m), 0);
   const totalSangrias = movimentos
     .filter((m) => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa')
-    .reduce((sum, m) => sum + (m.valor || 0), 0);
-  const totalDespesas = despesas.reduce((sum, d) => sum + (d.valor || 0), 0);
+    .reduce((sum, m) => sum + movimentoValor(m), 0);
+  const totalDespesas = despesas.reduce((sum, d) => sum + (Number(d.valor ?? 0) || 0), 0);
 
   const saldoInicial = roundToTwoDecimals(turno.saldo_inicial || 0);
   const saldoCaixaCalculado = roundToTwoDecimals(
@@ -354,6 +399,18 @@ export function buildCaixaTurnoSnapshot(raw, { incluirRascunhos = true, rascunho
   };
 }
 
+export async function appendTurnoArrayId(base44Client, turnoId, field, newId) {
+  if (!turnoId || !newId || !field) return;
+  const fresh = await base44Client.entities.TurnoCaixa.get(turnoId).catch(() => null);
+  if (!fresh?.id) return;
+  const current = resolveTurnoArrayField(fresh, field);
+  const idStr = String(newId);
+  if (current.some((item) => String(item) === idStr)) return;
+  await base44Client.entities.TurnoCaixa.update(turnoId, {
+    [field]: [...current, newId],
+  });
+}
+
 export async function fetchCaixaTurnoSnapshot({
   turno,
   caixa,
@@ -368,6 +425,8 @@ export async function fetchCaixaTurnoSnapshot({
 
 /** Polling / idle sync — menos agressivo que antes */
 export const CAIXA_POLL_MS = 60_000;
+/** Polling ativo no PDV Caixa (fila de vendas + balanço) */
+export const CAIXA_LIVE_POLL_MS = 30_000;
 export const CAIXA_IDLE_SYNC_AFTER_MS = 5 * 60 * 1000;
 export const CAIXA_IDLE_SYNC_TICK_MS = 90_000;
 export const CAIXA_SUBSCRIBE_DEBOUNCE_MS = 600;

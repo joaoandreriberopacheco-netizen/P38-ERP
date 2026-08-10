@@ -63,7 +63,8 @@ async function buscarFilhos(tipo, doc) {
       referencia_tipo: 'PedidoCompra',
       referencia_id: doc.pedido_compra_id,
     });
-    const produtoIds = new Set((doc.itens || doc.itens_embarcados || []).map((item) => item.produto_id));
+    const embItens = await base44.entities.EmbarqueItem.filter({ embarque_id: doc.id });
+    const produtoIds = new Set((embItens || []).map((item) => item.produto_id));
     movEst
       .filter((m) => produtoIds.has(m.produto_id) && m.tipo === 'Entrada' && m.motivo === 'Compra')
       .forEach((m) => filhos.push({ tipo: 'MovimentacaoEstoque', label: `Mov. Estoque: ${m.produto_nome}`, id: m.id }));
@@ -208,7 +209,7 @@ export default function ExclusaoDocumentosPage() {
                 onKeyDown={e => e.key === 'Enter' && buscar()}
                 className="bg-muted/40 dark:bg-muted border-0 rounded-xl h-11 uppercase font-mono"
               />
-              <Button onClick={buscar} disabled={buscando} className="bg-background dark:bg-card text-white dark:text-foreground rounded-xl px-5 h-11">
+              <Button onClick={buscar} disabled={buscando} className="bg-card text-card-foreground rounded-xl px-5 h-11">
                 {buscando ? '...' : <Search className="w-4 h-4" />}
               </Button>
             </div>

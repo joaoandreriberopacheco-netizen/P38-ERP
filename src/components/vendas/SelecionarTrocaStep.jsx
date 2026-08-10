@@ -481,7 +481,7 @@ export default function SelecionarTrocaStep({ pedido, onConfirm }) {
             valorSubstitutos <= 0
           }
           onClick={handleConfirmarClick}
-          className="mx-auto block h-14 w-full max-w-lg rounded-2xl bg-background text-base font-semibold text-white dark:bg-card dark:text-foreground"
+          className="mx-auto block h-14 w-full max-w-lg rounded-2xl bg-primary text-base font-semibold text-primary-foreground dark:bg-card dark:text-foreground"
         >
           Confirmar troca
           {saldoVale > 0 ? ` · Vale ${formatValorBRL(saldoVale)}` : ''}

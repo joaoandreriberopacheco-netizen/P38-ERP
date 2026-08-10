@@ -149,7 +149,9 @@ export default function ExportarPlanilha() {
           valorCompraLiquido
           + (p.custo_frete_padrao || 0)
           + (p.custo_imposto1_padrao || 0)
-          + (p.custo_imposto2_padrao || 0);
+          + (p.custo_imposto2_padrao || 0)
+          + (p.custo_outros_padrao || 0)
+          + ((p.valor_compra || 0) * (Number(p.avaria_percentual) || 0) / 100);
         const rowData = {};
         COLUNAS_CONFIG.forEach(col => {
           if (col.key === 'custo_total_calculado') {

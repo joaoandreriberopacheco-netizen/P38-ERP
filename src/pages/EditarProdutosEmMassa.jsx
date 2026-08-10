@@ -561,7 +561,7 @@ export default function EditarProdutosEmMassa() {
           function StepLabel({ number, label }) {
   return (
     <div className="flex items-center gap-2 mb-3">
-      <span className="w-6 h-6 rounded-full bg-background dark:bg-card text-white dark:text-foreground text-xs font-bold flex items-center justify-center">
+      <span className="w-6 h-6 rounded-full bg-card text-card-foreground text-xs font-bold flex items-center justify-center">
         {number}
       </span>
       <span className="font-semibold text-foreground text-sm font-glacial">{label}</span>

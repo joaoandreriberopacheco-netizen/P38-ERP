@@ -22,6 +22,7 @@ const KNOWN_CATALOG_PRODUTO_COLUMNS = new Set([
   'preco_custo',
   'margem',
   'valor_compra',
+  'avaria_percentual',
   'markup',
   'estoque_atual',
   'media_30d',

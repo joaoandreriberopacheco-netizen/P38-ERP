@@ -1,7 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     darkMode: ["class"],
-    content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
+    content: ["./index.html", "./app/**/*.{ts,tsx,js,jsx}", "./src/**/*.{ts,tsx,js,jsx}"],
   theme: {
   	screens: {
   		sm: '640px',
@@ -90,6 +90,13 @@ module.exports = {
   				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
+  			},
+  			p38: {
+  				olive: 'hsl(var(--p38-olive))',
+  				lime: 'hsl(var(--p38-lime))',
+  				'citrus-yellow': 'hsl(var(--p38-citrus-yellow))',
+  				'citrus-orange': 'hsl(var(--p38-citrus-orange))',
+  				mediterranean: 'hsl(var(--p38-mediterranean))',
   			}
   		},
   		keyframes: {

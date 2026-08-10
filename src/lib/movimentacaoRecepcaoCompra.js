@@ -8,6 +8,8 @@
 
 import { invokeRecalcularEstoqueProduto } from './p38StockRecalc.js';
 import { calculateBaseQuantity, getCustoCompraLiquidoFator1 } from './productUnits.js';
+import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
+import { fetchPedidoCompraItensPorPedidos, linhasPedidoCompraToLegacyItens } from '@/lib/fetchPedidoCompraItens';
 
 const round6 = (n) => Math.round((Number(n) || 0) * 1_000_000) / 1_000_000;
 
@@ -102,12 +104,7 @@ export function buildMovimentacaoRecepcaoCompraPayload({
  * @returns número de movimentos criados
  */
 export async function criarMovimentosStockRecepcaoEmFalta(base44, { pedido, embarque, movimentosExistentes = [] }) {
-  const itens =
-    Array.isArray(embarque?.itens_embarcados) && embarque.itens_embarcados.length > 0
-      ? embarque.itens_embarcados
-      : Array.isArray(embarque?.itens)
-        ? embarque.itens
-        : [];
+  const itens = getEmbarqueItensLinhas(embarque);
 
   const codigoEmb = String(embarque?.codigo_exibicao || '').trim();
 
@@ -129,9 +126,16 @@ export async function criarMovimentosStockRecepcaoEmFalta(base44, { pedido, emba
 
     if (jaExiste) continue;
 
-    const purchaseItem = (Array.isArray(pedido?.itens) ? pedido.itens : []).find(
+    let purchaseItem = (Array.isArray(pedido?.itens) ? pedido.itens : []).find(
       (pi) => String(pi?.produto_id) === String(item?.produto_id),
-    ) || item;
+    );
+    if (!purchaseItem && pedido?.id && base44?.entities?.PedidoCompraItem?.filter) {
+      const byPedido = await fetchPedidoCompraItensPorPedidos(base44, [pedido.id]);
+      const linhas = byPedido.get(pedido.id) || [];
+      const legado = linhasPedidoCompraToLegacyItens(linhas);
+      purchaseItem = legado.find((pi) => String(pi?.produto_id) === String(item?.produto_id));
+    }
+    purchaseItem = purchaseItem || item;
 
     await base44.entities.MovimentacaoEstoque.create(
       buildMovimentacaoRecepcaoCompraPayload({

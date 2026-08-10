@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Guidance for AI agents working in this repository (**varejosync** / P38 ERP — Vite + React + Base44).
+Guidance for AI agents working in this repository (**P38-ERP** — Vite/React UI + Supabase, produção Next.js).
 
 ## CRITICAL: validation artifact policy (João André)
 
@@ -86,6 +86,7 @@ Após gravar secrets no Cursor: **nova sessão** → `npm run secrets:audit`
 ### Repo context
 
 - Canonical **hosted** deploy path today: this repo → Base44 / Vercel legacy. Future canonical stack: **a29-erp** (Next.js + Supabase). See root `README.md` and `.cursor/rules/transicao-vercel-base44.mdc`.
+- **Mobile visual north star (finance/ops):** Planejamento financeiro dark — palette/feeling approved by João André; see `.cursor/rules/p38-mobile-referencia-planejamento.mdc` and `docs/p38-mobile-rollout.md` §0.
 - **Flare** workflow: `docs/flare-export/README.md`, rule `.cursor/rules/busca-de-flares.mdc` — do not commit `flare-pending.json` with sensitive data.
 
 ### Optional services (not VM startup)

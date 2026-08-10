@@ -8,6 +8,7 @@ import { safeAppReturnPath } from '@/lib/supabaseAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import P38Logo from '@/components/brand/P38Logo';
 
 function GoogleIcon({ className }) {
   return (
@@ -31,6 +32,15 @@ function GoogleIcon({ className }) {
     </svg>
   );
 }
+
+const authFieldClass =
+  'rounded-none border-neutral-300 bg-white text-neutral-900 placeholder:text-neutral-400 focus-visible:ring-neutral-900 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:focus-visible:ring-neutral-100';
+
+const authButtonClass =
+  'rounded-none bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200';
+
+const authOutlineButtonClass =
+  'rounded-none border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100 dark:hover:bg-neutral-900';
 
 /**
  * Login local (Supabase) quando `VITE_P38_USE_SUPABASE_AUTH=true`.
@@ -96,83 +106,129 @@ export default function LoginPage() {
   const googleEnabled = isGoogleLoginEnabled();
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-background">
-      <div className="w-full max-w-sm space-y-4 rounded-xl border border-border/40 dark:border-border/40 bg-card dark:bg-card p-6 shadow-sm">
-        <div className="space-y-1">
-          <h1 className="text-lg font-semibold text-foreground dark:text-foreground">Entrar</h1>
-          <p className="text-sm text-muted-foreground dark:text-muted-foreground">
-            {googleEnabled
-              ? 'Use a sua conta Google ou utilizador e senha.'
-              : 'Utilizador e senha definidos pelo administrador.'}
-          </p>
-        </div>
-
-        {flash ? (
-          <p className="text-sm text-green-700 dark:text-green-400" role="status">
-            {flash}
-          </p>
-        ) : null}
-
-        {error ? (
-          <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-            {error}
-          </p>
-        ) : null}
-
-        {googleEnabled ? (
-          <>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full gap-2"
-              disabled={busy}
-              onClick={handleGoogleLogin}
-            >
-              <GoogleIcon className="h-4 w-4 shrink-0" />
-              {googleLoading ? 'A redirecionar…' : 'Continuar com Google'}
-            </Button>
-
-            <div className="flex items-center gap-3">
-              <Separator className="flex-1" />
-              <span className="text-xs text-muted-foreground uppercase tracking-wide">ou</span>
-              <Separator className="flex-1" />
-            </div>
-          </>
-        ) : null}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground/90 dark:text-muted-foreground">Utilizador</label>
-            <Input
-              type="text"
-              autoComplete="username"
-              value={login}
-              onChange={(ev) => setLogin(ev.target.value)}
-              placeholder="Ex: joao, admin…"
-              required
-            />
+    <div className="min-h-screen bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
+      <div className="flex min-h-screen flex-col md:flex-row">
+        <aside
+          className="flex flex-col items-center justify-center border-b border-neutral-200 bg-neutral-50 px-6 py-12 dark:border-neutral-800 dark:bg-neutral-900 md:w-1/2 md:border-b-0 md:border-r md:py-0"
+          aria-hidden="true"
+        >
+          <div className="md:hidden">
+            <P38Logo surface="auth.mobile" className="mx-auto" />
           </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground/90 dark:text-muted-foreground">Senha</label>
-            <Input
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(ev) => setPassword(ev.target.value)}
-              required
-            />
+          <div className="hidden md:flex md:items-center md:justify-center md:px-12">
+            <P38Logo surface="auth.desktop" className="max-w-[min(420px,80%)]" />
           </div>
-          <Button type="submit" className="w-full" disabled={busy}>
-            {submitting ? 'A entrar…' : 'Entrar'}
-          </Button>
-        </form>
+        </aside>
 
-        <p className="text-center text-xs text-muted-foreground">
-          Primeira vez ou senha nova?{' '}
-          <Link to="/ativar-acesso" className="text-primary hover:underline">
-            Activar acesso
-          </Link>
-        </p>
+        <main className="flex flex-1 items-center justify-center px-6 py-10 md:w-1/2 md:px-12 md:py-16">
+          <div className="w-full max-w-md space-y-8">
+            <header className="space-y-2">
+              <p className="text-xs font-medium uppercase tracking-[0.22em] text-neutral-500 dark:text-neutral-400">
+                Acesso ao sistema
+              </p>
+              <h1 className="font-glacial text-3xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50">
+                Entrar
+              </h1>
+              <p className="text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+                {googleEnabled
+                  ? 'Use a sua conta Google ou utilizador e senha.'
+                  : 'Utilizador e senha definidos pelo administrador.'}
+              </p>
+            </header>
+
+            {flash ? (
+              <p
+                className="border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300"
+                role="status"
+              >
+                {flash}
+              </p>
+            ) : null}
+
+            {error ? (
+              <p
+                className="border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300"
+                role="alert"
+              >
+                {error}
+              </p>
+            ) : null}
+
+            {googleEnabled ? (
+              <div className="space-y-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={`h-11 w-full gap-2 ${authOutlineButtonClass}`}
+                  disabled={busy}
+                  onClick={handleGoogleLogin}
+                >
+                  <GoogleIcon className="h-4 w-4 shrink-0" />
+                  {googleLoading ? 'A redirecionar…' : 'Continuar com Google'}
+                </Button>
+
+                <div className="flex items-center gap-3">
+                  <Separator className="flex-1 bg-neutral-200 dark:bg-neutral-800" />
+                  <span className="text-xs uppercase tracking-[0.18em] text-neutral-500 dark:text-neutral-500">
+                    ou
+                  </span>
+                  <Separator className="flex-1 bg-neutral-200 dark:bg-neutral-800" />
+                </div>
+              </div>
+            ) : null}
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <label
+                  htmlFor="login-username"
+                  className="text-xs font-medium uppercase tracking-[0.16em] text-neutral-600 dark:text-neutral-400"
+                >
+                  Utilizador
+                </label>
+                <Input
+                  id="login-username"
+                  type="text"
+                  autoComplete="username"
+                  value={login}
+                  onChange={(ev) => setLogin(ev.target.value)}
+                  placeholder="Ex: joao, admin…"
+                  className={`h-11 ${authFieldClass}`}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label
+                  htmlFor="login-password"
+                  className="text-xs font-medium uppercase tracking-[0.16em] text-neutral-600 dark:text-neutral-400"
+                >
+                  Senha
+                </label>
+                <Input
+                  id="login-password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(ev) => setPassword(ev.target.value)}
+                  className={`h-11 ${authFieldClass}`}
+                  required
+                />
+              </div>
+              <Button type="submit" className={`h-11 w-full ${authButtonClass}`} disabled={busy}>
+                {submitting ? 'A entrar…' : 'Entrar'}
+              </Button>
+            </form>
+
+            <p className="text-center text-sm text-neutral-500 dark:text-neutral-400">
+              Primeira vez ou senha nova?{' '}
+              <Link
+                to="/ativar-acesso"
+                className="font-medium text-neutral-900 underline-offset-4 hover:underline dark:text-neutral-100"
+              >
+                Activar acesso
+              </Link>
+            </p>
+          </div>
+        </main>
       </div>
     </div>
   );
