@@ -53,7 +53,7 @@ import { processarVendaCaixa } from '@/functions/processarVendaCaixa';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 import ConfirmarImpressaoDialog from '@/components/vendas/ConfirmarImpressaoDialog';
 import { roundToTwoDecimals, resolveValorPedidoVenda, pagamentosCobremTotal } from '@/lib/financialUtils';
-import { selectAllOnFocus, focusAndSelect, handleCentavosMaskKeyDown } from '@/lib/inputFocusUtils';
+import { selectAllOnFocus, handleCentavosMaskKeyDown } from '@/lib/inputFocusUtils';
 import {
   descricaoPadraoVale,
   listarPessoasFolhaParaVale,
@@ -275,15 +275,26 @@ export default function PDVCaixa({
   const [inputVale, setInputVale] = useState('');
   const [inputContaPagar, setInputContaPagar] = useState('');
 
-  // Refs para os inputs
-  const inputRefs = {
-    dinheiro: React.useRef(null),
-    pix: React.useRef(null),
-    debito: React.useRef(null),
-    credito: React.useRef(null),
-    vale: React.useRef(null),
-    contaPagar: React.useRef(null),
-  };
+  // Refs estáveis — o objeto não pode ser recriado cada render (quebrava foco no pagamento)
+  const dinheiroInputRef = React.useRef(null);
+  const pixInputRef = React.useRef(null);
+  const debitoInputRef = React.useRef(null);
+  const creditoInputRef = React.useRef(null);
+  const valeInputRef = React.useRef(null);
+  const contaPagarInputRef = React.useRef(null);
+  const inputRefs = useMemo(
+    () => ({
+      dinheiro: dinheiroInputRef,
+      pix: pixInputRef,
+      debito: debitoInputRef,
+      credito: creditoInputRef,
+      vale: valeInputRef,
+      contaPagar: contaPagarInputRef,
+    }),
+    []
+  );
+  const conferenciaDinheiroFocusedRef = useRef(false);
+  const conferenciaDinheiroEditadoRef = useRef(false);
 
   const [showLiberacaoEntrega, setShowLiberacaoEntrega] = useState(false);
   const [vendaFinalizada, setVendaFinalizada] = useState(null);
@@ -470,9 +481,6 @@ export default function PDVCaixa({
       setFormaPagamentoAtiva(0);
       setMaquininhaDebito(null);
       setMaquininhaCredito(null);
-
-      // Auto-focus após dialog montar (valor pré-preenchido selecionado para substituir)
-      setTimeout(() => focusAndSelect(inputRefs.dinheiro.current), 200);
     }
   }, [pedidoSelecionado]);
 
@@ -730,6 +738,7 @@ export default function PDVCaixa({
     setModoVisualizacao(somenteLeitura);
     setShowSeletorCaixa(false);
     setContaCaixaPDV(caixa);
+    conferenciaDinheiroEditadoRef.current = false;
     if (turno) {
       loadData(caixa, turno);
     }
@@ -1268,7 +1277,8 @@ export default function PDVCaixa({
   };
 
   useEffect(() => {
-    // Auto-preencher recebimentos: Dinheiro = Liquidez - (PIX + Crédito + Débito + Vale)
+    if (conferenciaDinheiroFocusedRef.current || conferenciaDinheiroEditadoRef.current) return;
+    // Auto-preencher conferência: Dinheiro = Liquidez - (PIX + Crédito + Débito + Vale)
     const dinheiroCalculado = roundToTwoDecimals(
       caixaData.liquidez -
         (caixaData.recebimentos?.pix || 0) -
@@ -1598,8 +1608,18 @@ export default function PDVCaixa({
                         type="text"
                         inputMode="decimal"
                         value={recebimentosDinheiro}
-                        onChange={(e) => !modoVisualizacao && setRecebimentosDinheiro(e.target.value)}
-                        onFocus={selectAllOnFocus}
+                        onChange={(e) => {
+                          if (modoVisualizacao) return;
+                          conferenciaDinheiroEditadoRef.current = true;
+                          setRecebimentosDinheiro(e.target.value);
+                        }}
+                        onFocus={(e) => {
+                          conferenciaDinheiroFocusedRef.current = true;
+                          selectAllOnFocus(e);
+                        }}
+                        onBlur={() => {
+                          conferenciaDinheiroFocusedRef.current = false;
+                        }}
                         disabled={modoVisualizacao}
                         className={`w-36 text-right text-lg font-bold bg-transparent border-0 focus:outline-none text-foreground dark:text-white ${modoVisualizacao ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
                         placeholder={formatarValorExibicao(caixaData.saldoAtual || 0)}

@@ -4,6 +4,23 @@ export function selectAllOnFocus(e) {
   if (el && typeof el.select === 'function') el.select();
 }
 
+/**
+ * Seleciona tudo só na primeira vez que o campo ganha foco (até blur).
+ * Evita re-selecionar no meio da digitação quando o parent re-renderiza.
+ */
+export function selectAllOnFocusOnceUntilBlur(e) {
+  const el = e?.target;
+  if (!el || typeof el.select !== 'function') return;
+  if (el.dataset.p38FocusedOnce === '1') return;
+  el.dataset.p38FocusedOnce = '1';
+  el.select();
+}
+
+export function clearSelectOnFocusOnceFlag(e) {
+  const el = e?.target;
+  if (el?.dataset) delete el.dataset.p38FocusedOnce;
+}
+
 /** Foca elemento e seleciona todo o conteúdo (ex.: após abrir dialog de pagamento). */
 export function focusAndSelect(el) {
   if (!el) return;
