@@ -13,6 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlusCircle, Search, Edit, Monitor, Receipt, Eye, Package } from 'lucide-react';
 import PedidoVendaForm from '@/components/vendas/PedidoVendaForm';
 import { formatarDataHora, formatarSoData } from '@/components/utils/dateUtils';
+import { hydratePedidosVendaItensFromSql } from '@/lib/fetchPedidoVendaItens';
+import { omitPedidoVendaEspelho } from '@/lib/omitEspelhoPersist';
 
 const PedidosTab = () => {
   const [pedidos, setPedidos] = useState([]);
@@ -28,19 +30,31 @@ const PedidosTab = () => {
 
   const loadPedidos = async () => {
     const data = await base44.entities.PedidoVenda.list('-created_date');
-    setPedidos(data);
+    const hydrated = await hydratePedidosVendaItensFromSql(base44, data);
+    setPedidos(hydrated);
   };
 
   const handleSave = async (data) => {
+    const payload = omitPedidoVendaEspelho({
+      ...data,
+      subtotal: Number(data.subtotal) || 0,
+      valor_total: Number(data.valor_total) || 0,
+    });
+    let pedidoSalvo;
     if (data.id) {
-      await base44.entities.PedidoVenda.update(data.id, data);
+      pedidoSalvo = await base44.entities.PedidoVenda.update(data.id, payload);
     } else {
       const allPOs = await base44.entities.PedidoVenda.list();
       const nextNumber = (allPOs.length > 0 ? Math.max(...allPOs.map(p => parseInt(p.numero?.split('-')[1] || 0))) : 0) + 1;
-      await base44.entities.PedidoVenda.create({ ...data, numero: `PV-${String(nextNumber).padStart(5, '0')}` });
+      pedidoSalvo = await base44.entities.PedidoVenda.create({
+        ...payload,
+        numero: `PV-${String(nextNumber).padStart(5, '0')}`,
+      });
     }
-    loadPedidos();
+    await loadPedidos();
     setIsFormOpen(false);
+    const row = pedidoSalvo?.data ?? pedidoSalvo;
+    return row?.id ? row : { id: data.id, ...payload };
   };
 
   const handleEdit = (pedido) => {
@@ -186,14 +200,22 @@ const PedidosTab = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {pedidoParaVer.itens?.map((item, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell>{item.produto_nome}</TableCell>
-                        <TableCell>{item.quantidade}</TableCell>
-                        <TableCell>R$ {formatValor(item.preco_unitario_praticado)}</TableCell>
-                        <TableCell>R$ {formatValor(item.total)}</TableCell>
+                    {Array.isArray(pedidoParaVer.itens) && pedidoParaVer.itens.length > 0 ? (
+                      pedidoParaVer.itens.map((item, idx) => (
+                        <TableRow key={item.pedido_venda_item_id || item.produto_id || idx}>
+                          <TableCell>{item.produto_nome}</TableCell>
+                          <TableCell>{item.quantidade}</TableCell>
+                          <TableCell>R$ {formatValor(item.preco_unitario_praticado)}</TableCell>
+                          <TableCell>R$ {formatValor(item.total)}</TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-muted-foreground text-center">
+                          Sem linhas SQL para este pedido
+                        </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
                 </div>
