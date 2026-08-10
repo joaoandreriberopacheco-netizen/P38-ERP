@@ -41,9 +41,16 @@ export function linhasPedidoCompraToLegacyItens(linhas = []) {
   return (linhas || []).map(pedidoCompraItemToLegacyMirror).filter((item) => item?.produto_id);
 }
 
-/**
- * Prioriza SQL; espelho legado `pedido.itens[]` só como fallback.
- */
+function attachItensPedido(pedido, itens, fonte) {
+  const { itens: _i, _itens_fonte: _f, ...rest } = pedido || {};
+  return {
+    ...rest,
+    itens,
+    _itens_fonte: fonte,
+  };
+}
+
+/** Hidrata `itens` só a partir de PedidoCompraItem (SQL). Sem fallback JSON. */
 export async function hydratePedidosCompraItensFromSql(base44, pedidos = []) {
   if (!Array.isArray(pedidos) || !pedidos.length) return pedidos || [];
 
@@ -55,17 +62,8 @@ export async function hydratePedidosCompraItensFromSql(base44, pedidos = []) {
   return pedidos.map((pedido) => {
     const sqlRows = byPedido.get(pedido.id);
     if (sqlRows?.length) {
-      return {
-        ...pedido,
-        itens: linhasPedidoCompraToLegacyItens(sqlRows),
-        _itens_fonte: 'sql',
-      };
+      return attachItensPedido(pedido, linhasPedidoCompraToLegacyItens(sqlRows), 'sql');
     }
-    const legado = Array.isArray(pedido.itens) ? pedido.itens : [];
-    return {
-      ...pedido,
-      itens: legado,
-      _itens_fonte: legado.length ? 'espelho' : 'vazio',
-    };
+    return attachItensPedido(pedido, [], 'vazio');
   });
 }

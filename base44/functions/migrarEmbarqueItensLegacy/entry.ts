@@ -126,10 +126,6 @@ Deno.serve(async (req) => {
           stats.itens_criados++;
         }
 
-        const espelho=criadas.map(it=>({ produto_id:it.produto_id, produto_nome:it.produto_nome, produto_unidade_id:it.produto_unidade_id, quantidade_pedida:it.quantidade_pedida_comercial, quantidade_embarcada:it.quantidade_embarcada_comercial, quantidade_recebida:it.quantidade_recebida_comercial, unidade_medida:it.unidade_sigla, divergencia_tipo:it.divergencia_tipo, produto_id_recebido_diferente:it.produto_id_recebido_diferente, produto_nome_recebido_diferente:it.produto_nome_recebido_diferente, acordo_financeiro_lancamento_id:it.acordo_financeiro_lancamento_id, embarque_item_id:it.id }));
-        await sleep(200);
-        await base44.asServiceRole.entities.Embarque.update(embarque.id,{itens:espelho});
-
         stats.processados++;
         await sleep(300);
       } catch(e){

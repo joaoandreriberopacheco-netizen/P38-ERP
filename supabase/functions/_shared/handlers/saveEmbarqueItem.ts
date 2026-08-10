@@ -144,15 +144,11 @@ const itemToLegacyMirror = (item: any) => ({
   embarque_item_id: item?.id || undefined,
 });
 
+/** Conta linhas SQL — espelho JSON `itens` / `itens_embarcados` deixou de ser gravado. */
 const recomporEmbarque = async (base44: any, embarqueId: string) => {
   const linhas = await base44.asServiceRole.entities.EmbarqueItem.filter({ embarque_id: embarqueId });
-  const ordenadas = (linhas || []).slice().sort((a: any, b: any) => asNumber(a.ordem, 0) - asNumber(b.ordem, 0));
-  const espelho = ordenadas.map(itemToLegacyMirror);
-  await base44.asServiceRole.entities.Embarque.update(embarqueId, {
-    itens: espelho,
-    itens_embarcados: espelho,
-  });
-  return { itens_count: espelho.length };
+  const count = Array.isArray(linhas) ? linhas.length : 0;
+  return { itens_count: count, espelho_json: false };
 };
 
 const fetchProduto = async (base44: any, id: string) => {

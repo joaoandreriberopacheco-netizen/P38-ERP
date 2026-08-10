@@ -6,7 +6,7 @@ import { filterEmbarquesVisiveisParaPedido } from '@/components/compras/embarque
 import { normalizeItemToCanonicalFactorOne } from '@/lib/productUnits';
 import { hydrateEmbarquesPedidoFromSql } from '@/lib/fetchEmbarqueItens';
 import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
-import { gerarNumeroSequencial } from '@/lib/gerarNumeroSequencial';
+import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
 
 /**
  * Página inteira de detalhe/criação de Pedido de Compra — fullscreen em todos os viewports.
@@ -97,10 +97,9 @@ export default function PedidoCompraDetalhe() {
     if (sanitizedData.id) {
       const atual = await base44.entities.PedidoCompra.filter({ id: sanitizedData.id });
       const pedidoAtual = atual?.[0] || {};
-      saved = await base44.entities.PedidoCompra.update(sanitizedData.id, {
+      saved = await base44.entities.PedidoCompra.update(sanitizedData.id, omitPedidoCompraEspelho({
         ...pedidoAtual,
         ...sanitizedData,
-        embarques_registrados: sanitizedData.embarques_registrados ?? pedidoAtual.embarques_registrados,
         status_embarque: sanitizedData.status_embarque ?? pedidoAtual.status_embarque,
         status_recebimento_geral: sanitizedData.status_recebimento_geral ?? pedidoAtual.status_recebimento_geral,
         data_despacho: sanitizedData.data_despacho ?? pedidoAtual.data_despacho,
@@ -108,9 +107,9 @@ export default function PedidoCompraDetalhe() {
         conferencia_id: sanitizedData.conferencia_id ?? pedidoAtual.conferencia_id,
         manifesto_entrada_id: sanitizedData.manifesto_entrada_id ?? pedidoAtual.manifesto_entrada_id,
         tem_divergencias: sanitizedData.tem_divergencias ?? pedidoAtual.tem_divergencias,
-      });
+      }));
     } else {
-      const { id: _id, ...newPedido } = sanitizedData;
+      const { id: _id, ...newPedido } = omitPedidoCompraEspelho(sanitizedData);
       if (!newPedido.numero) {
         newPedido.numero = await gerarNumeroSequencial('PC');
       }

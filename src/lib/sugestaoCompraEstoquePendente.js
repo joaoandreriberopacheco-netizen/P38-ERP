@@ -1,5 +1,6 @@
 import { pedidoLiberadoParaLogistica } from '@/lib/aprovarPedidoCompraFinanceiro';
 import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
+import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 
 const PEDIDO_COMPRA_APPROVED_STATUSES = new Set([
   'aprovado financeiramente',
@@ -71,12 +72,7 @@ function resolveQuantidadeRecebidaItemEmbarque(item = {}, embarque = {}) {
 }
 
 function somarRecebidosItensEmbarque(acc, embarque = {}, pedido = null) {
-  const itensEmbarcados = Array.isArray(embarque.itens_embarcados)
-    ? embarque.itens_embarcados
-    : Array.isArray(embarque.itens)
-      ? embarque.itens
-      : [];
-  itensEmbarcados.forEach((item) => {
+  getEmbarqueItensLinhas(embarque).forEach((item) => {
     const produtoId = item?.produto_id;
     if (!produtoId) return;
     const produtoKey = String(produtoId);
@@ -174,7 +170,7 @@ export function buildRecebidosPorPedidoProdutoFromEmbarques(embarques = [], pedi
 }
 
 function recebidosEmbeddedNoPedido(pedido = {}) {
-  const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
+  const embarques = Array.isArray(pedido._embarques) ? pedido._embarques : [];
   return embarques.reduce((acc, embarque) => somarRecebidosItensEmbarque(acc, embarque, pedido), {});
 }
 
@@ -291,7 +287,7 @@ export function buildPendenteEmbarcadoNaoRecebidoPorProduto(embarques = [], pedi
     // Embarque em trânsito conta no estoque projetado salvo pedido encerrado/cancelado.
     if (pedido && pedidoCompraEstaConcluido(pedido)) continue;
 
-    const itens = embarque?.itens_embarcados || embarque?.itens || [];
+    const itens = getEmbarqueItensLinhas(embarque);
     for (const item of itens) {
       const produtoId = item?.produto_id;
       if (!produtoId) continue;

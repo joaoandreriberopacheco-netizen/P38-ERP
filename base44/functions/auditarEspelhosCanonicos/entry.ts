@@ -154,40 +154,20 @@ Deno.serve(async (req) => {
       relatorio.problemas.pedido_compra = detalhe;
     }
 
-    // ── PedidoVenda ───────────────────────────────────────────────────────
+    // ── PedidoVenda: cobertura SQL ────────────────────────────────────────
     if (escopo.includes('pedido_venda')) {
       const pedidos = await base44.asServiceRole.entities.PedidoVenda.list();
-      const itens = (pedidos || []).slice(0, limit);
-      let comDivergencia = 0;
-      let semCanonico = 0;
+      const amostra = (pedidos || []).slice(0, limit);
+      let semLinhasSql = 0;
       const detalhe: any[] = [];
-      for (const pedido of itens) {
-        const espelho = Array.isArray(pedido?.itens) ? pedido.itens : [];
+      for (const pedido of amostra) {
         const canonico = await base44.asServiceRole.entities.PedidoVendaItem.filter({ pedido_venda_id: pedido.id });
         if (!Array.isArray(canonico) || canonico.length === 0) {
-          if (espelho.length > 0) semCanonico++;
-          continue;
-        }
-        const ordenadas = canonico.slice().sort((a: any, b: any) => asNumber(a.ordem, 0) - asNumber(b.ordem, 0));
-        const canonicoEspelhoEquivalente = ordenadas.map((it: any) => ({
-          produto_id: it.produto_id,
-          quantidade: asNumber(it.quantidade_comercial, 0),
-          preco_unitario_praticado: asNumber(it.preco_unitario_fator1, 0),
-          total: asNumber(it.total, 0),
-        }));
-        const espelhoLite = espelho.map((it: any) => ({
-          produto_id: it.produto_id,
-          quantidade: asNumber(it.quantidade, 0),
-          preco_unitario_praticado: asNumber(it.preco_unitario_praticado, 0),
-          total: asNumber(it.total, 0),
-        }));
-        const divs = compararLista(espelhoLite, canonicoEspelhoEquivalente, ['produto_id', 'quantidade', 'preco_unitario_praticado', 'total']);
-        if (divs.length > 0) {
-          comDivergencia++;
-          if (detalhe.length < 30) detalhe.push({ id: pedido.id, numero: pedido.numero, divergencias: divs.slice(0, 8) });
+          semLinhasSql++;
+          if (detalhe.length < 30) detalhe.push({ id: pedido.id, numero: pedido.numero });
         }
       }
-      relatorio.stats.pedido_venda = { total: itens.length, sem_canonico: semCanonico, com_divergencia: comDivergencia };
+      relatorio.stats.pedido_venda = { total: amostra.length, sem_canonico: semLinhasSql, com_divergencia: 0 };
       relatorio.problemas.pedido_venda = detalhe;
     }
 

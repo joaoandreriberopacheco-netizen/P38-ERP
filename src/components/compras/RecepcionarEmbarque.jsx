@@ -39,7 +39,7 @@ import {
 import { buildMovimentacaoRecepcaoCompraPayload } from '@/lib/movimentacaoRecepcaoCompra';
 import { reverterRecepcaoEmbarque } from '@/lib/reverterRecepcaoEmbarque';
 import { buildItensCanonicosEmbarque } from '@/lib/buildEmbarqueItensCanonicos';
-import { hydrateEmbarquesFromSql } from '@/lib/fetchEmbarqueItens';
+import { hydrateEmbarquesFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 
 function pedidoItemParaEmbarque(pedido, embItem) {
   return (Array.isArray(pedido?.itens) ? pedido.itens : []).find(
@@ -48,9 +48,7 @@ function pedidoItemParaEmbarque(pedido, embItem) {
 }
 
 function getItensDoEmbarque(embarque) {
-  const baseItens = Array.isArray(embarque?.itens_embarcados) && embarque.itens_embarcados.length > 0
-    ? embarque.itens_embarcados
-    : (Array.isArray(embarque?.itens) ? embarque.itens : []);
+  const baseItens = getEmbarqueItensLinhas(embarque);
   const statusRec = embarque?.status_recebimento || embarque?.status_recebimento_embarque || 'Pendente';
   const aguardandoRecepcao = !statusRec || statusRec === 'Pendente';
 
@@ -338,7 +336,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         statusRecebimento = 'Recebido Parcial';
       }
 
-      const embarques = Array.isArray(pedido._embarques) ? pedido._embarques : (pedido.embarques_registrados || []);
+      const embarques = Array.isArray(pedido._embarques) ? pedido._embarques : [];
       const outrosEmbarques = embarques.filter((e) => e.id !== embarque.id);
       const pedidoItens = Array.isArray(pedido?.itens) ? pedido.itens : [];
 
@@ -386,8 +384,6 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         observacoes: 'Gerado automaticamente por saldo não recebido do embarque original.',
         status_recebimento: 'Pendente',
         status_recebimento_embarque: 'Pendente',
-        itens: [],
-        itens_embarcados: [],
       } : null;
 
       const itensCanonicos = buildItensCanonicosEmbarque(itensNorm, pedidoItens);

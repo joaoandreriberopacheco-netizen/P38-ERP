@@ -134,84 +134,78 @@ Deno.serve(async (req) => {
     const apenasRascunho = body?.apenas_rascunho === true;
     const incorporarDescontoLiquido = body?.incorporar_desconto_liquido === true;
 
+    if (!incorporarDescontoLiquido) {
+      return Response.json({
+        success: true,
+        dry_run: dryRun,
+        message: 'SQL-only: use incorporar_desconto_liquido=true para normalizar PedidoCompraItem.',
+        pendentes_processados: 0,
+        updates: [],
+      });
+    }
+
     const pedidos = await base44.asServiceRole.entities.PedidoCompra.list();
     const pendentes = (pedidos || [])
       .filter((p: any) => (apenasRascunho ? isPedidoRascunho(p) : isPedidoNaoConcluido(p)))
       .slice(0, limit);
 
     const updates: Array<Record<string, unknown>> = [];
-    let itensEspelhoAlterados = 0;
     let itensCanonicosAlterados = 0;
 
     for (const pedido of pendentes) {
-      const itens = Array.isArray(pedido?.itens) ? pedido.itens : [];
-      if (!itens.length) continue;
-
-      let espelhoChanged = 0;
-      const itensNorm = itens.map((item: any) => {
-        const liquido = incorporarDescontoLiquido ? normalizeItemDescontoLiquido(item) : { item, changed: false };
-        if (liquido.changed) espelhoChanged += 1;
-        return normalizeItemCanonical(liquido.item);
-      });
-
       const linhas = await base44.asServiceRole.entities.PedidoCompraItem.filter({ pedido_compra_id: pedido.id });
+      if (!Array.isArray(linhas) || !linhas.length) continue;
+
       let canonicosChanged = 0;
       const linhasNorm: Array<{ original: any; item: any }> = (linhas || []).map((linha: any) => {
-        const norm = incorporarDescontoLiquido
-          ? normalizeCanonicalLinhaDescontoLiquido(linha)
-          : { item: linha, changed: false };
+        const norm = normalizeCanonicalLinhaDescontoLiquido(linha);
         if (norm.changed) canonicosChanged += 1;
         return { original: linha, item: norm.item };
       });
 
-      if (incorporarDescontoLiquido && espelhoChanged === 0 && canonicosChanged === 0) continue;
+      if (canonicosChanged === 0) continue;
 
-      const valorItens = round2(itensNorm.reduce((acc: number, it: any) => acc + (Number(it?.total) || 0), 0));
-      const valorTotal = calcValorTotalPedido(pedido, itensNorm);
-      const payload = incorporarDescontoLiquido
-        ? { itens: itensNorm, valor_itens: valorItens, valor_total: valorTotal }
-        : { itens: itensNorm };
+      const linhasAtualizadas = linhasNorm.map(({ item }) => item);
+      const valorItens = round2(linhasAtualizadas.reduce((acc: number, it: any) => acc + (Number(it?.total) || 0), 0));
+      const valorTotal = calcValorTotalPedido(pedido, linhasAtualizadas);
 
       if (dryRun) {
         updates.push({
           id: pedido.id,
           numero: pedido.numero,
-          itens_count: itensNorm.length,
-          itens_espelho_alterados: espelhoChanged,
+          itens_count: linhasAtualizadas.length,
           itens_canonicos_alterados: canonicosChanged,
           valor_itens: valorItens,
           valor_total: valorTotal,
         });
-        itensEspelhoAlterados += espelhoChanged;
         itensCanonicosAlterados += canonicosChanged;
         continue;
       }
 
-      await base44.asServiceRole.entities.PedidoCompra.update(pedido.id, payload);
-
-      if (incorporarDescontoLiquido) {
-        for (const { original, item } of linhasNorm) {
-          if (Number(original?.desconto_unitario_fator1) === 0) continue;
-          await base44.asServiceRole.entities.PedidoCompraItem.update(original.id, {
-            custo_unitario_fator1: item.custo_unitario_fator1,
-            custo_unitario_comercial: item.custo_unitario_comercial,
-            desconto_unitario_fator1: 0,
-            custo_total_unitario_fator1: item.custo_total_unitario_fator1,
-            total: item.total,
-          });
-        }
+      for (const { original, item } of linhasNorm) {
+        if (Number(original?.desconto_unitario_fator1) === 0) continue;
+        await base44.asServiceRole.entities.PedidoCompraItem.update(original.id, {
+          custo_unitario_fator1: item.custo_unitario_fator1,
+          custo_unitario_comercial: item.custo_unitario_comercial,
+          desconto_unitario_fator1: 0,
+          custo_total_unitario_fator1: item.custo_total_unitario_fator1,
+          total: item.total,
+        });
       }
+
+      await base44.asServiceRole.entities.PedidoCompra.update(pedido.id, {
+        valor_itens: valorItens,
+        valor_total: valorTotal,
+      });
 
       updates.push({
         id: pedido.id,
         numero: pedido.numero,
-        itens_count: itensNorm.length,
-        itens_espelho_alterados: espelhoChanged,
+        itens_count: linhasAtualizadas.length,
         itens_canonicos_alterados: canonicosChanged,
         valor_itens: valorItens,
         valor_total: valorTotal,
       });
-      itensEspelhoAlterados += espelhoChanged;
       itensCanonicosAlterados += canonicosChanged;
     }
 
@@ -222,7 +216,6 @@ Deno.serve(async (req) => {
       incorporar_desconto_liquido: incorporarDescontoLiquido,
       total_lidos: pedidos?.length || 0,
       pendentes_processados: updates.length,
-      itens_espelho_alterados: itensEspelhoAlterados,
       itens_canonicos_alterados: itensCanonicosAlterados,
       updates,
     });
