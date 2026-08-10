@@ -42,6 +42,7 @@ import PainelCentralFinanceiroPedido from './PainelCentralFinanceiroPedido.jsx';
 import PedidoCompraLogisticaTab from './PedidoCompraLogisticaTab.jsx';
 import AbaRecepção from './AbaRecepção.jsx';
 import { filterEmbarquesVisiveisParaPedido } from './embarqueFilters';
+import { hydrateEmbarquesPedidoFromSql } from '@/lib/fetchEmbarqueItens';
 import {
   calcValorTotalPedidoCompra,
   cancelarLancamentosNaoPagosPedidoCompra,
@@ -1631,7 +1632,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
                     base44.entities.Embarque.filter({ pedido_compra_id: pedidoId })
                   ]);
                   if (atualizado?.[0]) {
-                    const embarquesVisiveis = filterEmbarquesVisiveisParaPedido(embarquesAtualizados || []);
+                    const embarquesHidratados = await hydrateEmbarquesPedidoFromSql(
+                      base44,
+                      pedidoId,
+                      embarquesAtualizados || [],
+                    );
+                    const embarquesVisiveis = filterEmbarquesVisiveisParaPedido(embarquesHidratados);
                     const pedidoCompleto = { ...atualizado[0], _embarques: embarquesVisiveis };
                     setPedidoLogistica(pedidoCompleto);
                     setFormData(prev => ({ ...prev, ...pedidoCompleto }));

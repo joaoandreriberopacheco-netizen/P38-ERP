@@ -8,7 +8,7 @@ import {
   movimentoCombinaCodigoEmbarque,
 } from '@/lib/movimentacaoRecepcaoCompra';
 import { invokeRecalcularConclusaoPedidoCompra } from '@/lib/p38StockRecalc';
-import RecepcionarEmbarque from './RecepcionarEmbarque';
+import { hydrateEmbarquesPedidoFromSql } from '@/lib/fetchEmbarqueItens';
 
 function motivoEntradaCompraOk(mov) {
   const m = mov?.motivo;
@@ -364,10 +364,15 @@ export default function AbaRecepção({ pedido }) {
             if (pedidoId) {
               const [atualizado, embarquesAtualizados] = await Promise.all([
                 base44.entities.PedidoCompra.filter({ id: pedidoId }),
-                base44.entities.Embarque.filter({ pedido_compra_id: pedidoId })
+                base44.entities.Embarque.filter({ pedido_compra_id: pedidoId }),
               ]);
+              const embarquesHidratados = await hydrateEmbarquesPedidoFromSql(
+                base44,
+                pedidoId,
+                embarquesAtualizados || [],
+              );
               if (atualizado?.[0]) {
-                setPedidoAtual({ ...atualizado[0], _embarques: embarquesAtualizados || [] });
+                setPedidoAtual({ ...atualizado[0], _embarques: embarquesHidratados });
               }
             }
             loadMovimentos();
@@ -382,8 +387,13 @@ export default function AbaRecepção({ pedido }) {
                 base44.entities.PedidoCompra.filter({ id: pedidoId }),
                 base44.entities.Embarque.filter({ pedido_compra_id: pedidoId }),
               ]);
+              const embarquesHidratados = await hydrateEmbarquesPedidoFromSql(
+                base44,
+                pedidoId,
+                embarquesAtualizados || [],
+              );
               if (atualizado?.[0]) {
-                setPedidoAtual({ ...atualizado[0], _embarques: embarquesAtualizados || [] });
+                setPedidoAtual({ ...atualizado[0], _embarques: embarquesHidratados });
               }
             }
             setSelectedEmbarque(null);

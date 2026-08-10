@@ -5,6 +5,8 @@
 
 import { movimentoCombinaCodigoEmbarque } from './movimentacaoRecepcaoCompra.js';
 import { invokeRecalcularConclusaoPedidoCompra, invokeRecalcularEstoqueProduto } from './p38StockRecalc.js';
+import { buildItensCanonicosEmbarque } from '@/lib/buildEmbarqueItensCanonicos';
+import { hydrateEmbarquesFromSql } from '@/lib/fetchEmbarqueItens';
 import { saveEmbarqueItem } from '@/functions/saveEmbarqueItem';
 import { formatarLogTime } from '@/components/utils/dateUtils';
 
@@ -101,7 +103,8 @@ export async function reverterRecepcaoEmbarque(base44, { pedido, embarque, movim
       : await carregarMovimentosPedido(base44, pedido?.id);
 
   const movimentosEmbarque = filtrarMovimentosRecepcaoEmbarque(movimentos, embarque);
-  const itensOriginais = getItensEmbarque(embarque);
+  const [embarqueHidratado] = await hydrateEmbarquesFromSql(base44, [embarque]);
+  const itensOriginais = getItensEmbarque(embarqueHidratado || embarque);
   const itensReset = itensOriginais.map(resetItemRecepcao);
   const codigo = embarque?.codigo_exibicao || embarque?.numero || '';
 
@@ -115,47 +118,21 @@ export async function reverterRecepcaoEmbarque(base44, { pedido, embarque, movim
     await invokeRecalcularEstoqueProduto(base44, produtoId);
   }
 
+  const pedidoItens = Array.isArray(pedido?.itens) ? pedido.itens : [];
+  const itensCanonicos = buildItensCanonicosEmbarque(itensReset, pedidoItens);
+  if (itensCanonicos.length > 0) {
+    await saveEmbarqueItem({
+      action: 'replaceAll',
+      embarque_id: embarque.id,
+      items: itensCanonicos,
+    });
+  }
+
   await base44.entities.Embarque.update(embarque.id, {
     status: 'Pendente',
     status_recebimento: 'Pendente',
     status_recebimento_embarque: 'Pendente',
-    itens: itensReset,
-    itens_embarcados: itensReset,
   });
-
-  const pedidoItens = Array.isArray(pedido?.itens) ? pedido.itens : [];
-  try {
-    const itensCanonicos = itensReset
-      .map((it, idx) => {
-        const linhaPedido = pedidoItens.find((pi) => pi.produto_id === it?.produto_id);
-        const qPedida =
-          Number(it?.quantidade_pedida) ||
-          Number(linhaPedido?.quantidade) ||
-          0;
-        return {
-          produto_id: it?.produto_id || '',
-          produto_unidade_id: it?.produto_unidade_id || '',
-          pedido_compra_item_id: it?.pedido_compra_item_id || '',
-          unidade_sigla: it?.unidade_medida || '',
-          quantidade_pedida_comercial: qPedida,
-          quantidade_embarcada_comercial: Number(it?.quantidade_embarcada) || 0,
-          quantidade_recebida_comercial: 0,
-          divergencia_tipo: 'Nenhuma',
-          ordem: idx,
-        };
-      })
-      .filter((it) => it.produto_id && it.quantidade_embarcada_comercial > 0);
-
-    if (itensCanonicos.length > 0) {
-      await saveEmbarqueItem({
-        action: 'replaceAll',
-        embarque_id: embarque.id,
-        items: itensCanonicos,
-      });
-    }
-  } catch (canonicalErr) {
-    console.warn('Sincronia EmbarqueItem na reversão falhou:', canonicalErr?.message || canonicalErr);
-  }
 
   if (pedido?.id) {
     const tag = `\n[REVERSÃO RECEPÇÃO EMBARQUE ${codigo} | ${movimentosEmbarque.length} movimento(s) removido(s) | ${formatarLogTime()}]`;

@@ -148,7 +148,10 @@ const recomporEmbarque = async (base44: any, embarqueId: string) => {
   const linhas = await base44.asServiceRole.entities.EmbarqueItem.filter({ embarque_id: embarqueId });
   const ordenadas = (linhas || []).slice().sort((a: any, b: any) => asNumber(a.ordem, 0) - asNumber(b.ordem, 0));
   const espelho = ordenadas.map(itemToLegacyMirror);
-  await base44.asServiceRole.entities.Embarque.update(embarqueId, { itens: espelho });
+  await base44.asServiceRole.entities.Embarque.update(embarqueId, {
+    itens: espelho,
+    itens_embarcados: espelho,
+  });
   return { itens_count: espelho.length };
 };
 

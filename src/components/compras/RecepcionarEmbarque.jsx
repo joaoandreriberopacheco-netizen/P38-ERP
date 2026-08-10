@@ -38,7 +38,8 @@ import {
 } from '@/lib/p38StockRecalc';
 import { buildMovimentacaoRecepcaoCompraPayload } from '@/lib/movimentacaoRecepcaoCompra';
 import { reverterRecepcaoEmbarque } from '@/lib/reverterRecepcaoEmbarque';
-import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
+import { buildItensCanonicosEmbarque } from '@/lib/buildEmbarqueItensCanonicos';
+import { hydrateEmbarquesFromSql } from '@/lib/fetchEmbarqueItens';
 
 function pedidoItemParaEmbarque(pedido, embItem) {
   return (Array.isArray(pedido?.itens) ? pedido.itens : []).find(
@@ -133,12 +134,22 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
   };
 
   useEffect(() => {
-    if (!isOpen) return;
-    const baseItens = getItensDoEmbarque(embarque);
-    setItens(baseItens);
+    if (!isOpen || !embarque?.id) return;
+    let cancelled = false;
     setDataEntrada(dataHoje());
-    inicializarVitrineRecepcao(baseItens);
-  }, [isOpen, embarque, pedido]);
+
+    (async () => {
+      const [hydrated] = await hydrateEmbarquesFromSql(base44, [embarque]);
+      if (cancelled) return;
+      const baseItens = getItensDoEmbarque(hydrated || embarque);
+      setItens(baseItens);
+      inicializarVitrineRecepcao(baseItens);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, embarque?.id, pedido?.id]);
 
   const copiarQuantidadesEmbarcado = () => {
     const qtdAtualizada = { ...qtdRecebidaApres };
@@ -277,7 +288,6 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
 
   const handleConfirmarRecebimento = async () => {
     setIsSaving(true);
-    let avisoSincroniaEmbarqueItem = null;
     try {
       const itensNorm = itens.map((item) => {
         const produto = produtosMap[item.produto_id];
@@ -290,7 +300,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         toast({
           title: 'Embarque sem identificador',
           description:
-            'Não é possível concluir a receção sem o id do embarque na Base44. Recarregue o pedido ou abra de novo na aba Logística.',
+            'Não é possível concluir a receção sem o id do embarque. Recarregue o pedido ou abra de novo na aba Logística.',
           variant: 'destructive',
         });
         return;
@@ -315,43 +325,49 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         });
         return;
       }
-      const novoEmbarque = { ...embarque, itens: itensNorm, itens_embarcados: itensNorm };
-      const temDivergencia = itensNorm.some(i => i.divergencia_tipo !== 'Nenhuma');
+
+      const temDivergencia = itensNorm.some((i) => i.divergencia_tipo !== 'Nenhuma');
       const todosRecebidos = itensNorm.every(
-        (i) => Number(i.quantidade_recebida || 0) >= Number(i.quantidade_embarcada || 0)
+        (i) => Number(i.quantidade_recebida || 0) >= Number(i.quantidade_embarcada || 0),
       );
-      
+
       let statusRecebimento = 'Recebido OK';
       if (temDivergencia) {
         statusRecebimento = 'Com Divergência';
       } else if (!todosRecebidos) {
         statusRecebimento = 'Recebido Parcial';
       }
-      
-      novoEmbarque.status_recebimento = statusRecebimento;
-      novoEmbarque.status = 'Concluído';
 
-      const embarques = Array.isArray(pedido._embarques) ? pedido._embarques : (Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : []);
-      const outrosEmbarques = embarques.filter(e => e.id !== embarque.id);
+      const embarques = Array.isArray(pedido._embarques) ? pedido._embarques : (pedido.embarques_registrados || []);
+      const outrosEmbarques = embarques.filter((e) => e.id !== embarque.id);
+      const pedidoItens = Array.isArray(pedido?.itens) ? pedido.itens : [];
 
-      const itensOrfaos = itensNorm.map((item) => {
-        const saldo = roundToTwoDecimals(
-          Math.max(0, Number(item.quantidade_embarcada || 0) - Number(item.quantidade_recebida || 0))
-        );
-        if (!saldo) return null;
-        return {
-          produto_id: item.produto_id,
-          produto_nome: item.produto_nome,
-          quantidade_pedida: saldo,
-          quantidade_embarcada: saldo,
-          quantidade_recebida: 0,
-          unidade_medida: item.unidade_medida,
-          divergencia_tipo: 'Nenhuma'
-        };
-      }).filter(Boolean);
+      const itensOrfaosNorm = itensNorm
+        .map((item) => {
+          const pedidoItem = pedidoItemParaEmbarque(pedido, item);
+          const produto = produtosMap[item.produto_id];
+          const linha = resolveUnidadeLinha(pedidoItem, produto, unidadeLinha, item.produto_id);
+          const qEmbApres = Number(item.quantidade_embarcada_apresentacao) ?? quantidadeApresentacaoEmbarqueItem(item, linha);
+          const qRecApres = Number(item.quantidade_recebida_apresentacao) ?? 0;
+          const saldoApres = roundToTwoDecimals(Math.max(0, qEmbApres - qRecApres));
+          if (saldoApres <= 0) return null;
+          const saldoBase = roundToTwoDecimals(calculateBaseQuantity(saldoApres, linha.fator));
+          return {
+            ...item,
+            quantidade_pedida: saldoBase,
+            quantidade_embarcada: saldoBase,
+            quantidade_recebida: 0,
+            quantidade_embarcada_apresentacao: saldoApres,
+            quantidade_recebida_apresentacao: 0,
+            unidade_apresentacao: linha.unidade,
+            fator_apresentacao: linha.fator,
+            divergencia_tipo: 'Nenhuma',
+          };
+        })
+        .filter(Boolean);
 
       const proximaLetra = String.fromCharCode(65 + outrosEmbarques.length + 1);
-      const embarqueOrfao = itensOrfaos.length > 0 ? {
+      const embarqueOrfaoMeta = itensOrfaosNorm.length > 0 ? {
         pedido_compra_id: pedido.id,
         pedido_compra_numero: pedido.numero,
         fornecedor_id: pedido.fornecedor_id,
@@ -370,13 +386,29 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         observacoes: 'Gerado automaticamente por saldo não recebido do embarque original.',
         status_recebimento: 'Pendente',
         status_recebimento_embarque: 'Pendente',
-        itens: itensOrfaos,
-        itens_embarcados: itensOrfaos
+        itens: [],
+        itens_embarcados: [],
       } : null;
 
-      const pedidoItensParaCusto = Array.isArray(pedido?.itens) ? pedido.itens : [];
+      const itensCanonicos = buildItensCanonicosEmbarque(itensNorm, pedidoItens);
+      if (itensCanonicos.length <= 0) {
+        toast({
+          title: 'Linhas inválidas',
+          description: 'Não foi possível gravar as linhas do embarque. Verifique produto e quantidades.',
+          variant: 'destructive',
+        });
+        return;
+      }
 
-      // 1) Entrada em stock na DB Base44 (antes de fechar o embarque — se falhar, receção não fica «Concluída»).
+      // 1) SQL canónico (EmbarqueItem) — obrigatório; recomporEmbarque actualiza espelho JSON
+      await saveEmbarqueItem({
+        action: 'replaceAll',
+        embarque_id: embarque.id,
+        items: itensCanonicos,
+      });
+
+      // 2) Entrada em stock
+      const pedidoItensParaCusto = pedidoItens;
       for (const item of itensNorm) {
         if (item.quantidade_recebida > 0) {
           const produtoId = item.produto_id_recebido_diferente || item.produto_id;
@@ -390,63 +422,32 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
               embarque,
               purchaseItem: linhaPedido || item,
               receiptItem: item,
-            })
+            }),
           );
           await invokeRecalcularEstoqueProduto(base44, produtoId);
         }
       }
 
+      // 3) Metadados do embarque (sem duplicar itens — espelho vem do SQL)
       await base44.entities.Embarque.update(embarque.id, {
-        status: novoEmbarque.status,
+        status: 'Concluído',
         status_recebimento: statusRecebimento,
-        itens: itensNorm,
-        itens_embarcados: itensNorm,
-        observacoes: novoEmbarque.observacoes,
+        observacoes: embarque?.observacoes,
       });
 
-      const pedidoItens = Array.isArray(pedido?.itens) ? pedido.itens : [];
-      try {
-        const itensCanonicos = itensNorm
-          .map((it, idx) => {
-            const linhaPedido = pedidoItens.find((pi) => pi.produto_id === it?.produto_id);
-            const qPedida =
-              Number(it?.quantidade_pedida_apresentacao) ||
-              Number(it?.quantidade_pedida) ||
-              Number(linhaPedido?.quantidade) ||
-              0;
-            return {
-              produto_id: it?.produto_id || '',
-              produto_unidade_id: it?.produto_unidade_id || '',
-              pedido_compra_item_id: it?.pedido_compra_item_id || '',
-              unidade_sigla: it?.unidade_apresentacao || it?.unidade_medida || '',
-              quantidade_pedida_comercial: qPedida,
-              quantidade_embarcada_comercial: Number(it?.quantidade_embarcada_apresentacao) || 0,
-              quantidade_recebida_comercial: Number(it?.quantidade_recebida_apresentacao) || 0,
-              divergencia_tipo: it?.divergencia_tipo || 'Nenhuma',
-              produto_id_recebido_diferente: it?.produto_id_recebido_diferente || '',
-              produto_nome_recebido_diferente: it?.produto_nome_recebido_diferente || '',
-              acordo_financeiro_lancamento_id: it?.acordo_financeiro_lancamento_id || '',
-              ordem: idx,
-            };
-          })
-          .filter((it) => it.produto_id && it.quantidade_embarcada_comercial > 0);
-        if (itensCanonicos.length > 0) {
+      if (embarqueOrfaoMeta) {
+        const orphanCreated = await base44.entities.Embarque.create(embarqueOrfaoMeta);
+        const orphanCanonicos = buildItensCanonicosEmbarque(itensOrfaosNorm, pedidoItens);
+        if (orphanCreated?.id && orphanCanonicos.length > 0) {
           await saveEmbarqueItem({
             action: 'replaceAll',
-            embarque_id: embarque.id,
-            items: itensCanonicos,
+            embarque_id: orphanCreated.id,
+            items: orphanCanonicos,
           });
         }
-      } catch (canonicalErr) {
-        console.warn('Sincronia canonica de EmbarqueItem (recepcao) falhou:', canonicalErr?.message || canonicalErr);
-        avisoSincroniaEmbarqueItem = String(canonicalErr?.message || canonicalErr);
       }
 
-      if (embarqueOrfao) {
-        await base44.entities.Embarque.create(embarqueOrfao);
-      }
-
-      const divergenciasCount = itensNorm.filter(i => i.divergencia_tipo !== 'Nenhuma').length;
+      const divergenciasCount = itensNorm.filter((i) => i.divergencia_tipo !== 'Nenhuma').length;
       const divergenciasDesc = divergenciasCount > 0 ? ` | ${divergenciasCount} divergência(s)` : '';
       const resumoItens = itensNorm.map((i) => {
         const un = i.unidade_apresentacao || i.unidade_medida || '';
@@ -456,22 +457,13 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
       }).join('; ');
 
       await base44.entities.PedidoCompra.update(pedido.id, {
-        historico: (pedido.historico || '') + `\n[RECEPÇÃO EMBARQUE ${embarque.codigo_exibicao || ''} | Status: ${statusRecebimento}${divergenciasDesc} | Data: ${dataEntrada} | Itens: ${resumoItens}${embarqueOrfao ? ' | split automático gerou novo embarque' : ''} | ${formatarLogTime()}]`
+        historico: (pedido.historico || '') + `\n[RECEPÇÃO EMBARQUE ${embarque.codigo_exibicao || ''} | Status: ${statusRecebimento}${divergenciasDesc} | Data: ${dataEntrada} | Itens: ${resumoItens}${embarqueOrfaoMeta ? ' | split automático gerou novo embarque' : ''} | ${formatarLogTime()}]`,
       });
 
       await invokeRecalcularConclusaoPedidoCompra(base44, pedido.id);
 
       const recebimentoNumero = `REC-${String(embarque?.id || '').slice(-6) || String(Date.now()).slice(-6)}`;
-      if (avisoSincroniaEmbarqueItem) {
-        toast({
-          title: 'Recebimento concluído com ressalvas',
-          description: `Entrada em stock e embarque guardados. Sincronização EmbarqueItem falhou: ${avisoSincroniaEmbarqueItem.slice(0, 200)}`,
-          variant: 'destructive',
-          duration: 12000,
-        });
-      } else {
-        toast({ title: 'Recebimento concluído', className: 'bg-green-100 text-green-800' });
-      }
+      toast({ title: 'Recebimento concluído', className: 'bg-green-100 text-green-800' });
       onRecebido?.({ recebimentoNumero });
       onClose();
     } catch (error) {
