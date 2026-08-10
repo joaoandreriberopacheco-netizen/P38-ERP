@@ -170,7 +170,7 @@ export function buildRecebidosPorPedidoProdutoFromEmbarques(embarques = [], pedi
 }
 
 function recebidosEmbeddedNoPedido(pedido = {}) {
-  const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
+  const embarques = Array.isArray(pedido._embarques) ? pedido._embarques : [];
   return embarques.reduce((acc, embarque) => somarRecebidosItensEmbarque(acc, embarque, pedido), {});
 }
 

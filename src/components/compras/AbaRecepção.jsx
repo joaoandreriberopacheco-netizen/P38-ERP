@@ -8,7 +8,7 @@ import {
   movimentoCombinaCodigoEmbarque,
 } from '@/lib/movimentacaoRecepcaoCompra';
 import { invokeRecalcularConclusaoPedidoCompra } from '@/lib/p38StockRecalc';
-import { hydrateEmbarquesPedidoFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
+import { hydrateEmbarquesPedidoFromSql, getEmbarqueItensLinhas, hydrateEmbarquesFromSql } from '@/lib/fetchEmbarqueItens';
 
 function motivoEntradaCompraOk(mov) {
   const m = mov?.motivo;
@@ -106,7 +106,7 @@ export default function AbaRecepção({ pedido }) {
 
   useEffect(() => {
     setSelectedEmbarque(null);
-  }, [pedidoAtual?.embarques_registrados]);
+  }, [pedidoAtual?._embarques]);
 
   const handleRetificarStockEmbarque = useCallback(
     async (embarqueEl, codigoExibicaoVal, evt) => {
@@ -120,9 +120,10 @@ export default function AbaRecepção({ pedido }) {
       setRetificandoEmbId(id);
       try {
         const pedidoRef = pedidoAtual || pedido;
+        const [embarqueHidratado] = await hydrateEmbarquesFromSql(base44, [embarqueEl]);
         const n = await criarMovimentosStockRecepcaoEmFalta(base44, {
           pedido: pedidoRef,
-          embarque: { ...embarqueEl, codigo_exibicao: codigoExibicaoVal },
+          embarque: { ...embarqueHidratado, codigo_exibicao: codigoExibicaoVal },
           movimentosExistentes: movimentos,
         });
         if (n === 0) {
@@ -146,18 +147,8 @@ export default function AbaRecepção({ pedido }) {
 
   const embarques = useMemo(() => {
     if (Array.isArray(pedidoAtual?._embarques)) return pedidoAtual._embarques.filter(Boolean);
-    const raw = pedidoAtual?.embarques_registrados;
-    if (Array.isArray(raw)) return raw.filter(Boolean);
-    if (typeof raw === 'string') {
-      try {
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
-      } catch {
-        return [];
-      }
-    }
     return [];
-  }, [pedidoAtual?._embarques, pedidoAtual?.embarques_registrados]);
+  }, [pedidoAtual?._embarques]);
 
   const getStatusIcon = (status) => {
     switch (status) {

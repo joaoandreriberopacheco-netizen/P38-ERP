@@ -492,8 +492,10 @@ const buildVirtualNecessidade = (pedido, embarquesDoPedido) => {
     status: 'Pendente',
     status_recebimento: 'Pendente',
     observacoes: 'Embarque de necessidade criado automaticamente para itens pendentes.',
+    _linhas: itensPendentes,
     itens: itensPendentes,
     itens_embarcados: itensPendentes,
+    _itens_fonte: 'virtual',
     created_date: new Date().toISOString(),
   };
 };
@@ -850,7 +852,7 @@ export default function PedidosCompraPage() {
 
   const calcularValorPendentePedido = (pedido) => {
     const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
-    const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
+    const embarques = Array.isArray(pedido._embarques) ? pedido._embarques : [];
 
     const recebidosPorProduto = embarques.reduce((acc, embarque) => {
       getEmbarqueItensLinhas(embarque).forEach((item) => {

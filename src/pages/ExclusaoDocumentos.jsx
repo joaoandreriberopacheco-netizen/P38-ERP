@@ -63,7 +63,8 @@ async function buscarFilhos(tipo, doc) {
       referencia_tipo: 'PedidoCompra',
       referencia_id: doc.pedido_compra_id,
     });
-    const produtoIds = new Set((doc.itens || doc.itens_embarcados || []).map((item) => item.produto_id));
+    const embItens = await base44.entities.EmbarqueItem.filter({ embarque_id: doc.id });
+    const produtoIds = new Set((embItens || []).map((item) => item.produto_id));
     movEst
       .filter((m) => produtoIds.has(m.produto_id) && m.tipo === 'Entrada' && m.motivo === 'Compra')
       .forEach((m) => filhos.push({ tipo: 'MovimentacaoEstoque', label: `Mov. Estoque: ${m.produto_nome}`, id: m.id }));

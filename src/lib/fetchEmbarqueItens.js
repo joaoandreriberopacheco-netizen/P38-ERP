@@ -3,15 +3,28 @@ import { rebuildEmbarqueItensMirror } from '@/lib/embarqueItemContract';
 const CHUNK_SIZE = 40;
 
 /**
- * Linhas de um embarque já hidratado (SQL → espelho) ou legado.
- * Preferir chamar hydrateEmbarquesFromSql antes de usar em fluxos críticos.
+ * Linhas de embarque hidratadas do SQL (em memória). Não lê espelho JSON da BD.
  */
 export function getEmbarqueItensLinhas(embarque) {
   if (!embarque) return [];
-  if (Array.isArray(embarque.itens_embarcados) && embarque.itens_embarcados.length > 0) {
-    return embarque.itens_embarcados;
+  if (Array.isArray(embarque._linhas)) return embarque._linhas;
+  if (embarque._itens_fonte === 'sql' || embarque._itens_fonte === 'virtual') {
+    return Array.isArray(embarque.itens_embarcados) && embarque.itens_embarcados.length
+      ? embarque.itens_embarcados
+      : (Array.isArray(embarque.itens) ? embarque.itens : []);
   }
-  return Array.isArray(embarque.itens) ? embarque.itens : [];
+  return [];
+}
+
+function attachLinhasEmbarque(embarque, mirror, fonte) {
+  const { itens: _i, itens_embarcados: _ie, _linhas: _l, ...rest } = embarque || {};
+  return {
+    ...rest,
+    _linhas: mirror,
+    itens: mirror,
+    itens_embarcados: mirror,
+    _itens_fonte: fonte,
+  };
 }
 
 /**
@@ -64,9 +77,7 @@ export async function fetchEmbarqueItensPorPedido(base44, pedidoCompraId) {
   }
 }
 
-/**
- * Prioriza SQL; espelho `itens` / `itens_embarcados` só como fallback.
- */
+/** Hidrata linhas só a partir de EmbarqueItem (SQL). Sem fallback JSON. */
 export async function hydrateEmbarquesFromSql(base44, embarques = []) {
   if (!Array.isArray(embarques) || !embarques.length) return embarques || [];
 
@@ -78,32 +89,14 @@ export async function hydrateEmbarquesFromSql(base44, embarques = []) {
   return embarques.map((embarque) => {
     const sqlRows = byEmbarque.get(embarque.id);
     if (sqlRows?.length) {
-      const mirror = rebuildEmbarqueItensMirror(sqlRows);
-      return {
-        ...embarque,
-        itens: mirror,
-        itens_embarcados: mirror,
-        _itens_fonte: 'sql',
-      };
+      return attachLinhasEmbarque(embarque, rebuildEmbarqueItensMirror(sqlRows), 'sql');
     }
-    const legado =
-      (Array.isArray(embarque.itens_embarcados) && embarque.itens_embarcados.length > 0
-        ? embarque.itens_embarcados
-        : Array.isArray(embarque.itens)
-          ? embarque.itens
-          : []);
-    return {
-      ...embarque,
-      itens: legado,
-      itens_embarcados: legado,
-      _itens_fonte: legado.length ? 'espelho' : 'vazio',
-    };
+    return attachLinhasEmbarque(embarque, [], 'vazio');
   });
 }
 
 /**
  * Hidrata embarques de um pedido — útil no detalhe do pedido.
- * Mantém compatibilidade com hydrateEmbarquesLinhasDesdeCanonical.
  */
 export async function hydrateEmbarquesPedidoFromSql(base44, pedidoCompraId, embarques = []) {
   if (!base44 || !pedidoCompraId || !Array.isArray(embarques)) return embarques;
@@ -124,20 +117,8 @@ export async function hydrateEmbarquesPedidoFromSql(base44, pedidoCompraId, emba
   return embarques.map((emb) => {
     const rows = byEmb[emb.id];
     if (!rows?.length) {
-      const legado =
-        (Array.isArray(emb.itens_embarcados) && emb.itens_embarcados.length > 0
-          ? emb.itens_embarcados
-          : Array.isArray(emb.itens)
-            ? emb.itens
-            : []);
-      return { ...emb, _itens_fonte: legado.length ? 'espelho' : 'vazio' };
+      return attachLinhasEmbarque(emb, [], 'vazio');
     }
-    const mirror = rebuildEmbarqueItensMirror(rows);
-    return {
-      ...emb,
-      itens: mirror,
-      itens_embarcados: mirror,
-      _itens_fonte: 'sql',
-    };
+    return attachLinhasEmbarque(emb, rebuildEmbarqueItensMirror(rows), 'sql');
   });
 }

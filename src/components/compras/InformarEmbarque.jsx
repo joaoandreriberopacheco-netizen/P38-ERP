@@ -45,7 +45,7 @@ import {
 
 function calcularJaEmbarcadoBaseSemEmbarque(pedido, embarqueExistenteId) {
   const map = {};
-  const embarques = Array.isArray(pedido?._embarques) ? pedido._embarques : (pedido?.embarques_registrados || []);
+  const embarques = Array.isArray(pedido?._embarques) ? pedido._embarques : [];
   embarques.forEach((emb) => {
     if (embarqueExistenteId && emb.id === embarqueExistenteId) return;
     getEmbarqueItensLinhas(emb).forEach((item) => {
@@ -517,7 +517,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
         },
         transportadoras,
       );
-      const embarquesExistentes = Array.isArray(pedido._embarques) ? pedido._embarques : (pedido.embarques_registrados || []);
+      const embarquesExistentes = Array.isArray(pedido._embarques) ? pedido._embarques : [];
       const letraExibicao = String.fromCharCode(65 + embarquesExistentes.length);
       const itensEmbarcados = (pedido.itens || [])
         .filter(item => selectedItems[item.produto_id])

@@ -336,7 +336,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         statusRecebimento = 'Recebido Parcial';
       }
 
-      const embarques = Array.isArray(pedido._embarques) ? pedido._embarques : (pedido.embarques_registrados || []);
+      const embarques = Array.isArray(pedido._embarques) ? pedido._embarques : [];
       const outrosEmbarques = embarques.filter((e) => e.id !== embarque.id);
       const pedidoItens = Array.isArray(pedido?.itens) ? pedido.itens : [];
 
@@ -384,8 +384,6 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         observacoes: 'Gerado automaticamente por saldo não recebido do embarque original.',
         status_recebimento: 'Pendente',
         status_recebimento_embarque: 'Pendente',
-        itens: [],
-        itens_embarcados: [],
       } : null;
 
       const itensCanonicos = buildItensCanonicosEmbarque(itensNorm, pedidoItens);

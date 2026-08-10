@@ -119,39 +119,17 @@ export async function handle(req: Request, base44: Awaited<ReturnType<typeof cre
     // ── PedidoCompra: espelho vs canonico ─────────────────────────────────
     if (escopo.includes('pedido_compra')) {
       const pedidos = await base44.asServiceRole.entities.PedidoCompra.list();
-      const itens = (pedidos || []).slice(0, limit);
-      let comDivergencia = 0;
-      let semCanonico = 0;
+      const amostra = (pedidos || []).slice(0, limit);
+      let semLinhasSql = 0;
       const detalhe: any[] = [];
-      for (const pedido of itens) {
-        const espelho = Array.isArray(pedido?.itens) ? pedido.itens : [];
+      for (const pedido of amostra) {
         const canonico = await base44.asServiceRole.entities.PedidoCompraItem.filter({ pedido_compra_id: pedido.id });
         if (!Array.isArray(canonico) || canonico.length === 0) {
-          if (espelho.length > 0) semCanonico++;
-          continue;
-        }
-        const ordenadas = canonico.slice().sort((a: any, b: any) => asNumber(a.ordem, 0) - asNumber(b.ordem, 0));
-        const canonicoEspelhoEquivalente = ordenadas.map((it: any) => ({
-          produto_id: it.produto_id,
-          quantidade: asNumber(it.quantidade_comercial, 0),
-          quantidade_base: asNumber(it.quantidade_base, 0),
-          custo_unitario: asNumber(it.custo_unitario_fator1, 0),
-          total: asNumber(it.total, 0),
-        }));
-        const espelhoLite = espelho.map((it: any) => ({
-          produto_id: it.produto_id,
-          quantidade: asNumber(it.quantidade, 0),
-          quantidade_base: asNumber(it.quantidade_base, 0),
-          custo_unitario: asNumber(it.custo_unitario, 0),
-          total: asNumber(it.total, 0),
-        }));
-        const divs = compararLista(espelhoLite, canonicoEspelhoEquivalente, ['produto_id', 'quantidade', 'quantidade_base', 'custo_unitario', 'total']);
-        if (divs.length > 0) {
-          comDivergencia++;
-          if (detalhe.length < 30) detalhe.push({ id: pedido.id, numero: pedido.numero, divergencias: divs.slice(0, 8) });
+          semLinhasSql++;
+          if (detalhe.length < 30) detalhe.push({ id: pedido.id, numero: pedido.numero });
         }
       }
-      relatorio.stats.pedido_compra = { total: itens.length, sem_canonico: semCanonico, com_divergencia: comDivergencia };
+      relatorio.stats.pedido_compra = { total: amostra.length, sem_canonico: semLinhasSql, com_divergencia: 0 };
       relatorio.problemas.pedido_compra = detalhe;
     }
 
@@ -196,34 +174,16 @@ export async function handle(req: Request, base44: Awaited<ReturnType<typeof cre
     if (escopo.includes('embarque')) {
       const embs = await base44.asServiceRole.entities.Embarque.list();
       const itens = (embs || []).slice(0, limit);
-      let comDivergencia = 0;
-      let semCanonico = 0;
+      let semLinhasSql = 0;
       const detalhe: any[] = [];
       for (const emb of itens) {
-        const espelho = Array.isArray(emb?.itens) ? emb.itens : (Array.isArray(emb?.itens_embarcados) ? emb.itens_embarcados : []);
         const canonico = await base44.asServiceRole.entities.EmbarqueItem.filter({ embarque_id: emb.id });
         if (!Array.isArray(canonico) || canonico.length === 0) {
-          if (espelho.length > 0) semCanonico++;
-          continue;
-        }
-        const ordenadas = canonico.slice().sort((a: any, b: any) => asNumber(a.ordem, 0) - asNumber(b.ordem, 0));
-        const canonicoEspelhoEquivalente = ordenadas.map((it: any) => ({
-          produto_id: it.produto_id,
-          quantidade_embarcada: asNumber(it.quantidade_embarcada_comercial, 0),
-          quantidade_recebida: asNumber(it.quantidade_recebida_comercial, 0),
-        }));
-        const espelhoLite = espelho.map((it: any) => ({
-          produto_id: it.produto_id,
-          quantidade_embarcada: asNumber(it.quantidade_embarcada, 0),
-          quantidade_recebida: asNumber(it.quantidade_recebida, 0),
-        }));
-        const divs = compararLista(espelhoLite, canonicoEspelhoEquivalente, ['produto_id', 'quantidade_embarcada', 'quantidade_recebida']);
-        if (divs.length > 0) {
-          comDivergencia++;
-          if (detalhe.length < 30) detalhe.push({ id: emb.id, numero: emb.numero, divergencias: divs.slice(0, 8) });
+          semLinhasSql++;
+          if (detalhe.length < 30) detalhe.push({ id: emb.id, numero: emb.numero, codigo: emb.codigo_exibicao });
         }
       }
-      relatorio.stats.embarque = { total: itens.length, sem_canonico: semCanonico, com_divergencia: comDivergencia };
+      relatorio.stats.embarque = { total: itens.length, sem_canonico: semLinhasSql, com_divergencia: 0 };
       relatorio.problemas.embarque = detalhe;
     }
 

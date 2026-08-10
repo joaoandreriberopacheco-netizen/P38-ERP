@@ -1046,10 +1046,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
         );
       }
 
-      // ── Sincroniza linhas canonicas em PedidoCompraItem ──
-      // O servico replaceAll persiste cada linha com produto_unidade_id, recompoe
-      // o espelho `PedidoCompra.itens[]` e atualiza `valor_total`. Os erros nao
-      // bloqueiam o save legado — apenas geram um aviso pra o usuario.
+      // ── Sincroniza linhas canónicas em PedidoCompraItem (SQL) ──
+      // replaceAll persiste cada linha; recomporPedido actualiza só totais (sem espelho JSON).
       if (pedidoId && Array.isArray(dataToSave?.itens)) {
         try {
           const itensCanonicos = dataToSave.itens.map((it, idx) => {

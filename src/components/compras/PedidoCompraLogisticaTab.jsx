@@ -199,7 +199,7 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated, onIr
   const [embarqueEditando, setEmbarqueEditando] = useState(null);
   const [acordoOpen, setAcordoOpen] = useState(false);
 
-  const embarques = Array.isArray(pedido?._embarques) ? pedido._embarques : (pedido?.embarques_registrados || []);
+  const embarques = Array.isArray(pedido?._embarques) ? pedido._embarques : [];
   const embarquesComDespacho = embarques.filter((emb) => !!(emb?.data_embarque || emb?.eta || emb?.transportadora_id || emb?.transportadora_nome));
   const embarquesComItensAssociados = embarquesComDespacho.filter((emb) => getEmbarqueItensLinhas(emb).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0));
   const percentuaisCalculados = useMemo(
