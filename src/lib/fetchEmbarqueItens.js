@@ -3,6 +3,18 @@ import { rebuildEmbarqueItensMirror } from '@/lib/embarqueItemContract';
 const CHUNK_SIZE = 40;
 
 /**
+ * Linhas de um embarque já hidratado (SQL → espelho) ou legado.
+ * Preferir chamar hydrateEmbarquesFromSql antes de usar em fluxos críticos.
+ */
+export function getEmbarqueItensLinhas(embarque) {
+  if (!embarque) return [];
+  if (Array.isArray(embarque.itens_embarcados) && embarque.itens_embarcados.length > 0) {
+    return embarque.itens_embarcados;
+  }
+  return Array.isArray(embarque.itens) ? embarque.itens : [];
+}
+
+/**
  * Busca linhas canónicas EmbarqueItem para vários embarques.
  * @returns {Map<string, object[]>} embarque_id → linhas ordenadas
  */

@@ -6,7 +6,7 @@
 import { movimentoCombinaCodigoEmbarque } from './movimentacaoRecepcaoCompra.js';
 import { invokeRecalcularConclusaoPedidoCompra, invokeRecalcularEstoqueProduto } from './p38StockRecalc.js';
 import { buildItensCanonicosEmbarque } from '@/lib/buildEmbarqueItensCanonicos';
-import { hydrateEmbarquesFromSql } from '@/lib/fetchEmbarqueItens';
+import { hydrateEmbarquesFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 import { saveEmbarqueItem } from '@/functions/saveEmbarqueItem';
 import { formatarLogTime } from '@/components/utils/dateUtils';
 
@@ -18,10 +18,7 @@ function motivoEntradaCompraOk(mov) {
 }
 
 function getItensEmbarque(embarque) {
-  if (Array.isArray(embarque?.itens_embarcados) && embarque.itens_embarcados.length > 0) {
-    return embarque.itens_embarcados;
-  }
-  return Array.isArray(embarque?.itens) ? embarque.itens : [];
+  return getEmbarqueItensLinhas(embarque);
 }
 
 /** Movimentos de entrada de compra atribuíveis a este embarque. */

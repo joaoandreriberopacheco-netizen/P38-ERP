@@ -8,7 +8,7 @@ import {
   movimentoCombinaCodigoEmbarque,
 } from '@/lib/movimentacaoRecepcaoCompra';
 import { invokeRecalcularConclusaoPedidoCompra } from '@/lib/p38StockRecalc';
-import { hydrateEmbarquesPedidoFromSql } from '@/lib/fetchEmbarqueItens';
+import { hydrateEmbarquesPedidoFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 
 function motivoEntradaCompraOk(mov) {
   const m = mov?.motivo;
@@ -204,7 +204,7 @@ export default function AbaRecepção({ pedido }) {
         const statusRecebimento = embarque.status_recebimento || embarque.status_recebimento_embarque || 'Pendente';
         const dataEmbarque = embarque.data_embarque ? new Date(embarque.data_embarque).toLocaleDateString('pt-BR') : '-';
         const eta = embarque.eta ? new Date(embarque.eta).toLocaleDateString('pt-BR') : '-';
-        const itensEmbarque = embarque.itens || embarque.itens_embarcados || [];
+        const itensEmbarque = getEmbarqueItensLinhas(embarque);
         const qtdItens = itensEmbarque.length || 0;
         const codigoExibicao = embarque.codigo_exibicao || `${pedidoAtual?.numero || pedido?.numero || '-----'}-${String.fromCharCode(65 + idx)}`;
 

@@ -13,6 +13,8 @@ import { agora, dataHoje, meioDiaSistemaISO, toLocalDateKey, formatarLogTime } f
 import { logDespachoAudit, InformarDespachoAuditStrip } from '@/components/compras/informarEmbarqueAudit.jsx';
 import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
 import { saveEmbarqueItem } from '@/functions/saveEmbarqueItem';
+import { buildItensCanonicosEmbarque } from '@/lib/buildEmbarqueItensCanonicos';
+import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 import { invokeRecalcularConclusaoPedidoCompra } from '@/lib/p38StockRecalc';
 import {
   buildTransportadoraPersistPayload,
@@ -46,7 +48,7 @@ function calcularJaEmbarcadoBaseSemEmbarque(pedido, embarqueExistenteId) {
   const embarques = Array.isArray(pedido?._embarques) ? pedido._embarques : (pedido?.embarques_registrados || []);
   embarques.forEach((emb) => {
     if (embarqueExistenteId && emb.id === embarqueExistenteId) return;
-    (emb.itens || emb.itens_embarcados || []).forEach((item) => {
+    getEmbarqueItensLinhas(emb).forEach((item) => {
       const prev = map[item.produto_id] || 0;
       map[item.produto_id] = roundToTwoDecimals(prev + quantidadeBaseEmbarqueItem(item));
     });
@@ -82,7 +84,7 @@ function calcularPercentualValorEmbarcado(pedido, embarquesAtualizados) {
   const qtdPorProduto = {};
   (embarquesAtualizados || []).forEach((emb) => {
     if (emb.status === 'Pendente') return;
-    (emb.itens_embarcados || []).forEach((item) => {
+    getEmbarqueItensLinhas(emb).forEach((item) => {
       const prevQ = qtdPorProduto[item.produto_id] || 0;
       qtdPorProduto[item.produto_id] = roundToTwoDecimals(prevQ + (Number(item.quantidade_embarcada) || 0));
     });
@@ -94,13 +96,6 @@ function calcularPercentualValorEmbarcado(pedido, embarquesAtualizados) {
   }, 0);
 
   return Math.min(100, Number(((valorEmbarcado / valorTotalPedido) * 100).toFixed(2)));
-}
-
-function getItensEmbarque(embarque) {
-  if (Array.isArray(embarque?.itens_embarcados) && embarque.itens_embarcados.length > 0) {
-    return embarque.itens_embarcados;
-  }
-  return Array.isArray(embarque?.itens) ? embarque.itens : [];
 }
 
 // ── TransportadoraSearch ──────────────────────────────────────────────────────
@@ -303,7 +298,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
         : [];
       setVolumes(volsCarregados);
       setObservacoes(embarqueExistente.observacoes || '');
-      const itensDoEmbarque = getItensEmbarque(embarqueExistente);
+      const itensDoEmbarque = getEmbarqueItensLinhas(embarqueExistente);
       (pedido.itens || []).forEach((item) => {
         const produto = null;
         const embItem = itensDoEmbarque.find((i) => i.produto_id === item.produto_id);
@@ -351,7 +346,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
         const produto = map[item.produto_id];
         if (!produto) return;
         if (isEdicao) {
-          const itensDoEmbarque = getItensEmbarque(embarqueExistente);
+          const itensDoEmbarque = getEmbarqueItensLinhas(embarqueExistente);
           const embItem = itensDoEmbarque.find((i) => i.produto_id === item.produto_id);
           const linha = enrichLinhaDespacho(produto, buildUnidadeLinhaInicial(item, produto, embItem));
           unidadeAtualizada[item.produto_id] = linha;
@@ -533,7 +528,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
           return buildItemEmbarquePersistido(item, produto, linha, qEmb);
         })
         .filter(i => i.quantidade_embarcada > 0);
-      const itensJaLancados = (embarqueExistente?.itens_embarcados || embarqueExistente?.itens || []).filter(
+      const itensJaLancados = getEmbarqueItensLinhas(embarqueExistente).filter(
         (item) => (Number(item?.quantidade_embarcada) || 0) > 0
       );
       const podeSalvarSoTransporte = isEdicao && itensEmbarcados.length === 0 && itensJaLancados.length > 0;
@@ -543,14 +538,12 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
         return;
       }
 
-      // Volumes: texto descritivo resumido para campo legado
-      // Volumes: salvar no campo volumes_detalhados (estruturado) + volumes (legado texto)
       const volumesTexto = volumes.length > 0
         ? volumes.map(v => `${v.quantidade}x ${v.descricao || 'sem descrição'}`).join(', ')
         : '';
       const volumesDetalhados = volumes.length > 0 ? volumes : [];
 
-      const payloadEmbarque = {
+      const payloadMetadados = {
         data_embarque: dataDespacho ? meioDiaSistemaISO(dataDespacho) : (embarqueExistente?.data_embarque || agora()),
         eta: meioDiaSistemaISO(eta),
         transportadora_id: transportadoraPayload.transportadora_id,
@@ -562,15 +555,11 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
         volumes_detalhados: volumesDetalhados,
         peso_kg: totalPesoKg,
         observacoes,
-        itens: podeSalvarSoTransporte ? (embarqueExistente?.itens || embarqueExistente?.itens_embarcados || []) : itensEmbarcados,
-        itens_embarcados: podeSalvarSoTransporte ? (embarqueExistente?.itens_embarcados || embarqueExistente?.itens || []) : itensEmbarcados,
-        status: 'Pendente'
+        status: 'Pendente',
       };
 
       let embarqueIdSalvo = embarqueExistente?.id || null;
-      if (isEdicao) {
-        await base44.entities.Embarque.update(embarqueExistente.id, payloadEmbarque);
-      } else {
+      if (!isEdicao) {
         const embCriado = await base44.entities.Embarque.create({
           pedido_compra_id: pedido.id,
           pedido_compra_numero: pedido.numero,
@@ -580,60 +569,42 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
           codigo_exibicao: `${pedido.numero}-${letraExibicao}`,
           tipo: 'Embarque',
           status_recebimento: 'Pendente',
-          ...payloadEmbarque
+          ...payloadMetadados,
         });
         embarqueIdSalvo = embCriado?.id || null;
       }
 
-      const linhasComQuantidade = (payloadEmbarque.itens_embarcados || payloadEmbarque.itens || []).filter(
-        (it) => it?.produto_id && (Number(it?.quantidade_embarcada) || 0) > 0
-      );
+      if (!embarqueIdSalvo) {
+        toast.error('Não foi possível identificar o embarque para gravar as linhas.');
+        return;
+      }
+
+      if (!podeSalvarSoTransporte) {
+        const itensCanonicos = buildItensCanonicosEmbarque(itensEmbarcados, pedido.itens || []);
+        if (itensCanonicos.length === 0) {
+          toast.error('Não foi possível gravar as linhas do despacho. Verifique produto e quantidades.');
+          return;
+        }
+        await saveEmbarqueItem({
+          action: 'replaceAll',
+          embarque_id: embarqueIdSalvo,
+          items: itensCanonicos,
+        });
+      }
+
+      if (isEdicao) {
+        await base44.entities.Embarque.update(embarqueExistente.id, payloadMetadados);
+      }
+
+      const linhasComQuantidade = podeSalvarSoTransporte
+        ? itensJaLancados
+        : itensEmbarcados.filter((it) => it?.produto_id && (Number(it?.quantidade_embarcada) || 0) > 0);
       const nProdutosVinculados = linhasComQuantidade.length;
       const totalUnidadesEmbarcadas = linhasComQuantidade.reduce(
         (s, i) => s + (Number(i.quantidade_embarcada) || 0),
         0
       );
 
-      // Sincronia canonica de EmbarqueItem (espelho recomposto pelo backend).
-      let sincroniaCanonical = 'nao_aplicavel';
-      if (embarqueIdSalvo && Array.isArray(payloadEmbarque?.itens) && nProdutosVinculados > 0) {
-        sincroniaCanonical = 'pendente';
-        try {
-          const itensCanonicos = payloadEmbarque.itens
-            .map((it, idx) => ({
-              id: it?.embarque_item_id || it?.id || undefined,
-              produto_id: it?.produto_id || '',
-              produto_unidade_id: it?.produto_unidade_id || '',
-              pedido_compra_item_id: it?.pedido_compra_item_id || '',
-              unidade_sigla: it?.unidade_apresentacao || it?.unidade_medida || '',
-              quantidade_pedida_comercial: Number(it?.quantidade_pedida_apresentacao) || 0,
-              quantidade_embarcada_comercial: Number(it?.quantidade_embarcada_apresentacao) || 0,
-              quantidade_recebida_comercial: Number(it?.quantidade_recebida) || 0,
-              divergencia_tipo: it?.divergencia_tipo || 'Nenhuma',
-              produto_id_recebido_diferente: it?.produto_id_recebido_diferente || '',
-              produto_nome_recebido_diferente: it?.produto_nome_recebido_diferente || '',
-              acordo_financeiro_lancamento_id: it?.acordo_financeiro_lancamento_id || '',
-              ordem: idx,
-            }))
-            .filter((it) => it.produto_id && it.quantidade_embarcada_comercial > 0);
-
-          if (itensCanonicos.length > 0) {
-            await saveEmbarqueItem({
-              action: 'replaceAll',
-              embarque_id: embarqueIdSalvo,
-              items: itensCanonicos,
-            });
-            sincroniaCanonical = 'ok';
-          } else {
-            sincroniaCanonical = 'linhas_invalidas';
-          }
-        } catch (canonicalErr) {
-          sincroniaCanonical = 'erro';
-          console.warn('Sincronia canonica de EmbarqueItem falhou:', canonicalErr?.message || canonicalErr);
-        }
-      }
-
-      // Cloud opcional: falha não deve invalidar despacho já gravado (mesmo padrão que RecepcionarEmbarque)
       await invokeRecalcularConclusaoPedidoCompra(base44, pedido.id);
 
       const msgOk = isEdicao ? 'Despacho atualizado com sucesso.' : 'Despacho registrado com sucesso.';
@@ -642,22 +613,11 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
           ? `${nProdutosVinculados} produto(s) com quantidades embarcadas (${formatQuantity(totalUnidadesEmbarcadas)} un.). `
           : 'Sem linhas novas por produto neste envio (apenas transporte/dados logísticos). ';
       const seguirRecepcao = 'A seguir abrimos a Recepção.';
-      const avisoSync =
-        sincroniaCanonical === 'erro' || sincroniaCanonical === 'linhas_invalidas'
-          ? ' Atenção: a sincronização extra das linhas (EmbarqueItem) falhou ou ficou incompleta — confira na Recepção.'
-          : '';
 
-      if (sincroniaCanonical === 'erro' || sincroniaCanonical === 'linhas_invalidas') {
-        toast.warning(isEdicao ? 'Despacho guardado com ressalvas' : 'Despacho registado com ressalvas', {
-          description: `${resumoItens}${seguirRecepcao}${avisoSync}`,
-          duration: 9000,
-        });
-      } else {
-        toast.success(msgOk, {
-          description: `${resumoItens}${seguirRecepcao}`,
-          duration: 6500,
-        });
-      }
+      toast.success(msgOk, {
+        description: `${resumoItens}${seguirRecepcao}`,
+        duration: 6500,
+      });
       await new Promise((r) => setTimeout(r, PAUSA_ANTES_RECEPCAO_MS));
       onSuccess?.();
       onIrParaRecepcao?.();
