@@ -53,6 +53,7 @@ import { processarVendaCaixa } from '@/functions/processarVendaCaixa';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 import ConfirmarImpressaoDialog from '@/components/vendas/ConfirmarImpressaoDialog';
 import { roundToTwoDecimals, resolveValorPedidoVenda, pagamentosCobremTotal } from '@/lib/financialUtils';
+import { selectAllOnFocus, focusAndSelect } from '@/lib/inputFocusUtils';
 import {
   descricaoPadraoVale,
   listarPessoasFolhaParaVale,
@@ -500,8 +501,8 @@ export default function PDVCaixa({
       setMaquininhaDebito(null);
       setMaquininhaCredito(null);
 
-      // Auto-focus no primeiro input
-      setTimeout(() => inputRefs.dinheiro.current?.focus(), 100);
+      // Auto-focus no primeiro input (seleciona valor pré-preenchido para digitar por cima)
+      setTimeout(() => focusAndSelect(inputRefs.dinheiro.current), 100);
     }
   }, [pedidoSelecionado]);
 
@@ -1628,7 +1629,7 @@ export default function PDVCaixa({
                         inputMode="decimal"
                         value={recebimentosDinheiro}
                         onChange={(e) => !modoVisualizacao && setRecebimentosDinheiro(e.target.value)}
-                        onFocus={(e) => e.target.select()}
+                        onFocus={selectAllOnFocus}
                         disabled={modoVisualizacao}
                         className={`w-36 text-right text-lg font-bold bg-transparent border-0 focus:outline-none text-foreground dark:text-white ${modoVisualizacao ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
                         placeholder={formatarValorExibicao(caixaData.saldoAtual || 0)}

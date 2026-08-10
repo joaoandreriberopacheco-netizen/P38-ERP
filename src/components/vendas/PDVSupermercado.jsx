@@ -20,6 +20,7 @@ import { calculateBaseQuantity, getItemUnitKey, pickDefaultSaleUnit, getUnidadeE
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
 import { productCodesMatch } from '@/lib/productCode';
 import { isVendaSemEstoquePermitida } from '@/lib/configFlags';
+import { selectAllOnFocus, focusAndSelect } from '@/lib/inputFocusUtils';
 
 export default function PDVSupermercado() {
   const [carrinho, setCarrinho] = useState([]);
@@ -405,6 +406,7 @@ export default function PDVSupermercado() {
                 className="w-20 md:w-24 bg-card dark:bg-card border border-border/40 dark:border-border/40 rounded-xl text-foreground dark:text-muted-foreground h-14 md:h-14 text-center text-lg font-semibold focus:ring-2 focus:ring-border/40"
                 value={quantidadeAtual}
                 onChange={(e) => setQuantidadeAtual(parseInt(e.target.value) || 1)}
+                onFocus={selectAllOnFocus}
                 onKeyDown={handleQuantidadeKeyDown}
                 min="1"
                 disabled={!produtoSelecionado}
@@ -630,7 +632,7 @@ export default function PDVSupermercado() {
                    return (
                      <div key={label} 
                         className={`flex items-center justify-between p-3 rounded-lg cursor-pointer ${formaPagamentoAtiva === i ? 'bg-muted border border-indigo-200' : 'border border-transparent'}`}
-                        onClick={() => { setFormaPagamentoAtiva(i); refs[i].current?.focus(); }}
+                        onClick={() => { setFormaPagamentoAtiva(i); focusAndSelect(refs[i].current); }}
                      >
                         <div className="flex items-center gap-2">
                            <Icon className="w-5 h-5 text-muted-foreground" />
@@ -641,7 +643,7 @@ export default function PDVSupermercado() {
                            value={vals[i]}
                            onChange={() => {}}
                            onKeyDown={(e) => handleInputMascara(e, setters[i], numSetters[i])}
-                           onFocus={(e) => { e.target.select(); setFormaPagamentoAtiva(i); }}
+                           onFocus={(e) => { selectAllOnFocus(e); setFormaPagamentoAtiva(i); }}
                            className="w-24 text-right bg-transparent font-bold outline-none"
                         />
                      </div>

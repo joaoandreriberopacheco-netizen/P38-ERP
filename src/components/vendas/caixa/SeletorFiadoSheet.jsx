@@ -4,6 +4,7 @@ import { format, addDays } from 'date-fns';
 import { Dialog } from '@/components/ui/dialog';
 import { CaixaDialogContent } from './CaixaDialogContent';
 import { cn } from '@/lib/utils';
+import { selectAllOnFocus } from '@/lib/inputFocusUtils';
 
 /**
  * Modal Radix aninhado — fiado sobre o dialog de pagamento (clique/toque confiáveis).
@@ -155,6 +156,7 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
               const formatado = (parseFloat(numeros || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
               setValor(formatado);
             }}
+            onFocus={selectAllOnFocus}
             placeholder="Ex: R$ 100,00"
             className="w-full px-3 py-2.5 bg-muted/50 rounded-xl text-sm text-foreground/90 border border-border/40 focus:outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring"
           />

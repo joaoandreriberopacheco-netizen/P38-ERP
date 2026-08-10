@@ -3,6 +3,7 @@ import { Dialog, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CaixaDialogContent } from './CaixaDialogContent';
 import { Button } from '@/components/ui/button';
 import { caixaClasses } from '@/lib/caixaP38Theme';
+import { selectAllOnFocus } from '@/lib/inputFocusUtils';
 import { Input } from '@/components/ui/input';
 import { Plus, Minus } from 'lucide-react';
 
@@ -23,6 +24,7 @@ export default function CalculadoraCedulasDialog({ open, onOpenChange, cedulas, 
           className="h-8 w-8 p-0"><Minus className="w-4 h-4" /></Button>
         <Input type="number" value={cedulas[key]}
           onChange={(e) => setCedulas(prev => ({ ...prev, [key]: Math.max(0, parseInt(e.target.value) || 0) }))}
+          onFocus={selectAllOnFocus}
           className="h-8 w-16 text-center dark:bg-muted" />
         <Button variant="outline" size="sm"
           onClick={() => setCedulas(prev => ({ ...prev, [key]: prev[key] + 1 }))}

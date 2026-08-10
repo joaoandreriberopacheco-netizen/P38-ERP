@@ -8,6 +8,7 @@ import SeletorMaquininhaSheet from './SeletorMaquininhaSheet';
 import SeletorFiadoSheet from './SeletorFiadoSheet';
 import { CAIXA_TOAST_SUCCESS, caixaClasses, caixaSurface } from '@/lib/caixaP38Theme';
 import { resolveValorPedidoVenda } from '@/lib/financialUtils';
+import { selectAllOnFocus, focusAndSelect } from '@/lib/inputFocusUtils';
 
 export default function ConfirmarPagamentoDialog({
   open, onOpenChange,
@@ -351,6 +352,9 @@ function InputPagamento({
         onClick={() => {
           if (onContainerClick) onContainerClick();
           else onFocus?.();
+          if (!maquininhaPendente && !fiadoPendente && inputRef?.current) {
+            focusAndSelect(inputRef.current);
+          }
         }}
       >
         <Icon className="w-4 h-4 flex-shrink-0 text-muted-foreground" />
@@ -388,7 +392,7 @@ function InputPagamento({
             inputMode="numeric"
             value={valoresVisiveis ? value : value ? '••••••' : ''}
             onChange={() => {}}
-            onFocus={(e) => { e.target.select(); onFocus?.(); }}
+            onFocus={(e) => { selectAllOnFocus(e); onFocus?.(); }}
             onKeyDown={onKeyDown}
             className="w-24 text-right text-base font-semibold bg-transparent border-0 focus:outline-none text-foreground cursor-text tabular-nums"
           />

@@ -3,6 +3,7 @@ import { Dialog } from '@/components/ui/dialog';
 import { CaixaDialogContent } from './CaixaDialogContent';
 import { Button } from '@/components/ui/button';
 import { caixaClasses } from '@/lib/caixaP38Theme';
+import { selectAllOnFocus } from '@/lib/inputFocusUtils';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -45,7 +46,7 @@ export default function GerenciarMovimentoDialog({ open, onOpenChange, movimento
         <div className="space-y-4 p-4 md:p-5">
           <div>
             <Label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Valor</Label>
-            <Input value={valor} onChange={handleValorChange} className="h-11 rounded-2xl border-0 bg-muted shadow-sm dark:bg-muted" />
+            <Input value={valor} onChange={handleValorChange} onFocus={selectAllOnFocus} className="h-11 rounded-2xl border-0 bg-muted shadow-sm dark:bg-muted" />
           </div>
           <div>
             <Label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Observação</Label>

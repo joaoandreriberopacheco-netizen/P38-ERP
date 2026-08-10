@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Monitor, Lock, X, ChevronRight, ArrowLeft } from 'lucide-react';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { selectAllOnFocus, focusAndSelect } from '@/lib/inputFocusUtils';
 import {
   caixaTurnoQueryKey,
   fetchCaixaTurnoSnapshot,
@@ -50,11 +51,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
   }, []);
 
   const focusSaldoInput = useCallback(() => {
-    const input = saldoInputRef.current;
-    if (!input) return;
-    input.focus();
-    const len = input.value.length;
-    input.setSelectionRange(len, len);
+    focusAndSelect(saldoInputRef.current);
   }, []);
 
   useEffect(() => {
@@ -437,6 +434,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
                     enterKeyHint="done"
                     value={saldoInicial}
                     onChange={handleSaldoChange}
+                    onFocus={selectAllOnFocus}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
