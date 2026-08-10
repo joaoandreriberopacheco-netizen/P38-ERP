@@ -20,7 +20,7 @@ import { calculateBaseQuantity, getItemUnitKey, pickDefaultSaleUnit, getUnidadeE
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
 import { productCodesMatch } from '@/lib/productCode';
 import { isVendaSemEstoquePermitida } from '@/lib/configFlags';
-import { selectAllOnFocus, focusAndSelect, selectAllOnMouseDown } from '@/lib/inputFocusUtils';
+import { selectAllOnFocus, focusAndSelect, selectAllOnMouseDown, handleCentavosMaskKeyDown } from '@/lib/inputFocusUtils';
 
 export default function PDVSupermercado() {
   const [carrinho, setCarrinho] = useState([]);
