@@ -493,8 +493,6 @@ const buildVirtualNecessidade = (pedido, embarquesDoPedido) => {
     status_recebimento: 'Pendente',
     observacoes: 'Embarque de necessidade criado automaticamente para itens pendentes.',
     _linhas: itensPendentes,
-    itens: itensPendentes,
-    itens_embarcados: itensPendentes,
     _itens_fonte: 'virtual',
     created_date: new Date().toISOString(),
   };
@@ -629,8 +627,6 @@ export default function PedidosCompraPage() {
               tipo: 'Original',
               status: 'Pendente',
               status_recebimento: 'Pendente',
-              itens: [],
-              itens_embarcados: [],
               observacoes: '',
               created_date: pedido.created_date,
             }];

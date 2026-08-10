@@ -7,13 +7,7 @@ const CHUNK_SIZE = 40;
  */
 export function getEmbarqueItensLinhas(embarque) {
   if (!embarque) return [];
-  if (Array.isArray(embarque._linhas)) return embarque._linhas;
-  if (embarque._itens_fonte === 'sql' || embarque._itens_fonte === 'virtual') {
-    return Array.isArray(embarque.itens_embarcados) && embarque.itens_embarcados.length
-      ? embarque.itens_embarcados
-      : (Array.isArray(embarque.itens) ? embarque.itens : []);
-  }
-  return [];
+  return Array.isArray(embarque._linhas) ? embarque._linhas : [];
 }
 
 function attachLinhasEmbarque(embarque, mirror, fonte) {
@@ -21,8 +15,6 @@ function attachLinhasEmbarque(embarque, mirror, fonte) {
   return {
     ...rest,
     _linhas: mirror,
-    itens: mirror,
-    itens_embarcados: mirror,
     _itens_fonte: fonte,
   };
 }

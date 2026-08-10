@@ -128,10 +128,12 @@ Deno.serve(async (req) => {
           stats.itens_criados++;
         }
 
-        const espelho = criadas.map(toMirror);
-        const valorTotal = round6(espelho.reduce((a,it)=>a+asNumber(it.total,0),0));
+        const valorItens = round6(criadas.reduce((a, it) => a + asNumber(it.total, 0), 0));
+        const frete = asNumber(pedido?.valor_frete, 0);
+        const desconto = asNumber(pedido?.valor_desconto, 0);
+        const valorTotal = round6(valorItens + frete - desconto);
         await sleep(200);
-        await base44.asServiceRole.entities.PedidoCompra.update(pedido.id, { itens:espelho, valor_total:valorTotal });
+        await base44.asServiceRole.entities.PedidoCompra.update(pedido.id, { valor_itens: valorItens, valor_total: valorTotal });
 
         stats.pedidos_processados++;
         await sleep(300);

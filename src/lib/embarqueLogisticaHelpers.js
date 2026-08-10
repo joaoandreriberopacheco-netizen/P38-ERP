@@ -51,7 +51,7 @@ export function derivarStatusEmbarqueAgregado(pctDespachado) {
 }
 
 /**
- * Preenche `itens` / `itens_embarcados` a partir de EmbarqueItem (SQL primeiro).
+ * Percentuais de despacho/conclusão a partir de `_linhas` (EmbarqueItem SQL).
  */
 export async function hydrateEmbarquesLinhasDesdeCanonical(base44, pedidoCompraId, embarques) {
   return hydrateEmbarquesPedidoFromSql(base44, pedidoCompraId, embarques);

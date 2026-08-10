@@ -1100,7 +1100,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
           console.warn('Sincronia canonica de PedidoCompraItem falhou:', canonicalErr?.message || canonicalErr);
           toast({
             title: 'Aviso de sincronia canonica',
-            description: 'O pedido foi salvo, mas a entidade canonica PedidoCompraItem nao pode ser sincronizada. O espelho legado segue valido. Detalhe: ' + (canonicalErr?.message || ''),
+            description: 'O pedido foi salvo, mas a entidade canonica PedidoCompraItem nao pode ser sincronizada. Detalhe: ' + (canonicalErr?.message || ''),
           });
         }
       }

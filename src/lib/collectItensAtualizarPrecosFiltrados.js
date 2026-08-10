@@ -2,7 +2,7 @@ import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
 
 /**
  * Extrai linhas para atualização de preços a partir dos pedidos filtrados.
- * Fonte: PedidoCompraItem (SQL), com fallback no espelho legado.
+ * Fonte: PedidoCompraItem (SQL).
  */
 export async function collectItensAtualizarPrecosFiltrados(base44, pedidos = []) {
   const hydrated = await hydratePedidosCompraItensFromSql(base44, pedidos);
