@@ -17,6 +17,7 @@ import SugestaoCompra from '../components/compras/SugestaoCompra';
 import CotacoesManager from '../components/compras/CotacoesManager';
 import ImportadorNotaFiscal from '../components/compras/ImportadorNotaFiscal';
 import GestaoCodigosConferencia from '../components/logistica/GestaoCodigosConferencia';
+import HierarquiaPortalEntry from '@/components/hierarquia-portal/HierarquiaPortalEntry';
 import PainelConferencias from '../components/compras/PainelConferencias';
 import { cn } from '@/components/utils';
 import { useCompactShell } from '@/hooks/use-breakpoint';
@@ -392,8 +393,13 @@ export default function ComprasPage() {
     >
       {/* Header */}
       <div className={cn('shrink-0', sugestoesFullHeight ? 'px-4 pb-2 pt-0' : 'px-4 md:px-0 pb-4')}>
-        <h1 className="text-xl md:text-2xl font-semibold text-foreground font-glacial">Compras</h1>
-        <p className="text-xs text-muted-foreground mt-0.5">Gestão completa do ciclo de suprimentos</p>
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <h1 className="text-xl md:text-2xl font-semibold text-foreground font-glacial">Compras</h1>
+            <p className="text-xs text-muted-foreground mt-0.5">Gestão completa do ciclo de suprimentos</p>
+          </div>
+          <HierarquiaPortalEntry className="shrink-0" />
+        </div>
       </div>
 
       {/* Tab Bar - PDV Style pill tabs */}

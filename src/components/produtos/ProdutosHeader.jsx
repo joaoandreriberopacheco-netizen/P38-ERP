@@ -12,7 +12,7 @@ import ProdutosEstoqueVirtualToggle from '@/components/produtos/ProdutosEstoqueV
 import ProdutosAnaliseAgrupamentoControl from '@/components/produtos/ProdutosAnaliseAgrupamentoControl';
 import ProdutosAbcdQuickFilter from '@/components/produtos/ProdutosAbcdQuickFilter';
 import ProdutosNumericMetricFilter from '@/components/produtos/ProdutosNumericMetricFilter';
-import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
+import HierarquiaPortalEntry from '@/components/hierarquia-portal/HierarquiaPortalEntry';
 import ProdutosTreeByCategoryToggle from '@/components/produtos/ProdutosTreeByCategoryToggle';
 import ProdutosMobileFiltersSheet from '@/components/produtos/ProdutosMobileFiltersSheet';
 import { useCompactShell } from '@/hooks/use-breakpoint';
@@ -85,6 +85,7 @@ export default function ProdutosHeader({
           </div>
 
           <div className="flex items-center gap-1 flex-shrink-0 min-w-0 max-w-[58vw] sm:max-w-none overflow-x-auto overscroll-x-contain">
+            <HierarquiaPortalEntry size="icon" className="h-9 w-9 px-0" variant="ghost" />
             <Button
               type="button"
               variant="ghost"
