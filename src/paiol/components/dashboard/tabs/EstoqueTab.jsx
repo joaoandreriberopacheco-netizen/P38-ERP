@@ -12,6 +12,7 @@ import {
   quantidadePendenteItemPedidoCompra,
 } from '@/lib/sugestaoCompraEstoquePendente';
 import { fetchPedidosCompraParaSugestaoEstoque } from '@/lib/fetchPedidosCompraParaSugestaoEstoque';
+import { hydrateEmbarquesFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 import {
   resolveProdutoCustoUnitarioBase,
   sumCatalogTransitStockValue,
@@ -323,12 +324,7 @@ function calcularValorPendentePedidoCompra(pedido = {}, recebidosPorProdutoExter
   const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
   const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
   const recebidosPorProduto = recebidosPorProdutoExterno || embarques.reduce((acc, embarque) => {
-    const itensEmbarcados = Array.isArray(embarque.itens_embarcados)
-      ? embarque.itens_embarcados
-      : Array.isArray(embarque.itens)
-        ? embarque.itens
-        : [];
-    itensEmbarcados.forEach((item) => {
+    getEmbarqueItensLinhas(embarque).forEach((item) => {
       const produtoId = item.produto_id;
       if (!produtoId) return;
       acc[produtoId] = (acc[produtoId] || 0) + (Number(item.quantidade_recebida) || 0);
@@ -361,7 +357,7 @@ function isNecessidadeRenderizada(embarque = {}) {
 }
 
 function hasLinkedItems(embarque = {}) {
-  const itens = embarque?.itens || embarque?.itens_embarcados || [];
+  const itens = getEmbarqueItensLinhas(embarque);
   return Array.isArray(itens) && itens.some((item) => (Number(item?.quantidade_embarcada) || 0) > 0);
 }
 
@@ -377,7 +373,7 @@ function hasDespachoVinculado(embarque = {}) {
 function getQuantidadePendenteNecessidade(pedido = {}, embarque = {}) {
   if (!isNecessidadeRenderizada(embarque)) return 0;
 
-  const itensNecessidade = embarque?.itens || embarque?.itens_embarcados || [];
+  const itensNecessidade = getEmbarqueItensLinhas(embarque);
   const quantidadeDoEmbarque = itensNecessidade.reduce((acc, item) => {
     return acc + (Number(item?.quantidade_embarcada) || Number(item?.quantidade_pedida) || 0);
   }, 0);
@@ -432,7 +428,7 @@ function getBorrowedStatus(pedido = {}, embarque = {}) {
 }
 
 function getDisplayValorEmbarque(pedido = {}, embarque = {}) {
-  const itensEmbarque = embarque?.itens || embarque?.itens_embarcados || [];
+  const itensEmbarque = getEmbarqueItensLinhas(embarque);
   const valorItensPedido = calcValorItensPedidoCompra(pedido);
   if (!itensEmbarque.length) return calcValorTotalPedidoCompra(pedido);
 
@@ -470,7 +466,7 @@ function buildVirtualNecessidade(pedido = {}, embarquesDoPedido = []) {
   if (!temDespachoReal) return null;
 
   const recebidosPorProduto = embarquesReais.reduce((acc, embarque) => {
-    (embarque?.itens || embarque?.itens_embarcados || []).forEach((item) => {
+    getEmbarqueItensLinhas(embarque).forEach((item) => {
       const produtoId = item.produto_id;
       if (!produtoId) return;
       acc[produtoId] =
@@ -606,19 +602,17 @@ export default function EstoqueTab() {
         const lancamentosLista = Array.isArray(lancamentosFinanceiros) ? lancamentosFinanceiros : [];
         const pedidosVendaLista = Array.isArray(pedidosVenda) ? pedidosVenda : [];
         const pedidosCompraLista = Array.isArray(pedidosCompra) ? pedidosCompra : [];
-        const embarquesCompraLista = Array.isArray(embarquesCompraRaw) ? embarquesCompraRaw : [];
+        const embarquesCompraLista = await hydrateEmbarquesFromSql(
+          base44,
+          Array.isArray(embarquesCompraRaw) ? embarquesCompraRaw : [],
+        );
 
         const recebidosPorPedidoProduto = embarquesCompraLista.reduce((acc, embarque) => {
           const pedidoId = embarque?.pedido_compra_id;
           if (!pedidoId) return acc;
           const pedidoKey = String(pedidoId);
           if (!acc[pedidoKey]) acc[pedidoKey] = {};
-          const itensEmbarcados = Array.isArray(embarque.itens_embarcados)
-            ? embarque.itens_embarcados
-            : Array.isArray(embarque.itens)
-              ? embarque.itens
-              : [];
-          itensEmbarcados.forEach((item) => {
+          getEmbarqueItensLinhas(embarque).forEach((item) => {
             const produtoId = item?.produto_id;
             if (!produtoId) return;
             const produtoKey = String(produtoId);

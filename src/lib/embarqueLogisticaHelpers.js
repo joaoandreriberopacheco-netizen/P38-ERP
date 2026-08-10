@@ -1,5 +1,5 @@
 import { rebuildEmbarqueItensMirror } from '@/lib/embarqueItemContract';
-import { hydrateEmbarquesPedidoFromSql } from '@/lib/fetchEmbarqueItens';
+import { getEmbarqueItensLinhas, hydrateEmbarquesPedidoFromSql } from '@/lib/fetchEmbarqueItens';
 
 /**
  * Percentuais de despacho/conclusão a partir dos embarques reais (entidade Embarque),
@@ -19,13 +19,7 @@ export function calcularPercentuaisLogistica(pedido, embarques = []) {
   const porProdutoRec = {};
 
   linhas.forEach((emb) => {
-    const arr =
-      Array.isArray(emb.itens_embarcados) && emb.itens_embarcados.length > 0
-        ? emb.itens_embarcados
-        : Array.isArray(emb.itens)
-          ? emb.itens
-          : [];
-    arr.forEach((item) => {
+    getEmbarqueItensLinhas(emb).forEach((item) => {
       const pid = item.produto_id;
       if (!pid) return;
       porProdutoEmb[pid] = (porProdutoEmb[pid] || 0) + (Number(item.quantidade_embarcada) || 0);
