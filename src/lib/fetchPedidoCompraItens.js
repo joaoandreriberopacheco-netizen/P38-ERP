@@ -2,6 +2,30 @@ import { pedidoCompraItemToLegacyMirror } from '@/lib/pedidoCompraItemContract';
 
 const CHUNK_SIZE = 40;
 
+async function fetchRowsByCampoIn(entity, field, ids = []) {
+  const unique = [...new Set((ids || []).filter(Boolean))];
+  if (!unique.length || !entity?.filter) return [];
+
+  const allRows = [];
+  for (let i = 0; i < unique.length; i += CHUNK_SIZE) {
+    const chunk = unique.slice(i, i + CHUNK_SIZE);
+    try {
+      const rows = await entity.filter({ [field]: { $in: chunk } });
+      if (Array.isArray(rows) && rows.length > 0) {
+        allRows.push(...rows);
+        continue;
+      }
+    } catch {
+      /* fallback abaixo */
+    }
+    const batches = await Promise.all(
+      chunk.map((id) => entity.filter({ [field]: id }).catch(() => [])),
+    );
+    batches.flat().forEach((row) => allRows.push(row));
+  }
+  return allRows;
+}
+
 /**
  * Busca linhas canónicas PedidoCompraItem para vários pedidos.
  * @returns {Map<string, object[]>} pedido_compra_id → linhas ordenadas
@@ -14,14 +38,7 @@ export async function fetchPedidoCompraItensPorPedidos(base44, pedidoIds = []) {
   const pci = base44?.entities?.PedidoCompraItem;
   if (!pci?.filter) return byPedido;
 
-  const allRows = [];
-  for (let i = 0; i < ids.length; i += CHUNK_SIZE) {
-    const chunk = ids.slice(i, i + CHUNK_SIZE);
-    const batches = await Promise.all(
-      chunk.map((pedidoId) => pci.filter({ pedido_compra_id: pedidoId }).catch(() => [])),
-    );
-    batches.flat().forEach((row) => allRows.push(row));
-  }
+  const allRows = await fetchRowsByCampoIn(pci, 'pedido_compra_id', ids);
 
   for (const row of allRows) {
     const pid = row?.pedido_compra_id;

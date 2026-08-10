@@ -19,39 +19,68 @@ function attachLinhasEmbarque(embarque, mirror, fonte) {
   };
 }
 
-/**
- * Busca linhas canónicas EmbarqueItem para vários embarques.
- * @returns {Map<string, object[]>} embarque_id → linhas ordenadas
- */
-export async function fetchEmbarqueItensPorEmbarques(base44, embarqueIds = []) {
-  const ids = [...new Set((embarqueIds || []).filter(Boolean))];
-  const byEmbarque = new Map();
-  if (!ids.length) return byEmbarque;
-
-  const ei = base44?.entities?.EmbarqueItem;
-  if (!ei?.filter) return byEmbarque;
+async function fetchRowsByCampoIn(entity, field, ids = []) {
+  const unique = [...new Set((ids || []).filter(Boolean))];
+  if (!unique.length || !entity?.filter) return [];
 
   const allRows = [];
-  for (let i = 0; i < ids.length; i += CHUNK_SIZE) {
-    const chunk = ids.slice(i, i + CHUNK_SIZE);
+  for (let i = 0; i < unique.length; i += CHUNK_SIZE) {
+    const chunk = unique.slice(i, i + CHUNK_SIZE);
+    try {
+      const rows = await entity.filter({ [field]: { $in: chunk } });
+      if (Array.isArray(rows) && rows.length > 0) {
+        allRows.push(...rows);
+        continue;
+      }
+    } catch {
+      /* fallback abaixo */
+    }
     const batches = await Promise.all(
-      chunk.map((embarqueId) => ei.filter({ embarque_id: embarqueId }).catch(() => [])),
+      chunk.map((id) => entity.filter({ [field]: id }).catch(() => [])),
     );
     batches.flat().forEach((row) => allRows.push(row));
   }
+  return allRows;
+}
 
+function groupEmbarqueItemRows(allRows = []) {
+  const byEmbarque = new Map();
   for (const row of allRows) {
     const eid = row?.embarque_id;
     if (!eid) continue;
     if (!byEmbarque.has(eid)) byEmbarque.set(eid, []);
     byEmbarque.get(eid).push(row);
   }
-
   for (const rows of byEmbarque.values()) {
     rows.sort((a, b) => (Number(a.ordem) || 0) - (Number(b.ordem) || 0));
   }
-
   return byEmbarque;
+}
+
+/**
+ * Busca linhas EmbarqueItem para vários pedidos (campo denormalizado).
+ * @returns {Map<string, object[]>} embarque_id → linhas ordenadas
+ */
+export async function fetchEmbarqueItensPorPedidos(base44, pedidoIds = []) {
+  const ei = base44?.entities?.EmbarqueItem;
+  if (!ei?.filter) return new Map();
+  const rows = await fetchRowsByCampoIn(ei, 'pedido_compra_id', pedidoIds);
+  return groupEmbarqueItemRows(rows);
+}
+
+/**
+ * Busca linhas canónicas EmbarqueItem para vários embarques.
+ * @returns {Map<string, object[]>} embarque_id → linhas ordenadas
+ */
+export async function fetchEmbarqueItensPorEmbarques(base44, embarqueIds = []) {
+  const ids = [...new Set((embarqueIds || []).filter(Boolean))];
+  if (!ids.length) return new Map();
+
+  const ei = base44?.entities?.EmbarqueItem;
+  if (!ei?.filter) return new Map();
+
+  const allRows = await fetchRowsByCampoIn(ei, 'embarque_id', ids);
+  return groupEmbarqueItemRows(allRows);
 }
 
 /**
@@ -73,10 +102,13 @@ export async function fetchEmbarqueItensPorPedido(base44, pedidoCompraId) {
 export async function hydrateEmbarquesFromSql(base44, embarques = []) {
   if (!Array.isArray(embarques) || !embarques.length) return embarques || [];
 
-  const byEmbarque = await fetchEmbarqueItensPorEmbarques(
-    base44,
-    embarques.map((e) => e.id).filter(Boolean),
-  );
+  const pedidoIds = [...new Set(embarques.map((e) => e.pedido_compra_id).filter(Boolean))];
+  const byEmbarque = pedidoIds.length
+    ? await fetchEmbarqueItensPorPedidos(base44, pedidoIds)
+    : await fetchEmbarqueItensPorEmbarques(
+        base44,
+        embarques.map((e) => e.id).filter(Boolean),
+      );
 
   return embarques.map((embarque) => {
     const sqlRows = byEmbarque.get(embarque.id);

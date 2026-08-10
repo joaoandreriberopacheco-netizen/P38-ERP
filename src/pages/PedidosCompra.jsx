@@ -16,6 +16,8 @@ import {
 
 import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
 import { hydrateEmbarquesFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
+import { carregarProdutosMap } from '@/lib/embarqueVitrineHelpers';
+import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
 import ListaPedidosCompra from '@/components/compras/ListaPedidosCompra';
@@ -545,23 +547,15 @@ export default function PedidosCompraPage() {
         }),
       ]);
 
-      const pcs = await hydratePedidosCompraItensFromSql(base44, pcsRaw);
-      const embarquesDb = await hydrateEmbarquesFromSql(base44, embarquesDbRaw);
+      const [pcs, embarquesDb] = await Promise.all([
+        hydratePedidosCompraItensFromSql(base44, pcsRaw),
+        hydrateEmbarquesFromSql(base44, embarquesDbRaw),
+      ]);
       const produtoIds = [...new Set([
         ...pcs.flatMap((p) => (p.itens || []).map((i) => i.produto_id).filter(Boolean)),
         ...embarquesDb.flatMap((e) => getEmbarqueItensLinhas(e).map((i) => i.produto_id).filter(Boolean)),
       ])];
-      const produtos = produtoIds.length
-        ? await Promise.all(produtoIds.map(async (id) => {
-            const viaGet = await base44.entities.Produto.get(id).catch(() => null);
-            if (viaGet) return viaGet;
-            const viaFilter = await base44.entities.Produto.filter({ id }).catch(() => []);
-            return Array.isArray(viaFilter) ? (viaFilter[0] || null) : null;
-          }))
-        : [];
-      const produtosMap = Object.fromEntries((produtos || []).filter(Boolean).map((p) => [p.id, p]));
-
-      const pedidoMap = new Map(pcs.map((pedido) => [pedido.id, pedido]));
+      const produtosMap = await carregarProdutosMap(produtoIds.map((id) => ({ produto_id: id })));
       const embarquesPorPedido = embarquesDb.reduce((acc, embarque) => {
         const pedidoId = embarque.pedido_compra_id;
         if (!pedidoId) return acc;
@@ -685,9 +679,11 @@ export default function PedidosCompraPage() {
       ...pedidoData,
       valor_total: Number(pedidoData.valor_total) || 0,
     };
-    const sanitizedData = (pedidoNaoConcluido(sanitizedDataBase) && Array.isArray(sanitizedDataBase.itens))
-      ? { ...sanitizedDataBase, itens: sanitizedDataBase.itens.map((item) => normalizeItemToCanonicalFactorOne(item, 'custo')) }
-      : sanitizedDataBase;
+    const sanitizedData = omitPedidoCompraEspelho(
+      (pedidoNaoConcluido(sanitizedDataBase) && Array.isArray(sanitizedDataBase.itens))
+        ? { ...sanitizedDataBase, itens: sanitizedDataBase.itens.map((item) => normalizeItemToCanonicalFactorOne(item, 'custo')) }
+        : sanitizedDataBase,
+    );
 
     if (sanitizedData.id) {
       await base44.entities.PedidoCompra.update(sanitizedData.id, sanitizedData);
@@ -803,8 +799,6 @@ export default function PedidosCompraPage() {
     return [...set].sort((a, b) => a.localeCompare(b, 'pt-BR'));
   }, [pedidos]);
 
-  const cardsFonte = useMemo(() => embarques, [embarques]);
-
   const filtrosCompras = useMemo(
     () => ({
       search,
@@ -837,13 +831,13 @@ export default function PedidosCompraPage() {
   );
 
   const filtrados = useMemo(
-    () => cardsFonte.filter((card) => passaFiltrosEmbarqueCard(card, filtrosCompras)),
-    [cardsFonte, filtrosCompras],
+    () => embarques.filter((card) => passaFiltrosEmbarqueCard(card, filtrosCompras)),
+    [embarques, filtrosCompras],
   );
 
   const filtradosSemBusca = useMemo(
-    () => cardsFonte.filter((card) => passaFiltrosEmbarqueCard(card, { ...filtrosCompras, skipSearch: true })),
-    [cardsFonte, filtrosCompras],
+    () => embarques.filter((card) => passaFiltrosEmbarqueCard(card, { ...filtrosCompras, skipSearch: true })),
+    [embarques, filtrosCompras],
   );
 
   const calcularValorPendentePedido = (pedido) => {
@@ -868,14 +862,6 @@ export default function PedidosCompraPage() {
     }, 0);
   };
 
-  const pedidosVisiveisLista = useMemo(() => {
-    return filtrados;
-  }, [filtrados]);
-
-  const pedidosVisiveisPendentes = useMemo(() => {
-    return pedidosVisiveisLista;
-  }, [pedidosVisiveisLista]);
-
   const pedidosPagosPendentes = useMemo(() => {
     return filtrados.filter((pedido) => {
       const aprovadoFinanceiro =
@@ -889,8 +875,8 @@ export default function PedidosCompraPage() {
   }, [filtrados]);
 
   const valorTotal = useMemo(() => {
-    return pedidosVisiveisPendentes.reduce((acc, pedido) => acc + (pedido._display_valor ?? pedido.valor_total ?? 0), 0);
-  }, [pedidosVisiveisPendentes]);
+    return filtrados.reduce((acc, pedido) => acc + (pedido._display_valor ?? pedido.valor_total ?? 0), 0);
+  }, [filtrados]);
 
   const valorPagoNaoEntregue = useMemo(() => {
     return pedidosPagosPendentes.reduce((acc, pedido) => acc + Number(pedido._display_valor || 0), 0);
@@ -938,7 +924,7 @@ export default function PedidosCompraPage() {
 
     const map = {};
 
-    pedidosVisiveisLista.forEach((pedido) => {
+    filtrados.forEach((pedido) => {
       const embarque = pedido._embarque;
       const meta = getGroupMeta(pedido, embarque);
 
@@ -969,7 +955,7 @@ export default function PedidosCompraPage() {
           _total_eta: pedidosSort.reduce((acc, p) => acc + (p._display_valor || 0), 0)
         };
       });
-  }, [pedidosVisiveisLista, groupBy, sortOrder]);
+  }, [filtrados, groupBy, sortOrder]);
 
   const hasEtaFilter = etaFiltroModo && (
     (['antes', 'depois'].includes(etaFiltroModo) && etaData) ||
@@ -1012,7 +998,7 @@ export default function PedidosCompraPage() {
             </p>
           ) : (
             <>
-              <p className="text-sm leading-normal text-foreground/85 font-din-1451">{pedidosVisiveisPendentes.length} embarques visíveis · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              <p className="text-sm leading-normal text-foreground/85 font-din-1451">{filtrados.length} embarques visíveis · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
               <p className="text-sm leading-normal text-emerald-600 dark:text-emerald-400">Aprovados financeiramente e ainda não recebidos no filtro: R$ {valorPagoNaoEntregue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
             </>
           )}
@@ -1120,7 +1106,7 @@ export default function PedidosCompraPage() {
         pedidos={filtrados}
         filtrosDesc={`Busca: ${search || 'todas'} · Status: ${statusSel.join(', ') || 'todos'} · Fornecedores: ${fornecedorSel.length || 0} · Tags: ${tagsSel.length || 0} · Período: ${dataInicial || '-'} até ${dataFinal || '-'} · ETA: ${etaFiltroModo || 'todos'}${etaFiltroModo === 'antes' || etaFiltroModo === 'depois' ? ` (${etaData || '-'})` : ''}${etaFiltroModo === 'entre' || etaFiltroModo === 'personalizado' ? ` (${etaInicial || '-'} até ${etaFinal || '-'})` : ''}`}
         kpis={{
-          totalPedidos: pedidosVisiveisPendentes.length,
+          totalPedidos: filtrados.length,
           totalGeral: valorTotal,
           totalEmAberto: filtrados.filter(p => ['Rascunho', 'Aguardando Aprovação Financeira', 'Aprovado'].includes(p.status)).reduce((acc, p) => acc + Number(p._display_valor || p.valor_total || 0), 0),
           totalPagoNaoEntregue: valorPagoNaoEntregue
