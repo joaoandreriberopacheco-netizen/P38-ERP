@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CaixaDialogContent } from './CaixaDialogContent';
 import {
@@ -8,7 +8,7 @@ import SeletorMaquininhaSheet from './SeletorMaquininhaSheet';
 import SeletorFiadoSheet from './SeletorFiadoSheet';
 import { CAIXA_TOAST_SUCCESS, caixaClasses, caixaSurface } from '@/lib/caixaP38Theme';
 import { resolveValorPedidoVenda } from '@/lib/financialUtils';
-import { selectAllOnFocus, focusAndSelect, selectAllOnMouseDown } from '@/lib/inputFocusUtils';
+import { selectAllOnFocusOnceUntilBlur, clearSelectOnFocusOnceFlag, focusAndSelect } from '@/lib/inputFocusUtils';
 
 export default function ConfirmarPagamentoDialog({
   open, onOpenChange,
@@ -35,6 +35,7 @@ export default function ConfirmarPagamentoDialog({
   const [fiadoConfig, setFiadoConfig] = useState(null);
   const [valoresVisiveis, setValoresVisiveis] = useState(true);
   const dialogOpen = open && !!pedidoSelecionado;
+  const initialFocusDoneRef = useRef(false);
 
   useEffect(() => {
     setFiadoConfig(null);
@@ -43,10 +44,15 @@ export default function ConfirmarPagamentoDialog({
   }, [pedidoSelecionado?.id]);
 
   useEffect(() => {
-    if (!dialogOpen) return;
+    if (!dialogOpen) {
+      initialFocusDoneRef.current = false;
+      return;
+    }
+    if (initialFocusDoneRef.current) return;
+    initialFocusDoneRef.current = true;
     const t = setTimeout(() => focusAndSelect(inputRefs?.dinheiro?.current), 220);
     return () => clearTimeout(t);
-  }, [dialogOpen, pedidoSelecionado?.id, inputRefs]);
+  }, [dialogOpen, pedidoSelecionado?.id]);
 
   // Bloqueia dígitos sem maquininha (valor só após botão + seleção); não abre o seletor automaticamente
   const handleInputMascaraComMaquininha = (e, setInput, setValor, modalidade) => {
@@ -367,7 +373,9 @@ function InputPagamento({
           if (onContainerClick) onContainerClick();
           else onFocus?.();
           if (!maquininhaPendente && !fiadoPendente && inputRef?.current) {
-            focusAndSelect(inputRef.current);
+            if (document.activeElement !== inputRef.current) {
+              focusAndSelect(inputRef.current);
+            }
           }
         }}
       >
@@ -406,8 +414,11 @@ function InputPagamento({
             inputMode="numeric"
             value={valoresVisiveis ? value : value ? '••••••' : ''}
             onChange={() => {}}
-            onFocus={(e) => { selectAllOnFocus(e); onFocus?.(); }}
-            onMouseDown={selectAllOnMouseDown}
+            onFocus={(e) => {
+              selectAllOnFocusOnceUntilBlur(e);
+              onFocus?.();
+            }}
+            onBlur={clearSelectOnFocusOnceFlag}
             onKeyDown={onKeyDown}
             className="w-24 text-right text-base font-semibold bg-transparent border-0 focus:outline-none text-foreground cursor-text tabular-nums"
           />
