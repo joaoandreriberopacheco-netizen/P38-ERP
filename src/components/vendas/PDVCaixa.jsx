@@ -956,7 +956,7 @@ export default function PDVCaixa({
       setVendaFinalizada({
         ...rascunhoProcessado,
         ...pedidoVenda,
-        itens: pedidoVenda.itens?.length ? pedidoVenda.itens : rascunhoProcessado.itens,
+        itens: rascunhoProcessado.itens?.length ? rascunhoProcessado.itens : (pedidoVenda.itens || []),
         pagamentos: pagamentosArray,
       });
       setShowConfirmarImpressao(true);

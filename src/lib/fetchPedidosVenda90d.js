@@ -8,7 +8,6 @@ import {
 import { STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA } from '@/lib/pdvCaixaTurnoVendas';
 
 const PEDIDO_IDS_CHUNK = 40;
-const PEDIDO_GET_CHUNK = 10;
 export const TIPOS_VENDA_PDV = ['PDV', 'PDV Supermercado', 'PDV Autosserviço', 'Pedido'];
 
 function normalizeItemVenda(it) {
@@ -150,37 +149,28 @@ async function carregarPedidoVendaItensPorData(dataKey, itensPorProduto, itensPo
   return total;
 }
 
-async function carregarEspelhoItensPorIds(pedidoIds, itensPorProduto, itensPorPedido) {
-  if (!pedidoIds.length || !base44.entities.PedidoVenda?.filter) return;
+async function hidratarPedidosSemItens(pedidos90d, dataKey) {
+  const pedidos = Array.isArray(pedidos90d) ? [...pedidos90d] : [];
+  const semItens = pedidos.filter((p) => !pedidoTemItens(p));
+  if (!semItens.length) return pedidos;
 
-  for (let i = 0; i < pedidoIds.length; i += PEDIDO_IDS_CHUNK) {
-    const chunk = pedidoIds.slice(i, i + PEDIDO_IDS_CHUNK);
-    try {
-      const batch = await base44.entities.PedidoVenda.filter({ id: { $in: chunk } });
-      for (const pedido of rowsFromApi(batch)) {
-        for (const it of pedido?.itens || []) {
-          appendItemToIndexes(itensPorProduto, itensPorPedido, pedido.id, it);
-        }
-      }
-    } catch {
-      for (let j = 0; j < chunk.length; j += PEDIDO_GET_CHUNK) {
-        const sub = chunk.slice(j, j + PEDIDO_GET_CHUNK);
-        await Promise.all(
-          sub.map(async (pedidoId) => {
-            try {
-              const pedido = await base44.entities.PedidoVenda.get(pedidoId);
-              const row = pedido?.data ?? pedido;
-              for (const it of row?.itens || []) {
-                appendItemToIndexes(itensPorProduto, itensPorPedido, pedidoId, it);
-              }
-            } catch {
-              /* ignorar */
-            }
-          }),
-        );
-      }
-    }
+  const itensPorProduto = {};
+  const itensPorPedido = {};
+
+  await carregarPedidoVendaItensPorData(dataKey, itensPorProduto, itensPorPedido);
+
+  const idsSemLinhas = semItens
+    .filter((p) => !(itensPorPedido[String(p.id)]?.length))
+    .map((p) => String(p.id))
+    .filter(Boolean);
+
+  if (idsSemLinhas.length) {
+    await carregarPedidoVendaItensPorIds(idsSemLinhas, itensPorProduto, itensPorPedido);
   }
+
+  const hidratados = hydratePedidosComItens(semItens, itensPorPedido);
+  const porId = Object.fromEntries(hidratados.map((p) => [String(p.id), p]));
+  return pedidos.map((p) => porId[String(p.id)] || p);
 }
 
 async function fetchPedidosPaginados(query) {
@@ -263,34 +253,6 @@ async function buscarPedidos90dBase() {
   return [...porId.values()];
 }
 
-async function hidratarPedidosSemItens(pedidos90d, dataKey) {
-  const pedidos = Array.isArray(pedidos90d) ? [...pedidos90d] : [];
-  const semItens = pedidos.filter((p) => !pedidoTemItens(p));
-  if (!semItens.length) return pedidos;
-
-  const itensPorProduto = {};
-  const itensPorPedido = {};
-
-  await carregarPedidoVendaItensPorData(dataKey, itensPorProduto, itensPorPedido);
-
-  const idsSemLinhas = semItens
-    .filter((p) => !(itensPorPedido[String(p.id)]?.length))
-    .map((p) => String(p.id))
-    .filter(Boolean);
-
-  if (idsSemLinhas.length) {
-    await carregarEspelhoItensPorIds(idsSemLinhas, itensPorProduto, itensPorPedido);
-  }
-
-  if (idsSemLinhas.length && countLinhasPedido(itensPorPedido) < idsSemLinhas.length) {
-    await carregarPedidoVendaItensPorIds(idsSemLinhas, itensPorProduto, itensPorPedido);
-  }
-
-  const hidratados = hydratePedidosComItens(semItens, itensPorPedido);
-  const porId = Object.fromEntries(hidratados.map((p) => [String(p.id), p]));
-  return pedidos.map((p) => porId[String(p.id)] || p);
-}
-
 /**
  * Pedidos PDV elegíveis para catálogo / relatório de vendas (últimos 90 dias).
  */
@@ -322,12 +284,6 @@ export async function buildItensIndexes90d(pedidos90d) {
 
     if (pedidosSemEspelho > 0 || poucasLinhas) {
       await carregarPedidoVendaItensPorData(dataKey, itensPorProduto, itensPorPedido);
-    }
-    if (countLinhasItens(itensPorProduto) < pedidoIds.length) {
-      const faltam = pedidoIds.filter((id) => !(itensPorPedido[id]?.length));
-      if (faltam.length) {
-        await carregarEspelhoItensPorIds(faltam, itensPorProduto, itensPorPedido);
-      }
     }
     if (countLinhasItens(itensPorProduto) < pedidoIds.length) {
       const faltam = pedidoIds.filter((id) => !(itensPorPedido[id]?.length));

@@ -48,6 +48,7 @@ export const P38_PAGE_NAMES = [
   "FluxoCaixa",
   "FolhaPrevisao",
   "GestaoTemplates",
+  "HierarquiaPortal",
   "Home",
   "HubLogistico",
   "ImportacaoProdutos",

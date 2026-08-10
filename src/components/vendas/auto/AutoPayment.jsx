@@ -5,11 +5,14 @@ import { CreditCard, Smartphone, ArrowLeft, Loader2, Printer, CheckCircle } from
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import SimuladorCartaoSheet from '@/components/vendas/SimuladorCartaoSheet';
+import { omitPedidoVendaEspelho } from '@/lib/omitEspelhoPersist';
+import { syncPedidoVendaItens } from '@/lib/syncPedidoVendaItens';
 
 export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
   const [processing, setProcessing] = useState(false);
   const [method, setMethod] = useState(null); // 'credit', 'debit', 'pix'
   const [pedidoFinalizado, setPedidoFinalizado] = useState(null);
+  const [itensCupom, setItensCupom] = useState([]);
   const [showSimulador, setShowSimulador] = useState(false);
   const { toast } = useToast();
 
@@ -29,7 +32,15 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
         const randomNum = Math.floor(Math.random() * 10000);
         const numeroPedido = `AUTO-${randomNum}`;
 
-        const pedidoData = {
+        const itensLegado = carrinho.map(item => ({
+            produto_id: item.produto_id,
+            produto_nome: item.produto_nome,
+            quantidade: item.quantidade,
+            preco_unitario_praticado: item.preco_unitario_praticado,
+            total: item.total
+          }));
+
+        const pedidoData = omitPedidoVendaEspelho({
           numero: numeroPedido,
           tipo: 'PDV Autosserviço',
           cliente_id: cliente?.id,
@@ -37,13 +48,6 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
           vendedor_id: user.id, // Atribui ao usuário logado (totem)
           vendedor_nome: 'Totem Autosserviço',
           status: 'Finalizado',
-          itens: carrinho.map(item => ({
-            produto_id: item.produto_id,
-            produto_nome: item.produto_nome,
-            quantidade: item.quantidade,
-            preco_unitario_praticado: item.preco_unitario_praticado,
-            total: item.total
-          })),
           valor_total: total,
           pagamentos: [{
             forma_pagamento: selectedMethod === 'pix' ? 'PIX' : selectedMethod === 'credit' ? 'Cartão de Crédito' : 'Cartão de Débito',
@@ -51,9 +55,17 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
             parcelas: 1
           }],
           origem: 'Totem'
-        };
+        });
 
         const pedido = await base44.entities.PedidoVenda.create(pedidoData);
+
+        try {
+          await syncPedidoVendaItens(pedido.id, itensLegado);
+        } catch (canonicalErr) {
+          console.warn('Sincronia PedidoVendaItem falhou:', canonicalErr?.message || canonicalErr);
+        }
+
+        setItensCupom(itensLegado);
         setPedidoFinalizado(pedido);
         // onSuccess(pedido); // Movido para depois da impressão
       } catch (error) {
@@ -93,7 +105,7 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
               </div>
               
               <div className="space-y-2 mb-4">
-                {pedidoFinalizado.itens.map((item, idx) => (
+                {itensCupom.map((item, idx) => (
                   <div key={idx} className="flex justify-between">
                     <span className="truncate flex-1 pr-4">{item.quantidade}x {item.produto_nome}</span>
                     <span>{item.total.toFixed(2)}</span>

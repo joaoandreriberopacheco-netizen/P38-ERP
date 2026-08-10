@@ -10,6 +10,9 @@ import {
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import ProductUnitSelectorDialog from "@/components/produtos/ProductUnitSelectorDialog";
+import { hydrateConferenciasItensFromSql } from "@/lib/fetchConferenciaItens";
+import { omitConferenciaEspelho } from "@/lib/omitEspelhoPersist";
+import { syncConferenciaItens } from "@/lib/syncConferenciaItens";
 import {
   buildCountEntry,
   changeCountEntryUnit,
@@ -53,8 +56,9 @@ export default function PDVAuditoria() {
       base44.entities.Produto.list("campo_hierarquico_1", 2000),
     ]);
     if (conf.length === 0) return navigate(createPageUrl("AuditoriaEstoque"));
-    setConferencia(conf[0]);
-    setItens(conf[0].itens_conferidos || []);
+    const [conferenciaHidratada] = await hydrateConferenciasItensFromSql(base44, [conf[0]]);
+    setConferencia(conferenciaHidratada);
+    setItens(conferenciaHidratada.itens_conferidos || []);
     setProdutos(prods);
     setLoading(false);
   };
@@ -70,9 +74,13 @@ export default function PDVAuditoria() {
 
   const salvarItens = useCallback(async (novosItens) => {
     setSaving(true);
-    await base44.entities.ConferenciaEstoque.update(conferencia_id, { itens_conferidos: novosItens });
+    try {
+      await syncConferenciaItens(conferencia_id, novosItens, produtos);
+    } catch (err) {
+      console.warn('Sincronia ConferenciaItem falhou:', err?.message || err);
+    }
     setSaving(false);
-  }, [conferencia_id]);
+  }, [conferencia_id, produtos]);
 
   const adicionarProduto = async (produto) => {
     const novosItens = [...itens, buildCountEntry(produto, 1)];
@@ -190,12 +198,11 @@ export default function PDVAuditoria() {
     const idsRecalc = [...new Set(movimentacoes.map((m) => m.produto_id).filter(Boolean))];
 
     await Promise.all([
-      base44.entities.ConferenciaEstoque.update(conferencia_id, {
+      base44.entities.ConferenciaEstoque.update(conferencia_id, omitConferenciaEspelho({
         status: "Concluída",
         data_fim: new Date().toISOString(),
-        itens_conferidos: itens,
         ajuste_aplicado: true,
-      }),
+      })),
       ...movimentacoes.map((movimentacao) => base44.entities.MovimentacaoEstoque.create(movimentacao)),
     ]);
 

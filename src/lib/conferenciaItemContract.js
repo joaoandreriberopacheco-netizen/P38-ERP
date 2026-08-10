@@ -87,6 +87,28 @@ export function conferenciaItemToLegacyMirror(item = {}) {
   };
 }
 
+/** Linha SQL → entrada compatível com inventoryCountUnits / UI de contagem. */
+export function conferenciaItemRowToCountEntry(row = {}) {
+  const fator = asNumber(row?.fator_aplicado, 1) || 1;
+  const qComercial = asNumber(row?.quantidade_contada_comercial, 0);
+  const qBase = asNumber(row?.quantidade_contada_base, 0);
+  const unidade = normalizeUnitCode(row?.unidade_sigla) || "UN";
+
+  return {
+    produto_id: row?.produto_id || "",
+    produto_nome: row?.produto_nome || "",
+    quantidade_contada: qBase,
+    quantidade_contada_comercial: qComercial,
+    quantidade_contada_base: qBase,
+    quantidade_base: qBase,
+    unidade_medida: unidade,
+    unidade_sigla: unidade,
+    produto_unidade_id: row?.produto_unidade_id || "",
+    fator_conversao: fator,
+    conferencia_item_id: row?.id || undefined,
+  };
+}
+
 export function rebuildConferenciaItensMirror(items = []) {
   return (Array.isArray(items) ? items : []).map(conferenciaItemToLegacyMirror);
 }

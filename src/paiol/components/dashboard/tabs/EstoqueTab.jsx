@@ -21,6 +21,7 @@ import {
 import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
 import { resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
 import { fetchDadosVendaAbcd90d } from '@/lib/fetchPedidosVenda90d';
+import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
 import {
   calcValorItensPedidoCompra,
   calcValorTotalPedidoCompra,
@@ -601,7 +602,10 @@ export default function EstoqueTab() {
           : [];
         const lancamentosLista = Array.isArray(lancamentosFinanceiros) ? lancamentosFinanceiros : [];
         const pedidosVendaLista = Array.isArray(pedidosVenda) ? pedidosVenda : [];
-        const pedidosCompraLista = Array.isArray(pedidosCompra) ? pedidosCompra : [];
+        const pedidosCompraLista = await hydratePedidosCompraItensFromSql(
+          base44,
+          Array.isArray(pedidosCompra) ? pedidosCompra : [],
+        );
         const embarquesCompraLista = await hydrateEmbarquesFromSql(
           base44,
           Array.isArray(embarquesCompraRaw) ? embarquesCompraRaw : [],

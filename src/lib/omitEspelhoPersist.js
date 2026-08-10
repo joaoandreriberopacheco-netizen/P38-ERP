@@ -5,6 +5,8 @@ export const EMBARQUE_ESPELHO_KEYS = ['itens', 'itens_embarcados'];
 
 export const PEDIDO_VENDA_ESPELHO_KEYS = ['itens'];
 
+export const CONFERENCIA_ESPELHO_KEYS = ['itens_conferidos'];
+
 export function omitKeys(obj = {}, keys = []) {
   const out = { ...obj };
   keys.forEach((k) => {
@@ -23,4 +25,8 @@ export function omitEmbarqueEspelho(obj = {}) {
 
 export function omitPedidoVendaEspelho(obj = {}) {
   return omitKeys(obj, PEDIDO_VENDA_ESPELHO_KEYS);
+}
+
+export function omitConferenciaEspelho(obj = {}) {
+  return omitKeys(obj, CONFERENCIA_ESPELHO_KEYS);
 }

@@ -387,6 +387,39 @@ async function clearJobCache(db) {
 // FASES DO JOB — preparar (lista+ordena+grupos) → gravar (por SKU em blocos)
 // ═══════════════════════════════════════════════════════════════
 
+async function carregarPedidoVendaItensPorData(db, dataISO, itensPorProduto) {
+  if (!db.PedidoVendaItem?.filter) return;
+
+  let skip = 0;
+  const pageSize = 500;
+
+  while (true) {
+    let batch;
+    try {
+      batch = await db.PedidoVendaItem.filter(
+        { created_date: { $gte: dataISO } },
+        '-created_date',
+        pageSize,
+        skip,
+      );
+    } catch {
+      break;
+    }
+
+    if (!batch || batch.length === 0) break;
+
+    for (const it of batch) {
+      const pid = String(it?.produto_id ?? '');
+      if (!pid) continue;
+      if (!itensPorProduto[pid]) itensPorProduto[pid] = [];
+      itensPorProduto[pid].push(it);
+    }
+
+    if (batch.length < pageSize) break;
+    skip += pageSize;
+  }
+}
+
 async function carregarDados90d(db) {
   const hoje = new Date();
   const data90d = new Date();
@@ -414,17 +447,13 @@ async function carregarDados90d(db) {
       for (const pedido of batch) {
         if (!pedidoElegivelIep(pedido)) continue;
         pedidos90d += 1;
-        for (const it of pedido.itens || []) {
-          const pid = String(it?.produto_id ?? '');
-          if (!pid) continue;
-          if (!itensPorProduto[pid]) itensPorProduto[pid] = [];
-          itensPorProduto[pid].push(it);
-        }
       }
       skip += pageSize;
       if (batch.length < pageSize) temMais = false;
     }
   }
+
+  await carregarPedidoVendaItensPorData(db, dataISO, itensPorProduto);
 
   return { produtos, itensPorProduto, dataISO, pedidos_90d: pedidos90d };
 }

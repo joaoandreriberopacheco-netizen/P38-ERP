@@ -20,6 +20,8 @@ import { calculateBaseQuantity, getItemUnitKey, pickDefaultSaleUnit, getUnidadeE
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
 import { productCodesMatch } from '@/lib/productCode';
 import { isVendaSemEstoquePermitida } from '@/lib/configFlags';
+import { omitPedidoVendaEspelho } from '@/lib/omitEspelhoPersist';
+import { syncPedidoVendaItens } from '@/lib/syncPedidoVendaItens';
 import { selectAllOnFocus, focusAndSelect, selectAllOnMouseDown, handleCentavosMaskKeyDown } from '@/lib/inputFocusUtils';
 
 export default function PDVSupermercado() {
@@ -261,14 +263,7 @@ export default function PDVSupermercado() {
       if (pagamentosDebito > 0) pagamentos.push({ forma_pagamento: 'Cartão de Débito', valor: pagamentosDebito, parcelas: 1 });
       if (pagamentosCredito > 0) pagamentos.push({ forma_pagamento: 'Cartão de Crédito', valor: pagamentosCredito, parcelas: parcelasCredito });
 
-      const pedidoData = {
-        tipo: 'PDV Supermercado',
-        cliente_id: cliente?.id,
-        cliente_nome: cliente?.nome || 'Consumidor Final',
-        vendedor_id: currentUser.id,
-        vendedor_nome: currentUser.full_name,
-        status: 'Finalizado',
-        itens: carrinho.map(item => ({
+      const itensLegado = carrinho.map(item => ({
           produto_id: item.produto_id,
           produto_nome: item.produto_nome,
           quantidade: item.quantidade,
@@ -277,13 +272,27 @@ export default function PDVSupermercado() {
           fator_conversao: item.fator_conversao || 1,
           preco_unitario_praticado: item.preco_unitario_praticado,
           total: item.total
-        })),
+        }));
+
+      const pedidoData = omitPedidoVendaEspelho({
+        tipo: 'PDV Supermercado',
+        cliente_id: cliente?.id,
+        cliente_nome: cliente?.nome || 'Consumidor Final',
+        vendedor_id: currentUser.id,
+        vendedor_nome: currentUser.full_name,
+        status: 'Finalizado',
         valor_total: totalCarrinho,
         pagamentos: pagamentos,
         caixa_destino_id: currentUser.caixa_destino_id
-      };
+      });
 
       const novoPedido = await base44.entities.PedidoVenda.create(pedidoData);
+
+      try {
+        await syncPedidoVendaItens(novoPedido.id, itensLegado);
+      } catch (canonicalErr) {
+        console.warn('Sincronia PedidoVendaItem falhou:', canonicalErr?.message || canonicalErr);
+      }
       
       // Criar movimentações de estoque para cada item vendido
       for (const item of carrinho) {

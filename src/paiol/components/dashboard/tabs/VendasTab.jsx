@@ -9,6 +9,7 @@ import {
   isValid,
 } from 'date-fns';
 import { base44 } from '@/api/base44Client';
+import { hydratePedidosVendaItensFromSql } from '@/lib/fetchPedidoVendaItens';
 import { AlertCircle, CircleGauge, Target, TrendingUp, CalendarDays } from 'lucide-react';
 import {
   buildDonutRingData,
@@ -356,6 +357,11 @@ export default function VendasTab() {
           base44.entities.ConfiguracoesVenda.list(),
         ]);
 
+        const pedidosVendaLista = await hydratePedidosVendaItensFromSql(
+          base44,
+          Array.isArray(pedidosVendaRaw) ? pedidosVendaRaw : [],
+        );
+
         const produtosLista = Array.isArray(produtosRaw) ? produtosRaw : [];
         const productCostMap = new Map(
           produtosLista.map((produto) => [
@@ -366,7 +372,7 @@ export default function VendasTab() {
 
         if (mounted) {
           setRawData({
-            pedidos: Array.isArray(pedidosVendaRaw) ? pedidosVendaRaw : [],
+            pedidos: pedidosVendaLista,
             productCostMap,
             kpiConfig: normalizeDashboardKpiConfig(configVendaRaw?.[0] || {}),
           });
