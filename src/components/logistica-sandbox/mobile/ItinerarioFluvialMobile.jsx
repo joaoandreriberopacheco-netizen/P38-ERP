@@ -5,7 +5,8 @@ import { useLogisticaEventosQuery, useLogisticaLancamentosFretesQuery } from '@/
 import { p38Keys } from '@/lib/p38QueryConfig';
 import { format, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { buildFluvialEvents, formatDate, FLUVIAL_DEFAULT_PERIOD, eventoTemDataNoPeriodo, getFluvialTimelineDate } from '@/components/logistica-sandbox/fluvialDataUtils';
+import { buildFluvialEvents, formatDate, FLUVIAL_DEFAULT_PERIOD, FLUVIAL_DEFAULT_VIEW_MODE, eventoTemDataNoPeriodo, getFluvialTimelineDate, getFluvialViewModeLabel } from '@/components/logistica-sandbox/fluvialDataUtils';
+import FluvialViewModeToggle from '@/components/logistica-sandbox/FluvialViewModeToggle';
 import TimelineDayGroup from '@/components/logistica-sandbox/TimelineDayGroup';
 import TimelineSidebarCard from '@/components/logistica-sandbox/TimelineSidebarCard';
 import MobileDetailHeader from '@/components/logistica-sandbox/MobileDetailHeader';
@@ -25,7 +26,7 @@ export default function ItinerarioFluvialMobile() {
   const [routeType, setRouteType] = useState('Fluvial');
   const [selectedEvento, setSelectedEvento] = useState(null);
   const [simulationDate, setSimulationDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [viewMode, setViewMode] = useState('saida_manaus');
+  const [viewMode, setViewMode] = useState(FLUVIAL_DEFAULT_VIEW_MODE);
   const [showFilters, setShowFilters] = useState(false);
   const [scrolledToToday, setScrolledToToday] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -195,7 +196,7 @@ export default function ItinerarioFluvialMobile() {
     }
   }, [timelineItems, scrolledToToday]);
 
-  const viewModeLabel = viewMode === 'chegada_manaus' ? 'Chegada Manaus' : viewMode === 'chegada_tabatinga' ? 'Chegada Tabatinga' : 'Saída Manaus';
+  const viewModeLabel = getFluvialViewModeLabel(viewMode, { short: true });
 
   const freteEventos = useMemo(() => {
     return eventos.filter((evento) => (evento.embarques_relacionados || []).length > 0);
@@ -239,10 +240,13 @@ export default function ItinerarioFluvialMobile() {
         <ItinerarioMobileTopTabs value={routeType} onChange={setRouteType} />
 
         {routeType === 'Fluvial' && !selectedEvento ? (
-          <FluvialSearchBar
-            value={searchTerm}
-            onChange={setSearchTerm}
-          />
+          <>
+            <FluvialSearchBar
+              value={searchTerm}
+              onChange={setSearchTerm}
+            />
+            <FluvialViewModeToggle value={viewMode} onChange={setViewMode} />
+          </>
         ) : null}
 
         {routeType === 'Fluvial' ? (
@@ -273,8 +277,6 @@ export default function ItinerarioFluvialMobile() {
               ))}
               </div>
               <FluvialFAB
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
                 simulationDate={simulationDate}
                 onSimulationDateChange={setSimulationDate}
                 periodoFiltro={periodoFiltro}

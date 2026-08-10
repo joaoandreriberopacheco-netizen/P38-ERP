@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import BoatHistoryDetailsDialog from '@/components/logistica-sandbox/BoatHistoryDetailsDialog';
 import { sincronizarViagensTransportadora } from '@/functions/sincronizarViagensTransportadora';
 import TransportadoraProgressDialog from '@/components/logistica-sandbox/TransportadoraProgressDialog';
-import { getFluvialViewModeLabel } from '@/components/logistica-sandbox/fluvialDataUtils';
 
 function StatusBadge({ status }) {
   const classes = status === 'ativa'
@@ -103,7 +102,7 @@ function HistoricoCard({ evento, onOpen }) {
   );
 }
 
-export default function BoatDetailsDialog({ open, onOpenChange, transportadora, viewMode, viagensCarregando = false, onSave, onDelete, onInactivate }) {
+export default function BoatDetailsDialog({ open, onOpenChange, transportadora, viagensCarregando = false, onSave, onDelete, onInactivate }) {
   const [isEditing, setIsEditing] = React.useState(false);
   const [selectedEvento, setSelectedEvento] = React.useState(null);
   const [draft, setDraft] = React.useState(transportadora);
@@ -190,9 +189,7 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
                   </div>
                   <div className="min-w-0">
                     <DialogTitle className="text-xl font-semibold text-foreground dark:text-foreground font-glacial truncate">{draft.nome}</DialogTitle>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Próximo {draft.proximo_eta_label || getFluvialViewModeLabel(viewMode, { short: true })}: {draft.proximo_eta}
-                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">Próximo ETA: {draft.proximo_eta}</p>
                   </div>
                 </div>
                 <StatusBadge status={draft.status} />
@@ -208,9 +205,6 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
                 </TabsList>
 
                 <TabsContent value="timeline" className="mt-0 min-w-0">
-                  <p className="mb-3 text-xs text-muted-foreground">
-                    Visualizando por <span className="font-medium text-foreground">{getFluvialViewModeLabel(viewMode)}</span>
-                  </p>
                   {mostrarCarregandoViagens ? (
                     <div className="space-y-3">
                       {[1, 2, 3].map((item) => (
@@ -224,7 +218,7 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
                   ) : (
                     <div className="space-y-1 pr-1 min-w-0">
                       {timelineItems.map((item) => (
-                        <BoatTimelineItem key={item.id || `${item.label}-${item.data}`} item={item} />
+                        <BoatTimelineItem key={`${item.label}-${item.data}`} item={item} />
                       ))}
                       {timelineItems.length === 0 && (
                         <div className="rounded-2xl bg-muted/50 p-6 shadow-sm text-center">

@@ -9,9 +9,10 @@ import {
 import { p38Keys } from '@/lib/p38QueryConfig';
 import { format, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { buildFluvialEvents, formatDate, FLUVIAL_DEFAULT_PERIOD, eventoTemDataNoPeriodo, getFluvialPeriodLabel, getFluvialTimelineDate } from '@/components/logistica-sandbox/fluvialDataUtils';
+import { buildFluvialEvents, formatDate, FLUVIAL_DEFAULT_PERIOD, FLUVIAL_DEFAULT_VIEW_MODE, eventoTemDataNoPeriodo, getFluvialPeriodLabel, getFluvialTimelineDate, getFluvialViewModeLabel } from '@/components/logistica-sandbox/fluvialDataUtils';
 import LogisticaSandboxHeader from '@/components/logistica-sandbox/LogisticaSandboxHeader';
 import RouteModeToggle from '@/components/logistica-sandbox/RouteModeToggle';
+import FluvialViewModeToggle from '@/components/logistica-sandbox/FluvialViewModeToggle';
 import TimelineDatePicker from '@/components/logistica-sandbox/TimelineDatePicker';
 import TimelineDayGroup from '@/components/logistica-sandbox/TimelineDayGroup';
 import TimelineSidebarCard from '@/components/logistica-sandbox/TimelineSidebarCard';
@@ -29,7 +30,7 @@ export default function ItinerarioFluvial() {
   const [routeType, setRouteType] = useState('Fluvial');
   const [selectedEvento, setSelectedEvento] = useState(null);
   const [simulationDate, setSimulationDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [viewMode, setViewMode] = useState('saida_manaus');
+  const [viewMode, setViewMode] = useState(FLUVIAL_DEFAULT_VIEW_MODE);
   const [isMobile, setIsMobile] = useState(false);
   const [freteSearchQuery, setFreteSearchQuery] = useState('');
   const [embarqueLinkFilter, setEmbarqueLinkFilter] = useState('todos');
@@ -173,11 +174,7 @@ export default function ItinerarioFluvial() {
     }
   };
 
-  const viewModeLabel = viewMode === 'chegada_manaus'
-    ? 'Chegada Manaus'
-    : viewMode === 'chegada_tabatinga'
-      ? 'Chegada Tabatinga'
-      : 'Saída Manaus';
+  const viewModeLabel = getFluvialViewModeLabel(viewMode, { short: true });
 
 
   const freteEventos = useMemo(() => {
@@ -215,6 +212,7 @@ export default function ItinerarioFluvial() {
 
         {routeType === 'Fluvial' ? (
            <>
+             <FluvialViewModeToggle value={viewMode} onChange={setViewMode} />
              <FluvialFilterBar
                periodoFiltro={periodoFiltro}
                onPeriodoFiltroChange={setPeriodoFiltro}

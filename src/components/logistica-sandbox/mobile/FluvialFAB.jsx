@@ -8,8 +8,6 @@ import { format } from 'date-fns';
 import { FLUVIAL_PERIOD_OPTIONS } from '@/components/logistica-sandbox/fluvialDataUtils';
 
 export default function FluvialFAB({ 
-  viewMode,
-  onViewModeChange,
   simulationDate,
   onSimulationDateChange,
   periodoFiltro = '30d',
@@ -18,12 +16,6 @@ export default function FluvialFAB({
   onEmbarqueLinkFilterChange
 }) {
   const [open, setOpen] = useState(false);
-
-  const viewModes = [
-    { id: 'saida_manaus', label: 'Saída Manaus' },
-    { id: 'chegada_manaus', label: 'Chegada Manaus' },
-    { id: 'chegada_tabatinga', label: 'Chegada Tabatinga' }
-  ];
 
   return (
     <>
@@ -40,31 +32,6 @@ export default function FluvialFAB({
             <SheetTitle className="text-xs font-semibold text-foreground/90 uppercase tracking-wide">Filtros da Timeline</SheetTitle>
           </SheetHeader>
           <div className="pt-4 space-y-4">
-            {/* View Mode */}
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground block mb-2 uppercase tracking-wide">
-                Visualização
-              </label>
-              <div className="space-y-1.5">
-                {viewModes.map((mode) => (
-                  <button
-                    key={mode.id}
-                    onClick={() => {
-                      onViewModeChange(mode.id);
-                      setOpen(false);
-                    }}
-                    className={`w-full text-left px-3 py-2.5 rounded text-xs font-medium transition-colors ${
-                      viewMode === mode.id
-                        ? 'bg-card text-foreground dark:text-foreground shadow-sm ring-1 ring-border/40 dark:ring-border/40'
-                        : 'bg-muted text-foreground/90 dark:text-muted-foreground hover:bg-muted dark:hover:bg-primary/90'
-                    }`}
-                  >
-                    {mode.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Simulation Date */}
             <div>
               <label className="text-xs font-semibold text-muted-foreground block mb-2 uppercase tracking-wide flex items-center gap-2">

@@ -26,11 +26,6 @@ export function getFluvialViewModeLabel(viewMode, { short = false } = {}) {
   return short ? option.shortLabel : option.label;
 }
 
-export function getFluvialTimelineMilestoneLabel(viewMode) {
-  if (viewMode === 'chegada_tabatinga') return 'ETA Tabatinga';
-  return getFluvialViewModeLabel(viewMode);
-}
-
 export function normalizeFluvialDateKey(value) {
   if (!value) return null;
   if (value instanceof Date) {
@@ -316,21 +311,7 @@ export function buildFluvialEvents({ eventosLogisticos = [], embarques = [], lan
     .sort((a, b) => new Date(b.data_saida_origem || 0) - new Date(a.data_saida_origem || 0));
 }
 
-function buildBoatTimelineItem(evento, viewMode) {
-  const viewDate = getFluvialViewDate(evento, viewMode);
-  return {
-    id: `${evento.id}-${viewMode}`,
-    label: getFluvialTimelineMilestoneLabel(viewMode),
-    data: formatDate(viewDate),
-    status: viewDate ? 'Planejado' : 'Sem data',
-    dayLabel: viewDate ? format(parseStableDate(viewDate), 'dd', { locale: ptBR }) : '--',
-    hasLinked: Boolean(evento.total_embarques_relacionados),
-    linkedCount: evento.total_embarques_relacionados || 0,
-    sortDate: viewDate,
-  };
-}
-
-export function buildBoatViewModels({ transportadoras = [], eventos = [], viewMode = FLUVIAL_DEFAULT_VIEW_MODE }) {
+export function buildBoatViewModels({ transportadoras = [], eventos = [] }) {
   const eventosPorTransportadora = new Map();
   (eventos || []).forEach((evento) => {
     const transportadoraId = resolveTransportadoraFromRecord(evento).transportadora_id;
@@ -343,25 +324,17 @@ export function buildBoatViewModels({ transportadoras = [], eventos = [], viewMo
 
   return (transportadoras || []).map((item) => {
     const eventosRelacionados = (eventosPorTransportadora.get(item.id) || [])
-      .sort((a, b) => {
-        const dateA = getFluvialViewDate(a, viewMode);
-        const dateB = getFluvialViewDate(b, viewMode);
-        return new Date(dateA || 0) - new Date(dateB || 0);
-      });
+      .sort((a, b) => new Date(a.data_saida_origem || 0) - new Date(b.data_saida_origem || 0));
 
     const proximoEvento = eventosRelacionados.find((evento) => {
-      const viewDate = getFluvialViewDate(evento, viewMode);
-      if (!viewDate) return false;
-      return parseStableDate(viewDate) >= new Date();
+      if (!evento.data_chegada_destino) return false;
+      return parseStableDate(evento.data_chegada_destino) >= new Date();
     }) || eventosRelacionados[0];
-
-    const proximaData = proximoEvento ? getFluvialViewDate(proximoEvento, viewMode) : null;
 
     return {
       ...item,
       status: item.ativo === false ? 'inativa' : 'ativa',
-      proximo_eta: proximaData ? format(parseStableDate(proximaData), 'dd/MM/yyyy', { locale: ptBR }) : '-',
-      proximo_eta_label: getFluvialViewModeLabel(viewMode, { short: true }),
+      proximo_eta: proximoEvento?.data_chegada_destino ? format(parseStableDate(proximoEvento.data_chegada_destino), 'dd/MM/yyyy', { locale: ptBR }) : '-',
       recorrencia: item.saida_referencia || '-',
       eventos: eventosRelacionados
         .filter((evento) => (evento.total_embarques_relacionados || 0) > 0)
@@ -369,7 +342,7 @@ export function buildBoatViewModels({ transportadoras = [], eventos = [], viewMo
           id: evento.id,
           titulo: evento.nome || `${item.nome} · ${evento.codigo}`,
           codigo: evento.codigo || '-',
-          data: formatDate(getFluvialViewDate(evento, viewMode)),
+          data: formatDate(evento.data_saida_origem),
           cargas: evento.total_embarques_relacionados || 0,
           freteValor: evento.tem_conta_frete
             ? (evento.lancamento_financeiro_valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -379,28 +352,52 @@ export function buildBoatViewModels({ transportadoras = [], eventos = [], viewMo
           embarques: evento.embarques_relacionados || [],
           anexos: [],
         })),
-      timeline: eventosRelacionados
-        .map((evento) => buildBoatTimelineItem(evento, viewMode))
-        .sort((a, b) => new Date(a.sortDate || 0) - new Date(b.sortDate || 0)),
-      itinerario_real: eventosRelacionados
-        .map((evento) => {
-          const viewDate = getFluvialViewDate(evento, viewMode);
-          const hoje = new Date();
-          hoje.setHours(12, 0, 0, 0);
-          const parsedDate = viewDate ? parseStableDate(viewDate) : null;
-          let tipo = 'futura';
-          if (parsedDate) {
-            if (parsedDate < hoje) tipo = 'passada';
-            else if (parsedDate.toDateString() === hoje.toDateString()) tipo = 'atual';
-          }
-
-          return {
-            id: `${evento.id}-${viewMode}`,
-            etapa: getFluvialTimelineMilestoneLabel(viewMode),
-            data: formatDate(viewDate),
-            tipo,
-          };
-        }),
+      timeline: eventosRelacionados.flatMap((evento) => ([
+        {
+          label: 'Chegada em Manaus',
+          data: formatDate(evento.data_chegada_manaus),
+          status: evento.data_chegada_manaus ? 'Planejado' : 'Sem data',
+          dayLabel: evento.data_chegada_manaus ? format(parseStableDate(evento.data_chegada_manaus), 'dd', { locale: ptBR }) : '--',
+          hasLinked: Boolean(evento.total_embarques_relacionados),
+          linkedCount: evento.total_embarques_relacionados || 0,
+        },
+        {
+          label: 'Saída de Manaus',
+          data: formatDate(evento.data_saida_origem),
+          status: evento.data_saida_origem ? 'Planejado' : 'Sem data',
+          dayLabel: evento.data_saida_origem ? format(parseStableDate(evento.data_saida_origem), 'dd', { locale: ptBR }) : '--',
+          hasLinked: Boolean(evento.total_embarques_relacionados),
+          linkedCount: evento.total_embarques_relacionados || 0,
+        },
+        {
+          label: 'ETA Tabatinga',
+          data: formatDate(evento.data_chegada_destino),
+          status: evento.data_chegada_destino ? 'Planejado' : 'Sem data',
+          dayLabel: evento.data_chegada_destino ? format(parseStableDate(evento.data_chegada_destino), 'dd', { locale: ptBR }) : '--',
+          hasLinked: Boolean(evento.total_embarques_relacionados),
+          linkedCount: evento.total_embarques_relacionados || 0,
+        }
+      ])),
+      itinerario_real: eventosRelacionados.flatMap((evento) => ([
+        {
+          id: `${evento.id}-manaus`,
+          etapa: 'Chegada em Manaus',
+          data: formatDate(evento.data_chegada_manaus),
+          tipo: 'passada',
+        },
+        {
+          id: `${evento.id}-saida`,
+          etapa: 'Saída de Manaus',
+          data: formatDate(evento.data_saida_origem),
+          tipo: 'atual',
+        },
+        {
+          id: `${evento.id}-tabatinga`,
+          etapa: 'ETA Tabatinga',
+          data: formatDate(evento.data_chegada_destino),
+          tipo: 'futura',
+        }
+      ])),
     };
   });
 }
