@@ -67,7 +67,18 @@ function attachItensPedido(pedido, itens, fonte) {
   };
 }
 
-/** Hidrata `itens` só a partir de PedidoVendaItem (SQL). Sem fallback JSON. */
+function readLegacyItensEspelho(pedido = {}) {
+  if (Array.isArray(pedido?.itens) && pedido.itens.length > 0) {
+    return pedido.itens;
+  }
+  const dadosItens = pedido?.dados?.itens;
+  if (Array.isArray(dadosItens) && dadosItens.length > 0) {
+    return dadosItens;
+  }
+  return [];
+}
+
+/** Hidrata `itens`: SQL (PedidoVendaItem) primeiro; fallback JSON legado só na leitura. */
 export async function hydratePedidosVendaItensFromSql(base44, pedidos = []) {
   if (!Array.isArray(pedidos) || !pedidos.length) return pedidos || [];
 
@@ -77,9 +88,14 @@ export async function hydratePedidosVendaItensFromSql(base44, pedidos = []) {
   );
 
   return pedidos.map((pedido) => {
-    const sqlRows = byPedido.get(pedido.id);
+    const pid = String(pedido?.id ?? '');
+    const sqlRows = byPedido.get(pedido.id) ?? byPedido.get(pid);
     if (sqlRows?.length) {
       return attachItensPedido(pedido, linhasPedidoVendaToLegacyItens(sqlRows), 'sql');
+    }
+    const legado = readLegacyItensEspelho(pedido);
+    if (legado.length) {
+      return attachItensPedido(pedido, legado, 'json-legado');
     }
     return attachItensPedido(pedido, [], 'vazio');
   });
