@@ -8,7 +8,12 @@ import {
   useTransportadorasFluvialQuery,
 } from '@/hooks/useP38Entities';
 import { p38Keys } from '@/lib/p38QueryConfig';
-import { buildBoatViewModels, buildFluvialEvents } from '@/components/logistica-sandbox/fluvialDataUtils';
+import {
+  buildBoatViewModels,
+  buildFluvialEvents,
+  FLUVIAL_DEFAULT_VIEW_MODE,
+} from '@/components/logistica-sandbox/fluvialDataUtils';
+import FluvialViewModeToggle from '@/components/logistica-sandbox/FluvialViewModeToggle';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,7 +42,9 @@ function BoatListCard({ transportadora, onClick }) {
           </div>
           <div className="min-w-0">
             <h3 className="text-base font-semibold text-foreground font-glacial truncate">{transportadora.nome || 'Sem nome'}</h3>
-            <p className="text-sm text-muted-foreground truncate">Próximo ETA: {transportadora.proximo_eta}</p>
+            <p className="text-sm text-muted-foreground truncate">
+              Próximo {transportadora.proximo_eta_label || 'marco'}: {transportadora.proximo_eta}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -71,6 +78,7 @@ function BoatListSkeleton() {
 
 export default function BoatsTab() {
   const [filter, setFilter] = useState('todas');
+  const [viewMode, setViewMode] = useState(FLUVIAL_DEFAULT_VIEW_MODE);
   const [search, setSearch] = useState('');
   const [selectedBoatId, setSelectedBoatId] = useState(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
@@ -100,8 +108,9 @@ export default function BoatsTab() {
     return buildBoatViewModels({
       transportadoras: transportadorasData,
       eventos: eventosEnriquecidos,
+      viewMode,
     });
-  }, [transportadorasData, eventosEnriquecidos]);
+  }, [transportadorasData, eventosEnriquecidos, viewMode]);
 
   const transportadoras = useMemo(() => {
     const termo = search.trim().toLowerCase();
@@ -152,6 +161,8 @@ export default function BoatsTab() {
 
   return (
     <div className="space-y-4 relative z-0">
+      <FluvialViewModeToggle value={viewMode} onChange={setViewMode} />
+
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex flex-wrap gap-2">
         {[
@@ -225,6 +236,7 @@ export default function BoatsTab() {
         open={!!selectedBoatId}
         onOpenChange={(open) => !open && setSelectedBoatId(null)}
         transportadora={selectedBoat}
+        viewMode={viewMode}
         viagensCarregando={viagensCarregando}
         onSave={handleSaveBoat}
         onDelete={handleDeleteBoat}
