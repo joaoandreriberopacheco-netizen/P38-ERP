@@ -8,7 +8,7 @@ import { caixaClasses } from '@/lib/caixaP38Theme';
 export default function SaldoValeDialog({ saldoResidualVale, onClose, formatValor }) {
   const tone = caixaClasses('success');
   return (
-    <Dialog open={!!saldoResidualVale} onOpenChange={onClose}>
+    <Dialog open={!!saldoResidualVale} onOpenChange={(nextOpen) => { if (!nextOpen) onClose(); }}>
       <CaixaDialogContent className="max-w-xs mx-auto dark:bg-background">
         <div className="flex flex-col items-center gap-4 py-2">
           <div className={`w-14 h-14 rounded-full flex items-center justify-center ${tone.well}`}>

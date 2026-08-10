@@ -1944,9 +1944,13 @@ export default function PDVCaixa({
           />
         )}
 
+        {(isDialogOpen && pedidoSelecionado) && (
         <ConfirmarPagamentoDialog
           open={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
+          onOpenChange={(nextOpen) => {
+            setIsDialogOpen(nextOpen);
+            if (!nextOpen) setPedidoSelecionado(null);
+          }}
           pedidoSelecionado={pedidoSelecionado}
           pagamentosDinheiro={pagamentosDinheiro}
           setPagamentosDinheiro={setPagamentosDinheiro}
@@ -1999,6 +2003,7 @@ export default function PDVCaixa({
           toast={toast}
           base44={base44}
         />
+        )}
 
         {/* Dialogs extraídos */}
         <MovimentoDialog

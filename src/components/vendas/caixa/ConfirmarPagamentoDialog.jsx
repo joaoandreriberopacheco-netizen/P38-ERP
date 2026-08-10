@@ -34,6 +34,7 @@ export default function ConfirmarPagamentoDialog({
   const [showSeletorFiado, setShowSeletorFiado] = useState(false);
   const [fiadoConfig, setFiadoConfig] = useState(null);
   const [valoresVisiveis, setValoresVisiveis] = useState(true);
+  const dialogOpen = open && !!pedidoSelecionado;
 
   useEffect(() => {
     setFiadoConfig(null);
@@ -45,7 +46,7 @@ export default function ConfirmarPagamentoDialog({
     if (!dialogOpen) return;
     const t = setTimeout(() => focusAndSelect(inputRefs?.dinheiro?.current), 220);
     return () => clearTimeout(t);
-  }, [dialogOpen, pedidoSelecionado?.id]);
+  }, [dialogOpen, pedidoSelecionado?.id, inputRefs]);
 
   // Bloqueia dígitos sem maquininha (valor só após botão + seleção); não abre o seletor automaticamente
   const handleInputMascaraComMaquininha = (e, setInput, setValor, modalidade) => {
@@ -83,8 +84,6 @@ export default function ConfirmarPagamentoDialog({
     handleInputMascara(e, setInput, setValor);
   };
 
-  const dialogOpen = open && !!pedidoSelecionado;
-
   const handleBuscarVale = async () => {
     if (!codigoVale.trim()) return;
     setBuscandoVale(true);
@@ -119,7 +118,16 @@ export default function ConfirmarPagamentoDialog({
 
   return (
     <>
-      <Dialog open={dialogOpen} onOpenChange={onOpenChange}>
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(nextOpen) => {
+          onOpenChange(nextOpen);
+          if (!nextOpen) {
+            setSeletorMaquininha(null);
+            setShowSeletorFiado(false);
+          }
+        }}
+      >
         <CaixaDialogContent className="flex max-h-[min(92dvh,52rem)] min-h-0 max-w-lg flex-col gap-0 overflow-hidden rounded-2xl border-0 bg-card p-0 shadow-2xl dark:bg-background">
           {/* Header */}
           <DialogHeader className="shrink-0 border-b border-border/40 px-5 pb-4 pt-5 dark:border-border/40">

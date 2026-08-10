@@ -9,7 +9,7 @@ import FormaPagamentoBadges from '@/components/vendas/FormaPagamentoBadges';
 export default function VendaDetalheDialog({ venda, onClose, formatValor }) {
   if (!venda) return null;
   return (
-    <Dialog open={!!venda} onOpenChange={onClose}>
+    <Dialog open={!!venda} onOpenChange={(nextOpen) => { if (!nextOpen) onClose(); }}>
       <CaixaDialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-background dark:text-foreground">
         <DialogHeader>
           <DialogTitle className="text-lg text-foreground">
