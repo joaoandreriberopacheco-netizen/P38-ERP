@@ -12,6 +12,7 @@ import { CheckCircle, AlertTriangle, Package, Search, Plus, X, Play, Copy, Eye, 
 import { dataHoje, formatarLogTime } from '@/components/utils/dateUtils';
 import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
 import { saveEmbarqueItem } from '@/functions/saveEmbarqueItem';
+import { syncEmbarqueItemRecepcaoFallback } from '@/lib/syncEmbarqueItemRecepcaoFallback';
 import {
   invokeRecalcularConclusaoPedidoCompra,
   invokeRecalcularEstoqueProduto,
@@ -328,7 +329,17 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         }
       } catch (canonicalErr) {
         console.warn('Sincronia canonica de EmbarqueItem (recepcao) falhou:', canonicalErr?.message || canonicalErr);
-        avisoSincroniaEmbarqueItem = String(canonicalErr?.message || canonicalErr);
+        try {
+          const fb = await syncEmbarqueItemRecepcaoFallback(base44, {
+            embarqueId: embarque.id,
+            itensNorm,
+          });
+          console.info('[RecepcionarEmbarque] fallback EmbarqueItem OK:', fb);
+        } catch (fallbackErr) {
+          avisoSincroniaEmbarqueItem = String(
+            fallbackErr?.message || canonicalErr?.message || canonicalErr,
+          );
+        }
       }
 
       if (embarqueOrfao) {
