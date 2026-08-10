@@ -8,6 +8,7 @@ import {
   fetchDadosVendaAbcd90d,
   fetchPedidosVenda90d,
 } from '@/lib/fetchPedidosVenda90d';
+import { hydratePedidosVendaItensFromSql } from '@/lib/fetchPedidoVendaItens';
 
 export { fetchPedidosVenda90d, fetchDadosVendaAbcd90d };
 import { unifyLogisticaEventos } from '@/components/logistica-sandbox/fluvialDataUtils';
@@ -35,8 +36,9 @@ export function fetchFornecedores() {
   return base44.entities.Terceiro.filter({ $or: [{ tipo: 'Fornecedor' }, { tipo: 'Ambos' }] });
 }
 
-export function fetchPedidosVendaList(sort = '-created_date') {
-  return base44.entities.PedidoVenda.list(sort);
+export async function fetchPedidosVendaList(sort = '-created_date') {
+  const pedidos = await base44.entities.PedidoVenda.list(sort);
+  return hydratePedidosVendaItensFromSql(base44, pedidos);
 }
 
 export function fetchRascunhosPedidoVendaList(sort = '-created_date') {

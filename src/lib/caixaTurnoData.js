@@ -1,6 +1,7 @@
 import { base44 } from '@/api/base44Client';
 import { withRateLimitRetry } from '@/lib/p38ApiErrors';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { hydratePedidosVendaItensFromSql } from '@/lib/fetchPedidoVendaItens';
 import {
   buildPedidoIdsReceitasTurno,
   isPedidoVendaNoTurnoCaixa,
@@ -419,7 +420,11 @@ export async function fetchCaixaTurnoSnapshot({
 }) {
   return withRateLimitRetry(async () => {
     const raw = await fetchCaixaTurnoRawData({ turno, caixa, incluirRascunhos });
-    return buildCaixaTurnoSnapshot(raw, { incluirRascunhos, rascunhoExigirItens });
+    const pedidos = await hydratePedidosVendaItensFromSql(base44, raw.pedidos || []);
+    return buildCaixaTurnoSnapshot(
+      { ...raw, pedidos },
+      { incluirRascunhos, rascunhoExigirItens },
+    );
   });
 }
 
