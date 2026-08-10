@@ -20,7 +20,7 @@ import { calculateBaseQuantity, getItemUnitKey, pickDefaultSaleUnit, getUnidadeE
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
 import { productCodesMatch } from '@/lib/productCode';
 import { isVendaSemEstoquePermitida } from '@/lib/configFlags';
-import { selectAllOnFocus, focusAndSelect } from '@/lib/inputFocusUtils';
+import { selectAllOnFocus, focusAndSelect, selectAllOnMouseDown } from '@/lib/inputFocusUtils';
 
 export default function PDVSupermercado() {
   const [carrinho, setCarrinho] = useState([]);
@@ -326,26 +326,13 @@ export default function PDVSupermercado() {
 
   // Formatter helpers
   const formatarValorExibicao = (valor) => valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const aplicarMascaraValor = (valorAtual, tecla) => {
-    let numeros = valorAtual.replace(/\D/g, '');
-    if (/^\d$/.test(tecla)) numeros += tecla;
-    return formatarValorExibicao(parseInt(numeros) / 100);
-  };
 
   const handleInputMascara = (e, setInput, setValor) => {
-    const tecla = e.key;
-    if (tecla === 'Backspace') {
-      e.preventDefault();
-      let numeros = e.target.value.replace(/\D/g, '').slice(0, -1) || '0';
-      const valor = parseInt(numeros) / 100;
-      setInput(formatarValorExibicao(valor));
-      setValor(valor);
-    } else if (/^\d$/.test(tecla)) {
-      e.preventDefault();
-      const novoValor = aplicarMascaraValor(e.target.value, tecla);
-      setInput(novoValor);
-      setValor(parseFloat(novoValor.replace(/\./g, '').replace(',', '.')));
-    }
+    handleCentavosMaskKeyDown(e, {
+      setInput,
+      setValor,
+      formatDisplay: formatarValorExibicao,
+    });
   };
 
   return (
@@ -644,6 +631,7 @@ export default function PDVSupermercado() {
                            onChange={() => {}}
                            onKeyDown={(e) => handleInputMascara(e, setters[i], numSetters[i])}
                            onFocus={(e) => { selectAllOnFocus(e); setFormaPagamentoAtiva(i); }}
+                           onMouseDown={selectAllOnMouseDown}
                            className="w-24 text-right bg-transparent font-bold outline-none"
                         />
                      </div>

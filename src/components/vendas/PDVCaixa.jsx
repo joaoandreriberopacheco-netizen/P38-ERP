@@ -53,7 +53,7 @@ import { processarVendaCaixa } from '@/functions/processarVendaCaixa';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 import ConfirmarImpressaoDialog from '@/components/vendas/ConfirmarImpressaoDialog';
 import { roundToTwoDecimals, resolveValorPedidoVenda, pagamentosCobremTotal } from '@/lib/financialUtils';
-import { selectAllOnFocus, focusAndSelect } from '@/lib/inputFocusUtils';
+import { selectAllOnFocus, focusAndSelect, handleCentavosMaskKeyDown } from '@/lib/inputFocusUtils';
 import {
   descricaoPadraoVale,
   listarPessoasFolhaParaVale,
@@ -401,45 +401,15 @@ export default function PDVCaixa({
   };
 
   // Máscara de valor - digita números e formata automaticamente (centavos -> reais)
-  const aplicarMascaraValor = (valorAtual, tecla) => {
-    // Remove tudo que não é número
-    let numeros = valorAtual.replace(/\D/g, '');
-
-    // Adiciona o novo dígito
-    if (/^\d$/.test(tecla)) {
-      numeros += tecla;
-    }
-
-    // Converte para número e divide por 100 (centavos)
-    const valor = parseInt(numeros) / 100;
-    return formatarValorExibicao(valor);
-  };
-
   const handleInputMascara = (e, setInput, setValor) => {
+    const handled = handleCentavosMaskKeyDown(e, {
+      setInput,
+      setValor,
+      formatDisplay: formatarValorExibicao,
+    });
+    if (handled) return;
+
     const tecla = e.key;
-
-    // Backspace - remove último dígito
-    if (tecla === 'Backspace') {
-      e.preventDefault();
-      let numeros = e.target.value.replace(/\D/g, '');
-      numeros = numeros.slice(0, -1) || '0';
-      const valor = parseInt(numeros) / 100;
-      setInput(formatarValorExibicao(valor));
-      setValor(valor);
-      return;
-    }
-
-    // Só aceita números
-    if (/^\d$/.test(tecla)) {
-      e.preventDefault();
-      const novoValor = aplicarMascaraValor(e.target.value, tecla);
-      setInput(novoValor);
-      const valorNumerico = parseFloat(novoValor.replace(/\./g, '').replace(',', '.'));
-      setValor(valorNumerico);
-      return;
-    }
-
-    // Navegação
     if (tecla === 'ArrowUp' || tecla === 'ArrowDown') {
       handleNavegacaoPagamento(e);
     }
@@ -501,8 +471,8 @@ export default function PDVCaixa({
       setMaquininhaDebito(null);
       setMaquininhaCredito(null);
 
-      // Auto-focus no primeiro input (seleciona valor pré-preenchido para digitar por cima)
-      setTimeout(() => focusAndSelect(inputRefs.dinheiro.current), 100);
+      // Auto-focus após dialog montar (valor pré-preenchido selecionado para substituir)
+      setTimeout(() => focusAndSelect(inputRefs.dinheiro.current), 200);
     }
   }, [pedidoSelecionado]);
 

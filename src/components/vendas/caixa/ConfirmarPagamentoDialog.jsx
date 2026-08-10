@@ -8,7 +8,7 @@ import SeletorMaquininhaSheet from './SeletorMaquininhaSheet';
 import SeletorFiadoSheet from './SeletorFiadoSheet';
 import { CAIXA_TOAST_SUCCESS, caixaClasses, caixaSurface } from '@/lib/caixaP38Theme';
 import { resolveValorPedidoVenda } from '@/lib/financialUtils';
-import { selectAllOnFocus, focusAndSelect } from '@/lib/inputFocusUtils';
+import { selectAllOnFocus, focusAndSelect, selectAllOnMouseDown } from '@/lib/inputFocusUtils';
 
 export default function ConfirmarPagamentoDialog({
   open, onOpenChange,
@@ -40,6 +40,12 @@ export default function ConfirmarPagamentoDialog({
     setShowSeletorFiado(false);
     setSeletorMaquininha(null);
   }, [pedidoSelecionado?.id]);
+
+  useEffect(() => {
+    if (!dialogOpen) return;
+    const t = setTimeout(() => focusAndSelect(inputRefs?.dinheiro?.current), 220);
+    return () => clearTimeout(t);
+  }, [dialogOpen, pedidoSelecionado?.id]);
 
   // Bloqueia dígitos sem maquininha (valor só após botão + seleção); não abre o seletor automaticamente
   const handleInputMascaraComMaquininha = (e, setInput, setValor, modalidade) => {
@@ -393,6 +399,7 @@ function InputPagamento({
             value={valoresVisiveis ? value : value ? '••••••' : ''}
             onChange={() => {}}
             onFocus={(e) => { selectAllOnFocus(e); onFocus?.(); }}
+            onMouseDown={selectAllOnMouseDown}
             onKeyDown={onKeyDown}
             className="w-24 text-right text-base font-semibold bg-transparent border-0 focus:outline-none text-foreground cursor-text tabular-nums"
           />
