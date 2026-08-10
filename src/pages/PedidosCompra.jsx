@@ -15,7 +15,7 @@ import {
 } from '@/lib/pedidoCompraFinanceiro';
 
 import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
-import { hydrateEmbarquesFromSql } from '@/lib/fetchEmbarqueItens';
+import { hydrateEmbarquesFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
 import ListaPedidosCompra from '@/components/compras/ListaPedidosCompra';
@@ -225,14 +225,14 @@ const getDisplayEmbarqueCode = (pedido, embarque) => {
 
 const getDisplayEmbarqueOrdinal = (embarque, pedido) => `#${String(getEmbarqueSuffixIndex(embarque, pedido) + 1).padStart(2, '0')}`;
 
-const hasLinkedItems = (embarque) => Array.isArray(embarque?.itens || embarque?.itens_embarcados) && (embarque.itens || embarque.itens_embarcados || []).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0 || (Number(item?.quantidade_recebida) || 0) > 0);
+const hasLinkedItems = (embarque) => getEmbarqueItensLinhas(embarque).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0 || (Number(item?.quantidade_recebida) || 0) > 0);
 
 const hasDespachoVinculado = (embarque) => !!(embarque?.data_embarque || embarque?.eta || embarque?.transportadora_id || embarque?.transportadora_nome);
 
 const getQuantidadePendenteNecessidade = (pedido, embarque) => {
   if (!isNecessidadeRenderizada(embarque)) return 0;
 
-  const itensNecessidade = embarque?.itens || embarque?.itens_embarcados || [];
+  const itensNecessidade = getEmbarqueItensLinhas(embarque);
   const quantidadeDoEmbarque = itensNecessidade.reduce((acc, item) => {
     return acc + (Number(item?.quantidade_embarcada) || Number(item?.quantidade_pedida) || 0);
   }, 0);
@@ -414,7 +414,7 @@ const normalizeDisplayItemCommercial = (produto = null, pedidoItem = {}, item = 
 };
 
 const buildDisplayItensFromEmbarque = (pedido, embarque, produtosMap = {}) => {
-  return (embarque?.itens || embarque?.itens_embarcados || []).map((item) => {
+  return getEmbarqueItensLinhas(embarque).map((item) => {
     const pedidoItem = (pedido.itens || []).find((pedidoItem) => pedidoItem.produto_id === item.produto_id);
     const produto = produtosMap[item.produto_id] || produtosMap[pedidoItem?.produto_id] || null;
     return normalizeDisplayItemCommercial(produto, pedidoItem, item);
@@ -423,7 +423,7 @@ const buildDisplayItensFromEmbarque = (pedido, embarque, produtosMap = {}) => {
 
 /** Valor do card de embarque: parcela proporcional do total do pedido (itens + frete/desconto rateados). */
 const getDisplayValorEmbarque = (pedido, embarque) => {
-  const itensEmbarque = embarque?.itens || embarque?.itens_embarcados || [];
+  const itensEmbarque = getEmbarqueItensLinhas(embarque);
   const valorItensPedido = calcValorItensPedidoCompra(pedido);
   if (!itensEmbarque.length) return calcValorTotalPedidoCompra(pedido);
 
@@ -459,7 +459,7 @@ const buildVirtualNecessidade = (pedido, embarquesDoPedido) => {
   if (!temDespachoReal) return null;
 
   const recebidosPorProduto = embarquesReais.reduce((acc, embarque) => {
-    (embarque?.itens || embarque?.itens_embarcados || []).forEach((item) => {
+    getEmbarqueItensLinhas(embarque).forEach((item) => {
       const produtoId = item.produto_id;
       if (!produtoId) return;
       acc[produtoId] = (acc[produtoId] || 0) + (Number(item.quantidade_recebida) || Number(item.quantidade_embarcada) || 0);
@@ -549,7 +549,7 @@ export default function PedidosCompraPage() {
       const embarquesDb = await hydrateEmbarquesFromSql(base44, embarquesDbRaw);
       const produtoIds = [...new Set([
         ...pcs.flatMap((p) => (p.itens || []).map((i) => i.produto_id).filter(Boolean)),
-        ...embarquesDb.flatMap((e) => (e.itens || e.itens_embarcados || []).map((i) => i.produto_id).filter(Boolean)),
+        ...embarquesDb.flatMap((e) => getEmbarqueItensLinhas(e).map((i) => i.produto_id).filter(Boolean)),
       ])];
       const produtos = produtoIds.length
         ? await Promise.all(produtoIds.map(async (id) => {
@@ -574,7 +574,7 @@ export default function PedidosCompraPage() {
         const embarquesDoPedido = embarquesPorPedido[pedido.id] || [];
         const totalPedido = calcValorTotalPedidoCompra(pedido);
         const valorEmbarcado = embarquesDoPedido.reduce((acc, embarque) => {
-            const valorEmbarque = (embarque.itens || embarque.itens_embarcados || []).reduce((itemAcc, item) => {
+            const valorEmbarque = getEmbarqueItensLinhas(embarque).reduce((itemAcc, item) => {
             const pedidoItem = (pedido.itens || []).find((candidate) => candidate.produto_id === item.produto_id);
             const custoUnitarioEfetivo = getValorUnitarioEfetivoItemPedido(pedidoItem || {}, pedido);
             return itemAcc + ((Number(item.quantidade_embarcada) || 0) * custoUnitarioEfetivo);
@@ -853,8 +853,7 @@ export default function PedidosCompraPage() {
     const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
 
     const recebidosPorProduto = embarques.reduce((acc, embarque) => {
-      const itensEmbarcados = Array.isArray(embarque.itens_embarcados) ? embarque.itens_embarcados : [];
-      itensEmbarcados.forEach((item) => {
+      getEmbarqueItensLinhas(embarque).forEach((item) => {
         const produtoId = item.produto_id;
         if (!produtoId) return;
         acc[produtoId] = (acc[produtoId] || 0) + (Number(item.quantidade_recebida) || 0);

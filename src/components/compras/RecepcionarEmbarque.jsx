@@ -39,7 +39,7 @@ import {
 import { buildMovimentacaoRecepcaoCompraPayload } from '@/lib/movimentacaoRecepcaoCompra';
 import { reverterRecepcaoEmbarque } from '@/lib/reverterRecepcaoEmbarque';
 import { buildItensCanonicosEmbarque } from '@/lib/buildEmbarqueItensCanonicos';
-import { hydrateEmbarquesFromSql } from '@/lib/fetchEmbarqueItens';
+import { hydrateEmbarquesFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 
 function pedidoItemParaEmbarque(pedido, embItem) {
   return (Array.isArray(pedido?.itens) ? pedido.itens : []).find(
@@ -48,9 +48,7 @@ function pedidoItemParaEmbarque(pedido, embItem) {
 }
 
 function getItensDoEmbarque(embarque) {
-  const baseItens = Array.isArray(embarque?.itens_embarcados) && embarque.itens_embarcados.length > 0
-    ? embarque.itens_embarcados
-    : (Array.isArray(embarque?.itens) ? embarque.itens : []);
+  const baseItens = getEmbarqueItensLinhas(embarque);
   const statusRec = embarque?.status_recebimento || embarque?.status_recebimento_embarque || 'Pendente';
   const aguardandoRecepcao = !statusRec || statusRec === 'Pendente';
 
