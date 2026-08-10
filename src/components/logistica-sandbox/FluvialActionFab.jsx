@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Sliders, Calendar, Link2 } from 'lucide-react';
+import { Sliders, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { FLUVIAL_PERIOD_OPTIONS } from '@/components/logistica-sandbox/fluvialDataUtils';
+import FluvialFiltersSheetContent from '@/components/logistica-sandbox/FluvialFiltersSheetContent';
 
-export default function FluvialActionFab({ 
+export default function FluvialActionFab({
   onScrollToToday,
+  viewMode,
+  onViewModeChange,
   periodoFiltro = '30d',
   onPeriodoFiltroChange,
   embarqueLinkFilter = 'todos',
-  onEmbarqueLinkFilterChange
+  onEmbarqueLinkFilterChange,
+  totalViagens = 0,
+  totalCarregadas = 0,
 }) {
   const [open, setOpen] = useState(false);
 
@@ -23,16 +27,28 @@ export default function FluvialActionFab({
       <button
         onClick={() => setOpen(true)}
         className="fixed right-4 z-[55] flex h-14 w-14 items-center justify-center rounded-full bg-card text-foreground/90 shadow-lg transition-shadow hover:shadow-xl dark:bg-muted dark:text-muted-foreground p38-bottom-fab1"
+        aria-label="Filtros da timeline"
       >
         <Sliders className="w-5 h-5" />
       </button>
 
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="bottom" className="rounded-t-3xl">
+        <SheetContent side="bottom" className="rounded-t-3xl max-h-[90vh] overflow-y-auto">
           <SheetHeader>
-            <SheetTitle className="text-sm font-semibold">Opções</SheetTitle>
+            <SheetTitle className="text-sm font-semibold">Filtros da timeline</SheetTitle>
           </SheetHeader>
-          <div className="pt-6 space-y-3">
+          <div className="pt-4 space-y-4">
+            <FluvialFiltersSheetContent
+              viewMode={viewMode}
+              onViewModeChange={onViewModeChange}
+              periodoFiltro={periodoFiltro}
+              onPeriodoFiltroChange={onPeriodoFiltroChange}
+              embarqueLinkFilter={embarqueLinkFilter}
+              onEmbarqueLinkFilterChange={onEmbarqueLinkFilterChange}
+              totalViagens={totalViagens}
+              totalCarregadas={totalCarregadas}
+            />
+
             <Button
               onClick={handleScrollToToday}
               variant="outline"
@@ -41,50 +57,6 @@ export default function FluvialActionFab({
               <Calendar className="w-5 h-5" />
               <span>Ir para Hoje</span>
             </Button>
-            <div className="rounded-2xl bg-muted/50 p-3 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                <Calendar className="w-3.5 h-3.5" />
-                Período
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {FLUVIAL_PERIOD_OPTIONS.map((option) => (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() => onPeriodoFiltroChange?.(option.id)}
-                    className={`rounded-2xl px-2 py-2 text-[11px] font-medium transition-colors ${
-                      periodoFiltro === option.id
-                        ? 'bg-background text-foreground shadow-sm'
-                        : 'bg-transparent text-muted-foreground'
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="rounded-2xl bg-muted/50 p-3 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                <Link2 className="w-3.5 h-3.5" />
-                Vínculo de embarque
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {[{ id: 'todos', label: 'Todas' }, { id: 'com_vinculo', label: 'Com vínculo' }, { id: 'sem_vinculo', label: 'Sem vínculo' }].map((mode) => (
-                  <button
-                    key={mode.id}
-                    type="button"
-                    onClick={() => onEmbarqueLinkFilterChange?.(mode.id)}
-                    className={`rounded-2xl px-2 py-2 text-[11px] font-medium transition-colors ${
-                      embarqueLinkFilter === mode.id
-                        ? 'bg-background text-foreground shadow-sm'
-                        : 'bg-transparent text-muted-foreground'
-                    }`}
-                  >
-                    {mode.label}
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
         </SheetContent>
       </Sheet>

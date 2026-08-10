@@ -12,7 +12,6 @@ import { ptBR } from 'date-fns/locale';
 import { buildFluvialEvents, formatDate, FLUVIAL_DEFAULT_PERIOD, FLUVIAL_DEFAULT_VIEW_MODE, eventoTemDataNoPeriodo, getFluvialPeriodLabel, getFluvialTimelineDate, getFluvialViewModeLabel } from '@/components/logistica-sandbox/fluvialDataUtils';
 import LogisticaSandboxHeader from '@/components/logistica-sandbox/LogisticaSandboxHeader';
 import RouteModeToggle from '@/components/logistica-sandbox/RouteModeToggle';
-import FluvialViewModeToggle from '@/components/logistica-sandbox/FluvialViewModeToggle';
 import TimelineDatePicker from '@/components/logistica-sandbox/TimelineDatePicker';
 import TimelineDayGroup from '@/components/logistica-sandbox/TimelineDayGroup';
 import TimelineSidebarCard from '@/components/logistica-sandbox/TimelineSidebarCard';
@@ -24,7 +23,6 @@ import BoatsTab from '@/components/logistica-sandbox/BoatsTab';
 import ItinerarioFluvialMobile from '@/components/logistica-sandbox/mobile/ItinerarioFluvialMobile';
 import FreteDetailPanel from '@/components/logistica-sandbox/FreteDetailPanel';
 import FluvialActionFab from '@/components/logistica-sandbox/FluvialActionFab';
-import FluvialFilterBar from '@/components/logistica-sandbox/FluvialFilterBar';
 
 export default function ItinerarioFluvial() {
   const [routeType, setRouteType] = useState('Fluvial');
@@ -212,15 +210,6 @@ export default function ItinerarioFluvial() {
 
         {routeType === 'Fluvial' ? (
            <>
-             <FluvialViewModeToggle value={viewMode} onChange={setViewMode} />
-             <FluvialFilterBar
-               periodoFiltro={periodoFiltro}
-               onPeriodoFiltroChange={setPeriodoFiltro}
-               embarqueLinkFilter={embarqueLinkFilter}
-               onEmbarqueLinkFilterChange={setEmbarqueLinkFilter}
-               totalViagens={totalViagensFiltradas}
-               totalCarregadas={totalViagensCarregadas}
-             />
              <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-5">
                <div className="bg-transparent space-y-1 max-h-[calc(100vh-190px)] overflow-y-auto overflow-x-hidden pr-2 min-w-0">
                  {timelineCarregando ? (
@@ -267,10 +256,14 @@ export default function ItinerarioFluvial() {
              </div>
              <FluvialActionFab 
                onScrollToToday={handleScrollToToday}
+               viewMode={viewMode}
+               onViewModeChange={setViewMode}
                periodoFiltro={periodoFiltro}
                onPeriodoFiltroChange={setPeriodoFiltro}
                embarqueLinkFilter={embarqueLinkFilter}
                onEmbarqueLinkFilterChange={setEmbarqueLinkFilter}
+               totalViagens={totalViagensFiltradas}
+               totalCarregadas={totalViagensCarregadas}
              />
            </>
         ) : routeType === 'Fretes' ? (

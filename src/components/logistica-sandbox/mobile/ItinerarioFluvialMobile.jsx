@@ -6,7 +6,6 @@ import { p38Keys } from '@/lib/p38QueryConfig';
 import { format, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { buildFluvialEvents, formatDate, FLUVIAL_DEFAULT_PERIOD, FLUVIAL_DEFAULT_VIEW_MODE, eventoTemDataNoPeriodo, getFluvialTimelineDate, getFluvialViewModeLabel } from '@/components/logistica-sandbox/fluvialDataUtils';
-import FluvialViewModeToggle from '@/components/logistica-sandbox/FluvialViewModeToggle';
 import TimelineDayGroup from '@/components/logistica-sandbox/TimelineDayGroup';
 import TimelineSidebarCard from '@/components/logistica-sandbox/TimelineSidebarCard';
 import MobileDetailHeader from '@/components/logistica-sandbox/MobileDetailHeader';
@@ -144,6 +143,13 @@ export default function ItinerarioFluvialMobile() {
       }, {});
   }, [eventos, viewMode, searchTerm, embarques, embarqueLinkFilter, periodoFiltro]);
 
+  const totalViagensFiltradas = useMemo(
+    () => Object.values(groupedEventos).reduce((total, items) => total + items.length, 0),
+    [groupedEventos],
+  );
+
+  const totalViagensCarregadas = eventos.length;
+
   const timelineItems = useMemo(() => {
     const sortedItems = Object.entries(groupedEventos)
       .sort(([a], [b]) => new Date(a) - new Date(b))
@@ -240,13 +246,10 @@ export default function ItinerarioFluvialMobile() {
         <ItinerarioMobileTopTabs value={routeType} onChange={setRouteType} />
 
         {routeType === 'Fluvial' && !selectedEvento ? (
-          <>
-            <FluvialSearchBar
-              value={searchTerm}
-              onChange={setSearchTerm}
-            />
-            <FluvialViewModeToggle value={viewMode} onChange={setViewMode} />
-          </>
+          <FluvialSearchBar
+            value={searchTerm}
+            onChange={setSearchTerm}
+          />
         ) : null}
 
         {routeType === 'Fluvial' ? (
@@ -277,19 +280,37 @@ export default function ItinerarioFluvialMobile() {
               ))}
               </div>
               <FluvialFAB
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
                 simulationDate={simulationDate}
                 onSimulationDateChange={setSimulationDate}
                 periodoFiltro={periodoFiltro}
                 onPeriodoFiltroChange={setPeriodoFiltro}
                 embarqueLinkFilter={embarqueLinkFilter}
                 onEmbarqueLinkFilterChange={setEmbarqueLinkFilter}
+                totalViagens={totalViagensFiltradas}
+                totalCarregadas={totalViagensCarregadas}
               />
             </>
           ) : (
+            <>
             <ItinerarioMobileEmptyState
               title="Nenhum evento encontrado"
               description="Nenhuma viagem no período selecionado. Amplie o filtro de datas ou ajuste a busca."
             />
+            <FluvialFAB
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+              simulationDate={simulationDate}
+              onSimulationDateChange={setSimulationDate}
+              periodoFiltro={periodoFiltro}
+              onPeriodoFiltroChange={setPeriodoFiltro}
+              embarqueLinkFilter={embarqueLinkFilter}
+              onEmbarqueLinkFilterChange={setEmbarqueLinkFilter}
+              totalViagens={totalViagensFiltradas}
+              totalCarregadas={totalViagensCarregadas}
+            />
+            </>
           )
         ) : routeType === 'Fretes' ? (
           selectedEvento ? (
