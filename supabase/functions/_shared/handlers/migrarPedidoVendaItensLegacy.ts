@@ -100,7 +100,9 @@ export async function handle(req: Request, base44: Awaited<ReturnType<typeof cre
 
     for(const pedido of candidatos){
       try{
-        const itensLeg = Array.isArray(pedido?.itens)?pedido.itens:[];
+        const itensLeg = Array.isArray(pedido?.itens) && pedido.itens.length
+          ? pedido.itens
+          : (Array.isArray(pedido?.dados?.itens) ? pedido.dados.itens : []);
         if(!itensLeg.length){stats.pedidos_sem_itens++;continue;}
 
         const linhas = [];
