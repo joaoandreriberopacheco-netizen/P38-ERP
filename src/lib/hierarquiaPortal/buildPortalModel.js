@@ -2,6 +2,7 @@ import { planLinhaCompraAnalise, norm } from '@/lib/hierarquiaPortal/planLinhaCo
 import { inferirLinhaCodigo, findLinhaMeta } from '@/lib/hierarquiaPortal/inferirLinha';
 import { getPortalExcelSku, findPortalExcelLinha } from '@/lib/hierarquiaPortal/portalExcelManifest';
 import { portalEstoqueSku, portalEstoqueGrupo } from '@/lib/hierarquiaPortal/portalStockFormat';
+import { enrichPortalSupplyLineCeramica } from '@/lib/hierarquiaPortal/buildPortalSupplyCeramica';
 
 function trim(s) {
   return String(s || '').trim();
@@ -138,15 +139,14 @@ export function buildPortalSupplyLines(enriched) {
   return [...map.values()]
     .map((g) => {
       const grp = portalEstoqueGrupo(g.skus);
-      return {
+      const base = {
         ...g,
         sku_count: g.skus.length,
         estoque_total: grp.quantidade,
         estoque_label: grp.label,
         estoque_sigla: grp.sigla,
-        alerta: g.zerados > 0 || g.abaixo_ponto > g.skus.length / 2,
-        pfut_simulado: g.zerados === g.skus.length ? -3 : g.abaixo_ponto > 0 ? -1 : 12,
       };
+      return enrichPortalSupplyLineCeramica(base);
     })
     .sort((a, b) => {
       if (a.linha_ordem !== b.linha_ordem) return a.linha_ordem - b.linha_ordem;

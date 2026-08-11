@@ -54,7 +54,10 @@ function HierarquiaPortalInner() {
   }, []);
 
   const produtosPiloto = useMemo(() => filterProdutosPortalExcel(produtos), [produtos]);
-  const enriched = useMemo(() => produtosPiloto.map(enrichProdutoPortal), [produtosPiloto]);
+  const enriched = useMemo(
+    () => produtosPiloto.map(enrichProdutoPortal).filter((r) => r.fonte_excel),
+    [produtosPiloto],
+  );
   const tree = useMemo(() => buildPortalTree(enriched), [enriched]);
   const supplyLines = useMemo(() => buildPortalSupplyLines(enriched), [enriched]);
   const linhas = useMemo(() => listPortalLinhas(enriched), [enriched]);

@@ -8,16 +8,25 @@ export const PORTAL_EXCEL_LINHAS = manifest.linhas || [];
 export const PORTAL_EXCEL_SKU_COUNT = manifest.skuCount || 0;
 export const PORTAL_EXCEL_SOURCE = manifest.source || '';
 
+/** Normaliza código interno (Excel ↔ Base44). */
+export function resolvePortalProdutoCodigo(produto) {
+  const raw =
+    produto?.codigo_interno
+    ?? produto?.codigo
+    ?? produto?.Codigo_Interno
+    ?? '';
+  return String(raw).trim().toUpperCase();
+}
+
 export function getPortalExcelSku(produto) {
-  const cod = String(produto?.codigo_interno || '').trim().toUpperCase();
+  const cod = resolvePortalProdutoCodigo(produto);
   if (!cod) return null;
   return SKU_MAP[cod] || null;
 }
 
 export function isProdutoNoExcelPortal(produto) {
   if (!HIERARQUIA_PORTAL_FILTRAR_EXCEL) return true;
-  const cod = String(produto?.codigo_interno || '').trim().toUpperCase();
-  return CODIGOS.has(cod);
+  return CODIGOS.has(resolvePortalProdutoCodigo(produto));
 }
 
 export function filterProdutosPortalExcel(produtos) {
