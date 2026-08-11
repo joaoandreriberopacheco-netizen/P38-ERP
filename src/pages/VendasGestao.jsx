@@ -7,6 +7,7 @@ import {
   useP38QueryInvalidation,
 } from '@/hooks/useP38Entities';
 import { hydratePedidosVendaItensFromSql } from '@/lib/fetchPedidoVendaItens';
+import { isValidGestaoDateKey } from '@/lib/fetchPedidosVendaGestao';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import VendasRelatorisFAB from '@/components/vendas/VendasRelatorisFAB';
@@ -612,6 +613,9 @@ function VendasGestaoPage() {
       .then((hydrated) => {
         if (!cancelled) setPedidosConsultaComItens(hydrated);
       })
+      .catch(() => {
+        if (!cancelled) setPedidosConsultaComItens(vendasConsulta);
+      })
       .finally(() => {
         if (!cancelled) setConsultaHydrating(false);
       });
@@ -848,12 +852,14 @@ function VendasGestaoPage() {
                 startDate={dataInicio}
                 endDate={dataFim}
                 onApply={(inicio, fim) => {
+                  if (!isValidGestaoDateKey(inicio) || !isValidGestaoDateKey(fim)) return;
                   setDataInicio(inicio);
                   setDataFim(fim);
                 }}
                 onClear={() => {
-                  setDataInicio('');
-                  setDataFim('');
+                  const { start, end } = getPeriodoMesCorrente();
+                  setDataInicio(start);
+                  setDataFim(end);
                 }}
               />
             </div>

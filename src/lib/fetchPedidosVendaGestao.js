@@ -1,12 +1,24 @@
 import { base44 } from '@/api/base44Client';
 import { inicioDiaSistemaISO, fimDiaSistemaISO } from '@/components/utils/dateUtils';
 
+const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+export function isValidGestaoDateKey(value) {
+  return typeof value === 'string' && DATE_KEY_RE.test(value);
+}
+
 function buildCreatedDateFilter(dataInicio, dataFim) {
-  if (!dataInicio && !dataFim) return null;
+  const inicio = isValidGestaoDateKey(dataInicio) ? dataInicio : null;
+  const fim = isValidGestaoDateKey(dataFim) ? dataFim : null;
+  if (!inicio && !fim) return null;
   const created_date = {};
-  if (dataInicio) created_date.$gte = inicioDiaSistemaISO(dataInicio);
-  if (dataFim) created_date.$lte = fimDiaSistemaISO(dataFim);
+  if (inicio) created_date.$gte = inicioDiaSistemaISO(inicio);
+  if (fim) created_date.$lte = fimDiaSistemaISO(fim);
   return created_date;
+}
+
+function normalizeListResult(rows) {
+  return Array.isArray(rows) ? rows : [];
 }
 
 /** Cabeçalhos de pedidos de venda no período — sem hidratar itens (Gestão de Vendas). */
@@ -15,11 +27,15 @@ export async function fetchPedidosVendaGestaoHeaders({
   dataFim,
   sort = '-created_date',
 } = {}) {
+  if (!isValidGestaoDateKey(dataInicio) || !isValidGestaoDateKey(dataFim)) {
+    return [];
+  }
   const created_date = buildCreatedDateFilter(dataInicio, dataFim);
   if (!created_date) {
-    return base44.entities.PedidoVenda.list(sort);
+    return [];
   }
-  return base44.entities.PedidoVenda.filter({ created_date }, sort);
+  const rows = await base44.entities.PedidoVenda.filter({ created_date }, sort);
+  return normalizeListResult(rows);
 }
 
 /** Cabeçalhos de rascunhos no período — sem hidratar itens (Gestão de Vendas). */
@@ -28,9 +44,13 @@ export async function fetchRascunhosPedidoVendaGestaoHeaders({
   dataFim,
   sort = '-created_date',
 } = {}) {
+  if (!isValidGestaoDateKey(dataInicio) || !isValidGestaoDateKey(dataFim)) {
+    return [];
+  }
   const created_date = buildCreatedDateFilter(dataInicio, dataFim);
   if (!created_date) {
-    return base44.entities.RascunhoPedidoVenda.list(sort);
+    return [];
   }
-  return base44.entities.RascunhoPedidoVenda.filter({ created_date }, sort);
+  const rows = await base44.entities.RascunhoPedidoVenda.filter({ created_date }, sort);
+  return normalizeListResult(rows);
 }
