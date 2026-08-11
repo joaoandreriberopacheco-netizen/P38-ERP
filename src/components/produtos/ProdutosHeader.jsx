@@ -15,6 +15,7 @@ import ProdutosAnaliseAgrupamentoControl from '@/components/produtos/ProdutosAna
 import ProdutosAbcdQuickFilter from '@/components/produtos/ProdutosAbcdQuickFilter';
 import ProdutosNumericMetricFilter from '@/components/produtos/ProdutosNumericMetricFilter';
 import HierarquiaPortalEntry from '@/components/hierarquia-portal/HierarquiaPortalEntry';
+import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
 import ProdutosTreeByCategoryToggle from '@/components/produtos/ProdutosTreeByCategoryToggle';
 import ProdutosMobileFiltersSheet from '@/components/produtos/ProdutosMobileFiltersSheet';
 import { useCompactShell } from '@/hooks/use-breakpoint';
