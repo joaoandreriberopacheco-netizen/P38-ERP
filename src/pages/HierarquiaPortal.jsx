@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Loader2, Search } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
 import { createPageUrl } from '@/components/utils';
 import { fetchAllProdutosCatalogo, fetchProdutosAtivos } from '@/lib/fetchProdutosAtivos';
@@ -29,8 +28,14 @@ import PortalTreeGrid from '@/components/hierarquia-portal/PortalTreeGrid';
 import PortalSmartSupplyPanel from '@/components/hierarquia-portal/PortalSmartSupplyPanel';
 import PortalReservaPanel from '@/components/hierarquia-portal/PortalReservaPanel';
 import PortalTipoFilter from '@/components/hierarquia-portal/PortalTipoFilter';
+import PortalCatalogFilters from '@/components/hierarquia-portal/PortalCatalogFilters';
 import CadastroProdutoV2Form from '@/components/cadastro-produto-v2/CadastroProdutoV2Form';
 import { isProdutoReservaPortal, contagemReservaLine } from '@/lib/hierarquiaPortal/portalReservaCeramica';
+import { getDefaultPortalCatalogFilters } from '@/lib/hierarquiaPortal/portalCatalogFilters';
+import { filterProdutos, isSomentePositivosFilter } from '@/lib/filterProdutos';
+import { createCatalogStockContext } from '@/lib/catalogEstoqueVirtual';
+import { fetchPedidosCompraParaSugestaoEstoque } from '@/lib/fetchPedidosCompraParaSugestaoEstoque';
+import { buildPendenteAprovadoFinanceiroPorProduto } from '@/lib/sugestaoCompraEstoquePendente';
 import { isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
 import { CADASTRO_PRODUTO_V2_ENABLED } from '@/config/cadastroProdutoV2Flags';
 import {
@@ -78,7 +83,7 @@ function HierarquiaPortalInner() {
   const [pedidos90d, setPedidos90d] = useState([]);
   const [filtroLinha, setFiltroLinha] = useState('');
   const [filtroTipos, setFiltroTipos] = useState(() => new Set(['portfolio']));
-  const [search, setSearch] = useState('');
+  const [portalFilters, setPortalFilters] = useState(getDefaultPortalCatalogFilters);
   const [somenteAlerta, setSomenteAlerta] = useState(false);
   const [reservados, setReservados] = useState([]);
 
@@ -124,9 +129,37 @@ function HierarquiaPortalInner() {
     () => buildCatalogSalesVelocityMap(produtosPiloto, pedidos90d),
     [produtosPiloto, pedidos90d],
   );
+
+  const estoqueVirtualAtivo = portalFilters.estoqueVirtual === true;
+  const { data: pendentePorProduto = {} } = useQuery({
+    queryKey: ['portal', 'pendente-estoque'],
+    enabled: estoqueVirtualAtivo,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const data = await fetchPedidosCompraParaSugestaoEstoque(base44);
+      return buildPendenteAprovadoFinanceiroPorProduto(
+        data.pedidosAbertos,
+        data.recebidosPorPedidoProduto,
+        { embarques: data.embarques, pedidosParaEmbarque: data.pedidosTodos },
+      );
+    },
+  });
+
+  const catalogStockContext = useMemo(
+    () => createCatalogStockContext(estoqueVirtualAtivo, pendentePorProduto),
+    [estoqueVirtualAtivo, pendentePorProduto],
+  );
+
+  const produtosPilotoFiltrados = useMemo(
+    () => filterProdutos(produtosPiloto, portalFilters, { salesVelocityMap: velocityMap, catalogStockContext }),
+    [produtosPiloto, portalFilters, velocityMap, catalogStockContext],
+  );
+
   const enriched = useMemo(
-    () => produtosPiloto.map(enrichProdutoPortal).filter((r) => r.fonte_excel),
-    [produtosPiloto],
+    () => produtosPilotoFiltrados
+      .map((p) => enrichProdutoPortal(p, catalogStockContext))
+      .filter((r) => r.fonte_excel),
+    [produtosPilotoFiltrados, catalogStockContext],
   );
   const tree = useMemo(() => buildPortalTree(enriched), [enriched]);
   const supplyLines = useMemo(
@@ -136,8 +169,10 @@ function HierarquiaPortalInner() {
   const linhas = useMemo(() => listPortalLinhas(enriched), [enriched]);
 
   const reservadosEnriched = useMemo(
-    () => reservados.map(enrichProdutoPortal).filter((r) => r.fonte_excel),
-    [reservados],
+    () => reservados
+      .map((p) => enrichProdutoPortal(p, catalogStockContext))
+      .filter((r) => r.fonte_excel),
+    [reservados, catalogStockContext],
   );
 
   const enrichedComReserva = useMemo(() => {
@@ -158,7 +193,7 @@ function HierarquiaPortalInner() {
     let lines = tab === 'reserva' ? supplyLinesReserva : supplyLines;
     if (filtroLinha) lines = lines.filter((l) => l.linha_codigo === filtroLinha);
     if (filtroTipos?.size) lines = lines.filter((l) => filtroTipos.has(l.linha_tipo));
-    const q = search.trim().toLowerCase();
+    const q = (portalFilters.searchTerm || '').trim().toLowerCase();
     if (q) {
       lines = lines.filter(
         (l) =>
@@ -168,7 +203,7 @@ function HierarquiaPortalInner() {
       );
     }
     return lines;
-  }, [supplyLines, supplyLinesReserva, tab, filtroLinha, filtroTipos, search]);
+  }, [supplyLines, supplyLinesReserva, tab, filtroLinha, filtroTipos, portalFilters.searchTerm]);
 
   const excedentesReserva = useMemo(
     () => filteredSupply.filter((line) => contagemReservaLine(line).excedente > 0).length,
@@ -191,6 +226,8 @@ function HierarquiaPortalInner() {
   }, [linhas, supplyLines, tab]);
 
   const linhasPilotoLabel = HIERARQUIA_PORTAL_PILOTO_LINHAS.map((l) => l.nome).join(' · ');
+  const searchTerm = portalFilters.searchTerm || '';
+  const somentePositivos = isSomentePositivosFilter(portalFilters);
 
   return (
     <div className="flex flex-col min-h-full w-full max-w-full font-din-1451 bg-background -mx-4 md:-mx-6 tablet-landscape:-mx-7">
@@ -214,7 +251,11 @@ function HierarquiaPortalInner() {
             </div>
             <div className="rounded-lg border border-violet-500/40 bg-violet-50/80 dark:bg-violet-950/30 px-3 py-2 text-xs text-violet-900 dark:text-violet-100 max-w-sm space-y-1 shrink-0">
               <p>
-                <strong>Piloto:</strong> {enriched.length} SKUs · {linhasPilotoLabel}
+                <strong>Piloto:</strong> {enriched.length}
+                {produtosPilotoFiltrados.length !== produtosPiloto.length && (
+                  <span className="opacity-80"> / {produtosPiloto.length}</span>
+                )}
+                {' '}SKUs{estoqueVirtualAtivo ? ' ~' : ''} · {linhasPilotoLabel}
               </p>
               <p className="opacity-80 hidden sm:block">
                 Em breve: {MODELO_PILOTO_LINHAS_PLANEADAS.map((l) => l.nome).join(' · ')}
@@ -227,44 +268,32 @@ function HierarquiaPortalInner() {
           )}
 
           {showCatalogFilters && (
-          <div className="flex flex-wrap gap-2 items-center">
-            <div className="relative flex-1 min-w-[200px] max-w-md">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar esquadra ou SKU…"
-                className="pl-8 h-9"
-              />
-            </div>
-            <Select value={filtroLinha || 'all'} onValueChange={(v) => setFiltroLinha(v === 'all' ? '' : v)}>
-              <SelectTrigger className="w-[220px] h-9">
-                <SelectValue placeholder="LINHA" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as LINHAS (piloto)</SelectItem>
-                {linhas.map((l) => (
-                  <SelectItem key={l.codigo} value={l.codigo}>
-                    {l.nome} ({l.tipo})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {tab === 'supply' && (
-              <Button
-                variant={somenteAlerta ? 'secondary' : 'outline'}
-                size="sm"
-                onClick={() => setSomenteAlerta((v) => !v)}
-              >
-                Só alertas
-              </Button>
+          <PortalCatalogFilters
+            filters={portalFilters}
+            setFilters={setPortalFilters}
+            filtroLinha={filtroLinha}
+            onFiltroLinhaChange={(v) => setFiltroLinha(v === 'all' ? '' : v)}
+            linhas={linhas}
+            extra={(
+              <>
+                {tab === 'supply' && (
+                  <Button
+                    variant={somenteAlerta ? 'secondary' : 'outline'}
+                    size="sm"
+                    className="h-9"
+                    onClick={() => setSomenteAlerta((v) => !v)}
+                  >
+                    Só alertas
+                  </Button>
+                )}
+                {tab === 'reserva' && excedentesReserva > 0 && (
+                  <span className="text-xs text-amber-800 dark:text-amber-200 px-2 py-1 rounded bg-amber-100/80 dark:bg-amber-950/40">
+                    {excedentesReserva} esquadra(s) acima de 12 pos.
+                  </span>
+                )}
+              </>
             )}
-            {tab === 'reserva' && excedentesReserva > 0 && (
-              <span className="text-xs text-amber-800 dark:text-amber-200 px-2 py-1 rounded bg-amber-100/80 dark:bg-amber-950/40">
-                {excedentesReserva} esquadra(s) acima de 12 pos.
-              </span>
-            )}
-          </div>
+          />
           )}
 
           <GlacialTabsList className="w-full">
@@ -322,7 +351,8 @@ function HierarquiaPortalInner() {
             tree={tree}
             filtroLinha={filtroLinha}
             filtroTipos={filtroTipos}
-            search={search}
+            search={searchTerm}
+            catalogStockContext={catalogStockContext}
           />
         ) : tab === 'supply' ? (
           <PortalSmartSupplyPanel
@@ -341,7 +371,11 @@ function HierarquiaPortalInner() {
 
         {tab !== 'cadastro' && (
         <p className="text-[11px] text-muted-foreground text-center mt-4">
-          {enriched.length} SKUs · {supplyLines.length} esquadras · {PORTAL_EXCEL_LINHAS.length} LINHAS piloto · Excel mestre
+          {enriched.length} SKUs visíveis
+          {produtosPiloto.length !== enriched.length ? ` (${produtosPiloto.length} no piloto)` : ''}
+          · {supplyLines.length} esquadras · {PORTAL_EXCEL_LINHAS.length} LINHAS
+          {somentePositivos ? ' · só positivos' : ''}
+          {estoqueVirtualAtivo ? ' · estoque virtual ~' : ''}
         </p>
         )}
       </div>

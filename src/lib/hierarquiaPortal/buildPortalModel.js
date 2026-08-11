@@ -22,11 +22,11 @@ function mapTipoLinha(tipoMestre) {
   return 'mix';
 }
 
-export function enrichProdutoPortal(produto) {
+export function enrichProdutoPortal(produto, catalogStockContext = null) {
   const excel = getPortalExcelSku(produto);
   const plan = planLinhaCompraAnalise(produto);
-  const vitrine = portalEstoqueSku(produto);
-  const estoqueBase = Number(produto.estoque_atual) || 0;
+  const vitrine = portalEstoqueSku(produto, catalogStockContext);
+  const estoqueBase = vitrine.quantidade;
   const ponto = Number(produto.estoque_minimo) || 0;
 
   if (excel) {
@@ -61,6 +61,8 @@ export function enrichProdutoPortal(produto) {
       estoque_vitrine: vitrine.quantidade,
       estoque_sigla: vitrine.sigla,
       estoque_label: vitrine.label,
+      estoque_virtual: vitrine.virtual,
+      estoque_pendente: vitrine.pendente,
       abaixo_ponto: estoqueBase < ponto,
       zerado: estoqueBase <= 0,
       fonte_excel: true,
@@ -93,6 +95,8 @@ export function enrichProdutoPortal(produto) {
     estoque_vitrine: vitrine.quantidade,
     estoque_sigla: vitrine.sigla,
     estoque_label: vitrine.label,
+    estoque_virtual: vitrine.virtual,
+    estoque_pendente: vitrine.pendente,
     abaixo_ponto: estoqueBase < ponto,
     zerado: estoqueBase <= 0,
     fonte_excel: false,

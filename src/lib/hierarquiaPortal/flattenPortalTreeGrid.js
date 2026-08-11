@@ -47,13 +47,13 @@ function allSkuRows(lin) {
 /**
  * Flatten portal tree → linhas compactas estilo TreeGrid (níveis 1–4 + todos).
  */
-export function flattenPortalTreeGrid(tree, maxLevel) {
+export function flattenPortalTreeGrid(tree, maxLevel, catalogStockContext = null) {
   const rows = [];
   const showAll = maxLevel >= TREE_GRID_EXPAND_ALL_LEVEL;
 
   for (const cat of tree) {
     const catSkus = cat.linhas.flatMap(allSkuRows);
-    const catStock = portalEstoqueGrupo(catSkus);
+    const catStock = portalEstoqueGrupo(catSkus, catalogStockContext);
     rows.push({
       id: `cat:${cat.nome}`,
       kind: 'categoria',
@@ -69,7 +69,7 @@ export function flattenPortalTreeGrid(tree, maxLevel) {
 
     for (const lin of cat.linhas) {
       const linSkus = allSkuRows(lin);
-      const linStock = portalEstoqueGrupo(linSkus);
+      const linStock = portalEstoqueGrupo(linSkus, catalogStockContext);
       rows.push({
         id: `lin:${cat.nome}::${lin.linha_codigo}`,
         kind: 'linha',
@@ -94,7 +94,12 @@ export function flattenPortalTreeGrid(tree, maxLevel) {
               subtitle: montarSubtituloPortalSku(s),
               tipo: null,
               skuCount: null,
-              estoque: { label: s.estoque_label, quantidade: s.estoque_vitrine, sigla: s.estoque_sigla },
+              estoque: {
+                label: s.estoque_label,
+                quantidade: s.estoque_vitrine,
+                sigla: s.estoque_sigla,
+                virtual: s.estoque_virtual,
+              },
             });
           }
         }
@@ -102,7 +107,7 @@ export function flattenPortalTreeGrid(tree, maxLevel) {
       }
 
       for (const pc of lin.pcs) {
-        const pcStock = portalEstoqueGrupo(pc.skus);
+        const pcStock = portalEstoqueGrupo(pc.skus, catalogStockContext);
         rows.push({
           id: `pc:${cat.nome}::${lin.linha_codigo}::${pc.produto_compra_codigo}`,
           kind: 'produto_compra',
@@ -128,7 +133,12 @@ export function flattenPortalTreeGrid(tree, maxLevel) {
             subtitle: montarSubtituloPortalSku(s),
             tipo: null,
             skuCount: null,
-            estoque: { label: s.estoque_label, quantidade: s.estoque_vitrine, sigla: s.estoque_sigla },
+            estoque: {
+              label: s.estoque_label,
+              quantidade: s.estoque_vitrine,
+              sigla: s.estoque_sigla,
+              virtual: s.estoque_virtual,
+            },
           });
         }
       }

@@ -45,7 +45,7 @@ function rowTone(kind) {
   return 'text-muted-foreground';
 }
 
-export default function PortalTreeGrid({ tree, filtroLinha, filtroTipos, search }) {
+export default function PortalTreeGrid({ tree, filtroLinha, filtroTipos, search, catalogStockContext = null }) {
   const [maxLevel, setMaxLevel] = useState(TREE_GRID_EXPAND_ALL_LEVEL);
 
   const filtered = useMemo(
@@ -54,8 +54,8 @@ export default function PortalTreeGrid({ tree, filtroLinha, filtroTipos, search 
   );
 
   const rows = useMemo(
-    () => flattenPortalTreeGrid(filtered, maxLevel),
-    [filtered, maxLevel],
+    () => flattenPortalTreeGrid(filtered, maxLevel, catalogStockContext),
+    [filtered, maxLevel, catalogStockContext],
   );
 
   if (!filtered.length) {
@@ -139,6 +139,10 @@ export default function PortalTreeGrid({ tree, filtroLinha, filtroTipos, search 
                   <TableCell className={cn(p38Table.cell, p38Table.cellNumeric, 'py-1 tabular-nums text-sm whitespace-nowrap')}>
                     {row.estoque?.mixed ? (
                       <span className="text-amber-700 dark:text-amber-300 text-xs">{row.estoque.label}</span>
+                    ) : row.estoque?.virtual && row.estoque?.pendente > 0 ? (
+                      <span className="text-sky-700 dark:text-sky-300 text-xs" title="Estoque virtual">
+                        {row.estoque.label}
+                      </span>
                     ) : (
                       row.estoque?.label || '—'
                     )}
