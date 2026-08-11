@@ -9,6 +9,7 @@ import {
 } from '@/lib/movimentacaoRecepcaoCompra';
 import { invokeRecalcularConclusaoPedidoCompra } from '@/lib/p38StockRecalc';
 import { hydrateEmbarquesPedidoFromSql, getEmbarqueItensLinhas, hydrateEmbarquesFromSql } from '@/lib/fetchEmbarqueItens';
+import RecepcionarEmbarque from '@/components/compras/RecepcionarEmbarque';
 
 function motivoEntradaCompraOk(mov) {
   const m = mov?.motivo;
