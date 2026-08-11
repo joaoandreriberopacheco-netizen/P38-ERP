@@ -37,32 +37,61 @@ const fmtCx = (n) => {
 const moeda = (v) => `R$ ${fmtR(Number(v) || 0)}`;
 const moedaOuTraco = (v) => (Number(v) > 0 ? moeda(v) : '—');
 
-function buildEsquadraColumns(pageW) {
+function buildTreeColumns(pageW) {
   const tableRight = pageW - M;
   return {
-    linha: M,
-    linhaW: 36,
-    esquadra: M + 38,
-    esquadraW: 50,
-    massa: M + 92,
+    label: M,
+    labelW: 82,
+    massa: M + 86,
     invest: M + 108,
-    media: M + 138,
+    media: M + 144,
     skus: tableRight,
+    childIndent: 5,
     tableRight,
   };
 }
 
-function buildSkuColumns(pageW) {
+function buildSkuTreeColumns(pageW) {
   const tableRight = pageW - M;
   return {
-    modelo: M,
-    modeloW: 72,
-    estoque: M + 74,
-    faltam: M + 96,
-    custoCx: M + 116,
+    label: M,
+    labelW: 88,
+    estoque: M + 92,
+    faltam: M + 114,
+    custoCx: M + 136,
     invest: tableRight,
+    childIndent: 5,
     tableRight,
   };
+}
+
+function groupEsquadrasByLinha(esquadras = []) {
+  const map = new Map();
+  for (const eq of esquadras) {
+    const key = eq.linha_codigo || eq.linha_nome || '—';
+    if (!map.has(key)) {
+      map.set(key, {
+        linha_nome: eq.linha_nome,
+        linha_codigo: eq.linha_codigo,
+        esquadras: [],
+      });
+    }
+    map.get(key).esquadras.push(eq);
+  }
+  return [...map.values()]
+    .map((g) => ({
+      ...g,
+      esquadras: [...g.esquadras].sort((a, b) =>
+        (a.produto_compra_nome || '').localeCompare(b.produto_compra_nome || '', 'pt-BR'),
+      ),
+      totais: {
+        count: g.esquadras.length,
+        saldaveis: g.esquadras.filter((e) => e.saldavel).length,
+        invest: g.esquadras.reduce((s, e) => s + (e.custo_para_saldavel || 0), 0),
+        skus: g.esquadras.reduce((s, e) => s + (e.sku_count || 0), 0),
+      },
+    }))
+    .sort((a, b) => (a.linha_nome || '').localeCompare(b.linha_nome || '', 'pt-BR'));
 }
 
 function splitLines(doc, text, width, fontSize) {
@@ -99,23 +128,11 @@ function drawFooter(doc, fontFamily, pageNum, totalPages) {
   doc.text(`Página ${pageNum} / ${totalPages}`, pageW - M, pageH - 6, { align: 'right' });
 }
 
-function drawGroupBar(doc, fontFamily, title, y, tableRight) {
-  doc.setFillColor(...ENXUTO.group);
-  doc.rect(M, y - 3.6, tableRight - M, 7.2, 'F');
-  doc.setFont(fontFamily, PDF_FONT_BOLD);
-  doc.setFontSize(FONT.group);
-  doc.setTextColor(...ENXUTO.black);
-  const lines = splitLines(doc, title, tableRight - M - 4, FONT.group);
-  drawTextBlock(doc, lines.slice(0, 2), M + 2, y + 0.8);
-  return y + 7.2 + (lines.length > 1 ? 2 : 0);
-}
-
-function drawEsquadraTableHeader(doc, fontFamily, y, col) {
+function drawTreeTableHeader(doc, fontFamily, y, col) {
   doc.setFont(fontFamily, PDF_FONT_BOLD);
   doc.setFontSize(FONT.colHdr);
   doc.setTextColor(...ENXUTO.muted);
-  doc.text('LINHA', col.linha, y);
-  doc.text('ESQUADRA', col.esquadra, y);
+  doc.text('LINHA / ESQUADRA', col.label, y);
   doc.text('MASSA', col.massa, y, { align: 'right' });
   doc.text('INVEST.', col.invest, y, { align: 'right' });
   doc.text('MÉD/MOD', col.media, y, { align: 'right' });
@@ -125,24 +142,68 @@ function drawEsquadraTableHeader(doc, fontFamily, y, col) {
   return lineY + 4.8;
 }
 
-function measureEsquadraRow(doc, eq, col) {
-  const linhaLines = splitLines(doc, eq.linha_nome || '', col.linhaW - 2, FONT.row);
-  const esquadraLines = splitLines(doc, eq.produto_compra_nome || '', col.esquadraW - 2, FONT.row);
-  return 3.6 + Math.max(linhaLines.length, esquadraLines.length, 1) * LINE_H;
+function measureLinhaGroupRow(doc, grupo, col) {
+  const title = `${grupo.linha_nome} (${grupo.totais.count} esquadra${grupo.totais.count !== 1 ? 's' : ''})`;
+  const lines = splitLines(doc, title, col.labelW - 2, FONT.group);
+  return 3.6 + Math.max(lines.length, 1) * LINE_H;
 }
 
-function drawEsquadraRow(doc, fontFamily, eq, y, col) {
-  const rowH = measureEsquadraRow(doc, eq, col);
+function drawLinhaGroupRow(doc, fontFamily, grupo, y, col) {
+  const rowH = measureLinhaGroupRow(doc, grupo, col);
+  doc.setFillColor(...ENXUTO.section);
+  doc.rect(M, y, col.tableRight - M, rowH + 0.6, 'F');
+
+  const baseline = y + 3.8;
+  doc.setFont(fontFamily, PDF_FONT_BOLD);
+  doc.setFontSize(FONT.group);
+  doc.setTextColor(...ENXUTO.black);
+
+  const title = `${grupo.linha_nome} (${grupo.totais.count} esquadra${grupo.totais.count !== 1 ? 's' : ''})`;
+  const titleLines = splitLines(doc, title, col.labelW - 2, FONT.group);
+  drawTextBlock(doc, titleLines, col.label + 2, baseline);
+
+  doc.setFont(fontFamily, PDF_FONT_NORMAL);
+  doc.setFontSize(FONT.rowSmall);
+  doc.setTextColor(...ENXUTO.muted);
+  doc.text(
+    safe(`${grupo.totais.saldaveis} saldável(is)`),
+    col.massa,
+    baseline,
+    { align: 'right' },
+  );
+
+  doc.setFont(fontFamily, PDF_FONT_BOLD);
+  doc.setFontSize(FONT.row);
+  doc.setTextColor(...ENXUTO.black);
+  doc.text(moedaOuTraco(grupo.totais.invest), col.invest, baseline, { align: 'right' });
+  doc.text('—', col.media, baseline, { align: 'right' });
+  doc.text(String(grupo.totais.skus), col.skus, baseline, { align: 'right' });
+
+  const bottom = y + rowH + 0.6;
+  drawRule(doc, bottom, col.tableRight, 0.08);
+  return bottom + 1;
+}
+
+function measureEsquadraChildRow(doc, eq, col) {
+  const esquadraLines = splitLines(doc, eq.produto_compra_nome || '', col.labelW - col.childIndent - 2, FONT.row);
+  return 3.6 + Math.max(esquadraLines.length, 1) * LINE_H;
+}
+
+function drawEsquadraChildRow(doc, fontFamily, eq, y, col) {
+  const rowH = measureEsquadraChildRow(doc, eq, col);
   const baseline = y + 3.6;
+  const xLabel = col.label + col.childIndent;
 
   doc.setFont(fontFamily, PDF_FONT_NORMAL);
   doc.setFontSize(FONT.row);
   doc.setTextColor(...ENXUTO.black);
 
-  const linhaLines = splitLines(doc, eq.linha_nome || '', col.linhaW - 2, FONT.row);
-  const esquadraLines = splitLines(doc, eq.produto_compra_nome || '', col.esquadraW - 2, FONT.row);
-  drawTextBlock(doc, linhaLines, col.linha, baseline);
-  drawTextBlock(doc, esquadraLines, col.esquadra, baseline);
+  doc.setTextColor(...ENXUTO.muted);
+  doc.text('└', col.label + 1, baseline);
+  doc.setTextColor(...ENXUTO.black);
+
+  const esquadraLines = splitLines(doc, eq.produto_compra_nome || '', col.labelW - col.childIndent - 2, FONT.row);
+  drawTextBlock(doc, esquadraLines, xLabel, baseline);
 
   doc.text(`${eq.linhas_com_massa}/${eq.min_linhas_saldavel}`, col.massa, baseline, { align: 'right' });
   doc.text(moedaOuTraco(eq.custo_para_saldavel), col.invest, baseline, { align: 'right' });
@@ -154,11 +215,28 @@ function drawEsquadraRow(doc, fontFamily, eq, y, col) {
   return bottom + 1;
 }
 
-function drawSkuTableHeader(doc, fontFamily, y, col) {
+function drawLinhaDetailGroup(doc, fontFamily, grupo, y, col) {
+  const title = `${grupo.linha_nome} (${grupo.esquadras.length} esquadra${grupo.esquadras.length !== 1 ? 's' : ''})`;
+  const titleLines = splitLines(doc, title, col.labelW - 2, FONT.group);
+  const rowH = 3.6 + Math.max(titleLines.length, 1) * LINE_H;
+
+  doc.setFillColor(...ENXUTO.section);
+  doc.rect(M, y, col.tableRight - M, rowH + 0.4, 'F');
+  doc.setFont(fontFamily, PDF_FONT_BOLD);
+  doc.setFontSize(FONT.group);
+  doc.setTextColor(...ENXUTO.black);
+  drawTextBlock(doc, titleLines, col.label + 2, y + 3.6);
+
+  const bottom = y + rowH + 0.4;
+  drawRule(doc, bottom, col.tableRight, 0.08);
+  return bottom + 1;
+}
+
+function drawSkuTreeHeader(doc, fontFamily, y, col) {
   doc.setFont(fontFamily, PDF_FONT_BOLD);
   doc.setFontSize(FONT.colHdr);
   doc.setTextColor(...ENXUTO.muted);
-  doc.text('MODELO', col.modelo, y);
+  doc.text('ESQUADRA / MODELO', col.label, y);
   doc.text('EST.', col.estoque, y, { align: 'right' });
   doc.text('FALTAM', col.faltam, y, { align: 'right' });
   doc.text('CUSTO/CX', col.custoCx, y, { align: 'right' });
@@ -168,23 +246,50 @@ function drawSkuTableHeader(doc, fontFamily, y, col) {
   return lineY + 4.8;
 }
 
-function measureSkuRow(doc, sku, col) {
+function measureEsquadraDetailGroup(doc, eq, col) {
+  const title = `${eq.produto_compra_nome} — invest. ${moeda(eq.custo_para_saldavel)}`;
+  const lines = splitLines(doc, title, col.labelW - 2, FONT.group);
+  return 3.6 + Math.max(lines.length, 1) * LINE_H;
+}
+
+function drawEsquadraDetailGroup(doc, fontFamily, eq, y, col) {
+  const rowH = measureEsquadraDetailGroup(doc, eq, col);
+  doc.setFillColor(...ENXUTO.group);
+  doc.rect(M, y, col.tableRight - M, rowH + 0.4, 'F');
+
+  const baseline = y + 3.6;
+  doc.setFont(fontFamily, PDF_FONT_BOLD);
+  doc.setFontSize(FONT.group);
+  doc.setTextColor(...ENXUTO.black);
+  const title = `${eq.produto_compra_nome} — invest. ${moeda(eq.custo_para_saldavel)}`;
+  const titleLines = splitLines(doc, title, col.labelW - 2, FONT.group);
+  drawTextBlock(doc, titleLines, col.label + 2, baseline);
+
+  const bottom = y + rowH + 0.4;
+  drawRule(doc, bottom, col.tableRight, 0.08);
+  return bottom + 1;
+}
+
+function measureSkuChildRow(doc, sku, col) {
   const label = sku.prioridade_saldavel ? `★ ${sku.eixos || sku.nome}` : (sku.eixos || sku.nome);
-  const nameLines = splitLines(doc, label, col.modeloW - 2, FONT.row);
+  const nameLines = splitLines(doc, label, col.labelW - col.childIndent - 2, FONT.row);
   return 3.6 + Math.max(nameLines.length, 1) * LINE_H;
 }
 
-function drawSkuRow(doc, fontFamily, sku, y, col) {
-  const rowH = measureSkuRow(doc, sku, col);
+function drawSkuChildRow(doc, fontFamily, sku, y, col) {
+  const rowH = measureSkuChildRow(doc, sku, col);
   const baseline = y + 3.6;
+  const xLabel = col.label + col.childIndent;
 
   doc.setFont(fontFamily, PDF_FONT_NORMAL);
   doc.setFontSize(FONT.row);
+  doc.setTextColor(...ENXUTO.muted);
+  doc.text('└', col.label + 1, baseline);
   doc.setTextColor(...ENXUTO.black);
 
   const label = sku.prioridade_saldavel ? `★ ${sku.eixos || sku.nome}` : (sku.eixos || sku.nome);
-  const nameLines = splitLines(doc, label, col.modeloW - 2, FONT.row);
-  drawTextBlock(doc, nameLines, col.modelo, baseline);
+  const nameLines = splitLines(doc, label, col.labelW - col.childIndent - 2, FONT.row);
+  drawTextBlock(doc, nameLines, xLabel, baseline);
 
   doc.text(`${fmtCx(sku.cx_atual)} CX`, col.estoque, baseline, { align: 'right' });
   doc.text(`${fmtCx(sku.cx_faltam)} CX`, col.faltam, baseline, { align: 'right' });
@@ -215,8 +320,8 @@ export async function generatePortalMassaCriticaRelatorioPdf(payload = {}) {
   const massa = parametros.massa_critica_cx ?? 16;
   const minLinhas = parametros.min_linhas_saldavel ?? 9;
 
-  const colEq = buildEsquadraColumns(pageW);
-  const colSku = buildSkuColumns(pageW);
+  const colTree = buildTreeColumns(pageW);
+  const colSkuTree = buildSkuTreeColumns(pageW);
 
   let y = TOP_Y;
   let activeTableHeader = null;
@@ -232,8 +337,13 @@ export async function generatePortalMassaCriticaRelatorioPdf(payload = {}) {
     }
   };
 
-  const startEsquadraTable = () => {
-    activeTableHeader = () => drawEsquadraTableHeader(doc, fontFamily, y, colEq);
+  const startEsquadraTree = () => {
+    activeTableHeader = () => drawTreeTableHeader(doc, fontFamily, y, colTree);
+    y = activeTableHeader();
+  };
+
+  const startSkuTree = () => {
+    activeTableHeader = () => drawSkuTreeHeader(doc, fontFamily, y, colSkuTree);
     y = activeTableHeader();
   };
 
@@ -282,7 +392,7 @@ export async function generatePortalMassaCriticaRelatorioPdf(payload = {}) {
   doc.text('INDICADOR', M, y);
   doc.text('VALOR', M + 72, y);
   y += 4.5;
-  drawHeaderRule(doc, y - 1.5, colEq.tableRight);
+  drawHeaderRule(doc, y - 1.5, colTree.tableRight);
   y += 2;
 
   const kpiRows = [
@@ -300,7 +410,7 @@ export async function generatePortalMassaCriticaRelatorioPdf(payload = {}) {
     doc.text(safe(label), M, y);
     doc.text(safe(value), M + 72, y);
     y += 4.8;
-    drawRule(doc, y - 0.8, colEq.tableRight);
+    drawRule(doc, y - 0.8, colTree.tableRight);
   }
   y += 6;
 
@@ -312,15 +422,20 @@ export async function generatePortalMassaCriticaRelatorioPdf(payload = {}) {
   doc.text('Por esquadra (produto compra)', M, y);
   y += 6;
 
-  startEsquadraTable();
-  for (const eq of esquadras) {
-    ensureSpace(measureEsquadraRow(doc, eq, colEq) + 2);
-    y = drawEsquadraRow(doc, fontFamily, eq, y, colEq);
+  const gruposLinha = groupEsquadrasByLinha(esquadras);
+  startEsquadraTree();
+  for (const grupo of gruposLinha) {
+    ensureSpace(measureLinhaGroupRow(doc, grupo, colTree) + 2);
+    y = drawLinhaGroupRow(doc, fontFamily, grupo, y, colTree);
+    for (const eq of grupo.esquadras) {
+      ensureSpace(measureEsquadraChildRow(doc, eq, colTree) + 2);
+      y = drawEsquadraChildRow(doc, fontFamily, eq, y, colTree);
+    }
   }
   stopTable();
   y += 4;
 
-  // —— Detalhe SKUs prioritários ——
+  // —— Detalhe SKUs prioritários (tree: linha → esquadra → modelos) ——
   const detalheEsquadras = esquadras.filter(
     (eq) => !eq.saldavel && (eq.custo_para_saldavel > 0 || eq.skus?.some((s) => s.prioridade_saldavel)),
   );
@@ -333,30 +448,36 @@ export async function generatePortalMassaCriticaRelatorioPdf(payload = {}) {
     doc.text('Detalhe — modelos prioritários', M, y);
     y += 7;
 
-    for (const eq of detalheEsquadras) {
-      const skusPrioritarios = (eq.skus || []).filter((s) => s.prioridade_saldavel || !s.atinge_massa);
-      if (!skusPrioritarios.length) continue;
+    startSkuTree();
 
-      ensureSpace(18);
-      y = drawGroupBar(
-        doc,
-        fontFamily,
-        `${eq.linha_nome} · ${eq.produto_compra_nome} — invest. saldável ${moeda(eq.custo_para_saldavel)}`,
-        y,
-        colSku.tableRight,
-      );
+    const detalheGrupos = groupEsquadrasByLinha(detalheEsquadras);
+    for (const grupo of detalheGrupos) {
+      const esquadrasComSkus = grupo.esquadras
+        .map((eq) => ({
+          eq,
+          skus: (eq.skus || []).filter((s) => s.prioridade_saldavel || !s.atinge_massa),
+        }))
+        .filter(({ skus }) => skus.length > 0);
 
-      activeTableHeader = () => drawSkuTableHeader(doc, fontFamily, y, colSku);
-      y = activeTableHeader();
+      if (!esquadrasComSkus.length) continue;
 
-      for (const sku of skusPrioritarios) {
-        ensureSpace(measureSkuRow(doc, sku, colSku) + 2);
-        y = drawSkuRow(doc, fontFamily, sku, y, colSku);
+      ensureSpace(12);
+      y = drawLinhaDetailGroup(doc, fontFamily, { ...grupo, esquadras: esquadrasComSkus.map((x) => x.eq) }, y, colSkuTree);
+
+      for (const { eq, skus } of esquadrasComSkus) {
+        ensureSpace(measureEsquadraDetailGroup(doc, eq, colSkuTree) + 4);
+        y = drawEsquadraDetailGroup(doc, fontFamily, eq, y, colSkuTree);
+
+        for (const sku of skus) {
+          ensureSpace(measureSkuChildRow(doc, sku, colSkuTree) + 2);
+          y = drawSkuChildRow(doc, fontFamily, sku, y, colSkuTree);
+        }
       }
 
-      stopTable();
-      y += 3;
+      y += 2;
     }
+
+    stopTable();
   }
 
   const totalPages = doc.getNumberOfPages();
