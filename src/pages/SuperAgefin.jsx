@@ -81,6 +81,7 @@ import {
   P38_VIRTUAL_OVERSCAN,
 } from '@/lib/p38VirtualList';
 import { cn } from '@/lib/utils';
+import { fetchLancamentosSuperAgefinMes } from '@/lib/fetchLancamentosExtratoAgefin';
 import { toast } from 'sonner';
 
 function formatCurrency(value) {
@@ -402,7 +403,7 @@ export default function SuperAgefin() {
   const loadContas = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 5000);
+      const data = await fetchLancamentosSuperAgefinMes(currentMonth);
       setContas(
         (data || []).filter((item) => {
           if (lancamentoCancelado(item)) return false;
@@ -418,7 +419,7 @@ export default function SuperAgefin() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentMonth]);
 
   useEffect(() => {
     loadContas();

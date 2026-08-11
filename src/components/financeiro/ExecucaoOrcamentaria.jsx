@@ -4,10 +4,19 @@ import { format, subDays } from 'date-fns';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { dateRangeFinanceiroCurto, diaBalanceteFromFiltros } from '@/lib/periodoFinanceiro';
 import {
+  fetchLancamentosFinanceirosPeriodo,
+  fetchLancamentosProgramadosFluxo,
+  fetchMovimentosCaixaPeriodo,
+  intervaloFetchFluxoPadrao,
+  intervaloProgramadasFluxo,
+  mergeLancamentosFluxo,
+} from '@/lib/fetchLancamentosFinanceirosFluxo';
+import {
   calcularKpisFluxoPeriodo,
   calcularSaldosTodasContas,
   contaUsaRegraCaixaPDV,
   getDataMovimentoCaixa,
+  getSaldoExibicaoConta,
   isTransferenciaEntreContas,
   lancamentoPertenceContasSelecionadas,
 } from '@/lib/saldoContaFinanceira';
@@ -138,6 +147,8 @@ export default function ExecucaoOrcamentaria() {
     gravarPreferenciasCorteHistorico(mostrar, dataCorte);
   }, []);
 
+  const { s: ds, e: de } = useMemo(() => dateRange(periodo, cs, ce), [periodo, cs, ce]);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const abaParam = params.get('aba');
@@ -186,7 +197,60 @@ export default function ExecucaoOrcamentaria() {
     window.history.replaceState({}, '', window.location.pathname);
   }, []);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const cts = await base44.entities.ContasFinanceiras.list();
+        if (cancelled) return;
+        setContas(cts);
+        const ativas = cts.filter((c) => c.ativo !== false);
+        setContasSel((prev) => (prev.length ? prev : ativas.map((c) => c.id)));
+      } catch (error) {
+        console.error('[Fluxo de Caixa] Erro ao carregar contas:', error);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const carregarDadosPeriodo = useCallback(async ({ ds: dsParam, de: deParam, corteHistorico } = {}) => {
+    const { dataInicio, dataFim } = intervaloFetchFluxoPadrao(dsParam, deParam);
+    const progIntervalo = intervaloProgramadasFluxo(corteHistorico ?? dataCorteHistorico);
+
+    const [realizados, programados, movs] = await Promise.all([
+      fetchLancamentosFinanceirosPeriodo({ dataInicio, dataFim }),
+      fetchLancamentosProgramadosFluxo(progIntervalo),
+      fetchMovimentosCaixaPeriodo({ dataInicio, dataFim }),
+    ]);
+
+    return {
+      lancs: mergeLancamentosFluxo(realizados, programados),
+      movimentos: movs,
+    };
+  }, [dataCorteHistorico]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    carregarDadosPeriodo({ ds, de, corteHistorico: dataCorteHistorico })
+      .then(({ lancs: ls, movimentos: movs }) => {
+        if (!cancelled) {
+          setLancs(ls);
+          setMovimentos(movs);
+        }
+      })
+      .catch((error) => {
+        console.error('[Fluxo de Caixa] Erro ao carregar período:', error);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ds, de, dataCorteHistorico, carregarDadosPeriodo]);
 
   useEffect(() => {
     if (!showNovoFluxo) return;
@@ -223,54 +287,49 @@ export default function ExecucaoOrcamentaria() {
     }
   };
 
-  const load = async () => {
+  const loadContasEManutencao = async () => {
     setLoading(true);
-    let snapshot = null;
     try {
-      const [ls, cts, movs] = await Promise.all([
-        base44.entities.LancamentoFinanceiro.list('-data_vencimento'),
-        base44.entities.ContasFinanceiras.list(),
-        base44.entities.MovimentosCaixa.list(),
-      ]);
-      snapshot = { ls, cts, movs };
-
-      setLancs(ls);
-      setMovimentos(movs);
+      const cts = await base44.entities.ContasFinanceiras.list();
       setContas(cts);
       const ativas = cts.filter((c) => c.ativo !== false);
       setContasSel((prev) => (prev.length ? prev : ativas.map((c) => c.id)));
-    } catch (error) {
-      console.error('[Fluxo de Caixa] Erro ao carregar:', error);
-    } finally {
-      setLoading(false);
-    }
 
-    if (!snapshot) return null;
-    try {
-      await syncCaixaPDVMaintenance(snapshot.cts, snapshot.movs, snapshot.ls);
-      const [ls2, movs2] = await Promise.all([
-        base44.entities.LancamentoFinanceiro.list('-data_vencimento'),
-        base44.entities.MovimentosCaixa.list(),
-      ]);
-      const contaIds = snapshot.cts.filter((c) => c.ativo !== false).map((c) => c.id);
+      const { lancs: ls, movimentos: movs } = await carregarDadosPeriodo({
+        ds,
+        de,
+        corteHistorico: dataCorteHistorico,
+      });
+      setLancs(ls);
+      setMovimentos(movs);
+
+      await syncCaixaPDVMaintenance(cts, movs, ls);
+      const refreshed = await carregarDadosPeriodo({
+        ds,
+        de,
+        corteHistorico: dataCorteHistorico,
+      });
+      const contaIds = cts.filter((c) => c.ativo !== false).map((c) => c.id);
       await sincronizarSaldosContasFinanceiras(base44, {
-        contas: snapshot.cts,
-        lancamentos: ls2,
-        movimentos: movs2,
+        contas: cts,
+        lancamentos: refreshed.lancs,
+        movimentos: refreshed.movimentos,
         contaIds,
       });
       const cts2 = await base44.entities.ContasFinanceiras.list();
-      setLancs(ls2);
-      setMovimentos(movs2);
+      setLancs(refreshed.lancs);
+      setMovimentos(refreshed.movimentos);
       setContas(cts2);
-      return { ...snapshot, ls: ls2, movs: movs2, cts: cts2 };
+      return { cts: cts2, ls: refreshed.lancs, movs: refreshed.movimentos };
     } catch (error) {
-      console.error('[Fluxo de Caixa] Erro na manutenção PDV/sincronização:', error);
+      console.error('[Fluxo de Caixa] Erro ao recarregar:', error);
+      return null;
+    } finally {
+      setLoading(false);
     }
-    return snapshot;
   };
 
-  const { s: ds, e: de } = useMemo(() => dateRange(periodo, cs, ce), [periodo, cs, ce]);
+  const load = async () => loadContasEManutencao();
 
   const contasById = useMemo(
     () => Object.fromEntries(contas.map((c) => [c.id, c])),
@@ -342,7 +401,10 @@ export default function ExecucaoOrcamentaria() {
       contasFiltroIds,
     );
     const saldosMap = calcularSaldosTodasContas(contasVisiveisSaldo, lancs, movimentos);
-    const saldoContas = contasVisiveisSaldo.reduce((acc, c) => acc + (saldosMap[c.id] || 0), 0);
+    const saldoContas = contasVisiveisSaldo.reduce(
+      (acc, c) => acc + getSaldoExibicaoConta(c, saldosMap),
+      0,
+    );
     return {
       ...baseKpis,
       saldoContas: roundToTwoDecimals(saldoContas),
