@@ -25,6 +25,11 @@ const toValue = (date) => {
   return format(date, 'yyyy-MM-dd');
 };
 
+const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+const isCompleteDateRange = (start, end) =>
+  DATE_KEY_RE.test(start) && DATE_KEY_RE.test(end);
+
 const formatLabel = (date) => {
   if (!date || Number.isNaN(date.getTime())) return 'Selecionar';
   return format(date, 'dd MMM yyyy', { locale: ptBR });
@@ -156,6 +161,7 @@ export default function MobileDateRangePicker({ startDate, endDate, onApply, onC
   };
 
   const handleSelectDay = (date) => {
+    if (!date || Number.isNaN(date.getTime())) return;
     const picked = toValue(date);
     if (!tempStart || (tempStart && tempEnd)) {
       setTempStart(picked);
@@ -172,9 +178,11 @@ export default function MobileDateRangePicker({ startDate, endDate, onApply, onC
     }
   };
 
-  const summary = startDate && endDate
+  const canApply = isCompleteDateRange(tempStart, tempEnd);
+
+  const summary = isCompleteDateRange(startDate, endDate)
     ? `${formatLabel(toDate(startDate))} - ${formatLabel(toDate(endDate))}`
-    : startDate
+    : startDate && DATE_KEY_RE.test(startDate)
       ? `${formatLabel(toDate(startDate))} - ...`
       : 'Período';
 
@@ -271,8 +279,10 @@ export default function MobileDateRangePicker({ startDate, endDate, onApply, onC
               </Button>
               <Button
                 type="button"
-                className="flex-1 h-11 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground border border-primary/80 dark:border-transparent"
+                disabled={!canApply}
+                className="flex-1 h-11 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground border border-primary/80 dark:border-transparent disabled:opacity-50"
                 onClick={() => {
+                  if (!canApply) return;
                   onApply(tempStart, tempEnd);
                   setOpen(false);
                 }}

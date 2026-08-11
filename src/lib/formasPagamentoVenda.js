@@ -28,7 +28,8 @@ export function pedidoMatchesFormasPagamento(pedido, formasSelecionadas) {
  */
 export function listarFormasPagamentoParaFiltro(pedidos = []) {
   const set = new Set(FORMAS_PAGAMENTO_VENDA);
-  pedidos.forEach((pedido) => {
+  const lista = Array.isArray(pedidos) ? pedidos : [];
+  lista.forEach((pedido) => {
     (pedido.pagamentos || []).forEach((pag) => {
       if (pag?.forma_pagamento) set.add(pag.forma_pagamento);
     });

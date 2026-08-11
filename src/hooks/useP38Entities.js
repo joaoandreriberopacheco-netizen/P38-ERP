@@ -17,7 +17,9 @@ import {
 import {
   fetchPedidosVendaGestaoHeaders,
   fetchRascunhosPedidoVendaGestaoHeaders,
+  isValidGestaoDateKey,
 } from '@/lib/fetchPedidosVendaGestao';
+import { keepPreviousData } from '@tanstack/react-query';
 
 export { fetchPedidosVenda90d, fetchDadosVendaAbcd90d };
 import { unifyLogisticaEventos } from '@/components/logistica-sandbox/fluvialDataUtils';
@@ -175,10 +177,12 @@ export function usePedidosVendaListQuery(options = {}) {
 }
 
 export function usePedidosVendaGestaoQuery({ dataInicio, dataFim, enabled = true, ...rest } = {}) {
+  const datesOk = isValidGestaoDateKey(dataInicio) && isValidGestaoDateKey(dataFim);
   return useQuery({
     queryKey: p38Keys.pedidosVendaGestao(dataInicio, dataFim),
     queryFn: () => fetchPedidosVendaGestaoHeaders({ dataInicio, dataFim }),
-    enabled: enabled && Boolean(dataInicio && dataFim),
+    enabled: enabled && datesOk,
+    placeholderData: keepPreviousData,
     staleTime: 30 * 1000,
     gcTime: P38_GC_TIME,
     ...rest,
@@ -186,10 +190,12 @@ export function usePedidosVendaGestaoQuery({ dataInicio, dataFim, enabled = true
 }
 
 export function useRascunhosPedidoVendaGestaoQuery({ dataInicio, dataFim, enabled = true, ...rest } = {}) {
+  const datesOk = isValidGestaoDateKey(dataInicio) && isValidGestaoDateKey(dataFim);
   return useQuery({
     queryKey: p38Keys.rascunhosPedidoVendaGestao(dataInicio, dataFim),
     queryFn: () => fetchRascunhosPedidoVendaGestaoHeaders({ dataInicio, dataFim }),
-    enabled: enabled && Boolean(dataInicio && dataFim),
+    enabled: enabled && datesOk,
+    placeholderData: keepPreviousData,
     staleTime: 30 * 1000,
     gcTime: P38_GC_TIME,
     ...rest,
