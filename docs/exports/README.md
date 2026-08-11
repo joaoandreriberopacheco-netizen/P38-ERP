@@ -1,6 +1,20 @@
 # Exportações do catálogo
 
-## Catálogo completo — 1 planilha (1226 SKUs activos)
+## Excel mestre (João) — cerâmica CERAM
+
+| Ficheiro | Descrição |
+|----------|-----------|
+| [../P38-catalogo-skus-completo.xlsx](../P38-catalogo-skus-completo.xlsx) | Mestre com colunas LINHA, produto_compra, ex_a, ex_b (upload GitHub) |
+
+Laboratório modelo — **piloto cerâmica** (só **CERÂMICA BOLD** + **CERÂMICA RETIF**, prefixo `CERAM`, sem zumbis).
+
+Próximo piloto mix (ainda não activo): conexões **ESGOTO** e **SOLDÁVEL**.
+
+Regras por **LINHA** (defaults): **12 posições**, massa crítica **16 cx**, **saldável** se ≥ **9** linhas com massa. Cada **produto compra** pode **sobrescrever** (null = herda).
+
+---
+
+## Catálogo completo — export automático Supabase
 
 | Ficheiro | Colunas |
 |----------|---------|

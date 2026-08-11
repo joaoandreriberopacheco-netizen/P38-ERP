@@ -67,6 +67,7 @@
     "export:analise-linhas": "node scripts/export-catalogo-analise-linhas.mjs",
     "export:linhas-mestre": "node scripts/export-linhas-mestre.mjs",
     "export:catalogo-skus": "node scripts/export-catalogo-skus.mjs",
+    "modelo:seed-ceramica": "node scripts/seed-modelo-catalogo-ceramica.mjs",
     "produto:nome:restaurar": "node scripts/restaurar-nomes-produto-hierarquia.mjs",
     "produto:nome:restaurar:apply": "node scripts/restaurar-nomes-produto-hierarquia.mjs --apply",
     "git:ship": "node scripts/git-ship.mjs",
