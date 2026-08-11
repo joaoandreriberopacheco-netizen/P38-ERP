@@ -42,6 +42,10 @@ import { filterAndSortProducts, sortProductsAlphabetically } from '@/components/
 import { productCodesMatch } from '@/lib/productCode';
 import { isVendaSemEstoquePermitida } from '@/lib/configFlags';
 import { selectAllOnFocus } from '@/lib/inputFocusUtils';
+import {
+  filterProdutosDisponiveisPdv,
+  isProdutoDisponivelPdv,
+} from '@/lib/hierarquiaPortal/produtoPdvDisponibilidade';
 
 export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   const navigate = useNavigate();
@@ -490,7 +494,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
       base44.entities.Terceiro.filter({ tipo: ['Cliente', 'Ambos'] })]
       );
 
-      setProdutos(produtosData);
+      setProdutos(filterProdutosDisponiveisPdv(produtosData));
       setCurrentUser(userData);
       setClientes(clientesData);
 
@@ -544,6 +548,11 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   };
 
   const handleSelecionarProduto = (produto) => {
+    if (!isProdutoDisponivelPdv(produto)) {
+      showFeedback('error', 'Produto na reserva — não disponível para venda no PDV.', 3000);
+      return;
+    }
+
     setBuscaProduto('');
     setShowSuggestions(false);
     setQuantidadeAtual('');

@@ -36,6 +36,10 @@ import {
   reativarSkusDaReserva,
   sugerirSkusExcedente,
 } from '@/lib/hierarquiaPortal/portalReservaCeramica';
+import {
+  isProdutoReservaComEstoque,
+  produtoEstoqueNumerico,
+} from '@/lib/hierarquiaPortal/produtoPdvDisponibilidade';
 import { toast } from 'sonner';
 
 function PosBadge({ activos, meta }) {
@@ -51,6 +55,23 @@ function PosBadge({ activos, meta }) {
     >
       {activos}/{meta}
     </span>
+  );
+}
+
+/** LED âmbar: reserva com saldo físico ainda no estoque (não vende no PDV). */
+function ReservaStockLed({ row, className }) {
+  if (!isProdutoReservaComEstoque(row)) return null;
+  const cx = produtoEstoqueNumerico(row);
+  return (
+    <span
+      className={cn(
+        'inline-block w-2.5 h-2.5 rounded-full shrink-0',
+        'bg-amber-400 shadow-[0_0_0_3px_rgba(251,191,36,0.32)] dark:bg-amber-500',
+        className,
+      )}
+      title={`Reserva com estoque (${cx} CX) — indisponível no PDV`}
+      aria-label={`Reserva com estoque (${cx} CX) — indisponível no PDV`}
+    />
   );
 }
 
@@ -228,8 +249,8 @@ export default function PortalReservaPanel({
         </p>
         <p className="text-xs text-muted-foreground">
           SKUs na reserva ficam com tag <code className="text-[10px]">reserva-ceramica</code> e{' '}
-          <code className="text-[10px]">ativo=false</code>. Não aparecem no catálogo activo nem no piloto,
-          mas podem ser reactivados a qualquer momento.
+          <code className="text-[10px]">ativo=false</code>. Não aparecem no catálogo activo, no piloto
+          nem no PDV. Os que ainda tiverem estoque aparecem com LED âmbar na lista de reservados.
         </p>
         {excedentes.length > 0 && (
           <p className="text-xs text-amber-800 dark:text-amber-200">
@@ -434,7 +455,12 @@ export default function PortalReservaPanel({
                                 aria-label={`Seleccionar ${eixosLabel}`}
                               />
                             </TableCell>
-                            <TableCell className="py-1 text-sm font-medium">{eixosLabel}</TableCell>
+                            <TableCell className="py-1 text-sm font-medium">
+                              <span className="inline-flex items-center gap-2">
+                                <ReservaStockLed row={sku} />
+                                {eixosLabel}
+                              </span>
+                            </TableCell>
                             <TableCell className="py-1 text-[10px] text-muted-foreground">
                               {sku.estoque_label}
                             </TableCell>

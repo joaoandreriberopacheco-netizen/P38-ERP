@@ -23,6 +23,10 @@ import { isVendaSemEstoquePermitida } from '@/lib/configFlags';
 import { omitPedidoVendaEspelho } from '@/lib/omitEspelhoPersist';
 import { syncPedidoVendaItens } from '@/lib/syncPedidoVendaItens';
 import { selectAllOnFocus, focusAndSelect, selectAllOnMouseDown, handleCentavosMaskKeyDown } from '@/lib/inputFocusUtils';
+import {
+  filterProdutosDisponiveisPdv,
+  isProdutoDisponivelPdv,
+} from '@/lib/hierarquiaPortal/produtoPdvDisponibilidade';
 
 export default function PDVSupermercado() {
   const [carrinho, setCarrinho] = useState([]);
@@ -138,7 +142,7 @@ export default function PDVSupermercado() {
         base44.entities.ConfiguracoesVenda.list(),
         base44.entities.ConfiguracoesEstoque.list(),
       ]);
-      setProdutos(produtosData);
+      setProdutos(filterProdutosDisponiveisPdv(produtosData));
       setCurrentUser(userData);
       setClientes(clientesData);
       if (configsVendas.length > 0) {
@@ -169,6 +173,11 @@ export default function PDVSupermercado() {
   }, [buscaProduto, produtos]);
 
   const handleSelecionarProduto = (produto) => {
+    if (!isProdutoDisponivelPdv(produto)) {
+      toast({ title: 'Produto na reserva — não disponível para venda no PDV.', variant: 'destructive' });
+      return;
+    }
+
     setProdutoSelecionado(produto);
     setBuscaProduto('');
     setShowSuggestions(false);

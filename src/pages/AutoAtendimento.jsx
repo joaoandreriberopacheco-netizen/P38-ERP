@@ -8,6 +8,10 @@ import AutoPayment from '@/components/vendas/auto/AutoPayment';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import { calculateBaseQuantity, getItemUnitKey, pickDefaultSaleUnit } from '@/lib/productUnits';
+import {
+  filterProdutosDisponiveisPdv,
+  isProdutoDisponivelPdv,
+} from '@/lib/hierarquiaPortal/produtoPdvDisponibilidade';
 
 export default function AutoAtendimentoPage() {
   const [step, setStep] = useState('home'); // home, identification, register, shop, payment, success
@@ -28,7 +32,7 @@ export default function AutoAtendimentoPage() {
         base44.entities.Produto.filter({ ativo: true }),
         base44.entities.ConfiguracoesVenda.list()
       ]);
-      setProdutos(prods);
+      setProdutos(filterProdutosDisponiveisPdv(prods));
       setConfig(configs[0]);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
@@ -59,6 +63,15 @@ export default function AutoAtendimentoPage() {
   };
 
   const handleAddToCart = (produto, quantidade = 1) => {
+    if (!isProdutoDisponivelPdv(produto)) {
+      toast({
+        title: 'Produto na reserva',
+        description: 'Este item não está disponível para venda.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setCarrinho(prev => {
       const defaultUnit = pickDefaultSaleUnit(produto, 1) || { unidade: produto.unidade_principal || 'UN', fator_conversao: 1, valor_unitario: produto.preco_venda_padrao || 0 };
       const fator = Number(defaultUnit.fator_conversao) || 1;
