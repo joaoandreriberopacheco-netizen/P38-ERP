@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Search } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
 import { createPageUrl } from '@/components/utils';
-import { fetchProdutosAtivos } from '@/lib/fetchProdutosAtivos';
+import { fetchAllProdutosCatalogo, fetchProdutosAtivos } from '@/lib/fetchProdutosAtivos';
 import { fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
 import { buildCatalogSalesVelocityMap } from '@/lib/catalogSalesVelocity';
 import {
@@ -27,7 +27,9 @@ import {
 } from '@/lib/hierarquiaPortal/portalExcelManifest';
 import PortalTreeGrid from '@/components/hierarquia-portal/PortalTreeGrid';
 import PortalSmartSupplyPanel from '@/components/hierarquia-portal/PortalSmartSupplyPanel';
+import PortalReservaPanel from '@/components/hierarquia-portal/PortalReservaPanel';
 import PortalTipoFilter from '@/components/hierarquia-portal/PortalTipoFilter';
+import { isProdutoReservaPortal, contagemReservaLine } from '@/lib/hierarquiaPortal/portalReservaCeramica';
 import {
   HIERARQUIA_PORTAL_ENABLED,
   HIERARQUIA_PORTAL_PILOTO_LINHAS,
@@ -45,22 +47,28 @@ function HierarquiaPortalInner() {
   const [filtroTipos, setFiltroTipos] = useState(() => new Set(['portfolio']));
   const [search, setSearch] = useState('');
   const [somenteAlerta, setSomenteAlerta] = useState(false);
+  const [reservados, setReservados] = useState([]);
+
+  const loadProdutos = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [activos, todos] = await Promise.all([
+        fetchProdutosAtivos(base44),
+        fetchAllProdutosCatalogo(),
+      ]);
+      setProdutos(activos || []);
+      const reservaRows = filterProdutosPortalExcel(todos || []).filter((p) => isProdutoReservaPortal(p));
+      setReservados(reservaRows);
+    } catch (e) {
+      console.error('[HierarquiaPortal]', e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      try {
-        const rows = await fetchProdutosAtivos(base44);
-        if (!cancelled) setProdutos(rows || []);
-      } catch (e) {
-        console.error('[HierarquiaPortal]', e);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
+    loadProdutos();
+  }, [loadProdutos]);
 
   useEffect(() => {
     let cancelled = false;
@@ -94,8 +102,27 @@ function HierarquiaPortalInner() {
   );
   const linhas = useMemo(() => listPortalLinhas(enriched), [enriched]);
 
+  const reservadosEnriched = useMemo(
+    () => reservados.map(enrichProdutoPortal).filter((r) => r.fonte_excel),
+    [reservados],
+  );
+
+  const enrichedComReserva = useMemo(() => {
+    const byId = new Map();
+    for (const row of enriched) byId.set(row.produto.id, row);
+    for (const row of reservadosEnriched) {
+      if (!byId.has(row.produto.id)) byId.set(row.produto.id, row);
+    }
+    return [...byId.values()];
+  }, [enriched, reservadosEnriched]);
+
+  const supplyLinesReserva = useMemo(
+    () => enrichSupplyLinesWithMetrics(buildPortalSupplyLines(enrichedComReserva), velocityMap),
+    [enrichedComReserva, velocityMap],
+  );
+
   const filteredSupply = useMemo(() => {
-    let lines = supplyLines;
+    let lines = tab === 'reserva' ? supplyLinesReserva : supplyLines;
     if (filtroLinha) lines = lines.filter((l) => l.linha_codigo === filtroLinha);
     if (filtroTipos?.size) lines = lines.filter((l) => filtroTipos.has(l.linha_tipo));
     const q = search.trim().toLowerCase();
@@ -108,7 +135,12 @@ function HierarquiaPortalInner() {
       );
     }
     return lines;
-  }, [supplyLines, filtroLinha, filtroTipos, search]);
+  }, [supplyLines, supplyLinesReserva, tab, filtroLinha, filtroTipos, search]);
+
+  const excedentesReserva = useMemo(
+    () => filteredSupply.filter((line) => contagemReservaLine(line).excedente > 0).length,
+    [filteredSupply],
+  );
 
   const filteredHierarchy = useMemo(
     () => buildPortalSupplyHierarchy(filteredSupply, velocityMap),
@@ -191,6 +223,11 @@ function HierarquiaPortalInner() {
                 Só alertas
               </Button>
             )}
+            {tab === 'reserva' && excedentesReserva > 0 && (
+              <span className="text-xs text-amber-800 dark:text-amber-200 px-2 py-1 rounded bg-amber-100/80 dark:bg-amber-950/40">
+                {excedentesReserva} esquadra(s) acima de 12 pos.
+              </span>
+            )}
           </div>
 
           <GlacialTabsList className="w-full">
@@ -205,6 +242,12 @@ function HierarquiaPortalInner() {
               activeValue={tab}
               onSelect={setTab}
               label={SMART_SUPPLY_PORTAL_PREVIEW_LABEL}
+            />
+            <GlacialTabsTrigger
+              value="reserva"
+              activeValue={tab}
+              onSelect={setTab}
+              label="Reserva (12 pos.)"
             />
           </GlacialTabsList>
         </div>
@@ -224,12 +267,18 @@ function HierarquiaPortalInner() {
             filtroTipos={filtroTipos}
             search={search}
           />
-        ) : (
+        ) : tab === 'supply' ? (
           <PortalSmartSupplyPanel
             hierarchy={filteredHierarchy}
             flatLines={filteredSupply}
             somenteAlerta={somenteAlerta}
             loadingVelocity={loadingVelocity}
+          />
+        ) : (
+          <PortalReservaPanel
+            supplyLines={filteredSupply}
+            reservadosEnriched={reservadosEnriched}
+            onRefresh={loadProdutos}
           />
         )}
 
