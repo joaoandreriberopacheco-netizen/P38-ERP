@@ -100,7 +100,12 @@ export default function ModeloCatalogoTree({
                             <ChevronRight className={cn('h-3 w-3', pcOpen && 'rotate-90')} />
                             <Layers className="h-3.5 w-3.5 text-muted-foreground" />
                             <span className="truncate">{pc.nome}</span>
-                            <span className="text-[10px] text-muted-foreground">{pc.skus.length}</span>
+                            <span className="text-[10px] text-muted-foreground">{pc.skus.length}/{pc.meta_vagas ?? 12}</span>
+                            {pc.avaliacao?.saldavel ? (
+                              <Badge className="text-[9px] bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200">Saldável</Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-[9px]">{pc.avaliacao?.linhas_com_massa_critica ?? 0}/9 massa</Badge>
+                            )}
                           </button>
                           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onNovoSku?.({ linhaId: node.linha.id, produtoCompraId: pc.id, similarBase: pc.skus[0] })}>
                             <Plus className="h-3 w-3" />

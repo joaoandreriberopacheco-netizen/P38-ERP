@@ -3,6 +3,7 @@ import { ChevronRight, AlertTriangle, Layers } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/components/utils';
 import { TIPO_LINHA_LABEL } from '@/lib/modeloCatalogo/montarNomeSku';
+import { atingeMassaCriticaCeramica } from '@/lib/modeloCatalogo/regrasCeramica';
 
 function PfutCell({ value }) {
   const neg = value < 0;
@@ -23,6 +24,11 @@ function SupplyLine({ line }) {
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-medium truncate">{line.produto_compra_nome}</span>
             <Badge variant="outline" className="text-[10px]">{TIPO_LINHA_LABEL[line.linha_tipo] || line.linha_tipo}</Badge>
+            {line.saldavel ? (
+              <Badge className="text-[10px] bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200">Saldável</Badge>
+            ) : (
+              <Badge variant="secondary" className="text-[10px]">{line.linhas_com_massa_critica ?? 0}/9 c/ 16 cx</Badge>
+            )}
             {line.alerta && <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />}
           </div>
           <p className="text-[11px] text-muted-foreground truncate">{line.linha_nome} · {line.categoria}</p>
@@ -35,19 +41,24 @@ function SupplyLine({ line }) {
       </button>
       {open && (
         <div className="px-4 pb-3 bg-muted/30">
-          {line.meta_vagas != null && (
-            <p className="text-[10px] text-muted-foreground mb-1">Portfolio: {line.meta_vagas} vagas · limiar {line.massa_critica ?? '—'}</p>
-          )}
+          <p className="text-[10px] text-muted-foreground mb-1">
+            {line.posicoes_ocupadas ?? line.sku_count}/{line.meta_vagas ?? 12} posições · massa crítica {line.massa_critica ?? 16} cx · saldável ≥ {line.min_linhas_saldavel ?? 9} linhas
+          </p>
           <p className="text-[10px] text-muted-foreground mb-2 flex items-center gap-1">
             <Layers className="h-3 w-3" /> Detalhe por SKU (simulado — não gera pedido real)
           </p>
           <ul className="space-y-1">
-            {line.skus.map((s) => (
+            {line.skus.map((s) => {
+              const est = Number(s.estoque_simulado) || 0;
+              const ok = atingeMassaCriticaCeramica(est, line.massa_critica);
+              return (
               <li key={s.id} className="flex justify-between gap-2 text-xs text-muted-foreground">
                 <span className="truncate">{s.nome}</span>
-                <span className="shrink-0 tabular-nums">est. {Number(s.estoque_simulado) || 0}{s.eixo_b_texto ? ` · ${s.eixo_b_texto}` : ''}</span>
+                <span className={cn('shrink-0 tabular-nums', ok ? 'text-green-700 dark:text-green-400' : '')}>
+                  {est} cx{ok ? ' ✓' : ''}{s.eixo_b_texto ? ` · ${s.eixo_b_texto}` : ''}
+                </span>
               </li>
-            ))}
+            );})}
           </ul>
         </div>
       )}

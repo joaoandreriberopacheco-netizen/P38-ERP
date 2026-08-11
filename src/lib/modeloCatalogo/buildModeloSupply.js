@@ -1,8 +1,14 @@
 import { mapTipoLinhaUi } from '@/lib/modeloCatalogo/montarNomeSku';
+import {
+  avaliarProdutoCompraCeramica,
+  CERAM_MASSA_CRITICA_CX,
+  CERAM_META_VAGAS,
+  CERAM_MIN_LINHAS_SALDAVEL,
+} from '@/lib/modeloCatalogo/regrasCeramica';
 
 /**
  * SMART SUPPLY simulado — agrupa por produto_compra (ou linha solo).
- * P.FUT* = estoque_simulado - estoque_minimo_simulado (simplificado).
+ * Cerâmica: saldável se >= min_linhas posições com estoque >= massa_critica (16 cx).
  */
 export function buildModeloSupplyLines({ linhas, produtosCompra, skus }) {
   const linhaById = new Map((linhas || []).map((l) => [l.id, l]));
@@ -24,8 +30,9 @@ export function buildModeloSupplyLines({ linhas, produtosCompra, skus }) {
         categoria: linha.categoria_nome,
         produto_compra_id: pc?.id || null,
         produto_compra_nome: pc?.nome || linha.nome,
-        meta_vagas: pc?.meta_vagas ?? null,
-        massa_critica: pc?.massa_critica ?? null,
+        meta_vagas: pc?.meta_vagas ?? CERAM_META_VAGAS,
+        massa_critica: pc?.massa_critica ?? CERAM_MASSA_CRITICA_CX,
+        min_linhas_saldavel: pc?.min_linhas_saldavel ?? CERAM_MIN_LINHAS_SALDavel,
         skus: [],
       });
     }
@@ -37,9 +44,15 @@ export function buildModeloSupplyLines({ linhas, produtosCompra, skus }) {
     const minimoTotal = g.skus.reduce((n, s) => n + (Number(s.estoque_minimo_simulado) || 0), 0);
     const zerados = g.skus.filter((s) => (Number(s.estoque_simulado) || 0) <= 0).length;
     const pfut = Math.round(estoqueTotal - minimoTotal);
-    const alerta = zerados > 0 || pfut < 0;
+    const ceramica = avaliarProdutoCompraCeramica(g.skus, {
+      massaCritica: g.massa_critica,
+      metaVagas: g.meta_vagas,
+      minLinhasSaldavel: g.min_linhas_saldavel,
+    });
+    const alerta = !ceramica.saldavel || zerados > 0 || pfut < 0;
     return {
       ...g,
+      ...ceramica,
       sku_count: g.skus.length,
       estoque_total: estoqueTotal,
       pfut_simulado: pfut,
