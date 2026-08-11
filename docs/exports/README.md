@@ -1,5 +1,15 @@
 # Exportações do catálogo
 
+## Catálogo completo — 1 planilha (1226 SKUs activos)
+
+| Ficheiro | Colunas |
+|----------|---------|
+| [P38-catalogo-skus-completo.xlsx](./P38-catalogo-skus-completo.xlsx) | categoria · codigo interno · h1–h5 · descrição completa (sku) · estoque atual |
+
+Regenerar: `npm run export:catalogo-skus`
+
+---
+
 ## LINHAS mestre — aprovação (próximo passo BD)
 
 Tabela **LINHA** + tipo (solo/mix/portfolio) antes de SQL. Marque **STATUS** na folha.
