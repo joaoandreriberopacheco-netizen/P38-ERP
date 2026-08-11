@@ -19,6 +19,7 @@ import {
   usuarioLegadoSemMatrizPerfil,
   perfilResolvidoParaUsuario,
 } from '@/lib/perfilPermissoes';
+import { SMART_SUPPLY_MENU_LABEL } from '@/config/smartSupplyFlags';
 import {
   LayoutDashboard, House, Monitor, Banknote, TrendingUp, Package,
   DollarSign, BookOpen, Settings, ShoppingCart, Warehouse, Truck, ClipboardPenLine,
@@ -191,7 +192,7 @@ export const ALL_MENU_ITEMS = [
       p?.estoque?.logistica,
     submenu: [
       {
-        name: 'Sugestões de Compra',
+        name: SMART_SUPPLY_MENU_LABEL,
         page: 'SugestoesCompra',
         icon: Lightbulb,
         permissaoCheck: (p) => p?.estoque?.compras?.sugestoes === true

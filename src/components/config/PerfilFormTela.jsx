@@ -84,7 +84,7 @@ export const MODULOS = [
         key: 'compras',
         label: 'Compras',
         submodulos: [
-          { key: 'sugestoes', label: 'Sugestões de Compra' },
+          { key: 'sugestoes', label: 'SMART SUPPLY' },
           { key: 'cotacoes', label: 'Cotações' },
           { key: 'pedidos', label: 'Pedidos de Compra' },
           { key: 'conferencia', label: 'Conferência de Entrada' },

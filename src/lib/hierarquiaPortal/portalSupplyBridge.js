@@ -1,9 +1,9 @@
-/** Chave sessionStorage — ponte Portal SMART SUPPLY → Sugestões de Compra. */
+/** Chave sessionStorage — ponte Portal preview → SMART SUPPLY (SugestoesCompra). */
 export const PORTAL_SUPPLY_BRIDGE_KEY = 'p38_portal_supply_bridge';
 
 /**
- * Grava contexto da LINHA/esquadra e abre Sugestões de Compra (cotação fornecedor).
- * @returns {string} path para navigate/Link
+ * Grava contexto da LINHA/esquadra para abrir SMART SUPPLY com filtro.
+ * @returns {object} payload
  */
 export function buildPortalSupplyBridgePayload({ linhaCodigo, linhaNome, produtoCompraNome, pontoFuturoLabel, veredicto }) {
   const searchTerm = produtoCompraNome || linhaNome || '';
@@ -14,7 +14,7 @@ export function buildPortalSupplyBridgePayload({ linhaCodigo, linhaNome, produto
     produto_compra: produtoCompraNome || '',
     ponto_futuro: pontoFuturoLabel || '',
     veredicto: veredicto || '',
-    source: 'portal_smart_supply',
+    source: 'portal_smart_supply_preview',
     at: new Date().toISOString(),
   };
 }

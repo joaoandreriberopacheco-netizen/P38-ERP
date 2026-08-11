@@ -21,6 +21,7 @@ import {
 import { portalEstoqueCx } from '@/lib/hierarquiaPortal/buildPortalSupplyCeramica';
 import { summarizePortalSupply } from '@/lib/hierarquiaPortal/buildPortalSupplyHierarchy';
 import PortalSupplyBridgeActions from '@/components/hierarquia-portal/PortalSupplyBridgeActions';
+import { SMART_SUPPLY_TITLE } from '@/config/smartSupplyFlags';
 
 const TIPO_LABEL = { solo: 'Solo', mix: 'Mix', portfolio: 'Portfolio' };
 
@@ -71,9 +72,10 @@ function SupplySummary({ hierarchy, flatLines, somenteAlerta }) {
       <p className="text-xs text-muted-foreground flex items-start gap-1.5">
         <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
         <span>
-          SMART SUPPLY observa a <strong>LINHA</strong> e consolida dos SKUs: estoque vitrine, média 30d e ponto futuro.
-          O <strong>catálogo</strong> cuida do cadastro; daqui sai a <strong>ponte para cotação</strong> ao fornecedor (Sugestões de Compra).
-          Regra cerâmica piloto: {CERAM_META_VAGAS} pos · {CERAM_MASSA_CRITICA_CX} CX · ≥ {CERAM_MIN_LINHAS_SALDAVEL} linhas saldáveis.
+          SMART SUPPLY observa a <strong>LINHA</strong> (preview). Consolida estoque, giro 30d e ponto futuro dos SKUs.
+          O módulo de produção <strong>{SMART_SUPPLY_TITLE}</strong> (Compras) junta <strong>sugestão + cotação</strong> ao fornecedor —
+          use <strong>Abrir SMART SUPPLY</strong> para continuar a reposição.
+          {' '}Regra cerâmica piloto: {CERAM_META_VAGAS} pos · {CERAM_MASSA_CRITICA_CX} CX · ≥ {CERAM_MIN_LINHAS_SALDAVEL} linhas saldáveis.
         </span>
       </p>
     </div>

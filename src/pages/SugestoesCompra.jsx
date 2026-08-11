@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import SugestaoCompra from '@/components/compras/SugestaoCompra';
 import HierarquiaPortalEntry from '@/components/hierarquia-portal/HierarquiaPortalEntry';
 import ModeloCatalogoEntry from '@/components/modelo-catalogo/ModeloCatalogoEntry';
+import {
+  SMART_SUPPLY_SUBTITLE,
+  SMART_SUPPLY_TITLE,
+} from '@/config/smartSupplyFlags';
 
 export default function SugestoesCompraPage() {
   const [sugestaoKey, setSugestaoKey] = useState(0);
@@ -12,10 +16,11 @@ export default function SugestoesCompraPage() {
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
             <h1 className="text-2xl font-semibold text-foreground font-glacial">
-              Sugestões de Compra
+              {SMART_SUPPLY_TITLE}
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Análise inteligente de estoque e reposição
+            <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+              {SMART_SUPPLY_SUBTITLE}. O catálogo cuida do cadastro; aqui vive a reposição
+              (sugestão + cotação). Piloto cerâmica: use o preview por LINHA no portal.
             </p>
           </div>
           <div className="flex flex-wrap gap-2 shrink-0">

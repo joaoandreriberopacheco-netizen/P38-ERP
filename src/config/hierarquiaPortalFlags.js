@@ -1,10 +1,10 @@
 /**
  * Portal de preview da hierarquia (Categoria → LINHA → Produto compra → SKU).
  *
- * Papéis (visão alvo pós-corte):
- * - Catálogo /Produtos → cadastro (nome, hierarquia, unidades, preço)
- * - Portal SMART SUPPLY → giro, ponto futuro, saldável, ponte cotação fornecedor
- * - Sugestões de Compra → execução da cotação/reposição (legado hoje; converge para supply)
+ * Papéis:
+ * - Catálogo /Produtos → cadastro
+ * - SugestoesCompra (/SugestoesCompra) → SMART SUPPLY (sugestão + cotação fornecedor)
+ * - Portal Hierarquia → preview da visão por LINHA (piloto cerâmica) antes de convergir no SMART SUPPLY
  */
 import {
   MODELO_PILOTO_LINHAS_ATIVAS,

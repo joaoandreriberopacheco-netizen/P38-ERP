@@ -33,6 +33,7 @@ import {
   HIERARQUIA_PORTAL_PILOTO_LINHAS,
 } from '@/config/hierarquiaPortalFlags';
 import { MODELO_PILOTO_LINHAS_PLANEADAS } from '@/config/modeloCatalogoFlags';
+import { SMART_SUPPLY_PORTAL_PREVIEW_LABEL, SMART_SUPPLY_TITLE } from '@/config/smartSupplyFlags';
 
 function HierarquiaPortalInner() {
   const [loading, setLoading] = useState(true);
@@ -141,9 +142,10 @@ function HierarquiaPortalInner() {
               Portal hierarquia — piloto cerâmica
             </h1>
             <p className="text-sm text-muted-foreground max-w-2xl">
-              Piloto cerâmica ({PORTAL_EXCEL_SKU_COUNT} SKUs).{' '}
-              <strong className="text-foreground font-normal">Cadastro (treegrid)</strong> — hierarquia e nomes, como futuro catálogo enxuto.{' '}
-              <strong className="text-foreground font-normal">SMART SUPPLY</strong> — giro, ponto futuro, saldável e ponte para cotação fornecedor.
+              Preview por LINHA (piloto cerâmica, {PORTAL_EXCEL_SKU_COUNT} SKUs).{' '}
+              <strong className="text-foreground font-normal">Cadastro</strong> — hierarquia e nomes.{' '}
+              <strong className="text-foreground font-normal">{SMART_SUPPLY_TITLE}</strong> de produção
+              (sugestão + cotação) fica em <strong className="text-foreground font-normal">Compras → SMART SUPPLY</strong>.
             </p>
           </div>
           <div className="rounded-lg border border-violet-500/40 bg-violet-50/80 dark:bg-violet-950/30 px-3 py-2 text-xs text-violet-900 dark:text-violet-100 max-w-sm space-y-1">
@@ -206,7 +208,7 @@ function HierarquiaPortalInner() {
             value="supply"
             activeValue={tab}
             onSelect={setTab}
-            label="SMART SUPPLY (reposição)"
+            label={SMART_SUPPLY_PORTAL_PREVIEW_LABEL}
           />
         </GlacialTabsList>
 
