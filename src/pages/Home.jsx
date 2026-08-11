@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { ChevronRight, ClipboardPenLine, Settings2 } from 'lucide-react';
@@ -25,11 +26,15 @@ import {
 } from '@/lib/perfilPermissoes';
 import { prefetchP38Page } from '@/next/prefetchP38Route';
 import { createPageUrl } from '@/components/utils';
+import { dataHoje } from '@/components/utils/dateUtils';
+import { fetchHomeVendasHoje } from '@/hooks/useP38Entities';
+import { p38Keys } from '@/lib/p38QueryConfig';
 
 const STORAGE_KEY = 'home_quick_actions';
 const PersonalizarHomeDialog = React.lazy(() => import('@/components/home/PersonalizarHomeDialog'));
 
 export default function HomePage() {
+  const queryClient = useQueryClient();
   const [currentUser, setCurrentUser] = useState(null);
   const [perfilDeAcesso, setPerfilDeAcesso] = useState(null);
   const [quickActionIds, setQuickActionIds] = useState([]);
@@ -63,6 +68,17 @@ export default function HomePage() {
       permissoes?.vendas?.acesso
     );
   }, [currentUser, permissoes]);
+
+  useEffect(() => {
+    if (!podeVerResumoVendas) return undefined;
+    const dateKey = dataHoje();
+    queryClient.prefetchQuery({
+      queryKey: p38Keys.homeVendasHoje(dateKey),
+      queryFn: () => fetchHomeVendasHoje(dateKey),
+      staleTime: 30 * 1000,
+    });
+    return undefined;
+  }, [podeVerResumoVendas, queryClient]);
 
   useEffect(() => {
     const loadUser = async () => {

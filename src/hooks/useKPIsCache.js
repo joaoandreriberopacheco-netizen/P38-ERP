@@ -1,26 +1,30 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useHomeKpisQuery } from '@/hooks/useP38Entities';
+import { useHomeVendasHojeQuery } from '@/hooks/useP38Entities';
 import { p38Keys } from '@/lib/p38QueryConfig';
 
-const DEFAULT_KPIS = {
+const DEFAULT_VENDAS_HOJE = {
   vendasHoje: 0,
   valorVendasHoje: 0,
-  estoqueAlerta: 0,
-  pedidosPendentes: 0,
 };
 
 /**
- * KPIs da Home — cache via React Query (partilha catálogo com Produtos).
- * @deprecated Preferir useHomeKpisQuery directamente em código novo.
+ * Resumo de vendas da Home — cache via React Query.
+ * @deprecated Preferir useHomeVendasHojeQuery em código novo.
  */
 export function useKPIsCache(options = {}) {
   const queryClient = useQueryClient();
-  const { data, isLoading, isFetching, refetch } = useHomeKpisQuery(options);
+  const { data, isLoading, isFetching, refetch } = useHomeVendasHojeQuery(options);
 
   return {
-    kpis: data ?? DEFAULT_KPIS,
-    isLoading: isLoading || isFetching,
+    kpis: data ?? DEFAULT_VENDAS_HOJE,
+    isLoading,
+    isFetching,
+    isPending: isLoading,
+    hasData: data != null,
     loadKPIs: refetch,
-    clearCache: () => queryClient.removeQueries({ queryKey: [...p38Keys.all, 'home-kpis'] }),
+    clearCache: () => {
+      queryClient.removeQueries({ queryKey: [...p38Keys.all, 'home-vendas-hoje'] });
+      queryClient.removeQueries({ queryKey: [...p38Keys.all, 'home-kpis'] });
+    },
   };
 }

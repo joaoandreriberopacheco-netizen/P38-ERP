@@ -16,6 +16,8 @@ export const p38Keys = {
   dadosVendaAbcd90d: () => [...p38Keys.pedidosVenda90d(), 'abcd-itens'],
   rascunhosPedidoVenda: (sort = '-created_date') => [...p38Keys.all, 'rascunho-pedido-venda', 'list', sort],
   homeKpis: (dateKey) => [...p38Keys.all, 'home-kpis', dateKey],
+  homeVendasHoje: (dateKey) => [...p38Keys.all, 'home-vendas-hoje', dateKey],
+  homePedidosPendentes: () => [...p38Keys.all, 'home-pedidos-pendentes'],
   intervenientes: () => [...p38Keys.all, 'intervenientes'],
   logistica: {
     eventos: () => [...p38Keys.all, 'logistica', 'eventos'],

@@ -9,15 +9,15 @@ import {
   fetchPedidosVenda90d,
 } from '@/lib/fetchPedidosVenda90d';
 import { hydratePedidosVendaItensFromSql } from '@/lib/fetchPedidoVendaItens';
+import {
+  fetchHomeKpis as fetchHomeKpisLight,
+  fetchHomeVendasHoje,
+  fetchPedidosAguardandoCaixaCount,
+} from '@/lib/fetchHomeKpis';
 
 export { fetchPedidosVenda90d, fetchDadosVendaAbcd90d };
 import { unifyLogisticaEventos } from '@/components/logistica-sandbox/fluvialDataUtils';
-import { resolveValorPedidoVenda, roundToTwoDecimals } from '@/lib/financialUtils';
-import { dataHoje, toLocalDateKey } from '@/components/utils/dateUtils';
-
-function valorPedidoVenda(pedido) {
-  return resolveValorPedidoVenda(pedido);
-}
+import { dataHoje } from '@/components/utils/dateUtils';
 
 const entityQueryDefaults = {
   staleTime: P38_STALE_TIME,
@@ -45,42 +45,42 @@ export function fetchRascunhosPedidoVendaList(sort = '-created_date') {
   return base44.entities.RascunhoPedidoVenda.list(sort);
 }
 
-export async function fetchHomeKpis(dateKey, queryClient) {
-  const produtosPromise = queryClient
-    ? queryClient.fetchQuery({
-        queryKey: p38Keys.produtos(),
-        queryFn: () => fetchProdutosList(),
-        staleTime: P38_STALE_TIME,
-      })
-    : fetchProdutosList();
+export async function fetchHomeKpis(dateKey, _queryClient) {
+  return fetchHomeKpisLight(dateKey);
+}
 
-  const pedidosPromise = queryClient
-    ? queryClient.fetchQuery({
-        queryKey: p38Keys.pedidosVenda(),
-        queryFn: () => fetchPedidosVendaList('-created_date'),
-        staleTime: P38_STALE_TIME,
-      })
-    : fetchPedidosVendaList('-created_date');
+export { fetchHomeVendasHoje, fetchPedidosAguardandoCaixaCount };
 
-  const [allPedidos, produtos] = await Promise.all([pedidosPromise, produtosPromise]);
-  const pedidos = Array.isArray(allPedidos) ? allPedidos : [];
+const homeQueryDefaults = {
+  staleTime: 30 * 1000,
+  gcTime: P38_GC_TIME,
+  refetchOnMount: 'always',
+  refetchOnWindowFocus: true,
+};
 
-  const vendasHoje = pedidos.filter(
-    (v) => v?.created_date && toLocalDateKey(v.created_date) === dateKey
-  );
-  const pedidosPendentes = pedidos.filter((p) => p.status === 'Aguardando Caixa');
-  const produtosAlerta = (produtos || []).filter(
-    (p) => (p.estoque_atual || 0) <= (p.estoque_minimo || 0)
-  );
+export function useHomeVendasHojeQuery(options = {}) {
+  const dateKey = dataHoje();
+  const { enabled = true, ...rest } = options;
 
-  return {
-    vendasHoje: vendasHoje.length,
-    valorVendasHoje: roundToTwoDecimals(
-      vendasHoje.reduce((sum, v) => sum + valorPedidoVenda(v), 0)
-    ),
-    estoqueAlerta: produtosAlerta.length,
-    pedidosPendentes: pedidosPendentes.length,
-  };
+  return useQuery({
+    queryKey: p38Keys.homeVendasHoje(dateKey),
+    queryFn: () => fetchHomeVendasHoje(dateKey),
+    enabled,
+    ...homeQueryDefaults,
+    ...rest,
+  });
+}
+
+export function useHomePedidosPendentesQuery(options = {}) {
+  const { enabled = true, ...rest } = options;
+
+  return useQuery({
+    queryKey: p38Keys.homePedidosPendentes(),
+    queryFn: fetchPedidosAguardandoCaixaCount,
+    enabled,
+    ...homeQueryDefaults,
+    ...rest,
+  });
 }
 
 export function useProdutosListQuery(options = {}) {
@@ -327,8 +327,11 @@ export function useP38QueryInvalidation() {
       queryClient.invalidateQueries({ queryKey: [...p38Keys.all, 'pedido-venda'] }),
     invalidateRascunhosPedidoVenda: () =>
       queryClient.invalidateQueries({ queryKey: [...p38Keys.all, 'rascunho-pedido-venda'] }),
-    invalidateHomeKpis: () =>
-      queryClient.invalidateQueries({ queryKey: [...p38Keys.all, 'home-kpis'] }),
+    invalidateHomeKpis: () => {
+      queryClient.invalidateQueries({ queryKey: [...p38Keys.all, 'home-kpis'] });
+      queryClient.invalidateQueries({ queryKey: [...p38Keys.all, 'home-vendas-hoje'] });
+      queryClient.invalidateQueries({ queryKey: [...p38Keys.all, 'home-pedidos-pendentes'] });
+    },
     invalidateLogistica: () =>
       queryClient.invalidateQueries({ queryKey: [...p38Keys.all, 'logistica'] }),
   };
