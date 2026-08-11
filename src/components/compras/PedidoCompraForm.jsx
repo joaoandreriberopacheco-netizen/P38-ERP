@@ -1669,7 +1669,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
 
             {/* ABA: LOGS */}
             <TabsContent value="logs" className="mt-0">
-              <LogsPedidoCompra pedidoId={pedido?.id} />
+              <LogsPedidoCompra pedidoId={pedido?.id} pedido={pedido} />
             </TabsContent>
           </div>
         </Tabs>

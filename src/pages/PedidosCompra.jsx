@@ -18,6 +18,8 @@ import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
 import { hydrateEmbarquesFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 import { fetchPedidosCompraGestaoInicial } from '@/lib/fetchPedidosCompraGestao';
 import { carregarProdutosMap } from '@/lib/embarqueVitrineHelpers';
+import { qtyEmbarcadaComercialLinha } from '@/lib/embarqueLogisticaHelpers';
+import { resolveEmbarqueQuantidadeComercial } from '@/lib/embarqueQuantityResolve';
 import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
@@ -237,7 +239,7 @@ const getQuantidadePendenteNecessidade = (pedido, embarque) => {
 
   const itensNecessidade = getEmbarqueItensLinhas(embarque);
   const quantidadeDoEmbarque = itensNecessidade.reduce((acc, item) => {
-    return acc + (Number(item?.quantidade_embarcada) || Number(item?.quantidade_pedida) || 0);
+    return acc + qtyEmbarcadaComercialLinha(item);
   }, 0);
 
   if (quantidadeDoEmbarque > 0) return quantidadeDoEmbarque;
@@ -465,7 +467,10 @@ const buildVirtualNecessidade = (pedido, embarquesDoPedido) => {
     getEmbarqueItensLinhas(embarque).forEach((item) => {
       const produtoId = item.produto_id;
       if (!produtoId) return;
-      acc[produtoId] = (acc[produtoId] || 0) + (Number(item.quantidade_recebida) || Number(item.quantidade_embarcada) || 0);
+      const recebido =
+        resolveEmbarqueQuantidadeComercial(item, 'recebida')
+        || resolveEmbarqueQuantidadeComercial(item, 'embarcada');
+      acc[produtoId] = (acc[produtoId] || 0) + recebido;
     });
     return acc;
   }, {});

@@ -8,7 +8,7 @@ import InformarEmbarque from './InformarEmbarque';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
-import { calcularPercentuaisLogistica, derivarStatusEmbarqueAgregado, qtyEmbarcadaComercialLinha } from '@/lib/embarqueLogisticaHelpers';
+import { calcularPercentuaisLogistica, derivarStatusEmbarqueAgregado, qtyEmbarcadaComercialLinha, calcularItensOrfaosAguardandoDespacho } from '@/lib/embarqueLogisticaHelpers';
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 
 // Calcula total embarcado por produto em TODOS os embarques
@@ -218,17 +218,11 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated, onIr
   }, [temEmbarqueReal, percentualEmbarcado, pedido?.status_embarque]);
   const totalEmbarcado = useMemo(() => calcularTotalEmbarcado(embarquesComItensAssociados), [embarquesComItensAssociados]);
 
-  // Itens órfãos: qty pedida - qty embarcada em todos os embarques reais
-  const itensOrfaos = useMemo(() => {
-    return (pedido?.itens || []).
-    map((item) => ({
-      ...item,
-      qtd_pendente: roundToTwoDecimals(
-        Math.max(0, (Number(item.quantidade) || 0) - (totalEmbarcado[item.produto_id] || 0))
-      )
-    })).
-    filter((item) => item.qtd_pendente > 0);
-  }, [pedido, totalEmbarcado]);
+  // Itens órfãos: Necessidade (saldo pós-recepção) + pedido ainda não despachado
+  const itensOrfaos = useMemo(
+    () => calcularItensOrfaosAguardandoDespacho(pedido, embarques, totalEmbarcado),
+    [pedido, embarques, totalEmbarcado],
+  );
 
   const temOrfaos = itensOrfaos.length > 0;
   const semEmbarques = embarques.length === 0;

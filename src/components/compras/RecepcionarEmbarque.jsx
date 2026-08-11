@@ -363,6 +363,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
             quantidade_pedida: saldoBase,
             quantidade_embarcada: saldoBase,
             quantidade_recebida: 0,
+            quantidade_pedida_apresentacao: saldoApres,
             quantidade_embarcada_apresentacao: saldoApres,
             quantidade_recebida_apresentacao: 0,
             unidade_apresentacao: linha.unidade,
@@ -435,10 +436,31 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
       }
 
       // 3) Metadados do embarque (sem duplicar itens — espelho vem do SQL)
+      const divergenciasCount = itensNorm.filter((i) => i.divergencia_tipo !== 'Nenhuma').length;
+      const resumoDivergencias = itensNorm
+        .filter((i) => i.divergencia_tipo !== 'Nenhuma')
+        .map((i) => {
+          const un = i.unidade_apresentacao || i.unidade_medida || '';
+          const rec = i.quantidade_recebida_apresentacao ?? resolveEmbarqueQuantidadeComercial(i, 'recebida');
+          const emb = i.quantidade_embarcada_apresentacao ?? resolveEmbarqueQuantidadeComercial(i, 'embarcada');
+          return `${i.produto_nome}: recebido ${rec}/${emb} ${un} (${i.divergencia_tipo})`;
+        })
+        .join('; ');
+
+      const obsAnteriores = String(embarque?.observacoes || '').trim();
+      const obsRecepcao = [
+        temDivergencia ? `Recepção com divergência (${dataEntrada}).` : null,
+        resumoDivergencias || null,
+        itensOrfaosNorm.length > 0
+          ? `Saldo aguardando novo embarque: ${itensOrfaosNorm.map((i) => `${i.produto_nome} ${i.quantidade_embarcada_apresentacao} ${i.unidade_apresentacao || ''}`.trim()).join('; ')}`
+          : null,
+      ].filter(Boolean).join('\n');
+      const observacoesFinais = [obsAnteriores, obsRecepcao].filter(Boolean).join('\n\n');
+
       await base44.entities.Embarque.update(embarque.id, {
         status: 'Concluído',
         status_recebimento: statusRecebimento,
-        observacoes: embarque?.observacoes,
+        observacoes: observacoesFinais || embarque?.observacoes,
       });
 
       if (embarqueOrfaoMeta) {
@@ -453,7 +475,6 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         }
       }
 
-      const divergenciasCount = itensNorm.filter((i) => i.divergencia_tipo !== 'Nenhuma').length;
       const divergenciasDesc = divergenciasCount > 0 ? ` | ${divergenciasCount} divergência(s)` : '';
       const resumoItens = itensNorm.map((i) => {
         const un = i.unidade_apresentacao || i.unidade_medida || '';

@@ -1,4 +1,5 @@
 import { rebuildEmbarqueItensMirror } from '@/lib/embarqueItemContract';
+import { roundToTwoDecimals } from '@/lib/financialUtils';
 import {
   resolveEmbarqueQuantidadeBase,
   resolveEmbarqueQuantidadeComercial,
@@ -78,6 +79,79 @@ export function derivarStatusEmbarqueAgregado(pctDespachado) {
 /** Quantidade comercial para exibição em órfãos / totais por produto. */
 export function qtyEmbarcadaComercialLinha(item = {}) {
   return resolveEmbarqueQuantidadeComercial(item, 'embarcada');
+}
+
+/**
+ * Itens aguardando novo despacho:
+ * 1) saldo em embarques tipo Necessidade (pós-recepção com divergência), e
+ * 2) quantidade do pedido ainda não coberta por despachos reais.
+ */
+export function calcularItensOrfaosAguardandoDespacho(pedido, embarques = [], totalEmbarcadoPorProduto = {}) {
+  const pendentePorProduto = {};
+
+  (embarques || [])
+    .filter((emb) => emb?.tipo === 'Necessidade')
+    .forEach((emb) => {
+      getEmbarqueItensLinhas(emb).forEach((linha) => {
+        const pid = linha?.produto_id;
+        if (!pid) return;
+        const q = qtyEmbarcadaComercialLinha(linha);
+        if (q > 0) {
+          pendentePorProduto[pid] = roundToTwoDecimals((pendentePorProduto[pid] || 0) + q);
+        }
+      });
+    });
+
+  (pedido?.itens || []).forEach((item) => {
+    const pid = item?.produto_id;
+    if (!pid) return;
+    const pedidaCom = Number(item.quantidade) || 0;
+    const embarcadoCom = Number(totalEmbarcadoPorProduto[pid]) || 0;
+    const faltaDespacho = Math.max(0, pedidaCom - embarcadoCom);
+    if (faltaDespacho > 0) {
+      pendentePorProduto[pid] = roundToTwoDecimals((pendentePorProduto[pid] || 0) + faltaDespacho);
+    }
+  });
+
+  return (pedido?.itens || [])
+    .map((item) => ({
+      ...item,
+      qtd_pendente: roundToTwoDecimals(pendentePorProduto[item.produto_id] || 0),
+    }))
+    .filter((item) => item.qtd_pendente > 0);
+}
+
+function calcularTotalEmbarcadoComercial(embarques = []) {
+  const map = {};
+  (embarques || []).forEach((emb) => {
+    if (emb?.tipo === 'Necessidade') return;
+    if (!(emb?.data_embarque || emb?.eta || emb?.transportadora_id || emb?.transportadora_nome)) return;
+    getEmbarqueItensLinhas(emb).forEach((item) => {
+      const pid = item?.produto_id;
+      if (!pid) return;
+      const add = qtyEmbarcadaComercialLinha(item);
+      map[pid] = roundToTwoDecimals((map[pid] || 0) + add);
+    });
+  });
+  return map;
+}
+
+/** Órfãos com cálculo automático do total embarcado (para Logs e listagens). */
+export function calcularItensOrfaosPedido(pedido, embarques = []) {
+  return calcularItensOrfaosAguardandoDespacho(
+    pedido,
+    embarques,
+    calcularTotalEmbarcadoComercial(embarques),
+  );
+}
+
+/** Embarques com recepção divergente ou parcial (para aba Logs). */
+export function listarEmbarquesComDivergenciaRecepcao(embarques = []) {
+  return (embarques || []).filter((emb) => {
+    const st = emb?.status_recebimento || emb?.status_recebimento_embarque || '';
+    const obs = String(emb?.observacoes || '').toLowerCase();
+    return /diverg|parcial/i.test(st) || obs.includes('divergência') || obs.includes('divergencia');
+  });
 }
 
 /**

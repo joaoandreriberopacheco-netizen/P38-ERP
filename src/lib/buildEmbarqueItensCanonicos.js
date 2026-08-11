@@ -9,6 +9,7 @@ export function buildItensCanonicosEmbarque(itensNorm = [], pedidoItens = []) {
       const qPedida =
         Number(it?.quantidade_pedida_apresentacao) ||
         Number(it?.quantidade_pedida_comercial) ||
+        (Number(it?.quantidade_embarcada_apresentacao) > 0 ? Number(it.quantidade_embarcada_apresentacao) : 0) ||
         Number(linhaPedido?.quantidade) ||
         0;
       return {

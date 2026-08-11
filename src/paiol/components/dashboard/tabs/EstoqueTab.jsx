@@ -13,6 +13,7 @@ import {
 } from '@/lib/sugestaoCompraEstoquePendente';
 import { fetchPedidosCompraParaSugestaoEstoque } from '@/lib/fetchPedidosCompraParaSugestaoEstoque';
 import { hydrateEmbarquesFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
+import { qtyEmbarcadaComercialLinha } from '@/lib/embarqueLogisticaHelpers';
 import {
   resolveProdutoCustoUnitarioBase,
   sumCatalogTransitStockValue,
@@ -376,7 +377,7 @@ function getQuantidadePendenteNecessidade(pedido = {}, embarque = {}) {
 
   const itensNecessidade = getEmbarqueItensLinhas(embarque);
   const quantidadeDoEmbarque = itensNecessidade.reduce((acc, item) => {
-    return acc + (Number(item?.quantidade_embarcada) || Number(item?.quantidade_pedida) || 0);
+    return acc + qtyEmbarcadaComercialLinha(item);
   }, 0);
 
   if (quantidadeDoEmbarque > 0) return quantidadeDoEmbarque;
