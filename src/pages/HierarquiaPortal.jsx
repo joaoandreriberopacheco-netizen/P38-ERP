@@ -54,6 +54,7 @@ function HierarquiaPortalInner() {
   const filteredSupply = useMemo(() => {
     let lines = supplyLines;
     if (filtroLinha) lines = lines.filter((l) => l.linha_codigo === filtroLinha);
+    if (filtroTipos?.size) lines = lines.filter((l) => filtroTipos.has(l.linha_tipo));
     const q = search.trim().toLowerCase();
     if (q) {
       lines = lines.filter(
@@ -64,17 +65,19 @@ function HierarquiaPortalInner() {
       );
     }
     return lines;
-  }, [supplyLines, filtroLinha, search]);
+  }, [supplyLines, filtroLinha, filtroTipos, search]);
 
   const soldavelCount = enriched.filter((r) => r.linha_codigo === 'SOLDAVEL').length;
 
   const tipoCounts = useMemo(() => {
     const counts = { solo: 0, mix: 0, portfolio: 0 };
-    for (const l of linhas) {
-      if (counts[l.tipo] != null) counts[l.tipo] += 1;
+    const source = tab === 'supply' ? supplyLines : linhas;
+    for (const l of source) {
+      const tipo = l.linha_tipo ?? l.tipo;
+      if (counts[tipo] != null) counts[tipo] += 1;
     }
     return counts;
-  }, [linhas]);
+  }, [linhas, supplyLines, tab]);
 
   return (
     <div className="min-h-screen bg-background font-din-1451 pb-8">
@@ -100,9 +103,7 @@ function HierarquiaPortalInner() {
           </div>
         </div>
 
-        {tab === 'cadastro' && (
-          <PortalTipoFilter activeTipos={filtroTipos} onChange={setFiltroTipos} counts={tipoCounts} />
-        )}
+        <PortalTipoFilter activeTipos={filtroTipos} onChange={setFiltroTipos} counts={tipoCounts} />
 
         <div className="flex flex-wrap gap-2 items-center">
           <div className="relative flex-1 min-w-[200px] max-w-md">
