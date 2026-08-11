@@ -68,6 +68,13 @@ export async function fetchEmbarqueItensPorPedidos(base44, pedidoIds = []) {
   return groupEmbarqueItemRows(rows);
 }
 
+/** Embarques (cabeçalhos) ligados a pedidos de compra — com fallback por id. */
+export async function fetchEmbarquesPorPedidos(base44, pedidoIds = []) {
+  const emb = base44?.entities?.Embarque;
+  if (!emb?.filter) return [];
+  return fetchRowsByCampoIn(emb, 'pedido_compra_id', pedidoIds);
+}
+
 /**
  * Busca linhas canónicas EmbarqueItem para vários embarques.
  * @returns {Map<string, object[]>} embarque_id → linhas ordenadas

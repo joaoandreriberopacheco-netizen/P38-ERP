@@ -199,6 +199,13 @@ function applyFilters(query, where, mapping) {
         q = q.neq(target, ops.$ne);
         applied = true;
       }
+      if ('$in' in ops) {
+        const list = ops.$in;
+        if (Array.isArray(list) && list.length) {
+          q = q.in(target, list);
+        }
+        applied = true;
+      }
       if ('$regex' in ops) {
         const pattern = String(ops.$regex);
         q = ops.$options === 'i' ? q.ilike(target, `%${pattern}%`) : q.like(target, `%${pattern}%`);

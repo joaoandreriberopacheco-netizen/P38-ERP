@@ -3,7 +3,7 @@ import {
   hydratePedidosCompraItens,
   pedidoCompraAprovadoNaoConcluido,
 } from '@/lib/sugestaoCompraEstoquePendente';
-import { hydrateEmbarquesFromSql } from '@/lib/fetchEmbarqueItens';
+import { fetchEmbarquesPorPedidos, hydrateEmbarquesFromSql } from '@/lib/fetchEmbarqueItens';
 
 /** Status logísticos em aberto — alinhado a `pedidoCompraAprovadoNaoConcluido`. */
 export const PEDIDO_COMPRA_STATUS_QUERY_ESTOQUE = [
@@ -22,7 +22,6 @@ export const PEDIDO_COMPRA_STATUS_QUERY_ESTOQUE = [
 
 const PEDIDOS_RECENTES_LIMIT = 1200;
 const EMBARQUES_LIMIT = 2000;
-const EMBARQUE_PEDIDO_CHUNK = 40;
 
 function dedupePedidosPorId(pedidos = []) {
   const porId = new Map();
@@ -54,20 +53,7 @@ function dedupeEmbarquesPorId(embarques = []) {
 }
 
 export async function fetchEmbarquesForPedidoIds(base44, pedidoIds = []) {
-  const unique = [...new Set((pedidoIds || []).filter(Boolean))];
-  if (!unique.length || !base44?.entities?.Embarque?.filter) return [];
-
-  const chunks = [];
-  for (let i = 0; i < unique.length; i += EMBARQUE_PEDIDO_CHUNK) {
-    chunks.push(unique.slice(i, i + EMBARQUE_PEDIDO_CHUNK));
-  }
-
-  const rows = await Promise.all(
-    chunks.map((chunk) =>
-      base44.entities.Embarque.filter({ pedido_compra_id: { $in: chunk } }).catch(() => []),
-    ),
-  );
-  return rows.flat().filter((embarque) => embarque?.id);
+  return fetchEmbarquesPorPedidos(base44, pedidoIds);
 }
 
 /**
