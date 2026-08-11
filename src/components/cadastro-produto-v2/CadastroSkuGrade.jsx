@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Plus, Trash2, Copy } from 'lucide-react';
+import { Plus, Trash2, Copy, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -22,6 +22,7 @@ export default function CadastroSkuGrade({
   produtoCompra,
   eixos,
   solo,
+  onEditRow,
 }) {
   const updateRow = (key, field, value) => {
     onChange(rows.map((r) => (r.key === key ? { ...r, [field]: value } : r)));
@@ -64,8 +65,9 @@ export default function CadastroSkuGrade({
                 <TableHead className={cn(p38Table.head, 'min-w-[200px]')}>novo_sku</TableHead>
                 <TableHead className={cn(p38Table.head, 'w-[96px]')}>Código</TableHead>
                 <TableHead className={cn(p38Table.head, p38Table.headRight, 'w-[88px]')}>Compra</TableHead>
-                <TableHead className={cn(p38Table.head, p38Table.headRight, 'w-[88px]')}>Venda</TableHead>
-              </TableRow>
+              <TableHead className={cn(p38Table.head, p38Table.headRight, 'w-[88px]')}>Venda</TableHead>
+              <TableHead className={cn(p38Table.head, 'w-[88px]')}>Catálogo</TableHead>
+            </TableRow>
             </TableHeader>
             <TableBody>
               {rows.map((row) => (
@@ -81,6 +83,18 @@ export default function CadastroSkuGrade({
                   </TableCell>
                   <TableCell className={cn(p38Table.cell, p38Table.cellNumeric)}>
                     <Input className="h-8 text-xs text-right" type="number" step="0.01" value={row.preco_venda} onChange={(e) => updateRow(row.key, 'preco_venda', e.target.value)} />
+                  </TableCell>
+                  <TableCell className={cn(p38Table.cell, 'py-1')}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-[10px] gap-1"
+                      onClick={() => onEditRow?.(row)}
+                    >
+                      <Pencil className="h-3 w-3" />
+                      {row.from_producao ? 'Editar' : 'Cadastrar'}
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -117,6 +131,7 @@ export default function CadastroSkuGrade({
               <TableHead className={cn(p38Table.head, p38Table.headRight, 'w-[88px]')}>Compra</TableHead>
               <TableHead className={cn(p38Table.head, p38Table.headRight, 'w-[88px]')}>Venda</TableHead>
               <TableHead className={cn(p38Table.head, p38Table.headRight, 'w-[72px]')}>Est.</TableHead>
+              <TableHead className={cn(p38Table.head, 'w-[100px]')}>Catálogo</TableHead>
               <TableHead className={cn(p38Table.head, 'w-[36px]')} />
             </TableRow>
           </TableHeader>
@@ -199,6 +214,25 @@ export default function CadastroSkuGrade({
                     value={row.estoque}
                     onChange={(e) => updateRow(row.key, 'estoque', e.target.value)}
                   />
+                </TableCell>
+                <TableCell className={cn(p38Table.cell, 'py-1')}>
+                  <div className="flex flex-col gap-1 items-start">
+                    {row.from_producao ? (
+                      <Badge variant="secondary" className="text-[9px] font-normal">Produção</Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[9px] font-normal">Novo</Badge>
+                    )}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-1.5 text-[10px] gap-1"
+                      onClick={() => onEditRow?.(row)}
+                    >
+                      <Pencil className="h-3 w-3" />
+                      {row.from_producao ? 'Editar' : 'Cadastrar'}
+                    </Button>
+                  </div>
                 </TableCell>
                 <TableCell className={cn(p38Table.cell, 'py-1 px-1')}>
                   <Button

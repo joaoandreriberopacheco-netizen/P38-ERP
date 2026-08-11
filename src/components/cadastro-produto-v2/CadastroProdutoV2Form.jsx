@@ -24,6 +24,11 @@ import {
 } from '@/lib/cadastroProdutoV2/saveCadastroProdutoV2';
 import CadastroProdutoCompraDialog from '@/components/cadastro-produto-v2/CadastroProdutoCompraDialog';
 import CadastroSkuGrade from '@/components/cadastro-produto-v2/CadastroSkuGrade';
+import CadastroSkuProdutoEditor from '@/components/cadastro-produto-v2/CadastroSkuProdutoEditor';
+import {
+  gradeRowToProdutoSeed,
+  linkGradeRowFromProduto,
+} from '@/lib/cadastroProdutoV2/gradeRowToProdutoSeed';
 
 export default function CadastroProdutoV2Form() {
   const [loading, setLoading] = useState(true);
@@ -37,6 +42,9 @@ export default function CadastroProdutoV2Form() {
   const [produtoCompraId, setProdutoCompraId] = useState('');
   const [gradeRows, setGradeRows] = useState([]);
   const [pcDialogOpen, setPcDialogOpen] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editorProduto, setEditorProduto] = useState(null);
+  const [editorRowKey, setEditorRowKey] = useState(null);
 
   const linha = useMemo(() => linhas.find((l) => l.id === linhaId), [linhas, linhaId]);
   const produtoCompra = useMemo(
@@ -116,6 +124,72 @@ export default function CadastroProdutoV2Form() {
     toast.message('Preços e estoque actualizados a partir da produção');
   };
 
+  const resolveSavedProduto = async (row, hintId) => {
+    if (hintId) {
+      try {
+        const full = await base44.entities.Produto.get(hintId);
+        if (full?.id) return full;
+      } catch {
+        /* tenta por código */
+      }
+    }
+    const codigo = String(row?.codigo_interno || '').trim().toUpperCase();
+    if (codigo) {
+      const hits = await base44.entities.Produto.filter({ codigo_interno: codigo }, '-created_date', 5);
+      const list = Array.isArray(hits) ? hits : hits?.data ?? [];
+      const match = list.find((p) => String(p.codigo_interno || '').toUpperCase() === codigo);
+      if (match) return match;
+    }
+    const recent = await base44.entities.Produto.list('-created_date', 3);
+    const recentList = Array.isArray(recent) ? recent : recent?.data ?? [];
+    const nomeAlvo = gradeRowToProdutoSeed({ row, linha, produtoCompra, eixos, solo }).nome;
+    return recentList.find((p) => String(p.nome || '').trim().toUpperCase() === String(nomeAlvo).toUpperCase()) || null;
+  };
+
+  const handleEditGradeRow = async (row) => {
+    setEditorRowKey(row.key);
+    if (row.produto_producao_id) {
+      try {
+        const full = await base44.entities.Produto.get(row.produto_producao_id);
+        setEditorProduto(full?.id ? full : { id: row.produto_producao_id });
+      } catch {
+        setEditorProduto(gradeRowToProdutoSeed({ row, linha, produtoCompra, eixos, solo }));
+      }
+    } else {
+      setEditorProduto(gradeRowToProdutoSeed({ row, linha, produtoCompra, eixos, solo }));
+    }
+    setEditorOpen(true);
+  };
+
+  const handleEditorSave = async () => {
+    const row = gradeRows.find((r) => r.key === editorRowKey);
+    const hintId = editorProduto?.id || row?.produto_producao_id;
+    try {
+      const saved = await resolveSavedProduto(row, hintId);
+      const prodRows = await fetchProdutosAtivos(base44);
+      setProdutos(prodRows || []);
+      if (saved && row) {
+        setGradeRows((rows) => rows.map((r) => (
+          r.key === editorRowKey
+            ? linkGradeRowFromProduto(r, saved, { linha, produtoCompra, eixos, solo })
+            : r
+        )));
+        toast.success(saved.id === hintId ? 'SKU actualizado no catálogo' : 'SKU criado no catálogo');
+      } else {
+        toast.message('Catálogo actualizado — actualize a grade se necessário');
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error('Erro ao sincronizar com o catálogo');
+    }
+  };
+
+  const handleEditorClose = () => {
+    setEditorOpen(false);
+    setEditorProduto(null);
+    setEditorRowKey(null);
+  };
+
   const handleSave = async () => {
     if (!linha) {
       toast.error('Seleccione a LINHA');
@@ -154,7 +228,8 @@ export default function CadastroProdutoV2Form() {
     <div className="space-y-5">
       <div className="rounded-lg border border-border/40 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
         A grade <strong>hidrata</strong> dos SKUs reais (preço, estoque, código).
-        Grava em <code className="text-[10px]">cadastro_v2_grade_sku</code> — separado da produção.
+        Use <strong>Cadastrar / Editar</strong> para abrir o formulário completo do catálogo (como em Produtos).
+        Grava rascunho em <code className="text-[10px]">cadastro_v2_grade_sku</code>.
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -218,6 +293,7 @@ export default function CadastroProdutoV2Form() {
               produtoCompra={produtoCompra}
               eixos={eixos}
               solo={solo}
+              onEditRow={handleEditGradeRow}
             />
           )}
 
@@ -261,6 +337,14 @@ export default function CadastroProdutoV2Form() {
           });
         }}
       />
+
+      {editorOpen && (
+        <CadastroSkuProdutoEditor
+          produto={editorProduto}
+          onSave={handleEditorSave}
+          onClose={handleEditorClose}
+        />
+      )}
     </div>
   );
 }

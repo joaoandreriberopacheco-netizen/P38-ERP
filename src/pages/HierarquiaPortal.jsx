@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Loader2, Search } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,10 @@ import PortalTreeGrid from '@/components/hierarquia-portal/PortalTreeGrid';
 import PortalSmartSupplyPanel from '@/components/hierarquia-portal/PortalSmartSupplyPanel';
 import PortalReservaPanel from '@/components/hierarquia-portal/PortalReservaPanel';
 import PortalTipoFilter from '@/components/hierarquia-portal/PortalTipoFilter';
+import CadastroProdutoV2Form from '@/components/cadastro-produto-v2/CadastroProdutoV2Form';
 import { isProdutoReservaPortal, contagemReservaLine } from '@/lib/hierarquiaPortal/portalReservaCeramica';
+import { isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
+import { CADASTRO_PRODUTO_V2_ENABLED } from '@/config/cadastroProdutoV2Flags';
 import {
   HIERARQUIA_PORTAL_ENABLED,
   HIERARQUIA_PORTAL_PILOTO_LINHAS,
@@ -37,12 +40,42 @@ import {
 import { MODELO_PILOTO_LINHAS_PLANEADAS } from '@/config/modeloCatalogoFlags';
 import { SMART_SUPPLY_PORTAL_PREVIEW_LABEL } from '@/config/smartSupplyFlags';
 
+const PORTAL_TABS = ['cadastro', 'hierarquia', 'supply', 'reserva'];
+
+function resolvePortalTab(tabParam) {
+  if (!PORTAL_TABS.includes(tabParam)) {
+    return CADASTRO_PRODUTO_V2_ENABLED ? 'cadastro' : 'hierarquia';
+  }
+  if (tabParam === 'cadastro' && !CADASTRO_PRODUTO_V2_ENABLED) return 'hierarquia';
+  return tabParam;
+}
+
 function HierarquiaPortalInner() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const tab = resolvePortalTab(tabParam);
+
+  const setTab = useCallback(
+    (value) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (!value || value === 'cadastro') next.delete('tab');
+          else next.set('tab', value);
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
+
+  const supabaseOk = isSupabaseBrowserConfigured();
+  const showCatalogFilters = tab !== 'cadastro';
   const [loading, setLoading] = useState(true);
   const [loadingVelocity, setLoadingVelocity] = useState(true);
   const [produtos, setProdutos] = useState([]);
   const [pedidos90d, setPedidos90d] = useState([]);
-  const [tab, setTab] = useState('cadastro');
   const [filtroLinha, setFiltroLinha] = useState('');
   const [filtroTipos, setFiltroTipos] = useState(() => new Set(['portfolio']));
   const [search, setSearch] = useState('');
@@ -176,7 +209,7 @@ function HierarquiaPortalInner() {
                 Portal hierarquia — piloto cerâmica
               </h1>
               <p className="text-sm text-muted-foreground max-w-3xl hidden md:block">
-                Preview por LINHA ({PORTAL_EXCEL_SKU_COUNT} SKUs). Cadastro = hierarquia · Preview = SMART SUPPLY piloto.
+                LINHA → produto compra → grade de SKUs (eixos). Hierarquia · SMART SUPPLY · reserva 12 pos.
               </p>
             </div>
             <div className="rounded-lg border border-violet-500/40 bg-violet-50/80 dark:bg-violet-950/30 px-3 py-2 text-xs text-violet-900 dark:text-violet-100 max-w-sm space-y-1 shrink-0">
@@ -189,8 +222,11 @@ function HierarquiaPortalInner() {
             </div>
           </div>
 
-          <PortalTipoFilter activeTipos={filtroTipos} onChange={setFiltroTipos} counts={tipoCounts} />
+          {showCatalogFilters && (
+            <PortalTipoFilter activeTipos={filtroTipos} onChange={setFiltroTipos} counts={tipoCounts} />
+          )}
 
+          {showCatalogFilters && (
           <div className="flex flex-wrap gap-2 items-center">
             <div className="relative flex-1 min-w-[200px] max-w-md">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -229,13 +265,22 @@ function HierarquiaPortalInner() {
               </span>
             )}
           </div>
+          )}
 
           <GlacialTabsList className="w-full">
+            {CADASTRO_PRODUTO_V2_ENABLED && (
+              <GlacialTabsTrigger
+                value="cadastro"
+                activeValue={tab}
+                onSelect={setTab}
+                label="Cadastro (eixos)"
+              />
+            )}
             <GlacialTabsTrigger
-              value="cadastro"
+              value="hierarquia"
               activeValue={tab}
               onSelect={setTab}
-              label="Cadastro (hierarquia)"
+              label="Hierarquia"
             />
             <GlacialTabsTrigger
               value="supply"
@@ -255,12 +300,24 @@ function HierarquiaPortalInner() {
 
       {/* Conteúdo — scroll da página (sem caixa max-h) */}
       <div className="flex-1 w-full min-w-0 px-3 md:px-4 py-4 pb-10">
-        {loading ? (
+        {tab === 'cadastro' ? (
+          !CADASTRO_PRODUTO_V2_ENABLED ? (
+            <div className="p-8 text-center text-muted-foreground">Cadastro com eixos indisponível.</div>
+          ) : !supabaseOk ? (
+            <div className="p-8 text-center text-muted-foreground">
+              Supabase não configurado — cadastro com eixos indisponível.
+            </div>
+          ) : (
+            <div className="max-w-5xl mx-auto">
+              <CadastroProdutoV2Form />
+            </div>
+          )
+        ) : loading ? (
           <div className="flex items-center justify-center py-16 text-muted-foreground gap-2">
             <Loader2 className="h-5 w-5 animate-spin" />
             Montando piloto cerâmica…
           </div>
-        ) : tab === 'cadastro' ? (
+        ) : tab === 'hierarquia' ? (
           <PortalTreeGrid
             tree={tree}
             filtroLinha={filtroLinha}
@@ -282,9 +339,11 @@ function HierarquiaPortalInner() {
           />
         )}
 
+        {tab !== 'cadastro' && (
         <p className="text-[11px] text-muted-foreground text-center mt-4">
           {enriched.length} SKUs · {supplyLines.length} esquadras · {PORTAL_EXCEL_LINHAS.length} LINHAS piloto · Excel mestre
         </p>
+        )}
       </div>
     </div>
   );
