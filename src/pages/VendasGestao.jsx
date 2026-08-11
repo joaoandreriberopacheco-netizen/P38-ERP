@@ -30,20 +30,16 @@ import {
 } from '@/lib/formasPagamentoVenda';
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
-import MobileDateRangePicker from '@/components/vendas/MobileDateRangePicker';
+import VendasPeriodoFiltro from '@/components/vendas/VendasPeriodoFiltro';
+import { getPeriodoMesCorrente } from '@/lib/vendasPeriodoFiltro';
 import ValesTrocaTab from '@/components/vendas/ValesTrocaTab';
 import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
 import FormaPagamentoBadges from '@/components/vendas/FormaPagamentoBadges';
 import { STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA } from '@/lib/pdvCaixaTurnoVendas';
-import { dataHoje, boundsMesCivil, formatarDataHora, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
+import { formatarDataHora, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
 const fmtDtHora = (d) => d ? formatarDataHora(d) : '-';
 const fmtDataCurta = (d) => d ? formatarSoData(d) : '';
 
-function getPeriodoMesCorrente() {
-  const hoje = dataHoje();
-  const [year, month] = hoje.split('-').map(Number);
-  return boundsMesCivil(year, month - 1);
-}
 const dateRangeMatches = (valor, inicio, fim) => {
   const chave = toLocalDateKey(valor);
   if (!chave) return false;
@@ -447,6 +443,7 @@ function VendasGestaoPage() {
   const { invalidateHomeKpis } = useP38QueryInvalidation();
   const [dataInicio, setDataInicio] = useState(() => getPeriodoMesCorrente().start);
   const [dataFim, setDataFim] = useState(() => getPeriodoMesCorrente().end);
+  const [periodoPreset, setPeriodoPreset] = useState('mes_atual');
   const {
     data: pedidos = [],
     isLoading: pedidosLoading,
@@ -705,6 +702,7 @@ function VendasGestaoPage() {
     const { start, end } = getPeriodoMesCorrente();
     setDataInicio(start);
     setDataFim(end);
+    setPeriodoPreset('mes_atual');
   };
 
   return (
@@ -847,19 +845,16 @@ function VendasGestaoPage() {
 
             <div>
               <label className="block text-xs text-muted-foreground mb-2">Período</label>
-              <MobileDateRangePicker
-                nested
-                startDate={dataInicio}
-                endDate={dataFim}
-                onApply={(inicio, fim) => {
+              <VendasPeriodoFiltro
+                periodoPreset={periodoPreset}
+                onPeriodoPresetChange={setPeriodoPreset}
+                dataInicio={dataInicio}
+                dataFim={dataFim}
+                onDateRangeChange={(inicio, fim) => {
                   if (!isValidGestaoDateKey(inicio) || !isValidGestaoDateKey(fim)) return;
                   setDataInicio(inicio);
                   setDataFim(fim);
-                }}
-                onClear={() => {
-                  const { start, end } = getPeriodoMesCorrente();
-                  setDataInicio(start);
-                  setDataFim(end);
+                  setPeriodoPreset('personalizado');
                 }}
               />
             </div>
