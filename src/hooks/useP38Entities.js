@@ -14,6 +14,10 @@ import {
   fetchHomeVendasHoje,
   fetchPedidosAguardandoCaixaCount,
 } from '@/lib/fetchHomeKpis';
+import {
+  fetchPedidosVendaGestaoHeaders,
+  fetchRascunhosPedidoVendaGestaoHeaders,
+} from '@/lib/fetchPedidosVendaGestao';
 
 export { fetchPedidosVenda90d, fetchDadosVendaAbcd90d };
 import { unifyLogisticaEventos } from '@/components/logistica-sandbox/fluvialDataUtils';
@@ -166,6 +170,28 @@ export function usePedidosVendaListQuery(options = {}) {
     queryKey: p38Keys.pedidosVenda(sort),
     queryFn: () => fetchPedidosVendaList(sort),
     ...entityQueryDefaults,
+    ...rest,
+  });
+}
+
+export function usePedidosVendaGestaoQuery({ dataInicio, dataFim, enabled = true, ...rest } = {}) {
+  return useQuery({
+    queryKey: p38Keys.pedidosVendaGestao(dataInicio, dataFim),
+    queryFn: () => fetchPedidosVendaGestaoHeaders({ dataInicio, dataFim }),
+    enabled: enabled && Boolean(dataInicio && dataFim),
+    staleTime: 30 * 1000,
+    gcTime: P38_GC_TIME,
+    ...rest,
+  });
+}
+
+export function useRascunhosPedidoVendaGestaoQuery({ dataInicio, dataFim, enabled = true, ...rest } = {}) {
+  return useQuery({
+    queryKey: p38Keys.rascunhosPedidoVendaGestao(dataInicio, dataFim),
+    queryFn: () => fetchRascunhosPedidoVendaGestaoHeaders({ dataInicio, dataFim }),
+    enabled: enabled && Boolean(dataInicio && dataFim),
+    staleTime: 30 * 1000,
+    gcTime: P38_GC_TIME,
     ...rest,
   });
 }

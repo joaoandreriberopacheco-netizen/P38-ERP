@@ -1,11 +1,12 @@
-import { memo, useState, useRef, useMemo } from 'react';
+import { memo, useState, useRef, useMemo, useEffect } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { base44 } from '@/api/base44Client';
 import {
-  usePedidosVendaListQuery,
-  useRascunhosPedidoVendaListQuery,
+  usePedidosVendaGestaoQuery,
+  useRascunhosPedidoVendaGestaoQuery,
   useP38QueryInvalidation,
 } from '@/hooks/useP38Entities';
+import { hydratePedidosVendaItensFromSql } from '@/lib/fetchPedidoVendaItens';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import VendasRelatorisFAB from '@/components/vendas/VendasRelatorisFAB';
@@ -443,22 +444,24 @@ function VirtualizedRascunhosTable({ rascunhos, onInutilizar }) {
 
 function VendasGestaoPage() {
   const { invalidateHomeKpis } = useP38QueryInvalidation();
+  const [dataInicio, setDataInicio] = useState(() => getPeriodoMesCorrente().start);
+  const [dataFim, setDataFim] = useState(() => getPeriodoMesCorrente().end);
   const {
     data: pedidos = [],
     isLoading: pedidosLoading,
     refetch: refetchPedidos,
-  } = usePedidosVendaListQuery();
+  } = usePedidosVendaGestaoQuery({ dataInicio, dataFim });
   const {
     data: rascunhos = [],
     isLoading: rascunhosLoading,
     refetch: refetchRascunhos,
-  } = useRascunhosPedidoVendaListQuery();
+  } = useRascunhosPedidoVendaGestaoQuery({ dataInicio, dataFim });
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFiltro, setStatusFiltro] = useState('todos');
   const [formasPagamentoFiltro, setFormasPagamentoFiltro] = useState([]);
-  const [dataInicio, setDataInicio] = useState(() => getPeriodoMesCorrente().start);
-  const [dataFim, setDataFim] = useState(() => getPeriodoMesCorrente().end);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [pedidosConsultaComItens, setPedidosConsultaComItens] = useState([]);
+  const [consultaHydrating, setConsultaHydrating] = useState(false);
 
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [pedidoDetalhes, setPedidoDetalhes] = useState(null);
@@ -587,16 +590,46 @@ function VendasGestaoPage() {
     return list;
   }, [pedidos, searchTerm, statusFiltroResolvido, dataInicio, dataFim, formasPagamentoFiltro]);
 
+  useEffect(() => {
+    if (activeTab !== 'consulta') {
+      setPedidosConsultaComItens([]);
+      return undefined;
+    }
+    if (!vendasConsulta.length) {
+      setPedidosConsultaComItens([]);
+      return undefined;
+    }
+    const precisaHidratar = vendasConsulta.some(
+      (pedido) => !Array.isArray(pedido.itens) || pedido.itens.length === 0,
+    );
+    if (!precisaHidratar) {
+      setPedidosConsultaComItens(vendasConsulta);
+      return undefined;
+    }
+    let cancelled = false;
+    setConsultaHydrating(true);
+    hydratePedidosVendaItensFromSql(base44, vendasConsulta)
+      .then((hydrated) => {
+        if (!cancelled) setPedidosConsultaComItens(hydrated);
+      })
+      .finally(() => {
+        if (!cancelled) setConsultaHydrating(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, vendasConsulta]);
+
   // Calcular subtotal dos pedidos filtrados
   const subtotalFiltrado = activeTab === 'pedidos'
     ? pedidosFiltrados.reduce((acc, p) => acc + (p.valor_total || 0), 0)
     : activeTab === 'consulta'
-      ? vendasConsulta.reduce((acc, p) => acc + (p.valor_total || 0), 0)
+      ? pedidosConsultaComItens.reduce((acc, p) => acc + (p.valor_total || 0), 0)
       : rascunhosFiltrados.reduce((acc, r) => acc + (r.valor_total || 0), 0);
   const quantidadeFiltrada = activeTab === 'pedidos'
     ? pedidosFiltrados.length
     : activeTab === 'consulta'
-      ? vendasConsulta.length
+      ? pedidosConsultaComItens.length
       : rascunhosFiltrados.length;
 
   const handleEdit = (pedido) => {
@@ -604,13 +637,23 @@ function VendasGestaoPage() {
     console.log('Editar pedido:', pedido);
   };
 
-  const handleVerDetalhes = (pedido) => {
-    setPedidoDetalhes(pedido);
+  const handleVerDetalhes = async (pedido) => {
+    let enriched = pedido;
+    if (!Array.isArray(pedido?.itens) || pedido.itens.length === 0) {
+      const [hydrated] = await hydratePedidosVendaItensFromSql(base44, [pedido]);
+      enriched = hydrated || pedido;
+    }
+    setPedidoDetalhes(enriched);
     setShowDetalhes(true);
   };
 
-  const handleReimprimir = (pedido) => {
-    setPedidoParaImprimir(pedido);
+  const handleReimprimir = async (pedido) => {
+    let enriched = pedido;
+    if (!Array.isArray(pedido?.itens) || pedido.itens.length === 0) {
+      const [hydrated] = await hydratePedidosVendaItensFromSql(base44, [pedido]);
+      enriched = hydrated || pedido;
+    }
+    setPedidoParaImprimir(enriched);
     setShowComprovante(true);
   };
 
@@ -921,13 +964,13 @@ function VendasGestaoPage() {
 
         {activeTab === 'consulta' && (
         <div className="space-y-4 min-w-0">
-          {isLoading ? (
+          {isLoading || consultaHydrating ? (
             <div className="flex justify-center py-12">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-border/40"></div>
             </div>
           ) : (
             <ConsultaVendasCaixa
-              vendasFinalizadas={vendasConsulta}
+              vendasFinalizadas={pedidosConsultaComItens}
               onVerDetalhes={handleVerDetalhes}
               contextLabel="Consulta de vendas"
               emptyMessage="Nenhuma venda finalizada no período selecionado"

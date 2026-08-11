@@ -16,6 +16,7 @@ import {
 
 import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
 import { hydrateEmbarquesFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
+import { fetchPedidosCompraGestaoInicial } from '@/lib/fetchPedidosCompraGestao';
 import { carregarProdutosMap } from '@/lib/embarqueVitrineHelpers';
 import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
@@ -538,19 +539,16 @@ export default function PedidosCompraPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [pcsRaw, embarquesDbRaw, fns] = await Promise.all([
-        base44.entities.PedidoCompra.list('-created_date', 300),
-        base44.entities.Embarque.list('-created_date', 600),
+      const [gestao, fns] = await Promise.all([
+        fetchPedidosCompraGestaoInicial(base44),
         base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] }, 'nome', 300).catch((err) => {
           console.warn('[PedidosCompra] Terceiro.filter falhou — lista de fornecedores vazia:', err?.message || err);
           return [];
         }),
       ]);
 
-      const [pcs, embarquesDb] = await Promise.all([
-        hydratePedidosCompraItensFromSql(base44, pcsRaw),
-        hydrateEmbarquesFromSql(base44, embarquesDbRaw),
-      ]);
+      const pcs = gestao.pedidos;
+      const embarquesDb = gestao.embarques;
       const produtoIds = [...new Set([
         ...pcs.flatMap((p) => (p.itens || []).map((i) => i.produto_id).filter(Boolean)),
         ...embarquesDb.flatMap((e) => getEmbarqueItensLinhas(e).map((i) => i.produto_id).filter(Boolean)),
