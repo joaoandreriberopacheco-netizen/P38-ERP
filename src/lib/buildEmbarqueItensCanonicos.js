@@ -8,7 +8,7 @@ export function buildItensCanonicosEmbarque(itensNorm = [], pedidoItens = []) {
       const linhaPedido = pedidoItens.find((pi) => String(pi?.produto_id) === String(it?.produto_id));
       const qPedida =
         Number(it?.quantidade_pedida_apresentacao) ||
-        Number(it?.quantidade_pedida) ||
+        Number(it?.quantidade_pedida_comercial) ||
         Number(linhaPedido?.quantidade) ||
         0;
       return {

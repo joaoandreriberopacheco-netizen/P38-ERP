@@ -1,5 +1,30 @@
 import { rebuildEmbarqueItensMirror } from '@/lib/embarqueItemContract';
+import {
+  resolveEmbarqueQuantidadeBase,
+  resolveEmbarqueQuantidadeComercial,
+} from '@/lib/embarqueQuantityResolve';
 import { getEmbarqueItensLinhas, hydrateEmbarquesPedidoFromSql } from '@/lib/fetchEmbarqueItens';
+
+function qtyPedidaBaseItem(item = {}) {
+  return resolveEmbarqueQuantidadeBase(
+    {
+      ...item,
+      quantidade_pedida_base: item.quantidade_base,
+      quantidade_pedida_apresentacao: item.quantidade_pedida_apresentacao ?? item.quantidade,
+      quantidade_pedida: item.quantidade,
+    },
+    'pedida',
+  );
+}
+
+/** Quantidade embarcada em unidade base — alinhado a integrarPedidosEmbarques (SQL). */
+export function qtyEmbarcadaBaseLinha(item = {}) {
+  return resolveEmbarqueQuantidadeBase(item, 'embarcada');
+}
+
+function qtyRecebidaBaseLinha(item = {}) {
+  return resolveEmbarqueQuantidadeBase(item, 'recebida');
+}
 
 /**
  * Percentuais de despacho/conclusão a partir dos embarques reais (entidade Embarque),
@@ -7,7 +32,7 @@ import { getEmbarqueItensLinhas, hydrateEmbarquesPedidoFromSql } from '@/lib/fet
  */
 export function calcularPercentuaisLogistica(pedido, embarques = []) {
   const totalPedido = (pedido?.itens || []).reduce(
-    (acc, item) => acc + (Number(item.quantidade_base ?? item.quantidade) || 0),
+    (acc, item) => acc + qtyPedidaBaseItem(item),
     0
   );
   if (!totalPedido) {
@@ -22,15 +47,15 @@ export function calcularPercentuaisLogistica(pedido, embarques = []) {
     getEmbarqueItensLinhas(emb).forEach((item) => {
       const pid = item.produto_id;
       if (!pid) return;
-      porProdutoEmb[pid] = (porProdutoEmb[pid] || 0) + (Number(item.quantidade_embarcada) || 0);
-      porProdutoRec[pid] = (porProdutoRec[pid] || 0) + (Number(item.quantidade_recebida) || 0);
+      porProdutoEmb[pid] = (porProdutoEmb[pid] || 0) + qtyEmbarcadaBaseLinha(item);
+      porProdutoRec[pid] = (porProdutoRec[pid] || 0) + qtyRecebidaBaseLinha(item);
     });
   });
 
   let totalDespachado = 0;
   let totalConcluido = 0;
   (pedido?.itens || []).forEach((item) => {
-    const pedida = Number(item.quantidade_base ?? item.quantidade) || 0;
+    const pedida = qtyPedidaBaseItem(item);
     const emb = porProdutoEmb[item.produto_id] || 0;
     const rec = porProdutoRec[item.produto_id] || 0;
     totalDespachado += Math.min(pedida, emb);
@@ -48,6 +73,11 @@ export function derivarStatusEmbarqueAgregado(pctDespachado) {
   if (pctDespachado >= 100) return 'Total';
   if (pctDespachado > 0) return 'Parcial';
   return 'Nenhum';
+}
+
+/** Quantidade comercial para exibição em órfãos / totais por produto. */
+export function qtyEmbarcadaComercialLinha(item = {}) {
+  return resolveEmbarqueQuantidadeComercial(item, 'embarcada');
 }
 
 /**

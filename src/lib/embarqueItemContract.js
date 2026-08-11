@@ -86,17 +86,35 @@ export function deriveEmbarqueItem({ embarque = {}, produto = {}, pedidoCompraIt
 }
 
 export function embarqueItemToLegacyMirror(item = {}) {
+  const fator = asNumber(item?.fator_aplicado, 0) || 1;
+  const unidade = item?.unidade_sigla || "UN";
+  const qPedCom = asNumber(item?.quantidade_pedida_comercial, 0);
+  const qEmbCom = asNumber(item?.quantidade_embarcada_comercial, 0);
+  const qRecCom = asNumber(item?.quantidade_recebida_comercial, 0);
+  const qPedBase = asNumber(item?.quantidade_pedida_base, 0);
+  const qEmbBase = asNumber(item?.quantidade_embarcada_base, 0);
+  const qRecBase = asNumber(item?.quantidade_recebida_base, 0);
+
   return {
     produto_id: item?.produto_id || "",
     produto_nome: item?.produto_nome || "",
     produto_unidade_id: item?.produto_unidade_id || "",
     pedido_compra_item_id: item?.pedido_compra_item_id || "",
-    fator_aplicado: asNumber(item?.fator_aplicado, 0) || undefined,
-    quantidade_pedida: asNumber(item?.quantidade_pedida_comercial, 0),
-    quantidade_embarcada: asNumber(item?.quantidade_embarcada_comercial, 0),
-    quantidade_recebida: asNumber(item?.quantidade_recebida_comercial, 0),
-    quantidade_recebida_base: asNumber(item?.quantidade_recebida_base, 0) || undefined,
-    unidade_medida: item?.unidade_sigla || "UN",
+    fator_aplicado: fator,
+    fator_apresentacao: fator,
+    fator_conversao: fator,
+    quantidade_pedida: qPedCom,
+    quantidade_embarcada: qEmbCom,
+    quantidade_recebida: qRecCom,
+    quantidade_pedida_base: qPedBase || undefined,
+    quantidade_embarcada_base: qEmbBase || undefined,
+    quantidade_recebida_base: qRecBase || undefined,
+    quantidade_pedida_apresentacao: qPedCom,
+    quantidade_embarcada_apresentacao: qEmbCom,
+    quantidade_recebida_apresentacao: qRecCom,
+    unidade_medida: unidade,
+    unidade_apresentacao: unidade,
+    unidade_sigla: unidade,
     divergencia_tipo: item?.divergencia_tipo || "Nenhuma",
     produto_id_recebido_diferente: item?.produto_id_recebido_diferente || "",
     produto_nome_recebido_diferente: item?.produto_nome_recebido_diferente || "",

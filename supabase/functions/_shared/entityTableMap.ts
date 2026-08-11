@@ -477,3 +477,19 @@ export const ENTITY_TO_TABLE = {
  * Resolve uma entrada do mapa para o formato canônico { table, mode, columns }.
  * Aceita string (legado) ou objeto. Retorna null quando a entidade não está mapeada.
  */
+export function resolveEntityMapping(entityName: string) {
+  const raw = ENTITY_TO_TABLE[entityName as keyof typeof ENTITY_TO_TABLE];
+  if (!raw) return null;
+  if (typeof raw === 'string') {
+    return { table: raw, mode: 'columns' as const, columns: null as string[] | null };
+  }
+  return {
+    table: raw.table,
+    mode: (raw.mode || 'columns') as 'columns' | 'jsonb',
+    columns: Array.isArray(raw.columns) ? raw.columns : null,
+  };
+}
+
+export function isEntityLinkedToSupabase(entityName: string) {
+  return Boolean(ENTITY_TO_TABLE[entityName as keyof typeof ENTITY_TO_TABLE]);
+}
