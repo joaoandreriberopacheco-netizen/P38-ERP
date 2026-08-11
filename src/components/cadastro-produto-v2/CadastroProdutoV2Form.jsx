@@ -52,7 +52,22 @@ export default function CadastroProdutoV2Form() {
     [produtosCompra, produtoCompraId],
   );
   const solo = linha && mapTipoLinhaUi(linha.tipo) === 'solo';
-  const eixos = useMemo(() => resolveEixosCadastro(produtoCompra, linha), [produtoCompra, linha]);
+  const eixos = useMemo(() => {
+    try {
+      return resolveEixosCadastro(produtoCompra, linha);
+    } catch (e) {
+      console.error('[CadastroProdutoV2] resolveEixos', e);
+      return {
+        solo: false,
+        useA: true,
+        useB: true,
+        rotuloA: 'Formato',
+        rotuloB: 'Modelo',
+        count: 2,
+        params: {},
+      };
+    }
+  }, [produtoCompra, linha]);
 
   const pcsFiltrados = useMemo(
     () => produtosCompra.filter((p) => p.linha_id === linhaId),
@@ -94,8 +109,8 @@ export default function CadastroProdutoV2Form() {
       });
       setGradeRows(rows.length ? rows : [emptyGradeRow()]);
     } catch (e) {
-      console.error(e);
-      toast.error(e.message || 'Erro ao carregar grade');
+      console.error('[CadastroProdutoV2] loadGrade', e);
+      toast.error(e?.message || 'Erro ao carregar grade');
       setGradeRows([emptyGradeRow()]);
     } finally {
       setLoadingGrade(false);

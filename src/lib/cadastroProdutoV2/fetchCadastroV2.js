@@ -7,24 +7,32 @@ function sb() {
 }
 
 export async function fetchCadastroV2Grade({ linhaId, produtoCompraId, solo }) {
-  let q = sb()
-    .from('cadastro_v2_grade_sku')
-    .select('*')
-    .eq('linha_id', linhaId)
-    .eq('ativo', true)
-    .order('novo_sku');
+  try {
+    let q = sb()
+      .from('cadastro_v2_grade_sku')
+      .select('*')
+      .eq('linha_id', linhaId)
+      .eq('ativo', true)
+      .order('novo_sku');
 
-  if (solo) {
-    q = q.is('produto_compra_id', null);
-  } else if (produtoCompraId) {
-    q = q.eq('produto_compra_id', produtoCompraId);
-  } else {
+    if (solo) {
+      q = q.is('produto_compra_id', null);
+    } else if (produtoCompraId) {
+      q = q.eq('produto_compra_id', produtoCompraId);
+    } else {
+      return [];
+    }
+
+    const { data, error } = await q;
+    if (error) {
+      console.warn('[fetchCadastroV2Grade]', error.message);
+      return [];
+    }
+    return data || [];
+  } catch (e) {
+    console.warn('[fetchCadastroV2Grade]', e?.message || e);
     return [];
   }
-
-  const { data, error } = await q;
-  if (error) throw error;
-  return data || [];
 }
 
 export async function saveCadastroV2GradeRow(row) {

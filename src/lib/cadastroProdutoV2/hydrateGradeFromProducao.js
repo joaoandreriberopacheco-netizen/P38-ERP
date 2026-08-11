@@ -13,7 +13,11 @@ function num(v) {
 }
 
 function matchesContext(row, { linha, produtoCompra, solo }) {
-  if (!linha || row.linha_codigo !== linha.codigo) return false;
+  if (!linha) return false;
+  const linhaOk =
+    row.linha_codigo === linha.codigo
+    || norm(row.linha_nome) === norm(linha.nome);
+  if (!linhaOk) return false;
   if (solo) return row.solo;
   if (!produtoCompra) return false;
   return (

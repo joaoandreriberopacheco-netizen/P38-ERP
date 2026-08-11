@@ -40,14 +40,16 @@ export function resolveEixosCadastro(produtoCompra, linha) {
     };
   }
 
-  const useA = axisEnabled(pc.eixo_a_rotulo, ln.eixo_a_rotulo);
+  let useA = axisEnabled(pc.eixo_a_rotulo, ln.eixo_a_rotulo);
   let useB = axisEnabled(pc.eixo_b_rotulo, ln.eixo_b_rotulo);
 
   let rotuloA = axisRotulo(pc.eixo_a_rotulo, ln.eixo_a_rotulo, 'Eixo A');
   let rotuloB = axisRotulo(pc.eixo_b_rotulo, ln.eixo_b_rotulo, 'Eixo B');
 
-  if (mapTipoLinhaUi(ln.tipo) === 'portfolio' && pc.eixo_a_rotulo !== '' && pc.eixo_b_rotulo !== '') {
-    if (!useA && !useB && pc.eixo_a_rotulo == null && pc.eixo_b_rotulo == null) {
+  // Portfolio com PC a herdar da LINHA (null): activa eixos por defeito
+  if (mapTipoLinhaUi(ln.tipo) === 'portfolio') {
+    const pcHerda = pc.eixo_a_rotulo == null && pc.eixo_b_rotulo == null;
+    if (pcHerda && !useA && !useB) {
       useA = true;
       useB = true;
       rotuloA = axisRotulo(null, ln.eixo_a_rotulo, 'Formato');
