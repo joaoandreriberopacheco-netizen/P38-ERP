@@ -372,7 +372,9 @@ export async function generatePortalMassaCriticaRelatorioPdf(payload = {}) {
 
   doc.setFontSize(FONT.rowSmall);
   doc.text(
-    safe(`Meta saldável: ${minLinhas} modelos com ≥ ${massa} CX · custo = preco_custo_calculado (por CX)`),
+    safe(
+      `Meta saldável: ${minLinhas} modelos × ${massa} CX · MÉD/MOD = média custo/CX × ${massa} · invest. saldável = MÉD/MOD × modelos em falta (mín. ${minLinhas} modelos)`,
+    ),
     M,
     y,
   );

@@ -77,23 +77,35 @@ export function estimarCustoEsquadraMassaCritica(line, opts = {}) {
     abaixoMassa.slice(0, faltamLinhas).map((s) => s.sku?.produto?.id).filter(Boolean),
   );
 
-  const skusComPrioridade = skusDetalhe.map((s) => ({
-    ...s,
-    prioridade_saldavel: prioridadeIds.has(s.sku?.produto?.id),
-  }));
-
-  const custoParaSaldavel = abaixoMassa
-    .slice(0, faltamLinhas)
-    .reduce((sum, s) => sum + s.custo_estimado, 0);
-  const custoTodosAbaixo = abaixoMassa.reduce((sum, s) => sum + s.custo_estimado, 0);
-  const cxFaltamSaldavel = abaixoMassa
-    .slice(0, faltamLinhas)
-    .reduce((sum, s) => sum + s.cx_faltam, 0);
-
   const comCusto = skusDetalhe.filter((s) => s.custo_por_cx > 0);
   const mediaCustoCx = comCusto.length
     ? comCusto.reduce((sum, s) => sum + s.custo_por_cx, 0) / comCusto.length
     : 0;
+
+  // Investimento mínimo: média custo/CX × 16 CX × modelos em falta (meta 9 modelos saldáveis).
+  const mediaInvestimentoModelo = roundToTwoDecimals(mediaCustoCx * massaCritica);
+  const investimentoMinimoSaldavel = roundToTwoDecimals(mediaInvestimentoModelo * minLinhasSaldavel);
+
+  const custoParaSaldavel =
+    faltamLinhas > 0 && mediaInvestimentoModelo > 0
+      ? roundToTwoDecimals(mediaInvestimentoModelo * faltamLinhas)
+      : 0;
+  const custoTodosAbaixo =
+    abaixoMassa.length > 0 && mediaInvestimentoModelo > 0
+      ? roundToTwoDecimals(mediaInvestimentoModelo * abaixoMassa.length)
+      : 0;
+  const cxFaltamSaldavel = faltamLinhas > 0 ? faltamLinhas * massaCritica : 0;
+
+  const skusComPrioridade = skusDetalhe.map((s) => {
+    const prioridade = prioridadeIds.has(s.sku?.produto?.id);
+    const custoEstimadoRelatorio =
+      prioridade && mediaInvestimentoModelo > 0 ? mediaInvestimentoModelo : s.custo_estimado;
+    return {
+      ...s,
+      prioridade_saldavel: prioridade,
+      custo_estimado: custoEstimadoRelatorio,
+    };
+  });
 
   return {
     massa_critica: massaCritica,
@@ -101,11 +113,12 @@ export function estimarCustoEsquadraMassaCritica(line, opts = {}) {
     linhas_com_massa: comMassa.length,
     linhas_faltam_saldavel: faltamLinhas,
     skus_abaixo_massa: abaixoMassa.length,
-    custo_para_saldavel: roundToTwoDecimals(custoParaSaldavel),
-    custo_todos_abaixo_massa: roundToTwoDecimals(custoTodosAbaixo),
+    custo_para_saldavel: custoParaSaldavel,
+    custo_todos_abaixo_massa: custoTodosAbaixo,
     cx_faltam_saldavel: cxFaltamSaldavel,
     media_custo_por_cx: roundToTwoDecimals(mediaCustoCx),
-    media_investimento_modelo: roundToTwoDecimals(mediaCustoCx * massaCritica),
+    media_investimento_modelo: mediaInvestimentoModelo,
+    investimento_minimo_saldavel: investimentoMinimoSaldavel,
     skus_detalhe: skusComPrioridade,
   };
 }
@@ -129,6 +142,7 @@ export function buildPortalMassaCriticaRelatorio(supplyLines = []) {
       custo_completar_abaixo: est.custo_todos_abaixo_massa,
       media_custo_por_cx: est.media_custo_por_cx,
       media_investimento_modelo: est.media_investimento_modelo,
+      investimento_minimo_saldavel: est.investimento_minimo_saldavel,
       cx_faltam_saldavel: est.cx_faltam_saldavel,
       linhas_faltam_saldavel: est.linhas_faltam_saldavel,
       skus: est.skus_detalhe.map((s) => ({
