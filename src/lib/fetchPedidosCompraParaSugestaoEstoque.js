@@ -53,7 +53,7 @@ function dedupeEmbarquesPorId(embarques = []) {
   return [...porId.values()];
 }
 
-async function fetchEmbarquesForPedidoIds(base44, pedidoIds = []) {
+export async function fetchEmbarquesForPedidoIds(base44, pedidoIds = []) {
   const unique = [...new Set((pedidoIds || []).filter(Boolean))];
   if (!unique.length || !base44?.entities?.Embarque?.filter) return [];
 
