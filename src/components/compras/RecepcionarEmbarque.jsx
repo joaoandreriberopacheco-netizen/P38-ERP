@@ -41,6 +41,10 @@ import { reverterRecepcaoEmbarque } from '@/lib/reverterRecepcaoEmbarque';
 import { buildItensCanonicosEmbarque } from '@/lib/buildEmbarqueItensCanonicos';
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
 import { hydrateEmbarquesFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
+import {
+  resolveEmbarqueQuantidadeBase,
+  resolveEmbarqueQuantidadeComercial,
+} from '@/lib/embarqueQuantityResolve';
 
 function pedidoItemParaEmbarque(pedido, embItem) {
   return (Array.isArray(pedido?.itens) ? pedido.itens : []).find(
@@ -50,25 +54,28 @@ function pedidoItemParaEmbarque(pedido, embItem) {
 
 function getItensDoEmbarque(embarque) {
   const baseItens = getEmbarqueItensLinhas(embarque);
-  const statusRec = embarque?.status_recebimento || embarque?.status_recebimento_embarque || 'Pendente';
-  const aguardandoRecepcao = !statusRec || statusRec === 'Pendente';
 
   return baseItens.map((item) => {
-    const hasExplicitRecebida = item.quantidade_recebida != null && item.quantidade_recebida !== '';
+    const qEmbApres = resolveEmbarqueQuantidadeComercial(item, 'embarcada');
+    const qEmbBase = resolveEmbarqueQuantidadeBase(item, 'embarcada');
+    const hasExplicitRecebida =
+      (item.quantidade_recebida != null && item.quantidade_recebida !== '')
+      || item.quantidade_recebida_apresentacao != null;
+
+    let quantidade_recebida_apresentacao;
     let quantidade_recebida;
-    if (!aguardandoRecepcao) {
-      quantidade_recebida = hasExplicitRecebida
-        ? roundToTwoDecimals(Number(item.quantidade_recebida) || 0)
-        : roundToTwoDecimals(Number(item.quantidade_embarcada) || 0);
-    } else if (hasExplicitRecebida) {
-      quantidade_recebida = roundToTwoDecimals(Number(item.quantidade_recebida) || 0);
+    if (hasExplicitRecebida) {
+      quantidade_recebida_apresentacao = resolveEmbarqueQuantidadeComercial(item, 'recebida');
+      quantidade_recebida = resolveEmbarqueQuantidadeBase(item, 'recebida');
     } else {
-      // Embarque ainda «Pendente»: assumir entrada = embarcado até o utilizador ajustar (evita confirmar com zeros).
-      quantidade_recebida = roundToTwoDecimals(Number(item.quantidade_embarcada) || 0);
+      quantidade_recebida_apresentacao = qEmbApres;
+      quantidade_recebida = qEmbBase;
     }
+
     return {
       ...item,
       quantidade_recebida,
+      quantidade_recebida_apresentacao,
     };
   });
 }
@@ -414,7 +421,9 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
             buildMovimentacaoRecepcaoCompraPayload({
               produtoId,
               produtoNome: item.produto_nome_recebido_diferente || item.produto_nome,
-              quantidade: item.quantidade_recebida,
+              quantidade:
+                item.quantidade_recebida_apresentacao
+                ?? resolveEmbarqueQuantidadeComercial(item, 'recebida'),
               pedido,
               embarque,
               purchaseItem: linhaPedido || item,

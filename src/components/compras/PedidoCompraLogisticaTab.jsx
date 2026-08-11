@@ -8,7 +8,7 @@ import InformarEmbarque from './InformarEmbarque';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
-import { calcularPercentuaisLogistica, derivarStatusEmbarqueAgregado } from '@/lib/embarqueLogisticaHelpers';
+import { calcularPercentuaisLogistica, derivarStatusEmbarqueAgregado, qtyEmbarcadaComercialLinha } from '@/lib/embarqueLogisticaHelpers';
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 
 // Calcula total embarcado por produto em TODOS os embarques
@@ -17,7 +17,7 @@ function calcularTotalEmbarcado(embarques) {
   (embarques || []).forEach((emb) => {
     getEmbarqueItensLinhas(emb).forEach((item) => {
       const prev = map[item.produto_id] || 0;
-      const add = Number(item.quantidade_embarcada) || 0;
+      const add = qtyEmbarcadaComercialLinha(item);
       map[item.produto_id] = roundToTwoDecimals(prev + add);
     });
   });
@@ -40,7 +40,7 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
   const eta = parseValidDate(embarque.eta);
   const itensEmbarque = getEmbarqueItensLinhas(embarque);
   const totalItens = roundToTwoDecimals(
-    itensEmbarque.reduce((s, i) => s + (Number(i.quantidade_embarcada) || 0), 0)
+    itensEmbarque.reduce((s, i) => s + qtyEmbarcadaComercialLinha(i), 0)
   );
   const codigoExibicao = embarque.codigo_exibicao || `${pedido?.numero || '-----'}-${String.fromCharCode(64 + nivel)}`;
   const statusRecebimento = embarque.status_recebimento || embarque.status_recebimento_embarque || 'Pendente';

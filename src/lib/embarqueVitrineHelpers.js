@@ -1,6 +1,12 @@
 import { base44 } from '@/api/base44Client';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import {
+  resolveEmbarqueLinhaFator,
+  resolveEmbarqueLinhaUnidade,
+  resolveEmbarqueQuantidadeBase,
+  resolveEmbarqueQuantidadeComercial,
+} from '@/lib/embarqueQuantityResolve';
+import {
   buildPurchaseUnitOptions,
   calculateBaseQuantity,
   commercialQuantityFromBase,
@@ -11,11 +17,7 @@ import {
 } from '@/lib/productUnits';
 
 export function quantidadeBaseEmbarqueItem(item = {}) {
-  const qb = Number(item.quantidade_base);
-  if (Number.isFinite(qb) && qb > 0) return qb;
-  const q = Number(item.quantidade_embarcada) || 0;
-  const f = Number(item.fator_conversao) || 1;
-  return calculateBaseQuantity(q, f);
+  return resolveEmbarqueQuantidadeBase(item, 'embarcada');
 }
 
 export function pedidaBaseItem(item = {}) {
@@ -25,17 +27,11 @@ export function pedidaBaseItem(item = {}) {
 }
 
 export function buildUnidadeLinhaInicial(item, produto, embItem = null) {
-  if (embItem?.unidade_apresentacao) {
+  if (embItem?.unidade_apresentacao || embItem?.unidade_sigla || embItem?.unidade_medida) {
+    const unidade = embItem.unidade_apresentacao || embItem.unidade_sigla || embItem.unidade_medida;
     return {
-      unidade: embItem.unidade_apresentacao,
-      fator: Number(embItem.fator_apresentacao) || 1,
-      produto_unidade_id: embItem.produto_unidade_id || '',
-    };
-  }
-  if (embItem?.unidade_medida && Number(embItem.fator_conversao) > 1) {
-    return {
-      unidade: embItem.unidade_medida,
-      fator: Number(embItem.fator_conversao) || 1,
+      unidade,
+      fator: resolveEmbarqueLinhaFator(embItem),
       produto_unidade_id: embItem.produto_unidade_id || '',
     };
   }
@@ -139,19 +135,20 @@ export function resolveUnidadeLinha(item, produto, unidadeLinhaMap, produtoId) {
 }
 
 export function quantidadeApresentacaoEmbarqueItem(embItem, linha) {
-  const apres = Number(embItem?.quantidade_embarcada_apresentacao);
-  if (Number.isFinite(apres) && apres >= 0) return apres;
-  if (Number(embItem?.fator_conversao) > 1 && embItem?.quantidade_embarcada != null) {
-    return Number(embItem.quantidade_embarcada) || 0;
+  const comercial = resolveEmbarqueQuantidadeComercial(embItem, 'embarcada');
+  if (comercial >= 0 && (embItem?.quantidade_embarcada_apresentacao != null || embItem?.quantidade_embarcada_comercial != null || embItem?.quantidade_embarcada != null)) {
+    return comercial;
   }
   const baseEmb = quantidadeBaseEmbarqueItem(embItem);
   return commercialQuantityFromBase(baseEmb, linha.fator, linha.unidade);
 }
 
 export function quantidadeRecebidaApresentacaoEmbarqueItem(embItem, linha) {
-  const apres = Number(embItem?.quantidade_recebida_apresentacao);
-  if (Number.isFinite(apres) && apres >= 0) return apres;
-  const baseRec = Number(embItem?.quantidade_recebida);
+  const comercial = resolveEmbarqueQuantidadeComercial(embItem, 'recebida');
+  if (comercial >= 0 && (embItem?.quantidade_recebida_apresentacao != null || embItem?.quantidade_recebida_comercial != null || embItem?.quantidade_recebida != null)) {
+    return comercial;
+  }
+  const baseRec = resolveEmbarqueQuantidadeBase(embItem, 'recebida');
   if (Number.isFinite(baseRec) && baseRec >= 0) {
     return commercialQuantityFromBase(baseRec, linha.fator, linha.unidade);
   }

@@ -1,46 +1,29 @@
 import { rebuildEmbarqueItensMirror } from '@/lib/embarqueItemContract';
+import {
+  resolveEmbarqueQuantidadeBase,
+  resolveEmbarqueQuantidadeComercial,
+} from '@/lib/embarqueQuantityResolve';
 import { getEmbarqueItensLinhas, hydrateEmbarquesPedidoFromSql } from '@/lib/fetchEmbarqueItens';
 
 function qtyPedidaBaseItem(item = {}) {
-  const base = Number(item.quantidade_base);
-  if (Number.isFinite(base) && base > 0) return base;
-  const comercial = Number(item.quantidade_comercial ?? item.quantidade) || 0;
-  const fator = Number(item.fator_conversao) || 1;
-  return comercial * fator;
+  return resolveEmbarqueQuantidadeBase(
+    {
+      ...item,
+      quantidade_pedida_base: item.quantidade_base,
+      quantidade_pedida_apresentacao: item.quantidade_pedida_apresentacao ?? item.quantidade,
+      quantidade_pedida: item.quantidade,
+    },
+    'pedida',
+  );
 }
 
 /** Quantidade embarcada em unidade base — alinhado a integrarPedidosEmbarques (SQL). */
 export function qtyEmbarcadaBaseLinha(item = {}) {
-  const sqlBase = Number(item.quantidade_embarcada_base);
-  if (Number.isFinite(sqlBase) && sqlBase > 0) return sqlBase;
-
-  const legacyBase = Number(item.quantidade_base);
-  if (Number.isFinite(legacyBase) && legacyBase > 0 && Number(item.fator_conversao ?? 1) <= 1) {
-    return legacyBase;
-  }
-
-  const comercial =
-    Number(
-      item.quantidade_embarcada_apresentacao ??
-        item.quantidade_embarcada_comercial ??
-        item.quantidade_embarcada
-    ) || 0;
-  const fator = Number(item.fator_apresentacao ?? item.fator_aplicado ?? item.fator_conversao) || 1;
-  return comercial * fator;
+  return resolveEmbarqueQuantidadeBase(item, 'embarcada');
 }
 
 function qtyRecebidaBaseLinha(item = {}) {
-  const sqlBase = Number(item.quantidade_recebida_base);
-  if (Number.isFinite(sqlBase) && sqlBase > 0) return sqlBase;
-
-  const comercial =
-    Number(
-      item.quantidade_recebida_apresentacao ??
-        item.quantidade_recebida_comercial ??
-        item.quantidade_recebida
-    ) || 0;
-  const fator = Number(item.fator_apresentacao ?? item.fator_aplicado ?? item.fator_conversao) || 1;
-  return comercial * fator;
+  return resolveEmbarqueQuantidadeBase(item, 'recebida');
 }
 
 /**
@@ -90,6 +73,11 @@ export function derivarStatusEmbarqueAgregado(pctDespachado) {
   if (pctDespachado >= 100) return 'Total';
   if (pctDespachado > 0) return 'Parcial';
   return 'Nenhum';
+}
+
+/** Quantidade comercial para exibição em órfãos / totais por produto. */
+export function qtyEmbarcadaComercialLinha(item = {}) {
+  return resolveEmbarqueQuantidadeComercial(item, 'embarcada');
 }
 
 /**
