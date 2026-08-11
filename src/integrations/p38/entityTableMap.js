@@ -4,6 +4,7 @@
 import {
   PRODUTO_COLUMNS,
   TERCEIRO_COLUMNS,
+  LINHA_COLUMNS,
   LANCAMENTO_FINANCEIRO_COLUMNS,
   PEDIDO_VENDA_COLUMNS,
   PEDIDO_COMPRA_COLUMNS,
@@ -34,6 +35,7 @@ export const ENTITY_TO_TABLE = {
     columns: LANCAMENTO_FINANCEIRO_COLUMNS,
   },
   Terceiro: { table: 'terceiro', mode: 'columns', columns: TERCEIRO_COLUMNS },
+  Linha: { table: 'linha', mode: 'columns', columns: LINHA_COLUMNS },
   Produto: { table: 'produto', mode: 'columns', columns: PRODUTO_COLUMNS },
   PedidoVenda: { table: 'pedido_venda', mode: 'columns', columns: PEDIDO_VENDA_COLUMNS },
   PedidoCompra: { table: 'pedido_compra', mode: 'columns', columns: PEDIDO_COMPRA_COLUMNS },

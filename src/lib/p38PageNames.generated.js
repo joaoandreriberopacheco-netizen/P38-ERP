@@ -66,6 +66,7 @@ export const P38_PAGE_NAMES = [
   "Operacoes",
   "OtimizacaoEstoqueIA",
   "PainelGerente",
+  "PainelLinhaRanger",
   "PDV",
   "PDVAuditoria",
   "PDVCaixa",

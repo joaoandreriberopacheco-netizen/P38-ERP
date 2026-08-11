@@ -24,7 +24,7 @@ import {
   DollarSign, BookOpen, Settings, ShoppingCart, Warehouse, Truck, ClipboardPenLine,
   Users, TrendingDown, Lightbulb, FileText, PackageSearch, Ship,
   ScanLine, ClipboardList, Tags, Upload, CheckSquare, Search, Activity,
-  ArrowLeftRight, CreditCard, Clock, Wallet, ReceiptText, AlertCircle, Repeat2, CalendarClock, Target, LineChart
+  ArrowLeftRight, CreditCard, Clock, Wallet, ReceiptText, AlertCircle, Repeat2, CalendarClock, Target, LineChart, Shield
 } from 'lucide-react';
 
 export { resolverPermissoes };
@@ -194,6 +194,12 @@ export const ALL_MENU_ITEMS = [
         name: 'Sugestões de Compra',
         page: 'SugestoesCompra',
         icon: Lightbulb,
+        permissaoCheck: (p) => p?.estoque?.compras?.sugestoes === true
+      },
+      {
+        name: 'Painel LINHA (Ranger)',
+        page: 'PainelLinhaRanger',
+        icon: Shield,
         permissaoCheck: (p) => p?.estoque?.compras?.sugestoes === true
       },
       {
