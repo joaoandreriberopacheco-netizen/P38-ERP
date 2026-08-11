@@ -14,19 +14,26 @@ import {
   buildPortalSupplyLines,
   listPortalLinhas,
 } from '@/lib/hierarquiaPortal/buildPortalModel';
-import PortalCadastroPanel from '@/components/hierarquia-portal/PortalCadastroPanel';
+import {
+  filterProdutosPortalExcel,
+  PORTAL_EXCEL_LINHAS,
+  PORTAL_EXCEL_SKU_COUNT,
+} from '@/lib/hierarquiaPortal/portalExcelManifest';
+import PortalTreeGrid from '@/components/hierarquia-portal/PortalTreeGrid';
 import PortalSmartSupplyPanel from '@/components/hierarquia-portal/PortalSmartSupplyPanel';
 import PortalTipoFilter from '@/components/hierarquia-portal/PortalTipoFilter';
-import { HIERARQUIA_PORTAL_ENABLED } from '@/config/hierarquiaPortalFlags';
-
-const TIPOS_LINHA = ['solo', 'mix', 'portfolio'];
+import {
+  HIERARQUIA_PORTAL_ENABLED,
+  HIERARQUIA_PORTAL_PILOTO_LINHAS,
+} from '@/config/hierarquiaPortalFlags';
+import { MODELO_PILOTO_LINHAS_PLANEADAS } from '@/config/modeloCatalogoFlags';
 
 function HierarquiaPortalInner() {
   const [loading, setLoading] = useState(true);
   const [produtos, setProdutos] = useState([]);
   const [tab, setTab] = useState('cadastro');
   const [filtroLinha, setFiltroLinha] = useState('');
-  const [filtroTipos, setFiltroTipos] = useState(() => new Set(TIPOS_LINHA));
+  const [filtroTipos, setFiltroTipos] = useState(() => new Set(['portfolio']));
   const [search, setSearch] = useState('');
   const [somenteAlerta, setSomenteAlerta] = useState(false);
 
@@ -46,7 +53,8 @@ function HierarquiaPortalInner() {
     return () => { cancelled = true; };
   }, []);
 
-  const enriched = useMemo(() => produtos.map(enrichProdutoPortal), [produtos]);
+  const produtosPiloto = useMemo(() => filterProdutosPortalExcel(produtos), [produtos]);
+  const enriched = useMemo(() => produtosPiloto.map(enrichProdutoPortal), [produtosPiloto]);
   const tree = useMemo(() => buildPortalTree(enriched), [enriched]);
   const supplyLines = useMemo(() => buildPortalSupplyLines(enriched), [enriched]);
   const linhas = useMemo(() => listPortalLinhas(enriched), [enriched]);
@@ -67,8 +75,6 @@ function HierarquiaPortalInner() {
     return lines;
   }, [supplyLines, filtroLinha, filtroTipos, search]);
 
-  const soldavelCount = enriched.filter((r) => r.linha_codigo === 'SOLDAVEL').length;
-
   const tipoCounts = useMemo(() => {
     const counts = { solo: 0, mix: 0, portfolio: 0 };
     const source = tab === 'supply' ? supplyLines : linhas;
@@ -78,6 +84,8 @@ function HierarquiaPortalInner() {
     }
     return counts;
   }, [linhas, supplyLines, tab]);
+
+  const linhasPilotoLabel = HIERARQUIA_PORTAL_PILOTO_LINHAS.map((l) => l.nome).join(' · ');
 
   return (
     <div className="min-h-screen bg-background font-din-1451 pb-8">
@@ -91,15 +99,26 @@ function HierarquiaPortalInner() {
               </Link>
             </Button>
             <h1 className="text-xl md:text-2xl font-semibold font-glacial text-foreground">
-              Portal hierarquia
+              Portal hierarquia — piloto cerâmica
             </h1>
             <p className="text-sm text-muted-foreground max-w-2xl">
-              Preview da hierarquia completa: <strong className="text-foreground font-normal">Categoria → LINHA → Produto compra → SKU</strong>.
-              Solo, Mix e Portfolio no mesmo ecrã — só leitura, não altera o cadastro.
+              Mesmo universo do Excel mestre e do laboratório Modelo:{' '}
+              <strong className="text-foreground font-normal">{linhasPilotoLabel}</strong>
+              {' '}({PORTAL_EXCEL_SKU_COUNT} SKUs, prefixo CERAM). Hierarquia{' '}
+              <strong className="text-foreground font-normal">Categoria → LINHA → Produto compra → SKU</strong>
+              {' '}· estoque em unidade vitrine · só leitura.
             </p>
           </div>
-          <div className="rounded-lg border border-amber-500/40 bg-amber-50/80 dark:bg-amber-950/30 px-3 py-2 text-xs text-amber-900 dark:text-amber-100 max-w-sm">
-            <strong>Exemplo Mix:</strong> SOLDÁVEL — {soldavelCount} SKUs. Filtre por LINHA ou expanda a tabela.
+          <div className="rounded-lg border border-violet-500/40 bg-violet-50/80 dark:bg-violet-950/30 px-3 py-2 text-xs text-violet-900 dark:text-violet-100 max-w-sm space-y-1">
+            <p>
+              <strong>Piloto portfolio:</strong> {enriched.length} SKUs carregados
+              {enriched.length < PORTAL_EXCEL_SKU_COUNT && (
+                <span className="opacity-80"> · {PORTAL_EXCEL_SKU_COUNT - enriched.length} no Excel ainda sem match no cadastro</span>
+              )}
+            </p>
+            <p className="opacity-80">
+              Em breve (mix): {MODELO_PILOTO_LINHAS_PLANEADAS.map((l) => l.nome).join(' · ')}
+            </p>
           </div>
         </div>
 
@@ -116,11 +135,11 @@ function HierarquiaPortalInner() {
             />
           </div>
           <Select value={filtroLinha || 'all'} onValueChange={(v) => setFiltroLinha(v === 'all' ? '' : v)}>
-            <SelectTrigger className="w-[200px] h-9">
+            <SelectTrigger className="w-[220px] h-9">
               <SelectValue placeholder="LINHA" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas as LINHAS</SelectItem>
+              <SelectItem value="all">Todas as LINHAS (piloto)</SelectItem>
               {linhas.map((l) => (
                 <SelectItem key={l.codigo} value={l.codigo}>
                   {l.nome} ({l.tipo})
@@ -144,7 +163,7 @@ function HierarquiaPortalInner() {
             value="cadastro"
             activeValue={tab}
             onSelect={setTab}
-            label="Cadastro (árvore)"
+            label="Cadastro (treegrid)"
           />
           <GlacialTabsTrigger
             value="supply"
@@ -157,10 +176,10 @@ function HierarquiaPortalInner() {
         {loading ? (
           <div className="flex items-center justify-center py-16 text-muted-foreground gap-2">
             <Loader2 className="h-5 w-5 animate-spin" />
-            Montando preview…
+            Montando piloto cerâmica…
           </div>
         ) : tab === 'cadastro' ? (
-          <PortalCadastroPanel
+          <PortalTreeGrid
             tree={tree}
             filtroLinha={filtroLinha}
             filtroTipos={filtroTipos}
@@ -171,7 +190,7 @@ function HierarquiaPortalInner() {
         )}
 
         <p className="text-[11px] text-muted-foreground text-center">
-          {enriched.length} SKUs · {supplyLines.length} linhas de compra (proposta) · dados só leitura
+          {enriched.length} SKUs · {supplyLines.length} esquadras · {PORTAL_EXCEL_LINHAS.length} LINHAS piloto · Excel mestre
         </p>
       </div>
     </div>

@@ -1,5 +1,7 @@
 import { planLinhaCompraAnalise, norm } from '@/lib/hierarquiaPortal/planLinhaCompra';
 import { inferirLinhaCodigo, findLinhaMeta } from '@/lib/hierarquiaPortal/inferirLinha';
+import { getPortalExcelSku, findPortalExcelLinha } from '@/lib/hierarquiaPortal/portalExcelManifest';
+import { portalEstoqueSku, portalEstoqueGrupo } from '@/lib/hierarquiaPortal/portalStockFormat';
 
 function trim(s) {
   return String(s || '').trim();
@@ -20,15 +22,55 @@ function mapTipoLinha(tipoMestre) {
 }
 
 export function enrichProdutoPortal(produto) {
+  const excel = getPortalExcelSku(produto);
   const plan = planLinhaCompraAnalise(produto);
+  const vitrine = portalEstoqueSku(produto);
+  const estoqueBase = Number(produto.estoque_atual) || 0;
+  const ponto = Number(produto.estoque_minimo) || 0;
+
+  if (excel) {
+    const linhaMeta = findPortalExcelLinha(excel.linha_codigo) || {
+      codigo: excel.linha_codigo,
+      nome: excel.linha_nome,
+      tipo: 'portfolio',
+      ordem: 10,
+    };
+    const linhaTipo = mapTipoLinha(linhaMeta.tipo);
+    const solo = linhaTipo === 'solo';
+    const pcNome = solo ? '' : trim(excel.produto_compra);
+    const pcCodigo = solo ? '' : (excel.produto_compra_codigo || slugCodigo(pcNome));
+
+    return {
+      produto,
+      categoria: trim(excel.categoria) || trim(produto.categoria_nome) || '(sem categoria)',
+      linha_codigo: linhaMeta.codigo,
+      linha_nome: linhaMeta.nome,
+      linha_tipo: linhaTipo,
+      linha_ordem: linhaMeta.ordem ?? 10,
+      produto_compra_codigo: pcCodigo,
+      produto_compra_nome: pcNome,
+      solo,
+      eixo_a: excel.ex_a || plan.eixo_a || '',
+      eixo_b: excel.ex_b || plan.eixo_b || '',
+      eixo_a_rotulo: excel.ex_a || plan.eixo_a_rotulo || '',
+      eixo_b_rotulo: excel.ex_b || plan.eixo_b_rotulo || '',
+      confianca: 'excel',
+      estoque: estoqueBase,
+      estoque_vitrine: vitrine.quantidade,
+      estoque_sigla: vitrine.sigla,
+      estoque_label: vitrine.label,
+      abaixo_ponto: estoqueBase < ponto,
+      zerado: estoqueBase <= 0,
+      fonte_excel: true,
+    };
+  }
+
   const linhaCod = inferirLinhaCodigo(produto);
   const linhaMeta = findLinhaMeta(linhaCod);
   const linhaTipo = mapTipoLinha(linhaMeta.tipo);
   const solo = linhaTipo === 'solo';
   const pcNome = solo ? '' : trim(plan.produto_compra_nome);
   const pcCodigo = solo ? '' : slugCodigo(pcNome || linhaMeta.codigo);
-  const estoque = Number(produto.estoque_atual) || 0;
-  const ponto = Number(produto.estoque_minimo) || 0;
 
   return {
     produto,
@@ -45,9 +87,13 @@ export function enrichProdutoPortal(produto) {
     eixo_a_rotulo: plan.eixo_a_rotulo || '',
     eixo_b_rotulo: plan.eixo_b_rotulo || '',
     confianca: plan.confianca,
-    estoque,
-    abaixo_ponto: estoque < ponto,
-    zerado: estoque <= 0,
+    estoque: estoqueBase,
+    estoque_vitrine: vitrine.quantidade,
+    estoque_sigla: vitrine.sigla,
+    estoque_label: vitrine.label,
+    abaixo_ponto: estoqueBase < ponto,
+    zerado: estoqueBase <= 0,
+    fonte_excel: false,
   };
 }
 
@@ -70,10 +116,12 @@ export function buildPortalSupplyLines(enriched) {
         linha_tipo: row.linha_tipo,
         linha_ordem: row.linha_ordem,
         produto_compra_codigo: row.produto_compra_codigo,
-        produto_compra_nome: row.solo ? '(solo — SKUs diretos)' : row.produto_compra_nome,
+        produto_compra_nome: row.solo ? '(solo — SKUs directos)' : row.produto_compra_nome,
         solo: row.solo,
         skus: [],
         estoque_total: 0,
+        estoque_label: '',
+        estoque_sigla: '',
         zerados: 0,
         abaixo_ponto: 0,
         eixo_a_rotulo: row.eixo_a_rotulo,
@@ -82,21 +130,27 @@ export function buildPortalSupplyLines(enriched) {
     }
     const g = map.get(key);
     g.skus.push(row);
-    g.estoque_total += row.estoque;
+    g.estoque_total += row.estoque_vitrine ?? row.estoque;
     if (row.zerado) g.zerados += 1;
     if (row.abaixo_ponto) g.abaixo_ponto += 1;
   }
 
   return [...map.values()]
-    .map((g) => ({
-      ...g,
-      sku_count: g.skus.length,
-      alerta: g.zerados > 0 || g.abaixo_ponto > g.skus.length / 2,
-      pfut_simulado: g.estoque_total <= 0 ? -3 : g.abaixo_ponto > 0 ? -1 : 12,
-    }))
+    .map((g) => {
+      const grp = portalEstoqueGrupo(g.skus);
+      return {
+        ...g,
+        sku_count: g.skus.length,
+        estoque_total: grp.quantidade,
+        estoque_label: grp.label,
+        estoque_sigla: grp.sigla,
+        alerta: g.zerados > 0 || g.abaixo_ponto > g.skus.length / 2,
+        pfut_simulado: g.zerados === g.skus.length ? -3 : g.abaixo_ponto > 0 ? -1 : 12,
+      };
+    })
     .sort((a, b) => {
       if (a.linha_ordem !== b.linha_ordem) return a.linha_ordem - b.linha_ordem;
-      return (a.produto_compra_nome || '').localeCompare(b.produto_compra_nome || '', 'pt-BR');
+      return (a.produto_compra_nome || '').localeCompare(b.produto_compra_nome, 'pt-BR');
     });
 }
 

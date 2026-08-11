@@ -80,8 +80,8 @@ function SupplyRow({ line, open, onToggle }) {
         <TableCell className={cn(p38Table.cell, p38Table.cellNumeric, 'w-[72px]')}>
           <span className="tabular-nums text-sm">{line.sku_count}</span>
         </TableCell>
-        <TableCell className={cn(p38Table.cell, p38Table.cellNumeric, 'w-[88px]')}>
-          <span className="tabular-nums text-sm">{line.estoque_total}</span>
+        <TableCell className={cn(p38Table.cell, p38Table.cellNumeric, 'w-[120px]')}>
+          <span className="tabular-nums text-sm whitespace-nowrap">{line.estoque_label || line.estoque_total}</span>
         </TableCell>
         <TableCell className={cn(p38Table.cell, p38Table.cellNumeric, 'w-[72px]')}>
           <PfutCell value={line.pfut_simulado} />
@@ -101,8 +101,8 @@ function SupplyRow({ line, open, onToggle }) {
                   className="flex justify-between gap-3 text-xs text-muted-foreground border-b border-border/30 dark:border-white/5 py-1 last:border-0"
                 >
                   <span className="truncate">{s.produto.nome}</span>
-                  <span className="shrink-0 tabular-nums">
-                    est. {s.estoque}
+                  <span className="shrink-0 tabular-nums whitespace-nowrap">
+                    {s.estoque_label || s.estoque}
                     {s.eixo_b ? ` · ${s.eixo_b}` : ''}
                   </span>
                 </li>
@@ -165,7 +165,7 @@ export default function PortalSmartSupplyPanel({ lines, somenteAlerta }) {
               <TableHead className={p38Table.head}>Produto compra</TableHead>
               <TableHead className={cn(p38Table.head, 'w-[100px]')}>Tipo</TableHead>
               <TableHead className={cn(p38Table.head, p38Table.headRight, 'w-[72px]')}>SKUs</TableHead>
-              <TableHead className={cn(p38Table.head, p38Table.headRight, 'w-[88px]')}>Estoque</TableHead>
+              <TableHead className={cn(p38Table.head, p38Table.headRight, 'w-[120px]')}>Estoque vitrine</TableHead>
               <TableHead className={cn(p38Table.head, p38Table.headRight, 'w-[72px]')}>P.FUT*</TableHead>
             </TableRow>
           </TableHeader>
