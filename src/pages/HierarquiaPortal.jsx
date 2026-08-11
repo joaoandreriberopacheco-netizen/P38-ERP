@@ -16,13 +16,17 @@ import {
 } from '@/lib/hierarquiaPortal/buildPortalModel';
 import PortalCadastroPanel from '@/components/hierarquia-portal/PortalCadastroPanel';
 import PortalSmartSupplyPanel from '@/components/hierarquia-portal/PortalSmartSupplyPanel';
+import PortalTipoFilter from '@/components/hierarquia-portal/PortalTipoFilter';
 import { HIERARQUIA_PORTAL_ENABLED } from '@/config/hierarquiaPortalFlags';
+
+const TIPOS_LINHA = ['solo', 'mix', 'portfolio'];
 
 function HierarquiaPortalInner() {
   const [loading, setLoading] = useState(true);
   const [produtos, setProdutos] = useState([]);
   const [tab, setTab] = useState('cadastro');
   const [filtroLinha, setFiltroLinha] = useState('');
+  const [filtroTipos, setFiltroTipos] = useState(() => new Set(TIPOS_LINHA));
   const [search, setSearch] = useState('');
   const [somenteAlerta, setSomenteAlerta] = useState(false);
 
@@ -64,9 +68,17 @@ function HierarquiaPortalInner() {
 
   const soldavelCount = enriched.filter((r) => r.linha_codigo === 'SOLDAVEL').length;
 
+  const tipoCounts = useMemo(() => {
+    const counts = { solo: 0, mix: 0, portfolio: 0 };
+    for (const l of linhas) {
+      if (counts[l.tipo] != null) counts[l.tipo] += 1;
+    }
+    return counts;
+  }, [linhas]);
+
   return (
     <div className="min-h-screen bg-background font-din-1451 pb-8">
-      <div className="max-w-5xl mx-auto px-4 py-4 md:py-6 space-y-4">
+      <div className="max-w-7xl mx-auto px-4 py-4 md:py-6 space-y-4">
         <div className="flex flex-wrap items-start gap-3 justify-between">
           <div className="space-y-1 min-w-0">
             <Button variant="ghost" size="sm" className="h-8 -ml-2 gap-1 text-muted-foreground" asChild>
@@ -78,16 +90,19 @@ function HierarquiaPortalInner() {
             <h1 className="text-xl md:text-2xl font-semibold font-glacial text-foreground">
               Portal hierarquia
             </h1>
-            <p className="text-sm text-muted-foreground max-w-xl">
-              Universo paralelo — preview da nova lógica (Categoria → LINHA → Produto compra → SKU).
-              Não altera cadastro, pedidos nem Sugestões de Compra actuais.
+            <p className="text-sm text-muted-foreground max-w-2xl">
+              Preview da hierarquia completa: <strong className="text-foreground font-normal">Categoria → LINHA → Produto compra → SKU</strong>.
+              Solo, Mix e Portfolio no mesmo ecrã — só leitura, não altera o cadastro.
             </p>
           </div>
           <div className="rounded-lg border border-amber-500/40 bg-amber-50/80 dark:bg-amber-950/30 px-3 py-2 text-xs text-amber-900 dark:text-amber-100 max-w-sm">
-            <strong>Piloto visual:</strong> SOLDÁVEL tem {soldavelCount} SKUs no cadastro actual.
-            Filtre por LINHA SOLDÁVEL para comparar com a lista gigante de hoje.
+            <strong>Exemplo Mix:</strong> SOLDÁVEL — {soldavelCount} SKUs. Filtre por LINHA ou expanda a tabela.
           </div>
         </div>
+
+        {tab === 'cadastro' && (
+          <PortalTipoFilter activeTipos={filtroTipos} onChange={setFiltroTipos} counts={tipoCounts} />
+        )}
 
         <div className="flex flex-wrap gap-2 items-center">
           <div className="relative flex-1 min-w-[200px] max-w-md">
@@ -144,9 +159,12 @@ function HierarquiaPortalInner() {
             Montando preview…
           </div>
         ) : tab === 'cadastro' ? (
-          <div className="rounded-lg border bg-card p-2 min-h-[320px]">
-            <PortalCadastroPanel tree={tree} filtroLinha={filtroLinha} search={search} />
-          </div>
+          <PortalCadastroPanel
+            tree={tree}
+            filtroLinha={filtroLinha}
+            filtroTipos={filtroTipos}
+            search={search}
+          />
         ) : (
           <PortalSmartSupplyPanel lines={filteredSupply} somenteAlerta={somenteAlerta} />
         )}
