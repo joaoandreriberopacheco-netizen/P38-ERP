@@ -13,6 +13,11 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/components/utils';
 import { p38Table } from '@/lib/p38TableSurfaces';
+import {
+  montarNomePortalSku,
+  montarSubtituloPortalSku,
+  montarVariantePortalSku,
+} from '@/lib/hierarquiaPortal/montarNomePortalSku';
 
 const TIPO_BADGE = {
   solo: 'bg-slate-200/80 text-slate-800 dark:bg-slate-700 dark:text-slate-100',
@@ -287,10 +292,10 @@ export default function PortalCadastroPanel({ tree, filtroLinha, filtroTipos, se
               <HierarchyRow
                 key={`sku:${s.produto.id}`}
                 nivel="sku"
-                nome={s.produto.nome}
+                nome={montarNomePortalSku(s)}
                 estoque={s.estoque}
                 depth={3}
-                subtitle={s.eixo_b || undefined}
+                subtitle={montarSubtituloPortalSku(s) || undefined}
               />,
             );
           }
@@ -330,10 +335,10 @@ export default function PortalCadastroPanel({ tree, filtroLinha, filtroTipos, se
             <HierarchyRow
               key={`sku:${s.produto.id}`}
               nivel="sku"
-              nome={s.produto.nome}
+              nome={montarVariantePortalSku(s)}
               estoque={s.estoque}
               depth={3}
-              subtitle={s.eixo_b || undefined}
+              subtitle={montarSubtituloPortalSku(s) || undefined}
             />,
           );
         }

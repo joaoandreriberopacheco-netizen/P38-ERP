@@ -1,4 +1,9 @@
 import { TREE_GRID_EXPAND_ALL_LEVEL } from '@/components/produtos/treegrid/LevelControl';
+import {
+  montarNomePortalSku,
+  montarSubtituloPortalSku,
+  montarVariantePortalSku,
+} from '@/lib/hierarquiaPortal/montarNomePortalSku';
 import { portalEstoqueGrupo } from '@/lib/hierarquiaPortal/portalStockFormat';
 
 function filterTree(tree, filtroLinha, filtroTipos, search) {
@@ -86,8 +91,8 @@ export function flattenPortalTreeGrid(tree, maxLevel) {
               id: `sku:${s.produto.id}`,
               kind: 'sku',
               depth: 2,
-              label: s.produto.nome,
-              subtitle: s.eixo_b || s.produto.codigo_interno || '',
+              label: montarNomePortalSku(s),
+              subtitle: montarSubtituloPortalSku(s),
               tipo: null,
               skuCount: null,
               estoque: { label: s.estoque_label, quantidade: s.estoque_vitrine, sigla: s.estoque_sigla },
@@ -120,8 +125,8 @@ export function flattenPortalTreeGrid(tree, maxLevel) {
             id: `sku:${s.produto.id}`,
             kind: 'sku',
             depth: 3,
-            label: s.produto.nome,
-            subtitle: s.eixo_b || s.produto.codigo_interno || '',
+            label: montarVariantePortalSku(s),
+            subtitle: montarSubtituloPortalSku(s),
             tipo: null,
             skuCount: null,
             estoque: { label: s.estoque_label, quantidade: s.estoque_vitrine, sigla: s.estoque_sigla },

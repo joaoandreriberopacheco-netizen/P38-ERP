@@ -20,25 +20,59 @@ import {
 } from '@/lib/modeloCatalogo/regrasCeramica';
 import { portalEstoqueCx } from '@/lib/hierarquiaPortal/buildPortalSupplyCeramica';
 import { summarizePortalSupply } from '@/lib/hierarquiaPortal/buildPortalSupplyHierarchy';
+import { montarSubtituloPortalSku, montarVariantePortalSku } from '@/lib/hierarquiaPortal/montarNomePortalSku';
 import { buildPortalSupplyBridgePayload, savePortalSupplyBridge } from '@/lib/hierarquiaPortal/portalSupplyBridge';
 import { SMART_SUPPLY_PAGE, SMART_SUPPLY_TITLE } from '@/config/smartSupplyFlags';
 
+/** off = saldável · amarelo = alerta · laranja = ruptura PFUT · vermelho = ruptura confirmada */
 const LED_CLASS = {
-  ok: 'bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.22)] dark:bg-emerald-400',
-  alerta: 'bg-amber-400 shadow-[0_0_0_3px_rgba(251,191,36,0.24)] dark:bg-amber-400',
-  critico: 'bg-red-500 shadow-[0_0_0_3px_rgba(239,68,68,0.24)] dark:bg-red-400',
+  off: 'bg-muted-foreground/15 border border-muted-foreground/25 dark:bg-white/[0.06] dark:border-white/10',
+  alerta: 'bg-yellow-300 shadow-[0_0_0_3px_rgba(253,224,71,0.32)] dark:bg-yellow-400',
+  alerta_escuro: 'bg-yellow-500 shadow-[0_0_0_3px_rgba(234,179,8,0.34)] dark:bg-yellow-500',
+  ruptura_pfut: 'bg-orange-500 shadow-[0_0_0_3px_rgba(249,115,22,0.34)] dark:bg-orange-400',
+  ruptura: 'bg-red-500 shadow-[0_0_0_3px_rgba(239,68,68,0.34)] dark:bg-red-400',
 };
 
 const BORDER_CLASS = {
-  ok: 'border-l-emerald-500/70',
-  alerta: 'border-l-amber-500',
-  critico: 'border-l-red-500',
+  off: 'border-l-transparent',
+  alerta: 'border-l-yellow-400',
+  alerta_escuro: 'border-l-yellow-500',
+  ruptura_pfut: 'border-l-orange-500',
+  ruptura: 'border-l-red-500',
 };
 
-function resolveSupplyLed({ saldavel, veredicto_tom, ponto_negativo }) {
-  if (ponto_negativo || veredicto_tom === 'critico') return 'critico';
-  if (saldavel) return 'ok';
-  return 'alerta';
+function resolveSkuLed(row, massaCritica) {
+  const cx = portalEstoqueCx(row);
+  if (cx <= 0) return 'ruptura';
+  if (row.ponto_negativo) return 'ruptura_pfut';
+  if (!atingeMassaCriticaCeramica(cx, massaCritica)) {
+    return cx < massaCritica / 2 ? 'alerta_escuro' : 'alerta';
+  }
+  return 'off';
+}
+
+function resolveEsquadraLed(eq) {
+  const m = eq.metrics;
+  if (eq.zerados > 0 || eq.veredicto_tom === 'critico') return 'ruptura';
+  if (m?.ponto_negativo) return 'ruptura_pfut';
+  if (eq.saldavel) return 'off';
+  const ratio = (eq.abaixo_massa || 0) / (eq.sku_count || 1);
+  return ratio >= 0.5 ? 'alerta_escuro' : 'alerta';
+}
+
+function resolveLinhaLed(linha) {
+  const m = linha.metrics;
+  const esquadras = linha.esquadras || [];
+  if (esquadras.some((e) => e.zerados > 0 || e.veredicto_tom === 'critico')) return 'ruptura';
+  if (m?.ponto_negativo) return 'ruptura_pfut';
+  if (
+    linha.resumo.esquadras_saldaveis === linha.resumo.esquadras_total
+    && linha.resumo.esquadras_total > 0
+  ) {
+    return 'off';
+  }
+  const ratio = (linha.resumo.esquadras_alerta || 0) / (linha.resumo.esquadras_total || 1);
+  return ratio >= 0.5 ? 'alerta_escuro' : 'alerta';
 }
 
 function SupplyLed({ tone = 'alerta', tip, pulse = false, className }) {
@@ -47,7 +81,7 @@ function SupplyLed({ tone = 'alerta', tip, pulse = false, className }) {
       className={cn(
         'inline-block w-2.5 h-2.5 rounded-full shrink-0',
         LED_CLASS[tone] || LED_CLASS.alerta,
-        pulse && tone !== 'ok' && 'animate-pulse',
+        pulse && tone !== 'off' && 'animate-pulse',
         className,
       )}
       aria-hidden
@@ -119,12 +153,12 @@ function RangerBar({ hierarchy, flatLines, somenteAlerta }) {
         </span>
         <span className="text-muted-foreground">·</span>
         <span className="inline-flex items-center gap-1.5">
-          <SupplyLed tone="ok" />
+          <SupplyLed tone="off" />
           <strong>{stats.saldaveis}</strong>
         </span>
         <span className="text-muted-foreground">·</span>
         <span className="inline-flex items-center gap-1.5">
-          <SupplyLed tone={stats.alertas > 0 ? 'alerta' : 'ok'} pulse={stats.alertas > 0} />
+          <SupplyLed tone={stats.alertas > 0 ? 'alerta' : 'off'} pulse={stats.alertas > 0} />
           <strong>{stats.alertas}</strong>
         </span>
         {somenteAlerta && (
@@ -145,7 +179,9 @@ function RangerBar({ hierarchy, flatLines, somenteAlerta }) {
 function SkuRows({ skus, massaCritica }) {
   return skus.map((s) => {
     const cx = portalEstoqueCx(s);
-    const tone = cx <= 0 ? 'critico' : !atingeMassaCriticaCeramica(cx, massaCritica) ? 'alerta' : 'ok';
+    const tone = resolveSkuLed(s, massaCritica);
+    const label = montarVariantePortalSku(s);
+    const code = montarSubtituloPortalSku(s);
     return (
       <TableRow
         key={s.produto.id}
@@ -153,10 +189,15 @@ function SkuRows({ skus, massaCritica }) {
       >
         <TableCell className={cn(p38Table.cell, 'w-8 px-1')} />
         <TableCell className={cn(p38Table.cell, 'w-8 px-1')}>
-          <SupplyLed tone={tone} />
+          <SupplyLed tone={tone} pulse={tone === 'ruptura' || tone === 'ruptura_pfut'} />
         </TableCell>
         <TableCell className={cn(p38Table.cell, 'min-w-0 max-w-0')}>
-          <span className="block truncate text-xs text-muted-foreground pl-10">{s.produto.nome}</span>
+          <div className="pl-10 min-w-0">
+            <span className="block truncate text-xs text-muted-foreground">{label}</span>
+            {code && (
+              <span className="block truncate text-[10px] text-muted-foreground/60 tabular-nums">{code}</span>
+            )}
+          </div>
         </TableCell>
         <TableCell className={cn(p38Table.cell, p38Table.cellNumeric, 'w-[52px]')} />
         <TableCell className={cn(p38Table.cell, p38Table.cellNumeric, 'w-[100px]')}>
@@ -178,11 +219,7 @@ function EsquadraRows({ esquadras, openSet, toggleOpen }) {
   return esquadras.map((eq) => {
     const open = openSet.has(eq.key);
     const m = eq.metrics;
-    const tone = resolveSupplyLed({
-      saldavel: eq.saldavel,
-      veredicto_tom: eq.veredicto_tom,
-      ponto_negativo: m?.ponto_negativo,
-    });
+    const tone = resolveEsquadraLed(eq);
 
     return (
       <React.Fragment key={eq.key}>
@@ -204,7 +241,7 @@ function EsquadraRows({ esquadras, openSet, toggleOpen }) {
             </button>
           </TableCell>
           <TableCell className={cn(p38Table.cell, 'w-8 px-1')}>
-            <SupplyLed tone={tone} tip={eq.veredicto} pulse={tone === 'critico'} />
+            <SupplyLed tone={tone} tip={eq.veredicto} pulse={tone === 'ruptura' || tone === 'ruptura_pfut'} />
           </TableCell>
           <TableCell className={cn(p38Table.cell, 'min-w-0 max-w-0')}>
             <span className="block truncate text-sm pl-5 font-medium">{eq.produto_compra_nome}</span>
@@ -283,11 +320,7 @@ function SupplyTreeTable({ linhas }) {
           {linhas.map((linha) => {
             const linhaOpen = openLinhas.has(linha.linha_codigo);
             const m = linha.metrics;
-            const tone = resolveSupplyLed({
-              saldavel: linha.resumo.esquadras_saldaveis === linha.resumo.esquadras_total && linha.resumo.esquadras_total > 0,
-              veredicto_tom: linha.veredicto_tom,
-              ponto_negativo: m?.ponto_negativo,
-            });
+            const tone = resolveLinhaLed(linha);
 
             return (
               <React.Fragment key={linha.linha_codigo}>
@@ -309,7 +342,7 @@ function SupplyTreeTable({ linhas }) {
                     </button>
                   </TableCell>
                   <TableCell className={cn(p38Table.cell, 'w-8 px-1')}>
-                    <SupplyLed tone={tone} tip={linha.veredicto_linha} pulse={tone === 'critico'} />
+                    <SupplyLed tone={tone} tip={linha.veredicto_linha} pulse={tone === 'ruptura' || tone === 'ruptura_pfut'} />
                   </TableCell>
                   <TableCell className={cn(p38Table.cell, 'min-w-0 max-w-0')}>
                     <span className="block truncate text-sm font-semibold">{linha.linha_nome}</span>
@@ -370,8 +403,8 @@ export default function PortalSmartSupplyPanel({ hierarchy, flatLines, somenteAl
     return (
       <div className="space-y-3">
         <RangerBar hierarchy={hierarchy} flatLines={flatLines} somenteAlerta={somenteAlerta} />
-        <div className="rounded-lg border border-emerald-500/30 dark:border-emerald-500/20 bg-emerald-50/20 dark:bg-emerald-950/15 p-8 text-center">
-          <SupplyLed tone="ok" className="mx-auto mb-3" />
+        <div className="rounded-lg border border-border/40 dark:border-white/10 bg-muted/20 dark:bg-emerald-950/10 p-8 text-center">
+          <SupplyLed tone="off" className="mx-auto mb-3" />
           <p className="text-sm tabular-nums">0 alertas</p>
         </div>
       </div>
