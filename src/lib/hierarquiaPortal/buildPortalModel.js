@@ -55,6 +55,7 @@ export function enrichProdutoPortal(produto) {
       eixo_b: excel.ex_b || plan.eixo_b || '',
       eixo_a_rotulo: excel.ex_a || plan.eixo_a_rotulo || '',
       eixo_b_rotulo: excel.ex_b || plan.eixo_b_rotulo || '',
+      novo_sku: excel.novo_sku || '',
       confianca: 'excel',
       estoque: estoqueBase,
       estoque_vitrine: vitrine.quantidade,

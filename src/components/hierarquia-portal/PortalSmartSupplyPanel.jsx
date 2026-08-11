@@ -20,7 +20,7 @@ import {
 } from '@/lib/modeloCatalogo/regrasCeramica';
 import { portalEstoqueCx } from '@/lib/hierarquiaPortal/buildPortalSupplyCeramica';
 import { summarizePortalSupply } from '@/lib/hierarquiaPortal/buildPortalSupplyHierarchy';
-import { montarSubtituloPortalSku, montarVariantePortalSku } from '@/lib/hierarquiaPortal/montarNomePortalSku';
+import { montarNomePortalSku, montarSubtituloPortalSku } from '@/lib/hierarquiaPortal/montarNomePortalSku';
 import { buildPortalSupplyBridgePayload, savePortalSupplyBridge } from '@/lib/hierarquiaPortal/portalSupplyBridge';
 import { SMART_SUPPLY_PAGE, SMART_SUPPLY_TITLE } from '@/config/smartSupplyFlags';
 
@@ -180,7 +180,7 @@ function SkuRows({ skus, massaCritica }) {
   return skus.map((s) => {
     const cx = portalEstoqueCx(s);
     const tone = resolveSkuLed(s, massaCritica);
-    const label = montarVariantePortalSku(s);
+    const label = montarNomePortalSku(s);
     const code = montarSubtituloPortalSku(s);
     return (
       <TableRow

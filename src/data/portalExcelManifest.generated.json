@@ -1,5 +1,5 @@
 {
-  "exportedAt": "2026-08-11T16:38:24.678Z",
+  "exportedAt": "2026-08-11T17:36:27.423Z",
   "source": "docs/P38-catalogo-skus-completo.xlsx",
   "skuCount": 174,
   "linhaCount": 2,
@@ -26,7 +26,8 @@
       "produto_compra": "CERAM BOLD ANTI",
       "produto_compra_codigo": "CERAM_BOLD_ANTI",
       "ex_a": "45x45",
-      "ex_b": "BANDEIRANTE 46"
+      "ex_b": "BANDEIRANTE 46",
+      "novo_sku": "CERAM BOLD ANTI 45x45 BANDEIRANTE 46"
     },
     "CP4-YKZ": {
       "codigo_interno": "CP4-YKZ",
@@ -36,7 +37,8 @@
       "produto_compra": "CERAM BOLD ANTI",
       "produto_compra_codigo": "CERAM_BOLD_ANTI",
       "ex_a": "45x45",
-      "ex_b": "BAUXITA"
+      "ex_b": "BAUXITA",
+      "novo_sku": "CERAM BOLD ANTI 45x45 BAUXITA"
     },
     "2ES-05N": {
       "codigo_interno": "2ES-05N",
@@ -46,7 +48,8 @@
       "produto_compra": "CERAM BOLD ANTI",
       "produto_compra_codigo": "CERAM_BOLD_ANTI",
       "ex_a": "45x45",
-      "ex_b": "ETNA CINZA"
+      "ex_b": "ETNA CINZA",
+      "novo_sku": "CERAM BOLD ANTI 45x45 ETNA CINZA"
     },
     "Y7F-U31": {
       "codigo_interno": "Y7F-U31",
@@ -56,7 +59,8 @@
       "produto_compra": "CERAM BOLD ANTI",
       "produto_compra_codigo": "CERAM_BOLD_ANTI",
       "ex_a": "45x45",
-      "ex_b": "GRAMADO"
+      "ex_b": "GRAMADO",
+      "novo_sku": "CERAM BOLD ANTI 45x45 GRAMADO"
     },
     "VE3-O6F": {
       "codigo_interno": "VE3-O6F",
@@ -66,7 +70,8 @@
       "produto_compra": "CERAM BOLD ANTI",
       "produto_compra_codigo": "CERAM_BOLD_ANTI",
       "ex_a": "45x45",
-      "ex_b": "MIRACEMA"
+      "ex_b": "MIRACEMA",
+      "novo_sku": "CERAM BOLD ANTI 45x45 MIRACEMA"
     },
     "ST2-QT9": {
       "codigo_interno": "ST2-QT9",
@@ -76,7 +81,8 @@
       "produto_compra": "CERAM BOLD ANTI",
       "produto_compra_codigo": "CERAM_BOLD_ANTI",
       "ex_a": "45x45",
-      "ex_b": "PALATINO"
+      "ex_b": "PALATINO",
+      "novo_sku": "CERAM BOLD ANTI 45x45 PALATINO"
     },
     "JPP-CV0": {
       "codigo_interno": "JPP-CV0",
@@ -86,7 +92,8 @@
       "produto_compra": "CERAM BOLD ANTI",
       "produto_compra_codigo": "CERAM_BOLD_ANTI",
       "ex_a": "45x45",
-      "ex_b": "PLANALTO"
+      "ex_b": "PLANALTO",
+      "novo_sku": "CERAM BOLD ANTI 45x45 PLANALTO"
     },
     "RVP-1G7": {
       "codigo_interno": "RVP-1G7",
@@ -96,7 +103,8 @@
       "produto_compra": "CERAM BOLD ANTI",
       "produto_compra_codigo": "CERAM_BOLD_ANTI",
       "ex_a": "45x45",
-      "ex_b": "SAN LORENZO BG"
+      "ex_b": "SAN LORENZO BG",
+      "novo_sku": "CERAM BOLD ANTI 45x45 SAN LORENZO BG"
     },
     "5NH-LJW": {
       "codigo_interno": "5NH-LJW",
@@ -106,7 +114,8 @@
       "produto_compra": "CERAM BOLD ANTI",
       "produto_compra_codigo": "CERAM_BOLD_ANTI",
       "ex_a": "45x45",
-      "ex_b": "SAN LORENZO P&B"
+      "ex_b": "SAN LORENZO P&B",
+      "novo_sku": "CERAM BOLD ANTI 45x45 SAN LORENZO P&B"
     },
     "CRV-F57": {
       "codigo_interno": "CRV-F57",
@@ -116,7 +125,8 @@
       "produto_compra": "CERAM BOLD ANTI",
       "produto_compra_codigo": "CERAM_BOLD_ANTI",
       "ex_a": "45x45",
-      "ex_b": "SÃO TOME"
+      "ex_b": "SÃO TOME",
+      "novo_sku": "CERAM BOLD ANTI 45x45 SÃO TOME"
     },
     "000-K36": {
       "codigo_interno": "000-K36",
@@ -126,7 +136,8 @@
       "produto_compra": "CERAM BOLD ANTI",
       "produto_compra_codigo": "CERAM_BOLD_ANTI",
       "ex_a": "50x50",
-      "ex_b": "AGATA"
+      "ex_b": "AGATA",
+      "novo_sku": "CERAM BOLD ANTI 50x50 AGATA"
     },
     "HH2-RBI": {
       "codigo_interno": "HH2-RBI",
@@ -136,7 +147,8 @@
       "produto_compra": "CERAM BOLD ANTI",
       "produto_compra_codigo": "CERAM_BOLD_ANTI",
       "ex_a": "50x50",
-      "ex_b": "CALCADA"
+      "ex_b": "CALCADA",
+      "novo_sku": "CERAM BOLD ANTI 50x50 CALCADA"
     },
     "URC-I5H": {
       "codigo_interno": "URC-I5H",
@@ -146,7 +158,8 @@
       "produto_compra": "CERAM BOLD ANTI",
       "produto_compra_codigo": "CERAM_BOLD_ANTI",
       "ex_a": "50x50",
-      "ex_b": "COLISEU"
+      "ex_b": "COLISEU",
+      "novo_sku": "CERAM BOLD ANTI 50x50 COLISEU"
     },
     "VHF-U9A": {
       "codigo_interno": "VHF-U9A",
@@ -156,7 +169,8 @@
       "produto_compra": "CERAM BOLD ANTI",
       "produto_compra_codigo": "CERAM_BOLD_ANTI",
       "ex_a": "50x50",
-      "ex_b": "MEDINA"
+      "ex_b": "MEDINA",
+      "novo_sku": "CERAM BOLD ANTI 50x50 MEDINA"
     },
     "L0Y-5D3": {
       "codigo_interno": "L0Y-5D3",
@@ -166,7 +180,8 @@
       "produto_compra": "CERAM BOLD ANTI",
       "produto_compra_codigo": "CERAM_BOLD_ANTI",
       "ex_a": "50x50",
-      "ex_b": "MURANO"
+      "ex_b": "MURANO",
+      "novo_sku": "CERAM BOLD ANTI 50x50 MURANO"
     },
     "JLJ-D5L": {
       "codigo_interno": "JLJ-D5L",
@@ -176,7 +191,8 @@
       "produto_compra": "CERAM BOLD ANTI",
       "produto_compra_codigo": "CERAM_BOLD_ANTI",
       "ex_a": "50x50",
-      "ex_b": "STREET"
+      "ex_b": "STREET",
+      "novo_sku": "CERAM BOLD ANTI 50x50 STREET"
     },
     "NPC-2YQ": {
       "codigo_interno": "NPC-2YQ",
@@ -186,7 +202,8 @@
       "produto_compra": "CERAM BOLD ANTI",
       "produto_compra_codigo": "CERAM_BOLD_ANTI",
       "ex_a": "50x50",
-      "ex_b": "VERONA CINZA"
+      "ex_b": "VERONA CINZA",
+      "novo_sku": "CERAM BOLD ANTI 50x50 VERONA CINZA"
     },
     "8OG-UOD": {
       "codigo_interno": "8OG-UOD",
@@ -196,7 +213,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "20x60",
-      "ex_b": "CASTANHO"
+      "ex_b": "CASTANHO",
+      "novo_sku": "CERAM BOLD LISA 20x60 CASTANHO"
     },
     "O5A-QZF": {
       "codigo_interno": "O5A-QZF",
@@ -206,7 +224,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "20x60",
-      "ex_b": "CASTANHO MATE"
+      "ex_b": "CASTANHO MATE",
+      "novo_sku": "CERAM BOLD LISA 20x60 CASTANHO MATE"
     },
     "AN4-5EN": {
       "codigo_interno": "AN4-5EN",
@@ -216,7 +235,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "20x60",
-      "ex_b": "FLAMBOYANT"
+      "ex_b": "FLAMBOYANT",
+      "novo_sku": "CERAM BOLD LISA 20x60 FLAMBOYANT"
     },
     "KBX-D8M": {
       "codigo_interno": "KBX-D8M",
@@ -226,7 +246,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "43x43",
-      "ex_b": "LE BLANC"
+      "ex_b": "LE BLANC",
+      "novo_sku": "CERAM BOLD LISA 43x43 LE BLANC"
     },
     "30F-SDJ": {
       "codigo_interno": "30F-SDJ",
@@ -236,7 +257,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "ARABIA SAUDITA"
+      "ex_b": "ARABIA SAUDITA",
+      "novo_sku": "CERAM BOLD LISA 45x45 ARABIA SAUDITA"
     },
     "AD7-NV0": {
       "codigo_interno": "AD7-NV0",
@@ -246,7 +268,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "AREIA"
+      "ex_b": "AREIA",
+      "novo_sku": "CERAM BOLD LISA 45x45 AREIA"
     },
     "1NQ-HM8": {
       "codigo_interno": "1NQ-HM8",
@@ -256,7 +279,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "AZURRO"
+      "ex_b": "AZURRO",
+      "novo_sku": "CERAM BOLD LISA 45x45 AZURRO"
     },
     "6Q9-VSK": {
       "codigo_interno": "6Q9-VSK",
@@ -266,7 +290,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "BIANCO"
+      "ex_b": "BIANCO",
+      "novo_sku": "CERAM BOLD LISA 45x45 BIANCO"
     },
     "5TY-TS1": {
       "codigo_interno": "5TY-TS1",
@@ -276,7 +301,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "BOSCO MARROM PEI 3 (2,00 M²/ CX)"
+      "ex_b": "BOSCO MARROM PEI 3 (2,00 M²/ CX)",
+      "novo_sku": "CERAM BOLD LISA 45x45 BOSCO MARROM PEI 3 (2,00 M²/ CX)"
     },
     "OS8-CON": {
       "codigo_interno": "OS8-CON",
@@ -286,7 +312,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "BRANCO ACT"
+      "ex_b": "BRANCO ACT",
+      "novo_sku": "CERAM BOLD LISA 45x45 BRANCO ACT"
     },
     "PPG-0LM": {
       "codigo_interno": "PPG-0LM",
@@ -296,7 +323,8 @@
       "produto_compra": "CERAM BOLD SEMI",
       "produto_compra_codigo": "CERAM_BOLD_SEMI",
       "ex_a": "50X50",
-      "ex_b": "TRAGEGO BG"
+      "ex_b": "TRAGEGO BG",
+      "novo_sku": "CERAM BOLD SEMI 50X50 TRAGEGO BG"
     },
     "GR1-WWS": {
       "codigo_interno": "GR1-WWS",
@@ -306,7 +334,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "CARVALHO"
+      "ex_b": "CARVALHO",
+      "novo_sku": "CERAM BOLD LISA 45x45 CARVALHO"
     },
     "KIG-EC0": {
       "codigo_interno": "KIG-EC0",
@@ -316,7 +345,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "CRISTAL MARROM"
+      "ex_b": "CRISTAL MARROM",
+      "novo_sku": "CERAM BOLD LISA 45x45 CRISTAL MARROM"
     },
     "2HV-K54": {
       "codigo_interno": "2HV-K54",
@@ -326,7 +356,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "DELUXE"
+      "ex_b": "DELUXE",
+      "novo_sku": "CERAM BOLD LISA 45x45 DELUXE"
     },
     "3ST-2BC": {
       "codigo_interno": "3ST-2BC",
@@ -336,7 +367,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "FIORENTINA HD"
+      "ex_b": "FIORENTINA HD",
+      "novo_sku": "CERAM BOLD LISA 45x45 FIORENTINA HD"
     },
     "AVF-R41": {
       "codigo_interno": "AVF-R41",
@@ -346,7 +378,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "ILUMINAR"
+      "ex_b": "ILUMINAR",
+      "novo_sku": "CERAM BOLD LISA 45x45 ILUMINAR"
     },
     "SI6-6LY": {
       "codigo_interno": "SI6-6LY",
@@ -356,7 +389,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "IMBUIA CL"
+      "ex_b": "IMBUIA CL",
+      "novo_sku": "CERAM BOLD LISA 45x45 IMBUIA CL"
     },
     "U9J-KRZ": {
       "codigo_interno": "U9J-KRZ",
@@ -366,7 +400,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "JACARANDA"
+      "ex_b": "JACARANDA",
+      "novo_sku": "CERAM BOLD LISA 45x45 JACARANDA"
     },
     "5MV-FDF": {
       "codigo_interno": "5MV-FDF",
@@ -376,7 +411,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "LAGUNA"
+      "ex_b": "LAGUNA",
+      "novo_sku": "CERAM BOLD LISA 45x45 LAGUNA"
     },
     "GW3-4QW": {
       "codigo_interno": "GW3-4QW",
@@ -386,7 +422,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "MACAU BR"
+      "ex_b": "MACAU BR",
+      "novo_sku": "CERAM BOLD LISA 45x45 MACAU BR"
     },
     "4O4-4ZU": {
       "codigo_interno": "4O4-4ZU",
@@ -396,7 +433,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "MINERALE MR"
+      "ex_b": "MINERALE MR",
+      "novo_sku": "CERAM BOLD LISA 45x45 MINERALE MR"
     },
     "G63-CSJ": {
       "codigo_interno": "G63-CSJ",
@@ -406,7 +444,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "OLIVA RED"
+      "ex_b": "OLIVA RED",
+      "novo_sku": "CERAM BOLD LISA 45x45 OLIVA RED"
     },
     "2D5-VZ7": {
       "codigo_interno": "2D5-VZ7",
@@ -416,7 +455,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "OREGON"
+      "ex_b": "OREGON",
+      "novo_sku": "CERAM BOLD LISA 45x45 OREGON"
     },
     "QGL-88C": {
       "codigo_interno": "QGL-88C",
@@ -426,7 +466,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "ORIGENS CLARO"
+      "ex_b": "ORIGENS CLARO",
+      "novo_sku": "CERAM BOLD LISA 45x45 ORIGENS CLARO"
     },
     "YHX-Z94": {
       "codigo_interno": "YHX-Z94",
@@ -436,7 +477,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "ORIGENS ESCURO"
+      "ex_b": "ORIGENS ESCURO",
+      "novo_sku": "CERAM BOLD LISA 45x45 ORIGENS ESCURO"
     },
     "P9Q-ZPH": {
       "codigo_interno": "P9Q-ZPH",
@@ -446,7 +488,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "RIVIERA BG"
+      "ex_b": "RIVIERA BG",
+      "novo_sku": "CERAM BOLD LISA 45x45 RIVIERA BG"
     },
     "9X5-OJ7": {
       "codigo_interno": "9X5-OJ7",
@@ -456,7 +499,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "RIVIERA CZ"
+      "ex_b": "RIVIERA CZ",
+      "novo_sku": "CERAM BOLD LISA 45x45 RIVIERA CZ"
     },
     "359-HRH": {
       "codigo_interno": "359-HRH",
@@ -466,7 +510,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "SAUDI AZUL"
+      "ex_b": "SAUDI AZUL",
+      "novo_sku": "CERAM BOLD LISA 45x45 SAUDI AZUL"
     },
     "A1H-215": {
       "codigo_interno": "A1H-215",
@@ -476,7 +521,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "TERRAGUA"
+      "ex_b": "TERRAGUA",
+      "novo_sku": "CERAM BOLD LISA 45x45 TERRAGUA"
     },
     "BIL-0H2": {
       "codigo_interno": "BIL-0H2",
@@ -486,7 +532,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "TITANIO"
+      "ex_b": "TITANIO",
+      "novo_sku": "CERAM BOLD LISA 45x45 TITANIO"
     },
     "BD7-XM9": {
       "codigo_interno": "BD7-XM9",
@@ -496,7 +543,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "TRAVERTINO BG"
+      "ex_b": "TRAVERTINO BG",
+      "novo_sku": "CERAM BOLD LISA 45x45 TRAVERTINO BG"
     },
     "HJK-AU9": {
       "codigo_interno": "HJK-AU9",
@@ -506,7 +554,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "TURIM BLACK"
+      "ex_b": "TURIM BLACK",
+      "novo_sku": "CERAM BOLD LISA 45x45 TURIM BLACK"
     },
     "37L-PDM": {
       "codigo_interno": "37L-PDM",
@@ -516,7 +565,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "45x45",
-      "ex_b": "YPE MARROM"
+      "ex_b": "YPE MARROM",
+      "novo_sku": "CERAM BOLD LISA 45x45 YPE MARROM"
     },
     "06I-6PB": {
       "codigo_interno": "06I-6PB",
@@ -526,7 +576,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "50x50",
-      "ex_b": "ANGELIN MATE"
+      "ex_b": "ANGELIN MATE",
+      "novo_sku": "CERAM BOLD LISA 50x50 ANGELIN MATE"
     },
     "JYJ-1U7": {
       "codigo_interno": "JYJ-1U7",
@@ -536,7 +587,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "50x50",
-      "ex_b": "BIANCO"
+      "ex_b": "BIANCO",
+      "novo_sku": "CERAM BOLD LISA 50x50 BIANCO"
     },
     "F9J-UXX": {
       "codigo_interno": "F9J-UXX",
@@ -546,7 +598,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "50x50",
-      "ex_b": "DUCALE"
+      "ex_b": "DUCALE",
+      "novo_sku": "CERAM BOLD LISA 50x50 DUCALE"
     },
     "XOG-60R": {
       "codigo_interno": "XOG-60R",
@@ -556,7 +609,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "50x50",
-      "ex_b": "NATURALE BG"
+      "ex_b": "NATURALE BG",
+      "novo_sku": "CERAM BOLD LISA 50x50 NATURALE BG"
     },
     "ZUH-SP4": {
       "codigo_interno": "ZUH-SP4",
@@ -566,7 +620,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "50x50",
-      "ex_b": "NATURALE MR"
+      "ex_b": "NATURALE MR",
+      "novo_sku": "CERAM BOLD LISA 50x50 NATURALE MR"
     },
     "O3L-JIG": {
       "codigo_interno": "O3L-JIG",
@@ -576,7 +631,8 @@
       "produto_compra": "CERAM BOLD LISA",
       "produto_compra_codigo": "CERAM_BOLD_LISA",
       "ex_a": "50x50",
-      "ex_b": "PATINA MR"
+      "ex_b": "PATINA MR",
+      "novo_sku": "CERAM BOLD LISA 50x50 PATINA MR"
     },
     "EWA-6TT": {
       "codigo_interno": "EWA-6TT",
@@ -586,7 +642,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "32x45",
-      "ex_b": "BIANCO"
+      "ex_b": "BIANCO",
+      "novo_sku": "CERAM BOLD PARE 32x45 BIANCO"
     },
     "MIG-0HB": {
       "codigo_interno": "MIG-0HB",
@@ -596,7 +653,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "34x60",
-      "ex_b": "ALECRIM"
+      "ex_b": "ALECRIM",
+      "novo_sku": "CERAM BOLD PARE 34x60 ALECRIM"
     },
     "ZG5-8NE": {
       "codigo_interno": "ZG5-8NE",
@@ -606,7 +664,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "34x60",
-      "ex_b": "AMBIENTE BR"
+      "ex_b": "AMBIENTE BR",
+      "novo_sku": "CERAM BOLD PARE 34x60 AMBIENTE BR"
     },
     "RS6-URC": {
       "codigo_interno": "RS6-URC",
@@ -616,7 +675,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "34x60",
-      "ex_b": "AQUARELA VERDE"
+      "ex_b": "AQUARELA VERDE",
+      "novo_sku": "CERAM BOLD PARE 34x60 AQUARELA VERDE"
     },
     "X2Y-TI0": {
       "codigo_interno": "X2Y-TI0",
@@ -626,7 +686,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "34x60",
-      "ex_b": "AREIA"
+      "ex_b": "AREIA",
+      "novo_sku": "CERAM BOLD PARE 34x60 AREIA"
     },
     "KN4-TWR": {
       "codigo_interno": "KN4-TWR",
@@ -636,7 +697,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "34x60",
-      "ex_b": "AZULEIJO PT"
+      "ex_b": "AZULEIJO PT",
+      "novo_sku": "CERAM BOLD PARE 34x60 AZULEIJO PT"
     },
     "WNL-AB9": {
       "codigo_interno": "WNL-AB9",
@@ -646,7 +708,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "34x60",
-      "ex_b": "BIANCO"
+      "ex_b": "BIANCO",
+      "novo_sku": "CERAM BOLD PARE 34x60 BIANCO"
     },
     "4OW-ZRW": {
       "codigo_interno": "4OW-ZRW",
@@ -656,7 +719,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "34x60",
-      "ex_b": "BIANCO MATE"
+      "ex_b": "BIANCO MATE",
+      "novo_sku": "CERAM BOLD PARE 34x60 BIANCO MATE"
     },
     "DRM-02X": {
       "codigo_interno": "DRM-02X",
@@ -666,7 +730,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "34x60",
-      "ex_b": "DECORE BR"
+      "ex_b": "DECORE BR",
+      "novo_sku": "CERAM BOLD PARE 34x60 DECORE BR"
     },
     "I0B-GHS": {
       "codigo_interno": "I0B-GHS",
@@ -676,7 +741,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "34x60",
-      "ex_b": "DUCALE"
+      "ex_b": "DUCALE",
+      "novo_sku": "CERAM BOLD PARE 34x60 DUCALE"
     },
     "VMK-Z4Q": {
       "codigo_interno": "VMK-Z4Q",
@@ -686,7 +752,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "34x60",
-      "ex_b": "FILETE 57"
+      "ex_b": "FILETE 57",
+      "novo_sku": "CERAM BOLD PARE 34x60 FILETE 57"
     },
     "A94-J3Q": {
       "codigo_interno": "A94-J3Q",
@@ -696,7 +763,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "34x60",
-      "ex_b": "FILETE 58"
+      "ex_b": "FILETE 58",
+      "novo_sku": "CERAM BOLD PARE 34x60 FILETE 58"
     },
     "OJD-65G": {
       "codigo_interno": "OJD-65G",
@@ -706,7 +774,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "34x60",
-      "ex_b": "FILETE 59"
+      "ex_b": "FILETE 59",
+      "novo_sku": "CERAM BOLD PARE 34x60 FILETE 59"
     },
     "BJJ-782": {
       "codigo_interno": "BJJ-782",
@@ -716,7 +785,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "34x60",
-      "ex_b": "FINALE"
+      "ex_b": "FINALE",
+      "novo_sku": "CERAM BOLD PARE 34x60 FINALE"
     },
     "HRI-G36": {
       "codigo_interno": "HRI-G36",
@@ -726,7 +796,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "34x60",
-      "ex_b": "FOLHA"
+      "ex_b": "FOLHA",
+      "novo_sku": "CERAM BOLD PARE 34x60 FOLHA"
     },
     "VV3-X4E": {
       "codigo_interno": "VV3-X4E",
@@ -736,7 +807,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "34X60",
-      "ex_b": "LATERES HD PEI 3 (2,10M²/ CX)"
+      "ex_b": "LATERES HD PEI 3 (2,10M²/ CX)",
+      "novo_sku": "CERAM BOLD PARE 34X60 LATERES HD PEI 3 (2,10M²/ CX)"
     },
     "6V1-HA0": {
       "codigo_interno": "6V1-HA0",
@@ -746,7 +818,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "34x60",
-      "ex_b": "LUCCA BR"
+      "ex_b": "LUCCA BR",
+      "novo_sku": "CERAM BOLD PARE 34x60 LUCCA BR"
     },
     "WK7-VMF": {
       "codigo_interno": "WK7-VMF",
@@ -756,7 +829,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "34x60",
-      "ex_b": "MARGARIDA"
+      "ex_b": "MARGARIDA",
+      "novo_sku": "CERAM BOLD PARE 34x60 MARGARIDA"
     },
     "ZLV-I0M": {
       "codigo_interno": "ZLV-I0M",
@@ -766,7 +840,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "34x60",
-      "ex_b": "MOSAICO AZUL"
+      "ex_b": "MOSAICO AZUL",
+      "novo_sku": "CERAM BOLD PARE 34x60 MOSAICO AZUL"
     },
     "4MY-2YC": {
       "codigo_interno": "4MY-2YC",
@@ -776,7 +851,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "34x60",
-      "ex_b": "MOSAICO PRETA"
+      "ex_b": "MOSAICO PRETA",
+      "novo_sku": "CERAM BOLD PARE 34x60 MOSAICO PRETA"
     },
     "03M-QLT": {
       "codigo_interno": "03M-QLT",
@@ -786,7 +862,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "34x60",
-      "ex_b": "NEWTON PT"
+      "ex_b": "NEWTON PT",
+      "novo_sku": "CERAM BOLD PARE 34x60 NEWTON PT"
     },
     "HO6-V57": {
       "codigo_interno": "HO6-V57",
@@ -796,7 +873,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "34x60",
-      "ex_b": "OREON"
+      "ex_b": "OREON",
+      "novo_sku": "CERAM BOLD PARE 34x60 OREON"
     },
     "XH5-IB9": {
       "codigo_interno": "XH5-IB9",
@@ -806,7 +884,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "34x60",
-      "ex_b": "PANDORA"
+      "ex_b": "PANDORA",
+      "novo_sku": "CERAM BOLD PARE 34x60 PANDORA"
     },
     "1E8-ZMY": {
       "codigo_interno": "1E8-ZMY",
@@ -816,7 +895,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "34x60",
-      "ex_b": "SPRING"
+      "ex_b": "SPRING",
+      "novo_sku": "CERAM BOLD PARE 34x60 SPRING"
     },
     "PQM-Q2L": {
       "codigo_interno": "PQM-Q2L",
@@ -826,7 +906,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "34x60",
-      "ex_b": "TURIM BLACK"
+      "ex_b": "TURIM BLACK",
+      "novo_sku": "CERAM BOLD PARE 34x60 TURIM BLACK"
     },
     "7PZ-5RZ": {
       "codigo_interno": "7PZ-5RZ",
@@ -836,7 +917,8 @@
       "produto_compra": "CERAM BOLD PARE",
       "produto_compra_codigo": "CERAM_BOLD_PARE",
       "ex_a": "34x60",
-      "ex_b": "VITRAL BR"
+      "ex_b": "VITRAL BR",
+      "novo_sku": "CERAM BOLD PARE 34x60 VITRAL BR"
     },
     "Z0Q-G0W": {
       "codigo_interno": "Z0Q-G0W",
@@ -846,7 +928,8 @@
       "produto_compra": "CERAM BOLD SEMI",
       "produto_compra_codigo": "CERAM_BOLD_SEMI",
       "ex_a": "45x45",
-      "ex_b": "ADERE BG"
+      "ex_b": "ADERE BG",
+      "novo_sku": "CERAM BOLD SEMI 45x45 ADERE BG"
     },
     "9QU-OAH": {
       "codigo_interno": "9QU-OAH",
@@ -856,7 +939,8 @@
       "produto_compra": "CERAM BOLD SEMI",
       "produto_compra_codigo": "CERAM_BOLD_SEMI",
       "ex_a": "45x45",
-      "ex_b": "ASTRA CZ"
+      "ex_b": "ASTRA CZ",
+      "novo_sku": "CERAM BOLD SEMI 45x45 ASTRA CZ"
     },
     "K3N-THM": {
       "codigo_interno": "K3N-THM",
@@ -866,7 +950,8 @@
       "produto_compra": "CERAM BOLD SEMI",
       "produto_compra_codigo": "CERAM_BOLD_SEMI",
       "ex_a": "45x45",
-      "ex_b": "CENTAURO BG"
+      "ex_b": "CENTAURO BG",
+      "novo_sku": "CERAM BOLD SEMI 45x45 CENTAURO BG"
     },
     "1IZ-HA5": {
       "codigo_interno": "1IZ-HA5",
@@ -876,7 +961,8 @@
       "produto_compra": "CERAM BOLD SEMI",
       "produto_compra_codigo": "CERAM_BOLD_SEMI",
       "ex_a": "45x45",
-      "ex_b": "CROSS"
+      "ex_b": "CROSS",
+      "novo_sku": "CERAM BOLD SEMI 45x45 CROSS"
     },
     "9AX-3HK": {
       "codigo_interno": "9AX-3HK",
@@ -886,7 +972,8 @@
       "produto_compra": "CERAM BOLD SEMI",
       "produto_compra_codigo": "CERAM_BOLD_SEMI",
       "ex_a": "45x45",
-      "ex_b": "JAVA VERDE"
+      "ex_b": "JAVA VERDE",
+      "novo_sku": "CERAM BOLD SEMI 45x45 JAVA VERDE"
     },
     "SX5-S36": {
       "codigo_interno": "SX5-S36",
@@ -896,7 +983,8 @@
       "produto_compra": "CERAM BOLD SEMI",
       "produto_compra_codigo": "CERAM_BOLD_SEMI",
       "ex_a": "45x45",
-      "ex_b": "MONTANA AZUL"
+      "ex_b": "MONTANA AZUL",
+      "novo_sku": "CERAM BOLD SEMI 45x45 MONTANA AZUL"
     },
     "12L-X9P": {
       "codigo_interno": "12L-X9P",
@@ -906,7 +994,8 @@
       "produto_compra": "CERAM BOLD SEMI",
       "produto_compra_codigo": "CERAM_BOLD_SEMI",
       "ex_a": "45x45",
-      "ex_b": "NEVE BR"
+      "ex_b": "NEVE BR",
+      "novo_sku": "CERAM BOLD SEMI 45x45 NEVE BR"
     },
     "LDO-L9N": {
       "codigo_interno": "LDO-L9N",
@@ -916,7 +1005,8 @@
       "produto_compra": "CERAM BOLD SEMI",
       "produto_compra_codigo": "CERAM_BOLD_SEMI",
       "ex_a": "45x45",
-      "ex_b": "SIZAL"
+      "ex_b": "SIZAL",
+      "novo_sku": "CERAM BOLD SEMI 45x45 SIZAL"
     },
     "S81-MGR": {
       "codigo_interno": "S81-MGR",
@@ -926,7 +1016,8 @@
       "produto_compra": "CERAM BOLD SEMI",
       "produto_compra_codigo": "CERAM_BOLD_SEMI",
       "ex_a": "45X45",
-      "ex_b": "TRAFEGO BG"
+      "ex_b": "TRAFEGO BG",
+      "novo_sku": "CERAM BOLD SEMI 45X45 TRAFEGO BG"
     },
     "0GM-S8H": {
       "codigo_interno": "0GM-S8H",
@@ -936,7 +1027,8 @@
       "produto_compra": "CERAM BOLD SEMI",
       "produto_compra_codigo": "CERAM_BOLD_SEMI",
       "ex_a": "46x46",
-      "ex_b": "NEVE BR"
+      "ex_b": "NEVE BR",
+      "novo_sku": "CERAM BOLD SEMI 46x46 NEVE BR"
     },
     "9L6-F9Q": {
       "codigo_interno": "9L6-F9Q",
@@ -946,7 +1038,8 @@
       "produto_compra": "CERAM BOLD SEMI",
       "produto_compra_codigo": "CERAM_BOLD_SEMI",
       "ex_a": "50x50",
-      "ex_b": "ARTICO"
+      "ex_b": "ARTICO",
+      "novo_sku": "CERAM BOLD SEMI 50x50 ARTICO"
     },
     "XJ2-W9N": {
       "codigo_interno": "XJ2-W9N",
@@ -956,7 +1049,8 @@
       "produto_compra": "CERAM BOLD SEMI",
       "produto_compra_codigo": "CERAM_BOLD_SEMI",
       "ex_a": "50x50",
-      "ex_b": "DAKOTA BR"
+      "ex_b": "DAKOTA BR",
+      "novo_sku": "CERAM BOLD SEMI 50x50 DAKOTA BR"
     },
     "CFA-A7W": {
       "codigo_interno": "CFA-A7W",
@@ -966,7 +1060,8 @@
       "produto_compra": "CERAM BOLD SEMI",
       "produto_compra_codigo": "CERAM_BOLD_SEMI",
       "ex_a": "50x50",
-      "ex_b": "ENDURO CREMA"
+      "ex_b": "ENDURO CREMA",
+      "novo_sku": "CERAM BOLD SEMI 50x50 ENDURO CREMA"
     },
     "E9N-5R1": {
       "codigo_interno": "E9N-5R1",
@@ -976,7 +1071,8 @@
       "produto_compra": "CERAM BOLD SEMI",
       "produto_compra_codigo": "CERAM_BOLD_SEMI",
       "ex_a": "50x50",
-      "ex_b": "ROYALE BR"
+      "ex_b": "ROYALE BR",
+      "novo_sku": "CERAM BOLD SEMI 50x50 ROYALE BR"
     },
     "OPT-1SM": {
       "codigo_interno": "OPT-1SM",
@@ -986,7 +1082,8 @@
       "produto_compra": "CERAM BOLD SEMI",
       "produto_compra_codigo": "CERAM_BOLD_SEMI",
       "ex_a": "50x50",
-      "ex_b": "TRAFEGO BR"
+      "ex_b": "TRAFEGO BR",
+      "novo_sku": "CERAM BOLD SEMI 50x50 TRAFEGO BR"
     },
     "M5C-0UL": {
       "codigo_interno": "M5C-0UL",
@@ -996,7 +1093,8 @@
       "produto_compra": "CERAM RETIF ANTI",
       "produto_compra_codigo": "CERAM_RETIF_ANTI",
       "ex_a": "60x120",
-      "ex_b": "ARENISA BG"
+      "ex_b": "ARENISA BG",
+      "novo_sku": "CERAM RETIF ANTI 60x120 ARENISA BG"
     },
     "QX9-BK1": {
       "codigo_interno": "QX9-BK1",
@@ -1006,7 +1104,8 @@
       "produto_compra": "CERAM RETIF ANTI",
       "produto_compra_codigo": "CERAM_RETIF_ANTI",
       "ex_a": "66x66",
-      "ex_b": "SOLO"
+      "ex_b": "SOLO",
+      "novo_sku": "CERAM RETIF ANTI 66x66 SOLO"
     },
     "2QG-KFD": {
       "codigo_interno": "2QG-KFD",
@@ -1016,7 +1115,8 @@
       "produto_compra": "CERAM RETIF ANTI",
       "produto_compra_codigo": "CERAM_RETIF_ANTI",
       "ex_a": "66x66",
-      "ex_b": "STONE"
+      "ex_b": "STONE",
+      "novo_sku": "CERAM RETIF ANTI 66x66 STONE"
     },
     "4OI-6FP": {
       "codigo_interno": "4OI-6FP",
@@ -1026,7 +1126,8 @@
       "produto_compra": "CERAM RETIF ANTI",
       "produto_compra_codigo": "CERAM_RETIF_ANTI",
       "ex_a": "81x81",
-      "ex_b": "MALI CZ"
+      "ex_b": "MALI CZ",
+      "novo_sku": "CERAM RETIF ANTI 81x81 MALI CZ"
     },
     "O0E-RT7": {
       "codigo_interno": "O0E-RT7",
@@ -1036,7 +1137,8 @@
       "produto_compra": "CERAM RETIF BRILH",
       "produto_compra_codigo": "CERAM_RETIF_BRILH",
       "ex_a": "33X62",
-      "ex_b": "CALM CRISTAL (1,64 M² / CX)"
+      "ex_b": "CALM CRISTAL (1,64 M² / CX)",
+      "novo_sku": "CERAM RETIF BRILH 33X62 CALM CRISTAL (1,64 M² / CX)"
     },
     "02D-ZAL": {
       "codigo_interno": "02D-ZAL",
@@ -1046,7 +1148,8 @@
       "produto_compra": "CERAM RETIF BRILH",
       "produto_compra_codigo": "CERAM_RETIF_BRILH",
       "ex_a": "57x57",
-      "ex_b": "ANTERA ACT LF EXTRA (CX 2,30 M²)  -"
+      "ex_b": "ANTERA ACT LF EXTRA (CX 2,30 M²)  -",
+      "novo_sku": "CERAM RETIF BRILH 57x57 ANTERA ACT LF EXTRA (CX 2,30 M²)  -"
     },
     "V71-QZD": {
       "codigo_interno": "V71-QZD",
@@ -1056,7 +1159,8 @@
       "produto_compra": "CERAM RETIF BRILH",
       "produto_compra_codigo": "CERAM_RETIF_BRILH",
       "ex_a": "60x60",
-      "ex_b": "MARMI ESMERALDA"
+      "ex_b": "MARMI ESMERALDA",
+      "novo_sku": "CERAM RETIF BRILH 60x60 MARMI ESMERALDA"
     },
     "1S3-VTB": {
       "codigo_interno": "1S3-VTB",
@@ -1066,7 +1170,8 @@
       "produto_compra": "CERAM RETIF LISA",
       "produto_compra_codigo": "CERAM_RETIF_LISA",
       "ex_a": "33x59",
-      "ex_b": "CAJIQUINHA (2,02 M²/CX)"
+      "ex_b": "CAJIQUINHA (2,02 M²/CX)",
+      "novo_sku": "CERAM RETIF LISA 33x59 CAJIQUINHA (2,02 M²/CX)"
     },
     "MF0-OSU": {
       "codigo_interno": "MF0-OSU",
@@ -1076,7 +1181,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "20x120",
-      "ex_b": "CABERNET"
+      "ex_b": "CABERNET",
+      "novo_sku": "CERAM RETIF MATE 20x120 CABERNET"
     },
     "19W-K2W": {
       "codigo_interno": "19W-K2W",
@@ -1086,7 +1192,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "20x120",
-      "ex_b": "CARVALHO NATURAL"
+      "ex_b": "CARVALHO NATURAL",
+      "novo_sku": "CERAM RETIF MATE 20x120 CARVALHO NATURAL"
     },
     "74S-2RN": {
       "codigo_interno": "74S-2RN",
@@ -1096,7 +1203,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "20x120",
-      "ex_b": "COPAIBA"
+      "ex_b": "COPAIBA",
+      "novo_sku": "CERAM RETIF MATE 20x120 COPAIBA"
     },
     "0HY-SZL": {
       "codigo_interno": "0HY-SZL",
@@ -1106,7 +1214,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "20x120",
-      "ex_b": "JATOBA"
+      "ex_b": "JATOBA",
+      "novo_sku": "CERAM RETIF MATE 20x120 JATOBA"
     },
     "1MO-1YA": {
       "codigo_interno": "1MO-1YA",
@@ -1116,7 +1225,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "20x120",
-      "ex_b": "PANTANAL"
+      "ex_b": "PANTANAL",
+      "novo_sku": "CERAM RETIF MATE 20x120 PANTANAL"
     },
     "7LK-7LS": {
       "codigo_interno": "7LK-7LS",
@@ -1126,7 +1236,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "20x120",
-      "ex_b": "PEROBA"
+      "ex_b": "PEROBA",
+      "novo_sku": "CERAM RETIF MATE 20x120 PEROBA"
     },
     "FNN-8OB": {
       "codigo_interno": "FNN-8OB",
@@ -1136,7 +1247,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "20x120",
-      "ex_b": "PIEMONT"
+      "ex_b": "PIEMONT",
+      "novo_sku": "CERAM RETIF MATE 20x120 PIEMONT"
     },
     "UP2-0FI": {
       "codigo_interno": "UP2-0FI",
@@ -1146,7 +1258,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "20x120",
-      "ex_b": "QUEBEC"
+      "ex_b": "QUEBEC",
+      "novo_sku": "CERAM RETIF MATE 20x120 QUEBEC"
     },
     "4Y9-DVI": {
       "codigo_interno": "4Y9-DVI",
@@ -1156,7 +1269,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "33x59",
-      "ex_b": "TAIKO MARFIM RET"
+      "ex_b": "TAIKO MARFIM RET",
+      "novo_sku": "CERAM RETIF MATE 33x59 TAIKO MARFIM RET"
     },
     "R8R-SQY": {
       "codigo_interno": "R8R-SQY",
@@ -1166,7 +1280,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "33x60",
-      "ex_b": "WHITE ABSOLUTE SATINY HD"
+      "ex_b": "WHITE ABSOLUTE SATINY HD",
+      "novo_sku": "CERAM RETIF MATE 33x60 WHITE ABSOLUTE SATINY HD"
     },
     "2FU-GRT": {
       "codigo_interno": "2FU-GRT",
@@ -1176,7 +1291,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "33X62",
-      "ex_b": "HEXA"
+      "ex_b": "HEXA",
+      "novo_sku": "CERAM RETIF MATE 33X62 HEXA"
     },
     "3KE-WK6": {
       "codigo_interno": "3KE-WK6",
@@ -1186,7 +1302,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "60x120",
-      "ex_b": "AVELÃ"
+      "ex_b": "AVELÃ",
+      "novo_sku": "CERAM RETIF MATE 60x120 AVELÃ"
     },
     "LS7-KWU": {
       "codigo_interno": "LS7-KWU",
@@ -1196,7 +1313,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "60x120",
-      "ex_b": "BLEND BG"
+      "ex_b": "BLEND BG",
+      "novo_sku": "CERAM RETIF MATE 60x120 BLEND BG"
     },
     "IW6-HGQ": {
       "codigo_interno": "IW6-HGQ",
@@ -1206,7 +1324,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "60x120",
-      "ex_b": "BOSSA CLARO"
+      "ex_b": "BOSSA CLARO",
+      "novo_sku": "CERAM RETIF MATE 60x120 BOSSA CLARO"
     },
     "YIP-21M": {
       "codigo_interno": "YIP-21M",
@@ -1216,7 +1335,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "60x120",
-      "ex_b": "PETRA"
+      "ex_b": "PETRA",
+      "novo_sku": "CERAM RETIF MATE 60x120 PETRA"
     },
     "8ZB-UEP": {
       "codigo_interno": "8ZB-UEP",
@@ -1226,7 +1346,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "60x60",
-      "ex_b": "BRANCO MATE"
+      "ex_b": "BRANCO MATE",
+      "novo_sku": "CERAM RETIF MATE 60x60 BRANCO MATE"
     },
     "9NV-CH6": {
       "codigo_interno": "9NV-CH6",
@@ -1236,7 +1357,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "60x60",
-      "ex_b": "GRAFFIATO CZ"
+      "ex_b": "GRAFFIATO CZ",
+      "novo_sku": "CERAM RETIF MATE 60x60 GRAFFIATO CZ"
     },
     "5YT-Y4H": {
       "codigo_interno": "5YT-Y4H",
@@ -1246,7 +1368,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "60x60",
-      "ex_b": "HOUSE CINZA"
+      "ex_b": "HOUSE CINZA",
+      "novo_sku": "CERAM RETIF MATE 60x60 HOUSE CINZA"
     },
     "DU4-Y65": {
       "codigo_interno": "DU4-Y65",
@@ -1256,7 +1379,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "60x60",
-      "ex_b": "PEDRA FERRO"
+      "ex_b": "PEDRA FERRO",
+      "novo_sku": "CERAM RETIF MATE 60x60 PEDRA FERRO"
     },
     "T6G-XXZ": {
       "codigo_interno": "T6G-XXZ",
@@ -1266,7 +1390,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "60x60",
-      "ex_b": "SARANDI PLUS"
+      "ex_b": "SARANDI PLUS",
+      "novo_sku": "CERAM RETIF MATE 60x60 SARANDI PLUS"
     },
     "H29-XM5": {
       "codigo_interno": "H29-XM5",
@@ -1276,7 +1401,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "66x66",
-      "ex_b": "ARIES CZ"
+      "ex_b": "ARIES CZ",
+      "novo_sku": "CERAM RETIF MATE 66x66 ARIES CZ"
     },
     "FCA-Y27": {
       "codigo_interno": "FCA-Y27",
@@ -1286,7 +1412,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "66x66",
-      "ex_b": "CORTONA"
+      "ex_b": "CORTONA",
+      "novo_sku": "CERAM RETIF MATE 66x66 CORTONA"
     },
     "8ST-2PH": {
       "codigo_interno": "8ST-2PH",
@@ -1296,7 +1423,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "66x66",
-      "ex_b": "DETROIT"
+      "ex_b": "DETROIT",
+      "novo_sku": "CERAM RETIF MATE 66x66 DETROIT"
     },
     "6CU-68D": {
       "codigo_interno": "6CU-68D",
@@ -1306,7 +1434,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "66x66",
-      "ex_b": "GRAFITE CZ"
+      "ex_b": "GRAFITE CZ",
+      "novo_sku": "CERAM RETIF MATE 66x66 GRAFITE CZ"
     },
     "7N5-QZZ": {
       "codigo_interno": "7N5-QZZ",
@@ -1316,7 +1445,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "66x66",
-      "ex_b": "MILANO CZ"
+      "ex_b": "MILANO CZ",
+      "novo_sku": "CERAM RETIF MATE 66x66 MILANO CZ"
     },
     "P44-7JV": {
       "codigo_interno": "P44-7JV",
@@ -1326,7 +1456,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "66x66",
-      "ex_b": "SALON"
+      "ex_b": "SALON",
+      "novo_sku": "CERAM RETIF MATE 66x66 SALON"
     },
     "BVX-IU1": {
       "codigo_interno": "BVX-IU1",
@@ -1336,7 +1467,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "81x81",
-      "ex_b": "CLEANTEC SILVER"
+      "ex_b": "CLEANTEC SILVER",
+      "novo_sku": "CERAM RETIF MATE 81x81 CLEANTEC SILVER"
     },
     "NIT-68J": {
       "codigo_interno": "NIT-68J",
@@ -1346,7 +1478,8 @@
       "produto_compra": "CERAM RETIF MATE",
       "produto_compra_codigo": "CERAM_RETIF_MATE",
       "ex_a": "81x81",
-      "ex_b": "CLEANTEC WHITE"
+      "ex_b": "CLEANTEC WHITE",
+      "novo_sku": "CERAM RETIF MATE 81x81 CLEANTEC WHITE"
     },
     "WGD-547": {
       "codigo_interno": "WGD-547",
@@ -1356,7 +1489,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "32x66",
-      "ex_b": "AVOLIO CZ"
+      "ex_b": "AVOLIO CZ",
+      "novo_sku": "CERAM RETIF POL 32x66 AVOLIO CZ"
     },
     "L15-KH8": {
       "codigo_interno": "L15-KH8",
@@ -1366,7 +1500,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "32x66",
-      "ex_b": "BRANCO"
+      "ex_b": "BRANCO",
+      "novo_sku": "CERAM RETIF POL 32x66 BRANCO"
     },
     "61H-1K7": {
       "codigo_interno": "61H-1K7",
@@ -1376,7 +1511,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "33x59",
-      "ex_b": "AREIA RT"
+      "ex_b": "AREIA RT",
+      "novo_sku": "CERAM RETIF POL 33x59 AREIA RT"
     },
     "002-5CS": {
       "codigo_interno": "002-5CS",
@@ -1386,7 +1522,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "33x59",
-      "ex_b": "BIANCO RT"
+      "ex_b": "BIANCO RT",
+      "novo_sku": "CERAM RETIF POL 33x59 BIANCO RT"
     },
     "0KM-WXV": {
       "codigo_interno": "0KM-WXV",
@@ -1396,7 +1533,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "60x120",
-      "ex_b": "AMENDOLA"
+      "ex_b": "AMENDOLA",
+      "novo_sku": "CERAM RETIF POL 60x120 AMENDOLA"
     },
     "Q04-N3F": {
       "codigo_interno": "Q04-N3F",
@@ -1406,7 +1544,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "60x120",
-      "ex_b": "APULIA"
+      "ex_b": "APULIA",
+      "novo_sku": "CERAM RETIF POL 60x120 APULIA"
     },
     "666-PTG": {
       "codigo_interno": "666-PTG",
@@ -1416,7 +1555,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "60x120",
-      "ex_b": "BELLA GOLD"
+      "ex_b": "BELLA GOLD",
+      "novo_sku": "CERAM RETIF POL 60x120 BELLA GOLD"
     },
     "H4Y-0QR": {
       "codigo_interno": "H4Y-0QR",
@@ -1426,7 +1566,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "60x120",
-      "ex_b": "BRANCO RT POLIDO CX2,"
+      "ex_b": "BRANCO RT POLIDO CX2,",
+      "novo_sku": "CERAM RETIF POL 60x120 BRANCO RT POLIDO CX2,"
     },
     "N8J-ZTV": {
       "codigo_interno": "N8J-ZTV",
@@ -1436,7 +1577,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "60x120",
-      "ex_b": "BRICK CZ RT"
+      "ex_b": "BRICK CZ RT",
+      "novo_sku": "CERAM RETIF POL 60x120 BRICK CZ RT"
     },
     "ZOL-7ZA": {
       "codigo_interno": "ZOL-7ZA",
@@ -1446,7 +1588,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "60x120",
-      "ex_b": "CALACATA BG"
+      "ex_b": "CALACATA BG",
+      "novo_sku": "CERAM RETIF POL 60x120 CALACATA BG"
     },
     "N1S-8LN": {
       "codigo_interno": "N1S-8LN",
@@ -1456,7 +1599,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "60x120",
-      "ex_b": "CONCRETO"
+      "ex_b": "CONCRETO",
+      "novo_sku": "CERAM RETIF POL 60x120 CONCRETO"
     },
     "YPP-964": {
       "codigo_interno": "YPP-964",
@@ -1466,7 +1610,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "60x120",
-      "ex_b": "GRAN BELLIGHAN"
+      "ex_b": "GRAN BELLIGHAN",
+      "novo_sku": "CERAM RETIF POL 60x120 GRAN BELLIGHAN"
     },
     "S8N-9JR": {
       "codigo_interno": "S8N-9JR",
@@ -1476,7 +1621,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "60x120",
-      "ex_b": "GRAN CARBONO"
+      "ex_b": "GRAN CARBONO",
+      "novo_sku": "CERAM RETIF POL 60x120 GRAN CARBONO"
     },
     "2QI-R57": {
       "codigo_interno": "2QI-R57",
@@ -1486,7 +1632,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "60x120",
-      "ex_b": "GRAN IMPERIUM DARK"
+      "ex_b": "GRAN IMPERIUM DARK",
+      "novo_sku": "CERAM RETIF POL 60x120 GRAN IMPERIUM DARK"
     },
     "OF9-IAZ": {
       "codigo_interno": "OF9-IAZ",
@@ -1496,7 +1643,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "60x120",
-      "ex_b": "GRAN LIEGE OURO"
+      "ex_b": "GRAN LIEGE OURO",
+      "novo_sku": "CERAM RETIF POL 60x120 GRAN LIEGE OURO"
     },
     "53U-0LC": {
       "codigo_interno": "53U-0LC",
@@ -1506,7 +1654,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "60x120",
-      "ex_b": "GRAN LUMINI"
+      "ex_b": "GRAN LUMINI",
+      "novo_sku": "CERAM RETIF POL 60x120 GRAN LUMINI"
     },
     "A7T-XP1": {
       "codigo_interno": "A7T-XP1",
@@ -1516,7 +1665,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "60x120",
-      "ex_b": "GRAN MARMI DELUX"
+      "ex_b": "GRAN MARMI DELUX",
+      "novo_sku": "CERAM RETIF POL 60x120 GRAN MARMI DELUX"
     },
     "QKO-5SR": {
       "codigo_interno": "QKO-5SR",
@@ -1526,7 +1676,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "60x120",
-      "ex_b": "GRAN PHOENIX"
+      "ex_b": "GRAN PHOENIX",
+      "novo_sku": "CERAM RETIF POL 60x120 GRAN PHOENIX"
     },
     "FE2-S6X": {
       "codigo_interno": "FE2-S6X",
@@ -1536,7 +1687,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "60x120",
-      "ex_b": "GRAN POLAR"
+      "ex_b": "GRAN POLAR",
+      "novo_sku": "CERAM RETIF POL 60x120 GRAN POLAR"
     },
     "NEJ-L2M": {
       "codigo_interno": "NEJ-L2M",
@@ -1546,7 +1698,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "60x120",
-      "ex_b": "NEVADA"
+      "ex_b": "NEVADA",
+      "novo_sku": "CERAM RETIF POL 60x120 NEVADA"
     },
     "L19-TOS": {
       "codigo_interno": "L19-TOS",
@@ -1556,7 +1709,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "60x120",
-      "ex_b": "PERSA BG"
+      "ex_b": "PERSA BG",
+      "novo_sku": "CERAM RETIF POL 60x120 PERSA BG"
     },
     "EH2-H6H": {
       "codigo_interno": "EH2-H6H",
@@ -1566,7 +1720,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "60x120",
-      "ex_b": "POMPEI"
+      "ex_b": "POMPEI",
+      "novo_sku": "CERAM RETIF POL 60x120 POMPEI"
     },
     "08S-F2J": {
       "codigo_interno": "08S-F2J",
@@ -1576,7 +1731,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "60x120",
-      "ex_b": "STATUARIO"
+      "ex_b": "STATUARIO",
+      "novo_sku": "CERAM RETIF POL 60x120 STATUARIO"
     },
     "L00-5DR": {
       "codigo_interno": "L00-5DR",
@@ -1586,7 +1742,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "66x66",
-      "ex_b": "BEGE"
+      "ex_b": "BEGE",
+      "novo_sku": "CERAM RETIF POL 66x66 BEGE"
     },
     "CWL-WV3": {
       "codigo_interno": "CWL-WV3",
@@ -1596,7 +1753,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "66x66",
-      "ex_b": "BLUASTRA"
+      "ex_b": "BLUASTRA",
+      "novo_sku": "CERAM RETIF POL 66x66 BLUASTRA"
     },
     "UZV-2J5": {
       "codigo_interno": "UZV-2J5",
@@ -1606,7 +1764,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "66x66",
-      "ex_b": "BRANCO"
+      "ex_b": "BRANCO",
+      "novo_sku": "CERAM RETIF POL 66x66 BRANCO"
     },
     "BI9-11S": {
       "codigo_interno": "BI9-11S",
@@ -1616,7 +1775,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "66x66",
-      "ex_b": "BRONZE ARMANI"
+      "ex_b": "BRONZE ARMANI",
+      "novo_sku": "CERAM RETIF POL 66x66 BRONZE ARMANI"
     },
     "CCT-7PE": {
       "codigo_interno": "CCT-7PE",
@@ -1626,7 +1786,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "66x66",
-      "ex_b": "CACAU"
+      "ex_b": "CACAU",
+      "novo_sku": "CERAM RETIF POL 66x66 CACAU"
     },
     "IZ2-S4O": {
       "codigo_interno": "IZ2-S4O",
@@ -1636,7 +1797,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "66x66",
-      "ex_b": "FIORDO"
+      "ex_b": "FIORDO",
+      "novo_sku": "CERAM RETIF POL 66x66 FIORDO"
     },
     "464-ER8": {
       "codigo_interno": "464-ER8",
@@ -1646,7 +1808,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "66x66",
-      "ex_b": "GRAFITE CZ"
+      "ex_b": "GRAFITE CZ",
+      "novo_sku": "CERAM RETIF POL 66x66 GRAFITE CZ"
     },
     "79D-98O": {
       "codigo_interno": "79D-98O",
@@ -1656,7 +1819,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "66x66",
-      "ex_b": "IMPERIUM DARK"
+      "ex_b": "IMPERIUM DARK",
+      "novo_sku": "CERAM RETIF POL 66x66 IMPERIUM DARK"
     },
     "KGT-YW9": {
       "codigo_interno": "KGT-YW9",
@@ -1666,7 +1830,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "66x66",
-      "ex_b": "INTENSY"
+      "ex_b": "INTENSY",
+      "novo_sku": "CERAM RETIF POL 66x66 INTENSY"
     },
     "NBB-SP1": {
       "codigo_interno": "NBB-SP1",
@@ -1676,7 +1841,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "66x66",
-      "ex_b": "MARMI DELUX"
+      "ex_b": "MARMI DELUX",
+      "novo_sku": "CERAM RETIF POL 66x66 MARMI DELUX"
     },
     "GD4-LX1": {
       "codigo_interno": "GD4-LX1",
@@ -1686,7 +1852,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "66x66",
-      "ex_b": "MUNARI CZ"
+      "ex_b": "MUNARI CZ",
+      "novo_sku": "CERAM RETIF POL 66x66 MUNARI CZ"
     },
     "HHU-1C9": {
       "codigo_interno": "HHU-1C9",
@@ -1696,7 +1863,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "66x66",
-      "ex_b": "NERO ELEVATO"
+      "ex_b": "NERO ELEVATO",
+      "novo_sku": "CERAM RETIF POL 66x66 NERO ELEVATO"
     },
     "CXZ-D0L": {
       "codigo_interno": "CXZ-D0L",
@@ -1706,7 +1874,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "66x66",
-      "ex_b": "ONIX ICE"
+      "ex_b": "ONIX ICE",
+      "novo_sku": "CERAM RETIF POL 66x66 ONIX ICE"
     },
     "6C5-9TP": {
       "codigo_interno": "6C5-9TP",
@@ -1716,7 +1885,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "66x66",
-      "ex_b": "SIRIUS GRAY"
+      "ex_b": "SIRIUS GRAY",
+      "novo_sku": "CERAM RETIF POL 66x66 SIRIUS GRAY"
     },
     "8N5-QNH": {
       "codigo_interno": "8N5-QNH",
@@ -1726,7 +1896,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "66x66",
-      "ex_b": "STATUARIO"
+      "ex_b": "STATUARIO",
+      "novo_sku": "CERAM RETIF POL 66x66 STATUARIO"
     },
     "8D3-DQ5": {
       "codigo_interno": "8D3-DQ5",
@@ -1736,7 +1907,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "81x81",
-      "ex_b": "CALACATA BIANCO"
+      "ex_b": "CALACATA BIANCO",
+      "novo_sku": "CERAM RETIF POL 81x81 CALACATA BIANCO"
     },
     "OP8-W6W": {
       "codigo_interno": "OP8-W6W",
@@ -1746,7 +1918,8 @@
       "produto_compra": "CERAM RETIF POL",
       "produto_compra_codigo": "CERAM_RETIF_POL",
       "ex_a": "83x83",
-      "ex_b": "CRATER"
+      "ex_b": "CRATER",
+      "novo_sku": "CERAM RETIF POL 83x83 CRATER"
     },
     "3ZD-8NF": {
       "codigo_interno": "3ZD-8NF",
@@ -1756,7 +1929,8 @@
       "produto_compra": "CERAM RETIF SEMI",
       "produto_compra_codigo": "CERAM_RETIF_SEMI",
       "ex_a": "81x81",
-      "ex_b": "LOMBARDIA BRANCO"
+      "ex_b": "LOMBARDIA BRANCO",
+      "novo_sku": "CERAM RETIF SEMI 81x81 LOMBARDIA BRANCO"
     }
   }
 }

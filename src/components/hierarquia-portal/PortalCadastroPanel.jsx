@@ -16,7 +16,6 @@ import { p38Table } from '@/lib/p38TableSurfaces';
 import {
   montarNomePortalSku,
   montarSubtituloPortalSku,
-  montarVariantePortalSku,
 } from '@/lib/hierarquiaPortal/montarNomePortalSku';
 
 const TIPO_BADGE = {
@@ -335,7 +334,7 @@ export default function PortalCadastroPanel({ tree, filtroLinha, filtroTipos, se
             <HierarchyRow
               key={`sku:${s.produto.id}`}
               nivel="sku"
-              nome={montarVariantePortalSku(s)}
+              nome={montarNomePortalSku(s)}
               estoque={s.estoque}
               depth={3}
               subtitle={montarSubtituloPortalSku(s) || undefined}

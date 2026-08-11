@@ -8,8 +8,15 @@ function pick(...vals) {
   return '';
 }
 
-/** Nome completo estilo “novo SKU” (PC + eixos + marca). */
+/**
+ * Nome canónico estilo coluna «novo_sku» do Excel:
+ * produto_compra + ex_a + ex_b (+ marca se houver).
+ * Ex.: CERAM BOLD ANTI 50x50 MEDINA
+ */
 export function montarNomePortalSku(row) {
+  const fromExcel = pick(row.novo_sku);
+  if (fromExcel) return fromExcel;
+
   const composed = montarNomeProposto({
     produtoCompraNome: row.solo ? pick(row.linha_nome) : pick(row.produto_compra_nome),
     eixoA: pick(row.eixo_a, row.eixo_a_rotulo),
@@ -19,16 +26,7 @@ export function montarNomePortalSku(row) {
   return composed || pick(row.produto?.nome);
 }
 
-/** Rótulo do SKU dentro de uma esquadra — só o que varia (eixos), sem repetir PC. */
-export function montarVariantePortalSku(row) {
-  const ea = pick(row.eixo_a, row.eixo_a_rotulo);
-  const eb = pick(row.eixo_b, row.eixo_b_rotulo);
-  if (ea && eb) return `${ea} × ${eb}`;
-  if (ea || eb) return ea || eb;
-  return pick(row.produto?.codigo_interno, row.produto?.nome);
-}
-
-/** Subtítulo do SKU — código interno, nunca repetir eixo já visível no rótulo. */
+/** Subtítulo do SKU — código interno. */
 export function montarSubtituloPortalSku(row) {
   return pick(row.produto?.codigo_interno);
 }

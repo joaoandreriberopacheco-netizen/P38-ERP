@@ -74,6 +74,7 @@ async function main() {
     const produtoCompra = cellStr(row.getCell(4));
     const exA = cellStr(row.getCell(5));
     const exB = cellStr(row.getCell(6));
+    const novoSku = cellStr(row.getCell(7));
     if (!codigo || !linhaNome) return;
     if (exB.toUpperCase() === 'ZUMBI') return;
 
@@ -94,6 +95,7 @@ async function main() {
       produto_compra_codigo: slugPc(produtoCompra),
       ex_a: exA,
       ex_b: exB,
+      novo_sku: novoSku || [produtoCompra, exA, exB].filter(Boolean).join(' '),
     };
   });
 

@@ -2,7 +2,6 @@ import { TREE_GRID_EXPAND_ALL_LEVEL } from '@/components/produtos/treegrid/Level
 import {
   montarNomePortalSku,
   montarSubtituloPortalSku,
-  montarVariantePortalSku,
 } from '@/lib/hierarquiaPortal/montarNomePortalSku';
 import { portalEstoqueGrupo } from '@/lib/hierarquiaPortal/portalStockFormat';
 
@@ -125,7 +124,7 @@ export function flattenPortalTreeGrid(tree, maxLevel) {
             id: `sku:${s.produto.id}`,
             kind: 'sku',
             depth: 3,
-            label: montarVariantePortalSku(s),
+            label: montarNomePortalSku(s),
             subtitle: montarSubtituloPortalSku(s),
             tipo: null,
             skuCount: null,
