@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ChevronRight, AlertTriangle, CheckCircle2, Info, Layers } from 'lucide-react';
+import { ChevronRight, AlertTriangle, CheckCircle2, Info, Layers, Package } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
   P38TableShell,
@@ -19,23 +19,9 @@ import {
   atingeMassaCriticaCeramica,
 } from '@/lib/modeloCatalogo/regrasCeramica';
 import { portalEstoqueCx } from '@/lib/hierarquiaPortal/buildPortalSupplyCeramica';
-import { summarizePortalSupply } from '@/lib/hierarquiaPortal/buildPortalSupplyCeramica';
-
-const TIPO_BADGE = {
-  solo: 'bg-slate-200/80 text-slate-800 dark:bg-slate-700 dark:text-slate-100',
-  mix: 'bg-blue-200/80 text-blue-900 dark:bg-blue-900/60 dark:text-blue-100',
-  portfolio: 'bg-violet-200/80 text-violet-800 dark:bg-violet-900/60 dark:text-violet-100',
-};
+import { summarizePortalSupply } from '@/lib/hierarquiaPortal/buildPortalSupplyHierarchy';
 
 const TIPO_LABEL = { solo: 'Solo', mix: 'Mix', portfolio: 'Portfolio' };
-
-function TipoBadge({ tipo }) {
-  return (
-    <Badge variant="secondary" className={cn('text-[10px] font-normal uppercase tracking-wide', TIPO_BADGE[tipo] || '')}>
-      {TIPO_LABEL[tipo] || tipo}
-    </Badge>
-  );
-}
 
 function VeredictoBadge({ tom, saldavel }) {
   if (saldavel) {
@@ -59,24 +45,24 @@ function VeredictoBadge({ tom, saldavel }) {
   );
 }
 
-function PfutCell({ value, saldavel }) {
-  if (saldavel) {
-    return <span className="tabular-nums text-sm text-green-700 dark:text-green-400 font-medium">OK</span>;
-  }
-  const neg = value < 0;
+function MetricCell({ label, negativo }) {
+  if (!label || label === '—') return <span className="text-muted-foreground">—</span>;
   return (
-    <span className={cn('tabular-nums text-sm font-medium', neg ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground')}>
-      {neg ? 'Repor' : value}
+    <span className={cn('tabular-nums text-sm whitespace-nowrap', negativo && 'text-red-600 dark:text-red-400 font-medium')}>
+      {label}
     </span>
   );
 }
 
-function SupplySummary({ lines, somenteAlerta }) {
-  const stats = useMemo(() => summarizePortalSupply(lines), [lines]);
+function SupplySummary({ hierarchy, flatLines, somenteAlerta }) {
+  const stats = useMemo(() => summarizePortalSupply(flatLines), [flatLines]);
+  const linhas = hierarchy?.length ?? 0;
+
   return (
     <div className="rounded-lg border border-violet-500/30 bg-violet-50/50 dark:bg-violet-950/20 px-4 py-3 space-y-2">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-        <span><strong>{stats.total}</strong> esquadra(s) cerâmica</span>
+        <span><strong>{linhas}</strong> LINHA(s) piloto</span>
+        <span><strong>{stats.total}</strong> esquadra(s)</span>
         <span className="text-green-700 dark:text-green-400"><strong>{stats.saldaveis}</strong> saldável(eis)</span>
         <span className="text-amber-700 dark:text-amber-300"><strong>{stats.alertas}</strong> em alerta</span>
         {somenteAlerta && <span className="text-xs text-muted-foreground">(filtro: só alertas)</span>}
@@ -84,96 +70,83 @@ function SupplySummary({ lines, somenteAlerta }) {
       <p className="text-xs text-muted-foreground flex items-start gap-1.5">
         <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
         <span>
-          Regra piloto (igual laboratório Modelo): cada <strong>produto compra</strong> tem até{' '}
-          <strong>{CERAM_META_VAGAS} posições</strong>; massa crítica <strong>{CERAM_MASSA_CRITICA_CX} CX</strong>;
-          esquadra <strong>saldável</strong> quando ≥ <strong>{CERAM_MIN_LINHAS_SALDAVEL} linhas</strong> (ex_b) atingem a massa.
-          Estoque em <strong>unidade vitrine</strong>. Preview — não gera pedido.
+          SMART SUPPLY observa a <strong>LINHA</strong> e consolida dos SKUs: <strong>estoque vitrine</strong>,{' '}
+          <strong>média 30d</strong> (giro) e <strong>ponto futuro</strong> (estoque − giro) — mesma lógica do catálogo.
+          Regra cerâmica: {CERAM_META_VAGAS} pos · massa {CERAM_MASSA_CRITICA_CX} CX · saldável ≥ {CERAM_MIN_LINHAS_SALDAVEL} linhas.
+          Preview — não gera pedido.
         </span>
       </p>
     </div>
   );
 }
 
-function SupplyRow({ line, open, onToggle }) {
+function SkuDetailList({ skus, massaCritica }) {
+  return (
+    <ul className="space-y-1">
+      {skus.map((s) => {
+        const cx = portalEstoqueCx(s);
+        const ok = atingeMassaCriticaCeramica(cx, massaCritica);
+        return (
+          <li
+            key={s.produto.id}
+            className="grid grid-cols-[1fr_auto_auto_auto] gap-2 text-xs border-b border-border/30 dark:border-white/5 py-1.5 last:border-0 items-center"
+          >
+            <span className="truncate text-foreground/90">{s.produto.nome}</span>
+            <MetricCell label={s.estoque_label} negativo={cx <= 0} />
+            <MetricCell label={s.media30_label} />
+            <MetricCell label={s.ponto_futuro_label} negativo={s.ponto_negativo} />
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function EsquadraRow({ line, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen);
+  const m = line.metrics;
+
   return (
     <>
-      <TableRow
-        className={cn(
-          p38Table.row,
-          'bg-background dark:bg-[#2f343c]/80',
-          line.alerta && 'border-l-2 border-l-amber-500 dark:border-l-amber-400',
-          line.saldavel && 'border-l-2 border-l-green-600/70 dark:border-l-green-500/70',
-        )}
-      >
+      <TableRow className={cn(p38Table.row, 'bg-background/90 dark:bg-[#2a2e35]/90 text-sm')}>
         <TableCell className={cn(p38Table.cell, 'w-8 px-1')}>
           <button
             type="button"
-            onClick={onToggle}
-            className="flex h-7 w-7 items-center justify-center rounded hover:bg-secondary/40"
-            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+            className="flex h-7 w-7 items-center justify-center rounded hover:bg-secondary/40 ml-4"
           >
-            <ChevronRight className={cn('h-4 w-4 transition-transform', open && 'rotate-90')} />
+            <ChevronRight className={cn('h-3.5 w-3.5 transition-transform', open && 'rotate-90')} />
           </button>
         </TableCell>
         <TableCell className={cn(p38Table.cell, 'min-w-0')}>
-          <div className="flex items-center gap-2 flex-wrap min-w-0">
-            <span className="truncate text-sm font-medium">{line.produto_compra_nome}</span>
+          <div className="flex items-center gap-2 flex-wrap pl-2">
+            <Layers className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <span className="font-medium truncate">{line.produto_compra_nome}</span>
             <VeredictoBadge tom={line.veredicto_tom} saldavel={line.saldavel} />
-            <TipoBadge tipo={line.linha_tipo} />
           </div>
-          <p className="truncate text-[11px] text-muted-foreground mt-0.5">
-            {line.linha_nome} · {line.categoria}
-          </p>
-          <p className={cn(
-            'text-[11px] mt-1 leading-snug',
-            line.veredicto_tom === 'ok' && 'text-green-700 dark:text-green-400',
-            line.veredicto_tom === 'alerta' && 'text-amber-800 dark:text-amber-200',
-            line.veredicto_tom === 'critico' && 'text-red-700 dark:text-red-300',
-          )}
-          >
-            {line.veredicto}
-          </p>
+          <p className="text-[10px] text-muted-foreground pl-7 mt-0.5 truncate">{line.veredicto}</p>
+        </TableCell>
+        <TableCell className={cn(p38Table.cell, p38Table.cellNumeric, 'w-[52px]')}>{line.sku_count}</TableCell>
+        <TableCell className={cn(p38Table.cell, p38Table.cellNumeric, 'w-[100px]')}>
+          <MetricCell label={m?.estoque_label} />
+        </TableCell>
+        <TableCell className={cn(p38Table.cell, p38Table.cellNumeric, 'w-[88px]')}>
+          <MetricCell label={m?.media30_label} />
+        </TableCell>
+        <TableCell className={cn(p38Table.cell, p38Table.cellNumeric, 'w-[88px]')}>
+          <MetricCell label={m?.ponto_futuro_label} negativo={m?.ponto_negativo} />
         </TableCell>
         <TableCell className={cn(p38Table.cell, p38Table.cellNumeric, 'w-[56px]')}>
-          <span className="tabular-nums text-sm">{line.sku_count}</span>
-        </TableCell>
-        <TableCell className={cn(p38Table.cell, p38Table.cellNumeric, 'w-[72px]')}>
-          <span className="tabular-nums text-sm">{line.linhas_com_massa_critica}/{CERAM_MIN_LINHAS_SALDAVEL}</span>
-          <p className="text-[9px] text-muted-foreground">c/ massa</p>
-        </TableCell>
-        <TableCell className={cn(p38Table.cell, p38Table.cellNumeric, 'w-[120px]')}>
-          <span className="tabular-nums text-sm whitespace-nowrap">{line.estoque_label || '—'}</span>
-        </TableCell>
-        <TableCell className={cn(p38Table.cell, p38Table.cellNumeric, 'w-[64px]')}>
-          <PfutCell value={line.pfut_simulado} saldavel={line.saldavel} />
+          <span className="text-xs tabular-nums">{line.linhas_com_massa_critica}/{CERAM_MIN_LINHAS_SALDAVEL}</span>
         </TableCell>
       </TableRow>
       {open && (
-        <TableRow className="bg-muted/20 dark:bg-[#2a2e35] hover:bg-muted/20 dark:hover:bg-[#2a2e35]">
-          <TableCell colSpan={6} className={cn(p38Table.cell, 'py-3')}>
-            <p className="text-[10px] text-muted-foreground mb-2 flex items-center gap-1 uppercase tracking-wide">
-              <Layers className="h-3 w-3" />
-              {line.posicoes_ocupadas}/{line.meta_vagas} posições · massa {line.massa_critica} CX · saldável ≥ {line.min_linhas_saldavel} linhas
+        <TableRow className="bg-muted/10 dark:bg-[#252830]">
+          <TableCell colSpan={7} className={cn(p38Table.cell, 'py-2 pl-12')}>
+            <p className="text-[9px] uppercase tracking-wide text-muted-foreground mb-1 grid grid-cols-[1fr_auto_auto_auto] gap-2">
+              <span>SKU</span><span>Estoque</span><span>Média 30d</span><span>P. futuro</span>
             </p>
-            <ul className="space-y-1">
-              {line.skus.map((s) => {
-                const cx = portalEstoqueCx(s);
-                const ok = atingeMassaCriticaCeramica(cx, line.massa_critica);
-                return (
-                  <li
-                    key={s.produto.id}
-                    className="flex justify-between gap-3 text-xs border-b border-border/30 dark:border-white/5 py-1.5 last:border-0"
-                  >
-                    <span className="truncate text-foreground/90">{s.produto.nome}</span>
-                    <span className={cn('shrink-0 tabular-nums whitespace-nowrap text-right', ok ? 'text-green-700 dark:text-green-400' : 'text-muted-foreground')}>
-                      {s.estoque_label || `${cx} CX`}
-                      {ok ? ' ✓ massa' : cx <= 0 ? ' · zerado' : ` · < ${line.massa_critica} CX`}
-                      {s.eixo_b ? ` · ${s.eixo_b}` : ''}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
+            <SkuDetailList skus={line.skus} massaCritica={line.massa_critica} />
           </TableCell>
         </TableRow>
       )}
@@ -181,15 +154,83 @@ function SupplyRow({ line, open, onToggle }) {
   );
 }
 
-function SupplyLine({ line }) {
-  const [open, setOpen] = useState(false);
-  return <SupplyRow line={line} open={open} onToggle={() => setOpen((v) => !v)} />;
+function LinhaBlock({ linha, somenteAlerta }) {
+  const [open, setOpen] = useState(true);
+  const esquadras = somenteAlerta ? linha.esquadras.filter((e) => e.alerta) : linha.esquadras;
+  if (!esquadras.length) return null;
+
+  const m = linha.metrics;
+  const r = linha.resumo;
+
+  return (
+    <div className="border-b border-border/40 dark:border-white/10 last:border-0">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={cn(
+          'w-full grid grid-cols-[auto_1fr_repeat(5,auto)] gap-x-3 gap-y-1 items-center px-3 py-3 text-left',
+          'bg-muted/40 dark:bg-[#343a42] hover:bg-muted/60 dark:hover:bg-[#3a4149]',
+          linha.alerta && 'border-l-2 border-l-amber-500',
+          !linha.alerta && r.esquadras_saldaveis === r.esquadras_total && 'border-l-2 border-l-green-600/60',
+        )}
+      >
+        <ChevronRight className={cn('h-4 w-4 shrink-0 transition-transform', open && 'rotate-90')} />
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Package className="h-4 w-4 text-muted-foreground shrink-0" />
+            <span className="font-semibold text-sm">{linha.linha_nome}</span>
+            <Badge variant="outline" className="text-[10px]">{TIPO_LABEL[linha.linha_tipo] || linha.linha_tipo}</Badge>
+            <span className="text-[10px] text-muted-foreground">{r.esquadras_saldaveis}/{r.esquadras_total} esquadras saldáveis · {r.sku_total} SKUs</span>
+          </div>
+          <p className={cn(
+            'text-[11px] mt-1 leading-snug',
+            linha.veredicto_tom === 'ok' && 'text-green-700 dark:text-green-400',
+            linha.veredicto_tom === 'alerta' && 'text-amber-800 dark:text-amber-200',
+          )}
+          >
+            {linha.veredicto_linha}
+          </p>
+        </div>
+        <div className="text-right hidden sm:block">
+          <p className="text-[9px] uppercase text-muted-foreground">Estoque</p>
+          <MetricCell label={m?.estoque_label} />
+        </div>
+        <div className="text-right hidden sm:block">
+          <p className="text-[9px] uppercase text-muted-foreground">Média 30d</p>
+          <MetricCell label={m?.media30_label} />
+        </div>
+        <div className="text-right hidden sm:block">
+          <p className="text-[9px] uppercase text-muted-foreground">P. futuro</p>
+          <MetricCell label={m?.ponto_futuro_label} negativo={m?.ponto_negativo} />
+        </div>
+        <div className="text-right hidden md:block w-16" />
+      </button>
+
+      {open && (
+        <Table className="table-auto">
+          <TableBody>
+            {esquadras.map((eq) => (
+              <EsquadraRow key={eq.key} line={eq} />
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </div>
+  );
 }
 
-export default function PortalSmartSupplyPanel({ lines, somenteAlerta }) {
-  const visible = somenteAlerta ? lines.filter((l) => l.alerta) : lines;
+export default function PortalSmartSupplyPanel({ hierarchy, flatLines, somenteAlerta, loadingVelocity }) {
+  const visibleLinhas = useMemo(() => {
+    if (!somenteAlerta) return hierarchy || [];
+    return (hierarchy || [])
+      .map((linha) => ({
+        ...linha,
+        esquadras: linha.esquadras.filter((e) => e.alerta),
+      }))
+      .filter((linha) => linha.esquadras.length > 0 || linha.alerta);
+  }, [hierarchy, somenteAlerta]);
 
-  if (!lines.length) {
+  if (!flatLines?.length) {
     return (
       <div className="rounded-lg border border-border/40 dark:border-white/10 bg-muted/20 dark:bg-[#2f343c] p-8 text-center space-y-2">
         <p className="text-sm text-muted-foreground">Nenhuma esquadra no piloto cerâmica.</p>
@@ -198,14 +239,14 @@ export default function PortalSmartSupplyPanel({ lines, somenteAlerta }) {
     );
   }
 
-  if (!visible.length) {
+  if (!visibleLinhas.length) {
     return (
       <div className="space-y-3">
-        <SupplySummary lines={lines} somenteAlerta={somenteAlerta} />
+        <SupplySummary hierarchy={hierarchy} flatLines={flatLines} somenteAlerta={somenteAlerta} />
         <div className="rounded-lg border border-green-500/30 bg-green-50/30 dark:bg-green-950/20 p-6 text-center">
           <CheckCircle2 className="h-8 w-8 text-green-600 mx-auto mb-2" />
-          <p className="text-sm font-medium text-green-800 dark:text-green-200">Nenhuma esquadra em alerta</p>
-          <p className="text-xs text-muted-foreground mt-1">Todas as esquadras visíveis estão saldáveis ou dentro da regra.</p>
+          <p className="text-sm font-medium text-green-800 dark:text-green-200">Nenhuma LINHA em alerta</p>
+          <p className="text-xs text-muted-foreground mt-1">Estoque e giro dentro do esperado nas esquadras visíveis.</p>
         </div>
       </div>
     );
@@ -213,38 +254,37 @@ export default function PortalSmartSupplyPanel({ lines, somenteAlerta }) {
 
   return (
     <div className="space-y-3">
-      <SupplySummary lines={lines} somenteAlerta={somenteAlerta} />
+      <SupplySummary hierarchy={hierarchy} flatLines={flatLines} somenteAlerta={somenteAlerta} />
+      {loadingVelocity && (
+        <p className="text-[11px] text-muted-foreground px-1">A carregar vendas 90d para calcular giro e ponto futuro…</p>
+      )}
 
       <P38TableShell
         className={cn(
-          'max-h-[min(70vh,880px)] border-border/40 dark:border-white/10',
+          'max-h-[min(72vh,900px)] border-border/40 dark:border-white/10 overflow-hidden',
           'bg-background dark:bg-[#2a2e35]',
           'shadow-sm dark:shadow-[0_4px_18px_rgba(0,0,0,0.35)]',
         )}
       >
-        <Table className="table-auto min-w-[760px]">
-          <TableHeader
-            className={cn(
-              p38Table.headerSolid,
-              'bg-muted dark:bg-[#383e47]',
-              'border-b-2 border-[#4a5240] dark:border-[#a4ce33]',
-            )}
-          >
-            <TableRow className="hover:bg-transparent border-none">
-              <TableHead className={cn(p38Table.head, 'w-8')} />
-              <TableHead className={p38Table.head}>Produto compra · situação</TableHead>
-              <TableHead className={cn(p38Table.head, p38Table.headRight, 'w-[56px]')}>SKUs</TableHead>
-              <TableHead className={cn(p38Table.head, p38Table.headRight, 'w-[72px]')}>Massa</TableHead>
-              <TableHead className={cn(p38Table.head, p38Table.headRight, 'w-[120px]')}>Estoque vitrine</TableHead>
-              <TableHead className={cn(p38Table.head, p38Table.headRight, 'w-[64px]')}>Acção</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {visible.map((line) => (
-              <SupplyLine key={line.key} line={line} />
-            ))}
-          </TableBody>
-        </Table>
+        <div className={cn(
+          p38Table.headerSolid,
+          'bg-muted dark:bg-[#383e47] border-b-2 border-[#4a5240] dark:border-[#a4ce33]',
+          'grid grid-cols-[auto_1fr_repeat(5,auto)] gap-x-3 px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground',
+        )}
+        >
+          <span className="w-4" />
+          <span>LINHA / esquadra</span>
+          <span className="text-right w-[52px] hidden sm:inline">SKUs</span>
+          <span className="text-right w-[100px] hidden sm:inline">Estoque</span>
+          <span className="text-right w-[88px] hidden sm:inline">Média 30d</span>
+          <span className="text-right w-[88px] hidden sm:inline">P. futuro</span>
+          <span className="text-right w-[56px] hidden md:inline">Massa</span>
+        </div>
+        <div className="overflow-y-auto max-h-[min(65vh,820px)]">
+          {visibleLinhas.map((linha) => (
+            <LinhaBlock key={linha.linha_codigo} linha={linha} somenteAlerta={somenteAlerta} />
+          ))}
+        </div>
       </P38TableShell>
     </div>
   );

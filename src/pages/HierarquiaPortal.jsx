@@ -8,12 +8,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
 import { createPageUrl } from '@/components/utils';
 import { fetchProdutosAtivos } from '@/lib/fetchProdutosAtivos';
+import { fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
+import { buildCatalogSalesVelocityMap } from '@/lib/catalogSalesVelocity';
 import {
   enrichProdutoPortal,
   buildPortalTree,
   buildPortalSupplyLines,
   listPortalLinhas,
 } from '@/lib/hierarquiaPortal/buildPortalModel';
+import {
+  buildPortalSupplyHierarchy,
+  enrichSupplyLinesWithMetrics,
+} from '@/lib/hierarquiaPortal/buildPortalSupplyHierarchy';
 import {
   filterProdutosPortalExcel,
   PORTAL_EXCEL_LINHAS,
@@ -30,7 +36,9 @@ import { MODELO_PILOTO_LINHAS_PLANEADAS } from '@/config/modeloCatalogoFlags';
 
 function HierarquiaPortalInner() {
   const [loading, setLoading] = useState(true);
+  const [loadingVelocity, setLoadingVelocity] = useState(true);
   const [produtos, setProdutos] = useState([]);
+  const [pedidos90d, setPedidos90d] = useState([]);
   const [tab, setTab] = useState('cadastro');
   const [filtroLinha, setFiltroLinha] = useState('');
   const [filtroTipos, setFiltroTipos] = useState(() => new Set(['portfolio']));
@@ -53,13 +61,36 @@ function HierarquiaPortalInner() {
     return () => { cancelled = true; };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoadingVelocity(true);
+      try {
+        const pedidos = await fetchPedidosVenda90d();
+        if (!cancelled) setPedidos90d(pedidos || []);
+      } catch (e) {
+        console.error('[HierarquiaPortal] vendas 90d', e);
+      } finally {
+        if (!cancelled) setLoadingVelocity(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   const produtosPiloto = useMemo(() => filterProdutosPortalExcel(produtos), [produtos]);
+  const velocityMap = useMemo(
+    () => buildCatalogSalesVelocityMap(produtosPiloto, pedidos90d),
+    [produtosPiloto, pedidos90d],
+  );
   const enriched = useMemo(
     () => produtosPiloto.map(enrichProdutoPortal).filter((r) => r.fonte_excel),
     [produtosPiloto],
   );
   const tree = useMemo(() => buildPortalTree(enriched), [enriched]);
-  const supplyLines = useMemo(() => buildPortalSupplyLines(enriched), [enriched]);
+  const supplyLines = useMemo(
+    () => enrichSupplyLinesWithMetrics(buildPortalSupplyLines(enriched), velocityMap),
+    [enriched, velocityMap],
+  );
   const linhas = useMemo(() => listPortalLinhas(enriched), [enriched]);
 
   const filteredSupply = useMemo(() => {
@@ -77,6 +108,11 @@ function HierarquiaPortalInner() {
     }
     return lines;
   }, [supplyLines, filtroLinha, filtroTipos, search]);
+
+  const filteredHierarchy = useMemo(
+    () => buildPortalSupplyHierarchy(filteredSupply, velocityMap),
+    [filteredSupply, velocityMap],
+  );
 
   const tipoCounts = useMemo(() => {
     const counts = { solo: 0, mix: 0, portfolio: 0 };
@@ -189,7 +225,12 @@ function HierarquiaPortalInner() {
             search={search}
           />
         ) : (
-          <PortalSmartSupplyPanel lines={filteredSupply} somenteAlerta={somenteAlerta} />
+          <PortalSmartSupplyPanel
+            hierarchy={filteredHierarchy}
+            flatLines={filteredSupply}
+            somenteAlerta={somenteAlerta}
+            loadingVelocity={loadingVelocity}
+          />
         )}
 
         <p className="text-[11px] text-muted-foreground text-center">
