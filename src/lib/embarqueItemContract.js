@@ -95,6 +95,8 @@ export function embarqueItemToLegacyMirror(item = {}) {
     quantidade_pedida: asNumber(item?.quantidade_pedida_comercial, 0),
     quantidade_embarcada: asNumber(item?.quantidade_embarcada_comercial, 0),
     quantidade_recebida: asNumber(item?.quantidade_recebida_comercial, 0),
+    quantidade_pedida_base: asNumber(item?.quantidade_pedida_base, 0) || undefined,
+    quantidade_embarcada_base: asNumber(item?.quantidade_embarcada_base, 0) || undefined,
     quantidade_recebida_base: asNumber(item?.quantidade_recebida_base, 0) || undefined,
     unidade_medida: item?.unidade_sigla || "UN",
     divergencia_tipo: item?.divergencia_tipo || "Nenhuma",
