@@ -20,6 +20,8 @@ export const p38Keys = {
   homeKpis: (dateKey) => [...p38Keys.all, 'home-kpis', dateKey],
   homeVendasHoje: (dateKey) => [...p38Keys.all, 'home-vendas-hoje', dateKey],
   homePedidosPendentes: () => [...p38Keys.all, 'home-pedidos-pendentes'],
+  dashboardVendas: (monthKey) => [...p38Keys.all, 'dashboard', 'vendas', monthKey],
+  dashboardEstoque: () => [...p38Keys.all, 'dashboard', 'estoque'],
   intervenientes: () => [...p38Keys.all, 'intervenientes'],
   logistica: {
     eventos: () => [...p38Keys.all, 'logistica', 'eventos'],

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { BarChart3, TrendingUp, ShoppingCart, Package, DollarSign } from 'lucide-react';
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
@@ -13,7 +13,18 @@ import DashboardCaixa from '@/pages/DashboardCaixa';
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('geral');
+  const [visitedTabs, setVisitedTabs] = useState(() => new Set(['geral']));
   const [currentUser, setCurrentUser] = useState(null);
+
+  const handleTabSelect = useCallback((tab) => {
+    setActiveTab(tab);
+    setVisitedTabs((prev) => {
+      if (prev.has(tab)) return prev;
+      const next = new Set(prev);
+      next.add(tab);
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -34,7 +45,6 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-4">
-      {/* Header com logo alinhada à direita */}
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-lg font-semibold text-foreground font-glacial">Dashboard</h1>
@@ -46,19 +56,39 @@ export default function DashboardPage() {
       </div>
 
       <GlacialTabsList scrollable>
-        <GlacialTabsTrigger value="geral"      activeValue={activeTab} onSelect={setActiveTab} icon={BarChart3}      label="Geral" />
-        <GlacialTabsTrigger value="vendas"     activeValue={activeTab} onSelect={setActiveTab} icon={TrendingUp}      label="Vendas" />
-        <GlacialTabsTrigger value="compras"    activeValue={activeTab} onSelect={setActiveTab} icon={ShoppingCart}    label="Compras" />
-        <GlacialTabsTrigger value="estoque"    activeValue={activeTab} onSelect={setActiveTab} icon={Package}         label="Estoque" />
-        <GlacialTabsTrigger value="financeiro" activeValue={activeTab} onSelect={setActiveTab} icon={DollarSign}      label="Financeiro" />
+        <GlacialTabsTrigger value="geral"      activeValue={activeTab} onSelect={handleTabSelect} icon={BarChart3}      label="Geral" />
+        <GlacialTabsTrigger value="vendas"     activeValue={activeTab} onSelect={handleTabSelect} icon={TrendingUp}      label="Vendas" />
+        <GlacialTabsTrigger value="compras"    activeValue={activeTab} onSelect={handleTabSelect} icon={ShoppingCart}    label="Compras" />
+        <GlacialTabsTrigger value="estoque"    activeValue={activeTab} onSelect={handleTabSelect} icon={Package}         label="Estoque" />
+        <GlacialTabsTrigger value="financeiro" activeValue={activeTab} onSelect={handleTabSelect} icon={DollarSign}      label="Financeiro" />
       </GlacialTabsList>
 
       <div>
-        {activeTab === 'geral'      && <GeralTab />}
-        {activeTab === 'vendas'     && <VendasTab />}
-        {activeTab === 'compras'    && <ComprasTab />}
-        {activeTab === 'estoque'    && <EstoqueTab />}
-        {activeTab === 'financeiro' && <FinanceiroTab />}
+        {visitedTabs.has('geral') && (
+          <div hidden={activeTab !== 'geral'}>
+            <GeralTab />
+          </div>
+        )}
+        {visitedTabs.has('vendas') && (
+          <div hidden={activeTab !== 'vendas'}>
+            <VendasTab enabled={visitedTabs.has('vendas')} />
+          </div>
+        )}
+        {visitedTabs.has('compras') && (
+          <div hidden={activeTab !== 'compras'}>
+            <ComprasTab />
+          </div>
+        )}
+        {visitedTabs.has('estoque') && (
+          <div hidden={activeTab !== 'estoque'}>
+            <EstoqueTab enabled={visitedTabs.has('estoque')} />
+          </div>
+        )}
+        {visitedTabs.has('financeiro') && (
+          <div hidden={activeTab !== 'financeiro'}>
+            <FinanceiroTab />
+          </div>
+        )}
       </div>
     </div>
   );
