@@ -53,6 +53,7 @@ import {
   filterSugestaoCompraLinhas,
   linhaAbaixoPontoFuturo,
 } from '@/lib/filterSugestaoCompraLinhas';
+import { readPortalSupplyBridge } from '@/lib/hierarquiaPortal/portalSupplyBridge';
 const SUGESTAO_TREE_LEVEL_KEY = 'sugestaoCompra.treeLevel';
 const SUGESTAO_GROUP_CATEGORY_KEY = 'sugestaoCompra.groupByCategory';
 const SUGESTAO_OPERATIONAL_MODE_KEY = 'sugestaoCompra.operationalMode';
@@ -157,6 +158,17 @@ export default function SugestaoCompra({ onStatsChange }) {
   const { toast } = useToast();
   const navigate = useNavigate();
   const isMobile = useCompactShell();
+
+  useEffect(() => {
+    const bridge = readPortalSupplyBridge();
+    if (!bridge?.searchTerm) return;
+    setFilters((f) => ({ ...f, searchTerm: bridge.searchTerm }));
+    const extra = bridge.ponto_futuro ? ` · P.FUT ${bridge.ponto_futuro}` : '';
+    toast({
+      title: 'Portal SMART SUPPLY',
+      description: `Cotação pré-filtrada: ${bridge.searchTerm}${extra}`,
+    });
+  }, [toast]);
   const calcContextRef = useRef({
     pedidos: [],
     movsPorProduto: {},

@@ -141,11 +141,9 @@ function HierarquiaPortalInner() {
               Portal hierarquia — piloto cerâmica
             </h1>
             <p className="text-sm text-muted-foreground max-w-2xl">
-              Mesmo universo do Excel mestre e do laboratório Modelo:{' '}
-              <strong className="text-foreground font-normal">{linhasPilotoLabel}</strong>
-              {' '}({PORTAL_EXCEL_SKU_COUNT} SKUs, prefixo CERAM). Hierarquia{' '}
-              <strong className="text-foreground font-normal">Categoria → LINHA → Produto compra → SKU</strong>
-              {' '}· estoque em unidade vitrine · só leitura.
+              Piloto cerâmica ({PORTAL_EXCEL_SKU_COUNT} SKUs).{' '}
+              <strong className="text-foreground font-normal">Cadastro (treegrid)</strong> — hierarquia e nomes, como futuro catálogo enxuto.{' '}
+              <strong className="text-foreground font-normal">SMART SUPPLY</strong> — giro, ponto futuro, saldável e ponte para cotação fornecedor.
             </p>
           </div>
           <div className="rounded-lg border border-violet-500/40 bg-violet-50/80 dark:bg-violet-950/30 px-3 py-2 text-xs text-violet-900 dark:text-violet-100 max-w-sm space-y-1">
@@ -202,13 +200,13 @@ function HierarquiaPortalInner() {
             value="cadastro"
             activeValue={tab}
             onSelect={setTab}
-            label="Cadastro (treegrid)"
+            label="Cadastro (hierarquia)"
           />
           <GlacialTabsTrigger
             value="supply"
             activeValue={tab}
             onSelect={setTab}
-            label="SMART SUPPLY (preview)"
+            label="SMART SUPPLY (reposição)"
           />
         </GlacialTabsList>
 

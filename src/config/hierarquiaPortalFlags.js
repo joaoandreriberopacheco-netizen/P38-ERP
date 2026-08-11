@@ -1,6 +1,10 @@
 /**
  * Portal de preview da hierarquia (Categoria → LINHA → Produto compra → SKU).
- * Piloto alinhado ao laboratório Modelo + Excel mestre (cerâmica CERAM).
+ *
+ * Papéis (visão alvo pós-corte):
+ * - Catálogo /Produtos → cadastro (nome, hierarquia, unidades, preço)
+ * - Portal SMART SUPPLY → giro, ponto futuro, saldável, ponte cotação fornecedor
+ * - Sugestões de Compra → execução da cotação/reposição (legado hoje; converge para supply)
  */
 import {
   MODELO_PILOTO_LINHAS_ATIVAS,

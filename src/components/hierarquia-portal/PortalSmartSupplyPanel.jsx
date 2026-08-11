@@ -20,6 +20,7 @@ import {
 } from '@/lib/modeloCatalogo/regrasCeramica';
 import { portalEstoqueCx } from '@/lib/hierarquiaPortal/buildPortalSupplyCeramica';
 import { summarizePortalSupply } from '@/lib/hierarquiaPortal/buildPortalSupplyHierarchy';
+import PortalSupplyBridgeActions from '@/components/hierarquia-portal/PortalSupplyBridgeActions';
 
 const TIPO_LABEL = { solo: 'Solo', mix: 'Mix', portfolio: 'Portfolio' };
 
@@ -70,10 +71,9 @@ function SupplySummary({ hierarchy, flatLines, somenteAlerta }) {
       <p className="text-xs text-muted-foreground flex items-start gap-1.5">
         <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
         <span>
-          SMART SUPPLY observa a <strong>LINHA</strong> e consolida dos SKUs: <strong>estoque vitrine</strong>,{' '}
-          <strong>média 30d</strong> (giro) e <strong>ponto futuro</strong> (estoque − giro) — mesma lógica do catálogo.
-          Regra cerâmica: {CERAM_META_VAGAS} pos · massa {CERAM_MASSA_CRITICA_CX} CX · saldável ≥ {CERAM_MIN_LINHAS_SALDAVEL} linhas.
-          Preview — não gera pedido.
+          SMART SUPPLY observa a <strong>LINHA</strong> e consolida dos SKUs: estoque vitrine, média 30d e ponto futuro.
+          O <strong>catálogo</strong> cuida do cadastro; daqui sai a <strong>ponte para cotação</strong> ao fornecedor (Sugestões de Compra).
+          Regra cerâmica piloto: {CERAM_META_VAGAS} pos · {CERAM_MASSA_CRITICA_CX} CX · ≥ {CERAM_MIN_LINHAS_SALDAVEL} linhas saldáveis.
         </span>
       </p>
     </div>
@@ -125,6 +125,16 @@ function EsquadraRow({ line, defaultOpen = false }) {
             <VeredictoBadge tom={line.veredicto_tom} saldavel={line.saldavel} />
           </div>
           <p className="text-[10px] text-muted-foreground pl-7 mt-0.5 truncate">{line.veredicto}</p>
+          <div className="pl-7 mt-1">
+            <PortalSupplyBridgeActions
+              compact
+              linhaCodigo={line.linha_codigo}
+              linhaNome={line.linha_nome}
+              produtoCompraNome={line.produto_compra_nome}
+              pontoFuturoLabel={m?.ponto_futuro_label}
+              veredicto={line.veredicto}
+            />
+          </div>
         </TableCell>
         <TableCell className={cn(p38Table.cell, p38Table.cellNumeric, 'w-[52px]')}>{line.sku_count}</TableCell>
         <TableCell className={cn(p38Table.cell, p38Table.cellNumeric, 'w-[100px]')}>
@@ -164,17 +174,22 @@ function LinhaBlock({ linha, somenteAlerta }) {
 
   return (
     <div className="border-b border-border/40 dark:border-white/10 last:border-0">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
+      <div
         className={cn(
-          'w-full grid grid-cols-[auto_1fr_repeat(5,auto)] gap-x-3 gap-y-1 items-center px-3 py-3 text-left',
-          'bg-muted/40 dark:bg-[#343a42] hover:bg-muted/60 dark:hover:bg-[#3a4149]',
+          'w-full grid grid-cols-[auto_1fr_repeat(5,auto)] gap-x-3 gap-y-1 items-center px-3 py-3',
+          'bg-muted/40 dark:bg-[#343a42]',
           linha.alerta && 'border-l-2 border-l-amber-500',
           !linha.alerta && r.esquadras_saldaveis === r.esquadras_total && 'border-l-2 border-l-green-600/60',
         )}
       >
-        <ChevronRight className={cn('h-4 w-4 shrink-0 transition-transform', open && 'rotate-90')} />
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex h-8 w-8 items-center justify-center rounded hover:bg-secondary/40"
+          aria-expanded={open}
+        >
+          <ChevronRight className={cn('h-4 w-4 shrink-0 transition-transform', open && 'rotate-90')} />
+        </button>
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <Package className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -190,6 +205,12 @@ function LinhaBlock({ linha, somenteAlerta }) {
           >
             {linha.veredicto_linha}
           </p>
+          <PortalSupplyBridgeActions
+            linhaCodigo={linha.linha_codigo}
+            linhaNome={linha.linha_nome}
+            pontoFuturoLabel={m?.ponto_futuro_label}
+            veredicto={linha.veredicto_linha}
+          />
         </div>
         <div className="text-right hidden sm:block">
           <p className="text-[9px] uppercase text-muted-foreground">Estoque</p>
@@ -204,7 +225,7 @@ function LinhaBlock({ linha, somenteAlerta }) {
           <MetricCell label={m?.ponto_futuro_label} negativo={m?.ponto_negativo} />
         </div>
         <div className="text-right hidden md:block w-16" />
-      </button>
+      </div>
 
       {open && (
         <Table className="table-auto">
