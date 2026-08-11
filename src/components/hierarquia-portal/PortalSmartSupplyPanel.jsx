@@ -293,7 +293,7 @@ function SupplyTreeTable({ linhas }) {
   return (
     <P38TableShell
       className={cn(
-        'max-h-[min(72vh,900px)] border-border/40 dark:border-white/10 overflow-hidden',
+        'border-border/40 dark:border-white/10 w-full',
         'bg-background dark:bg-[#2a2e35]',
         'shadow-sm dark:shadow-[0_4px_18px_rgba(0,0,0,0.35)]',
       )}

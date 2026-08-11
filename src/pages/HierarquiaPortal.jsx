@@ -33,7 +33,7 @@ import {
   HIERARQUIA_PORTAL_PILOTO_LINHAS,
 } from '@/config/hierarquiaPortalFlags';
 import { MODELO_PILOTO_LINHAS_PLANEADAS } from '@/config/modeloCatalogoFlags';
-import { SMART_SUPPLY_PORTAL_PREVIEW_LABEL, SMART_SUPPLY_TITLE } from '@/config/smartSupplyFlags';
+import { SMART_SUPPLY_PORTAL_PREVIEW_LABEL } from '@/config/smartSupplyFlags';
 
 function HierarquiaPortalInner() {
   const [loading, setLoading] = useState(true);
@@ -128,90 +128,90 @@ function HierarquiaPortalInner() {
   const linhasPilotoLabel = HIERARQUIA_PORTAL_PILOTO_LINHAS.map((l) => l.nome).join(' · ');
 
   return (
-    <div className="min-h-screen bg-background font-din-1451 pb-8">
-      <div className="max-w-7xl mx-auto px-4 py-4 md:py-6 space-y-4">
-        <div className="flex flex-wrap items-start gap-3 justify-between">
-          <div className="space-y-1 min-w-0">
-            <Button variant="ghost" size="sm" className="h-8 -ml-2 gap-1 text-muted-foreground" asChild>
-              <Link to={createPageUrl('Compras')}>
-                <ArrowLeft className="h-3.5 w-3.5" />
-                Voltar a Compras
-              </Link>
-            </Button>
-            <h1 className="text-xl md:text-2xl font-semibold font-glacial text-foreground">
-              Portal hierarquia — piloto cerâmica
-            </h1>
-            <p className="text-sm text-muted-foreground max-w-2xl">
-              Preview por LINHA (piloto cerâmica, {PORTAL_EXCEL_SKU_COUNT} SKUs).{' '}
-              <strong className="text-foreground font-normal">Cadastro</strong> — hierarquia e nomes.{' '}
-              <strong className="text-foreground font-normal">{SMART_SUPPLY_TITLE}</strong> de produção
-              (sugestão + cotação) fica em <strong className="text-foreground font-normal">Compras → SMART SUPPLY</strong>.
-            </p>
+    <div className="flex flex-col min-h-full w-full max-w-full font-din-1451 bg-background -mx-4 md:-mx-6 tablet-landscape:-mx-7">
+      {/* Barra fixa — filtros + tabs (estilo catálogo) */}
+      <div className="sticky top-0 z-30 bg-background border-b border-border/40 shadow-sm">
+        <div className="w-full px-3 md:px-4 py-3 space-y-3">
+          <div className="flex flex-wrap items-start gap-3 justify-between">
+            <div className="space-y-1 min-w-0">
+              <Button variant="ghost" size="sm" className="h-8 -ml-2 gap-1 text-muted-foreground" asChild>
+                <Link to={createPageUrl('Compras')}>
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  Voltar a Compras
+                </Link>
+              </Button>
+              <h1 className="text-xl md:text-2xl font-semibold font-glacial text-foreground">
+                Portal hierarquia — piloto cerâmica
+              </h1>
+              <p className="text-sm text-muted-foreground max-w-3xl hidden md:block">
+                Preview por LINHA ({PORTAL_EXCEL_SKU_COUNT} SKUs). Cadastro = hierarquia · Preview = SMART SUPPLY piloto.
+              </p>
+            </div>
+            <div className="rounded-lg border border-violet-500/40 bg-violet-50/80 dark:bg-violet-950/30 px-3 py-2 text-xs text-violet-900 dark:text-violet-100 max-w-sm space-y-1 shrink-0">
+              <p>
+                <strong>Piloto:</strong> {enriched.length} SKUs · {linhasPilotoLabel}
+              </p>
+              <p className="opacity-80 hidden sm:block">
+                Em breve: {MODELO_PILOTO_LINHAS_PLANEADAS.map((l) => l.nome).join(' · ')}
+              </p>
+            </div>
           </div>
-          <div className="rounded-lg border border-violet-500/40 bg-violet-50/80 dark:bg-violet-950/30 px-3 py-2 text-xs text-violet-900 dark:text-violet-100 max-w-sm space-y-1">
-            <p>
-              <strong>Piloto portfolio:</strong> {enriched.length} SKUs carregados
-              {enriched.length < PORTAL_EXCEL_SKU_COUNT && (
-                <span className="opacity-80"> · {PORTAL_EXCEL_SKU_COUNT - enriched.length} no Excel ainda sem match no cadastro</span>
-              )}
-            </p>
-            <p className="opacity-80">
-              Em breve (mix): {MODELO_PILOTO_LINHAS_PLANEADAS.map((l) => l.nome).join(' · ')}
-            </p>
+
+          <PortalTipoFilter activeTipos={filtroTipos} onChange={setFiltroTipos} counts={tipoCounts} />
+
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="relative flex-1 min-w-[200px] max-w-md">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar esquadra ou SKU…"
+                className="pl-8 h-9"
+              />
+            </div>
+            <Select value={filtroLinha || 'all'} onValueChange={(v) => setFiltroLinha(v === 'all' ? '' : v)}>
+              <SelectTrigger className="w-[220px] h-9">
+                <SelectValue placeholder="LINHA" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as LINHAS (piloto)</SelectItem>
+                {linhas.map((l) => (
+                  <SelectItem key={l.codigo} value={l.codigo}>
+                    {l.nome} ({l.tipo})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {tab === 'supply' && (
+              <Button
+                variant={somenteAlerta ? 'secondary' : 'outline'}
+                size="sm"
+                onClick={() => setSomenteAlerta((v) => !v)}
+              >
+                Só alertas
+              </Button>
+            )}
           </div>
-        </div>
 
-        <PortalTipoFilter activeTipos={filtroTipos} onChange={setFiltroTipos} counts={tipoCounts} />
-
-        <div className="flex flex-wrap gap-2 items-center">
-          <div className="relative flex-1 min-w-[200px] max-w-md">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar esquadra ou SKU…"
-              className="pl-8 h-9"
+          <GlacialTabsList className="w-full">
+            <GlacialTabsTrigger
+              value="cadastro"
+              activeValue={tab}
+              onSelect={setTab}
+              label="Cadastro (hierarquia)"
             />
-          </div>
-          <Select value={filtroLinha || 'all'} onValueChange={(v) => setFiltroLinha(v === 'all' ? '' : v)}>
-            <SelectTrigger className="w-[220px] h-9">
-              <SelectValue placeholder="LINHA" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as LINHAS (piloto)</SelectItem>
-              {linhas.map((l) => (
-                <SelectItem key={l.codigo} value={l.codigo}>
-                  {l.nome} ({l.tipo})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {tab === 'supply' && (
-            <Button
-              variant={somenteAlerta ? 'secondary' : 'outline'}
-              size="sm"
-              onClick={() => setSomenteAlerta((v) => !v)}
-            >
-              Só alertas
-            </Button>
-          )}
+            <GlacialTabsTrigger
+              value="supply"
+              activeValue={tab}
+              onSelect={setTab}
+              label={SMART_SUPPLY_PORTAL_PREVIEW_LABEL}
+            />
+          </GlacialTabsList>
         </div>
+      </div>
 
-        <GlacialTabsList className="w-full">
-          <GlacialTabsTrigger
-            value="cadastro"
-            activeValue={tab}
-            onSelect={setTab}
-            label="Cadastro (hierarquia)"
-          />
-          <GlacialTabsTrigger
-            value="supply"
-            activeValue={tab}
-            onSelect={setTab}
-            label={SMART_SUPPLY_PORTAL_PREVIEW_LABEL}
-          />
-        </GlacialTabsList>
-
+      {/* Conteúdo — scroll da página (sem caixa max-h) */}
+      <div className="flex-1 w-full min-w-0 px-3 md:px-4 py-4 pb-10">
         {loading ? (
           <div className="flex items-center justify-center py-16 text-muted-foreground gap-2">
             <Loader2 className="h-5 w-5 animate-spin" />
@@ -233,7 +233,7 @@ function HierarquiaPortalInner() {
           />
         )}
 
-        <p className="text-[11px] text-muted-foreground text-center">
+        <p className="text-[11px] text-muted-foreground text-center mt-4">
           {enriched.length} SKUs · {supplyLines.length} esquadras · {PORTAL_EXCEL_LINHAS.length} LINHAS piloto · Excel mestre
         </p>
       </div>
