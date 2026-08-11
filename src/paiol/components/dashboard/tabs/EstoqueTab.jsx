@@ -38,7 +38,7 @@ import {
   DASHBOARD_CHART_MARGIN,
 } from '@/lib/dashboardChartLayout';
 import { useDashboardChartTheme } from '@/lib/useDashboardChartTheme';
-import { toLocalDateKey } from '@/components/utils/dateUtils';
+import { toLocalDateKey, inicioDiaSistemaISO, fimDiaSistemaISO } from '@/components/utils/dateUtils';
 import { AlertCircle, Gauge, Layers, Package, Truck } from 'lucide-react';
 import {
   Bar,
@@ -569,10 +569,21 @@ export default function EstoqueTab() {
         const supplyStartISO = format(supplyMonthBuckets[0]?.start || startDate, 'yyyy-MM-dd');
         const supplyEndISO = format(supplyMonthBuckets[supplyMonthBuckets.length - 1]?.end || endDate, 'yyyy-MM-dd');
 
-        const [produtos, movimentacoesEstoqueRaw, lancamentosFinanceiros, pedidosVenda, pedidosCompra, embarquesCompraRaw, dadosVendaAbcd90d, sugestaoEstoqueData] =
+        const nivelStartISO = format(nivelEstoqueStartDate, 'yyyy-MM-dd');
+
+        const [produtos, movimentacoesEstoqueRaw, lancamentosFinanceiros, pedidosVenda, dadosVendaAbcd90d, sugestaoEstoqueData] =
           await Promise.all([
             base44.entities.Produto.filter({}, '-created_date', 5000),
-            base44.entities.MovimentacaoEstoque.list('-created_date', 50000),
+            base44.entities.MovimentacaoEstoque.filter(
+              {
+                created_date: {
+                  $gte: inicioDiaSistemaISO(nivelStartISO),
+                  $lte: fimDiaSistemaISO(endISO),
+                },
+              },
+              '-created_date',
+              10000,
+            ).catch(() => []),
             base44.entities.LancamentoFinanceiro.filter(
               {
                 tipo: 'Despesa',
@@ -582,12 +593,23 @@ export default function EstoqueTab() {
               '-data_pagamento',
               20000
             ),
-            base44.entities.PedidoVenda.filter({ tipo: 'PDV' }, '-created_date', 20000),
-            base44.entities.PedidoCompra.list('-created_date', 300),
-            base44.entities.Embarque.list('-created_date', 600),
+            base44.entities.PedidoVenda.filter(
+              {
+                tipo: 'PDV',
+                created_date: {
+                  $gte: inicioDiaSistemaISO(startISO),
+                  $lte: fimDiaSistemaISO(endISO),
+                },
+              },
+              '-created_date',
+              5000,
+            ).catch(() => []),
             fetchDadosVendaAbcd90d().catch(() => null),
             fetchPedidosCompraParaSugestaoEstoque(base44).catch(() => null),
           ]);
+
+        const pedidosCompra = sugestaoEstoqueData?.pedidosTodos || [];
+        const embarquesCompraRaw = sugestaoEstoqueData?.embarques || [];
 
         const produtosLista = Array.isArray(produtos) ? produtos : [];
         const produtosComAbcdCatalogo = Array.isArray(dadosVendaAbcd90d?.pedidos90d)

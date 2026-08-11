@@ -19,6 +19,11 @@ import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, end
 import { useToast } from '@/components/ui/use-toast';
 import { printOrShareElementAsPdf } from '@/lib/mobilePrintAndShare';
 import { dataHoje } from '@/components/utils/dateUtils';
+import {
+  fetchLancamentosExtratoConta,
+  fetchMovimentosExtratoConta,
+} from '@/lib/fetchLancamentosExtratoAgefin';
+import { subMonths } from 'date-fns';
 import { roundToTwoDecimals, sortLancamentosPorDescricao } from '@/lib/financialUtils';
 import KpiExtratoConta from '@/components/financeiro/fluxo/KpiExtratoConta';
 import FiltrosExtratoConta, { PERIODOS_EXTRATO } from '@/components/financeiro/fluxo/FiltrosExtratoConta';
@@ -79,39 +84,42 @@ export default function ExtratoContaPage() {
   const loadExtrato = async (contaId) => {
     setIsLoading(true);
     try {
-      const [contaData, lancamentosData, movimentosData, contasData] = await Promise.all([
+      const hoje = dataHoje();
+      const dataFim = hoje;
+      const dataInicio = format(subMonths(new Date(`${hoje}T12:00:00`), 24), 'yyyy-MM-dd');
+
+      const [contaData, contasData] = await Promise.all([
         base44.entities.ContasFinanceiras.filter({ id: contaId }),
-        base44.entities.LancamentoFinanceiro.list(),
-        base44.entities.MovimentosCaixa.list(),
-        base44.entities.ContasFinanceiras.list()
+        base44.entities.ContasFinanceiras.list(),
       ]);
 
       if (contaData.length > 0) {
         const contaAtual = contaData[0];
-        const contaNome = contaAtual.nome;
         const isCaixaGeral = contaAtual.is_caixa_geral === true;
-        
+
         setConta(contaAtual);
         setContas(contasData);
-        
-        let lancamentosFiltrados = [];
 
-        if (isCaixaGeral) {
-          lancamentosFiltrados = lancamentosData.filter(l => !l.conta_financeira_id);
-        } else {
-          lancamentosFiltrados = lancamentosData.filter(l => l.conta_financeira_id === contaId);
-        }
-
-        const movsFiltrados = movimentosData.filter(m => m.conta_id === contaId);
+        let lancamentosFiltrados = await fetchLancamentosExtratoConta({
+          contaId,
+          isCaixaGeral,
+          dataInicio,
+          dataFim,
+        });
+        let movsFiltrados = isCaixaGeral
+          ? []
+          : await fetchMovimentosExtratoConta({ contaId, dataInicio, dataFim });
 
         const backfill = await backfillLancamentosMovimentosCaixaPDV(base44, contasData);
-        let lancamentosAtual = lancamentosData;
         if (backfill) {
-          lancamentosAtual = await base44.entities.LancamentoFinanceiro.list();
-          if (isCaixaGeral) {
-            lancamentosFiltrados = lancamentosAtual.filter(l => !l.conta_financeira_id);
-          } else {
-            lancamentosFiltrados = lancamentosAtual.filter(l => l.conta_financeira_id === contaId);
+          lancamentosFiltrados = await fetchLancamentosExtratoConta({
+            contaId,
+            isCaixaGeral,
+            dataInicio,
+            dataFim,
+          });
+          if (!isCaixaGeral) {
+            movsFiltrados = await fetchMovimentosExtratoConta({ contaId, dataInicio, dataFim });
           }
         }
 
@@ -126,22 +134,19 @@ export default function ExtratoContaPage() {
           movsFiltrados,
         );
 
-        const saldo = calcularSaldoContaFinanceira(
-          contaAtual,
-          reconciliou
-            ? (await base44.entities.LancamentoFinanceiro.list()).filter(
-                (l) => l.conta_financeira_id === contaId || (!l.conta_financeira_id && contaAtual.is_caixa_geral),
-              )
-            : lancamentosFiltrados,
-          movsFiltrados,
-        );
+        const lancsSaldo = reconciliou
+          ? await fetchLancamentosExtratoConta({
+              contaId,
+              isCaixaGeral,
+              dataInicio,
+              dataFim,
+            })
+          : lancamentosFiltrados;
+
+        const saldo = calcularSaldoContaFinanceira(contaAtual, lancsSaldo, movsFiltrados);
 
         if (reconciliou) {
-          const [lancamentosAtualizados] = await Promise.all([
-            base44.entities.LancamentoFinanceiro.list(),
-          ]);
-          const lancsConta = lancamentosAtualizados.filter((l) => l.conta_financeira_id === contaId);
-          setLancamentos(lancsConta);
+          setLancamentos(lancsSaldo);
         }
 
         if (Math.abs(saldo - Number(contaAtual.saldo_atual || 0)) > 0.009) {

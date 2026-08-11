@@ -9,7 +9,7 @@ import {
   isValid,
 } from 'date-fns';
 import { base44 } from '@/api/base44Client';
-import { hydratePedidosVendaItensFromSql } from '@/lib/fetchPedidoVendaItens';
+import { fetchDashboardVendasPeriodo } from '@/lib/fetchDashboardVendas';
 import { AlertCircle, CircleGauge, Target, TrendingUp, CalendarDays } from 'lucide-react';
 import {
   buildDonutRingData,
@@ -32,7 +32,6 @@ import {
   saleWithinMonthTemporalCut,
 } from '@/lib/dashboardVendasPeriod';
 import { resolveValorPedidoVenda } from '@/lib/financialUtils';
-import { resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
 import {
   AcumuladoKpiChart,
   AccumulatedLegendLine,
@@ -351,29 +350,15 @@ export default function VendasTab() {
       setError(null);
 
       try {
-        const [pedidosVendaRaw, produtosRaw, configVendaRaw] = await Promise.all([
-          base44.entities.PedidoVenda.list('-created_date', 30000),
-          base44.entities.Produto.filter({}, '-created_date', 10000),
+        const [configVendaRaw, dashboardData] = await Promise.all([
           base44.entities.ConfiguracoesVenda.list(),
+          fetchDashboardVendasPeriodo({ selectedMonthKey }),
         ]);
-
-        const pedidosVendaLista = await hydratePedidosVendaItensFromSql(
-          base44,
-          Array.isArray(pedidosVendaRaw) ? pedidosVendaRaw : [],
-        );
-
-        const produtosLista = Array.isArray(produtosRaw) ? produtosRaw : [];
-        const productCostMap = new Map(
-          produtosLista.map((produto) => [
-            produto.id,
-            Number(resolveCustoTotalUnitBaseProduto(produto)),
-          ])
-        );
 
         if (mounted) {
           setRawData({
-            pedidos: pedidosVendaLista,
-            productCostMap,
+            pedidos: dashboardData.pedidos,
+            productCostMap: dashboardData.productCostMap,
             kpiConfig: normalizeDashboardKpiConfig(configVendaRaw?.[0] || {}),
           });
         }
@@ -389,7 +374,7 @@ export default function VendasTab() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [selectedMonthKey]);
 
   const metrics = useMemo(() => {
     if (!rawData) return null;
