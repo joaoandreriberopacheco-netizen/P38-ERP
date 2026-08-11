@@ -39,6 +39,7 @@ import {
 import { buildMovimentacaoRecepcaoCompraPayload } from '@/lib/movimentacaoRecepcaoCompra';
 import { reverterRecepcaoEmbarque } from '@/lib/reverterRecepcaoEmbarque';
 import { buildItensCanonicosEmbarque } from '@/lib/buildEmbarqueItensCanonicos';
+import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
 import { hydrateEmbarquesFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 
 function pedidoItemParaEmbarque(pedido, embItem) {

@@ -2,12 +2,32 @@ import { rebuildEmbarqueItensMirror } from '@/lib/embarqueItemContract';
 
 const CHUNK_SIZE = 40;
 
+/** Espelho legado no cabeçalho Embarque (só leitura — gravação vai para EmbarqueItem). */
+export function readLegacyEmbarqueLinhas(embarque = {}) {
+  if (Array.isArray(embarque.itens_embarcados) && embarque.itens_embarcados.length) {
+    return embarque.itens_embarcados;
+  }
+  if (Array.isArray(embarque.itens) && embarque.itens.length) {
+    return embarque.itens;
+  }
+  return [];
+}
+
 /**
- * Linhas de embarque hidratadas do SQL (em memória). Não lê espelho JSON da BD.
+ * Linhas de embarque hidratadas (SQL `_linhas` ou espelho legado na leitura).
  */
 export function getEmbarqueItensLinhas(embarque) {
   if (!embarque) return [];
-  return Array.isArray(embarque._linhas) ? embarque._linhas : [];
+  if (Array.isArray(embarque._linhas)) return embarque._linhas;
+  return readLegacyEmbarqueLinhas(embarque);
+}
+
+function attachLinhasFromSqlOrLegacy(embarque, sqlRows) {
+  if (sqlRows?.length) {
+    return attachLinhasEmbarque(embarque, rebuildEmbarqueItensMirror(sqlRows), 'sql');
+  }
+  const legado = readLegacyEmbarqueLinhas(embarque);
+  return attachLinhasEmbarque(embarque, legado, legado.length ? 'json-legado' : 'vazio');
 }
 
 function attachLinhasEmbarque(embarque, mirror, fonte) {
@@ -105,7 +125,7 @@ export async function fetchEmbarqueItensPorPedido(base44, pedidoCompraId) {
   }
 }
 
-/** Hidrata linhas só a partir de EmbarqueItem (SQL). Sem fallback JSON. */
+/** Hidrata linhas a partir de EmbarqueItem (SQL); fallback legado só na leitura. */
 export async function hydrateEmbarquesFromSql(base44, embarques = []) {
   if (!Array.isArray(embarques) || !embarques.length) return embarques || [];
 
@@ -119,10 +139,7 @@ export async function hydrateEmbarquesFromSql(base44, embarques = []) {
 
   return embarques.map((embarque) => {
     const sqlRows = byEmbarque.get(embarque.id);
-    if (sqlRows?.length) {
-      return attachLinhasEmbarque(embarque, rebuildEmbarqueItensMirror(sqlRows), 'sql');
-    }
-    return attachLinhasEmbarque(embarque, [], 'vazio');
+    return attachLinhasFromSqlOrLegacy(embarque, sqlRows);
   });
 }
 
@@ -145,11 +162,5 @@ export async function hydrateEmbarquesPedidoFromSql(base44, pedidoCompraId, emba
     byEmb[eid].push(row);
   });
 
-  return embarques.map((emb) => {
-    const rows = byEmb[emb.id];
-    if (!rows?.length) {
-      return attachLinhasEmbarque(emb, [], 'vazio');
-    }
-    return attachLinhasEmbarque(emb, rebuildEmbarqueItensMirror(rows), 'sql');
-  });
+  return embarques.map((emb) => attachLinhasFromSqlOrLegacy(emb, byEmb[emb.id]));
 }

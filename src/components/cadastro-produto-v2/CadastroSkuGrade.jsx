@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Plus, Trash2, Copy, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
   P38TableShell,
