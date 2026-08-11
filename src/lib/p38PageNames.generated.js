@@ -13,6 +13,7 @@ export const P38_PAGE_NAMES = [
   "AuditoriaPins",
   "AutoAtendimento",
   "Budgets",
+  "CadastroProdutoV2",
   "CaixasAtivos",
   "Campanhas",
   "Compras",
