@@ -27,12 +27,13 @@ import {
 import PortalTreeGrid from '@/components/hierarquia-portal/PortalTreeGrid';
 import PortalSmartSupplyPanel from '@/components/hierarquia-portal/PortalSmartSupplyPanel';
 import PortalReservaPanel from '@/components/hierarquia-portal/PortalReservaPanel';
+import PortalMassaCriticaRelatorioButton from '@/components/hierarquia-portal/PortalMassaCriticaRelatorioButton';
 import PortalTipoFilter from '@/components/hierarquia-portal/PortalTipoFilter';
 import PortalCatalogFilters from '@/components/hierarquia-portal/PortalCatalogFilters';
 import CadastroProdutoV2Form from '@/components/cadastro-produto-v2/CadastroProdutoV2Form';
 import { isProdutoReservaPortal, contagemReservaLine } from '@/lib/hierarquiaPortal/portalReservaCeramica';
 import { getDefaultPortalCatalogFilters } from '@/lib/hierarquiaPortal/portalCatalogFilters';
-import { filterProdutos, isSomentePositivosFilter } from '@/lib/filterProdutos';
+import { filterProdutos, isSomentePositivosFilter, describeProdutoFilters } from '@/lib/filterProdutos';
 import { createCatalogStockContext } from '@/lib/catalogEstoqueVirtual';
 import { fetchPedidosCompraParaSugestaoEstoque } from '@/lib/fetchPedidosCompraParaSugestaoEstoque';
 import { buildPendenteAprovadoFinanceiroPorProduto } from '@/lib/sugestaoCompraEstoquePendente';
@@ -229,6 +230,29 @@ function HierarquiaPortalInner() {
   const searchTerm = portalFilters.searchTerm || '';
   const somentePositivos = isSomentePositivosFilter(portalFilters);
 
+  const supplyParaRelatorio = useMemo(() => {
+    if (tab !== 'supply' || !somenteAlerta) return filteredSupply;
+    return filteredSupply.filter((l) => l.alerta);
+  }, [filteredSupply, somenteAlerta, tab]);
+
+  const filterSummaryRelatorio = useMemo(() => {
+    const parts = [];
+    const catalogo = describeProdutoFilters(portalFilters);
+    if (catalogo && catalogo !== 'nenhum') parts.push(catalogo);
+    if (filtroLinha) {
+      const ln = linhas.find((l) => l.codigo === filtroLinha);
+      parts.push(`LINHA: ${ln?.nome || filtroLinha}`);
+    }
+    if (filtroTipos?.size && filtroTipos.size < 3) {
+      parts.push(`tipo: ${[...filtroTipos].join(', ')}`);
+    }
+    if (tab === 'supply' && somenteAlerta) parts.push('só alertas');
+    if (tab === 'reserva') parts.push('tab reserva');
+    else if (tab === 'supply') parts.push('tab SMART SUPPLY');
+    else if (tab === 'hierarquia') parts.push('tab hierarquia');
+    return parts.join(' · ') || 'piloto completo';
+  }, [portalFilters, filtroLinha, filtroTipos, linhas, somenteAlerta, tab]);
+
   return (
     <div className="flex flex-col min-h-full w-full max-w-full font-din-1451 bg-background -mx-4 md:-mx-6 tablet-landscape:-mx-7">
       {/* Barra fixa — filtros + tabs (estilo catálogo) */}
@@ -290,6 +314,13 @@ function HierarquiaPortalInner() {
                   <span className="text-xs text-amber-800 dark:text-amber-200 px-2 py-1 rounded bg-amber-100/80 dark:bg-amber-950/40">
                     {excedentesReserva} esquadra(s) acima de 12 pos.
                   </span>
+                )}
+                {tab !== 'cadastro' && (
+                  <PortalMassaCriticaRelatorioButton
+                    filteredSupply={supplyParaRelatorio}
+                    filterSummary={filterSummaryRelatorio}
+                    disabled={loading}
+                  />
                 )}
               </>
             )}
