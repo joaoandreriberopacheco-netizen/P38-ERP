@@ -501,6 +501,118 @@ const buildVirtualNecessidade = (pedido, embarquesDoPedido) => {
   };
 };
 
+function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
+  const embarquesPorPedido = embarquesDb.reduce((acc, embarque) => {
+    const pedidoId = embarque.pedido_compra_id;
+    if (!pedidoId) return acc;
+    if (!acc[pedidoId]) acc[pedidoId] = [];
+    acc[pedidoId].push(embarque);
+    return acc;
+  }, {});
+
+  const pedidosComResumoReal = pcs.map((pedido) => {
+    const embarquesDoPedido = embarquesPorPedido[pedido.id] || [];
+    const totalPedido = calcValorTotalPedidoCompra(pedido);
+    const valorEmbarcado = embarquesDoPedido.reduce((acc, embarque) => {
+        const valorEmbarque = getEmbarqueItensLinhas(embarque).reduce((itemAcc, item) => {
+        const pedidoItem = (pedido.itens || []).find((candidate) => candidate.produto_id === item.produto_id);
+        const custoUnitarioEfetivo = getValorUnitarioEfetivoItemPedido(pedidoItem || {}, pedido);
+        return itemAcc + ((Number(item.quantidade_embarcada) || 0) * custoUnitarioEfetivo);
+      }, 0);
+      return acc + valorEmbarque;
+    }, 0);
+    const percentualReal = totalPedido > 0 ? Math.min(100, (valorEmbarcado / totalPedido) * 100) : 0;
+    const ultimoEmbarque = [...embarquesDoPedido].sort((a, b) => new Date(b.updated_date || b.created_date) - new Date(a.updated_date || a.created_date))[0] || null;
+
+    let statusRecebimentoReal = 'Nenhum';
+    if (embarquesDoPedido.length > 0) {
+      const recebimentos = embarquesDoPedido.map((embarque) => embarque.status_recebimento).filter(Boolean);
+      if (recebimentos.some((status) => status === 'Com Divergência')) statusRecebimentoReal = 'Concluído com Divergência';
+      else if (recebimentos.length > 0 && recebimentos.every((status) => status === 'Recebido OK')) statusRecebimentoReal = 'Concluído OK';
+      else if (recebimentos.some((status) => status === 'Recebido Parcial')) statusRecebimentoReal = 'Recebido Parcial';
+      else statusRecebimentoReal = 'Pendente';
+    }
+
+    let statusEmbarqueReal = 'Nenhum';
+    if (embarquesDoPedido.length > 0) {
+      statusEmbarqueReal = percentualReal >= 100 ? 'Total' : 'Parcial';
+    }
+
+    return {
+      ...pedido,
+      _embarques: embarquesDoPedido,
+      _embarque_principal: ultimoEmbarque,
+      percentual_valor_embarcado: percentualReal,
+      status_embarque: statusEmbarqueReal,
+      status_recebimento_geral: statusRecebimentoReal,
+      data_prevista_entrega: ultimoEmbarque?.eta ? String(ultimoEmbarque.eta).slice(0, 10) : pedido.data_prevista_entrega,
+    };
+  });
+
+  const cardsDeEmbarque = pcs.flatMap((pedido) => {
+    const embarquesDoPedido = (embarquesPorPedido[pedido.id] || []).slice()
+      .sort((a, b) => new Date(a.created_date || 0) - new Date(b.created_date || 0));
+
+    const embarquesReais = embarquesDoPedido.filter((embarque) => !isNecessidadeRenderizada(embarque));
+    const embarquesNecessidade = embarquesDoPedido.filter((embarque) => isNecessidadeRenderizada(embarque));
+    const embarqueOriginal = embarquesReais[0] || null;
+    const necessidadeVirtual = embarquesNecessidade.length === 0 ? buildVirtualNecessidade(pedido, embarquesDoPedido) : null;
+
+    const embarquesRenderizados = embarquesDoPedido.length > 0
+      ? [...embarquesReais, ...embarquesNecessidade, ...(necessidadeVirtual ? [necessidadeVirtual] : [])]
+      : [{
+          id: `original-${pedido.id}`,
+          pedido_compra_id: pedido.id,
+          numero: pedido.numero,
+          tipo: 'Original',
+          status: 'Pendente',
+          status_recebimento: 'Pendente',
+          observacoes: '',
+          created_date: pedido.created_date,
+        }];
+
+    return embarquesRenderizados.map((embarque) => {
+      const quantidadePendente = getQuantidadePendenteNecessidade(pedido, embarque);
+      const ehNecessidade = isNecessidadeRenderizada(embarque);
+      const itensDoCard = ehNecessidade
+        ? buildDisplayItensFromEmbarque(pedido, embarque, produtosMap)
+        : (hasLinkedItems(embarque)
+            ? buildDisplayItensFromEmbarque(pedido, embarque, produtosMap)
+            : (pedido.itens || []).map((item) => {
+                const produto = produtosMap[item.produto_id] || null;
+                return normalizeDisplayItemCommercial(produto, item, {
+                  produto_id: item.produto_id,
+                  produto_nome: item.produto_nome,
+                  quantidade: Number(item.quantidade) || 0,
+                  quantidade_embarcada: 0,
+                  quantidade_pedida: Number(item.quantidade) || 0,
+                  quantidade_base: Number(item.quantidade_base) || 0,
+                  fator_conversao: Number(item.fator_conversao) || 1,
+                  unidade_medida: item.unidade_medida || '',
+                }, pedido);
+              }));
+
+      return {
+        ...pedido,
+        _virtual_key: `${pedido.id}_${embarque.id}`,
+        _embarque: embarque,
+        _display_code: getDisplayEmbarqueCode(pedido, embarque),
+        _display_ordinal: getDisplayEmbarqueOrdinal(embarque, { ...pedido, _embarques: embarquesRenderizados }),
+        _display_status: getBorrowedStatus(pedido, embarque),
+        _display_valor: hasLinkedItems(embarque) || ehNecessidade ? getDisplayValorEmbarque(pedido, embarque, produtosMap) : calcValorTotalPedidoCompra(pedido),
+        _display_itens: itensDoCard,
+        _display_date: getEmbarqueDisplayDate(pedido),
+        _display_fornecedor: pedido.fornecedor_nome || '—',
+        _quantidade_pendente: quantidadePendente,
+        _is_original: !!embarqueOriginal && embarque.id === embarqueOriginal.id,
+        _is_necessidade: ehNecessidade,
+      };
+    });
+  });
+
+  return { pedidosComResumoReal, cardsDeEmbarque };
+}
+
 export default function PedidosCompraPage() {
   const isPhone = useCompactShell();
   const navigate = useNavigate();
@@ -548,128 +660,28 @@ export default function PedidosCompraPage() {
       ]);
 
       const pcs = gestao.pedidos;
-      const embarquesDb = gestao.embarques;
+      const embarquesHeaders = gestao.embarques;
+
+      const primeiraPassagem = materializePedidosCompraView(pcs, embarquesHeaders, {});
+      setPedidos(primeiraPassagem.pedidosComResumoReal);
+      setEmbarques(primeiraPassagem.cardsDeEmbarque);
+      setFornecedores(fns);
+      setLoading(false);
+
+      const embarquesDb = await hydrateEmbarquesFromSql(base44, embarquesHeaders);
       const produtoIds = [...new Set([
         ...pcs.flatMap((p) => (p.itens || []).map((i) => i.produto_id).filter(Boolean)),
         ...embarquesDb.flatMap((e) => getEmbarqueItensLinhas(e).map((i) => i.produto_id).filter(Boolean)),
       ])];
       const produtosMap = await carregarProdutosMap(produtoIds.map((id) => ({ produto_id: id })));
-      const embarquesPorPedido = embarquesDb.reduce((acc, embarque) => {
-        const pedidoId = embarque.pedido_compra_id;
-        if (!pedidoId) return acc;
-        if (!acc[pedidoId]) acc[pedidoId] = [];
-        acc[pedidoId].push(embarque);
-        return acc;
-      }, {});
-
-      const pedidosComResumoReal = pcs.map((pedido) => {
-        const embarquesDoPedido = embarquesPorPedido[pedido.id] || [];
-        const totalPedido = calcValorTotalPedidoCompra(pedido);
-        const valorEmbarcado = embarquesDoPedido.reduce((acc, embarque) => {
-            const valorEmbarque = getEmbarqueItensLinhas(embarque).reduce((itemAcc, item) => {
-            const pedidoItem = (pedido.itens || []).find((candidate) => candidate.produto_id === item.produto_id);
-            const custoUnitarioEfetivo = getValorUnitarioEfetivoItemPedido(pedidoItem || {}, pedido);
-            return itemAcc + ((Number(item.quantidade_embarcada) || 0) * custoUnitarioEfetivo);
-          }, 0);
-          return acc + valorEmbarque;
-        }, 0);
-        const percentualReal = totalPedido > 0 ? Math.min(100, (valorEmbarcado / totalPedido) * 100) : 0;
-        const ultimoEmbarque = [...embarquesDoPedido].sort((a, b) => new Date(b.updated_date || b.created_date) - new Date(a.updated_date || a.created_date))[0] || null;
-
-        let statusRecebimentoReal = 'Nenhum';
-        if (embarquesDoPedido.length > 0) {
-          const recebimentos = embarquesDoPedido.map((embarque) => embarque.status_recebimento).filter(Boolean);
-          if (recebimentos.some((status) => status === 'Com Divergência')) statusRecebimentoReal = 'Concluído com Divergência';
-          else if (recebimentos.length > 0 && recebimentos.every((status) => status === 'Recebido OK')) statusRecebimentoReal = 'Concluído OK';
-          else if (recebimentos.some((status) => status === 'Recebido Parcial')) statusRecebimentoReal = 'Recebido Parcial';
-          else statusRecebimentoReal = 'Pendente';
-        }
-
-        let statusEmbarqueReal = 'Nenhum';
-        if (embarquesDoPedido.length > 0) {
-          statusEmbarqueReal = percentualReal >= 100 ? 'Total' : 'Parcial';
-        }
-
-        return {
-          ...pedido,
-          _embarques: embarquesDoPedido,
-          _embarque_principal: ultimoEmbarque,
-          percentual_valor_embarcado: percentualReal,
-          status_embarque: statusEmbarqueReal,
-          status_recebimento_geral: statusRecebimentoReal,
-          data_prevista_entrega: ultimoEmbarque?.eta ? String(ultimoEmbarque.eta).slice(0, 10) : pedido.data_prevista_entrega,
-        };
-      });
-
-      const cardsDeEmbarque = pcs.flatMap((pedido) => {
-        const embarquesDoPedido = (embarquesPorPedido[pedido.id] || []).slice()
-          .sort((a, b) => new Date(a.created_date || 0) - new Date(b.created_date || 0));
-
-        const embarquesReais = embarquesDoPedido.filter((embarque) => !isNecessidadeRenderizada(embarque));
-        const embarquesNecessidade = embarquesDoPedido.filter((embarque) => isNecessidadeRenderizada(embarque));
-        const embarqueOriginal = embarquesReais[0] || null;
-        const necessidadeVirtual = embarquesNecessidade.length === 0 ? buildVirtualNecessidade(pedido, embarquesDoPedido) : null;
-
-        const embarquesRenderizados = embarquesDoPedido.length > 0
-          ? [...embarquesReais, ...embarquesNecessidade, ...(necessidadeVirtual ? [necessidadeVirtual] : [])]
-          : [{
-              id: `original-${pedido.id}`,
-              pedido_compra_id: pedido.id,
-              numero: pedido.numero,
-              tipo: 'Original',
-              status: 'Pendente',
-              status_recebimento: 'Pendente',
-              observacoes: '',
-              created_date: pedido.created_date,
-            }];
-
-        return embarquesRenderizados.map((embarque) => {
-          const quantidadePendente = getQuantidadePendenteNecessidade(pedido, embarque);
-          const ehNecessidade = isNecessidadeRenderizada(embarque);
-          const itensDoCard = ehNecessidade
-            ? buildDisplayItensFromEmbarque(pedido, embarque, produtosMap)
-            : (hasLinkedItems(embarque)
-                ? buildDisplayItensFromEmbarque(pedido, embarque, produtosMap)
-                : (pedido.itens || []).map((item) => {
-                    const produto = produtosMap[item.produto_id] || null;
-                    return normalizeDisplayItemCommercial(produto, item, {
-                      produto_id: item.produto_id,
-                      produto_nome: item.produto_nome,
-                      quantidade: Number(item.quantidade) || 0,
-                      quantidade_embarcada: 0,
-                      quantidade_pedida: Number(item.quantidade) || 0,
-                      quantidade_base: Number(item.quantidade_base) || 0,
-                      fator_conversao: Number(item.fator_conversao) || 1,
-                      unidade_medida: item.unidade_medida || '',
-                    }, pedido);
-                  }));
-
-          return {
-            ...pedido,
-            _virtual_key: `${pedido.id}_${embarque.id}`,
-            _embarque: embarque,
-            _display_code: getDisplayEmbarqueCode(pedido, embarque),
-            _display_ordinal: getDisplayEmbarqueOrdinal(embarque, { ...pedido, _embarques: embarquesRenderizados }),
-            _display_status: getBorrowedStatus(pedido, embarque),
-            _display_valor: hasLinkedItems(embarque) || ehNecessidade ? getDisplayValorEmbarque(pedido, embarque, produtosMap) : calcValorTotalPedidoCompra(pedido),
-            _display_itens: itensDoCard,
-            _display_date: getEmbarqueDisplayDate(pedido),
-            _display_fornecedor: pedido.fornecedor_nome || '—',
-            _quantidade_pendente: quantidadePendente,
-            _is_original: !!embarqueOriginal && embarque.id === embarqueOriginal.id,
-            _is_necessidade: ehNecessidade,
-          };
-        });
-      });
-
-      setPedidos(pedidosComResumoReal);
-      setEmbarques(cardsDeEmbarque);
-      setFornecedores(fns);
+      const refinado = materializePedidosCompraView(pcs, embarquesDb, produtosMap);
+      setPedidos(refinado.pedidosComResumoReal);
+      setEmbarques(refinado.cardsDeEmbarque);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
       toast.error(error?.message || 'Erro ao carregar embarques');
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleSave = async (pedidoData) => {
