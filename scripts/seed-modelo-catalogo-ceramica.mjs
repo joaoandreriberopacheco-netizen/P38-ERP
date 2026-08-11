@@ -10,7 +10,8 @@
  *
  * npm run modelo:seed-ceramica              # dry-run
  * npm run modelo:seed-ceramica -- --apply
- * npm run modelo:seed-ceramica -- --apply --reset   # limpa modelo_* antes
+ * Piloto: apenas CERAMICA_BOLD e CERAMICA_RETIF (prefixo produto_compra CERAM).
+ * Próximo: ESGOTO + SOLDAVEL (mix) — ver MODELO_PILOTO_LINHAS_PLANEADAS.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -22,6 +23,7 @@ const EXCEL_CANDIDATES = [
   path.join(process.cwd(), 'docs', 'exports', 'P38-catalogo-skus-completo.xlsx'),
 ];
 
+const PILOTO_LINHA_CODIGOS = ['CERAMICA_BOLD', 'CERAMICA_RETIF'];
 const META_VAGAS = 12;
 const MASSA_CRITICA = 16;
 const MIN_LINHAS_SALDAVEL = 9;
@@ -158,6 +160,12 @@ async function main() {
     await client.query('delete from modelo_produto_compra');
     await client.query('delete from modelo_linha');
     console.log('[seed-ceramica] modelo_* limpo (--reset)');
+  } else {
+    await client.query(
+      `delete from modelo_sku where linha_id in (select id from modelo_linha where codigo <> all($1::text[]))`,
+      [PILOTO_LINHA_CODIGOS],
+    );
+    await client.query(`delete from modelo_linha where codigo <> all($1::text[])`, [PILOTO_LINHA_CODIGOS]);
   }
 
   const linhaIds = new Map();

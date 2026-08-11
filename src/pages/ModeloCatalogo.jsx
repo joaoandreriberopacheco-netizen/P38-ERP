@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
 import { createPageUrl } from '@/components/utils';
 import { isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
-import { MODELO_CATALOGO_ENABLED } from '@/config/modeloCatalogoFlags';
+import { MODELO_CATALOGO_ENABLED, MODELO_PILOTO_LINHAS_ATIVAS, MODELO_PILOTO_LINHAS_PLANEADAS } from '@/config/modeloCatalogoFlags';
+import { filtrarDadosPilotoModelo } from '@/lib/modeloCatalogo/filtrarPilotoModelo';
 import {
   fetchAllModeloProdutosCompra,
   fetchModeloLinhas,
@@ -17,7 +18,6 @@ import { buildModeloTree, filterModeloTree } from '@/lib/modeloCatalogo/buildMod
 import { buildModeloSupplyLines } from '@/lib/modeloCatalogo/buildModeloSupply';
 import ModeloCatalogoTree from '@/components/modelo-catalogo/ModeloCatalogoTree';
 import ModeloSmartSupplyPanel from '@/components/modelo-catalogo/ModeloSmartSupplyPanel';
-import ModeloLinhaDialog from '@/components/modelo-catalogo/ModeloLinhaDialog';
 import ModeloProdutoCompraDialog from '@/components/modelo-catalogo/ModeloProdutoCompraDialog';
 import ModeloSkuForm from '@/components/modelo-catalogo/ModeloSkuForm';
 import EspelharProdutoDialog from '@/components/modelo-catalogo/EspelharProdutoDialog';
@@ -33,7 +33,6 @@ function ModeloCatalogoInner() {
   const [filtroLinha, setFiltroLinha] = useState('');
   const [somenteAlerta, setSomenteAlerta] = useState(false);
 
-  const [linhaDialog, setLinhaDialog] = useState(false);
   const [pcDialog, setPcDialog] = useState(null);
   const [skuForm, setSkuForm] = useState(null);
   const [espelharOpen, setEspelharOpen] = useState(false);
@@ -47,9 +46,10 @@ function ModeloCatalogoInner() {
         fetchAllModeloProdutosCompra(),
         fetchModeloSkus(),
       ]);
-      setLinhas(l);
-      setProdutosCompra(pc);
-      setSkus(s);
+      const filtrado = filtrarDadosPilotoModelo({ linhas: l, produtosCompra: pc, skus: s });
+      setLinhas(filtrado.linhas);
+      setProdutosCompra(filtrado.produtosCompra);
+      setSkus(filtrado.skus);
     } catch (e) {
       console.error('[ModeloCatalogo]', e);
     } finally {
@@ -94,12 +94,18 @@ function ModeloCatalogoInner() {
               Catálogo Modelo (laboratório)
             </h1>
             <p className="text-sm text-muted-foreground max-w-xl">
-              Universo paralelo: LINHA → produto compra → 2 eixos → SKU. Grava só em <code className="text-xs">modelo_*</code>.
-              Pode <strong>ler</strong> produção para espelhar — nunca altera o cadastro real.
+              Piloto cerâmica: <strong>CERÂMICA BOLD</strong> e <strong>CERÂMICA RETIF</strong> apenas.
+              Grava só em <code className="text-xs">modelo_*</code> — pode ler produção para espelhar.
             </p>
           </div>
-          <div className="rounded-lg border border-violet-500/40 bg-violet-50/80 dark:bg-violet-950/30 px-3 py-2 text-xs text-violet-900 dark:text-violet-100 max-w-sm">
-            <strong>Não é produção.</strong> {skus.length} SKU(s) modelo · {linhas.length} LINHA(s)
+          <div className="space-y-2 max-w-sm">
+            <div className="rounded-lg border border-violet-500/40 bg-violet-50/80 dark:bg-violet-950/30 px-3 py-2 text-xs text-violet-900 dark:text-violet-100">
+              <strong>Não é produção.</strong> {skus.length} SKU(s) · {linhas.length} LINHA(s) activas
+            </div>
+            <div className="rounded-lg border border-dashed border-muted-foreground/40 px-3 py-2 text-[11px] text-muted-foreground">
+              <strong>Em breve (mix):</strong>{' '}
+              {MODELO_PILOTO_LINHAS_PLANEADAS.map((l) => l.nome).join(' · ')}
+            </div>
           </div>
         </div>
 
@@ -111,12 +117,14 @@ function ModeloCatalogoInner() {
           <Select value={filtroLinha || 'all'} onValueChange={(v) => setFiltroLinha(v === 'all' ? '' : v)}>
             <SelectTrigger className="w-[200px] h-9"><SelectValue placeholder="LINHA" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas as LINHAS</SelectItem>
+              <SelectItem value="all">Todas (piloto)</SelectItem>
               {linhas.map((l) => <SelectItem key={l.id} value={l.codigo}>{l.nome}</SelectItem>)}
+              {MODELO_PILOTO_LINHAS_ATIVAS.filter((m) => !linhas.some((l) => l.codigo === m.codigo)).map((m) => (
+                <SelectItem key={m.codigo} value={m.codigo} disabled>{m.nome} (sem seed)</SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Button variant="outline" size="sm" onClick={reload} disabled={loading}><RefreshCw className={loading ? 'animate-spin h-3.5 w-3.5' : 'h-3.5 w-3.5'} /></Button>
-          <Button variant="outline" size="sm" onClick={() => setLinhaDialog(true)}>+ LINHA</Button>
           <Button variant="outline" size="sm" onClick={() => setEspelharOpen(true)}>Espelhar produção</Button>
           <Button size="sm" onClick={() => setSkuForm({})}><Plus className="h-3.5 w-3.5 mr-1" /> SKU</Button>
         </div>
@@ -134,7 +142,6 @@ function ModeloCatalogoInner() {
           <div className="rounded-lg border bg-card p-2 min-h-[320px]">
             <ModeloCatalogoTree
               tree={filteredTree}
-              onNovaLinha={() => setLinhaDialog(true)}
               onNovoProdutoCompra={(linha) => setPcDialog(linha)}
               onNovoSku={(ctx) => setSkuForm(ctx)}
               onEditSku={(sku) => setSkuForm({ skuInicial: sku })}
@@ -148,7 +155,6 @@ function ModeloCatalogoInner() {
         )}
       </div>
 
-      <ModeloLinhaDialog open={linhaDialog} onClose={() => setLinhaDialog(false)} onSaved={() => reload()} initialCategoria="E - PISOS E REVESTIMENTOS" />
       <ModeloProdutoCompraDialog open={!!pcDialog} linha={pcDialog} onClose={() => setPcDialog(null)} onSaved={() => reload()} />
       <ModeloSkuForm
         open={!!skuForm}

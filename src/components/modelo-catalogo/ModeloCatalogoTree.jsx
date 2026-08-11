@@ -35,8 +35,8 @@ export default function ModeloCatalogoTree({
   if (!tree.length) {
     return (
       <div className="py-12 text-center text-sm text-muted-foreground space-y-3">
-        <p>Nenhum dado no laboratório ainda.</p>
-        <Button size="sm" onClick={onNovaLinha}>+ Nova LINHA</Button>
+        <p>Piloto cerâmica vazio — corra <code className="text-xs">npm run modelo:seed-ceramica -- --apply</code></p>
+        <p className="text-xs">LINHAS activas: CERÂMICA BOLD · CERÂMICA RETIF</p>
       </div>
     );
   }

@@ -19,6 +19,8 @@ import {
   saveModeloSku,
 } from '@/lib/modeloCatalogo/fetchModeloCatalogo';
 import { montarNomeModeloSku, mapTipoLinhaUi } from '@/lib/modeloCatalogo/montarNomeSku';
+import { MODELO_PILOTO_CODIGOS_ATIVOS } from '@/config/modeloCatalogoFlags';
+import { isLinhaPilotoAtiva } from '@/lib/modeloCatalogo/filtrarPilotoModelo';
 import { resolveParametrosProdutoCompra } from '@/lib/modeloCatalogo/resolveParametrosModelo';
 import { applyModeloSkuSimilar } from '@/lib/modeloCatalogo/espelharProduto';
 import { toast } from 'sonner';
@@ -223,11 +225,12 @@ export default function ModeloSkuForm({
               <SelectTrigger><SelectValue placeholder="Seleccionar LINHA" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="__none__">—</SelectItem>
-                {linhas.map((l) => (
+                {linhas.filter(isLinhaPilotoAtiva).map((l) => (
                   <SelectItem key={l.id} value={l.id}>{l.nome} ({l.tipo})</SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            <p className="text-[10px] text-muted-foreground">Piloto: {MODELO_PILOTO_CODIGOS_ATIVOS.join(' · ')}</p>
           </div>
 
           {!solo && (
