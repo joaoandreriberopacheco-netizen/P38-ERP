@@ -61,6 +61,7 @@ export const P38_PAGE_NAMES = [
   "LogsAutenticacao",
   "Manual",
   "MapaFuncionalidades",
+  "ModeloCatalogo",
   "MovimentosInventario",
   "Notificacoes",
   "Operacoes",

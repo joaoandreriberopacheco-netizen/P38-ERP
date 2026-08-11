@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import SugestaoCompra from '@/components/compras/SugestaoCompra';
 import HierarquiaPortalEntry from '@/components/hierarquia-portal/HierarquiaPortalEntry';
+import ModeloCatalogoEntry from '@/components/modelo-catalogo/ModeloCatalogoEntry';
 
 export default function SugestoesCompraPage() {
   const [sugestaoKey, setSugestaoKey] = useState(0);
@@ -17,7 +18,10 @@ export default function SugestoesCompraPage() {
               Análise inteligente de estoque e reposição
             </p>
           </div>
-          <HierarquiaPortalEntry className="shrink-0" />
+          <div className="flex flex-wrap gap-2 shrink-0">
+            <ModeloCatalogoEntry className="shrink-0" />
+            <HierarquiaPortalEntry className="shrink-0" />
+          </div>
         </div>
         <SugestaoCompra key={sugestaoKey} />
       </div>
