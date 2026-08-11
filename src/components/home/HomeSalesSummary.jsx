@@ -1,20 +1,26 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { roundToTwoDecimals, formatCurrency } from '@/lib/financialUtils';
 import { useKPIsCache } from '@/hooks/useKPIsCache';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function formatValor(valor) {
   return formatCurrency(roundToTwoDecimals(valor || 0));
 }
 
-/** Resumo de vendas do dia — carrega KPIs só quando montado. */
+function SalesSummarySkeleton() {
+  return (
+    <div className="space-y-2" aria-busy="true" aria-label="Carregando resumo de vendas">
+      <Skeleton className="h-9 w-44 rounded-lg" />
+      <Skeleton className="h-4 w-36 rounded-md" />
+    </div>
+  );
+}
+
+/** Resumo de vendas do dia — consulta filtrada no SQL; skeleton até os dados chegarem. */
 export default function HomeSalesSummary() {
   const [showBalance, setShowBalance] = React.useState(false);
-  const { kpis, loadKPIs } = useKPIsCache({ enabled: true });
-
-  useEffect(() => {
-    loadKPIs();
-  }, [loadKPIs]);
+  const { kpis, isPending } = useKPIsCache({ enabled: true });
 
   return (
     <div className="bg-card rounded-3xl p-6 shadow-sm border border-border/40">
@@ -27,6 +33,7 @@ export default function HomeSalesSummary() {
           type="button"
           onClick={() => setShowBalance(!showBalance)}
           className="p-2 hover:bg-muted rounded-xl transition-colors touch-manipulation"
+          aria-label={showBalance ? 'Ocultar valores' : 'Mostrar valores'}
         >
           {showBalance ? (
             <Eye className="w-5 h-5 text-muted-foreground" />
@@ -35,7 +42,9 @@ export default function HomeSalesSummary() {
           )}
         </button>
       </div>
-      {showBalance ? (
+      {isPending ? (
+        <SalesSummarySkeleton />
+      ) : showBalance ? (
         <>
           <div className="text-3xl font-bold text-foreground mb-1">
             R$ {formatValor(kpis.valorVendasHoje)}
