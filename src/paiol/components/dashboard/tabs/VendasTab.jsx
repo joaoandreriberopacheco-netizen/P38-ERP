@@ -8,8 +8,7 @@ import {
   parse,
   isValid,
 } from 'date-fns';
-import { base44 } from '@/api/base44Client';
-import { fetchDashboardVendasPeriodo } from '@/lib/fetchDashboardVendas';
+import { useDashboardVendasQuery } from '@/hooks/useDashboardQueries';
 import { AlertCircle, CircleGauge, Target, TrendingUp, CalendarDays } from 'lucide-react';
 import {
   buildDonutRingData,
@@ -18,7 +17,6 @@ import {
   countWorkingDaysUpToCalendarDay,
   DONUT_GAUGE_RADII,
   getDailyMetaFromMonthly,
-  normalizeDashboardKpiConfig,
 } from '@/lib/dashboardKpiConfig';
 import {
   buildMonthBucket,
@@ -324,12 +322,10 @@ function computeVendasMetrics({ pedidos, productCostMap, kpiConfig, selectedMont
   };
 }
 
-export default function VendasTab() {
+export default function VendasTab({ enabled = true } = {}) {
   const chartTheme = useDashboardChartTheme();
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [rawData, setRawData] = useState(null);
   const [selectedMonthKey, setSelectedMonthKey] = useState(getCurrentMonthKey);
+  const { data: rawData, isLoading, error } = useDashboardVendasQuery(selectedMonthKey, { enabled });
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window === 'undefined') return false;
     return window.innerWidth < 640;
@@ -341,40 +337,6 @@ export default function VendasTab() {
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
-
-  useEffect(() => {
-    let mounted = true;
-
-    const loadVendas = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const [configVendaRaw, dashboardData] = await Promise.all([
-          base44.entities.ConfiguracoesVenda.list(),
-          fetchDashboardVendasPeriodo({ selectedMonthKey }),
-        ]);
-
-        if (mounted) {
-          setRawData({
-            pedidos: dashboardData.pedidos,
-            productCostMap: dashboardData.productCostMap,
-            kpiConfig: normalizeDashboardKpiConfig(configVendaRaw?.[0] || {}),
-          });
-        }
-      } catch (loadError) {
-        console.error('Erro ao carregar dashboard de vendas:', loadError);
-        if (mounted) setError(loadError);
-      } finally {
-        if (mounted) setIsLoading(false);
-      }
-    };
-
-    loadVendas();
-    return () => {
-      mounted = false;
-    };
-  }, [selectedMonthKey]);
 
   const metrics = useMemo(() => {
     if (!rawData) return null;
