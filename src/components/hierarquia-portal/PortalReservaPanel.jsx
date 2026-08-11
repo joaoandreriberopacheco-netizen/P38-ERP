@@ -24,7 +24,11 @@ import { cn } from '@/components/utils';
 import { p38Table } from '@/lib/p38TableSurfaces';
 import { CERAM_META_VAGAS } from '@/lib/modeloCatalogo/regrasCeramica';
 import { portalEstoqueCx } from '@/lib/hierarquiaPortal/buildPortalSupplyCeramica';
-import { montarNomePortalSku } from '@/lib/hierarquiaPortal/montarNomePortalSku';
+import {
+  comparePortalSkuEixos,
+  montarEixosPortalSku,
+  montarSubtituloPortalSku,
+} from '@/lib/hierarquiaPortal/montarNomePortalSku';
 import {
   contagemReservaLine,
   enviarSkusParaReserva,
@@ -95,8 +99,16 @@ export default function PortalReservaPanel({
       }
       map.get(key).skus.push(row);
     }
-    return [...map.values()];
+    return [...map.values()].map((g) => ({
+      ...g,
+      skus: [...g.skus].sort(comparePortalSkuEixos),
+    }));
   }, [reservadosEnriched]);
+
+  const sortSkusActivos = useCallback(
+    (skus) => [...(skus || [])].filter((s) => s.produto?.ativo !== false).sort(comparePortalSkuEixos),
+    [],
+  );
 
   const toggleSelect = useCallback((id) => {
     setSelected((prev) => {
@@ -289,7 +301,7 @@ export default function PortalReservaPanel({
             {linesComContagem.map(({ line, contagem }) => {
               const key = line.key;
               const isOpen = expanded === key;
-              const skusActivos = (line.skus || []).filter((s) => s.produto?.ativo !== false);
+              const skusActivos = sortSkusActivos(line.skus);
               return (
                 <React.Fragment key={key}>
                   <TableRow
@@ -337,19 +349,33 @@ export default function PortalReservaPanel({
                     skusActivos.map((sku) => {
                       const id = sku.produto?.id;
                       const cx = portalEstoqueCx(sku);
+                      const isSelected = selected.has(id);
+                      const eixosLabel = montarEixosPortalSku(sku);
+                      const codigo = montarSubtituloPortalSku(sku);
                       return (
-                        <TableRow key={id} className={cn(p38Table.row, 'bg-muted/10')}>
-                          <TableCell className={cn(p38Table.cell, 'py-1')}>
+                        <TableRow
+                          key={id}
+                          className={cn(
+                            p38Table.row,
+                            'bg-muted/10 cursor-pointer select-none',
+                            isSelected && 'bg-primary/10 dark:bg-primary/15',
+                          )}
+                          onClick={() => toggleSelect(id)}
+                        >
+                          <TableCell
+                            className={cn(p38Table.cell, 'py-1')}
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <Checkbox
-                              checked={selected.has(id)}
+                              checked={isSelected}
                               onCheckedChange={() => toggleSelect(id)}
-                              aria-label="Seleccionar SKU"
+                              aria-label={`Seleccionar ${eixosLabel}`}
                             />
                           </TableCell>
-                          <TableCell colSpan={2} className={cn(p38Table.cell, 'py-1 pl-8')}>
-                            <p className="text-xs truncate">{montarNomePortalSku(sku)}</p>
-                            {sku.eixo_b && (
-                              <p className="text-[10px] text-muted-foreground truncate">{sku.eixo_b}</p>
+                          <TableCell colSpan={2} className={cn(p38Table.cell, 'py-1 pl-6')}>
+                            <p className="text-sm font-medium truncate">{eixosLabel}</p>
+                            {codigo && (
+                              <p className="text-[10px] text-muted-foreground truncate font-mono">{codigo}</p>
                             )}
                           </TableCell>
                           <TableCell className={cn(p38Table.cell, p38Table.cellNumeric, 'py-1 tabular-nums text-xs')}>
@@ -390,15 +416,25 @@ export default function PortalReservaPanel({
                       </TableRow>
                       {grupo.skus.map((sku) => {
                         const id = sku.produto?.id;
+                        const isSelected = selected.has(id);
+                        const eixosLabel = montarEixosPortalSku(sku);
                         return (
-                          <TableRow key={id}>
-                            <TableCell className="w-8 py-1">
+                          <TableRow
+                            key={id}
+                            className={cn(
+                              'cursor-pointer select-none',
+                              isSelected && 'bg-primary/10 dark:bg-primary/15',
+                            )}
+                            onClick={() => toggleSelect(id)}
+                          >
+                            <TableCell className="w-8 py-1" onClick={(e) => e.stopPropagation()}>
                               <Checkbox
-                                checked={selected.has(id)}
+                                checked={isSelected}
                                 onCheckedChange={() => toggleSelect(id)}
+                                aria-label={`Seleccionar ${eixosLabel}`}
                               />
                             </TableCell>
-                            <TableCell className="py-1 text-xs">{montarNomePortalSku(sku)}</TableCell>
+                            <TableCell className="py-1 text-sm font-medium">{eixosLabel}</TableCell>
                             <TableCell className="py-1 text-[10px] text-muted-foreground">
                               {sku.estoque_label}
                             </TableCell>
