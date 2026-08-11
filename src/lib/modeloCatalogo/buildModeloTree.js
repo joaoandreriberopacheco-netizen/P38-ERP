@@ -1,5 +1,6 @@
 import { mapTipoLinhaUi } from '@/lib/modeloCatalogo/montarNomeSku';
 import { avaliarProdutoCompraCeramica } from '@/lib/modeloCatalogo/regrasCeramica';
+import { resolveParametrosProdutoCompra } from '@/lib/modeloCatalogo/resolveParametrosModelo';
 
 export function buildModeloTree({ linhas, produtosCompra, skus }) {
   const pcByLinha = new Map();
@@ -29,12 +30,13 @@ export function buildModeloTree({ linhas, produtosCompra, skus }) {
     const solo = tipo === 'solo';
     const pcs = (pcByLinha.get(linha.id) || []).map((pc) => {
       const pcSkus = skusByPc.get(pc.id) || [];
+      const params = resolveParametrosProdutoCompra(pc, linha);
       const avaliacao = avaliarProdutoCompraCeramica(pcSkus, {
-        massaCritica: pc.massa_critica,
-        metaVagas: pc.meta_vagas,
-        minLinhasSaldavel: pc.min_linhas_saldavel,
+        massaCritica: params.massa_critica,
+        metaVagas: params.meta_vagas,
+        minLinhasSaldavel: params.min_linhas_saldavel,
       });
-      return { ...pc, skus: pcSkus, avaliacao };
+      return { ...pc, ...params, skus: pcSkus, avaliacao };
     });
     const soloSkus = skusSoloByLinha.get(linha.id) || [];
     categorias.get(cat).push({

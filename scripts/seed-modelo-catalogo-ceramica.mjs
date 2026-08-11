@@ -165,16 +165,17 @@ async function main() {
     const { rows: ex } = await client.query('select id from modelo_linha where codigo = $1', [linha.codigo]);
     if (ex[0]?.id) {
       await client.query(
-        `update modelo_linha set nome=$2, categoria_nome=$3, tipo=$4, ordem=$5, updated_at=now() where id=$1`,
-        [ex[0].id, linha.nome, CATEGORIA, linha.tipo, linha.ordem],
+        `update modelo_linha set nome=$2, categoria_nome=$3, tipo=$4, ordem=$5,
+         meta_vagas=$6, massa_critica=$7, min_linhas_saldavel=$8, updated_at=now() where id=$1`,
+        [ex[0].id, linha.nome, CATEGORIA, linha.tipo, linha.ordem, META_VAGAS, MASSA_CRITICA, MIN_LINHAS_SALDAVEL],
       );
       linhaIds.set(linha.codigo, ex[0].id);
       continue;
     }
     const ins = await client.query(
-      `insert into modelo_linha (codigo, nome, categoria_nome, tipo, eixo_a_rotulo, eixo_b_rotulo, ordem, ativo)
-       values ($1,$2,$3,$4,'Formato','Cor / Modelo',$5,true) returning id`,
-      [linha.codigo, linha.nome, CATEGORIA, linha.tipo, linha.ordem],
+      `insert into modelo_linha (codigo, nome, categoria_nome, tipo, eixo_a_rotulo, eixo_b_rotulo, ordem, meta_vagas, massa_critica, min_linhas_saldavel, ativo)
+       values ($1,$2,$3,$4,'Formato','Cor / Modelo',$5,$6,$7,$8,true) returning id`,
+      [linha.codigo, linha.nome, CATEGORIA, linha.tipo, linha.ordem, META_VAGAS, MASSA_CRITICA, MIN_LINHAS_SALDAVEL],
     );
     linhaIds.set(linha.codigo, ins.rows[0].id);
   }
@@ -189,16 +190,16 @@ async function main() {
     );
     if (ex[0]?.id) {
       await client.query(
-        `update modelo_produto_compra set nome=$2, meta_vagas=$3, massa_critica=$4, min_linhas_saldavel=$5, updated_at=now() where id=$1`,
-        [ex[0].id, pc.nome, META_VAGAS, MASSA_CRITICA, MIN_LINHAS_SALDAVEL],
+        `update modelo_produto_compra set nome=$2, meta_vagas=null, massa_critica=null, min_linhas_saldavel=null, updated_at=now() where id=$1`,
+        [ex[0].id, pc.nome],
       );
       pcIds.set(key, ex[0].id);
       continue;
     }
     const ins = await client.query(
       `insert into modelo_produto_compra (linha_id, codigo, nome, meta_vagas, massa_critica, min_linhas_saldavel, eixo_a_rotulo, eixo_b_rotulo, ativo)
-       values ($1,$2,$3,$4,$5,$6,'Formato','Cor / Modelo',true) returning id`,
-      [linhaId, cod, pc.nome, META_VAGAS, MASSA_CRITICA, MIN_LINHAS_SALDAVEL],
+       values ($1,$2,$3,null,null,null,null,null,true) returning id`,
+      [linhaId, cod, pc.nome],
     );
     pcIds.set(key, ins.rows[0].id);
   }

@@ -101,6 +101,9 @@ export default function ModeloCatalogoTree({
                             <Layers className="h-3.5 w-3.5 text-muted-foreground" />
                             <span className="truncate">{pc.nome}</span>
                             <span className="text-[10px] text-muted-foreground">{pc.skus.length}/{pc.meta_vagas ?? 12}</span>
+                            {pc.overrides?.meta_vagas || pc.overrides?.massa_critica || pc.overrides?.min_linhas_saldavel ? (
+                              <Badge variant="outline" className="text-[9px]">custom</Badge>
+                            ) : null}
                             {pc.avaliacao?.saldavel ? (
                               <Badge className="text-[9px] bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200">Saldável</Badge>
                             ) : (

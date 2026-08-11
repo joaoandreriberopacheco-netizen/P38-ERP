@@ -42,7 +42,8 @@ function SupplyLine({ line }) {
       {open && (
         <div className="px-4 pb-3 bg-muted/30">
           <p className="text-[10px] text-muted-foreground mb-1">
-            {line.posicoes_ocupadas ?? line.sku_count}/{line.meta_vagas ?? 12} posições · massa crítica {line.massa_critica ?? 16} cx · saldável ≥ {line.min_linhas_saldavel ?? 9} linhas
+            {line.parametros_overrides?.meta_vagas || line.parametros_overrides?.massa_critica ? 'Override PC · ' : 'Herdado LINHA · '}
+            {line.posicoes_ocupadas ?? line.sku_count}/{line.meta_vagas ?? 12} posições · massa {line.massa_critica ?? 16} cx · saldável ≥ {line.min_linhas_saldavel ?? 9} linhas
           </p>
           <p className="text-[10px] text-muted-foreground mb-2 flex items-center gap-1">
             <Layers className="h-3 w-3" /> Detalhe por SKU (simulado — não gera pedido real)

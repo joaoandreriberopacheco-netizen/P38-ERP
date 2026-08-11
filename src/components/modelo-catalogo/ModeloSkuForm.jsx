@@ -19,6 +19,7 @@ import {
   saveModeloSku,
 } from '@/lib/modeloCatalogo/fetchModeloCatalogo';
 import { montarNomeModeloSku, mapTipoLinhaUi } from '@/lib/modeloCatalogo/montarNomeSku';
+import { resolveParametrosProdutoCompra } from '@/lib/modeloCatalogo/resolveParametrosModelo';
 import { applyModeloSkuSimilar } from '@/lib/modeloCatalogo/espelharProduto';
 import { toast } from 'sonner';
 
@@ -60,6 +61,10 @@ export default function ModeloSkuForm({
     [produtosCompra, form.produto_compra_id],
   );
   const solo = linha && mapTipoLinhaUi(linha.tipo) === 'solo';
+  const paramsPc = useMemo(
+    () => (produtoCompra && linha ? resolveParametrosProdutoCompra(produtoCompra, linha) : null),
+    [produtoCompra, linha],
+  );
   const isPortfolio = linha && mapTipoLinhaUi(linha.tipo) === 'portfolio';
 
   useEffect(() => {
@@ -195,8 +200,8 @@ export default function ModeloSkuForm({
     }
   };
 
-  const eixoARotulo = produtoCompra?.eixo_a_rotulo || linha?.eixo_a_rotulo || 'Eixo A';
-  const eixoBRotulo = produtoCompra?.eixo_b_rotulo || linha?.eixo_b_rotulo || 'Eixo B';
+  const eixoARotulo = paramsPc?.eixo_a_rotulo || linha?.eixo_a_rotulo || 'Eixo A';
+  const eixoBRotulo = paramsPc?.eixo_b_rotulo || linha?.eixo_b_rotulo || 'Eixo B';
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose?.()}>
@@ -241,9 +246,10 @@ export default function ModeloSkuForm({
                   ))}
                 </SelectContent>
               </Select>
-              {isPortfolio && produtoCompra && (
+              {isPortfolio && produtoCompra && paramsPc && (
                 <p className="text-[11px] text-muted-foreground mt-1">
-                  Portfolio: {produtoCompra.meta_vagas ?? '—'} vagas · massa crítica {produtoCompra.massa_critica ?? '—'}
+                  {paramsPc.overrides?.meta_vagas || paramsPc.overrides?.massa_critica ? 'Override PC · ' : 'Herdado LINHA · '}
+                  {paramsPc.meta_vagas} vagas · massa {paramsPc.massa_critica} cx · saldável ≥ {paramsPc.min_linhas_saldavel} linhas
                 </p>
               )}
             </div>

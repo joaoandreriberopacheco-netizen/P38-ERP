@@ -1,17 +1,13 @@
 import { mapTipoLinhaUi } from '@/lib/modeloCatalogo/montarNomeSku';
-import {
-  avaliarProdutoCompraCeramica,
-  CERAM_MASSA_CRITICA_CX,
-  CERAM_META_VAGAS,
-  CERAM_MIN_LINHAS_SALDAVEL,
-} from '@/lib/modeloCatalogo/regrasCeramica';
+import { avaliarProdutoCompraCeramica } from '@/lib/modeloCatalogo/regrasCeramica';
+import { indexLinhasPorId, resolveParametrosProdutoCompra } from '@/lib/modeloCatalogo/resolveParametrosModelo';
 
 /**
  * SMART SUPPLY simulado — agrupa por produto_compra (ou linha solo).
  * Cerâmica: saldável se >= min_linhas posições com estoque >= massa_critica (16 cx).
  */
 export function buildModeloSupplyLines({ linhas, produtosCompra, skus }) {
-  const linhaById = new Map((linhas || []).map((l) => [l.id, l]));
+  const linhaById = indexLinhasPorId(linhas);
   const pcById = new Map((produtosCompra || []).map((p) => [p.id, p]));
   const groups = new Map();
 
@@ -22,6 +18,8 @@ export function buildModeloSupplyLines({ linhas, produtosCompra, skus }) {
     const key = sku.produto_compra_id || `solo:${sku.linha_id}`;
     if (!groups.has(key)) {
       const pc = sku.produto_compra_id ? pcById.get(sku.produto_compra_id) : null;
+      const linhaRef = linha;
+      const params = resolveParametrosProdutoCompra(pc || {}, linhaRef);
       groups.set(key, {
         linha_id: linha.id,
         linha_codigo: linha.codigo,
@@ -30,9 +28,10 @@ export function buildModeloSupplyLines({ linhas, produtosCompra, skus }) {
         categoria: linha.categoria_nome,
         produto_compra_id: pc?.id || null,
         produto_compra_nome: pc?.nome || linha.nome,
-        meta_vagas: pc?.meta_vagas ?? CERAM_META_VAGAS,
-        massa_critica: pc?.massa_critica ?? CERAM_MASSA_CRITICA_CX,
-        min_linhas_saldavel: pc?.min_linhas_saldavel ?? CERAM_MIN_LINHAS_SALDavel,
+        meta_vagas: params.meta_vagas,
+        massa_critica: params.massa_critica,
+        min_linhas_saldavel: params.min_linhas_saldavel,
+        parametros_overrides: params.overrides,
         skus: [],
       });
     }
