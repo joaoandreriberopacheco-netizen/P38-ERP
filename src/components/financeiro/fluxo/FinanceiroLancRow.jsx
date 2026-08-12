@@ -94,6 +94,12 @@ function rowMeta(l, { showPago = false, dimProgramada = false } = {}) {
     <>
       {l.categoria && l.categoria !== 'Transferência entre Contas' && <span>{l.categoria}</span>}
       {isTransferenciaEntreContas(l) && !l.isTransferenciaConsolidada && <span>Transferência entre contas</span>}
+      {l.reforcoCaixaStatus === 'aguardando_caixa' && (
+        <P38StatusLabel tone="warning">Aguardando caixa</P38StatusLabel>
+      )}
+      {l.reforcoCaixaStatus === 'aceito_caixa' && (
+        <P38StatusLabel tone="success">Aceito no caixa</P38StatusLabel>
+      )}
       {programada && !isPago && (
         <P38StatusLabel tone="warning">Programado</P38StatusLabel>
       )}

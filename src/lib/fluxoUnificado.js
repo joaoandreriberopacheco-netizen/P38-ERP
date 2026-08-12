@@ -107,7 +107,12 @@ export function calcularKpisProgramadas(programadas, hojeKey = dataHoje()) {
 }
 
 /** Insere lançamentos programados nos grupos do fluxo (por data de vencimento). */
-export function mesclarProgramadasNosGrupos(grupos = [], programadas = [], ordemLancamentos = 'desc') {
+export function mesclarProgramadasNosGrupos(
+  grupos = [],
+  programadas = [],
+  ordemLancamentos = 'desc',
+  { movimentos = [] } = {},
+) {
   if (!programadas.length) return grupos;
 
   const porDia = new Map();
@@ -121,7 +126,7 @@ export function mesclarProgramadasNosGrupos(grupos = [], programadas = [], ordem
 
   porDia.forEach((items, k) => {
     const ordenados = sortLancamentosPorDescricao(items);
-    const consolidados = consolidarTransferenciasListaFluxo(ordenados).map((l) => ({
+    const consolidados = consolidarTransferenciasListaFluxo(ordenados, { movimentos }).map((l) => ({
       ...l,
       _isProgramada: true,
     }));

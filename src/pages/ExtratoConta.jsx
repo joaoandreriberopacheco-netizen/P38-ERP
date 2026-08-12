@@ -38,6 +38,7 @@ import { formatFinanceiroGrupoLabel } from '@/components/financeiro/fluxo/Financ
 import AjusteSaldoDialog from '@/components/config/AjusteSaldoDialog';
 import {
   buildMapaContrapartesTransferencia,
+  buildMapaParIdsTransferencia,
   calcularSaldoContaAposDataCorte,
   calcularSaldoContaFinanceira,
   contaUsaRegraCaixaPDV,
@@ -47,6 +48,7 @@ import {
   totaisEntradaSaidaMovimentos,
 } from '@/lib/saldoContaFinanceira';
 import { reconciliarSaldoCaixaPDVSemTurnoAberto, backfillLancamentosMovimentosCaixaPDV } from '@/lib/contaDestinoCaixaPDV';
+import { consolidarTransferenciasListaFluxo } from '@/lib/gruposMovimentacaoConta';
 
 function getDataKeyMovimentoExtrato(mov) {
   if (mov?.origem === 'movimento' || (mov?.conta_id && !mov?.conta_financeira_id)) {
@@ -364,8 +366,23 @@ export default function ExtratoContaPage() {
   });
 
   const movimentosJaNoFinanceiro = useMemo(
-    () => idsMovimentosComLancamentoFinanceiro(lancamentos),
-    [lancamentos],
+    () => idsMovimentosComLancamentoFinanceiro(lancamentos, movimentosCaixa),
+    [lancamentos, movimentosCaixa],
+  );
+
+  const contasById = useMemo(
+    () => Object.fromEntries(contas.map((c) => [c.id, c])),
+    [contas],
+  );
+
+  const lancsParaPares = lancsSaldoBase.length ? lancsSaldoBase : lancamentos;
+  const mapaContrapartesPares = useMemo(
+    () => buildMapaContrapartesTransferencia(lancsParaPares),
+    [lancsParaPares],
+  );
+  const mapaParIdsPares = useMemo(
+    () => buildMapaParIdsTransferencia(lancsParaPares),
+    [lancsParaPares],
   );
 
   // Combina e ordena movimentações (PDV: só o que compõe dinheiro na gaveta)
@@ -373,6 +390,7 @@ export default function ExtratoContaPage() {
     ...lancamentos.map(l => ({ ...l, origem: 'lancamento' })),
     ...movimentosCaixa
       .filter((m) => !movimentosJaNoFinanceiro.has(String(m.id)))
+      .filter((m) => !(m.tipo === 'Reforço' && m.lancamento_financeiro_id))
       .map(m => ({ ...m, origem: 'movimento' }))
   ]
     .filter((mov) => participaDoSaldo(mov))
@@ -511,7 +529,15 @@ export default function ExtratoContaPage() {
     return diasExibicao.map((diaData) => ({
       k: diaData.dia,
       label: formatFinanceiroGrupoLabel(diaData.dia, hStr, oStr),
-      items: diaData.movimentacoes.map(normalizeMov),
+      items: consolidarTransferenciasListaFluxo(
+        diaData.movimentacoes.map(normalizeMov),
+        {
+          movimentos: movimentosCaixa,
+          mapaContrapartes: mapaContrapartesPares,
+          contasById,
+          mapaParIds: mapaParIdsPares,
+        },
+      ),
       totais: {
         r: diaData.totalEntradas,
         d: diaData.totalSaidas,
@@ -521,7 +547,7 @@ export default function ExtratoContaPage() {
         saldoAcumulado: roundToTwoDecimals(diaData.saldoFinal),
       },
     }));
-  }, [diasExibicao]);
+  }, [diasExibicao, movimentosCaixa, mapaContrapartesPares, contasById, mapaParIdsPares]);
 
   const totalMovimentacoes = movimentacoesFiltradas.length;
   const kpisExtrato = useMemo(() => ({

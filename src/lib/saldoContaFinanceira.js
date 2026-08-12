@@ -95,7 +95,9 @@ export function isTransferenciaEntreContas(l) {
 function chaveParTransferenciaLancamento(l) {
   if (!isTransferenciaEntreContas(l) || l.origem === 'movimento') return null;
   if (l.referencia_tipo === 'MovimentosCaixa' && l.referencia_id != null) {
-    return `mc:${l.referencia_id}`;
+    const data = getDataChaveLancamento(l) || '';
+    const valor = Number(l.valor || 0).toFixed(2);
+    return `tr:${data}:${valor}`;
   }
   const data = getDataChaveLancamento(l) || '';
   const valor = Number(l.valor || 0).toFixed(2);
@@ -163,6 +165,29 @@ export function buildMapaContrapartesTransferencia(lancamentos = []) {
   });
 
   adicionarParesTransferenciaImplicitos(lancamentos, mapa);
+  return mapa;
+}
+
+/** Mapa lancamentoId → id do par (despesa ↔ receita) na mesma transferência. */
+export function buildMapaParIdsTransferencia(lancamentos = []) {
+  const porChave = new Map();
+  lancamentos.forEach((l) => {
+    const key = chaveParTransferenciaLancamento(l);
+    if (!key) return;
+    if (!porChave.has(key)) porChave.set(key, []);
+    porChave.get(key).push(l);
+  });
+
+  const mapa = new Map();
+  porChave.forEach((grupo) => {
+    const despesa = grupo.find((i) => i.tipo === 'Despesa');
+    const receita = grupo.find((i) => i.tipo === 'Receita');
+    if (!despesa || !receita) return;
+    if (Math.abs(Number(despesa.valor || 0) - Number(receita.valor || 0)) > 0.009) return;
+    mapa.set(despesa.id, receita.id);
+    mapa.set(receita.id, despesa.id);
+  });
+
   return mapa;
 }
 
@@ -237,11 +262,16 @@ export function projetarLinhaFluxoCaixa(l) {
 }
 
 /** IDs de MovimentosCaixa já refletidos em LancamentoFinanceiro (evita contar duas vezes). */
-export function idsMovimentosComLancamentoFinanceiro(lancamentos = []) {
+export function idsMovimentosComLancamentoFinanceiro(lancamentos = [], movimentos = []) {
   const ids = new Set();
   lancamentos.forEach((l) => {
-    if (l?.referencia_tipo === 'MovimentosCaixa' && l?.referencia_id && l.tipo === 'Despesa') {
+    if (l?.referencia_tipo === 'MovimentosCaixa' && l?.referencia_id) {
       ids.add(String(l.referencia_id));
+    }
+  });
+  (movimentos || []).forEach((m) => {
+    if (m?.tipo === 'Reforço' && m?.status_registro === 'Pendente' && m?.lancamento_financeiro_id) {
+      ids.add(String(m.id));
     }
   });
   return ids;
