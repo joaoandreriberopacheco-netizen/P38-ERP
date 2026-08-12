@@ -259,7 +259,6 @@ function buildNivelEstoqueSeries(monthBuckets, skuBase, movimentosCompraVenda, p
     .slice()
     .sort((a, b) => b.date.getTime() - a.date.getTime());
 
-  const currentMonthKey = monthBuckets[monthBuckets.length - 1]?.key;
   const deltaAfterBySku = new Map();
   let movIdx = 0;
   const nivelEstoqueSeries = [];
@@ -267,7 +266,6 @@ function buildNivelEstoqueSeries(monthBuckets, skuBase, movimentosCompraVenda, p
   for (let i = monthBuckets.length - 1; i >= 0; i -= 1) {
     const bucket = monthBuckets[i];
     const monthEnd = bucket.end;
-    const isCurrentMonth = bucket.key === currentMonthKey;
 
     while (movIdx < sortedMovements.length && isAfter(sortedMovements[movIdx].date, monthEnd)) {
       const movimento = sortedMovements[movIdx];
@@ -286,15 +284,8 @@ function buildNivelEstoqueSeries(monthBuckets, skuBase, movimentosCompraVenda, p
       monthValue += estoqueGerencial * skuData.custoAtual;
     });
 
-    // Estoque virtual só compõe o mês corrente; meses passados = só físico.
-    const valorVirtual = isCurrentMonth
-      ? calcularValorEstoqueVirtualNoFimDoMes(
-        monthEnd,
-        pedidosCompraLista,
-        embarquesCompraLista,
-        custoProdutoMap,
-      )
-      : 0;
+    // Virtual/trânsito do mês corrente vem do card Localização (patch abaixo).
+    const valorVirtual = 0;
 
     nivelEstoqueSeries.unshift({
       periodo: bucket.label,
@@ -528,6 +519,19 @@ export async function fetchDashboardEstoqueMetrics(queryClient) {
   );
 
   const totalLocalizacao = estoqueFisico + transitoFinanceiroAprovado;
+
+  // Mês corrente: alinhar ao card Localização (físico catálogo + trânsito aprovado = 365K).
+  if (nivelEstoqueSeries.length > 0) {
+    const currentIdx = nivelEstoqueSeries.length - 1;
+    nivelEstoqueSeries[currentIdx] = {
+      ...nivelEstoqueSeries[currentIdx],
+      valor: estoqueFisico,
+      valorFisico: estoqueFisico,
+      valorVirtual: transitoFinanceiroAprovado,
+      valorGeral: totalLocalizacao,
+    };
+  }
+
   const qualityTotal = QUALITY_ORDER.reduce((sum, key) => sum + qualityAccumulator[key], 0);
 
   const QUALITY_COLORS = {
