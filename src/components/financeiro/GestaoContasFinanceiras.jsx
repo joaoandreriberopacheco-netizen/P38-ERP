@@ -118,6 +118,7 @@ function useGestaoContasModel(shared) {
 
   const loadData = useCallback(async () => {
     if (shared?.reload) {
+      setCarregandoSaldosBase(true);
       await shared.reload();
       await loadSaldosBase();
       return;
@@ -450,6 +451,7 @@ export function GestaoContasPane() {
     mostrarHistoricoAnterior,
     dataCorteHistorico,
     atualizarCorteHistorico,
+    saldosProntos,
   } = m;
 
   const tipoLabel = TIPOS_CONTA.find((t) => t.v === tipoFiltro)?.l;
