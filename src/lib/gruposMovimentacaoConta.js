@@ -2,6 +2,7 @@ import { toLocalDateKey } from '@/components/utils/dateUtils';
 import { getDataChaveLancamento, roundToTwoDecimals, sortLancamentosPorCodigo } from '@/lib/financialUtils';
 import {
   buildMapaContrapartesTransferencia,
+  buildMapaParIdsTransferencia,
   chaveParTransferenciaLancamentoFluxo,
   contaUsaRegraCaixaPDV,
   getDataMovimentoCaixa,
@@ -18,6 +19,10 @@ import {
   isLancamentoCancelado,
   isLancamentoRealizadoFluxo,
 } from '@/lib/lancamentoFinanceiroStatus';
+import {
+  mapReforcosTransferenciaPorLancamentoId,
+  statusReforcoTransferenciaPdv,
+} from '@/lib/reforcoPendenteCaixaPDV';
 
 function totaisDiaFromGrupo(totaisGrupo) {
   return {
@@ -147,8 +152,74 @@ function extrairNotaTransferencia(despesa, receita) {
   return null;
 }
 
+function extrairNomesTransferenciaLadoUnico(item, contasById = {}, mapaContrapartes = null) {
+  const desc = (item.descricao || '').trim();
+  const contaNome = item.conta_financeira_nome || contasById[item.conta_financeira_id]?.nome;
+
+  const paraMatch = desc.match(/^Transferência para\s+(.+)$/i);
+  const deMatch = desc.match(/^Transferência de\s+(.+)$/i);
+
+  if (item.tipo === 'Despesa' && paraMatch) {
+    return { contaOrigemNome: contaNome || 'Origem', contaDestinoNome: paraMatch[1].trim() };
+  }
+  if (item.tipo === 'Receita' && deMatch) {
+    return { contaOrigemNome: deMatch[1].trim(), contaDestinoNome: contaNome || 'Destino' };
+  }
+
+  const contraparteId = mapaContrapartes?.get(item.id);
+  const contraparteNome = contraparteId ? contasById[contraparteId]?.nome : null;
+  if (item.tipo === 'Despesa') {
+    return { contaOrigemNome: contaNome || 'Origem', contaDestinoNome: contraparteNome || 'Destino' };
+  }
+  if (item.tipo === 'Receita') {
+    return { contaOrigemNome: contraparteNome || 'Origem', contaDestinoNome: contaNome || 'Destino' };
+  }
+  return null;
+}
+
+function projetarTransferenciaLadoUnico(
+  item,
+  { reforcosPorLancamento, mapaParIds, contasById, mapaContrapartes },
+) {
+  if (!isTransferenciaEntreContas(item) || item.origem === 'movimento') return null;
+
+  const nomes = extrairNomesTransferenciaLadoUnico(item, contasById, mapaContrapartes);
+  if (!nomes) return null;
+
+  const receitaId = item.tipo === 'Receita' ? item.id : mapaParIds?.get(item.id);
+  const reforcoStatus = receitaId
+    ? statusReforcoTransferenciaPdv(reforcosPorLancamento.get(String(receitaId)))
+    : null;
+
+  return {
+    id: `transfer-single-${item.id}`,
+    isTransferenciaConsolidada: true,
+    tipoExibicao: 'Transferência',
+    tipo: 'Transferência',
+    valor: item.valor,
+    data_pagamento: item.data_pagamento,
+    data_vencimento: item.data_vencimento,
+    contaOrigemNome: nomes.contaOrigemNome,
+    contaDestinoNome: nomes.contaDestinoNome,
+    conta_origem_id: item.tipo === 'Despesa' ? item.conta_financeira_id : mapaContrapartes?.get(item.id),
+    conta_destino_id: item.tipo === 'Receita' ? item.conta_financeira_id : mapaContrapartes?.get(item.id),
+    notaTransferencia: item.observacoes || null,
+    reforcoCaixaStatus: reforcoStatus,
+    status: item.status,
+    status_conciliacao: item.status_conciliacao,
+    categoria: 'Transferência entre Contas',
+    tags: item.tags,
+    _lancamentoDespesa: item.tipo === 'Despesa' ? item : undefined,
+    _lancamentoReceita: item.tipo === 'Receita' ? item : undefined,
+  };
+}
+
 /** Une par Despesa+Receita da mesma transferência numa linha só no Fluxo de Caixa. */
-export function consolidarTransferenciasListaFluxo(items = []) {
+export function consolidarTransferenciasListaFluxo(
+  items = [],
+  { movimentos = [], mapaContrapartes = null, contasById = {}, mapaParIds = null } = {},
+) {
+  const reforcosPorLancamento = mapReforcosTransferenciaPorLancamentoId(movimentos);
   const grupos = new Map();
   items.forEach((item) => {
     const key = chaveParTransferenciaLancamento(item);
@@ -179,6 +250,7 @@ export function consolidarTransferenciasListaFluxo(items = []) {
       conta_origem_id: despesa.conta_financeira_id,
       conta_destino_id: receita.conta_financeira_id,
       notaTransferencia: extrairNotaTransferencia(despesa, receita),
+      reforcoCaixaStatus: statusReforcoTransferenciaPdv(reforcosPorLancamento.get(String(receita.id))),
       status: despesa.status || receita.status || 'Pago',
       status_conciliacao: despesa.status_conciliacao || receita.status_conciliacao,
       categoria: 'Transferência entre Contas',
@@ -189,9 +261,21 @@ export function consolidarTransferenciasListaFluxo(items = []) {
     receitaOculta.add(receita.id);
   });
 
+  const parIds = mapaParIds || buildMapaParIdsTransferencia(items);
+
   return items
     .filter((item) => !receitaOculta.has(item.id))
-    .map((item) => consolidados.get(item.id) || item);
+    .map((item) => {
+      if (consolidados.has(item.id)) return consolidados.get(item.id);
+      const projetado = projetarTransferenciaLadoUnico(item, {
+        reforcosPorLancamento,
+        mapaParIds: parIds,
+        contasById,
+        mapaContrapartes,
+      });
+      if (projetado) return projetado;
+      return isTransferenciaEntreContas(item) ? projetarLinhaFluxoCaixa(item) : item;
+    });
 }
 
 export function normalizarMovimentoCaixaParaLinha(mov) {
@@ -238,7 +322,7 @@ export function montarGruposFluxoCaixa({
   oStr,
   ordemLancamentos = 'desc',
 }) {
-  const movimentosJaNoFinanceiro = idsMovimentosComLancamentoFinanceiro(todosLancamentos);
+  const movimentosJaNoFinanceiro = idsMovimentosComLancamentoFinanceiro(todosLancamentos, movimentos);
   const mapaContrapartes = buildMapaContrapartesTransferencia(todosLancamentos);
   const pdvIds = new Set(
     contas
@@ -267,7 +351,7 @@ export function montarGruposFluxoCaixa({
     .map((dia) => {
       const brutos = map[dia];
       const itemsOrdenados = sortLancamentosPorCodigo(brutos, ordemLancamentos);
-      const itemsConsolidados = consolidarTransferenciasListaFluxo(itemsOrdenados);
+      const itemsConsolidados = consolidarTransferenciasListaFluxo(itemsOrdenados, { movimentos });
       const items = itemsConsolidados.map((m) => {
         if (m.origem === 'movimento') {
           return projetarLinhaFluxoCaixa(normalizarMovimentoCaixaParaLinha(m));
@@ -307,13 +391,14 @@ export function montarGruposPorDiaConta({
 }) {
   if (!conta) return [];
 
-  const movimentosJaNoFinanceiro = idsMovimentosComLancamentoFinanceiro(todosLancamentos);
+  const movimentosJaNoFinanceiro = idsMovimentosComLancamentoFinanceiro(todosLancamentos, movimentos);
   const participa = (mov) => movimentoParticipaExtrato(mov, conta);
 
   const todasMovimentacoes = [
     ...lancamentos.map((l) => ({ ...l, origem: 'lancamento' })),
     ...movimentos
       .filter((m) => !movimentosJaNoFinanceiro.has(String(m.id)))
+      .filter((m) => !(m.tipo === 'Reforço' && m.lancamento_financeiro_id))
       .map((m) => ({ ...m, origem: 'movimento' })),
   ].filter(participa);
 
@@ -336,7 +421,9 @@ export function montarGruposPorDiaConta({
     .map((dia) => {
       const brutos = porDia[dia];
       const contasById = { [conta.id]: conta };
-      const items = sortLancamentosPorCodigo(brutos).map((m) => {
+      const itemsBrutos = sortLancamentosPorCodigo(brutos);
+      const itemsConsolidados = consolidarTransferenciasListaFluxo(itemsBrutos, { movimentos });
+      const items = itemsConsolidados.map((m) => {
         const linha = m.origem === 'movimento' ? normalizarMovimentoCaixaParaLinha(m) : m;
         return projetarLinhaFluxoCaixa(linha);
       });
