@@ -23,6 +23,7 @@ export function useDashboardVendasQuery(selectedMonthKey, { enabled = true } = {
       return {
         pedidos: dashboardData.pedidos,
         productCostMap: dashboardData.productCostMap,
+        sealedMonths: dashboardData.sealedMonths || {},
         kpiConfig: normalizeDashboardKpiConfig(configVendaRaw?.[0] || {}),
       };
     },

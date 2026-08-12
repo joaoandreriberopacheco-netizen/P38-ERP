@@ -29,6 +29,7 @@ import {
   getTemporalStartForMonth,
   saleWithinMonthTemporalCut,
 } from '@/lib/dashboardVendasPeriod';
+import { getHojeDateKey } from '@/lib/dashboardIncrementalCache';
 import { resolveValorPedidoVenda } from '@/lib/financialUtils';
 import {
   AcumuladoKpiChart,
@@ -147,7 +148,41 @@ function isSaleEligible(sale) {
   return Boolean(getSaleDate(sale));
 }
 
-function computeVendasMetrics({ pedidos, productCostMap, kpiConfig, selectedMonthKey }) {
+function getSealedThroughCalendarDay(sealedPayload, monthKey) {
+  const closedThrough = String(sealedPayload?.closedThrough || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(closedThrough)) return 0;
+  if (closedThrough.slice(0, 7) !== monthKey) return 0;
+  return Number(closedThrough.slice(8, 10)) || 0;
+}
+
+function applySealedMonthsToBuckets(sealedMonths, salesByMonthDay, profitByMonthDay, monthlyTotals, monthBuckets6) {
+  if (!sealedMonths || typeof sealedMonths !== 'object') return;
+
+  for (const bucket of monthBuckets6) {
+    const snap = sealedMonths[bucket.key];
+    if (!snap?.monthlyTotals) continue;
+
+    const totals = snap.monthlyTotals;
+    monthlyTotals[bucket.key] = {
+      salesGross: Number(totals.salesGross || 0),
+      discounts: Number(totals.discounts || 0),
+      salesNet: Number(totals.salesNet || 0),
+      cost: Number(totals.cost || 0),
+      profit: Number(totals.profit || 0),
+    };
+
+    const salesByDay = snap.salesByDay || {};
+    const profitByDay = snap.profitByDay || {};
+    for (const [dayStr, value] of Object.entries(salesByDay)) {
+      salesByMonthDay[bucket.key][Number(dayStr)] = Number(value || 0);
+    }
+    for (const [dayStr, value] of Object.entries(profitByDay)) {
+      profitByMonthDay[bucket.key][Number(dayStr)] = Number(value || 0);
+    }
+  }
+}
+
+function computeVendasMetrics({ pedidos, productCostMap, kpiConfig, selectedMonthKey, sealedMonths = {} }) {
   const monthBuckets6 = getMonthBucketsEndingAt(selectedMonthKey, 6);
   const [y, m] = selectedMonthKey.split('-').map(Number);
   const selectedBucket = buildMonthBucket(new Date(y, m - 1, 1));
@@ -175,6 +210,23 @@ function computeVendasMetrics({ pedidos, productCostMap, kpiConfig, selectedMont
     };
   });
 
+  monthBuckets6.forEach((bucket) => {
+    salesByMonthDay[bucket.key] = {};
+    profitByMonthDay[bucket.key] = {};
+    monthlyTotals[bucket.key] = {
+      salesGross: 0,
+      discounts: 0,
+      salesNet: 0,
+      cost: 0,
+      profit: 0,
+    };
+  });
+
+  applySealedMonthsToBuckets(sealedMonths, salesByMonthDay, profitByMonthDay, monthlyTotals, monthBuckets6);
+
+  const currentMonthKey = getCurrentMonthKey();
+  const hojeDay = Number(getHojeDateKey().slice(8, 10)) || 0;
+
   eligibleSales.forEach((sale) => {
     const saleDate = getSaleDate(sale);
     if (!saleDate) return;
@@ -183,6 +235,12 @@ function computeVendasMetrics({ pedidos, productCostMap, kpiConfig, selectedMont
     if (!saleWithinMonthTemporalCut(saleDate, monthKey)) return;
 
     const day = getDate(saleDate);
+    const sealedPayload = sealedMonths[monthKey];
+    if (sealedPayload?.monthlyTotals) {
+      if (monthKey < currentMonthKey) return;
+      const sealedThroughDay = getSealedThroughCalendarDay(sealedPayload, monthKey);
+      if (sealedThroughDay > 0 && day <= sealedThroughDay && day !== hojeDay) return;
+    }
     const discountAmount = Number(sale.valor_desconto || 0);
     const netAmount = extractSaleNetAmount(sale);
     const grossAmount = netAmount + discountAmount;
@@ -345,6 +403,7 @@ export default function VendasTab({ enabled = true } = {}) {
       productCostMap: rawData.productCostMap,
       kpiConfig: rawData.kpiConfig,
       selectedMonthKey,
+      sealedMonths: rawData.sealedMonths,
     });
   }, [rawData, selectedMonthKey]);
 

@@ -4,8 +4,15 @@ import {
   getMonthBucketsEndingAt,
   getTemporalCutoffForMonth,
   getTemporalStartForMonth,
+  getCurrentMonthKey,
 } from '@/lib/dashboardVendasPeriod';
 import {
+  fetchDashboardVendasSnapshotsForWindow,
+  planSealedMonthKeys,
+  sealedMonthsFromSnapshotMap,
+} from '@/lib/dashboardKpiSnapshotApi';
+import {
+  isMonthFullyClosed,
   isVendasWindowFullyClosed,
   mergePedidosById,
   planDashboardVendasFetchRanges,
@@ -113,24 +120,38 @@ async function ensurePedidosSegment(queryClient, segmentKey, dataInicio, dataFim
   });
 }
 
-async function fetchDashboardVendasIncremental({ selectedMonthKey, months = 6, queryClient } = {}) {
+async function fetchDashboardVendasIncremental({
+  selectedMonthKey,
+  months = 6,
+  queryClient,
+  sealedMonthKeys = new Set(),
+} = {}) {
   const plan = planDashboardVendasFetchRanges(selectedMonthKey, months);
+  const currentKey = getCurrentMonthKey();
   const segmentFetches = [];
 
   if (plan.closed) {
-    const { dataInicio, dataFim } = plan.closed;
-    segmentFetches.push(
-      ensurePedidosSegment(
-        queryClient,
-        `closed-${dataInicio}_${dataFim}`,
-        dataInicio,
-        dataFim,
-        CLOSED_SEGMENT_STALE,
-      ),
+    const closedBuckets = getMonthBucketsEndingAt(selectedMonthKey, months).filter((b) =>
+      isMonthFullyClosed(b.key),
     );
+    const allClosedSealed = closedBuckets.length > 0
+      && closedBuckets.every((b) => sealedMonthKeys.has(b.key));
+
+    if (!allClosedSealed) {
+      const { dataInicio, dataFim } = plan.closed;
+      segmentFetches.push(
+        ensurePedidosSegment(
+          queryClient,
+          `closed-${dataInicio}_${dataFim}`,
+          dataInicio,
+          dataFim,
+          CLOSED_SEGMENT_STALE,
+        ),
+      );
+    }
   }
 
-  if (plan.currentThroughOntem) {
+  if (plan.currentThroughOntem && !sealedMonthKeys.has(currentKey)) {
     const { dataInicio, dataFim } = plan.currentThroughOntem;
     segmentFetches.push(
       ensurePedidosSegment(
@@ -164,12 +185,26 @@ export async function fetchDashboardVendasPeriodo({
 } = {}) {
   const { dataInicio, dataFim } = monthWindowKeys(selectedMonthKey, months);
   if (!dataInicio || !dataFim) {
-    return { pedidos: [], productCostMap: new Map() };
+    return { pedidos: [], productCostMap: new Map(), sealedMonths: {} };
   }
+
+  const snapshotMap = await fetchDashboardVendasSnapshotsForWindow(selectedMonthKey, months);
+  const sealedMonthKeys = new Set(planSealedMonthKeys(snapshotMap, selectedMonthKey, months));
+  const sealedMonths = sealedMonthsFromSnapshotMap(snapshotMap);
+
+  const buckets = getMonthBucketsEndingAt(selectedMonthKey, months);
+  const allMonthsSealed = buckets.length > 0 && buckets.every((b) => sealedMonthKeys.has(b.key));
 
   let pedidos;
 
-  if (isVendasWindowFullyClosed(selectedMonthKey, months)) {
+  if (allMonthsSealed) {
+    const plan = planDashboardVendasFetchRanges(selectedMonthKey, months);
+    if (plan.hoje) {
+      pedidos = await fetchPedidosVendaHydratedRange(plan.hoje.dataInicio, plan.hoje.dataFim, 500);
+    } else {
+      pedidos = [];
+    }
+  } else if (isVendasWindowFullyClosed(selectedMonthKey, months)) {
     pedidos = await ensurePedidosSegment(
       queryClient,
       `window-${dataInicio}_${dataFim}`,
@@ -178,10 +213,15 @@ export async function fetchDashboardVendasPeriodo({
       CLOSED_SEGMENT_STALE,
     );
   } else {
-    pedidos = await fetchDashboardVendasIncremental({ selectedMonthKey, months, queryClient });
+    pedidos = await fetchDashboardVendasIncremental({
+      selectedMonthKey,
+      months,
+      queryClient,
+      sealedMonthKeys,
+    });
   }
 
   const productCostMap = await fetchProdutosCustoPorIds(collectProdutoIdsFromPedidos(pedidos));
 
-  return { pedidos, productCostMap };
+  return { pedidos, productCostMap, sealedMonths };
 }
