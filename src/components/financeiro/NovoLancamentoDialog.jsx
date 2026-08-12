@@ -334,6 +334,7 @@ export default function NovoLancamentoDialog({
       if (!result.changed) {
         toast({ title: 'Nada foi alterado', className: 'bg-muted text-foreground' });
         setShowConfirmDialog(false);
+        setSaving(false);
         return;
       }
       const batchMsg = result.batchCount ? ` (${result.batchCount} lançamentos)` : '';
@@ -789,6 +790,7 @@ export default function NovoLancamentoDialog({
 
       <RecorrenciaEscopoDialog
         open={showEscopoPagamento}
+        stackElevated
         onClose={() => setShowEscopoPagamento(false)}
         onConfirm={(escopo) => {
           setShowEscopoPagamento(false);
@@ -806,6 +808,7 @@ export default function NovoLancamentoDialog({
       <RecorrenciaEscopoDialog
         mode="cadastro"
         open={showEscopoCadastro}
+        stackElevated
         onClose={() => setShowEscopoCadastro(false)}
         onConfirm={(escopo) => {
           setShowEscopoCadastro(false);
