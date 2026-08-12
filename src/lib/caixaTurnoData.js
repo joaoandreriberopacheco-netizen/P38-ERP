@@ -272,6 +272,21 @@ export function filterRascunhosAguardando(rascunhosRaw, { exigirItens = true } =
     });
 }
 
+/** Valores de recebimentos do turno para painéis compactos (seletor de caixa, etc.). */
+export function buildRecebimentosTurnoResumo(caixaData = {}) {
+  const { pix = 0, credito = 0, debito = 0, vale = 0, fiado = 0 } = caixaData.recebimentos || {};
+  const liquidez = Number(caixaData.liquidez ?? 0);
+  const dinheiro = roundToTwoDecimals(liquidez - pix - credito - debito - vale);
+  return {
+    dinheiro,
+    pix: roundToTwoDecimals(pix),
+    credito: roundToTwoDecimals(credito),
+    debito: roundToTwoDecimals(debito),
+    vale: roundToTwoDecimals(vale),
+    fiado: roundToTwoDecimals(fiado),
+  };
+}
+
 /** Resumo de liquidez no formato de CaixasAtivos / SeletorCaixaPDV (totalVendasUtil). */
 export function buildPainelCaixaResumo(snapshot, { rascunhosPendentesCaixa = [] } = {}) {
   const { turno, substituicoesCtx, caixaData } = snapshot;
@@ -282,9 +297,9 @@ export function buildPainelCaixaResumo(snapshot, { rascunhosPendentesCaixa = [] 
     (caixaData.reforcos || 0) -
     (caixaData.sangrias || 0) -
     (caixaData.despesas || 0);
-  const { pix = 0, credito = 0, debito = 0, vale = 0 } = caixaData.recebimentos || {};
-  const totalFiado = caixaData.fiado || 0;
-  const dinheiroNaGaveta = liquidezTurno - pix - credito - debito - vale - totalFiado;
+  const recebimentos = buildRecebimentosTurnoResumo({ ...caixaData, liquidez: liquidezTurno });
+  const totalFiado = caixaData.fiado || recebimentos.fiado || 0;
+  const dinheiroNaGaveta = recebimentos.dinheiro;
 
   return {
     turnoAberto: true,
@@ -292,6 +307,7 @@ export function buildPainelCaixaResumo(snapshot, { rascunhosPendentesCaixa = [] 
     totalVendas,
     liquidez: liquidezTurno,
     dinheiroNaGaveta,
+    recebimentos,
     totalFiado,
     quantidadeFiado: (caixaData.fiadoLista || []).length,
     senhasAguardando: rascunhosPendentesCaixa,

@@ -18,6 +18,7 @@ import {
 import { findTurnoAbertoParaCaixa, turnoAbertoMaisAntigo } from '@/lib/turnoCaixaAberto';
 import { getCachedUserSession } from '@/lib/userSessionCache';
 import { QUICK_ACCESS_NESTED_DIALOG_CLASS } from '@/lib/quickAccessOverlay';
+import CaixaRecebimentosResumoLinhas from '@/components/vendas/caixa/CaixaRecebimentosResumoLinhas';
 
 function normalizeCaixaId(id) {
   return String(id ?? '').trim();
@@ -123,6 +124,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
               saldoInicial: resumo.saldoInicial,
               totalVendas: resumo.totalVendas,
               liquidez: resumo.liquidez,
+              recebimentos: resumo.recebimentos,
               loadingDetalhes: false,
             },
           }));
@@ -342,19 +344,20 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
                           {caixa.nome}
                         </h3>
                         {liquidezPorCaixa[caixa.id]?.turnoAberto ? (
-                          <div className="space-y-0.5">
+                          <div className="space-y-1.5">
                             {liquidezPorCaixa[caixa.id]?.loadingDetalhes ? (
-                              <p className="text-sm font-semibold text-primary">
-                                Turno aberto · Carregando liquidez…
+                              <p className="text-xs font-medium text-primary">
+                                Turno aberto · Carregando resumo…
                               </p>
                             ) : (
                               <>
-                                <p className="text-sm font-semibold text-primary">
-                                  Turno aberto · Liquidez: R$ {(liquidezPorCaixa[caixa.id].liquidez || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                <p className="text-xs font-semibold text-primary uppercase tracking-wide">
+                                  Turno aberto
                                 </p>
-                                <p className="text-xs text-muted-foreground">
-                                  Saldo Inicial: R$ {(liquidezPorCaixa[caixa.id].saldoInicial || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} · Vendas: R$ {(liquidezPorCaixa[caixa.id].totalVendas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                </p>
+                                <CaixaRecebimentosResumoLinhas
+                                  recebimentos={liquidezPorCaixa[caixa.id].recebimentos}
+                                  compact
+                                />
                               </>
                             )}
                           </div>
