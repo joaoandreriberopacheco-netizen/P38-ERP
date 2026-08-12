@@ -58,6 +58,7 @@ import usePagamentoLoteFluxo from './fluxo/usePagamentoLoteFluxo';
 import { CONCILIACAO_LOTE_TAMANHO } from '@/lib/conciliacaoEmLote';
 import { consumirArquivoLancamentoTorreDoBridge } from '@/lib/torreLancamentoBridge';
 import { uploadAnexoParaLancamentoFinanceiro } from '@/lib/uploadAnexoReferencia';
+import { resolveViewportLayout, useCompactShell } from '@/hooks/use-breakpoint';
 import {
   calcularKpisProgramadas,
   calcularSaldoPrevisto,
@@ -95,6 +96,24 @@ const FAB_ITEMS = [
   { tipo: 'Transferência', icon: ArrowRightLeft, label: 'Transf.' },
 ];
 
+const ABAS_FINANCEIRO_DESKTOP = [
+  { value: 'caixas', label: 'Caixas e Bancos', shortLabel: 'Contas' },
+  { value: 'fluxo', label: 'Fluxo de Caixa', shortLabel: 'Fluxo' },
+  { value: 'folha', label: 'Folha (previsão)', shortLabel: 'Folha' },
+  { value: 'budgets', label: 'Budgets', shortLabel: 'Budgets' },
+  { value: 'planejamento', label: 'Planejamento', shortLabel: 'Plan.' },
+];
+
+const ABAS_FINANCEIRO_MOBILE = ABAS_FINANCEIRO_DESKTOP.slice(0, 2);
+
+const ABAS_SO_DESKTOP = new Set(['folha', 'budgets', 'planejamento']);
+
+function abaFinanceiroInicial() {
+  if (typeof window === 'undefined') return 'caixas';
+  const layout = resolveViewportLayout(window.innerWidth, window.innerHeight);
+  return layout === 'mobile' ? 'caixas' : 'fluxo';
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function ExecucaoOrcamentaria() {
   const [lancs, setLancs] = useState([]);
@@ -127,7 +146,7 @@ export default function ExecucaoOrcamentaria() {
     contasSel: [],
   });
   const [corteDiarioInitial, setCorteDiarioInitial] = useState(null);
-  const [aba, setAba] = useState('fluxo'); // 'fluxo' | 'caixas' | 'planejamento' | 'folha'
+  const [aba, setAba] = useState(abaFinanceiroInicial);
   const [showImportadorAgefin, setShowImportadorAgefin] = useState(false);
   const [mostrarProgramadas, setMostrarProgramadas] = useState(
     () => lerPreferenciasFluxoUnificado().mostrarProgramadas,
@@ -153,15 +172,24 @@ export default function ExecucaoOrcamentaria() {
 
   const { s: ds, e: de } = useMemo(() => dateRange(periodo, cs, ce), [periodo, cs, ce]);
 
+  const isCompactShell = useCompactShell();
+
+  useEffect(() => {
+    if (!isCompactShell) return;
+    setAba((prev) => (ABAS_SO_DESKTOP.has(prev) ? 'caixas' : prev));
+  }, [isCompactShell]);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const abaParam = params.get('aba');
+    const layoutMobile = typeof window !== 'undefined'
+      && resolveViewportLayout(window.innerWidth, window.innerHeight) === 'mobile';
     if (abaParam === 'folha') {
-      setAba('folha');
+      setAba(layoutMobile ? 'caixas' : 'folha');
     } else if (abaParam === 'budgets') {
-      setAba('budgets');
+      setAba(layoutMobile ? 'caixas' : 'budgets');
     } else if (abaParam === 'planejamento' || abaParam === 'agefin') {
-      setAba('planejamento');
+      setAba(layoutMobile ? 'caixas' : 'planejamento');
     }
     if (abaParam === 'folha' || abaParam === 'budgets' || abaParam === 'planejamento' || abaParam === 'agefin') {
       params.delete('aba');
@@ -736,13 +764,7 @@ export default function ExecucaoOrcamentaria() {
     [lancs, movimentos, contas, contasAtivas, loading],
   );
 
-  const abasPrincipais = [
-    { value: 'fluxo', label: 'Fluxo de Caixa', shortLabel: 'Fluxo' },
-    { value: 'caixas', label: 'Caixas e Bancos', shortLabel: 'Caixas' },
-    { value: 'folha', label: 'Folha (previsão)', shortLabel: 'Folha' },
-    { value: 'budgets', label: 'Budgets', shortLabel: 'Bdg.' },
-    { value: 'planejamento', label: 'Planejamento', shortLabel: 'Plan.' },
-  ];
+  const abasPrincipais = isCompactShell ? ABAS_FINANCEIRO_MOBILE : ABAS_FINANCEIRO_DESKTOP;
 
   const handleToggleProgramadas = useCallback((next) => {
     setMostrarProgramadas(next);
