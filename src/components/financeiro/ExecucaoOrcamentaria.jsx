@@ -473,6 +473,15 @@ export default function ExecucaoOrcamentaria() {
 
   const lancsParaSaldo = lancsSaldo.length ? lancsSaldo : lancs;
   const movsParaSaldo = movsSaldo.length ? movsSaldo : movimentos;
+  const precisaBaseCarteiraSaldo = !mostrarHistoricoAnterior && !!dataCorteHistorico;
+  const baseCarteiraSaldoDisponivel = lancsSaldo.length > 0 && movsSaldo.length > 0;
+  const saldosCarteiraProntos = !loading && (!precisaBaseCarteiraSaldo || baseCarteiraSaldoDisponivel);
+  const lancsParaSaldoCarteira = baseCarteiraSaldoDisponivel
+    ? lancsSaldo
+    : (precisaBaseCarteiraSaldo ? [] : lancs);
+  const movsParaSaldoCarteira = baseCarteiraSaldoDisponivel
+    ? movsSaldo
+    : (precisaBaseCarteiraSaldo ? [] : movimentos);
 
   const kpis = useMemo(() => {
     const baseKpis = calcularKpisFluxoPeriodo(
@@ -482,9 +491,12 @@ export default function ExecucaoOrcamentaria() {
       contasById,
       contasFiltroIds,
     );
+    if (!saldosCarteiraProntos) {
+      return { ...baseKpis, saldoContas: null };
+    }
     const saldosMap = !mostrarHistoricoAnterior && dataCorteHistorico
-      ? calcularSaldosAposDataCorte(contasVisiveisSaldo, lancsParaSaldo, movsParaSaldo, dataCorteHistorico)
-      : calcularSaldosTodasContas(contasVisiveisSaldo, lancsParaSaldo, movsParaSaldo);
+      ? calcularSaldosAposDataCorte(contasVisiveisSaldo, lancsParaSaldoCarteira, movsParaSaldoCarteira, dataCorteHistorico)
+      : calcularSaldosTodasContas(contasVisiveisSaldo, lancsParaSaldoCarteira, movsParaSaldoCarteira);
     const saldoContas = contasVisiveisSaldo.reduce(
       (acc, c) => acc + getSaldoExibicaoConta(c, saldosMap),
       0,
@@ -500,10 +512,11 @@ export default function ExecucaoOrcamentaria() {
     contasById,
     contasVisiveisSaldo,
     contasFiltroIds,
-    lancsParaSaldo,
-    movsParaSaldo,
+    lancsParaSaldoCarteira,
+    movsParaSaldoCarteira,
     mostrarHistoricoAnterior,
     dataCorteHistorico,
+    saldosCarteiraProntos,
   ]);
 
   const grupos = useMemo(() => {
@@ -837,6 +850,7 @@ export default function ExecucaoOrcamentaria() {
                   saldoPrevisto={saldoPrevisto}
                   aReceber={kpisProgramadas.aReceber}
                   aPagar={kpisProgramadas.aPagar}
+                  saldosCarteiraProntos={saldosCarteiraProntos}
                 />
               </div>
               <ContasSaldoPicker
