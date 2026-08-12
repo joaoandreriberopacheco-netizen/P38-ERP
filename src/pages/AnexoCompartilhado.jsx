@@ -65,13 +65,8 @@ export default function AnexoCompartilhado() {
     [tiposDocumentoCustom]
   );
 
+  /** Só descrição na busca; valor do OCR vai em valorSugerido (ordena, não filtra). */
   const queryBuscaLancamento = useMemo(() => {
-    if (dadosComprovante?.valor != null) {
-      return Number(dadosComprovante.valor).toLocaleString('pt-BR', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
-    }
     if (dadosComprovante?.descricao) return dadosComprovante.descricao;
     return '';
   }, [dadosComprovante]);

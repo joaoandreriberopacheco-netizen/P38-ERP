@@ -15,6 +15,10 @@ import { normalizeDataText } from '@/lib/normalizeDataText';
 import { gravarPreferenciasLancamento, resolverPreferenciasLancamento } from '@/lib/lancamentoPreferencias';
 import { resolverDataLancamentoInput } from '@/lib/lancamentoOrdemMeta';
 import { isLancamentoPago } from '@/lib/lancamentoFinanceiroStatus';
+import {
+  limparFluxoLancamentoTorre,
+  voltarParaTorreControle,
+} from '@/lib/torreLancamentoBridge';
 import RecorrenciaEscopoDialog from './RecorrenciaEscopoDialog';
 import {
   descricaoPadraoVale,
@@ -59,6 +63,7 @@ export default function NovoLancamentoDialog({
   origemContaPagar,
   presentation,
   lancamentoExistente = null,
+  origemTorre = false,
   modoPlanejamento = false,
   centroCusto = '',
   centroCustoId = '',
@@ -105,6 +110,14 @@ export default function NovoLancamentoDialog({
   const { categorias, reload: reloadCats } = useCategorias();
 
   const modoEdicao = !!lancamentoExistente;
+
+  const fecharFluxo = () => {
+    if (origemTorre && !modoEdicao) {
+      voltarParaTorreControle();
+      return;
+    }
+    onClose();
+  };
 
   const resetForm = () => {
     setTipo(tipoInicial || 'Despesa');
@@ -661,7 +674,7 @@ export default function NovoLancamentoDialog({
       <div className="flex items-center justify-between px-4 pt-5 pb-2 shrink-0">
         <button
           type="button"
-          onClick={onClose}
+          onClick={fecharFluxo}
           className="w-9 h-9 flex items-center justify-center rounded-full bg-muted dark:bg-muted active:scale-95"
         >
           <X className="w-4 h-4 text-muted-foreground" />
@@ -771,8 +784,16 @@ export default function NovoLancamentoDialog({
         open={showConfirmDialog}
         mode={confirmDialogMode}
         stackElevated
-        successTitle={modoEdicao ? 'Alterações guardadas' : undefined}
-        successMessage={modoEdicao ? undefined : undefined}
+        successTitle={modoEdicao ? 'Alterações guardadas' : origemTorre ? 'Lançamento salvo' : undefined}
+        successMessage={
+          modoEdicao
+            ? undefined
+            : origemTorre
+              ? 'Comprovante anexado. Deseja registrar outro lançamento?'
+              : undefined
+        }
+        createAnotherLabel={origemTorre ? 'Outro lançamento (S)' : undefined}
+        finishLabel={origemTorre ? 'Voltar à Torre (N)' : undefined}
         onCreateAnother={() => {
           setShowConfirmDialog(false);
           setConfirmDialogMode('processing');
@@ -780,11 +801,12 @@ export default function NovoLancamentoDialog({
             onClose();
             return;
           }
+          if (origemTorre) limparFluxoLancamentoTorre();
           resetForm();
         }}
         onFinish={() => {
           setShowConfirmDialog(false);
-          onClose();
+          fecharFluxo();
         }}
       />
 

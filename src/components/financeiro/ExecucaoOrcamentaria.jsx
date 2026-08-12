@@ -57,7 +57,7 @@ import PagamentoLoteDialog from './PagamentoLoteDialog';
 import FluxoToggleProgramadas from './fluxo/FluxoToggleProgramadas';
 import usePagamentoLoteFluxo from './fluxo/usePagamentoLoteFluxo';
 import { CONCILIACAO_LOTE_TAMANHO } from '@/lib/conciliacaoEmLote';
-import { consumirArquivoLancamentoTorreDoBridge } from '@/lib/torreLancamentoBridge';
+import { consumirArquivoLancamentoTorreDoBridge, temFluxoLancamentoTorreAtivo, voltarParaTorreControle } from '@/lib/torreLancamentoBridge';
 import { uploadAnexoParaLancamentoFinanceiro } from '@/lib/uploadAnexoReferencia';
 import { resolveViewportLayout, useCompactShell } from '@/hooks/use-breakpoint';
 import {
@@ -160,6 +160,7 @@ export default function ExecucaoOrcamentaria() {
     () => lerPreferenciasFluxoUnificado().mostrarProgramadas,
   );
   const [showNovoFluxo, setShowNovoFluxo] = useState(false);
+  const [origemTorre, setOrigemTorre] = useState(() => temFluxoLancamentoTorreAtivo());
   const [ordemLancamentos, setOrdemLancamentos] = useState('desc');
   const [urlDescricao, setUrlDescricao] = useState('');
   const [urlValor, setUrlValor] = useState('');
@@ -222,6 +223,10 @@ export default function ExecucaoOrcamentaria() {
     const novoAtalho = params.get('novo');
 
     if (novoAtalho === '1' || novoAtalho === 'true') {
+      if (params.get('torre_anexo') === '1' || temFluxoLancamentoTorreAtivo()) {
+        setOrigemTorre(true);
+        setAba('fluxo');
+      }
       if (tipo && FAB_ITEMS.some((item) => item.tipo === tipo)) {
         setNovoTipo(tipo);
         setShowNovoFluxo(true);
@@ -1052,15 +1057,21 @@ export default function ExecucaoOrcamentaria() {
           <NovoLancamentoDialog
             open={showNovoFluxo}
             lancamentoExistente={editando}
+            origemTorre={origemTorre}
             tipoInicial={novoTipo}
             descricaoInicial={urlDescricao}
             valorInicial={urlValor}
             referenciaId={urlReferenciaId}
             referenciaTipo={urlReferenciaTipo}
             onClose={() => {
+              if (origemTorre && !editando) {
+                voltarParaTorreControle();
+                return;
+              }
               setShowNovoFluxo(false);
               setEditando(null);
               setFabOpen(false);
+              setOrigemTorre(false);
               setUrlDescricao('');
               setUrlValor('');
               setUrlReferenciaId('');

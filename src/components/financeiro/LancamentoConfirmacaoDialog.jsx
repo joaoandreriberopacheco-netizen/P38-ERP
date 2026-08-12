@@ -4,7 +4,7 @@ import { CheckCircle2, Loader2 } from 'lucide-react';
 import { LancamentoFormSheet } from './fluxo/LancamentoPickerDialog';
 import { useCompactShell } from '@/hooks/use-breakpoint';
 
-function ConfirmacaoBody({ processing, successTitle, successMessage, onCreateAnother, onFinish }) {
+function ConfirmacaoBody({ processing, successTitle, successMessage, onCreateAnother, onFinish, createAnotherLabel, finishLabel }) {
   return (
     <div className="flex flex-col items-center gap-4 py-2 text-center">
       <div className={`flex h-16 w-16 items-center justify-center rounded-full ${processing ? 'bg-muted' : 'bg-green-50 dark:bg-green-900/20'}`}>
@@ -31,14 +31,14 @@ function ConfirmacaoBody({ processing, successTitle, successMessage, onCreateAno
             onClick={onCreateAnother}
             className="h-12 w-full rounded-2xl bg-background text-sm font-semibold text-white dark:bg-muted dark:text-foreground"
           >
-            Sim (S)
+            {createAnotherLabel || 'Sim (S)'}
           </button>
           <button
             type="button"
             onClick={onFinish}
             className="h-12 w-full rounded-2xl bg-muted text-sm font-medium text-foreground"
           >
-            Não (N)
+            {finishLabel || 'Não (N)'}
           </button>
         </div>
       )}
@@ -54,6 +54,8 @@ export default function LancamentoConfirmacaoDialog({
   successTitle,
   successMessage,
   stackElevated = false,
+  createAnotherLabel,
+  finishLabel,
 }) {
   const processing = mode === 'processing';
   const isMobile = useCompactShell();
@@ -76,6 +78,8 @@ export default function LancamentoConfirmacaoDialog({
       successMessage={successMessage}
       onCreateAnother={onCreateAnother}
       onFinish={onFinish}
+      createAnotherLabel={createAnotherLabel}
+      finishLabel={finishLabel}
     />
   );
 

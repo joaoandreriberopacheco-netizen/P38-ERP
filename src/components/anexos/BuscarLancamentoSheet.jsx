@@ -65,7 +65,7 @@ function intervaloBuscaPeriodo(periodo) {
 
 async function buscarLancamentosPeriodo({ dataInicio, dataFim, limit = PAGE_SIZE }) {
   const [porPeriodo, porLancamento, porCriacao] = await Promise.all([
-    fetchLancamentosFinanceirosPeriodo({ dataInicio, dataFim, limit }),
+    fetchLancamentosFinanceirosPeriodo({ dataInicio, dataFim, limit }).catch(() => []),
     base44.entities.LancamentoFinanceiro.filter(
       { data_lancamento: { $gte: inicioDiaSistemaISO(dataInicio), $lte: fimDiaSistemaISO(dataFim) } },
       '-data_lancamento',
@@ -78,6 +78,18 @@ async function buscarLancamentosPeriodo({ dataInicio, dataFim, limit = PAGE_SIZE
     ).catch(() => []),
   ]);
   return dedupPorId([...(porPeriodo || []), ...(porLancamento || []), ...(porCriacao || [])]);
+}
+
+function queryPriorizaValor(queryRaw, valorSugerido) {
+  const q = String(queryRaw || '').trim();
+  if (!q || valorSugerido == null) return q;
+  const alvo = Number(valorSugerido);
+  if (!Number.isFinite(alvo)) return q;
+  const nQ = parseValorBusca(q);
+  if (nQ != null && Math.abs(nQ - alvo) < 0.009) return '';
+  const formatted = alvo.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (q.replace(/\s/g, '') === formatted.replace(/\s/g, '')) return '';
+  return q;
 }
 
 function passaFiltroPeriodoLancamento(l, periodo) {
@@ -287,11 +299,12 @@ export default function BuscarLancamentoSheet({
   }, [queryInicial]);
 
   const lancamentos = useMemo(() => {
+    const queryEfetiva = queryPriorizaValor(query, valorSugerido);
     const filtrados = cache
       .filter((l) => passaFiltroPeriodoLancamento(l, filterPeriodo))
       .filter((l) => filtrosAuxiliares(l, { filterTipo, filterStatus, filterPrazo }))
-      .filter((l) => lancamentoMatchesSearch(l, query));
-    if (!query.trim() && valorSugerido != null) {
+      .filter((l) => lancamentoMatchesSearch(l, queryEfetiva));
+    if (!queryEfetiva.trim() && valorSugerido != null) {
       return priorizarPorValorSugerido(filtrados, valorSugerido);
     }
     return ordenarMaisRecentes(filtrados);

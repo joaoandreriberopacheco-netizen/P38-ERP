@@ -4,9 +4,46 @@
 
 import { createPageUrl } from '@/utils';
 
+const TTL_MS = 30 * 60 * 1000;
+
 export const STORAGE_LANCAMENTO_TORRE_BRIDGE = 'p38_lancamento_torre_v1';
+export const STORAGE_TORRE_RETURN = 'p38_torre_return_v1';
+
+/** Marca que o fluxo veio da Torre (para voltar em vez de ficar no Fluxo de Caixa). */
+export function marcarFluxoLancamentoTorre() {
+  try {
+    sessionStorage.setItem(STORAGE_TORRE_RETURN, JSON.stringify({ ts: Date.now() }));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function limparFluxoLancamentoTorre() {
+  try {
+    sessionStorage.removeItem(STORAGE_TORRE_RETURN);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function temFluxoLancamentoTorreAtivo() {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_TORRE_RETURN);
+    if (!raw) return false;
+    const { ts } = JSON.parse(raw);
+    return !(ts && Date.now() - Number(ts) > TTL_MS);
+  } catch {
+    return false;
+  }
+}
+
+export function voltarParaTorreControle() {
+  limparFluxoLancamentoTorre();
+  window.location.href = createPageUrl('AnexoCompartilhado');
+}
 
 export async function navegarParaNovoLancamentoTorre(arquivoEntry, { valor, descricao, tipoDocumento = 'Comprovante' } = {}) {
+  marcarFluxoLancamentoTorre();
   try {
     const file = arquivoEntry?.file;
     if (file) {
@@ -60,8 +97,6 @@ export function guardarArquivoParaLancamentoTorre(file, nome, tipo, tipoDocument
     reader.readAsDataURL(file);
   });
 }
-
-const TTL_MS = 30 * 60 * 1000;
 
 export function consumirArquivoLancamentoTorreDoBridge() {
   try {
