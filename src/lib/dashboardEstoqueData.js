@@ -20,6 +20,12 @@ import { fetchDadosVendaAbcd90d } from '@/lib/fetchPedidosVenda90d';
 import { fetchProdutosList } from '@/hooks/useP38Entities';
 import { p38Keys, P38_STALE_TIME } from '@/lib/p38QueryConfig';
 import { inicioDiaSistemaISO, fimDiaSistemaISO } from '@/components/utils/dateUtils';
+import {
+  buildEstoqueFisicoPorProdutoNoFimDoMes,
+  getMarcaMensalEstoque,
+  getMovimentoDeltaReconstrucao,
+  movimentoContaNaReconstrucaoEstoque,
+} from '@/lib/dashboardEstoqueReconstrucao';
 
 const QUALITY_ORDER = ['A', 'B', 'C', 'D', 'E'];
 const QUALITY_LABELS = {
@@ -160,39 +166,21 @@ function buildPendenteLocalizacaoNoFimDoMes(monthEnd, pedidosCompra = [], embarq
   );
 }
 
-function movimentoContaNoNivelEstoque(movimento = {}) {
-  const motivo = normalizeStatus(movimento.motivo);
-  return motivo === 'compra' || motivo === 'venda' || motivo === 'consumo interno';
-}
-
 function getMovimentoDate(movimento = {}) {
   const raw = movimento.data_movimento || movimento.created_date || movimento.data;
   return parseDate(raw);
-}
-
-function getMovimentoDeltaQuantidade(movimento = {}) {
-  if (!movimentoContaNoNivelEstoque(movimento)) return 0;
-  const quantidade = Number(movimento.quantidade || 0);
-  const motivo = normalizeStatus(movimento.motivo);
-  const tipo = normalizeStatus(movimento.tipo);
-
-  if (motivo === 'compra') return Math.abs(quantidade);
-  if (motivo === 'venda' || motivo === 'consumo interno') return -Math.abs(quantidade);
-  if (tipo === 'entrada') return Math.abs(quantidade);
-  if (tipo === 'saída' || tipo === 'saida') return -Math.abs(quantidade);
-  return 0;
 }
 
 function buildNivelEstoqueSeries({
   monthBuckets,
   produtosComAbcd,
   skuBase,
-  movimentosCompraVenda,
+  movimentosReconstrucao,
   pedidosCompraLista,
   embarquesCompraLista,
   pendentePorProdutoAtual,
 }) {
-  const sortedMovements = movimentosCompraVenda
+  const sortedMovements = movimentosReconstrucao
     .slice()
     .sort((a, b) => b.date.getTime() - a.date.getTime());
 
@@ -206,6 +194,18 @@ function buildNivelEstoqueSeries({
     const monthEnd = bucket.end;
     const isCurrentMonth = bucket.key === currentMonthKey;
 
+    const marcaMensal = getMarcaMensalEstoque(bucket.key);
+    if (marcaMensal) {
+      nivelEstoqueSeries.unshift({
+        periodo: bucket.label,
+        valor: marcaMensal.estoqueFisico,
+        valorFisico: marcaMensal.estoqueFisico,
+        valorVirtual: marcaMensal.transitoFinanceiroAprovado,
+        valorGeral: marcaMensal.totalLocalizacao,
+      });
+      continue;
+    }
+
     while (movIdx < sortedMovements.length && isAfter(sortedMovements[movIdx].date, monthEnd)) {
       const movimento = sortedMovements[movIdx];
       deltaAfterBySku.set(
@@ -215,14 +215,11 @@ function buildNivelEstoqueSeries({
       movIdx += 1;
     }
 
-    const estoqueFisicoPorProdutoId = new Map();
-    produtosComAbcd.forEach((produto) => {
-      if (!produto?.ativo) return;
-      const skuData = skuBase.get(produto.id);
-      if (!skuData) return;
-      const deltaAfterMonth = deltaAfterBySku.get(produto.id) || 0;
-      estoqueFisicoPorProdutoId.set(produto.id, Math.max(0, skuData.estoqueAtual - deltaAfterMonth));
-    });
+    const estoqueFisicoPorProdutoId = buildEstoqueFisicoPorProdutoNoFimDoMes(
+      produtosComAbcd,
+      skuBase,
+      deltaAfterBySku,
+    );
 
     const pendentePorProduto = isCurrentMonth
       ? pendentePorProdutoAtual
@@ -419,11 +416,12 @@ export async function fetchDashboardEstoqueMetrics(queryClient) {
     ]),
   );
 
-  const movimentosCompraVenda = movimentacoesEstoqueLista
+  const movimentosReconstrucao = movimentacoesEstoqueLista
+    .filter((movimento) => movimentoContaNaReconstrucaoEstoque(movimento))
     .map((movimento) => ({
       skuId: movimento.produto_id,
       date: getMovimentoDate(movimento),
-      deltaQuantidade: getMovimentoDeltaQuantidade(movimento),
+      deltaQuantidade: getMovimentoDeltaReconstrucao(movimento),
     }))
     .filter((movimento) => movimento.skuId && movimento.date && movimento.deltaQuantidade !== 0);
 
@@ -435,7 +433,7 @@ export async function fetchDashboardEstoqueMetrics(queryClient) {
     monthBuckets,
     produtosComAbcd: produtosComAbcdCatalogo,
     skuBase,
-    movimentosCompraVenda,
+    movimentosReconstrucao,
     pedidosCompraLista,
     embarquesCompraLista,
     pendentePorProdutoAtual: pendentePorProdutoCatalogo,
