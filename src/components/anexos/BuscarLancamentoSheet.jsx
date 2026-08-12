@@ -13,20 +13,86 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import { format } from 'date-fns';
-import { dataHoje } from '@/components/utils/dateUtils';
+import { format, subDays } from 'date-fns';
+import { dataHoje, fimDiaSistemaISO, inicioDiaSistemaISO } from '@/components/utils/dateUtils';
+import { fetchLancamentosFinanceirosPeriodo } from '@/lib/fetchLancamentosFinanceirosFluxo';
+import { getDataChaveLancamento } from '@/lib/financialUtils';
+import { codigoOrdemLancamento } from '@/lib/lancamentoOrdemMeta';
+import {
+  lerPreferenciasCorteHistorico,
+  passaFiltroCorteHistorico,
+  periodoRangeFinanceiro,
+} from '@/lib/filtroDataFinanceiro';
 
 const PAGE_SIZE = 800;
 
-function priorizarDespesas(lista) {
+function dedupPorId(rows) {
+  const map = new Map();
+  for (const row of rows || []) {
+    if (row?.id) map.set(row.id, row);
+  }
+  return [...map.values()];
+}
+
+function ordenarMaisRecentes(lista) {
   return [...lista].sort((a, b) => {
-    const pa = a.tipo === 'Despesa' ? 0 : a.tipo === 'Receita' ? 1 : 2;
-    const pb = b.tipo === 'Despesa' ? 0 : b.tipo === 'Receita' ? 1 : 2;
-    if (pa !== pb) return pa - pb;
-    const da = a.data_vencimento || '';
-    const db = b.data_vencimento || '';
+    const ca = codigoOrdemLancamento(a) || '';
+    const cb = codigoOrdemLancamento(b) || '';
+    if (ca && cb && ca !== cb) return cb.localeCompare(ca);
+    const da = getDataChaveLancamento(a) || a.data_pagamento || a.data_vencimento || '';
+    const db = getDataChaveLancamento(b) || b.data_pagamento || b.data_vencimento || '';
     return db.localeCompare(da);
   });
+}
+
+function intervaloBuscaPeriodo(periodo) {
+  const hoje = dataHoje();
+  if (periodo === 'hoje') return { dataInicio: hoje, dataFim: hoje };
+  if (periodo === 'semana') {
+    const inicio = format(subDays(new Date(`${hoje}T12:00:00`), 6), 'yyyy-MM-dd');
+    return { dataInicio: inicio, dataFim: hoje };
+  }
+  if (periodo === 'mes') {
+    const { s, e } = periodoRangeFinanceiro('mes', null, null);
+    return {
+      dataInicio: format(s, 'yyyy-MM-dd'),
+      dataFim: format(e, 'yyyy-MM-dd'),
+    };
+  }
+  const { dataCorte } = lerPreferenciasCorteHistorico();
+  return { dataInicio: dataCorte || hoje, dataFim: hoje };
+}
+
+async function buscarLancamentosPeriodo({ dataInicio, dataFim, limit = PAGE_SIZE }) {
+  const [porPeriodo, porLancamento, porCriacao] = await Promise.all([
+    fetchLancamentosFinanceirosPeriodo({ dataInicio, dataFim, limit }),
+    base44.entities.LancamentoFinanceiro.filter(
+      { data_lancamento: { $gte: inicioDiaSistemaISO(dataInicio), $lte: fimDiaSistemaISO(dataFim) } },
+      '-data_lancamento',
+      limit,
+    ).catch(() => []),
+    base44.entities.LancamentoFinanceiro.filter(
+      { created_date: { $gte: inicioDiaSistemaISO(dataInicio), $lte: fimDiaSistemaISO(dataFim) } },
+      '-created_date',
+      limit,
+    ).catch(() => []),
+  ]);
+  return dedupPorId([...(porPeriodo || []), ...(porLancamento || []), ...(porCriacao || [])]);
+}
+
+function passaFiltroPeriodoLancamento(l, periodo) {
+  if (periodo === 'todas') return true;
+  const { dataInicio, dataFim } = intervaloBuscaPeriodo(periodo);
+  const key = getDataChaveLancamento(l);
+  if (!key) return false;
+  return key >= dataInicio && key <= dataFim;
+}
+
+function labelPeriodoAtivo(periodo) {
+  if (periodo === 'hoje') return 'de hoje';
+  if (periodo === 'semana') return 'dos últimos 7 dias';
+  if (periodo === 'mes') return 'do mês';
+  return 'recentes';
 }
 
 /** Extrai número monetário de texto livre (ex.: "150,90", "R$ 100"). */
@@ -48,6 +114,13 @@ function formatVencimentoBR(dataVenc) {
   } catch {
     return String(dataVenc);
   }
+}
+
+function getDataExibicaoLancamento(l) {
+  const key = getDataChaveLancamento(l);
+  if (key) return formatVencimentoBR(key);
+  if (l?.data_pagamento) return formatVencimentoBR(l.data_pagamento);
+  return formatVencimentoBR(l?.data_vencimento);
 }
 
 function lancamentoMatchesSearch(l, qRaw) {
@@ -167,9 +240,11 @@ export default function BuscarLancamentoSheet({
   const [erro, setErro] = useState(null);
   const [selecionado, setSelecionado] = useState(null);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [filterPeriodo, setFilterPeriodo] = useState('hoje');
   const [filterTipo, setFilterTipo] = useState('todos');
   const [filterStatus, setFilterStatus] = useState('todos');
   const [filterPrazo, setFilterPrazo] = useState('todos');
+  const preferenciasCorte = useMemo(() => lerPreferenciasCorteHistorico(), []);
 
   useEffect(() => {
     let cancelled = false;
@@ -177,10 +252,14 @@ export default function BuscarLancamentoSheet({
       setCarregando(true);
       setErro(null);
       try {
-        const todos = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', PAGE_SIZE);
+        const { dataInicio, dataFim } = intervaloBuscaPeriodo(filterPeriodo);
+        const todos = await buscarLancamentosPeriodo({ dataInicio, dataFim, limit: PAGE_SIZE });
         if (cancelled) return;
         const lista = Array.isArray(todos) ? todos : [];
-        setCache(priorizarDespesas(lista));
+        const aposCorte = lista.filter((l) =>
+          passaFiltroCorteHistorico(getDataChaveLancamento(l), preferenciasCorte),
+        );
+        setCache(ordenarMaisRecentes(aposCorte));
       } catch (e) {
         console.error(e);
         if (!cancelled) {
@@ -194,10 +273,13 @@ export default function BuscarLancamentoSheet({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [filterPeriodo, preferenciasCorte]);
 
   const hasActiveFilters =
-    filterTipo !== 'todos' || filterStatus !== 'todos' || filterPrazo !== 'todos';
+    filterPeriodo !== 'hoje' ||
+    filterTipo !== 'todos' ||
+    filterStatus !== 'todos' ||
+    filterPrazo !== 'todos';
 
   useEffect(() => {
     const q = String(queryInicial || '').trim();
@@ -206,15 +288,17 @@ export default function BuscarLancamentoSheet({
 
   const lancamentos = useMemo(() => {
     const filtrados = cache
+      .filter((l) => passaFiltroPeriodoLancamento(l, filterPeriodo))
       .filter((l) => filtrosAuxiliares(l, { filterTipo, filterStatus, filterPrazo }))
       .filter((l) => lancamentoMatchesSearch(l, query));
     if (!query.trim() && valorSugerido != null) {
       return priorizarPorValorSugerido(filtrados, valorSugerido);
     }
-    return filtrados;
-  }, [cache, query, filterTipo, filterStatus, filterPrazo, valorSugerido]);
+    return ordenarMaisRecentes(filtrados);
+  }, [cache, query, filterPeriodo, filterTipo, filterStatus, filterPrazo, valorSugerido]);
 
   const limparFiltros = () => {
+    setFilterPeriodo('hoje');
     setFilterTipo('todos');
     setFilterStatus('todos');
     setFilterPrazo('todos');
@@ -269,7 +353,7 @@ export default function BuscarLancamentoSheet({
         </div>
         <div className="flex items-center justify-between px-1 pt-2">
           <p className="text-[11px] text-muted-foreground dark:text-muted-foreground">
-            {lancamentos.length} lançamento{lancamentos.length !== 1 ? 's' : ''}
+            {lancamentos.length} lançamento{lancamentos.length !== 1 ? 's' : ''} {labelPeriodoAtivo(filterPeriodo)}
           </p>
           {(hasActiveFilters || query) && (
             <button type="button" onClick={limparFiltros} className="flex items-center gap-1 text-[11px] text-muted-foreground dark:text-muted-foreground">
@@ -292,8 +376,12 @@ export default function BuscarLancamentoSheet({
         ) : lancamentos.length === 0 ? (
           <p className="py-10 text-center text-sm text-muted-foreground dark:text-muted-foreground">
             {cache.length === 0
-              ? 'Nenhum lançamento disponível. Crie ou importe contas no Financeiro.'
-              : 'Nenhum lançamento corresponde à busca ou aos filtros.'}
+              ? filterPeriodo === 'hoje'
+                ? 'Nenhum lançamento de hoje. Amplie o período nos filtros ou crie um lançamento no Financeiro.'
+                : 'Nenhum lançamento neste período. Tente ampliar o filtro ou crie um lançamento no Financeiro.'
+              : query
+                ? `Nenhum lançamento ${labelPeriodoAtivo(filterPeriodo)} corresponde à busca. Limpe a busca ou amplie o período.`
+                : 'Nenhum lançamento corresponde aos filtros.'}
           </p>
         ) : (
           lancamentos.map((l) => (
@@ -342,6 +430,18 @@ export default function BuscarLancamentoSheet({
             <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-muted-foreground/30" />
             <p className="font-glacial text-lg font-semibold text-foreground">Filtros</p>
             <FilterChipRow
+              label="Período"
+              icon={CalendarClock}
+              value={filterPeriodo}
+              onChange={setFilterPeriodo}
+              options={[
+                { id: 'hoje', label: 'Hoje' },
+                { id: 'semana', label: '7 dias' },
+                { id: 'mes', label: 'Mês' },
+                { id: 'todas', label: 'Todas' },
+              ]}
+            />
+            <FilterChipRow
               label="Tipo"
               icon={BarChart3}
               value={filterTipo}
@@ -381,6 +481,7 @@ export default function BuscarLancamentoSheet({
               <button
                 type="button"
                 onClick={() => {
+                  setFilterPeriodo('hoje');
                   setFilterTipo('todos');
                   setFilterStatus('todos');
                   setFilterPrazo('todos');
@@ -435,7 +536,7 @@ function LancamentoItem({ lancamento, selecionado, onClick }) {
           {lancamento.descricao || '—'}
         </p>
         <p className={`mt-0.5 text-xs ${selecionado ? 'text-muted-foreground' : 'text-muted-foreground dark:text-muted-foreground'}`}>
-          {lancamento.data_vencimento ? formatVencimentoBR(lancamento.data_vencimento) : '—'}
+          {getDataExibicaoLancamento(lancamento) || '—'}
           {lancamento.status && ` · ${lancamento.status}`}
         </p>
       </div>
