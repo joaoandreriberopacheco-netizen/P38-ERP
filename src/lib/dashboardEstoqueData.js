@@ -259,6 +259,7 @@ function buildNivelEstoqueSeries(monthBuckets, skuBase, movimentosCompraVenda, p
     .slice()
     .sort((a, b) => b.date.getTime() - a.date.getTime());
 
+  const currentMonthKey = monthBuckets[monthBuckets.length - 1]?.key;
   const deltaAfterBySku = new Map();
   let movIdx = 0;
   const nivelEstoqueSeries = [];
@@ -266,6 +267,7 @@ function buildNivelEstoqueSeries(monthBuckets, skuBase, movimentosCompraVenda, p
   for (let i = monthBuckets.length - 1; i >= 0; i -= 1) {
     const bucket = monthBuckets[i];
     const monthEnd = bucket.end;
+    const isCurrentMonth = bucket.key === currentMonthKey;
 
     while (movIdx < sortedMovements.length && isAfter(sortedMovements[movIdx].date, monthEnd)) {
       const movimento = sortedMovements[movIdx];
@@ -284,12 +286,15 @@ function buildNivelEstoqueSeries(monthBuckets, skuBase, movimentosCompraVenda, p
       monthValue += estoqueGerencial * skuData.custoAtual;
     });
 
-    const valorVirtual = calcularValorEstoqueVirtualNoFimDoMes(
-      monthEnd,
-      pedidosCompraLista,
-      embarquesCompraLista,
-      custoProdutoMap,
-    );
+    // Estoque virtual só compõe o mês corrente; meses passados = só físico.
+    const valorVirtual = isCurrentMonth
+      ? calcularValorEstoqueVirtualNoFimDoMes(
+        monthEnd,
+        pedidosCompraLista,
+        embarquesCompraLista,
+        custoProdutoMap,
+      )
+      : 0;
 
     nivelEstoqueSeries.unshift({
       periodo: bucket.label,
