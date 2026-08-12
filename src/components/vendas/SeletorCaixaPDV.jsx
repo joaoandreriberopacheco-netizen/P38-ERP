@@ -18,7 +18,13 @@ import {
 import { findTurnoAbertoParaCaixa, turnoAbertoMaisAntigo } from '@/lib/turnoCaixaAberto';
 import { getCachedUserSession } from '@/lib/userSessionCache';
 import { QUICK_ACCESS_NESTED_DIALOG_CLASS } from '@/lib/quickAccessOverlay';
-import CaixaRecebimentosResumoLinhas from '@/components/vendas/caixa/CaixaRecebimentosResumoLinhas';
+import CaixaRecebimentosResumoLinhas, {
+  CaixaRecebimentosResumoSkeleton,
+} from '@/components/vendas/caixa/CaixaRecebimentosResumoLinhas';
+import {
+  ensureReforcosPendentesCaixaPDV,
+  listarReforcosPendentesCaixaPDV,
+} from '@/lib/reforcoPendenteCaixaPDV';
 
 function normalizeCaixaId(id) {
   return String(id ?? '').trim();
@@ -117,6 +123,11 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
           );
 
           const resumo = buildPainelCaixaResumo(snapshot);
+          await ensureReforcosPendentesCaixaPDV(base44, caixa.id);
+          const reforcosPendentes = await listarReforcosPendentesCaixaPDV(base44, caixa.id);
+
+          if (loadGenerationRef.current !== generation) return;
+
           setLiquidezPorCaixa((prev) => ({
             ...prev,
             [caixa.id]: {
@@ -125,6 +136,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
               totalVendas: resumo.totalVendas,
               liquidez: resumo.liquidez,
               recebimentos: resumo.recebimentos,
+              reforcosPendentes: reforcosPendentes.length,
               loadingDetalhes: false,
             },
           }));
@@ -325,47 +337,60 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto">
-              {caixasDisponiveis.map(caixa => {
+            <div className="grid grid-cols-1 gap-3 max-h-[70vh] overflow-y-auto">
+              {caixasDisponiveis.map((caixa) => {
+                const resumo = liquidezPorCaixa[caixa.id];
                 const podeOperar = true;
-                
+
                 return (
                   <button
                     key={caixa.id}
+                    type="button"
                     onClick={() => handleSelecionarCaixa(caixa)}
-                    className="bg-card rounded-2xl p-6 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-border/40 dark:hover:border-border/40"
+                    className="group bg-card rounded-2xl p-4 shadow-sm hover:shadow-md transition-all text-left border border-border/40 hover:border-primary/30 dark:hover:border-lime-500/30"
                   >
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
-                        <Monitor className="w-6 h-6 text-foreground/90" />
+                    <div className="flex items-start gap-3">
+                      <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center flex-shrink-0 group-hover:bg-primary/10 transition-colors">
+                        <Monitor className="w-5 h-5 text-foreground/90" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold text-foreground font-glacial mb-1">
-                          {caixa.nome}
-                        </h3>
-                        {liquidezPorCaixa[caixa.id]?.turnoAberto ? (
-                          <div className="space-y-1.5">
-                            {liquidezPorCaixa[caixa.id]?.loadingDetalhes ? (
-                              <p className="text-xs font-medium text-primary">
-                                Turno aberto · Carregando resumo…
-                              </p>
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <h3 className="text-base font-semibold text-foreground font-glacial truncate">
+                            {caixa.nome}
+                          </h3>
+                          <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0 group-hover:text-primary transition-colors" />
+                        </div>
+
+                        {resumo?.turnoAberto ? (
+                          <div className="space-y-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-lime-700 dark:text-lime-300">
+                                <span className="w-1.5 h-1.5 rounded-full bg-lime-500 animate-pulse" aria-hidden />
+                                Turno aberto
+                              </span>
+                              {(resumo.reforcosPendentes || 0) > 0 && (
+                                <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+                                  {resumo.reforcosPendentes} reforço{resumo.reforcosPendentes !== 1 ? 's' : ''} aguardando
+                                </span>
+                              )}
+                            </div>
+
+                            {resumo.loadingDetalhes ? (
+                              <CaixaRecebimentosResumoSkeleton rows={4} />
                             ) : (
-                              <>
-                                <p className="text-xs font-semibold text-primary uppercase tracking-wide">
-                                  Turno aberto
-                                </p>
-                                <CaixaRecebimentosResumoLinhas
-                                  recebimentos={liquidezPorCaixa[caixa.id].recebimentos}
-                                  compact
-                                />
-                              </>
+                              <CaixaRecebimentosResumoLinhas
+                                recebimentos={resumo.recebimentos}
+                                compact
+                                variant="seletor"
+                              />
                             )}
                           </div>
                         ) : (
-                          <p className="text-sm text-muted-foreground">Sem turno aberto</p>
+                          <p className="text-sm text-muted-foreground">Sem turno aberto — toque para abrir</p>
                         )}
+
                         {!podeOperar && (
-                          <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+                          <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 mt-2">
                             <Lock className="w-3 h-3" />
                             <span>Somente visualização</span>
                           </div>
