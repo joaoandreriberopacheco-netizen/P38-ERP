@@ -2,6 +2,7 @@ import { subMonths, startOfMonth, endOfMonth, format, isAfter, isBefore } from '
 import { ptBR } from 'date-fns/locale';
 import { base44 } from '@/api/base44Client';
 import { enrichProdutosComIep } from '@/lib/calcularIepProdutos';
+import { fetchDadosVendaAbcd90d } from '@/lib/fetchPedidosVenda90d';
 import {
   buildPendenteAprovadoFinanceiroPorProduto,
   buildRecebidosPorPedidoProdutoFromEmbarques,
@@ -16,10 +17,14 @@ import {
 } from '@/lib/catalogStockTotals';
 import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
 import { resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
-import { fetchDadosVendaAbcd90d } from '@/lib/fetchPedidosVenda90d';
 import { fetchProdutosList } from '@/hooks/useP38Entities';
 import { p38Keys, P38_STALE_TIME } from '@/lib/p38QueryConfig';
 import { inicioDiaSistemaISO, fimDiaSistemaISO } from '@/components/utils/dateUtils';
+import {
+  getHojeDateKey,
+  getOntemDateKey,
+  mergeMovimentosById,
+} from '@/lib/dashboardIncrementalCache';
 import {
   buildEstoqueFisicoPorProdutoNoFimDoMes,
   getMarcaMensalEstoque,
@@ -296,11 +301,62 @@ async function ensureCached(queryClient, key, queryFn, staleTime = P38_STALE_TIM
   return queryClient.ensureQueryData({ queryKey: key, queryFn, staleTime });
 }
 
+async function fetchMovimentacoesIncremental(queryClient, nivelStartISO, endISO) {
+  const hoje = getHojeDateKey();
+  const ontem = getOntemDateKey();
+  const ontemISO = ontem <= endISO.slice(0, 10) ? ontem : endISO.slice(0, 10);
+
+  const fetchHistoric = () =>
+    base44.entities.MovimentacaoEstoque.filter(
+      {
+        created_date: {
+          $gte: inicioDiaSistemaISO(nivelStartISO),
+          $lte: fimDiaSistemaISO(ontemISO),
+        },
+      },
+      '-created_date',
+      10000,
+    ).catch(() => []);
+
+  const fetchHoje = () =>
+    base44.entities.MovimentacaoEstoque.filter(
+      {
+        created_date: {
+          $gte: inicioDiaSistemaISO(hoje),
+          $lte: fimDiaSistemaISO(hoje),
+        },
+      },
+      '-created_date',
+      500,
+    ).catch(() => []);
+
+  const [historic, todayRows] = await Promise.all([
+    ensureCached(
+      queryClient,
+      p38Keys.dashboardEstoqueMovimentosAteOntem(ontem, nivelStartISO),
+      fetchHistoric,
+      Number.POSITIVE_INFINITY,
+    ),
+    ensureCached(
+      queryClient,
+      p38Keys.dashboardEstoqueMovimentosHoje(hoje),
+      fetchHoje,
+      2 * 60 * 1000,
+    ),
+  ]);
+
+  return mergeMovimentosById(
+    Array.isArray(historic) ? historic : [],
+    Array.isArray(todayRows) ? todayRows : [],
+  );
+}
+
 /**
  * Carrega e calcula métricas do dashboard de estoque.
- * Reutiliza cache React Query de produtos e ABCD quando disponível.
+ * Reutiliza cache React Query de produtos; movimentos até ontem + hoje; ABCD opcional.
  */
-export async function fetchDashboardEstoqueMetrics(queryClient) {
+export async function fetchDashboardEstoqueMetrics(queryClient, options = {}) {
+  const { includeAbcdEnrichment = false } = options;
   const monthBuckets = getMonthBuckets();
   const supplyMonthBuckets = getSupplyMonthBuckets();
 
@@ -313,19 +369,10 @@ export async function fetchDashboardEstoqueMetrics(queryClient) {
   const endISO = format(endDate, 'yyyy-MM-dd');
   const nivelStartISO = format(nivelEstoqueStartDate, 'yyyy-MM-dd');
 
-  const [produtos, movimentacoesEstoqueRaw, lancamentosFinanceiros, pedidosVenda, dadosVendaAbcd90d, sugestaoEstoqueData] =
+  const [produtos, movimentacoesEstoqueRaw, lancamentosFinanceiros, pedidosVenda, sugestaoEstoqueData] =
     await Promise.all([
       ensureCached(queryClient, p38Keys.produtos(), () => fetchProdutosList()),
-      base44.entities.MovimentacaoEstoque.filter(
-        {
-          created_date: {
-            $gte: inicioDiaSistemaISO(nivelStartISO),
-            $lte: fimDiaSistemaISO(endISO),
-          },
-        },
-        '-created_date',
-        10000,
-      ).catch(() => []),
+      fetchMovimentacoesIncremental(queryClient, nivelStartISO, endISO),
       base44.entities.LancamentoFinanceiro.filter(
         {
           tipo: 'Despesa',
@@ -346,11 +393,23 @@ export async function fetchDashboardEstoqueMetrics(queryClient) {
         '-created_date',
         3000,
       ).catch(() => []),
-      ensureCached(queryClient, p38Keys.dadosVendaAbcd90d(), () => fetchDadosVendaAbcd90d(), 10 * 60 * 1000).catch(
-        () => null,
-      ),
-      fetchPedidosCompraParaSugestaoEstoque(base44).catch(() => null),
+      ensureCached(
+        queryClient,
+        p38Keys.pedidosCompraSugestao(),
+        () => fetchPedidosCompraParaSugestaoEstoque(base44),
+        P38_STALE_TIME,
+      ).catch(() => null),
     ]);
+
+  let dadosVendaAbcd90d = null;
+  if (includeAbcdEnrichment) {
+    dadosVendaAbcd90d = await ensureCached(
+      queryClient,
+      p38Keys.dadosVendaAbcd90d(),
+      () => fetchDadosVendaAbcd90d(),
+      10 * 60 * 1000,
+    ).catch(() => null);
+  }
 
   const pedidosCompraLista = Array.isArray(sugestaoEstoqueData?.pedidosTodos)
     ? sugestaoEstoqueData.pedidosTodos

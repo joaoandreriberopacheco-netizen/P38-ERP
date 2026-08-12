@@ -1,11 +1,23 @@
 import { base44 } from '@/api/base44Client';
 import { inicioDiaSistemaISO, fimDiaSistemaISO } from '@/components/utils/dateUtils';
-import { getMonthBucketsEndingAt, getTemporalCutoffForMonth, getTemporalStartForMonth } from '@/lib/dashboardVendasPeriod';
+import {
+  getMonthBucketsEndingAt,
+  getTemporalCutoffForMonth,
+  getTemporalStartForMonth,
+} from '@/lib/dashboardVendasPeriod';
+import {
+  isVendasWindowFullyClosed,
+  mergePedidosById,
+  planDashboardVendasFetchRanges,
+} from '@/lib/dashboardIncrementalCache';
 import { hydratePedidosVendaItensFromSql } from '@/lib/fetchPedidoVendaItens';
+import { p38Keys } from '@/lib/p38QueryConfig';
 import { resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
 import { format } from 'date-fns';
 
 const CHUNK_SIZE = 40;
+const CLOSED_SEGMENT_STALE = Number.POSITIVE_INFINITY;
+const CURRENT_THROUGH_ONTEM_STALE = Number.POSITIVE_INFINITY;
 
 function normalizeList(rows) {
   return Array.isArray(rows) ? rows : [];
@@ -62,15 +74,8 @@ function collectProdutoIdsFromPedidos(pedidos = []) {
   return [...ids];
 }
 
-/** Pedidos de venda do dashboard (janela de N meses) com itens hidratados só desse conjunto. */
-export async function fetchDashboardVendasPeriodo({
-  selectedMonthKey,
-  months = 6,
-} = {}) {
-  const { dataInicio, dataFim } = monthWindowKeys(selectedMonthKey, months);
-  if (!dataInicio || !dataFim) {
-    return { pedidos: [], productCostMap: new Map() };
-  }
+async function fetchPedidosVendaRawRange(dataInicio, dataFim, limit = 5000) {
+  if (!dataInicio || !dataFim) return [];
 
   const pedidosRaw = await base44.entities.PedidoVenda.filter(
     {
@@ -80,11 +85,102 @@ export async function fetchDashboardVendasPeriodo({
       },
     },
     '-created_date',
-    5000,
+    limit,
   );
 
-  const pedidosLista = normalizeList(pedidosRaw);
-  const pedidos = await hydratePedidosVendaItensFromSql(base44, pedidosLista);
+  return normalizeList(pedidosRaw);
+}
+
+async function hydratePedidosLista(pedidosLista) {
+  if (!pedidosLista.length) return [];
+  return hydratePedidosVendaItensFromSql(base44, pedidosLista);
+}
+
+async function fetchPedidosVendaHydratedRange(dataInicio, dataFim, limit = 5000) {
+  const pedidosLista = await fetchPedidosVendaRawRange(dataInicio, dataFim, limit);
+  return hydratePedidosLista(pedidosLista);
+}
+
+async function ensurePedidosSegment(queryClient, segmentKey, dataInicio, dataFim, staleTime) {
+  const fetchSegment = () => fetchPedidosVendaHydratedRange(dataInicio, dataFim);
+
+  if (!queryClient) return fetchSegment();
+
+  return queryClient.ensureQueryData({
+    queryKey: p38Keys.dashboardVendasPedidosSegment(segmentKey),
+    queryFn: fetchSegment,
+    staleTime,
+  });
+}
+
+async function fetchDashboardVendasIncremental({ selectedMonthKey, months = 6, queryClient } = {}) {
+  const plan = planDashboardVendasFetchRanges(selectedMonthKey, months);
+  const segmentFetches = [];
+
+  if (plan.closed) {
+    const { dataInicio, dataFim } = plan.closed;
+    segmentFetches.push(
+      ensurePedidosSegment(
+        queryClient,
+        `closed-${dataInicio}_${dataFim}`,
+        dataInicio,
+        dataFim,
+        CLOSED_SEGMENT_STALE,
+      ),
+    );
+  }
+
+  if (plan.currentThroughOntem) {
+    const { dataInicio, dataFim } = plan.currentThroughOntem;
+    segmentFetches.push(
+      ensurePedidosSegment(
+        queryClient,
+        `cm-ate-ontem-${dataInicio}_${dataFim}`,
+        dataInicio,
+        dataFim,
+        CURRENT_THROUGH_ONTEM_STALE,
+      ),
+    );
+  }
+
+  if (plan.hoje) {
+    const { dataInicio, dataFim } = plan.hoje;
+    segmentFetches.push(fetchPedidosVendaHydratedRange(dataInicio, dataFim, 500));
+  }
+
+  if (!segmentFetches.length) {
+    return [];
+  }
+
+  const segments = await Promise.all(segmentFetches);
+  return mergePedidosById(...segments);
+}
+
+/** Pedidos de venda do dashboard (janela de N meses) com fetch incremental até ontem + hoje. */
+export async function fetchDashboardVendasPeriodo({
+  selectedMonthKey,
+  months = 6,
+  queryClient,
+} = {}) {
+  const { dataInicio, dataFim } = monthWindowKeys(selectedMonthKey, months);
+  if (!dataInicio || !dataFim) {
+    return { pedidos: [], productCostMap: new Map() };
+  }
+
+  let pedidos;
+
+  if (isVendasWindowFullyClosed(selectedMonthKey, months)) {
+    pedidos = await ensurePedidosSegment(
+      queryClient,
+      `window-${dataInicio}_${dataFim}`,
+      dataInicio,
+      dataFim,
+      CLOSED_SEGMENT_STALE,
+    );
+  } else {
+    pedidos = await fetchDashboardVendasIncremental({ selectedMonthKey, months, queryClient });
+  }
+
   const productCostMap = await fetchProdutosCustoPorIds(collectProdutoIdsFromPedidos(pedidos));
 
   return { pedidos, productCostMap };

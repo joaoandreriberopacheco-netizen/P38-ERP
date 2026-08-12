@@ -21,7 +21,18 @@ export const p38Keys = {
   homeVendasHoje: (dateKey) => [...p38Keys.all, 'home-vendas-hoje', dateKey],
   homePedidosPendentes: () => [...p38Keys.all, 'home-pedidos-pendentes'],
   dashboardVendas: (monthKey) => [...p38Keys.all, 'dashboard', 'vendas', monthKey],
+  dashboardVendasPedidosSegment: (segmentKey) => [...p38Keys.all, 'dashboard', 'vendas', 'segment', segmentKey],
   dashboardEstoque: () => [...p38Keys.all, 'dashboard', 'estoque'],
+  dashboardEstoqueMovimentosAteOntem: (ontemKey, startISO) => [
+    ...p38Keys.all,
+    'dashboard',
+    'estoque',
+    'movimentos-ate',
+    ontemKey,
+    startISO,
+  ],
+  dashboardEstoqueMovimentosHoje: (hojeKey) => [...p38Keys.all, 'dashboard', 'estoque', 'movimentos-hoje', hojeKey],
+  pedidosCompraSugestao: () => [...p38Keys.all, 'pedidos-compra', 'sugestao-estoque'],
   intervenientes: () => [...p38Keys.all, 'intervenientes'],
   logistica: {
     eventos: () => [...p38Keys.all, 'logistica', 'eventos'],

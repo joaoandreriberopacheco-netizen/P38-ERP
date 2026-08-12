@@ -20,8 +20,8 @@ export const ESTOQUE_DASHBOARD_ANCORAGEM = '2026-08-11';
 export const ESTOQUE_DASHBOARD_MARCAS_MENSAIS = {
   '2026-08': {
     registradoEm: '2026-08-11',
-    estoqueFisico: null,
-    transitoFinanceiroAprovado: null,
+    estoqueFisico: 234618,
+    transitoFinanceiroAprovado: 131110,
   },
 };
 
