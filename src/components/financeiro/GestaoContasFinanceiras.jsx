@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { createPageUrl } from '@/components/utils';
+import { createPageUrl } from '@/utils';
 import { formatarSoData } from '@/components/utils/dateUtils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,6 +49,7 @@ const FORM_VAZIO = {
 };
 
 function useGestaoContasModel(shared) {
+  const navigate = useNavigate();
   const [accountsLocal, setAccountsLocal] = useState([]);
   const [lancamentosLocal, setLancamentosLocal] = useState([]);
   const [movimentosLocal, setMovimentosLocal] = useState([]);
@@ -100,25 +102,37 @@ function useGestaoContasModel(shared) {
     gravarPreferenciasSaldoContas(ids);
   }, [shared]);
 
+  const aplicarSaldoBase = useCallback((lancsFull, movsFull) => {
+    if (!Array.isArray(lancsFull) || !Array.isArray(movsFull)) return false;
+    if (!lancsFull.length || !movsFull.length) return false;
+    setLancamentosSaldo(lancsFull);
+    setMovimentosSaldo(movsFull);
+    setCarregandoSaldosBase(false);
+    return true;
+  }, []);
+
   const loadSaldosBase = useCallback(async () => {
+    if (aplicarSaldoBase(shared?.lancsSaldo, shared?.movsSaldo)) return;
+
     setCarregandoSaldosBase(true);
     try {
       const [lancsFull, movsFull] = await Promise.all([
         base44.entities.LancamentoFinanceiro.list(),
         base44.entities.MovimentosCaixa.list(),
       ]);
-      setLancamentosSaldo(lancsFull);
-      setMovimentosSaldo(movsFull);
+      aplicarSaldoBase(lancsFull, movsFull);
     } catch (error) {
       console.error('Erro ao carregar base de saldos:', error);
     } finally {
       setCarregandoSaldosBase(false);
     }
-  }, []);
+  }, [shared?.lancsSaldo, shared?.movsSaldo, aplicarSaldoBase]);
 
   const loadData = useCallback(async () => {
     if (shared?.reload) {
-      setCarregandoSaldosBase(true);
+      if (!aplicarSaldoBase(shared.lancsSaldo, shared.movsSaldo)) {
+        setCarregandoSaldosBase(true);
+      }
       await shared.reload();
       await loadSaldosBase();
       return;
@@ -142,11 +156,12 @@ function useGestaoContasModel(shared) {
       setLoadingLocal(false);
       setCarregandoSaldosBase(false);
     }
-  }, [shared, loadSaldosBase]);
+  }, [shared, loadSaldosBase, aplicarSaldoBase]);
 
   useEffect(() => {
+    if (aplicarSaldoBase(shared?.lancsSaldo, shared?.movsSaldo)) return;
     loadSaldosBase();
-  }, [loadSaldosBase]);
+  }, [shared?.lancsSaldo, shared?.movsSaldo, loadSaldosBase, aplicarSaldoBase]);
 
   useEffect(() => {
     if (shared) return;
@@ -324,7 +339,17 @@ function useGestaoContasModel(shared) {
   };
 
   const handleExtrato = (account) => {
-    window.location.href = createPageUrl(`ExtratoConta?id=${account.id}`);
+    const lancsPreload = lancamentosSaldo.length ? lancamentosSaldo : shared?.lancsSaldo;
+    const movsPreload = movimentosSaldo.length ? movimentosSaldo : shared?.movsSaldo;
+    navigate(`${createPageUrl('ExtratoConta')}?id=${account.id}`, {
+      state: {
+        extratoPreload: {
+          conta: account,
+          lancsSaldo: lancsPreload?.length ? lancsPreload : undefined,
+          movsSaldo: movsPreload?.length ? movsPreload : undefined,
+        },
+      },
+    });
   };
 
   const handleAjuste = (account) => {

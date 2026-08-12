@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,6 +48,7 @@ import {
   totaisEntradaSaidaMovimentos,
 } from '@/lib/saldoContaFinanceira';
 import { reconciliarSaldoCaixaPDVSemTurnoAberto, backfillLancamentosMovimentosCaixaPDV } from '@/lib/contaDestinoCaixaPDV';
+import { navigateBackOr } from '@/lib/navigateBackOr';
 
 function getDataKeyMovimentoExtrato(mov) {
   if (mov?.origem === 'movimento' || (mov?.conta_id && !mov?.conta_financeira_id)) {
@@ -86,6 +88,8 @@ function passaIntervaloExtratoYmd(dataKey, inicio, fim) {
 }
 
 export default function ExtratoContaPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [conta, setConta] = useState(null);
   const [lancamentos, setLancamentos] = useState([]);
   const [movimentosCaixa, setMovimentosCaixa] = useState([]);
@@ -126,15 +130,97 @@ export default function ExtratoContaPage() {
     descricao: ''
   });
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const contaId = params.get('id');
-    if (contaId) {
-      loadExtrato(contaId);
-    }
+  const voltar = useCallback(() => {
+    navigateBackOr(navigate, 'Financeiro');
+  }, [navigate]);
+
+  const aplicarSaldoBase = useCallback((lancsFull, movsFull) => {
+    if (!Array.isArray(lancsFull) || !Array.isArray(movsFull)) return false;
+    if (!lancsFull.length || !movsFull.length) return false;
+    setLancsSaldoBase(lancsFull);
+    setMovsSaldoBase(movsFull);
+    return true;
   }, []);
 
-  const loadExtrato = async (contaId) => {
+  const runExtratoMaintenance = useCallback(async ({
+    contaAtual,
+    contasData,
+    dataInicio,
+    dataFim,
+    prefsCorte,
+    lancamentosIniciais,
+    movsIniciais,
+    saldoBaseJaCarregado,
+  }) => {
+    let lancamentosFiltrados = lancamentosIniciais;
+    let movsFiltrados = movsIniciais;
+    const isCaixaGeral = contaAtual.is_caixa_geral === true;
+
+    const backfill = await backfillLancamentosMovimentosCaixaPDV(base44, contasData);
+    if (backfill) {
+      lancamentosFiltrados = await fetchLancamentosExtratoConta({
+        contaId: contaAtual.id,
+        isCaixaGeral,
+        dataInicio,
+        dataFim,
+      });
+      if (!isCaixaGeral) {
+        movsFiltrados = await fetchMovimentosExtratoConta({
+          contaId: contaAtual.id,
+          dataInicio,
+          dataFim,
+        });
+      }
+      setLancamentos(lancamentosFiltrados);
+      setMovimentosCaixa(movsFiltrados);
+    }
+
+    let lancsDisplay = lancamentosFiltrados;
+    const reconciliou = await reconciliarSaldoCaixaPDVSemTurnoAberto(
+      base44,
+      contaAtual,
+      contasData,
+      lancamentosFiltrados,
+      movsFiltrados,
+    );
+
+    if (reconciliou) {
+      lancsDisplay = await fetchLancamentosExtratoConta({
+        contaId: contaAtual.id,
+        isCaixaGeral,
+        dataInicio,
+        dataFim,
+      });
+      setLancamentos(lancsDisplay);
+    }
+
+    let lancsSaldo = lancsDisplay;
+    let movsSaldo = movsFiltrados;
+
+    if (!saldoBaseJaCarregado && !prefsCorte.mostrarHistoricoAnterior && prefsCorte.dataCorte) {
+      const [lancsFull, movsFull] = await Promise.all([
+        base44.entities.LancamentoFinanceiro.list(),
+        base44.entities.MovimentosCaixa.list(),
+      ]);
+      lancsSaldo = lancsFull;
+      movsSaldo = movsFull;
+      aplicarSaldoBase(lancsFull, movsFull);
+    }
+
+    const saldo = !prefsCorte.mostrarHistoricoAnterior && prefsCorte.dataCorte
+      ? calcularSaldoContaAposDataCorte(contaAtual, lancsSaldo, movsSaldo, prefsCorte.dataCorte)
+      : calcularSaldoContaFinanceira(contaAtual, lancsSaldo, movsSaldo);
+
+    if (Math.abs(saldo - Number(contaAtual.saldo_atual || 0)) > 0.009) {
+      await base44.entities.ContasFinanceiras.update(contaAtual.id, { saldo_atual: saldo });
+      setConta({ ...contaAtual, saldo_atual: saldo });
+    } else if (contaUsaRegraCaixaPDV(contaAtual) && Math.abs(saldo) <= 0.009) {
+      await base44.entities.ContasFinanceiras.update(contaAtual.id, { saldo_atual: 0 });
+      setConta({ ...contaAtual, saldo_atual: 0 });
+    }
+  }, [aplicarSaldoBase]);
+
+  const loadExtrato = useCallback(async (contaId, preload) => {
     setIsLoading(true);
     try {
       const prefsCorte = lerPreferenciasCorteHistorico();
@@ -147,8 +233,15 @@ export default function ExtratoContaPage() {
         ? prefsCorte.dataCorte
         : format(subMonths(new Date(`${hoje}T12:00:00`), 24), 'yyyy-MM-dd');
 
+      const preloadConta = preload?.conta?.id === contaId ? preload.conta : null;
+      if (preloadConta) {
+        setConta(preloadConta);
+      }
+
+      const saldoBaseJaCarregado = aplicarSaldoBase(preload?.lancsSaldo, preload?.movsSaldo);
+
       const [contaData, contasData] = await Promise.all([
-        base44.entities.ContasFinanceiras.filter({ id: contaId }),
+        preloadConta ? Promise.resolve([preloadConta]) : base44.entities.ContasFinanceiras.filter({ id: contaId }),
         base44.entities.ContasFinanceiras.list(),
       ]);
 
@@ -159,80 +252,34 @@ export default function ExtratoContaPage() {
         setConta(contaAtual);
         setContas(contasData);
 
-        let lancamentosFiltrados = await fetchLancamentosExtratoConta({
-          contaId,
-          isCaixaGeral,
-          dataInicio,
-          dataFim,
-        });
-        let movsFiltrados = isCaixaGeral
-          ? []
-          : await fetchMovimentosExtratoConta({ contaId, dataInicio, dataFim });
-
-        const backfill = await backfillLancamentosMovimentosCaixaPDV(base44, contasData);
-        if (backfill) {
-          lancamentosFiltrados = await fetchLancamentosExtratoConta({
+        const [lancamentosFiltrados, movsFiltrados] = await Promise.all([
+          fetchLancamentosExtratoConta({
             contaId,
             isCaixaGeral,
             dataInicio,
             dataFim,
-          });
-          if (!isCaixaGeral) {
-            movsFiltrados = await fetchMovimentosExtratoConta({ contaId, dataInicio, dataFim });
-          }
-        }
+          }),
+          isCaixaGeral
+            ? Promise.resolve([])
+            : fetchMovimentosExtratoConta({ contaId, dataInicio, dataFim }),
+        ]);
 
         setLancamentos(lancamentosFiltrados);
         setMovimentosCaixa(movsFiltrados);
+        setIsLoading(false);
 
-        let lancsDisplay = lancamentosFiltrados;
-
-        const reconciliou = await reconciliarSaldoCaixaPDVSemTurnoAberto(
-          base44,
+        void runExtratoMaintenance({
           contaAtual,
           contasData,
-          lancamentosFiltrados,
-          movsFiltrados,
-        );
-
-        if (reconciliou) {
-          lancsDisplay = await fetchLancamentosExtratoConta({
-            contaId,
-            isCaixaGeral,
-            dataInicio,
-            dataFim,
-          });
-          setLancamentos(lancsDisplay);
-        }
-
-        let lancsSaldo = lancsDisplay;
-        let movsSaldo = movsFiltrados;
-
-        if (!prefsCorte.mostrarHistoricoAnterior && prefsCorte.dataCorte) {
-          const [lancsFull, movsFull] = await Promise.all([
-            base44.entities.LancamentoFinanceiro.list(),
-            base44.entities.MovimentosCaixa.list(),
-          ]);
-          lancsSaldo = lancsFull;
-          movsSaldo = movsFull;
-          setLancsSaldoBase(lancsFull);
-          setMovsSaldoBase(movsFull);
-        } else {
-          setLancsSaldoBase([]);
-          setMovsSaldoBase([]);
-        }
-
-        const saldo = !prefsCorte.mostrarHistoricoAnterior && prefsCorte.dataCorte
-          ? calcularSaldoContaAposDataCorte(contaAtual, lancsSaldo, movsSaldo, prefsCorte.dataCorte)
-          : calcularSaldoContaFinanceira(contaAtual, lancsSaldo, movsSaldo);
-
-        if (Math.abs(saldo - Number(contaAtual.saldo_atual || 0)) > 0.009) {
-          await base44.entities.ContasFinanceiras.update(contaAtual.id, { saldo_atual: saldo });
-          setConta({ ...contaAtual, saldo_atual: saldo });
-        } else if (contaUsaRegraCaixaPDV(contaAtual) && Math.abs(saldo) <= 0.009) {
-          await base44.entities.ContasFinanceiras.update(contaAtual.id, { saldo_atual: 0 });
-          setConta({ ...contaAtual, saldo_atual: 0 });
-        }
+          dataInicio,
+          dataFim,
+          prefsCorte,
+          lancamentosIniciais: lancamentosFiltrados,
+          movsIniciais: movsFiltrados,
+          saldoBaseJaCarregado,
+        });
+      } else {
+        setIsLoading(false);
       }
     } catch (error) {
       toast({
@@ -240,10 +287,17 @@ export default function ExtratoContaPage() {
         description: error.message,
         variant: "destructive"
       });
-    } finally {
       setIsLoading(false);
     }
-  };
+  }, [aplicarSaldoBase, runExtratoMaintenance, toast]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const contaId = params.get('id');
+    if (contaId) {
+      loadExtrato(contaId, location.state?.extratoPreload);
+    }
+  }, [loadExtrato, location.state]);
 
   const handleSaveLancamento = async () => {
     try {
@@ -265,7 +319,6 @@ export default function ExtratoContaPage() {
       });
 
       setDialogType(null);
-      loadExtrato(conta.id);
     } catch (error) {
       toast({
         title: "Erro ao salvar",
@@ -578,7 +631,7 @@ export default function ExtratoContaPage() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <p className="text-muted-foreground mb-4">Conta não encontrada</p>
-          <Button onClick={() => window.history.back()} className="gap-2">
+          <Button onClick={voltar} className="gap-2">
             <ArrowLeft className="w-4 h-4" /> Voltar
           </Button>
         </div>
@@ -595,7 +648,7 @@ export default function ExtratoContaPage() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => window.history.back()}
+              onClick={voltar}
               className="h-8 w-8 shrink-0"
               aria-label="Voltar"
             >
@@ -644,7 +697,7 @@ export default function ExtratoContaPage() {
         {/* Desktop */}
         <div className="hidden min-w-0 items-center gap-3 md:flex">
           <div className="flex shrink-0 items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => window.history.back()} className="h-8 w-8" aria-label="Voltar">
+            <Button variant="ghost" size="icon" onClick={voltar} className="h-8 w-8" aria-label="Voltar">
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>

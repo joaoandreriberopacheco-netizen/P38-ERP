@@ -802,6 +802,8 @@ export default function ExecucaoOrcamentaria() {
     () => ({
       lancs,
       movimentos,
+      lancsSaldo,
+      movsSaldo,
       contas,
       contasAtivas,
       loading,
@@ -810,7 +812,7 @@ export default function ExecucaoOrcamentaria() {
       atualizarContasSaldoSel,
       contasSaldoOpcoes,
     }),
-    [lancs, movimentos, contas, contasAtivas, loading, contasSaldoSel, atualizarContasSaldoSel, contasSaldoOpcoes],
+    [lancs, movimentos, lancsSaldo, movsSaldo, contas, contasAtivas, loading, contasSaldoSel, atualizarContasSaldoSel, contasSaldoOpcoes],
   );
 
   const abasPrincipais = isCompactShell ? ABAS_FINANCEIRO_MOBILE : ABAS_FINANCEIRO_DESKTOP;
