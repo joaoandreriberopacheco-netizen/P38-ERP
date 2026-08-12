@@ -50,7 +50,7 @@ export default function CaixaRapidoPanel({ open, onOpenChange, sessionKey = 0 })
           overlayMode
           onClose={handleClose}
           initialActiveTab="vendas"
-          initialVendasView="aguardando"
+          initialVendasView="consulta"
         />
       </Suspense>
     </div>

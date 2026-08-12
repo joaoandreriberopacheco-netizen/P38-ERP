@@ -4,6 +4,21 @@ import { isP38Dev } from '@/lib/p38PublicEnv';
 /** Colunas físicas comuns às tabelas managed pelo app. */
 const META_COLUMNS = new Set(['id', 'created_at', 'updated_at', 'created_by']);
 
+/** Coluna promovida vazia (null/undefined/'') — valor legado em `dados` deve prevalecer. */
+function isEmptyPromotedColumnValue(value) {
+  return value === null || value === undefined || value === '';
+}
+
+function mergeOverflowBlob(target, blob) {
+  if (!blob || typeof blob !== 'object') return target;
+  for (const [k, v] of Object.entries(blob)) {
+    if (!(k in target) || isEmptyPromotedColumnValue(target[k])) {
+      target[k] = v;
+    }
+  }
+  return target;
+}
+
 function parseOrder(order) {
   if (order === undefined || order === null || order === '') {
     return { column: 'created_at', ascending: false };
@@ -28,17 +43,13 @@ function decorateRow(row, entityName, mapping) {
   if ('dados' in out && out.dados && typeof out.dados === 'object') {
     const dados = out.dados;
     delete out.dados;
-    for (const [k, v] of Object.entries(dados)) {
-      if (!(k in out)) out[k] = v;
-    }
+    mergeOverflowBlob(out, dados);
   }
 
   if ('extras' in out && out.extras && typeof out.extras === 'object') {
     const extras = out.extras;
     delete out.extras;
-    for (const [k, v] of Object.entries(extras)) {
-      if (!(k in out)) out[k] = v;
-    }
+    mergeOverflowBlob(out, extras);
   }
 
   if (entityName === 'TargetFlare') {
