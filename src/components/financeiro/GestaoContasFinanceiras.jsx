@@ -11,6 +11,7 @@ import { Plus, ArrowRightLeft } from 'lucide-react';
 import ConciliacaoBancaria from './ConciliacaoBancaria';
 import AjusteSaldoDialog from '@/components/config/AjusteSaldoDialog';
 import KpiContasBar from './fluxo/KpiContasBar';
+import ContasSaldoPicker from './fluxo/ContasSaldoPicker';
 import FiltrosContasFinanceiras, { TIPOS_CONTA } from './fluxo/FiltrosContasFinanceiras';
 import ListaContasFinanceiras from './fluxo/ListaContasFinanceiras';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from './fluxo/FinanceiroListaMeta';
@@ -27,6 +28,11 @@ import {
   passaFiltroCorteHistorico,
 } from '@/lib/filtroDataFinanceiro';
 import { getDataAncoraFluxoKey } from '@/lib/lancamentoFinanceiroStatus';
+import {
+  contasParaSaldoKpi,
+  gravarPreferenciasSaldoContas,
+  lerPreferenciasSaldoContas,
+} from '@/lib/preferenciasSaldoContas';
 
 const GestaoContasCtx = createContext(null);
 
@@ -68,6 +74,7 @@ function useGestaoContasModel(shared) {
   const [dataCorteHistorico, setDataCorteHistorico] = useState(
     () => lerPreferenciasCorteHistorico().dataCorte || DATA_CORTE_HISTORICO_PADRAO,
   );
+  const [contasSaldoSelLocal, setContasSaldoSelLocal] = useState(() => lerPreferenciasSaldoContas());
 
   const atualizarCorteHistorico = useCallback((mostrar, dataCorte) => {
     setMostrarHistoricoAnterior(mostrar);
@@ -79,6 +86,19 @@ function useGestaoContasModel(shared) {
   const lancamentos = shared?.lancs ?? lancamentosLocal;
   const movimentosCaixa = shared?.movimentos ?? movimentosLocal;
   const loading = shared ? shared.loading : loadingLocal;
+  const contasSaldoSel = shared?.contasSaldoSel ?? contasSaldoSelLocal;
+  const contasSaldoOpcoes = shared?.contasSaldoOpcoes ?? accounts.filter(
+    (c) => c.ativo !== false && !isContaTransicao(c),
+  );
+
+  const atualizarContasSaldoSel = useCallback((ids) => {
+    if (shared?.atualizarContasSaldoSel) {
+      shared.atualizarContasSaldoSel(ids);
+      return;
+    }
+    setContasSaldoSelLocal(ids);
+    gravarPreferenciasSaldoContas(ids);
+  }, [shared]);
 
   const loadSaldosBase = useCallback(async () => {
     setCarregandoSaldosBase(true);
@@ -132,6 +152,18 @@ function useGestaoContasModel(shared) {
     loadData();
   }, [shared, loadData]);
 
+  useEffect(() => {
+    if (shared) return;
+    const ativas = accounts.filter((c) => c.ativo !== false);
+    if (!ativas.length) return;
+    setContasSaldoSelLocal((prev) => {
+      if (!prev.length) return prev;
+      const valid = prev.filter((id) => ativas.some((c) => c.id === id));
+      if (valid.length !== prev.length) gravarPreferenciasSaldoContas(valid);
+      return valid;
+    });
+  }, [shared, accounts]);
+
   const precisaBaseCompletaSaldo = !mostrarHistoricoAnterior && !!dataCorteHistorico;
   const baseSaldoDisponivel = lancamentosSaldo.length > 0 && movimentosSaldo.length > 0;
   const saldosProntos = !carregandoSaldosBase && (!precisaBaseCompletaSaldo || baseSaldoDisponivel);
@@ -175,6 +207,11 @@ function useGestaoContasModel(shared) {
     [contasEnriquecidas],
   );
 
+  const contasNoSaldoKpi = useMemo(
+    () => contasParaSaldoKpi(contasSaldoSel, contasSaldoOpcoes),
+    [contasSaldoSel, contasSaldoOpcoes],
+  );
+
   const filtrados = useMemo(() => contasOperacionais.filter((account) => {
     if (statusFiltro === 'ativas' && account.ativo === false) return false;
     if (statusFiltro === 'inativas' && account.ativo !== false) return false;
@@ -202,6 +239,7 @@ function useGestaoContasModel(shared) {
 
     contasOperacionais.forEach((a) => {
       if (!saldosProntos || !saldosCalculados) return;
+      if (!contasNoSaldoKpi.some((c) => c.id === a.id)) return;
       const saldo = getSaldoExibicaoConta(a, saldosCalculados);
       saldoTotal += saldo;
       if (a.ativo !== false) qtdAtivas++;
@@ -222,7 +260,7 @@ function useGestaoContasModel(shared) {
       saldoNegativo: Math.abs(saldoNegativo),
       pendencias,
     };
-  }, [contasOperacionais, saldosCalculados, pendenciasConciliacao, saldosProntos]);
+  }, [contasOperacionais, contasNoSaldoKpi, saldosCalculados, pendenciasConciliacao, saldosProntos]);
 
   const grupos = useMemo(() => {
     const map = {};
@@ -336,6 +374,9 @@ function useGestaoContasModel(shared) {
     dataCorteHistorico,
     atualizarCorteHistorico,
     saldosProntos,
+    contasSaldoSel,
+    contasSaldoOpcoes,
+    atualizarContasSaldoSel,
   };
 }
 
@@ -348,7 +389,19 @@ function GestaoContasProvider({ shared, children }) {
 export function GestaoContasKpis() {
   const m = useContext(GestaoContasCtx);
   if (!m) return null;
-  return <KpiContasBar kpis={m.kpis} saldosProntos={m.saldosProntos} />;
+  return (
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+      <div className="min-w-0 flex-1">
+        <KpiContasBar kpis={m.kpis} saldosProntos={m.saldosProntos} />
+      </div>
+      <ContasSaldoPicker
+        contas={m.contasSaldoOpcoes}
+        sel={m.contasSaldoSel}
+        onSel={m.atualizarContasSaldoSel}
+        className="self-start"
+      />
+    </div>
+  );
 }
 
 /** Filtros + meta + lista + FAB + diálogos. */

@@ -43,6 +43,7 @@ import FiltrosFluxoCaixa, { PERIODO_LABELS } from './fluxo/FiltrosFluxoCaixa';
 import FinanceiroPillTabs from './fluxo/FinanceiroPillTabs';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from './fluxo/FinanceiroListaMeta';
 import KpiFluxoBar from './fluxo/KpiFluxoBar';
+import ContasSaldoPicker from './fluxo/ContasSaldoPicker';
 import ListaLancamentos from './fluxo/ListaLancamentos';
 import { formatFinanceiroGrupoLabel } from './fluxo/FinanceiroListaShared';
 import {
@@ -67,11 +68,17 @@ import {
   mesclarProgramadasNosGrupos,
 } from '@/lib/fluxoUnificado';
 import { lerPreferenciasFluxoUnificado, gravarPreferenciasFluxoUnificado } from '@/lib/fluxoUnificadoPreferencias';
+import {
+  gravarPreferenciasSaldoContas,
+  lerPreferenciasSaldoContas,
+  contasParaSaldoKpi,
+} from '@/lib/preferenciasSaldoContas';
 import { consolidarTransferenciasListaFluxo } from '@/lib/gruposMovimentacaoConta';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   DATA_CORTE_HISTORICO_PADRAO,
   gravarPreferenciasCorteHistorico,
+  isContaTransicao,
   lerPreferenciasCorteHistorico,
   passaFiltroCorteHistorico,
 } from '@/lib/filtroDataFinanceiro';
@@ -128,6 +135,7 @@ export default function ExecucaoOrcamentaria() {
   const [cs, setCs] = useState('');
   const [ce, setCe] = useState('');
   const [contasSel, setContasSel] = useState([]);
+  const [contasSaldoSel, setContasSaldoSel] = useState(() => lerPreferenciasSaldoContas());
   const [tiposSel, setTiposSel] = useState([]);
   const [statusSel, setStatusSel] = useState([]);
   const [pendentes, setPendentes] = useState(false);
@@ -168,6 +176,11 @@ export default function ExecucaoOrcamentaria() {
     setMostrarHistoricoAnterior(mostrar);
     setDataCorteHistorico(dataCorte);
     gravarPreferenciasCorteHistorico(mostrar, dataCorte);
+  }, []);
+
+  const atualizarContasSaldoSel = useCallback((ids) => {
+    setContasSaldoSel(ids);
+    gravarPreferenciasSaldoContas(ids);
   }, []);
 
   const { s: ds, e: de } = useMemo(() => dateRange(periodo, cs, ce), [periodo, cs, ce]);
@@ -392,6 +405,16 @@ export default function ExecucaoOrcamentaria() {
     [contas],
   );
 
+  useEffect(() => {
+    if (!contasAtivas.length) return;
+    setContasSaldoSel((prev) => {
+      if (!prev.length) return prev;
+      const valid = prev.filter((id) => contasAtivas.some((c) => c.id === id));
+      if (valid.length !== prev.length) gravarPreferenciasSaldoContas(valid);
+      return valid;
+    });
+  }, [contasAtivas]);
+
   const contasBuscaFluxo = useMemo(
     () => contasMatchBuscaFluxo(search, contasAtivas),
     [search, contasAtivas],
@@ -408,8 +431,8 @@ export default function ExecucaoOrcamentaria() {
   );
 
   const contasVisiveisSaldo = useMemo(
-    () => contasVisiveisFluxo(contasSel, contasAtivas, contasSelBusca),
-    [contasSel, contasAtivas, contasSelBusca],
+    () => contasParaSaldoKpi(contasSaldoSel, contasAtivas),
+    [contasSaldoSel, contasAtivas],
   );
 
   const filtrados = useMemo(() => lancs.filter(l => {
@@ -752,6 +775,11 @@ export default function ExecucaoOrcamentaria() {
   const planejamentoAtiva = aba === 'planejamento';
   const folhaAtiva = aba === 'folha';
   const budgetsAtiva = aba === 'budgets';
+  const contasSaldoOpcoes = useMemo(
+    () => contasAtivas.filter((c) => !isContaTransicao(c)),
+    [contasAtivas],
+  );
+
   const financeiroShared = useMemo(
     () => ({
       lancs,
@@ -760,8 +788,11 @@ export default function ExecucaoOrcamentaria() {
       contasAtivas,
       loading,
       reload: load,
+      contasSaldoSel,
+      atualizarContasSaldoSel,
+      contasSaldoOpcoes,
     }),
-    [lancs, movimentos, contas, contasAtivas, loading],
+    [lancs, movimentos, contas, contasAtivas, loading, contasSaldoSel, atualizarContasSaldoSel, contasSaldoOpcoes],
   );
 
   const abasPrincipais = isCompactShell ? ABAS_FINANCEIRO_MOBILE : ABAS_FINANCEIRO_DESKTOP;
@@ -792,14 +823,24 @@ export default function ExecucaoOrcamentaria() {
           </div>
 
           {aba === 'fluxo' && (
-            <KpiFluxoBar
-              kpis={kpis}
-              periodoLabel={periodoLabel}
-              mostrarProgramadas={mostrarProgramadas}
-              saldoPrevisto={saldoPrevisto}
-              aReceber={kpisProgramadas.aReceber}
-              aPagar={kpisProgramadas.aPagar}
-            />
+            <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:gap-3">
+              <div className="min-w-0 flex-1">
+                <KpiFluxoBar
+                  kpis={kpis}
+                  periodoLabel={periodoLabel}
+                  mostrarProgramadas={mostrarProgramadas}
+                  saldoPrevisto={saldoPrevisto}
+                  aReceber={kpisProgramadas.aReceber}
+                  aPagar={kpisProgramadas.aPagar}
+                />
+              </div>
+              <ContasSaldoPicker
+                contas={contasSaldoOpcoes}
+                sel={contasSaldoSel}
+                onSel={atualizarContasSaldoSel}
+                className="self-start"
+              />
+            </div>
           )}
 
           <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:gap-3">
