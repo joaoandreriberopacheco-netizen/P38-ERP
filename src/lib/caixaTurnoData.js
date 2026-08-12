@@ -291,14 +291,10 @@ export function buildRecebimentosTurnoResumo(caixaData = {}) {
 export function buildPainelCaixaResumo(snapshot, { rascunhosPendentesCaixa = [] } = {}) {
   const { turno, substituicoesCtx, caixaData } = snapshot;
   const totalVendas = substituicoesCtx.totalVendasUtil;
-  const liquidezTurno =
-    (turno.saldo_inicial || 0) +
-    totalVendas +
-    (caixaData.reforcos || 0) -
-    (caixaData.sangrias || 0) -
-    (caixaData.despesas || 0);
-  const recebimentos = buildRecebimentosTurnoResumo({ ...caixaData, liquidez: liquidezTurno });
-  const totalFiado = caixaData.fiado || recebimentos.fiado || 0;
+  // Usar liquidez já calculada no snapshot (soma real dos pagamentos), não totalVendasUtil.
+  const liquidezTurno = roundToTwoDecimals(caixaData.liquidez ?? 0);
+  const recebimentos = buildRecebimentosTurnoResumo(caixaData);
+  const totalFiado = caixaData.recebimentos?.fiado ?? recebimentos.fiado ?? 0;
   const dinheiroNaGaveta = recebimentos.dinheiro;
 
   return {
