@@ -25,7 +25,7 @@ function chipLevou() {
   return (
     <Badge
       variant="outline"
-      className="text-[10px] px-1.5 py-0 gap-0.5 border-orange-300 text-orange-800 dark:border-orange-700 dark:text-orange-300 inline-flex items-center"
+      className="text-[10px] px-1.5 py-0 gap-0.5 border-emerald-300 text-emerald-700 dark:border-emerald-700 dark:text-emerald-300 inline-flex items-center"
     >
       <ArrowUp className="w-3 h-3" aria-hidden />
       Levou
