@@ -15,6 +15,7 @@ import FiltrosContasFinanceiras, { TIPOS_CONTA } from './fluxo/FiltrosContasFina
 import ListaContasFinanceiras from './fluxo/ListaContasFinanceiras';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from './fluxo/FinanceiroListaMeta';
 import {
+  calcularSaldosAposDataCorte,
   calcularSaldosTodasContas,
   getSaldoExibicaoConta,
 } from '@/lib/saldoContaFinanceira';
@@ -57,6 +58,9 @@ function useGestaoContasModel(shared) {
   const [ajusteConta, setAjusteConta] = useState(null);
   const [ajusteDialogOpen, setAjusteDialogOpen] = useState(false);
   const [formData, setFormData] = useState(FORM_VAZIO);
+  /** Base completa para saldos — o Fluxo partilha só o período filtrado. */
+  const [lancamentosSaldo, setLancamentosSaldo] = useState([]);
+  const [movimentosSaldo, setMovimentosSaldo] = useState([]);
   const [mostrarHistoricoAnterior, setMostrarHistoricoAnterior] = useState(
     () => lerPreferenciasCorteHistorico().mostrarHistoricoAnterior,
   );
@@ -75,9 +79,23 @@ function useGestaoContasModel(shared) {
   const movimentosCaixa = shared?.movimentos ?? movimentosLocal;
   const loading = shared ? shared.loading : loadingLocal;
 
+  const loadSaldosBase = useCallback(async () => {
+    try {
+      const [lancsFull, movsFull] = await Promise.all([
+        base44.entities.LancamentoFinanceiro.list(),
+        base44.entities.MovimentosCaixa.list(),
+      ]);
+      setLancamentosSaldo(lancsFull);
+      setMovimentosSaldo(movsFull);
+    } catch (error) {
+      console.error('Erro ao carregar base de saldos:', error);
+    }
+  }, []);
+
   const loadData = useCallback(async () => {
     if (shared?.reload) {
       await shared.reload();
+      await loadSaldosBase();
       return;
     }
     setLoadingLocal(true);
@@ -90,17 +108,26 @@ function useGestaoContasModel(shared) {
       setAccountsLocal(contas);
       setLancamentosLocal(lancs);
       setMovimentosLocal(movs);
+      setLancamentosSaldo(lancs);
+      setMovimentosSaldo(movs);
     } catch (error) {
       console.error('Erro ao carregar contas:', error);
     } finally {
       setLoadingLocal(false);
     }
-  }, [shared]);
+  }, [shared, loadSaldosBase]);
+
+  useEffect(() => {
+    loadSaldosBase();
+  }, [loadSaldosBase]);
 
   useEffect(() => {
     if (shared) return;
     loadData();
   }, [shared, loadData]);
+
+  const lancsParaSaldo = lancamentosSaldo.length ? lancamentosSaldo : lancamentos;
+  const movsParaSaldo = movimentosSaldo.length ? movimentosSaldo : movimentosCaixa;
 
   const pendenciasConciliacao = useMemo(() => {
     const mapa = {};
@@ -116,11 +143,12 @@ function useGestaoContasModel(shared) {
     return mapa;
   }, [lancamentos, mostrarHistoricoAnterior, dataCorteHistorico]);
 
-  // Mesma regra do Fluxo de Caixa: saldo canónico a partir de todos os lançamentos pagos + movimentos.
-  const saldosCalculados = useMemo(
-    () => calcularSaldosTodasContas(accounts, lancamentos, movimentosCaixa),
-    [accounts, lancamentos, movimentosCaixa],
-  );
+  const saldosCalculados = useMemo(() => {
+    if (!mostrarHistoricoAnterior && dataCorteHistorico) {
+      return calcularSaldosAposDataCorte(accounts, lancsParaSaldo, movsParaSaldo, dataCorteHistorico);
+    }
+    return calcularSaldosTodasContas(accounts, lancsParaSaldo, movsParaSaldo);
+  }, [accounts, lancsParaSaldo, movsParaSaldo, mostrarHistoricoAnterior, dataCorteHistorico]);
 
   const contasEnriquecidas = useMemo(() => accounts.map((account) => ({
     ...account,
@@ -400,7 +428,7 @@ export function GestaoContasPane() {
                 )}
                 {!mostrarHistoricoAnterior && (
                   <FinanceiroSummaryChip>
-                    Movimentos desde {formatarSoData(dataCorteHistorico)}
+                    Saldos desde {formatarSoData(dataCorteHistorico)}
                   </FinanceiroSummaryChip>
                 )}
                 {mostrarHistoricoAnterior && (

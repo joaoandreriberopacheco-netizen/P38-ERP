@@ -310,10 +310,14 @@ export default function ExecucaoOrcamentaria() {
         corteHistorico: dataCorteHistorico,
       });
       const contaIds = cts.filter((c) => c.ativo !== false).map((c) => c.id);
+      const [lancsCompletos, movsCompletos] = await Promise.all([
+        base44.entities.LancamentoFinanceiro.list(),
+        base44.entities.MovimentosCaixa.list(),
+      ]);
       await sincronizarSaldosContasFinanceiras(base44, {
         contas: cts,
-        lancamentos: refreshed.lancs,
-        movimentos: refreshed.movimentos,
+        lancamentos: lancsCompletos,
+        movimentos: movsCompletos,
         contaIds,
       });
       const cts2 = await base44.entities.ContasFinanceiras.list();
