@@ -1,21 +1,22 @@
 import React from 'react';
+import { ArrowDown, ArrowUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import { p38Table } from '@/lib/p38TableSurfaces';
-import { caixaTypo } from '@/lib/caixaP38Theme';
-import CaixaValorDisplay, { formatCaixaR } from '@/components/vendas/caixa/CaixaValorDisplay';
+import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 import FormaPagamentoBadges from '@/components/vendas/FormaPagamentoBadges';
 import { formatarDataHora } from '@/components/utils/dateUtils';
 import { resolveResumoTrocaCaixa } from '@/lib/substituicoesVendaCaixa';
 import { ConsultaProdutoRow } from '@/components/vendas/caixa/ConsultaProdutoRow';
 
-function chipRetorno() {
+function chipDevolveu() {
   return (
     <Badge
       variant="outline"
-      className="text-[10px] px-1.5 py-0 mr-1.5 border-red-300 text-red-700 dark:border-red-700 dark:text-red-300 align-middle"
+      className="text-[10px] px-1.5 py-0 gap-0.5 border-red-300 text-red-700 dark:border-red-700 dark:text-red-300 inline-flex items-center"
     >
-      Retorno
+      <ArrowDown className="w-3 h-3" aria-hidden />
+      Devolveu
     </Badge>
   );
 }
@@ -24,8 +25,9 @@ function chipLevou() {
   return (
     <Badge
       variant="outline"
-      className="text-[10px] px-1.5 py-0 mr-1.5 border-orange-300 text-orange-800 dark:border-orange-700 dark:text-orange-300 align-middle"
+      className="text-[10px] px-1.5 py-0 gap-0.5 border-orange-300 text-orange-800 dark:border-orange-700 dark:text-orange-300 inline-flex items-center"
     >
+      <ArrowUp className="w-3 h-3" aria-hidden />
       Levou
     </Badge>
   );
@@ -101,22 +103,11 @@ export default function TrocaCaixaCard({ venda, meta, onVerDetalhes }) {
                 descontoUnitario={0}
                 striped={striped}
                 accent={kind === 'retorno' ? 'muted' : 'success'}
-                nomePrefix={kind === 'retorno' ? chipRetorno() : chipLevou()}
+                nomeSuffix={kind === 'retorno' ? chipDevolveu() : chipLevou()}
               />
             );
           })}
         </P38MobileLineList>
-      )}
-
-      {resumo.creditoDevolucao > 0 && (
-        <div className={`px-4 py-2.5 ${caixaTypo.meta}`}>
-          <div className="flex justify-between gap-3">
-            <span>Crédito do retorno</span>
-            <span className="tabular-nums text-red-700 dark:text-red-400">
-              − {formatCaixaR(resumo.creditoDevolucao)}
-            </span>
-          </div>
-        </div>
       )}
     </div>
   );

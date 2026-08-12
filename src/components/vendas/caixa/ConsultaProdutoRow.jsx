@@ -44,6 +44,7 @@ export function ConsultaProdutoRow({
   accent = 'success',
   hideValor = false,
   nomePrefix = null,
+  nomeSuffix = null,
 }) {
   const borderClass = accent === 'muted' ? p38Accent.muted.border : p38Accent.success.border;
   const valorNum = Number(valorTotal) || 0;
@@ -68,10 +69,13 @@ export function ConsultaProdutoRow({
     >
       <ConsultaQtdUnCol qtd={quantidade} unidade={unidade} accent={accent} />
       <div className="flex-1 min-w-0 py-2 pr-3 pl-2">
-        <p className={cn(p38Table.mobileLineTitle, 'line-clamp-3 leading-snug')}>
-          {nomePrefix}
-          {nome}
-        </p>
+        <div className="flex items-start justify-between gap-2 min-w-0">
+          <p className={cn(p38Table.mobileLineTitle, 'line-clamp-3 leading-snug flex-1 min-w-0')}>
+            {nomePrefix}
+            {nome}
+          </p>
+          {nomeSuffix ? <div className="shrink-0 pt-0.5">{nomeSuffix}</div> : null}
+        </div>
         <div className="flex items-baseline justify-between gap-3 mt-1">
           <p className={`${caixaTypo.meta} normal-case tabular-nums min-w-0`}>
             {temDesconto && (
