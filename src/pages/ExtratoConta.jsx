@@ -18,7 +18,13 @@ import {
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, isWithinInterval, parseISO } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 import { printOrShareElementAsPdf } from '@/lib/mobilePrintAndShare';
-import { dataHoje } from '@/components/utils/dateUtils';
+import { dataHoje, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
+import { getDataAncoraFluxoKey } from '@/lib/lancamentoFinanceiroStatus';
+import {
+  DATA_CORTE_HISTORICO_PADRAO,
+  lerPreferenciasCorteHistorico,
+  passaFiltroCorteHistorico,
+} from '@/lib/filtroDataFinanceiro';
 import {
   fetchLancamentosExtratoConta,
   fetchMovimentosExtratoConta,
@@ -33,18 +39,31 @@ import { formatFinanceiroGrupoLabel } from '@/components/financeiro/fluxo/Financ
 import AjusteSaldoDialog from '@/components/config/AjusteSaldoDialog';
 import {
   buildMapaContrapartesTransferencia,
+  calcularSaldoContaAposDataCorte,
   calcularSaldoContaFinanceira,
   contaUsaRegraCaixaPDV,
+  getDataMovimentoCaixa,
   idsMovimentosComLancamentoFinanceiro,
   movimentoParticipaExtrato,
   totaisEntradaSaidaMovimentos,
 } from '@/lib/saldoContaFinanceira';
 import { reconciliarSaldoCaixaPDVSemTurnoAberto, backfillLancamentosMovimentosCaixaPDV } from '@/lib/contaDestinoCaixaPDV';
 
+function getDataKeyMovimentoExtrato(mov) {
+  if (mov?.origem === 'movimento' || (mov?.conta_id && !mov?.conta_financeira_id)) {
+    const raw = getDataMovimentoCaixa(mov);
+    return raw ? toLocalDateKey(raw) : null;
+  }
+  return getDataAncoraFluxoKey(mov);
+}
+
 export default function ExtratoContaPage() {
   const [conta, setConta] = useState(null);
   const [lancamentos, setLancamentos] = useState([]);
   const [movimentosCaixa, setMovimentosCaixa] = useState([]);
+  /** Base completa para saldo quando há corte histórico (lista exibida pode ser recortada). */
+  const [lancsSaldoBase, setLancsSaldoBase] = useState([]);
+  const [movsSaldoBase, setMovsSaldoBase] = useState([]);
   const [contas, setContas] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [fabOpen, setFabOpen] = useState(false);
@@ -55,6 +74,12 @@ export default function ExtratoContaPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [ajusteDialogOpen, setAjusteDialogOpen] = useState(false);
+  const [mostrarHistoricoAnterior, setMostrarHistoricoAnterior] = useState(
+    () => lerPreferenciasCorteHistorico().mostrarHistoricoAnterior,
+  );
+  const [dataCorteHistorico, setDataCorteHistorico] = useState(
+    () => lerPreferenciasCorteHistorico().dataCorte || DATA_CORTE_HISTORICO_PADRAO,
+  );
   const { toast } = useToast();
 
   const [formLancamento, setFormLancamento] = useState({
@@ -84,9 +109,15 @@ export default function ExtratoContaPage() {
   const loadExtrato = async (contaId) => {
     setIsLoading(true);
     try {
+      const prefsCorte = lerPreferenciasCorteHistorico();
+      setMostrarHistoricoAnterior(prefsCorte.mostrarHistoricoAnterior);
+      setDataCorteHistorico(prefsCorte.dataCorte || DATA_CORTE_HISTORICO_PADRAO);
+
       const hoje = dataHoje();
       const dataFim = hoje;
-      const dataInicio = format(subMonths(new Date(`${hoje}T12:00:00`), 24), 'yyyy-MM-dd');
+      const dataInicio = !prefsCorte.mostrarHistoricoAnterior && prefsCorte.dataCorte
+        ? prefsCorte.dataCorte
+        : format(subMonths(new Date(`${hoje}T12:00:00`), 24), 'yyyy-MM-dd');
 
       const [contaData, contasData] = await Promise.all([
         base44.entities.ContasFinanceiras.filter({ id: contaId }),
@@ -134,7 +165,7 @@ export default function ExtratoContaPage() {
           movsFiltrados,
         );
 
-        const lancsSaldo = reconciliou
+        let lancsSaldo = reconciliou
           ? await fetchLancamentosExtratoConta({
               contaId,
               isCaixaGeral,
@@ -142,8 +173,25 @@ export default function ExtratoContaPage() {
               dataFim,
             })
           : lancamentosFiltrados;
+        let movsSaldo = movsFiltrados;
 
-        const saldo = calcularSaldoContaFinanceira(contaAtual, lancsSaldo, movsFiltrados);
+        if (!prefsCorte.mostrarHistoricoAnterior && prefsCorte.dataCorte) {
+          const [lancsFull, movsFull] = await Promise.all([
+            base44.entities.LancamentoFinanceiro.list(),
+            base44.entities.MovimentosCaixa.list(),
+          ]);
+          lancsSaldo = lancsFull;
+          movsSaldo = movsFull;
+          setLancsSaldoBase(lancsFull);
+          setMovsSaldoBase(movsFull);
+        } else {
+          setLancsSaldoBase([]);
+          setMovsSaldoBase([]);
+        }
+
+        const saldo = !prefsCorte.mostrarHistoricoAnterior && prefsCorte.dataCorte
+          ? calcularSaldoContaAposDataCorte(contaAtual, lancsSaldo, movsSaldo, prefsCorte.dataCorte)
+          : calcularSaldoContaFinanceira(contaAtual, lancsSaldo, movsSaldo);
 
         if (reconciliou) {
           setLancamentos(lancsSaldo);
@@ -280,6 +328,10 @@ export default function ExtratoContaPage() {
 
   const getDataMovimento = (mov) => mov.data_pagamento || mov.data_vencimento || mov.data_movimento || mov.created_date;
   const participaDoSaldo = (mov) => movimentoParticipaExtrato(mov, conta);
+  const passaCorteHistorico = (mov) => passaFiltroCorteHistorico(getDataKeyMovimentoExtrato(mov), {
+    mostrarHistoricoAnterior,
+    dataCorte: dataCorteHistorico,
+  });
 
   const movimentosJaNoFinanceiro = useMemo(
     () => idsMovimentosComLancamentoFinanceiro(lancamentos),
@@ -294,6 +346,7 @@ export default function ExtratoContaPage() {
       .map(m => ({ ...m, origem: 'movimento' }))
   ]
     .filter((mov) => participaDoSaldo(mov))
+    .filter(passaCorteHistorico)
     .sort((a, b) => new Date(getDataMovimento(a)) - new Date(getDataMovimento(b)));
 
   // Aplica filtro de período
@@ -346,9 +399,14 @@ export default function ExtratoContaPage() {
 
   const diasOrdenados = Object.keys(movimentacoesPorDia).sort((a, b) => new Date(b) - new Date(a));
 
-  // Saldo canónico (mesma regra da lista de contas)
+  const lancsParaSaldo = lancsSaldoBase.length ? lancsSaldoBase : lancamentos;
+  const movsParaSaldo = movsSaldoBase.length ? movsSaldoBase : movimentosCaixa;
+
+  // Saldo canónico (mesma regra da lista de contas / corte histórico)
   const saldoReal = conta
-    ? calcularSaldoContaFinanceira(conta, lancamentos, movimentosCaixa)
+    ? (!mostrarHistoricoAnterior && dataCorteHistorico
+        ? calcularSaldoContaAposDataCorte(conta, lancsParaSaldo, movsParaSaldo, dataCorteHistorico)
+        : calcularSaldoContaFinanceira(conta, lancsParaSaldo, movsParaSaldo))
     : 0;
 
   const movimentacoesAposPeriodo = todasMovimentacoes.filter(m => {
@@ -651,6 +709,9 @@ export default function ExtratoContaPage() {
         }}
         summaryChips={
           <>
+            {!mostrarHistoricoAnterior && dataCorteHistorico && (
+              <FinanceiroSummaryChip>Movimentos desde {formatarSoData(dataCorteHistorico)}</FinanceiroSummaryChip>
+            )}
             {filtroPeriodo !== 'mes' && <FinanceiroSummaryChip>{periodoLabel}</FinanceiroSummaryChip>}
             {searchTerm && <FinanceiroSummaryChip>Busca</FinanceiroSummaryChip>}
           </>
