@@ -13,6 +13,7 @@ import {
 } from '@/lib/fetchLancamentosFinanceirosFluxo';
 import {
   calcularKpisFluxoPeriodo,
+  calcularSaldosAposDataCorte,
   calcularSaldosTodasContas,
   contaUsaRegraCaixaPDV,
   getDataMovimentoCaixa,
@@ -98,6 +99,9 @@ const FAB_ITEMS = [
 export default function ExecucaoOrcamentaria() {
   const [lancs, setLancs] = useState([]);
   const [movimentos, setMovimentos] = useState([]);
+  /** Base completa para saldo da carteira (período filtrado não basta). */
+  const [lancsSaldo, setLancsSaldo] = useState([]);
+  const [movsSaldo, setMovsSaldo] = useState([]);
   const [contas, setContas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -215,6 +219,14 @@ export default function ExecucaoOrcamentaria() {
     };
   }, []);
 
+  const carregarBaseSaldos = useCallback(async () => {
+    const [lancsFull, movsFull] = await Promise.all([
+      base44.entities.LancamentoFinanceiro.list(),
+      base44.entities.MovimentosCaixa.list(),
+    ]);
+    return { lancsFull, movsFull };
+  }, []);
+
   const carregarDadosPeriodo = useCallback(async ({ ds: dsParam, de: deParam, corteHistorico } = {}) => {
     const { dataInicio, dataFim } = intervaloFetchFluxoPadrao(dsParam, deParam);
     const progIntervalo = intervaloProgramadasFluxo(corteHistorico ?? dataCorteHistorico);
@@ -234,11 +246,16 @@ export default function ExecucaoOrcamentaria() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    carregarDadosPeriodo({ ds, de, corteHistorico: dataCorteHistorico })
-      .then(({ lancs: ls, movimentos: movs }) => {
+    Promise.all([
+      carregarDadosPeriodo({ ds, de, corteHistorico: dataCorteHistorico }),
+      carregarBaseSaldos(),
+    ])
+      .then(([{ lancs: ls, movimentos: movs }, { lancsFull, movsFull }]) => {
         if (!cancelled) {
           setLancs(ls);
           setMovimentos(movs);
+          setLancsSaldo(lancsFull);
+          setMovsSaldo(movsFull);
         }
       })
       .catch((error) => {
@@ -250,7 +267,7 @@ export default function ExecucaoOrcamentaria() {
     return () => {
       cancelled = true;
     };
-  }, [ds, de, dataCorteHistorico, carregarDadosPeriodo]);
+  }, [ds, de, dataCorteHistorico, carregarDadosPeriodo, carregarBaseSaldos]);
 
   useEffect(() => {
     if (!showNovoFluxo) return;
@@ -323,6 +340,8 @@ export default function ExecucaoOrcamentaria() {
       const cts2 = await base44.entities.ContasFinanceiras.list();
       setLancs(refreshed.lancs);
       setMovimentos(refreshed.movimentos);
+      setLancsSaldo(lancsCompletos);
+      setMovsSaldo(movsCompletos);
       setContas(cts2);
       return { cts: cts2, ls: refreshed.lancs, movs: refreshed.movimentos };
     } catch (error) {
@@ -396,6 +415,9 @@ export default function ExecucaoOrcamentaria() {
     return true;
   }), [movimentos, ds, de, contasFiltroIds, mostrarHistoricoAnterior, dataCorteHistorico]);
 
+  const lancsParaSaldo = lancsSaldo.length ? lancsSaldo : lancs;
+  const movsParaSaldo = movsSaldo.length ? movsSaldo : movimentos;
+
   const kpis = useMemo(() => {
     const baseKpis = calcularKpisFluxoPeriodo(
       filtrados,
@@ -404,7 +426,9 @@ export default function ExecucaoOrcamentaria() {
       contasById,
       contasFiltroIds,
     );
-    const saldosMap = calcularSaldosTodasContas(contasVisiveisSaldo, lancs, movimentos);
+    const saldosMap = !mostrarHistoricoAnterior && dataCorteHistorico
+      ? calcularSaldosAposDataCorte(contasVisiveisSaldo, lancsParaSaldo, movsParaSaldo, dataCorteHistorico)
+      : calcularSaldosTodasContas(contasVisiveisSaldo, lancsParaSaldo, movsParaSaldo);
     const saldoContas = contasVisiveisSaldo.reduce(
       (acc, c) => acc + getSaldoExibicaoConta(c, saldosMap),
       0,
@@ -413,7 +437,18 @@ export default function ExecucaoOrcamentaria() {
       ...baseKpis,
       saldoContas: roundToTwoDecimals(saldoContas),
     };
-  }, [filtrados, movimentosFiltrados, lancs, contasById, contasVisiveisSaldo, contasFiltroIds, movimentos]);
+  }, [
+    filtrados,
+    movimentosFiltrados,
+    lancs,
+    contasById,
+    contasVisiveisSaldo,
+    contasFiltroIds,
+    lancsParaSaldo,
+    movsParaSaldo,
+    mostrarHistoricoAnterior,
+    dataCorteHistorico,
+  ]);
 
   const grupos = useMemo(() => {
     const hStr = dataHoje();
@@ -504,7 +539,7 @@ export default function ExecucaoOrcamentaria() {
     if (periodo === 'hoje') return 'Hoje';
     if (periodo === 'ontem') return 'Ontem';
     if (periodo === 'semana') return 'Esta semana';
-    if (periodo === 'mes') return 'Este mês';
+    if (periodo === 'mes') return 'Este período';
     if (periodo === 'periodo' && cs && ce) return `${formatarSoData(cs)} até ${formatarSoData(ce)}`;
     return 'Período atual';
   }, [periodo, cs, ce]);
@@ -576,8 +611,13 @@ export default function ExecucaoOrcamentaria() {
         contasById,
         contasFiltroIdsF,
       );
-      const saldosMap = calcularSaldosTodasContas(contasVisiveisF, lancs, movimentos);
-      const saldoContas = contasVisiveisF.reduce((acc, c) => acc + (saldosMap[c.id] || 0), 0);
+      const saldosMap = !mostrarHistoricoAnterior && dataCorteHistorico
+        ? calcularSaldosAposDataCorte(contasVisiveisF, lancsParaSaldo, movsParaSaldo, dataCorteHistorico)
+        : calcularSaldosTodasContas(contasVisiveisF, lancsParaSaldo, movsParaSaldo);
+      const saldoContas = contasVisiveisF.reduce(
+        (acc, c) => acc + getSaldoExibicaoConta(c, saldosMap),
+        0,
+      );
       return { ...baseKpis, saldoContas: roundToTwoDecimals(saldoContas) };
     })();
 
@@ -610,6 +650,8 @@ export default function ExecucaoOrcamentaria() {
   }, [
     lancs,
     movimentos,
+    lancsParaSaldo,
+    movsParaSaldo,
     contas,
     contasAtivas,
     contasById,
