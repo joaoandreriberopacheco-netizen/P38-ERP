@@ -174,7 +174,7 @@ export default function PDVCaixa({
   overlayMode = false,
   onClose,
   initialActiveTab = 'balanco',
-  initialVendasView = 'aguardando',
+  initialVendasView = 'consulta',
 } = {}) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();

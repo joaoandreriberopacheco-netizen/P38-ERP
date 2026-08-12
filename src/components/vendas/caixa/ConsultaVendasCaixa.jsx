@@ -147,7 +147,7 @@ export default function ConsultaVendasCaixa({
   contextLabel = 'Consulta do turno',
   emptyMessage = 'Nenhuma venda finalizada no turno',
 }) {
-  const [modo, setModo] = useState('produto');
+  const [modo, setModo] = useState('comprovante');
 
   const { trocas, normais } = useMemo(
     () => partitionVendasConsultaCaixa(vendasFinalizadas, metaPorPedidoId),

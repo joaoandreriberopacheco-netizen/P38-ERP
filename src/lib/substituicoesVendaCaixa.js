@@ -66,6 +66,50 @@ function devolucaoAtiva(dt) {
   return dt?.numero && String(dt.status || '').toLowerCase() !== 'cancelada';
 }
 
+function creditoDevolucaoFromDt(dt) {
+  return round2(
+    devolucaoItensRetorno(dt).reduce((sum, item) => sum + (Number(item.total) || 0), 0)
+  );
+}
+
+function valorSubstitutosFromDt(dt) {
+  const itens = devolucaoItensSubstitutos(dt);
+  if (!itens.length) return 0;
+  return round2(itens.reduce((sum, item) => sum + (Number(item.total) || 0), 0));
+}
+
+/** Pedido origem fora do turno — montado a partir da devolução/troca. */
+function origemFromDevolucao(dt) {
+  if (!dt?.pedido_origem_id && !dt?.pedido_origem_numero) return null;
+  const credito = creditoDevolucaoFromDt(dt);
+  return {
+    id: dt.pedido_origem_id || `origem-devolucao-${dt.numero}`,
+    numero: dt.pedido_origem_numero || dt.pedido_origem_id,
+    valor_total: credito,
+    total: credito,
+    created_date: dt.created_date,
+    cliente_nome: dt.cliente_nome,
+  };
+}
+
+function extrasValoresTroca(dt, substituto) {
+  const credito = creditoDevolucaoFromDt(dt);
+  const substitutos = valorSubstitutosFromDt(dt);
+  return {
+    devolucao: dt,
+    devolucaoNumero: dt.numero,
+    valorOrigem: credito > 0 ? credito : undefined,
+    valorSubstituto: substitutos > 0 ? substitutos : valorPedido(substituto),
+  };
+}
+
+export function isVendaEntradaTrocaCaixa(venda, metaPorPedidoId = {}) {
+  const meta = metaPorPedidoId?.[venda?.id];
+  if (meta?.papel === 'substituto') return true;
+  if (meta?.devolucao || meta?.par?.devolucao) return true;
+  return !!extrairNumeroDevolucaoObservacoes(pedidoObservacoes(venda));
+}
+
 function pagamentoVale(pedido) {
   return (pedido.pagamentos || []).find((p) => {
     const fp = (p.forma_pagamento || '').toLowerCase();
@@ -141,6 +185,11 @@ export function buildSubstituicoesVendaCaixa({ vendas = [], vales = [], devoluco
     return origem;
   };
 
+  const resolveOrigemParaTroca = (dt) => {
+    const origem = resolveOrigem(dt?.pedido_origem_id, dt?.pedido_origem_numero);
+    return origem || origemFromDevolucao(dt);
+  };
+
   const resolveSubstituto = (subId, subNumero) => {
     let sub = subId ? vendasById.get(subId) : null;
     if (!sub && subNumero) sub = vendasByNumero.get(normCodigo(subNumero));
@@ -152,8 +201,8 @@ export function buildSubstituicoesVendaCaixa({ vendas = [], vales = [], devoluco
     const key = chavePar(origem.id, substituto.id);
     if (parKeys.has(key)) return;
     parKeys.add(key);
-    const valorOrigem = valorPedido(origem);
-    const valorSubstituto = valorPedido(substituto);
+    const valorOrigem = extra.valorOrigem ?? valorPedido(origem);
+    const valorSubstituto = extra.valorSubstituto ?? valorPedido(substituto);
     pares.push({
       origem,
       substituto,
@@ -184,9 +233,9 @@ export function buildSubstituicoesVendaCaixa({ vendas = [], vales = [], devoluco
     if (!numeroDev) continue;
     const dt = devolucoes.find((d) => normCodigo(d.numero) === normCodigo(numeroDev) && devolucaoAtiva(d));
     if (!dt) continue;
-    const origem = resolveOrigem(dt.pedido_origem_id, dt.pedido_origem_numero);
+    const origem = resolveOrigemParaTroca(dt);
     if (!origem) continue;
-    addPar(origem, substituto, { fonte: 'observacoes_troca', devolucao: dt, devolucaoNumero: dt.numero });
+    addPar(origem, substituto, { fonte: 'observacoes_troca', ...extrasValoresTroca(dt, substituto) });
   }
 
   // 2) Vale troca no pagamento (id ou código)
@@ -218,16 +267,17 @@ export function buildSubstituicoesVendaCaixa({ vendas = [], vales = [], devoluco
     if (!devolucaoAtiva(dt)) continue;
     if (!dt.pedido_substituto_id && !dt.pedido_substituto_numero) continue;
     const substituto = resolveSubstituto(dt.pedido_substituto_id, dt.pedido_substituto_numero);
-    const origem = resolveOrigem(dt.pedido_origem_id, dt.pedido_origem_numero);
+    const origemNoTurno = resolveOrigem(dt.pedido_origem_id, dt.pedido_origem_numero);
+    const origem = origemNoTurno || origemFromDevolucao(dt);
     if (!origem || !substituto) continue;
-    if (!mesmoDiaCivil(origem.created_date, substituto.created_date)) continue;
-    addPar(origem, substituto, { fonte: 'devolucao_gravada', devolucaoNumero: dt.numero, devolucao: dt });
+    if (origemNoTurno && !mesmoDiaCivil(origem.created_date, substituto.created_date)) continue;
+    addPar(origem, substituto, { fonte: 'devolucao_gravada', ...extrasValoresTroca(dt, substituto) });
   }
 
   // 4) Devolução + vale: histórico ou pagamento com mesmo código/id do vale da devolução
   for (const dt of devolucoes) {
     if (!devolucaoAtiva(dt)) continue;
-    const origem = resolveOrigem(dt.pedido_origem_id, dt.pedido_origem_numero);
+    const origem = resolveOrigemParaTroca(dt);
     if (!origem || idsSubstituidos.has(origem.id)) continue;
     const vale = resolveValeDevolucao(dt, valesById, valesByCodigo);
     if (vale) {
@@ -254,7 +304,7 @@ export function buildSubstituicoesVendaCaixa({ vendas = [], vales = [], devoluco
   // 5) Devolução no dia → venda posterior do mesmo cliente (troca típica sem flag aguarda_substituto)
   for (const dt of devolucoes) {
     if (!devolucaoAtiva(dt)) continue;
-    const origem = resolveOrigem(dt.pedido_origem_id, dt.pedido_origem_numero);
+    const origem = resolveOrigemParaTroca(dt);
     if (!origem || idsSubstituidos.has(origem.id)) continue;
 
     const origemTime = new Date(origem.created_date || 0).getTime();
@@ -280,19 +330,31 @@ export function buildSubstituicoesVendaCaixa({ vendas = [], vales = [], devoluco
     });
 
     if (comValeDaDevolucao.length === 1) {
-      addPar(origem, comValeDaDevolucao[0], { fonte: 'devolucao_candidato_vale', devolucaoNumero: dt.numero, devolucao: dt });
+      addPar(origem, comValeDaDevolucao[0], {
+        fonte: 'devolucao_candidato_vale',
+        ...extrasValoresTroca(dt, comValeDaDevolucao[0]),
+      });
     } else if (dt.aguarda_substituto) {
       const porObs = candidatos.filter((v) => {
         const obs = pedidoObservacoes(v);
         return dt.numero && obs.toUpperCase().includes(normCodigo(dt.numero));
       });
       if (porObs.length === 1) {
-        addPar(origem, porObs[0], { fonte: 'aguarda_substituto_obs', devolucaoNumero: dt.numero, devolucao: dt });
+        addPar(origem, porObs[0], {
+          fonte: 'aguarda_substituto_obs',
+          ...extrasValoresTroca(dt, porObs[0]),
+        });
       } else if (candidatos.length === 1) {
-        addPar(origem, candidatos[0], { fonte: 'aguarda_substituto', devolucaoNumero: dt.numero, devolucao: dt });
+        addPar(origem, candidatos[0], {
+          fonte: 'aguarda_substituto',
+          ...extrasValoresTroca(dt, candidatos[0]),
+        });
       }
     } else if (candidatos.length === 1) {
-      addPar(origem, candidatos[0], { fonte: 'devolucao_candidato_unico', devolucaoNumero: dt.numero, devolucao: dt });
+      addPar(origem, candidatos[0], {
+        fonte: 'devolucao_candidato_unico',
+        ...extrasValoresTroca(dt, candidatos[0]),
+      });
     }
   }
 
@@ -327,6 +389,27 @@ export function buildSubstituicoesVendaCaixa({ vendas = [], vales = [], devoluco
     }
   }
 
+  // Rede de segurança: pedido com "Troca DT-…" nas observações
+  for (const v of vendas) {
+    if (metaPorPedidoId[v.id]?.papel === 'substituto') continue;
+    const numeroDev = extrairNumeroDevolucaoObservacoes(pedidoObservacoes(v));
+    if (!numeroDev) continue;
+    const dt = devolucoes.find(
+      (d) => normCodigo(d.numero) === normCodigo(numeroDev) && devolucaoAtiva(d)
+    );
+    if (!dt) continue;
+    const origem = origemFromDevolucao(dt);
+    metaPorPedidoId[v.id] = {
+      papel: 'substituto',
+      origem,
+      devolucao: dt,
+      diferenca: round2(
+        (valorSubstitutosFromDt(dt) || valorPedido(v)) - creditoDevolucaoFromDt(dt)
+      ),
+    };
+    idsSubstitutos.add(v.id);
+  }
+
   const totalVendasBruto = round2(vendas.reduce((s, v) => s + valorPedido(v), 0));
   const totalVendasUtil = round2(
     vendas
@@ -355,7 +438,7 @@ export function partitionVendasConsultaCaixa(vendas = [], metaPorPedidoId = {}) 
   const trocas = [];
   const normais = [];
   for (const venda of vendas) {
-    if (metaPorPedidoId[venda.id]?.papel === 'substituto') trocas.push(venda);
+    if (isVendaEntradaTrocaCaixa(venda, metaPorPedidoId)) trocas.push(venda);
     else normais.push(venda);
   }
   return { trocas, normais };
