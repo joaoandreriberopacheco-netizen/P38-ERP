@@ -68,7 +68,7 @@ export const PERIODOS_DATA_PAGAMENTO = [
 ];
 
 /** Data padrão para ocultar histórico confuso no Fluxo de Caixa (ajustável pelo utilizador). */
-export const DATA_CORTE_HISTORICO_PADRAO = '2026-06-18';
+export const DATA_CORTE_HISTORICO_PADRAO = '2026-08-12';
 
 const STORAGE_MOSTRAR_HISTORICO = 'p38-fluxo-mostrar-historico-anterior';
 const STORAGE_OCULTAR_HISTORICO_LEGADO = 'p38-fluxo-ocultar-historico';
