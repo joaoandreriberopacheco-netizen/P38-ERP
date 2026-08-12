@@ -33,6 +33,39 @@ function normCodigo(c) {
   return String(c || '').trim().toUpperCase();
 }
 
+function pedidoCampo(pedido, field) {
+  if (!pedido) return null;
+  const direct = pedido[field];
+  if (direct !== null && direct !== undefined && direct !== '') return direct;
+  return pedido.dados?.[field] ?? null;
+}
+
+function pedidoObservacoes(pedido) {
+  return String(pedidoCampo(pedido, 'observacoes') || '').trim();
+}
+
+function extrairNumeroDevolucaoObservacoes(observacoes) {
+  const match = String(observacoes || '').match(/Troca\s+(DT-\d+)/i);
+  return match ? match[1].toUpperCase() : null;
+}
+
+function devolucaoDados(dt) {
+  return dt?.dados && typeof dt.dados === 'object' ? dt.dados : {};
+}
+
+export function devolucaoItensSubstitutos(dt) {
+  const dados = devolucaoDados(dt);
+  return Array.isArray(dados.itens_substitutos) ? dados.itens_substitutos : [];
+}
+
+export function devolucaoItensRetorno(dt) {
+  return Array.isArray(dt?.itens_devolvidos) ? dt.itens_devolvidos : [];
+}
+
+function devolucaoAtiva(dt) {
+  return dt?.numero && String(dt.status || '').toLowerCase() !== 'cancelada';
+}
+
 function pagamentoVale(pedido) {
   return (pedido.pagamentos || []).find((p) => {
     const fp = (p.forma_pagamento || '').toLowerCase();
@@ -133,12 +166,27 @@ export function buildSubstituicoesVendaCaixa({ vendas = [], vales = [], devoluco
     idsSubstitutos.add(substituto.id);
   };
 
-  // 1) Campo explícito no pedido substituto
+  // 1) Campo explícito no pedido substituto (coluna ou dados legado)
   for (const substituto of vendas) {
-    const origem = resolveOrigem(substituto.substitui_pedido_id, substituto.substitui_pedido_numero);
+    const origem = resolveOrigem(
+      pedidoCampo(substituto, 'substitui_pedido_id'),
+      pedidoCampo(substituto, 'substitui_pedido_numero')
+    );
     if (origem && mesmoDiaCivil(origem.created_date, substituto.created_date)) {
       addPar(origem, substituto, { fonte: 'pedido' });
     }
+  }
+
+  // 1b) Observações do pedido: "Troca DT-00002 — pedido PV-…"
+  for (const substituto of vendas) {
+    if (idsSubstitutos.has(substituto.id)) continue;
+    const numeroDev = extrairNumeroDevolucaoObservacoes(pedidoObservacoes(substituto));
+    if (!numeroDev) continue;
+    const dt = devolucoes.find((d) => normCodigo(d.numero) === normCodigo(numeroDev) && devolucaoAtiva(d));
+    if (!dt) continue;
+    const origem = resolveOrigem(dt.pedido_origem_id, dt.pedido_origem_numero);
+    if (!origem) continue;
+    addPar(origem, substituto, { fonte: 'observacoes_troca', devolucao: dt, devolucaoNumero: dt.numero });
   }
 
   // 2) Vale troca no pagamento (id ou código)
@@ -167,16 +215,18 @@ export function buildSubstituicoesVendaCaixa({ vendas = [], vales = [], devoluco
 
   // 3) Devolução com substituto já gravado
   for (const dt of devolucoes) {
+    if (!devolucaoAtiva(dt)) continue;
     if (!dt.pedido_substituto_id && !dt.pedido_substituto_numero) continue;
     const substituto = resolveSubstituto(dt.pedido_substituto_id, dt.pedido_substituto_numero);
     const origem = resolveOrigem(dt.pedido_origem_id, dt.pedido_origem_numero);
     if (!origem || !substituto) continue;
     if (!mesmoDiaCivil(origem.created_date, substituto.created_date)) continue;
-    addPar(origem, substituto, { fonte: 'devolucao_gravada', devolucaoNumero: dt.numero });
+    addPar(origem, substituto, { fonte: 'devolucao_gravada', devolucaoNumero: dt.numero, devolucao: dt });
   }
 
   // 4) Devolução + vale: histórico ou pagamento com mesmo código/id do vale da devolução
   for (const dt of devolucoes) {
+    if (!devolucaoAtiva(dt)) continue;
     const origem = resolveOrigem(dt.pedido_origem_id, dt.pedido_origem_numero);
     if (!origem || idsSubstituidos.has(origem.id)) continue;
     const vale = resolveValeDevolucao(dt, valesById, valesByCodigo);
@@ -203,6 +253,7 @@ export function buildSubstituicoesVendaCaixa({ vendas = [], vales = [], devoluco
 
   // 5) Devolução no dia → venda posterior do mesmo cliente (troca típica sem flag aguarda_substituto)
   for (const dt of devolucoes) {
+    if (!devolucaoAtiva(dt)) continue;
     const origem = resolveOrigem(dt.pedido_origem_id, dt.pedido_origem_numero);
     if (!origem || idsSubstituidos.has(origem.id)) continue;
 
@@ -229,11 +280,26 @@ export function buildSubstituicoesVendaCaixa({ vendas = [], vales = [], devoluco
     });
 
     if (comValeDaDevolucao.length === 1) {
-      addPar(origem, comValeDaDevolucao[0], { fonte: 'devolucao_candidato_vale', devolucaoNumero: dt.numero });
-    } else if (dt.aguarda_substituto && candidatos.length === 1) {
-      addPar(origem, candidatos[0], { fonte: 'aguarda_substituto', devolucaoNumero: dt.numero });
+      addPar(origem, comValeDaDevolucao[0], { fonte: 'devolucao_candidato_vale', devolucaoNumero: dt.numero, devolucao: dt });
+    } else if (dt.aguarda_substituto) {
+      const porObs = candidatos.filter((v) => {
+        const obs = pedidoObservacoes(v);
+        return dt.numero && obs.toUpperCase().includes(normCodigo(dt.numero));
+      });
+      if (porObs.length === 1) {
+        addPar(origem, porObs[0], { fonte: 'aguarda_substituto_obs', devolucaoNumero: dt.numero, devolucao: dt });
+      } else if (candidatos.length === 1) {
+        addPar(origem, candidatos[0], { fonte: 'aguarda_substituto', devolucaoNumero: dt.numero, devolucao: dt });
+      }
     } else if (candidatos.length === 1) {
-      addPar(origem, candidatos[0], { fonte: 'devolucao_candidato_unico', devolucaoNumero: dt.numero });
+      addPar(origem, candidatos[0], { fonte: 'devolucao_candidato_unico', devolucaoNumero: dt.numero, devolucao: dt });
+    }
+  }
+
+  for (const par of pares) {
+    if (!par.devolucao && par.devolucaoNumero) {
+      par.devolucao =
+        devolucoes.find((d) => normCodigo(d.numero) === normCodigo(par.devolucaoNumero)) || null;
     }
   }
 
@@ -244,12 +310,14 @@ export function buildSubstituicoesVendaCaixa({ vendas = [], vales = [], devoluco
       par,
       substituto: par.substituto,
       diferenca: par.diferenca,
+      devolucao: par.devolucao || null,
     };
     metaPorPedidoId[par.substituto.id] = {
       papel: 'substituto',
       par,
       origem: par.origem,
       diferenca: par.diferenca,
+      devolucao: par.devolucao || null,
     };
   }
 
@@ -279,6 +347,76 @@ export function buildSubstituicoesVendaCaixa({ vendas = [], vales = [], devoluco
     valorSubstituidoNaoSoma,
     qtdSubstituicoes: pares.length,
     vendasParaExibicao,
+  };
+}
+
+/** Separa vendas normais de entradas de troca (pedido substituto) para consulta do caixa. */
+export function partitionVendasConsultaCaixa(vendas = [], metaPorPedidoId = {}) {
+  const trocas = [];
+  const normais = [];
+  for (const venda of vendas) {
+    if (metaPorPedidoId[venda.id]?.papel === 'substituto') trocas.push(venda);
+    else normais.push(venda);
+  }
+  return { trocas, normais };
+}
+
+/** Valores exibidos na consulta do caixa para não parecer venda com desconto absurdo. */
+export function resolveResumoTrocaCaixa(venda, meta) {
+  const devolucao = meta?.devolucao || meta?.par?.devolucao || null;
+  const itensLevouRaw = devolucaoItensSubstitutos(devolucao);
+  const itensRetornoRaw = devolucaoItensRetorno(devolucao);
+
+  const itens = venda?.itens || [];
+  const subtotalItens = round2(
+    (itensLevouRaw.length ? itensLevouRaw : itens).reduce((sum, item) => {
+      const qtd = Number(item.quantidade ?? item.quantidade_devolvida) || 0;
+      const total = Number(item.total);
+      if (Number.isFinite(total)) return sum + total;
+      const unit = Number(item.preco_unitario ?? item.preco_unitario_praticado) || 0;
+      return sum + unit * qtd;
+    }, 0)
+  );
+
+  const entradaCaixa = round2(Number(pedidoCampo(venda, 'total')) || Number(pedidoCampo(venda, 'valor_total')) || 0);
+  const subtotalProdutos = round2(
+    Number(pedidoCampo(venda, 'subtotal')) || subtotalItens
+  );
+  const creditoInformado = Number(pedidoCampo(venda, 'valor_desconto'));
+  const creditoDevolucao = round2(
+    Number.isFinite(creditoInformado) && creditoInformado > 0
+      ? creditoInformado
+      : itensRetornoRaw.length
+        ? round2(
+            itensRetornoRaw.reduce((sum, item) => sum + (Number(item.total) || 0), 0)
+          )
+        : Math.max(0, subtotalProdutos - entradaCaixa)
+  );
+
+  const itensRetorno = itensRetornoRaw.map((item) => ({
+    produto_nome: item.produto_nome,
+    quantidade: Number(item.quantidade_devolvida) || 0,
+    preco_unitario: Number(item.preco_unitario) || 0,
+    total: Number(item.total) || 0,
+    unidade_medida: 'UN',
+  }));
+
+  const itensLevou = (itensLevouRaw.length ? itensLevouRaw : itens).map((item) => ({
+    produto_nome: item.produto_nome,
+    quantidade: Number(item.quantidade) || 0,
+    preco_unitario: Number(item.preco_unitario ?? item.preco_unitario_praticado) || 0,
+    total: Number(item.total) || 0,
+    unidade_medida: item.unidade_medida || 'UN',
+  }));
+
+  return {
+    entradaCaixa,
+    creditoDevolucao,
+    subtotalProdutos,
+    pedidoOrigem: meta?.origem?.numero || pedidoCampo(venda, 'substitui_pedido_numero') || null,
+    devolucaoNumero: meta?.par?.devolucaoNumero || devolucao?.numero || extrairNumeroDevolucaoObservacoes(pedidoObservacoes(venda)),
+    itensRetorno,
+    itensLevou,
   };
 }
 

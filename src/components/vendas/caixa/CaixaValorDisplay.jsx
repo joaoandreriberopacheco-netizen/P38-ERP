@@ -10,6 +10,7 @@ const SIGN_CLASS = {
   success: p38Accent.success.text,
   danger: p38Accent.danger.text,
   info: p38Accent.info.text,
+  warning: 'text-amber-700 dark:text-amber-300',
 };
 
 const SIZE_CLASS = {
@@ -19,7 +20,7 @@ const SIZE_CLASS = {
 };
 
 /**
- * @param {'success'|'danger'|'info'|'neutral'} tone
+ * @param {'success'|'danger'|'info'|'warning'|'neutral'} tone
  * @param {boolean} signed — exibe +/− (como fluxo de caixa)
  * @param {boolean} reserveSignSpace — coluna fixa para alinhar decimais entre linhas
  */
@@ -34,11 +35,13 @@ export default function CaixaValorDisplay({
   const n = Math.abs(Number(valor) || 0);
   const sizeCls = SIZE_CLASS[size] || SIZE_CLASS.md;
   const showSign = signed && tone !== 'neutral';
-  const isEntrada = tone === 'success' || tone === 'info';
+  const isEntrada = tone === 'success' || tone === 'info' || tone === 'warning';
   const sign = showSign ? (isEntrada ? '+' : '−') : '+';
   const signClass = showSign
     ? (tone === 'info'
       ? SIGN_CLASS.info
+      : tone === 'warning'
+        ? SIGN_CLASS.warning
       : isEntrada
         ? SIGN_CLASS.success
         : SIGN_CLASS.danger)

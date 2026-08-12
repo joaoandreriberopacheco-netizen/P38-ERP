@@ -10,6 +10,10 @@ import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { formatCommercialQuantity } from '@/lib/productUnits';
 import { formatarDataHora } from '@/components/utils/dateUtils';
 import FormaPagamentoBadges from '@/components/vendas/FormaPagamentoBadges';
+import TrocaCaixaCard from '@/components/vendas/caixa/TrocaCaixaCard';
+import {
+  partitionVendasConsultaCaixa,
+} from '@/lib/substituicoesVendaCaixa';
 
 /** Coluna Qtd (cima) + Un (baixo) + barra vertical — como relatório de compras / margem mobile */
 function ConsultaQtdUnCol({ qtd, unidade, accent = 'success' }) {
@@ -47,6 +51,7 @@ function ConsultaProdutoRow({
   descontoUnitario,
   striped = false,
   accent = 'success',
+  hideValor = false,
 }) {
   const borderClass = accent === 'muted' ? p38Accent.muted.border : p38Accent.success.border;
   const precoEfetivo = resolvePrecoUnitarioEfetivo({
@@ -79,14 +84,16 @@ function ConsultaProdutoRow({
             )}
             <span className="text-foreground/90">{formatCaixaR(precoEfetivo)} un.</span>
           </p>
-          <div className="shrink-0">
-            <CaixaValorDisplay
-              valor={valorTotal}
-              tone={accent === 'muted' ? 'neutral' : 'success'}
-              signed={accent !== 'muted'}
-              size="sm"
-            />
-          </div>
+          {!hideValor && (
+            <div className="shrink-0">
+              <CaixaValorDisplay
+                valor={valorTotal}
+                tone={accent === 'muted' ? 'neutral' : 'success'}
+                signed={accent !== 'muted'}
+                size="sm"
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -129,20 +136,36 @@ function sortByComprovante(vendas) {
   });
 }
 
+function TrocaResumoLinha({ venda, meta, onVerDetalhes }) {
+  return <TrocaCaixaCard venda={venda} meta={meta} onVerDetalhes={onVerDetalhes} />;
+}
+
 export default function ConsultaVendasCaixa({
   vendasFinalizadas = [],
+  metaPorPedidoId = {},
   onVerDetalhes,
   contextLabel = 'Consulta do turno',
   emptyMessage = 'Nenhuma venda finalizada no turno',
 }) {
   const [modo, setModo] = useState('produto');
 
-  const produtosAgregados = useMemo(() => aggregateByProduto(vendasFinalizadas), [vendasFinalizadas]);
-  const vendasOrdenadas = useMemo(() => sortByComprovante(vendasFinalizadas), [vendasFinalizadas]);
+  const { trocas, normais } = useMemo(
+    () => partitionVendasConsultaCaixa(vendasFinalizadas, metaPorPedidoId),
+    [vendasFinalizadas, metaPorPedidoId]
+  );
+
+  const produtosAgregados = useMemo(() => aggregateByProduto(normais), [normais]);
+  const vendasOrdenadas = useMemo(() => sortByComprovante(normais), [normais]);
+  const trocasOrdenadas = useMemo(() => sortByComprovante(trocas), [trocas]);
 
   const totalGeral = useMemo(
     () => roundToTwoDecimals(vendasFinalizadas.reduce((acc, v) => acc + (Number(v.valor_total) || 0), 0)),
     [vendasFinalizadas]
+  );
+
+  const totalTrocas = useMemo(
+    () => roundToTwoDecimals(trocas.reduce((acc, v) => acc + (Number(v.valor_total) || 0), 0)),
+    [trocas]
   );
 
   if (vendasFinalizadas.length === 0) {
@@ -161,7 +184,10 @@ export default function ConsultaVendasCaixa({
           <p className={caixaTypo.labelSm}>{contextLabel}</p>
           <CaixaValorDisplay valor={totalGeral} tone="success" size="lg" />
           <p className={`${caixaTypo.meta} mt-1`}>
-            {vendasFinalizadas.length} comprovante{vendasFinalizadas.length === 1 ? '' : 's'}
+            {normais.length} venda{normais.length === 1 ? '' : 's'}
+            {trocas.length > 0
+              ? ` · ${trocas.length} troca${trocas.length === 1 ? '' : 's'} (${formatCaixaR(totalTrocas)} no caixa)`
+              : ''}
           </p>
         </div>
         <div className="flex rounded-2xl bg-muted/50 p-1 gap-1">
@@ -183,54 +209,104 @@ export default function ConsultaVendasCaixa({
       </div>
 
       {modo === 'produto' ? (
-        <P38MobileLineList allViewports className="rounded-lg">
-          {produtosAgregados.map((p, index) => (
-            <ConsultaProdutoRow
-              key={p.key}
-              quantidade={p.quantidade}
-              unidade={p.unidade}
-              nome={p.nome}
-              valorTotal={p.total}
-              striped={index % 2 === 1}
-            />
-          ))}
-        </P38MobileLineList>
-      ) : (
-        <div className="space-y-3">
-          {vendasOrdenadas.map((venda) => (
-            <div key={venda.id} className="bg-card rounded-2xl shadow-sm overflow-hidden">
-              <button
-                type="button"
-                onClick={() => onVerDetalhes?.(venda)}
-                className="w-full flex items-center justify-between gap-3 px-4 py-3 border-b border-border/40 text-left hover:bg-muted/30 transition-colors"
-              >
-                <div className="min-w-0">
-                  <p className={`${p38Table.mobileLineTitle} truncate`}>{venda.numero}</p>
-                  <p className={`${p38Table.mobileLineSubtitle} truncate`}>
-                    {venda.cliente_nome || 'Avulso'}
-                    {venda.created_date ? ` · ${formatarDataHora(venda.created_date).split(' ')[1] || ''}` : ''}
-                  </p>
-                  <FormaPagamentoBadges pagamentos={venda.pagamentos} className="mt-1.5" size="xs" />
-                </div>
-                <CaixaValorDisplay valor={venda.valor_total} tone="success" size="sm" />
-              </button>
-              <P38MobileLineList allViewports className="rounded-none border-0">
-                {(venda.itens || []).map((item, idx) => (
+        <div className="space-y-4">
+          {trocasOrdenadas.length > 0 && (
+            <div className="space-y-2">
+              <p className={`${caixaTypo.labelSm} px-1 text-amber-800 dark:text-amber-300`}>
+                Trocas — entrada no caixa ({trocasOrdenadas.length})
+              </p>
+              <div className="space-y-2">
+                {trocasOrdenadas.map((venda) => (
+                  <TrocaResumoLinha
+                    key={venda.id}
+                    venda={venda}
+                    meta={metaPorPedidoId[venda.id]}
+                    onVerDetalhes={onVerDetalhes}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+          {produtosAgregados.length > 0 ? (
+            <div className="space-y-2">
+              {trocasOrdenadas.length > 0 && (
+                <p className={`${caixaTypo.labelSm} px-1`}>Vendas por produto</p>
+              )}
+              <P38MobileLineList allViewports className="rounded-lg">
+                {produtosAgregados.map((p, index) => (
                   <ConsultaProdutoRow
-                    key={`${venda.id}-${idx}`}
-                    quantidade={item.quantidade}
-                    unidade={item.unidade_medida}
-                    nome={item.produto_nome}
-                    valorTotal={item.total || (Number(item.preco_unitario_praticado) || 0) * (Number(item.quantidade) || 0)}
-                    precoLista={item.preco_unitario_praticado}
-                    descontoUnitario={item.desconto_unitario}
-                    striped={idx % 2 === 1}
-                    accent="muted"
+                    key={p.key}
+                    quantidade={p.quantidade}
+                    unidade={p.unidade}
+                    nome={p.nome}
+                    valorTotal={p.total}
+                    striped={index % 2 === 1}
                   />
                 ))}
               </P38MobileLineList>
             </div>
-          ))}
+          ) : trocasOrdenadas.length > 0 ? (
+            <p className={`${caixaTypo.meta} px-1`}>Sem vendas normais no turno — apenas trocas.</p>
+          ) : null}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {trocasOrdenadas.length > 0 && (
+            <div className="space-y-3">
+              <p className={`${caixaTypo.labelSm} px-1 text-amber-800 dark:text-amber-300`}>
+                Trocas — entrada no caixa ({trocasOrdenadas.length})
+              </p>
+              {trocasOrdenadas.map((venda) => (
+                <TrocaCaixaCard
+                  key={venda.id}
+                  venda={venda}
+                  meta={metaPorPedidoId[venda.id]}
+                  onVerDetalhes={onVerDetalhes}
+                />
+              ))}
+            </div>
+          )}
+          {vendasOrdenadas.length > 0 && (
+            <div className="space-y-3">
+              {trocasOrdenadas.length > 0 && (
+                <p className={`${caixaTypo.labelSm} px-1`}>Vendas ({vendasOrdenadas.length})</p>
+              )}
+              {vendasOrdenadas.map((venda) => (
+                <div key={venda.id} className="bg-card rounded-2xl shadow-sm overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => onVerDetalhes?.(venda)}
+                    className="w-full flex items-center justify-between gap-3 px-4 py-3 border-b border-border/40 text-left hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="min-w-0">
+                      <p className={`${p38Table.mobileLineTitle} truncate`}>{venda.numero}</p>
+                      <p className={`${p38Table.mobileLineSubtitle} truncate`}>
+                        {venda.cliente_nome || 'Avulso'}
+                        {venda.created_date ? ` · ${formatarDataHora(venda.created_date).split(' ')[1] || ''}` : ''}
+                      </p>
+                      <FormaPagamentoBadges pagamentos={venda.pagamentos} className="mt-1.5" size="xs" />
+                    </div>
+                    <CaixaValorDisplay valor={venda.valor_total} tone="success" size="sm" />
+                  </button>
+                  <P38MobileLineList allViewports className="rounded-none border-0">
+                    {(venda.itens || []).map((item, idx) => (
+                      <ConsultaProdutoRow
+                        key={`${venda.id}-${idx}`}
+                        quantidade={item.quantidade}
+                        unidade={item.unidade_medida}
+                        nome={item.produto_nome}
+                        valorTotal={item.total || (Number(item.preco_unitario_praticado) || 0) * (Number(item.quantidade) || 0)}
+                        precoLista={item.preco_unitario_praticado}
+                        descontoUnitario={item.desconto_unitario}
+                        striped={idx % 2 === 1}
+                        accent="muted"
+                      />
+                    ))}
+                  </P38MobileLineList>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

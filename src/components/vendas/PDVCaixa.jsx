@@ -1869,6 +1869,7 @@ export default function PDVCaixa({
                     {vendasView === 'consulta' ? (
                       <ConsultaVendasCaixa
                         vendasFinalizadas={vendasFinalizadas}
+                        metaPorPedidoId={substituicoesCtx?.metaPorPedidoId}
                         onVerDetalhes={setVendaDetalhada}
                       />
                     ) : rascunhosAguardando.length === 0 ? (

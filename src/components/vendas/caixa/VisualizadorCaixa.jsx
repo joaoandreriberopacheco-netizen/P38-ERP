@@ -625,6 +625,7 @@ export default function VisualizadorCaixa({
               {vendasView === 'consulta' || modoFechado ? (
                 <ConsultaVendasCaixa
                   vendasFinalizadas={vendasFinalizadas}
+                  metaPorPedidoId={substituicoesCtx?.metaPorPedidoId}
                   onVerDetalhes={setVendaDetalhada}
                 />
               ) : rascunhosAguardando.length === 0 ? (
