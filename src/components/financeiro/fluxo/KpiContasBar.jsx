@@ -19,7 +19,7 @@ function KpiSegment({ icon: Icon, value, valueClass, iconClass }) {
 }
 
 /** Faixa compacta — Caixas e Bancos (saldo, contas, conciliação, negativas). */
-export default function KpiContasBar({ kpis, saldosProntos = true }) {
+export default function KpiContasBar({ kpis, saldosProntos = false }) {
   const saldoExibir = saldosProntos && kpis.saldoTotal != null;
   const saldoPos = (kpis.saldoTotal ?? 0) >= 0;
   const posClass = P38_ACCENT;

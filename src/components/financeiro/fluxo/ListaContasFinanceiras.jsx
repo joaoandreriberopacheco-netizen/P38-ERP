@@ -9,7 +9,7 @@ export default function ListaContasFinanceiras({
   loading,
   pendenciasMap = {},
   saldosCalculados = null,
-  saldosProntos = true,
+  saldosProntos = false,
   onExtrato,
   onEdit,
   onAjuste,

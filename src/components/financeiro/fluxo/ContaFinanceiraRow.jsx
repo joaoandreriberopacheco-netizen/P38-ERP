@@ -10,7 +10,7 @@ export default function ContaFinanceiraRow({
   conta,
   pendencias = 0,
   saldosCalculados,
-  saldosProntos = true,
+  saldosProntos = false,
   onExtrato,
   onEdit,
   onAjuste,
