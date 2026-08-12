@@ -18,6 +18,7 @@ import {
   formatValorBRL,
   pedidoItemKey,
 } from '@/lib/creditoDevolucaoTroca';
+import { criarRascunhoTrocaParaCaixa } from '@/lib/rascunhoTrocaCaixa';
 
 function tituloModulo(tipo) {
   if (tipo === 'Troca') return 'Troca de Produto';
@@ -370,6 +371,13 @@ function ComprovanteStep({ resultado, onClose }) {
           <small>O código permanece válido enquanto houver saldo</small>
         </div>` : ''}
       ${resultado.diferencaPagar > 0 ? `<div class="row"><span>A pagar no caixa:</span><b>R$ ${resultado.diferencaPagar.toFixed(2).replace('.', ',')}</b></div>` : ''}
+      ${resultado.senhaAtendimento ? `
+        <div class="dashed"></div>
+        <div class="alert" style="background:#fffbeb;border-color:#fcd34d">
+          <b>SENHA CAIXA: ${resultado.senhaAtendimento.slice(-4)}</b><br/>
+          <small>${resultado.senhaAtendimento}</small><br/>
+          <small>Apresente no caixa para homologar o pagamento</small>
+        </div>` : ''}
       <div class="dashed"></div>
       ${resultado.motivo ? `<p><small>Motivo: ${resultado.motivo}</small></p>` : ''}
       <div class="center"><small>Não é documento fiscal</small></div>
@@ -461,10 +469,19 @@ function ComprovanteStep({ resultado, onClose }) {
         )}
 
         {resultado.diferencaPagar > 0 && (
-          <div className="px-5 py-3 border-t border-border/40 bg-amber-50 dark:bg-amber-900/20">
+          <div className="px-5 py-3 border-t border-border/40 bg-amber-50 dark:bg-amber-900/20 space-y-2">
             <p className="text-sm text-amber-900 dark:text-amber-200 text-center">
               Cliente deve pagar <strong>{formatValorBRL(resultado.diferencaPagar)}</strong> no caixa.
             </p>
+            {resultado.senhaAtendimento && (
+              <div className="rounded-xl bg-card px-3 py-3 text-center">
+                <p className="text-xs text-muted-foreground">Senha enviada à fila do caixa</p>
+                <p className="text-2xl font-bold font-mono text-foreground">
+                  {resultado.senhaAtendimento.slice(-4)}
+                </p>
+                <p className="text-xs text-muted-foreground">{resultado.senhaAtendimento}</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -819,6 +836,26 @@ export default function DevolucaoTrocaPage() {
         }
       }
 
+      let rascunhoCaixa = null;
+      if (diferencaPagar > 0) {
+        rascunhoCaixa = await criarRascunhoTrocaParaCaixa({
+          pedido,
+          itensSubstitutos,
+          creditoDevolucao,
+          valorSubstitutos,
+          diferencaPagar,
+          numeroDev,
+          operador: user,
+          motivo,
+        });
+        if (rascunhoCaixa?.senha_atendimento) {
+          toast({
+            title: 'Senha enviada ao caixa',
+            description: `Senha ${rascunhoCaixa.senha_atendimento.slice(-4)} aguardando homologação no PDV Caixa.`,
+          });
+        }
+      }
+
       setResultado({
         numero: numeroDev,
         pedidoNumero: pedido.numero,
@@ -831,6 +868,7 @@ export default function DevolucaoTrocaPage() {
         valeValor: saldoVale,
         formaReembolso,
         valeCode: valeCodigo,
+        senhaAtendimento: rascunhoCaixa?.senha_atendimento || null,
         motivo,
         tipo: 'Troca',
       });
