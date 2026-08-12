@@ -105,19 +105,8 @@ function extrasValoresTroca(dt, substituto) {
 
 export function isVendaEntradaTrocaCaixa(venda, metaPorPedidoId = {}) {
   const meta = metaPorPedidoId?.[venda?.id];
-  if (meta?.papel === 'substituto') return true;
-  if (meta?.devolucao || meta?.par?.devolucao) return true;
   if (extrairNumeroDevolucaoObservacoes(pedidoObservacoes(venda))) return true;
-  // Crédito de devolução gravado como valor_desconto (troca no caixa sem observações legíveis).
-  const subtotal = Number(pedidoCampo(venda, 'subtotal')) || 0;
-  const credito = Number(pedidoCampo(venda, 'valor_desconto')) || 0;
-  const total = round2(
-    Number(pedidoCampo(venda, 'total')) || Number(pedidoCampo(venda, 'valor_total')) || 0
-  );
-  if (credito > 0 && subtotal > total + 0.01) {
-    const diferenca = round2(subtotal - credito);
-    if (Math.abs(diferenca - total) < 0.05) return true;
-  }
+  if (meta?.devolucao || meta?.par?.devolucao) return true;
   return false;
 }
 
