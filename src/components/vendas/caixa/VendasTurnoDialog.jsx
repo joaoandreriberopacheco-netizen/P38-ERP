@@ -254,8 +254,8 @@ export default function VendasTurnoDialog({
               )}
               {trocas.length > 0 && (
                 <div className="mb-4 space-y-3">
-                  <p className="text-xs font-semibold px-1 text-amber-800 dark:text-amber-300">
-                    Trocas — entrada no caixa ({trocas.length})
+                  <p className="text-xs font-semibold px-1 text-muted-foreground">
+                    Trocas ({trocas.length})
                   </p>
                   {trocas.map((venda) => (
                     <TrocaCaixaCard
@@ -291,8 +291,8 @@ export default function VendasTurnoDialog({
               />
               {trocas.length > 0 && (
                 <div className="mb-4 space-y-3">
-                  <p className="text-xs font-semibold px-1 text-amber-800 dark:text-amber-300">
-                    Trocas — entrada no caixa ({trocas.length})
+                  <p className="text-xs font-semibold px-1 text-muted-foreground">
+                    Trocas ({trocas.length})
                   </p>
                   {trocas.map((venda) => (
                     <TrocaCaixaCard
