@@ -8,7 +8,8 @@ export default function ListaContasFinanceiras({
   grupos,
   loading,
   pendenciasMap = {},
-  saldosCalculados = {},
+  saldosCalculados = null,
+  saldosProntos = true,
   onExtrato,
   onEdit,
   onAjuste,
@@ -22,18 +23,21 @@ export default function ListaContasFinanceiras({
       vazioIcon={Wallet}
     >
       {grupos.map(({ k, label, items }) => {
-        const totalGrupo = items.reduce(
-          (acc, c) => acc + getSaldoExibicaoConta(c, saldosCalculados),
-          0,
-        );
-        const positivo = totalGrupo >= 0;
+        const totalGrupo = saldosProntos && saldosCalculados
+          ? items.reduce(
+            (acc, c) => acc + getSaldoExibicaoConta(c, saldosCalculados),
+            0,
+          )
+          : null;
+        const positivo = (totalGrupo ?? 0) >= 0;
 
         return (
           <FinanceiroGrupo
             key={k}
             label={label}
-            receitas={positivo ? totalGrupo : 0}
-            despesas={positivo ? 0 : Math.abs(totalGrupo)}
+            receitas={saldosProntos && totalGrupo != null ? (positivo ? totalGrupo : 0) : 0}
+            despesas={saldosProntos && totalGrupo != null ? (positivo ? 0 : Math.abs(totalGrupo)) : 0}
+            ocultarTotais={!saldosProntos}
             card
           >
             {items.map((conta, index) => (
@@ -42,6 +46,7 @@ export default function ListaContasFinanceiras({
                 conta={conta}
                 pendencias={pendenciasMap[conta.id] || 0}
                 saldosCalculados={saldosCalculados}
+                saldosProntos={saldosProntos}
                 striped={index % 2 === 1}
                 onExtrato={onExtrato}
                 onEdit={onEdit}

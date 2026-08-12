@@ -10,14 +10,17 @@ export default function ContaFinanceiraRow({
   conta,
   pendencias = 0,
   saldosCalculados,
+  saldosProntos = true,
   onExtrato,
   onEdit,
   onAjuste,
   onConciliar,
   striped,
 }) {
-  const saldo = getSaldoExibicaoConta(conta, saldosCalculados);
-  const isNegativo = saldo < 0;
+  const saldo = saldosProntos && saldosCalculados
+    ? getSaldoExibicaoConta(conta, saldosCalculados)
+    : null;
+  const isNegativo = saldo != null && saldo < 0;
   const ativa = conta.ativo !== false;
 
   const subtitle = [conta.tipo, conta.banco].filter(Boolean).join(' · ');
@@ -66,7 +69,9 @@ export default function ContaFinanceiraRow({
               isNegativo ? 'text-red-600 dark:text-red-400' : 'text-foreground',
             )}
           >
-            {formatFinanceiroValor(saldo)}
+            {saldosProntos && saldo != null
+              ? formatFinanceiroValor(saldo)
+              : <span className="text-muted-foreground animate-pulse">…</span>}
           </p>
           {valueSub && (
             <p className="mt-0.5 max-w-[7rem] truncate text-[10px] text-muted-foreground sm:max-w-none sm:text-xs">
