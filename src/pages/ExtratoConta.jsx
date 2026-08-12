@@ -157,6 +157,8 @@ export default function ExtratoContaPage() {
         setLancamentos(lancamentosFiltrados);
         setMovimentosCaixa(movsFiltrados);
 
+        let lancsDisplay = lancamentosFiltrados;
+
         const reconciliou = await reconciliarSaldoCaixaPDVSemTurnoAberto(
           base44,
           contaAtual,
@@ -165,14 +167,17 @@ export default function ExtratoContaPage() {
           movsFiltrados,
         );
 
-        let lancsSaldo = reconciliou
-          ? await fetchLancamentosExtratoConta({
-              contaId,
-              isCaixaGeral,
-              dataInicio,
-              dataFim,
-            })
-          : lancamentosFiltrados;
+        if (reconciliou) {
+          lancsDisplay = await fetchLancamentosExtratoConta({
+            contaId,
+            isCaixaGeral,
+            dataInicio,
+            dataFim,
+          });
+          setLancamentos(lancsDisplay);
+        }
+
+        let lancsSaldo = lancsDisplay;
         let movsSaldo = movsFiltrados;
 
         if (!prefsCorte.mostrarHistoricoAnterior && prefsCorte.dataCorte) {
@@ -192,10 +197,6 @@ export default function ExtratoContaPage() {
         const saldo = !prefsCorte.mostrarHistoricoAnterior && prefsCorte.dataCorte
           ? calcularSaldoContaAposDataCorte(contaAtual, lancsSaldo, movsSaldo, prefsCorte.dataCorte)
           : calcularSaldoContaFinanceira(contaAtual, lancsSaldo, movsSaldo);
-
-        if (reconciliou) {
-          setLancamentos(lancsSaldo);
-        }
 
         if (Math.abs(saldo - Number(contaAtual.saldo_atual || 0)) > 0.009) {
           await base44.entities.ContasFinanceiras.update(contaAtual.id, { saldo_atual: saldo });

@@ -46,7 +46,10 @@ export async function fetchLancamentosExtratoConta({
   for (const row of [...normalizeRows(porVencimento), ...normalizeRows(porPagamento)]) {
     if (!row?.id) continue;
     if (isCaixaGeral) {
-      if (!row.conta_financeira_id) merged.set(row.id, row);
+      // Mesma regra de filtrarLancamentosDaConta: legado sem id + vinculados à Caixa Geral.
+      if (!row.conta_financeira_id || row.conta_financeira_id === contaId) {
+        merged.set(row.id, row);
+      }
     } else if (row.conta_financeira_id === contaId) {
       merged.set(row.id, row);
     }
