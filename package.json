@@ -56,6 +56,7 @@
     "corrigir:wx7-console": "node scripts/corrigir-wx7-a5n-console.mjs",
     "iep:calcular": "node scripts/invoke-calcular-iep.mjs",
     "estoque:atualizar-metas": "node scripts/invoke-atualizar-metas-estoque.mjs",
+    "dashboard:kpi-backfill": "node scripts/dashboard-kpi-backfill.mjs",
     "abcd:limpar": "node scripts/limpar-abcd-job-produtos.mjs",
     "abcd:limpar-console": "node scripts/limpar-abcd-job-console.mjs",
     "abcd:executar-console": "node scripts/executar-abcd-job-console.mjs",

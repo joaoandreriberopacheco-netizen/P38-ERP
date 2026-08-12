@@ -28,6 +28,27 @@ export async function fetchDashboardVendasSnapshotsForWindow(selectedMonthKey, m
 
   try {
     const supabase = getSupabaseBrowserClient();
+
+    const { data: windowData, error: windowError } = await supabase.rpc('dashboard_vendas_window_read', {
+      p_selected_month: selectedMonthKey,
+      p_months: months,
+    });
+
+    if (!windowError && windowData?.sealedMonths && typeof windowData.sealedMonths === 'object') {
+      const map = new Map();
+      for (const [monthKey, payload] of Object.entries(windowData.sealedMonths)) {
+        if (!payload?.monthlyTotals) continue;
+        map.set(monthKey, {
+          monthKey,
+          closedThrough: payload.closedThrough || null,
+          payload,
+          computedAt: null,
+          windowComplete: Boolean(windowData.complete),
+        });
+      }
+      if (map.size > 0) return map;
+    }
+
     const { data, error } = await supabase.rpc('dashboard_kpi_vendas_read', {
       p_month_keys: monthKeys,
     });
