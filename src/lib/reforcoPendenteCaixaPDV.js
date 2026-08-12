@@ -16,6 +16,29 @@ export function isReforcoPendente(movimento) {
   return movimento?.tipo === 'Reforço' && movimento?.status_registro === STATUS_REFORCO_PENDENTE;
 }
 
+/** Status do reforço PDV vinculado a transferência financeira (para tag no extrato/fluxo). */
+export function statusReforcoTransferenciaPdv(movimento) {
+  if (!movimento || movimento.tipo !== 'Reforço' || !movimento.lancamento_financeiro_id) return null;
+  if (isReforcoPendente(movimento)) return 'aguardando_caixa';
+  if (movimento.status_registro === 'Ativo' || movimento.status_registro === 'Editado') return 'aceito_caixa';
+  return null;
+}
+
+export function mapReforcosTransferenciaPorLancamentoId(movimentos = []) {
+  const map = new Map();
+  movimentos.forEach((m) => {
+    if (m?.tipo === 'Reforço' && m?.lancamento_financeiro_id) {
+      map.set(String(m.lancamento_financeiro_id), m);
+    }
+  });
+  return map;
+}
+
+/** Reforço pendente vinculado a transferência não aparece como linha separada no extrato. */
+export function isMovimentoReforcoTransferenciaPdv(movimento) {
+  return movimento?.tipo === 'Reforço' && !!movimento?.lancamento_financeiro_id;
+}
+
 export function movimentoReforcoContaSaldo(movimento) {
   if (!movimento || movimento?.tipo !== 'Reforço') return 0;
   if (movimento.status_registro === 'Cancelado') return 0;
@@ -66,14 +89,6 @@ export async function criarReforcoPendenteTransferenciaCaixaPDV(
     status_registro: STATUS_REFORCO_PENDENTE,
     lancamento_financeiro_id: lancamentoReceitaId || null,
   });
-
-  if (lancamentoReceitaId) {
-    await base44.entities.LancamentoFinanceiro.update(lancamentoReceitaId, {
-      referencia_tipo: 'MovimentosCaixa',
-      referencia_id: movimento.id,
-      observacoes: observacao,
-    });
-  }
 
   return movimento;
 }

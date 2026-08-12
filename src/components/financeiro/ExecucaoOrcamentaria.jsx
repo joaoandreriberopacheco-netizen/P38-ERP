@@ -547,8 +547,8 @@ export default function ExecucaoOrcamentaria() {
   }), [lancs, contasSel, contasById, contasAtivas, tiposSel, cmvOnly, search, mostrarHistoricoAnterior, dataCorteHistorico]);
 
   const programadasLista = useMemo(
-    () => consolidarTransferenciasListaFluxo(programadasFiltradas),
-    [programadasFiltradas],
+    () => consolidarTransferenciasListaFluxo(programadasFiltradas, { movimentos }),
+    [programadasFiltradas, movimentos],
   );
 
   const kpisProgramadas = useMemo(
@@ -565,7 +565,7 @@ export default function ExecucaoOrcamentaria() {
     if (!mostrarProgramadas) return grupos;
     const hStr = dataHoje();
     const oStr = format(subDays(parseDateKey(hStr), 1), 'yyyy-MM-dd');
-    const merged = mesclarProgramadasNosGrupos(grupos, programadasLista, ordemLancamentos);
+    const merged = mesclarProgramadasNosGrupos(grupos, programadasLista, ordemLancamentos, { movimentos });
     return merged.map((g) => ({
       ...g,
       label: g.label || (g.k === 'sem-data' ? 'Sem data' : formatFinanceiroGrupoLabel(g.k, hStr, oStr)),
