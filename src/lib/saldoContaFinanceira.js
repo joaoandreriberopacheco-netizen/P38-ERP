@@ -369,7 +369,12 @@ export function contaTemDivergenciaSaldo(conta, saldoCalculado) {
 }
 
 function movimentoCaixaParticipaExtrato(mov) {
-  return mov?.tipo === 'Reforço' || mov?.tipo === 'Sangria' || mov?.tipo === 'Recolhimento de Caixa';
+  if (!mov) return false;
+  if (mov.tipo === 'Reforço') {
+    if (mov.status_registro === 'Pendente' || mov.status_registro === 'Cancelado') return false;
+    return true;
+  }
+  return mov.tipo === 'Sangria' || mov.tipo === 'Recolhimento de Caixa';
 }
 
 /** Indica se o movimento compõe o saldo/extrato da conta (PDV usa regra de dinheiro físico). */
@@ -397,8 +402,11 @@ export function totaisEntradaSaidaMovimentos(
 
   movimentos.forEach((mov) => {
     if (mov.origem === 'movimento' || mov.conta_id) {
-      if (mov.tipo === 'Reforço') entradas += Number(mov.valor || 0);
-      else if (mov.tipo === 'Sangria' || mov.tipo === 'Recolhimento de Caixa') {
+      if (mov.tipo === 'Reforço') {
+        if (mov.status_registro !== 'Pendente' && mov.status_registro !== 'Cancelado') {
+          entradas += Number(mov.valor || 0);
+        }
+      } else if (mov.tipo === 'Sangria' || mov.tipo === 'Recolhimento de Caixa') {
         const interna = filtrarTransfInternas && movimentoPDVTransferenciaInternaAoFiltro(
           mov,
           contasSel,
@@ -495,7 +503,9 @@ export function calcularKpisFluxoPeriodo(
     if (!contaUsaRegraCaixaPDV(conta)) return;
     const valor = Number(m.valor || 0);
     if (m.tipo === 'Reforço') {
-      entrou += valor;
+      if (m.status_registro !== 'Pendente' && m.status_registro !== 'Cancelado') {
+        entrou += valor;
+      }
       return;
     }
     if (!isMovimentoTransferenciaCaixaPDV(m)) return;
@@ -546,8 +556,9 @@ export function totaisGrupoFluxoCaixa(
     const valor = getValorFluxoCaixa(l);
 
     if (l.origem === 'movimento' || (l.conta_id && !l.conta_financeira_id)) {
-      if (l.tipo === 'Reforço') r += valor;
-      else if (isMovimentoTransferenciaCaixaPDV(l)) {
+      if (l.tipo === 'Reforço') {
+        if (l.status_registro !== 'Pendente' && l.status_registro !== 'Cancelado') r += valor;
+      } else if (isMovimentoTransferenciaCaixaPDV(l)) {
         if (movimentoPDVTransferenciaInternaAoFiltro(l, contasSel, contasById, todosLancamentos, mapaContrapartes)) {
           transfOut += valor;
         } else {
