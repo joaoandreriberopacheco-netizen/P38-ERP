@@ -44,7 +44,11 @@ export function formaPagamentoNaoDinheiroFisico(l) {
 export function lancamentoParticipaSaldoCaixaPDV(l) {
   if (!lancamentoParticipaSaldo(l)) return false;
   if (l.tipo === 'Despesa') return true;
-  if (l.tipo === 'Receita') return !formaPagamentoNaoDinheiroFisico(l);
+  if (l.tipo === 'Receita') {
+    // Transferência para o PDV só entra na gaveta após reforço confirmado pelo operador.
+    if (isTransferenciaEntreContas(l)) return false;
+    return !formaPagamentoNaoDinheiroFisico(l);
+  }
   return false;
 }
 
@@ -248,11 +252,14 @@ export function getDataMovimentoCaixa(mov) {
   return mov?.data_movimento || mov?.created_date || null;
 }
 
-/** Reforço soma; sangria e recolhimento subtraem. */
+/** Reforço soma; sangria e recolhimento subtraem. Reforços pendentes não alteram saldo. */
 export function deltaMovimentoCaixaSaldo(m) {
   if (!m) return 0;
   const valor = Number(m.valor || 0);
-  if (m.tipo === 'Reforço') return valor;
+  if (m.tipo === 'Reforço') {
+    if (m.status_registro === 'Pendente' || m.status_registro === 'Cancelado') return 0;
+    return valor;
+  }
   if (m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa') return -valor;
   return 0;
 }

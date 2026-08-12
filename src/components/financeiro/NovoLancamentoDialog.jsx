@@ -7,6 +7,8 @@ import { addWeeks, addMonths, addYears, format } from 'date-fns';
 import { dataHoje, datetimeLocalParaISO, codigoOrdenacaoDesdeInstante } from '@/components/utils/dateUtils';
 import { formatarCodigoLancamentoLegivel } from '@/lib/financialUtils';
 import { sincronizarSaldosAposAlteracao } from '@/lib/sincronizarSaldoContasFinanceiras';
+import { contaUsaRegraCaixaPDV } from '@/lib/saldoContaFinanceira';
+import { criarReforcoPendenteTransferenciaCaixaPDV } from '@/lib/reforcoPendenteCaixaPDV';
 import { useCategorias } from './fluxo/DialogCategoria';
 import LancamentoConfirmacaoDialog from './LancamentoConfirmacaoDialog';
 import LancamentoFormUnico, { formatarDataFormulario } from './fluxo/LancamentoFormUnico';
@@ -497,7 +499,7 @@ export default function NovoLancamentoDialog({
         conta_financeira_id: contaId,
         conta_financeira_nome: conta?.nome,
       });
-      await base44.entities.LancamentoFinanceiro.create({
+      const receita = await base44.entities.LancamentoFinanceiro.create({
         ...base,
         tipo: 'Receita',
         descricao: `Transferência de ${conta?.nome}`,
@@ -506,6 +508,18 @@ export default function NovoLancamentoDialog({
       });
       if (realizado) {
         await sincronizarSaldosAposAlteracao(base44, [contaId, contaDestinoId]);
+      }
+      if (realizado && contaUsaRegraCaixaPDV(contaDest)) {
+        const user = await base44.auth.me().catch(() => null);
+        await criarReforcoPendenteTransferenciaCaixaPDV(base44, {
+          contaDestino: contaDest,
+          contaOrigem: conta,
+          valor: valorNumerico,
+          lancamentoReceitaId: receita?.id,
+          usuarioId: user?.id,
+          usuarioNome: user?.full_name || user?.email,
+          observacaoExtra: observacoes?.trim() || '',
+        });
       }
     } else if (isRecorrente && frequencia) {
       const freqSalvar = frequencia;

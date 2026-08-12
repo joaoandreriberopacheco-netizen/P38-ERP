@@ -349,7 +349,7 @@ export function buildCaixaTurnoSnapshot(raw, { incluirRascunhos = true, rascunho
 
   const totalVendasMonetarias = totalDinheiro + totalPix + totalCredito + totalDebito + totalVale;
   const totalReforcos = movimentos
-    .filter((m) => m.tipo === 'Reforço')
+    .filter((m) => m.tipo === 'Reforço' && m.status_registro !== 'Pendente' && m.status_registro !== 'Cancelado')
     .reduce((sum, m) => sum + movimentoValor(m), 0);
   const totalSangrias = movimentos
     .filter((m) => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa')

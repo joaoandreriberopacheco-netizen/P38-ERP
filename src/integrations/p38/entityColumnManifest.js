@@ -85,7 +85,7 @@ export const MOVIMENTOS_CAIXA_COLUMNS = [
   'numero', 'tipo', 'valor', 'valor_original', 'status_registro', 'conta_id', 'turno_caixa_id',
   'usuario_responsavel_id', 'usuario_responsavel_nome', 'observacao', 'observacao_original',
   'motivo_ajuste', 'editado_por_nome', 'editado_em', 'cancelado_em', 'cancelado_por_nome',
-  'historico_ajustes',
+  'historico_ajustes', 'lancamento_financeiro_id',
 ];
 
 export const FORMAS_DE_PAGAMENTO_COLUMNS = [

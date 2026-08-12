@@ -49,6 +49,7 @@ import { format } from 'date-fns';
 import LiberacaoEntrega from './LiberacaoEntrega';
 import SeletorCaixaPDV from './SeletorCaixaPDV';
 import AutorizacoesEstornoPendentes from './AutorizacoesEstornoPendentes';
+import ReforcosPendentesCaixa from './ReforcosPendentesCaixa';
 import { processarVendaCaixa } from '@/functions/processarVendaCaixa';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 import ConfirmarImpressaoDialog from '@/components/vendas/ConfirmarImpressaoDialog';
@@ -1227,7 +1228,8 @@ export default function PDVCaixa({
         conta_id: contaCaixaPDV.id,
         turno_caixa_id: turnoAtivo?.id,
         usuario_responsavel_id: currentUser.id,
-        usuario_responsavel_nome: currentUser.full_name
+        usuario_responsavel_nome: currentUser.full_name,
+        status_registro: 'Ativo',
       });
 
       setMovimentoCriado(movimento);
@@ -1458,6 +1460,15 @@ export default function PDVCaixa({
           turnoAtivo={turnoAtivo}
           contaCaixa={contaCaixaPDV}
           currentUser={currentUser}
+        />
+      )}
+
+      {turnoAtivo && contaCaixaPDV && !modoVisualizacao && (
+        <ReforcosPendentesCaixa
+          turnoAtivo={turnoAtivo}
+          contaCaixa={contaCaixaPDV}
+          currentUser={currentUser}
+          onConfirmado={() => loadData(undefined, undefined, { force: true })}
         />
       )}
 
