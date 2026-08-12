@@ -15,10 +15,10 @@ import {
   Printer,
   Scale,
 } from 'lucide-react';
-import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, isWithinInterval, parseISO } from 'date-fns';
+import { format, subMonths } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 import { printOrShareElementAsPdf } from '@/lib/mobilePrintAndShare';
-import { dataHoje, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
+import { dataHoje, dataMenosDiasSistema, boundsMesCivil, formatarDataHora, formatarSoData, inicioSemanaCivilDesdeYmd, toLocalDateKey } from '@/components/utils/dateUtils';
 import { getDataAncoraFluxoKey } from '@/lib/lancamentoFinanceiroStatus';
 import {
   DATA_CORTE_HISTORICO_PADRAO,
@@ -29,7 +29,6 @@ import {
   fetchLancamentosExtratoConta,
   fetchMovimentosExtratoConta,
 } from '@/lib/fetchLancamentosExtratoAgefin';
-import { subMonths } from 'date-fns';
 import { roundToTwoDecimals, sortLancamentosPorDescricao } from '@/lib/financialUtils';
 import KpiExtratoConta from '@/components/financeiro/fluxo/KpiExtratoConta';
 import FiltrosExtratoConta, { PERIODOS_EXTRATO } from '@/components/financeiro/fluxo/FiltrosExtratoConta';
@@ -55,6 +54,35 @@ function getDataKeyMovimentoExtrato(mov) {
     return raw ? toLocalDateKey(raw) : null;
   }
   return getDataAncoraFluxoKey(mov);
+}
+
+function intervaloExtratoYmd(periodo, cs, ce) {
+  const hoje = dataHoje();
+  const [ano, mes] = hoje.split('-').map(Number);
+  if (periodo === 'hoje') return { inicio: hoje, fim: hoje };
+  if (periodo === 'ontem') {
+    const ontem = dataMenosDiasSistema(1);
+    return { inicio: ontem, fim: ontem };
+  }
+  if (periodo === 'semana') {
+    return { inicio: inicioSemanaCivilDesdeYmd(hoje), fim: hoje };
+  }
+  if (periodo === 'mes') {
+    const { start, end } = boundsMesCivil(ano, mes - 1);
+    return { inicio: start, fim: end };
+  }
+  if (periodo === 'todos') return { inicio: null, fim: hoje };
+  if (periodo === 'personalizado' && cs && ce) {
+    return { inicio: String(cs).slice(0, 10), fim: String(ce).slice(0, 10) };
+  }
+  return { inicio: null, fim: hoje };
+}
+
+function passaIntervaloExtratoYmd(dataKey, inicio, fim) {
+  if (!dataKey) return false;
+  if (inicio && dataKey < inicio) return false;
+  if (fim && dataKey > fim) return false;
+  return true;
 }
 
 export default function ExtratoContaPage() {
@@ -328,6 +356,7 @@ export default function ExtratoContaPage() {
   };
 
   const getDataMovimento = (mov) => mov.data_pagamento || mov.data_vencimento || mov.data_movimento || mov.created_date;
+  const chaveDiaMovimento = (mov) => getDataKeyMovimentoExtrato(mov) || toLocalDateKey(getDataMovimento(mov));
   const participaDoSaldo = (mov) => movimentoParticipaExtrato(mov, conta);
   const passaCorteHistorico = (mov) => passaFiltroCorteHistorico(getDataKeyMovimentoExtrato(mov), {
     mostrarHistoricoAnterior,
@@ -350,35 +379,10 @@ export default function ExtratoContaPage() {
     .filter(passaCorteHistorico)
     .sort((a, b) => new Date(getDataMovimento(a)) - new Date(getDataMovimento(b)));
 
-  // Aplica filtro de período
-  const getDataRange = () => {
-    const hoje = new Date();
-    switch (filtroPeriodo) {
-      case 'hoje':
-        return { inicio: startOfDay(hoje), fim: endOfDay(hoje) };
-      case 'ontem':
-        const ontem = subDays(hoje, 1);
-        return { inicio: startOfDay(ontem), fim: endOfDay(ontem) };
-      case 'semana':
-        return { inicio: startOfWeek(hoje, { weekStartsOn: 0 }), fim: endOfWeek(hoje, { weekStartsOn: 0 }) };
-      case 'mes':
-        return { inicio: startOfMonth(hoje), fim: endOfMonth(hoje) };
-      case 'todos':
-        return { inicio: new Date(0), fim: endOfDay(hoje) };
-      case 'personalizado':
-        return dataInicio && dataFim ? 
-          { inicio: startOfDay(parseISO(dataInicio)), fim: endOfDay(parseISO(dataFim)) } : 
-          { inicio: new Date(0), fim: new Date() };
-      default:
-        return { inicio: new Date(0), fim: new Date() };
-    }
-  };
-
-  const { inicio, fim } = getDataRange();
-  const movimentacoesNoPeriodo = todasMovimentacoes.filter(m => {
-    const dataMovimento = new Date(getDataMovimento(m));
-    return isWithinInterval(dataMovimento, { start: inicio, end: fim });
-  });
+  const { inicio: inicioYmd, fim: fimYmd } = intervaloExtratoYmd(filtroPeriodo, dataInicio, dataFim);
+  const movimentacoesNoPeriodo = todasMovimentacoes.filter((m) => (
+    passaIntervaloExtratoYmd(chaveDiaMovimento(m), inicioYmd, fimYmd)
+  ));
 
   const movimentacoesFiltradas = movimentacoesNoPeriodo.filter(m => {
     if (!searchTerm) return true;
@@ -392,7 +396,8 @@ export default function ExtratoContaPage() {
 
   // Agrupa por dia e calcula saldos
   const movimentacoesPorDia = movimentacoesFiltradas.reduce((acc, mov) => {
-    const dia = format(new Date(getDataMovimento(mov)), 'yyyy-MM-dd');
+    const dia = chaveDiaMovimento(mov);
+    if (!dia) return acc;
     if (!acc[dia]) acc[dia] = [];
     acc[dia].push(mov);
     return acc;
@@ -410,9 +415,9 @@ export default function ExtratoContaPage() {
         : calcularSaldoContaFinanceira(conta, lancsParaSaldo, movsParaSaldo))
     : 0;
 
-  const movimentacoesAposPeriodo = todasMovimentacoes.filter(m => {
-    const dataMovimento = new Date(getDataMovimento(m));
-    return dataMovimento > fim && participaDoSaldo(m);
+  const movimentacoesAposPeriodo = todasMovimentacoes.filter((m) => {
+    const dataKey = chaveDiaMovimento(m);
+    return fimYmd && dataKey > fimYmd && participaDoSaldo(m);
   });
 
   const totalEntradasAposPeriodo = totaisEntradaSaidaMovimentos(
@@ -502,7 +507,7 @@ export default function ExtratoContaPage() {
 
   const grupos = useMemo(() => {
     const hStr = dataHoje();
-    const oStr = format(subDays(new Date(`${hStr}T12:00:00`), 1), 'yyyy-MM-dd');
+    const oStr = dataMenosDiasSistema(1);
     return diasExibicao.map((diaData) => ({
       k: diaData.dia,
       label: formatFinanceiroGrupoLabel(diaData.dia, hStr, oStr),
@@ -534,7 +539,7 @@ export default function ExtratoContaPage() {
     const csvContent = [
       ['Data', 'Descrição', 'Tipo', 'Categoria', 'Valor', 'Saldo'],
       ...movimentacoesFiltradas.map(m => [
-        format(new Date(getDataMovimento(m)), 'dd/MM/yyyy HH:mm'),
+        formatarDataHora(getDataMovimento(m)),
         m.descricao || m.tipo,
         m.tipo,
         m.categoria || '-',

@@ -12,7 +12,7 @@ export function formatFinanceiroGrupoLabel(k, hStr, oStr) {
   if (k === 'sem-data' || k === 'sem-vencimento') return 'Sem data';
   if (k === hStr) return 'Hoje';
   if (k === oStr) return 'Ontem';
-  const d = new Date(`${k}T12:00:00`);
+  const d = new Date(`${k}T12:00:00-05:00`);
   if (Number.isNaN(d.getTime())) return k;
   if (k > hStr) return `${format(d, "d 'de' MMMM", { locale: ptBR })} (previsto)`;
   return format(d, "d 'de' MMMM", { locale: ptBR });
