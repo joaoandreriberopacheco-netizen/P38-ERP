@@ -49,13 +49,13 @@ export const p38Table = {
   catalogMobileHeader:
     'flex-shrink-0 border-t-2 border-t-[#4a5240] dark:border-t-[#a4ce33] border-b border-border/40 dark:border-white/10 bg-muted dark:bg-[#383e47] text-foreground shadow-[0_2px_10px_rgba(0,0,0,0.14)] dark:shadow-[0_4px_14px_rgba(0,0,0,0.45)]',
   /** Mesma linha com barra lateral semântica mais fina (1px) — financeiro */
-  mobileLineThin: 'border-b border-border/50 dark:border-white/10 border-l py-3 pr-3 pl-4 min-w-0 bg-background font-din-1451',
+  mobileLineThin: 'border-b border-border/50 dark:border-white/10 border-l py-3 pr-14 pl-3 sm:pr-4 sm:pl-4 min-w-0 bg-background font-din-1451',
   mobileLineInteractive: 'active:bg-secondary/30 cursor-pointer select-none min-h-[52px] tablet-portrait:min-h-[60px] touch-pan-y',
-  mobileLineTitle: 'font-din-1451 font-medium text-base tablet-portrait:text-lg uppercase tracking-wide text-foreground leading-tight break-words',
-  mobileLineSubtitle: 'text-xs tablet-portrait:text-sm text-muted-foreground break-all mt-0.5 font-din-1451',
+  mobileLineTitle: 'font-din-1451 font-medium text-sm sm:text-base tablet-portrait:text-lg uppercase tracking-wide text-foreground leading-snug line-clamp-2 break-words',
+  mobileLineSubtitle: 'text-[11px] sm:text-xs tablet-portrait:text-sm text-muted-foreground line-clamp-2 break-words mt-0.5 font-din-1451',
   mobileLineMeta: 'text-xs tablet-portrait:text-sm uppercase tracking-wide text-muted-foreground font-din-1451',
   mobileLineMetaInline: 'text-xs tablet-portrait:text-sm normal-case tracking-normal text-muted-foreground font-din-1451',
-  mobileLineValue: 'font-semibold text-base tablet-portrait:text-lg text-foreground text-right tabular-nums font-din-1451',
+  mobileLineValue: 'font-semibold text-sm sm:text-base tablet-portrait:text-lg text-foreground text-right tabular-nums font-din-1451 whitespace-nowrap',
   mobileLineValueSub: 'text-xs tablet-portrait:text-sm text-muted-foreground text-right font-din-1451',
   mobileMicroLabel: 'text-xs tablet-portrait:text-sm uppercase tracking-wide text-muted-foreground leading-none font-din-1451',
   /** Lista mobile: telemóvel + tablet retrato; tabelas em desktop + tablet paisagem. */

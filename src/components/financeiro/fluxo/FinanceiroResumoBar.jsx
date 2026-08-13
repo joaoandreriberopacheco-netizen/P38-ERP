@@ -24,7 +24,7 @@ function ResumoGridCell({ icon: Icon, value, valueClass, iconClass, label }) {
       <Icon className={cn('h-3.5 w-3.5 shrink-0', iconClass ?? valueClass)} aria-hidden />
       <span
         className={cn(
-          'w-full truncate text-center text-[10px] font-semibold leading-tight tabular-nums sm:text-[11px]',
+          'w-full text-center text-[9px] font-semibold leading-tight tabular-nums whitespace-nowrap sm:text-[10px] md:text-[11px]',
           valueClass,
         )}
       >
@@ -95,7 +95,7 @@ export default function FinanceiroResumoBar({
         {/* Mobile: 3 colunas fixas — leitura vertical estável ao rolar */}
         <div
           className={cn(
-            'grid w-full grid-cols-3 gap-2 rounded-lg px-2 py-3 md:hidden',
+            'grid w-full grid-cols-3 gap-1.5 rounded-lg px-1 py-3 md:hidden',
             className,
           )}
           title={title}

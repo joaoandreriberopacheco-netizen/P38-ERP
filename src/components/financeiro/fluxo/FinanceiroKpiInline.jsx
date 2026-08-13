@@ -18,14 +18,14 @@ export function FinanceiroKpiItem({
 }) {
   if (layout === 'stack') {
     return (
-      <div className={cn('flex min-w-0 items-center justify-between gap-4 py-2', className)}>
-        <span className="flex min-w-0 items-center gap-2 text-[11px] uppercase tracking-wide text-foreground/60">
+      <div className={cn('flex min-w-0 items-center justify-between gap-3 py-2', className)}>
+        <span className="flex min-w-0 flex-1 items-center gap-2 text-[11px] uppercase tracking-wide text-foreground/60">
           {Icon && <Icon className={cn('h-4 w-4 shrink-0', iconClass)} />}
           <span className="truncate">{label}</span>
         </span>
-        <div className="shrink-0 text-right">
-          <span className={cn('text-base font-semibold tabular-nums leading-tight', valueClass)}>{value}</span>
-          {sub && <p className="text-[11px] text-foreground/45">{sub}</p>}
+        <div className="shrink-0 max-w-[55%] text-right">
+          <span className={cn('text-sm font-semibold tabular-nums leading-tight whitespace-nowrap sm:text-base', valueClass)}>{value}</span>
+          {sub && <p className="truncate text-[11px] text-foreground/45">{sub}</p>}
         </div>
       </div>
     );
@@ -47,9 +47,9 @@ export function FinanceiroKpiSaldo({ label = 'Saldo', value, percent, positive, 
   if (layout === 'stack') {
     return (
       <div className={cn('space-y-2 py-2', className)}>
-        <div className="flex min-w-0 items-center justify-between gap-4">
-          <span className="text-[11px] uppercase tracking-wide text-foreground/60">{label}</span>
-          <span className={cn('text-base font-semibold tabular-nums', positive ? P38_ACCENT : 'text-foreground/80')}>
+        <div className="flex min-w-0 items-center justify-between gap-3">
+          <span className="shrink-0 text-[11px] uppercase tracking-wide text-foreground/60">{label}</span>
+          <span className={cn('max-w-[58%] truncate text-right text-sm font-semibold tabular-nums whitespace-nowrap sm:text-base', positive ? P38_ACCENT : 'text-foreground/80')}>
             {value}
           </span>
         </div>

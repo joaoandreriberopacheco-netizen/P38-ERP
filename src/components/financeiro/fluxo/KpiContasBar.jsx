@@ -37,7 +37,7 @@ export default function KpiContasBar({ kpis, saldosProntos = false }) {
 
   return (
     <div
-      className="flex min-w-0 items-center gap-2 md:gap-3 md:overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] md:[&::-webkit-scrollbar]:hidden"
+      className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 md:flex-nowrap md:gap-3 md:overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] md:[&::-webkit-scrollbar]:hidden"
       title={title}
     >
       <KpiSegment

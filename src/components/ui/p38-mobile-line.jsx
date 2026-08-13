@@ -82,10 +82,10 @@ export function P38MobileLine({
         ) : null}
       </div>
       {(value || valueSub || trailing) && (
-        <div className="flex items-center gap-1.5 shrink-0 max-w-[50%] sm:max-w-[42%]">
-          <div className="flex flex-col items-end gap-0.5 min-w-0">
+        <div className="flex items-center gap-1.5 shrink-0 max-w-[44%] sm:max-w-[42%]">
+          <div className="flex flex-col items-end gap-0.5 min-w-0 max-w-full overflow-hidden">
             {value ? <div className={p38Table.mobileLineValue}>{value}</div> : null}
-            {valueSub ? <div className={p38Table.mobileLineValueSub}>{valueSub}</div> : null}
+            {valueSub ? <div className={cn(p38Table.mobileLineValueSub, 'truncate max-w-full')}>{valueSub}</div> : null}
           </div>
           {trailing}
         </div>

@@ -58,7 +58,7 @@ export function FinanceiroGrupo({
   const saldoNode = (
     <span
       className={cn(
-        'max-w-[9.5rem] truncate text-[10px] font-bold tabular-nums sm:max-w-none sm:text-[11px]',
+        'whitespace-nowrap text-[10px] font-bold tabular-nums sm:text-[11px]',
         liquido >= 0 ? 'text-[#4A5D23] dark:text-[#a4ce33]' : negClass,
       )}
     >
@@ -77,8 +77,9 @@ export function FinanceiroGrupo({
           balancoDia
             ? 'flex flex-col gap-2.5 px-1 py-3 md:flex-row md:items-center md:justify-between md:gap-2 md:py-1.5'
             : cn(
-                'grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 py-1.5',
-                card && 'gap-x-3 py-2.5',
+                card
+                  ? 'flex flex-col gap-1 py-2.5 sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-x-3'
+                  : 'grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 py-1.5',
               ),
           card ? 'px-3 py-2.5' : 'mb-0.5 border-b border-border/50 dark:border-white/10',
         )}
@@ -111,9 +112,10 @@ export function FinanceiroGrupo({
         </div>
         <div
           className={cn(
-            'flex min-w-0 items-center justify-end gap-1 sm:gap-1.5',
+            'flex min-w-0 items-center gap-1 sm:gap-1.5',
+            card && 'w-full justify-end sm:w-auto sm:shrink-0 sm:justify-end',
             balancoDia && 'w-full md:w-auto md:shrink md:justify-end',
-            !balancoDia && 'shrink-0',
+            !balancoDia && !card && 'shrink-0 justify-end',
           )}
         >
           {balancoDia ? (
@@ -194,7 +196,7 @@ export function FinanceiroListaEstado({
   }
 
   return (
-    <div className="min-w-0 w-full max-w-full space-y-2 overflow-x-hidden pb-2 md:pb-0">
+    <div className="min-w-0 w-full max-w-full space-y-2 overflow-x-hidden pb-24 md:pb-2">
       {children}
     </div>
   );
