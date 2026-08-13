@@ -155,7 +155,8 @@ export async function transferirRecolhimentoCaixaPDV({
 }
 
 /**
- * Fechamento: transfere o saldo calculado da gaveta (igual ao extrato) e zera a conta PDV.
+ * Fechamento: transfere o dinheiro restante na gaveta para Caixa Geral e zera a conta PDV.
+ * `valorTransferir` — saldo na gaveta do turno (caixaData.saldoAtual); se omitido, usa cálculo financeiro.
  */
 export async function transferirDinheiroFechamentoCaixaPDV({
   base44,
@@ -165,6 +166,7 @@ export async function transferirDinheiroFechamentoCaixaPDV({
   movimentoId,
   lancamentos,
   movimentos,
+  valorTransferir,
 }) {
   if (!contaCaixaPDV?.id) return { saldoRestante: 0, valorTransferido: 0 };
 
@@ -174,15 +176,16 @@ export async function transferirDinheiroFechamentoCaixaPDV({
     lancamentos,
     movimentos,
   );
-  const saldoRestante = roundToTwoDecimals(saldoGaveta);
+  const saldoRestante = valorTransferir != null
+    ? roundToTwoDecimals(Math.max(0, valorTransferir))
+    : roundToTwoDecimals(Math.max(0, saldoGaveta));
 
-  if (saldoRestante > 0) {
+  if (saldoRestante > 0.009) {
     if (!contaDestino?.id) {
       throw new Error(
         'Conta destino do caixa PDV não configurada. Vá em Configurações → Financeiro → Contas.'
       );
     }
-    await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, { saldo_atual: 0 });
     await creditarContaDestinoCaixaPDV(base44, contaDestino, saldoRestante);
     await registrarLancamentosTransferenciaCaixaPDV(base44, {
       contaOrigem: origemFresh,
@@ -191,9 +194,9 @@ export async function transferirDinheiroFechamentoCaixaPDV({
       descricao,
       movimentoId,
     });
-  } else {
-    await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, { saldo_atual: 0 });
   }
+
+  await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, { saldo_atual: 0 });
 
   return { saldoRestante, valorTransferido: saldoRestante };
 }

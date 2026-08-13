@@ -247,6 +247,25 @@ export function idsMovimentosComLancamentoFinanceiro(lancamentos = []) {
   return ids;
 }
 
+/**
+ * Lançamentos do PDV já contabilizados via MovimentosCaixa (reforço/recolhimento vinculado).
+ * Evita somar Receita de transferência + Movimento Reforço em duplicado.
+ */
+export function idsLancamentosEspelhadosEmMovimentosCaixa(lancamentos = [], movimentos = []) {
+  const ids = new Set();
+  lancamentos.forEach((l) => {
+    if (l?.referencia_tipo === 'MovimentosCaixa' && l?.referencia_id) {
+      ids.add(String(l.id));
+    }
+  });
+  movimentos.forEach((m) => {
+    if (m?.lancamento_financeiro_id) {
+      ids.add(String(m.lancamento_financeiro_id));
+    }
+  });
+  return ids;
+}
+
 /** Data efetiva do movimento de caixa (permite retroativo via data_movimento). */
 export function getDataMovimentoCaixa(mov) {
   return mov?.data_movimento || mov?.created_date || null;
@@ -292,9 +311,15 @@ export function calcularSaldoContaFinanceira(conta, todosLancamentos = [], todos
   const movimentos = filtrarMovimentosDaConta(conta.id, todosMovimentos);
 
   const movimentosJaNoFinanceiro = idsMovimentosComLancamentoFinanceiro(lancamentos);
+  const lancamentosEspelhadosEmMov = contaUsaRegraCaixaPDV(conta)
+    ? idsLancamentosEspelhadosEmMovimentosCaixa(lancamentos, movimentos)
+    : new Set();
 
   let delta = 0;
-  lancamentos.forEach((l) => { delta += deltaLancamentoSaldoConta(conta, l); });
+  lancamentos.forEach((l) => {
+    if (lancamentosEspelhadosEmMov.has(String(l.id))) return;
+    delta += deltaLancamentoSaldoConta(conta, l);
+  });
   if (contaUsaRegraCaixaPDV(conta)) {
     movimentos.forEach((m) => {
       if (movimentosJaNoFinanceiro.has(String(m.id))) return;
@@ -324,9 +349,13 @@ export function liquidoContaDesdeDataCorte(conta, todosLancamentos = [], todosMo
 
   const lancamentos = filtrarLancamentosDaConta(conta, todosLancamentos);
   const movimentosJaNoFinanceiro = idsMovimentosComLancamentoFinanceiro(lancamentos);
+  const lancamentosEspelhadosEmMov = contaUsaRegraCaixaPDV(conta)
+    ? idsLancamentosEspelhadosEmMovimentosCaixa(lancamentos, todosMovimentos)
+    : new Set();
   let liquido = 0;
 
   lancamentos.forEach((l) => {
+    if (lancamentosEspelhadosEmMov.has(String(l.id))) return;
     const dataKey = dataChaveLancamentoSaldo(l);
     if (dataKey && dataKey >= dataCorte) {
       liquido += deltaLancamentoSaldoConta(conta, l);
