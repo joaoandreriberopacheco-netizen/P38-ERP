@@ -9,6 +9,7 @@ import {
   p38StatusTone,
   p38AccentKeyFromTone,
 } from '@/components/ui/p38-mobile-line';
+import { cn } from '@/lib/utils';
 import { formatFinanceiroValor } from './FinanceiroListaShared';
 import { isTransferenciaEntreContas } from '@/lib/saldoContaFinanceira';
 
