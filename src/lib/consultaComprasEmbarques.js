@@ -1,4 +1,4 @@
-import { toLocalDateKey } from '@/components/utils/dateUtils';
+import { dataHoje, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 import { resolveEmbarqueQuantidadeComercial } from '@/lib/embarqueQuantityResolve';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
@@ -152,4 +152,103 @@ export function compareEmbarquesConsulta(a, b, sortOrder, groupBy) {
     : String(metaB.value).localeCompare(String(metaA.value), 'pt-BR');
   if (cmp !== 0) return cmp;
   return String(a._display_code || a.numero || '').localeCompare(String(b._display_code || b.numero || ''), 'pt-BR');
+}
+
+function isSemEtaGrupo(grupo) {
+  const eta = String(grupo?.orderValue || '').split('|')[0];
+  return eta === 'sem-eta' || grupo?.key === 'eta_transportadora:sem-dados';
+}
+
+function compareGruposConsulta(a, b, sortOrder, groupBy) {
+  if (groupBy === 'eta_transportadora') {
+    const aSem = isSemEtaGrupo(a);
+    const bSem = isSemEtaGrupo(b);
+    if (aSem !== bSem) return aSem ? -1 : 1;
+
+    const etaA = String(a.orderValue || '').split('|')[0];
+    const etaB = String(b.orderValue || '').split('|')[0];
+
+    if (etaA !== 'sem-eta' && etaB !== 'sem-eta') {
+      const dateCmp = sortOrder === 'asc'
+        ? etaA.localeCompare(etaB, 'pt-BR')
+        : etaB.localeCompare(etaA, 'pt-BR');
+      if (dateCmp !== 0) return dateCmp;
+    }
+
+    return String(a.orderValue).localeCompare(String(b.orderValue), 'pt-BR');
+  }
+
+  if (sortOrder === 'asc') return String(a.orderValue).localeCompare(String(b.orderValue), 'pt-BR');
+  return String(b.orderValue).localeCompare(String(a.orderValue), 'pt-BR');
+}
+
+function getGrupoConsultaMeta(card, groupBy) {
+  const embarque = card._embarque;
+
+  if (groupBy === 'fornecedor') {
+    const fornecedor = card.fornecedor_nome?.trim() || card._display_fornecedor?.trim() || 'Sem fornecedor';
+    return { key: `fornecedor:${fornecedor}`, label: fornecedor, orderValue: fornecedor.toLowerCase() };
+  }
+
+  if (groupBy === 'status') {
+    const status = card._display_status || card.status || 'Sem status';
+    return { key: `status:${status}`, label: status, orderValue: status.toLowerCase() };
+  }
+
+  if (groupBy === 'eta_transportadora') {
+    const eta = embarque?.eta ? toLocalDateKey(new Date(embarque.eta)) : 'sem-eta';
+    const transportadora = embarque?.transportadora_nome?.trim() || 'Sem transportadora';
+    const semDados = eta === 'sem-eta' && transportadora === 'Sem transportadora';
+    return {
+      key: semDados ? 'eta_transportadora:sem-dados' : `eta_transportadora:${eta}:${transportadora}`,
+      label: semDados ? 'Sem ETA / Sem transportadora' : `${eta === 'sem-eta' ? 'Sem ETA' : formatarSoData(eta)} · ${transportadora}`,
+      orderValue: `${eta}|${transportadora.toLowerCase()}`,
+      groupDate: semDados || eta === 'sem-eta' ? 'Sem ETA' : formatarSoData(eta),
+      groupCarrier: semDados ? 'Sem transportadora' : transportadora,
+    };
+  }
+
+  const dataKey = card.data_emissao || (card.created_date ? toLocalDateKey(new Date(card.created_date)) : null);
+  const key = dataKey || 'sem-data';
+  const hoje = dataHoje();
+  let label = 'Sem data';
+  if (key !== 'sem-data') {
+    label = key === hoje ? 'Hoje' : formatarSoData(key);
+  }
+  return { key: `data_pedido:${key}`, label, orderValue: key };
+}
+
+/** Agrupa cards da consulta por embarque (mesma lógica da lista Embarques). */
+export function buildGruposConsultaEmbarques(cards = [], groupBy = 'eta_transportadora', sortOrder = 'asc') {
+  const map = {};
+
+  cards.forEach((card) => {
+    const meta = getGrupoConsultaMeta(card, groupBy);
+    if (!map[meta.key]) {
+      map[meta.key] = {
+        key: meta.key,
+        label: meta.label,
+        orderValue: meta.orderValue,
+        groupDate: meta.groupDate ?? null,
+        groupCarrier: meta.groupCarrier ?? null,
+        cards: [],
+      };
+    }
+    map[meta.key].cards.push(card);
+  });
+
+  const compareValues = (a, b) => {
+    if (sortOrder === 'asc') return String(a).localeCompare(String(b), 'pt-BR');
+    return String(b).localeCompare(String(a), 'pt-BR');
+  };
+
+  return Object.values(map)
+    .sort((a, b) => compareGruposConsulta(a, b, sortOrder, groupBy))
+    .map((grupo) => ({
+      ...grupo,
+      cards: grupo.cards.sort((a, b) => compareEmbarquesConsulta(a, b, sortOrder, groupBy)),
+      totalConsulta: roundToTwoDecimals(
+        grupo.cards.reduce((acc, c) => acc + (Number(c._consulta_valor) || 0), 0),
+      ),
+    }));
 }

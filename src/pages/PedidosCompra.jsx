@@ -1076,6 +1076,8 @@ export default function PedidosCompraPage() {
         <ConsultaComprasPedidos
           pedidosFiltrados={pedidosConsulta}
           onVerPedido={handleOpenPedido}
+          groupBy={groupBy}
+          sortOrder={sortOrder}
           contextLabel="Resumo do período"
           emptyMessage="Nenhum embarque no período selecionado"
         />
