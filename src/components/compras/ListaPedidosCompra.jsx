@@ -402,25 +402,27 @@ function GrupoDia({ label, groupDate, groupCarrier, pedidos, onEdit, onDelete, s
       }, 0);
 
   return (
-    <div className={`w-full space-y-3 font-din-1451 ${className}`}>
+    <div className={`w-full space-y-2 font-din-1451 ${className}`}>
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className="w-full min-w-0 grid grid-cols-[5.75rem_minmax(0,1fr)_auto_auto] tablet-portrait:grid-cols-[6.25rem_minmax(0,1fr)_auto_auto] items-center gap-x-3 border-b border-border/50 dark:border-white/10 px-1 py-2.5 group"
+        className="w-full min-w-0 flex items-center gap-3 border-b border-border/50 dark:border-white/10 py-2.5 pr-1 text-left group"
       >
-        {hasStructuredHeader ? (
-          <>
-            <span className={cn(headerTextClass, 'truncate tabular-nums')}>{groupDate}</span>
-            <span className={cn(headerTextClass, 'truncate min-w-0')}>{groupCarrier}</span>
-          </>
-        ) : (
-          <span className={cn(headerTextClass, 'col-span-2 truncate min-w-0 uppercase tracking-wide')}>{label}</span>
-        )}
-        <span className={cn(headerTextClass, 'text-right whitespace-nowrap tabular-nums')}>{R(valorTotal)}</span>
-        <ChevronDown className={`w-4 h-4 text-foreground/70 transition-transform duration-200 justify-self-end ${open ? '' : '-rotate-90'}`} />
+        <div className="flex-1 min-w-0">
+          {hasStructuredHeader ? (
+            <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 min-w-0">
+              <span className={cn(headerTextClass, 'shrink-0 tabular-nums whitespace-nowrap')}>{groupDate}</span>
+              <span className={cn(headerTextClass, 'truncate min-w-0')}>{groupCarrier}</span>
+            </div>
+          ) : (
+            <span className={cn(headerTextClass, 'block truncate min-w-0 uppercase tracking-wide')}>{label}</span>
+          )}
+        </div>
+        <span className={cn(headerTextClass, 'shrink-0 whitespace-nowrap tabular-nums')}>{R(valorTotal)}</span>
+        <ChevronDown className={`w-4 h-4 shrink-0 text-foreground/70 transition-transform duration-200 ${open ? '' : '-rotate-90'}`} />
       </button>
       {open && (
-        <>
+        <div className="ml-2.5 sm:ml-3 pl-3 border-l border-border/30 dark:border-white/10 space-y-3">
           <P38MobileLineList className="desktop-layout:hidden [&>*:not(:last-child)]:mb-1">
             {pedidos.map((p, index) => (
               <PedidoMobileLine
@@ -450,7 +452,7 @@ function GrupoDia({ label, groupDate, groupCarrier, pedidos, onEdit, onDelete, s
               />
             ))}
           </div>
-        </>
+        </div>
       )}
     </div>
   );
