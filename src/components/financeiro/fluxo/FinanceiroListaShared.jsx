@@ -58,7 +58,7 @@ export function FinanceiroGrupo({
   const saldoNode = (
     <span
       className={cn(
-        'shrink-0 text-[11px] font-bold tabular-nums',
+        'max-w-[9.5rem] truncate text-[10px] font-bold tabular-nums sm:max-w-none sm:text-[11px]',
         liquido >= 0 ? 'text-[#4A5D23] dark:text-[#a4ce33]' : negClass,
       )}
     >

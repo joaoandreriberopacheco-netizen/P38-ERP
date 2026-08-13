@@ -86,16 +86,14 @@ export async function resolverSaldoGavetaCaixaPDV(
 }
 
 /**
- * Turno fechado mas extrato ainda com saldo: esvazia para a conta destino (dados antigos).
+ * Turno fechado com PDV ainda gravada com saldo > 0: só zera o campo gravado.
+ * Não cria lançamentos — recolhimentos/fechamento já transferem via movimentos reais.
  */
 export async function reconciliarSaldoCaixaPDVSemTurnoAberto(base44, conta, contas, lancamentos, movimentos) {
+  void contas;
+  void lancamentos;
+  void movimentos;
   if (!contaUsaRegraCaixaPDV(conta)) return false;
-
-  const { saldoGaveta } = await resolverSaldoGavetaCaixaPDV(base44, conta, lancamentos, movimentos);
-  if (saldoGaveta <= 0.009) {
-    await base44.entities.ContasFinanceiras.update(conta.id, { saldo_atual: 0 });
-    return false;
-  }
 
   const turnosAbertos = await base44.entities.TurnoCaixa.filter({
     conta_caixa_pdv_id: conta.id,
@@ -103,18 +101,11 @@ export async function reconciliarSaldoCaixaPDVSemTurnoAberto(base44, conta, cont
   });
   if (turnosAbertos.length > 0) return false;
 
-  const contaDestino = resolveContaDestinoCaixaPDV(contas);
-  if (!contaDestino) return false;
+  const contaFresh = await carregarContaFinanceira(base44, conta.id);
+  const gravado = Number(contaFresh?.saldo_atual ?? conta.saldo_atual ?? 0);
+  if (gravado <= 0.009) return false;
 
-  const descricao = `Reconciliação pós-fechamento — saldo remanescente em ${conta.nome}`;
-  await transferirDinheiroFechamentoCaixaPDV({
-    base44,
-    contaCaixaPDV: conta,
-    contaDestino,
-    descricao,
-    lancamentos,
-    movimentos,
-  });
+  await base44.entities.ContasFinanceiras.update(conta.id, { saldo_atual: 0 });
   return true;
 }
 

@@ -62,7 +62,7 @@ export default function ContaFinanceiraRow({
       }}
       className={cn(
         'group w-full border-b border-border/50 text-left font-din-1451 dark:border-white/10',
-        'border-l-2 px-3 py-3 pr-2 sm:px-4 cursor-pointer',
+        'border-l-2 px-3 py-3 pr-14 sm:px-4 sm:pr-4 cursor-pointer',
         borderAccent,
         striped && 'bg-secondary/15 dark:bg-secondary/20',
         !ativa && 'opacity-70',
@@ -70,17 +70,17 @@ export default function ContaFinanceiraRow({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[15px] font-semibold uppercase leading-tight text-foreground sm:text-base">
+          <p className="truncate text-[13px] font-semibold uppercase leading-tight text-foreground sm:text-[15px]">
             {conta.nome}
           </p>
           {subtitle && (
             <p className="mt-0.5 truncate text-xs text-muted-foreground">{subtitle}</p>
           )}
         </div>
-        <div className="shrink-0 text-right">
+        <div className="shrink-0 max-w-[46%] text-right sm:max-w-none">
           <p
             className={cn(
-              'whitespace-nowrap text-sm font-semibold tabular-nums sm:text-base',
+              'text-xs font-semibold tabular-nums leading-tight sm:whitespace-nowrap sm:text-sm md:text-base',
               isNegativo ? 'text-red-600 dark:text-red-400' : 'text-foreground',
             )}
           >
