@@ -18,6 +18,7 @@ import { gravarPreferenciasLancamento, resolverPreferenciasLancamento } from '@/
 import { resolverDataLancamentoInput } from '@/lib/lancamentoOrdemMeta';
 import { isLancamentoPago } from '@/lib/lancamentoFinanceiroStatus';
 import { concluirFluxoTorreCompartilhamento } from '@/lib/torreLancamentoBridge';
+import { useCompactShell } from '@/hooks/use-breakpoint';
 import RecorrenciaEscopoDialog from './RecorrenciaEscopoDialog';
 import {
   descricaoPadraoVale,
@@ -116,6 +117,7 @@ export default function NovoLancamentoDialog({
   const [centroCustoIdLocal, setCentroCustoIdLocal] = useState('');
   const { toast } = useToast();
   const { categorias, reload: reloadCats } = useCategorias();
+  const isCompactShell = useCompactShell();
 
   const modoEdicao = !!lancamentoExistente;
 
@@ -793,11 +795,11 @@ export default function NovoLancamentoDialog({
 
   if (!open) return null;
 
-  const layout = presentation ?? (origemContaPagar ? 'bottomSheet' : 'center');
+  const layout = presentation ?? (origemContaPagar || isCompactShell ? 'bottomSheet' : 'center');
   const rootClassName =
     layout === 'bottomSheet'
-      ? 'relative flex h-[min(92dvh,720px)] min-h-0 w-full max-w-2xl flex-col overflow-hidden rounded-t-[28px] bg-background shadow-2xl'
-      : 'relative flex h-[min(100dvh,820px)] min-h-0 w-full max-w-2xl flex-col overflow-hidden rounded-[28px] bg-background shadow-2xl md:max-h-[calc(100vh-3rem)]';
+      ? 'relative flex h-full max-h-[92dvh] min-h-0 w-full max-w-2xl flex-col overflow-hidden rounded-t-[28px] bg-background shadow-2xl'
+      : 'relative flex h-[min(100dvh,820px)] max-h-[100dvh] min-h-0 w-full max-w-2xl flex-col overflow-hidden rounded-[28px] bg-background shadow-2xl md:max-h-[calc(100vh-3rem)]';
 
   const panel = (
     <div className={rootClassName} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
@@ -815,6 +817,7 @@ export default function NovoLancamentoDialog({
         <div className="w-9" />
       </div>
 
+      <div className="flex h-0 min-h-0 flex-1 flex-col overflow-hidden">
       <LancamentoFormUnico
         tipo={tipo}
         onTipoChange={setTipo}
@@ -893,7 +896,9 @@ export default function NovoLancamentoDialog({
           const mods = await listarModelos();
           setModelosBudget(mods || []);
         }}
+        stackElevated
       />
+      </div>
 
       <LancamentoFormSheet
         open={showDataDialog}
@@ -999,10 +1004,10 @@ export default function NovoLancamentoDialog({
           onClick={onClose}
         />
         <div
-          className="fixed inset-x-0 bottom-0 z-[60] flex justify-center px-0"
+          className="fixed inset-x-0 bottom-0 z-[60] flex max-h-[92dvh] justify-center px-0"
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
-          <div className="pointer-events-auto w-full max-w-2xl" role="dialog" aria-modal="true">
+          <div className="pointer-events-auto flex h-[92dvh] max-h-[92dvh] w-full max-w-2xl min-h-0 flex-col" role="dialog" aria-modal="true">
             {panel}
           </div>
         </div>
@@ -1020,7 +1025,7 @@ export default function NovoLancamentoDialog({
         onClick={onClose}
       />
       <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 pointer-events-none md:p-4">
-        <div className="pointer-events-auto w-full max-w-2xl" role="dialog" aria-modal="true">
+        <div className="pointer-events-auto flex max-h-[100dvh] w-full max-w-2xl min-h-0 flex-col" role="dialog" aria-modal="true">
           {panel}
         </div>
       </div>

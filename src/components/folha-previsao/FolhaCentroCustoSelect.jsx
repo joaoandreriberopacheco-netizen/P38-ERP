@@ -25,10 +25,20 @@ import { cn } from '@/lib/utils';
 import { salvarCentroCustoRegistro } from '@/lib/folhaPrevisaoService';
 import { useToast } from '@/components/ui/use-toast';
 import { useCompactShell } from '@/hooks/use-breakpoint';
+import { lancamentoStackClasses } from '@/components/financeiro/fluxo/LancamentoPickerDialog';
 
-function FolhaCentroCustoFormDialog({ open, onClose, centro, onSave, saving }) {
+function FolhaCentroCustoFormDialog({
+  open,
+  onClose,
+  centro,
+  onSave,
+  saving,
+  stackElevated = false,
+  stackLevel = 2,
+}) {
   const [nome, setNome] = useState('');
   const [ativo, setAtivo] = useState(true);
+  const stack = lancamentoStackClasses(stackElevated ? stackLevel : 0);
 
   useEffect(() => {
     if (!open) return;
@@ -47,7 +57,10 @@ function FolhaCentroCustoFormDialog({ open, onClose, centro, onSave, saving }) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose?.()}>
-      <DialogContent className="w-[calc(100vw-1.25rem)] max-w-sm rounded-2xl">
+      <DialogContent
+        overlayClassName={stack.overlay}
+        className={cn('w-[calc(100vw-1.25rem)] max-w-sm rounded-2xl', stack.content)}
+      >
         <DialogHeader>
           <DialogTitle>{centro?.id ? 'Editar centro de custo' : 'Novo centro de custo'}</DialogTitle>
         </DialogHeader>
@@ -91,6 +104,8 @@ export default function FolhaCentroCustoSelect({
   allowEmpty = true,
   emptyLabel = 'Sem centro',
   placeholder = 'Escolher centro de custo',
+  stackElevated = false,
+  stackLevel = 1,
 }) {
   const [open, setOpen] = useState(false);
   const [busca, setBusca] = useState('');
@@ -98,6 +113,8 @@ export default function FolhaCentroCustoSelect({
   const [salvando, setSalvando] = useState(false);
   const { toast } = useToast();
   const compact = useCompactShell();
+  const stack = lancamentoStackClasses(stackElevated ? stackLevel : 0);
+  const dialogStackLevel = stackElevated ? stackLevel + 1 : 0;
 
   const ativos = useMemo(
     () => (centros || []).filter((c) => c?.ativo !== false && String(c?.nome || '').trim()),
@@ -275,8 +292,16 @@ export default function FolhaCentroCustoSelect({
               setOpen(v);
               if (!v) setBusca('');
             }}
+            repositionInputs={false}
+            shouldScaleBackground={false}
           >
-            <DrawerContent className="rounded-t-[28px] border-0 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+            <DrawerContent
+              overlayClassName={stack.overlay}
+              className={cn(
+                'rounded-t-[28px] border-0 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]',
+                stack.content,
+              )}
+            >
               <DrawerHeader className="px-0 pb-2 text-left">
                 <DrawerTitle>Centro de custo</DrawerTitle>
               </DrawerHeader>
@@ -331,7 +356,10 @@ export default function FolhaCentroCustoSelect({
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+          <PopoverContent
+            className={cn('w-[var(--radix-popover-trigger-width)] p-0', stack.content)}
+            align="start"
+          >
             <Command shouldFilter={false}>
               <div className="flex items-center gap-1 border-b px-2">
                 <div className="flex min-w-0 flex-1 items-center gap-2 px-1">
@@ -408,6 +436,8 @@ export default function FolhaCentroCustoSelect({
         centro={centroForm}
         onSave={handleSalvarCentro}
         saving={salvando}
+        stackElevated={stackElevated}
+        stackLevel={dialogStackLevel}
       />
     </>
   );

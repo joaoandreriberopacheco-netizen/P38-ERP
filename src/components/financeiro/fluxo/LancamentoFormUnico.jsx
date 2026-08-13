@@ -120,6 +120,7 @@ export default function LancamentoFormUnico({
   budgetModeloId = '',
   onBudgetModeloChange,
   onModelosBudgetChange,
+  stackElevated = false,
 }) {
   const [campoAtivo, setCampoAtivo] = useState('valor');
   const [picker, setPicker] = useState(null); // 'conta' | 'contaDestino' | 'categoria' | 'tags'
@@ -176,7 +177,7 @@ export default function LancamentoFormUnico({
 
       <div
         ref={scrollRef}
-        className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 pb-8 space-y-3 scroll-pb-24"
+        className="h-0 flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 pb-8 space-y-3 scroll-pb-24 touch-pan-y [-webkit-overflow-scrolling:touch]"
       >
         <div className="flex items-center justify-between rounded-2xl bg-card px-4 py-3 shadow-sm">
           <div>
@@ -306,6 +307,7 @@ export default function LancamentoFormUnico({
                 valueId={centroCustoId}
                 onValueChange={onCentroCustoChange}
                 onCentrosChange={onCentrosCustoChange}
+                stackElevated={stackElevated}
               />
             </div>
           </div>
@@ -326,6 +328,7 @@ export default function LancamentoFormUnico({
                     onCategoriasChange={onCategoriasDespesaChange}
                     onCentrosChange={onCentrosCustoChange}
                     placeholder="Escolher budget — + para criar"
+                    stackElevated={stackElevated}
                   />
                 </div>
                 <div>
@@ -338,6 +341,7 @@ export default function LancamentoFormUnico({
                     onCentrosChange={onCentrosCustoChange}
                     emptyLabel="Nenhum"
                     placeholder={budgetModeloId ? 'Preenchido pelo budget — + para alterar' : 'Opcional — + para criar'}
+                    stackElevated={stackElevated}
                   />
                 </div>
               </div>

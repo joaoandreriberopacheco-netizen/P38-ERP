@@ -15,6 +15,7 @@ import BudgetCategoriaSelect from '@/components/budget-previsao/BudgetCategoriaS
 import FolhaCentroCustoSelect from '@/components/folha-previsao/FolhaCentroCustoSelect';
 import { P38HelpPopover } from '@/components/ui/p38-help-popover';
 import { cn } from '@/lib/utils';
+import { lancamentoStackClasses } from '@/components/financeiro/fluxo/LancamentoPickerDialog';
 import { P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
 import {
   calcularOrcadoMensal,
@@ -41,7 +42,11 @@ export default function BudgetModeloDialog({
   saving,
   onCategoriasChange,
   onCentrosChange,
+  stackElevated = false,
+  stackLevel = 2,
 }) {
+  const stack = lancamentoStackClasses(stackElevated ? stackLevel : 0);
+  const nestedStackLevel = stackElevated ? stackLevel + 1 : 0;
   const draftIdRef = useRef(null);
 
   useEffect(() => {
@@ -150,7 +155,13 @@ export default function BudgetModeloDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !saving && !v && onClose?.()}>
-      <DialogContent className="max-w-lg rounded-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        overlayClassName={stack.overlay}
+        className={cn(
+          'max-w-lg rounded-2xl max-h-[90vh] overflow-y-auto',
+          stack.content,
+        )}
+      >
         <DialogHeader>
           <DialogTitle>{modelo?.id ? 'Editar budget' : 'Novo budget'}</DialogTitle>
         </DialogHeader>
@@ -174,6 +185,8 @@ export default function BudgetModeloDialog({
                 value={form.categoria_id || ''}
                 onValueChange={handleCategoria}
                 onCategoriasChange={onCategoriasChange}
+                stackElevated={stackElevated}
+                stackLevel={nestedStackLevel}
               />
             </div>
             <div>
@@ -192,6 +205,8 @@ export default function BudgetModeloDialog({
                 onCentrosChange={onCentrosChange}
                 emptyLabel="Nenhum"
                 placeholder="Nenhum — tocar + para criar"
+                stackElevated={stackElevated}
+                stackLevel={nestedStackLevel}
               />
             </div>
           </div>
