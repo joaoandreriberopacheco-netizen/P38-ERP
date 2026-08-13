@@ -7,6 +7,7 @@ import { normalizeItemToCanonicalFactorOne } from '@/lib/productUnits';
 import { hydrateEmbarquesPedidoFromSql } from '@/lib/fetchEmbarqueItens';
 import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
 import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
+import { gerarNumeroSequencial } from '@/lib/gerarNumeroSequencial';
 
 /**
  * Página inteira de detalhe/criação de Pedido de Compra — fullscreen em todos os viewports.
