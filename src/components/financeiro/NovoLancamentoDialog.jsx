@@ -17,10 +17,7 @@ import { normalizeDataText } from '@/lib/normalizeDataText';
 import { gravarPreferenciasLancamento, resolverPreferenciasLancamento } from '@/lib/lancamentoPreferencias';
 import { resolverDataLancamentoInput } from '@/lib/lancamentoOrdemMeta';
 import { isLancamentoPago } from '@/lib/lancamentoFinanceiroStatus';
-import {
-  limparFluxoLancamentoTorre,
-  voltarParaTorreControle,
-} from '@/lib/torreLancamentoBridge';
+import { concluirFluxoTorreCompartilhamento } from '@/lib/torreLancamentoBridge';
 import RecorrenciaEscopoDialog from './RecorrenciaEscopoDialog';
 import {
   descricaoPadraoVale,
@@ -98,6 +95,7 @@ export default function NovoLancamentoDialog({
   const [saving, setSaving] = useState(false);
   const [confirmDialogMode, setConfirmDialogMode] = useState('processing');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [anexoTorreOk, setAnexoTorreOk] = useState(null);
   const [pedidoCompraId, setPedidoCompraId] = useState('');
   const [pedidosCompra, setPedidosCompra] = useState([]);
   const [observacoes, setObservacoes] = useState('');
@@ -115,7 +113,7 @@ export default function NovoLancamentoDialog({
 
   const fecharFluxo = () => {
     if (origemTorre && !modoEdicao) {
-      voltarParaTorreControle();
+      concluirFluxoTorreCompartilhamento();
       return;
     }
     onClose();
@@ -144,6 +142,7 @@ export default function NovoLancamentoDialog({
     setSaving(false);
     setConfirmDialogMode('processing');
     setShowConfirmDialog(false);
+    setAnexoTorreOk(null);
     setShowEscopoPagamento(false);
     setShowEscopoCadastro(false);
     setPendingEscopoPagamento('apenas_esta');
@@ -492,7 +491,7 @@ export default function NovoLancamentoDialog({
         categoria: 'Transferência entre Contas',
         referencia_tipo: 'Manual',
       };
-      await base44.entities.LancamentoFinanceiro.create({
+      const saida = await base44.entities.LancamentoFinanceiro.create({
         ...base,
         tipo: 'Despesa',
         descricao: `Transferência para ${contaDest?.nome}`,
@@ -521,6 +520,11 @@ export default function NovoLancamentoDialog({
           observacaoExtra: observacoes?.trim() || '',
         });
       }
+      lancamentoParaCallback = {
+        id: saida?.id,
+        ids: [saida?.id, receita?.id].filter(Boolean),
+        descricao: saida?.descricao || `Transferência para ${contaDest?.nome}`,
+      };
     } else if (isRecorrente && frequencia) {
       const freqSalvar = frequencia;
       const grupoId = gerarGrupoId();
@@ -670,7 +674,18 @@ export default function NovoLancamentoDialog({
         categoriaId,
       });
     }
-    onSaved?.(lancamentoParaCallback || metaRecorrente);
+    const payload = lancamentoParaCallback || metaRecorrente;
+    if (origemTorre && typeof onSaved === 'function') {
+      try {
+        const meta = await onSaved(payload);
+        setAnexoTorreOk(meta?.anexoAnexado ?? null);
+      } catch (e) {
+        console.warn('[Torre→Lançamento] pós-salvar:', e);
+        setAnexoTorreOk(false);
+      }
+    } else {
+      await onSaved?.(payload);
+    }
     setSaving(false);
     setConfirmDialogMode('success');
   };
@@ -803,19 +818,23 @@ export default function NovoLancamentoDialog({
           modoEdicao
             ? undefined
             : origemTorre
-              ? 'Comprovante anexado. Deseja registrar outro lançamento?'
+              ? anexoTorreOk === false
+                ? 'Lançamento salvo, mas o comprovante não foi anexado. Deseja outro lançamento ou concluir?'
+                : anexoTorreOk === true
+                  ? 'Lançamento e comprovante salvos. Deseja outro lançamento ou concluir?'
+                  : 'Deseja registrar outro lançamento ou concluir?'
               : undefined
         }
         createAnotherLabel={origemTorre ? 'Outro lançamento (S)' : undefined}
-        finishLabel={origemTorre ? 'Voltar à Torre (N)' : undefined}
+        finishLabel={origemTorre ? 'Concluir (N)' : undefined}
         onCreateAnother={() => {
           setShowConfirmDialog(false);
           setConfirmDialogMode('processing');
+          setAnexoTorreOk(null);
           if (modoEdicao) {
             onClose();
             return;
           }
-          if (origemTorre) limparFluxoLancamentoTorre();
           resetForm();
         }}
         onFinish={() => {

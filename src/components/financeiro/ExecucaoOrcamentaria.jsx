@@ -57,7 +57,7 @@ import PagamentoLoteDialog from './PagamentoLoteDialog';
 import FluxoToggleProgramadas from './fluxo/FluxoToggleProgramadas';
 import usePagamentoLoteFluxo from './fluxo/usePagamentoLoteFluxo';
 import { CONCILIACAO_LOTE_TAMANHO } from '@/lib/conciliacaoEmLote';
-import { consumirArquivoLancamentoTorreDoBridge, temFluxoLancamentoTorreAtivo, voltarParaTorreControle } from '@/lib/torreLancamentoBridge';
+import { consumirArquivoLancamentoTorreDoBridge, temFluxoLancamentoTorreAtivo, concluirFluxoTorreCompartilhamento } from '@/lib/torreLancamentoBridge';
 import { uploadAnexoParaLancamentoFinanceiro } from '@/lib/uploadAnexoReferencia';
 import { resolveViewportLayout, useCompactShell } from '@/hooks/use-breakpoint';
 import {
@@ -1081,7 +1081,7 @@ export default function ExecucaoOrcamentaria() {
             referenciaTipo={urlReferenciaTipo}
             onClose={() => {
               if (origemTorre && !editando) {
-                voltarParaTorreControle();
+                concluirFluxoTorreCompartilhamento();
                 return;
               }
               setShowNovoFluxo(false);
@@ -1097,9 +1097,16 @@ export default function ExecucaoOrcamentaria() {
               setEditando(null);
               await load();
               const fromTorre = consumirArquivoLancamentoTorreDoBridge();
-              const lancamentoId = lancamentoSalvo?.id;
-              if (fromTorre?.file && lancamentoId) {
-                try {
+              const ids = Array.isArray(lancamentoSalvo?.ids)
+                ? lancamentoSalvo.ids.filter(Boolean)
+                : lancamentoSalvo?.id
+                  ? [lancamentoSalvo.id]
+                  : [];
+              if (!fromTorre?.file || ids.length === 0) {
+                return { anexoAnexado: false };
+              }
+              try {
+                for (const lancamentoId of ids) {
                   await uploadAnexoParaLancamentoFinanceiro(base44, {
                     file: fromTorre.file,
                     lancamentoId,
@@ -1107,9 +1114,11 @@ export default function ExecucaoOrcamentaria() {
                     tipoDocumento: fromTorre.tipoDocumento || 'Comprovante',
                     origem: 'torre_novo_lancamento',
                   });
-                } catch (e) {
-                  console.warn('[Torre→Lançamento] falha ao anexar comprovante:', e);
                 }
+                return { anexoAnexado: true };
+              } catch (e) {
+                console.warn('[Torre→Lançamento] falha ao anexar comprovante:', e);
+                return { anexoAnexado: false };
               }
             }}
           />

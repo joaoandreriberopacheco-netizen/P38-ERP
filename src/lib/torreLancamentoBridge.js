@@ -37,9 +37,36 @@ export function temFluxoLancamentoTorreAtivo() {
   }
 }
 
+/** @deprecated Preferir concluirFluxoTorreCompartilhamento após salvar na Torre. */
 export function voltarParaTorreControle() {
   limparFluxoLancamentoTorre();
   window.location.href = createPageUrl('AnexoCompartilhado');
+}
+
+/**
+ * Termina o fluxo iniciado pela Torre (partilha → novo lançamento):
+ * tenta fechar o P38 / voltar à app anterior; senão vai à Home.
+ */
+export function concluirFluxoTorreCompartilhamento() {
+  limparFluxoLancamentoTorre();
+  try {
+    sessionStorage.removeItem(STORAGE_LANCAMENTO_TORRE_BRIDGE);
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    window.close();
+  } catch {
+    /* ignore — muitos browsers bloqueiam close() */
+  }
+
+  if (typeof window !== 'undefined' && window.history.length > 1) {
+    window.history.go(-1);
+    return;
+  }
+
+  window.location.replace(createPageUrl('Home'));
 }
 
 export async function navegarParaNovoLancamentoTorre(arquivoEntry, { valor, descricao, tipoDocumento = 'Comprovante' } = {}) {
