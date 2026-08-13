@@ -26,6 +26,7 @@ import {
   COMPRAS_FILTRO_STATUS_PEDIDO,
   COMPRAS_FILTRO_STATUS_RECEBIMENTO,
 } from '@/lib/comprasEmbarquesPalette';
+import StatusPedidoCompraPicker, { statusPedidoCompraExplicitos } from '@/components/compras/StatusPedidoCompraPicker';
 
 const ETA_FILTRO_MODOS = [
   { value: 'antes', label: 'Antes de' },
@@ -384,7 +385,7 @@ export default function FiltrosCompras({
     ) {
       count += 1;
     }
-    count += statusSel.filter((s) => s !== '__nao_concluido__').length;
+    count += statusPedidoCompraExplicitos(statusSel).length;
     count += tagsSel.length;
     return count;
   }, [dataInicial, dataFinal, etaFiltroModo, etaData, etaInicial, etaFinal, statusSel, tagsSel]);
@@ -442,8 +443,7 @@ export default function FiltrosCompras({
       }
     }
 
-    statusSel
-      .filter((s) => s !== '__nao_concluido__')
+    statusPedidoCompraExplicitos(statusSel)
       .forEach((codigo) => {
         const status = COMPRAS_FILTRO_STATUS_ALL.find((s) => s.codigo === codigo);
         chips.push({
@@ -524,11 +524,20 @@ export default function FiltrosCompras({
         onCheckedChange={(next) => {
           onFiltroSomenteNaoConcluidos?.(next);
           if (next) {
-            onStatusSel(statusSel.filter((s) => s !== 'Concluído').concat('__nao_concluido__'));
+            onStatusSel(
+              statusPedidoCompraExplicitos(statusSel)
+                .filter((s) => s !== 'Concluído')
+                .concat('__nao_concluido__'),
+            );
           } else {
             onStatusSel(statusSel.filter((s) => s !== '__nao_concluido__'));
           }
         }}
+      />
+      <StatusPedidoCompraPicker
+        statusSel={statusSel}
+        onStatusSel={onStatusSel}
+        onFiltroSomenteNaoConcluidos={onFiltroSomenteNaoConcluidos}
       />
     </div>
   );

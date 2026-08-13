@@ -133,7 +133,8 @@ const passaFiltrosEmbarqueCard = (
     return false;
   }
 
-  const ocultarConcluidos = filtroSomenteNaoConcluidos || statusSel.includes('__nao_concluido__');
+  const ocultarConcluidos = (filtroSomenteNaoConcluidos || statusSel.includes('__nao_concluido__'))
+    && statusExplicitos.length === 0;
   if (!passaFiltroVisibilidadePedidosCompra(card, {
     somenteNaoConcluidos: ocultarConcluidos,
     ultimos30Dias: filtroUltimos30Dias,
