@@ -11,6 +11,7 @@ import { getItemCompraExibicaoVitrine } from '@/lib/productUnits';
 import { formatarSoData } from '@/components/utils/dateUtils';
 import { getTotalLinhaPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
 import { buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
+import { useCompactShell } from '@/hooks/use-breakpoint';
 
 function getConsultaItens(card) {
   return card._consulta_itens || card.itens || [];
@@ -39,41 +40,86 @@ function aggregateByProduto(cards) {
   return [...map.values()].sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' }));
 }
 
-/** Card de embarque — mesmo esqueleto da consulta de vendas (por comprovante), identidade compras (ciano). */
-function ConsultaEmbarqueCard({ card, onVerPedido }) {
-  const itensEmbarque = getConsultaItens(card);
+function buildEmbarqueMetaLinhas(card) {
   const etaEmbarque = card._embarque?.eta ? formatarSoData(card._embarque.eta) : null;
-  const ehNecessidade = card._consulta_papel === 'necessidade';
   const etaLabel = etaEmbarque
     ? `ETA ${etaEmbarque}`
     : (card.data_prevista_entrega ? `ETA ${formatarSoData(card.data_prevista_entrega)}` : null);
-  const subtitulo = [
-    card._display_fornecedor || card.fornecedor_nome || 'Fornecedor não informado',
-    card.data_emissao ? formatarSoData(card.data_emissao) : null,
-    etaLabel,
-    card._display_status || null,
-  ].filter(Boolean).join(' · ');
+
+  return {
+    fornecedor: card._display_fornecedor || card.fornecedor_nome || 'Fornecedor não informado',
+    detalhes: [
+      card.data_emissao ? formatarSoData(card.data_emissao) : null,
+      etaLabel,
+      card._display_status || null,
+    ].filter(Boolean),
+  };
+}
+
+/** Card de embarque — mobile empilhado (como por produto); desktop mantém linha horizontal. */
+function ConsultaEmbarqueCard({ card, onVerPedido, compact = false }) {
+  const itensEmbarque = getConsultaItens(card);
+  const ehNecessidade = card._consulta_papel === 'necessidade';
+  const { fornecedor, detalhes } = buildEmbarqueMetaLinhas(card);
 
   return (
-    <div className="bg-card rounded-2xl shadow-sm overflow-hidden min-w-0 max-w-full">
+    <div
+      className={cn(
+        'min-w-0 max-w-full overflow-hidden',
+        compact ? 'border-b border-border/40 last:border-b-0' : 'bg-card rounded-2xl shadow-sm',
+      )}
+    >
       <button
         type="button"
         onClick={() => onVerPedido?.(card)}
-        className="w-full flex items-center justify-between gap-3 px-4 py-3 border-b border-border/40 text-left hover:bg-muted/30 transition-colors min-w-0"
+        className={cn(
+          'w-full text-left hover:bg-muted/30 transition-colors min-w-0',
+          compact ? 'px-1 py-3' : 'flex items-center justify-between gap-3 px-4 py-3 border-b border-border/40',
+        )}
       >
-        <div className="min-w-0 flex-1">
-          <p className={cn(p38Table.mobileLineTitle, 'truncate')}>
-            {card._display_code || card.numero}
-            {ehNecessidade ? (
-              <span className="text-muted-foreground font-normal normal-case text-sm"> · falta vir</span>
-            ) : null}
-          </p>
-          <p className={cn(p38Table.mobileLineSubtitle, 'truncate')}>{subtitulo}</p>
-        </div>
-        <CaixaValorDisplay valor={card._consulta_valor || 0} tone="info" size="sm" className="shrink-0" />
+        {compact ? (
+          <div className="space-y-1.5 min-w-0 w-full">
+            <p className={cn(p38Table.mobileLineTitle, 'leading-snug')}>
+              {card._display_code || card.numero}
+              {ehNecessidade ? (
+                <span className="text-muted-foreground font-normal normal-case text-sm"> · falta vir</span>
+              ) : null}
+            </p>
+            <p className={cn(p38Table.mobileLineSubtitle, 'normal-case line-clamp-2')}>{fornecedor}</p>
+            <div className="flex items-end justify-between gap-3 min-w-0">
+              <p className={cn(caixaTypo.meta, 'normal-case min-w-0 line-clamp-2 flex-1')}>
+                {detalhes.join(' · ')}
+              </p>
+              <CaixaValorDisplay
+                valor={card._consulta_valor || 0}
+                tone="info"
+                size="sm"
+                className="shrink-0"
+              />
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="min-w-0 flex-1">
+              <p className={cn(p38Table.mobileLineTitle, 'truncate')}>
+                {card._display_code || card.numero}
+                {ehNecessidade ? (
+                  <span className="text-muted-foreground font-normal normal-case text-sm"> · falta vir</span>
+                ) : null}
+              </p>
+              <p className={cn(p38Table.mobileLineSubtitle, 'truncate')}>
+                {[fornecedor, ...detalhes].join(' · ')}
+              </p>
+            </div>
+            <CaixaValorDisplay valor={card._consulta_valor || 0} tone="info" size="sm" className="shrink-0" />
+          </>
+        )}
       </button>
       {itensEmbarque.length > 0 ? (
-        <P38MobileLineList allViewports className="rounded-none border-0">
+        <P38MobileLineList
+          allViewports
+          className={cn('rounded-none border-0', compact && 'border-t border-border/30')}
+        >
           {itensEmbarque.map((item, idx) => {
             const exib = getItemCompraExibicaoVitrine(item);
             return (
@@ -85,7 +131,7 @@ function ConsultaEmbarqueCard({ card, onVerPedido }) {
                 valorTotal={Number(item.valor_total_item) || Number(item.total) || getTotalLinhaPedidoCompra(item)}
                 precoUnitario={item.preco_unitario || exib.preco_unitario}
                 striped={idx % 2 === 1}
-                accent="muted"
+                accent={compact ? 'info' : 'muted'}
               />
             );
           })}
@@ -96,7 +142,7 @@ function ConsultaEmbarqueCard({ card, onVerPedido }) {
 }
 
 /** Agrupamento ETA + transportadora — identidade da lista de embarques. */
-function ConsultaGrupoEmbarques({ grupo, onVerPedido, defaultOpen = true }) {
+function ConsultaGrupoEmbarques({ grupo, onVerPedido, defaultOpen = true, compact = false }) {
   const [open, setOpen] = useState(defaultOpen);
   const hasStructuredHeader = grupo.groupDate != null && grupo.groupCarrier != null;
 
@@ -105,31 +151,71 @@ function ConsultaGrupoEmbarques({ grupo, onVerPedido, defaultOpen = true }) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="w-full min-w-0 flex items-center gap-2 border-b border-border/50 dark:border-white/10 py-2 pr-1 text-left overflow-hidden"
+        className={cn(
+          'w-full min-w-0 text-left overflow-hidden',
+          compact
+            ? 'flex items-start gap-2 py-2 border-b border-border/50 dark:border-white/10'
+            : 'flex items-center gap-2 border-b border-border/50 dark:border-white/10 py-2 pr-1',
+        )}
       >
         <div className="flex-1 min-w-0 overflow-hidden">
           {hasStructuredHeader ? (
-            <div className="flex items-center gap-2 min-w-0">
-              <span className={cn(caixaTypo.labelSm, 'shrink-0 tabular-nums whitespace-nowrap normal-case')}>
-                {grupo.groupDate}
-              </span>
-              <span className={cn(p38Table.mobileLineSubtitle, 'truncate min-w-0 normal-case')}>
-                {grupo.groupCarrier}
-              </span>
-            </div>
+            compact ? (
+              <div className="space-y-0.5 min-w-0">
+                <span className={cn(caixaTypo.labelSm, 'block tabular-nums normal-case')}>
+                  {grupo.groupDate}
+                </span>
+                <span className={cn(p38Table.mobileLineSubtitle, 'block normal-case line-clamp-2')}>
+                  {grupo.groupCarrier}
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 min-w-0">
+                <span className={cn(caixaTypo.labelSm, 'shrink-0 tabular-nums whitespace-nowrap normal-case')}>
+                  {grupo.groupDate}
+                </span>
+                <span className={cn(p38Table.mobileLineSubtitle, 'truncate min-w-0 normal-case')}>
+                  {grupo.groupCarrier}
+                </span>
+              </div>
+            )
           ) : (
             <span className={cn(caixaTypo.labelSm, 'block truncate min-w-0 uppercase tracking-wide')}>
               {grupo.label}
             </span>
           )}
         </div>
-        <CaixaValorDisplay valor={grupo.totalConsulta || 0} tone="info" size="sm" className="shrink-0 max-w-[40%]" />
-        <ChevronDown className={`w-4 h-4 shrink-0 text-foreground/70 transition-transform duration-200 ${open ? '' : '-rotate-90'}`} />
+        <div className={cn('flex shrink-0 items-center gap-1', compact && 'flex-col items-end pt-0.5')}>
+          <CaixaValorDisplay
+            valor={grupo.totalConsulta || 0}
+            tone="info"
+            size="sm"
+            className={compact ? '' : 'max-w-[40%]'}
+          />
+          <ChevronDown
+            className={cn(
+              'w-4 h-4 text-foreground/70 transition-transform duration-200',
+              open ? '' : '-rotate-90',
+            )}
+          />
+        </div>
       </button>
       {open ? (
-        <div className="ml-2 pl-2.5 border-l border-border/30 dark:border-white/10 space-y-3 min-w-0 max-w-full overflow-hidden">
+        <div
+          className={cn(
+            'min-w-0 max-w-full overflow-hidden',
+            compact
+              ? 'space-y-0 rounded-lg border border-border/40 dark:border-white/10 bg-background'
+              : 'ml-2 pl-2.5 border-l border-border/30 dark:border-white/10 space-y-3',
+          )}
+        >
           {grupo.cards.map((card) => (
-            <ConsultaEmbarqueCard key={card._virtual_key || card.id} card={card} onVerPedido={onVerPedido} />
+            <ConsultaEmbarqueCard
+              key={card._virtual_key || card.id}
+              card={card}
+              onVerPedido={onVerPedido}
+              compact={compact}
+            />
           ))}
         </div>
       ) : null}
@@ -145,6 +231,7 @@ export default function ConsultaComprasPedidos({
   groupBy = 'eta_transportadora',
   sortOrder = 'asc',
 }) {
+  const compact = useCompactShell();
   const [modo, setModo] = useState('produto');
 
   const produtosAgregados = useMemo(() => aggregateByProduto(pedidosFiltrados), [pedidosFiltrados]);
@@ -170,7 +257,7 @@ export default function ConsultaComprasPedidos({
   }
 
   return (
-    <div className="space-y-4 min-w-0 max-w-full overflow-hidden font-din-1451">
+    <div className="space-y-4 min-w-0 max-w-full overflow-x-hidden font-din-1451">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 min-w-0">
         <div className="min-w-0">
           <p className={caixaTypo.labelSm}>{contextLabel}</p>
@@ -179,7 +266,7 @@ export default function ConsultaComprasPedidos({
             {pedidosFiltrados.length} embarque{pedidosFiltrados.length === 1 ? '' : 's'}
           </p>
         </div>
-        <div className="flex rounded-2xl bg-muted/50 p-1 gap-1 w-full sm:w-auto">
+        <div className="flex rounded-2xl bg-muted/50 p-1 gap-1 w-full sm:w-auto min-w-0">
           <button
             type="button"
             onClick={() => setModo('produto')}
@@ -212,9 +299,14 @@ export default function ConsultaComprasPedidos({
           ))}
         </P38MobileLineList>
       ) : (
-        <div className="space-y-4 min-w-0 max-w-full overflow-hidden">
+        <div className="space-y-3 min-w-0 max-w-full overflow-x-hidden">
           {gruposEmbarque.map((grupo) => (
-            <ConsultaGrupoEmbarques key={grupo.key} grupo={grupo} onVerPedido={onVerPedido} />
+            <ConsultaGrupoEmbarques
+              key={grupo.key}
+              grupo={grupo}
+              onVerPedido={onVerPedido}
+              compact={compact}
+            />
           ))}
         </div>
       )}
