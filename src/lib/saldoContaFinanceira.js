@@ -295,10 +295,12 @@ export function calcularSaldoContaFinanceira(conta, todosLancamentos = [], todos
 
   let delta = 0;
   lancamentos.forEach((l) => { delta += deltaLancamentoSaldoConta(conta, l); });
-  movimentos.forEach((m) => {
-    if (movimentosJaNoFinanceiro.has(String(m.id))) return;
-    delta += deltaMovimentoCaixaSaldo(m);
-  });
+  if (contaUsaRegraCaixaPDV(conta)) {
+    movimentos.forEach((m) => {
+      if (movimentosJaNoFinanceiro.has(String(m.id))) return;
+      delta += deltaMovimentoCaixaSaldo(m);
+    });
+  }
 
   return roundToTwoDecimals(saldoInicial + delta);
 }
@@ -335,6 +337,7 @@ export function calcularSaldoContaAposDataCorte(conta, todosLancamentos = [], to
   });
 
   filtrarMovimentosDaConta(conta.id, todosMovimentos).forEach((m) => {
+    if (!contaUsaRegraCaixaPDV(conta)) return;
     if (movimentosJaNoFinanceiro.has(String(m.id))) return;
     const dataKey = m.created_date ? toLocalDateKey(m.created_date) : null;
     if (dataKey && dataKey < dataCorte) {
@@ -380,6 +383,7 @@ function movimentoCaixaParticipaExtrato(mov) {
 /** Indica se o movimento compõe o saldo/extrato da conta (PDV usa regra de dinheiro físico). */
 export function movimentoParticipaExtrato(mov, conta = null) {
   if (mov?.origem === 'movimento' || mov?.conta_id) {
+    if (!contaUsaRegraCaixaPDV(conta)) return false;
     return movimentoCaixaParticipaExtrato(mov);
   }
   return lancamentoParticipaSaldoConta(conta, mov);

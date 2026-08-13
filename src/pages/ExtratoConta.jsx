@@ -416,9 +416,13 @@ export default function ExtratoContaPage() {
     dataCorte: dataCorteHistorico,
   });
 
+  const lancsParaSaldo = lancsSaldoBase.length ? lancsSaldoBase : lancamentos;
+  const movsParaSaldo = movsSaldoBase.length ? movsSaldoBase : movimentosCaixa;
+  const todosLancamentosExtrato = lancsParaSaldo;
+
   const movimentosJaNoFinanceiro = useMemo(
-    () => idsMovimentosComLancamentoFinanceiro(lancamentos),
-    [lancamentos],
+    () => idsMovimentosComLancamentoFinanceiro(todosLancamentosExtrato),
+    [todosLancamentosExtrato],
   );
 
   // Combina e ordena movimentações (PDV: só o que compõe dinheiro na gaveta)
@@ -458,9 +462,6 @@ export default function ExtratoContaPage() {
 
   const diasOrdenados = Object.keys(movimentacoesPorDia).sort((a, b) => new Date(b) - new Date(a));
 
-  const lancsParaSaldo = lancsSaldoBase.length ? lancsSaldoBase : lancamentos;
-  const movsParaSaldo = movsSaldoBase.length ? movsSaldoBase : movimentosCaixa;
-
   // Saldo canónico (mesma regra da lista de contas / corte histórico)
   const saldoReal = conta
     ? (!mostrarHistoricoAnterior && dataCorteHistorico
@@ -489,8 +490,8 @@ export default function ExtratoContaPage() {
     conta,
     {
       contasSel: conta ? [conta.id] : null,
-      mapaContrapartes: buildMapaContrapartesTransferencia(lancamentos),
-      todosLancamentos: lancamentos,
+      mapaContrapartes: buildMapaContrapartesTransferencia(todosLancamentosExtrato),
+      todosLancamentos: todosLancamentosExtrato,
     },
   ).entradas;
   const totalSaidasPeriodo = totaisEntradaSaidaMovimentos(
@@ -498,14 +499,14 @@ export default function ExtratoContaPage() {
     conta,
     {
       contasSel: conta ? [conta.id] : null,
-      mapaContrapartes: buildMapaContrapartesTransferencia(lancamentos),
-      todosLancamentos: lancamentos,
+      mapaContrapartes: buildMapaContrapartesTransferencia(todosLancamentosExtrato),
+      todosLancamentos: todosLancamentosExtrato,
     },
   ).saidas;
 
   let saldoAcumulado = saldoNoFimDoPeriodo - totalEntradasPeriodo + totalSaidasPeriodo;
 
-  const mapaContrapartesExtrato = buildMapaContrapartesTransferencia(lancamentos);
+  const mapaContrapartesExtrato = buildMapaContrapartesTransferencia(todosLancamentosExtrato);
   const optsTotaisExtrato = {
     contasSel: conta ? [conta.id] : null,
     mapaContrapartes: mapaContrapartesExtrato,
