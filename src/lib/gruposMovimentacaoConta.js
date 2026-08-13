@@ -245,6 +245,11 @@ export function consolidarTransferenciasListaFluxo(
       valor: despesa.valor,
       data_pagamento: despesa.data_pagamento || receita.data_pagamento,
       data_vencimento: despesa.data_vencimento || receita.data_vencimento,
+      data_lancamento: despesa.data_lancamento || receita.data_lancamento,
+      codigo_lancamento: despesa.codigo_lancamento || receita.codigo_lancamento,
+      created_date: despesa.created_date || receita.created_date,
+      updated_date: despesa.updated_date || receita.updated_date,
+      descricao: despesa.descricao || receita.descricao,
       contaOrigemNome: despesa.conta_financeira_nome || 'Origem',
       contaDestinoNome: receita.conta_financeira_nome || 'Destino',
       conta_origem_id: despesa.conta_financeira_id,
@@ -351,7 +356,10 @@ export function montarGruposFluxoCaixa({
     .map((dia) => {
       const brutos = map[dia];
       const itemsOrdenados = sortLancamentosPorCodigo(brutos, ordemLancamentos);
-      const itemsConsolidados = consolidarTransferenciasListaFluxo(itemsOrdenados, { movimentos });
+      const itemsConsolidados = sortLancamentosPorCodigo(
+        consolidarTransferenciasListaFluxo(itemsOrdenados, { movimentos }),
+        ordemLancamentos,
+      );
       const items = itemsConsolidados.map((m) => {
         if (m.origem === 'movimento') {
           return projetarLinhaFluxoCaixa(normalizarMovimentoCaixaParaLinha(m));
@@ -422,7 +430,9 @@ export function montarGruposPorDiaConta({
       const brutos = porDia[dia];
       const contasById = { [conta.id]: conta };
       const itemsBrutos = sortLancamentosPorCodigo(brutos);
-      const itemsConsolidados = consolidarTransferenciasListaFluxo(itemsBrutos, { movimentos });
+      const itemsConsolidados = sortLancamentosPorCodigo(
+        consolidarTransferenciasListaFluxo(itemsBrutos, { movimentos }),
+      );
       const items = itemsConsolidados.map((m) => {
         const linha = m.origem === 'movimento' ? normalizarMovimentoCaixaParaLinha(m) : m;
         return projetarLinhaFluxoCaixa(linha);

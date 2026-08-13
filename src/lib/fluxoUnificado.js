@@ -133,12 +133,15 @@ export function mesclarProgramadasNosGrupos(
 
     if (gruposMap.has(k)) {
       const grupo = gruposMap.get(k);
-      grupo.items = [...grupo.items, ...consolidados];
+      grupo.items = sortLancamentosPorDescricao(
+        [...grupo.items, ...consolidados],
+        ordemLancamentos,
+      );
     } else {
       gruposMap.set(k, {
         k,
         label: null,
-        items: consolidados,
+        items: sortLancamentosPorDescricao(consolidados, ordemLancamentos),
         totais: { r: 0, d: 0, entrou: 0, saiu: 0, liquido: 0, liquidoOperacional: 0 },
         _somenteProgramadas: true,
       });

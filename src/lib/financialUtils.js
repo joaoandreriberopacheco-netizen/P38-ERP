@@ -4,7 +4,7 @@ import {
   codigoOrdenacaoDesdeInstante,
   toLocalDateKey,
 } from '@/components/utils/dateUtils';
-import { codigoOrdemLancamento, diaChaveOrdemLancamento } from '@/lib/lancamentoOrdemMeta';
+import { codigoOrdemLancamento, diaChaveOrdemLancamento, instanteDesdeCodigoOrdenacao } from '@/lib/lancamentoOrdemMeta';
 
 /**
  * Arredonda número (ou string numérica) para 2 casas decimais.
@@ -89,24 +89,69 @@ export function getDataChaveLancamento(l) {
   return dr ? toLocalDateKey(dr) : null;
 }
 
+/** Item base para ordenação (transferência consolidada herda do par). */
+function itemBaseOrdenacao(item) {
+  return item?._lancamentoDespesa || item?._lancamentoReceita || item;
+}
+
+function parseInstanteOrdenacao(valor) {
+  if (valor == null || valor === '') return null;
+  const s = String(valor).trim();
+  if (!s) return null;
+  if (/^\d{14}$/.test(s)) {
+    const iso = instanteDesdeCodigoOrdenacao(s);
+    const t = iso ? Date.parse(iso) : NaN;
+    return Number.isFinite(t) ? t : null;
+  }
+  const normalized = s.length === 10 ? `${s}T12:00:00` : s;
+  const t = Date.parse(normalized);
+  return Number.isFinite(t) ? t : null;
+}
+
+/**
+ * Timestamp (ms) para desempate quando o código de dia não traz hora (legado).
+ */
+export function timestampOrdenacaoLancamento(item) {
+  const base = itemBaseOrdenacao(item);
+  const candidatos = [
+    base?.data_lancamento,
+    base?.data_movimento,
+    base?.created_date,
+    base?.updated_date,
+    base?.codigo_lancamento,
+    base?.data_pagamento,
+    base?.data_vencimento,
+  ];
+  for (const c of candidatos) {
+    const t = parseInstanteOrdenacao(c);
+    if (t != null) return t;
+  }
+  return 0;
+}
+
 /**
  * Código AAAAMMDDHHMMSS para ordenar lançamentos no fluxo de caixa.
  * Usa `codigo_lancamento` persistido, depois `data_lancamento`, `created_date`
  * ou data de pagamento/vencimento (00:00:00).
  */
 export function codigoOrdenacaoLancamento(item) {
-  const codigo = codigoOrdemLancamento(item);
+  const base = itemBaseOrdenacao(item);
+  const codigo = codigoOrdemLancamento(base);
   if (codigo) return codigo;
-  if (item?.created_date) {
-    const codigoCreated = codigoOrdenacaoDesdeInstante(item.created_date);
+  if (base?.created_date) {
+    const codigoCreated = codigoOrdenacaoDesdeInstante(base.created_date);
     if (codigoCreated) return codigoCreated;
   }
-  const dataComHora = item?.data_movimento || item?.data_lancamento;
+  if (base?.updated_date) {
+    const codigoUpdated = codigoOrdenacaoDesdeInstante(base.updated_date);
+    if (codigoUpdated) return codigoUpdated;
+  }
+  const dataComHora = base?.data_movimento || base?.data_lancamento;
   if (dataComHora && String(dataComHora).includes('T')) {
     const codigoInstante = codigoOrdenacaoDesdeInstante(dataComHora);
     if (codigoInstante) return codigoInstante;
   }
-  return codigoOrdenacaoDesdeDataSomente(item?.data_pagamento || item?.data_vencimento || item?.data_movimento)
+  return codigoOrdenacaoDesdeDataSomente(base?.data_pagamento || base?.data_vencimento || base?.data_movimento)
     || '00000000000000';
 }
 
@@ -132,6 +177,9 @@ export function sortLancamentosPorCodigo(items, ordem = 'desc') {
   return [...items].sort((a, b) => {
     const cmp = codigoOrdenacaoLancamento(a).localeCompare(codigoOrdenacaoLancamento(b));
     if (cmp !== 0) return asc ? cmp : -cmp;
+    const ta = timestampOrdenacaoLancamento(a);
+    const tb = timestampOrdenacaoLancamento(b);
+    if (ta !== tb) return asc ? ta - tb : tb - ta;
     const alpha = (a.descricao || '').localeCompare(b.descricao || '', 'pt-BR', { sensitivity: 'base' });
     return asc ? alpha : -alpha;
   });

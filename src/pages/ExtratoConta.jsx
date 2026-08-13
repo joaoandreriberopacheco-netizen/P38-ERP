@@ -584,14 +584,17 @@ export default function ExtratoContaPage() {
       const movsDia = Array.isArray(diaData?.movimentacoes) ? diaData.movimentacoes : [];
       let items;
       try {
-        items = consolidarTransferenciasListaFluxo(
-          movsDia.map(normalizeMov),
-          {
-            movimentos: movimentosCaixa,
-            mapaContrapartes: mapaContrapartesPares,
-            contasById,
-            mapaParIds: mapaParIdsPares,
-          },
+        items = sortLancamentosPorDescricao(
+          consolidarTransferenciasListaFluxo(
+            movsDia.map(normalizeMov),
+            {
+              movimentos: movimentosCaixa,
+              mapaContrapartes: mapaContrapartesPares,
+              contasById,
+              mapaParIds: mapaParIdsPares,
+            },
+          ),
+          'desc',
         );
       } catch (err) {
         console.error('[ExtratoConta] consolidarTransferenciasListaFluxo', err);
