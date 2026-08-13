@@ -237,11 +237,6 @@ export function buildGruposConsultaEmbarques(cards = [], groupBy = 'eta_transpor
     map[meta.key].cards.push(card);
   });
 
-  const compareValues = (a, b) => {
-    if (sortOrder === 'asc') return String(a).localeCompare(String(b), 'pt-BR');
-    return String(b).localeCompare(String(a), 'pt-BR');
-  };
-
   return Object.values(map)
     .sort((a, b) => compareGruposConsulta(a, b, sortOrder, groupBy))
     .map((grupo) => ({
