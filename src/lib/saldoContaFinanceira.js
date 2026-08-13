@@ -314,8 +314,8 @@ export function deltaMovimentoCaixaSaldo(m) {
 }
 
 /**
- * PDV: recolhimento/sangria gera Despesa espelhada + MovimentoCaixa.
- * Se a Despesa foi ignorada (espelhada), o movimento tem de entrar no saldo — senão a saída some.
+ * PDV: movimento com par no financeiro — contabiliza o movimento só se o par
+ * espelhado (Despesa em recolhimento, Receita em reforço) foi ignorado no cálculo.
  */
 function movimentoCaixaContaNoSaldoPDV(
   mov,
@@ -324,14 +324,30 @@ function movimentoCaixaContaNoSaldoPDV(
   lancamentosEspelhadosEmMov,
 ) {
   if (!movimentosJaNoFinanceiro.has(String(mov.id))) return true;
+
   const despesaPar = lancamentos.find(
     (l) =>
       l?.referencia_tipo === 'MovimentosCaixa' &&
       String(l.referencia_id) === String(mov.id) &&
       l.tipo === 'Despesa',
   );
-  if (!despesaPar) return false;
-  return lancamentosEspelhadosEmMov.has(String(despesaPar.id));
+  if (despesaPar && lancamentosEspelhadosEmMov.has(String(despesaPar.id))) return true;
+
+  if (mov?.tipo === 'Reforço') {
+    const receitaPar =
+      lancamentos.find(
+        (l) =>
+          l?.referencia_tipo === 'MovimentosCaixa' &&
+          String(l.referencia_id) === String(mov.id) &&
+          l.tipo === 'Receita',
+      ) ||
+      (mov.lancamento_financeiro_id
+        ? lancamentos.find((l) => String(l.id) === String(mov.lancamento_financeiro_id))
+        : null);
+    if (receitaPar && lancamentosEspelhadosEmMov.has(String(receitaPar.id))) return true;
+  }
+
+  return false;
 }
 
 export function filtrarLancamentosDaConta(conta, todosLancamentos = []) {
@@ -361,7 +377,7 @@ export function calcularSaldoContaFinanceira(conta, todosLancamentos = [], todos
   const lancamentos = filtrarLancamentosDaConta(conta, todosLancamentos);
   const movimentos = filtrarMovimentosDaConta(conta.id, todosMovimentos);
 
-  const movimentosJaNoFinanceiro = idsMovimentosComLancamentoFinanceiro(lancamentos);
+  const movimentosJaNoFinanceiro = idsMovimentosComLancamentoFinanceiro(lancamentos, movimentos);
   const lancamentosEspelhadosEmMov = contaUsaRegraCaixaPDV(conta)
     ? idsLancamentosEspelhadosEmMovimentosCaixa(lancamentos, movimentos)
     : new Set();
@@ -401,7 +417,8 @@ export function liquidoContaDesdeDataCorte(conta, todosLancamentos = [], todosMo
   if (!conta || !dataCorte) return 0;
 
   const lancamentos = filtrarLancamentosDaConta(conta, todosLancamentos);
-  const movimentosJaNoFinanceiro = idsMovimentosComLancamentoFinanceiro(lancamentos);
+  const movimentosConta = filtrarMovimentosDaConta(conta.id, todosMovimentos);
+  const movimentosJaNoFinanceiro = idsMovimentosComLancamentoFinanceiro(lancamentos, movimentosConta);
   const lancamentosEspelhadosEmMov = contaUsaRegraCaixaPDV(conta)
     ? idsLancamentosEspelhadosEmMovimentosCaixa(lancamentos, todosMovimentos)
     : new Set();

@@ -580,27 +580,37 @@ export default function ExtratoContaPage() {
   const grupos = useMemo(() => {
     const hStr = dataHoje();
     const oStr = dataMenosDiasSistema(1);
-    return diasExibicao.map((diaData) => ({
-      k: diaData.dia,
-      label: formatFinanceiroGrupoLabel(diaData.dia, hStr, oStr),
-      items: consolidarTransferenciasListaFluxo(
-        diaData.movimentacoes.map(normalizeMov),
-        {
-          movimentos: movimentosCaixa,
-          mapaContrapartes: mapaContrapartesPares,
-          contasById,
-          mapaParIds: mapaParIdsPares,
+    return (diasExibicao || []).map((diaData) => {
+      const movsDia = Array.isArray(diaData?.movimentacoes) ? diaData.movimentacoes : [];
+      let items;
+      try {
+        items = consolidarTransferenciasListaFluxo(
+          movsDia.map(normalizeMov),
+          {
+            movimentos: movimentosCaixa,
+            mapaContrapartes: mapaContrapartesPares,
+            contasById,
+            mapaParIds: mapaParIdsPares,
+          },
+        );
+      } catch (err) {
+        console.error('[ExtratoConta] consolidarTransferenciasListaFluxo', err);
+        items = movsDia.map(normalizeMov);
+      }
+      return {
+        k: diaData.dia,
+        label: formatFinanceiroGrupoLabel(diaData.dia, hStr, oStr),
+        items,
+        totais: {
+          r: diaData.totalEntradas,
+          d: diaData.totalSaidas,
+          entrou: diaData.totalEntradas,
+          saiu: diaData.totalSaidas,
+          liquidoOperacional: roundToTwoDecimals(diaData.totalEntradas - diaData.totalSaidas),
+          saldoAcumulado: roundToTwoDecimals(diaData.saldoFinal),
         },
-      ),
-      totais: {
-        r: diaData.totalEntradas,
-        d: diaData.totalSaidas,
-        entrou: diaData.totalEntradas,
-        saiu: diaData.totalSaidas,
-        liquidoOperacional: roundToTwoDecimals(diaData.totalEntradas - diaData.totalSaidas),
-        saldoAcumulado: roundToTwoDecimals(diaData.saldoFinal),
-      },
-    }));
+      };
+    });
   }, [diasExibicao, movimentosCaixa, mapaContrapartesPares, contasById, mapaParIdsPares]);
 
   const totalMovimentacoes = movimentacoesFiltradas.length;
