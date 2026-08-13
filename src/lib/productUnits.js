@@ -1517,7 +1517,7 @@ export function normalizeItemCompraParaExibicao(item = {}, produto = null) {
   const fallback = item?.unidade_medida || snapshot?.unidade_principal || "UN";
   const snap = buildSnapshotExibicaoComercial(
     snapshot,
-    produto ? resolveUnidadeExibicaoParaCompras(snapshot, item, fallback) : null
+    resolveUnidadeExibicaoParaCompras(snapshot, item, fallback),
   );
   const resolvido = resolveCommercialDisplay(snap, quantidadeBase, fallback);
   const quantidadeShow = Number(resolvido?.quantidade ?? 0) || quantidadeAtual;

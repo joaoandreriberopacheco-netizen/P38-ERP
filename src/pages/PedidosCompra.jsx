@@ -609,6 +609,7 @@ export default function PedidosCompraPage() {
   const navigate = useNavigate();
   const [pedidos, setPedidos] = useState([]);
   const [embarques, setEmbarques] = useState([]);
+  const [produtosMap, setProdutosMap] = useState({});
   const [search, setSearch] = useState('');
   const [statusSel, setStatusSel] = useState(filtroComprasStatusSelInicial);
   const [filtroUltimos30Dias, setFiltroUltimos30Dias] = useState(FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT);
@@ -656,6 +657,7 @@ export default function PedidosCompraPage() {
         ...embarquesDb.flatMap((e) => getEmbarqueItensLinhas(e).map((i) => i.produto_id).filter(Boolean)),
       ])];
       const produtosMap = await carregarProdutosMap(produtoIds.map((id) => ({ produto_id: id })));
+      setProdutosMap(produtosMap);
       const refinado = materializePedidosCompraView(pcs, embarquesDb, produtosMap);
       setPedidos(refinado.pedidosComResumoReal);
       setEmbarques(refinado.cardsDeEmbarque);
@@ -983,10 +985,10 @@ export default function PedidosCompraPage() {
 
     return embarques
       .filter((card) => keysVisiveis.has(card._virtual_key))
-      .map(enrichEmbarqueParaConsulta)
+      .map((card) => enrichEmbarqueParaConsulta(card, produtosMap))
       .filter((card) => (card._consulta_itens || []).length > 0)
       .sort((a, b) => compareEmbarquesConsulta(a, b, sortOrder, groupBy));
-  }, [filtrados, filtradosSemBusca, embarques, search, sortOrder, groupBy]);
+  }, [filtrados, filtradosSemBusca, embarques, search, sortOrder, groupBy, produtosMap]);
 
   return (
     <div className={cn('w-full min-w-0 max-w-full overflow-x-hidden space-y-4 font-din-1451 bg-background', isPhone && 'pb-[var(--p38-scroll-pad-below-nav)]')}>

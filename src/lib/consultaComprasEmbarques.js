@@ -1,6 +1,6 @@
 import { dataHoje, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
-import { resolveEmbarqueQuantidadeComercial } from '@/lib/embarqueQuantityResolve';
+import { resolveEmbarqueQuantidadeComercial, resolveEmbarqueLinhaUnidade } from '@/lib/embarqueQuantityResolve';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { getTotalLinhaPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
 import { getItemCompraExibicaoVitrine } from '@/lib/productUnits';
@@ -17,24 +17,29 @@ function hasLinkedItems(embarque) {
   );
 }
 
-function buildLinhaConsultaItem(pedido, pedidoItem, quantidade, sqlLine = null) {
-  const merged = sqlLine ? { ...pedidoItem, ...sqlLine } : { ...(pedidoItem || {}) };
-  const exib = getItemCompraExibicaoVitrine(merged);
-  const lineTotalFull = getTotalLinhaPedidoCompra(pedidoItem || merged);
-  const qtyRef = Number(pedidoItem?.quantidade) || Number(exib.quantidade) || quantidade || 1;
+function buildLinhaConsultaItem(pedido, pedidoItem, quantidade, sqlLine = null, produto = null) {
+  const linhaPedido = pedidoItem || {};
+  const exib = getItemCompraExibicaoVitrine(linhaPedido, produto);
+  const unidadeVitrine =
+    exib.unidade_medida
+    || (sqlLine ? resolveEmbarqueLinhaUnidade({ ...linhaPedido, ...sqlLine }) : null)
+    || linhaPedido.unidade_medida
+    || 'UN';
+  const lineTotalFull = getTotalLinhaPedidoCompra(linhaPedido);
+  const qtyRef = Number(linhaPedido.quantidade) || Number(exib.quantidade) || quantidade || 1;
   const valorLinha = qtyRef > 0
     ? roundToTwoDecimals((quantidade / qtyRef) * lineTotalFull)
     : lineTotalFull;
 
   return {
-    produto_id: pedidoItem?.produto_id || sqlLine?.produto_id,
-    produto_nome: pedidoItem?.produto_nome || sqlLine?.produto_nome || 'Produto',
+    produto_id: linhaPedido.produto_id || sqlLine?.produto_id,
+    produto_nome: linhaPedido.produto_nome || sqlLine?.produto_nome || 'Produto',
     quantidade,
     quantidade_pedida: qtyRef,
-    unidade_medida: exib.unidade_medida || pedidoItem?.unidade_medida || 'UN',
+    unidade_medida: unidadeVitrine,
     fator_conversao: exib.fator_conversao,
-    custo_unitario: pedidoItem?.custo_unitario,
-    custo_final_unitario: pedidoItem?.custo_final_unitario,
+    custo_unitario: linhaPedido.custo_unitario,
+    custo_final_unitario: linhaPedido.custo_final_unitario,
     total: valorLinha,
     valor_total_item: valorLinha,
     preco_unitario: exib.preco_unitario,
@@ -46,10 +51,15 @@ function buildLinhaConsultaItem(pedido, pedidoItem, quantidade, sqlLine = null) 
  * - Embarque real: o que veio / está neste despacho (recebido; senão embarcado).
  * - Necessidade: o que ainda falta vir.
  */
-export function buildConsultaItensEmbarque(card = {}) {
+export function buildConsultaItensEmbarque(card = {}, produtosMap = {}) {
   const pedido = card;
   const embarque = card._embarque;
   const ehNecessidade = card._is_necessidade || isNecessidadeRenderizada(embarque);
+
+  const produtoDaLinha = (pedidoItem, sqlLine) => {
+    const pid = pedidoItem?.produto_id || sqlLine?.produto_id;
+    return pid ? produtosMap[pid] || null : null;
+  };
 
   if (ehNecessidade) {
     return getEmbarqueItensLinhas(embarque)
@@ -60,7 +70,7 @@ export function buildConsultaItensEmbarque(card = {}) {
           || resolveEmbarqueQuantidadeComercial(sqlLine, 'pedida')
           || 0;
         if (qtyPend <= 0) return null;
-        return buildLinhaConsultaItem(pedido, pedidoItem, qtyPend, sqlLine);
+        return buildLinhaConsultaItem(pedido, pedidoItem, qtyPend, sqlLine, produtoDaLinha(pedidoItem, sqlLine));
       })
       .filter(Boolean);
   }
@@ -73,7 +83,7 @@ export function buildConsultaItensEmbarque(card = {}) {
         const qtyEmb = resolveEmbarqueQuantidadeComercial(sqlLine, 'embarcada');
         const qtyMostrar = qtyRec > 0 ? qtyRec : qtyEmb;
         if (qtyMostrar <= 0) return null;
-        return buildLinhaConsultaItem(pedido, pedidoItem, qtyMostrar, sqlLine);
+        return buildLinhaConsultaItem(pedido, pedidoItem, qtyMostrar, sqlLine, produtoDaLinha(pedidoItem, sqlLine));
       })
       .filter(Boolean);
   }
@@ -89,7 +99,13 @@ export function buildConsultaItensEmbarque(card = {}) {
     .map((pedidoItem) => {
       const qty = Number(pedidoItem.quantidade) || 0;
       if (qty <= 0) return null;
-      return buildLinhaConsultaItem(pedido, pedidoItem, qty);
+      return buildLinhaConsultaItem(
+        pedido,
+        pedidoItem,
+        qty,
+        null,
+        produtoDaLinha(pedidoItem, null),
+      );
     })
     .filter(Boolean);
 }
@@ -108,8 +124,8 @@ export function calcConsultaValorEmbarque(card, itens) {
 /** @deprecated alias */
 export const calcConsultaValorPendenteEmbarque = calcConsultaValorEmbarque;
 
-export function enrichEmbarqueParaConsulta(card) {
-  const itens = buildConsultaItensEmbarque(card);
+export function enrichEmbarqueParaConsulta(card, produtosMap = {}) {
+  const itens = buildConsultaItensEmbarque(card, produtosMap);
   const ehNecessidade = card._is_necessidade || isNecessidadeRenderizada(card._embarque);
   return {
     ...card,

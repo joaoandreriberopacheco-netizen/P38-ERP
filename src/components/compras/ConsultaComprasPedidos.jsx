@@ -32,14 +32,15 @@ function aggregateByProduto(cards) {
   const map = new Map();
   (cards || []).forEach((card) => {
     getConsultaItens(card).forEach((item) => {
-      const key = item.produto_id || item.produto_nome || 'sem-id';
       const exib = getItemCompraExibicaoVitrine(item);
+      const unidade = item.unidade_medida || exib.unidade_medida || 'UN';
+      const key = `${item.produto_id || item.produto_nome || 'sem-id'}::${unidade}`;
       const qtd = Number(item.quantidade) || exib.quantidade;
       const total = Number(item.valor_total_item) || Number(item.total) || getTotalLinhaPedidoCompra(item);
       const prev = map.get(key) || {
         key,
         nome: item.produto_nome || 'Produto',
-        unidade: exib.unidade_medida || item.unidade_medida || 'UN',
+        unidade,
         quantidade: 0,
         total: 0,
       };
@@ -138,7 +139,7 @@ function ConsultaEmbarqueCard({ card, onVerPedido, compact = false, isLast = fal
               <ConsultaProdutoRow
                 key={`${card._virtual_key || card.id}-${item.produto_id || idx}`}
                 quantidade={Number(item.quantidade) || exib.quantidade}
-                unidade={exib.unidade_medida || item.unidade_medida}
+                unidade={item.unidade_medida || exib.unidade_medida}
                 nome={item.produto_nome}
                 valorTotal={Number(item.valor_total_item) || Number(item.total) || getTotalLinhaPedidoCompra(item)}
                 precoUnitario={item.preco_unitario || exib.preco_unitario}
