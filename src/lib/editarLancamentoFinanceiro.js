@@ -51,6 +51,8 @@ export async function salvarEdicaoLancamentoFinanceiro({
   observacoes = '',
   categoria,
   categoriaId,
+  centroCusto = '',
+  centroCustoId = '',
   tags,
   contaId,
   realizado,
@@ -79,6 +81,8 @@ export async function salvarEdicaoLancamentoFinanceiro({
     data_vencimento: venAtual,
     categoria: normalizeDataText(categoria),
     categoria_id: categoriaId || '',
+    centro_custo: normalizeDataText(centroCusto || ''),
+    centro_custo_id: centroCustoId || '',
     tags: tags || [],
   };
 
@@ -88,6 +92,8 @@ export async function salvarEdicaoLancamentoFinanceiro({
     (lancamento.data_vencimento || '').slice(0, 10) !== venAtual ||
     (lancamento.observacoes || '') !== cadastroPayload.observacoes ||
     (lancamento.categoria || '') !== cadastroPayload.categoria ||
+    (lancamento.centro_custo || '') !== cadastroPayload.centro_custo ||
+    (lancamento.centro_custo_id || '') !== cadastroPayload.centro_custo_id ||
     JSON.stringify(lancamento.tags || []) !== JSON.stringify(tags || []);
 
   const conta = contas.find((c) => c.id === contaId);

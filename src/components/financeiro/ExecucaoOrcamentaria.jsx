@@ -225,8 +225,9 @@ export default function ExecucaoOrcamentaria() {
     if (novoAtalho === '1' || novoAtalho === 'true') {
       if (params.get('torre_anexo') === '1' || temFluxoLancamentoTorreAtivo()) {
         setOrigemTorre(true);
-        setAba('fluxo');
       }
+      // Atalho PWA (?novo=1): ir para fluxo e abrir picker Receita/Despesa/Transferência
+      setAba('fluxo');
       if (tipo && FAB_ITEMS.some((item) => item.tipo === tipo)) {
         setNovoTipo(tipo);
         setShowNovoFluxo(true);
@@ -399,6 +400,38 @@ export default function ExecucaoOrcamentaria() {
   };
 
   const load = async () => loadContasEManutencao();
+
+  /** Recarrega lista do período sem bloquear a UI com manutenção pesada de saldos. */
+  const recarregarAposSalvar = useCallback(async () => {
+    try {
+      const [{ lancs: ls, movimentos: movs }, { lancsFull, movsFull }] = await Promise.all([
+        carregarDadosPeriodo({ ds, de, corteHistorico: dataCorteHistorico }),
+        carregarBaseSaldos(),
+      ]);
+      setLancs(ls);
+      setMovimentos(movs);
+      setLancsSaldo(lancsFull);
+      setMovsSaldo(movsFull);
+      void (async () => {
+        try {
+          const cts = await base44.entities.ContasFinanceiras.list();
+          const contaIds = cts.filter((c) => c.ativo !== false).map((c) => c.id);
+          await sincronizarSaldosContasFinanceiras(base44, {
+            contas: cts,
+            lancamentos: lancsFull,
+            movimentos: movsFull,
+            contaIds,
+          });
+          const cts2 = await base44.entities.ContasFinanceiras.list();
+          setContas(cts2);
+        } catch (err) {
+          console.warn('[Fluxo de Caixa] sync saldos em background:', err);
+        }
+      })();
+    } catch (error) {
+      console.error('[Fluxo de Caixa] Erro ao recarregar após salvar:', error);
+    }
+  }, [ds, de, dataCorteHistorico, carregarDadosPeriodo, carregarBaseSaldos]);
 
   const contasById = useMemo(
     () => Object.fromEntries(contas.map((c) => [c.id, c])),
@@ -1018,28 +1051,6 @@ export default function ExecucaoOrcamentaria() {
             }}
           />
 
-          {fabOpen && !showNovoFluxo && !showPrintDialog && !showCorteDiario && (
-            <div className="fixed inset-0 z-[54] bg-muted/55 backdrop-blur-[2px]" onClick={() => setFabOpen(false)} />
-          )}
-          <div className="fixed right-4 z-[55] flex flex-col items-end gap-2 p38-bottom-fab1 lg:right-6">
-            {fabOpen && FAB_ITEMS.map(({ tipo, icon: Icon, label }) => (
-              <button key={tipo}
-                onClick={() => {
-                  setFabOpen(false);
-                  setNovoTipo(tipo);
-                  setShowNovoFluxo(true);
-                }}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-lg whitespace-nowrap active:scale-95 transition-transform">
-                <Icon className="w-4 h-4" />{label}
-              </button>
-            ))}
-            <button
-              onClick={() => setFabOpen(o => !o)}
-              className={`w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-xl active:scale-95 transition-all ${fabOpen ? 'bg-[#383e47] rotate-45' : 'bg-[#4a5240] dark:bg-[#a4ce33]'}`}>
-              <Plus className={`w-6 h-6 ${fabOpen ? 'text-white' : 'text-white dark:text-[#1f1d22]'}`} />
-            </button>
-          </div>
-
           <PagamentoLoteDialog
             open={lote.showPagamentoLote}
             onOpenChange={lote.setShowPagamentoLote}
@@ -1065,64 +1076,99 @@ export default function ExecucaoOrcamentaria() {
                 setShowNovoFluxo(true);
               }}
               onSaved={async () => {
-                await load();
+                await recarregarAposSalvar();
                 setDetalhe(null);
               }}
             />
           )}
-          <NovoLancamentoDialog
-            open={showNovoFluxo}
-            lancamentoExistente={editando}
-            origemTorre={origemTorre}
-            tipoInicial={novoTipo}
-            descricaoInicial={urlDescricao}
-            valorInicial={urlValor}
-            referenciaId={urlReferenciaId}
-            referenciaTipo={urlReferenciaTipo}
-            onClose={() => {
-              if (origemTorre && !editando) {
-                concluirFluxoTorreCompartilhamento();
-                return;
-              }
-              setShowNovoFluxo(false);
-              setEditando(null);
-              setFabOpen(false);
-              setOrigemTorre(false);
-              setUrlDescricao('');
-              setUrlValor('');
-              setUrlReferenciaId('');
-              setUrlReferenciaTipo('');
-            }}
-            onSaved={async (lancamentoSalvo) => {
-              setEditando(null);
-              await load();
-              const fromTorre = consumirArquivoLancamentoTorreDoBridge();
-              const ids = Array.isArray(lancamentoSalvo?.ids)
-                ? lancamentoSalvo.ids.filter(Boolean)
-                : lancamentoSalvo?.id
-                  ? [lancamentoSalvo.id]
-                  : [];
-              if (!fromTorre?.file || ids.length === 0) {
-                return { anexoAnexado: false };
-              }
-              try {
-                for (const lancamentoId of ids) {
-                  await uploadAnexoParaLancamentoFinanceiro(base44, {
-                    file: fromTorre.file,
-                    lancamentoId,
-                    descricao: lancamentoSalvo?.descricao || '',
-                    tipoDocumento: fromTorre.tipoDocumento || 'Comprovante',
-                    origem: 'torre_novo_lancamento',
-                  });
-                }
-                return { anexoAnexado: true };
-              } catch (e) {
-                console.warn('[Torre→Lançamento] falha ao anexar comprovante:', e);
-                return { anexoAnexado: false };
-              }
-            }}
-          />
+        </>
+      )}
 
+      {(aba === 'fluxo' || fabOpen || showNovoFluxo) && (
+        <>
+          {fabOpen && !showNovoFluxo && !showPrintDialog && !showCorteDiario && aba === 'fluxo' && (
+            <div className="fixed inset-0 z-[54] bg-muted/55 backdrop-blur-[2px]" onClick={() => setFabOpen(false)} />
+          )}
+          {aba === 'fluxo' && (
+            <div className="fixed right-4 z-[55] flex flex-col items-end gap-2 p38-bottom-fab1 lg:right-6">
+              {fabOpen && FAB_ITEMS.map(({ tipo, icon: Icon, label }) => (
+                <button key={tipo}
+                  type="button"
+                  onClick={() => {
+                    setFabOpen(false);
+                    setNovoTipo(tipo);
+                    setShowNovoFluxo(true);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-lg whitespace-nowrap active:scale-95 transition-transform">
+                  <Icon className="w-4 h-4" />{label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setFabOpen(o => !o)}
+                className={`w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-xl active:scale-95 transition-all ${fabOpen ? 'bg-[#383e47] rotate-45' : 'bg-[#4a5240] dark:bg-[#a4ce33]'}`}>
+                <Plus className={`w-6 h-6 ${fabOpen ? 'text-white' : 'text-white dark:text-[#1f1d22]'}`} />
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      <NovoLancamentoDialog
+        open={showNovoFluxo}
+        lancamentoExistente={editando}
+        origemTorre={origemTorre}
+        tipoInicial={novoTipo}
+        descricaoInicial={urlDescricao}
+        valorInicial={urlValor}
+        referenciaId={urlReferenciaId}
+        referenciaTipo={urlReferenciaTipo}
+        onClose={() => {
+          if (origemTorre && !editando) {
+            concluirFluxoTorreCompartilhamento();
+            return;
+          }
+          setShowNovoFluxo(false);
+          setEditando(null);
+          setFabOpen(false);
+          setOrigemTorre(false);
+          setUrlDescricao('');
+          setUrlValor('');
+          setUrlReferenciaId('');
+          setUrlReferenciaTipo('');
+        }}
+        onSaved={async (lancamentoSalvo) => {
+          setEditando(null);
+          void recarregarAposSalvar();
+          const fromTorre = consumirArquivoLancamentoTorreDoBridge();
+          const ids = Array.isArray(lancamentoSalvo?.ids)
+            ? lancamentoSalvo.ids.filter(Boolean)
+            : lancamentoSalvo?.id
+              ? [lancamentoSalvo.id]
+              : [];
+          if (!fromTorre?.file || ids.length === 0) {
+            return { anexoAnexado: false };
+          }
+          try {
+            for (const lancamentoId of ids) {
+              await uploadAnexoParaLancamentoFinanceiro(base44, {
+                file: fromTorre.file,
+                lancamentoId,
+                descricao: lancamentoSalvo?.descricao || '',
+                tipoDocumento: fromTorre.tipoDocumento || 'Comprovante',
+                origem: 'torre_novo_lancamento',
+              });
+            }
+            return { anexoAnexado: true };
+          } catch (e) {
+            console.warn('[Torre→Lançamento] falha ao anexar comprovante:', e);
+            return { anexoAnexado: false };
+          }
+        }}
+      />
+
+      {aba === 'fluxo' && (
+        <>
           <Dialog open={conciliacaoConta != null} onOpenChange={(open) => !open && setConciliacaoConta(null)}>
             <DialogContent className="flex h-[min(85dvh,90vh)] max-h-[min(85dvh,90vh)] w-[calc(100vw-1rem)] max-w-3xl flex-col gap-0 overflow-hidden border-border/40 p-0 dark:border-border/40 dark:bg-muted">
               <DialogHeader className="shrink-0 px-6 pb-3 pt-6">

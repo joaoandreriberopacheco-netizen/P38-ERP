@@ -5,7 +5,7 @@ import { X } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { addWeeks, addMonths, addYears, format } from 'date-fns';
 import { dataHoje, datetimeLocalParaISO, codigoOrdenacaoDesdeInstante } from '@/components/utils/dateUtils';
-import { formatarCodigoLancamentoLegivel } from '@/lib/financialUtils';
+import { formatarCodigoLancamentoLegivel, prepararMetadadosLancamentoFinanceiro } from '@/lib/financialUtils';
 import { sincronizarSaldosAposAlteracao } from '@/lib/sincronizarSaldoContasFinanceiras';
 import { contaUsaRegraCaixaPDV } from '@/lib/saldoContaFinanceira';
 import { criarReforcoPendenteTransferenciaCaixaPDV } from '@/lib/reforcoPendenteCaixaPDV';
@@ -30,6 +30,8 @@ import {
   precisaEscopoRecorrenciaPagamento,
   salvarEdicaoLancamentoFinanceiro,
 } from '@/lib/editarLancamentoFinanceiro';
+import { listarCategoriasDespesa, listarModelos } from '@/lib/budgetService';
+import { listarCentrosCustoRegistros } from '@/lib/folhaPrevisaoService';
 
 const FREQS_MAP = {
   Semanal: (d, i) => addWeeks(d, i),
@@ -106,10 +108,55 @@ export default function NovoLancamentoDialog({
   const [valeFolhaModeloId, setValeFolhaModeloId] = useState('');
   const [pessoasFolha, setPessoasFolha] = useState([]);
   const [loadingPessoasFolha, setLoadingPessoasFolha] = useState(false);
+  const [categoriasBudgetLocal, setCategoriasBudgetLocal] = useState([]);
+  const [modelosBudget, setModelosBudget] = useState([]);
+  const [centrosCustoLocal, setCentrosCustoLocal] = useState([]);
+  const [budgetModeloId, setBudgetModeloId] = useState('');
+  const [centroCustoLocal, setCentroCustoLocal] = useState('');
+  const [centroCustoIdLocal, setCentroCustoIdLocal] = useState('');
   const { toast } = useToast();
   const { categorias, reload: reloadCats } = useCategorias();
 
   const modoEdicao = !!lancamentoExistente;
+
+  const centroCustoEfetivo = modoPlanejamento ? centroCusto : centroCustoLocal;
+  const centroCustoIdEfetivo = modoPlanejamento ? centroCustoId : centroCustoIdLocal;
+  const centrosCustoEfetivos = modoPlanejamento ? centrosCustoRegistros : centrosCustoLocal;
+
+  const metaCentroCustoSalvar = () => ({
+    centro_custo: normalizeDataText(centroCustoEfetivo || ''),
+    centro_custo_id: centroCustoIdEfetivo || '',
+  });
+
+  const handleCentroCustoForm = (centro) => {
+    const nome = centro?.nome || '';
+    const id = centro?.id || '';
+    if (modoPlanejamento) {
+      onCentroCustoChange?.(centro);
+      return;
+    }
+    setCentroCustoLocal(nome);
+    setCentroCustoIdLocal(id);
+  };
+
+  const handleBudgetModeloForm = (modelo) => {
+    if (!modelo?.id) {
+      setBudgetModeloId('');
+      return;
+    }
+    setBudgetModeloId(modelo.id);
+    setCategoria(modelo.categoria_nome || '');
+    setCategoriaId(modelo.categoria_id || '');
+    if (modoPlanejamento) {
+      onCentroCustoChange?.({
+        id: modelo.centro_custo_id || '',
+        nome: modelo.centro_custo || '',
+      });
+    } else {
+      setCentroCustoLocal(modelo.centro_custo || '');
+      setCentroCustoIdLocal(modelo.centro_custo_id || '');
+    }
+  };
 
   const fecharFluxo = () => {
     if (origemTorre && !modoEdicao) {
@@ -148,6 +195,9 @@ export default function NovoLancamentoDialog({
     setPendingEscopoPagamento('apenas_esta');
     setIsValeFolha(false);
     setValeFolhaModeloId('');
+    setBudgetModeloId('');
+    setCentroCustoLocal('');
+    setCentroCustoIdLocal('');
   };
 
   const popularDeLancamento = (l) => {
@@ -181,6 +231,9 @@ export default function NovoLancamentoDialog({
     setIsCustoMercadoria(!!l.is_custo_mercadoria);
     setPedidoCompraId(l.pedido_compra_vinculado_id || '');
     setObservacoes((l.observacoes || '').replace(/\[CANCELADO.*?\]/gs, '').trim());
+    setCentroCustoLocal(l.centro_custo || '');
+    setCentroCustoIdLocal(l.centro_custo_id || '');
+    setBudgetModeloId('');
   };
 
   useEffect(() => {
@@ -193,6 +246,44 @@ export default function NovoLancamentoDialog({
     }
     resetForm();
   }, [open, tipoInicial, contaDefaultId, descricaoInicial, valorInicial, origemContaPagar, lancamentoExistente?.id]);
+
+  useEffect(() => {
+    if (!open || modoPlanejamento) return;
+    if (categoriasDespesa?.length) {
+      setCategoriasBudgetLocal(categoriasDespesa);
+    }
+    let cancelled = false;
+    Promise.all([
+      listarModelos(),
+      categoriasDespesa?.length ? Promise.resolve(categoriasDespesa) : listarCategoriasDespesa(),
+      listarCentrosCustoRegistros(),
+    ])
+      .then(([mods, cats, centros]) => {
+        if (cancelled) return;
+        setModelosBudget(mods || []);
+        if (!categoriasDespesa?.length) setCategoriasBudgetLocal(cats || []);
+        setCentrosCustoLocal(centros || []);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setModelosBudget([]);
+          setCentrosCustoLocal([]);
+        }
+      });
+    return () => { cancelled = true; };
+  }, [open, modoPlanejamento, categoriasDespesa]);
+
+  useEffect(() => {
+    if (!open || !lancamentoExistente || !modelosBudget.length) return;
+    const catId = lancamentoExistente.categoria_id;
+    const ccId = lancamentoExistente.centro_custo_id;
+    if (!catId && !ccId) return;
+    const match =
+      modelosBudget.find(
+        (m) => m.categoria_id === catId && (ccId ? m.centro_custo_id === ccId : true),
+      ) || modelosBudget.find((m) => m.categoria_id === catId);
+    if (match) setBudgetModeloId(match.id);
+  }, [open, lancamentoExistente?.id, lancamentoExistente?.categoria_id, lancamentoExistente?.centro_custo_id, modelosBudget]);
 
   useEffect(() => {
     if (!open || modoEdicao || tipo === 'Transferência') return;
@@ -337,6 +428,8 @@ export default function NovoLancamentoDialog({
         observacoes,
         categoria,
         categoriaId,
+        centroCusto: centroCustoEfetivo,
+        centroCustoId: centroCustoIdEfetivo,
         tags,
         contaId,
         realizado,
@@ -451,6 +544,7 @@ export default function NovoLancamentoDialog({
 
     const descricaoNorm = normalizeDataText(descricao.trim());
     const categoriaNorm = normalizeDataText(categoria);
+    const centroMeta = tipo !== 'Transferência' ? metaCentroCustoSalvar() : {};
     const { dataVenc, dataPag, metaLanc } = resolverDatasSalvamento(realizado);
 
     setSaving(true);
@@ -545,6 +639,7 @@ export default function NovoLancamentoDialog({
             status_conciliacao: i === 0 && realizado ? 'Pendente' : 'N/A',
             categoria: categoriaNorm,
             categoria_id: categoriaId,
+            ...centroMeta,
             tags: tagsSalvar,
             conta_financeira_id: contaId,
             conta_financeira_nome: conta?.nome,
@@ -582,6 +677,7 @@ export default function NovoLancamentoDialog({
             status_conciliacao: i === 0 && realizado ? 'Pendente' : 'N/A',
             categoria: categoriaNorm,
             categoria_id: categoriaId,
+            ...centroMeta,
             tags: tagsSalvar,
             conta_financeira_id: contaId,
             conta_financeira_nome: conta?.nome,
@@ -616,7 +712,11 @@ export default function NovoLancamentoDialog({
         data_vencimento: primeiro?.data_vencimento || dataVenc,
       };
     } else {
+      const ordemPadrao = prepararMetadadosLancamentoFinanceiro(
+        metaLanc?.data_lancamento ? { dataLancamento: metaLanc.data_lancamento } : {},
+      );
       const novoLancamento = await base44.entities.LancamentoFinanceiro.create({
+        ...ordemPadrao,
         ...metaDataLancamento(),
         ...metaLanc,
         tipo,
@@ -628,6 +728,7 @@ export default function NovoLancamentoDialog({
         status_conciliacao: realizado ? 'Pendente' : 'N/A',
         categoria: categoriaNorm,
         categoria_id: categoriaId,
+        ...centroMeta,
         tags: tagsSalvar,
         conta_financeira_id: contaId,
         conta_financeira_nome: conta?.nome,
@@ -684,7 +785,7 @@ export default function NovoLancamentoDialog({
         setAnexoTorreOk(false);
       }
     } else {
-      await onSaved?.(payload);
+      void onSaved?.(payload);
     }
     setSaving(false);
     setConfirmDialogMode('success');
@@ -719,7 +820,7 @@ export default function NovoLancamentoDialog({
         onTipoChange={setTipo}
         bloquearTipo={modoEdicao}
         valorNumerico={valorNumerico}
-        onValorChange={(v) => setValorCents(Math.round(parseFloat(v || '0') * 100).toString() || '0')}
+        onValorChange={(v) => setValorCents(Math.round((Number(v) || 0) * 100).toString())}
         descricao={descricao}
         onDescricaoChange={setDescricao}
         realizado={realizado}
@@ -770,13 +871,28 @@ export default function NovoLancamentoDialog({
         salvarLabel={modoEdicao ? 'Salvar alterações' : 'Salvar'}
         bloquearRecorrencia={modoEdicao}
         modoPlanejamento={modoPlanejamento}
-        centroCusto={centroCusto}
-        centroCustoId={centroCustoId}
-        onCentroCustoChange={onCentroCustoChange}
-        centrosCustoRegistros={centrosCustoRegistros}
-        onCentrosCustoChange={onCentrosCustoChange}
-        categoriasDespesa={categoriasDespesa}
-        onCategoriasDespesaChange={onCategoriasDespesaChange}
+        centroCusto={centroCustoEfetivo}
+        centroCustoId={centroCustoIdEfetivo}
+        onCentroCustoChange={handleCentroCustoForm}
+        centrosCustoRegistros={centrosCustoEfetivos}
+        onCentrosCustoChange={
+          onCentrosCustoChange || (async () => {
+            const centros = await listarCentrosCustoRegistros();
+            setCentrosCustoLocal(centros || []);
+          })
+        }
+        categoriasDespesa={modoPlanejamento ? categoriasDespesa : categoriasBudgetLocal}
+        onCategoriasDespesaChange={onCategoriasDespesaChange || (async () => {
+          const cats = await listarCategoriasDespesa();
+          setCategoriasBudgetLocal(cats || []);
+        })}
+        modelosBudget={modelosBudget}
+        budgetModeloId={budgetModeloId}
+        onBudgetModeloChange={handleBudgetModeloForm}
+        onModelosBudgetChange={async () => {
+          const mods = await listarModelos();
+          setModelosBudget(mods || []);
+        }}
       />
 
       <LancamentoFormSheet
