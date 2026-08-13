@@ -318,21 +318,18 @@ function dataChaveLancamentoSaldo(l) {
   return dr ? toLocalDateKey(dr) : null;
 }
 
-/** Saldo atual menos movimentos anteriores à data de corte (visão pós-corte). */
-export function calcularSaldoContaAposDataCorte(conta, todosLancamentos = [], todosMovimentos = [], dataCorte) {
-  if (!conta || !dataCorte) {
-    return calcularSaldoContaFinanceira(conta, todosLancamentos, todosMovimentos);
-  }
+/** Líquido de lançamentos + movimentos de caixa a partir da data de corte (inclusive). */
+export function liquidoContaDesdeDataCorte(conta, todosLancamentos = [], todosMovimentos = [], dataCorte) {
+  if (!conta || !dataCorte) return 0;
 
-  const saldoCompleto = calcularSaldoContaFinanceira(conta, todosLancamentos, todosMovimentos);
   const lancamentos = filtrarLancamentosDaConta(conta, todosLancamentos);
   const movimentosJaNoFinanceiro = idsMovimentosComLancamentoFinanceiro(lancamentos);
-  let liquidoAntes = 0;
+  let liquido = 0;
 
   lancamentos.forEach((l) => {
     const dataKey = dataChaveLancamentoSaldo(l);
-    if (dataKey && dataKey < dataCorte) {
-      liquidoAntes += deltaLancamentoSaldoConta(conta, l);
+    if (dataKey && dataKey >= dataCorte) {
+      liquido += deltaLancamentoSaldoConta(conta, l);
     }
   });
 
@@ -340,12 +337,26 @@ export function calcularSaldoContaAposDataCorte(conta, todosLancamentos = [], to
     if (!contaUsaRegraCaixaPDV(conta)) return;
     if (movimentosJaNoFinanceiro.has(String(m.id))) return;
     const dataKey = m.created_date ? toLocalDateKey(m.created_date) : null;
-    if (dataKey && dataKey < dataCorte) {
-      liquidoAntes += deltaMovimentoCaixaSaldo(m);
+    if (dataKey && dataKey >= dataCorte) {
+      liquido += deltaMovimentoCaixaSaldo(m);
     }
   });
 
-  return roundToTwoDecimals(saldoCompleto - liquidoAntes);
+  return roundToTwoDecimals(liquido);
+}
+
+/**
+ * Saldo pós-corte = saldo_inicial (abertura configurada) + movimentos desde a data de corte.
+ * Histórico anterior à data de corte fica fora — não entra no cálculo.
+ */
+export function calcularSaldoContaAposDataCorte(conta, todosLancamentos = [], todosMovimentos = [], dataCorte) {
+  if (!conta || !dataCorte) {
+    return calcularSaldoContaFinanceira(conta, todosLancamentos, todosMovimentos);
+  }
+
+  const saldoInicial = Number(conta.saldo_inicial || 0);
+  const liquidoDesdeCorte = liquidoContaDesdeDataCorte(conta, todosLancamentos, todosMovimentos, dataCorte);
+  return roundToTwoDecimals(saldoInicial + liquidoDesdeCorte);
 }
 
 export function calcularSaldosAposDataCorte(contas = [], todosLancamentos = [], todosMovimentos = [], dataCorte) {

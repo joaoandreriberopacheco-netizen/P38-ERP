@@ -206,7 +206,18 @@ async function main() {
     const obs = `Corte financeiro ${dataCorte.split('-').reverse().join('/')} — saldo abertura`;
 
     for (const p of plano) {
-      if (Math.abs(p.ajuste) < 0.01) continue;
+      // Abertura do corte fica em saldo_inicial (SQL) — histórico anterior não entra no dia.
+      await client.query(
+        `UPDATE contas_financeiras SET saldo_inicial = $1, updated_at = NOW() WHERE id = $2`,
+        [p.alvo, p.conta.id],
+      );
+      p.conta.saldo_inicial = p.alvo;
+
+      if (Math.abs(p.ajuste) < 0.01) {
+        console.log(`  ${p.conta.nome}: saldo_inicial = R$ ${fmt(p.alvo)} (sem movimento)`);
+        continue;
+      }
+
       const tipo = p.ajuste > 0 ? 'Reforço' : 'Sangria';
       const valor = Math.abs(p.ajuste);
       const id = randomUUID();
@@ -217,12 +228,13 @@ async function main() {
         ) VALUES ($1, '{}'::jsonb, $2::timestamptz, NOW(), $3, $4, $5, $6, $7, $8, 'Ativo')`,
         [id, tsAbertura, tipo, valor, obs, p.conta.id, 'sistema', 'Corte financeiro (agente)'],
       );
+      console.log(`  ${p.conta.nome}: saldo_inicial = R$ ${fmt(p.alvo)} + ${tipo} R$ ${fmt(valor)}`);
     }
 
-    // Recarrega movimentos e persiste saldo_atual alinhado à regra canónica
     const movs2 = (await client.query(`SELECT * FROM movimentos_caixa`)).rows;
     for (const p of plano) {
-      const novoSaldo = saldoCompleto(p.conta, lancs, movs2);
+      const liquido = liquidoPeriodo(p.conta, lancs, movs2, (k) => k >= dataCorte);
+      const novoSaldo = round2(Number(p.alvo) + liquido);
       await client.query(`UPDATE contas_financeiras SET saldo_atual = $1, updated_at = NOW() WHERE id = $2`, [
         novoSaldo,
         p.conta.id,
