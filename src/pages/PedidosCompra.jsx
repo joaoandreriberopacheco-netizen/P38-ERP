@@ -188,6 +188,34 @@ const getConsultaPedidoSortMeta = (pedido, groupBy, filtradosCards) => {
   return { value: fallbackEta || '', missing: !fallbackEta };
 };
 
+const isSemEtaGrupo = (grupo) => {
+  const eta = String(grupo?.orderValue || '').split('|')[0];
+  return eta === 'sem-eta' || grupo?.key === 'eta_transportadora:sem-dados';
+};
+
+const compareGruposPedidosCompra = (a, b, sortOrder, groupBy) => {
+  if (groupBy === 'eta_transportadora') {
+    const aSem = isSemEtaGrupo(a);
+    const bSem = isSemEtaGrupo(b);
+    if (aSem !== bSem) return aSem ? -1 : 1;
+
+    const etaA = String(a.orderValue || '').split('|')[0];
+    const etaB = String(b.orderValue || '').split('|')[0];
+
+    if (etaA !== 'sem-eta' && etaB !== 'sem-eta') {
+      const dateCmp = sortOrder === 'asc'
+        ? etaA.localeCompare(etaB, 'pt-BR')
+        : etaB.localeCompare(etaA, 'pt-BR');
+      if (dateCmp !== 0) return dateCmp;
+    }
+
+    return String(a.orderValue).localeCompare(String(b.orderValue), 'pt-BR');
+  }
+
+  if (sortOrder === 'asc') return String(a.orderValue).localeCompare(String(b.orderValue), 'pt-BR');
+  return String(b.orderValue).localeCompare(String(a.orderValue), 'pt-BR');
+};
+
 const comparePedidosConsulta = (a, b, sortOrder, groupBy, filtradosCards) => {
   const metaA = getConsultaPedidoSortMeta(a, groupBy, filtradosCards);
   const metaB = getConsultaPedidoSortMeta(b, groupBy, filtradosCards);
@@ -195,8 +223,8 @@ const comparePedidosConsulta = (a, b, sortOrder, groupBy, filtradosCards) => {
   if (metaA.missing && metaB.missing) {
     return String(a.numero || '').localeCompare(String(b.numero || ''), 'pt-BR');
   }
-  if (metaA.missing) return 1;
-  if (metaB.missing) return -1;
+  if (metaA.missing) return groupBy === 'eta_transportadora' ? -1 : 1;
+  if (metaB.missing) return groupBy === 'eta_transportadora' ? 1 : -1;
 
   const cmp = sortOrder === 'asc'
     ? String(metaA.value).localeCompare(String(metaB.value), 'pt-BR')
@@ -645,7 +673,7 @@ export default function PedidosCompraPage() {
   const [formaPagamentoLote, setFormaPagamentoLote] = useState('Parcelado');
   const [dataPrimeiroVencimentoLote, setDataPrimeiroVencimentoLote] = useState('');
   const [groupBy, setGroupBy] = useState('eta_transportadora');
-  const [sortOrder, setSortOrder] = useState('desc');
+  const [sortOrder, setSortOrder] = useState('asc');
   const [activeView, setActiveView] = useState('embarques');
   const [showAtualizarPrecosFiltrados, setShowAtualizarPrecosFiltrados] = useState(false);
 
@@ -955,7 +983,7 @@ export default function PedidosCompraPage() {
     });
 
     return Object.values(map)
-      .sort((a, b) => compareValues(a.orderValue, b.orderValue))
+      .sort((a, b) => compareGruposPedidosCompra(a, b, sortOrder, groupBy))
       .map((grupo) => {
         const pedidosSort = grupo.pedidos.sort((a, b) => {
           const valorA = a.data_emissao || a.created_date || '';

@@ -177,6 +177,7 @@ function PedidoMobileLine({ pedido, onEdit, onDelete, selecionado, desabilitadoS
       <P38MobileLine
         striped={striped}
         thinAccent
+        comfortable
         accent={p38AccentKeyFromTone(accent)}
         onClick={() => {
           if (modoSelecao) { if (!desabilitadoSelecao) onToggleSelecao?.(pedido); return; }
@@ -389,7 +390,7 @@ function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleS
       }, 0);
 
   return (
-    <div className={`w-full space-y-2 font-din-1451 ${className}`}>
+    <div className={`w-full space-y-3 font-din-1451 ${className}`}>
       <button onClick={() => setOpen(o => !o)} className="w-full min-w-0 flex items-center justify-between border-b border-border/50 dark:border-white/10 px-1 py-2 gap-2 group">
         <p className="text-sm tablet-landscape:text-base font-bold uppercase tracking-wide text-foreground/80 leading-normal truncate min-w-0 flex-1">
           {label}
@@ -401,7 +402,7 @@ function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleS
       </button>
       {open && (
         <>
-          <P38MobileLineList className="desktop-layout:hidden">
+          <P38MobileLineList className="desktop-layout:hidden [&>*:not(:last-child)]:mb-1">
             {pedidos.map((p, index) => (
               <PedidoMobileLine
                 key={p._virtual_key || p.id}
@@ -455,7 +456,7 @@ export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, 
   }
 
   return (
-    <div className="space-y-3 font-din-1451">
+    <div className="space-y-4 font-din-1451">
       {grupos.map(({ key, label, pedidos, _total_eta }, index) => {
         const previousLabel = grupos[index - 1]?.label || '';
         const isSpecialTransition = (
