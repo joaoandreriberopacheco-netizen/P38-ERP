@@ -5,7 +5,7 @@ import { X } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { addWeeks, addMonths, addYears, format } from 'date-fns';
 import { dataHoje, datetimeLocalParaISO, codigoOrdenacaoDesdeInstante } from '@/components/utils/dateUtils';
-import { formatarCodigoLancamentoLegivel } from '@/lib/financialUtils';
+import { formatarCodigoLancamentoLegivel, prepararMetadadosLancamentoFinanceiro } from '@/lib/financialUtils';
 import { sincronizarSaldosAposAlteracao } from '@/lib/sincronizarSaldoContasFinanceiras';
 import { contaUsaRegraCaixaPDV } from '@/lib/saldoContaFinanceira';
 import { criarReforcoPendenteTransferenciaCaixaPDV } from '@/lib/reforcoPendenteCaixaPDV';
@@ -30,6 +30,7 @@ import {
   precisaEscopoRecorrenciaPagamento,
   salvarEdicaoLancamentoFinanceiro,
 } from '@/lib/editarLancamentoFinanceiro';
+import { listarCategoriasDespesa } from '@/lib/budgetService';
 
 const FREQS_MAP = {
   Semanal: (d, i) => addWeeks(d, i),
@@ -106,6 +107,7 @@ export default function NovoLancamentoDialog({
   const [valeFolhaModeloId, setValeFolhaModeloId] = useState('');
   const [pessoasFolha, setPessoasFolha] = useState([]);
   const [loadingPessoasFolha, setLoadingPessoasFolha] = useState(false);
+  const [categoriasBudgetLocal, setCategoriasBudgetLocal] = useState([]);
   const { toast } = useToast();
   const { categorias, reload: reloadCats } = useCategorias();
 
@@ -193,6 +195,19 @@ export default function NovoLancamentoDialog({
     }
     resetForm();
   }, [open, tipoInicial, contaDefaultId, descricaoInicial, valorInicial, origemContaPagar, lancamentoExistente?.id]);
+
+  useEffect(() => {
+    if (!open || modoPlanejamento) return;
+    if (categoriasDespesa?.length) {
+      setCategoriasBudgetLocal(categoriasDespesa);
+      return;
+    }
+    let cancelled = false;
+    listarCategoriasDespesa()
+      .then((cats) => { if (!cancelled) setCategoriasBudgetLocal(cats || []); })
+      .catch(() => { if (!cancelled) setCategoriasBudgetLocal([]); });
+    return () => { cancelled = true; };
+  }, [open, modoPlanejamento, categoriasDespesa]);
 
   useEffect(() => {
     if (!open || modoEdicao || tipo === 'Transferência') return;
@@ -616,7 +631,11 @@ export default function NovoLancamentoDialog({
         data_vencimento: primeiro?.data_vencimento || dataVenc,
       };
     } else {
+      const ordemPadrao = prepararMetadadosLancamentoFinanceiro(
+        metaLanc?.data_lancamento ? { dataLancamento: metaLanc.data_lancamento } : {},
+      );
       const novoLancamento = await base44.entities.LancamentoFinanceiro.create({
+        ...ordemPadrao,
         ...metaDataLancamento(),
         ...metaLanc,
         tipo,
@@ -684,7 +703,7 @@ export default function NovoLancamentoDialog({
         setAnexoTorreOk(false);
       }
     } else {
-      await onSaved?.(payload);
+      void onSaved?.(payload);
     }
     setSaving(false);
     setConfirmDialogMode('success');
@@ -719,7 +738,7 @@ export default function NovoLancamentoDialog({
         onTipoChange={setTipo}
         bloquearTipo={modoEdicao}
         valorNumerico={valorNumerico}
-        onValorChange={(v) => setValorCents(Math.round(parseFloat(v || '0') * 100).toString() || '0')}
+        onValorChange={(v) => setValorCents(Math.round((Number(v) || 0) * 100).toString())}
         descricao={descricao}
         onDescricaoChange={setDescricao}
         realizado={realizado}
@@ -775,8 +794,11 @@ export default function NovoLancamentoDialog({
         onCentroCustoChange={onCentroCustoChange}
         centrosCustoRegistros={centrosCustoRegistros}
         onCentrosCustoChange={onCentrosCustoChange}
-        categoriasDespesa={categoriasDespesa}
-        onCategoriasDespesaChange={onCategoriasDespesaChange}
+        categoriasDespesa={modoPlanejamento ? categoriasDespesa : categoriasBudgetLocal}
+        onCategoriasDespesaChange={onCategoriasDespesaChange || (async () => {
+          const cats = await listarCategoriasDespesa();
+          setCategoriasBudgetLocal(cats || []);
+        })}
       />
 
       <LancamentoFormSheet

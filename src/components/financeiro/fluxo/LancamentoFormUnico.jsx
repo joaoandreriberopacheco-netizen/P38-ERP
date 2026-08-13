@@ -8,6 +8,8 @@ import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { dataHoje, formatarSoData } from '@/components/utils/dateUtils';
 import { createUppercaseInputChangeHandler } from '@/lib/uppercaseInputHandlers';
+import { formatCurrency } from '@/lib/financialUtils';
+import { handleCentavosMaskKeyDown, selectAllOnFocus } from '@/lib/inputFocusUtils';
 import SeletorContaMobile from './SeletorContaMobile';
 import { SeletorCategoria } from './DialogCategoria';
 import TagsInput from './TagsInput';
@@ -192,24 +194,35 @@ export default function LancamentoFormUnico({
           <p className={cn('text-muted-foreground mb-1', campoAtivo === 'valor' ? 'text-xs text-center' : 'text-[10px] uppercase tracking-wider')}>
             Valor
           </p>
-          <input
-            autoComplete="off"
-            type="number"
-            inputMode="decimal"
-            min="0"
-            step="0.01"
-            value={valorNumerico === 0 ? '' : valorNumerico}
-            onFocus={(e) => focarCampo('valor', e.currentTarget)}
-            onChange={(e) => onValorChange(e.target.value)}
-            placeholder="0,00"
-            className={cn(
-              'w-full bg-transparent outline-none border-0 font-semibold text-foreground tracking-tight font-glacial placeholder:text-muted-foreground',
-              campoAtivo === 'valor' ? 'text-center text-5xl' : 'text-2xl',
-            )}
-          />
-          {campoAtivo === 'valor' && (
-            <p className="text-xs text-muted-foreground text-center mt-1">R$</p>
-          )}
+          <div className={cn('flex items-baseline gap-1', campoAtivo === 'valor' ? 'justify-center' : '')}>
+            <span className={cn('font-semibold text-muted-foreground shrink-0', campoAtivo === 'valor' ? 'text-2xl' : 'text-lg')}>
+              R$
+            </span>
+            <input
+              autoComplete="off"
+              type="text"
+              inputMode="numeric"
+              value={formatCurrency(valorNumerico)}
+              onFocus={(e) => {
+                focarCampo('valor', e.currentTarget);
+                selectAllOnFocus(e);
+              }}
+              onKeyDown={(e) => handleCentavosMaskKeyDown(e, {
+                setInput: () => {},
+                setValor: onValorChange,
+                formatDisplay: formatCurrency,
+              })}
+              onChange={(e) => {
+                const nums = e.target.value.replace(/\D/g, '') || '0';
+                onValorChange(parseInt(nums, 10) / 100);
+              }}
+              placeholder="0,00"
+              className={cn(
+                'min-w-0 flex-1 bg-transparent outline-none border-0 font-semibold text-foreground tracking-tight font-glacial placeholder:text-muted-foreground',
+                campoAtivo === 'valor' ? 'text-center text-5xl max-w-[min(100%,16rem)]' : 'text-2xl',
+              )}
+            />
+          </div>
         </div>
 
         <div
@@ -292,23 +305,38 @@ export default function LancamentoFormUnico({
             </div>
           </div>
         ) : !isTransfer ? (
-          <div className="grid gap-2 sm:grid-cols-2">
-            <CampoLinha
-              label="Categoria"
-              value={categoria}
-              placeholder="Opcional"
-              onClick={() => setPicker('categoria')}
-              className="sm:col-span-1"
-            />
-            <CampoLinha
-              label="Tags"
-              value={tagsResumo}
-              placeholder="Opcional"
-              icon={Tag}
-              onClick={() => setPicker('tags')}
-              className="sm:col-span-1"
-            />
-          </div>
+          <>
+            {tipo === 'Despesa' && categoriasDespesa?.length > 0 && (
+              <div className="rounded-2xl bg-card shadow-sm px-4 py-3">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Budget (opcional)</p>
+                <BudgetCategoriaSelect
+                  categorias={categoriasDespesa}
+                  value={categoriaId}
+                  displayName={categoria}
+                  onValueChange={(cat) => onCategoriaChange(cat?.nome || '', cat?.id || '')}
+                  onCategoriasChange={onCategoriasDespesaChange}
+                  placeholder="Vincular a um budget"
+                />
+              </div>
+            )}
+            <div className="grid gap-2 sm:grid-cols-2">
+              <CampoLinha
+                label="Categoria"
+                value={categoria}
+                placeholder="Opcional"
+                onClick={() => setPicker('categoria')}
+                className="sm:col-span-1"
+              />
+              <CampoLinha
+                label="Tags"
+                value={tagsResumo}
+                placeholder="Opcional"
+                icon={Tag}
+                onClick={() => setPicker('tags')}
+                className="sm:col-span-1"
+              />
+            </div>
+          </>
         ) : null}
 
         {!isTransfer && modoPlanejamento && !bloquearRecorrencia && (

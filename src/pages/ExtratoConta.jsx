@@ -559,7 +559,7 @@ export default function ExtratoContaPage() {
   const diasExibicao = useMemo(() => {
     return diasComSaldo.map((diaData) => ({
       ...diaData,
-      movimentacoes: sortLancamentosPorDescricao(diaData.movimentacoes),
+      movimentacoes: sortLancamentosPorDescricao(diaData.movimentacoes, 'desc'),
     }));
   }, [diasComSaldo]);
 

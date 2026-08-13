@@ -98,10 +98,15 @@ export function codigoOrdenacaoLancamento(item) {
   const codigo = codigoOrdemLancamento(item);
   if (codigo) return codigo;
   if (item?.created_date) {
-    const codigo = codigoOrdenacaoDesdeInstante(item.created_date);
-    if (codigo) return codigo;
+    const codigoCreated = codigoOrdenacaoDesdeInstante(item.created_date);
+    if (codigoCreated) return codigoCreated;
   }
-  return codigoOrdenacaoDesdeDataSomente(item?.data_pagamento || item?.data_vencimento)
+  const dataComHora = item?.data_movimento || item?.data_lancamento;
+  if (dataComHora && String(dataComHora).includes('T')) {
+    const codigoInstante = codigoOrdenacaoDesdeInstante(dataComHora);
+    if (codigoInstante) return codigoInstante;
+  }
+  return codigoOrdenacaoDesdeDataSomente(item?.data_pagamento || item?.data_vencimento || item?.data_movimento)
     || '00000000000000';
 }
 
