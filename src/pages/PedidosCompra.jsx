@@ -26,7 +26,7 @@ import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
 import ListaPedidosCompra from '@/components/compras/ListaPedidosCompra';
 import ConsultaComprasPedidos from '@/components/compras/ConsultaComprasPedidos';
-import StatusPedidoCompraPicker from '@/components/compras/StatusPedidoCompraPicker';
+import StatusPedidoCompraPicker, { statusPedidoCompraExplicitos } from '@/components/compras/StatusPedidoCompraPicker';
 import ActionMenuComprasV2 from '@/components/compras/ActionMenuComprasV2';
 import EnvioFinanceiroLoteDialog from '@/components/compras/EnvioFinanceiroLoteDialog';
 import AtualizarPrecosFiltradosDialog from '@/components/compras/AtualizarPrecosFiltradosDialog';
@@ -45,6 +45,7 @@ import { toLocalDateKey, formatarSoData, dataHoje } from '@/components/utils/dat
 import {
   FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT,
   FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT,
+  filtroComprasStatusSelInicial,
   passaFiltroVisibilidadePedidosCompra,
 } from '@/lib/filtroVisibilidadePedidosCompra';
 const toLocalDate = (d) => toLocalDateKey(new Date(d));
@@ -609,7 +610,7 @@ export default function PedidosCompraPage() {
   const [pedidos, setPedidos] = useState([]);
   const [embarques, setEmbarques] = useState([]);
   const [search, setSearch] = useState('');
-  const [statusSel, setStatusSel] = useState([]);
+  const [statusSel, setStatusSel] = useState(filtroComprasStatusSelInicial);
   const [filtroUltimos30Dias, setFiltroUltimos30Dias] = useState(FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT);
   const [filtroSomenteNaoConcluidos, setFiltroSomenteNaoConcluidos] = useState(FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT);
   const [tagsSel, setTagsSel] = useState([]);
@@ -962,7 +963,8 @@ export default function PedidosCompraPage() {
     (etaFiltroModo === 'entre' && (etaInicial || etaFinal)) ||
     (etaFiltroModo === 'personalizado' && (etaInicial || etaFinal))
   );
-  const hasActiveFilters = search || tagsSel.length > 0 || dataInicial || dataFinal || hasEtaFilter || statusSel.length > 0
+  const hasActiveFilters = search || tagsSel.length > 0 || dataInicial || dataFinal || hasEtaFilter
+    || statusPedidoCompraExplicitos(statusSel).length > 0
     || filtroUltimos30Dias !== FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT
     || filtroSomenteNaoConcluidos !== FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT;
 
@@ -1052,7 +1054,7 @@ export default function PedidosCompraPage() {
         hasActiveFilters={hasActiveFilters}
         onLimparFiltros={() => {
           setSearch('');
-          setStatusSel([]);
+          setStatusSel(filtroComprasStatusSelInicial());
           setFiltroUltimos30Dias(FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT);
           setFiltroSomenteNaoConcluidos(FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT);
           setTagsSel([]);
