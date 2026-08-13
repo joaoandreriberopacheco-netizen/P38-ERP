@@ -423,8 +423,8 @@ export default function ExtratoContaPage() {
   const todosLancamentosExtrato = lancsParaSaldo;
 
   const movimentosJaNoFinanceiro = useMemo(
-    () => idsMovimentosComLancamentoFinanceiro(todosLancamentosExtrato),
-    [todosLancamentosExtrato],
+    () => idsMovimentosComLancamentoFinanceiro(lancamentos, movimentosCaixa),
+    [lancamentos, movimentosCaixa],
   );
 
   const contasById = useMemo(
