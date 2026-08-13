@@ -8,7 +8,10 @@ import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { formatCommercialQuantity } from '@/lib/productUnits';
 
 function ConsultaQtdUnCol({ qtd, unidade, accent = 'success' }) {
-  const dotClass = accent === 'muted' ? p38Accent.muted.dot : p38Table.accentDot;
+  const dotClass =
+    accent === 'muted' ? p38Accent.muted.dot
+      : accent === 'info' ? p38Accent.info.dot
+        : p38Table.accentDot;
   return (
     <div className="relative w-[3.25rem] flex-shrink-0 border-r border-border/40 dark:border-white/10 pr-1.5 py-2.5 text-right">
       <span className={`absolute left-0 top-3 ${dotClass}`} aria-hidden />
@@ -39,24 +42,37 @@ export function ConsultaProdutoRow({
   nome,
   valorTotal,
   precoLista,
+  precoUnitario,
   descontoUnitario,
   striped = false,
   accent = 'success',
   hideValor = false,
   nomePrefix = null,
   nomeSuffix = null,
+  signedValor,
 }) {
-  const borderClass = accent === 'muted' ? p38Accent.muted.border : p38Accent.success.border;
+  const precoListaEff = precoLista ?? precoUnitario;
+  const borderClass =
+    accent === 'muted' ? p38Accent.muted.border
+      : accent === 'info' ? p38Accent.info.border
+        : p38Accent.success.border;
   const valorNum = Number(valorTotal) || 0;
   const precoEfetivo = resolvePrecoUnitarioEfetivo({
     quantidade,
     total: valorNum,
-    precoLista,
+    precoLista: precoListaEff,
     descontoUnitario,
   });
-  const precoTabela = Number(precoLista) || 0;
+  const precoTabela = Number(precoListaEff) || 0;
   const temDesconto = precoTabela > precoEfetivo + 0.009;
-  const valorTone = valorNum < 0 ? 'danger' : accent === 'muted' ? 'neutral' : 'success';
+  const valorTone = valorNum < 0
+    ? 'danger'
+    : accent === 'muted'
+      ? 'neutral'
+      : accent === 'info'
+        ? 'info'
+        : 'success';
+  const showSigned = signedValor ?? accent !== 'muted';
 
   return (
     <div
@@ -87,7 +103,7 @@ export function ConsultaProdutoRow({
           </p>
           {!hideValor && (
             <div className="shrink-0">
-              <CaixaValorDisplay valor={valorNum} tone={valorTone} signed size="sm" />
+              <CaixaValorDisplay valor={valorNum} tone={valorTone} signed={showSigned} size="sm" />
             </div>
           )}
         </div>
