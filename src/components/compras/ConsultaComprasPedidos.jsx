@@ -11,11 +11,8 @@ import { getItemCompraExibicaoVitrine } from '@/lib/productUnits';
 import { formatarSoData } from '@/components/utils/dateUtils';
 import { getTotalLinhaPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
 import { buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
+import { comprasAccentFromDisplayStatus } from '@/lib/comprasEmbarquesPalette';
 import { useCompactShell } from '@/hooks/use-breakpoint';
-
-/** Texto do cabeçalho do pedido — mais legível (contraste invertido vs. linhas de produto). */
-const CONSULTA_HEADER_BODY = 'text-sm text-foreground/90 dark:text-foreground/85 normal-case font-din-1451 leading-snug';
-const CONSULTA_HEADER_META = 'text-sm text-foreground/85 dark:text-foreground/80 normal-case font-din-1451 leading-snug';
 
 /** Recuo hierárquico: grupo → pedido/embarque → linha de produto. */
 const CONSULTA_HIER = {
@@ -75,6 +72,7 @@ function ConsultaEmbarqueCard({ card, onVerPedido, compact = false, isLast = fal
   const itensEmbarque = getConsultaItens(card);
   const ehNecessidade = card._consulta_papel === 'necessidade';
   const { fornecedor, detalhes } = buildEmbarqueMetaLinhas(card);
+  const statusAccent = comprasAccentFromDisplayStatus(card._display_status || card.status);
 
   return (
     <div className={cn('min-w-0 max-w-full overflow-hidden', !isLast && CONSULTA_HIER.sep)}>
@@ -95,9 +93,9 @@ function ConsultaEmbarqueCard({ card, onVerPedido, compact = false, isLast = fal
                 <span className="text-muted-foreground font-normal normal-case text-sm"> · falta vir</span>
               ) : null}
             </p>
-            <p className={cn(CONSULTA_HEADER_BODY, 'line-clamp-2')}>{fornecedor}</p>
+            <p className={cn(p38Table.mobileLineSubtitle, 'normal-case line-clamp-2')}>{fornecedor}</p>
             <div className="flex items-end justify-between gap-3 min-w-0">
-              <p className={cn(CONSULTA_HEADER_META, 'min-w-0 line-clamp-2 flex-1')}>
+              <p className={cn(caixaTypo.meta, 'normal-case min-w-0 line-clamp-2 flex-1')}>
                 {detalhes.join(' · ')}
               </p>
               <CaixaValorDisplay
@@ -118,7 +116,7 @@ function ConsultaEmbarqueCard({ card, onVerPedido, compact = false, isLast = fal
                   <span className="text-muted-foreground font-normal normal-case text-sm"> · falta vir</span>
                 ) : null}
               </p>
-              <p className={cn(CONSULTA_HEADER_BODY, 'truncate')}>
+              <p className={cn(p38Table.mobileLineSubtitle, 'truncate')}>
                 {[fornecedor, ...detalhes].join(' · ')}
               </p>
             </div>
@@ -145,7 +143,7 @@ function ConsultaEmbarqueCard({ card, onVerPedido, compact = false, isLast = fal
                 valorTotal={Number(item.valor_total_item) || Number(item.total) || getTotalLinhaPedidoCompra(item)}
                 precoUnitario={item.preco_unitario || exib.preco_unitario}
                 striped={idx % 2 === 1}
-                subtle
+                accent={statusAccent}
                 valorTone="neutral"
                 signedValor={false}
               />
@@ -182,7 +180,7 @@ function ConsultaGrupoEmbarques({ grupo, onVerPedido, defaultOpen = true, compac
                 <span className={cn(caixaTypo.labelSm, 'block tabular-nums normal-case text-foreground/90')}>
                   {grupo.groupDate}
                 </span>
-                <span className={cn(CONSULTA_HEADER_BODY, 'block line-clamp-2')}>
+                <span className={cn(p38Table.mobileLineSubtitle, 'block normal-case line-clamp-2')}>
                   {grupo.groupCarrier}
                 </span>
               </div>
@@ -191,7 +189,7 @@ function ConsultaGrupoEmbarques({ grupo, onVerPedido, defaultOpen = true, compac
                 <span className={cn(caixaTypo.labelSm, 'shrink-0 tabular-nums whitespace-nowrap normal-case text-foreground/90')}>
                   {grupo.groupDate}
                 </span>
-                <span className={cn(CONSULTA_HEADER_BODY, 'truncate min-w-0')}>
+                <span className={cn(p38Table.mobileLineSubtitle, 'truncate min-w-0 normal-case')}>
                   {grupo.groupCarrier}
                 </span>
               </div>

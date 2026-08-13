@@ -24,21 +24,15 @@ function resolveConsultaAccentBorder(accent) {
   return p38Accent.success.border;
 }
 
-function ConsultaQtdUnCol({ qtd, unidade, accent = 'success', subtle = false }) {
-  const dotClass = subtle ? p38Accent.muted.dot : resolveConsultaAccentDot(accent);
+function ConsultaQtdUnCol({ qtd, unidade, accent = 'success' }) {
+  const dotClass = resolveConsultaAccentDot(accent);
   return (
     <div className="relative w-[3.25rem] flex-shrink-0 border-r border-border/40 dark:border-white/10 pr-1.5 py-2.5 text-right">
       <span className={`absolute left-0 top-3 ${dotClass}`} aria-hidden />
-      <p className={cn(
-        'text-base font-din-1451 tabular-nums leading-none',
-        subtle ? 'text-muted-foreground/90 dark:text-muted-foreground/80' : 'text-foreground',
-      )}>
+      <p className="text-base font-din-1451 tabular-nums text-foreground leading-none">
         {formatCommercialQuantity(qtd, unidade)}
       </p>
-      <p className={cn(
-        `${caixaTypo.labelSm} mt-1.5 leading-none truncate`,
-        subtle && 'text-muted-foreground/70 dark:text-muted-foreground/60',
-      )}>
+      <p className={`${caixaTypo.labelSm} mt-1.5 leading-none truncate`}>
         {(unidade || 'UN').toUpperCase()}
       </p>
     </div>
@@ -71,10 +65,9 @@ export function ConsultaProdutoRow({
   nomeSuffix = null,
   signedValor,
   valorTone: valorToneProp,
-  subtle = false,
 }) {
   const precoListaEff = precoLista ?? precoUnitario;
-  const borderClass = subtle ? p38Accent.muted.border : resolveConsultaAccentBorder(accent);
+  const borderClass = resolveConsultaAccentBorder(accent);
   const valorNum = Number(valorTotal) || 0;
   const precoEfetivo = resolvePrecoUnitarioEfetivo({
     quantidade,
@@ -102,29 +95,23 @@ export function ConsultaProdutoRow({
         striped && 'bg-secondary/15 dark:bg-secondary/20',
       )}
     >
-      <ConsultaQtdUnCol qtd={quantidade} unidade={unidade} accent={accent} subtle={subtle} />
+      <ConsultaQtdUnCol qtd={quantidade} unidade={unidade} accent={accent} />
       <div className="flex-1 min-w-0 py-2 pr-3 pl-2">
         <div className="flex items-start justify-between gap-2 min-w-0">
-          <p className={cn(
-            subtle
-              ? 'text-sm text-muted-foreground dark:text-muted-foreground/85 normal-case font-din-1451 leading-snug line-clamp-3 flex-1 min-w-0'
-              : cn(p38Table.mobileLineTitle, 'line-clamp-3 leading-snug flex-1 min-w-0'),
-          )}>
+          <p className={cn(p38Table.mobileLineTitle, 'line-clamp-3 leading-snug flex-1 min-w-0')}>
             {nomePrefix}
             {nome}
           </p>
           {nomeSuffix ? <div className="shrink-0 pt-0.5">{nomeSuffix}</div> : null}
         </div>
         <div className="flex items-baseline justify-between gap-3 mt-1">
-          <p className={cn(`${caixaTypo.meta} normal-case tabular-nums min-w-0`, subtle && 'text-muted-foreground/75 dark:text-muted-foreground/65')}>
+          <p className={`${caixaTypo.meta} normal-case tabular-nums min-w-0`}>
             {temDesconto && (
-              <span className="line-through text-muted-foreground/60 mr-1.5">
+              <span className="line-through text-muted-foreground/70 mr-1.5">
                 {formatCaixaR(precoTabela)}
               </span>
             )}
-            <span className={subtle ? 'text-muted-foreground/80 dark:text-muted-foreground/70' : 'text-foreground/90'}>
-              {formatCaixaR(precoEfetivo)} un.
-            </span>
+            <span className="text-foreground/90">{formatCaixaR(precoEfetivo)} un.</span>
           </p>
           {!hideValor && (
             <div className="shrink-0">
