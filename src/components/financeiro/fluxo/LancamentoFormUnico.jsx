@@ -18,6 +18,7 @@ import RecorrenciaConfig from './RecorrenciaConfig';
 import LancamentoValeFolha from './LancamentoValeFolha';
 import LancamentoPickerDialog from './LancamentoPickerDialog';
 import BudgetCategoriaSelect from '@/components/budget-previsao/BudgetCategoriaSelect';
+import BudgetModeloSelect from '@/components/budget-previsao/BudgetModeloSelect';
 import FolhaCentroCustoSelect from '@/components/folha-previsao/FolhaCentroCustoSelect';
 
 const TIPOS = [
@@ -115,6 +116,10 @@ export default function LancamentoFormUnico({
   onCentrosCustoChange,
   categoriasDespesa = [],
   onCategoriasDespesaChange,
+  modelosBudget = [],
+  budgetModeloId = '',
+  onBudgetModeloChange,
+  onModelosBudgetChange,
 }) {
   const [campoAtivo, setCampoAtivo] = useState('valor');
   const [picker, setPicker] = useState(null); // 'conta' | 'contaDestino' | 'categoria' | 'tags'
@@ -306,17 +311,35 @@ export default function LancamentoFormUnico({
           </div>
         ) : !isTransfer ? (
           <>
-            {tipo === 'Despesa' && categoriasDespesa?.length > 0 && (
-              <div className="rounded-2xl bg-card shadow-sm px-4 py-3">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Budget (opcional)</p>
-                <BudgetCategoriaSelect
-                  categorias={categoriasDespesa}
-                  value={categoriaId}
-                  displayName={categoria}
-                  onValueChange={(cat) => onCategoriaChange(cat?.nome || '', cat?.id || '')}
-                  onCategoriasChange={onCategoriasDespesaChange}
-                  placeholder="Vincular a um budget"
-                />
+            {tipo === 'Despesa' && (
+              <div className="rounded-2xl bg-card shadow-sm px-4 py-3 space-y-3">
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Budget (opcional)</p>
+                  <BudgetModeloSelect
+                    modelos={modelosBudget}
+                    value={budgetModeloId}
+                    displayName={budgetModeloId ? categoria : ''}
+                    onValueChange={onBudgetModeloChange}
+                    onModelosChange={onModelosBudgetChange}
+                    categorias={categoriasDespesa}
+                    centrosCustoRegistros={centrosCustoRegistros}
+                    onCategoriasChange={onCategoriasDespesaChange}
+                    onCentrosChange={onCentrosCustoChange}
+                    placeholder="Escolher budget — + para criar"
+                  />
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Centro de custo</p>
+                  <FolhaCentroCustoSelect
+                    centros={centrosCustoRegistros}
+                    value={centroCusto}
+                    valueId={centroCustoId}
+                    onValueChange={onCentroCustoChange}
+                    onCentrosChange={onCentrosCustoChange}
+                    emptyLabel="Nenhum"
+                    placeholder={budgetModeloId ? 'Preenchido pelo budget — + para alterar' : 'Opcional — + para criar'}
+                  />
+                </div>
               </div>
             )}
             <div className="grid gap-2 sm:grid-cols-2">
