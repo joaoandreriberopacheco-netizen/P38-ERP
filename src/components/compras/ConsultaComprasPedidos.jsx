@@ -15,7 +15,7 @@ import { buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
 function ConsultaQtdUnCol({ qtd, unidade, accent = 'info' }) {
   const dotClass = accent === 'muted' ? p38Accent.muted.dot : p38Accent.info.dot;
   return (
-    <div className="relative w-[2.5rem] sm:w-[3rem] flex-shrink-0 border-r border-border/40 dark:border-white/10 pr-1 py-2.5 text-right">
+    <div className="relative w-[2.25rem] sm:w-[2.75rem] flex-shrink-0 border-r border-border/40 dark:border-white/10 pr-1 py-1.5 text-right">
       <span className={`absolute left-0 top-3 h-1.5 w-1.5 rounded-full ${dotClass}`} aria-hidden />
       <p className="text-xs sm:text-sm font-din-1451 tabular-nums text-foreground leading-none">
         {formatCommercialQuantity(qtd, unidade)}
@@ -53,13 +53,13 @@ function ConsultaProdutoRow({
       )}
     >
       <ConsultaQtdUnCol qtd={quantidade} unidade={unidade} accent={accent} />
-      <div className="flex-1 min-w-0 py-2 pr-2 pl-1.5 sm:pl-2 overflow-hidden">
-        <p className={cn(p38Table.mobileLineTitle, 'line-clamp-2 sm:line-clamp-3 leading-snug font-light break-words')}>{nome}</p>
-        <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-0.5 sm:gap-2 mt-1 min-w-0">
-          <p className={`${caixaTypo.meta} normal-case tabular-nums min-w-0 truncate`}>
+      <div className="flex-1 min-w-0 py-1.5 pr-1.5 pl-1 sm:pl-2 overflow-hidden">
+        <p className={cn(p38Table.mobileLineTitle, 'line-clamp-2 leading-snug font-light break-words text-sm')}>{nome}</p>
+        <div className="flex items-baseline justify-between gap-2 mt-0.5 min-w-0">
+          <p className={`${caixaTypo.meta} normal-case tabular-nums min-w-0 truncate text-[11px] sm:text-xs`}>
             <span className="text-foreground/90">{formatCaixaR(precoEfetivo)} un.</span>
           </p>
-          <div className="shrink-0 self-end sm:self-auto">
+          <div className="shrink-0">
             <CaixaValorDisplay
               valor={valorTotal}
               tone={accent === 'muted' ? 'neutral' : 'info'}
@@ -104,39 +104,41 @@ function ConsultaEmbarqueCard({ card, onVerPedido }) {
   const itensEmbarque = getConsultaItens(card);
   const etaEmbarque = card._embarque?.eta ? formatarSoData(card._embarque.eta) : null;
   const ehNecessidade = card._consulta_papel === 'necessidade';
+  const etaLabel = etaEmbarque
+    ? `ETA ${etaEmbarque}`
+    : (card.data_prevista_entrega ? `ETA ${formatarSoData(card.data_prevista_entrega)}` : null);
+  const metaLinha = [
+    card._display_fornecedor || card.fornecedor_nome || 'Fornecedor não informado',
+    card.data_emissao ? formatarSoData(card.data_emissao) : null,
+    etaLabel,
+  ].filter(Boolean).join(' · ');
 
   return (
-    <div className="bg-card rounded-2xl shadow-sm overflow-hidden max-w-full min-w-0 w-full">
+    <div className="bg-card rounded-xl shadow-sm overflow-hidden max-w-full min-w-0 w-full">
       <button
         type="button"
         onClick={() => onVerPedido?.(card)}
-        className="w-full flex flex-col sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start gap-1 sm:gap-2 px-3 py-3 sm:px-4 border-b border-border/40 text-left hover:bg-muted/30 transition-colors min-w-0"
+        className="w-full grid grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto] gap-x-2 gap-y-0.5 px-2.5 py-2 sm:px-3 border-b border-border/40 text-left hover:bg-muted/30 transition-colors min-w-0 items-start"
       >
-        <div className="min-w-0 w-full overflow-hidden">
-          <p className={cn(p38Table.mobileLineTitle, 'font-light break-words line-clamp-2')}>
+        <div className="min-w-0 col-start-1 row-start-1 flex items-center gap-1.5 overflow-hidden">
+          <span className={cn(p38Table.mobileLineTitle, 'text-sm font-light truncate min-w-0')}>
             {card._display_code || card.numero}
-            {ehNecessidade ? (
-              <span className="text-muted-foreground font-light normal-case text-sm"> · falta vir</span>
-            ) : null}
-          </p>
-          <p className={cn(p38Table.mobileLineSubtitle, 'truncate font-light mt-0.5')}>
-            {card._display_fornecedor || card.fornecedor_nome || 'Fornecedor não informado'}
-          </p>
-          <p className={cn(caixaTypo.meta, 'mt-1 font-light normal-case line-clamp-2')}>
-            {[
-              card.data_emissao ? formatarSoData(card.data_emissao) : null,
-              etaEmbarque ? `ETA ${etaEmbarque}` : (card.data_prevista_entrega ? `ETA ${formatarSoData(card.data_prevista_entrega)}` : null),
-            ].filter(Boolean).join(' · ')}
-          </p>
+          </span>
+          {ehNecessidade ? (
+            <span className="shrink-0 text-[10px] font-medium normal-case text-muted-foreground/90">falta vir</span>
+          ) : null}
           {card._display_status ? (
-            <p className={cn(caixaTypo.meta, 'mt-1 truncate font-light uppercase tracking-wide')}>
+            <span className="shrink-0 max-w-[5.5rem] sm:max-w-[8rem] truncate text-[10px] font-medium uppercase tracking-wide text-muted-foreground/80">
               {card._display_status}
-            </p>
+            </span>
           ) : null}
         </div>
-        <div className="shrink-0 sm:pt-0.5 sm:text-right w-full sm:w-auto flex sm:block justify-end">
+        <div className="col-start-2 row-start-1 row-span-2 self-start shrink-0 max-w-[42%]">
           <CaixaValorDisplay valor={card._consulta_valor || 0} tone="info" size="sm" />
         </div>
+        <p className={cn(caixaTypo.meta, 'col-start-1 row-start-2 min-w-0 truncate font-light normal-case text-[11px] sm:text-xs leading-tight')}>
+          {metaLinha}
+        </p>
       </button>
       {itensEmbarque.length > 0 ? (
         <div className="ml-1 sm:ml-2 pl-2 sm:pl-2.5 border-l border-border/25 dark:border-white/10 min-w-0 overflow-hidden">
@@ -166,18 +168,18 @@ function ConsultaEmbarqueCard({ card, onVerPedido }) {
 function ConsultaGrupoEmbarques({ grupo, onVerPedido, defaultOpen = true }) {
   const [open, setOpen] = useState(defaultOpen);
   const hasStructuredHeader = grupo.groupDate != null && grupo.groupCarrier != null;
-  const headerTextClass = 'text-sm sm:text-base font-light text-foreground/85 leading-relaxed';
+  const headerTextClass = 'text-xs sm:text-sm font-light text-foreground/85 leading-snug';
 
   return (
-    <div className="w-full min-w-0 max-w-full space-y-2">
+    <div className="w-full min-w-0 max-w-full space-y-1.5">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="w-full min-w-0 max-w-full flex items-center gap-2 sm:gap-3 border-b border-border/50 dark:border-white/10 py-2.5 pr-1 text-left overflow-hidden"
+        className="w-full min-w-0 max-w-full flex items-center gap-1.5 sm:gap-2 border-b border-border/50 dark:border-white/10 py-2 pr-0.5 text-left overflow-hidden"
       >
         <div className="flex-1 min-w-0 overflow-hidden">
           {hasStructuredHeader ? (
-            <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-x-3 min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
               <span className={cn(headerTextClass, 'shrink-0 tabular-nums whitespace-nowrap')}>{grupo.groupDate}</span>
               <span className={cn(headerTextClass, 'truncate min-w-0')}>{grupo.groupCarrier}</span>
             </div>
@@ -185,11 +187,11 @@ function ConsultaGrupoEmbarques({ grupo, onVerPedido, defaultOpen = true }) {
             <span className={cn(headerTextClass, 'block truncate min-w-0 uppercase tracking-wide')}>{grupo.label}</span>
           )}
         </div>
-        <CaixaValorDisplay valor={grupo.totalConsulta || 0} tone="info" size="sm" className="shrink-0 max-w-[40%]" />
-        <ChevronDown className={`w-4 h-4 shrink-0 text-foreground/70 transition-transform duration-200 ${open ? '' : '-rotate-90'}`} />
+        <CaixaValorDisplay valor={grupo.totalConsulta || 0} tone="info" size="sm" className="shrink-0 max-w-[38%] sm:max-w-[40%]" />
+        <ChevronDown className={`w-3.5 h-3.5 shrink-0 text-foreground/70 transition-transform duration-200 ${open ? '' : '-rotate-90'}`} />
       </button>
       {open ? (
-        <div className="ml-1 sm:ml-2.5 pl-2 sm:pl-3 border-l border-border/30 dark:border-white/10 space-y-2.5 sm:space-y-3 min-w-0 max-w-full overflow-hidden">
+        <div className="ml-1 sm:ml-2 pl-2 sm:pl-2.5 border-l border-border/30 dark:border-white/10 space-y-2 min-w-0 max-w-full overflow-hidden">
           {grupo.cards.map((card) => (
             <ConsultaEmbarqueCard key={card._virtual_key || card.id} card={card} onVerPedido={onVerPedido} />
           ))}
@@ -232,27 +234,29 @@ export default function ConsultaComprasPedidos({
   }
 
   return (
-    <div className="space-y-4 min-w-0 max-w-full overflow-hidden font-din-1451">
-      <div className="flex flex-col gap-3 min-w-0 max-w-full">
-        <div className="min-w-0">
-          <p className={cn(caixaTypo.labelSm, 'font-light uppercase tracking-wide')}>{contextLabel}</p>
-          <CaixaValorDisplay valor={totalGeral} tone="info" size="lg" />
-          <p className={`${caixaTypo.meta} mt-1 font-light`}>
-            {pedidosFiltrados.length} embarque{pedidosFiltrados.length === 1 ? '' : 's'}
-          </p>
+    <div className="space-y-3 min-w-0 max-w-full overflow-hidden font-din-1451">
+      <div className="flex flex-col gap-2 min-w-0 max-w-full">
+        <div className="min-w-0 flex items-end justify-between gap-2">
+          <div className="min-w-0">
+            <p className={cn(caixaTypo.labelSm, 'font-light uppercase tracking-wide text-[10px] sm:text-xs')}>{contextLabel}</p>
+            <CaixaValorDisplay valor={totalGeral} tone="info" size="lg" />
+            <p className={`${caixaTypo.meta} mt-0.5 font-light text-xs`}>
+              {pedidosFiltrados.length} embarque{pedidosFiltrados.length === 1 ? '' : 's'}
+            </p>
+          </div>
         </div>
-        <div className="grid grid-cols-2 gap-1 rounded-2xl bg-muted/50 p-1 w-full max-w-md">
+        <div className="grid grid-cols-2 gap-1 rounded-xl bg-muted/50 p-0.5 w-full max-w-md">
           <button
             type="button"
             onClick={() => setModo('produto')}
-            className={`px-3 py-2.5 rounded-xl ${caixaTypo.tab} font-light transition-colors truncate ${modo === 'produto' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
+            className={`px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg ${caixaTypo.tab} font-light transition-colors truncate text-xs sm:text-sm ${modo === 'produto' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
           >
             Por produto
           </button>
           <button
             type="button"
             onClick={() => setModo('embarque')}
-            className={`px-3 py-2.5 rounded-xl ${caixaTypo.tab} font-light transition-colors truncate ${modo === 'embarque' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
+            className={`px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg ${caixaTypo.tab} font-light transition-colors truncate text-xs sm:text-sm ${modo === 'embarque' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
           >
             Por embarque
           </button>
@@ -273,7 +277,7 @@ export default function ConsultaComprasPedidos({
           ))}
         </P38MobileLineList>
       ) : (
-        <div className="space-y-4 min-w-0 max-w-full overflow-hidden">
+        <div className="space-y-3 min-w-0 max-w-full overflow-hidden">
           {gruposEmbarque.map((grupo) => (
             <ConsultaGrupoEmbarques key={grupo.key} grupo={grupo} onVerPedido={onVerPedido} />
           ))}
