@@ -17,6 +17,7 @@ import BudgetCategoriaDialog from '@/components/budget-previsao/BudgetCategoriaD
 import { salvarCategoriaDespesa } from '@/lib/budgetService';
 import { useToast } from '@/components/ui/use-toast';
 import { useCompactShell } from '@/hooks/use-breakpoint';
+import { lancamentoStackClasses } from '@/components/financeiro/fluxo/LancamentoPickerDialog';
 
 export default function BudgetCategoriaSelect({
   categorias = [],
@@ -26,6 +27,8 @@ export default function BudgetCategoriaSelect({
   onCategoriasChange,
   disabled,
   placeholder = 'Escolher categoria',
+  stackElevated = false,
+  stackLevel = 1,
 }) {
   const [open, setOpen] = useState(false);
   const [busca, setBusca] = useState('');
@@ -33,6 +36,8 @@ export default function BudgetCategoriaSelect({
   const [salvandoCategoria, setSalvandoCategoria] = useState(false);
   const { toast } = useToast();
   const compact = useCompactShell();
+  const stack = lancamentoStackClasses(stackElevated ? stackLevel : 0);
+  const dialogStackLevel = stackElevated ? stackLevel + 1 : 0;
 
   const selecionada = useMemo(
     () => categorias.find((c) => c.id === value) || null,
@@ -152,8 +157,16 @@ export default function BudgetCategoriaSelect({
               setOpen(v);
               if (!v) setBusca('');
             }}
+            repositionInputs={false}
+            shouldScaleBackground={false}
           >
-            <DrawerContent className="rounded-t-[28px] border-0 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+            <DrawerContent
+              overlayClassName={stack.overlay}
+              className={cn(
+                'rounded-t-[28px] border-0 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]',
+                stack.content,
+              )}
+            >
               <DrawerHeader className="px-0 pb-2 text-left">
                 <DrawerTitle>Categoria</DrawerTitle>
               </DrawerHeader>
@@ -208,7 +221,10 @@ export default function BudgetCategoriaSelect({
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+          <PopoverContent
+            className={cn('w-[var(--radix-popover-trigger-width)] p-0', stack.content)}
+            align="start"
+          >
             <Command shouldFilter={false}>
               <div className="flex items-center gap-1 border-b px-2">
                 <div className="flex min-w-0 flex-1 items-center gap-2 px-1">
@@ -275,6 +291,8 @@ export default function BudgetCategoriaSelect({
         categoria={categoriaForm}
         onSave={handleSalvarCategoria}
         saving={salvandoCategoria}
+        stackElevated={stackElevated}
+        stackLevel={dialogStackLevel}
       />
     </>
   );

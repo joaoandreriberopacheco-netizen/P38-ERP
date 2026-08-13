@@ -17,6 +17,7 @@ import BudgetModeloDialog from '@/components/budget-previsao/BudgetModeloDialog'
 import { salvarModelo } from '@/lib/budgetService';
 import { useToast } from '@/components/ui/use-toast';
 import { useCompactShell } from '@/hooks/use-breakpoint';
+import { lancamentoStackClasses } from '@/components/financeiro/fluxo/LancamentoPickerDialog';
 
 function labelModelo(modelo) {
   if (!modelo) return '';
@@ -36,6 +37,7 @@ export default function BudgetModeloSelect({
   onCentrosChange,
   disabled,
   placeholder = 'Vincular a um budget',
+  stackElevated = false,
 }) {
   const [open, setOpen] = useState(false);
   const [busca, setBusca] = useState('');
@@ -43,6 +45,7 @@ export default function BudgetModeloSelect({
   const [salvandoModelo, setSalvandoModelo] = useState(false);
   const { toast } = useToast();
   const compact = useCompactShell();
+  const stack = lancamentoStackClasses(stackElevated ? 1 : 0);
 
   const ativos = useMemo(
     () => (modelos || []).filter((m) => m.ativo !== false),
@@ -181,8 +184,16 @@ export default function BudgetModeloSelect({
               setOpen(v);
               if (!v) setBusca('');
             }}
+            repositionInputs={false}
+            shouldScaleBackground={false}
           >
-            <DrawerContent className="rounded-t-[28px] border-0 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+            <DrawerContent
+              overlayClassName={stack.overlay}
+              className={cn(
+                'rounded-t-[28px] border-0 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]',
+                stack.content,
+              )}
+            >
               <DrawerHeader className="px-0 pb-2 text-left">
                 <DrawerTitle>Budget</DrawerTitle>
               </DrawerHeader>
@@ -237,7 +248,10 @@ export default function BudgetModeloSelect({
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+          <PopoverContent
+            className={cn('w-[var(--radix-popover-trigger-width)] p-0', stack.content)}
+            align="start"
+          >
             <Command shouldFilter={false}>
               <div className="flex items-center gap-1 border-b px-2">
                 <div className="flex min-w-0 flex-1 items-center gap-2 px-1">
@@ -315,6 +329,8 @@ export default function BudgetModeloSelect({
         saving={salvandoModelo}
         onCategoriasChange={onCategoriasChange}
         onCentrosChange={onCentrosChange}
+        stackElevated={stackElevated}
+        stackLevel={stackElevated ? 2 : 0}
       />
     </>
   );
