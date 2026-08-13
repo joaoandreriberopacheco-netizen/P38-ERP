@@ -313,6 +313,27 @@ export function deltaMovimentoCaixaSaldo(m) {
   return 0;
 }
 
+/**
+ * PDV: recolhimento/sangria gera Despesa espelhada + MovimentoCaixa.
+ * Se a Despesa foi ignorada (espelhada), o movimento tem de entrar no saldo — senão a saída some.
+ */
+function movimentoCaixaContaNoSaldoPDV(
+  mov,
+  lancamentos,
+  movimentosJaNoFinanceiro,
+  lancamentosEspelhadosEmMov,
+) {
+  if (!movimentosJaNoFinanceiro.has(String(mov.id))) return true;
+  const despesaPar = lancamentos.find(
+    (l) =>
+      l?.referencia_tipo === 'MovimentosCaixa' &&
+      String(l.referencia_id) === String(mov.id) &&
+      l.tipo === 'Despesa',
+  );
+  if (!despesaPar) return false;
+  return lancamentosEspelhadosEmMov.has(String(despesaPar.id));
+}
+
 export function filtrarLancamentosDaConta(conta, todosLancamentos = []) {
   if (!conta) return [];
   if (conta.is_caixa_geral === true) {
@@ -352,7 +373,9 @@ export function calcularSaldoContaFinanceira(conta, todosLancamentos = [], todos
   });
   if (contaUsaRegraCaixaPDV(conta)) {
     movimentos.forEach((m) => {
-      if (movimentosJaNoFinanceiro.has(String(m.id))) return;
+      if (!movimentoCaixaContaNoSaldoPDV(m, lancamentos, movimentosJaNoFinanceiro, lancamentosEspelhadosEmMov)) {
+        return;
+      }
       delta += deltaMovimentoCaixaSaldo(m);
     });
   }
@@ -394,11 +417,12 @@ export function liquidoContaDesdeDataCorte(conta, todosLancamentos = [], todosMo
 
   filtrarMovimentosDaConta(conta.id, todosMovimentos).forEach((m) => {
     if (!contaUsaRegraCaixaPDV(conta)) return;
-    if (movimentosJaNoFinanceiro.has(String(m.id))) return;
     const dataKey = m.created_date ? toLocalDateKey(m.created_date) : null;
-    if (dataKey && dataKey >= dataCorte) {
-      liquido += deltaMovimentoCaixaSaldo(m);
+    if (!dataKey || dataKey < dataCorte) return;
+    if (!movimentoCaixaContaNoSaldoPDV(m, lancamentos, movimentosJaNoFinanceiro, lancamentosEspelhadosEmMov)) {
+      return;
     }
+    liquido += deltaMovimentoCaixaSaldo(m);
   });
 
   return roundToTwoDecimals(liquido);
