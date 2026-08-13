@@ -974,8 +974,8 @@ export function getCustoCompraLiquidoFator1(item = {}) {
 }
 
 /**
- * Persistência canônica: `valor de compra` na BD é o líquido (bruto − desconto + avaria em R$).
- * Incorpora ajustes no `custo_unitario_fator1` e zera desconto para não duplicar na leitura.
+ * Persistência canônica do pedido de compra: valor pago ao fornecedor (bruto − desconto).
+ * Avaria % é custo interno — não entra no pedido nem no total da NF.
  */
 export function normalizePedidoCompraItemCustoLiquidoParaPersist(item = {}) {
   const frete = normalizeNumber(item?.frete_unitario_fator1 ?? item?.custo_frete_unitario, 0);
@@ -985,8 +985,7 @@ export function normalizePedidoCompraItemCustoLiquidoParaPersist(item = {}) {
     item?.desconto_unitario_fator1 ?? item?.valor_desconto_item ?? item?.desconto_unitario,
     0,
   );
-  const avaria = resolveAvariaLinhaCompraFator1(item);
-  const custoLiquidoF1 = roundToTwoDecimals(custoBruto - desconto + avaria);
+  const custoLiquidoF1 = roundToTwoDecimals(custoBruto - desconto);
   const fator = normalizeNumber(item?.fator_aplicado ?? item?.fator_conversao, 1) || 1;
   const custoTotalUnit = roundToTwoDecimals(custoLiquidoF1 + frete + outros);
   const qb = normalizeNumber(item?.quantidade_base, NaN);
@@ -1016,17 +1015,7 @@ export function normalizePedidoCompraItemCustoLiquidoParaPersist(item = {}) {
   };
 }
 
-/** Custo unitário na unidade comercial da linha (líquido + avaria %), alinhado ao que a UI do pedido mostra. */
-export function getCustoUnitarioComercialCompraPedido(item = {}) {
-  const fator = normalizeNumber(item?.fator_conversao, 1) || 1;
-  const custoFinalApres = getCustoFinalApresentacaoItem(item);
-  const avariaApres = roundToTwoDecimals(
-    custoFator1ParaApresentacao(resolveAvariaLinhaCompraFator1(item), fator),
-  );
-  return roundToTwoDecimals(custoFinalApres + avariaApres);
-}
-
-/** Total da linha: quantidade comercial × preço na mesma unidade (CX, M², …). */
+/** Total da linha: quantidade comercial × preço na mesma unidade (CX, M², …), sem avaria interna. */
 export function calcTotalItemCompraPedido(item = {}) {
   const qb = normalizeNumber(item?.quantidade_base, NaN);
   const qty = normalizeNumber(item?.quantidade, 0);
@@ -1035,12 +1024,11 @@ export function calcTotalItemCompraPedido(item = {}) {
 
   const custoF1 = normalizeNumber(item?.custo_unitario, 0);
   const descF1 = normalizeNumber(item?.valor_desconto_item, 0);
-  const avariaF1 = resolveAvariaLinhaCompraFator1(item);
-  const custoLiquidoF1 = custoF1 - descF1 + avariaF1;
+  const custoLiquidoF1 = custoF1 - descF1;
   const totalViaBase = () => roundToTwoDecimals(qBase * custoLiquidoF1);
 
   if (qty > 0) {
-    const unitComercial = getCustoUnitarioComercialCompraPedido(item);
+    const unitComercial = getCustoFinalApresentacaoItem(item);
     const custoApres = getCustoApresentacaoItem(item);
 
     // Embalagem (CX/PAC…): qtd comercial × preço/embalagem — evita arredondar fator-1 antes do produto.

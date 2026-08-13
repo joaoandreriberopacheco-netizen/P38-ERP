@@ -26,7 +26,6 @@ import {
   getCustoApresentacaoItem,
   getDescontoApresentacaoItem,
   getCustoFinalApresentacaoItem,
-  getCustoUnitarioComercialCompraPedido,
   getDescontoPctApresentacaoItem,
   isItemAcrescimoCompra,
   applyItemDescontoPctApresentacao,
@@ -185,7 +184,6 @@ export default function MobileProductSelector({
         desconto_pct_item: descontoGlobalPct !== 0
           ? Math.abs(descontoGlobalPct)
           : resolveDescontoPctCompraProduto(product, custoF1),
-        avaria_pct_item: Number(product.avaria_percentual) || 0,
       },
       product,
       selectedUnit,
@@ -812,36 +810,16 @@ export default function MobileProductSelector({
             );
           })()}
 
-          {/* Custo líquido + avaria + total */}
+          {/* Custo líquido (desconto/acréscimo) — avaria % é interna, fora do pedido ao fornecedor */}
           {(() => {
             const liquido = getCustoFinalApresentacaoItem(editingItem);
-            const unitComercial = getCustoUnitarioComercialCompraPedido(editingItem);
-            const avariaPct = Number(editingItem?.avaria_pct_item) || 0;
-            const avariaValor = roundToTwoDecimals(Math.max(0, unitComercial - liquido));
             const isAcrescimo = isItemAcrescimoCompra(editingItem);
-            const temDesconto = (parseFloat(editingItem?.valor_desconto_item) || 0) !== 0;
-            return (
-              <div className="space-y-2 px-1 text-sm">
-                {temDesconto ? (
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Custo {isAcrescimo ? 'com acréscimo' : 'líquido'}</span>
-                    <span className={`font-semibold ${isAcrescimo ? 'text-red-600 dark:text-red-400' : 'text-emerald-700 dark:text-emerald-400'}`}>{formatCurrency(liquido)}</span>
-                  </div>
-                ) : null}
-                {avariaPct > 0 && avariaValor > 0 ? (
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Avaria ({avariaPct}%)</span>
-                    <span className="font-semibold text-amber-700 dark:text-amber-400">+{formatCurrency(avariaValor)}</span>
-                  </div>
-                ) : null}
-                {avariaPct > 0 && avariaValor > 0 ? (
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Custo unitário ({editingItem.unidade_medida})</span>
-                    <span className="font-semibold text-foreground">{formatCurrency(unitComercial)}</span>
-                  </div>
-                ) : null}
+            return (parseFloat(editingItem?.valor_desconto_item) || 0) !== 0 ? (
+              <div className="flex justify-between items-center text-sm px-1">
+                <span className="text-muted-foreground">Custo {isAcrescimo ? 'com acréscimo' : 'líquido'}</span>
+                <span className={`font-semibold ${isAcrescimo ? 'text-red-600 dark:text-red-400' : 'text-emerald-700 dark:text-emerald-400'}`}>{formatCurrency(liquido)}</span>
               </div>
-            );
+            ) : null;
           })()}
 
           <div className="p-3 bg-muted rounded-lg flex justify-between items-center">
