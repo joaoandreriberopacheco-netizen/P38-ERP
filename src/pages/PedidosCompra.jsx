@@ -994,7 +994,7 @@ export default function PedidosCompraPage() {
           </p>
           {activeView === 'consulta' ? (
             <p className="text-sm leading-normal text-foreground/85 font-din-1451">
-              {pedidosConsulta.length} embarque{pedidosConsulta.length === 1 ? '' : 's'} pendentes no período
+              {pedidosConsulta.length} embarque{pedidosConsulta.length === 1 ? '' : 's'} no período
             </p>
           ) : (
             <>
@@ -1077,7 +1077,7 @@ export default function PedidosCompraPage() {
           pedidosFiltrados={pedidosConsulta}
           onVerPedido={handleOpenPedido}
           contextLabel="Resumo do período"
-          emptyMessage="Nenhum embarque pendente no período selecionado"
+          emptyMessage="Nenhum embarque no período selecionado"
         />
       )}
 

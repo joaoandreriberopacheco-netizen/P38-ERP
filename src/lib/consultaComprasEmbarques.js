@@ -17,32 +17,36 @@ function hasLinkedItems(embarque) {
   );
 }
 
-function buildLinhaConsultaPendente(pedido, pedidoItem, quantidadePendente, sqlLine = null) {
+function buildLinhaConsultaItem(pedido, pedidoItem, quantidade, sqlLine = null) {
   const merged = sqlLine ? { ...pedidoItem, ...sqlLine } : { ...(pedidoItem || {}) };
   const exib = getItemCompraExibicaoVitrine(merged);
   const lineTotalFull = getTotalLinhaPedidoCompra(pedidoItem || merged);
-  const qtyRef = Number(pedidoItem?.quantidade) || Number(exib.quantidade) || quantidadePendente || 1;
-  const valorPendente = qtyRef > 0
-    ? roundToTwoDecimals((quantidadePendente / qtyRef) * lineTotalFull)
+  const qtyRef = Number(pedidoItem?.quantidade) || Number(exib.quantidade) || quantidade || 1;
+  const valorLinha = qtyRef > 0
+    ? roundToTwoDecimals((quantidade / qtyRef) * lineTotalFull)
     : lineTotalFull;
 
   return {
     produto_id: pedidoItem?.produto_id || sqlLine?.produto_id,
     produto_nome: pedidoItem?.produto_nome || sqlLine?.produto_nome || 'Produto',
-    quantidade: quantidadePendente,
+    quantidade,
     quantidade_pedida: qtyRef,
     unidade_medida: exib.unidade_medida || pedidoItem?.unidade_medida || 'UN',
     fator_conversao: exib.fator_conversao,
     custo_unitario: pedidoItem?.custo_unitario,
     custo_final_unitario: pedidoItem?.custo_final_unitario,
-    total: valorPendente,
-    valor_total_item: valorPendente,
+    total: valorLinha,
+    valor_total_item: valorLinha,
     preco_unitario: exib.preco_unitario,
   };
 }
 
-/** Itens ainda pendentes de recebimento num card de embarque (fonte: linhas SQL EmbarqueItem). */
-export function buildConsultaItensPendentes(card = {}) {
+/**
+ * Metodologia consulta por embarque (EmbarqueItem SQL):
+ * - Embarque real: o que veio / está neste despacho (recebido; senão embarcado).
+ * - Necessidade: o que ainda falta vir.
+ */
+export function buildConsultaItensEmbarque(card = {}) {
   const pedido = card;
   const embarque = card._embarque;
   const ehNecessidade = card._is_necessidade || isNecessidadeRenderizada(embarque);
@@ -56,7 +60,7 @@ export function buildConsultaItensPendentes(card = {}) {
           || resolveEmbarqueQuantidadeComercial(sqlLine, 'pedida')
           || 0;
         if (qtyPend <= 0) return null;
-        return buildLinhaConsultaPendente(pedido, pedidoItem, qtyPend, sqlLine);
+        return buildLinhaConsultaItem(pedido, pedidoItem, qtyPend, sqlLine);
       })
       .filter(Boolean);
   }
@@ -65,11 +69,11 @@ export function buildConsultaItensPendentes(card = {}) {
     return getEmbarqueItensLinhas(embarque)
       .map((sqlLine) => {
         const pedidoItem = (pedido.itens || []).find((pi) => pi.produto_id === sqlLine.produto_id);
-        const qtyEmb = resolveEmbarqueQuantidadeComercial(sqlLine, 'embarcada');
         const qtyRec = resolveEmbarqueQuantidadeComercial(sqlLine, 'recebida');
-        const qtyPend = Math.max(0, qtyEmb - qtyRec);
-        if (qtyPend <= 0) return null;
-        return buildLinhaConsultaPendente(pedido, pedidoItem, qtyPend, sqlLine);
+        const qtyEmb = resolveEmbarqueQuantidadeComercial(sqlLine, 'embarcada');
+        const qtyMostrar = qtyRec > 0 ? qtyRec : qtyEmb;
+        if (qtyMostrar <= 0) return null;
+        return buildLinhaConsultaItem(pedido, pedidoItem, qtyMostrar, sqlLine);
       })
       .filter(Boolean);
   }
@@ -83,27 +87,35 @@ export function buildConsultaItensPendentes(card = {}) {
 
   return (pedido.itens || [])
     .map((pedidoItem) => {
-      const qtyPend = Number(pedidoItem.quantidade) || 0;
-      if (qtyPend <= 0) return null;
-      return buildLinhaConsultaPendente(pedido, pedidoItem, qtyPend);
+      const qty = Number(pedidoItem.quantidade) || 0;
+      if (qty <= 0) return null;
+      return buildLinhaConsultaItem(pedido, pedidoItem, qty);
     })
     .filter(Boolean);
 }
 
-export function calcConsultaValorPendenteEmbarque(card, itensPendentes) {
-  const itens = itensPendentes || buildConsultaItensPendentes(card);
-  if (!itens.length) return 0;
+/** @deprecated alias */
+export const buildConsultaItensPendentes = buildConsultaItensEmbarque;
+
+export function calcConsultaValorEmbarque(card, itens) {
+  const linhas = itens || buildConsultaItensEmbarque(card);
+  if (!linhas.length) return 0;
   return roundToTwoDecimals(
-    itens.reduce((acc, item) => acc + (Number(item.valor_total_item) || Number(item.total) || 0), 0),
+    linhas.reduce((acc, item) => acc + (Number(item.valor_total_item) || Number(item.total) || 0), 0),
   );
 }
 
+/** @deprecated alias */
+export const calcConsultaValorPendenteEmbarque = calcConsultaValorEmbarque;
+
 export function enrichEmbarqueParaConsulta(card) {
-  const itens = buildConsultaItensPendentes(card);
+  const itens = buildConsultaItensEmbarque(card);
+  const ehNecessidade = card._is_necessidade || isNecessidadeRenderizada(card._embarque);
   return {
     ...card,
     _consulta_itens: itens,
-    _consulta_valor: calcConsultaValorPendenteEmbarque(card, itens),
+    _consulta_valor: calcConsultaValorEmbarque(card, itens),
+    _consulta_papel: ehNecessidade ? 'necessidade' : 'despacho',
   };
 }
 

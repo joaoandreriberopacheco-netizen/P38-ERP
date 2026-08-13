@@ -103,7 +103,7 @@ export default function ConsultaComprasPedidos({
   pedidosFiltrados = [],
   onVerPedido,
   contextLabel = 'Consulta de compras',
-  emptyMessage = 'Nenhum embarque pendente no período selecionado',
+  emptyMessage = 'Nenhum embarque no período selecionado',
 }) {
   const [modo, setModo] = useState('produto');
 
@@ -133,7 +133,7 @@ export default function ConsultaComprasPedidos({
           <p className={cn(caixaTypo.labelSm, 'font-light uppercase tracking-wide')}>{contextLabel}</p>
           <CaixaValorDisplay valor={totalGeral} tone="info" size="lg" />
           <p className={`${caixaTypo.meta} mt-1 font-light`}>
-            {pedidosFiltrados.length} embarque{pedidosFiltrados.length === 1 ? '' : 's'} · só pendências
+            {pedidosFiltrados.length} embarque{pedidosFiltrados.length === 1 ? '' : 's'}
           </p>
         </div>
         <div className="grid grid-cols-2 gap-1 rounded-2xl bg-muted/50 p-1 w-full max-w-md">
@@ -146,10 +146,10 @@ export default function ConsultaComprasPedidos({
           </button>
           <button
             type="button"
-            onClick={() => setModo('pedido')}
-            className={`px-3 py-2.5 rounded-xl ${caixaTypo.tab} font-light transition-colors truncate ${modo === 'pedido' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
+            onClick={() => setModo('embarque')}
+            className={`px-3 py-2.5 rounded-xl ${caixaTypo.tab} font-light transition-colors truncate ${modo === 'embarque' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
           >
-            Por pedido
+            Por embarque
           </button>
         </div>
       </div>
@@ -170,8 +170,9 @@ export default function ConsultaComprasPedidos({
       ) : (
         <div className="space-y-3 min-w-0 max-w-full">
           {embarquesOrdenados.map((card) => {
-            const itensPendentes = getConsultaItens(card);
+            const itensEmbarque = getConsultaItens(card);
             const etaEmbarque = card._embarque?.eta ? formatarSoData(card._embarque.eta) : null;
+            const ehNecessidade = card._consulta_papel === 'necessidade';
             return (
               <div key={card._virtual_key || card.id} className="bg-card rounded-2xl shadow-sm overflow-hidden max-w-full min-w-0">
                 <button
@@ -182,6 +183,9 @@ export default function ConsultaComprasPedidos({
                   <div className="min-w-0 overflow-hidden">
                     <p className={cn(p38Table.mobileLineTitle, 'truncate font-light')}>
                       {card._display_code || card.numero}
+                      {ehNecessidade ? (
+                        <span className="text-muted-foreground font-light normal-case"> · falta vir</span>
+                      ) : null}
                     </p>
                     <p className={cn(p38Table.mobileLineSubtitle, 'truncate font-light mt-0.5')}>
                       {card._display_fornecedor || card.fornecedor_nome || 'Fornecedor não informado'}
@@ -203,7 +207,7 @@ export default function ConsultaComprasPedidos({
                   </div>
                 </button>
                 <P38MobileLineList allViewports className="rounded-none border-0 max-w-full overflow-hidden">
-                  {itensPendentes.map((item, idx) => {
+                  {itensEmbarque.map((item, idx) => {
                     const exib = getItemCompraExibicaoVitrine(item);
                     return (
                       <ConsultaProdutoRow
