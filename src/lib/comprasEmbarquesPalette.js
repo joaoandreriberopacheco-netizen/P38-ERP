@@ -14,7 +14,7 @@ export const COMPRAS_CTA =
 /** Pills alinhados a STATUS_CONFIG em ListaPedidosCompra.jsx */
 export const COMPRAS_PILL = {
   success: 'bg-lime-50 dark:bg-lime-900/30 text-lime-700 dark:text-lime-300',
-  info: 'bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300',
+  info: 'bg-cyan-50 dark:bg-cyan-950/30 text-cyan-700 dark:text-cyan-500',
   warning: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
   danger: 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300',
   muted: 'bg-muted/80 text-muted-foreground',
@@ -23,7 +23,7 @@ export const COMPRAS_PILL = {
 export function comprasAccentBorderClass(tone) {
   if (tone === 'danger') return 'border-l-red-500 dark:border-l-red-400';
   if (tone === 'warning') return 'border-l-amber-500 dark:border-l-amber-400';
-  if (tone === 'info') return 'border-l-cyan-500 dark:border-l-cyan-400';
+  if (tone === 'info') return 'border-l-cyan-600 dark:border-l-cyan-600/55';
   if (tone === 'muted') return 'border-l-transparent';
   return 'border-l-lime-400 dark:border-l-lime-400';
 }

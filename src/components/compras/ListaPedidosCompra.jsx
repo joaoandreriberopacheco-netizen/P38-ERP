@@ -46,7 +46,7 @@ const STATUS_CONFIG = {
   'Aguardando Liberação Financeira': { dot: 'bg-amber-400 dark:bg-amber-400', pill: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
   'Aguardando Liberação': { dot: 'bg-amber-400 dark:bg-amber-400', pill: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
   'Aprovado': { dot: 'bg-lime-400 dark:bg-lime-400', pill: 'bg-lime-50 dark:bg-lime-900/30 text-lime-700 dark:text-lime-300' },
-  'Despachado': { dot: 'bg-cyan-400 dark:bg-cyan-400', pill: 'bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300' },
+  'Despachado': { dot: 'bg-cyan-600 dark:bg-cyan-600/70', pill: 'bg-cyan-50 dark:bg-cyan-950/30 text-cyan-700 dark:text-cyan-500' },
   'Concluído': { dot: 'bg-emerald-500 dark:bg-emerald-500', pill: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
   'Cancelado': { dot: 'bg-rose-400 dark:bg-rose-400', pill: 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300' },
 };
@@ -176,6 +176,8 @@ function PedidoMobileLine({ pedido, onEdit, onDelete, selecionado, desabilitadoS
     <>
       <P38MobileLine
         striped={striped}
+        thinAccent
+        comfortable
         accent={p38AccentKeyFromTone(accent)}
         onClick={() => {
           if (modoSelecao) { if (!desabilitadoSelecao) onToggleSelecao?.(pedido); return; }
@@ -183,7 +185,7 @@ function PedidoMobileLine({ pedido, onEdit, onDelete, selecionado, desabilitadoS
         }}
         title={
           <span className="inline-flex items-center gap-1.5 min-w-0">
-            <StatusLed displayStatus={displayStatus} fallbackStatus={pedido.status} className="w-2 h-2 mt-0" />
+            <StatusLed displayStatus={displayStatus} fallbackStatus={pedido.status} className="w-1.5 h-1.5 mt-0" />
             <span className="truncate">{codigo}</span>
           </span>
         }
@@ -388,7 +390,7 @@ function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleS
       }, 0);
 
   return (
-    <div className={`w-full space-y-2 font-din-1451 ${className}`}>
+    <div className={`w-full space-y-3 font-din-1451 ${className}`}>
       <button onClick={() => setOpen(o => !o)} className="w-full min-w-0 flex items-center justify-between border-b border-border/50 dark:border-white/10 px-1 py-2 gap-2 group">
         <p className="text-sm tablet-landscape:text-base font-bold uppercase tracking-wide text-foreground/80 leading-normal truncate min-w-0 flex-1">
           {label}
@@ -400,7 +402,7 @@ function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleS
       </button>
       {open && (
         <>
-          <P38MobileLineList className="desktop-layout:hidden">
+          <P38MobileLineList className="desktop-layout:hidden [&>*:not(:last-child)]:mb-1">
             {pedidos.map((p, index) => (
               <PedidoMobileLine
                 key={p._virtual_key || p.id}
@@ -454,7 +456,7 @@ export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, 
   }
 
   return (
-    <div className="space-y-3 font-din-1451">
+    <div className="space-y-4 font-din-1451">
       {grupos.map(({ key, label, pedidos, _total_eta }, index) => {
         const previousLabel = grupos[index - 1]?.label || '';
         const isSpecialTransition = (

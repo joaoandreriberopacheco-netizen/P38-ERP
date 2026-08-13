@@ -30,6 +30,16 @@ export function P38StatusDot({ tone = 'success', className }) {
 }
 
 /** Linha compacta para listas mobile — inspirada no Relatório de Margem. */
+const COMFORTABLE_LINE = 'py-4 tablet-portrait:py-5 min-h-[68px] tablet-portrait:min-h-[74px]';
+const COMFORTABLE_TITLE =
+  'font-din-1451 font-light text-base sm:text-lg tablet-portrait:text-xl uppercase tracking-wide text-foreground leading-relaxed line-clamp-2 break-words';
+const COMFORTABLE_SUBTITLE =
+  'text-xs sm:text-sm tablet-portrait:text-base font-light text-muted-foreground line-clamp-2 break-words mt-1 font-din-1451';
+const COMFORTABLE_META =
+  'text-sm tablet-portrait:text-base normal-case tracking-normal text-muted-foreground font-light font-din-1451';
+const COMFORTABLE_VALUE =
+  'font-light text-base sm:text-lg tablet-portrait:text-xl text-foreground text-right tabular-nums font-din-1451 whitespace-nowrap';
+
 export function P38MobileLine({
   as: Component = 'div',
   onClick,
@@ -41,6 +51,7 @@ export function P38MobileLine({
   trailing,
   accent = 'default',
   thinAccent = false,
+  comfortable = false,
   striped = false,
   className,
   children,
@@ -48,6 +59,7 @@ export function P38MobileLine({
 }) {
   const rowClass = cn(
     thinAccent ? p38Table.mobileLineThin : p38Table.mobileLine,
+    comfortable && COMFORTABLE_LINE,
     ACCENT_BORDER[accent] ?? ACCENT_BORDER.default,
     striped && 'bg-secondary/15 dark:bg-secondary/20',
     onClick && p38Table.mobileLineInteractive,
@@ -64,19 +76,24 @@ export function P38MobileLine({
 
   return (
     <Component
-      className={cn(rowClass, 'flex items-center gap-2.5', onClick && 'min-h-[56px]')}
+      className={cn(rowClass, 'flex items-center gap-2.5', onClick && (comfortable ? 'min-h-[68px] tablet-portrait:min-h-[74px]' : 'min-h-[56px]'))}
       onClick={onClick}
       {...props}
     >
       <div className="flex-1 min-w-0">
         {title ? (
-          <div className={p38Table.mobileLineTitle}>
+          <div className={comfortable ? COMFORTABLE_TITLE : p38Table.mobileLineTitle}>
             {typeof title === 'string' ? title.toUpperCase() : title}
           </div>
         ) : null}
-        {subtitle ? <div className={p38Table.mobileLineSubtitle}>{subtitle}</div> : null}
+        {subtitle ? (
+          <div className={comfortable ? COMFORTABLE_SUBTITLE : p38Table.mobileLineSubtitle}>{subtitle}</div>
+        ) : null}
         {meta ? (
-          <div className={cn('flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 min-w-0', p38Table.mobileLineMetaInline)}>
+          <div className={cn(
+            'flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5 min-w-0',
+            comfortable ? COMFORTABLE_META : p38Table.mobileLineMetaInline,
+          )}>
             {meta}
           </div>
         ) : null}
@@ -84,7 +101,7 @@ export function P38MobileLine({
       {(value || valueSub || trailing) && (
         <div className="flex items-center gap-1.5 shrink-0 max-w-[44%] sm:max-w-[42%]">
           <div className="flex flex-col items-end gap-0.5 min-w-0 max-w-full overflow-hidden">
-            {value ? <div className={p38Table.mobileLineValue}>{value}</div> : null}
+            {value ? <div className={comfortable ? COMFORTABLE_VALUE : p38Table.mobileLineValue}>{value}</div> : null}
             {valueSub ? <div className={cn(p38Table.mobileLineValueSub, 'truncate max-w-full')}>{valueSub}</div> : null}
           </div>
           {trailing}
@@ -161,7 +178,7 @@ const PILL_TONE_CLASS = {
   success: 'bg-[#4a5240]/10 text-[#4a5240] dark:bg-[#a4ce33]/15 dark:text-[#a4ce33]',
   warning: 'bg-amber-500/10 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400',
   danger: 'bg-red-500/10 text-red-700 dark:bg-red-950/40 dark:text-red-400',
-  info: 'bg-cyan-500/10 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-300',
+  info: 'bg-cyan-500/10 text-cyan-700 dark:bg-cyan-950/30 dark:text-cyan-500',
   muted: 'bg-muted/80 text-muted-foreground',
 };
 
