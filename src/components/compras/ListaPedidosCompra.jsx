@@ -20,6 +20,8 @@ import {
   p38AccentKeyFromTone,
 } from '@/components/ui/p38-mobile-line';
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
+import { cn } from '@/components/utils';
+import { p38Accent } from '@/lib/p38ThemeSurfaces';
 
 const R = (v) => {
   const n = v || 0;
@@ -40,15 +42,15 @@ function pedidoSelecionavelEnvioFinanceiroLote(pedido = {}) {
 }
 
 const STATUS_CONFIG = {
-  'Rascunho': { dot: 'bg-slate-500 dark:bg-slate-400', pill: 'bg-slate-100 dark:bg-slate-800/55 text-slate-700 dark:text-slate-300' },
-  'Aguardando': { dot: 'bg-red-500 dark:bg-red-500', pill: 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300' },
-  'Aguardando Aprovação Financeira': { dot: 'bg-amber-400 dark:bg-amber-400', pill: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
-  'Aguardando Liberação Financeira': { dot: 'bg-amber-400 dark:bg-amber-400', pill: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
-  'Aguardando Liberação': { dot: 'bg-amber-400 dark:bg-amber-400', pill: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
-  'Aprovado': { dot: 'bg-lime-400 dark:bg-lime-400', pill: 'bg-lime-50 dark:bg-lime-900/30 text-lime-700 dark:text-lime-300' },
+  'Rascunho': { dot: 'bg-slate-500 dark:bg-slate-500/60', pill: 'bg-slate-100 dark:bg-slate-800/40 text-slate-700 dark:text-slate-400' },
+  'Aguardando': { dot: 'bg-red-600 dark:bg-red-600/70', pill: 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-500' },
+  'Aguardando Aprovação Financeira': { dot: 'bg-amber-600 dark:bg-amber-600/70', pill: 'bg-amber-50 dark:bg-amber-900/25 text-amber-700 dark:text-amber-500' },
+  'Aguardando Liberação Financeira': { dot: 'bg-amber-600 dark:bg-amber-600/70', pill: 'bg-amber-50 dark:bg-amber-900/25 text-amber-700 dark:text-amber-500' },
+  'Aguardando Liberação': { dot: 'bg-amber-600 dark:bg-amber-600/70', pill: 'bg-amber-50 dark:bg-amber-900/25 text-amber-700 dark:text-amber-500' },
+  'Aprovado': { dot: 'bg-lime-600 dark:bg-[#a4ce33]/70', pill: 'bg-lime-50 dark:bg-lime-900/25 text-lime-700 dark:text-[#a4ce33]/85' },
   'Despachado': { dot: 'bg-cyan-600 dark:bg-cyan-600/70', pill: 'bg-cyan-50 dark:bg-cyan-950/30 text-cyan-700 dark:text-cyan-500' },
-  'Concluído': { dot: 'bg-emerald-500 dark:bg-emerald-500', pill: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
-  'Cancelado': { dot: 'bg-rose-400 dark:bg-rose-400', pill: 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300' },
+  'Concluído': { dot: 'bg-emerald-600 dark:bg-emerald-600/70', pill: 'bg-emerald-50 dark:bg-emerald-900/25 text-emerald-700 dark:text-emerald-500' },
+  'Cancelado': { dot: 'bg-rose-600 dark:bg-rose-600/70', pill: 'bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-500' },
 };
 
 function resolveStatusConfig(displayStatus, fallbackStatus) {
@@ -66,7 +68,7 @@ function StatusLed({ displayStatus, fallbackStatus, blink = false, className = '
   const cfg = resolveStatusConfig(displayStatus, fallbackStatus);
   return (
     <span
-      className={`flex-none w-2.5 h-2.5 rounded-full mt-0.5 ${blink ? 'animate-blink-led' : cfg.dot} ${className}`}
+      className={`flex-none w-1.5 h-1.5 rounded-full mt-0.5 ${blink ? 'animate-blink-led' : cfg.dot} ${className}`}
       aria-hidden
     />
   );
@@ -75,7 +77,7 @@ function StatusLed({ displayStatus, fallbackStatus, blink = false, className = '
 function StatusPill({ displayStatus, fallbackStatus, children, className = '' }) {
   const cfg = resolveStatusConfig(displayStatus, fallbackStatus);
   return (
-    <span className={`inline-flex max-w-full text-sm px-2 py-0.5 rounded-full font-semibold leading-normal whitespace-nowrap truncate ${cfg.pill} ${className}`}>
+    <span className={`inline-flex max-w-full text-sm px-2 py-0.5 rounded-full font-medium leading-normal whitespace-nowrap truncate ${cfg.pill} ${className}`}>
       {children}
     </span>
   );
@@ -133,6 +135,11 @@ function pedidoAccentFromStatus(displayStatus) {
   if (displayStatus === 'Aguardando' || String(displayStatus).includes('Aguard') || String(displayStatus).includes('Aprovação')) return 'warning';
   if (displayStatus === 'Cancelado') return 'danger';
   return 'muted';
+}
+
+function pedidoAccentBorderClass(displayStatus) {
+  const tone = pedidoAccentFromStatus(displayStatus);
+  return p38Accent[tone]?.border || p38Accent.muted.border;
 }
 
 function PedidoMobileLine({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao, onToggleSelecao, modoSelecao, striped }) {
@@ -275,17 +282,20 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
           onEdit(pedido);
         }}
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!modoSelecao) onEdit(pedido); } }}
-        className="group relative w-full min-w-0 box-border bg-muted rounded-2xl shadow-sm hover:shadow-md active:scale-[0.995] transition-all cursor-pointer overflow-hidden font-din-1451 tablet-landscape:min-h-[88px]"
+        className={cn(
+          'group relative w-full min-w-0 box-border bg-muted rounded-2xl shadow-sm hover:shadow-md active:scale-[0.995] transition-all cursor-pointer overflow-hidden font-din-1451 border-l tablet-landscape:min-h-[96px]',
+          pedidoAccentBorderClass(displayStatus),
+        )}
       >
         {/* Seleção overlay */}
         {modoSelecao && selecionado && (
           <div className="absolute inset-0 bg-emerald-500/8 dark:bg-emerald-500/10 rounded-2xl pointer-events-none" />
         )}
 
-        <div className="w-full min-w-0 px-2 py-1.5 tablet-landscape:px-4 tablet-landscape:py-3 overflow-hidden">
+        <div className="w-full min-w-0 px-3 py-3 tablet-landscape:px-5 tablet-landscape:py-4 overflow-hidden">
           {/* Linha principal */}
-          <div className="flex w-full min-w-0 items-center justify-between gap-1.5 overflow-hidden">
-            <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+          <div className="flex w-full min-w-0 items-center justify-between gap-2 overflow-hidden">
+            <div className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden">
               {/* Checkbox modo seleção */}
               {modoSelecao && (
                 <div className={`flex-none w-5 h-5 rounded-md flex items-center justify-center transition-colors ${selecionado ? 'bg-emerald-500 text-white' : 'bg-muted'} ${desabilitadoSelecao ? 'opacity-40' : ''}`}>
@@ -293,18 +303,18 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                 </div>
               )}
 
-              <StatusLed displayStatus={displayStatus} fallbackStatus={pedido.status} />
+              <StatusLed displayStatus={displayStatus} fallbackStatus={pedido.status} className="mt-0" />
 
               <div className="min-w-0 flex-1 overflow-hidden">
                 <div className="flex min-w-0 items-start justify-between gap-2 overflow-hidden">
                   <div className="min-w-0 flex-1 overflow-hidden" style={{maxWidth: '55%'}}>
-                    <span className="block overflow-hidden text-ellipsis whitespace-nowrap text-sm tablet-landscape:text-base font-semibold text-foreground leading-normal">
+                    <span className="block overflow-hidden text-ellipsis whitespace-nowrap text-base tablet-landscape:text-lg font-light text-foreground leading-relaxed">
                       {String(pedido._display_code || pedido.numero || '').replace(' - ', '-').replace(/\s+/g, '')}
                     </span>
-                    <p className="mt-0.5 text-sm tablet-landscape:text-base font-medium text-foreground/85 leading-normal truncate">
+                    <p className="mt-1 text-sm tablet-landscape:text-base font-light text-foreground/85 leading-relaxed truncate">
                       {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
                     </p>
-                    <div className="mt-0.5">
+                    <div className="mt-1">
                       <StatusPill displayStatus={displayStatus} fallbackStatus={pedido.status}>
                         {displayStatusLabel}
                       </StatusPill>
@@ -315,18 +325,18 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
             </div>
 
             {/* Valor + data */}
-            <div className="flex-none text-right shrink-0 flex flex-col justify-center gap-0 pl-1">
-              <p className="text-sm font-bold text-foreground leading-normal whitespace-nowrap overflow-hidden text-ellipsis tabular-nums">
+            <div className="flex-none text-right shrink-0 flex flex-col justify-center gap-0.5 pl-1">
+              <p className="text-base font-light text-foreground leading-relaxed whitespace-nowrap overflow-hidden text-ellipsis tabular-nums">
                 {R(valorExibido)}
               </p>
-              <p className="text-sm text-foreground/80 leading-normal whitespace-nowrap">
+              <p className="text-sm font-light text-foreground/80 leading-relaxed whitespace-nowrap">
                 {pedido._display_date ? formatarDataCurta(pedido._display_date) : '—'}
               </p>
             </div>
           </div>
 
           {/* Linha de metadados */}
-          <div className="mt-1.5 flex flex-col gap-1 text-sm leading-normal">
+          <div className="mt-2 flex flex-col gap-1.5 text-sm font-light leading-relaxed">
             <div className="flex items-center gap-3 flex-wrap">
               <span className="flex items-center gap-1.5 text-foreground/85">
                 <Package2 className="w-3.5 h-3.5 flex-none text-foreground/70" />
@@ -417,7 +427,7 @@ function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleS
               />
             ))}
           </P38MobileLineList>
-          <div className="hidden desktop-layout:block space-y-2">
+          <div className="hidden desktop-layout:block space-y-3">
             {pedidos.map(p => (
               <PedidoCard
                 key={p._virtual_key || p.id}

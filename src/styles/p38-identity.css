@@ -174,15 +174,15 @@
   }
 
   .dark .p38-line--success {
-    border-left-color: hsl(var(--p38-accent-lime));
+    border-left-color: rgb(164 206 51 / 0.55);
   }
 
   .p38-line--warning {
-    @apply border-l-amber-500 dark:border-l-amber-400;
+    @apply border-l-amber-600 dark:border-l-amber-600/55;
   }
 
   .p38-line--danger {
-    @apply border-l-red-500 dark:border-l-red-400;
+    @apply border-l-red-600 dark:border-l-red-600/55;
   }
 
   .p38-line--info {
@@ -264,15 +264,15 @@
   }
 
   .dark .p38-dot {
-    background-color: hsl(var(--p38-accent-lime));
+    background-color: rgb(164 206 51 / 0.7);
   }
 
   .p38-dot--warning {
-    @apply bg-amber-500 dark:bg-amber-400;
+    @apply bg-amber-600 dark:bg-amber-600/70;
   }
 
   .p38-dot--danger {
-    @apply bg-red-500 dark:bg-red-400;
+    @apply bg-red-600 dark:bg-red-600/70;
   }
 
   .p38-dot--info {

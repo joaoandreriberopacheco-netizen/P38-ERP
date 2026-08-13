@@ -45,21 +45,21 @@ export const P38_THEME = {
   },
 };
 
-/** Acentos semânticos — uso pontual (status, lucro, alertas). */
+/** Acentos semânticos — uso pontual (status, lucro, alertas). Tom suave para leitura prolongada. */
 export const p38Accent = {
   success: {
     solid: '#4a5240',
     solidDark: '#a4ce33',
-    text: 'text-[#4a5240] dark:text-[#a4ce33]',
-    dot: 'bg-[#4a5240] dark:bg-[#a4ce33]',
-    border: 'border-l-[#4a5240] dark:border-l-[#a4ce33]',
+    text: 'text-[#4a5240] dark:text-[#a4ce33]/85',
+    dot: 'bg-[#4a5240] dark:bg-[#a4ce33]/70',
+    border: 'border-l-[#4a5240] dark:border-l-[#a4ce33]/55',
   },
   warning: {
-    solid: '#d97706',
-    solidDark: '#fbbf24',
-    text: 'text-amber-600 dark:text-amber-400',
-    dot: 'bg-amber-500 dark:bg-amber-400',
-    border: 'border-l-amber-500 dark:border-l-amber-400',
+    solid: '#b45309',
+    solidDark: '#d97706',
+    text: 'text-amber-700 dark:text-amber-500',
+    dot: 'bg-amber-600 dark:bg-amber-600/70',
+    border: 'border-l-amber-600 dark:border-l-amber-600/55',
   },
   info: {
     solid: '#0e7490',
@@ -69,15 +69,15 @@ export const p38Accent = {
     border: 'border-l-cyan-600 dark:border-l-cyan-600/55',
   },
   danger: {
-    solid: '#dc2626',
-    solidDark: '#f87171',
-    text: 'text-red-600 dark:text-red-400',
-    dot: 'bg-red-500 dark:bg-red-400',
-    border: 'border-l-red-500 dark:border-l-red-400',
+    solid: '#b91c1c',
+    solidDark: '#dc2626',
+    text: 'text-red-700 dark:text-red-500',
+    dot: 'bg-red-600 dark:bg-red-600/70',
+    border: 'border-l-red-600 dark:border-l-red-600/55',
   },
   muted: {
     text: 'text-muted-foreground',
-    dot: 'bg-muted-foreground/50 dark:bg-muted-foreground/60',
+    dot: 'bg-muted-foreground/45 dark:bg-muted-foreground/50',
     border: 'border-l-border dark:border-l-border',
   },
 };
