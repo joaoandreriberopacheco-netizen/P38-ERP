@@ -1261,7 +1261,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
 
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-card dark:text-foreground overflow-hidden">
+    <div className="fixed inset-0 flex flex-col bg-card dark:text-foreground overflow-hidden font-din-1451 uppercase tracking-wide [&_label]:font-light [&_textarea]:normal-case [&_input[type=date]]:normal-case [&_input[type=number]]:normal-case">
       {/* Alerta de Bloqueio Desktop */}
       {isLocked && <BannerStatusPedido pedido={pedido} isMobile={isPhone} />}
       {/* Header compacto */}
@@ -1271,33 +1271,49 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
           <X className="w-5 h-5" />
         </Button>
         <div className="flex-1 flex items-center justify-between min-w-0">
-          <span className="text-sm font-semibold text-foreground truncate">
+          <span className="text-sm font-light text-foreground truncate">
             {pedido?.numero || 'Novo Pedido'}
           </span>
-          <span className="text-sm text-muted-foreground whitespace-nowrap ml-4">
+          <span className="text-sm font-light text-muted-foreground whitespace-nowrap ml-4 normal-case tabular-nums">
             {formData.itens.length} item(s) • {formatCurrency(valorTotal)}
           </span>
         </div>
-        {pedido?.id && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" title="Relatórios">
-                <Printer className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="dark:bg-muted">
-              <DropdownMenuItem onClick={() => handlePrintReport('pedido')}>
-                Relatório do Pedido
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handlePrintReport('precificacao')}>
-                Análise de Precificação
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handlePrintReport('pendencias')}>
-                Relatório de Pendências
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" title="Mais opções">
+              <MoreVertical className="w-5 h-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="dark:bg-muted min-w-[12rem]">
+            <DropdownMenuItem
+              disabled={!pedido?.id}
+              onClick={() => setAbaPedidoDesktop('pendencias')}
+            >
+              <AlertCircle className="w-4 h-4 mr-2" />
+              Pendências
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={!pedido?.id}
+              onClick={() => setAbaPedidoDesktop('logs')}
+            >
+              <History className="w-4 h-4 mr-2" />
+              Logs
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem disabled={!pedido?.id} onClick={() => handlePrintReport('pedido')}>
+              <Printer className="w-4 h-4 mr-2" />
+              Relatório do Pedido
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled={!pedido?.id} onClick={() => handlePrintReport('precificacao')}>
+              <Printer className="w-4 h-4 mr-2" />
+              Análise de Precificação
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled={!pedido?.id} onClick={() => handlePrintReport('pendencias')}>
+              <Printer className="w-4 h-4 mr-2" />
+              Relatório de Pendências
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
 
       </div>
@@ -1355,21 +1371,15 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
               { value: 'pagamento',    icon: <DollarSign className="w-4 h-4 flex-shrink-0" />, short: 'Fin.', disabled: false },
               { value: 'logistica',    icon: <Ship className="w-4 h-4 flex-shrink-0" />, short: 'Log', disabled: false },
               { value: 'recepcao',     icon: <Package className="w-4 h-4 flex-shrink-0" />, short: 'Rec', disabled: !pedido?.id },
-              { value: 'pendencias',   icon: <AlertCircle className="w-4 h-4 flex-shrink-0" />, short: 'Pend', disabled: !pedido?.id },
-              { value: 'logs',         icon: <History className="w-4 h-4 flex-shrink-0" />, short: 'Logs', disabled: !pedido?.id },
             ].map(tab => (
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
                 disabled={tab.disabled}
-                className="flex-1 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent data-[state=active]:border-teal-500 dark:data-[state=active]:border-teal-400 data-[state=active]:text-teal-600 dark:data-[state=active]:text-teal-300 rounded-none py-2 px-1 text-muted-foreground disabled:opacity-30 transition-colors min-w-0"
+                className="flex-1 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent data-[state=active]:border-teal-500 dark:data-[state=active]:border-teal-400 data-[state=active]:text-teal-600 dark:data-[state=active]:text-teal-300 rounded-none py-2 px-1 text-muted-foreground disabled:opacity-30 transition-colors min-w-0 font-light"
               >
                 {tab.icon}
-                <span className="text-[9px] font-semibold tracking-wider hidden xs:block" style={{display: 'none'}}>{tab.short}</span>
-                <span
-                  className="text-[9px] font-semibold tracking-wider leading-none"
-                  style={{ fontSize: '9px' }}
-                >
+                <span className="text-[10px] font-light tracking-wider leading-none uppercase">
                   {tab.short}
                 </span>
               </TabsTrigger>
@@ -1381,7 +1391,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
               <div className="grid grid-cols-12 gap-x-6 gap-y-6">
                 {/* Fornecedor */}
                 <div className="col-span-12 lg:col-span-6">
-                  <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Fornecedor *</Label>
+                  <Label className="text-sm font-light text-muted-foreground mb-2 block">Fornecedor *</Label>
                   <Select value={formData.fornecedor_id} onValueChange={handleFornecedorChange} disabled={isLocked}>
                     <SelectTrigger className="bg-muted/50 border-0 h-12 text-sm shadow-sm rounded-xl text-foreground">
                       <SelectValue placeholder="Selecione o fornecedor..." />
@@ -1456,7 +1466,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
 
                 {/* Tags */}
                 <div className="col-span-12 lg:col-span-6">
-                  <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Tags</Label>
+                  <Label className="text-sm font-light text-muted-foreground mb-2 block">Tags</Label>
                   <Input 
                     className="bg-muted/50 border-0 h-12 text-sm shadow-sm rounded-xl text-foreground placeholder:text-muted-foreground" 
                     placeholder="Ex: Urgente, Reposição..."
@@ -1467,7 +1477,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
                 </div>
                 
                 <div className="col-span-12 md:col-span-6 lg:col-span-3">
-                  <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Data do Pedido</Label>
+                  <Label className="text-sm font-light text-muted-foreground mb-2 block">Data do Pedido</Label>
                   <Input
                     type="date"
                     className="bg-muted/50 border-0 h-12 text-sm shadow-sm rounded-xl text-foreground"
@@ -1478,7 +1488,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
                 </div>
 
                 <div className="col-span-12 md:col-span-6 lg:col-span-3">
-                  <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Previsão de Entrega</Label>
+                  <Label className="text-sm font-light text-muted-foreground mb-2 block">Previsão de Entrega</Label>
                   <Input
                     type="date"
                     className="bg-muted/50 border-0 h-12 text-sm shadow-sm rounded-xl text-foreground"
@@ -1490,7 +1500,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
 
                 {/* Observação em linha inteira */}
                 <div className="col-span-12">
-                  <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Observações</Label>
+                  <Label className="text-sm font-light text-muted-foreground mb-2 block">Observações</Label>
                   <Textarea 
                     className="bg-muted/50 border-0 shadow-sm resize-none rounded-xl text-foreground placeholder:text-muted-foreground" 
                     placeholder="Observações do pedido..."
@@ -1528,7 +1538,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
           <TabsContent value="pagamento" className="mt-0 space-y-8">
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Forma de Pagamento *</Label>
+                <Label className="text-sm font-light text-muted-foreground mb-2 block">Forma de Pagamento *</Label>
                 <Select value={formData.forma_pagamento_compra} onValueChange={v => handleChange('forma_pagamento_compra', v)}>
                   <SelectTrigger className="bg-muted/50 border-0 h-12 shadow-sm rounded-xl">
                     <SelectValue />
@@ -1541,7 +1551,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
               </div>
               
               <div>
-                <Label className="text-sm font-semibold text-muted-foreground mb-2 block">
+                <Label className="text-sm font-light text-muted-foreground mb-2 block">
                   {formData.forma_pagamento_compra === 'À Vista' ? 'Data de Pagamento' : 'Primeiro Vencimento'}
                 </Label>
                 <Input 
@@ -1557,7 +1567,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
             {formData.forma_pagamento_compra === 'Parcelado' && (
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Número de Parcelas</Label>
+                  <Label className="text-sm font-light text-muted-foreground mb-2 block">Número de Parcelas</Label>
                   <Input 
                     type="number" 
                     min="1"
@@ -1568,7 +1578,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
                   />
                 </div>
                 <div>
-                  <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Intervalo entre Parcelas (dias)</Label>
+                  <Label className="text-sm font-light text-muted-foreground mb-2 block">Intervalo entre Parcelas (dias)</Label>
                   <Input 
                     type="number" 
                     min="1"
@@ -1582,7 +1592,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
             )}
 
             <div>
-              <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Observações de Pagamento</Label>
+              <Label className="text-sm font-light text-muted-foreground mb-2 block">Observações de Pagamento</Label>
               <Textarea 
                 className="bg-muted/50 border-0 shadow-sm resize-none rounded-xl" 
                 placeholder="Ex: Pagar via PIX, transferência, observações sobre o pagamento..."
@@ -1597,7 +1607,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
             <div className="pt-6 border-t border-border/40 space-y-6">
               <div className="text-right">
                 <span className="text-xs text-muted-foreground block mb-0.5">Total do Pedido</span>
-                <span className="text-2xl font-bold text-foreground dark:text-foreground">{formatCurrency(valorTotal)}</span>
+                <span className="text-2xl font-light text-foreground dark:text-foreground">{formatCurrency(valorTotal)}</span>
               </div>
 
               {pedido?.id && (
@@ -1795,7 +1805,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
            </DialogHeader>
            <div className="space-y-4">
              <div>
-               <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Nome *</Label>
+               <Label className="text-sm font-light text-muted-foreground mb-2 block">Nome *</Label>
                <Input
                  placeholder="Nome do fornecedor"
                  value={novoFornecedor.nome}
@@ -1804,7 +1814,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
                  />
                  </div>
                  <div>
-                 <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Email</Label>
+                 <Label className="text-sm font-light text-muted-foreground mb-2 block">Email</Label>
                  <Input
                  placeholder="email@fornecedor.com"
                  value={novoFornecedor.email}
@@ -1813,7 +1823,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
                  />
                  </div>
                  <div>
-                 <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Telefone</Label>
+                 <Label className="text-sm font-light text-muted-foreground mb-2 block">Telefone</Label>
                <Input
                  placeholder="(00) 00000-0000"
                  value={novoFornecedor.telefone}
@@ -1822,7 +1832,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
                  />
                  </div>
                  <div>
-                 <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Endereço</Label>
+                 <Label className="text-sm font-light text-muted-foreground mb-2 block">Endereço</Label>
                  <Input
                  placeholder="Endereço completo"
                  value={novoFornecedor.endereco}
