@@ -1386,6 +1386,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
             ))}
           </TabsList>
 
+          {(abaPedidoDesktop === 'pendencias' || abaPedidoDesktop === 'logs') && (
+            <div className="flex-shrink-0 px-6 py-2 border-b border-border/30 text-sm font-light text-muted-foreground">
+              {abaPedidoDesktop === 'pendencias' ? 'Pendências' : 'Logs'}
+            </div>
+          )}
+
           <div className="flex-1 overflow-y-auto p-6">
             <TabsContent value="dados-gerais" className="mt-0 space-y-6">
               <div className="grid grid-cols-12 gap-x-6 gap-y-6">

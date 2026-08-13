@@ -42,3 +42,26 @@ export function comprasAccentBorderClass(tone) {
   if (tone === 'muted') return p38Accent.muted.border;
   return p38Accent.success.border;
 }
+
+/** Opções de status alinhadas ao filtro em PedidosCompra.jsx / getBorrowedStatus. */
+export const COMPRAS_FILTRO_STATUS_PEDIDO = [
+  { codigo: 'Rascunho', label: 'Rascunho', chip: 'bg-muted text-foreground/90' },
+  { codigo: 'Aguardando Liberação', label: 'Aguard. pagamento', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
+  { codigo: 'Aguardando', label: 'Aguard. embarque', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
+  { codigo: 'Aprovado', label: 'Aprovado', chip: 'bg-lime-50 text-lime-800 dark:bg-lime-900/25 dark:text-[#a4ce33]/85' },
+  { codigo: 'Despachado', label: 'Despachado', chip: 'bg-[#4ECDC4]/15 text-[#1a7a73] dark:bg-[#4ECDC4]/20 dark:text-[#4ECDC4]' },
+  { codigo: 'Concluído', label: 'Concluído', chip: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/25 dark:text-emerald-500' },
+  { codigo: 'Cancelado', label: 'Cancelado', chip: 'bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-500' },
+];
+
+export const COMPRAS_FILTRO_STATUS_RECEBIMENTO = [
+  { codigo: 'Aguardando Embarque', label: 'Sem embarque', chip: 'bg-orange-50 text-orange-800 dark:bg-orange-900/25 dark:text-orange-300' },
+  { codigo: 'Recebido Parcial', label: 'Receb. parcial', chip: 'bg-amber-50 text-amber-800 dark:bg-amber-900/25 dark:text-amber-400' },
+  { codigo: 'Recebido OK', label: 'Recebido OK', chip: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/25 dark:text-emerald-500' },
+  { codigo: 'Com Divergência', label: 'Divergência', chip: 'bg-rose-50 text-rose-800 dark:bg-rose-950/30 dark:text-rose-400' },
+];
+
+export const COMPRAS_FILTRO_STATUS_ALL = [
+  ...COMPRAS_FILTRO_STATUS_PEDIDO,
+  ...COMPRAS_FILTRO_STATUS_RECEBIMENTO,
+];

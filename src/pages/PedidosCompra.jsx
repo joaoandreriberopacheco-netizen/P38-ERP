@@ -20,6 +20,7 @@ import { fetchPedidosCompraGestaoInicial } from '@/lib/fetchPedidosCompraGestao'
 import { carregarProdutosMap } from '@/lib/embarqueVitrineHelpers';
 import { qtyEmbarcadaComercialLinha } from '@/lib/embarqueLogisticaHelpers';
 import { resolveEmbarqueQuantidadeComercial } from '@/lib/embarqueQuantityResolve';
+import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta } from '@/lib/consultaComprasEmbarques';
 import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
@@ -110,7 +111,6 @@ const passaFiltrosEmbarqueCard = (
     statusSel,
     filtroUltimos30Dias,
     filtroSomenteNaoConcluidos,
-    fornecedorSel,
     tagsSel,
     dataInicial,
     dataFinal,
@@ -153,39 +153,11 @@ const passaFiltrosEmbarqueCard = (
     if (!matchPai && !matchEmbarque) return false;
   }
 
-  if (fornecedorSel.length > 0 && !fornecedorSel.includes(card.fornecedor_id)) return false;
   if (tagsSel.length > 0 && !tagsSel.some((t) => (card.tags || []).includes(t))) return false;
   if (dataInicial && (!dataPedido || dataPedido < dataInicial)) return false;
   if (dataFinal && (!dataPedido || dataPedido > dataFinal)) return false;
   if (!etaMatchesFilter(embarque, etaFiltroModo, etaData, etaInicial, etaFinal)) return false;
   return true;
-};
-
-const getConsultaPedidoSortMeta = (pedido, groupBy, filtradosCards) => {
-  if (groupBy === 'fornecedor') {
-    return { value: (pedido.fornecedor_nome || '').toLowerCase(), missing: false };
-  }
-  if (groupBy === 'status') {
-    return { value: (pedido.status || '').toLowerCase(), missing: false };
-  }
-  if (groupBy === 'data_pedido') {
-    const data = pedido.data_emissao || (pedido.created_date ? toLocalDate(pedido.created_date) : '');
-    return { value: data || '0000-00-00', missing: !data };
-  }
-
-  const cards = filtradosCards.filter((card) => card.id === pedido.id);
-  const etaKeys = cards
-    .map((card) => (card._embarque?.eta ? toLocalDate(card._embarque.eta) : null))
-    .filter(Boolean)
-    .sort((a, b) => a.localeCompare(b, 'pt-BR'));
-
-  if (etaKeys.length > 0) {
-    return { value: etaKeys[0], missing: false };
-  }
-
-  const fallbackEta = pedido.data_prevista_entrega
-    || (pedido._embarque_principal?.eta ? toLocalDate(pedido._embarque_principal.eta) : '');
-  return { value: fallbackEta || '', missing: !fallbackEta };
 };
 
 const isSemEtaGrupo = (grupo) => {
@@ -214,23 +186,6 @@ const compareGruposPedidosCompra = (a, b, sortOrder, groupBy) => {
 
   if (sortOrder === 'asc') return String(a.orderValue).localeCompare(String(b.orderValue), 'pt-BR');
   return String(b.orderValue).localeCompare(String(a.orderValue), 'pt-BR');
-};
-
-const comparePedidosConsulta = (a, b, sortOrder, groupBy, filtradosCards) => {
-  const metaA = getConsultaPedidoSortMeta(a, groupBy, filtradosCards);
-  const metaB = getConsultaPedidoSortMeta(b, groupBy, filtradosCards);
-
-  if (metaA.missing && metaB.missing) {
-    return String(a.numero || '').localeCompare(String(b.numero || ''), 'pt-BR');
-  }
-  if (metaA.missing) return groupBy === 'eta_transportadora' ? -1 : 1;
-  if (metaB.missing) return groupBy === 'eta_transportadora' ? 1 : -1;
-
-  const cmp = sortOrder === 'asc'
-    ? String(metaA.value).localeCompare(String(metaB.value), 'pt-BR')
-    : String(metaB.value).localeCompare(String(metaA.value), 'pt-BR');
-  if (cmp !== 0) return cmp;
-  return String(a.numero || '').localeCompare(String(b.numero || ''), 'pt-BR');
 };
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -651,12 +606,10 @@ export default function PedidosCompraPage() {
   const navigate = useNavigate();
   const [pedidos, setPedidos] = useState([]);
   const [embarques, setEmbarques] = useState([]);
-  const [fornecedores, setFornecedores] = useState([]);
   const [search, setSearch] = useState('');
   const [statusSel, setStatusSel] = useState([]);
   const [filtroUltimos30Dias, setFiltroUltimos30Dias] = useState(FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT);
   const [filtroSomenteNaoConcluidos, setFiltroSomenteNaoConcluidos] = useState(FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT);
-  const [fornecedorSel, setFornecedorSel] = useState([]);
   const [tagsSel, setTagsSel] = useState([]);
   const [dataInicial, setDataInicial] = useState('');
   const [dataFinal, setDataFinal] = useState('');
@@ -684,13 +637,7 @@ export default function PedidosCompraPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [gestao, fns] = await Promise.all([
-        fetchPedidosCompraGestaoInicial(base44),
-        base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] }, 'nome', 300).catch((err) => {
-          console.warn('[PedidosCompra] Terceiro.filter falhou — lista de fornecedores vazia:', err?.message || err);
-          return [];
-        }),
-      ]);
+      const gestao = await fetchPedidosCompraGestaoInicial(base44);
 
       const pcs = gestao.pedidos;
       const embarquesHeaders = gestao.embarques;
@@ -698,7 +645,6 @@ export default function PedidosCompraPage() {
       const primeiraPassagem = materializePedidosCompraView(pcs, embarquesHeaders, {});
       setPedidos(primeiraPassagem.pedidosComResumoReal);
       setEmbarques(primeiraPassagem.cardsDeEmbarque);
-      setFornecedores(fns);
       setLoading(false);
 
       const embarquesDb = await hydrateEmbarquesFromSql(base44, embarquesHeaders);
@@ -848,7 +794,6 @@ export default function PedidosCompraPage() {
       statusSel,
       filtroUltimos30Dias,
       filtroSomenteNaoConcluidos,
-      fornecedorSel,
       tagsSel,
       dataInicial,
       dataFinal,
@@ -862,7 +807,6 @@ export default function PedidosCompraPage() {
       statusSel,
       filtroUltimos30Dias,
       filtroSomenteNaoConcluidos,
-      fornecedorSel,
       tagsSel,
       dataInicial,
       dataFinal,
@@ -1016,27 +960,29 @@ export default function PedidosCompraPage() {
     (etaFiltroModo === 'entre' && (etaInicial || etaFinal)) ||
     (etaFiltroModo === 'personalizado' && (etaInicial || etaFinal))
   );
-  const hasActiveFilters = search || fornecedorSel.length > 0 || tagsSel.length > 0 || dataInicial || dataFinal || hasEtaFilter || statusSel.length > 0
+  const hasActiveFilters = search || tagsSel.length > 0 || dataInicial || dataFinal || hasEtaFilter || statusSel.length > 0
     || filtroUltimos30Dias !== FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT
     || filtroSomenteNaoConcluidos !== FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT;
 
   const pedidosConsulta = useMemo(() => {
-    const idsVisiveis = new Set(filtrados.map((card) => card.id));
+    const keysVisiveis = new Set(filtrados.map((card) => card._virtual_key));
 
     if (search) {
       const searchLower = search.toLowerCase();
       filtradosSemBusca.forEach((card) => {
-        if (idsVisiveis.has(card.id)) return;
+        if (keysVisiveis.has(card._virtual_key)) return;
         if (cardMatchesSearch(card, searchLower, { includeProdutos: true })) {
-          idsVisiveis.add(card.id);
+          keysVisiveis.add(card._virtual_key);
         }
       });
     }
 
-    return pedidos
-      .filter((p) => idsVisiveis.has(p.id))
-      .sort((a, b) => comparePedidosConsulta(a, b, sortOrder, groupBy, filtrados));
-  }, [filtrados, filtradosSemBusca, pedidos, search, sortOrder, groupBy]);
+    return embarques
+      .filter((card) => keysVisiveis.has(card._virtual_key))
+      .map(enrichEmbarqueParaConsulta)
+      .filter((card) => (card._consulta_itens || []).length > 0)
+      .sort((a, b) => compareEmbarquesConsulta(a, b, sortOrder, groupBy));
+  }, [filtrados, filtradosSemBusca, embarques, search, sortOrder, groupBy]);
 
   return (
     <div className={cn('w-full min-w-0 max-w-full overflow-x-hidden space-y-4 font-din-1451 bg-background', isPhone && 'pb-[var(--p38-scroll-pad-below-nav)]')}>
@@ -1048,7 +994,7 @@ export default function PedidosCompraPage() {
           </p>
           {activeView === 'consulta' ? (
             <p className="text-sm leading-normal text-foreground/85 font-din-1451">
-              {pedidosConsulta.length} pedido{pedidosConsulta.length === 1 ? '' : 's'} no período
+              {pedidosConsulta.length} embarque{pedidosConsulta.length === 1 ? '' : 's'} pendentes no período
             </p>
           ) : (
             <>
@@ -1089,7 +1035,6 @@ export default function PedidosCompraPage() {
         filtroUltimos30Dias={filtroUltimos30Dias} onFiltroUltimos30Dias={setFiltroUltimos30Dias}
         filtroSomenteNaoConcluidos={filtroSomenteNaoConcluidos} onFiltroSomenteNaoConcluidos={setFiltroSomenteNaoConcluidos}
         statusSel={statusSel} onStatusSel={setStatusSel}
-        fornecedores={fornecedores} fornecedorSel={fornecedorSel} onFornecedorSel={setFornecedorSel}
         todasTags={todasTags} tagsSel={tagsSel} onTagsSel={setTagsSel}
         dataInicial={dataInicial} onDataInicial={setDataInicial}
         dataFinal={dataFinal} onDataFinal={setDataFinal}
@@ -1103,7 +1048,6 @@ export default function PedidosCompraPage() {
           setStatusSel([]);
           setFiltroUltimos30Dias(FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT);
           setFiltroSomenteNaoConcluidos(FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT);
-          setFornecedorSel([]);
           setTagsSel([]);
           setDataInicial('');
           setDataFinal('');
@@ -1133,7 +1077,7 @@ export default function PedidosCompraPage() {
           pedidosFiltrados={pedidosConsulta}
           onVerPedido={handleOpenPedido}
           contextLabel="Resumo do período"
-          emptyMessage="Nenhum pedido de compra no período selecionado"
+          emptyMessage="Nenhum embarque pendente no período selecionado"
         />
       )}
 
@@ -1158,7 +1102,7 @@ export default function PedidosCompraPage() {
         quantidadeSelecionados={selecionadosIds.length}
         enviandoLote={enviandoLote}
         pedidos={filtrados}
-        filtrosDesc={`Busca: ${search || 'todas'} · Status: ${statusSel.join(', ') || 'todos'} · Fornecedores: ${fornecedorSel.length || 0} · Tags: ${tagsSel.length || 0} · Período: ${dataInicial || '-'} até ${dataFinal || '-'} · ETA: ${etaFiltroModo || 'todos'}${etaFiltroModo === 'antes' || etaFiltroModo === 'depois' ? ` (${etaData || '-'})` : ''}${etaFiltroModo === 'entre' || etaFiltroModo === 'personalizado' ? ` (${etaInicial || '-'} até ${etaFinal || '-'})` : ''}`}
+        filtrosDesc={`Busca: ${search || 'todas'} · Status: ${statusSel.join(', ') || 'todos'} · Tags: ${tagsSel.length || 0} · Período: ${dataInicial || '-'} até ${dataFinal || '-'} · ETA: ${etaFiltroModo || 'todos'}${etaFiltroModo === 'antes' || etaFiltroModo === 'depois' ? ` (${etaData || '-'})` : ''}${etaFiltroModo === 'entre' || etaFiltroModo === 'personalizado' ? ` (${etaInicial || '-'} até ${etaFinal || '-'})` : ''}`}
         kpis={{
           totalPedidos: filtrados.length,
           totalGeral: valorTotal,
