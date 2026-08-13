@@ -1,25 +1,38 @@
 /**
- * Paleta da lista de Embarques (ListaPedidosCompra) — ciano nos CTAs/Despachado,
- * lima em Aprovado, âmbar em pendências financeiras, vermelho em Aguardando.
- * Composição mobile partilha superfícies P38_FIELD_SURFACE / P38_KPI_SHELL.
+ * Paleta da lista de Embarques (ListaPedidosCompra) — ciano Sea Green em Despachado,
+ * laranja terracota em Aguardando, lima em Aprovado.
  */
 
-import { p38Accent } from '@/lib/p38ThemeSurfaces';
+import { p38Accent, P38_AGUARDANDO_ORANGE, P38_CYAN_SEA } from '@/lib/p38ThemeSurfaces';
+
+export { P38_CYAN_SEA, P38_AGUARDANDO_ORANGE };
 
 export const COMPRAS_CHIP_ACTIVE =
-  'bg-cyan-50 text-cyan-800 ring-1 ring-cyan-500/25 dark:bg-cyan-950/40 dark:text-cyan-300';
+  'bg-[#4ECDC4]/12 text-[#1a7a73] ring-1 ring-[#4ECDC4]/25 dark:bg-[#4ECDC4]/15 dark:text-[#4ECDC4]';
 export const COMPRAS_CHIP_INACTIVE =
   'bg-secondary/80 text-muted-foreground dark:bg-[#26262e] dark:text-foreground/80';
 export const COMPRAS_CTA =
-  'bg-cyan-600 hover:bg-cyan-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-400 dark:text-[#1f1d22]';
+  'bg-[#3bbdb4] hover:bg-[#34a9a1] text-white dark:bg-[#4ECDC4] dark:hover:bg-[#5fd9d0] dark:text-[#1f1d22]';
 
 /** Pills alinhados a STATUS_CONFIG em ListaPedidosCompra.jsx */
 export const COMPRAS_PILL = {
   success: 'bg-lime-50 dark:bg-lime-900/25 text-lime-700 dark:text-[#a4ce33]/85',
-  info: 'bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300',
-  warning: 'bg-amber-50 dark:bg-amber-900/25 text-amber-700 dark:text-amber-500',
+  info: 'bg-[#4ECDC4]/12 text-[#1a7a73] dark:bg-[#4ECDC4]/15 dark:text-[#4ECDC4]',
+  warning: 'bg-[#D96F55]/12 text-[#9c4228] dark:bg-[#D96F55]/15 dark:text-[#D96F55]',
   danger: 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-500',
   muted: 'bg-muted/80 text-muted-foreground',
+};
+
+/** LED + pill por status de embarque (ListaPedidosCompra). */
+export const COMPRAS_STATUS_STYLE = {
+  aguardando: {
+    dot: 'bg-[#D96F55] dark:bg-[#D96F55]',
+    pill: COMPRAS_PILL.warning,
+  },
+  despachado: {
+    dot: 'bg-[#4ECDC4] dark:bg-[#4ECDC4]',
+    pill: COMPRAS_PILL.info,
+  },
 };
 
 export function comprasAccentBorderClass(tone) {

@@ -178,7 +178,7 @@
   }
 
   .p38-line--warning {
-    @apply border-l-amber-600 dark:border-l-amber-600/55;
+    border-left-color: #D96F55;
   }
 
   .p38-line--danger {
@@ -186,7 +186,7 @@
   }
 
   .p38-line--info {
-    @apply border-l-cyan-500 dark:border-l-cyan-400;
+    border-left-color: #4ECDC4;
   }
 
   /* Contentor lista mobile (oculto em md+ quando há tabela desktop) */
@@ -268,7 +268,7 @@
   }
 
   .p38-dot--warning {
-    @apply bg-amber-600 dark:bg-amber-600/70;
+    background-color: #D96F55;
   }
 
   .p38-dot--danger {
@@ -276,7 +276,7 @@
   }
 
   .p38-dot--info {
-    @apply bg-cyan-500 dark:bg-cyan-400;
+    background-color: #4ECDC4;
   }
 
   .p38-dot--muted {

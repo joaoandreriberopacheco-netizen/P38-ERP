@@ -22,6 +22,7 @@ import {
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 import { cn } from '@/components/utils';
 import { p38Accent } from '@/lib/p38ThemeSurfaces';
+import { COMPRAS_STATUS_STYLE } from '@/lib/comprasEmbarquesPalette';
 
 const R = (v) => {
   const n = v || 0;
@@ -43,12 +44,12 @@ function pedidoSelecionavelEnvioFinanceiroLote(pedido = {}) {
 
 const STATUS_CONFIG = {
   'Rascunho': { dot: 'bg-slate-500 dark:bg-slate-500/60', pill: 'bg-slate-100 dark:bg-slate-800/40 text-slate-700 dark:text-slate-400' },
-  'Aguardando': { dot: 'bg-red-600 dark:bg-red-600/70', pill: 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-500' },
-  'Aguardando Aprovação Financeira': { dot: 'bg-amber-600 dark:bg-amber-600/70', pill: 'bg-amber-50 dark:bg-amber-900/25 text-amber-700 dark:text-amber-500' },
-  'Aguardando Liberação Financeira': { dot: 'bg-amber-600 dark:bg-amber-600/70', pill: 'bg-amber-50 dark:bg-amber-900/25 text-amber-700 dark:text-amber-500' },
-  'Aguardando Liberação': { dot: 'bg-amber-600 dark:bg-amber-600/70', pill: 'bg-amber-50 dark:bg-amber-900/25 text-amber-700 dark:text-amber-500' },
+  'Aguardando': COMPRAS_STATUS_STYLE.aguardando,
+  'Aguardando Aprovação Financeira': COMPRAS_STATUS_STYLE.aguardando,
+  'Aguardando Liberação Financeira': COMPRAS_STATUS_STYLE.aguardando,
+  'Aguardando Liberação': COMPRAS_STATUS_STYLE.aguardando,
   'Aprovado': { dot: 'bg-lime-600 dark:bg-[#a4ce33]/70', pill: 'bg-lime-50 dark:bg-lime-900/25 text-lime-700 dark:text-[#a4ce33]/85' },
-  'Despachado': { dot: 'bg-cyan-500 dark:bg-cyan-400', pill: 'bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300' },
+  'Despachado': COMPRAS_STATUS_STYLE.despachado,
   'Concluído': { dot: 'bg-emerald-600 dark:bg-emerald-600/70', pill: 'bg-emerald-50 dark:bg-emerald-900/25 text-emerald-700 dark:text-emerald-500' },
   'Cancelado': { dot: 'bg-rose-600 dark:bg-rose-600/70', pill: 'bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-500' },
 };
@@ -88,12 +89,12 @@ if (typeof document !== 'undefined' && !document.getElementById('blink-animation
   const style = document.createElement('style');
   style.id = 'blink-animation';
   style.innerHTML = `
-    @keyframes blink-red-amber {
-      0%, 100% { background-color: rgb(239, 68, 68); }
-      50% { background-color: rgb(217, 119, 6); }
+    @keyframes blink-aguardando {
+      0%, 100% { background-color: #D96F55; }
+      50% { background-color: #c45a42; }
     }
     .animate-blink-led {
-      animation: blink-red-amber 1s infinite;
+      animation: blink-aguardando 1s infinite;
     }
   `;
   document.head.appendChild(style);

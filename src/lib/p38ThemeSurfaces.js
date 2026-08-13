@@ -45,6 +45,10 @@ export const P38_THEME = {
   },
 };
 
+/** Cores de status — paleta aprovada (embarques / alertas operacionais). */
+export const P38_CYAN_SEA = '#4ECDC4';
+export const P38_AGUARDANDO_ORANGE = '#D96F55';
+
 /** Acentos semânticos — uso pontual (status, lucro, alertas). Tom suave para leitura prolongada. */
 export const p38Accent = {
   success: {
@@ -55,18 +59,18 @@ export const p38Accent = {
     border: 'border-l-[#4a5240] dark:border-l-[#a4ce33]/55',
   },
   warning: {
-    solid: '#b45309',
-    solidDark: '#d97706',
-    text: 'text-amber-700 dark:text-amber-500',
-    dot: 'bg-amber-600 dark:bg-amber-600/70',
-    border: 'border-l-amber-600 dark:border-l-amber-600/55',
+    solid: P38_AGUARDANDO_ORANGE,
+    solidDark: P38_AGUARDANDO_ORANGE,
+    text: 'text-[#9c4228] dark:text-[#D96F55]',
+    dot: 'bg-[#D96F55] dark:bg-[#D96F55]',
+    border: 'border-l-[#D96F55] dark:border-l-[#D96F55]',
   },
   info: {
-    solid: '#0891b2',
-    solidDark: '#22d3ee',
-    text: 'text-cyan-600 dark:text-cyan-400',
-    dot: 'bg-cyan-500 dark:bg-cyan-400',
-    border: 'border-l-cyan-500 dark:border-l-cyan-400',
+    solid: P38_CYAN_SEA,
+    solidDark: P38_CYAN_SEA,
+    text: 'text-[#1a7a73] dark:text-[#4ECDC4]',
+    dot: 'bg-[#4ECDC4] dark:bg-[#4ECDC4]',
+    border: 'border-l-[#4ECDC4] dark:border-l-[#4ECDC4]',
   },
   danger: {
     solid: '#b91c1c',
