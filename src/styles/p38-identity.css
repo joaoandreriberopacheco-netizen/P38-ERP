@@ -186,7 +186,7 @@
   }
 
   .p38-line--info {
-    @apply border-l-cyan-600 dark:border-l-cyan-600/55;
+    @apply border-l-cyan-500 dark:border-l-cyan-400;
   }
 
   /* Contentor lista mobile (oculto em md+ quando há tabela desktop) */
@@ -276,7 +276,7 @@
   }
 
   .p38-dot--info {
-    @apply bg-cyan-600 dark:bg-cyan-600/70;
+    @apply bg-cyan-500 dark:bg-cyan-400;
   }
 
   .p38-dot--muted {

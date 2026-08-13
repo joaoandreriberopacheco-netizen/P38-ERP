@@ -48,7 +48,7 @@ const STATUS_CONFIG = {
   'Aguardando Liberação Financeira': { dot: 'bg-amber-600 dark:bg-amber-600/70', pill: 'bg-amber-50 dark:bg-amber-900/25 text-amber-700 dark:text-amber-500' },
   'Aguardando Liberação': { dot: 'bg-amber-600 dark:bg-amber-600/70', pill: 'bg-amber-50 dark:bg-amber-900/25 text-amber-700 dark:text-amber-500' },
   'Aprovado': { dot: 'bg-lime-600 dark:bg-[#a4ce33]/70', pill: 'bg-lime-50 dark:bg-lime-900/25 text-lime-700 dark:text-[#a4ce33]/85' },
-  'Despachado': { dot: 'bg-cyan-600 dark:bg-cyan-600/70', pill: 'bg-cyan-50 dark:bg-cyan-950/30 text-cyan-700 dark:text-cyan-500' },
+  'Despachado': { dot: 'bg-cyan-500 dark:bg-cyan-400', pill: 'bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300' },
   'Concluído': { dot: 'bg-emerald-600 dark:bg-emerald-600/70', pill: 'bg-emerald-50 dark:bg-emerald-900/25 text-emerald-700 dark:text-emerald-500' },
   'Cancelado': { dot: 'bg-rose-600 dark:bg-rose-600/70', pill: 'bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-500' },
 };
@@ -387,8 +387,10 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
   );
 }
 
-function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleSelecao, modoSelecao, className = '', _total_eta = 0 }) {
+function GrupoDia({ label, groupDate, groupCarrier, pedidos, onEdit, onDelete, selecionadosIds, onToggleSelecao, modoSelecao, className = '', _total_eta = 0 }) {
   const [open, setOpen] = useState(true);
+  const hasStructuredHeader = groupDate != null && groupCarrier != null;
+  const headerTextClass = 'text-base tablet-portrait:text-lg font-light text-foreground/85 leading-relaxed';
   // Soma apenas _display_valor para cards virtuais (embarques + órfãos), ou usa _total_eta se disponível
   const valorTotal = _total_eta > 0
     ? _total_eta
@@ -401,14 +403,21 @@ function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleS
 
   return (
     <div className={`w-full space-y-3 font-din-1451 ${className}`}>
-      <button onClick={() => setOpen(o => !o)} className="w-full min-w-0 flex items-center justify-between border-b border-border/50 dark:border-white/10 px-1 py-2 gap-2 group">
-        <p className="text-sm tablet-landscape:text-base font-bold uppercase tracking-wide text-foreground/80 leading-normal truncate min-w-0 flex-1">
-          {label}
-        </p>
-        <div className="flex items-center gap-1.5 flex-none shrink-0">
-          <span className="text-sm font-bold text-foreground/80 leading-normal whitespace-nowrap tabular-nums">{R(valorTotal)}</span>
-          <ChevronDown className={`w-3.5 h-3.5 text-foreground/70 transition-transform duration-200 ${open ? '' : '-rotate-90'}`} />
-        </div>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full min-w-0 grid grid-cols-[5.75rem_minmax(0,1fr)_auto_auto] tablet-portrait:grid-cols-[6.25rem_minmax(0,1fr)_auto_auto] items-center gap-x-3 border-b border-border/50 dark:border-white/10 px-1 py-2.5 group"
+      >
+        {hasStructuredHeader ? (
+          <>
+            <span className={cn(headerTextClass, 'truncate tabular-nums')}>{groupDate}</span>
+            <span className={cn(headerTextClass, 'truncate min-w-0')}>{groupCarrier}</span>
+          </>
+        ) : (
+          <span className={cn(headerTextClass, 'col-span-2 truncate min-w-0 uppercase tracking-wide')}>{label}</span>
+        )}
+        <span className={cn(headerTextClass, 'text-right whitespace-nowrap tabular-nums')}>{R(valorTotal)}</span>
+        <ChevronDown className={`w-4 h-4 text-foreground/70 transition-transform duration-200 justify-self-end ${open ? '' : '-rotate-90'}`} />
       </button>
       {open && (
         <>
@@ -467,7 +476,7 @@ export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, 
 
   return (
     <div className="space-y-4 font-din-1451">
-      {grupos.map(({ key, label, pedidos, _total_eta }, index) => {
+      {grupos.map(({ key, label, groupDate, groupCarrier, pedidos, _total_eta }, index) => {
         const previousLabel = grupos[index - 1]?.label || '';
         const isSpecialTransition = (
           (previousLabel.includes('Sem transportador') && label.includes('Sem ETA')) ||
@@ -478,6 +487,8 @@ export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, 
           <GrupoDia
             key={key}
             label={label}
+            groupDate={groupDate}
+            groupCarrier={groupCarrier}
             pedidos={pedidos}
             onEdit={onEdit}
             onDelete={onDelete}

@@ -62,11 +62,11 @@ export const p38Accent = {
     border: 'border-l-amber-600 dark:border-l-amber-600/55',
   },
   info: {
-    solid: '#0e7490',
-    solidDark: '#0891b2',
-    text: 'text-cyan-700 dark:text-cyan-500',
-    dot: 'bg-cyan-600 dark:bg-cyan-600/70',
-    border: 'border-l-cyan-600 dark:border-l-cyan-600/55',
+    solid: '#0891b2',
+    solidDark: '#22d3ee',
+    text: 'text-cyan-600 dark:text-cyan-400',
+    dot: 'bg-cyan-500 dark:bg-cyan-400',
+    border: 'border-l-cyan-500 dark:border-l-cyan-400',
   },
   danger: {
     solid: '#b91c1c',

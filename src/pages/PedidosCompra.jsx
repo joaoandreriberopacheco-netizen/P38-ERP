@@ -947,6 +947,8 @@ export default function PedidosCompraPage() {
           key: semDados ? 'eta_transportadora:sem-dados' : `eta_transportadora:${eta}:${transportadora}`,
           label: semDados ? 'Sem ETA / Sem transportadora' : `${eta === 'sem-eta' ? 'Sem ETA' : formatarSoData(eta)} · ${transportadora}`,
           orderValue: `${eta}|${transportadora.toLowerCase()}`,
+          groupDate: semDados || eta === 'sem-eta' ? 'Sem ETA' : formatarSoData(eta),
+          groupCarrier: semDados ? 'Sem transportadora' : transportadora,
         };
       }
 
@@ -972,7 +974,14 @@ export default function PedidosCompraPage() {
       const meta = getGroupMeta(pedido, embarque);
 
       if (!map[meta.key]) {
-        map[meta.key] = { key: meta.key, label: meta.label, orderValue: meta.orderValue, pedidos: [] };
+        map[meta.key] = {
+          key: meta.key,
+          label: meta.label,
+          orderValue: meta.orderValue,
+          groupDate: meta.groupDate ?? null,
+          groupCarrier: meta.groupCarrier ?? null,
+          pedidos: [],
+        };
       }
 
       map[meta.key].pedidos.push({
@@ -994,6 +1003,8 @@ export default function PedidosCompraPage() {
         return {
           key: grupo.key,
           label: grupo.label,
+          groupDate: grupo.groupDate,
+          groupCarrier: grupo.groupCarrier,
           pedidos: pedidosSort,
           _total_eta: pedidosSort.reduce((acc, p) => acc + (p._display_valor || 0), 0)
         };
