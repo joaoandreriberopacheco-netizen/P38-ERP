@@ -7,11 +7,25 @@ import { caixaTypo } from '@/lib/caixaP38Theme';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { formatCommercialQuantity } from '@/lib/productUnits';
 
+function resolveConsultaAccentDot(accent) {
+  if (accent === 'muted') return p38Accent.muted.dot;
+  if (accent === 'info') return p38Accent.info.dot;
+  if (accent === 'warning') return p38Accent.warning.dot;
+  if (accent === 'danger') return p38Accent.danger.dot;
+  if (accent === 'success') return p38Accent.success.dot;
+  return p38Table.accentDot;
+}
+
+function resolveConsultaAccentBorder(accent) {
+  if (accent === 'muted') return p38Accent.muted.border;
+  if (accent === 'info') return p38Accent.info.border;
+  if (accent === 'warning') return p38Accent.warning.border;
+  if (accent === 'danger') return p38Accent.danger.border;
+  return p38Accent.success.border;
+}
+
 function ConsultaQtdUnCol({ qtd, unidade, accent = 'success' }) {
-  const dotClass =
-    accent === 'muted' ? p38Accent.muted.dot
-      : accent === 'info' ? p38Accent.info.dot
-        : p38Table.accentDot;
+  const dotClass = resolveConsultaAccentDot(accent);
   return (
     <div className="relative w-[3.25rem] flex-shrink-0 border-r border-border/40 dark:border-white/10 pr-1.5 py-2.5 text-right">
       <span className={`absolute left-0 top-3 ${dotClass}`} aria-hidden />
@@ -50,12 +64,10 @@ export function ConsultaProdutoRow({
   nomePrefix = null,
   nomeSuffix = null,
   signedValor,
+  valorTone: valorToneProp,
 }) {
   const precoListaEff = precoLista ?? precoUnitario;
-  const borderClass =
-    accent === 'muted' ? p38Accent.muted.border
-      : accent === 'info' ? p38Accent.info.border
-        : p38Accent.success.border;
+  const borderClass = resolveConsultaAccentBorder(accent);
   const valorNum = Number(valorTotal) || 0;
   const precoEfetivo = resolvePrecoUnitarioEfetivo({
     quantidade,
@@ -65,13 +77,13 @@ export function ConsultaProdutoRow({
   });
   const precoTabela = Number(precoListaEff) || 0;
   const temDesconto = precoTabela > precoEfetivo + 0.009;
-  const valorTone = valorNum < 0
+  const valorTone = valorToneProp ?? (valorNum < 0
     ? 'danger'
     : accent === 'muted'
       ? 'neutral'
       : accent === 'info'
         ? 'info'
-        : 'success';
+        : 'success');
   const showSigned = signedValor ?? accent !== 'muted';
 
   return (

@@ -43,6 +43,16 @@ export function comprasAccentBorderClass(tone) {
   return p38Accent.success.border;
 }
 
+/** Tom P38 das linhas de produto — alinhado a ListaPedidosCompra / status do embarque. */
+export function comprasAccentFromDisplayStatus(displayStatus) {
+  const status = String(displayStatus || '').trim();
+  if (status === 'Concluído' || status === 'Aprovado') return 'success';
+  if (status === 'Despachado') return 'info';
+  if (status === 'Aguardando' || status.includes('Aguard') || status.includes('Aprovação')) return 'warning';
+  if (status === 'Cancelado') return 'danger';
+  return 'muted';
+}
+
 /** Opções de status alinhadas ao filtro em PedidosCompra.jsx / getBorrowedStatus. */
 export const COMPRAS_FILTRO_STATUS_PEDIDO = [
   { codigo: 'Rascunho', label: 'Rascunho', chip: 'bg-muted text-foreground/90' },

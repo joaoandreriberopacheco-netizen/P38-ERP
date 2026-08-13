@@ -11,7 +11,18 @@ import { getItemCompraExibicaoVitrine } from '@/lib/productUnits';
 import { formatarSoData } from '@/components/utils/dateUtils';
 import { getTotalLinhaPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
 import { buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
+import { comprasAccentFromDisplayStatus } from '@/lib/comprasEmbarquesPalette';
 import { useCompactShell } from '@/hooks/use-breakpoint';
+
+/** Recuo hierárquico: grupo → pedido/embarque → linha de produto. */
+const CONSULTA_HIER = {
+  /** Nível 1 — pedidos dentro do agrupador ETA/transportadora */
+  l1: 'ml-2 pl-2.5 border-l border-border/30 dark:border-white/10 min-w-0 max-w-full',
+  /** Nível 2 — produtos dentro do pedido/embarque */
+  l2: 'ml-2 pl-2 border-l border-border/20 dark:border-white/[0.06] min-w-0 max-w-full',
+  /** Separador cinza suave entre níveis e entre pedidos */
+  sep: 'border-b border-border/40 dark:border-white/10',
+};
 
 function getConsultaItens(card) {
   return card._consulta_itens || card.itens || [];
@@ -56,30 +67,27 @@ function buildEmbarqueMetaLinhas(card) {
   };
 }
 
-/** Card de embarque — mobile empilhado (como por produto); desktop mantém linha horizontal. */
-function ConsultaEmbarqueCard({ card, onVerPedido, compact = false }) {
+/** Cabeçalho do pedido/embarque — neutro; cor fica nas linhas de produto. */
+function ConsultaEmbarqueCard({ card, onVerPedido, compact = false, isLast = false }) {
   const itensEmbarque = getConsultaItens(card);
   const ehNecessidade = card._consulta_papel === 'necessidade';
   const { fornecedor, detalhes } = buildEmbarqueMetaLinhas(card);
+  const statusAccent = comprasAccentFromDisplayStatus(card._display_status || card.status);
 
   return (
-    <div
-      className={cn(
-        'min-w-0 max-w-full overflow-hidden',
-        compact ? 'border-b border-border/40 last:border-b-0' : 'bg-card rounded-2xl shadow-sm',
-      )}
-    >
+    <div className={cn('min-w-0 max-w-full overflow-hidden', !isLast && CONSULTA_HIER.sep)}>
       <button
         type="button"
         onClick={() => onVerPedido?.(card)}
         className={cn(
-          'w-full text-left hover:bg-muted/30 transition-colors min-w-0',
-          compact ? 'px-1 py-3' : 'flex items-center justify-between gap-3 px-4 py-3 border-b border-border/40',
+          'w-full text-left hover:bg-muted/20 transition-colors min-w-0',
+          CONSULTA_HIER.sep,
+          compact ? 'py-3 pr-1' : 'flex items-center justify-between gap-3 px-1 py-3 sm:px-2',
         )}
       >
         {compact ? (
           <div className="space-y-1.5 min-w-0 w-full">
-            <p className={cn(p38Table.mobileLineTitle, 'leading-snug')}>
+            <p className={cn(p38Table.mobileLineTitle, 'leading-snug text-foreground/95')}>
               {card._display_code || card.numero}
               {ehNecessidade ? (
                 <span className="text-muted-foreground font-normal normal-case text-sm"> · falta vir</span>
@@ -92,7 +100,8 @@ function ConsultaEmbarqueCard({ card, onVerPedido, compact = false }) {
               </p>
               <CaixaValorDisplay
                 valor={card._consulta_valor || 0}
-                tone="info"
+                tone="neutral"
+                signed={false}
                 size="sm"
                 className="shrink-0"
               />
@@ -101,7 +110,7 @@ function ConsultaEmbarqueCard({ card, onVerPedido, compact = false }) {
         ) : (
           <>
             <div className="min-w-0 flex-1">
-              <p className={cn(p38Table.mobileLineTitle, 'truncate')}>
+              <p className={cn(p38Table.mobileLineTitle, 'truncate text-foreground/95')}>
                 {card._display_code || card.numero}
                 {ehNecessidade ? (
                   <span className="text-muted-foreground font-normal normal-case text-sm"> · falta vir</span>
@@ -111,15 +120,18 @@ function ConsultaEmbarqueCard({ card, onVerPedido, compact = false }) {
                 {[fornecedor, ...detalhes].join(' · ')}
               </p>
             </div>
-            <CaixaValorDisplay valor={card._consulta_valor || 0} tone="info" size="sm" className="shrink-0" />
+            <CaixaValorDisplay
+              valor={card._consulta_valor || 0}
+              tone="neutral"
+              signed={false}
+              size="sm"
+              className="shrink-0"
+            />
           </>
         )}
       </button>
       {itensEmbarque.length > 0 ? (
-        <P38MobileLineList
-          allViewports
-          className={cn('rounded-none border-0', compact && 'border-t border-border/30')}
-        >
+        <div className={cn(CONSULTA_HIER.l2, 'pb-1 pt-0.5')}>
           {itensEmbarque.map((item, idx) => {
             const exib = getItemCompraExibicaoVitrine(item);
             return (
@@ -131,11 +143,13 @@ function ConsultaEmbarqueCard({ card, onVerPedido, compact = false }) {
                 valorTotal={Number(item.valor_total_item) || Number(item.total) || getTotalLinhaPedidoCompra(item)}
                 precoUnitario={item.preco_unitario || exib.preco_unitario}
                 striped={idx % 2 === 1}
-                accent={compact ? 'info' : 'muted'}
+                accent={statusAccent}
+                valorTone="neutral"
+                signedValor={false}
               />
             );
           })}
-        </P38MobileLineList>
+        </div>
       ) : null}
     </div>
   );
@@ -147,22 +161,23 @@ function ConsultaGrupoEmbarques({ grupo, onVerPedido, defaultOpen = true, compac
   const hasStructuredHeader = grupo.groupDate != null && grupo.groupCarrier != null;
 
   return (
-    <div className="w-full min-w-0 max-w-full space-y-2">
+    <div className="w-full min-w-0 max-w-full">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         className={cn(
           'w-full min-w-0 text-left overflow-hidden',
+          CONSULTA_HIER.sep,
           compact
-            ? 'flex items-start gap-2 py-2 border-b border-border/50 dark:border-white/10'
-            : 'flex items-center gap-2 border-b border-border/50 dark:border-white/10 py-2 pr-1',
+            ? 'flex items-start gap-2 py-2.5'
+            : 'flex items-center gap-2 py-2.5 pr-1',
         )}
       >
         <div className="flex-1 min-w-0 overflow-hidden">
           {hasStructuredHeader ? (
             compact ? (
               <div className="space-y-0.5 min-w-0">
-                <span className={cn(caixaTypo.labelSm, 'block tabular-nums normal-case')}>
+                <span className={cn(caixaTypo.labelSm, 'block tabular-nums normal-case text-foreground/90')}>
                   {grupo.groupDate}
                 </span>
                 <span className={cn(p38Table.mobileLineSubtitle, 'block normal-case line-clamp-2')}>
@@ -171,7 +186,7 @@ function ConsultaGrupoEmbarques({ grupo, onVerPedido, defaultOpen = true, compac
               </div>
             ) : (
               <div className="flex items-center gap-2 min-w-0">
-                <span className={cn(caixaTypo.labelSm, 'shrink-0 tabular-nums whitespace-nowrap normal-case')}>
+                <span className={cn(caixaTypo.labelSm, 'shrink-0 tabular-nums whitespace-nowrap normal-case text-foreground/90')}>
                   {grupo.groupDate}
                 </span>
                 <span className={cn(p38Table.mobileLineSubtitle, 'truncate min-w-0 normal-case')}>
@@ -180,7 +195,7 @@ function ConsultaGrupoEmbarques({ grupo, onVerPedido, defaultOpen = true, compac
               </div>
             )
           ) : (
-            <span className={cn(caixaTypo.labelSm, 'block truncate min-w-0 uppercase tracking-wide')}>
+            <span className={cn(caixaTypo.labelSm, 'block truncate min-w-0 uppercase tracking-wide text-foreground/90')}>
               {grupo.label}
             </span>
           )}
@@ -188,7 +203,8 @@ function ConsultaGrupoEmbarques({ grupo, onVerPedido, defaultOpen = true, compac
         <div className={cn('flex shrink-0 items-center gap-1', compact && 'flex-col items-end pt-0.5')}>
           <CaixaValorDisplay
             valor={grupo.totalConsulta || 0}
-            tone="info"
+            tone="neutral"
+            signed={false}
             size="sm"
             className={compact ? '' : 'max-w-[40%]'}
           />
@@ -201,20 +217,14 @@ function ConsultaGrupoEmbarques({ grupo, onVerPedido, defaultOpen = true, compac
         </div>
       </button>
       {open ? (
-        <div
-          className={cn(
-            'min-w-0 max-w-full overflow-hidden',
-            compact
-              ? 'space-y-0 rounded-lg border border-border/40 dark:border-white/10 bg-background'
-              : 'ml-2 pl-2.5 border-l border-border/30 dark:border-white/10 space-y-3',
-          )}
-        >
-          {grupo.cards.map((card) => (
+        <div className={cn(CONSULTA_HIER.l1, 'space-y-0')}>
+          {grupo.cards.map((card, index) => (
             <ConsultaEmbarqueCard
               key={card._virtual_key || card.id}
               card={card}
               onVerPedido={onVerPedido}
               compact={compact}
+              isLast={index === grupo.cards.length - 1}
             />
           ))}
         </div>
@@ -299,7 +309,7 @@ export default function ConsultaComprasPedidos({
           ))}
         </P38MobileLineList>
       ) : (
-        <div className="space-y-3 min-w-0 max-w-full overflow-x-hidden">
+        <div className="space-y-4 min-w-0 max-w-full overflow-x-hidden">
           {gruposEmbarque.map((grupo) => (
             <ConsultaGrupoEmbarques
               key={grupo.key}
