@@ -7,7 +7,7 @@ import {
   getEstoqueMinimo,
   getEstoqueStatus,
 } from '@/lib/catalogProductUi';
-import { formatQuantidadeCatalogoApresentacao } from '@/lib/productUnits';
+import { formatQuantidadeCatalogoApresentacao, resolvePurchaseUnitDisplay } from '@/lib/productUnits';
 
 /**
  * Linha compacta de estoque para cards de catálogo (compras / cotação).
@@ -19,6 +19,8 @@ export default function CatalogProductStockLine({
   showMinimo = true,
   size = 'sm',
   apresentacao = false,
+  /** Unidade de compra selecionada na linha (ex.: CX) — estoque na mesma unidade. */
+  purchaseUnit = null,
 }) {
   if (!product) return null;
 
@@ -27,19 +29,27 @@ export default function CatalogProductStockLine({
   const status = getEstoqueStatus(product);
   const textSize = size === 'md' ? 'text-sm' : 'text-xs';
 
-  const atualApresentacao = apresentacao
-    ? formatQuantidadeCatalogoApresentacao(product, atualBase)
-    : null;
-  const minimoApresentacao = apresentacao && minimoBase > 0
-    ? formatQuantidadeCatalogoApresentacao(product, minimoBase)
-    : null;
+  const atualApresentacao = purchaseUnit
+    ? resolvePurchaseUnitDisplay(product, atualBase, purchaseUnit)
+    : apresentacao
+      ? formatQuantidadeCatalogoApresentacao(product, atualBase)
+      : null;
+  const minimoApresentacao = purchaseUnit
+    ? (minimoBase > 0 ? resolvePurchaseUnitDisplay(product, minimoBase, purchaseUnit) : null)
+    : apresentacao && minimoBase > 0
+      ? formatQuantidadeCatalogoApresentacao(product, minimoBase)
+      : null;
 
-  const atualLabel = apresentacao && atualApresentacao
-    ? `${formatEstoqueQty(atualApresentacao.quantidade)} ${atualApresentacao.sigla}`
-    : formatEstoqueQty(atualBase);
-  const minimoLabel = apresentacao && minimoApresentacao
-    ? `${formatEstoqueQty(minimoApresentacao.quantidade)} ${minimoApresentacao.sigla}`
-    : formatEstoqueQty(minimoBase);
+  const atualLabel = purchaseUnit && atualApresentacao
+    ? `${formatEstoqueQty(atualApresentacao.quantidade)} ${atualApresentacao.unidade}`
+    : apresentacao && atualApresentacao
+      ? `${formatEstoqueQty(atualApresentacao.quantidade)} ${atualApresentacao.sigla}`
+      : formatEstoqueQty(atualBase);
+  const minimoLabel = purchaseUnit && minimoApresentacao
+    ? `${formatEstoqueQty(minimoApresentacao.quantidade)} ${minimoApresentacao.unidade}`
+    : apresentacao && minimoApresentacao
+      ? `${formatEstoqueQty(minimoApresentacao.quantidade)} ${minimoApresentacao.sigla}`
+      : formatEstoqueQty(minimoBase);
 
   return (
     <div className={cn('flex flex-wrap items-center gap-2', textSize, className)}>

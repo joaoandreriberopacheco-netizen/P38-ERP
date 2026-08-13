@@ -1016,36 +1016,48 @@ export function normalizePedidoCompraItemCustoLiquidoParaPersist(item = {}) {
   };
 }
 
-/** Total da linha: quantidade_base × custo final fator-1 (contrato PedidoCompra). */
+/** Custo unitário na unidade comercial da linha (líquido + avaria %), alinhado ao que a UI do pedido mostra. */
+export function getCustoUnitarioComercialCompraPedido(item = {}) {
+  const fator = normalizeNumber(item?.fator_conversao, 1) || 1;
+  const custoFinalApres = getCustoFinalApresentacaoItem(item);
+  const avariaApres = roundToTwoDecimals(
+    custoFator1ParaApresentacao(resolveAvariaLinhaCompraFator1(item), fator),
+  );
+  return roundToTwoDecimals(custoFinalApres + avariaApres);
+}
+
+/** Total da linha: quantidade comercial × preço na mesma unidade (CX, M², …). */
 export function calcTotalItemCompraPedido(item = {}) {
   const qb = normalizeNumber(item?.quantidade_base, NaN);
   const qty = normalizeNumber(item?.quantidade, 0);
   const fator = normalizeNumber(item?.fator_conversao, 1) || 1;
-  const qBase = Number.isFinite(qb) && qb > 0 ? qb : qty * fator;
+  const qBase = Number.isFinite(qb) && qb > 0 ? qb : roundToTwoDecimals(qty * fator);
+
   const custoF1 = normalizeNumber(item?.custo_unitario, 0);
   const descF1 = normalizeNumber(item?.valor_desconto_item, 0);
   const avariaF1 = resolveAvariaLinhaCompraFator1(item);
   const custoLiquidoF1 = custoF1 - descF1 + avariaF1;
-
   const totalViaBase = () => roundToTwoDecimals(qBase * custoLiquidoF1);
 
-  if (item?.preco_eixo === "FATOR_1") {
-    return totalViaBase();
-  }
+  if (qty > 0) {
+    const unitComercial = getCustoUnitarioComercialCompraPedido(item);
+    const custoApres = getCustoApresentacaoItem(item);
 
-  // Embalagem (CX/PAC…): total = qtd comercial × preço/embalagem. Evita (preço÷fator)×(qtd×fator)
-  // arredondar o unitário fator-1 antes do produto (ex.: 110,26÷200 → 0,55 → total 2.200 em vez de 2.205,20).
-  if (fator > 1 && qty > 0) {
-    const custoFinalApres = getCustoFinalApresentacaoItem(item);
-    if (custoFinalApres > 0 || custoF1 > 0) {
-      // Sem snapshot de apresentação: custo ainda em fator-1 (R$/UN) — não fazer 30 CX × 0,37.
+    // Embalagem (CX/PAC…): qtd comercial × preço/embalagem — evita arredondar fator-1 antes do produto.
+    if (fator > 1 && (custoApres > 0 || unitComercial > 0)) {
+      // Preço ainda só em fator-1 (R$/M²) sem snapshot de embalagem.
       if (
         custoLiquidoF1 > 0 &&
-        Math.abs(custoFinalApres - custoLiquidoF1) <= Math.max(0.001, 0.001 * custoLiquidoF1)
+        custoApres > 0 &&
+        Math.abs(custoApres - custoLiquidoF1) <= Math.max(0.001, 0.001 * custoLiquidoF1)
       ) {
         return totalViaBase();
       }
-      return roundToTwoDecimals(qty * custoFinalApres);
+      return roundToTwoDecimals(qty * unitComercial);
+    }
+
+    if (unitComercial > 0) {
+      return roundToTwoDecimals(qty * unitComercial);
     }
   }
 

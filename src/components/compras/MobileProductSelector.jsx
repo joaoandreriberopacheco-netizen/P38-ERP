@@ -26,6 +26,7 @@ import {
   getCustoApresentacaoItem,
   getDescontoApresentacaoItem,
   getCustoFinalApresentacaoItem,
+  getCustoUnitarioComercialCompraPedido,
   getDescontoPctApresentacaoItem,
   isItemAcrescimoCompra,
   applyItemDescontoPctApresentacao,
@@ -283,7 +284,11 @@ export default function MobileProductSelector({
     }, 100);
   };
 
-  const calculateTotal = (item) => calcTotalItemCompraPedido(syncItemQuantidadeBaseComercial(item));
+  const calculateTotal = (item) => {
+    if (!item) return 0;
+    const synced = syncItemDescontoApresentacao(syncItemQuantidadeBaseComercial(item));
+    return calcTotalItemCompraPedido(synced);
+  };
 
   const cartProductIds = useMemo(
     () => items.map((i) => i.produto_id).filter(Boolean),
@@ -648,7 +653,12 @@ export default function MobileProductSelector({
                 </Button>
              </div>
              {editProduct && (
-               <CatalogProductStockLine product={editProduct} className="mt-4 justify-center" size="md" />
+               <CatalogProductStockLine
+                 product={editProduct}
+                 purchaseUnit={editingItem.unidade_medida}
+                 className="mt-4 justify-center"
+                 size="md"
+               />
              )}
           </div>
 
@@ -802,16 +812,36 @@ export default function MobileProductSelector({
             );
           })()}
 
-          {/* Custo líquido + total */}
+          {/* Custo líquido + avaria + total */}
           {(() => {
             const liquido = getCustoFinalApresentacaoItem(editingItem);
+            const unitComercial = getCustoUnitarioComercialCompraPedido(editingItem);
+            const avariaPct = Number(editingItem?.avaria_pct_item) || 0;
+            const avariaValor = roundToTwoDecimals(Math.max(0, unitComercial - liquido));
             const isAcrescimo = isItemAcrescimoCompra(editingItem);
-            return (parseFloat(editingItem?.valor_desconto_item) || 0) !== 0 ? (
-              <div className="flex justify-between items-center text-sm px-1">
-                <span className="text-muted-foreground">Custo {isAcrescimo ? 'com acréscimo' : 'líquido'}</span>
-                <span className={`font-semibold ${isAcrescimo ? 'text-red-600 dark:text-red-400' : 'text-emerald-700 dark:text-emerald-400'}`}>{formatCurrency(liquido)}</span>
+            const temDesconto = (parseFloat(editingItem?.valor_desconto_item) || 0) !== 0;
+            return (
+              <div className="space-y-2 px-1 text-sm">
+                {temDesconto ? (
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Custo {isAcrescimo ? 'com acréscimo' : 'líquido'}</span>
+                    <span className={`font-semibold ${isAcrescimo ? 'text-red-600 dark:text-red-400' : 'text-emerald-700 dark:text-emerald-400'}`}>{formatCurrency(liquido)}</span>
+                  </div>
+                ) : null}
+                {avariaPct > 0 && avariaValor > 0 ? (
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Avaria ({avariaPct}%)</span>
+                    <span className="font-semibold text-amber-700 dark:text-amber-400">+{formatCurrency(avariaValor)}</span>
+                  </div>
+                ) : null}
+                {avariaPct > 0 && avariaValor > 0 ? (
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Custo unitário ({editingItem.unidade_medida})</span>
+                    <span className="font-semibold text-foreground">{formatCurrency(unitComercial)}</span>
+                  </div>
+                ) : null}
               </div>
-            ) : null;
+            );
           })()}
 
           <div className="p-3 bg-muted rounded-lg flex justify-between items-center">
