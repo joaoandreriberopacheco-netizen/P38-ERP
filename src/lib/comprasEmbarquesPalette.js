@@ -64,6 +64,16 @@ export const COMPRAS_FILTRO_STATUS_PEDIDO = [
   { codigo: 'Cancelado', label: 'Cancelado', chip: 'bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-500' },
 ];
 
+/** Seletor rápido (chip) — status operacionais do pedido/embarque. */
+export const COMPRAS_FILTRO_STATUS_PICKER = [
+  { codigo: 'Rascunho', label: 'Rascunho', chip: 'bg-muted text-foreground/90' },
+  { codigo: 'Aguardando Liberação', label: 'Aguard. pagamento', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
+  { codigo: 'Aprovado', label: 'Aprovado', chip: 'bg-lime-50 text-lime-800 dark:bg-lime-900/25 dark:text-[#a4ce33]/85' },
+  { codigo: 'Aguardando', label: 'Pend. entrega', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
+  { codigo: 'Despachado', label: 'Despachado', chip: 'bg-[#4ECDC4]/15 text-[#1a7a73] dark:bg-[#4ECDC4]/20 dark:text-[#4ECDC4]' },
+  { codigo: 'Concluído', label: 'Concluído', chip: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/25 dark:text-emerald-500' },
+];
+
 export const COMPRAS_FILTRO_STATUS_RECEBIMENTO = [
   { codigo: 'Aguardando Embarque', label: 'Sem embarque', chip: 'bg-orange-50 text-orange-800 dark:bg-orange-900/25 dark:text-orange-300' },
   { codigo: 'Recebido Parcial', label: 'Receb. parcial', chip: 'bg-amber-50 text-amber-800 dark:bg-amber-900/25 dark:text-amber-400' },

@@ -26,6 +26,7 @@ import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
 import ListaPedidosCompra from '@/components/compras/ListaPedidosCompra';
 import ConsultaComprasPedidos from '@/components/compras/ConsultaComprasPedidos';
+import StatusPedidoCompraPicker from '@/components/compras/StatusPedidoCompraPicker';
 import ActionMenuComprasV2 from '@/components/compras/ActionMenuComprasV2';
 import EnvioFinanceiroLoteDialog from '@/components/compras/EnvioFinanceiroLoteDialog';
 import AtualizarPrecosFiltradosDialog from '@/components/compras/AtualizarPrecosFiltradosDialog';
@@ -1005,7 +1006,7 @@ export default function PedidosCompraPage() {
           )}
         </div>
         {activeView === 'embarques' || activeView === 'consulta' ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap justify-end">
             {activeView === 'consulta' && pedidosConsulta.length > 0 ? (
               <button
                 type="button"
@@ -1020,6 +1021,11 @@ export default function PedidosCompraPage() {
               sortOrder={sortOrder}
               onGroupByChange={setGroupBy}
               onSortOrderToggle={() => setSortOrder((prev) => prev === 'asc' ? 'desc' : 'asc')}
+            />
+            <StatusPedidoCompraPicker
+              statusSel={statusSel}
+              onStatusSel={setStatusSel}
+              onFiltroSomenteNaoConcluidos={setFiltroSomenteNaoConcluidos}
             />
           </div>
         ) : null}

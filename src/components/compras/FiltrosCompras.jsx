@@ -26,7 +26,7 @@ import {
   COMPRAS_FILTRO_STATUS_PEDIDO,
   COMPRAS_FILTRO_STATUS_RECEBIMENTO,
 } from '@/lib/comprasEmbarquesPalette';
-import StatusPedidoCompraPicker, { statusPedidoCompraExplicitos } from '@/components/compras/StatusPedidoCompraPicker';
+import { statusPedidoCompraExplicitos } from '@/components/compras/StatusPedidoCompraPicker';
 
 const ETA_FILTRO_MODOS = [
   { value: 'antes', label: 'Antes de' },
@@ -533,11 +533,6 @@ export default function FiltrosCompras({
             onStatusSel(statusSel.filter((s) => s !== '__nao_concluido__'));
           }
         }}
-      />
-      <StatusPedidoCompraPicker
-        statusSel={statusSel}
-        onStatusSel={onStatusSel}
-        onFiltroSomenteNaoConcluidos={onFiltroSomenteNaoConcluidos}
       />
     </div>
   );

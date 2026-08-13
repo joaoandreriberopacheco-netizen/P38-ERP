@@ -1,9 +1,10 @@
 import React from 'react';
-import { Layers, ChevronDown } from 'lucide-react';
+import { Layers } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { P38_CHIP_ACTIVE, P38_CHIP_INACTIVE, P38_POPOVER } from '@/components/financeiro/fluxo/financeiroP38';
-import { COMPRAS_FILTRO_STATUS_PEDIDO } from '@/lib/comprasEmbarquesPalette';
+import { cn } from '@/components/utils';
+import { P38_CHIP_ACTIVE, P38_POPOVER } from '@/components/financeiro/fluxo/financeiroP38';
+import { COMPRAS_FILTRO_STATUS_PICKER } from '@/lib/comprasEmbarquesPalette';
 
 export function statusPedidoCompraExplicitos(statusSel = []) {
   return (statusSel || []).filter((s) => s !== '__nao_concluido__');
@@ -11,17 +12,19 @@ export function statusPedidoCompraExplicitos(statusSel = []) {
 
 export function labelStatusPedidoCompraPicker(statusSel = []) {
   const explicit = statusPedidoCompraExplicitos(statusSel);
-  if (explicit.length === 0) return 'Status do pedido';
+  if (explicit.length === 0) return 'Status';
   if (explicit.length === 1) {
-    return COMPRAS_FILTRO_STATUS_PEDIDO.find((o) => o.codigo === explicit[0])?.label || explicit[0];
+    return COMPRAS_FILTRO_STATUS_PICKER.find((o) => o.codigo === explicit[0])?.label || explicit[0];
   }
   return `${explicit.length} status`;
 }
 
+/** Botão ícone — mesmo tamanho do agrupador (caminhão / seta). */
+const ICON_BTN =
+  'relative flex items-center justify-center w-10 h-10 rounded-xl bg-card shadow-sm hover:shadow-md transition text-foreground/90';
+
 /**
- * Seletor rápido de status — mesmo padrão do ContasSaldoPicker (fluxo de caixa).
- * Os toggles «Últimos 30 dias» e «Não concluídos» mantêm-se; quando há status
- * escolhidos aqui, estes têm a última palavra no filtro.
+ * Seletor de status ao lado do agrupador (caminhão + ordenação).
  */
 export default function StatusPedidoCompraPicker({
   statusSel = [],
@@ -31,8 +34,7 @@ export default function StatusPedidoCompraPicker({
 }) {
   const explicit = statusPedidoCompraExplicitos(statusSel);
   const temSelecaoExplicita = explicit.length > 0;
-  const label = labelStatusPedidoCompraPicker(statusSel);
-  const allCodigos = COMPRAS_FILTRO_STATUS_PEDIDO.map((o) => o.codigo);
+  const allCodigos = COMPRAS_FILTRO_STATUS_PICKER.map((o) => o.codigo);
 
   const toggle = (codigo) => {
     const base = explicit.length ? [...explicit] : [];
@@ -58,53 +60,66 @@ export default function StatusPedidoCompraPicker({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${temSelecaoExplicita ? P38_CHIP_ACTIVE : P38_CHIP_INACTIVE} ${className}`}
-          aria-label="Filtrar por status do pedido"
+          className={cn(
+            ICON_BTN,
+            temSelecaoExplicita && 'ring-2 ring-[#4a5240]/35 dark:ring-[#a4ce33]/45',
+            className,
+          )}
+          title={labelStatusPedidoCompraPicker(statusSel)}
+          aria-label={`Filtrar status: ${labelStatusPedidoCompraPicker(statusSel)}`}
         >
-          <Layers className="h-3.5 w-3.5 shrink-0" />
-          <span className="max-w-[9rem] truncate sm:max-w-[12rem]">{label}</span>
-          <ChevronDown className="h-3 w-3 shrink-0 opacity-70" />
+          <Layers className="w-4 h-4" />
+          {temSelecaoExplicita ? (
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#4a5240] px-0.5 text-[9px] font-semibold leading-none text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]">
+              {explicit.length > 9 ? '9+' : explicit.length}
+            </span>
+          ) : null}
         </button>
       </PopoverTrigger>
-      <PopoverContent className={`w-72 p-2.5 ${P38_POPOVER}`} align="start">
-        <div className="mb-2 px-2 pt-1">
-          <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Status do pedido</p>
-          <p className="mt-1 text-[10px] leading-snug text-muted-foreground/80">
-            Complementa os atalhos «30 dias» e «Não concluídos». Ao escolher aqui, este filtro prevalece.
-          </p>
+      <PopoverContent className={`w-56 p-2 ${P38_POPOVER}`} align="end" sideOffset={6}>
+        <div className="mb-1 flex gap-1 px-1">
+          <button
+            type="button"
+            onClick={limparSelecao}
+            className={cn(
+              'flex-1 rounded-xl px-2 py-1.5 text-[10px] transition-colors',
+              !temSelecaoExplicita
+                ? `${P38_CHIP_ACTIVE} font-medium`
+                : 'text-muted-foreground hover:bg-secondary/80 dark:hover:bg-[#383e47]',
+            )}
+          >
+            Atalhos
+          </button>
+          <button
+            type="button"
+            onClick={marcarTodos}
+            className={cn(
+              'flex-1 rounded-xl px-2 py-1.5 text-[10px] transition-colors',
+              explicit.length === allCodigos.length
+                ? `${P38_CHIP_ACTIVE} font-medium`
+                : 'text-muted-foreground hover:bg-secondary/80 dark:hover:bg-[#383e47]',
+            )}
+          >
+            Todos
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={limparSelecao}
-          className={`mb-1.5 w-full rounded-2xl px-3 py-2 text-left text-xs transition-colors ${!temSelecaoExplicita
-            ? `${P38_CHIP_ACTIVE} font-medium`
-            : 'text-muted-foreground hover:bg-secondary/80 dark:hover:bg-[#383e47]'}`}
-        >
-          Usar só os atalhos (30 dias / não concluídos)
-        </button>
-        <button
-          type="button"
-          onClick={marcarTodos}
-          className={`mb-1.5 w-full rounded-2xl px-3 py-2 text-left text-xs transition-colors ${explicit.length === allCodigos.length
-            ? `${P38_CHIP_ACTIVE} font-medium`
-            : 'text-muted-foreground hover:bg-secondary/80 dark:hover:bg-[#383e47]'}`}
-        >
-          Todos os status
-        </button>
-        <div className="max-h-64 space-y-1 overflow-y-auto">
-          {COMPRAS_FILTRO_STATUS_PEDIDO.map((option) => {
+        <div className="max-h-56 space-y-0.5 overflow-y-auto">
+          {COMPRAS_FILTRO_STATUS_PICKER.map((option) => {
             const selected = explicit.includes(option.codigo);
             return (
               <label
                 key={option.codigo}
-                className={`flex cursor-pointer items-center gap-3 rounded-2xl px-3 py-2.5 transition-all ${selected
-                  ? 'bg-secondary/80 shadow-sm dark:bg-[#383e47]'
-                  : 'hover:bg-secondary/60 dark:hover:bg-[#383e47]/60'}`}
+                className={cn(
+                  'flex cursor-pointer items-center gap-2.5 rounded-xl px-2.5 py-2 transition-all',
+                  selected
+                    ? 'bg-secondary/80 dark:bg-[#383e47]'
+                    : 'hover:bg-secondary/60 dark:hover:bg-[#383e47]/60',
+                )}
               >
                 <Checkbox
                   checked={selected}
                   onCheckedChange={() => toggle(option.codigo)}
-                  className="h-4 w-4"
+                  className="h-3.5 w-3.5"
                 />
                 <span className={`inline-flex h-5 items-center rounded-full px-2 text-[10px] font-medium ${option.chip}`}>
                   {option.label}
