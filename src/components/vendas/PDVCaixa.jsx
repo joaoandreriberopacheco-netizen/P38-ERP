@@ -1832,7 +1832,7 @@ export default function PDVCaixa({
                              <Printer className="w-4 h-4" /> Imprimir
                            </button>
                            <FechamentoCaixaButton
-                             caixaData={{ ...caixaData, saldoAtual: dinheiroConferido }}
+                             caixaData={caixaData}
                              recebimentosDinheiro={recebimentosDinheiro}
                              turnoAtivo={turnoAtivo}
                              currentUser={currentUser}

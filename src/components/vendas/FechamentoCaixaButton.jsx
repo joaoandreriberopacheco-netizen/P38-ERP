@@ -5,9 +5,9 @@ import SafeActionButton from '@/components/ui/safe-action-button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/use-toast';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { appendTurnoArrayId } from '@/lib/caixaTurnoData';
 import {
   resolveContaDestinoCaixaPDV,
-  resolverSaldoGavetaCaixaPDV,
   transferirDinheiroFechamentoCaixaPDV,
 } from '@/lib/contaDestinoCaixaPDV';
 import RelatorioFechamentoCaixa from './caixa/RelatorioFechamentoCaixa';
@@ -52,15 +52,12 @@ export default function FechamentoCaixaButton({
         base44.entities.MovimentosCaixa.list(),
       ]);
       const contaDestino = resolveContaDestinoCaixaPDV(todasContas);
-      const { saldoGaveta } = await resolverSaldoGavetaCaixaPDV(
-        base44,
-        contaCaixaPDV,
-        lancamentos,
-        movimentos,
+      /** Dinheiro físico na gaveta ao fechar (saldo do turno, não histórico financeiro). */
+      const saldoNaGaveta = roundToTwoDecimals(
+        caixaData.saldoAtual ?? caixaData.saldoCaixaCalculado ?? 0,
       );
-      const saldoRestante = roundToTwoDecimals(saldoGaveta);
 
-      if (saldoRestante > 0 && !contaDestino) {
+      if (saldoNaGaveta > 0.009 && !contaDestino) {
         toast({
           title: 'Conta destino não configurada',
           description: 'Em Configurações → Financeiro → Contas, defina para onde vai o dinheiro do caixa PDV antes de fechar.',
@@ -69,36 +66,35 @@ export default function FechamentoCaixaButton({
         return;
       }
 
-      if (contaDestino && saldoRestante > 0) {
+      let movimentoFechamento = null;
+      if (contaDestino && saldoNaGaveta > 0.009) {
         const observacao = `Fechamento de turno ${turnoAtivo.numero} - Transferido para ${contaDestino.nome}`;
-        const movimentoFechamento = await base44.entities.MovimentosCaixa.create({
+        movimentoFechamento = await base44.entities.MovimentosCaixa.create({
           numero: `MCX-${String(Date.now()).slice(-5)}`,
           tipo: 'Sangria',
-          valor: saldoRestante,
+          valor: saldoNaGaveta,
           observacao,
           conta_id: contaCaixaPDV.id,
           turno_caixa_id: turnoAtivo.id,
           usuario_responsavel_id: currentUser.id,
           usuario_responsavel_nome: currentUser.full_name,
         });
-        await transferirDinheiroFechamentoCaixaPDV({
-          base44,
-          contaCaixaPDV,
-          contaDestino,
-          descricao: observacao,
-          movimentoId: movimentoFechamento.id,
-          lancamentos,
-          movimentos,
-        });
-      } else if (contaCaixaPDV?.id) {
-        await transferirDinheiroFechamentoCaixaPDV({
-          base44,
-          contaCaixaPDV,
-          contaDestino,
-          descricao: `Fechamento de turno ${turnoAtivo.numero}`,
-          lancamentos,
-          movimentos,
-        });
+      }
+
+      await transferirDinheiroFechamentoCaixaPDV({
+        base44,
+        contaCaixaPDV,
+        contaDestino,
+        descricao: movimentoFechamento?.observacao
+          || `Fechamento de turno ${turnoAtivo.numero}`,
+        movimentoId: movimentoFechamento?.id,
+        lancamentos,
+        movimentos,
+        valorTransferir: saldoNaGaveta,
+      });
+
+      if (movimentoFechamento?.id) {
+        await appendTurnoArrayId(base44, turnoAtivo.id, 'movimentos_ids', movimentoFechamento.id);
       }
 
       await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
