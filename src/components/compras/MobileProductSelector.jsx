@@ -40,6 +40,16 @@ import {
   getItemCompraExibicaoVitrine,
 } from '@/lib/productUnits';
 
+/** Mobile: overlay fullscreen. Desktop: painel dentro da montagem da cotação. */
+const SELECTOR_PANEL_CLASS = cn(
+  'fixed inset-0 z-[60] flex flex-col bg-card',
+  'desktop-layout:relative desktop-layout:inset-auto desktop-layout:z-0',
+  'desktop-layout:flex-1 desktop-layout:min-h-0 desktop-layout:overflow-hidden',
+);
+
+const SELECTOR_FAB_CLASS =
+  'fixed right-6 z-[70] flex h-14 w-14 items-center justify-center rounded-full p38-btn-primary shadow-lg transition-shadow hover:shadow-xl p38-bottom-fab1 desktop-layout:absolute desktop-layout:right-4 desktop-layout:bottom-4';
+
 export default function MobileProductSelector({ 
   items, 
   products, 
@@ -350,7 +360,7 @@ export default function MobileProductSelector({
     const isDesconto = tipoDesconto === 'desconto';
 
     return (
-      <div className="fixed inset-0 bg-card z-[60] flex flex-col">
+      <div className={SELECTOR_PANEL_CLASS}>
         {/* Header */}
         <div className="flex items-center px-4 py-3 border-b border-border/40 flex-shrink-0">
           <Button variant="ghost" size="icon" onClick={() => setView('menu')} className="h-10 w-10">
@@ -460,8 +470,8 @@ export default function MobileProductSelector({
     'absolute -top-1 -right-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-[#a4ce33] px-1 text-xs font-bold text-[#1f1d22]';
 
     return (
-      <div className="flex flex-col h-full bg-card">
-        <div className="flex-1 flex flex-col p-4 space-y-3">
+      <div className="flex h-full min-h-0 flex-col bg-card">
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto p-4 sm:grid-cols-2 desktop-layout:max-w-4xl desktop-layout:mx-auto desktop-layout:w-full desktop-layout:content-start">
           {/* Buscar Produtos */}
           <button
             onClick={() => setView('catalog')}
@@ -548,7 +558,7 @@ export default function MobileProductSelector({
     const editHasAltUnits = editProduct && buildPurchaseUnitOptions(editProduct).length > 1;
     return (
       <>
-      <div className="fixed inset-0 bg-card z-[60] flex flex-col">
+      <div className={SELECTOR_PANEL_CLASS}>
         <div className="flex items-center p-4 border-b border-border/40 flex-shrink-0 gap-2">
           <Button variant="ghost" size="icon" onClick={() => {
             setEditingItem(null);
@@ -580,7 +590,7 @@ export default function MobileProductSelector({
           )}
         </div>
         
-        <div className="flex-1 overflow-y-auto p-3 space-y-5">
+        <div className="flex-1 overflow-y-auto p-3 space-y-5 desktop-layout:mx-auto desktop-layout:w-full desktop-layout:max-w-2xl">
           {isLocked && (
             <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
               <div className="flex items-start gap-2">
@@ -908,7 +918,7 @@ export default function MobileProductSelector({
   if (view === 'catalog') {
     return (
       <>
-        <div className="fixed inset-0 bg-card z-[60] flex flex-col">
+        <div className={SELECTOR_PANEL_CLASS}>
           <div className="flex items-center p-4 border-b border-border/40 flex-shrink-0 gap-2">
             <Button variant="ghost" size="icon" onClick={() => setView('menu')} className="h-10 w-10">
               <ChevronLeft className="w-5 h-5" />
@@ -995,7 +1005,7 @@ export default function MobileProductSelector({
               )}
             </div>
 
-            <div className="p-4 space-y-3">
+            <div className="p-4 space-y-3 desktop-layout:grid desktop-layout:grid-cols-2 desktop-layout:gap-3 desktop-layout:xl:grid-cols-3">
               {search.trim() === '' ? (
                 <div className="text-center py-16 text-muted-foreground">
                   <Search className="w-16 h-16 mx-auto mb-4 opacity-20" />
@@ -1089,7 +1099,7 @@ export default function MobileProductSelector({
                 document.activeElement?.blur();
                 setShowNovoProduto(true);
               }}
-              className="fixed right-6 z-[70] flex h-14 w-14 items-center justify-center rounded-full p38-btn-primary shadow-lg transition-shadow hover:shadow-xl p38-bottom-fab1"
+              className={SELECTOR_FAB_CLASS}
               title="Criar novo produto"
             >
               <Plus className="w-6 h-6" />
@@ -1127,7 +1137,7 @@ export default function MobileProductSelector({
   );
 
   return (
-    <div className="fixed inset-0 bg-card z-[60] flex flex-col">
+    <div className={SELECTOR_PANEL_CLASS}>
       <div className="flex items-center p-4 border-b border-border/40 flex-shrink-0 gap-2">
         <Button variant="ghost" size="icon" onClick={() => setView('menu')} className="h-10 w-10">
           <ChevronLeft className="w-5 h-5" />

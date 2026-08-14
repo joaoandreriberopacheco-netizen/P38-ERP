@@ -761,6 +761,7 @@ export default function CotacoesManager() {
   return (
     <>
       {view === 'hub' ? (
+        <div className="flex h-full min-h-0 flex-1 flex-col">
         <CotacaoExpressHub
           cotacoes={cotacoes}
           loading={isLoading}
@@ -772,8 +773,9 @@ export default function CotacoesManager() {
           onExcluirCotacao={handleDeleteCotacao}
           criando={criando}
         />
+        </div>
       ) : (
-    <div className="flex h-full min-h-[min(70dvh,720px)] flex-col overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm sm:min-h-[480px]">
+    <div className="flex h-full min-h-[min(70dvh,720px)] flex-col overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm desktop-layout:min-h-[560px]">
       {view === 'montagem' && selectedCotacao && cotacaoExibicao && (
         <CotacaoExpressMontagem
           cotacao={cotacaoExibicao}

@@ -60,7 +60,7 @@ export default function CotacaoExpressMontagem({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-hidden pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] sm:pb-0">
+      <div className="min-h-0 flex-1 overflow-hidden pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] desktop-layout:pb-0">
         <MobileProductSelector
           items={selectorItems}
           products={produtos}

@@ -432,7 +432,7 @@ export default function ComprasPage() {
       <div
         className={cn(
           tabFullHeight
-            ? 'flex-1 min-h-0 overflow-hidden'
+            ? 'flex-1 min-h-0 overflow-hidden px-4 desktop-layout:px-0'
             : 'px-4 md:px-0 pt-4 min-w-0 max-w-full overflow-x-clip',
         )}
       >
