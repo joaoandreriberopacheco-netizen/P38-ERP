@@ -94,7 +94,7 @@ export default function MobileProductSelector({
 
   const filteredProducts = useMemo(() => {
     if (!search.trim()) return [];
-    return filterAndSortProducts(products, search);
+    return filterAndSortProducts(products, search, { limit: 60 });
   }, [products, search]);
 
   /** pt-BR: "1.234,56" ou decimal com ponto "15.49". */
@@ -464,7 +464,7 @@ export default function MobileProductSelector({
         <div className="flex-1 flex flex-col p-4 space-y-3">
           {/* Buscar Produtos */}
           <button
-            onClick={() => setView('discount-entry')}
+            onClick={() => setView('catalog')}
             className={cn(menuCardClass, 'flex items-center gap-4')}
             disabled={isLocked}
           >

@@ -53,7 +53,7 @@ export default function CatalogLotePicker({
 
   const filteredProducts = useMemo(() => {
     if (!search.trim()) return [];
-    const list = filterAndSortProducts(products, search);
+    const list = filterAndSortProducts(products, search, { limit: 60 });
     if (!sortResultsAlphabetically) return list;
     return [...list].sort((a, b) =>
       (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base', numeric: true }),

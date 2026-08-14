@@ -368,7 +368,7 @@ export default function ComprasPage() {
   const [activeTab, setActiveTab] = useState('sugestoes');
   const isMobile = useCompactShell();
   const sugestoesFullHeight = isMobile && activeTab === 'sugestoes';
-  const cotacoesFullHeight = isMobile && activeTab === 'cotacoes';
+  const cotacoesFullHeight = activeTab === 'cotacoes';
   const tabFullHeight = sugestoesFullHeight || cotacoesFullHeight;
 
   const handleTabChange = (value) => {

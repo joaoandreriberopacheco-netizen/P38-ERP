@@ -142,20 +142,36 @@ export function normalizeProductSearchText(value) {
     .trim();
 }
 
-export function getProductSearchText(produto) {
+function buildProductSearchFields(produto, { includeHierarchy = false } = {}) {
   const codigoInternoRaw = normalizeProductCodeForSearch(produto?.codigo_interno);
-  return normalizeMatchText([
+  const fields = [
     produto?.nome,
+    produto?.descricao,
     produto?.codigo_interno,
     codigoInternoRaw,
     produto?.codigo_barras,
-    produto?.campo_hierarquico_1,
-    produto?.campo_hierarquico_2,
-    produto?.campo_hierarquico_3,
-    produto?.campo_hierarquico_4,
-    produto?.campo_hierarquico_5,
     produto?.marca,
-  ].filter(Boolean).join(' '));
+  ];
+  if (includeHierarchy) {
+    fields.push(
+      produto?.campo_hierarquico_1,
+      produto?.campo_hierarquico_2,
+      produto?.campo_hierarquico_3,
+      produto?.campo_hierarquico_4,
+      produto?.campo_hierarquico_5,
+    );
+  }
+  return fields.filter(Boolean);
+}
+
+/** Texto pesquisável completo (inclui hierarquia) — OCR e match automático. */
+export function getProductSearchText(produto) {
+  return normalizeMatchText(buildProductSearchFields(produto, { includeHierarchy: true }).join(' '));
+}
+
+/** Texto pesquisável manual — alinhado ao catálogo Produtos (nome, códigos, marca). */
+export function getProductPrimarySearchText(produto) {
+  return normalizeMatchText(buildProductSearchFields(produto, { includeHierarchy: false }).join(' '));
 }
 
 /** Termos separados por espaço ou ";" — todos devem aparecer (mesmo conceito da tela Produtos). */
@@ -163,11 +179,35 @@ export function getSemicolonSearchTokens(query) {
   return parseSearchTerms(query, normalizeProductSearchText);
 }
 
-export function matchesProductQuery(produto, query) {
+export function matchesProductQuery(produto, query, { includeHierarchy = false } = {}) {
   if (!query?.trim()) return true;
-  const searchable = getProductSearchText(produto);
+  const searchable = includeHierarchy
+    ? getProductSearchText(produto)
+    : getProductPrimarySearchText(produto);
   const terms = parseSearchTerms(query, normalizeMatchText);
   return terms.every((term) => searchable.includes(term));
+}
+
+function scoreManualProductSearch(produto, query) {
+  const trimmed = String(query || '').trim();
+  if (!trimmed) return 0;
+
+  const terms = parseSearchTerms(trimmed, normalizeMatchText);
+  if (!terms.length) return 0;
+
+  const primaryText = getProductPrimarySearchText(produto);
+  if (!terms.every((term) => primaryText.includes(term))) return 0;
+
+  const nomeText = normalizeMatchText(produto?.nome);
+  const queryTokens = tokenizeForProductMatch(trimmed);
+  let score = scoreProductAgainstTokens(queryTokens, produto);
+
+  for (const term of terms) {
+    if (nomeText.includes(term)) score += 2;
+    else if (primaryText.includes(term)) score += 0.75;
+  }
+
+  return score;
 }
 
 export function sortProductsAlphabetically(produtos = []) {
@@ -180,12 +220,21 @@ export function filterAndSortProducts(produtos = [], query = '', { limit = null,
   const trimmed = String(query || '').trim();
   if (!trimmed && !includeEmpty) return [];
 
-  const sorted = sortProductsAlphabetically(produtos);
-  const filtered = trimmed
-    ? sorted.filter((produto) => matchesProductQuery(produto, trimmed))
-    : sorted;
+  if (!trimmed) {
+    const sorted = sortProductsAlphabetically(produtos);
+    return Number.isFinite(limit) && limit > 0 ? sorted.slice(0, limit) : sorted;
+  }
 
-  return Number.isFinite(limit) && limit > 0 ? filtered.slice(0, limit) : filtered;
+  const filtered = produtos.filter((produto) => matchesProductQuery(produto, trimmed));
+  const ranked = filtered
+    .map((produto) => ({ produto, score: scoreManualProductSearch(produto, trimmed) }))
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return getProdutoLabel(a.produto).localeCompare(getProdutoLabel(b.produto), 'pt-BR', { sensitivity: 'base' });
+    })
+    .map(({ produto }) => produto);
+
+  return Number.isFinite(limit) && limit > 0 ? ranked.slice(0, limit) : ranked;
 }
 
 export function getProdutoCatalogEntry(produto) {
@@ -233,7 +282,7 @@ export function findLocalBestProductMatch(textoIdentificado, catalogoProdutos = 
     const queryTokens = tokenizeForProductMatch(query);
     if (!queryTokens.length) continue;
 
-    const direct = catalogoProdutos.find((produto) => matchesProductQuery(produto, query));
+    const direct = catalogoProdutos.find((produto) => matchesProductQuery(produto, query, { includeHierarchy: true }));
     if (direct) return { produto: direct, confianca: 'media' };
 
     for (const produto of catalogoProdutos) {

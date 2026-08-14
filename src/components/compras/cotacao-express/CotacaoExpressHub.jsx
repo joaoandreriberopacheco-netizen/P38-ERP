@@ -243,7 +243,7 @@ export default function CotacaoExpressHub({
         }
         vazioIcon={FileText}
       >
-        <P38MobileLineList>
+        <P38MobileLineList allViewports>
           {lista.map((cotacao, index) => (
             <P38MobileLine
               key={cotacao.id}
