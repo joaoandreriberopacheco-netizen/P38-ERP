@@ -405,7 +405,7 @@ function HierarquiaPortalInner() {
         <p className="text-[11px] text-muted-foreground text-center mt-4">
           {enriched.length} SKUs visíveis
           {produtosPiloto.length !== enriched.length ? ` (${produtosPiloto.length} no piloto)` : ''}
-          · {supplyLines.length} esquadras · {PORTAL_EXCEL_LINHAS.length} LINHAS
+          · {supplyLines.length} esquadras · {getPortalCatalogLinhas().length} LINHAS
           {somentePositivos ? ' · só positivos' : ''}
           {estoqueVirtualAtivo ? ' · estoque virtual ~' : ''}
         </p>
