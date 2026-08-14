@@ -47,6 +47,8 @@ Em **produção** estes flags vêm `false` (deploy Vercel). Para testar o piloto
 - `VITE_CADASTRO_PRODUTO_V2_ENABLED=true`
 - `VITE_MODELO_CATALOGO_ENABLED=true` (opcional — laboratório modelo)
 
+**Atenção — cadastro partilhado:** o portal de homologação usa o **mesmo Base44 / cadastro de produtos** que a operação real. Ações como **“Enviar para reserva”** (`ativo: false` + tag `reserva-ceramica`) **alteram o cadastro de produção** se as credenciais apontarem para o app P38. O flag só esconde o botão no site de produção; **não isola dados**. Para recuperar SKUs: `npm run reserva:listar` e `npm run reserva:reativar -- --apply` (com `VITE_BASE44_APP_ID` + token no ambiente).
+
 ### Datalink híbrido (entidades → Postgres Supabase)
 
 Com o stack local a correr (`supabase start`), no `.env.local` na raiz do app:
