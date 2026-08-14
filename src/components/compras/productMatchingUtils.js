@@ -25,7 +25,22 @@ const MATERIAL_ABBREVIATIONS = {
   piso: 'piso',
   porc: 'porcelanato',
   porcel: 'porcelanato',
+  mrm: 'marrom',
+  bg: 'bege',
 };
+
+/** Abreviações comuns na busca manual (ex.: "naturale mrm" → marrom). */
+const QUERY_TERM_ALIASES = {
+  mrm: 'marrom',
+  bg: 'bege',
+};
+
+function termMatchesSearchable(term, searchable) {
+  if (!term) return true;
+  if (searchable.includes(term)) return true;
+  const alias = QUERY_TERM_ALIASES[term];
+  return alias ? searchable.includes(alias) : false;
+}
 
 function preprocessMatchText(value) {
   return String(value || '')
@@ -185,7 +200,7 @@ export function matchesProductQuery(produto, query, { includeHierarchy = false }
     ? getProductSearchText(produto)
     : getProductPrimarySearchText(produto);
   const terms = parseSearchTerms(query, normalizeMatchText);
-  return terms.every((term) => searchable.includes(term));
+  return terms.every((term) => termMatchesSearchable(term, searchable));
 }
 
 function scoreManualProductSearch(produto, query) {
@@ -196,7 +211,7 @@ function scoreManualProductSearch(produto, query) {
   if (!terms.length) return 0;
 
   const primaryText = getProductPrimarySearchText(produto);
-  if (!terms.every((term) => primaryText.includes(term))) return 0;
+  if (!terms.every((term) => termMatchesSearchable(term, primaryText))) return 0;
 
   const nomeText = normalizeMatchText(produto?.nome);
   const queryTokens = tokenizeForProductMatch(trimmed);

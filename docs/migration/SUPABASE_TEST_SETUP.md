@@ -58,7 +58,11 @@ npm run reserva:listar
 npm run reserva:reativar -- --apply
 ```
 
-Se existirem SKUs afectados pela reserva **antiga** (tag `reserva-ceramica` / `ativo=false` no Base44), use também `--legacy-base44` no reactivar.
+Se existirem SKUs afectados pela reserva **antiga** (tag `reserva-ceramica` / `ativo=false` no cadastro), use:
+
+```bash
+npm run reserva:reativar -- --apply --legacy-cadastro
+```
 
 Flags opcionais de UI:
 

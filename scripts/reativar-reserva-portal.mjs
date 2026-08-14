@@ -6,7 +6,8 @@
  *   npm run reserva:reativar              # dry-run
  *   npm run reserva:reativar -- --apply     # reserva_portal=false em portal_catalog
  *   npm run reserva:reativar -- --apply --codigos=ABC,DEF
- *   npm run reserva:reativar -- --apply --legacy-base44  # remove tag antiga no Base44 (opcional)
+ *   npm run reserva:reativar -- --apply --legacy-cadastro  # reactiva produto inactivo + tag antiga (Postgres)
+ *   npm run reserva:reativar -- --apply --legacy-base44    # idem no Base44 (opcional)
  *
  * Requer DATABASE_URL (migração 067 aplicada).
  * --legacy-base44 também requer VITE_BASE44_APP_ID + BASE44_ACCESS_TOKEN ou BASE44_API_KEY.
@@ -20,6 +21,7 @@ const BATCH_SIZE = 8;
 const args = new Set(process.argv.slice(2));
 const apply = args.has('--apply');
 const legacyBase44 = args.has('--legacy-base44');
+const legacyCadastro = args.has('--legacy-cadastro');
 const codigosArg = [...args].find((a) => a.startsWith('--codigos='));
 const filterCodigos = codigosArg
   ? new Set(codigosArg.slice('--codigos='.length).split(',').map((s) => s.trim().toUpperCase()).filter(Boolean))
@@ -74,6 +76,47 @@ async function clearPortalReserva(client, codigos = null) {
     set reserva_portal = false, updated_at = now()
     where ativo = true and reserva_portal = true
   `);
+  return rowCount;
+}
+
+async function listLegacyCadastroReserva(client) {
+  const { rows } = await client.query(`
+    select id, codigo_interno, nome, ativo, tags
+    from public.produto
+    where ativo = false
+      and tags::text ilike '%reserva-ceramica%'
+    order by nome
+  `);
+  return rows;
+}
+
+async function reativarLegacyCadastroReserva(client, codigos = null) {
+  const params = [];
+  let codigoFilter = '';
+  if (codigos?.length) {
+    params.push(codigos.map((c) => String(c).trim().toUpperCase()));
+    codigoFilter = ` and upper(codigo_interno) = any($${params.length}::text[])`;
+  }
+
+  const { rowCount } = await client.query(
+    `
+    update public.produto p
+    set ativo = true,
+        tags = coalesce(
+          (
+            select jsonb_agg(to_jsonb(trim(elem)))
+            from jsonb_array_elements_text(p.tags) elem
+            where lower(regexp_replace(trim(both '#' from elem), '\\s+', ' ', 'g')) <> $${params.length + 1}
+          ),
+          '[]'::jsonb
+        ),
+        updated_at = now()
+    where ativo = false
+      and tags::text ilike '%reserva-ceramica%'
+      ${codigoFilter}
+    `,
+    [...params, PORTAL_RESERVA_TAG],
+  );
   return rowCount;
 }
 
@@ -132,16 +175,35 @@ async function main() {
       reservados = reservados.filter((r) => filterCodigos.has(String(r.codigo_interno).toUpperCase()));
     }
 
+    let legadoCadastro = await listLegacyCadastroReserva(client);
+    if (filterCodigos?.size) {
+      legadoCadastro = legadoCadastro.filter((p) =>
+        filterCodigos.has(String(p.codigo_interno).toUpperCase()),
+      );
+    }
+
     console.log(`[reserva] portal_catalog.reserva_portal=true: ${reservados.length}`);
+    console.log(`[reserva] produto legado (ativo=false + tag reserva-ceramica): ${legadoCadastro.length}`);
     if (reservados.length) {
-      console.log('\nAmostra (até 25):');
+      console.log('\nAmostra portal_catalog (até 25):');
       console.log(JSON.stringify(reservados.slice(0, 25), null, 2));
+    }
+    if (legadoCadastro.length) {
+      console.log('\nAmostra cadastro legado (até 25):');
+      console.log(JSON.stringify(legadoCadastro.slice(0, 25).map((p) => ({
+        codigo_interno: p.codigo_interno,
+        nome: p.nome,
+        ativo: p.ativo,
+      })), null, 2));
     }
 
     if (!apply) {
       console.log('\n[reserva] Dry-run. Para limpar: npm run reserva:reativar -- --apply');
+      if (legacyCadastro) {
+        console.log('[reserva] Com --legacy-cadastro reactiva produtos inactivos pela reserva antiga (cotação/PDV).');
+      }
       if (legacyBase44) {
-        console.log('[reserva] Com --legacy-base44 também remove tag antiga no cadastro Base44.');
+        console.log('[reserva] Com --legacy-base44 também actualiza cadastro Base44.');
       }
       return;
     }
@@ -151,6 +213,17 @@ async function main() {
       : reservados.map((r) => r.codigo_interno);
     const n = await clearPortalReserva(client, codigos.length ? codigos : null);
     console.log(`\n[reserva] ${n} linha(s) actualizada(s) em portal_catalog (reserva_portal=false).`);
+
+    if (legacyCadastro) {
+      const codigosLegado = filterCodigos?.size
+        ? [...filterCodigos]
+        : legadoCadastro.map((p) => p.codigo_interno);
+      const nCadastro = await reativarLegacyCadastroReserva(
+        client,
+        codigosLegado.length ? codigosLegado : null,
+      );
+      console.log(`[reserva] ${nCadastro} produto(s) reactivado(s) no cadastro (Postgres).`);
+    }
 
     if (legacyBase44) {
       const base44 = requireBase44Client();
