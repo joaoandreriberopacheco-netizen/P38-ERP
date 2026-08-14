@@ -1,6 +1,7 @@
 import { sortLancamentosPorDescricao } from '@/lib/financialUtils';
 import { consolidarTransferenciasListaFluxo } from '@/lib/gruposMovimentacaoConta';
-import { lancamentoPertenceContasSelecionadas, isTransferenciaEntreContas } from '@/lib/saldoContaFinanceira';
+import { passaFiltroTiposLancamento } from '@/lib/filtroTipoFinanceiro';
+import { lancamentoPertenceContasSelecionadas } from '@/lib/saldoContaFinanceira';
 import {
   getDataAncoraFluxoKey,
   getValorContaAberta,
@@ -58,11 +59,7 @@ export function filtrarProgramadasFluxo(lancs, {
 
     if (contasSel.length && !lancamentoPertenceContasSelecionadas(l, contasSel, contasById)) return false;
 
-    if (tiposSel.length) {
-      const matchTipo = tiposSel.includes(l.tipo);
-      const matchTransf = tiposSel.includes('Transferência') && isTransferenciaEntreContas(l);
-      if (!matchTipo && !matchTransf) return false;
-    }
+    if (!passaFiltroTiposLancamento(l, tiposSel)) return false;
 
     if (cmvOnly && !l.is_custo_mercadoria) return false;
     if (search && !lancamentoPassaBuscaFluxo(l, search, contasAtivas, contasById)) return false;
