@@ -55,7 +55,7 @@ import ConciliacaoBancaria from './ConciliacaoBancaria';
 import PagamentoLoteDialog from './PagamentoLoteDialog';
 import FluxoToggleProgramadas from './fluxo/FluxoToggleProgramadas';
 import TipoFiltroBar from './fluxo/TipoFiltroBar';
-import { passaFiltroTiposLancamento } from '@/lib/filtroTipoFinanceiro';
+import { passaFiltroTiposLancamento, filtrarGruposPorTipo } from '@/lib/filtroTipoFinanceiro';
 import usePagamentoLoteFluxo from './fluxo/usePagamentoLoteFluxo';
 import { CONCILIACAO_LOTE_TAMANHO } from '@/lib/conciliacaoEmLote';
 import { consumirArquivoLancamentoTorreDoBridge, temFluxoLancamentoTorreAtivo, concluirFluxoTorreCompartilhamento } from '@/lib/torreLancamentoBridge';
@@ -498,8 +498,9 @@ export default function ExecucaoOrcamentaria() {
     if (ds && dataKey < ds) return false;
     if (de && dataKey > de) return false;
     if (!passaFiltroCorteHistorico(dataKey, { mostrarHistoricoAnterior, dataCorte: dataCorteHistorico })) return false;
+    if (!passaFiltroTiposLancamento(m, tiposSel)) return false;
     return true;
-  }), [movimentos, ds, de, contasFiltroIds, mostrarHistoricoAnterior, dataCorteHistorico]);
+  }), [movimentos, ds, de, contasFiltroIds, mostrarHistoricoAnterior, dataCorteHistorico, tiposSel]);
 
   const lancsParaSaldo = lancsSaldo.length ? lancsSaldo : lancs;
   const movsParaSaldo = movsSaldo.length ? movsSaldo : movimentos;
@@ -605,15 +606,18 @@ export default function ExecucaoOrcamentaria() {
   );
 
   const gruposExibicao = useMemo(() => {
-    if (!mostrarProgramadas) return grupos;
+    if (!mostrarProgramadas) return filtrarGruposPorTipo(grupos, tiposSel);
     const hStr = dataHoje();
     const oStr = format(subDays(parseDateKey(hStr), 1), 'yyyy-MM-dd');
     const merged = mesclarProgramadasNosGrupos(grupos, programadasLista, ordemLancamentos, { movimentos });
-    return merged.map((g) => ({
-      ...g,
-      label: g.label || (g.k === 'sem-data' ? 'Sem data' : formatFinanceiroGrupoLabel(g.k, hStr, oStr)),
-    }));
-  }, [grupos, mostrarProgramadas, programadasLista, ordemLancamentos]);
+    return filtrarGruposPorTipo(
+      merged.map((g) => ({
+        ...g,
+        label: g.label || (g.k === 'sem-data' ? 'Sem data' : formatFinanceiroGrupoLabel(g.k, hStr, oStr)),
+      })),
+      tiposSel,
+    );
+  }, [grupos, mostrarProgramadas, programadasLista, ordemLancamentos, movimentos, tiposSel]);
 
   const lote = usePagamentoLoteFluxo({
     programadas: programadasLista,
@@ -695,6 +699,7 @@ export default function ExecucaoOrcamentaria() {
       if (dsF && dataKey < dsF) return false;
       if (deF && dataKey > deF) return false;
       if (!passaFiltroCorteHistorico(dataKey, { mostrarHistoricoAnterior, dataCorte: dataCorteHistorico })) return false;
+      if (!passaFiltroTiposLancamento(m, tiposSelFiltro)) return false;
       return true;
     });
 
@@ -858,34 +863,36 @@ export default function ExecucaoOrcamentaria() {
           <div className="flex items-center gap-2">
             <p className="text-lg font-semibold leading-none text-foreground font-glacial md:text-2xl">Financeiro</p>
             {aba === 'fluxo' && (
-              <button
-                onClick={abrirMenuRelatorios}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg p38-field-surface border-0 hover:opacity-90 transition-opacity"
-                aria-label="Relatórios — balancete e extrato"
-              >
-                <Printer className="w-4 h-4 text-foreground/90" />
-              </button>
+              <div className="flex shrink-0 items-center gap-0.5 no-pdf-capture">
+                <ContasSaldoPicker
+                  variant="icon"
+                  contas={contasSaldoOpcoes}
+                  sel={contasSaldoSel}
+                  onSel={atualizarContasSaldoSel}
+                />
+                <TipoFiltroBar sel={tiposSel} onSel={setTiposSel} />
+                <button
+                  type="button"
+                  onClick={abrirMenuRelatorios}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg p38-field-surface border-0 hover:opacity-90 transition-opacity"
+                  aria-label="Relatórios — balancete e extrato"
+                >
+                  <Printer className="w-4 h-4 text-foreground/90" />
+                </button>
+              </div>
             )}
           </div>
 
           {aba === 'fluxo' && (
-            <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:gap-3">
-              <div className="min-w-0 flex-1">
-                <KpiFluxoBar
-                  kpis={kpis}
-                  periodoLabel={periodoLabel}
-                  mostrarProgramadas={mostrarProgramadas}
-                  saldoPrevisto={saldoPrevisto}
-                  aReceber={kpisProgramadas.aReceber}
-                  aPagar={kpisProgramadas.aPagar}
-                  saldosCarteiraProntos={saldosCarteiraProntos}
-                />
-              </div>
-              <ContasSaldoPicker
-                contas={contasSaldoOpcoes}
-                sel={contasSaldoSel}
-                onSel={atualizarContasSaldoSel}
-                className="self-start"
+            <div className="min-w-0">
+              <KpiFluxoBar
+                kpis={kpis}
+                periodoLabel={periodoLabel}
+                mostrarProgramadas={mostrarProgramadas}
+                saldoPrevisto={saldoPrevisto}
+                aReceber={kpisProgramadas.aReceber}
+                aPagar={kpisProgramadas.aPagar}
+                saldosCarteiraProntos={saldosCarteiraProntos}
               />
             </div>
           )}
@@ -912,8 +919,6 @@ export default function ExecucaoOrcamentaria() {
             checked={mostrarProgramadas}
             onCheckedChange={handleToggleProgramadas}
           />
-
-          <TipoFiltroBar sel={tiposSel} onSel={setTiposSel} />
 
           <FiltrosFluxoCaixa
             search={search}

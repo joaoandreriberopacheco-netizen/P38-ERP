@@ -36,7 +36,7 @@ import FiltrosExtratoConta, { PERIODOS_EXTRATO } from '@/components/financeiro/f
 import ListaExtratoConta from '@/components/financeiro/fluxo/ListaExtratoConta';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from '@/components/financeiro/fluxo/FinanceiroListaMeta';
 import TipoFiltroBar from '@/components/financeiro/fluxo/TipoFiltroBar';
-import { passaFiltroTiposLancamento, labelTiposSelecionados } from '@/lib/filtroTipoFinanceiro';
+import { passaFiltroTiposLancamento, labelTiposSelecionados, filtrarGruposPorTipo } from '@/lib/filtroTipoFinanceiro';
 import { formatFinanceiroGrupoLabel } from '@/components/financeiro/fluxo/FinanceiroListaShared';
 import AjusteSaldoDialog from '@/components/config/AjusteSaldoDialog';
 import {
@@ -708,6 +708,7 @@ export default function ExtratoContaPage() {
               </p>
             </div>
             <div className="flex shrink-0 gap-0.5 no-pdf-capture">
+              <TipoFiltroBar sel={tiposSel} onSel={setTiposSel} />
               <button
                 type="button"
                 onClick={() => setAjusteDialogOpen(true)}
@@ -789,8 +790,6 @@ export default function ExtratoContaPage() {
           </div>
         </div>
       </div>
-
-      <TipoFiltroBar sel={tiposSel} onSel={setTiposSel} />
 
       <FiltrosExtratoConta
         search={searchTerm}
