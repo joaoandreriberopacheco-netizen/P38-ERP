@@ -20,12 +20,14 @@ import {
   perfilResolvidoParaUsuario,
 } from '@/lib/perfilPermissoes';
 import { SMART_SUPPLY_MENU_LABEL } from '@/config/smartSupplyFlags';
+import { HIERARQUIA_PORTAL_ENABLED } from '@/config/hierarquiaPortalFlags';
 import {
   LayoutDashboard, House, Monitor, Banknote, TrendingUp, Package,
   DollarSign, BookOpen, Settings, ShoppingCart, Warehouse, Truck, ClipboardPenLine,
   Users, TrendingDown, Lightbulb, FileText, PackageSearch, Ship,
   ScanLine, ClipboardList, Tags, Upload, CheckSquare, Search, Activity,
-  ArrowLeftRight, CreditCard, Clock, Wallet, ReceiptText, AlertCircle, Repeat2, CalendarClock, Target, LineChart
+  ArrowLeftRight, CreditCard, Clock, Wallet, ReceiptText, AlertCircle, Repeat2, CalendarClock, Target, LineChart,
+  Sparkles,
 } from 'lucide-react';
 
 export { resolverPermissoes };
@@ -52,12 +54,33 @@ const MINIMAL_MENU_ITEMS = [
   },
 ];
 
+/** Itens `homologOnly` só aparecem com VITE_HIERARQUIA_PORTAL_ENABLED=true. */
+function finalizeMenuItems(items) {
+  if (HIERARQUIA_PORTAL_ENABLED) return items;
+  return items.map((item) => {
+    if (!item.submenu?.length) return item;
+    return {
+      ...item,
+      submenu: item.submenu.filter((sub) => !sub.homologOnly),
+    };
+  });
+}
+
+function filterSubmenuByPermissoes(submenu, permissoes) {
+  return submenu.filter((sub) => {
+    if (sub.homologOnly && !HIERARQUIA_PORTAL_ENABLED) return false;
+    return sub.permissaoCheck ? sub.permissaoCheck(permissoes) : true;
+  });
+}
+
 export function buildMenuItems(user, perfilDeAcesso) {
-  if (user?.role === 'admin') return ALL_MENU_ITEMS;
+  if (user?.role === 'admin') return finalizeMenuItems(ALL_MENU_ITEMS);
 
   const temPerfil = !!user?.perfil_acesso_id;
 
-  if (usuarioLegadoSemMatrizPerfil(user)) return ALL_MENU_ITEMS.filter((item) => !item.adminOnly);
+  if (usuarioLegadoSemMatrizPerfil(user)) {
+    return finalizeMenuItems(ALL_MENU_ITEMS.filter((item) => !item.adminOnly));
+  }
 
   const perfilEfetivo = perfilResolvidoParaUsuario(user, perfilDeAcesso);
   if (temPerfil && !perfilEfetivo) return MINIMAL_MENU_ITEMS;
@@ -65,7 +88,7 @@ export function buildMenuItems(user, perfilDeAcesso) {
   const permissoes = resolverPermissoes(perfilEfetivo, user?.override_permissoes);
 
   if (perfilTemEscopoTotal(perfilEfetivo)) {
-    return ALL_MENU_ITEMS.filter((item) => !item.adminOnly);
+    return finalizeMenuItems(ALL_MENU_ITEMS.filter((item) => !item.adminOnly));
   }
 
   const algumaPermissao = Object.values(permissoes || {}).some((mod) => {
@@ -80,20 +103,19 @@ export function buildMenuItems(user, perfilDeAcesso) {
   });
   if (!algumaPermissao) return MINIMAL_MENU_ITEMS;
 
-  return ALL_MENU_ITEMS
-    .map(item => {
-      if (!item.submenu) return item;
-      const subsFiltrados = item.submenu.filter(sub =>
-        sub.permissaoCheck ? sub.permissaoCheck(permissoes) : true
-      );
-      return { ...item, submenu: subsFiltrados };
-    })
-    .filter(item => {
-      const pass = item.permissaoCheck ? item.permissaoCheck(permissoes) : true;
-      if (!pass) return false;
-      if (item.submenu) return item.submenu.length > 0;
-      return true;
-    });
+  return finalizeMenuItems(
+    ALL_MENU_ITEMS
+      .map((item) => {
+        if (!item.submenu) return item;
+        return { ...item, submenu: filterSubmenuByPermissoes(item.submenu, permissoes) };
+      })
+      .filter((item) => {
+        const pass = item.permissaoCheck ? item.permissaoCheck(permissoes) : true;
+        if (!pass) return false;
+        if (item.submenu) return item.submenu.length > 0;
+        return true;
+      }),
+  );
 }
 
 // ─── Definição do menu alinhada com o formato real salvo pelo PerfilFormTela ──
@@ -221,6 +243,19 @@ export const ALL_MENU_ITEMS = [
         page: 'ItinerarioFluvial',
         icon: Ship,
         permissaoCheck: (p) => p?.estoque?.compras?.logistica === true || p?.estoque?.logistica === true
+      },
+      {
+        name: 'Portal (teste)',
+        page: 'HierarquiaPortal',
+        icon: Sparkles,
+        homologOnly: true,
+        permissaoCheck: (p) =>
+          p?.estoque?.compras?.sugestoes ||
+          p?.estoque?.compras?.cotacoes ||
+          p?.estoque?.compras?.pedidos ||
+          p?.estoque?.compras?.conferencia ||
+          p?.estoque?.compras?.logistica ||
+          p?.estoque?.compras_ativo,
       }
     ]
   },
