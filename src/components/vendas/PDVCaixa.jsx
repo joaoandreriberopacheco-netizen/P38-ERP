@@ -61,7 +61,7 @@ import {
   montarTagsValeFolha,
   registrarValeNoFolhaAposLancamento,
 } from '@/lib/folhaValeFluxo';
-import { getPrazoLiquidacaoMaquininha } from '@/lib/pagamentoPedidoVendaFinanceiro';
+import { getPrazoLiquidacaoMaquininha, calcularValoresCartao } from '@/lib/pagamentoPedidoVendaFinanceiro';
 import {
   appendTurnoArrayId,
   caixaTurnoQueryKey,
@@ -823,6 +823,7 @@ export default function PDVCaixa({
        if (pagamentosDebito > 0) pagamentosArray.push({
          forma_pagamento: 'Cartão de Débito',
          valor: pagamentosDebito,
+         valor_liquido_recebido: calcularValoresCartao(pagamentosDebito, maquininhaDebito?.taxa || 0).liquido,
          parcelas: 1,
          maquininha_id: maquininhaDebito?.maquininha?.id,
          maquininha_nome: maquininhaDebito?.maquininha?.nome,
@@ -835,6 +836,7 @@ export default function PDVCaixa({
        if (pagamentosCredito > 0) pagamentosArray.push({
          forma_pagamento: 'Cartão de Crédito',
          valor: pagamentosCredito,
+         valor_liquido_recebido: calcularValoresCartao(pagamentosCredito, maquininhaCredito?.taxa || 0).liquido,
          parcelas: parcelasCredito,
          maquininha_id: maquininhaCredito?.maquininha?.id,
          maquininha_nome: maquininhaCredito?.maquininha?.nome,
