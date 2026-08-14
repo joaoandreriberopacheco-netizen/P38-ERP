@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import { ChevronDown, ShoppingCart } from 'lucide-react';
 import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import { cn } from '@/components/utils';
-import { p38Table } from '@/lib/p38TableSurfaces';
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 import { ConsultaProdutoRow } from '@/components/vendas/caixa/ConsultaProdutoRow';
 import { caixaTypo } from '@/lib/caixaP38Theme';
@@ -12,17 +11,17 @@ import { formatarSoData } from '@/components/utils/dateUtils';
 import { getTotalLinhaPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
 import { buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
 import { comprasAccentFromDisplayStatus } from '@/lib/comprasEmbarquesPalette';
-import { useCompactShell } from '@/hooks/use-breakpoint';
 
-/** Recuo hierárquico: grupo → pedido/embarque → linha de produto. */
+/** Recuo hierárquico + tipografia fixa (visual mobile em todos os viewports). */
 const CONSULTA_HIER = {
-  /** Nível 1 — pedidos dentro do agrupador ETA/transportadora */
-  l1: 'ml-2 pl-2.5 border-l border-border/30 dark:border-white/10 min-w-0 max-w-full',
-  /** Nível 2 — produtos dentro do pedido/embarque */
-  l2: 'ml-2 pl-2 border-l border-border/20 dark:border-white/[0.06] min-w-0 max-w-full',
-  /** Separador cinza suave entre níveis e entre pedidos */
+  l1: 'ml-1 pl-2 border-l border-border/30 dark:border-white/10 min-w-0 max-w-full',
+  l2: 'ml-1 pl-2 border-l border-border/20 dark:border-white/[0.06] min-w-0 max-w-full',
   sep: 'border-b border-border/40 dark:border-white/10',
 };
+const CONSULTA_TITLE =
+  'font-din-1451 font-light text-sm uppercase tracking-wide text-foreground leading-snug line-clamp-2 break-words';
+const CONSULTA_SUBTITLE =
+  'font-din-1451 font-light text-[11px] text-muted-foreground line-clamp-2 break-words';
 
 function getConsultaItens(card) {
   return card._consulta_itens || card.itens || [];
@@ -68,8 +67,7 @@ function buildEmbarqueMetaLinhas(card) {
   };
 }
 
-/** Cabeçalho do pedido/embarque — neutro; cor fica nas linhas de produto. */
-function ConsultaEmbarqueCard({ card, onVerPedido, compact = false, isLast = false }) {
+function ConsultaEmbarqueCard({ card, onVerPedido, isLast = false }) {
   const itensEmbarque = getConsultaItens(card);
   const ehNecessidade = card._consulta_papel === 'necessidade';
   const { fornecedor, detalhes } = buildEmbarqueMetaLinhas(card);
@@ -81,46 +79,22 @@ function ConsultaEmbarqueCard({ card, onVerPedido, compact = false, isLast = fal
         type="button"
         onClick={() => onVerPedido?.(card)}
         className={cn(
-          'w-full text-left hover:bg-muted/20 transition-colors min-w-0',
+          'w-full text-left hover:bg-muted/20 transition-colors min-w-0 py-3 pr-1',
           CONSULTA_HIER.sep,
-          compact ? 'py-3 pr-1' : 'flex items-center justify-between gap-3 px-1 py-3 sm:px-2',
         )}
       >
-        {compact ? (
-          <div className="space-y-1.5 min-w-0 w-full">
-            <p className={cn(p38Table.mobileLineTitle, 'leading-snug text-foreground/95')}>
-              {card._display_code || card.numero}
-              {ehNecessidade ? (
-                <span className="text-muted-foreground font-normal normal-case text-sm"> · falta vir</span>
-              ) : null}
+        <div className="space-y-1.5 min-w-0 w-full">
+          <p className={CONSULTA_TITLE}>
+            {card._display_code || card.numero}
+            {ehNecessidade ? (
+              <span className="text-muted-foreground font-light normal-case text-sm"> · falta vir</span>
+            ) : null}
+          </p>
+          <p className={cn(CONSULTA_SUBTITLE, 'normal-case')}>{fornecedor}</p>
+          <div className="flex items-end justify-between gap-3 min-w-0">
+            <p className={cn(caixaTypo.meta, 'normal-case min-w-0 line-clamp-2 flex-1 font-light')}>
+              {detalhes.join(' · ')}
             </p>
-            <p className={cn(p38Table.mobileLineSubtitle, 'normal-case line-clamp-2')}>{fornecedor}</p>
-            <div className="flex items-end justify-between gap-3 min-w-0">
-              <p className={cn(caixaTypo.meta, 'normal-case min-w-0 line-clamp-2 flex-1')}>
-                {detalhes.join(' · ')}
-              </p>
-              <CaixaValorDisplay
-                valor={card._consulta_valor || 0}
-                tone="neutral"
-                signed={false}
-                size="sm"
-                className="shrink-0"
-              />
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="min-w-0 flex-1">
-              <p className={cn(p38Table.mobileLineTitle, 'truncate text-foreground/95')}>
-                {card._display_code || card.numero}
-                {ehNecessidade ? (
-                  <span className="text-muted-foreground font-normal normal-case text-sm"> · falta vir</span>
-                ) : null}
-              </p>
-              <p className={cn(p38Table.mobileLineSubtitle, 'truncate')}>
-                {[fornecedor, ...detalhes].join(' · ')}
-              </p>
-            </div>
             <CaixaValorDisplay
               valor={card._consulta_valor || 0}
               tone="neutral"
@@ -128,8 +102,8 @@ function ConsultaEmbarqueCard({ card, onVerPedido, compact = false, isLast = fal
               size="sm"
               className="shrink-0"
             />
-          </>
-        )}
+          </div>
+        </div>
       </button>
       {itensEmbarque.length > 0 ? (
         <div className={cn(CONSULTA_HIER.l2, 'pb-1 pt-0.5')}>
@@ -138,6 +112,7 @@ function ConsultaEmbarqueCard({ card, onVerPedido, compact = false, isLast = fal
             return (
               <ConsultaProdutoRow
                 key={`${card._virtual_key || card.id}-${item.produto_id || idx}`}
+                compact
                 quantidade={Number(item.quantidade) || exib.quantidade}
                 unidade={item.unidade_medida || exib.unidade_medida}
                 nome={item.produto_nome}
@@ -156,10 +131,10 @@ function ConsultaEmbarqueCard({ card, onVerPedido, compact = false, isLast = fal
   );
 }
 
-/** Agrupamento ETA + transportadora — identidade da lista de embarques. */
-function ConsultaGrupoEmbarques({ grupo, onVerPedido, defaultOpen = true, compact = false }) {
+function ConsultaGrupoEmbarques({ grupo, onVerPedido, defaultOpen = true }) {
   const [open, setOpen] = useState(defaultOpen);
   const hasStructuredHeader = grupo.groupDate != null && grupo.groupCarrier != null;
+  const headerTextClass = 'text-sm font-light text-foreground/85 leading-relaxed';
 
   return (
     <div className="w-full min-w-0 max-w-full">
@@ -167,47 +142,32 @@ function ConsultaGrupoEmbarques({ grupo, onVerPedido, defaultOpen = true, compac
         type="button"
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          'w-full min-w-0 text-left overflow-hidden',
+          'w-full min-w-0 text-left overflow-hidden flex items-start gap-2 py-2.5',
           CONSULTA_HIER.sep,
-          compact
-            ? 'flex items-start gap-2 py-2.5'
-            : 'flex items-center gap-2 py-2.5 pr-1',
         )}
       >
         <div className="flex-1 min-w-0 overflow-hidden">
           {hasStructuredHeader ? (
-            compact ? (
-              <div className="space-y-0.5 min-w-0">
-                <span className={cn(caixaTypo.labelSm, 'block tabular-nums normal-case text-foreground/90')}>
-                  {grupo.groupDate}
-                </span>
-                <span className={cn(p38Table.mobileLineSubtitle, 'block normal-case line-clamp-2')}>
-                  {grupo.groupCarrier}
-                </span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 min-w-0">
-                <span className={cn(caixaTypo.labelSm, 'shrink-0 tabular-nums whitespace-nowrap normal-case text-foreground/90')}>
-                  {grupo.groupDate}
-                </span>
-                <span className={cn(p38Table.mobileLineSubtitle, 'truncate min-w-0 normal-case')}>
-                  {grupo.groupCarrier}
-                </span>
-              </div>
-            )
+            <div className="space-y-0.5 min-w-0">
+              <span className={cn(headerTextClass, 'block tabular-nums normal-case')}>
+                {grupo.groupDate}
+              </span>
+              <span className={cn(CONSULTA_SUBTITLE, 'block normal-case')}>
+                {grupo.groupCarrier}
+              </span>
+            </div>
           ) : (
-            <span className={cn(caixaTypo.labelSm, 'block truncate min-w-0 uppercase tracking-wide text-foreground/90')}>
+            <span className={cn(headerTextClass, 'block truncate min-w-0 uppercase tracking-wide')}>
               {grupo.label}
             </span>
           )}
         </div>
-        <div className={cn('flex shrink-0 items-center gap-1', compact && 'flex-col items-end pt-0.5')}>
+        <div className="flex shrink-0 flex-col items-end gap-0.5 pt-0.5">
           <CaixaValorDisplay
             valor={grupo.totalConsulta || 0}
             tone="neutral"
             signed={false}
             size="sm"
-            className={compact ? '' : 'max-w-[40%]'}
           />
           <ChevronDown
             className={cn(
@@ -224,7 +184,6 @@ function ConsultaGrupoEmbarques({ grupo, onVerPedido, defaultOpen = true, compac
               key={card._virtual_key || card.id}
               card={card}
               onVerPedido={onVerPedido}
-              compact={compact}
               isLast={index === grupo.cards.length - 1}
             />
           ))}
@@ -242,7 +201,6 @@ export default function ConsultaComprasPedidos({
   groupBy = 'eta_transportadora',
   sortOrder = 'asc',
 }) {
-  const compact = useCompactShell();
   const [modo, setModo] = useState('produto');
 
   const produtosAgregados = useMemo(() => aggregateByProduto(pedidosFiltrados), [pedidosFiltrados]);
@@ -269,26 +227,26 @@ export default function ConsultaComprasPedidos({
 
   return (
     <div className="space-y-4 min-w-0 max-w-full overflow-x-hidden font-din-1451">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 min-w-0">
+      <div className="flex flex-col gap-3 min-w-0 max-w-full">
         <div className="min-w-0">
-          <p className={caixaTypo.labelSm}>{contextLabel}</p>
+          <p className={cn(caixaTypo.labelSm, 'font-light uppercase tracking-wide')}>{contextLabel}</p>
           <CaixaValorDisplay valor={totalGeral} tone="info" size="lg" />
-          <p className={`${caixaTypo.meta} mt-1`}>
+          <p className={`${caixaTypo.meta} mt-1 font-light`}>
             {pedidosFiltrados.length} embarque{pedidosFiltrados.length === 1 ? '' : 's'}
           </p>
         </div>
-        <div className="flex rounded-2xl bg-muted/50 p-1 gap-1 w-full sm:w-auto min-w-0">
+        <div className="grid grid-cols-2 gap-1 rounded-2xl bg-muted/50 p-1 w-full max-w-md">
           <button
             type="button"
             onClick={() => setModo('produto')}
-            className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${modo === 'produto' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
+            className={`px-3 py-2.5 rounded-xl ${caixaTypo.tab} font-light transition-colors truncate ${modo === 'produto' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
           >
             Por produto
           </button>
           <button
             type="button"
             onClick={() => setModo('embarque')}
-            className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${modo === 'embarque' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
+            className={`px-3 py-2.5 rounded-xl ${caixaTypo.tab} font-light transition-colors truncate ${modo === 'embarque' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
           >
             Por embarque
           </button>
@@ -296,10 +254,11 @@ export default function ConsultaComprasPedidos({
       </div>
 
       {modo === 'produto' ? (
-        <P38MobileLineList allViewports className="rounded-lg">
+        <P38MobileLineList allViewports className="rounded-lg max-w-full overflow-hidden">
           {produtosAgregados.map((p, index) => (
             <ConsultaProdutoRow
               key={p.key}
+              compact
               quantidade={p.quantidade}
               unidade={p.unidade}
               nome={p.nome}
@@ -316,7 +275,6 @@ export default function ConsultaComprasPedidos({
               key={grupo.key}
               grupo={grupo}
               onVerPedido={onVerPedido}
-              compact={compact}
             />
           ))}
         </div>

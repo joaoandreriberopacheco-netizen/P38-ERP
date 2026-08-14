@@ -24,15 +24,28 @@ function resolveConsultaAccentBorder(accent) {
   return p38Accent.success.border;
 }
 
-function ConsultaQtdUnCol({ qtd, unidade, accent = 'success' }) {
+function ConsultaQtdUnCol({ qtd, unidade, accent = 'success', compact = false }) {
   const dotClass = resolveConsultaAccentDot(accent);
   return (
-    <div className="relative w-[3.25rem] flex-shrink-0 border-r border-border/40 dark:border-white/10 pr-1.5 py-2.5 text-right">
-      <span className={`absolute left-0 top-3 ${dotClass}`} aria-hidden />
-      <p className="text-base font-din-1451 tabular-nums text-foreground leading-none">
+    <div className={cn(
+      'relative flex-shrink-0 border-r border-border/40 dark:border-white/10 py-2.5 text-right',
+      compact ? 'w-[2.5rem] pr-1' : 'w-[3.25rem] pr-1.5',
+    )}
+    >
+      <span className={cn('absolute left-0 top-3 h-1.5 w-1.5 rounded-full', dotClass)} aria-hidden />
+      <p className={cn(
+        'font-din-1451 tabular-nums text-foreground leading-none',
+        compact ? 'text-xs font-light' : 'text-base',
+      )}
+      >
         {formatCommercialQuantity(qtd, unidade)}
       </p>
-      <p className={`${caixaTypo.labelSm} mt-1.5 leading-none truncate`}>
+      <p className={cn(
+        caixaTypo.labelSm,
+        'leading-none truncate',
+        compact ? 'mt-1 text-[10px] font-light' : 'mt-1.5',
+      )}
+      >
         {(unidade || 'UN').toUpperCase()}
       </p>
     </div>
@@ -65,6 +78,7 @@ export function ConsultaProdutoRow({
   nomeSuffix = null,
   signedValor,
   valorTone: valorToneProp,
+  compact = false,
 }) {
   const precoListaEff = precoLista ?? precoUnitario;
   const borderClass = resolveConsultaAccentBorder(accent);
@@ -86,26 +100,37 @@ export function ConsultaProdutoRow({
         : 'success');
   const showSigned = signedValor ?? accent !== 'muted';
 
+  const rowShell = compact
+    ? 'border-b border-border/50 dark:border-white/10 border-l py-3 pr-2 pl-3 min-w-0 bg-background font-din-1451 font-light'
+    : p38Table.mobileLineThin;
+  const titleClass = compact
+    ? 'font-din-1451 font-light text-sm leading-snug line-clamp-2 break-words flex-1 min-w-0 normal-case'
+    : cn(p38Table.mobileLineTitle, 'line-clamp-3 leading-snug flex-1 min-w-0');
+
   return (
     <div
       className={cn(
-        p38Table.mobileLineThin,
+        rowShell,
         borderClass,
-        'flex min-w-0',
+        'flex min-w-0 w-full max-w-full overflow-hidden',
         striped && 'bg-secondary/15 dark:bg-secondary/20',
       )}
     >
-      <ConsultaQtdUnCol qtd={quantidade} unidade={unidade} accent={accent} />
-      <div className="flex-1 min-w-0 py-2 pr-3 pl-2">
+      <ConsultaQtdUnCol qtd={quantidade} unidade={unidade} accent={accent} compact={compact} />
+      <div className={cn('flex-1 min-w-0 overflow-hidden', compact ? 'py-2 pr-1 pl-1.5' : 'py-2 pr-3 pl-2')}>
         <div className="flex items-start justify-between gap-2 min-w-0">
-          <p className={cn(p38Table.mobileLineTitle, 'line-clamp-3 leading-snug flex-1 min-w-0')}>
+          <p className={titleClass}>
             {nomePrefix}
             {nome}
           </p>
           {nomeSuffix ? <div className="shrink-0 pt-0.5">{nomeSuffix}</div> : null}
         </div>
-        <div className="flex items-baseline justify-between gap-3 mt-1">
-          <p className={`${caixaTypo.meta} normal-case tabular-nums min-w-0`}>
+        <div className={cn(
+          'mt-1 min-w-0',
+          compact ? 'flex flex-col gap-0.5' : 'flex items-baseline justify-between gap-3',
+        )}
+        >
+          <p className={`${caixaTypo.meta} normal-case tabular-nums min-w-0 truncate ${compact ? 'font-light' : ''}`}>
             {temDesconto && (
               <span className="line-through text-muted-foreground/70 mr-1.5">
                 {formatCaixaR(precoTabela)}
@@ -114,7 +139,7 @@ export function ConsultaProdutoRow({
             <span className="text-foreground/90">{formatCaixaR(precoEfetivo)} un.</span>
           </p>
           {!hideValor && (
-            <div className="shrink-0">
+            <div className={compact ? 'shrink-0 self-end' : 'shrink-0'}>
               <CaixaValorDisplay valor={valorNum} tone={valorTone} signed={showSigned} size="sm" />
             </div>
           )}
