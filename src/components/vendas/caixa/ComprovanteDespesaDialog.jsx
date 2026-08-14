@@ -5,9 +5,13 @@ import { ArrowLeft, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import { caixaClasses } from '@/lib/caixaP38Theme';
+import { tagsVisiveisFinanceiro } from '@/components/financeiro/fluxo/FinanceiroLancRow';
 
 export default function ComprovanteDespesaDialog({ open, onOpenChange, despesaCriada, currentUser, formatValor }) {
   const tone = caixaClasses('danger');
+  const tagsVisiveis = tagsVisiveisFinanceiro(despesaCriada?.tags);
+  const tagsTexto = tagsVisiveis.length > 0 ? tagsVisiveis.join(', ') : '';
+
   const printComprovante = async () => {
     const html = `<html><head><title>Comprovante Despesa</title>
       <style>body{font-family:monospace;font-size:13px;padding:20px;max-width:320px;margin:0 auto}
@@ -17,7 +21,8 @@ export default function ComprovanteDespesaDialog({ open, onOpenChange, despesaCr
       <div class="dashed"></div>
       <div class="row"><span>Data/Hora:</span><span>${format(new Date(), 'dd/MM/yyyy HH:mm')}</span></div>
       <div class="row"><span>Operador:</span><span>${currentUser?.full_name}</span></div>
-      <div class="row"><span>Categoria:</span><span>${despesaCriada?.categoria}</span></div>
+      ${despesaCriada?.categoria ? `<div class="row"><span>Categoria:</span><span>${despesaCriada.categoria}</span></div>` : ''}
+      ${tagsTexto ? `<div class="row"><span>Tags:</span><span>${tagsTexto}</span></div>` : ''}
       <div class="row"><span>Descrição:</span><span>${despesaCriada?.descricao}</span></div>
       <div class="dashed"></div>
       <div class="row big"><span>VALOR:</span><span>-R$ ${(despesaCriada?.valor || 0).toFixed(2).replace('.', ',')}</span></div>
@@ -54,7 +59,8 @@ export default function ComprovanteDespesaDialog({ open, onOpenChange, despesaCr
               {[
                 { l: 'Data/Hora', v: format(new Date(), 'dd/MM/yyyy HH:mm') },
                 { l: 'Operador', v: currentUser?.full_name },
-                { l: 'Categoria', v: despesaCriada?.categoria },
+                ...(despesaCriada?.categoria ? [{ l: 'Categoria', v: despesaCriada.categoria }] : []),
+                ...(tagsTexto ? [{ l: 'Tags', v: tagsTexto }] : []),
                 { l: 'Descrição', v: despesaCriada?.descricao },
               ].map(({ l, v }) => (
                 <div key={l} className="flex justify-between text-xs">
