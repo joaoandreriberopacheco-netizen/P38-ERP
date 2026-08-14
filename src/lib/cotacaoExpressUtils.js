@@ -1,7 +1,10 @@
 import {
   applyPurchaseUnitOptionToItem,
+  buildPurchaseUnitOptions,
   calcTotalItemCompraPedido,
+  commercialQuantityFromBase,
   normalizeItemToCanonicalFactorOne,
+  normalizeUnitCode,
   pickDefaultPurchaseUnit,
   resolveDescontoPctCompraProduto,
   resolveValorDescontoCompraPadraoFator1,
@@ -65,6 +68,57 @@ export function getPrecoCompraAtual(produto) {
   return parseFloat(produto.valor_compra) || parseFloat(produto.preco_custo_calculado) || 0;
 }
 
+function resolveFatorUnidadeCompra(produto, unidadeSigla) {
+  if (!produto || !unidadeSigla) return 1;
+  const options = buildPurchaseUnitOptions(produto);
+  const hit = options.find(
+    (option) => normalizeUnitCode(option.unidade) === normalizeUnitCode(unidadeSigla),
+  );
+  return parseFloat(hit?.fator_conversao) || 1;
+}
+
+function inferQuantidadeBaseCotacaoItem(item, produto, unitOption) {
+  const qtySalva = parseFloat(item.quantidade) || 1;
+  const fatorSalvo = parseFloat(item.fator_conversao);
+  const unidadeSalva = normalizeUnitCode(item.unidade || item.unidade_medida || '');
+  const fatorAlvo = parseFloat(unitOption?.fator_conversao) || 1;
+  const fatorReferencia = Number.isFinite(fatorSalvo) && fatorSalvo > 0
+    ? fatorSalvo
+    : (unidadeSalva && produto
+      ? resolveFatorUnidadeCompra(produto, unidadeSalva)
+      : fatorAlvo);
+
+  const quantidadeBasePersistida = parseFloat(item.quantidade_base);
+  if (Number.isFinite(quantidadeBasePersistida) && quantidadeBasePersistida > 0) {
+    const baseEsperada = roundToTwoDecimals(qtySalva * fatorReferencia);
+    // Corrige legado: base gravada = quantidade comercial (ex. 10 CX → base 10 em vez de 21,6).
+    if (
+      fatorReferencia > 1
+      && Math.abs(quantidadeBasePersistida - qtySalva) < 0.01
+      && Math.abs(quantidadeBasePersistida - baseEsperada) > 0.05
+    ) {
+      return baseEsperada;
+    }
+    return roundToTwoDecimals(quantidadeBasePersistida);
+  }
+
+  if (Number.isFinite(fatorSalvo) && fatorSalvo > 0) {
+    return roundToTwoDecimals(qtySalva * fatorSalvo);
+  }
+
+  if (unidadeSalva && produto) {
+    const fatorUnidadeSalva = resolveFatorUnidadeCompra(produto, unidadeSalva);
+    return roundToTwoDecimals(qtySalva * fatorUnidadeSalva);
+  }
+
+  if (unitOption && fatorAlvo > 0) {
+    // Item novo sem unidade persistida: quantidade já está na UM comercial de compra (CX, PAC…).
+    return roundToTwoDecimals(qtySalva * fatorAlvo);
+  }
+
+  return roundToTwoDecimals(qtySalva);
+}
+
 export function calcDiferencaPct(precoCotado, precoReferencia) {
   const cotado = parseFloat(precoCotado) || 0;
   const ref = parseFloat(precoReferencia) || 0;
@@ -80,22 +134,17 @@ export function formatDiferencaPct(pct) {
 
 export function cotacaoItemToSelectorItem(item, produto) {
   const qtySalva = parseFloat(item.quantidade) || 1;
-  const fatorSalvo = parseFloat(item.fator_conversao);
 
   // Cotação opera na unidade comercial de compra (CX, PAC…), não no fator-1 (M², KG…).
   const unitOption = produto ? pickDefaultPurchaseUnit(produto) : null;
   const fator = parseFloat(unitOption?.fator_conversao) || 1;
   const unidade = unitOption?.unidade || produto?.unidade_principal || 'UN';
 
-  let quantidadeBase = parseFloat(item.quantidade_base);
-  if (!Number.isFinite(quantidadeBase) || quantidadeBase <= 0) {
-    const fSaved = Number.isFinite(fatorSalvo) && fatorSalvo > 0 ? fatorSalvo : 1;
-    quantidadeBase = roundToTwoDecimals(qtySalva * fSaved);
-  }
+  const quantidadeBase = inferQuantidadeBaseCotacaoItem(item, produto, unitOption);
 
   let quantidade = qtySalva;
   if (unitOption && fator > 0) {
-    quantidade = roundToTwoDecimals(quantidadeBase / fator);
+    quantidade = commercialQuantityFromBase(quantidadeBase, fator, unidade);
     if (quantidade <= 0) quantidade = qtySalva;
   }
 
@@ -130,12 +179,19 @@ export function cotacaoItemToSelectorItem(item, produto) {
 }
 
 export function selectorItemToCotacaoItem(item) {
+  const qty = parseFloat(item.quantidade) || 1;
+  const fator = parseFloat(item.fator_conversao) || 1;
+  const quantidadeBase = parseFloat(item.quantidade_base);
   return {
     produto_id: item.produto_id,
     produto_nome: item.produto_nome,
-    quantidade: parseFloat(item.quantidade) || 1,
+    quantidade: qty,
     unidade: item.unidade_medida || item.unidade || 'UN',
-    fator_conversao: parseFloat(item.fator_conversao) || 1,
+    fator_conversao: fator,
+    quantidade_base:
+      Number.isFinite(quantidadeBase) && quantidadeBase > 0
+        ? quantidadeBase
+        : roundToTwoDecimals(qty * fator),
   };
 }
 
