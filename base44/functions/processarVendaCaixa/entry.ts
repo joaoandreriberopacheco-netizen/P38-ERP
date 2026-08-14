@@ -4,7 +4,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
  * Processa uma venda no caixa de forma atômica e segura.
  * Para pagamentos em cartão (débito/crédito), cria LancamentoFinanceiro "Em Aberto"
  * com data de vencimento = próximo dia útil conforme prazo da maquininha.
- * Os lançamentos são agrupados por maquininha+dia no fluxo de caixa como previsão.
+ * Para cartão: pedido/comprovante no valor nominal; lançamento financeiro só no líquido.
  */
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
@@ -383,7 +383,7 @@ Deno.serve(async (req) => {
           descricao,
           terceiro_id: rascunho.cliente_id || null,
           terceiro_nome: rascunho.cliente_nome || null,
-          valor: valorBruto,
+          valor: valorLiquido,
           valor_liquido: valorLiquido,
           data_vencimento: dataVencimento,
           data_liquidacao_prevista: dataVencimento,
@@ -412,6 +412,8 @@ Deno.serve(async (req) => {
             bandeira,
             taxa_pct: taxa,
             parcelas: pag.parcelas || 1,
+            valor_nominal: valorBruto,
+            valor_liquido: valorLiquido,
             data_venda: hoje,
           }),
         });

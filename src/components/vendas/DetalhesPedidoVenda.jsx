@@ -38,6 +38,11 @@ import {
 } from '@/components/ui/table';
 import { P38MobileLineList, P38MobileLine } from '@/components/ui/p38-mobile-line';
 import { formatCommercialQuantity, getUnidadeMedidaItemPedidoVenda } from '@/lib/productUnits';
+import {
+  calcularValoresCartao,
+  isCartaoForma,
+  resolveValorLiquidoPagamento,
+} from '@/lib/pagamentoPedidoVendaFinanceiro';
 const fmtDtHora = (d) => d ? formatarDataHora(d) : 'N/A';
 const fmtData = (d) => d ? formatarSoData(d) : '-';
 
@@ -379,7 +384,14 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
                 
                 {pedido.pagamentos && pedido.pagamentos.length > 0 ? (
                   <div className="space-y-3">
-                    {pedido.pagamentos.map((pag, idx) => (
+                    {pedido.pagamentos.map((pag, idx) => {
+                      const valorNominal = Number(pag.valor || 0);
+                      const valorLiquido = resolveValorLiquidoPagamento(pag);
+                      const mostraLiquido = isCartaoForma(pag.forma_pagamento) && valorLiquido !== valorNominal;
+                      const tarifa = mostraLiquido
+                        ? calcularValoresCartao(valorNominal, pag.taxa_maquininha || 0).tarifa
+                        : 0;
+                      return (
                       <div key={idx} className="bg-card p-4 rounded-xl flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
@@ -402,16 +414,22 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
                               {pag.maquininha_nome ? ` • ${pag.maquininha_nome}` : ''}
                               {pag.bandeira ? ` · ${pag.bandeira}` : ''}
                             </div>
+                            {mostraLiquido && (
+                              <div className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+                                Nominal (comprovante): {formatValor(valorNominal)} · Líquido empresa: {formatValor(valorLiquido)}
+                                {tarifa > 0 ? ` · Tarifa ~${formatValor(tarifa)}` : ''}
+                              </div>
+                            )}
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="font-semibold text-foreground">{formatValor(pag.valor)}</div>
-                          {pag.valor_liquido_recebido && pag.valor_liquido_recebido !== pag.valor && (
-                            <div className="text-xs text-muted-foreground">Líq: {formatValor(pag.valor_liquido_recebido)}</div>
+                          <div className="font-semibold text-foreground">{formatValor(valorNominal)}</div>
+                          {mostraLiquido && (
+                            <div className="text-xs text-muted-foreground">Líq. empresa: {formatValor(valorLiquido)}</div>
                           )}
                         </div>
                       </div>
-                    ))}
+                    );})}
                   </div>
                 ) : (
                   <div className="py-12 text-center bg-card rounded-xl">
