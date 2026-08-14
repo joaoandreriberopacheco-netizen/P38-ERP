@@ -35,6 +35,8 @@ import KpiExtratoConta from '@/components/financeiro/fluxo/KpiExtratoConta';
 import FiltrosExtratoConta, { PERIODOS_EXTRATO } from '@/components/financeiro/fluxo/FiltrosExtratoConta';
 import ListaExtratoConta from '@/components/financeiro/fluxo/ListaExtratoConta';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from '@/components/financeiro/fluxo/FinanceiroListaMeta';
+import TipoFiltroBar from '@/components/financeiro/fluxo/TipoFiltroBar';
+import { passaFiltroTiposLancamento, labelTiposSelecionados } from '@/lib/filtroTipoFinanceiro';
 import { formatFinanceiroGrupoLabel } from '@/components/financeiro/fluxo/FinanceiroListaShared';
 import AjusteSaldoDialog from '@/components/config/AjusteSaldoDialog';
 import {
@@ -106,6 +108,7 @@ export default function ExtratoContaPage() {
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [tiposSel, setTiposSel] = useState([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [ajusteDialogOpen, setAjusteDialogOpen] = useState(false);
   const [mostrarHistoricoAnterior, setMostrarHistoricoAnterior] = useState(
@@ -459,7 +462,11 @@ export default function ExtratoContaPage() {
     passaIntervaloExtratoYmd(chaveDiaMovimento(m), inicioYmd, fimYmd)
   ));
 
-  const movimentacoesFiltradas = movimentacoesNoPeriodo.filter(m => {
+  const movimentacoesPorTipo = movimentacoesNoPeriodo.filter((m) => (
+    passaFiltroTiposLancamento(m, tiposSel)
+  ));
+
+  const movimentacoesFiltradas = movimentacoesPorTipo.filter(m => {
     if (!searchTerm) return true;
     const termo = searchTerm.toLowerCase();
     return (
@@ -504,7 +511,7 @@ export default function ExtratoContaPage() {
   const saldoNoFimDoPeriodo = saldoReal - totalEntradasAposPeriodo + totalSaidasAposPeriodo;
 
   const totalEntradasPeriodo = totaisEntradaSaidaMovimentos(
-    movimentacoesNoPeriodo.filter(participaDoSaldo),
+    movimentacoesPorTipo.filter(participaDoSaldo),
     conta,
     {
       contasSel: conta ? [conta.id] : null,
@@ -513,7 +520,7 @@ export default function ExtratoContaPage() {
     },
   ).entradas;
   const totalSaidasPeriodo = totaisEntradaSaidaMovimentos(
-    movimentacoesNoPeriodo.filter(participaDoSaldo),
+    movimentacoesPorTipo.filter(participaDoSaldo),
     conta,
     {
       contasSel: conta ? [conta.id] : null,
@@ -625,7 +632,7 @@ export default function ExtratoContaPage() {
   }), [totalEntradasPeriodo, totalSaidasPeriodo, saldoCalculado]);
 
   const periodoLabel = PERIODOS_EXTRATO.find((p) => p.v === filtroPeriodo)?.l || 'Período';
-  const hasActiveFilters = filtroPeriodo !== 'mes' || !!dataInicio || !!dataFim;
+  const hasActiveFilters = filtroPeriodo !== 'mes' || !!dataInicio || !!dataFim || tiposSel.length > 0;
 
   // Funções de exportação
   const exportarCSV = () => {
@@ -783,6 +790,8 @@ export default function ExtratoContaPage() {
         </div>
       </div>
 
+      <TipoFiltroBar sel={tiposSel} onSel={setTiposSel} />
+
       <FiltrosExtratoConta
         search={searchTerm}
         onSearch={setSearchTerm}
@@ -804,6 +813,7 @@ export default function ExtratoContaPage() {
           setFiltroPeriodo('mes');
           setDataInicio('');
           setDataFim('');
+          setTiposSel([]);
           setSearchTerm('');
         }}
         summaryChips={
@@ -812,6 +822,9 @@ export default function ExtratoContaPage() {
               <FinanceiroSummaryChip>Movimentos desde {formatarSoData(dataCorteHistorico)}</FinanceiroSummaryChip>
             )}
             {filtroPeriodo !== 'mes' && <FinanceiroSummaryChip>{periodoLabel}</FinanceiroSummaryChip>}
+            {tiposSel.length > 0 && (
+              <FinanceiroSummaryChip>{labelTiposSelecionados(tiposSel)}</FinanceiroSummaryChip>
+            )}
             {searchTerm && <FinanceiroSummaryChip>Busca</FinanceiroSummaryChip>}
           </>
         }

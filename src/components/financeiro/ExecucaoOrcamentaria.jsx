@@ -18,7 +18,6 @@ import {
   contaUsaRegraCaixaPDV,
   getDataMovimentoCaixa,
   getSaldoExibicaoConta,
-  isTransferenciaEntreContas,
   lancamentoPertenceContasSelecionadas,
 } from '@/lib/saldoContaFinanceira';
 import { reconciliarSaldoCaixaPDVSemTurnoAberto, backfillLancamentosMovimentosCaixaPDV } from '@/lib/contaDestinoCaixaPDV';
@@ -55,6 +54,8 @@ import AgefinImportador from '../agefin/AgefinImportador';
 import ConciliacaoBancaria from './ConciliacaoBancaria';
 import PagamentoLoteDialog from './PagamentoLoteDialog';
 import FluxoToggleProgramadas from './fluxo/FluxoToggleProgramadas';
+import TipoFiltroBar from './fluxo/TipoFiltroBar';
+import { passaFiltroTiposLancamento } from '@/lib/filtroTipoFinanceiro';
 import usePagamentoLoteFluxo from './fluxo/usePagamentoLoteFluxo';
 import { CONCILIACAO_LOTE_TAMANHO } from '@/lib/conciliacaoEmLote';
 import { consumirArquivoLancamentoTorreDoBridge, temFluxoLancamentoTorreAtivo, concluirFluxoTorreCompartilhamento } from '@/lib/torreLancamentoBridge';
@@ -482,11 +483,7 @@ export default function ExecucaoOrcamentaria() {
     if (de && dataKey > de) return false;
     if (!passaFiltroCorteHistorico(dataKey, { mostrarHistoricoAnterior, dataCorte: dataCorteHistorico })) return false;
     if (contasSel.length && !lancamentoPertenceContasSelecionadas(l, contasSel, contasById)) return false;
-    if (tiposSel.length) {
-      const matchTipo = tiposSel.includes(l.tipo);
-      const matchTransf = tiposSel.includes('Transferência') && isTransferenciaEntreContas(l);
-      if (!matchTipo && !matchTransf) return false;
-    }
+    if (!passaFiltroTiposLancamento(l, tiposSel)) return false;
     if (statusSel.length && !statusSel.includes(l.status)) return false;
     if (pendentes && l.status_conciliacao !== 'Pendente') return false;
     if (cmvOnly && !l.is_custo_mercadoria) return false;
@@ -683,11 +680,7 @@ export default function ExecucaoOrcamentaria() {
       if (deF && dataKey > deF) return false;
       if (!passaFiltroCorteHistorico(dataKey, { mostrarHistoricoAnterior, dataCorte: dataCorteHistorico })) return false;
       if (contasSelFiltro.length && !lancamentoPertenceContasSelecionadas(l, contasSelFiltro, contasById)) return false;
-      if (tiposSelFiltro.length) {
-        const matchTipo = tiposSelFiltro.includes(l.tipo);
-        const matchTransf = tiposSelFiltro.includes('Transferência') && isTransferenciaEntreContas(l);
-        if (!matchTipo && !matchTransf) return false;
-      }
+      if (!passaFiltroTiposLancamento(l, tiposSelFiltro)) return false;
       if (statusSelFiltro.length && !statusSelFiltro.includes(l.status)) return false;
       if (pendentesFiltro && l.status_conciliacao !== 'Pendente') return false;
       if (cmvOnlyFiltro && !l.is_custo_mercadoria) return false;
@@ -920,6 +913,8 @@ export default function ExecucaoOrcamentaria() {
             onCheckedChange={handleToggleProgramadas}
           />
 
+          <TipoFiltroBar sel={tiposSel} onSel={setTiposSel} />
+
           <FiltrosFluxoCaixa
             search={search}
             onSearch={setSearch}
@@ -931,8 +926,6 @@ export default function ExecucaoOrcamentaria() {
             contas={contasAtivas}
             contasSel={contasSel}
             onContasSel={setContasSel}
-            tiposSel={tiposSel}
-            onTiposSel={setTiposSel}
             statusSel={statusSel}
             onStatusSel={setStatusSel}
             pendentes={pendentes}

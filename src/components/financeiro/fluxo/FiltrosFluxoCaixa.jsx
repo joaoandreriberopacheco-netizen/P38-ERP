@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  X, Wallet, BarChart3, Clock, ChevronDown,
+  X, Wallet, Clock, ChevronDown,
   ChevronLeft, ChevronRight, Layers, RefreshCw
 } from 'lucide-react';
 import { dataHoje } from '@/components/utils/dateUtils';
@@ -257,36 +257,6 @@ function StatusFiltro({ sel, onSel }) {
   );
 }
 
-// ─── Filtro Tipo ──────────────────────────────────────────────────────────────
-function TipoFiltro({ sel, onSel }) {
-  const ALL = ['Receita', 'Despesa', 'Transferência'];
-  const todasSel = sel.length === 0 || sel.length === ALL.length;
-  const toggle = (t) => sel.includes(t) ? onSel(sel.filter(x => x !== t)) : onSel([...sel, t]);
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
-          ${!todasSel ? P38_CHIP_ACTIVE : P38_CHIP_INACTIVE}`}
-        >
-          <BarChart3 className="w-3 h-3" />
-          {todasSel ? 'Tipo' : sel.join(', ')}
-          <ChevronDown className="w-3 h-3" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className={`w-44 p-2 ${P38_POPOVER}`} align="start">
-        {ALL.map(t => (
-          <label key={t} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-secondary/80 dark:hover:bg-[#383e47] cursor-pointer">
-            <Checkbox checked={sel.length === 0 || sel.includes(t)} onCheckedChange={() => toggle(t)} className="w-3.5 h-3.5" />
-            <span className="text-xs text-foreground/90">{t}</span>
-          </label>
-        ))}
-      </PopoverContent>
-    </Popover>
-  );
-}
-
 function CmvFiltro({ cmvOnly, onToggle }) {
   return (
     <button
@@ -335,7 +305,6 @@ function ConciliacaoLoteFiltro({ contas, onOpenConciliacao }) {
 function FiltrosFluxoPainel({
   periodo, onPeriodo, customStart, customEnd, onCustom,
   contas, contasSel, onContasSel,
-  tiposSel, onTiposSel,
   statusSel, onStatusSel,
   pendentes, onPendentes,
   cmvOnly, onCmvOnly,
@@ -358,7 +327,6 @@ function FiltrosFluxoPainel({
 
       <div className="flex flex-wrap gap-1.5">
         <ContasFiltro contas={contas} sel={contasSel} onSel={onContasSel} />
-        <TipoFiltro sel={tiposSel} onSel={onTiposSel} />
         <StatusFiltro sel={statusSel} onSel={onStatusSel} />
         <CmvFiltro cmvOnly={cmvOnly} onToggle={onCmvOnly} />
         <ConciliacaoLoteFiltro contas={contas} onOpenConciliacao={onOpenConciliacao} />
@@ -376,13 +344,12 @@ function FiltrosFluxoPainel({
 }
 
 // ─── Export Principal ─────────────────────────────────────────────────────────
-export { PeriodoPicker, ContasFiltro, TipoFiltro, StatusFiltro, CmvFiltro, ConciliacaoLoteFiltro };
+export { PeriodoPicker, ContasFiltro, StatusFiltro, CmvFiltro, ConciliacaoLoteFiltro };
 
 export default function FiltrosFluxoCaixa({
   search, onSearch,
   periodo, onPeriodo, customStart, customEnd, onCustom,
   contas, contasSel, onContasSel,
-  tiposSel, onTiposSel,
   statusSel, onStatusSel,
   pendentes, onPendentes,
   cmvOnly, onCmvOnly,
@@ -399,7 +366,6 @@ export default function FiltrosFluxoCaixa({
 
   const hasPanelFilters =
     periodo !== 'mes' ||
-    tiposSel.length > 0 ||
     statusSel.length > 0 ||
     cmvOnly ||
     mostrarHistoricoAnterior ||
@@ -430,8 +396,6 @@ export default function FiltrosFluxoCaixa({
         contas={contas}
         contasSel={contasSel}
         onContasSel={onContasSel}
-        tiposSel={tiposSel}
-        onTiposSel={onTiposSel}
         statusSel={statusSel}
         onStatusSel={onStatusSel}
         pendentes={pendentes}
