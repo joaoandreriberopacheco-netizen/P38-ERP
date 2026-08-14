@@ -35,6 +35,17 @@ add_env NEXT_PUBLIC_SUPABASE_ANON_KEY "$supabase_anon" 1
 add_env NEXT_PUBLIC_P38_USE_SUPABASE_AUTH "$use_auth"
 add_env NEXT_PUBLIC_P38_ENABLE_GOOGLE_LOGIN "$google_login"
 
+# Laboratório portal / cadastro v2 — desligado em produção (só homologação)
+portal_homolog="${VITE_HIERARQUIA_PORTAL_ENABLED:-false}"
+cadastro_v2="${VITE_CADASTRO_PRODUTO_V2_ENABLED:-false}"
+modelo_catalogo="${VITE_MODELO_CATALOGO_ENABLED:-false}"
+add_env NEXT_PUBLIC_HIERARQUIA_PORTAL_ENABLED "$portal_homolog"
+add_env NEXT_PUBLIC_CADASTRO_PRODUTO_V2_ENABLED "$cadastro_v2"
+add_env NEXT_PUBLIC_MODELO_CATALOGO_ENABLED "$modelo_catalogo"
+add_env VITE_HIERARQUIA_PORTAL_ENABLED "$portal_homolog"
+add_env VITE_CADASTRO_PRODUTO_V2_ENABLED "$cadastro_v2"
+add_env VITE_MODELO_CATALOGO_ENABLED "$modelo_catalogo"
+
 # VITE_* — scripts locais / api/auth-p38.js / p38PublicEnv fallback
 add_env VITE_P38_PROVIDER "$provider"
 add_env VITE_P38_BYPASS_BASE44 "$bypass"

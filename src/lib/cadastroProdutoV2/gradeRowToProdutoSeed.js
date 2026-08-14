@@ -10,15 +10,23 @@ function num(v) {
  * Converte linha da grade v2 em rascunho de Produto (catálogo produção).
  * Preenche h1–h3 alinhados ao piloto cerâmica / portfolio.
  */
-export function gradeRowToProdutoSeed({ row, linha, produtoCompra, eixos, solo }) {
-  const nome = montarNovoSku({
+export function gradeRowToProdutoSeed({ row, linha, produtoCompra, eixos, solo, produtoExistente = null }) {
+  const codigo = String(row.codigo_interno || produtoExistente?.codigo_interno || '').trim();
+  const nomeProducao = String(produtoExistente?.nome || row._nome_producao || '').trim();
+
+  let nome = montarNovoSku({
     linha,
     produtoCompra,
     eixoA: eixos?.useA ? row.eixo_a : '',
     eixoB: eixos?.useB ? row.eixo_b : '',
-    marca: row.marca,
+    marca: row.marca || produtoExistente?.marca,
     solo,
   });
+
+  // Sem código: não substituir nome distintivo (Anjo, Luksonva, etc.) pela fórmula genérica.
+  if (!codigo && nomeProducao) {
+    nome = nomeProducao;
+  }
 
   const tipoLinha = mapTipoLinhaUi(linha?.tipo);
   let h1 = '';
@@ -41,7 +49,7 @@ export function gradeRowToProdutoSeed({ row, linha, produtoCompra, eixos, solo }
 
   return {
     nome,
-    codigo_interno: String(row.codigo_interno || '').trim().toUpperCase(),
+    codigo_interno: codigo.toUpperCase(),
     marca: String(row.marca || '').trim(),
     categoria_nome: linha?.categoria_nome || produtoCompra?.categoria_nome || '',
     campo_hierarquico_1: h1,

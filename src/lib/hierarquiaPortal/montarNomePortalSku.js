@@ -8,14 +8,24 @@ function pick(...vals) {
   return '';
 }
 
+function semCodigoInterno(row) {
+  return !pick(row.produto?.codigo_interno);
+}
+
 /**
  * Nome canónico estilo coluna «novo_sku» do Excel:
  * produto_compra + ex_a + ex_b (+ marca se houver).
  * Ex.: CERAM BOLD ANTI 50x50 MEDINA
+ *
+ * SKUs **sem código interno** mantêm `produto.nome` de produção
+ * (ex. thinners Anjo vs Luksonva) — a fórmula genérica colapsava variantes.
  */
 export function montarNomePortalSku(row) {
+  const original = pick(row.produto?.nome);
   const fromExcel = pick(row.novo_sku);
   if (fromExcel) return fromExcel;
+
+  if (semCodigoInterno(row) && original) return original;
 
   const composed = montarNomeProposto({
     produtoCompraNome: row.solo ? pick(row.linha_nome) : pick(row.produto_compra_nome),
@@ -23,11 +33,14 @@ export function montarNomePortalSku(row) {
     eixoB: pick(row.eixo_b, row.eixo_b_rotulo),
     marca: pick(row.produto?.marca),
   });
-  return composed || pick(row.produto?.nome);
+  return composed || original;
 }
 
 /** Label compacto — só eixos (produto compra já está no cabeçalho da esquadra). */
 export function montarEixosPortalSku(row) {
+  const original = pick(row.produto?.nome);
+  if (semCodigoInterno(row) && original) return original;
+
   const a = pick(row.eixo_a, row.eixo_a_rotulo);
   const b = pick(row.eixo_b, row.eixo_b_rotulo);
   const parts = [a, b].filter(Boolean);

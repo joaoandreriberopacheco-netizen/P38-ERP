@@ -39,6 +39,14 @@ Ver também **[PHASE_1_HOMOLOGACAO.md](./PHASE_1_HOMOLOGACAO.md)** (Fase 1 compl
 - `VITE_SUBPAYZE_API_KEY`
 - `VITE_SUBPAYZE_WEBHOOK_SECRET`
 
+### Portal cerâmica / cadastro v2 (só homologação)
+
+Em **produção** estes flags vêm `false` (deploy Vercel). Para testar o piloto no Cloud Agent ou `.env.local`:
+
+- `VITE_HIERARQUIA_PORTAL_ENABLED=true`
+- `VITE_CADASTRO_PRODUTO_V2_ENABLED=true`
+- `VITE_MODELO_CATALOGO_ENABLED=true` (opcional — laboratório modelo)
+
 ### Datalink híbrido (entidades → Postgres Supabase)
 
 Com o stack local a correr (`supabase start`), no `.env.local` na raiz do app:

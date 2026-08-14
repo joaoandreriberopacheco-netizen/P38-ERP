@@ -127,12 +127,18 @@ jobs:
             echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}"
             echo "NEXT_PUBLIC_P38_USE_SUPABASE_AUTH=${use_auth}"
             echo "NEXT_PUBLIC_P38_ENABLE_GOOGLE_LOGIN=${google_login}"
+            echo "NEXT_PUBLIC_HIERARQUIA_PORTAL_ENABLED=false"
+            echo "NEXT_PUBLIC_CADASTRO_PRODUTO_V2_ENABLED=false"
+            echo "NEXT_PUBLIC_MODELO_CATALOGO_ENABLED=false"
             echo "VITE_P38_PROVIDER=supabase"
             echo "VITE_P38_BYPASS_BASE44=true"
             echo "VITE_SUPABASE_URL=${VITE_SUPABASE_URL}"
             echo "VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}"
             echo "VITE_P38_USE_SUPABASE_AUTH=${use_auth}"
             echo "VITE_P38_ENABLE_GOOGLE_LOGIN=${google_login}"
+            echo "VITE_HIERARQUIA_PORTAL_ENABLED=false"
+            echo "VITE_CADASTRO_PRODUTO_V2_ENABLED=false"
+            echo "VITE_MODELO_CATALOGO_ENABLED=false"
           } > .env.production.local
           echo "OK: .env.production.local criado (sem imprimir valores)."
 
@@ -145,6 +151,9 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_P38_USE_SUPABASE_AUTH: ${{ secrets.VITE_P38_USE_SUPABASE_AUTH || 'true' }}
           NEXT_PUBLIC_P38_ENABLE_GOOGLE_LOGIN: ${{ secrets.VITE_P38_ENABLE_GOOGLE_LOGIN || '' }}
+          NEXT_PUBLIC_HIERARQUIA_PORTAL_ENABLED: 'false'
+          NEXT_PUBLIC_CADASTRO_PRODUTO_V2_ENABLED: 'false'
+          NEXT_PUBLIC_MODELO_CATALOGO_ENABLED: 'false'
           VITE_P38_PROVIDER: supabase
           VITE_P38_BYPASS_BASE44: 'true'
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}

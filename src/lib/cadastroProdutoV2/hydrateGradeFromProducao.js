@@ -29,14 +29,17 @@ function matchesContext(row, { linha, produtoCompra, solo }) {
 /** SKU real (produto) → linha da grade editável. */
 export function produtoEnriquecidoToGradeRow(row, { linha, produtoCompra, eixos, solo }) {
   const p = row.produto;
-  const novoSku = montarNomePortalSku(row) || montarNovoSku({
-    linha,
-    produtoCompra,
-    eixoA: eixos.useA ? row.eixo_a : '',
-    eixoB: eixos.useB ? row.eixo_b : '',
-    marca: p.marca,
-    solo,
-  });
+  const semCodigo = !String(p.codigo_interno || '').trim();
+  const novoSku = semCodigo && p.nome
+    ? String(p.nome).trim()
+    : (montarNomePortalSku(row) || montarNovoSku({
+      linha,
+      produtoCompra,
+      eixoA: eixos.useA ? row.eixo_a : '',
+      eixoB: eixos.useB ? row.eixo_b : '',
+      marca: p.marca,
+      solo,
+    }));
 
   return {
     key: p.id,

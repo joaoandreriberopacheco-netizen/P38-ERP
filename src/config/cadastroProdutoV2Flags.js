@@ -1,8 +1,12 @@
 /**
  * Cadastro Produto v2 — produto compra + eixos (0–2), grade tipo Excel.
- * Grava em modelo_* e opcionalmente publica em produção (Produto).
+ * Grava em cadastro_v2_grade_sku; publicação no catálogo é acção explícita.
+ *
+ * **Produção:** desligado por defeito (activar só em homologação).
  */
-export const CADASTRO_PRODUTO_V2_ENABLED = true;
+import { p38PublicEnvBool } from '@/lib/p38PublicEnv';
+
+export const CADASTRO_PRODUTO_V2_ENABLED = p38PublicEnvBool('VITE_CADASTRO_PRODUTO_V2_ENABLED', false);
 
 /** Reutiliza piloto cerâmica do laboratório */
 export {

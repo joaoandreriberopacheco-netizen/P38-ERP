@@ -1,9 +1,12 @@
 /**
  * Catálogo Modelo — laboratório paralelo (LINHA → produto compra → SKU).
  * Grava só em modelo_*; pode ler produto de produção (espelho).
- * Não altera cadastro, pedidos nem Sugestões de Compra reais.
+ *
+ * **Produção:** desligado por defeito (activar só em homologação).
  */
-export const MODELO_CATALOGO_ENABLED = true;
+import { p38PublicEnvBool } from '@/lib/p38PublicEnv';
+
+export const MODELO_CATALOGO_ENABLED = p38PublicEnvBool('VITE_MODELO_CATALOGO_ENABLED', false);
 
 /** Piloto actual — só cerâmica no universo de teste */
 export const MODELO_PILOTO_LINHAS_ATIVAS = [
