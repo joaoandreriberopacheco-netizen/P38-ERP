@@ -22,7 +22,7 @@ import { caixaTypo } from '@/lib/caixaP38Theme';
 
 /** Recuo hierárquico + tipografia (mesma linguagem da Consulta por embarque). */
 const EMBARQUE_HIER = {
-  l1: 'ml-1 pl-2 border-l border-border/30 dark:border-white/10 min-w-0 max-w-full',
+  l1: 'ml-1 pl-2 md:ml-3 md:pl-3.5 border-l border-border/30 dark:border-white/10 min-w-0 max-w-full',
   sep: 'border-b border-border/40 dark:border-white/10',
 };
 const EMBARQUE_TITLE =
