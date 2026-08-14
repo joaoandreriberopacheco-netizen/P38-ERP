@@ -6,7 +6,8 @@
  *
  *   npm run reserva:listar
  *   npm run reserva:reativar              # dry-run (só lista)
- *   npm run reserva:reativar -- --apply   # reactiva todos com tag reserva-ceramica
+ *   npm run reserva:reativar -- --apply           # tag reserva-ceramica
+ *   npm run reserva:reativar -- --apply --all-inativos  # todos ativo:false
  *   npm run reserva:reativar -- --apply --ids=abc,def
  *
  * Credenciais: VITE_BASE44_APP_ID + BASE44_ACCESS_TOKEN ou BASE44_API_KEY
@@ -18,6 +19,7 @@ const BATCH_SIZE = 8;
 
 const args = new Set(process.argv.slice(2));
 const apply = args.has('--apply');
+const allInativos = args.has('--all-inativos');
 const idsArg = [...args].find((a) => a.startsWith('--ids='));
 const filterIds = idsArg
   ? new Set(idsArg.slice('--ids='.length).split(',').map((s) => s.trim()).filter(Boolean))
@@ -105,12 +107,25 @@ if (filterIds?.size) {
 console.log(`[reserva] Total catálogo: ${todos.length}`);
 console.log(`[reserva] Com tag "${PORTAL_RESERVA_TAG}": ${reservados.length}`);
 
-if (reservados.length === 0) {
+const inativos = todos.filter((p) => p.ativo === false);
+const isServico = (p) => String(p?.tipo || '').toLowerCase().startsWith('serv');
+let alvo = reservados;
+if (allInativos) {
+  alvo = inativos.filter((p) => !isServico(p));
+  console.log(`[reserva] Modo --all-inativos: ${alvo.length} produto(s) inactivo(s)`);
+} else if (filterIds?.size) {
+  alvo = reservados.filter((p) => filterIds.has(p.id));
+} else if (reservados.length === 0 && inativos.length > 0) {
+  alvo = inativos.filter((p) => !isServico(p));
+  console.log(`[reserva] Sem tag reserva; a reactivar ${alvo.length} inactivo(s) com --apply`);
+}
+
+if (alvo.length === 0) {
   console.log('[reserva] Nada a fazer.');
   process.exit(0);
 }
 
-const amostra = reservados.slice(0, 25).map((p) => ({
+const amostra = alvo.slice(0, 25).map((p) => ({
   id: p.id,
   nome: p.nome,
   ativo: p.ativo,
@@ -124,7 +139,7 @@ if (!apply) {
   process.exit(0);
 }
 
-const items = reservados.map((p) => ({
+const items = alvo.map((p) => ({
   id: p.id,
   patch: {
     ativo: true,

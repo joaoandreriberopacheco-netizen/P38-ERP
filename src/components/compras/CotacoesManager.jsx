@@ -32,6 +32,7 @@ import {
 } from '@/lib/cotacaoExpressUtils';
 import { gerarNumeroSequencial } from '@/lib/gerarNumeroSequencial';
 import { mergeLoteIntoItems, parseLoteQuantidade } from '@/lib/catalogLoteUtils';
+import { fetchProdutosAtivos } from '@/lib/fetchProdutosAtivos';
 
 export default function CotacoesManager() {
   const navigate = useNavigate();
@@ -92,7 +93,7 @@ export default function CotacoesManager() {
       const [cotacoesData, fornecedoresData, produtosData, empresaData] = await Promise.all([
         base44.entities.Cotacao.list('-created_date'),
         base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] }),
-        base44.entities.Produto.filter({ tipo: 'Produto', ativo: true }),
+        fetchProdutosAtivos(),
         base44.entities.DadosEmpresa.list().catch(() => []),
       ]);
       setCotacoes(cotacoesData);
