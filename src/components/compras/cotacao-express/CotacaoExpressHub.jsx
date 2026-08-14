@@ -146,7 +146,8 @@ export default function CotacaoExpressHub({
 
   return (
     <div className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pb-[calc(6.5rem+var(--p38-bottom-nav-total,0px))] desktop-layout:pb-4">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[calc(6.5rem+var(--p38-bottom-nav-total,0px))] desktop-layout:pb-4">
+        <div className="space-y-3">
       <div className={cn(P38_KPI_SHELL, 'space-y-2.5 sm:space-y-3 min-w-0 desktop-layout:grid desktop-layout:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] desktop-layout:items-start desktop-layout:gap-4')}>
         <div className="space-y-2.5 sm:space-y-3 min-w-0">
         <p className="text-[10px] text-muted-foreground leading-snug desktop-layout:text-xs">
@@ -249,6 +250,7 @@ export default function CotacaoExpressHub({
       <FinanceiroListaEstado
         loading={loading}
         vazio={lista.length === 0}
+        flushBottom
         vazioMensagem={
           hubView === 'abertas'
             ? (busca.trim() ? 'Nenhuma cotação aberta com esse filtro.' : 'Nenhuma cotação aberta. Use Nova ou o menu +.')
@@ -256,7 +258,7 @@ export default function CotacaoExpressHub({
         }
         vazioIcon={FileText}
       >
-        <P38MobileLineList className="desktop-layout:hidden">
+        <P38MobileLineList className="desktop-layout:hidden !overflow-visible border-0 rounded-none bg-transparent shadow-none">
           {lista.map((cotacao, index) => (
             <P38MobileLine
               key={cotacao.id}
@@ -296,7 +298,7 @@ export default function CotacaoExpressHub({
           ))}
         </P38MobileLineList>
 
-        <P38TableShell className="hidden min-w-0 overflow-x-auto desktop-layout:block">
+        <P38TableShell className="hidden min-w-0 desktop-layout:block overflow-x-auto !overflow-y-visible shadow-none">
           <Table>
             <TableHeader>
               <TableRow>
@@ -355,13 +357,14 @@ export default function CotacaoExpressHub({
           </Table>
         </P38TableShell>
       </FinanceiroListaEstado>
+        </div>
+      </div>
 
       <CotacaoExpressFab
         onNovaCotacao={onNovaCotacao}
         onImportarFoto={onImportarFoto}
         criando={criando}
       />
-      </div>
     </div>
   );
 }

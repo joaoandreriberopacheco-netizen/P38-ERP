@@ -1,4 +1,14 @@
-import { pickDefaultPurchaseUnit } from '@/lib/productUnits';
+import {
+  applyPurchaseUnitOptionToItem,
+  calcTotalItemCompraPedido,
+  normalizeItemToCanonicalFactorOne,
+  pickDefaultPurchaseUnit,
+  resolveDescontoPctCompraProduto,
+  resolveValorDescontoCompraPadraoFator1,
+  syncItemDescontoApresentacao,
+  syncItemQuantidadeBaseComercial,
+} from '@/lib/productUnits';
+import { roundToTwoDecimals } from '@/lib/financialUtils';
 import {
   aplicarDescontoUnitarioCotacaoPdf,
   calcularRatioDescontoCotacaoPdf,
@@ -69,22 +79,54 @@ export function formatDiferencaPct(pct) {
 }
 
 export function cotacaoItemToSelectorItem(item, produto) {
-  const pu = pickDefaultPurchaseUnit(produto);
-  const fator = item.fator_conversao ?? pu?.fator_conversao ?? 1;
-  const unidade = item.unidade || item.unidade_medida || pu?.unidade || produto?.unidade_principal || 'UN';
-  const qty = parseFloat(item.quantidade) || 1;
-  return {
+  const qtySalva = parseFloat(item.quantidade) || 1;
+  const fatorSalvo = parseFloat(item.fator_conversao);
+
+  // Cotação opera na unidade comercial de compra (CX, PAC…), não no fator-1 (M², KG…).
+  const unitOption = produto ? pickDefaultPurchaseUnit(produto) : null;
+  const fator = parseFloat(unitOption?.fator_conversao) || 1;
+  const unidade = unitOption?.unidade || produto?.unidade_principal || 'UN';
+
+  let quantidadeBase = parseFloat(item.quantidade_base);
+  if (!Number.isFinite(quantidadeBase) || quantidadeBase <= 0) {
+    const fSaved = Number.isFinite(fatorSalvo) && fatorSalvo > 0 ? fatorSalvo : 1;
+    quantidadeBase = roundToTwoDecimals(qtySalva * fSaved);
+  }
+
+  let quantidade = qtySalva;
+  if (unitOption && fator > 0) {
+    quantidade = roundToTwoDecimals(quantidadeBase / fator);
+    if (quantidade <= 0) quantidade = qtySalva;
+  }
+
+  let draft = {
     produto_id: item.produto_id,
     produto_nome: item.produto_nome || produto?.nome || '',
-    quantidade: qty,
+    codigo_produto: produto?.codigo_interno || produto?.codigo_barras || '',
+    quantidade,
     unidade_medida: unidade,
     fator_conversao: fator,
-    quantidade_base: qty * fator,
+    quantidade_base: quantidadeBase,
     custo_unitario: getPrecoCompraAtual(produto),
     valor_desconto_item: 0,
     desconto_pct_item: 0,
-    total: 0,
   };
+
+  if (produto && unitOption) {
+    draft = applyPurchaseUnitOptionToItem(draft, produto, unitOption, {
+      preserveQuantidadeBase: true,
+      usarCustoSugerido: true,
+    });
+    draft.quantidade = quantidade;
+    draft = syncItemQuantidadeBaseComercial(draft);
+    const custoF1 = parseFloat(draft.custo_unitario) || getPrecoCompraAtual(produto);
+    draft.valor_desconto_item = resolveValorDescontoCompraPadraoFator1(produto, custoF1);
+    draft.desconto_pct_item = resolveDescontoPctCompraProduto(produto, custoF1);
+  }
+
+  draft = syncItemDescontoApresentacao(draft);
+  const total = calcTotalItemCompraPedido(draft);
+  return normalizeItemToCanonicalFactorOne({ ...draft, total }, 'custo');
 }
 
 export function selectorItemToCotacaoItem(item) {

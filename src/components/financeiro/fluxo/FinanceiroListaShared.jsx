@@ -174,6 +174,7 @@ export function FinanceiroListaEstado({
   vazio,
   vazioMensagem,
   vazioIcon: VazioIcon,
+  flushBottom = false,
   children,
 }) {
   if (loading) {
@@ -196,7 +197,7 @@ export function FinanceiroListaEstado({
   }
 
   return (
-    <div className="min-w-0 w-full max-w-full space-y-2 overflow-x-hidden pb-24 md:pb-2">
+    <div className={cn('min-w-0 w-full max-w-full space-y-2 overflow-x-hidden', flushBottom ? 'pb-0' : 'pb-24 md:pb-2')}>
       {children}
     </div>
   );

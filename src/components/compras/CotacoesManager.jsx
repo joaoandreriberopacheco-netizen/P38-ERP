@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import { createPageUrl } from '@/components/utils';
 import { dataHoje } from '@/components/utils/dateUtils';
-import { pickDefaultPurchaseUnit } from '@/lib/productUnits';
+import { calcTotalItemCompraPedido, syncItemDescontoApresentacao } from '@/lib/productUnits';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import ImportadorCotacaoPDF from './ImportadorCotacaoPDF';
 import ImportadorListaFoto from './ImportadorListaFoto';
@@ -304,22 +304,11 @@ export default function CotacoesManager() {
   };
 
   const buildSelectorItemFromProduct = useCallback((product, quantidade = 1) => {
-    const pu = pickDefaultPurchaseUnit(product);
-    const fator = pu?.fator_conversao ?? 1;
-    const unidade = pu?.unidade || product.unidade_principal || 'UN';
     const qty = parseLoteQuantidade(quantidade);
-    return {
-      produto_id: product.id,
-      produto_nome: product.nome,
-      quantidade: qty,
-      unidade_medida: unidade,
-      fator_conversao: fator,
-      quantidade_base: roundToTwoDecimals(qty * fator),
-      custo_unitario: parseFloat(product.valor_compra) || 0,
-      valor_desconto_item: 0,
-      desconto_pct_item: 0,
-      total: 0,
-    };
+    return cotacaoItemToSelectorItem(
+      { produto_id: product.id, produto_nome: product.nome, quantidade: qty },
+      product,
+    );
   }, []);
 
   const handleAddItem = (payload = null) => {
@@ -356,11 +345,13 @@ export default function CotacoesManager() {
         const next = [...prev];
         const fator = parseFloat(next[idx].fator_conversao) || 1;
         const newQty = (parseFloat(next[idx].quantidade) || 0) + qty;
-        next[idx] = {
+        let merged = syncItemDescontoApresentacao({
           ...next[idx],
           quantidade: newQty,
           quantidade_base: roundToTwoDecimals(newQty * fator),
-        };
+        });
+        merged = { ...merged, total: calcTotalItemCompraPedido(merged) };
+        next[idx] = merged;
         return sortCotacaoItensAlfabeticamente(next);
       }
       if (!product?.id && !product?.nome) return prev;
@@ -437,6 +428,8 @@ export default function CotacoesManager() {
       const fator = parseFloat(item.fator_conversao) || 1;
       const qty = parseFloat(item.quantidade) || 0;
       item.quantidade_base = roundToTwoDecimals(qty * fator);
+      item = syncItemDescontoApresentacao(item);
+      item.total = calcTotalItemCompraPedido(item);
       next[index] = item;
       return sortCotacaoItensAlfabeticamente(next);
     });
