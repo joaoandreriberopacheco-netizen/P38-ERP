@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 import { cn } from '@/components/utils';
-import { COMPRAS_STATUS_STYLE } from '@/lib/comprasEmbarquesPalette';
+import { COMPRAS_STATUS_STYLE, comprasAccentBorderClass, comprasAccentFromDisplayStatus } from '@/lib/comprasEmbarquesPalette';
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 import { caixaTypo } from '@/lib/caixaP38Theme';
 
@@ -185,6 +185,7 @@ function EmbarqueListaCard({
     codigo,
     qtdLabel,
   } = getPedidoDisplayData(pedido);
+  const statusAccent = comprasAccentFromDisplayStatus(displayStatus);
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -222,8 +223,9 @@ function EmbarqueListaCard({
             }
           }}
           className={cn(
-            'w-full text-left hover:bg-muted/20 transition-colors min-w-0 py-3 pr-1 cursor-pointer',
+            'w-full text-left hover:bg-muted/20 transition-colors min-w-0 py-3 pr-1 pl-2 cursor-pointer border-l',
             EMBARQUE_HIER.sep,
+            comprasAccentBorderClass(statusAccent),
           )}
         >
           <div className="flex items-start gap-2 min-w-0 w-full">
