@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 /**
- * Lista e reactiva SKUs marcados como "reserva cerâmica" do portal (piloto homologação).
- *
- * Uso quando testes no portal inactivaram produtos no cadastro real (mesmo Base44).
+ * Lista e limpa reserva cerâmica do portal (tabela auxiliar portal_catalog).
  *
  *   npm run reserva:listar
- *   npm run reserva:reativar              # dry-run (só lista)
- *   npm run reserva:reativar -- --apply           # tag reserva-ceramica
- *   npm run reserva:reativar -- --apply --all-inativos  # todos ativo:false
- *   npm run reserva:reativar -- --apply --ids=abc,def
+ *   npm run reserva:reativar              # dry-run
+ *   npm run reserva:reativar -- --apply     # reserva_portal=false em portal_catalog
+ *   npm run reserva:reativar -- --apply --codigos=ABC,DEF
+ *   npm run reserva:reativar -- --apply --legacy-base44  # remove tag antiga no Base44 (opcional)
  *
- * Credenciais: VITE_BASE44_APP_ID + BASE44_ACCESS_TOKEN ou BASE44_API_KEY
+ * Requer DATABASE_URL (migração 067 aplicada).
+ * --legacy-base44 também requer VITE_BASE44_APP_ID + BASE44_ACCESS_TOKEN ou BASE44_API_KEY.
  */
+import pg from 'pg';
 import { requireBase44Client } from './base44-env.mjs';
 
 const PORTAL_RESERVA_TAG = 'reserva-ceramica';
@@ -19,10 +19,10 @@ const BATCH_SIZE = 8;
 
 const args = new Set(process.argv.slice(2));
 const apply = args.has('--apply');
-const allInativos = args.has('--all-inativos');
-const idsArg = [...args].find((a) => a.startsWith('--ids='));
-const filterIds = idsArg
-  ? new Set(idsArg.slice('--ids='.length).split(',').map((s) => s.trim()).filter(Boolean))
+const legacyBase44 = args.has('--legacy-base44');
+const codigosArg = [...args].find((a) => a.startsWith('--codigos='));
+const filterCodigos = codigosArg
+  ? new Set(codigosArg.slice('--codigos='.length).split(',').map((s) => s.trim().toUpperCase()).filter(Boolean))
   : null;
 
 function normalizeTag(tag) {
@@ -31,11 +31,6 @@ function normalizeTag(tag) {
     .replace(/^#+/, '')
     .replace(/\s+/g, ' ')
     .toLowerCase();
-}
-
-function isProdutoReservaPortal(produto) {
-  const tags = Array.isArray(produto?.tags) ? produto.tags : [];
-  return tags.some((t) => normalizeTag(t) === PORTAL_RESERVA_TAG);
 }
 
 function mergeTags(existing = [], { remove = [] } = {}) {
@@ -53,18 +48,43 @@ function mergeTags(existing = [], { remove = [] } = {}) {
   return out;
 }
 
-function rowsFromBatch(batch) {
-  return Array.isArray(batch) ? batch : batch?.data ?? [];
+async function listPortalReserva(client) {
+  const { rows } = await client.query(`
+    select codigo_interno, novo_sku, linha_nome, produto_compra_nome, produto_id, reserva_portal
+    from public.portal_catalog
+    where ativo = true and reserva_portal = true
+    order by linha_ordem, novo_sku
+  `);
+  return rows;
 }
 
-async function fetchAllProdutos(base44) {
+async function clearPortalReserva(client, codigos = null) {
+  if (codigos?.length) {
+    const { rowCount } = await client.query(
+      `update public.portal_catalog
+       set reserva_portal = false, updated_at = now()
+       where ativo = true and reserva_portal = true
+         and upper(codigo_interno) = any($1::text[])`,
+      [codigos.map((c) => String(c).trim().toUpperCase())],
+    );
+    return rowCount;
+  }
+  const { rowCount } = await client.query(`
+    update public.portal_catalog
+    set reserva_portal = false, updated_at = now()
+    where ativo = true and reserva_portal = true
+  `);
+  return rowCount;
+}
+
+async function fetchLegacyBase44Reserva(base44) {
   const byId = new Map();
   const pageSize = 500;
   let skip = 0;
 
   for (let page = 0; page < 40; page += 1) {
     const batch = await base44.entities.Produto.list('-created_date', pageSize, skip);
-    const rows = rowsFromBatch(batch);
+    const rows = Array.isArray(batch) ? batch : batch?.data ?? [];
     if (!rows.length) break;
 
     let novos = 0;
@@ -79,7 +99,10 @@ async function fetchAllProdutos(base44) {
     skip += pageSize;
   }
 
-  return [...byId.values()];
+  return [...byId.values()].filter((p) => {
+    const tags = Array.isArray(p?.tags) ? p.tags : [];
+    return tags.some((t) => normalizeTag(t) === PORTAL_RESERVA_TAG) || p.ativo === false;
+  });
 }
 
 async function runBatchUpdates(base44, items) {
@@ -90,63 +113,66 @@ async function runBatchUpdates(base44, items) {
       batch.map(({ id, patch }) => base44.entities.Produto.update(id, patch)),
     );
     done += batch.length;
-    console.log(`  … ${done}/${items.length} actualizados`);
+    console.log(`  … ${done}/${items.length} actualizados no Base44`);
   }
 }
 
-const base44 = requireBase44Client();
+async function main() {
+  if (!process.env.DATABASE_URL) {
+    console.error('[reserva] DATABASE_URL em falta.');
+    process.exit(1);
+  }
 
-console.log('[reserva] A carregar catálogo…');
-const todos = await fetchAllProdutos(base44);
-let reservados = todos.filter(isProdutoReservaPortal);
+  const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
+  await client.connect();
 
-if (filterIds?.size) {
-  reservados = reservados.filter((p) => filterIds.has(p.id));
+  try {
+    let reservados = await listPortalReserva(client);
+    if (filterCodigos?.size) {
+      reservados = reservados.filter((r) => filterCodigos.has(String(r.codigo_interno).toUpperCase()));
+    }
+
+    console.log(`[reserva] portal_catalog.reserva_portal=true: ${reservados.length}`);
+    if (reservados.length) {
+      console.log('\nAmostra (até 25):');
+      console.log(JSON.stringify(reservados.slice(0, 25), null, 2));
+    }
+
+    if (!apply) {
+      console.log('\n[reserva] Dry-run. Para limpar: npm run reserva:reativar -- --apply');
+      if (legacyBase44) {
+        console.log('[reserva] Com --legacy-base44 também remove tag antiga no cadastro Base44.');
+      }
+      return;
+    }
+
+    const codigos = filterCodigos?.size
+      ? [...filterCodigos]
+      : reservados.map((r) => r.codigo_interno);
+    const n = await clearPortalReserva(client, codigos.length ? codigos : null);
+    console.log(`\n[reserva] ${n} linha(s) actualizada(s) em portal_catalog (reserva_portal=false).`);
+
+    if (legacyBase44) {
+      const base44 = requireBase44Client();
+      const legado = await fetchLegacyBase44Reserva(base44);
+      console.log(`[reserva] Legado Base44 (tag/inactivo): ${legado.length}`);
+      if (legado.length) {
+        const items = legado.map((p) => ({
+          id: p.id,
+          patch: {
+            ativo: true,
+            tags: mergeTags(Array.isArray(p.tags) ? p.tags : [], { remove: [PORTAL_RESERVA_TAG] }),
+          },
+        }));
+        await runBatchUpdates(base44, items);
+      }
+    }
+  } finally {
+    await client.end();
+  }
 }
 
-console.log(`[reserva] Total catálogo: ${todos.length}`);
-console.log(`[reserva] Com tag "${PORTAL_RESERVA_TAG}": ${reservados.length}`);
-
-const inativos = todos.filter((p) => p.ativo === false);
-const isServico = (p) => String(p?.tipo || '').toLowerCase().startsWith('serv');
-let alvo = reservados;
-if (allInativos) {
-  alvo = inativos.filter((p) => !isServico(p));
-  console.log(`[reserva] Modo --all-inativos: ${alvo.length} produto(s) inactivo(s)`);
-} else if (filterIds?.size) {
-  alvo = reservados.filter((p) => filterIds.has(p.id));
-} else if (reservados.length === 0 && inativos.length > 0) {
-  alvo = inativos.filter((p) => !isServico(p));
-  console.log(`[reserva] Sem tag reserva; a reactivar ${alvo.length} inactivo(s) com --apply`);
-}
-
-if (alvo.length === 0) {
-  console.log('[reserva] Nada a fazer.');
-  process.exit(0);
-}
-
-const amostra = alvo.slice(0, 25).map((p) => ({
-  id: p.id,
-  nome: p.nome,
-  ativo: p.ativo,
-  codigo: p.codigo_interno,
-}));
-console.log('\nAmostra (até 25):');
-console.log(JSON.stringify(amostra, null, 2));
-
-if (!apply) {
-  console.log('\n[reserva] Dry-run. Para reactivar: npm run reserva:reativar -- --apply');
-  process.exit(0);
-}
-
-const items = alvo.map((p) => ({
-  id: p.id,
-  patch: {
-    ativo: true,
-    tags: mergeTags(Array.isArray(p.tags) ? p.tags : [], { remove: [PORTAL_RESERVA_TAG] }),
-  },
-}));
-
-console.log(`\n[reserva] A reactivar ${items.length} SKU(s)…`);
-await runBatchUpdates(base44, items);
-console.log('[reserva] Concluído. Produtos voltam a aparecer na cotação, PDV e buscas (ativo=true).');
+main().catch((e) => {
+  console.error('[reserva]', e);
+  process.exit(1);
+});

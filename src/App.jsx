@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react'
+import React, { Suspense, useEffect } from 'react'
 import './App.css'
 import { Toaster } from "@/components/ui/sonner"
 import { QueryClientProvider } from '@tanstack/react-query'
@@ -15,6 +15,7 @@ import AuthCallbackPage from '@/components/auth/AuthCallbackPage';
 import AtivarAcessoPage from '@/components/auth/AtivarAcessoPage';
 import GlobalQuickAccessLaunchers from '@/components/global/GlobalQuickAccessLaunchers';
 import { PageLoadFallback, ChunkErrorBoundary } from '@/lib/lazyPage';
+import { loadPortalCatalog } from '@/lib/hierarquiaPortal/fetchPortalCatalog';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const MainPage = Pages[mainPage] ?? Pages.Home;
@@ -28,6 +29,10 @@ const AUTH_PUBLIC_PATHS = new Set(['/login', '/auth/callback', '/ativar-acesso']
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, p38NeedsBootstrap, mustActivateAccess } = useAuth();
   const location = useLocation();
+
+  useEffect(() => {
+    loadPortalCatalog().catch(() => {});
+  }, []);
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (

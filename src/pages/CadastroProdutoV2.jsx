@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { createPageUrl } from '@/components/utils';
 import { isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
 import { CADASTRO_PRODUTO_V2_ENABLED } from '@/config/cadastroProdutoV2Flags';
-import { HIERARQUIA_PORTAL_ENABLED } from '@/config/hierarquiaPortalFlags';
 import CadastroProdutoV2Form from '@/components/cadastro-produto-v2/CadastroProdutoV2Form';
 
 function CadastroProdutoV2Inner() {
@@ -49,8 +48,5 @@ export default function CadastroProdutoV2Page() {
   if (!CADASTRO_PRODUTO_V2_ENABLED) {
     return <Navigate to={createPageUrl('Home')} replace />;
   }
-  if (HIERARQUIA_PORTAL_ENABLED) {
-    return <Navigate to={createPageUrl('HierarquiaPortal')} replace />;
-  }
-  return <CadastroProdutoV2Inner />;
+  return <Navigate to={`${createPageUrl('HierarquiaPortal')}?tab=cadastro`} replace />;
 }

@@ -3,15 +3,12 @@ import { Link } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createPageUrl } from '@/components/utils';
-import { HIERARQUIA_PORTAL_ENABLED } from '@/config/hierarquiaPortalFlags';
 import { cn } from '@/components/utils';
 
 /**
- * Entrada ao portal de preview — não altera cadastro nem compras reais.
+ * Entrada ao portal de catálogo cerâmica — trabalha em tabela auxiliar, não altera cadastro real.
  */
 export default function HierarquiaPortalEntry({ className, variant = 'outline', size = 'sm' }) {
-  if (!HIERARQUIA_PORTAL_ENABLED) return null;
-
   const isIcon = size === 'icon';
 
   return (
@@ -26,13 +23,13 @@ export default function HierarquiaPortalEntry({ className, variant = 'outline', 
     >
       <Link
         to={createPageUrl('HierarquiaPortal')}
-        title="Preview da nova hierarquia — não altera o sistema atual"
-        aria-label="Portal hierarquia (preview)"
+        title="Portal catálogo cerâmica — tabela auxiliar, não altera o cadastro de produção"
+        aria-label="Portal catálogo cerâmica"
       >
         <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
         {!isIcon && (
           <>
-            <span className="hidden sm:inline">Portal hierarquia</span>
+            <span className="hidden sm:inline">Portal catálogo</span>
             <span className="sm:hidden">Portal</span>
           </>
         )}

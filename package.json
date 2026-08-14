@@ -62,6 +62,8 @@
     "abcd:limpar-console": "node scripts/limpar-abcd-job-console.mjs",
     "reserva:listar": "node scripts/reativar-reserva-portal.mjs",
     "reserva:reativar": "node scripts/reativar-reserva-portal.mjs",
+    "portal:catalog:seed": "node scripts/seed-portal-catalog-from-manifest.mjs",
+    "portal:catalog:import": "node scripts/import-portal-catalog-excel.mjs",
     "abcd:executar-console": "node scripts/executar-abcd-job-console.mjs",
     "produto:codigo:backfill": "node scripts/backfill-produto-codigo.mjs",
     "produto:codigo:aplicar": "node scripts/backfill-produto-codigo.mjs --apply",

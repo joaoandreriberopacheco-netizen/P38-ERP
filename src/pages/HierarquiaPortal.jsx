@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, Navigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
@@ -21,9 +21,10 @@ import {
 } from '@/lib/hierarquiaPortal/buildPortalSupplyHierarchy';
 import {
   filterProdutosPortalExcel,
-  PORTAL_EXCEL_LINHAS,
-  PORTAL_EXCEL_SKU_COUNT,
+  getPortalCatalogLinhas,
+  getPortalCatalogSkuCount,
 } from '@/lib/hierarquiaPortal/portalExcelManifest';
+import { loadPortalCatalog } from '@/lib/hierarquiaPortal/fetchPortalCatalog';
 import PortalTreeGrid from '@/components/hierarquia-portal/PortalTreeGrid';
 import PortalSmartSupplyPanel from '@/components/hierarquia-portal/PortalSmartSupplyPanel';
 import PortalReservaPanel from '@/components/hierarquia-portal/PortalReservaPanel';
@@ -40,7 +41,6 @@ import { buildPendenteAprovadoFinanceiroPorProduto } from '@/lib/sugestaoCompraE
 import { isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
 import { CADASTRO_PRODUTO_V2_ENABLED } from '@/config/cadastroProdutoV2Flags';
 import {
-  HIERARQUIA_PORTAL_ENABLED,
   HIERARQUIA_PORTAL_PILOTO_LINHAS,
 } from '@/config/hierarquiaPortalFlags';
 import { MODELO_PILOTO_LINHAS_PLANEADAS } from '@/config/modeloCatalogoFlags';
@@ -91,6 +91,7 @@ function HierarquiaPortalInner() {
   const loadProdutos = useCallback(async () => {
     setLoading(true);
     try {
+      await loadPortalCatalog();
       const [activos, todos] = await Promise.all([
         fetchProdutosAtivos(base44),
         fetchAllProdutosCatalogo(),
@@ -415,8 +416,5 @@ function HierarquiaPortalInner() {
 }
 
 export default function HierarquiaPortalPage() {
-  if (!HIERARQUIA_PORTAL_ENABLED) {
-    return <Navigate to={createPageUrl('Home')} replace />;
-  }
   return <HierarquiaPortalInner />;
 }

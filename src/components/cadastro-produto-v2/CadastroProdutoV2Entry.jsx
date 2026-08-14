@@ -4,15 +4,12 @@ import { PackagePlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createPageUrl } from '@/components/utils';
 import { CADASTRO_PRODUTO_V2_ENABLED } from '@/config/cadastroProdutoV2Flags';
-import { HIERARQUIA_PORTAL_ENABLED } from '@/config/hierarquiaPortalFlags';
 import { cn } from '@/components/utils';
 
 export default function CadastroProdutoV2Entry({ className, variant = 'outline', size = 'sm' }) {
   if (!CADASTRO_PRODUTO_V2_ENABLED) return null;
 
-  const href = HIERARQUIA_PORTAL_ENABLED
-    ? createPageUrl('HierarquiaPortal')
-    : createPageUrl('CadastroProdutoV2');
+  const href = `${createPageUrl('HierarquiaPortal')}?tab=cadastro`;
 
   return (
     <Button

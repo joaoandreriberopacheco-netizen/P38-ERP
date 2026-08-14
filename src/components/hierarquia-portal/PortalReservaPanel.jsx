@@ -126,8 +126,11 @@ export default function PortalReservaPanel({
     }));
   }, [reservadosEnriched]);
 
-  const sortSkusActivos = useCallback(
-    (skus) => [...(skus || [])].filter((s) => s.produto?.ativo !== false).sort(comparePortalSkuEixos),
+  const sortSkusVisiveis = useCallback(
+    (skus) =>
+      [...(skus || [])]
+        .filter((s) => !isProdutoReservaPortal(s.produto))
+        .sort(comparePortalSkuEixos),
     [],
   );
 
@@ -189,9 +192,9 @@ export default function PortalReservaPanel({
   }, [linesComContagem, reservadosEnriched, selected]);
 
   const runReserva = async () => {
-    const alvo = produtosSeleccionados.filter((p) => p.ativo !== false);
+    const alvo = produtosSeleccionados.filter((p) => !isProdutoReservaPortal(p));
     if (!alvo.length) {
-      toast.error('Seleccione SKUs activos para enviar à reserva.');
+      toast.error('Seleccione SKUs que ainda não estão na reserva.');
       return;
     }
     setProcessing(true);
@@ -200,7 +203,7 @@ export default function PortalReservaPanel({
       const n = await enviarSkusParaReserva(base44, alvo, {
         onProgress: (done, total) => setProgress(Math.round((done / total) * 100)),
       });
-      toast.success(`${n} SKU(s) enviado(s) para reserva (inactivos, não apagados).`);
+      toast.success(`${n} SKU(s) enviado(s) para reserva (só tabela auxiliar).`);
       setSelected(new Set());
       await onRefresh?.();
     } catch (e) {
@@ -244,13 +247,14 @@ export default function PortalReservaPanel({
     <div className="space-y-4">
       <div className="rounded-lg border border-border/40 bg-muted/20 dark:bg-[#2f343c] px-4 py-3 space-y-2">
         <p className="text-sm text-foreground">
-          <strong>Reserva cerâmica</strong> — inactiva SKUs em massa sem apagar do cadastro.
+          <strong>Reserva cerâmica</strong> — oculta SKUs do portal e do PDV piloto sem alterar o cadastro real (
+          <code className="text-[10px]">public.produto</code> permanece activo).
           Meta: <strong>{CERAM_META_VAGAS} posições</strong> por esquadra (produto compra).
         </p>
         <p className="text-xs text-muted-foreground">
-          SKUs na reserva ficam com tag <code className="text-[10px]">reserva-ceramica</code> e{' '}
-          <code className="text-[10px]">ativo=false</code>. Não aparecem no catálogo activo, no piloto
-          nem no PDV. Os que ainda tiverem estoque aparecem com LED âmbar na lista de reservados.
+          A flag fica em <code className="text-[10px]">portal_catalog.reserva_portal</code> (tabela auxiliar).
+          SKUs reservados deixam de aparecer no piloto e no PDV; o cadastro de produção não é inactivado.
+          Os que ainda tiverem estoque aparecem com LED âmbar na lista de reservados.
         </p>
         {excedentes.length > 0 && (
           <p className="text-xs text-amber-800 dark:text-amber-200">
@@ -273,12 +277,12 @@ export default function PortalReservaPanel({
         <Button
           variant="secondary"
           size="sm"
-          disabled={processing || !produtosSeleccionados.some((p) => p.ativo !== false)}
+          disabled={processing || !produtosSeleccionados.some((p) => !isProdutoReservaPortal(p))}
           onClick={runReserva}
           className="gap-1.5"
         >
           {processing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Archive className="h-3.5 w-3.5" />}
-          Enviar para reserva ({produtosSeleccionados.filter((p) => p.ativo !== false).length})
+          Enviar para reserva ({produtosSeleccionados.filter((p) => !isProdutoReservaPortal(p)).length})
         </Button>
         <Button
           variant="outline"
@@ -302,7 +306,7 @@ export default function PortalReservaPanel({
       {processing && (
         <div className="space-y-1">
           <Progress value={progress} className="h-1.5" />
-          <p className="text-[11px] text-muted-foreground text-center">A actualizar produtos… {progress}%</p>
+          <p className="text-[11px] text-muted-foreground text-center">A actualizar portal_catalog… {progress}%</p>
         </div>
       )}
 
@@ -322,7 +326,7 @@ export default function PortalReservaPanel({
             {linesComContagem.map(({ line, contagem }) => {
               const key = line.key;
               const isOpen = expanded === key;
-              const skusActivos = sortSkusActivos(line.skus);
+              const skusVisiveis = sortSkusVisiveis(line.skus);
               return (
                 <React.Fragment key={key}>
                   <TableRow
@@ -367,7 +371,7 @@ export default function PortalReservaPanel({
                     </TableCell>
                   </TableRow>
                   {isOpen &&
-                    skusActivos.map((sku) => {
+                    skusVisiveis.map((sku) => {
                       const id = sku.produto?.id;
                       const cx = portalEstoqueCx(sku);
                       const isSelected = selected.has(id);

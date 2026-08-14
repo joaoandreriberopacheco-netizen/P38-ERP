@@ -1,8 +1,6 @@
 /**
- * Portal de preview da hierarquia (Categoria → LINHA → Produto compra → SKU).
- *
- * **Produção:** desligado por defeito.
- * **Homologação:** `VITE_HIERARQUIA_PORTAL_ENABLED=true` (ou `NEXT_PUBLIC_*` no Next).
+ * Portal de hierarquia cerâmica (piloto).
+ * Catálogo auxiliar em `portal_catalog` — não altera `public.produto`.
  */
 import { p38PublicEnvBool } from '@/lib/p38PublicEnv';
 import {
@@ -10,6 +8,7 @@ import {
   MODELO_PILOTO_PREFIXO_PC,
 } from '@/config/modeloCatalogoFlags';
 
+/** @deprecated Mantido só para compatibilidade de env; o portal já não depende deste flag. */
 export const HIERARQUIA_PORTAL_ENABLED = p38PublicEnvBool('VITE_HIERARQUIA_PORTAL_ENABLED', false);
 
 /** Só SKUs presentes no Excel mestre (docs/P38-catalogo-skus-completo.xlsx). */

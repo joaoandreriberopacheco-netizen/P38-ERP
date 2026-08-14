@@ -1,10 +1,17 @@
 import { CERAM_META_VAGAS } from '@/lib/modeloCatalogo/regrasCeramica';
 import { portalEstoqueCx } from '@/lib/hierarquiaPortal/buildPortalSupplyCeramica';
+import { resolvePortalProdutoCodigo } from '@/lib/hierarquiaPortal/portalExcelManifest';
+import {
+  enviarPortalCatalogParaReserva,
+  reativarPortalCatalogReserva,
+} from '@/lib/hierarquiaPortal/fetchPortalCatalog';
+import {
+  isProdutoReservaPortalSync,
+  patchPortalCatalogReservaLocal,
+} from '@/lib/hierarquiaPortal/portalCatalogStore';
 
-/** Tag no produto para distinguir inactivação por reserva do portal (vs. inactivo genérico). */
+/** Legado — reserva antiga gravava tag no produto; só para limpeza. */
 export const PORTAL_RESERVA_TAG = 'reserva-ceramica';
-
-const BATCH_SIZE = 8;
 
 function normalizeTag(tag) {
   return String(tag || '')
@@ -17,10 +24,17 @@ export function getProdutoTags(produto) {
   return Array.isArray(produto?.tags) ? produto.tags : [];
 }
 
-export function isProdutoReservaPortal(produto) {
+function hasLegacyReservaTag(produto) {
   if (!produto) return false;
   const tags = getProdutoTags(produto).map((t) => normalizeTag(t).toLowerCase());
   return tags.includes(PORTAL_RESERVA_TAG);
+}
+
+/** Reserva do portal — flag em portal_catalog (não altera public.produto). */
+export function isProdutoReservaPortal(produto) {
+  if (!produto) return false;
+  if (isProdutoReservaPortalSync(produto)) return true;
+  return hasLegacyReservaTag(produto);
 }
 
 export function mergeTags(existing = [], { add = [], remove = [] } = {}) {
@@ -51,7 +65,7 @@ export function mergeTags(existing = [], { add = [], remove = [] } = {}) {
 
 /** SKUs activos sugeridos para reserva quando a esquadra excede a meta de posições (menor estoque primeiro). */
 export function sugerirSkusExcedente(line, metaVagas = CERAM_META_VAGAS) {
-  const skus = (line?.skus || []).filter((s) => s.produto?.ativo !== false);
+  const skus = (line?.skus || []).filter((s) => !isProdutoReservaPortal(s.produto));
   if (skus.length <= metaVagas) return [];
 
   const ordenados = [...skus].sort((a, b) => {
@@ -67,8 +81,8 @@ export function sugerirSkusExcedente(line, metaVagas = CERAM_META_VAGAS) {
 
 export function contagemReservaLine(line) {
   const skus = line?.skus || [];
-  const activos = skus.filter((s) => s.produto?.ativo !== false);
   const reservados = skus.filter((s) => isProdutoReservaPortal(s.produto));
+  const activos = skus.filter((s) => !isProdutoReservaPortal(s.produto));
   return {
     total: skus.length,
     activos: activos.length,
@@ -78,42 +92,45 @@ export function contagemReservaLine(line) {
   };
 }
 
-async function runBatchUpdates(base44, items, onProgress) {
+function codigosFromProdutos(produtos) {
+  return (produtos || [])
+    .map((p) => resolvePortalProdutoCodigo(p))
+    .filter(Boolean);
+}
+
+/** Marca reserva só em portal_catalog.reserva_portal (não toca public.produto). */
+export async function enviarSkusParaReserva(_base44, produtos, { onProgress } = {}) {
+  const lista = (produtos || []).filter((p) => p?.id && !isProdutoReservaPortal(p));
+  const codigos = codigosFromProdutos(lista);
+  if (!codigos.length) return 0;
+
   let done = 0;
-  for (let i = 0; i < items.length; i += BATCH_SIZE) {
-    const batch = items.slice(i, i + BATCH_SIZE);
-    await Promise.all(
-      batch.map(({ id, patch }) => base44.entities.Produto.update(id, patch)),
-    );
+  const batchSize = 25;
+  for (let i = 0; i < codigos.length; i += batchSize) {
+    const batch = codigos.slice(i, i + batchSize);
+    await enviarPortalCatalogParaReserva(batch);
     done += batch.length;
-    onProgress?.(done, items.length);
+    onProgress?.(done, codigos.length);
   }
+  return codigos.length;
 }
 
-/** Inactiva SKUs e marca tag reserva-ceramica (não apaga do cadastro). */
-export async function enviarSkusParaReserva(base44, produtos, { onProgress } = {}) {
-  const lista = (produtos || []).filter((p) => p?.id && p.ativo !== false);
-  const items = lista.map((p) => ({
-    id: p.id,
-    patch: {
-      ativo: false,
-      tags: mergeTags(getProdutoTags(p), { add: [PORTAL_RESERVA_TAG] }),
-    },
-  }));
-  await runBatchUpdates(base44, items, onProgress);
-  return items.length;
-}
-
-/** Reativa SKUs previamente na reserva do portal. */
-export async function reativarSkusDaReserva(base44, produtos, { onProgress } = {}) {
+/** Remove reserva do portal_catalog (produto real permanece intacto). */
+export async function reativarSkusDaReserva(_base44, produtos, { onProgress } = {}) {
   const lista = (produtos || []).filter((p) => p?.id && isProdutoReservaPortal(p));
-  const items = lista.map((p) => ({
-    id: p.id,
-    patch: {
-      ativo: true,
-      tags: mergeTags(getProdutoTags(p), { remove: [PORTAL_RESERVA_TAG] }),
-    },
-  }));
-  await runBatchUpdates(base44, items, onProgress);
-  return items.length;
+  const codigos = codigosFromProdutos(lista);
+  if (!codigos.length) return 0;
+
+  let done = 0;
+  const batchSize = 25;
+  for (let i = 0; i < codigos.length; i += batchSize) {
+    const batch = codigos.slice(i, i + batchSize);
+    await reativarPortalCatalogReserva(batch);
+    done += batch.length;
+    onProgress?.(done, codigos.length);
+  }
+  return codigos.length;
 }
+
+/** Atualiza cache local quando Supabase offline. */
+export { patchPortalCatalogReservaLocal };

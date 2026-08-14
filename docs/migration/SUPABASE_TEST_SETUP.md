@@ -39,15 +39,33 @@ Ver também **[PHASE_1_HOMOLOGACAO.md](./PHASE_1_HOMOLOGACAO.md)** (Fase 1 compl
 - `VITE_SUBPAYZE_API_KEY`
 - `VITE_SUBPAYZE_WEBHOOK_SECRET`
 
-### Portal cerâmica / cadastro v2 (só homologação)
+### Portal catálogo cerâmica (tabela auxiliar)
 
-Em **produção** estes flags vêm `false` (deploy Vercel). Para testar o piloto no Cloud Agent ou `.env.local`:
+O piloto cerâmica do menu **Compras → Portal catálogo** trabalha em **`public.portal_catalog`** (migração `067_portal_catalog.sql`), **não** altera `public.produto` ao reservar SKUs.
 
-- `VITE_HIERARQUIA_PORTAL_ENABLED=true`
-- `VITE_CADASTRO_PRODUTO_V2_ENABLED=true`
-- `VITE_MODELO_CATALOGO_ENABLED=true` (opcional — laboratório modelo)
+**Popular a tabela auxiliar:**
 
-**Atenção — cadastro partilhado:** o portal de homologação usa o **mesmo Base44 / cadastro de produtos** que a operação real. Ações como **“Enviar para reserva”** (`ativo: false` + tag `reserva-ceramica`) **alteram o cadastro de produção** se as credenciais apontarem para o app P38. O flag só esconde o botão no site de produção; **não isola dados**. Para recuperar SKUs: `npm run reserva:listar` e `npm run reserva:reativar -- --apply` (com `VITE_BASE44_APP_ID` + token no ambiente).
+```bash
+npm run supabase:deploy -- --migrations-only   # aplica 067 se pendente
+npm run portal:catalog:seed -- --apply         # 174 SKUs do manifest JSON
+npm run portal:catalog:import -- --apply       # ou directamente do Excel piloto
+```
+
+**Reserva (só `portal_catalog.reserva_portal`):**
+
+```bash
+npm run reserva:listar
+npm run reserva:reativar -- --apply
+```
+
+Se existirem SKUs afectados pela reserva **antiga** (tag `reserva-ceramica` / `ativo=false` no Base44), use também `--legacy-base44` no reactivar.
+
+Flags opcionais de UI:
+
+- `VITE_CADASTRO_PRODUTO_V2_ENABLED=true` — aba cadastro no portal
+- `VITE_MODELO_CATALOGO_ENABLED=true` — laboratório modelo (opcional)
+
+Leitura de estoque/preço continua a vir de `produto`; hierarquia, reserva e import Excel vivem em `portal_catalog`.
 
 ### Datalink híbrido (entidades → Postgres Supabase)
 

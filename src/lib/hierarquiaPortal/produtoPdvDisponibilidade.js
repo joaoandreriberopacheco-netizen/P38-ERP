@@ -10,15 +10,18 @@ export function produtoEstoqueNumerico(produtoOrRow) {
   return Number(produtoOrRow.estoque_atual) || 0;
 }
 
-/** SKU marcado como reserva cerâmica do portal — não vende no PDV. */
+/** SKU com reserva legada no produto (tag antiga) — não usar portal_catalog.reserva_portal. */
 export function isProdutoBloqueadoPdv(produto) {
-  return isProdutoReservaPortal(produto);
+  if (!produto) return false;
+  const tags = Array.isArray(produto?.tags) ? produto.tags : [];
+  return tags.some((t) => String(t).toLowerCase().replace(/^#+/, '').trim() === 'reserva-ceramica');
 }
 
-/** Disponível para busca/venda no PDV (activo e fora da reserva). */
+/** Disponível para busca/venda no PDV (activo e fora da reserva do portal). */
 export function isProdutoDisponivelPdv(produto) {
   if (!produto || produto.ativo === false) return false;
-  return !isProdutoBloqueadoPdv(produto);
+  if (isProdutoBloqueadoPdv(produto)) return false;
+  return !isProdutoReservaPortal(produto);
 }
 
 /** Reserva com saldo físico — indicador âmbar no portal. */

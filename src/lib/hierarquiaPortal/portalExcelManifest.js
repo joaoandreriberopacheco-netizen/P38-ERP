@@ -1,5 +1,12 @@
 import manifest from '@/data/portalExcelManifest.generated.json';
-import { HIERARQUIA_PORTAL_FILTRAR_EXCEL } from '@/config/hierarquiaPortalFlags';
+import {
+  filterProdutosPortalCatalog,
+  getPortalCatalogLinhasSync,
+  getPortalCatalogSkuCountSync,
+  getPortalCatalogSkuSync,
+  isPortalCatalogLoaded,
+  isProdutoInPortalCatalogSync,
+} from '@/lib/hierarquiaPortal/portalCatalogStore';
 
 const SKU_MAP = manifest.skus || {};
 const CODIGOS = new Set(Object.keys(SKU_MAP));
@@ -21,19 +28,36 @@ export function resolvePortalProdutoCodigo(produto) {
 export function getPortalExcelSku(produto) {
   const cod = resolvePortalProdutoCodigo(produto);
   if (!cod) return null;
+  const fromCatalog = getPortalCatalogSkuSync(cod);
+  if (fromCatalog) return fromCatalog;
   return SKU_MAP[cod] || null;
 }
 
 export function isProdutoNoExcelPortal(produto) {
-  if (!HIERARQUIA_PORTAL_FILTRAR_EXCEL) return true;
+  if (isPortalCatalogLoaded()) {
+    return isProdutoInPortalCatalogSync(produto);
+  }
   return CODIGOS.has(resolvePortalProdutoCodigo(produto));
 }
 
 export function filterProdutosPortalExcel(produtos) {
-  if (!HIERARQUIA_PORTAL_FILTRAR_EXCEL) return produtos || [];
+  if (isPortalCatalogLoaded()) {
+    return filterProdutosPortalCatalog(produtos);
+  }
   return (produtos || []).filter(isProdutoNoExcelPortal);
 }
 
 export function findPortalExcelLinha(codigo) {
-  return PORTAL_EXCEL_LINHAS.find((l) => l.codigo === codigo) || null;
+  const linhas = isPortalCatalogLoaded() ? getPortalCatalogLinhasSync() : PORTAL_EXCEL_LINHAS;
+  return linhas.find((l) => l.codigo === codigo) || null;
+}
+
+export function getPortalCatalogLinhas() {
+  if (isPortalCatalogLoaded()) return getPortalCatalogLinhasSync();
+  return PORTAL_EXCEL_LINHAS;
+}
+
+export function getPortalCatalogSkuCount() {
+  if (isPortalCatalogLoaded()) return getPortalCatalogSkuCountSync();
+  return PORTAL_EXCEL_SKU_COUNT;
 }
