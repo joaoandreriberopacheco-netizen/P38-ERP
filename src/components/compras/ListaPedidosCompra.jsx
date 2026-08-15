@@ -148,8 +148,9 @@ function getPedidoDisplayData(pedido) {
     : pedido.valor_total);
   const codigo = String(pedido._display_code || pedido.numero || '').replace(' - ', '-').replace(/\s+/g, '');
 
+  const qtdPendNec = Number(pedido._quantidade_pendente) || 0;
   const qtdLabel = pedido._is_necessidade
-    ? (totalQtd > 0 ? `${formatCardQuantity(totalQtd, sufixoUnidade)} ${sufixoUnidade} pend.` : '')
+    ? (qtdPendNec > 0 ? `${formatCardQuantity(qtdPendNec, sufixoUnidade)} ${sufixoUnidade} pend.` : '')
     : totalQtdEmbarcada > 0
       ? `${formatCardQuantity(totalQtdEmbarcada, sufixoUnidade)} / ${formatCardQuantity(totalQtdPedidaCard, sufixoUnidade)} ${sufixoUnidade}`
       : (totalQtd > 0 ? `${formatCardQuantity(totalQtd, sufixoUnidade)} ${sufixoUnidade}` : '');

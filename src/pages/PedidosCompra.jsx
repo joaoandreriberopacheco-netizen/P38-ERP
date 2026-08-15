@@ -18,7 +18,6 @@ import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
 import { hydrateEmbarquesFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 import { fetchPedidosCompraGestaoInicial } from '@/lib/fetchPedidosCompraGestao';
 import { carregarProdutosMap } from '@/lib/embarqueVitrineHelpers';
-import { qtyEmbarcadaComercialLinha } from '@/lib/embarqueLogisticaHelpers';
 import { resolveEmbarqueQuantidadeComercial, resolveEmbarqueQuantidadeBase } from '@/lib/embarqueQuantityResolve';
 import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta } from '@/lib/consultaComprasEmbarques';
 import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
@@ -221,18 +220,25 @@ const hasLinkedItems = (embarque) => getEmbarqueItensLinhas(embarque).some((item
 
 const hasDespachoVinculado = (embarque) => !!(embarque?.data_embarque || embarque?.eta || embarque?.transportadora_id || embarque?.transportadora_nome);
 
-const getQuantidadePendenteNecessidade = (pedido, embarque) => {
+const getQuantidadePendenteNecessidade = (pedido, embarque, produtosMap = {}) => {
   if (!isNecessidadeRenderizada(embarque)) return 0;
 
   const itensNecessidade = getEmbarqueItensLinhas(embarque);
   const quantidadeDoEmbarque = itensNecessidade.reduce((acc, item) => {
-    return acc + qtyEmbarcadaComercialLinha(item);
+    const pedidoItem = (pedido.itens || []).find((pi) => pi.produto_id === item.produto_id);
+    const produto = produtosMap[item.produto_id] || produtosMap[pedidoItem?.produto_id] || null;
+    const exib = getItemCompraExibicaoVitrine({ ...pedidoItem, ...item }, produto);
+    const qtyBase = resolveEmbarqueQuantidadeBase({ ...pedidoItem, ...item }, 'embarcada');
+    if (qtyBase <= 0) return acc;
+    return acc + commercialQuantityFromBase(qtyBase, exib.fator_conversao, exib.unidade_medida);
   }, 0);
 
   if (quantidadeDoEmbarque > 0) return quantidadeDoEmbarque;
 
   return (pedido.itens || []).reduce((acc, item) => {
-    const quantidade = Number(item.quantidade) || 0;
+    const produto = produtosMap[item.produto_id] || null;
+    const exib = getItemCompraExibicaoVitrine(item, produto);
+    const quantidade = Number(exib.quantidade) || Number(item.quantidade) || 0;
     const quantidadeVinculada = Number(item.quantidade_vinculada) || 0;
     return acc + Math.max(0, quantidade - quantidadeVinculada);
   }, 0);
@@ -240,6 +246,10 @@ const getQuantidadePendenteNecessidade = (pedido, embarque) => {
 
 const getBorrowedStatus = (pedido, embarque) => {
   if (!embarque) return pedido?.status || 'Rascunho';
+
+  if (!pedidoNaoConcluido(pedido)) {
+    return 'Concluído';
+  }
 
   const temDespachoVinculado = hasDespachoVinculado(embarque);
   const statusRecebimento = embarque.status_recebimento;
@@ -442,7 +452,9 @@ const getDisplayValorEmbarque = (pedido, embarque) => {
   return Number((valorEmbarqueItens + proporcao * (frete - desconto)).toFixed(2));
 };
 
-const buildVirtualNecessidade = (pedido, embarquesDoPedido) => {
+const buildVirtualNecessidade = (pedido, embarquesDoPedido, produtosMap = {}) => {
+  if (!pedidoNaoConcluido(pedido)) return null;
+
   const embarquesReais = (embarquesDoPedido || []).filter((embarque) => !isNecessidadeRenderizada(embarque));
   const temDespachoReal = embarquesReais.some((embarque) => hasLinkedItems(embarque) && hasDespachoVinculado(embarque));
   if (!temDespachoReal) return null;
@@ -460,20 +472,35 @@ const buildVirtualNecessidade = (pedido, embarquesDoPedido) => {
   }, {});
 
   const itensPendentes = (pedido.itens || []).map((item) => {
+    const produto = produtosMap[item.produto_id] || null;
+    const exib = getItemCompraExibicaoVitrine(item, produto);
     const quantidadePedidaBase = Number(item.quantidade_base)
+      || calculateBaseQuantity(exib.quantidade, exib.fator_conversao)
       || calculateBaseQuantity(Number(item.quantidade) || 0, Number(item.fator_conversao) || 1);
     const quantidadeRecebidaBase = Number(recebidosPorProduto[item.produto_id]) || 0;
     const quantidadePendenteBase = Math.max(0, quantidadePedidaBase - quantidadeRecebidaBase);
-    if (!quantidadePendenteBase) return null;
+    if (quantidadePendenteBase <= 0.009) return null;
+
+    const quantidadePendenteComercial = commercialQuantityFromBase(
+      quantidadePendenteBase,
+      exib.fator_conversao,
+      exib.unidade_medida,
+    );
+    if (quantidadePendenteComercial <= 0.009) return null;
+
     return {
       produto_id: item.produto_id,
       produto_nome: item.produto_nome,
-      quantidade_pedida: quantidadePedidaBase,
-      quantidade_embarcada: quantidadePendenteBase,
+      quantidade_pedida: exib.quantidade,
+      quantidade_embarcada: quantidadePendenteComercial,
+      quantidade_embarcada_apresentacao: quantidadePendenteComercial,
+      quantidade_embarcada_base: quantidadePendenteBase,
       quantidade_base: quantidadePendenteBase,
       quantidade_recebida: 0,
-      fator_conversao: 1,
-      unidade_medida: item.unidade_medida || '',
+      fator_conversao: exib.fator_conversao,
+      fator_apresentacao: exib.fator_conversao,
+      unidade_apresentacao: exib.unidade_medida,
+      unidade_medida: exib.unidade_medida,
     };
   }).filter(Boolean);
 
@@ -548,10 +575,13 @@ function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
     const embarquesReais = embarquesDoPedido.filter((embarque) => !isNecessidadeRenderizada(embarque));
     const embarquesNecessidade = embarquesDoPedido.filter((embarque) => isNecessidadeRenderizada(embarque));
     const embarqueOriginal = embarquesReais[0] || null;
-    const necessidadeVirtual = embarquesNecessidade.length === 0 ? buildVirtualNecessidade(pedido, embarquesDoPedido) : null;
+    const necessidadeVirtual = embarquesNecessidade.length === 0 && pedidoNaoConcluido(pedido)
+      ? buildVirtualNecessidade(pedido, embarquesDoPedido, produtosMap)
+      : null;
 
     const embarquesRenderizados = embarquesDoPedido.length > 0
       ? [...embarquesReais, ...embarquesNecessidade, ...(necessidadeVirtual ? [necessidadeVirtual] : [])]
+          .filter((embarque) => !isNecessidadeRenderizada(embarque) || pedidoNaoConcluido(pedido))
       : [{
           id: `original-${pedido.id}`,
           pedido_compra_id: pedido.id,
@@ -564,7 +594,7 @@ function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
         }];
 
     return embarquesRenderizados.map((embarque) => {
-      const quantidadePendente = getQuantidadePendenteNecessidade(pedido, embarque);
+      const quantidadePendente = getQuantidadePendenteNecessidade(pedido, embarque, produtosMap);
       const ehNecessidade = isNecessidadeRenderizada(embarque);
       const itensDoCard = ehNecessidade
         ? buildDisplayItensFromEmbarque(pedido, embarque, produtosMap)
