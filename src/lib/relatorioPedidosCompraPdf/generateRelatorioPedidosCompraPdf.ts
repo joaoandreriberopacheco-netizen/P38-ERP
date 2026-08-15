@@ -255,6 +255,12 @@ const normalizarStatusRelatorio = (status) => {
 
 const getPedidoNumeroRelatorio = (pedido) => safe(pedido._display_code || pedido.numero || 'Sem numero');
 const getFornecedorRelatorio = (pedido) => safe(pedido._display_fornecedor || pedido.fornecedor_nome || 'Sem fornecedor');
+/** Texto livre do pedido (observações do comprador; sem log de histórico). */
+const getTextoPedidoRelatorio = (pedido) => {
+  const obs = String(pedido?.observacoes || '').trim();
+  if (obs) return obs;
+  return '';
+};
 const getDataRelatorio = (pedido) => pedido._display_date || pedido.data_prevista_entrega || pedido.data_emissao || pedido.created_date;
 const getQuantidadeRelatorio = (pedido) => {
   const itens = pedido._display_itens || pedido.itens || [];
@@ -861,6 +867,7 @@ const normalizeReportVersion = (version) => {
   if (version === 'expandida_mobile') return 'expandida_mobile';
   if (version === 'expandida') return 'expandida';
   if (version === 'expandida_com_anexos') return 'expandida_com_anexos';
+  if (version === 'expandida_com_anexos_a4') return 'expandida_com_anexos_a4';
   return 'expandida';
 };
 
@@ -877,8 +884,15 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
     } = payload;
     const normalizedVersion = normalizeReportVersion(version);
 
-    const includeAnexos = normalizedVersion === 'expandida_com_anexos';
-    const layoutVersion = includeAnexos ? 'expandida_enxuta' : normalizedVersion;
+    const includeAnexos =
+      normalizedVersion === 'expandida_com_anexos' || normalizedVersion === 'expandida_com_anexos_a4';
+    const isAnexosMobile = normalizedVersion === 'expandida_com_anexos';
+    /** Mobile com anexos → mobile claro; A4 com anexos → enxuto (minuta tabular + comprovantes). */
+    const layoutVersion = isAnexosMobile
+      ? 'expandida_mobile_claro'
+      : normalizedVersion === 'expandida_com_anexos_a4'
+        ? 'expandida_enxuta'
+        : normalizedVersion;
 
     const isMobileClaro = layoutVersion === 'expandida_mobile_claro';
     const isMobileClassico = layoutVersion === 'expandida_mobile';
@@ -888,12 +902,9 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
     const generatedAtStr = new Date().toLocaleString('pt-BR');
     /** Páginas do relatório completo → metadados do pedido no cabeçalho. */
     const pagePedidoChrome = {};
-    const RELATORIO_COMPLETO_CHROME = {
-      headerH: 13,
-      footerH: 8,
-      topContentY: 17,
-      bottomPad: 11,
-    };
+    const RELATORIO_COMPLETO_CHROME = isMobile
+      ? { headerH: 11, footerH: 7, topContentY: 14, bottomPad: 9 }
+      : { headerH: 13, footerH: 8, topContentY: 17, bottomPad: 11 };
 
     const produtosMap = { ...produtosMapFromPayload };
 
@@ -1157,26 +1168,35 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       }
 
       if (isMobileClaro) {
-        let hy = 12;
+        let hy = isAnexosMobile ? RELATORIO_COMPLETO_CHROME.topContentY + 1 : 12;
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-        doc.setFontSize(11);
+        doc.setFontSize(isAnexosMobile ? 10 : 11);
         doc.setTextColor(...MOBILE_INK.black);
-        doc.text('Embarques', M, hy);
-        hy += 4.2;
+        doc.text(isAnexosMobile ? 'Embarques (completo)' : 'Embarques', M, hy);
+        hy += isAnexosMobile ? 3.8 : 4.2;
 
         doc.setFontSize(6.8);
         doc.setTextColor(...MOBILE_INK.meta);
-        doc.text('Relatorio para celular (leitura clara)', M, hy);
+        doc.text(
+          isAnexosMobile
+            ? 'Minuta mobile + comprovantes embutidos por pedido'
+            : 'Relatorio para celular (leitura clara)',
+          M,
+          hy,
+        );
         hy += 3.8;
 
         const filtrosLinhas = doc.splitTextToSize(safe(filtros_desc || '-'), CW);
-        const maxFiltroLinhas = Math.min(3, filtrosLinhas.length);
+        const maxFiltroLinhas = Math.min(isAnexosMobile ? 4 : 3, filtrosLinhas.length);
+        doc.setFontSize(6.6);
+        doc.setTextColor(...MOBILE_INK.body);
         for (let fi = 0; fi < maxFiltroLinhas; fi++) {
           doc.text(filtrosLinhas[fi], M, hy);
-          hy += 3.6;
+          hy += 3.4;
         }
         hy += 0.5;
         doc.setFontSize(6.2);
+        doc.setTextColor(...MOBILE_INK.meta);
         doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, M, hy);
         hy += 4;
 
@@ -1537,13 +1557,13 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
           qtdColRight,
           nomeMaxW: M + CW - itemMl - 2,
           contentRight: M + CW,
-          vs: 1.18,
+          vs: isAnexosMobile ? 1.22 : 1.18,
           fontScale: 1,
           lineWidth: 1.8,
-          nomeFontSize: 7.4,
-          detailFontSize: 6.1,
-          qtdFontSize: 6.9,
-          unFontSize: 5.75,
+          nomeFontSize: isAnexosMobile ? 7.8 : 7.4,
+          detailFontSize: isAnexosMobile ? 6.5 : 6.1,
+          qtdFontSize: isAnexosMobile ? 7.2 : 6.9,
+          unFontSize: isAnexosMobile ? 6 : 5.75,
           ink: true,
         };
       }
@@ -2079,6 +2099,8 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
       const statusRelatorio = normalizarStatusRelatorio(pedido._display_status || pedido.status);
       const itens = mapItensRelatorioComercial(pedido);
+      const textoPedido = isAnexosMobile ? getTextoPedidoRelatorio(pedido) : '';
+      const transportadora = getTransportadoraRelatorio(pedido);
 
       const valorHeader = isPendencia
         ? moeda(itens.reduce((a, i) => {
@@ -2089,28 +2111,48 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         : moeda(getValorRelatorio(pedido, produtosMap));
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(6.4);
+      doc.setFontSize(isAnexosMobile ? 6.6 : 6.4);
       const codigoLinhas = doc.splitTextToSize(safe(getPedidoNumeroRelatorio(pedido)), CW - 4).slice(0, 2);
       const codigoLineStep = 3.5;
-      const fornLines = doc.splitTextToSize(getFornecedorRelatorio(pedido), CW - 4).slice(0, 3);
+      const fornMaxLines = isAnexosMobile ? 4 : 3;
+      const fornFontSize = isAnexosMobile ? 8.6 : 8.2;
+      const fornLines = doc.splitTextToSize(getFornecedorRelatorio(pedido), CW - 4).slice(0, fornMaxLines);
       const countLabel = isNecessidadeRelatorio(pedido)
         ? `${itens.length} item(ns) pendente(s)`
         : `${itens.length} item(ns)`;
-      const metaTexto = `${dataFmt(getDataRelatorio(pedido))} · ETA ${dataFmt(getEtaRelatorio(pedido))} · ${getOrdinalRelatorio(pedido)} · ${countLabel}`;
-      const metaLines = doc.splitTextToSize(metaTexto, CW - 4).slice(0, 2);
+      const metaParts = [
+        dataFmt(getDataRelatorio(pedido)),
+        `ETA ${dataFmt(getEtaRelatorio(pedido))}`,
+        getOrdinalRelatorio(pedido),
+        countLabel,
+      ];
+      if (isAnexosMobile && transportadora && transportadora !== 'Sem transportadora') {
+        metaParts.splice(2, 0, `Transp. ${transportadora}`);
+      }
+      const metaTexto = metaParts.join(' · ');
+      const metaLines = doc.splitTextToSize(metaTexto, CW - 4).slice(0, isAnexosMobile ? 3 : 2);
+      const textoPedidoLines = textoPedido
+        ? doc.splitTextToSize(textoPedido, CW - 6).slice(0, 10)
+        : [];
 
-      const fornLineStep = 3.7;
+      const fornLineStep = isAnexosMobile ? 3.9 : 3.7;
       const fornBlock = fornLines.length * fornLineStep;
       const totalRowH = 4.8;
       const metaLineStep = 3.4;
       const metaBlock = metaLines.length * metaLineStep;
+      const textoLabelH = textoPedidoLines.length > 0 ? 3.2 : 0;
+      const textoLineStep = 3.3;
+      const textoBlock = textoPedidoLines.length > 0
+        ? textoLabelH + textoPedidoLines.length * textoLineStep + 1.2
+        : 0;
       const progH = 2.2;
       const codeY0 = 5.5;
       const codeBlockH = codigoLinhas.length * codigoLineStep;
       const gapCodeForn = 2.2;
-      const headerBlockH = codeY0 + codeBlockH + gapCodeForn + fornBlock + totalRowH + metaBlock + progH + 2;
+      const headerBlockH = codeY0 + codeBlockH + gapCodeForn + fornBlock + totalRowH + metaBlock + textoBlock + progH + 2;
 
-      const minPrimeiroItemH = itens.length > 0 ? computeExpandedItemRowH(pedido, itens[0], 'narrow_claro', 0) : 0;
+      const itemLayout = 'narrow_claro';
+      const minPrimeiroItemH = itens.length > 0 ? computeExpandedItemRowH(pedido, itens[0], itemLayout, 0) : 0;
       ensureSpace(headerBlockH + 2 + minPrimeiroItemH + 5);
 
       const blockTop = y;
@@ -2123,7 +2165,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       doc.rect(M, blockTop, 0.9, headerBlockH, 'F');
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(6.4);
+      doc.setFontSize(isAnexosMobile ? 6.6 : 6.4);
       doc.setTextColor(...MOBILE_INK.meta);
       codigoLinhas.forEach((line, ci) => {
         doc.text(line, M + 3, blockTop + codeY0 + ci * codigoLineStep);
@@ -2136,7 +2178,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
 
       let cy = blockTop + codeY0 + codeBlockH + gapCodeForn;
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(8.2);
+      doc.setFontSize(fornFontSize);
       doc.setTextColor(...MOBILE_INK.black);
       fornLines.forEach((line, fl) => {
         doc.text(line, M + 3, cy + fl * fornLineStep);
@@ -2147,7 +2189,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       doc.setTextColor(...MOBILE_INK.meta);
       doc.text('Total', M + 3, cy);
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(8.2);
+      doc.setFontSize(fornFontSize);
       doc.setTextColor(...MOBILE_INK.black);
       doc.text(valorHeader, M + CW - 2, cy, { align: 'right' });
       cy += totalRowH;
@@ -2157,7 +2199,20 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       metaLines.forEach((line, ml) => {
         doc.text(line, M + 3, cy + ml * metaLineStep);
       });
-      cy += metaBlock + 1;
+      cy += metaBlock + (textoPedidoLines.length > 0 ? 1.2 : 0);
+
+      if (textoPedidoLines.length > 0) {
+        doc.setFontSize(6);
+        doc.setTextColor(...MOBILE_INK.meta);
+        doc.text('Texto do pedido', M + 3, cy);
+        cy += textoLabelH;
+        doc.setFontSize(isAnexosMobile ? 7.2 : 6.8);
+        doc.setTextColor(...MOBILE_INK.body);
+        textoPedidoLines.forEach((line, tl) => {
+          doc.text(line, M + 3, cy + tl * textoLineStep);
+        });
+        cy += textoPedidoLines.length * textoLineStep + 1;
+      }
 
       drawProgressBarMobileClaro(pedido._display_status || pedido.status, cy);
       y = blockTop + headerBlockH + 2;
@@ -2167,9 +2222,9 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       doc.line(M, y - 1, M + CW, y - 1);
 
       itens.forEach((item) => {
-        const rowH = computeExpandedItemRowH(pedido, item, 'narrow_claro', y);
+        const rowH = computeExpandedItemRowH(pedido, item, itemLayout, y);
         ensureSpace(rowH + 4);
-        const drawn = drawExpandedItemRowClean(pedido, item, 'narrow_claro', y, 0);
+        const drawn = drawExpandedItemRowClean(pedido, item, itemLayout, y, 0);
         y += drawn.rowBlockH;
       });
 
@@ -2374,45 +2429,75 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
 
     const applyRelatorioCompletoChrome = () => {
       const total = doc.internal.getNumberOfPages();
+      const chromeInk = isMobile ? MOBILE_INK.black : ENXUTO.black;
+      const chromeMuted = isMobile ? MOBILE_INK.meta : ENXUTO.muted;
+      const titleSize = isMobile ? 7 : 8;
+      const metaSize = isMobile ? 6.2 : 7;
+      const detailSize = isMobile ? 5.8 : 6.8;
+      const footerSize = isMobile ? 6 : 7;
+      const lineColor = isMobile ? MOBILE_INK.line : [180, 180, 180];
+      const footerLineColor = isMobile ? MOBILE_INK.line : [200, 200, 200];
+
       for (let page = 1; page <= total; page += 1) {
         doc.setPage(page);
         const ctx = pagePedidoChrome[page];
 
-        doc.setDrawColor(180, 180, 180);
+        doc.setDrawColor(...lineColor);
         doc.setLineWidth(0.2);
         doc.line(M, RELATORIO_COMPLETO_CHROME.headerH, pageW - M, RELATORIO_COMPLETO_CHROME.headerH);
 
         doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-        doc.setFontSize(8);
-        doc.setTextColor(...ENXUTO.black);
+        doc.setFontSize(titleSize);
+        doc.setTextColor(...chromeInk);
 
         if (ctx) {
-          doc.text(safe(ctx.codigo), M, 5);
-          doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-          doc.setFontSize(7);
-          const metaLine = [ctx.fornecedor, ctx.data, ctx.valor].filter(Boolean).join('  ·  ');
-          doc.text(doc.splitTextToSize(safe(metaLine), CW - 4)[0], M, 9);
-          const linha2 = ctx.transportadora && ctx.transportadora !== 'Sem transportadora'
-            ? `Transportadora: ${safe(ctx.transportadora)}`
-            : `ETA: ${safe(ctx.eta || '-')}   Status: ${safe(ctx.status)}`;
-          doc.setFontSize(6.8);
-          doc.setTextColor(...ENXUTO.muted);
-          doc.text(doc.splitTextToSize(linha2, CW - 4)[0], M, 12.5);
+          if (isMobile) {
+            const codigoLinhas = doc.splitTextToSize(safe(ctx.codigo), CW);
+            doc.text(codigoLinhas[0] || '-', M, 4.2);
+            doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+            doc.setFontSize(metaSize);
+            doc.setTextColor(...chromeMuted);
+            const fornLinhas = doc.splitTextToSize(safe(ctx.fornecedor), CW);
+            const fornY = 7.2;
+            doc.text(fornLinhas[0] || '-', M, fornY);
+            if (fornLinhas.length > 1) {
+              doc.text(fornLinhas[1], M, fornY + 2.8);
+            }
+            const linhaMeta = [ctx.data, ctx.valor].filter(Boolean).join('  ·  ');
+            doc.setFontSize(detailSize);
+            doc.text(doc.splitTextToSize(safe(linhaMeta), CW)[0], M, 10.2);
+          } else {
+            doc.text(safe(ctx.codigo), M, 5);
+            doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+            doc.setFontSize(metaSize);
+            doc.setTextColor(...chromeMuted);
+            const metaLine = [ctx.fornecedor, ctx.data, ctx.valor].filter(Boolean).join('  ·  ');
+            doc.text(doc.splitTextToSize(safe(metaLine), CW - 4)[0], M, 9);
+            const linha2 = ctx.transportadora && ctx.transportadora !== 'Sem transportadora'
+              ? `Transportadora: ${safe(ctx.transportadora)}`
+              : `ETA: ${safe(ctx.eta || '-')}   Status: ${safe(ctx.status)}`;
+            doc.setFontSize(detailSize);
+            doc.text(doc.splitTextToSize(linha2, CW - 4)[0], M, 12.5);
+          }
         } else {
-          doc.text('Relatorio completo de embarques', M, 5);
+          doc.text(
+            isMobile ? 'Embarques completo' : 'Relatorio completo de embarques',
+            M,
+            isMobile ? 4.2 : 5,
+          );
           doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-          doc.setFontSize(7);
-          doc.setTextColor(...ENXUTO.muted);
-          doc.text('Indice e resumo do periodo filtrado', M, 9);
+          doc.setFontSize(metaSize);
+          doc.setTextColor(...chromeMuted);
+          doc.text('Indice e resumo do periodo filtrado', M, isMobile ? 7.2 : 9);
         }
 
-        doc.setDrawColor(200, 200, 200);
+        doc.setDrawColor(...footerLineColor);
         doc.line(M, pageH - RELATORIO_COMPLETO_CHROME.footerH, pageW - M, pageH - RELATORIO_COMPLETO_CHROME.footerH);
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-        doc.setFontSize(7);
-        doc.setTextColor(...ENXUTO.muted);
-        doc.text(`Gerado em ${generatedAtStr}`, M, pageH - 3.5);
-        doc.text(`Pagina ${page} de ${total}`, pageW - M, pageH - 3.5, { align: 'right' });
+        doc.setFontSize(footerSize);
+        doc.setTextColor(...chromeMuted);
+        doc.text(`Gerado em ${generatedAtStr}`, M, pageH - 3.2);
+        doc.text(`Pagina ${page} de ${total}`, pageW - M, pageH - 3.2, { align: 'right' });
       }
     };
 

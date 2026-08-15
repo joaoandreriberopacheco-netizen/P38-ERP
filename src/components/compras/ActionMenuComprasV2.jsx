@@ -7,6 +7,8 @@ import { dataHoje } from '@/components/utils/dateUtils';
 import { normalizeItemCompraParaExibicao, custoApresentacaoParaFator1 } from '@/lib/productUnits';
 import { base44 } from '@/api/base44Client';
 
+const VERSOES_RELATORIO_COM_ANEXOS = new Set(['expandida_com_anexos', 'expandida_com_anexos_a4']);
+
 function normalizarItemRelatorio(item, produtosMap = {}) {
   const produtoSnapshot = produtosMap[item?.produto_id] || item?._produto || null;
   const norm = normalizeItemCompraParaExibicao(item, produtoSnapshot);
@@ -152,11 +154,14 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarPedido, on
       const gruposNormalizados = normalizarGruposParaRelatorio(grupos || [], produtosMap);
 
       let anexosPorPedido = {};
-      if (version === 'expandida_com_anexos') {
+      if (VERSOES_RELATORIO_COM_ANEXOS.has(version)) {
         toast.loading('Carregando anexos dos pedidos filtrados...', { id: 'gerando-relatorio' });
         const pedidoIds = coletarPedidoIdsParaRelatorio(pedidos, grupos);
         anexosPorPedido = await fetchAnexosPorPedidos(pedidoIds);
-        toast.loading('Montando PDF completo (minuta + anexos)...', { id: 'gerando-relatorio' });
+        const montagemMsg = version === 'expandida_com_anexos_a4'
+          ? 'Montando PDF A4 completo (minuta + anexos)...'
+          : 'Montando PDF mobile completo (minuta + anexos)...';
+        toast.loading(montagemMsg, { id: 'gerando-relatorio' });
       }
 
       const resposta = await gerarRelatorioPedidosCompra({
@@ -246,12 +251,21 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarPedido, on
     },
     {
       icon: <Files className="w-5 h-5" />,
-      label: 'PDF completo (minuta + anexos)',
+      label: 'PDF completo mobile (minuta + anexos)',
       reportVersion: 'expandida_com_anexos',
       onClick: () => handleGerarRelatorio('expandida_com_anexos'),
       color: 'bg-card dark:bg-muted text-foreground/90',
       disabled: !!gerando,
-      title: 'Minuta de cada embarque filtrado + comprovantes e anexos embutidos',
+      title: 'Minuta mobile com texto do pedido + comprovantes embutidos por pedido',
+    },
+    {
+      icon: <FileSpreadsheet className="w-5 h-5" />,
+      label: 'PDF completo A4 (minuta + anexos)',
+      reportVersion: 'expandida_com_anexos_a4',
+      onClick: () => handleGerarRelatorio('expandida_com_anexos_a4'),
+      color: 'bg-card dark:bg-muted text-foreground/90',
+      disabled: !!gerando,
+      title: 'Minuta enxuta A4 com tabela de itens + comprovantes embutidos por pedido',
     },
     {
       icon: <List className="w-5 h-5" />,
