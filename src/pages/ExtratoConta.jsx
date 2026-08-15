@@ -36,6 +36,8 @@ import FiltrosExtratoConta, { PERIODOS_EXTRATO } from '@/components/financeiro/f
 import ListaExtratoConta from '@/components/financeiro/fluxo/ListaExtratoConta';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from '@/components/financeiro/fluxo/FinanceiroListaMeta';
 import TipoFiltroBar from '@/components/financeiro/fluxo/TipoFiltroBar';
+import { FinanceiroToolbarIcon } from '@/components/financeiro/fluxo/FinanceiroToolbarIcon';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { passaFiltroTiposLancamento, labelTiposSelecionados, filtrarGruposPorTipo } from '@/lib/filtroTipoFinanceiro';
 import { formatFinanceiroGrupoLabel } from '@/components/financeiro/fluxo/FinanceiroListaShared';
 import AjusteSaldoDialog from '@/components/config/AjusteSaldoDialog';
@@ -707,33 +709,29 @@ export default function ExtratoContaPage() {
                 {conta.is_caixa_pdv ? 'Dinheiro na gaveta' : conta.tipo}
               </p>
             </div>
-            <div className="flex shrink-0 gap-0.5 no-pdf-capture">
-              <TipoFiltroBar sel={tiposSel} onSel={setTiposSel} />
-              <button
-                type="button"
-                onClick={() => setAjusteDialogOpen(true)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg p38-field-surface border-0"
-                aria-label="Ajustar saldo"
-              >
-                <Scale className="h-4 w-4 text-foreground/90" />
-              </button>
-              <button
-                type="button"
-                onClick={exportarCSV}
-                className="flex h-8 w-8 items-center justify-center rounded-lg p38-field-surface border-0"
-                aria-label="Exportar CSV"
-              >
-                <FileDown className="h-4 w-4 text-foreground/90" />
-              </button>
-              <button
-                type="button"
-                onClick={imprimir}
-                className="flex h-8 w-8 items-center justify-center rounded-lg p38-field-surface border-0"
-                aria-label="Imprimir"
-              >
-                <Printer className="h-4 w-4 text-foreground/90" />
-              </button>
-            </div>
+            <TooltipProvider delayDuration={300}>
+              <div className="flex shrink-0 items-center gap-0.5 no-pdf-capture">
+                <TipoFiltroBar sel={tiposSel} onSel={setTiposSel} />
+                <FinanceiroToolbarIcon
+                  label="Ajustar saldo"
+                  onClick={() => setAjusteDialogOpen(true)}
+                >
+                  <Scale className="h-4 w-4 text-foreground/90" />
+                </FinanceiroToolbarIcon>
+                <FinanceiroToolbarIcon
+                  label="Exportar CSV"
+                  onClick={exportarCSV}
+                >
+                  <FileDown className="h-4 w-4 text-foreground/90" />
+                </FinanceiroToolbarIcon>
+                <FinanceiroToolbarIcon
+                  label="Imprimir"
+                  onClick={imprimir}
+                >
+                  <Printer className="h-4 w-4 text-foreground/90" />
+                </FinanceiroToolbarIcon>
+              </div>
+            </TooltipProvider>
           </div>
           <KpiExtratoConta
             kpis={kpisExtrato}
@@ -762,32 +760,29 @@ export default function ExtratoContaPage() {
               saldoLabel={contaUsaRegraCaixaPDV(conta) ? 'Saldo na gaveta' : 'Saldo na conta'}
             />
           </div>
-          <div className="flex shrink-0 gap-1 no-pdf-capture">
-            <button
-              type="button"
-              onClick={() => setAjusteDialogOpen(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg p38-field-surface border-0"
-              aria-label="Ajustar saldo"
-            >
-              <Scale className="h-4 w-4 text-foreground/90" />
-            </button>
-            <button
-              type="button"
-              onClick={exportarCSV}
-              className="flex h-8 w-8 items-center justify-center rounded-lg p38-field-surface border-0"
-              aria-label="Exportar CSV"
-            >
-              <FileDown className="h-4 w-4 text-foreground/90" />
-            </button>
-            <button
-              type="button"
-              onClick={imprimir}
-              className="flex h-8 w-8 items-center justify-center rounded-lg p38-field-surface border-0"
-              aria-label="Imprimir"
-            >
-              <Printer className="h-4 w-4 text-foreground/90" />
-            </button>
-          </div>
+          <TooltipProvider delayDuration={300}>
+            <div className="flex shrink-0 items-center gap-0.5 no-pdf-capture">
+              <TipoFiltroBar sel={tiposSel} onSel={setTiposSel} />
+              <FinanceiroToolbarIcon
+                label="Ajustar saldo"
+                onClick={() => setAjusteDialogOpen(true)}
+              >
+                <Scale className="h-4 w-4 text-foreground/90" />
+              </FinanceiroToolbarIcon>
+              <FinanceiroToolbarIcon
+                label="Exportar CSV"
+                onClick={exportarCSV}
+              >
+                <FileDown className="h-4 w-4 text-foreground/90" />
+              </FinanceiroToolbarIcon>
+              <FinanceiroToolbarIcon
+                label="Imprimir"
+                onClick={imprimir}
+              >
+                <Printer className="h-4 w-4 text-foreground/90" />
+              </FinanceiroToolbarIcon>
+            </div>
+          </TooltipProvider>
         </div>
       </div>
 

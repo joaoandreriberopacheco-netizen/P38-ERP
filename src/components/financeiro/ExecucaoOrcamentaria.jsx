@@ -55,6 +55,8 @@ import ConciliacaoBancaria from './ConciliacaoBancaria';
 import PagamentoLoteDialog from './PagamentoLoteDialog';
 import FluxoToggleProgramadas from './fluxo/FluxoToggleProgramadas';
 import TipoFiltroBar from './fluxo/TipoFiltroBar';
+import { FinanceiroToolbarIcon } from './fluxo/FinanceiroToolbarIcon';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { passaFiltroTiposLancamento, filtrarGruposPorTipo } from '@/lib/filtroTipoFinanceiro';
 import usePagamentoLoteFluxo from './fluxo/usePagamentoLoteFluxo';
 import { CONCILIACAO_LOTE_TAMANHO } from '@/lib/conciliacaoEmLote';
@@ -860,26 +862,28 @@ export default function ExecucaoOrcamentaria() {
       {/* Header unificado — título, KPIs do fluxo, abas */}
       <div className="min-w-0 max-w-full space-y-2">
         <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <p className="text-lg font-semibold leading-none text-foreground font-glacial md:text-2xl">Financeiro</p>
+          <div className="flex min-w-0 items-center gap-2">
+            <p className="min-w-0 flex-1 truncate text-lg font-semibold leading-none text-foreground font-glacial md:text-2xl">
+              Financeiro
+            </p>
             {aba === 'fluxo' && (
-              <div className="flex shrink-0 items-center gap-0.5 no-pdf-capture">
-                <ContasSaldoPicker
-                  variant="icon"
-                  contas={contasSaldoOpcoes}
-                  sel={contasSaldoSel}
-                  onSel={atualizarContasSaldoSel}
-                />
-                <TipoFiltroBar sel={tiposSel} onSel={setTiposSel} />
-                <button
-                  type="button"
-                  onClick={abrirMenuRelatorios}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg p38-field-surface border-0 hover:opacity-90 transition-opacity"
-                  aria-label="Relatórios — balancete e extrato"
-                >
-                  <Printer className="w-4 h-4 text-foreground/90" />
-                </button>
-              </div>
+              <TooltipProvider delayDuration={300}>
+                <div className="flex shrink-0 items-center gap-0.5 no-pdf-capture">
+                  <ContasSaldoPicker
+                    variant="icon"
+                    contas={contasSaldoOpcoes}
+                    sel={contasSaldoSel}
+                    onSel={atualizarContasSaldoSel}
+                  />
+                  <TipoFiltroBar sel={tiposSel} onSel={setTiposSel} />
+                  <FinanceiroToolbarIcon
+                    label="Relatórios — balancete e extrato"
+                    onClick={abrirMenuRelatorios}
+                  >
+                    <Printer className="w-4 h-4 text-foreground/90" />
+                  </FinanceiroToolbarIcon>
+                </div>
+              </TooltipProvider>
             )}
           </div>
 
