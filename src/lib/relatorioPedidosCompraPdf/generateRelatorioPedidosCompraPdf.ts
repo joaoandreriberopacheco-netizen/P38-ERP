@@ -928,8 +928,8 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
 
     // ── Criação do documento ─────────────────────────────────────────────────
     const MOBILE_W = 100; // mm — largura estilo smartphone
-    // Mobile: página alta (uma coluna “infinita”) para rolar no leitor PDF com menos quebras abruptas
-    const MOBILE_PAGE_H = 1200;
+    // Mobile com anexos: páginas curtas (~viewport) para não “segurar” o próximo bloco no fim de folha longa.
+    const MOBILE_PAGE_H = isAnexosMobile ? 280 : 1200;
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -1028,14 +1028,19 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       track: [228, 228, 228],
     };
 
-    let y = includeAnexos ? RELATORIO_COMPLETO_CHROME.topContentY : 16;
+    let y = isAnexosMobile ? 16 : (includeAnexos ? RELATORIO_COMPLETO_CHROME.topContentY : 16);
+    const MOBILE_BLOCO_RESPIRO = 4;
+    /** Metadados do cabeçalho geral (página 1) — distinto dos cabeçalhos por pedido. */
+    const relatorioGeralMeta = isAnexosMobile
+      ? { titulo: 'Embarques (completo)', filtros: filtros_desc, generatedAt: generatedAtStr }
+      : null;
 
     const getBottomPad = () => {
       if (includeAnexos) return RELATORIO_COMPLETO_CHROME.bottomPad;
       return isMobile ? 4 : 10;
     };
     const getNewPageY = () => {
-      if (includeAnexos) return RELATORIO_COMPLETO_CHROME.topContentY;
+      if (includeAnexos) return isAnexosMobile ? 16 : RELATORIO_COMPLETO_CHROME.topContentY;
       return 14;
     };
 
@@ -1186,7 +1191,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       }
 
       if (isMobileClaro) {
-        let hy = isAnexosMobile ? RELATORIO_COMPLETO_CHROME.topContentY + 0.5 : 12;
+        let hy = isAnexosMobile ? 16 : 12;
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
         doc.setFontSize(isAnexosMobile ? 9 : 11);
         doc.setTextColor(...MOBILE_INK.black);
@@ -2615,7 +2620,38 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
 
     const marcarPaginasPedido = (startPage, endPage, chrome) => {
       for (let page = startPage; page <= endPage; page += 1) {
+        if (relatorioGeralMeta && page === 1) continue;
         pagePedidoChrome[page] = chrome;
+      }
+    };
+
+    const drawRelatorioGeralChrome = (page) => {
+      if (!relatorioGeralMeta) return;
+      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+      doc.setFontSize(7);
+      doc.setTextColor(...MOBILE_INK.black);
+      doc.text(safe(relatorioGeralMeta.titulo), M, 4.2);
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+      doc.setFontSize(5.8);
+      doc.setTextColor(...MOBILE_INK.meta);
+      const filtrosLinha = doc.splitTextToSize(safe(relatorioGeralMeta.filtros || '-'), CW)[0];
+      doc.text(filtrosLinha, M, 7.2);
+      doc.setFontSize(5.4);
+      doc.text(`Gerado em ${relatorioGeralMeta.generatedAt}`, M, 9.8);
+    };
+
+    const syncCursorAfterAnexos = (endPage) => {
+      doc.setPage(endPage);
+      y = pageH - getBottomPad() + 0.5;
+    };
+
+    const appendPedidoRespiro = () => {
+      ensureSpace(MOBILE_BLOCO_RESPIRO + 6);
+      if (y + MOBILE_BLOCO_RESPIRO > pageH - getBottomPad()) {
+        doc.addPage();
+        y = getNewPageY();
+      } else {
+        y += MOBILE_BLOCO_RESPIRO;
       }
     };
 
@@ -2642,7 +2678,9 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         doc.setFontSize(titleSize);
         doc.setTextColor(...chromeInk);
 
-        if (ctx) {
+        if (relatorioGeralMeta && page === 1) {
+          drawRelatorioGeralChrome(page);
+        } else if (ctx) {
           if (isMobile) {
             const codigoLinhas = doc.splitTextToSize(safe(ctx.codigo), CW);
             doc.text(codigoLinhas[0] || '-', M, 4.2);
@@ -2708,18 +2746,26 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       return drawExpandido(pedido);
     };
 
-    const appendAnexosDoPedido = async (pedido) => {
+    const appendAnexosDoPedido = async (pedido, minutaEndY) => {
       if (!includeAnexos || !pedido?.id) return;
       const anexos = anexosPorPedido[pedido.id] || [];
       if (!anexos.length) return;
       await appendAnexosToPdfDoc(doc, anexos, {
-        sectionPrefix: `Anexos ${getPedidoNumeroRelatorio(pedido)}`,
+        sectionPrefix: `Comprovantes ${getPedidoNumeroRelatorio(pedido)}`,
         layout: {
           margin: M,
           titleY: RELATORIO_COMPLETO_CHROME.topContentY + 1,
           contentTop: RELATORIO_COMPLETO_CHROME.topContentY + 6,
-          contentBottom: pageH - RELATORIO_COMPLETO_CHROME.bottomPad,
+          contentBottom: doc.internal.pageSize.getHeight() - RELATORIO_COMPLETO_CHROME.bottomPad,
         },
+        flow: isAnexosMobile
+          ? {
+              initialY: minutaEndY,
+              gapBefore: 3,
+              newPageY: getNewPageY(),
+              bottomPad: getBottomPad(),
+            }
+          : undefined,
       });
     };
 
@@ -2729,12 +2775,10 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       const chrome = buildPedidoChrome(pedido);
       if (includeAnexos && pedidoBlocoIndex > 0) {
         if (isAnexosMobile) {
-          ensureSpace(4);
-          y += 0.3;
+          appendPedidoRespiro();
           doc.setDrawColor(...MOBILE_INK.line);
-          doc.setLineWidth(0.1);
-          doc.line(M, y, M + CW, y);
-          y += 1.2;
+          doc.setLineWidth(0.08);
+          doc.line(M, y - 1.5, M + CW, y - 1.5);
         } else {
           doc.addPage();
           y = getNewPageY();
@@ -2743,9 +2787,13 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       pedidoBlocoIndex += 1;
       const startPage = doc.internal.getNumberOfPages();
       renderPedido(pedido);
-      await appendAnexosDoPedido(pedido);
+      const minutaEndY = y;
+      await appendAnexosDoPedido(pedido, minutaEndY);
       const endPage = doc.internal.getNumberOfPages();
       marcarPaginasPedido(startPage, endPage, chrome);
+      if (isAnexosMobile) {
+        syncCursorAfterAnexos(endPage);
+      }
     };
 
     const renderGrupo = async (grupo) => {
