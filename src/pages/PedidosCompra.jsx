@@ -19,7 +19,7 @@ import { hydrateEmbarquesFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmba
 import { fetchPedidosCompraGestaoInicial } from '@/lib/fetchPedidosCompraGestao';
 import { carregarProdutosMap } from '@/lib/embarqueVitrineHelpers';
 import { calcularPercentuaisLogistica } from '@/lib/embarqueLogisticaHelpers';
-import { resolveEmbarqueQuantidadeComercial } from '@/lib/embarqueQuantityResolve';
+import { resolveEmbarqueQuantidadeComercial, resolveEmbarqueQuantidadeBase } from '@/lib/embarqueQuantityResolve';
 import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta } from '@/lib/consultaComprasEmbarques';
 import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
@@ -445,6 +445,25 @@ const buildDisplayItensFromEmbarque = (pedido, embarque, produtosMap = {}) => {
   });
 };
 
+const findPedidoItemForEmbarqueLinha = (pedido, itemEmb = {}) => {
+  const itens = pedido?.itens || [];
+  const pciId = itemEmb.pedido_compra_item_id;
+  if (pciId) {
+    const byId = itens.find((pi) => pi.id === pciId || pi.pedido_compra_item_id === pciId);
+    if (byId) return byId;
+  }
+  return itens.find((pi) => pi.produto_id === itemEmb.produto_id);
+};
+
+const resolveQtyBasePedidoItem = (pedidoItem = {}, produto = null) => {
+  const stored = Number(pedidoItem?.quantidade_base);
+  if (stored > 0) return stored;
+  const exib = getItemCompraExibicaoVitrine(pedidoItem, produto);
+  const qty = Number(exib?.quantidade) || Number(pedidoItem?.quantidade) || 0;
+  const fator = Number(exib?.fator_conversao) || Number(pedidoItem?.fator_conversao) || 1;
+  return calculateBaseQuantity(qty, fator);
+};
+
 /** Valor do card de embarque: parcela proporcional do total do pedido (itens + frete/desconto rateados). */
 const getDisplayValorEmbarque = (pedido, embarque, produtosMap = {}) => {
   const itensEmbarque = getEmbarqueItensLinhas(embarque);
@@ -453,21 +472,19 @@ const getDisplayValorEmbarque = (pedido, embarque, produtosMap = {}) => {
 
   let valorEmbarqueItens = 0;
   for (const itemEmb of itensEmbarque) {
-    const pedidoItem = (pedido.itens || []).find((pi) => pi.produto_id === itemEmb.produto_id);
+    const pedidoItem = findPedidoItemForEmbarqueLinha(pedido, itemEmb);
     if (!pedidoItem) continue;
-    const lineTotal = getTotalLinhaPedidoCompra(pedidoItem);
-    const qtyEmb =
-      resolveEmbarqueQuantidadeComercial(itemEmb, 'embarcada')
-      || Number(itemEmb.quantidade_embarcada)
-      || Number(itemEmb.quantidade_pedida)
-      || Number(itemEmb.quantidade)
-      || 0;
+    const linhaMerged = { ...pedidoItem, ...itemEmb };
     const produto = produtosMap[itemEmb.produto_id] || produtosMap[pedidoItem?.produto_id] || null;
-    const exibPed = getItemCompraExibicaoVitrine(pedidoItem, produto);
-    const qtyPed = Number(exibPed.quantidade) || Number(pedidoItem.quantidade) || 0;
-    if (qtyPed > 0 && lineTotal > 0) {
-      valorEmbarqueItens += (qtyEmb / qtyPed) * lineTotal;
-    } else if (lineTotal > 0) {
+    const lineTotal = getTotalLinhaPedidoCompra(pedidoItem);
+    const qtyEmbBase =
+      resolveEmbarqueQuantidadeBase(linhaMerged, 'recebida')
+      || resolveEmbarqueQuantidadeBase(linhaMerged, 'embarcada');
+    const qtyPedBase = resolveQtyBasePedidoItem(pedidoItem, produto);
+    if (qtyPedBase > 0 && lineTotal > 0 && qtyEmbBase > 0) {
+      const ratio = Math.min(1, qtyEmbBase / qtyPedBase);
+      valorEmbarqueItens += ratio * lineTotal;
+    } else if (lineTotal > 0 && qtyEmbBase > 0) {
       valorEmbarqueItens += lineTotal;
     }
   }
