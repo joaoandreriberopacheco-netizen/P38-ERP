@@ -143,7 +143,8 @@ export default function FinanceiroLancRow({
   const isPago = l.status === 'Pago' || !!l.data_pagamento;
   const podeSelecionar = emSelecao && (selecionarPagos ? isPago : !isPago);
   const conc = l.status_conciliacao || 'N/A';
-  const isTransfConsolidada = l.isTransferenciaConsolidada;
+  const isTransfConsolidada = l.isTransferenciaConsolidada || l.perspectivaTransferencia === 'neutra';
+  const perspectiva = l.perspectivaTransferencia;
   const data =
     dataField === 'vencimento'
       ? l.data_vencimento
@@ -161,7 +162,7 @@ export default function FinanceiroLancRow({
     </>
   );
 
-  const subtitle = isTransfConsolidada ? (
+  const subtitle = isTransfConsolidada || perspectiva ? (
     <span className="line-clamp-2 break-words">
       {data ? formatarDataCurta(data) : '—'}
       {l.notaTransferencia ? ` · ${l.notaTransferencia}` : ''}
@@ -182,11 +183,25 @@ export default function FinanceiroLancRow({
         {l.contaDestinoNome}
       </span>
     </span>
+  ) : perspectiva === 'saida' ? (
+    <span className="inline-flex min-w-0 items-center gap-1 text-[13px] sm:text-[15px]">
+      <ArrowRightLeft className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+      <span className="line-clamp-2 min-w-0 break-words normal-case leading-snug">
+        Transferência → {l.contaDestinoNome || 'Destino'}
+      </span>
+    </span>
+  ) : perspectiva === 'entrada' ? (
+    <span className="inline-flex min-w-0 items-center gap-1 text-[13px] sm:text-[15px]">
+      <ArrowRightLeft className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+      <span className="line-clamp-2 min-w-0 break-words normal-case leading-snug">
+        Transferência ← {l.contaOrigemNome || 'Origem'}
+      </span>
+    </span>
   ) : (
     <span className={cn('line-clamp-2 normal-case leading-snug', cancelado && 'line-through')}>{l.descricao}</span>
   );
 
-  const lancamentoClick = isTransfConsolidada ? (l._lancamentoDespesa || l) : l;
+  const lancamentoClick = l._lancamentoTransferencia || (isTransfConsolidada ? (l._lancamentoDespesa || l) : l);
 
   const esmaecido = cancelado || (showPago && isPago) || dimProgramada || l._isProgramada;
 

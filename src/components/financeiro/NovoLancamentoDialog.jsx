@@ -577,29 +577,25 @@ export default function NovoLancamentoDialog({
       }
       const contaDest = contas.find((c) => c.id === contaDestinoId);
       const st = realizado ? 'Pago' : 'Em Aberto';
-      const base = {
+      const descricaoTransf =
+        descricao.trim() ||
+        `Transferência ${conta?.nome || 'origem'} → ${contaDest?.nome || 'destino'}`;
+      const transferencia = await base44.entities.LancamentoFinanceiro.create({
         ...metaLanc,
+        tipo: 'Transferência',
+        descricao: descricaoTransf,
         valor: valorNumerico,
         data_vencimento: dataVenc,
         data_pagamento: realizado ? dataPag : null,
         status: st,
-        status_conciliacao: realizado ? 'N/A' : 'N/A',
+        status_conciliacao: 'N/A',
         categoria: 'Transferência entre Contas',
         referencia_tipo: 'Manual',
-      };
-      const saida = await base44.entities.LancamentoFinanceiro.create({
-        ...base,
-        tipo: 'Despesa',
-        descricao: `Transferência para ${contaDest?.nome}`,
         conta_financeira_id: contaId,
         conta_financeira_nome: conta?.nome,
-      });
-      const receita = await base44.entities.LancamentoFinanceiro.create({
-        ...base,
-        tipo: 'Receita',
-        descricao: `Transferência de ${conta?.nome}`,
-        conta_financeira_id: contaDestinoId,
-        conta_financeira_nome: contaDest?.nome,
+        conta_destino_id: contaDestinoId,
+        conta_destino_nome: contaDest?.nome,
+        observacoes: observacoes?.trim() || '',
       });
       if (realizado) {
         await sincronizarSaldosAposAlteracao(base44, [contaId, contaDestinoId]);
@@ -610,16 +606,16 @@ export default function NovoLancamentoDialog({
           contaDestino: contaDest,
           contaOrigem: conta,
           valor: valorNumerico,
-          lancamentoReceitaId: receita?.id,
+          lancamentoReceitaId: transferencia?.id,
           usuarioId: user?.id,
           usuarioNome: user?.full_name || user?.email,
           observacaoExtra: observacoes?.trim() || '',
         });
       }
       lancamentoParaCallback = {
-        id: saida?.id,
-        ids: [saida?.id, receita?.id].filter(Boolean),
-        descricao: saida?.descricao || `Transferência para ${contaDest?.nome}`,
+        id: transferencia?.id,
+        ids: [transferencia?.id].filter(Boolean),
+        descricao: transferencia?.descricao || descricaoTransf,
       };
     } else if (isRecorrente && frequencia) {
       const freqSalvar = frequencia;

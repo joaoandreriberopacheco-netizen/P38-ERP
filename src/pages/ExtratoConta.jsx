@@ -53,6 +53,8 @@ import {
   totaisEntradaSaidaMovimentos,
 } from '@/lib/saldoContaFinanceira';
 import { reconciliarSaldoCaixaPDVSemTurnoAberto, backfillLancamentosMovimentosCaixaPDV } from '@/lib/contaDestinoCaixaPDV';
+import { sincronizarSaldosAposAlteracao } from '@/lib/sincronizarSaldoContasFinanceiras';
+import { criarReforcoPendenteTransferenciaCaixaPDV } from '@/lib/reforcoPendenteCaixaPDV';
 import { consolidarTransferenciasListaFluxo } from '@/lib/gruposMovimentacaoConta';
 import { navigateBackOr } from '@/lib/navigateBackOr';
 
@@ -345,31 +347,41 @@ export default function ExtratoContaPage() {
         return;
       }
 
-      // Cria saída na conta origem
-      await base44.entities.LancamentoFinanceiro.create({
-        tipo: 'Despesa',
-        descricao: `Transferência para ${contaDestino.nome}: ${formTransferencia.descricao}`,
-        valor: valor,
-        categoria: 'Outros',
+      const descricao =
+        formTransferencia.descricao?.trim() ||
+        `Transferência ${conta.nome} → ${contaDestino.nome}`;
+
+      const transferencia = await base44.entities.LancamentoFinanceiro.create({
+        tipo: 'Transferência',
+        descricao,
+        valor,
+        categoria: 'Transferência entre Contas',
         data_vencimento: format(new Date(), 'yyyy-MM-dd'),
         data_pagamento: format(new Date(), 'yyyy-MM-dd'),
         status: 'Pago',
+        status_conciliacao: 'N/A',
+        referencia_tipo: 'Manual',
         conta_financeira_id: conta.id,
-        observacoes: `Transferência de ${conta.nome} para ${contaDestino.nome}`
+        conta_financeira_nome: conta.nome,
+        conta_destino_id: contaDestino.id,
+        conta_destino_nome: contaDestino.nome,
+        observacoes: formTransferencia.descricao?.trim() || '',
       });
 
-      // Cria entrada na conta destino
-      await base44.entities.LancamentoFinanceiro.create({
-        tipo: 'Receita',
-        descricao: `Transferência de ${conta.nome}: ${formTransferencia.descricao}`,
-        valor: valor,
-        categoria: 'Outros',
-        data_vencimento: format(new Date(), 'yyyy-MM-dd'),
-        data_pagamento: format(new Date(), 'yyyy-MM-dd'),
-        status: 'Pago',
-        conta_financeira_id: contaDestino.id,
-        observacoes: `Transferência de ${conta.nome} para ${contaDestino.nome}`
-      });
+      await sincronizarSaldosAposAlteracao(base44, [conta.id, contaDestino.id]);
+
+      if (contaUsaRegraCaixaPDV(contaDestino)) {
+        const user = await base44.auth.me().catch(() => null);
+        await criarReforcoPendenteTransferenciaCaixaPDV(base44, {
+          contaDestino,
+          contaOrigem: conta,
+          valor,
+          lancamentoReceitaId: transferencia?.id,
+          usuarioId: user?.id,
+          usuarioNome: user?.full_name || user?.email,
+          observacaoExtra: formTransferencia.descricao?.trim() || '',
+        });
+      }
 
       toast({
         title: "Transferência realizada",

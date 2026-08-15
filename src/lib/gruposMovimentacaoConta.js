@@ -14,6 +14,7 @@ import {
   projetarLinhaFluxoCaixa,
   totaisGrupoFluxoCaixa,
 } from '@/lib/saldoContaFinanceira';
+import { projetarTransferenciaParaExibicao } from '@/lib/projecaoTransferenciaFinanceira';
 import {
   getDataAncoraFluxoKey,
   isLancamentoCancelado,
@@ -217,7 +218,14 @@ function projetarTransferenciaLadoUnico(
 /** Une par Despesa+Receita da mesma transferência numa linha só no Fluxo de Caixa. */
 export function consolidarTransferenciasListaFluxo(
   items = [],
-  { movimentos = [], mapaContrapartes = null, contasById = {}, mapaParIds = null } = {},
+  {
+    movimentos = [],
+    mapaContrapartes = null,
+    contasById = {},
+    mapaParIds = null,
+    contasSel = [],
+    contaContext = null,
+  } = {},
 ) {
   const reforcosPorLancamento = mapReforcosTransferenciaPorLancamentoId(movimentos);
   const grupos = new Map();
@@ -272,6 +280,13 @@ export function consolidarTransferenciasListaFluxo(
     .filter((item) => !receitaOculta.has(item.id))
     .map((item) => {
       if (consolidados.has(item.id)) return consolidados.get(item.id);
+      const unico = projetarTransferenciaParaExibicao(item, {
+        contasSel,
+        contaContext,
+        contasById,
+        reforcoStatus: statusReforcoTransferenciaPdv(reforcosPorLancamento.get(String(item.id))),
+      });
+      if (unico) return unico;
       const projetado = projetarTransferenciaLadoUnico(item, {
         reforcosPorLancamento,
         mapaParIds: parIds,
@@ -357,7 +372,11 @@ export function montarGruposFluxoCaixa({
       const brutos = map[dia];
       const itemsOrdenados = sortLancamentosPorCodigo(brutos, ordemLancamentos);
       const itemsConsolidados = sortLancamentosPorCodigo(
-        consolidarTransferenciasListaFluxo(itemsOrdenados, { movimentos }),
+        consolidarTransferenciasListaFluxo(itemsOrdenados, {
+          movimentos,
+          contasSel,
+          contasById,
+        }),
         ordemLancamentos,
       );
       const items = itemsConsolidados.map((m) => {
@@ -431,7 +450,11 @@ export function montarGruposPorDiaConta({
       const contasById = { [conta.id]: conta };
       const itemsBrutos = sortLancamentosPorCodigo(brutos);
       const itemsConsolidados = sortLancamentosPorCodigo(
-        consolidarTransferenciasListaFluxo(itemsBrutos, { movimentos }),
+        consolidarTransferenciasListaFluxo(itemsBrutos, {
+          movimentos,
+          contaContext: conta,
+          contasById,
+        }),
       );
       const items = itemsConsolidados.map((m) => {
         const linha = m.origem === 'movimento' ? normalizarMovimentoCaixaParaLinha(m) : m;

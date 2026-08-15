@@ -125,32 +125,45 @@ export async function backfillReforcosPendentesTransferenciasCaixaPDV(base44, co
   const pdvIds = new Set(pdvContas.map((c) => c.id));
 
   let criou = false;
-  for (const receita of lancamentos) {
-    if (receita.tipo !== 'Receita') continue;
-    if (!pdvIds.has(receita.conta_financeira_id)) continue;
-    if (!isTransferenciaEntreContas(receita)) continue;
-    if (receita.status !== 'Pago' && !receita.data_pagamento) continue;
-    if (receitasJaVinculadas.has(String(receita.id))) continue;
+  for (const lanc of lancamentos) {
+    const isLegadoReceita =
+      lanc.tipo === 'Receita' &&
+      isTransferenciaEntreContas(lanc) &&
+      !lanc.conta_destino_id;
+    const isRegistroUnico =
+      lanc.tipo === 'Transferência' &&
+      lanc.conta_destino_id &&
+      pdvIds.has(lanc.conta_destino_id);
+    if (!isLegadoReceita && !isRegistroUnico) continue;
+
+    const contaDestinoId = isRegistroUnico ? lanc.conta_destino_id : lanc.conta_financeira_id;
+    if (!pdvIds.has(contaDestinoId)) continue;
+    if (lanc.status !== 'Pago' && !lanc.data_pagamento) continue;
+    if (receitasJaVinculadas.has(String(lanc.id))) continue;
     if (
-      receita.referencia_tipo === 'MovimentosCaixa' &&
-      receita.referencia_id &&
-      movimentoIds.has(String(receita.referencia_id))
+      lanc.referencia_tipo === 'MovimentosCaixa' &&
+      lanc.referencia_id &&
+      movimentoIds.has(String(lanc.referencia_id))
     ) {
       continue;
     }
 
-    const contaDestino = pdvContas.find((c) => c.id === receita.conta_financeira_id);
-    const origemId = mapaContrapartes.get(receita.id);
-    const contaOrigem = contas.find((c) => c.id === origemId) || { nome: receita.descricao?.replace(/^Transferência de\s+/i, '') };
+    const contaDestino = pdvContas.find((c) => c.id === contaDestinoId);
+    const origemId = isRegistroUnico
+      ? lanc.conta_financeira_id
+      : mapaContrapartes.get(lanc.id);
+    const contaOrigem =
+      contas.find((c) => c.id === origemId) ||
+      { nome: lanc.descricao?.replace(/^Transferência de\s+/i, '') };
 
     await criarReforcoPendenteTransferenciaCaixaPDV(base44, {
       contaDestino,
       contaOrigem,
-      valor: receita.valor,
-      lancamentoReceitaId: receita.id,
+      valor: lanc.valor,
+      lancamentoReceitaId: lanc.id,
       usuarioId: 'sistema',
       usuarioNome: 'Retroativo',
-      observacaoExtra: receita.observacoes || '',
+      observacaoExtra: lanc.observacoes || '',
     });
     criou = true;
   }
