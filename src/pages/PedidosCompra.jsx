@@ -18,7 +18,8 @@ import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
 import { hydrateEmbarquesFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 import { fetchPedidosCompraGestaoInicial } from '@/lib/fetchPedidosCompraGestao';
 import { carregarProdutosMap } from '@/lib/embarqueVitrineHelpers';
-import { resolveEmbarqueQuantidadeComercial, resolveEmbarqueQuantidadeBase } from '@/lib/embarqueQuantityResolve';
+import { calcularPercentuaisLogistica } from '@/lib/embarqueLogisticaHelpers';
+import { resolveEmbarqueQuantidadeComercial } from '@/lib/embarqueQuantityResolve';
 import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta } from '@/lib/consultaComprasEmbarques';
 import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
@@ -220,31 +221,52 @@ const hasLinkedItems = (embarque) => getEmbarqueItensLinhas(embarque).some((item
 
 const hasDespachoVinculado = (embarque) => !!(embarque?.data_embarque || embarque?.eta || embarque?.transportadora_id || embarque?.transportadora_nome);
 
-const getQuantidadePendenteNecessidade = (pedido, embarque, produtosMap = {}) => {
-  if (!isNecessidadeRenderizada(embarque)) return 0;
+function calcularCoberturaComercialPorProduto(embarquesReais = []) {
+  return (embarquesReais || []).reduce((acc, embarque) => {
+    getEmbarqueItensLinhas(embarque).forEach((item) => {
+      const produtoId = item.produto_id;
+      if (!produtoId) return;
+      const coberto =
+        resolveEmbarqueQuantidadeComercial(item, 'recebida')
+        || resolveEmbarqueQuantidadeComercial(item, 'embarcada');
+      acc[produtoId] = (acc[produtoId] || 0) + coberto;
+    });
+    return acc;
+  }, {});
+}
 
-  const itensNecessidade = getEmbarqueItensLinhas(embarque);
-  const quantidadeDoEmbarque = itensNecessidade.reduce((acc, item) => {
-    const pedidoItem = (pedido.itens || []).find((pi) => pi.produto_id === item.produto_id);
-    const produto = produtosMap[item.produto_id] || produtosMap[pedidoItem?.produto_id] || null;
-    const exib = getItemCompraExibicaoVitrine({ ...pedidoItem, ...item }, produto);
-    const qtyBase = resolveEmbarqueQuantidadeBase({ ...pedidoItem, ...item }, 'embarcada');
-    if (qtyBase <= 0) return acc;
-    return acc + commercialQuantityFromBase(qtyBase, exib.fator_conversao, exib.unidade_medida);
-  }, 0);
+/** Pendência real na unidade vitrine (CX/PAC…), cruzando pedido vs embarques reais. */
+function calcularPendenciaComercialItens(pedido, embarquesDoPedido = [], produtosMap = {}) {
+  const embarquesReais = (embarquesDoPedido || []).filter((embarque) => !isNecessidadeRenderizada(embarque));
+  const cobertura = calcularCoberturaComercialPorProduto(embarquesReais);
 
-  if (quantidadeDoEmbarque > 0) return quantidadeDoEmbarque;
-
-  return (pedido.itens || []).reduce((acc, item) => {
+  return (pedido.itens || []).map((item) => {
     const produto = produtosMap[item.produto_id] || null;
     const exib = getItemCompraExibicaoVitrine(item, produto);
-    const quantidade = Number(exib.quantidade) || Number(item.quantidade) || 0;
-    const quantidadeVinculada = Number(item.quantidade_vinculada) || 0;
-    return acc + Math.max(0, quantidade - quantidadeVinculada);
-  }, 0);
+    const pedida = Number(exib.quantidade) || Number(item.quantidade) || 0;
+    const coberta = Number(cobertura[item.produto_id]) || 0;
+    const pendente = Math.max(0, pedida - coberta);
+    if (pendente <= 0.009) return null;
+    return { item, exib, pendente };
+  }).filter(Boolean);
+}
+
+function somaPendenciaComercial(pendencias = []) {
+  return pendencias.reduce((acc, row) => acc + (Number(row.pendente) || 0), 0);
+}
+
+function pedidoTemPendenciaLogisticaReal(pedido, embarquesDoPedido = []) {
+  const embarquesReais = (embarquesDoPedido || []).filter((embarque) => !isNecessidadeRenderizada(embarque));
+  const logistica = calcularPercentuaisLogistica(pedido, embarquesReais);
+  return logistica.pendente > 0.5;
+}
+
+const getQuantidadePendenteNecessidade = (pedido, embarque, produtosMap = {}, embarquesDoPedido = []) => {
+  if (!isNecessidadeRenderizada(embarque)) return 0;
+  return somaPendenciaComercial(calcularPendenciaComercialItens(pedido, embarquesDoPedido, produtosMap));
 };
 
-const getBorrowedStatus = (pedido, embarque) => {
+const getBorrowedStatus = (pedido, embarque, produtosMap = {}, embarquesDoPedido = []) => {
   if (!embarque) return pedido?.status || 'Rascunho';
 
   if (!pedidoNaoConcluido(pedido)) {
@@ -254,7 +276,7 @@ const getBorrowedStatus = (pedido, embarque) => {
   const temDespachoVinculado = hasDespachoVinculado(embarque);
   const statusRecebimento = embarque.status_recebimento;
   const temItensAssociados = hasLinkedItems(embarque);
-  const quantidadePendente = getQuantidadePendenteNecessidade(pedido, embarque);
+  const quantidadePendente = getQuantidadePendenteNecessidade(pedido, embarque, produtosMap, embarquesDoPedido);
   const ehNecessidade = isNecessidadeRenderizada(embarque);
   const precisaPreenchimento = ehNecessidade && !temDespachoVinculado && quantidadePendente > 0;
 
@@ -424,7 +446,7 @@ const buildDisplayItensFromEmbarque = (pedido, embarque, produtosMap = {}) => {
 };
 
 /** Valor do card de embarque: parcela proporcional do total do pedido (itens + frete/desconto rateados). */
-const getDisplayValorEmbarque = (pedido, embarque) => {
+const getDisplayValorEmbarque = (pedido, embarque, produtosMap = {}) => {
   const itensEmbarque = getEmbarqueItensLinhas(embarque);
   const valorItensPedido = calcValorItensPedidoCompra(pedido);
   if (!itensEmbarque.length) return calcValorTotalPedidoCompra(pedido);
@@ -434,11 +456,17 @@ const getDisplayValorEmbarque = (pedido, embarque) => {
     const pedidoItem = (pedido.itens || []).find((pi) => pi.produto_id === itemEmb.produto_id);
     if (!pedidoItem) continue;
     const lineTotal = getTotalLinhaPedidoCompra(pedidoItem);
-    const qtyEmbBase = resolveEmbarqueQuantidadeBase(itemEmb, 'embarcada');
-    const qtyPedBase = Number(pedidoItem.quantidade_base)
-      || calculateBaseQuantity(Number(pedidoItem.quantidade) || 0, Number(pedidoItem.fator_conversao) || 1);
-    if (qtyPedBase > 0 && lineTotal > 0) {
-      valorEmbarqueItens += (qtyEmbBase / qtyPedBase) * lineTotal;
+    const qtyEmb =
+      resolveEmbarqueQuantidadeComercial(itemEmb, 'embarcada')
+      || Number(itemEmb.quantidade_embarcada)
+      || Number(itemEmb.quantidade_pedida)
+      || Number(itemEmb.quantidade)
+      || 0;
+    const produto = produtosMap[itemEmb.produto_id] || produtosMap[pedidoItem?.produto_id] || null;
+    const exibPed = getItemCompraExibicaoVitrine(pedidoItem, produto);
+    const qtyPed = Number(exibPed.quantidade) || Number(pedidoItem.quantidade) || 0;
+    if (qtyPed > 0 && lineTotal > 0) {
+      valorEmbarqueItens += (qtyEmb / qtyPed) * lineTotal;
     } else if (lineTotal > 0) {
       valorEmbarqueItens += lineTotal;
     }
@@ -458,51 +486,25 @@ const buildVirtualNecessidade = (pedido, embarquesDoPedido, produtosMap = {}) =>
   const embarquesReais = (embarquesDoPedido || []).filter((embarque) => !isNecessidadeRenderizada(embarque));
   const temDespachoReal = embarquesReais.some((embarque) => hasLinkedItems(embarque) && hasDespachoVinculado(embarque));
   if (!temDespachoReal) return null;
+  if (!pedidoTemPendenciaLogisticaReal(pedido, embarquesDoPedido)) return null;
 
-  const recebidosPorProduto = embarquesReais.reduce((acc, embarque) => {
-    getEmbarqueItensLinhas(embarque).forEach((item) => {
-      const produtoId = item.produto_id;
-      if (!produtoId) return;
-      const recebidoBase =
-        resolveEmbarqueQuantidadeBase(item, 'recebida')
-        || resolveEmbarqueQuantidadeBase(item, 'embarcada');
-      acc[produtoId] = (acc[produtoId] || 0) + recebidoBase;
-    });
-    return acc;
-  }, {});
+  const pendencias = calcularPendenciaComercialItens(pedido, embarquesDoPedido, produtosMap);
+  if (!pendencias.length) return null;
 
-  const itensPendentes = (pedido.itens || []).map((item) => {
-    const produto = produtosMap[item.produto_id] || null;
-    const exib = getItemCompraExibicaoVitrine(item, produto);
-    const quantidadePedidaBase = Number(item.quantidade_base)
-      || calculateBaseQuantity(exib.quantidade, exib.fator_conversao)
-      || calculateBaseQuantity(Number(item.quantidade) || 0, Number(item.fator_conversao) || 1);
-    const quantidadeRecebidaBase = Number(recebidosPorProduto[item.produto_id]) || 0;
-    const quantidadePendenteBase = Math.max(0, quantidadePedidaBase - quantidadeRecebidaBase);
-    if (quantidadePendenteBase <= 0.009) return null;
-
-    const quantidadePendenteComercial = commercialQuantityFromBase(
-      quantidadePendenteBase,
-      exib.fator_conversao,
-      exib.unidade_medida,
-    );
-    if (quantidadePendenteComercial <= 0.009) return null;
-
-    return {
-      produto_id: item.produto_id,
-      produto_nome: item.produto_nome,
-      quantidade_pedida: exib.quantidade,
-      quantidade_embarcada: quantidadePendenteComercial,
-      quantidade_embarcada_apresentacao: quantidadePendenteComercial,
-      quantidade_embarcada_base: quantidadePendenteBase,
-      quantidade_base: quantidadePendenteBase,
-      quantidade_recebida: 0,
-      fator_conversao: exib.fator_conversao,
-      fator_apresentacao: exib.fator_conversao,
-      unidade_apresentacao: exib.unidade_medida,
-      unidade_medida: exib.unidade_medida,
-    };
-  }).filter(Boolean);
+  const itensPendentes = pendencias.map(({ item, exib, pendente }) => ({
+    produto_id: item.produto_id,
+    produto_nome: item.produto_nome,
+    quantidade_pedida: exib.quantidade,
+    quantidade_embarcada: pendente,
+    quantidade_embarcada_apresentacao: pendente,
+    quantidade_embarcada_base: calculateBaseQuantity(pendente, exib.fator_conversao),
+    quantidade_base: calculateBaseQuantity(pendente, exib.fator_conversao),
+    quantidade_recebida: 0,
+    fator_conversao: exib.fator_conversao,
+    fator_apresentacao: exib.fator_conversao,
+    unidade_apresentacao: exib.unidade_medida,
+    unidade_medida: exib.unidade_medida,
+  }));
 
   if (!itensPendentes.length) return null;
 
@@ -581,7 +583,12 @@ function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
 
     const embarquesRenderizados = embarquesDoPedido.length > 0
       ? [...embarquesReais, ...embarquesNecessidade, ...(necessidadeVirtual ? [necessidadeVirtual] : [])]
-          .filter((embarque) => !isNecessidadeRenderizada(embarque) || pedidoNaoConcluido(pedido))
+          .filter((embarque) => {
+            if (!isNecessidadeRenderizada(embarque)) return true;
+            if (!pedidoNaoConcluido(pedido)) return false;
+            return pedidoTemPendenciaLogisticaReal(pedido, embarquesDoPedido)
+              && calcularPendenciaComercialItens(pedido, embarquesDoPedido, produtosMap).length > 0;
+          })
       : [{
           id: `original-${pedido.id}`,
           pedido_compra_id: pedido.id,
@@ -594,7 +601,7 @@ function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
         }];
 
     return embarquesRenderizados.map((embarque) => {
-      const quantidadePendente = getQuantidadePendenteNecessidade(pedido, embarque, produtosMap);
+      const quantidadePendente = getQuantidadePendenteNecessidade(pedido, embarque, produtosMap, embarquesDoPedido);
       const ehNecessidade = isNecessidadeRenderizada(embarque);
       const itensDoCard = ehNecessidade
         ? buildDisplayItensFromEmbarque(pedido, embarque, produtosMap)
@@ -620,7 +627,7 @@ function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
         _embarque: embarque,
         _display_code: getDisplayEmbarqueCode(pedido, embarque),
         _display_ordinal: getDisplayEmbarqueOrdinal(embarque, { ...pedido, _embarques: embarquesRenderizados }),
-        _display_status: getBorrowedStatus(pedido, embarque),
+        _display_status: getBorrowedStatus(pedido, embarque, produtosMap, embarquesDoPedido),
         _display_valor: hasLinkedItems(embarque) || ehNecessidade ? getDisplayValorEmbarque(pedido, embarque, produtosMap) : calcValorTotalPedidoCompra(pedido),
         _display_itens: itensDoCard,
         _display_date: getEmbarqueDisplayDate(pedido),
