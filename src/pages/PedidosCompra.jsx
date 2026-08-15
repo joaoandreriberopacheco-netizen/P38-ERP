@@ -19,7 +19,7 @@ import { hydrateEmbarquesFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmba
 import { fetchPedidosCompraGestaoInicial } from '@/lib/fetchPedidosCompraGestao';
 import { carregarProdutosMap } from '@/lib/embarqueVitrineHelpers';
 import { qtyEmbarcadaComercialLinha } from '@/lib/embarqueLogisticaHelpers';
-import { resolveEmbarqueQuantidadeComercial } from '@/lib/embarqueQuantityResolve';
+import { resolveEmbarqueQuantidadeComercial, resolveEmbarqueQuantidadeBase } from '@/lib/embarqueQuantityResolve';
 import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta } from '@/lib/consultaComprasEmbarques';
 import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
@@ -36,6 +36,7 @@ import { Package, Receipt } from 'lucide-react';
 import {
   buildPurchaseUnitOptions,
   normalizeUnitCode,
+  calculateBaseQuantity,
   commercialQuantityFromBase,
   normalizeItemToCanonicalFactorOne,
   getItemCompraExibicaoVitrine,
@@ -423,14 +424,11 @@ const getDisplayValorEmbarque = (pedido, embarque) => {
     const pedidoItem = (pedido.itens || []).find((pi) => pi.produto_id === itemEmb.produto_id);
     if (!pedidoItem) continue;
     const lineTotal = getTotalLinhaPedidoCompra(pedidoItem);
-    const qtyEmb =
-      Number(itemEmb.quantidade_embarcada) ||
-      Number(itemEmb.quantidade_pedida) ||
-      Number(itemEmb.quantidade) ||
-      0;
-    const qtyPed = Number(pedidoItem.quantidade) || 0;
-    if (qtyPed > 0 && lineTotal > 0) {
-      valorEmbarqueItens += (qtyEmb / qtyPed) * lineTotal;
+    const qtyEmbBase = resolveEmbarqueQuantidadeBase(itemEmb, 'embarcada');
+    const qtyPedBase = Number(pedidoItem.quantidade_base)
+      || calculateBaseQuantity(Number(pedidoItem.quantidade) || 0, Number(pedidoItem.fator_conversao) || 1);
+    if (qtyPedBase > 0 && lineTotal > 0) {
+      valorEmbarqueItens += (qtyEmbBase / qtyPedBase) * lineTotal;
     } else if (lineTotal > 0) {
       valorEmbarqueItens += lineTotal;
     }
@@ -453,25 +451,28 @@ const buildVirtualNecessidade = (pedido, embarquesDoPedido) => {
     getEmbarqueItensLinhas(embarque).forEach((item) => {
       const produtoId = item.produto_id;
       if (!produtoId) return;
-      const recebido =
-        resolveEmbarqueQuantidadeComercial(item, 'recebida')
-        || resolveEmbarqueQuantidadeComercial(item, 'embarcada');
-      acc[produtoId] = (acc[produtoId] || 0) + recebido;
+      const recebidoBase =
+        resolveEmbarqueQuantidadeBase(item, 'recebida')
+        || resolveEmbarqueQuantidadeBase(item, 'embarcada');
+      acc[produtoId] = (acc[produtoId] || 0) + recebidoBase;
     });
     return acc;
   }, {});
 
   const itensPendentes = (pedido.itens || []).map((item) => {
-    const quantidadePedida = Number(item.quantidade) || 0;
-    const quantidadeRecebida = Number(recebidosPorProduto[item.produto_id]) || 0;
-    const quantidadePendente = Math.max(0, quantidadePedida - quantidadeRecebida);
-    if (!quantidadePendente) return null;
+    const quantidadePedidaBase = Number(item.quantidade_base)
+      || calculateBaseQuantity(Number(item.quantidade) || 0, Number(item.fator_conversao) || 1);
+    const quantidadeRecebidaBase = Number(recebidosPorProduto[item.produto_id]) || 0;
+    const quantidadePendenteBase = Math.max(0, quantidadePedidaBase - quantidadeRecebidaBase);
+    if (!quantidadePendenteBase) return null;
     return {
       produto_id: item.produto_id,
       produto_nome: item.produto_nome,
-      quantidade_pedida: quantidadePedida,
-      quantidade_embarcada: quantidadePendente,
+      quantidade_pedida: quantidadePedidaBase,
+      quantidade_embarcada: quantidadePendenteBase,
+      quantidade_base: quantidadePendenteBase,
       quantidade_recebida: 0,
+      fator_conversao: 1,
       unidade_medida: item.unidade_medida || '',
     };
   }).filter(Boolean);
