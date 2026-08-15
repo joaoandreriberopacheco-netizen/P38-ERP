@@ -20,7 +20,7 @@ import { fetchPedidosCompraGestaoInicial } from '@/lib/fetchPedidosCompraGestao'
 import { carregarProdutosMap } from '@/lib/embarqueVitrineHelpers';
 import { calcularPercentuaisLogistica } from '@/lib/embarqueLogisticaHelpers';
 import { resolveEmbarqueQuantidadeComercial } from '@/lib/embarqueQuantityResolve';
-import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta } from '@/lib/consultaComprasEmbarques';
+import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta, buildConsultaItensEmbarque, calcConsultaValorEmbarque } from '@/lib/consultaComprasEmbarques';
 import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
@@ -445,34 +445,23 @@ const buildDisplayItensFromEmbarque = (pedido, embarque, produtosMap = {}) => {
   });
 };
 
-/** Valor do card de embarque: parcela proporcional do total do pedido (itens + frete/desconto rateados). */
-const getDisplayValorEmbarque = (pedido, embarque, produtosMap = {}) => {
+const getDisplayValorEmbarque = (pedido, embarque, produtosMap = {}, embarquesDoPedido = []) => {
   const itensEmbarque = getEmbarqueItensLinhas(embarque);
-  const valorItensPedido = calcValorItensPedidoCompra(pedido);
   if (!itensEmbarque.length) return calcValorTotalPedidoCompra(pedido);
 
-  let valorEmbarqueItens = 0;
-  for (const itemEmb of itensEmbarque) {
-    const pedidoItem = (pedido.itens || []).find((pi) => pi.produto_id === itemEmb.produto_id);
-    if (!pedidoItem) continue;
-    const lineTotal = getTotalLinhaPedidoCompra(pedidoItem);
-    const qtyEmb =
-      resolveEmbarqueQuantidadeComercial(itemEmb, 'embarcada')
-      || Number(itemEmb.quantidade_embarcada)
-      || Number(itemEmb.quantidade_pedida)
-      || Number(itemEmb.quantidade)
-      || 0;
-    const produto = produtosMap[itemEmb.produto_id] || produtosMap[pedidoItem?.produto_id] || null;
-    const exibPed = getItemCompraExibicaoVitrine(pedidoItem, produto);
-    const qtyPed = Number(exibPed.quantidade) || Number(pedidoItem.quantidade) || 0;
-    if (qtyPed > 0 && lineTotal > 0) {
-      valorEmbarqueItens += (qtyEmb / qtyPed) * lineTotal;
-    } else if (lineTotal > 0) {
-      valorEmbarqueItens += lineTotal;
-    }
-  }
+  const card = {
+    ...pedido,
+    _embarque: embarque,
+    _is_necessidade: isNecessidadeRenderizada(embarque),
+    _embarques: embarquesDoPedido.length ? embarquesDoPedido : (pedido._embarques || []),
+  };
+  const itensConsulta = buildConsultaItensEmbarque(card, produtosMap);
+  const valorEmbarqueItens = calcConsultaValorEmbarque(card, itensConsulta);
+  const valorItensPedido = calcValorItensPedidoCompra(pedido);
 
-  if (!valorItensPedido) return Number(valorEmbarqueItens.toFixed(2));
+  if (!valorItensPedido || !itensConsulta.length) {
+    return valorEmbarqueItens || calcValorTotalPedidoCompra(pedido);
+  }
 
   const frete = Number(pedido?.valor_frete) || 0;
   const desconto = Number(pedido?.valor_desconto) || 0;
@@ -628,7 +617,7 @@ function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
         _display_code: getDisplayEmbarqueCode(pedido, embarque),
         _display_ordinal: getDisplayEmbarqueOrdinal(embarque, { ...pedido, _embarques: embarquesRenderizados }),
         _display_status: getBorrowedStatus(pedido, embarque, produtosMap, embarquesDoPedido),
-        _display_valor: hasLinkedItems(embarque) || ehNecessidade ? getDisplayValorEmbarque(pedido, embarque, produtosMap) : calcValorTotalPedidoCompra(pedido),
+        _display_valor: hasLinkedItems(embarque) || ehNecessidade ? getDisplayValorEmbarque(pedido, embarque, produtosMap, embarquesDoPedido) : calcValorTotalPedidoCompra(pedido),
         _display_itens: itensDoCard,
         _display_date: getEmbarqueDisplayDate(pedido),
         _display_fornecedor: pedido.fornecedor_nome || '—',
