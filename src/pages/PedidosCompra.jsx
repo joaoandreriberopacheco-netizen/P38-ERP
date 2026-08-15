@@ -19,8 +19,8 @@ import { hydrateEmbarquesFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmba
 import { fetchPedidosCompraGestaoInicial } from '@/lib/fetchPedidosCompraGestao';
 import { carregarProdutosMap } from '@/lib/embarqueVitrineHelpers';
 import { calcularPercentuaisLogistica } from '@/lib/embarqueLogisticaHelpers';
-import { resolveEmbarqueQuantidadeComercial, resolveEmbarqueQuantidadeBase } from '@/lib/embarqueQuantityResolve';
-import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta } from '@/lib/consultaComprasEmbarques';
+import { resolveEmbarqueQuantidadeComercial } from '@/lib/embarqueQuantityResolve';
+import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta, buildConsultaItensEmbarque, calcConsultaValorEmbarque } from '@/lib/consultaComprasEmbarques';
 import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
@@ -445,51 +445,23 @@ const buildDisplayItensFromEmbarque = (pedido, embarque, produtosMap = {}) => {
   });
 };
 
-const findPedidoItemForEmbarqueLinha = (pedido, itemEmb = {}) => {
-  const itens = pedido?.itens || [];
-  const pciId = itemEmb.pedido_compra_item_id;
-  if (pciId) {
-    const byId = itens.find((pi) => pi.id === pciId || pi.pedido_compra_item_id === pciId);
-    if (byId) return byId;
-  }
-  return itens.find((pi) => pi.produto_id === itemEmb.produto_id);
-};
-
-const resolveQtyBasePedidoItem = (pedidoItem = {}, produto = null) => {
-  const stored = Number(pedidoItem?.quantidade_base);
-  if (stored > 0) return stored;
-  const exib = getItemCompraExibicaoVitrine(pedidoItem, produto);
-  const qty = Number(exib?.quantidade) || Number(pedidoItem?.quantidade) || 0;
-  const fator = Number(exib?.fator_conversao) || Number(pedidoItem?.fator_conversao) || 1;
-  return calculateBaseQuantity(qty, fator);
-};
-
-/** Valor do card de embarque: parcela proporcional do total do pedido (itens + frete/desconto rateados). */
-const getDisplayValorEmbarque = (pedido, embarque, produtosMap = {}) => {
+const getDisplayValorEmbarque = (pedido, embarque, produtosMap = {}, embarquesDoPedido = []) => {
   const itensEmbarque = getEmbarqueItensLinhas(embarque);
-  const valorItensPedido = calcValorItensPedidoCompra(pedido);
   if (!itensEmbarque.length) return calcValorTotalPedidoCompra(pedido);
 
-  let valorEmbarqueItens = 0;
-  for (const itemEmb of itensEmbarque) {
-    const pedidoItem = findPedidoItemForEmbarqueLinha(pedido, itemEmb);
-    if (!pedidoItem) continue;
-    const linhaMerged = { ...pedidoItem, ...itemEmb };
-    const produto = produtosMap[itemEmb.produto_id] || produtosMap[pedidoItem?.produto_id] || null;
-    const lineTotal = getTotalLinhaPedidoCompra(pedidoItem);
-    const qtyEmbBase =
-      resolveEmbarqueQuantidadeBase(linhaMerged, 'recebida')
-      || resolveEmbarqueQuantidadeBase(linhaMerged, 'embarcada');
-    const qtyPedBase = resolveQtyBasePedidoItem(pedidoItem, produto);
-    if (qtyPedBase > 0 && lineTotal > 0 && qtyEmbBase > 0) {
-      const ratio = Math.min(1, qtyEmbBase / qtyPedBase);
-      valorEmbarqueItens += ratio * lineTotal;
-    } else if (lineTotal > 0 && qtyEmbBase > 0) {
-      valorEmbarqueItens += lineTotal;
-    }
-  }
+  const card = {
+    ...pedido,
+    _embarque: embarque,
+    _is_necessidade: isNecessidadeRenderizada(embarque),
+    _embarques: embarquesDoPedido.length ? embarquesDoPedido : (pedido._embarques || []),
+  };
+  const itensConsulta = buildConsultaItensEmbarque(card, produtosMap);
+  const valorEmbarqueItens = calcConsultaValorEmbarque(card, itensConsulta);
+  const valorItensPedido = calcValorItensPedidoCompra(pedido);
 
-  if (!valorItensPedido) return Number(valorEmbarqueItens.toFixed(2));
+  if (!valorItensPedido || !itensConsulta.length) {
+    return valorEmbarqueItens || calcValorTotalPedidoCompra(pedido);
+  }
 
   const frete = Number(pedido?.valor_frete) || 0;
   const desconto = Number(pedido?.valor_desconto) || 0;
@@ -645,7 +617,7 @@ function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
         _display_code: getDisplayEmbarqueCode(pedido, embarque),
         _display_ordinal: getDisplayEmbarqueOrdinal(embarque, { ...pedido, _embarques: embarquesRenderizados }),
         _display_status: getBorrowedStatus(pedido, embarque, produtosMap, embarquesDoPedido),
-        _display_valor: hasLinkedItems(embarque) || ehNecessidade ? getDisplayValorEmbarque(pedido, embarque, produtosMap) : calcValorTotalPedidoCompra(pedido),
+        _display_valor: hasLinkedItems(embarque) || ehNecessidade ? getDisplayValorEmbarque(pedido, embarque, produtosMap, embarquesDoPedido) : calcValorTotalPedidoCompra(pedido),
         _display_itens: itensDoCard,
         _display_date: getEmbarqueDisplayDate(pedido),
         _display_fornecedor: pedido.fornecedor_nome || '—',
