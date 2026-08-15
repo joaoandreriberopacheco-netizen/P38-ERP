@@ -1,14 +1,21 @@
 #!/usr/bin/env python3
 """
-Gera o PDF 'P38 Parts Catalog — UI First' (sem código).
-Estrutura: Menu → Página → Funções → Tabelas de dados.
+P38 Parts Catalog — UI First (System Design)
+Gera docs/P38_PARTS_CATALOG_UI_FIRST.pdf
+
+Estrutura em árvore (retrato):
+  Módulo → Página → Componente → Função ⚙️ → Tabela 🛢️ (+ FKs e regras)
 """
 
+from __future__ import annotations
+
 from datetime import date
+from typing import Any
+
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_LEFT
-from reportlab.lib.pagesizes import A4, landscape
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.enums import TA_LEFT
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import cm, mm
 from reportlab.platypus import (
     BaseDocTemplate,
@@ -18,963 +25,714 @@ from reportlab.platypus import (
     PageTemplate,
     Paragraph,
     Spacer,
-    Table,
-    TableStyle,
 )
 
 OUTPUT = "/workspace/docs/P38_PARTS_CATALOG_UI_FIRST.pdf"
 
-# ─── Paleta (carta náutica / CIC) ───────────────────────────────────────────
-NAVY = colors.HexColor("#0B1D3A")
-DEEP = colors.HexColor("#132F52")
-TEAL = colors.HexColor("#1A6B7C")
-GRID = colors.HexColor("#B8D4E3")
-ACCENT = colors.HexColor("#E8A838")
-WHITE = colors.white
-MUTED = colors.HexColor("#5A7A8C")
-ZONE_COLORS = {
-    "inicio": colors.HexColor("#2E5C8A"),
-    "dashboard": colors.HexColor("#3D6B99"),
-    "pdv": colors.HexColor("#1E7A6E"),
-    "caixa": colors.HexColor("#1A6B5C"),
-    "vendas": colors.HexColor("#2D7D46"),
-    "produtos": colors.HexColor("#5C4D8A"),
-    "compras": colors.HexColor("#8B5A2B"),
-    "estoque": colors.HexColor("#6B4C2E"),
-    "consumo": colors.HexColor("#7A5C3A"),
-    "financeiro": colors.HexColor("#1A4A6B"),
-    "relatorios": colors.HexColor("#4A5568"),
-    "config": colors.HexColor("#374151"),
-    "auth": colors.HexColor("#6B7280"),
-    "satelite": colors.HexColor("#4B5563"),
+# ── Paleta minimalista ───────────────────────────────────────────────────────
+INK = colors.HexColor("#111827")
+MUTED = colors.HexColor("#6B7280")
+RULE = colors.HexColor("#D1D5DB")
+ZONE = colors.HexColor("#1E40AF")
+PAGE = colors.HexColor("#111827")
+COMP = colors.HexColor("#374151")
+FN = colors.HexColor("#7C3AED")
+DB = colors.HexColor("#0F766E")
+ASYNC = colors.HexColor("#B45309")
+BIZ = colors.HexColor("#B91C1C")
+
+INDENT = [0, 10, 22, 34, 46]  # mm por nível 0..4
+
+
+def S(name: str, **kw) -> ParagraphStyle:
+    defaults = dict(fontName="Helvetica", fontSize=8, leading=10, textColor=INK, alignment=TA_LEFT)
+    defaults.update(kw)
+    return ParagraphStyle(name, **defaults)
+
+
+STYLES = {
+    "cover_title": S("cover_title", fontName="Helvetica-Bold", fontSize=22, leading=26, textColor=INK),
+    "cover_sub": S("cover_sub", fontSize=10, leading=14, textColor=MUTED),
+    "zone": S("zone", fontName="Helvetica-Bold", fontSize=11, leading=14, textColor=ZONE, spaceBefore=8, spaceAfter=2),
+    "zone_desc": S("zone_desc", fontSize=7.5, leading=10, textColor=MUTED, spaceAfter=4),
+    "page": S("page", fontName="Helvetica-Bold", fontSize=9, leading=11, textColor=PAGE, leftIndent=INDENT[1] * mm),
+    "comp": S("comp", fontSize=7.5, leading=9.5, textColor=COMP, leftIndent=INDENT[2] * mm),
+    "fn": S("fn", fontSize=7.5, leading=9.5, textColor=FN, leftIndent=INDENT[3] * mm),
+    "db": S("db", fontSize=7.5, leading=9.5, textColor=DB, leftIndent=INDENT[4] * mm),
+    "biz": S("biz", fontSize=7, leading=9, textColor=BIZ, leftIndent=INDENT[3] * mm),
+    "async": S("async", fontSize=7, leading=9, textColor=ASYNC, leftIndent=INDENT[3] * mm),
+    "meta": S("meta", fontSize=7, leading=9, textColor=MUTED, leftIndent=INDENT[1] * mm),
+    "footer": S("footer", fontSize=6.5, leading=8, textColor=MUTED),
 }
 
-# ─── Catálogo UI-first ──────────────────────────────────────────────────────
-# Cada zona do menu → páginas → funções → tabelas
-CATALOG = [
+# ── Catálogo denso (extraído do código) ──────────────────────────────────────
+CATALOG: list[dict[str, Any]] = [
     {
-        "id": "inicio",
-        "menu": "Início",
-        "icon": "🏠",
-        "desc": "Porta de entrada após login. Atalhos personalizados e alertas do dia.",
-        "pages": [
-            {
-                "nome": "Home",
-                "rota": "/  ·  /Home",
-                "papel": "Landing principal; quick actions para módulos frequentes",
-                "funcoes": ["— (leitura de entidades via camada p38)"],
-                "tabelas": ["usuario", "tarefa", "avisos_auto", "pedido_venda (alertas)"],
-                "filhos": [],
-            },
-            {
-                "nome": "Notificações / Agenda",
-                "rota": "/Notificacoes",
-                "papel": "Agenda e notificações (bottom nav mobile)",
-                "funcoes": ["—"],
-                "tabelas": ["agenda_item", "tarefa"],
-                "filhos": [],
-            },
-        ],
-    },
-    {
-        "id": "dashboard",
-        "menu": "Dashboard",
-        "icon": "📊",
-        "desc": "Visão executiva — KPIs por domínio (vendas, compras, estoque, financeiro).",
-        "pages": [
-            {
-                "nome": "Dashboard",
-                "rota": "/Dashboard",
-                "papel": "Painel gerencial com abas Geral · Vendas · Compras · Estoque · Financeiro",
-                "funcoes": ["fechar-dashboard-kpi (cron, snapshots)"],
-                "tabelas": [
-                    "dashboard_kpi_diario",
-                    "dashboard_kpi_mensal",
-                    "pedido_venda",
-                    "pedido_compra",
-                    "produto",
-                    "lancamento_financeiro",
-                ],
-                "filhos": [
-                    {"nome": "Dashboard Caixa", "rota": "/DashboardCaixa", "tabelas": ["turno_caixa", "movimentos_caixa"]},
-                    {"nome": "Dashboard Vendedor", "rota": "/DashboardVendedor", "tabelas": ["pedido_venda", "agenda_logistica"]},
-                ],
-            },
-            {
-                "nome": "Painel Gerente",
-                "rota": "/PainelGerente",
-                "papel": "Painel de vendas para gestores (menu Vendas)",
-                "funcoes": ["—"],
-                "tabelas": ["pedido_venda", "rascunho_pedido_venda", "terceiro"],
-                "filhos": [],
-            },
-        ],
-    },
-    {
-        "id": "pdv",
         "menu": "PDV",
-        "icon": "🛒",
-        "desc": "Ponto de venda — vendedor, supermercado e auto-atendimento.",
+        "desc": "Venda assistida, self-checkout e totem. Mobile-first fullscreen.",
         "pages": [
             {
-                "nome": "PDV Vendedor",
+                "nome": "PDVVendedor",
                 "rota": "/PDVVendedor",
-                "papel": "Venda assistida; rascunhos e orçamentos",
+                "feature": "components/vendas/PDVVendedor.jsx",
+                "components": [
+                    "ComprovantePreVenda · BarcodeScanner · LostSalesForm · ProductUnitSelectorDialog",
+                ],
+                "regras": [
+                    "Bloqueia venda se estoque_atual < qty_base, salvo configVenda.vender_sem_estoque ou permitir_venda_estoque_negativo (configFlags.js)",
+                    "Rascunho → conversão no caixa; status espelhados em RascunhoPedidoVenda",
+                ],
                 "funcoes": [
-                    "savePedidoVendaItem",
-                    "gerarNumeroSequencial",
-                    "gerenciarPin",
+                    {"nome": "savePedidoVendaItem", "async": False, "nota": "CRUD canónico de linhas + espelho em pedido_venda.itens"},
+                    {"nome": "gerarNumeroSequencial", "async": False, "nota": "PV-*, orçamentos"},
                 ],
                 "tabelas": [
-                    "rascunho_pedido_venda",
-                    "pedido_venda",
-                    "pedido_venda_item",
-                    "produto",
-                    "terceiro",
-                    "tabela_preco",
-                    "configuracoes_venda",
+                    {"nome": "rascunho_pedido_venda", "fks": [
+                        "cliente_id → terceiro.id (lógico)",
+                        "vendedor_id → usuario.id (lógico)",
+                        "pedido_venda_final_id → pedido_venda.id (lógico)",
+                    ]},
+                    {"nome": "pedido_venda_item", "fks": [
+                        "pedido_venda_id → pedido_venda.id (lógico, sem FK DB)",
+                        "produto_id → produto.id (lógico)",
+                    ]},
+                    {"nome": "produto", "fks": ["produto_id → movimentacao_estoque (RESTRICT na saída)"]},
                 ],
-                "filhos": [],
             },
             {
                 "nome": "PDV Supermercado",
                 "rota": "/PDV?mode=supermercado",
-                "papel": "Checkout rápido estilo supermercado",
-                "funcoes": ["savePedidoVendaItem", "processarVendaCaixa"],
-                "tabelas": ["produto", "pedido_venda", "configuracoes_venda"],
-                "filhos": [],
+                "feature": "components/vendas/PDVSupermercado.jsx",
+                "components": ["BarcodeScanner · SimuladorCartaoSheet"],
+                "regras": ["Checkout rápido; mesmas regras de estoque do vendedor"],
+                "funcoes": [{"nome": "processarVendaCaixa", "async": False, "nota": "RPC transacional — ver Caixa"}],
+                "tabelas": [{"nome": "pedido_venda", "fks": ["cliente_id → terceiro.id (FK DB SET NULL)"]}],
             },
             {
                 "nome": "Auto-Atendimento",
                 "rota": "/AutoAtendimento",
-                "papel": "Totem self-service (fullscreen)",
-                "funcoes": ["processarVendaCaixa"],
-                "tabelas": ["config_auto_atendimento", "produto", "venda_perdida", "pedido_venda"],
-                "filhos": [],
-            },
-            {
-                "nome": "PDV (multi-modo)",
-                "rota": "/PDV?mode=vendedor|caixa|supermercado",
-                "papel": "Rota unificada legada / alternativa",
-                "funcoes": ["processarVendaCaixa", "imprimirCupomTermico"],
-                "tabelas": ["pedido_venda", "turno_caixa", "produto"],
-                "filhos": [
-                    {"nome": "PDV Auditoria", "rota": "/PDVAuditoria?conferencia_id=", "tabelas": ["conferencia_estoque", "movimentacao_estoque"]},
-                    {"nome": "Simulador Cartão", "rota": "→ /PDV (sheet)", "tabelas": ["maquininha", "formas_de_pagamento"]},
+                "feature": "pages/AutoAtendimento.jsx → auto/*",
+                "components": ["AutoHome → AutoIdentification → AutoShop → AutoPayment"],
+                "regras": ["Fullscreen totem; venda_perdida registada em abandono"],
+                "funcoes": [{"nome": "processarVendaCaixa", "async": False, "nota": "Mesmo RPC atómico do caixa"}],
+                "tabelas": [
+                    {"nome": "config_auto_atendimento", "fks": []},
+                    {"nome": "venda_perdida", "fks": ["produto_id → produto.id (lógico)"]},
                 ],
             },
         ],
     },
     {
-        "id": "caixa",
         "menu": "Caixa",
-        "icon": "💵",
-        "desc": "Operação de caixa — recebimento, sangria, fechamento de turno.",
+        "desc": "Recebimento, sangria, reforço, cupom térmico. Turno obrigatório.",
         "pages": [
             {
-                "nome": "PDV Caixa",
+                "nome": "PDVCaixa",
                 "rota": "/PDVCaixa",
-                "papel": "Registro de pagamentos, reforço, sangria, cupom",
+                "feature": "components/vendas/PDVCaixa.jsx",
+                "components": [
+                    "ProcessarVendasView · ConfirmarPagamentoDialog · VendasTurnoDialog · SeletorCaixaPDV",
+                ],
+                "regras": [
+                    "Sem turno vinculado = modo somente leitura (L719)",
+                    "Pagamentos devem cobrir total com tolerância R$0,01 (financialUtils)",
+                    "Cartão exige maquininha+bandeira; anti-duplo-clique via processandoVenda",
+                    "Espelho turno: só pedidos Financeiro OK / Pedido Concluído / Em Separação / Em Rota",
+                    "Polling live de rascunhos (CAIXA_LIVE_POLL_MS) — não bloqueia UI principal",
+                ],
                 "funcoes": [
-                    "processarVendaCaixa",
-                    "imprimirCupomTermico",
-                    "gerenciarPin",
-                    "gerarNumeroSequencial",
+                    {
+                        "nome": "processarVendaCaixa",
+                        "async": False,
+                        "nota": "RPC atómica: rascunho→pedido, saída estoque, LF receita, vale troca, ordem_separacao se fluxo Completo",
+                    },
+                    {"nome": "imprimirCupomTermico", "async": False, "nota": "HTML/PDF comprovante"},
+                    {"nome": "gerenciarPin", "async": False, "nota": "PIN 6 dígitos SHA-256 (desligado por defeito: VITE_OPERACAO_AUTH_ENABLED)"},
+                ],
+                "async_bg": [
+                    "sincronizarEstoquePorMovimentacao — trigger AFTER em movimentacao_estoque (recalcula produto.estoque_atual)",
                 ],
                 "tabelas": [
-                    "turno_caixa",
-                    "movimentos_caixa",
-                    "pedido_venda",
-                    "pedido_venda_item",
-                    "lancamento_financeiro",
-                    "contas_financeiras",
-                    "formas_de_pagamento",
-                    "vale_compra",
-                    "devolucao_troca",
-                    "ordem_separacao",
-                ],
-                "filhos": [
-                    {"nome": "Devolução / Troca", "rota": "/DevolucaoTroca", "tabelas": ["devolucao_troca", "vale_compra", "autorizacao_estorno"]},
+                    {"nome": "turno_caixa", "fks": [
+                        "conta_caixa_pdv_id → contas_financeiras.id (lógico)",
+                        "operador_id → usuario.id (lógico)",
+                    ]},
+                    {"nome": "movimentos_caixa", "fks": [
+                        "conta_id → contas_financeiras.id (FK RESTRICT)",
+                        "turno_caixa_id → turno_caixa.id (FK SET NULL)",
+                        "lancamento_financeiro_id → lancamento_financeiro.id (lógico)",
+                    ]},
+                    {"nome": "lancamento_financeiro", "fks": [
+                        "conta_financeira_id → contas_financeiras.id (FK SET NULL)",
+                        "turno_caixa_id → turno_caixa.id (lógico)",
+                        "referencia_id → polimórfico (pedido_venda, devolucao_troca…)",
+                    ]},
+                    {"nome": "pedido_venda", "fks": ["cliente_id → terceiro.id (FK DB)"]},
+                    {"nome": "vale_compra / devolucao_troca", "fks": [
+                        "cliente_id → terceiro.id · pedido_origem_id → pedido_venda.id",
+                    ]},
                 ],
             },
         ],
     },
     {
-        "id": "vendas",
         "menu": "Vendas",
-        "icon": "📈",
-        "desc": "Gestão pós-venda — pedidos, entregas, perdas e painel gerencial.",
+        "desc": "Pós-venda, entregas, perdas, painel gerencial.",
         "pages": [
             {
-                "nome": "Gestão de Vendas",
+                "nome": "VendasGestao",
                 "rota": "/VendasGestao",
-                "papel": "Lista virtualizada de pedidos e orçamentos",
-                "funcoes": ["savePedidoVendaItem"],
-                "tabelas": ["pedido_venda", "pedido_venda_item", "rascunho_pedido_venda", "terceiro"],
-                "filhos": [],
+                "feature": "pages/VendasGestao.jsx",
+                "components": ["DetalhesPedidoVenda · AlterarPagamentoDialog · ValesTrocaTab · ConsultaVendasCaixa"],
+                "regras": ["Lista virtualizada; filtros por período e status"],
+                "funcoes": [{"nome": "savePedidoVendaItem", "async": False, "nota": "Edição de linhas em pedidos abertos"}],
+                "tabelas": [{"nome": "pedido_venda / pedido_venda_item", "fks": [
+                    "pedido_venda.cliente_id → terceiro.id (FK)",
+                    "pedido_venda_item.pedido_venda_id → pedido_venda.id (lógico)",
+                ]}],
             },
             {
-                "nome": "Vendas Perdidas",
-                "rota": "/VendasPerdidas",
-                "papel": "Registro de oportunidades perdidas",
-                "funcoes": ["—"],
-                "tabelas": ["venda_perdida", "produto"],
-                "filhos": [],
-            },
-            {
-                "nome": "Controle de Entregas",
+                "nome": "ControleEntregas",
                 "rota": "/ControleEntregas",
-                "papel": "Agenda e status de entregas",
-                "funcoes": ["—"],
-                "tabelas": ["agenda_logistica", "protocolo_entrega", "pedido_venda", "terceiro"],
-                "filhos": [],
+                "feature": "pages/ControleEntregas.jsx → LiberacaoEntrega",
+                "components": ["LiberacaoEntrega"],
+                "regras": [],
+                "funcoes": [],
+                "tabelas": [{"nome": "agenda_logistica", "fks": [
+                    "pedido_venda_id → pedido_venda.id (FK CASCADE)",
+                    "cliente_id → terceiro.id (FK RESTRICT)",
+                    "motorista_id → usuario.id (lógico)",
+                ]}],
             },
             {
-                "nome": "Clientes (Terceiros)",
-                "rota": "/Terceiros",
-                "papel": "Cadastro de clientes e fornecedores (atalho Home)",
-                "funcoes": ["—"],
-                "tabelas": ["terceiro"],
-                "filhos": [
-                    {"nome": "Vendas (legado)", "rota": "/Vendas", "tabelas": ["pedido_venda"]},
-                    {"nome": "Campanhas", "rota": "/Campanhas", "tabelas": ["campanha"]},
-                    {"nome": "Expedição", "rota": "/Expedicao", "tabelas": ["protocolo_entrega", "ordem_separacao"]},
-                ],
+                "nome": "VendasPerdidas",
+                "rota": "/VendasPerdidas",
+                "feature": "inline page",
+                "components": ["tabs + VendaPerdida entity"],
+                "regras": [],
+                "funcoes": [],
+                "tabelas": [{"nome": "venda_perdida", "fks": ["produto_id → produto.id (lógico)"]}],
             },
         ],
     },
     {
-        "id": "produtos",
         "menu": "Produtos",
-        "icon": "📦",
-        "desc": "Catálogo central — preço, stock, grade de compra, relatórios embutidos.",
+        "desc": "Catálogo, precificação, ABCD/IEP, grade de compra.",
         "pages": [
             {
                 "nome": "Produtos",
                 "rota": "/Produtos",
-                "papel": "Catálogo, estoque, precificação; ?relatorioVendas=1 · ?relatorioEstoque=1",
+                "feature": "pages/Produtos.jsx",
+                "components": ["TreeGrid · MobileHierarquica · ProdutoFormCompleto · ProdutoFAB"],
+                "regras": [
+                    "Termômetro precificação mobile: margem verde ≥30%, amarelo >0<30%, vermelho ≤0% (MobileHierarquica.jsx)",
+                    "Markup semáforo: verde ≥40%, amarelo >0<40% — meta Preço Justo GLOBAL_MARKUP_ALVO=40% (precoJustoCalculos.js)",
+                    "ABCD ao vivo: pareto A≤70% B≤85% C≤95% D resto, E=sem venda; iep_trava_manual preserva classe",
+                    "Margem contribuição = (preco−custo)/preco×100 (productUnits.js)",
+                ],
                 "funcoes": [
-                    "gerarRelatorioCatalogoEstoque (cliente)",
-                    "gerarRelatorioCatalogoVendas (cliente)",
-                    "calcularIEP",
-                    "atualizarMetasEstoque",
+                    {"nome": "calcularIEP", "async": True, "nota": "Job batch 50 SKUs; fases preparar→classificar→gravar; só noturno se ABCD_JOB_NOTURNO"},
+                    {"nome": "atualizarMetasEstoque", "async": True, "nota": "Recalcula ponto de pedido (janela 60d vendas)"},
+                    {"nome": "importarProdutos", "async": True, "nota": "Bulk XLS/CSV + ImportacaoLog para undo"},
                 ],
                 "tabelas": [
-                    "produto",
-                    "categoria_produto",
-                    "tabela_preco",
-                    "movimentacao_estoque",
-                    "linha_compra",
-                    "produto_compra",
-                    "eixo_valor",
-                    "area",
+                    {"nome": "produto", "fks": [
+                        "categoria_id → categoria_produto.id (lógico)",
+                        "area_id → area.id (lógico)",
+                        "fornecedor_padrao_id → terceiro.id (lógico)",
+                    ]},
+                    {"nome": "movimentacao_estoque", "fks": [
+                        "produto_id → produto.id (FK RESTRICT)",
+                        "referencia_id → polimórfico (pedido_venda, pedido_compra, consumo_interno)",
+                    ]},
+                    {"nome": "tabela_preco", "fks": []},
                 ],
-                "filhos": [
-                    {"nome": "Edição em Massa", "rota": "/EditarProdutosEmMassa", "tabelas": ["produto"]},
-                    {"nome": "Custos em Massa", "rota": "/EdicaoMassivaCustos", "tabelas": ["produto"]},
-                    {"nome": "Otimização IA", "rota": "/OtimizacaoEstoqueIA", "tabelas": ["produto", "pedido_venda"]},
-                    {"nome": "Embalagens IA", "rota": "/EstimativaEmbalagensIA", "tabelas": ["produto"]},
-                    {"nome": "Tabelas de Preço", "rota": "/TabelasPreco", "tabelas": ["tabela_preco"]},
-                    {"nome": "Portal Catálogo", "rota": "/HierarquiaPortal", "tabelas": ["portal_catalog", "linha_compra", "modelo_linha"]},
+            },
+            {
+                "nome": "HierarquiaPortal",
+                "rota": "/HierarquiaPortal",
+                "feature": "hierarquia-portal/* + CadastroProdutoV2",
+                "components": ["PortalTreeGrid · PortalSmartSupplyPanel · CadastroProdutoV2Form"],
+                "regras": ["Grade cerâmica: linha_compra → produto_compra → eixo_valor"],
+                "funcoes": [],
+                "tabelas": [
+                    {"nome": "portal_catalog", "fks": ["produto_id → produto.id (texto)"]},
+                    {"nome": "linha_compra → produto_compra → eixo_valor", "fks": [
+                        "produto_compra.linha_id → linha_compra.id (FK)",
+                        "eixo_valor → linha_compra ou produto_compra (FK)",
+                    ]},
                 ],
             },
         ],
     },
     {
-        "id": "compras",
         "menu": "Compras",
-        "icon": "🛍️",
-        "desc": "Ciclo de compra — sugestão, cotação, pedido, conferência, logística fluvial.",
+        "desc": "Smart Supply, cotações, POs, conferência cega, logística fluvial.",
         "pages": [
             {
-                "nome": "Sugestões de Compra",
+                "nome": "SugestoesCompra",
                 "rota": "/SugestoesCompra",
-                "papel": "Smart Supply — reabastecimento inteligente",
-                "funcoes": ["atualizarMetasEstoque"],
-                "tabelas": ["produto", "pedido_compra", "pedido_venda"],
-                "filhos": [],
+                "feature": "components/compras/SugestaoCompra.jsx",
+                "components": ["SugestaoCompraTreeGrid · SugestaoCompraMobileCatalog"],
+                "regras": ["Filtro curva ABCD; qty sugerida por meta estoque"],
+                "funcoes": [{"nome": "atualizarMetasEstoque", "async": True, "nota": "Job background ponto de pedido"}],
+                "tabelas": [{"nome": "produto / pedido_compra", "fks": []}],
             },
             {
-                "nome": "Cotações",
-                "rota": "/Cotacoes",
-                "papel": "Cotação com fornecedores",
-                "funcoes": ["gerarNumeroSequencial"],
-                "tabelas": ["cotacao", "terceiro", "produto"],
-                "filhos": [],
-            },
-            {
-                "nome": "Pedidos de Compra",
+                "nome": "PedidosCompra",
                 "rota": "/PedidosCompra",
-                "papel": "Lista e gestão de POs",
-                "funcoes": [
-                    "savePedidoCompraItem",
-                    "gerarNumeroSequencial",
-                    "enviarFinanceiroLote",
-                    "recalcularEstoqueProduto",
-                    "recalcular-conclusao-pedido-compra",
+                "feature": "pages/PedidosCompra.jsx",
+                "components": ["ListaPedidosCompra · ConsultaComprasPedidos · ImportadorNotaFiscal · ActionMenuComprasV2"],
+                "regras": [
+                    "isLocked quando status/aprovacao ∈ {Aguardando Aprovação, Aprovado*, Rejeitado*}",
+                    "Envio financeiro cria LF is_custo_mercadoria:true; bloqueia reenvio se parcela paga",
+                    "Trigger DB: status=Aprovado → status_aprovacao_financeira=Aprovado automaticamente",
+                    "Reabertura bloqueada se manifesto_entrada_id preenchido (trigger 024)",
                 ],
-                "tabelas": ["pedido_compra", "pedido_compra_item", "terceiro", "embarque", "lancamento_financeiro"],
-                "filhos": [
-                    {"nome": "Detalhe PO", "rota": "/PedidoCompraDetalhe?id=", "tabelas": ["pedido_compra", "pedido_compra_item", "embarque", "anexo_documento"]},
-                    {"nome": "Templates", "rota": "/TemplatesCompra", "tabelas": ["pedido_compra"]},
-                    {"nome": "Compras (hub)", "rota": "/Compras", "tabelas": ["pedido_compra", "cotacao"]},
-                    {"nome": "Hub Logístico", "rota": "/HubLogistico", "tabelas": ["supermanifesto", "manifesto_entrada"]},
+                "funcoes": [
+                    {"nome": "savePedidoCompraItem", "async": False, "nota": "qty_base=fator×qty; custo líquido; recomputa valor_total PO"},
+                    {"nome": "recalcular-conclusao-pedido-compra", "async": True, "nota": "Recalcula estoque de todos SKUs do PO concluído"},
+                    {"nome": "automacaoAprovacaoFinanceira", "async": True, "nota": "Trigger entity PedidoCompra update"},
+                ],
+                "tabelas": [
+                    {"nome": "pedido_compra", "fks": [
+                        "fornecedor_id → terceiro.id (FK RESTRICT)",
+                        "conta_pagamento_id → contas_financeiras.id (FK SET NULL)",
+                        "conferencia_id → conferencia_compra.id (lógico)",
+                        "manifesto_entrada_id → manifesto_entrada.id (lógico)",
+                    ]},
+                    {"nome": "pedido_compra_item", "fks": [
+                        "pedido_compra_id → pedido_compra.id (lógico)",
+                        "produto_id → produto.id (lógico)",
+                    ]},
+                    {"nome": "lancamento_financeiro", "fks": [
+                        "pedido_compra_vinculado_id → pedido_compra.id (lógico)",
+                    ]},
                 ],
             },
             {
-                "nome": "Conferência de Entrada",
+                "nome": "PedidoCompraDetalhe",
+                "rota": "/PedidoCompraDetalhe?id=",
+                "feature": "components/compras/PedidoCompraForm.jsx",
+                "components": ["InformarEmbarque · RecepcionarEmbarque · PedidoCompraFAB"],
+                "regras": ["PIN save só se VITE_PEDIDO_COMPRA_SAVE_AUTH_PIN + status Aguardando Aprovação"],
+                "funcoes": [
+                    {"nome": "saveEmbarqueItem", "async": False, "nota": "Linhas embarque ↔ pedido_compra_item"},
+                    {"nome": "gerarRelatorioPedido/Precificacao/Pendencias", "async": False, "nota": "PDF server-side"},
+                ],
+                "tabelas": [{"nome": "embarque", "fks": [
+                    "pedido_compra_id → pedido_compra.id (FK CASCADE)",
+                    "fornecedor_id → terceiro.id (FK SET NULL)",
+                    "transportadora_id → transportadora.id (lógico)",
+                ]}],
+            },
+            {
+                "nome": "ConferenciaEntrada",
                 "rota": "/ConferenciaEntrada",
-                "papel": "Recepção cega de mercadoria",
-                "funcoes": [
-                    "validateConferenceCode",
-                    "generateConferenceCode",
-                    "gerarRelatorioConferencia",
+                "feature": "PainelConferencias + GestaoCodigosConferencia",
+                "components": ["validateConferenceCode · generateConferenceCode"],
+                "regras": [
+                    "Código conferência: só admin/Gerente; 8 chars; status Gerado→Em Uso→Concluído/Expirado",
+                    "Finalização volumes permite divergências; itens exige lote se controla_lote",
                 ],
-                "tabelas": ["conferencia_compra", "supermanifesto", "manifesto_entrada", "divergencia_compra"],
-                "filhos": [
-                    {"nome": "Conferência Itens", "rota": "/ConferenciaItens", "tabelas": ["manifesto_entrada", "lote_estoque"]},
-                    {"nome": "Conferência Volumes", "rota": "/ConferenciaVolumes", "tabelas": ["supermanifesto", "manifesto_entrada"]},
+                "funcoes": [
+                    {"nome": "generateConferenceCode", "async": False, "nota": "Supermanifesto ou ManifestoEntrada"},
+                    {"nome": "validateConferenceCode", "async": False, "nota": "Bloqueia Expirado/Concluído"},
+                    {"nome": "saveConferenciaItem", "async": False, "nota": "divergencia_base = contada − sistema"},
+                ],
+                "tabelas": [
+                    {"nome": "supermanifesto / manifesto_entrada", "fks": ["supermanifesto_id lógico em embarque"]},
+                    {"nome": "conferencia_compra", "fks": ["pedido_compra_id → pedido_compra.id (lógico)"]},
                 ],
             },
             {
-                "nome": "Boats (Itinerário Fluvial)",
+                "nome": "ItinerarioFluvial",
                 "rota": "/ItinerarioFluvial",
-                "papel": "Logística fluvial / sandbox de viagens",
-                "funcoes": ["sincronizarViagensTransportadora", "gerarViagensTransportadora"],
-                "tabelas": ["evento_logistico_sandbox", "transportadora", "eventos_logisticos"],
-                "filhos": [
-                    {"nome": "Veículos", "rota": "/Veiculos", "tabelas": ["Veiculo (Base44)"]},
-                    {"nome": "Discriminar Volumes", "rota": "/DiscriminarVolumes", "tabelas": ["embarque"]},
+                "feature": "logistica-sandbox/*",
+                "components": ["TimelineDayGroup · FreteResumoCard"],
+                "regras": [],
+                "funcoes": [
+                    {"nome": "sincronizarViagensTransportadora", "async": True, "nota": "Sync sandbox por transportadora"},
+                    {"nome": "atualizarViagensTransportadoras", "async": True, "nota": "Cron dia 1 do mês"},
                 ],
+                "tabelas": [{"nome": "evento_logistico_sandbox", "fks": [
+                    "transportadora_id → transportadora.id (lógico)",
+                ]}],
             },
         ],
     },
     {
-        "id": "estoque",
         "menu": "Estoque",
-        "icon": "🏭",
-        "desc": "Movimentação, contagem, conferência, armazenagem e separação.",
+        "desc": "Contagem, movimentos, conferência, armazenagem, separação.",
         "pages": [
             {
-                "nome": "Contagem Express",
+                "nome": "ContagemExpress",
                 "rota": "/ContagemExpress",
-                "papel": "Contagem rápida com carrinho e PIN",
-                "funcoes": ["gerenciarPin", "saveConferenciaItem"],
-                "tabelas": ["conferencia_estoque", "produto", "movimentacao_estoque"],
-                "filhos": [],
+                "feature": "estoque/contagem-express/*",
+                "components": ["ContagemExpressCarrinho · ContagemExpressPainelContagem"],
+                "regras": ["Confirmação com PIN; cria conferencia_estoque"],
+                "funcoes": [{"nome": "saveConferenciaItem", "async": False, "nota": "Linhas canónicas conferência"}],
+                "tabelas": [{"nome": "conferencia_estoque", "fks": [
+                    "responsavel_id → usuario.id (lógico); itens_conferidos[].produto_id → produto",
+                ]}],
             },
             {
-                "nome": "Movimentos de Inventário",
+                "nome": "MovimentosInventario",
                 "rota": "/MovimentosInventario",
-                "papel": "Ajustes manuais de stock",
-                "funcoes": ["sincronizarEstoquePorMovimentacao (trigger)"],
-                "tabelas": ["movimentacao_estoque", "produto"],
-                "filhos": [],
-            },
-            {
-                "nome": "Conferência de Estoque",
-                "rota": "/ConferenciaEstoque",
-                "papel": "Contagens formais com ajuste",
-                "funcoes": ["saveConferenciaItem"],
-                "tabelas": ["conferencia_estoque", "produto"],
-                "filhos": [
-                    {"nome": "Editor Conferência", "rota": "/ConferenciaEditor?id=", "tabelas": ["conferencia_estoque"]},
+                "feature": "inline page",
+                "components": ["productMatchingUtils · productUnits"],
+                "regras": [
+                    "estoque_atual = Σ Entradas − Σ Saídas − avariado; negativo permitido desde mig.038",
                 ],
+                "funcoes": [],
+                "async_bg": [
+                    "trigger recalcular_estoque_produto AFTER INSERT/UPDATE/DELETE em movimentacao_estoque",
+                ],
+                "tabelas": [{"nome": "movimentacao_estoque", "fks": [
+                    "produto_id → produto.id (FK RESTRICT)",
+                ]}],
             },
             {
-                "nome": "Auditoria de Estoque",
-                "rota": "/AuditoriaEstoque",
-                "papel": "Busca e auditoria de divergências",
-                "funcoes": ["—"],
-                "tabelas": ["produto", "movimentacao_estoque", "conferencia_estoque"],
-                "filhos": [],
+                "nome": "ConferenciaEstoque / Editor",
+                "rota": "/ConferenciaEstoque · /ConferenciaEditor?id=",
+                "feature": "estoque/auditoria/*",
+                "components": ["NovaConferenciaDialog · ConferenciaEditor"],
+                "regras": ["Ajuste aplica movimentação compensatória"],
+                "funcoes": [{"nome": "saveConferenciaItem", "async": False, "nota": "Espelho canónico itens"}],
+                "tabelas": [{"nome": "conferencia_estoque", "fks": []}],
             },
             {
-                "nome": "Armazenagem",
-                "rota": "/Armazenagem",
-                "papel": "Localização física no depósito",
-                "funcoes": ["—"],
-                "tabelas": ["produto", "area"],
-                "filhos": [],
-            },
-            {
-                "nome": "Separação de Pedidos",
-                "rota": "/InterfaceSeparador",
-                "papel": "Fila de separação para expedição",
-                "funcoes": ["—"],
-                "tabelas": ["ordem_separacao", "pedido_venda", "produto"],
-                "filhos": [],
-            },
-            {
-                "nome": "Tabela de Preços (consulta)",
-                "rota": "/TabelaPrecosConsulta",
-                "papel": "Consulta rápida de preços",
-                "funcoes": ["—"],
-                "tabelas": ["tabela_preco", "produto", "dados_empresa"],
-                "filhos": [],
-            },
-            {
-                "nome": "Importação em Massa",
+                "nome": "ImportacaoProdutos",
                 "rota": "/ImportacaoProdutos",
-                "papel": "Import XLS/CSV de produtos",
-                "funcoes": ["importarProdutos", "importarAreas"],
-                "tabelas": ["produto", "importacao_log", "categoria_produto", "area"],
-                "filhos": [
-                    {"nome": "Estoque (hub)", "rota": "/Estoque", "tabelas": ["produto"]},
-                    {"nome": "Operações", "rota": "/Operacoes", "tabelas": ["—"]},
-                ],
+                "feature": "produtos/massa/*",
+                "components": ["ImportarPlanilha · ImportarEstoque · ImportarEmbalagensPlanilha"],
+                "regras": ["ImportacaoLog guarda snapshot para undo"],
+                "funcoes": [{"nome": "importarProdutos", "async": True, "nota": "Bulk + log"}],
+                "tabelas": [{"nome": "importacao_log", "fks": []}],
             },
         ],
     },
     {
-        "id": "consumo",
-        "menu": "Consumo Interno",
-        "icon": "🍽️",
-        "desc": "Baixa de produtos para uso interno (refeitório, manutenção, etc.).",
-        "pages": [
-            {
-                "nome": "Consumo Interno",
-                "rota": "/ConsumoInterno",
-                "papel": "Registro de consumo com aprovação",
-                "funcoes": ["gerarNumeroSequencial"],
-                "tabelas": [
-                    "consumo_interno",
-                    "destinacao_consumo_interno",
-                    "responsavel_consumo_interno",
-                    "produto",
-                    "movimentacao_estoque",
-                    "turno_caixa",
-                ],
-                "filhos": [
-                    {"nome": "Relatório Consumo", "rota": "/RelatorioConsumoInterno", "tabelas": ["consumo_interno"]},
-                ],
-            },
-        ],
-    },
-    {
-        "id": "financeiro",
         "menu": "Financeiro",
-        "icon": "💰",
-        "desc": "Fluxo de caixa, contas, AGEFIN, planejamento, aprovações e turnos.",
+        "desc": "Fluxo, AGEFIN, planejamento, aprovações. Gate senha VITE_FINANCEIRO_GATE_PASSWORD (15 min).",
         "pages": [
             {
-                "nome": "Fluxo de Caixa",
+                "nome": "FluxoCaixa",
                 "rota": "/FluxoCaixa",
-                "papel": "Execução orçamentária e extrato (?aba=agefin)",
-                "funcoes": ["gerarExtratoFluxoCaixa"],
-                "tabelas": ["lancamento_financeiro", "contas_financeiras", "budget_competencia", "categoria_financeira"],
-                "filhos": [],
+                "feature": "financeiro/ExecucaoOrcamentaria.jsx",
+                "components": ["ListaLancamentos · FiltrosFluxoCaixa · ConciliacaoBancaria · NovoLancamentoDialog"],
+                "regras": ["Filtros: tipo, conta, status, CMV-only, conciliação pendente"],
+                "funcoes": [{"nome": "gerarExtratoFluxoCaixa", "async": False, "nota": "PDF extrato"}],
+                "tabelas": [{"nome": "lancamento_financeiro", "fks": [
+                    "conta_financeira_id → contas_financeiras.id (FK)",
+                    "terceiro_id → terceiro.id (lógico)",
+                    "categoria_id → categoria_financeira.id (lógico)",
+                    "grupo_lancamento_id → lancamento_financeiro.id (self-ref)",
+                ]}],
             },
             {
-                "nome": "Folha (Previsão)",
-                "rota": "/FolhaPrevisao",
-                "papel": "Previsão de folha de pagamento",
-                "funcoes": ["—"],
-                "tabelas": ["folha_previsao_modelo", "folha_previsao_competencia", "folha_centro_custo"],
-                "filhos": [],
-            },
-            {
-                "nome": "AGEFIN (SuperAgefin)",
+                "nome": "SuperAgefin",
                 "rota": "/SuperAgefin",
-                "papel": "Contas recorrentes e previstas",
+                "feature": "pages/SuperAgefin.jsx",
+                "components": ["SuperAgefinConsultaDrawer · SuperAgefinConsultaOrganizer"],
+                "regras": [
+                    "Compromissos sintéticos: sócios=sábados do mês; folha=dia 05",
+                    "ContaPrevista Pago → trigger cria lancamento_financeiro",
+                ],
                 "funcoes": [
-                    "gerarContasPrevistasRecorrentes (cron)",
-                    "sincronizarContaPrevia (trigger)",
-                    "cancelarLancamentoFinanceiro",
-                    "uploadAnexoDrive",
+                    {"nome": "cancelarLancamentoFinanceiro", "async": False, "nota": "Cancela LF + reverte saldo conta"},
+                ],
+                "async_bg": [
+                    "gerarContasPrevistasRecorrentes — cron dia 1 06:00 Rio Branco",
+                    "gerarLancamentosCartao — cron diário 05:00",
+                    "processarLiquidacaoCartaoCredito — cron 08:00",
+                    "atualizarStatusLancamentos — vencidos automático",
                 ],
                 "tabelas": [
-                    "conta_recorrente",
-                    "conta_prevista",
-                    "lancamento_financeiro",
-                    "categoria_financeira",
-                    "terceiro",
-                    "anexo_documento",
-                    "agefin_serie_modelo",
-                    "agefin_serie_competencia",
-                ],
-                "filhos": [
-                    {"nome": "Extrato Conta", "rota": "/ExtratoConta?id=", "tabelas": ["contas_financeiras", "lancamento_financeiro", "movimentos_caixa"]},
-                    {"nome": "Anexos Lançamento", "rota": "/LancamentoAnexos?id=", "tabelas": ["anexo_documento", "lancamento_financeiro"]},
-                    {"nome": "Atualizar Boleto", "rota": "/AtualizarBoletoRecorrente", "tabelas": ["conta_recorrente"]},
-                    {"nome": "Reversão Sangrias", "rota": "/ReversaoDespesasSangrias", "tabelas": ["movimentos_caixa", "lancamento_financeiro"]},
+                    {"nome": "conta_recorrente", "fks": [
+                        "terceiro_id → terceiro.id (FK RESTRICT)",
+                        "categoria_financeira_id → categoria_financeira.id (FK RESTRICT)",
+                    ]},
+                    {"nome": "conta_prevista", "fks": [
+                        "conta_recorrente_id → conta_recorrente.id (FK SET NULL)",
+                        "terceiro_id → terceiro.id (FK RESTRICT)",
+                    ]},
                 ],
             },
             {
-                "nome": "Planejamento Financeiro",
-                "rota": "/PlanejamentoFinanceiro",
-                "papel": "Planejamento v2 — metas e cenários",
-                "funcoes": ["gerarRelatorioVisaoFinanceira (cliente)"],
-                "tabelas": ["budget_modelo", "budget_competencia", "lancamento_financeiro"],
-                "filhos": [],
-            },
-            {
-                "nome": "Budgets",
-                "rota": "/Budgets",
-                "papel": "Orçamentos e metas por competência",
-                "funcoes": ["gerarRelatorioBudgets (cliente)"],
-                "tabelas": ["budget_modelo", "budget_competencia"],
-                "filhos": [],
-            },
-            {
-                "nome": "Visão Financeira",
-                "rota": "/VisaoFinanceira",
-                "papel": "Analytics consolidado de despesas previstas",
-                "funcoes": ["gerarRelatorioVisaoFinanceira (cliente)"],
-                "tabelas": ["conta_prevista", "lancamento_financeiro", "categoria_financeira"],
-                "filhos": [],
-            },
-            {
-                "nome": "Contas Financeiras",
-                "rota": "/ContasFinanceiras",
-                "papel": "Cadastro de contas bancárias e caixas",
-                "funcoes": ["auditarSaldosContas"],
-                "tabelas": ["contas_financeiras", "formas_de_pagamento"],
-                "filhos": [],
-            },
-            {
-                "nome": "Aprovações Financeiras",
+                "nome": "AprovacoesFinanceiras",
                 "rota": "/AprovacoesFinanceiras",
-                "papel": "Aprovar pagamentos de POs e lançamentos",
-                "funcoes": ["automacaoAprovacaoFinanceira (trigger)", "repararLancamentosPedidosAprovados"],
-                "tabelas": ["pedido_compra", "lancamento_financeiro"],
-                "filhos": [],
+                "feature": "inline + aprovarPedidoCompraFinanceiro.js",
+                "components": [],
+                "regras": [
+                    "Aprovar: status→Aguardando Recepção; LF is_custo_mercadoria mantidos",
+                    "Rejeitar: status→Cancelado; cancela LF Em Aberto/Vencido",
+                    "Lista: status ou status_aprovacao = Aguardando Aprovação Financeira",
+                ],
+                "funcoes": [{"nome": "repararLancamentosPedidosAprovados", "async": True, "nota": "Admin backfill LF"}],
+                "tabelas": [{"nome": "pedido_compra + lancamento_financeiro", "fks": [
+                    "pedido_compra_vinculado_id → pedido_compra.id",
+                ]}],
             },
             {
-                "nome": "Caixas Ativos",
-                "rota": "/CaixasAtivos",
-                "papel": "Monitoramento de caixas PDV abertos",
-                "funcoes": ["—"],
-                "tabelas": ["turno_caixa", "contas_financeiras", "consumo_interno"],
-                "filhos": [],
+                "nome": "PlanejamentoFinanceiro / Budgets",
+                "rota": "/PlanejamentoFinanceiro · /Budgets",
+                "feature": "features/planejamento-financeiro-v2 · budget-previsao/*",
+                "components": ["ContasFixasTab · BudgetPlanoCompleto"],
+                "regras": [],
+                "funcoes": [],
+                "tabelas": [
+                    {"nome": "budget_modelo / budget_competencia", "fks": []},
+                    {"nome": "folha_previsao_modelo / folha_previsao_competencia", "fks": []},
+                ],
             },
             {
-                "nome": "Turnos Fechados",
-                "rota": "/TurnosFechados",
-                "papel": "Histórico de fechamentos de turno",
-                "funcoes": ["—"],
-                "tabelas": ["turno_caixa", "movimentos_caixa", "pedido_venda"],
-                "filhos": [],
+                "nome": "CaixasAtivos / TurnosFechados",
+                "rota": "/CaixasAtivos · /TurnosFechados",
+                "feature": "vendas/caixa/VisualizadorCaixa.jsx",
+                "components": ["CaixaValorDisplay · ConsumoDetalheDialog"],
+                "regras": [],
+                "funcoes": [],
+                "tabelas": [{"nome": "turno_caixa / movimentos_caixa", "fks": [
+                    "movimentos_caixa.turno_caixa_id → turno_caixa.id (FK)",
+                ]}],
             },
         ],
     },
     {
-        "id": "relatorios",
         "menu": "Relatórios",
-        "icon": "📋",
-        "desc": "Hub de relatórios gerenciais — vendas, compras, estoque, margem.",
+        "desc": "Hub gerencial; mix server PDF + client PDF.",
         "pages": [
             {
-                "nome": "Relatórios",
+                "nome": "Relatorios",
                 "rota": "/Relatorios",
-                "papel": "Central com abas Gerencial · Vendas · Compras · Estoque",
+                "feature": "pages/Relatorios.jsx",
+                "components": ["abas Gerencial·Vendas·Compras·Estoque"],
+                "regras": ["Margem: pedidos não Cancelados + STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA"],
                 "funcoes": [
-                    "gerarRelatorioPedidosCompra",
-                    "gerarRelatorioConsolidadoCompra",
-                    "gerarRelatorioContasAbertas",
+                    {"nome": "gerarRelatorioPedidosCompra", "async": False, "nota": "Server PDF (V1)"},
+                    {"nome": "gerarRelatorioMargem", "async": False, "nota": "Disponível server; UI usa client PDF"},
                 ],
-                "tabelas": ["pedido_venda", "pedido_compra", "produto", "lancamento_financeiro"],
-                "filhos": [
-                    {"nome": "Margem", "rota": "/RelatorioMargem", "tabelas": ["pedido_venda", "produto", "movimentacao_estoque"]},
-                    {"nome": "Performance", "rota": "/RelatorioPerformance", "tabelas": ["pedido_venda"]},
-                    {"nome": "Preço Justo", "rota": "/PrecoJustoDashboard", "tabelas": ["produto", "pedido_venda"]},
-                ],
+                "tabelas": [{"nome": "pedido_venda / pedido_compra / produto", "fks": []}],
             },
         ],
     },
     {
-        "id": "config",
         "menu": "Configurações",
-        "icon": "⚙️",
-        "desc": "Parametrização — vendas, operações, financeiro, ferramentas admin.",
+        "desc": "Admin: perfis, parâmetros, ferramentas perigosas.",
         "pages": [
             {
-                "nome": "Configurações",
+                "nome": "Configuracoes",
                 "rota": "/Configuracoes",
-                "papel": "Hub com abas Vendas · Operações · Financeiro · Parâmetros · Ferramentas",
+                "feature": "pages/Configuracoes.jsx",
+                "components": ["UsuariosManager · PerfisDeAcessoManager · AbcdConfigTool · MetasEstoqueConfigTool"],
+                "regras": ["adminOnly no menu; perfilTemEscopoTotal bypass"],
                 "funcoes": [
-                    "gerenciarPin",
-                    "p38-auth",
-                    "zerarEntidade",
-                    "calcularIEP",
-                    "atualizarMetasEstoque",
-                    "limparAbcdJobProdutos",
+                    {"nome": "zerarEntidade", "async": True, "nota": "⚠ wipe entity — RecomecarDoZero"},
+                    {"nome": "p38-auth", "async": False, "nota": "CRUD usuario + Supabase Auth"},
                 ],
                 "tabelas": [
-                    "usuario",
-                    "perfil_de_acesso",
-                    "dados_empresa",
-                    "configuracoes_venda",
-                    "configuracoes_estoque",
-                    "formas_de_pagamento",
-                    "politicas_desconto",
-                    "comprovante_template",
-                    "layout_template",
+                    {"nome": "usuario", "fks": ["perfil_acesso_id → perfil_de_acesso.id (lógico)", "empresa_id → empresa.id (FK)"]},
+                    {"nome": "perfil_de_acesso", "fks": []},
                 ],
-                "filhos": [
-                    {"nome": "Reimpressão Docs", "rota": "/ReimpressaoDocumentos", "tabelas": ["pedido_venda", "comprovante_template"]},
-                    {"nome": "Exclusão Docs", "rota": "/ExclusaoDocumentos", "tabelas": ["pedido_venda", "pedido_compra", "lancamento_financeiro"]},
-                    {"nome": "Telemetria LLM", "rota": "/LlmTelemetria", "tabelas": ["p38_llm_telemetry"]},
-                    {"nome": "Intervenientes", "rota": "/Intervenientes", "tabelas": ["interveniente"]},
-                ],
-            },
-        ],
-    },
-    {
-        "id": "auth",
-        "menu": "Autenticação (fora do menu)",
-        "icon": "🔐",
-        "desc": "Rotas públicas — sem shell lateral.",
-        "pages": [
-            {
-                "nome": "Login",
-                "rota": "/login",
-                "papel": "Entrada no sistema",
-                "funcoes": ["p38-auth", "gerenciarPin"],
-                "tabelas": ["usuario", "perfil_de_acesso"],
-                "filhos": [
-                    {"nome": "Auth Callback", "rota": "/auth/callback", "tabelas": ["usuario"]},
-                    {"nome": "Ativar Acesso", "rota": "/ativar-acesso", "tabelas": ["usuario"]},
-                ],
-            },
-        ],
-    },
-    {
-        "id": "satelite",
-        "menu": "Satélites / PWA",
-        "icon": "📡",
-        "desc": "Fluxos auxiliares acessados por atalho, share-target ou deep link.",
-        "pages": [
-            {
-                "nome": "Anexo Compartilhado",
-                "rota": "/AnexoCompartilhado",
-                "papel": "PWA iOS — anexar PDF/boleto a lançamento ou PO",
-                "funcoes": ["uploadAnexoDrive", "listarAnexos"],
-                "tabelas": ["anexo_documento", "lancamento_financeiro", "pedido_compra", "conta_prevista"],
-                "filhos": [],
             },
         ],
     },
 ]
 
-# ─── Legenda de símbolos (metáfora carta náutica) ───────────────────────────
-LEGEND = [
-    ("Zona do menu", "Sector colorido — equivalente a uma área da carta náutica"),
-    ("Página / rota", "Ponto de ancoragem — o que o utilizador abre"),
-    ("Função backend", "Bóia de dados — processamento server-side (Base44 / Supabase Edge)"),
-    ("Tabela", "Profundidade / camada — onde os dados ficam persistidos (Postgres/Supabase)"),
-    ("Filho / satélite", "Derivação — sub-rota ou fluxo acessado a partir da página pai"),
-    ("→ redirect", "Corrente — rota legada que redireciona para destino canónico"),
+HUB_TABLES = [
+    ("terceiro", "Hub CRM", "cliente_id/fornecedor_id em vendas, compras, financeiro, agenda"),
+    ("produto", "Hub catálogo", "movimentacao_estoque.produto_id FK RESTRICT; linhas PO/PV lógicas"),
+    ("pedido_venda", "Hub vendas", "cliente_id FK; turno_caixa_id lógico; origem PDV RPC"),
+    ("pedido_compra", "Hub compras", "fornecedor_id FK RESTRICT; embarque CASCADE; LF custo mercadoria"),
+    ("lancamento_financeiro", "Hub financeiro", "conta_financeira_id FK; referencia polimórfica"),
+    ("turno_caixa", "Hub sessão caixa", "movimentos_caixa.turno_caixa_id FK; pedidos do turno"),
 ]
 
-# ─── Estilos ──────────────────────────────────────────────────────────────────
-styles = getSampleStyleSheet()
-styles.add(ParagraphStyle(name="CoverTitle", fontSize=26, leading=32, textColor=WHITE, alignment=TA_CENTER, fontName="Helvetica-Bold"))
-styles.add(ParagraphStyle(name="CoverSub", fontSize=13, leading=18, textColor=GRID, alignment=TA_CENTER))
-styles.add(ParagraphStyle(name="SectionTitle", fontSize=16, leading=20, textColor=WHITE, fontName="Helvetica-Bold"))
-styles.add(ParagraphStyle(name="SectionDesc", fontSize=9, leading=12, textColor=WHITE))
-styles.add(ParagraphStyle(name="PageName", fontSize=11, leading=14, textColor=NAVY, fontName="Helvetica-Bold"))
-styles.add(ParagraphStyle(name="Meta", fontSize=8, leading=10, textColor=MUTED))
-styles.add(ParagraphStyle(name="Body", fontSize=9, leading=12, textColor=NAVY))
-styles.add(ParagraphStyle(name="LegendHead", fontSize=12, leading=16, textColor=NAVY, fontName="Helvetica-Bold"))
-styles.add(ParagraphStyle(name="SmallWhite", fontSize=8, leading=10, textColor=GRID))
+
+def esc(text: str) -> str:
+    return (
+        str(text)
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+    )
 
 
-def draw_cover(canvas, doc):
-    canvas.saveState()
-    w, h = landscape(A4)
-    canvas.setFillColor(NAVY)
-    canvas.rect(0, 0, w, h, fill=1, stroke=0)
-    # grid lines
-    canvas.setStrokeColor(GRID)
-    canvas.setLineWidth(0.3)
-    for x in range(0, int(w), 40):
-        canvas.line(x, 0, x, h)
-    for y in range(0, int(h), 40):
-        canvas.line(0, y, w, y)
-    canvas.restoreState()
+def render_zone(zone: dict) -> list:
+    flow = []
+    flow.append(Paragraph(f"<b>{esc(zone['menu'])}</b>", STYLES["zone"]))
+    flow.append(Paragraph(esc(zone["desc"]), STYLES["zone_desc"]))
 
+    for page in zone["pages"]:
+        rota = page.get("rota", "")
+        feat = page.get("feature", "")
+        flow.append(
+            Paragraph(
+                f"● <b>{esc(page['nome'])}</b>  <font color='#6B7280'>{esc(rota)}</font>",
+                STYLES["page"],
+            )
+        )
+        if feat:
+            flow.append(Paragraph(f"feature: {esc(feat)}", STYLES["meta"]))
 
-def draw_zone_header(canvas, doc, zone_color, menu_name):
-    canvas.saveState()
-    w, _ = landscape(A4)
-    canvas.setFillColor(zone_color)
-    canvas.rect(0, landscape(A4)[1] - 1.6 * cm, w, 1.6 * cm, fill=1, stroke=0)
-    canvas.setFillColor(WHITE)
-    canvas.setFont("Helvetica-Bold", 14)
-    canvas.drawString(1.5 * cm, landscape(A4)[1] - 1.1 * cm, menu_name)
-    canvas.setFont("Helvetica", 8)
-    canvas.drawRightString(w - 1.5 * cm, landscape(A4)[1] - 1.1 * cm, f"P38 Parts Catalog · {date.today().isoformat()}")
-    canvas.restoreState()
+        for comp in page.get("components", []):
+            flow.append(Paragraph(f"● {esc(comp)}", STYLES["comp"]))
+
+        for regra in page.get("regras", []):
+            flow.append(Paragraph(f"▲ {esc(regra)}", STYLES["biz"]))
+
+        for fn in page.get("funcoes", []):
+            tag = "⟳ async" if fn.get("async") else "sync"
+            flow.append(
+                Paragraph(
+                    f"◆ <b>{esc(fn['nome'])}</b> <font color='#6B7280'>[{tag}]</font> — {esc(fn.get('nota', ''))}",
+                    STYLES["fn"],
+                )
+            )
+
+        for bg in page.get("async_bg", []):
+            flow.append(Paragraph(f"⟳ {esc(bg)}", STYLES["async"]))
+
+        for tbl in page.get("tabelas", []):
+            fks = tbl.get("fks", [])
+            fk_txt = ""
+            if fks:
+                fk_txt = "<br/>".join(f"&nbsp;&nbsp;↳ {esc(f)}" for f in fks)
+            flow.append(
+                Paragraph(
+                    f"■ <b>{esc(tbl['nome'])}</b>{('<br/>' + fk_txt) if fk_txt else ''}",
+                    STYLES["db"],
+                )
+            )
+
+    flow.append(Spacer(1, 3 * mm))
+    return flow
 
 
 def on_page(canvas, doc):
     canvas.saveState()
-    w, h = landscape(A4)
-    canvas.setStrokeColor(GRID)
-    canvas.setLineWidth(0.2)
-    for x in range(0, int(w), 20):
-        canvas.line(x, 0, x, h)
-    for y in range(0, int(h), 20):
-        canvas.line(0, y, w, y)
+    w, h = A4
+    canvas.setStrokeColor(RULE)
+    canvas.setLineWidth(0.25)
+    canvas.line(1.5 * cm, h - 1.2 * cm, w - 1.5 * cm, h - 1.2 * cm)
+    canvas.setFont("Helvetica", 6.5)
     canvas.setFillColor(MUTED)
-    canvas.setFont("Helvetica", 7)
-    canvas.drawCentredString(w / 2, 0.5 * cm, f"Página {doc.page}")
+    canvas.drawString(1.5 * cm, h - 1.0 * cm, "P38 Parts Catalog · UI First · System Design")
+    canvas.drawRightString(w - 1.5 * cm, h - 1.0 * cm, f"{doc.page}")
     canvas.restoreState()
 
 
-def bullet_list(items, style=styles["Body"]):
-    return [Paragraph(f"• {item}", style) for item in items]
-
-
-def make_page_card(page, zone_id):
-    rows = []
-    rows.append([Paragraph(f"<b>{page['nome']}</b>", styles["PageName"])])
-    rows.append([Paragraph(f"<font color='#1A6B7C'><b>ROTA</b></font>  {page['rota']}", styles["Meta"])])
-    rows.append([Paragraph(page["papel"], styles["Body"])])
-
-    fn = page.get("funcoes", [])
-    if fn:
-        rows.append([Paragraph("<b>Funções (bóias)</b>", styles["Meta"])])
-        rows.append([Paragraph(" · ".join(fn), styles["Body"])])
-
-    tbl = page.get("tabelas", [])
-    if tbl:
-        rows.append([Paragraph("<b>Tabelas (profundidade)</b>", styles["Meta"])])
-        rows.append([Paragraph(" · ".join(tbl), styles["Body"])])
-
-    filhos = page.get("filhos", [])
-    if filhos:
-        child_lines = []
-        for c in filhos:
-            t = c.get("tabelas", [])
-            t_str = f" → [{', '.join(t)}]" if t else ""
-            child_lines.append(f"↳ {c['nome']} ({c['rota']}){t_str}")
-        rows.append([Paragraph("<b>Satélites / filhos</b>", styles["Meta"])])
-        rows.append([Paragraph("<br/>".join(child_lines), styles["Body"])])
-
-    t = Table(rows, colWidths=[24 * cm])
-    t.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#F0F7FB")),
-                ("BOX", (0, 0), (-1, -1), 0.5, GRID),
-                ("INNERGRID", (0, 0), (-1, -1), 0.25, GRID),
-                ("LEFTPADDING", (0, 0), (-1, -1), 8),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
-                ("TOPPADDING", (0, 0), (-1, -1), 5),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-                ("LINEBELOW", (0, 0), (-1, 0), 2, ZONE_COLORS.get(zone_id, TEAL)),
-            ]
-        )
-    )
-    return t
-
-
 def build_pdf():
-    w, h = landscape(A4)
+    w, h = A4
     doc = BaseDocTemplate(
         OUTPUT,
-        pagesize=landscape(A4),
-        leftMargin=1.2 * cm,
-        rightMargin=1.2 * cm,
-        topMargin=2 * cm,
+        pagesize=A4,
+        leftMargin=1.5 * cm,
+        rightMargin=1.5 * cm,
+        topMargin=1.5 * cm,
         bottomMargin=1.2 * cm,
+        title="P38 Parts Catalog UI First",
     )
-
-    cover_frame = Frame(2 * cm, 2 * cm, w - 4 * cm, h - 4 * cm, id="cover")
-    body_frame = Frame(1.2 * cm, 1.2 * cm, w - 2.4 * cm, h - 2.8 * cm, id="body")
-
-    doc.addPageTemplates(
-        [
-            PageTemplate(id="cover", frames=[cover_frame], onPage=draw_cover),
-            PageTemplate(id="body", frames=[body_frame], onPage=on_page),
-        ]
-    )
+    frame = Frame(1.5 * cm, 1.2 * cm, w - 3 * cm, h - 2.7 * cm, id="main")
+    doc.addPageTemplates([PageTemplate(id="main", frames=[frame], onPage=on_page)])
 
     story = []
 
-    # ── Capa ──
-    story.append(Spacer(1, 3 * cm))
-    story.append(Paragraph("P38 ERP", styles["CoverTitle"]))
-    story.append(Spacer(1, 0.4 * cm))
-    story.append(Paragraph("Parts Catalog — UI First", styles["CoverTitle"]))
-    story.append(Spacer(1, 1 * cm))
+    # Capa compacta
+    story.append(Spacer(1, 4 * cm))
+    story.append(Paragraph("P38 Parts Catalog", STYLES["cover_title"]))
+    story.append(Paragraph("UI First · System Design Map", STYLES["cover_title"]))
+    story.append(Spacer(1, 0.8 * cm))
     story.append(
         Paragraph(
-            "Carta arquitetural: menu → páginas → funções → tabelas<br/>"
-            "Metáfora: carta náutica + bóias de dados (como NOAA tsunami buoys)",
-            styles["CoverSub"],
+            "Árvore hierárquica: Módulo → Página → Componente → Função → Tabela (+ FKs, regras, async).<br/>"
+            f"Gerado {date.today().strftime('%d/%m/%Y')} · extraído do código P38-ERP · sem snippets de código.",
+            STYLES["cover_sub"],
         )
     )
-    story.append(Spacer(1, 1.5 * cm))
-    story.append(Paragraph(f"Gerado em {date.today().strftime('%d/%m/%Y')} · sem código · comunicação agente↔humano", styles["CoverSub"]))
-    story.append(Paragraph("Repositório P38-ERP (VarejoSync) · Base de dados Supabase/Postgres", styles["CoverSub"]))
+    story.append(Spacer(1, 1.2 * cm))
+    story.append(Paragraph("<b>Legenda</b>", STYLES["cover_sub"]))
+    for line in [
+        "● UI — página ou componente React",
+        "◆ FN — Edge/Base44 (sync = bloqueia UI; ⟳ = background/cron/trigger)",
+        "■ DB — Postgres/Supabase; ↳ = FK DB ou lógica",
+        "▲ Regra de negócio crítica",
+    ]:
+        story.append(Paragraph(line, STYLES["cover_sub"]))
 
-    story.append(NextPageTemplate("body"))
     story.append(PageBreak())
 
-    # ── Legenda ──
-    story.append(Paragraph("Legenda da carta", styles["LegendHead"]))
-    story.append(Spacer(1, 0.3 * cm))
-    legend_data = [[Paragraph(f"<b>{sym}</b>", styles["Body"]), Paragraph(desc, styles["Body"])] for sym, desc in LEGEND]
-    lt = Table(legend_data, colWidths=[4 * cm, 20 * cm])
-    lt.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F8FBFD")),
-                ("BOX", (0, 0), (-1, -1), 0.5, GRID),
-                ("INNERGRID", (0, 0), (-1, -1), 0.25, GRID),
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("LEFTPADDING", (0, 0), (-1, -1), 8),
-                ("TOPPADDING", (0, 0), (-1, -1), 6),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-            ]
-        )
-    )
-    story.append(lt)
-    story.append(Spacer(1, 0.5 * cm))
-
-    story.append(Paragraph("Como ler este documento", styles["LegendHead"]))
+    # Índice compacto
+    story.append(Paragraph("<b>Índice de módulos</b>", STYLES["zone"]))
+    story.append(Spacer(1, 2 * mm))
+    for i, z in enumerate(CATALOG, 1):
+        pages = ", ".join(p["nome"] for p in z["pages"])
+        story.append(Paragraph(f"{i}. <b>{esc(z['menu'])}</b> — {esc(pages)}", STYLES["meta"]))
+    story.append(Spacer(1, 4 * mm))
+    story.append(Paragraph("<b>Tabelas-hub (correntes entre módulos)</b>", STYLES["zone"]))
+    for name, role, links in HUB_TABLES:
+        story.append(Paragraph(f"■ <b>{esc(name)}</b> ({esc(role)}) — {esc(links)}", STYLES["db"]))
+    story.append(Spacer(1, 4 * mm))
     story.append(
         Paragraph(
-            "A estrutura é <b>UI first</b>: começa pelo que o utilizador vê no menu lateral/mobile. "
-            "Cada zona desce em camadas — página (ponto de ancoragem), funções backend (bóias que processam), "
-            "tabelas (profundidade onde os dados repousam). Use este mapa ao pedir alterações a agentes Cursor: "
-            "indique a <b>zona do menu</b>, a <b>rota</b> e as <b>tabelas</b> envolvidas.",
-            styles["Body"],
+            "<b>Modelo de pedido ao agente:</b> «No módulo <i>Compras → PedidosCompra</i>, ao aprovar PO, "
+            "o LF em lancamento_financeiro (pedido_compra_vinculado_id) não aparece em Aprovações.»",
+            STYLES["meta"],
         )
     )
+
     story.append(PageBreak())
 
-    # ── Índice de zonas ──
-    story.append(Paragraph("Índice de zonas (menu)", styles["LegendHead"]))
-    story.append(Spacer(1, 0.3 * cm))
-    idx_rows = [["#", "Zona", "Páginas principais", "Tabelas âncora"]]
-    anchor_tables = {
-        "inicio": "usuario, tarefa",
-        "dashboard": "dashboard_kpi_*",
-        "pdv": "pedido_venda, produto",
-        "caixa": "turno_caixa, movimentos_caixa",
-        "vendas": "pedido_venda, terceiro",
-        "produtos": "produto, tabela_preco",
-        "compras": "pedido_compra, embarque",
-        "estoque": "movimentacao_estoque, produto",
-        "consumo": "consumo_interno",
-        "financeiro": "lancamento_financeiro, contas_financeiras",
-        "relatorios": "pedido_venda, pedido_compra",
-        "config": "usuario, perfil_de_acesso",
-        "auth": "usuario",
-        "satelite": "anexo_documento",
-    }
-    for i, zone in enumerate(CATALOG, 1):
-        pages_str = ", ".join(p["nome"] for p in zone["pages"][:4])
-        if len(zone["pages"]) > 4:
-            pages_str += f" (+{len(zone['pages']) - 4})"
-        idx_rows.append([str(i), f"{zone['icon']} {zone['menu']}", pages_str, anchor_tables.get(zone["id"], "—")])
+    # Zonas — 2 módulos por página quando possível (denso)
+    for i, zone in enumerate(CATALOG):
+        story.extend(render_zone(zone))
+        # page break a cada 2 módulos grandes, exceto último
+        if i % 2 == 1 and i < len(CATALOG) - 1:
+            story.append(PageBreak())
 
-    idx_table = Table(idx_rows, colWidths=[1 * cm, 4.5 * cm, 11 * cm, 7.5 * cm])
-    idx_table.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), NAVY),
-                ("TEXTCOLOR", (0, 0), (-1, 0), WHITE),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, -1), 8),
-                ("BOX", (0, 0), (-1, -1), 0.5, GRID),
-                ("INNERGRID", (0, 0), (-1, -1), 0.25, GRID),
-                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F4F9FC")]),
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("LEFTPADDING", (0, 0), (-1, -1), 6),
-                ("TOPPADDING", (0, 0), (-1, -1), 5),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-            ]
-        )
-    )
-    story.append(idx_table)
+    # Apêndice: integridade relacional
     story.append(PageBreak())
-
-    # ── Zonas detalhadas ──
-    for zone in CATALOG:
-        zc = ZONE_COLORS.get(zone["id"], TEAL)
-
-        # Header band via table trick
-        header = Table(
-            [[Paragraph(f"{zone['icon']}  {zone['menu']}", styles["SectionTitle"])]],
-            colWidths=[24 * cm],
-        )
-        header.setStyle(
-            TableStyle(
-                [
-                    ("BACKGROUND", (0, 0), (-1, -1), zc),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 12),
-                    ("TOPPADDING", (0, 0), (-1, -1), 10),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
-                ]
-            )
-        )
-        story.append(header)
-        story.append(Paragraph(zone["desc"], styles["Body"]))
-        story.append(Spacer(1, 0.4 * cm))
-
-        for page in zone["pages"]:
-            story.append(make_page_card(page, zone["id"]))
-            story.append(Spacer(1, 0.35 * cm))
-
-        story.append(PageBreak())
-
-    # ── Mapa de relacionamentos (hub tables) ──
-    story.append(Paragraph("Tabelas-hub (correntes entre zonas)", styles["LegendHead"]))
-    story.append(Spacer(1, 0.3 * cm))
-    hubs = [
-        ("terceiro", "Clientes e fornecedores", "Vendas · Compras · Financeiro · PDV"),
-        ("produto", "Catálogo e stock", "Produtos · PDV · Estoque · Compras"),
-        ("pedido_venda", "Vendas e PDV", "PDV · Vendas · Expedição · Financeiro"),
-        ("pedido_compra", "Compras", "Compras · Logística · Financeiro · Estoque"),
-        ("lancamento_financeiro", "Movimentação financeira", "Financeiro · Caixa · Compras"),
-        ("turno_caixa", "Sessão de caixa", "Caixa · PDV · Consumo interno"),
-        ("movimentacao_estoque", "Histórico de stock", "Estoque · PDV · Compras"),
-        ("usuario / perfil_de_acesso", "Quem acede a quê", "Todas as zonas (permissões)"),
+    story.append(Paragraph("<b>Apêndice A — FKs DB-enforced (Postgres)</b>", STYLES["zone"]))
+    enforced = [
+        "pedido_venda.cliente_id → terceiro.id (SET NULL)",
+        "pedido_compra.fornecedor_id → terceiro.id (RESTRICT)",
+        "pedido_compra.conta_pagamento_id → contas_financeiras.id (SET NULL)",
+        "embarque.pedido_compra_id → pedido_compra.id (CASCADE)",
+        "movimentacao_estoque.produto_id → produto.id (RESTRICT)",
+        "lancamento_financeiro.conta_financeira_id → contas_financeiras.id (SET NULL)",
+        "movimentos_caixa.conta_id → contas_financeiras.id (RESTRICT)",
+        "movimentos_caixa.turno_caixa_id → turno_caixa.id (SET NULL)",
+        "conta_recorrente → terceiro + categoria_financeira (RESTRICT)",
+        "conta_prevista → terceiro + categoria_financeira + conta_recorrente",
+        "agenda_logistica.pedido_venda_id → pedido_venda.id (CASCADE)",
+        "agenda_logistica.cliente_id → terceiro.id (RESTRICT)",
+        "linha_compra ← produto_compra ← eixo_valor (grade catálogo)",
     ]
-    hub_rows = [["Tabela-hub", "Papel", "Zonas que a tocam"]]
-    hub_rows.extend(hubs)
-    hub_t = Table(hub_rows, colWidths=[5 * cm, 7 * cm, 12 * cm])
-    hub_t.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), DEEP),
-                ("TEXTCOLOR", (0, 0), (-1, 0), WHITE),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, -1), 8),
-                ("BOX", (0, 0), (-1, -1), 0.5, GRID),
-                ("INNERGRID", (0, 0), (-1, -1), 0.25, GRID),
-                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F4F9FC")]),
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("LEFTPADDING", (0, 0), (-1, -1), 6),
-                ("TOPPADDING", (0, 0), (-1, -1), 5),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-            ]
-        )
-    )
-    story.append(hub_t)
-    story.append(Spacer(1, 0.6 * cm))
+    for line in enforced:
+        story.append(Paragraph(f"↳ {esc(line)}", STYLES["db"]))
 
-    story.append(Paragraph("Como pedir ao agente Cursor", styles["LegendHead"]))
+    story.append(Spacer(1, 4 * mm))
+    story.append(Paragraph("<b>Apêndice B — Jobs & triggers (não bloqueiam UI)</b>", STYLES["zone"]))
+    jobs = [
+        "sincronizarEstoquePorMovimentacao — trigger movimentacao_estoque",
+        "automacaoAprovacaoFinanceira — trigger pedido_compra.status",
+        "gerarContasPrevistasRecorrentes — cron dia 1",
+        "gerarLancamentosCartao + processarLiquidacaoCartaoCredito — cron diário",
+        "calcularIEP — batch noturno (ABCD_JOB_NOTURNO)",
+        "atualizarViagensTransportadoras — cron mensal",
+        "exportFlareToGithub — trigger TargetFlare",
+    ]
+    for line in jobs:
+        story.append(Paragraph(f"⟳ {esc(line)}", STYLES["async"]))
+
+    story.append(Spacer(1, 4 * mm))
+    story.append(Paragraph("<b>Apêndice C — Linhas canónicas sem FK DB</b>", STYLES["zone"]))
     story.append(
         Paragraph(
-            "<b>Modelo de pedido:</b> «Na zona <i>Compras → Pedidos de Compra</i> (/PedidosCompra), "
-            "quando aprovo um PO, o lançamento em <i>lancamento_financeiro</i> não aparece em "
-            "<i>Financeiro → Aprovações</i>.» — O agente localiza página, função (automacaoAprovacaoFinanceira) "
-            "e tabelas sem ambiguidade.",
-            styles["Body"],
-        )
-    )
-    story.append(Spacer(1, 0.3 * cm))
-    story.append(
-        Paragraph(
-            "<b>Evitar:</b> pedidos só por nome de tabela ou só por ficheiro de código. "
-            "<b>Preferir:</b> menu → rota → comportamento esperado → tabelas suspeitas.",
-            styles["Body"],
+            "pedido_venda_item, pedido_compra_item, embarque_item — integridade via save*Item handlers "
+            "(replaceAll, recompute totals). Base44 legacy: IDs text, maioria das relações lógicas.",
+            STYLES["meta"],
         )
     )
 
