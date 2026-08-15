@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { ChevronDown, ShoppingCart } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ChevronDown, FoldVertical, ShoppingCart, UnfoldVertical } from 'lucide-react';
 import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import { cn } from '@/components/utils';
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
@@ -131,8 +131,7 @@ function ConsultaEmbarqueCard({ card, onVerPedido, isLast = false }) {
   );
 }
 
-function ConsultaGrupoEmbarques({ grupo, onVerPedido, defaultOpen = true }) {
-  const [open, setOpen] = useState(defaultOpen);
+function ConsultaGrupoEmbarques({ grupo, onVerPedido, open, onToggle }) {
   const hasStructuredHeader = grupo.groupDate != null && grupo.groupCarrier != null;
   const headerTextClass = 'text-sm font-light text-foreground/85 leading-relaxed';
 
@@ -140,7 +139,7 @@ function ConsultaGrupoEmbarques({ grupo, onVerPedido, defaultOpen = true }) {
     <div className="w-full min-w-0 max-w-full">
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={onToggle}
         className={cn(
           'w-full min-w-0 text-left overflow-hidden flex items-start gap-2 py-2.5',
           CONSULTA_HIER.sep,
@@ -202,12 +201,38 @@ export default function ConsultaComprasPedidos({
   sortOrder = 'asc',
 }) {
   const [modo, setModo] = useState('produto');
+  const [gruposAbertos, setGruposAbertos] = useState(() => new Set());
 
   const produtosAgregados = useMemo(() => aggregateByProduto(pedidosFiltrados), [pedidosFiltrados]);
   const gruposEmbarque = useMemo(
     () => buildGruposConsultaEmbarques(pedidosFiltrados, groupBy, sortOrder),
     [pedidosFiltrados, groupBy, sortOrder],
   );
+
+  useEffect(() => {
+    setGruposAbertos(new Set());
+  }, [gruposEmbarque]);
+
+  const toggleGrupo = (key) => {
+    setGruposAbertos((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const abrirTodosGrupos = () => {
+    setGruposAbertos(new Set(gruposEmbarque.map((g) => g.key)));
+  };
+
+  const recolherTodosGrupos = () => {
+    setGruposAbertos(new Set());
+  };
+
+  const todosGruposAbertos = gruposEmbarque.length > 0
+    && gruposEmbarque.every((g) => gruposAbertos.has(g.key));
+  const algumGrupoAberto = gruposEmbarque.some((g) => gruposAbertos.has(g.key));
 
   const totalGeral = useMemo(
     () => roundToTwoDecimals(
@@ -270,11 +295,45 @@ export default function ConsultaComprasPedidos({
         </P38MobileLineList>
       ) : (
         <div className="space-y-4 min-w-0 max-w-full overflow-x-hidden">
+          {gruposEmbarque.length > 0 ? (
+            <div className="flex items-center justify-end gap-2 min-w-0">
+              {!todosGruposAbertos ? (
+                <button
+                  type="button"
+                  onClick={abrirTodosGrupos}
+                  className={cn(
+                    caixaTypo.meta,
+                    'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-light text-foreground/80',
+                    'hover:bg-muted/40 transition-colors',
+                  )}
+                >
+                  <UnfoldVertical className="w-4 h-4 shrink-0" aria-hidden />
+                  Abrir todos
+                </button>
+              ) : null}
+              {algumGrupoAberto ? (
+                <button
+                  type="button"
+                  onClick={recolherTodosGrupos}
+                  className={cn(
+                    caixaTypo.meta,
+                    'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-light text-foreground/80',
+                    'hover:bg-muted/40 transition-colors',
+                  )}
+                >
+                  <FoldVertical className="w-4 h-4 shrink-0" aria-hidden />
+                  Recolher todos
+                </button>
+              ) : null}
+            </div>
+          ) : null}
           {gruposEmbarque.map((grupo) => (
             <ConsultaGrupoEmbarques
               key={grupo.key}
               grupo={grupo}
               onVerPedido={onVerPedido}
+              open={gruposAbertos.has(grupo.key)}
+              onToggle={() => toggleGrupo(grupo.key)}
             />
           ))}
         </div>
