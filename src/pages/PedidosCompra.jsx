@@ -684,11 +684,6 @@ export default function PedidosCompraPage() {
       const pcs = gestao.pedidos;
       const embarquesHeaders = gestao.embarques;
 
-      const primeiraPassagem = materializePedidosCompraView(pcs, embarquesHeaders, {});
-      setPedidos(primeiraPassagem.pedidosComResumoReal);
-      setEmbarques(primeiraPassagem.cardsDeEmbarque);
-      setLoading(false);
-
       const embarquesDb = await hydrateEmbarquesFromSql(base44, embarquesHeaders);
       const produtoIds = [...new Set([
         ...pcs.flatMap((p) => (p.itens || []).map((i) => i.produto_id).filter(Boolean)),
@@ -702,6 +697,7 @@ export default function PedidosCompraPage() {
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
       toast.error(error?.message || 'Erro ao carregar embarques');
+    } finally {
       setLoading(false);
     }
   };
