@@ -31,6 +31,8 @@ INK = colors.HexColor("#111827")
 MUTED = colors.HexColor("#6B7280")
 RULE = colors.HexColor("#D1D5DB")
 ZONE = colors.HexColor("#1E40AF")
+PAGE = colors.HexColor("#111827")
+COMP = colors.HexColor("#374151")
 LINK = colors.HexColor("#0369A1")
 FN = colors.HexColor("#7C3AED")
 DB = colors.HexColor("#0F766E")
@@ -62,6 +64,8 @@ STYLES = {
     "biz": S("biz", fontSize=8, leading=10.5, textColor=BIZ, leftIndent=INDENT[2] * mm),
     "async": S("async", fontSize=8, leading=10.5, textColor=ASYNC, leftIndent=INDENT[2] * mm),
     "meta": S("meta", fontSize=8, leading=10.5, textColor=MUTED),
+    "logica": S("logica", fontSize=8.5, leading=11.5, textColor=INK, leftIndent=INDENT[1] * mm, spaceAfter=3),
+    "arvore": S("arvore", fontName="Courier", fontSize=7.5, leading=10, textColor=COMP, leftIndent=INDENT[1] * mm),
 }
 
 # ── Catálogo manual (peça a peça) ─────────────────────────────────────────────
@@ -78,6 +82,16 @@ CATALOG: list[dict[str, Any]] = [
                 "rota": "/  ·  /Home",
                 "feature": "pages/Home.jsx",
                 "papel": "Landing personalizada: quick actions filtradas por permissão do perfil; cards de alerta (pedidos pendentes, tarefas).",
+                "arvore": [
+                    "Home",
+                    "├── quickActions (atalhos por perfil)",
+                    "├── cards alerta (pedidos, tarefas)",
+                    "└── navigate → módulos operacionais",
+                ],
+                "logica": (
+                    "Não grava transações. Lê usuario + perfil_de_acesso para decidir atalhos; "
+                    "React Query invalida alertas quando há mudanças noutros módulos."
+                ),
                 "caminho": [
                     "Login → Home (mainPage em pages.config.js)",
                     "Utilizador toca atalho → navigate('/RotaDestino')",
@@ -163,6 +177,19 @@ CATALOG: list[dict[str, Any]] = [
                 "rota": "/PDVVendedor",
                 "feature": "components/vendas/PDVVendedor.jsx",
                 "papel": "Venda assistida: monta carrinho, identifica cliente, gera orçamento ou envia ao caixa.",
+                "arvore": [
+                    "PDVVendedor",
+                    "├── BarcodeScanner → produto",
+                    "├── ProductUnitSelectorDialog → unidade/qty_base",
+                    "├── savePedidoVendaItem → rascunho_pedido_venda",
+                    "├── ComprovantePreVenda (pré-caixa)",
+                    "└── LostSalesForm → venda_perdida",
+                ],
+                "logica": (
+                    "O rascunho é a peça intermédia: todas as linhas vivem em rascunho_pedido_venda até o caixa "
+                    "chamar processarVendaCaixa. O vendedor nunca baixa estoque nem cria LF — isso é responsabilidade "
+                    "exclusiva do caixa (transação atómica)."
+                ),
                 "caminho": [
                     "1. Operador abre turno (opcional no vendedor) e escaneia/busca produto",
                     "2. ProductUnitSelectorDialog resolve unidade comercial → quantidade_base",
@@ -250,6 +277,22 @@ CATALOG: list[dict[str, Any]] = [
                 "rota": "/PDVCaixa",
                 "feature": "components/vendas/PDVCaixa.jsx",
                 "papel": "Recebimento, sangria, reforço, cupom, devolução. Centro nervoso do PDV.",
+                "arvore": [
+                    "PDVCaixa",
+                    "├── SeletorCaixaPDV → turno_caixa",
+                    "├── ProcessarVendasView → rascunhos (poll)",
+                    "│   └── ConfirmarPagamentoDialog",
+                    "│       └── processarVendaCaixa (RPC)",
+                    "├── VendasTurnoDialog (espelho)",
+                    "├── sangria/reforço → movimentos_caixa",
+                    "└── imprimirCupomTermico",
+                ],
+                "logica": (
+                    "processarVendaCaixa é a única porta que converte rascunho em venda real numa transação: "
+                    "valida idempotência (409 se já processado), cria pedido_venda, gera saída em movimentacao_estoque, "
+                    "cria lancamento_financeiro por forma de pagamento (dinheiro atualiza saldo conta; cartão exige "
+                    "maquininha; fiado gera LF Em Aberto). O trigger de estoque corre depois, sem bloquear o RPC."
+                ),
                 "caminho": [
                     "1. SeletorCaixaPDV: operador escolhe conta_caixa_pdv + abre turno_caixa",
                     "2. ProcessarVendasView: lista rascunhos do turno (polling live)",
@@ -369,6 +412,19 @@ CATALOG: list[dict[str, Any]] = [
                 "rota": "/Produtos",
                 "feature": "pages/Produtos.jsx",
                 "papel": "CRUD catálogo, precificação, ABCD/IEP, relatórios embutidos (?relatorioVendas/Estoque=1).",
+                "arvore": [
+                    "Produtos",
+                    "├── TreeGrid (desktop) / MobileHierarquica (mobile)",
+                    "│   └── termômetro margem≥30% markup≥40%",
+                    "├── ProdutoFormCompleto",
+                    "├── ProdutoFAB → ações rápidas",
+                    "└── jobs: calcularIEP / atualizarMetasEstoque",
+                ],
+                "logica": (
+                    "Produto é hub de leitura para quase todo o sistema. Alterar preço ou estoque aqui propaga "
+                    "para PDV, sugestão de compra e margem. O termômetro mobile calcula margem/markup ao vivo sem "
+                    "gravar; o job calcularIEP grava curva ABCD só se ABCD_JOB_NOTURNO estiver ativo."
+                ),
                 "caminho": [
                     "TreeGrid (desktop) ou MobileHierarquica (mobile) lista SKUs",
                     "ProdutoFAB → ProdutoFormCompleto (cadastro completo)",
@@ -430,6 +486,33 @@ CATALOG: list[dict[str, Any]] = [
             "embarque → conferência → entrada estoque."
         ),
         "pages": [
+            {
+                "nome": "Cotacoes",
+                "rota": "/Cotacoes",
+                "feature": "components/compras/CotacoesManager.jsx",
+                "papel": "Cotação com fornecedores antes de formalizar PO.",
+                "arvore": [
+                    "Cotacoes",
+                    "├── CotacaoExpressHub",
+                    "├── CotacaoExpressMontagem / Disputa",
+                    "└── ImportadorCotacaoPDF",
+                ],
+                "logica": "Cotação não movimenta estoque nem financeiro — só compara preços. PO nasce depois em PedidosCompra.",
+                "caminho": [
+                    "1. Monta lista produtos + fornecedores convidados",
+                    "2. Fornecedores respondem (ou import PDF)",
+                    "3. Escolhe vencedor → gera pedido_compra rascunho",
+                ],
+                "vem_de": ["produto", "terceiro (fornecedor)"],
+                "envia_para": ["PedidosCompra (novo PO)"],
+                "filhas": [
+                    {"nome": "CotacaoExpressHub", "papel": "Hub express de cotações abertas"},
+                    {"nome": "ImportadorCotacaoPDF", "papel": "OCR/import PDF resposta fornecedor"},
+                ],
+                "regras": [],
+                "funcoes": [{"nome": "gerarNumeroSequencial", "async": False, "nota": "Número cotação"}],
+                "tabelas": [{"nome": "cotacao", "fks": ["fornecedores/respostas em JSON"]}],
+            },
             {
                 "nome": "SugestoesCompra",
                 "rota": "/SugestoesCompra",
@@ -545,6 +628,69 @@ CATALOG: list[dict[str, Any]] = [
         "menu": "Estoque",
         "intro": "Movimentação física e contagem. Toda entrada/saída passa por movimentacao_estoque.",
         "pages": [
+            {
+                "nome": "Armazenagem",
+                "rota": "/Armazenagem",
+                "feature": "pages/Armazenagem.jsx",
+                "papel": "Localização física: corredor, prateleira, área de picking.",
+                "arvore": ["Armazenagem", "├── FilaSeparacao", "├── MovimentacaoEstoqueForm", "└── HistoricoMovimentacoes"],
+                "logica": "Altera area_id do produto e pode gerar movimentação de transferência entre áreas.",
+                "caminho": ["Busca SKU → edita localização → opcional movimento transferência"],
+                "vem_de": ["produto", "area"],
+                "envia_para": ["movimentacao_estoque (transferência)", "InterfaceSeparador"],
+                "filhas": [
+                    {"nome": "FilaSeparacao", "papel": "Pedidos aguardando separação física"},
+                    {"nome": "MovimentacaoEstoqueForm", "papel": "Form movimento manual"},
+                ],
+                "regras": [],
+                "funcoes": [],
+                "tabelas": [{"nome": "produto / area", "fks": ["produto.area_id → area.id"]}],
+            },
+            {
+                "nome": "ConferenciaEstoque",
+                "rota": "/ConferenciaEstoque · /ConferenciaEditor?id=",
+                "feature": "estoque/auditoria/*",
+                "papel": "Contagem formal com sessão, ajuste e auditoria.",
+                "arvore": [
+                    "ConferenciaEstoque",
+                    "├── NovaConferenciaDialog",
+                    "└── ConferenciaEditor → saveConferenciaItem",
+                ],
+                "logica": (
+                    "Diferente da Contagem Express: aqui a conferência é uma entidade com ciclo de vida "
+                    "(aberta → contada → ajuste aplicado). O ajuste gera movimentacao_estoque compensatória."
+                ),
+                "caminho": [
+                    "1. Nova conferência (nome, responsável)",
+                    "2. Contagem item a item no Editor",
+                    "3. saveConferenciaItem grava divergência",
+                    "4. Aplicar ajuste → movimentacao_estoque",
+                ],
+                "vem_de": ["produto (estoque sistema)"],
+                "envia_para": ["movimentacao_estoque", "AuditoriaEstoque"],
+                "filhas": [
+                    {"nome": "NovaConferenciaDialog", "papel": "Cria sessão conferencia_estoque"},
+                    {"nome": "ConferenciaEditor", "papel": "UI contagem por linha"},
+                ],
+                "regras": ["divergencia_base = qty contada − qty sistema"],
+                "funcoes": [{"nome": "saveConferenciaItem", "async": False, "nota": "Linhas canónicas"}],
+                "tabelas": [{"nome": "conferencia_estoque", "fks": ["responsavel_id → usuario.id"]}],
+            },
+            {
+                "nome": "TabelaPrecosConsulta",
+                "rota": "/TabelaPrecosConsulta",
+                "feature": "pages/TabelaPrecosConsulta.jsx",
+                "papel": "Consulta rápida de preço na loja (operador de chão).",
+                "arvore": ["TabelaPrecosConsulta", "├── OrcamentoSheet", "└── SimuladorCartaoSheet"],
+                "logica": "Somente leitura de tabela_preco + produto; pode gerar orçamento PDF sem venda.",
+                "caminho": ["Scan/busca → mostra preço por tabela → opcional orçamento"],
+                "vem_de": ["tabela_preco", "produto", "dados_empresa"],
+                "envia_para": ["PDVVendedor (orçamento)", "venda_perdida (se desiste)"],
+                "filhas": [{"nome": "OrcamentoSheet", "papel": "Gera orçamento rápido para cliente"}],
+                "regras": [],
+                "funcoes": [],
+                "tabelas": [{"nome": "tabela_preco / produto", "fks": []}],
+            },
             {
                 "nome": "ContagemExpress",
                 "rota": "/ContagemExpress",
@@ -717,20 +863,163 @@ CATALOG: list[dict[str, Any]] = [
                 ]}],
             },
             {
-                "nome": "PlanejamentoFinanceiro / Budgets",
-                "rota": "/PlanejamentoFinanceiro · /Budgets",
-                "feature": "planejamento-financeiro-v2 + budget-previsao",
-                "papel": "Planejamento estratégico: contas fixas, projeção, orçamento por competência.",
-                "caminho": ["Modelo → competências mensais → comparação realizado (LF)"],
-                "vem_de": ["lancamento_financeiro", "folha_previsao", "budget_competencia"],
-                "envia_para": ["SuperAgefin (contas fixas)", "VisaoFinanceira"],
-                "filhas": [
-                    {"nome": "ContasFixasTab", "papel": "Série recorrente planejada"},
-                    {"nome": "BudgetPlanoCompleto", "papel": "Orçamento anual por centro"},
-                ],
+                "nome": "FolhaPrevisao",
+                "rota": "/FolhaPrevisao",
+                "feature": "pages/FolhaPrevisao.jsx",
+                "papel": "Previsão de folha por colaborador e competência.",
+                "arvore": ["FolhaPrevisao", "├── FolhaPrevisaoLista", "└── FolhaSimulacao"],
+                "logica": "Alimenta Planejamento e SuperAgefin (compromisso folha dia 05).",
+                "caminho": ["Modelo → competência → simulação → grava"],
+                "vem_de": ["folha_centro_custo"],
+                "envia_para": ["PlanejamentoFinanceiro", "SuperAgefin"],
+                "filhas": [{"nome": "FolhaSimulacao", "papel": "Cenários por colaborador"}],
                 "regras": [],
                 "funcoes": [],
-                "tabelas": [{"nome": "budget_modelo / budget_competencia / folha_previsao_*", "fks": []}],
+                "tabelas": [{"nome": "folha_previsao_modelo / folha_previsao_competencia", "fks": []}],
+            },
+            {
+                "nome": "ContasFinanceiras",
+                "rota": "/ContasFinanceiras",
+                "feature": "financeiro/GestaoContasFinanceiras.jsx",
+                "papel": "Cadastro contas bancárias e caixas PDV.",
+                "arvore": ["ContasFinanceiras", "├── ListaContasFinanceiras", "└── AjusteSaldoDialog"],
+                "logica": "is_caixa_pdv liga ao SeletorCaixaPDV; saldo derivado de LF.",
+                "caminho": ["Lista → extrato → ajuste saldo admin"],
+                "vem_de": ["lancamento_financeiro"],
+                "envia_para": ["FluxoCaixa", "PDVCaixa"],
+                "filhas": [{"nome": "ConciliacaoBancaria", "papel": "Match extrato ↔ LF"}],
+                "regras": [],
+                "funcoes": [{"nome": "auditarSaldosContas", "async": True, "nota": "Recomputa saldos"}],
+                "tabelas": [{"nome": "contas_financeiras", "fks": []}],
+            },
+            {
+                "nome": "VisaoFinanceira",
+                "rota": "/VisaoFinanceira",
+                "feature": "config/VisaoFinanceiraPlano.jsx",
+                "papel": "Previsto vs realizado consolidado para o dono.",
+                "logica": "Agrega conta_prevista + LF + budget numa visão única.",
+                "caminho": ["Mês → consolidado → PDF"],
+                "vem_de": ["conta_prevista", "lancamento_financeiro"],
+                "envia_para": ["PlanejamentoFinanceiro"],
+                "filhas": [{"nome": "planoFinanceiroConsolidado.js", "papel": "Motor consolidação"}],
+                "regras": [],
+                "funcoes": [],
+                "tabelas": [{"nome": "conta_prevista / lancamento_financeiro", "fks": []}],
+            },
+            {
+                "nome": "CaixasAtivos",
+                "rota": "/CaixasAtivos",
+                "feature": "VisualizadorCaixa.jsx",
+                "papel": "Monitor caixas PDV abertos em tempo real.",
+                "logica": "Lê turno_caixa Aberto; mostra vendas e sangrias do turno.",
+                "caminho": ["Lista abertos → drill-down turno"],
+                "vem_de": ["turno_caixa", "consumo_interno"],
+                "envia_para": ["PDVCaixa", "TurnosFechados"],
+                "filhas": [{"nome": "VisualizadorCaixa", "papel": "Detalhe turno ao vivo"}],
+                "regras": [],
+                "funcoes": [],
+                "tabelas": [{"nome": "turno_caixa / movimentos_caixa", "fks": []}],
+            },
+            {
+                "nome": "TurnosFechados",
+                "rota": "/TurnosFechados",
+                "feature": "VisualizadorCaixa.jsx (histórico)",
+                "papel": "Auditoria de fechamentos por operador/dia.",
+                "caminho": ["Filtro data → turnos Fechado → detalhe"],
+                "vem_de": ["turno_caixa"],
+                "envia_para": ["Relatorios", "FluxoCaixa"],
+                "filhas": [{"nome": "CaixaValorDisplay", "papel": "Formatação valores"}],
+                "regras": [],
+                "funcoes": [],
+                "tabelas": [{"nome": "turno_caixa", "fks": ["movimentos_caixa.turno_caixa_id → turno_caixa.id"]}],
+            },
+            {
+                "nome": "PlanejamentoFinanceiro",
+                "rota": "/PlanejamentoFinanceiro",
+                "feature": "planejamento-financeiro-v2/",
+                "papel": "Planejamento v2: contas fixas, projeção, cenários.",
+                "arvore": ["PlanejamentoFinanceiro", "├── ContasFixasTab", "└── ProjecaoTab"],
+                "logica": "SSOT contas fixas; alimenta SuperAgefin.",
+                "caminho": ["Modelo → competências → compara LF real"],
+                "vem_de": ["conta_recorrente", "lancamento_financeiro"],
+                "envia_para": ["SuperAgefin", "VisaoFinanceira"],
+                "filhas": [{"nome": "ContasFixasTab", "papel": "Séries recorrentes"}],
+                "regras": [],
+                "funcoes": [],
+                "tabelas": [{"nome": "budget_modelo / agefin_serie_*", "fks": []}],
+            },
+            {
+                "nome": "Budgets",
+                "rota": "/Budgets",
+                "feature": "pages/Budgets.jsx",
+                "papel": "Orçamento anual por centro de custo.",
+                "caminho": ["Modelo → competências mensais → acompanhamento"],
+                "vem_de": ["lancamento_financeiro"],
+                "envia_para": ["FluxoCaixa"],
+                "filhas": [{"nome": "BudgetPlanoCompleto", "papel": "Visão anual editável"}],
+                "regras": [],
+                "funcoes": [],
+                "tabelas": [{"nome": "budget_modelo / budget_competencia", "fks": []}],
+            },
+        ],
+    },
+    {
+        "menu": "Satélites & PWA",
+        "intro": "Peças acessadas por deep link, share-target ou fluxo lateral — fora do menu principal.",
+        "pages": [
+            {
+                "nome": "AnexoCompartilhado",
+                "rota": "/AnexoCompartilhado",
+                "feature": "pages/AnexoCompartilhado.jsx",
+                "papel": "PWA iOS: anexar PDF/boleto a lançamento, PO ou importar pedido.",
+                "arvore": [
+                    "AnexoCompartilhado",
+                    "├── torre de controlo (destino)",
+                    "├── BuscarLancamentoSheet",
+                    "├── AgefinImportador",
+                    "└── uploadAnexoDrive",
+                ],
+                "logica": (
+                    "Share-target recebe ficheiro → OCR opcional → utilizador escolhe destino "
+                    "(lançamento existente, novo LF, PO, importar PDF pedido). Ponte entre mundo exterior e financeiro/compras."
+                ),
+                "caminho": [
+                    "1. iOS share → abre AnexoCompartilhado",
+                    "2. Escolhe destino (lançamento / PO / importar)",
+                    "3. uploadAnexoDrive grava anexo_documento",
+                    "4. Liga referencia_tipo/id à entidade",
+                ],
+                "vem_de": ["iOS share sheet", "OCR PDF"],
+                "envia_para": ["lancamento_financeiro", "pedido_compra", "SuperAgefin"],
+                "filhas": [
+                    {"nome": "BuscarLancamentoSheet", "papel": "Lista LF de hoje para vincular"},
+                    {"nome": "AgefinImportador", "papel": "Importa boleto/recorrente"},
+                ],
+                "regras": ["Deep link ?destino=importar_pedido"],
+                "funcoes": [
+                    {"nome": "uploadAnexoDrive", "async": False, "nota": "Drive + anexo_documento"},
+                    {"nome": "listarAnexos", "async": False, "nota": "Lista por referencia"},
+                ],
+                "tabelas": [{"nome": "anexo_documento", "fks": [
+                    "referencia_tipo/id → polimórfico (LF, PO, conta_prevista)",
+                ]}],
+            },
+            {
+                "nome": "DevolucaoTroca",
+                "rota": "/DevolucaoTroca",
+                "feature": "pages/DevolucaoTroca.jsx",
+                "papel": "Devolução ou troca pós-venda; gera vale_compra.",
+                "logica": "Liga devolucao_troca ao pedido_origem; vale debitado no próximo PDVCaixa.",
+                "caminho": ["VendasGestao ou PDVCaixa → DevolucaoTroca → vale_compra → próxima venda"],
+                "vem_de": ["pedido_venda", "PDVCaixa"],
+                "envia_para": ["vale_compra", "processarVendaCaixa (crédito)"],
+                "filhas": [],
+                "regras": ["substitui_pedido_id liga troca à nova venda"],
+                "funcoes": [],
+                "tabelas": [{"nome": "devolucao_troca / vale_compra", "fks": [
+                    "pedido_origem_id → pedido_venda.id",
+                    "cliente_id → terceiro.id",
+                ]}],
             },
         ],
     },
@@ -823,6 +1112,27 @@ FLOW_CHAINS = [
             "→ lancamento_financeiro → FluxoCaixa / saldo contas_financeiras",
         ],
     },
+    {
+        "titulo": "Devolução e vale troca",
+        "passos": [
+            "VendasGestao ou PDVCaixa identifica pedido_origem",
+            "DevolucaoTroca regista itens devolvidos",
+            "vale_compra gerado com valor_disponivel",
+            "Próximo PDVCaixa auto-preenche crédito do vale",
+            "processarVendaCaixa debita vale_compra",
+        ],
+    },
+    {
+        "titulo": "Conferência cega (código → estoque)",
+        "passos": [
+            "GestaoCodigosConferencia gera código (admin/Gerente)",
+            "ConferenciaVolumes ou ConferenciaItens valida código",
+            "Operador conta volumes/itens",
+            "saveConferenciaItem / finalização",
+            "movimentacao_estoque Entrada motivo Compra",
+            "trigger recalcula produto.estoque_atual",
+        ],
+    },
 ]
 
 
@@ -840,6 +1150,15 @@ def render_piece(page: dict) -> list:
     if page.get("papel"):
         flow.append(Paragraph("<b>Papel</b>", STYLES["section_lbl"]))
         flow.append(Paragraph(esc(page["papel"]), STYLES["body"]))
+
+    if page.get("arvore"):
+        flow.append(Paragraph("<b>Árvore desta peça</b>", STYLES["section_lbl"]))
+        for line in page["arvore"]:
+            flow.append(Paragraph(esc(line), STYLES["arvore"]))
+
+    if page.get("logica"):
+        flow.append(Paragraph("<b>Lógica interna</b>", STYLES["section_lbl"]))
+        flow.append(Paragraph(esc(page["logica"]), STYLES["logica"]))
 
     if page.get("caminho"):
         flow.append(Paragraph("<b>Caminho (pathway)</b>", STYLES["section_lbl"]))
@@ -901,7 +1220,21 @@ def render_piece(page: dict) -> list:
                 )
             )
 
-    flow.append(Spacer(1, 4 * mm))
+    flow.append(Spacer(1, 6 * mm))
+    return flow
+
+
+def render_zone_tree(zone: dict) -> list:
+    """Mapa hierárquico rápido do módulo antes das peças."""
+    flow: list = []
+    flow.append(Paragraph("<b>Mapa hierárquico do módulo</b>", STYLES["section_lbl"]))
+    flow.append(Paragraph(f"{esc(zone['menu'])}", STYLES["arvore"]))
+    for p in zone["pages"]:
+        flow.append(Paragraph(f"├── ● {esc(p['nome'])}  ({esc(p.get('rota', ''))})", STYLES["arvore"]))
+        for f in p.get("filhas", []):
+            nome = f["nome"] if isinstance(f, dict) else f
+            flow.append(Paragraph(f"│   └── {esc(nome)}", STYLES["arvore"]))
+    flow.append(Spacer(1, 5 * mm))
     return flow
 
 
@@ -976,18 +1309,15 @@ def build_pdf():
         story.append(Spacer(1, 5 * mm))
     story.append(PageBreak())
 
-    # Módulos — uma peça por bloco, page break entre peças grandes
+    # Módulos — uma peça por página (manual espaçado)
     for zone in CATALOG:
         story.append(Paragraph(esc(zone["menu"]), STYLES["zone"]))
         story.append(Paragraph(esc(zone.get("intro", "")), STYLES["zone_intro"]))
+        story.extend(render_zone_tree(zone))
 
-        for j, page in enumerate(zone["pages"]):
+        for page in zone["pages"]:
             story.extend(render_piece(page))
-            # page break entre peças (manual espaçado)
-            if j < len(zone["pages"]) - 1:
-                story.append(PageBreak())
-
-        story.append(PageBreak())
+            story.append(PageBreak())
 
     # Apêndice
     story.append(Paragraph("Apêndice — Tabelas-hub", STYLES["zone"]))
