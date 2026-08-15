@@ -246,12 +246,12 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarPedido, on
     },
     {
       icon: <Files className="w-5 h-5" />,
-      label: 'PDF completo (minuta + anexos)',
+      label: 'PDF completo mobile (minuta + anexos)',
       reportVersion: 'expandida_com_anexos',
       onClick: () => handleGerarRelatorio('expandida_com_anexos'),
       color: 'bg-card dark:bg-muted text-foreground/90',
       disabled: !!gerando,
-      title: 'Minuta de cada embarque filtrado + comprovantes e anexos embutidos',
+      title: 'Minuta mobile com texto do pedido + comprovantes embutidos por pedido',
     },
     {
       icon: <List className="w-5 h-5" />,
