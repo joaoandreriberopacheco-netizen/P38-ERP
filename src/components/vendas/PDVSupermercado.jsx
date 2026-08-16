@@ -672,7 +672,7 @@ export default function PDVSupermercado() {
         <div className={`hidden desktop-layout:flex flex-col w-72 lg:w-80 xl:w-96 flex-shrink-0 bg-white dark:bg-card border-l border-[#dce0d4] dark:border-border/40 p-4 lg:p-6 shadow-lg z-10`}>
           <div className="mb-6">
             <h2 className={`${AUTO_ACCENT_TEXT} uppercase text-xs font-bold tracking-wider mb-2 opacity-80`}>Resumo</h2>
-            <div className="text-4xl font-bold text-emerald-700 dark:text-emerald-400 mb-1 tabular-nums">R$ {totalCarrinho.toFixed(2)}</div>
+            <div className={`text-4xl font-bold mb-1 tabular-nums ${AUTO_ACCENT_TEXT}`}>R$ {totalCarrinho.toFixed(2)}</div>
             <p className="text-sm text-muted-foreground">{totalItensCarrinho} itens</p>
           </div>
 
@@ -794,7 +794,7 @@ export default function PDVSupermercado() {
              </div>
              <div className={`${AUTO_SURFACE_CLASS} p-4 desktop-layout:p-6 flex flex-col justify-center items-center text-center order-1 desktop-layout:order-2 sticky top-0 desktop-layout:static z-10`}>
                 <p className={`text-xs desktop-layout:text-sm ${AUTO_ACCENT_TEXT} uppercase font-semibold tracking-wide opacity-80`}>Total a Pagar</p>
-                <p className="text-3xl font-bold text-emerald-700 dark:text-emerald-400 mb-2 desktop-layout:mb-4 tabular-nums">R$ {totalCarrinho.toFixed(2)}</p>
+                <p className={`text-3xl font-bold mb-2 desktop-layout:mb-4 tabular-nums ${AUTO_ACCENT_TEXT}`}>R$ {totalCarrinho.toFixed(2)}</p>
                 
                 {troco > 0 && <p className="text-emerald-600 font-bold text-lg desktop-layout:text-xl tabular-nums">Troco: R$ {troco.toFixed(2)}</p>}
                 {valorRestante > 0.01 && <p className="text-amber-600 font-bold text-lg desktop-layout:text-xl tabular-nums">Falta: R$ {valorRestante.toFixed(2)}</p>}
