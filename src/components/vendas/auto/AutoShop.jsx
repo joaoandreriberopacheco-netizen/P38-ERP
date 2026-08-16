@@ -24,6 +24,9 @@ import AutoProductGrid from './AutoProductGrid';
 import {
   AUTO_HEADER_CLASS,
   AUTO_PRIMARY_BTN,
+  AUTO_CARD_CLASS,
+  AUTO_SHELL_BG,
+  AUTO_FIELD_CLASS,
   buildCategoryStructure,
   formatAutoMoney,
 } from './autoAtendimentoUi';
@@ -103,7 +106,7 @@ export default function AutoShop({
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-muted/40 dark:bg-background overflow-hidden">
+    <div className={`flex-1 flex flex-col h-full ${AUTO_SHELL_BG} overflow-hidden`}>
       {avisos.length > 0 && (
         <div className="bg-indigo-600 text-white py-1.5 overflow-hidden shrink-0">
           <div className="animate-marquee whitespace-nowrap flex gap-8 text-sm">
@@ -140,7 +143,7 @@ export default function AutoShop({
         )}
       </header>
 
-      <div className="px-4 py-3 bg-card border-b border-border/40 shrink-0">
+      <div className="px-4 py-3 bg-white dark:bg-card border-b border-[#dce0d4] dark:border-border/40 shrink-0">
         <div className="max-w-4xl mx-auto flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -148,7 +151,7 @@ export default function AutoShop({
               placeholder="Buscar por nome ou código..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 h-12 text-base rounded-xl bg-muted/40 border-border/40"
+              className={`pl-10 h-12 text-base rounded-xl ${AUTO_FIELD_CLASS}`}
             />
           </div>
           {(selectedCategory || search.trim()) && (
@@ -204,7 +207,7 @@ export default function AutoShop({
       </div>
 
       {carrinho.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border/40 p-4 shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
+        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-card border-t border-[#dce0d4] dark:border-border/40 p-4 shadow-[0_-8px_30px_rgba(0,0,0,0.06)]">
           <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
             <button
               type="button"
