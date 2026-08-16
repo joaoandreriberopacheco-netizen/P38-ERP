@@ -23,6 +23,10 @@ export function VirtualizedList({
     estimateSize: () => estimateSize,
     getItemKey: (index) => getItemKey?.(safeItems[index], index) ?? safeItems[index]?.id ?? index,
     overscan,
+    measureElement:
+      typeof window !== 'undefined'
+        ? (element) => element?.getBoundingClientRect().height ?? estimateSize
+        : undefined,
   });
 
   if (safeItems.length === 0) {
@@ -46,6 +50,7 @@ export function VirtualizedList({
             <div
               key={virtualRow.key}
               data-index={virtualRow.index}
+              ref={virtualizer.measureElement}
               className={cn('absolute left-0 top-0 w-full', itemClassName)}
               style={{ transform: `translateY(${virtualRow.start}px)` }}
             >

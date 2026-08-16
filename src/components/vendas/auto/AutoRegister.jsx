@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
+import { AUTO_ACCENT_TEXT, AUTO_PRIMARY_BTN, AUTO_SHELL_BG, AUTO_SURFACE_CLASS, AUTO_FIELD_CLASS } from './autoAtendimentoUi';
 
 export default function AutoRegister({ onSuccess, onBack }) {
   const [formData, setFormData] = useState({
@@ -51,7 +52,7 @@ export default function AutoRegister({ onSuccess, onBack }) {
 
   return (
     <motion.div 
-      className="flex-1 flex flex-col bg-background p-6 md:p-12"
+      className={`flex-1 flex flex-col ${AUTO_SHELL_BG} p-6 md:p-12`}
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -50 }}
@@ -60,7 +61,7 @@ export default function AutoRegister({ onSuccess, onBack }) {
         <Button 
           onClick={onBack}
           variant="ghost"
-          className="mb-6 pl-0 hover:bg-transparent hover:text-indigo-600"
+          className={`mb-6 pl-0 hover:bg-transparent ${AUTO_ACCENT_TEXT}`}
         >
           <ArrowLeft className="w-5 h-5 mr-2" /> Voltar
         </Button>
@@ -105,7 +106,7 @@ export default function AutoRegister({ onSuccess, onBack }) {
           <Button 
             type="submit"
             disabled={loading}
-            className="w-full h-14 text-lg font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl mt-4"
+            className={`w-full h-14 text-lg font-bold rounded-xl mt-4 ${AUTO_PRIMARY_BTN}`}
           >
             {loading ? 'Cadastrando...' : 'Concluir Cadastro'}
           </Button>

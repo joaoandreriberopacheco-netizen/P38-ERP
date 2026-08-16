@@ -24,9 +24,11 @@ import AutoProductGrid from './AutoProductGrid';
 import {
   AUTO_HEADER_CLASS,
   AUTO_PRIMARY_BTN,
-  AUTO_CARD_CLASS,
+  AUTO_SURFACE_CLASS,
   AUTO_SHELL_BG,
   AUTO_FIELD_CLASS,
+  AUTO_ACCENT_TEXT,
+  AUTO_ACCENT_BG,
   buildCategoryStructure,
   formatAutoMoney,
 } from './autoAtendimentoUi';
@@ -215,7 +217,7 @@ export default function AutoShop({
               onClick={() => setShowCartModal(true)}
             >
               <div className="relative shrink-0">
-                <div className="w-11 h-11 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl flex items-center justify-center text-indigo-600">
+                <div className={`w-11 h-11 ${AUTO_ACCENT_BG} rounded-xl flex items-center justify-center ${AUTO_ACCENT_TEXT}`}>
                   <ShoppingCart className="w-5 h-5" />
                 </div>
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">

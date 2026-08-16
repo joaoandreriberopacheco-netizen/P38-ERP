@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { UserPlus, ArrowRight, Search } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
-import { AUTO_HEADER_CLASS, AUTO_PRIMARY_BTN } from './autoAtendimentoUi';
+import { AUTO_HEADER_CLASS, AUTO_PRIMARY_BTN, AUTO_SHELL_BG, AUTO_SURFACE_CLASS, AUTO_FIELD_CLASS, AUTO_ACCENT_TEXT } from './autoAtendimentoUi';
 
 export default function AutoIdentification({ onIdentify, onSkip, onRegister, onBack }) {
   const [documento, setDocumento] = useState('');
@@ -51,7 +51,7 @@ export default function AutoIdentification({ onIdentify, onSkip, onRegister, onB
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen bg-muted/40 dark:bg-background">
+    <div className={`flex-1 flex flex-col min-h-screen ${AUTO_SHELL_BG}`}>
       <header className={AUTO_HEADER_CLASS}>
         <Button
           variant="ghost"
@@ -73,7 +73,7 @@ export default function AutoIdentification({ onIdentify, onSkip, onRegister, onB
 
           <form
             onSubmit={handleSearch}
-            className="bg-card border border-border/40 rounded-2xl p-6 shadow-sm space-y-4"
+            className={`${AUTO_SURFACE_CLASS} p-6 space-y-4`}
           >
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
@@ -85,13 +85,13 @@ export default function AutoIdentification({ onIdentify, onSkip, onRegister, onB
                   value={documento}
                   onChange={(e) => setDocumento(e.target.value)}
                   placeholder="Somente números"
-                  className="h-12 text-lg pr-12 rounded-xl"
+                  className={`h-12 text-lg pr-12 rounded-xl ${AUTO_FIELD_CLASS}`}
                   autoFocus
                 />
                 <button
                   type="submit"
                   disabled={loading}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg"
+                  className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 ${AUTO_ACCENT_TEXT} hover:bg-[#f0f2ec] dark:hover:bg-[#26262e] rounded-lg`}
                 >
                   <Search className="w-5 h-5" />
                 </button>
@@ -118,7 +118,7 @@ export default function AutoIdentification({ onIdentify, onSkip, onRegister, onB
             </Button>
             <Button
               variant="ghost"
-              className="w-full h-12 rounded-xl text-indigo-600"
+              className={`w-full h-12 rounded-xl ${AUTO_ACCENT_TEXT}`}
               onClick={onRegister}
             >
               <UserPlus className="w-4 h-4 mr-2" />

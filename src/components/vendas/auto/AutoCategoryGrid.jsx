@@ -1,5 +1,10 @@
 import { ChevronRight, LayoutGrid } from 'lucide-react';
-import { AUTO_CARD_CLASS } from './autoAtendimentoUi';
+import {
+  AUTO_SURFACE_CLASS,
+  AUTO_CARD_HOVER,
+  AUTO_ACCENT_TEXT,
+  AUTO_ACCENT_BG,
+} from './autoAtendimentoUi';
 
 export default function AutoCategoryGrid({ categories, onSelect }) {
   if (!categories?.length) {
@@ -17,14 +22,16 @@ export default function AutoCategoryGrid({ categories, onSelect }) {
           key={cat.name}
           type="button"
           onClick={() => onSelect(cat.name)}
-          className={`${AUTO_CARD_CLASS} p-4 text-left hover:border-indigo-300 hover:shadow-md transition-all active:scale-[0.98]`}
+          className={`${AUTO_SURFACE_CLASS} ${AUTO_CARD_HOVER} p-4 text-left`}
         >
           <div className="flex items-start justify-between gap-2">
-            <LayoutGrid className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
+            <div className={`w-8 h-8 rounded-lg ${AUTO_ACCENT_BG} flex items-center justify-center shrink-0`}>
+              <LayoutGrid className={`w-4 h-4 ${AUTO_ACCENT_TEXT}`} />
+            </div>
             <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
           </div>
           <p className="font-semibold text-foreground mt-3 leading-snug">{cat.name}</p>
-          <p className="text-xs text-muted-foreground mt-1">{cat.count} produtos</p>
+          <p className={`text-xs mt-1 ${AUTO_ACCENT_TEXT} opacity-80`}>{cat.count} produtos</p>
         </button>
       ))}
     </div>

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
+import { AUTO_PRIMARY_BTN } from './autoAtendimentoUi';
 
 export default function AutoLostSales({ open, onClose }) {
   const [msg, setMsg] = useState('');
@@ -93,7 +94,7 @@ export default function AutoLostSales({ open, onClose }) {
             <Button
               onClick={handleSubmit}
               disabled={!msg.trim()}
-              className="flex-1 h-12 bg-indigo-600 hover:bg-indigo-700 text-white"
+              className={`flex-1 h-12 ${AUTO_PRIMARY_BTN}`}
             >
               Enviar
             </Button>

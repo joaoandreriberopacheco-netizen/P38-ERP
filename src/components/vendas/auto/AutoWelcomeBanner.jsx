@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
+import { AUTO_COVER_CLASS, AUTO_PRIMARY_BTN } from './autoAtendimentoUi';
 
 export default function AutoWelcomeBanner({ config, onUpdateConfig, visible }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -32,7 +33,7 @@ export default function AutoWelcomeBanner({ config, onUpdateConfig, visible }) {
 
   return (
     <div
-      className="relative mx-4 mt-3 mb-2 rounded-2xl overflow-hidden bg-indigo-600 text-white shadow-md shrink-0"
+      className={`relative mx-4 mt-3 mb-2 rounded-2xl overflow-hidden ${AUTO_COVER_CLASS} shadow-md shrink-0`}
       style={{
         backgroundImage: config.imagem_fundo_url
           ? `linear-gradient(to bottom, rgba(15, 23, 42, 0.15), rgba(15, 23, 42, 0.85)), url(${config.imagem_fundo_url})`
@@ -86,7 +87,7 @@ export default function AutoWelcomeBanner({ config, onUpdateConfig, visible }) {
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setIsEditing(false)}>Cancelar</Button>
-            <Button onClick={handleSaveConfig} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+            <Button onClick={handleSaveConfig} className={AUTO_PRIMARY_BTN}>
               Salvar
             </Button>
           </DialogFooter>
