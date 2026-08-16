@@ -5,6 +5,7 @@ import { CreditCard, Smartphone, ArrowLeft, Loader2, Printer, CheckCircle } from
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import SimuladorCartaoSheet from '@/components/vendas/SimuladorCartaoSheet';
+import { AUTO_HEADER_CLASS, AUTO_PRIMARY_BTN, formatAutoMoney } from './autoAtendimentoUi';
 import { omitPedidoVendaEspelho } from '@/lib/omitEspelhoPersist';
 import { syncPedidoVendaItens } from '@/lib/syncPedidoVendaItens';
 
@@ -126,7 +127,7 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
 
             <Button 
               onClick={() => onSuccess(pedidoFinalizado)}
-              className="w-full h-14 text-lg font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl mb-3"
+              className={`w-full h-14 text-lg font-bold rounded-xl mb-3 ${AUTO_PRIMARY_BTN}`}
             >
               <Printer className="w-5 h-5 mr-2" />
               Imprimir e Finalizar
@@ -151,12 +152,12 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
     >
-      <div className="p-6 border-b border-border/40 bg-card flex items-center justify-between">
-        <Button variant="ghost" onClick={onBack} disabled={processing}>
+      <div className={AUTO_HEADER_CLASS}>
+        <Button variant="ghost" onClick={onBack} disabled={processing} className="text-white hover:bg-indigo-700 hover:text-white">
           <ArrowLeft className="w-5 h-5 mr-2" /> Voltar
         </Button>
-        <h2 className="text-xl font-bold">Pagamento</h2>
-        <div className="w-20"></div> {/* Spacer */}
+        <h2 className="text-lg font-bold">Pagamento</h2>
+        <div className="w-16" />
       </div>
 
       <div className="flex-1 flex flex-col md:flex-row">
