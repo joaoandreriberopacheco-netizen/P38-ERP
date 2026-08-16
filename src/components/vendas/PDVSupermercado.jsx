@@ -27,6 +27,11 @@ import {
   filterProdutosDisponiveisPdv,
   isProdutoDisponivelPdv,
 } from '@/lib/hierarquiaPortal/produtoPdvDisponibilidade';
+import {
+  AUTO_HEADER_CLASS,
+  AUTO_PRIMARY_BTN,
+  AUTO_CARD_CLASS,
+} from '@/components/vendas/auto/autoAtendimentoUi';
 
 export default function PDVSupermercado() {
   const [carrinho, setCarrinho] = useState([]);
@@ -391,48 +396,55 @@ export default function PDVSupermercado() {
 
   return (
     <div className="h-screen flex flex-col bg-muted/40 dark:bg-background">
-      {/* Header */}
-      <div className="bg-indigo-600 text-white px-3 py-2.5 desktop-layout:px-4 desktop-layout:py-4 flex justify-between items-center shadow-md flex-shrink-0">
+      {/* Header — mesmo visual indigo do auto-atendimento */}
+      <header className={`${AUTO_HEADER_CLASS} px-3 py-2.5 desktop-layout:px-4 desktop-layout:py-3`}>
         <div className="flex items-center gap-2 desktop-layout:gap-3 min-w-0">
-          <ShoppingCart className="w-5 h-5 desktop-layout:w-6 desktop-layout:h-6 flex-shrink-0" />
+          <div className="w-9 h-9 desktop-layout:w-10 desktop-layout:h-10 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0">
+            <ShoppingCart className="w-5 h-5" />
+          </div>
           <div className="min-w-0">
             <h1 className="text-base desktop-layout:text-lg font-bold truncate">PDV Supermercado</h1>
-            <p className="text-xs opacity-80 hidden desktop-layout:block">Venda Rápida • Estoque & Financeiro Integrados</p>
+            <p className="text-xs text-indigo-100 hidden desktop-layout:block">Venda Rápida • Estoque & Financeiro Integrados</p>
           </div>
         </div>
         <div className="flex items-center gap-2 desktop-layout:gap-4 flex-shrink-0">
           <div className="text-right hidden desktop-layout:block">
-             <p className="text-xs opacity-80">Operador</p>
+             <p className="text-xs text-indigo-100">Operador</p>
              <p className="font-semibold text-sm">{currentUser?.full_name}</p>
           </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setShowClienteDialog(true)}
-            className="desktop-layout:hidden h-9 w-9 hover:bg-indigo-700"
+            className="desktop-layout:hidden h-9 w-9 text-white hover:bg-indigo-700 hover:text-white"
             aria-label="Selecionar cliente"
           >
             <UserPlus className="w-5 h-5" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => window.location.href = '/'} className="h-9 w-9 hover:bg-indigo-700">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => { window.location.href = '/'; }}
+            className="h-9 w-9 text-white hover:bg-indigo-700 hover:text-white"
+          >
             <ArrowRight className="w-5 h-5" />
           </Button>
         </div>
-      </div>
+      </header>
 
       {/* Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left: Product List */}
         <div className="flex-1 flex flex-col p-3 desktop-layout:p-4 overflow-hidden pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] desktop-layout:pb-4">
           {/* Search and Add Product Area - MATCHING PDV VENDEDOR STYLE */}
-          <div className="mb-3 desktop-layout:mb-4 flex-shrink-0 relative" ref={suggestionsRef}>
+          <div className="mb-3 desktop-layout:mb-4 flex-shrink-0 relative px-3 py-3 -mx-3 desktop-layout:mx-0 desktop-layout:px-0 desktop-layout:py-0 bg-card border-b border-border/40 desktop-layout:bg-transparent desktop-layout:border-0" ref={suggestionsRef}>
             <div className="flex gap-2">
                 <div className="flex-1 relative min-w-0">
-                  <Barcode className="absolute left-3 desktop-layout:left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Barcode className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-indigo-500/70" />
                   <Input 
                     ref={inputProdutoRef}
                     placeholder="Buscar ou escanear..."
-                    className="pl-10 desktop-layout:pl-12 pr-12 desktop-layout:pr-14 bg-card dark:bg-card border border-border/40 dark:border-border/40 rounded-xl text-foreground dark:text-muted-foreground h-12 desktop-layout:h-14 text-base focus:ring-2 focus:ring-border/40 focus:border-border/40 placeholder:text-muted-foreground"
+                    className="pl-10 pr-12 bg-muted/40 border-border/40 rounded-xl text-foreground h-12 desktop-layout:h-14 text-base focus-visible:ring-indigo-500/40 focus-visible:border-indigo-400 placeholder:text-muted-foreground"
                     value={buscaProduto}
                     onChange={(e) => setBuscaProduto(e.target.value)}
                     onKeyDown={handleKeyDown}
@@ -443,7 +455,7 @@ export default function PDVSupermercado() {
                     variant="ghost"
                     size="icon"
                     onClick={() => setShowBarcodeScanner(true)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 text-muted-foreground hover:text-muted-foreground hover:bg-muted dark:hover:bg-muted"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
                   >
                     <Camera className="w-5 h-5" />
                   </Button>
@@ -453,7 +465,7 @@ export default function PDVSupermercado() {
                 type="number"
                 inputMode="numeric"
                 placeholder="Qtd"
-                className="w-[4.5rem] desktop-layout:w-24 bg-card dark:bg-card border border-border/40 dark:border-border/40 rounded-xl text-foreground dark:text-muted-foreground h-12 desktop-layout:h-14 text-center text-lg font-semibold focus:ring-2 focus:ring-border/40"
+                className="w-[4.5rem] desktop-layout:w-24 bg-muted/40 border-border/40 rounded-xl text-foreground h-12 desktop-layout:h-14 text-center text-lg font-semibold focus-visible:ring-indigo-500/40"
                 value={quantidadeAtual}
                 onChange={(e) => setQuantidadeAtual(parseInt(e.target.value) || 1)}
                 onFocus={selectAllOnFocus}
@@ -474,8 +486,8 @@ export default function PDVSupermercado() {
                     return (
                       <div
                         key={produto.id}
-                        className={`p-3 desktop-layout:p-4 hover:bg-muted/40 dark:hover:bg-muted/50 border-b border-border/40 dark:border-border/40 last:border-b-0 cursor-pointer transition-all flex justify-between items-start gap-3 ${
-                          isSelected ? 'bg-muted dark:bg-muted border-l-4 border-l-border pl-3' : 'pl-4'
+                        className={`p-3 desktop-layout:p-4 hover:bg-indigo-50/80 dark:hover:bg-indigo-950/20 border-b border-border/40 last:border-b-0 cursor-pointer transition-all flex justify-between items-start gap-3 ${
+                          isSelected ? 'bg-indigo-50 dark:bg-indigo-950/30 border-l-4 border-l-indigo-600 pl-3' : 'pl-4'
                         }`}
                         onClick={() => handleSelecionarProduto(produto)}
                       >
@@ -500,11 +512,11 @@ export default function PDVSupermercado() {
 
             {/* Selected Product Preview (Before Adding) */}
             {produtoSelecionado && (
-              <div className="mt-3 p-3 desktop-layout:p-4 bg-muted dark:bg-card rounded-xl border border-border/40 dark:border-border/40">
+              <div className={`mt-3 p-3 desktop-layout:p-4 ${AUTO_CARD_CLASS} border-indigo-200/60 dark:border-indigo-800/40`}>
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="w-10 h-10 rounded-lg bg-muted dark:bg-muted flex items-center justify-center flex-shrink-0">
-                      <Package className="w-5 h-5 text-muted-foreground dark:text-muted-foreground" />
+                    <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center flex-shrink-0">
+                      <Package className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-foreground dark:text-foreground truncate">{produtoSelecionado.nome}</p>
@@ -532,7 +544,7 @@ export default function PDVSupermercado() {
                     </Button>
                     <Button
                       onClick={handleConfirmarAdicao}
-                      className="flex-[2] bg-primary hover:bg-primary/90 text-primary-foreground text-white font-medium"
+                      className={`flex-[2] ${AUTO_PRIMARY_BTN}`}
                       size="sm"
                     >
                       <span className="desktop-layout:hidden">Adicionar</span>
@@ -545,11 +557,11 @@ export default function PDVSupermercado() {
           </div>
 
           {/* Cart List */}
-          <div className="flex-1 overflow-y-auto bg-card dark:bg-card rounded-lg shadow-sm border min-h-0">
+          <div className={`flex-1 overflow-y-auto ${AUTO_CARD_CLASS} min-h-0`}>
             {/* Mobile: cards */}
-            <div className="desktop-layout:hidden divide-y divide-border/40">
+            <div className="desktop-layout:hidden p-2 space-y-2">
               {carrinho.map((item) => (
-                <div key={getCartItemKey(item)} className="p-3">
+                <div key={getCartItemKey(item)} className="border border-border/40 rounded-xl p-3 bg-card hover:border-indigo-300/60 transition-colors">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-sm leading-snug line-clamp-2">{item.produto_nome}</p>
@@ -578,7 +590,7 @@ export default function PDVSupermercado() {
                       <button
                         type="button"
                         onClick={() => updateCartItemQuantity(item, -1)}
-                        className="min-h-11 min-w-11 bg-muted rounded-lg hover:bg-muted/80 font-bold text-lg"
+                        className="min-h-11 min-w-11 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40 font-bold text-lg"
                         aria-label="Diminuir quantidade"
                       >
                         -
@@ -587,7 +599,7 @@ export default function PDVSupermercado() {
                       <button
                         type="button"
                         onClick={() => updateCartItemQuantity(item, 1)}
-                        className="min-h-11 min-w-11 bg-muted rounded-lg hover:bg-muted/80 font-bold text-lg"
+                        className="min-h-11 min-w-11 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40 font-bold text-lg"
                         aria-label="Aumentar quantidade"
                       >
                         +
@@ -641,30 +653,34 @@ export default function PDVSupermercado() {
             </div>
 
             {carrinho.length === 0 && (
-              <div className="h-full min-h-[12rem] flex flex-col items-center justify-center text-muted-foreground opacity-50 p-6 text-center">
-                <ShoppingCart className="w-14 h-14 desktop-layout:w-16 desktop-layout:h-16 mb-3 desktop-layout:mb-4" />
-                <p className="text-base desktop-layout:text-lg font-medium">Carrinho Vazio</p>
-                <p className="text-sm">Escaneie ou busque um produto</p>
+              <div className="h-full min-h-[12rem] flex flex-col items-center justify-center text-muted-foreground p-6 text-center">
+                <div className="w-16 h-16 desktop-layout:w-20 desktop-layout:h-20 rounded-2xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center mb-3 desktop-layout:mb-4">
+                  <ShoppingCart className="w-8 h-8 desktop-layout:w-10 desktop-layout:h-10 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <p className="text-base desktop-layout:text-lg font-medium text-foreground">Carrinho Vazio</p>
+                <p className="text-sm text-muted-foreground">Escaneie ou busque um produto</p>
               </div>
             )}
           </div>
         </div>
 
         {/* Right: Summary & Actions — tablet+ split; telemóvel usa barra inferior */}
-        <div className="hidden desktop-layout:flex flex-col w-72 lg:w-80 xl:w-96 flex-shrink-0 bg-card dark:bg-card border-l p-4 lg:p-6 shadow-lg z-10">
+        <div className="hidden desktop-layout:flex flex-col w-72 lg:w-80 xl:w-96 flex-shrink-0 bg-card dark:bg-card border-l border-indigo-100/80 dark:border-indigo-900/30 p-4 lg:p-6 shadow-lg z-10">
           <div className="mb-6">
-            <h2 className="text-muted-foreground uppercase text-xs font-bold tracking-wider mb-2">Resumo</h2>
-            <div className="text-4xl font-bold text-foreground dark:text-white mb-1">R$ {totalCarrinho.toFixed(2)}</div>
+            <h2 className="text-indigo-600/80 dark:text-indigo-400 uppercase text-xs font-bold tracking-wider mb-2">Resumo</h2>
+            <div className="text-4xl font-bold text-emerald-600 dark:text-emerald-400 mb-1 tabular-nums">R$ {totalCarrinho.toFixed(2)}</div>
             <p className="text-sm text-muted-foreground">{totalItensCarrinho} itens</p>
           </div>
 
           <div className="space-y-3 mb-auto">
-             <div className="p-3 bg-muted/40 rounded-lg border flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                   <UserPlus className="w-4 h-4 text-muted-foreground" />
-                   <span className="text-sm">{cliente ? cliente.nome : 'Consumidor Final'}</span>
+             <div className={`p-3 ${AUTO_CARD_CLASS} flex justify-between items-center`}>
+                <div className="flex items-center gap-2 min-w-0">
+                   <div className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center flex-shrink-0">
+                     <UserPlus className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                   </div>
+                   <span className="text-sm truncate">{cliente ? cliente.nome : 'Consumidor Final'}</span>
                 </div>
-                <Button variant="link" size="sm" onClick={() => setShowClienteDialog(true)}>Alterar</Button>
+                <Button variant="link" size="sm" onClick={() => setShowClienteDialog(true)} className="text-indigo-600 shrink-0">Alterar</Button>
              </div>
           </div>
 
@@ -679,7 +695,7 @@ export default function PDVSupermercado() {
           )}
           <Button 
             size="lg" 
-            className="h-16 text-xl font-bold bg-emerald-600 hover:bg-emerald-700 w-full rounded-xl shadow-emerald-200"
+            className={`h-16 text-xl font-bold w-full ${AUTO_PRIMARY_BTN}`}
             onClick={handlePaymentOpen}
             disabled={carrinho.length === 0}
           >
@@ -688,24 +704,36 @@ export default function PDVSupermercado() {
         </div>
       </div>
 
-      {/* Barra inferior — smartphone */}
-      <div className="desktop-layout:hidden fixed left-0 right-0 bottom-0 z-50 border-t border-border/40 bg-card/95 backdrop-blur-md shadow-[0_-8px_24px_rgba(0,0,0,0.08)]">
+      {/* Barra inferior — smartphone (estilo auto-atendimento) */}
+      <div className="desktop-layout:hidden fixed left-0 right-0 bottom-0 z-50 border-t border-border/40 bg-card shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
         <div className="flex items-center gap-3 px-3 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
           <button
             type="button"
             onClick={() => setShowClienteDialog(true)}
-            className="flex min-w-0 max-w-[38%] flex-col rounded-xl border border-border/40 bg-muted/30 px-3 py-2 text-left"
+            className="flex min-w-0 max-w-[34%] flex-col rounded-xl border border-indigo-200/60 dark:border-indigo-800/40 bg-indigo-50/50 dark:bg-indigo-950/20 px-3 py-2 text-left"
           >
-            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Cliente</span>
+            <span className="text-[10px] uppercase tracking-wide text-indigo-600/80 dark:text-indigo-400">Cliente</span>
             <span className="truncate text-sm font-medium">{cliente ? cliente.nome : 'Consumidor Final'}</span>
           </button>
-          <div className="flex-1 min-w-0 text-right">
-            <p className="text-xs text-muted-foreground">{totalItensCarrinho} itens</p>
-            <p className="text-xl font-bold text-foreground tabular-nums">R$ {totalCarrinho.toFixed(2)}</p>
+          <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
+            <div className="relative shrink-0">
+              <div className="w-11 h-11 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl flex items-center justify-center text-indigo-600">
+                <ShoppingCart className="w-5 h-5" />
+              </div>
+              {totalItensCarrinho > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {totalItensCarrinho}
+                </span>
+              )}
+            </div>
+            <div className="text-right min-w-0">
+              <p className="text-xs text-muted-foreground">{totalItensCarrinho} itens</p>
+              <p className="text-xl font-bold text-foreground tabular-nums">R$ {totalCarrinho.toFixed(2)}</p>
+            </div>
           </div>
           <Button
             size="lg"
-            className="h-12 shrink-0 px-5 font-bold bg-emerald-600 hover:bg-emerald-700"
+            className={`h-12 shrink-0 px-5 text-base ${AUTO_PRIMARY_BTN}`}
             onClick={handlePaymentOpen}
             disabled={carrinho.length === 0}
           >
@@ -714,31 +742,38 @@ export default function PDVSupermercado() {
         </div>
       </div>
 
-      {/* Payment Dialog */}
       <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-        <DialogContent className="desktop-layout:max-w-2xl max-w-none w-full h-[100dvh] desktop-layout:h-auto desktop-layout:max-h-[90vh] left-0 top-0 desktop-layout:left-[50%] desktop-layout:top-[50%] translate-x-0 translate-y-0 desktop-layout:translate-x-[-50%] desktop-layout:translate-y-[-50%] rounded-none desktop-layout:rounded-lg overflow-y-auto p-4 desktop-layout:p-6">
-          <DialogHeader className="text-left">
-            <DialogTitle>Pagamento</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-1 desktop-layout:grid-cols-2 gap-4 desktop-layout:gap-8">
+        <DialogContent className="desktop-layout:max-w-2xl max-w-none w-full h-[100dvh] desktop-layout:h-auto desktop-layout:max-h-[90vh] left-0 top-0 desktop-layout:left-[50%] desktop-layout:top-[50%] translate-x-0 translate-y-0 desktop-layout:translate-x-[-50%] desktop-layout:translate-y-[-50%] rounded-none desktop-layout:rounded-lg overflow-y-auto p-0 desktop-layout:p-0 gap-0">
+          <div className="h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shrink-0" />
+          <div className={`${AUTO_HEADER_CLASS} rounded-none`}>
+            <DialogTitle className="text-lg font-bold text-white">Pagamento</DialogTitle>
+            <p className="text-sm text-indigo-100 tabular-nums">R$ {totalCarrinho.toFixed(2)}</p>
+          </div>
+          <div className="p-4 desktop-layout:p-6 grid grid-cols-1 desktop-layout:grid-cols-2 gap-4 desktop-layout:gap-8">
              <div className="space-y-3 desktop-layout:space-y-4 order-2 desktop-layout:order-1">
-                {/* Input fields for payment methods */}
                 {['Dinheiro', 'PIX', 'Cartão Débito', 'Cartão Crédito'].map((label, i) => {
                    const refs = [inputRefs.dinheiro, inputRefs.pix, inputRefs.debito, inputRefs.credito];
                    const vals = [inputDinheiro, inputPix, inputDebito, inputCredito];
                    const setters = [setInputDinheiro, setInputPix, setInputDebito, setInputCredito];
                    const numSetters = [setPagamentosDinheiro, setPagamentosPix, setPagamentosDebito, setPagamentosCredito];
                    const icons = [Banknote, Smartphone, CreditCard, CreditCard];
+                   const iconBg = ['bg-amber-100 dark:bg-amber-900/40 text-amber-700', 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700', 'bg-teal-100 dark:bg-teal-900/40 text-teal-700', 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700'];
                    const Icon = icons[i];
                    
                    return (
                      <div key={label} 
-                        className={`flex items-center justify-between p-3 rounded-xl cursor-pointer min-h-[3.25rem] ${formaPagamentoAtiva === i ? 'bg-muted border border-indigo-200' : 'border border-border/40'}`}
+                        className={`flex items-center justify-between p-4 rounded-2xl cursor-pointer min-h-[3.5rem] transition-all ${
+                          formaPagamentoAtiva === i
+                            ? 'bg-indigo-50 dark:bg-indigo-950/30 border-2 border-indigo-500 shadow-sm'
+                            : 'bg-card border-2 border-transparent hover:border-indigo-300 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20'
+                        }`}
                         onClick={() => { setFormaPagamentoAtiva(i); focusAndSelect(refs[i].current); }}
                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                           <Icon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                           <span className="text-sm desktop-layout:text-base">{label}</span>
+                        <div className="flex items-center gap-3 min-w-0">
+                           <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${iconBg[i]}`}>
+                             <Icon className="w-5 h-5" />
+                           </div>
+                           <span className="text-sm desktop-layout:text-base font-medium">{label}</span>
                         </div>
                         <input autoComplete="off" 
                            ref={refs[i]}
@@ -747,15 +782,15 @@ export default function PDVSupermercado() {
                            onKeyDown={(e) => handleInputMascara(e, setters[i], numSetters[i])}
                            onFocus={(e) => { selectAllOnFocus(e); setFormaPagamentoAtiva(i); }}
                            onMouseDown={selectAllOnMouseDown}
-                           className="w-28 desktop-layout:w-24 text-right bg-transparent font-bold outline-none text-base"
+                           className="w-28 desktop-layout:w-24 text-right bg-transparent font-bold outline-none text-base text-indigo-700 dark:text-indigo-300"
                         />
                      </div>
                    );
                 })}
              </div>
-             <div className="bg-muted/40 p-4 desktop-layout:p-6 rounded-xl flex flex-col justify-center items-center text-center order-1 desktop-layout:order-2 sticky top-0 desktop-layout:static z-10">
-                <p className="text-xs desktop-layout:text-sm text-muted-foreground uppercase">Total a Pagar</p>
-                <p className="text-3xl desktop-layout:text-3xl font-bold text-foreground mb-2 desktop-layout:mb-4 tabular-nums">R$ {totalCarrinho.toFixed(2)}</p>
+             <div className={`${AUTO_CARD_CLASS} p-4 desktop-layout:p-6 flex flex-col justify-center items-center text-center order-1 desktop-layout:order-2 sticky top-0 desktop-layout:static z-10 border-indigo-200/60 dark:border-indigo-800/40`}>
+                <p className="text-xs desktop-layout:text-sm text-indigo-600/80 dark:text-indigo-400 uppercase font-semibold tracking-wide">Total a Pagar</p>
+                <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-2 desktop-layout:mb-4 tabular-nums">R$ {totalCarrinho.toFixed(2)}</p>
                 
                 {troco > 0 && <p className="text-emerald-600 font-bold text-lg desktop-layout:text-xl tabular-nums">Troco: R$ {troco.toFixed(2)}</p>}
                 {valorRestante > 0.01 && <p className="text-amber-600 font-bold text-lg desktop-layout:text-xl tabular-nums">Falta: R$ {valorRestante.toFixed(2)}</p>}
@@ -763,7 +798,7 @@ export default function PDVSupermercado() {
                 <Button 
                   onClick={handleFinalizarVenda} 
                   disabled={!pagamentoValido || isProcessing}
-                  className="w-full mt-4 desktop-layout:mt-6 h-12 text-base desktop-layout:text-lg bg-indigo-600 hover:bg-indigo-700"
+                  className={`w-full mt-4 desktop-layout:mt-6 h-12 text-base desktop-layout:text-lg ${AUTO_PRIMARY_BTN}`}
                 >
                   {isProcessing ? 'Processando...' : 'Confirmar'}
                 </Button>
@@ -774,18 +809,21 @@ export default function PDVSupermercado() {
 
       {/* Client Selection Dialog */}
       <Dialog open={showClienteDialog} onOpenChange={setShowClienteDialog}>
-        <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] desktop-layout:w-full">
-           <DialogHeader><DialogTitle>Selecionar Cliente</DialogTitle></DialogHeader>
-           <Input placeholder="Buscar cliente..." value={buscaCliente} onChange={e => setBuscaCliente(e.target.value)} autoFocus />
-           <div className="mt-4 max-h-60 overflow-y-auto">
+        <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] desktop-layout:w-full p-0 gap-0 overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+          <div className="p-6">
+           <DialogHeader><DialogTitle className="text-indigo-700 dark:text-indigo-400">Selecionar Cliente</DialogTitle></DialogHeader>
+           <Input placeholder="Buscar cliente..." value={buscaCliente} onChange={e => setBuscaCliente(e.target.value)} autoFocus className="mt-4 rounded-xl bg-muted/40" />
+           <div className="mt-4 max-h-60 overflow-y-auto space-y-1">
               {clientes.filter(c => c.nome.toLowerCase().includes(buscaCliente.toLowerCase())).map(c => (
-                 <div key={c.id} className="p-3 hover:bg-muted/40 cursor-pointer border-b" onClick={() => { setCliente(c); setShowClienteDialog(false); }}>
+                 <div key={c.id} className="p-3 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 cursor-pointer rounded-xl border border-transparent hover:border-indigo-200" onClick={() => { setCliente(c); setShowClienteDialog(false); }}>
                     <p className="font-bold">{c.nome}</p>
                     <p className="text-xs text-muted-foreground">{c.cpf_cnpj}</p>
                  </div>
               ))}
            </div>
-           <Button variant="outline" onClick={() => { setCliente(null); setShowClienteDialog(false); }}>Consumidor Final</Button>
+           <Button variant="outline" onClick={() => { setCliente(null); setShowClienteDialog(false); }} className="w-full mt-4 rounded-xl border-indigo-200 text-indigo-700 hover:bg-indigo-50">Consumidor Final</Button>
+          </div>
         </DialogContent>
       </Dialog>
 
