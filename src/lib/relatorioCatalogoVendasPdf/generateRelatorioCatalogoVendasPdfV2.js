@@ -25,6 +25,7 @@ import {
   stockQuantTexto,
   velocityQuantTexto,
 } from '@/lib/relatorioCatalogoVendasPdf/generateRelatorioCatalogoVendasPdf.js';
+import { sumCatalogStockTotals } from '@/lib/catalogStockTotals';
 
 const PDF_FONT_BOLD = 'bold';
 const PDF_FONT_NORMAL = 'normal';
@@ -40,15 +41,18 @@ const ENXUTO = {
   subtleDivider: [225, 225, 225],
 };
 const FONT = {
-  title: 13,
-  kpi: 9.6,
-  colHdr: 6.8,
-  row: 8,
+  title: 15.5,
+  meta: 9.2,
+  kpi: 10.8,
+  colHdr: 7.8,
+  row: 9.2,
   footer: 9,
 };
-const DESC_LINE_LEAD = 4.5;
-const COL_HDR_BLOCK = 9;
-const TABLE_TOP_CONTINUATION = 14;
+const DESC_LINE_LEAD = 5.1;
+const COL_HDR_BLOCK = 10.2;
+const TABLE_TOP_CONTINUATION = 15;
+const PAGE_FOOTER_Y_OFFSET = 6;
+const PAGE_BOTTOM_RESERVE = 12;
 const LEVEL_INDENT = 2.8;
 const DESC_COL_SHARE = 0.38;
 const VALUE_COL_KEYS = ['vCompra', 'custo', 'preco', 'markup', 'v30', 'v60'];
@@ -58,6 +62,7 @@ const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2,
 const fmtPct = (n) => `${(Number(n) || 0).toFixed(1)}%`;
 const safe = (text) => normalizePdfText(text);
 const moedaSemSimbolo = (valor) => fmtR(Number(valor) || 0);
+const moedaComSimbolo = (valor) => `R$ ${moedaSemSimbolo(valor)}`;
 const moedaOuTraco = (valor) => Number.isFinite(Number(valor)) && Number(valor) > 0 ? moedaSemSimbolo(valor) : '\u2014';
 const markupOuTraco = (valor, preco) => Number(valor) > 0 && Number(preco) > 0 ? fmtPct(valor) : '\u2014';
 const cellText = (value) => (value == null || value === '' ? '\u2014' : String(value));
@@ -245,7 +250,7 @@ export function buildUniformSalesPdfColumns({
   };
 }
 
-export const CATALOG_SALES_PDF_V2_BUILD = 'enxuto_vendas_preco_mkup_v4';
+export const CATALOG_SALES_PDF_V2_BUILD = 'enxuto_vendas_preco_mkup_v5';
 
 export async function generateRelatorioCatalogoVendasPdfV2(payload = {}) {
   const {
@@ -288,13 +293,29 @@ export async function generateRelatorioCatalogoVendasPdfV2(payload = {}) {
     gutter: COL_GUTTER,
   });
 
-  const ROW_H = 6.1;
-  const ROW_GAP = 1.15;
+  const ROW_H = 6.8;
+  const ROW_GAP = 1.25;
   const ROW_STEP = ROW_H + ROW_GAP;
   const BASELINE_RATIO = 0.72;
   let y = 16;
   let dividerStartY = 0;
   let dividerStartPage = 1;
+
+  const drawPageNumbers = () => {
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let page = 1; page <= pageCount; page += 1) {
+      doc.setPage(page);
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+      doc.setFontSize(FONT.footer);
+      doc.setTextColor(...ENXUTO.muted);
+      doc.text(
+        safe(`Página ${page} / ${pageCount}`),
+        pageW - M,
+        pageH - PAGE_FOOTER_Y_OFFSET,
+        { align: 'right' },
+      );
+    }
+  };
 
   const strokeLine = (x0, y0, x1, y1, color = ENXUTO.line, width = ENXUTO_LINE_W) => {
     doc.setDrawColor(...color);
@@ -308,7 +329,7 @@ export async function generateRelatorioCatalogoVendasPdfV2(payload = {}) {
     color = ENXUTO.line,
     width = ENXUTO_LINE_W,
   } = {}) => {
-    const bottomPad = 10;
+    const bottomPad = PAGE_BOTTOM_RESERVE;
     const savedPage = doc.internal.getNumberOfPages();
     for (let page = startPage; page <= endPage; page += 1) {
       doc.setPage(page);
@@ -336,8 +357,8 @@ export async function generateRelatorioCatalogoVendasPdfV2(payload = {}) {
     doc.text(stockLike.unitText, X.quantUnitStart, baselineY, { align: 'left' });
   };
   const drawColumnHeaders = (topY) => {
-    const line1 = topY + 3.2;
-    const line2 = topY + 6.8;
+    const line1 = topY + 3.6;
+    const line2 = topY + 7.4;
     const hdrTop = topY + 1.2;
     const hdrBottom = topY + COL_HDR_BLOCK - 0.4;
     doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
@@ -351,7 +372,7 @@ export async function generateRelatorioCatalogoVendasPdfV2(payload = {}) {
     doc.text('MKUP', X.markup, line1, { align: 'right' });
     doc.text('V.30D', X.v30, line1, { align: 'right' });
     doc.text('V.60D', X.v60, line1, { align: 'right' });
-    doc.setFontSize(FONT.colHdr - 0.35);
+    doc.setFontSize(FONT.colHdr - 0.4);
     doc.text('estoque', X.quantQtyEnd, line2, { align: 'right' });
     doc.text('unid.', X.quantUnitStart, line2, { align: 'left' });
     doc.text('compra', X.vCompra, line2, { align: 'right' });
@@ -367,7 +388,7 @@ export async function generateRelatorioCatalogoVendasPdfV2(payload = {}) {
     y += COL_HDR_BLOCK;
   };
   const ensureTableSpace = (needed = ROW_STEP + 1) => {
-    if (y + needed > pageH - 10) {
+    if (y + needed > pageH - PAGE_BOTTOM_RESERVE) {
       doc.addPage();
       y = TABLE_TOP_CONTINUATION;
       beginTablePage();
@@ -463,31 +484,30 @@ export async function generateRelatorioCatalogoVendasPdfV2(payload = {}) {
   doc.setFontSize(FONT.title);
   doc.setTextColor(...ENXUTO.black);
   doc.text('Relatorio de vendas — ENXUTO v2 (beta)', M, y);
-  y += 5.5;
+  y += 6.2;
   doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-  doc.setFontSize(8);
+  doc.setFontSize(FONT.meta);
   doc.setTextColor(...ENXUTO.muted);
   doc.text('A4   estoque + compra/custo + preço/MKUP + vendas 30/60 dias   DIN 1451', M, y);
-  y += 4.5;
+  y += 5;
   const modeLabel = documento.mode === 'plana'
     ? 'Lista plana A-Z · todos os filtrados'
     : documento.groupByCategory
       ? `Agrupado por categoria · ${treeLevelLabel(documento.treeLevel)}`
       : `Hierarquia do catálogo · ${treeLevelLabel(documento.treeLevel)}`;
   doc.text(modeLabel, M, y);
-  y += 4.2;
-  doc.setFontSize(8.8);
+  y += 4.8;
   doc.text(safe(`${documento.produtos?.length ?? 0} SKU(s) no relatório`), M, y);
-  y += 4.2;
+  y += 4.8;
   doc.text(safe(`Inclusão: ${documento.inclusionLabel}`), M, y);
-  y += 4.2;
+  y += 4.8;
   if (filtersSummary) {
     doc.text(doc.splitTextToSize(safe(filtersSummary), CW)[0] || '-', M, y);
-    y += 4.2;
+    y += 4.8;
   }
-  doc.setFontSize(8.2);
+  doc.setFontSize(FONT.meta - 0.6);
   doc.text(`Gerado em ${generatedAt}`, M, y);
-  y += 5;
+  y += 5.5;
   const totalV30 = (documento.produtos || []).reduce(
     (s, p) => s + (Number(documento.velocityMap?.[String(p.id)]?.qtd30) || 0),
     0,
@@ -496,11 +516,17 @@ export async function generateRelatorioCatalogoVendasPdfV2(payload = {}) {
     (s, p) => s + (Number(documento.velocityMap?.[String(p.id)]?.qtd60) || 0),
     0,
   );
+  const stockTotals = sumCatalogStockTotals(documento.produtos || []);
   doc.setFontSize(FONT.kpi);
   doc.setTextColor(...ENXUTO.black);
   doc.text(`Vendas 30d: ${fmtN(totalV30)} un.`, M, y);
   doc.setTextColor(...ENXUTO.muted);
   doc.text(`Vendas 60d: ${fmtN(totalV60)} un.`, M + CW, y, { align: 'right' });
+  y += 5.2;
+  doc.setTextColor(...ENXUTO.black);
+  doc.text(`Total custo (estoque): ${moedaComSimbolo(stockTotals.totalCusto)}`, M, y);
+  doc.setTextColor(...ENXUTO.muted);
+  doc.text(`Total venda (estoque): ${moedaComSimbolo(stockTotals.totalVenda)}`, M + CW, y, { align: 'right' });
   y += 8;
 
   if (!documento.rows?.length) {
@@ -560,7 +586,7 @@ export async function generateRelatorioCatalogoVendasPdfV2(payload = {}) {
 
   y += 8;
   const FOOTER_BLOCK_H = 14;
-  if (y + FOOTER_BLOCK_H > pageH - M) {
+  if (y + FOOTER_BLOCK_H > pageH - PAGE_BOTTOM_RESERVE) {
     doc.addPage();
     y = TABLE_TOP_CONTINUATION + 4;
   } else {
@@ -574,6 +600,7 @@ export async function generateRelatorioCatalogoVendasPdfV2(payload = {}) {
     M,
     y,
   );
+  drawPageNumbers();
   const pdfBytes = doc.output('arraybuffer');
   return { data: pdfBytes, version: CATALOG_SALES_PDF_V2_BUILD };
 }
