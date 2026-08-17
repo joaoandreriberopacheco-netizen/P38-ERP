@@ -17,7 +17,8 @@ export const ABCD_REGRAS = {
   janela_dias: 90,
   abcd_nivel: 'campo_hierarquico_2 (ou campo_hierarquico_1 se h2 vazio)',
   pareto: 'A até 70% · B até 85% · C até 95% · D até 100% · E sem venda',
-  agrupamento: 'lucro agregado por grupo; mesma letra A–D para todos os SKUs do grupo; E por SKU sem venda',
+  agrupamento:
+    'Pareto no nível 2 (h1+h2); se não houver h2, no nível 1 (h1). Mesma letra A–D para SKUs do grupo com venda; E só no SKU sem venda no período',
 };
 
 function hierarchyKey(parts) {
