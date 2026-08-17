@@ -9,7 +9,7 @@ import {
 import { addDays, format, isSameDay, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ArrowLeft, Anchor, Check, Sliders } from 'lucide-react';
-import { buildFluvialEvents, formatDate, getFluvialViewDate, getLinkedIndicatorStyle } from '@/components/logistica-sandbox/fluvialDataUtils';
+import { applyFluvialOcupacaoProjection, buildFluvialEvents, formatDate, getFluvialViewDate, getLinkedIndicatorStyle } from '@/components/logistica-sandbox/fluvialDataUtils';
 import ItinerarioMobileTopTabs from '@/components/logistica-sandbox/mobile/ItinerarioMobileTopTabs';
 import FluvialSearchBar from '@/components/logistica-sandbox/mobile/FluvialSearchBar';
 import FluvialExpandableFilters from '@/components/logistica-sandbox/FluvialExpandableFilters';
@@ -42,39 +42,10 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
     [eventosLogisticos, embarques, lancamentosFinanceiros],
   );
 
-  const eventos = useMemo(() => {
-    const simulationBaseDate = new Date(`${simulationDate}T12:00:00`);
-    const hojeReal = new Date();
-    const hojeRealBase = new Date(hojeReal.getFullYear(), hojeReal.getMonth(), hojeReal.getDate(), 12, 0, 0, 0);
-
-    return eventosBase.map((item) => {
-      const saidaManaus = item.data_saida_origem;
-      const chegadaManaus = item.data_chegada_manaus;
-      const inicioReal = chegadaManaus ? new Date(`${chegadaManaus}T00:00:00`) : null;
-      const saidaReal = saidaManaus ? new Date(`${saidaManaus}T00:00:00`) : null;
-
-      let ocupacaoPercentualDinamica = item.ocupacao_percentual || 0;
-
-      if (!inicioReal || !saidaReal) {
-        ocupacaoPercentualDinamica = 0;
-      } else {
-        const aindaNaoComecouNoReal = hojeRealBase < inicioReal;
-        const aindaNaoComecouNoSimulador = simulationBaseDate < inicioReal;
-
-        if (aindaNaoComecouNoReal || aindaNaoComecouNoSimulador) {
-          ocupacaoPercentualDinamica = 0;
-        } else if (simulationBaseDate >= saidaReal) {
-          ocupacaoPercentualDinamica = 100;
-        } else {
-          const diasTotais = Math.max(1, Math.round((saidaReal - inicioReal) / (1000 * 60 * 60 * 24)));
-          const diasCorridos = Math.max(0, Math.round((simulationBaseDate - inicioReal) / (1000 * 60 * 60 * 24)));
-          ocupacaoPercentualDinamica = Math.max(0, Math.min(100, Math.round((diasCorridos / diasTotais) * 100)));
-        }
-      }
-
-      return { ...item, ocupacao_percentual_dinamica: ocupacaoPercentualDinamica };
-    });
-  }, [eventosBase, simulationDate]);
+  const eventos = useMemo(
+    () => applyFluvialOcupacaoProjection(eventosBase, simulationDate),
+    [eventosBase, simulationDate],
+  );
 
 
 
