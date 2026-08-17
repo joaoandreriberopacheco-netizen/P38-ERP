@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, subDays, addDays } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { p38Keys, P38_GC_TIME, P38_STALE_TIME } from '@/lib/p38QueryConfig';
-import { enrichProdutosComIep, stripAbcdIepCadastro } from '@/lib/calcularIepProdutos';
+import { enrichProdutosComIep } from '@/lib/calcularIepProdutos';
 import {
   fetchDadosVendaAbcd90d,
   fetchPedidosVenda90d,
@@ -121,7 +121,7 @@ export function useDadosVendaAbcd90dQuery(options = {}) {
   });
 }
 
-/** Catálogo — ABCD/IEP ao vivo; ignora valores gravados pelo job. */
+/** Catálogo — métricas IEP ao vivo; curva ABCD vem do cadastro SQL (`produto.abcd`). */
 export function useProdutosComIepQuery(options = {}) {
   const sort = options.sort ?? '-created_date';
   const { sort: _sort, ...rest } = options;
@@ -134,7 +134,7 @@ export function useProdutosComIepQuery(options = {}) {
     if (!produtosQuery.data?.length) return produtosQuery.data ?? [];
     const vendas = vendasQuery.data;
     if (!vendas?.pedidos90d) {
-      return produtosQuery.data.map(stripAbcdIepCadastro);
+      return produtosQuery.data;
     }
     return enrichProdutosComIep(produtosQuery.data, vendas);
   }, [produtosQuery.data, vendasQuery.data]);

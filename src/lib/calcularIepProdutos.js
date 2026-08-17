@@ -1,6 +1,6 @@
 /**
- * Cálculo ABCD / IEP ao vivo no catálogo (sem gravar no cadastro).
- * Ao abrir o catálogo, enrichProdutosComIep recalcula com vendas dos últimos 90 dias.
+ * Cálculo IEP ao vivo (scores, lucro 90d) — sem gravar no cadastro.
+ * A curva ABCD exibida no catálogo/dashboard vem da coluna SQL `produto.abcd` (job IEP).
  */
 
 import {
@@ -10,6 +10,7 @@ import {
   classificarGruposAbcdPareto,
   grupoAbcdKey,
 } from '@/lib/abcdCurvaOrganizacao';
+import { resolveCadastroAbcdClasse } from '@/lib/catalogAbcdEnrichment';
 import { resolveCommercialDisplay, resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
 
 export { ABCD_CURVA_VERSAO, grupoAbcdKey };
@@ -514,7 +515,6 @@ export function calcularMetricasIepParaCatalogo(produtos, pedidos90d, itensPorPr
 }
 
 const CAMPOS_ABCD_IEP_CATALOGO = [
-  'abcd',
   'iep_score',
   'iep_score_base',
   'iep_confianca_indice',
@@ -535,7 +535,7 @@ const CAMPOS_ABCD_IEP_CATALOGO = [
   'iep_classe',
 ];
 
-/** Remove ABCD/IEP gravados no cadastro — o catálogo usa só o cálculo ao vivo. */
+/** Remove métricas IEP calculadas ao vivo (mantém `abcd` gravado no SQL). */
 export function stripAbcdIepCadastro(produto) {
   if (!produto || typeof produto !== 'object') return produto;
   const next = { ...produto };
@@ -546,7 +546,7 @@ export function stripAbcdIepCadastro(produto) {
 }
 
 /**
- * Aplica métricas IEP/ABCD calculadas a partir das vendas de 90 dias.
+ * Aplica métricas IEP calculadas (90d). A curva ABCD permanece a do cadastro SQL.
  * Aceita pedidos90d[] ou { pedidos90d, itensPorProduto }.
  */
 export function enrichProdutosComIep(produtos, vendasDados) {
@@ -557,17 +557,17 @@ export function enrichProdutosComIep(produtos, vendasDados) {
   const itensPorProduto = Array.isArray(vendasDados) ? null : vendasDados?.itensPorProduto;
 
   if (!lista.length || !Array.isArray(pedidos90d)) {
-    return lista.map(stripAbcdIepCadastro);
+    return lista;
   }
 
   const calculado = calcularMetricasIepParaCatalogo(lista, pedidos90d, itensPorProduto);
   return lista.map((produto) => {
+    const cadastroAbcd = resolveCadastroAbcdClasse(produto);
     const m = calculado[produto.id];
-    if (!m) return stripAbcdIepCadastro(produto);
+    if (!m) return produto;
     const merged = { ...stripAbcdIepCadastro(produto), ...m };
-    if (produto.iep_trava_manual) {
-      const locked = String(produto.iep_classe || '').toUpperCase().trim();
-      if (locked) merged.abcd = locked;
+    if (cadastroAbcd) {
+      merged.abcd = cadastroAbcd;
     }
     return merged;
   });
