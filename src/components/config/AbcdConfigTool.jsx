@@ -229,9 +229,10 @@ export default function AbcdConfigTool() {
           <div className="min-w-0 space-y-1">
             <p className="text-sm font-semibold text-foreground/90">Curva ABCD / IEP</p>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Calcula a classificação com vendas dos últimos 90 dias e grava no cadastro do produto
-              (campo abcd e scores IEP). O processamento roda em blocos de {BATCH_SIZE} produtos.
-              À madrugada o job recalcula todos automaticamente.
+              Calcula a classificação com vendas dos últimos 90 dias e grava no cadastro SQL do produto
+              (coluna <code className="text-[11px]">abcd</code>). O processamento roda em blocos de {BATCH_SIZE}{' '}
+              produtos. Todo sábado à meia-noite (hora de Tabatinga) o job recalcula todos automaticamente;
+              catálogo e dashboard leem essa coluna como fonte de verdade.
             </p>
           </div>
         </div>

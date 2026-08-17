@@ -56,6 +56,8 @@
     "compras:migrar-embarque-local": "node scripts/migrar-embarque-itens-local.mjs",
     "corrigir:wx7-console": "node scripts/corrigir-wx7-a5n-console.mjs",
     "iep:calcular": "node scripts/invoke-calcular-iep.mjs",
+    "abcd:recalcular": "node scripts/run-abcd-job-agendado.mjs",
+    "abcd:enable-noturno": "node scripts/set-abcd-job-noturno-secret.mjs",
     "estoque:atualizar-metas": "node scripts/invoke-atualizar-metas-estoque.mjs",
     "dashboard:kpi-backfill": "node scripts/dashboard-kpi-backfill.mjs",
     "abcd:limpar": "node scripts/limpar-abcd-job-produtos.mjs",

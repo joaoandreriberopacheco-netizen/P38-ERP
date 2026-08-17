@@ -1,0 +1,52 @@
+# Recalcula curva ABCDE (produto.abcd) com vendas dos últimos 90 dias.
+#
+# Agenda: sábado 00:00 hora de Tabatinga (America/Rio_Branco, UTC-5) = 05:00 UTC.
+#
+# Secrets (Settings → Secrets and variables → Actions):
+#   DATABASE_URL
+#
+# Edge Function calcular-iep: ABCD_JOB_NOTURNO=true (Supabase → Edge Functions → Secrets).
+#
+# Disparo manual: Actions → "ABCD job semanal" → Run workflow
+
+name: ABCD job semanal
+
+concurrency:
+  group: abcd-job-semanal
+  cancel-in-progress: false
+
+on:
+  schedule:
+    # Sábado 05:00 UTC = sábado 00:00 Tabatinga (UTC-5)
+    - cron: '0 5 * * 6'
+  workflow_dispatch:
+    inputs:
+      somente_vazios:
+        description: 'Só produtos com ABCD vazio (se false, recalcula todos)'
+        type: boolean
+        default: false
+
+jobs:
+  recalcular:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Recalcular curva ABCDE no SQL
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          ARGS=""
+          if [ "${{ inputs.somente_vazios }}" = "true" ]; then
+            ARGS="--somente-vazios"
+          fi
+          npm run abcd:recalcular -- $ARGS
