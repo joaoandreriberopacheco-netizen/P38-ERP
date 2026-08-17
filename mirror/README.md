@@ -1,6 +1,8 @@
-# Espelho P38 → a29-erp
+# Espelho P38 → Mana (a29-erp)
 
-Pasta de **exportação** do código VarejoSync para o monorepo **a29-erp**. Não entra no build de produção do Base44.
+Pasta de **exportação** opcional do VarejoSync para o monorepo **Mana** (`a29-erp`). Não entra no build de produção do Base44.
+
+> **Piloto 2026:** o Mana é a **doca seca do Galileu** (plataforma fluvial), não o branco paralelo do P-38. O espelho UI (`mirror:sync`) é **opcional** — ver [`docs/galileu-pathway.md`](docs/galileu-pathway.md).
 
 ## Fluxo (2 passos)
 
