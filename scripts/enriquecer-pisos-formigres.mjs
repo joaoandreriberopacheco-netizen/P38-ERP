@@ -34,6 +34,72 @@ function stripAccents(s) {
   return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
+/** Variantes com acento pt (uma vogal de cada vez). */
+function generateAccentVariants(word) {
+  const w = stripAccents(word).toUpperCase();
+  const map = { A: ['Á', 'Ã'], E: ['Ê', 'É'], I: ['Í'], O: ['Ó', 'Ô'], U: ['Ú'] };
+  const out = new Set([w]);
+  for (let i = 0; i < w.length; i++) {
+    const c = w[i];
+    if (!map[c]) continue;
+    for (const acc of map[c]) out.add(w.slice(0, i) + acc + w.slice(i + 1));
+  }
+  return [...out];
+}
+
+/** Grafias alternativas conhecidas no site vs Excel. */
+function spellingAliases(text) {
+  const t = String(text || '');
+  const out = [];
+  if (/CIMENTOCOLOR/i.test(t)) out.push('CIMENTCOLOR', 'CIMENTO');
+  if (/CALENDULA/i.test(t)) out.push('CALÊNDULA');
+  if (/TRAFEGO/i.test(t)) out.push('TRÁFEGO');
+  if (/CORUMBA/i.test(t)) out.push('CORUMBÁ', 'CORU');
+  if (/TIMBO/i.test(t)) out.push('TIMBÓ', 'TIM');
+  if (/AVELA/i.test(t)) out.push('AVELÃ');
+  if (/ARDOSIA/i.test(t)) out.push('ARDÓSIA');
+  return out;
+}
+
+function buildBuscaVariantes(busca, tokens) {
+  const set = new Set();
+  const words = [...new Set([busca, ...tokens].filter(Boolean))];
+
+  for (const w of words) {
+    set.add(w);
+    set.add(stripAccents(w));
+    for (const v of generateAccentVariants(w)) set.add(v);
+    for (const alias of spellingAliases(w)) set.add(alias);
+    if (w.length >= 4) {
+      const pre4 = w.slice(0, 4);
+      set.add(pre4);
+      for (const v of generateAccentVariants(pre4)) set.add(v);
+    }
+    if (w.length >= 5) {
+      const pre5 = w.slice(0, 5);
+      set.add(pre5);
+      for (const v of generateAccentVariants(pre5)) set.add(v);
+    }
+  }
+
+  return [...set].filter(Boolean);
+}
+
+function normName(s) {
+  return stripAccents(s).toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+/** Match flexível: CIMENTOCOLOR ≈ CIMENTCOLOR */
+function namesLikelyMatch(a, b) {
+  const x = normName(a);
+  const y = normName(b);
+  if (!x || !y) return false;
+  if (x.includes(y) || y.includes(x)) return true;
+  const dropO = (s) => s.replace(/O/g, '');
+  if (dropO(x).includes(dropO(y)) || dropO(y).includes(dropO(x))) return true;
+  return false;
+}
+
 function splitGluedToken(t) {
   const m = String(t).match(/^([A-Za-zÀ-ÿ]+)(\d+)$/i);
   return m ? m[1] : t;
@@ -45,7 +111,7 @@ function parseDesc(desc) {
   const m2Match = raw.match(/\((\d+[,.]?\d*)\)/);
   const m2_excel = m2Match ? m2Match[1].replace(',', '.') : '';
 
-  let rest = raw.replace(/^(PISO|REV\.?)\s+/i, '');
+  let rest = raw.replace(/^(PISO|REVESTIMENTO|REV\.?)\s+/i, '');
   if (formato) rest = rest.replace(new RegExp(formato.replace('x', '[xX]'), 'i'), ' ').trim();
   rest = rest.replace(/\s*\([^)]*\).*/g, '').replace(/["']/g, ' ').trim();
   rest = rest.replace(/\b(RT|HD|PEI|LD|LC|JU|P|BOLD|BRILH\w*|MAT\w*|POL\w*|SEMI\w*|ANTI\w*|AD|RELEV\/?\/?OUTS?\w*|RELEVO|OUTSIDE|MR|BG|EXT|PE|ACETINADO)\b/gi, ' ');
@@ -71,14 +137,7 @@ function parseDesc(desc) {
     : /GRANILH/i.test(raw) ? 'granilhado'
     : '';
 
-  // variantes de busca (ex.: TRAFEGO → TRÁFEGO)
-  const buscaVariantes = [...new Set([
-    busca,
-    stripAccents(busca),
-    busca.replace(/TRAFEGO/i, 'TRÁFEGO'),
-    buscaTokens[0] || '',
-    stripAccents(buscaTokens[0] || ''),
-  ].filter(Boolean))];
+  const buscaVariantes = buildBuscaVariantes(busca, buscaTokens);
 
   return { raw, formato, m2_excel, busca, buscaVariantes, acab_excel, tokens };
 }
@@ -90,11 +149,18 @@ function scoreMatch(prod, parsed) {
   else if (parsed.formato && fmtSite) score -= 40;
 
   const title = stripAccents(prod.titulo).toUpperCase();
+  const titleRaw = prod.titulo.toUpperCase();
   for (const tok of stripAccents(parsed.busca).toUpperCase().split(' ')) {
     if (tok && title.includes(tok)) score += 20;
+    else if (tok && namesLikelyMatch(tok, prod.titulo)) score += 18;
   }
   for (const tok of parsed.tokens.map((t) => stripAccents(t).toUpperCase())) {
-    if (tok.length >= 2 && title.includes(tok)) score += 5;
+    if (tok.length >= 2 && (title.includes(tok) || titleRaw.includes(tok))) score += 5;
+    else if (tok.length >= 4 && namesLikelyMatch(tok, prod.titulo)) score += 8;
+  }
+  // TAIKO BEGE / TAIKO CAFE
+  for (const tok of parsed.tokens) {
+    if (/^(BEGE|CAFE|CAFÉ|MARFIM|BG|CZ)$/i.test(tok) && title.includes(stripAccents(tok).toUpperCase())) score += 15;
   }
   // FREIJO CL45 → preferir título com CL
   if (/CL/i.test(parsed.raw) && title.includes('CL')) score += 12;
