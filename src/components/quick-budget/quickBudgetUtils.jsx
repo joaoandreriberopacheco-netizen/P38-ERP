@@ -177,3 +177,59 @@ export function getBudgetSummary(items, cartDiscount = null) {
     quantidadeItens: items.reduce((sum, item) => sum + (Number(item.quantidade) || 0), 0),
   };
 }
+
+/** Subtotal no preço de catálogo (sem acréscimo da tabela) — limite visual do desconto. */
+export function getCatalogSubtotal(items = []) {
+  return items.reduce((sum, item) => {
+    const qtd = Number(item.quantidade) || 0;
+    const precoCatalogo = Number(item.preco_venda_lista) || Number(item.preco_unitario) || 0;
+    return sum + qtd * precoCatalogo;
+  }, 0);
+}
+
+/**
+ * Desconto no estilo PDV vendedor (% ↔ R$) com limite de perfil/tabela
+ * e referência ao preço de catálogo.
+ */
+export function computeOrcamentoRapidoDesconto({
+  items = [],
+  ajustePercentual = '',
+  ajusteValor = '',
+  tipoValorAjuste = 'percentual',
+  limiteUsuario = 0,
+  limiteTabela = 0,
+} = {}) {
+  const subtotal = items.reduce((sum, item) => sum + ((Number(item.quantidade) || 0) * (Number(item.preco_unitario) || 0)), 0);
+  const catalogSubtotal = getCatalogSubtotal(items);
+
+  const pct = parseFloat(ajustePercentual) || 0;
+  const val = parseFloat(ajusteValor) || 0;
+
+  let valorDesconto = 0;
+  if (tipoValorAjuste === 'percentual' && pct > 0) {
+    valorDesconto = subtotal * pct / 100;
+  } else if (tipoValorAjuste === 'valor' && val > 0) {
+    valorDesconto = val;
+  }
+  valorDesconto = Math.min(valorDesconto, subtotal);
+
+  const percent = subtotal > 0 ? (valorDesconto / subtotal) * 100 : 0;
+  const limite = Math.max(Number(limiteUsuario) || 0, Number(limiteTabela) || 0);
+  const ajusteExcedido = limite > 0 && percent > limite;
+  const total = Math.max(subtotal - valorDesconto, 0);
+  const abaixoCatalogo = catalogSubtotal > 0 && total < catalogSubtotal;
+
+  return {
+    subtotal,
+    catalogSubtotal,
+    valorDesconto,
+    total,
+    percent,
+    limite,
+    ajusteExcedido,
+    abaixoCatalogo,
+  };
+}
+
+export const ORCAMENTO_RAPIDO_AVISO_PRECO =
+  'Preços sujeitos a variação. Valores informados para consulta; confirme no caixa antes da venda.';

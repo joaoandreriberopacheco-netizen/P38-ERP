@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
 import { ArrowLeft, ShoppingCart, FileText, ChevronRight, Package, Clock } from 'lucide-react';
-import { format, subDays } from 'date-fns';
+import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { listarOrcamentosRapidos } from '@/lib/orcamentoRapidoSql';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -18,12 +18,11 @@ export default function OrcamentosRecentesSheet({ isOpen, onClose, currentUser, 
   const loadOrcamentos = async () => {
     setLoading(true);
     try {
-      const todos = await base44.entities.PedidoVenda.filter({ tipo: 'Orçamento' }, '-created_date', 50);
-      const limite = subDays(new Date(), 2);
-      const recentes = todos.filter(o => new Date(o.created_date) >= limite);
+      const recentes = await listarOrcamentosRapidos({ dias: 2, limite: 50 });
       setOrcamentos(recentes);
     } catch (e) {
       console.error(e);
+      setOrcamentos([]);
     } finally {
       setLoading(false);
     }
@@ -52,7 +51,6 @@ export default function OrcamentosRecentesSheet({ isOpen, onClose, currentUser, 
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-muted/40 dark:bg-background">
-      {/* Header */}
       <div className="flex items-center gap-3 px-4 py-4 bg-card border-b border-border/40 flex-shrink-0">
         <button
           onClick={onClose}
@@ -62,14 +60,13 @@ export default function OrcamentosRecentesSheet({ isOpen, onClose, currentUser, 
         </button>
         <div className="flex-1">
           <h2 className="text-lg font-semibold text-foreground font-glacial">Orçamentos Recentes</h2>
-          <p className="text-xs text-muted-foreground">Últimos 2 dias</p>
+          <p className="text-xs text-muted-foreground">Últimos 2 dias · Orçamento rápido</p>
         </div>
         <div className="w-9 h-9 flex items-center justify-center rounded-2xl bg-muted">
           <Clock className="w-4 h-4 text-muted-foreground" />
         </div>
       </div>
 
-      {/* Lista */}
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {loading ? (
           <div className="flex items-center justify-center py-20">
@@ -85,18 +82,16 @@ export default function OrcamentosRecentesSheet({ isOpen, onClose, currentUser, 
         ) : (
           orcamentos.map(orc => {
             const isExpanded = expandedId === orc.id;
-            const dataCriacao = new Date(orc.created_date);
+            const dataCriacao = new Date(orc.created_at || orc.created_date);
             return (
               <div key={orc.id} className="bg-card rounded-2xl overflow-hidden shadow-sm">
                 <button
                   onClick={() => setExpandedId(isExpanded ? null : orc.id)}
                   className="w-full flex items-center gap-3.5 px-4 py-4 text-left active:bg-muted/40 dark:active:bg-primary/60 transition-colors"
                 >
-                  {/* Ícone */}
                   <div className="w-12 h-12 bg-muted rounded-2xl flex items-center justify-center flex-shrink-0">
                     <FileText className="w-5 h-5 text-muted-foreground" />
                   </div>
-                  {/* Info */}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground truncate">
                       {orc.cliente_nome || 'Sem cliente'}
@@ -105,7 +100,6 @@ export default function OrcamentosRecentesSheet({ isOpen, onClose, currentUser, 
                       {(orc.itens || []).length} item(s) · {format(dataCriacao, "dd/MM · HH'h'mm", { locale: ptBR })}
                     </p>
                   </div>
-                  {/* Total + chevron */}
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <span className="text-base font-bold text-foreground tabular-nums">
                       R$ {fmtR(orc.valor_total)}
@@ -114,10 +108,8 @@ export default function OrcamentosRecentesSheet({ isOpen, onClose, currentUser, 
                   </div>
                 </button>
 
-                {/* Detalhe expandido */}
                 {isExpanded && (
                   <div className="px-4 pb-4 space-y-3 border-t border-border/40 pt-3">
-                    {/* Itens */}
                     <div className="space-y-1.5">
                       {(orc.itens || []).map((item, idx) => (
                         <div key={idx} className="flex items-center justify-between py-2 border-b border-border/30 dark:border-border/40 last:border-b-0">
@@ -136,7 +128,6 @@ export default function OrcamentosRecentesSheet({ isOpen, onClose, currentUser, 
                         </div>
                       ))}
                     </div>
-                    {/* Botão carregar */}
                     <button
                       onClick={() => handleCarregar(orc)}
                       className="w-full flex items-center justify-center gap-2 py-3.5 bg-background dark:bg-muted text-foreground rounded-2xl text-sm font-semibold active:scale-[0.98] transition-all"
