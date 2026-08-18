@@ -82,7 +82,6 @@ export default function QuickBudgetCartView({
 
         <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
           {items.map((item) => (
-<<<<<<< HEAD
             <div
               key={item.item_key || item.produto_id}
               className="rounded-2xl bg-muted/50 dark:bg-muted/30 px-3 py-3 flex items-center justify-between gap-3"
