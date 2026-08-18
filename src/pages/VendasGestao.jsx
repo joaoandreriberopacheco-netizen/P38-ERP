@@ -36,6 +36,11 @@ import ValesTrocaTab from '@/components/vendas/ValesTrocaTab';
 import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
 import FormaPagamentoBadges from '@/components/vendas/FormaPagamentoBadges';
 import { STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA } from '@/lib/pdvCaixaTurnoVendas';
+import {
+  getVirtualPadding,
+  measureVirtualItem,
+  P38_VIRTUAL_OVERSCAN,
+} from '@/lib/p38VirtualList';
 import { formatarDataHora, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
 const fmtDtHora = (d) => d ? formatarDataHora(d) : '-';
 const fmtDataCurta = (d) => d ? formatarSoData(d) : '';
@@ -76,19 +81,9 @@ const FILTRO_SELECT_CONTENT =
   'z-[320] max-h-[min(50vh,20rem)] border border-border/40 bg-popover shadow-lg dark:border-white/10 dark:bg-card';
 
 const VIRTUAL_LIST_STYLE = { maxHeight: 'calc(100vh - 260px)' };
-const VIRTUAL_OVERSCAN = 8;
-
-const getVirtualPadding = (virtualItems, totalSize) => {
-  if (virtualItems.length === 0) {
-    return { paddingTop: 0, paddingBottom: 0 };
-  }
-
-  const paddingTop = virtualItems[0]?.start ?? 0;
-  const lastItem = virtualItems[virtualItems.length - 1];
-  const paddingBottom = Math.max(0, totalSize - (lastItem?.end ?? 0));
-
-  return { paddingTop, paddingBottom };
-};
+/** Altura inicial por card mobile (pedido: título + nº + status/pagamento/vendedor). */
+const PEDIDO_MOBILE_ESTIMATE = 104;
+const RASCUNHO_MOBILE_ESTIMATE = 96;
 
 function PedidoActionsMenu({
   pedido,
@@ -161,9 +156,10 @@ function VirtualizedPedidoCards({ pedidos, onVerDetalhes, onEdit, onReimprimir, 
   const rowVirtualizer = useVirtualizer({
     count: pedidos.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 76,
+    estimateSize: () => PEDIDO_MOBILE_ESTIMATE,
     getItemKey: (index) => pedidos[index]?.id ?? index,
-    overscan: VIRTUAL_OVERSCAN,
+    measureElement: measureVirtualItem,
+    overscan: P38_VIRTUAL_OVERSCAN,
   });
   const virtualItems = rowVirtualizer.getVirtualItems();
 
@@ -177,6 +173,7 @@ function VirtualizedPedidoCards({ pedidos, onVerDetalhes, onEdit, onReimprimir, 
             <div
               key={virtualRow.key}
               data-index={virtualRow.index}
+              ref={rowVirtualizer.measureElement}
               className="absolute left-0 top-0 w-full"
               style={{ transform: `translateY(${virtualRow.start}px)` }}
             >
@@ -203,7 +200,7 @@ function VirtualizedPedidosTable({ pedidos, onVerDetalhes, onEdit, onReimprimir,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 74,
     getItemKey: (index) => pedidos[index]?.id ?? index,
-    overscan: VIRTUAL_OVERSCAN,
+    overscan: P38_VIRTUAL_OVERSCAN,
   });
   const virtualItems = rowVirtualizer.getVirtualItems();
   const { paddingTop, paddingBottom } = getVirtualPadding(virtualItems, rowVirtualizer.getTotalSize());
@@ -328,9 +325,10 @@ function VirtualizedRascunhoLines({ rascunhos, onInutilizar }) {
   const rowVirtualizer = useVirtualizer({
     count: rascunhos.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 88,
+    estimateSize: () => RASCUNHO_MOBILE_ESTIMATE,
     getItemKey: (index) => rascunhos[index]?.id ?? index,
-    overscan: VIRTUAL_OVERSCAN,
+    measureElement: measureVirtualItem,
+    overscan: P38_VIRTUAL_OVERSCAN,
   });
   const virtualItems = rowVirtualizer.getVirtualItems();
 
@@ -344,6 +342,7 @@ function VirtualizedRascunhoLines({ rascunhos, onInutilizar }) {
             <div
               key={virtualRow.key}
               data-index={virtualRow.index}
+              ref={rowVirtualizer.measureElement}
               className="absolute left-0 top-0 w-full"
               style={{ transform: `translateY(${virtualRow.start}px)` }}
             >
@@ -367,7 +366,7 @@ function VirtualizedRascunhosTable({ rascunhos, onInutilizar }) {
     getScrollElement: () => parentRef.current,
     estimateSize: () => 92,
     getItemKey: (index) => rascunhos[index]?.id ?? index,
-    overscan: VIRTUAL_OVERSCAN,
+    overscan: P38_VIRTUAL_OVERSCAN,
   });
   const virtualItems = rowVirtualizer.getVirtualItems();
   const { paddingTop, paddingBottom } = getVirtualPadding(virtualItems, rowVirtualizer.getTotalSize());
