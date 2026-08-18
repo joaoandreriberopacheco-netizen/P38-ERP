@@ -256,5 +256,22 @@ export async function salvarOrcamentoRapido({
 
   await syncPedidoVendaItens(pedidoId, legacyItens);
 
+  // Recompor linas pode inflar subtotal/total (preços de tabela); reafirmar totais do UI.
+  const { error: fixError } = await client
+    .from('pedido_venda')
+    .update({
+      subtotal: Number(subtotal) || 0,
+      valor_desconto: Number(valorDesconto) || 0,
+      total: Number(valorTotal) || 0,
+      dados: {
+        ...payload.dados,
+        valor_total: Number(valorTotal) || 0,
+        subtotal: Number(subtotal) || 0,
+        valor_desconto: Number(valorDesconto) || 0,
+      },
+    })
+    .eq('id', pedidoId);
+  if (fixError) throw new Error(fixError.message);
+
   return obterOrcamentoRapido(pedidoId);
 }

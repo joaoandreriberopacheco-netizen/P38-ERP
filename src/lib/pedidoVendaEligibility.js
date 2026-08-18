@@ -24,3 +24,16 @@ export function isPedidoVendaElegivelKpi(pedido) {
 export function filterPedidosVendaElegiblesKpi(pedidos) {
   return (Array.isArray(pedidos) ? pedidos : []).filter(isPedidoVendaElegivelKpi);
 }
+
+/** Orçamento gravado em pedido_venda (rápido ou legado) — não é venda fechada. */
+export function isPedidoOrcamento(pedido) {
+  if (!pedido) return false;
+  const status = normalizePedidoVendaLabel(pedido.status);
+  const tipo = normalizePedidoVendaLabel(pedido.tipo);
+  return (
+    status === 'orçamento' ||
+    status === 'orcamento' ||
+    tipo === 'orçamento' ||
+    tipo === 'orcamento'
+  );
+}

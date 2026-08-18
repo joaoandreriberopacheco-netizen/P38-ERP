@@ -14,7 +14,7 @@ import VendasRelatorisFAB from '@/components/vendas/VendasRelatorisFAB';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, P38TableShell } from '@/components/ui/table';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38StatusTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Search, Edit, ShoppingCart, Eye, FileText, MoreHorizontal, RotateCcw, RefreshCw, CreditCard, Printer, SlidersHorizontal, Ban, Ticket, Receipt, UserRoundPen } from 'lucide-react';
+import { Search, Edit, ShoppingCart, Eye, FileText, MoreHorizontal, RotateCcw, RefreshCw, CreditCard, Printer, SlidersHorizontal, Ban, Ticket, Receipt, UserRoundPen, ScrollText } from 'lucide-react';
 import DetalhesPedidoVenda from '@/components/vendas/DetalhesPedidoVenda';
 import AlterarPagamentoDialog from '@/components/vendas/AlterarPagamentoDialog';
 import AlterarClientePedidoDialog from '@/components/vendas/AlterarClientePedidoDialog';
@@ -37,7 +37,8 @@ import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
 import FormaPagamentoBadges from '@/components/vendas/FormaPagamentoBadges';
 import { STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA } from '@/lib/pdvCaixaTurnoVendas';
 import { formatarDataHora, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
-import { filterPedidosVendaElegiblesKpi } from '@/lib/pedidoVendaEligibility';
+import { filterPedidosVendaElegiblesKpi, isPedidoOrcamento } from '@/lib/pedidoVendaEligibility';
+import { resolveValorPedidoVendaGestao } from '@/lib/financialUtils';
 const fmtDtHora = (d) => d ? formatarDataHora(d) : '-';
 const fmtDataCurta = (d) => d ? formatarSoData(d) : '';
 
@@ -52,7 +53,8 @@ const dateRangeMatches = (valor, inicio, fim) => {
 /** Evita crash do Radix Select quando o status não existe nas opções da aba ativa. */
 const STATUS_OPCOES_POR_ABA = {
   rascunhos: ['Criado', 'Em Edição', 'Aguardando Caixa', 'Convertido', 'Cancelado'],
-  pedidos: ['Orçamento', 'Aguardando Caixa', 'Financeiro OK', 'Em Separação', 'Pedido Concluído', 'Cancelado'],
+  pedidos: ['Aguardando Caixa', 'Financeiro OK', 'Em Separação', 'Pedido Concluído', 'Cancelado'],
+  orcamentos: ['Orçamento'],
   consulta: ['Financeiro OK', 'Em Separação', 'Em Rota de Entrega', 'Pedido Concluído'],
   vales: ['Ativo', 'Utilizado Parcialmente', 'Utilizado', 'Expirado', 'Cancelado'],
 };
@@ -141,7 +143,7 @@ function PedidoMobileLine({ pedido, onVerDetalhes, onEdit, onReimprimir, onCorri
           {pedido.vendedor_nome ? <span className="truncate">{pedido.vendedor_nome}</span> : null}
         </>
       }
-      value={`R$ ${(pedido.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+      value={`R$ ${resolveValorPedidoVendaGestao(pedido).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
       valueSub={fmtDataCurta(pedido.created_date)}
       trailing={
         <PedidoActionsMenu
@@ -261,7 +263,7 @@ function VirtualizedPedidosTable({ pedidos, onVerDetalhes, onEdit, onReimprimir,
                     {fmtDtHora(pedido.created_date)}
                   </TableCell>
                   <TableCell className="text-right font-semibold text-foreground tabular-nums">
-                    R$ {(pedido.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    R$ {resolveValorPedidoVendaGestao(pedido).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </TableCell>
                 </TableRow>
               );
@@ -515,8 +517,17 @@ function VendasGestaoPage() {
     }
   };
 
+  const pedidosVenda = useMemo(
+    () => pedidos.filter((p) => !isPedidoOrcamento(p)),
+    [pedidos],
+  );
+  const pedidosOrcamento = useMemo(
+    () => pedidos.filter(isPedidoOrcamento),
+    [pedidos],
+  );
+
   const pedidosFiltrados = useMemo(() => {
-    let currentFiltered = pedidos;
+    let currentFiltered = pedidosVenda;
 
     if (searchTerm) {
       currentFiltered = currentFiltered.filter(p =>
@@ -540,7 +551,28 @@ function VendasGestaoPage() {
     }
 
     return currentFiltered;
-  }, [pedidos, searchTerm, statusFiltroResolvido, dataInicio, dataFim, formasPagamentoFiltro]);
+  }, [pedidosVenda, searchTerm, statusFiltroResolvido, dataInicio, dataFim, formasPagamentoFiltro]);
+
+  const orcamentosFiltrados = useMemo(() => {
+    let currentFiltered = pedidosOrcamento;
+
+    if (searchTerm) {
+      currentFiltered = currentFiltered.filter(p =>
+        p.numero?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.cliente_nome?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (statusFiltroResolvido !== 'todos') {
+      currentFiltered = currentFiltered.filter(p => p.status === statusFiltroResolvido);
+    }
+
+    if (dataInicio || dataFim) {
+      currentFiltered = currentFiltered.filter(p => dateRangeMatches(p.created_date, dataInicio, dataFim));
+    }
+
+    return currentFiltered;
+  }, [pedidosOrcamento, searchTerm, statusFiltroResolvido, dataInicio, dataFim]);
 
   const rascunhosFiltrados = useMemo(() => {
     let currentFiltered = rascunhos;
@@ -628,12 +660,16 @@ function VendasGestaoPage() {
   );
 
   // Calcular subtotal dos pedidos filtrados (orçamentos listados mas não somam)
-  const subtotalFiltrado = activeTab === 'pedidos'
-    ? pedidosFiltradosParaSoma.reduce((acc, p) => acc + (p.valor_total || 0), 0)
+  const subtotalFiltrado = activeTab === 'orcamentos'
+    ? orcamentosFiltrados.reduce((acc, p) => acc + resolveValorPedidoVendaGestao(p), 0)
+    : activeTab === 'pedidos'
+    ? pedidosFiltradosParaSoma.reduce((acc, p) => acc + resolveValorPedidoVendaGestao(p), 0)
     : activeTab === 'consulta'
-      ? pedidosConsultaComItens.reduce((acc, p) => acc + (p.valor_total || 0), 0)
+      ? pedidosConsultaComItens.reduce((acc, p) => acc + resolveValorPedidoVendaGestao(p), 0)
       : rascunhosFiltrados.reduce((acc, r) => acc + (r.valor_total || 0), 0);
-  const quantidadeFiltrada = activeTab === 'pedidos'
+  const quantidadeFiltrada = activeTab === 'orcamentos'
+    ? orcamentosFiltrados.length
+    : activeTab === 'pedidos'
     ? pedidosFiltradosParaSoma.length
     : activeTab === 'consulta'
       ? pedidosConsultaComItens.length
@@ -767,6 +803,7 @@ function VendasGestaoPage() {
       <GlacialTabsList className="w-full" scrollable>
         <GlacialTabsTrigger value="rascunhos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Senhas" icon={FileText} />
         <GlacialTabsTrigger value="pedidos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Pedidos" icon={ShoppingCart} />
+        <GlacialTabsTrigger value="orcamentos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Orçamentos" icon={ScrollText} />
         <GlacialTabsTrigger value="consulta" activeValue={activeTab} onSelect={handleActiveTabChange} label="Consulta" icon={Receipt} />
         <GlacialTabsTrigger value="vales" activeValue={activeTab} onSelect={handleActiveTabChange} label="Vales" icon={Ticket} />
       </GlacialTabsList>
@@ -784,6 +821,7 @@ function VendasGestaoPage() {
               <GlacialTabsList className="w-full" scrollable>
                 <GlacialTabsTrigger value="rascunhos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Senhas" icon={FileText} />
                 <GlacialTabsTrigger value="pedidos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Pedidos" icon={ShoppingCart} />
+                <GlacialTabsTrigger value="orcamentos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Orçamentos" icon={ScrollText} />
                 <GlacialTabsTrigger value="consulta" activeValue={activeTab} onSelect={handleActiveTabChange} label="Consulta" icon={Receipt} />
                 <GlacialTabsTrigger value="vales" activeValue={activeTab} onSelect={handleActiveTabChange} label="Vales" icon={Ticket} />
               </GlacialTabsList>
@@ -963,6 +1001,47 @@ function VendasGestaoPage() {
             />
 
 
+          </>
+        )}
+        </div>
+        </div>
+        )}
+
+        {activeTab === 'orcamentos' && (
+        <div className="space-y-4 min-w-0">
+          <div className="flex items-start justify-between gap-3 text-sm min-w-0">
+            <span className="text-muted-foreground min-w-0">{quantidadeFiltrada} orçamento(s)</span>
+            <span className="text-base sm:text-lg font-semibold text-foreground text-right break-words leading-tight">R$ {formatValor(subtotalFiltrado)}</span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Orçamentos ainda não são vendas — não têm senha nem passaram no caixa.
+          </p>
+          <div>
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-border/40"></div>
+          </div>
+        ) : orcamentosFiltrados.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <ScrollText className="w-10 h-10 mx-auto mb-3 text-muted-foreground dark:text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Nenhum orçamento encontrado</p>
+          </div>
+        ) : (
+          <>
+            <VirtualizedPedidoCards
+              pedidos={orcamentosFiltrados}
+              onVerDetalhes={handleVerDetalhes}
+              onEdit={handleEdit}
+              onReimprimir={handleReimprimir}
+              onCorrigirCliente={handleCorrigirCliente}
+            />
+            <VirtualizedPedidosTable
+              pedidos={orcamentosFiltrados}
+              onVerDetalhes={handleVerDetalhes}
+              onEdit={handleEdit}
+              onReimprimir={handleReimprimir}
+              onCorrigirCliente={handleCorrigirCliente}
+            />
           </>
         )}
         </div>
