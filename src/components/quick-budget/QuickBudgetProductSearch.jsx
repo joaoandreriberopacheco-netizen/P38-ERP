@@ -2,6 +2,8 @@ import React, { useMemo } from 'react';
 import { Search } from 'lucide-react';
 import ProdutoThumb from '@/components/produtos/ProdutoThumb';
 import { Input } from '@/components/ui/input';
+import { P38_SEARCH } from '@/components/financeiro/fluxo/financeiroP38';
+import { cn } from '@/lib/utils';
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
 import { formatEstoqueDisponivelLabel } from '@/lib/productUnits';
 import { PrecoVendaTabelaLinhas } from './quickBudgetUtils';
@@ -30,7 +32,7 @@ export default function QuickBudgetProductSearch({ inputRef, query, onQueryChang
             }
           }}
           placeholder="Nome ou código (espaço ou ; para combinar termos)..."
-          className="h-14 md:h-12 pl-11 pr-4 border-0 bg-muted/50 rounded-2xl shadow-sm text-base md:text-sm"
+          className={cn('h-14 md:h-12 pl-11 pr-4 rounded-2xl text-base md:text-sm', P38_SEARCH)}
         />
       </div>
 

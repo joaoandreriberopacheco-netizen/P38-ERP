@@ -2,10 +2,11 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Check, FileText, Loader2, MessageCircle, Search, ShoppingCart, X } from 'lucide-react';
+import { Check, FileText, Loader2, MessageCircle, Printer, Search, ShoppingCart, Receipt, X } from 'lucide-react';
 import QuickBudgetProductSearch from './QuickBudgetProductSearch';
 import QuickBudgetCartView from './QuickBudgetCartView';
 import OrcamentosRapidosSalvosSheet from './OrcamentosRapidosSalvosSheet';
+import OrcamentoRapidoCupomOverlay from './OrcamentoRapidoCupomOverlay';
 import ProdutoQuantidadeDialog from '@/components/orcamento/ProdutoQuantidadeDialog';
 import {
   buildQuickBudgetItem,
@@ -32,7 +33,10 @@ import {
   salvarOrcamentoRapido,
 } from '@/lib/orcamentoRapidoSql';
 import { prepararOrcamentoParaPdv } from '@/lib/orcamentoRapidoPdvBridge';
+import { quickBudgetStateToCupomProps } from '@/lib/orcamentoRapidoCupom';
 import { useIsDesktop } from '@/hooks/use-breakpoint';
+import { P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
+import { cn } from '@/lib/utils';
 
 function resolveFlowScreen({ itemDialog, isMobile, showCartMobile, showSalvos }) {
   if (itemDialog) return 'quantity';
@@ -59,6 +63,9 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
   const [orcamentoId, setOrcamentoId] = useState(null);
   const [clienteNome, setClienteNome] = useState('');
   const [observacoes, setObservacoes] = useState('');
+  const [empresa, setEmpresa] = useState(null);
+  const [showCupom, setShowCupom] = useState(false);
+  const [formatoImpressao, setFormatoImpressao] = useState('80mm');
 
   const [ajustePercentual, setAjustePercentual] = useState('');
   const [ajusteValor, setAjusteValor] = useState('');
@@ -116,13 +123,15 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
   useEffect(() => {
     if (!open || produtos.length > 0) return;
     (async () => {
-      const [prods, tabelas, me] = await Promise.all([
+      const [prods, tabelas, me, empresas] = await Promise.all([
         base44.entities.Produto.filter({ ativo: true }),
         base44.entities.TabelaPreco.filter({ ativo: true }).catch(() => []),
         base44.auth.me().catch(() => null),
+        base44.entities.DadosEmpresa.list().catch(() => []),
       ]);
       setProdutos(prods || []);
       setCurrentUser(me);
+      setEmpresa((empresas || [])[0] || null);
       const list = tabelas || [];
       const t =
         list.find((x) => x.id === me?.tabela_preco_id) ||
@@ -149,6 +158,8 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
     setOrcamentoId(null);
     setClienteNome('');
     setObservacoes('');
+    setShowCupom(false);
+    setFormatoImpressao('80mm');
     setAjustePercentual('');
     setAjusteValor('');
     setTipoValorAjuste('percentual');
@@ -251,6 +262,7 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
     setOrcamentoId(orcamento.id);
     setClienteNome(orcamento.cliente_nome || '');
     setObservacoes(orcamento.observacoes || '');
+    setObservacoes(orcamento.observacoes || '');
     if (Number(orcamento.valor_desconto) > 0) {
       setAjusteValor(String(orcamento.valor_desconto));
       setTipoValorAjuste('valor');
@@ -298,6 +310,15 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
 
   const handleSalvarOrcamento = async () => {
     await persistirOrcamento();
+  };
+
+  const handleImprimir = async () => {
+    if (descontoResumo.ajusteExcedido) {
+      toast.error(`Desconto excede o limite de ${descontoResumo.limite}%`);
+      return;
+    }
+    await persistirOrcamento();
+    setShowCupom(true);
   };
 
   const handleConcluir = async () => {
@@ -450,11 +471,16 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
     limiteTabela: tabelaSelecionada?.percentual_desconto_maximo,
     clienteNome,
     setClienteNome,
+    observacoes,
+    setObservacoes,
+    formatoImpressao,
+    setFormatoImpressao,
     onSaveCart: () => {
       setShowCartMobile(false);
       setTimeout(() => searchInputRef.current?.focus(), 80);
     },
     onSalvarOrcamento: handleSalvarOrcamento,
+    onImprimir: handleImprimir,
     onEnviarPdv: handleEnviarPdv,
     onClose: handleConcluir,
     onShare: handleShare,
@@ -462,11 +488,21 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
     isSaving,
   };
 
+  const cupomProps = quickBudgetStateToCupomProps({
+    items,
+    descontoResumo,
+    clienteNome,
+    observacoes,
+  });
+
   if (!open || typeof document === 'undefined') return null;
 
   const shell = (
     <div
-      className={`fixed inset-0 flex min-h-0 flex-col overflow-hidden ${QUICK_ACCESS_PANEL_SHELL_CLASS}`}
+      className={cn(
+        'fixed inset-0 flex min-h-0 flex-col overflow-hidden font-din-1451 bg-muted/40 dark:bg-background',
+        QUICK_ACCESS_PANEL_SHELL_CLASS,
+      )}
       style={{ zIndex: QUICK_ACCESS_Z.panel }}
       role="dialog"
       aria-modal="true"
@@ -474,32 +510,44 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
     >
       {flowScreen === 'search' && (
         <>
-          <div className="flex items-center justify-between px-4 py-4 border-b border-border/40 bg-card flex-shrink-0 gap-2">
-            <div className="min-w-0">
-              <h2 className="text-lg font-semibold text-foreground font-glacial">Orçamento rápido</h2>
-              <p className="text-xs text-muted-foreground mt-0.5 truncate">Consulta de preços para o cliente</p>
-            </div>
-            <div className="flex items-center gap-1.5 flex-shrink-0">
-              <button
-                type="button"
-                onClick={() => setShowSalvos(true)}
-                className="w-9 h-9 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground"
-                aria-label="Buscar orçamentos salvos"
-              >
-                <FileText className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={handleClose}
-                className="w-9 h-9 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground"
-              >
-                <X className="w-4 h-4" />
-              </button>
+          <div className="flex-shrink-0 px-3 pt-3 pb-2">
+            <div className={cn('rounded-[28px] bg-card dark:bg-background shadow-sm px-4 py-3', P38_FIELD_SURFACE)}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-2xl bg-muted dark:bg-card flex items-center justify-center shrink-0">
+                    <Receipt className="w-4 h-4 text-foreground" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Consulta de preços</p>
+                    <h2 className="text-xl font-semibold text-foreground font-glacial leading-tight">Orçamento rápido</h2>
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                      {tabelaSelecionada?.nome || 'Tabela de preços'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setShowSalvos(true)}
+                    className="w-10 h-10 rounded-2xl bg-muted dark:bg-card flex items-center justify-center text-muted-foreground"
+                    aria-label="Buscar orçamentos salvos"
+                  >
+                    <FileText className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    className="w-10 h-10 rounded-2xl bg-muted dark:bg-card flex items-center justify-center text-muted-foreground"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="relative flex flex-1 min-h-0 flex-col">
-            <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 pb-28 md:pb-4">
+          <div className="relative flex flex-1 min-h-0 flex-col px-3">
+            <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pb-28 md:pb-4">
               <QuickBudgetProductSearch
                 inputRef={searchInputRef}
                 query={query}
@@ -515,19 +563,19 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
               )}
 
               {items.length === 0 && (
-                <div className="rounded-3xl bg-card shadow-sm px-4 py-4 flex items-center gap-3 text-xs text-muted-foreground">
+                <div className={cn('rounded-[28px] px-4 py-4 flex items-center gap-3 text-xs text-muted-foreground', P38_FIELD_SURFACE, 'bg-card dark:bg-background')}>
                   <Search className="w-4 h-4 shrink-0" />
-                  Busque produtos para montar o orçamento. Salve ou envie ao PDV quando estiver pronto.
+                  Busque produtos, salve, imprima (cupom ou A4) ou envie ao PDV.
                 </div>
               )}
             </div>
 
             {items.length > 0 && (
-              <div className={`relative ${QUICK_BUDGET_FLOW_CLASS.footer} border-t border-border/40 bg-card/95 dark:bg-background/95 backdrop-blur-md px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-4 shadow-[0_-10px_26px_rgba(15,23,42,0.08)]`}>
+              <div className="relative border-t border-border/40 bg-card/95 dark:bg-background/95 backdrop-blur-md px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-4 shadow-[0_-10px_26px_rgba(15,23,42,0.08)] dark:shadow-[0_-10px_26px_rgba(0,0,0,0.32)]">
                 <div className="flex items-center gap-2">
                   <div className="flex-1 min-w-0">
-                    <div className="text-[10px] text-muted-foreground leading-none mb-0.5">Total</div>
-                    <div className="text-xl font-bold text-foreground leading-tight font-glacial">
+                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground leading-none mb-0.5">Total</div>
+                    <div className="text-xl font-bold text-foreground leading-tight font-glacial tabular-nums">
                       {descontoResumo.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                     </div>
                   </div>
@@ -539,16 +587,25 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
                       className="relative w-10 h-10 flex items-center justify-center rounded-xl text-muted-foreground hover:bg-muted flex-shrink-0"
                     >
                       <ShoppingCart className="w-5 h-5" />
-                      <span className="absolute -top-0.5 -right-0.5 bg-muted text-foreground text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                      <span className="absolute -top-0.5 -right-0.5 bg-[#a4ce33] text-[#1f1d22] text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                         {items.length}
                       </span>
                     </button>
                   )}
                   <button
                     type="button"
+                    onClick={handleImprimir}
+                    disabled={isSaving || descontoResumo.ajusteExcedido}
+                    className="h-10 px-3 p38-btn-primary rounded-xl font-medium flex items-center justify-center gap-1.5 text-sm disabled:opacity-50"
+                  >
+                    <Printer className="w-4 h-4" />
+                    <span className="hidden sm:inline">Imprimir</span>
+                  </button>
+                  <button
+                    type="button"
                     onClick={handleConcluir}
                     disabled={isSaving}
-                    className="h-10 px-4 bg-muted text-foreground/90 rounded-xl font-medium flex items-center justify-center gap-2 text-sm"
+                    className="h-10 px-3 bg-muted text-foreground/90 rounded-xl font-medium flex items-center justify-center gap-1.5 text-sm"
                   >
                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                     Concluir
@@ -557,10 +614,9 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
                     type="button"
                     onClick={handleShare}
                     disabled={isSharing}
-                    className="h-10 px-4 bg-muted hover:bg-muted text-foreground rounded-xl font-semibold flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+                    className="h-10 px-3 bg-muted text-foreground rounded-xl font-semibold flex items-center justify-center gap-1.5 text-sm disabled:opacity-50"
                   >
                     {isSharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
-                    Compartilhar
                   </button>
                 </div>
               </div>
@@ -570,22 +626,24 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
       )}
 
       {flowScreen === 'cart' && (
-        <div className={`absolute inset-0 flex flex-col ${QUICK_ACCESS_PANEL_SHELL_CLASS} ${QUICK_BUDGET_FLOW_CLASS.cart}`}>
-          <div className="flex items-center justify-between px-4 py-4 border-b border-border/40 bg-card flex-shrink-0">
-            <button
-              type="button"
-              onClick={() => setShowCartMobile(false)}
-              className="w-9 h-9 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground"
-            >
-              <X className="w-4 h-4" />
-            </button>
-            <div className="text-center">
-              <p className="text-sm font-semibold text-foreground font-glacial">Carrinho</p>
-              <p className="text-[11px] text-muted-foreground">Orçamento rápido</p>
+        <div className={`absolute inset-0 flex flex-col bg-muted/40 dark:bg-background ${QUICK_BUDGET_FLOW_CLASS.cart}`}>
+          <div className="flex-shrink-0 px-3 pt-3 pb-2">
+            <div className={cn('rounded-[28px] bg-card dark:bg-background shadow-sm px-4 py-3 flex items-center justify-between', P38_FIELD_SURFACE)}>
+              <button
+                type="button"
+                onClick={() => setShowCartMobile(false)}
+                className="w-10 h-10 rounded-2xl bg-muted dark:bg-card flex items-center justify-center text-muted-foreground"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <div className="text-center">
+                <p className="text-sm font-semibold text-foreground font-glacial">Carrinho</p>
+                <p className="text-[11px] text-muted-foreground">Orçamento rápido</p>
+              </div>
+              <div className="w-10" />
             </div>
-            <div className="w-9" />
           </div>
-          <div className="flex-1 overflow-y-auto p-4 pb-8">
+          <div className="flex-1 overflow-y-auto px-3 pb-8">
             <QuickBudgetCartView {...cartProps} compact />
           </div>
         </div>
@@ -596,8 +654,19 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
           isOpen
           onClose={() => setShowSalvos(false)}
           onCarregar={handleCarregarSalvo}
+          tabelaNome={tabelaSelecionada?.nome || ''}
+          empresa={empresa}
         />
       )}
+
+      <OrcamentoRapidoCupomOverlay
+        open={showCupom}
+        cupomProps={cupomProps}
+        formato={formatoImpressao}
+        nomeTabela={tabelaSelecionada?.nome || ''}
+        empresa={empresa}
+        onClose={() => setShowCupom(false)}
+      />
 
       {flowScreen === 'quantity' && itemDialog && (
         <ProdutoQuantidadeDialog

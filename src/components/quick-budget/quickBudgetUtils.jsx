@@ -1,5 +1,6 @@
 import React from 'react';
 import { getPrecoPisoCustoUnidade, getPrecoUnitarioNaUnidade, getSaleUnitContextForTabela } from '@/lib/orcamentoPrecoTabela';
+import { ORCAMENTO_RAPIDO_AVISO_PRECO } from '@/lib/orcamentoRapidoCupom';
 import { buildSaleUnitOptions, calculateBaseQuantity, formatEstoqueDisponivelApresentacao, getItemUnitKey } from '@/lib/productUnits';
 import { normalizeProductCodeForSearch } from '@/lib/productCode';
 
@@ -232,5 +233,4 @@ export function computeOrcamentoRapidoDesconto({
   };
 }
 
-export const ORCAMENTO_RAPIDO_AVISO_PRECO =
-  'Preços sujeitos a variação. Valores informados para consulta; confirme no caixa antes da venda.';
+export { ORCAMENTO_RAPIDO_AVISO_PRECO };
