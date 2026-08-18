@@ -15,6 +15,8 @@ import {
   Clock
 } from 'lucide-react';
 
+import { filterPedidosVendaElegiblesKpi } from '@/lib/pedidoVendaEligibility';
+import { resolveValorPedidoVenda } from '@/lib/financialUtils';
 import { format, startOfDay, startOfMonth, subDays } from 'date-fns';
 
 const DashboardVendedorVendasChart = lazy(() => import('@/components/dashboard/DashboardVendedorVendasChart'));
@@ -43,18 +45,22 @@ export default function DashboardVendedor() {
 
       // Vendas de hoje
       const hoje = dateKey(startOfDay(new Date()));
-      const vendasHj = await base44.entities.PedidoVenda.filter({
-        vendedor_id: user.id,
-        created_date: { $gte: hoje }
-      });
+      const vendasHj = filterPedidosVendaElegiblesKpi(
+        await base44.entities.PedidoVenda.filter({
+          vendedor_id: user.id,
+          created_date: { $gte: hoje },
+        }),
+      );
       setVendasHoje(vendasHj);
 
       // Vendas do mês
       const inicioMes = dateKey(startOfMonth(new Date()));
-      const vendasM = await base44.entities.PedidoVenda.filter({
-        vendedor_id: user.id,
-        created_date: { $gte: inicioMes }
-      });
+      const vendasM = filterPedidosVendaElegiblesKpi(
+        await base44.entities.PedidoVenda.filter({
+          vendedor_id: user.id,
+          created_date: { $gte: inicioMes },
+        }),
+      );
       setVendasMes(vendasM);
 
       // Tabela de preço (buscar a configurada para este vendedor)
@@ -80,8 +86,8 @@ export default function DashboardVendedor() {
     }
   };
 
-  const totalVendasHoje = vendasHoje.reduce((acc, v) => acc + (v.valor_total || 0), 0);
-  const totalVendasMes = vendasMes.reduce((acc, v) => acc + (v.valor_total || 0), 0);
+  const totalVendasHoje = vendasHoje.reduce((acc, v) => acc + resolveValorPedidoVenda(v), 0);
+  const totalVendasMes = vendasMes.reduce((acc, v) => acc + resolveValorPedidoVenda(v), 0);
   const percentualMeta = (totalVendasMes / metaMensal) * 100;
 
   // Dados para gráfico mensal
@@ -91,7 +97,7 @@ export default function DashboardVendedor() {
       const dia = subDays(new Date(), i);
       const diaKey = dateKey(dia);
       const vendasDia = vendasMes.filter((v) => dateKey(v.created_date) === diaKey);
-      const total = vendasDia.reduce((acc, v) => acc + (v.valor_total || 0), 0);
+      const total = vendasDia.reduce((acc, v) => acc + resolveValorPedidoVenda(v), 0);
       dias.push({
         dia: format(dia, 'dd/MM'),
         valor: total,

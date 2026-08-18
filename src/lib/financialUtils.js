@@ -33,6 +33,43 @@ export function resolveValorPedidoVenda(pedido) {
   return roundToTwoDecimals(v);
 }
 
+/**
+ * Valor exibido de orçamento (pedido_venda tipo Orçamento).
+ * Após sync de linhas, `total` pode ficar inflado (soma de tabela); prioriza
+ * `dados.valor_total` gravado pelo orçamento rápido quando diverge.
+ */
+export function resolveValorOrcamentoPedidoVenda(pedido) {
+  if (!pedido) return 0;
+  const desconto = roundToTwoDecimals(pedido.valor_desconto ?? 0);
+  const frete = roundToTwoDecimals(pedido.valor_frete ?? 0);
+  const dadosTotal = Number(pedido.dados?.valor_total);
+  const colTotal = Number(pedido.total);
+
+  if (Number.isFinite(dadosTotal) && dadosTotal > 0) {
+    if (!Number.isFinite(colTotal) || colTotal <= 0 || colTotal > dadosTotal * 1.15) {
+      return roundToTwoDecimals(dadosTotal);
+    }
+  }
+
+  const subtotal = Number(pedido.subtotal);
+  if (Number.isFinite(subtotal) && subtotal > 0) {
+    return roundToTwoDecimals(subtotal - desconto + frete);
+  }
+
+  return resolveValorPedidoVenda(pedido);
+}
+
+/** Valor para listagens na gestão de vendas. */
+export function resolveValorPedidoVendaGestao(pedido) {
+  if (!pedido) return 0;
+  const status = String(pedido.status || '').trim().toLowerCase();
+  const tipo = String(pedido.tipo || '').trim().toLowerCase();
+  if (status === 'orçamento' || status === 'orcamento' || tipo === 'orçamento' || tipo === 'orcamento') {
+    return resolveValorOrcamentoPedidoVenda(pedido);
+  }
+  return resolveValorPedidoVenda(pedido);
+}
+
 /** Comparação de pagamento no caixa — tolerância de 1 centavo (ex.: 5000,00 vs 4999,999744). */
 export function pagamentosCobremTotal(totalPago, valorTotal, toleranciaCentavos = 0.01) {
   const pago = roundToTwoDecimals(totalPago);

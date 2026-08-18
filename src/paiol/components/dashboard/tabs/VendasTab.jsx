@@ -31,6 +31,7 @@ import {
 } from '@/lib/dashboardVendasPeriod';
 import { getHojeDateKey } from '@/lib/dashboardIncrementalCache';
 import { resolveValorPedidoVenda } from '@/lib/financialUtils';
+import { isPedidoVendaElegivelKpi } from '@/lib/pedidoVendaEligibility';
 import {
   AcumuladoKpiChart,
   AccumulatedLegendLine,
@@ -78,9 +79,6 @@ const RING_COLORS = {
 
 const SALES_BAR_COLORS = ['#c3dd74', '#b6d05f', '#a9c24d', '#9cb53f', '#90a835', '#7f9531'];
 
-const NORMALIZED_EXCLUDED_STATUSES = new Set(['cancelado']);
-const NORMALIZED_EXCLUDED_TYPES = new Set(['orçamento', 'orcamento']);
-
 function parseDate(value) {
   if (!value) return null;
   if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
@@ -100,10 +98,6 @@ function parseDate(value) {
   const parsed = new Date(value);
   if (!isValid(parsed)) return null;
   return parsed;
-}
-
-function normalizeText(value) {
-  return String(value || '').trim().toLowerCase();
 }
 
 const formatShort = formatDashboardCurrency;
@@ -141,10 +135,7 @@ function getSaleDate(sale = {}) {
 }
 
 function isSaleEligible(sale) {
-  const status = normalizeText(sale.status);
-  const type = normalizeText(sale.tipo);
-  if (NORMALIZED_EXCLUDED_STATUSES.has(status)) return false;
-  if (NORMALIZED_EXCLUDED_TYPES.has(type)) return false;
+  if (!isPedidoVendaElegivelKpi(sale)) return false;
   return Boolean(getSaleDate(sale));
 }
 
