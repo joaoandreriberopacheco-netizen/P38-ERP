@@ -8,6 +8,7 @@
  *   node scripts/cruzar-formigres-imagens-produto.mjs --apply      # grava no Supabase
  *   node scripts/cruzar-formigres-imagens-produto.mjs --limit 20
  *   node scripts/cruzar-formigres-imagens-produto.mjs --apply --force-imagem-url
+ *   node scripts/cruzar-formigres-imagens-produto.mjs --piso-only   # piloto: nome começa com PISO
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -23,9 +24,11 @@ const OUT_DIR = path.join(process.cwd(), 'docs', 'imports-local', 'formigres-pro
 const args = process.argv.slice(2);
 const apply = args.includes('--apply');
 const forceImagemUrl = args.includes('--force-imagem-url');
+const pisoOnly = args.includes('--piso-only');
 const limit = args.includes('--limit') ? Number(args[args.indexOf('--limit') + 1]) : null;
 
-const SQL_PISOS = `
+function buildSqlPisos() {
+  return `
   select
     id,
     codigo_interno,
@@ -37,15 +40,17 @@ const SQL_PISOS = `
   from public.produto
   where coalesce(ativo, true)
     and campo_hierarquico_1 in ('PISO', 'REVESTIMENTO')
+    ${pisoOnly ? "and nome ilike 'PISO%'" : ''}
   order by campo_hierarquico_1, nome
 `;
+}
 
 function csvEscape(v) {
   return `"${String(v ?? '').replace(/"/g, '""')}"`;
 }
 
 async function loadPisos(client) {
-  const { rows } = await client.query(SQL_PISOS);
+  const { rows } = await client.query(buildSqlPisos());
   return limit ? rows.slice(0, limit) : rows;
 }
 
@@ -190,7 +195,7 @@ async function main() {
     const csvPath = path.join(OUT_DIR, 'cruzamento-imagens.csv');
     fs.writeFileSync(csvPath, csv);
 
-    const summary = { ...stats, apply, csv: csvPath };
+    const summary = { ...stats, apply, pisoOnly, csv: csvPath };
     fs.writeFileSync(path.join(OUT_DIR, 'resumo.json'), JSON.stringify(summary, null, 2) + '\n');
     console.log(JSON.stringify(summary, null, 2));
   } finally {

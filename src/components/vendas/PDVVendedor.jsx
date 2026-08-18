@@ -46,6 +46,7 @@ import {
   filterProdutosDisponiveisPdv,
   isProdutoDisponivelPdv,
 } from '@/lib/hierarquiaPortal/produtoPdvDisponibilidade';
+import ProdutoThumb from '@/components/produtos/ProdutoThumb';
 
 export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   const navigate = useNavigate();
@@ -1177,12 +1178,12 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                     className={`flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors border-b border-border/30 dark:border-border/40 last:border-b-0 ${
                     index === produtoSelecionadoIndex ? 'bg-muted/40 dark:bg-card' : 'hover:bg-muted/40 dark:hover:bg-muted/60'}`}
                     onClick={() => handleSelecionarProduto(produto)}>
-                    {produto.imagem_url
-                      ? <img src={produto.imagem_url} alt={produto.nome} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
-                      : <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${estoqueStatus === 'sem' ? 'bg-red-50 dark:bg-red-900/20' : 'bg-muted dark:bg-card'}`}>
-                          <Package className={`w-5 h-5 ${estoqueStatus === 'sem' ? 'text-red-400' : 'text-muted-foreground'}`} />
-                        </div>
-                    }
+                    <ProdutoThumb
+                      produto={produto}
+                      size="md"
+                      roundedClassName="rounded-xl"
+                      fallbackClassName={estoqueStatus === 'sem' ? 'bg-red-50 dark:bg-red-900/20' : undefined}
+                    />
                     <div className="flex-1 min-w-0">
                       <p className="text-base font-medium text-foreground dark:text-foreground leading-snug break-words whitespace-normal">{produto.nome}</p>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -1219,12 +1220,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                 {produtoSelecionado &&
                 <div className="mt-3 p-4 bg-card dark:bg-background rounded-2xl shadow-sm border border-border/40 dark:border-border/40 space-y-3">
                 <div className="flex items-center gap-3">
-                {produtoSelecionado.imagem_url
-                  ? <img src={produtoSelecionado.imagem_url} alt={produtoSelecionado.nome} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
-                  : <div className="w-12 h-12 rounded-xl bg-muted dark:bg-card flex items-center justify-center flex-shrink-0">
-                      <Package className="w-5 h-5 text-muted-foreground" />
-                    </div>
-                }
+                <ProdutoThumb produto={produtoSelecionado} size="md" roundedClassName="rounded-xl" />
                 <div className="flex-1 min-w-0">
                   <p className="text-base font-semibold text-foreground dark:text-foreground break-words whitespace-normal leading-snug">{produtoSelecionado.nome}</p>
                   {produtoSelecionado.preco_livre ? (
@@ -1299,12 +1295,16 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
             carrinho.map((item) =>
             <div key={item.item_key} className="group p-3 bg-muted/40 dark:bg-muted/60 rounded-xl hover:bg-muted dark:hover:bg-card transition-colors">
                   <div className="flex items-start gap-2.5 mb-2.5">
-                    {item.imagem_url
-                        ? <img src={item.imagem_url} alt={item.produto_nome} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 mt-0.5" />
-                        : <div className="w-10 h-10 rounded-lg bg-muted dark:bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <Package className="w-4 h-4 text-muted-foreground" />
-                          </div>
-                      }
+                    <ProdutoThumb
+                      produto={{
+                        id: item.produto_id,
+                        nome: item.produto_nome,
+                        imagem_url: item.imagem_url,
+                      }}
+                      size="sm"
+                      roundedClassName="rounded-lg"
+                      className="mt-0.5"
+                    />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground leading-snug break-words">{item.produto_nome}</p>
                         {item.codigo_interno ? (
@@ -1777,12 +1777,15 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
           carrinho.map((item) =>
           <div key={item.item_key} className="p-3.5 bg-card dark:bg-background rounded-2xl shadow-sm">
                   <div className="flex items-start gap-3 mb-3">
-                    {item.imagem_url
-                      ? <img src={item.imagem_url} alt={item.produto_nome} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
-                      : <div className="w-12 h-12 rounded-xl bg-muted dark:bg-card flex items-center justify-center flex-shrink-0">
-                          <Package className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                    }
+                    <ProdutoThumb
+                      produto={{
+                        id: item.produto_id,
+                        nome: item.produto_nome,
+                        imagem_url: item.imagem_url,
+                      }}
+                      size="md"
+                      roundedClassName="rounded-xl"
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="min-w-0">
                         <p className="font-medium text-sm text-foreground dark:text-foreground leading-snug break-words">{item.produto_nome}</p>

@@ -11,6 +11,7 @@ import { P38MobileLineList, P38StatusDot } from '@/components/ui/p38-mobile-line
 import { p38Table } from '@/lib/p38TableSurfaces';
 import { cn } from '@/components/utils';
 import { filterAndSortProducts, sortProductsAlphabetically } from '@/components/compras/productMatchingUtils';
+import ProdutoThumb from '@/components/produtos/ProdutoThumb';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
@@ -37,11 +38,7 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
       style={{ boxSizing: 'border-box' }}
     >
       {/* Thumbnail */}
-      <div className="w-12 h-12 bg-muted rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden">
-        {p.imagem_url
-          ? <img src={p.imagem_url} alt="" className="w-full h-full object-cover" />
-          : <Package className="w-5 h-5 text-muted-foreground dark:text-muted-foreground" />}
-      </div>
+      <ProdutoThumb produto={p} size="md" roundedClassName="rounded-2xl" />
 
       {/* Nome + info */}
       <div className="flex-1 min-w-0 overflow-hidden">
