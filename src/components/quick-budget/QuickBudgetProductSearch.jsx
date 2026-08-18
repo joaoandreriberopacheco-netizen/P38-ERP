@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { Search, Plus } from 'lucide-react';
+import { Search } from 'lucide-react';
+import ProdutoThumb from '@/components/produtos/ProdutoThumb';
 import { Input } from '@/components/ui/input';
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
 import { formatEstoqueDisponivelLabel } from '@/lib/productUnits';
@@ -43,9 +44,7 @@ export default function QuickBudgetProductSearch({ inputRef, query, onQueryChang
               className="w-full rounded-2xl bg-card shadow-sm px-4 py-3 text-left hover:bg-muted/40 dark:hover:bg-muted transition-colors"
             >
               <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-2xl bg-muted flex items-center justify-center flex-shrink-0">
-                  <Plus className="w-4 h-4 text-muted-foreground" />
-                </div>
+                <ProdutoThumb produto={produto} size="xs" roundedClassName="rounded-2xl" asDiv />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground break-words">{produto.nome}</p>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">

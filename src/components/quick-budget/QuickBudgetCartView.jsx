@@ -15,6 +15,7 @@ import {
   ORCAMENTO_RAPIDO_AVISO_PRECO,
 } from './quickBudgetUtils';
 import { selectAllOnFocus } from '@/lib/inputFocusUtils';
+import ProdutoThumb from '@/components/produtos/ProdutoThumb';
 
 export default function QuickBudgetCartView({
   items,
@@ -70,7 +71,17 @@ export default function QuickBudgetCartView({
         <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
           {items.map((item) => (
             <div key={item.item_key || item.produto_id} className="rounded-2xl bg-muted/50 px-3 py-3 flex items-center justify-between gap-3">
-              <div className="min-w-0">
+              <ProdutoThumb
+                produto={{
+                  id: item.produto_id,
+                  nome: item.produto_nome,
+                  imagem_url: item.imagem_url,
+                }}
+                size="sm"
+                roundedClassName="rounded-xl"
+                asDiv
+              />
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-foreground truncate">{item.produto_nome}</p>
                 <p className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-1 gap-y-0.5">
                   <span>{item.quantidade} {item.unidade || 'UN'} ×</span>

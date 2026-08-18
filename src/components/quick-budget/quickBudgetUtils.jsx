@@ -111,6 +111,7 @@ export function buildQuickBudgetItem(produto, tabelaPreco, unitOption = null) {
   return {
     produto_id: produto.id,
     produto_nome: produto.nome,
+    imagem_url: produto.imagem_url || null,
     codigo_interno: produto.codigo_interno || '',
     estoque_atual: Number(produto.estoque_atual || 0),
     estoque_exibicao_qtd: estoqueDisp.quantidade,

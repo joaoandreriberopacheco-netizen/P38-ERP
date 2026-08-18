@@ -5,6 +5,7 @@ import { isProdutoPilotoGaleria, resolveProdutoGaleria } from '@/lib/produtoImag
 import ProdutoGaleriaModal from '@/components/produtos/ProdutoGaleriaModal';
 
 const SIZE_CLASS = {
+  xs: 'w-9 h-9',
   sm: 'w-10 h-10',
   md: 'w-12 h-12',
 };
@@ -21,6 +22,8 @@ export default function ProdutoThumb({
   enableGaleria,
   onClick,
   stopPropagation = true,
+  /** Evita <button> dentro de <button> (ex.: linha clicável do orçamento rápido). */
+  asDiv = false,
 }) {
   const [galeriaOpen, setGaleriaOpen] = useState(false);
   const [galeriaImagens, setGaleriaImagens] = useState([]);
@@ -67,24 +70,50 @@ export default function ProdutoThumb({
     className,
   );
 
+  const handleShellClick = (e) => {
+    onClick?.(e);
+    if (!e?.defaultPrevented) handleOpenGaleria(e);
+  };
+
+  const handleShellKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleShellClick(e);
+    }
+  };
+
+  const shellContent = loadingGaleria ? (
+    <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+  ) : (
+    thumbInner
+  );
+
+  const ariaLabel = imagemUrl ? `Ver fotos de ${nome}` : `Produto ${nome}`;
+
   return (
     <>
       {galeriaAtiva && produto?.id ? (
-        <button
-          type="button"
-          className={shellClass}
-          onClick={(e) => {
-            onClick?.(e);
-            if (!e?.defaultPrevented) handleOpenGaleria(e);
-          }}
-          aria-label={imagemUrl ? `Ver fotos de ${nome}` : `Produto ${nome}`}
-        >
-          {loadingGaleria ? (
-            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-          ) : (
-            thumbInner
-          )}
-        </button>
+        asDiv ? (
+          <div
+            role="button"
+            tabIndex={0}
+            className={shellClass}
+            onClick={handleShellClick}
+            onKeyDown={handleShellKeyDown}
+            aria-label={ariaLabel}
+          >
+            {shellContent}
+          </div>
+        ) : (
+          <button
+            type="button"
+            className={shellClass}
+            onClick={handleShellClick}
+            aria-label={ariaLabel}
+          >
+            {shellContent}
+          </button>
+        )
       ) : (
         <div className={shellClass} onClick={onClick}>
           {thumbInner}
