@@ -37,6 +37,7 @@ import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
 import FormaPagamentoBadges from '@/components/vendas/FormaPagamentoBadges';
 import { STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA } from '@/lib/pdvCaixaTurnoVendas';
 import { formatarDataHora, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
+import { filterPedidosVendaElegiblesKpi } from '@/lib/pedidoVendaEligibility';
 const fmtDtHora = (d) => d ? formatarDataHora(d) : '-';
 const fmtDataCurta = (d) => d ? formatarSoData(d) : '';
 
@@ -621,14 +622,19 @@ function VendasGestaoPage() {
     };
   }, [activeTab, vendasConsulta]);
 
-  // Calcular subtotal dos pedidos filtrados
+  const pedidosFiltradosParaSoma = useMemo(
+    () => filterPedidosVendaElegiblesKpi(pedidosFiltrados),
+    [pedidosFiltrados],
+  );
+
+  // Calcular subtotal dos pedidos filtrados (orçamentos listados mas não somam)
   const subtotalFiltrado = activeTab === 'pedidos'
-    ? pedidosFiltrados.reduce((acc, p) => acc + (p.valor_total || 0), 0)
+    ? pedidosFiltradosParaSoma.reduce((acc, p) => acc + (p.valor_total || 0), 0)
     : activeTab === 'consulta'
       ? pedidosConsultaComItens.reduce((acc, p) => acc + (p.valor_total || 0), 0)
       : rascunhosFiltrados.reduce((acc, r) => acc + (r.valor_total || 0), 0);
   const quantidadeFiltrada = activeTab === 'pedidos'
-    ? pedidosFiltrados.length
+    ? pedidosFiltradosParaSoma.length
     : activeTab === 'consulta'
       ? pedidosConsultaComItens.length
       : rascunhosFiltrados.length;

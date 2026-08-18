@@ -1,11 +1,12 @@
 import { base44 } from '@/api/base44Client';
 import { inicioDiaSistemaISO, fimDiaSistemaISO } from '@/components/utils/dateUtils';
 import { resolveValorPedidoVenda, roundToTwoDecimals } from '@/lib/financialUtils';
+import { filterPedidosVendaElegiblesKpi } from '@/lib/pedidoVendaEligibility';
 
 const PEDIDO_VENDA = () => base44.entities.PedidoVenda;
 
 function somarVendasHoje(pedidos = []) {
-  const vendasHoje = Array.isArray(pedidos) ? pedidos : [];
+  const vendasHoje = filterPedidosVendaElegiblesKpi(pedidos);
   return {
     vendasHoje: vendasHoje.length,
     valorVendasHoje: roundToTwoDecimals(
