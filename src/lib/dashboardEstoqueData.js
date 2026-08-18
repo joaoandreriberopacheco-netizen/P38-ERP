@@ -1,8 +1,9 @@
 import { subMonths, startOfMonth, endOfMonth, format, isAfter, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { base44 } from '@/api/base44Client';
-import { enrichProdutosComIep } from '@/lib/calcularIepProdutos';
+import { enrichProdutosComIep, pedidoElegivelIep } from '@/lib/calcularIepProdutos';
 import { fetchDadosVendaAbcd90d } from '@/lib/fetchPedidosVenda90d';
+import { hydratePedidosVendaItensFromSql } from '@/lib/fetchPedidoVendaItens';
 import {
   buildPendenteAprovadoFinanceiroPorProduto,
   buildRecebidosPorPedidoProdutoFromEmbarques,
@@ -107,10 +108,8 @@ function getSupplyStatus(percentage) {
 }
 
 function pedidoVendaContaNoCMV(pedido = {}) {
+  if (!pedidoElegivelIep(pedido)) return false;
   const status = normalizeStatus(pedido.status);
-  const tipo = normalizeStatus(pedido.tipo);
-  if (status === 'cancelado') return false;
-  if (tipo === 'orçamento' || tipo === 'orcamento') return false;
   if (PEDIDO_VENDA_STATUSES_CMV.has(status)) return true;
   return status !== 'orçamento' && status !== 'orcamento' && status !== 'aguardando caixa';
 }
@@ -301,6 +300,23 @@ async function ensureCached(queryClient, key, queryFn, staleTime = P38_STALE_TIM
   return queryClient.ensureQueryData({ queryKey: key, queryFn, staleTime });
 }
 
+async function fetchPedidosVendaParaRazaoAbastecimento(supplyStartISO, supplyEndISO) {
+  const pedidosRaw = await base44.entities.PedidoVenda.filter(
+    {
+      created_date: {
+        $gte: inicioDiaSistemaISO(supplyStartISO),
+        $lte: fimDiaSistemaISO(supplyEndISO),
+      },
+    },
+    '-created_date',
+    5000,
+  ).catch(() => []);
+
+  const pedidosLista = Array.isArray(pedidosRaw) ? pedidosRaw : [];
+  const elegibles = pedidosLista.filter(pedidoElegivelIep);
+  return hydratePedidosVendaItensFromSql(base44, elegibles);
+}
+
 async function fetchMovimentacoesIncremental(queryClient, nivelStartISO, endISO) {
   const hoje = getHojeDateKey();
   const ontem = getOntemDateKey();
@@ -382,17 +398,7 @@ export async function fetchDashboardEstoqueMetrics(queryClient, options = {}) {
         '-data_pagamento',
         20000,
       ),
-      base44.entities.PedidoVenda.filter(
-        {
-          tipo: 'PDV',
-          created_date: {
-            $gte: inicioDiaSistemaISO(supplyStartISO),
-            $lte: fimDiaSistemaISO(supplyEndISO),
-          },
-        },
-        '-created_date',
-        3000,
-      ).catch(() => []),
+      fetchPedidosVendaParaRazaoAbastecimento(supplyStartISO, supplyEndISO),
       ensureCached(
         queryClient,
         p38Keys.pedidosCompraSugestao(),
