@@ -47,6 +47,7 @@ import {
   isProdutoDisponivelPdv,
 } from '@/lib/hierarquiaPortal/produtoPdvDisponibilidade';
 import ProdutoThumb from '@/components/produtos/ProdutoThumb';
+import { consumirOrcamentoParaPdv } from '@/lib/orcamentoRapidoPdvBridge';
 
 export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   const navigate = useNavigate();
@@ -233,6 +234,10 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   useEffect(() => {
     loadDependencies();
     loadConfiguracoesVenda();
+    const urlParams = new URLSearchParams(window.location.search);
+    if (!urlParams.get('rascunho_id')) {
+      verificarOrcamentoRapidoParaPdv();
+    }
     verificarRascunhoParaEdicao();
   }, []);
 
@@ -264,6 +269,33 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
     } catch (error) {
       console.error('Erro ao carregar configurações:', error);
     }
+  };
+
+  const verificarOrcamentoRapidoParaPdv = () => {
+    const payload = consumirOrcamentoParaPdv();
+    if (!payload?.items?.length) return;
+
+    setCarrinho(normalizeCartItems(payload.items));
+
+    if (payload.clienteNome?.trim()) {
+      setClienteSelecionado({ id: null, nome: payload.clienteNome.trim() });
+    }
+
+    if (Number(payload.valorDesconto) > 0) {
+      setTipoAjuste('desconto');
+      setValorAjuste(Number(payload.valorDesconto));
+      setAjusteValor(Number(payload.valorDesconto).toFixed(2));
+      setTipoValorAjuste('valor');
+      setAjustePercentual('');
+    }
+
+    const ref = payload.orcamentoNumero || payload.orcamentoId?.slice(0, 8) || '';
+    showFeedback(
+      'success',
+      ref ? `Orçamento rápido ${ref} no PDV` : 'Orçamento rápido carregado no PDV',
+      3000,
+    );
+    setTimeout(() => inputProdutoRef.current?.focus(), 400);
   };
 
   const verificarRascunhoParaEdicao = async () => {

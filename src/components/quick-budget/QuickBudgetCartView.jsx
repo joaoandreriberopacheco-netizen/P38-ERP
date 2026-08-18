@@ -1,25 +1,53 @@
 import React from 'react';
-import { Check, Loader2, MessageCircle, ShoppingCart } from 'lucide-react';
+import {
+  Check,
+  Loader2,
+  MessageCircle,
+  ShoppingCart,
+  Store,
+  Save,
+  AlertCircle,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { formatCurrency } from './quickBudgetUtils';
+import {
+  formatCurrency,
+  ORCAMENTO_RAPIDO_AVISO_PRECO,
+} from './quickBudgetUtils';
+import { selectAllOnFocus } from '@/lib/inputFocusUtils';
 
 export default function QuickBudgetCartView({
   items,
-  summary,
-  desconto,
-  setDesconto,
-  tipoDesconto,
-  setTipoDesconto,
+  descontoResumo,
+  ajustePercentual,
+  ajusteValor,
+  onAjustePercentualChange,
+  onAjusteValorChange,
+  limiteTabela = 0,
+  clienteNome,
+  setClienteNome,
   onSaveCart,
+  onSalvarOrcamento,
+  onEnviarPdv,
   onClose,
   onShare,
   isSharing,
+  isSaving,
   compact = false,
 }) {
   if (items.length === 0) {
     return null;
   }
+
+  const {
+    subtotal,
+    catalogSubtotal,
+    valorDesconto,
+    total,
+    limite,
+    ajusteExcedido,
+    abaixoCatalogo,
+  } = descontoResumo || {};
 
   return (
     <div className="space-y-3">
@@ -27,11 +55,15 @@ export default function QuickBudgetCartView({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs text-muted-foreground">Carrinho</p>
-            <p className="text-sm text-foreground/90">{summary.quantidadeItens} qtd · {items.length} itens</p>
+            <p className="text-sm text-foreground/90">
+              {items.reduce((s, i) => s + (Number(i.quantidade) || 0), 0)} qtd · {items.length} itens
+            </p>
           </div>
           <div className="text-right">
-            {summary.desconto > 0 && <p className="text-xs text-muted-foreground line-through">{formatCurrency(summary.subtotal)}</p>}
-            <p className="text-2xl font-bold text-foreground font-glacial">{formatCurrency(summary.total)}</p>
+            {valorDesconto > 0 && (
+              <p className="text-xs text-muted-foreground line-through">{formatCurrency(subtotal)}</p>
+            )}
+            <p className="text-2xl font-bold text-foreground font-glacial">{formatCurrency(total)}</p>
           </div>
         </div>
 
@@ -56,35 +88,70 @@ export default function QuickBudgetCartView({
         </div>
       </div>
 
-      {/* Desconto no carrinho */}
+      <div className="rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 px-3 py-2.5 flex gap-2 text-xs text-amber-900 dark:text-amber-100">
+        <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+        <span>{ORCAMENTO_RAPIDO_AVISO_PRECO}</span>
+      </div>
+
       <div className="rounded-3xl bg-card shadow-sm p-4 space-y-2">
-        <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">Desconto</span>
-        <div className="flex gap-1.5 items-center">
+        <Input
+          placeholder="Nome do cliente (opcional)"
+          value={clienteNome}
+          onChange={(e) => setClienteNome(e.target.value)}
+          className="border-0 bg-muted h-10 text-sm rounded-xl shadow-none focus-visible:ring-0 mb-2"
+        />
+
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Desconto</span>
+          {limiteTabela > 0 && (
+            <span className="text-[10px] text-muted-foreground">máx {limiteTabela}%</span>
+          )}
+        </div>
+        <div className="flex gap-2 items-center">
           <div className="relative flex-1">
             <Input
               type="number"
               min="0"
               step="0.01"
-              value={desconto}
-              onChange={(e) => setDesconto(parseFloat(e.target.value) || 0)}
-              className="pr-5 h-10 bg-muted/50 border-0 shadow-sm rounded-xl text-sm text-right focus:ring-1 focus:ring-border/40 dark:focus:ring-ring"
+              value={ajustePercentual}
+              onChange={(e) => onAjustePercentualChange(e.target.value)}
+              onFocus={selectAllOnFocus}
+              className="pr-6 h-10 bg-muted/50 border-0 shadow-sm rounded-xl text-sm text-right focus:ring-1 focus:ring-border/40"
               placeholder="0"
             />
-            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
-              {tipoDesconto === 'percentual' ? '%' : 'R$'}
-            </span>
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span>
           </div>
-          <button
-            type="button"
-            onClick={() => setTipoDesconto(tipoDesconto === 'percentual' ? 'fixo' : 'percentual')}
-            className="h-10 px-3 bg-muted rounded-xl text-[10px] font-semibold text-foreground/90"
-          >
-            {tipoDesconto === 'percentual' ? '%' : 'R$'}
-          </button>
+          <span className="text-muted-foreground text-xs">=</span>
+          <div className="relative flex-1">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">R$</span>
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              value={ajusteValor}
+              onChange={(e) => onAjusteValorChange(e.target.value)}
+              onFocus={selectAllOnFocus}
+              className="pl-7 h-10 bg-muted/50 border-0 shadow-sm rounded-xl text-sm focus:ring-1 focus:ring-border/40"
+              placeholder="0,00"
+            />
+          </div>
         </div>
-        {summary.descontoCarrinho > 0 && (
+        {ajusteExcedido && (
+          <p className="text-xs text-red-500">Excede limite de {limite}%</p>
+        )}
+        {abaixoCatalogo && !ajusteExcedido && (
+          <p className="text-xs text-amber-600 dark:text-amber-400">
+            Abaixo do preço de catálogo (limite: {formatCurrency(catalogSubtotal)})
+          </p>
+        )}
+        {catalogSubtotal > 0 && catalogSubtotal < subtotal && (
+          <p className="text-[10px] text-muted-foreground text-right">
+            Limite catálogo (sem tabela): {formatCurrency(catalogSubtotal)}
+          </p>
+        )}
+        {valorDesconto > 0 && (
           <p className="text-xs text-muted-foreground text-right">
-            Desconto aplicado: −{formatCurrency(summary.descontoCarrinho)}
+            Desconto aplicado: −{formatCurrency(valorDesconto)}
           </p>
         )}
       </div>
@@ -92,9 +159,29 @@ export default function QuickBudgetCartView({
       <Button
         type="button"
         onClick={onSaveCart}
+        className="w-full h-11 rounded-2xl bg-muted hover:bg-muted/80 shadow-none text-foreground"
+      >
+        <ShoppingCart className="w-4 h-4 mr-2" /> Continuar buscando
+      </Button>
+
+      <Button
+        type="button"
+        onClick={onSalvarOrcamento}
+        disabled={isSaving || ajusteExcedido}
         className="w-full h-12 rounded-2xl bg-background hover:bg-primary dark:bg-card dark:text-foreground shadow-none"
       >
-        <ShoppingCart className="w-4 h-4 mr-2" /> Salvar carrinho
+        {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+        Salvar orçamento
+      </Button>
+
+      <Button
+        type="button"
+        variant="outline"
+        onClick={onEnviarPdv}
+        disabled={ajusteExcedido}
+        className="w-full h-12 rounded-2xl border-0 bg-muted shadow-none"
+      >
+        <Store className="w-4 h-4 mr-2" /> Enviar para o PDV
       </Button>
 
       {!compact && (
@@ -106,16 +193,16 @@ export default function QuickBudgetCartView({
           >
             <Check className="w-4 h-4 mr-2" /> Concluir
           </Button>
-          <Button onClick={onShare} disabled={isSharing} className="h-12 rounded-2xl bg-background hover:bg-primary dark:bg-card dark:text-foreground shadow-none">
-            {isSharing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <MessageCircle className="w-4 h-4 mr-2" />} Compartilhar
+          <Button
+            onClick={onShare}
+            disabled={isSharing}
+            className="h-12 rounded-2xl bg-background hover:bg-primary dark:bg-card dark:text-foreground shadow-none"
+          >
+            {isSharing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <MessageCircle className="w-4 h-4 mr-2" />}
+            Compartilhar
           </Button>
         </div>
       )}
-
-      <div className="rounded-3xl bg-card shadow-sm px-4 py-3 flex items-center gap-3 text-xs text-muted-foreground">
-        <ShoppingCart className="w-4 h-4" />
-        Adicionou ao carrinho e a busca volta pronta para o próximo produto.
-      </div>
     </div>
   );
 }
