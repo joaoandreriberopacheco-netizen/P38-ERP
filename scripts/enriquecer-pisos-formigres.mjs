@@ -165,6 +165,9 @@ function scoreMatch(prod, parsed) {
   // FREIJO CL45 → preferir título com CL
   if (/CL/i.test(parsed.raw) && title.includes('CL')) score += 12;
   if (/\bM[\s-]?45\b/i.test(parsed.raw) && /\bM\s*45\b/.test(prod.titulo)) score += 12;
+  // BEGE no Excel costuma ser BG no site (ex.: TAIKO BEGE → TAIKO BG)
+  if (/\bTAIKO\b/i.test(parsed.raw) && /\bBEGE\b/i.test(parsed.raw) && /\bTAIKO\b/i.test(prod.titulo) && /\bBG\b/i.test(prod.titulo)) score += 20;
+  if (/\bTAIKO\b/i.test(parsed.busca) && !/\bTAIKO\b/i.test(prod.titulo)) score -= 50;
 
   if ((prod.marca_nome || '').toLowerCase() === 'premium') score += 3;
 
