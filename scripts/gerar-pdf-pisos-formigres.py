@@ -25,9 +25,12 @@ from reportlab.platypus import (
 )
 
 STATUS_OK = "encontrado"
-IMG_COL_W = 22 * mm
-ROW_H = 24 * mm
-THUMB = 20 * mm
+IMG_COL_W = 26 * mm
+# Tamanho visível na tabela (pontos PDF)
+THUMB_BOX = 24 * mm
+# Resolução embutida (px) — maior que o display para zoom nítido no leitor PDF
+MAX_EMBED_PX = 720
+JPEG_QUALITY = 95
 
 
 def fmt_br_num(value: str | float | int) -> str:
@@ -99,11 +102,27 @@ def load_thumb(img_dir: Path, arquivo: str) -> Image | None:
     try:
         with PILImage.open(p) as im:
             im = im.convert("RGB")
-            im.thumbnail((int(THUMB), int(THUMB)), PILImage.Resampling.LANCZOS)
+            # Alta resolução no ficheiro; tamanho pequeno só na página
+            im.thumbnail((MAX_EMBED_PX, MAX_EMBED_PX), PILImage.Resampling.LANCZOS)
+            pw, ph = im.size
+            if pw <= 0 or ph <= 0:
+                return None
+            if pw >= ph:
+                disp_w = THUMB_BOX
+                disp_h = THUMB_BOX * ph / pw
+            else:
+                disp_h = THUMB_BOX
+                disp_w = THUMB_BOX * pw / ph
             buf = io.BytesIO()
-            im.save(buf, format="JPEG", quality=85)
+            im.save(
+                buf,
+                format="JPEG",
+                quality=JPEG_QUALITY,
+                optimize=True,
+                subsampling=0,
+            )
             buf.seek(0)
-            return Image(buf, width=THUMB, height=THUMB)
+            return Image(buf, width=disp_w, height=disp_h)
     except Exception:
         return None
 
@@ -152,7 +171,7 @@ def build_pdf(rows: list[dict[str, str]], img_dir: Path, out_path: Path) -> None
         Paragraph("<b>Estoque m²</b>", cell_c),
     ]
 
-    col_widths = [IMG_COL_W, 62 * mm, 52 * mm, 18 * mm, 28 * mm, 14 * mm, 18 * mm, 20 * mm]
+    col_widths = [IMG_COL_W, 60 * mm, 52 * mm, 18 * mm, 28 * mm, 14 * mm, 18 * mm, 20 * mm]
     data = [header]
 
     for row in rows:
