@@ -22,16 +22,22 @@ Confirme no painel Base44 que a função **`calcularIEP`** está na versão **`V
 
 ## 3. Executar o job ABCDE
 
-**Opção A — no app (recomendado)**  
+**Opção A — automático (recomendado)**  
+Todo **sábado à meia-noite** (hora de Tabatinga) o GitHub Actions corre `abcd:recalcular` e grava `produto.abcd` no Supabase.  
+Pré-requisitos: secrets `VITE_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` no GitHub; `ABCD_JOB_NOTURNO=true` na Edge Function (`npm run abcd:enable-noturno`).
+
+**Opção B — no app (manual)**  
 Configurações → ferramenta **Curva ABCD** → «Recalcular todos» ou «Só vazios».
 
-**Opção B — console do browser (admin logado em p38.base44.app)**
+**Opção C — terminal / agente**
 
 ```bash
-npm run abcd:executar-console
+npm run abcd:recalcular              # recalcula todos
+npm run abcd:recalcular -- --somente-vazios
 ```
 
-Cole o script impresso no DevTools → Console.
+**Opção D — console do browser (legado Base44)**  
+`npm run abcd:executar-console` — só se ainda usares Base44 como backend.
 
 ## 4. Verificação rápida
 

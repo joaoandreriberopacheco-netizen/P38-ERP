@@ -8,7 +8,7 @@ import {
 } from '@/lib/limparAbcdJobCadastro';
 
 /**
- * Remove abcd / IEP gravados pelo job noturno — catálogo volta ao cálculo ao vivo.
+ * Remove abcd gravado pelo job (produto.abcd no SQL).
  * Admin only. Corre lotes automaticamente (sem console).
  */
 export default function AbcdLimparCadastroTool() {

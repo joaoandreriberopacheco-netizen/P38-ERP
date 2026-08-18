@@ -89,6 +89,7 @@ O deploy publica o código; no **Supabase Dashboard → Edge Functions → Secre
 | `GEMINI_MODEL` | Opcional — default `gemini-3.6-flash` (PDF/imagem) / `gemini-3.5-flash-lite` (texto) |
 | `RESEND_API_KEY` | `gerenciar-pin` (email PIN) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Todas (já injectada pelo Supabase em runtime) |
+| `ABCD_JOB_NOTURNO` | `calcular-iep` — deve ser `true` para o job agendado (`npm run abcd:enable-noturno`) |
 
 **OCR / importar pedido:**
 
