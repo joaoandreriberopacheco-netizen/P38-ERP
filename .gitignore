@@ -59,6 +59,9 @@ secrets/p38-chaves.local.txt
 _mcp*
 .cursor-tmp-mcp-*
 
+# Imports locais / enriquecimento Formigres (imagens + CSV gerados)
+docs/imports-local/
+
 .env
 base44/.app.jsonc
 supabase/.temp/
