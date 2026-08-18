@@ -139,10 +139,14 @@ export default function EstoqueTab({ enabled = true } = {}) {
     ? (metrics.qualityDistributionGeral || metrics.qualityDistribution)
     : metrics.qualityDistribution;
   const totalQualidade = qualityBase.reduce((sum, bucket) => sum + Number(bucket.valor || 0), 0);
-  const nivelEstoqueChartData = (metrics.nivelEstoqueSeries || []).map((entry) => ({
-    ...entry,
-    valor: incluirEstoqueVirtualNivel ? Number(entry.valorGeral ?? entry.valor) : Number(entry.valorFisico ?? entry.valor),
-  }));
+  const nivelEstoqueSeries = metrics.nivelEstoqueSeries || [];
+  const nivelEstoqueChartData = nivelEstoqueSeries.map((entry, idx) => {
+    const isCurrentMonth = idx === nivelEstoqueSeries.length - 1;
+    const valorFisico = Number(entry.valorFisico ?? entry.valor);
+    const valorGeral = Number(entry.valorGeral ?? entry.valor);
+    const valor = incluirEstoqueVirtualNivel && isCurrentMonth ? valorGeral : valorFisico;
+    return { ...entry, valor };
+  });
   const nivelEstoqueAtual = nivelEstoqueChartData.at(-1)?.valor || 0;
   const qualityHalfDonutData = qualityBase.map((bucket) => ({
     name: bucket.label,
