@@ -13,7 +13,6 @@ import {
   computeOrcamentoRapidoDesconto,
   getFullPrice,
   getQuickBudgetUnitContext,
-  ORCAMENTO_RAPIDO_AVISO_PRECO,
   recalculateItem,
 } from './quickBudgetUtils';
 import { shareOrDownloadHtmlDocument, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
@@ -33,7 +32,7 @@ import {
   salvarOrcamentoRapido,
 } from '@/lib/orcamentoRapidoSql';
 import { prepararOrcamentoParaPdv } from '@/lib/orcamentoRapidoPdvBridge';
-import { quickBudgetStateToCupomProps } from '@/lib/orcamentoRapidoCupom';
+import { quickBudgetStateToCupomProps, buildOrcamentoRapidoShareHtml } from '@/lib/orcamentoRapidoCupom';
 import { useIsDesktop } from '@/hooks/use-breakpoint';
 import { P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
 import { cn } from '@/lib/utils';
@@ -368,74 +367,24 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
 
   const buildShareHtml = () => {
     const { subtotal: st, valorDesconto, total, catalogSubtotal } = descontoResumo;
-    return `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Orçamento rápido</title>
-  <style>
-    body { margin: 0; font-family: 'DIN 1451', DINish, system-ui, sans-serif; background: #f8fafc; color: #111827; }
-    .wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
-    .card { background: #fff; border-radius: 24px; box-shadow: 0 6px 24px rgba(15, 23, 42, 0.08); padding: 20px; }
-    .top { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
-    h1 { margin: 0; font-size: 28px; }
-    .muted { color: #6b7280; font-size: 14px; }
-    .total { text-align: right; }
-    .total strong { display: block; font-size: 28px; }
-    .list { margin-top: 18px; display: grid; gap: 10px; }
-    .item { background: #f8fafc; border-radius: 18px; padding: 14px; display: flex; justify-content: space-between; gap: 12px; }
-    .item-name { font-weight: 600; }
-    .item-meta { font-size: 13px; color: #6b7280; margin-top: 4px; }
-    .item-total { font-weight: 700; white-space: nowrap; }
-    .summary { margin-top: 18px; background: #f8fafc; border-radius: 18px; padding: 14px; display: grid; gap: 8px; }
-    .summary-row { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }
-    .summary-row.total-row { font-size: 18px; font-weight: 700; }
-    .aviso { margin-top: 14px; padding: 12px; background: #fffbeb; border-radius: 12px; font-size: 12px; color: #92400e; }
-    .actions { margin-top: 18px; }
-    .button { border: 0; border-radius: 16px; padding: 14px 18px; background: #111827; color: white; font-weight: 600; cursor: pointer; }
-    @media print { body { background: white; } .wrap { padding: 0; } .card { box-shadow: none; } .actions { display: none; } }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="card">
-      <div class="top">
-        <div>
-          <h1>Orçamento rápido</h1>
-          ${clienteNome ? `<div class="muted">Cliente: ${clienteNome}</div>` : ''}
-          <div class="muted">${items.length} itens</div>
-        </div>
-        <div class="total">
-          <div class="muted">Total</div>
-          <strong>${total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
-        </div>
-      </div>
-      <div class="list">
-        ${items.map((item) => `
-          <div class="item">
-            <div>
-              <div class="item-name">${item.produto_nome}</div>
-              <div class="item-meta">${item.quantidade} ${item.unidade || 'UN'} × ${Number(item.preco_unitario || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
-            </div>
-            <div class="item-total">${Number(item.total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
-          </div>
-        `).join('')}
-      </div>
-      <div class="summary">
-        <div class="summary-row"><span>Subtotal</span><strong>${st.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong></div>
-        ${catalogSubtotal > 0 && catalogSubtotal < st ? `<div class="summary-row"><span>Limite catálogo</span><strong>${catalogSubtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong></div>` : ''}
-        ${valorDesconto > 0 ? `<div class="summary-row"><span>Desconto</span><strong>${valorDesconto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong></div>` : ''}
-        <div class="summary-row total-row"><span>Total</span><strong>${total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong></div>
-      </div>
-      <div class="aviso">${ORCAMENTO_RAPIDO_AVISO_PRECO}</div>
-      <div class="actions">
-        <button class="button" onclick="window.print()">Baixar PDF</button>
-      </div>
-    </div>
-  </div>
-</body>
-</html>`;
+    const cupom = quickBudgetStateToCupomProps({
+      items,
+      descontoResumo,
+      clienteNome,
+      observacoes,
+    });
+    return buildOrcamentoRapidoShareHtml({
+      empresa,
+      nomeTabela: tabelaSelecionada?.nome || '',
+      clienteNome,
+      numero: orcamentoId ? String(orcamentoId).slice(0, 8) : '',
+      itens: cupom.itens,
+      subtotal: st,
+      desconto: valorDesconto,
+      total,
+      observacoes: cupom.observacoes,
+      catalogSubtotal,
+    });
   };
 
   const handleShare = async () => {

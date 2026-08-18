@@ -1,5 +1,5 @@
 import React from 'react';
-import OrcamentoCupom from '@/components/orcamento/OrcamentoCupom';
+import OrcamentoRapidoCupom from './OrcamentoRapidoCupom';
 import { QUICK_ACCESS_NESTED_DIALOG_CLASS } from '@/lib/quickAccessOverlay';
 
 /**
@@ -17,19 +17,19 @@ export default function OrcamentoRapidoCupomOverlay({
 
   return (
     <div className={`fixed inset-0 ${QUICK_ACCESS_NESTED_DIALOG_CLASS}`}>
-      <OrcamentoCupom
-      itens={cupomProps.itens}
-      total={cupomProps.total}
-      desconto={cupomProps.desconto}
-      subtotal={cupomProps.subtotal}
-      observacoes={cupomProps.observacoes}
-      formato={formato}
-      nomeTabela={nomeTabela}
-      clienteNome={cupomProps.clienteNome}
-      empresa={empresa}
-      onVoltar={onClose}
-      onClose={onClose}
-    />
+      <OrcamentoRapidoCupom
+        itens={cupomProps.itens}
+        total={cupomProps.total}
+        desconto={cupomProps.desconto}
+        subtotal={cupomProps.subtotal}
+        observacoes={cupomProps.observacoes}
+        numero={cupomProps.numero || ''}
+        formato={formato}
+        nomeTabela={nomeTabela}
+        clienteNome={cupomProps.clienteNome}
+        empresa={empresa}
+        onVoltar={onClose}
+      />
     </div>
   );
 }
