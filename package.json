@@ -77,6 +77,7 @@
     "portal:excel-manifest": "node scripts/build-portal-excel-manifest.mjs",
     "modelo:seed-ceramica": "node scripts/seed-modelo-catalogo-ceramica.mjs",
     "formigres:enriquecer-pisos": "node scripts/enriquecer-pisos-formigres.mjs",
+    "formigres:pdf-pisos": "node scripts/gerar-pdf-pisos-formigres.mjs",
     "produto:nome:restaurar": "node scripts/restaurar-nomes-produto-hierarquia.mjs",
     "produto:nome:restaurar:apply": "node scripts/restaurar-nomes-produto-hierarquia.mjs --apply",
     "git:ship": "node scripts/git-ship.mjs",
