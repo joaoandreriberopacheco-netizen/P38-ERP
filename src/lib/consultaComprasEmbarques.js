@@ -3,13 +3,8 @@ import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 import { resolveEmbarqueQuantidadeComercial, resolveEmbarqueLinhaUnidade, resolveEmbarqueQuantidadeBase } from '@/lib/embarqueQuantityResolve';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { getTotalLinhaPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
+import { isNecessidadeRenderizada } from '@/lib/pedidoCompraNecessidade';
 import { calculateBaseQuantity, commercialQuantityFromBase, getItemCompraExibicaoVitrine } from '@/lib/productUnits';
-
-function isNecessidadeRenderizada(embarque) {
-  if (!embarque) return false;
-  if (embarque?.tipo === 'Necessidade') return true;
-  return !!embarque?.observacoes && String(embarque.observacoes).includes('criado automaticamente para itens pendentes');
-}
 
 function hasLinkedItems(embarque) {
   return getEmbarqueItensLinhas(embarque).some(
