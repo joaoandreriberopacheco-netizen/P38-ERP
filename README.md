@@ -87,7 +87,7 @@ Push na `main` → GitHub Actions **Vercel Deploy** (build com secrets) + **Supa
 
 ## Repositório relacionado
 
-O monorepo **a29-erp** mantém snapshot de referência em `legacy/varejosync/`. Espelho opcional: `npm run mirror:pack` — ver [`mirror/README.md`](mirror/README.md).
+Espelho UI local opcional: `npm run mirror:pack` — ver [`mirror/README.md`](mirror/README.md). (Ambiente Mana/a29-erp removido ago/2026.)
 
 ---
 
