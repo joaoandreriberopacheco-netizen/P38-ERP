@@ -1,20 +1,24 @@
 #!/usr/bin/env node
 /**
- * Export CSV estudo: cadastro actual vs hierarquia portal (LINHA → PC → eixos → novo SKU).
+ * Export estudo: cadastro actual vs hierarquia portal (LINHA → PC → eixos → novo SKU).
  *
  * Uso:
  *   node scripts/export-sku-hierarquia-estudo.mjs
- *   node scripts/export-sku-hierarquia-estudo.mjs --out=docs/exports/meu-arquivo.csv
+ *   node scripts/export-sku-hierarquia-estudo.mjs --format=xlsx
+ *   node scripts/export-sku-hierarquia-estudo.mjs --format=csv --out=docs/exports/meu.csv
+ *   node scripts/export-sku-hierarquia-estudo.mjs --format=both
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
 import pg from 'pg';
+import ExcelJS from 'exceljs';
 import { loadDotEnvFiles } from './base44-env.mjs';
 
 loadDotEnvFiles();
 
-const DEFAULT_OUT = path.join(process.cwd(), 'docs', 'exports', 'P38-sku-hierarquia-estudo.csv');
+const DEFAULT_BASENAME = 'P38-sku-hierarquia-estudo';
+const DEFAULT_DIR = path.join(process.cwd(), 'docs', 'exports');
 const MANIFEST_CANDIDATES = [
   path.join(process.cwd(), 'src', 'data', 'portalExcelManifest.generated.json'),
   path.join(process.cwd(), 'docs', 'exports', 'portal-excel-manifest.snapshot.json'),
@@ -59,7 +63,18 @@ const LINHAS_MESTRE = [
 
 function parseArgs(argv) {
   const outArg = argv.find((a) => a.startsWith('--out='));
-  return { out: outArg ? outArg.slice(6) : DEFAULT_OUT };
+  const formatArg = argv.find((a) => a.startsWith('--format='));
+  const format = (formatArg?.slice(9) || 'xlsx').toLowerCase();
+  if (!['xlsx', 'csv', 'both'].includes(format)) {
+    throw new Error('--format deve ser xlsx, csv ou both');
+  }
+  let out = outArg ? outArg.slice(6) : null;
+  if (!out) {
+    if (format === 'csv') out = path.join(DEFAULT_DIR, `${DEFAULT_BASENAME}.csv`);
+    else if (format === 'xlsx') out = path.join(DEFAULT_DIR, `${DEFAULT_BASENAME}.xlsx`);
+    else out = path.join(DEFAULT_DIR, DEFAULT_BASENAME);
+  }
+  return { out, format };
 }
 
 function trim(s) {
@@ -303,8 +318,94 @@ function enrichEstudo(produto, excelByCodigo, excelLinhas) {
   };
 }
 
+const EXPORT_HEADERS = [
+  'codigo_interno',
+  'linha',
+  'produto_compra',
+  'eixo_a',
+  'eixo_b',
+  'novo_sku',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'sku_atual',
+  'categoria',
+];
+
+function buildExportRows(produtos, excelByCodigo, excelLinhas) {
+  return produtos.map((p) => {
+    const estudo = enrichEstudo(p, excelByCodigo, excelLinhas);
+    return [
+      trim(p.codigo_interno),
+      estudo.linha,
+      estudo.produto_compra,
+      estudo.eixo_a,
+      estudo.eixo_b,
+      estudo.novo_sku,
+      trim(p.campo_hierarquico_1),
+      trim(p.campo_hierarquico_2),
+      trim(p.campo_hierarquico_3),
+      trim(p.campo_hierarquico_4),
+      trim(p.campo_hierarquico_5),
+      trim(p.nome),
+      trim(p.categoria_nome),
+    ];
+  });
+}
+
+function resolveOutputPaths(out, format) {
+  if (format === 'both') {
+    const base = out.endsWith('.csv') || out.endsWith('.xlsx')
+      ? out.replace(/\.(csv|xlsx)$/i, '')
+      : out;
+    return { xlsx: `${base}.xlsx`, csv: `${base}.csv` };
+  }
+  if (format === 'csv') {
+    return { csv: out.endsWith('.csv') ? out : `${out}.csv` };
+  }
+  return { xlsx: out.endsWith('.xlsx') ? out : `${out}.xlsx` };
+}
+
+async function writeCsv(filePath, headers, dataRows) {
+  const lines = [csvLine(headers), ...dataRows.map((row) => csvLine(row))];
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, `\ufeff${lines.join('\n')}\n`, 'utf8');
+}
+
+async function writeXlsx(filePath, headers, dataRows) {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'P38 export-sku-hierarquia-estudo';
+  wb.created = new Date();
+
+  const ws = wb.addWorksheet('Estudo hierarquia', {
+    views: [{ state: 'frozen', ySplit: 1 }],
+  });
+
+  ws.addRow(headers);
+  for (const row of dataRows) ws.addRow(row);
+
+  const headerRow = ws.getRow(1);
+  headerRow.font = { bold: true };
+  headerRow.alignment = { vertical: 'middle', wrapText: true };
+
+  const widths = [14, 22, 24, 12, 28, 42, 18, 14, 28, 14, 14, 42, 28];
+  headers.forEach((_, i) => {
+    ws.getColumn(i + 1).width = widths[i] ?? 16;
+  });
+
+  ws.autoFilter = {
+    from: { row: 1, column: 1 },
+    to: { row: 1 + dataRows.length, column: headers.length },
+  };
+
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  await wb.xlsx.writeFile(filePath);
+}
+
 async function main() {
-  const { out } = parseArgs(process.argv.slice(2));
+  const { out, format } = parseArgs(process.argv.slice(2));
   const { manifest, source } = loadManifest();
   const excelByCodigo = Object.fromEntries(
     Object.entries(manifest.skus || {}).map(([k, v]) => [norm(k), v]),
@@ -326,49 +427,22 @@ async function main() {
   `);
   await pool.end();
 
-  const headers = [
-    'codigo_interno',
-    'linha',
-    'produto_compra',
-    'eixo_a',
-    'eixo_b',
-    'novo_sku',
-    'h1',
-    'h2',
-    'h3',
-    'h4',
-    'h5',
-    'sku_atual',
-    'categoria',
-  ];
+  const dataRows = buildExportRows(rows, excelByCodigo, excelLinhas);
+  const paths = resolveOutputPaths(out, format);
+  const written = [];
 
-  const lines = [csvLine(headers)];
-
-  for (const p of rows) {
-    const estudo = enrichEstudo(p, excelByCodigo, excelLinhas);
-    lines.push(csvLine([
-      trim(p.codigo_interno),
-      estudo.linha,
-      estudo.produto_compra,
-      estudo.eixo_a,
-      estudo.eixo_b,
-      estudo.novo_sku,
-      trim(p.campo_hierarquico_1),
-      trim(p.campo_hierarquico_2),
-      trim(p.campo_hierarquico_3),
-      trim(p.campo_hierarquico_4),
-      trim(p.campo_hierarquico_5),
-      trim(p.nome),
-      trim(p.categoria_nome),
-    ]));
+  if (paths.xlsx) {
+    await writeXlsx(paths.xlsx, EXPORT_HEADERS, dataRows);
+    written.push(paths.xlsx);
   }
-
-  fs.mkdirSync(path.dirname(out), { recursive: true });
-  fs.writeFileSync(out, `\ufeff${lines.join('\n')}\n`, 'utf8');
+  if (paths.csv) {
+    await writeCsv(paths.csv, EXPORT_HEADERS, dataRows);
+    written.push(paths.csv);
+  }
 
   const excelCount = rows.filter((p) => excelByCodigo[norm(p.codigo_interno)]).length;
   console.log('[export-sku-hierarquia-estudo] OK');
-  console.log(`  ficheiro: ${out}`);
+  for (const f of written) console.log(`  ficheiro: ${f}`);
   console.log(`  skus: ${rows.length}`);
   console.log(`  manifest: ${source}`);
   console.log(`  com excel cerâmica: ${excelCount}`);
