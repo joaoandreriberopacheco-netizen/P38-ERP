@@ -25,6 +25,7 @@ export default function PedidoCompraDetalhe() {
   const [loading, setLoading] = useState(true);
   const [autoOpenImporter, setAutoOpenImporter] = useState(false);
   const [abaInicial, setAbaInicial] = useState('dados-gerais');
+  const [embarqueContextoId, setEmbarqueContextoId] = useState(null);
 
   const loadPedidoComVerdade = useCallback(async (id, keepLoading = false) => {
     if (!id || id === 'novo') {
@@ -95,6 +96,7 @@ export default function PedidoCompraDetalhe() {
     setAutoOpenImporter(params.get('autoImportador') === '1');
     const tab = params.get('tab');
     if (tab === 'pagamento' || tab === 'financeiro') setAbaInicial('pagamento');
+    setEmbarqueContextoId(params.get('embarque'));
     loadPedidoComVerdade(id, false);
   }, [loadPedidoComVerdade]);
 
@@ -177,6 +179,7 @@ export default function PedidoCompraDetalhe() {
         }}
         abaInicial={abaInicial}
         autoOpenImporter={autoOpenImporter}
+        embarqueContextoId={embarqueContextoId}
       />
     </div>
   );

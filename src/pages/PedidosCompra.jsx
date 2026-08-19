@@ -25,7 +25,8 @@ import { fetchPedidosCompraGestaoInicial } from '@/lib/fetchPedidosCompraGestao'
 import { carregarProdutosMap } from '@/lib/embarqueVitrineHelpers';
 import { calcularPercentuaisLogistica } from '@/lib/embarqueLogisticaHelpers';
 import {
-  avaliarNecessidadeComercialPedido,
+  buildEmbarqueVirtualNecessidade,
+  embarqueNecessidadeTemItensPendentes,
   isNecessidadeRenderizada,
   pedidoDeveExibirCardNecessidade,
   quantidadePendenteNecessidadePedido,
@@ -46,7 +47,6 @@ import { Package, Receipt } from 'lucide-react';
 import {
   buildPurchaseUnitOptions,
   normalizeUnitCode,
-  calculateBaseQuantity,
   commercialQuantityFromBase,
   normalizeItemToCanonicalFactorOne,
   getItemCompraExibicaoVitrine,
@@ -443,43 +443,6 @@ const getDisplayValorEmbarque = (pedido, embarque, produtosMap = {}, embarquesDo
   return Number((valorEmbarqueItens + proporcao * (frete - desconto)).toFixed(2));
 };
 
-const buildVirtualNecessidade = (pedido, embarquesDoPedido, produtosMap = {}) => {
-  if (!pedidoNaoConcluido(pedido)) return null;
-
-  const { exibir, pendencias } = avaliarNecessidadeComercialPedido(pedido, embarquesDoPedido, produtosMap);
-  if (!exibir || !pendencias.length) return null;
-
-  const itensPendentes = pendencias.map(({ item, exib, pendente }) => ({
-    produto_id: item.produto_id,
-    produto_nome: item.produto_nome,
-    quantidade_pedida: exib.quantidade,
-    quantidade_embarcada: pendente,
-    quantidade_embarcada_apresentacao: pendente,
-    quantidade_embarcada_base: calculateBaseQuantity(pendente, exib.fator_conversao),
-    quantidade_base: calculateBaseQuantity(pendente, exib.fator_conversao),
-    quantidade_recebida: 0,
-    fator_conversao: exib.fator_conversao,
-    fator_apresentacao: exib.fator_conversao,
-    unidade_apresentacao: exib.unidade_medida,
-    unidade_medida: exib.unidade_medida,
-  }));
-
-  if (!itensPendentes.length) return null;
-
-  return {
-    id: `virtual-necessidade-${pedido.id}`,
-    pedido_compra_id: pedido.id,
-    numero: `${pedido.numero || 'PC'}-NEC`,
-    tipo: 'Necessidade',
-    status: 'Pendente',
-    status_recebimento: 'Pendente',
-    observacoes: 'Embarque de necessidade criado automaticamente para itens pendentes.',
-    _linhas: itensPendentes,
-    _itens_fonte: 'virtual',
-    created_date: new Date().toISOString(),
-  };
-};
-
 function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
   const embarquesPorPedido = embarquesDb.reduce((acc, embarque) => {
     const pedidoId = embarque.pedido_compra_id;
@@ -535,8 +498,10 @@ function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
     const embarquesReais = embarquesDoPedido.filter((embarque) => !isNecessidadeRenderizada(embarque));
     const embarquesNecessidade = embarquesDoPedido.filter((embarque) => isNecessidadeRenderizada(embarque));
     const embarqueOriginal = embarquesReais[0] || null;
-    const necessidadeVirtual = embarquesNecessidade.length === 0 && pedidoNaoConcluido(pedido)
-      ? buildVirtualNecessidade(pedido, embarquesDoPedido, produtosMap)
+    const exibirNecessidadeCard = pedidoDeveExibirCardNecessidade(pedido, embarquesDoPedido, produtosMap);
+    const embarquesNecessidadeComItens = embarquesNecessidade.filter((embarque) => embarqueNecessidadeTemItensPendentes(embarque));
+    const necessidadeVirtual = exibirNecessidadeCard && pedidoNaoConcluido(pedido) && embarquesNecessidadeComItens.length === 0
+      ? buildEmbarqueVirtualNecessidade(pedido, embarquesDoPedido, produtosMap)
       : null;
 
     const embarquesRenderizados = embarquesDoPedido.length > 0

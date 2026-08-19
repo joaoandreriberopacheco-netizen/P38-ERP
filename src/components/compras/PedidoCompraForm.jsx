@@ -75,8 +75,20 @@ import { savePedidoCompraItem } from '@/functions/savePedidoCompraItem';
 import { uploadAnexoParaPedidoCompra } from '@/lib/uploadAnexoReferencia';
 import { limparArquivoPedidoImportBridge } from '@/lib/torrePedidoImportBridge';
 import { mergeLoteIntoItems, parseLoteQuantidade } from '@/lib/catalogLoteUtils';
+import {
+  calcularResumoNecessidadeDetalhe,
+  resolverEmbarqueNecessidadeContexto,
+} from '@/lib/pedidoCompraNecessidade';
 
-export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefresh, abaInicial = 'dados-gerais', autoOpenImporter = false }) {
+export default function PedidoCompraForm({
+  pedido,
+  onSave,
+  onClose,
+  onPedidoRefresh,
+  abaInicial = 'dados-gerais',
+  autoOpenImporter = false,
+  embarqueContextoId = null,
+}) {
   const isPhone = useCompactShell();
   const { data: produtosCached, refetch: refetchProdutosCatalog } = useProdutosListQuery();
   const { data: terceirosCached } = useTerceirosListQuery();
@@ -170,6 +182,29 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
   const statusFinanceiroHeader = getPedidoCompraDisplayStatusFinanceiroLabel(
     getPedidoCompraDisplayStatusFinanceiro(pedidoAtual || {}, lancamentosPedido),
   );
+
+  const produtosMapBasico = useMemo(() => {
+    const map = {};
+    (produtosCached || []).forEach((produto) => {
+      if (produto?.id) map[produto.id] = produto;
+    });
+    return map;
+  }, [produtosCached]);
+
+  const embarqueNecessidadeContexto = useMemo(
+    () => resolverEmbarqueNecessidadeContexto(pedidoAtual, embarqueContextoId, produtosMapBasico),
+    [pedidoAtual, embarqueContextoId, produtosMapBasico],
+  );
+
+  const resumoNecessidadeDetalhe = useMemo(() => {
+    if (!embarqueNecessidadeContexto) return null;
+    return calcularResumoNecessidadeDetalhe(
+      pedidoAtual,
+      embarqueNecessidadeContexto,
+      pedidoAtual?._embarques || [],
+      produtosMapBasico,
+    );
+  }, [pedidoAtual, embarqueNecessidadeContexto, produtosMapBasico]);
 
   const handlePedidoFinanceiroAtualizado = async () => {
     if (onPedidoRefresh) {
@@ -1337,7 +1372,17 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
             )}
           </div>
           <span className="text-sm font-light text-muted-foreground whitespace-nowrap ml-4 normal-case tabular-nums">
-            {formData.itens.length} item(s) • {formatCurrency(valorTotal)}
+            {resumoNecessidadeDetalhe ? (
+              <>
+                {resumoNecessidadeDetalhe.qtdItens}{' '}
+                {resumoNecessidadeDetalhe.qtdItens === 1 ? 'item' : 'itens'}{' '}
+                ({formatCurrency(resumoNecessidadeDetalhe.valorTotal)})
+              </>
+            ) : (
+              <>
+                {formData.itens.length} item(s) • {formatCurrency(valorTotal)}
+              </>
+            )}
           </span>
         </div>
         <DropdownMenu>
