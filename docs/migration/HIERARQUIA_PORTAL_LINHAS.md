@@ -47,6 +47,18 @@ npm run build
 
 Benchmark LM: [`LEROY_MERLIN_BENCHMARK_CATALOGO.md`](LEROY_MERLIN_BENCHMARK_CATALOGO.md)
 
+## Export com camada CORE (pathway obra)
+
+Estudo Excel enriquecido — **sem alterar LINHA portal**:
+
+```bash
+npm run export:sku-hierarquia-core
+```
+
+Saída: `docs/exports/P38-sku-hierarquia-core.xlsx` (+ CSV). Colunas extra: `etapa_obra`, `core`, `core_nome`, `papel_core`. Folha **Referência cores** no xlsx.
+
+Lógica: [`scripts/lib/inferenciaCoreObra.mjs`](../../scripts/lib/inferenciaCoreObra.mjs)
+
 ## Cerâmica piloto
 
 As LINHAs `CERAMICA_BOLD` e `CERAMICA_RETIF` vêm também do manifest Excel (`portal-excel-manifest.snapshot.json`). O loader **mescla** manifest + mestre para os ~174 SKUs do piloto.
