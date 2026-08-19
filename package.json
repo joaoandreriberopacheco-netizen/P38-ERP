@@ -19,6 +19,7 @@
     "flare:export": "node scripts/export-flare-pending.mjs",
     "flare:api": "node scripts/flare-local-api.mjs",
     "audit:fluxo-dia": "node scripts/audit-fluxo-dia.mjs",
+    "audit:margem-outros": "node scripts/auditar-margem-outros.mjs",
     "financeiro:corte-saldos": "node scripts/aplicar-corte-financeiro-saldos.mjs",
     "audit:pedido-sugestao": "node scripts/audit-pedido-sugestao-estoque.mjs",
     "audit:estoque-canonico": "node scripts/audit-estoque-canonico.mjs",
