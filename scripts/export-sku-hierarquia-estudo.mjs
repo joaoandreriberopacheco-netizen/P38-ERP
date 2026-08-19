@@ -15,6 +15,12 @@ import pg from 'pg';
 import ExcelJS from 'exceljs';
 import { loadDotEnvFiles } from './base44-env.mjs';
 import { planInferenciaEstruturada, inferirLinhaCodigoEstruturado } from './lib/inferenciaHierarquiaEstudo.mjs';
+import {
+  planInferenciaOutrosMacro,
+  compactarRotulo,
+  deveUsarOutros,
+  isFalsoH1,
+} from './lib/inferenciaOutrosMacro.mjs';
 
 loadDotEnvFiles();
 
@@ -47,6 +53,7 @@ const LINHAS_MESTRE = [
   { ordem: 60, codigo: 'SOLDAVEL', nome: 'SOLDÁVEL', tipo: 'mix' },
   { ordem: 70, codigo: 'ESGOTO', nome: 'ESGOTO', tipo: 'mix' },
   { ordem: 80, codigo: 'ROSCAVEL', nome: 'ROSCÁVEL', tipo: 'mix' },
+  { ordem: 88, codigo: 'PINTURA_QUIMICOS', nome: 'PINTURA E QUÍMICOS', tipo: 'portfolio' },
   { ordem: 90, codigo: 'TINTA', nome: 'TINTA', tipo: 'portfolio' },
   { ordem: 100, codigo: 'VERNIZ', nome: 'VERNIZ', tipo: 'portfolio' },
   { ordem: 110, codigo: 'MASSA_CORRIDA', nome: 'MASSA CORRIDA', tipo: 'mix' },
@@ -56,10 +63,17 @@ const LINHAS_MESTRE = [
   { ordem: 150, codigo: 'PARAFUSO', nome: 'PARAFUSO', tipo: 'mix' },
   { ordem: 160, codigo: 'TORNEIRA', nome: 'TORNEIRA', tipo: 'portfolio' },
   { ordem: 170, codigo: 'METAIS_SANITARIOS', nome: 'METAIS SANITÁRIOS', tipo: 'portfolio' },
+  { ordem: 175, codigo: 'HIDRÁULICA', nome: 'HIDRÁULICA', tipo: 'mix' },
   { ordem: 180, codigo: 'TUBO', nome: 'TUBO (geral)', tipo: 'mix' },
   { ordem: 190, codigo: 'LIXA', nome: 'LIXA', tipo: 'mix' },
   { ordem: 200, codigo: 'ELETRICA', nome: 'MATERIAL ELÉTRICO', tipo: 'mix' },
+  { ordem: 205, codigo: 'ILUMINACAO', nome: 'ILUMINAÇÃO', tipo: 'mix' },
+  { ordem: 208, codigo: 'FERRAMENTAS', nome: 'FERRAMENTAS', tipo: 'mix' },
   { ordem: 210, codigo: 'FERRAGEM', nome: 'FERRAGEM', tipo: 'mix' },
+  { ordem: 215, codigo: 'MATERIAIS_BASICOS', nome: 'MATERIAIS BÁSICOS', tipo: 'mix' },
+  { ordem: 218, codigo: 'COBERTURAS', nome: 'COBERTURAS E FORROS', tipo: 'mix' },
+  { ordem: 219, codigo: 'ESQUADRIAS', nome: 'ESQUADRIAS E FERRAGENS', tipo: 'mix' },
+  { ordem: 225, codigo: 'DIVERSOS', nome: 'DIVERSOS', tipo: 'mix' },
   { ordem: 220, codigo: 'IMPERMEABILIZANTE', nome: 'IMPERMEABILIZANTE', tipo: 'mix' },
   { ordem: 230, codigo: 'ADESIVO', nome: 'ADESIVO', tipo: 'mix' },
   { ordem: 900, codigo: 'OUTROS', nome: 'OUTROS / A CLASSIFICAR', tipo: 'solo' },
@@ -178,6 +192,20 @@ function planLinhaCompraAnalise(produto = {}) {
     };
   }
 
+  const macro = planInferenciaOutrosMacro(produto);
+  if (macro) {
+    return {
+      linha_codigo: macro.linha_codigo,
+      linha_nome: macro.linha_nome,
+      linha_tipo: macro.linha_tipo,
+      produto_compra_nome: macro.produto_compra_nome,
+      eixo_a: macro.eixo_a,
+      eixo_b: macro.eixo_b,
+      confianca: macro.confianca,
+      motivo: macro.motivo,
+    };
+  }
+
   const h1 = trim(produto.campo_hierarquico_1);
   const h2 = trim(produto.campo_hierarquico_2);
   const h3 = trim(produto.campo_hierarquico_3);
@@ -235,18 +263,6 @@ function planLinhaCompraAnalise(produto = {}) {
   return patch;
 }
 
-function isFalsoH1(produto) {
-  const h1 = trim(produto.campo_hierarquico_1);
-  const nome = trim(produto.nome);
-  if (!h1) return false;
-  if (norm(h1) === norm(nome)) return true;
-  if (nome.toUpperCase().startsWith(h1.toUpperCase()) && h1.length > 25) return true;
-  if (h1.length > 45) return true;
-  const tokens = h1.split(/\s+/);
-  if (tokens.length >= 5 && tokens.filter((t) => /\d/.test(t)).length >= 2) return true;
-  return false;
-}
-
 function enrichEstudo(produto, excelByCodigo, excelLinhas) {
   const cod = trim(produto.codigo_interno).toUpperCase();
   const excel = excelByCodigo[cod] || excelByCodigo[trim(produto.codigo_interno)];
@@ -281,22 +297,24 @@ function enrichEstudo(produto, excelByCodigo, excelLinhas) {
     };
   }
 
-  const linhaCod = falsoH1 ? 'OUTROS' : (plan.linha_codigo || inferirLinhaCodigo(produto));
-  const linhaMeta = plan.linha_codigo
+  const usarOutros = deveUsarOutros(produto, plan);
+  const linhaCod = usarOutros ? 'OUTROS' : (plan.linha_codigo || inferirLinhaCodigo(produto));
+  const linhaMeta = plan.linha_codigo && !usarOutros
     ? { codigo: plan.linha_codigo, nome: plan.linha_nome, tipo: plan.linha_tipo }
     : findLinhaMeta(linhaCod);
   const solo = linhaMeta.tipo === 'solo';
   const pcNome = solo ? trim(linhaMeta.nome) : trim(plan.produto_compra_nome || linhaMeta.nome);
   const eixoA = trim(plan.eixo_a);
   const eixoB = trim(plan.eixo_b);
+  const montarSku = () => {
+    const raw = montarNomeProposto({ produtoCompraNome: pcNome, eixoA, eixoB, marca: produto.marca });
+    return plan.motivo === 'macro_outros' ? compactarRotulo(raw) : raw;
+  };
   let novoSku;
   if (solo && linhaCod === 'OUTROS') {
-    // Falsos h1 / por classificar — mantém nome actual até passar pelo Excel.
     novoSku = trim(produto.nome);
-  } else if (solo) {
-    novoSku = montarNomeProposto({ produtoCompraNome: pcNome, eixoA, eixoB, marca: produto.marca }) || trim(produto.nome);
   } else {
-    novoSku = montarNomeProposto({ produtoCompraNome: pcNome, eixoA, eixoB, marca: produto.marca }) || trim(produto.nome);
+    novoSku = montarSku() || trim(produto.nome);
   }
 
   return {
@@ -433,11 +451,15 @@ async function main() {
   }
 
   const excelCount = rows.filter((p) => excelByCodigo[norm(p.codigo_interno)]).length;
+  const outrosCount = dataRows.filter((r) => r[1]?.includes('OUTROS')).length;
+  const pcUnicos = new Set(dataRows.map((r) => r[2]).filter(Boolean)).size;
   console.log('[export-sku-hierarquia-estudo] OK');
   for (const f of written) console.log(`  ficheiro: ${f}`);
   console.log(`  skus: ${rows.length}`);
   console.log(`  manifest: ${source}`);
   console.log(`  com excel cerâmica: ${excelCount}`);
+  console.log(`  linha OUTROS: ${outrosCount}`);
+  console.log(`  produtos compra únicos: ${pcUnicos}`);
 }
 
 main().catch((err) => {
