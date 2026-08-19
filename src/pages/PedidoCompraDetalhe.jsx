@@ -8,6 +8,12 @@ import { hydrateEmbarquesPedidoFromSql } from '@/lib/fetchEmbarqueItens';
 import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
 import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
 import { gerarNumeroSequencial } from '@/lib/gerarNumeroSequencial';
+import {
+  listarLancamentosPedidoCompra,
+  pedidoStatusIndicaAguardandoAprovacaoFinanceira,
+  pedidoPrecisaSincronizarAprovacaoFinanceira,
+} from '@/lib/pedidoCompraFinanceiro';
+import { sincronizarPedidoCompraAprovacaoFinanceira } from '@/lib/aprovarPedidoCompraFinanceiro';
 
 /**
  * Página inteira de detalhe/criação de Pedido de Compra — fullscreen em todos os viewports.
@@ -58,6 +64,21 @@ export default function PedidoCompraDetalhe() {
       _embarque_principal: ultimoEmbarque,
       data_prevista_entrega: ultimoEmbarque?.eta ? String(ultimoEmbarque.eta).slice(0, 10) : pedidoComItens.data_prevista_entrega,
     };
+
+    if (pedidoStatusIndicaAguardandoAprovacaoFinanceira(pedidoComVerdade)) {
+      const lancs = await listarLancamentosPedidoCompra(base44, pedidoComVerdade.id);
+      if (pedidoPrecisaSincronizarAprovacaoFinanceira(pedidoComVerdade, lancs)) {
+        await sincronizarPedidoCompraAprovacaoFinanceira({
+          base44,
+          pedido: pedidoComVerdade,
+          lancamentos: lancs,
+        });
+        const [atualizado] = await base44.entities.PedidoCompra.filter({ id: pedidoComVerdade.id });
+        if (atualizado) {
+          Object.assign(pedidoComVerdade, atualizado);
+        }
+      }
+    }
 
     setPedido(pedidoComVerdade);
     setLoading(false);

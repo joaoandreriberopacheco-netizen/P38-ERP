@@ -129,6 +129,95 @@ export function pedidoPrecisaSincronizarAprovacaoFinanceira(pedido = {}, lancame
   return evidenciaAprovacaoFinanceiraProcessada(pedido, lancamentos);
 }
 
+/** Status financeiro efetivo para exibição (considera lançamentos quando o pedido está desatualizado). */
+export function getPedidoCompraDisplayStatusFinanceiro(pedido = {}, lancamentos = []) {
+  const aprovadoEfetivo =
+    pedido._financeiro_aprovado_efetivo || evidenciaAprovacaoFinanceiraProcessada(pedido, lancamentos);
+
+  if (aprovadoEfetivo) return 'Aprovado Financeiramente';
+
+  const saf = pedido.status_aprovacao_financeira || '';
+  if (saf === 'Rejeitado Financeiramente' || saf === 'Rejeitado') return saf;
+  if (saf === 'Solicitação de Edição Pendente') return saf;
+  if (pedidoStatusIndicaAguardandoAprovacaoFinanceira(pedido)) {
+    return 'Aguardando Aprovação Financeira';
+  }
+  if (saf) return saf;
+  return pedido.status || 'Rascunho';
+}
+
+/** Rótulo curto do status financeiro para cabeçalho / lista. */
+export function getPedidoCompraDisplayStatusFinanceiroLabel(status = '') {
+  if (
+    status === 'Aguardando Liberação Financeira' ||
+    status === 'Aguardando Aprovação Financeira' ||
+    status === 'Aguardando Liberação'
+  ) {
+    return 'Aguard. Pgto';
+  }
+  if (status === 'Aprovado Financeiramente' || status === 'Aprovado') return 'Aprovado';
+  return status;
+}
+
+export async function carregarLancamentosPedidosCompraMap(base44, pedidoIds = []) {
+  const map = new Map();
+  const ids = [...new Set((pedidoIds || []).filter(Boolean))];
+  await Promise.all(
+    ids.map(async (id) => {
+      const lancs = await listarLancamentosPedidoCompra(base44, id);
+      map.set(id, lancs);
+    }),
+  );
+  return map;
+}
+
+export function enriquecerPedidoCompraFinanceiroDisplay(pedido = {}, lancamentos = []) {
+  const aprovadoEfetivo = evidenciaAprovacaoFinanceiraProcessada(pedido, lancamentos);
+  return {
+    ...pedido,
+    _lancamentos_compra: lancamentos,
+    _financeiro_aprovado_efetivo: aprovadoEfetivo,
+    _display_status_financeiro: getPedidoCompraDisplayStatusFinanceiro(
+      { ...pedido, _financeiro_aprovado_efetivo: aprovadoEfetivo },
+      lancamentos,
+    ),
+  };
+}
+
+/**
+ * Enriquece pedidos/cards com evidência financeira para exibição (embarques, cabeçalho).
+ * @returns {{ pedidos: Array, cards: Array }}
+ */
+export async function enriquecerPedidosCompraGestaoFinanceiro(base44, pedidos = [], cards = []) {
+  const candidatos = pedidos.filter((p) => pedidoStatusIndicaAguardandoAprovacaoFinanceira(p));
+  if (!candidatos.length) return { pedidos, cards };
+
+  const lancMap = await carregarLancamentosPedidosCompraMap(
+    base44,
+    candidatos.map((p) => p.id),
+  );
+
+  const pedidosEnriquecidos = pedidos.map((pedido) => {
+    const lancs = lancMap.get(pedido.id);
+    if (!lancs) return pedido;
+    return enriquecerPedidoCompraFinanceiroDisplay(pedido, lancs);
+  });
+
+  const pedidosPorId = new Map(pedidosEnriquecidos.map((p) => [p.id, p]));
+  const cardsEnriquecidos = cards.map((card) => {
+    const pedidoBase = pedidosPorId.get(card.id);
+    if (!pedidoBase?._financeiro_aprovado_efetivo) return card;
+    return {
+      ...card,
+      _financeiro_aprovado_efetivo: pedidoBase._financeiro_aprovado_efetivo,
+      _display_status_financeiro: pedidoBase._display_status_financeiro,
+      _lancamentos_compra: pedidoBase._lancamentos_compra,
+    };
+  });
+
+  return { pedidos: pedidosEnriquecidos, cards: cardsEnriquecidos };
+}
+
 /**
  * Cancela parcelas Em Aberto / Vencido vinculadas ao pedido (não pagas).
  * @returns {{ cancelados: number }}

@@ -41,8 +41,14 @@ export function pedidoAprovadoFinanceiramente(pedido = {}) {
 }
 
 /** Financeiro liberou compra/logística, mas embarque ainda sem despacho (card = Aprovado). */
-export function pedidoLiberadoParaLogistica(pedido = {}) {
-  if (pedidoAguardandoAprovacaoFinanceira(pedido)) return false;
+export function pedidoLiberadoParaLogistica(pedido = {}, lancamentos = null) {
+  if (
+    pedido._financeiro_aprovado_efetivo ||
+    (lancamentos && evidenciaAprovacaoFinanceiraProcessada(pedido, lancamentos))
+  ) {
+    return true;
+  }
+  if (pedidoAguardandoAprovacaoFinanceira(pedido, lancamentos)) return false;
   return pedidoAprovadoFinanceiramente(pedido);
 }
 

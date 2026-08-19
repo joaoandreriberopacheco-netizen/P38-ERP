@@ -6,12 +6,17 @@ import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { buildBypassAuthPayload } from '@/components/auth/operacaoAuthFlags';
 import { enviarPedidoCompraFinanceiroLote } from '@/lib/enviarPedidoCompraFinanceiro';
-import { pedidoLiberadoParaLogistica } from '@/lib/aprovarPedidoCompraFinanceiro';
+import { pedidoLiberadoParaLogistica, sincronizarPedidoCompraAprovacaoFinanceira } from '@/lib/aprovarPedidoCompraFinanceiro';
 import { gerarNumeroSequencial } from '@/lib/gerarNumeroSequencial';
 import {
+  evidenciaAprovacaoFinanceiraProcessada,
   calcValorItensPedidoCompra,
   calcValorTotalPedidoCompra,
+  enriquecerPedidosCompraGestaoFinanceiro,
   getTotalLinhaPedidoCompra,
+  listarLancamentosPedidoCompra,
+  pedidoPrecisaSincronizarAprovacaoFinanceira,
+  pedidoStatusIndicaAguardandoAprovacaoFinanceira,
 } from '@/lib/pedidoCompraFinanceiro';
 
 import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
@@ -293,6 +298,13 @@ const getBorrowedStatus = (pedido, embarque, produtosMap = {}, embarquesDoPedido
   }
 
   if (!ehNecessidade && !temDespachoVinculado) {
+    if (
+      pedido._financeiro_aprovado_efetivo ||
+      evidenciaAprovacaoFinanceiraProcessada(pedido, pedido._lancamentos_compra)
+    ) {
+      return 'Aprovado';
+    }
+
     const saf = pedido?.status_aprovacao_financeira || '';
     if (
       pedido?.status === 'Aguardando Aprovação Financeira' ||
@@ -681,8 +693,35 @@ export default function PedidosCompraPage() {
       const produtosMap = await carregarProdutosMap(produtoIds.map((id) => ({ produto_id: id })));
       setProdutosMap(produtosMap);
       const refinado = materializePedidosCompraView(pcs, embarquesDb, produtosMap);
-      setPedidos(refinado.pedidosComResumoReal);
-      setEmbarques(refinado.cardsDeEmbarque);
+
+      for (const pedido of refinado.pedidosComResumoReal) {
+        if (!pedidoStatusIndicaAguardandoAprovacaoFinanceira(pedido)) continue;
+        try {
+          const lancs = await listarLancamentosPedidoCompra(base44, pedido.id);
+          if (!pedidoPrecisaSincronizarAprovacaoFinanceira(pedido, lancs)) continue;
+          await sincronizarPedidoCompraAprovacaoFinanceira({ base44, pedido, lancamentos: lancs });
+          const [atualizado] = await base44.entities.PedidoCompra.filter({ id: pedido.id });
+          if (atualizado) {
+            pedido.status = atualizado.status;
+            pedido.status_aprovacao_financeira = atualizado.status_aprovacao_financeira;
+            pedido.data_aprovacao_financeira = atualizado.data_aprovacao_financeira;
+          }
+        } catch {
+          /* exibição segue com enriquecimento abaixo */
+        }
+      }
+
+      const { pedidos: pedidosFin, cards: cardsFin } = await enriquecerPedidosCompraGestaoFinanceiro(
+        base44,
+        refinado.pedidosComResumoReal,
+        refinado.cardsDeEmbarque,
+      );
+      const cardsComStatus = cardsFin.map((card) => ({
+        ...card,
+        _display_status: getBorrowedStatus(card, card._embarque, produtosMap, card._embarques || []),
+      }));
+      setPedidos(pedidosFin);
+      setEmbarques(cardsComStatus);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
       toast.error(error?.message || 'Erro ao carregar embarques');

@@ -47,8 +47,11 @@ import {
   calcValorTotalPedidoCompra,
   cancelarLancamentosNaoPagosPedidoCompra,
   criarLancamentoAjustePedidoCompra,
+  getPedidoCompraDisplayStatusFinanceiro,
+  getPedidoCompraDisplayStatusFinanceiroLabel,
   listarLancamentosPedidoCompra,
   temLancamentoPagoParaPedido,
+  evidenciaAprovacaoFinanceiraProcessada,
 } from '@/lib/pedidoCompraFinanceiro';
 import {
   pedidoAguardandoAprovacaoFinanceira,
@@ -160,9 +163,13 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
   const [pedidoLogistica, setPedidoLogistica] = useState(pedido);
   const [abaPedidoDesktop, setAbaPedidoDesktop] = useState(abaInicial);
   const [lancamentosRefreshKey, setLancamentosRefreshKey] = useState(0);
+  const [lancamentosPedido, setLancamentosPedido] = useState([]);
   const { toast } = useToast();
 
   const pedidoAtual = pedidoLogistica || pedido;
+  const statusFinanceiroHeader = getPedidoCompraDisplayStatusFinanceiroLabel(
+    getPedidoCompraDisplayStatusFinanceiro(pedidoAtual || {}, lancamentosPedido),
+  );
 
   const handlePedidoFinanceiroAtualizado = async () => {
     if (onPedidoRefresh) {
@@ -182,13 +189,19 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
   }, [abaInicial]);
 
   useEffect(() => {
-    if (!pedido?.id) return;
-    if (!pedidoAguardandoAprovacaoFinanceira(pedido)) return;
+    if (!pedido?.id) {
+      setLancamentosPedido([]);
+      return;
+    }
 
     let cancelled = false;
     (async () => {
       const lancs = await listarLancamentosPedidoCompra(base44, pedido.id);
-      if (cancelled || !pedidoAguardandoAprovacaoFinanceira(pedido, lancs)) return;
+      if (cancelled) return;
+      setLancamentosPedido(lancs);
+
+      if (!pedidoAguardandoAprovacaoFinanceira(pedido, lancs)) return;
+
       const { synced } = await sincronizarPedidoCompraAprovacaoFinanceira({
         base44,
         pedido,
@@ -201,12 +214,14 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
           setPedidoLogistica((prev) => ({ ...(prev || {}), ...atualizado }));
         }
       }
-    })().catch(() => {});
+    })().catch(() => {
+      if (!cancelled) setLancamentosPedido([]);
+    });
 
     return () => {
       cancelled = true;
     };
-  }, [pedido?.id, pedido?.status, pedido?.status_aprovacao_financeira]);
+  }, [pedido?.id, pedido?.status, pedido?.status_aprovacao_financeira, lancamentosRefreshKey]);
 
   useEffect(() => {
     if (pedido) {
@@ -921,8 +936,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
   const isAprovado = pedidoAtual && (pedidoAtual.status === 'Aprovado' || pedidoAtual.status === 'Aguardando Recepção');
 
   const isLocked = pedidoAtual && (
-    pedidoAtual.status === 'Aguardando Aprovação Financeira' ||
-    pedidoAtual.status_aprovacao_financeira === 'Aguardando Aprovação Financeira' ||
+    pedidoAguardandoAprovacaoFinanceira(pedidoAtual, lancamentosPedido) ||
+    evidenciaAprovacaoFinanceiraProcessada(pedidoAtual, lancamentosPedido) ||
     pedidoAtual.status_aprovacao_financeira === 'Aprovado' ||
     pedidoAtual.status_aprovacao_financeira === 'Aprovado Financeiramente' ||
     pedidoAtual.status_aprovacao_financeira === 'Rejeitado' ||
@@ -1292,17 +1307,35 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
   return (
     <div className="fixed inset-0 flex flex-col bg-card dark:text-foreground overflow-hidden font-din-1451 uppercase tracking-wide [&_label]:font-light [&_textarea]:normal-case [&_input[type=date]]:normal-case [&_input[type=number]]:normal-case">
       {/* Alerta de Bloqueio Desktop */}
-      {isLocked && <BannerStatusPedido pedido={pedido} isMobile={isPhone} />}
+      {isLocked && (
+        <BannerStatusPedido pedido={pedidoAtual} lancamentos={lancamentosPedido} isMobile={isPhone} />
+      )}
       {/* Header compacto */}
       <div className="flex-shrink-0 px-4 py-4 flex items-center gap-3 border-b border-border/40 relative">
         <span className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-teal-400/60 via-teal-300/40 to-transparent rounded-t" />
         <Button variant="ghost" size="icon" onClick={handleCloseWithProtection} className="h-10 w-10">
           <X className="w-5 h-5" />
         </Button>
-        <div className="flex-1 flex items-center justify-between min-w-0">
-          <span className="text-sm font-light text-foreground truncate">
-            {pedido?.numero || 'Novo Pedido'}
-          </span>
+        <div className="flex-1 flex items-center justify-between min-w-0 gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-sm font-light text-foreground truncate">
+              {pedido?.numero || 'Novo Pedido'}
+            </span>
+            {pedido?.id && statusFinanceiroHeader && statusFinanceiroHeader !== 'Rascunho' && (
+              <Badge
+                variant="secondary"
+                className={
+                  statusFinanceiroHeader === 'Aprovado'
+                    ? 'bg-lime-100 text-lime-800 dark:bg-lime-900/30 dark:text-lime-300 shrink-0'
+                    : statusFinanceiroHeader === 'Aguard. Pgto'
+                      ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 shrink-0'
+                      : 'shrink-0'
+                }
+              >
+                {statusFinanceiroHeader}
+              </Badge>
+            )}
+          </div>
           <span className="text-sm font-light text-muted-foreground whitespace-nowrap ml-4 normal-case tabular-nums">
             {formData.itens.length} item(s) • {formatCurrency(valorTotal)}
           </span>
