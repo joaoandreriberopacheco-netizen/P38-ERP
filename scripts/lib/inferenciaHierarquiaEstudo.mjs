@@ -58,9 +58,9 @@ export function planInferenciaEstruturada(produto = {}) {
     return patch('FERRAGEM', 'FERRAGEM', 'mix', 'BUCHA PLÁSTICA', '', h2);
   }
 
-  // --- Barra roscada ---
+  // --- Barra roscada → família PARAFUSO (LM: Fixação > Barras Roscadas) ---
   if (h1u.includes('BARRA ROSC')) {
-    return patch('FERRAGEM', 'FERRAGEM', 'mix', 'BARRA ROSCADA ZINCADA', h2, h3);
+    return patch('PARAFUSO', 'PARAFUSO', 'mix', 'BARRA ROSCADA ZINCADA', h2, h3);
   }
 
   // --- Disco de corte ---
@@ -191,9 +191,10 @@ export function inferirLinhaCodigoEstruturado(produto) {
   if (['DISJUNTOR', 'LAMPADA', 'LUMINÁRIA', 'LUMINARIA', 'TOMADA', 'INTERRUPTOR', 'GRAMPO'].some((k) => n1.includes(k))) {
     return 'ELETRICA';
   }
-  if (['FECHADURA', 'DOBRADIÇA', 'PUXADOR', 'TRINCO', 'BUCHA PLÁSTICA', 'BUCHA PLASTICA', 'BARRA ROSC', 'DISCO DE CORTE'].some((k) => n1.includes(k))) {
+  if (['FECHADURA', 'DOBRADIÇA', 'PUXADOR', 'TRINCO', 'BUCHA PLÁSTICA', 'BUCHA PLASTICA', 'DISCO DE CORTE'].some((k) => n1.includes(k))) {
     return 'FERRAGEM';
   }
+  if (n1.includes('BARRA ROSC') || n1.includes('PARAFUSO')) return 'PARAFUSO';
   if (n1.includes('IMPERMEAB')) return 'IMPERMEABILIZANTE';
   if (n1.includes('ADESIVO') || n1.includes('COLA ')) return 'ADESIVO';
   return 'OUTROS';

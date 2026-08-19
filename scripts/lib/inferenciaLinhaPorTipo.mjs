@@ -125,6 +125,13 @@ function parsePrego(produto, t) {
   return patch('PREGO', 'PREGO', 'solo', 'PREGO', h2, h3);
 }
 
+function parseBarraRoscada(produto, t) {
+  if (!/\bBARRA ROSC/.test(t)) return null;
+  const h2 = trim(produto.campo_hierarquico_2);
+  const h3 = trim(produto.campo_hierarquico_3);
+  return patch('PARAFUSO', 'PARAFUSO', 'mix', 'BARRA ROSCADA ZINCADA', h2, h3);
+}
+
 function parseParafuso(produto, t) {
   if (!/^PARAFUSO\b/.test(t) && norm(produto.campo_hierarquico_1) !== 'PARAFUSO') return null;
   const h2 = trim(produto.campo_hierarquico_2);
@@ -220,6 +227,7 @@ export function planLinhaPorTipoProduto(produto = {}) {
     () => parseMassa(produto, t),
     () => parseTinta(produto, t),
     () => parsePrego(produto, t),
+    () => parseBarraRoscada(produto, t),
     () => parseParafuso(produto, t),
     () => parseAdesivo(produto, t),
     () => parseImpermeabilizante(produto, t),
