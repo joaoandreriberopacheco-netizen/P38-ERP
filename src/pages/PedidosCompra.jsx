@@ -26,6 +26,7 @@ import { carregarProdutosMap } from '@/lib/embarqueVitrineHelpers';
 import { calcularPercentuaisLogistica } from '@/lib/embarqueLogisticaHelpers';
 import {
   buildEmbarqueVirtualNecessidade,
+  embarqueExcluidoDeNecessidade,
   embarqueNecessidadeTemItensPendentes,
   isNecessidadeRenderizada,
   pedidoDeveExibirCardNecessidade,
@@ -246,6 +247,11 @@ const getBorrowedStatus = (pedido, embarque, produtosMap = {}, embarquesDoPedido
     : 0;
   const ehNecessidade = isNecessidadeRenderizada(embarque);
   const precisaPreenchimento = ehNecessidade && !temDespachoVinculado && exibirNecessidade && quantidadePendente > 0;
+
+  if (embarqueExcluidoDeNecessidade(pedido, embarque)) {
+    if (temDespachoVinculado || temItensAssociados) return 'Despachado';
+    return 'Aguardando';
+  }
 
   if (statusRecebimento === 'Recebido OK' || statusRecebimento === 'Com Divergência' || embarque.status === 'Concluído') {
     return 'Concluído';
@@ -507,6 +513,9 @@ function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
     const embarquesRenderizados = embarquesDoPedido.length > 0
       ? [...embarquesReais, ...embarquesNecessidade, ...(necessidadeVirtual ? [necessidadeVirtual] : [])]
           .filter((embarque) => {
+            if (embarqueExcluidoDeNecessidade(pedido, embarque)) {
+              return !isNecessidadeRenderizada(embarque);
+            }
             if (!isNecessidadeRenderizada(embarque)) return true;
             if (!pedidoNaoConcluido(pedido)) return false;
             return pedidoDeveExibirCardNecessidade(pedido, embarquesDoPedido, produtosMap);
@@ -525,7 +534,7 @@ function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
     return embarquesRenderizados.map((embarque) => {
       const exibirNecessidade = pedidoDeveExibirCardNecessidade(pedido, embarquesDoPedido, produtosMap);
       const quantidadePendente = quantidadePendenteNecessidadePedido(pedido, embarquesDoPedido, produtosMap);
-      const ehNecessidade = isNecessidadeRenderizada(embarque) && exibirNecessidade;
+      const ehNecessidade = isNecessidadeRenderizada(embarque) && exibirNecessidade && !embarqueExcluidoDeNecessidade(pedido, embarque);
       const itensDoCard = ehNecessidade
         ? buildDisplayItensFromEmbarque(pedido, embarque, produtosMap)
         : (hasLinkedItems(embarque)

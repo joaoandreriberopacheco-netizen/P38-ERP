@@ -25,6 +25,42 @@ export const MIN_SOMA_PENDENTE_NECESSIDADE = 0.5;
 /** Qualquer linha com pelo menos esta qtd comercial conta como necessidade material. */
 export const MIN_UNIDADE_INTEIRA_PENDENTE = 1;
 
+/**
+ * Embarques/cards que não entram na Necessidade (decisão operacional).
+ * Normalização: trim, sem espaços, maiúsculas (ex.: E62-67G).
+ */
+export const NECESSIDADE_EMBARQUE_CODIGOS_EXCLUIDOS = ['E62-67G'];
+
+function normalizarCodigoEmbarque(codigo = '') {
+  return String(codigo || '').trim().replace(/\s+/g, '').toUpperCase();
+}
+
+export function codigoEmbarqueExcluidoDeNecessidade(codigo = '') {
+  const norm = normalizarCodigoEmbarque(codigo);
+  return NECESSIDADE_EMBARQUE_CODIGOS_EXCLUIDOS.some(
+    (excluido) => normalizarCodigoEmbarque(excluido) === norm,
+  );
+}
+
+/** Código exibido do embarque (card E62-67G, codigo_exibicao, etc.). */
+export function resolverCodigoEmbarqueNecessidade(pedido, embarque) {
+  if (!embarque) return '';
+  const direto = embarque.codigo_exibicao || embarque.numero || '';
+  if (direto) return String(direto).trim();
+  const base = String(pedido?.numero || '').replace(/\s+/g, '');
+  return base;
+}
+
+export function embarqueExcluidoDeNecessidade(pedido, embarque, displayCode = '') {
+  const candidatos = [displayCode, embarque?.codigo_exibicao, embarque?.numero].filter(Boolean);
+  if (candidatos.some((c) => codigoEmbarqueExcluidoDeNecessidade(c))) return true;
+  return codigoEmbarqueExcluidoDeNecessidade(resolverCodigoEmbarqueNecessidade(pedido, embarque));
+}
+
+function filtrarEmbarquesParaCalculoNecessidade(pedido, embarquesDoPedido = []) {
+  return (embarquesDoPedido || []).filter((embarque) => !embarqueExcluidoDeNecessidade(pedido, embarque));
+}
+
 export function isNecessidadeRenderizada(embarque) {
   if (!embarque) return false;
   if (embarque?.tipo === 'Necessidade') return true;
@@ -79,9 +115,10 @@ export function temDespachoRealComItens(embarquesDoPedido = []) {
 
 /** Pendência comercial — alinhada aos itens órfãos da aba Logística (saldo pós-recepção). */
 export function calcularPendenciaComercialItens(pedido, embarquesDoPedido = [], produtosMap = {}) {
-  if (!temDespachoRealComItens(embarquesDoPedido)) return [];
+  const embarquesConsiderados = filtrarEmbarquesParaCalculoNecessidade(pedido, embarquesDoPedido);
+  if (!temDespachoRealComItens(embarquesConsiderados)) return [];
 
-  return calcularItensOrfaosPedido(pedido, embarquesDoPedido)
+  return calcularItensOrfaosPedido(pedido, embarquesConsiderados)
     .map((item) => {
       const produto = produtosMap[item.produto_id] || null;
       const exib = getItemCompraExibicaoVitrine(item, produto);
@@ -112,10 +149,11 @@ function faltaComercialRelevante(pendencias = []) {
  * @returns {{ exibir: boolean, pendencias: Array, somaPendente: number, temDespachoReal: boolean }}
  */
 export function avaliarNecessidadeComercialPedido(pedido, embarquesDoPedido = [], produtosMap = {}) {
+  const embarquesConsiderados = filtrarEmbarquesParaCalculoNecessidade(pedido, embarquesDoPedido);
   const pendenciasBrutas = calcularPendenciaComercialItens(pedido, embarquesDoPedido, produtosMap);
   const pendencias = pendenciasComerciaisRelevantes(pendenciasBrutas);
   const somaPendente = somaPendenciaComercial(pendencias);
-  const temDespachoReal = temDespachoRealComItens(embarquesDoPedido);
+  const temDespachoReal = temDespachoRealComItens(embarquesConsiderados);
   const exibir = temDespachoReal && faltaComercialRelevante(pendencias);
 
   return { exibir, pendencias, somaPendente, temDespachoReal };
