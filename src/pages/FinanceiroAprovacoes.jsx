@@ -20,12 +20,12 @@ import {
   aprovarPedidoCompraFinanceiro,
   pedidoAguardandoAprovacaoFinanceira,
   rejeitarPedidoCompraFinanceiro,
-  sincronizarPedidoCompraSePagamentoCompleto,
+  sincronizarPedidoCompraAprovacaoFinanceira,
 } from '@/lib/aprovarPedidoCompraFinanceiro';
 import {
   cancelarLancamentosNaoPagosPedidoCompra,
   listarLancamentosPedidoCompra,
-  pedidoPagamentoCompleto,
+  pedidoPrecisaSincronizarAprovacaoFinanceira,
   temLancamentoPagoParaPedido,
   calcValorTotalPedidoCompra,
 } from '@/lib/pedidoCompraFinanceiro';
@@ -98,8 +98,8 @@ export default function FinanceiroAprovacoesPage() {
         const lancs = pedido.lancamentos_financeiros || [];
         if (pedidoAguardandoAprovacaoFinanceira(pedido, lancs)) {
           pendentes.push(pedido);
-        } else if (pedidoPagamentoCompleto(lancs, pedido)) {
-          await sincronizarPedidoCompraSePagamentoCompleto({
+        } else if (pedidoPrecisaSincronizarAprovacaoFinanceira(pedido, lancs)) {
+          await sincronizarPedidoCompraAprovacaoFinanceira({
             base44,
             pedido,
             lancamentos: lancs,
@@ -179,9 +179,9 @@ export default function FinanceiroAprovacoesPage() {
         });
 
         toast({
-          title: resultado.jaEstavaPago ? 'Pagamento já estava realizado' : '✓ Pagamento aprovado',
-          description: resultado.jaEstavaPago
-            ? 'Status do pedido alinhado com as parcelas pagas. Logística liberada.'
+          title: resultado.aprovacaoJaRealizada ? 'Aprovação financeira já constava' : '✓ Pagamento aprovado',
+          description: resultado.aprovacaoJaRealizada
+            ? 'O pedido já tinha lançamentos processados. Status de aprovação financeira alinhado.'
             : 'Pedido aprovado. Logística liberada.',
           className: 'bg-muted text-foreground',
         });

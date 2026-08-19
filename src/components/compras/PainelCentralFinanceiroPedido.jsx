@@ -15,7 +15,7 @@ import {
   pedidoAguardandoAprovacaoFinanceira,
   pedidoAprovadoFinanceiramente,
   rejeitarPedidoCompraFinanceiro,
-  sincronizarPedidoCompraSePagamentoCompleto,
+  sincronizarPedidoCompraAprovacaoFinanceira,
 } from '@/lib/aprovarPedidoCompraFinanceiro';
 import { calcValorTotalPedidoCompra, listarLancamentosPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
 import { CheckCircle, XCircle, Unlock, ExternalLink, Loader2, AlertCircle } from 'lucide-react';
@@ -58,7 +58,7 @@ export default function PainelCentralFinanceiroPedido({ pedido, onPedidoAtualiza
 
       if (!pedidoAguardandoAprovacaoFinanceira(pedido, lancs)) return;
 
-      const { synced } = await sincronizarPedidoCompraSePagamentoCompleto({
+      const { synced } = await sincronizarPedidoCompraAprovacaoFinanceira({
         base44,
         pedido,
         lancamentos: lancs,

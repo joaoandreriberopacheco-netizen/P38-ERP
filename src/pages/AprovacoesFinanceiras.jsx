@@ -10,11 +10,11 @@ import { ptBR } from 'date-fns/locale';
 import { runOperacaoAuthBypass } from '@/components/auth/runOperacaoAuthBypass';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
-import { calcValorTotalPedidoCompra, listarLancamentosPedidoCompra, pedidoPagamentoCompleto } from '@/lib/pedidoCompraFinanceiro';
+import { calcValorTotalPedidoCompra, listarLancamentosPedidoCompra, pedidoPrecisaSincronizarAprovacaoFinanceira } from '@/lib/pedidoCompraFinanceiro';
 import {
   aprovarPedidoCompraFinanceiro,
   pedidoAguardandoAprovacaoFinanceira,
-  sincronizarPedidoCompraSePagamentoCompleto,
+  sincronizarPedidoCompraAprovacaoFinanceira,
 } from '@/lib/aprovarPedidoCompraFinanceiro';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38StatusTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 
@@ -54,8 +54,8 @@ export default function AprovacoesFinanceirasPage() {
       const lancs = await listarLancamentosPedidoCompra(base44, p.id);
       if (pedidoAguardandoAprovacaoFinanceira(p, lancs)) {
         pedidosPendentes.push(p);
-      } else if (pedidoPagamentoCompleto(lancs, p)) {
-        await sincronizarPedidoCompraSePagamentoCompleto({ base44, pedido: p, lancamentos: lancs });
+      } else if (pedidoPrecisaSincronizarAprovacaoFinanceira(p, lancs)) {
+        await sincronizarPedidoCompraAprovacaoFinanceira({ base44, pedido: p, lancamentos: lancs });
       }
     }
     const adaptados = pedidosPendentes.map(p => ({

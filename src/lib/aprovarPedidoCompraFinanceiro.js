@@ -8,22 +8,17 @@ import { registrarTransicao } from '@/components/compras/transicaoHelper';
 import {
   calcValorTotalPedidoCompra,
   cancelarLancamentosNaoPagosPedidoCompra,
+  evidenciaAprovacaoFinanceiraProcessada,
   filtrarLancamentosCompraPedido,
   listarLancamentosPedidoCompra,
-  pedidoPagamentoCompleto,
+  pedidoPrecisaSincronizarAprovacaoFinanceira,
+  pedidoStatusIndicaAguardandoAprovacaoFinanceira,
 } from '@/lib/pedidoCompraFinanceiro';
 import { isLancamentoPago } from '@/lib/lancamentoFinanceiroStatus';
 
 export function pedidoAguardandoAprovacaoFinanceira(pedido = {}, lancamentos = null) {
-  const status = pedido.status || '';
-  const saf = pedido.status_aprovacao_financeira || '';
-  const statusAguardando =
-    status === 'Aguardando Aprovação Financeira' ||
-    status === 'Aguardando Liberação' ||
-    saf === 'Aguardando Aprovação Financeira';
-
-  if (!statusAguardando) return false;
-  if (lancamentos && pedidoPagamentoCompleto(lancamentos, pedido)) return false;
+  if (!pedidoStatusIndicaAguardandoAprovacaoFinanceira(pedido)) return false;
+  if (lancamentos && evidenciaAprovacaoFinanceiraProcessada(pedido, lancamentos)) return false;
   return true;
 }
 
@@ -55,7 +50,7 @@ function nomeAprovador(authData = {}) {
   return authData.intervenienteName || authData.userName || 'Usuário';
 }
 
-function statusPedidoAposPagamentoCompleto(statusAtual = '') {
+function statusPedidoAposAprovacaoFinanceira(statusAtual = '') {
   if (
     statusAtual === 'Aguardando Aprovação Financeira' ||
     statusAtual === 'Aguardando Liberação' ||
@@ -67,10 +62,11 @@ function statusPedidoAposPagamentoCompleto(statusAtual = '') {
 }
 
 /**
- * Alinha status do pedido quando as parcelas CMV já estão pagas mas o pedido ainda aguarda aprovação.
+ * Alinha `status_aprovacao_financeira` / `status` do pedido quando a aprovação já consta
+ * nos lançamentos ou no histórico, mas o pedido ficou preso em "Aguardando Aprovação Financeira".
  * @returns {{ synced: boolean, statusNovo?: string }}
  */
-export async function sincronizarPedidoCompraSePagamentoCompleto({
+export async function sincronizarPedidoCompraAprovacaoFinanceira({
   base44,
   pedido,
   lancamentos: lancamentosIn,
@@ -79,43 +75,20 @@ export async function sincronizarPedidoCompraSePagamentoCompleto({
   if (!pedido?.id || !base44) return { synced: false };
 
   const lancamentos = lancamentosIn || await listarLancamentosPedidoCompra(base44, pedido.id);
-  if (!pedidoPagamentoCompleto(lancamentos, pedido)) return { synced: false };
-
-  const saf = pedido.status_aprovacao_financeira || '';
-  const status = pedido.status || '';
-  const jaAprovado =
-    saf === 'Aprovado Financeiramente' ||
-    saf === 'Aprovado' ||
-  [
-    'Aguardando Recepção',
-    'Aguardando Embarque',
-    'Enviado',
-    'Despachado',
-    'Em Recepção',
-    'Em Trânsito',
-    'Recebido Parcialmente',
-    'Recebido Parcial',
-    'Pendência',
-    'Concluído',
-    'Aprovado',
-  ].includes(status);
-
-  if (jaAprovado && saf !== 'Aguardando Aprovação Financeira' && status !== 'Aguardando Aprovação Financeira') {
-    return { synced: false };
-  }
+  if (!pedidoPrecisaSincronizarAprovacaoFinanceira(pedido, lancamentos)) return { synced: false };
 
   const compraLancs = filtrarLancamentosCompraPedido(pedido.id, lancamentos);
-  const paidLanc = compraLancs.find(isLancamentoPago) || compraLancs[0];
-  const contaId = pedido.conta_pagamento_id || paidLanc?.conta_financeira_id || '';
-  const contaNome = pedido.conta_pagamento_nome || paidLanc?.conta_financeira_nome || '';
+  const lancRef = compraLancs.find(isLancamentoPago) || compraLancs[0];
+  const contaId = pedido.conta_pagamento_id || lancRef?.conta_financeira_id || '';
+  const contaNome = pedido.conta_pagamento_nome || lancRef?.conta_financeira_nome || '';
   const agora = new Date().toISOString();
   const dataAprovacao =
     pedido.data_aprovacao_financeira ||
-    (paidLanc?.data_pagamento ? `${paidLanc.data_pagamento}T12:00:00.000Z` : agora);
+    (lancRef?.data_pagamento ? `${lancRef.data_pagamento}T12:00:00.000Z` : agora);
   const nota =
     notaHistorico ||
-    `\n[Status sincronizado: pagamento já realizado | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`;
-  const statusNovo = statusPedidoAposPagamentoCompleto(status);
+    `\n[Aprovação financeira sincronizada — pedido constava pendente mas lançamentos já processados | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`;
+  const statusNovo = statusPedidoAposAprovacaoFinanceira(pedido.status || '');
 
   await base44.entities.PedidoCompra.update(pedido.id, {
     status: statusNovo,
@@ -129,7 +102,12 @@ export async function sincronizarPedidoCompraSePagamentoCompleto({
   return { synced: true, statusNovo };
 }
 
-/** Sincroniza pedidos vinculados após pagamento de lançamento(s). */
+/** @deprecated Use sincronizarPedidoCompraAprovacaoFinanceira */
+export async function sincronizarPedidoCompraSePagamentoCompleto(args = {}) {
+  return sincronizarPedidoCompraAprovacaoFinanceira(args);
+}
+
+/** Sincroniza pedidos vinculados quando lançamentos indicam aprovação financeira já realizada. */
 export async function sincronizarPedidosCompraPorLancamentos(base44, lancamentos = []) {
   const pedidoIds = new Set();
   for (const l of lancamentos) {
@@ -143,7 +121,7 @@ export async function sincronizarPedidosCompraPorLancamentos(base44, lancamentos
     const pedido = rows?.[0];
     if (!pedido) continue;
     const lancs = await listarLancamentosPedidoCompra(base44, pedidoId);
-    const { synced } = await sincronizarPedidoCompraSePagamentoCompleto({
+    const { synced } = await sincronizarPedidoCompraAprovacaoFinanceira({
       base44,
       pedido,
       lancamentos: lancs,
@@ -168,11 +146,11 @@ export async function aprovarPedidoCompraFinanceiro({
   }
 
   const lancamentosExistentes = await listarLancamentosPedidoCompra(base44, pedido.id);
-  if (pedidoPagamentoCompleto(lancamentosExistentes, pedido)) {
+  if (evidenciaAprovacaoFinanceiraProcessada(pedido, lancamentosExistentes)) {
     const aprovador = nomeAprovador(authData);
-    const notaSync = `\n[Pagamento já realizado — status alinhado: ${aprovador} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`;
+    const notaSync = `\n[Aprovação financeira já constava nos lançamentos — status do pedido alinhado: ${aprovador} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`;
     const contaNomeSync = contaNome || lancamentosExistentes.find(isLancamentoPago)?.conta_financeira_nome || '';
-    const { statusNovo } = await sincronizarPedidoCompraSePagamentoCompleto({
+    const { statusNovo } = await sincronizarPedidoCompraAprovacaoFinanceira({
       base44,
       pedido: {
         ...pedido,
@@ -182,7 +160,7 @@ export async function aprovarPedidoCompraFinanceiro({
       lancamentos: lancamentosExistentes,
       notaHistorico: notaSync,
     });
-    return { statusNovo, jaEstavaPago: true };
+    return { statusNovo, aprovacaoJaRealizada: true };
   }
 
   const agora = new Date().toISOString();

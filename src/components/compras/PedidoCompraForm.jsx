@@ -52,7 +52,7 @@ import {
 } from '@/lib/pedidoCompraFinanceiro';
 import {
   pedidoAguardandoAprovacaoFinanceira,
-  sincronizarPedidoCompraSePagamentoCompleto,
+  sincronizarPedidoCompraAprovacaoFinanceira,
 } from '@/lib/aprovarPedidoCompraFinanceiro';
 import {
   pickDefaultPurchaseUnit,
@@ -189,7 +189,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
     (async () => {
       const lancs = await listarLancamentosPedidoCompra(base44, pedido.id);
       if (cancelled || !pedidoAguardandoAprovacaoFinanceira(pedido, lancs)) return;
-      const { synced } = await sincronizarPedidoCompraSePagamentoCompleto({
+      const { synced } = await sincronizarPedidoCompraAprovacaoFinanceira({
         base44,
         pedido,
         lancamentos: lancs,

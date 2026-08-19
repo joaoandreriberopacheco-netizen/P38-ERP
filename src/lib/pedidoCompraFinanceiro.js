@@ -71,9 +71,10 @@ export function filtrarLancamentosCompraPedido(pedidoId, lancamentos = []) {
 }
 
 /**
- * Pagamento do pedido coberto pelos lançamentos vinculados (tolerância de centavos).
+ * Parcelas CMV já pagas (valor coberto ou todas quitadas).
+ * Usado como evidência de que o financeiro já executou o fluxo — não é o status do pedido.
  */
-export function pedidoPagamentoCompleto(lancamentos, pedido = {}) {
+export function pedidoParcelasCmvPagas(lancamentos, pedido = {}) {
   const compraLancs = filtrarLancamentosCompraPedido(pedido.id, lancamentos);
   if (!compraLancs.length) return false;
 
@@ -84,6 +85,48 @@ export function pedidoPagamentoCompleto(lancamentos, pedido = {}) {
 
   if (totalEsperado > 0 && totalPago >= totalEsperado - 0.02) return true;
   return compraLancs.every(isLancamentoPago);
+}
+
+/** @deprecated Prefer pedidoParcelasCmvPagas — nome antigo mantido por compatibilidade. */
+export function pedidoPagamentoCompleto(lancamentos, pedido = {}) {
+  return pedidoParcelasCmvPagas(lancamentos, pedido);
+}
+
+const NOTA_APROVACAO_FINANCEIRA_RE = /\[(Aprovado Financeiramente|Aprovado:)/i;
+
+/**
+ * Evidência de que a aprovação financeira do pedido já ocorreu (no pedido ou nos lançamentos),
+ * mesmo quando `status_aprovacao_financeira` do pedido ficou desatualizado.
+ */
+export function evidenciaAprovacaoFinanceiraProcessada(pedido = {}, lancamentos = []) {
+  if (pedido.data_aprovacao_financeira) return true;
+
+  const historico = pedido.historico || '';
+  if (NOTA_APROVACAO_FINANCEIRA_RE.test(historico)) return true;
+
+  const compraLancs = filtrarLancamentosCompraPedido(pedido.id, lancamentos);
+  if (!compraLancs.length) return false;
+
+  if (pedidoParcelasCmvPagas(lancamentos, pedido)) return true;
+
+  return compraLancs.some((l) => NOTA_APROVACAO_FINANCEIRA_RE.test(l.observacoes || ''));
+}
+
+/** Pedido ainda marcado como aguardando aprovação financeira nos campos de status. */
+export function pedidoStatusIndicaAguardandoAprovacaoFinanceira(pedido = {}) {
+  const status = pedido.status || '';
+  const saf = pedido.status_aprovacao_financeira || '';
+  return (
+    status === 'Aguardando Aprovação Financeira' ||
+    status === 'Aguardando Liberação' ||
+    saf === 'Aguardando Aprovação Financeira'
+  );
+}
+
+/** Pedido com status pendente mas lançamentos/histórico indicam aprovação financeira já feita. */
+export function pedidoPrecisaSincronizarAprovacaoFinanceira(pedido = {}, lancamentos = []) {
+  if (!pedidoStatusIndicaAguardandoAprovacaoFinanceira(pedido)) return false;
+  return evidenciaAprovacaoFinanceiraProcessada(pedido, lancamentos);
 }
 
 /**
