@@ -345,6 +345,7 @@ function enrichEstudo(produto, excelByCodigo, excelLinhas) {
 
 const EXPORT_HEADERS = [
   'codigo_interno',
+  'categoria_atual',
   'linha',
   'produto_compra',
   'eixo_a',
@@ -356,14 +357,18 @@ const EXPORT_HEADERS = [
   'h4',
   'h5',
   'sku_atual',
-  'categoria',
 ];
+
+function resolveCategoriaAtual(produto) {
+  return trim(produto.categoria_atual || produto.categoria_nome);
+}
 
 function buildExportRows(produtos, excelByCodigo, excelLinhas) {
   return produtos.map((p) => {
     const estudo = enrichEstudo(p, excelByCodigo, excelLinhas);
     return [
       trim(p.codigo_interno),
+      resolveCategoriaAtual(p),
       estudo.linha,
       estudo.produto_compra,
       estudo.eixo_a,
@@ -375,7 +380,6 @@ function buildExportRows(produtos, excelByCodigo, excelLinhas) {
       trim(p.campo_hierarquico_4),
       trim(p.campo_hierarquico_5),
       trim(p.nome),
-      trim(p.categoria_nome),
     ];
   });
 }
@@ -415,7 +419,7 @@ async function writeXlsx(filePath, headers, dataRows) {
   headerRow.font = { bold: true };
   headerRow.alignment = { vertical: 'middle', wrapText: true };
 
-  const widths = [14, 22, 24, 12, 28, 42, 18, 14, 28, 14, 14, 42, 28];
+  const widths = [14, 32, 22, 24, 12, 28, 42, 18, 14, 28, 14, 14, 42];
   headers.forEach((_, i) => {
     ws.getColumn(i + 1).width = widths[i] ?? 16;
   });
@@ -443,12 +447,20 @@ async function main() {
 
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
   const { rows } = await pool.query(`
-    select id, nome, codigo_interno, marca, categoria_nome,
-           campo_hierarquico_1, campo_hierarquico_2, campo_hierarquico_3,
-           campo_hierarquico_4, campo_hierarquico_5
-    from public.produto
-    where coalesce(ativo, true) = true
-    order by categoria_nome nulls last, campo_hierarquico_1, codigo_interno
+    select p.id, p.nome, p.codigo_interno, p.marca,
+           coalesce(nullif(trim(p.categoria_nome), ''), cat_map.categoria_nome, '') as categoria_atual,
+           p.categoria_nome,
+           p.campo_hierarquico_1, p.campo_hierarquico_2, p.campo_hierarquico_3,
+           p.campo_hierarquico_4, p.campo_hierarquico_5
+    from public.produto p
+    left join (
+      select categoria_id, max(nullif(trim(categoria_nome), '')) as categoria_nome
+      from public.produto
+      where coalesce(ativo, true) = true
+      group by categoria_id
+    ) cat_map on cat_map.categoria_id = p.categoria_id
+    where coalesce(p.ativo, true) = true
+    order by categoria_atual nulls last, p.campo_hierarquico_1, p.codigo_interno
   `);
   await pool.end();
 
@@ -466,8 +478,9 @@ async function main() {
   }
 
   const excelCount = rows.filter((p) => excelByCodigo[norm(p.codigo_interno)]).length;
-  const outrosCount = dataRows.filter((r) => r[1]?.includes('OUTROS')).length;
-  const pcUnicos = new Set(dataRows.map((r) => r[2]).filter(Boolean)).size;
+  const outrosCount = dataRows.filter((r) => r[2]?.includes('OUTROS')).length;
+  const pcUnicos = new Set(dataRows.map((r) => r[3]).filter(Boolean)).size;
+  const catPreenchida = dataRows.filter((r) => trim(r[1])).length;
   console.log('[export-sku-hierarquia-estudo] OK');
   for (const f of written) console.log(`  ficheiro: ${f}`);
   console.log(`  skus: ${rows.length}`);
@@ -475,6 +488,7 @@ async function main() {
   console.log(`  com excel cerâmica: ${excelCount}`);
   console.log(`  linha OUTROS: ${outrosCount}`);
   console.log(`  produtos compra únicos: ${pcUnicos}`);
+  console.log(`  com categoria_atual: ${catPreenchida}`);
 }
 
 main().catch((err) => {
