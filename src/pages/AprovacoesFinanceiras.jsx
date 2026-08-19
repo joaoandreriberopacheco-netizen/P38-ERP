@@ -10,8 +10,12 @@ import { ptBR } from 'date-fns/locale';
 import { runOperacaoAuthBypass } from '@/components/auth/runOperacaoAuthBypass';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
-import { calcValorTotalPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
-import { aprovarPedidoCompraFinanceiro, pedidoAguardandoAprovacaoFinanceira } from '@/lib/aprovarPedidoCompraFinanceiro';
+import { calcValorTotalPedidoCompra, listarLancamentosPedidoCompra, pedidoPrecisaSincronizarAprovacaoFinanceira } from '@/lib/pedidoCompraFinanceiro';
+import {
+  aprovarPedidoCompraFinanceiro,
+  pedidoAguardandoAprovacaoFinanceira,
+  sincronizarPedidoCompraAprovacaoFinanceira,
+} from '@/lib/aprovarPedidoCompraFinanceiro';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38StatusTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 
 export default function AprovacoesFinanceirasPage() {
@@ -42,11 +46,18 @@ export default function AprovacoesFinanceirasPage() {
 
     const pedidosPorId = new Map();
     [...pedidosLiberacao, ...pedidosAprovacaoFinanceira, ...pedidosPorSaf].forEach((p) => {
-      if (p?.id && pedidoAguardandoAprovacaoFinanceira(p)) {
-        pedidosPorId.set(p.id, p);
-      }
+      if (p?.id) pedidosPorId.set(p.id, p);
     });
-    const pedidosPendentes = [...pedidosPorId.values()];
+
+    const pedidosPendentes = [];
+    for (const p of pedidosPorId.values()) {
+      const lancs = await listarLancamentosPedidoCompra(base44, p.id);
+      if (pedidoAguardandoAprovacaoFinanceira(p, lancs)) {
+        pedidosPendentes.push(p);
+      } else if (pedidoPrecisaSincronizarAprovacaoFinanceira(p, lancs)) {
+        await sincronizarPedidoCompraAprovacaoFinanceira({ base44, pedido: p, lancamentos: lancs });
+      }
+    }
     const adaptados = pedidosPendentes.map(p => ({
       id: p.id,
       referencia_id: p.id,

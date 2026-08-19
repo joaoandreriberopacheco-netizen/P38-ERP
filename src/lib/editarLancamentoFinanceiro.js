@@ -1,3 +1,4 @@
+import { sincronizarPedidosCompraPorLancamentos } from '@/lib/aprovarPedidoCompraFinanceiro';
 import { base44 as defaultClient } from '@/api/base44Client';
 import { dataHoje, datetimeLocalParaISO, vencimentoComMesmoDiaNoMes } from '@/components/utils/dateUtils';
 import { lancamentoMesmoRamoRecorrencia } from '@/lib/agefinLancamentosRecorrencia';
@@ -184,6 +185,13 @@ export async function salvarEdicaoLancamentoFinanceiro({
       }
     }
     await sincronizarSaldosAposAlteracao(base44, [contaId, ...alvos.map((l) => l.conta_financeira_id)]);
+    if (pagamentoDirty && realizado) {
+      try {
+        await sincronizarPedidosCompraPorLancamentos(base44, alvos);
+      } catch {
+        /* não bloqueia pagamento */
+      }
+    }
     const updated = alvos.find((l) => l.id === lancamento.id) || lancamento;
     return { updated, changed: true, batchCount: alvos.length };
   }
@@ -232,6 +240,15 @@ export async function salvarEdicaoLancamentoFinanceiro({
       /* não bloqueia edição do lançamento */
     }
   }
+
+  if (pagamentoDirty && realizado) {
+    try {
+      await sincronizarPedidosCompraPorLancamentos(base44, [updated || { ...lancamento, ...baseUpdate }]);
+    } catch {
+      /* não bloqueia pagamento */
+    }
+  }
+
   return { updated, changed: true };
 }
 
