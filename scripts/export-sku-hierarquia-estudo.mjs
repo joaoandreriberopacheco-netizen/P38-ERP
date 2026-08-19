@@ -14,6 +14,7 @@ import { execSync } from 'node:child_process';
 import pg from 'pg';
 import ExcelJS from 'exceljs';
 import { loadDotEnvFiles } from './base44-env.mjs';
+import { planInferenciaEstruturada, inferirLinhaCodigoEstruturado } from './lib/inferenciaHierarquiaEstudo.mjs';
 
 loadDotEnvFiles();
 
@@ -40,6 +41,9 @@ const LINHAS_MESTRE = [
   { ordem: 30, codigo: 'PISO', nome: 'PISO / CERÂMICA DE PISO', tipo: 'portfolio' },
   { ordem: 40, codigo: 'PORCELANATO', nome: 'PORCELANATO', tipo: 'portfolio' },
   { ordem: 50, codigo: 'REVESTIMENTO', nome: 'REVESTIMENTO', tipo: 'portfolio' },
+  { ordem: 55, codigo: 'ELETRODUTO', nome: 'ELETRODUTO', tipo: 'mix' },
+  { ordem: 56, codigo: 'FIO', nome: 'FIOS ELÉTRICOS', tipo: 'mix' },
+  { ordem: 57, codigo: 'VERGALHAO', nome: 'VERGALHÃO', tipo: 'mix' },
   { ordem: 60, codigo: 'SOLDAVEL', nome: 'SOLDÁVEL', tipo: 'mix' },
   { ordem: 70, codigo: 'ESGOTO', nome: 'ESGOTO', tipo: 'mix' },
   { ordem: 80, codigo: 'ROSCAVEL', nome: 'ROSCÁVEL', tipo: 'mix' },
@@ -124,35 +128,7 @@ function isSoldavel(produto) {
 }
 
 function inferirLinhaCodigo(produto) {
-  if (isSoldavel(produto)) return 'SOLDAVEL';
-  const n1 = norm(produto.campo_hierarquico_1);
-  const n2 = norm(produto.campo_hierarquico_2);
-
-  if (n1.includes('CIMENTO')) return 'CIMENTO';
-  if (n1 === 'ARGAMASSA') return 'ARGAMASSA';
-  if (n1 === 'PISO') return 'PISO';
-  if (n1 === 'PORCELANATO' || n1 === 'PORCELENATO') return 'PORCELANATO';
-  if (n1 === 'REVESTIMENTO') return 'REVESTIMENTO';
-  if (n1 === 'TINTA' || n1 === 'TINTA SPRAY') return 'TINTA';
-  if (n1 === 'VERNIZ') return 'VERNIZ';
-  if (n1.includes('MASSA CORRIDA')) return 'MASSA_CORRIDA';
-  if (n1.includes('MASSA ACR')) return 'MASSA_ACRILICA';
-  if (n1 === 'REJUNTE' || n1.includes('REJUNTE')) return 'REJUNTE';
-  if (n1 === 'PREGO') return 'PREGO';
-  if (n1.includes('PARAFUSO')) return 'PARAFUSO';
-  if (n2.includes('ESGOTO') || n1.includes('ESGOTO')) return 'ESGOTO';
-  if (n2.includes('ROSC') || n1.includes('ROSC')) return 'ROSCAVEL';
-  if (n1.includes('TORNEIRA')) return 'TORNEIRA';
-  if (['CHUVEIRO', 'REGISTRO', 'REGISTRO ESFERA', 'VALVULA', 'VALVULA DE DESCARGA', 'CAIXA DE DESCARGA', 'ASSENTO SANITÁRIO', 'MONOCOMANDO'].some((k) => n1.includes(k))) {
-    return 'METAIS_SANITARIOS';
-  }
-  if (n1 === 'TUBO' || n1.includes('TUBO')) return 'TUBO';
-  if (n1 === 'LIXA') return 'LIXA';
-  if (['DISJUNTOR', 'CABO', 'LAMPADA', 'LUMINÁRIA', 'TOMADA', 'INTERRUPTOR'].some((k) => n1.includes(k))) return 'ELETRICA';
-  if (['FECHADURA', 'DOBRADIÇA', 'PUXADOR', 'TRINCO'].some((k) => n1.includes(k))) return 'FERRAGEM';
-  if (n1.includes('IMPERMEAB')) return 'IMPERMEABILIZANTE';
-  if (n1.includes('ADESIVO') || n1.includes('COLA ')) return 'ADESIVO';
-  return 'OUTROS';
+  return inferirLinhaCodigoEstruturado(produto);
 }
 
 function findLinhaMeta(codigo) {
@@ -188,6 +164,20 @@ function montarNomeProposto({ produtoCompraNome, eixoA, eixoB, marca }) {
 }
 
 function planLinhaCompraAnalise(produto = {}) {
+  const structured = planInferenciaEstruturada(produto);
+  if (structured) {
+    return {
+      linha_codigo: structured.linha_codigo,
+      linha_nome: structured.linha_nome,
+      linha_tipo: structured.linha_tipo,
+      produto_compra_nome: structured.produto_compra_nome,
+      eixo_a: structured.eixo_a,
+      eixo_b: structured.eixo_b,
+      confianca: structured.confianca,
+      motivo: structured.motivo,
+    };
+  }
+
   const h1 = trim(produto.campo_hierarquico_1);
   const h2 = trim(produto.campo_hierarquico_2);
   const h3 = trim(produto.campo_hierarquico_3);
@@ -226,7 +216,7 @@ function planLinhaCompraAnalise(produto = {}) {
     patch = map
       ? { linha_nome: 'TINTA', produto_compra_nome: map.nome, eixo_a: h2, eixo_b: h4 || '', confianca: 'alta' }
       : { linha_nome: 'TINTA', produto_compra_nome: '(tinta sem h3)', eixo_a: h2, eixo_b: h4 || '', confianca: 'baixa' };
-  } else if (['ESGOTO', 'ROSCÁVEL', 'ROSCAVEL', 'ELETRODUTO'].includes(norm(h2))) {
+  } else if (['ESGOTO', 'ROSCÁVEL', 'ROSCAVEL', 'ELETRODUTO'].includes(norm(h2)) && !norm(h1).includes('BUCHA')) {
     patch = {
       linha_nome: norm(h2) === 'ESGOTO' ? 'ESGOTO' : norm(h2).includes('ROSC') ? 'ROSCÁVEL' : h1u,
       produto_compra_nome: `${h1u} ${h2}`.replace(/\s+/g, ' ').trim(),
@@ -291,8 +281,10 @@ function enrichEstudo(produto, excelByCodigo, excelLinhas) {
     };
   }
 
-  const linhaCod = falsoH1 ? 'OUTROS' : inferirLinhaCodigo(produto);
-  const linhaMeta = findLinhaMeta(linhaCod);
+  const linhaCod = falsoH1 ? 'OUTROS' : (plan.linha_codigo || inferirLinhaCodigo(produto));
+  const linhaMeta = plan.linha_codigo
+    ? { codigo: plan.linha_codigo, nome: plan.linha_nome, tipo: plan.linha_tipo }
+    : findLinhaMeta(linhaCod);
   const solo = linhaMeta.tipo === 'solo';
   const pcNome = solo ? trim(linhaMeta.nome) : trim(plan.produto_compra_nome || linhaMeta.nome);
   const eixoA = trim(plan.eixo_a);
