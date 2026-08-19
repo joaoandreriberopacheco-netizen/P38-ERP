@@ -66,7 +66,6 @@ const LINHAS_MESTRE = [
   { ordem: 160, codigo: 'TORNEIRA', nome: 'TORNEIRA', tipo: 'portfolio' },
   { ordem: 170, codigo: 'METAIS_SANITARIOS', nome: 'METAIS SANITÁRIOS', tipo: 'portfolio' },
   { ordem: 175, codigo: 'HIDRÁULICA', nome: 'HIDRÁULICA', tipo: 'mix' },
-  { ordem: 180, codigo: 'TUBO', nome: 'TUBO (geral)', tipo: 'mix' },
   { ordem: 190, codigo: 'LIXA', nome: 'LIXA', tipo: 'mix' },
   { ordem: 200, codigo: 'ELETRICA', nome: 'MATERIAL ELÉTRICO', tipo: 'mix' },
   { ordem: 205, codigo: 'ILUMINACAO', nome: 'ILUMINAÇÃO', tipo: 'mix' },
@@ -260,9 +259,11 @@ function planLinhaCompraAnalise(produto = {}) {
     patch = map
       ? { linha_nome: 'TINTA', produto_compra_nome: map.nome, eixo_a: h2, eixo_b: h4 || '', confianca: 'alta' }
       : { linha_nome: 'TINTA', produto_compra_nome: '(tinta sem h3)', eixo_a: h2, eixo_b: h4 || '', confianca: 'baixa' };
-  } else if (['ESGOTO', 'ROSCÁVEL', 'ROSCAVEL', 'ELETRODUTO'].includes(norm(h2)) && !norm(h1).includes('BUCHA')) {
+  } else if (['ESGOTO', 'ROSCÁVEL', 'ROSCAVEL', 'ELETRODUTO', 'SOLDÁVEL', 'SOLDAVEL'].includes(norm(h2)) && !norm(h1).includes('BUCHA')) {
+    const h2n = norm(h2);
+    const linhaNome = h2n === 'ESGOTO' ? 'ESGOTO' : h2n.includes('ROSC') ? 'ROSCÁVEL' : h2n.includes('SOLD') ? 'SOLDÁVEL' : h2n.includes('ELETRO') ? 'ELETRODUTO' : h2;
     patch = {
-      linha_nome: norm(h2) === 'ESGOTO' ? 'ESGOTO' : norm(h2).includes('ROSC') ? 'ROSCÁVEL' : h1u,
+      linha_nome: linhaNome,
       produto_compra_nome: `${h1u} ${h2}`.replace(/\s+/g, ' ').trim(),
       eixo_a: h3 || '',
       eixo_b: h4 || '',

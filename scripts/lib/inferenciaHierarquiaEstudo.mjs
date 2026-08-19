@@ -3,6 +3,8 @@
  * Prioridade: padrões h1/h2 explícitos antes do fallback genérico.
  */
 
+import { inferirTuboPorLinha } from './inferenciaLinhaPorTipo.mjs';
+
 function trim(s) {
   return String(s ?? '').trim();
 }
@@ -125,10 +127,18 @@ export function planInferenciaEstruturada(produto = {}) {
     return patch('ROSCAVEL', 'ROSCÁVEL', 'mix', 'ENGATE FLEXÍVEL', h2, h3 || h4);
   }
 
+  // --- Tubo → LINHA da conexão (ESGOTO, SOLDÁVEL, ROSCÁVEL, ELETRODUTO) — não existe LINHA TUBO ---
+  if (h1u.startsWith('TUBO')) {
+    const tubo = inferirTuboPorLinha(produto);
+    if (tubo) {
+      return { ...tubo, motivo: 'inferencia_estruturada' };
+    }
+  }
+
   // --- Junção (conexão) ---
   if (h1u === 'JUNÇÃO' || h1u === 'JUNCAO') {
-    const linha = h2u.includes('SOLD') ? 'SOLDAVEL' : h2u.includes('ROSC') ? 'ROSCAVEL' : h2u.includes('ESGOTO') ? 'ESGOTO' : 'TUBO';
-    const linhaNome = linha === 'SOLDAVEL' ? 'SOLDÁVEL' : linha === 'ROSCAVEL' ? 'ROSCÁVEL' : linha === 'ESGOTO' ? 'ESGOTO' : 'TUBO (geral)';
+    const linha = h2u.includes('SOLD') ? 'SOLDAVEL' : h2u.includes('ROSC') ? 'ROSCAVEL' : h2u.includes('ESGOTO') ? 'ESGOTO' : 'HIDRÁULICA';
+    const linhaNome = linha === 'SOLDAVEL' ? 'SOLDÁVEL' : linha === 'ROSCAVEL' ? 'ROSCÁVEL' : linha === 'ESGOTO' ? 'ESGOTO' : 'HIDRÁULICA';
     return patch(linha, linhaNome, 'mix', 'JUNÇÃO', h2, h3 || h4);
   }
 
@@ -196,7 +206,12 @@ export function inferirLinhaCodigoEstruturado(produto) {
   if (['CHUVEIRO', 'REGISTRO', 'VALVULA', 'CAIXA DE DESCARGA', 'ASSENTO SANITÁRIO', 'MONOCOMANDO'].some((k) => n1.includes(k))) {
     return 'METAIS_SANITARIOS';
   }
-  if (n1 === 'TUBO' || (n1.includes('TUBO') && !n1.includes('ADESIVO'))) return 'TUBO';
+  if (n1.startsWith('TUBO') && !n1.includes('ADESIVO')) {
+    if (n2.includes('ELETRODUTO') || n1.includes('ELETRODUTO')) return 'ELETRODUTO';
+    if (n2.includes('ESGOTO') || n1.includes('ESGOTO') || n1.includes('OCRE') || n1.includes('DESCARGA')) return 'ESGOTO';
+    if (n2.includes('SOLD') || n1.includes('SOLD')) return 'SOLDAVEL';
+    if (n2.includes('ROSC') || n1.includes('ROSC') || n1.includes('GALVANIZ')) return 'ROSCAVEL';
+  }
   if (n1 === 'LIXA') return 'LIXA';
   if (['DISJUNTOR', 'LAMPADA', 'LUMINÁRIA', 'LUMINARIA', 'TOMADA', 'INTERRUPTOR', 'GRAMPO'].some((k) => n1.includes(k))) {
     return 'ELETRICA';

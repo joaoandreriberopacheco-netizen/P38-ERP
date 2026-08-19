@@ -160,13 +160,38 @@ function parseImpermeabilizante(produto, t) {
   return patch('IMPERMEABILIZANTE', 'IMPERMEABILIZANTE', 'mix', pc, h2 || extractEmbalagem(t), h3);
 }
 
-function parseTubo(produto, t) {
+function parseTuboPorLinha(produto, t) {
   const h1u = norm(produto.campo_hierarquico_1);
-  if (h1u !== 'TUBO' && !/^TUBO\b/.test(t)) return null;
-  if (/ADESIVO|COLAR|ELETRODUTO|ESGOTO|ROSC|SOLD/.test(t)) return null;
-  const h2 = trim(produto.campo_hierarquico_2);
+  if (!h1u.startsWith('TUBO') && !/^TUBO\b/.test(t)) return null;
+  if (/ADESIVO|TUBOLAR|COLAR PARA TUBO|TORNEIRA.*TUBO/.test(t)) return null;
+
+  const h2u = norm(produto.campo_hierarquico_2);
   const h3 = trim(produto.campo_hierarquico_3);
-  return patch('TUBO', 'TUBO (geral)', 'mix', 'TUBO', h2, h3);
+  const h4 = trim(produto.campo_hierarquico_4);
+  const med = h3 || trim(produto.campo_hierarquico_2);
+
+  if (h2u.includes('ELETRODUTO') || /TUBO ELETRODUTO/.test(t)) {
+    return patch('ELETRODUTO', 'ELETRODUTO', 'mix', 'TUBO ELETRODUTO', med, h4);
+  }
+  if (h2u.includes('ESGOTO') || /TUBO ESGOTO|TUBO OCRE|TUBO DESCARGA|\bPOÇO\b|\bPOCO\b/.test(t)) {
+    let pc = 'TUBO ESGOTO';
+    if (/OCRE/.test(t)) pc = 'TUBO OCRE';
+    else if (/DESCARGA/.test(t)) pc = 'TUBO DESCARGA';
+    return patch('ESGOTO', 'ESGOTO', 'mix', pc, med, h4);
+  }
+  if (h2u.includes('SOLD') || /TUBO SOLDAVEL/.test(t)) {
+    return patch('SOLDAVEL', 'SOLDÁVEL', 'mix', 'TUBO SOLDÁVEL', med, h4);
+  }
+  if (h2u.includes('ROSC') || /TUBO ROSCAVEL|TUBO GALVANIZ/.test(t)) {
+    const pc = /GALVANIZ/.test(t) ? 'TUBO GALVANIZADO' : 'TUBO ROSCÁVEL';
+    return patch('ROSCAVEL', 'ROSCÁVEL', 'mix', pc, med, h4);
+  }
+  return null;
+}
+
+/** Exportado para inferenciaHierarquiaEstudo (h1=TUBO estruturado). */
+export function inferirTuboPorLinha(produto, t = textBlob(produto)) {
+  return parseTuboPorLinha(produto, t);
 }
 
 function parseTorneira(produto, t) {
@@ -198,7 +223,7 @@ export function planLinhaPorTipoProduto(produto = {}) {
     () => parseParafuso(produto, t),
     () => parseAdesivo(produto, t),
     () => parseImpermeabilizante(produto, t),
-    () => parseTubo(produto, t),
+    () => parseTuboPorLinha(produto, t),
     () => parseTorneira(produto, t),
   ]) {
     const r = fn();
