@@ -90,6 +90,7 @@ const STATUS_EMBARQUE_VIRTUAIS = [
   'Aguardando Liberação Financeira',
   'Aguardando Liberação',
   'Aprovado',
+  'Necessidade',
   'Despachado',
   'Concluído',
 ];
@@ -260,10 +261,8 @@ function somaPendenciaComercial(pendencias = []) {
   return pendencias.reduce((acc, row) => acc + (Number(row.pendente) || 0), 0);
 }
 
-function pedidoTemPendenciaLogisticaReal(pedido, embarquesDoPedido = []) {
-  const embarquesReais = (embarquesDoPedido || []).filter((embarque) => !isNecessidadeRenderizada(embarque));
-  const logistica = calcularPercentuaisLogistica(pedido, embarquesReais);
-  return logistica.pendente > 0.5;
+function pedidoTemPendenciaLogisticaReal(pedido, embarquesDoPedido = [], produtosMap = {}) {
+  return calcularPendenciaComercialItens(pedido, embarquesDoPedido, produtosMap).length > 0;
 }
 
 const getQuantidadePendenteNecessidade = (pedido, embarque, produtosMap = {}, embarquesDoPedido = []) => {
@@ -294,7 +293,7 @@ const getBorrowedStatus = (pedido, embarque, produtosMap = {}, embarquesDoPedido
   }
 
   if (ehNecessidade && !temDespachoVinculado) {
-    return 'Aguardando';
+    return quantidadePendente > 0 ? 'Necessidade' : 'Aguardando';
   }
 
   if (!ehNecessidade && !temDespachoVinculado) {
@@ -487,7 +486,7 @@ const buildVirtualNecessidade = (pedido, embarquesDoPedido, produtosMap = {}) =>
   const embarquesReais = (embarquesDoPedido || []).filter((embarque) => !isNecessidadeRenderizada(embarque));
   const temDespachoReal = embarquesReais.some((embarque) => hasLinkedItems(embarque) && hasDespachoVinculado(embarque));
   if (!temDespachoReal) return null;
-  if (!pedidoTemPendenciaLogisticaReal(pedido, embarquesDoPedido)) return null;
+  if (!pedidoTemPendenciaLogisticaReal(pedido, embarquesDoPedido, produtosMap)) return null;
 
   const pendencias = calcularPendenciaComercialItens(pedido, embarquesDoPedido, produtosMap);
   if (!pendencias.length) return null;
@@ -587,8 +586,7 @@ function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
           .filter((embarque) => {
             if (!isNecessidadeRenderizada(embarque)) return true;
             if (!pedidoNaoConcluido(pedido)) return false;
-            return pedidoTemPendenciaLogisticaReal(pedido, embarquesDoPedido)
-              && calcularPendenciaComercialItens(pedido, embarquesDoPedido, produtosMap).length > 0;
+            return calcularPendenciaComercialItens(pedido, embarquesDoPedido, produtosMap).length > 0;
           })
       : [{
           id: `original-${pedido.id}`,

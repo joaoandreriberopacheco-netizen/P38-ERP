@@ -49,6 +49,7 @@ export function comprasAccentFromDisplayStatus(displayStatus) {
   if (status === 'Concluído' || status === 'Aprovado') return 'success';
   if (status === 'Despachado') return 'info';
   if (status === 'Aguardando' || status.includes('Aguard') || status.includes('Aprovação')) return 'warning';
+  if (status === 'Necessidade') return 'danger';
   if (status === 'Cancelado') return 'danger';
   return 'muted';
 }
@@ -59,6 +60,7 @@ export const COMPRAS_FILTRO_STATUS_PEDIDO = [
   { codigo: 'Aguardando Liberação', label: 'Aguard. pagamento', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
   { codigo: 'Aguardando', label: 'Aguard. embarque', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
   { codigo: 'Aprovado', label: 'Aprovado', chip: 'bg-lime-50 text-lime-800 dark:bg-lime-900/25 dark:text-[#a4ce33]/85' },
+  { codigo: 'Necessidade', label: 'Necessidade', chip: 'bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-400' },
   { codigo: 'Despachado', label: 'Despachado', chip: 'bg-[#4ECDC4]/15 text-[#1a7a73] dark:bg-[#4ECDC4]/20 dark:text-[#4ECDC4]' },
   { codigo: 'Concluído', label: 'Concluído', chip: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/25 dark:text-emerald-500' },
   { codigo: 'Cancelado', label: 'Cancelado', chip: 'bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-500' },
@@ -69,6 +71,7 @@ export const COMPRAS_FILTRO_STATUS_PICKER = [
   { codigo: 'Rascunho', label: 'Rascunho', chip: 'bg-muted text-foreground/90' },
   { codigo: 'Aguardando Liberação', label: 'Aguard. pagamento', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
   { codigo: 'Aprovado', label: 'Aprovado', chip: 'bg-lime-50 text-lime-800 dark:bg-lime-900/25 dark:text-[#a4ce33]/85' },
+  { codigo: 'Necessidade', label: 'Necessidade', chip: 'bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-400' },
   { codigo: 'Aguardando', label: 'Pend. entrega', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
   { codigo: 'Despachado', label: 'Despachado', chip: 'bg-[#4ECDC4]/15 text-[#1a7a73] dark:bg-[#4ECDC4]/20 dark:text-[#4ECDC4]' },
   { codigo: 'Concluído', label: 'Concluído', chip: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/25 dark:text-emerald-500' },

@@ -50,6 +50,7 @@ const STATUS_CONFIG = {
   'Aguardando Liberação Financeira': COMPRAS_STATUS_STYLE.aguardando,
   'Aguardando Liberação': COMPRAS_STATUS_STYLE.aguardando,
   'Aprovado': { dot: 'bg-lime-600 dark:bg-[#a4ce33]/70', pill: 'bg-lime-50 dark:bg-lime-900/25 text-lime-700 dark:text-[#a4ce33]/85' },
+  'Necessidade': { dot: 'bg-red-500 dark:bg-red-500/70', pill: 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400' },
   'Despachado': COMPRAS_STATUS_STYLE.despachado,
   'Concluído': { dot: 'bg-emerald-600 dark:bg-emerald-600/70', pill: 'bg-emerald-50 dark:bg-emerald-900/25 text-emerald-700 dark:text-emerald-500' },
   'Cancelado': { dot: 'bg-rose-600 dark:bg-rose-600/70', pill: 'bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-500' },
@@ -63,6 +64,7 @@ function getDisplayStatusLabel(displayStatus) {
   if (displayStatus === 'Aguardando Liberação Financeira' || displayStatus === 'Aguardando Aprovação Financeira') {
     return 'Aguard. Pgto';
   }
+  if (displayStatus === 'Necessidade') return 'Necessidade';
   return displayStatus;
 }
 
