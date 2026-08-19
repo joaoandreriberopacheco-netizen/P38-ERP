@@ -20,6 +20,7 @@
     "flare:api": "node scripts/flare-local-api.mjs",
     "audit:fluxo-dia": "node scripts/audit-fluxo-dia.mjs",
     "audit:margem-outros": "node scripts/auditar-margem-outros.mjs",
+    "audit:margem-composicao": "node scripts/auditar-margem-composicao.mjs",
     "financeiro:corte-saldos": "node scripts/aplicar-corte-financeiro-saldos.mjs",
     "audit:pedido-sugestao": "node scripts/audit-pedido-sugestao-estoque.mjs",
     "audit:estoque-canonico": "node scripts/audit-estoque-canonico.mjs",
