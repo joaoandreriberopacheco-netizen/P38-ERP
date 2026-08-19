@@ -68,6 +68,8 @@ npm run benchmark:leroy-merlin -- --only-divergencias
 
 | Ficheiro | Papel |
 |----------|--------|
+| [`src/data/hierarquiaPortalLinhas.json`](../../src/data/hierarquiaPortalLinhas.json) | **LINHAs mestre** portal (fonte canónica) |
+| [`scripts/lib/hierarquiaPortalLinhas.mjs`](../../scripts/lib/hierarquiaPortalLinhas.mjs) | Loader + merge com manifest cerâmica |
 | `scripts/lib/leroyMerlinReferencia.mjs` | Regras LM + LINHA portal sugerida |
 | `scripts/benchmark-leroy-merlin-estudo.mjs` | Gera CSV comparativo |
 | `scripts/lib/inferenciaLinhaPorTipo.mjs` | Inferência portal (THINNER, PARAFUSO, …) |

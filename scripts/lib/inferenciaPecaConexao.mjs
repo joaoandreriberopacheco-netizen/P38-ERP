@@ -146,6 +146,25 @@ export function inferirPecaConexao(produto = {}) {
   const h3u = norm(h3);
   const t = textBlob(produto);
 
+  // h1 composto (falso h1): "TE ESGOTO 100MM", "JOELHO SOLDÁVEL 25MM"…
+  const composto = h1u.match(/^(TE|TÊ|JOELHO|LUVA|CAP|CURVA|NIPEL|UNIAO|UNIÃO|PLUG)\s+(ESGOTO|SOLDAVEL|SOLDÁVEL|ROSCAVEL|ROSCÁVEL|ELETRODUTO)\b(.*)$/);
+  if (composto) {
+    const [, pecaRaw, connRaw, resto] = composto;
+    const lnPair = detectLinhaConexao('', connRaw, t) ?? ['ESGOTO', 'ESGOTO'];
+    const [lc, ln] = lnPair;
+    const med = trim(resto) || h2 || h3;
+    const peca = norm(pecaRaw);
+    if (peca === 'TE' || peca === 'TÊ') {
+      return patch(lc, ln, 'TE ESGOTO', med, h4 || '');
+    }
+    if (peca === 'JOELHO') {
+      return patch(lc, ln, ln === 'ESGOTO' ? 'JOELHO ESGOTO' : joelhoProdutoCompra(h2u, h3u, ln), med, h4 || h5);
+    }
+    if (peca === 'LUVA') return patch(lc, ln, luvaProdutoCompra(h2u, h3u, ln), med, h4 || '');
+    if (peca === 'CAP') return patch(lc, ln, capProdutoCompra(ln), med, '');
+    return patch(lc, ln, pecaGenericaProdutoCompra(pecaRaw, ln), med, h4 || '');
+  }
+
   if (h1u.includes('ADAPTADOR') && /CX\.?\s*D.?ÁGUA|CAIXA D.?ÁGUA/.test(t)) return null;
   if (h1u.includes('ADAPTADOR') && (h2u.includes('SOLD') || h1u.includes('SOLD'))) {
     const ln = detectLinhaConexao(h2, h3, t) ?? ['SOLDAVEL', 'SOLDÁVEL'];

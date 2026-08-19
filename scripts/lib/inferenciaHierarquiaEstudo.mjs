@@ -53,9 +53,17 @@ export function planInferenciaEstruturada(produto = {}) {
     return patch('ELETRODUTO', 'ELETRODUTO', 'mix', tituloPeca(h1, 'ELETRODUTO'), h2, h3 || h4);
   }
 
-  // --- Bucha plástica (parafuso) ---
+  // --- Bucha plástica / química → PARAFUSO (LM: Fixação > Buchas) ---
   if (h1u === 'BUCHA PLÁSTICA' || h1u === 'BUCHA PLASTICA') {
-    return patch('FERRAGEM', 'FERRAGEM', 'mix', 'BUCHA PLÁSTICA', '', h2);
+    return patch('PARAFUSO', 'PARAFUSO', 'mix', 'BUCHA PLÁSTICA', '', h2);
+  }
+  if (h1u === 'BUCHA QUÍMICA' || h1u === 'BUCHA QUIMICA') {
+    return patch('PARAFUSO', 'PARAFUSO', 'mix', 'BUCHA QUÍMICA', h2, h3);
+  }
+
+  // --- Porca / arruela (fixação) ---
+  if (h1u === 'PORCA' || h1u.startsWith('PORCA ') || h1u === 'ARRUELA' || h1u.startsWith('ARRUELA ')) {
+    return patch('PARAFUSO', 'PARAFUSO', 'mix', h1, h2, h3 || h4);
   }
 
   // --- Barra roscada → família PARAFUSO (LM: Fixação > Barras Roscadas) ---
@@ -191,8 +199,11 @@ export function inferirLinhaCodigoEstruturado(produto) {
   if (['DISJUNTOR', 'LAMPADA', 'LUMINÁRIA', 'LUMINARIA', 'TOMADA', 'INTERRUPTOR', 'GRAMPO'].some((k) => n1.includes(k))) {
     return 'ELETRICA';
   }
-  if (['FECHADURA', 'DOBRADIÇA', 'PUXADOR', 'TRINCO', 'BUCHA PLÁSTICA', 'BUCHA PLASTICA', 'DISCO DE CORTE'].some((k) => n1.includes(k))) {
+  if (['FECHADURA', 'DOBRADIÇA', 'PUXADOR', 'TRINCO', 'DISCO DE CORTE'].some((k) => n1.includes(k))) {
     return 'FERRAGEM';
+  }
+  if (['BUCHA PLÁSTICA', 'BUCHA PLASTICA', 'BUCHA QUÍMICA', 'BUCHA QUIMICA', 'PORCA', 'ARRUELA'].some((k) => n1.includes(k))) {
+    return 'PARAFUSO';
   }
   if (n1.includes('BARRA ROSC') || n1.includes('PARAFUSO')) return 'PARAFUSO';
   if (n1.includes('IMPERMEAB')) return 'IMPERMEABILIZANTE';

@@ -68,7 +68,25 @@ const REGRAS_LM = [
     },
   },
   {
-    test: (t) => /\bTHINNER\b|\bVERNIZ\b|\bTINTA\b|\bMASSA CORRIDA\b|\bMASSA ACR/.test(t),
+    test: (t) => /\bTHINNER\b/.test(t),
+    ref: {
+      departamento: 'Tintas e Acessórios',
+      caminho: 'Tintas > Complementos > Thinner',
+      familiaLm: 'Thinner',
+      linhaPortalSugerida: 'THINNER',
+    },
+  },
+  {
+    test: (t) => /\bVERNIZ\b/.test(t),
+    ref: {
+      departamento: 'Tintas e Acessórios',
+      caminho: 'Tintas > Vernizes',
+      familiaLm: 'Vernizes',
+      linhaPortalSugerida: 'VERNIZ',
+    },
+  },
+  {
+    test: (t) => /\bTINTA\b|\bMASSA CORRIDA\b|\bMASSA ACR/.test(t),
     ref: {
       departamento: 'Tintas e Acessórios',
       caminho: 'Tintas > Tintas e Complementos',
@@ -203,6 +221,13 @@ export function linhasEquivalentes(linhaNossa, linhaSugerida) {
   if (a === b) return true;
   // LM: barra roscada / bucha / porca → família parafusos; FERRAGEM genérica ≠ PARAFUSO
   if (b === 'PARAFUSO' && a === 'FERRAGEM') return false;
+  // Pintura: LM agrupa tudo em "Tintas" — nossas LINHAs são mais granulares
+  if (b === 'TINTA' && ['VERNIZ', 'THINNER', 'MASSA CORRIDA', 'MASSA ACRÍLICA', 'PINTURA E QUÍMICOS'].includes(a)) return true;
+  if (b === 'VERNIZ' && a === 'VERNIZ') return true;
+  if (b === 'THINNER' && a === 'THINNER') return true;
+  // LM agrupa argamassa com cimentos — nós mantemos LINHA ARGAMASSA
+  if (b === 'CIMENTO' && a === 'ARGAMASSA') return true;
+  if (b === 'ESGOTO' && a === 'ESGOTO') return true;
   return false;
 }
 

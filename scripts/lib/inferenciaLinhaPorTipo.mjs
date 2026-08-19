@@ -132,6 +132,23 @@ function parseBarraRoscada(produto, t) {
   return patch('PARAFUSO', 'PARAFUSO', 'mix', 'BARRA ROSCADA ZINCADA', h2, h3);
 }
 
+function parseBuchaFixacao(produto, t) {
+  if (!/\bBUCHA PL[AÁ]STICA\b|\bBUCHA QU[IÍ]MICA\b/.test(t)) return null;
+  const h2 = trim(produto.campo_hierarquico_2);
+  const h3 = trim(produto.campo_hierarquico_3);
+  const pc = /\bQU[IÍ]MICA\b/.test(t) ? 'BUCHA QUÍMICA' : 'BUCHA PLÁSTICA';
+  return patch('PARAFUSO', 'PARAFUSO', 'mix', pc, h2, h3);
+}
+
+function parsePorcaArruela(produto, t) {
+  if (!/^PORCA\b|^ARRUELA\b/.test(t)) return null;
+  if (/ELETRODUTO/.test(t)) return null;
+  const h1 = trim(produto.campo_hierarquico_1);
+  const h2 = trim(produto.campo_hierarquico_2);
+  const h3 = trim(produto.campo_hierarquico_3);
+  return patch('PARAFUSO', 'PARAFUSO', 'mix', h1 || (t.startsWith('PORCA') ? 'PORCA' : 'ARRUELA'), h2, h3);
+}
+
 function parseParafuso(produto, t) {
   if (!/^PARAFUSO\b/.test(t) && norm(produto.campo_hierarquico_1) !== 'PARAFUSO') return null;
   const h2 = trim(produto.campo_hierarquico_2);
@@ -228,6 +245,8 @@ export function planLinhaPorTipoProduto(produto = {}) {
     () => parseTinta(produto, t),
     () => parsePrego(produto, t),
     () => parseBarraRoscada(produto, t),
+    () => parseBuchaFixacao(produto, t),
+    () => parsePorcaArruela(produto, t),
     () => parseParafuso(produto, t),
     () => parseAdesivo(produto, t),
     () => parseImpermeabilizante(produto, t),
