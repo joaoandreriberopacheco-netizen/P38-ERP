@@ -328,7 +328,7 @@ function enrichEstudo(produto, excelByCodigo, excelLinhas) {
     novoSku = trim(produto.nome);
   } else {
     const raw = montarNomeProposto({ produtoCompraNome: pcNome, eixoA, eixoB, marca: produto.marca });
-    novoSku = (plan.motivo === 'macro_outros' || plan.motivo === 'linha_por_tipo' ? compactarRotulo(raw) : raw)
+    novoSku = (plan.motivo === 'macro_outros' || plan.motivo === 'linha_por_tipo' || plan.motivo === 'peca_conexao' ? compactarRotulo(raw) : raw)
       || trim(produto.nome);
   }
 

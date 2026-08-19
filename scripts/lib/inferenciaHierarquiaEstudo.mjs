@@ -4,6 +4,7 @@
  */
 
 import { inferirTuboPorLinha } from './inferenciaLinhaPorTipo.mjs';
+import { inferirPecaConexao } from './inferenciaPecaConexao.mjs';
 
 function trim(s) {
   return String(s ?? '').trim();
@@ -47,16 +48,6 @@ export function planInferenciaEstruturada(produto = {}) {
     return patch('VERGALHAO', 'VERGALHÃO', 'mix', 'TELA', h2, h3);
   }
 
-  // --- Buchas de redução ---
-  if (h1u.includes('BUCHA') && h1u.includes('RED')) {
-    if (h2u.includes('SOLD') || h1u.includes('SOLD')) {
-      return patch('SOLDAVEL', 'SOLDÁVEL', 'mix', 'BUCHA REDUÇÃO SOLDÁVEL', h3, h4);
-    }
-    if (h2u.includes('ROSC') || h1u.includes('ROSC')) {
-      return patch('ROSCAVEL', 'ROSCÁVEL', 'mix', 'BUCHA REDUÇÃO ROSCÁVEL', '', h4 || h3);
-    }
-  }
-
   // --- Eletroduto (peças) ---
   if (h1u.includes('ELETRODUTO')) {
     return patch('ELETRODUTO', 'ELETRODUTO', 'mix', tituloPeca(h1, 'ELETRODUTO'), h2, h3 || h4);
@@ -87,12 +78,7 @@ export function planInferenciaEstruturada(produto = {}) {
     return patch('TINTA', 'TINTA', 'portfolio', 'XADREZ EM PÓ', h2, h3);
   }
 
-  // --- Adaptador soldável misto ---
-  if (h1u.includes('ADAPTADOR') && (h2u.includes('SOLD') || h1u.includes('SOLD'))) {
-    return patch('SOLDAVEL', 'SOLDÁVEL', 'mix', 'ADAPTADOR SOLDÁVEL', h3, h4 || h2);
-  }
-
-  // --- Lixa (já tem h1=LIXA mas reforço eixo) ---
+  // --- Lixa ---
   if (h1u === 'LIXA' && h2) {
     return patch('LIXA', 'LIXA', 'mix', 'LIXA', h2, h3 || h4);
   }
@@ -127,7 +113,7 @@ export function planInferenciaEstruturada(produto = {}) {
     return patch('ROSCAVEL', 'ROSCÁVEL', 'mix', 'ENGATE FLEXÍVEL', h2, h3 || h4);
   }
 
-  // --- Tubo → LINHA da conexão (ESGOTO, SOLDÁVEL, ROSCÁVEL, ELETRODUTO) — não existe LINHA TUBO ---
+  // --- Tubo → LINHA da conexão ---
   if (h1u.startsWith('TUBO')) {
     const tubo = inferirTuboPorLinha(produto);
     if (tubo) {
@@ -135,21 +121,10 @@ export function planInferenciaEstruturada(produto = {}) {
     }
   }
 
-  // --- Junção (conexão) ---
-  if (h1u === 'JUNÇÃO' || h1u === 'JUNCAO') {
-    const linha = h2u.includes('SOLD') ? 'SOLDAVEL' : h2u.includes('ROSC') ? 'ROSCAVEL' : h2u.includes('ESGOTO') ? 'ESGOTO' : 'HIDRÁULICA';
-    const linhaNome = linha === 'SOLDAVEL' ? 'SOLDÁVEL' : linha === 'ROSCAVEL' ? 'ROSCÁVEL' : linha === 'ESGOTO' ? 'ESGOTO' : 'HIDRÁULICA';
-    return patch(linha, linhaNome, 'mix', 'JUNÇÃO', h2, h3 || h4);
-  }
-
-  // --- União (peça) — evita cair no genérico com nome duplicado ---
-  if (h1u === 'UNIAO' || h1u === 'UNIÃO') {
-    if (h2u.includes('SOLD') || h2u === 'SOLDÁVEL' || h2u === 'SOLDAVEL') {
-      return patch('SOLDAVEL', 'SOLDÁVEL', 'mix', 'UNIÃO SOLDÁVEL', '', h3 || h4);
-    }
-    if (h2u.includes('ROSC')) {
-      return patch('ROSCAVEL', 'ROSCÁVEL', 'mix', 'UNIÃO ROSCÁVEL', '', h3 || h4);
-    }
+  // --- Peças avulsas (joelho, luva, tee, cap…) → LINHA da conexão ---
+  const peca = inferirPecaConexao(produto);
+  if (peca) {
+    return { ...peca, motivo: 'inferencia_estruturada' };
   }
 
   return null;

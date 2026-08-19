@@ -3,6 +3,8 @@
  * Objetivo: tirar o máximo possível do bucket OUTROS.
  */
 
+import { inferirPecaConexao } from './inferenciaPecaConexao.mjs';
+
 function trim(s) {
   return String(s ?? '').trim();
 }
@@ -158,20 +160,16 @@ function parseCaixaAgua(produto, t) {
 }
 
 function parseConexaoAvulsa(produto, t) {
+  const peca = inferirPecaConexao(produto);
+  if (peca) return peca;
+
   const h1 = norm(produto.campo_hierarquico_1);
   const rules = [
-    { re: /^UNIAO|^UNIÃO/, pc: 'UNIÃO ROSCÁVEL', lc: 'ROSCAVEL', ln: 'ROSCÁVEL' },
-    { re: /^NIPEL/, pc: 'NIPEL ROSCÁVEL', lc: 'ROSCAVEL', ln: 'ROSCÁVEL' },
-    { re: /^PLUG/, pc: 'PLUG ROSCÁVEL', lc: 'ROSCAVEL', ln: 'ROSCÁVEL' },
-    { re: /^LUVA/, pc: h1.includes('SOLD') ? 'LUVA SOLDÁVEL' : 'LUVA ROSCÁVEL', lc: h1.includes('SOLD') ? 'SOLDAVEL' : 'ROSCAVEL', ln: h1.includes('SOLD') ? 'SOLDÁVEL' : 'ROSCÁVEL' },
-    { re: /^TE ESGOTO|^TE /, pc: 'TE ESGOTO', lc: 'ESGOTO', ln: 'ESGOTO' },
     { re: /^GRELHA/, pc: 'GRELHA', lc: 'HIDRÁULICA', ln: 'HIDRÁULICA' },
     { re: /^SIFAO|^SIFÃO/, pc: 'SIFÃO', lc: 'HIDRÁULICA', ln: 'HIDRÁULICA' },
     { re: /^RALO/, pc: 'RALO', lc: 'HIDRÁULICA', ln: 'HIDRÁULICA' },
     { re: /^BOCAL/, pc: 'BOCAL', lc: 'HIDRÁULICA', ln: 'HIDRÁULICA' },
     { re: /^TAMPA/, pc: 'TAMPA', lc: 'HIDRÁULICA', ln: 'HIDRÁULICA' },
-    { re: /^ENGATE FLEX/, pc: 'ENGATE FLEXÍVEL', lc: 'ROSCAVEL', ln: 'ROSCÁVEL' },
-    { re: /^COLAR PARA TUBO/, pc: 'COLAR PARA TUBO', lc: 'ROSCAVEL', ln: 'ROSCÁVEL' },
     { re: /^TAPA-FURO/, pc: 'TAPA-FURO', lc: 'ELETRICA', ln: 'MATERIAL ELÉTRICO' },
     { re: /^ESPUDE/, pc: 'ESPUDE', lc: 'HIDRÁULICA', ln: 'HIDRÁULICA' },
     { re: /^MANGUEIRA P\/ MAQUINA/, pc: 'MANGUEIRA LAVADORA', lc: 'HIDRÁULICA', ln: 'HIDRÁULICA' },
@@ -307,7 +305,7 @@ export function isFalsoH1(produto) {
 }
 
 export function deveUsarOutros(produto, plan) {
-  if (plan?.motivo === 'macro_outros' || plan?.motivo === 'inferencia_estruturada' || plan?.motivo === 'linha_por_tipo') {
+  if (plan?.motivo === 'macro_outros' || plan?.motivo === 'inferencia_estruturada' || plan?.motivo === 'linha_por_tipo' || plan?.motivo === 'peca_conexao') {
     return false;
   }
   if (plan?.linha_codigo && !['OUTROS', 'DIVERSOS'].includes(plan.linha_codigo)) return false;
