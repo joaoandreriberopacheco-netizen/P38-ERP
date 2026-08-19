@@ -23,6 +23,7 @@
     "preview": "vite preview",
     "catalogo:generate-seed": "node scripts/generate-catalogo-interface-seed.mjs",
     "catalogo:build-preview": "node scripts/build-catalogo-preview.mjs",
+    "export:sku-hierarquia-estudo": "node scripts/export-sku-hierarquia-estudo.mjs",
     "db:apply-migrations": "node scripts/apply-supabase-migrations.mjs",
     "supabase:deploy": "node scripts/deploy-supabase.mjs",
     "supabase:deploy:check": "node scripts/supabase-deploy-check.mjs",
