@@ -5,6 +5,7 @@ import {
   resolveEmbarqueQuantidadeComercial,
 } from '@/lib/embarqueQuantityResolve';
 import { getEmbarqueItensLinhas, hydrateEmbarquesPedidoFromSql } from '@/lib/fetchEmbarqueItens';
+import { commercialQuantityFromBase, getItemCompraExibicaoVitrine } from '@/lib/productUnits';
 
 function qtyPedidaBaseItem(item = {}) {
   return resolveEmbarqueQuantidadeBase(
@@ -86,7 +87,28 @@ export function qtyEmbarcadaComercialLinha(item = {}) {
  * 1) saldo em embarques tipo Necessidade (pós-recepção com divergência), e
  * 2) quantidade do pedido ainda não coberta por despachos reais.
  */
-export function calcularItensOrfaosAguardandoDespacho(pedido, embarques = [], totalEmbarcadoPorProduto = {}) {
+/**
+ * Converte pendência em base (M²) para unidade vitrine/logística (ex.: CX).
+ * `qtd_pendente` nos órfãos é sempre em base — evita comparar CX com M².
+ */
+export function qtyPendenteComercialParaExibicao(item = {}, produto = null) {
+  const pendenteBase = Number(item.qtd_pendente) || 0;
+  if (pendenteBase <= 0.009) {
+    return { quantidade: 0, unidade: item.unidade_medida || 'UN' };
+  }
+  const exib = getItemCompraExibicaoVitrine(item, produto);
+  return {
+    quantidade: commercialQuantityFromBase(pendenteBase, exib.fator_conversao, exib.unidade_medida),
+    unidade: exib.unidade_medida || item.unidade_medida || 'UN',
+  };
+}
+
+export function calcularItensOrfaosAguardandoDespacho(
+  pedido,
+  embarques = [],
+  totalEmbarcadoPorProduto = {},
+  produtosMap = {},
+) {
   const pendentePorProduto = {};
 
   (embarques || [])
@@ -95,7 +117,7 @@ export function calcularItensOrfaosAguardandoDespacho(pedido, embarques = [], to
       getEmbarqueItensLinhas(emb).forEach((linha) => {
         const pid = linha?.produto_id;
         if (!pid) return;
-        const q = qtyEmbarcadaComercialLinha(linha);
+        const q = qtyEmbarcadaBaseLinha(linha);
         if (q > 0) {
           pendentePorProduto[pid] = roundToTwoDecimals((pendentePorProduto[pid] || 0) + q);
         }
@@ -105,23 +127,32 @@ export function calcularItensOrfaosAguardandoDespacho(pedido, embarques = [], to
   (pedido?.itens || []).forEach((item) => {
     const pid = item?.produto_id;
     if (!pid) return;
-    const pedidaCom = Number(item.quantidade) || 0;
-    const embarcadoCom = Number(totalEmbarcadoPorProduto[pid]) || 0;
-    const faltaDespacho = Math.max(0, pedidaCom - embarcadoCom);
-    if (faltaDespacho > 0) {
+    const pedidaBase = qtyPedidaBaseItem(item);
+    const embarcadoBase = Number(totalEmbarcadoPorProduto[pid]) || 0;
+    const faltaDespacho = Math.max(0, pedidaBase - embarcadoBase);
+    if (faltaDespacho > 0.009) {
       pendentePorProduto[pid] = roundToTwoDecimals((pendentePorProduto[pid] || 0) + faltaDespacho);
     }
   });
 
   return (pedido?.itens || [])
-    .map((item) => ({
-      ...item,
-      qtd_pendente: roundToTwoDecimals(pendentePorProduto[item.produto_id] || 0),
-    }))
-    .filter((item) => item.qtd_pendente > 0);
+    .map((item) => {
+      const qtdPendenteBase = roundToTwoDecimals(pendentePorProduto[item.produto_id] || 0);
+      const exibCom = qtyPendenteComercialParaExibicao(
+        { ...item, qtd_pendente: qtdPendenteBase },
+        produtosMap[item.produto_id] || null,
+      );
+      return {
+        ...item,
+        qtd_pendente: qtdPendenteBase,
+        qtd_pendente_comercial: exibCom.quantidade,
+        unidade_pendente_exibicao: exibCom.unidade,
+      };
+    })
+    .filter((item) => item.qtd_pendente > 0.009);
 }
 
-function calcularTotalEmbarcadoComercial(embarques = []) {
+function calcularTotalEmbarcadoBase(embarques = []) {
   const map = {};
   (embarques || []).forEach((emb) => {
     if (emb?.tipo === 'Necessidade') return;
@@ -129,7 +160,7 @@ function calcularTotalEmbarcadoComercial(embarques = []) {
     getEmbarqueItensLinhas(emb).forEach((item) => {
       const pid = item?.produto_id;
       if (!pid) return;
-      const add = qtyEmbarcadaComercialLinha(item);
+      const add = qtyEmbarcadaBaseLinha(item);
       map[pid] = roundToTwoDecimals((map[pid] || 0) + add);
     });
   });
@@ -137,11 +168,12 @@ function calcularTotalEmbarcadoComercial(embarques = []) {
 }
 
 /** Órfãos com cálculo automático do total embarcado (para Logs e listagens). */
-export function calcularItensOrfaosPedido(pedido, embarques = []) {
+export function calcularItensOrfaosPedido(pedido, embarques = [], produtosMap = {}) {
   return calcularItensOrfaosAguardandoDespacho(
     pedido,
     embarques,
-    calcularTotalEmbarcadoComercial(embarques),
+    calcularTotalEmbarcadoBase(embarques),
+    produtosMap,
   );
 }
 

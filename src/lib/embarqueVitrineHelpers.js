@@ -13,6 +13,7 @@ import {
   getItemCompraExibicaoVitrine,
   getUnidadeBySiglaCanonical,
   normalizeUnitCode,
+  resolveBoatLogisticsUnit,
   resolvePrimaryFromFactorOne,
 } from '@/lib/productUnits';
 
@@ -44,11 +45,14 @@ export function buildUnidadeLinhaInicial(item, produto, embItem = null) {
     };
   }
   const exib = getItemCompraExibicaoVitrine(item, produto);
-  const unidade = exib.unidade_medida || item.unidade_medida || 'UN';
+  const unidadePreferida = produto
+    ? resolveBoatLogisticsUnit(produto, exib.unidade_medida || item.unidade_medida || 'UN')
+    : (exib.unidade_medida || item.unidade_medida || 'UN');
+  const unidade = unidadePreferida;
   const canon = produto ? getUnidadeBySiglaCanonical(produto, unidade) : null;
   return {
     unidade,
-    fator: Number(exib.fator_conversao) || Number(item.fator_conversao) || 1,
+    fator: Number(canon?.fator_conversao) || Number(exib.fator_conversao) || Number(item.fator_conversao) || 1,
     produto_unidade_id: canon?.id || item.produto_unidade_id || '',
   };
 }

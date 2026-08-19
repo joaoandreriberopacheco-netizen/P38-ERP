@@ -15,6 +15,15 @@ const round6 = (n) => Math.round((Number(n) || 0) * 1_000_000) / 1_000_000;
 
 /** Fator da linha do pedido/embarque (ex.: 200 para CX de estribo). */
 export function resolveFatorRecepcaoCompra(purchaseItem = {}, receiptItem = {}) {
+  const fatorApresentacao = Number(
+    receiptItem?.fator_apresentacao
+      ?? receiptItem?.fator_aplicado
+      ?? purchaseItem?.fator_apresentacao
+      ?? purchaseItem?.fator_aplicado
+      ?? 0,
+  );
+  if (fatorApresentacao > 0) return fatorApresentacao;
+
   const fator = Number(
     purchaseItem?.fator_conversao
       ?? purchaseItem?.fator_aplicado

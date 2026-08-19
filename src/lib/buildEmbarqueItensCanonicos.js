@@ -17,6 +17,7 @@ export function buildItensCanonicosEmbarque(itensNorm = [], pedidoItens = []) {
         produto_unidade_id: it?.produto_unidade_id || '',
         pedido_compra_item_id: it?.pedido_compra_item_id || '',
         unidade_sigla: it?.unidade_apresentacao || it?.unidade_medida || '',
+        fator_aplicado: Number(it?.fator_apresentacao) || undefined,
         quantidade_pedida_comercial: qPedida,
         quantidade_embarcada_comercial: Number(it?.quantidade_embarcada_apresentacao) || 0,
         quantidade_recebida_comercial: Number(it?.quantidade_recebida_apresentacao) || 0,

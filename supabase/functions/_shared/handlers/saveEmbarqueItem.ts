@@ -93,7 +93,14 @@ const deriveEmbarqueItem = (embarque: any, produto: any, pedidoCompraItem: any, 
     errors.push(`produto_unidade_id ${input.produto_unidade_id} nao encontrado em Produto.unidades[]`);
   }
   const u = resolvido.unidade;
-  const fator = asNumber(u?.fator_conversao, 1) || 1;
+  const fatorInput = asNumber(input?.fator_aplicado ?? input?.fator_apresentacao, 0);
+  const fatorUnidade = asNumber(u?.fator_conversao, 1) || 1;
+  const siglaInput = normalizeSigla(input?.unidade_sigla || input?.unidade_medida || input?.unidade_apresentacao);
+  const siglaUnidade = normalizeSigla(u?.sigla);
+  const fator =
+    fatorInput > 0 && siglaInput && (siglaInput === siglaUnidade || !resolvido.found)
+      ? fatorInput
+      : fatorUnidade;
 
   const qPedida = asNumber(input?.quantidade_pedida_comercial ?? input?.quantidade_pedida, 0);
   const qEmbarcada = asNumber(input?.quantidade_embarcada_comercial ?? input?.quantidade_embarcada, 0);

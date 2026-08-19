@@ -124,8 +124,10 @@ export default function LogsPedidoCompra({ pedidoId, pedido }) {
               >
                 <span className="text-sm text-foreground truncate">{item.produto_nome}</span>
                 <span className="text-sm font-semibold text-foreground whitespace-nowrap">
-                  {formatQuantity(item.qtd_pendente)}{' '}
-                  <span className="font-normal text-muted-foreground">{item.unidade_medida}</span>
+                  {formatQuantity(item.qtd_pendente_comercial ?? item.qtd_pendente)}{' '}
+                  <span className="font-normal text-muted-foreground">
+                    {item.unidade_pendente_exibicao || item.unidade_medida}
+                  </span>
                 </span>
               </li>
             ))}

@@ -14,7 +14,7 @@ import { buildConsultaItensEmbarque, calcConsultaValorEmbarque } from '@/lib/con
 import { calcularItensOrfaosPedido, qtyEmbarcadaComercialLinha } from '@/lib/embarqueLogisticaHelpers';
 import { calcValorItensPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
-import { calculateBaseQuantity, getItemCompraExibicaoVitrine } from '@/lib/productUnits';
+import { calculateBaseQuantity, commercialQuantityFromBase, getItemCompraExibicaoVitrine } from '@/lib/productUnits';
 
 /** Mínimo por linha (unidade comercial) para contar como falta real. */
 export const MIN_LINHA_PENDENTE_COMERCIAL = 0.01;
@@ -118,11 +118,16 @@ export function calcularPendenciaComercialItens(pedido, embarquesDoPedido = [], 
   const embarquesConsiderados = filtrarEmbarquesParaCalculoNecessidade(pedido, embarquesDoPedido);
   if (!temDespachoRealComItens(embarquesConsiderados)) return [];
 
-  return calcularItensOrfaosPedido(pedido, embarquesConsiderados)
+  return calcularItensOrfaosPedido(pedido, embarquesConsiderados, produtosMap)
     .map((item) => {
       const produto = produtosMap[item.produto_id] || null;
       const exib = getItemCompraExibicaoVitrine(item, produto);
-      const pendente = Number(item.qtd_pendente) || 0;
+      const pendenteBase = Number(item.qtd_pendente) || 0;
+      const pendente = commercialQuantityFromBase(
+        pendenteBase,
+        exib.fator_conversao,
+        exib.unidade_medida,
+      );
       if (pendente <= 0.009) return null;
       return { item, exib, pendente };
     })

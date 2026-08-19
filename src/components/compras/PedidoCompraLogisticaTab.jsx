@@ -8,7 +8,7 @@ import InformarEmbarque from './InformarEmbarque';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
-import { calcularPercentuaisLogistica, derivarStatusEmbarqueAgregado, qtyEmbarcadaComercialLinha, calcularItensOrfaosAguardandoDespacho } from '@/lib/embarqueLogisticaHelpers';
+import { calcularPercentuaisLogistica, derivarStatusEmbarqueAgregado, qtyEmbarcadaBaseLinha, calcularItensOrfaosAguardandoDespacho } from '@/lib/embarqueLogisticaHelpers';
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 
 // Calcula total embarcado por produto em TODOS os embarques
@@ -17,7 +17,7 @@ function calcularTotalEmbarcado(embarques) {
   (embarques || []).forEach((emb) => {
     getEmbarqueItensLinhas(emb).forEach((item) => {
       const prev = map[item.produto_id] || 0;
-      const add = qtyEmbarcadaComercialLinha(item);
+      const add = qtyEmbarcadaBaseLinha(item);
       map[item.produto_id] = roundToTwoDecimals(prev + add);
     });
   });
@@ -177,7 +177,9 @@ function ItensOrfaos({ itens, onAcordo }) {
         <div key={item.produto_id} className="flex items-start justify-between gap-3">
             <span className="text-sm text-foreground flex-1 leading-tight">{item.produto_nome}</span>
             <span className="text-sm font-semibold text-foreground dark:text-foreground whitespace-nowrap flex-shrink-0">
-              {formatQuantity(item.qtd_pendente)} <span className="text-muted-foreground font-normal">{item.unidade_medida}</span> <span className="text-xs text-muted-foreground">pend.</span>
+              {formatQuantity(item.qtd_pendente_comercial ?? item.qtd_pendente)}{' '}
+              <span className="text-muted-foreground font-normal">{item.unidade_pendente_exibicao || item.unidade_medida}</span>{' '}
+              <span className="text-xs text-muted-foreground">pend.</span>
             </span>
           </div>
         )}
