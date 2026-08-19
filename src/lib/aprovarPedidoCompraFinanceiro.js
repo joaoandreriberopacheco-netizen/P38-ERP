@@ -8,17 +8,23 @@ import { registrarTransicao } from '@/components/compras/transicaoHelper';
 import {
   calcValorTotalPedidoCompra,
   cancelarLancamentosNaoPagosPedidoCompra,
+  filtrarLancamentosCompraPedido,
   listarLancamentosPedidoCompra,
+  pedidoPagamentoCompleto,
 } from '@/lib/pedidoCompraFinanceiro';
+import { isLancamentoPago } from '@/lib/lancamentoFinanceiroStatus';
 
-export function pedidoAguardandoAprovacaoFinanceira(pedido = {}) {
+export function pedidoAguardandoAprovacaoFinanceira(pedido = {}, lancamentos = null) {
   const status = pedido.status || '';
   const saf = pedido.status_aprovacao_financeira || '';
-  return (
+  const statusAguardando =
     status === 'Aguardando Aprovação Financeira' ||
     status === 'Aguardando Liberação' ||
-    saf === 'Aguardando Aprovação Financeira'
-  );
+    saf === 'Aguardando Aprovação Financeira';
+
+  if (!statusAguardando) return false;
+  if (lancamentos && pedidoPagamentoCompleto(lancamentos, pedido)) return false;
+  return true;
 }
 
 export function pedidoAprovadoFinanceiramente(pedido = {}) {
@@ -49,6 +55,104 @@ function nomeAprovador(authData = {}) {
   return authData.intervenienteName || authData.userName || 'Usuário';
 }
 
+function statusPedidoAposPagamentoCompleto(statusAtual = '') {
+  if (
+    statusAtual === 'Aguardando Aprovação Financeira' ||
+    statusAtual === 'Aguardando Liberação' ||
+    statusAtual === 'Rascunho'
+  ) {
+    return 'Aguardando Recepção';
+  }
+  return statusAtual || 'Aguardando Recepção';
+}
+
+/**
+ * Alinha status do pedido quando as parcelas CMV já estão pagas mas o pedido ainda aguarda aprovação.
+ * @returns {{ synced: boolean, statusNovo?: string }}
+ */
+export async function sincronizarPedidoCompraSePagamentoCompleto({
+  base44,
+  pedido,
+  lancamentos: lancamentosIn,
+  notaHistorico = '',
+} = {}) {
+  if (!pedido?.id || !base44) return { synced: false };
+
+  const lancamentos = lancamentosIn || await listarLancamentosPedidoCompra(base44, pedido.id);
+  if (!pedidoPagamentoCompleto(lancamentos, pedido)) return { synced: false };
+
+  const saf = pedido.status_aprovacao_financeira || '';
+  const status = pedido.status || '';
+  const jaAprovado =
+    saf === 'Aprovado Financeiramente' ||
+    saf === 'Aprovado' ||
+  [
+    'Aguardando Recepção',
+    'Aguardando Embarque',
+    'Enviado',
+    'Despachado',
+    'Em Recepção',
+    'Em Trânsito',
+    'Recebido Parcialmente',
+    'Recebido Parcial',
+    'Pendência',
+    'Concluído',
+    'Aprovado',
+  ].includes(status);
+
+  if (jaAprovado && saf !== 'Aguardando Aprovação Financeira' && status !== 'Aguardando Aprovação Financeira') {
+    return { synced: false };
+  }
+
+  const compraLancs = filtrarLancamentosCompraPedido(pedido.id, lancamentos);
+  const paidLanc = compraLancs.find(isLancamentoPago) || compraLancs[0];
+  const contaId = pedido.conta_pagamento_id || paidLanc?.conta_financeira_id || '';
+  const contaNome = pedido.conta_pagamento_nome || paidLanc?.conta_financeira_nome || '';
+  const agora = new Date().toISOString();
+  const dataAprovacao =
+    pedido.data_aprovacao_financeira ||
+    (paidLanc?.data_pagamento ? `${paidLanc.data_pagamento}T12:00:00.000Z` : agora);
+  const nota =
+    notaHistorico ||
+    `\n[Status sincronizado: pagamento já realizado | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`;
+  const statusNovo = statusPedidoAposPagamentoCompleto(status);
+
+  await base44.entities.PedidoCompra.update(pedido.id, {
+    status: statusNovo,
+    status_aprovacao_financeira: 'Aprovado Financeiramente',
+    conta_pagamento_id: contaId,
+    conta_pagamento_nome: contaNome,
+    data_aprovacao_financeira: dataAprovacao,
+    historico: (pedido.historico || '') + nota,
+  });
+
+  return { synced: true, statusNovo };
+}
+
+/** Sincroniza pedidos vinculados após pagamento de lançamento(s). */
+export async function sincronizarPedidosCompraPorLancamentos(base44, lancamentos = []) {
+  const pedidoIds = new Set();
+  for (const l of lancamentos) {
+    if (l?.referencia_tipo === 'PedidoCompra' && l.referencia_id) pedidoIds.add(l.referencia_id);
+    if (l?.pedido_compra_vinculado_id) pedidoIds.add(l.pedido_compra_vinculado_id);
+  }
+
+  const syncedIds = [];
+  for (const pedidoId of pedidoIds) {
+    const rows = await base44.entities.PedidoCompra.filter({ id: pedidoId });
+    const pedido = rows?.[0];
+    if (!pedido) continue;
+    const lancs = await listarLancamentosPedidoCompra(base44, pedidoId);
+    const { synced } = await sincronizarPedidoCompraSePagamentoCompleto({
+      base44,
+      pedido,
+      lancamentos: lancs,
+    });
+    if (synced) syncedIds.push(pedidoId);
+  }
+  return syncedIds;
+}
+
 /**
  * Aprova o pedido: libera logística (Aguardando Recepção), CMV nos lançamentos, transição auditada.
  */
@@ -61,6 +165,24 @@ export async function aprovarPedidoCompraFinanceiro({
 }) {
   if (!pedido?.id || !contaId) {
     throw new Error('Pedido ou conta de pagamento não informados.');
+  }
+
+  const lancamentosExistentes = await listarLancamentosPedidoCompra(base44, pedido.id);
+  if (pedidoPagamentoCompleto(lancamentosExistentes, pedido)) {
+    const aprovador = nomeAprovador(authData);
+    const notaSync = `\n[Pagamento já realizado — status alinhado: ${aprovador} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`;
+    const contaNomeSync = contaNome || lancamentosExistentes.find(isLancamentoPago)?.conta_financeira_nome || '';
+    const { statusNovo } = await sincronizarPedidoCompraSePagamentoCompleto({
+      base44,
+      pedido: {
+        ...pedido,
+        conta_pagamento_id: pedido.conta_pagamento_id || contaId,
+        conta_pagamento_nome: pedido.conta_pagamento_nome || contaNomeSync,
+      },
+      lancamentos: lancamentosExistentes,
+      notaHistorico: notaSync,
+    });
+    return { statusNovo, jaEstavaPago: true };
   }
 
   const agora = new Date().toISOString();
@@ -94,7 +216,7 @@ export async function aprovarPedidoCompraFinanceiro({
     historicoAtual: historicoAtualizado,
   });
 
-  const lancamentos = await base44.entities.LancamentoFinanceiro.filter({ referencia_id: pedido.id });
+  const lancamentos = lancamentosExistentes;
   const valor = calcValorTotalPedidoCompra(pedido);
 
   if (lancamentos.length === 0) {
@@ -122,6 +244,7 @@ export async function aprovarPedidoCompraFinanceiro({
     });
   } else {
     for (const l of lancamentos) {
+      if (isLancamentoPago(l)) continue;
       await base44.entities.LancamentoFinanceiro.update(l.id, {
         tipo: 'Despesa',
         status: 'Em Aberto',

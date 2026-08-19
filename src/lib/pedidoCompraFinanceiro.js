@@ -3,7 +3,7 @@
  */
 
 import { calcTotalItemCompraPedido } from '@/lib/productUnits';
-import { isLancamentoPago } from '@/lib/lancamentoFinanceiroStatus';
+import { isLancamentoCancelado, isLancamentoPago } from '@/lib/lancamentoFinanceiroStatus';
 import { dataHoje, formatarLogTime } from '@/components/utils/dateUtils';
 
 const roundToTwoDecimals = (n) => Math.round((Number(n) || 0) * 100) / 100;
@@ -56,6 +56,34 @@ export async function listarLancamentosPedidoCompra(base44, pedidoId) {
 
 export function temLancamentoPagoParaPedido(lancamentos) {
   return (lancamentos || []).some(isLancamentoPago);
+}
+
+/** Parcelas CMV / conta a pagar vinculadas ao pedido (exclui canceladas). */
+export function filtrarLancamentosCompraPedido(pedidoId, lancamentos = []) {
+  if (!pedidoId) return [];
+  return (lancamentos || []).filter(
+    (l) =>
+      !isLancamentoCancelado(l) &&
+      (l.referencia_tipo === 'PedidoCompra' ||
+        l.pedido_compra_vinculado_id === pedidoId ||
+        l.is_custo_mercadoria),
+  );
+}
+
+/**
+ * Pagamento do pedido coberto pelos lançamentos vinculados (tolerância de centavos).
+ */
+export function pedidoPagamentoCompleto(lancamentos, pedido = {}) {
+  const compraLancs = filtrarLancamentosCompraPedido(pedido.id, lancamentos);
+  if (!compraLancs.length) return false;
+
+  const totalEsperado = calcValorTotalPedidoCompra(pedido);
+  const totalPago = compraLancs
+    .filter(isLancamentoPago)
+    .reduce((sum, l) => sum + Number(l.valor || 0), 0);
+
+  if (totalEsperado > 0 && totalPago >= totalEsperado - 0.02) return true;
+  return compraLancs.every(isLancamentoPago);
 }
 
 /**

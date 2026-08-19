@@ -51,6 +51,10 @@ import {
   temLancamentoPagoParaPedido,
 } from '@/lib/pedidoCompraFinanceiro';
 import {
+  pedidoAguardandoAprovacaoFinanceira,
+  sincronizarPedidoCompraSePagamentoCompleto,
+} from '@/lib/aprovarPedidoCompraFinanceiro';
+import {
   pickDefaultPurchaseUnit,
   normalizePurchaseItemToCommercial,
   commercialQuantityFromBase,
@@ -176,6 +180,33 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
   useEffect(() => {
     if (abaInicial) setAbaPedidoDesktop(abaInicial);
   }, [abaInicial]);
+
+  useEffect(() => {
+    if (!pedido?.id) return;
+    if (!pedidoAguardandoAprovacaoFinanceira(pedido)) return;
+
+    let cancelled = false;
+    (async () => {
+      const lancs = await listarLancamentosPedidoCompra(base44, pedido.id);
+      if (cancelled || !pedidoAguardandoAprovacaoFinanceira(pedido, lancs)) return;
+      const { synced } = await sincronizarPedidoCompraSePagamentoCompleto({
+        base44,
+        pedido,
+        lancamentos: lancs,
+      });
+      if (!cancelled && synced) {
+        const [atualizado] = await base44.entities.PedidoCompra.filter({ id: pedido.id });
+        if (atualizado) {
+          setFormData((prev) => ({ ...prev, ...atualizado }));
+          setPedidoLogistica((prev) => ({ ...(prev || {}), ...atualizado }));
+        }
+      }
+    })().catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pedido?.id, pedido?.status, pedido?.status_aprovacao_financeira]);
 
   useEffect(() => {
     if (pedido) {

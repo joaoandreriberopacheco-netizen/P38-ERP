@@ -15,8 +15,9 @@ import {
   pedidoAguardandoAprovacaoFinanceira,
   pedidoAprovadoFinanceiramente,
   rejeitarPedidoCompraFinanceiro,
+  sincronizarPedidoCompraSePagamentoCompleto,
 } from '@/lib/aprovarPedidoCompraFinanceiro';
-import { calcValorTotalPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
+import { calcValorTotalPedidoCompra, listarLancamentosPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
 import { CheckCircle, XCircle, Unlock, ExternalLink, Loader2, AlertCircle } from 'lucide-react';
 
 const formatCurrency = (value) =>
@@ -32,8 +33,9 @@ export default function PainelCentralFinanceiroPedido({ pedido, onPedidoAtualiza
   const [motivoRejeicao, setMotivoRejeicao] = useState('');
   const [processando, setProcessando] = useState(false);
   const [mostrarRejeitar, setMostrarRejeitar] = useState(false);
+  const [lancamentos, setLancamentos] = useState([]);
 
-  const aguardando = pedidoAguardandoAprovacaoFinanceira(pedido);
+  const aguardando = pedidoAguardandoAprovacaoFinanceira(pedido, lancamentos);
   const aprovado = pedidoAprovadoFinanceiramente(pedido);
   const solicitacaoEdicao = pedido?.status_aprovacao_financeira === 'Solicitação de Edição Pendente';
   const rejeitado =
@@ -44,6 +46,34 @@ export default function PainelCentralFinanceiroPedido({ pedido, onPedidoAtualiza
     if (!pedido?.id) return;
     base44.entities.ContasFinanceiras.filter({ ativo: true }).then(setContas).catch(() => setContas([]));
   }, [pedido?.id]);
+
+  useEffect(() => {
+    if (!pedido?.id) return;
+    let cancelled = false;
+
+    (async () => {
+      const lancs = await listarLancamentosPedidoCompra(base44, pedido.id);
+      if (cancelled) return;
+      setLancamentos(lancs);
+
+      if (!pedidoAguardandoAprovacaoFinanceira(pedido, lancs)) return;
+
+      const { synced } = await sincronizarPedidoCompraSePagamentoCompleto({
+        base44,
+        pedido,
+        lancamentos: lancs,
+      });
+      if (!cancelled && synced) {
+        await onPedidoAtualizado?.();
+      }
+    })().catch(() => {
+      if (!cancelled) setLancamentos([]);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pedido?.id, pedido?.status, pedido?.status_aprovacao_financeira]);
 
   useEffect(() => {
     if (pedido?.conta_pagamento_id) {
