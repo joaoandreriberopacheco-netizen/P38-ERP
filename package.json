@@ -38,6 +38,7 @@
     "benchmark:catalogo": "node scripts/benchmark-catalogo.mjs",
     "verify:frontend-supabase": "node scripts/verify-frontend-supabase-connectivity.mjs",
     "secrets:init": "node scripts/init-p38-secrets-bundle.mjs",
+    "monitor:supabase-usage": "node scripts/supabase-usage-monitor.mjs",
     "supabase:align:check": "node scripts/verify-supabase-project-alignment.mjs",
     "supabase:deploy:functions": "node scripts/deploy-supabase-functions.mjs",
     "supabase:port-functions": "node scripts/port-base44-functions.mjs",

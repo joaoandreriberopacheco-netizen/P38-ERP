@@ -17,6 +17,7 @@ node_modules
 
 # Exportações locais (dados do catálogo — não versionar)
 artifacts/
+monitoring/
 dist
 dist-ssr
 .next
