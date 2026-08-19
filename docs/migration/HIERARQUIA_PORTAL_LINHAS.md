@@ -1,6 +1,8 @@
 # Hierarquia portal P38 — LINHAs mestre
 
-Modelo alvo do catálogo portal (pós-migração h1–h5 legado):
+Modelo alvo do catálogo portal (pós-migração h1–h5 legado).
+
+**Leitura de negócio:** [`MODELO_AGRUPAMENTO_P38.md`](MODELO_AGRUPAMENTO_P38.md) — solo vs composto, mix/portfolio/solo, diferença vs Leroy Merlin.
 
 ```
 LINHA → produto compra → eixo A → eixo B → novo SKU
