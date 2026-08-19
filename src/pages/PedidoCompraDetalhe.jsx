@@ -50,8 +50,12 @@ export default function PedidoCompraDetalhe() {
     const [pedidoHydrated] = await hydratePedidosCompraItensFromSql(base44, [pedidoBase]);
     const pedidoComItens = pedidoHydrated || pedidoBase;
 
-    let embarques = filterEmbarquesVisiveisParaPedido(embarquesRes || []);
-    embarques = await hydrateEmbarquesPedidoFromSql(base44, pedidoComItens.id, embarques);
+    const embarquesHidratados = await hydrateEmbarquesPedidoFromSql(
+      base44,
+      pedidoComItens.id,
+      embarquesRes || [],
+    );
+    const embarques = filterEmbarquesVisiveisParaPedido(embarquesHidratados);
     const ultimoEmbarque = [...embarques]
       .filter((emb) => emb.status !== 'Concluído')
       .sort((a, b) => new Date(a.eta || a.created_date) - new Date(b.eta || b.created_date))[0]
