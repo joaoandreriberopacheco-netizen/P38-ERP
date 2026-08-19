@@ -77,7 +77,10 @@ function primeirasPalavras(text, n = 3) {
 function parseThinner(produto, t) {
   if (!/\bTHINNER\b|\bSOLVENTE?\b/.test(t)) return null;
   const emb = extractEmbalagem(t) || trim(produto.campo_hierarquico_2);
-  const [lc, ln, lt] = linhaFromCategoria(produto.categoria_nome);
+  // Mesma LINHA para todos os thinners — produto compra distingue marca/receita (237 ≠ 2750).
+  const lc = 'THINNER';
+  const ln = 'THINNER';
+  const lt = 'portfolio';
 
   if (/LUKSNOVA|LUKS NOVA|\bLUKS\b/.test(t)) {
     const code = t.match(/\b(206|237)\b/)?.[1] || '';

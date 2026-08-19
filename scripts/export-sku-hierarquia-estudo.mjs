@@ -56,6 +56,7 @@ const LINHAS_MESTRE = [
   { ordem: 88, codigo: 'PINTURA_QUIMICOS', nome: 'PINTURA E QUÍMICOS', tipo: 'portfolio' },
   { ordem: 90, codigo: 'TINTA', nome: 'TINTA', tipo: 'portfolio' },
   { ordem: 100, codigo: 'VERNIZ', nome: 'VERNIZ', tipo: 'portfolio' },
+  { ordem: 105, codigo: 'THINNER', nome: 'THINNER', tipo: 'portfolio' },
   { ordem: 110, codigo: 'MASSA_CORRIDA', nome: 'MASSA CORRIDA', tipo: 'mix' },
   { ordem: 120, codigo: 'MASSA_ACRILICA', nome: 'MASSA ACRÍLICA', tipo: 'mix' },
   { ordem: 130, codigo: 'REJUNTE', nome: 'REJUNTE', tipo: 'mix' },
