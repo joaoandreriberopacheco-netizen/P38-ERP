@@ -24,6 +24,7 @@
     "catalogo:generate-seed": "node scripts/generate-catalogo-interface-seed.mjs",
     "catalogo:build-preview": "node scripts/build-catalogo-preview.mjs",
     "export:sku-hierarquia-estudo": "node scripts/export-sku-hierarquia-estudo.mjs",
+    "export:sku-hierarquia-core": "node scripts/export-sku-hierarquia-core.mjs",
     "benchmark:leroy-merlin": "node scripts/benchmark-leroy-merlin-estudo.mjs",
     "db:apply-migrations": "node scripts/apply-supabase-migrations.mjs",
     "supabase:deploy": "node scripts/deploy-supabase.mjs",
