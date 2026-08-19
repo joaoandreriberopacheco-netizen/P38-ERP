@@ -102,12 +102,8 @@ function parseTintaSpray(produto, t) {
 }
 
 function parseMassaQuimica(produto, t) {
-  if (!/\bMASSA CORRIDA\b|\bMASSA ACR/i.test(t)) return null;
-  const [lc, ln, lt] = linhaFromCategoria(produto.categoria_nome);
-  const pc = t.includes('MASSA CORRIDA') ? 'MASSA CORRIDA' : 'MASSA ACRÍLICA';
-  const emb = extractEmbalagem(t) || trim(produto.campo_hierarquico_2);
-  const marca = t.match(/HIPERCOR|SELATINTAS|LUKSCOLOR/i)?.[0] || trim(produto.campo_hierarquico_3);
-  return patch(lc === 'PINTURA_QUIMICOS' ? lc : 'PINTURA_QUIMICOS', ln, lt, pc, emb, marca);
+  // Delegado a inferenciaLinhaPorTipo.mjs — evita duplicar e cair em PINTURA E QUÍMICOS.
+  return null;
 }
 
 function parseRoloPincel(produto, t) {
@@ -121,14 +117,7 @@ function parseRoloPincel(produto, t) {
 }
 
 function parseTorneiraPiaCuba(produto, t) {
-  if (/^TORNEIRA\b/.test(t)) {
-    let pc = 'TORNEIRA';
-    if (/PURIFICADOR/.test(t)) pc = 'TORNEIRA PURIFICADOR';
-    else if (/BICA/.test(t)) pc = 'TORNEIRA BICA';
-    else if (/PLASTICA|PLÁSTICA/.test(t)) pc = 'TORNEIRA PLÁSTICA';
-    else if (/COZINHA/.test(t)) pc = 'TORNEIRA COZINHA';
-    return patch('METAIS_SANITARIOS', 'METAIS SANITÁRIOS', 'portfolio', pc, extractMedidas(t) || trim(produto.campo_hierarquico_2), trim(produto.campo_hierarquico_3));
-  }
+  if (/^TORNEIRA\b/.test(t)) return null; // inferenciaLinhaPorTipo → LINHA TORNEIRA
   if (/^PIA\b/.test(t)) {
     return patch('METAIS_SANITARIOS', 'METAIS SANITÁRIOS', 'portfolio', 'PIA', extractMedidas(t), trim(produto.campo_hierarquico_2));
   }
@@ -318,7 +307,9 @@ export function isFalsoH1(produto) {
 }
 
 export function deveUsarOutros(produto, plan) {
-  if (plan?.motivo === 'macro_outros' || plan?.motivo === 'inferencia_estruturada') return false;
+  if (plan?.motivo === 'macro_outros' || plan?.motivo === 'inferencia_estruturada' || plan?.motivo === 'linha_por_tipo') {
+    return false;
+  }
   if (plan?.linha_codigo && !['OUTROS', 'DIVERSOS'].includes(plan.linha_codigo)) return false;
   return isFalsoH1(produto) && !plan?.produto_compra_nome;
 }

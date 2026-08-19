@@ -15,6 +15,7 @@ import pg from 'pg';
 import ExcelJS from 'exceljs';
 import { loadDotEnvFiles } from './base44-env.mjs';
 import { planInferenciaEstruturada, inferirLinhaCodigoEstruturado } from './lib/inferenciaHierarquiaEstudo.mjs';
+import { planLinhaPorTipoProduto } from './lib/inferenciaLinhaPorTipo.mjs';
 import {
   planInferenciaOutrosMacro,
   compactarRotulo,
@@ -42,7 +43,7 @@ const TINTA_H3_TO_PRODUTO_COMPRA = {
 };
 
 const LINHAS_MESTRE = [
-  { ordem: 10, codigo: 'CIMENTO', nome: 'CIMENTO', tipo: 'solo' },
+  { ordem: 10, codigo: 'CIMENTO', nome: 'CIMENTO', tipo: 'mix' },
   { ordem: 20, codigo: 'ARGAMASSA', nome: 'ARGAMASSA', tipo: 'mix' },
   { ordem: 30, codigo: 'PISO', nome: 'PISO / CERÂMICA DE PISO', tipo: 'portfolio' },
   { ordem: 40, codigo: 'PORCELANATO', nome: 'PORCELANATO', tipo: 'portfolio' },
@@ -193,6 +194,20 @@ function planLinhaCompraAnalise(produto = {}) {
     };
   }
 
+  const porTipo = planLinhaPorTipoProduto(produto);
+  if (porTipo) {
+    return {
+      linha_codigo: porTipo.linha_codigo,
+      linha_nome: porTipo.linha_nome,
+      linha_tipo: porTipo.linha_tipo,
+      produto_compra_nome: porTipo.produto_compra_nome,
+      eixo_a: porTipo.eixo_a,
+      eixo_b: porTipo.eixo_b,
+      confianca: porTipo.confianca,
+      motivo: porTipo.motivo,
+    };
+  }
+
   const macro = planInferenciaOutrosMacro(produto);
   if (macro) {
     return {
@@ -307,15 +322,13 @@ function enrichEstudo(produto, excelByCodigo, excelLinhas) {
   const pcNome = solo ? trim(linhaMeta.nome) : trim(plan.produto_compra_nome || linhaMeta.nome);
   const eixoA = trim(plan.eixo_a);
   const eixoB = trim(plan.eixo_b);
-  const montarSku = () => {
-    const raw = montarNomeProposto({ produtoCompraNome: pcNome, eixoA, eixoB, marca: produto.marca });
-    return plan.motivo === 'macro_outros' ? compactarRotulo(raw) : raw;
-  };
   let novoSku;
   if (solo && linhaCod === 'OUTROS') {
     novoSku = trim(produto.nome);
   } else {
-    novoSku = montarSku() || trim(produto.nome);
+    const raw = montarNomeProposto({ produtoCompraNome: pcNome, eixoA, eixoB, marca: produto.marca });
+    novoSku = (plan.motivo === 'macro_outros' || plan.motivo === 'linha_por_tipo' ? compactarRotulo(raw) : raw)
+      || trim(produto.nome);
   }
 
   return {
