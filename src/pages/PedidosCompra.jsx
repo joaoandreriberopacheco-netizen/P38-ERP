@@ -24,7 +24,12 @@ import { hydrateEmbarquesFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmba
 import { fetchPedidosCompraGestaoInicial } from '@/lib/fetchPedidosCompraGestao';
 import { carregarProdutosMap } from '@/lib/embarqueVitrineHelpers';
 import { calcularPercentuaisLogistica } from '@/lib/embarqueLogisticaHelpers';
-import { resolveEmbarqueQuantidadeComercial } from '@/lib/embarqueQuantityResolve';
+import {
+  avaliarNecessidadeComercialPedido,
+  isNecessidadeRenderizada,
+  pedidoDeveExibirCardNecessidade,
+  quantidadePendenteNecessidadePedido,
+} from '@/lib/pedidoCompraNecessidade';
 import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta, buildConsultaItensEmbarque, calcConsultaValorEmbarque } from '@/lib/consultaComprasEmbarques';
 import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
@@ -200,11 +205,13 @@ const compareGruposPedidosCompra = (a, b, sortOrder, groupBy) => {
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-const isNecessidadeRenderizada = (embarque) => {
-  if (!embarque) return false;
-  if (embarque?.tipo === 'Necessidade') return true;
-  return !!embarque?.observacoes && String(embarque.observacoes).includes('criado automaticamente para itens pendentes');
-};
+const hasLinkedItems = (embarque) =>
+  getEmbarqueItensLinhas(embarque).some(
+    (item) => (Number(item?.quantidade_embarcada) || 0) > 0 || (Number(item?.quantidade_recebida) || 0) > 0,
+  );
+
+const hasDespachoVinculado = (embarque) =>
+  !!(embarque?.data_embarque || embarque?.eta || embarque?.transportadora_id || embarque?.transportadora_nome);
 
 const getEmbarqueSuffixIndex = (embarque, pedido) => {
   const embarquesDoPedido = (pedido?._embarques || [])
@@ -223,53 +230,6 @@ const getDisplayEmbarqueCode = (pedido, embarque) => {
 
 const getDisplayEmbarqueOrdinal = (embarque, pedido) => `#${String(getEmbarqueSuffixIndex(embarque, pedido) + 1).padStart(2, '0')}`;
 
-const hasLinkedItems = (embarque) => getEmbarqueItensLinhas(embarque).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0 || (Number(item?.quantidade_recebida) || 0) > 0);
-
-const hasDespachoVinculado = (embarque) => !!(embarque?.data_embarque || embarque?.eta || embarque?.transportadora_id || embarque?.transportadora_nome);
-
-function calcularCoberturaComercialPorProduto(embarquesReais = []) {
-  return (embarquesReais || []).reduce((acc, embarque) => {
-    getEmbarqueItensLinhas(embarque).forEach((item) => {
-      const produtoId = item.produto_id;
-      if (!produtoId) return;
-      const coberto =
-        resolveEmbarqueQuantidadeComercial(item, 'recebida')
-        || resolveEmbarqueQuantidadeComercial(item, 'embarcada');
-      acc[produtoId] = (acc[produtoId] || 0) + coberto;
-    });
-    return acc;
-  }, {});
-}
-
-/** Pendência real na unidade vitrine (CX/PAC…), cruzando pedido vs embarques reais. */
-function calcularPendenciaComercialItens(pedido, embarquesDoPedido = [], produtosMap = {}) {
-  const embarquesReais = (embarquesDoPedido || []).filter((embarque) => !isNecessidadeRenderizada(embarque));
-  const cobertura = calcularCoberturaComercialPorProduto(embarquesReais);
-
-  return (pedido.itens || []).map((item) => {
-    const produto = produtosMap[item.produto_id] || null;
-    const exib = getItemCompraExibicaoVitrine(item, produto);
-    const pedida = Number(exib.quantidade) || Number(item.quantidade) || 0;
-    const coberta = Number(cobertura[item.produto_id]) || 0;
-    const pendente = Math.max(0, pedida - coberta);
-    if (pendente <= 0.009) return null;
-    return { item, exib, pendente };
-  }).filter(Boolean);
-}
-
-function somaPendenciaComercial(pendencias = []) {
-  return pendencias.reduce((acc, row) => acc + (Number(row.pendente) || 0), 0);
-}
-
-function pedidoTemPendenciaLogisticaReal(pedido, embarquesDoPedido = [], produtosMap = {}) {
-  return calcularPendenciaComercialItens(pedido, embarquesDoPedido, produtosMap).length > 0;
-}
-
-const getQuantidadePendenteNecessidade = (pedido, embarque, produtosMap = {}, embarquesDoPedido = []) => {
-  if (!isNecessidadeRenderizada(embarque)) return 0;
-  return somaPendenciaComercial(calcularPendenciaComercialItens(pedido, embarquesDoPedido, produtosMap));
-};
-
 const getBorrowedStatus = (pedido, embarque, produtosMap = {}, embarquesDoPedido = []) => {
   if (!embarque) return pedido?.status || 'Rascunho';
 
@@ -280,9 +240,12 @@ const getBorrowedStatus = (pedido, embarque, produtosMap = {}, embarquesDoPedido
   const temDespachoVinculado = hasDespachoVinculado(embarque);
   const statusRecebimento = embarque.status_recebimento;
   const temItensAssociados = hasLinkedItems(embarque);
-  const quantidadePendente = getQuantidadePendenteNecessidade(pedido, embarque, produtosMap, embarquesDoPedido);
+  const exibirNecessidade = pedidoDeveExibirCardNecessidade(pedido, embarquesDoPedido, produtosMap);
+  const quantidadePendente = isNecessidadeRenderizada(embarque)
+    ? quantidadePendenteNecessidadePedido(pedido, embarquesDoPedido, produtosMap)
+    : 0;
   const ehNecessidade = isNecessidadeRenderizada(embarque);
-  const precisaPreenchimento = ehNecessidade && !temDespachoVinculado && quantidadePendente > 0;
+  const precisaPreenchimento = ehNecessidade && !temDespachoVinculado && exibirNecessidade && quantidadePendente > 0;
 
   if (statusRecebimento === 'Recebido OK' || statusRecebimento === 'Com Divergência' || embarque.status === 'Concluído') {
     return 'Concluído';
@@ -293,7 +256,7 @@ const getBorrowedStatus = (pedido, embarque, produtosMap = {}, embarquesDoPedido
   }
 
   if (ehNecessidade && !temDespachoVinculado) {
-    return quantidadePendente > 0 ? 'Necessidade' : 'Aguardando';
+    return exibirNecessidade && quantidadePendente > 0 ? 'Necessidade' : 'Aguardando';
   }
 
   if (!ehNecessidade && !temDespachoVinculado) {
@@ -483,13 +446,8 @@ const getDisplayValorEmbarque = (pedido, embarque, produtosMap = {}, embarquesDo
 const buildVirtualNecessidade = (pedido, embarquesDoPedido, produtosMap = {}) => {
   if (!pedidoNaoConcluido(pedido)) return null;
 
-  const embarquesReais = (embarquesDoPedido || []).filter((embarque) => !isNecessidadeRenderizada(embarque));
-  const temDespachoReal = embarquesReais.some((embarque) => hasLinkedItems(embarque) && hasDespachoVinculado(embarque));
-  if (!temDespachoReal) return null;
-  if (!pedidoTemPendenciaLogisticaReal(pedido, embarquesDoPedido, produtosMap)) return null;
-
-  const pendencias = calcularPendenciaComercialItens(pedido, embarquesDoPedido, produtosMap);
-  if (!pendencias.length) return null;
+  const { exibir, pendencias } = avaliarNecessidadeComercialPedido(pedido, embarquesDoPedido, produtosMap);
+  if (!exibir || !pendencias.length) return null;
 
   const itensPendentes = pendencias.map(({ item, exib, pendente }) => ({
     produto_id: item.produto_id,
@@ -586,7 +544,7 @@ function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
           .filter((embarque) => {
             if (!isNecessidadeRenderizada(embarque)) return true;
             if (!pedidoNaoConcluido(pedido)) return false;
-            return calcularPendenciaComercialItens(pedido, embarquesDoPedido, produtosMap).length > 0;
+            return pedidoDeveExibirCardNecessidade(pedido, embarquesDoPedido, produtosMap);
           })
       : [{
           id: `original-${pedido.id}`,
@@ -600,8 +558,9 @@ function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
         }];
 
     return embarquesRenderizados.map((embarque) => {
-      const quantidadePendente = getQuantidadePendenteNecessidade(pedido, embarque, produtosMap, embarquesDoPedido);
-      const ehNecessidade = isNecessidadeRenderizada(embarque);
+      const exibirNecessidade = pedidoDeveExibirCardNecessidade(pedido, embarquesDoPedido, produtosMap);
+      const quantidadePendente = quantidadePendenteNecessidadePedido(pedido, embarquesDoPedido, produtosMap);
+      const ehNecessidade = isNecessidadeRenderizada(embarque) && exibirNecessidade;
       const itensDoCard = ehNecessidade
         ? buildDisplayItensFromEmbarque(pedido, embarque, produtosMap)
         : (hasLinkedItems(embarque)
