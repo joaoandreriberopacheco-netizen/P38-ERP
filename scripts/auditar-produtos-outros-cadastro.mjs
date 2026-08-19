@@ -39,14 +39,20 @@ function agruparPorLinha(produtos) {
   return [...map.values()].sort((a, b) => b.quantidade - a.quantidade);
 }
 
-function imprimir({ produtos, periodo, vendidosNoPeriodo }) {
+function imprimir({ produtos, periodo, vendidosNoPeriodo, totalVendidos = null }) {
   console.log('');
   console.log('═══════════════════════════════════════════════════════════');
   console.log('  Produtos com "Outros Custos" cadastrado (Supabase)');
   console.log('═══════════════════════════════════════════════════════════');
   if (periodo) {
-    console.log(`  Filtro vendas: ${periodo.from} a ${periodo.to}`);
-    console.log(`  Cadastrados com Outros que venderam no período: ${produtos.length}`);
+    console.log(`  Período: ${periodo.from} a ${periodo.to}`);
+    if (totalVendidos != null) {
+      console.log(
+        `  Dos ${totalVendidos} produtos vendidos, ${produtos.length} tinham Outros Custos > 0 no cadastro`,
+      );
+    } else {
+      console.log(`  Produtos vendidos com Outros cadastrado: ${produtos.length}`);
+    }
   } else {
     console.log(`  Total no catálogo: ${produtos.length}`);
   }
@@ -102,15 +108,17 @@ async function main() {
 
   if (periodo) {
     const margem = await loadMargemPeriodo(periodo.from, periodo.to);
+    const totalVendidos = margem.linhas.length;
     vendidosNoPeriodo = new Map(
       margem.linhas
         .filter((l) => (l.custo_outros_total || 0) > 0)
         .map((l) => [l.produto_id, l]),
     );
     produtos = catalogo.filter((p) => vendidosNoPeriodo.has(p.produto_id));
+    imprimir({ produtos, periodo, vendidosNoPeriodo, totalVendidos });
+  } else {
+    imprimir({ produtos, periodo, vendidosNoPeriodo });
   }
-
-  imprimir({ produtos, periodo, vendidosNoPeriodo });
 
   if (out || json) {
     const payload = {
