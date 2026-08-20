@@ -26,19 +26,38 @@ export const MIN_SOMA_PENDENTE_NECESSIDADE = 0.5;
 export const MIN_UNIDADE_INTEIRA_PENDENTE = 1;
 
 /**
- * Embarques/cards que não entram na Necessidade (decisão operacional).
- * Normalização: trim, sem espaços, maiúsculas (ex.: E62-67G).
+ * Pedidos/embarques que não entram na Necessidade (decisão operacional).
+ * Pré-regra (ago/2026): falsos positivos legados — ficam para trás; a regra única
+ * vale daqui em diante. Pendências reais em aberto: CCG (AAC-EB6, KA2-K4Q).
+ * Normalização: trim, sem espaços, maiúsculas (ex.: E62-67G, 49K-PKG-A).
  */
-export const NECESSIDADE_EMBARQUE_CODIGOS_EXCLUIDOS = ['E62-67G'];
+export const NECESSIDADE_EMBARQUE_CODIGOS_EXCLUIDOS = [
+  'E62-67G',
+  '49K-PKG',
+  'MHK-S8W',
+  'FKJ-2GF',
+  'WX7-A5N',
+  '6DB-B2S',
+  'EHJ-BM9',
+  'G62-HUF',
+  'EXC-FQZ',
+  'NXJ-53K',
+];
 
 function normalizarCodigoEmbarque(codigo = '') {
   return String(codigo || '').trim().replace(/\s+/g, '').toUpperCase();
 }
 
+function codigoCorrespondeExclusaoNecessidade(norm = '', excluido = '') {
+  const base = normalizarCodigoEmbarque(excluido);
+  if (!base || !norm) return false;
+  return norm === base || norm.startsWith(`${base}-`);
+}
+
 export function codigoEmbarqueExcluidoDeNecessidade(codigo = '') {
   const norm = normalizarCodigoEmbarque(codigo);
-  return NECESSIDADE_EMBARQUE_CODIGOS_EXCLUIDOS.some(
-    (excluido) => normalizarCodigoEmbarque(excluido) === norm,
+  return NECESSIDADE_EMBARQUE_CODIGOS_EXCLUIDOS.some((excluido) =>
+    codigoCorrespondeExclusaoNecessidade(norm, excluido),
   );
 }
 
@@ -52,7 +71,12 @@ export function resolverCodigoEmbarqueNecessidade(pedido, embarque) {
 }
 
 export function embarqueExcluidoDeNecessidade(pedido, embarque, displayCode = '') {
-  const candidatos = [displayCode, embarque?.codigo_exibicao, embarque?.numero].filter(Boolean);
+  const candidatos = [
+    displayCode,
+    pedido?.numero,
+    embarque?.codigo_exibicao,
+    embarque?.numero,
+  ].filter(Boolean);
   if (candidatos.some((c) => codigoEmbarqueExcluidoDeNecessidade(c))) return true;
   return codigoEmbarqueExcluidoDeNecessidade(resolverCodigoEmbarqueNecessidade(pedido, embarque));
 }
