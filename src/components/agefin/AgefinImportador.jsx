@@ -865,7 +865,7 @@ ${blocoTextoLocal}`,
             <Button
               variant="outline"
               onClick={() => onSuccess?.(null, { close: true, voltarAtualizador: true })}
-              className="h-12 w-full rounded-2xl border-0 bg-[#2e2629] text-sm font-semibold text-white hover:bg-[#362d31] dark:bg-[#2e2629] dark:text-white"
+              className="h-12 w-full rounded-2xl border border-border bg-card text-sm font-semibold text-foreground hover:bg-muted dark:border-transparent dark:bg-muted dark:text-foreground"
             >
               Voltar j?
             </Button>
@@ -875,7 +875,7 @@ ${blocoTextoLocal}`,
             <Button
               variant="outline"
               onClick={() => onSuccess?.(null, { close: true })}
-              className="h-14 rounded-2xl border-0 bg-[#2e2629] text-base font-semibold text-white hover:bg-[#362d31] dark:bg-[#2e2629] dark:text-white"
+              className="h-14 rounded-2xl border border-border bg-card text-base font-semibold text-foreground hover:bg-muted dark:border-transparent dark:bg-muted dark:text-foreground"
             >
               Fechar
             </Button>
@@ -1025,13 +1025,13 @@ ${blocoTextoLocal}`,
         </div>
         <div className="sticky bottom-0 z-10 shrink-0 border-t border-white/5 bg-muted/40/95 px-5 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur dark:bg-muted/95 md:pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
           <div className="grid grid-cols-2 gap-3">
-            <Button variant="outline" onClick={resetState} className="h-14 rounded-2xl border-0 bg-[#2e2629] text-base font-semibold text-white">
+            <Button variant="outline" onClick={resetState} className="h-14 rounded-2xl border border-border bg-card text-base font-semibold text-foreground hover:bg-muted dark:border-transparent dark:bg-muted dark:text-foreground">
               Cancelar
             </Button>
             <Button
               onClick={handleConfirm}
               disabled={loading || !file?.original}
-              className="h-14 rounded-2xl bg-muted text-base font-semibold text-foreground"
+              className="h-14 rounded-2xl bg-primary text-base font-semibold text-primary-foreground hover:bg-primary/90 dark:bg-[#a4ce33] dark:text-[#1f1d22] dark:hover:bg-[#a4ce33]/90"
             >
               {loading ? 'Vinculando...' : 'Vincular boleto'}
             </Button>
@@ -1258,14 +1258,14 @@ ${blocoTextoLocal}`,
           <Button
             variant="outline"
             onClick={resetState}
-            className="h-14 rounded-2xl border-0 bg-[#2e2629] text-base font-semibold text-white hover:bg-[#362d31] dark:bg-[#2e2629] dark:text-white"
+            className="h-14 rounded-2xl border border-border bg-card text-base font-semibold text-foreground hover:bg-muted dark:border-transparent dark:bg-muted dark:text-foreground"
           >
             Cancelar
           </Button>
           <Button
             onClick={handleConfirm}
             disabled={loading || (!fluxoListaRecorrentes && !selectedNatureza) || !contaFinanceiraId}
-            className="h-14 rounded-2xl bg-muted text-base font-semibold text-foreground hover:bg-muted-foreground/40 dark:bg-muted dark:text-foreground dark:hover:bg-card"
+            className="h-14 rounded-2xl bg-primary text-base font-semibold text-primary-foreground hover:bg-primary/90 dark:bg-[#a4ce33] dark:text-[#1f1d22] dark:hover:bg-[#a4ce33]/90"
           >
             {loading ? 'Salvando...' : fluxoListaRecorrentes ? 'Guardar boleto' : 'Salvar Conta'}
           </Button>

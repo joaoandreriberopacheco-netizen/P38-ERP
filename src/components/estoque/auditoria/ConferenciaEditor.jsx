@@ -599,7 +599,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
             </div>
             <div className="flex gap-2">
               <Button variant="ghost" onClick={() => setModalQtd(null)} className="flex-1 h-12 rounded-2xl bg-muted text-muted-foreground hover:bg-muted dark:hover:bg-primary/90">Cancelar</Button>
-              <Button onClick={confirmarQtd} className="flex-1 h-12 rounded-2xl bg-background dark:bg-card hover:bg-primary/90 dark:hover:bg-muted text-foreground shadow-none font-semibold">
+              <Button onClick={confirmarQtd} className="flex-1 h-12 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-muted dark:hover:bg-muted/90 dark:text-foreground shadow-none font-semibold">
                 <CheckCircle2 className="w-4 h-4 mr-1.5" /> Confirmar
               </Button>
             </div>
