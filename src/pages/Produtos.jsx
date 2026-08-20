@@ -1344,6 +1344,23 @@ function ProdutosPageContent() {
         queryClient.setQueryData(p38Keys.pedidosVenda90d(), pedidos);
       }
 
+      let pendenteMap = pendentePorProduto;
+      if (estoqueVirtualAtivo) {
+        const cachedPendente = queryClient.getQueryData(['catalogo', 'pendente-estoque']);
+        if (cachedPendente && typeof cachedPendente === 'object') {
+          pendenteMap = cachedPendente;
+        } else if (!pendenteMap || Object.keys(pendenteMap).length === 0) {
+          toast({ title: 'Buscando pedidos em trânsito...' });
+          const data = await fetchPedidosCompraParaSugestaoEstoque(base44);
+          pendenteMap = buildPendenteAprovadoFinanceiroPorProduto(
+            data.pedidosAbertos,
+            data.recebidosPorPedidoProduto,
+            { embarques: data.embarques, pedidosParaEmbarque: data.pedidosTodos },
+          );
+          queryClient.setQueryData(['catalogo', 'pendente-estoque'], pendenteMap);
+        }
+      }
+
       toast({ title: 'Montando PDF de vendas v2...' });
       const { generateRelatorioCatalogoVendasPdfV2 } = await import(
         '@/lib/relatorioCatalogoVendasPdf/generateRelatorioCatalogoVendasPdfV2.js'
@@ -1357,6 +1374,8 @@ function ProdutosPageContent() {
         sort_order: sortOrder,
         group_by_category: groupPdfByCategory,
         expanded_keys: [...catalogExpandedKeysRef.current],
+        estoque_virtual: estoqueVirtualAtivo,
+        pendente_por_produto: pendenteMap || {},
       });
 
       const blob = new Blob([resposta.data], { type: 'application/pdf' });
@@ -1377,7 +1396,7 @@ function ProdutosPageContent() {
     } finally {
       setGerandoRelatorioVendasV2(false);
     }
-  }, [filteredProdutos, filters, categorias, fornecedores, viewMode, treeLevel, sortOrder, groupTreeByCategory, queryClient, toast]);
+  }, [filteredProdutos, filters, categorias, fornecedores, viewMode, treeLevel, sortOrder, groupTreeByCategory, queryClient, toast, estoqueVirtualAtivo, pendentePorProduto]);
 
   const handleGerarRelatorioIep = useCallback(async () => {
     setGerandoRelatorioIep(true);

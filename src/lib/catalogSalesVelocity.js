@@ -357,7 +357,10 @@ export function filterProdutosComVendas30ou60d(produtos, velocityMap) {
 }
 
 /** Estoque comercial > 0 (mesma ideia do atalho «somente positivos» do catálogo). */
-export function produtoTemEstoquePositivo(produto) {
+export function produtoTemEstoquePositivo(produto, catalogStockContext = null) {
+  if (isCatalogEstoqueVirtualAtivo(catalogStockContext)) {
+    return getCatalogEstoqueExibicaoQuantidade(produto, catalogStockContext).quantidade > 0;
+  }
   return (Number(produto?.estoque_atual) || 0) > 0;
 }
 
@@ -365,13 +368,13 @@ export function produtoTemEstoquePositivo(produto) {
  * Critério do relatório v2: entra se teve venda em 30/60d OU tem estoque > 0.
  * Os filtros do catálogo (categoria, busca, etc.) aplicam-se antes, na lista recebida.
  */
-export function produtoIncluirRelatorioVendasV2(produto, velocity) {
-  return produtoTeveVenda30ou60d(velocity) || produtoTemEstoquePositivo(produto);
+export function produtoIncluirRelatorioVendasV2(produto, velocity, catalogStockContext = null) {
+  return produtoTeveVenda30ou60d(velocity) || produtoTemEstoquePositivo(produto, catalogStockContext);
 }
 
-export function filterProdutosRelatorioVendasV2(produtos, velocityMap) {
+export function filterProdutosRelatorioVendasV2(produtos, velocityMap, catalogStockContext = null) {
   return (produtos || []).filter((p) => {
     if (!p?.id) return false;
-    return produtoIncluirRelatorioVendasV2(p, velocityMap[String(p.id)]);
+    return produtoIncluirRelatorioVendasV2(p, velocityMap[String(p.id)], catalogStockContext);
   });
 }

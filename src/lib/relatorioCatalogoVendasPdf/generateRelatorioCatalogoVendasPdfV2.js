@@ -25,6 +25,7 @@ import {
   stockQuantTexto,
   velocityQuantTexto,
 } from '@/lib/relatorioCatalogoVendasPdf/generateRelatorioCatalogoVendasPdf.js';
+import { createCatalogStockContext } from '@/lib/catalogEstoqueVirtual';
 import { sumCatalogStockTotals } from '@/lib/catalogStockTotals';
 
 const PDF_FONT_BOLD = 'bold';
@@ -135,7 +136,7 @@ function prepareFlatRows(produtos, velocityMap, sortOrder = 'az') {
   }));
 }
 
-function enrichTreeRows(rows, velocityMap) {
+function enrichTreeRows(rows, velocityMap, catalogStockContext = null) {
   return (rows || []).map((row) => {
     if (row.type === 'sku') {
       return {
@@ -151,7 +152,7 @@ function enrichTreeRows(rows, velocityMap) {
         ...row,
         velocity: aggregateCatalogSalesVelocity(skus, velocityMap),
         skuCount: skus.length,
-        stock: groupStockTexto(skus, { hideGroupTotals }),
+        stock: groupStockTexto(skus, { hideGroupTotals, catalogStockContext }),
         hideGroupTotals,
         commercial: {
           vCompra: roundToTwoDecimals(row.valorCompraMedio || 0),
@@ -173,10 +174,13 @@ export function prepareCatalogSalesReportDocumentV2({
   sortOrder = 'az',
   groupByCategory = false,
   expandedKeys: expandedKeysFromCatalog = null,
+  estoqueVirtual = false,
+  pendentePorProduto = {},
 } = {}) {
   const list = (produtos || []).filter((p) => p && typeof p === 'object');
+  const catalogStockContext = createCatalogStockContext(estoqueVirtual, pendentePorProduto);
   const velocityMap = buildCatalogSalesVelocityMap(list, pedidos);
-  const comVenda = filterProdutosRelatorioVendasV2(list, velocityMap);
+  const comVenda = filterProdutosRelatorioVendasV2(list, velocityMap, catalogStockContext);
 
   const isFlat = layoutMode === 'plana';
   let rows;
@@ -189,16 +193,19 @@ export function prepareCatalogSalesReportDocumentV2({
     rows = mergeAdjacentDuplicateGroupHeaders(
       flattenTree(tree, expandedKeys, '', 0, sortOrder),
     );
-    rows = enrichTreeRows(rows, velocityMap);
+    rows = enrichTreeRows(rows, velocityMap, catalogStockContext);
   }
 
   return {
     mode: isFlat ? 'plana' : groupByCategory ? 'categoria' : 'tree',
     groupByCategory: Boolean(groupByCategory),
     treeLevel: Number(treeLevel) || 1,
-    inclusionLabel: 'venda nos últimos 30 ou 60 dias, ou estoque > 0',
+    inclusionLabel: estoqueVirtual
+      ? 'venda nos últimos 30 ou 60 dias, ou estoque (físico + trânsito) > 0'
+      : 'venda nos últimos 30 ou 60 dias, ou estoque > 0',
     produtos: comVenda,
     velocityMap,
+    catalogStockContext,
     rows,
   };
 }
@@ -250,7 +257,7 @@ export function buildUniformSalesPdfColumns({
   };
 }
 
-export const CATALOG_SALES_PDF_V2_BUILD = 'enxuto_vendas_preco_mkup_v5';
+export const CATALOG_SALES_PDF_V2_BUILD = 'enxuto_vendas_preco_mkup_v6_estoque_virtual';
 
 export async function generateRelatorioCatalogoVendasPdfV2(payload = {}) {
   const {
@@ -263,6 +270,8 @@ export async function generateRelatorioCatalogoVendasPdfV2(payload = {}) {
     group_by_category: groupByCategory = false,
     expanded_keys: expandedKeysFromCatalog = null,
     generated_at: generatedAt = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }),
+    estoque_virtual: estoqueVirtual = false,
+    pendente_por_produto: pendentePorProduto = {},
   } = payload;
 
   const documento = prepareCatalogSalesReportDocumentV2({
@@ -273,7 +282,10 @@ export async function generateRelatorioCatalogoVendasPdfV2(payload = {}) {
     sortOrder,
     groupByCategory: Boolean(groupByCategory),
     expandedKeys: Array.isArray(expandedKeysFromCatalog) ? expandedKeysFromCatalog : null,
+    estoqueVirtual: estoqueVirtual === true,
+    pendentePorProduto,
   });
+  const catalogStockContext = documento.catalogStockContext;
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pdfFontFamily = await registerJsPdfDin1451Fonts(doc);
@@ -429,7 +441,7 @@ export async function generateRelatorioCatalogoVendasPdfV2(payload = {}) {
       drawDashRow(baselineY);
       return;
     }
-    const stockDisplay = produto ? stockQuantTexto(produto) : stock;
+    const stockDisplay = produto ? stockQuantTexto(produto, catalogStockContext) : stock;
     const vals = produto
       ? commercialSaleValues(produto)
       : {
@@ -516,7 +528,7 @@ export async function generateRelatorioCatalogoVendasPdfV2(payload = {}) {
     (s, p) => s + (Number(documento.velocityMap?.[String(p.id)]?.qtd60) || 0),
     0,
   );
-  const stockTotals = sumCatalogStockTotals(documento.produtos || []);
+  const stockTotals = sumCatalogStockTotals(documento.produtos || [], catalogStockContext);
   doc.setFontSize(FONT.kpi);
   doc.setTextColor(...ENXUTO.black);
   doc.text(`Vendas 30d: ${fmtN(totalV30)} un.`, M, y);

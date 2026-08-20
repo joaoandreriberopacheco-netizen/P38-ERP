@@ -19,6 +19,7 @@ import {
   filterProdutosComVendasNaJanela,
   normalizeCatalogSalesWindow,
 } from '@/lib/catalogSalesVelocity';
+import { aggregateCatalogEstoqueExibicao, resolveCatalogEstoqueExibicao } from '@/lib/catalogEstoqueVirtual';
 import { formatEstoqueApresentacao, getCatalogoComercialView } from '@/lib/productUnits';
 
 function prepareFlatRows(produtos, velocityMap, sortOrder = 'az') {
@@ -138,15 +139,24 @@ export function prepareCatalogSalesReportDocument({
   };
 }
 
-export function groupStockTexto(skus = [], { hideGroupTotals = false } = {}) {
+function stockQuantPrefix(est) {
+  return est?.virtual && Number(est.pendente) > 0 ? '~' : '';
+}
+
+export function groupStockTexto(skus = [], { hideGroupTotals = false, catalogStockContext = null } = {}) {
   if (hideGroupTotals) return { texto: '—', quantText: null, unitText: null, heterogeneous: true };
-  const disp = aggregateEstoqueDisplay(skus);
+  const disp = catalogStockContext
+    ? aggregateCatalogEstoqueExibicao(skus, catalogStockContext)
+    : aggregateEstoqueDisplay(skus);
   if (disp.mode === 'empty') return { texto: '—', quantText: null, unitText: null, heterogeneous: false };
   if (disp.mode === 'mixed') return { texto: '—', quantText: null, unitText: null, heterogeneous: true };
+  const prefix = stockQuantPrefix(disp);
+  const qtyText = `${prefix}${formatQty(disp.quantidade)}`;
+  const unit = disp.sigla || 'UN';
   return {
-    quantText: formatQty(disp.quantidade),
-    unitText: disp.sigla || 'UN',
-    texto: `${formatQty(disp.quantidade)} | ${disp.sigla || 'UN'}`,
+    quantText: qtyText,
+    unitText: unit,
+    texto: `${qtyText} | ${unit}`,
     heterogeneous: false,
   };
 }
@@ -159,7 +169,23 @@ export function commercialCostValues(produto) {
   };
 }
 
-export function stockQuantTexto(produto) {
+export function stockQuantTexto(produto, catalogStockContext = null) {
+  const est = catalogStockContext
+    ? resolveCatalogEstoqueExibicao(produto, catalogStockContext)
+    : null;
+  if (est) {
+    const prefix = stockQuantPrefix(est);
+    const qtyText = `${prefix}${formatQty(est.quantidade)}`;
+    const unit = est.unidade || 'UN';
+    return {
+      quantText: qtyText,
+      unitText: unit,
+      texto: `${qtyText} | ${unit}`,
+      quantidade: est.quantidade,
+      unidade: unit,
+    };
+  }
+
   const apresent = formatEstoqueApresentacao(produto);
   if (apresent) {
     return {
