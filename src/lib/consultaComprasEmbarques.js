@@ -6,10 +6,61 @@ import { getTotalLinhaPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
 import { isNecessidadeRenderizada } from '@/lib/pedidoCompraNecessidade';
 import { calculateBaseQuantity, commercialQuantityFromBase, getItemCompraExibicaoVitrine } from '@/lib/productUnits';
 
+const MIN_QTD_PENDENTE_CONSULTA = 0.009;
+
 function hasLinkedItems(embarque) {
   return getEmbarqueItensLinhas(embarque).some(
     (item) => (Number(item?.quantidade_embarcada) || 0) > 0 || (Number(item?.quantidade_recebida) || 0) > 0,
   );
+}
+
+function resolveQtyPendenteEmbarqueComercial(sqlLine = {}) {
+  const qtyEmb = resolveEmbarqueQuantidadeComercial(sqlLine, 'embarcada');
+  const qtyRec = resolveEmbarqueQuantidadeComercial(sqlLine, 'recebida');
+  return roundToTwoDecimals(Math.max(0, qtyEmb - qtyRec));
+}
+
+/** Embarque concluído na Consulta: não entra na lista (cada split é independente). */
+export function isEmbarqueConcluidoParaConsulta(card = {}, embarque = card._embarque) {
+  if (!embarque) return false;
+
+  const displayStatus = String(card._display_status || '').trim();
+  const statusEmb = String(embarque.status || '').trim();
+  const statusReceb = String(embarque.status_recebimento || embarque.status_recebimento_embarque || '').trim();
+
+  if (displayStatus === 'Concluído' || statusEmb === 'Concluído') return true;
+  if (statusReceb === 'Recebido OK') return true;
+
+  if (hasLinkedItems(embarque)) {
+    return getEmbarqueItensLinhas(embarque).every(
+      (line) => resolveQtyPendenteEmbarqueComercial(line) <= MIN_QTD_PENDENTE_CONSULTA,
+    );
+  }
+
+  return false;
+}
+
+/** Linha SQL só com o saldo pendente deste embarque (embarcado − recebido). */
+function sqlLineComSaldoPendente(sqlLine = {}) {
+  const qtyPendCom = resolveQtyPendenteEmbarqueComercial(sqlLine);
+  if (qtyPendCom <= MIN_QTD_PENDENTE_CONSULTA) return null;
+
+  const qtyEmbBase = resolveEmbarqueQuantidadeBase(sqlLine, 'embarcada');
+  const qtyRecBase = resolveEmbarqueQuantidadeBase(sqlLine, 'recebida');
+  const qtyPendBase = roundToTwoDecimals(Math.max(0, qtyEmbBase - qtyRecBase));
+  if (qtyPendBase <= MIN_QTD_PENDENTE_CONSULTA) return null;
+
+  return {
+    ...sqlLine,
+    quantidade_embarcada_apresentacao: qtyPendCom,
+    quantidade_embarcada_comercial: qtyPendCom,
+    quantidade_embarcada: qtyPendBase,
+    quantidade_embarcada_base: qtyPendBase,
+    quantidade_recebida_apresentacao: 0,
+    quantidade_recebida_comercial: 0,
+    quantidade_recebida: 0,
+    quantidade_recebida_base: 0,
+  };
 }
 
 function resolveQtyBasePedido(pedidoItem = {}, exibPedido = null) {
@@ -67,13 +118,17 @@ function buildLinhaConsultaItem(pedido, pedidoItem, sqlLine = null, produto = nu
 
 /**
  * Metodologia consulta por embarque (EmbarqueItem SQL):
- * - Embarque real: o que veio / está neste despacho (recebido; senão embarcado).
- * - Necessidade: o que ainda falta vir.
+ * - Pedido completo primeiro; splits (despacho / Necessidade) são independentes.
+ * - Embarque concluído: não aparece na Consulta.
+ * - Despacho em trânsito: só saldo pendente deste split (embarcado − recebido).
+ * - Necessidade: só o que ainda falta vir neste split.
  */
 export function buildConsultaItensEmbarque(card = {}, produtosMap = {}) {
   const pedido = card;
   const embarque = card._embarque;
   const ehNecessidade = card._is_necessidade || isNecessidadeRenderizada(embarque);
+
+  if (isEmbarqueConcluidoParaConsulta(card, embarque)) return [];
 
   const produtoDaLinha = (pedidoItem, sqlLine) => {
     const pid = pedidoItem?.produto_id || sqlLine?.produto_id;
@@ -88,7 +143,7 @@ export function buildConsultaItensEmbarque(card = {}, produtosMap = {}) {
           resolveEmbarqueQuantidadeComercial(sqlLine, 'embarcada')
           || resolveEmbarqueQuantidadeComercial(sqlLine, 'pedida')
           || 0;
-        if (qtyPend <= 0) return null;
+        if (qtyPend <= MIN_QTD_PENDENTE_CONSULTA) return null;
         const qtyKind = resolveEmbarqueQuantidadeComercial(sqlLine, 'embarcada') > 0 ? 'embarcada' : 'pedida';
         return buildLinhaConsultaItem(pedido, pedidoItem, sqlLine, produtoDaLinha(pedidoItem, sqlLine), qtyKind);
       })
@@ -99,12 +154,15 @@ export function buildConsultaItensEmbarque(card = {}, produtosMap = {}) {
     return getEmbarqueItensLinhas(embarque)
       .map((sqlLine) => {
         const pedidoItem = (pedido.itens || []).find((pi) => pi.produto_id === sqlLine.produto_id);
-        const qtyRec = resolveEmbarqueQuantidadeComercial(sqlLine, 'recebida');
-        const qtyEmb = resolveEmbarqueQuantidadeComercial(sqlLine, 'embarcada');
-        const qtyMostrar = qtyRec > 0 ? qtyRec : qtyEmb;
-        if (qtyMostrar <= 0) return null;
-        const qtyKind = qtyRec > 0 ? 'recebida' : 'embarcada';
-        return buildLinhaConsultaItem(pedido, pedidoItem, sqlLine, produtoDaLinha(pedidoItem, sqlLine), qtyKind);
+        const linhaPendente = sqlLineComSaldoPendente(sqlLine);
+        if (!linhaPendente) return null;
+        return buildLinhaConsultaItem(
+          pedido,
+          pedidoItem,
+          linhaPendente,
+          produtoDaLinha(pedidoItem, linhaPendente),
+          'embarcada',
+        );
       })
       .filter(Boolean);
   }
@@ -113,8 +171,6 @@ export function buildConsultaItensEmbarque(card = {}, produtosMap = {}) {
     (e) => e.id !== embarque?.id && !isNecessidadeRenderizada(e),
   );
   if (outrosEmbarques.some((e) => hasLinkedItems(e))) return [];
-
-  if (card._display_status === 'Concluído') return [];
 
   return (pedido.itens || [])
     .map((pedidoItem) => {
