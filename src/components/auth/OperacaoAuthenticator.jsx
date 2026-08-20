@@ -264,7 +264,7 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
                             </div>
                             <Button
                                 onClick={() => setShowPinSetup(true)}
-                                className="bg-background dark:bg-card dark:text-foreground text-white gap-2"
+                                className="bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground gap-2"
                             >
                                 Configurar PIN agora
                                 <ChevronRight className="w-4 h-4" />
@@ -329,7 +329,7 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
                         <Button
                             onClick={handlePinSubmit}
                             disabled={loading || pin.length < 6}
-                            className="bg-background dark:bg-card dark:text-foreground text-white min-w-[120px]"
+                            className="bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground min-w-[120px]"
                         >
                             {loading ? (
                                 <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Validando...</>

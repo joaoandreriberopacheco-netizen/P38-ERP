@@ -87,7 +87,7 @@ export default function VolumetrizacaoManifestos() {
         <Button
           onClick={() => setShowLoteDialog(true)}
           disabled={manifestosFiltrados.length === 0}
-          className="h-11 rounded-2xl bg-background hover:bg-primary dark:bg-muted dark:hover:bg-muted dark:text-foreground shadow-sm gap-2"
+          className="h-11 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-muted dark:hover:bg-muted/90 dark:text-foreground shadow-sm gap-2"
         >
           <Boxes className="w-4 h-4" />
           Criar em lote

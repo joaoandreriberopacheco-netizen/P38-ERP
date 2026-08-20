@@ -157,7 +157,7 @@ function CupomImpressao({ itens, calcularPreco, tabelaSelecionada, onClose }) {
 
           <Button
             onClick={handlePrint}
-            className="w-full bg-primary hover:bg-background dark:bg-muted dark:hover:bg-muted dark:text-foreground text-white h-11 rounded-xl gap-2"
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-muted dark:hover:bg-muted dark:text-foreground h-11 rounded-xl gap-2"
           >
             <Printer className="w-4 h-4" />
             Imprimir / Salvar PDF
@@ -362,7 +362,7 @@ export default function OrcamentoSheet({ produtos, calcularPreco, tabelaSelecion
             </div>
             <Button
               onClick={() => setShowCupom(true)}
-              className="w-full bg-primary hover:bg-background dark:bg-muted dark:hover:bg-muted dark:text-foreground text-white h-11 rounded-xl gap-2"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-muted dark:hover:bg-muted dark:text-foreground h-11 rounded-xl gap-2"
             >
               <FileText className="w-4 h-4" />
               Gerar Orçamento

@@ -369,7 +369,7 @@ export default function ConferenciaItens() {
             <Button
               onClick={handleFinalizar}
               disabled={finalizando || itensConferidos.length === 0}
-              className="flex-1 h-14 text-base bg-background hover:bg-primary dark:bg-muted dark:hover:bg-muted shadow-lg"
+              className="flex-1 h-14 text-base bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-muted dark:hover:bg-muted/90 dark:text-foreground shadow-lg"
             >
               {finalizando ? (
                 <>
@@ -473,7 +473,7 @@ export default function ConferenciaItens() {
 
             <Button
               onClick={() => setModalLote({ ...modalLote, open: false })}
-              className="w-full h-12 bg-background hover:bg-primary dark:bg-muted dark:hover:bg-muted"
+              className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-muted dark:hover:bg-muted/90 dark:text-foreground"
             >
               <CheckCircle className="w-5 h-5 mr-2" />
               CONFIRMAR LOTES

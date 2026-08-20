@@ -500,7 +500,7 @@ function ComprovanteStep({ resultado, onClose }) {
         <button onClick={onClose} className="flex-1 h-14 bg-muted text-foreground/90 rounded-2xl font-medium text-base">
           Fechar
         </button>
-        <button onClick={imprimir} className="flex-1 h-14 rounded-2xl font-medium text-white bg-background dark:bg-card dark:text-foreground flex items-center justify-center gap-2 text-base">
+        <button onClick={imprimir} className="flex-1 h-14 rounded-2xl font-medium bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground flex items-center justify-center gap-2 text-base">
           <Printer className="w-4 h-4" /> Imprimir
         </button>
       </div>

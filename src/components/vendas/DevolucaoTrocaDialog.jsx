@@ -257,7 +257,7 @@ function ComprovanteStep({ resultado, onClose }) {
         <button onClick={onClose} className="flex-1 h-12 bg-muted text-foreground/90 rounded-2xl font-medium" style={{ minHeight: 48 }}>
           Fechar
         </button>
-        <button onClick={imprimir} className="flex-1 h-12 rounded-2xl font-medium text-white bg-background dark:bg-card dark:text-foreground flex items-center justify-center gap-2" style={{ minHeight: 48 }}>
+        <button onClick={imprimir} className="flex-1 h-12 rounded-2xl font-medium bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground flex items-center justify-center gap-2" style={{ minHeight: 48 }}>
           <Printer className="w-4 h-4" /> Imprimir
         </button>
       </div>

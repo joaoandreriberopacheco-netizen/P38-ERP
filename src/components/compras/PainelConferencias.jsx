@@ -373,7 +373,7 @@ export default function PainelConferencias() {
                   </Button>
                   <Button
                     onClick={tirarFoto}
-                    className="flex-1 bg-background hover:bg-primary"
+                    className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     CAPTURAR
                   </Button>

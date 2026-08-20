@@ -461,7 +461,7 @@ export default function ConferenciaVolumes() {
             <Button
               onClick={handleFinalizar}
               disabled={finalizando}
-              className="flex-1 h-12 bg-background hover:bg-primary dark:bg-muted dark:hover:bg-muted shadow-lg"
+              className="flex-1 h-12 bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-muted dark:hover:bg-muted/90 dark:text-foreground shadow-lg"
             >
               {finalizando ? (
                 <>
@@ -544,7 +544,7 @@ export default function ConferenciaVolumes() {
                 )}
                 <Button
                   onClick={handleAvancarEtapa}
-                  className="flex-1 bg-background hover:bg-primary dark:bg-muted"
+                  className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-muted dark:text-foreground"
                 >
                   {divergencias.length > 0 ? 'Salvar com Divergências' : 'Prosseguir'}
                 </Button>
@@ -584,7 +584,7 @@ export default function ConferenciaVolumes() {
                 </Button>
                 <Button
                   onClick={handleAvancarEtapa}
-                  className="flex-1 bg-background hover:bg-primary"
+                  className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
                 >
                   Avançar
                 </Button>
@@ -612,7 +612,7 @@ export default function ConferenciaVolumes() {
                   </div>
                   <Button
                     onClick={tirarFoto}
-                    className="w-full bg-background hover:bg-primary"
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     <Camera className="w-4 h-4 mr-2" />
                     Tirar Foto

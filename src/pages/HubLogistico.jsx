@@ -141,7 +141,7 @@ export default function HubLogistico() {
           </Button>
           <Button
             onClick={() => navigate(createPageUrl('ConferenciaEntrada'))}
-            className="bg-background hover:bg-primary dark:bg-muted dark:hover:bg-muted shadow-lg gap-2"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-muted dark:hover:bg-muted/90 dark:text-foreground shadow-lg gap-2"
             size="sm"
           >
             <QrCode className="w-4 h-4" />

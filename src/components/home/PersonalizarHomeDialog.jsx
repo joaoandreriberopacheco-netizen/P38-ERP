@@ -86,7 +86,7 @@ export default function PersonalizarHomeDialog({ isOpen, onClose, selected, onSa
           <Button
             onClick={handleSave}
             disabled={localSelected.length === 0}
-            className="flex-1 rounded-xl bg-background hover:bg-primary dark:bg-card dark:text-foreground dark:hover:bg-muted"
+            className="flex-1 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground dark:hover:bg-muted"
           >
             Salvar ({localSelected.length})
           </Button>

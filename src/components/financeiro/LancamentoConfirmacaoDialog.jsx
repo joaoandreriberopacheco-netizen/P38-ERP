@@ -29,7 +29,7 @@ function ConfirmacaoBody({ processing, successTitle, successMessage, onCreateAno
           <button
             type="button"
             onClick={onCreateAnother}
-            className="h-12 w-full rounded-2xl bg-background text-sm font-semibold text-white dark:bg-muted dark:text-foreground"
+            className="h-12 w-full rounded-2xl bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90 dark:bg-muted dark:text-foreground"
           >
             {createAnotherLabel || 'Sim (S)'}
           </button>
