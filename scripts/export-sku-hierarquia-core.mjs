@@ -1,21 +1,44 @@
 #!/usr/bin/env node
 /**
- * Export estudo + camada CORE (pathway de obra).
- * Base: export hierarquia portal; acrescenta etapa_obra, core, papel_core.
+ * Export catálogo delimitado: etapa → core → linha(·N|·C|·R) → produto compra → eixos.
+ *
+ * Camadas (5 + identificadores):
+ *   etapa | core | linha | produto_compra | eixo_a | eixo_b
+ *   + codigo_interno | novo_sku | sku_atual
+ *
+ * Subfolhas xlsx: Etapas (categorias ERP renomeadas), Referência cores, Legenda linha.
  *
  * Uso:
  *   npm run export:sku-hierarquia-core
- *   npm run export:sku-hierarquia-core -- --format=both
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
 import ExcelJS from 'exceljs';
 import { inferirCoreObra, listarCoresObra } from './lib/inferenciaCoreObra.mjs';
+import {
+  getLegendaLinha,
+  getMapaEtapasCategoria,
+  resolverEtapaSku,
+  linhaComGlitch,
+} from './lib/etapaCategoriaMap.mjs';
 
 const DEFAULT_DIR = path.join(process.cwd(), 'docs', 'exports');
 const DEFAULT_BASENAME = 'P38-sku-hierarquia-core';
 const DEFAULT_IN = path.join(DEFAULT_DIR, 'P38-sku-hierarquia-estudo.csv');
+
+/** Colunas principais — sem categoria ERP, sem h1–h3, sem papel_core solto. */
+const EXPORT_HEADERS = [
+  'codigo_interno',
+  'etapa',
+  'core',
+  'linha',
+  'produto_compra',
+  'eixo_a',
+  'eixo_b',
+  'novo_sku',
+  'sku_atual',
+];
 
 function parseArgs(argv) {
   const outArg = argv.find((a) => a.startsWith('--out='));
@@ -25,7 +48,7 @@ function parseArgs(argv) {
   if (!['xlsx', 'csv', 'both'].includes(format)) {
     throw new Error('--format deve ser xlsx, csv ou both');
   }
-  let out = outArg ? outArg.slice(6) : path.join(DEFAULT_DIR, DEFAULT_BASENAME);
+  const out = outArg ? outArg.slice(6) : path.join(DEFAULT_DIR, DEFAULT_BASENAME);
   return {
     inPath: inArg ? inArg.slice(5) : DEFAULT_IN,
     out,
@@ -80,49 +103,25 @@ function loadEstudoCsv(filePath) {
       h1: get('h1'),
       h2: get('h2'),
       h3: get('h3'),
-      h4: get('h4'),
-      h5: get('h5'),
       sku_atual: get('sku_atual'),
     };
   });
 }
 
-const EXPORT_HEADERS = [
-  'codigo_interno',
-  'categoria_atual',
-  'etapa_obra',
-  'core',
-  'core_nome',
-  'papel_core',
-  'linha',
-  'produto_compra',
-  'eixo_a',
-  'eixo_b',
-  'novo_sku',
-  'h1',
-  'h2',
-  'h3',
-  'sku_atual',
-];
-
-function buildCoreRows(rows) {
+function buildCatalogRows(rows) {
   return rows.map((row) => {
     const c = inferirCoreObra(row);
+    const etapa = resolverEtapaSku(row.categoria_atual, c);
+    const linha = linhaComGlitch(row.linha, c.papel_core);
     return [
       row.codigo_interno,
-      row.categoria_atual,
-      c.etapa_obra,
+      etapa,
       c.core,
-      c.core_nome,
-      c.papel_core,
-      row.linha,
+      linha,
       row.produto_compra,
       row.eixo_a,
       row.eixo_b,
       row.novo_sku,
-      row.h1,
-      row.h2,
-      row.h3,
       row.sku_atual,
     ];
   });
@@ -148,31 +147,41 @@ async function writeXlsx(filePath, headers, dataRows) {
   wb.creator = 'P38 export-sku-hierarquia-core';
   wb.created = new Date();
 
-  const ws = wb.addWorksheet('Hierarquia + Core', {
+  const ws = wb.addWorksheet('Catálogo', {
     views: [{ state: 'frozen', ySplit: 1 }],
   });
   ws.addRow(headers);
   for (const row of dataRows) ws.addRow(row);
-
-  const headerRow = ws.getRow(1);
-  headerRow.font = { bold: true };
-  headerRow.alignment = { vertical: 'middle', wrapText: true };
-
-  const widths = [14, 28, 26, 22, 28, 14, 22, 26, 12, 24, 42, 20, 14, 20, 36];
+  ws.getRow(1).font = { bold: true };
+  const widths = [14, 28, 22, 26, 28, 12, 24, 42, 42];
   headers.forEach((_, i) => {
     ws.getColumn(i + 1).width = widths[i] ?? 16;
   });
-
   ws.autoFilter = {
     from: { row: 1, column: 1 },
     to: { row: 1 + dataRows.length, column: headers.length },
   };
 
-  // Folha referência cores
+  const etapas = wb.addWorksheet('Etapas');
+  etapas.addRow(['categoria_erp', 'etapa', 'etapa_codigo']);
+  for (const m of getMapaEtapasCategoria()) {
+    etapas.addRow([m.categoria_erp, m.etapa, m.etapa_codigo]);
+  }
+  etapas.getRow(1).font = { bold: true };
+  etapas.getColumn(1).width = 36;
+  etapas.getColumn(2).width = 32;
+
+  const legenda = wb.addWorksheet('Legenda linha');
+  legenda.addRow(['sufixo', 'significado']);
+  for (const [suf, desc] of Object.entries(getLegendaLinha())) {
+    legenda.addRow([suf, desc]);
+  }
+  legenda.getRow(1).font = { bold: true };
+
   const ref = wb.addWorksheet('Referência cores');
-  ref.addRow(['core', 'nome', 'etapa', 'descricao']);
+  ref.addRow(['core', 'etapa', 'descricao']);
   for (const c of listarCoresObra()) {
-    ref.addRow([c.codigo, c.nome, c.etapa, c.descricao]);
+    ref.addRow([c.codigo, c.etapa, c.descricao]);
   }
   ref.getRow(1).font = { bold: true };
 
@@ -181,21 +190,14 @@ async function writeXlsx(filePath, headers, dataRows) {
 }
 
 function printStats(dataRows) {
-  const byCore = {};
-  const byEtapa = {};
   let comCore = 0;
+  let comGlitch = 0;
   for (const r of dataRows) {
-    const core = r[3] || '(sem core)';
-    const etapa = r[2] || '(sem etapa)';
-    byCore[core] = (byCore[core] || 0) + 1;
-    if (r[3]) comCore++;
-    if (r[2]) byEtapa[etapa] = (byEtapa[etapa] || 0) + 1;
+    if (r[2]) comCore++;
+    if (String(r[3]).includes('·')) comGlitch++;
   }
   console.log(`  com core: ${comCore} / ${dataRows.length}`);
-  console.log('  cores:');
-  for (const [k, v] of Object.entries(byCore).sort((a, b) => b[1] - a[1]).slice(0, 12)) {
-    console.log(`    ${v.toString().padStart(4)}  ${k}`);
-  }
+  console.log(`  linha com glitch ·N/·C/·R: ${comGlitch}`);
 }
 
 async function main() {
@@ -214,7 +216,7 @@ async function main() {
   }
 
   const rows = loadEstudoCsv(inPath);
-  const dataRows = buildCoreRows(rows);
+  const dataRows = buildCatalogRows(rows);
   const paths = resolveOutputPaths(out, format);
   const written = [];
 
@@ -229,6 +231,7 @@ async function main() {
 
   console.log('[export-sku-hierarquia-core] OK');
   for (const f of written) console.log(`  ficheiro: ${f}`);
+  console.log(`  colunas: ${EXPORT_HEADERS.join(' → ')}`);
   console.log(`  skus: ${dataRows.length}`);
   printStats(dataRows);
 }

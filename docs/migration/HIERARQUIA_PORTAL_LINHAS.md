@@ -49,15 +49,28 @@ Benchmark LM: [`LEROY_MERLIN_BENCHMARK_CATALOGO.md`](LEROY_MERLIN_BENCHMARK_CATA
 
 ## Export com camada CORE (pathway obra)
 
-Estudo Excel enriquecido — **sem alterar LINHA portal**:
+Estudo Excel delimitado — **5 camadas + 3 identificadores**:
+
+```text
+etapa → core → linha(·N|·C|·R) → produto_compra → eixo_a → eixo_b
+codigo_interno | novo_sku | sku_atual
+```
+
+- **Subfolha Etapas:** categorias ERP renomeadas por etapa
+- **Legenda linha:** `·N` núcleo, `·C` complemento, `·R` receita pronta (ex.: aditivo → `PINTURA E QUÍMICOS·C`)
+- **Sem** `categoria_atual`, `papel_core` nem `h1–h3` na folha principal
 
 ```bash
 npm run export:sku-hierarquia-core
 ```
 
-Saída: `docs/exports/P38-sku-hierarquia-core.xlsx` (+ CSV). Colunas extra: `etapa_obra`, `core`, `core_nome`, `papel_core`. Folha **Referência cores** no xlsx.
+Saída: `docs/exports/P38-sku-hierarquia-core.xlsx`
 
-Lógica: [`scripts/lib/inferenciaCoreObra.mjs`](../../scripts/lib/inferenciaCoreObra.mjs)
+| Ficheiro | Papel |
+|----------|--------|
+| [`scripts/lib/inferenciaCoreObra.mjs`](../../scripts/lib/inferenciaCoreObra.mjs) | Inferência `core` |
+| [`scripts/lib/etapaCategoriaMap.mjs`](../../scripts/lib/etapaCategoriaMap.mjs) | Etapas + glitch linha |
+| [`src/data/etapaCategoriaMap.json`](../../src/data/etapaCategoriaMap.json) | Mapa categorias ERP → etapa |
 
 ## Cerâmica piloto
 
