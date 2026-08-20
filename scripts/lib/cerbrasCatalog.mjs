@@ -112,11 +112,13 @@ export async function buscarComVariantes(parsed) {
 
 export function scoreMatch(prod, parsed) {
   let score = 0;
-  const fmtSite = normFmt(prod.formato) || normFmt(prod.titulo);
+  const fmtSite = normFmt(prod.formato) || normFmt(prod.titulo) || normFmt(prod.url || '');
   if (parsed.formato && fmtSite === parsed.formato) score += 50;
   else if (parsed.formato && fmtSite) score -= 40;
 
   const title = stripAccents(prod.titulo).toUpperCase();
+  const haystack = title + stripAccents(prod.url || '').toUpperCase();
+
   for (const tok of stripAccents(parsed.busca).toUpperCase().split(' ')) {
     if (tok && title.includes(tok)) score += 20;
     else if (tok && namesLikelyMatch(tok, prod.titulo)) score += 18;
@@ -126,10 +128,22 @@ export function scoreMatch(prod, parsed) {
     else if (tok.length >= 4 && namesLikelyMatch(tok, prod.titulo)) score += 10;
   }
 
+  const buscaToks = stripAccents(parsed.busca).toUpperCase().split(' ').filter(Boolean);
+  const missingCore = buscaToks.filter((t) => t.length >= 4 && !haystack.includes(t));
+  for (const tok of missingCore) score -= 50;
+
+  const refDot = String(parsed.raw || '').match(/\((\d)\.(\d{5,6})\)/);
+  if (refDot) {
+    const ref = refDot[2].replace(/^0+/, '');
+    if (ref && haystack.includes(ref)) score += 40;
+  }
+
   if (/BRILH/i.test(parsed.raw) && /BRILH/i.test(prod.acabamento + prod.titulo)) score += 8;
   if (/ACET/i.test(parsed.raw) && /ACET|MATE/i.test(prod.acabamento + prod.titulo)) score += 8;
-  if (/DECK/i.test(parsed.raw) && /DECK/i.test(prod.titulo + prod.url)) score += 12;
-  if (/HD/i.test(parsed.raw) && /HD/i.test(prod.titulo)) score += 6;
+  if (/DECK/i.test(parsed.raw) && /DECK/i.test(prod.titulo + (prod.url || ''))) score += 12;
+  if (/HD/i.test(parsed.raw) && /HD/i.test(prod.titulo + (prod.url || ''))) score += 6;
+
+  if (missingCore.length) score = Math.min(score, 25);
 
   return score;
 }

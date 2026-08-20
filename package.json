@@ -84,6 +84,7 @@
     "esquenta:pdf": "node scripts/gerar-pdf-esquenta-fornecedor.mjs",
     "esquenta:gerar": "npm run esquenta:enriquecer && npm run esquenta:pdf",
     "catalogo:snapshot-formigres": "node scripts/catalogo/snapshot-formigres.mjs",
+    "catalogo:snapshot-cerbras": "node scripts/catalogo/snapshot-cerbras.mjs",
     "catalogo:match": "node scripts/catalogo/match-local.mjs",
     "produto:nome:restaurar": "node scripts/restaurar-nomes-produto-hierarquia.mjs",
     "produto:nome:restaurar:apply": "node scripts/restaurar-nomes-produto-hierarquia.mjs --apply",
