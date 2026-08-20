@@ -1449,7 +1449,7 @@ export default function PedidoCompraForm({
               Começar do zero
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-background hover:bg-primary dark:bg-card dark:hover:bg-muted dark:text-foreground rounded-xl h-10"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-card dark:hover:bg-muted dark:text-foreground rounded-xl h-10"
               onClick={() => {
                 if (pendingDraft?.data) {
                   isRestoringDraftRef.current = true;

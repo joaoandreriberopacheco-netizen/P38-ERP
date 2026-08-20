@@ -640,7 +640,7 @@ export default function ImportadorPedidoCompra({
                 <Button variant="outline" onClick={() => { selectedFileRef.current = null; setSelectedFile(null); setStep('upload'); }} className="h-12 px-5 rounded-2xl border-0 shadow-sm">
                   <ArrowLeft className="w-4 h-4" />
                 </Button>
-                <Button onClick={processSelectedFile} className="h-12 px-8 rounded-2xl shadow-sm bg-background dark:bg-card dark:text-foreground text-white gap-2">
+                <Button onClick={processSelectedFile} className="h-12 px-8 rounded-2xl shadow-sm bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
                   Buscar Itens
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </Button>

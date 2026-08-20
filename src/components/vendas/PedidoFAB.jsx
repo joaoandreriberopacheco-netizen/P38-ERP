@@ -78,9 +78,9 @@ export default function PedidoFAB({ pedido, onSave, isSaving, isDisabled, empres
           onClick={() => setIsOpen(!isOpen)}
           className={`w-14 h-14 rounded-full shadow-lg transition-all duration-200 flex items-center justify-center ${
             isOpen
-              ? 'bg-muted dark:bg-muted'
-              : 'bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:hover:bg-muted/400'
-          } text-white`}
+              ? 'bg-muted text-foreground dark:bg-muted dark:text-foreground'
+              : 'bg-[#4a5240] text-white hover:bg-[#4a5240]/90 dark:bg-[#a4ce33] dark:text-[#1f1d22] dark:hover:bg-[#a4ce33]/90'
+          }`}
           title="Menu de ações"
         >
           {isOpen ? <X className="w-6 h-6" /> : <Save className="w-6 h-6" />}

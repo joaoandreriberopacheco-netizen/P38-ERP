@@ -108,21 +108,21 @@ export default function PedidoCompraFAB({
       label: 'Anexos',
       onClick: () => setShowAnexosModal(true),
       disabled: !pedido?.id,
-      color: 'bg-card dark:bg-muted text-foreground/90',
+      color: 'bg-card text-foreground border border-border dark:bg-muted dark:text-foreground dark:border-transparent',
     },
     {
       icon: <FileText className="w-5 h-5" />,
       label: 'PDF',
       onClick: handlePrintPDF,
       disabled: !pedido?.id,
-      color: 'bg-card dark:bg-muted text-foreground/90',
+      color: 'bg-card text-foreground border border-border dark:bg-muted dark:text-foreground dark:border-transparent',
     },
     {
       icon: <Save className="w-5 h-5" />,
       label: 'Salvar',
       onClick: () => onSave?.(),
       disabled: isSaving,
-      color: 'bg-card dark:bg-muted text-foreground/90',
+      color: 'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]',
     },
   ].filter(Boolean);
 
@@ -148,8 +148,10 @@ export default function PedidoCompraFAB({
               type="button"
               onClick={() => setIsExpanded(prev => !prev)}
               className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
-                isExpanded ? 'bg-muted dark:bg-muted/400 rotate-45' : 'bg-background dark:bg-muted'
-              } text-white`}
+                isExpanded
+                  ? 'bg-muted text-foreground dark:bg-muted/400 dark:text-foreground rotate-45'
+                  : 'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]'
+              }`}
               title="Ações do pedido"
             >
               {isExpanded ? <X className="w-6 h-6" /> : <Compass className="w-6 h-6" />}

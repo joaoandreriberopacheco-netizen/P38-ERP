@@ -271,7 +271,7 @@ Retorne JSON:
                                         <Calculator className="w-3.5 h-3.5" />
                                         <span>Sugestão Automática Ativa</span>
                                     </div>
-                                    <Button onClick={handleCreateQuotation} className="bg-background hover:bg-black text-white rounded-lg shadow-lg w-full md:w-auto">
+                                    <Button onClick={handleCreateQuotation} className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg shadow-lg w-full md:w-auto">
                                         {mode === 'merge' ? 'Aplicar Itens na Cotação' : 'Gerar Cotação'}
                                     </Button>
                                 </div>

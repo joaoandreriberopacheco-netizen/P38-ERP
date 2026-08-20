@@ -208,7 +208,7 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarPedido, on
       icon: <CheckSquare className="w-5 h-5" />,
       label: modoSelecao ? 'Cancelar seleção' : 'Selecionar embarques',
       onClick: () => { onToggleModoSelecao?.(); setIsExpanded(false); },
-      color: modoSelecao ? 'bg-background dark:bg-muted text-white' : 'bg-card dark:bg-muted text-foreground/90',
+      color: modoSelecao ? 'bg-[#4a5240] text-white dark:bg-muted dark:text-foreground' : 'bg-card text-foreground border border-border dark:bg-muted dark:text-foreground dark:border-transparent',
     },
     ...(modoSelecao ? [{
       icon: <Send className="w-5 h-5" />,
@@ -311,8 +311,10 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarPedido, on
         <button
           onClick={() => setIsExpanded(prev => !prev)}
           className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
-            isExpanded ? 'bg-muted dark:bg-muted/400 rotate-45' : 'bg-background dark:bg-muted'
-          } text-white`}
+            isExpanded
+              ? 'bg-muted text-foreground dark:bg-muted/400 dark:text-foreground rotate-45'
+              : 'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]'
+          }`}
           title="Ações de compras"
         >
           {isExpanded ? <X className="w-6 h-6" /> : <Plus className="w-6 h-6" />}

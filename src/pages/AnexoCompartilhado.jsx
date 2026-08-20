@@ -938,7 +938,7 @@ export default function AnexoCompartilhado() {
               type="button"
               onClick={() => setEtapa('opcoes')}
               disabled={!String(tipoDocumento || '').trim()}
-              className="mt-auto flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-background text-sm font-semibold text-white disabled:opacity-40 dark:bg-primary dark:text-primary-foreground md:mt-2"
+              className="mt-auto flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-40 md:mt-2"
             >
               Continuar para destinos
               <ChevronRight className="h-4 w-4" />
