@@ -119,8 +119,8 @@ export default function ProductSearchInputPDV({
           </div>
         ) : (
           <div className={cn(
-            "rounded-2xl bg-background shadow-sm transition-all",
-            isFocused && "ring-1 ring-border/40 dark:ring-border/40"
+            "rounded-2xl bg-card border border-border/50 shadow-sm transition-all dark:bg-background dark:border-transparent",
+            isFocused && "ring-1 ring-border/60 dark:ring-border/40"
           )}>
             <div className="flex items-center gap-2 px-2 sm:px-3 h-12">
               <span className={cn(
@@ -144,7 +144,7 @@ export default function ProductSearchInputPDV({
                   value={currentQuery}
                   onChange={handleChange}
                   onFocus={() => setIsFocused(true)}
-                  className="w-full h-10 bg-transparent pl-5 pr-1 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground outline-none"
+                  className="w-full h-10 bg-transparent pl-5 pr-1 text-xs sm:text-sm text-foreground placeholder:text-foreground/45 dark:placeholder:text-muted-foreground outline-none"
                   placeholder="Buscar item"
                 />
               </div>
@@ -184,7 +184,7 @@ export default function ProductSearchInputPDV({
             </div>
 
             {isFocused && (
-                <div className="border-t border-border/40 max-h-72 overflow-y-auto">
+                <div className="border-t border-border/50 dark:border-border/40 max-h-72 overflow-y-auto bg-card dark:bg-background">
                 {visibleProducts.length > 0 ? (
                   visibleProducts.map(produto => (
                     <button
@@ -192,17 +192,17 @@ export default function ProductSearchInputPDV({
                       type="button"
                       tabIndex={0}
                       onMouseDown={(e) => { e.preventDefault(); handleSelect(produto.id, getProdutoLabel(produto)); }}
-                      className="w-full px-3 sm:px-4 py-2.5 text-left text-xs sm:text-sm text-foreground hover:bg-muted/40 dark:hover:bg-background border-b border-border/30 dark:border-border/40 last:border-0"
+                      className="w-full px-3 sm:px-4 py-2.5 text-left text-xs sm:text-sm text-foreground hover:bg-muted/55 dark:hover:bg-muted/40 border-b border-border/35 dark:border-border/40 last:border-0"
                     >
                       {getProdutoLabel(produto)}
                     </button>
                   ))
                 ) : currentQuery ? (
-                  <div className="px-4 py-3 text-sm text-muted-foreground">
+                  <div className="px-4 py-3 text-sm text-foreground/70">
                     Nenhum produto encontrado para "{currentQuery}"
                   </div>
                 ) : (
-                  <div className="px-4 py-3 text-sm text-muted-foreground">
+                  <div className="px-4 py-3 text-sm text-foreground/70">
                     Nenhum produto no catálogo
                   </div>
                 )}

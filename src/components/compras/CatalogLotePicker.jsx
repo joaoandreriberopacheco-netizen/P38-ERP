@@ -8,6 +8,7 @@ import {
   P38_CHIP_ACTIVE,
   P38_CHIP_INACTIVE,
   P38_FIELD_SURFACE,
+  P38_SEARCH_SURFACE,
 } from '@/components/financeiro/fluxo/financeiroP38';
 import {
   countLoteDraft,
@@ -207,12 +208,12 @@ export default function CatalogLotePicker({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className={cn('shrink-0 space-y-3 p-4 pb-3', P38_FIELD_SURFACE, 'rounded-none')}>
-        <div className="relative">
+      <div className={cn('shrink-0 space-y-3 p-4 pb-3 rounded-none', P38_SEARCH_SURFACE)}>
+        <div className={cn('relative rounded-xl bg-card dark:bg-transparent', P38_FIELD_SURFACE, 'border-0 shadow-none h-12')}>
           <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder={searchPlaceholder}
-            className="h-12 border-0 bg-transparent pl-11 shadow-none focus-visible:ring-0"
+            className="h-12 border-0 bg-transparent pl-11 shadow-none focus-visible:ring-0 placeholder:text-foreground/45 dark:placeholder:text-muted-foreground"
             value={search}
             onChange={(e) => onSearchChange?.(e.target.value)}
             autoFocus
