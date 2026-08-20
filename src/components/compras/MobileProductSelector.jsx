@@ -1012,7 +1012,7 @@ export default function MobileProductSelector({
                 <div className={cn('hidden desktop-layout:block -mx-4 mt-3 max-h-[min(24rem,50vh)] overflow-y-auto', P38_DROPDOWN_PANEL)}>
                   {filteredProducts.length > 0 ? (
                     <>
-                      <div className="sticky top-0 z-[1] flex items-center justify-between border-b border-border/40 bg-card px-4 py-2.5 dark:bg-background">
+                      <div className="sticky top-0 z-[1] flex items-center justify-between bg-card px-4 py-2.5 dark:bg-background">
                         <span className="text-[11px] font-medium uppercase tracking-wide text-foreground/70">
                           {filteredProducts.length} resultado{filteredProducts.length !== 1 ? 's' : ''}
                         </span>
@@ -1031,7 +1031,7 @@ export default function MobileProductSelector({
                             ref={(el) => { catalogItemRefs.current[idx] = el; }}
                             onClick={() => { if (!isLocked) handleSelectProduct(product); }}
                             className={cn(
-                              'flex w-full items-start gap-3 border-b border-border/35 px-4 py-3 text-left transition-colors last:border-0',
+                              'flex w-full items-start gap-3 px-4 py-3 text-left transition-colors',
                               isSelected ? 'bg-muted/55 dark:bg-muted/40' : 'hover:bg-muted/40 dark:hover:bg-muted/30',
                               inCart && !isSelected && 'bg-[#a4ce33]/8',
                               isLocked && 'pointer-events-none opacity-50',

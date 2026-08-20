@@ -118,10 +118,7 @@ export default function ProductSearchInputPDV({
             </button>
           </div>
         ) : (
-          <div className={cn(
-            "rounded-2xl bg-card border border-border/50 shadow-sm transition-all dark:bg-background dark:border-transparent",
-            isFocused && "ring-1 ring-border/60 dark:ring-border/40"
-          )}>
+          <div className="rounded-2xl bg-card transition-all dark:bg-background">
             <div className="flex items-center gap-2 px-2 sm:px-3 h-12">
               <span className={cn(
                 "text-[11px] sm:text-xs truncate max-w-[90px] sm:max-w-[110px] text-right",
@@ -184,7 +181,7 @@ export default function ProductSearchInputPDV({
             </div>
 
             {isFocused && (
-                <div className="border-t border-border/50 dark:border-border/40 max-h-72 overflow-y-auto bg-card dark:bg-background">
+                <div className="max-h-72 overflow-y-auto bg-card dark:bg-background">
                 {visibleProducts.length > 0 ? (
                   visibleProducts.map(produto => (
                     <button
@@ -192,7 +189,7 @@ export default function ProductSearchInputPDV({
                       type="button"
                       tabIndex={0}
                       onMouseDown={(e) => { e.preventDefault(); handleSelect(produto.id, getProdutoLabel(produto)); }}
-                      className="w-full px-3 sm:px-4 py-2.5 text-left text-xs sm:text-sm text-foreground hover:bg-muted/55 dark:hover:bg-muted/40 border-b border-border/35 dark:border-border/40 last:border-0"
+                      className="w-full px-3 sm:px-4 py-2.5 text-left text-xs sm:text-sm text-foreground hover:bg-muted/55 dark:hover:bg-muted/40"
                     >
                       {getProdutoLabel(produto)}
                     </button>

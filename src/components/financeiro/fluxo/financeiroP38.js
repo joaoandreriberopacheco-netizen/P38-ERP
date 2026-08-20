@@ -15,12 +15,12 @@ export const P38_CHIP_INACTIVE =
 export const P38_FIELD_SURFACE = 'p38-field-surface border-0 shadow-none';
 /** Campo de busca — inclui h-11 fixo; não usar em KPIs/listas. */
 export const P38_SEARCH = 'p38-search-field border-0 shadow-none focus-visible:ring-1 focus-visible:ring-border/60';
-/** Busca com contraste no modo claro (card branco + borda); P38 no escuro. */
+/** Busca com contraste no modo claro (card branco, sem borda); P38 no escuro. */
 export const P38_SEARCH_SURFACE =
-  'rounded-xl border border-border/55 bg-card shadow-sm dark:border-0 dark:shadow-none p38-field-surface';
+  'rounded-xl border-0 shadow-none bg-card dark:bg-transparent p38-field-surface';
 /** Painel de resultados tipo lista suspensa. */
 export const P38_DROPDOWN_PANEL =
-  'border-t border-border/50 dark:border-border/40 bg-card dark:bg-background';
+  'bg-card dark:bg-background';
 export const P38_POPOVER =
   'border border-border/40 dark:border-white/10 shadow-xl rounded-2xl bg-card dark:bg-[#2d333b]';
 export const P38_KPI_SHELL =
