@@ -3,16 +3,18 @@ import { fetchAnexosPorPedidos, coletarPedidoIdsParaRelatorio } from '@/lib/fetc
 import { dataHoje } from '@/components/utils/dateUtils';
 import { normalizeItemCompraParaExibicao, custoApresentacaoParaFator1 } from '@/lib/productUnits';
 import { base44 } from '@/api/base44Client';
+import { gerarConsultaComprasHtmlPdf } from '@/lib/consultaComprasHtmlExport';
 
 const VERSOES_RELATORIO_COM_ANEXOS = new Set(['expandida_com_anexos', 'expandida_com_anexos_a4']);
+const VERSOES_HTML_CONSULTA = new Set(['expandida_mobile', 'expandida_mobile_claro']);
 
 export const COMPRAS_RELATORIOS = [
   { version: 'expandida', label: 'PDF expandido', icon: 'spreadsheet' },
   { version: 'expandida_com_anexos', label: 'PDF mobile consulta + anexos', icon: 'files', title: 'Visual da consulta + comprovantes embutidos por pedido' },
   { version: 'expandida_com_anexos_a4', label: 'PDF completo A4 (minuta + anexos)', icon: 'spreadsheet', title: 'Minuta enxuta A4 com tabela de itens + comprovantes embutidos por pedido' },
   { version: 'expandida_enxuta', label: 'PDF enxuto', icon: 'list' },
-  { version: 'expandida_mobile', label: 'PDF mobile (consulta)', icon: 'smartphone', title: 'Visual da consulta — DIN 1451, largura celular, custos por item' },
-  { version: 'expandida_mobile_claro', label: 'PDF mobile consulta', icon: 'smartphone', title: 'Consulta + custos (Comp., Custo, Venda, Mk) por linha' },
+  { version: 'expandida_mobile', label: 'PDF mobile (consulta)', icon: 'smartphone', title: 'Visual da consulta (HTML) — largura celular, custos por item' },
+  { version: 'expandida_mobile_claro', label: 'PDF mobile consulta', icon: 'smartphone', title: 'Consulta clara (HTML) + custos (Comp., Custo, Venda, Mk) por linha' },
 ];
 
 function normalizarItemRelatorio(item, produtosMap = {}) {
@@ -135,7 +137,45 @@ export async function gerarComprasRelatorioPdf({
   filtrosDesc = 'Pedidos filtrados na tela',
   kpis = {},
   onProgress,
+  produtosMap: produtosMapInput = {},
+  groupBy = 'eta_transportadora',
+  sortOrder = 'asc',
 }) {
+  if (VERSOES_HTML_CONSULTA.has(version)) {
+    onProgress?.('Carregando produtos...');
+    const ids = coletarProdutoIds([pedidos, grupos]);
+    const produtosMap = { ...produtosMapInput };
+    const missingIds = ids.filter((id) => !produtosMap[id]);
+    if (missingIds.length > 0) {
+      try {
+        const rows = await base44.entities.Produto.filter({ id: missingIds });
+        (rows || []).forEach((p) => {
+          if (p?.id) produtosMap[p.id] = p;
+        });
+      } catch {
+        const chunkSize = 25;
+        for (let i = 0; i < missingIds.length; i += chunkSize) {
+          const slice = missingIds.slice(i, i + chunkSize);
+          const batch = await Promise.all(slice.map((id) => base44.entities.Produto.get(id).catch(() => null)));
+          batch.filter(Boolean).forEach((p) => {
+            produtosMap[p.id] = p;
+          });
+        }
+      }
+    }
+
+    await gerarConsultaComprasHtmlPdf({
+      version,
+      pedidos,
+      filtrosDesc,
+      produtosMap,
+      groupBy,
+      sortOrder,
+      onProgress,
+    });
+    return;
+  }
+
   onProgress?.('Carregando produtos...');
   const ids = coletarProdutoIds([pedidos, grupos]);
   const produtosMap = {};

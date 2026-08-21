@@ -1021,6 +1021,9 @@ export default function PedidosCompraPage() {
             <ComprasRelatoriosMenu
               pedidos={activeView === 'consulta' ? pedidosConsulta : filtrados}
               grupos={activeView === 'consulta' ? gruposConsultaRelatorio : grupos}
+              produtosMap={produtosMap}
+              groupBy={groupBy}
+              sortOrder={sortOrder}
               filtrosDesc={`Busca: ${search || 'todas'} · Status: ${statusSel.join(', ') || 'todos'} · Tags: ${tagsSel.length || 0} · Período: ${dataInicial || '-'} até ${dataFinal || '-'} · ETA: ${etaFiltroModo || 'todos'}${etaFiltroModo === 'antes' || etaFiltroModo === 'depois' ? ` (${etaData || '-'})` : ''}${etaFiltroModo === 'entre' || etaFiltroModo === 'personalizado' ? ` (${etaInicial || '-'} até ${etaFinal || '-'})` : ''}`}
               kpis={{
                 totalPedidos: filtrados.length,
