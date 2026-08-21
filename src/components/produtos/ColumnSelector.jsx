@@ -5,6 +5,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { ArrowDown, ArrowUp, Columns, Package, DollarSign, Truck, Settings, RotateCcw, BarChart3 } from 'lucide-react';
 import { DEFAULT_CATALOG_PRODUTO_COLUMNS } from '@/lib/catalogProdutoColumnsStorage';
+import { cn } from '@/components/utils';
+import { P38_CHIP_ACTIVE, PRODUTOS_DROPDOWN_ITEM } from '@/lib/produtosP38Theme';
 
 export default function ColumnSelector({ visibleColumns, onColumnsChange, open, onClose }) {
   // Ensure visibleColumns is always an array
@@ -218,7 +220,7 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
                         setTempColumns(prev => [...new Set([...prev, ...allColumns])]);
                       }
                     }}
-                    className="h-7 text-xs dark:text-foreground/90 dark:hover:bg-primary/90"
+                    className={cn('h-7 text-xs hover:bg-muted/60', PRODUTOS_DROPDOWN_ITEM)}
                   >
                     {allSelected ? 'Desmarcar todos' : 'Marcar todos'}
                   </Button>
@@ -283,13 +285,13 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
           <Button
             variant="outline"
             onClick={onClose}
-            className="dark:bg-muted dark:text-foreground dark:border-border/40 dark:hover:bg-primary/90"
+            className={cn('hover:bg-muted/60 dark:hover:bg-muted', PRODUTOS_DROPDOWN_ITEM)}
           >
             Cancelar
           </Button>
           <Button
             onClick={handleSave}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:hover:bg-muted/400 text-white"
+            className={cn(P38_CHIP_ACTIVE, 'hover:opacity-90')}
           >
             Aplicar
           </Button>
