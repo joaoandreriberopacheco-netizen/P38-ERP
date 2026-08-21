@@ -9,7 +9,7 @@ const VERSOES_RELATORIO_COM_ANEXOS = new Set(['expandida_com_anexos', 'expandida
 export const COMPRAS_RELATORIOS = [
   { version: 'expandida', label: 'PDF expandido', icon: 'spreadsheet' },
   { version: 'expandida_com_anexos', label: 'PDF mobile consulta + anexos', icon: 'files', title: 'Visual da consulta + comprovantes embutidos por pedido' },
-  { version: 'expandida_com_anexos_a4', label: 'PDF completo A4 (minuta + anexos)', icon: 'spreadsheet', title: 'Minuta enxuta A4 com tabela de itens + comprovantes embutidos por pedido' },
+  { version: 'expandida_com_anexos_a4', label: 'PDF completo A4 (minuta + anexos)', icon: 'spreadsheet', title: 'Minuta A4 por pedido (consulta + enxuto) + comprovantes embutidos' },
   { version: 'expandida_enxuta', label: 'PDF enxuto', icon: 'list' },
   { version: 'expandida_mobile', label: 'PDF mobile (consulta)', icon: 'smartphone', title: 'Visual da consulta — DIN 1451, largura celular, custos por item' },
   { version: 'expandida_mobile_claro', label: 'PDF mobile consulta', icon: 'smartphone', title: 'Consulta + custos (Comp., Custo, Venda, Mk) por linha' },
