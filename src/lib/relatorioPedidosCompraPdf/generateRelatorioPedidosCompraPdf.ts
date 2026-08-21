@@ -1062,6 +1062,37 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       doc.line(x0, y0, x1, y1);
     };
 
+    /** Recuos e border-l — espelha CONSULTA_HIER em ConsultaComprasPedidos. */
+    const CONSULTA_HIER = {
+      l1Border: 1.0,
+      l1Pad: 2.2,
+      l2Border: 1.0,
+      l2Pad: 1.8,
+      l1Line: [190, 190, 190],
+      l2Line: [210, 210, 210],
+    };
+    const strokeConsultaHierarchyVert = (x, y0, y1, level = 'l1') => {
+      if (y1 <= y0 + 0.4) return;
+      doc.setDrawColor(...(level === 'l2' ? CONSULTA_HIER.l2Line : CONSULTA_HIER.l1Line));
+      doc.setLineWidth(MOBILE_LINE_W);
+      doc.line(x, y0, x, y1);
+    };
+    const withMobileContentScope = (contentM, contentCW, fn) => {
+      const m0 = M;
+      const tm0 = TM;
+      const cw0 = CW;
+      M = contentM;
+      TM = contentM;
+      CW = contentCW;
+      syncLayoutWidths();
+      const result = fn();
+      M = m0;
+      TM = tm0;
+      CW = cw0;
+      syncLayoutWidths();
+      return result;
+    };
+
     let y = isAnexosMobile ? 16 : (includeAnexos ? RELATORIO_COMPLETO_CHROME.topContentY : 16);
     const MOBILE_BLOCO_RESPIRO = 4;
     /** Metadados do cabeçalho geral (página 1) — distinto dos cabeçalhos por pedido. */
@@ -1578,23 +1609,23 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         };
       }
       if (layout === 'narrow_consulta') {
-        const itemMl = M + 12;
-        const lineX = M + 10;
-        const qtdColRight = M + 9;
+        const itemMl = M + 2.5;
+        const lineX = M + 0.8;
+        const qtdColRight = M + 7.5;
         return {
           layout: 'narrow_consulta',
           itemMl,
           lineX,
           qtdColRight,
-          nomeMaxW: M + CW - itemMl - 2,
+          nomeMaxW: M + CW - itemMl - 1,
           contentRight: M + CW,
-          vs: 1.12,
+          vs: 1.1,
           fontScale: 1,
-          lineWidth: 0.35,
+          lineWidth: 0.3,
           nomeFontSize: MOBILE_FONT.itemNome,
           detailFontSize: MOBILE_FONT.detail,
-          qtdFontSize: 6.6,
-          unFontSize: 5.4,
+          qtdFontSize: 6.4,
+          unFontSize: 5.2,
           ink: true,
           accentLine: true,
         };
@@ -1756,11 +1787,11 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       if (layout === 'narrow_consulta' && cfg.accentLine) {
         const accent = COMPRAS_PDF_ACCENT[mobileItemAccentKey] || COMPRAS_PDF_ACCENT.muted;
         doc.setDrawColor(...accent.line);
-        doc.setLineWidth(0.35);
+        doc.setLineWidth(0.3);
         doc.line(cfg.lineX, y0, cfg.lineX, y0 + rowBlockH);
         doc.setFillColor(...accent.dot);
-        doc.circle(cfg.lineX + 0.45, branchY, 0.45, 'F');
-        strokeMobileLine(cfg.qtdColRight + 0.8, y0, cfg.qtdColRight + 0.8, y0 + rowBlockH);
+        doc.circle(cfg.lineX + 0.35, branchY, 0.4, 'F');
+        strokeMobileLine(cfg.qtdColRight + 0.6, y0, cfg.qtdColRight + 0.6, y0 + rowBlockH);
       } else if (isEnxutoRow) {
         strokeEnxutoLine(cfg.lineX, y0, cfg.lineX, y0 + rowBlockH);
         strokeEnxutoLine(cfg.lineX, branchY, cfg.lineX + (cfg.branchLen ?? 2.4), branchY);
@@ -2138,6 +2169,12 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
     // ════════════════════════════════════════════════════════════════════════
 
     const drawMobileCardConsultaEmbarques = (pedido) => {
+      const rootM = M;
+      const rootRight = rootM + CW;
+      const l1BorderX = rootM + CONSULTA_HIER.l1Border;
+      const l1ContentM = l1BorderX + CONSULTA_HIER.l1Pad;
+      const l1ContentCW = rootRight - l1ContentM;
+
       const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
       const statusRelatorio = normalizarStatusRelatorio(pedido._display_status || pedido.status);
       const accentKey = comprasAccentFromDisplayStatusPdf(statusRelatorio);
@@ -2169,21 +2206,21 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(MOBILE_FONT.meta);
-      const metaLines = doc.splitTextToSize(safe(metaTexto), CW - 2).slice(0, 3);
+      const metaLines = doc.splitTextToSize(safe(metaTexto), l1ContentCW - 1).slice(0, 3);
       const metaLineStep = 3;
 
       const codigoRaw = safe(getPedidoNumeroRelatorio(pedido)).toUpperCase();
-      const codigoLinhas = doc.splitTextToSize(codigoRaw, CW - 2).slice(0, 2);
+      const codigoLinhas = doc.splitTextToSize(codigoRaw, l1ContentCW - 1).slice(0, 2);
       const codigoLineStep = 3.2;
-      const fornLines = doc.splitTextToSize(getFornecedorRelatorio(pedido), CW - 4).slice(0, 3);
+      const fornLines = doc.splitTextToSize(getFornecedorRelatorio(pedido), l1ContentCW - 1).slice(0, 3);
       const fornLineStep = 3.2;
-      const textoPedidoLines = textoPedido ? doc.splitTextToSize(textoPedido, CW - 4).slice(0, 10) : [];
+      const textoPedidoLines = textoPedido ? doc.splitTextToSize(textoPedido, l1ContentCW - 1).slice(0, 10) : [];
       const textoLineStep = 3;
       const progH = 2.8;
       const chipRowH = 4.8;
 
       const headerH =
-        2
+        2.5
         + codigoLinhas.length * codigoLineStep
         + 1
         + fornLines.length * fornLineStep
@@ -2192,92 +2229,108 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         + metaLines.length * metaLineStep
         + 0.8
         + progH
-        + (textoPedidoLines.length > 0 ? 2.5 + textoPedidoLines.length * textoLineStep : 0)
-        + 1;
+        + (textoPedidoLines.length > 0 ? 2.5 + textoPedidoLines.length * textoLineStep : 0);
 
       const itemLayout = 'narrow_consulta';
-      const minPrimeiroItemH = itens.length > 0 ? computeExpandedItemRowH(pedido, itens[0], itemLayout, 0) : 0;
+      const minPrimeiroItemH = itens.length > 0
+        ? withMobileContentScope(
+          l1ContentM + CONSULTA_HIER.l2Border + CONSULTA_HIER.l2Pad,
+          rootRight - (l1ContentM + CONSULTA_HIER.l2Border + CONSULTA_HIER.l2Pad),
+          () => computeExpandedItemRowH(pedido, itens[0], itemLayout, 0),
+        )
+        : 0;
       ensureSpace(headerH + minPrimeiroItemH + 14);
 
       const blockTop = y;
-      strokeMobileLine(M, blockTop, M + CW, blockTop);
 
-      let cy = blockTop + 2;
-      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(MOBILE_FONT.title);
-      doc.setTextColor(...MOBILE_INK.black);
-      codigoLinhas.forEach((line, ci) => {
-        doc.text(line, M + 0.5, cy + ci * codigoLineStep);
-      });
-      cy += codigoLinhas.length * codigoLineStep + 1;
+      withMobileContentScope(l1ContentM, l1ContentCW, () => {
+        let cy = blockTop + 2.5;
+        doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+        doc.setFontSize(MOBILE_FONT.title);
+        doc.setTextColor(...MOBILE_INK.black);
+        codigoLinhas.forEach((line, ci) => {
+          doc.text(line, 0.5, cy + ci * codigoLineStep);
+        });
+        cy += codigoLinhas.length * codigoLineStep + 1;
 
-      doc.setFontSize(MOBILE_FONT.subtitle);
-      doc.setTextColor(...MOBILE_INK.meta);
-      fornLines.forEach((line, fl) => {
-        doc.text(line, M + 0.5, cy + fl * fornLineStep);
-      });
-      cy += fornLines.length * fornLineStep + 1.2;
+        doc.setFontSize(MOBILE_FONT.subtitle);
+        doc.setTextColor(...MOBILE_INK.meta);
+        fornLines.forEach((line, fl) => {
+          doc.text(line, 0.5, cy + fl * fornLineStep);
+        });
+        cy += fornLines.length * fornLineStep + 1.2;
 
-      const metaBaseline = cy + 3;
-      drawComprasStatusChipPdf(M + 0.5, metaBaseline, pedido._display_status || pedido.status);
-      doc.setFontSize(MOBILE_FONT.valor);
-      doc.setTextColor(...MOBILE_INK.black);
-      doc.text(valorHeader, M + CW, metaBaseline, { align: 'right' });
-      cy += chipRowH;
+        const metaBaseline = cy + 3;
+        drawComprasStatusChipPdf(0.5, metaBaseline, pedido._display_status || pedido.status);
+        doc.setFontSize(MOBILE_FONT.valor);
+        doc.setTextColor(...MOBILE_INK.black);
+        doc.text(valorHeader, CW, metaBaseline, { align: 'right' });
+        cy += chipRowH;
 
-      doc.setFontSize(MOBILE_FONT.meta);
-      doc.setTextColor(...MOBILE_INK.meta);
-      metaLines.forEach((line, ml) => {
-        doc.text(line, M + 0.5, cy + ml * metaLineStep);
-      });
-      cy += metaLines.length * metaLineStep + 0.8;
-
-      drawProgressBar(pedido._display_status || pedido.status, cy);
-      cy += progH;
-
-      if (textoPedidoLines.length > 0) {
-        cy += 0.8;
         doc.setFontSize(MOBILE_FONT.meta);
         doc.setTextColor(...MOBILE_INK.meta);
-        doc.text('Texto do pedido', M + 0.5, cy);
-        cy += 2.5;
-        doc.setFontSize(MOBILE_FONT.detail);
-        doc.setTextColor(...MOBILE_INK.body);
-        textoPedidoLines.forEach((line, tl) => {
-          doc.text(line, M + 0.5, cy + tl * textoLineStep);
+        metaLines.forEach((line, ml) => {
+          doc.text(line, 0.5, cy + ml * metaLineStep);
         });
-      }
+        cy += metaLines.length * metaLineStep + 0.8;
 
-      strokeMobileLine(M, blockTop + headerH, M + CW, blockTop + headerH);
-      y = blockTop + headerH + 0.5;
+        drawProgressBar(pedido._display_status || pedido.status, cy);
+        cy += progH;
+
+        if (textoPedidoLines.length > 0) {
+          cy += 0.8;
+          doc.setFontSize(MOBILE_FONT.meta);
+          doc.text('Texto do pedido', 0.5, cy);
+          cy += 2.5;
+          doc.setFontSize(MOBILE_FONT.detail);
+          doc.setTextColor(...MOBILE_INK.body);
+          textoPedidoLines.forEach((line, tl) => {
+            doc.text(line, 0.5, cy + tl * textoLineStep);
+          });
+        }
+      });
+
+      const headerBottom = blockTop + headerH;
+      strokeMobileLine(l1ContentM, headerBottom, rootRight, headerBottom);
+      y = headerBottom + 0.5;
 
       let totCusto = 0;
       let totVenda = 0;
       if (itens.length > 0) {
-        strokeMobileLine(M + 1.5, y, M + 1.5, y + 0.01);
-        itens.forEach((item, idx) => {
-          const rowH = computeExpandedItemRowH(pedido, item, itemLayout, y);
-          ensureSpace(rowH + 4);
-          const drawn = drawExpandedItemRowClean(pedido, item, itemLayout, y, idx);
-          totCusto += drawn.totCustoAdd;
-          totVenda += drawn.totVendaAdd;
-          y += drawn.rowBlockH;
+        const l2BorderX = l1ContentM + CONSULTA_HIER.l2Border;
+        const l2ContentM = l2BorderX + CONSULTA_HIER.l2Pad;
+        const l2ContentCW = rootRight - l2ContentM;
+        const itemsTop = y;
+
+        withMobileContentScope(l2ContentM, l2ContentCW, () => {
+          itens.forEach((item, idx) => {
+            const rowH = computeExpandedItemRowH(pedido, item, itemLayout, y);
+            ensureSpace(rowH + 4);
+            const drawn = drawExpandedItemRowClean(pedido, item, itemLayout, y, idx);
+            totCusto += drawn.totCustoAdd;
+            totVenda += drawn.totVendaAdd;
+            y += drawn.rowBlockH;
+          });
+
+          ensureSpace(10);
+          y += 1.5;
+          strokeMobileLine(0, y, CW, y);
+          y += 2.5;
+          doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+          doc.setFontSize(MOBILE_FONT.meta);
+          doc.setTextColor(...MOBILE_INK.meta);
+          doc.text(`Custo total (itens): ${moedaOuTraco(totCusto)}`, 0.5, y);
+          y += 3;
+          doc.text(`Venda ref. (itens): ${moeda(totVenda)}`, 0.5, y);
+          y += 3;
         });
 
-        ensureSpace(10);
-        y += 1.5;
-        strokeMobileLine(M + 1.5, y, M + CW, y);
-        y += 2.5;
-        doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-        doc.setFontSize(MOBILE_FONT.meta);
-        doc.setTextColor(...MOBILE_INK.meta);
-        doc.text(`Custo total (itens): ${moedaOuTraco(totCusto)}`, M + 1.5, y);
-        y += 3;
-        doc.text(`Venda ref. (itens): ${moeda(totVenda)}`, M + 1.5, y);
-        y += 3.5;
+        strokeConsultaHierarchyVert(l2BorderX, itemsTop, y, 'l2');
       }
 
-      y += 0.5;
+      strokeConsultaHierarchyVert(l1BorderX, blockTop, y, 'l1');
+      strokeMobileLine(rootM, y + 0.3, rootRight, y + 0.3);
+      y += 1.2;
     };
 
     // ════════════════════════════════════════════════════════════════════════
@@ -2788,44 +2841,43 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
     const renderGrupo = async (grupo) => {
       ensureSpace(14);
       if (isMobile) {
-        y += 0.5;
         const totalGrupo = (grupo.pedidos || []).reduce((a, p) => a + getValorRelatorio(p, produtosMap), 0);
         const hasStructured = grupo.groupDate != null && grupo.groupCarrier != null;
-        const headerH = hasStructured ? 8.5 : 5.5;
-        ensureSpace(headerH + 3);
+        const headerH = hasStructured ? 9 : 6;
+        ensureSpace(headerH + 6);
 
-        doc.setDrawColor(...MOBILE_INK.line);
-        doc.setLineWidth(0.12);
-        doc.line(M, y, M + CW, y);
-        y += 1.8;
+        strokeMobileLine(M, y, M + CW, y);
+        y += 2.2;
 
         if (hasStructured) {
           doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-          doc.setFontSize(7);
+          doc.setFontSize(MOBILE_FONT.title);
           doc.setTextColor(...MOBILE_INK.black);
-          doc.text(safe(grupo.groupDate), M + 1, y + 2.8);
-          doc.setFontSize(6.1);
+          doc.text(safe(grupo.groupDate), M + 0.5, y + 2.8);
+          doc.setFontSize(MOBILE_FONT.subtitle);
           doc.setTextColor(...MOBILE_INK.meta);
-          doc.text(safe(grupo.groupCarrier), M + 1, y + 6);
+          doc.text(safe(grupo.groupCarrier), M + 0.5, y + 6.2);
         } else {
           doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-          doc.setFontSize(6.8);
+          doc.setFontSize(MOBILE_FONT.title);
           doc.setTextColor(...MOBILE_INK.black);
-          doc.text(safe(String(grupo.label || '-')).toUpperCase(), M + 1, y + 3.5);
+          doc.text(safe(String(grupo.label || '-')).toUpperCase(), M + 0.5, y + 3.5);
         }
-        doc.setFontSize(7);
+        doc.setFontSize(MOBILE_FONT.valor);
         doc.setTextColor(...MOBILE_INK.black);
-        doc.text(moeda(totalGrupo), M + CW - 1, y + 3.5, { align: 'right' });
+        doc.text(moeda(totalGrupo), M + CW, y + 3.5, { align: 'right' });
         y += headerH;
 
-        doc.setDrawColor(...MOBILE_INK.line);
-        doc.setLineWidth(0.15);
-        doc.line(M + 1.5, y, M + 1.5, y + 0.01);
+        strokeMobileLine(M, y, M + CW, y);
+        y += 1.2;
 
+        const l1BorderX = M + CONSULTA_HIER.l1Border;
+        const l1StartY = y;
         for (const pedido of grupo.pedidos || []) {
           await renderPedidoComAnexos(pedido);
         }
-        y += 0.5;
+        strokeConsultaHierarchyVert(l1BorderX, l1StartY, y, 'l1');
+        y += 0.8;
         return;
       } else if (isEnxuta) {
         y += 5;
