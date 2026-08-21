@@ -23,7 +23,7 @@ import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
 import { hydrateEmbarquesFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 import { fetchPedidosCompraGestaoInicial } from '@/lib/fetchPedidosCompraGestao';
 import { carregarProdutosMap } from '@/lib/embarqueVitrineHelpers';
-import { calcularPercentuaisLogistica } from '@/lib/embarqueLogisticaHelpers';
+import { calcularPercentuaisLogistica, embarqueRecepcaoDocumentalCompleta, embarqueTemSaldoPendente } from '@/lib/embarqueLogisticaHelpers';
 import {
   buildEmbarqueVirtualNecessidade,
   embarqueExcluidoDeNecessidade,
@@ -250,17 +250,23 @@ const getBorrowedStatus = (pedido, embarque, produtosMap = {}, embarquesDoPedido
   const ehNecessidade = isNecessidadeRenderizada(embarque);
   const precisaPreenchimento = ehNecessidade && !temDespachoVinculado && exibirNecessidade && quantidadePendente > 0;
 
+  if (embarqueRecepcaoDocumentalCompleta(embarque)) {
+    return 'Concluído';
+  }
+
   if (embarqueExcluidoDeNecessidade(pedido, embarque)) {
-    if (temDespachoVinculado || temItensAssociados) return 'Despachado';
+    if (temDespachoVinculado || temItensAssociados) {
+      return embarqueTemSaldoPendente(embarque) ? 'Despachado' : 'Concluído';
+    }
     return 'Aguardando';
   }
 
   if (statusRecebimento === 'Recebido OK' || statusRecebimento === 'Com Divergência' || embarque.status === 'Concluído') {
-    return 'Concluído';
+    return embarqueTemSaldoPendente(embarque) ? 'Despachado' : 'Concluído';
   }
 
   if (statusRecebimento === 'Recebido Parcial') {
-    return 'Despachado';
+    return embarqueTemSaldoPendente(embarque) ? 'Despachado' : 'Concluído';
   }
 
   if (ehNecessidade && !temDespachoVinculado) {
@@ -476,12 +482,17 @@ function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
 
     let statusRecebimentoReal = 'Nenhum';
     if (embarquesDoPedido.length > 0) {
-      const recebimentos = embarquesDoPedido.map((embarque) => embarque.status_recebimento).filter(Boolean);
+      const recebimentos = embarquesDoPedido.map((embarque) => {
+        if (embarqueRecepcaoDocumentalCompleta(embarque)) return 'Recebido OK';
+        return embarque.status_recebimento;
+      }).filter(Boolean);
       if (recebimentos.some((status) => status === 'Com Divergência')) statusRecebimentoReal = 'Concluído com Divergência';
       else if (recebimentos.length > 0 && recebimentos.every((status) => status === 'Recebido OK')) statusRecebimentoReal = 'Concluído OK';
       else if (recebimentos.some((status) => status === 'Recebido Parcial')) statusRecebimentoReal = 'Recebido Parcial';
       else statusRecebimentoReal = 'Pendente';
     }
+
+    const percentuaisLogistica = calcularPercentuaisLogistica(pedido, embarquesDoPedido);
 
     let statusEmbarqueReal = 'Nenhum';
     if (embarquesDoPedido.length > 0) {
@@ -493,13 +504,15 @@ function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
       _embarques: embarquesDoPedido,
       _embarque_principal: ultimoEmbarque,
       percentual_valor_embarcado: percentualReal,
+      percentual_concluido: percentuaisLogistica.concluido,
+      percentual_despachado: percentuaisLogistica.despachado,
       status_embarque: statusEmbarqueReal,
       status_recebimento_geral: statusRecebimentoReal,
       data_prevista_entrega: ultimoEmbarque?.eta ? String(ultimoEmbarque.eta).slice(0, 10) : pedido.data_prevista_entrega,
     };
   });
 
-  const cardsDeEmbarque = pcs.flatMap((pedido) => {
+  const cardsDeEmbarque = pedidosComResumoReal.flatMap((pedido) => {
     const embarquesDoPedido = (embarquesPorPedido[pedido.id] || []).slice()
       .sort((a, b) => new Date(a.created_date || 0) - new Date(b.created_date || 0));
 

@@ -28,6 +28,40 @@ function qtyRecebidaBaseLinha(item = {}) {
   return resolveEmbarqueQuantidadeBase(item, 'recebida');
 }
 
+/** Mínimo em unidade base (M², UN fator 1…) para contar saldo pendente real. */
+export const MIN_SALDO_PENDENTE_BASE = 0.009;
+
+/** Saldo pendente do split em base — comparação correcta entre PAC/CX/M². */
+export function resolveSaldoPendenteEmbarqueBase(linha = {}) {
+  const emb = qtyEmbarcadaBaseLinha(linha);
+  const rec = qtyRecebidaBaseLinha(linha);
+  return roundToTwoDecimals(Math.max(0, emb - rec));
+}
+
+export function embarqueTemSaldoPendente(embarque, minBase = MIN_SALDO_PENDENTE_BASE) {
+  return getEmbarqueItensLinhas(embarque).some(
+    (linha) => resolveSaldoPendenteEmbarqueBase(linha) > minBase,
+  );
+}
+
+/**
+ * Recepção concluída neste split (inclui recepção em pacotes com status ainda Pendente).
+ * Usa unidade base; exibição continua em vitrine na UI.
+ */
+export function embarqueRecepcaoDocumentalCompleta(embarque) {
+  const linhas = getEmbarqueItensLinhas(embarque);
+  if (!linhas.length) return false;
+  if (embarqueTemSaldoPendente(embarque)) return false;
+
+  const status = String(embarque.status_recebimento || embarque.status_recebimento_embarque || '').trim();
+  if (status === 'Recebido OK' || embarque.status === 'Concluído') return true;
+  if (status === 'Com Divergência' || status === 'Recebido Parcial') return true;
+
+  const temRecebido = linhas.some((l) => qtyRecebidaBaseLinha(l) > MIN_SALDO_PENDENTE_BASE);
+  const temEmbarcado = linhas.some((l) => qtyEmbarcadaBaseLinha(l) > MIN_SALDO_PENDENTE_BASE);
+  return temRecebido && temEmbarcado;
+}
+
 /**
  * Percentuais de despacho/conclusão a partir dos embarques reais (entidade Embarque),
  * alinhado à lógica de `integrarPedidosEmbarques` mas sem depender do snapshot no PedidoCompra.
