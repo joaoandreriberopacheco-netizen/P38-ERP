@@ -6,13 +6,32 @@ import { base44 } from '@/api/base44Client';
 
 const VERSOES_RELATORIO_COM_ANEXOS = new Set(['expandida_com_anexos', 'expandida_com_anexos_a4']);
 
+/** Quatro formatos canónicos — todos minuta enxuto (embarque → pedido → custos). */
 export const COMPRAS_RELATORIOS = [
-  { version: 'expandida', label: 'PDF expandido', icon: 'spreadsheet' },
-  { version: 'expandida_com_anexos', label: 'PDF mobile consulta + anexos', icon: 'files', title: 'Visual da consulta + comprovantes embutidos por pedido' },
-  { version: 'expandida_com_anexos_a4', label: 'PDF completo A4 (minuta + anexos)', icon: 'spreadsheet', title: 'Minuta A4 por pedido (consulta + enxuto) + comprovantes embutidos' },
-  { version: 'expandida_enxuta', label: 'PDF enxuto', icon: 'list' },
-  { version: 'expandida_mobile', label: 'PDF mobile (consulta)', icon: 'smartphone', title: 'Visual da consulta — DIN 1451, largura celular, custos por item' },
-  { version: 'expandida_mobile_claro', label: 'PDF mobile consulta', icon: 'smartphone', title: 'Consulta + custos (Comp., Custo, Venda, Mk) por linha' },
+  {
+    version: 'expandida_enxuta',
+    label: 'PDF consulta (desktop)',
+    icon: 'spreadsheet',
+    title: 'Minuta A4 — embarque, pedido, custos por item (Comp., Frete, Avar., Custo, Venda)',
+  },
+  {
+    version: 'expandida_mobile',
+    label: 'PDF consulta (mobile)',
+    icon: 'smartphone',
+    title: 'Minuta mobile — mesmo visual da consulta, largura celular',
+  },
+  {
+    version: 'expandida_com_anexos_a4',
+    label: 'PDF anexos (desktop)',
+    icon: 'files',
+    title: 'Minuta A4 + comprovantes embutidos por pedido',
+  },
+  {
+    version: 'expandida_com_anexos',
+    label: 'PDF anexos (mobile)',
+    icon: 'files',
+    title: 'Minuta mobile + comprovantes embutidos por pedido',
+  },
 ];
 
 function normalizarItemRelatorio(item, produtosMap = {}) {
@@ -167,8 +186,8 @@ export async function gerarComprasRelatorioPdf({
     anexosPorPedido = await fetchAnexosPorPedidos(pedidoIds);
     onProgress?.(
       version === 'expandida_com_anexos_a4'
-        ? 'Montando PDF A4 completo (minuta + anexos)...'
-        : 'Montando PDF mobile completo (minuta + anexos)...',
+        ? 'Montando PDF anexos desktop (minuta + comprovantes)...'
+        : 'Montando PDF anexos mobile (minuta + comprovantes)...',
     );
   }
 
