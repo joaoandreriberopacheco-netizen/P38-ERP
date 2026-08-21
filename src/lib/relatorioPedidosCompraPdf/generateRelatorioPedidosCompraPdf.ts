@@ -1612,18 +1612,23 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         const itemMl = M + 2.5;
         const lineX = M + 0.8;
         const qtdColRight = M + 7.5;
+        const totalColW = 16;
         return {
           layout: 'narrow_consulta',
           itemMl,
           lineX,
           qtdColRight,
-          nomeMaxW: M + CW - itemMl - 1,
+          totalColW,
+          totalOnRight: true,
+          nomeMaxW: M + CW - itemMl - totalColW - 1.5,
           contentRight: M + CW,
           vs: 1.1,
           fontScale: 1,
-          lineWidth: 0.3,
+          lineWidth: MOBILE_LINE_W,
+          accentLineWidth: MOBILE_LINE_W,
           nomeFontSize: MOBILE_FONT.itemNome,
           detailFontSize: MOBILE_FONT.detail,
+          totalFontSize: MOBILE_FONT.valor,
           qtdFontSize: 6.4,
           unFontSize: 5.2,
           ink: true,
@@ -1676,6 +1681,13 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         return {
           linha1: `Total ${moedaOuTraco(met.totalLinha)}   ${un}   Comp. ${moedaOuTraco(met.vlrUnit)}   Custo ${moedaOuTraco(met.custoUnit)}${equivEnx}`,
           linha2: `Venda ${moedaOuTraco(met.vendaUnit)}   Mk ${percentualOuTraco(met.markup)}`,
+          warning: met.warningText || '',
+        };
+      }
+      if (layout === 'narrow_consulta') {
+        return {
+          linha1: `${un} · Comp. ${moedaOuTraco(met.vlrUnit)} · Custo ${moedaOuTraco(met.custoUnit)}${equivSuf}`,
+          linha2: `Venda ${moedaOuTraco(met.vendaUnit)} · Mk ${percentualOuTraco(met.markup)}`,
           warning: met.warningText || '',
         };
       }
@@ -1786,12 +1798,13 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
 
       if (layout === 'narrow_consulta' && cfg.accentLine) {
         const accent = COMPRAS_PDF_ACCENT[mobileItemAccentKey] || COMPRAS_PDF_ACCENT.muted;
+        const accentW = cfg.accentLineWidth ?? MOBILE_LINE_W;
         doc.setDrawColor(...accent.line);
-        doc.setLineWidth(0.3);
+        doc.setLineWidth(accentW);
         doc.line(cfg.lineX, y0, cfg.lineX, y0 + rowBlockH);
         doc.setFillColor(...accent.dot);
-        doc.circle(cfg.lineX + 0.35, branchY, 0.4, 'F');
-        strokeMobileLine(cfg.qtdColRight + 0.6, y0, cfg.qtdColRight + 0.6, y0 + rowBlockH);
+        doc.circle(cfg.lineX + 0.25, branchY, 0.28, 'F');
+        strokeMobileLine(cfg.qtdColRight + 0.5, y0, cfg.qtdColRight + 0.5, y0 + rowBlockH);
       } else if (isEnxutoRow) {
         strokeEnxutoLine(cfg.lineX, y0, cfg.lineX, y0 + rowBlockH);
         strokeEnxutoLine(cfg.lineX, branchY, cfg.lineX + (cfg.branchLen ?? 2.4), branchY);
@@ -1824,6 +1837,13 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       nomeLinhas.forEach((line, li) => {
         doc.text(line, nomeX, nomeTop + li * nomeLineStep);
       });
+
+      if (layout === 'narrow_consulta' && cfg.totalOnRight) {
+        doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+        doc.setFontSize((cfg.totalFontSize ?? MOBILE_FONT.valor) * cfg.fontScale);
+        doc.setTextColor(...inkBlack);
+        doc.text(moeda(met.totalLinha), CW, nomeTop, { align: 'right' });
+      }
 
       if (usesColumnValueLayout(layout)) {
         const valoresY = measured.valoresY;
@@ -2216,7 +2236,6 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       const fornLineStep = 3.2;
       const textoPedidoLines = textoPedido ? doc.splitTextToSize(textoPedido, l1ContentCW - 1).slice(0, 10) : [];
       const textoLineStep = 3;
-      const progH = 2.8;
       const chipRowH = 4.8;
 
       const headerH =
@@ -2227,8 +2246,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         + 1.2
         + chipRowH
         + metaLines.length * metaLineStep
-        + 0.8
-        + progH
+        + 0.5
         + (textoPedidoLines.length > 0 ? 2.5 + textoPedidoLines.length * textoLineStep : 0);
 
       const itemLayout = 'narrow_consulta';
@@ -2272,10 +2290,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         metaLines.forEach((line, ml) => {
           doc.text(line, 0.5, cy + ml * metaLineStep);
         });
-        cy += metaLines.length * metaLineStep + 0.8;
-
-        drawProgressBar(pedido._display_status || pedido.status, cy);
-        cy += progH;
+        cy += metaLines.length * metaLineStep + 0.5;
 
         if (textoPedidoLines.length > 0) {
           cy += 0.8;
