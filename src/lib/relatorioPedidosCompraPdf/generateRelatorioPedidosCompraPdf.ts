@@ -244,6 +244,18 @@ const percentual = (valor = 0) =>
 const moedaOuTraco = (valor) => (Number.isFinite(Number(valor)) ? moeda(valor) : '--');
 const moedaSemSimboloOuTraco = (valor) => (Number.isFinite(Number(valor)) ? moedaSemSimbolo(valor) : '--');
 const percentualOuTraco = (valor) => (Number.isFinite(Number(valor)) ? percentual(valor) : '--');
+
+/** Preço unitário efetivo — espelha ConsultaProdutoRow.resolvePrecoUnitarioEfetivo. */
+const resolvePrecoUnitarioConsultaPdf = (item = {}, met = {}) => {
+  const qtd = Number(met.qtd) || 0;
+  const totalNum = Number(met.totalLinha);
+  if (qtd > 0 && Number.isFinite(totalNum)) {
+    return Math.round((Math.abs(totalNum) / qtd) * 100) / 100;
+  }
+  const preco = Number(item.preco_unitario) || Number(met.vlrUnit) || 0;
+  const desconto = Number(item.desconto_unitario) || 0;
+  return Math.round((preco - desconto) * 100) / 100;
+};
 const dataFmt = (valor) => {
   if (!valor) return '-';
   const d = new Date(valor);
@@ -1619,7 +1631,6 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         const qtdSepX = qtdColRight + 0.35;
         const itemMl = qtdSepX + 1.4;
         const nomeRight = totalColLeft - 0.9;
-        const detailMidX = itemMl + (nomeRight - itemMl) * 0.54;
         return {
           layout: 'narrow_consulta',
           itemMl,
@@ -1629,12 +1640,6 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
           totalColRight,
           totalColLeft,
           nomeRight,
-          compColX: itemMl,
-          custoColX: detailMidX,
-          vendaColX: itemMl,
-          mkColX: detailMidX,
-          totalOnRight: true,
-          totalOnDetailRow: true,
           nomeMaxW: Math.max(8, nomeRight - itemMl),
           contentRight,
           vs: 1.1,
@@ -1643,7 +1648,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
           accentLineWidth: MOBILE_LINE_W,
           nomeFontSize: MOBILE_FONT.itemNome,
           detailFontSize: MOBILE_FONT.detail,
-          totalFontSize: MOBILE_FONT.detail,
+          totalFontSize: MOBILE_FONT.valor,
           qtdFontSize: 6.4,
           unFontSize: 5.2,
           ink: true,
@@ -1700,15 +1705,9 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         };
       }
       if (layout === 'narrow_consulta') {
+        const precoEfetivo = resolvePrecoUnitarioConsultaPdf(item, met);
         return {
-          linha1: '',
-          linha2: '',
-          comp: moedaOuTraco(met.vlrUnit),
-          custo: moedaOuTraco(met.custoUnit),
-          venda: moedaOuTraco(met.vendaUnit),
-          mk: percentualOuTraco(met.markup),
-          un,
-          equivSuf,
+          valorLinha: `${String(un).toUpperCase()} ${moeda(precoEfetivo)} un.`,
           warning: met.warningText || '',
         };
       }
@@ -1742,15 +1741,9 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       if (layout === 'narrow_consulta') {
         const det = buildExpandedItemDetailText(layout, item, prod, met);
         const auxDetailStep = 2.85 * vs;
-        const gapNomeDetalhe = 2.0 * vs;
-        const detAux1 = lastNomeBaseline + gapNomeDetalhe;
-        const detAux2 = detAux1 + auxDetailStep;
-        let detEnd = detAux2 + auxDetailStep;
-        if (det.equivSuf) {
-          doc.setFontSize((cfg.detailFontSize ?? 5.65) * cfg.fontScale);
-          const equivLinhas = doc.splitTextToSize(det.equivSuf.trim(), cfg.nomeMaxW);
-          detEnd += equivLinhas.length * auxDetailStep;
-        }
+        const gapNomeValor = 2.0 * vs;
+        const valorLineY = lastNomeBaseline + gapNomeValor;
+        let detEnd = valorLineY + auxDetailStep;
         if (det.warning) {
           doc.setFontSize((cfg.detailFontSize ?? 5.65) * cfg.fontScale);
           const warnLinhas = doc.splitTextToSize(det.warning, cfg.nomeMaxW);
@@ -1766,11 +1759,10 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
           vs,
           nomeLineStep,
           auxDetailStep,
-          gapNomeDetalhe,
+          gapNomeValor,
           margemLinhaInferiorItem,
           nomeTop,
-          detAux1,
-          detAux2,
+          valorLineY,
         };
       }
 
@@ -1924,33 +1916,20 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
           });
         }
       } else if (layout === 'narrow_consulta') {
-        const { det, auxDetailStep, detAux1, detAux2 } = measured;
-        const detailFs = (cfg.detailFontSize ?? 5.65) * cfg.fontScale;
+        const { det, valorLineY } = measured;
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-        doc.setFontSize(detailFs);
+        doc.setFontSize((cfg.detailFontSize ?? 5.65) * cfg.fontScale);
         doc.setTextColor(...inkMeta);
-        doc.text(`Comp. ${det.comp}`, cfg.compColX, detAux1);
-        doc.text(`Custo ${det.custo}`, cfg.custoColX, detAux1);
-        doc.setFontSize((cfg.totalFontSize ?? MOBILE_FONT.detail) * cfg.fontScale);
+        doc.text(det.valorLinha, cfg.itemMl, valorLineY);
+        doc.setFontSize((cfg.totalFontSize ?? MOBILE_FONT.valor) * cfg.fontScale);
         doc.setTextColor(...inkBlack);
-        doc.text(moeda(met.totalLinha), cfg.totalColRight, detAux1, { align: 'right' });
-        doc.setFontSize(detailFs);
-        doc.setTextColor(...inkMeta);
-        doc.text(`Venda ${det.venda}`, cfg.vendaColX, detAux2);
-        doc.text(`Mk ${det.mk}`, cfg.mkColX, detAux2);
-        let extraY = detAux2 + auxDetailStep;
-        if (det.equivSuf) {
-          const equivLinhas = doc.splitTextToSize(det.equivSuf.trim(), cfg.nomeMaxW);
-          equivLinhas.forEach((line, ei) => {
-            doc.text(line, cfg.compColX, extraY + ei * auxDetailStep);
-          });
-          extraY += equivLinhas.length * auxDetailStep;
-        }
+        doc.text(moeda(met.totalLinha), cfg.totalColRight, valorLineY, { align: 'right' });
         if (det.warning) {
+          doc.setFontSize((cfg.detailFontSize ?? 5.65) * cfg.fontScale);
           doc.setTextColor(...inkMeta);
           const warnLinhas = doc.splitTextToSize(det.warning, cfg.nomeMaxW);
           warnLinhas.forEach((line, wi) => {
-            doc.text(line, cfg.compColX, extraY + wi * auxDetailStep);
+            doc.text(line, cfg.itemMl, valorLineY + 2.85 * vs + wi * 2.85 * vs);
           });
         }
       } else {
