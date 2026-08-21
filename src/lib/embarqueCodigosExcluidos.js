@@ -11,7 +11,6 @@ export const EMBARQUE_CODIGOS_EXCLUIDOS_OPERACIONAL = [
   '6DB-B2S',
   'EHJ-BM9',
   'G62-HUF',
-  'EXC-FQZ',
   'NXJ-53K',
 ];
 

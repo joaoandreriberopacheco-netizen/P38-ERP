@@ -11,7 +11,7 @@ import {
 } from '@/lib/embarqueLogisticaHelpers';
 import { isNecessidadeRenderizada } from '@/lib/pedidoCompraNecessidade';
 import { embarqueExcluidoOperacional } from '@/lib/embarqueCodigosExcluidos';
-import { calculateBaseQuantity, commercialQuantityFromBase, getItemCompraExibicaoVitrine } from '@/lib/productUnits';
+import { calculateBaseQuantity, commercialQuantityFromBase, getItemCompraExibicaoVitrine, normalizeUnitCode } from '@/lib/productUnits';
 
 const MIN_QTD_PENDENTE_CONSULTA = MIN_SALDO_PENDENTE_BASE;
 
@@ -66,6 +66,9 @@ function resolveQtyBasePedido(pedidoItem = {}, exibPedido = null) {
   return calculateBaseQuantity(qty, fator);
 }
 
+/** Quando comercial e base divergem (ex.: 214 CX vs 99 CX vitrine), preferir base. */
+const RATIO_DIVERGENCIA_USAR_BASE = 0.15;
+
 function resolveValorLinhaEmbarqueProporcional(
   pedidoItem = {},
   linhaMerged = null,
@@ -74,23 +77,43 @@ function resolveValorLinhaEmbarqueProporcional(
   produto = null,
 ) {
   const exibPedido = getItemCompraExibicaoVitrine(pedidoItem, produto);
+  const qtyBasePedido = resolveQtyBasePedido(pedidoItem, exibPedido);
+  const qtyBaseEmbarque = linhaMerged
+    ? resolveEmbarqueQuantidadeBase(linhaMerged, qtyKind)
+    : qtyBasePedido;
+  const ratioBase = qtyBasePedido > 0 && qtyBaseEmbarque > 0
+    ? qtyBaseEmbarque / qtyBasePedido
+    : null;
+
+  const unidadePedido = normalizeUnitCode(exibPedido?.unidade_medida || pedidoItem?.unidade_medida);
+  const unidadeEmbarque = linhaMerged
+    ? normalizeUnitCode(resolveEmbarqueLinhaUnidade(linhaMerged))
+    : unidadePedido;
+  const unidadesAlinhadas = unidadePedido === unidadeEmbarque;
+
   const qtyComPedido = Number(exibPedido?.quantidade) || Number(pedidoItem?.quantidade) || 0;
   const qtyComEmbarque = linhaMerged
     ? resolveEmbarqueQuantidadeComercial(linhaMerged, qtyKind)
     : qtyComPedido;
+  const ratioCom = unidadesAlinhadas && qtyComPedido > 0 && qtyComEmbarque > 0
+    ? qtyComEmbarque / qtyComPedido
+    : null;
 
-  if (qtyComPedido > 0 && qtyComEmbarque > 0) {
-    return roundToTwoDecimals((qtyComEmbarque / qtyComPedido) * lineTotalFull);
+  let ratio = null;
+  if (ratioBase != null && ratioCom != null) {
+    const maxRatio = Math.max(ratioBase, ratioCom, 0.001);
+    const diverge = Math.abs(ratioCom - ratioBase) / maxRatio;
+    ratio = diverge > RATIO_DIVERGENCIA_USAR_BASE ? ratioBase : ratioCom;
+  } else if (ratioBase != null) {
+    ratio = ratioBase;
+  } else if (ratioCom != null) {
+    ratio = ratioCom;
   }
 
-  const qtyBasePedido = resolveQtyBasePedido(pedidoItem, exibPedido) || 1;
-  const qtyBaseEmbarque = linhaMerged
-    ? resolveEmbarqueQuantidadeBase(linhaMerged, qtyKind)
-    : qtyBasePedido;
+  if (ratio == null) return lineTotalFull;
 
-  return qtyBasePedido > 0
-    ? roundToTwoDecimals((qtyBaseEmbarque / qtyBasePedido) * lineTotalFull)
-    : lineTotalFull;
+  const valor = roundToTwoDecimals(ratio * lineTotalFull);
+  return roundToTwoDecimals(Math.min(valor, lineTotalFull));
 }
 
 function buildLinhaConsultaItem(pedido, pedidoItem, sqlLine = null, produto = null, qtyKind = 'embarcada') {
@@ -258,7 +281,8 @@ export function calcValorEmbarqueCard(card = {}, produtosMap = {}) {
   const frete = Number(pedido?.valor_frete) || 0;
   const desconto = Number(pedido?.valor_desconto) || 0;
   const proporcao = valorItens / valorItensPedido;
-  return roundToTwoDecimals(valorItens + proporcao * (frete - desconto));
+  const valorCard = roundToTwoDecimals(valorItens + proporcao * (frete - desconto));
+  return roundToTwoDecimals(Math.min(valorCard, calcValorTotalPedidoCompra(pedido)));
 }
 
 /** @deprecated alias */
