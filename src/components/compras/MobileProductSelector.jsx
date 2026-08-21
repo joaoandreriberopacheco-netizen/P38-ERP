@@ -53,6 +53,40 @@ const SELECTOR_PANEL_CLASS = cn(
 const SELECTOR_FAB_CLASS =
   'fixed right-6 z-[70] flex h-14 w-14 items-center justify-center rounded-full p38-btn-primary shadow-lg transition-shadow hover:shadow-xl p38-bottom-fab1 desktop-layout:absolute desktop-layout:right-4 desktop-layout:bottom-4';
 
+/** Barra de busca — contraste sobre fundo branco no modo claro. */
+const CATALOG_SEARCH_FIELD = cn(
+  P38_SEARCH,
+  'h-12 border border-border/55 shadow-sm',
+  'focus-within:border-[#4a5240]/35 focus-within:ring-2 focus-within:ring-[#4a5240]/15',
+  'dark:border-white/10 dark:shadow-none dark:focus-within:border-[#a4ce33]/40 dark:focus-within:ring-[#a4ce33]/20',
+);
+
+/** Item destacado na navegação ↑↓ (lista desktop). */
+const CATALOG_LIST_ITEM_SELECTED =
+  'border-l-[#4a5240] bg-[#4a5240]/10 dark:border-l-[#a4ce33] dark:bg-[#a4ce33]/12';
+
+/** Card destacado na navegação ↑↓ (mobile). */
+const CATALOG_CARD_SELECTED = cn(
+  'ring-2 ring-[#4a5240]/55 dark:ring-[#a4ce33]/70',
+  'bg-[#4a5240]/10 dark:bg-[#a4ce33]/12 shadow-sm',
+);
+
+/** Scroll dentro do painel certo — scrollIntoView no desktop ia para o ancestor errado. */
+function scrollElementIntoScrollParent(scrollParent, element, { paddingTop = 0, paddingBottom = 0 } = {}) {
+  if (!scrollParent || !element) return;
+  const parentRect = scrollParent.getBoundingClientRect();
+  const elementRect = element.getBoundingClientRect();
+  const relativeTop = elementRect.top - parentRect.top + scrollParent.scrollTop;
+  const relativeBottom = relativeTop + elementRect.height;
+  const viewTop = scrollParent.scrollTop + paddingTop;
+  const viewBottom = scrollParent.scrollTop + scrollParent.clientHeight - paddingBottom;
+  if (relativeTop < viewTop) {
+    scrollParent.scrollTop = relativeTop - paddingTop;
+  } else if (relativeBottom > viewBottom) {
+    scrollParent.scrollTop = relativeBottom - scrollParent.clientHeight + paddingBottom;
+  }
+}
+
 export default function MobileProductSelector({ 
   items, 
   products, 
@@ -93,6 +127,9 @@ export default function MobileProductSelector({
   const descontoPctInputRef = React.useRef(null);
   const descontoValorInputRef = React.useRef(null);
   const catalogScrollRef = useRef(null);
+  const catalogStickyRef = useRef(null);
+  const catalogDropdownScrollRef = useRef(null);
+  const catalogDropdownStickyRef = useRef(null);
   const catalogItemRefs = useRef([]);
 
   // Auto-focus ao entrar na tela de edição
@@ -344,11 +381,23 @@ export default function MobileProductSelector({
   useEffect(() => {
     if (view !== 'catalog' || selectedIndex < 0 || filteredProducts.length === 0) return;
     catalogItemRefs.current = catalogItemRefs.current.slice(0, filteredProducts.length);
-    const scrollContainer = catalogScrollRef.current;
     const activeItem = catalogItemRefs.current[selectedIndex];
-    if (!scrollContainer || !activeItem) return;
-    activeItem.scrollIntoView({ block: 'nearest' });
-  }, [view, selectedIndex, filteredProducts]);
+    if (!activeItem) return;
+
+    const raf = requestAnimationFrame(() => {
+      const dropdown = catalogDropdownScrollRef.current;
+      if (dropdown?.getClientRects().length) {
+        const stickyH = catalogDropdownStickyRef.current?.offsetHeight ?? 0;
+        scrollElementIntoScrollParent(dropdown, activeItem, { paddingTop: stickyH, paddingBottom: 4 });
+        return;
+      }
+      const scrollRoot = catalogScrollRef.current;
+      if (!scrollRoot) return;
+      const stickyH = catalogStickyRef.current?.offsetHeight ?? 0;
+      scrollElementIntoScrollParent(scrollRoot, activeItem, { paddingTop: stickyH, paddingBottom: 8 });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [view, selectedIndex, filteredProducts, search]);
 
   if (view === 'discount-entry') {
     const numVal = parseFloat(discountInputVal.replace(',', '.')) || 0;
@@ -970,7 +1019,7 @@ export default function MobileProductSelector({
               />
             ) : (
             <>
-            <div className={cn('sticky top-0 z-10 p-4 pb-3 border-b border-border/40', P38_SEARCH_SURFACE, 'rounded-none')}>
+            <div ref={catalogStickyRef} className={cn('sticky top-0 z-10 p-4 pb-3 border-b border-border/40', P38_SEARCH_SURFACE, 'rounded-none bg-[hsl(var(--p38-search))] dark:bg-background/95')}>
               {/* Badge de desconto global ativo */}
               {descontoGlobalPct !== 0 && (
                 <button
@@ -983,7 +1032,7 @@ export default function MobileProductSelector({
                   {descontoGlobalPct > 0 ? 'Desconto' : 'Acréscimo'} global de {Math.abs(descontoGlobalPct)}% ativo — toque para alterar
                 </button>
               )}
-              <div className={cn('relative rounded-xl', P38_SEARCH, 'h-12 bg-card dark:bg-transparent')}>
+              <div className={cn('relative rounded-xl', CATALOG_SEARCH_FIELD)}>
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   placeholder="Buscar produto..."
@@ -1009,10 +1058,10 @@ export default function MobileProductSelector({
 
               {/* Desktop: lista suspensa (não cards) */}
               {search.trim() !== '' && (
-                <div className={cn('hidden desktop-layout:block -mx-4 mt-3 max-h-[min(24rem,50vh)] overflow-y-auto', P38_DROPDOWN_PANEL)}>
+                <div ref={catalogDropdownScrollRef} className={cn('hidden desktop-layout:block -mx-4 mt-3 max-h-[min(24rem,50vh)] overflow-y-auto', P38_DROPDOWN_PANEL)}>
                   {filteredProducts.length > 0 ? (
                     <>
-                      <div className="sticky top-0 z-[1] flex items-center justify-between bg-card px-4 py-2.5 dark:bg-background">
+                      <div ref={catalogDropdownStickyRef} className="sticky top-0 z-[1] flex items-center justify-between bg-card px-4 py-2.5 dark:bg-background">
                         <span className="text-[11px] font-medium uppercase tracking-wide text-foreground/70">
                           {filteredProducts.length} resultado{filteredProducts.length !== 1 ? 's' : ''}
                         </span>
@@ -1031,8 +1080,10 @@ export default function MobileProductSelector({
                             ref={(el) => { catalogItemRefs.current[idx] = el; }}
                             onClick={() => { if (!isLocked) handleSelectProduct(product); }}
                             className={cn(
-                              'flex w-full items-start gap-3 px-4 py-3 text-left transition-colors',
-                              isSelected ? 'bg-muted/55 dark:bg-muted/40' : 'hover:bg-muted/40 dark:hover:bg-muted/30',
+                              'flex w-full items-start gap-3 border-l-[3px] px-4 py-3 text-left transition-colors',
+                              isSelected
+                                ? CATALOG_LIST_ITEM_SELECTED
+                                : 'border-l-transparent hover:bg-muted/40 dark:hover:bg-muted/30',
                               inCart && !isSelected && 'bg-[#a4ce33]/8',
                               isLocked && 'pointer-events-none opacity-50',
                             )}
@@ -1109,7 +1160,7 @@ export default function MobileProductSelector({
                       className={cn(
                         'rounded-2xl p-5 cursor-pointer transition-all active:scale-[0.99]',
                         P38_FIELD_SURFACE,
-                        isSelected && 'ring-2 ring-[#a4ce33]/70 dark:ring-[#a4ce33]/50',
+                        isSelected && CATALOG_CARD_SELECTED,
                         inCart && !isSelected && 'ring-2 ring-[#a4ce33]/40 dark:ring-[#a4ce33]/30',
                         isLocked && 'opacity-50 pointer-events-none',
                       )}

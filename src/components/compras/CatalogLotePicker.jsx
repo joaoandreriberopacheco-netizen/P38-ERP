@@ -8,6 +8,7 @@ import {
   P38_CHIP_ACTIVE,
   P38_CHIP_INACTIVE,
   P38_FIELD_SURFACE,
+  P38_SEARCH,
   P38_SEARCH_SURFACE,
 } from '@/components/financeiro/fluxo/financeiroP38';
 import {
@@ -208,8 +209,14 @@ export default function CatalogLotePicker({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className={cn('shrink-0 space-y-3 p-4 pb-3 rounded-none', P38_SEARCH_SURFACE)}>
-        <div className={cn('relative rounded-xl bg-card dark:bg-transparent', P38_FIELD_SURFACE, 'border-0 shadow-none h-12')}>
+      <div className={cn('shrink-0 space-y-3 p-4 pb-3 rounded-none bg-[hsl(var(--p38-search))] dark:bg-background/95', P38_SEARCH_SURFACE)}>
+        <div className={cn(
+          'relative rounded-xl h-12',
+          P38_SEARCH,
+          'border border-border/55 shadow-sm',
+          'focus-within:border-[#4a5240]/35 focus-within:ring-2 focus-within:ring-[#4a5240]/15',
+          'dark:border-white/10 dark:shadow-none dark:focus-within:border-[#a4ce33]/40 dark:focus-within:ring-[#a4ce33]/20',
+        )}>
           <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder={searchPlaceholder}
