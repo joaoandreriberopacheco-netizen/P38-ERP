@@ -1037,7 +1037,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       itemsAfterRule: 1.8,
       itemTop: 3.8,
       itemBottom: 2,
-      gapDescCustos: 3.4,
+      gapDescCustos: 4.2,
     };
     const MOBILE_MINUTA_FONT = {
       kpi: 7.5,
@@ -1653,15 +1653,14 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         const sepLineX = tableX + qtdZoneW + 0.3;
         const itemMl = sepLineX + (isMobile ? 1.6 : 2.4);
         const contentRight = M + CW - 0.5;
-        const stackTotalBelowNome = !!isMobile;
         const totalColRight = contentRight;
-        const totalColW = isMobile ? 0 : 28;
-        const nomeMaxW = Math.max(
-          12,
-          stackTotalBelowNome
-            ? contentRight - itemMl - 0.5
-            : contentRight - totalColW - itemMl - 1.5,
-        );
+        const totalColW = isMobile ? 21 : 28;
+        const totalColLeft = totalColRight - totalColW;
+        const nomeMaxW = Math.max(12, totalColLeft - itemMl - 1.2);
+        const costGridLeft = itemMl;
+        const costGridWidth = Math.max(24, contentRight - costGridLeft);
+        const costGridCols = 3;
+        const costGridColW = costGridWidth / costGridCols;
         const detailWrapW = Math.max(12, contentRight - itemMl - 0.5);
         return {
           layout: 'narrow_enxuto',
@@ -1673,8 +1672,14 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
           qtdColRight: tableX + qtdZoneW - 0.4,
           contentRight,
           totalColRight,
+          totalColLeft,
           totalColW,
-          stackTotalBelowNome,
+          costGrid: !!isMobile,
+          costGridLeft,
+          costGridColW,
+          costGridCols,
+          costRowStep: isMobile ? 6.2 : 4.0,
+          costLabelValueGap: isMobile ? 3.0 : 2.6,
           vs: isMobile ? 1 : 1.12,
           fontScale: 1,
           branchLen: isMobile ? 1.2 : 1.8,
@@ -1759,6 +1764,43 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       };
     };
 
+    const buildMinutaEnxutoMobileCostGrid = (item, prod, met) => {
+      const fatorItem = Number(item.fator_conversao) || 1;
+      const qBase =
+        item.quantidade_base != null && item.quantidade_base !== ''
+          ? Number(item.quantidade_base)
+          : (Number(met.qtd) || 0) * fatorItem;
+      const upPrincipal = prod.unidade_principal || '';
+      let equivValue = '';
+      if (
+        upPrincipal &&
+        (fatorItem !== 1 || String(met.un).toUpperCase() !== String(upPrincipal).toUpperCase())
+      ) {
+        equivValue = `${fmtQuantidadePdf(qBase)} ${upPrincipal}`;
+      }
+      const emptyCell = { label: '', value: '' };
+      const row3 = [
+        { label: 'Mk', value: percentualOuTraco(met.markup) },
+        equivValue ? { label: 'Eq.', value: equivValue } : emptyCell,
+        emptyCell,
+      ];
+      return {
+        rows: [
+          [
+            { label: 'Comp', value: moedaOuTraco(met.vlrUnit) },
+            { label: 'Frete', value: moedaOuTraco(met.freteUnit) },
+            { label: 'Out', value: moedaOuTraco(met.outrosUnit) },
+          ],
+          [
+            { label: 'Avar', value: moedaOuTraco(met.avariaUnit) },
+            { label: 'Custo', value: moedaOuTraco(met.custoUnit) },
+            { label: 'Venda', value: moedaOuTraco(met.vendaUnit) },
+          ],
+          row3,
+        ],
+      };
+    };
+
     const buildExpandedItemDetailText = (layout, item, prod, met) => {
       const un = met.un;
       const fatorItem = Number(item.fator_conversao) || 1;
@@ -1783,14 +1825,6 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       }
       if (layout === 'narrow_enxuto') {
         const equivEnx = equivSuf ? `   Eq. ${fmtQuantidadePdf(qBase)} ${upPrincipal}` : '';
-        if (isMobile) {
-          return {
-            linha1: `Comp ${moedaOuTraco(met.vlrUnit)} · Frete ${moedaOuTraco(met.freteUnit)} · Out ${moedaOuTraco(met.outrosUnit)}`,
-            linha2: `Avar ${moedaOuTraco(met.avariaUnit)} · Custo ${moedaOuTraco(met.custoUnit)} · Venda ${moedaOuTraco(met.vendaUnit)}`,
-            linha3: `Mk ${percentualOuTraco(met.markup)}${equivEnx}`,
-            warning: met.warningText || '',
-          };
-        }
         return {
           linha1: `Comp. ${moedaOuTraco(met.vlrUnit)}   Frete ${moedaOuTraco(met.freteUnit)}   Outros ${moedaOuTraco(met.outrosUnit)}   Avar. ${moedaOuTraco(met.avariaUnit)}`,
           linha2: `Custo ${moedaOuTraco(met.custoUnit)}   Venda ${moedaOuTraco(met.vendaUnit)}   Mk ${percentualOuTraco(met.markup)}${equivEnx}`,
@@ -1867,27 +1901,45 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       }
 
       if (layout === 'narrow_enxuto') {
-        const det = buildExpandedItemDetailText(layout, item, prod, met);
-        const detailWrapW = cfg.detailWrapW ?? cfg.nomeMaxW;
-        const auxDetailStep = (isMobile ? 3.15 : 4.0) * vs;
         const gapNomeDetalhe = minutaPad.gapDescCustos * vs;
         const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
-        const gapNomeTotal = cfg.stackTotalBelowNome ? 1.6 * vs : 0;
-        const totalRowH = cfg.stackTotalBelowNome ? 3.6 * vs : 0;
-        const anchorAfterNome = lastNomeBaseline + gapNomeTotal + totalRowH;
-        const totalY = cfg.stackTotalBelowNome
-          ? lastNomeBaseline + gapNomeTotal + totalRowH * 0.78
-          : nomeTop + (isMobile ? 1.4 : 1.4) * vs;
+        const totalY = nomeTop + 1.4 * vs;
+        const costY1 = lastNomeBaseline + gapNomeDetalhe;
 
+        if (cfg.costGrid) {
+          const costGrid = buildMinutaEnxutoMobileCostGrid(item, prod, met);
+          const rowStep = (cfg.costRowStep ?? 5.0) * vs;
+          let detEnd = costY1 + costGrid.rows.length * rowStep;
+          if (met.warningText) {
+            doc.setFontSize(minutaFont.warn * cfg.fontScale);
+            const warnLinhas = doc.splitTextToSize(met.warningText, cfg.detailWrapW ?? cfg.nomeMaxW);
+            detEnd += warnLinhas.length * rowStep * 0.75;
+          }
+          return {
+            rowBlockH: detEnd + margemLinhaInferiorItem - y0,
+            met,
+            nomeLinhas,
+            nomeX: cfg.itemMl,
+            costGrid,
+            cfg,
+            vs,
+            nomeLineStep,
+            gapNomeDetalhe,
+            margemLinhaInferiorItem,
+            nomeTop,
+            costY1,
+            totalY,
+          };
+        }
+
+        const det = buildExpandedItemDetailText(layout, item, prod, met);
+        const detailWrapW = cfg.detailWrapW ?? cfg.nomeMaxW;
+        const auxDetailStep = 4.0 * vs;
         doc.setFontSize((cfg.detailFontSize ?? minutaFont.itemDetail) * cfg.fontScale);
         const linha1Lines = doc.splitTextToSize(det.linha1 || '', detailWrapW);
         const linha2Lines = det.linha2 ? doc.splitTextToSize(det.linha2, detailWrapW) : [];
-        const linha3Lines = det.linha3 ? doc.splitTextToSize(det.linha3, detailWrapW) : [];
-
-        const costY1 = anchorAfterNome + gapNomeDetalhe;
         let detEnd = costY1 + linha1Lines.length * auxDetailStep;
         if (linha2Lines.length) detEnd += linha2Lines.length * auxDetailStep;
-        if (linha3Lines.length) detEnd += linha3Lines.length * auxDetailStep;
         if (det.warning) {
           doc.setFontSize(minutaFont.warn * cfg.fontScale);
           const warnLinhas = doc.splitTextToSize(det.warning, detailWrapW);
@@ -1904,15 +1956,12 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
           nomeLineStep,
           auxDetailStep,
           gapNomeDetalhe,
-          gapNomeTotal,
-          totalRowH,
-          totalY,
           linha1Lines,
           linha2Lines,
-          linha3Lines,
           margemLinhaInferiorItem,
           nomeTop,
           costY1,
+          totalY,
         };
       }
 
@@ -2081,48 +2130,73 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
           auxDetailStep,
           linha1Lines,
           linha2Lines,
-          linha3Lines,
+          costGrid,
           totalY: measuredTotalY,
         } = measured;
         const detailWrapW = cfg.detailWrapW ?? cfg.nomeMaxW;
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
         doc.setFontSize((cfg.totalFontSize ?? cfg.qtdFontSize) * cfg.fontScale);
         doc.setTextColor(...inkBody);
-        if (cfg.stackTotalBelowNome) {
-          doc.text(moeda(met.totalLinha), cfg.itemMl, measuredTotalY ?? costY1);
-        } else {
-          doc.text(
-            moeda(met.totalLinha),
-            cfg.totalColRight ?? cfg.contentRight,
-            measuredTotalY ?? nomeTop + qtdYOff,
-            { align: 'right' },
-          );
-        }
+        doc.text(
+          moeda(met.totalLinha),
+          cfg.totalColRight ?? cfg.contentRight,
+          measuredTotalY ?? nomeTop + qtdYOff,
+          { align: 'right' },
+        );
+
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
         doc.setFontSize((cfg.detailFontSize ?? minutaFont.itemDetail) * cfg.fontScale);
         doc.setTextColor(...inkMeta);
-        const l1 = linha1Lines ?? doc.splitTextToSize(det.linha1 || '', detailWrapW);
-        const l2 = linha2Lines ?? (det.linha2 ? doc.splitTextToSize(det.linha2, detailWrapW) : []);
-        const l3 = linha3Lines ?? (det.linha3 ? doc.splitTextToSize(det.linha3, detailWrapW) : []);
-        let cy = costY1;
-        l1.forEach((line, i) => {
-          doc.text(line, cfg.itemMl, cy + i * auxDetailStep);
-        });
-        cy += l1.length * auxDetailStep;
-        l2.forEach((line, i) => {
-          doc.text(line, cfg.itemMl, cy + i * auxDetailStep);
-        });
-        cy += l2.length * auxDetailStep;
-        l3.forEach((line, i) => {
-          doc.text(line, cfg.itemMl, cy + i * auxDetailStep);
-        });
-        cy += l3.length * auxDetailStep;
-        if (det.warning) {
-          doc.setFontSize(minutaFont.warn * cfg.fontScale);
-          const warnLinhas = doc.splitTextToSize(det.warning, detailWrapW);
-          warnLinhas.forEach((line, wi) => {
-            doc.text(line, cfg.itemMl, cy + wi * auxDetailStep);
+
+        if (cfg.costGrid && costGrid) {
+          const rowStep = (cfg.costRowStep ?? 6.2) * vs;
+          const labelGap = (cfg.costLabelValueGap ?? 3.0) * vs;
+          costGrid.rows.forEach((row, ri) => {
+            const blockTop = costY1 + ri * rowStep;
+            row.forEach((cell, ci) => {
+              if (!cell.label) return;
+              const colLeft = cfg.costGridLeft + ci * cfg.costGridColW;
+              const colRight = colLeft + cfg.costGridColW - 0.6;
+              doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+              doc.setFontSize((cfg.detailFontSize ?? minutaFont.itemDetail) * cfg.fontScale * 0.92);
+              doc.setTextColor(...inkMeta);
+              doc.text(cell.label, colLeft, blockTop);
+              doc.setFontSize((cfg.detailFontSize ?? minutaFont.itemDetail) * cfg.fontScale);
+              doc.setTextColor(...inkBody);
+              const valueMaxW = Math.max(6, cfg.costGridColW - 0.8);
+              const valueLines = doc.splitTextToSize(cell.value || '-', valueMaxW);
+              valueLines.forEach((line, vi) => {
+                doc.text(line, colRight, blockTop + labelGap + vi * 2.6 * vs, { align: 'right' });
+              });
+            });
           });
+          if (met.warningText) {
+            const warnBaseY = costY1 + costGrid.rows.length * rowStep;
+            doc.setFontSize(minutaFont.warn * cfg.fontScale);
+            const warnLinhas = doc.splitTextToSize(met.warningText, detailWrapW);
+            warnLinhas.forEach((line, wi) => {
+              doc.text(line, cfg.itemMl, warnBaseY + wi * rowStep * 0.75);
+            });
+          }
+        } else {
+          const l1 = linha1Lines ?? doc.splitTextToSize(det.linha1 || '', detailWrapW);
+          const l2 = linha2Lines ?? (det.linha2 ? doc.splitTextToSize(det.linha2, detailWrapW) : []);
+          let cy = costY1;
+          l1.forEach((line, i) => {
+            doc.text(line, cfg.itemMl, cy + i * auxDetailStep);
+          });
+          cy += l1.length * auxDetailStep;
+          l2.forEach((line, i) => {
+            doc.text(line, cfg.itemMl, cy + i * auxDetailStep);
+          });
+          cy += l2.length * auxDetailStep;
+          if (det.warning) {
+            doc.setFontSize(minutaFont.warn * cfg.fontScale);
+            const warnLinhas = doc.splitTextToSize(det.warning, detailWrapW);
+            warnLinhas.forEach((line, wi) => {
+              doc.text(line, cfg.itemMl, cy + wi * auxDetailStep);
+            });
+          }
         }
       } else if (layout === 'narrow_consulta') {
         const { det, valorLineY, auxDetailStep } = measured;
