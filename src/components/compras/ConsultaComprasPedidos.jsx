@@ -88,13 +88,17 @@ function ConsultaEmbarqueCard({ card, onVerPedido, isLast = false }) {
         )}
       >
         <div className="space-y-1.5 min-w-0 w-full">
-          <p className={CONSULTA_TITLE}>
+          <p className={cn(CONSULTA_TITLE, displayStatus === 'Aprovado' && 'font-normal')}>
             {card._display_code || card.numero}
             {ehNecessidade ? (
               <span className="text-muted-foreground font-light normal-case text-sm"> · falta vir</span>
             ) : null}
           </p>
-          <p className={cn(CONSULTA_SUBTITLE, 'normal-case')}>{fornecedor}</p>
+          <p className={cn(
+            CONSULTA_SUBTITLE,
+            'normal-case',
+            displayStatus === 'Aprovado' && 'font-normal text-foreground/75',
+          )}>{fornecedor}</p>
           <div className="flex items-end justify-between gap-3 min-w-0">
             <div className={cn(caixaTypo.meta, 'normal-case min-w-0 flex-1 font-light flex flex-wrap items-center gap-1.5')}>
               {metaSemStatus.map((part, i) => (

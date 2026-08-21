@@ -248,7 +248,11 @@ function EmbarqueListaCard({
             <div className="flex-1 min-w-0 space-y-1.5">
               <div className="flex items-start gap-1.5 min-w-0">
                 <StatusLed displayStatus={displayStatus} fallbackStatus={pedido.status} className="mt-1.5 shrink-0" />
-                <p className={cn(EMBARQUE_TITLE, 'flex-1 min-w-0')}>{codigo}</p>
+                <p className={cn(
+                  EMBARQUE_TITLE,
+                  displayStatus === 'Aprovado' && 'font-normal',
+                  'flex-1 min-w-0',
+                )}>{codigo}</p>
                 {pedido.status === 'Rascunho' && !modoSelecao ? (
                   <button
                     type="button"
@@ -261,7 +265,11 @@ function EmbarqueListaCard({
                 ) : null}
               </div>
 
-              <p className={cn(EMBARQUE_SUBTITLE, 'normal-case')}>
+              <p className={cn(
+                EMBARQUE_SUBTITLE,
+                'normal-case',
+                displayStatus === 'Aprovado' && 'font-normal text-foreground/75',
+              )}>
                 {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
               </p>
 
