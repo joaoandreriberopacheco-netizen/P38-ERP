@@ -998,8 +998,10 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       layerGap: 2.8,
       headerBottom: 3.5,
       itemsAfterRule: 2.5,
-      itemTop: 4.8,
-      itemBottom: 2.4,
+      itemTop: 5.5,
+      itemBottom: 3.2,
+      /** Espaço entre descrição do produto e linha de custos. */
+      gapDescCustos: 4.8,
     };
     /** Tipografia enxuta — corpo bem legível (DIN 1451 com tamanhos maiores). */
     const ENXUTO_FONT = {
@@ -1014,12 +1016,12 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       pedidoMeta: 8.8,
       colHdr: 8.5,
       nome: 10,
-      itemNome: 11,
-      itemTotal: 10,
-      itemDetail: 9,
-      itemQtd: 10,
-      itemUn: 9,
-      footer: 8.5,
+      itemNome: 12,
+      itemTotal: 11,
+      itemDetail: 10,
+      itemQtd: 11,
+      itemUn: 10,
+      footer: 9.5,
       warn: 7,
     };
     const strokeEnxutoLine = (x0, y0, x1, y1, color = ENXUTO.line) => {
@@ -1753,7 +1755,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       const prod = produtosMap[item.produto_id] || {};
       const met = resolveMetricasItemPdf(item, prod, pedido);
       const vs = cfg.vs;
-      const nomeLineStep = layout === 'narrow_enxuto' ? 4.2 * vs : 3.85 * vs;
+      const nomeLineStep = layout === 'narrow_enxuto' ? 4.6 * vs : 3.85 * vs;
       const margemLinhaInferiorItem = layout === 'narrow_enxuto'
         ? ENXUTO_PAD.itemBottom * vs
         : (usesColumnValueLayout(layout) ? 1.2 : 1.3) * vs;
@@ -1803,8 +1805,8 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
 
       if (layout === 'narrow_enxuto') {
         const det = buildExpandedItemDetailText(layout, item, prod, met);
-        const auxDetailStep = 3.5 * vs;
-        const gapNomeDetalhe = 2.8 * vs;
+        const auxDetailStep = 4.0 * vs;
+        const gapNomeDetalhe = ENXUTO_PAD.gapDescCustos * vs;
         const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
         const costY1 = lastNomeBaseline + gapNomeDetalhe;
         let detEnd = costY1 + auxDetailStep;
@@ -1944,8 +1946,8 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(qtdFs * cfg.fontScale);
       doc.setTextColor(...(isEnxutoRow ? inkBody : inkBlack));
-      const qtdYOff = 1.2;
-      const unYOff = usesColumnValueLayout(layout) ? 4.6 : 4.6;
+      const qtdYOff = isEnxutoRow ? 1.4 : 1.2;
+      const unYOff = isEnxutoRow ? 5.4 : (usesColumnValueLayout(layout) ? 4.6 : 4.6);
       doc.text(fmtQuantidadePdf(Number(met.qtd) || 0), cfg.qtdColRight, nomeTop + qtdYOff, { align: 'right' });
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(unFs * cfg.fontScale);
@@ -1991,7 +1993,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         }
       } else if (layout === 'narrow_enxuto') {
         const { det, costY1, auxDetailStep } = measured;
-        const totalY = nomeTop + 1.2 * vs;
+        const totalY = nomeTop + qtdYOff;
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
         doc.setFontSize((cfg.totalFontSize ?? cfg.qtdFontSize) * cfg.fontScale);
         doc.setTextColor(...inkBody);
@@ -2775,8 +2777,8 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       });
 
       if (itens.length > 0) {
-        ensureSpace(8);
-        y += 2;
+        ensureSpace(10);
+        y += 4;
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
         doc.setFontSize(ENXUTO_FONT.footer);
         doc.setTextColor(...ENXUTO.muted);
@@ -2785,7 +2787,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
           enxutoTableX,
           y,
         );
-        y += 5;
+        y += 6;
       }
 
       strokeEnxutoLine(M, y + 0.5, M + CW, y + 0.5);
@@ -2907,8 +2909,8 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       });
 
       if (itens.length > 0) {
-        ensureSpace(8);
-        y += 2;
+        ensureSpace(10);
+        y += 4;
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
         doc.setFontSize(ENXUTO_FONT.footer);
         doc.setTextColor(...ENXUTO.muted);
@@ -2917,7 +2919,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
           M + ENXUTO_INDENT.produto,
           y,
         );
-        y += 5;
+        y += 6;
       }
 
       const pedidoEndPage = doc.internal.getNumberOfPages();
