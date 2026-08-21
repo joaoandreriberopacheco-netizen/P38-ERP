@@ -10,7 +10,8 @@ import { getItemCompraExibicaoVitrine } from '@/lib/productUnits';
 import { formatarSoData } from '@/components/utils/dateUtils';
 import { getTotalLinhaPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
 import { buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
-import { comprasAccentFromDisplayStatus } from '@/lib/comprasEmbarquesPalette';
+import { comprasAccentBorderClass, comprasAccentFromDisplayStatus } from '@/lib/comprasEmbarquesPalette';
+import { P38StatusPill } from '@/components/ui/p38-mobile-line';
 
 /** Recuo hierárquico + tipografia fixa (visual mobile em todos os viewports). */
 const CONSULTA_HIER = {
@@ -70,8 +71,10 @@ function buildEmbarqueMetaLinhas(card) {
 function ConsultaEmbarqueCard({ card, onVerPedido, isLast = false }) {
   const itensEmbarque = getConsultaItens(card);
   const ehNecessidade = card._consulta_papel === 'necessidade';
+  const displayStatus = card._display_status || card.status;
   const { fornecedor, detalhes } = buildEmbarqueMetaLinhas(card);
-  const statusAccent = comprasAccentFromDisplayStatus(card._display_status || card.status);
+  const statusAccent = comprasAccentFromDisplayStatus(displayStatus);
+  const metaSemStatus = detalhes.filter((d) => d !== displayStatus);
 
   return (
     <div className={cn('min-w-0 max-w-full overflow-hidden', !isLast && CONSULTA_HIER.sep)}>
@@ -79,8 +82,9 @@ function ConsultaEmbarqueCard({ card, onVerPedido, isLast = false }) {
         type="button"
         onClick={() => onVerPedido?.(card)}
         className={cn(
-          'w-full text-left hover:bg-muted/20 transition-colors min-w-0 py-3 pr-1',
+          'w-full text-left hover:bg-muted/20 transition-colors min-w-0 py-3 pr-1 pl-2 border-l',
           CONSULTA_HIER.sep,
+          comprasAccentBorderClass(statusAccent),
         )}
       >
         <div className="space-y-1.5 min-w-0 w-full">
@@ -92,9 +96,23 @@ function ConsultaEmbarqueCard({ card, onVerPedido, isLast = false }) {
           </p>
           <p className={cn(CONSULTA_SUBTITLE, 'normal-case')}>{fornecedor}</p>
           <div className="flex items-end justify-between gap-3 min-w-0">
-            <p className={cn(caixaTypo.meta, 'normal-case min-w-0 line-clamp-2 flex-1 font-light')}>
-              {detalhes.join(' · ')}
-            </p>
+            <div className={cn(caixaTypo.meta, 'normal-case min-w-0 flex-1 font-light flex flex-wrap items-center gap-1.5')}>
+              {metaSemStatus.map((part, i) => (
+                <span key={part} className="tabular-nums">
+                  {i > 0 ? ' · ' : ''}{part}
+                </span>
+              ))}
+              {displayStatus ? (
+                <>
+                  {metaSemStatus.length > 0 ? <span className="text-foreground/50">·</span> : null}
+                  {displayStatus === 'Aprovado' ? (
+                    <P38StatusPill tone="aprovado">{displayStatus}</P38StatusPill>
+                  ) : (
+                    <span>{displayStatus}</span>
+                  )}
+                </>
+              ) : null}
+            </div>
             <CaixaValorDisplay
               valor={card._consulta_valor || 0}
               tone="neutral"
@@ -106,7 +124,11 @@ function ConsultaEmbarqueCard({ card, onVerPedido, isLast = false }) {
         </div>
       </button>
       {itensEmbarque.length > 0 ? (
-        <div className={cn(CONSULTA_HIER.l2, 'pb-1 pt-0.5')}>
+        <div className={cn(
+          CONSULTA_HIER.l2,
+          'pb-1 pt-0.5',
+          statusAccent === 'aprovado' && 'border-l-lime-500/50 dark:border-l-[#a4ce33]/35',
+        )}>
           {itensEmbarque.map((item, idx) => {
             const exib = getItemCompraExibicaoVitrine(item);
             return (

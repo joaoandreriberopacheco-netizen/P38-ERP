@@ -8,6 +8,7 @@ import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { formatCommercialQuantity } from '@/lib/productUnits';
 
 function resolveConsultaAccentDot(accent) {
+  if (accent === 'aprovado') return p38Accent.aprovado.dot;
   if (accent === 'muted') return p38Accent.muted.dot;
   if (accent === 'info') return p38Accent.info.dot;
   if (accent === 'warning') return p38Accent.warning.dot;
@@ -17,6 +18,7 @@ function resolveConsultaAccentDot(accent) {
 }
 
 function resolveConsultaAccentBorder(accent) {
+  if (accent === 'aprovado') return p38Accent.aprovado.border;
   if (accent === 'muted') return p38Accent.muted.border;
   if (accent === 'info') return p38Accent.info.border;
   if (accent === 'warning') return p38Accent.warning.border;
@@ -97,7 +99,9 @@ export function ConsultaProdutoRow({
       ? 'neutral'
       : accent === 'info'
         ? 'info'
-        : 'success');
+        : accent === 'aprovado'
+          ? 'success'
+          : 'success');
   const showSigned = signedValor ?? accent !== 'muted';
 
   const rowShell = compact

@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 import { cn } from '@/components/utils';
-import { COMPRAS_STATUS_STYLE, comprasAccentBorderClass, comprasAccentFromDisplayStatus } from '@/lib/comprasEmbarquesPalette';
+import { COMPRAS_APROVADO_STYLE, COMPRAS_STATUS_STYLE, comprasAccentBorderClass, comprasAccentFromDisplayStatus } from '@/lib/comprasEmbarquesPalette';
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 import { caixaTypo } from '@/lib/caixaP38Theme';
 
@@ -49,7 +49,7 @@ const STATUS_CONFIG = {
   'Aguardando Aprovação Financeira': COMPRAS_STATUS_STYLE.aguardando,
   'Aguardando Liberação Financeira': COMPRAS_STATUS_STYLE.aguardando,
   'Aguardando Liberação': COMPRAS_STATUS_STYLE.aguardando,
-  'Aprovado': { dot: 'bg-lime-600 dark:bg-[#a4ce33]/70', pill: 'bg-lime-50 dark:bg-lime-900/25 text-lime-700 dark:text-[#a4ce33]/85' },
+  'Aprovado': COMPRAS_APROVADO_STYLE,
   'Necessidade': { dot: 'bg-red-500 dark:bg-red-500/70', pill: 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400' },
   'Despachado': COMPRAS_STATUS_STYLE.despachado,
   'Concluído': { dot: 'bg-emerald-600 dark:bg-emerald-600/70', pill: 'bg-emerald-50 dark:bg-emerald-900/25 text-emerald-700 dark:text-emerald-500' },
@@ -70,9 +70,11 @@ function getDisplayStatusLabel(displayStatus) {
 
 function StatusLed({ displayStatus, fallbackStatus, blink = false, className = '' }) {
   const cfg = resolveStatusConfig(displayStatus, fallbackStatus);
+  const isAprovado = (displayStatus || fallbackStatus) === 'Aprovado';
+  const sizeClass = isAprovado ? 'w-2 h-2' : 'w-1.5 h-1.5';
   return (
     <span
-      className={`flex-none w-1.5 h-1.5 rounded-full mt-0.5 ${blink ? 'animate-blink-led' : cfg.dot} ${className}`}
+      className={`flex-none ${sizeClass} rounded-full mt-0.5 ${blink ? 'animate-blink-led' : cfg.dot} ${isAprovado ? 'ring-2 ring-lime-400/40 dark:ring-[#a4ce33]/25' : ''} ${className}`}
       aria-hidden
     />
   );

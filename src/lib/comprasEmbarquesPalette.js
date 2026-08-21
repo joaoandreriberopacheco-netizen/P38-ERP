@@ -16,11 +16,18 @@ export const COMPRAS_CTA =
 
 /** Pills alinhados a STATUS_CONFIG em ListaPedidosCompra.jsx */
 export const COMPRAS_PILL = {
+  aprovado: 'bg-lime-100 text-lime-800 ring-1 ring-lime-400/45 font-semibold dark:bg-lime-900/30 dark:text-[#a4ce33] dark:ring-lime-500/25',
   success: 'bg-lime-50 dark:bg-lime-900/25 text-lime-700 dark:text-[#a4ce33]/85',
   info: 'bg-[#4ECDC4]/12 text-[#1a7a73] dark:bg-[#4ECDC4]/15 dark:text-[#4ECDC4]',
   warning: 'bg-[#D96F55]/12 text-[#9c4228] dark:bg-[#D96F55]/15 dark:text-[#D96F55]',
   danger: 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-500',
   muted: 'bg-muted/80 text-muted-foreground',
+};
+
+/** LED + pill — pedido aprovado (pronto para despacho). */
+export const COMPRAS_APROVADO_STYLE = {
+  dot: 'bg-lime-500 dark:bg-[#a4ce33]',
+  pill: COMPRAS_PILL.aprovado,
 };
 
 /** LED + pill por status de embarque (ListaPedidosCompra). */
@@ -36,6 +43,7 @@ export const COMPRAS_STATUS_STYLE = {
 };
 
 export function comprasAccentBorderClass(tone) {
+  if (tone === 'aprovado') return p38Accent.aprovado.border;
   if (tone === 'danger') return p38Accent.danger.border;
   if (tone === 'warning') return p38Accent.warning.border;
   if (tone === 'info') return p38Accent.info.border;
@@ -46,7 +54,8 @@ export function comprasAccentBorderClass(tone) {
 /** Tom P38 das linhas de produto — alinhado a ListaPedidosCompra / status do embarque. */
 export function comprasAccentFromDisplayStatus(displayStatus) {
   const status = String(displayStatus || '').trim();
-  if (status === 'Concluído' || status === 'Aprovado') return 'success';
+  if (status === 'Aprovado') return 'aprovado';
+  if (status === 'Concluído') return 'success';
   if (status === 'Despachado') return 'info';
   if (status === 'Aguardando' || status.includes('Aguard') || status.includes('Aprovação')) return 'warning';
   if (status === 'Necessidade') return 'danger';
@@ -59,7 +68,7 @@ export const COMPRAS_FILTRO_STATUS_PEDIDO = [
   { codigo: 'Rascunho', label: 'Rascunho', chip: 'bg-muted text-foreground/90' },
   { codigo: 'Aguardando Liberação', label: 'Aguard. pagamento', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
   { codigo: 'Aguardando', label: 'Aguard. embarque', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
-  { codigo: 'Aprovado', label: 'Aprovado', chip: 'bg-lime-50 text-lime-800 dark:bg-lime-900/25 dark:text-[#a4ce33]/85' },
+  { codigo: 'Aprovado', label: 'Aprovado', chip: COMPRAS_PILL.aprovado },
   { codigo: 'Necessidade', label: 'Necessidade', chip: 'bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-400' },
   { codigo: 'Despachado', label: 'Despachado', chip: 'bg-[#4ECDC4]/15 text-[#1a7a73] dark:bg-[#4ECDC4]/20 dark:text-[#4ECDC4]' },
   { codigo: 'Concluído', label: 'Concluído', chip: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/25 dark:text-emerald-500' },
@@ -70,7 +79,7 @@ export const COMPRAS_FILTRO_STATUS_PEDIDO = [
 export const COMPRAS_FILTRO_STATUS_PICKER = [
   { codigo: 'Rascunho', label: 'Rascunho', chip: 'bg-muted text-foreground/90' },
   { codigo: 'Aguardando Liberação', label: 'Aguard. pagamento', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
-  { codigo: 'Aprovado', label: 'Aprovado', chip: 'bg-lime-50 text-lime-800 dark:bg-lime-900/25 dark:text-[#a4ce33]/85' },
+  { codigo: 'Aprovado', label: 'Aprovado', chip: COMPRAS_PILL.aprovado },
   { codigo: 'Necessidade', label: 'Necessidade', chip: 'bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-400' },
   { codigo: 'Aguardando', label: 'Pend. entrega', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
   { codigo: 'Despachado', label: 'Despachado', chip: 'bg-[#4ECDC4]/15 text-[#1a7a73] dark:bg-[#4ECDC4]/20 dark:text-[#4ECDC4]' },

@@ -5,6 +5,7 @@ import { p38Accent } from '@/lib/p38ThemeSurfaces';
 
 const ACCENT_BORDER = {
   default: 'border-l-transparent',
+  aprovado: p38Accent.aprovado.border,
   success: p38Accent.success.border,
   warning: p38Accent.warning.border,
   info: p38Accent.info.border,
@@ -16,7 +17,9 @@ const ACCENT_BORDER = {
 /** Ponto de status semântico (verde, amarelo, ciano, vermelho). */
 export function P38StatusDot({ tone = 'success', className }) {
   const dotClass =
-    tone === 'warning'
+    tone === 'aprovado'
+      ? p38Accent.aprovado.dot
+      : tone === 'warning'
       ? p38Accent.warning.dot
       : tone === 'info'
         ? p38Accent.info.dot
@@ -143,6 +146,7 @@ export function p38TypeTone(type) {
 export function p38StatusTone(status) {
   if (!status) return 'muted';
   const s = String(status).toLowerCase();
+  if (s === 'aprovado') return 'aprovado';
   if (s.includes('cancel') || s.includes('discrep') || s.includes('inutil') || s.includes('rejeit')) return 'danger';
   if (s.includes('pend') || s.includes('aguard') || s.includes('rascunho') || s.includes('parcial')) return 'warning';
   if (s.includes('enviad') || s.includes('transit') || s.includes('cota')) return 'info';
@@ -150,6 +154,7 @@ export function p38StatusTone(status) {
 }
 
 export function p38AccentKeyFromTone(tone) {
+  if (tone === 'aprovado') return 'aprovado';
   if (tone === 'danger') return 'danger';
   if (tone === 'warning') return 'warning';
   if (tone === 'info') return 'info';
@@ -158,6 +163,7 @@ export function p38AccentKeyFromTone(tone) {
 }
 
 export function p38StatusTextClass(tone) {
+  if (tone === 'aprovado') return p38Accent.aprovado.text;
   if (tone === 'danger') return p38Accent.danger.text;
   if (tone === 'warning') return p38Accent.warning.text;
   if (tone === 'info') return p38Accent.info.text;
@@ -175,6 +181,7 @@ export function P38StatusLabel({ tone = 'success', children, className }) {
 }
 
 const PILL_TONE_CLASS = {
+  aprovado: 'bg-lime-100 text-lime-800 ring-1 ring-lime-400/45 font-semibold dark:bg-lime-900/30 dark:text-[#a4ce33] dark:ring-lime-500/25',
   success: 'bg-[#4a5240]/10 text-[#4a5240] dark:bg-[#a4ce33]/12 dark:text-[#a4ce33]/85',
   warning: 'bg-[#D96F55]/12 text-[#9c4228] dark:bg-[#D96F55]/15 dark:text-[#D96F55]',
   danger: 'bg-red-500/10 text-red-700 dark:bg-red-950/30 dark:text-red-500',

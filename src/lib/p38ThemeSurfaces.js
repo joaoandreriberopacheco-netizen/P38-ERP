@@ -58,6 +58,14 @@ export const p38Accent = {
     dot: 'bg-[#4a5240] dark:bg-[#a4ce33]/70',
     border: 'border-l-[#4a5240] dark:border-l-[#a4ce33]/55',
   },
+  /** Pedido aprovado — pronto para despacho (verde vivo no claro). */
+  aprovado: {
+    solid: '#84cc16',
+    solidDark: '#a4ce33',
+    text: 'text-lime-700 dark:text-[#a4ce33]',
+    dot: 'bg-lime-500 dark:bg-[#a4ce33]',
+    border: 'border-l-lime-500 dark:border-l-[#a4ce33]/75',
+  },
   warning: {
     solid: P38_AGUARDANDO_ORANGE,
     solidDark: P38_AGUARDANDO_ORANGE,
