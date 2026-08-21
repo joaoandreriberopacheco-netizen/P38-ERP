@@ -1,5 +1,5 @@
 /** Nível visual "todos" no seletor de profundidade da árvore (catálogo / margem). */
-import { PRODUTOS_LEVEL_ACTIVE } from '@/lib/produtosP38Theme';
+import { PRODUTOS_LEVEL_ACTIVE, PRODUTOS_LEVEL_IDLE } from '@/lib/produtosP38Theme';
 import { cn } from '@/components/utils';
 
 export const TREE_GRID_EXPAND_ALL_LEVEL = 99;
@@ -26,7 +26,7 @@ export function LevelControl({ level, onChange }) {
             'min-w-[24px] h-6 px-1.5 rounded text-[10px] font-semibold transition-colors',
             level === value
               ? PRODUTOS_LEVEL_ACTIVE
-              : 'bg-muted text-muted-foreground hover:bg-muted/80 dark:hover:bg-primary/90',
+              : PRODUTOS_LEVEL_IDLE,
           )}
         >
           {label}

@@ -11,6 +11,19 @@ import { CATALOG_SORT_OPTIONS } from '@/lib/catalogProdutoPerformance';
 import ProdutosNumericMetricFilter from '@/components/produtos/ProdutosNumericMetricFilter';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
 import { cn } from '@/components/utils';
+import {
+  PRODUTOS_CHIP_ACTIVE,
+  PRODUTOS_CHIP_IDLE,
+  PRODUTOS_DROPDOWN_MENU,
+  PRODUTOS_ICON_BTN,
+  PRODUTOS_METRIC_FIELD,
+  PRODUTOS_MOBILE_FILTER_SECTION,
+} from '@/lib/produtosP38Theme';
+
+const CHIP_BASE =
+  'h-9 rounded-xl text-xs font-medium transition-colors border border-transparent';
+
+const MOBILE_FILTER_SELECT = cn(PRODUTOS_METRIC_FIELD, 'h-10 w-full rounded-xl');
 
 const STOCK_FILTER_CHIPS = [
   { value: 'all', label: 'Todos' },
@@ -32,18 +45,9 @@ const CADASTRO_FILTER_CHIPS = [
   { value: 'incompleto', label: 'Incompletos' },
 ];
 
-const CHIP_BASE =
-  'h-9 rounded-xl text-xs font-medium transition-colors border border-transparent';
-const CHIP_ACTIVE =
-  'bg-[#4a5240] text-white border-[#4a5240] dark:bg-[#a4ce33] dark:text-[#1f1d22] dark:border-[#a4ce33]';
-const CHIP_IDLE = 'bg-muted/80 text-muted-foreground active:bg-muted';
-
-const MOBILE_FILTER_SELECT =
-  'bg-muted/80 border-none h-10 text-xs w-full rounded-xl';
-
 function MobileFilterSection({ title, hint, children }) {
   return (
-    <section className="space-y-2.5 rounded-2xl border border-border/30 bg-muted/20 p-3">
+    <section className={PRODUTOS_MOBILE_FILTER_SECTION}>
       <div>
         <h3 className="text-xs font-semibold text-foreground">{title}</h3>
         {hint ? (
@@ -67,7 +71,7 @@ function ChipGrid({ options, value, onChange, columns = 3 }) {
           type="button"
           onClick={() => onChange(optionValue)}
           aria-pressed={value === optionValue}
-          className={cn(CHIP_BASE, value === optionValue ? CHIP_ACTIVE : CHIP_IDLE)}
+          className={cn(CHIP_BASE, value === optionValue ? PRODUTOS_CHIP_ACTIVE : PRODUTOS_CHIP_IDLE)}
         >
           {label}
         </button>
@@ -108,7 +112,7 @@ export default function ProdutosMobileFiltersSheet({
 
         <div className="mb-4 flex items-start justify-between gap-3 px-4">
           <div className="flex min-w-0 items-start gap-3">
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-muted">
+            <div className={cn('flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl', PRODUTOS_ICON_BTN)}>
               <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
             </div>
             <div className="min-w-0">
@@ -152,7 +156,7 @@ export default function ProdutosMobileFiltersSheet({
             hint="Define quantos níveis abrem ao carregar e como os grupos se ordenam."
           >
             <div className="space-y-3">
-              <div className="rounded-xl bg-muted/60 px-3 py-2.5">
+              <div className="rounded-xl bg-card shadow-sm px-3 py-2.5">
                 <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
                   Nível inicial
                 </p>
@@ -166,7 +170,7 @@ export default function ProdutosMobileFiltersSheet({
                   <SelectTrigger className={MOBILE_FILTER_SELECT}>
                     <SelectValue placeholder="Ordenar catálogo" />
                   </SelectTrigger>
-                  <SelectContent className="dark:bg-muted dark:border-border/40">
+                  <SelectContent className={PRODUTOS_DROPDOWN_MENU}>
                     {CATALOG_SORT_OPTIONS.map((opt) => (
                       <SelectItem key={opt.id} value={opt.id} className="text-xs">
                         {opt.label}
@@ -229,7 +233,7 @@ export default function ProdutosMobileFiltersSheet({
                 <SelectTrigger className={MOBILE_FILTER_SELECT}>
                   <SelectValue placeholder="Categoria" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-muted dark:border-border/40">
+                <SelectContent className={PRODUTOS_DROPDOWN_MENU}>
                   <SelectItem value="all" className="text-xs">Todas as categorias</SelectItem>
                   {categorias.map((cat) => (
                     <SelectItem key={cat} value={cat} className="text-xs">{cat}</SelectItem>
@@ -241,7 +245,7 @@ export default function ProdutosMobileFiltersSheet({
                 <SelectTrigger className={MOBILE_FILTER_SELECT}>
                   <SelectValue placeholder="Fornecedor" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-muted dark:border-border/40">
+                <SelectContent className={PRODUTOS_DROPDOWN_MENU}>
                   <SelectItem value="all" className="text-xs">Todos os fornecedores</SelectItem>
                   {fornecedores.map((f) => (
                     <SelectItem key={f.id} value={f.id} className="text-xs">{f.nome}</SelectItem>
@@ -253,7 +257,7 @@ export default function ProdutosMobileFiltersSheet({
                 <SelectTrigger className={MOBILE_FILTER_SELECT}>
                   <SelectValue placeholder="Unidade vitrine" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-muted dark:border-border/40">
+                <SelectContent className={PRODUTOS_DROPDOWN_MENU}>
                   <SelectItem value="all" className="text-xs">Todas as unidades</SelectItem>
                   {unidadesVitrine.map((sigla) => (
                     <SelectItem key={sigla} value={sigla} className="text-xs">
@@ -268,7 +272,7 @@ export default function ProdutosMobileFiltersSheet({
           <MobileFilterSection title="Tag" hint="Filtra produtos que contenham esta tag.">
             <Input
               placeholder="Ex.: promoção, sazonal…"
-              className="bg-muted/80 border-none h-10 text-xs rounded-xl"
+              className={MOBILE_FILTER_SELECT}
               value={filters.tag || ''}
               onChange={(e) => handleFilterChange('tag', e.target.value)}
             />
@@ -312,7 +316,7 @@ export default function ProdutosMobileFiltersSheet({
                   <SelectTrigger className={MOBILE_FILTER_SELECT}>
                     <SelectValue placeholder="Condição" />
                   </SelectTrigger>
-                  <SelectContent className="dark:bg-muted dark:border-border/40">
+                  <SelectContent className={PRODUTOS_DROPDOWN_MENU}>
                     <SelectItem value="all" className="text-xs">Qualquer quantidade</SelectItem>
                     <SelectItem value="gt" className="text-xs">Maior que</SelectItem>
                     <SelectItem value="gte" className="text-xs">Maior ou igual a</SelectItem>
@@ -328,7 +332,7 @@ export default function ProdutosMobileFiltersSheet({
                     inputMode="decimal"
                     placeholder={quantidadeOperador === 'between' ? 'De' : 'Quantidade'}
                     disabled={quantidadeOperador === 'all'}
-                    className="bg-muted/80 border-none h-10 text-xs rounded-xl disabled:opacity-50"
+                    className={cn(MOBILE_FILTER_SELECT, 'disabled:opacity-50')}
                     value={filters.quantidadeValor || ''}
                     onChange={(e) => handleFilterChange('quantidadeValor', e.target.value)}
                   />
@@ -336,7 +340,7 @@ export default function ProdutosMobileFiltersSheet({
                     <Input
                       inputMode="decimal"
                       placeholder="Até"
-                      className="bg-muted/80 border-none h-10 text-xs rounded-xl"
+                      className={MOBILE_FILTER_SELECT}
                       value={filters.quantidadeValorAte || ''}
                       onChange={(e) => handleFilterChange('quantidadeValorAte', e.target.value)}
                     />

@@ -3,6 +3,7 @@ import { Package, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/components/utils';
+import { PRODUTOS_ICON_BTN } from '@/lib/produtosP38Theme';
 
 /**
  * Estoque virtual: soma pedidos em trânsito como se já tivessem chegado.
@@ -29,7 +30,8 @@ export default function ProdutosEstoqueVirtualToggle({ filters, setFilters }) {
         variant="ghost"
         size="icon"
         className={cn(
-          'h-10 w-10 flex-shrink-0 rounded-xl bg-muted',
+          'h-10 w-10 flex-shrink-0 rounded-xl',
+          PRODUTOS_ICON_BTN,
           'text-sky-700 dark:text-sky-300 ring-2 ring-sky-500/40 dark:ring-sky-400/40',
         )}
         onClick={desativar}
@@ -49,13 +51,13 @@ export default function ProdutosEstoqueVirtualToggle({ filters, setFilters }) {
           type="button"
           variant="ghost"
           size="icon"
-          className="h-10 w-10 flex-shrink-0 rounded-xl bg-muted relative overflow-hidden"
+          className={cn('h-10 w-10 flex-shrink-0 rounded-xl relative overflow-hidden', PRODUTOS_ICON_BTN)}
           title="Estoque virtual — incluir pedidos em trânsito"
           aria-label="Ativar estoque virtual"
         >
           <Package className="w-4 h-4 text-muted-foreground" />
           <span
-            className="absolute inset-x-0 bottom-0 flex items-center justify-center bg-muted/90 py-0.5"
+            className="absolute inset-x-0 bottom-0 flex items-center justify-center bg-card/90 py-0.5"
             aria-hidden
           >
             <ShieldAlert className="w-3 h-3 text-amber-600 dark:text-amber-400" />

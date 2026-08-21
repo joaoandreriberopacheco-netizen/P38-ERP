@@ -6,15 +6,13 @@ import {
   getCatalogMetricFilterKeys,
   NUMERIC_COMPARISON_OPERATORS,
 } from '@/lib/catalogNumericFilters';
+import { PRODUTOS_DROPDOWN_MENU, PRODUTOS_METRIC_FIELD } from '@/lib/produtosP38Theme';
 
-const MOBILE_FILTER_SELECT =
-  'bg-muted/80 border-none h-9 text-xs w-full rounded-xl';
+const MOBILE_FILTER_SELECT = cn(PRODUTOS_METRIC_FIELD, 'h-9 w-full rounded-xl');
 
-const INLINE_SELECT =
-  'bg-muted/80 border-none h-9 text-xs rounded-lg';
+const INLINE_SELECT = cn(PRODUTOS_METRIC_FIELD, 'rounded-lg');
 
-const INLINE_INPUT =
-  'bg-muted/80 border-none h-9 text-xs rounded-lg disabled:opacity-50';
+const INLINE_INPUT = cn(PRODUTOS_METRIC_FIELD, 'rounded-lg disabled:opacity-50');
 
 function FilterSectionLabel({ children, className }) {
   return (
@@ -76,7 +74,7 @@ export default function ProdutosNumericMetricFilter({
       >
         <SelectValue placeholder="Métrica" />
       </SelectTrigger>
-      <SelectContent className="dark:bg-muted dark:border-border/40">
+      <SelectContent className={PRODUTOS_DROPDOWN_MENU}>
         {CATALOG_NUMERIC_METRIC_FIELDS.map(({ value, label }) => (
           <SelectItem key={value} value={value} className="text-sm md:text-xs">
             {label}
@@ -108,7 +106,7 @@ export default function ProdutosNumericMetricFilter({
       >
         <SelectValue placeholder="Comparação" />
       </SelectTrigger>
-      <SelectContent className="dark:bg-muted dark:border-border/40">
+      <SelectContent className={PRODUTOS_DROPDOWN_MENU}>
         {NUMERIC_COMPARISON_OPERATORS.map(({ value, label }) => (
           <SelectItem key={value} value={value} className="text-sm md:text-xs">
             {label}

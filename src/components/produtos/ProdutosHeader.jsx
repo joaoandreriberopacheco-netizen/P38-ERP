@@ -25,7 +25,12 @@ import { cn } from '@/components/utils';
 import {
   PRODUTOS_DROPDOWN_ITEM,
   PRODUTOS_DROPDOWN_MENU,
+  PRODUTOS_FILTER_BADGE,
+  PRODUTOS_FILTER_OPEN,
+  PRODUTOS_FILTER_PANEL,
+  PRODUTOS_ICON_ACCENT,
   PRODUTOS_ICON_BTN,
+  PRODUTOS_PAGE_HEADER,
   PRODUTOS_SEARCH_INPUT,
   PRODUTOS_SEARCH_SHELL,
 } from '@/lib/produtosP38Theme';
@@ -82,7 +87,7 @@ function ProdutosHeader({
   };
 
   return (
-    <div className="flex-none bg-background border-b border-border/40 w-full min-w-0">
+    <div className={PRODUTOS_PAGE_HEADER}>
       <div className="w-full min-w-0 px-3 py-2 space-y-2">
         <div className="flex items-center gap-2">
           <div className="flex-1 min-w-0">
@@ -389,20 +394,25 @@ function ProdutosHeader({
               variant="ghost"
               size="icon"
               className={cn(
-                'h-10 w-10 flex-shrink-0 rounded-xl relative bg-muted',
-                isFilterOpen && 'ring-2 ring-[#4a5240]/40 dark:ring-[#a4ce33]/40',
-                activeFilterCount > 0 && 'text-[#4a5240] dark:text-[#a4ce33]',
+                'h-10 w-10 flex-shrink-0 rounded-xl relative',
+                PRODUTOS_ICON_BTN,
+                isFilterOpen && PRODUTOS_FILTER_OPEN,
+                activeFilterCount > 0 && 'text-[#b85a12] dark:text-[#a4ce33]',
               )}
               onClick={() => setIsFilterOpen(v => !v)}
               title="Mais filtros"
             >
               <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
-              {activeFilterCount > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-muted text-foreground text-[10px] rounded-full flex items-center justify-center font-bold">{activeFilterCount}</span>}
+              {activeFilterCount > 0 && (
+                <span className={cn('absolute -top-0.5 -right-0.5 w-4 h-4 text-[10px] rounded-full flex items-center justify-center font-bold', PRODUTOS_FILTER_BADGE)}>
+                  {activeFilterCount}
+                </span>
+              )}
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="h-10 w-10 flex-shrink-0 rounded-xl bg-muted"
+              className={cn('h-10 w-10 flex-shrink-0', PRODUTOS_ICON_BTN)}
               onClick={() => setIsColumnSelectorOpen(true)}
               title="Colunas"
             >
@@ -415,13 +425,13 @@ function ProdutosHeader({
           <div className="hidden desktop-layout:flex desktop-layout:flex-col desktop-layout:gap-3 desktop-layout:pb-1 min-w-0">
             {/* Visualização da árvore */}
             <div className="grid grid-cols-4 gap-2 min-w-0">
-              <div className="col-span-2 flex items-center gap-2 bg-muted rounded-lg px-3 h-9 min-w-0">
+              <div className={cn('col-span-2 flex items-center gap-2 px-3 h-9 min-w-0', PRODUTOS_FILTER_PANEL)}>
                 <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground flex-shrink-0">
                   Nível TreeGrid
                 </span>
                 <LevelControl level={treeLevel} onChange={setTreeLevel} />
               </div>
-              <div className="col-span-2 flex items-center gap-2 bg-muted rounded-lg px-3 h-9 min-w-0">
+              <div className={cn('col-span-2 flex items-center gap-2 px-3 h-9 min-w-0', PRODUTOS_FILTER_PANEL)}>
                 <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground flex-shrink-0">
                   Agrupamento
                 </span>
@@ -443,30 +453,30 @@ function ProdutosHeader({
             {/* Cadastro e classificação */}
             <div className="grid grid-cols-4 gap-2 min-w-0">
               <Select value={filters.categoria} onValueChange={v => handleFilterChange('categoria', v)}>
-                <SelectTrigger className="bg-muted border-none h-9 text-xs rounded-lg">
+                <SelectTrigger className="bg-card border-0 shadow-sm h-9 text-xs rounded-lg">
                   <SelectValue placeholder="Categoria" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-muted dark:border-border/40">
+                <SelectContent className={PRODUTOS_DROPDOWN_MENU}>
                   <SelectItem value="all" className="text-xs">Todas as categorias</SelectItem>
                   {categorias.map(cat => <SelectItem key={cat} value={cat} className="text-xs">{cat}</SelectItem>)}
                 </SelectContent>
               </Select>
 
               <Select value={filters.fornecedorId} onValueChange={v => handleFilterChange('fornecedorId', v)}>
-                <SelectTrigger className="bg-muted border-none h-9 text-xs rounded-lg">
+                <SelectTrigger className="bg-card border-0 shadow-sm h-9 text-xs rounded-lg">
                   <SelectValue placeholder="Fornecedor" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-muted dark:border-border/40">
+                <SelectContent className={PRODUTOS_DROPDOWN_MENU}>
                   <SelectItem value="all" className="text-xs">Todos os fornecedores</SelectItem>
                   {fornecedores.map(f => <SelectItem key={f.id} value={f.id} className="text-xs">{f.nome}</SelectItem>)}
                 </SelectContent>
               </Select>
 
               <Select value={filters.unidadeVitrine || 'all'} onValueChange={(v) => handleFilterChange('unidadeVitrine', v)}>
-                <SelectTrigger className="bg-muted border-none h-9 text-xs rounded-lg">
+                <SelectTrigger className="bg-card border-0 shadow-sm h-9 text-xs rounded-lg">
                   <SelectValue placeholder="Unidade vitrine" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-muted dark:border-border/40">
+                <SelectContent className={PRODUTOS_DROPDOWN_MENU}>
                   <SelectItem value="all" className="text-xs">Todas as unidades</SelectItem>
                   {unidadesVitrine.map((sigla) => (
                     <SelectItem key={sigla} value={sigla} className="text-xs">
@@ -477,10 +487,10 @@ function ProdutosHeader({
               </Select>
 
               <Select value={filters.statusEstoque} onValueChange={v => handleFilterChange('statusEstoque', v)}>
-                <SelectTrigger className="bg-muted border-none h-9 text-xs rounded-lg">
+                <SelectTrigger className="bg-card border-0 shadow-sm h-9 text-xs rounded-lg">
                   <SelectValue placeholder="Status do estoque" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-muted dark:border-border/40">
+                <SelectContent className={PRODUTOS_DROPDOWN_MENU}>
                   <SelectItem value="all" className="text-xs">Todos os status</SelectItem>
                   <SelectItem value="ok" className="text-xs">OK</SelectItem>
                   <SelectItem value="baixo" className="text-xs">Baixo</SelectItem>
@@ -490,10 +500,10 @@ function ProdutosHeader({
               </Select>
 
               <Select value={filters.ativoStatus || 'all'} onValueChange={v => handleFilterChange('ativoStatus', v)}>
-                <SelectTrigger className="bg-muted border-none h-9 text-xs rounded-lg">
+                <SelectTrigger className="bg-card border-0 shadow-sm h-9 text-xs rounded-lg">
                   <SelectValue placeholder="Ativos/Inativos" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-muted dark:border-border/40">
+                <SelectContent className={PRODUTOS_DROPDOWN_MENU}>
                   <SelectItem value="all" className="text-xs">Ativos e inativos</SelectItem>
                   <SelectItem value="ativos" className="text-xs">Somente ativos</SelectItem>
                   <SelectItem value="inativos" className="text-xs">Somente inativos</SelectItem>
@@ -501,10 +511,10 @@ function ProdutosHeader({
               </Select>
 
               <Select value={filters.cadastroIncompleto} onValueChange={v => handleFilterChange('cadastroIncompleto', v)}>
-                <SelectTrigger className="bg-muted border-none h-9 text-xs rounded-lg">
+                <SelectTrigger className="bg-card border-0 shadow-sm h-9 text-xs rounded-lg">
                   <SelectValue placeholder="Cadastro" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-muted dark:border-border/40">
+                <SelectContent className={PRODUTOS_DROPDOWN_MENU}>
                   <SelectItem value="all" className="text-xs">Todos os cadastros</SelectItem>
                   <SelectItem value="incompleto" className="text-xs">Incompleto</SelectItem>
                   <SelectItem value="completo" className="text-xs">Completo</SelectItem>
@@ -512,10 +522,10 @@ function ProdutosHeader({
               </Select>
 
               <Select value={filters.abcd || 'all'} onValueChange={v => handleFilterChange('abcd', v)}>
-                <SelectTrigger className="bg-muted border-none h-9 text-xs rounded-lg">
+                <SelectTrigger className="bg-card border-0 shadow-sm h-9 text-xs rounded-lg">
                   <SelectValue placeholder="Curva ABCD" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-muted dark:border-border/40">
+                <SelectContent className={PRODUTOS_DROPDOWN_MENU}>
                   <SelectItem value="all" className="text-xs">Todas as classes</SelectItem>
                   {ABCD_FILTER_VALUES.map((value) => (
                     <SelectItem key={value} value={value} className="text-xs">
@@ -527,14 +537,14 @@ function ProdutosHeader({
 
               <Input
                 placeholder="Filtrar por tag..."
-                className="bg-muted/80 border-none h-9 text-xs rounded-lg"
+                className="bg-card border-0 shadow-sm h-9 text-xs rounded-lg"
                 value={filters.tag || ''}
                 onChange={e => handleFilterChange('tag', e.target.value)}
               />
             </div>
 
             {/* Filtros numéricos: estoque + duas métricas */}
-            <div className="rounded-lg border border-border/30 bg-muted/15 p-2.5 space-y-2.5 min-w-0">
+            <div className={cn(PRODUTOS_FILTER_PANEL, 'p-2.5 space-y-2.5 min-w-0')}>
               <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Filtros numéricos
                 {filters.estoqueVirtual ? (
@@ -567,10 +577,10 @@ function ProdutosHeader({
                       quantidadeValorAte: v === 'between' ? prev.quantidadeValorAte : '',
                     }))}
                   >
-                    <SelectTrigger className="bg-muted/80 border-none h-9 text-xs rounded-lg min-w-0 flex-1">
+                    <SelectTrigger className="bg-card border-0 shadow-sm h-9 text-xs rounded-lg min-w-0 flex-1">
                       <SelectValue placeholder="Quantidade" />
                     </SelectTrigger>
-                    <SelectContent className="dark:bg-muted dark:border-border/40">
+                    <SelectContent className={PRODUTOS_DROPDOWN_MENU}>
                       <SelectItem value="all" className="text-xs">Qualquer quantidade</SelectItem>
                       <SelectItem value="gt" className="text-xs">Maior que</SelectItem>
                       <SelectItem value="gte" className="text-xs">Maior ou igual a</SelectItem>
@@ -585,7 +595,7 @@ function ProdutosHeader({
                     inputMode="decimal"
                     placeholder={quantidadeOperador === 'between' ? 'De' : 'Qtd.'}
                     disabled={quantidadeOperador === 'all'}
-                    className="bg-muted/80 border-none h-9 text-xs rounded-lg disabled:opacity-50 w-full min-w-[4.5rem] flex-[0.7]"
+                    className="bg-card border-0 shadow-sm h-9 text-xs rounded-lg disabled:opacity-50 w-full min-w-[4.5rem] flex-[0.7]"
                     value={filters.quantidadeValor || ''}
                     onChange={e => handleFilterChange('quantidadeValor', e.target.value)}
                   />
@@ -594,7 +604,7 @@ function ProdutosHeader({
                     <Input
                       inputMode="decimal"
                       placeholder="Até"
-                      className="bg-muted/80 border-none h-9 text-xs rounded-lg w-full min-w-[4.5rem] flex-[0.7]"
+                      className="bg-card border-0 shadow-sm h-9 text-xs rounded-lg w-full min-w-[4.5rem] flex-[0.7]"
                       value={filters.quantidadeValorAte || ''}
                       onChange={e => handleFilterChange('quantidadeValorAte', e.target.value)}
                     />
