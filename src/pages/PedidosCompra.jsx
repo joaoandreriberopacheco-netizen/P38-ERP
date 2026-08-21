@@ -39,7 +39,9 @@ import FiltrosCompras from '@/components/compras/FiltrosCompras';
 import ListaPedidosCompra from '@/components/compras/ListaPedidosCompra';
 import ConsultaComprasPedidos from '@/components/compras/ConsultaComprasPedidos';
 import StatusPedidoCompraPicker, { statusPedidoCompraExplicitos } from '@/components/compras/StatusPedidoCompraPicker';
-import ActionMenuComprasV2 from '@/components/compras/ActionMenuComprasV2';
+import ComprasNovoPedidoFab from '@/components/compras/ComprasNovoPedidoFab';
+import ComprasRelatoriosMenu from '@/components/compras/ComprasRelatoriosMenu';
+import ComprasOperacoesMenu from '@/components/compras/ComprasOperacoesMenu';
 import EnvioFinanceiroLoteDialog from '@/components/compras/EnvioFinanceiroLoteDialog';
 import AtualizarPrecosFiltradosDialog from '@/components/compras/AtualizarPrecosFiltradosDialog';
 import PedidosCompraOrganizer from '@/components/compras/PedidosCompraOrganizer';
@@ -1004,6 +1006,28 @@ export default function PedidosCompraPage() {
         </div>
         {activeView === 'embarques' || activeView === 'consulta' ? (
           <div className="flex items-center gap-2 flex-wrap justify-end">
+            <ComprasRelatoriosMenu
+              pedidos={filtrados}
+              grupos={grupos}
+              filtrosDesc={`Busca: ${search || 'todas'} · Status: ${statusSel.join(', ') || 'todos'} · Tags: ${tagsSel.length || 0} · Período: ${dataInicial || '-'} até ${dataFinal || '-'} · ETA: ${etaFiltroModo || 'todos'}${etaFiltroModo === 'antes' || etaFiltroModo === 'depois' ? ` (${etaData || '-'})` : ''}${etaFiltroModo === 'entre' || etaFiltroModo === 'personalizado' ? ` (${etaInicial || '-'} até ${etaFinal || '-'})` : ''}`}
+              kpis={{
+                totalPedidos: filtrados.length,
+                totalGeral: valorTotal,
+                totalEmAberto: filtrados.filter(p => ['Rascunho', 'Aguardando Aprovação Financeira', 'Aprovado'].includes(p.status)).reduce((acc, p) => acc + Number(p._display_valor || p.valor_total || 0), 0),
+                totalPagoNaoEntregue: valorPagoNaoEntregue,
+              }}
+            />
+            <ComprasOperacoesMenu
+              onImportarPedido={handleImportarPedido}
+              onImportarNF={() => setShowImportador(true)}
+              onDownloadTemplate={handleDownloadTemplate}
+              onEnviarFinanceiroLote={handleAbrirEnvioFinanceiroLote}
+              onToggleModoSelecao={handleToggleModoSelecao}
+              onAtualizarPrecosFiltrados={() => setShowAtualizarPrecosFiltrados(true)}
+              modoSelecao={modoSelecao}
+              quantidadeSelecionados={selecionadosIds.length}
+              enviandoLote={enviandoLote}
+            />
             {activeView === 'consulta' && pedidosConsulta.length > 0 ? (
               <button
                 type="button"
@@ -1095,28 +1119,7 @@ export default function PedidosCompraPage() {
         onSuccess={loadData}
       />
 
-      {/* Menu de ações FAB */}
-      <ActionMenuComprasV2
-        onNovopedido={handleNovoPedido}
-        onImportarPedido={handleImportarPedido}
-        onImportarNF={() => setShowImportador(true)}
-        onDownloadTemplate={handleDownloadTemplate}
-        onEnviarFinanceiroLote={handleAbrirEnvioFinanceiroLote}
-        onToggleModoSelecao={handleToggleModoSelecao}
-        onAtualizarPrecosFiltrados={() => setShowAtualizarPrecosFiltrados(true)}
-        modoSelecao={modoSelecao}
-        quantidadeSelecionados={selecionadosIds.length}
-        enviandoLote={enviandoLote}
-        pedidos={filtrados}
-        filtrosDesc={`Busca: ${search || 'todas'} · Status: ${statusSel.join(', ') || 'todos'} · Tags: ${tagsSel.length || 0} · Período: ${dataInicial || '-'} até ${dataFinal || '-'} · ETA: ${etaFiltroModo || 'todos'}${etaFiltroModo === 'antes' || etaFiltroModo === 'depois' ? ` (${etaData || '-'})` : ''}${etaFiltroModo === 'entre' || etaFiltroModo === 'personalizado' ? ` (${etaInicial || '-'} até ${etaFinal || '-'})` : ''}`}
-        kpis={{
-          totalPedidos: filtrados.length,
-          totalGeral: valorTotal,
-          totalEmAberto: filtrados.filter(p => ['Rascunho', 'Aguardando Aprovação Financeira', 'Aprovado'].includes(p.status)).reduce((acc, p) => acc + Number(p._display_valor || p.valor_total || 0), 0),
-          totalPagoNaoEntregue: valorPagoNaoEntregue
-        }}
-        grupos={grupos}
-      />
+      <ComprasNovoPedidoFab onNovopedido={handleNovoPedido} />
 
       <EnvioFinanceiroLoteDialog
         open={showEnvioDialog}
