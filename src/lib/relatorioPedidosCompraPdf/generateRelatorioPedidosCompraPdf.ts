@@ -1064,10 +1064,10 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
 
     /** Recuos e border-l — espelha CONSULTA_HIER em ConsultaComprasPedidos. */
     const CONSULTA_HIER = {
-      l1Border: 1.0,
-      l1Pad: 2.2,
-      l2Border: 1.0,
-      l2Pad: 1.8,
+      l1Border: 2.0,
+      l1Pad: 3.5,
+      l2Border: 1.2,
+      l2Pad: 2.5,
       l1Line: [190, 190, 190],
       l2Line: [210, 210, 210],
     };
@@ -1095,6 +1095,8 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
 
     let y = isAnexosMobile ? 16 : (includeAnexos ? RELATORIO_COMPLETO_CHROME.topContentY : 16);
     const MOBILE_BLOCO_RESPIRO = 4;
+    /** Embarques dentro de grupo ETA/transp. — evita L1 duplicado por card. */
+    let mobileConsultaInsideGrupo = false;
     /** Metadados do cabeçalho geral (página 1) — distinto dos cabeçalhos por pedido. */
     const relatorioGeralMeta = isAnexosMobile
       ? { titulo: 'Consulta de compras (completo)', filtros: filtros_desc, generatedAt: generatedAtStr }
@@ -1609,18 +1611,20 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         };
       }
       if (layout === 'narrow_consulta') {
-        const itemMl = M + 2.5;
-        const lineX = M + 0.8;
-        const qtdColRight = M + 7.5;
-        const totalColW = 16;
+        const qtdColRight = M + 9.2;
+        const qtdSepX = qtdColRight + 0.35;
+        const itemMl = qtdSepX + 1.4;
+        const totalColW = 15;
         return {
           layout: 'narrow_consulta',
           itemMl,
-          lineX,
           qtdColRight,
+          qtdSepX,
           totalColW,
           totalOnRight: true,
-          nomeMaxW: M + CW - itemMl - totalColW - 1.5,
+          totalOnDetailRow: true,
+          nomeMaxW: M + CW - itemMl - 0.8,
+          detailMaxW: M + CW - itemMl - totalColW - 1.2,
           contentRight: M + CW,
           vs: 1.1,
           fontScale: 1,
@@ -1628,7 +1632,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
           accentLineWidth: MOBILE_LINE_W,
           nomeFontSize: MOBILE_FONT.itemNome,
           detailFontSize: MOBILE_FONT.detail,
-          totalFontSize: MOBILE_FONT.valor,
+          totalFontSize: MOBILE_FONT.detail,
           qtdFontSize: 6.4,
           unFontSize: 5.2,
           ink: true,
@@ -1760,7 +1764,10 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       const auxDetailStep = (layout === 'narrow_enxuto' ? 3.15 : 2.85) * vs;
       const gapNomeDetalhe = (layout === 'narrow_enxuto' ? 2.6 : 2.2) * vs;
       doc.setFontSize((cfg.detailFontSize ?? 5.65) * cfg.fontScale);
-      const auxValoresLinhas = doc.splitTextToSize(det.linha1, cfg.nomeMaxW);
+      const detailWrapW = layout === 'narrow_consulta' && cfg.detailMaxW
+        ? cfg.detailMaxW
+        : cfg.nomeMaxW;
+      const auxValoresLinhas = doc.splitTextToSize(det.linha1, detailWrapW);
       const detAux1 = lastNomeBaseline + gapNomeDetalhe;
       const detAux2 = detAux1 + auxValoresLinhas.length * auxDetailStep;
       let detEnd = detAux2 + auxDetailStep;
@@ -1798,13 +1805,11 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
 
       if (layout === 'narrow_consulta' && cfg.accentLine) {
         const accent = COMPRAS_PDF_ACCENT[mobileItemAccentKey] || COMPRAS_PDF_ACCENT.muted;
-        const accentW = cfg.accentLineWidth ?? MOBILE_LINE_W;
-        doc.setDrawColor(...accent.line);
-        doc.setLineWidth(accentW);
-        doc.line(cfg.lineX, y0, cfg.lineX, y0 + rowBlockH);
+        doc.setFillColor(...accent.line);
+        doc.rect(M + 0.08, y0, 0.14, rowBlockH, 'F');
         doc.setFillColor(...accent.dot);
-        doc.circle(cfg.lineX + 0.25, branchY, 0.28, 'F');
-        strokeMobileLine(cfg.qtdColRight + 0.5, y0, cfg.qtdColRight + 0.5, y0 + rowBlockH);
+        doc.circle(M + 1.05, branchY, 0.24, 'F');
+        strokeMobileLine(cfg.qtdSepX, y0, cfg.qtdSepX, y0 + rowBlockH);
       } else if (isEnxutoRow) {
         strokeEnxutoLine(cfg.lineX, y0, cfg.lineX, y0 + rowBlockH);
         strokeEnxutoLine(cfg.lineX, branchY, cfg.lineX + (cfg.branchLen ?? 2.4), branchY);
@@ -1837,13 +1842,6 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       nomeLinhas.forEach((line, li) => {
         doc.text(line, nomeX, nomeTop + li * nomeLineStep);
       });
-
-      if (layout === 'narrow_consulta' && cfg.totalOnRight) {
-        doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-        doc.setFontSize((cfg.totalFontSize ?? MOBILE_FONT.valor) * cfg.fontScale);
-        doc.setTextColor(...inkBlack);
-        doc.text(moeda(met.totalLinha), CW, nomeTop, { align: 'right' });
-      }
 
       if (usesColumnValueLayout(layout)) {
         const valoresY = measured.valoresY;
@@ -1882,6 +1880,12 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         auxValoresLinhas.forEach((line, ai) => {
           doc.text(line, cfg.itemMl, detAux1 + ai * auxDetailStep);
         });
+        if (layout === 'narrow_consulta' && cfg.totalOnRight) {
+          doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+          doc.setFontSize((cfg.totalFontSize ?? MOBILE_FONT.detail) * cfg.fontScale);
+          doc.setTextColor(...inkBlack);
+          doc.text(moeda(met.totalLinha), CW, detAux1, { align: 'right' });
+        }
         doc.text(det.linha2, cfg.itemMl, detAux2);
         if (det.warning) {
           const warnLinhas = doc.splitTextToSize(det.warning, cfg.nomeMaxW);
@@ -2189,11 +2193,17 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
     // ════════════════════════════════════════════════════════════════════════
 
     const drawMobileCardConsultaEmbarques = (pedido) => {
-      const rootM = M;
-      const rootRight = rootM + CW;
-      const l1BorderX = rootM + CONSULTA_HIER.l1Border;
-      const l1ContentM = l1BorderX + CONSULTA_HIER.l1Pad;
+      const insideGrupo = mobileConsultaInsideGrupo;
+      const rootM = insideGrupo
+        ? M + CONSULTA_HIER.l1Border + CONSULTA_HIER.l1Pad
+        : M;
+      const rootRight = M + CW;
+      const l1BorderX = insideGrupo ? null : rootM + CONSULTA_HIER.l1Border;
+      const l1ContentM = insideGrupo
+        ? rootM
+        : rootM + CONSULTA_HIER.l1Border + CONSULTA_HIER.l1Pad;
       const l1ContentCW = rootRight - l1ContentM;
+      const cardValorColW = 18;
 
       const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
       const statusRelatorio = normalizarStatusRelatorio(pedido._display_status || pedido.status);
@@ -2230,7 +2240,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       const metaLineStep = 3;
 
       const codigoRaw = safe(getPedidoNumeroRelatorio(pedido)).toUpperCase();
-      const codigoLinhas = doc.splitTextToSize(codigoRaw, l1ContentCW - 1).slice(0, 2);
+      const codigoLinhas = doc.splitTextToSize(codigoRaw, l1ContentCW - cardValorColW - 1).slice(0, 2);
       const codigoLineStep = 3.2;
       const fornLines = doc.splitTextToSize(getFornecedorRelatorio(pedido), l1ContentCW - 1).slice(0, 3);
       const fornLineStep = 3.2;
@@ -2266,6 +2276,9 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
         doc.setFontSize(MOBILE_FONT.title);
         doc.setTextColor(...MOBILE_INK.black);
+        doc.setFontSize(MOBILE_FONT.valor);
+        doc.text(valorHeader, CW, cy, { align: 'right' });
+        doc.setFontSize(MOBILE_FONT.title);
         codigoLinhas.forEach((line, ci) => {
           doc.text(line, 0.5, cy + ci * codigoLineStep);
         });
@@ -2280,9 +2293,6 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
 
         const metaBaseline = cy + 3;
         drawComprasStatusChipPdf(0.5, metaBaseline, pedido._display_status || pedido.status);
-        doc.setFontSize(MOBILE_FONT.valor);
-        doc.setTextColor(...MOBILE_INK.black);
-        doc.text(valorHeader, CW, metaBaseline, { align: 'right' });
         cy += chipRowH;
 
         doc.setFontSize(MOBILE_FONT.meta);
@@ -2307,7 +2317,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
 
       const headerBottom = blockTop + headerH;
       strokeMobileLine(l1ContentM, headerBottom, rootRight, headerBottom);
-      y = headerBottom + 0.5;
+      y = headerBottom + 2;
 
       let totCusto = 0;
       let totVenda = 0;
@@ -2343,9 +2353,11 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         strokeConsultaHierarchyVert(l2BorderX, itemsTop, y, 'l2');
       }
 
-      strokeConsultaHierarchyVert(l1BorderX, blockTop, y, 'l1');
-      strokeMobileLine(rootM, y + 0.3, rootRight, y + 0.3);
-      y += 1.2;
+      if (l1BorderX != null) {
+        strokeConsultaHierarchyVert(l1BorderX, blockTop, y, 'l1');
+      }
+      strokeMobileLine(rootM, y + 0.5, rootRight, y + 0.5);
+      y += 1.8;
     };
 
     // ════════════════════════════════════════════════════════════════════════
@@ -2888,11 +2900,13 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
 
         const l1BorderX = M + CONSULTA_HIER.l1Border;
         const l1StartY = y;
+        mobileConsultaInsideGrupo = true;
         for (const pedido of grupo.pedidos || []) {
           await renderPedidoComAnexos(pedido);
         }
+        mobileConsultaInsideGrupo = false;
         strokeConsultaHierarchyVert(l1BorderX, l1StartY, y, 'l1');
-        y += 0.8;
+        y += 1.2;
         return;
       } else if (isEnxuta) {
         y += 5;
