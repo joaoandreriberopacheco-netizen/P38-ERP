@@ -17,6 +17,7 @@ import {
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 import { cn } from '@/components/utils';
 import { comprasAccentBorderClass, comprasAccentFromDisplayStatus, getComprasDisplayStatusLabel, resolveComprasStatusConfig } from '@/lib/comprasEmbarquesPalette';
+import { ComprasRecebimentoDateChip } from '@/components/compras/ComprasStatusChip';
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 import { caixaTypo } from '@/lib/caixaP38Theme';
 
@@ -256,11 +257,16 @@ function EmbarqueListaCard({
 
               <div className="flex items-end justify-between gap-3 min-w-0">
               <div className="min-w-0 flex-1 space-y-1">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <StatusPill displayStatus={displayStatus} fallbackStatus={pedido.status}>
-                    {displayStatusLabel}
-                  </StatusPill>
-                  <span className={cn(caixaTypo.meta, 'font-light normal-case text-foreground/80 inline-flex items-center gap-1')}>
+                <div className="flex flex-wrap items-start gap-x-1.5 gap-y-1">
+                  <div className="flex flex-col items-start gap-0.5 shrink-0">
+                    <StatusPill displayStatus={displayStatus} fallbackStatus={pedido.status}>
+                      {displayStatusLabel}
+                    </StatusPill>
+                    {displayStatus === 'Concluído' && pedido._display_data_recebimento ? (
+                      <ComprasRecebimentoDateChip date={pedido._display_data_recebimento} />
+                    ) : null}
+                  </div>
+                  <span className={cn(caixaTypo.meta, 'font-light normal-case text-foreground/80 inline-flex items-center gap-1 pt-0.5')}>
                     <Package2 className="w-3 h-3 flex-none text-foreground/70" />
                     <span>
                       {totalLinhas} {totalLinhas === 1 ? 'item' : 'itens'}

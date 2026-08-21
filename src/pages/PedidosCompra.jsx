@@ -24,6 +24,7 @@ import { hydrateEmbarquesFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmba
 import { fetchPedidosCompraGestaoInicial } from '@/lib/fetchPedidosCompraGestao';
 import { carregarProdutosMap } from '@/lib/embarqueVitrineHelpers';
 import { calcularPercentuaisLogistica, embarqueRecepcaoDocumentalCompleta, embarqueTemSaldoPendente } from '@/lib/embarqueLogisticaHelpers';
+import { getEmbarqueDataRecebimento, recebimentoMatchesFilter } from '@/lib/embarqueRecebimentoDate';
 import {
   buildEmbarqueVirtualNecessidade,
   embarqueExcluidoDeNecessidade,
@@ -135,6 +136,8 @@ const passaFiltrosEmbarqueCard = (
     etaData,
     etaInicial,
     etaFinal,
+    recebimentoInicial,
+    recebimentoFinal,
     skipSearch = false,
     searchIncludeProdutos = false,
   },
@@ -155,7 +158,14 @@ const passaFiltrosEmbarqueCard = (
   if (!passaFiltroVisibilidadePedidosCompra(card, {
     somenteNaoConcluidos: ocultarConcluidos,
     ultimos30Dias: filtroUltimos30Dias,
-    getDataPedido: (item) => item.data_emissao || (item.created_date ? toLocalDate(item.created_date) : ''),
+    getDataPedido: (item) => {
+      if (item._display_status === 'Concluído') {
+        return getEmbarqueDataRecebimento(item)
+          || item.data_emissao
+          || (item.created_date ? toLocalDate(item.created_date) : '');
+      }
+      return item.data_emissao || (item.created_date ? toLocalDate(item.created_date) : '');
+    },
     isConcluido: (item) => item._display_status === 'Concluído',
   })) return false;
 
@@ -175,6 +185,7 @@ const passaFiltrosEmbarqueCard = (
   if (dataInicial && (!dataPedido || dataPedido < dataInicial)) return false;
   if (dataFinal && (!dataPedido || dataPedido > dataFinal)) return false;
   if (!etaMatchesFilter(embarque, etaFiltroModo, etaData, etaInicial, etaFinal)) return false;
+  if (!recebimentoMatchesFilter(card, recebimentoInicial, recebimentoFinal)) return false;
   return true;
 };
 
@@ -554,13 +565,15 @@ function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
                 }, pedido);
               }));
 
-      return {
+      const displayCode = getDisplayEmbarqueCode(pedido, embarque);
+      const displayStatus = getBorrowedStatus(pedido, embarque, produtosMap, embarquesDoPedido);
+      const cardBase = {
         ...pedido,
         _virtual_key: `${pedido.id}_${embarque.id}`,
         _embarque: embarque,
-        _display_code: getDisplayEmbarqueCode(pedido, embarque),
+        _display_code: displayCode,
         _display_ordinal: getDisplayEmbarqueOrdinal(embarque, { ...pedido, _embarques: embarquesRenderizados }),
-        _display_status: getBorrowedStatus(pedido, embarque, produtosMap, embarquesDoPedido),
+        _display_status: displayStatus,
         _display_valor: hasLinkedItems(embarque) || ehNecessidade ? getDisplayValorEmbarque(pedido, embarque, produtosMap, embarquesDoPedido) : calcValorTotalPedidoCompra(pedido),
         _display_itens: itensDoCard,
         _display_date: getEmbarqueDisplayDate(pedido),
@@ -568,6 +581,11 @@ function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
         _quantidade_pendente: quantidadePendente,
         _is_original: !!embarqueOriginal && embarque.id === embarqueOriginal.id,
         _is_necessidade: ehNecessidade,
+      };
+
+      return {
+        ...cardBase,
+        _display_data_recebimento: getEmbarqueDataRecebimento(cardBase),
       };
     });
   });
@@ -592,6 +610,8 @@ export default function PedidosCompraPage() {
   const [etaData, setEtaData] = useState('');
   const [etaInicial, setEtaInicial] = useState('');
   const [etaFinal, setEtaFinal] = useState('');
+  const [recebimentoInicial, setRecebimentoInicial] = useState('');
+  const [recebimentoFinal, setRecebimentoFinal] = useState('');
   const [showImportador, setShowImportador] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selecionadosIds, setSelecionadosIds] = useState([]);
@@ -800,6 +820,8 @@ export default function PedidosCompraPage() {
       etaData,
       etaInicial,
       etaFinal,
+      recebimentoInicial,
+      recebimentoFinal,
     }),
     [
       search,
@@ -813,6 +835,8 @@ export default function PedidosCompraPage() {
       etaData,
       etaInicial,
       etaFinal,
+      recebimentoInicial,
+      recebimentoFinal,
     ],
   );
 
@@ -960,6 +984,7 @@ export default function PedidosCompraPage() {
     (etaFiltroModo === 'personalizado' && (etaInicial || etaFinal))
   );
   const hasActiveFilters = search || tagsSel.length > 0 || dataInicial || dataFinal || hasEtaFilter
+    || recebimentoInicial || recebimentoFinal
     || statusPedidoCompraExplicitos(statusSel).length > 0
     || filtroUltimos30Dias !== FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT
     || filtroSomenteNaoConcluidos !== FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT;
@@ -1082,6 +1107,8 @@ export default function PedidosCompraPage() {
         etaData={etaData} onEtaData={setEtaData}
         etaInicial={etaInicial} onEtaInicial={setEtaInicial}
         etaFinal={etaFinal} onEtaFinal={setEtaFinal}
+        recebimentoInicial={recebimentoInicial} onRecebimentoInicial={setRecebimentoInicial}
+        recebimentoFinal={recebimentoFinal} onRecebimentoFinal={setRecebimentoFinal}
         hasActiveFilters={hasActiveFilters}
         onLimparFiltros={() => {
           setSearch('');
@@ -1095,6 +1122,8 @@ export default function PedidosCompraPage() {
           setEtaData('');
           setEtaInicial('');
           setEtaFinal('');
+          setRecebimentoInicial('');
+          setRecebimentoFinal('');
         }}
       />
 

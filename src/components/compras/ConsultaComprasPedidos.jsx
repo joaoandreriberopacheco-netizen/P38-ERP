@@ -11,7 +11,7 @@ import { formatarSoData } from '@/components/utils/dateUtils';
 import { getTotalLinhaPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
 import { buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
 import { comprasAccentFromDisplayStatus, getComprasDisplayStatusLabel } from '@/lib/comprasEmbarquesPalette';
-import ComprasStatusChip from '@/components/compras/ComprasStatusChip';
+import ComprasStatusChip, { ComprasRecebimentoDateChip } from '@/components/compras/ComprasStatusChip';
 
 /** Recuo hierárquico + tipografia fixa (visual mobile em todos os viewports). */
 const CONSULTA_HIER = {
@@ -95,14 +95,19 @@ function ConsultaEmbarqueCard({ card, onVerPedido, isLast = false }) {
           </p>
           <p className={cn(CONSULTA_SUBTITLE, 'normal-case')}>{fornecedor}</p>
           <div className="flex items-end justify-between gap-3 min-w-0">
-            <div className={cn(caixaTypo.meta, 'normal-case min-w-0 flex-1 font-light flex flex-wrap items-center gap-1.5')}>
+            <div className={cn(caixaTypo.meta, 'normal-case min-w-0 flex-1 font-light flex flex-wrap items-start gap-x-1.5 gap-y-1')}>
               {displayStatus ? (
-                <ComprasStatusChip displayStatus={displayStatus} fallbackStatus={card.status}>
-                  {getComprasDisplayStatusLabel(displayStatus)}
-                </ComprasStatusChip>
+                <div className="flex flex-col items-start gap-0.5 shrink-0">
+                  <ComprasStatusChip displayStatus={displayStatus} fallbackStatus={card.status}>
+                    {getComprasDisplayStatusLabel(displayStatus)}
+                  </ComprasStatusChip>
+                  {displayStatus === 'Concluído' && card._display_data_recebimento ? (
+                    <ComprasRecebimentoDateChip date={card._display_data_recebimento} />
+                  ) : null}
+                </div>
               ) : null}
               {metaSemStatus.map((part) => (
-                <span key={part} className="tabular-nums text-foreground/80">
+                <span key={part} className="tabular-nums text-foreground/80 pt-0.5">
                   {part}
                 </span>
               ))}

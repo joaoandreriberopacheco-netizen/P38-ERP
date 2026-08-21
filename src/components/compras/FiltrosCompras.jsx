@@ -6,6 +6,7 @@ import {
   Tag,
   Calendar,
   CalendarClock,
+  CalendarCheck,
   Layers,
   ChevronDown,
 } from 'lucide-react';
@@ -137,6 +138,10 @@ function FiltrosComprasPainel({
   onEtaInicial,
   etaFinal,
   onEtaFinal,
+  recebimentoInicial,
+  onRecebimentoInicial,
+  recebimentoFinal,
+  onRecebimentoFinal,
   onFiltroSomenteNaoConcluidos,
   searchTag,
   onSearchTag,
@@ -280,6 +285,24 @@ function FiltrosComprasPainel({
         )}
       </FilterSection>
 
+      <FilterSection title="Período de recebimento" icon={CalendarCheck} className={layout === 'desktop' ? 'h-full' : undefined}>
+        <p className="text-[10px] font-light text-muted-foreground leading-snug">
+          Filtra embarques concluídos pela data em que foram recebidos.
+        </p>
+        <MobileDateRangePicker
+          startDate={recebimentoInicial}
+          endDate={recebimentoFinal}
+          onApply={(inicio, fim) => {
+            onRecebimentoInicial(inicio);
+            onRecebimentoFinal(fim);
+          }}
+          onClear={() => {
+            onRecebimentoInicial('');
+            onRecebimentoFinal('');
+          }}
+        />
+      </FilterSection>
+
       <FilterSection
         title="Status do pedido"
         icon={Layers}
@@ -368,6 +391,10 @@ export default function FiltrosCompras({
   onEtaInicial,
   etaFinal,
   onEtaFinal,
+  recebimentoInicial,
+  onRecebimentoInicial,
+  recebimentoFinal,
+  onRecebimentoFinal,
   hasActiveFilters,
   onLimparFiltros,
 }) {
@@ -378,6 +405,7 @@ export default function FiltrosCompras({
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (dataInicial || dataFinal) count += 1;
+    if (recebimentoInicial || recebimentoFinal) count += 1;
     if (
       etaFiltroModo &&
       ((['antes', 'depois'].includes(etaFiltroModo) && etaData) ||
@@ -388,7 +416,7 @@ export default function FiltrosCompras({
     count += statusPedidoCompraExplicitos(statusSel).length;
     count += tagsSel.length;
     return count;
-  }, [dataInicial, dataFinal, etaFiltroModo, etaData, etaInicial, etaFinal, statusSel, tagsSel]);
+  }, [dataInicial, dataFinal, recebimentoInicial, recebimentoFinal, etaFiltroModo, etaData, etaInicial, etaFinal, statusSel, tagsSel]);
 
   const activeChips = useMemo(() => {
     const chips = [];
@@ -406,6 +434,23 @@ export default function FiltrosCompras({
         onRemove: () => {
           onDataInicial('');
           onDataFinal('');
+        },
+      });
+    }
+
+    if (recebimentoInicial || recebimentoFinal) {
+      const label = recebimentoInicial && recebimentoFinal
+        ? `Recebimento: ${formatDateLabel(recebimentoInicial)} – ${formatDateLabel(recebimentoFinal)}`
+        : recebimentoInicial
+          ? `Recebimento desde ${formatDateLabel(recebimentoInicial)}`
+          : `Recebimento até ${formatDateLabel(recebimentoFinal)}`;
+      chips.push({
+        key: 'periodo-recebimento',
+        label,
+        tone: 'accent',
+        onRemove: () => {
+          onRecebimentoInicial('');
+          onRecebimentoFinal('');
         },
       });
     }
@@ -467,6 +512,8 @@ export default function FiltrosCompras({
   }, [
     dataInicial,
     dataFinal,
+    recebimentoInicial,
+    recebimentoFinal,
     etaFiltroModo,
     etaData,
     etaInicial,
@@ -475,6 +522,8 @@ export default function FiltrosCompras({
     tagsSel,
     onDataInicial,
     onDataFinal,
+    onRecebimentoInicial,
+    onRecebimentoFinal,
     onEtaFiltroModo,
     onEtaData,
     onEtaInicial,
@@ -501,6 +550,10 @@ export default function FiltrosCompras({
     onEtaInicial,
     etaFinal,
     onEtaFinal,
+    recebimentoInicial,
+    onRecebimentoInicial,
+    recebimentoFinal,
+    onRecebimentoFinal,
     onFiltroSomenteNaoConcluidos,
     searchTag,
     onSearchTag: setSearchTag,
