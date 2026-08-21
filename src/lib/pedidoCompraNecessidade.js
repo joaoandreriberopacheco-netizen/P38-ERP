@@ -11,6 +11,13 @@
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 import { resolveEmbarqueQuantidadeComercial } from '@/lib/embarqueQuantityResolve';
 import { buildConsultaItensEmbarque, calcConsultaValorEmbarque } from '@/lib/consultaComprasEmbarques';
+import {
+  EMBARQUE_CODIGOS_EXCLUIDOS_OPERACIONAL,
+  NECESSIDADE_EMBARQUE_CODIGOS_EXCLUIDOS,
+  codigoEmbarqueExcluidoOperacional as codigoEmbarqueExcluidoDeNecessidade,
+  embarqueExcluidoOperacional as embarqueExcluidoDeNecessidade,
+  resolverCodigoEmbarqueExibicao as resolverCodigoEmbarqueNecessidade,
+} from '@/lib/embarqueCodigosExcluidos';
 import { calcularItensOrfaosPedido, qtyEmbarcadaComercialLinha } from '@/lib/embarqueLogisticaHelpers';
 import { calcValorItensPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
@@ -25,61 +32,13 @@ export const MIN_SOMA_PENDENTE_NECESSIDADE = 0.5;
 /** Qualquer linha com pelo menos esta qtd comercial conta como necessidade material. */
 export const MIN_UNIDADE_INTEIRA_PENDENTE = 1;
 
-/**
- * Pedidos/embarques que não entram na Necessidade (decisão operacional).
- * Pré-regra (ago/2026): falsos positivos legados — ficam para trás; a regra única
- * vale daqui em diante. Pendências reais em aberto: CCG (AAC-EB6, KA2-K4Q).
- * Normalização: trim, sem espaços, maiúsculas (ex.: E62-67G, 49K-PKG-A).
- */
-export const NECESSIDADE_EMBARQUE_CODIGOS_EXCLUIDOS = [
-  'E62-67G',
-  '49K-PKG',
-  'MHK-S8W',
-  'FKJ-2GF',
-  'WX7-A5N',
-  '6DB-B2S',
-  'EHJ-BM9',
-  'G62-HUF',
-  'EXC-FQZ',
-  'NXJ-53K',
-];
-
-function normalizarCodigoEmbarque(codigo = '') {
-  return String(codigo || '').trim().replace(/\s+/g, '').toUpperCase();
-}
-
-function codigoCorrespondeExclusaoNecessidade(norm = '', excluido = '') {
-  const base = normalizarCodigoEmbarque(excluido);
-  if (!base || !norm) return false;
-  return norm === base || norm.startsWith(`${base}-`);
-}
-
-export function codigoEmbarqueExcluidoDeNecessidade(codigo = '') {
-  const norm = normalizarCodigoEmbarque(codigo);
-  return NECESSIDADE_EMBARQUE_CODIGOS_EXCLUIDOS.some((excluido) =>
-    codigoCorrespondeExclusaoNecessidade(norm, excluido),
-  );
-}
-
-/** Código exibido do embarque (card E62-67G, codigo_exibicao, etc.). */
-export function resolverCodigoEmbarqueNecessidade(pedido, embarque) {
-  if (!embarque) return '';
-  const direto = embarque.codigo_exibicao || embarque.numero || '';
-  if (direto) return String(direto).trim();
-  const base = String(pedido?.numero || '').replace(/\s+/g, '');
-  return base;
-}
-
-export function embarqueExcluidoDeNecessidade(pedido, embarque, displayCode = '') {
-  const candidatos = [
-    displayCode,
-    pedido?.numero,
-    embarque?.codigo_exibicao,
-    embarque?.numero,
-  ].filter(Boolean);
-  if (candidatos.some((c) => codigoEmbarqueExcluidoDeNecessidade(c))) return true;
-  return codigoEmbarqueExcluidoDeNecessidade(resolverCodigoEmbarqueNecessidade(pedido, embarque));
-}
+export {
+  EMBARQUE_CODIGOS_EXCLUIDOS_OPERACIONAL,
+  NECESSIDADE_EMBARQUE_CODIGOS_EXCLUIDOS,
+  codigoEmbarqueExcluidoDeNecessidade,
+  embarqueExcluidoDeNecessidade,
+  resolverCodigoEmbarqueNecessidade,
+};
 
 function filtrarEmbarquesParaCalculoNecessidade(pedido, embarquesDoPedido = []) {
   return (embarquesDoPedido || []).filter((embarque) => !embarqueExcluidoDeNecessidade(pedido, embarque));

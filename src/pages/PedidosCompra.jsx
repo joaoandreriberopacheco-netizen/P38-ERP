@@ -979,6 +979,7 @@ export default function PedidosCompraPage() {
 
     return embarques
       .filter((card) => keysVisiveis.has(card._virtual_key))
+      .filter((card) => !embarqueExcluidoDeNecessidade(card, card._embarque, card._display_code))
       .map((card) => enrichEmbarqueParaConsulta(card, produtosMap))
       .filter((card) => (card._consulta_itens || []).length > 0)
       .sort((a, b) => compareEmbarquesConsulta(a, b, sortOrder, groupBy));

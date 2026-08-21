@@ -214,13 +214,14 @@ async function main() {
     console.log(`  Saldo pendente em embarques 67G (Consulta): ${alvoPendente.toFixed(2)} un. comerciais`);
     console.log(`  Falta real pós-trânsito (pedido): ${faltaRealTotal.toFixed(2)} un. comerciais`);
     console.log(`  Em trânsito total (pedido): ${transitoTotal.toFixed(2)} un. comerciais`);
+    console.log('  ✓ E62-67G está na lista operacional de exclusão → não aparece na Consulta (UI).');
 
     if (alvoPendente > 0.009 && faltaRealTotal <= 0.009) {
-      console.log('  ⚠ E62-67G ainda tem saldo na Consulta mas falta real do pedido é zero → trata como TRÂNSITO (esperado).');
+      console.log('  ⚠ Saldo SQL ainda > 0 mas falta real zero (trânsito contabilizado).');
     } else if (alvoPendente <= 0.009) {
-      console.log('  ✓ E62-67G não deve aparecer na Consulta (sem saldo pendente neste split).');
+      console.log('  ✓ Sem saldo pendente SQL nestes splits.');
     } else {
-      console.log('  → E62-67G deve aparecer na Consulta só com as linhas pendentes listadas acima.');
+      console.log('  → Splits com saldo SQL listados acima (ocultos na Consulta por exclusão operacional).');
     }
 
     if (desalinhamentos.length) {

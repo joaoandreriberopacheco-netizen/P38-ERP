@@ -10,6 +10,7 @@ import {
   resolveSaldoPendenteEmbarqueBase,
 } from '@/lib/embarqueLogisticaHelpers';
 import { isNecessidadeRenderizada } from '@/lib/pedidoCompraNecessidade';
+import { embarqueExcluidoOperacional } from '@/lib/embarqueCodigosExcluidos';
 import { calculateBaseQuantity, commercialQuantityFromBase, getItemCompraExibicaoVitrine } from '@/lib/productUnits';
 
 const MIN_QTD_PENDENTE_CONSULTA = MIN_SALDO_PENDENTE_BASE;
@@ -146,11 +147,14 @@ function buildLinhaConsultaItem(pedido, pedidoItem, sqlLine = null, produto = nu
  * - Embarque concluído: não aparece na Consulta.
  * - Despacho em trânsito: só saldo pendente deste split (embarcado − recebido).
  * - Necessidade: só o que ainda falta vir neste split.
+ * - Códigos operacionais excluídos (ex.: E62-67G legado): não entram na Consulta.
  */
 export function buildConsultaItensEmbarque(card = {}, produtosMap = {}) {
   const pedido = card;
   const embarque = card._embarque;
   const ehNecessidade = card._is_necessidade || isNecessidadeRenderizada(embarque);
+
+  if (embarqueExcluidoOperacional(pedido, embarque, card._display_code)) return [];
 
   if (isEmbarqueConcluidoParaConsulta(card, embarque)) return [];
 
