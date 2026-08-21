@@ -7,7 +7,7 @@ import {
 } from '@/lib/produtoIepDiagnostico';
 
 const P38_SECTION =
-  'rounded-lg border border-border/40 dark:border-white/10 bg-card/70 dark:bg-[#2d333b]/90 p-4';
+  'rounded-lg border border-border/40 dark:border-white/10 bg-card dark:bg-[#2d333b]/90 p-4';
 
 const ABCD_TONE = {
   A: 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
@@ -29,7 +29,7 @@ function ScoreTile({ label, value, hint }) {
   const display =
     isText ? value : Number.isFinite(num) && num > 0 ? Math.round(num) : '—';
   return (
-    <div className="rounded-lg border border-border/40 dark:border-white/10 bg-secondary/30 dark:bg-[#26262e]/80 p-3">
+    <div className="rounded-lg border border-border/40 dark:border-white/10 bg-card dark:bg-[#26262e]/80 p-3">
       <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className="text-2xl font-semibold tabular-nums text-foreground mt-1">{display}</p>
       {hint ? <p className="text-[11px] text-muted-foreground mt-1 leading-snug">{hint}</p> : null}

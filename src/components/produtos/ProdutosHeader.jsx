@@ -22,6 +22,13 @@ import ProdutosTreeByCategoryToggle from '@/components/produtos/ProdutosTreeByCa
 import ProdutosMobileFiltersSheet from '@/components/produtos/ProdutosMobileFiltersSheet';
 import { useCompactShell } from '@/hooks/use-breakpoint';
 import { cn } from '@/components/utils';
+import {
+  PRODUTOS_DROPDOWN_ITEM,
+  PRODUTOS_DROPDOWN_MENU,
+  PRODUTOS_ICON_BTN,
+  PRODUTOS_SEARCH_INPUT,
+  PRODUTOS_SEARCH_SHELL,
+} from '@/lib/produtosP38Theme';
 
 function ProdutosHeader({
   stats,
@@ -127,13 +134,13 @@ function ProdutosHeader({
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="dark:bg-muted dark:border-border/40">
+              <DropdownMenuContent align="end" className={PRODUTOS_DROPDOWN_MENU}>
                 <DropdownMenuItem
                   onClick={() => {
                     window.setTimeout(() => onGerarRelatorioEstoque?.(), 0);
                   }}
                   className={cn(
-                    'dark:text-foreground dark:hover:bg-primary/90 text-sm',
+                    cn('text-sm', PRODUTOS_DROPDOWN_ITEM),
                     gerandoRelatorioEstoque && 'pointer-events-none opacity-50',
                   )}
                 >
@@ -145,7 +152,7 @@ function ProdutosHeader({
                     window.setTimeout(() => onGerarRelatorioVendas?.('30d'), 0);
                   }}
                   className={cn(
-                    'dark:text-foreground dark:hover:bg-primary/90 text-sm',
+                    cn('text-sm', PRODUTOS_DROPDOWN_ITEM),
                     gerandoRelatorioVendas && 'pointer-events-none opacity-50',
                   )}
                 >
@@ -157,7 +164,7 @@ function ProdutosHeader({
                     window.setTimeout(() => onGerarRelatorioVendas?.('60d'), 0);
                   }}
                   className={cn(
-                    'dark:text-foreground dark:hover:bg-primary/90 text-sm',
+                    cn('text-sm', PRODUTOS_DROPDOWN_ITEM),
                     gerandoRelatorioVendas && 'pointer-events-none opacity-50',
                   )}
                 >
@@ -169,7 +176,7 @@ function ProdutosHeader({
                     window.setTimeout(() => onGerarRelatorioVendasV2?.(), 0);
                   }}
                   className={cn(
-                    'dark:text-foreground dark:hover:bg-primary/90 text-sm',
+                    cn('text-sm', PRODUTOS_DROPDOWN_ITEM),
                     gerandoRelatorioVendasV2 && 'pointer-events-none opacity-50',
                   )}
                 >
@@ -180,7 +187,7 @@ function ProdutosHeader({
                   onClick={() => {
                     window.setTimeout(() => onOpenCatalogTagPrint?.(), 0);
                   }}
-                  className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
+                  className={cn('text-sm', PRODUTOS_DROPDOWN_ITEM)}
                 >
                   <Tags className="w-4 h-4 mr-2 p38-text-accent" />
                   Etiquetas em PDF A4
@@ -190,7 +197,7 @@ function ProdutosHeader({
                     window.setTimeout(() => onGerarRelatorioIep?.(), 0);
                   }}
                   className={cn(
-                    'dark:text-foreground dark:hover:bg-primary/90 text-sm',
+                    cn('text-sm', PRODUTOS_DROPDOWN_ITEM),
                     gerandoRelatorioIep && 'pointer-events-none opacity-50',
                   )}
                 >
@@ -228,26 +235,26 @@ function ProdutosHeader({
                     <Upload className="w-4 h-4 text-muted-foreground" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="dark:bg-muted dark:border-border/40">
+                <DropdownMenuContent align="end" className={PRODUTOS_DROPDOWN_MENU}>
                   {hasFilteredProdutos && (
                     <DropdownMenuItem
                       onClick={() => {
                         window.setTimeout(() => onOpenMassPrecificacao?.(), 0);
                       }}
-                      className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
+                      className={cn('text-sm', PRODUTOS_DROPDOWN_ITEM)}
                     >
                       <SlidersHorizontal className="w-4 h-4 mr-2 p38-text-accent" />Ajustar precificação nos filtrados
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem onClick={handleBaixarTemplateUnificado} className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
+                  <DropdownMenuItem onClick={handleBaixarTemplateUnificado} className={cn('text-sm', PRODUTOS_DROPDOWN_ITEM)}>
                     <Download className="w-4 h-4 mr-2" />Template
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
+                  <DropdownMenuItem asChild className={cn('text-sm', PRODUTOS_DROPDOWN_ITEM)}>
                     <Link to={createPageUrl('ImportacaoProdutos')}>
                       <Upload className="w-4 h-4 mr-2" />Importar CSV
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setIsMassImageUploaderOpen(true)} className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
+                  <DropdownMenuItem onClick={() => setIsMassImageUploaderOpen(true)} className={cn('text-sm', PRODUTOS_DROPDOWN_ITEM)}>
                     <ImageIcon className="w-4 h-4 mr-2" />Importar Imagens
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -258,23 +265,23 @@ function ProdutosHeader({
                     <Sparkles className="w-4 h-4 p38-text-accent" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="dark:bg-muted dark:border-border/40">
+                <DropdownMenuContent align="end" className={PRODUTOS_DROPDOWN_MENU}>
                   {hasFilteredProdutos && (
                     <DropdownMenuItem
                       onClick={() => {
                         window.setTimeout(() => onOpenMassTag?.(), 0);
                       }}
-                      className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
+                      className={cn('text-sm', PRODUTOS_DROPDOWN_ITEM)}
                     >
                       <Sparkles className="w-4 h-4 mr-2 p38-text-accent" />Tagificação em Massa
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem asChild className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
+                  <DropdownMenuItem asChild className={cn('text-sm', PRODUTOS_DROPDOWN_ITEM)}>
                     <Link to={createPageUrl('OtimizacaoEstoqueIA')}>
                       <Sparkles className="w-4 h-4 mr-2 p38-text-accent" />Otimizar Estoque
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
+                  <DropdownMenuItem asChild className={cn('text-sm', PRODUTOS_DROPDOWN_ITEM)}>
                     <Link to={createPageUrl('EstimativaEmbalagensIA')}>
                       <Wand2 className="w-4 h-4 mr-2 p38-text-accent" />Estimar Embalagens
                     </Link>
@@ -290,11 +297,11 @@ function ProdutosHeader({
 
         {/* Busca larga no topo; atalhos e filtros logo abaixo (sem scroll horizontal). */}
         <div className="flex flex-col gap-2 min-w-0">
-          <div className="relative w-full min-w-0">
+          <div className={cn('relative w-full min-w-0', PRODUTOS_SEARCH_SHELL)}>
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none desktop-layout:left-3" />
             <CatalogSearchInput
               placeholder="Nome ou descrição (espaço ou ; para combinar). XXmolhadas ou XXj- filtra por categoria..."
-              className="border-none bg-muted h-10 desktop-layout:h-11 text-sm pl-9 desktop-layout:pl-10 text-foreground/90 shadow-none focus-visible:ring-0 w-full min-w-0 rounded-xl"
+              className={PRODUTOS_SEARCH_INPUT}
               value={filters.searchTerm}
               onChange={(value) => handleFilterChange('searchTerm', value)}
             />
@@ -317,7 +324,7 @@ function ProdutosHeader({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-10 w-10 flex-shrink-0 rounded-xl bg-muted desktop-layout:hidden"
+                  className={cn('h-10 w-10 flex-shrink-0', PRODUTOS_ICON_BTN, 'desktop-layout:hidden')}
                   onClick={() => onOpenMassCategory?.()}
                   title="Classificar categorias com IA"
                   aria-label="Classificar categorias com IA"
@@ -338,7 +345,7 @@ function ProdutosHeader({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-10 w-10 flex-shrink-0 rounded-xl bg-muted desktop-layout:hidden"
+                  className={cn('h-10 w-10 flex-shrink-0', PRODUTOS_ICON_BTN, 'desktop-layout:hidden')}
                   onClick={() => onOpenMassTag?.()}
                   title="Tagificação em massa com IA"
                   aria-label="Tagificação em massa com IA"
@@ -359,7 +366,7 @@ function ProdutosHeader({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-10 w-10 flex-shrink-0 rounded-xl bg-muted desktop-layout:hidden"
+                  className={cn('h-10 w-10 flex-shrink-0', PRODUTOS_ICON_BTN, 'desktop-layout:hidden')}
                   onClick={() => onOpenMassPrecificacao?.()}
                   title="Ajustar precificação nos produtos do filtro atual"
                   aria-label="Ajustar precificação nos produtos do filtro atual"

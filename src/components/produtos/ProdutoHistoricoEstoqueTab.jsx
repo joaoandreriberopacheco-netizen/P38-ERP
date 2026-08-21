@@ -57,9 +57,9 @@ import { useCompactShell } from '@/hooks/use-breakpoint';
 import { cn } from '@/components/utils';
 
 const P38_FIELD =
-  'h-11 rounded-lg border-0 bg-secondary/80 shadow-none focus-visible:ring-1 focus-visible:ring-border/60 dark:bg-[#26262e]';
+  'h-11 rounded-lg border border-border/40 bg-card shadow-sm focus-visible:ring-2 focus-visible:ring-[#4a5240]/15 dark:border-0 dark:bg-[#26262e] dark:shadow-none dark:focus-visible:ring-1 dark:focus-visible:ring-border/60';
 const P38_BTN =
-  'h-11 rounded-lg border border-border/40 bg-card font-medium shadow-sm dark:border-white/10 dark:bg-[#26262e]';
+  'h-11 rounded-lg border border-border/40 bg-card font-medium shadow-sm hover:bg-secondary/30 dark:border-white/10 dark:bg-[#26262e] dark:hover:bg-[#26262e]';
 /** Acima do Drawer (z-310) para o dropdown não ficar atrás do painel de filtros */
 const FILTRO_SELECT_CONTENT =
   'z-[320] max-h-[min(50vh,20rem)] border border-border/40 bg-popover shadow-lg dark:border-white/10 dark:bg-[#2d333b]';

@@ -45,16 +45,18 @@ import { formatProductCode, generateRandomProductCode } from '@/lib/productCode'
 
 const P38_FORM_ROOT = 'flex flex-col h-full overflow-hidden font-din-1451 bg-background dark:bg-[#1f1d22]';
 const P38_FORM_HEADER = 'flex-none border-b border-border/40 dark:border-white/10 bg-card dark:bg-[#2d333b]';
-const P38_TAB_LIST = 'grid grid-cols-6 w-full bg-transparent border-b border-border/40 dark:border-white/10 rounded-none h-auto p-0 flex-shrink-0';
-const P38_TAB_TRIGGER = 'group border-b-2 border-transparent data-[state=active]:border-[#4a5240] dark:data-[state=active]:border-[#a4ce33] data-[state=active]:bg-[#26262e]/35 dark:data-[state=active]:bg-[#26262e]/70 rounded-none py-3 text-xs md:text-sm';
+const P38_TAB_LIST = 'grid grid-cols-6 w-full bg-card dark:bg-transparent border-b border-border/40 dark:border-white/10 rounded-none h-auto p-0 flex-shrink-0';
+const P38_TAB_TRIGGER = 'group border-b-2 border-transparent data-[state=active]:border-[#4a5240] dark:data-[state=active]:border-[#a4ce33] data-[state=active]:bg-[#4a5240]/10 dark:data-[state=active]:bg-[#26262e]/70 rounded-none py-3 text-xs md:text-sm';
 const P38_TAB_ICON = 'w-4 h-4 md:w-5 md:h-5 text-muted-foreground group-data-[state=active]:text-[#4a5240] dark:group-data-[state=active]:text-[#a4ce33]';
 const P38_TAB_LABEL = 'hidden sm:inline ml-2 text-muted-foreground group-data-[state=active]:text-foreground';
-const P38_INPUT = 'bg-secondary/80 dark:bg-[#26262e] border-0 rounded-lg h-10 text-sm text-foreground shadow-none focus-visible:ring-1 focus-visible:ring-border/60';
+const P38_INPUT = 'bg-card border border-border/40 dark:bg-[#26262e] dark:border-0 rounded-lg h-10 text-sm text-foreground shadow-none focus-visible:ring-2 focus-visible:ring-[#4a5240]/15 dark:focus-visible:ring-1 dark:focus-visible:ring-border/60';
 const P38_INPUT_UNDERLINE = 'bg-transparent border-0 border-b border-border/40 dark:border-white/10 rounded-none px-0 h-9 text-sm text-foreground focus:border-[#4a5240] dark:focus:border-[#a4ce33]';
-const P38_SECTION = 'rounded-lg border border-border/40 dark:border-white/10 bg-card/70 dark:bg-[#2d333b]/90 p-4';
+const P38_SECTION = 'rounded-lg border border-border/40 dark:border-white/10 bg-card dark:bg-[#2d333b]/90 p-4';
+const P38_FORM_PANEL = 'bg-secondary/40 dark:bg-[#26262e]/50';
 const P38_SAVE_BTN = 'bg-[#4a5240] hover:bg-[#4a5240]/90 text-white dark:bg-[#a4ce33] dark:hover:bg-[#a4ce33]/90 dark:text-[#1f1d22] h-10 w-10';
 /** Portal do Select fica no body; precisa ficar acima do shell do formulário (z-[70] / z-[80]). */
-const P38_FORM_SELECT_CONTENT = 'z-[90] max-h-96 dark:bg-muted dark:border-border/40';
+const P38_FORM_SELECT_CONTENT = 'z-[90] max-h-96 bg-card border border-border/40 shadow-lg dark:bg-muted dark:border-border/40';
+const P38_SELECT_ITEM = 'hover:bg-muted/60 focus:bg-muted/60 dark:hover:bg-primary/90 dark:focus:bg-primary/90';
 const SELECT_NONE = '__none__';
 const SELECT_ORPHAN_CAT_PREFIX = '__orphan_cat__:';
 const SELECT_ORPHAN_FORN_PREFIX = '__orphan_forn__:';
@@ -1193,7 +1195,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   >
                     <Redo2 className="w-5 h-5 text-muted-foreground" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={onClose} disabled={isSaving} className="h-10 w-10">
+                  <Button variant="ghost" size="icon" onClick={onClose} disabled={isSaving} className="h-10 w-10 hover:bg-muted/60">
                     <X className="w-5 h-5 text-muted-foreground" />
                   </Button>
                   <Button size="icon" onClick={handleSave} disabled={isSaving} className={P38_SAVE_BTN}>
@@ -1206,7 +1208,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
 
           {vendasUnitOptions.length > 0 && (
             <div
-              className="flex-none border-b border-border/40 dark:border-white/10 bg-[#26262e]/20 dark:bg-[#26262e]/50 px-4 md:px-6 py-3"
+              className={cn('flex-none border-b border-border/40 dark:border-white/10 px-4 md:px-6 py-3', P38_FORM_PANEL)}
               title="Escolhe qual unidade a precificação segue — o mesmo critério do botão «Outra unidade» no PDV."
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1240,7 +1242,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                         className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all border shadow-sm ${
                           active
                             ? 'border-[#4a5240]/40 bg-[#4a5240] text-white dark:border-[#a4ce33]/40 dark:bg-[#a4ce33] dark:text-[#1f1d22]'
-                            : 'border-border/40 bg-card dark:bg-[#26262e] text-foreground/90 hover:border-[#4a5240]/30 dark:hover:border-[#a4ce33]/30'
+                            : 'border-border/40 bg-card text-foreground/90 hover:border-[#4a5240]/30 hover:bg-secondary/30 dark:bg-[#26262e] dark:hover:border-[#a4ce33]/30'
                         }`}
                       >
                         {opt.unidade}
@@ -1324,7 +1326,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                             key={item.id}
                             type="button"
                             onClick={() => applyProdutoSimilar(item)}
-                            className="w-full rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-secondary/60 dark:hover:bg-[#26262e]"
+                            className="w-full rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-secondary/50 dark:hover:bg-[#26262e]"
                           >
                             <p className="text-sm font-medium text-foreground">{item.nome}</p>
                             <p className="text-xs text-muted-foreground">{item.marca || 'Sem marca'} • {item.categoria_nome || 'Sem categoria'}</p>
@@ -1338,7 +1340,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             )}
 
             <div className={`flex flex-col sm:flex-row gap-4 items-start ${P38_SECTION}`}>
-              <div className="w-28 h-28 shrink-0 bg-secondary/80 dark:bg-[#26262e] rounded-lg flex items-center justify-center overflow-hidden border border-border/40 dark:border-white/10">
+              <div className="w-28 h-28 shrink-0 bg-card dark:bg-[#26262e] rounded-lg flex items-center justify-center overflow-hidden border border-border/40 dark:border-white/10">
                 {formData.imagem_url ? (
                   <img src={formData.imagem_url} alt="Preview" className="w-full h-full object-cover" />
                 ) : (
@@ -1394,7 +1396,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
 
               {/* Preview do nome gerado */}
               {formData.nome && (
-                <div className="mb-4 px-3 py-2 rounded-lg border border-border/40 dark:border-white/10 bg-[#26262e]/20 dark:bg-[#26262e]/50">
+                <div className={cn('mb-4 px-3 py-2 rounded-lg border border-border/40 dark:border-white/10', P38_FORM_PANEL)}>
                   <p className="text-[10px] text-muted-foreground uppercase mb-1">Preview da Descrição Completa</p>
                   <p className="text-sm font-medium text-foreground font-din-1451 uppercase tracking-wide">{formData.nome}</p>
                 </div>
@@ -1468,14 +1470,14 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   <SelectValue placeholder="Categoria" />
                 </SelectTrigger>
                 <SelectContent className={P38_FORM_SELECT_CONTENT}>
-                  <SelectItem value={SELECT_NONE} className="dark:text-foreground dark:hover:bg-primary/90">Sem categoria</SelectItem>
+                  <SelectItem value={SELECT_NONE} className={P38_SELECT_ITEM}>Sem categoria</SelectItem>
                   {categoriaSelectValue.startsWith(SELECT_ORPHAN_CAT_PREFIX) ? (
-                    <SelectItem value={categoriaSelectValue} className="dark:text-foreground dark:hover:bg-primary/90">
+                    <SelectItem value={categoriaSelectValue} className={P38_SELECT_ITEM}>
                       {formData.categoria_nome || 'Categoria atual (não listada)'}
                     </SelectItem>
                   ) : null}
                   {categorias.filter((cat) => isValidSelectItemValue(cat?.id)).map(cat => (
-                    <SelectItem key={cat.id} value={String(cat.id)} className="dark:text-foreground dark:hover:bg-primary/90">{cat.nome}</SelectItem>
+                    <SelectItem key={cat.id} value={String(cat.id)} className={P38_SELECT_ITEM}>{cat.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -1496,14 +1498,14 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   <SelectValue placeholder="Fornecedor" />
                 </SelectTrigger>
                 <SelectContent className={P38_FORM_SELECT_CONTENT}>
-                  <SelectItem value={SELECT_NONE} className="dark:text-foreground dark:hover:bg-primary/90 text-sm">Sem fornecedor</SelectItem>
+                  <SelectItem value={SELECT_NONE} className={cn(P38_SELECT_ITEM, 'text-sm')}>Sem fornecedor</SelectItem>
                   {fornecedorSelectValue.startsWith(SELECT_ORPHAN_FORN_PREFIX) ? (
-                    <SelectItem value={fornecedorSelectValue} className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
+                    <SelectItem value={fornecedorSelectValue} className={cn(P38_SELECT_ITEM, 'text-sm')}>
                       {formData.fornecedor_padrao_nome || formData.fornecedor_padrao_codigo || 'Fornecedor atual (não listado)'}
                     </SelectItem>
                   ) : null}
                   {fornecedores.filter((f) => isValidSelectItemValue(f?.id)).map(f => (
-                    <SelectItem key={f.id} value={String(f.id)} className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
+                    <SelectItem key={f.id} value={String(f.id)} className={cn(P38_SELECT_ITEM, 'text-sm')}>
                       {f.nome}
                     </SelectItem>
                   ))}
@@ -2053,8 +2055,8 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className={P38_FORM_SELECT_CONTENT}>
-                  <SelectItem value="Produto" className="dark:text-foreground dark:hover:bg-primary/90">Produto (0)</SelectItem>
-                  <SelectItem value="Serviço" className="dark:text-foreground dark:hover:bg-primary/90">Serviço (1)</SelectItem>
+                  <SelectItem value="Produto" className={P38_SELECT_ITEM}>Produto (0)</SelectItem>
+                  <SelectItem value="Serviço" className={P38_SELECT_ITEM}>Serviço (1)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
