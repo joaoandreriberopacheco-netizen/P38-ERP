@@ -81,6 +81,7 @@ export function ConsultaProdutoRow({
   signedValor,
   valorTone: valorToneProp,
   compact = false,
+  detalheCustos = null,
 }) {
   const precoListaEff = precoLista ?? precoUnitario;
   const borderClass = resolveConsultaAccentBorder(accent);
@@ -148,6 +149,12 @@ export function ConsultaProdutoRow({
             </div>
           )}
         </div>
+        {detalheCustos ? (
+          <div className={cn('mt-1.5 space-y-0.5 min-w-0', caixaTypo.meta, 'font-light normal-case tabular-nums text-muted-foreground')}>
+            <p>{detalheCustos.linha1}</p>
+            <p>{detalheCustos.linha2}</p>
+          </div>
+        ) : null}
       </div>
     </div>
   );

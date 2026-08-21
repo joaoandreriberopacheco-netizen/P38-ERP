@@ -22,6 +22,9 @@ export default function ComprasRelatoriosMenu({
   filtrosDesc,
   kpis = {},
   className = '',
+  produtosMap = {},
+  groupBy = 'eta_transportadora',
+  sortOrder = 'asc',
 }) {
   const [gerando, setGerando] = useState(null);
 
@@ -35,6 +38,9 @@ export default function ComprasRelatoriosMenu({
         grupos,
         filtrosDesc,
         kpis,
+        produtosMap,
+        groupBy,
+        sortOrder,
         onProgress: (msg) => toast.loading(msg, { id: 'gerando-relatorio-compras' }),
       });
       toast.success('Relatório gerado com sucesso', { id: 'gerando-relatorio-compras' });

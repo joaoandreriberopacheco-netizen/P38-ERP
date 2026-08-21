@@ -3,10 +3,12 @@ import { fetchAnexosPorPedidos, coletarPedidoIdsParaRelatorio } from '@/lib/fetc
 import { dataHoje } from '@/components/utils/dateUtils';
 import { normalizeItemCompraParaExibicao, custoApresentacaoParaFator1 } from '@/lib/productUnits';
 import { base44 } from '@/api/base44Client';
+import { gerarConsultaComprasHtmlPdf } from '@/lib/consultaComprasHtmlExport';
 
 const VERSOES_RELATORIO_COM_ANEXOS = new Set(['expandida_com_anexos', 'expandida_com_anexos_a4']);
+const VERSOES_HTML_CONSULTA = new Set(['expandida_mobile', 'expandida_mobile_claro']);
 
-/** Quatro formatos canónicos — todos minuta enxuto (embarque → pedido → custos). */
+/** Quatro formatos canónicos — mobile consulta via HTML (mesmos componentes da tela). */
 export const COMPRAS_RELATORIOS = [
   {
     version: 'expandida_enxuta',
@@ -15,10 +17,10 @@ export const COMPRAS_RELATORIOS = [
     title: 'Minuta A4 — embarque, pedido, custos por item (Comp., Frete, Avar., Custo, Venda)',
   },
   {
-    version: 'expandida_mobile',
+    version: 'expandida_mobile_claro',
     label: 'PDF consulta (mobile)',
     icon: 'smartphone',
-    title: 'Minuta mobile — mesmo visual da consulta, largura celular',
+    title: 'Consulta mobile (HTML) — mesmo visual da tela + custos por linha',
   },
   {
     version: 'expandida_com_anexos_a4',
@@ -154,7 +156,45 @@ export async function gerarComprasRelatorioPdf({
   filtrosDesc = 'Pedidos filtrados na tela',
   kpis = {},
   onProgress,
+  produtosMap: produtosMapInput = {},
+  groupBy = 'eta_transportadora',
+  sortOrder = 'asc',
 }) {
+  if (VERSOES_HTML_CONSULTA.has(version)) {
+    onProgress?.('Carregando produtos...');
+    const ids = coletarProdutoIds([pedidos, grupos]);
+    const produtosMap = { ...produtosMapInput };
+    const missingIds = ids.filter((id) => !produtosMap[id]);
+    if (missingIds.length > 0) {
+      try {
+        const rows = await base44.entities.Produto.filter({ id: missingIds });
+        (rows || []).forEach((p) => {
+          if (p?.id) produtosMap[p.id] = p;
+        });
+      } catch {
+        const chunkSize = 25;
+        for (let i = 0; i < missingIds.length; i += chunkSize) {
+          const slice = missingIds.slice(i, i + chunkSize);
+          const batch = await Promise.all(slice.map((id) => base44.entities.Produto.get(id).catch(() => null)));
+          batch.filter(Boolean).forEach((p) => {
+            produtosMap[p.id] = p;
+          });
+        }
+      }
+    }
+
+    await gerarConsultaComprasHtmlPdf({
+      version,
+      pedidos,
+      filtrosDesc,
+      produtosMap,
+      groupBy,
+      sortOrder,
+      onProgress,
+    });
+    return;
+  }
+
   onProgress?.('Carregando produtos...');
   const ids = coletarProdutoIds([pedidos, grupos]);
   const produtosMap = {};

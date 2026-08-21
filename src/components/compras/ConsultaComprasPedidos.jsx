@@ -10,6 +10,7 @@ import { getItemCompraExibicaoVitrine } from '@/lib/productUnits';
 import { formatarSoData } from '@/components/utils/dateUtils';
 import { getTotalLinhaPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
 import { buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
+import { buildConsultaItemCustoDetalhe } from '@/lib/consultaItemCustoDetalhe';
 import { comprasAccentFromDisplayStatus, getComprasDisplayStatusLabel } from '@/lib/comprasEmbarquesPalette';
 import ComprasStatusChip, { ComprasRecebimentoDateChip } from '@/components/compras/ComprasStatusChip';
 
@@ -70,7 +71,14 @@ function buildEmbarqueMetaLinhas(card) {
   };
 }
 
-function ConsultaEmbarqueCard({ card, onVerPedido, isLast = false }) {
+function ConsultaEmbarqueCard({
+  card,
+  onVerPedido,
+  isLast = false,
+  exportMode = false,
+  showDetalheCustos = false,
+  produtosMap = {},
+}) {
   const itensEmbarque = getConsultaItens(card);
   const ehNecessidade = card._consulta_papel === 'necessidade';
   const displayStatus = card._display_status || card.status;
@@ -78,52 +86,62 @@ function ConsultaEmbarqueCard({ card, onVerPedido, isLast = false }) {
   const statusAccent = comprasAccentFromDisplayStatus(displayStatus);
   const metaSemStatus = detalhes.filter((d) => d !== displayStatus);
 
+  const headerShellClass = cn(
+    'w-full text-left min-w-0 py-3 pr-1',
+    CONSULTA_HIER.sep,
+    !exportMode && 'hover:bg-muted/20 transition-colors',
+  );
+  const headerContent = (
+    <div className="space-y-1.5 min-w-0 w-full">
+      <p className={CONSULTA_TITLE}>
+        {card._display_code || card.numero}
+        {ehNecessidade ? (
+          <span className="text-muted-foreground font-light normal-case text-sm"> · falta vir</span>
+        ) : null}
+      </p>
+      <p className={cn(CONSULTA_SUBTITLE, 'normal-case')}>{fornecedor}</p>
+      <div className="flex items-end justify-between gap-3 min-w-0">
+        <div className={cn(caixaTypo.meta, 'normal-case min-w-0 flex-1 font-light flex flex-wrap items-start gap-x-1.5 gap-y-1')}>
+          {displayStatus ? (
+            <div className="flex flex-col items-start gap-0.5 shrink-0">
+              <ComprasStatusChip displayStatus={displayStatus} fallbackStatus={card.status}>
+                {getComprasDisplayStatusLabel(displayStatus)}
+              </ComprasStatusChip>
+              {displayStatus === 'Concluído' && card._display_data_recebimento ? (
+                <ComprasRecebimentoDateChip date={card._display_data_recebimento} />
+              ) : null}
+            </div>
+          ) : null}
+          {metaSemStatus.map((part) => (
+            <span key={part} className="tabular-nums text-foreground/80 pt-0.5">
+              {part}
+            </span>
+          ))}
+        </div>
+        <CaixaValorDisplay
+          valor={card._consulta_valor || 0}
+          tone="neutral"
+          signed={false}
+          size="sm"
+          className="shrink-0"
+        />
+      </div>
+    </div>
+  );
+
   return (
     <div className={cn('min-w-0 max-w-full overflow-hidden', !isLast && CONSULTA_HIER.sep)}>
-      <button
-        type="button"
-        onClick={() => onVerPedido?.(card)}
-        className={cn(
-          'w-full text-left hover:bg-muted/20 transition-colors min-w-0 py-3 pr-1',
-          CONSULTA_HIER.sep,
-        )}
-      >
-        <div className="space-y-1.5 min-w-0 w-full">
-          <p className={CONSULTA_TITLE}>
-            {card._display_code || card.numero}
-            {ehNecessidade ? (
-              <span className="text-muted-foreground font-light normal-case text-sm"> · falta vir</span>
-            ) : null}
-          </p>
-          <p className={cn(CONSULTA_SUBTITLE, 'normal-case')}>{fornecedor}</p>
-          <div className="flex items-end justify-between gap-3 min-w-0">
-            <div className={cn(caixaTypo.meta, 'normal-case min-w-0 flex-1 font-light flex flex-wrap items-start gap-x-1.5 gap-y-1')}>
-              {displayStatus ? (
-                <div className="flex flex-col items-start gap-0.5 shrink-0">
-                  <ComprasStatusChip displayStatus={displayStatus} fallbackStatus={card.status}>
-                    {getComprasDisplayStatusLabel(displayStatus)}
-                  </ComprasStatusChip>
-                  {displayStatus === 'Concluído' && card._display_data_recebimento ? (
-                    <ComprasRecebimentoDateChip date={card._display_data_recebimento} />
-                  ) : null}
-                </div>
-              ) : null}
-              {metaSemStatus.map((part) => (
-                <span key={part} className="tabular-nums text-foreground/80 pt-0.5">
-                  {part}
-                </span>
-              ))}
-            </div>
-            <CaixaValorDisplay
-              valor={card._consulta_valor || 0}
-              tone="neutral"
-              signed={false}
-              size="sm"
-              className="shrink-0"
-            />
-          </div>
-        </div>
-      </button>
+      {exportMode ? (
+        <div className={headerShellClass}>{headerContent}</div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => onVerPedido?.(card)}
+          className={headerShellClass}
+        >
+          {headerContent}
+        </button>
+      )}
       {itensEmbarque.length > 0 ? (
         <div className={cn(CONSULTA_HIER.l2, 'pb-1 pt-0.5')}>
           {itensEmbarque.map((item, idx) => {
@@ -141,6 +159,11 @@ function ConsultaEmbarqueCard({ card, onVerPedido, isLast = false }) {
                 accent={statusAccent}
                 valorTone="neutral"
                 signedValor={false}
+                detalheCustos={
+                  showDetalheCustos
+                    ? buildConsultaItemCustoDetalhe(item, produtosMap[item.produto_id])
+                    : null
+                }
               />
             );
           })}
@@ -150,51 +173,78 @@ function ConsultaEmbarqueCard({ card, onVerPedido, isLast = false }) {
   );
 }
 
-function ConsultaGrupoEmbarques({ grupo, onVerPedido, open, onToggle }) {
+function ConsultaGrupoEmbarques({
+  grupo,
+  onVerPedido,
+  open,
+  onToggle,
+  exportMode = false,
+  showDetalheCustos = false,
+  produtosMap = {},
+}) {
   const hasStructuredHeader = grupo.groupDate != null && grupo.groupCarrier != null;
   const headerTextClass = 'text-sm font-light text-foreground/85 leading-relaxed';
 
-  return (
-    <div className="w-full min-w-0 max-w-full">
-      <button
-        type="button"
-        onClick={onToggle}
-        className={cn(
-          'w-full min-w-0 text-left overflow-hidden flex items-start gap-2 py-2.5',
-          CONSULTA_HIER.sep,
-        )}
-      >
-        <div className="flex-1 min-w-0 overflow-hidden">
-          {hasStructuredHeader ? (
-            <div className="space-y-0.5 min-w-0">
-              <span className={cn(headerTextClass, 'block tabular-nums normal-case')}>
-                {grupo.groupDate}
-              </span>
-              <span className={cn(CONSULTA_SUBTITLE, 'block normal-case')}>
-                {grupo.groupCarrier}
-              </span>
-            </div>
-          ) : (
-            <span className={cn(headerTextClass, 'block truncate min-w-0 uppercase tracking-wide')}>
-              {grupo.label}
+  const headerContent = (
+    <>
+      <div className="flex-1 min-w-0 overflow-hidden">
+        {hasStructuredHeader ? (
+          <div className="space-y-0.5 min-w-0">
+            <span className={cn(headerTextClass, 'block tabular-nums normal-case')}>
+              {grupo.groupDate}
             </span>
-          )}
-        </div>
-        <div className="flex shrink-0 flex-col items-end gap-0.5 pt-0.5">
-          <CaixaValorDisplay
-            valor={grupo.totalConsulta || 0}
-            tone="neutral"
-            signed={false}
-            size="sm"
-          />
+            <span className={cn(CONSULTA_SUBTITLE, 'block normal-case')}>
+              {grupo.groupCarrier}
+            </span>
+          </div>
+        ) : (
+          <span className={cn(headerTextClass, 'block truncate min-w-0 uppercase tracking-wide')}>
+            {grupo.label}
+          </span>
+        )}
+      </div>
+      <div className="flex shrink-0 flex-col items-end gap-0.5 pt-0.5">
+        <CaixaValorDisplay
+          valor={grupo.totalConsulta || 0}
+          tone="neutral"
+          signed={false}
+          size="sm"
+        />
+        {!exportMode ? (
           <ChevronDown
             className={cn(
               'w-4 h-4 text-foreground/70 transition-transform duration-200',
               open ? '' : '-rotate-90',
             )}
           />
+        ) : null}
+      </div>
+    </>
+  );
+
+  return (
+    <div className="w-full min-w-0 max-w-full">
+      {exportMode ? (
+        <div
+          className={cn(
+            'w-full min-w-0 text-left overflow-hidden flex items-start gap-2 py-2.5',
+            CONSULTA_HIER.sep,
+          )}
+        >
+          {headerContent}
         </div>
-      </button>
+      ) : (
+        <button
+          type="button"
+          onClick={onToggle}
+          className={cn(
+            'w-full min-w-0 text-left overflow-hidden flex items-start gap-2 py-2.5',
+            CONSULTA_HIER.sep,
+          )}
+        >
+          {headerContent}
+        </button>
+      )}
       {open ? (
         <div className={cn(CONSULTA_HIER.l1, 'space-y-0')}>
           {grupo.cards.map((card, index) => (
@@ -203,6 +253,9 @@ function ConsultaGrupoEmbarques({ grupo, onVerPedido, open, onToggle }) {
               card={card}
               onVerPedido={onVerPedido}
               isLast={index === grupo.cards.length - 1}
+              exportMode={exportMode}
+              showDetalheCustos={showDetalheCustos}
+              produtosMap={produtosMap}
             />
           ))}
         </div>
@@ -218,8 +271,12 @@ export default function ConsultaComprasPedidos({
   emptyMessage = 'Nenhum embarque no período selecionado',
   groupBy = 'eta_transportadora',
   sortOrder = 'asc',
+  exportMode = false,
+  showDetalheCustos = false,
+  produtosMap = {},
+  modoFixo = null,
 }) {
-  const [modo, setModo] = useState('produto');
+  const [modo, setModo] = useState(modoFixo || 'produto');
   const [gruposAbertos, setGruposAbertos] = useState(() => new Set());
 
   const produtosAgregados = useMemo(() => aggregateByProduto(pedidosFiltrados), [pedidosFiltrados]);
@@ -229,8 +286,16 @@ export default function ConsultaComprasPedidos({
   );
 
   useEffect(() => {
+    if (exportMode && modoFixo === 'embarque') {
+      setGruposAbertos(new Set(gruposEmbarque.map((g) => g.key)));
+      return;
+    }
     setGruposAbertos(new Set());
-  }, [gruposEmbarque]);
+  }, [gruposEmbarque, exportMode, modoFixo]);
+
+  useEffect(() => {
+    if (modoFixo) setModo(modoFixo);
+  }, [modoFixo]);
 
   const toggleGrupo = (key) => {
     setGruposAbertos((prev) => {
@@ -279,22 +344,24 @@ export default function ConsultaComprasPedidos({
             {pedidosFiltrados.length} embarque{pedidosFiltrados.length === 1 ? '' : 's'}
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-1 rounded-2xl bg-secondary/15 dark:bg-muted/50 p-1 w-full max-w-md">
-          <button
-            type="button"
-            onClick={() => setModo('produto')}
-            className={`px-3 py-2.5 rounded-xl ${caixaTypo.tab} font-light transition-colors truncate ${modo === 'produto' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
-          >
-            Por produto
-          </button>
-          <button
-            type="button"
-            onClick={() => setModo('embarque')}
-            className={`px-3 py-2.5 rounded-xl ${caixaTypo.tab} font-light transition-colors truncate ${modo === 'embarque' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
-          >
-            Por embarque
-          </button>
-        </div>
+        {!exportMode ? (
+          <div className="grid grid-cols-2 gap-1 rounded-2xl bg-secondary/15 dark:bg-muted/50 p-1 w-full max-w-md">
+            <button
+              type="button"
+              onClick={() => setModo('produto')}
+              className={`px-3 py-2.5 rounded-xl ${caixaTypo.tab} font-light transition-colors truncate ${modo === 'produto' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
+            >
+              Por produto
+            </button>
+            <button
+              type="button"
+              onClick={() => setModo('embarque')}
+              className={`px-3 py-2.5 rounded-xl ${caixaTypo.tab} font-light transition-colors truncate ${modo === 'embarque' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
+            >
+              Por embarque
+            </button>
+          </div>
+        ) : null}
       </div>
 
       {modo === 'produto' ? (
@@ -314,7 +381,7 @@ export default function ConsultaComprasPedidos({
         </P38MobileLineList>
       ) : (
         <div className="space-y-4 min-w-0 max-w-full overflow-x-hidden">
-          {gruposEmbarque.length > 0 ? (
+          {!exportMode && gruposEmbarque.length > 0 ? (
             <div className="flex items-center justify-end gap-2 min-w-0">
               {!todosGruposAbertos ? (
                 <button
@@ -351,8 +418,11 @@ export default function ConsultaComprasPedidos({
               key={grupo.key}
               grupo={grupo}
               onVerPedido={onVerPedido}
-              open={gruposAbertos.has(grupo.key)}
+              open={exportMode || gruposAbertos.has(grupo.key)}
               onToggle={() => toggleGrupo(grupo.key)}
+              exportMode={exportMode}
+              showDetalheCustos={showDetalheCustos}
+              produtosMap={produtosMap}
             />
           ))}
         </div>
