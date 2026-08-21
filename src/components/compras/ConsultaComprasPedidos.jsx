@@ -13,11 +13,13 @@ import { buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
 import { comprasAccentFromDisplayStatus, getComprasDisplayStatusLabel } from '@/lib/comprasEmbarquesPalette';
 import ComprasStatusChip, { ComprasRecebimentoDateChip } from '@/components/compras/ComprasStatusChip';
 
+import { COMPRAS_HIER_L1, COMPRAS_HIER_L2, COMPRAS_SEP } from '@/lib/comprasP38Theme';
+
 /** Recuo hierárquico + tipografia fixa (visual mobile em todos os viewports). */
 const CONSULTA_HIER = {
-  l1: 'ml-1 pl-2 border-l border-border/30 dark:border-white/10 min-w-0 max-w-full',
-  l2: 'ml-1 pl-2 border-l border-border/20 dark:border-white/[0.06] min-w-0 max-w-full',
-  sep: 'border-b border-border/40 dark:border-white/10',
+  l1: COMPRAS_HIER_L1,
+  l2: COMPRAS_HIER_L2,
+  sep: COMPRAS_SEP,
 };
 const CONSULTA_TITLE =
   'font-din-1451 font-light text-sm uppercase tracking-wide text-foreground leading-snug line-clamp-2 break-words';
@@ -277,7 +279,7 @@ export default function ConsultaComprasPedidos({
             {pedidosFiltrados.length} embarque{pedidosFiltrados.length === 1 ? '' : 's'}
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-1 rounded-2xl bg-muted/50 p-1 w-full max-w-md">
+        <div className="grid grid-cols-2 gap-1 rounded-2xl bg-secondary/15 dark:bg-muted/50 p-1 w-full max-w-md">
           <button
             type="button"
             onClick={() => setModo('produto')}

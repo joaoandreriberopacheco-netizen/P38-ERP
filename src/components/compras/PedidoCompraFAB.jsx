@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import AnexosModal from '@/components/anexos/AnexosModal';
 import { listarAnexos } from '@/functions/listarAnexos';
+import { COMPRAS_FAB, COMPRAS_FAB_CITRUS, COMPRAS_FAB_SOFT } from '@/lib/comprasP38Theme';
 
 export default function PedidoCompraFAB({
   pedido,
@@ -95,34 +96,34 @@ export default function PedidoCompraFAB({
       icon: <Send className="w-5 h-5" style={{ transform: 'rotate(-45deg)' }} />,
       label: 'Financeiro',
       onClick: () => onEnviarFinanceiro?.(),
-      color: 'bg-emerald-600 text-white',
+      color: COMPRAS_FAB_CITRUS,
     },
     mostrarSolicitarEdicao && {
       icon: <Wrench className="w-5 h-5" />,
       label: 'Solicitar correção',
       onClick: () => onSolicitarEdicao?.(),
-      color: 'bg-amber-500 text-white',
+      color: 'bg-[#f07a1a]/85 text-white',
     },
     {
       icon: <Paperclip className="w-5 h-5" />,
       label: 'Anexos',
       onClick: () => setShowAnexosModal(true),
       disabled: !pedido?.id,
-      color: 'bg-card text-foreground border border-border dark:bg-muted dark:text-foreground dark:border-transparent',
+      color: COMPRAS_FAB_SOFT,
     },
     {
       icon: <FileText className="w-5 h-5" />,
       label: 'PDF',
       onClick: handlePrintPDF,
       disabled: !pedido?.id,
-      color: 'bg-card text-foreground border border-border dark:bg-muted dark:text-foreground dark:border-transparent',
+      color: COMPRAS_FAB_SOFT,
     },
     {
       icon: <Save className="w-5 h-5" />,
       label: 'Salvar',
       onClick: () => onSave?.(),
       disabled: isSaving,
-      color: 'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]',
+      color: COMPRAS_FAB,
     },
   ].filter(Boolean);
 
@@ -149,8 +150,8 @@ export default function PedidoCompraFAB({
               onClick={() => setIsExpanded(prev => !prev)}
               className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
                 isExpanded
-                  ? 'bg-muted text-foreground dark:bg-muted/400 dark:text-foreground rotate-45'
-                  : 'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]'
+                  ? 'bg-card text-foreground shadow-md rotate-45 dark:bg-muted/400 dark:text-foreground'
+                  : COMPRAS_FAB
               }`}
               title="Ações do pedido"
             >

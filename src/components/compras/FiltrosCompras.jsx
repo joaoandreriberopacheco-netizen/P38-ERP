@@ -27,7 +27,15 @@ import {
   COMPRAS_FILTRO_STATUS_PEDIDO,
   COMPRAS_FILTRO_STATUS_RECEBIMENTO,
 } from '@/lib/comprasEmbarquesPalette';
-import { statusPedidoCompraExplicitos } from '@/components/compras/StatusPedidoCompraPicker';
+import {
+  COMPRAS_CHIP_ACTIVE_CITRUS,
+  COMPRAS_CHIP_ACTIVE_OLIVE,
+  COMPRAS_CHIP_IDLE,
+  COMPRAS_DIVIDER_TOP,
+  COMPRAS_ICON_ACCENT,
+  COMPRAS_SEARCH_INPUT,
+  COMPRAS_SECTION_CARD,
+} from '@/lib/comprasP38Theme';
 
 const ETA_FILTRO_MODOS = [
   { value: 'antes', label: 'Antes de' },
@@ -37,9 +45,9 @@ const ETA_FILTRO_MODOS = [
 ];
 
 const CHIP_BASE = 'inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-full transition-all font-light uppercase tracking-wide';
-const CHIP_IDLE = 'bg-muted/80 dark:bg-muted text-muted-foreground hover:bg-muted hover:text-foreground/85';
+const CHIP_IDLE = COMPRAS_CHIP_IDLE;
 const CHIP_ACTIVE = 'font-medium shadow-sm';
-const SECTION_CARD = 'rounded-2xl border border-border/40 bg-muted/20 dark:bg-muted/10 p-3.5 space-y-3';
+const SECTION_CARD = COMPRAS_SECTION_CARD;
 
 function QuickFilterToggle({ label, checked, onCheckedChange }) {
   return (
@@ -49,15 +57,15 @@ function QuickFilterToggle({ label, checked, onCheckedChange }) {
       className={cn(
         'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] leading-none transition-colors whitespace-nowrap font-light uppercase tracking-wide',
         checked
-          ? 'bg-teal-600/12 text-teal-800 dark:bg-teal-500/20 dark:text-teal-200'
-          : 'bg-muted/50 text-muted-foreground hover:bg-muted/80 hover:text-foreground/80',
+          ? COMPRAS_CHIP_ACTIVE_CITRUS
+          : 'bg-card text-muted-foreground hover:bg-secondary/30 dark:bg-muted/50 dark:hover:bg-muted/80 dark:hover:text-foreground/80',
       )}
       aria-pressed={checked}
     >
       <span
         className={cn(
           'h-1.5 w-1.5 rounded-full shrink-0',
-          checked ? 'bg-teal-600 dark:bg-teal-400' : 'bg-muted-foreground/35',
+          checked ? 'bg-[#f07a1a] dark:bg-[#a4ce33]' : 'bg-muted-foreground/35',
         )}
         aria-hidden
       />
@@ -70,7 +78,7 @@ function FilterSection({ title, icon: Icon, children, className }) {
   return (
     <section className={cn(SECTION_CARD, className)}>
       <div className="flex items-center gap-2">
-        {Icon ? <Icon className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400 shrink-0" /> : null}
+        {Icon ? <Icon className={cn('h-3.5 w-3.5 shrink-0', COMPRAS_ICON_ACCENT)} /> : null}
         <h3 className="text-[11px] font-light uppercase tracking-wide text-muted-foreground">{title}</h3>
       </div>
       {children}
@@ -81,8 +89,8 @@ function FilterSection({ title, icon: Icon, children, className }) {
 function ActiveFilterChip({ label, onRemove, tone = 'neutral' }) {
   const toneClass =
     tone === 'accent'
-      ? 'bg-teal-600/90 dark:bg-teal-700 text-white'
-      : 'bg-card border border-border/50 text-foreground/90 shadow-sm';
+      ? 'bg-[#f07a1a] text-white dark:bg-[#f07a1a]'
+      : 'bg-card text-foreground/90 shadow-sm';
 
   return (
     <span className={cn(CHIP_BASE, 'normal-case tracking-normal', toneClass)}>
@@ -187,7 +195,7 @@ function FiltrosComprasPainel({
     onEtaFinal('');
   };
 
-  const dateFieldClass = 'h-11 text-sm bg-card dark:bg-muted border border-border/30 shadow-sm rounded-xl';
+  const dateFieldClass = 'h-11 text-sm bg-card dark:bg-muted border-0 shadow-sm rounded-xl';
 
   return (
     <div
@@ -223,7 +231,7 @@ function FiltrosComprasPainel({
                 className={cn(
                   CHIP_BASE,
                   'justify-center px-2.5 sm:px-3 normal-case',
-                  selected ? cn(CHIP_ACTIVE, 'bg-teal-600 dark:bg-teal-500 text-white') : CHIP_IDLE,
+                  selected ? cn(CHIP_ACTIVE, COMPRAS_CHIP_ACTIVE_OLIVE) : CHIP_IDLE,
                 )}
               >
                 {modo.label}
@@ -340,7 +348,7 @@ function FiltrosComprasPainel({
               <Tag className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Buscar tag..."
-                className="h-10 pl-8 text-xs bg-card dark:bg-muted border border-border/30 shadow-sm rounded-xl"
+                className="h-10 pl-8 text-xs bg-card dark:bg-muted border-0 shadow-sm rounded-xl"
                 value={searchTag}
                 onChange={(e) => onSearchTag(e.target.value)}
               />
@@ -597,7 +605,7 @@ export default function FiltrosCompras({
       className={cn(
         'relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-all',
         'bg-muted dark:bg-muted text-foreground/90',
-        !isMobile && showFilters && 'ring-2 ring-teal-500/40 bg-teal-50 dark:bg-teal-950/30',
+        !isMobile && showFilters && 'ring-2 ring-[#f07a1a]/25 bg-[#f07a1a]/8 dark:bg-[#f07a1a]/10',
       )}
       title="Filtros"
       aria-label="Filtros"
@@ -605,7 +613,7 @@ export default function FiltrosCompras({
     >
       <SlidersHorizontal className="h-5 w-5" />
       {hasActiveFilters && (
-        <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-teal-600 px-1 text-[10px] font-semibold leading-none text-white dark:bg-teal-500">
+        <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#f07a1a] px-1 text-[10px] font-semibold leading-none text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]">
           {activeFilterCount > 9 ? '9+' : activeFilterCount}
         </span>
       )}
@@ -620,7 +628,7 @@ export default function FiltrosCompras({
         value={search}
         onChange={(e) => onSearch(e.target.value)}
         placeholder="Buscar pedido, embarque, fornecedor..."
-        className="h-12 w-full min-w-0 rounded-2xl border border-border/30 bg-card pl-10 pr-10 text-sm font-light uppercase tracking-wide text-foreground/90 shadow-sm outline-none transition-shadow placeholder:normal-case placeholder:tracking-normal placeholder:text-muted-foreground focus:ring-2 focus:ring-teal-300 dark:bg-muted dark:text-foreground dark:focus:ring-teal-600"
+        className={COMPRAS_SEARCH_INPUT}
       />
       {search ? (
         <button
@@ -673,19 +681,19 @@ export default function FiltrosCompras({
               <FiltrosComprasPainel {...painelProps} layout="drawer" />
             </div>
 
-            <div className="sticky bottom-0 -mx-4 border-t border-border/40 bg-card/95 px-4 py-3 backdrop-blur-sm dark:bg-card/95">
+            <div className={cn('sticky bottom-0 -mx-4 bg-card/95 px-4 py-3 backdrop-blur-sm dark:bg-card/95', COMPRAS_DIVIDER_TOP)}>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={limparFiltrosInterno}
-                  className="h-11 flex-1 rounded-2xl bg-muted text-sm font-light text-muted-foreground dark:bg-muted"
+                  className="h-11 flex-1 rounded-2xl bg-card text-sm font-light text-muted-foreground shadow-sm dark:bg-muted"
                 >
                   Limpar
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowFilters(false)}
-                  className="h-11 flex-1 rounded-2xl bg-teal-600 text-sm font-light text-white dark:bg-teal-500"
+                  className="h-11 flex-1 rounded-2xl bg-[#f07a1a] text-sm font-light text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]"
                 >
                   Aplicar
                 </button>
@@ -727,10 +735,10 @@ export default function FiltrosCompras({
       )}
 
       <CollapsibleContent>
-        <div className="rounded-2xl border border-border/40 bg-card/80 p-4 shadow-sm dark:bg-card/60">
+        <div className={cn(COMPRAS_SECTION_CARD, 'p-4')}>
           <div className="mb-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-sm font-light uppercase tracking-wide text-foreground">
-              <SlidersHorizontal className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+              <SlidersHorizontal className={cn('h-4 w-4', COMPRAS_ICON_ACCENT)} />
               Filtros avançados
             </div>
             <button
@@ -745,7 +753,7 @@ export default function FiltrosCompras({
 
           <FiltrosComprasPainel {...painelProps} layout="desktop" />
 
-          <div className="mt-4 flex justify-end gap-2 border-t border-border/30 pt-3">
+          <div className={cn('mt-4 flex justify-end gap-2 pt-3', COMPRAS_DIVIDER_TOP)}>
             <button
               type="button"
               onClick={limparFiltrosInterno}
@@ -756,7 +764,7 @@ export default function FiltrosCompras({
             <button
               type="button"
               onClick={() => setShowFilters(false)}
-              className="h-10 rounded-xl bg-teal-600 px-4 text-sm font-light text-white dark:bg-teal-500"
+              className="h-10 rounded-xl bg-[#f07a1a] px-4 text-sm font-light text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]"
             >
               Fechar painel
             </button>

@@ -56,9 +56,9 @@ const SELECTOR_FAB_CLASS =
 /** Barra de busca — contraste sobre fundo branco no modo claro. */
 const CATALOG_SEARCH_FIELD = cn(
   P38_SEARCH,
-  'h-12 border border-border/55 shadow-sm',
-  'focus-within:border-[#4a5240]/35 focus-within:ring-2 focus-within:ring-[#4a5240]/15',
-  'dark:border-white/10 dark:shadow-none dark:focus-within:border-[#a4ce33]/40 dark:focus-within:ring-[#a4ce33]/20',
+  'h-12 border-0 shadow-sm bg-card',
+  'focus-within:ring-2 focus-within:ring-[#f07a1a]/18',
+  'dark:focus-within:ring-[#a4ce33]/20',
 );
 
 /** Item destacado na navegação ↑↓ (lista desktop). */
@@ -414,7 +414,7 @@ export default function MobileProductSelector({
     return (
       <div className={SELECTOR_PANEL_CLASS}>
         {/* Header */}
-        <div className="flex items-center px-4 py-3 border-b border-border/40 flex-shrink-0">
+        <div className="flex items-center px-4 py-3 border-b border-border/15 dark:border-white/10 flex-shrink-0">
           <Button variant="ghost" size="icon" onClick={() => setView('menu')} className="h-10 w-10">
             <ChevronLeft className="w-5 h-5" />
           </Button>
@@ -611,7 +611,7 @@ export default function MobileProductSelector({
     return (
       <>
       <div className={SELECTOR_PANEL_CLASS}>
-        <div className="flex items-center p-4 border-b border-border/40 flex-shrink-0 gap-2">
+        <div className="flex items-center p-4 border-b border-border/15 dark:border-white/10 flex-shrink-0 gap-2">
           <Button variant="ghost" size="icon" onClick={() => {
             setEditingItem(null);
             setEditingIndex(-1);
@@ -890,7 +890,7 @@ export default function MobileProductSelector({
           </div>
         </div>
 
-        <div className="p-4 border-t border-border/40">
+        <div className="p-4 border-t border-border/15 dark:border-white/10">
           {editingIndex >= 0 ? (
             <div className="space-y-2">
               <Button 
@@ -971,7 +971,7 @@ export default function MobileProductSelector({
     return (
       <>
         <div className={SELECTOR_PANEL_CLASS}>
-          <div className="flex items-center p-4 border-b border-border/40 flex-shrink-0 gap-2">
+          <div className="flex items-center p-4 border-b border-border/15 dark:border-white/10 flex-shrink-0 gap-2">
             <Button variant="ghost" size="icon" onClick={() => setView('menu')} className="h-10 w-10">
               <ChevronLeft className="w-5 h-5" />
             </Button>
@@ -1019,7 +1019,7 @@ export default function MobileProductSelector({
               />
             ) : (
             <>
-            <div ref={catalogStickyRef} className={cn('sticky top-0 z-10 p-4 pb-3 border-b border-border/40', P38_SEARCH_SURFACE, 'rounded-none bg-[hsl(var(--p38-search))] dark:bg-background/95')}>
+            <div ref={catalogStickyRef} className={cn('sticky top-0 z-10 p-4 pb-3 border-b border-border/15 dark:border-white/10', P38_SEARCH_SURFACE, 'rounded-none bg-[hsl(var(--p38-search))] dark:bg-background/95')}>
               {/* Badge de desconto global ativo */}
               {descontoGlobalPct !== 0 && (
                 <button
@@ -1206,7 +1206,7 @@ export default function MobileProductSelector({
                         })()}
                       </div>
                       {inCart && (
-                        <div className="mt-3 pt-3 border-t border-border/40 flex justify-between items-center">
+                        <div className="mt-3 pt-3 border-t border-border/15 dark:border-white/10 flex justify-between items-center">
                           <span className="text-xs text-muted-foreground">Total do item</span>
                           <span className={cn('text-sm font-bold', P38_ACCENT)}>{formatCurrency(inCart.total || 0)}</span>
                         </div>
@@ -1271,7 +1271,7 @@ export default function MobileProductSelector({
 
   return (
     <div className={SELECTOR_PANEL_CLASS}>
-      <div className="flex items-center p-4 border-b border-border/40 flex-shrink-0 gap-2">
+      <div className="flex items-center p-4 border-b border-border/15 dark:border-white/10 flex-shrink-0 gap-2">
         <Button variant="ghost" size="icon" onClick={() => setView('menu')} className="h-10 w-10">
           <ChevronLeft className="w-5 h-5" />
         </Button>
@@ -1324,7 +1324,7 @@ export default function MobileProductSelector({
                     {produtoItem && (
                       <CatalogProductStockLine product={produtoItem} className="mb-2" />
                     )}
-                    <div className="flex justify-between items-center pt-2 border-t border-border/40">
+                    <div className="flex justify-between items-center pt-2 border-t border-border/15 dark:border-white/10">
                       <span className="text-xs text-muted-foreground">Total</span>
                       <span className={cn('font-bold text-base', P38_ACCENT)}>
                         {formatCurrency(item.total || 0)}
@@ -1352,7 +1352,7 @@ export default function MobileProductSelector({
         )}
       </div>
 
-      <div className="border-t border-border/40 bg-card/95 p-4 backdrop-blur-sm">
+      <div className="border-t border-border/15 dark:border-white/10 bg-card/95 p-4 backdrop-blur-sm">
         <div className="flex justify-between items-center">
           <span className="text-sm text-muted-foreground">Total do pedido</span>
           <div className="text-right">

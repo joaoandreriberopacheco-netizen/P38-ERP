@@ -26,6 +26,7 @@ import { useCompactShell } from '@/hooks/use-breakpoint';
 import { useProdutosListQuery, useTerceirosListQuery } from '@/hooks/useP38Entities';
 import { addDays, format } from 'date-fns';
 import { agora, dataHoje, formatarLogTime } from '@/components/utils/dateUtils';
+import { cn } from '@/components/utils';
 import { registrarTransicao } from './transicaoHelper';
 import { buildBypassAuthPayload } from '@/components/auth/operacaoAuthFlags';
 import MobileProductSelector from './MobileProductSelector';
@@ -79,6 +80,23 @@ import {
   calcularResumoNecessidadeDetalhe,
   resolverEmbarqueNecessidadeContexto,
 } from '@/lib/pedidoCompraNecessidade';
+import {
+  COMPRAS_BTN_CITRUS,
+  COMPRAS_BTN_PRIMARY,
+  COMPRAS_DIVIDER_TOP,
+  COMPRAS_DROPDOWN,
+  COMPRAS_DROPDOWN_ITEM,
+  COMPRAS_FIELD,
+  COMPRAS_FIELD_H12,
+  COMPRAS_FORM_HEADER,
+  COMPRAS_FORM_ROOT,
+  COMPRAS_HEADER_ACCENT,
+  COMPRAS_SELECT_HIGHLIGHT,
+  COMPRAS_SEP,
+  COMPRAS_SUBHEADER,
+  COMPRAS_TAB,
+  COMPRAS_TABS_BAR,
+} from '@/lib/comprasP38Theme';
 import { valorEmbarqueSplit } from '@/lib/pedidoCompraValorExibicao';
 
 export default function PedidoCompraForm({
@@ -1348,14 +1366,14 @@ export default function PedidoCompraForm({
 
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-card dark:text-foreground overflow-hidden font-din-1451 uppercase tracking-wide [&_label]:font-light [&_textarea]:normal-case [&_input[type=date]]:normal-case [&_input[type=number]]:normal-case">
+    <div className={cn(COMPRAS_FORM_ROOT, 'dark:text-foreground uppercase tracking-wide [&_label]:font-light [&_textarea]:normal-case [&_input[type=date]]:normal-case [&_input[type=number]]:normal-case')}>
       {/* Alerta de Bloqueio Desktop */}
       {isLocked && (
         <BannerStatusPedido pedido={pedidoAtual} lancamentos={lancamentosPedido} isMobile={isPhone} />
       )}
       {/* Header compacto */}
-      <div className="flex-shrink-0 px-4 py-4 flex items-center gap-3 border-b border-border/40 relative">
-        <span className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-teal-400/60 via-teal-300/40 to-transparent rounded-t" />
+      <div className={COMPRAS_FORM_HEADER}>
+        <span className={COMPRAS_HEADER_ACCENT} />
         <Button variant="ghost" size="icon" onClick={handleCloseWithProtection} className="h-10 w-10">
           <X className="w-5 h-5" />
         </Button>
@@ -1403,7 +1421,7 @@ export default function PedidoCompraForm({
               <MoreVertical className="w-5 h-5" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="dark:bg-muted min-w-[12rem]">
+          <DropdownMenuContent align="end" className={COMPRAS_DROPDOWN}>
             <DropdownMenuItem
               disabled={!pedido?.id}
               onClick={() => setAbaPedidoDesktop('pendencias')}
@@ -1461,7 +1479,7 @@ export default function PedidoCompraForm({
               Começar do zero
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-card dark:hover:bg-muted dark:text-foreground rounded-xl h-10"
+              className={cn(COMPRAS_BTN_PRIMARY, 'rounded-xl h-10')}
               onClick={() => {
                 if (pendingDraft?.data) {
                   isRestoringDraftRef.current = true;
@@ -1483,7 +1501,7 @@ export default function PedidoCompraForm({
       {/* DESKTOP: Tabs */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <Tabs value={abaPedidoDesktop} onValueChange={setAbaPedidoDesktop} className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="flex-shrink-0 bg-transparent border-b border-border/40 rounded-none h-auto p-0 flex w-full">
+          <TabsList className={COMPRAS_TABS_BAR}>
             {[
               { value: 'dados-gerais', icon: <FileText className="w-4 h-4 flex-shrink-0" />, short: 'Geral', disabled: false },
               { value: 'itens',        icon: <ShoppingCart className="w-4 h-4 flex-shrink-0" />, short: 'Itens', disabled: false },
@@ -1495,7 +1513,7 @@ export default function PedidoCompraForm({
                 key={tab.value}
                 value={tab.value}
                 disabled={tab.disabled}
-                className="flex-1 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent data-[state=active]:border-teal-500 dark:data-[state=active]:border-teal-400 data-[state=active]:text-teal-600 dark:data-[state=active]:text-teal-300 rounded-none py-2 px-1 text-muted-foreground disabled:opacity-30 transition-colors min-w-0 font-light"
+                className={COMPRAS_TAB}
               >
                 {tab.icon}
                 <span className="text-[10px] font-light tracking-wider leading-none uppercase">
@@ -1506,7 +1524,7 @@ export default function PedidoCompraForm({
           </TabsList>
 
           {(abaPedidoDesktop === 'pendencias' || abaPedidoDesktop === 'logs') && (
-            <div className="flex-shrink-0 px-6 py-2 border-b border-border/30 text-sm font-light text-muted-foreground">
+            <div className={COMPRAS_SUBHEADER}>
               {abaPedidoDesktop === 'pendencias' ? 'Pendências' : 'Logs'}
             </div>
           )}
@@ -1518,11 +1536,11 @@ export default function PedidoCompraForm({
                 <div className="col-span-12 lg:col-span-6">
                   <Label className="text-sm font-light text-muted-foreground mb-2 block">Fornecedor *</Label>
                   <Select value={formData.fornecedor_id} onValueChange={handleFornecedorChange} disabled={isLocked}>
-                    <SelectTrigger className="bg-muted/50 border-0 h-12 text-sm shadow-sm rounded-xl text-foreground">
+                    <SelectTrigger className={COMPRAS_FIELD_H12}>
                       <SelectValue placeholder="Selecione o fornecedor..." />
                     </SelectTrigger>
                     <SelectContent className="dark:bg-muted border-0 shadow-lg z-[9999] max-h-[300px]">
-                      <div className="sticky top-0 bg-muted/50 p-2 border-b border-border/40 z-10">
+                      <div className={cn('sticky top-0 bg-card p-2 z-10', COMPRAS_SEP)}>
                         <div className="relative">
                           <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                           <Input
@@ -1566,12 +1584,12 @@ export default function PedidoCompraForm({
                         <SelectItem 
                           key={f.id} 
                           value={f.id}
-                          className={idx === selectedFornecedorIndex ? 'bg-teal-50 dark:bg-teal-900/20' : ''}
+                          className={idx === selectedFornecedorIndex ? COMPRAS_SELECT_HIGHLIGHT : ''}
                         >
                           {f.nome}
                         </SelectItem>
                       ))}
-                      <div className="border-t border-border/40 p-2">
+                      <div className={cn('p-2', COMPRAS_DIVIDER_TOP)}>
                         <Button
                           type="button"
                           variant="ghost"
@@ -1593,7 +1611,7 @@ export default function PedidoCompraForm({
                 <div className="col-span-12 lg:col-span-6">
                   <Label className="text-sm font-light text-muted-foreground mb-2 block">Tags</Label>
                   <Input 
-                    className="bg-muted/50 border-0 h-12 text-sm shadow-sm rounded-xl text-foreground placeholder:text-muted-foreground" 
+                    className={cn(COMPRAS_FIELD_H12, 'placeholder:text-muted-foreground')} 
                     placeholder="Ex: Urgente, Reposição..."
                     value={formData.tags?.join(', ') || ''} 
                     onChange={e => handleChange('tags', e.target.value.split(',').map(t => t.trim()).filter(Boolean))} 
@@ -1605,7 +1623,7 @@ export default function PedidoCompraForm({
                   <Label className="text-sm font-light text-muted-foreground mb-2 block">Data do Pedido</Label>
                   <Input
                     type="date"
-                    className="bg-muted/50 border-0 h-12 text-sm shadow-sm rounded-xl text-foreground"
+                    className={COMPRAS_FIELD_H12}
                     value={formData.data_emissao || ''}
                     onChange={e => handleChange('data_emissao', e.target.value)}
                     disabled={isLocked}
@@ -1616,7 +1634,7 @@ export default function PedidoCompraForm({
                   <Label className="text-sm font-light text-muted-foreground mb-2 block">Previsão de Entrega</Label>
                   <Input
                     type="date"
-                    className="bg-muted/50 border-0 h-12 text-sm shadow-sm rounded-xl text-foreground"
+                    className={COMPRAS_FIELD_H12}
                     value={formData.data_prevista_entrega || ''}
                     onChange={e => handleChange('data_prevista_entrega', e.target.value)}
                     disabled={isLocked}
@@ -1627,7 +1645,7 @@ export default function PedidoCompraForm({
                 <div className="col-span-12">
                   <Label className="text-sm font-light text-muted-foreground mb-2 block">Observações</Label>
                   <Textarea 
-                    className="bg-muted/50 border-0 shadow-sm resize-none rounded-xl text-foreground placeholder:text-muted-foreground" 
+                    className={cn(COMPRAS_FIELD, 'shadow-sm resize-none placeholder:text-muted-foreground')} 
                     placeholder="Observações do pedido..."
                     rows={3}
                     value={formData.observacoes} 
@@ -1665,7 +1683,7 @@ export default function PedidoCompraForm({
               <div>
                 <Label className="text-sm font-light text-muted-foreground mb-2 block">Forma de Pagamento *</Label>
                 <Select value={formData.forma_pagamento_compra} onValueChange={v => handleChange('forma_pagamento_compra', v)}>
-                  <SelectTrigger className="bg-muted/50 border-0 h-12 shadow-sm rounded-xl">
+                  <SelectTrigger className={COMPRAS_FIELD_H12}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="dark:bg-muted border-0 shadow-lg z-[9999]">
@@ -1681,7 +1699,7 @@ export default function PedidoCompraForm({
                 </Label>
                 <Input 
                   type="date" 
-                  className="bg-muted/50 border-0 h-12 shadow-sm rounded-xl"
+                  className={COMPRAS_FIELD_H12}
                   value={formData.data_primeiro_vencimento} 
                   onChange={e => handleChange('data_primeiro_vencimento', e.target.value)} 
                   disabled={isLocked}
@@ -1696,7 +1714,7 @@ export default function PedidoCompraForm({
                   <Input 
                     type="number" 
                     min="1"
-                    className="bg-muted/50 border-0 h-12 shadow-sm rounded-xl"
+                    className={COMPRAS_FIELD_H12}
                     value={formData.num_parcelas} 
                     onChange={e => handleChange('num_parcelas', parseInt(e.target.value) || 1)} 
                     disabled={isLocked}
@@ -1707,7 +1725,7 @@ export default function PedidoCompraForm({
                   <Input 
                     type="number" 
                     min="1"
-                    className="bg-muted/50 border-0 h-12 shadow-sm rounded-xl" 
+                    className={COMPRAS_FIELD_H12} 
                     value={formData.intervalo_parcelas_dias} 
                     onChange={e => handleChange('intervalo_parcelas_dias', parseInt(e.target.value) || 30)} 
                     disabled={isLocked}
@@ -1719,7 +1737,7 @@ export default function PedidoCompraForm({
             <div>
               <Label className="text-sm font-light text-muted-foreground mb-2 block">Observações de Pagamento</Label>
               <Textarea 
-                className="bg-muted/50 border-0 shadow-sm resize-none rounded-xl" 
+                className={cn(COMPRAS_FIELD, 'shadow-sm resize-none')} 
                 placeholder="Ex: Pagar via PIX, transferência, observações sobre o pagamento..."
                 rows={3}
                 value={formData.condicoes_pagamento} 
@@ -1729,7 +1747,7 @@ export default function PedidoCompraForm({
             </div>
 
             {/* Central financeira + lançamentos */}
-            <div className="pt-6 border-t border-border/40 space-y-6">
+            <div className={cn('pt-6 space-y-6', COMPRAS_DIVIDER_TOP)}>
               <div className="text-right">
                 <span className="text-xs text-muted-foreground block mb-0.5">Total do Pedido</span>
                 <span className="text-2xl font-light text-foreground dark:text-foreground">{formatCurrency(valorTotal)}</span>
@@ -1935,7 +1953,7 @@ export default function PedidoCompraForm({
                  placeholder="Nome do fornecedor"
                  value={novoFornecedor.nome}
                  onChange={e => setNovoFornecedor({...novoFornecedor, nome: e.target.value})}
-                 className="bg-muted/50 border-0 h-12 shadow-sm rounded-xl text-foreground"
+                 className={COMPRAS_FIELD_H12}
                  />
                  </div>
                  <div>
@@ -1944,7 +1962,7 @@ export default function PedidoCompraForm({
                  placeholder="email@fornecedor.com"
                  value={novoFornecedor.email}
                  onChange={e => setNovoFornecedor({...novoFornecedor, email: e.target.value})}
-                 className="bg-muted/50 border-0 h-12 shadow-sm rounded-xl text-foreground"
+                 className={COMPRAS_FIELD_H12}
                  />
                  </div>
                  <div>
@@ -1953,7 +1971,7 @@ export default function PedidoCompraForm({
                  placeholder="(00) 00000-0000"
                  value={novoFornecedor.telefone}
                  onChange={e => setNovoFornecedor({...novoFornecedor, telefone: e.target.value})}
-                 className="bg-muted/50 border-0 h-12 shadow-sm rounded-xl text-foreground"
+                 className={COMPRAS_FIELD_H12}
                  />
                  </div>
                  <div>
@@ -1962,7 +1980,7 @@ export default function PedidoCompraForm({
                  placeholder="Endereço completo"
                  value={novoFornecedor.endereco}
                  onChange={e => setNovoFornecedor({...novoFornecedor, endereco: e.target.value})}
-                 className="bg-muted/50 border-0 h-12 shadow-sm rounded-xl text-foreground"
+                 className={COMPRAS_FIELD_H12}
                  />
                  </div>
                  </div>
@@ -1976,7 +1994,7 @@ export default function PedidoCompraForm({
                </Button>
                <Button
                onClick={handleCreateFornecedor}
-               className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-400 text-white rounded-xl h-12"
+               className={cn(COMPRAS_BTN_CITRUS, 'h-12')}
              >
                Criar
              </Button>

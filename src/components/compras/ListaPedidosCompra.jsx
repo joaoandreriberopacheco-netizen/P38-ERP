@@ -21,10 +21,12 @@ import { ComprasRecebimentoDateChip } from '@/components/compras/ComprasStatusCh
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 import { caixaTypo } from '@/lib/caixaP38Theme';
 
+import { COMPRAS_HIER_L1, COMPRAS_SEP } from '@/lib/comprasP38Theme';
+
 /** Recuo hierárquico + tipografia (mesma linguagem da Consulta por embarque). */
 const EMBARQUE_HIER = {
-  l1: 'ml-1 pl-2 md:ml-3 md:pl-3.5 border-l border-border/30 dark:border-white/10 min-w-0 max-w-full',
-  sep: 'border-b border-border/40 dark:border-white/10',
+  l1: COMPRAS_HIER_L1,
+  sep: COMPRAS_SEP,
 };
 const EMBARQUE_TITLE =
   'font-din-1451 font-light text-sm uppercase tracking-wide text-foreground leading-snug line-clamp-2 break-words';
@@ -295,7 +297,7 @@ function EmbarqueListaCard({
       </div>
 
       <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
-        <AlertDialogContent className="rounded-2xl border border-border/40 dark:bg-background max-w-sm">
+        <AlertDialogContent className="rounded-2xl border-0 shadow-2xl dark:bg-background max-w-sm">
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir rascunho?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -393,14 +395,14 @@ export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, 
   if (loading) {
     return (
       <div className="space-y-2">
-        {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-14 bg-muted/40 animate-pulse border-b border-border/40" />)}
+        {[1, 2, 3, 4, 5].map(i => <div key={i} className={cn('h-14 bg-secondary/20 animate-pulse', COMPRAS_SEP)} />)}
       </div>
     );
   }
 
   if (grupos.length === 0) {
     return (
-      <div className="py-16 flex flex-col items-center gap-2 border-b border-border/40">
+      <div className={cn('py-16 flex flex-col items-center gap-2', COMPRAS_SEP)}>
         <Package2 className="w-9 h-9 text-muted-foreground dark:text-foreground/90" />
         <p className="text-sm text-foreground/85 font-light">Nenhum embarque encontrado</p>
       </div>
