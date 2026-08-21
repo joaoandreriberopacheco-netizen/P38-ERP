@@ -8,7 +8,7 @@ import InformarEmbarque from './InformarEmbarque';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
-import { calcularPercentuaisLogistica, derivarStatusEmbarqueAgregado, qtyEmbarcadaBaseLinha, calcularItensOrfaosAguardandoDespacho } from '@/lib/embarqueLogisticaHelpers';
+import { calcularPercentuaisLogistica, derivarStatusEmbarqueAgregado, qtyEmbarcadaBaseLinha, qtyEmbarcadaComercialLinha, calcularItensOrfaosAguardandoDespacho } from '@/lib/embarqueLogisticaHelpers';
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 
 // Calcula total embarcado por produto em TODOS os embarques
