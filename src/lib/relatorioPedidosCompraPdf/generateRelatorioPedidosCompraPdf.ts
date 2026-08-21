@@ -977,6 +977,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
 
     /** Enxuto: DIN 1451, mind map vertical, traços finos uniformes. */
     const ENXUTO_LINE_W = 0.12;
+    const ENXUTO_SPINE_W = 0.06;
     const ENXUTO = {
       black: [0, 0, 0],
       muted: [72, 72, 72],
@@ -986,9 +987,19 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
     /** Recuos do mind map enxuto: 1 embarque → 2 pedido → 3 produtos. */
     const ENXUTO_INDENT = {
       embarque: 0,
-      pedidoLine: 5,
-      pedido: 7.5,
-      produto: 14,
+      pedidoLine: 3,
+      pedido: 10,
+      produto: 16,
+    };
+    /** Respiro entre linhas horizontais e texto (mm). */
+    const ENXUTO_PAD = {
+      bandTextY: 5.5,
+      bandH: 9,
+      layerGap: 2.8,
+      headerBottom: 3.5,
+      itemsAfterRule: 2.5,
+      itemTop: 4.8,
+      itemBottom: 2.4,
     };
     /** Tipografia enxuta — corpo bem legível (DIN 1451 com tamanhos maiores). */
     const ENXUTO_FONT = {
@@ -1004,7 +1015,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       colHdr: 8.5,
       nome: 10,
       itemNome: 11,
-      itemTotal: 11,
+      itemTotal: 10,
       itemDetail: 9,
       itemQtd: 10,
       itemUn: 9,
@@ -1014,6 +1025,11 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
     const strokeEnxutoLine = (x0, y0, x1, y1, color = ENXUTO.line) => {
       doc.setDrawColor(...color);
       doc.setLineWidth(ENXUTO_LINE_W);
+      doc.line(x0, y0, x1, y1);
+    };
+    const strokeEnxutoSpine = (x0, y0, x1, y1, color = ENXUTO.line) => {
+      doc.setDrawColor(...color);
+      doc.setLineWidth(ENXUTO_SPINE_W);
       doc.line(x0, y0, x1, y1);
     };
     const strokeEnxutoBlackLine = (x0, y0, x1, y1) => strokeEnxutoLine(x0, y0, x1, y1, ENXUTO.black);
@@ -1028,7 +1044,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         const segTop = page === startPage ? yStart : topPad;
         const segBottom = page === endPage ? yEnd : pageH - bottomPad;
         if (segBottom > segTop + 0.5) {
-          strokeEnxutoBlackLine(x, segTop, x, segBottom);
+          strokeEnxutoSpine(x, segTop, x, segBottom);
         }
       }
       doc.setPage(savedPage);
@@ -1586,24 +1602,27 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       }
       if (layout === 'narrow_enxuto') {
         const tableX = M + ENXUTO_INDENT.produto;
-        const itemMl = tableX + 14;
-        const totalColW = 26;
-        const contentRight = M + CW;
-        const nomeMaxW = Math.max(18, contentRight - itemMl - totalColW - 1);
+        const qtdZoneW = 9;
+        const sepLineX = tableX + qtdZoneW + 0.35;
+        const itemMl = sepLineX + 2.4;
+        const totalColRight = M + CW - 0.5;
+        const totalColW = 28;
+        const nomeMaxW = Math.max(18, totalColRight - totalColW - itemMl - 1.5);
         return {
           layout: 'narrow_enxuto',
           tableX,
           itemMl,
           nomeMaxW,
-          lineX: tableX + 11.5,
-          qtdColRight: tableX + 10.5,
-          contentRight,
+          lineX: sepLineX,
+          qtdColRight: tableX + qtdZoneW - 0.5,
+          contentRight: M + CW,
+          totalColRight,
           totalColW,
           vs: 1.12,
           fontScale: 1,
-          branchLen: 2.4,
+          branchLen: 1.8,
           nomeFontSize: ENXUTO_FONT.itemNome,
-          totalFontSize: ENXUTO_FONT.itemTotal,
+          totalFontSize: ENXUTO_FONT.itemQtd,
           detailFontSize: ENXUTO_FONT.itemDetail,
           qtdFontSize: ENXUTO_FONT.itemQtd,
           unFontSize: ENXUTO_FONT.itemUn,
@@ -1735,7 +1754,9 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       const met = resolveMetricasItemPdf(item, prod, pedido);
       const vs = cfg.vs;
       const nomeLineStep = layout === 'narrow_enxuto' ? 4.2 * vs : 3.85 * vs;
-      const margemLinhaInferiorItem = (usesColumnValueLayout(layout) ? 1.2 : 1.3) * vs;
+      const margemLinhaInferiorItem = layout === 'narrow_enxuto'
+        ? ENXUTO_PAD.itemBottom * vs
+        : (usesColumnValueLayout(layout) ? 1.2 : 1.3) * vs;
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       const nomeFsMeasure = (usesColumnValueLayout(layout) || layout === 'narrow_enxuto')
@@ -1749,7 +1770,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         layout === 'narrow_consulta' ? nomeRaw : toTitleCase(nomeRaw),
         nomeMaxW,
       );
-      const nomeTop = y0 + 3.4 * vs;
+      const nomeTop = y0 + (layout === 'narrow_enxuto' ? ENXUTO_PAD.itemTop : 3.4) * vs;
       const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
 
       if (layout === 'narrow_consulta') {
@@ -1907,8 +1928,8 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         const sepColor = (isAnexosA4 && mobileItemAccentKey)
           ? (COMPRAS_PDF_ACCENT[mobileItemAccentKey] || COMPRAS_PDF_ACCENT.muted).line
           : ENXUTO.line;
-        strokeEnxutoLine(cfg.lineX, y0, cfg.lineX, y0 + rowBlockH, sepColor);
-        strokeEnxutoLine(cfg.lineX, branchY, cfg.lineX + (cfg.branchLen ?? 2.4), branchY);
+        strokeEnxutoSpine(cfg.lineX, y0, cfg.lineX, y0 + rowBlockH, sepColor);
+        strokeEnxutoSpine(cfg.lineX, branchY, cfg.lineX + (cfg.branchLen ?? 1.8), branchY, sepColor);
       } else {
         const inkLine = ink ? MOBILE_INK.line : [203, 213, 225];
         doc.setFillColor(...inkLine);
@@ -1970,10 +1991,11 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         }
       } else if (layout === 'narrow_enxuto') {
         const { det, costY1, auxDetailStep } = measured;
-        doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-        doc.setFontSize((cfg.totalFontSize ?? cfg.nomeFontSize) * cfg.fontScale);
-        doc.setTextColor(...inkBlack);
-        doc.text(moeda(met.totalLinha), cfg.contentRight, nomeTop, { align: 'right' });
+        const totalY = nomeTop + 1.2 * vs;
+        doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+        doc.setFontSize((cfg.totalFontSize ?? cfg.qtdFontSize) * cfg.fontScale);
+        doc.setTextColor(...inkBody);
+        doc.text(moeda(met.totalLinha), cfg.totalColRight ?? cfg.contentRight, totalY, { align: 'right' });
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
         doc.setFontSize((cfg.detailFontSize ?? ENXUTO_FONT.itemDetail) * cfg.fontScale);
         doc.setTextColor(...inkMeta);
@@ -2651,15 +2673,15 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       const textoBlock = textoPedidoLines.length > 0
         ? 2.2 + textoPedidoLines.length * textoLineStep
         : 0;
-      const codeY0 = 5;
+      const codeY0 = 6.5;
       const codeBlockH = codigoLinhas.length * codigoLineStep;
       const gapCodeForn = 2.5;
-      const headerPadBottom = 2;
-      const embarqueBandH = 7.8;
+      const headerPadBottom = ENXUTO_PAD.headerBottom;
+      const embarqueBandH = ENXUTO_PAD.bandH;
       const pedidoHeaderBlockH =
         codeY0 + codeBlockH + gapCodeForn + fornBlock + totalRowH + metaBlock + textoBlock
         + headerPadBottom;
-      const headerBlockH = embarqueBandH + 1.8 + pedidoHeaderBlockH;
+      const headerBlockH = embarqueBandH + ENXUTO_PAD.layerGap + pedidoHeaderBlockH;
 
       const minPrimeiroItemH = itens.length > 0
         ? computeExpandedItemRowH(pedido, itens[0], itemLayout, 0)
@@ -2674,18 +2696,18 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
       doc.setFontSize(ENXUTO_FONT.grupo);
       doc.setTextColor(...ENXUTO.black);
-      doc.text(embarqueCodigo, embarqueX, blockTop + 4.2);
+      doc.text(embarqueCodigo, embarqueX, blockTop + ENXUTO_PAD.bandTextY);
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(ENXUTO_FONT.grupoMeta);
       doc.setTextColor(...ENXUTO.muted);
       embarqueMetaLines.forEach((line, ml) => {
-        doc.text(line, M + CW, blockTop + 4.2 + ml * 3.6, { align: 'right' });
+        doc.text(line, M + CW, blockTop + ENXUTO_PAD.bandTextY + ml * 3.6, { align: 'right' });
       });
       const embarqueBottom = blockTop + embarqueBandH;
       strokeEnxutoLine(M, embarqueBottom, M + CW, embarqueBottom);
 
       // Camada 2 — pedido (recuo ENXUTO_INDENT.pedido)
-      const pedidoTop = embarqueBottom + 1.8;
+      const pedidoTop = embarqueBottom + ENXUTO_PAD.layerGap;
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(ENXUTO_FONT.pedidoCodigo);
       doc.setTextColor(...ENXUTO.muted);
@@ -2735,10 +2757,10 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         cy += textoPedidoLines.length * textoLineStep;
       }
 
-      const itemsTopLine = pedidoTop + pedidoHeaderBlockH - headerPadBottom + 0.5;
+      const itemsTopLine = pedidoTop + pedidoHeaderBlockH - headerPadBottom + 1.2;
       strokeEnxutoLine(pedidoX, itemsTopLine, M + CW, itemsTopLine);
 
-      y = itemsTopLine + 1.5;
+      y = itemsTopLine + ENXUTO_PAD.itemsAfterRule;
 
       // Camada 3 — produtos (descrição + total em cima; custos em baixo)
       let totCusto = 0;
@@ -2817,10 +2839,10 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       const totalRowH = 6;
       const metaLineStep = 4.2;
       const metaBlock = metaLines.length * metaLineStep;
-      const codeY0 = 5;
+      const codeY0 = 6.5;
       const codeBlockH = codigoLinhas.length * codigoLineStep;
       const gapCodeForn = 2.5;
-      const headerPadBottom = 2;
+      const headerPadBottom = ENXUTO_PAD.headerBottom;
       const headerBlockH =
         codeY0 + codeBlockH + gapCodeForn + fornBlock + totalRowH + metaBlock
         + headerPadBottom;
@@ -2868,10 +2890,10 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       });
       cy += metaBlock;
 
-      const itemsTopLine = blockTop + headerBlockH - headerPadBottom + 0.5;
+      const itemsTopLine = blockTop + headerBlockH - headerPadBottom + 1.2;
       strokeEnxutoLine(pedidoX, itemsTopLine, M + CW, itemsTopLine);
 
-      y = itemsTopLine + 1.5;
+      y = itemsTopLine + ENXUTO_PAD.itemsAfterRule;
 
       let totCusto = 0;
       let totVenda = 0;
