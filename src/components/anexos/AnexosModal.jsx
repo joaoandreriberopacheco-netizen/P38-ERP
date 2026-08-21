@@ -98,7 +98,7 @@ function AnexoCard({ anexo, onDelete, readOnly = false }) {
   );
 }
 
-export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelete, uploading, referenciaNomero, readOnly = false }) {
+export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelete, uploading, referenciaNomero, pedidoId, readOnly = false }) {
   const [tipoSelecionado, setTipoSelecionado] = useState('Comprovante');
   const [tiposCustomizados, setTiposCustomizados] = useState([]);
   const [exportingPdf, setExportingPdf] = useState(false);
@@ -133,7 +133,7 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
     if (exportingPdf || anexos.length === 0) return;
 
     setExportingPdf(true);
-    await exportAnexosToPdf(anexos);
+    await exportAnexosToPdf(anexos, { pedidoId, pedidoNumero: referenciaNomero });
     setExportingPdf(false);
   };
 

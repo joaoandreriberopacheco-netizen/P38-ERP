@@ -72,7 +72,7 @@ function normalizarItemRelatorio(item, produtosMap = {}) {
   };
 }
 
-function normalizarPedidoParaRelatorio(pedido, produtosMap = {}) {
+export function normalizarPedidoParaRelatorio(pedido, produtosMap = {}) {
   const fonteItens = Array.isArray(pedido?._display_itens)
     ? pedido._display_itens
     : (Array.isArray(pedido?.itens) ? pedido.itens : []);

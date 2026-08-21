@@ -92,7 +92,7 @@ function addTextFallbackPage(doc, title, message, layout = {}) {
  * @returns {Promise<{ pagesAdded: number, endPage: number, endY: number }>}
  */
 export async function appendAnexosToPdfDoc(doc, anexos = [], options = {}) {
-  const { sectionPrefix = 'Anexos', layout = {}, flow, onPageAdded } = options;
+  const { sectionPrefix = 'Anexos', layout = {}, flow, onPageAdded, useFirstPage = false } = options;
   const list = (anexos || []).filter((a) => a?.url_drive);
   if (list.length === 0) {
     return {
@@ -112,8 +112,12 @@ export async function appendAnexosToPdfDoc(doc, anexos = [], options = {}) {
   };
 
   const beginDedicatedPage = (title, margin, titleY, contentTop, contentBottom) => {
-    doc.addPage();
-    registerPage();
+    if (!(useFirstPage && pagesAdded === 0 && doc.internal.getNumberOfPages() === 1)) {
+      doc.addPage();
+      registerPage();
+    } else if (useFirstPage && pagesAdded === 0) {
+      pagesAdded += 1;
+    }
     doc.setFontSize(7.5);
     doc.text(title, margin, titleY);
     return { titleY, contentTop, contentBottom };
