@@ -32,7 +32,7 @@ import {
   pedidoDeveExibirCardNecessidade,
   quantidadePendenteNecessidadePedido,
 } from '@/lib/pedidoCompraNecessidade';
-import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta, buildConsultaItensEmbarque, calcConsultaValorEmbarque } from '@/lib/consultaComprasEmbarques';
+import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta, buildConsultaItensEmbarque, calcConsultaValorEmbarque, buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
 import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
@@ -985,6 +985,18 @@ export default function PedidosCompraPage() {
       .sort((a, b) => compareEmbarquesConsulta(a, b, sortOrder, groupBy));
   }, [filtrados, filtradosSemBusca, embarques, search, sortOrder, groupBy, produtosMap]);
 
+  const gruposConsultaRelatorio = useMemo(
+    () => buildGruposConsultaEmbarques(pedidosConsulta, groupBy, sortOrder).map((g) => ({
+      key: g.key,
+      label: g.label,
+      groupDate: g.groupDate,
+      groupCarrier: g.groupCarrier,
+      pedidos: g.cards,
+      _total_eta: g.totalConsulta,
+    })),
+    [pedidosConsulta, groupBy, sortOrder],
+  );
+
   return (
     <div className={cn('w-full min-w-0 max-w-full overflow-x-hidden space-y-4 font-din-1451 bg-background', isPhone && 'pb-[var(--p38-scroll-pad-below-nav)]')}>
       {/* Header */}
@@ -1007,8 +1019,8 @@ export default function PedidosCompraPage() {
         {activeView === 'embarques' || activeView === 'consulta' ? (
           <div className="flex items-center gap-2 flex-wrap justify-end">
             <ComprasRelatoriosMenu
-              pedidos={filtrados}
-              grupos={grupos}
+              pedidos={activeView === 'consulta' ? pedidosConsulta : filtrados}
+              grupos={activeView === 'consulta' ? gruposConsultaRelatorio : grupos}
               filtrosDesc={`Busca: ${search || 'todas'} · Status: ${statusSel.join(', ') || 'todos'} · Tags: ${tagsSel.length || 0} · Período: ${dataInicial || '-'} até ${dataFinal || '-'} · ETA: ${etaFiltroModo || 'todos'}${etaFiltroModo === 'antes' || etaFiltroModo === 'depois' ? ` (${etaData || '-'})` : ''}${etaFiltroModo === 'entre' || etaFiltroModo === 'personalizado' ? ` (${etaInicial || '-'} até ${etaFinal || '-'})` : ''}`}
               kpis={{
                 totalPedidos: filtrados.length,

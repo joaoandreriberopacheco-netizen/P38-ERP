@@ -8,11 +8,11 @@ const VERSOES_RELATORIO_COM_ANEXOS = new Set(['expandida_com_anexos', 'expandida
 
 export const COMPRAS_RELATORIOS = [
   { version: 'expandida', label: 'PDF expandido', icon: 'spreadsheet' },
-  { version: 'expandida_com_anexos', label: 'PDF completo mobile (minuta + anexos)', icon: 'files', title: 'Minuta mobile com texto do pedido + comprovantes embutidos por pedido' },
+  { version: 'expandida_com_anexos', label: 'PDF mobile consulta + anexos', icon: 'files', title: 'Visual da consulta + comprovantes embutidos por pedido' },
   { version: 'expandida_com_anexos_a4', label: 'PDF completo A4 (minuta + anexos)', icon: 'spreadsheet', title: 'Minuta enxuta A4 com tabela de itens + comprovantes embutidos por pedido' },
   { version: 'expandida_enxuta', label: 'PDF enxuto', icon: 'list' },
-  { version: 'expandida_mobile', label: 'PDF mobile clássico', icon: 'smartphone', title: 'Cards coloridos com pills de status (versão anterior)' },
-  { version: 'expandida_mobile_claro', label: 'PDF mobile claro', icon: 'smartphone', title: 'Fontes pretas e alto contraste para leitura no celular' },
+  { version: 'expandida_mobile', label: 'PDF mobile (consulta)', icon: 'smartphone', title: 'Mesmo visual da tela Consulta — chips de status, cores e linhas de produto' },
+  { version: 'expandida_mobile_claro', label: 'PDF mobile consulta', icon: 'smartphone', title: 'Layout consulta com alto contraste para leitura no celular' },
 ];
 
 function normalizarItemRelatorio(item, produtosMap = {}) {
