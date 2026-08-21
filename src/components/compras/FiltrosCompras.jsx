@@ -36,6 +36,7 @@ import {
   COMPRAS_SEARCH_INPUT,
   COMPRAS_SECTION_CARD,
 } from '@/lib/comprasP38Theme';
+import { statusPedidoCompraExplicitos } from '@/components/compras/StatusPedidoCompraPicker';
 
 const ETA_FILTRO_MODOS = [
   { value: 'antes', label: 'Antes de' },
