@@ -32,7 +32,7 @@ import {
   pedidoDeveExibirCardNecessidade,
   quantidadePendenteNecessidadePedido,
 } from '@/lib/pedidoCompraNecessidade';
-import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta, buildConsultaItensEmbarque, calcConsultaValorEmbarque, buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
+import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta, buildConsultaItensEmbarque, calcConsultaValorEmbarque, calcValorEmbarqueCard, buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
 import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
@@ -434,27 +434,13 @@ const buildDisplayItensFromEmbarque = (pedido, embarque, produtosMap = {}) => {
 };
 
 const getDisplayValorEmbarque = (pedido, embarque, produtosMap = {}, embarquesDoPedido = []) => {
-  const itensEmbarque = getEmbarqueItensLinhas(embarque);
-  if (!itensEmbarque.length) return calcValorTotalPedidoCompra(pedido);
-
   const card = {
     ...pedido,
     _embarque: embarque,
     _is_necessidade: isNecessidadeRenderizada(embarque),
     _embarques: embarquesDoPedido.length ? embarquesDoPedido : (pedido._embarques || []),
   };
-  const itensConsulta = buildConsultaItensEmbarque(card, produtosMap);
-  const valorEmbarqueItens = calcConsultaValorEmbarque(card, itensConsulta);
-  const valorItensPedido = calcValorItensPedidoCompra(pedido);
-
-  if (!valorItensPedido || !itensConsulta.length) {
-    return valorEmbarqueItens || calcValorTotalPedidoCompra(pedido);
-  }
-
-  const frete = Number(pedido?.valor_frete) || 0;
-  const desconto = Number(pedido?.valor_desconto) || 0;
-  const proporcao = valorEmbarqueItens / valorItensPedido;
-  return Number((valorEmbarqueItens + proporcao * (frete - desconto)).toFixed(2));
+  return calcValorEmbarqueCard(card, produtosMap);
 };
 
 function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
