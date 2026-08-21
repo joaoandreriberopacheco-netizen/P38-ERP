@@ -79,6 +79,7 @@ import {
   calcularResumoNecessidadeDetalhe,
   resolverEmbarqueNecessidadeContexto,
 } from '@/lib/pedidoCompraNecessidade';
+import { valorEmbarqueSplit } from '@/lib/pedidoCompraValorExibicao';
 
 export default function PedidoCompraForm({
   pedido,
@@ -205,6 +206,13 @@ export default function PedidoCompraForm({
       produtosMapBasico,
     );
   }, [pedidoAtual, embarqueNecessidadeContexto, produtosMapBasico]);
+
+  const valorEmbarqueContexto = useMemo(() => {
+    if (!embarqueContextoId || !pedidoAtual) return null;
+    const embarque = (pedidoAtual._embarques || []).find((e) => e.id === embarqueContextoId);
+    if (!embarque) return null;
+    return valorEmbarqueSplit(pedidoAtual, embarque, produtosMapBasico);
+  }, [embarqueContextoId, pedidoAtual, produtosMapBasico]);
 
   const handlePedidoFinanceiroAtualizado = async () => {
     if (onPedidoRefresh) {
@@ -1377,6 +1385,10 @@ export default function PedidoCompraForm({
                 {resumoNecessidadeDetalhe.qtdItens}{' '}
                 {resumoNecessidadeDetalhe.qtdItens === 1 ? 'item' : 'itens'}{' '}
                 ({formatCurrency(resumoNecessidadeDetalhe.valorTotal)})
+              </>
+            ) : valorEmbarqueContexto != null ? (
+              <>
+                Embarque {formatCurrency(valorEmbarqueContexto)} · pedido {formatCurrency(valorTotal)}
               </>
             ) : (
               <>

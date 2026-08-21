@@ -33,7 +33,8 @@ import {
   pedidoDeveExibirCardNecessidade,
   quantidadePendenteNecessidadePedido,
 } from '@/lib/pedidoCompraNecessidade';
-import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta, buildConsultaItensEmbarque, calcConsultaValorEmbarque, calcValorEmbarqueCard, buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
+import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta, buildConsultaItensEmbarque, calcConsultaValorEmbarque, buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
+import { calcValorEmbarqueCard, calcValorEmbarcadoPedido } from '@/lib/embarqueValorFinanceiro';
 import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
@@ -54,7 +55,6 @@ import {
   commercialQuantityFromBase,
   normalizeItemToCanonicalFactorOne,
   getItemCompraExibicaoVitrine,
-  linhaPrecoNoEixoFatorUm,
 } from '@/lib/productUnits';
 import { toLocalDateKey, formatarSoData, dataHoje } from '@/components/utils/dateUtils';
 import {
@@ -327,75 +327,6 @@ const pedidoNaoConcluido = (pedido = {}) => {
   return status !== 'Concluído' && !statusReceb.startsWith('Concluído');
 };
 
-const getPercentualAjustePedido = (pedido = {}) => {
-  const percentualDireto = Number(pedido.percentual_desconto);
-  if (Number.isFinite(percentualDireto) && percentualDireto !== 0) return percentualDireto;
-
-  const valorDesconto = Number(pedido.valor_desconto);
-  const valorItens = Number(pedido.valor_itens);
-  if (Number.isFinite(valorDesconto) && Number.isFinite(valorItens) && valorItens > 0) {
-    return (valorDesconto / valorItens) * 100;
-  }
-
-  return 0;
-};
-
-const hasAjusteManualNoItem = (item = {}, baseUnit = 0) => {
-  const descontoOuAcrescimo = Number(item.valor_desconto_item);
-  if (Number.isFinite(descontoOuAcrescimo) && descontoOuAcrescimo !== 0) return true;
-
-  const custoFinalUnitario = Number(item.custo_final_unitario);
-  if (Number.isFinite(custoFinalUnitario) && Math.abs(custoFinalUnitario - baseUnit) > 0.01) return true;
-
-  const qtd = Number(item.quantidade_base || item.quantidade) || 0;
-  const totalItem = Number(item.total);
-  if (Number.isFinite(totalItem) && qtd > 0) {
-    const unitFromTotal = totalItem / qtd;
-    if (Math.abs(unitFromTotal - baseUnit) > 0.01) return true;
-  }
-
-  return false;
-};
-
-const getValorUnitarioEfetivoItemPedido = (item = {}, pedido = {}) => {
-  const custoUnitario = Number(item.custo_unitario);
-  const baseUnit = Number.isFinite(custoUnitario) ? custoUnitario : 0;
-  const percentualAjustePedido = getPercentualAjustePedido(pedido);
-  const multiplicadorPedido = 1 - (percentualAjustePedido / 100);
-  const temAjusteManualItem = hasAjusteManualNoItem(item, baseUnit);
-
-  const custoFinalUnitario = Number(item.custo_final_unitario);
-  if (Number.isFinite(custoFinalUnitario) && custoFinalUnitario > 0) {
-    return temAjusteManualItem ? custoFinalUnitario : (baseUnit * multiplicadorPedido);
-  }
-
-  const qtdBase = Number(item.quantidade_base) || 0;
-  const qtdComm = Number(item.quantidade) || 0;
-  const fator = Number(item.fator_conversao) || 1;
-  const totalItem = Number(item.total);
-  if (Number.isFinite(totalItem) && totalItem > 0) {
-    const eixoF1 = linhaPrecoNoEixoFatorUm(item);
-    const divisor =
-      eixoF1 && qtdBase > 0
-        ? qtdBase
-        : qtdComm > 0
-          ? qtdComm
-          : qtdBase || qtdComm;
-    if (divisor > 0) {
-      const unitFromTotal = totalItem / divisor;
-      return temAjusteManualItem ? unitFromTotal : baseUnit * multiplicadorPedido;
-    }
-  }
-
-  const descontoOuAcrescimo = Number(item.valor_desconto_item);
-  if (Number.isFinite(custoUnitario) && Number.isFinite(descontoOuAcrescimo)) {
-    const unitComAjuste = custoUnitario - descontoOuAcrescimo;
-    return temAjusteManualItem ? unitComAjuste : (unitComAjuste * multiplicadorPedido);
-  }
-
-  return baseUnit * multiplicadorPedido;
-};
-
 /** Exibição em unidade vitrine (CX…); totais vêm do item gravado. */
 const normalizeDisplayItemCommercial = (produto = null, pedidoItem = {}, item = {}) => {
   const linhaMerged = { ...pedidoItem, ...item };
@@ -466,14 +397,7 @@ function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
   const pedidosComResumoReal = pcs.map((pedido) => {
     const embarquesDoPedido = embarquesPorPedido[pedido.id] || [];
     const totalPedido = calcValorTotalPedidoCompra(pedido);
-    const valorEmbarcado = embarquesDoPedido.reduce((acc, embarque) => {
-        const valorEmbarque = getEmbarqueItensLinhas(embarque).reduce((itemAcc, item) => {
-        const pedidoItem = (pedido.itens || []).find((candidate) => candidate.produto_id === item.produto_id);
-        const custoUnitarioEfetivo = getValorUnitarioEfetivoItemPedido(pedidoItem || {}, pedido);
-        return itemAcc + ((Number(item.quantidade_embarcada) || 0) * custoUnitarioEfetivo);
-      }, 0);
-      return acc + valorEmbarque;
-    }, 0);
+    const valorEmbarcado = calcValorEmbarcadoPedido(pedido, embarquesDoPedido, produtosMap);
     const percentualReal = totalPedido > 0 ? Math.min(100, (valorEmbarcado / totalPedido) * 100) : 0;
     const ultimoEmbarque = [...embarquesDoPedido].sort((a, b) => new Date(b.updated_date || b.created_date) - new Date(a.updated_date || a.created_date))[0] || null;
 
@@ -851,24 +775,11 @@ export default function PedidosCompraPage() {
   );
 
   const calcularValorPendentePedido = (pedido) => {
-    const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
     const embarques = Array.isArray(pedido._embarques) ? pedido._embarques : [];
-
-    const recebidosPorProduto = embarques.reduce((acc, embarque) => {
-      getEmbarqueItensLinhas(embarque).forEach((item) => {
-        const produtoId = item.produto_id;
-        if (!produtoId) return;
-        acc[produtoId] = (acc[produtoId] || 0) + (Number(item.quantidade_recebida) || 0);
-      });
-      return acc;
-    }, {});
-
-    return itens.reduce((acc, item) => {
-      const quantidade = Number(item.quantidade) || 0;
-      const recebida = recebidosPorProduto[item.produto_id] || 0;
-      const pendente = Math.max(0, quantidade - recebida);
-      const custoUnitario = getValorUnitarioEfetivoItemPedido(item, pedido);
-      return acc + (pendente * custoUnitario);
+    if (!embarques.length) return 0;
+    return embarques.reduce((acc, embarque) => {
+      const card = { ...pedido, _embarque: embarque, _embarques: embarques };
+      return acc + calcConsultaValorEmbarque(card, buildConsultaItensEmbarque(card, produtosMap));
     }, 0);
   };
 
@@ -976,7 +887,7 @@ export default function PedidosCompraPage() {
           _total_eta: pedidosSort.reduce((acc, p) => acc + (p._display_valor || 0), 0)
         };
       });
-  }, [filtrados, groupBy, sortOrder]);
+  }, [filtrados, groupBy, sortOrder, produtosMap]);
 
   const hasEtaFilter = etaFiltroModo && (
     (['antes', 'depois'].includes(etaFiltroModo) && etaData) ||
