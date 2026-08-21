@@ -2,7 +2,10 @@ import { dataHoje, formatarSoData, toLocalDateKey } from '@/components/utils/dat
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 import { resolveEmbarqueQuantidadeComercial, resolveEmbarqueLinhaUnidade, resolveEmbarqueQuantidadeBase } from '@/lib/embarqueQuantityResolve';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
-import { getTotalLinhaPedidoCompra, calcValorItensPedidoCompra, calcValorTotalPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
+import { getTotalLinhaPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
+import { resolveValorLinhaEmbarqueProporcional } from '@/lib/embarqueValorFinanceiro';
+
+export { calcValorEmbarqueCard, resolveValorLinhaEmbarqueProporcional } from '@/lib/embarqueValorFinanceiro';
 import {
   embarqueRecepcaoDocumentalCompleta,
   embarqueTemSaldoPendente,
@@ -64,33 +67,6 @@ function resolveQtyBasePedido(pedidoItem = {}, exibPedido = null) {
   const qty = Number(exib?.quantidade) || Number(pedidoItem?.quantidade) || 0;
   const fator = Number(exib?.fator_conversao) || Number(pedidoItem?.fator_conversao) || 1;
   return calculateBaseQuantity(qty, fator);
-}
-
-function resolveValorLinhaEmbarqueProporcional(
-  pedidoItem = {},
-  linhaMerged = null,
-  lineTotalFull = 0,
-  qtyKind = 'embarcada',
-  produto = null,
-) {
-  const exibPedido = getItemCompraExibicaoVitrine(pedidoItem, produto);
-  const qtyComPedido = Number(exibPedido?.quantidade) || Number(pedidoItem?.quantidade) || 0;
-  const qtyComEmbarque = linhaMerged
-    ? resolveEmbarqueQuantidadeComercial(linhaMerged, qtyKind)
-    : qtyComPedido;
-
-  if (qtyComPedido > 0 && qtyComEmbarque > 0) {
-    return roundToTwoDecimals((qtyComEmbarque / qtyComPedido) * lineTotalFull);
-  }
-
-  const qtyBasePedido = resolveQtyBasePedido(pedidoItem, exibPedido) || 1;
-  const qtyBaseEmbarque = linhaMerged
-    ? resolveEmbarqueQuantidadeBase(linhaMerged, qtyKind)
-    : qtyBasePedido;
-
-  return qtyBasePedido > 0
-    ? roundToTwoDecimals((qtyBaseEmbarque / qtyBasePedido) * lineTotalFull)
-    : lineTotalFull;
 }
 
 function buildLinhaConsultaItem(pedido, pedidoItem, sqlLine = null, produto = null, qtyKind = 'embarcada') {
@@ -224,41 +200,6 @@ export function calcConsultaValorEmbarque(card, itens) {
   return roundToTwoDecimals(
     linhas.reduce((acc, item) => acc + (Number(item.valor_total_item) || Number(item.total) || 0), 0),
   );
-}
-
-/** Valor total do split/embarque para cards (todas as linhas, não só saldo Consulta). */
-export function calcValorEmbarqueCard(card = {}, produtosMap = {}) {
-  const pedido = card;
-  const embarque = card._embarque;
-  const linhas = getEmbarqueItensLinhas(embarque);
-  if (!linhas.length) return calcValorTotalPedidoCompra(pedido);
-
-  const ehNecessidade = card._is_necessidade || isNecessidadeRenderizada(embarque);
-  const valorItens = roundToTwoDecimals(
-    linhas.reduce((acc, sqlLine) => {
-      const pedidoItem = (pedido.itens || []).find((pi) => pi.produto_id === sqlLine.produto_id);
-      const produto = sqlLine.produto_id ? produtosMap[sqlLine.produto_id] || null : null;
-      const lineTotal = getTotalLinhaPedidoCompra(pedidoItem || {});
-      const qtyKind = ehNecessidade && resolveEmbarqueQuantidadeComercial(sqlLine, 'embarcada') <= 0
-        ? 'pedida'
-        : 'embarcada';
-      return acc + resolveValorLinhaEmbarqueProporcional(
-        pedidoItem || {},
-        { ...(pedidoItem || {}), ...sqlLine },
-        lineTotal,
-        qtyKind,
-        produto,
-      );
-    }, 0),
-  );
-
-  const valorItensPedido = calcValorItensPedidoCompra(pedido);
-  if (!valorItensPedido) return valorItens;
-
-  const frete = Number(pedido?.valor_frete) || 0;
-  const desconto = Number(pedido?.valor_desconto) || 0;
-  const proporcao = valorItens / valorItensPedido;
-  return roundToTwoDecimals(valorItens + proporcao * (frete - desconto));
 }
 
 /** @deprecated alias */

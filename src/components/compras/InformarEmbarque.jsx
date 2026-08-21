@@ -11,7 +11,7 @@ import FluvialTripSelectorFullscreen from '@/components/compras/FluvialTripSelec
 import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
 import { agora, dataHoje, meioDiaSistemaISO, toLocalDateKey, formatarLogTime } from '@/components/utils/dateUtils';
 import { logDespachoAudit, InformarDespachoAuditStrip } from '@/components/compras/informarEmbarqueAudit.jsx';
-import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
+import { calcPercentualValorEmbarcadoPedido } from '@/lib/embarqueValorFinanceiro';
 import { saveEmbarqueItem } from '@/functions/saveEmbarqueItem';
 import { buildItensCanonicosEmbarque } from '@/lib/buildEmbarqueItensCanonicos';
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
@@ -77,25 +77,7 @@ function calcularStatusEmbarque(itens, jaEmbarcadoBase, qtdEmbarque, selectedIte
 }
 
 function calcularPercentualValorEmbarcado(pedido, embarquesAtualizados) {
-  const custoPorProduto = Object.fromEntries((pedido.itens || []).map((item) => [item.produto_id, Number(item.custo_unitario) || 0]));
-  const valorTotalPedido = Number(pedido.valor_total) || (pedido.itens || []).reduce((acc, item) => acc + ((Number(item.quantidade) || 0) * (Number(item.custo_unitario) || 0)), 0);
-  if (!valorTotalPedido) return 0;
-
-  const qtdPorProduto = {};
-  (embarquesAtualizados || []).forEach((emb) => {
-    if (emb.status === 'Pendente') return;
-    getEmbarqueItensLinhas(emb).forEach((item) => {
-      const prevQ = qtdPorProduto[item.produto_id] || 0;
-      qtdPorProduto[item.produto_id] = roundToTwoDecimals(prevQ + (Number(item.quantidade_embarcada) || 0));
-    });
-  });
-
-  const valorEmbarcado = (pedido.itens || []).reduce((acc, item) => {
-    const qtd = Math.min(Number(item.quantidade) || 0, qtdPorProduto[item.produto_id] || 0);
-    return acc + (qtd * (custoPorProduto[item.produto_id] || 0));
-  }, 0);
-
-  return Math.min(100, Number(((valorEmbarcado / valorTotalPedido) * 100).toFixed(2)));
+  return calcPercentualValorEmbarcadoPedido(pedido, embarquesAtualizados, {});
 }
 
 // ── TransportadoraSearch ──────────────────────────────────────────────────────

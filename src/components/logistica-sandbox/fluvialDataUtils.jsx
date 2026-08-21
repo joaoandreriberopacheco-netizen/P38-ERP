@@ -1,6 +1,8 @@
 import { format, subDays, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { normalizeEventoTransportadoraFields, resolveTransportadoraFromRecord } from '@/lib/resolveTransportadora';
+import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
+import { calcValorCargaEmbarque } from '@/lib/embarqueValorFinanceiro';
 
 export const FLUVIAL_DEFAULT_PERIOD = '30d';
 export const FLUVIAL_FETCH_WINDOW_ALL_DAYS = 365;
@@ -331,20 +333,18 @@ export function buildFluvialEvents({ eventosLogisticos = [], embarques = [], lan
           fornecedoresMap.set(key, { fornecedor_nome: key, itens: [] });
         }
         const group = fornecedoresMap.get(key);
-        (embarque.itens || []).forEach((itemEmbarque) => {
+        getEmbarqueItensLinhas(embarque).forEach((itemEmbarque) => {
           group.itens.push(itemEmbarque);
         });
       });
 
       const resumoFornecedores = Array.from(fornecedoresMap.values());
       const valorTotalCarga = embarquesRelacionados.reduce((total, embarque) => {
-        const pedidoItens = mapaPedidosItens[embarque.pedido_compra_id] || {};
-        return total + (embarque.itens || []).reduce((sum, itemEmbarque) => {
-          const quantidade = itemEmbarque.quantidade_embarcada ?? itemEmbarque.quantidade_pedida ?? itemEmbarque.quantidade ?? 0;
-          const itemPedido = pedidoItens[itemEmbarque.produto_id] || {};
-          const custo = Number(itemEmbarque.custo_unitario ?? itemPedido.custo_unitario ?? 0) || 0;
-          return sum + (quantidade * custo);
-        }, 0);
+        const pedidoId = embarque.pedido_compra_id;
+        const itensMap = pedidoId ? mapaPedidosItens[pedidoId] : null;
+        const pedido = embarque._pedido_compra
+          || (itensMap ? { id: pedidoId, itens: Object.values(itensMap) } : { itens: [] });
+        return total + calcValorCargaEmbarque(pedido, embarque, {});
       }, 0);
       const totalEmbarquesAtivos = embarquesRelacionados.filter((emb) => getEmbarqueLifecycleStatus(emb) === 'ativo').length;
       const totalEmbarquesConcluidos = embarquesRelacionados.filter((emb) => getEmbarqueLifecycleStatus(emb) === 'finalizado').length;

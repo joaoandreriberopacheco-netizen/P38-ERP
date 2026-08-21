@@ -630,12 +630,11 @@ const getTotalItensAjustadoPedido = (pedido, produtosMap = {}) => {
   }, 0);
 };
 
-const getValorRelatorio = (pedido, produtosMap = {}) => {
-  const valorConhecidoPedido = Number(
-    pedido._consulta_valor ?? pedido._display_valor ?? pedido.valor_pendente_entrega ?? pedido.valor_total,
-  );
-  if (Number.isFinite(valorConhecidoPedido) && valorConhecidoPedido > 0) return valorConhecidoPedido;
+import { valorExibicaoPedidoCompra } from '@/lib/pedidoCompraValorExibicao';
 
+const getValorRelatorio = (pedido, produtosMap = {}) => {
+  const valorUnificado = valorExibicaoPedidoCompra(pedido, produtosMap);
+  if (valorUnificado > 0) return valorUnificado;
   const totalItensAjustado = getTotalItensAjustadoPedido(pedido, produtosMap);
   if (totalItensAjustado > 0) return totalItensAjustado;
   return 0;

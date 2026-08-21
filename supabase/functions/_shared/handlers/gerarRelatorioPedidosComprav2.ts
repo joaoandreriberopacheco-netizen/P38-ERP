@@ -584,7 +584,9 @@ const getTotalItensAjustadoPedido = (pedido, produtosMap = {}) => {
 };
 
 const getValorRelatorio = (pedido, produtosMap = {}) => {
-  const valorConhecidoPedido = Number(pedido._display_valor ?? pedido.valor_pendente_entrega ?? pedido.valor_total);
+  const valorConhecidoPedido = Number(
+    pedido._consulta_valor ?? pedido._display_valor ?? pedido.valor_pendente_entrega ?? pedido.valor_total,
+  );
   if (Number.isFinite(valorConhecidoPedido) && valorConhecidoPedido > 0) return valorConhecidoPedido;
 
   const totalItensAjustado = getTotalItensAjustadoPedido(pedido, produtosMap);
