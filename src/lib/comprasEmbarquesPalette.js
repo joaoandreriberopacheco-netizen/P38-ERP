@@ -14,9 +14,9 @@ export const COMPRAS_CHIP_INACTIVE =
 export const COMPRAS_CTA =
   'bg-[#3bbdb4] hover:bg-[#34a9a1] text-white dark:bg-[#4ECDC4] dark:hover:bg-[#5fd9d0] dark:text-[#1f1d22]';
 
-/** Pills alinhados a STATUS_CONFIG em ListaPedidosCompra.jsx */
+/** Pills alinhados a STATUS_CONFIG em ListaPedidosCompra.jsx — sem contorno (ring). */
 export const COMPRAS_PILL = {
-  aprovado: 'bg-lime-100 text-lime-800 ring-1 ring-lime-400/45 font-semibold dark:bg-lime-900/30 dark:text-[#a4ce33] dark:ring-lime-500/25',
+  aprovado: 'bg-lime-100 text-lime-800 dark:bg-lime-900/30 dark:text-[#a4ce33]',
   success: 'bg-lime-50 dark:bg-lime-900/25 text-lime-700 dark:text-[#a4ce33]/85',
   info: 'bg-[#4ECDC4]/12 text-[#1a7a73] dark:bg-[#4ECDC4]/15 dark:text-[#4ECDC4]',
   warning: 'bg-[#D96F55]/12 text-[#9c4228] dark:bg-[#D96F55]/15 dark:text-[#D96F55]',
@@ -30,7 +30,7 @@ export const COMPRAS_APROVADO_STYLE = {
   pill: COMPRAS_PILL.aprovado,
 };
 
-/** LED + pill por status de embarque (ListaPedidosCompra). */
+/** LED + pill por status de embarque (lista + consulta). */
 export const COMPRAS_STATUS_STYLE = {
   aguardando: {
     dot: 'bg-[#D96F55] dark:bg-[#D96F55]',
@@ -41,6 +41,31 @@ export const COMPRAS_STATUS_STYLE = {
     pill: COMPRAS_PILL.info,
   },
 };
+
+export const COMPRAS_STATUS_CONFIG = {
+  Rascunho: { dot: 'bg-slate-500 dark:bg-slate-500/60', pill: 'bg-slate-100 dark:bg-slate-800/40 text-slate-700 dark:text-slate-400' },
+  Aguardando: COMPRAS_STATUS_STYLE.aguardando,
+  'Aguardando Aprovação Financeira': COMPRAS_STATUS_STYLE.aguardando,
+  'Aguardando Liberação Financeira': COMPRAS_STATUS_STYLE.aguardando,
+  'Aguardando Liberação': COMPRAS_STATUS_STYLE.aguardando,
+  Aprovado: COMPRAS_APROVADO_STYLE,
+  Necessidade: { dot: 'bg-red-500 dark:bg-red-500/70', pill: COMPRAS_PILL.danger },
+  Despachado: COMPRAS_STATUS_STYLE.despachado,
+  Concluído: { dot: 'bg-emerald-600 dark:bg-emerald-600/70', pill: 'bg-emerald-50 dark:bg-emerald-900/25 text-emerald-700 dark:text-emerald-500' },
+  Cancelado: { dot: 'bg-rose-600 dark:bg-rose-600/70', pill: 'bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-500' },
+};
+
+export function resolveComprasStatusConfig(displayStatus, fallbackStatus) {
+  return COMPRAS_STATUS_CONFIG[displayStatus] || COMPRAS_STATUS_CONFIG[fallbackStatus] || COMPRAS_STATUS_CONFIG.Rascunho;
+}
+
+export function getComprasDisplayStatusLabel(displayStatus) {
+  if (displayStatus === 'Aguardando Liberação Financeira' || displayStatus === 'Aguardando Aprovação Financeira') {
+    return 'Aguard. Pgto';
+  }
+  if (displayStatus === 'Necessidade') return 'Necessidade';
+  return displayStatus;
+}
 
 export function comprasAccentBorderClass(tone) {
   if (tone === 'aprovado') return p38Accent.aprovado.border;

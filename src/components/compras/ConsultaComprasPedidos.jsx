@@ -10,8 +10,8 @@ import { getItemCompraExibicaoVitrine } from '@/lib/productUnits';
 import { formatarSoData } from '@/components/utils/dateUtils';
 import { getTotalLinhaPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
 import { buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
-import { comprasAccentBorderClass, comprasAccentFromDisplayStatus } from '@/lib/comprasEmbarquesPalette';
-import { P38StatusPill } from '@/components/ui/p38-mobile-line';
+import { comprasAccentFromDisplayStatus, getComprasDisplayStatusLabel } from '@/lib/comprasEmbarquesPalette';
+import ComprasStatusChip from '@/components/compras/ComprasStatusChip';
 
 /** Recuo hierárquico + tipografia fixa (visual mobile em todos os viewports). */
 const CONSULTA_HIER = {
@@ -82,40 +82,30 @@ function ConsultaEmbarqueCard({ card, onVerPedido, isLast = false }) {
         type="button"
         onClick={() => onVerPedido?.(card)}
         className={cn(
-          'w-full text-left hover:bg-muted/20 transition-colors min-w-0 py-3 pr-1 pl-2 border-l',
+          'w-full text-left hover:bg-muted/20 transition-colors min-w-0 py-3 pr-1',
           CONSULTA_HIER.sep,
-          comprasAccentBorderClass(statusAccent),
         )}
       >
         <div className="space-y-1.5 min-w-0 w-full">
-          <p className={cn(CONSULTA_TITLE, displayStatus === 'Aprovado' && 'font-normal')}>
+          <p className={CONSULTA_TITLE}>
             {card._display_code || card.numero}
             {ehNecessidade ? (
               <span className="text-muted-foreground font-light normal-case text-sm"> · falta vir</span>
             ) : null}
           </p>
-          <p className={cn(
-            CONSULTA_SUBTITLE,
-            'normal-case',
-            displayStatus === 'Aprovado' && 'font-normal text-foreground/75',
-          )}>{fornecedor}</p>
+          <p className={cn(CONSULTA_SUBTITLE, 'normal-case')}>{fornecedor}</p>
           <div className="flex items-end justify-between gap-3 min-w-0">
             <div className={cn(caixaTypo.meta, 'normal-case min-w-0 flex-1 font-light flex flex-wrap items-center gap-1.5')}>
-              {metaSemStatus.map((part, i) => (
-                <span key={part} className="tabular-nums">
-                  {i > 0 ? ' · ' : ''}{part}
+              {displayStatus ? (
+                <ComprasStatusChip displayStatus={displayStatus} fallbackStatus={card.status}>
+                  {getComprasDisplayStatusLabel(displayStatus)}
+                </ComprasStatusChip>
+              ) : null}
+              {metaSemStatus.map((part) => (
+                <span key={part} className="tabular-nums text-foreground/80">
+                  {part}
                 </span>
               ))}
-              {displayStatus ? (
-                <>
-                  {metaSemStatus.length > 0 ? <span className="text-foreground/50">·</span> : null}
-                  {displayStatus === 'Aprovado' ? (
-                    <P38StatusPill tone="aprovado">{displayStatus}</P38StatusPill>
-                  ) : (
-                    <span>{displayStatus}</span>
-                  )}
-                </>
-              ) : null}
             </div>
             <CaixaValorDisplay
               valor={card._consulta_valor || 0}
@@ -128,11 +118,7 @@ function ConsultaEmbarqueCard({ card, onVerPedido, isLast = false }) {
         </div>
       </button>
       {itensEmbarque.length > 0 ? (
-        <div className={cn(
-          CONSULTA_HIER.l2,
-          'pb-1 pt-0.5',
-          statusAccent === 'aprovado' && 'border-l-lime-500/50 dark:border-l-[#a4ce33]/35',
-        )}>
+        <div className={cn(CONSULTA_HIER.l2, 'pb-1 pt-0.5')}>
           {itensEmbarque.map((item, idx) => {
             const exib = getItemCompraExibicaoVitrine(item);
             return (

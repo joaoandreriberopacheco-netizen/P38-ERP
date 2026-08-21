@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 import { cn } from '@/components/utils';
-import { COMPRAS_APROVADO_STYLE, COMPRAS_STATUS_STYLE, comprasAccentBorderClass, comprasAccentFromDisplayStatus } from '@/lib/comprasEmbarquesPalette';
+import { comprasAccentBorderClass, comprasAccentFromDisplayStatus, getComprasDisplayStatusLabel, resolveComprasStatusConfig } from '@/lib/comprasEmbarquesPalette';
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 import { caixaTypo } from '@/lib/caixaP38Theme';
 
@@ -43,38 +43,19 @@ function pedidoSelecionavelEnvioFinanceiroLote(pedido = {}) {
   return saf === 'Rejeitado' || saf === 'Rejeitado Financeiramente';
 }
 
-const STATUS_CONFIG = {
-  'Rascunho': { dot: 'bg-slate-500 dark:bg-slate-500/60', pill: 'bg-slate-100 dark:bg-slate-800/40 text-slate-700 dark:text-slate-400' },
-  'Aguardando': COMPRAS_STATUS_STYLE.aguardando,
-  'Aguardando Aprovação Financeira': COMPRAS_STATUS_STYLE.aguardando,
-  'Aguardando Liberação Financeira': COMPRAS_STATUS_STYLE.aguardando,
-  'Aguardando Liberação': COMPRAS_STATUS_STYLE.aguardando,
-  'Aprovado': COMPRAS_APROVADO_STYLE,
-  'Necessidade': { dot: 'bg-red-500 dark:bg-red-500/70', pill: 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400' },
-  'Despachado': COMPRAS_STATUS_STYLE.despachado,
-  'Concluído': { dot: 'bg-emerald-600 dark:bg-emerald-600/70', pill: 'bg-emerald-50 dark:bg-emerald-900/25 text-emerald-700 dark:text-emerald-500' },
-  'Cancelado': { dot: 'bg-rose-600 dark:bg-rose-600/70', pill: 'bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-500' },
-};
-
 function resolveStatusConfig(displayStatus, fallbackStatus) {
-  return STATUS_CONFIG[displayStatus] || STATUS_CONFIG[fallbackStatus] || STATUS_CONFIG['Rascunho'];
+  return resolveComprasStatusConfig(displayStatus, fallbackStatus);
 }
 
 function getDisplayStatusLabel(displayStatus) {
-  if (displayStatus === 'Aguardando Liberação Financeira' || displayStatus === 'Aguardando Aprovação Financeira') {
-    return 'Aguard. Pgto';
-  }
-  if (displayStatus === 'Necessidade') return 'Necessidade';
-  return displayStatus;
+  return getComprasDisplayStatusLabel(displayStatus);
 }
 
 function StatusLed({ displayStatus, fallbackStatus, blink = false, className = '' }) {
   const cfg = resolveStatusConfig(displayStatus, fallbackStatus);
-  const isAprovado = (displayStatus || fallbackStatus) === 'Aprovado';
-  const sizeClass = isAprovado ? 'w-2 h-2' : 'w-1.5 h-1.5';
   return (
     <span
-      className={`flex-none ${sizeClass} rounded-full mt-0.5 ${blink ? 'animate-blink-led' : cfg.dot} ${isAprovado ? 'ring-2 ring-lime-400/40 dark:ring-[#a4ce33]/25' : ''} ${className}`}
+      className={`flex-none w-1.5 h-1.5 rounded-full mt-0.5 ${blink ? 'animate-blink-led' : cfg.dot} ${className}`}
       aria-hidden
     />
   );
