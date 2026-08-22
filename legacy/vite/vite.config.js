@@ -33,6 +33,9 @@ function requireSupabaseEnvForProduction() {
 
 export default defineConfig({
   root: repoRoot,
+  define: {
+    'process.env': {},
+  },
   plugins: [
     requireSupabaseEnvForProduction(),
     react(),
