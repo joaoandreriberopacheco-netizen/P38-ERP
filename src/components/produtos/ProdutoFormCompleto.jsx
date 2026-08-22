@@ -72,7 +72,10 @@ import {
 } from '@/lib/p38FormTypography';
 
 const P38_FORM_ROOT = PRODUTOS_FORM_ROOT;
-const P38_FORM_HEADER = cn(PRODUTOS_FORM_HEADER, 'flex-none relative');
+const P38_FORM_HEADER = cn(PRODUTOS_FORM_HEADER, 'flex-none relative overflow-visible');
+const P38_HEADER_GRID = 'grid grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto] gap-x-2 gap-y-1.5 items-center';
+const P38_HEADER_TOOLBAR = 'flex items-center justify-end gap-0.5 sm:gap-1 flex-shrink-0 row-start-1 col-start-2';
+const P38_HEADER_ICON_BTN = 'h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0';
 const P38_TAB_LIST = cn(PRODUTOS_TABS_BAR, 'grid grid-cols-6 w-full');
 const P38_TAB_TRIGGER = PRODUTOS_TAB_ICON;
 const P38_TAB_ICON = PRODUTOS_TAB_ICON_GLYPH;
@@ -1171,51 +1174,46 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <div
           className={cn(
-            'flex-none overflow-hidden transition-[max-height,opacity] duration-300 ease-out',
-            'desktop-layout:max-h-none desktop-layout:opacity-100',
+            'flex-none transition-[max-height,opacity] duration-300 ease-out',
+            collapseHistoricoShell ? 'overflow-hidden' : 'overflow-visible',
             collapseHistoricoShell && (historicoChromeExpanded ? 'max-h-[22rem] opacity-100' : 'max-h-0 opacity-0')
           )}
           aria-hidden={collapseHistoricoShell && !historicoChromeExpanded}
         >
-          {/* Header */}
+          {/* Header — grid: kicker + ícones na mesma linha; título na linha de baixo (largura total) */}
           <div className={P38_FORM_HEADER}>
             <span className={PRODUTOS_HEADER_ACCENT} />
-            <div className="p-4 md:p-6">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  {produto?.id ? (
-                    <>
-                      <p className={P38_PAGE_KICKER}>Editar produto</p>
-                      <h2 className={cn(P38_PAGE_TITLE, 'truncate mt-0.5')}>
-                        {formData.nome || 'Sem nome'}
-                      </h2>
-                    </>
-                  ) : (
-                    <>
-                      <h2 className={cn(P38_PAGE_TITLE, 'truncate')}>Novo produto</h2>
-                      <p className={P38_PAGE_SUBTITLE}>Preencha os dados do catálogo</p>
-                    </>
-                  )}
-                </div>
-                <div className="flex gap-2 flex-shrink-0">
-                  {produto?.id && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleChange('ativo', !formData.ativo)}
-                      disabled={isSaving}
-                      className={`h-10 w-10 ${formData.ativo ? 'text-red-500' : 'text-green-500'}`}
-                      title={formData.ativo ? 'Inativar produto' : 'Reativar produto'}
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </Button>
-                  )}
+            <div className="px-4 py-3 md:px-6 md:py-4">
+              <div className={P38_HEADER_GRID}>
+                <p className={cn(P38_PAGE_KICKER, 'row-start-1 col-start-1 truncate min-w-0')}>
+                  {produto?.id ? 'Editar produto' : 'Novo produto'}
+                </p>
+                <div className={P38_HEADER_TOOLBAR}>
+                  <Button
+                    size="icon"
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className={cn(P38_SAVE_BTN, P38_HEADER_ICON_BTN, 'order-first')}
+                    title="Salvar"
+                  >
+                    <Save className="w-5 h-5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onClose}
+                    disabled={isSaving}
+                    className={cn(P38_HEADER_ICON_BTN, 'hover:bg-muted/60')}
+                    title="Fechar"
+                  >
+                    <X className="w-5 h-5 text-muted-foreground" />
+                  </Button>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={handleUndo}
                     disabled={isSaving || historyIndex <= 0}
-                    className="h-10 w-10"
+                    className={cn(P38_HEADER_ICON_BTN, 'hidden sm:inline-flex')}
                     title="Desfazer (Ctrl+Z)"
                   >
                     <Undo2 className="w-5 h-5 text-muted-foreground" />
@@ -1225,18 +1223,41 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     size="icon"
                     onClick={handleRedo}
                     disabled={isSaving || historyIndex >= history.length - 1}
-                    className="h-10 w-10"
+                    className={cn(P38_HEADER_ICON_BTN, 'hidden sm:inline-flex')}
                     title="Refazer (Ctrl+Y / F4)"
                   >
                     <Redo2 className="w-5 h-5 text-muted-foreground" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={onClose} disabled={isSaving} className="h-10 w-10 hover:bg-muted/60">
-                    <X className="w-5 h-5 text-muted-foreground" />
-                  </Button>
-                  <Button size="icon" onClick={handleSave} disabled={isSaving} className={P38_SAVE_BTN}>
-                    <Save className="w-5 h-5" />
-                  </Button>
+                  {produto?.id && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleChange('ativo', !formData.ativo)}
+                      disabled={isSaving}
+                      className={cn(
+                        P38_HEADER_ICON_BTN,
+                        formData.ativo ? 'text-red-500' : 'text-green-500',
+                      )}
+                      title={formData.ativo ? 'Inativar produto' : 'Reativar produto'}
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </Button>
+                  )}
                 </div>
+                {produto?.id ? (
+                  <h2
+                    className={cn(
+                      P38_PAGE_TITLE,
+                      'row-start-2 col-span-2 text-lg md:text-xl leading-snug line-clamp-2 min-h-[2.75rem] min-w-0',
+                    )}
+                  >
+                    {formData.nome || 'Sem nome'}
+                  </h2>
+                ) : (
+                  <p className={cn(P38_PAGE_SUBTITLE, 'row-start-2 col-span-2 min-w-0')}>
+                    Preencha os dados do catálogo
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -1246,22 +1267,20 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
               className={cn('flex-none border-b border-border/15 dark:border-white/10 px-4 md:px-6 py-3', P38_FORM_PANEL)}
               title="Escolhe qual unidade a precificação segue — o mesmo critério do botão «Outra unidade» no PDV."
             >
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <span className={P38_FIELD_LABEL}>
-                    Estação de venda
-                  </span>
-                  <span className={P38_FIELD_VALUE}>
-                    {precoCatalogo.sigla}
-                  </span>
-                  <span className="text-xs tabular-nums text-muted-foreground">
-                    R$ {formatarNumero(precoCatalogo.valor)}
-                  </span>
-                  <span className="text-[11px] text-muted-foreground hidden sm:inline max-w-md truncate">
-                    Precificação e custo na embalagem escolhida; gravação continua na unidade base (fator 1).
-                  </span>
-                </div>
-                <div className="flex flex-wrap items-center justify-end gap-2">
+              <div className="grid grid-cols-[auto_auto_minmax(0,1fr)] items-baseline gap-x-2 gap-y-2">
+                <span className={cn(P38_FIELD_LABEL, 'col-start-1 row-start-1 whitespace-nowrap')}>
+                  Estação de venda
+                </span>
+                <span className={cn(P38_FIELD_VALUE, 'col-start-2 row-start-1 whitespace-nowrap')}>
+                  {precoCatalogo.sigla}
+                </span>
+                <span className="col-start-3 row-start-1 text-xs tabular-nums text-muted-foreground text-right whitespace-nowrap">
+                  R$ {formatarNumero(precoCatalogo.valor)}
+                </span>
+                <p className="col-span-3 row-start-2 text-[11px] text-muted-foreground hidden sm:block">
+                  Precificação e custo na embalagem escolhida; gravação continua na unidade base (fator 1).
+                </p>
+                <div className="col-span-3 row-start-3 flex flex-wrap items-center justify-start gap-2 pt-0.5">
                   {vendasUnitOptions.map((opt) => {
                     const exibNorm = normalizeSigla(formData.unidade_exibicao_sigla || '');
                     const catalogoEhPrincipal = !exibNorm;
