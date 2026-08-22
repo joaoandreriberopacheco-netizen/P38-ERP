@@ -80,8 +80,8 @@ export function p38ButtonPair(tone, isDark) {
       ? { bg: '#a4ce33', fg: '#1f1d22', border: '#8fb82a' }
       : { bg: '#6b7a52', fg: '#ffffff', border: '#4a5240' },
     citrus: isDark
-      ? { bg: '#f07a1a', fg: '#1f1d22', border: '#d96a10' }
-      : { bg: '#f07a1a', fg: '#1f1d22', border: '#c45e0e' },
+      ? { bg: '#e8b824', fg: '#1f1d22', border: '#c9a018' }
+      : { bg: '#e8b824', fg: '#242424', border: '#c9a018' },
     muted: isDark
       ? { bg: '#26262e', fg: '#fafafa', border: 'rgba(255,255,255,0.12)' }
       : { bg: '#ffffff', fg: '#242424', border: '#e8e8e8' },

@@ -45,9 +45,9 @@ const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2,
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 
 const CATALOGO_MOBILE_VALUES_GRID = 'grid grid-cols-3 gap-x-1.5 min-w-0';
-const CATALOGO_MOBILE_BODY_TEXT = 'font-din-1451 text-base tablet-landscape:text-lg font-light leading-none';
+const CATALOGO_MOBILE_BODY_TEXT = 'font-din-1451 text-base tablet-landscape:text-lg font-normal leading-none';
 /** Mesmo tamanho dos valores da tabela; cor mais suave para distinguir rótulos. */
-const CATALOGO_MOBILE_HEADER_LABEL = `${CATALOGO_MOBILE_BODY_TEXT} uppercase tracking-tight text-right text-muted-foreground min-w-0`;
+const CATALOGO_MOBILE_HEADER_LABEL = `${CATALOGO_MOBILE_BODY_TEXT} uppercase tracking-tight text-right text-foreground/70 dark:text-muted-foreground min-w-0`;
 /** Largura fixa da coluna qtd/un — eixo da linha divisória sagrada (nunca se move). */
 const CATALOGO_MOBILE_QTD_W = '3.25rem';
 const CATALOG_ROW_PL = 'pl-2.5';
@@ -63,7 +63,7 @@ const CATALOG_INDENT_STEP = 12;
 const CATALOGO_MOBILE_DESC_MIN_H = 'min-h-[3.75rem]';
 const CATALOGO_MOBILE_DESC_GAP = 'mb-2.5';
 const CATALOGO_MOBILE_NOME_TYPO =
-  'text-[12px] font-light leading-relaxed uppercase break-words [overflow-wrap:anywhere]';
+  'text-[13px] font-normal leading-relaxed uppercase break-words [overflow-wrap:anywhere]';
 const CATALOGO_MOBILE_ROW_H_GROUP = 118;
 const CATALOGO_MOBILE_ROW_H_SKU = 196;
 
@@ -142,7 +142,7 @@ function CatalogoMobileSacredAxis({ className = '' }) {
     <div
       className={cn(
         'pointer-events-none absolute inset-y-0 z-[10] w-0',
-        'border-l border-border/50 dark:border-white/20',
+        'border-l border-border/40 dark:border-white/20',
         className,
       )}
       style={{ left: CATALOG_AXIS_LEFT }}
@@ -241,12 +241,12 @@ function catalogoSkuSurfaceClass(row, underOpenGroup = false) {
 }
 function catalogoMetricValueClass(key) {
   if (key === 'markup') {
-    return `${MARGIN_ACCENT_VALUE} font-normal`;
+    return `${MARGIN_ACCENT_VALUE} font-medium`;
   }
   if (key === 'valorCompra' || key === 'custoCalculado') {
-    return 'text-muted-foreground font-light';
+    return 'text-foreground/75 font-normal dark:text-muted-foreground dark:font-light';
   }
-  return 'text-foreground/90 font-light';
+  return 'text-foreground font-normal dark:text-foreground/90 dark:font-light';
 }
 
 function buildUnitOptions(produto) {
@@ -552,11 +552,11 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing, catalo
             style={{ paddingLeft: catalogContentPadAfterLine(row.level ?? 1) }}
           >
             <div className="mb-1 flex items-center gap-1.5">
-              <span className="text-[9px] font-semibold uppercase tracking-wide text-primary/80 dark:text-[#a4ce33]/90">
+              <span className="text-[9px] font-semibold uppercase tracking-wide text-[#a8942e] dark:text-[#a4ce33]/90">
                 SKU
               </span>
               {p.codigo_interno && (
-                <span className="text-[10px] font-mono truncate text-muted-foreground">
+                <span className="text-[10px] font-mono truncate text-foreground/75 dark:text-muted-foreground">
                   #{p.codigo_interno}
                 </span>
               )}

@@ -57,7 +57,7 @@ const SELECTOR_FAB_CLASS =
 const CATALOG_SEARCH_FIELD = cn(
   P38_SEARCH,
   'h-12 border-0 shadow-sm bg-card',
-  'focus-within:ring-2 focus-within:ring-[#f07a1a]/18',
+  'focus-within:ring-2 focus-within:ring-[#e8b824]/22',
   'dark:focus-within:ring-[#a4ce33]/20',
 );
 

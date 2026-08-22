@@ -1,7 +1,7 @@
 /**
  * Superfícies P38 — alinhado ao Relatório de Margem mobile (screenshot) e tokens em index.css.
  * Escuro: carvão #1f1d22, cartão #2d333b, busca #26262e, cabeçalho tabela #383e47, limão #a4ce33.
- * Claro: branco puro + carvão + laranja suco (acento); escuro: carvão + limão.
+ * Claro: branco puro + carvão + amarelo suco (acento); escuro: carvão + limão.
  */
 
 export const P38_THEME = {
@@ -40,7 +40,7 @@ export const P38_THEME = {
     closeBg: '#f5f5f5',
     closeColor: '#404040',
     accent: '#4a5240',
-    citrus: '#f07a1a',
+    citrus: '#e8b824',
     citrusYellow: '#e8b824',
   },
 };
@@ -54,7 +54,7 @@ export const p38Accent = {
   success: {
     solid: '#4a5240',
     solidDark: '#a4ce33',
-    text: 'text-[#4a5240] dark:text-[#a4ce33]/85',
+    text: 'text-[#3a4232] dark:text-[#a4ce33]/85',
     dot: 'bg-[#4a5240] dark:bg-[#a4ce33]/70',
     border: 'border-l-[#4a5240] dark:border-l-[#a4ce33]/55',
   },

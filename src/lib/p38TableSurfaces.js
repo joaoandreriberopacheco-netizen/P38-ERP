@@ -18,7 +18,7 @@ export const p38Table = {
   headCenter: 'text-center',
 
   /** Linhas de dados */
-  row: 'border-b border-border/15 bg-background transition-colors hover:bg-secondary/25 dark:border-white/10 dark:hover:bg-secondary/30',
+  row: 'border-b border-border/35 bg-background transition-colors hover:bg-secondary/25 dark:border-white/10 dark:hover:bg-secondary/30',
   rowInteractive: 'cursor-pointer select-none',
 
   /** Células compactas (densidade ERP) */
@@ -26,7 +26,7 @@ export const p38Table = {
   cellNumeric: 'tabular-nums text-right',
   cellMuted: 'text-muted-foreground',
   cellStrong: 'font-semibold text-foreground',
-  cellAccent: 'font-semibold text-[#4a5240] dark:text-[#a4ce33]',
+  cellAccent: 'font-semibold text-[#3a4232] dark:text-[#a4ce33]',
 
   /** Colunas sticky (TreeGrid, catálogo) */
   stickyHead: 'sticky z-40 bg-background text-foreground',
@@ -43,18 +43,18 @@ export const p38Table = {
   microText: 'text-xs',
 
   /** Linhas mobile compactas (substituem cards em smartphone) */
-  mobileLine: 'border-b border-border/15 dark:border-white/10 border-l py-3 pr-3 pl-4 tablet-portrait:py-4 tablet-portrait:pr-4 tablet-portrait:pl-5 tablet-landscape:py-3.5 tablet-landscape:pl-4 min-w-0 bg-background font-din-1451',
+  mobileLine: 'border-b border-border/35 dark:border-white/10 border-l py-3 pr-3 pl-4 tablet-portrait:py-4 tablet-portrait:pr-4 tablet-portrait:pl-5 tablet-landscape:py-3.5 tablet-landscape:pl-4 min-w-0 bg-background font-din-1451',
   /** Catálogo mobile — fundo transparente; linha suave */
-  catalogMobileRow: 'border-b border-border/15 dark:border-white/10 py-4.5 tablet-portrait:py-5 min-w-0 bg-transparent font-din-1451',
+  catalogMobileRow: 'border-b border-border/35 dark:border-white/10 py-4.5 tablet-portrait:py-5 min-w-0 bg-transparent font-din-1451',
   catalogMobileHeader:
-    'relative flex-shrink-0 border-b border-border/15 dark:border-white/10 bg-background text-foreground shadow-sm before:absolute before:top-0 before:inset-x-0 before:h-px before:bg-gradient-to-r before:from-[#e8b824]/35 before:via-[#4a5240]/14 before:to-transparent dark:before:from-[#a4ce33]/80 dark:before:via-[#a4ce33]/40 dark:before:to-transparent',
+    'relative flex-shrink-0 border-b border-border/35 dark:border-white/10 bg-muted/45 dark:bg-background text-foreground shadow-sm before:absolute before:top-0 before:inset-x-0 before:h-px before:bg-gradient-to-r before:from-[#e8b824]/35 before:via-[#4a5240]/14 before:to-transparent dark:before:from-[#a4ce33]/80 dark:before:via-[#a4ce33]/40 dark:before:to-transparent',
   /** Mesma linha com barra lateral semântica mais fina (1px) — financeiro */
-  mobileLineThin: 'border-b border-border/15 dark:border-white/10 border-l py-3 pr-14 pl-3 sm:pr-4 sm:pl-4 min-w-0 bg-background font-din-1451',
+  mobileLineThin: 'border-b border-border/35 dark:border-white/10 border-l py-3 pr-14 pl-3 sm:pr-4 sm:pl-4 min-w-0 bg-background font-din-1451',
   mobileLineInteractive: 'active:bg-secondary/30 cursor-pointer select-none min-h-[52px] tablet-portrait:min-h-[60px] touch-pan-y',
   mobileLineTitle: 'font-din-1451 font-medium text-sm sm:text-base tablet-portrait:text-lg uppercase tracking-wide text-foreground leading-snug line-clamp-2 break-words',
-  mobileLineSubtitle: 'text-[11px] sm:text-xs tablet-portrait:text-sm text-muted-foreground line-clamp-2 break-words mt-0.5 font-din-1451',
-  mobileLineMeta: 'text-xs tablet-portrait:text-sm uppercase tracking-wide text-muted-foreground font-din-1451',
-  mobileLineMetaInline: 'text-xs tablet-portrait:text-sm normal-case tracking-normal text-muted-foreground font-din-1451',
+  mobileLineSubtitle: 'text-[11px] sm:text-xs tablet-portrait:text-sm text-foreground/70 dark:text-muted-foreground line-clamp-2 break-words mt-0.5 font-din-1451',
+  mobileLineMeta: 'text-xs tablet-portrait:text-sm uppercase tracking-wide text-foreground/65 dark:text-muted-foreground font-din-1451',
+  mobileLineMetaInline: 'text-xs tablet-portrait:text-sm normal-case tracking-normal text-foreground/65 dark:text-muted-foreground font-din-1451',
   mobileLineValue: 'font-semibold text-sm sm:text-base tablet-portrait:text-lg text-foreground text-right tabular-nums font-din-1451 whitespace-nowrap',
   mobileLineValueSub: 'text-xs tablet-portrait:text-sm text-muted-foreground text-right font-din-1451',
   mobileMicroLabel: 'text-xs tablet-portrait:text-sm uppercase tracking-wide text-muted-foreground leading-none font-din-1451',

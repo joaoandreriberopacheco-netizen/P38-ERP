@@ -12,7 +12,7 @@ export default function ProdutosTreeByCategoryToggle({ checked, onChange, classN
       <Switch
         checked={checked}
         onCheckedChange={onChange}
-        className="scale-[0.72] data-[state=checked]:bg-[#f07a1a]/80 dark:data-[state=checked]:bg-[#a4ce33]"
+        className="scale-[0.72] data-[state=checked]:bg-[#e8b824]/80 dark:data-[state=checked]:bg-[#a4ce33]"
       />
       <span className="text-[10px] font-medium text-muted-foreground whitespace-nowrap">
         Por categoria

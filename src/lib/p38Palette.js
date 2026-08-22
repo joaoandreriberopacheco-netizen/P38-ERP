@@ -25,10 +25,10 @@ export const P38_PALETTE = {
     hex: '#e8b824',
     hsl: '43 74% 52%',
   },
-  /** Laranja cítrico — alertas quentes, CTAs secundários */
+  /** Laranja cítrico — legado; modo claro usa amarelo suco (#e8b824). */
   citrusOrange: {
-    hex: '#f07a1a',
-    hsl: '27 87% 52%',
+    hex: '#e8b824',
+    hsl: '43 74% 52%',
   },
   /** Verde mediterrâneo claro — fundos tintados, hover */
   mediterranean: {
@@ -59,6 +59,6 @@ export const P38_PALETTE = {
 export const p38PaletteClasses = {
   accent: 'text-p38-olive dark:text-p38-lime',
   accentBg: 'bg-p38-olive/10 text-p38-olive border border-p38-olive/25 dark:bg-p38-lime/12 dark:text-p38-lime dark:border-p38-lime/30',
-  citrus: 'text-p38-citrus-orange dark:text-p38-citrus-yellow',
-  citrusBg: 'bg-p38-citrus-yellow/15 text-p38-citrus-orange border border-p38-citrus-yellow/35 dark:bg-p38-citrus-yellow/10 dark:text-p38-citrus-yellow dark:border-p38-citrus-yellow/25',
+  citrus: 'text-p38-citrus-yellow dark:text-p38-citrus-yellow',
+  citrusBg: 'bg-p38-citrus-yellow/15 text-[#a8942e] border border-p38-citrus-yellow/35 dark:bg-p38-citrus-yellow/10 dark:text-p38-citrus-yellow dark:border-p38-citrus-yellow/25',
 };

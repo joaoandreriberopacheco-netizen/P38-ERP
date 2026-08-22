@@ -20,7 +20,7 @@ export const p38Mobile = {
   filterChip:
     'px-3 py-2 rounded-lg text-xs font-medium transition-colors bg-card shadow-sm text-muted-foreground dark:bg-[#26262e]',
   filterChipActive:
-    'px-3 py-2 rounded-lg text-xs font-medium bg-[#f07a1a]/12 text-[#f07a1a] border-0 shadow-sm',
+    'px-3 py-2 rounded-lg text-xs font-medium bg-[#e8b824]/14 text-[#a8942e] border-0 shadow-sm',
   panel: `${MARGIN_TABLE_PANEL} border-0 shadow-sm rounded-lg overflow-hidden`,
   panelAccentBar: p38Table.panelAccentBar,
   kpiGrid: 'grid grid-cols-2 gap-x-3 gap-y-2',

@@ -71,7 +71,7 @@ export default function ProdutosAbcdQuickFilter({ abcd = 'all', onChange }) {
               'desktop-layout:hidden flex h-10 max-w-[7.5rem] flex-shrink-0 items-center gap-1 rounded-xl px-2.5 text-left transition-colors',
               PRODUTOS_ICON_BTN,
               isActive && PRODUTOS_FILTER_OPEN,
-              isActive ? 'text-[#f07a1a] dark:text-[#a4ce33]' : 'text-muted-foreground',
+              isActive ? 'text-[#a8942e] dark:text-[#a4ce33]' : 'text-muted-foreground',
             )}
             title={`Curva ABCD: ${summary.detail}`}
             aria-label={`Curva ABCD: ${summary.detail}`}

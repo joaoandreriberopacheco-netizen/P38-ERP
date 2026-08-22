@@ -66,7 +66,7 @@ function QuickFilterToggle({ label, checked, onCheckedChange }) {
       <span
         className={cn(
           'h-1.5 w-1.5 rounded-full shrink-0',
-          checked ? 'bg-[#f07a1a] dark:bg-[#a4ce33]' : 'bg-muted-foreground/35',
+          checked ? 'bg-[#e8b824] dark:bg-[#a4ce33]' : 'bg-muted-foreground/35',
         )}
         aria-hidden
       />
@@ -90,7 +90,7 @@ function FilterSection({ title, icon: Icon, children, className }) {
 function ActiveFilterChip({ label, onRemove, tone = 'neutral' }) {
   const toneClass =
     tone === 'accent'
-      ? 'bg-[#f07a1a] text-white dark:bg-[#f07a1a]'
+      ? 'bg-[#e8b824] text-[#242424] dark:bg-[#a4ce33] dark:text-[#1f1d22]'
       : 'bg-card text-foreground/90 shadow-sm';
 
   return (
@@ -606,7 +606,7 @@ export default function FiltrosCompras({
       className={cn(
         'relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-all',
         'bg-muted dark:bg-muted text-foreground/90',
-        !isMobile && showFilters && 'ring-2 ring-[#f07a1a]/25 bg-[#f07a1a]/8 dark:bg-[#f07a1a]/10',
+        !isMobile && showFilters && 'ring-2 ring-[#e8b824]/28 bg-[#e8b824]/8 dark:bg-[#a4ce33]/10',
       )}
       title="Filtros"
       aria-label="Filtros"
@@ -614,7 +614,7 @@ export default function FiltrosCompras({
     >
       <SlidersHorizontal className="h-5 w-5" />
       {hasActiveFilters && (
-        <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#f07a1a] px-1 text-[10px] font-semibold leading-none text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]">
+        <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#e8b824] px-1 text-[10px] font-semibold leading-none text-[#242424] dark:bg-[#a4ce33] dark:text-[#1f1d22]">
           {activeFilterCount > 9 ? '9+' : activeFilterCount}
         </span>
       )}
@@ -694,7 +694,7 @@ export default function FiltrosCompras({
                 <button
                   type="button"
                   onClick={() => setShowFilters(false)}
-                  className="h-11 flex-1 rounded-2xl bg-[#f07a1a] text-sm font-light text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]"
+                  className="h-11 flex-1 rounded-2xl bg-[#e8b824] text-sm font-light text-[#242424] dark:bg-[#a4ce33] dark:text-[#1f1d22]"
                 >
                   Aplicar
                 </button>
@@ -765,7 +765,7 @@ export default function FiltrosCompras({
             <button
               type="button"
               onClick={() => setShowFilters(false)}
-              className="h-10 rounded-xl bg-[#f07a1a] px-4 text-sm font-light text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]"
+              className="h-10 rounded-xl bg-[#e8b824] px-4 text-sm font-light text-[#242424] dark:bg-[#a4ce33] dark:text-[#1f1d22]"
             >
               Fechar painel
             </button>

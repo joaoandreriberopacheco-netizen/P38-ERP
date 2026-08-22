@@ -102,7 +102,7 @@ export default function PedidoCompraFAB({
       icon: <Wrench className="w-5 h-5" />,
       label: 'Solicitar correção',
       onClick: () => onSolicitarEdicao?.(),
-      color: 'bg-[#f07a1a]/85 text-white',
+      color: 'bg-[#e8b824]/85 text-[#242424]',
     },
     {
       icon: <Paperclip className="w-5 h-5" />,

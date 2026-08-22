@@ -40,12 +40,12 @@ export const PRODUTOS_SEARCH_SHELL = cn(
   'bg-background dark:bg-background/95 rounded-xl',
 );
 
-/** Busca branca, sem contorno — foco laranja suave. */
+/** Busca branca, sem contorno — foco amarelo suco. */
 export const PRODUTOS_SEARCH_INPUT = cn(
   P38_SEARCH,
   'h-10 desktop-layout:h-11 rounded-xl border-0 shadow-sm bg-card',
   'pl-9 desktop-layout:pl-10 text-sm text-foreground/90 w-full min-w-0',
-  'focus-visible:ring-2 focus-visible:ring-[#f07a1a]/18',
+  'focus-visible:ring-2 focus-visible:ring-[#e8b824]/22',
   'dark:bg-muted dark:focus-visible:ring-[#a4ce33]/20',
 );
 
@@ -55,10 +55,10 @@ export const PRODUTOS_DROPDOWN_ITEM = COMPRAS_DROPDOWN_ITEM;
 /** Botões ícone — branco com sombra leve (não caixa cinza). */
 export const PRODUTOS_ICON_BTN = COMPRAS_FAB_SOFT;
 
-export const PRODUTOS_FILTER_OPEN = 'ring-2 ring-[#f07a1a]/22 dark:ring-[#a4ce33]/35';
+export const PRODUTOS_FILTER_OPEN = 'ring-2 ring-[#e8b824]/28 dark:ring-[#a4ce33]/35';
 
 export const PRODUTOS_FILTER_BADGE =
-  'bg-[#f07a1a] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]';
+  'bg-[#e8b824] text-[#242424] dark:bg-[#a4ce33] dark:text-[#1f1d22]';
 
 export const PRODUTOS_FILTER_PANEL = COMPRAS_SECTION_CARD;
 
@@ -84,27 +84,27 @@ export const PRODUTOS_TAB = COMPRAS_TAB;
 export const PRODUTOS_FIELD = COMPRAS_FIELD;
 export const PRODUTOS_FIELD_H12 = cn(COMPRAS_FIELD, 'h-10 text-sm');
 export const PRODUTOS_SECTION = cn(COMPRAS_SECTION_CARD, 'rounded-lg p-4');
-export const PRODUTOS_FORM_PANEL = 'bg-[#f07a1a]/6 dark:bg-[#26262e]/50';
+export const PRODUTOS_FORM_PANEL = 'bg-[#e8b824]/6 dark:bg-[#26262e]/50';
 export const PRODUTOS_SAVE_BTN = cn(COMPRAS_BTN_PRIMARY, 'h-10 w-10');
 export const PRODUTOS_FORM_SELECT_CONTENT = cn(COMPRAS_DROPDOWN, 'z-[90] max-h-96');
 export const PRODUTOS_SELECT_ITEM = COMPRAS_DROPDOWN_ITEM;
-export const PRODUTOS_SELECT_HIGHLIGHT = 'bg-[#f07a1a]/10 dark:bg-[#f07a1a]/15';
+export const PRODUTOS_SELECT_HIGHLIGHT = 'bg-[#e8b824]/12 dark:bg-[#a4ce33]/15';
 export const PRODUTOS_DIVIDER_TOP = COMPRAS_DIVIDER_TOP;
 
-/** Abas do formulário com ícone — laranja activo no claro. */
+/** Abas do formulário com ícone — amarelo activo no claro. */
 export const PRODUTOS_TAB_ICON = cn(
   PRODUTOS_TAB,
-  'group py-3 text-xs md:text-sm data-[state=active]:bg-[#f07a1a]/6 dark:data-[state=active]:bg-[#26262e]/70',
+  'group py-3 text-xs md:text-sm data-[state=active]:bg-[#e8b824]/6 dark:data-[state=active]:bg-[#26262e]/70',
 );
 
 export const PRODUTOS_TAB_ICON_GLYPH =
-  'w-4 h-4 md:w-5 md:h-5 text-muted-foreground group-data-[state=active]:text-[#f07a1a] dark:group-data-[state=active]:text-[#a4ce33]';
+  'w-4 h-4 md:w-5 md:h-5 text-muted-foreground group-data-[state=active]:text-[#a8942e] dark:group-data-[state=active]:text-[#a4ce33]';
 
 export const PRODUTOS_TAB_ICON_LABEL =
-  'hidden sm:inline ml-2 text-muted-foreground group-data-[state=active]:text-[#f07a1a] dark:group-data-[state=active]:text-[#a4ce33]';
+  'hidden sm:inline ml-2 text-muted-foreground group-data-[state=active]:text-[#a8942e] dark:group-data-[state=active]:text-[#a4ce33]';
 
 export const PRODUTOS_INPUT_UNDERLINE =
-  'bg-transparent border-0 border-b border-border/15 dark:border-white/10 rounded-none px-0 h-9 text-sm text-foreground focus:border-[#f07a1a] dark:focus:border-[#a4ce33]';
+  'bg-transparent border-0 border-b border-border/35 dark:border-white/10 rounded-none px-0 h-9 text-sm text-foreground focus:border-[#e8b824] dark:focus:border-[#a4ce33]';
 
 /** Toggle com switch — cartão branco, não caixa cinza. */
 export const PRODUTOS_TOGGLE_SHELL =

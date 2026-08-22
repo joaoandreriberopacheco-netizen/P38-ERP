@@ -39,10 +39,10 @@
     --p38-surface: 0 0% 100%;
     --p38-search: 0 0% 100%;
     --p38-table-head: 0 0% 98%;
-    /* Claro: oliva nos CTAs · laranja suco nos acentos quentes */
+    /* Claro: oliva nos CTAs · amarelo suco nos acentos quentes */
     --p38-accent-olive: 82 18% 28%;
     --p38-accent-lime: 78 55% 51%;
-    --p38-accent-citrus: 27 87% 52%;
+    --p38-accent-citrus: 43 74% 52%;
     --p38-accent-citrus-yellow: 43 74% 52%;
     --p38-divider: 0 0% 91% / 0.85;
     /* Tipografia mobile */
@@ -229,11 +229,11 @@
 
   /* Linha vertical fina reutilizável (hierarquia, listas, tabelas mobile) */
   .p38-vline {
-    @apply border-l border-border/15 dark:border-white/10;
+    @apply border-l border-border/35 dark:border-white/10;
   }
 
   .p38-vline--citrus {
-    border-left-color: rgb(240 122 26 / 0.55);
+    border-left-color: rgb(232 184 36 / 0.55);
   }
 
   .dark .p38-vline--citrus {

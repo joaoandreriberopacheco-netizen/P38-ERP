@@ -182,7 +182,7 @@ export function P38StatusLabel({ tone = 'success', children, className }) {
 
 const PILL_TONE_CLASS = {
   aprovado: 'bg-lime-100 text-lime-800 dark:bg-lime-900/30 dark:text-[#a4ce33]',
-  success: 'bg-[#4a5240]/10 text-[#4a5240] dark:bg-[#a4ce33]/12 dark:text-[#a4ce33]/85',
+  success: 'bg-[#4a5240]/12 text-[#3a4232] dark:bg-[#a4ce33]/12 dark:text-[#a4ce33]/85',
   warning: 'bg-[#D96F55]/12 text-[#9c4228] dark:bg-[#D96F55]/15 dark:text-[#D96F55]',
   danger: 'bg-red-500/10 text-red-700 dark:bg-red-950/30 dark:text-red-500',
   info: 'bg-[#4ECDC4]/12 text-[#1a7a73] dark:bg-[#4ECDC4]/15 dark:text-[#4ECDC4]',

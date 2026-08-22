@@ -37,12 +37,12 @@ export const AUTO_ACCENT_BG_STRONG = 'bg-secondary dark:bg-[#383e47]';
 
 /** Laranja suco — destaques pontuais. */
 export const AUTO_CITRUS_TEXT = `${P38_LIGHT_CITRUS_TEXT} dark:text-[#e8b824]`;
-export const AUTO_CITRUS_BG = 'bg-[#f07a1a]/12 dark:bg-[#e8b824]/10';
-export const AUTO_CITRUS_BORDER = 'border-[#f07a1a]/30 dark:border-[#e8b824]/40';
+export const AUTO_CITRUS_BG = 'bg-[#e8b824]/12 dark:bg-[#e8b824]/10';
+export const AUTO_CITRUS_BORDER = 'border-[#e8b824]/30 dark:border-[#e8b824]/40';
 
 /** Hover de cartão / linha no interior claro. */
 export const AUTO_CARD_HOVER = cn(
-  'hover:border-[#f07a1a]/25 hover:shadow-md active:scale-[0.98] transition-all',
+  'hover:border-[#e8b824]/25 hover:shadow-md active:scale-[0.98] transition-all',
   P38_LIGHT_HOVER,
 );
 

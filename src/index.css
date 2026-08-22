@@ -104,7 +104,7 @@ button:focus-visible {
 
 @layer base {
   :root {
-    /* P38 claro — branco puro + carvão da informação + laranja suco (acento) */
+    /* P38 claro — branco puro + carvão da informação + amarelo suco (acento) */
     --background: 0 0% 100%;
     --foreground: 0 0% 14%;
     --card: 0 0% 100%;
@@ -116,15 +116,15 @@ button:focus-visible {
     --secondary: 0 0% 97%;
     --secondary-foreground: 0 0% 20%;
     --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 42%;
-    --accent: 27 100% 97%;
-    --accent-foreground: 27 87% 52%;
+    --muted-foreground: 0 0% 38%;
+    --accent: 43 80% 96%;
+    --accent-foreground: 43 74% 52%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 91%;
     --input: 0 0% 91%;
-    --ring: 27 87% 52%;
-    --chart-1: 27 87% 52%;
+    --ring: 43 74% 52%;
+    --chart-1: 43 74% 52%;
     --chart-2: 0 0% 35%;
     --chart-3: 0 0% 55%;
     --chart-4: 43 74% 52%;
@@ -133,7 +133,7 @@ button:focus-visible {
     --p38-olive: 82 18% 28%;
     --p38-lime: 78 55% 51%;
     --p38-citrus-yellow: 43 74% 52%;
-    --p38-citrus-orange: 27 87% 52%;
+    --p38-citrus-orange: 43 74% 52%;
     --p38-mediterranean: 82 18% 36%;
     /* Tipografia — claro mais robusto que escuro */
     --p38-font-weight-body: 400;
@@ -149,7 +149,7 @@ button:focus-visible {
     --sidebar-accent: 0 0% 97%;
     --sidebar-accent-foreground: 0 0% 20%;
     --sidebar-border: 0 0% 91%;
-    --sidebar-ring: 27 87% 52%;
+    --sidebar-ring: 43 74% 52%;
 
     /* GlacialBottomNav: alinhar FAB + padding de scroll (mobile) */
     --p38-bottom-nav-bar: 68px;

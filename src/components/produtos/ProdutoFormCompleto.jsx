@@ -80,7 +80,7 @@ const P38_TAB_LIST = cn(PRODUTOS_TABS_BAR, 'grid grid-cols-6 w-full');
 const P38_TAB_TRIGGER = PRODUTOS_TAB_ICON;
 const P38_TAB_ICON = PRODUTOS_TAB_ICON_GLYPH;
 const P38_TAB_LABEL = PRODUTOS_TAB_ICON_LABEL;
-const P38_INPUT = cn(PRODUTOS_FIELD_H12, 'shadow-sm focus-visible:ring-2 focus-visible:ring-[#f07a1a]/18 dark:focus-visible:ring-[#a4ce33]/20');
+const P38_INPUT = cn(PRODUTOS_FIELD_H12, 'shadow-sm focus-visible:ring-2 focus-visible:ring-[#e8b824]/22 dark:focus-visible:ring-[#a4ce33]/20');
 const P38_INPUT_UNDERLINE = PRODUTOS_INPUT_UNDERLINE;
 const P38_SECTION = PRODUTOS_SECTION;
 const P38_FORM_PANEL = PRODUTOS_FORM_PANEL;
@@ -1608,7 +1608,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
           <TabsContent value="comercial" className="mt-0">
             {false && vendasUnitOptions.length > 0 && (
               <div
-                className="mb-6 rounded-2xl bg-[#f07a1a]/6 dark:from-muted/40 dark:to-muted/60 px-4 py-3"
+                className="mb-6 rounded-2xl bg-[#e8b824]/6 dark:from-muted/40 dark:to-muted/60 px-4 py-3"
                 title="Escolha a embalagem para ver preço e custo escalados — alinha com unidade_vitrine e o catálogo."
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -2151,7 +2151,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                         onClick={() => handleChange('casas_decimais', n)}
                         className={`w-10 h-9 text-sm font-medium transition-colors ${
                           (formData.casas_decimais ?? 0) === n
-                            ? 'bg-[#f07a1a]/12 text-[#f07a1a] dark:bg-[#a4ce33]/15 dark:text-[#a4ce33]'
+                            ? 'bg-[#e8b824]/12 text-[#a8942e] dark:bg-[#a4ce33]/15 dark:text-[#a4ce33]'
                             : 'text-muted-foreground hover:bg-secondary/30'
                         }`}
                       >
