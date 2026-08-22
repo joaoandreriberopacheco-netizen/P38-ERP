@@ -34,6 +34,7 @@ import {
   PRODUTOS_SEARCH_INPUT,
   PRODUTOS_SEARCH_SHELL,
 } from '@/lib/produtosP38Theme';
+import { P38_SHELL_DESC, P38_SHELL_TITLE } from '@/lib/p38FormTypography';
 
 function ProdutosHeader({
   stats,
@@ -91,8 +92,8 @@ function ProdutosHeader({
       <div className="w-full min-w-0 px-3 py-2 space-y-2">
         <div className="flex items-center gap-2">
           <div className="flex-1 min-w-0">
-            <h1 className="text-sm font-semibold text-foreground truncate font-glacial">Catálogo</h1>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground min-w-0">
+            <h1 className={cn(P38_SHELL_TITLE, 'truncate')}>Catálogo</h1>
+            <div className={cn(P38_SHELL_DESC, 'flex flex-wrap items-center gap-x-3 gap-y-0.5 min-w-0')}>
               {isSummaryFiltered && (
                 <Filter
                   className="w-3 h-3 p38-text-accent flex-shrink-0"

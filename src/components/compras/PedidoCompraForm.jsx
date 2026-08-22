@@ -97,6 +97,7 @@ import {
   COMPRAS_TAB,
   COMPRAS_TABS_BAR,
 } from '@/lib/comprasP38Theme';
+import { P38_PAGE_KICKER, P38_PAGE_SUBTITLE, P38_PAGE_TITLE } from '@/lib/p38FormTypography';
 import { valorEmbarqueSplit } from '@/lib/pedidoCompraValorExibicao';
 
 export default function PedidoCompraForm({
@@ -1366,7 +1367,7 @@ export default function PedidoCompraForm({
 
 
   return (
-    <div className={cn(COMPRAS_FORM_ROOT, 'dark:text-foreground uppercase tracking-wide [&_label]:font-light [&_textarea]:normal-case [&_input[type=date]]:normal-case [&_input[type=number]]:normal-case')}>
+    <div className={cn(COMPRAS_FORM_ROOT, 'dark:text-foreground')}>
       {/* Alerta de Bloqueio Desktop */}
       {isLocked && (
         <BannerStatusPedido pedido={pedidoAtual} lancamentos={lancamentosPedido} isMobile={isPhone} />
@@ -1378,10 +1379,13 @@ export default function PedidoCompraForm({
           <X className="w-5 h-5" />
         </Button>
         <div className="flex-1 flex items-center justify-between min-w-0 gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-sm font-light text-foreground truncate">
-              {pedido?.numero || 'Novo Pedido'}
-            </span>
+          <div className="flex items-center gap-2 min-w-0 flex-col items-start sm:flex-row sm:items-center">
+            <div className="min-w-0">
+              <p className={P38_PAGE_KICKER}>Pedido de compra</p>
+              <h2 className={cn(P38_PAGE_TITLE, 'text-lg md:text-xl truncate leading-tight')}>
+                {pedido?.numero || 'Novo pedido'}
+              </h2>
+            </div>
             {pedido?.id && statusFinanceiroHeader && statusFinanceiroHeader !== 'Rascunho' && (
               <Badge
                 variant="secondary"
@@ -1397,7 +1401,7 @@ export default function PedidoCompraForm({
               </Badge>
             )}
           </div>
-          <span className="text-sm font-light text-muted-foreground whitespace-nowrap ml-4 normal-case tabular-nums">
+          <span className={cn(P38_PAGE_SUBTITLE, 'whitespace-nowrap ml-4 tabular-nums')}>
             {resumoNecessidadeDetalhe ? (
               <>
                 {resumoNecessidadeDetalhe.qtdItens}{' '}

@@ -6,8 +6,14 @@ import {
   P38_SEARCH_SURFACE,
 } from '@/components/financeiro/fluxo/financeiroP38';
 import { P38_LIGHT_HEADER_ACCENT, P38_LIGHT_VLINE } from '@/lib/p38LightTheme';
+import { P38_FORM_TYPO_SCOPE } from '@/lib/p38FormTypography';
 
 export { P38_CHIP_ACTIVE };
+
+const COMPRAS_FORM_BASE = cn(
+  'flex flex-col bg-background dark:bg-[#1f1d22] overflow-hidden font-din-1451',
+  P38_FORM_TYPO_SCOPE,
+);
 
 /** Divisores suaves — linhas finas verticais/horizontais, sem contorno pesado no claro. */
 export const COMPRAS_SEP = 'border-b border-border/15 dark:border-white/10';
@@ -16,8 +22,8 @@ export const COMPRAS_HIER_L2 = 'ml-1 pl-2 border-l border-border/10 dark:border-
 
 /** Superfícies brancas no claro. */
 export const COMPRAS_PAGE = 'bg-background';
-export const COMPRAS_FORM_ROOT =
-  'fixed inset-0 flex flex-col bg-background dark:bg-[#1f1d22] overflow-hidden font-din-1451';
+export const COMPRAS_FORM_ROOT = cn(COMPRAS_FORM_BASE, 'fixed inset-0');
+export { COMPRAS_FORM_BASE };
 
 export const COMPRAS_FORM_HEADER =
   'flex-shrink-0 px-4 py-4 flex items-center gap-3 border-b border-border/15 relative bg-background dark:bg-transparent';

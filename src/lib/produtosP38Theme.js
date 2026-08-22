@@ -9,6 +9,7 @@ import {
   COMPRAS_FAB,
   COMPRAS_FAB_SOFT,
   COMPRAS_FIELD,
+  COMPRAS_FORM_BASE,
   COMPRAS_FORM_HEADER,
   COMPRAS_FORM_ROOT,
   COMPRAS_HEADER_ACCENT,
@@ -74,7 +75,7 @@ export const PRODUTOS_VIEW_TOGGLE_ACTIVE = cn(
 export const PRODUTOS_LEVEL_ACTIVE = P38_CHIP_ACTIVE;
 
 /** Formulário produto — mesma linguagem do pedido de compra. */
-export const PRODUTOS_FORM_ROOT = COMPRAS_FORM_ROOT.replace('fixed inset-0 flex flex-col ', 'flex flex-col h-full overflow-hidden ');
+export const PRODUTOS_FORM_ROOT = cn(COMPRAS_FORM_BASE, 'h-full');
 
 export const PRODUTOS_FORM_HEADER = COMPRAS_FORM_HEADER;
 export const PRODUTOS_HEADER_ACCENT = COMPRAS_HEADER_ACCENT;

@@ -48,8 +48,11 @@
     /* Tipografia mobile */
     --p38-tracking: 0.02em;
     --p38-body-size: 1rem;
-    --p38-title-size: 1rem;
+    --p38-title-size: 1.125rem;
     --p38-label-size: 1rem;
+    --p38-page-title-size: 1.2857142857rem;
+    --p38-page-title-size-md: 1.5714285714rem;
+    --p38-section-title-size: 1.0714285714rem;
     --p38-meta-size: 1rem;
     --p38-type-lg: 1.125rem;
     --p38-type-xl: 1.25rem;
@@ -152,6 +155,65 @@
   .p38-meta-label {
     font-size: var(--p38-meta-size);
     @apply uppercase tracking-wide text-muted-foreground font-din1451;
+  }
+
+  /* ── Hierarquia: título · secção · label · conteúdo ── */
+  .p38-page-title {
+    text-transform: none;
+    letter-spacing: -0.015em;
+    font-size: var(--p38-page-title-size);
+    font-weight: 600;
+    line-height: 1.2;
+    color: hsl(var(--foreground));
+  }
+
+  @media (min-width: 768px) {
+    .p38-page-title {
+      font-size: var(--p38-page-title-size-md);
+    }
+  }
+
+  .p38-page-kicker {
+    font-size: var(--p38-label-size);
+    font-weight: 300;
+    letter-spacing: 0.07em;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .p38-page-subtitle {
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 400;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .p38-section-title {
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: var(--p38-section-title-size);
+    font-weight: 600;
+    color: hsl(var(--foreground));
+  }
+
+  .p38-field-label {
+    font-size: var(--p38-label-size);
+    font-weight: 300;
+    letter-spacing: 0.06em;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .p38-field-hint {
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 400;
+    color: hsl(var(--muted-foreground) / 0.78);
+  }
+
+  .p38-field-value {
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 500;
+    color: hsl(var(--foreground));
   }
 
   /* Título de linha mobile */
@@ -411,6 +473,11 @@
   .p38-app [data-preserve-case='true'] *,
   .p38-app .preserve-case,
   .p38-app .normal-case,
+  .p38-app .p38-page-title,
+  .p38-app .p38-page-subtitle,
+  .p38-app .p38-section-title,
+  .p38-app .p38-field-hint,
+  .p38-app .p38-field-value,
   .p38-app input[type='email'],
   .p38-app input[type='url'],
   .p38-app input[type='password'],

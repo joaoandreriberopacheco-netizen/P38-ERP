@@ -10,6 +10,7 @@ import EstoqueTab from '@/paiol/components/dashboard/tabs/EstoqueTab';
 import FinanceiroTab from '@/paiol/components/dashboard/tabs/FinanceiroTab';
 import DashboardVendedor from '@/pages/DashboardVendedor';
 import DashboardCaixa from '@/pages/DashboardCaixa';
+import { P38_SHELL_DESC, P38_SHELL_TITLE } from '@/lib/p38FormTypography';
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('geral');
@@ -47,8 +48,8 @@ export default function DashboardPage() {
     <div className="max-w-7xl mx-auto space-y-4">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-foreground font-glacial">Dashboard</h1>
-          <p className="text-xs text-muted-foreground">Visão geral do negócio</p>
+          <h1 className={P38_SHELL_TITLE}>Dashboard</h1>
+          <p className={P38_SHELL_DESC}>Visão geral do negócio</p>
         </div>
         <div className="hidden md:block">
           <P38Logo surface="dashboard.header" />

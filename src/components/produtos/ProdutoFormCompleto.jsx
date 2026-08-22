@@ -61,6 +61,15 @@ import {
   PRODUTOS_TAB_ICON_LABEL,
   PRODUTOS_TABS_BAR,
 } from '@/lib/produtosP38Theme';
+import {
+  P38_FIELD_HINT,
+  P38_FIELD_LABEL,
+  P38_FIELD_VALUE,
+  P38_PAGE_KICKER,
+  P38_PAGE_SUBTITLE,
+  P38_PAGE_TITLE,
+  P38_SECTION_TITLE,
+} from '@/lib/p38FormTypography';
 
 const P38_FORM_ROOT = PRODUTOS_FORM_ROOT;
 const P38_FORM_HEADER = cn(PRODUTOS_FORM_HEADER, 'flex-none relative');
@@ -1174,12 +1183,19 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             <div className="p-4 md:p-6">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-lg md:text-xl font-medium text-foreground truncate">
-                    {produto?.id ? 'Editar:' : 'Novo Produto'}
-                  </h2>
-                  <p className="text-xs md:text-sm text-muted-foreground mt-1 truncate">
-                    {formData.nome || 'Sem nome'}
-                  </p>
+                  {produto?.id ? (
+                    <>
+                      <p className={P38_PAGE_KICKER}>Editar produto</p>
+                      <h2 className={cn(P38_PAGE_TITLE, 'truncate mt-0.5')}>
+                        {formData.nome || 'Sem nome'}
+                      </h2>
+                    </>
+                  ) : (
+                    <>
+                      <h2 className={cn(P38_PAGE_TITLE, 'truncate')}>Novo produto</h2>
+                      <p className={P38_PAGE_SUBTITLE}>Preencha os dados do catálogo</p>
+                    </>
+                  )}
                 </div>
                 <div className="flex gap-2 flex-shrink-0">
                   {produto?.id && (
@@ -1232,10 +1248,10 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <span className={P38_FIELD_LABEL}>
                     Estação de venda
                   </span>
-                  <span className="text-sm font-semibold text-foreground dark:text-foreground">
+                  <span className={P38_FIELD_VALUE}>
                     {precoCatalogo.sigla}
                   </span>
                   <span className="text-xs tabular-nums text-muted-foreground">
@@ -1367,7 +1383,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 )}
               </div>
               <div className="flex-1 w-full space-y-3">
-                <Label className="text-xs text-muted-foreground block">URL da Imagem</Label>
+                <Label className={cn(P38_FIELD_LABEL, 'block')}>URL da Imagem</Label>
                 <div className="flex gap-2">
                   <Input 
                     value={formData.imagem_url || ''} 
@@ -1401,7 +1417,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     </Button>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className={P38_FIELD_HINT}>
                   Cole a URL ou faça upload de uma imagem do seu computador.
                 </p>
               </div>
@@ -1410,14 +1426,14 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             {/* Campos Hierárquicos */}
             <div className="space-y-1">
               <div className="flex items-center gap-2 mb-3">
-                <Label className="text-sm font-semibold p38-text-accent">Descrição Hierárquica</Label>
+                <Label className={P38_SECTION_TITLE}>Descrição Hierárquica</Label>
               </div>
 
               {/* Preview do nome gerado */}
               {formData.nome && (
                 <div className={cn('mb-4 px-3 py-2 rounded-lg', P38_FORM_PANEL)}>
-                  <p className="text-[10px] text-muted-foreground uppercase mb-1">Preview da Descrição Completa</p>
-                  <p className="text-sm font-medium text-foreground font-din-1451 uppercase tracking-wide">{formData.nome}</p>
+                  <p className={cn(P38_FIELD_LABEL, 'mb-1')}>Preview da Descrição Completa</p>
+                  <p className={cn(P38_FIELD_VALUE, 'font-din-1451 uppercase tracking-wide')}>{formData.nome}</p>
                 </div>
               )}
 
@@ -1431,7 +1447,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 <div key={field} className="grid grid-cols-[20px_1fr] items-center gap-3 py-1">
                   <span className="text-xs font-bold text-muted-foreground text-center">{idx + 1}</span>
                   <div>
-                    <Label className="text-xs text-muted-foreground mb-1 block">{label}</Label>
+                    <Label className={cn(P38_FIELD_LABEL, 'mb-1 block')}>{label}</Label>
                     <Input
                       value={formData[field] || ''}
                       onChange={e => handleChange(field, e.target.value)}
