@@ -35,14 +35,14 @@ export const P38_PALETTE = {
     hex: '#5c6b4a',
     hsl: '82 18% 36%',
   },
-  /** Superfícies modo claro */
+  /** Superfícies modo claro — branco puro + carvão */
   light: {
-    bg: '#f7f8f5',
+    bg: '#ffffff',
     surface: '#ffffff',
-    surfaceMuted: '#f0f2ec',
-    border: '#dce0d4',
-    text: '#2a2f28',
-    textMuted: '#5c6358',
+    surfaceMuted: '#f5f5f5',
+    border: '#e8e8e8',
+    text: '#242424',
+    textMuted: '#6b6b6b',
   },
   /** Superfícies modo escuro */
   dark: {

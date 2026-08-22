@@ -7,12 +7,12 @@ export const AUTO_COVER_CLASS = 'bg-indigo-600 text-white';
 export const AUTO_HEADER_CLASS =
   `${AUTO_COVER_CLASS} px-4 py-3 flex items-center justify-between shadow-md shrink-0`;
 
-/** Fundo interior — verde-oliva muito claro P38 (#f7f8f5). */
-export const AUTO_SHELL_BG = 'bg-[#f7f8f5] dark:bg-background';
+/** Fundo interior — branco puro P38. */
+export const AUTO_SHELL_BG = 'bg-background dark:bg-background';
 
-/** Cartões brancos com borda suave mediterrânea. */
+/** Cartões brancos com borda suave neutra. */
 export const AUTO_SURFACE_CLASS =
-  'bg-white dark:bg-card border border-[#dce0d4] dark:border-border/40 rounded-xl shadow-sm';
+  'bg-card border border-border/40 dark:border-border/40 rounded-xl shadow-sm';
 
 /** Campos de busca / inputs operacionais — superfície P38. */
 export const AUTO_FIELD_CLASS = 'p38-field-surface border-0 shadow-none rounded-xl';
@@ -23,8 +23,8 @@ export const AUTO_PRIMARY_BTN =
 
 /** Acento oliva P38 — ícones, preços, detalhes. */
 export const AUTO_ACCENT_TEXT = 'text-[#4a5240] dark:text-[#a4ce33]';
-export const AUTO_ACCENT_BG = 'bg-[#f0f2ec] dark:bg-[#26262e]';
-export const AUTO_ACCENT_BG_STRONG = 'bg-[#e8ebe3] dark:bg-[#383e47]';
+export const AUTO_ACCENT_BG = 'bg-muted dark:bg-[#26262e]';
+export const AUTO_ACCENT_BG_STRONG = 'bg-secondary dark:bg-[#383e47]';
 
 /** Amarelo cítrico P38 — destaques pontuais. */
 export const AUTO_CITRUS_TEXT = 'text-[#c99710] dark:text-[#e8b824]';

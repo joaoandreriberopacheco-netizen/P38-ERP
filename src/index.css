@@ -104,26 +104,26 @@ button:focus-visible {
 
 @layer base {
   :root {
-    /* P38 claro — fundo verde-cinza suave + oliva mediterrâneo + cítricos */
-    --background: 82 12% 97%;
-    --foreground: 82 14% 16%;
+    /* P38 claro — branco puro + carvão da informação + laranja suco (acento) */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 14%;
     --card: 0 0% 100%;
-    --card-foreground: 82 14% 16%;
+    --card-foreground: 0 0% 14%;
     --popover: 0 0% 100%;
-    --popover-foreground: 82 14% 16%;
+    --popover-foreground: 0 0% 14%;
     --primary: 82 18% 28%;
-    --primary-foreground: 0 0% 99%;
-    --secondary: 82 10% 94%;
-    --secondary-foreground: 82 16% 22%;
-    --muted: 82 8% 94%;
-    --muted-foreground: 82 6% 38%;
-    --accent: 43 55% 92%;
-    --accent-foreground: 82 18% 24%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 97%;
+    --secondary-foreground: 0 0% 20%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 42%;
+    --accent: 27 100% 97%;
+    --accent-foreground: 27 87% 52%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 82 10% 86%;
-    --input: 82 10% 86%;
-    --ring: 82 18% 28%;
+    --border: 0 0% 91%;
+    --input: 0 0% 91%;
+    --ring: 27 87% 52%;
     --chart-1: 82 18% 32%;
     --chart-2: 173 58% 39%;
     --chart-3: 82 14% 22%;
@@ -141,15 +141,15 @@ button:focus-visible {
     --p38-font-weight-heading: 600;
     --app-font-scale: 1;
     --radius: 0.75rem;
-    /* Sidebar claro — oliva suave, não carvão */
-    --sidebar-background: 82 12% 97%;
-    --sidebar-foreground: 82 14% 16%;
+    /* Sidebar claro — branco puro, texto carvão */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 14%;
     --sidebar-primary: 82 18% 28%;
-    --sidebar-primary-foreground: 0 0% 99%;
-    --sidebar-accent: 82 10% 92%;
-    --sidebar-accent-foreground: 82 16% 22%;
-    --sidebar-border: 82 10% 86%;
-    --sidebar-ring: 82 18% 28%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 97%;
+    --sidebar-accent-foreground: 0 0% 20%;
+    --sidebar-border: 0 0% 91%;
+    --sidebar-ring: 27 87% 52%;
 
     /* GlacialBottomNav: alinhar FAB + padding de scroll (mobile) */
     --p38-bottom-nav-bar: 68px;

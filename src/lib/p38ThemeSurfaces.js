@@ -1,7 +1,7 @@
 /**
  * Superfícies P38 — alinhado ao Relatório de Margem mobile (screenshot) e tokens em index.css.
  * Escuro: carvão #1f1d22, cartão #2d333b, busca #26262e, cabeçalho tabela #383e47, limão #a4ce33.
- * Claro: fundo suave + acento verde oliva.
+ * Claro: branco puro + carvão + laranja suco (acento); escuro: carvão + limão.
  */
 
 export const P38_THEME = {
@@ -24,21 +24,21 @@ export const P38_THEME = {
     accent: '#a4ce33',
   },
   light: {
-    bg: '#f7f8f5',
+    bg: '#ffffff',
     headerBg: '#ffffff',
-    searchBg: '#f0f2ec',
+    searchBg: '#ffffff',
     cardBg: '#ffffff',
-    tableHeaderBg: '#e8ebe3',
-    text: '#2a2f28',
-    textMuted: '#5c6358',
-    textSub: '#434a40',
-    iconColor: '#5a6250',
-    chevron: '#8b9285',
-    divider: '#dce0d4',
-    btnBg: 'rgba(74, 82, 64, 0.08)',
-    backBg: '#f0f2ec',
-    closeBg: '#e8ebe3',
-    closeColor: '#434a40',
+    tableHeaderBg: '#fafafa',
+    text: '#242424',
+    textMuted: '#6b6b6b',
+    textSub: '#404040',
+    iconColor: '#5c5c5c',
+    chevron: '#8a8a8a',
+    divider: 'rgba(0,0,0,0.08)',
+    btnBg: 'rgba(0,0,0,0.04)',
+    backBg: '#ffffff',
+    closeBg: '#f5f5f5',
+    closeColor: '#404040',
     accent: '#4a5240',
     citrus: '#f07a1a',
     citrusYellow: '#e8b824',
@@ -114,6 +114,6 @@ export function p38SidebarColors(isDark) {
     sectionLabel: t.textMuted,
     subBorder: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
     accent: t.accent,
-    accentMuted: isDark ? 'rgba(164,206,51,0.35)' : 'rgba(99,107,51,0.45)',
+    accentMuted: isDark ? 'rgba(164,206,51,0.35)' : 'rgba(240,122,26,0.35)',
   };
 }

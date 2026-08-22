@@ -84,7 +84,7 @@ export function p38ButtonPair(tone, isDark) {
       : { bg: '#f07a1a', fg: '#1f1d22', border: '#c45e0e' },
     muted: isDark
       ? { bg: '#26262e', fg: '#fafafa', border: 'rgba(255,255,255,0.12)' }
-      : { bg: '#f0f2ec', fg: '#2a2f28', border: '#dce0d4' },
+      : { bg: '#ffffff', fg: '#242424', border: '#e8e8e8' },
   };
   return pairs[tone] ?? pairs.olive;
 }

@@ -34,17 +34,17 @@
 
 @layer base {
   :root {
-    /* Superfícies — tom verde-cinza suave no claro */
-    --p38-bg: 82 12% 97%;
+    /* Superfícies — branco puro neutro (sem tom esverdeado/amarelado) */
+    --p38-bg: 0 0% 100%;
     --p38-surface: 0 0% 100%;
-    --p38-search: 82 8% 94%;
-    --p38-table-head: 82 10% 92%;
-    /* Claro: mediterrâneo queimado · escuro: limão */
+    --p38-search: 0 0% 100%;
+    --p38-table-head: 0 0% 98%;
+    /* Claro: oliva nos CTAs · laranja suco nos acentos quentes */
     --p38-accent-olive: 82 18% 28%;
     --p38-accent-lime: 78 55% 51%;
     --p38-accent-citrus: 27 87% 52%;
     --p38-accent-citrus-yellow: 43 74% 52%;
-    --p38-divider: 82 10% 86% / 0.6;
+    --p38-divider: 0 0% 91% / 0.85;
     /* Tipografia mobile */
     --p38-tracking: 0.02em;
     --p38-body-size: 1rem;
