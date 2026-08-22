@@ -1,0 +1,25 @@
+{
+  "version": "1.0",
+  "description": "Sensores críticos — pré-deploy (função automática, não é UI). Cada sensor verifica se o pulso chega ao botão/ecrã.",
+  "screens": [
+    {
+      "route": "/PedidosCompra",
+      "label": "Pedidos de compra",
+      "warmupMs": 8000,
+      "sensors": [
+        { "id": "pedidos-compra.tab-embarques", "type": "presence", "label": "Aba embarques" },
+        { "id": "pedidos-compra.tab-consulta", "type": "click", "label": "Aba consulta", "expectVisible": "pedidos-compra.tab-consulta" },
+        { "id": "pedidos-compra.novo-pedido", "type": "click", "label": "FAB novo pedido" }
+      ]
+    },
+    {
+      "route": "/PDV?mode=vendedor",
+      "label": "PDV vendedor",
+      "warmupMs": 8000,
+      "sensors": [
+        { "id": "pdv.busca-produto", "type": "presence", "label": "Busca de produto" },
+        { "id": "pdv.scanner-codigo", "type": "presence", "label": "Scanner código de barras" }
+      ]
+    }
+  ]
+}

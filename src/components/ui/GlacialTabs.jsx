@@ -22,12 +22,13 @@ export function GlacialTabsList({ children, className, scrollable = false }) {
 }
 
 // eslint-disable-next-line no-unused-vars
-export function GlacialTabsTrigger({ value, activeValue, onSelect, icon: Icon, label, className }) {
+export function GlacialTabsTrigger({ value, activeValue, onSelect, icon: Icon, label, className, pulseSensor }) {
   const isActive = value === activeValue;
   return (
     <button
       type="button"
       onClick={() => onSelect(value)}
+      data-pulse-sensor={pulseSensor}
       className={cn(
         'flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 whitespace-nowrap flex-shrink-0 min-h-[36px]',
         isActive

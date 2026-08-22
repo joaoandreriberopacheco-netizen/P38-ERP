@@ -181,6 +181,7 @@ export default function LoginPageNext() {
                   id="login-username"
                   type="text"
                   autoComplete="username"
+                  data-pulse-sensor="login.campo-utilizador"
                   value={login}
                   onChange={(ev) => setLogin(ev.target.value)}
                   placeholder="Ex: joao, admin…"
@@ -199,13 +200,14 @@ export default function LoginPageNext() {
                   id="login-password"
                   type="password"
                   autoComplete="current-password"
+                  data-pulse-sensor="login.campo-senha"
                   value={password}
                   onChange={(ev) => setPassword(ev.target.value)}
                   className={`h-11 ${authFieldClass}`}
                   required
                 />
               </div>
-              <Button type="submit" className={`h-11 w-full ${authButtonClass}`} disabled={busy}>
+              <Button type="submit" className={`h-11 w-full ${authButtonClass}`} disabled={busy} data-pulse-sensor="login.botao-entrar">
                 {submitting ? 'A entrar…' : 'Entrar'}
               </Button>
             </form>
