@@ -54,6 +54,7 @@
     "usuario:provision-login-auth": "node scripts/provision-login-auth-users.mjs",
     "auth:enable-google": "node scripts/enable-supabase-google-auth.mjs",
     "retificar:5r8b3": "node scripts/retificar-embarque-5r8b3-once.mjs",
+    "reconcile:base44-supabase-2026-07-25": "node scripts/reconcile-base44-supabase-2026-07-25.mjs",
     "corrigir:recepcao": "node scripts/corrigir-recepcao-pedido.mjs",
     "compras:normalizar-rascunho-desconto": "node scripts/normalizar-pedidos-compra-rascunho-desconto.mjs",
     "compras:audit-linhas-sql": "node scripts/audit-compras-linhas-sql.mjs",
