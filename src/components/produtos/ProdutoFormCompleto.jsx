@@ -17,6 +17,7 @@ import ProductUnitSelectorDialog from './ProductUnitSelectorDialog';
 import { useToast } from "@/components/ui/use-toast";
 import ProdutoHistoricoEstoqueTab from '@/components/produtos/ProdutoHistoricoEstoqueTab';
 import ProdutoIepTab from '@/components/produtos/ProdutoIepTab';
+import ProdutoFormFAB from '@/components/produtos/ProdutoFormFAB';
 import { applyUnidadesToProduto, makeUnidade, normalizeSigla } from '@/lib/productUnitsCrud';
 import {
   buildProductSnapshotForPricing,
@@ -49,6 +50,7 @@ import {
   PRODUTOS_FORM_HEADER,
   PRODUTOS_FORM_PANEL,
   PRODUTOS_FORM_ROOT,
+  PRODUTOS_FORM_TABS_LIST,
   PRODUTOS_FORM_SELECT_CONTENT,
   PRODUTOS_HEADER_ACCENT,
   PRODUTOS_INPUT_UNDERLINE,
@@ -59,7 +61,6 @@ import {
   PRODUTOS_TAB_ICON,
   PRODUTOS_TAB_ICON_GLYPH,
   PRODUTOS_TAB_ICON_LABEL,
-  PRODUTOS_TABS_BAR,
 } from '@/lib/produtosP38Theme';
 import {
   P38_FIELD_HINT,
@@ -73,7 +74,7 @@ import {
 
 const P38_FORM_ROOT = PRODUTOS_FORM_ROOT;
 const P38_FORM_HEADER = cn(PRODUTOS_FORM_HEADER, 'flex-none relative');
-const P38_TAB_LIST = cn(PRODUTOS_TABS_BAR, 'grid grid-cols-6 w-full');
+const P38_TAB_LIST = PRODUTOS_FORM_TABS_LIST;
 const P38_TAB_TRIGGER = PRODUTOS_TAB_ICON;
 const P38_TAB_ICON = PRODUTOS_TAB_ICON_GLYPH;
 const P38_TAB_LABEL = PRODUTOS_TAB_ICON_LABEL;
@@ -1171,7 +1172,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <div
           className={cn(
-            'flex-none overflow-hidden transition-[max-height,opacity] duration-300 ease-out',
+            'flex-none overflow-x-hidden overflow-y-visible transition-[max-height,opacity] duration-300 ease-out',
             'desktop-layout:max-h-none desktop-layout:opacity-100',
             collapseHistoricoShell && (historicoChromeExpanded ? 'max-h-[22rem] opacity-100' : 'max-h-0 opacity-0')
           )}
@@ -1197,7 +1198,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     </>
                   )}
                 </div>
-                <div className="flex gap-2 flex-shrink-0">
+                <div className="flex max-w-[min(100%,14.5rem)] gap-1.5 flex-shrink-0 overflow-x-auto overflow-y-visible desktop-layout:max-w-none desktop-layout:gap-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {produto?.id && (
                     <Button
                       variant="ghost"
@@ -1233,8 +1234,15 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   <Button variant="ghost" size="icon" onClick={onClose} disabled={isSaving} className="h-10 w-10 hover:bg-muted/60">
                     <X className="w-5 h-5 text-muted-foreground" />
                   </Button>
-                  <Button size="icon" onClick={handleSave} disabled={isSaving} className={P38_SAVE_BTN}>
-                    <Save className="w-5 h-5" />
+                  <Button
+                    size="icon"
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className={cn(P38_SAVE_BTN, 'hidden desktop-layout:inline-flex')}
+                    title="Salvar produto"
+                    aria-label="Salvar produto"
+                  >
+                    <Save className="h-5 w-5 shrink-0" />
                   </Button>
                 </div>
               </div>
@@ -2194,6 +2202,10 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
           setUnitSelectorOpen(false);
         }}
       />
+
+      {isMobile && (
+        <ProdutoFormFAB onSave={handleSave} onClose={onClose} isSaving={isSaving} />
+      )}
     </div>
   );
 }

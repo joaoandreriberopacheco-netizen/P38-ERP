@@ -85,7 +85,16 @@ export const PRODUTOS_FIELD = COMPRAS_FIELD;
 export const PRODUTOS_FIELD_H12 = cn(COMPRAS_FIELD, 'h-10 text-sm');
 export const PRODUTOS_SECTION = cn(COMPRAS_SECTION_CARD, 'rounded-lg p-4');
 export const PRODUTOS_FORM_PANEL = 'bg-[#f07a1a]/6 dark:bg-[#26262e]/50';
-export const PRODUTOS_SAVE_BTN = cn(COMPRAS_BTN_PRIMARY, 'h-10 w-10');
+export const PRODUTOS_SAVE_BTN = cn(
+  COMPRAS_BTN_PRIMARY,
+  'h-10 w-10 shrink-0 [&_svg]:shrink-0 [&_svg]:text-white dark:[&_svg]:text-[#1f1d22]',
+);
+
+/** Lista de abas do formulário — anula defaults do TabsList (h-10, bg-muted). */
+export const PRODUTOS_FORM_TABS_LIST = cn(
+  PRODUTOS_TABS_BAR,
+  'grid !h-auto w-full grid-cols-6 !rounded-none !bg-transparent !p-0 shadow-none',
+);
 export const PRODUTOS_FORM_SELECT_CONTENT = cn(COMPRAS_DROPDOWN, 'z-[90] max-h-96');
 export const PRODUTOS_SELECT_ITEM = COMPRAS_DROPDOWN_ITEM;
 export const PRODUTOS_SELECT_HIGHLIGHT = 'bg-[#f07a1a]/10 dark:bg-[#f07a1a]/15';
@@ -98,7 +107,7 @@ export const PRODUTOS_TAB_ICON = cn(
 );
 
 export const PRODUTOS_TAB_ICON_GLYPH =
-  'w-4 h-4 md:w-5 md:h-5 text-muted-foreground group-data-[state=active]:text-[#f07a1a] dark:group-data-[state=active]:text-[#a4ce33]';
+  'h-4 w-4 shrink-0 stroke-[1.75] text-muted-foreground md:h-5 md:w-5 group-data-[state=active]:text-[#f07a1a] dark:group-data-[state=active]:text-[#a4ce33]';
 
 export const PRODUTOS_TAB_ICON_LABEL =
   'hidden sm:inline ml-2 text-muted-foreground group-data-[state=active]:text-[#f07a1a] dark:group-data-[state=active]:text-[#a4ce33]';
