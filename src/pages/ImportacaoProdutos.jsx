@@ -12,6 +12,7 @@ import ExportarPlanilha from '@/components/produtos/massa/ExportarPlanilha';
 import ExportarEmbalagensPlanilha from '@/components/produtos/massa/ExportarEmbalagensPlanilha';
 import ExportarEstoque from '@/components/produtos/massa/ExportarEstoque';
 import { P38_SECTION_TITLE } from '@/lib/p38FormTypography';
+import { P38PageHeader } from '@/components/layout/P38PageHeader';
 
 const TAMANHO_LOTE = 25;
 
@@ -212,14 +213,11 @@ export default function ImportacaoProdutosPage() {
     <div className="min-h-screen bg-card p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-semibold text-foreground font-glacial mb-2">
-            Importação de Produtos
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Produtos, embalagens/unidades, estoque e histórico de importações.
-          </p>
-        </div>
+        <P38PageHeader
+          variant="page"
+          title="Importação de Produtos"
+          description="Produtos, embalagens/unidades, estoque e histórico de importações."
+        />
 
         {/* Tabs */}
         <Tabs defaultValue="produtos" className="w-full">
