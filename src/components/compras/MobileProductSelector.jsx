@@ -1080,7 +1080,7 @@ export default function MobileProductSelector({
                             ref={(el) => { catalogItemRefs.current[idx] = el; }}
                             onClick={() => { if (!isLocked) handleSelectProduct(product); }}
                             className={cn(
-                              'flex w-full items-start gap-3 border-l-[3px] px-4 py-3 text-left transition-colors',
+                              'flex w-full items-start gap-3 border-l px-4 py-3 text-left transition-colors',
                               isSelected
                                 ? CATALOG_LIST_ITEM_SELECTED
                                 : 'border-l-transparent hover:bg-muted/40 dark:hover:bg-muted/30',

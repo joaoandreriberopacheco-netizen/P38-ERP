@@ -185,7 +185,7 @@ function SkuRows({ skus, massaCritica }) {
     return (
       <TableRow
         key={s.produto.id}
-        className={cn(p38Table.row, 'bg-muted/5 dark:bg-[#252830]/90 h-8 border-l-2', BORDER_CLASS[tone])}
+        className={cn(p38Table.row, 'bg-muted/5 dark:bg-[#252830]/90 h-8 border-l', BORDER_CLASS[tone])}
       >
         <TableCell className={cn(p38Table.cell, 'w-8 px-1')} />
         <TableCell className={cn(p38Table.cell, 'w-8 px-1')}>
@@ -226,7 +226,7 @@ function EsquadraRows({ esquadras, openSet, toggleOpen }) {
         <TableRow
           className={cn(
             p38Table.row,
-            'bg-background/90 dark:bg-[#2a2e35]/95 h-9 border-l-2',
+            'bg-background/90 dark:bg-[#2a2e35]/95 h-9 border-l',
             BORDER_CLASS[tone],
           )}
         >
@@ -327,7 +327,7 @@ function SupplyTreeTable({ linhas }) {
                 <TableRow
                   className={cn(
                     p38Table.row,
-                    'bg-muted/40 dark:bg-[#343a42] h-10 border-l-[3px]',
+                    'bg-muted/40 dark:bg-[#343a42] h-10 border-l',
                     BORDER_CLASS[tone],
                   )}
                 >

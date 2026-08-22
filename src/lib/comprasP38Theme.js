@@ -5,12 +5,13 @@ import {
   P38_SEARCH,
   P38_SEARCH_SURFACE,
 } from '@/components/financeiro/fluxo/financeiroP38';
+import { P38_LIGHT_HEADER_ACCENT, P38_LIGHT_VLINE } from '@/lib/p38LightTheme';
 
 export { P38_CHIP_ACTIVE };
 
 /** Divisores suaves — linhas finas verticais/horizontais, sem contorno pesado no claro. */
 export const COMPRAS_SEP = 'border-b border-border/15 dark:border-white/10';
-export const COMPRAS_HIER_L1 = 'ml-1 pl-2 md:ml-3 md:pl-3.5 border-l border-border/15 dark:border-white/10 min-w-0 max-w-full';
+export const COMPRAS_HIER_L1 = cn('ml-1 pl-2 md:ml-3 md:pl-3.5 min-w-0 max-w-full', P38_LIGHT_VLINE);
 export const COMPRAS_HIER_L2 = 'ml-1 pl-2 border-l border-border/10 dark:border-white/[0.06] min-w-0 max-w-full';
 
 /** Superfícies brancas no claro. */
@@ -21,9 +22,8 @@ export const COMPRAS_FORM_ROOT =
 export const COMPRAS_FORM_HEADER =
   'flex-shrink-0 px-4 py-4 flex items-center gap-3 border-b border-border/15 relative bg-background dark:bg-transparent';
 
-/** Faixa “suco de laranja” no topo — toque aconchegante no claro. */
-export const COMPRAS_HEADER_ACCENT =
-  'absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#f07a1a]/55 via-[#f07a1a]/25 to-transparent rounded-t';
+/** Faixa laranja → amarelo no topo — toque aconchegante no claro. */
+export const COMPRAS_HEADER_ACCENT = P38_LIGHT_HEADER_ACCENT;
 
 export const COMPRAS_TABS_BAR =
   'flex-shrink-0 bg-background dark:bg-transparent border-b border-border/15 rounded-none h-auto p-0 flex w-full';

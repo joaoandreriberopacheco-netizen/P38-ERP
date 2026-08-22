@@ -62,7 +62,7 @@ export default function ContaFinanceiraRow({
       }}
       className={cn(
         'group w-full border-b border-border/50 text-left font-din-1451 dark:border-white/10',
-        'border-l-2 px-3 py-3 pr-3 sm:px-4 cursor-pointer',
+        'border-l px-3 py-3 pr-3 sm:px-4 cursor-pointer',
         borderAccent,
         striped && 'bg-secondary/15 dark:bg-secondary/20',
         !ativa && 'opacity-70',

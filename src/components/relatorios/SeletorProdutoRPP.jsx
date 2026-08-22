@@ -173,7 +173,7 @@ const SeletorProdutoRPP = ({ onSelectProduct, onClose }) => {
             // Item SKU (folha)
             <button
               onClick={() => handleSelectProduct(item)}
-              className="w-full p-3 hover:bg-muted/40 dark:hover:bg-muted/50 transition text-left group border-l-2 border-border/40 ml-4"
+              className="w-full p-3 hover:bg-muted/40 dark:hover:bg-muted/50 transition text-left group border-l border-border/40 ml-4"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">

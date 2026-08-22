@@ -43,11 +43,11 @@ export const p38Table = {
   microText: 'text-xs',
 
   /** Linhas mobile compactas (substituem cards em smartphone) */
-  mobileLine: 'border-b border-border/15 dark:border-white/10 border-l-2 py-3 pr-3 pl-4 tablet-portrait:py-4 tablet-portrait:pr-4 tablet-portrait:pl-5 tablet-landscape:py-3.5 tablet-landscape:pl-4 min-w-0 bg-background font-din-1451',
+  mobileLine: 'border-b border-border/15 dark:border-white/10 border-l py-3 pr-3 pl-4 tablet-portrait:py-4 tablet-portrait:pr-4 tablet-portrait:pl-5 tablet-landscape:py-3.5 tablet-landscape:pl-4 min-w-0 bg-background font-din-1451',
   /** Catálogo mobile — fundo transparente; linha suave */
   catalogMobileRow: 'border-b border-border/15 dark:border-white/10 py-4.5 tablet-portrait:py-5 min-w-0 bg-transparent font-din-1451',
   catalogMobileHeader:
-    'flex-shrink-0 border-t-2 border-t-[#f07a1a] dark:border-t-[#a4ce33] border-b border-border/15 dark:border-white/10 bg-background text-foreground shadow-sm',
+    'relative flex-shrink-0 border-b border-border/15 dark:border-white/10 bg-background text-foreground shadow-sm before:absolute before:top-0 before:inset-x-0 before:h-0.5 before:bg-gradient-to-r before:from-[#f07a1a]/70 before:via-[#e8b824]/55 before:to-transparent dark:before:from-[#a4ce33]/80 dark:before:via-[#a4ce33]/40 dark:before:to-transparent',
   /** Mesma linha com barra lateral semântica mais fina (1px) — financeiro */
   mobileLineThin: 'border-b border-border/15 dark:border-white/10 border-l py-3 pr-14 pl-3 sm:pr-4 sm:pl-4 min-w-0 bg-background font-din-1451',
   mobileLineInteractive: 'active:bg-secondary/30 cursor-pointer select-none min-h-[52px] tablet-portrait:min-h-[60px] touch-pan-y',

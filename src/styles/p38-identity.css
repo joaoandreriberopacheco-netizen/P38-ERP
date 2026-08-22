@@ -160,9 +160,22 @@
     @apply font-din1451 font-medium uppercase tracking-wide text-foreground leading-tight break-words;
   }
 
-  /* Linha compacta (substitui card em smartphone) */
+  /* Linha compacta (substitui card em smartphone) — barra lateral sempre fina (1px) */
   .p38-line {
-    @apply border-b border-border/50 dark:border-white/10 border-l-2 border-l-transparent py-3 pr-3 pl-4 min-w-0 bg-background font-din1451;
+    @apply border-b border-border/50 dark:border-white/10 border-l border-l-transparent py-3 pr-3 pl-4 min-w-0 bg-background font-din1451;
+  }
+
+  /* Linha vertical fina reutilizável (hierarquia, listas, tabelas mobile) */
+  .p38-vline {
+    @apply border-l border-border/15 dark:border-white/10;
+  }
+
+  .p38-vline--citrus {
+    border-left-color: rgb(240 122 26 / 0.55);
+  }
+
+  .dark .p38-vline--citrus {
+    border-left-color: rgb(164 206 51 / 0.55);
   }
 
   .p38-line--interactive {

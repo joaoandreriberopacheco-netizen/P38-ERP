@@ -491,7 +491,7 @@ export default function PDVSupermercado() {
                       <div
                         key={produto.id}
                         className={`p-3 desktop-layout:p-4 hover:bg-secondary/60 dark:hover:bg-[#26262e] border-b border-border/40 dark:border-border/40 last:border-b-0 cursor-pointer transition-all flex justify-between items-start gap-3 ${
-                          isSelected ? 'bg-secondary/60 dark:bg-[#26262e] border-l-4 border-l-[#4a5240] dark:border-l-[#a4ce33] pl-3' : 'pl-4'
+                          isSelected ? 'bg-secondary/60 dark:bg-[#26262e] border-l border-l-[#4a5240] dark:border-l-[#a4ce33] pl-3' : 'pl-4'
                         }`}
                         onClick={() => handleSelecionarProduto(produto)}
                       >

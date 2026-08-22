@@ -114,6 +114,6 @@ export function p38SidebarColors(isDark) {
     sectionLabel: t.textMuted,
     subBorder: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
     accent: t.accent,
-    accentMuted: isDark ? 'rgba(164,206,51,0.35)' : 'rgba(240,122,26,0.35)',
+    accentMuted: isDark ? 'rgba(164,206,51,0.35)' : 'rgba(232,184,36,0.28)',
   };
 }
