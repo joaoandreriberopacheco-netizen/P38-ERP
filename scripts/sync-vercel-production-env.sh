@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sincroniza env de produção no projecto Vercel (Next.js + fallback Vite).
+# Sincroniza env de produção no projecto Vercel (Next.js + fallback Vite legado).
 set -euo pipefail
 : "${VERCEL_TOKEN:?VERCEL_TOKEN em falta}"
 
@@ -23,12 +23,13 @@ add_env() {
   echo "  $name → production (Vercel)"
 }
 
-supabase_url="${VITE_SUPABASE_URL:-}"
-supabase_anon="${VITE_SUPABASE_ANON_KEY:-}"
-provider="${VITE_P38_PROVIDER:-supabase}"
-bypass="${VITE_P38_BYPASS_BASE44:-true}"
-use_auth="${VITE_P38_USE_SUPABASE_AUTH:-true}"
-google_login="${VITE_P38_ENABLE_GOOGLE_LOGIN:-}"
+# Next.js produção — NEXT_PUBLIC_* canónico; VITE_* só espelho para scripts locais.
+supabase_url="${NEXT_PUBLIC_SUPABASE_URL:-${VITE_SUPABASE_URL:-}}"
+supabase_anon="${NEXT_PUBLIC_SUPABASE_ANON_KEY:-${VITE_SUPABASE_ANON_KEY:-}}"
+provider="${NEXT_PUBLIC_P38_PROVIDER:-${VITE_P38_PROVIDER:-supabase}}"
+bypass="${NEXT_PUBLIC_P38_BYPASS_BASE44:-${VITE_P38_BYPASS_BASE44:-true}}"
+use_auth="${NEXT_PUBLIC_P38_USE_SUPABASE_AUTH:-${VITE_P38_USE_SUPABASE_AUTH:-true}}"
+google_login="${NEXT_PUBLIC_P38_ENABLE_GOOGLE_LOGIN:-${VITE_P38_ENABLE_GOOGLE_LOGIN:-}}"
 
 echo "[sync-vercel-env] A actualizar env vars de produção no Vercel (Next.js)…"
 
@@ -41,9 +42,9 @@ add_env NEXT_PUBLIC_P38_USE_SUPABASE_AUTH "$use_auth"
 add_env NEXT_PUBLIC_P38_ENABLE_GOOGLE_LOGIN "$google_login"
 
 # Laboratório portal / cadastro v2 — desligado em produção (só homologação)
-portal_homolog="${VITE_HIERARQUIA_PORTAL_ENABLED:-false}"
-cadastro_v2="${VITE_CADASTRO_PRODUTO_V2_ENABLED:-false}"
-modelo_catalogo="${VITE_MODELO_CATALOGO_ENABLED:-false}"
+portal_homolog="${NEXT_PUBLIC_HIERARQUIA_PORTAL_ENABLED:-${VITE_HIERARQUIA_PORTAL_ENABLED:-false}}"
+cadastro_v2="${NEXT_PUBLIC_CADASTRO_PRODUTO_V2_ENABLED:-${VITE_CADASTRO_PRODUTO_V2_ENABLED:-false}}"
+modelo_catalogo="${NEXT_PUBLIC_MODELO_CATALOGO_ENABLED:-${VITE_MODELO_CATALOGO_ENABLED:-false}}"
 add_env NEXT_PUBLIC_HIERARQUIA_PORTAL_ENABLED "$portal_homolog"
 add_env NEXT_PUBLIC_CADASTRO_PRODUTO_V2_ENABLED "$cadastro_v2"
 add_env NEXT_PUBLIC_MODELO_CATALOGO_ENABLED "$modelo_catalogo"
@@ -51,7 +52,7 @@ add_env VITE_HIERARQUIA_PORTAL_ENABLED "$portal_homolog"
 add_env VITE_CADASTRO_PRODUTO_V2_ENABLED "$cadastro_v2"
 add_env VITE_MODELO_CATALOGO_ENABLED "$modelo_catalogo"
 
-# VITE_* — scripts locais / api/auth-p38.js / p38PublicEnv fallback
+# VITE_* — espelho legado (dev Vite / scripts); preenchido a partir de NEXT_PUBLIC quando possível
 add_env VITE_P38_PROVIDER "$provider"
 add_env VITE_P38_BYPASS_BASE44 "$bypass"
 add_env VITE_SUPABASE_URL "$supabase_url" 1

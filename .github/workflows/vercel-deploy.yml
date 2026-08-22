@@ -4,8 +4,9 @@
 #   VERCEL_TOKEN            — https://vercel.com/account/tokens
 #   VERCEL_ORG_ID           — Settings → General (Team/Personal ID)
 #   VERCEL_PROJECT_ID       — Project → Settings → General
-#   VITE_SUPABASE_URL       — https://[ref].supabase.co
-#   VITE_SUPABASE_ANON_KEY  — Supabase → Project Settings → API
+#   NEXT_PUBLIC_SUPABASE_URL       — https://[ref].supabase.co (produção Next.js)
+#   NEXT_PUBLIC_SUPABASE_ANON_KEY  — Supabase → Project Settings → API
+#   VITE_SUPABASE_*                — fallback legado (dev Vite); não usar no deploy se NEXT_PUBLIC existir
 #   DATABASE_URL            — migrações + alinhamento project ref
 #   SUPABASE_ACCESS_TOKEN   — opcional aqui (workflow Supabase Deploy); não bloqueia este job
 #
@@ -59,14 +60,56 @@ jobs:
             echo "VERCEL_PROJECT_ID=$project"
           } >> "$GITHUB_ENV"
 
-      - name: Validar secrets Vercel + Supabase
+      - name: Resolver secrets Supabase (Next.js)
+        shell: bash
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
+          RAW_NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          RAW_NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          RAW_VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          RAW_VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
+          RAW_VITE_P38_USE_SUPABASE_AUTH: ${{ secrets.VITE_P38_USE_SUPABASE_AUTH || secrets.NEXT_PUBLIC_P38_USE_SUPABASE_AUTH }}
+          RAW_VITE_P38_ENABLE_GOOGLE_LOGIN: ${{ secrets.VITE_P38_ENABLE_GOOGLE_LOGIN || secrets.NEXT_PUBLIC_P38_ENABLE_GOOGLE_LOGIN }}
+        run: |
+          set -e
+          trim() { printf '%s' "$1" | tr -d '\n\r'; }
+          next_url=$(trim "$RAW_NEXT_PUBLIC_SUPABASE_URL")
+          next_anon=$(trim "$RAW_NEXT_PUBLIC_SUPABASE_ANON_KEY")
+          vite_url=$(trim "$RAW_VITE_SUPABASE_URL")
+          vite_anon=$(trim "$RAW_VITE_SUPABASE_ANON_KEY")
+          supabase_url="${next_url:-$vite_url}"
+          supabase_anon="${next_anon:-$vite_anon}"
+          if [ -z "$supabase_url" ] || [ -z "$supabase_anon" ]; then
+            echo "::error::Secrets Supabase em falta — grave NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY (GitHub → Settings → Secrets → Actions)."
+            echo "Fallback legado VITE_SUPABASE_* só se NEXT_PUBLIC_* não existir."
+            exit 1
+          fi
+          if [ -z "$next_url" ]; then
+            echo "::warning::NEXT_PUBLIC_SUPABASE_URL em falta — a usar VITE_SUPABASE_URL (legado). Prefira NEXT_PUBLIC_* para produção Next."
+          else
+            echo "NEXT_PUBLIC_SUPABASE_URL: presente"
+          fi
+          if [ -z "$next_anon" ]; then
+            echo "::warning::NEXT_PUBLIC_SUPABASE_ANON_KEY em falta — a usar VITE_SUPABASE_ANON_KEY (legado). Prefira NEXT_PUBLIC_* para produção Next."
+          else
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY: presente"
+          fi
+          use_auth=$(trim "${RAW_VITE_P38_USE_SUPABASE_AUTH:-true}")
+          google_login=$(trim "$RAW_VITE_P38_ENABLE_GOOGLE_LOGIN")
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$supabase_url"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$supabase_anon"
+            echo "VITE_SUPABASE_URL=$supabase_url"
+            echo "VITE_SUPABASE_ANON_KEY=$supabase_anon"
+            echo "VITE_P38_USE_SUPABASE_AUTH=$use_auth"
+            echo "VITE_P38_ENABLE_GOOGLE_LOGIN=$google_login"
+          } >> "$GITHUB_ENV"
+          echo "OK: secrets Supabase resolvidos (Next.js)."
+
+      - name: Validar secrets Vercel + Supabase
         run: |
           set -e
           missing=0
-          for name in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID VITE_SUPABASE_URL VITE_SUPABASE_ANON_KEY; do
+          for name in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY; do
             eval "val=\${$name:-}"
             if [ -z "$val" ]; then
               echo "::error::Secret $name em falta (GitHub → Settings → Secrets → Actions)."
@@ -79,7 +122,8 @@ jobs:
             echo ""
             echo "Vercel: VERCEL_TOKEN em https://vercel.com/account/tokens"
             echo "        VERCEL_ORG_ID / VERCEL_PROJECT_ID no painel do projecto → Settings → General"
-            echo "Supabase: VITE_SUPABASE_ANON_KEY (ou SUPABASE_ANON_KEY) na API do projecto P38"
+            echo "Supabase (Next.js): NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_ANON_KEY"
+            echo "        Supabase → Project Settings → API (Project URL + anon public)"
             exit 1
           fi
           echo "OK: secrets presentes."
@@ -89,8 +133,10 @@ jobs:
 
       - name: Checklist secrets (pré-decolagem)
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ env.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_URL: ${{ env.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ env.VITE_SUPABASE_ANON_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: npm run secrets:check -- --context=vercel-deploy
@@ -104,18 +150,20 @@ jobs:
       - name: Sincronizar env Supabase no projecto Vercel
         run: bash scripts/sync-vercel-production-env.sh
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
-          VITE_P38_USE_SUPABASE_AUTH: ${{ secrets.VITE_P38_USE_SUPABASE_AUTH || 'true' }}
-          VITE_P38_ENABLE_GOOGLE_LOGIN: ${{ secrets.VITE_P38_ENABLE_GOOGLE_LOGIN || '' }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ env.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_URL: ${{ env.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ env.VITE_SUPABASE_ANON_KEY }}
+          VITE_P38_USE_SUPABASE_AUTH: ${{ env.VITE_P38_USE_SUPABASE_AUTH }}
+          VITE_P38_ENABLE_GOOGLE_LOGIN: ${{ env.VITE_P38_ENABLE_GOOGLE_LOGIN }}
 
-      # Next.js lê NEXT_PUBLIC_*; p38PublicEnv aceita também VITE_* como fallback.
+      # Next.js lê NEXT_PUBLIC_*; p38PublicEnv espelha VITE_* para código partilhado.
       - name: Escrever env de produção para o Next
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
-          VITE_P38_USE_SUPABASE_AUTH: ${{ secrets.VITE_P38_USE_SUPABASE_AUTH }}
-          VITE_P38_ENABLE_GOOGLE_LOGIN: ${{ secrets.VITE_P38_ENABLE_GOOGLE_LOGIN }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ env.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          VITE_P38_USE_SUPABASE_AUTH: ${{ env.VITE_P38_USE_SUPABASE_AUTH }}
+          VITE_P38_ENABLE_GOOGLE_LOGIN: ${{ env.VITE_P38_ENABLE_GOOGLE_LOGIN }}
         run: |
           set -e
           use_auth="${VITE_P38_USE_SUPABASE_AUTH:-true}"
@@ -123,8 +171,8 @@ jobs:
           {
             echo "NEXT_PUBLIC_P38_PROVIDER=supabase"
             echo "NEXT_PUBLIC_P38_BYPASS_BASE44=true"
-            echo "NEXT_PUBLIC_SUPABASE_URL=${VITE_SUPABASE_URL}"
-            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}"
+            echo "NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}"
             echo "NEXT_PUBLIC_P38_USE_SUPABASE_AUTH=${use_auth}"
             echo "NEXT_PUBLIC_P38_ENABLE_GOOGLE_LOGIN=${google_login}"
             echo "NEXT_PUBLIC_HIERARQUIA_PORTAL_ENABLED=false"
@@ -132,8 +180,8 @@ jobs:
             echo "NEXT_PUBLIC_MODELO_CATALOGO_ENABLED=false"
             echo "VITE_P38_PROVIDER=supabase"
             echo "VITE_P38_BYPASS_BASE44=true"
-            echo "VITE_SUPABASE_URL=${VITE_SUPABASE_URL}"
-            echo "VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}"
+            echo "VITE_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}"
+            echo "VITE_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}"
             echo "VITE_P38_USE_SUPABASE_AUTH=${use_auth}"
             echo "VITE_P38_ENABLE_GOOGLE_LOGIN=${google_login}"
             echo "VITE_HIERARQUIA_PORTAL_ENABLED=false"
@@ -147,26 +195,26 @@ jobs:
         env:
           NEXT_PUBLIC_P38_PROVIDER: supabase
           NEXT_PUBLIC_P38_BYPASS_BASE44: 'true'
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
-          NEXT_PUBLIC_P38_USE_SUPABASE_AUTH: ${{ secrets.VITE_P38_USE_SUPABASE_AUTH || 'true' }}
-          NEXT_PUBLIC_P38_ENABLE_GOOGLE_LOGIN: ${{ secrets.VITE_P38_ENABLE_GOOGLE_LOGIN || '' }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ env.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_P38_USE_SUPABASE_AUTH: ${{ env.VITE_P38_USE_SUPABASE_AUTH || 'true' }}
+          NEXT_PUBLIC_P38_ENABLE_GOOGLE_LOGIN: ${{ env.VITE_P38_ENABLE_GOOGLE_LOGIN || '' }}
           NEXT_PUBLIC_HIERARQUIA_PORTAL_ENABLED: 'false'
           NEXT_PUBLIC_CADASTRO_PRODUTO_V2_ENABLED: 'false'
           NEXT_PUBLIC_MODELO_CATALOGO_ENABLED: 'false'
           VITE_P38_PROVIDER: supabase
           VITE_P38_BYPASS_BASE44: 'true'
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
-          VITE_P38_USE_SUPABASE_AUTH: ${{ secrets.VITE_P38_USE_SUPABASE_AUTH || 'true' }}
-          VITE_P38_ENABLE_GOOGLE_LOGIN: ${{ secrets.VITE_P38_ENABLE_GOOGLE_LOGIN || '' }}
+          VITE_SUPABASE_URL: ${{ env.NEXT_PUBLIC_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          VITE_P38_USE_SUPABASE_AUTH: ${{ env.VITE_P38_USE_SUPABASE_AUTH || 'true' }}
+          VITE_P38_ENABLE_GOOGLE_LOGIN: ${{ env.VITE_P38_ENABLE_GOOGLE_LOGIN || '' }}
 
       - name: Verificar Supabase embutido no bundle Next
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ env.NEXT_PUBLIC_SUPABASE_URL }}
         run: |
           set -e
-          ref=$(echo "$VITE_SUPABASE_URL" | sed -E 's#https?://([^.]+)\.supabase\.co.*#\1#')
+          ref=$(echo "$NEXT_PUBLIC_SUPABASE_URL" | sed -E 's#https?://([^.]+)\.supabase\.co.*#\1#')
           found=0
           while IFS= read -r -d '' f; do
             if grep -q "$ref" "$f" 2>/dev/null; then found=1; break; fi
@@ -186,10 +234,10 @@ jobs:
 
       - name: Verificar produção expõe Supabase no bundle Next
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ env.NEXT_PUBLIC_SUPABASE_URL }}
         run: |
           set -e
-          ref=$(echo "$VITE_SUPABASE_URL" | sed -E 's#https?://([^.]+)\.supabase\.co.*#\1#')
+          ref=$(echo "$NEXT_PUBLIC_SUPABASE_URL" | sed -E 's#https?://([^.]+)\.supabase\.co.*#\1#')
           ok=0
           for attempt in 1 2 3 4 5 6 8 10; do
             html=$(curl -fsSL "https://p-38erp.vercel.app/login" || true)

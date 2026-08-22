@@ -9,9 +9,9 @@ O workflow **Vercel Deploy** (`.github/workflows/vercel-deploy.yml`) faz build c
 | `VERCEL_TOKEN` | [vercel.com/account/tokens](https://vercel.com/account/tokens) |
 | `VERCEL_ORG_ID` | Vercel → Settings → General (Team ID ou User ID) |
 | `VERCEL_PROJECT_ID` | Projecto → Settings → General → Project ID |
-| `VITE_SUPABASE_URL` | `https://zhonvxkkqabfdyehyxpu.supabase.co` (P38) |
-| `VITE_SUPABASE_ANON_KEY` | Supabase → Project Settings → API → anon public |
-| `SUPABASE_ANON_KEY` | Alias aceite no workflow (mesmo valor que acima) |
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://zhonvxkkqabfdyehyxpu.supabase.co` (P38) — **canónico Next.js** |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Project Settings → API → anon public |
+| `VITE_SUPABASE_*` | Fallback legado (dev Vite); o workflow aceita se `NEXT_PUBLIC_*` não existir |
 
 Opcional: `VITE_P38_USE_SUPABASE_AUTH` = `true` quando login Supabase estiver activo.
 

@@ -70,13 +70,17 @@ function requiredForContext(context, secrets) {
     push('VERCEL_PROJECT_ID', Boolean(secrets.vercelProjectId), 'Project → Settings → General');
   }
 
-  // Deploy SPA no Vercel — não precisa de SUPABASE_ACCESS_TOKEN (só Edge Functions / supabase-deploy).
+  // Deploy Next.js no Vercel — NEXT_PUBLIC_* canónico; VITE_* só fallback legado.
   if (context === 'vercel-deploy') {
-    push('VITE_SUPABASE_URL', Boolean(secrets.viteSupabaseUrl), 'Supabase → Project Settings → API → Project URL');
     push(
-      'VITE_SUPABASE_ANON_KEY',
-      Boolean(secrets.viteSupabaseAnonKey),
-      'Supabase → Project Settings → API → anon public'
+      'NEXT_PUBLIC_SUPABASE_URL',
+      Boolean(secrets.nextPublicSupabaseUrl || secrets.supabaseUrl),
+      'Supabase → Project Settings → API → Project URL (nome GitHub: NEXT_PUBLIC_SUPABASE_URL)'
+    );
+    push(
+      'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+      Boolean(secrets.nextPublicSupabaseAnonKey || secrets.supabaseAnonKey),
+      'Supabase → Project Settings → API → anon public (nome GitHub: NEXT_PUBLIC_SUPABASE_ANON_KEY)'
     );
   }
 
@@ -84,7 +88,7 @@ function requiredForContext(context, secrets) {
     push(
       'P38_AUTH_URL (derivável)',
       Boolean(secrets.p38AuthUrl),
-      'Auto: VITE_SUPABASE_URL + /functions/v1/p38-auth — ou defina P38_AUTH_URL'
+      'Auto: NEXT_PUBLIC_SUPABASE_URL + /functions/v1/p38-auth — ou defina P38_AUTH_URL'
     );
   }
 
@@ -155,8 +159,10 @@ async function main() {
   }
 
   console.log('\n[secrets:check] Presença (sem valores):');
-  console.log(' ', maskPresence('VITE_SUPABASE_URL', secrets.viteSupabaseUrl));
-  console.log(' ', maskPresence('VITE_SUPABASE_ANON_KEY', secrets.viteSupabaseAnonKey));
+  console.log(' ', maskPresence('NEXT_PUBLIC_SUPABASE_URL', secrets.nextPublicSupabaseUrl || secrets.supabaseUrl));
+  console.log(' ', maskPresence('NEXT_PUBLIC_SUPABASE_ANON_KEY', secrets.nextPublicSupabaseAnonKey || secrets.supabaseAnonKey));
+  console.log(' ', maskPresence('VITE_SUPABASE_URL (legado)', secrets.viteSupabaseUrl));
+  console.log(' ', maskPresence('VITE_SUPABASE_ANON_KEY (legado)', secrets.viteSupabaseAnonKey));
   console.log(' ', maskPresence('DATABASE_URL', secrets.databaseUrl));
   console.log(' ', maskPresence('SUPABASE_ACCESS_TOKEN', secrets.accessToken));
   console.log(' ', maskPresence('SUPABASE_SERVICE_ROLE_KEY', secrets.serviceRoleKey));
