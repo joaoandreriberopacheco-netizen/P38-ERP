@@ -16,6 +16,7 @@ export default function RouteModeToggle({ value, onChange }) {
         return (
           <button
             key={option.value}
+            {...(option.value === 'Fluvial' ? { 'data-pulse-sensor': 'itinerario-fluvial.modo-fluvial' } : {})}
             onClick={() => onChange(option.value)}
             className={`snap-start flex items-center justify-center gap-2 min-w-[132px] px-4 py-3 rounded-2xl shadow-sm text-sm whitespace-nowrap transition-all ${active ? 'bg-muted text-foreground dark:bg-muted dark:text-foreground' : 'bg-muted/70 text-muted-foreground dark:bg-background dark:text-muted-foreground'}`}
           >

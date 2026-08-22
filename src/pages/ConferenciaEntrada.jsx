@@ -11,7 +11,7 @@ export default function ConferenciaEntrada() {
   const [activeTab, setActiveTab] = useState('codigos');
 
   const tabs = [
-    { value: 'codigos', label: 'Gerar Códigos', icon: QrCode },
+    { value: 'codigos', label: 'Gerar Códigos', icon: QrCode, pulseSensor: 'conferencia-entrada.tab-codigos' },
     { value: 'fiscalizacao', label: 'Fiscalização', icon: Layers },
   ];
 
@@ -32,6 +32,7 @@ export default function ConferenciaEntrada() {
               onSelect={setActiveTab}
               icon={tab.icon}
               label={tab.label}
+              pulseSensor={tab.pulseSensor}
             />
           ))}
         </GlacialTabsList>

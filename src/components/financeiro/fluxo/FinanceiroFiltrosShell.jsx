@@ -16,6 +16,7 @@ export default function FinanceiroFiltrosShell({
   search,
   onSearch,
   searchPlaceholder = 'Buscar...',
+  pulseSensorId,
   filtersOpen,
   onFiltersOpenChange,
   hasActiveFilters,
@@ -44,6 +45,7 @@ export default function FinanceiroFiltrosShell({
           <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
           <input
             autoComplete="off"
+            {...(pulseSensorId ? { 'data-pulse-sensor': pulseSensorId } : {})}
             value={search}
             onChange={(e) => onSearch(e.target.value)}
             placeholder={searchPlaceholder}

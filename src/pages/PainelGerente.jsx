@@ -209,6 +209,7 @@ export default function PainelGerente() {
               <div className="relative">
                 <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
+                  data-pulse-sensor="painel-gerente.busca-cliente"
                   placeholder="BUSCAR..."
                   value={filtros.cliente}
                   onChange={(e) => setFiltros({ ...filtros, cliente: e.target.value })}

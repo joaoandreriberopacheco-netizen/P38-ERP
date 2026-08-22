@@ -247,6 +247,7 @@ export default function AprovacoesFinanceirasPage() {
             </p>
           </div>
           <Button
+            data-pulse-sensor="aprovacoes-financeiras.aprovar-lote"
             variant="ghost"
             onClick={() => {
               setModoSelecaoLote((prev) => !prev);

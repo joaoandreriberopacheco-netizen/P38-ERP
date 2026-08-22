@@ -378,6 +378,7 @@ export default function FiltrosFluxoCaixa({
       search={search}
       onSearch={onSearch}
       searchPlaceholder="Buscar lançamento, categoria, tag… ou \\conta"
+      pulseSensorId="fluxo-caixa.busca"
       filtersOpen={filtersOpen}
       onFiltersOpenChange={setFiltersOpen}
       hasActiveFilters={hasPanelFilters}

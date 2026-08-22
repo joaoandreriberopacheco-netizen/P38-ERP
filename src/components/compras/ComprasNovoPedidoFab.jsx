@@ -7,6 +7,7 @@ export default function ComprasNovoPedidoFab({ onNovopedido }) {
     <button
       type="button"
       onClick={onNovopedido}
+      data-pulse-sensor="pedidos-compra.novo-pedido"
       className={`fixed right-4 z-[55] flex h-14 w-14 items-center justify-center rounded-full ${COMPRAS_FAB} p38-bottom-fab1 md:bottom-6 md:right-6`}
       title="Novo pedido de compra"
       aria-label="Novo pedido de compra"

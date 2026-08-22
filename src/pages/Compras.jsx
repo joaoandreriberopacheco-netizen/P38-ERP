@@ -412,6 +412,7 @@ export default function ComprasPage() {
             return (
               <button
                 key={tab.value}
+                {...(tab.value === 'sugestoes' ? { 'data-pulse-sensor': 'compras.tab-sugestoes' } : {})}
                 onClick={() => handleTabChange(tab.value)}
                 className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-xl text-xs font-medium transition-all duration-200 whitespace-nowrap ${
                   isActive

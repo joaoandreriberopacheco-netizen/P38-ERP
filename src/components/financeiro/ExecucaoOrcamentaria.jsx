@@ -864,7 +864,10 @@ export default function ExecucaoOrcamentaria() {
       <div className="min-w-0 max-w-full space-y-2">
         <div className="flex flex-col gap-2">
           <div className="flex min-w-0 items-center gap-2">
-            <h1 className={cn(P38_PAGE_TITLE, 'min-w-0 flex-1 truncate text-lg md:text-2xl font-glacial leading-none')}>
+            <h1
+              className={cn(P38_PAGE_TITLE, 'min-w-0 flex-1 truncate text-lg md:text-2xl font-glacial leading-none')}
+              data-pulse-sensor="fluxo-caixa.titulo"
+            >
               Financeiro
             </h1>
             {aba === 'fluxo' && (

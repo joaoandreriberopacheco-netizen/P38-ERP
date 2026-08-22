@@ -50,7 +50,7 @@ export default function ExpedicaoPage() {
   return (
     <div className="p-4 md:p-6 lg:p-8 font-din-1451 bg-background pb-[var(--p38-scroll-pad-below-nav)] md:pb-8 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-foreground mb-2">Expedição e Entrega</h1>
+        <h1 className="text-3xl font-bold text-foreground mb-2" data-pulse-sensor="expedicao.titulo">Expedição e Entrega</h1>
         <p className="text-muted-foreground mb-8">Confirme a entrega dos pedidos separados.</p>
 
         {pedidosProntos.length === 0 ? (
@@ -84,6 +84,7 @@ export default function ExpedicaoPage() {
                   trailing={
                     <Button
                       size="sm"
+                      data-pulse-sensor="expedicao.confirmar"
                       onClick={() => handleConfirmarEntrega(pedido)}
                       className="bg-[#4A5D23] hover:bg-[#3d4f1d] dark:bg-[#a4ce33] dark:hover:bg-[#8fb32a] dark:text-foreground gap-1 shrink-0 h-9"
                     >

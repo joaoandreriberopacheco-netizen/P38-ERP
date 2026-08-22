@@ -192,6 +192,7 @@ export default function HomePage() {
             {podePersonalizar && (
               <button
                 type="button"
+                data-pulse-sensor="home.personalizar"
                 onClick={() => setShowPersonalizar(true)}
                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors p-1 touch-manipulation"
               >
