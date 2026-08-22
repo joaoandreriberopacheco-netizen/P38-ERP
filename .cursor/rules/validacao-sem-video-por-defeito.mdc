@@ -7,9 +7,14 @@ alwaysApply: true
 
 ## Regra principal
 
-- Não produzir vídeo de demonstração nem screenshots por padrão.
+- **Não** produzir vídeo de demonstração nem screenshots por padrão (consomem muito crédito).
 - A validação padrão deve priorizar evidência objetiva de terminal (ex.: build, typecheck, comandos focados).
-- Só gerar artefatos visuais quando o utilizador pedir explicitamente.
+- Só gerar artefatos visuais quando o utilizador pedir **explicitamente**.
+
+## Estratégia de revisão visual (preferida)
+
+- Em vez de gravação/screenshot, disponibilizar **link da branch / PR** (ou preview do deploy da branch) para o utilizador abrir e ver o resultado.
+- No resumo final: apontar claramente o URL da PR/branch e o que olhar — sem walkthrough em vídeo.
 
 ## Em caso de conflito de instruções
 
