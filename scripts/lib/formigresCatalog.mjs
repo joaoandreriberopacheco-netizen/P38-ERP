@@ -145,6 +145,9 @@ export function scoreMatch(prod, parsed) {
   for (const tok of parsed.tokens) {
     if (/^(BEGE|CAFE|CAFÉ|MARFIM|BG|CZ)$/i.test(tok) && title.includes(stripAccents(tok).toUpperCase())) score += 15;
   }
+  if (/\bBG\b/i.test(parsed.raw) && /\bBG\b/i.test(prod.titulo)) score += 18;
+  if (/\bBG\b/i.test(parsed.raw) && /\bBR\b/i.test(prod.titulo) && !/\bBG\b/i.test(prod.titulo)) score -= 25;
+  if (/\bCZ\b/i.test(parsed.raw) && /\bCZ\b/i.test(prod.titulo)) score += 18;
   if (/CL/i.test(parsed.raw) && title.includes('CL')) score += 12;
   if (/\bM[\s-]?45\b/i.test(parsed.raw) && /\bM\s*45\b/.test(prod.titulo)) score += 12;
   if (/\bTAIKO\b/i.test(parsed.raw) && /\bBEGE\b/i.test(parsed.raw) && /\bTAIKO\b/i.test(prod.titulo) && /\bBG\b/i.test(prod.titulo)) score += 20;
