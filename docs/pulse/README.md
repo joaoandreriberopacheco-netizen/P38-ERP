@@ -55,7 +55,7 @@ npm run pulse:all      # lote 1 + lote 2 (42 rotas)
 
 ## CI
 
-O workflow `.github/workflows/ci.yml` corre `npm run pulse` após o build Next.
+O workflow `.github/workflows/ci.yml` corre `npm run pulse:all` (42 rotas) após o build Next.
 
 ## Saída exemplo
 
