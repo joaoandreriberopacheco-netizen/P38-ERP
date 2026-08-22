@@ -145,7 +145,7 @@ export default function AutoShop({
         )}
       </header>
 
-      <div className="px-4 py-3 bg-white dark:bg-card border-b border-[#dce0d4] dark:border-border/40 shrink-0">
+      <div className="px-4 py-3 bg-background dark:bg-card border-b border-border/40 dark:border-border/40 shrink-0">
         <div className="max-w-4xl mx-auto flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -209,7 +209,7 @@ export default function AutoShop({
       </div>
 
       {carrinho.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-card border-t border-[#dce0d4] dark:border-border/40 p-4 shadow-[0_-8px_30px_rgba(0,0,0,0.06)]">
+        <div className="fixed bottom-0 left-0 right-0 z-30 bg-background dark:bg-card border-t border-border/40 dark:border-border/40 p-4 shadow-[0_-8px_30px_rgba(0,0,0,0.06)]">
           <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
             <button
               type="button"

@@ -191,12 +191,12 @@
 
   /* Contentor lista mobile (oculto em md+ quando há tabela desktop) */
   .p38-list-shell {
-    @apply md:hidden overflow-y-auto rounded-lg border border-border/40 dark:border-white/10 bg-background;
+    @apply md:hidden overflow-y-auto rounded-lg border-0 shadow-sm bg-background dark:border dark:border-white/10;
   }
 
   /* Contentor lista em todos os viewports */
   .p38-line-list-shell {
-    @apply overflow-y-auto rounded-lg border border-border/40 dark:border-white/10 bg-background;
+    @apply overflow-y-auto rounded-lg border-0 shadow-sm bg-background dark:border dark:border-white/10;
   }
 
   /* Inputs operacionais — visual maiúsculo instantâneo; valor normalizado no onChange/blur */
@@ -339,11 +339,11 @@
 
   /* Cartão de opção (modal unidade, seletores PDV) */
   .p38-option-card {
-    @apply w-full rounded-2xl p-4 text-left transition-all shadow-sm bg-muted/50 text-foreground border border-transparent;
+    @apply w-full rounded-2xl p-4 text-left transition-all shadow-sm bg-card text-foreground border-0;
   }
 
   .p38-option-card:hover {
-    @apply bg-muted/70;
+    @apply bg-secondary/40;
   }
 
   .p38-option-card--selected {

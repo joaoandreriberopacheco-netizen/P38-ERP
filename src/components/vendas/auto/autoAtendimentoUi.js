@@ -1,5 +1,16 @@
 /** Estilo e helpers compartilhados do totem de auto-atendimento e PDV supermercado.
- *  Capa roxa (header) + interior claro P38 + CTAs verde escuro. */
+ *  Capa roxa (header) + interior branco puro P38 + CTAs verde escuro. */
+
+import { cn } from '@/components/utils';
+import {
+  P38_LIGHT_BORDER,
+  P38_LIGHT_CARD,
+  P38_LIGHT_CITRUS_TEXT,
+  P38_LIGHT_FIELD,
+  P38_LIGHT_HOVER,
+  P38_LIGHT_OLIVE_BTN,
+  P38_LIGHT_PAGE,
+} from '@/lib/p38LightTheme';
 
 /** Capa roxa — só header, banner de boas-vindas e faixa de avisos. */
 export const AUTO_COVER_CLASS = 'bg-indigo-600 text-white';
@@ -7,33 +18,39 @@ export const AUTO_COVER_CLASS = 'bg-indigo-600 text-white';
 export const AUTO_HEADER_CLASS =
   `${AUTO_COVER_CLASS} px-4 py-3 flex items-center justify-between shadow-md shrink-0`;
 
-/** Fundo interior — branco puro P38. */
-export const AUTO_SHELL_BG = 'bg-background dark:bg-background';
+/** Fundo interior — branco puro. */
+export const AUTO_SHELL_BG = P38_LIGHT_PAGE;
 
-/** Cartões brancos com borda suave neutra. */
-export const AUTO_SURFACE_CLASS =
-  'bg-card border border-border/40 dark:border-border/40 rounded-xl shadow-sm';
+/** Cartões brancos com sombra leve. */
+export const AUTO_SURFACE_CLASS = cn(P38_LIGHT_CARD, 'rounded-xl border', P38_LIGHT_BORDER);
 
-/** Campos de busca / inputs operacionais — superfície P38. */
-export const AUTO_FIELD_CLASS = 'p38-field-surface border-0 shadow-none rounded-xl';
+/** Campos de busca / inputs operacionais. */
+export const AUTO_FIELD_CLASS = cn(P38_LIGHT_FIELD, 'rounded-xl');
 
 /** CTA principal — verde oliva P38. */
-export const AUTO_PRIMARY_BTN =
-  'bg-[#4a5240] hover:bg-[#3f4637] text-white font-bold rounded-xl';
+export const AUTO_PRIMARY_BTN = cn(P38_LIGHT_OLIVE_BTN, 'font-bold rounded-xl');
 
 /** Acento oliva P38 — ícones, preços, detalhes. */
 export const AUTO_ACCENT_TEXT = 'text-[#4a5240] dark:text-[#a4ce33]';
-export const AUTO_ACCENT_BG = 'bg-muted dark:bg-[#26262e]';
+export const AUTO_ACCENT_BG = 'bg-card shadow-sm dark:bg-[#26262e]';
 export const AUTO_ACCENT_BG_STRONG = 'bg-secondary dark:bg-[#383e47]';
 
-/** Amarelo cítrico P38 — destaques pontuais. */
-export const AUTO_CITRUS_TEXT = 'text-[#c99710] dark:text-[#e8b824]';
-export const AUTO_CITRUS_BG = 'bg-[#e8b824]/15 dark:bg-[#e8b824]/10';
-export const AUTO_CITRUS_BORDER = 'border-[#e8b824]/40';
+/** Laranja suco — destaques pontuais. */
+export const AUTO_CITRUS_TEXT = `${P38_LIGHT_CITRUS_TEXT} dark:text-[#e8b824]`;
+export const AUTO_CITRUS_BG = 'bg-[#f07a1a]/12 dark:bg-[#e8b824]/10';
+export const AUTO_CITRUS_BORDER = 'border-[#f07a1a]/30 dark:border-[#e8b824]/40';
 
-/** Hover de cartão no interior claro. */
-export const AUTO_CARD_HOVER =
-  'hover:border-[#4a5240]/35 hover:shadow-md active:scale-[0.98] transition-all';
+/** Hover de cartão / linha no interior claro. */
+export const AUTO_CARD_HOVER = cn(
+  'hover:border-[#f07a1a]/25 hover:shadow-md active:scale-[0.98] transition-all',
+  P38_LIGHT_HOVER,
+);
+
+/** Hover em botões secundários com fundo suave. */
+export const AUTO_SOFT_HOVER = 'hover:bg-secondary/60 dark:hover:bg-[#26262e]';
+
+/** Borda neutra partilhada. */
+export const AUTO_BORDER_CLASS = cn('border', P38_LIGHT_BORDER);
 
 /** @deprecated use AUTO_SURFACE_CLASS */
 export const AUTO_CARD_CLASS = AUTO_SURFACE_CLASS;

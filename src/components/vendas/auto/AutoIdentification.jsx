@@ -91,7 +91,7 @@ export default function AutoIdentification({ onIdentify, onSkip, onRegister, onB
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 ${AUTO_ACCENT_TEXT} hover:bg-[#f0f2ec] dark:hover:bg-[#26262e] rounded-lg`}
+                  className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 ${AUTO_ACCENT_TEXT} hover:bg-secondary/60 dark:hover:bg-[#26262e] rounded-lg`}
                 >
                   <Search className="w-5 h-5" />
                 </button>

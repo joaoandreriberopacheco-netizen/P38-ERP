@@ -441,7 +441,7 @@ export default function PDVSupermercado() {
         {/* Left: Product List */}
         <div className="flex-1 flex flex-col p-3 desktop-layout:p-4 overflow-hidden pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] desktop-layout:pb-4">
           {/* Search and Add Product Area - MATCHING PDV VENDEDOR STYLE */}
-          <div className="mb-3 desktop-layout:mb-4 flex-shrink-0 relative px-3 py-3 -mx-3 desktop-layout:mx-0 desktop-layout:px-0 desktop-layout:py-0 bg-white dark:bg-card border-b border-[#dce0d4] dark:border-border/40 desktop-layout:bg-transparent desktop-layout:border-0" ref={suggestionsRef}>
+          <div className="mb-3 desktop-layout:mb-4 flex-shrink-0 relative px-3 py-3 -mx-3 desktop-layout:mx-0 desktop-layout:px-0 desktop-layout:py-0 bg-background dark:bg-card border-b border-border/40 dark:border-border/40 desktop-layout:bg-transparent desktop-layout:border-0" ref={suggestionsRef}>
             <div className="flex gap-2">
                 <div className="flex-1 relative min-w-0">
                   <Barcode className={`absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 ${AUTO_ACCENT_TEXT} opacity-70`} />
@@ -459,7 +459,7 @@ export default function PDVSupermercado() {
                     variant="ghost"
                     size="icon"
                     onClick={() => setShowBarcodeScanner(true)}
-                    className={`absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 ${AUTO_ACCENT_TEXT} hover:bg-[#f0f2ec] dark:hover:bg-[#26262e]`}
+                    className={`absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 ${AUTO_ACCENT_TEXT} hover:bg-secondary/60 dark:hover:bg-[#26262e]`}
                   >
                     <Camera className="w-5 h-5" />
                   </Button>
@@ -490,8 +490,8 @@ export default function PDVSupermercado() {
                     return (
                       <div
                         key={produto.id}
-                        className={`p-3 desktop-layout:p-4 hover:bg-[#f0f2ec] dark:hover:bg-[#26262e] border-b border-[#dce0d4] dark:border-border/40 last:border-b-0 cursor-pointer transition-all flex justify-between items-start gap-3 ${
-                          isSelected ? 'bg-[#f0f2ec] dark:bg-[#26262e] border-l-4 border-l-[#4a5240] dark:border-l-[#a4ce33] pl-3' : 'pl-4'
+                        className={`p-3 desktop-layout:p-4 hover:bg-secondary/60 dark:hover:bg-[#26262e] border-b border-border/40 dark:border-border/40 last:border-b-0 cursor-pointer transition-all flex justify-between items-start gap-3 ${
+                          isSelected ? 'bg-secondary/60 dark:bg-[#26262e] border-l-4 border-l-[#4a5240] dark:border-l-[#a4ce33] pl-3' : 'pl-4'
                         }`}
                         onClick={() => handleSelecionarProduto(produto)}
                       >
@@ -561,7 +561,7 @@ export default function PDVSupermercado() {
           </div>
 
           {/* Cart List */}
-          <div className={`flex-1 overflow-y-auto ${AUTO_SURFACE_CLASS} min-h-0 bg-white dark:bg-card`}>
+          <div className={`flex-1 overflow-y-auto ${AUTO_SURFACE_CLASS} min-h-0 bg-background dark:bg-card`}>
             {/* Mobile: cards */}
             <div className="desktop-layout:hidden p-2 space-y-2">
               {carrinho.map((item) => (
@@ -594,7 +594,7 @@ export default function PDVSupermercado() {
                       <button
                         type="button"
                         onClick={() => updateCartItemQuantity(item, -1)}
-                        className={`min-h-11 min-w-11 ${AUTO_ACCENT_BG} ${AUTO_ACCENT_TEXT} rounded-lg hover:bg-[#e8ebe3] dark:hover:bg-[#383e47] font-bold text-lg`}
+                        className={`min-h-11 min-w-11 ${AUTO_ACCENT_BG} ${AUTO_ACCENT_TEXT} rounded-lg hover:bg-muted dark:hover:bg-[#383e47] font-bold text-lg`}
                         aria-label="Diminuir quantidade"
                       >
                         -
@@ -603,7 +603,7 @@ export default function PDVSupermercado() {
                       <button
                         type="button"
                         onClick={() => updateCartItemQuantity(item, 1)}
-                        className={`min-h-11 min-w-11 ${AUTO_ACCENT_BG} ${AUTO_ACCENT_TEXT} rounded-lg hover:bg-[#e8ebe3] dark:hover:bg-[#383e47] font-bold text-lg`}
+                        className={`min-h-11 min-w-11 ${AUTO_ACCENT_BG} ${AUTO_ACCENT_TEXT} rounded-lg hover:bg-muted dark:hover:bg-[#383e47] font-bold text-lg`}
                         aria-label="Aumentar quantidade"
                       >
                         +
@@ -617,7 +617,7 @@ export default function PDVSupermercado() {
             {/* Desktop: table */}
             <div className="hidden desktop-layout:block p-2">
             <table className="w-full text-left text-sm">
-              <thead className={`${AUTO_ACCENT_BG} text-muted-foreground border-b border-[#dce0d4] dark:border-border/40`}>
+              <thead className={`${AUTO_ACCENT_BG} text-muted-foreground border-b border-border/40 dark:border-border/40`}>
                 <tr>
                   <th className="p-3">Produto</th>
                   <th className="p-3 text-center">Qtd</th>
@@ -639,9 +639,9 @@ export default function PDVSupermercado() {
                     </td>
                     <td className="p-3 text-center">
                       <div className="flex items-center justify-center gap-2">
-                        <button type="button" onClick={() => updateCartItemQuantity(item, -1)} className={`min-h-11 min-w-11 ${AUTO_ACCENT_BG} rounded-lg hover:bg-[#e8ebe3] dark:hover:bg-[#383e47] font-bold text-base ${AUTO_ACCENT_TEXT}`}>-</button>
+                        <button type="button" onClick={() => updateCartItemQuantity(item, -1)} className={`min-h-11 min-w-11 ${AUTO_ACCENT_BG} rounded-lg hover:bg-muted dark:hover:bg-[#383e47] font-bold text-base ${AUTO_ACCENT_TEXT}`}>-</button>
                         <span className="w-8 font-semibold">{item.quantidade}</span>
-                        <button type="button" onClick={() => updateCartItemQuantity(item, 1)} className={`min-h-11 min-w-11 ${AUTO_ACCENT_BG} rounded-lg hover:bg-[#e8ebe3] dark:hover:bg-[#383e47] font-bold text-base ${AUTO_ACCENT_TEXT}`}>+</button>
+                        <button type="button" onClick={() => updateCartItemQuantity(item, 1)} className={`min-h-11 min-w-11 ${AUTO_ACCENT_BG} rounded-lg hover:bg-muted dark:hover:bg-[#383e47] font-bold text-base ${AUTO_ACCENT_TEXT}`}>+</button>
                       </div>
                       <div className="text-[10px] text-muted-foreground mt-1">{item.unidade_medida || 'UN'}</div>
                     </td>
@@ -669,7 +669,7 @@ export default function PDVSupermercado() {
         </div>
 
         {/* Right: Summary & Actions — tablet+ split; telemóvel usa barra inferior */}
-        <div className={`hidden desktop-layout:flex flex-col w-72 lg:w-80 xl:w-96 flex-shrink-0 bg-white dark:bg-card border-l border-[#dce0d4] dark:border-border/40 p-4 lg:p-6 shadow-lg z-10`}>
+        <div className={`hidden desktop-layout:flex flex-col w-72 lg:w-80 xl:w-96 flex-shrink-0 bg-background dark:bg-card border-l border-border/40 dark:border-border/40 p-4 lg:p-6 shadow-lg z-10`}>
           <div className="mb-6">
             <h2 className={`${AUTO_ACCENT_TEXT} uppercase text-xs font-bold tracking-wider mb-2 opacity-80`}>Resumo</h2>
             <div className={`text-4xl font-bold mb-1 tabular-nums ${AUTO_ACCENT_TEXT}`}>R$ {totalCarrinho.toFixed(2)}</div>
@@ -709,12 +709,12 @@ export default function PDVSupermercado() {
       </div>
 
       {/* Barra inferior — smartphone (estilo auto-atendimento) */}
-      <div className="desktop-layout:hidden fixed left-0 right-0 bottom-0 z-50 border-t border-[#dce0d4] dark:border-border/40 bg-white dark:bg-card shadow-[0_-8px_30px_rgba(0,0,0,0.06)]">
+      <div className="desktop-layout:hidden fixed left-0 right-0 bottom-0 z-50 border-t border-border/40 dark:border-border/40 bg-background dark:bg-card shadow-[0_-8px_30px_rgba(0,0,0,0.06)]">
         <div className="flex items-center gap-3 px-3 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
           <button
             type="button"
             onClick={() => setShowClienteDialog(true)}
-            className={`flex min-w-0 max-w-[34%] flex-col rounded-xl border border-[#dce0d4] dark:border-border/40 ${AUTO_ACCENT_BG} px-3 py-2 text-left`}
+            className={`flex min-w-0 max-w-[34%] flex-col rounded-xl border border-border/40 dark:border-border/40 ${AUTO_ACCENT_BG} px-3 py-2 text-left`}
           >
             <span className={`text-[10px] uppercase tracking-wide ${AUTO_ACCENT_TEXT} opacity-80`}>Cliente</span>
             <span className="truncate text-sm font-medium">{cliente ? cliente.nome : 'Consumidor Final'}</span>
@@ -815,18 +815,18 @@ export default function PDVSupermercado() {
       <Dialog open={showClienteDialog} onOpenChange={setShowClienteDialog}>
         <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] desktop-layout:w-full p-0 gap-0 overflow-hidden">
           <div className="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
-          <div className="p-6 bg-white dark:bg-card">
+          <div className="p-6 bg-background dark:bg-card">
            <DialogHeader><DialogTitle className={AUTO_ACCENT_TEXT}>Selecionar Cliente</DialogTitle></DialogHeader>
            <Input placeholder="Buscar cliente..." value={buscaCliente} onChange={e => setBuscaCliente(e.target.value)} autoFocus className={`mt-4 ${AUTO_FIELD_CLASS}`} />
            <div className="mt-4 max-h-60 overflow-y-auto space-y-1">
               {clientes.filter(c => c.nome.toLowerCase().includes(buscaCliente.toLowerCase())).map(c => (
-                 <div key={c.id} className="p-3 hover:bg-[#f0f2ec] dark:hover:bg-[#26262e] cursor-pointer rounded-xl border border-transparent hover:border-[#dce0d4]" onClick={() => { setCliente(c); setShowClienteDialog(false); }}>
+                 <div key={c.id} className="p-3 hover:bg-secondary/60 dark:hover:bg-[#26262e] cursor-pointer rounded-xl border border-transparent hover:border-border/40" onClick={() => { setCliente(c); setShowClienteDialog(false); }}>
                     <p className="font-bold">{c.nome}</p>
                     <p className="text-xs text-muted-foreground">{c.cpf_cnpj}</p>
                  </div>
               ))}
            </div>
-           <Button variant="outline" onClick={() => { setCliente(null); setShowClienteDialog(false); }} className={`w-full mt-4 rounded-xl border-[#dce0d4] ${AUTO_ACCENT_TEXT} hover:bg-[#f0f2ec]`}>Consumidor Final</Button>
+           <Button variant="outline" onClick={() => { setCliente(null); setShowClienteDialog(false); }} className={`w-full mt-4 rounded-xl border-border/40 ${AUTO_ACCENT_TEXT} hover:bg-secondary/60`}>Consumidor Final</Button>
           </div>
         </DialogContent>
       </Dialog>

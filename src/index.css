@@ -124,11 +124,11 @@ button:focus-visible {
     --border: 0 0% 91%;
     --input: 0 0% 91%;
     --ring: 27 87% 52%;
-    --chart-1: 82 18% 32%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 82 14% 22%;
-    --chart-4: 43 74% 52%;
-    --chart-5: 27 87% 52%;
+    --chart-1: 27 87% 52%;
+    --chart-2: 0 0% 35%;
+    --chart-3: 0 0% 55%;
+    --chart-4: 27 90% 62%;
+    --chart-5: 0 0% 72%;
     /* Paleta P38 — acentos cítricos e oliva (uso em utilitários Tailwind) */
     --p38-olive: 82 18% 28%;
     --p38-lime: 78 55% 51%;

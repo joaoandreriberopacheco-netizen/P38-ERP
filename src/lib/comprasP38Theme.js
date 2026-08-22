@@ -91,6 +91,17 @@ export const COMPRAS_BTN_CITRUS = 'bg-[#f07a1a] hover:bg-[#f07a1a]/90 text-white
 
 export const COMPRAS_ICON_ACCENT = 'text-[#f07a1a] dark:text-[#a4ce33]';
 
+/** Re-exporta tokens canónicos do modo claro para uso directo em módulos novos. */
+export {
+  P38_LIGHT_CARD,
+  P38_LIGHT_CITRUS_BTN,
+  P38_LIGHT_CITRUS_CHIP,
+  P38_LIGHT_CITRUS_TEXT,
+  P38_LIGHT_FIELD,
+  P38_LIGHT_PAGE,
+  P38_LIGHT_PANEL,
+} from '@/lib/p38LightTheme';
+
 export const COMPRAS_SELECT_HIGHLIGHT = 'bg-[#f07a1a]/10 dark:bg-[#f07a1a]/15';
 
 export const COMPRAS_DIVIDER_TOP = 'border-t border-border/15 dark:border-white/10';

@@ -172,7 +172,7 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
 
       <div className="flex-1 flex flex-col md:flex-row">
         {/* Resumo */}
-        <div className={`w-full md:w-1/3 p-8 ${AUTO_SURFACE_CLASS} border-r border-[#dce0d4] dark:border-border/40`}>
+        <div className={`w-full md:w-1/3 p-8 ${AUTO_SURFACE_CLASS} border-r border-border/40 dark:border-border/40`}>
           <h3 className="text-lg font-semibold mb-6">Resumo do Pedido</h3>
           <div className="space-y-4 mb-8">
             {carrinho.map(item => (
@@ -204,7 +204,7 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
           {processing ? (
             <div className="text-center">
               <div className="relative w-24 h-24 mx-auto mb-8">
-                <div className="absolute inset-0 border-4 border-[#dce0d4] rounded-full"></div>
+                <div className="absolute inset-0 border-4 border-border/40 rounded-full"></div>
                 <div className="absolute inset-0 border-4 border-[#4a5240] rounded-full border-t-transparent animate-spin"></div>
               </div>
               <h3 className="text-2xl font-bold mb-2">Processando Pagamento...</h3>
@@ -227,7 +227,7 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
                 onClick={() => handleProcessPayment('credit')}
                 className={`w-full p-6 ${AUTO_SURFACE_CLASS} ${AUTO_CARD_HOVER} border-2 border-transparent flex items-center gap-4 group`}
               >
-                <div className={`w-12 h-12 ${AUTO_ACCENT_BG} rounded-full flex items-center justify-center group-hover:bg-[#e8ebe3] dark:group-hover:bg-[#383e47]`}>
+                <div className={`w-12 h-12 ${AUTO_ACCENT_BG} rounded-full flex items-center justify-center group-hover:bg-muted dark:group-hover:bg-[#383e47]`}>
                   <CreditCard className={`w-6 h-6 ${AUTO_ACCENT_TEXT}`} />
                 </div>
                 <div className="text-left">
@@ -253,7 +253,7 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
                 onClick={() => handleProcessPayment('pix')}
                 className={`w-full p-6 ${AUTO_SURFACE_CLASS} ${AUTO_CARD_HOVER} border-2 border-transparent flex items-center gap-4 group`}
               >
-                <div className={`w-12 h-12 ${AUTO_ACCENT_BG} rounded-full flex items-center justify-center group-hover:bg-[#e8ebe3] dark:group-hover:bg-[#383e47]`}>
+                <div className={`w-12 h-12 ${AUTO_ACCENT_BG} rounded-full flex items-center justify-center group-hover:bg-muted dark:group-hover:bg-[#383e47]`}>
                   <Smartphone className={`w-6 h-6 ${AUTO_ACCENT_TEXT}`} />
                 </div>
                 <div className="text-left">

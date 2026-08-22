@@ -12,22 +12,22 @@ import {
   MARGIN_TABLE_MICRO,
   MARGIN_ACCENT_VALUE,
 } from '@/lib/p38TableSurfaces';
+import { P38_LIGHT_CARD, P38_LIGHT_FIELD } from '@/lib/p38LightTheme';
 
 /** Tokens de classe (sem JSX) */
 export const p38Mobile = {
-  searchInput:
-    'border-0 bg-secondary/80 dark:bg-[#26262e] h-11 rounded-lg shadow-none focus-visible:ring-1 focus-visible:ring-border',
+  searchInput: cn(P38_LIGHT_FIELD, 'h-11 dark:bg-[#26262e] dark:shadow-none focus-visible:ring-1'),
   filterChip:
-    'px-3 py-2 rounded-lg text-xs font-medium transition-colors bg-secondary/80 dark:bg-[#26262e] text-muted-foreground',
+    'px-3 py-2 rounded-lg text-xs font-medium transition-colors bg-card shadow-sm text-muted-foreground dark:bg-[#26262e]',
   filterChipActive:
-    'px-3 py-2 rounded-lg text-xs font-medium bg-card text-foreground border border-border/40',
-  panel: `${MARGIN_TABLE_PANEL} border ${MARGIN_TABLE_BORDER} rounded-lg overflow-hidden`,
+    'px-3 py-2 rounded-lg text-xs font-medium bg-[#f07a1a]/12 text-[#f07a1a] border-0 shadow-sm',
+  panel: `${MARGIN_TABLE_PANEL} border-0 shadow-sm rounded-lg overflow-hidden`,
   panelAccentBar: p38Table.panelAccentBar,
   kpiGrid: 'grid grid-cols-2 gap-x-3 gap-y-2',
   kpiLabel: `${MARGIN_TABLE_MICRO} uppercase tracking-wide text-muted-foreground leading-none`,
   kpiValue: `${MARGIN_BODY_TEXT} tabular-nums mt-1 truncate`,
   kpiValueAccent: `${MARGIN_BODY_TEXT} tabular-nums mt-1 truncate ${MARGIN_ACCENT_VALUE}`,
-  detailPanel: 'rounded-lg border border-border/40 dark:border-white/10 bg-card/50 dark:bg-card/30 p-3',
+  detailPanel: cn(P38_LIGHT_CARD, 'rounded-lg p-3 dark:bg-card/30'),
   detailLabel: 'text-xs uppercase tracking-wide text-muted-foreground leading-none mb-2',
 };
 
@@ -73,7 +73,7 @@ export function P38MobileDetailRows({ rows, className }) {
   return (
     <div className={cn('space-y-2 text-sm font-din-1451', className)}>
       {rows.map((row) => (
-        <div key={row.label} className={cn('flex justify-between gap-2', row.highlight && 'pt-2 border-t border-border/40 font-bold')}>
+        <div key={row.label} className={cn('flex justify-between gap-2', row.highlight && 'pt-2 border-t border-border/15 font-bold')}>
           <span className="text-muted-foreground">{row.label}</span>
           <span className={cn('tabular-nums shrink-0', row.danger && 'text-red-600 dark:text-red-400', row.accent && MARGIN_ACCENT_VALUE, !row.danger && !row.accent && 'text-foreground font-semibold')}>
             {row.value}

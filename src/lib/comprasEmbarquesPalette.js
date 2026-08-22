@@ -10,7 +10,7 @@ export { P38_CYAN_SEA, P38_AGUARDANDO_ORANGE };
 export const COMPRAS_CHIP_ACTIVE =
   'bg-[#4ECDC4]/12 text-[#1a7a73] ring-1 ring-[#4ECDC4]/25 dark:bg-[#4ECDC4]/15 dark:text-[#4ECDC4]';
 export const COMPRAS_CHIP_INACTIVE =
-  'bg-secondary/80 text-muted-foreground dark:bg-[#26262e] dark:text-foreground/80';
+  'bg-card text-muted-foreground shadow-sm dark:bg-[#26262e] dark:text-foreground/80';
 export const COMPRAS_CTA =
   'bg-[#3bbdb4] hover:bg-[#34a9a1] text-white dark:bg-[#4ECDC4] dark:hover:bg-[#5fd9d0] dark:text-[#1f1d22]';
 
