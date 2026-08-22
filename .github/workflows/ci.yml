@@ -45,9 +45,12 @@ jobs:
       - name: Verificar output Next
         run: test -d .next
 
-      - name: Smoke HTTP — /login e /landing.html
+      - name: Pulso — lote1 (código → interface, LEDs 1–4)
         env:
           NEXT_PUBLIC_P38_PROVIDER: supabase
           NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ci1wbGFjZWhvbGRlcg
-        run: npm run smoke:http
+          VITE_P38_PROVIDER: supabase
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ci1wbGFjZWhvbGRlcg
+        run: npm run pulse

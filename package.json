@@ -16,6 +16,8 @@
     "verify:source-location": "node scripts/verify-source-location.mjs",
     "smoke:structure": "node scripts/smoke-repo-structure.mjs",
     "smoke:http": "node scripts/smoke-http-routes.mjs",
+    "pulse": "node scripts/pulse.mjs",
+    "pulse:slow": "node scripts/pulse.mjs --slow",
     "flare:export": "node scripts/export-flare-pending.mjs",
     "flare:api": "node scripts/flare-local-api.mjs",
     "audit:fluxo-dia": "node scripts/audit-fluxo-dia.mjs",
