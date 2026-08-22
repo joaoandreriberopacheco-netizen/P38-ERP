@@ -14,7 +14,12 @@ add_env() {
     fi
     return 0
   fi
-  printf '%s' "$value" | npx --yes vercel@latest env add "$name" production --token "$VERCEL_TOKEN" --force >/dev/null
+  # NEXT_PUBLIC_* / VITE_* são expostas no bundle — Vercel CLI 59+ rejeita "secret" em Production.
+  local sensitive_flags=()
+  if [[ "$name" == NEXT_PUBLIC_* || "$name" == VITE_* ]]; then
+    sensitive_flags=(--no-sensitive)
+  fi
+  printf '%s' "$value" | npx --yes vercel@latest env add "$name" production --token "$VERCEL_TOKEN" --force "${sensitive_flags[@]}" >/dev/null
   echo "  $name → production (Vercel)"
 }
 
