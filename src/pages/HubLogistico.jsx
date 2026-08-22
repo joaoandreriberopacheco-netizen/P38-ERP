@@ -153,6 +153,7 @@ export default function HubLogistico() {
 
       <div className="rounded-lg border border-border/40 dark:border-white/10 bg-background p-3">
         <Input
+          data-pulse-sensor="hub-logistico.busca"
           placeholder="Buscar por manifesto ou transportadora..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}

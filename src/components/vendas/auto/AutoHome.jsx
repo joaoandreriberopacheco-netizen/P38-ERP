@@ -24,6 +24,7 @@ export default function AutoHome({ onStart }) {
 
       <button
         type="button"
+        data-pulse-sensor="auto-atendimento.iniciar"
         onClick={onStart}
         className={`flex-1 flex flex-col items-center justify-center p-8 text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4a5240]/40 rounded-2xl mx-4 my-6 ${AUTO_SURFACE_CLASS} ${AUTO_CARD_HOVER}`}
       >

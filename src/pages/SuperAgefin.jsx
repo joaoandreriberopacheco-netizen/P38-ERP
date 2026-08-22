@@ -854,6 +854,7 @@ export default function SuperAgefin() {
                   <div className="flex flex-wrap gap-2">
                     <Button
                       type="button"
+                      data-pulse-sensor="agefin.somar"
                       variant="ghost"
                       size="sm"
                       onClick={() => setModoSelecao((v) => !v)}

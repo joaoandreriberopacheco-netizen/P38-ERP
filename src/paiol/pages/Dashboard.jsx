@@ -57,7 +57,7 @@ export default function DashboardPage() {
       </div>
 
       <GlacialTabsList scrollable>
-        <GlacialTabsTrigger value="geral"      activeValue={activeTab} onSelect={handleTabSelect} icon={BarChart3}      label="Geral" />
+        <GlacialTabsTrigger value="geral"      activeValue={activeTab} onSelect={handleTabSelect} icon={BarChart3}      label="Geral" pulseSensor="dashboard.tab-geral" />
         <GlacialTabsTrigger value="vendas"     activeValue={activeTab} onSelect={handleTabSelect} icon={TrendingUp}      label="Vendas" />
         <GlacialTabsTrigger value="compras"    activeValue={activeTab} onSelect={handleTabSelect} icon={ShoppingCart}    label="Compras" />
         <GlacialTabsTrigger value="estoque"    activeValue={activeTab} onSelect={handleTabSelect} icon={Package}         label="Estoque" />

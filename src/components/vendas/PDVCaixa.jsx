@@ -1531,7 +1531,7 @@ export default function PDVCaixa({
                     <PieChart className="w-5 h-5" />
                     <span className={caixaTypo.labelSm}>Balanço</span>
                   </TabsTrigger>
-                  <TabsTrigger value="vendas" className="flex flex-col items-center justify-center gap-0.5 data-[state=active]:bg-muted/40 dark:data-[state=active]:bg-muted h-full rounded-none border-0">
+                  <TabsTrigger value="vendas" data-pulse-sensor="pdv-caixa.tab-vendas" className="flex flex-col items-center justify-center gap-0.5 data-[state=active]:bg-muted/40 dark:data-[state=active]:bg-muted h-full rounded-none border-0">
                     <ShoppingCart className="w-5 h-5" />
                     <span className={caixaTypo.labelSm}>Vendas</span>
                   </TabsTrigger>
@@ -1568,7 +1568,7 @@ export default function PDVCaixa({
                       <PieChart className="w-4 h-4" />
                       <span className={caixaTypo.tab}>Balanço</span>
                     </TabsTrigger>
-                    <TabsTrigger value="vendas" className="flex items-center gap-2 data-[state=active]:bg-card dark:data-[state=active]:bg-card data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+                    <TabsTrigger value="vendas" data-pulse-sensor="pdv-caixa.tab-vendas" className="flex items-center gap-2 data-[state=active]:bg-card dark:data-[state=active]:bg-card data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
                       <Receipt className="w-4 h-4" />
                       <span className={caixaTypo.tab}>Vendas</span>
                     </TabsTrigger>

@@ -200,7 +200,7 @@ export default function CaixasAtivosPage() {
             <h1 className={`${caixaTypo.title} text-2xl mb-2`}>Caixas Ativos</h1>
             <p className={caixaTypo.meta}>Visualize o balanço de caixas em operação</p>
           </div>
-          <button onClick={loadTurnos} className="p-3 rounded-2xl bg-card border border-border/40 shadow-sm hover:bg-muted transition-colors" style={{ minWidth: '48px', minHeight: '48px' }}>
+          <button data-pulse-sensor="caixas-ativos.atualizar" onClick={loadTurnos} className="p-3 rounded-2xl bg-card border border-border/40 shadow-sm hover:bg-muted transition-colors" style={{ minWidth: '48px', minHeight: '48px' }}>
             <RefreshCw className="w-5 h-5 text-muted-foreground" />
           </button>
         </div>

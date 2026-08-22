@@ -84,6 +84,7 @@ export default function ExpedicaoPage() {
                   trailing={
                     <Button
                       size="sm"
+                      data-pulse-sensor="expedicao.confirmar"
                       onClick={() => handleConfirmarEntrega(pedido)}
                       className="bg-[#4A5D23] hover:bg-[#3d4f1d] dark:bg-[#a4ce33] dark:hover:bg-[#8fb32a] dark:text-foreground gap-1 shrink-0 h-9"
                     >

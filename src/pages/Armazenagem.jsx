@@ -38,6 +38,7 @@ export default function Armazenagem() {
             <TabsTrigger
               value="separacao"
               title="Fila de Separação"
+              data-pulse-sensor="armazenagem.tab-separacao"
               className="flex items-center gap-2 data-[state=active]:bg-muted dark:data-[state=active]:bg-muted"
             >
               <Package className="w-4 h-4" />
