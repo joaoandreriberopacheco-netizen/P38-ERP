@@ -18,6 +18,8 @@
     "smoke:http": "node scripts/smoke-http-routes.mjs",
     "pulse": "node scripts/pulse.mjs",
     "pulse:slow": "node scripts/pulse.mjs --slow",
+    "pulse:lote2": "node scripts/pulse.mjs --batch lote2",
+    "pulse:all": "node scripts/pulse.mjs --batch lote1 && node scripts/pulse.mjs --batch lote2",
     "flare:export": "node scripts/export-flare-pending.mjs",
     "flare:api": "node scripts/flare-local-api.mjs",
     "audit:fluxo-dia": "node scripts/audit-fluxo-dia.mjs",

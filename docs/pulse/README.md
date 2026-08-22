@@ -12,6 +12,8 @@
 | `npm run pulse:slow` | Lento | 1–8 |
 | `npm run pulse -- --route /Compras` | Uma rota | conforme modo |
 | `npm run pulse -- --batch lote1` | Lote do manifesto | conforme modo |
+| `npm run pulse:lote2` | Lote 2 (vendas, logística, relatórios) | LEDs 1–4 |
+| `npm run pulse:all` | Lote 1 + lote 2 | LEDs 1–4 |
 
 ## Os 8 LEDs
 
@@ -34,6 +36,22 @@ Definido em [`routes-lote1.json`](./routes-lote1.json):
 
 - Públicas: `/login`, `/auth/callback`, `/ativar-acesso`, `/landing.html`
 - Core operacional: `/`, `/Compras`, `/PedidosCompra`, `/Estoque`, `/Financeiro`, `/PDV`, `/Configuracoes`, `/PlanejamentoFinanceiro`
+
+## Lote 2 (módulos por área de negócio)
+
+Definido em [`routes-lote2.json`](./routes-lote2.json) — **30 rotas**:
+
+| Módulo | Rotas |
+|--------|-------|
+| **Vendas** (8) | `PDVVendedor`, `PDVCaixa`, `AutoAtendimento`, `TurnosFechados`, `VendasGestao`, `VendasPerdidas`, `ControleEntregas`, `DevolucaoTroca` |
+| **Logística** (10) | `SugestoesCompra`, `Cotacoes`, `ConferenciaEntrada`, `ConferenciaEstoque`, `Armazenagem`, `InterfaceSeparador`, `ItinerarioFluvial`, `Expedicao`, `HubLogistico`, `ImportacaoProdutos` |
+| **Financeiro** (6) | `FluxoCaixa`, `ContasFinanceiras`, `AprovacoesFinanceiras`, `CaixasAtivos`, `Agefin`, `ExtratoConta` |
+| **Gestão** (6) | `Dashboard`, `PainelGerente`, `Produtos`, `Relatorios`, `RelatorioMargem`, `RelatorioPerformance` |
+
+```bash
+npm run pulse:lote2    # só lote 2
+npm run pulse:all      # lote 1 + lote 2 (42 rotas)
+```
 
 ## CI
 

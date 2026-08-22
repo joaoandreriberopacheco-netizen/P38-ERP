@@ -1,0 +1,222 @@
+{
+  "version": "1.0",
+  "description": "Lote 2 — vendas, logística, financeiro operacional e relatórios/gestão. Complementa o lote 1 (core).",
+  "modules": {
+    "vendas": "P38 Caixa — vender, receber, entregas",
+    "logistica": "P38 Supply — compras, conferência, armazém, expedição",
+    "financeiro": "P38 Financeiro — fluxo, contas, aprovações",
+    "gestao": "P38 Gestão — dashboards, produtos, relatórios"
+  },
+  "routes": [
+    {
+      "path": "/PDVVendedor",
+      "label": "PDV Vendedor",
+      "module": "vendas",
+      "public": false,
+      "pageName": "PDVVendedor"
+    },
+    {
+      "path": "/PDVCaixa",
+      "label": "PDV Caixa",
+      "module": "vendas",
+      "public": false,
+      "pageName": "PDVCaixa"
+    },
+    {
+      "path": "/AutoAtendimento",
+      "label": "Auto-atendimento",
+      "module": "vendas",
+      "public": false,
+      "pageName": "AutoAtendimento"
+    },
+    {
+      "path": "/TurnosFechados",
+      "label": "Turnos fechados",
+      "module": "vendas",
+      "public": false,
+      "pageName": "TurnosFechados"
+    },
+    {
+      "path": "/VendasGestao",
+      "label": "Gestão de vendas",
+      "module": "vendas",
+      "public": false,
+      "pageName": "VendasGestao"
+    },
+    {
+      "path": "/VendasPerdidas",
+      "label": "Vendas perdidas",
+      "module": "vendas",
+      "public": false,
+      "pageName": "VendasPerdidas"
+    },
+    {
+      "path": "/ControleEntregas",
+      "label": "Controle de entregas",
+      "module": "vendas",
+      "public": false,
+      "pageName": "ControleEntregas"
+    },
+    {
+      "path": "/DevolucaoTroca",
+      "label": "Devolução e troca",
+      "module": "vendas",
+      "public": false,
+      "pageName": "DevolucaoTroca"
+    },
+    {
+      "path": "/SugestoesCompra",
+      "label": "Sugestões de compra",
+      "module": "logistica",
+      "public": false,
+      "pageName": "SugestoesCompra"
+    },
+    {
+      "path": "/Cotacoes",
+      "label": "Cotações",
+      "module": "logistica",
+      "public": false,
+      "pageName": "Cotacoes"
+    },
+    {
+      "path": "/ConferenciaEntrada",
+      "label": "Conferência de entrada",
+      "module": "logistica",
+      "public": false,
+      "pageName": "ConferenciaEntrada"
+    },
+    {
+      "path": "/ConferenciaEstoque",
+      "label": "Conferência de estoque",
+      "module": "logistica",
+      "public": false,
+      "pageName": "ConferenciaEstoque"
+    },
+    {
+      "path": "/Armazenagem",
+      "label": "Armazenagem",
+      "module": "logistica",
+      "public": false,
+      "pageName": "Armazenagem"
+    },
+    {
+      "path": "/InterfaceSeparador",
+      "label": "Interface separador",
+      "module": "logistica",
+      "public": false,
+      "pageName": "InterfaceSeparador"
+    },
+    {
+      "path": "/ItinerarioFluvial",
+      "label": "Itinerário fluvial",
+      "module": "logistica",
+      "public": false,
+      "pageName": "ItinerarioFluvial"
+    },
+    {
+      "path": "/Expedicao",
+      "label": "Expedição",
+      "module": "logistica",
+      "public": false,
+      "pageName": "Expedicao"
+    },
+    {
+      "path": "/HubLogistico",
+      "label": "Hub logístico",
+      "module": "logistica",
+      "public": false,
+      "pageName": "HubLogistico"
+    },
+    {
+      "path": "/ImportacaoProdutos",
+      "label": "Importação de produtos",
+      "module": "logistica",
+      "public": false,
+      "pageName": "ImportacaoProdutos"
+    },
+    {
+      "path": "/FluxoCaixa",
+      "label": "Fluxo de caixa",
+      "module": "financeiro",
+      "public": false,
+      "pageName": "FluxoCaixa"
+    },
+    {
+      "path": "/ContasFinanceiras",
+      "label": "Contas financeiras",
+      "module": "financeiro",
+      "public": false,
+      "pageName": "ContasFinanceiras"
+    },
+    {
+      "path": "/AprovacoesFinanceiras",
+      "label": "Aprovações financeiras",
+      "module": "financeiro",
+      "public": false,
+      "pageName": "AprovacoesFinanceiras"
+    },
+    {
+      "path": "/CaixasAtivos",
+      "label": "Caixas ativos",
+      "module": "financeiro",
+      "public": false,
+      "pageName": "CaixasAtivos"
+    },
+    {
+      "path": "/Agefin",
+      "label": "Agefin",
+      "module": "financeiro",
+      "public": false,
+      "pageName": "Agefin"
+    },
+    {
+      "path": "/ExtratoConta",
+      "label": "Extrato de conta",
+      "module": "financeiro",
+      "public": false,
+      "pageName": "ExtratoConta"
+    },
+    {
+      "path": "/Dashboard",
+      "label": "Dashboard",
+      "module": "gestao",
+      "public": false,
+      "pageName": "Dashboard"
+    },
+    {
+      "path": "/PainelGerente",
+      "label": "Painel gerente",
+      "module": "gestao",
+      "public": false,
+      "pageName": "PainelGerente"
+    },
+    {
+      "path": "/Produtos",
+      "label": "Produtos",
+      "module": "gestao",
+      "public": false,
+      "pageName": "Produtos"
+    },
+    {
+      "path": "/Relatorios",
+      "label": "Relatórios",
+      "module": "gestao",
+      "public": false,
+      "pageName": "Relatorios"
+    },
+    {
+      "path": "/RelatorioMargem",
+      "label": "Relatório de margem",
+      "module": "gestao",
+      "public": false,
+      "pageName": "RelatorioMargem"
+    },
+    {
+      "path": "/RelatorioPerformance",
+      "label": "Relatório de performance",
+      "module": "gestao",
+      "public": false,
+      "pageName": "RelatorioPerformance"
+    }
+  ]
+}
