@@ -32,29 +32,29 @@ const BRL = new Intl.NumberFormat('pt-BR', {
 });
 
 const QUALITY_COLORS = {
-  A: '#abc85a',
-  B: '#7f9850',
-  C: '#6f82a1',
-  D: '#8f6f63',
-  E: '#64748b',
+  A: '#c4d068',
+  B: '#9aaa62',
+  C: '#8a9470',
+  D: '#9a8878',
+  E: '#94949c',
 };
 
 const SUPPLY_RING_COLORS = {
-  healthy: '#abc85a',
-  healthyDark: '#89a246',
-  high: '#9aad63',
-  highDark: '#7f8f53',
-  low: '#6f819e',
-  lowDark: '#5d6d86',
-  muted: '#465267',
+  healthy: '#c4d068',
+  healthyDark: '#a8b856',
+  high: '#b8c078',
+  highDark: '#9aaa62',
+  low: '#8a9470',
+  lowDark: '#727a62',
+  muted: '#d8d8d8',
 };
 
 const LOCATION_COLORS = {
-  fisico: '#abc85a',
-  transito: '#6f82a1',
+  fisico: '#c4d068',
+  transito: '#8a9470',
 };
 
-const STOCK_BAR_COLORS = ['#b5d061', '#aac459', '#9eb851', '#93ab48', '#879f41', '#7d933b'];
+const STOCK_BAR_COLORS = ['#ddd48a', '#d4cc80', '#cbc474', '#c2bc6a', '#b9b460', '#b0ac58'];
 
 function formatShort(value) {
   if (!Number.isFinite(value) || value === 0) return 'R$ 0';

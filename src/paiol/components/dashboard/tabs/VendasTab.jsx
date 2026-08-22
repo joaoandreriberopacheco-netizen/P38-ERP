@@ -71,13 +71,13 @@ const BRL = new Intl.NumberFormat('pt-BR', {
 });
 
 const RING_COLORS = {
-  primary: '#abc85a',
-  primaryDark: '#89a246',
-  secondary: '#6f82a1',
-  muted: '#465267',
+  primary: '#c4d068',
+  primaryDark: '#a8b856',
+  secondary: '#8a9470',
+  muted: '#d8d8d8',
 };
 
-const SALES_BAR_COLORS = ['#c3dd74', '#b6d05f', '#a9c24d', '#9cb53f', '#90a835', '#7f9531'];
+const SALES_BAR_COLORS = ['#ddd48a', '#d0c87e', '#c4bc72', '#b8b066', '#aca45c', '#9a9452'];
 
 function parseDate(value) {
   if (!value) return null;

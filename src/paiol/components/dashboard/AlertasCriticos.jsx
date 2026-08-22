@@ -25,12 +25,12 @@ export default function AlertasCriticos({ alertas, isLoading }) {
         ) : (
           <>
             {/* Alerta de Baixo Estoque */}
-            <div className="p-4 bg-orange-50 rounded-lg">
+            <div className="p-4 bg-[#e8b824]/6 rounded-lg border border-[#4a5240]/8">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-orange-800 flex items-center gap-2"><Package className="w-5 h-5"/> Baixo Estoque</h3>
+                <h3 className="font-semibold text-[#5c5640] flex items-center gap-2"><Package className="w-5 h-5"/> Baixo Estoque</h3>
                 <Badge variant="destructive">{baixoEstoque.length}</Badge>
               </div>
-              <div className="space-y-1 text-sm text-orange-700 max-h-32 overflow-y-auto">
+              <div className="space-y-1 text-sm text-[#6b6550] max-h-32 overflow-y-auto">
                 {baixoEstoque.length > 0 ? baixoEstoque.map(p => (
                   <p key={p.id}>- {p.nome} (Atual: {p.estoque_atual})</p>
                 )) : <p className="text-muted-foreground">Nenhum produto com baixo estoque.</p>}

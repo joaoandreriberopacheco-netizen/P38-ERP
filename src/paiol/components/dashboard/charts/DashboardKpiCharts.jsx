@@ -192,7 +192,7 @@ function DonutGauge({ ring, label, actualLabel, targetLabel, actualValue, target
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <span className="text-[10px] text-muted-foreground uppercase">%</span>
-            <span className={`text-sm font-bold ${isAboveTarget ? 'text-lime-300' : p38Dashboard.title}`}>
+            <span className={`text-sm font-bold ${isAboveTarget ? p38Dashboard.percentAbove : p38Dashboard.title}`}>
               {ring.percent.toFixed(0)}%
             </span>
           </div>

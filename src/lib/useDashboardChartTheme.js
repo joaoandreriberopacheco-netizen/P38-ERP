@@ -19,9 +19,9 @@ const LIGHT = {
     labelStyle: { color: P38_LIGHT_HEX.text, fontWeight: 700 },
     itemStyle: { color: P38_LIGHT_HEX.textMuted },
   },
-  linePrimary: P38_LIGHT_HEX.citrus,
+  linePrimary: P38_LIGHT_HEX.citrusYellow,
   lineBreakEven: '#dc2626',
-  lineMeta: P38_LIGHT_HEX.olive,
+  lineMeta: P38_LIGHT_HEX.oliveMuted,
 };
 
 const DARK = {

@@ -17,7 +17,19 @@ export const P38_LIGHT_HEX = {
   citrus: '#f07a1a',
   citrusYellow: '#e8b824',
   olive: '#4a5240',
+  oliveMuted: '#6d7860',
+  juiceMuted: '#a8942e',
 };
+
+/** Amarelo suco — só como detalhe suave (nunca laranja forte). */
+export const P38_LIGHT_JUICE_WASH = 'bg-[#e8b824]/5';
+export const P38_LIGHT_OLIVE_WASH = 'bg-[#4a5240]/5';
+export const P38_LIGHT_JUICE_OLIVE_WASH =
+  'bg-gradient-to-br from-[#e8b824]/4 via-transparent to-[#4a5240]/4';
+
+/** Faixa topo amarelo suco → oliva (detalhe fino, sem laranja). */
+export const P38_LIGHT_SUBTLE_ACCENT_BAR =
+  'absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-[#e8b824]/35 via-[#4a5240]/14 to-transparent rounded-t';
 
 /** Linha vertical fina (1px) — padrão global; nunca border-l-2/3/4 no claro. */
 export const P38_LIGHT_VLINE = 'border-l border-border/15 dark:border-white/10';
@@ -81,10 +93,8 @@ export const P38_LIGHT_CHIP_IDLE =
 /** Superfície de ícone (FAB soft, botão filtro). */
 export const P38_LIGHT_ICON_BTN = 'bg-card text-foreground shadow-md';
 
-/** Faixa topo laranja → amarelo (formulários, headers). */
-export const P38_LIGHT_HEADER_ACCENT =
-  'absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#f07a1a]/65 via-[#e8b824]/45 to-transparent rounded-t';
+/** Faixa topo amarelo suco → oliva (formulários, headers). */
+export const P38_LIGHT_HEADER_ACCENT = P38_LIGHT_SUBTLE_ACCENT_BAR;
 
-/** Painel com wash laranja + amarelo muito suave. */
-export const P38_LIGHT_CITRUS_WASH =
-  'bg-gradient-to-br from-[#f07a1a]/5 via-[#e8b824]/4 to-transparent';
+/** Painel com wash amarelo + oliva muito suave. */
+export const P38_LIGHT_CITRUS_WASH = P38_LIGHT_JUICE_OLIVE_WASH;
