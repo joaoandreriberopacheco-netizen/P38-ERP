@@ -50,7 +50,7 @@ export default function ExpedicaoPage() {
   return (
     <div className="p-4 md:p-6 lg:p-8 font-din-1451 bg-background pb-[var(--p38-scroll-pad-below-nav)] md:pb-8 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-foreground mb-2">Expedição e Entrega</h1>
+        <h1 className="text-3xl font-bold text-foreground mb-2" data-pulse-sensor="expedicao.titulo">Expedição e Entrega</h1>
         <p className="text-muted-foreground mb-8">Confirme a entrega dos pedidos separados.</p>
 
         {pedidosProntos.length === 0 ? (

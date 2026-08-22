@@ -1485,7 +1485,7 @@ export default function PDVCaixa({
         </button>
         
         <div className="flex-1 text-center min-w-0 px-2">
-          <h1 className={`${caixaTypo.title} text-foreground dark:text-white`}>
+          <h1 className={`${caixaTypo.title} text-foreground dark:text-white`} data-pulse-sensor="pdv-caixa.titulo">
             {caixaSelecionado?.nome || 'Caixa'}
           </h1>
           {modoVisualizacao ? (

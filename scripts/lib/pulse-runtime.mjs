@@ -54,7 +54,9 @@ export async function killPulsePort() {
   try {
     const { execSync } = await import('child_process');
     execSync(`fuser -k ${PULSE_PORT}/tcp 2>/dev/null || true`, { stdio: 'ignore' });
-    await sleep(400);
+    execSync('pkill -9 -f "next-server" 2>/dev/null || true', { stdio: 'ignore' });
+    execSync(`pkill -9 -f "next start --port ${PULSE_PORT}" 2>/dev/null || true`, { stdio: 'ignore' });
+    await sleep(600);
   } catch {
     // ignore
   }

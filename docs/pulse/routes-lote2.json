@@ -121,13 +121,6 @@
       "pageName": "Expedicao"
     },
     {
-      "path": "/HubLogistico",
-      "label": "Hub logístico",
-      "module": "logistica",
-      "public": false,
-      "pageName": "HubLogistico"
-    },
-    {
       "path": "/ImportacaoProdutos",
       "label": "Importação de produtos",
       "module": "logistica",

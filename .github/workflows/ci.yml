@@ -47,7 +47,7 @@ jobs:
       - name: Verificar output Next
         run: test -d .next
 
-      - name: Pulso — pré-deploy (42 rotas + sensores UI)
+      - name: Pulso — pré-deploy (41 rotas + sensores gerais)
         env:
           NEXT_PUBLIC_P38_PROVIDER: supabase
           NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co

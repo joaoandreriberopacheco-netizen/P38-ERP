@@ -1,0 +1,705 @@
+{
+  "version": "1.0",
+  "description": "Sensores gerais — todos os módulos (lote 1 + lote 2). Shell automático via P38LazyPage.",
+  "screens": [
+    {
+      "route": "/",
+      "label": "Home (pós-login)",
+      "pageName": "Home",
+      "module": null,
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "Home.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "home.personalizar",
+          "type": "presence",
+          "label": "Personalizar atalhos"
+        }
+      ]
+    },
+    {
+      "route": "/Compras",
+      "label": "Compras",
+      "pageName": "Compras",
+      "module": null,
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "Compras.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "compras.tab-sugestoes",
+          "type": "presence",
+          "label": "Aba sugestões"
+        }
+      ]
+    },
+    {
+      "route": "/PedidosCompra",
+      "label": "Pedidos de compra",
+      "pageName": "PedidosCompra",
+      "module": null,
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "PedidosCompra.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "pedidos-compra.tab-embarques",
+          "type": "presence",
+          "label": "Aba embarques"
+        },
+        {
+          "id": "pedidos-compra.tab-consulta",
+          "type": "click",
+          "label": "Aba consulta",
+          "expectVisible": "pedidos-compra.tab-consulta"
+        },
+        {
+          "id": "pedidos-compra.novo-pedido",
+          "type": "click",
+          "label": "FAB novo pedido"
+        }
+      ]
+    },
+    {
+      "route": "/Estoque",
+      "label": "Estoque",
+      "pageName": "Estoque",
+      "module": null,
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "Estoque.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "estoque.link-contagem",
+          "type": "presence",
+          "label": "Atalho contagem express"
+        }
+      ]
+    },
+    {
+      "route": "/Configuracoes",
+      "label": "Configurações",
+      "pageName": "Configuracoes",
+      "module": null,
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "Configuracoes.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "configuracoes.tab-vendas",
+          "type": "presence",
+          "label": "Aba vendas"
+        }
+      ]
+    },
+    {
+      "route": "/PlanejamentoFinanceiro",
+      "label": "Planejamento financeiro",
+      "pageName": "PlanejamentoFinanceiro",
+      "module": null,
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "PlanejamentoFinanceiro.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "planejamento-financeiro.tab-contas",
+          "type": "presence",
+          "label": "Aba contas"
+        }
+      ]
+    },
+    {
+      "route": "/PDVVendedor",
+      "label": "PDV Vendedor",
+      "pageName": "PDVVendedor",
+      "module": "vendas",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "PDVVendedor.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "pdv.busca-produto",
+          "type": "presence",
+          "label": "Busca produto"
+        }
+      ]
+    },
+    {
+      "route": "/PDVCaixa",
+      "label": "PDV Caixa",
+      "pageName": "PDVCaixa",
+      "module": "vendas",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "PDVCaixa.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "pdv-caixa.titulo",
+          "type": "presence",
+          "label": "Título caixa"
+        }
+      ]
+    },
+    {
+      "route": "/AutoAtendimento",
+      "label": "Auto-atendimento",
+      "pageName": "AutoAtendimento",
+      "module": "vendas",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "AutoAtendimento.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "auto-atendimento.iniciar",
+          "type": "presence",
+          "label": "Iniciar"
+        }
+      ]
+    },
+    {
+      "route": "/TurnosFechados",
+      "label": "Turnos fechados",
+      "pageName": "TurnosFechados",
+      "module": "vendas",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "TurnosFechados.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "turnos-fechados.busca",
+          "type": "presence",
+          "label": "Busca"
+        }
+      ]
+    },
+    {
+      "route": "/VendasGestao",
+      "label": "Gestão de vendas",
+      "pageName": "VendasGestao",
+      "module": "vendas",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "VendasGestao.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "vendas-gestao.busca",
+          "type": "presence",
+          "label": "Busca"
+        }
+      ]
+    },
+    {
+      "route": "/VendasPerdidas",
+      "label": "Vendas perdidas",
+      "pageName": "VendasPerdidas",
+      "module": "vendas",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "VendasPerdidas.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "vendas-perdidas.tab-mix",
+          "type": "presence",
+          "label": "Aba mix"
+        }
+      ]
+    },
+    {
+      "route": "/ControleEntregas",
+      "label": "Controle de entregas",
+      "pageName": "ControleEntregas",
+      "module": "vendas",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "ControleEntregas.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "controle-entregas.busca-cliente",
+          "type": "presence",
+          "label": "Busca cliente"
+        }
+      ]
+    },
+    {
+      "route": "/DevolucaoTroca",
+      "label": "Devolução e troca",
+      "pageName": "DevolucaoTroca",
+      "module": "vendas",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "DevolucaoTroca.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "devolucao-troca.busca-pedido",
+          "type": "presence",
+          "label": "Busca pedido"
+        }
+      ]
+    },
+    {
+      "route": "/SugestoesCompra",
+      "label": "Sugestões de compra",
+      "pageName": "SugestoesCompra",
+      "module": "logistica",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "SugestoesCompra.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "sugestoes-compra.busca",
+          "type": "presence",
+          "label": "Busca"
+        }
+      ]
+    },
+    {
+      "route": "/Cotacoes",
+      "label": "Cotações",
+      "pageName": "Cotacoes",
+      "module": "logistica",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "Cotacoes.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "cotacoes.busca",
+          "type": "presence",
+          "label": "Busca"
+        }
+      ]
+    },
+    {
+      "route": "/ConferenciaEntrada",
+      "label": "Conferência de entrada",
+      "pageName": "ConferenciaEntrada",
+      "module": "logistica",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "ConferenciaEntrada.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "conferencia-entrada.tab-codigos",
+          "type": "presence",
+          "label": "Aba códigos"
+        }
+      ]
+    },
+    {
+      "route": "/ConferenciaEstoque",
+      "label": "Conferência de estoque",
+      "pageName": "ConferenciaEstoque",
+      "module": "logistica",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "ConferenciaEstoque.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "conferencia-estoque.nova",
+          "type": "presence",
+          "label": "Nova conferência"
+        }
+      ]
+    },
+    {
+      "route": "/Armazenagem",
+      "label": "Armazenagem",
+      "pageName": "Armazenagem",
+      "module": "logistica",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "Armazenagem.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "armazenagem.tab-separacao",
+          "type": "presence",
+          "label": "Aba separação"
+        }
+      ]
+    },
+    {
+      "route": "/InterfaceSeparador",
+      "label": "Interface separador",
+      "pageName": "InterfaceSeparador",
+      "module": "logistica",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "InterfaceSeparador.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "interface-separador.codigo-pedido",
+          "type": "presence",
+          "label": "Código pedido"
+        }
+      ]
+    },
+    {
+      "route": "/ItinerarioFluvial",
+      "label": "Itinerário fluvial",
+      "pageName": "ItinerarioFluvial",
+      "module": "logistica",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "ItinerarioFluvial.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "itinerario-fluvial.modo-fluvial",
+          "type": "presence",
+          "label": "Modo fluvial"
+        }
+      ]
+    },
+    {
+      "route": "/Expedicao",
+      "label": "Expedição",
+      "pageName": "Expedicao",
+      "module": "logistica",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "Expedicao.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "expedicao.titulo",
+          "type": "presence",
+          "label": "Título expedição"
+        }
+      ]
+    },
+    {
+      "route": "/ImportacaoProdutos",
+      "label": "Importação de produtos",
+      "pageName": "ImportacaoProdutos",
+      "module": "logistica",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "ImportacaoProdutos.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "importacao-produtos.tab-produtos",
+          "type": "presence",
+          "label": "Aba produtos"
+        }
+      ]
+    },
+    {
+      "route": "/FluxoCaixa",
+      "label": "Fluxo de caixa",
+      "pageName": "FluxoCaixa",
+      "module": "financeiro",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "FluxoCaixa.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "fluxo-caixa.titulo",
+          "type": "presence",
+          "label": "Título financeiro"
+        }
+      ]
+    },
+    {
+      "route": "/ContasFinanceiras",
+      "label": "Contas financeiras",
+      "pageName": "ContasFinanceiras",
+      "module": "financeiro",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "ContasFinanceiras.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "contas-financeiras.busca",
+          "type": "presence",
+          "label": "Busca"
+        }
+      ]
+    },
+    {
+      "route": "/AprovacoesFinanceiras",
+      "label": "Aprovações financeiras",
+      "pageName": "AprovacoesFinanceiras",
+      "module": "financeiro",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "AprovacoesFinanceiras.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "aprovacoes-financeiras.aprovar-lote",
+          "type": "presence",
+          "label": "Aprovar lote"
+        }
+      ]
+    },
+    {
+      "route": "/CaixasAtivos",
+      "label": "Caixas ativos",
+      "pageName": "CaixasAtivos",
+      "module": "financeiro",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "CaixasAtivos.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "caixas-ativos.atualizar",
+          "type": "presence",
+          "label": "Atualizar"
+        }
+      ]
+    },
+    {
+      "route": "/ExtratoConta",
+      "label": "Extrato de conta",
+      "pageName": "ExtratoConta",
+      "module": "financeiro",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "ExtratoConta.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "extrato-conta.voltar",
+          "type": "presence",
+          "label": "Voltar (sem conta)"
+        }
+      ]
+    },
+    {
+      "route": "/Dashboard",
+      "label": "Dashboard",
+      "pageName": "Dashboard",
+      "module": "gestao",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "Dashboard.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "dashboard.tab-geral",
+          "type": "presence",
+          "label": "Aba geral"
+        }
+      ]
+    },
+    {
+      "route": "/PainelGerente",
+      "label": "Painel gerente",
+      "pageName": "PainelGerente",
+      "module": "gestao",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "PainelGerente.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "painel-gerente.busca-cliente",
+          "type": "presence",
+          "label": "Busca cliente"
+        }
+      ]
+    },
+    {
+      "route": "/Produtos",
+      "label": "Produtos",
+      "pageName": "Produtos",
+      "module": "gestao",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "Produtos.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "produtos.busca",
+          "type": "presence",
+          "label": "Busca catálogo"
+        }
+      ]
+    },
+    {
+      "route": "/Relatorios",
+      "label": "Relatórios",
+      "pageName": "Relatorios",
+      "module": "gestao",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "Relatorios.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "relatorios.tab-vendas",
+          "type": "presence",
+          "label": "Aba vendas"
+        }
+      ]
+    },
+    {
+      "route": "/RelatorioMargem",
+      "label": "Relatório de margem",
+      "pageName": "RelatorioMargem",
+      "module": "gestao",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "RelatorioMargem.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "relatorio-margem.busca",
+          "type": "presence",
+          "label": "Busca"
+        }
+      ]
+    },
+    {
+      "route": "/RelatorioPerformance",
+      "label": "Relatório de performance",
+      "pageName": "RelatorioPerformance",
+      "module": "gestao",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "RelatorioPerformance.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "relatorio-performance.pdf",
+          "type": "presence",
+          "label": "Exportar PDF"
+        }
+      ]
+    },
+    {
+      "route": "/PDV?mode=vendedor",
+      "label": "PDV vendedor",
+      "pageName": "PDV",
+      "sensors": [
+        {
+          "id": "PDV.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "pdv.busca-produto",
+          "type": "presence",
+          "label": "Busca produto"
+        },
+        {
+          "id": "pdv.scanner-codigo",
+          "type": "presence",
+          "label": "Scanner"
+        }
+      ],
+      "warmupMs": 8000
+    },
+    {
+      "route": "/SuperAgefin",
+      "label": "SuperAgefin (destino Agefin)",
+      "pageName": "SuperAgefin",
+      "module": "financeiro",
+      "warmupMs": 8000,
+      "sensors": [
+        {
+          "id": "SuperAgefin.shell",
+          "type": "attached",
+          "label": "Shell página"
+        },
+        {
+          "id": "agefin.titulo",
+          "type": "presence",
+          "label": "Título Agefin"
+        }
+      ]
+    }
+  ]
+}

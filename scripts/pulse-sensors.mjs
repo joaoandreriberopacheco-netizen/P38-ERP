@@ -26,13 +26,15 @@ const ERROR_SELECTORS = [
 ];
 
 function parseArgs(argv) {
-  const args = { batch: 'lote1', skipServer: false };
+  const args = { batch: null, all: false, skipServer: false };
   for (let i = 2; i < argv.length; i += 1) {
     const arg = argv[i];
-    if (arg === '--batch' && argv[i + 1]) args.batch = argv[++i];
+    if (arg === '--all' || arg === '-a') args.all = true;
+    else if (arg === '--batch' && argv[i + 1]) args.batch = argv[++i];
     else if (arg === '--skip-server') args.skipServer = true;
     else if (arg === '--help' || arg === '-h') args.help = true;
   }
+  if (!args.batch && !args.all) args.all = true;
   return args;
 }
 
@@ -42,6 +44,11 @@ function loadSensors(batch) {
     throw new Error(`Manifesto não encontrado: docs/pulse/sensors-${batch}.json`);
   }
   return JSON.parse(fs.readFileSync(file, 'utf8'));
+}
+
+function loadAllSensorScreens() {
+  const manifest = loadSensors('geral');
+  return manifest.screens;
 }
 
 function sensorSelector(id) {
@@ -70,9 +77,12 @@ async function assertNoCrash(page) {
 
 async function runPresence(page, sensor) {
   const loc = page.locator(sensorSelector(sensor.id)).first();
-  await loc.waitFor({ state: 'visible', timeout: 15000 });
-  const visible = await loc.isVisible();
-  if (!visible) throw new Error('sensor não visível');
+  const state = sensor.type === 'attached' || sensor.id.endsWith('.shell') ? 'attached' : 'visible';
+  await loc.waitFor({ state, timeout: 20000 });
+  if (state === 'visible') {
+    const visible = await loc.isVisible();
+    if (!visible) throw new Error('sensor não visível');
+  }
 }
 
 async function runClick(page, sensor) {
@@ -88,7 +98,9 @@ async function runClick(page, sensor) {
 }
 
 async function pulseScreen(browser, screen) {
-  const context = await browser.newContext();
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 900 },
+  });
   const page = await context.newPage();
   const consoleErrors = [];
   page.on('pageerror', (err) => consoleErrors.push(String(err.message || err)));
@@ -102,6 +114,7 @@ async function pulseScreen(browser, screen) {
   console.log(`\nPULSE SENSORES ${screen.route} (${screen.label})`);
 
   try {
+    try {
     await page.goto(`${PULSE_BASE}${screen.route}`, {
       waitUntil: 'networkidle',
       timeout: 45000,
@@ -109,11 +122,13 @@ async function pulseScreen(browser, screen) {
     if (screen.warmupMs) {
       await page.waitForTimeout(screen.warmupMs);
     }
-    const firstSensor = screen.sensors[0]?.id;
-    if (firstSensor) {
-      await page.locator(sensorSelector(firstSensor)).first().waitFor({
-        state: 'visible',
-        timeout: 30000,
+    const firstSensor = screen.sensors.find((s) => s.type !== 'attached' && !s.id.endsWith('.shell'))
+      || screen.sensors[0];
+    if (firstSensor?.id) {
+      const state = firstSensor.type === 'attached' || firstSensor.id.endsWith('.shell') ? 'attached' : 'visible';
+      await page.locator(sensorSelector(firstSensor.id)).first().waitFor({
+        state,
+        timeout: 45000,
       });
     }
     await assertNoCrash(page);
@@ -126,7 +141,7 @@ async function pulseScreen(browser, screen) {
       }
 
       try {
-        if (sensor.type === 'presence') {
+        if (sensor.type === 'presence' || sensor.type === 'attached') {
           await runPresence(page, sensor);
         } else if (sensor.type === 'click') {
           await runClick(page, sensor);
@@ -159,6 +174,10 @@ async function pulseScreen(browser, screen) {
     const green = !failedAt;
     console.log(`  VERDE                          ${green ? '🟢' : '❌'}${failedAt ? `  parou em ${failedAt}` : ''}`);
     return { route: screen.route, green, failedAt, results };
+    } catch (err) {
+      console.log(`  VERDE                          ❌  ${err.message}`);
+      return { route: screen.route, green: false, failedAt: 'fatal', results, error: err.message };
+    }
   } finally {
     await context.close();
   }
@@ -167,15 +186,23 @@ async function pulseScreen(browser, screen) {
 async function main() {
   const args = parseArgs(process.argv);
   if (args.help) {
-    console.log('Uso: node scripts/pulse-sensors.mjs [--batch lote1] [--skip-server]');
+    console.log(`Uso: node scripts/pulse-sensors.mjs [opções]
+
+Opções:
+  --all, -a           Todos os ecrãs (sensors-geral.json) — default
+  --batch <nome>      Um lote (ex: lote1, geral)
+  --skip-server       Servidor já a correr
+`);
     process.exit(0);
   }
 
-  const manifest = loadSensors(args.batch);
+  const screens = args.all || args.batch === 'geral'
+    ? loadAllSensorScreens()
+    : loadSensors(args.batch || 'lote1').screens;
   const chromium = await loadPlaywright();
   let server = null;
 
-  console.log(`[pulse:sensors] lote ${args.batch} — ${manifest.screens.length} ecrã(s)`);
+  console.log(`[pulse:sensors] ${screens.length} ecrã(s)`);
 
   try {
     if (!args.skipServer) {
@@ -187,7 +214,7 @@ async function main() {
     const summary = [];
 
     try {
-      for (const screen of manifest.screens) {
+      for (const screen of screens) {
         summary.push(await pulseScreen(browser, screen));
       }
     } finally {

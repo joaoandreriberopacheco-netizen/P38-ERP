@@ -44,36 +44,35 @@ Definido em [`routes-lote2.json`](./routes-lote2.json) — **30 rotas**:
 | Módulo | Rotas |
 |--------|-------|
 | **Vendas** (8) | `PDVVendedor`, `PDVCaixa`, `AutoAtendimento`, `TurnosFechados`, `VendasGestao`, `VendasPerdidas`, `ControleEntregas`, `DevolucaoTroca` |
-| **Logística** (10) | `SugestoesCompra`, `Cotacoes`, `ConferenciaEntrada`, `ConferenciaEstoque`, `Armazenagem`, `InterfaceSeparador`, `ItinerarioFluvial`, `Expedicao`, `HubLogistico`, `ImportacaoProdutos` |
+| **Logística** (9) | `SugestoesCompra`, `Cotacoes`, `ConferenciaEntrada`, `ConferenciaEstoque`, `Armazenagem`, `InterfaceSeparador`, `ItinerarioFluvial`, `Expedicao`, `ImportacaoProdutos` |
 | **Financeiro** (6) | `FluxoCaixa`, `ContasFinanceiras`, `AprovacoesFinanceiras`, `CaixasAtivos`, `Agefin`, `ExtratoConta` |
 | **Gestão** (6) | `Dashboard`, `PainelGerente`, `Produtos`, `Relatorios`, `RelatorioMargem`, `RelatorioPerformance` |
 
 ```bash
 npm run pulse:lote2    # só lote 2
-npm run pulse:all      # lote 1 + lote 2 (42 rotas)
+npm run pulse:all      # lote 1 + lote 2 (41 rotas)
 ```
 
 ## Sensores UI (pré-deploy)
 
 Função automática — **não é uma página do P38**. Corre antes do deploy e verifica se o pulso chega a botões/ecrãs críticos.
 
-Manifesto: [`sensors-lote1.json`](./sensors-lote1.json)
-
-| Ecrã | Sensores |
-|------|----------|
-| `/PedidosCompra` | aba embarques, aba consulta (clique), FAB novo pedido |
-| `/PDV?mode=vendedor` | busca produto, scanner código |
+| Manifesto | Âmbito |
+|-----------|--------|
+| [`sensors-lote1.json`](./sensors-lote1.json) | Piloto: PedidosCompra + PDV |
+| [`sensors-geral.json`](./sensors-geral.json) | **Geral:** 36 ecrãs (lote 1 + lote 2), shell automático + 1 controlo por página |
 
 ```bash
-npm run pulse:sensors      # sensores lote 1
-npm run pulse:predeploy    # rotas (42) + sensores
+npm run pulse:generate-sensors   # regera sensors-geral.json
+npm run pulse:sensors            # todos os ecrãs (geral)
+npm run pulse:predeploy          # rotas (41) + sensores gerais
 ```
 
-Cada elemento tem `data-pulse-sensor="id"` no código. O CI faz build com bypass auth local para abrir páginas autenticadas sem login real.
+Cada elemento tem `data-pulse-sensor="id"` no código. O shell `.shell` é injetado automaticamente em `P38LazyPage`. O CI faz build com bypass auth local para abrir páginas autenticadas sem login real.
 
 ## CI
 
-O workflow `.github/workflows/ci.yml` corre `npm run pulse:predeploy` (42 rotas + sensores) após o build.
+O workflow `.github/workflows/ci.yml` corre `npm run pulse:predeploy` (41 rotas + sensores) após o build.
 
 ## Saída exemplo
 
