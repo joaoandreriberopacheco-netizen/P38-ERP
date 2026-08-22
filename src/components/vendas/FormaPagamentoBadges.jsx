@@ -1,18 +1,40 @@
 import { cn } from '@/lib/utils';
 
+/** Modo claro — paleta cítrica P38 (amarelo suco); escuro mantém cores semânticas. */
+const LIGHT_CITRUS_CHIP =
+  'bg-[#e8b824]/14 text-[#a8942e] border-[#e8b824]/32';
+const LIGHT_CITRUS_CHIP_MUTED =
+  'bg-[#e8b824]/8 text-[#8a7824] border-[#e8b824]/22';
+
 const FORMA_STYLES = {
-  dinheiro:
-    'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-200/60 dark:border-emerald-700/50',
-  pix: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-300 border-cyan-200/60 dark:border-cyan-700/50',
-  debito:
-    'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border-blue-200/60 dark:border-blue-700/50',
-  credito:
-    'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300 border-violet-200/60 dark:border-violet-700/50',
-  fiado:
-    'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300 border-orange-200/60 dark:border-orange-700/50',
-  vale:
-    'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200/60 dark:border-amber-700/50',
-  outro: 'bg-muted text-muted-foreground border-border/50',
+  dinheiro: cn(
+    LIGHT_CITRUS_CHIP,
+    'dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-700/50',
+  ),
+  pix: cn(
+    LIGHT_CITRUS_CHIP,
+    'dark:bg-cyan-900/40 dark:text-cyan-300 dark:border-cyan-700/50',
+  ),
+  debito: cn(
+    LIGHT_CITRUS_CHIP,
+    'dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700/50',
+  ),
+  credito: cn(
+    LIGHT_CITRUS_CHIP,
+    'dark:bg-violet-900/40 dark:text-violet-300 dark:border-violet-700/50',
+  ),
+  fiado: cn(
+    LIGHT_CITRUS_CHIP,
+    'dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700/50',
+  ),
+  vale: cn(
+    LIGHT_CITRUS_CHIP,
+    'dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700/50',
+  ),
+  outro: cn(
+    LIGHT_CITRUS_CHIP_MUTED,
+    'dark:bg-muted dark:text-muted-foreground dark:border-border/50',
+  ),
 };
 
 function resolveFormaKey(forma) {
