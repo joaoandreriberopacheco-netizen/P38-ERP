@@ -36,7 +36,7 @@ export default function ProdutosSomentePositivosToggle({ filters, setFilters }) 
         'h-10 w-10 flex-shrink-0 rounded-xl',
         PRODUTOS_ICON_BTN,
         active && PRODUTOS_FILTER_OPEN,
-        active && 'text-[#b85a12] dark:text-[#a4ce33]',
+        active && 'text-[#f07a1a] dark:text-[#a4ce33]',
       )}
       onClick={toggle}
       title={

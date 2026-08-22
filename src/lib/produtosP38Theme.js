@@ -100,7 +100,7 @@ export const PRODUTOS_TAB_ICON_GLYPH =
   'w-4 h-4 md:w-5 md:h-5 text-muted-foreground group-data-[state=active]:text-[#f07a1a] dark:group-data-[state=active]:text-[#a4ce33]';
 
 export const PRODUTOS_TAB_ICON_LABEL =
-  'hidden sm:inline ml-2 text-muted-foreground group-data-[state=active]:text-[#b85a12] dark:group-data-[state=active]:text-[#a4ce33]';
+  'hidden sm:inline ml-2 text-muted-foreground group-data-[state=active]:text-[#f07a1a] dark:group-data-[state=active]:text-[#a4ce33]';
 
 export const PRODUTOS_INPUT_UNDERLINE =
   'bg-transparent border-0 border-b border-border/15 dark:border-white/10 rounded-none px-0 h-9 text-sm text-foreground focus:border-[#f07a1a] dark:focus:border-[#a4ce33]';

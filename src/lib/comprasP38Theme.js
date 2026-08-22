@@ -31,7 +31,7 @@ export const COMPRAS_TABS_BAR =
 export const COMPRAS_TAB = cn(
   'flex-1 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent rounded-none py-2 px-1',
   'text-muted-foreground disabled:opacity-30 transition-colors min-w-0 font-light',
-  'data-[state=active]:border-[#f07a1a] data-[state=active]:text-[#b85a12]',
+  'data-[state=active]:border-[#f07a1a] data-[state=active]:text-[#f07a1a]',
   'dark:data-[state=active]:border-[#a4ce33] dark:data-[state=active]:text-[#a4ce33]',
 );
 
@@ -59,7 +59,7 @@ export const COMPRAS_SECTION_CARD =
   'rounded-2xl bg-card dark:bg-muted/10 p-3.5 space-y-3 shadow-sm';
 
 export const COMPRAS_CHIP_ACTIVE_CITRUS =
-  'bg-[#f07a1a]/12 text-[#b85a12] font-medium shadow-sm dark:bg-[#f07a1a]/20 dark:text-[#ffb366]';
+  'bg-[#f07a1a]/12 text-[#f07a1a] font-medium shadow-sm dark:bg-[#f07a1a]/20 dark:text-[#ffb366]';
 
 export const COMPRAS_CHIP_ACTIVE_OLIVE =
   'bg-[#4a5240]/10 text-[#4a5240] font-medium shadow-sm dark:bg-[#a4ce33]/15 dark:text-[#a4ce33]';

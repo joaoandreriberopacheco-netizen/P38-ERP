@@ -206,13 +206,17 @@ function CatalogoMobileQtdUnCol({
 
   return (
     <CatalogoMobileQtdColShell>
-      <span className={`absolute left-0 top-3.5 w-1.5 h-1.5 rounded-full ${dotClass}`} aria-hidden />
-      <p className={qtyClass}>
-        {virtualActive ? '~' : ''}{fmtN(quantidade)}
-      </p>
-      <p className={`${CATALOGO_MOBILE_BODY_TEXT} uppercase text-muted-foreground mt-1.5 leading-none truncate ${emphasis ? 'font-medium' : ''}`}>
-        {unidade}
-      </p>
+      <div className="flex items-start justify-end gap-1 min-w-0">
+        <span className={`mt-1 w-1.5 h-1.5 shrink-0 rounded-full ${dotClass}`} aria-hidden />
+        <div className="min-w-0 text-right">
+          <p className={qtyClass}>
+            {virtualActive ? '~' : ''}{fmtN(quantidade)}
+          </p>
+          <p className={`${CATALOGO_MOBILE_BODY_TEXT} uppercase text-muted-foreground mt-1.5 leading-none truncate ${emphasis ? 'font-medium' : ''}`}>
+            {unidade}
+          </p>
+        </div>
+      </div>
     </CatalogoMobileQtdColShell>
   );
 }
@@ -878,13 +882,14 @@ export function CatalogoMobileScrollShell({ catalogChrome, children }) {
 }
 
 // ── Componente principal ───────────────────────────────────────────────────────
-export default function MobileHierarquica({ produtos, onEdit, groupByCategory = false, masterLevel = 2, sortOrder = 'az', onExpandedKeysChange, catalogFilters = null, salesVelocityMap = {}, catalogStockContext = null }) {
+export default function MobileHierarquica({ produtos, onEdit, groupByCategory = false, masterLevel = 2, sortOrder = 'az', onExpandedKeysChange, catalogFilters = null, salesVelocityMap = {}, catalogStockContext = null, flatList = false }) {
   const scrollRef = useCatalogoMobileScrollRef();
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [pricingProduto, setPricingProduto] = useState(null);
   const pendingScrollRestoreRef = useRef(null);
 
-  const rawTree = useCatalogTreeGrid(produtos, { groupByCategory });
+  const effectiveGroupByCategory = flatList ? false : groupByCategory;
+  const rawTree = useCatalogTreeGrid(produtos, { groupByCategory: effectiveGroupByCategory });
   const tree = useMemo(
     () =>
       pruneTreeForGroupAnalysis(rawTree, {
@@ -895,8 +900,8 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
     [rawTree, catalogFilters, salesVelocityMap, catalogStockContext],
   );
   const produtosStructureSig = useMemo(
-    () => catalogProdutosStructureSig(produtos, { groupByCategory }),
-    [produtos, groupByCategory]
+    () => catalogProdutosStructureSig(produtos, { groupByCategory: effectiveGroupByCategory }),
+    [produtos, effectiveGroupByCategory]
   );
   const groupAnalysisSig = useMemo(
     () => catalogGroupAnalysisSig(catalogFilters),
@@ -909,12 +914,13 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
 
   // Reinicia expansão só quando filtros/hierarquia mudam — não a cada rebuild por ABCD/IEP ou preços.
   useEffect(() => {
+    const level = flatList ? TREE_GRID_EXPAND_ALL_LEVEL : masterLevel;
     setExpandedKeys(
-      resolveExpandedKeysForMasterLevel(tree, masterLevel, groupByCategory),
+      resolveExpandedKeysForMasterLevel(tree, level, effectiveGroupByCategory),
     );
     const scrollEl = scrollRef?.current;
     if (scrollEl) scrollEl.scrollTop = 0;
-  }, [produtosStructureSig, groupByCategory, masterLevel, groupAnalysisSig, scrollRef, tree]);
+  }, [produtosStructureSig, effectiveGroupByCategory, masterLevel, groupAnalysisSig, scrollRef, tree, flatList]);
 
   useEffect(() => {
     onExpandedKeysChange?.(expandedKeys);
@@ -924,8 +930,12 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
     const all = mergeAdjacentDuplicateGroupHeaders(
       flattenTree(tree, expandedKeys, '', 0, sortOrder, flattenOptions),
     );
-    return all.filter(r => !(r.type === 'group' && r.count === 0));
-  }, [tree, expandedKeys, sortOrder, flattenOptions]);
+    const filtered = all.filter(r => !(r.type === 'group' && r.count === 0));
+    if (!flatList) return filtered;
+    return filtered
+      .filter((r) => r.type === 'sku')
+      .map((r) => ({ ...r, level: 1 }));
+  }, [tree, expandedKeys, sortOrder, flattenOptions, flatList]);
 
   const shouldVirtualizeRows = rows.length >= CATALOGO_VIRTUALIZE_MIN_ROWS;
 
@@ -995,10 +1005,12 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
 
   return (
     <div className="w-full min-w-0 max-w-full">
-      <CatalogoMobileTreeToolbar
-        onExpandAll={handleExpandAll}
-        onCollapseAll={handleCollapseAll}
-      />
+      {!flatList ? (
+        <CatalogoMobileTreeToolbar
+          onExpandAll={handleExpandAll}
+          onCollapseAll={handleCollapseAll}
+        />
+      ) : null}
       <div className="relative border-x border-t-0 border-border/40 dark:border-white/10">
         <CatalogoMobileSacredAxis />
         <div className="relative border-b border-border/40 dark:border-white/10 bg-background">

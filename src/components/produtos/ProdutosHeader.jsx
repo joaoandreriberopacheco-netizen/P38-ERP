@@ -318,11 +318,6 @@ function ProdutosHeader({
               abcd={filters.abcd}
               onChange={(value) => handleFilterChange('abcd', value)}
             />
-            <ProdutosTreeByCategoryToggle
-              checked={groupTreeByCategory}
-              onChange={onGroupTreeByCategoryChange}
-              className="desktop-layout:hidden"
-            />
             {hasFilteredProdutos && (
               <>
                 <Button
@@ -397,7 +392,7 @@ function ProdutosHeader({
                 'h-10 w-10 flex-shrink-0 rounded-xl relative',
                 PRODUTOS_ICON_BTN,
                 isFilterOpen && PRODUTOS_FILTER_OPEN,
-                activeFilterCount > 0 && 'text-[#b85a12] dark:text-[#a4ce33]',
+                activeFilterCount > 0 && 'text-[#f07a1a] dark:text-[#a4ce33]',
               )}
               onClick={() => setIsFilterOpen(v => !v)}
               title="Mais filtros"

@@ -2116,7 +2116,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                         onClick={() => handleChange('casas_decimais', n)}
                         className={`w-10 h-9 text-sm font-medium transition-colors ${
                           (formData.casas_decimais ?? 0) === n
-                            ? 'bg-[#f07a1a]/12 text-[#b85a12] dark:bg-[#a4ce33]/15 dark:text-[#a4ce33]'
+                            ? 'bg-[#f07a1a]/12 text-[#f07a1a] dark:bg-[#a4ce33]/15 dark:text-[#a4ce33]'
                             : 'text-muted-foreground hover:bg-secondary/30'
                         }`}
                       >

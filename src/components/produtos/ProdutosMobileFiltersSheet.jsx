@@ -5,8 +5,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { DEFAULT_PRODUTO_FILTERS } from '@/lib/filterProdutos';
 import ProdutosEstoqueVirtualToggle from '@/components/produtos/ProdutosEstoqueVirtualToggle';
-import ProdutosAnaliseAgrupamentoControl from '@/components/produtos/ProdutosAnaliseAgrupamentoControl';
-import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
 import { CATALOG_SORT_OPTIONS } from '@/lib/catalogProdutoPerformance';
 import ProdutosNumericMetricFilter from '@/components/produtos/ProdutosNumericMetricFilter';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
@@ -152,34 +150,21 @@ export default function ProdutosMobileFiltersSheet({
           </MobileFilterSection>
 
           <MobileFilterSection
-            title="Visualização da árvore"
-            hint="Define quantos níveis abrem ao carregar e como os grupos se ordenam."
+            title="Ordenação"
+            hint="Como os produtos aparecem na lista."
           >
-            <div className="space-y-3">
-              <div className="rounded-xl bg-card shadow-sm px-3 py-2.5">
-                <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                  Nível inicial
-                </p>
-                <LevelControl level={treeLevel} onChange={setTreeLevel} />
-              </div>
-              <div className="space-y-1.5">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                  Ordenação
-                </p>
-                <Select value={sortOrder || 'az'} onValueChange={setSortOrder}>
-                  <SelectTrigger className={MOBILE_FILTER_SELECT}>
-                    <SelectValue placeholder="Ordenar catálogo" />
-                  </SelectTrigger>
-                  <SelectContent className={PRODUTOS_DROPDOWN_MENU}>
-                    {CATALOG_SORT_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.id} value={opt.id} className="text-xs">
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+            <Select value={sortOrder || 'az'} onValueChange={setSortOrder}>
+              <SelectTrigger className={MOBILE_FILTER_SELECT}>
+                <SelectValue placeholder="Ordenar catálogo" />
+              </SelectTrigger>
+              <SelectContent className={PRODUTOS_DROPDOWN_MENU}>
+                {CATALOG_SORT_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.id} value={opt.id} className="text-xs">
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </MobileFilterSection>
 
           <MobileFilterSection
@@ -275,18 +260,6 @@ export default function ProdutosMobileFiltersSheet({
               className={MOBILE_FILTER_SELECT}
               value={filters.tag || ''}
               onChange={(e) => handleFilterChange('tag', e.target.value)}
-            />
-          </MobileFilterSection>
-
-          <MobileFilterSection
-            title="Análise por agrupamento"
-            hint="Com este modo, quantidade e métricas avaliam o total do grupo no nível escolhido — não cada SKU."
-          >
-            <ProdutosAnaliseAgrupamentoControl
-              filters={filters}
-              setFilters={setFilters}
-              handleFilterChange={handleFilterChange}
-              compact
             />
           </MobileFilterSection>
 
