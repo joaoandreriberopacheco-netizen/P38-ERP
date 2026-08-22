@@ -56,7 +56,8 @@ import PagamentoLoteDialog from './PagamentoLoteDialog';
 import FluxoToggleProgramadas from './fluxo/FluxoToggleProgramadas';
 import TipoFiltroBar from './fluxo/TipoFiltroBar';
 import { FinanceiroToolbarIcon } from './fluxo/FinanceiroToolbarIcon';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { cn } from '@/components/utils';
+import { P38_PAGE_TITLE } from '@/lib/p38FormTypography';
 import { passaFiltroTiposLancamento, filtrarGruposPorTipo } from '@/lib/filtroTipoFinanceiro';
 import usePagamentoLoteFluxo from './fluxo/usePagamentoLoteFluxo';
 import { CONCILIACAO_LOTE_TAMANHO } from '@/lib/conciliacaoEmLote';
@@ -863,9 +864,9 @@ export default function ExecucaoOrcamentaria() {
       <div className="min-w-0 max-w-full space-y-2">
         <div className="flex flex-col gap-2">
           <div className="flex min-w-0 items-center gap-2">
-            <p className="min-w-0 flex-1 truncate text-lg font-semibold leading-none text-foreground font-glacial md:text-2xl">
+            <h1 className={cn(P38_PAGE_TITLE, 'min-w-0 flex-1 truncate text-lg md:text-2xl font-glacial leading-none')}>
               Financeiro
-            </p>
+            </h1>
             {aba === 'fluxo' && (
               <TooltipProvider delayDuration={300}>
                 <div className="flex shrink-0 items-center gap-0.5 no-pdf-capture">

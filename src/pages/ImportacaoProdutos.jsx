@@ -11,7 +11,7 @@ import DesfazerImportacao from '@/components/produtos/massa/DesfazerImportacao';
 import ExportarPlanilha from '@/components/produtos/massa/ExportarPlanilha';
 import ExportarEmbalagensPlanilha from '@/components/produtos/massa/ExportarEmbalagensPlanilha';
 import ExportarEstoque from '@/components/produtos/massa/ExportarEstoque';
-import { toast } from 'sonner';
+import { P38_SECTION_TITLE } from '@/lib/p38FormTypography';
 
 const TAMANHO_LOTE = 25;
 
@@ -250,7 +250,7 @@ export default function ImportacaoProdutosPage() {
                 <div className="w-8 h-8 rounded-full bg-card text-card-foreground text-sm font-bold flex items-center justify-center">
                   1
                 </div>
-                <h2 className="text-lg font-semibold text-foreground font-glacial">
+                <h2 className={P38_SECTION_TITLE}>
                   Baixar planilha de produtos
                 </h2>
               </div>
@@ -266,7 +266,7 @@ export default function ImportacaoProdutosPage() {
                 <div className="w-8 h-8 rounded-full bg-card text-card-foreground text-sm font-bold flex items-center justify-center">
                   2
                 </div>
-                <h2 className="text-lg font-semibold text-foreground font-glacial">
+                <h2 className={P38_SECTION_TITLE}>
                   Subir planilha editada
                 </h2>
               </div>
@@ -283,7 +283,7 @@ export default function ImportacaoProdutosPage() {
                   <div className="w-8 h-8 rounded-full bg-card text-card-foreground text-sm font-bold flex items-center justify-center">
                     3
                   </div>
-                  <h2 className="text-lg font-semibold text-foreground font-glacial">
+                  <h2 className={P38_SECTION_TITLE}>
                     Validar e confirmar
                   </h2>
                 </div>
@@ -338,7 +338,7 @@ export default function ImportacaoProdutosPage() {
                 <div className="w-8 h-8 rounded-full bg-card text-card-foreground text-sm font-bold flex items-center justify-center">
                   1
                 </div>
-                <h2 className="text-lg font-semibold text-foreground font-glacial">
+                <h2 className={P38_SECTION_TITLE}>
                   Baixar planilha de embalagens
                 </h2>
               </div>
@@ -362,7 +362,7 @@ export default function ImportacaoProdutosPage() {
                 <div className="w-8 h-8 rounded-full bg-card text-card-foreground text-sm font-bold flex items-center justify-center">
                   2
                 </div>
-                <h2 className="text-lg font-semibold text-foreground font-glacial">
+                <h2 className={P38_SECTION_TITLE}>
                   Subir planilha editada
                 </h2>
               </div>
@@ -378,7 +378,7 @@ export default function ImportacaoProdutosPage() {
                   <div className="w-8 h-8 rounded-full bg-card text-card-foreground text-sm font-bold flex items-center justify-center">
                     3
                   </div>
-                  <h2 className="text-lg font-semibold text-foreground font-glacial">
+                  <h2 className={P38_SECTION_TITLE}>
                     Validar e confirmar
                   </h2>
                 </div>
@@ -434,7 +434,7 @@ export default function ImportacaoProdutosPage() {
                 <div className="w-8 h-8 rounded-full bg-card text-card-foreground text-sm font-bold flex items-center justify-center">
                   1
                 </div>
-                <h2 className="text-lg font-semibold text-foreground font-glacial">
+                <h2 className={P38_SECTION_TITLE}>
                   Baixar template de estoque
                 </h2>
               </div>
@@ -450,7 +450,7 @@ export default function ImportacaoProdutosPage() {
                 <div className="w-8 h-8 rounded-full bg-card text-card-foreground text-sm font-bold flex items-center justify-center">
                   2
                 </div>
-                <h2 className="text-lg font-semibold text-foreground font-glacial">
+                <h2 className={P38_SECTION_TITLE}>
                   Subir planilha de inventário
                 </h2>
               </div>
@@ -467,7 +467,7 @@ export default function ImportacaoProdutosPage() {
                   <div className="w-8 h-8 rounded-full bg-card text-card-foreground text-sm font-bold flex items-center justify-center">
                     3
                   </div>
-                  <h2 className="text-lg font-semibold text-foreground font-glacial">
+                  <h2 className={P38_SECTION_TITLE}>
                     Validar e confirmar ajustes
                   </h2>
                 </div>

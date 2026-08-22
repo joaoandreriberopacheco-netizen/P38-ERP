@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeftRight, Package, Ship, CheckSquare, PackageSearch, ClipboardList } from 'lucide-react';
 import { createPageUrl } from '@/components/utils';
+import { P38PageHeader, P38SectionHeader } from '@/components/layout/P38PageHeader';
+import { P38_LIGHT_JUICE_OLIVE_WASH } from '@/lib/p38LightTheme';
+import { cn } from '@/components/utils';
 
 /**
  * Central de estoque: atalhos para fluxos diferentes, mantendo ajuste pontual separado de conferência/auditoria.
@@ -47,12 +50,12 @@ export default function EstoquePage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-8">
-      <div className="rounded-2xl border border-blue-200/80 bg-blue-50/90 p-5 dark:border-blue-900/50 dark:bg-blue-950/40">
-        <h1 className="text-xl font-semibold text-foreground">Central de Estoque</h1>
-        <p className="mt-2 text-sm leading-relaxed text-foreground/90">
-          Escolha o fluxo correto para cada operação. Movimentos de inventário servem para ajustes pontuais;
-          conferência e auditoria continuam separados para contagens formais.
-        </p>
+      <div className={cn('rounded-2xl border border-border/40 p-5 shadow-sm', P38_LIGHT_JUICE_OLIVE_WASH)}>
+        <P38PageHeader
+          variant="page"
+          title="Central de Estoque"
+          description="Escolha o fluxo correto para cada operação. Movimentos de inventário servem para ajustes pontuais; conferência e auditoria continuam separados para contagens formais."
+        />
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -60,14 +63,13 @@ export default function EstoquePage() {
           <Link
             key={to}
             to={to}
-            className="flex gap-3 rounded-2xl border border-border/40 bg-white p-4 transition-colors hover:bg-muted/40 dark:border-border/40 dark:bg-background dark:hover:bg-muted/80"
+            className="flex gap-3 rounded-2xl border border-border/40 bg-card p-4 shadow-sm transition-colors hover:bg-secondary/30"
           >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary/40">
               <Icon className="h-5 w-5 text-muted-foreground" />
             </div>
             <div className="min-w-0">
-              <h2 className="font-medium text-foreground">{title}</h2>
-              <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{desc}</p>
+              <P38SectionHeader title={title} description={desc} />
             </div>
           </Link>
         ))}

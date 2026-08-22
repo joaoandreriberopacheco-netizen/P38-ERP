@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { CalendarClock, Repeat2, TrendingUp } from 'lucide-react';
+import { P38PageHeader } from '@/components/layout/P38PageHeader';
 import { P38HelpPopover } from '@/components/ui/p38-help-popover';
 import { cn } from '@/lib/utils';
 import { P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
@@ -70,10 +71,11 @@ export default function PlanejamentoFinanceiroV2Page() {
   return (
     <div className="w-full min-w-0 overflow-x-hidden font-din-1451 bg-background px-3 py-3 sm:p-4 lg:p-6 pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
       <div className="pb-3 border-b border-border/40">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <h1 className="text-lg sm:text-xl font-medium text-foreground truncate">
-            Planejamento financeiro
-          </h1>
+        <P38PageHeader
+          variant="page"
+          title="Planejamento financeiro"
+          description="Série manda · Previsão é virtual · Abrir mês materializa"
+        >
           <P38HelpPopover label="Ajuda: planejamento financeiro" side="bottom" align="start">
             <p className="font-medium text-foreground">Uma fonte de verdade</p>
             <p className="text-muted-foreground mt-2">
@@ -91,10 +93,7 @@ export default function PlanejamentoFinanceiroV2Page() {
               financeiro (incluindo fretes e avulsos).
             </p>
           </P38HelpPopover>
-        </div>
-        <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-snug">
-          Série manda · Previsão é virtual · Abrir mês materializa
-        </p>
+        </P38PageHeader>
       </div>
 
       <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="w-full mt-3 sm:mt-4">

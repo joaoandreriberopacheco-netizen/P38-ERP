@@ -10,7 +10,7 @@ import { hydratePedidosVendaItensFromSql } from '@/lib/fetchPedidoVendaItens';
 import { isValidGestaoDateKey } from '@/lib/fetchPedidosVendaGestao';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import VendasRelatorisFAB from '@/components/vendas/VendasRelatorisFAB';
+import { P38PageHeader } from '@/components/layout/P38PageHeader';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, P38TableShell } from '@/components/ui/table';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38StatusTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -750,10 +750,10 @@ function VendasGestaoPage() {
     <div className="max-w-7xl mx-auto space-y-4 overflow-x-hidden">
       {/* Header limpo */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0 pr-2">
-          <h1 className="text-lg font-semibold text-foreground font-glacial">Gestão de Vendas</h1>
-          <p className="text-xs text-muted-foreground">Orçamentos, pedidos e acompanhamento</p>
-        </div>
+        <P38PageHeader
+          title="Gestão de Vendas"
+          description="Orçamentos, pedidos e acompanhamento"
+        />
         <div className="grid grid-cols-4 gap-1.5 sm:flex sm:flex-wrap sm:justify-end flex-shrink-0 w-full sm:w-auto">
           <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-muted dark:bg-muted" title="Devolução" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Devolução')}>
             <RotateCcw className="w-4 h-4 text-muted-foreground" />

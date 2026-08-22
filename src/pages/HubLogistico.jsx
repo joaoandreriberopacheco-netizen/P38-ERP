@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Button } from '@/components/ui/button';
+import { P38PageHeader } from '@/components/layout/P38PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Truck, Package, Weight, Calendar, Trash2, Eye, AlertTriangle, RefreshCw, QrCode } from 'lucide-react';
@@ -130,10 +130,11 @@ export default function HubLogistico() {
   return (
     <div className="max-w-7xl mx-auto space-y-6 p-4 md:p-6 font-din-1451 bg-background pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-light text-foreground">Hub Logístico Inbound</h1>
-          <p className="text-sm text-muted-foreground">Gestão de manifestos e planejamento de recebimento</p>
-        </div>
+        <P38PageHeader
+          variant="page"
+          title="Hub Logístico Inbound"
+          description="Gestão de manifestos e planejamento de recebimento"
+        />
         <div className="flex gap-2">
           <Button onClick={loadManifestos} variant="outline" size="sm" className="gap-2 border-0 shadow-sm">
             <RefreshCw className="w-4 h-4" />

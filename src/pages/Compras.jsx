@@ -20,6 +20,7 @@ import GestaoCodigosConferencia from '../components/logistica/GestaoCodigosConfe
 import HierarquiaPortalEntry from '@/components/hierarquia-portal/HierarquiaPortalEntry';
 import PainelConferencias from '../components/compras/PainelConferencias';
 import { cn } from '@/components/utils';
+import { P38PageHeader } from '@/components/layout/P38PageHeader';
 import { useCompactShell } from '@/hooks/use-breakpoint';
 
 const getStatusBadge = (status) => {
@@ -395,13 +396,11 @@ export default function ComprasPage() {
     >
       {/* Header */}
       <div className={cn('shrink-0', tabFullHeight ? 'px-4 pb-2 pt-0' : 'px-4 md:px-0 pb-4')}>
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div>
-            <h1 className="text-xl md:text-2xl font-semibold text-foreground font-glacial">Compras</h1>
-            <p className="text-xs text-muted-foreground mt-0.5">Gestão completa do ciclo de suprimentos</p>
-          </div>
-          <HierarquiaPortalEntry className="shrink-0" />
-        </div>
+        <P38PageHeader
+          title="Compras"
+          description="Gestão completa do ciclo de suprimentos"
+          children={<HierarquiaPortalEntry className="shrink-0" />}
+        />
       </div>
 
       {/* Tab Bar - PDV Style pill tabs */}

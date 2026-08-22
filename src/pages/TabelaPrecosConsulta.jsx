@@ -10,6 +10,7 @@ import { p38Mobile } from '@/lib/p38MobileSurfaces';
 import { P38MobileLineList, P38StatusDot } from '@/components/ui/p38-mobile-line';
 import { p38Table } from '@/lib/p38TableSurfaces';
 import { cn } from '@/components/utils';
+import { P38PageHeader } from '@/components/layout/P38PageHeader';
 import { filterAndSortProducts, sortProductsAlphabetically } from '@/components/compras/productMatchingUtils';
 import ProdutoThumb from '@/components/produtos/ProdutoThumb';
 
@@ -147,11 +148,10 @@ export default function TabelaPrecosConsulta() {
         <div className="px-4 pt-3 pb-2 space-y-3">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <h1 className="text-lg font-semibold text-foreground font-glacial">Tabela de Preços</h1>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {produtosFiltrados.length} produto{produtosFiltrados.length !== 1 ? 's' : ''}
-                {searchTerm && ` · "${searchTerm}"`}
-              </p>
+              <P38PageHeader
+                title="Tabela de Preços"
+                description={`${produtosFiltrados.length} produto${produtosFiltrados.length !== 1 ? 's' : ''}${searchTerm ? ` · "${searchTerm}"` : ''}`}
+              />
             </div>
             <span className="shrink-0 px-3 py-2 rounded-2xl text-xs font-medium bg-muted text-muted-foreground">
               Ordem alfabética (A→Z)

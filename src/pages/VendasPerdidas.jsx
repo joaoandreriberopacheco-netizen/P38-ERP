@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
+import { P38PageHeader } from '@/components/layout/P38PageHeader';
 import { Package, PackagePlus, AlertTriangle, TrendingDown, RefreshCw, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import {
@@ -59,10 +59,11 @@ export default function VendasPerdidasPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-6 font-din-1451 bg-background pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-medium text-foreground">Vendas Perdidas</h1>
-          <p className="text-sm text-muted-foreground">Análise de oportunidades e sugestões de mix</p>
-        </div>
+        <P38PageHeader
+          variant="page"
+          title="Vendas Perdidas"
+          description="Análise de oportunidades e sugestões de mix"
+        />
         <Button
           variant="ghost"
           size="sm"

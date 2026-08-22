@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { P38PageHeader } from '@/components/layout/P38PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
@@ -221,12 +222,11 @@ export default function RelatoriosPage() {
     <div className="w-full pb-6">
       {/* Header */}
       <div className="px-4 md:px-6 py-6 md:py-8 bg-card border-b border-border/40">
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">
-          Relatórios
-        </h1>
-        <p className="text-sm md:text-base text-muted-foreground">
-          Acesse análises estratégicas e operacionais do seu negócio.
-        </p>
+        <P38PageHeader
+          variant="page"
+          title="Relatórios"
+          description="Acesse análises estratégicas e operacionais do seu negócio."
+        />
       </div>
 
       {/* Tabs Navigation */}

@@ -1,3 +1,5 @@
+import { cn } from '@/components/utils';
+import { P38_PAGE_TITLE } from '@/lib/p38FormTypography';
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
@@ -716,9 +718,9 @@ export default function GestaoContasFinanceiras() {
       <div className="w-full min-w-0 max-w-full space-y-3 pb-[var(--p38-scroll-pad-below-nav)] font-din-1451 bg-background">
         <div className="min-w-0 max-w-full space-y-2">
           <div className="flex flex-col gap-2">
-            <p className="text-lg font-semibold leading-none text-foreground font-glacial md:text-2xl">
+            <h1 className={cn(P38_PAGE_TITLE, 'text-lg md:text-2xl font-glacial leading-none')}>
               Contas Financeiras
-            </p>
+            </h1>
             <GestaoContasKpis />
           </div>
         </div>

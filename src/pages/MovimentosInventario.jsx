@@ -34,6 +34,7 @@ import {
 } from '@/lib/productUnits';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import { p38Accent } from '@/lib/p38ThemeSurfaces';
+import { P38PageHeader } from '@/components/layout/P38PageHeader';
 
 const P38_ACCENT_TEXT = p38Accent.success.text;
 const P38_ACCENT_RING = 'ring-1 ring-[#4A5D23]/40 dark:ring-[#a4ce33]/40';
@@ -732,13 +733,12 @@ export default function MovimentosInventario() {
     <div className="min-h-screen bg-background font-din-1451 p-4 pb-[var(--p38-scroll-pad-below-nav)] md:p-8 md:pb-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div>
-            <p className={`text-xs font-semibold uppercase tracking-wide ${P38_ACCENT_TEXT}`}>Estoque</p>
-            <h1 className="text-2xl font-light text-foreground dark:text-white">Movimentos de Inventário</h1>
-            <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-              Ajuste pontual com caminho único: configure o tipo, adicione produtos ao carrinho, confira antes/depois e conclua.
-            </p>
-          </div>
+          <P38PageHeader
+            variant="page"
+            kicker="Estoque"
+            title="Movimentos de Inventário"
+            description="Ajuste pontual com caminho único: configure o tipo, adicione produtos ao carrinho, confira antes/depois e conclua."
+          />
           <Button variant="outline" onClick={loadInitialData} disabled={loading || saving}>
             Atualizar dados
           </Button>

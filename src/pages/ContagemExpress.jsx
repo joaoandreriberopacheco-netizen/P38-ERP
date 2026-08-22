@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { createPageUrl } from '@/utils';
 import { cn } from '@/lib/utils';
+import { P38_SHELL_TITLE } from '@/lib/p38FormTypography';
 import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
 import CatalogLotePicker, { CatalogLoteModeToggle } from '@/components/compras/CatalogLotePicker';
 import CatalogProductStockLine from '@/components/compras/CatalogProductStockLine';
@@ -500,7 +501,7 @@ export default function ContagemExpress() {
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
-        <h1 className="min-w-0 flex-1 truncate text-base font-semibold font-glacial text-foreground">
+        <h1 className={cn(P38_SHELL_TITLE, 'min-w-0 flex-1 truncate text-base md:text-lg')}>
           Contagem Express
         </h1>
         {!produtoSelecionado && (

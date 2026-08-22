@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { P38PageHeader } from '@/components/layout/P38PageHeader';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -317,10 +318,11 @@ export default function ConferenciaVolumes() {
             <div className="w-14 h-14 rounded-xl bg-muted flex items-center justify-center">
               <Package className="w-7 h-7 text-foreground/90" />
             </div>
-            <div className="flex-1">
-              <h1 className="text-xl font-semibold text-foreground">Conferência de Volumes</h1>
-              <p className="text-sm text-muted-foreground">Registre os volumes recebidos</p>
-            </div>
+        <P38PageHeader
+          variant="page"
+          title="Conferência de Volumes"
+          description="Registre os volumes recebidos"
+        />
           </div>
 
           <div className="bg-muted/40 border border-border/40 dark:border-white/10 rounded-lg p-4">
