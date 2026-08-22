@@ -11,6 +11,7 @@ import { isValidGestaoDateKey } from '@/lib/fetchPedidosVendaGestao';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { P38PageHeader } from '@/components/layout/P38PageHeader';
+import VendasRelatorisFAB from '@/components/vendas/VendasRelatorisFAB';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, P38TableShell } from '@/components/ui/table';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38StatusTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
