@@ -53,6 +53,18 @@ npm run pulse:lote2    # só lote 2
 npm run pulse:all      # lote 1 + lote 2 (41 rotas)
 ```
 
+## Corredor vertical (comboio)
+
+Metáfora: em vez da bola a rolar na horizontal (abrir 36 páginas reais), o **comboio** passa **uma vez** na linha `/pulse/corredor`. Cada **estação** deixa a sua **saca de cartas** (marcadores `data-pulse-sensor`); o script recolhe tudo e gera relatório.
+
+| Comando | O que faz |
+|---------|-----------|
+| `npm run pulse:corridor` | Comboio — 1 visita Playwright, recolhe 36 sacas |
+| `npm run pulse:sensors` | Modo lento — visita cada página real (opcional) |
+| `npm run pulse:predeploy` | Rotas (41) + corredor comboio |
+
+Relatório: `docs/pulse/corridor-report.json` (gerado em cada corrida; não versionado).
+
 ## Sensores UI (pré-deploy)
 
 Função automática — **não é uma página do P38**. Corre antes do deploy e verifica se o pulso chega a botões/ecrãs críticos.
@@ -65,7 +77,8 @@ Função automática — **não é uma página do P38**. Corre antes do deploy e
 ```bash
 npm run pulse:generate-sensors   # regera sensors-geral.json
 npm run pulse:sensors            # todos os ecrãs (geral)
-npm run pulse:predeploy          # rotas (41) + sensores gerais
+npm run pulse:corridor           # comboio (rápido)
+npm run pulse:predeploy          # rotas (41) + corredor
 ```
 
 Cada elemento tem `data-pulse-sensor="id"` no código. O shell `.shell` é injetado automaticamente em `P38LazyPage`. O CI faz build com bypass auth local para abrir páginas autenticadas sem login real.

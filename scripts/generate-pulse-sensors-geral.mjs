@@ -130,4 +130,28 @@ const manifest = {
 };
 
 fs.writeFileSync(OUT, `${JSON.stringify(manifest, null, 2)}\n`);
+
+const corridorOut = path.join(ROOT, 'src/pulse/corridorManifest.generated.js');
+const corridor = {
+  version: manifest.version,
+  description: 'Corredor vertical Pulso — estações e sacas de cartas (auto-gerado).',
+  stations: screens.map((screen) => ({
+    pageName: screen.pageName,
+    route: screen.route,
+    label: screen.label,
+    module: screen.module || null,
+    letters: screen.sensors.map((s) => ({
+      id: s.id,
+      label: s.label,
+      type: s.type || 'presence',
+    })),
+  })),
+};
+
+fs.writeFileSync(
+  corridorOut,
+  `// Auto-gerado por scripts/generate-pulse-sensors-geral.mjs — não editar à mão.\nexport const PULSE_CORRIDOR = ${JSON.stringify(corridor, null, 2)};\n`,
+);
+
 console.log(`[pulse:generate-sensors] ${screens.length} ecrãs → ${OUT}`);
+console.log(`[pulse:generate-sensors] corredor → ${corridorOut}`);
