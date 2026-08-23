@@ -12,7 +12,7 @@ import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelector
 import { agora, dataHoje, meioDiaSistemaISO, toLocalDateKey, formatarLogTime } from '@/components/utils/dateUtils';
 import { logDespachoAudit, InformarDespachoAuditStrip } from '@/components/compras/informarEmbarqueAudit.jsx';
 import { calcPercentualValorEmbarcadoPedido } from '@/lib/embarqueValorFinanceiro';
-import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { formatQuantity, roundToTwoDecimals } from '@/lib/financialUtils';
 import { saveEmbarqueItem } from '@/functions/saveEmbarqueItem';
 import { buildItensCanonicosEmbarque } from '@/lib/buildEmbarqueItensCanonicos';
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
