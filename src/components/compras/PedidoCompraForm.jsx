@@ -1372,91 +1372,103 @@ export default function PedidoCompraForm({
       {isLocked && (
         <BannerStatusPedido pedido={pedidoAtual} lancamentos={lancamentosPedido} isMobile={isPhone} />
       )}
-      {/* Header compacto */}
-      <div className={COMPRAS_FORM_HEADER}>
+      {/* Header — grid mobile: kicker + ícones; título; valores em linha própria (sem overlap) */}
+      <div className={cn(COMPRAS_FORM_HEADER, 'relative overflow-visible !flex-col !items-stretch !gap-0 !px-0 !py-0')}>
         <span className={COMPRAS_HEADER_ACCENT} />
-        <Button variant="ghost" size="icon" onClick={handleCloseWithProtection} className="h-10 w-10" data-pulse-sensor="pedidos-compra.detalhe-voltar" aria-label="Voltar">
-          <X className="w-5 h-5" />
-        </Button>
-        <div className="flex-1 flex items-center justify-between min-w-0 gap-2">
-          <div className="flex items-center gap-2 min-w-0 flex-col items-start sm:flex-row sm:items-center">
-            <div className="min-w-0">
-              <p className={P38_PAGE_KICKER}>Pedido de compra</p>
-              <h2 className={cn(P38_PAGE_TITLE, 'text-lg md:text-xl truncate leading-tight')} data-pulse-sensor="pedidos-compra.detalhe-titulo">
+        <div className="px-4 py-3 md:py-4 min-w-0">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto_auto] gap-x-2 gap-y-1.5 items-center">
+            <p className={cn(P38_PAGE_KICKER, 'row-start-1 col-start-1 truncate min-w-0')}>
+              Pedido de compra
+            </p>
+            <div className="flex items-center justify-end gap-0.5 shrink-0 row-start-1 col-start-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleCloseWithProtection}
+                className="h-9 w-9 sm:h-10 sm:w-10 shrink-0"
+                data-pulse-sensor="pedidos-compra.detalhe-voltar"
+                aria-label="Voltar"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10 shrink-0" title="Mais opções">
+                    <MoreVertical className="w-5 h-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className={COMPRAS_DROPDOWN}>
+                  <DropdownMenuItem
+                    disabled={!pedido?.id}
+                    onClick={() => setAbaPedidoDesktop('pendencias')}
+                  >
+                    <AlertCircle className="w-4 h-4 mr-2" />
+                    Pendências
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={!pedido?.id}
+                    onClick={() => setAbaPedidoDesktop('logs')}
+                  >
+                    <History className="w-4 h-4 mr-2" />
+                    Logs
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem disabled={!pedido?.id} onClick={() => handlePrintReport('pedido')}>
+                    <Printer className="w-4 h-4 mr-2" />
+                    Relatório do Pedido
+                  </DropdownMenuItem>
+                  <DropdownMenuItem disabled={!pedido?.id} onClick={() => handlePrintReport('precificacao')}>
+                    <Printer className="w-4 h-4 mr-2" />
+                    Análise de Precificação
+                  </DropdownMenuItem>
+                  <DropdownMenuItem disabled={!pedido?.id} onClick={() => handlePrintReport('pendencias')}>
+                    <Printer className="w-4 h-4 mr-2" />
+                    Relatório de Pendências
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <div className="row-start-2 col-span-2 min-w-0 flex flex-wrap items-center gap-x-2 gap-y-1">
+              <h2
+                className={cn(P38_PAGE_TITLE, 'text-lg md:text-xl leading-tight truncate min-w-0 max-w-full')}
+                data-pulse-sensor="pedidos-compra.detalhe-titulo"
+              >
                 {pedido?.numero || 'Novo pedido'}
               </h2>
+              {pedido?.id && statusFinanceiroHeader && statusFinanceiroHeader !== 'Rascunho' && (
+                <Badge
+                  variant="secondary"
+                  className={
+                    statusFinanceiroHeader === 'Aprovado'
+                      ? 'bg-lime-100 text-lime-800 dark:bg-lime-900/30 dark:text-lime-300 shrink-0'
+                      : statusFinanceiroHeader === 'Aguard. Pgto'
+                        ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 shrink-0'
+                        : 'shrink-0'
+                  }
+                >
+                  {statusFinanceiroHeader}
+                </Badge>
+              )}
             </div>
-            {pedido?.id && statusFinanceiroHeader && statusFinanceiroHeader !== 'Rascunho' && (
-              <Badge
-                variant="secondary"
-                className={
-                  statusFinanceiroHeader === 'Aprovado'
-                    ? 'bg-lime-100 text-lime-800 dark:bg-lime-900/30 dark:text-lime-300 shrink-0'
-                    : statusFinanceiroHeader === 'Aguard. Pgto'
-                      ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 shrink-0'
-                      : 'shrink-0'
-                }
-              >
-                {statusFinanceiroHeader}
-              </Badge>
-            )}
+            <p className={cn(P38_PAGE_SUBTITLE, 'row-start-3 col-span-2 text-xs sm:text-sm tabular-nums min-w-0 break-words leading-snug')}>
+              {resumoNecessidadeDetalhe ? (
+                <>
+                  {resumoNecessidadeDetalhe.qtdItens}{' '}
+                  {resumoNecessidadeDetalhe.qtdItens === 1 ? 'item' : 'itens'}{' '}
+                  ({formatCurrency(resumoNecessidadeDetalhe.valorTotal)})
+                </>
+              ) : valorEmbarqueContexto != null ? (
+                <>
+                  Embarque {formatCurrency(valorEmbarqueContexto)} · pedido {formatCurrency(valorTotal)}
+                </>
+              ) : (
+                <>
+                  {formData.itens.length} item(s) · {formatCurrency(valorTotal)}
+                </>
+              )}
+            </p>
           </div>
-          <span className={cn(P38_PAGE_SUBTITLE, 'whitespace-nowrap ml-4 tabular-nums')}>
-            {resumoNecessidadeDetalhe ? (
-              <>
-                {resumoNecessidadeDetalhe.qtdItens}{' '}
-                {resumoNecessidadeDetalhe.qtdItens === 1 ? 'item' : 'itens'}{' '}
-                ({formatCurrency(resumoNecessidadeDetalhe.valorTotal)})
-              </>
-            ) : valorEmbarqueContexto != null ? (
-              <>
-                Embarque {formatCurrency(valorEmbarqueContexto)} · pedido {formatCurrency(valorTotal)}
-              </>
-            ) : (
-              <>
-                {formData.itens.length} item(s) • {formatCurrency(valorTotal)}
-              </>
-            )}
-          </span>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" title="Mais opções">
-              <MoreVertical className="w-5 h-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className={COMPRAS_DROPDOWN}>
-            <DropdownMenuItem
-              disabled={!pedido?.id}
-              onClick={() => setAbaPedidoDesktop('pendencias')}
-            >
-              <AlertCircle className="w-4 h-4 mr-2" />
-              Pendências
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              disabled={!pedido?.id}
-              onClick={() => setAbaPedidoDesktop('logs')}
-            >
-              <History className="w-4 h-4 mr-2" />
-              Logs
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem disabled={!pedido?.id} onClick={() => handlePrintReport('pedido')}>
-              <Printer className="w-4 h-4 mr-2" />
-              Relatório do Pedido
-            </DropdownMenuItem>
-            <DropdownMenuItem disabled={!pedido?.id} onClick={() => handlePrintReport('precificacao')}>
-              <Printer className="w-4 h-4 mr-2" />
-              Análise de Precificação
-            </DropdownMenuItem>
-            <DropdownMenuItem disabled={!pedido?.id} onClick={() => handlePrintReport('pendencias')}>
-              <Printer className="w-4 h-4 mr-2" />
-              Relatório de Pendências
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-
       </div>
 
       {/* Dialog de rascunho */}
