@@ -56,6 +56,7 @@ import PagamentoLoteDialog from './PagamentoLoteDialog';
 import FluxoToggleProgramadas from './fluxo/FluxoToggleProgramadas';
 import TipoFiltroBar from './fluxo/TipoFiltroBar';
 import { FinanceiroToolbarIcon } from './fluxo/FinanceiroToolbarIcon';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { cn } from '@/components/utils';
 import { P38_PAGE_TITLE } from '@/lib/p38FormTypography';
 import { passaFiltroTiposLancamento, filtrarGruposPorTipo } from '@/lib/filtroTipoFinanceiro';
