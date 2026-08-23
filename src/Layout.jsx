@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import GlacialBottomNav from '@/components/navigation/GlacialBottomNav';
 import MobileUserMenu from '@/components/layout/MobileUserMenu';
 import { useCompactShell } from '@/hooks/use-breakpoint';
+import { useForceLandscape } from '@/hooks/useForceLandscape';
 import { useBottomNavScrollVisibility } from '@/hooks/useBottomNavScrollVisibility';
 import { shouldHideBottomNavOnScroll } from '@/config/bottomNavScrollPolicy';
 import { shouldOpenGlobalSearchFromKeyboard } from '@/lib/globalSearchShortcut';
@@ -51,6 +52,7 @@ export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useCompactShell();
+  const forceLandscape = useForceLandscape();
   const [currentUser, setCurrentUser] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState({});
@@ -351,10 +353,15 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <div className={darkMode ? 'dark' : ''}>
+      <div className={forceLandscape ? 'p38-orientation-rotated-stage' : undefined}>
       <FontScaleInitializer />
       <div
         className={`font-din-1451 p38-app bg-background ${
-          isMobile ? 'flex flex-col h-[100dvh] max-h-[100dvh] overflow-hidden p38-app-shell-compact' : 'min-h-screen flex'
+          isMobile
+            ? `flex flex-col overflow-hidden p38-app-shell-compact ${
+                forceLandscape ? 'h-full max-h-full' : 'h-[100dvh] max-h-[100dvh]'
+              }`
+            : 'min-h-screen flex'
         }`}
       >
 
@@ -422,6 +429,7 @@ export default function Layout({ children, currentPageName }) {
             onProfileClick={() => setShowMobileUserMenu(true)}
             currentPageName={currentPageName}
             visible={bottomNavVisible}
+            docked
           />
         )}
         {!isFullscreen && showMobileMenu && (
@@ -454,6 +462,7 @@ export default function Layout({ children, currentPageName }) {
         </Suspense>
       )}
       {searchOverlay}
+      </div>
     </div>
   );
 }

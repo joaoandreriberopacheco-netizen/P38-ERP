@@ -10,7 +10,7 @@ export const ORIENTATION_STORAGE_KEY = 'p38_orientation_mode';
 export const ORIENTATION_CHANGE_EVENT = 'p38-orientation-change';
 export const FORCE_LANDSCAPE_ATTR = 'data-p38-force-landscape';
 
-/** Largura mínima típica de tablet — sem rotação CSS (só telemóvel). */
+/** Largura mínima típica de tablet. */
 export const TABLET_MIN_DIMENSION = 768;
 
 export function isCoarsePointer() {
@@ -23,16 +23,11 @@ export function isForceLandscapeCssActive() {
   return document.documentElement.getAttribute(FORCE_LANDSCAPE_ATTR) === 'true';
 }
 
-/** Tablet: rotação nativa do SO; CSS quebra menu fixo e scroll. */
 export function isTabletSizedViewport() {
   if (typeof window === 'undefined') return false;
   const w = window.innerWidth;
   const h = window.innerHeight;
   return Math.min(w, h) >= TABLET_MIN_DIMENSION;
-}
-
-export function shouldUseCssLandscapeFallback() {
-  return isPortraitViewport() && !isTabletSizedViewport();
 }
 
 function canUseScreenOrientationLock() {
@@ -76,6 +71,15 @@ function persistOrientation(mode) {
   window.dispatchEvent(new CustomEvent(ORIENTATION_CHANGE_EVENT, { detail: { orientation: mode } }));
 }
 
+async function unlockScreenOrientation() {
+  if (!canUseScreenOrientationLock()) return;
+  try {
+    await screen.orientation.unlock();
+  } catch {
+    /* ignore */
+  }
+}
+
 export async function lockPortraitOrientation() {
   if (!canUseScreenOrientationLock()) return false;
   try {
@@ -93,17 +97,21 @@ export async function lockPortraitOrientation() {
 
 export async function lockLandscapeOrientation() {
   if (!canUseScreenOrientationLock()) return false;
-  try {
-    await screen.orientation.lock(LANDSCAPE_LOCK);
-    return true;
-  } catch {
+  await unlockScreenOrientation();
+  const attempts = [LANDSCAPE_LOCK, 'landscape-primary', 'landscape-secondary'];
+  for (const type of attempts) {
     try {
-      await screen.orientation.lock('landscape-primary');
-      return true;
+      await screen.orientation.lock(type);
+      if (!isPortraitViewport()) return true;
     } catch {
-      return false;
+      /* try next */
     }
   }
+  return !isPortraitViewport();
+}
+
+export function shouldUseCssLandscapeFallback() {
+  return isPortraitViewport();
 }
 
 export function applyCssLandscapeFallback(enabled) {
