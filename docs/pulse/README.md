@@ -77,8 +77,20 @@ Simula processos de negócio **sem gravar** (cancelar / voltar). Manifesto: [`sh
 | `npm run pulse:shipping -- --module vendas` | Só módulo vendas |
 | `npm run pulse:shipping -- --id pedidos-compra` | Um processo |
 | `npm run pulse:shipping -- --piloto` | 3 processos piloto (legado) |
+| `npm run pulse:shipping:critico` | **Anti-submarino** — fluxos compostos ([`shipping-critico.json`](./shipping-critico.json)) |
 
 Relatório: `docs/pulse/shipping-report.json`
+
+### Camadas de defesa (porque um bug pode “passar de submarino”)
+
+| Camada | O que vê | O que **não** vê |
+|--------|----------|------------------|
+| **Build** | Erros de compilação | `ReferenceError` só quando um ramo monta (ex.: pedido **salvo** + aba Logística) |
+| **Pulso rotas + comboio** | Página abre, shell existe | Abas internas, formulários fullscreen, estado “depois de gravar” |
+| **Shipping lista** | FAB novo pedido → voltar | Abas do detalhe com pedido já persistido |
+| **Shipping crítico** | Fluxos compostos + fixture `pulse-fixture-pedido` | Tudo o que ainda não está no manifesto crítico |
+
+**Regra:** quando um fluxo depende de **estado** (salvo, aprovado, com embarque), acrescentar sensor + passo em `shipping-critico.json` (ou `PULSE_SHIPPING_EXTRA` no gerador). O CI em cada push corre `pulse:predeploy` + `pulse:shipping:critico`.
 
 ## Sensores UI (pré-deploy)
 

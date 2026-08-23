@@ -54,9 +54,28 @@ jobs:
           NEXT_PUBLIC_P38_PROVIDER: supabase
           NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ci1wbGFjZWhvbGRlcg
+          NEXT_PUBLIC_P38_USE_SUPABASE_AUTH: 'false'
+          NEXT_PUBLIC_P38_BYPASS_BASE44: 'true'
           VITE_P38_PROVIDER: supabase
           VITE_SUPABASE_URL: https://placeholder.supabase.co
           VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ci1wbGFjZWhvbGRlcg
+          VITE_P38_USE_SUPABASE_AUTH: 'false'
+          VITE_P38_BYPASS_BASE44: 'true'
         run: |
           npx playwright install --with-deps chromium
           npm run pulse:predeploy
+
+      - name: Pulso — shipping crítico (fluxos compostos / estados salvos)
+        env:
+          PULSE_SKIP_BUILD: '1'
+          NEXT_PUBLIC_P38_PROVIDER: supabase
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ci1wbGFjZWhvbGRlcg
+          NEXT_PUBLIC_P38_USE_SUPABASE_AUTH: 'false'
+          NEXT_PUBLIC_P38_BYPASS_BASE44: 'true'
+          VITE_P38_PROVIDER: supabase
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ci1wbGFjZWhvbGRlcg
+          VITE_P38_USE_SUPABASE_AUTH: 'false'
+          VITE_P38_BYPASS_BASE44: 'true'
+        run: npm run pulse:shipping:critico -- --skip-build

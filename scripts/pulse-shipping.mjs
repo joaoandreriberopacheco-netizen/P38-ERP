@@ -23,6 +23,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const MANIFEST = path.join(ROOT, 'docs/pulse/shipping-geral.json');
 const MANIFEST_PILOTO = path.join(ROOT, 'docs/pulse/shipping-piloto.json');
+const MANIFEST_CRITICO = path.join(ROOT, 'docs/pulse/shipping-critico.json');
 const REPORT_OUT = path.join(ROOT, 'docs/pulse/shipping-report.json');
 
 const ERROR_SELECTORS = [
@@ -37,6 +38,7 @@ function parseArgs(argv) {
     id: null,
     module: null,
     piloto: false,
+    critico: false,
     skipServer: false,
     skipBuild: false,
     writeReport: true,
@@ -49,6 +51,7 @@ function parseArgs(argv) {
     const arg = argv[i];
     if (arg === '--all' || arg === '-a') args.all = true;
     else if (arg === '--piloto') args.piloto = true;
+    else if (arg === '--critico') args.critico = true;
     else if (arg === '--tablet') args.tablet = true;
     else if (arg === '--modo-paisagem') args.modoPaisagem = true;
     else if (arg === '--profile' && argv[i + 1]) args.profile = argv[++i];
@@ -176,6 +179,7 @@ async function main() {
 Opções:
   --all, -a           Todos (shipping-geral.json, default)
   --piloto            Só 3 processos piloto
+  --critico           Subconjunto anti-submarino (shipping-critico.json)
   --id <slug>         Um processo (ex: pedidos-compra)
   --module <nome>     Filtrar módulo (vendas, financeiro, logistica, gestao)
   --tablet            Emulação iPad (touch + menu de baixo)
@@ -194,12 +198,30 @@ Opções:
   //
   // refreshPulseRoteiro();
 
-  const manifestPath = args.piloto ? MANIFEST_PILOTO : MANIFEST;
-  if (!fs.existsSync(manifestPath)) {
-    throw new Error(`Manifesto não encontrado: ${manifestPath}. Corra: npm run pulse:generate-sensors`);
+  let shipments;
+  if (args.critico) {
+    if (!fs.existsSync(MANIFEST)) {
+      throw new Error(`Manifesto não encontrado: ${MANIFEST}. Corra: npm run pulse:generate-sensors`);
+    }
+    if (!fs.existsSync(MANIFEST_CRITICO)) {
+      throw new Error(`Manifesto crítico não encontrado: ${MANIFEST_CRITICO}`);
+    }
+    const manifest = JSON.parse(fs.readFileSync(MANIFEST, 'utf8'));
+    const critico = JSON.parse(fs.readFileSync(MANIFEST_CRITICO, 'utf8'));
+    const ids = critico.shipmentIds || [];
+    shipments = manifest.shipments.filter((s) => ids.includes(s.id));
+    const missing = ids.filter((id) => !shipments.some((s) => s.id === id));
+    if (missing.length) {
+      throw new Error(`Shipping crítico em falta no geral: ${missing.join(', ')}`);
+    }
+  } else {
+    const manifestPath = args.piloto ? MANIFEST_PILOTO : MANIFEST;
+    if (!fs.existsSync(manifestPath)) {
+      throw new Error(`Manifesto não encontrado: ${manifestPath}. Corra: npm run pulse:generate-sensors`);
+    }
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    shipments = manifest.shipments;
   }
-  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-  let shipments = manifest.shipments;
   if (args.id) {
     shipments = shipments.filter((s) => s.id === args.id);
     if (!shipments.length) throw new Error(`Shipping não encontrado: ${args.id}`);
@@ -220,8 +242,8 @@ Opções:
 
   console.log(
     `[pulse:shipping] ${shipments.length} processo(s) — dry run · ${viewportProfile.label}${
-      args.modoPaisagem ? ' · Modo Paisagem' : ''
-    }`
+      args.critico ? ' · crítico' : ''
+    }${args.modoPaisagem ? ' · Modo Paisagem' : ''}`
   );
 
   try {
@@ -247,6 +269,7 @@ Opções:
       collectedAt: new Date().toISOString(),
       profile: viewportProfile.id,
       profileLabel: viewportProfile.label,
+      critico: args.critico,
       modoPaisagem: args.modoPaisagem,
       passed,
       total: summary.length,
