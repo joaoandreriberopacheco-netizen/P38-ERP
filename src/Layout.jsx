@@ -352,7 +352,11 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className={darkMode ? 'dark' : ''}>
       <FontScaleInitializer />
-      <div className="min-h-screen flex font-din-1451 p38-app bg-background">
+      <div
+        className={`font-din-1451 p38-app bg-background ${
+          isMobile ? 'flex flex-col h-[100dvh] max-h-[100dvh] overflow-hidden p38-app-shell-compact' : 'min-h-screen flex'
+        }`}
+      >
 
 
         {/* Sidebar Desktop */}
@@ -390,10 +394,17 @@ export default function Layout({ children, currentPageName }) {
           data-p38-overlay-sidebar={useDesktopOverlaySidebar ? 'true' : undefined}
           className={`flex-1 transition-[margin] duration-200 ease-out ${
             isMobile 
-              ? `ml-0 pt-12 ${MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' : 'p38-layout-mobile-scroll-pad'}`
+              ? `ml-0 min-h-0 ${
+                  MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName)
+                    ? 'h-full max-h-full overflow-hidden'
+                    : 'overflow-y-auto overscroll-y-contain p38-layout-mobile-scroll-pad'
+                }`
               : (useDesktopOverlaySidebar ? 'ml-[64px]' : (isOpen ? 'ml-[300px]' : 'ml-[64px]'))
           } ${MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) && !isMobile ? 'h-screen max-h-screen overflow-hidden' : ''}`}
-          style={{ willChange: 'margin', paddingTop: isMobile ? `calc(3rem + env(safe-area-inset-top))` : undefined }}
+          style={{
+            willChange: 'margin',
+            paddingTop: isMobile ? `calc(3rem + env(safe-area-inset-top))` : undefined,
+          }}
         >
           {MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) ? (
             <div className="h-full min-h-0 overflow-hidden">

@@ -10,6 +10,9 @@ export const ORIENTATION_STORAGE_KEY = 'p38_orientation_mode';
 export const ORIENTATION_CHANGE_EVENT = 'p38-orientation-change';
 export const FORCE_LANDSCAPE_ATTR = 'data-p38-force-landscape';
 
+/** Largura mínima típica de tablet — sem rotação CSS (só telemóvel). */
+export const TABLET_MIN_DIMENSION = 768;
+
 export function isCoarsePointer() {
   if (typeof window === 'undefined' || !window.matchMedia) return false;
   return window.matchMedia('(pointer: coarse)').matches;
@@ -18,6 +21,18 @@ export function isCoarsePointer() {
 export function isForceLandscapeCssActive() {
   if (typeof document === 'undefined') return false;
   return document.documentElement.getAttribute(FORCE_LANDSCAPE_ATTR) === 'true';
+}
+
+/** Tablet: rotação nativa do SO; CSS quebra menu fixo e scroll. */
+export function isTabletSizedViewport() {
+  if (typeof window === 'undefined') return false;
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  return Math.min(w, h) >= TABLET_MIN_DIMENSION;
+}
+
+export function shouldUseCssLandscapeFallback() {
+  return isPortraitViewport() && !isTabletSizedViewport();
 }
 
 function canUseScreenOrientationLock() {
@@ -115,14 +130,14 @@ function syncCssLandscapeFallback() {
     applyCssLandscapeFallback(false);
     return;
   }
-  applyCssLandscapeFallback(isPortraitViewport());
+  applyCssLandscapeFallback(shouldUseCssLandscapeFallback());
 }
 
 export async function applyPreferredOrientation() {
   const mode = getPreferredOrientation();
   if (mode === 'landscape') {
     const locked = await lockLandscapeOrientation();
-    const cssFallback = !locked && isPortraitViewport();
+    const cssFallback = !locked && shouldUseCssLandscapeFallback();
     applyCssLandscapeFallback(cssFallback);
     return { mode, locked, cssFallback };
   }
@@ -211,7 +226,7 @@ export function bootLandscapeFallbackFromStorage() {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
   try {
     if (window.localStorage.getItem(ORIENTATION_STORAGE_KEY) !== 'landscape') return;
-    if (isPortraitViewport()) applyCssLandscapeFallback(true);
+    if (shouldUseCssLandscapeFallback()) applyCssLandscapeFallback(true);
   } catch {
     /* ignore */
   }

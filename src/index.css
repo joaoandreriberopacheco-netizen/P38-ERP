@@ -398,12 +398,12 @@ html[data-p38-shell="desktop"] {
 }
 
 /*
-  Fallback de paisagem: quando o SO/browser não bloqueia orientação
-  (iOS, janela de notebook, browser sem Screen Orientation API),
-  gira o app 90° para o utilizador usar o ecrã deitado.
+  Fallback de paisagem (só telemóvel): gira o app quando o SO não bloqueia orientação.
+  Tablet: rotação nativa — CSS quebra menu fixo e scroll.
 */
 html[data-p38-force-landscape='true'] {
   overflow: hidden;
+  height: 100%;
 }
 
 html[data-p38-force-landscape='true'] body {
@@ -415,7 +415,18 @@ html[data-p38-force-landscape='true'] body {
   margin: 0;
   transform: rotate(90deg);
   transform-origin: top left;
-  overflow: auto;
+  overflow: hidden;
+}
+
+html[data-p38-force-landscape='true'] #root,
+html[data-p38-force-landscape='true'] #root > * {
+  height: 100%;
+  max-height: 100%;
+}
+
+html[data-p38-force-landscape='true'] .p38-app-shell-compact {
+  height: 100%;
+  max-height: 100%;
 }
 
 /* ==========================================

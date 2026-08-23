@@ -8,7 +8,7 @@ try {
   if (localStorage.getItem('theme') === 'dark') {
     document.documentElement.classList.add('dark');
   }
-  if (localStorage.getItem('p38_orientation_mode') === 'landscape' && window.innerHeight > window.innerWidth) {
+  if (localStorage.getItem('p38_orientation_mode') === 'landscape' && window.innerHeight > window.innerWidth && Math.min(window.innerWidth, window.innerHeight) < 768) {
     document.documentElement.setAttribute('data-p38-force-landscape', 'true');
   }
 } catch (_) {}
