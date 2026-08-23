@@ -4,11 +4,12 @@ import GlobalSearchBar from '@/components/navigation/GlobalSearchBar';
 import { SHELL_Z } from '@/lib/quickAccessOverlay';
 import { cn } from '@/lib/utils';
 import { shouldSuppressGlobalSearchBackdropClose } from '@/lib/openGlobalSearch';
+import { getP38PortalRoot } from '@/lib/p38PortalRoot';
+import { useForceLandscape } from '@/hooks/useForceLandscape';
 
 /**
- * Busca global (Ctrl+K / bottom nav) — portal no body para prevalecer sobre qualquer tela.
- * No mobile o overlay fica sempre montado (invisível quando fechado) para o input existir
- * no gesto do toque e o teclado nativo abrir de imediato.
+ * Busca global (Ctrl+K / bottom nav).
+ * No mobile o overlay fica montado no stage de paisagem (ou body) para alinhar com o ecrã rotacionado.
  */
 export default function GlobalSearchOverlay({
   open,
@@ -18,6 +19,7 @@ export default function GlobalSearchOverlay({
   searchableItems,
   onNavigate,
 }) {
+  const forceLandscape = useForceLandscape();
   const handleBackdropClose = useCallback(() => {
     if (shouldSuppressGlobalSearchBackdropClose()) return;
     onClose?.();
@@ -26,13 +28,16 @@ export default function GlobalSearchOverlay({
   if (typeof document === 'undefined') return null;
   if (!isMobile && !open) return null;
 
+  const portalRoot = getP38PortalRoot();
+  if (!portalRoot) return null;
+
   const shellZ = SHELL_Z.search;
 
   if (isMobile) {
     return createPortal(
       <div
         className={cn(
-          'fixed inset-0 font-din-1451 sidebar-shell:hidden',
+          'p38-portal-overlay font-din-1451 sidebar-shell:hidden',
           !open && 'pointer-events-none'
         )}
         style={{ zIndex: shellZ }}
@@ -47,7 +52,8 @@ export default function GlobalSearchOverlay({
         ) : null}
         <div
           className={cn(
-            'relative z-[1] w-full px-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))]',
+            'relative z-[1] w-full px-3',
+            forceLandscape ? 'pt-3' : 'pt-[calc(0.75rem+env(safe-area-inset-top,0px))]',
             !open && 'pointer-events-none opacity-0'
           )}
           onClick={(e) => e.stopPropagation()}
@@ -64,7 +70,7 @@ export default function GlobalSearchOverlay({
           />
         </div>
       </div>,
-      document.body
+      portalRoot
     );
   }
 

@@ -14,6 +14,8 @@ try {
     document.documentElement.style.setProperty('--p38-force-landscape-shift', w + 'px');
     document.documentElement.style.setProperty('--p38-force-landscape-width', h + 'px');
     document.documentElement.style.setProperty('--p38-force-landscape-height', w + 'px');
+    document.documentElement.style.setProperty('--p38-stage-height', w + 'px');
+    document.documentElement.style.setProperty('--p38-stage-width', h + 'px');
   }
 } catch (_) {}
 `;

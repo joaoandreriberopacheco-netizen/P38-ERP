@@ -122,6 +122,8 @@ export function applyCssLandscapeFallback(enabled) {
     root.style.removeProperty('--p38-force-landscape-shift');
     root.style.removeProperty('--p38-force-landscape-width');
     root.style.removeProperty('--p38-force-landscape-height');
+    root.style.removeProperty('--p38-stage-height');
+    root.style.removeProperty('--p38-stage-width');
     return;
   }
   const vv = window.visualViewport;
@@ -131,6 +133,8 @@ export function applyCssLandscapeFallback(enabled) {
   root.style.setProperty('--p38-force-landscape-shift', `${width}px`);
   root.style.setProperty('--p38-force-landscape-width', `${height}px`);
   root.style.setProperty('--p38-force-landscape-height', `${width}px`);
+  root.style.setProperty('--p38-stage-height', `${width}px`);
+  root.style.setProperty('--p38-stage-width', `${height}px`);
 }
 
 function syncCssLandscapeFallback() {

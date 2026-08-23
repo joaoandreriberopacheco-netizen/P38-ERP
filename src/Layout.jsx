@@ -358,8 +358,8 @@ export default function Layout({ children, currentPageName }) {
       <div
         className={`font-din-1451 p38-app bg-background ${
           isMobile
-            ? `flex flex-col overflow-hidden p38-app-shell-compact ${
-                forceLandscape ? 'h-full max-h-full' : 'h-[100dvh] max-h-[100dvh]'
+            ? `relative flex flex-col min-h-0 overflow-hidden p38-app-shell-compact ${
+                forceLandscape ? 'flex-1' : 'h-[100dvh] max-h-[100dvh]'
               }`
             : 'min-h-screen flex'
         }`}
@@ -404,13 +404,15 @@ export default function Layout({ children, currentPageName }) {
               ? `ml-0 min-h-0 ${
                   MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName)
                     ? 'h-full max-h-full overflow-hidden'
-                    : 'overflow-y-auto overscroll-y-contain p38-layout-mobile-scroll-pad'
+                    : 'overflow-y-auto overscroll-y-contain p38-stage-panel-scroll p38-layout-mobile-scroll-pad touch-pan-y'
                 }`
               : (useDesktopOverlaySidebar ? 'ml-[64px]' : (isOpen ? 'ml-[300px]' : 'ml-[64px]'))
           } ${MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) && !isMobile ? 'h-screen max-h-screen overflow-hidden' : ''}`}
           style={{
             willChange: 'margin',
-            paddingTop: isMobile ? `calc(3rem + env(safe-area-inset-top))` : undefined,
+            paddingTop: isMobile
+              ? (forceLandscape ? '0.75rem' : `calc(3rem + env(safe-area-inset-top))`)
+              : undefined,
           }}
         >
           {MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) ? (
@@ -430,6 +432,7 @@ export default function Layout({ children, currentPageName }) {
             currentPageName={currentPageName}
             visible={bottomNavVisible}
             docked
+            skipSafeArea={forceLandscape}
           />
         )}
         {!isFullscreen && showMobileMenu && (

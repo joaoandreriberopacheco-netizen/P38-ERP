@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/components/utils';
@@ -6,6 +7,8 @@ import { User, LogOut, Settings, Sun, Moon, X, HelpCircle, Shield, RectangleHori
 import PinSetupDialog from '@/components/auth/PinSetupDialog';
 import FontScaleControl from '@/components/accessibility/FontScaleControl';
 import { usePreferredOrientation } from '@/hooks/usePreferredOrientation';
+import { useForceLandscape } from '@/hooks/useForceLandscape';
+import { getP38PortalRoot } from '@/lib/p38PortalRoot';
 import { pulseSensor } from '@/lib/pulseSensor';
 
 export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen, onExternalClose }) {
@@ -14,6 +17,7 @@ export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen,
   const [user, setUser] = useState(null);
   const [showPin, setShowPin] = useState(false);
   const { landscape, toggle: toggleLandscape } = usePreferredOrientation();
+  const forceLandscape = useForceLandscape();
 
   useEffect(() => {
     base44.auth.me().then(u => u && setUser(u)).catch(() => {});
@@ -33,19 +37,24 @@ export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen,
     ? user.full_name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()
     : '?';
 
-  return (
-    <>
-      {/* Drawer */}
-      {open && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
+  const portalRoot = typeof document !== 'undefined' ? getP38PortalRoot() : null;
+
+  const drawer =
+    open && portalRoot
+      ? createPortal(
+        <div className="p38-portal-overlay z-[55] flex flex-col justify-end min-h-0">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={handleClose}
+            aria-label="Fechar perfil"
           />
 
-          {/* Sheet */}
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-3xl shadow-2xl px-5 pt-5 pb-8 safe-area-container">
+          <div
+            className={`relative z-[1] bg-card rounded-t-3xl shadow-2xl px-5 pt-5 pb-8 max-h-[92%] overflow-y-auto overscroll-y-contain touch-pan-y ${
+              forceLandscape ? '' : 'safe-area-container'
+            }`}
+          >
             {/* Handle */}
             <div className="w-10 h-1 bg-muted rounded-full mx-auto mb-5" />
 
@@ -146,8 +155,14 @@ export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen,
               </button>
             </div>
           </div>
-        </>
-      )}
+        </div>,
+        portalRoot
+      )
+      : null;
+
+  return (
+    <>
+      {drawer}
       {showPin && (
         <PinSetupDialog
           isOpen={showPin}
