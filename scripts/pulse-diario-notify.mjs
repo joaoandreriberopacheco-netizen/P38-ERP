@@ -2,8 +2,10 @@
 /**
  * Notificação Pulso diário — mensagem simples para João André.
  *
- * GitHub: comenta issue aberta com label pulse-diario (João recebe email se inscrito).
- * Telegram (opcional): secrets PULSE_NOTIFY_TELEGRAM_BOT_TOKEN + PULSE_NOTIFY_TELEGRAM_CHAT_ID
+ * Canais (todos opcionais excepto consola):
+ * - GitHub issue (label pulse-diario)
+ * - WhatsApp via CallMeBot: PULSE_NOTIFY_WHATSAPP_PHONE + PULSE_NOTIFY_CALLMEBOT_APIKEY
+ * - Telegram: PULSE_NOTIFY_TELEGRAM_BOT_TOKEN + PULSE_NOTIFY_TELEGRAM_CHAT_ID
  */
 import fs from 'fs';
 import path from 'path';
@@ -40,17 +42,17 @@ function formatDate(iso) {
 
 function formatMessage(summary) {
   const when = formatDate(summary.finishedAt || summary.collectedAt);
-  const lines = [`☀️ *Pulso diário* — ${when}`, ''];
+  const lines = [`☀️ Pulso diário — ${when}`, ''];
 
   if (summary.status === 'ok') {
-    lines.push('✅ *Tudo OK* — nada a rever hoje.');
+    lines.push('✅ Tudo OK — nada a rever hoje.');
     lines.push(`• Trem: ${summary.trem.passed}/${summary.trem.total}`);
     lines.push(`• Shipping: ${summary.shipping.passed}/${summary.shipping.total}`);
     return lines.join('\n');
   }
 
   if (summary.status === 'fixed') {
-    lines.push('⚙️ *Encontrámos algo e corrigimos sozinhos* — confirma quando puderes.');
+    lines.push('⚙️ Encontrámos algo e corrigimos sozinhos — confirma quando puderes.');
     lines.push('');
     for (const fix of summary.autoFixes) {
       lines.push(`• ${fix.phase}: ${fix.action}`);
@@ -59,36 +61,36 @@ function formatMessage(summary) {
     lines.push(`• Trem: ${summary.trem.passed}/${summary.trem.total}`);
     lines.push(`• Shipping: ${summary.shipping.passed}/${summary.shipping.total}`);
     lines.push('');
-    lines.push('_Sugestão: abre rapidamente os ecrãs que costumas usar de manhã._');
+    lines.push('Sugestão: abre rapidamente os ecrãs que costumas usar de manhã.');
     return lines.join('\n');
   }
 
-  lines.push('⚠️ *Precisa da tua revisão* — não conseguimos corrigir sozinhos.');
+  lines.push('⚠️ Precisa da tua revisão — não conseguimos corrigir sozinhos.');
   lines.push('');
 
   if (summary.trem.failures?.length) {
-    lines.push('*Trem (ecrã):*');
+    lines.push('Trem (ecrã):');
     for (const f of summary.trem.failures.slice(0, 5)) {
-      lines.push(`• ${f.route} — parou em \`${f.failedAt}\`${f.error ? ` (${f.error})` : ''}`);
+      lines.push(`• ${f.route} — parou em ${f.failedAt}${f.error ? ` (${f.error})` : ''}`);
     }
   } else if (!summary.trem.ok) {
-    lines.push(`*Trem:* falhou (${summary.trem.passed ?? '?'}/${summary.trem.total ?? '?'})`);
+    lines.push(`Trem: falhou (${summary.trem.passed ?? '?'}/${summary.trem.total ?? '?'})`);
   }
 
   if (summary.shipping.failures?.length) {
     lines.push('');
-    lines.push('*Shipping (processo):*');
+    lines.push('Shipping (processo):');
     for (const f of summary.shipping.failures.slice(0, 5)) {
-      lines.push(`• ${f.label || f.id} — parou em \`${f.failedAt}\`${f.error ? ` (${f.error})` : ''}`);
+      lines.push(`• ${f.label || f.id} — parou em ${f.failedAt}${f.error ? ` (${f.error})` : ''}`);
     }
   } else if (!summary.shipping.ok && !summary.shipping.attempts?.[0]?.skipped) {
     lines.push('');
-    lines.push(`*Shipping:* falhou (${summary.shipping.passed ?? '?'}/${summary.shipping.total ?? '?'})`);
+    lines.push(`Shipping: falhou (${summary.shipping.passed ?? '?'}/${summary.shipping.total ?? '?'})`);
   }
 
   if (summary.autoFixes?.length) {
     lines.push('');
-    lines.push('*Já tentámos:*');
+    lines.push('Já tentámos:');
     for (const fix of summary.autoFixes) {
       lines.push(`• ${fix.action}`);
     }
@@ -96,7 +98,7 @@ function formatMessage(summary) {
 
   if (summary.workflowUrl) {
     lines.push('');
-    lines.push(`[Ver detalhes no GitHub Actions](${summary.workflowUrl})`);
+    lines.push(`Detalhes: ${summary.workflowUrl}`);
   }
 
   return lines.join('\n');
@@ -157,10 +159,30 @@ function notifyGitHub(message, summary) {
   const issueNumber = findOrCreateDigestIssue();
   if (!issueNumber) return false;
 
-  const body = `${message.replace(/\*/g, '**')}\n\n---\n\`status\`: ${summary.status} · \`trem\`: ${summary.trem.passed}/${summary.trem.total} · \`shipping\`: ${summary.shipping.passed}/${summary.shipping.total}`;
+  const body = `${message}\n\n---\nstatus: ${summary.status} · trem: ${summary.trem.passed}/${summary.trem.total} · shipping: ${summary.shipping.passed}/${summary.shipping.total}`;
 
   gh(['issue', 'comment', String(issueNumber), '--repo', repo, '--body', body]);
   console.log(`[pulse:notify] Comentário na issue #${issueNumber} (@${NOTIFY_ASSIGNEE})`);
+  return true;
+}
+
+async function notifyWhatsApp(message) {
+  const phone = (process.env.PULSE_NOTIFY_WHATSAPP_PHONE || '').replace(/\D/g, '');
+  const apikey = process.env.PULSE_NOTIFY_CALLMEBOT_APIKEY;
+  if (!phone || !apikey) return false;
+
+  const text = message.length > 1200 ? `${message.slice(0, 1197)}…` : message;
+  const url = new URL('https://api.callmebot.com/whatsapp.php');
+  url.searchParams.set('phone', phone);
+  url.searchParams.set('text', text);
+  url.searchParams.set('apikey', apikey);
+
+  const res = await fetch(url);
+  const body = await res.text();
+  if (!res.ok || /ERROR/i.test(body)) {
+    throw new Error(`WhatsApp (CallMeBot): ${body || res.status}`);
+  }
+  console.log('[pulse:notify] WhatsApp enviado');
   return true;
 }
 
@@ -174,8 +196,7 @@ async function notifyTelegram(message) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       chat_id: chatId,
-      text: message.replace(/\*/g, '*'),
-      parse_mode: 'Markdown',
+      text: message,
       disable_web_page_preview: true,
     }),
   });
@@ -193,9 +214,12 @@ async function main() {
   const message = formatMessage(summary);
 
   console.log('\n--- Notificação Pulso diário ---\n');
-  console.log(message.replace(/\*/g, ''));
+  console.log(message);
   console.log('\n--------------------------------\n');
 
+  await notifyWhatsApp(message).catch((err) => {
+    console.warn('[pulse:notify]', err.message);
+  });
   await notifyTelegram(message).catch((err) => {
     console.warn('[pulse:notify]', err.message);
   });

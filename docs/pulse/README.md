@@ -110,7 +110,7 @@ Workflow `.github/workflows/pulse-diario.yml`:
 
 - **Quando:** todos os dias às **05:00 Tabatinga** (10:00 UTC)
 - **O quê:** `npm run pulse:diario` — refresh → trem → shipping; se falhar, **auto-reparo seguro** (regenera roteiro e repete uma vez)
-- **Notificação João André:** comentário numa issue GitHub (`pulse-diario`) — **inscreve-te na issue** para receber email
+- **Notificação João André:** comentário numa issue GitHub (`pulse-diario`) e/ou **WhatsApp** (recomendado)
 - **Telegram (opcional):** secrets `PULSE_NOTIFY_TELEGRAM_BOT_TOKEN` + `PULSE_NOTIFY_TELEGRAM_CHAT_ID`
 - **Manual:** GitHub → Actions → **Pulso diário** → Run workflow
 
@@ -125,6 +125,21 @@ Mensagens possíveis:
 **Auto-reparo hoje:** só manifestos desactualizados (refresh + retry). Crash de código ou botão removido → aviso para ti rever; não altera `src/` automaticamente.
 
 Relatórios: artefacto `pulse-diario-reports` (7 dias).
+
+### WhatsApp (CallMeBot — uso pessoal)
+
+Configuração única (~2 min):
+
+1. No telemóvel, adiciona o contacto **+34 684 71 39 62** (CallMeBot).
+2. Envia no WhatsApp: `I allow callmebot to send me messages`
+3. O bot responde com a tua **apikey** — copia.
+4. GitHub → repo → **Settings → Secrets → Actions**, cria:
+   - `PULSE_NOTIFY_WHATSAPP_PHONE` — teu número internacional **sem** `+` (ex. Brasil `5511999999999`)
+   - `PULSE_NOTIFY_CALLMEBOT_APIKEY` — apikey que o bot enviou
+
+Na manhã seguinte à 1.ª corrida agendada, recebes a mensagem do Pulso no WhatsApp.
+
+Issue GitHub: inscreve-te na issue `pulse-diario` se quiseres email em paralelo.
 
 ## Saída exemplo
 

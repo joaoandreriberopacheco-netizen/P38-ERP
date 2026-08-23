@@ -3,8 +3,9 @@
 # Agenda: todos os dias 05:00 Tabatinga (America/Rio_Branco, UTC-5) = 10:00 UTC.
 # Disparo manual: Actions → "Pulso diário" → Run workflow
 #
-# Notificação João André: comenta issue GitHub (label pulse-diario).
-# Telegram opcional: secrets PULSE_NOTIFY_TELEGRAM_BOT_TOKEN + PULSE_NOTIFY_TELEGRAM_CHAT_ID
+# Notificação João André: issue GitHub (label pulse-diario) e/ou WhatsApp (CallMeBot).
+# WhatsApp secrets: PULSE_NOTIFY_WHATSAPP_PHONE + PULSE_NOTIFY_CALLMEBOT_APIKEY
+# Telegram opcional: PULSE_NOTIFY_TELEGRAM_BOT_TOKEN + PULSE_NOTIFY_TELEGRAM_CHAT_ID
 
 name: Pulso diário
 
@@ -75,6 +76,8 @@ jobs:
           VITE_P38_USE_SUPABASE_AUTH: 'false'
           PULSE_NOTIFY_TELEGRAM_BOT_TOKEN: ${{ secrets.PULSE_NOTIFY_TELEGRAM_BOT_TOKEN }}
           PULSE_NOTIFY_TELEGRAM_CHAT_ID: ${{ secrets.PULSE_NOTIFY_TELEGRAM_CHAT_ID }}
+          PULSE_NOTIFY_WHATSAPP_PHONE: ${{ secrets.PULSE_NOTIFY_WHATSAPP_PHONE }}
+          PULSE_NOTIFY_CALLMEBOT_APIKEY: ${{ secrets.PULSE_NOTIFY_CALLMEBOT_APIKEY }}
         run: |
           EXTRA=""
           if [ "${{ github.event.inputs.skip_refresh }}" = "true" ]; then
