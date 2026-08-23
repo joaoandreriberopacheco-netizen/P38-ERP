@@ -8,7 +8,7 @@ const SEARCH_DEBOUNCE_MS = 200;
  * Busca do catálogo: estado local para resposta imediata ao digitar;
  * propaga `onChange` com debounce para não re-renderizar TreeGrid a cada tecla.
  */
-export default function CatalogSearchInput({ value = '', onChange, className, placeholder }) {
+export default function CatalogSearchInput({ value = '', onChange, className, placeholder, ...rest }) {
   const [draft, setDraft] = useState(() => String(value || ''));
   const debounceRef = useRef(null);
   const lastCommittedRef = useRef(String(value || ''));
@@ -54,6 +54,7 @@ export default function CatalogSearchInput({ value = '', onChange, className, pl
       placeholder={placeholder}
       autoComplete="off"
       spellCheck={false}
+      {...rest}
     />
   );
 }

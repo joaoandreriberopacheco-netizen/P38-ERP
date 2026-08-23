@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { P38PageHeader } from '@/components/layout/P38PageHeader';
 import { Package, PackagePlus, AlertTriangle, TrendingDown, RefreshCw, Calendar } from 'lucide-react';
@@ -98,6 +99,7 @@ export default function VendasPerdidasPage() {
         <TabsList className="bg-transparent border-b border-border/40 rounded-none h-auto p-0 w-full justify-start">
           <TabsTrigger
             value="mix"
+            data-pulse-sensor="vendas-perdidas.tab-mix"
             className="border-b-2 border-transparent data-[state=active]:border-primary rounded-none py-3 px-4 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
           >
             <Package className="w-4 h-4 mr-2" />

@@ -1,0 +1,78 @@
+{
+  "version": "1.0",
+  "description": "Lote 1 — rotas críticas para o Pulso (código → interface). Públicas + módulos operacionais core.",
+  "routes": [
+    {
+      "path": "/login",
+      "label": "Login",
+      "public": true,
+      "pageName": null
+    },
+    {
+      "path": "/auth/callback",
+      "label": "Auth callback",
+      "public": true,
+      "pageName": null
+    },
+    {
+      "path": "/ativar-acesso",
+      "label": "Ativar acesso",
+      "public": true,
+      "pageName": null
+    },
+    {
+      "path": "/landing.html",
+      "label": "Landing estática",
+      "public": true,
+      "pageName": null
+    },
+    {
+      "path": "/",
+      "label": "Home (pós-login)",
+      "public": false,
+      "pageName": "Home"
+    },
+    {
+      "path": "/Compras",
+      "label": "Compras",
+      "public": false,
+      "pageName": "Compras"
+    },
+    {
+      "path": "/PedidosCompra",
+      "label": "Pedidos de compra",
+      "public": false,
+      "pageName": "PedidosCompra"
+    },
+    {
+      "path": "/Estoque",
+      "label": "Estoque",
+      "public": false,
+      "pageName": "Estoque"
+    },
+    {
+      "path": "/Financeiro",
+      "label": "Financeiro",
+      "public": false,
+      "pageName": "Financeiro"
+    },
+    {
+      "path": "/PDV",
+      "label": "PDV",
+      "public": false,
+      "pageName": "PDV"
+    },
+    {
+      "path": "/Configuracoes",
+      "label": "Configurações",
+      "public": false,
+      "pageName": "Configuracoes"
+    },
+    {
+      "path": "/PlanejamentoFinanceiro",
+      "label": "Planejamento financeiro",
+      "public": false,
+      "pageName": "PlanejamentoFinanceiro"
+    }
+  ]
+}

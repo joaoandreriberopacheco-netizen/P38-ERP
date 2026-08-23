@@ -1375,14 +1375,14 @@ export default function PedidoCompraForm({
       {/* Header compacto */}
       <div className={COMPRAS_FORM_HEADER}>
         <span className={COMPRAS_HEADER_ACCENT} />
-        <Button variant="ghost" size="icon" onClick={handleCloseWithProtection} className="h-10 w-10">
+        <Button variant="ghost" size="icon" onClick={handleCloseWithProtection} className="h-10 w-10" data-pulse-sensor="pedidos-compra.detalhe-voltar" aria-label="Voltar">
           <X className="w-5 h-5" />
         </Button>
         <div className="flex-1 flex items-center justify-between min-w-0 gap-2">
           <div className="flex items-center gap-2 min-w-0 flex-col items-start sm:flex-row sm:items-center">
             <div className="min-w-0">
               <p className={P38_PAGE_KICKER}>Pedido de compra</p>
-              <h2 className={cn(P38_PAGE_TITLE, 'text-lg md:text-xl truncate leading-tight')}>
+              <h2 className={cn(P38_PAGE_TITLE, 'text-lg md:text-xl truncate leading-tight')} data-pulse-sensor="pedidos-compra.detalhe-titulo">
                 {pedido?.numero || 'Novo pedido'}
               </h2>
             </div>

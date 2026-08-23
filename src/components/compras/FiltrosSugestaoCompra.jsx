@@ -624,6 +624,7 @@ export default function FiltrosSugestaoCompra({
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             autoComplete="off"
+            data-pulse-sensor="sugestoes-compra.busca"
             value={filters.searchTerm}
             onChange={(e) => patchFilters({ searchTerm: e.target.value })}
             placeholder="Buscar produto..."

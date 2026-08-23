@@ -106,6 +106,7 @@ export default function PlanejamentoFinanceiroV2Page() {
           <TabsTrigger
             value="contas"
             title="Contas fixas"
+            data-pulse-sensor="planejamento-financeiro.tab-contas"
             className="gap-1.5 rounded-lg py-2 min-h-[40px] min-w-0 px-1.5 sm:px-2 md:flex-1 md:min-w-[120px]"
           >
             <Repeat2 className="w-4 h-4 shrink-0" />

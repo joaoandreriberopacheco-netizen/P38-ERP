@@ -1159,6 +1159,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                   <Barcode className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
                   <Input
                   ref={inputProdutoRef}
+                  data-pulse-sensor="pdv.busca-produto"
                   placeholder="Nome ou código (espaço ou ; para combinar termos)..."
                   className="w-full pl-12 pr-14 bg-card dark:bg-secondary border-0 outline-none ring-0 shadow-sm rounded-2xl text-foreground h-14 text-base focus:ring-0 focus:border-transparent focus:outline-none focus-visible:ring-0 focus-visible:outline-none active:outline-none appearance-none [-webkit-tap-highlight-color:transparent] placeholder:text-muted-foreground"
                   value={buscaProduto}
@@ -1166,6 +1167,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                   onKeyDown={handleKeyDown}
                   autoFocus={false} />
                   <Button type="button" variant="ghost" size="icon" onClick={() => setShowBarcodeScanner(true)}
+                  data-pulse-sensor="pdv.scanner-codigo"
                   className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 text-muted-foreground hover:text-muted-foreground hover:bg-muted dark:hover:bg-card rounded-xl">
                     <Camera className="w-5 h-5" />
                   </Button>

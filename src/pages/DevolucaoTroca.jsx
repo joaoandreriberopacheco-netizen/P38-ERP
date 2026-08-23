@@ -60,6 +60,7 @@ function BuscarPedidoStep({ onFound }) {
         <p className="text-sm text-muted-foreground mb-4">Informe o número do pedido de venda</p>
         <div className="flex gap-3">
           <Input
+            data-pulse-sensor="devolucao-troca.busca-pedido"
             autoFocus
             placeholder="Ex: PV-00042"
             value={numeroPedido}

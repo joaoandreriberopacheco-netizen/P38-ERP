@@ -62,7 +62,7 @@ export default function ConfiguracoesPage() {
 
       {/* Tabs principais */}
       <GlacialTabsList scrollable>
-        <GlacialTabsTrigger value="vendas"     activeValue={tab} onSelect={setTab} icon={TrendingUp}  label="Vendas" />
+        <GlacialTabsTrigger value="vendas"     activeValue={tab} onSelect={setTab} icon={TrendingUp}  label="Vendas" pulseSensor="configuracoes.tab-vendas" />
         <GlacialTabsTrigger value="operacoes"  activeValue={tab} onSelect={setTab} icon={Package}     label="Operações" />
         <GlacialTabsTrigger value="financeiro" activeValue={tab} onSelect={setTab} icon={DollarSign}  label="Financeiro" />
         <GlacialTabsTrigger value="geral"      activeValue={tab} onSelect={setTab} icon={Settings}    label="Parâmetros" />

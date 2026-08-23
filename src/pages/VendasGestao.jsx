@@ -782,6 +782,7 @@ function VendasGestaoPage() {
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
+              data-pulse-sensor="vendas-gestao.busca"
               variant="search"
               placeholder="Buscar por número, cliente..."
               value={searchTerm}

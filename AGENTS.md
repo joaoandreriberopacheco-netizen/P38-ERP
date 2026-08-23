@@ -36,6 +36,38 @@ Guidance for AI agents working in this repository (**P38-ERP** — Vite/React UI
 | Secrets checklist | `npm run secrets:check` |
 | Auditar acessos (recomendado) | `npm run secrets:audit` |
 
+### Pulso (testador automático — não confundir com Flare)
+
+Doc completa: [`docs/pulse/README.md`](docs/pulse/README.md).
+
+Três níveis (metáfora comboio):
+
+| Nível | Comando | O que verifica |
+|-------|---------|----------------|
+| Comboio | `npm run pulse:corridor` | 36 sensores numa passagem (`/pulse/corredor`) |
+| Trem | `npm run pulse:sensors` | Abre cada ecrã real (Playwright) |
+| Shipping | `npm run pulse:shipping` | Dry run de processos (clicar/digitar sem gravar) |
+
+| Goal | Command |
+|------|---------|
+| Regenerar roteiro (manifestos) | `npm run pulse:refresh-roteiro` |
+| Pré-deploy CI | `npm run pulse:predeploy` (refresh + rotas + comboio) |
+| Gerar sensores/shipping JSON | `npm run pulse:generate-sensors` |
+
+**Refresh do roteiro no trem/shipping — comentado por defeito.** Em `scripts/pulse-sensors.mjs` e `scripts/pulse-shipping.mjs`, o bloco `refreshPulseRoteiro()` fica comentado no meio do script para corridas mais rápidas. Não descomentar salvo job periódico ou pedido explícito.
+
+Para corrida periódica (cron / GitHub Actions scheduled), usar **uma** destas opções:
+
+```bash
+# Opção A — duas linhas no pipeline (recomendado; não mexe no código)
+npm run pulse:refresh-roteiro && npm run pulse:sensors
+npm run pulse:refresh-roteiro && npm run pulse:shipping
+
+# Opção B — descomentar import + refreshPulseRoteiro() nos dois scripts
+```
+
+O CI em push continua a fazer refresh via `pulse:predeploy`. Sensores UI usam `data-pulse-sensor` no JSX; mapa de controlos em `scripts/generate-pulse-sensors-geral.mjs` (`CONTROLS`, `SHIPPING_OVERRIDES`).
+
 There is **no** `test` script; E2E is manual / migration checklists under `docs/migration/`.
 
 ### Starting the dev server

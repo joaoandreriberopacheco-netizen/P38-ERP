@@ -2042,6 +2042,7 @@ export default function RelatorioMargemVendas() {
                   <input
                     autoComplete="off"
                     type="text"
+                    data-pulse-sensor="relatorio-margem.busca"
                     placeholder="Produto, código, categoria ou tag (espaço ou ; para combinar termos)..."
                     value={searchDraft}
                     onChange={(event) => setSearchDraft(event.target.value)}

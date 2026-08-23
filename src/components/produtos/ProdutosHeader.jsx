@@ -306,6 +306,7 @@ function ProdutosHeader({
           <div className={cn('relative w-full min-w-0', PRODUTOS_SEARCH_SHELL)}>
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none desktop-layout:left-3" />
             <CatalogSearchInput
+              data-pulse-sensor="produtos.busca"
               placeholder="Nome ou descrição (espaço ou ; para combinar). XXmolhadas ou XXj- filtra por categoria..."
               className={PRODUTOS_SEARCH_INPUT}
               value={filters.searchTerm}

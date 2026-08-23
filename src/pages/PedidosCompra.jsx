@@ -1004,8 +1004,8 @@ export default function PedidosCompraPage() {
       </div>
 
       <GlacialTabsList className="w-full" scrollable>
-        <GlacialTabsTrigger value="embarques" activeValue={activeView} onSelect={setActiveView} label="Embarques" icon={Package} />
-        <GlacialTabsTrigger value="consulta" activeValue={activeView} onSelect={setActiveView} label="Consulta" icon={Receipt} />
+        <GlacialTabsTrigger value="embarques" activeValue={activeView} onSelect={setActiveView} label="Embarques" icon={Package} pulseSensor="pedidos-compra.tab-embarques" />
+        <GlacialTabsTrigger value="consulta" activeValue={activeView} onSelect={setActiveView} label="Consulta" icon={Receipt} pulseSensor="pedidos-compra.tab-consulta" />
       </GlacialTabsList>
 
       {/* Filtros */}

@@ -36,6 +36,8 @@ dist-ssr
 
 # Export local da fila Flare (pode conter dados sensíveis)
 docs/flare-export/flare-pending.json
+docs/pulse/corridor-report.json
+docs/pulse/shipping-report.json
 
 # Relatórios de auditoria com dados financeiros reais
 docs/audit/

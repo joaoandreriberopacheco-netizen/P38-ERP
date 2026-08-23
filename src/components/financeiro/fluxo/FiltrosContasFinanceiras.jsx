@@ -46,6 +46,7 @@ export default function FiltrosContasFinanceiras({
       search={search}
       onSearch={onSearch}
       searchPlaceholder="Buscar conta, banco..."
+      pulseSensorId="contas-financeiras.busca"
       filtersOpen={filtersOpen}
       onFiltersOpenChange={onFiltersOpenChange}
       hasActiveFilters={hasActiveFilters}

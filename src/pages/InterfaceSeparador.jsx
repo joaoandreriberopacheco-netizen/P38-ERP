@@ -208,6 +208,7 @@ export default function InterfaceSeparador() {
                 
                 <div className="relative">
                   <Input
+                    data-pulse-sensor="interface-separador.codigo-pedido"
                     placeholder="DIGITE O CÓDIGO DO PEDIDO"
                     value={qrInput}
                     onChange={(e) => setQrInput(e.target.value)}

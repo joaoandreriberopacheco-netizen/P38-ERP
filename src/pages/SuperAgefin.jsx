@@ -806,7 +806,7 @@ export default function SuperAgefin() {
         <div className="flex items-start justify-between gap-3 border-b border-border/40 pb-3">
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 min-w-0">
-              <h1 className="truncate text-lg font-medium text-foreground sm:text-xl">Agefin</h1>
+              <h1 className="truncate text-lg font-medium text-foreground sm:text-xl" data-pulse-sensor="agefin.titulo">Agefin</h1>
               <P38HelpPopover label="Ajuda: Agefin" side="bottom" align="start">
                 <p className="font-medium text-foreground">Consulta do que já é real</p>
                 <p className="mt-2 text-muted-foreground">
@@ -854,6 +854,7 @@ export default function SuperAgefin() {
                   <div className="flex flex-wrap gap-2">
                     <Button
                       type="button"
+                      data-pulse-sensor="agefin.somar"
                       variant="ghost"
                       size="sm"
                       onClick={() => setModoSelecao((v) => !v)}

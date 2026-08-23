@@ -32,7 +32,22 @@ jobs:
       - name: Smoke — estrutura do repositório
         run: npm run smoke:structure
 
-      - name: Build Next (placeholder env)
+      - name: Build Next (placeholder env + bypass auth para sensores)
+        env:
+          NEXT_PUBLIC_P38_PROVIDER: supabase
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ci1wbGFjZWhvbGRlcg
+          NEXT_PUBLIC_P38_USE_SUPABASE_AUTH: 'false'
+          VITE_P38_PROVIDER: supabase
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ci1wbGFjZWhvbGRlcg
+          VITE_P38_USE_SUPABASE_AUTH: 'false'
+        run: npm run build
+
+      - name: Verificar output Next
+        run: test -d .next
+
+      - name: Pulso — pré-deploy (41 rotas + corredor comboio)
         env:
           NEXT_PUBLIC_P38_PROVIDER: supabase
           NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
@@ -40,14 +55,6 @@ jobs:
           VITE_P38_PROVIDER: supabase
           VITE_SUPABASE_URL: https://placeholder.supabase.co
           VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ci1wbGFjZWhvbGRlcg
-        run: npm run build
-
-      - name: Verificar output Next
-        run: test -d .next
-
-      - name: Smoke HTTP — /login e /landing.html
-        env:
-          NEXT_PUBLIC_P38_PROVIDER: supabase
-          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ci1wbGFjZWhvbGRlcg
-        run: npm run smoke:http
+        run: |
+          npx playwright install --with-deps chromium
+          npm run pulse:predeploy

@@ -56,6 +56,7 @@ import PagamentoLoteDialog from './PagamentoLoteDialog';
 import FluxoToggleProgramadas from './fluxo/FluxoToggleProgramadas';
 import TipoFiltroBar from './fluxo/TipoFiltroBar';
 import { FinanceiroToolbarIcon } from './fluxo/FinanceiroToolbarIcon';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { cn } from '@/components/utils';
 import { P38_PAGE_TITLE } from '@/lib/p38FormTypography';
 import { passaFiltroTiposLancamento, filtrarGruposPorTipo } from '@/lib/filtroTipoFinanceiro';
@@ -864,7 +865,10 @@ export default function ExecucaoOrcamentaria() {
       <div className="min-w-0 max-w-full space-y-2">
         <div className="flex flex-col gap-2">
           <div className="flex min-w-0 items-center gap-2">
-            <h1 className={cn(P38_PAGE_TITLE, 'min-w-0 flex-1 truncate text-lg md:text-2xl font-glacial leading-none')}>
+            <h1
+              className={cn(P38_PAGE_TITLE, 'min-w-0 flex-1 truncate text-lg md:text-2xl font-glacial leading-none')}
+              data-pulse-sensor="fluxo-caixa.titulo"
+            >
               Financeiro
             </h1>
             {aba === 'fluxo' && (
@@ -1109,6 +1113,7 @@ export default function ExecucaoOrcamentaria() {
               <button
                 type="button"
                 onClick={() => setFabOpen(o => !o)}
+                data-pulse-sensor="fluxo-caixa.fab"
                 className={`w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-xl active:scale-95 transition-all ${fabOpen ? 'bg-[#383e47] rotate-45' : 'bg-[#4a5240] dark:bg-[#a4ce33]'}`}>
                 <Plus className={`w-6 h-6 ${fabOpen ? 'text-white' : 'text-white dark:text-[#1f1d22]'}`} />
               </button>

@@ -59,6 +59,7 @@ export default function ConferenciaEstoque() {
           description={`${conferencias.length} conferência${conferencias.length !== 1 ? 's' : ''}`}
         />
         <Button
+          data-pulse-sensor="conferencia-estoque.nova"
           onClick={() => setShowNova(true)}
           className="bg-card text-card-foreground rounded-xl h-9 px-4 text-sm font-medium shadow-none"
         >

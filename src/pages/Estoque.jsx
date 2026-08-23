@@ -63,6 +63,7 @@ export default function EstoquePage() {
           <Link
             key={to}
             to={to}
+            {...(title === 'Contagem Express' ? { 'data-pulse-sensor': 'estoque.link-contagem' } : {})}
             className="flex gap-3 rounded-2xl border border-border/40 bg-card p-4 shadow-sm transition-colors hover:bg-secondary/30"
           >
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary/40">

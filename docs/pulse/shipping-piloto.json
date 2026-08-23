@@ -1,0 +1,48 @@
+{
+  "version": "1.0",
+  "description": "Shipping piloto — dry run de processos (operação requisitada). Sem gravar na BD.",
+  "shipments": [
+    {
+      "id": "pedidos-compra",
+      "label": "Compras — novo pedido e voltar",
+      "route": "/PedidosCompra",
+      "warmupMs": 6000,
+      "steps": [
+        { "action": "wait", "sensor": "PedidosCompra.shell", "state": "attached", "label": "Lista pedidos" },
+        { "action": "click", "sensor": "pedidos-compra.novo-pedido", "label": "FAB novo pedido" },
+        { "action": "wait_url", "pattern": "PedidoCompraDetalhe", "label": "Navegou para detalhe" },
+        { "action": "wait", "sensor": "pedidos-compra.detalhe-titulo", "label": "Formulário novo" },
+        { "action": "click", "sensor": "pedidos-compra.detalhe-voltar", "label": "Voltar sem gravar" },
+        { "action": "wait", "sensor": "PedidosCompra.shell", "state": "attached", "label": "Voltou à lista" }
+      ]
+    },
+    {
+      "id": "pdv-vendedor",
+      "label": "PDV — busca produto (dry)",
+      "route": "/PDV?mode=vendedor",
+      "warmupMs": 6000,
+      "steps": [
+        { "action": "wait", "sensor": "PDV.shell", "state": "attached", "label": "Shell PDV" },
+        { "action": "wait", "sensor": "pdv.busca-produto", "label": "Campo busca" },
+        { "action": "fill", "sensor": "pdv.busca-produto", "value": "a", "label": "Digitar busca" },
+        { "action": "sleep", "ms": 800, "label": "Aguardar sugestões" },
+        { "action": "press", "key": "Escape", "label": "Fechar sugestões" },
+        { "action": "fill", "sensor": "pdv.busca-produto", "value": "", "label": "Limpar busca" }
+      ]
+    },
+    {
+      "id": "fluxo-caixa",
+      "label": "Financeiro — novo lançamento e cancelar",
+      "route": "/FluxoCaixa",
+      "warmupMs": 8000,
+      "steps": [
+        { "action": "wait", "sensor": "FluxoCaixa.shell", "state": "attached", "label": "Shell financeiro" },
+        { "action": "wait", "sensor": "fluxo-caixa.titulo", "label": "Título visível" },
+        { "action": "click", "sensor": "fluxo-caixa.fab", "label": "Abrir FAB" },
+        { "action": "click_text", "text": "Despesa", "label": "Escolher Despesa" },
+        { "action": "wait", "sensor": "fluxo-caixa.novo-cancelar", "label": "Dialog novo lançamento" },
+        { "action": "click", "sensor": "fluxo-caixa.novo-cancelar", "label": "Cancelar sem gravar" }
+      ]
+    }
+  ]
+}

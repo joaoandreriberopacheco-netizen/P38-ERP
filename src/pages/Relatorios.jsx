@@ -236,6 +236,7 @@ export default function RelatoriosPage() {
             <TabsList className="w-full h-auto justify-start gap-2 md:gap-4 bg-transparent p-0 border-b border-border/40">
               <TabsTrigger 
                 value="vendas" 
+                data-pulse-sensor="relatorios.tab-vendas"
                 className="px-0 py-3 text-xs md:text-sm font-medium border-b-2 border-transparent data-[state=active]:border-green-500 data-[state=active]:text-green-600 dark:data-[state=active]:text-green-400 rounded-none"
               >
                 Vendas

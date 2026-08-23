@@ -222,7 +222,7 @@ export default function ImportacaoProdutosPage() {
         {/* Tabs */}
         <Tabs defaultValue="produtos" className="w-full">
           <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-muted p-1 rounded-xl gap-1">
-            <TabsTrigger value="produtos" className="data-[state=active]:bg-card rounded-lg">
+            <TabsTrigger value="produtos" data-pulse-sensor="importacao-produtos.tab-produtos" className="data-[state=active]:bg-card rounded-lg">
               <Upload className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Produtos</span>
             </TabsTrigger>

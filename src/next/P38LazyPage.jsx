@@ -28,9 +28,11 @@ export default function P38LazyPage({ pageName }) {
 
   return (
     <ChunkErrorBoundary>
-      <Suspense fallback={<PageLoadFallback />}>
-        <ResolvedPage />
-      </Suspense>
+      <div data-pulse-sensor={`${pageName}.shell`} className="w-full min-w-0">
+        <Suspense fallback={<PageLoadFallback />}>
+          <ResolvedPage />
+        </Suspense>
+      </div>
     </ChunkErrorBoundary>
   );
 }

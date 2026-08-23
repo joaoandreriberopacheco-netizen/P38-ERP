@@ -274,6 +274,7 @@ const RelatorioPerformance = ({ dados, onClose }) => {
             💬 WhatsApp
           </Button>
           <Button
+            data-pulse-sensor="relatorio-performance.pdf"
             onClick={handleImprimir}
             className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground text-sm flex items-center justify-center gap-2 dark:bg-muted dark:hover:bg-muted"
           >

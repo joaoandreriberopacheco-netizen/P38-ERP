@@ -305,6 +305,8 @@ export default function ExtratoContaPage() {
     const contaId = params.get('id');
     if (contaId) {
       loadExtrato(contaId, location.state?.extratoPreload);
+    } else {
+      setIsLoading(false);
     }
   }, [loadExtrato, location.state]);
 
@@ -692,7 +694,7 @@ export default function ExtratoContaPage() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <p className="text-muted-foreground mb-4">Conta não encontrada</p>
-          <Button onClick={voltar} className="gap-2">
+          <Button onClick={voltar} className="gap-2" data-pulse-sensor="extrato-conta.voltar">
             <ArrowLeft className="w-4 h-4" /> Voltar
           </Button>
         </div>
