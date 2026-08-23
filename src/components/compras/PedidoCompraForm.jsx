@@ -1518,6 +1518,7 @@ export default function PedidoCompraForm({
                 value={tab.value}
                 disabled={tab.disabled}
                 className={COMPRAS_TAB}
+                data-pulse-sensor={tab.value === 'logistica' ? 'pedidos-compra.tab-logistica' : undefined}
               >
                 {tab.icon}
                 <span className="text-[10px] font-light tracking-wider leading-none uppercase">

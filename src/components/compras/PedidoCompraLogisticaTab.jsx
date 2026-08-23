@@ -246,7 +246,7 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated, onIr
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-pulse-sensor="pedidos-compra.logistica-panel">
       <div className="rounded-2xl bg-muted/50 px-4 py-4 shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
@@ -298,7 +298,9 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated, onIr
             size="sm"
             variant="outline"
             onClick={handleNovoEmbarque}
-            className="h-8 px-3 text-xs border-0 shadow-sm bg-card text-foreground/90 hover:bg-muted">
+            className="h-8 px-3 text-xs border-0 shadow-sm bg-card text-foreground/90 hover:bg-muted"
+            data-pulse-sensor="pedidos-compra.logistica-informar-despacho"
+          >
             <Plus className="w-3.5 h-3.5 mr-1" />
             Informar Despacho
           </Button>

@@ -94,6 +94,24 @@ function buildSteps(screen) {
   return steps;
 }
 
+/** Dry runs que não vêm do manifesto de sensores (fluxos críticos compostos). */
+const PULSE_SHIPPING_EXTRA = [
+  {
+    id: 'pedidos-compra-logistica',
+    label: 'Pedido compra — aba Logística',
+    pageName: 'PedidoCompraDetalhe',
+    module: 'compras',
+    route: '/PedidoCompraDetalhe?id=pulse-fixture-pedido',
+    warmupMs: 6000,
+    steps: [
+      { action: 'wait', sensor: 'pedidos-compra.detalhe-titulo', label: 'Formulário pedido' },
+      { action: 'click', sensor: 'pedidos-compra.tab-logistica', label: 'Aba logística' },
+      { action: 'wait', sensor: 'pedidos-compra.logistica-panel', label: 'Painel logística' },
+      { action: 'wait', sensor: 'pedidos-compra.logistica-informar-despacho', label: 'Informar despacho' },
+    ],
+  },
+];
+
 function main() {
   if (!fs.existsSync(SENSORS_IN)) {
     throw new Error(`Corra primeiro: npm run pulse:generate-sensors (${SENSORS_IN} em falta)`);
@@ -109,6 +127,8 @@ function main() {
     warmupMs: screen.warmupMs ?? 6000,
     steps: buildSteps(screen),
   }));
+
+  shipments.push(...PULSE_SHIPPING_EXTRA);
 
   const manifest = {
     version: '1.0',

@@ -974,6 +974,36 @@
           "label": "Título Agefin"
         }
       ]
+    },
+    {
+      "id": "pedidos-compra-logistica",
+      "label": "Pedido compra — aba Logística",
+      "pageName": "PedidoCompraDetalhe",
+      "module": "compras",
+      "route": "/PedidoCompraDetalhe?id=pulse-fixture-pedido",
+      "warmupMs": 6000,
+      "steps": [
+        {
+          "action": "wait",
+          "sensor": "pedidos-compra.detalhe-titulo",
+          "label": "Formulário pedido"
+        },
+        {
+          "action": "click",
+          "sensor": "pedidos-compra.tab-logistica",
+          "label": "Aba logística"
+        },
+        {
+          "action": "wait",
+          "sensor": "pedidos-compra.logistica-panel",
+          "label": "Painel logística"
+        },
+        {
+          "action": "wait",
+          "sensor": "pedidos-compra.logistica-informar-despacho",
+          "label": "Informar despacho"
+        }
+      ]
     }
   ]
 }

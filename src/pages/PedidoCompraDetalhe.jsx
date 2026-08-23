@@ -13,7 +13,37 @@ import {
   pedidoStatusIndicaAguardandoAprovacaoFinanceira,
   pedidoPrecisaSincronizarAprovacaoFinanceira,
 } from '@/lib/pedidoCompraFinanceiro';
-import { sincronizarPedidoCompraAprovacaoFinanceira } from '@/lib/aprovarPedidoCompraFinanceiro';
+import { format } from 'date-fns';
+import { isBase44BypassEnabled } from '@/integrations/p38/providers';
+
+/** Fixture só em bypass — Pulso shipping valida aba Logística sem BD real. */
+const PULSE_FIXTURE_PEDIDO_ID = 'pulse-fixture-pedido';
+
+function buildPulseFixturePedido() {
+  return {
+    id: PULSE_FIXTURE_PEDIDO_ID,
+    numero: 'PULSE-FIX',
+    fornecedor_id: 'pulse-fornecedor',
+    fornecedor_nome: 'Fornecedor Pulso',
+    status: 'Rascunho',
+    forma_pagamento_compra: 'À Vista',
+    data_emissao: format(new Date(), 'yyyy-MM-dd'),
+    itens: [
+      {
+        produto_id: 'pulse-prod-1',
+        produto_nome: 'Produto fixture',
+        quantidade_base: 10,
+        quantidade: 10,
+        unidade_medida: 'UN',
+        fator_conversao: 1,
+        custo_unitario: 1,
+        subtotal: 10,
+        total: 10,
+      },
+    ],
+    _embarques: [],
+  };
+}
 
 /**
  * Página inteira de detalhe/criação de Pedido de Compra — fullscreen em todos os viewports.
@@ -32,6 +62,13 @@ export default function PedidoCompraDetalhe() {
       setPedido(null);
       setLoading(false);
       return null;
+    }
+
+    if (id === PULSE_FIXTURE_PEDIDO_ID && isBase44BypassEnabled()) {
+      const fixture = buildPulseFixturePedido();
+      setPedido(fixture);
+      setLoading(false);
+      return fixture;
     }
 
     if (keepLoading) setLoading(true);
