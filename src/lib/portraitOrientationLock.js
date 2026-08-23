@@ -1,8 +1,14 @@
 /**
- * Bloqueia rotação para retrato (comportamento histórico do PWA Android).
- * Manifest: portrait-primary. Sem overlay de mensagem.
+ * Preferência de orientação do P38.
+ * Por defeito mantém retrato (comportamento histórico do PWA Android).
+ * O utilizador pode pedir paisagem no menu Perfil — telemóvel, tablet ou notebook.
  */
 const PORTRAIT_LOCK = 'portrait-primary';
+const LANDSCAPE_LOCK = 'landscape';
+
+export const ORIENTATION_STORAGE_KEY = 'p38_orientation_mode';
+export const ORIENTATION_CHANGE_EVENT = 'p38-orientation-change';
+export const FORCE_LANDSCAPE_ATTR = 'data-p38-force-landscape';
 
 function isCoarsePointer() {
   if (typeof window === 'undefined' || !window.matchMedia) return false;
@@ -11,6 +17,43 @@ function isCoarsePointer() {
 
 function canUseScreenOrientationLock() {
   return typeof screen !== 'undefined' && typeof screen.orientation?.lock === 'function';
+}
+
+export function getPreferredOrientation() {
+  if (typeof window === 'undefined') return 'portrait';
+  try {
+    return window.localStorage.getItem(ORIENTATION_STORAGE_KEY) === 'landscape'
+      ? 'landscape'
+      : 'portrait';
+  } catch {
+    return 'portrait';
+  }
+}
+
+export function isPortraitViewport() {
+  if (typeof window === 'undefined') return false;
+  if (window.matchMedia) {
+    try {
+      if (window.matchMedia('(orientation: landscape)').matches) return false;
+      if (window.matchMedia('(orientation: portrait)').matches) return true;
+    } catch {
+      /* ignore */
+    }
+  }
+  const vv = window.visualViewport;
+  const width = vv?.width ?? window.innerWidth;
+  const height = vv?.height ?? window.innerHeight;
+  return height > width;
+}
+
+function persistOrientation(mode) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(ORIENTATION_STORAGE_KEY, mode);
+  } catch {
+    /* ignore */
+  }
+  window.dispatchEvent(new CustomEvent(ORIENTATION_CHANGE_EVENT, { detail: { orientation: mode } }));
 }
 
 export async function lockPortraitOrientation() {
@@ -28,18 +71,97 @@ export async function lockPortraitOrientation() {
   }
 }
 
+export async function lockLandscapeOrientation() {
+  if (!canUseScreenOrientationLock()) return false;
+  try {
+    await screen.orientation.lock(LANDSCAPE_LOCK);
+    return true;
+  } catch {
+    try {
+      await screen.orientation.lock('landscape-primary');
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+
+export function applyCssLandscapeFallback(enabled) {
+  if (typeof document === 'undefined') return;
+  const root = document.documentElement;
+  if (!enabled) {
+    root.removeAttribute(FORCE_LANDSCAPE_ATTR);
+    root.style.removeProperty('--p38-force-landscape-shift');
+    root.style.removeProperty('--p38-force-landscape-width');
+    root.style.removeProperty('--p38-force-landscape-height');
+    return;
+  }
+  const vv = window.visualViewport;
+  const width = Math.round(vv?.width ?? window.innerWidth);
+  const height = Math.round(vv?.height ?? window.innerHeight);
+  root.setAttribute(FORCE_LANDSCAPE_ATTR, 'true');
+  root.style.setProperty('--p38-force-landscape-shift', `${width}px`);
+  root.style.setProperty('--p38-force-landscape-width', `${height}px`);
+  root.style.setProperty('--p38-force-landscape-height', `${width}px`);
+}
+
+function syncCssLandscapeFallback() {
+  if (getPreferredOrientation() !== 'landscape') {
+    applyCssLandscapeFallback(false);
+    return;
+  }
+  applyCssLandscapeFallback(isPortraitViewport());
+}
+
+export async function applyPreferredOrientation() {
+  const mode = getPreferredOrientation();
+  if (mode === 'landscape') {
+    const locked = await lockLandscapeOrientation();
+    const cssFallback = !locked && isPortraitViewport();
+    applyCssLandscapeFallback(cssFallback);
+    return { mode, locked, cssFallback };
+  }
+
+  applyCssLandscapeFallback(false);
+  if (isCoarsePointer()) {
+    const locked = await lockPortraitOrientation();
+    return { mode, locked, cssFallback: false };
+  }
+  try {
+    screen.orientation?.unlock?.();
+  } catch {
+    /* ignore */
+  }
+  return { mode, locked: false, cssFallback: false };
+}
+
+export function setPreferredOrientation(mode) {
+  const next = mode === 'landscape' ? 'landscape' : 'portrait';
+  persistOrientation(next);
+  return applyPreferredOrientation();
+}
+
+export function togglePreferredOrientation() {
+  return setPreferredOrientation(getPreferredOrientation() === 'landscape' ? 'portrait' : 'landscape');
+}
+
 /**
- * Mantém retrato em dispositivos touch (PWA Android / Chrome).
- * Re-tenta após gesto, ao voltar ao app e se a orientação mudar.
+ * Aplica a preferência gravada e re-tenta após gesto, visibilidade e rotação.
+ * Retrato por defeito só em dispositivos touch. Paisagem aplica-se em qualquer aparelho.
  */
 export function installPortraitOrientationLock() {
-  if (typeof window === 'undefined' || !isCoarsePointer()) return undefined;
+  if (typeof window === 'undefined') return undefined;
 
   let disposed = false;
 
   const tryLock = () => {
     if (disposed) return;
-    lockPortraitOrientation();
+    applyPreferredOrientation();
+  };
+
+  const syncCss = () => {
+    if (disposed) return;
+    syncCssLandscapeFallback();
   };
 
   tryLock();
@@ -55,9 +177,11 @@ export function installPortraitOrientationLock() {
   };
 
   window.addEventListener('orientationchange', tryLock);
+  window.addEventListener('resize', syncCss);
   document.addEventListener('visibilitychange', onVisibility);
   window.addEventListener('pointerdown', onFirstGesture, true);
   window.addEventListener('touchstart', onFirstGesture, true);
+  window.visualViewport?.addEventListener('resize', syncCss);
 
   if (screen.orientation?.addEventListener) {
     screen.orientation.addEventListener('change', tryLock);
@@ -66,11 +190,24 @@ export function installPortraitOrientationLock() {
   return () => {
     disposed = true;
     window.removeEventListener('orientationchange', tryLock);
+    window.removeEventListener('resize', syncCss);
     document.removeEventListener('visibilitychange', onVisibility);
     window.removeEventListener('pointerdown', onFirstGesture, true);
     window.removeEventListener('touchstart', onFirstGesture, true);
+    window.visualViewport?.removeEventListener('resize', syncCss);
     if (screen.orientation?.removeEventListener) {
       screen.orientation.removeEventListener('change', tryLock);
     }
   };
+}
+
+/** Antes da primeira pintura: evita flash em retrato quando a preferência já é paisagem. */
+export function bootLandscapeFallbackFromStorage() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  try {
+    if (window.localStorage.getItem(ORIENTATION_STORAGE_KEY) !== 'landscape') return;
+    if (isPortraitViewport()) applyCssLandscapeFallback(true);
+  } catch {
+    /* ignore */
+  }
 }

@@ -366,6 +366,27 @@ html[data-p38-bottom-nav-hidden] {
   z-index: 99999;
 }
 
+/*
+  Fallback de paisagem: quando o SO/browser não bloqueia orientação
+  (iOS, janela de notebook, browser sem Screen Orientation API),
+  gira o app 90° para o utilizador usar o ecrã deitado.
+*/
+html[data-p38-force-landscape='true'] {
+  overflow: hidden;
+}
+
+html[data-p38-force-landscape='true'] body {
+  position: fixed;
+  top: 0;
+  left: var(--p38-force-landscape-shift, 100vw);
+  width: var(--p38-force-landscape-width, 100vh);
+  height: var(--p38-force-landscape-height, 100vw);
+  margin: 0;
+  transform: rotate(90deg);
+  transform-origin: top left;
+  overflow: auto;
+}
+
 /* ==========================================
    SCROLLBAR GLOBAL — estilo Cursor (P38)
    Preto no claro, cinza no escuro; trilho transparente.

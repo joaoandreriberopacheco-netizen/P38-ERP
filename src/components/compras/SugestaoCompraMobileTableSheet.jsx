@@ -2,11 +2,11 @@ import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SugestaoCompraMobileTable from '@/components/compras/SugestaoCompraMobileTable';
-import { lockPortraitOrientation } from '@/lib/portraitOrientationLock';
+import { applyPreferredOrientation } from '@/lib/portraitOrientationLock';
 
 /**
  * Tabela comparativa em fullscreen no telemóvel.
- * Mantém retrato (não força paisagem) — alinhado ao bloqueio global do PWA Android.
+ * Respeita a preferência de orientação do menu Perfil.
  */
 export default function SugestaoCompraMobileTableSheet({
   open,
@@ -20,12 +20,12 @@ export default function SugestaoCompraMobileTableSheet({
 }) {
   useEffect(() => {
     if (!open) return undefined;
-    lockPortraitOrientation();
+    applyPreferredOrientation();
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = prevOverflow;
-      lockPortraitOrientation();
+      applyPreferredOrientation();
     };
   }, [open]);
 

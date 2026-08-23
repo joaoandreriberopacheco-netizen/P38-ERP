@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from '@/App.jsx'
 import '@/index.css'
 import { installMobileFocusPolicy } from '@/lib/focusPolicy'
-import { installPortraitOrientationLock } from '@/lib/portraitOrientationLock'
+import { bootLandscapeFallbackFromStorage, installPortraitOrientationLock } from '@/lib/portraitOrientationLock'
 import { uppercaseInputValue } from '@/lib/uppercaseInputHandlers'
 import { installChunkErrorHandlers, reloadOnceOnChunkError } from '@/lib/lazyPage'
 import { shouldRegisterServiceWorker } from '@/lib/pwaServiceWorkerEnv'
@@ -17,6 +17,7 @@ try {
 } catch (_) {
   /* ignore */
 }
+bootLandscapeFallbackFromStorage()
 
 // Select-on-focus global: seleciona o texto ao clicar/focar em qualquer input numérico ou de texto
 document.addEventListener('focusin', (e) => {

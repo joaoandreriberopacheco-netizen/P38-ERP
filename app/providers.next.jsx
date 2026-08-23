@@ -9,6 +9,7 @@ import { queryClientInstance } from '@/lib/query-client';
 import { Toaster } from '@/components/ui/sonner';
 import DeferredMount from '@/lib/DeferredMount';
 import { initP38Monitoring } from '@/lib/p38Monitoring';
+import { installPortraitOrientationLock } from '@/lib/portraitOrientationLock';
 
 const SpeedInsights = dynamic(
   () => import('@vercel/speed-insights/react').then((mod) => ({ default: mod.SpeedInsights })),
@@ -22,6 +23,11 @@ function P38MonitoringBoot() {
   return null;
 }
 
+function P38OrientationBoot() {
+  useEffect(() => installPortraitOrientationLock(), []);
+  return null;
+}
+
 export function Providers({ children }) {
   return (
     <AuthProvider>
@@ -29,6 +35,7 @@ export function Providers({ children }) {
         {children}
         <Toaster />
         <P38MonitoringBoot />
+        <P38OrientationBoot />
         <DeferredMount waitForIdle>
           <SpeedInsights />
         </DeferredMount>

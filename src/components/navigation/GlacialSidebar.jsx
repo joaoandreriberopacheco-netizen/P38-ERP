@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
-import { ChevronRight, Sun, Moon, ALargeSmall, Shield, User, Settings, LogOut } from 'lucide-react';
+import { ChevronRight, Sun, Moon, ALargeSmall, Shield, User, Settings, LogOut, RectangleHorizontal, Smartphone } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import PinSetupDialog from '@/components/auth/PinSetupDialog';
 import P38Logo from '@/components/brand/P38Logo';
 import MenuSearchBar from '@/components/navigation/MenuSearchBar';
 import { getP38ShellColors } from '@/lib/p38ShellColors';
+import { usePreferredOrientation } from '@/hooks/usePreferredOrientation';
+import { pulseSensor } from '@/lib/pulseSensor';
 
 function useDarkMode() {
   const [isDark, setIsDark] = useState(() =>
@@ -46,6 +48,7 @@ export default function GlacialSidebar({
   });
   const location = useLocation();
   const isDark = useDarkMode();
+  const { landscape, toggle: toggleLandscape } = usePreferredOrientation();
 
   useEffect(() => {
     if (!currentUser) {
@@ -302,6 +305,21 @@ export default function GlacialSidebar({
                 >
                   {isDarkLocal ? <Sun size={15} style={{ color: c.iconColor }} /> : <Moon size={15} style={{ color: c.iconColor }} />}
                   <span className="text-sm">{isDarkLocal ? 'Modo Claro' : 'Modo Escuro'}</span>
+                </button>
+
+                <button
+                  onClick={() => { toggleLandscape(); setUserPanelOpen(false); }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left"
+                  style={{ color: c.text }}
+                  onMouseEnter={e => e.currentTarget.style.background = c.hoverBg}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  {...pulseSensor('perfil.modo-paisagem')}
+                >
+                  {landscape
+                    ? <Smartphone size={15} style={{ color: c.iconColor }} />
+                    : <RectangleHorizontal size={15} style={{ color: c.iconColor }} />
+                  }
+                  <span className="text-sm">{landscape ? 'Modo Retrato' : 'Modo Paisagem'}</span>
                 </button>
 
                 <button

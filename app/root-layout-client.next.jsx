@@ -8,6 +8,9 @@ try {
   if (localStorage.getItem('theme') === 'dark') {
     document.documentElement.classList.add('dark');
   }
+  if (localStorage.getItem('p38_orientation_mode') === 'landscape' && window.innerHeight > window.innerWidth) {
+    document.documentElement.setAttribute('data-p38-force-landscape', 'true');
+  }
 } catch (_) {}
 `;
 
