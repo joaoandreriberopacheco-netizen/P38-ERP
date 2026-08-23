@@ -67,12 +67,14 @@ Relatório: `docs/pulse/corridor-report.json` (gerado em cada corrida; não vers
 
 ## Shipping (dry run — operação requisitada)
 
-Simula processos de negócio **sem gravar** (cancelar / voltar). Manifesto piloto: [`shipping-piloto.json`](./shipping-piloto.json)
+Simula processos de negócio **sem gravar** (cancelar / voltar). Manifesto: [`shipping-geral.json`](./shipping-geral.json) (**36 processos**, gerado com `pulse:generate-sensors`).
 
 | Comando | O que faz |
 |---------|-----------|
-| `npm run pulse:shipping` | 3 processos piloto (Compras, PDV, Fluxo caixa) |
-| `npm run pulse:shipping -- --id pedidos-compra` | Um processo só |
+| `npm run pulse:shipping` | **36 dry runs** (todos os ecrãs) |
+| `npm run pulse:shipping -- --module vendas` | Só módulo vendas |
+| `npm run pulse:shipping -- --id pedidos-compra` | Um processo |
+| `npm run pulse:shipping -- --piloto` | 3 processos piloto (legado) |
 
 Relatório: `docs/pulse/shipping-report.json`
 

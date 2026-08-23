@@ -24,6 +24,7 @@
     "pulse:corridor": "node scripts/pulse-corridor.mjs",
     "pulse:shipping": "node scripts/pulse-shipping.mjs",
     "pulse:generate-sensors": "node scripts/generate-pulse-sensors-geral.mjs",
+    "pulse:generate-shipping": "node scripts/generate-pulse-shipping-geral.mjs",
     "pulse:predeploy": "npm run pulse:generate-sensors && npm run pulse:all && npm run pulse:corridor",
     "flare:export": "node scripts/export-flare-pending.mjs",
     "flare:api": "node scripts/flare-local-api.mjs",

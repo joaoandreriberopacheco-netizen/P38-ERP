@@ -155,3 +155,11 @@ fs.writeFileSync(
 
 console.log(`[pulse:generate-sensors] ${screens.length} ecrãs → ${OUT}`);
 console.log(`[pulse:generate-sensors] corredor → ${corridorOut}`);
+
+// Shipping geral (dry run 36 processos)
+import { spawnSync } from 'child_process';
+const ship = spawnSync(process.execPath, [path.join(__dirname, 'generate-pulse-shipping-geral.mjs')], {
+  cwd: ROOT,
+  stdio: 'inherit',
+});
+if (ship.status !== 0) process.exit(ship.status ?? 1);

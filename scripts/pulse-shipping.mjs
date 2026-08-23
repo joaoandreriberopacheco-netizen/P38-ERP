@@ -17,7 +17,8 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const MANIFEST = path.join(ROOT, 'docs/pulse/shipping-piloto.json');
+const MANIFEST = path.join(ROOT, 'docs/pulse/shipping-geral.json');
+const MANIFEST_PILOTO = path.join(ROOT, 'docs/pulse/shipping-piloto.json');
 const REPORT_OUT = path.join(ROOT, 'docs/pulse/shipping-report.json');
 
 const ERROR_SELECTORS = [
@@ -27,10 +28,12 @@ const ERROR_SELECTORS = [
 ];
 
 function parseArgs(argv) {
-  const args = { all: true, id: null, skipServer: false, writeReport: true };
+  const args = { all: true, id: null, module: null, piloto: false, skipServer: false, writeReport: true };
   for (let i = 2; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--all' || arg === '-a') args.all = true;
+    else if (arg === '--piloto') args.piloto = true;
+    else if (arg === '--module' && argv[i + 1]) args.module = argv[++i];
     else if (arg === '--id' && argv[i + 1]) {
       args.id = argv[++i];
       args.all = false;
@@ -147,15 +150,31 @@ async function runShipment(browser, shipment) {
 async function main() {
   const args = parseArgs(process.argv);
   if (args.help) {
-    console.log(`Uso: node scripts/pulse-shipping.mjs [--all] [--id <shipment>] [--skip-server]`);
+    console.log(`Uso: node scripts/pulse-shipping.mjs [opções]
+
+Opções:
+  --all, -a           Todos (shipping-geral.json, default)
+  --piloto            Só 3 processos piloto
+  --id <slug>         Um processo (ex: pedidos-compra)
+  --module <nome>     Filtrar módulo (vendas, financeiro, logistica, gestao)
+  --skip-server       Servidor já a correr
+`);
     process.exit(0);
   }
 
-  const manifest = JSON.parse(fs.readFileSync(MANIFEST, 'utf8'));
+  const manifestPath = args.piloto ? MANIFEST_PILOTO : MANIFEST;
+  if (!fs.existsSync(manifestPath)) {
+    throw new Error(`Manifesto não encontrado: ${manifestPath}. Corra: npm run pulse:generate-sensors`);
+  }
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   let shipments = manifest.shipments;
   if (args.id) {
     shipments = shipments.filter((s) => s.id === args.id);
     if (!shipments.length) throw new Error(`Shipping não encontrado: ${args.id}`);
+  }
+  if (args.module) {
+    shipments = shipments.filter((s) => s.module === args.module);
+    if (!shipments.length) throw new Error(`Nenhum shipping no módulo: ${args.module}`);
   }
 
   const chromium = await loadPlaywright();
