@@ -27,6 +27,10 @@ on:
         description: 'Saltar refresh do roteiro (manifestos já actualizados)'
         type: boolean
         default: false
+      simular_falha_vendas_gestao:
+        description: 'TESTE: quebrar Gestão de vendas de propósito (notificação)'
+        type: boolean
+        default: false
 
 jobs:
   trem-e-shipping:
@@ -50,6 +54,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ci1wbGFjZWhvbGRlcg
           NEXT_PUBLIC_P38_USE_SUPABASE_AUTH: 'false'
+          NEXT_PUBLIC_PULSE_TEST_BREAK_VENDAS_GESTAO: ${{ github.event.inputs.simular_falha_vendas_gestao == true && 'true' || 'false' }}
           VITE_P38_PROVIDER: supabase
           VITE_SUPABASE_URL: https://placeholder.supabase.co
           VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ci1wbGFjZWhvbGRlcg

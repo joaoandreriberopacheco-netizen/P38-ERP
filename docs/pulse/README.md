@@ -141,6 +141,8 @@ Na manhã seguinte à 1.ª corrida agendada, recebes a mensagem do Pulso no What
 
 Issue GitHub: inscreve-te na issue `pulse-diario` se quiseres email em paralelo.
 
+**Teste de notificação:** Actions → Pulso diário → Run workflow → activar **「TESTE: quebrar Gestão de vendas de propósito」**. Não afecta produção (só o build desse job). Recebes WhatsApp/issue a pedir revisão de `/VendasGestao`.
+
 ## Saída exemplo
 
 ```text

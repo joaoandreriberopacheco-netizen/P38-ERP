@@ -443,6 +443,11 @@ function VirtualizedRascunhosTable({ rascunhos, onInutilizar }) {
 }
 
 function VendasGestaoPage() {
+  // PULSE-TEST: quebra só quando NEXT_PUBLIC_PULSE_TEST_BREAK_VENDAS_GESTAO=true (workflow Pulso diário)
+  if (process.env.NEXT_PUBLIC_PULSE_TEST_BREAK_VENDAS_GESTAO === 'true') {
+    throw new Error('[PULSE-TEST] Gestão de vendas quebrada de propósito');
+  }
+
   const { invalidateHomeKpis } = useP38QueryInvalidation();
   const [dataInicio, setDataInicio] = useState(() => getPeriodoMesCorrente().start);
   const [dataFim, setDataFim] = useState(() => getPeriodoMesCorrente().end);
