@@ -88,11 +88,15 @@ Função automática — **não é uma página do P38**. Corre antes do deploy e
 | [`sensors-geral.json`](./sensors-geral.json) | **Geral:** 36 ecrãs (lote 1 + lote 2), shell automático + 1 controlo por página |
 
 ```bash
-npm run pulse:generate-sensors   # regera sensors-geral.json
-npm run pulse:sensors            # todos os ecrãs (geral)
+npm run pulse:refresh-roteiro   # só regenerar manifestos (sensores + corredor + shipping)
+npm run pulse:generate-sensors   # alias legado — igual ao refresh
+npm run pulse:sensors            # refresh automático + trem (36 ecrãs)
+npm run pulse:shipping           # refresh automático + shipping (36 dry runs)
 npm run pulse:corridor           # comboio (rápido)
-npm run pulse:predeploy          # rotas (41) + corredor
+npm run pulse:predeploy          # refresh + rotas (41) + corredor
 ```
+
+**Refresh automático:** `pulse:sensors` e `pulse:shipping` regeneram o roteiro antes de correr. Para saltar (manifesto já actualizado): `--skip-refresh`.
 
 Cada elemento tem `data-pulse-sensor="id"` no código. O shell `.shell` é injetado automaticamente em `P38LazyPage`. O CI faz build com bypass auth local para abrir páginas autenticadas sem login real.
 
