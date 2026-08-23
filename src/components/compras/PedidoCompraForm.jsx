@@ -1503,8 +1503,8 @@ export default function PedidoCompraForm({
       </AlertDialog>
 
       {/* DESKTOP: Tabs */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Tabs value={abaPedidoDesktop} onValueChange={setAbaPedidoDesktop} className="flex-1 overflow-hidden flex flex-col">
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <Tabs value={abaPedidoDesktop} onValueChange={setAbaPedidoDesktop} className="flex-1 min-h-0 overflow-hidden flex flex-col">
           <TabsList className={COMPRAS_TABS_BAR}>
             {[
               { value: 'dados-gerais', icon: <FileText className="w-4 h-4 flex-shrink-0" />, short: 'Geral', disabled: false },
@@ -1534,7 +1534,7 @@ export default function PedidoCompraForm({
             </div>
           )}
 
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-6 touch-pan-y">
             <TabsContent value="dados-gerais" className="mt-0 space-y-6">
               <div className="grid grid-cols-12 gap-x-6 gap-y-6">
                 {/* Fornecedor */}

@@ -42,7 +42,7 @@ export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen,
   const drawer =
     open && portalRoot
       ? createPortal(
-        <div className="p38-portal-overlay z-[55] flex flex-col justify-end min-h-0">
+        <div className="p38-portal-overlay z-[55] flex flex-col justify-end min-h-0 h-full max-h-full">
           <button
             type="button"
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"

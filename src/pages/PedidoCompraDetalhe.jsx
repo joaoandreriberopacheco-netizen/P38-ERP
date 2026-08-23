@@ -198,15 +198,14 @@ export default function PedidoCompraDetalhe() {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-card">
+      <div className="p38-fullscreen-panel flex items-center justify-center bg-card">
         <div className="w-8 h-8 border-4 border-border/40 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-card overflow-hidden z-50">
-      <PedidoCompraForm
+    <PedidoCompraForm
         pedido={pedido}
         onSave={handleSave}
         onClose={handleClose}
@@ -218,6 +217,5 @@ export default function PedidoCompraDetalhe() {
         autoOpenImporter={autoOpenImporter}
         embarqueContextoId={embarqueContextoId}
       />
-    </div>
   );
 }

@@ -460,6 +460,28 @@ html[data-p38-force-landscape='true'] .p38-app-shell-compact {
 
 .p38-orientation-rotated-stage > .p38-portal-overlay {
   position: absolute;
+  max-height: 100%;
+}
+
+/* Páginas fullscreen (pedido compra, PDV…) — alinhadas ao stage em Modo Paisagem */
+.p38-fullscreen-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+}
+
+html[data-p38-force-landscape='true'] .p38-orientation-rotated-stage .p38-fullscreen-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  max-height: 100%;
+}
+
+html[data-p38-force-landscape='true'] .p38-orientation-rotated-stage .p38-fullscreen-shell {
+  flex: 1 1 0;
+  min-height: 0;
+  height: auto;
+  max-height: 100%;
 }
 
 /* Legado — preferir p38-portal-overlay */

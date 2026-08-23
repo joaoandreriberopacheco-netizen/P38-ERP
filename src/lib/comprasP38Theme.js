@@ -22,7 +22,8 @@ export const COMPRAS_HIER_L2 = 'ml-1 pl-2 border-l border-border/25 dark:border-
 
 /** Superfícies brancas no claro. */
 export const COMPRAS_PAGE = 'bg-background';
-export const COMPRAS_FORM_ROOT = cn(COMPRAS_FORM_BASE, 'fixed inset-0');
+/** Fullscreen compras — absolute dentro do stage em Modo Paisagem; fixed no retrato normal. */
+export const COMPRAS_FORM_ROOT = cn(COMPRAS_FORM_BASE, 'p38-fullscreen-panel flex flex-col min-h-0');
 export { COMPRAS_FORM_BASE };
 
 export const COMPRAS_FORM_HEADER =

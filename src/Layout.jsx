@@ -19,6 +19,7 @@ import { armGlobalSearchOpenGuard, registerOpenSearchOverlaySync } from '@/lib/o
 import FinanceiroAccessGuard from '@/components/guard/FinanceiroAccessGuard';
 import { isFinanceiroProtectedPage } from '@/config/financeiroGate';
 import { isSupabaseAuthEnabled } from '@/integrations/p38/providers';
+import { cn } from '@/lib/utils';
 
 const GlacialSidebar = React.lazy(() => import('@/components/navigation/GlacialSidebar'));
 const PinSetupDialog = React.lazy(() => import('@/components/auth/PinSetupDialog'));
@@ -341,12 +342,23 @@ export default function Layout({ children, currentPageName }) {
   );
 
   if (isFullscreen) {
+    const fullscreenShell = cn(
+      'p38-fullscreen-shell overflow-hidden bg-white dark:bg-background p38-app flex flex-col min-h-0',
+      forceLandscape ? 'flex-1' : 'h-[100dvh] max-h-[100dvh]',
+    );
+    const fullscreenBody = (
+      <>
+        <div className={fullscreenShell}>{pageContent}</div>
+        {searchOverlay}
+      </>
+    );
     return (
       <div className={darkMode ? 'dark' : ''}>
-        <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-white dark:bg-background p38-app">
-          {pageContent}
-        </div>
-        {searchOverlay}
+        {forceLandscape ? (
+          <div className="p38-orientation-rotated-stage">{fullscreenBody}</div>
+        ) : (
+          fullscreenBody
+        )}
       </div>
     );
   }

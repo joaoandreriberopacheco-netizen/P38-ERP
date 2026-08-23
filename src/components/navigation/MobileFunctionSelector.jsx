@@ -46,7 +46,7 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
 
   return createPortal(
     <div
-      className="p38-portal-overlay z-[60] sidebar-shell:hidden font-din-1451 flex flex-col min-h-0"
+      className="p38-portal-overlay z-[60] sidebar-shell:hidden font-din-1451 flex flex-col min-h-0 h-full max-h-full"
       style={{ background: c.bg }}
     >
       <div
