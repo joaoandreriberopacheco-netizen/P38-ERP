@@ -20,6 +20,7 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
+const REPORT_OUT = path.join(ROOT, 'docs/pulse/sensors-report.json');
 
 const ERROR_SELECTORS = [
   'text=Application error',
@@ -28,12 +29,13 @@ const ERROR_SELECTORS = [
 ];
 
 function parseArgs(argv) {
-  const args = { batch: null, all: false, skipServer: false };
+  const args = { batch: null, all: false, skipServer: false, writeReport: true };
   for (let i = 2; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--all' || arg === '-a') args.all = true;
     else if (arg === '--batch' && argv[i + 1]) args.batch = argv[++i];
     else if (arg === '--skip-server') args.skipServer = true;
+    else if (arg === '--no-report') args.writeReport = false;
     else if (arg === '--help' || arg === '-h') args.help = true;
   }
   if (!args.batch && !args.all) args.all = true;
@@ -231,6 +233,17 @@ Opções:
 
     const passed = summary.filter((s) => s.green).length;
     console.log(`\n[pulse:sensors] Resumo: ${passed}/${summary.length} ecrãs com VERDE 🟢`);
+
+    const report = {
+      collectedAt: new Date().toISOString(),
+      passed,
+      total: summary.length,
+      screens: summary,
+    };
+    if (args.writeReport) {
+      fs.writeFileSync(REPORT_OUT, `${JSON.stringify(report, null, 2)}\n`);
+      console.log(`[pulse:sensors] Relatório → ${REPORT_OUT}`);
+    }
 
     if (passed < summary.length) {
       const bad = summary.filter((s) => !s.green).map((s) => s.route);

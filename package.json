@@ -26,7 +26,7 @@
     "pulse:generate-sensors": "node scripts/generate-pulse-sensors-geral.mjs",
     "pulse:generate-shipping": "node scripts/generate-pulse-shipping-geral.mjs",
     "pulse:refresh-roteiro": "node scripts/pulse-refresh-roteiro.mjs",
-    "pulse:diario": "npm run pulse:refresh-roteiro && npm run pulse:sensors && npm run pulse:shipping",
+    "pulse:diario": "node scripts/pulse-diario.mjs",
     "pulse:predeploy": "npm run pulse:refresh-roteiro && npm run pulse:all && npm run pulse:corridor",
     "flare:export": "node scripts/export-flare-pending.mjs",
     "flare:api": "node scripts/flare-local-api.mjs",

@@ -38,6 +38,8 @@ dist-ssr
 docs/flare-export/flare-pending.json
 docs/pulse/corridor-report.json
 docs/pulse/shipping-report.json
+docs/pulse/sensors-report.json
+docs/pulse/pulse-diario-summary.json
 
 # Relatórios de auditoria com dados financeiros reais
 docs/audit/

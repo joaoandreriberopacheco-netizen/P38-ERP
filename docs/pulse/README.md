@@ -109,12 +109,22 @@ O workflow `.github/workflows/ci.yml` corre `npm run pulse:predeploy` (41 rotas 
 Workflow `.github/workflows/pulse-diario.yml`:
 
 - **Quando:** todos os dias às **05:00 Tabatinga** (10:00 UTC)
-- **O quê:** `pulse:refresh-roteiro` → `pulse:sensors` (trem) → `pulse:shipping` (36 dry runs)
+- **O quê:** `npm run pulse:diario` — refresh → trem → shipping; se falhar, **auto-reparo seguro** (regenera roteiro e repete uma vez)
+- **Notificação João André:** comentário numa issue GitHub (`pulse-diario`) — **inscreve-te na issue** para receber email
+- **Telegram (opcional):** secrets `PULSE_NOTIFY_TELEGRAM_BOT_TOKEN` + `PULSE_NOTIFY_TELEGRAM_CHAT_ID`
 - **Manual:** GitHub → Actions → **Pulso diário** → Run workflow
-- **Local:** `npm run pulse:diario` (mesma sequência, após `npm run build`)
-- **Relatório:** artefacto `pulse-diario-reports` (7 dias); falha envia alerta Actions
 
-Isto funciona como debugger overnight: se alguém mergeou algo que parte um ecrã ou fluxo, acordas com o GitHub vermelho em vez de um utilizador a descobrir no balcão.
+Mensagens possíveis:
+
+| Estado | O que recebes |
+|--------|----------------|
+| ✅ Tudo OK | "Nada a rever hoje" |
+| ⚙️ Corrigido | "Encontrámos X, regenerámos roteiro, agora verde — confirma" |
+| ⚠️ Revisão | "Partiu em /FluxoCaixa (sensor X) — não corrigimos código sozinhos" |
+
+**Auto-reparo hoje:** só manifestos desactualizados (refresh + retry). Crash de código ou botão removido → aviso para ti rever; não altera `src/` automaticamente.
+
+Relatórios: artefacto `pulse-diario-reports` (7 dias).
 
 ## Saída exemplo
 

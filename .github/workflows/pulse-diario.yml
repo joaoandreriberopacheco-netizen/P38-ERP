@@ -3,14 +3,18 @@
 # Agenda: todos os dias 05:00 Tabatinga (America/Rio_Branco, UTC-5) = 10:00 UTC.
 # Disparo manual: Actions → "Pulso diário" → Run workflow
 #
-# Em falha, o GitHub notifica quem tem alertas de Actions activos no repo.
-# Relatório shipping: artefacto "pulse-diario-reports" (7 dias).
+# Notificação João André: comenta issue GitHub (label pulse-diario).
+# Telegram opcional: secrets PULSE_NOTIFY_TELEGRAM_BOT_TOKEN + PULSE_NOTIFY_TELEGRAM_CHAT_ID
 
 name: Pulso diário
 
 concurrency:
   group: pulse-diario
   cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
 
 on:
   schedule:
@@ -54,7 +58,12 @@ jobs:
       - name: Playwright Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Pulso — refresh + trem + shipping (36 ecrãs)
+      - name: Label digest Pulso
+        run: gh label create pulse-diario --color "0E8A16" --description "Digest Pulso diário" 2>/dev/null || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pulso diário — trem + shipping + notificação
         env:
           NEXT_PUBLIC_P38_PROVIDER: supabase
           NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
@@ -64,12 +73,14 @@ jobs:
           VITE_SUPABASE_URL: https://placeholder.supabase.co
           VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ci1wbGFjZWhvbGRlcg
           VITE_P38_USE_SUPABASE_AUTH: 'false'
+          PULSE_NOTIFY_TELEGRAM_BOT_TOKEN: ${{ secrets.PULSE_NOTIFY_TELEGRAM_BOT_TOKEN }}
+          PULSE_NOTIFY_TELEGRAM_CHAT_ID: ${{ secrets.PULSE_NOTIFY_TELEGRAM_CHAT_ID }}
         run: |
-          if [ "${{ github.event.inputs.skip_refresh }}" != "true" ]; then
-            npm run pulse:refresh-roteiro
+          EXTRA=""
+          if [ "${{ github.event.inputs.skip_refresh }}" = "true" ]; then
+            EXTRA="--skip-refresh"
           fi
-          npm run pulse:sensors
-          npm run pulse:shipping
+          npm run pulse:diario -- $EXTRA
 
       - name: Upload relatórios Pulso
         if: always()
@@ -77,6 +88,8 @@ jobs:
         with:
           name: pulse-diario-reports
           path: |
+            docs/pulse/pulse-diario-summary.json
+            docs/pulse/sensors-report.json
             docs/pulse/shipping-report.json
           retention-days: 7
           if-no-files-found: ignore
