@@ -22,6 +22,7 @@
     "pulse:all": "node scripts/pulse.mjs --batch lote1 && node scripts/pulse.mjs --batch lote2",
     "pulse:sensors": "node scripts/pulse-sensors.mjs",
     "pulse:corridor": "node scripts/pulse-corridor.mjs",
+    "pulse:shipping": "node scripts/pulse-shipping.mjs",
     "pulse:generate-sensors": "node scripts/generate-pulse-sensors-geral.mjs",
     "pulse:predeploy": "npm run pulse:generate-sensors && npm run pulse:all && npm run pulse:corridor",
     "flare:export": "node scripts/export-flare-pending.mjs",

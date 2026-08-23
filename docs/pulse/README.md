@@ -65,6 +65,17 @@ Metáfora: em vez da bola a rolar na horizontal (abrir 36 páginas reais), o **c
 
 Relatório: `docs/pulse/corridor-report.json` (gerado em cada corrida; não versionado).
 
+## Shipping (dry run — operação requisitada)
+
+Simula processos de negócio **sem gravar** (cancelar / voltar). Manifesto piloto: [`shipping-piloto.json`](./shipping-piloto.json)
+
+| Comando | O que faz |
+|---------|-----------|
+| `npm run pulse:shipping` | 3 processos piloto (Compras, PDV, Fluxo caixa) |
+| `npm run pulse:shipping -- --id pedidos-compra` | Um processo só |
+
+Relatório: `docs/pulse/shipping-report.json`
+
 ## Sensores UI (pré-deploy)
 
 Função automática — **não é uma página do P38**. Corre antes do deploy e verifica se o pulso chega a botões/ecrãs críticos.

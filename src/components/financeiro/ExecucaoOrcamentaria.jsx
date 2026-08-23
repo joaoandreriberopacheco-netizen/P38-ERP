@@ -1113,6 +1113,7 @@ export default function ExecucaoOrcamentaria() {
               <button
                 type="button"
                 onClick={() => setFabOpen(o => !o)}
+                data-pulse-sensor="fluxo-caixa.fab"
                 className={`w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-xl active:scale-95 transition-all ${fabOpen ? 'bg-[#383e47] rotate-45' : 'bg-[#4a5240] dark:bg-[#a4ce33]'}`}>
                 <Plus className={`w-6 h-6 ${fabOpen ? 'text-white' : 'text-white dark:text-[#1f1d22]'}`} />
               </button>

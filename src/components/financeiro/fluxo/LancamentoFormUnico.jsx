@@ -422,6 +422,7 @@ export default function LancamentoFormUnico({
         <button
           type="button"
           onClick={onCancelar}
+          data-pulse-sensor="fluxo-caixa.novo-cancelar"
           className="flex-1 h-12 rounded-2xl bg-muted text-sm font-medium text-muted-foreground"
         >
           Cancelar
