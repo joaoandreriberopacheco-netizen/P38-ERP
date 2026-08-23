@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import GlacialBottomNav from '@/components/navigation/GlacialBottomNav';
 import MobileUserMenu from '@/components/layout/MobileUserMenu';
 import { useCompactShell } from '@/hooks/use-breakpoint';
-import { isCoarsePointer } from '@/lib/portraitOrientationLock';
 import { useBottomNavScrollVisibility } from '@/hooks/useBottomNavScrollVisibility';
 import { shouldHideBottomNavOnScroll } from '@/config/bottomNavScrollPolicy';
 import { shouldOpenGlobalSearchFromKeyboard } from '@/lib/globalSearchShortcut';
@@ -97,15 +96,8 @@ export default function Layout({ children, currentPageName }) {
   const bottomNavVisible = useBottomNavScrollVisibility(bottomNavScrollEnabled);
 
   useEffect(() => {
-    if (isMobile) {
-      setIsOpen(false);
-      document.documentElement.dataset.p38Shell = 'mobile';
-      return undefined;
-    }
-    // Tablet / toque: menu lateral aberto (não depende de hover). Notebook: recolhido.
-    setIsOpen(isCoarsePointer());
-    document.documentElement.dataset.p38Shell = 'desktop';
-    return undefined;
+    setIsOpen(false);
+    document.documentElement.dataset.p38Shell = isMobile ? 'mobile' : 'desktop';
   }, [isMobile]);
 
   useEffect(() => {
@@ -272,7 +264,6 @@ export default function Layout({ children, currentPageName }) {
   }, []);
 
   const handleMouseLeave = React.useCallback(() => {
-    if (isCoarsePointer()) return;
     setIsOpen(false);
   }, []);
 

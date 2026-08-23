@@ -320,8 +320,8 @@ html[data-p38-bottom-nav-hidden] {
   }
 }
 
-/* Desktop + tablet paisagem: sem bottom nav — FABs encostam ao fundo */
-@media (min-width: 1024px), ((min-width: 768px) and (orientation: landscape)) {
+/* Notebook com rato (menu lateral): FABs encostam ao fundo. Tablet paisagem mantém o menu de baixo. */
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
   .p38-bottom-fab1 {
     bottom: 1.5rem;
   }
@@ -352,9 +352,7 @@ html[data-p38-bottom-nav-hidden] {
   }
 }
 
-/* Paisagem pedida no Perfil (tablet ainda reporta retrato físico) */
-html[data-p38-shell="desktop"],
-html[data-p38-force-landscape="true"] {
+html[data-p38-shell="desktop"] {
   .p38-bottom-fab1 {
     bottom: 1.5rem;
   }

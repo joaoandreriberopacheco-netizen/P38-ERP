@@ -139,6 +139,8 @@ module.exports = {
         'html[data-p38-force-landscape="true"] &',
       ]);
       addVariant('tablet-portrait', '@media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait)');
+      addVariant('sidebar-shell', 'html[data-p38-shell="desktop"] &');
+      addVariant('compact-shell', 'html[data-p38-shell="mobile"] &');
     },
   ],
 }

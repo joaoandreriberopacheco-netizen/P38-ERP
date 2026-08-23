@@ -33,9 +33,9 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
 
   if (!isOpen) return null;
 
-  // Menu full-screen com bottom nav (mobile + tablet retrato).
+  // Menu full-screen com bottom nav (telemóvel + tablet, retrato ou paisagem).
   return (
-    <div className="fixed inset-0 z-[60] desktop-layout:hidden font-din-1451" style={{ background: c.bg }}>
+    <div className="fixed inset-0 z-[60] sidebar-shell:hidden font-din-1451" style={{ background: c.bg }}>
       {/* Header */}
       <div style={{ background: c.headerBg, boxShadow: '0 1px 0 rgba(0,0,0,0.06)' }} className="px-4 pt-5 pb-4">
         <div className="flex items-center justify-between mb-4">

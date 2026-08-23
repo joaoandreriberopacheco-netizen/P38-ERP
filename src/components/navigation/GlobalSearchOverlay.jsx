@@ -32,7 +32,7 @@ export default function GlobalSearchOverlay({
     return createPortal(
       <div
         className={cn(
-          'fixed inset-0 font-din-1451 desktop-layout:hidden',
+          'fixed inset-0 font-din-1451 sidebar-shell:hidden',
           !open && 'pointer-events-none'
         )}
         style={{ zIndex: shellZ }}
