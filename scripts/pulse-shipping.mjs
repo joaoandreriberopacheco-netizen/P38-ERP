@@ -14,7 +14,8 @@ import {
   startPulseServer,
   stopPulseServer,
 } from './lib/pulse-runtime.mjs';
-import { refreshPulseRoteiro } from './lib/pulse-refresh-roteiro.mjs';
+// Descomentar junto com o bloco refreshPulseRoteiro() em main():
+// import { refreshPulseRoteiro } from './lib/pulse-refresh-roteiro.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -29,7 +30,7 @@ const ERROR_SELECTORS = [
 ];
 
 function parseArgs(argv) {
-  const args = { all: true, id: null, module: null, piloto: false, skipServer: false, skipRefresh: false, writeReport: true };
+  const args = { all: true, id: null, module: null, piloto: false, skipServer: false, writeReport: true };
   for (let i = 2; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--all' || arg === '-a') args.all = true;
@@ -39,7 +40,6 @@ function parseArgs(argv) {
       args.id = argv[++i];
       args.all = false;
     } else if (arg === '--skip-server') args.skipServer = true;
-    else if (arg === '--skip-refresh') args.skipRefresh = true;
     else if (arg === '--no-report') args.writeReport = false;
     else if (arg === '--help' || arg === '-h') args.help = true;
   }
@@ -160,14 +160,15 @@ Opções:
   --id <slug>         Um processo (ex: pedidos-compra)
   --module <nome>     Filtrar módulo (vendas, financeiro, logistica, gestao)
   --skip-server       Servidor já a correr
-  --skip-refresh      Não regenerar manifestos antes de correr
 `);
     process.exit(0);
   }
 
-  if (!args.skipRefresh) {
-    refreshPulseRoteiro();
-  }
+  // Refresh do roteiro antes do shipping — desligado por defeito (corrida mais rápida).
+  // Para job periódico (ex. cron/GitHub Actions scheduled): descomentar import +
+  // bloco abaixo OU correr antes: npm run pulse:refresh-roteiro && npm run pulse:shipping
+  //
+  // refreshPulseRoteiro();
 
   const manifestPath = args.piloto ? MANIFEST_PILOTO : MANIFEST;
   if (!fs.existsSync(manifestPath)) {

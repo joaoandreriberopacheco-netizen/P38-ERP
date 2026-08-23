@@ -15,7 +15,8 @@ import {
   startPulseServer,
   stopPulseServer,
 } from './lib/pulse-runtime.mjs';
-import { refreshPulseRoteiro } from './lib/pulse-refresh-roteiro.mjs';
+// Descomentar junto com o bloco refreshPulseRoteiro() em main():
+// import { refreshPulseRoteiro } from './lib/pulse-refresh-roteiro.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -27,13 +28,12 @@ const ERROR_SELECTORS = [
 ];
 
 function parseArgs(argv) {
-  const args = { batch: null, all: false, skipServer: false, skipRefresh: false };
+  const args = { batch: null, all: false, skipServer: false };
   for (let i = 2; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--all' || arg === '-a') args.all = true;
     else if (arg === '--batch' && argv[i + 1]) args.batch = argv[++i];
     else if (arg === '--skip-server') args.skipServer = true;
-    else if (arg === '--skip-refresh') args.skipRefresh = true;
     else if (arg === '--help' || arg === '-h') args.help = true;
   }
   if (!args.batch && !args.all) args.all = true;
@@ -194,14 +194,15 @@ Opções:
   --all, -a           Todos os ecrãs (sensors-geral.json) — default
   --batch <nome>      Um lote (ex: lote1, geral)
   --skip-server       Servidor já a correr
-  --skip-refresh      Não regenerar manifestos antes de correr
 `);
     process.exit(0);
   }
 
-  if (!args.skipRefresh) {
-    refreshPulseRoteiro();
-  }
+  // Refresh do roteiro antes do trem — desligado por defeito (corrida mais rápida).
+  // Para job periódico (ex. cron/GitHub Actions scheduled): descomentar import +
+  // bloco abaixo OU correr antes: npm run pulse:refresh-roteiro && npm run pulse:sensors
+  //
+  // refreshPulseRoteiro();
 
   const screens = args.all || args.batch === 'geral'
     ? loadAllSensorScreens()
