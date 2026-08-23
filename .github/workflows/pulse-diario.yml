@@ -1,0 +1,82 @@
+# Pulso — debugger automático diário (trem + shipping).
+#
+# Agenda: todos os dias 05:00 Tabatinga (America/Rio_Branco, UTC-5) = 10:00 UTC.
+# Disparo manual: Actions → "Pulso diário" → Run workflow
+#
+# Em falha, o GitHub notifica quem tem alertas de Actions activos no repo.
+# Relatório shipping: artefacto "pulse-diario-reports" (7 dias).
+
+name: Pulso diário
+
+concurrency:
+  group: pulse-diario
+  cancel-in-progress: false
+
+on:
+  schedule:
+    # 10:00 UTC = 05:00 Tabatinga (UTC-5)
+    - cron: '0 10 * * *'
+  workflow_dispatch:
+    inputs:
+      skip_refresh:
+        description: 'Saltar refresh do roteiro (manifestos já actualizados)'
+        type: boolean
+        default: false
+
+jobs:
+  trem-e-shipping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next (placeholder env + bypass auth)
+        env:
+          NEXT_PUBLIC_P38_PROVIDER: supabase
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ci1wbGFjZWhvbGRlcg
+          NEXT_PUBLIC_P38_USE_SUPABASE_AUTH: 'false'
+          VITE_P38_PROVIDER: supabase
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ci1wbGFjZWhvbGRlcg
+          VITE_P38_USE_SUPABASE_AUTH: 'false'
+        run: npm run build
+
+      - name: Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Pulso — refresh + trem + shipping (36 ecrãs)
+        env:
+          NEXT_PUBLIC_P38_PROVIDER: supabase
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ci1wbGFjZWhvbGRlcg
+          NEXT_PUBLIC_P38_USE_SUPABASE_AUTH: 'false'
+          VITE_P38_PROVIDER: supabase
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ci1wbGFjZWhvbGRlcg
+          VITE_P38_USE_SUPABASE_AUTH: 'false'
+        run: |
+          if [ "${{ github.event.inputs.skip_refresh }}" != "true" ]; then
+            npm run pulse:refresh-roteiro
+          fi
+          npm run pulse:sensors
+          npm run pulse:shipping
+
+      - name: Upload relatórios Pulso
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pulse-diario-reports
+          path: |
+            docs/pulse/shipping-report.json
+          retention-days: 7
+          if-no-files-found: ignore

@@ -96,13 +96,25 @@ npm run pulse:corridor           # comboio (rápido)
 npm run pulse:predeploy          # refresh + rotas (41) + corredor
 ```
 
-**Refresh periódico (trem/shipping):** o refresh automático no meio dos scripts está **comentado** por defeito. Para job agendado, correr `pulse:refresh-roteiro` antes **ou** descomentar o bloco em `pulse-sensors.mjs` / `pulse-shipping.mjs`.
+**Refresh periódico (trem/shipping):** o refresh automático no meio dos scripts está **comentado** por defeito. Job agendado: workflow [`.github/workflows/pulse-diario.yml`](../../.github/workflows/pulse-diario.yml) (05:00 Tabatinga) ou `npm run pulse:diario`.
 
 Cada elemento tem `data-pulse-sensor="id"` no código. O shell `.shell` é injetado automaticamente em `P38LazyPage`. O CI faz build com bypass auth local para abrir páginas autenticadas sem login real.
 
 ## CI
 
-O workflow `.github/workflows/ci.yml` corre `npm run pulse:predeploy` (41 rotas + sensores) após o build.
+O workflow `.github/workflows/ci.yml` corre `npm run pulse:predeploy` (41 rotas + corredor comboio) em cada push.
+
+### Debugger automático diário
+
+Workflow `.github/workflows/pulse-diario.yml`:
+
+- **Quando:** todos os dias às **05:00 Tabatinga** (10:00 UTC)
+- **O quê:** `pulse:refresh-roteiro` → `pulse:sensors` (trem) → `pulse:shipping` (36 dry runs)
+- **Manual:** GitHub → Actions → **Pulso diário** → Run workflow
+- **Local:** `npm run pulse:diario` (mesma sequência, após `npm run build`)
+- **Relatório:** artefacto `pulse-diario-reports` (7 dias); falha envia alerta Actions
+
+Isto funciona como debugger overnight: se alguém mergeou algo que parte um ecrã ou fluxo, acordas com o GitHub vermelho em vez de um utilizador a descobrir no balcão.
 
 ## Saída exemplo
 

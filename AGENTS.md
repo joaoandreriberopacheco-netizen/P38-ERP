@@ -68,6 +68,8 @@ npm run pulse:refresh-roteiro && npm run pulse:shipping
 
 O CI em push continua a fazer refresh via `pulse:predeploy`. Sensores UI usam `data-pulse-sensor` no JSX; mapa de controlos em `scripts/generate-pulse-sensors-geral.mjs` (`CONTROLS`, `SHIPPING_OVERRIDES`).
 
+**Debugger diário (trem + shipping):** workflow `.github/workflows/pulse-diario.yml` — 05:00 Tabatinga, ou `npm run pulse:diario` localmente (requer build + Playwright). Falha = alerta GitHub Actions.
+
 There is **no** `test` script; E2E is manual / migration checklists under `docs/migration/`.
 
 ### Starting the dev server
