@@ -13,7 +13,9 @@ import {
   PULSE_BASE,
   startPulseServer,
   stopPulseServer,
+  ensurePulseBuild,
 } from './lib/pulse-runtime.mjs';
+import { createPulseBrowserContext, resolveViewportProfile } from './lib/pulse-viewport.mjs';
 // Descomentar junto com o bloco refreshPulseRoteiro() em main():
 // import { refreshPulseRoteiro } from './lib/pulse-refresh-roteiro.mjs';
 
@@ -30,16 +32,33 @@ const ERROR_SELECTORS = [
 ];
 
 function parseArgs(argv) {
-  const args = { all: true, id: null, module: null, piloto: false, skipServer: false, writeReport: true };
+  const args = {
+    all: true,
+    id: null,
+    module: null,
+    piloto: false,
+    skipServer: false,
+    skipBuild: false,
+    writeReport: true,
+    tablet: false,
+    orientation: 'portrait',
+    profile: null,
+    modoPaisagem: false,
+  };
   for (let i = 2; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--all' || arg === '-a') args.all = true;
     else if (arg === '--piloto') args.piloto = true;
+    else if (arg === '--tablet') args.tablet = true;
+    else if (arg === '--modo-paisagem') args.modoPaisagem = true;
+    else if (arg === '--profile' && argv[i + 1]) args.profile = argv[++i];
+    else if (arg === '--orientation' && argv[i + 1]) args.orientation = argv[++i];
     else if (arg === '--module' && argv[i + 1]) args.module = argv[++i];
     else if (arg === '--id' && argv[i + 1]) {
       args.id = argv[++i];
       args.all = false;
     } else if (arg === '--skip-server') args.skipServer = true;
+    else if (arg === '--skip-build') args.skipBuild = true;
     else if (arg === '--no-report') args.writeReport = false;
     else if (arg === '--help' || arg === '-h') args.help = true;
   }
@@ -108,8 +127,8 @@ async function runStep(page, step) {
   await assertNoCrash(page);
 }
 
-async function runShipment(browser, shipment) {
-  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+async function runShipment(browser, shipment, runOpts) {
+  const { context } = await createPulseBrowserContext(browser, runOpts);
   const page = await context.newPage();
   const stepResults = [];
   let failedAt = null;
@@ -159,7 +178,12 @@ Opções:
   --piloto            Só 3 processos piloto
   --id <slug>         Um processo (ex: pedidos-compra)
   --module <nome>     Filtrar módulo (vendas, financeiro, logistica, gestao)
+  --tablet            Emulação iPad (touch + menu de baixo)
+  --orientation <p|l> portrait (default) ou landscape
+  --profile <nome>    desktop | tablet-portrait | tablet-landscape
+  --modo-paisagem     Grava preferência paisagem antes de cada página
   --skip-server       Servidor já a correr
+  --skip-build        Não rebuildar (usa .next actual; pode falhar sem bypass no build)
 `);
     process.exit(0);
   }
@@ -185,22 +209,32 @@ Opções:
     if (!shipments.length) throw new Error(`Nenhum shipping no módulo: ${args.module}`);
   }
 
+  const viewportProfile = resolveViewportProfile(args);
+  const runOpts = {
+    profile: viewportProfile,
+    modoPaisagem: args.modoPaisagem,
+  };
+
   const chromium = await loadPlaywright();
   let server = null;
 
-  console.log(`[pulse:shipping] ${shipments.length} processo(s) — dry run`);
+  console.log(
+    `[pulse:shipping] ${shipments.length} processo(s) — dry run · ${viewportProfile.label}${
+      args.modoPaisagem ? ' · Modo Paisagem' : ''
+    }`
+  );
 
   try {
     if (!args.skipServer) {
       console.log('[pulse:shipping] A subir next start (bypass auth)…');
-      server = await startPulseServer({ bypassAuth: true });
+      server = await startPulseServer({ bypassAuth: true, skipBuild: args.skipBuild });
     }
 
     const browser = await chromium.launch({ headless: true });
     const summary = [];
     try {
       for (const shipment of shipments) {
-        summary.push(await runShipment(browser, shipment));
+        summary.push(await runShipment(browser, shipment, runOpts));
       }
     } finally {
       await browser.close();
@@ -209,7 +243,15 @@ Opções:
     const passed = summary.filter((s) => s.green).length;
     console.log(`\n[pulse:shipping] Resumo: ${passed}/${summary.length} entregas dry run 🟢`);
 
-    const report = { collectedAt: new Date().toISOString(), passed, total: summary.length, shipments: summary };
+    const report = {
+      collectedAt: new Date().toISOString(),
+      profile: viewportProfile.id,
+      profileLabel: viewportProfile.label,
+      modoPaisagem: args.modoPaisagem,
+      passed,
+      total: summary.length,
+      shipments: summary,
+    };
     if (args.writeReport) {
       fs.writeFileSync(REPORT_OUT, `${JSON.stringify(report, null, 2)}\n`);
       console.log(`[pulse:shipping] Relatório → ${REPORT_OUT}`);

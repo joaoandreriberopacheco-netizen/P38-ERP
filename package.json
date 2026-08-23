@@ -23,6 +23,8 @@
     "pulse:sensors": "node scripts/pulse-sensors.mjs",
     "pulse:corridor": "node scripts/pulse-corridor.mjs",
     "pulse:shipping": "node scripts/pulse-shipping.mjs",
+    "pulse:shipping:tablet": "node scripts/pulse-shipping.mjs --tablet",
+    "pulse:shipping:tablet:paisagem": "node scripts/pulse-shipping.mjs --tablet --modo-paisagem",
     "pulse:generate-sensors": "node scripts/generate-pulse-sensors-geral.mjs",
     "pulse:generate-shipping": "node scripts/generate-pulse-shipping-geral.mjs",
     "pulse:refresh-roteiro": "node scripts/pulse-refresh-roteiro.mjs",

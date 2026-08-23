@@ -1,4 +1,4 @@
-import { spawn } from 'child_process';
+import { spawn, spawnSync } from 'child_process';
 import { setTimeout as sleep } from 'timers/promises';
 
 export const PULSE_PORT = Number(process.env.PULSE_PORT || process.env.SMOKE_PORT || 3099);
@@ -62,7 +62,25 @@ export async function killPulsePort() {
   }
 }
 
-export async function startPulseServer({ bypassAuth = false } = {}) {
+export async function ensurePulseBuild({ bypassAuth = false } = {}) {
+  if (process.env.PULSE_SKIP_BUILD === '1' || process.env.PULSE_SKIP_BUILD === 'true') {
+    return;
+  }
+  console.log('[pulse] Build Next com env de teste (bypass auth + Supabase placeholder)…');
+  const result = spawnSync('npm', ['run', 'build'], {
+    cwd: process.cwd(),
+    env: pulseEnv({ bypassAuth }),
+    stdio: 'inherit',
+  });
+  if (result.status !== 0) {
+    throw new Error('npm run build falhou — shipping/sensores precisam de build com bypass');
+  }
+}
+
+export async function startPulseServer({ bypassAuth = false, skipBuild = false } = {}) {
+  if (!skipBuild) {
+    await ensurePulseBuild({ bypassAuth });
+  }
   await killPulsePort();
   const child = spawn('npx', ['next', 'start', '--port', String(PULSE_PORT)], {
     cwd: process.cwd(),

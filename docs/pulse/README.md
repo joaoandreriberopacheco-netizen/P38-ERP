@@ -72,6 +72,8 @@ Simula processos de negócio **sem gravar** (cancelar / voltar). Manifesto: [`sh
 | Comando | O que faz |
 |---------|-----------|
 | `npm run pulse:shipping` | **36 dry runs** (todos os ecrãs) |
+| `npm run pulse:shipping:tablet` | Shipping em emulação **tablet** (iPad touch, menu de baixo) |
+| `npm run pulse:shipping:tablet:paisagem` | Tablet + **Modo Paisagem** gravado no `localStorage` |
 | `npm run pulse:shipping -- --module vendas` | Só módulo vendas |
 | `npm run pulse:shipping -- --id pedidos-compra` | Um processo |
 | `npm run pulse:shipping -- --piloto` | 3 processos piloto (legado) |
