@@ -10,9 +10,14 @@ export const ORIENTATION_STORAGE_KEY = 'p38_orientation_mode';
 export const ORIENTATION_CHANGE_EVENT = 'p38-orientation-change';
 export const FORCE_LANDSCAPE_ATTR = 'data-p38-force-landscape';
 
-function isCoarsePointer() {
+export function isCoarsePointer() {
   if (typeof window === 'undefined' || !window.matchMedia) return false;
   return window.matchMedia('(pointer: coarse)').matches;
+}
+
+export function isForceLandscapeCssActive() {
+  if (typeof document === 'undefined') return false;
+  return document.documentElement.getAttribute(FORCE_LANDSCAPE_ATTR) === 'true';
 }
 
 function canUseScreenOrientationLock() {

@@ -1,4 +1,9 @@
 import * as React from 'react';
+import {
+  FORCE_LANDSCAPE_ATTR,
+  ORIENTATION_CHANGE_EVENT,
+  isForceLandscapeCssActive,
+} from '@/lib/portraitOrientationLock';
 
 /** Smartphone estreito: sempre layout mobile. */
 export const PHONE_MAX = 767;
@@ -22,6 +27,14 @@ export function resolveViewportLayout(width, height) {
   return isPortrait(width, height) ? 'mobile' : 'desktop';
 }
 
+/** Paisagem forçada por CSS: o ecrã físico ainda é retrato — usa a dimensão longa como largura. */
+export function logicalViewportSize(width, height, forceLandscape) {
+  if (forceLandscape && height > width) {
+    return { width: height, height: width };
+  }
+  return { width, height };
+}
+
 /** Legado: phone | tablet | desktop por largura só. */
 function resolveBreakpoint(width) {
   if (width < TABLET_MIN) return 'phone';
@@ -33,8 +46,15 @@ function readViewport() {
   if (typeof window === 'undefined') {
     return { width: DESKTOP_MIN, height: DESKTOP_MIN, layout: 'desktop', breakpoint: 'desktop' };
   }
-  const width = window.innerWidth;
-  const height = window.innerHeight;
+  const physical = {
+    width: window.innerWidth,
+    height: window.innerHeight,
+  };
+  const { width, height } = logicalViewportSize(
+    physical.width,
+    physical.height,
+    isForceLandscapeCssActive(),
+  );
   return {
     width,
     height,
@@ -56,16 +76,24 @@ export function useViewport() {
 
     window.addEventListener('resize', onChange);
     window.addEventListener('orientationchange', onChange);
+    window.addEventListener(ORIENTATION_CHANGE_EVENT, onChange);
     const portraitMq = window.matchMedia('(orientation: portrait)');
     const landscapeMq = window.matchMedia('(orientation: landscape)');
     portraitMq.addEventListener('change', onChange);
     landscapeMq.addEventListener('change', onChange);
+    const rootObserver = new MutationObserver(onChange);
+    rootObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: [FORCE_LANDSCAPE_ATTR],
+    });
 
     return () => {
       window.removeEventListener('resize', onChange);
       window.removeEventListener('orientationchange', onChange);
+      window.removeEventListener(ORIENTATION_CHANGE_EVENT, onChange);
       portraitMq.removeEventListener('change', onChange);
       landscapeMq.removeEventListener('change', onChange);
+      rootObserver.disconnect();
     };
   }, []);
 

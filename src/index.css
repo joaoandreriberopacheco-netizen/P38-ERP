@@ -352,6 +352,39 @@ html[data-p38-bottom-nav-hidden] {
   }
 }
 
+/* Paisagem pedida no Perfil (tablet ainda reporta retrato físico) */
+html[data-p38-shell="desktop"],
+html[data-p38-force-landscape="true"] {
+  .p38-bottom-fab1 {
+    bottom: 1.5rem;
+  }
+  .p38-bottom-fab-mid {
+    bottom: 6rem;
+  }
+  .p38-bottom-fab-high {
+    bottom: 7rem;
+  }
+  .p38-bottom-fab2 {
+    bottom: 6rem;
+  }
+  .p38-bottom-fab-xl {
+    bottom: 1.5rem;
+  }
+  .p38-bottom-dock {
+    bottom: 0;
+  }
+  .p38-quick-access-launcher1,
+  .p38-quick-access-launcher2 {
+    bottom: 1.5rem;
+  }
+  .p38-quick-access-launcher2 {
+    bottom: calc(1.5rem + var(--p38-quick-access-size) + var(--p38-quick-access-gap));
+  }
+  .p38-layout-mobile-scroll-pad {
+    padding-bottom: 0;
+  }
+}
+
 @keyframes app-toast-progress {
   from {
     width: 100%;
