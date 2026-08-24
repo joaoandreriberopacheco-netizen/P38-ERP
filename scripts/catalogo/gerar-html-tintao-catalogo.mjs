@@ -231,6 +231,70 @@ function buildHtml({ classif, itens }) {
       letter-spacing: .02em;
     }
     header.hero p { margin: 0; color: var(--muted); font-size: .92rem; }
+    .hero-cta {
+      display: none;
+      width: 100%;
+      margin-top: 14px;
+      padding: 14px 18px;
+      border-radius: 14px;
+      border: 0;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
+      color: #1a1a12;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(164,206,51,.25);
+    }
+    .hero-cta.pulse { animation: cta-pulse 2s ease-in-out 2; }
+    @keyframes cta-pulse {
+      0%, 100% { box-shadow: 0 8px 24px rgba(164,206,51,.25); transform: scale(1); }
+      50% { box-shadow: 0 12px 32px rgba(164,206,51,.45); transform: scale(1.02); }
+    }
+    .flow-steps {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      margin-top: 16px;
+      padding: 10px 8px;
+      background: rgba(0,0,0,.2);
+      border-radius: 12px;
+    }
+    .flow-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      flex: 1;
+      opacity: .45;
+      transition: opacity .2s ease;
+    }
+    .flow-step.active, .flow-step.done { opacity: 1; }
+    .flow-icon {
+      width: 28px; height: 28px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      border: 2px solid var(--border);
+      display: grid; place-items: center;
+      font-size: .75rem; font-weight: 700;
+    }
+    .flow-step.active .flow-icon {
+      border-color: var(--accent);
+      background: rgba(164,206,51,.15);
+      color: var(--accent);
+    }
+    .flow-step.done .flow-icon {
+      border-color: var(--accent-dim);
+      background: var(--accent);
+      color: #1a1a12;
+    }
+    .flow-label { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+    .flow-step.active .flow-label { color: var(--accent); }
+    .flow-line {
+      width: 24px; height: 2px; background: var(--border);
+      flex-shrink: 0; margin-bottom: 18px;
+    }
+    .flow-line.done { background: var(--accent-dim); }
     .stats {
       display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px;
     }
@@ -246,6 +310,12 @@ function buildHtml({ classif, itens }) {
     .toolbar {
       display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;
     }
+    .toolbar-main { display: flex; gap: 10px; flex: 1 1 100%; }
+    .toolbar-extra {
+      display: flex; gap: 8px; flex-wrap: wrap; width: 100%;
+    }
+    .toolbar-extra[hidden] { display: none !important; }
+    .btn-icon { min-width: 44px; padding: 10px; font-size: 1.1rem; line-height: 1; }
     .search {
       flex: 1 1 220px;
       background: var(--surface);
@@ -387,12 +457,172 @@ function buildHtml({ classif, itens }) {
       border-color: var(--accent);
       background: #1a1c14;
     }
-    .qty-hint {
-      font-size: .78rem;
-      color: var(--muted);
-      margin: -8px 0 14px;
-      line-height: 1.4;
+    .product-list {
+      display: grid;
+      gap: 10px;
+      padding: 8px 10px 12px;
     }
+    .product-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .product-card.has-qty {
+      border-color: rgba(164,206,51,.45);
+      box-shadow: 0 0 0 1px rgba(164,206,51,.12);
+    }
+    .product-card.qty-focus-row {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(164,206,51,.2);
+    }
+    .card-main {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .card-body { flex: 1; min-width: 0; }
+    .card-title {
+      margin: 0 0 4px;
+      font-size: .95rem;
+      font-weight: 600;
+      line-height: 1.25;
+    }
+    .card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .card-chip {
+      font-size: .68rem;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .card-price {
+      font-size: .88rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .card-qty-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+    .qty-label {
+      font-size: .72rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .qty-stepper {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .qty-step {
+      width: 44px;
+      height: 44px;
+      border: 0;
+      background: transparent;
+      color: var(--accent);
+      font-size: 1.35rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      line-height: 1;
+    }
+    .qty-step:active { background: rgba(164,206,51,.15); }
+    .qty-stepper .qty-input {
+      width: 52px;
+      height: 44px;
+      border: 0;
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      border-radius: 0;
+      background: var(--bg);
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+    .bottom-bar {
+      display: none;
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      z-index: 40;
+      background: rgba(31,29,34,.96);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border);
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+      box-shadow: 0 -8px 32px rgba(0,0,0,.4);
+    }
+    .bottom-bar.has-items { border-top-color: rgba(164,206,51,.35); }
+    .bottom-bar-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .bottom-pedido {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px 14px;
+      color: var(--text);
+      cursor: pointer;
+      min-width: 64px;
+    }
+    .bottom-pedido .bb-icon { font-size: 1.2rem; line-height: 1; }
+    .bottom-pedido .bb-label { font-size: .62rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+    .bb-badge {
+      position: absolute;
+      top: -4px; right: -4px;
+      min-width: 20px; height: 20px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #1a1a12;
+      font-size: .7rem;
+      font-weight: 700;
+      display: grid;
+      place-items: center;
+    }
+    .bottom-meta {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    #bb-summary { font-size: .78rem; color: var(--muted); }
+    #bb-total { font-size: 1.05rem; color: var(--accent); }
+    .bottom-pdf {
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .bottom-pdf:disabled { opacity: .4; cursor: not-allowed; }
+    body.has-bottom-bar { padding-bottom: 88px; }
     .pedido-panel {
       display: none;
       background: var(--surface);
@@ -545,11 +775,36 @@ function buildHtml({ classif, itens }) {
     }
     @media (max-width: 720px) {
       .wrap { padding: 14px 10px 36px; }
+      body.has-bottom-bar .wrap { padding-bottom: 100px; }
+      .hero-cta { display: block; }
+      .bottom-bar { display: block; }
+      body.has-bottom-bar { padding-bottom: 0; }
       header.hero { padding: 16px 14px; }
       header.hero h1 { font-size: 1.15rem; }
-      .toolbar { gap: 8px; }
-      .search { flex: 1 1 100%; min-width: 0; }
-      .select-group, .btn { flex: 1 1 auto; font-size: .8rem; padding: 9px 12px; }
+      .stat-hide-mobile { display: none; }
+      .toolbar { gap: 8px; margin-bottom: 10px; }
+      .toolbar-desktop-only { display: none !important; }
+      .search { flex: 1; min-width: 0; }
+      .select-group, .btn { font-size: .8rem; padding: 9px 12px; }
+      .pedido-panel.open {
+        position: fixed;
+        left: 0; right: 0; bottom: 0;
+        z-index: 45;
+        max-height: 85vh;
+        overflow-y: auto;
+        border-radius: 18px 18px 0 0;
+        margin: 0;
+        box-shadow: 0 -16px 48px rgba(0,0,0,.5);
+      }
+      .pedido-panel.open::before {
+        content: "";
+        display: block;
+        width: 40px; height: 4px;
+        background: var(--border);
+        border-radius: 999px;
+        margin: 0 auto 12px;
+      }
+      footer.note { display: none; }
       details.acc > summary {
         padding: 12px 12px 12px calc(10px + var(--depth, 0) * 12px);
         gap: 8px;
@@ -557,29 +812,18 @@ function buildHtml({ classif, itens }) {
       .acc-inner { padding-left: calc(8px + var(--depth, 0) * 12px); }
       .acc-title { font-size: .92rem; }
       .acc-count { font-size: .72rem; padding: 3px 8px; }
-      .col-desc, .model-table thead th:nth-child(3) { display: none; }
-      .model-table { font-size: .8rem; }
-      .qty-input { width: 64px; min-height: 44px; font-size: 1rem; }
-      .col-qty, .model-table thead th:nth-child(6) {
-        position: sticky; right: 52px; background: var(--bg); z-index: 1;
-        box-shadow: -6px 0 8px rgba(0,0,0,.2);
-      }
-      .model-table thead th:nth-child(6) { background: #232027; z-index: 2; }
-      .col-cod, .model-table thead th:nth-child(7) {
-        position: sticky; right: 0; background: var(--bg); z-index: 1;
-      }
-      .model-table thead th:nth-child(7) { background: #232027; z-index: 2; }
+      .thumb-btn { width: 72px; height: 72px; border-radius: 12px; }
+      .thumb-empty { width: 72px; height: 72px; }
       .lightbox { padding: 10px; }
       .gallery-nav { width: 36px; height: 36px; }
     }
+    @media (min-width: 721px) {
+      .toolbar-mobile-only { display: none !important; }
+      .product-list { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+    }
     @media (max-width: 480px) {
-      .col-acab, .col-cod,
-      .model-table thead th:nth-child(4),
-      .model-table thead th:nth-child(7) { display: none; }
-      .col-qty, .model-table thead th:nth-child(6) { right: 0; }
       .stats { gap: 6px; }
       .stat { font-size: .75rem; padding: 5px 10px; }
-      .thumb-btn { width: 42px; height: 42px; }
       .model-table td, .model-table th { padding: 7px 8px; }
       .lightbox-head h3 { font-size: .88rem; }
       .lightbox-stage { min-height: 220px; }
@@ -591,29 +835,50 @@ function buildHtml({ classif, itens }) {
   <div class="wrap">
     <header class="hero">
       <h1>Catálogo Tintão — Formigres</h1>
-      <p>Lista orçamento 24/08/2026 · classificação Bold / Retificada / Polida</p>
+      <p>Lista orçamento · pisos Formigres</p>
       <div class="stats">
         <span class="stat"><strong>${total}</strong> modelos</span>
-        <span class="stat"><strong>${comFoto}</strong> com foto</span>
-        <span class="stat">Gerado em ${esc(gerado)}</span>
+        <span class="stat stat-hide-mobile"><strong>${comFoto}</strong> com foto</span>
       </div>
+      <div class="flow-steps" aria-hidden="true">
+        <div class="flow-step active" id="flow-1"><span class="flow-icon">1</span><span class="flow-label">Ver</span></div>
+        <span class="flow-line" id="flow-line-1"></span>
+        <div class="flow-step" id="flow-2"><span class="flow-icon">2</span><span class="flow-label">Caixas</span></div>
+        <span class="flow-line" id="flow-line-2"></span>
+        <div class="flow-step" id="flow-3"><span class="flow-icon">3</span><span class="flow-label">Pedido</span></div>
+      </div>
+      <button type="button" class="hero-cta" id="start-qty">Montar pedido</button>
     </header>
 
     <div class="toolbar">
-      <input id="search" class="search" type="search" placeholder="Buscar modelo, formato, acabamento…" />
-      <select id="group-by" class="select-group" title="Como agrupar dentro de Bold / Retificada / Polida">
-        <option value="tipo">Agrupar: tipo</option>
-        <option value="acabamento">Agrupar: acabamento</option>
-      </select>
-      <button type="button" class="btn" id="filter-qty">Só com quantidade</button>
-      <button type="button" class="btn" id="clear-qty" title="Zerar todas as caixas preenchidas">Limpar seleção</button>
-      <button type="button" class="btn btn-primary" id="start-qty" title="Abrir tudo e focar o primeiro campo de caixas">Preencher caixas</button>
-      <button type="button" class="btn" id="toggle-pedido">Ver pedido</button>
-      <button type="button" class="btn btn-primary" id="pdf-pedido">PDF do pedido</button>
-      <button type="button" class="btn" id="expand-all">Abrir tudo</button>
-      <button type="button" class="btn" id="collapse-all">Fechar tudo</button>
+      <div class="toolbar-main">
+        <input id="search" class="search" type="search" placeholder="Buscar modelo…" />
+        <button type="button" class="btn btn-icon toolbar-mobile-only" id="toolbar-more" aria-label="Mais opções">⋯</button>
+      </div>
+      <div class="toolbar-extra toolbar-mobile-only" id="toolbar-extra" hidden>
+        <select id="group-by" class="select-group" title="Agrupar">
+          <option value="tipo">Por tipo</option>
+          <option value="acabamento">Por acabamento</option>
+        </select>
+        <button type="button" class="btn" id="filter-qty">Com quantidade</button>
+        <button type="button" class="btn" id="clear-qty">Limpar</button>
+        <button type="button" class="btn" id="expand-all">Abrir</button>
+        <button type="button" class="btn" id="collapse-all">Fechar</button>
+      </div>
+      <div class="toolbar-extra toolbar-desktop-only">
+        <select id="group-by-desktop" class="select-group">
+          <option value="tipo">Agrupar: tipo</option>
+          <option value="acabamento">Agrupar: acabamento</option>
+        </select>
+        <button type="button" class="btn" id="filter-qty-d">Só com quantidade</button>
+        <button type="button" class="btn" id="clear-qty-d">Limpar seleção</button>
+        <button type="button" class="btn btn-primary" id="start-qty-d">Preencher caixas</button>
+        <button type="button" class="btn" id="toggle-pedido">Ver pedido</button>
+        <button type="button" class="btn btn-primary" id="pdf-pedido">PDF do pedido</button>
+        <button type="button" class="btn" id="expand-all-d">Abrir tudo</button>
+        <button type="button" class="btn" id="collapse-all-d">Fechar tudo</button>
+      </div>
     </div>
-    <p class="qty-hint">Dica: toque na linha para editar caixas · <strong>Enter</strong> próximo · <strong>Shift+Enter</strong> anterior · botão <strong>Preencher caixas</strong> abre tudo e começa no primeiro vazio</p>
 
     <section class="pedido-panel" id="pedido-panel" aria-label="Resumo do pedido">
       <h2>Resumo do pedido</h2>
@@ -633,8 +898,23 @@ function buildHtml({ classif, itens }) {
 
     <section class="catalogo" id="catalogo"></section>
 
-    <footer class="note">HTML autónomo — partilhe por WhatsApp, e-mail ou drive. Defina quantidades de caixa, veja o pedido e gere PDF. Fotos embutidas na geração (galeria completa sem depender de internet).</footer>
+    <footer class="note">Catálogo offline · fotos embutidas · ${esc(gerado)}</footer>
   </div>
+
+  <nav class="bottom-bar" id="bottom-bar" aria-label="Pedido rápido">
+    <div class="bottom-bar-inner">
+      <button type="button" class="bottom-pedido" id="bb-pedido">
+        <span class="bb-icon" aria-hidden="true">🛒</span>
+        <span class="bb-badge" id="bb-badge">0</span>
+        <span class="bb-label">Pedido</span>
+      </button>
+      <div class="bottom-meta">
+        <span id="bb-summary">Toque + para adicionar</span>
+        <strong id="bb-total" hidden></strong>
+      </div>
+      <button type="button" class="bottom-pdf btn-primary" id="bb-pdf" disabled>PDF</button>
+    </div>
+  </nav>
 
   <div id="pedido-print"></div>
 
@@ -691,8 +971,20 @@ function buildHtml({ classif, itens }) {
       if (n > 0) qtyMap[String(cod)] = n;
       else delete qtyMap[String(cod)];
       localStorage.setItem(QTY_KEY, JSON.stringify(qtyMap));
+      document.querySelectorAll('.model-row[data-cod="' + cod + '"]').forEach((row) => {
+        row.dataset.qty = String(n);
+        row.classList.toggle('has-qty', n > 0);
+      });
+      document.querySelectorAll('.qty-input[data-cod="' + cod + '"]').forEach((input) => {
+        if (document.activeElement !== input) input.value = n || '';
+      });
       renderPedido();
+      updateBottomBar();
+      updateFlowSteps();
       if (filterQtyOnly) applySearch(document.getElementById('search').value);
+    }
+    function adjustQty(cod, delta) {
+      setQty(cod, getQty(cod) + delta);
     }
     function clearAllQty() {
       const hasQty = Object.keys(qtyMap).length > 0 || [...document.querySelectorAll('.qty-input')].some((el) => Number(el.value) > 0);
@@ -703,9 +995,14 @@ function buildHtml({ classif, itens }) {
       document.querySelectorAll('.qty-input').forEach((input) => {
         input.value = '';
         const row = input.closest('.model-row');
-        if (row) row.dataset.qty = '0';
+        if (row) {
+          row.dataset.qty = '0';
+          row.classList.remove('has-qty');
+        }
       });
       renderPedido();
+      updateBottomBar();
+      updateFlowSteps();
       if (filterQtyOnly) applySearch(document.getElementById('search').value);
     }
     function visibleQtyInputs() {
@@ -812,30 +1109,36 @@ function buildHtml({ classif, itens }) {
       if (imgs.length) return imgs;
       return item.imagem_url ? [{ url: item.imagem_url, tipo: 'principal' }] : [];
     }
-    function renderRow(item) {
+    function qtyStepperHtml(cod, qty, titulo) {
+      return '<div class="qty-stepper">' +
+        '<button type="button" class="qty-step minus" data-cod="' + esc(cod) + '" aria-label="Menos">−</button>' +
+        '<input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="Caixas" placeholder="0" />' +
+        '<button type="button" class="qty-step plus" data-cod="' + esc(cod) + '" aria-label="Mais">+</button>' +
+        '</div>';
+    }
+    function renderProductCard(item) {
       const imgs = getGaleria(item);
       const img = imgs[0]?.url || item.imagem_url || '';
       const titulo = item.formigres_titulo || item.descricao;
       const cod = item.codigo_tintao;
       const qty = getQty(cod);
       const foto = img
-        ? '<button type="button" class="thumb-btn' + (imgs.length > 1 ? ' has-gallery' : '') + '" data-cod="' + esc(cod) + '" data-title="' + esc(titulo) + '" title="Clique para ver fotos"><img src="' + esc(img) + '" alt="" loading="lazy" />' + (imgs.length > 1 ? '<span class="thumb-more" aria-hidden="true">▦</span>' : '') + '</button>'
+        ? '<button type="button" class="thumb-btn' + (imgs.length > 1 ? ' has-gallery' : '') + '" data-cod="' + esc(cod) + '" data-title="' + esc(titulo) + '" title="Ver fotos"><img src="' + esc(img) + '" alt="" loading="lazy" />' + (imgs.length > 1 ? '<span class="thumb-more" aria-hidden="true">▦</span>' : '') + '</button>'
         : '<span class="thumb-empty">—</span>';
-      const warn = item.match_status !== 'encontrado' ? ' <span class="badge warn">sem match</span>' : '';
-      return '<tr class="model-row" data-cod="' + esc(cod) + '" data-search="' + esc((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato).toLowerCase()) + '" data-qty="' + qty + '">' +
-        '<td class="col-foto">' + foto + '</td>' +
-        '<td class="col-modelo"><strong>' + esc(titulo) + '</strong>' + warn + '</td>' +
-        '<td class="col-desc">' + esc(item.descricao) + '</td>' +
-        '<td class="col-acab">' + esc(item.formigres_acabamento || '—') + '</td>' +
-        '<td class="col-preco">' + esc(fmtMoney(item.preco_m2)) + '</td>' +
-        '<td class="col-qty"><input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="Caixas de ' + esc(titulo) + '" placeholder="0" /></td>' +
-        '<td class="col-cod">' + esc(cod) + '</td></tr>';
+      const warn = item.match_status !== 'encontrado' ? '<span class="badge warn">sem match</span>' : '';
+      return '<article class="product-card model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato).toLowerCase()) + '" data-qty="' + qty + '">' +
+        '<div class="card-main">' + foto +
+        '<div class="card-body"><h4 class="card-title">' + esc(titulo) + '</h4>' +
+        '<div class="card-meta"><span class="card-chip">' + esc(item.formato || '—') + '</span>' +
+        (item.formigres_acabamento ? '<span class="card-chip">' + esc(item.formigres_acabamento) + '</span>' : '') +
+        warn + '</div>' +
+        '<div class="card-price">' + esc(fmtMoney(item.preco_m2)) + '<span style="font-weight:400;color:var(--muted)"> /m²</span></div></div></div>' +
+        '<div class="card-qty-row"><span class="qty-label">Caixas</span>' + qtyStepperHtml(cod, qty, titulo) + '</div></article>';
     }
     function renderFormato(formato, items) {
       const n = items.length;
-      return '<details class="acc acc-formato"><summary><span class="acc-title">Formato ' + esc(formato) + '</span><span class="acc-count">' + n + ' modelo' + (n === 1 ? '' : 's') + '</span></summary>' +
-        '<div class="table-wrap"><table class="model-table"><thead><tr><th>Foto</th><th>Modelo</th><th>Descrição Tintão</th><th>Acabamento</th><th>Preço/m²</th><th>Caixas</th><th>Cód.</th></tr></thead><tbody>' +
-        items.map(renderRow).join('') + '</tbody></table></div></details>';
+      return '<details class="acc acc-formato"><summary><span class="acc-title">Formato ' + esc(formato) + '</span><span class="acc-count">' + n + '</span></summary>' +
+        '<div class="product-list">' + items.map(renderProductCard).join('') + '</div></details>';
     }
     function renderGrupo(key, formatosMap, linha) {
       const formatos = Object.keys(formatosMap).sort((a, b) => fmtAreaKey(b) - fmtAreaKey(a) || a.localeCompare(b));
@@ -912,13 +1215,78 @@ function buildHtml({ classif, itens }) {
           '<td>' + esc(fmtMoney(item.preco_m2)) + '</td>' +
           '<td class="col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
       }).join('');
-      document.getElementById('pedido-body').innerHTML = body || '<tr><td colspan="8" style="color:var(--muted);text-align:center">Nenhum item com quantidade definida.</td></tr>';
+      document.getElementById('pedido-body').innerHTML = body || '<tr><td colspan="8" style="color:var(--muted);text-align:center;padding:24px;font-size:2rem">📦</td></tr>';
       document.getElementById('pedido-resumo').innerHTML =
         '<span class="stat"><strong>' + rows.length + '</strong> modelos</span>' +
         '<span class="stat"><strong>' + totalCaixas + '</strong> caixas</span>' +
         '<span class="stat"><strong>' + totalM2.toFixed(2).replace('.', ',') + '</strong> m²</span>';
       document.getElementById('pedido-total').innerHTML =
         '<span>Total estimado: <strong>' + fmtMoney(totalValor) + '</strong></span>';
+      updateBottomBar();
+      updateFlowSteps();
+    }
+
+    function updateBottomBar() {
+      const rows = pedidoItens();
+      let totalCaixas = 0;
+      let totalValor = 0;
+      for (const { item, qty } of rows) {
+        totalCaixas += qty;
+        const sub = itemSubtotal(item, qty);
+        if (sub) totalValor += sub;
+      }
+      const badge = document.getElementById('bb-badge');
+      const summary = document.getElementById('bb-summary');
+      const totalEl = document.getElementById('bb-total');
+      const pdf = document.getElementById('bb-pdf');
+      const bar = document.getElementById('bottom-bar');
+      if (badge) badge.textContent = String(rows.length);
+      if (summary) summary.textContent = rows.length ? (totalCaixas + ' cx · ' + rows.length + ' modelos') : 'Toque + para adicionar';
+      if (totalEl) {
+        totalEl.textContent = totalValor > 0 ? fmtMoney(totalValor) : '';
+        totalEl.hidden = totalValor <= 0;
+      }
+      if (pdf) pdf.disabled = rows.length === 0;
+      if (bar) bar.classList.toggle('has-items', rows.length > 0);
+      document.body.classList.add('has-bottom-bar');
+    }
+
+    function updateFlowSteps() {
+      const n = pedidoItens().length;
+      const s1 = document.getElementById('flow-1');
+      const s2 = document.getElementById('flow-2');
+      const s3 = document.getElementById('flow-3');
+      const l1 = document.getElementById('flow-line-1');
+      const l2 = document.getElementById('flow-line-2');
+      s1?.classList.toggle('done', true);
+      s1?.classList.toggle('active', n === 0);
+      s2?.classList.toggle('active', n === 0);
+      s2?.classList.toggle('done', n > 0);
+      s3?.classList.toggle('active', n > 0);
+      s3?.classList.toggle('done', pedidoOpen && n > 0);
+      l1?.classList.toggle('done', n > 0);
+      l2?.classList.toggle('done', n > 0);
+    }
+
+    function openPedidoPanel() {
+      pedidoOpen = true;
+      pedidoPanel.classList.add('open');
+      document.getElementById('toggle-pedido')?.classList.add('active');
+      renderPedido();
+      updateFlowSteps();
+    }
+
+    function closePedidoPanel() {
+      pedidoOpen = false;
+      pedidoPanel.classList.remove('open');
+      document.getElementById('toggle-pedido')?.classList.remove('active');
+      updateFlowSteps();
+    }
+
+    function printPedidoPdf() {
+      if (!pedidoItens().length) return;
+      document.getElementById('pedido-print').innerHTML = buildPedidoPrintHtml();
+      window.print();
     }
 
     function buildPedidoPrintHtml() {
@@ -944,53 +1312,57 @@ function buildHtml({ classif, itens }) {
 
     const q = document.getElementById('search');
     const groupSel = document.getElementById('group-by');
-    const btnFilterQty = document.getElementById('filter-qty');
-    const btnClearQty = document.getElementById('clear-qty');
-    const btnStartQty = document.getElementById('start-qty');
-    const btnPedido = document.getElementById('toggle-pedido');
-    const btnPdf = document.getElementById('pdf-pedido');
+    const groupSelD = document.getElementById('group-by-desktop');
     const pedidoPanel = document.getElementById('pedido-panel');
 
-    q.addEventListener('input', () => applySearch(q.value));
-    groupSel.addEventListener('change', () => {
-      groupBy = groupSel.value;
+    function syncGroupBy(val) {
+      groupBy = val;
+      if (groupSel) groupSel.value = val;
+      if (groupSelD) groupSelD.value = val;
       renderCatalogo();
-    });
-    btnFilterQty.addEventListener('click', () => {
+    }
+    function toggleFilterQty(btn) {
       filterQtyOnly = !filterQtyOnly;
-      btnFilterQty.classList.toggle('active', filterQtyOnly);
+      document.querySelectorAll('#filter-qty, #filter-qty-d').forEach((b) => b?.classList.toggle('active', filterQtyOnly));
       applySearch(q.value);
+    }
+    function bindClick(id, fn) {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('click', fn);
+    }
+
+    q.addEventListener('input', () => applySearch(q.value));
+    groupSel?.addEventListener('change', () => syncGroupBy(groupSel.value));
+    groupSelD?.addEventListener('change', () => syncGroupBy(groupSelD.value));
+
+    bindClick('filter-qty', (e) => toggleFilterQty(e.currentTarget));
+    bindClick('filter-qty-d', (e) => toggleFilterQty(e.currentTarget));
+    bindClick('clear-qty', clearAllQty);
+    bindClick('clear-qty-d', clearAllQty);
+    bindClick('start-qty', startQtyEntry);
+    bindClick('start-qty-d', startQtyEntry);
+    bindClick('toggle-pedido', () => (pedidoOpen ? closePedidoPanel() : openPedidoPanel()));
+    bindClick('pdf-pedido', printPedidoPdf);
+    bindClick('bb-pedido', () => (pedidoOpen ? closePedidoPanel() : openPedidoPanel()));
+    bindClick('bb-pdf', printPedidoPdf);
+    bindClick('toolbar-more', () => {
+      const extra = document.getElementById('toolbar-extra');
+      if (extra) extra.hidden = !extra.hidden;
     });
-    btnClearQty.addEventListener('click', clearAllQty);
-    btnStartQty.addEventListener('click', startQtyEntry);
-    btnPedido.addEventListener('click', () => {
-      pedidoOpen = !pedidoOpen;
-      pedidoPanel.classList.toggle('open', pedidoOpen);
-      btnPedido.classList.toggle('active', pedidoOpen);
-      if (pedidoOpen) renderPedido();
-    });
-    btnPdf.addEventListener('click', () => {
-      if (!pedidoItens().length) {
-        alert('Defina quantidades de caixa antes de gerar o PDF.');
-        return;
-      }
-      document.getElementById('pedido-print').innerHTML = buildPedidoPrintHtml();
-      window.print();
-    });
+    bindClick('expand-all', () => dom.allDetails.forEach((d) => { d.open = true; }));
+    bindClick('expand-all-d', () => dom.allDetails.forEach((d) => { d.open = true; }));
+    bindClick('collapse-all', () => dom.allDetails.forEach((d) => { d.open = false; }));
+    bindClick('collapse-all-d', () => dom.allDetails.forEach((d) => { d.open = false; }));
 
     document.getElementById('catalogo').addEventListener('input', (e) => {
       const input = e.target.closest('.qty-input');
       if (!input) return;
       setQty(input.dataset.cod, input.value);
-      const row = input.closest('.model-row');
-      if (row) row.dataset.qty = String(getQty(input.dataset.cod));
     });
     document.getElementById('catalogo').addEventListener('change', (e) => {
       const input = e.target.closest('.qty-input');
       if (!input) return;
       setQty(input.dataset.cod, input.value);
-      const row = input.closest('.model-row');
-      if (row) row.dataset.qty = String(getQty(input.dataset.cod));
     });
     document.getElementById('catalogo').addEventListener('focusin', (e) => {
       const input = e.target.closest('.qty-input');
@@ -1010,21 +1382,37 @@ function buildHtml({ classif, itens }) {
       if (e.key === 'Enter') {
         e.preventDefault();
         setQty(input.dataset.cod, input.value);
-        const row = input.closest('.model-row');
-        if (row) row.dataset.qty = String(getQty(input.dataset.cod));
         moveQtyFocus(input, e.shiftKey ? -1 : 1);
       }
     });
 
-    document.getElementById('expand-all').addEventListener('click', () => {
-      dom.allDetails.forEach((d) => { d.open = true; });
+    document.getElementById('catalogo').addEventListener('click', (e) => {
+      const step = e.target.closest('.qty-step');
+      if (step) {
+        e.stopPropagation();
+        adjustQty(step.dataset.cod, step.classList.contains('plus') ? 1 : -1);
+        return;
+      }
+      const btn = e.target.closest('.thumb-btn');
+      if (btn) {
+        onThumbClick(btn);
+        return;
+      }
+      if (e.target.closest('.qty-input, .qty-stepper')) return;
+      const row = e.target.closest('.model-row');
+      if (!row || row.classList.contains('hidden')) return;
+      focusQtyInput(row.querySelector('.qty-input'));
     });
-    document.getElementById('collapse-all').addEventListener('click', () => {
-      dom.allDetails.forEach((d) => { d.open = false; });
-    });
+
+    if (!sessionStorage.getItem('tintao-seen')) {
+      document.querySelector('.hero-cta')?.classList.add('pulse');
+      sessionStorage.setItem('tintao-seen', '1');
+    }
 
     renderCatalogo();
     renderPedido();
+    updateBottomBar();
+    updateFlowSteps();
 
     const lb = document.getElementById('lightbox');
     const lbImg = document.getElementById('lightbox-img');
@@ -1078,17 +1466,6 @@ function buildHtml({ classif, itens }) {
       openGaleria(imagens, title, false);
     }
 
-    document.getElementById('catalogo').addEventListener('click', (e) => {
-      const btn = e.target.closest('.thumb-btn');
-      if (btn) {
-        onThumbClick(btn);
-        return;
-      }
-      if (e.target.closest('.qty-input')) return;
-      const row = e.target.closest('.model-row');
-      if (!row || row.classList.contains('hidden')) return;
-      focusQtyInput(row.querySelector('.qty-input'));
-    });
     btnPrev.addEventListener('click', () => renderGaleriaIdx(galeriaIdx - 1));
     btnNext.addEventListener('click', () => renderGaleriaIdx(galeriaIdx + 1));
     lbDots.addEventListener('click', (e) => {
