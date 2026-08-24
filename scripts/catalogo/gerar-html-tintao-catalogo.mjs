@@ -1169,7 +1169,7 @@ function buildHtml({ classif, itens }) {
       <h1>Pedido Formigres</h1>
       <p>Para lojistas — escolha o modelo, marque as caixas e revise o total</p>
       <div class="stats">
-        <span class="stat"><strong>${total}</strong> modelos na lista</span>
+        <span class="stat" id="stat-modelos"><strong id="stat-modelos-count">${total}</strong> <span id="stat-modelos-label">modelos na lista</span></span>
       </div>
       <div class="flow-steps" aria-hidden="true">
         <div class="flow-step active" id="flow-1"><span class="flow-icon">1</span><span class="flow-label">Explorar</span></div>
@@ -1314,6 +1314,7 @@ function buildHtml({ classif, itens }) {
     const THEME_KEY = 'tintao-theme-v1';
     const DESCONTO_KEY = 'tintao-desconto-v1';
     const itemsByCode = new Map(CATALOGO.itens.map((i) => [String(i.codigo_tintao), i]));
+    const TOTAL_MODELOS = CATALOGO.itens.length;
     let qtyMap = {};
     try { qtyMap = JSON.parse(localStorage.getItem(QTY_KEY) || '{}'); } catch { qtyMap = {}; }
     let descontoPct = 0;
@@ -1686,6 +1687,20 @@ function buildHtml({ classif, itens }) {
       }
       for (const l of dom.linhas) {
         l.classList.toggle('hidden', l.querySelectorAll('.acc-grupo:not(.hidden)').length === 0);
+      }
+      updateModelosCount();
+    }
+    function updateModelosCount() {
+      const visible = dom.rows.length
+        ? dom.rows.filter((r) => !r.classList.contains('hidden')).length
+        : TOTAL_MODELOS;
+      const countEl = document.getElementById('stat-modelos-count');
+      const labelEl = document.getElementById('stat-modelos-label');
+      if (countEl) countEl.textContent = String(visible);
+      if (labelEl) {
+        labelEl.textContent = visible === TOTAL_MODELOS
+          ? 'modelos na lista'
+          : ('de ' + TOTAL_MODELOS + ' modelos');
       }
     }
 
