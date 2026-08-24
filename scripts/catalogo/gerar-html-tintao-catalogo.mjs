@@ -831,7 +831,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
     .pedido-cards { display: flex; flex-direction: column; }
     .pedido-card {
       padding: 14px 0;
-      border-bottom: 1px solid var(--border-subtle);
+      border-bottom: 0.5px solid color-mix(in srgb, var(--border) 38%, transparent);
     }
     .pedido-card:last-child { border-bottom: 0; }
     .pedido-card-head {
@@ -931,7 +931,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       color: var(--text-strong);
     }
     .pedido-total {
-      margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--accent-border);
+      margin-top: 12px; padding-top: 12px; border-top: 0.5px solid color-mix(in srgb, var(--accent-border) 55%, transparent);
       display: flex; justify-content: flex-end; gap: 24px; font-size: 1rem;
     }
     .pedido-total strong { color: var(--accent-bright); font-size: 1.15rem; font-weight: 600; }
@@ -950,6 +950,62 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
     }
     .btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
     #pedido-print { display: none; }
+    #pedido-pdf-render-host {
+      position: fixed;
+      left: 0;
+      top: 0;
+      z-index: -9999;
+      opacity: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .pedido-pdf-sheet {
+      position: fixed;
+      inset: 0;
+      z-index: 55;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      background: rgba(8,7,10,.72);
+      padding: 0;
+    }
+    .pedido-pdf-sheet.open { display: flex; }
+    .pedido-pdf-sheet-panel {
+      width: 100%;
+      max-width: 420px;
+      background: var(--surface);
+      border-top: 1px solid var(--accent-border);
+      border-radius: var(--radius) var(--radius) 0 0;
+      padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+      box-shadow: var(--shadow);
+    }
+    .pedido-pdf-sheet-panel::before {
+      content: "";
+      display: block;
+      width: 40px; height: 4px;
+      background: var(--border);
+      border-radius: var(--radius);
+      margin: 0 auto 14px;
+      opacity: .55;
+    }
+    .pedido-pdf-sheet-panel h3 {
+      margin: 0 0 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-strong);
+    }
+    .pedido-pdf-sheet-panel p {
+      margin: 0 0 14px;
+      font-size: .82rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .pedido-pdf-sheet-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .pedido-pdf-sheet-actions .btn { width: 100%; padding: 12px; border-radius: var(--radius); }
     @media print {
       body > :not(#pedido-print) { display: none !important; }
       #pedido-print {
@@ -1142,7 +1198,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       .pedido-total {
         margin-top: 10px;
         padding: 10px 0 12px;
-        border-top: 1px solid var(--border-subtle);
+        border-top: 0.5px solid color-mix(in srgb, var(--border) 38%, transparent);
         flex-direction: column;
         align-items: stretch;
         gap: 4px;
@@ -1352,7 +1408,19 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
 
   <div id="pedido-print"></div>
 
-  <iframe id="pedido-print-frame" title="Impressão do pedido" hidden></iframe>
+  <div id="pedido-pdf-render-host" aria-hidden="true"></div>
+
+  <div class="pedido-pdf-sheet" id="pedido-pdf-sheet" role="dialog" aria-modal="true" aria-label="PDF do pedido">
+    <div class="pedido-pdf-sheet-panel">
+      <h3>PDF pronto</h3>
+      <p>Escolha abrir no leitor do telemóvel ou guardar o ficheiro.</p>
+      <div class="pedido-pdf-sheet-actions">
+        <button type="button" class="btn btn-primary" id="pedido-pdf-open">Abrir PDF</button>
+        <button type="button" class="btn" id="pedido-pdf-download">Baixar PDF</button>
+        <button type="button" class="btn" id="pedido-pdf-close">Fechar</button>
+      </div>
+    </div>
+  </div>
 
   <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Galeria do produto">
     <div class="lightbox-panel">
@@ -1393,6 +1461,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
     let groupBy = 'acabamento';
     let filterQtyOnly = false;
     let pedidoOpen = false;
+    let pedidoPdfSheetOpen = false;
     let dom = {};
 
     function esc(s) {
@@ -1567,6 +1636,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
     }
     function syncBodyScrollLock() {
       const locked = pedidoOpen
+        || pedidoPdfSheetOpen
         || document.getElementById('lightbox')?.classList.contains('open');
       document.body.style.overflow = locked ? 'hidden' : '';
     }
@@ -1883,17 +1953,6 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
     function printPageWidthMm() {
       return Math.max(88, pxToMm(printPageWidthPx()));
     }
-    function waitPrintImages(doc) {
-      const imgs = [...(doc.images || [])];
-      if (!imgs.length) return Promise.resolve();
-      return Promise.all(imgs.map((img) => {
-        if (img.complete) return Promise.resolve();
-        return new Promise((resolve) => {
-          img.addEventListener('load', resolve, { once: true });
-          img.addEventListener('error', resolve, { once: true });
-        });
-      }));
-    }
     function buildPedidoPrintHtml() {
       const rows = pedidoItens();
       let totalCaixas = 0, totalM2 = 0, totalValor = 0;
@@ -1944,7 +2003,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
         '.print-resumo-stat { flex: 1; min-width: 0; text-align: center; padding: 7px 4px; border: 1px solid #aaa; border-radius: 6px; background: #f4f4f4; font-size: 10px; color: #555; }' +
         '.print-resumo-stat strong { display: block; font-size: 14px; color: #111; margin-bottom: 2px; }' +
         '.print-cards { display: flex; flex-direction: column; }' +
-        '.pedido-card { padding: 10px 0; border-bottom: 1px solid #aaa; break-inside: avoid; page-break-inside: avoid; }' +
+        '.pedido-card { padding: 10px 0; border-bottom: 0.5px solid #e3e3e3; break-inside: avoid; page-break-inside: avoid; }' +
         '.pedido-card:last-child { border-bottom: 0; }' +
         '.pedido-card-head { display: flex; align-items: flex-start; gap: 10px; }' +
         '.pedido-card-thumb { width: 48px; height: 48px; border-radius: 7px; object-fit: cover; flex-shrink: 0; background: #eee; }' +
@@ -1962,72 +2021,143 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
         '.pedido-card-price-val { display: block; line-height: 1.15; }' +
         '.preco-orig { display: block; text-decoration: line-through; color: #777; font-size: 9px; line-height: 1.1; font-weight: 400; }' +
         '.preco-desc { display: block; font-weight: 700; color: #111; line-height: 1.15; font-size: 11px; }' +
-        '.print-totals { text-align: right; margin: 14px 0 0; padding-top: 10px; border-top: 1px solid #aaa; font-size: 14px; break-inside: avoid; page-break-inside: avoid; }' +
+        '.print-totals { text-align: right; margin: 14px 0 0; padding-top: 10px; border-top: 0.5px solid #e3e3e3; font-size: 14px; break-inside: avoid; page-break-inside: avoid; }' +
         '.print-totals strong { font-size: 16px; }';
     }
-    async function printPedidoPdf() {
-      if (!pedidoItens().length) return;
-      closePedidoPanel();
-      const content = buildPedidoPrintHtml();
+    const HTML2PDF_URL = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+    let pedidoPdfBlob = null;
+    let pedidoPdfBlobUrl = null;
+
+    function pedidoPdfFilename() {
+      return 'pedido-formigres-' + new Date().toISOString().slice(0, 10) + '.pdf';
+    }
+    function revokePedidoPdfBlob() {
+      if (pedidoPdfBlobUrl) {
+        URL.revokeObjectURL(pedidoPdfBlobUrl);
+        pedidoPdfBlobUrl = null;
+      }
+      pedidoPdfBlob = null;
+    }
+    function loadHtml2Pdf() {
+      if (window.html2pdf) return Promise.resolve(window.html2pdf);
+      return new Promise((resolve, reject) => {
+        const existing = document.getElementById('html2pdf-script');
+        if (existing) {
+          existing.addEventListener('load', () => resolve(window.html2pdf));
+          existing.addEventListener('error', () => reject(new Error('Falha ao carregar gerador PDF')));
+          return;
+        }
+        const script = document.createElement('script');
+        script.id = 'html2pdf-script';
+        script.src = HTML2PDF_URL;
+        script.async = true;
+        script.onload = () => resolve(window.html2pdf);
+        script.onerror = () => reject(new Error('Falha ao carregar gerador PDF'));
+        document.head.appendChild(script);
+      });
+    }
+    function mountPedidoPdfRender() {
       const pageWpx = printPageWidthPx();
       const pageWmm = printPageWidthMm();
-      const frame = document.getElementById('pedido-print-frame');
-      if (!frame) return;
-      frame.style.width = pageWpx + 'px';
-      frame.style.visibility = 'hidden';
-      frame.style.position = 'fixed';
-      frame.style.left = '0';
-      frame.style.top = '0';
-      frame.style.zIndex = '-1';
-      frame.style.border = '0';
-      const doc = frame.contentDocument || frame.contentWindow?.document;
-      if (!doc) return;
-      doc.open();
-      doc.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">' +
-        '<meta name="viewport" content="width=' + pageWpx + '">' +
-        '<title>Pedido Formigres</title><style id="print-base">' +
-        printPedidoPrintCss(pageWmm, null) +
-        '</style></head><body>' + content + '</body></html>');
-      doc.close();
-      const win = frame.contentWindow;
-      if (!win) return;
-      const resetFrame = () => {
-        frame.style.width = '';
-        frame.style.visibility = '';
-        frame.style.position = '';
-        frame.style.left = '';
-        frame.style.top = '';
-        frame.style.zIndex = '';
-      };
-      const cleanup = () => {
-        resetFrame();
-        try { doc.open(); doc.write(''); doc.close(); } catch { /* ignore */ }
-      };
+      const host = document.getElementById('pedido-pdf-render-host');
+      if (!host) return null;
+      host.innerHTML = '';
+      const style = document.createElement('style');
+      style.textContent = printPedidoPrintCss(pageWmm, null);
+      host.appendChild(style);
+      const wrap = document.createElement('div');
+      wrap.className = 'print-render-root';
+      wrap.style.width = pageWpx + 'px';
+      wrap.style.background = '#fff';
+      wrap.style.color = '#111';
+      wrap.innerHTML = buildPedidoPrintHtml();
+      host.appendChild(wrap);
+      wrap.querySelectorAll('img').forEach((img) => { img.crossOrigin = 'anonymous'; });
+      return { host, wrap, pageWpx, pageWmm };
+    }
+    async function waitPrintImagesRoot(root) {
+      const imgs = [...root.querySelectorAll('img')];
+      if (!imgs.length) return;
+      await Promise.all(imgs.map((img) => {
+        if (img.complete) return Promise.resolve();
+        return new Promise((resolve) => {
+          img.addEventListener('load', resolve, { once: true });
+          img.addEventListener('error', resolve, { once: true });
+        });
+      }));
+    }
+    function openPedidoPdfSheet() {
+      pedidoPdfSheetOpen = true;
+      document.getElementById('pedido-pdf-sheet')?.classList.add('open');
+      syncBodyScrollLock();
+    }
+    function closePedidoPdfSheet() {
+      pedidoPdfSheetOpen = false;
+      document.getElementById('pedido-pdf-sheet')?.classList.remove('open');
+      syncBodyScrollLock();
+    }
+    function openPedidoPdfFile() {
+      if (!pedidoPdfBlobUrl) return;
+      window.open(pedidoPdfBlobUrl, '_blank', 'noopener,noreferrer');
+    }
+    function downloadPedidoPdfFile() {
+      if (!pedidoPdfBlobUrl) return;
+      const a = document.createElement('a');
+      a.href = pedidoPdfBlobUrl;
+      a.download = pedidoPdfFilename();
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+    async function exportPedidoPdf() {
+      if (!pedidoItens().length) return;
+      const btn = document.getElementById('pdf-pedido-panel');
+      const prevLabel = btn?.textContent || 'PDF do pedido';
+      if (btn) { btn.disabled = true; btn.textContent = 'Gerando PDF…'; }
+      const mounted = mountPedidoPdfRender();
+      if (!mounted) {
+        if (btn) { btn.disabled = !pedidoItens().length; btn.textContent = prevLabel; }
+        return;
+      }
+      const { host, wrap, pageWpx, pageWmm } = mounted;
       try {
-        await waitPrintImages(doc);
+        const html2pdf = await loadHtml2Pdf();
+        await waitPrintImagesRoot(wrap);
         await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-        const sheet = doc.querySelector('.print-sheet');
-        const heightPx = Math.max(
-          sheet?.scrollHeight || 0,
-          doc.body?.scrollHeight || 0,
-          doc.documentElement?.scrollHeight || 0
-        );
-        let pageHmm = pxToMm(heightPx) + 12;
-        pageHmm = Math.max(100, pageHmm);
-        const pageStyle = doc.createElement('style');
-        pageStyle.id = 'print-page-size';
-        if (pageHmm > 1400) {
-          pageStyle.textContent = '@page { size: ' + pageWmm + 'mm 297mm; margin: 5mm 4mm; }';
-        } else {
-          pageStyle.textContent = '@page { size: ' + pageWmm + 'mm ' + pageHmm + 'mm; margin: 5mm 4mm; }';
+        const sheet = wrap.querySelector('.print-sheet') || wrap;
+        const heightPx = Math.max(sheet.scrollHeight || 0, wrap.scrollHeight || 0);
+        let pageHmm = Math.max(100, pxToMm(heightPx) + 12);
+        if (pageHmm > 1400) pageHmm = 297;
+        revokePedidoPdfBlob();
+        pedidoPdfBlob = await html2pdf().set({
+          margin: [5, 4, 5, 4],
+          filename: pedidoPdfFilename(),
+          image: { type: 'jpeg', quality: 0.94 },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            allowTaint: false,
+            logging: false,
+            width: pageWpx,
+            windowWidth: pageWpx,
+            backgroundColor: '#ffffff',
+          },
+          jsPDF: { unit: 'mm', format: [pageWmm, pageHmm], orientation: 'portrait' },
+          pagebreak: { mode: ['css', 'legacy'] },
+        }).from(sheet).outputPdf('blob');
+        pedidoPdfBlobUrl = URL.createObjectURL(pedidoPdfBlob);
+        closePedidoPanel();
+        openPedidoPdfSheet();
+      } catch (err) {
+        console.error(err);
+        alert('Não foi possível gerar o PDF. Verifique a ligação à internet e tente de novo.');
+      } finally {
+        host.innerHTML = '';
+        if (btn) {
+          btn.disabled = !pedidoItens().length;
+          btn.textContent = prevLabel;
         }
-        doc.head.appendChild(pageStyle);
-        win.onafterprint = cleanup;
-        win.focus();
-        win.print();
-        setTimeout(cleanup, 30000);
-      } catch {
-        cleanup();
       }
     }
 
@@ -2127,7 +2257,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
     bindClick('start-qty-d', startQtyEntry);
     bindClick('cart-fab', () => (pedidoOpen ? closePedidoPanel() : openPedidoPanel()));
     bindClick('pedido-close', closePedidoPanel);
-    bindClick('pdf-pedido-panel', printPedidoPdf);
+    bindClick('pdf-pedido-panel', exportPedidoPdf);
+    bindClick('pedido-pdf-open', openPedidoPdfFile);
+    bindClick('pedido-pdf-download', downloadPedidoPdfFile);
+    bindClick('pedido-pdf-close', closePedidoPdfSheet);
+    document.getElementById('pedido-pdf-sheet')?.addEventListener('click', (e) => {
+      if (e.target.id === 'pedido-pdf-sheet') closePedidoPdfSheet();
+    });
     bindClick('clear-qty-panel', () => { clearAllQty(); if (!pedidoItens().length) closePedidoPanel(); });
     document.getElementById('pedido-overlay')?.addEventListener('click', (e) => {
       if (e.target.id === 'pedido-overlay') closePedidoPanel();
@@ -2243,6 +2379,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         if (lb.classList.contains('open')) closeLightbox();
+        else if (pedidoPdfSheetOpen) closePedidoPdfSheet();
         else if (pedidoOpen) closePedidoPanel();
       }
       if (!lb.classList.contains('open')) return;
