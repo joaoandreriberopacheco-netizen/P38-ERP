@@ -15,6 +15,7 @@ const ROOT = process.cwd();
 const CLASSIF_DIR = path.join(ROOT, 'docs', 'imports-local', 'tintao', 'classificacao');
 const OUT_HTML = path.join(ROOT, 'docs', 'imports-local', 'tintao', 'catalogo-tintao-formigres.html');
 const ANT_LOGO_PATH = path.join(ROOT, 'scripts', 'catalogo', 'assets', 'formigres-ant.png');
+// Silhueta vermelha Formigres (recorte do logo vertical da marca); fundo transparente.
 
 function loadAntLogoDataUri() {
   try {
@@ -268,9 +269,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
     html[data-theme="light"] .load-overlay { background: rgba(242,242,240,.97); }
     .load-logo-ant {
       position: relative;
-      width: min(168px, 52vw);
+      width: min(200px, 58vw);
       margin: 0 auto;
-      aspect-ratio: 72 / 50;
+      aspect-ratio: 306 / 184;
     }
     .load-logo-ant img {
       display: block;
@@ -329,22 +330,17 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       visibility: hidden;
       pointer-events: none;
     }
-    .load-panel { text-align: center; padding: 24px; max-width: 360px; }
-    .load-title {
-      margin: 18px 0 4px;
-      font-size: .82rem;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      color: var(--text-strong);
-      font-weight: 600;
-    }
-    .load-sub { margin: 0; color: var(--muted); font-size: .85rem; }
-    .load-progress {
-      margin: 10px 0 0;
-      font-size: .78rem;
-      color: var(--accent-dim);
-      font-variant-numeric: tabular-nums;
-      letter-spacing: .04em;
+    .load-panel { text-align: center; padding: 24px; max-width: 280px; }
+    .load-sr {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
     .theme-fab {
       position: fixed;
@@ -1004,14 +1000,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
   <div class="load-overlay" id="load-overlay" role="status" aria-live="polite" aria-busy="true">
     <div class="load-panel">
       <div class="load-logo-ant" aria-hidden="true">
-        <img class="load-ant-ghost" src="${antLogoDataUri || ''}" alt="" width="144" height="100" />
+        <img class="load-ant-ghost" src="${antLogoDataUri || ''}" alt="" width="200" height="120" />
         <div class="load-ant-fill-wrap" id="load-ant-fill-wrap">
-          <img src="${antLogoDataUri || ''}" alt="" width="144" height="100" />
+          <img src="${antLogoDataUri || ''}" alt="" width="200" height="120" />
         </div>
       </div>
-      <p class="load-title">Formigres</p>
-      <p class="load-sub" id="load-msg">A carregar fotos do catálogo…</p>
-      <p class="load-progress" id="load-progress">0 / 0</p>
+      <p class="load-sr" id="load-msg">A carregar fotos do catálogo</p>
     </div>
   </div>
 
@@ -1626,8 +1620,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       const pct = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
       const wrap = document.getElementById('load-ant-fill-wrap');
       if (wrap) wrap.style.height = pct + '%';
-      const prog = document.getElementById('load-progress');
-      if (prog) prog.textContent = total ? (done + ' / ' + total) : '—';
+      const msg = document.getElementById('load-msg');
+      if (msg && total > 0) msg.textContent = 'A carregar fotos do catálogo — ' + done + ' de ' + total;
     }
     function preloadImages(urls) {
       return new Promise((resolve) => {
