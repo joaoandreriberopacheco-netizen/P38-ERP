@@ -38,6 +38,18 @@ const TIPO_LABEL = {
   outros: 'Outros',
 };
 
+const ACAB_ORDER = [
+  'POLIDO',
+  'BRILHANTE',
+  'MATE',
+  'GRANILHADO',
+  'PROTETIVA ADERENTE',
+  'GRANILHADO ABS',
+  'MATE ABS',
+  'GOTEJADO',
+  'Sem acabamento',
+];
+
 function argValue(flag) {
   const args = process.argv.slice(2);
   const i = args.indexOf(flag);
@@ -84,109 +96,6 @@ function esc(s) {
     .replace(/"/g, '&quot;');
 }
 
-function buildTree(itens) {
-  const tree = {};
-  for (const item of itens) {
-    const linha = item.linha || 'desconhecida';
-    const tipo = tipoKey(item);
-    const formato = item.formato || '—';
-    tree[linha] ??= {};
-    tree[linha][tipo] ??= {};
-    tree[linha][tipo][formato] ??= [];
-    tree[linha][tipo][formato].push(item);
-  }
-
-  for (const linha of Object.keys(tree)) {
-    for (const tipo of Object.keys(tree[linha])) {
-      for (const formato of Object.keys(tree[linha][tipo])) {
-        tree[linha][tipo][formato].sort((a, b) => {
-          const ta = (a.formigres_titulo || a.descricao || '').localeCompare(b.formigres_titulo || b.descricao || '', 'pt-BR');
-          return ta;
-        });
-      }
-    }
-  }
-  return tree;
-}
-
-function renderTableRow(item) {
-  const img = item.imagem_url || '';
-  const titulo = item.formigres_titulo || item.descricao;
-  const fid = item.formigres_id || '';
-  const foto = img && fid
-    ? `<button type="button" class="thumb-btn has-gallery" data-formigres-id="${esc(fid)}" data-thumb="${esc(img)}" data-title="${esc(titulo)}" aria-label="Galeria ${esc(titulo)}" title="Clique para ver fotos (carrega mais ao abrir)">
-         <img src="${esc(img)}" alt="" loading="lazy" />
-         <span class="thumb-more" aria-hidden="true">▦</span>
-       </button>`
-    : img
-      ? `<button type="button" class="thumb-btn" data-thumb="${esc(img)}" data-title="${esc(titulo)}" aria-label="Ampliar ${esc(titulo)}">
-           <img src="${esc(img)}" alt="" loading="lazy" />
-         </button>`
-      : `<span class="thumb-empty">—</span>`;
-
-  const warn = item.match_status !== 'encontrado' ? ' <span class="badge warn">sem match</span>' : '';
-
-  return `<tr class="model-row" data-search="${esc(`${titulo} ${item.descricao} ${item.formigres_acabamento} ${item.formato}`.toLowerCase())}">
-    <td class="col-foto">${foto}</td>
-    <td class="col-modelo"><strong>${esc(titulo)}</strong>${warn}</td>
-    <td class="col-desc">${esc(item.descricao)}</td>
-    <td class="col-acab">${esc(item.formigres_acabamento || '—')}</td>
-    <td class="col-preco">${esc(fmtMoney(item.preco_m2))}</td>
-    <td class="col-cod">${esc(item.codigo_tintao)}</td>
-  </tr>`;
-}
-
-function renderFormatoBlock(formato, items) {
-  const count = items.length;
-  return `<details class="acc acc-formato">
-    <summary>
-      <span class="acc-title">Formato ${esc(formato)}</span>
-      <span class="acc-count">${count} modelo${count === 1 ? '' : 's'}</span>
-    </summary>
-    <div class="table-wrap">
-      <table class="model-table">
-        <thead>
-          <tr>
-            <th>Foto</th>
-            <th>Modelo Formigres</th>
-            <th>Descrição Tintão</th>
-            <th>Acabamento</th>
-            <th>Preço/m²</th>
-            <th>Cód.</th>
-          </tr>
-        </thead>
-        <tbody>${items.map(renderTableRow).join('')}</tbody>
-      </table>
-    </div>
-  </details>`;
-}
-
-function renderTipoBlock(tipo, formatosMap) {
-  const count = Object.values(formatosMap).reduce((n, arr) => n + arr.length, 0);
-  const formatos = Object.keys(formatosMap).sort((a, b) => fmtAreaKey(b) - fmtAreaKey(a) || a.localeCompare(b));
-  return `<details class="acc acc-tipo">
-    <summary>
-      <span class="acc-title">${esc(TIPO_LABEL[tipo] || tipo)}</span>
-      <span class="acc-count">${count} itens</span>
-    </summary>
-    <div class="acc-inner">${formatos.map((f) => renderFormatoBlock(f, formatosMap[f])).join('')}</div>
-  </details>`;
-}
-
-function renderLinhaBlock(linha, tiposMap) {
-  const count = Object.values(tiposMap).reduce((n, fm) => n + Object.values(fm).reduce((m, arr) => m + arr.length, 0), 0);
-  const tipos = (TIPO_ORDER[linha] || Object.keys(tiposMap))
-    .filter((t) => tiposMap[t] && Object.keys(tiposMap[t]).length);
-
-  return `<details class="acc acc-linha" open>
-    <summary>
-      <span class="acc-title linha-${esc(linha)}">${esc(LINHA_LABEL[linha] || linha)}</span>
-      <span class="acc-count">${count} itens</span>
-    </summary>
-    <div class="acc-inner">${tipos.map((t) => renderTipoBlock(t, tiposMap[t])).join('')}</div>
-  </details>`;
-}
-
 function fixImageUrl(url) {
   if (!url) return '';
   if (url.includes('formigres.com.br/produtos/') && !url.includes('/uploads/produtos/')) {
@@ -208,15 +117,37 @@ function enrichItens(itens, snapshot) {
   });
 }
 
-function buildHtml({ classif, itens, tree }) {
+function slimItem(item) {
+  return {
+    codigo_tintao: item.codigo_tintao,
+    descricao: item.descricao,
+    formato: item.formato || '—',
+    linha: item.linha || 'desconhecida',
+    subtipo: item.subtipo,
+    variante_lisa: item.variante_lisa,
+    formigres_id: item.formigres_id || '',
+    formigres_titulo: item.formigres_titulo || '',
+    formigres_acabamento: item.formigres_acabamento || '',
+    match_status: item.match_status,
+    preco_m2: item.preco_m2,
+    imagem_url: item.imagem_url || '',
+  };
+}
+
+function buildHtml({ classif, itens }) {
   const gerado = new Date(classif.geradoEm || Date.now()).toLocaleString('pt-BR');
   const total = itens.length;
   const comFoto = itens.filter((i) => i.imagem_url).length;
-
-  const linhasHtml = LINHA_ORDER
-    .filter((l) => tree[l])
-    .map((l) => renderLinhaBlock(l, tree[l]))
-    .join('');
+  const catalogoJson = JSON.stringify({
+    itens: itens.map(slimItem),
+    config: {
+      linhaOrder: LINHA_ORDER,
+      linhaLabel: LINHA_LABEL,
+      tipoOrder: TIPO_ORDER,
+      tipoLabel: TIPO_LABEL,
+      acabOrder: ACAB_ORDER,
+    },
+  }).replace(/</g, '\\u003c');
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -297,6 +228,16 @@ function buildHtml({ classif, itens, tree }) {
       font-size: .85rem;
     }
     .btn:hover { border-color: var(--accent-dim); color: var(--accent); }
+    .select-group {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: .85rem;
+      cursor: pointer;
+    }
+    .select-group:focus { border-color: var(--accent-dim); outline: none; }
     .catalogo { display: grid; gap: 12px; }
     details.acc {
       background: var(--surface);
@@ -309,11 +250,13 @@ function buildHtml({ classif, itens, tree }) {
       cursor: pointer;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-start;
       gap: 12px;
-      padding: 14px 16px;
+      padding: 14px 16px 14px calc(14px + var(--depth, 0) * 18px);
       user-select: none;
     }
+    details.acc > summary .acc-title { flex: 1; text-align: left; }
+    details.acc > summary .acc-count { margin-left: auto; }
     details.acc > summary::-webkit-details-marker { display: none; }
     details.acc > summary::before {
       content: "▸";
@@ -333,10 +276,10 @@ function buildHtml({ classif, itens, tree }) {
       padding: 4px 10px;
       white-space: nowrap;
     }
-    .acc-inner { padding: 0 10px 12px; display: grid; gap: 8px; }
-    .acc-linha > .acc-inner { padding-left: 8px; }
-    .acc-tipo { background: var(--surface-2); }
-    .acc-formato { background: #2f2c33; }
+    .acc-inner { padding: 0 10px 12px calc(10px + var(--depth, 0) * 18px); display: grid; gap: 8px; }
+    .acc-linha { --depth: 0; }
+    .acc-grupo { --depth: 1; background: var(--surface-2); }
+    .acc-formato { --depth: 2; background: #2f2c33; }
     .linha-bold { color: #e8f0c8; }
     .linha-retificada { color: #c8dff0; }
     .linha-polida { color: #f0e6c8; }
@@ -498,13 +441,15 @@ function buildHtml({ classif, itens, tree }) {
 
     <div class="toolbar">
       <input id="search" class="search" type="search" placeholder="Buscar modelo, formato, acabamento…" />
+      <select id="group-by" class="select-group" title="Como agrupar dentro de Bold / Retificada / Polida">
+        <option value="tipo">Agrupar: tipo</option>
+        <option value="acabamento">Agrupar: acabamento</option>
+      </select>
       <button type="button" class="btn" id="expand-all">Abrir tudo</button>
       <button type="button" class="btn" id="collapse-all">Fechar tudo</button>
     </div>
 
-    <section class="catalogo" id="catalogo">
-      ${linhasHtml}
-    </section>
+    <section class="catalogo" id="catalogo"></section>
 
     <footer class="note">HTML autónomo — partilhe por WhatsApp, e-mail ou drive. Miniatura na tabela; clique abre galeria (mais fotos carregam do site Formigres, requer internet).</footer>
   </div>
@@ -527,10 +472,148 @@ function buildHtml({ classif, itens, tree }) {
     </div>
   </div>
 
+  <script id="catalogo-data" type="application/json">${catalogoJson}</script>
   <script>
+    const CATALOGO = JSON.parse(document.getElementById('catalogo-data').textContent);
+    const CFG = CATALOGO.config;
     const FORMIGRES_API = 'https://www.formigres.com.br';
-    const TIPO_LABEL = { principal: 'Cerâmica', ambiente: 'Ambiente', piso: 'Piso', face: 'Face', outro: 'Imagem' };
+    const TIPO_LABEL_GAL = { principal: 'Cerâmica', ambiente: 'Ambiente', piso: 'Piso', face: 'Face', outro: 'Imagem' };
     const galleryCache = new Map();
+    let groupBy = 'tipo';
+    let dom = {};
+
+    function esc(s) {
+      return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function fmtMoney(v) {
+      if (v == null || v === '') return '—';
+      const n = Number(v);
+      return Number.isNaN(n) ? String(v) : 'R$ ' + n.toFixed(2).replace('.', ',');
+    }
+    function fmtAreaKey(fmt) {
+      const m = String(fmt || '').match(/(\\d+)\\s*x\\s*(\\d+)/i);
+      return m ? Number(m[1]) * Number(m[2]) : 0;
+    }
+    function tipoKey(item) {
+      if (item.linha === 'polida') return 'polida';
+      if (item.linha === 'retificada' && item.subtipo === 'lisa') {
+        return item.variante_lisa ? 'lisa_' + item.variante_lisa : 'lisa';
+      }
+      return item.subtipo || 'outros';
+    }
+    function acabKey(item) {
+      const a = String(item.formigres_acabamento || '').trim();
+      return a || 'Sem acabamento';
+    }
+    function grupoLabel(key, linha) {
+      if (groupBy === 'acabamento') return key;
+      return (CFG.tipoLabel[key] || key);
+    }
+    function sortGrupos(keys, linha) {
+      if (groupBy === 'acabamento') {
+        const order = CFG.acabOrder || [];
+        return [...keys].sort((a, b) => {
+          const ia = order.indexOf(a); const ib = order.indexOf(b);
+          if (ia >= 0 && ib >= 0) return ia - ib;
+          if (ia >= 0) return -1; if (ib >= 0) return 1;
+          return a.localeCompare(b, 'pt-BR');
+        });
+      }
+      const order = CFG.tipoOrder[linha] || [];
+      return order.filter((k) => keys.includes(k)).concat(keys.filter((k) => !order.includes(k)).sort());
+    }
+    function buildTree(itens) {
+      const tree = {};
+      for (const item of itens) {
+        const linha = item.linha || 'desconhecida';
+        const grupo = groupBy === 'acabamento' ? acabKey(item) : tipoKey(item);
+        const formato = item.formato || '—';
+        tree[linha] ??= {};
+        tree[linha][grupo] ??= {};
+        tree[linha][grupo][formato] ??= [];
+        tree[linha][grupo][formato].push(item);
+      }
+      for (const linha of Object.keys(tree)) {
+        for (const grupo of Object.keys(tree[linha])) {
+          for (const formato of Object.keys(tree[linha][grupo])) {
+            tree[linha][grupo][formato].sort((a, b) =>
+              (a.formigres_titulo || a.descricao || '').localeCompare(b.formigres_titulo || b.descricao || '', 'pt-BR')
+            );
+          }
+        }
+      }
+      return tree;
+    }
+    function renderRow(item) {
+      const img = item.imagem_url || '';
+      const titulo = item.formigres_titulo || item.descricao;
+      const fid = item.formigres_id || '';
+      const foto = img && fid
+        ? '<button type="button" class="thumb-btn has-gallery" data-formigres-id="' + esc(fid) + '" data-thumb="' + esc(img) + '" data-title="' + esc(titulo) + '" title="Clique para ver fotos"><img src="' + esc(img) + '" alt="" loading="lazy" /><span class="thumb-more" aria-hidden="true">▦</span></button>'
+        : img
+          ? '<button type="button" class="thumb-btn" data-thumb="' + esc(img) + '" data-title="' + esc(titulo) + '"><img src="' + esc(img) + '" alt="" loading="lazy" /></button>'
+          : '<span class="thumb-empty">—</span>';
+      const warn = item.match_status !== 'encontrado' ? ' <span class="badge warn">sem match</span>' : '';
+      return '<tr class="model-row" data-search="' + esc((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato).toLowerCase()) + '">' +
+        '<td class="col-foto">' + foto + '</td>' +
+        '<td class="col-modelo"><strong>' + esc(titulo) + '</strong>' + warn + '</td>' +
+        '<td class="col-desc">' + esc(item.descricao) + '</td>' +
+        '<td class="col-acab">' + esc(item.formigres_acabamento || '—') + '</td>' +
+        '<td class="col-preco">' + esc(fmtMoney(item.preco_m2)) + '</td>' +
+        '<td class="col-cod">' + esc(item.codigo_tintao) + '</td></tr>';
+    }
+    function renderFormato(formato, items) {
+      const n = items.length;
+      return '<details class="acc acc-formato"><summary><span class="acc-title">Formato ' + esc(formato) + '</span><span class="acc-count">' + n + ' modelo' + (n === 1 ? '' : 's') + '</span></summary>' +
+        '<div class="table-wrap"><table class="model-table"><thead><tr><th>Foto</th><th>Modelo</th><th>Descrição Tintão</th><th>Acabamento</th><th>Preço/m²</th><th>Cód.</th></tr></thead><tbody>' +
+        items.map(renderRow).join('') + '</tbody></table></div></details>';
+    }
+    function renderGrupo(key, formatosMap, linha) {
+      const formatos = Object.keys(formatosMap).sort((a, b) => fmtAreaKey(b) - fmtAreaKey(a) || a.localeCompare(b));
+      const n = formatos.reduce((s, f) => s + formatosMap[f].length, 0);
+      return '<details class="acc acc-grupo"><summary><span class="acc-title">' + esc(grupoLabel(key, linha)) + '</span><span class="acc-count">' + n + ' itens</span></summary>' +
+        '<div class="acc-inner">' + formatos.map((f) => renderFormato(f, formatosMap[f])).join('') + '</div></details>';
+    }
+    function renderLinha(linha, gruposMap) {
+      const keys = sortGrupos(Object.keys(gruposMap), linha);
+      const n = keys.reduce((s, k) => s + Object.values(gruposMap[k]).reduce((a, arr) => a + arr.length, 0), 0);
+      const label = CFG.linhaLabel[linha] || linha;
+      return '<details class="acc acc-linha" open><summary><span class="acc-title linha-' + esc(linha) + '">' + esc(label) + '</span><span class="acc-count">' + n + ' itens</span></summary>' +
+        '<div class="acc-inner">' + keys.map((k) => renderGrupo(k, gruposMap[k], linha)).join('') + '</div></details>';
+    }
+    function renderCatalogo() {
+      const tree = buildTree(CATALOGO.itens);
+      const html = (CFG.linhaOrder || []).filter((l) => tree[l]).map((l) => renderLinha(l, tree[l])).join('');
+      document.getElementById('catalogo').innerHTML = html;
+      refreshDom();
+      applySearch(document.getElementById('search').value);
+    }
+    function refreshDom() {
+      dom.rows = [...document.querySelectorAll('.model-row')];
+      dom.formatos = [...document.querySelectorAll('.acc-formato')];
+      dom.grupos = [...document.querySelectorAll('.acc-grupo')];
+      dom.linhas = [...document.querySelectorAll('.acc-linha')];
+      dom.allDetails = [...document.querySelectorAll('details.acc')];
+    }
+    function normalize(s) {
+      return (s || '').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');
+    }
+    function applySearch(termRaw) {
+      const term = normalize(termRaw.trim());
+      for (const row of dom.rows) {
+        const show = !term || normalize(row.textContent).includes(term);
+        row.classList.toggle('hidden', !show);
+      }
+      for (const fmt of dom.formatos) {
+        fmt.classList.toggle('hidden', fmt.querySelectorAll('.model-row:not(.hidden)').length === 0);
+      }
+      for (const g of dom.grupos) {
+        g.classList.toggle('hidden', g.querySelectorAll('.acc-formato:not(.hidden)').length === 0);
+      }
+      for (const l of dom.linhas) {
+        l.classList.toggle('hidden', l.querySelectorAll('.acc-grupo:not(.hidden)').length === 0);
+      }
+    }
 
     function absUrl(rel) {
       if (!rel) return '';
@@ -576,43 +659,22 @@ function buildHtml({ classif, itens, tree }) {
     }
 
     const q = document.getElementById('search');
-    const rows = [...document.querySelectorAll('.model-row')];
-    const formatos = [...document.querySelectorAll('.acc-formato')];
-    const tipos = [...document.querySelectorAll('.acc-tipo')];
-    const linhas = [...document.querySelectorAll('.acc-linha')];
-    const allDetails = [...document.querySelectorAll('details.acc')];
+    const groupSel = document.getElementById('group-by');
 
-    function normalize(s) {
-      return (s || '').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');
-    }
-
-    q.addEventListener('input', () => {
-      const term = normalize(q.value.trim());
-      for (const row of rows) {
-        const text = normalize(row.textContent);
-        const show = !term || text.includes(term);
-        row.classList.toggle('hidden', !show);
-      }
-      for (const fmt of formatos) {
-        const visible = fmt.querySelectorAll('.model-row:not(.hidden)').length > 0;
-        fmt.classList.toggle('hidden', !visible);
-      }
-      for (const t of tipos) {
-        const visible = t.querySelectorAll('.acc-formato:not(.hidden)').length > 0;
-        t.classList.toggle('hidden', !visible);
-      }
-      for (const l of linhas) {
-        const visible = l.querySelectorAll('.acc-tipo:not(.hidden)').length > 0;
-        l.classList.toggle('hidden', !visible);
-      }
+    q.addEventListener('input', () => applySearch(q.value));
+    groupSel.addEventListener('change', () => {
+      groupBy = groupSel.value;
+      renderCatalogo();
     });
 
     document.getElementById('expand-all').addEventListener('click', () => {
-      allDetails.forEach((d) => { d.open = true; });
+      dom.allDetails.forEach((d) => { d.open = true; });
     });
     document.getElementById('collapse-all').addEventListener('click', () => {
-      allDetails.forEach((d) => { d.open = false; });
+      dom.allDetails.forEach((d) => { d.open = false; });
     });
+
+    renderCatalogo();
 
     const lb = document.getElementById('lightbox');
     const lbImg = document.getElementById('lightbox-img');
@@ -630,7 +692,7 @@ function buildHtml({ classif, itens, tree }) {
       const img = galeriaAtual[galeriaIdx];
       lbImg.src = img.url;
       lbImg.alt = lbTitle.textContent;
-      lbMeta.textContent = (galeriaAtual.length > 1 ? (galeriaIdx + 1) + ' / ' + galeriaAtual.length + ' · ' : '') + (TIPO_LABEL[img.tipo] || img.tipo);
+      lbMeta.textContent = (galeriaAtual.length > 1 ? (galeriaIdx + 1) + ' / ' + galeriaAtual.length + ' · ' : '') + (TIPO_LABEL_GAL[img.tipo] || img.tipo);
       lbMeta.classList.remove('loading');
       lb.classList.toggle('has-multi', galeriaAtual.length > 1);
       lbDots.hidden = galeriaAtual.length <= 1;
@@ -712,8 +774,7 @@ function main() {
   }
 
   const itens = enrichItens(classif.itens || [], snapshot);
-  const tree = buildTree(itens);
-  const html = buildHtml({ classif, itens, tree });
+  const html = buildHtml({ classif, itens });
 
   fs.mkdirSync(path.dirname(OUT_HTML), { recursive: true });
   fs.writeFileSync(OUT_HTML, html);
