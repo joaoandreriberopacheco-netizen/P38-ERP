@@ -1093,9 +1093,38 @@ function buildHtml({ classif, itens }) {
     function moveQtyFocus(input, delta) {
       const list = visibleQtyInputs();
       const idx = list.indexOf(input);
-      if (idx < 0) return;
-      const next = list[idx + delta];
-      if (next) focusQtyInput(next);
+      if (idx < 0 || !list.length) return;
+      let nextIdx = idx + delta;
+      if (nextIdx < 0) nextIdx = list.length - 1;
+      else if (nextIdx >= list.length) nextIdx = 0;
+      focusQtyInput(list[nextIdx]);
+    }
+    function saveAndMoveQtyFocus(input, delta) {
+      if (!input || isMobileQty()) return;
+      setQty(input.dataset.cod, input.value);
+      moveQtyFocus(input, delta);
+    }
+    function handleQtyKeyboardNav(e) {
+      if (isMobileQty()) return;
+      const input = e.target.closest('.qty-input-desktop');
+      if (!input) return;
+      let delta = 0;
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        delta = e.shiftKey ? -1 : 1;
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        delta = e.shiftKey ? -1 : 1;
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        delta = 1;
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        delta = -1;
+      } else {
+        return;
+      }
+      saveAndMoveQtyFocus(input, delta);
     }
     function startQtyEntry() {
       dom.allDetails.forEach((d) => { d.open = true; });
@@ -1217,7 +1246,7 @@ function buildHtml({ classif, itens }) {
       const cod = item.codigo_tintao;
       const qty = getQty(cod);
       const foto = img
-        ? '<button type="button" class="thumb-btn' + (imgs.length > 1 ? ' has-gallery' : '') + '" data-cod="' + esc(cod) + '" data-title="' + esc(titulo) + '" title="Ver fotos"><img src="' + esc(img) + '" alt="" loading="lazy" />' + (imgs.length > 1 ? '<span class="thumb-more" aria-hidden="true">▦</span>' : '') + '</button>'
+        ? '<button type="button" class="thumb-btn' + (imgs.length > 1 ? ' has-gallery' : '') + '" tabindex="-1" data-cod="' + esc(cod) + '" data-title="' + esc(titulo) + '" title="Ver fotos"><img src="' + esc(img) + '" alt="" loading="lazy" />' + (imgs.length > 1 ? '<span class="thumb-more" aria-hidden="true">▦</span>' : '') + '</button>'
         : '<span class="thumb-empty">—</span>';
       const warn = item.match_status !== 'encontrado' ? ' <span class="badge warn">sem match</span>' : '';
       return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod).toLowerCase()) + '" data-qty="' + qty + '">' +
@@ -1227,7 +1256,7 @@ function buildHtml({ classif, itens }) {
         '<td class="col-acab">' + esc(item.formigres_acabamento || '—') + '</td>' +
         '<td class="col-preco">' + esc(fmtMoney(item.preco_m2)) + '</td>' +
         '<td class="col-qty">' +
-        '<input type="number" class="qty-input qty-input-desktop" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="Caixas" placeholder="0" />' +
+        '<input type="number" class="qty-input qty-input-desktop" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" tabindex="0" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="Caixas" placeholder="0" />' +
         '<button type="button" class="qty-cell-btn' + (qty > 0 ? ' has-value' : '') + '" data-cod="' + esc(cod) + '" aria-label="Caixas">' + (qty > 0 ? qty : '+') + '</button>' +
         '</td>' +
         '<td class="col-cod">' + esc(item.formato || '—') + '</td></tr>';
@@ -1485,26 +1514,18 @@ function buildHtml({ classif, itens }) {
       setQty(input.dataset.cod, input.value);
     });
     document.getElementById('catalogo').addEventListener('focusin', (e) => {
-      const input = e.target.closest('.qty-input');
-      if (!input) return;
+      const input = e.target.closest('.qty-input-desktop');
+      if (!input || isMobileQty()) return;
       clearQtyFocusRows();
       input.closest('.model-row')?.classList.add('qty-focus-row');
       input.select();
     });
     document.getElementById('catalogo').addEventListener('focusout', (e) => {
-      const input = e.target.closest('.qty-input');
-      if (!input) return;
+      const input = e.target.closest('.qty-input-desktop');
+      if (!input || isMobileQty()) return;
       input.closest('.model-row')?.classList.remove('qty-focus-row');
     });
-    document.getElementById('catalogo').addEventListener('keydown', (e) => {
-      const input = e.target.closest('.qty-input-desktop');
-      if (!input) return;
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        setQty(input.dataset.cod, input.value);
-        moveQtyFocus(input, e.shiftKey ? -1 : 1);
-      }
-    });
+    document.getElementById('catalogo').addEventListener('keydown', handleQtyKeyboardNav);
 
     document.getElementById('catalogo').addEventListener('click', (e) => {
       const qtyBtn = e.target.closest('.qty-cell-btn');
