@@ -236,6 +236,117 @@ function buildHtml({ classif, itens }) {
       min-height: 100vh;
       -webkit-font-smoothing: antialiased;
     }
+    body.is-loading { overflow: hidden; }
+    body.is-loading .app-shell {
+      visibility: hidden;
+      pointer-events: none;
+      position: absolute;
+      width: 0;
+      height: 0;
+      overflow: hidden;
+    }
+    .load-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(18,18,20,.96);
+      display: grid;
+      place-items: center;
+      transition: opacity .45s ease, visibility .45s ease;
+    }
+    body:not(.is-loading) .load-overlay {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .load-panel { text-align: center; padding: 24px; max-width: 340px; }
+    .load-ant-wrap {
+      display: inline-block;
+      animation: ant-march 1.1s ease-in-out infinite;
+    }
+    @keyframes ant-march {
+      0%, 100% { transform: translateX(-6px); }
+      50% { transform: translateX(6px); }
+    }
+    .load-ant-svg { display: block; margin: 0 auto; overflow: visible; }
+    .load-ant-svg .ant-leg {
+      transform-origin: center top;
+      animation: ant-leg .35s ease-in-out infinite alternate;
+    }
+    .load-ant-svg .leg-a { animation-delay: 0s; }
+    .load-ant-svg .leg-b { animation-delay: .12s; }
+    .load-ant-svg .leg-c { animation-delay: .24s; }
+    @keyframes ant-leg {
+      from { transform: rotate(-18deg); }
+      to { transform: rotate(18deg); }
+    }
+    .load-title {
+      margin: 18px 0 4px;
+      font-size: .82rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--text-strong);
+      font-weight: 600;
+    }
+    .load-sub { margin: 0; color: var(--muted); font-size: .85rem; }
+    .load-progress {
+      margin: 10px 0 0;
+      font-size: .78rem;
+      color: var(--accent-dim);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: .04em;
+    }
+    .load-trail {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 14px;
+    }
+    .load-trail span {
+      width: 6px;
+      height: 6px;
+      background: var(--accent-border);
+      opacity: .35;
+      animation: trail-dot 1.2s ease-in-out infinite;
+    }
+    .load-trail span:nth-child(2) { animation-delay: .15s; }
+    .load-trail span:nth-child(3) { animation-delay: .3s; }
+    @keyframes trail-dot {
+      0%, 100% { opacity: .2; transform: scale(.85); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+    .site-bar {
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      border-left: 3px solid var(--accent-dim);
+    }
+    .site-bar-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .site-brand {
+      font-size: .92rem;
+      font-weight: 600;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--text-strong);
+    }
+    .site-divider {
+      width: 1px;
+      height: 16px;
+      background: var(--border);
+    }
+    .site-sub {
+      font-size: .72rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
     .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
     header.hero {
       background: var(--surface);
@@ -923,7 +1034,38 @@ function buildHtml({ classif, itens }) {
     }
   </style>
 </head>
-<body>
+<body class="is-loading">
+  <div class="load-overlay" id="load-overlay" role="status" aria-live="polite" aria-busy="true">
+    <div class="load-panel">
+      <div class="load-ant-wrap" aria-hidden="true">
+        <svg class="load-ant-svg" width="96" height="56" viewBox="0 0 96 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="44" cy="30" rx="20" ry="12" fill="#2c2c32" stroke="#c8c8d0" stroke-width="1.2"/>
+          <circle cx="64" cy="24" r="9" fill="#2c2c32" stroke="#c8c8d0" stroke-width="1.2"/>
+          <circle cx="67" cy="22" r="1.5" fill="#ececf0"/>
+          <line class="ant-leg leg-a" x1="36" y1="38" x2="28" y2="50" stroke="#a8a8b2" stroke-width="2" stroke-linecap="square"/>
+          <line class="ant-leg leg-b" x1="44" y1="40" x2="44" y2="52" stroke="#a8a8b2" stroke-width="2" stroke-linecap="square"/>
+          <line class="ant-leg leg-c" x1="52" y1="38" x2="60" y2="50" stroke="#a8a8b2" stroke-width="2" stroke-linecap="square"/>
+          <line class="ant-leg leg-a" x1="38" y1="34" x2="30" y2="24" stroke="#a8a8b2" stroke-width="2" stroke-linecap="square"/>
+          <line class="ant-leg leg-b" x1="46" y1="32" x2="46" y2="20" stroke="#a8a8b2" stroke-width="2" stroke-linecap="square"/>
+          <line class="ant-leg leg-c" x1="54" y1="34" x2="62" y2="24" stroke="#a8a8b2" stroke-width="2" stroke-linecap="square"/>
+          <path d="M72 24 L82 22 L82 26 Z" fill="#c8c8d0"/>
+        </svg>
+      </div>
+      <p class="load-title">Formigres</p>
+      <p class="load-sub" id="load-msg">A carregar fotos do catálogo…</p>
+      <p class="load-progress" id="load-progress">0 / 0</p>
+      <div class="load-trail" aria-hidden="true"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+
+  <div id="app-shell" class="app-shell" aria-hidden="true">
+  <header class="site-bar">
+    <div class="site-bar-inner">
+      <span class="site-brand">Formigres</span>
+      <span class="site-divider" aria-hidden="true"></span>
+      <span class="site-sub">Pedido B2B · Lojistas</span>
+    </div>
+  </header>
   <div class="wrap">
     <header class="hero">
       <h1>Pedido Formigres</h1>
@@ -1045,6 +1187,7 @@ function buildHtml({ classif, itens }) {
       </div>
       <div class="lightbox-dots" id="lightbox-dots" hidden></div>
     </div>
+  </div>
   </div>
 
   <script id="catalogo-data" type="application/json">${catalogoJson}</script>
@@ -1495,6 +1638,63 @@ function buildHtml({ classif, itens }) {
         '<p style="text-align:right;margin-top:16px;font-size:14px"><strong>' + rows.length + ' modelos · ' + totalCaixas + ' caixas · ' + totalM2.toFixed(2) + ' m² · Total: ' + fmtMoney(totalValor) + '</strong></p></div>';
     }
 
+    function collectImageUrls() {
+      const urls = new Set();
+      for (const item of CATALOGO.itens) {
+        if (item.imagem_url) urls.add(item.imagem_url);
+        for (const img of (item.imagens || [])) {
+          if (img && img.url) urls.add(img.url);
+        }
+      }
+      return [...urls];
+    }
+    function preloadImages(urls) {
+      return new Promise((resolve) => {
+        if (!urls.length) { resolve(); return; }
+        let done = 0;
+        const total = urls.length;
+        const prog = document.getElementById('load-progress');
+        const finish = () => { clearTimeout(timeout); resolve(); };
+        const tick = () => {
+          done += 1;
+          if (prog) prog.textContent = done + ' / ' + total;
+          if (done >= total) finish();
+        };
+        const timeout = setTimeout(finish, 35000);
+        urls.forEach((url) => {
+          const img = new Image();
+          img.onload = tick;
+          img.onerror = tick;
+          img.src = url;
+        });
+      });
+    }
+    function revealApp() {
+      document.body.classList.remove('is-loading');
+      const shell = document.getElementById('app-shell');
+      if (shell) shell.removeAttribute('aria-hidden');
+      const overlay = document.getElementById('load-overlay');
+      if (overlay) {
+        overlay.setAttribute('aria-busy', 'false');
+        overlay.setAttribute('aria-hidden', 'true');
+      }
+    }
+    async function bootApp() {
+      const urls = collectImageUrls();
+      const prog = document.getElementById('load-progress');
+      if (prog) prog.textContent = urls.length ? ('0 / ' + urls.length) : '—';
+      await preloadImages(urls);
+      renderCatalogo();
+      renderPedido();
+      updateCartFab();
+      updateFlowSteps();
+      if (!sessionStorage.getItem('tintao-seen')) {
+        document.querySelector('.hero-cta')?.classList.add('pulse');
+        sessionStorage.setItem('tintao-seen', '1');
+      }
+      requestAnimationFrame(() => requestAnimationFrame(revealApp));
+    }
+
     const q = document.getElementById('search');
     const groupSel = document.getElementById('group-by');
     const groupSelD = document.getElementById('group-by-desktop');
@@ -1605,15 +1805,7 @@ function buildHtml({ classif, itens }) {
       else focusQtyInput(row.querySelector('.qty-input-desktop'));
     });
 
-    if (!sessionStorage.getItem('tintao-seen')) {
-      document.querySelector('.hero-cta')?.classList.add('pulse');
-      sessionStorage.setItem('tintao-seen', '1');
-    }
-
-    renderCatalogo();
-    renderPedido();
-    updateCartFab();
-    updateFlowSteps();
+    bootApp();
 
     const lb = document.getElementById('lightbox');
     const lbImg = document.getElementById('lightbox-img');
