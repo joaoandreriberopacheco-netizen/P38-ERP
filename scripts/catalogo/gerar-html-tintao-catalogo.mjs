@@ -1419,10 +1419,30 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       if (!qty || !m2cx || !preco) return null;
       return qty * m2cx * preco;
     }
+    function fmtAreaKey(fmt) {
+      const m = String(fmt || '').match(/(\\d+)\\s*x\\s*(\\d+)/i);
+      if (!m) return Number.MAX_SAFE_INTEGER;
+      return Number(m[1]) * Number(m[2]);
+    }
+    function compareFormato(a, b) {
+      const fa = fmtAreaKey(a);
+      const fb = fmtAreaKey(b);
+      if (fa !== fb) return fa - fb;
+      return String(a || '').localeCompare(String(b || ''), 'pt-BR');
+    }
+    function itemTitulo(item) {
+      return item.formigres_titulo || item.descricao || '';
+    }
+    function compareItensFormatoNome(a, b) {
+      const byFmt = compareFormato(a.formato, b.formato);
+      if (byFmt !== 0) return byFmt;
+      return itemTitulo(a).localeCompare(itemTitulo(b), 'pt-BR');
+    }
     function pedidoItens() {
       return CATALOGO.itens
         .map((item) => ({ item, qty: getQty(item.codigo_tintao) }))
-        .filter((x) => x.qty > 0);
+        .filter((x) => x.qty > 0)
+        .sort((a, b) => compareItensFormatoNome(a.item, b.item));
     }
     function tipoKey(item) {
       if (item.linha === 'polida') return 'polida';
@@ -1466,9 +1486,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       for (const linha of Object.keys(tree)) {
         for (const grupo of Object.keys(tree[linha])) {
           for (const formato of Object.keys(tree[linha][grupo])) {
-            tree[linha][grupo][formato].sort((a, b) =>
-              (a.formigres_titulo || a.descricao || '').localeCompare(b.formigres_titulo || b.descricao || '', 'pt-BR')
-            );
+            tree[linha][grupo][formato].sort((a, b) => compareItensFormatoNome(a, b));
           }
         }
       }
@@ -1508,7 +1526,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
         items.map(renderTableRow).join('') + '</tbody></table></div></details>';
     }
     function renderGrupo(key, formatosMap, linha) {
-      const formatos = Object.keys(formatosMap).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+      const formatos = Object.keys(formatosMap).sort(compareFormato);
       const n = formatos.reduce((s, f) => s + formatosMap[f].length, 0);
       return '<details class="acc acc-grupo" open><summary><span class="acc-title">' + esc(grupoLabel(key, linha)) + '</span><span class="acc-count" data-total="' + n + '" data-suffix="itens">' + n + ' itens</span></summary>' +
         '<div class="acc-inner">' + formatos.map((f) => renderFormato(f, formatosMap[f])).join('') + '</div></details>';
