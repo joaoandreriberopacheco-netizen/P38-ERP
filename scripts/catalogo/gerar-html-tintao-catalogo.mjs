@@ -1008,10 +1008,6 @@ function buildHtml({ classif, itens }) {
       const n = Number(v);
       return Number.isNaN(n) ? String(v) : 'R$ ' + n.toFixed(2).replace('.', ',');
     }
-    function fmtAreaKey(fmt) {
-      const m = String(fmt || '').match(/(\\d+)\\s*x\\s*(\\d+)/i);
-      return m ? Number(m[1]) * Number(m[2]) : 0;
-    }
     function getQty(cod) {
       const n = Number(qtyMap[String(cod)] || 0);
       return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
@@ -1268,7 +1264,7 @@ function buildHtml({ classif, itens }) {
         items.map(renderTableRow).join('') + '</tbody></table></div></details>';
     }
     function renderGrupo(key, formatosMap, linha) {
-      const formatos = Object.keys(formatosMap).sort((a, b) => fmtAreaKey(b) - fmtAreaKey(a) || a.localeCompare(b));
+      const formatos = Object.keys(formatosMap).sort((a, b) => a.localeCompare(b, 'pt-BR'));
       const n = formatos.reduce((s, f) => s + formatosMap[f].length, 0);
       return '<details class="acc acc-grupo" open><summary><span class="acc-title">' + esc(grupoLabel(key, linha)) + '</span><span class="acc-count">' + n + ' itens</span></summary>' +
         '<div class="acc-inner">' + formatos.map((f) => renderFormato(f, formatosMap[f])).join('') + '</div></details>';
