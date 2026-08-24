@@ -7,6 +7,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import sharp from 'sharp';
 import { readJson, snapshotPath } from '../lib/catalogoPaths.mjs';
 import { loadSnapshotFromFile } from '../lib/formigresSnapshot.mjs';
 import { extractImagensFromDetalhe, fetchProdutoDetalhe } from '../lib/formigresCatalog.mjs';
@@ -14,6 +15,7 @@ import { extractImagensFromDetalhe, fetchProdutoDetalhe } from '../lib/formigres
 const ROOT = process.cwd();
 const CLASSIF_DIR = path.join(ROOT, 'docs', 'imports-local', 'tintao', 'classificacao');
 const OUT_HTML = path.join(ROOT, 'docs', 'imports-local', 'tintao', 'catalogo-tintao-formigres.html');
+const OUT_PDF_THUMBS = path.join(ROOT, 'docs', 'imports-local', 'tintao', 'catalogo-tintao-pdf-thumbs.json');
 const ANT_LOGO_PATH = path.join(ROOT, 'scripts', 'catalogo', 'assets', 'formigres-ant.png');
 // Silhueta vermelha Formigres (recorte do logo vertical da marca); fundo transparente.
 
@@ -118,21 +120,24 @@ function fixImageUrl(url) {
   return url;
 }
 
-async function fetchImageDataUri(url) {
+async function fetchPdfThumbDataUri(url) {
   if (!url) return '';
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
     if (!res.ok) return '';
-    const ct = (res.headers.get('content-type') || 'image/jpeg').split(';')[0];
     const buf = Buffer.from(await res.arrayBuffer());
-    if (buf.length > 512000) return '';
-    return `data:${ct};base64,${buf.toString('base64')}`;
+    const thumb = await sharp(buf)
+      .rotate()
+      .resize(80, 80, { fit: 'cover' })
+      .jpeg({ quality: 48, mozjpeg: true })
+      .toBuffer();
+    return `data:image/jpeg;base64,${thumb.toString('base64')}`;
   } catch {
     return '';
   }
 }
 
-async function buildImageDataMap(itens) {
+async function buildPdfThumbMap(itens) {
   const urls = new Set();
   for (const item of itens) {
     if (item.imagem_url) urls.add(item.imagem_url);
@@ -145,7 +150,7 @@ async function buildImageDataMap(itens) {
     while (idx < list.length) {
       const i = idx++;
       const url = list[i];
-      map[url] = await fetchImageDataUri(url);
+      map[url] = await fetchPdfThumbDataUri(url);
     }
   }
   await Promise.all(Array.from({ length: workers }, worker));
@@ -220,14 +225,13 @@ function slimItem(item) {
   };
 }
 
-function buildHtml({ classif, itens, antLogoDataUri = '', imageData = {} }) {
+function buildHtml({ classif, itens, antLogoDataUri = '' }) {
   const gerado = new Date(classif.geradoEm || Date.now()).toLocaleString('pt-BR');
   const total = itens.length;
   const comFoto = itens.filter((i) => i.imagem_url).length;
   const loadSquaresHtml = Array.from({ length: 20 }, () => '<span class="load-square"></span>').join('');
   const catalogoJson = JSON.stringify({
     itens: itens.map(slimItem),
-    imageData,
     config: {
       linhaOrder: LINHA_ORDER,
       linhaLabel: LINHA_LABEL,
@@ -1482,7 +1486,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', imageData = {} }) {
   <script>
     const CATALOGO = JSON.parse(document.getElementById('catalogo-data').textContent);
     const CFG = CATALOGO.config;
-    const IMAGE_DATA = CATALOGO.imageData || {};
+    const PDF_THUMBS_FILE = 'catalogo-tintao-pdf-thumbs.json';
     const TIPO_LABEL_GAL = { principal: 'Cerâmica', ambiente: 'Ambiente', piso: 'Piso', face: 'Face', outro: 'Imagem' };
     const QTY_KEY = 'tintao-pedido-qty-v1';
     const THEME_KEY = 'tintao-theme-v1';
@@ -1505,11 +1509,24 @@ function buildHtml({ classif, itens, antLogoDataUri = '', imageData = {} }) {
     function esc(s) {
       return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
-    function resolveImgSrc(url) {
-      if (!url) return '';
-      return IMAGE_DATA[url] || url;
-    }
     const PDF_THEME = 'light';
+    let pdfThumbsCache = null;
+    async function loadPdfThumbs() {
+      if (pdfThumbsCache) return pdfThumbsCache;
+      try {
+        const base = window.location.href.replace(/[^/]*$/, '');
+        const res = await fetch(base + PDF_THUMBS_FILE);
+        if (!res.ok) throw new Error('thumbs missing');
+        pdfThumbsCache = await res.json();
+      } catch {
+        pdfThumbsCache = {};
+      }
+      return pdfThumbsCache;
+    }
+    function pdfImgSrc(url, thumbs) {
+      if (!url) return '';
+      return (thumbs && thumbs[url]) || url;
+    }
     function fmtMoney(v) {
       if (v == null || v === '') return '—';
       const n = Number(v);
@@ -1769,8 +1786,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', imageData = {} }) {
     }
     function getGaleria(item) {
       const imgs = Array.isArray(item.imagens) ? item.imagens.filter((i) => i && i.url) : [];
-      const list = imgs.length ? imgs : (item.imagem_url ? [{ url: item.imagem_url, tipo: 'principal' }] : []);
-      return list.map((img) => ({ ...img, url: resolveImgSrc(img.url) }));
+      if (imgs.length) return imgs;
+      return item.imagem_url ? [{ url: item.imagem_url, tipo: 'principal' }] : [];
     }
     function renderTableRow(item) {
       const imgs = getGaleria(item);
@@ -1997,7 +2014,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', imageData = {} }) {
     function printPageWidthMm() {
       return Math.max(88, pxToMm(printPageWidthPx()));
     }
-    function buildPedidoPrintHtml() {
+    function buildPedidoPrintHtml(thumbs) {
       const rows = pedidoItens();
       let totalCaixas = 0, totalM2 = 0, totalValor = 0;
       const cards = [];
@@ -2009,7 +2026,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', imageData = {} }) {
         if (m2tot) totalM2 += m2tot;
         if (sub) totalValor += sub;
         const imgs = getGaleria(item);
-        const img = imgs[0]?.url || '';
+        const img = pdfImgSrc(imgs[0]?.url || '', thumbs);
         const titulo = item.formigres_titulo || item.descricao;
         cards.push(renderPedidoCard({ item, qty, img, titulo, m2cx, m2tot, sub }));
       }
@@ -2117,7 +2134,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', imageData = {} }) {
         document.head.appendChild(script);
       });
     }
-    function mountPedidoPdfRender() {
+    function mountPedidoPdfRender(thumbs) {
       const pageWpx = printPageWidthPx();
       const pageWmm = printPageWidthMm();
       const theme = PDF_THEME;
@@ -2131,7 +2148,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', imageData = {} }) {
       wrap.className = 'print-render-root';
       wrap.setAttribute('data-theme', theme);
       wrap.style.width = pageWpx + 'px';
-      wrap.innerHTML = buildPedidoPrintHtml();
+      wrap.innerHTML = buildPedidoPrintHtml(thumbs);
       host.appendChild(wrap);
       return { host, wrap, pageWpx, pageWmm, theme };
     }
@@ -2175,7 +2192,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', imageData = {} }) {
       const btn = document.getElementById('pdf-pedido-panel');
       const prevLabel = btn?.textContent || 'PDF do pedido';
       if (btn) { btn.disabled = true; btn.textContent = 'Gerando PDF…'; }
-      const mounted = mountPedidoPdfRender();
+      let thumbs = {};
+      try {
+        thumbs = await loadPdfThumbs();
+      } catch {
+        thumbs = {};
+      }
+      const mounted = mountPedidoPdfRender(thumbs);
       if (!mounted) {
         if (btn) { btn.disabled = !pedidoItens().length; btn.textContent = prevLabel; }
         return;
@@ -2479,23 +2502,30 @@ async function mainAsync() {
   const itensBase = enrichItens(classif.itens || [], snapshot);
   console.error('A carregar fotos do site Formigres…');
   const itens = await enrichImagensFromApi(itensBase);
-  console.error('A embutir fotos no HTML (PDF offline)…');
-  const imageData = await buildImageDataMap(itens);
-  const imagensEmbutidas = Object.values(imageData).filter(Boolean).length;
+  console.error('A gerar miniaturas leves para PDF…');
+  const pdfThumbs = await buildPdfThumbMap(itens);
+  const thumbsCount = Object.values(pdfThumbs).filter(Boolean).length;
   const antLogoDataUri = loadAntLogoDataUri();
-  const html = buildHtml({ classif, itens, antLogoDataUri, imageData });
+  const html = buildHtml({ classif, itens, antLogoDataUri });
 
   fs.mkdirSync(path.dirname(OUT_HTML), { recursive: true });
   fs.writeFileSync(OUT_HTML, html);
+  fs.writeFileSync(OUT_PDF_THUMBS, `${JSON.stringify(pdfThumbs)}\n`);
+
+  const htmlKb = Math.round(fs.statSync(OUT_HTML).size / 1024);
+  const thumbsKb = Math.round(fs.statSync(OUT_PDF_THUMBS).size / 1024);
 
   console.log(JSON.stringify({
     ok: true,
     itens: itens.length,
     comFoto: itens.filter((i) => i.imagem_url).length,
     comGaleria: itens.filter((i) => (i.imagens || []).length > 1).length,
-    imagensEmbutidas,
+    pdfThumbs: thumbsCount,
+    htmlKb,
+    thumbsKb,
     fonte: jsonPath,
     html: OUT_HTML,
+    pdfThumbsFile: OUT_PDF_THUMBS,
   }, null, 2));
 }
 
