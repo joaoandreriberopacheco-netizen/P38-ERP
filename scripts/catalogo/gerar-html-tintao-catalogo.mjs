@@ -140,7 +140,9 @@ async function fetchPdfThumbDataUri(url) {
 async function buildPdfThumbMap(itens) {
   const urls = new Set();
   for (const item of itens) {
-    if (item.imagem_url) urls.add(item.imagem_url);
+    const imgs = (item.imagens || []).filter((img) => img?.url);
+    const url = imgs[0]?.url || item.imagem_url;
+    if (url) urls.add(url);
   }
   const list = [...urls];
   const map = {};
@@ -225,7 +227,7 @@ function slimItem(item) {
   };
 }
 
-function buildHtml({ classif, itens, antLogoDataUri = '' }) {
+function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {} }) {
   const gerado = new Date(classif.geradoEm || Date.now()).toLocaleString('pt-BR');
   const total = itens.length;
   const comFoto = itens.filter((i) => i.imagem_url).length;
@@ -240,6 +242,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       acabOrder: ACAB_ORDER,
     },
   }).replace(/</g, '\\u003c');
+  const pdfThumbsJson = JSON.stringify(pdfThumbs).replace(/</g, '\\u003c');
 
   return `<!DOCTYPE html>
 <html lang="pt-BR" data-theme="dark">
@@ -993,12 +996,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
     #pedido-print { display: none; }
     #pedido-pdf-render-host {
       position: fixed;
-      left: 0;
+      left: -12000px;
       top: 0;
-      z-index: -9999;
-      opacity: 0;
+      z-index: -1;
       pointer-events: none;
-      overflow: hidden;
+      overflow: visible;
+      visibility: hidden;
     }
     .pedido-pdf-sheet {
       position: fixed;
@@ -1482,11 +1485,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
   </div>
   </div>
 
+  <script id="pdf-thumbs-data" type="application/json">${pdfThumbsJson}</script>
   <script id="catalogo-data" type="application/json">${catalogoJson}</script>
   <script>
     const CATALOGO = JSON.parse(document.getElementById('catalogo-data').textContent);
     const CFG = CATALOGO.config;
-    const PDF_THUMBS_FILE = 'catalogo-tintao-pdf-thumbs.json';
     const TIPO_LABEL_GAL = { principal: 'Cerâmica', ambiente: 'Ambiente', piso: 'Piso', face: 'Face', outro: 'Imagem' };
     const QTY_KEY = 'tintao-pedido-qty-v1';
     const THEME_KEY = 'tintao-theme-v1';
@@ -1511,21 +1514,21 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
     }
     const PDF_THEME = 'light';
     let pdfThumbsCache = null;
-    async function loadPdfThumbs() {
+    function loadPdfThumbs() {
       if (pdfThumbsCache) return pdfThumbsCache;
       try {
-        const base = window.location.href.replace(/[^/]*$/, '');
-        const res = await fetch(base + PDF_THUMBS_FILE);
-        if (!res.ok) throw new Error('thumbs missing');
-        pdfThumbsCache = await res.json();
-      } catch {
-        pdfThumbsCache = {};
-      }
+        const el = document.getElementById('pdf-thumbs-data');
+        if (el && el.textContent) pdfThumbsCache = JSON.parse(el.textContent);
+      } catch { /* ignore */ }
+      if (!pdfThumbsCache) pdfThumbsCache = {};
       return pdfThumbsCache;
     }
-    function pdfImgSrc(url, thumbs) {
+    function pdfImgSrc(url, thumbs, item) {
+      if (!url && item?.imagem_url) url = item.imagem_url;
       if (!url) return '';
-      return (thumbs && thumbs[url]) || url;
+      if (thumbs?.[url]) return thumbs[url];
+      if (item?.imagem_url && thumbs?.[item.imagem_url]) return thumbs[item.imagem_url];
+      return thumbs?.[url] || url;
     }
     function fmtMoney(v) {
       if (v == null || v === '') return '—';
@@ -1896,11 +1899,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       }
     }
 
-    function renderPedidoCard({ item, qty, img, titulo, m2cx, m2tot, sub }) {
+    function renderPedidoCard({ item, qty, img, titulo, m2cx, m2tot, sub }, opts) {
+      const forPdf = opts && opts.pdf;
       const thumb = img
-        ? '<img class="pedido-card-thumb" src="' + esc(img) + '" alt="" loading="lazy" />'
+        ? '<img class="pedido-card-thumb" src="' + esc(img) + '" alt=""' + (forPdf ? ' width="48" height="48"' : ' loading="lazy"') + ' />'
         : '<span class="pedido-card-thumb pedido-card-thumb-empty" aria-hidden="true">—</span>';
-      return '<article class="pedido-card">' +
+      return '<article class="pedido-card' + (forPdf ? ' pedido-card-pdf' : '') + '">' +
         '<div class="pedido-card-head">' +
           thumb +
           '<div class="pedido-card-intro">' +
@@ -2026,10 +2030,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
         if (m2tot) totalM2 += m2tot;
         if (sub) totalValor += sub;
         const imgs = getGaleria(item);
-        const img = pdfImgSrc(imgs[0]?.url || '', thumbs);
+        const img = pdfImgSrc(imgs[0]?.url || '', thumbs, item);
         const titulo = item.formigres_titulo || item.descricao;
-        cards.push(renderPedidoCard({ item, qty, img, titulo, m2cx, m2tot, sub }));
+        cards.push(renderPedidoCard({ item, qty, img, titulo, m2cx, m2tot, sub }, { pdf: true }));
       }
+      const cardsHtml = cards.join('');
       const descNote = descontoPct ? '<p class="print-note">Desconto comercial aplicado: ' + descontoPct + '% sobre a tabela.</p>' : '';
       const resumo = rows.length
         ? '<div class="print-resumo">' +
@@ -2045,59 +2050,46 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
           descNote +
         '</header>' +
         resumo +
-        '<div class="print-cards">' + cards.join('') + '</div>' +
+        '<div class="print-cards">' + cardsHtml + '</div>' +
         '<p class="print-totals"><strong>Total estimado: ' + fmtMoney(totalValor) + '</strong></p>' +
       '</div>';
     }
-    function pedidoPdfThemeBlock(theme) {
-      if (theme === 'light') {
-        return '.print-render-root[data-theme="light"] {' +
-          '--pdf-bg:#ffffff;--pdf-surface:#ffffff;--pdf-surface-2:#fafafa;--pdf-text:#5a5a5a;--pdf-text-strong:#2f2f2f;' +
-          '--pdf-muted:#767676;--pdf-border:#d5d5d5;--pdf-divider:#d5d5d5;--pdf-accent-bright:#1f1f24;--pdf-resumo-bg:#f7f7f7;--pdf-resumo-border:#d5d5d5;' +
-        '}';
-      }
-      return '.print-render-root[data-theme="dark"] {' +
-        '--pdf-bg:#121214;--pdf-surface:#1c1c20;--pdf-surface-2:#242428;--pdf-text:#b4b4bc;--pdf-text-strong:#ececf0;' +
-        '--pdf-muted:#787884;--pdf-border:#3a3a42;--pdf-divider:rgba(255,255,255,.08);--pdf-accent-bright:#f4f4f8;--pdf-resumo-bg:#242428;--pdf-resumo-border:#3a3a42;' +
-      '}';
-    }
-    function printPedidoPrintCss(pageWmm, pageHmm, theme) {
+    function printPedidoPrintCss(pageWmm, pageHmm) {
       const pageRule = pageHmm != null
         ? '@page { size: ' + pageWmm + 'mm ' + pageHmm + 'mm; margin: 3mm 2mm; }'
         : '';
       return pageRule +
-        pedidoPdfThemeBlock(theme) +
         'html, body { margin: 0; padding: 0; }' +
-        '.print-render-root { background: var(--pdf-bg); color: var(--pdf-text); font-family: "Libre Franklin", "Segoe UI", system-ui, sans-serif; font-size: 13px; -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; width: 100%; }' +
-        '.print-sheet { width: 100%; max-width: 100%; margin: 0 auto; box-sizing: border-box; background: var(--pdf-surface); color: var(--pdf-text); padding: 4px 14px 2px; }' +
+        '.print-render-root { background: #ffffff; color: #5a5a5a; font-family: "Libre Franklin", "Segoe UI", system-ui, sans-serif; font-size: 13px; -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; width: 100%; }' +
+        '.print-sheet { width: 100%; max-width: 100%; margin: 0 auto; box-sizing: border-box; background: #ffffff; color: #5a5a5a; padding: 4px 14px 2px; }' +
         '.print-head { margin-bottom: 10px; }' +
-        'h1 { margin: 0 0 4px; font-size: 17px; letter-spacing: .08em; text-transform: uppercase; color: var(--pdf-text-strong); font-weight: 600; }' +
-        '.print-meta, .print-note { margin: 0 0 6px; color: var(--pdf-muted); font-size: 11px; line-height: 1.35; }' +
+        'h1 { margin: 0 0 4px; font-size: 17px; letter-spacing: .08em; text-transform: uppercase; color: #2f2f2f; font-weight: 600; }' +
+        '.print-meta, .print-note { margin: 0 0 6px; color: #767676; font-size: 11px; line-height: 1.35; }' +
         '.print-resumo { display: flex; gap: 6px; margin-bottom: 10px; }' +
-        '.print-resumo-stat { flex: 1; min-width: 0; text-align: center; padding: 7px 4px; border: 1px solid var(--pdf-resumo-border); border-radius: 0; background: var(--pdf-resumo-bg); font-size: 10px; color: var(--pdf-muted); }' +
-        '.print-resumo-stat strong { display: block; font-size: 14px; color: var(--pdf-text-strong); margin-bottom: 2px; font-weight: 600; }' +
+        '.print-resumo-stat { flex: 1; min-width: 0; text-align: center; padding: 7px 4px; border: 1px solid #d5d5d5; border-radius: 0; background: #f7f7f7; font-size: 10px; color: #767676; }' +
+        '.print-resumo-stat strong { display: block; font-size: 14px; color: #2f2f2f; margin-bottom: 2px; font-weight: 600; }' +
         '.print-cards { display: flex; flex-direction: column; }' +
-        '.pedido-card { padding: 14px 0; border-bottom: 1px solid var(--pdf-divider); break-inside: avoid; page-break-inside: avoid; background: transparent; }' +
-        '.pedido-card:last-child { border-bottom: 0; }' +
+        '.pedido-card-pdf { padding: 14px 0; break-inside: avoid; page-break-inside: avoid; background: #ffffff; border-top: 1px solid #d5d5d5; }' +
+        '.print-cards > .pedido-card-pdf:first-child { border-top: none; }' +
         '.pedido-card-head { display: flex; align-items: flex-start; gap: 10px; }' +
-        '.pedido-card-thumb { width: 48px; height: 48px; border-radius: 0; object-fit: cover; flex-shrink: 0; background: var(--pdf-surface-2); }' +
-        '.pedido-card-thumb-empty { display: flex; align-items: center; justify-content: center; color: var(--pdf-muted); font-size: 12px; }' +
+        '.pedido-card-thumb { width: 48px; height: 48px; border-radius: 0; object-fit: cover; flex-shrink: 0; background: #fafafa; display: block; }' +
+        '.pedido-card-thumb-empty { display: flex; align-items: center; justify-content: center; color: #767676; font-size: 12px; }' +
         '.pedido-card-intro { flex: 1; min-width: 0; }' +
         '.pedido-card-aside { text-align: right; flex-shrink: 0; min-width: 72px; max-width: 42%; }' +
-        '.pedido-card-title { font-size: .88rem; font-weight: 600; line-height: 1.25; color: var(--pdf-text-strong); }' +
-        '.pedido-card-meta { margin-top: 3px; font-size: .72rem; color: var(--pdf-muted); line-height: 1.3; }' +
-        '.pedido-card-subtotal-label, .pedido-card-unit-label { display: block; font-size: .6rem; text-transform: uppercase; letter-spacing: .05em; color: var(--pdf-muted); margin-bottom: 2px; }' +
-        '.pedido-card-subtotal strong { display: block; font-size: .92rem; font-weight: 600; color: var(--pdf-accent-bright); white-space: nowrap; line-height: 1.2; }' +
+        '.pedido-card-title { font-size: .88rem; font-weight: 600; line-height: 1.25; color: #2f2f2f; }' +
+        '.pedido-card-meta { margin-top: 3px; font-size: .72rem; color: #767676; line-height: 1.3; }' +
+        '.pedido-card-subtotal-label, .pedido-card-unit-label { display: block; font-size: .6rem; text-transform: uppercase; letter-spacing: .05em; color: #767676; margin-bottom: 2px; }' +
+        '.pedido-card-subtotal strong { display: block; font-size: .92rem; font-weight: 600; color: #1f1f24; white-space: nowrap; line-height: 1.2; }' +
         '.pedido-card-unit { margin-top: 8px; }' +
         '.pedido-card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 10px; margin-top: 10px; }' +
-        '.pedido-card-kv-label { display: block; font-size: .62rem; text-transform: uppercase; letter-spacing: .04em; color: var(--pdf-muted); margin-bottom: 2px; }' +
-        '.pedido-card-kv-val { font-size: .84rem; font-weight: 500; color: var(--pdf-text-strong); font-variant-numeric: tabular-nums; }' +
+        '.pedido-card-kv-label { display: block; font-size: .62rem; text-transform: uppercase; letter-spacing: .04em; color: #767676; margin-bottom: 2px; }' +
+        '.pedido-card-kv-val { font-size: .84rem; font-weight: 500; color: #2f2f2f; font-variant-numeric: tabular-nums; }' +
         '.pedido-card-price-val { display: block; line-height: 1.15; }' +
-        '.pedido-card-price-val .preco-orig { font-size: .62rem; line-height: 1.1; display: block; text-decoration: line-through; color: var(--pdf-muted); }' +
-        '.pedido-card-price-val .preco-desc { font-size: .78rem; font-weight: 600; color: var(--pdf-text-strong); display: block; }' +
-        '.pedido-card-price-val:not(.has-desc) { font-size: .78rem; font-weight: 600; color: var(--pdf-text-strong); }' +
-        '.print-totals { text-align: right; margin: 14px 0 0; padding-top: 10px; border-top: 1px solid var(--pdf-divider); font-size: 14px; color: var(--pdf-text); break-inside: avoid; page-break-inside: avoid; }' +
-        '.print-totals strong { font-size: 16px; color: var(--pdf-accent-bright); font-weight: 600; }';
+        '.pedido-card-price-val .preco-orig { font-size: .62rem; line-height: 1.1; display: block; text-decoration: line-through; color: #767676; }' +
+        '.pedido-card-price-val .preco-desc { font-size: .78rem; font-weight: 600; color: #2f2f2f; display: block; }' +
+        '.pedido-card-price-val:not(.has-desc) { font-size: .78rem; font-weight: 600; color: #2f2f2f; }' +
+        '.print-totals { text-align: right; margin: 14px 0 0; padding-top: 10px; border-top: 1px solid #d5d5d5; font-size: 14px; color: #5a5a5a; break-inside: avoid; page-break-inside: avoid; }' +
+        '.print-totals strong { font-size: 16px; color: #1f1f24; font-weight: 600; }';
     }
     function pdfCanvasBackground(theme) {
       return '#ffffff';
@@ -2142,15 +2134,14 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       if (!host) return null;
       host.innerHTML = '';
       const style = document.createElement('style');
-      style.textContent = printPedidoPrintCss(pageWmm, null, theme);
+      style.textContent = printPedidoPrintCss(pageWmm, null);
       host.appendChild(style);
       const wrap = document.createElement('div');
       wrap.className = 'print-render-root';
-      wrap.setAttribute('data-theme', theme);
       wrap.style.width = pageWpx + 'px';
       wrap.innerHTML = buildPedidoPrintHtml(thumbs);
       host.appendChild(wrap);
-      return { host, wrap, pageWpx, pageWmm, theme };
+      return { host, wrap, pageWpx, pageWmm };
     }
     async function waitPrintImagesRoot(root) {
       const imgs = [...root.querySelectorAll('img')];
@@ -2192,19 +2183,19 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       const btn = document.getElementById('pdf-pedido-panel');
       const prevLabel = btn?.textContent || 'PDF do pedido';
       if (btn) { btn.disabled = true; btn.textContent = 'Gerando PDF…'; }
-      let thumbs = {};
-      try {
-        thumbs = await loadPdfThumbs();
-      } catch {
-        thumbs = {};
-      }
+      const thumbs = loadPdfThumbs();
       const mounted = mountPedidoPdfRender(thumbs);
       if (!mounted) {
         if (btn) { btn.disabled = !pedidoItens().length; btn.textContent = prevLabel; }
         return;
       }
-      const { host, wrap, pageWpx, pageWmm, theme } = mounted;
+      const { host, wrap, pageWpx, pageWmm } = mounted;
+      const prevHostVisibility = host.style.visibility;
+      const prevHostLeft = host.style.left;
       try {
+        host.style.visibility = 'visible';
+        host.style.left = '0';
+        host.style.width = pageWpx + 'px';
         const html2pdf = await loadHtml2Pdf();
         await waitPrintImagesRoot(wrap);
         await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
@@ -2214,7 +2205,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
         if (pageHmm > 1400) pageHmm = 297;
         host.querySelector('style')?.remove();
         const pageStyle = document.createElement('style');
-        pageStyle.textContent = printPedidoPrintCss(pageWmm, pageHmm, theme);
+        pageStyle.textContent = printPedidoPrintCss(pageWmm, pageHmm);
         host.insertBefore(pageStyle, wrap);
         revokePedidoPdfBlob();
         pedidoPdfBlob = await html2pdf().set({
@@ -2224,11 +2215,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
           html2canvas: {
             scale: 2,
             useCORS: true,
-            allowTaint: false,
+            allowTaint: true,
             logging: false,
             width: pageWpx,
             windowWidth: pageWpx,
-            backgroundColor: pdfCanvasBackground(theme),
+            backgroundColor: pdfCanvasBackground(PDF_THEME),
           },
           jsPDF: { unit: 'mm', format: [pageWmm, pageHmm], orientation: 'portrait' },
           pagebreak: { mode: ['css', 'legacy'] },
@@ -2240,6 +2231,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
         console.error(err);
         alert('Não foi possível gerar o PDF. Verifique a ligação à internet e tente de novo.');
       } finally {
+        host.style.visibility = prevHostVisibility;
+        host.style.left = prevHostLeft;
+        host.style.width = '';
         host.innerHTML = '';
         if (btn) {
           btn.disabled = !pedidoItens().length;
@@ -2506,7 +2500,7 @@ async function mainAsync() {
   const pdfThumbs = await buildPdfThumbMap(itens);
   const thumbsCount = Object.values(pdfThumbs).filter(Boolean).length;
   const antLogoDataUri = loadAntLogoDataUri();
-  const html = buildHtml({ classif, itens, antLogoDataUri });
+  const html = buildHtml({ classif, itens, antLogoDataUri, pdfThumbs });
 
   fs.mkdirSync(path.dirname(OUT_HTML), { recursive: true });
   fs.writeFileSync(OUT_HTML, html);
