@@ -1874,9 +1874,25 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       syncBodyScrollLock();
     }
 
+    function pxToMm(px) {
+      return Math.ceil(Number(px || 0) * 25.4 / 96);
+    }
+    function printPageWidthPx() {
+      return Math.min(430, Math.max(340, window.innerWidth || 390));
+    }
     function printPageWidthMm() {
-      const px = Math.min(430, Math.max(340, window.innerWidth || 390));
-      return Math.max(88, Math.round(px * 0.264583));
+      return Math.max(88, pxToMm(printPageWidthPx()));
+    }
+    function waitPrintImages(doc) {
+      const imgs = [...(doc.images || [])];
+      if (!imgs.length) return Promise.resolve();
+      return Promise.all(imgs.map((img) => {
+        if (img.complete) return Promise.resolve();
+        return new Promise((resolve) => {
+          img.addEventListener('load', resolve, { once: true });
+          img.addEventListener('error', resolve, { once: true });
+        });
+      }));
     }
     function buildPedidoPrintHtml() {
       const rows = pedidoItens();
@@ -1913,11 +1929,14 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
         '<p class="print-totals"><strong>Total estimado: ' + fmtMoney(totalValor) + '</strong></p>' +
       '</div>';
     }
-    function printPedidoPrintCss(pageWmm) {
-      return '@page { size: ' + pageWmm + 'mm 297mm; margin: 6mm 4mm; }' +
+    function printPedidoPrintCss(pageWmm, pageHmm) {
+      const pageRule = pageHmm != null
+        ? '@page { size: ' + pageWmm + 'mm ' + pageHmm + 'mm; margin: 5mm 4mm; }'
+        : '';
+      return pageRule +
         'html, body { margin: 0; padding: 0; }' +
-        'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; color: #1a1a1a; font-size: 13px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }' +
-        '.print-sheet { width: 100%; }' +
+        'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; color: #1a1a1a; font-size: 13px; -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; }' +
+        '.print-sheet { width: 100%; box-sizing: border-box; }' +
         '.print-head { margin-bottom: 10px; }' +
         'h1 { margin: 0 0 4px; font-size: 17px; letter-spacing: .04em; text-transform: uppercase; }' +
         '.print-meta, .print-note { margin: 0 0 6px; color: #555; font-size: 11px; line-height: 1.35; }' +
@@ -1946,31 +1965,70 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
         '.print-totals { text-align: right; margin: 14px 0 0; padding-top: 10px; border-top: 1px solid #aaa; font-size: 14px; break-inside: avoid; page-break-inside: avoid; }' +
         '.print-totals strong { font-size: 16px; }';
     }
-    function printPedidoPdf() {
+    async function printPedidoPdf() {
       if (!pedidoItens().length) return;
       closePedidoPanel();
       const content = buildPedidoPrintHtml();
+      const pageWpx = printPageWidthPx();
       const pageWmm = printPageWidthMm();
       const frame = document.getElementById('pedido-print-frame');
       if (!frame) return;
+      frame.style.width = pageWpx + 'px';
+      frame.style.visibility = 'hidden';
+      frame.style.position = 'fixed';
+      frame.style.left = '0';
+      frame.style.top = '0';
+      frame.style.zIndex = '-1';
+      frame.style.border = '0';
       const doc = frame.contentDocument || frame.contentWindow?.document;
       if (!doc) return;
       doc.open();
-      doc.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Pedido Formigres</title><style>' +
-        printPedidoPrintCss(pageWmm) +
+      doc.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">' +
+        '<meta name="viewport" content="width=' + pageWpx + '">' +
+        '<title>Pedido Formigres</title><style id="print-base">' +
+        printPedidoPrintCss(pageWmm, null) +
         '</style></head><body>' + content + '</body></html>');
       doc.close();
       const win = frame.contentWindow;
       if (!win) return;
+      const resetFrame = () => {
+        frame.style.width = '';
+        frame.style.visibility = '';
+        frame.style.position = '';
+        frame.style.left = '';
+        frame.style.top = '';
+        frame.style.zIndex = '';
+      };
       const cleanup = () => {
+        resetFrame();
         try { doc.open(); doc.write(''); doc.close(); } catch { /* ignore */ }
       };
-      win.onafterprint = cleanup;
-      win.focus();
-      setTimeout(() => {
+      try {
+        await waitPrintImages(doc);
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        const sheet = doc.querySelector('.print-sheet');
+        const heightPx = Math.max(
+          sheet?.scrollHeight || 0,
+          doc.body?.scrollHeight || 0,
+          doc.documentElement?.scrollHeight || 0
+        );
+        let pageHmm = pxToMm(heightPx) + 12;
+        pageHmm = Math.max(100, pageHmm);
+        const pageStyle = doc.createElement('style');
+        pageStyle.id = 'print-page-size';
+        if (pageHmm > 1400) {
+          pageStyle.textContent = '@page { size: ' + pageWmm + 'mm 297mm; margin: 5mm 4mm; }';
+        } else {
+          pageStyle.textContent = '@page { size: ' + pageWmm + 'mm ' + pageHmm + 'mm; margin: 5mm 4mm; }';
+        }
+        doc.head.appendChild(pageStyle);
+        win.onafterprint = cleanup;
+        win.focus();
         win.print();
         setTimeout(cleanup, 30000);
-      }, 250);
+      } catch {
+        cleanup();
+      }
     }
 
     function collectImageUrls() {
