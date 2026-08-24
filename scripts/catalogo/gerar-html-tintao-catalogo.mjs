@@ -118,6 +118,40 @@ function fixImageUrl(url) {
   return url;
 }
 
+async function fetchImageDataUri(url) {
+  if (!url) return '';
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
+    if (!res.ok) return '';
+    const ct = (res.headers.get('content-type') || 'image/jpeg').split(';')[0];
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (buf.length > 512000) return '';
+    return `data:${ct};base64,${buf.toString('base64')}`;
+  } catch {
+    return '';
+  }
+}
+
+async function buildImageDataMap(itens) {
+  const urls = new Set();
+  for (const item of itens) {
+    if (item.imagem_url) urls.add(item.imagem_url);
+  }
+  const list = [...urls];
+  const map = {};
+  let idx = 0;
+  const workers = Math.min(8, list.length || 1);
+  async function worker() {
+    while (idx < list.length) {
+      const i = idx++;
+      const url = list[i];
+      map[url] = await fetchImageDataUri(url);
+    }
+  }
+  await Promise.all(Array.from({ length: workers }, worker));
+  return map;
+}
+
 function enrichItens(itens, snapshot) {
   const byId = new Map((snapshot?.produtos || []).map((p) => [String(p.id), p]));
   return itens.map((item) => {
@@ -186,13 +220,14 @@ function slimItem(item) {
   };
 }
 
-function buildHtml({ classif, itens, antLogoDataUri = '' }) {
+function buildHtml({ classif, itens, antLogoDataUri = '', imageData = {} }) {
   const gerado = new Date(classif.geradoEm || Date.now()).toLocaleString('pt-BR');
   const total = itens.length;
   const comFoto = itens.filter((i) => i.imagem_url).length;
   const loadSquaresHtml = Array.from({ length: 20 }, () => '<span class="load-square"></span>').join('');
   const catalogoJson = JSON.stringify({
     itens: itens.map(slimItem),
+    imageData,
     config: {
       linhaOrder: LINHA_ORDER,
       linhaLabel: LINHA_LABEL,
@@ -1445,6 +1480,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
   <script>
     const CATALOGO = JSON.parse(document.getElementById('catalogo-data').textContent);
     const CFG = CATALOGO.config;
+    const IMAGE_DATA = CATALOGO.imageData || {};
     const TIPO_LABEL_GAL = { principal: 'Cerâmica', ambiente: 'Ambiente', piso: 'Piso', face: 'Face', outro: 'Imagem' };
     const QTY_KEY = 'tintao-pedido-qty-v1';
     const THEME_KEY = 'tintao-theme-v1';
@@ -1466,6 +1502,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
 
     function esc(s) {
       return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function resolveImgSrc(url) {
+      if (!url) return '';
+      return IMAGE_DATA[url] || url;
+    }
+    function currentTheme() {
+      return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
     }
     function fmtMoney(v) {
       if (v == null || v === '') return '—';
@@ -1726,8 +1769,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
     }
     function getGaleria(item) {
       const imgs = Array.isArray(item.imagens) ? item.imagens.filter((i) => i && i.url) : [];
-      if (imgs.length) return imgs;
-      return item.imagem_url ? [{ url: item.imagem_url, tipo: 'principal' }] : [];
+      const list = imgs.length ? imgs : (item.imagem_url ? [{ url: item.imagem_url, tipo: 'principal' }] : []);
+      return list.map((img) => ({ ...img, url: resolveImgSrc(img.url) }));
     }
     function renderTableRow(item) {
       const imgs = getGaleria(item);
@@ -1988,41 +2031,58 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
         '<p class="print-totals"><strong>Total estimado: ' + fmtMoney(totalValor) + '</strong></p>' +
       '</div>';
     }
-    function printPedidoPrintCss(pageWmm, pageHmm) {
+    function pedidoPdfThemeBlock(theme) {
+      if (theme === 'light') {
+        return '.print-render-root[data-theme="light"] {' +
+          '--pdf-bg:#f2f2f0;--pdf-surface:#ffffff;--pdf-surface-2:#fafafa;--pdf-text:#5a5a5a;--pdf-text-strong:#2f2f2f;' +
+          '--pdf-muted:#767676;--pdf-border:#d5d5d5;--pdf-divider:rgba(0,0,0,.08);--pdf-accent-bright:#1f1f24;--pdf-resumo-bg:#f4f4f4;--pdf-resumo-border:#d5d5d5;' +
+        '}';
+      }
+      return '.print-render-root[data-theme="dark"] {' +
+        '--pdf-bg:#121214;--pdf-surface:#1c1c20;--pdf-surface-2:#242428;--pdf-text:#b4b4bc;--pdf-text-strong:#ececf0;' +
+        '--pdf-muted:#787884;--pdf-border:#3a3a42;--pdf-divider:rgba(255,255,255,.08);--pdf-accent-bright:#f4f4f8;--pdf-resumo-bg:#242428;--pdf-resumo-border:#3a3a42;' +
+      '}';
+    }
+    function printPedidoPrintCss(pageWmm, pageHmm, theme) {
       const pageRule = pageHmm != null
         ? '@page { size: ' + pageWmm + 'mm ' + pageHmm + 'mm; margin: 5mm 4mm; }'
         : '';
       return pageRule +
+        pedidoPdfThemeBlock(theme) +
         'html, body { margin: 0; padding: 0; }' +
-        'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; color: #1a1a1a; font-size: 13px; -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; }' +
-        '.print-sheet { width: 100%; box-sizing: border-box; }' +
+        '.print-render-root { background: var(--pdf-bg); color: var(--pdf-text); font-family: "Libre Franklin", "Segoe UI", system-ui, sans-serif; font-size: 13px; -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; }' +
+        '.print-sheet { width: 100%; box-sizing: border-box; background: var(--pdf-surface); color: var(--pdf-text); padding: 2px 0; }' +
         '.print-head { margin-bottom: 10px; }' +
-        'h1 { margin: 0 0 4px; font-size: 17px; letter-spacing: .04em; text-transform: uppercase; }' +
-        '.print-meta, .print-note { margin: 0 0 6px; color: #555; font-size: 11px; line-height: 1.35; }' +
+        'h1 { margin: 0 0 4px; font-size: 17px; letter-spacing: .08em; text-transform: uppercase; color: var(--pdf-text-strong); font-weight: 600; }' +
+        '.print-meta, .print-note { margin: 0 0 6px; color: var(--pdf-muted); font-size: 11px; line-height: 1.35; }' +
         '.print-resumo { display: flex; gap: 6px; margin-bottom: 10px; }' +
-        '.print-resumo-stat { flex: 1; min-width: 0; text-align: center; padding: 7px 4px; border: 1px solid #aaa; border-radius: 6px; background: #f4f4f4; font-size: 10px; color: #555; }' +
-        '.print-resumo-stat strong { display: block; font-size: 14px; color: #111; margin-bottom: 2px; }' +
+        '.print-resumo-stat { flex: 1; min-width: 0; text-align: center; padding: 7px 4px; border: 1px solid var(--pdf-resumo-border); border-radius: 0; background: var(--pdf-resumo-bg); font-size: 10px; color: var(--pdf-muted); }' +
+        '.print-resumo-stat strong { display: block; font-size: 14px; color: var(--pdf-text-strong); margin-bottom: 2px; font-weight: 600; }' +
         '.print-cards { display: flex; flex-direction: column; }' +
-        '.pedido-card { padding: 10px 0; border-bottom: 0.5px solid #e3e3e3; break-inside: avoid; page-break-inside: avoid; }' +
+        '.pedido-card { padding: 14px 0; border-bottom: 0.5px solid var(--pdf-divider); break-inside: avoid; page-break-inside: avoid; background: transparent; }' +
         '.pedido-card:last-child { border-bottom: 0; }' +
         '.pedido-card-head { display: flex; align-items: flex-start; gap: 10px; }' +
-        '.pedido-card-thumb { width: 48px; height: 48px; border-radius: 7px; object-fit: cover; flex-shrink: 0; background: #eee; }' +
-        '.pedido-card-thumb-empty { display: flex; align-items: center; justify-content: center; color: #888; font-size: 12px; }' +
+        '.pedido-card-thumb { width: 48px; height: 48px; border-radius: 0; object-fit: cover; flex-shrink: 0; background: var(--pdf-surface-2); }' +
+        '.pedido-card-thumb-empty { display: flex; align-items: center; justify-content: center; color: var(--pdf-muted); font-size: 12px; }' +
         '.pedido-card-intro { flex: 1; min-width: 0; }' +
         '.pedido-card-aside { text-align: right; flex-shrink: 0; min-width: 72px; max-width: 42%; }' +
-        '.pedido-card-title { font-size: 13px; font-weight: 700; line-height: 1.25; color: #111; }' +
-        '.pedido-card-meta { margin-top: 3px; font-size: 10px; color: #666; line-height: 1.3; }' +
-        '.pedido-card-subtotal-label, .pedido-card-unit-label { display: block; font-size: 8px; text-transform: uppercase; letter-spacing: .05em; color: #666; margin-bottom: 2px; }' +
-        '.pedido-card-subtotal strong { display: block; font-size: 13px; font-weight: 700; color: #111; white-space: nowrap; line-height: 1.2; }' +
-        '.pedido-card-unit { margin-top: 7px; }' +
-        '.pedido-card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 8px; margin-top: 9px; }' +
-        '.pedido-card-kv-label { display: block; font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: #666; margin-bottom: 2px; }' +
-        '.pedido-card-kv-val { font-size: 12px; font-weight: 600; color: #111; font-variant-numeric: tabular-nums; }' +
+        '.pedido-card-title { font-size: .88rem; font-weight: 600; line-height: 1.25; color: var(--pdf-text-strong); }' +
+        '.pedido-card-meta { margin-top: 3px; font-size: .72rem; color: var(--pdf-muted); line-height: 1.3; }' +
+        '.pedido-card-subtotal-label, .pedido-card-unit-label { display: block; font-size: .6rem; text-transform: uppercase; letter-spacing: .05em; color: var(--pdf-muted); margin-bottom: 2px; }' +
+        '.pedido-card-subtotal strong { display: block; font-size: .92rem; font-weight: 600; color: var(--pdf-accent-bright); white-space: nowrap; line-height: 1.2; }' +
+        '.pedido-card-unit { margin-top: 8px; }' +
+        '.pedido-card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 10px; margin-top: 10px; }' +
+        '.pedido-card-kv-label { display: block; font-size: .62rem; text-transform: uppercase; letter-spacing: .04em; color: var(--pdf-muted); margin-bottom: 2px; }' +
+        '.pedido-card-kv-val { font-size: .84rem; font-weight: 500; color: var(--pdf-text-strong); font-variant-numeric: tabular-nums; }' +
         '.pedido-card-price-val { display: block; line-height: 1.15; }' +
-        '.preco-orig { display: block; text-decoration: line-through; color: #777; font-size: 9px; line-height: 1.1; font-weight: 400; }' +
-        '.preco-desc { display: block; font-weight: 700; color: #111; line-height: 1.15; font-size: 11px; }' +
-        '.print-totals { text-align: right; margin: 14px 0 0; padding-top: 10px; border-top: 0.5px solid #e3e3e3; font-size: 14px; break-inside: avoid; page-break-inside: avoid; }' +
-        '.print-totals strong { font-size: 16px; }';
+        '.pedido-card-price-val .preco-orig { font-size: .62rem; line-height: 1.1; display: block; text-decoration: line-through; color: var(--pdf-muted); }' +
+        '.pedido-card-price-val .preco-desc { font-size: .78rem; font-weight: 600; color: var(--pdf-text-strong); display: block; }' +
+        '.pedido-card-price-val:not(.has-desc) { font-size: .78rem; font-weight: 600; color: var(--pdf-text-strong); }' +
+        '.print-totals { text-align: right; margin: 14px 0 0; padding-top: 10px; border-top: 0.5px solid var(--pdf-divider); font-size: 14px; color: var(--pdf-text); break-inside: avoid; page-break-inside: avoid; }' +
+        '.print-totals strong { font-size: 16px; color: var(--pdf-accent-bright); font-weight: 600; }';
+    }
+    function pdfCanvasBackground(theme) {
+      return theme === 'light' ? '#f2f2f0' : '#121214';
     }
     const HTML2PDF_URL = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
     let pedidoPdfBlob = null;
@@ -2059,21 +2119,20 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
     function mountPedidoPdfRender() {
       const pageWpx = printPageWidthPx();
       const pageWmm = printPageWidthMm();
+      const theme = currentTheme();
       const host = document.getElementById('pedido-pdf-render-host');
       if (!host) return null;
       host.innerHTML = '';
       const style = document.createElement('style');
-      style.textContent = printPedidoPrintCss(pageWmm, null);
+      style.textContent = printPedidoPrintCss(pageWmm, null, theme);
       host.appendChild(style);
       const wrap = document.createElement('div');
       wrap.className = 'print-render-root';
+      wrap.setAttribute('data-theme', theme);
       wrap.style.width = pageWpx + 'px';
-      wrap.style.background = '#fff';
-      wrap.style.color = '#111';
       wrap.innerHTML = buildPedidoPrintHtml();
       host.appendChild(wrap);
-      wrap.querySelectorAll('img').forEach((img) => { img.crossOrigin = 'anonymous'; });
-      return { host, wrap, pageWpx, pageWmm };
+      return { host, wrap, pageWpx, pageWmm, theme };
     }
     async function waitPrintImagesRoot(root) {
       const imgs = [...root.querySelectorAll('img')];
@@ -2120,7 +2179,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
         if (btn) { btn.disabled = !pedidoItens().length; btn.textContent = prevLabel; }
         return;
       }
-      const { host, wrap, pageWpx, pageWmm } = mounted;
+      const { host, wrap, pageWpx, pageWmm, theme } = mounted;
       try {
         const html2pdf = await loadHtml2Pdf();
         await waitPrintImagesRoot(wrap);
@@ -2129,6 +2188,10 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
         const heightPx = Math.max(sheet.scrollHeight || 0, wrap.scrollHeight || 0);
         let pageHmm = Math.max(100, pxToMm(heightPx) + 12);
         if (pageHmm > 1400) pageHmm = 297;
+        host.querySelector('style')?.remove();
+        const pageStyle = document.createElement('style');
+        pageStyle.textContent = printPedidoPrintCss(pageWmm, pageHmm, theme);
+        host.insertBefore(pageStyle, wrap);
         revokePedidoPdfBlob();
         pedidoPdfBlob = await html2pdf().set({
           margin: [5, 4, 5, 4],
@@ -2141,7 +2204,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
             logging: false,
             width: pageWpx,
             windowWidth: pageWpx,
-            backgroundColor: '#ffffff',
+            backgroundColor: pdfCanvasBackground(theme),
           },
           jsPDF: { unit: 'mm', format: [pageWmm, pageHmm], orientation: 'portrait' },
           pagebreak: { mode: ['css', 'legacy'] },
@@ -2415,8 +2478,11 @@ async function mainAsync() {
   const itensBase = enrichItens(classif.itens || [], snapshot);
   console.error('A carregar fotos do site Formigres…');
   const itens = await enrichImagensFromApi(itensBase);
+  console.error('A embutir fotos no HTML (PDF offline)…');
+  const imageData = await buildImageDataMap(itens);
+  const imagensEmbutidas = Object.values(imageData).filter(Boolean).length;
   const antLogoDataUri = loadAntLogoDataUri();
-  const html = buildHtml({ classif, itens, antLogoDataUri });
+  const html = buildHtml({ classif, itens, antLogoDataUri, imageData });
 
   fs.mkdirSync(path.dirname(OUT_HTML), { recursive: true });
   fs.writeFileSync(OUT_HTML, html);
@@ -2426,6 +2492,7 @@ async function mainAsync() {
     itens: itens.length,
     comFoto: itens.filter((i) => i.imagem_url).length,
     comGaleria: itens.filter((i) => (i.imagens || []).length > 1).length,
+    imagensEmbutidas,
     fonte: jsonPath,
     html: OUT_HTML,
   }, null, 2));
