@@ -112,11 +112,17 @@ function buildTree(itens) {
 function renderTableRow(item) {
   const img = item.imagem_url || '';
   const titulo = item.formigres_titulo || item.descricao;
-  const foto = img
-    ? `<button type="button" class="thumb-btn" data-lightbox="${esc(img)}" data-title="${esc(titulo)}" aria-label="Ampliar ${esc(titulo)}">
+  const fid = item.formigres_id || '';
+  const foto = img && fid
+    ? `<button type="button" class="thumb-btn has-gallery" data-formigres-id="${esc(fid)}" data-thumb="${esc(img)}" data-title="${esc(titulo)}" aria-label="Galeria ${esc(titulo)}" title="Clique para ver fotos (carrega mais ao abrir)">
          <img src="${esc(img)}" alt="" loading="lazy" />
+         <span class="thumb-more" aria-hidden="true">▦</span>
        </button>`
-    : `<span class="thumb-empty">—</span>`;
+    : img
+      ? `<button type="button" class="thumb-btn" data-thumb="${esc(img)}" data-title="${esc(titulo)}" aria-label="Ampliar ${esc(titulo)}">
+           <img src="${esc(img)}" alt="" loading="lazy" />
+         </button>`
+      : `<span class="thumb-empty">—</span>`;
 
   const warn = item.match_status !== 'encontrado' ? ' <span class="badge warn">sem match</span>' : '';
 
@@ -387,6 +393,14 @@ function buildHtml({ classif, itens, tree }) {
       object-fit: cover;
     }
     .thumb-btn:hover { border-color: var(--accent-dim); }
+    .thumb-btn.has-gallery { position: relative; }
+    .thumb-more {
+      position: absolute; right: 2px; bottom: 2px;
+      font-size: 10px; line-height: 1;
+      background: rgba(0,0,0,.65); color: var(--accent);
+      border-radius: 4px; padding: 2px 3px;
+      pointer-events: none;
+    }
     .thumb-empty {
       display: inline-grid;
       place-items: center;
@@ -423,16 +437,44 @@ function buildHtml({ classif, itens, tree }) {
       overflow: hidden;
     }
     .lightbox-head {
-      display: flex; justify-content: space-between; align-items: center;
+      display: flex; justify-content: space-between; align-items: flex-start;
       gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--border);
     }
     .lightbox-head h3 { margin: 0; font-size: .95rem; }
+    .lightbox-meta { margin: 4px 0 0; font-size: .78rem; color: var(--muted); }
+    .lightbox-meta.loading { color: var(--accent); }
     .lightbox-close {
       background: transparent; border: 1px solid var(--border); color: var(--text);
       border-radius: 8px; width: 34px; height: 34px; cursor: pointer; font-size: 1.1rem;
+      flex-shrink: 0;
     }
-    .lightbox-body { background: #111; display: grid; place-items: center; }
-    .lightbox-body img { max-width: 100%; max-height: 72vh; object-fit: contain; display: block; }
+    .lightbox-stage {
+      position: relative; background: #111;
+      display: grid; place-items: center; min-height: 280px;
+    }
+    .lightbox-stage img {
+      max-width: 100%; max-height: 72vh; object-fit: contain; display: block;
+    }
+    .gallery-nav {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      background: rgba(0,0,0,.55); border: 1px solid var(--border);
+      color: var(--text); border-radius: 999px; width: 40px; height: 40px;
+      cursor: pointer; font-size: 1.2rem; display: none;
+    }
+    .gallery-nav:hover { background: rgba(164,206,51,.25); border-color: var(--accent-dim); }
+    .gallery-nav.prev { left: 8px; }
+    .gallery-nav.next { right: 8px; }
+    .lightbox.has-multi .gallery-nav { display: block; }
+    .lightbox-dots {
+      display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;
+      padding: 10px; border-top: 1px solid var(--border); background: var(--surface-2);
+    }
+    .lightbox-dot {
+      width: 8px; height: 8px; border-radius: 999px; border: 0;
+      background: var(--border); cursor: pointer; padding: 0;
+    }
+    .lightbox-dot.active { background: var(--accent); }
+    .lightbox-dot[hidden] { display: none; }
     footer.note {
       margin-top: 20px; color: var(--muted); font-size: .78rem; text-align: center;
     }
@@ -464,22 +506,75 @@ function buildHtml({ classif, itens, tree }) {
       ${linhasHtml}
     </section>
 
-    <footer class="note">Ficheiro HTML autónomo — partilhe por WhatsApp, e-mail ou drive. Fotos carregam do site Formigres (requer internet).</footer>
+    <footer class="note">HTML autónomo — partilhe por WhatsApp, e-mail ou drive. Miniatura na tabela; clique abre galeria (mais fotos carregam do site Formigres, requer internet).</footer>
   </div>
 
-  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Imagem ampliada">
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Galeria do produto">
     <div class="lightbox-panel">
       <div class="lightbox-head">
-        <h3 id="lightbox-title">Modelo</h3>
+        <div style="min-width:0;flex:1">
+          <h3 id="lightbox-title">Modelo</h3>
+          <p class="lightbox-meta" id="lightbox-meta">Cerâmica</p>
+        </div>
         <button type="button" class="lightbox-close" id="lightbox-close" aria-label="Fechar">×</button>
       </div>
-      <div class="lightbox-body">
+      <div class="lightbox-stage">
+        <button type="button" class="gallery-nav prev" id="gallery-prev" aria-label="Foto anterior">‹</button>
         <img id="lightbox-img" src="" alt="" />
+        <button type="button" class="gallery-nav next" id="gallery-next" aria-label="Próxima foto">›</button>
       </div>
+      <div class="lightbox-dots" id="lightbox-dots" hidden></div>
     </div>
   </div>
 
   <script>
+    const FORMIGRES_API = 'https://www.formigres.com.br';
+    const TIPO_LABEL = { principal: 'Cerâmica', ambiente: 'Ambiente', piso: 'Piso', face: 'Face', outro: 'Imagem' };
+    const galleryCache = new Map();
+
+    function absUrl(rel) {
+      if (!rel) return '';
+      if (rel.startsWith('http')) return rel;
+      return FORMIGRES_API + (rel.startsWith('/') ? rel : '/' + rel);
+    }
+    function isPlaceholder(url) {
+      return !url || /placeholder/i.test(url);
+    }
+    function extractImagens(prod) {
+      if (!prod) return [];
+      const imgs = [];
+      if (!isPlaceholder(prod.imagem_url)) imgs.push({ url: absUrl(prod.imagem_url), tipo: 'principal' });
+      if (!isPlaceholder(prod.imagem_amb_url)) imgs.push({ url: absUrl(prod.imagem_amb_url), tipo: 'ambiente' });
+      if (!isPlaceholder(prod.imagem_piso_url)) imgs.push({ url: absUrl(prod.imagem_piso_url), tipo: 'piso' });
+      const faces = Array.isArray(prod.faces) ? prod.faces : [];
+      faces.forEach((u, i) => {
+        if (!isPlaceholder(u)) imgs.push({ url: absUrl(u), tipo: 'face' });
+      });
+      const seen = new Set();
+      return imgs.filter((img) => {
+        if (seen.has(img.url)) return false;
+        seen.add(img.url);
+        return true;
+      });
+    }
+    async function fetchGaleria(formigresId, thumbUrl) {
+      if (!formigresId) return thumbUrl ? [{ url: thumbUrl, tipo: 'principal' }] : [];
+      if (galleryCache.has(formigresId)) return galleryCache.get(formigresId);
+      const fallback = thumbUrl ? [{ url: thumbUrl, tipo: 'principal' }] : [];
+      try {
+        const res = await fetch(FORMIGRES_API + '/api/produto.php?id=' + encodeURIComponent(formigresId));
+        if (!res.ok) { galleryCache.set(formigresId, fallback); return fallback; }
+        const data = await res.json();
+        const imgs = extractImagens(data.produto);
+        const result = imgs.length ? imgs : fallback;
+        galleryCache.set(formigresId, result);
+        return result;
+      } catch {
+        galleryCache.set(formigresId, fallback);
+        return fallback;
+      }
+    }
+
     const q = document.getElementById('search');
     const rows = [...document.querySelectorAll('.model-row')];
     const formatos = [...document.querySelectorAll('.acc-formato')];
@@ -522,25 +617,80 @@ function buildHtml({ classif, itens, tree }) {
     const lb = document.getElementById('lightbox');
     const lbImg = document.getElementById('lightbox-img');
     const lbTitle = document.getElementById('lightbox-title');
-    function openLightbox(url, title) {
-      lbImg.src = url;
-      lbImg.alt = title || '';
+    const lbMeta = document.getElementById('lightbox-meta');
+    const lbDots = document.getElementById('lightbox-dots');
+    const btnPrev = document.getElementById('gallery-prev');
+    const btnNext = document.getElementById('gallery-next');
+    let galeriaAtual = [];
+    let galeriaIdx = 0;
+
+    function renderGaleriaIdx(idx) {
+      if (!galeriaAtual.length) return;
+      galeriaIdx = ((idx % galeriaAtual.length) + galeriaAtual.length) % galeriaAtual.length;
+      const img = galeriaAtual[galeriaIdx];
+      lbImg.src = img.url;
+      lbImg.alt = lbTitle.textContent;
+      lbMeta.textContent = (galeriaAtual.length > 1 ? (galeriaIdx + 1) + ' / ' + galeriaAtual.length + ' · ' : '') + (TIPO_LABEL[img.tipo] || img.tipo);
+      lbMeta.classList.remove('loading');
+      lb.classList.toggle('has-multi', galeriaAtual.length > 1);
+      lbDots.hidden = galeriaAtual.length <= 1;
+      lbDots.innerHTML = galeriaAtual.map((_, i) =>
+        '<button type="button" class="lightbox-dot' + (i === galeriaIdx ? ' active' : '') + '" data-idx="' + i + '" aria-label="Foto ' + (i+1) + '"></button>'
+      ).join('');
+    }
+
+    function openGaleria(imagens, title, loadingMore) {
+      galeriaAtual = imagens.length ? imagens : [];
+      galeriaIdx = 0;
       lbTitle.textContent = title || 'Modelo';
+      if (loadingMore) {
+        lbMeta.textContent = 'A carregar mais fotos…';
+        lbMeta.classList.add('loading');
+      }
+      renderGaleriaIdx(0);
       lb.classList.add('open');
+      document.body.style.overflow = 'hidden';
     }
+
     function closeLightbox() {
-      lb.classList.remove('open');
+      lb.classList.remove('open', 'has-multi');
+      document.body.style.overflow = '';
       lbImg.src = '';
+      galeriaAtual = [];
     }
+
+    async function onThumbClick(btn) {
+      const title = btn.dataset.title || 'Modelo';
+      const thumb = btn.dataset.thumb || '';
+      const fid = btn.dataset.formigresId || '';
+      const inicial = thumb ? [{ url: thumb, tipo: 'principal' }] : [];
+      openGaleria(inicial, title, Boolean(fid));
+      if (!fid) return;
+      const completa = await fetchGaleria(fid, thumb);
+      if (!lb.classList.contains('open')) return;
+      galeriaAtual = completa;
+      renderGaleriaIdx(galeriaIdx);
+    }
+
     document.getElementById('catalogo').addEventListener('click', (e) => {
       const btn = e.target.closest('.thumb-btn');
       if (!btn) return;
-      openLightbox(btn.dataset.lightbox, btn.dataset.title);
+      onThumbClick(btn);
+    });
+    btnPrev.addEventListener('click', () => renderGaleriaIdx(galeriaIdx - 1));
+    btnNext.addEventListener('click', () => renderGaleriaIdx(galeriaIdx + 1));
+    lbDots.addEventListener('click', (e) => {
+      const dot = e.target.closest('.lightbox-dot');
+      if (!dot) return;
+      renderGaleriaIdx(Number(dot.dataset.idx));
     });
     document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
     lb.addEventListener('click', (e) => { if (e.target === lb) closeLightbox(); });
     document.addEventListener('keydown', (e) => {
+      if (!lb.classList.contains('open')) return;
       if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') renderGaleriaIdx(galeriaIdx - 1);
+      if (e.key === 'ArrowRight') renderGaleriaIdx(galeriaIdx + 1);
     });
   </script>
 </body>
