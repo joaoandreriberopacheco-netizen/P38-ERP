@@ -577,6 +577,7 @@ function buildHtml({ classif, itens }) {
         <option value="acabamento">Agrupar: acabamento</option>
       </select>
       <button type="button" class="btn" id="filter-qty">Só com quantidade</button>
+      <button type="button" class="btn" id="clear-qty" title="Zerar todas as caixas preenchidas">Limpar seleção</button>
       <button type="button" class="btn" id="toggle-pedido">Ver pedido</button>
       <button type="button" class="btn btn-primary" id="pdf-pedido">PDF do pedido</button>
       <button type="button" class="btn" id="expand-all">Abrir tudo</button>
@@ -659,6 +660,20 @@ function buildHtml({ classif, itens }) {
       if (n > 0) qtyMap[String(cod)] = n;
       else delete qtyMap[String(cod)];
       localStorage.setItem(QTY_KEY, JSON.stringify(qtyMap));
+      renderPedido();
+      if (filterQtyOnly) applySearch(document.getElementById('search').value);
+    }
+    function clearAllQty() {
+      const hasQty = Object.keys(qtyMap).length > 0 || [...document.querySelectorAll('.qty-input')].some((el) => Number(el.value) > 0);
+      if (!hasQty) return;
+      if (!confirm('Limpar todas as quantidades de caixa?')) return;
+      qtyMap = {};
+      localStorage.removeItem(QTY_KEY);
+      document.querySelectorAll('.qty-input').forEach((input) => {
+        input.value = '';
+        const row = input.closest('.model-row');
+        if (row) row.dataset.qty = '0';
+      });
       renderPedido();
       if (filterQtyOnly) applySearch(document.getElementById('search').value);
     }
@@ -866,6 +881,7 @@ function buildHtml({ classif, itens }) {
     const q = document.getElementById('search');
     const groupSel = document.getElementById('group-by');
     const btnFilterQty = document.getElementById('filter-qty');
+    const btnClearQty = document.getElementById('clear-qty');
     const btnPedido = document.getElementById('toggle-pedido');
     const btnPdf = document.getElementById('pdf-pedido');
     const pedidoPanel = document.getElementById('pedido-panel');
@@ -880,6 +896,7 @@ function buildHtml({ classif, itens }) {
       btnFilterQty.classList.toggle('active', filterQtyOnly);
       applySearch(q.value);
     });
+    btnClearQty.addEventListener('click', clearAllQty);
     btnPedido.addEventListener('click', () => {
       pedidoOpen = !pedidoOpen;
       pedidoPanel.classList.toggle('open', pedidoOpen);
