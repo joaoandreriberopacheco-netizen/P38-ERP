@@ -190,11 +190,14 @@ function buildHtml({ classif, itens }) {
   }).replace(/</g, '\\u003c');
 
   return `<!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Pedido Formigres — Lojistas</title>
+  <script>
+    (function(){try{var t=localStorage.getItem('tintao-theme-v1');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark');}catch(e){}})();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -227,6 +230,34 @@ function buildHtml({ classif, itens }) {
       --shadow-soft: 0 4px 16px rgba(0,0,0,.28);
       font-family: "Libre Franklin", "Segoe UI", system-ui, -apple-system, sans-serif;
     }
+    html[data-theme="light"] {
+      --bg: #f2f2f0;
+      --bg-elevated: #ffffff;
+      --surface: #ffffff;
+      --surface-2: #fafafa;
+      --surface-3: #f5f5f3;
+      --border: #d5d5d5;
+      --border-subtle: rgba(0,0,0,.06);
+      --text: #5a5a5a;
+      --text-strong: #2f2f2f;
+      --muted: #767676;
+      --accent: #3a3a42;
+      --accent-bright: #1f1f24;
+      --accent-dim: #787884;
+      --accent-deep: #5a5a62;
+      --accent-hover: #000000;
+      --accent-on: #ffffff;
+      --accent-muted: rgba(0,0,0,.04);
+      --accent-soft: rgba(0,0,0,.07);
+      --accent-glow: rgba(0,0,0,.08);
+      --accent-ring: rgba(0,0,0,.06);
+      --accent-border: rgba(0,0,0,.14);
+      --shadow: 0 16px 40px rgba(0,0,0,.1);
+      --shadow-soft: 0 2px 12px rgba(0,0,0,.06);
+    }
+    html[data-theme="light"] .load-overlay { background: rgba(242,242,240,.97); }
+    html[data-theme="light"] .load-ant-svg ellipse,
+    html[data-theme="light"] .load-ant-svg circle { fill: #e8e8ea; stroke: #787884; }
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -701,7 +732,7 @@ function buildHtml({ classif, itens }) {
     .cart-fab {
       position: fixed;
       right: 16px;
-      bottom: calc(16px + env(safe-area-inset-bottom));
+      bottom: calc(78px + env(safe-area-inset-bottom));
       z-index: 40;
       width: 56px;
       height: 56px;
@@ -962,8 +993,75 @@ function buildHtml({ classif, itens }) {
     .lightbox-dot.active { background: var(--accent-bright); }
     .lightbox-dot[hidden] { display: none; }
     footer.note {
-      margin-top: 20px; color: var(--muted); font-size: .78rem; text-align: center;
+      margin: 0;
+      color: var(--muted);
+      font-size: .72rem;
       letter-spacing: .04em;
+    }
+    .page-dock {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 35;
+      background: var(--surface-2);
+      border-top: 1px solid var(--border);
+      padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+    }
+    .page-dock-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px 20px;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+    .dock-group { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .dock-label {
+      font-size: .68rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .desconto-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .desconto-row .pct-suffix { color: var(--muted); font-size: .85rem; }
+    #desconto-pct {
+      width: 72px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-strong);
+      padding: 8px 8px;
+      font-size: .9rem;
+      text-align: center;
+    }
+    #desconto-pct:focus {
+      border-color: var(--accent-dim);
+      outline: none;
+      box-shadow: 0 0 0 3px var(--accent-ring);
+    }
+    .dock-theme-row { display: flex; align-items: center; gap: 8px; }
+    .preco-orig {
+      display: block;
+      text-decoration: line-through;
+      color: var(--muted);
+      font-size: .74rem;
+      line-height: 1.2;
+    }
+    .preco-desc { color: var(--text-strong); font-weight: 600; }
+    .col-preco.has-desc .preco-desc { white-space: nowrap; }
+    .dock-note { flex: 1 1 100%; text-align: right; margin-top: 2px; }
+    .pedido-desconto-note {
+      font-size: .78rem;
+      color: var(--muted);
+      margin-top: 6px;
+      text-align: right;
     }
     .cart-fab.has-items {
       animation: cart-pulse 2.4s ease-in-out infinite;
@@ -973,7 +1071,7 @@ function buildHtml({ classif, itens }) {
       50% { box-shadow: 0 10px 28px var(--accent-glow); }
     }
     body.has-cart .wrap {
-      padding-bottom: calc(80px + env(safe-area-inset-bottom));
+      padding-bottom: calc(148px + env(safe-area-inset-bottom));
     }
     @media (max-width: 720px) {
       .wrap { padding: 14px 10px 36px; }
@@ -991,8 +1089,8 @@ function buildHtml({ classif, itens }) {
         max-height: 85vh;
       }
       .pedido-overlay.open .pedido-panel::before { display: none; }
-      .cart-fab { right: 20px; bottom: 20px; }
-      footer.note { display: none; }
+      .cart-fab { right: 16px; bottom: calc(78px + env(safe-area-inset-bottom)); }
+      .page-dock-inner { gap: 10px 14px; }
       details.acc > summary {
         padding: 12px 12px 12px calc(10px + var(--depth, 0) * 12px);
         gap: 8px;
@@ -1112,9 +1210,26 @@ function buildHtml({ classif, itens }) {
     </div>
 
     <section class="catalogo" id="catalogo"></section>
-
-    <footer class="note">Catálogo offline · fotos embutidas · ${esc(gerado)}</footer>
   </div>
+
+  <footer class="page-dock" id="page-dock">
+    <div class="page-dock-inner">
+      <div class="dock-group">
+        <span class="dock-label" for="desconto-pct">Desconto comercial</span>
+        <div class="desconto-row">
+          <input type="number" id="desconto-pct" min="0" max="100" step="0.1" inputmode="decimal" placeholder="0" aria-label="Desconto comercial em percentual" />
+          <span class="pct-suffix">%</span>
+        </div>
+      </div>
+      <div class="dock-group">
+        <span class="dock-label">Aparência</span>
+        <div class="dock-theme-row">
+          <button type="button" class="btn" id="theme-toggle" aria-label="Alternar tema claro ou escuro">Claro</button>
+        </div>
+      </div>
+      <p class="note dock-note">Catálogo offline · ${esc(gerado)}</p>
+    </div>
+  </footer>
 
   <button type="button" class="cart-fab" id="cart-fab" aria-label="Minha seleção">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1196,9 +1311,16 @@ function buildHtml({ classif, itens }) {
     const CFG = CATALOGO.config;
     const TIPO_LABEL_GAL = { principal: 'Cerâmica', ambiente: 'Ambiente', piso: 'Piso', face: 'Face', outro: 'Imagem' };
     const QTY_KEY = 'tintao-pedido-qty-v1';
+    const THEME_KEY = 'tintao-theme-v1';
+    const DESCONTO_KEY = 'tintao-desconto-v1';
     const itemsByCode = new Map(CATALOGO.itens.map((i) => [String(i.codigo_tintao), i]));
     let qtyMap = {};
     try { qtyMap = JSON.parse(localStorage.getItem(QTY_KEY) || '{}'); } catch { qtyMap = {}; }
+    let descontoPct = 0;
+    try {
+      const d = Number(localStorage.getItem(DESCONTO_KEY));
+      if (Number.isFinite(d) && d >= 0 && d <= 100) descontoPct = d;
+    } catch { descontoPct = 0; }
     let groupBy = 'acabamento';
     let filterQtyOnly = false;
     let pedidoOpen = false;
@@ -1211,6 +1333,56 @@ function buildHtml({ classif, itens }) {
       if (v == null || v === '') return '—';
       const n = Number(v);
       return Number.isNaN(n) ? String(v) : 'R$ ' + n.toFixed(2).replace('.', ',');
+    }
+    function precoEfetivo(preco) {
+      const base = Number(preco);
+      if (!Number.isFinite(base) || base <= 0) return null;
+      if (!descontoPct) return base;
+      return Math.round(base * (1 - descontoPct / 100) * 100) / 100;
+    }
+    function fmtPrecoHtml(preco) {
+      const base = Number(preco);
+      if (!Number.isFinite(base) || base <= 0) return '—';
+      const eff = precoEfetivo(base);
+      if (!descontoPct) return esc(fmtMoney(eff));
+      return '<span class="preco-orig">' + esc(fmtMoney(base)) + '</span><strong class="preco-desc">' + esc(fmtMoney(eff)) + '</strong>';
+    }
+    function fmtPrecoPlain(preco) {
+      const base = Number(preco);
+      if (!Number.isFinite(base) || base <= 0) return '—';
+      const eff = precoEfetivo(base);
+      if (!descontoPct || eff === base) return fmtMoney(eff);
+      return fmtMoney(eff) + ' (tab. ' + fmtMoney(base) + ')';
+    }
+    function applyTheme(theme) {
+      const next = theme === 'light' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem(THEME_KEY, next);
+      const btn = document.getElementById('theme-toggle');
+      if (btn) btn.textContent = next === 'light' ? 'Escuro' : 'Claro';
+    }
+    function toggleTheme() {
+      const cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+      applyTheme(cur === 'light' ? 'dark' : 'light');
+    }
+    function setDesconto(val) {
+      const n = Math.max(0, Math.min(100, Number(val) || 0));
+      descontoPct = Math.round(n * 10) / 10;
+      localStorage.setItem(DESCONTO_KEY, String(descontoPct));
+      const inp = document.getElementById('desconto-pct');
+      if (inp && document.activeElement !== inp) inp.value = descontoPct ? String(descontoPct) : '';
+      renderCatalogo();
+      renderPedido();
+    }
+    function initDockControls() {
+      applyTheme(localStorage.getItem(THEME_KEY) === 'light' ? 'light' : 'dark');
+      const inp = document.getElementById('desconto-pct');
+      if (inp) {
+        inp.value = descontoPct ? String(descontoPct) : '';
+        inp.addEventListener('input', () => setDesconto(inp.value));
+        inp.addEventListener('change', () => setDesconto(inp.value));
+      }
+      bindClick('theme-toggle', toggleTheme);
     }
     function getQty(cod) {
       const n = Number(qtyMap[String(cod)] || 0);
@@ -1375,7 +1547,7 @@ function buildHtml({ classif, itens }) {
     }
     function itemSubtotal(item, qty) {
       const m2cx = parseM2Caixa(item);
-      const preco = Number(item.preco_m2);
+      const preco = precoEfetivo(item.preco_m2);
       if (!qty || !m2cx || !preco) return null;
       return qty * m2cx * preco;
     }
@@ -1454,7 +1626,7 @@ function buildHtml({ classif, itens }) {
         '<td class="col-modelo"><strong>' + esc(titulo) + '</strong>' + warn + '<br><small style="color:var(--muted)">#' + esc(cod) + '</small></td>' +
         '<td class="col-desc">' + esc(item.descricao) + '</td>' +
         '<td class="col-acab">' + esc(item.formigres_acabamento || '—') + '</td>' +
-        '<td class="col-preco">' + esc(fmtMoney(item.preco_m2)) + '</td>' +
+        '<td class="col-preco' + (descontoPct ? ' has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
         '<td class="col-qty">' +
         '<input type="number" class="qty-input qty-input-desktop" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" tabindex="0" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="Caixas" placeholder="0" />' +
         '<button type="button" class="qty-cell-btn' + (qty > 0 ? ' has-value' : '') + '" data-cod="' + esc(cod) + '" aria-label="Caixas">' + (qty > 0 ? qty : '+') + '</button>' +
@@ -1539,7 +1711,7 @@ function buildHtml({ classif, itens }) {
           '<td>' + qty + '</td>' +
           '<td>' + (m2cx ? m2cx.toFixed(2).replace('.', ',') : '—') + '</td>' +
           '<td>' + (m2tot ? m2tot.toFixed(2).replace('.', ',') : '—') + '</td>' +
-          '<td>' + esc(fmtMoney(item.preco_m2)) + '</td>' +
+          '<td class="' + (descontoPct ? 'has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
           '<td class="col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
       }).join('');
       document.getElementById('pedido-body').innerHTML = body;
@@ -1551,7 +1723,8 @@ function buildHtml({ classif, itens }) {
           '<span class="stat"><strong>' + totalM2.toFixed(2).replace('.', ',') + '</strong> m²</span>'
         : '';
       document.getElementById('pedido-total').innerHTML = rows.length
-        ? '<span>Total estimado: <strong>' + fmtMoney(totalValor) + '</strong></span>'
+        ? '<span>Total estimado: <strong>' + fmtMoney(totalValor) + '</strong></span>' +
+          (descontoPct ? '<p class="pedido-desconto-note">Preços com ' + descontoPct + '% de desconto comercial</p>' : '')
         : '';
       document.getElementById('pdf-pedido-panel')?.toggleAttribute('disabled', rows.length === 0);
       updateCartFab();
@@ -1629,11 +1802,13 @@ function buildHtml({ classif, itens }) {
         if (sub) totalValor += sub;
         const img = getGaleria(item)[0]?.url || '';
         const titulo = item.formigres_titulo || item.descricao;
-        return '<tr><td>' + (img ? '<img src="' + img + '" alt="" />' : '') + '</td><td>' + titulo + '<br><small>' + item.codigo_tintao + '</small></td><td>' + (item.formato || '—') + '</td><td style="text-align:center">' + qty + '</td><td>' + (m2cx ? m2cx.toFixed(2) : '—') + '</td><td>' + (m2tot ? m2tot.toFixed(2) : '—') + '</td><td>' + fmtMoney(item.preco_m2) + '</td><td style="text-align:right">' + (sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
+        return '<tr><td>' + (img ? '<img src="' + img + '" alt="" />' : '') + '</td><td>' + titulo + '<br><small>' + item.codigo_tintao + '</small></td><td>' + (item.formato || '—') + '</td><td style="text-align:center">' + qty + '</td><td>' + (m2cx ? m2cx.toFixed(2) : '—') + '</td><td>' + (m2tot ? m2tot.toFixed(2) : '—') + '</td><td>' + fmtPrecoPlain(item.preco_m2) + '</td><td style="text-align:right">' + (sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
       }).join('');
+      const descNote = descontoPct ? '<p style="margin:0 0 12px;color:#555;font-size:12px">Desconto comercial aplicado: ' + descontoPct + '% sobre a tabela.</p>' : '';
       return '<div style="font-family:Arial,sans-serif;padding:24px;color:#111">' +
         '<h1 style="margin:0 0 4px;font-size:20px">Pedido Formigres — seleção do lojista</h1>' +
-        '<p style="margin:0 0 16px;color:#555;font-size:12px">Gerado em ' + new Date().toLocaleString('pt-BR') + '</p>' +
+        '<p style="margin:0 0 8px;color:#555;font-size:12px">Gerado em ' + new Date().toLocaleString('pt-BR') + '</p>' +
+        descNote +
         '<table><thead><tr><th>Foto</th><th>Modelo</th><th>Formato</th><th>Caixas</th><th>m²/cx</th><th>m² total</th><th>Preço/m²</th><th>Subtotal</th></tr></thead><tbody>' + body + '</tbody></table>' +
         '<p style="text-align:right;margin-top:16px;font-size:14px"><strong>' + rows.length + ' modelos · ' + totalCaixas + ' caixas · ' + totalM2.toFixed(2) + ' m² · Total: ' + fmtMoney(totalValor) + '</strong></p></div>';
     }
@@ -1714,6 +1889,7 @@ function buildHtml({ classif, itens }) {
       const el = document.getElementById(id);
       if (el) el.addEventListener('click', fn);
     }
+    initDockControls();
 
     q.addEventListener('input', () => applySearch(q.value));
     groupSel?.addEventListener('change', () => syncGroupBy(groupSel.value));
