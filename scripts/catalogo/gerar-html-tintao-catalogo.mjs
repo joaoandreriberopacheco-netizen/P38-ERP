@@ -1044,6 +1044,14 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {} }) {
       color: var(--muted);
       line-height: 1.4;
     }
+    .pedido-pdf-preview {
+      width: 100%;
+      height: min(360px, 42vh);
+      border: 1px solid var(--border);
+      background: #fff;
+      margin: 0 0 12px;
+      border-radius: var(--radius);
+    }
     .pedido-pdf-sheet-actions {
       display: flex;
       flex-direction: column;
@@ -1457,7 +1465,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {} }) {
   <div class="pedido-pdf-sheet" id="pedido-pdf-sheet" role="dialog" aria-modal="true" aria-label="PDF do pedido">
     <div class="pedido-pdf-sheet-panel">
       <h3>PDF pronto</h3>
-      <p>Escolha abrir no leitor do telemóvel ou guardar o ficheiro.</p>
+      <p>Pré-visualização abaixo. Use Baixar PDF para guardar no telemóvel.</p>
+      <iframe id="pedido-pdf-preview" class="pedido-pdf-preview" title="Pré-visualização do PDF"></iframe>
       <div class="pedido-pdf-sheet-actions">
         <button type="button" class="btn btn-primary" id="pedido-pdf-open">Abrir PDF</button>
         <button type="button" class="btn" id="pedido-pdf-download">Baixar PDF</button>
@@ -1528,7 +1537,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {} }) {
       if (!url) return '';
       if (thumbs?.[url]) return thumbs[url];
       if (item?.imagem_url && thumbs?.[item.imagem_url]) return thumbs[item.imagem_url];
-      return thumbs?.[url] || url;
+      return '';
     }
     function fmtMoney(v) {
       if (v == null || v === '') return '—';
@@ -2012,8 +2021,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {} }) {
       return Math.ceil(Number(px || 0) * 25.4 / 96);
     }
     function printPageWidthPx() {
-      const w = window.innerWidth || 390;
-      return Math.min(480, Math.max(360, Math.round(w * 0.96)));
+      return 390;
     }
     function printPageWidthMm() {
       return Math.max(88, pxToMm(printPageWidthPx()));
@@ -2108,40 +2116,71 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {} }) {
       }
       pedidoPdfBlob = null;
     }
-    function loadHtml2Pdf() {
-      if (window.html2pdf) return Promise.resolve(window.html2pdf);
+    function loadHtml2PdfInWindow(win, doc) {
+      if (win.html2pdf) return Promise.resolve(win.html2pdf);
       return new Promise((resolve, reject) => {
-        const existing = document.getElementById('html2pdf-script');
-        if (existing) {
-          existing.addEventListener('load', () => resolve(window.html2pdf));
-          existing.addEventListener('error', () => reject(new Error('Falha ao carregar gerador PDF')));
-          return;
-        }
-        const script = document.createElement('script');
-        script.id = 'html2pdf-script';
+        const script = doc.createElement('script');
         script.src = HTML2PDF_URL;
         script.async = true;
-        script.onload = () => resolve(window.html2pdf);
+        script.onload = () => resolve(win.html2pdf);
         script.onerror = () => reject(new Error('Falha ao carregar gerador PDF'));
-        document.head.appendChild(script);
+        (doc.head || doc.body || doc.documentElement).appendChild(script);
       });
     }
-    function mountPedidoPdfRender(thumbs) {
+    async function renderPedidoPdfBlob(thumbs) {
       const pageWpx = printPageWidthPx();
       const pageWmm = printPageWidthMm();
-      const theme = PDF_THEME;
-      const host = document.getElementById('pedido-pdf-render-host');
-      if (!host) return null;
-      host.innerHTML = '';
-      const style = document.createElement('style');
-      style.textContent = printPedidoPrintCss(pageWmm, null);
-      host.appendChild(style);
-      const wrap = document.createElement('div');
-      wrap.className = 'print-render-root';
-      wrap.style.width = pageWpx + 'px';
-      wrap.innerHTML = buildPedidoPrintHtml(thumbs);
-      host.appendChild(wrap);
-      return { host, wrap, pageWpx, pageWmm };
+      const html = buildPedidoPrintHtml(thumbs);
+      const iframe = document.createElement('iframe');
+      iframe.setAttribute('aria-hidden', 'true');
+      iframe.style.cssText = 'position:fixed;left:0;top:0;width:' + pageWpx + 'px;height:2400px;border:0;opacity:0;pointer-events:none;z-index:2147483646;';
+      document.body.appendChild(iframe);
+      try {
+        const win = iframe.contentWindow;
+        const doc = win.document;
+        doc.open();
+        doc.write(
+          '<!DOCTYPE html><html><head><meta charset="utf-8"><style>' +
+          printPedidoPrintCss(pageWmm, null) +
+          '</style></head><body style="margin:0"><div class="print-render-root" style="width:' + pageWpx + 'px">' +
+          html +
+          '</div></body></html>'
+        );
+        doc.close();
+        await loadHtml2PdfInWindow(win, doc);
+        await waitPrintImagesRoot(doc.body);
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        const sheet = doc.querySelector('.print-sheet');
+        if (!sheet) throw new Error('Conteúdo do PDF indisponível');
+        const heightPx = Math.max(sheet.scrollHeight || 0, sheet.offsetHeight || 0, 280);
+        let pageHmm = Math.max(100, pxToMm(heightPx) + 12);
+        if (pageHmm > 1400) pageHmm = 297;
+        const pageStyle = doc.createElement('style');
+        pageStyle.textContent = printPedidoPrintCss(pageWmm, pageHmm);
+        doc.head.appendChild(pageStyle);
+        const blob = await win.html2pdf().set({
+          margin: 3,
+          filename: pedidoPdfFilename(),
+          image: { type: 'jpeg', quality: 0.94 },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            logging: false,
+            width: pageWpx,
+            windowWidth: pageWpx,
+            height: heightPx,
+            windowHeight: heightPx,
+            backgroundColor: pdfCanvasBackground(PDF_THEME),
+          },
+          jsPDF: { unit: 'mm', format: [pageWmm, pageHmm], orientation: 'portrait' },
+          pagebreak: { mode: ['css', 'legacy'] },
+        }).from(sheet).outputPdf('blob');
+        if (!blob || blob.size < 12000) throw new Error('PDF gerado vazio');
+        return blob;
+      } finally {
+        iframe.remove();
+      }
     }
     async function waitPrintImagesRoot(root) {
       const imgs = [...root.querySelectorAll('img')];
@@ -2162,11 +2201,22 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {} }) {
     function closePedidoPdfSheet() {
       pedidoPdfSheetOpen = false;
       document.getElementById('pedido-pdf-sheet')?.classList.remove('open');
+      document.getElementById('pedido-pdf-preview')?.removeAttribute('src');
       syncBodyScrollLock();
+    }
+    function updatePedidoPdfPreview() {
+      const frame = document.getElementById('pedido-pdf-preview');
+      if (!frame) return;
+      if (pedidoPdfBlobUrl) frame.src = pedidoPdfBlobUrl;
+      else frame.removeAttribute('src');
     }
     function openPedidoPdfFile() {
       if (!pedidoPdfBlobUrl) return;
-      window.open(pedidoPdfBlobUrl, '_blank', 'noopener,noreferrer');
+      updatePedidoPdfPreview();
+      document.getElementById('pedido-pdf-preview')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      try {
+        window.open(pedidoPdfBlobUrl, '_blank', 'noopener,noreferrer');
+      } catch { /* preview iframe já mostra o PDF */ }
     }
     function downloadPedidoPdfFile() {
       if (!pedidoPdfBlobUrl) return;
@@ -2184,57 +2234,23 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {} }) {
       const prevLabel = btn?.textContent || 'PDF do pedido';
       if (btn) { btn.disabled = true; btn.textContent = 'Gerando PDF…'; }
       const thumbs = loadPdfThumbs();
-      const mounted = mountPedidoPdfRender(thumbs);
-      if (!mounted) {
+      const thumbCount = Object.values(thumbs).filter(Boolean).length;
+      if (!thumbCount) {
+        alert('As miniaturas do PDF não carregaram. Recarregue a página e tente de novo.');
         if (btn) { btn.disabled = !pedidoItens().length; btn.textContent = prevLabel; }
         return;
       }
-      const { host, wrap, pageWpx, pageWmm } = mounted;
-      const prevHostVisibility = host.style.visibility;
-      const prevHostLeft = host.style.left;
       try {
-        host.style.visibility = 'visible';
-        host.style.left = '0';
-        host.style.width = pageWpx + 'px';
-        const html2pdf = await loadHtml2Pdf();
-        await waitPrintImagesRoot(wrap);
-        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-        const sheet = wrap.querySelector('.print-sheet') || wrap;
-        const heightPx = Math.max(sheet.scrollHeight || 0, wrap.scrollHeight || 0);
-        let pageHmm = Math.max(100, pxToMm(heightPx) + 12);
-        if (pageHmm > 1400) pageHmm = 297;
-        host.querySelector('style')?.remove();
-        const pageStyle = document.createElement('style');
-        pageStyle.textContent = printPedidoPrintCss(pageWmm, pageHmm);
-        host.insertBefore(pageStyle, wrap);
         revokePedidoPdfBlob();
-        pedidoPdfBlob = await html2pdf().set({
-          margin: [3, 2, 3, 2],
-          filename: pedidoPdfFilename(),
-          image: { type: 'jpeg', quality: 0.94 },
-          html2canvas: {
-            scale: 2,
-            useCORS: true,
-            allowTaint: true,
-            logging: false,
-            width: pageWpx,
-            windowWidth: pageWpx,
-            backgroundColor: pdfCanvasBackground(PDF_THEME),
-          },
-          jsPDF: { unit: 'mm', format: [pageWmm, pageHmm], orientation: 'portrait' },
-          pagebreak: { mode: ['css', 'legacy'] },
-        }).from(sheet).outputPdf('blob');
+        pedidoPdfBlob = await renderPedidoPdfBlob(thumbs);
         pedidoPdfBlobUrl = URL.createObjectURL(pedidoPdfBlob);
+        updatePedidoPdfPreview();
         closePedidoPanel();
         openPedidoPdfSheet();
       } catch (err) {
         console.error(err);
         alert('Não foi possível gerar o PDF. Verifique a ligação à internet e tente de novo.');
       } finally {
-        host.style.visibility = prevHostVisibility;
-        host.style.left = prevHostLeft;
-        host.style.width = '';
-        host.innerHTML = '';
         if (btn) {
           btn.disabled = !pedidoItens().length;
           btn.textContent = prevLabel;
