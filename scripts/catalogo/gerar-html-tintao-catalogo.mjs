@@ -1258,13 +1258,6 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       if (!descontoPct) return esc(fmtMoney(eff));
       return '<span class="preco-orig">' + esc(fmtMoney(base)) + '</span><strong class="preco-desc">' + esc(fmtMoney(eff)) + '</strong>';
     }
-    function fmtPrecoPlain(preco) {
-      const base = Number(preco);
-      if (!Number.isFinite(base) || base <= 0) return '—';
-      const eff = precoEfetivo(base);
-      if (!descontoPct || eff === base) return fmtMoney(eff);
-      return fmtMoney(eff) + ' (tab. ' + fmtMoney(base) + ')';
-    }
     function setDesconto(val) {
       const n = Math.max(0, Math.min(100, Number(val) || 0));
       descontoPct = Math.round(n * 10) / 10;
@@ -1690,7 +1683,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
         if (sub) totalValor += sub;
         const img = getGaleria(item)[0]?.url || '';
         const titulo = item.formigres_titulo || item.descricao;
-        return '<tr><td>' + (img ? '<img src="' + esc(img) + '" alt="" />' : '') + '</td><td>' + esc(titulo) + '<br><small>' + esc(item.codigo_tintao) + '</small></td><td>' + esc(item.formato || '—') + '</td><td style="text-align:center">' + qty + '</td><td>' + (m2cx ? fmtDecimal(m2cx) : '—') + '</td><td>' + (m2tot ? fmtDecimal(m2tot) : '—') + '</td><td>' + fmtPrecoPlain(item.preco_m2) + '</td><td style="text-align:right">' + (sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
+        return '<tr><td>' + (img ? '<img src="' + esc(img) + '" alt="" />' : '') + '</td><td>' + esc(titulo) + '<br><small>' + esc(item.codigo_tintao) + '</small></td><td>' + esc(item.formato || '—') + '</td><td style="text-align:center">' + qty + '</td><td>' + (m2cx ? fmtDecimal(m2cx) : '—') + '</td><td>' + (m2tot ? fmtDecimal(m2tot) : '—') + '</td><td class="col-preco-print">' + fmtPrecoHtml(item.preco_m2) + '</td><td style="text-align:right">' + (sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
       }).join('');
       const descNote = descontoPct ? '<p class="print-note">Desconto comercial aplicado: ' + descontoPct + '% sobre a tabela.</p>' : '';
       return '<header class="print-head">' +
@@ -1721,6 +1714,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
         '.print-table th, .print-table td { border: 1px solid #ccc; padding: 6px 8px; vertical-align: middle; }' +
         '.print-table th { background: #f5f5f5; text-align: left; }' +
         '.print-table img { width: 48px; height: 48px; object-fit: cover; display: block; }' +
+        '.col-preco-print { white-space: nowrap; }' +
+        '.preco-orig { display: block; text-decoration: line-through; color: #888; font-size: 9px; line-height: 1.2; font-weight: 400; }' +
+        '.preco-desc { display: block; font-weight: 700; color: #111; line-height: 1.25; }' +
         '.print-table tbody tr { break-inside: avoid; page-break-inside: avoid; }' +
         '.print-totals { text-align: right; margin: 16px 0 0; font-size: 14px; break-inside: avoid; page-break-inside: avoid; }' +
         '</style></head><body>' + content + '</body></html>');
