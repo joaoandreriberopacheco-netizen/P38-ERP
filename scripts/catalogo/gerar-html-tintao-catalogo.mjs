@@ -352,14 +352,55 @@ function buildHtml({ classif, itens }) {
       border-left: 3px solid var(--accent-dim);
     }
     .site-bar-inner {
-      max-width: 1100px;
+      max-width: 1480px;
       margin: 0 auto;
-      padding: 12px 16px;
+      padding: 10px 16px;
       display: flex;
       align-items: center;
       gap: 12px;
       flex-wrap: wrap;
     }
+    .site-bar-spacer { flex: 1 1 12px; min-width: 8px; }
+    .site-desconto {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: .78rem;
+      color: var(--muted);
+    }
+    .site-desconto label {
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .desconto-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .desconto-row .pct-suffix { color: var(--muted); font-size: .85rem; }
+    #desconto-pct {
+      width: 64px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-strong);
+      padding: 7px 6px;
+      font-size: .88rem;
+      text-align: center;
+    }
+    #desconto-pct:focus {
+      border-color: var(--accent-dim);
+      outline: none;
+      box-shadow: 0 0 0 3px var(--accent-ring);
+    }
+    .site-stat {
+      font-size: .78rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .site-stat strong { color: var(--accent); font-weight: 600; }
     .site-brand {
       font-size: .92rem;
       font-weight: 600;
@@ -378,96 +419,24 @@ function buildHtml({ classif, itens }) {
       text-transform: uppercase;
       color: var(--muted);
     }
-    .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
-    header.hero {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-left: 3px solid var(--accent-dim);
-      border-radius: var(--radius);
-      padding: 24px 22px;
-      margin-bottom: 18px;
-      box-shadow: var(--shadow-soft);
+    .wrap { max-width: 1480px; margin: 0 auto; padding: 16px 16px 32px; }
+    .page-head {
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
     }
-    header.hero h1 {
-      margin: 0 0 6px;
-      font-size: 1.5rem;
+    .page-head h1 {
+      margin: 0;
+      font-size: 1.15rem;
       font-weight: 600;
       letter-spacing: .06em;
       text-transform: uppercase;
       color: var(--text-strong);
     }
-    header.hero p { margin: 0; color: var(--muted); font-size: .92rem; }
-    .hero-cta {
-      display: none;
-      width: 100%;
-      margin-top: 14px;
-      padding: 14px 18px;
-      border-radius: var(--radius);
-      border: 1px solid var(--accent-border);
-      background: var(--accent-dim);
-      color: var(--accent-on);
-      font-size: .95rem;
-      font-weight: 600;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-      cursor: pointer;
-      box-shadow: var(--shadow-soft);
-      transition: background .25s ease, transform .15s ease;
-    }
-    .hero-cta:hover { background: var(--accent-bright); color: var(--accent-on); }
-    .hero-cta.pulse { animation: cta-pulse 2s ease-in-out 2; }
-    @keyframes cta-pulse {
-      0%, 100% { box-shadow: var(--shadow-soft); transform: scale(1); }
-      50% { box-shadow: 0 6px 20px var(--accent-glow); transform: scale(1.01); }
-    }
-    .flow-steps {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0;
-      margin-top: 16px;
-      padding: 12px 10px;
-      background: var(--surface-3);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-    }
-    .flow-step {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      flex: 1;
-      opacity: .45;
-      transition: opacity .2s ease;
-    }
-    .flow-step.active, .flow-step.done { opacity: 1; }
-    .flow-icon {
-      width: 28px; height: 28px;
-      border-radius: var(--radius);
-      background: var(--surface-2);
-      border: 2px solid var(--border);
-      display: grid; place-items: center;
-      font-size: .75rem; font-weight: 700;
-    }
-    .flow-step.active .flow-icon {
-      border-color: var(--accent);
-      background: var(--accent-soft);
-      color: var(--accent);
-    }
-    .flow-step.done .flow-icon {
-      border-color: var(--accent);
-      background: var(--accent);
-      color: var(--accent-on);
-    }
-    .flow-label { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
-    .flow-step.active .flow-label { color: var(--accent); font-weight: 600; }
-    .flow-line {
-      width: 24px; height: 2px; background: var(--border);
-      flex-shrink: 0; margin-bottom: 18px;
-    }
-    .flow-line.done { background: var(--accent-dim); }
-    .stats {
-      display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px;
+    .page-head p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: .82rem;
     }
     .stat {
       background: var(--surface);
@@ -625,6 +594,9 @@ function buildHtml({ classif, itens }) {
       outline: none;
       box-shadow: 0 0 0 3px var(--accent-ring);
     }
+    @media (max-width: 720px) {
+      .qty-input { width: 52px; min-height: 40px; font-size: .95rem; }
+    }
     .model-row { cursor: pointer; transition: background .2s ease; }
     .model-row.qty-focus-row {
       background: var(--accent-soft);
@@ -643,102 +615,22 @@ function buildHtml({ classif, itens }) {
     body.has-selection .model-row:not(.has-qty):hover {
       opacity: .95;
     }
-    .qty-cell-btn {
-      display: none;
-      align-items: center;
-      justify-content: center;
-      min-width: 52px;
-      min-height: 44px;
-      padding: 0 12px;
-      border-radius: var(--radius);
-      border: 1px dashed var(--border);
-      background: var(--surface-2);
-      color: var(--muted);
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .qty-cell-btn.has-value {
-      border-style: solid;
-      border-color: var(--accent);
-      background: var(--accent-soft);
-      color: var(--accent-deep);
-    }
-    .qty-dialog {
-      position: fixed; inset: 0; z-index: 55;
-      background: rgba(8,7,10,.75);
-      display: none; align-items: flex-end; justify-content: center;
-      padding: 0;
-    }
-    .qty-dialog.open { display: flex; }
-    .qty-dialog-panel {
-      width: 100%; max-width: 420px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius) var(--radius) 0 0;
-      padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
-      box-shadow: var(--shadow);
-    }
-    .qty-dialog-panel::before {
-      content: "";
-      display: block;
-      width: 40px; height: 4px;
-      background: var(--border);
-      border-radius: var(--radius);
-      margin: 0 auto 14px;
-    }
-    .qty-dialog-title { margin: 0 0 4px; font-size: 1rem; font-weight: 600; }
-    .qty-dialog-meta { margin: 0 0 16px; font-size: .78rem; color: var(--muted); }
-    .qty-dialog-stepper {
-      display: flex; align-items: center; justify-content: center;
-      gap: 0; margin-bottom: 16px;
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-      max-width: 220px;
-      margin-left: auto; margin-right: auto;
-    }
-    .qty-dialog-stepper .qty-step {
-      width: 56px; height: 56px;
-      border: 0; background: transparent;
-      color: var(--accent); font-size: 1.5rem; font-weight: 600;
-      cursor: pointer;
-    }
-    .qty-dialog-stepper .qty-input {
-      width: 72px; height: 56px;
-      border: 0; border-left: 1px solid var(--border); border-right: 1px solid var(--border);
-      border-radius: 0; font-size: 1.25rem; font-weight: 600;
-    }
-    .qty-dialog-actions {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-    }
-    .qty-dialog-actions .btn { border-radius: var(--radius); padding: 14px; font-size: .95rem; }
-    .qty-dialog-actions .btn-save {
-      background: var(--accent-dim);
-      border-color: var(--accent-border);
-      color: var(--accent-on);
-      font-weight: 600;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-    }
-    .qty-dialog-actions .btn-save:hover { background: var(--accent-bright); }
-    @media (min-width: 721px) {
-      .qty-dialog { align-items: center; padding: 20px; }
-      .qty-dialog-panel { border-radius: var(--radius); max-width: 380px; }
-      .qty-dialog-panel::before { display: none; }
-      .qty-cell-btn { display: none !important; }
-    }
-    .cart-fab {
+    .fab-stack {
       position: fixed;
-      right: 16px;
-      bottom: calc(78px + env(safe-area-inset-bottom));
+      right: 14px;
+      bottom: calc(14px + env(safe-area-inset-bottom));
       z-index: 40;
-      width: 56px;
-      height: 56px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+    }
+    .fab {
+      width: 48px;
+      height: 48px;
       border-radius: var(--radius);
       background: var(--surface-2);
-      border: 1px solid var(--accent-border);
+      border: 1px solid var(--border);
       color: var(--accent-bright);
       box-shadow: var(--shadow);
       cursor: pointer;
@@ -746,15 +638,33 @@ function buildHtml({ classif, itens }) {
       align-items: center;
       justify-content: center;
       padding: 0;
-      transition: transform .25s ease, box-shadow .25s ease, background .25s ease, color .25s ease;
+      transition: transform .2s ease, box-shadow .2s ease, background .2s ease, color .2s ease, opacity .2s ease;
+    }
+    .fab:hover {
+      transform: scale(1.04);
+      border-color: var(--accent-border);
+      background: var(--accent-muted);
+    }
+    .fab svg { width: 22px; height: 22px; stroke-width: 2; }
+    .fab-theme.is-active {
+      background: var(--accent-dim);
+      border-color: var(--accent-border);
+      color: var(--accent-on);
+      opacity: 1;
+    }
+    .fab-theme:not(.is-active) { opacity: .5; }
+    .fab-theme:not(.is-active):hover { opacity: .85; }
+    .cart-fab {
+      border-color: var(--accent-border);
+      color: var(--accent-bright);
+      position: relative;
     }
     .cart-fab:hover {
-      transform: scale(1.03);
       background: var(--accent-dim);
       color: var(--accent-on);
-      box-shadow: 0 10px 28px var(--accent-glow);
+      box-shadow: 0 8px 24px var(--accent-glow);
     }
-    .cart-fab svg { width: 26px; height: 26px; stroke-width: 2.2; }
+    .cart-fab svg { width: 24px; height: 24px; stroke-width: 2.2; }
     .cart-fab-badge {
       position: absolute;
       top: -4px;
@@ -793,7 +703,7 @@ function buildHtml({ classif, itens }) {
       border-radius: var(--radius) var(--radius) 0 0;
       padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
       width: 100%;
-      max-width: 1100px;
+      max-width: 1480px;
       max-height: 88vh;
       overflow-y: auto;
       box-shadow: var(--shadow);
@@ -992,61 +902,6 @@ function buildHtml({ classif, itens }) {
     }
     .lightbox-dot.active { background: var(--accent-bright); }
     .lightbox-dot[hidden] { display: none; }
-    footer.note {
-      margin: 0;
-      color: var(--muted);
-      font-size: .72rem;
-      letter-spacing: .04em;
-    }
-    .page-dock {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 35;
-      background: var(--surface-2);
-      border-top: 1px solid var(--border);
-      padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
-    }
-    .page-dock-inner {
-      max-width: 1100px;
-      margin: 0 auto;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 14px 20px;
-      align-items: flex-end;
-      justify-content: space-between;
-    }
-    .dock-group { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-    .dock-label {
-      font-size: .68rem;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      color: var(--muted);
-      font-weight: 600;
-    }
-    .desconto-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .desconto-row .pct-suffix { color: var(--muted); font-size: .85rem; }
-    #desconto-pct {
-      width: 72px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      color: var(--text-strong);
-      padding: 8px 8px;
-      font-size: .9rem;
-      text-align: center;
-    }
-    #desconto-pct:focus {
-      border-color: var(--accent-dim);
-      outline: none;
-      box-shadow: 0 0 0 3px var(--accent-ring);
-    }
-    .dock-theme-row { display: flex; align-items: center; gap: 8px; }
     .preco-orig {
       display: block;
       text-decoration: line-through;
@@ -1056,7 +911,6 @@ function buildHtml({ classif, itens }) {
     }
     .preco-desc { color: var(--text-strong); font-weight: 600; }
     .col-preco.has-desc .preco-desc { white-space: nowrap; }
-    .dock-note { flex: 1 1 100%; text-align: right; margin-top: 2px; }
     .pedido-desconto-note {
       font-size: .78rem;
       color: var(--muted);
@@ -1070,48 +924,44 @@ function buildHtml({ classif, itens }) {
       0%, 100% { box-shadow: var(--shadow); }
       50% { box-shadow: 0 10px 28px var(--accent-glow); }
     }
-    body.has-cart .wrap {
-      padding-bottom: calc(148px + env(safe-area-inset-bottom));
-    }
     @media (max-width: 720px) {
-      .wrap { padding: 14px 10px 36px; }
-      .hero-cta { display: block; }
-      header.hero { padding: 16px 14px; }
-      header.hero h1 { font-size: 1.15rem; }
-      .stat-hide-mobile { display: none; }
-      .toolbar { gap: 8px; margin-bottom: 10px; }
+      .wrap { padding: 10px 10px 20px; }
+      .page-head { margin-bottom: 8px; padding-bottom: 8px; }
+      .page-head h1 { font-size: 1rem; }
+      .page-head-hint { display: none; }
+      .site-bar-inner { padding: 8px 10px; gap: 8px; }
+      .site-divider, .site-sub { display: none; }
+      .site-desconto label { display: none; }
+      #desconto-pct { width: 56px; padding: 6px 4px; }
+      .site-stat { font-size: .72rem; }
+      .toolbar { gap: 6px; margin-bottom: 8px; }
       .toolbar-desktop-only { display: none !important; }
       .search { flex: 1; min-width: 0; }
-      .select-group, .btn { font-size: .8rem; padding: 9px 12px; }
-      .pedido-overlay.open { align-items: center; padding: 20px; }
+      .select-group, .btn { font-size: .78rem; padding: 8px 10px; }
+      .fab-stack { right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); gap: 6px; }
+      .fab { width: 44px; height: 44px; }
+      .fab svg { width: 20px; height: 20px; }
+      .pedido-overlay.open { align-items: center; padding: 12px; }
       .pedido-overlay.open .pedido-panel {
         border-radius: var(--radius);
-        max-height: 85vh;
+        max-height: 90vh;
       }
       .pedido-overlay.open .pedido-panel::before { display: none; }
-      .cart-fab { right: 16px; bottom: calc(78px + env(safe-area-inset-bottom)); }
-      .page-dock-inner { gap: 10px 14px; }
       details.acc > summary {
-        padding: 12px 12px 12px calc(10px + var(--depth, 0) * 12px);
-        gap: 8px;
+        padding: 10px 10px 10px calc(8px + var(--depth, 0) * 10px);
+        gap: 6px;
       }
-      .acc-inner { padding-left: calc(8px + var(--depth, 0) * 12px); }
-      .acc-title { font-size: .92rem; }
-      .acc-count { font-size: .72rem; padding: 3px 8px; }
+      .acc-inner { padding-left: calc(6px + var(--depth, 0) * 10px); }
+      .acc-title { font-size: .88rem; }
+      .acc-count { font-size: .7rem; padding: 2px 7px; }
       .col-desc, .model-table thead th:nth-child(3) { display: none; }
-      .model-table { font-size: .8rem; }
-      .qty-input-desktop { display: none !important; }
-      .qty-cell-btn { display: inline-flex; }
-      .qty-input { width: 64px; min-height: 44px; font-size: 1rem; }
+      .model-table { font-size: .78rem; }
       .col-qty, .model-table thead th:nth-child(6) {
-        position: sticky; right: 52px; background: var(--surface); z-index: 1;
-        box-shadow: -6px 0 8px rgba(0,0,0,.06);
+        position: sticky; right: 0; background: var(--surface); z-index: 1;
+        box-shadow: -4px 0 6px rgba(0,0,0,.05);
       }
       .model-table thead th:nth-child(6) { background: var(--surface-2); z-index: 2; }
-      .col-cod, .model-table thead th:nth-child(7) {
-        position: sticky; right: 0; background: var(--surface); z-index: 1;
-      }
-      .model-table thead th:nth-child(7) { background: var(--surface-2); z-index: 2; }
+      .col-cod, .model-table thead th:nth-child(7) { display: none; }
       .lightbox { padding: 10px; }
       .gallery-nav { width: 36px; height: 36px; }
     }
@@ -1162,24 +1012,22 @@ function buildHtml({ classif, itens }) {
       <span class="site-brand">Formigres</span>
       <span class="site-divider" aria-hidden="true"></span>
       <span class="site-sub">Pedido B2B · Lojistas</span>
+      <span class="site-bar-spacer" aria-hidden="true"></span>
+      <div class="site-desconto">
+        <label for="desconto-pct">Desconto</label>
+        <div class="desconto-row">
+          <input type="number" id="desconto-pct" min="0" max="100" step="0.1" inputmode="decimal" placeholder="0" aria-label="Desconto comercial em percentual" />
+          <span class="pct-suffix">%</span>
+        </div>
+      </div>
+      <span class="site-stat" id="stat-modelos"><strong id="stat-modelos-count">${total}</strong> <span id="stat-modelos-label">modelos</span></span>
     </div>
   </header>
   <div class="wrap">
-    <header class="hero">
+    <div class="page-head">
       <h1>Pedido Formigres</h1>
-      <p>Para lojistas — escolha o modelo, marque as caixas e revise o total</p>
-      <div class="stats">
-        <span class="stat" id="stat-modelos"><strong id="stat-modelos-count">${total}</strong> <span id="stat-modelos-label">modelos na lista</span></span>
-      </div>
-      <div class="flow-steps" aria-hidden="true">
-        <div class="flow-step active" id="flow-1"><span class="flow-icon">1</span><span class="flow-label">Explorar</span></div>
-        <span class="flow-line" id="flow-line-1"></span>
-        <div class="flow-step" id="flow-2"><span class="flow-icon">2</span><span class="flow-label">Caixas</span></div>
-        <span class="flow-line" id="flow-line-2"></span>
-        <div class="flow-step" id="flow-3"><span class="flow-icon">3</span><span class="flow-label">Revisar</span></div>
-      </div>
-      <button type="button" class="hero-cta" id="start-qty">Começar pedido</button>
-    </header>
+      <p class="page-head-hint">Marque caixas na tabela · revise no carrinho</p>
+    </div>
 
     <div class="toolbar">
       <div class="toolbar-main">
@@ -1191,6 +1039,7 @@ function buildHtml({ classif, itens }) {
           <option value="acabamento" selected>Por acabamento</option>
           <option value="tipo">Por tipo</option>
         </select>
+        <button type="button" class="btn btn-primary" id="start-qty">Caixas</button>
         <button type="button" class="btn" id="filter-qty">Na seleção</button>
         <button type="button" class="btn" id="clear-qty">Limpar</button>
         <button type="button" class="btn" id="expand-all">Abrir</button>
@@ -1212,32 +1061,25 @@ function buildHtml({ classif, itens }) {
     <section class="catalogo" id="catalogo"></section>
   </div>
 
-  <footer class="page-dock" id="page-dock">
-    <div class="page-dock-inner">
-      <div class="dock-group">
-        <span class="dock-label" for="desconto-pct">Desconto comercial</span>
-        <div class="desconto-row">
-          <input type="number" id="desconto-pct" min="0" max="100" step="0.1" inputmode="decimal" placeholder="0" aria-label="Desconto comercial em percentual" />
-          <span class="pct-suffix">%</span>
-        </div>
-      </div>
-      <div class="dock-group">
-        <span class="dock-label">Aparência</span>
-        <div class="dock-theme-row">
-          <button type="button" class="btn" id="theme-toggle" aria-label="Alternar tema claro ou escuro">Claro</button>
-        </div>
-      </div>
-      <p class="note dock-note">Catálogo offline · ${esc(gerado)}</p>
-    </div>
-  </footer>
-
-  <button type="button" class="cart-fab" id="cart-fab" aria-label="Minha seleção">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
-      <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
-    </svg>
-    <span class="cart-fab-badge" id="cart-fab-badge" data-count="0">0</span>
-  </button>
+  <div class="fab-stack" id="fab-stack">
+    <button type="button" class="fab fab-theme" id="theme-light" aria-label="Tema claro" title="Claro">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+      </svg>
+    </button>
+    <button type="button" class="fab fab-theme" id="theme-dark" aria-label="Tema escuro" title="Escuro">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+      </svg>
+    </button>
+    <button type="button" class="fab cart-fab" id="cart-fab" aria-label="Minha seleção">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
+        <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+      </svg>
+      <span class="cart-fab-badge" id="cart-fab-badge" data-count="0">0</span>
+    </button>
+  </div>
 
   <div class="pedido-overlay" id="pedido-overlay" role="dialog" aria-modal="true" aria-label="Minha seleção">
     <section class="pedido-panel" id="pedido-panel">
@@ -1269,22 +1111,6 @@ function buildHtml({ classif, itens }) {
   </div>
 
   <div id="pedido-print"></div>
-
-  <div class="qty-dialog" id="qty-dialog" role="dialog" aria-modal="true" aria-label="Quantidade de caixas">
-    <div class="qty-dialog-panel">
-      <h3 class="qty-dialog-title" id="qty-dialog-title">Modelo</h3>
-      <p class="qty-dialog-meta" id="qty-dialog-meta"></p>
-      <div class="qty-dialog-stepper">
-        <button type="button" class="qty-step minus" id="qty-dialog-minus" aria-label="Menos">−</button>
-        <input type="number" class="qty-input" id="qty-dialog-input" min="0" step="1" inputmode="numeric" autocomplete="off" placeholder="0" />
-        <button type="button" class="qty-step plus" id="qty-dialog-plus" aria-label="Mais">+</button>
-      </div>
-      <div class="qty-dialog-actions">
-        <button type="button" class="btn" id="qty-dialog-cancel">Cancelar</button>
-        <button type="button" class="btn btn-save" id="qty-dialog-save">Salvar</button>
-      </div>
-    </div>
-  </div>
 
   <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Galeria do produto">
     <div class="lightbox-panel">
@@ -1355,17 +1181,6 @@ function buildHtml({ classif, itens }) {
       if (!descontoPct || eff === base) return fmtMoney(eff);
       return fmtMoney(eff) + ' (tab. ' + fmtMoney(base) + ')';
     }
-    function applyTheme(theme) {
-      const next = theme === 'light' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem(THEME_KEY, next);
-      const btn = document.getElementById('theme-toggle');
-      if (btn) btn.textContent = next === 'light' ? 'Escuro' : 'Claro';
-    }
-    function toggleTheme() {
-      const cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
-      applyTheme(cur === 'light' ? 'dark' : 'light');
-    }
     function setDesconto(val) {
       const n = Math.max(0, Math.min(100, Number(val) || 0));
       descontoPct = Math.round(n * 10) / 10;
@@ -1375,7 +1190,14 @@ function buildHtml({ classif, itens }) {
       renderCatalogo();
       renderPedido();
     }
-    function initDockControls() {
+    function applyTheme(theme) {
+      const next = theme === 'light' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem(THEME_KEY, next);
+      document.getElementById('theme-light')?.classList.toggle('is-active', next === 'light');
+      document.getElementById('theme-dark')?.classList.toggle('is-active', next === 'dark');
+    }
+    function initTopControls() {
       applyTheme(localStorage.getItem(THEME_KEY) === 'light' ? 'light' : 'dark');
       const inp = document.getElementById('desconto-pct');
       if (inp) {
@@ -1383,17 +1205,12 @@ function buildHtml({ classif, itens }) {
         inp.addEventListener('input', () => setDesconto(inp.value));
         inp.addEventListener('change', () => setDesconto(inp.value));
       }
-      bindClick('theme-toggle', toggleTheme);
+      bindClick('theme-light', () => applyTheme('light'));
+      bindClick('theme-dark', () => applyTheme('dark'));
     }
     function getQty(cod) {
       const n = Number(qtyMap[String(cod)] || 0);
       return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
-    }
-    function syncQtyCellDisplay(cod, n) {
-      document.querySelectorAll('.qty-cell-btn[data-cod="' + cod + '"]').forEach((btn) => {
-        btn.textContent = n > 0 ? String(n) : '+';
-        btn.classList.toggle('has-value', n > 0);
-      });
     }
     function setQty(cod, val) {
       const n = Math.max(0, Math.floor(Number(val) || 0));
@@ -1404,17 +1221,12 @@ function buildHtml({ classif, itens }) {
         row.dataset.qty = String(n);
         row.classList.toggle('has-qty', n > 0);
       });
-      syncQtyCellDisplay(cod, n);
       document.querySelectorAll('.qty-input[data-cod="' + cod + '"]').forEach((input) => {
         if (document.activeElement !== input) input.value = n || '';
       });
       renderPedido();
       updateCartFab();
-      updateFlowSteps();
       if (filterQtyOnly) applySearch(document.getElementById('search').value);
-    }
-    function adjustQty(cod, delta) {
-      setQty(cod, getQty(cod) + delta);
     }
     function clearAllQty() {
       const hasQty = Object.keys(qtyMap).length > 0 || [...document.querySelectorAll('.qty-input')].some((el) => Number(el.value) > 0);
@@ -1425,27 +1237,19 @@ function buildHtml({ classif, itens }) {
       document.querySelectorAll('.qty-input').forEach((input) => {
         input.value = '';
       });
-      document.querySelectorAll('.qty-cell-btn').forEach((btn) => {
-        btn.textContent = '+';
-        btn.classList.remove('has-value');
-      });
       document.querySelectorAll('.model-row').forEach((row) => {
         row.dataset.qty = '0';
         row.classList.remove('has-qty');
       });
       renderPedido();
       updateCartFab();
-      updateFlowSteps();
       if (filterQtyOnly) applySearch(document.getElementById('search').value);
     }
     function visibleQtyInputs() {
-      return [...document.querySelectorAll('.model-row:not(.hidden) .qty-input-desktop')];
+      return [...document.querySelectorAll('.model-row:not(.hidden) .qty-input')];
     }
     function visibleRows() {
       return [...document.querySelectorAll('.model-row:not(.hidden)')];
-    }
-    function isMobileQty() {
-      return window.matchMedia('(max-width: 720px)').matches;
     }
     function clearQtyFocusRows() {
       document.querySelectorAll('.model-row.qty-focus-row').forEach((r) => r.classList.remove('qty-focus-row'));
@@ -1473,13 +1277,13 @@ function buildHtml({ classif, itens }) {
       focusQtyInput(list[nextIdx]);
     }
     function saveAndMoveQtyFocus(input, delta) {
-      if (!input || isMobileQty()) return;
+      if (!input) return;
       setQty(input.dataset.cod, input.value);
       moveQtyFocus(input, delta);
     }
     function handleQtyKeyboardNav(e) {
-      if (isMobileQty()) return;
-      const input = e.target.closest('.qty-input-desktop');
+      if (window.matchMedia('(max-width: 720px)').matches) return;
+      const input = e.target.closest('.qty-input');
       if (!input) return;
       let delta = 0;
       if (e.key === 'Tab') {
@@ -1506,38 +1310,10 @@ function buildHtml({ classif, itens }) {
       const empty = rows.find((r) => !getQty(r.dataset.cod));
       const target = empty || rows[0];
       if (!target) return;
-      const cod = target.dataset.cod;
-      if (isMobileQty()) openQtyDialog(cod);
-      else focusQtyInput(target.querySelector('.qty-input-desktop'));
-    }
-    let qtyDialogCod = null;
-    function openQtyDialog(cod) {
-      const item = itemsByCode.get(String(cod));
-      if (!item) return;
-      qtyDialogCod = String(cod);
-      const titulo = item.formigres_titulo || item.descricao;
-      document.getElementById('qty-dialog-title').textContent = titulo;
-      const meta = [item.formato, item.formigres_acabamento, '#' + item.codigo_tintao].filter(Boolean).join(' · ');
-      document.getElementById('qty-dialog-meta').textContent = meta;
-      const input = document.getElementById('qty-dialog-input');
-      input.value = getQty(cod) || '';
-      document.getElementById('qty-dialog').classList.add('open');
-      document.body.style.overflow = 'hidden';
-      requestAnimationFrame(() => { input.focus(); input.select(); });
-    }
-    function closeQtyDialog() {
-      document.getElementById('qty-dialog').classList.remove('open');
-      qtyDialogCod = null;
-      syncBodyScrollLock();
-    }
-    function saveQtyDialog() {
-      if (!qtyDialogCod) return;
-      setQty(qtyDialogCod, document.getElementById('qty-dialog-input').value);
-      closeQtyDialog();
+      focusQtyInput(target.querySelector('.qty-input'));
     }
     function syncBodyScrollLock() {
       const locked = pedidoOpen
-        || document.getElementById('qty-dialog').classList.contains('open')
         || document.getElementById('lightbox')?.classList.contains('open');
       document.body.style.overflow = locked ? 'hidden' : '';
     }
@@ -1629,8 +1405,7 @@ function buildHtml({ classif, itens }) {
         '<td class="col-acab">' + esc(item.formigres_acabamento || '—') + '</td>' +
         '<td class="col-preco' + (descontoPct ? ' has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
         '<td class="col-qty">' +
-        '<input type="number" class="qty-input qty-input-desktop" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" tabindex="0" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="Caixas" placeholder="0" />' +
-        '<button type="button" class="qty-cell-btn' + (qty > 0 ? ' has-value' : '') + '" data-cod="' + esc(cod) + '" aria-label="Caixas">' + (qty > 0 ? qty : '+') + '</button>' +
+        '<input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" tabindex="0" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="Caixas" placeholder="0" />' +
         '</td>' +
         '<td class="col-cod">' + esc(item.formato || '—') + '</td></tr>';
     }
@@ -1743,7 +1518,6 @@ function buildHtml({ classif, itens }) {
         : '';
       document.getElementById('pdf-pedido-panel')?.toggleAttribute('disabled', rows.length === 0);
       updateCartFab();
-      updateFlowSteps();
     }
 
     function updateCartFab() {
@@ -1763,39 +1537,19 @@ function buildHtml({ classif, itens }) {
           ? 'Minha seleção — ' + count + ' modelos, ' + totalCaixas + ' caixas'
           : 'Minha seleção vazia');
       }
-      document.body.classList.add('has-cart');
       document.body.classList.toggle('has-selection', count > 0);
-    }
-
-    function updateFlowSteps() {
-      const n = pedidoItens().length;
-      const s1 = document.getElementById('flow-1');
-      const s2 = document.getElementById('flow-2');
-      const s3 = document.getElementById('flow-3');
-      const l1 = document.getElementById('flow-line-1');
-      const l2 = document.getElementById('flow-line-2');
-      s1?.classList.toggle('done', true);
-      s1?.classList.toggle('active', n === 0);
-      s2?.classList.toggle('active', n === 0);
-      s2?.classList.toggle('done', n > 0);
-      s3?.classList.toggle('active', n > 0);
-      s3?.classList.toggle('done', pedidoOpen && n > 0);
-      l1?.classList.toggle('done', n > 0);
-      l2?.classList.toggle('done', n > 0);
     }
 
     function openPedidoPanel() {
       pedidoOpen = true;
       document.getElementById('pedido-overlay').classList.add('open');
       renderPedido();
-      updateFlowSteps();
       syncBodyScrollLock();
     }
 
     function closePedidoPanel() {
       pedidoOpen = false;
       document.getElementById('pedido-overlay').classList.remove('open');
-      updateFlowSteps();
       syncBodyScrollLock();
     }
 
@@ -1877,11 +1631,6 @@ function buildHtml({ classif, itens }) {
       renderCatalogo();
       renderPedido();
       updateCartFab();
-      updateFlowSteps();
-      if (!sessionStorage.getItem('tintao-seen')) {
-        document.querySelector('.hero-cta')?.classList.add('pulse');
-        sessionStorage.setItem('tintao-seen', '1');
-      }
       requestAnimationFrame(() => requestAnimationFrame(revealApp));
     }
 
@@ -1904,7 +1653,7 @@ function buildHtml({ classif, itens }) {
       const el = document.getElementById(id);
       if (el) el.addEventListener('click', fn);
     }
-    initDockControls();
+    initTopControls();
 
     q.addEventListener('input', () => applySearch(q.value));
     groupSel?.addEventListener('change', () => syncGroupBy(groupSel.value));
@@ -1922,25 +1671,6 @@ function buildHtml({ classif, itens }) {
     bindClick('clear-qty-panel', () => { clearAllQty(); if (!pedidoItens().length) closePedidoPanel(); });
     document.getElementById('pedido-overlay')?.addEventListener('click', (e) => {
       if (e.target.id === 'pedido-overlay') closePedidoPanel();
-    });
-    bindClick('qty-dialog-cancel', closeQtyDialog);
-    bindClick('qty-dialog-save', saveQtyDialog);
-    bindClick('qty-dialog-minus', () => {
-      if (!qtyDialogCod) return;
-      const input = document.getElementById('qty-dialog-input');
-      input.value = Math.max(0, (Number(input.value) || 0) - 1);
-    });
-    bindClick('qty-dialog-plus', () => {
-      if (!qtyDialogCod) return;
-      const input = document.getElementById('qty-dialog-input');
-      input.value = (Number(input.value) || 0) + 1;
-    });
-    document.getElementById('qty-dialog')?.addEventListener('click', (e) => {
-      if (e.target.id === 'qty-dialog') closeQtyDialog();
-    });
-    document.getElementById('qty-dialog-input')?.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); saveQtyDialog(); }
-      if (e.key === 'Escape') closeQtyDialog();
     });
     bindClick('toolbar-more', () => {
       const extra = document.getElementById('toolbar-extra');
@@ -1962,38 +1692,29 @@ function buildHtml({ classif, itens }) {
       setQty(input.dataset.cod, input.value);
     });
     document.getElementById('catalogo').addEventListener('focusin', (e) => {
-      const input = e.target.closest('.qty-input-desktop');
-      if (!input || isMobileQty()) return;
+      const input = e.target.closest('.qty-input');
+      if (!input || !input.closest('.model-row')) return;
       clearQtyFocusRows();
       input.closest('.model-row')?.classList.add('qty-focus-row');
       input.select();
     });
     document.getElementById('catalogo').addEventListener('focusout', (e) => {
-      const input = e.target.closest('.qty-input-desktop');
-      if (!input || isMobileQty()) return;
+      const input = e.target.closest('.qty-input');
+      if (!input || !input.closest('.model-row')) return;
       input.closest('.model-row')?.classList.remove('qty-focus-row');
     });
     document.getElementById('catalogo').addEventListener('keydown', handleQtyKeyboardNav);
 
     document.getElementById('catalogo').addEventListener('click', (e) => {
-      const qtyBtn = e.target.closest('.qty-cell-btn');
-      if (qtyBtn) {
-        e.stopPropagation();
-        const cod = qtyBtn.dataset.cod;
-        if (isMobileQty()) openQtyDialog(cod);
-        else focusQtyInput(qtyBtn.closest('.model-row')?.querySelector('.qty-input-desktop'));
-        return;
-      }
       const btn = e.target.closest('.thumb-btn');
       if (btn) {
         onThumbClick(btn);
         return;
       }
-      if (e.target.closest('.qty-input, .qty-stepper')) return;
+      if (e.target.closest('.qty-input')) return;
       const row = e.target.closest('.model-row');
       if (!row || row.classList.contains('hidden')) return;
-      if (isMobileQty()) openQtyDialog(row.dataset.cod);
-      else focusQtyInput(row.querySelector('.qty-input-desktop'));
+      focusQtyInput(row.querySelector('.qty-input'));
     });
 
     bootApp();
@@ -2061,8 +1782,7 @@ function buildHtml({ classif, itens }) {
     lb.addEventListener('click', (e) => { if (e.target === lb) closeLightbox(); });
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        if (document.getElementById('qty-dialog').classList.contains('open')) closeQtyDialog();
-        else if (lb.classList.contains('open')) closeLightbox();
+        if (lb.classList.contains('open')) closeLightbox();
         else if (pedidoOpen) closePedidoPanel();
       }
       if (!lb.classList.contains('open')) return;
