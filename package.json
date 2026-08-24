@@ -86,6 +86,7 @@
     "catalogo:snapshot-formigres": "node scripts/catalogo/snapshot-formigres.mjs",
     "catalogo:snapshot-cerbras": "node scripts/catalogo/snapshot-cerbras.mjs",
     "catalogo:match": "node scripts/catalogo/match-local.mjs",
+    "catalogo:classificar-tintao": "node scripts/catalogo/classificar-tintao-formigres.mjs",
     "produto:nome:restaurar": "node scripts/restaurar-nomes-produto-hierarquia.mjs",
     "produto:nome:restaurar:apply": "node scripts/restaurar-nomes-produto-hierarquia.mjs --apply",
     "git:ship": "node scripts/git-ship.mjs",
