@@ -848,21 +848,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
     .btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
     #pedido-print { display: none; }
     @media print {
-      @page { size: A4; margin: 12mm; }
-      body { background: #fff !important; color: #111 !important; margin: 0; }
-      body > .load-overlay { display: none !important; }
-      #app-shell > *:not(#pedido-print) { display: none !important; }
-      #app-shell { display: block !important; visibility: visible !important; }
+      body > :not(#pedido-print) { display: none !important; }
       #pedido-print {
         display: block !important;
         width: 100%;
         padding: 0;
       }
-      #pedido-print .pedido-print-sheet { page-break-after: avoid; }
-      #pedido-print table { width: 100%; border-collapse: collapse; font-size: 11px; }
-      #pedido-print th, #pedido-print td { border: 1px solid #ccc; padding: 6px 8px; }
-      #pedido-print img { width: 48px; height: 48px; object-fit: cover; }
-      #pedido-print tr { page-break-inside: avoid; }
     }
     .thumb-btn {
       display: block;
@@ -1191,6 +1182,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
   </div>
 
   <div id="pedido-print"></div>
+
+  <iframe id="pedido-print-frame" title="Impressão do pedido" hidden></iframe>
 
   <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Galeria do produto">
     <div class="lightbox-panel">
@@ -1667,13 +1660,6 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       syncBodyScrollLock();
     }
 
-    function printPedidoPdf() {
-      if (!pedidoItens().length) return;
-      closePedidoPanel();
-      document.getElementById('pedido-print').innerHTML = buildPedidoPrintHtml();
-      window.print();
-    }
-
     function buildPedidoPrintHtml() {
       const rows = pedidoItens();
       let totalCaixas = 0, totalM2 = 0, totalValor = 0;
@@ -1686,15 +1672,52 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
         if (sub) totalValor += sub;
         const img = getGaleria(item)[0]?.url || '';
         const titulo = item.formigres_titulo || item.descricao;
-        return '<tr><td>' + (img ? '<img src="' + img + '" alt="" />' : '') + '</td><td>' + titulo + '<br><small>' + item.codigo_tintao + '</small></td><td>' + (item.formato || '—') + '</td><td style="text-align:center">' + qty + '</td><td>' + (m2cx ? fmtDecimal(m2cx) : '—') + '</td><td>' + (m2tot ? fmtDecimal(m2tot) : '—') + '</td><td>' + fmtPrecoPlain(item.preco_m2) + '</td><td style="text-align:right">' + (sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
+        return '<tr><td>' + (img ? '<img src="' + esc(img) + '" alt="" />' : '') + '</td><td>' + esc(titulo) + '<br><small>' + esc(item.codigo_tintao) + '</small></td><td>' + esc(item.formato || '—') + '</td><td style="text-align:center">' + qty + '</td><td>' + (m2cx ? fmtDecimal(m2cx) : '—') + '</td><td>' + (m2tot ? fmtDecimal(m2tot) : '—') + '</td><td>' + fmtPrecoPlain(item.preco_m2) + '</td><td style="text-align:right">' + (sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
       }).join('');
-      const descNote = descontoPct ? '<p style="margin:0 0 12px;color:#555;font-size:12px">Desconto comercial aplicado: ' + descontoPct + '% sobre a tabela.</p>' : '';
-      return '<div class="pedido-print-sheet" style="font-family:Arial,sans-serif;padding:24px;color:#111">' +
-        '<h1 style="margin:0 0 4px;font-size:20px">Pedido Formigres</h1>' +
-        '<p style="margin:0 0 8px;color:#555;font-size:12px">1ª via · Gerado em ' + new Date().toLocaleString('pt-BR') + '</p>' +
+      const descNote = descontoPct ? '<p class="print-note">Desconto comercial aplicado: ' + descontoPct + '% sobre a tabela.</p>' : '';
+      return '<header class="print-head">' +
+        '<h1>Pedido Formigres</h1>' +
+        '<p class="print-meta">1ª via · Gerado em ' + esc(new Date().toLocaleString('pt-BR')) + '</p>' +
         descNote +
-        '<table><thead><tr><th>Foto</th><th>Modelo</th><th>Formato</th><th>Caixas</th><th>m²/cx</th><th>m² total</th><th>Preço/m²</th><th>Subtotal</th></tr></thead><tbody>' + body + '</tbody></table>' +
-        '<p style="text-align:right;margin-top:16px;font-size:14px"><strong>' + rows.length + ' modelos · ' + totalCaixas + ' caixas · ' + fmtDecimal(totalM2) + ' m² · Total: ' + fmtMoney(totalValor) + '</strong></p></div>';
+        '</header>' +
+        '<table class="print-table"><thead><tr><th>Foto</th><th>Modelo</th><th>Formato</th><th>Caixas</th><th>m²/cx</th><th>m² total</th><th>Preço/m²</th><th>Subtotal</th></tr></thead><tbody>' + body + '</tbody></table>' +
+        '<p class="print-totals"><strong>' + rows.length + ' modelos · ' + totalCaixas + ' caixas · ' + fmtDecimal(totalM2) + ' m² · Total: ' + fmtMoney(totalValor) + '</strong></p>';
+    }
+    function printPedidoPdf() {
+      if (!pedidoItens().length) return;
+      closePedidoPanel();
+      const content = buildPedidoPrintHtml();
+      const frame = document.getElementById('pedido-print-frame');
+      if (!frame) return;
+      const doc = frame.contentDocument || frame.contentWindow?.document;
+      if (!doc) return;
+      doc.open();
+      doc.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Pedido Formigres</title><style>' +
+        '@page { size: A4; margin: 12mm; }' +
+        'body { font-family: Arial, sans-serif; color: #111; margin: 0; padding: 0; }' +
+        '.print-head { margin-bottom: 12px; }' +
+        'h1 { margin: 0 0 4px; font-size: 20px; }' +
+        '.print-meta, .print-note { margin: 0 0 8px; color: #555; font-size: 12px; }' +
+        '.print-table { width: 100%; border-collapse: collapse; font-size: 11px; }' +
+        '.print-table thead { display: table-header-group; }' +
+        '.print-table th, .print-table td { border: 1px solid #ccc; padding: 6px 8px; vertical-align: middle; }' +
+        '.print-table th { background: #f5f5f5; text-align: left; }' +
+        '.print-table img { width: 48px; height: 48px; object-fit: cover; display: block; }' +
+        '.print-table tbody tr { break-inside: avoid; page-break-inside: avoid; }' +
+        '.print-totals { text-align: right; margin: 16px 0 0; font-size: 14px; break-inside: avoid; page-break-inside: avoid; }' +
+        '</style></head><body>' + content + '</body></html>');
+      doc.close();
+      const win = frame.contentWindow;
+      if (!win) return;
+      const cleanup = () => {
+        try { doc.open(); doc.write(''); doc.close(); } catch { /* ignore */ }
+      };
+      win.onafterprint = cleanup;
+      win.focus();
+      setTimeout(() => {
+        win.print();
+        setTimeout(cleanup, 30000);
+      }, 250);
     }
 
     function collectImageUrls() {
