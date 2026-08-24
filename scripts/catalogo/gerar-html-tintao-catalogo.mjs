@@ -373,7 +373,26 @@ function buildHtml({ classif, itens }) {
       font-size: .85rem;
       text-align: center;
     }
-    .qty-input:focus { border-color: var(--accent-dim); outline: none; }
+    .qty-input:focus {
+      border-color: var(--accent);
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(164,206,51,.2);
+    }
+    .model-row { cursor: pointer; }
+    .model-row.qty-focus-row {
+      background: rgba(164,206,51,.1);
+      box-shadow: inset 3px 0 0 var(--accent);
+    }
+    .model-row.qty-focus-row .qty-input {
+      border-color: var(--accent);
+      background: #1a1c14;
+    }
+    .qty-hint {
+      font-size: .78rem;
+      color: var(--muted);
+      margin: -8px 0 14px;
+      line-height: 1.4;
+    }
     .pedido-panel {
       display: none;
       background: var(--surface);
@@ -540,14 +559,24 @@ function buildHtml({ classif, itens }) {
       .acc-count { font-size: .72rem; padding: 3px 8px; }
       .col-desc, .model-table thead th:nth-child(3) { display: none; }
       .model-table { font-size: .8rem; }
-      .col-modelo { min-width: 100px; }
+      .qty-input { width: 64px; min-height: 44px; font-size: 1rem; }
+      .col-qty, .model-table thead th:nth-child(6) {
+        position: sticky; right: 52px; background: var(--bg); z-index: 1;
+        box-shadow: -6px 0 8px rgba(0,0,0,.2);
+      }
+      .model-table thead th:nth-child(6) { background: #232027; z-index: 2; }
+      .col-cod, .model-table thead th:nth-child(7) {
+        position: sticky; right: 0; background: var(--bg); z-index: 1;
+      }
+      .model-table thead th:nth-child(7) { background: #232027; z-index: 2; }
       .lightbox { padding: 10px; }
       .gallery-nav { width: 36px; height: 36px; }
     }
     @media (max-width: 480px) {
       .col-acab, .col-cod,
       .model-table thead th:nth-child(4),
-      .model-table thead th:nth-child(6) { display: none; }
+      .model-table thead th:nth-child(7) { display: none; }
+      .col-qty, .model-table thead th:nth-child(6) { right: 0; }
       .stats { gap: 6px; }
       .stat { font-size: .75rem; padding: 5px 10px; }
       .thumb-btn { width: 42px; height: 42px; }
@@ -578,11 +607,13 @@ function buildHtml({ classif, itens }) {
       </select>
       <button type="button" class="btn" id="filter-qty">Só com quantidade</button>
       <button type="button" class="btn" id="clear-qty" title="Zerar todas as caixas preenchidas">Limpar seleção</button>
+      <button type="button" class="btn btn-primary" id="start-qty" title="Abrir tudo e focar o primeiro campo de caixas">Preencher caixas</button>
       <button type="button" class="btn" id="toggle-pedido">Ver pedido</button>
       <button type="button" class="btn btn-primary" id="pdf-pedido">PDF do pedido</button>
       <button type="button" class="btn" id="expand-all">Abrir tudo</button>
       <button type="button" class="btn" id="collapse-all">Fechar tudo</button>
     </div>
+    <p class="qty-hint">Dica: toque na linha para editar caixas · <strong>Enter</strong> próximo · <strong>Shift+Enter</strong> anterior · botão <strong>Preencher caixas</strong> abre tudo e começa no primeiro vazio</p>
 
     <section class="pedido-panel" id="pedido-panel" aria-label="Resumo do pedido">
       <h2>Resumo do pedido</h2>
@@ -677,6 +708,39 @@ function buildHtml({ classif, itens }) {
       renderPedido();
       if (filterQtyOnly) applySearch(document.getElementById('search').value);
     }
+    function visibleQtyInputs() {
+      return [...document.querySelectorAll('.model-row:not(.hidden) .qty-input')];
+    }
+    function clearQtyFocusRows() {
+      document.querySelectorAll('.model-row.qty-focus-row').forEach((r) => r.classList.remove('qty-focus-row'));
+    }
+    function focusQtyInput(input, { select = true } = {}) {
+      if (!input) return;
+      let el = input.parentElement;
+      while (el) {
+        if (el.tagName === 'DETAILS' && !el.open) el.open = true;
+        el = el.parentElement;
+      }
+      clearQtyFocusRows();
+      input.closest('.model-row')?.classList.add('qty-focus-row');
+      input.focus({ preventScroll: true });
+      if (select) input.select();
+      input.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+    function moveQtyFocus(input, delta) {
+      const list = visibleQtyInputs();
+      const idx = list.indexOf(input);
+      if (idx < 0) return;
+      const next = list[idx + delta];
+      if (next) focusQtyInput(next);
+    }
+    function startQtyEntry() {
+      dom.allDetails.forEach((d) => { d.open = true; });
+      applySearch(document.getElementById('search').value);
+      const list = visibleQtyInputs();
+      const empty = list.find((i) => !Number(i.value));
+      focusQtyInput(empty || list[0]);
+    }
     function parseM2Caixa(item) {
       if (item.m2_por_caixa) return Number(item.m2_por_caixa);
       const m = String(item.unidade || item.descricao || '').match(/CX\\s*([\\d,]+)\\s*M2/i) || String(item.descricao || '').match(/([\\d,]+)\\s*M2/i);
@@ -764,7 +828,7 @@ function buildHtml({ classif, itens }) {
         '<td class="col-desc">' + esc(item.descricao) + '</td>' +
         '<td class="col-acab">' + esc(item.formigres_acabamento || '—') + '</td>' +
         '<td class="col-preco">' + esc(fmtMoney(item.preco_m2)) + '</td>' +
-        '<td class="col-qty"><input type="number" class="qty-input" min="0" step="1" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="Caixas" placeholder="0" /></td>' +
+        '<td class="col-qty"><input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="Caixas de ' + esc(titulo) + '" placeholder="0" /></td>' +
         '<td class="col-cod">' + esc(cod) + '</td></tr>';
     }
     function renderFormato(formato, items) {
@@ -882,6 +946,7 @@ function buildHtml({ classif, itens }) {
     const groupSel = document.getElementById('group-by');
     const btnFilterQty = document.getElementById('filter-qty');
     const btnClearQty = document.getElementById('clear-qty');
+    const btnStartQty = document.getElementById('start-qty');
     const btnPedido = document.getElementById('toggle-pedido');
     const btnPdf = document.getElementById('pdf-pedido');
     const pedidoPanel = document.getElementById('pedido-panel');
@@ -897,6 +962,7 @@ function buildHtml({ classif, itens }) {
       applySearch(q.value);
     });
     btnClearQty.addEventListener('click', clearAllQty);
+    btnStartQty.addEventListener('click', startQtyEntry);
     btnPedido.addEventListener('click', () => {
       pedidoOpen = !pedidoOpen;
       pedidoPanel.classList.toggle('open', pedidoOpen);
@@ -925,6 +991,29 @@ function buildHtml({ classif, itens }) {
       setQty(input.dataset.cod, input.value);
       const row = input.closest('.model-row');
       if (row) row.dataset.qty = String(getQty(input.dataset.cod));
+    });
+    document.getElementById('catalogo').addEventListener('focusin', (e) => {
+      const input = e.target.closest('.qty-input');
+      if (!input) return;
+      clearQtyFocusRows();
+      input.closest('.model-row')?.classList.add('qty-focus-row');
+      input.select();
+    });
+    document.getElementById('catalogo').addEventListener('focusout', (e) => {
+      const input = e.target.closest('.qty-input');
+      if (!input) return;
+      input.closest('.model-row')?.classList.remove('qty-focus-row');
+    });
+    document.getElementById('catalogo').addEventListener('keydown', (e) => {
+      const input = e.target.closest('.qty-input');
+      if (!input) return;
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        setQty(input.dataset.cod, input.value);
+        const row = input.closest('.model-row');
+        if (row) row.dataset.qty = String(getQty(input.dataset.cod));
+        moveQtyFocus(input, e.shiftKey ? -1 : 1);
+      }
     });
 
     document.getElementById('expand-all').addEventListener('click', () => {
@@ -991,8 +1080,14 @@ function buildHtml({ classif, itens }) {
 
     document.getElementById('catalogo').addEventListener('click', (e) => {
       const btn = e.target.closest('.thumb-btn');
-      if (!btn) return;
-      onThumbClick(btn);
+      if (btn) {
+        onThumbClick(btn);
+        return;
+      }
+      if (e.target.closest('.qty-input')) return;
+      const row = e.target.closest('.model-row');
+      if (!row || row.classList.contains('hidden')) return;
+      focusQtyInput(row.querySelector('.qty-input'));
     });
     btnPrev.addEventListener('click', () => renderGaleriaIdx(galeriaIdx - 1));
     btnNext.addEventListener('click', () => renderGaleriaIdx(galeriaIdx + 1));
