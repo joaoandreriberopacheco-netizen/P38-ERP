@@ -887,8 +887,8 @@ function buildHtml({ classif, itens }) {
       </div>
       <div class="toolbar-extra toolbar-mobile-only" id="toolbar-extra" hidden>
         <select id="group-by" class="select-group" title="Agrupar">
+          <option value="acabamento" selected>Por acabamento</option>
           <option value="tipo">Por tipo</option>
-          <option value="acabamento">Por acabamento</option>
         </select>
         <button type="button" class="btn" id="filter-qty">Na seleção</button>
         <button type="button" class="btn" id="clear-qty">Limpar</button>
@@ -897,8 +897,8 @@ function buildHtml({ classif, itens }) {
       </div>
       <div class="toolbar-extra toolbar-desktop-only">
         <select id="group-by-desktop" class="select-group">
+          <option value="acabamento" selected>Agrupar: acabamento</option>
           <option value="tipo">Agrupar: tipo</option>
-          <option value="acabamento">Agrupar: acabamento</option>
         </select>
         <button type="button" class="btn" id="filter-qty-d">Só na seleção</button>
         <button type="button" class="btn" id="clear-qty-d">Limpar seleção</button>
@@ -995,7 +995,7 @@ function buildHtml({ classif, itens }) {
     const itemsByCode = new Map(CATALOGO.itens.map((i) => [String(i.codigo_tintao), i]));
     let qtyMap = {};
     try { qtyMap = JSON.parse(localStorage.getItem(QTY_KEY) || '{}'); } catch { qtyMap = {}; }
-    let groupBy = 'tipo';
+    let groupBy = 'acabamento';
     let filterQtyOnly = false;
     let pedidoOpen = false;
     let dom = {};
