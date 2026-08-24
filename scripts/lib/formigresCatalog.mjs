@@ -83,6 +83,132 @@ function splitGluedToken(t) {
   return m ? m[1] : t;
 }
 
+const STRIP_NOISE_RE = /\b(RT|HD|PEI\d*|LD|LC|JU|P|BOLD|BRILH\w*|MAT\w*|POL\w*|SEMI\w*|ANTI\w*|AD|RELEV\/?\/?OUTS?\w*|RELEVO|OUTSIDE|EXT|PE|ACETINADO|CX|EXTRA|F-\d+)\b/gi;
+const TOKEN_NOISE_RE = /^(PEI\d*|HD\d*|CX\d.*M2|\d+[,.]?\d*M2|\d+D?|F\d+|EXTRA)$/i;
+
+/** Códigos de cor na lista Tintão → palavras no título Formigres. */
+const COR_MAP = {
+  BG: ['BG', 'BEGE'],
+  BEGE: ['BG', 'BEGE'],
+  VD: ['VD', 'VERDE'],
+  VERDE: ['VD', 'VERDE'],
+  CZ: ['CZ', 'CINZA'],
+  CINZA: ['CZ', 'CINZA'],
+  MR: ['MR', 'MARROM'],
+  MRM: ['MR', 'MARROM', 'MRM'],
+  MARROM: ['MR', 'MARROM', 'MRM'],
+  AZ: ['AZ', 'AZUL'],
+  AZUL: ['AZ', 'AZUL'],
+  CL: ['CL'],
+  BR: ['BR'],
+  CAFE: ['CAFE', 'CAFÉ', 'CF'],
+  CAFÉ: ['CAFE', 'CAFÉ', 'CF'],
+  MARFIM: ['MARFIM', 'MRM'],
+};
+
+function titleWords(titulo) {
+  return stripAccents(titulo)
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, ' ')
+    .split(' ')
+    .filter((w) => w.length >= 2);
+}
+
+function extractCorTokens(raw) {
+  const upper = stripAccents(raw).toUpperCase();
+  const found = new Set();
+  const patterns = [
+    [/\bBG\b|\bBEGE\b/, 'BG'],
+    [/\bVD\b|\bVERDE\b/, 'VD'],
+    [/\bCZ\b|\bCINZA\b/, 'CZ'],
+    [/\bMRM\b|\bMARROM\b/, 'MRM'],
+    [/\bMR\b/, 'MR'],
+    [/\bAZUL\b|\bAZ\b/, 'AZ'],
+    [/\bCL\b/, 'CL'],
+    [/\bBRILHANTE\b|\bBR\b(?![A-Z])/, 'BR'],
+    [/\bCAFE\b|\bCAFÉ\b/, 'CAFE'],
+    [/\bMARFIM\b/, 'MARFIM'],
+  ];
+  for (const [re, code] of patterns) {
+    if (re.test(upper)) found.add(code);
+  }
+  return [...found];
+}
+
+function isNoiseToken(clean) {
+  if (!clean || clean.length < 2) return true;
+  if (/^\d+$/.test(clean)) return true;
+  return TOKEN_NOISE_RE.test(clean);
+}
+
+function scoreWordMatch(queryWord, titleWord) {
+  if (!queryWord || !titleWord) return 0;
+  if (queryWord === titleWord) return 30;
+
+  const q = queryWord;
+  const t = titleWord;
+  const shorter = q.length <= t.length ? q : t;
+  const longer = q.length > t.length ? q : t;
+
+  if (longer.startsWith(shorter)) {
+    const diff = longer.length - shorter.length;
+    if (diff === 0) return 30;
+    // MADEIRO↔MADEIRADO, MONT↔MONTANA — prefixo enganoso
+    if (diff <= 3 && shorter.length >= 4) return -40;
+    if (diff === 1) return 8;
+    return -20;
+  }
+
+  if (namesLikelyMatch(q, t)) return 10;
+  return -15;
+}
+
+function scoreNameTokens(nameTokens, titulo) {
+  if (!nameTokens.length) return 0;
+  const words = titleWords(titulo);
+  let score = 0;
+  for (const token of nameTokens) {
+    const q = stripAccents(token).toUpperCase();
+    let best = -999;
+    for (const tw of words) {
+      best = Math.max(best, scoreWordMatch(q, tw));
+    }
+    if (best > 0) score += best;
+    else {
+      score -= 25;
+      if (q.length >= 4) score -= 40;
+    }
+  }
+  return score;
+}
+
+function scoreCorTokens(corTokens, titulo, raw) {
+  const title = stripAccents(titulo).toUpperCase();
+  const rawU = stripAccents(raw).toUpperCase();
+  let score = 0;
+
+  for (const code of corTokens) {
+    const aliases = COR_MAP[code] || [code];
+    const hit = aliases.some((a) => title.includes(a));
+    if (hit) score += 22;
+    else score -= 35;
+  }
+
+  if (corTokens.includes('CL')) {
+    if (title.includes('CL')) score += 18;
+    else score -= 30;
+  } else if (/\bCL\b/.test(title) && !/\bCL\b/i.test(rawU)) {
+    score -= 38;
+  }
+
+  if (/\bBRILHANTE\b/i.test(rawU) && !corTokens.includes('CL')) {
+    if (/BRILHANTE|BRILH/.test(title)) score += 12;
+    if (title.includes('CL') && !/\bCL\b/i.test(rawU)) score -= 20;
+  }
+
+  return score;
+}
+
 export function parseDesc(desc) {
   const raw = String(desc || '').trim();
   const formato = normFmt(raw);
@@ -92,19 +218,24 @@ export function parseDesc(desc) {
   let rest = raw.replace(/^(PISO|REVESTIMENTO|REV\.?)\s+/i, '');
   if (formato) rest = rest.replace(new RegExp(formato.replace('x', '[xX]'), 'i'), ' ').trim();
   rest = rest.replace(/\s*\([^)]*\).*/g, '').replace(/["']/g, ' ').trim();
-  rest = rest.replace(/\b(RT|HD|PEI|LD|LC|JU|P|BOLD|BRILH\w*|MAT\w*|POL\w*|SEMI\w*|ANTI\w*|AD|RELEV\/?\/?OUTS?\w*|RELEVO|OUTSIDE|MR|BG|EXT|PE|ACETINADO)\b/gi, ' ');
+  rest = rest.replace(STRIP_NOISE_RE, ' ');
   rest = rest.replace(/[-/]+/g, ' ').replace(/\s+/g, ' ').trim();
 
   const tokens = rest.split(' ').filter(Boolean).map(splitGluedToken);
-  const buscaTokens = [];
+  const cor_tokens = extractCorTokens(raw);
+  const corSet = new Set(cor_tokens.flatMap((c) => [c, ...(COR_MAP[c] || [])]).map((x) => stripAccents(x).toUpperCase()));
+
+  const name_tokens = [];
   for (const t of tokens) {
     const clean = t.replace(/[^A-Za-zÀ-ÿ0-9]/g, '');
-    if (!clean || clean.length < 3) continue;
-    if (/^\d+$/.test(clean)) continue;
-    if (/^(REV|BR|HD|BG|CZ|CL|M)$/i.test(clean)) continue;
-    buscaTokens.push(clean);
-    if (buscaTokens.length >= 2) break;
+    if (isNoiseToken(clean)) continue;
+    const up = stripAccents(clean).toUpperCase();
+    if (corSet.has(up)) continue;
+    if (/^(REV|BR)$/i.test(clean) && /BRILH/i.test(raw)) continue;
+    name_tokens.push(clean);
   }
+
+  const buscaTokens = name_tokens.slice(0, 3);
   const busca = buscaTokens.join(' ') || splitGluedToken(tokens[0] || '') || '';
 
   const acab_excel = /MATE/i.test(raw) ? 'mate'
@@ -123,6 +254,8 @@ export function parseDesc(desc) {
     buscaVariantes: buildBuscaVariantes(busca, buscaTokens),
     acab_excel,
     tokens,
+    name_tokens: buscaTokens,
+    cor_tokens,
   };
 }
 
@@ -133,24 +266,17 @@ export function scoreMatch(prod, parsed) {
   else if (parsed.formato && fmtSite) score -= 40;
 
   const title = stripAccents(prod.titulo).toUpperCase();
-  const titleRaw = prod.titulo.toUpperCase();
-  for (const tok of stripAccents(parsed.busca).toUpperCase().split(' ')) {
-    if (tok && title.includes(tok)) score += 20;
-    else if (tok && namesLikelyMatch(tok, prod.titulo)) score += 18;
-  }
+  const nameTokens = parsed.name_tokens?.length ? parsed.name_tokens : parsed.busca.split(' ').filter(Boolean);
+
+  score += scoreNameTokens(nameTokens, prod.titulo);
+  score += scoreCorTokens(parsed.cor_tokens || [], prod.titulo, parsed.raw);
+
+  // Tokens soltos (reforço leve)
   for (const tok of parsed.tokens.map((t) => stripAccents(t).toUpperCase())) {
-    if (tok.length >= 2 && (title.includes(tok) || titleRaw.includes(tok))) score += 5;
-    else if (tok.length >= 4 && namesLikelyMatch(tok, prod.titulo)) score += 8;
+    if (tok.length >= 3 && !TOKEN_NOISE_RE.test(tok) && title.includes(tok)) score += 3;
   }
-  for (const tok of parsed.tokens) {
-    if (/^(BEGE|CAFE|CAFÉ|MARFIM|BG|CZ)$/i.test(tok) && title.includes(stripAccents(tok).toUpperCase())) score += 15;
-  }
-  if (/\bBG\b/i.test(parsed.raw) && /\bBG\b/i.test(prod.titulo)) score += 18;
-  if (/\bBG\b/i.test(parsed.raw) && /\bBR\b/i.test(prod.titulo) && !/\bBG\b/i.test(prod.titulo)) score -= 25;
-  if (/\bCZ\b/i.test(parsed.raw) && /\bCZ\b/i.test(prod.titulo)) score += 18;
-  if (/CL/i.test(parsed.raw) && title.includes('CL')) score += 12;
-  if (/\bM[\s-]?45\b/i.test(parsed.raw) && /\bM\s*45\b/.test(prod.titulo)) score += 12;
-  if (/\bTAIKO\b/i.test(parsed.raw) && /\bBEGE\b/i.test(parsed.raw) && /\bTAIKO\b/i.test(prod.titulo) && /\bBG\b/i.test(prod.titulo)) score += 20;
+
+  if (/\bTAIKO\b/i.test(parsed.raw) && /\bBEGE\b/i.test(parsed.raw) && /\bTAIKO\b/i.test(prod.titulo) && /\bBG\b/i.test(prod.titulo)) score += 15;
   if (/\bTAIKO\b/i.test(parsed.busca) && !/\bTAIKO\b/i.test(prod.titulo)) score -= 50;
 
   if ((prod.marca_nome || '').toLowerCase() === 'premium') score += 3;
