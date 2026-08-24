@@ -70,10 +70,13 @@ function summarizeApiCounts(result) {
 }
 
 async function collectDbMetrics(databaseUrl) {
+  const trimmed = databaseUrl.trim();
   const client = new pg.Client({
-    connectionString: databaseUrl.trim(),
-    ssl: databaseUrl.includes('supabase') ? { rejectUnauthorized: false } : undefined,
+    connectionString: trimmed,
+    ssl: trimmed.includes('supabase') ? { rejectUnauthorized: false } : undefined,
     connectionTimeoutMillis: 15000,
+    // GitHub Actions: runners often lack rota IPv6 até Supabase (ENETUNREACH).
+    family: 4,
   });
 
   await client.connect();
