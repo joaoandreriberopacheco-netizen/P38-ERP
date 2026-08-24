@@ -827,6 +827,104 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       text-align: left; color: var(--muted); font-size: .72rem; text-transform: uppercase;
     }
     .pedido-table .col-subtotal { text-align: right; white-space: nowrap; }
+    .pedido-cards-wrap { display: none; }
+    .pedido-cards { display: flex; flex-direction: column; }
+    .pedido-card {
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .pedido-card:last-child { border-bottom: 0; }
+    .pedido-card-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .pedido-card-thumb {
+      width: 52px;
+      height: 52px;
+      border-radius: 8px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: var(--surface-2);
+    }
+    .pedido-card-thumb-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: .78rem;
+    }
+    .pedido-card-intro { flex: 1; min-width: 0; }
+    .pedido-card-title {
+      font-size: .88rem;
+      font-weight: 600;
+      line-height: 1.25;
+      color: var(--text-strong);
+    }
+    .pedido-card-meta {
+      margin-top: 3px;
+      font-size: .72rem;
+      color: var(--muted);
+      line-height: 1.3;
+    }
+    .pedido-card-subtotal {
+      text-align: right;
+      flex-shrink: 0;
+      min-width: 72px;
+    }
+    .pedido-card-subtotal-label {
+      display: block;
+      font-size: .62rem;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+    .pedido-card-subtotal strong {
+      font-size: .92rem;
+      font-weight: 600;
+      color: var(--accent-bright);
+      white-space: nowrap;
+    }
+    .pedido-card-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px 10px;
+      margin-top: 10px;
+    }
+    .pedido-card-kv-label {
+      display: block;
+      font-size: .62rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+    .pedido-card-kv-val {
+      font-size: .84rem;
+      font-weight: 500;
+      color: var(--text-strong);
+      font-variant-numeric: tabular-nums;
+    }
+    .pedido-card-price {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .pedido-card-price-label {
+      font-size: .62rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: var(--muted);
+      padding-bottom: 2px;
+    }
+    .pedido-card-price-val { text-align: right; }
+    .pedido-card-price-val .preco-orig { font-size: .68rem; }
+    .pedido-card-price-val .preco-desc { font-size: .88rem; }
     .pedido-total {
       margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--accent-border);
       display: flex; justify-content: flex-end; gap: 24px; font-size: 1rem;
@@ -995,12 +1093,72 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       .fab-stack { right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); }
       .theme-fab { left: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); width: 44px; height: 44px; }
       .theme-fab svg { width: 20px; height: 20px; }
-      .pedido-overlay.open { align-items: center; padding: 12px; }
+      .pedido-overlay.open { align-items: flex-end; padding: 0; }
       .pedido-overlay.open .pedido-panel {
-        border-radius: var(--radius);
-        max-height: 90vh;
+        border-radius: var(--radius) var(--radius) 0 0;
+        max-height: 92vh;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
       }
-      .pedido-overlay.open .pedido-panel::before { display: none; }
+      .pedido-overlay.open .pedido-panel::before { display: block; margin-top: 8px; }
+      .pedido-head {
+        padding: 4px 14px 0;
+        margin-bottom: 0;
+        flex-shrink: 0;
+      }
+      .pedido-head p { font-size: .72rem !important; }
+      .pedido-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 8px 14px 0;
+        -webkit-overflow-scrolling: touch;
+      }
+      .pedido-resumo {
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+      .pedido-resumo .stat {
+        flex: 1;
+        min-width: 0;
+        text-align: center;
+        padding: 8px 6px;
+        font-size: .72rem;
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius);
+        background: var(--surface-2);
+      }
+      .pedido-resumo .stat strong { font-size: .92rem; display: block; margin-bottom: 2px; }
+      .pedido-table-wrap { display: none !important; }
+      .pedido-cards-wrap { display: block; }
+      .pedido-card { padding: 12px 0; }
+      .pedido-card-thumb { width: 48px; height: 48px; }
+      .pedido-total {
+        margin-top: 10px;
+        padding: 10px 0 12px;
+        border-top: 1px solid var(--border-subtle);
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+        font-size: .92rem;
+      }
+      .pedido-total strong { font-size: 1.08rem; }
+      .pedido-desconto-note { text-align: left; margin-top: 4px; }
+      .pedido-actions {
+        flex-shrink: 0;
+        margin-top: 0;
+        padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+        border-top: 1px solid var(--border-subtle);
+        background: var(--surface);
+        gap: 8px;
+      }
+      .pedido-actions .btn {
+        min-width: 0;
+        padding: 11px 10px;
+        font-size: .78rem;
+      }
       details.acc > summary {
         padding: 10px 10px 10px calc(8px + var(--depth, 0) * 10px);
         gap: 6px;
@@ -1161,19 +1319,26 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
         </div>
         <button type="button" class="pedido-close" id="pedido-close" aria-label="Fechar">×</button>
       </div>
+      <div class="pedido-scroll" id="pedido-scroll">
       <div class="pedido-resumo" id="pedido-resumo"></div>
       <div class="pedido-empty hidden" id="pedido-empty">Nenhum modelo na seleção — marque caixas na tabela.</div>
-      <div class="table-wrap" id="pedido-table-wrap">
-        <table class="pedido-table" id="pedido-table">
-          <thead>
-            <tr>
-              <th>Foto</th><th>Modelo</th><th>Formato</th><th>Caixas</th><th>m²/cx</th><th>m² total</th><th>Preço/m²</th><th>Subtotal</th>
-            </tr>
-          </thead>
-          <tbody id="pedido-body"></tbody>
-        </table>
+      <div class="pedido-list-wrap hidden" id="pedido-list-wrap">
+        <div class="table-wrap pedido-table-wrap" id="pedido-table-wrap">
+          <table class="pedido-table" id="pedido-table">
+            <thead>
+              <tr>
+                <th>Foto</th><th>Modelo</th><th>Formato</th><th>Caixas</th><th>m²/cx</th><th>m² total</th><th>Preço/m²</th><th>Subtotal</th>
+              </tr>
+            </thead>
+            <tbody id="pedido-body"></tbody>
+          </table>
+        </div>
+        <div class="pedido-cards-wrap" id="pedido-cards-wrap">
+          <div class="pedido-cards" id="pedido-cards"></div>
+        </div>
       </div>
       <div class="pedido-total" id="pedido-total"></div>
+      </div>
       <div class="pedido-actions">
         <button type="button" class="btn" id="clear-qty-panel">Limpar seleção</button>
         <button type="button" class="btn btn-primary" id="pdf-pedido-panel" disabled>PDF do pedido</button>
@@ -1597,12 +1762,41 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       }
     }
 
+    function renderPedidoCard({ item, qty, img, titulo, m2cx, m2tot, sub }) {
+      const thumb = img
+        ? '<img class="pedido-card-thumb" src="' + esc(img) + '" alt="" loading="lazy" />'
+        : '<span class="pedido-card-thumb pedido-card-thumb-empty" aria-hidden="true">—</span>';
+      return '<article class="pedido-card">' +
+        '<div class="pedido-card-head">' +
+          thumb +
+          '<div class="pedido-card-intro">' +
+            '<div class="pedido-card-title">' + esc(titulo) + '</div>' +
+            '<div class="pedido-card-meta">#' + esc(item.codigo_tintao) + ' · ' + esc(item.formato || '—') + '</div>' +
+          '</div>' +
+          '<div class="pedido-card-subtotal">' +
+            '<span class="pedido-card-subtotal-label">Subtotal</span>' +
+            '<strong>' + esc(sub != null ? fmtMoney(sub) : '—') + '</strong>' +
+          '</div>' +
+        '</div>' +
+        '<div class="pedido-card-grid">' +
+          '<div class="pedido-card-kv"><span class="pedido-card-kv-label">Caixas</span><span class="pedido-card-kv-val">' + qty + '</span></div>' +
+          '<div class="pedido-card-kv"><span class="pedido-card-kv-label">m²/cx</span><span class="pedido-card-kv-val">' + esc(m2cx ? fmtDecimal(m2cx) : '—') + '</span></div>' +
+          '<div class="pedido-card-kv"><span class="pedido-card-kv-label">m² total</span><span class="pedido-card-kv-val">' + esc(m2tot ? fmtDecimal(m2tot) : '—') + '</span></div>' +
+        '</div>' +
+        '<div class="pedido-card-price">' +
+          '<span class="pedido-card-price-label">Preço/m²</span>' +
+          '<span class="pedido-card-price-val' + (descontoPct ? ' has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</span>' +
+        '</div>' +
+      '</article>';
+    }
     function renderPedido() {
       const rows = pedidoItens();
       let totalCaixas = 0;
       let totalM2 = 0;
       let totalValor = 0;
-      const body = rows.map(({ item, qty }) => {
+      const bodyRows = [];
+      const cardRows = [];
+      for (const { item, qty } of rows) {
         const m2cx = parseM2Caixa(item);
         const m2tot = m2cx ? qty * m2cx : null;
         const sub = itemSubtotal(item, qty);
@@ -1612,7 +1806,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
         const imgs = getGaleria(item);
         const img = imgs[0]?.url || '';
         const titulo = item.formigres_titulo || item.descricao;
-        return '<tr>' +
+        const rowData = { item, qty, img, titulo, m2cx, m2tot, sub };
+        bodyRows.push('<tr>' +
           '<td>' + (img ? '<img src="' + esc(img) + '" alt="" width="48" height="48" style="object-fit:cover;border-radius:6px" />' : '—') + '</td>' +
           '<td><strong>' + esc(titulo) + '</strong><br><small>' + esc(item.codigo_tintao) + '</small></td>' +
           '<td>' + esc(item.formato || '—') + '</td>' +
@@ -1620,11 +1815,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
           '<td>' + (m2cx ? fmtDecimal(m2cx) : '—') + '</td>' +
           '<td>' + (m2tot ? fmtDecimal(m2tot) : '—') + '</td>' +
           '<td class="' + (descontoPct ? 'has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
-          '<td class="col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
-      }).join('');
-      document.getElementById('pedido-body').innerHTML = body;
+          '<td class="col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>');
+        cardRows.push(renderPedidoCard(rowData));
+      }
+      document.getElementById('pedido-body').innerHTML = bodyRows.join('');
+      document.getElementById('pedido-cards').innerHTML = cardRows.join('');
       document.getElementById('pedido-empty')?.classList.toggle('hidden', rows.length > 0);
-      document.getElementById('pedido-table-wrap')?.classList.toggle('hidden', rows.length === 0);
+      document.getElementById('pedido-list-wrap')?.classList.toggle('hidden', rows.length === 0);
       document.getElementById('pedido-resumo').innerHTML = rows.length
         ? '<span class="stat"><strong>' + rows.length + '</strong> modelos</span>' +
           '<span class="stat"><strong>' + totalCaixas + '</strong> caixas</span>' +
