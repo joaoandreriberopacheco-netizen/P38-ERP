@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { readJson, snapshotPath } from '../lib/catalogoPaths.mjs';
 import { loadSnapshotFromFile } from '../lib/formigresSnapshot.mjs';
+import { extractImagensFromDetalhe, fetchProdutoDetalhe } from '../lib/formigresCatalog.mjs';
 
 const ROOT = process.cwd();
 const CLASSIF_DIR = path.join(ROOT, 'docs', 'imports-local', 'tintao', 'classificacao');
@@ -108,13 +109,48 @@ function enrichItens(itens, snapshot) {
   const byId = new Map((snapshot?.produtos || []).map((p) => [String(p.id), p]));
   return itens.map((item) => {
     const prod = byId.get(String(item.formigres_id));
+    const imagem_url = fixImageUrl(prod?.imagem_url || '');
+    const imagem_amb_url = fixImageUrl(prod?.imagem_amb_url || '');
+    const imagens = extractImagensFromDetalhe({
+      imagem_url,
+      imagem_amb_url,
+      imagem_piso_url: fixImageUrl(prod?.imagem_piso_url || ''),
+      faces: prod?.faces || [],
+    });
     return {
       ...item,
-      imagem_url: fixImageUrl(prod?.imagem_url || ''),
-      imagem_amb_url: fixImageUrl(prod?.imagem_amb_url || ''),
+      imagem_url,
+      imagem_amb_url,
       produto_url: prod?.produto_url || '',
+      imagens: imagens.length ? imagens : (imagem_url ? [{ url: imagem_url, tipo: 'principal' }] : []),
     };
   });
+}
+
+async function enrichImagensFromApi(itens) {
+  const out = [];
+  for (const item of itens) {
+    if (!item.formigres_id) {
+      out.push(item);
+      continue;
+    }
+    try {
+      const det = await fetchProdutoDetalhe(item.formigres_id);
+      const imgs = extractImagensFromDetalhe(det ? {
+        imagem_url: fixImageUrl(det.imagem_url || det.imagem),
+        imagem_amb_url: fixImageUrl(det.imagem_amb_url || det.imagem_ambiente),
+        imagem_piso_url: fixImageUrl(det.imagem_piso_url || det.imagem_piso),
+        faces: Array.isArray(det.faces) ? det.faces : (det.imagens_faces ? JSON.parse(det.imagens_faces || '[]') : []),
+      } : null);
+      out.push({
+        ...item,
+        imagens: imgs.length ? imgs : item.imagens,
+      });
+    } catch {
+      out.push(item);
+    }
+  }
+  return out;
 }
 
 function slimItem(item) {
@@ -130,7 +166,10 @@ function slimItem(item) {
     formigres_acabamento: item.formigres_acabamento || '',
     match_status: item.match_status,
     preco_m2: item.preco_m2,
+    m2_por_caixa: item.m2_por_caixa ?? null,
+    unidade: item.unidade || '',
     imagem_url: item.imagem_url || '',
+    imagens: (item.imagens || []).map((img) => ({ url: img.url, tipo: img.tipo || 'principal' })),
   };
 }
 
@@ -323,6 +362,66 @@ function buildHtml({ classif, itens }) {
     .col-acab { white-space: nowrap; font-size: .78rem; }
     .col-preco { white-space: nowrap; text-align: right; }
     .col-cod { white-space: nowrap; color: var(--muted); font-size: .78rem; text-align: right; }
+    .col-qty { width: 72px; text-align: center; }
+    .qty-input {
+      width: 56px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 6px 4px;
+      font-size: .85rem;
+      text-align: center;
+    }
+    .qty-input:focus { border-color: var(--accent-dim); outline: none; }
+    .pedido-panel {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .pedido-panel.open { display: block; }
+    .pedido-panel h2 { margin: 0 0 12px; font-size: 1.1rem; }
+    .pedido-resumo {
+      display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;
+    }
+    .pedido-resumo .stat strong { font-size: 1rem; }
+    .pedido-table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+    .pedido-table th, .pedido-table td {
+      padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle;
+    }
+    .pedido-table th {
+      text-align: left; color: var(--muted); font-size: .72rem; text-transform: uppercase;
+    }
+    .pedido-table .col-subtotal { text-align: right; white-space: nowrap; }
+    .pedido-total {
+      margin-top: 12px; padding-top: 12px; border-top: 2px solid var(--accent-dim);
+      display: flex; justify-content: flex-end; gap: 24px; font-size: 1rem;
+    }
+    .pedido-total strong { color: var(--accent); font-size: 1.15rem; }
+    .btn-primary {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: #1a1a12;
+      font-weight: 600;
+    }
+    .btn-primary:hover { background: var(--accent); color: #111; }
+    .btn.active { border-color: var(--accent); color: var(--accent); }
+    #pedido-print { display: none; }
+    @media print {
+      body { background: #fff; color: #111; }
+      .wrap > *:not(#pedido-print) { display: none !important; }
+      #pedido-print {
+        display: block !important;
+        max-width: 100%;
+        padding: 0;
+      }
+      #pedido-print table { width: 100%; border-collapse: collapse; font-size: 11px; }
+      #pedido-print th, #pedido-print td { border: 1px solid #ccc; padding: 6px 8px; }
+      #pedido-print img { width: 48px; height: 48px; object-fit: cover; }
+    }
     .thumb-btn {
       display: block;
       width: 48px;
@@ -477,14 +576,35 @@ function buildHtml({ classif, itens }) {
         <option value="tipo">Agrupar: tipo</option>
         <option value="acabamento">Agrupar: acabamento</option>
       </select>
+      <button type="button" class="btn" id="filter-qty">Só com quantidade</button>
+      <button type="button" class="btn" id="toggle-pedido">Ver pedido</button>
+      <button type="button" class="btn btn-primary" id="pdf-pedido">PDF do pedido</button>
       <button type="button" class="btn" id="expand-all">Abrir tudo</button>
       <button type="button" class="btn" id="collapse-all">Fechar tudo</button>
     </div>
 
+    <section class="pedido-panel" id="pedido-panel" aria-label="Resumo do pedido">
+      <h2>Resumo do pedido</h2>
+      <div class="pedido-resumo" id="pedido-resumo"></div>
+      <div class="table-wrap">
+        <table class="pedido-table" id="pedido-table">
+          <thead>
+            <tr>
+              <th>Foto</th><th>Modelo</th><th>Formato</th><th>Caixas</th><th>m²/cx</th><th>m² total</th><th>Preço/m²</th><th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody id="pedido-body"></tbody>
+        </table>
+      </div>
+      <div class="pedido-total" id="pedido-total"></div>
+    </section>
+
     <section class="catalogo" id="catalogo"></section>
 
-    <footer class="note">HTML autónomo — partilhe por WhatsApp, e-mail ou drive. Miniatura na tabela; clique abre galeria (mais fotos carregam do site Formigres, requer internet).</footer>
+    <footer class="note">HTML autónomo — partilhe por WhatsApp, e-mail ou drive. Defina quantidades de caixa, veja o pedido e gere PDF. Fotos embutidas na geração (galeria completa sem depender de internet).</footer>
   </div>
+
+  <div id="pedido-print"></div>
 
   <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Galeria do produto">
     <div class="lightbox-panel">
@@ -508,10 +628,14 @@ function buildHtml({ classif, itens }) {
   <script>
     const CATALOGO = JSON.parse(document.getElementById('catalogo-data').textContent);
     const CFG = CATALOGO.config;
-    const FORMIGRES_API = 'https://www.formigres.com.br';
     const TIPO_LABEL_GAL = { principal: 'Cerâmica', ambiente: 'Ambiente', piso: 'Piso', face: 'Face', outro: 'Imagem' };
-    const galleryCache = new Map();
+    const QTY_KEY = 'tintao-pedido-qty-v1';
+    const itemsByCode = new Map(CATALOGO.itens.map((i) => [String(i.codigo_tintao), i]));
+    let qtyMap = {};
+    try { qtyMap = JSON.parse(localStorage.getItem(QTY_KEY) || '{}'); } catch { qtyMap = {}; }
     let groupBy = 'tipo';
+    let filterQtyOnly = false;
+    let pedidoOpen = false;
     let dom = {};
 
     function esc(s) {
@@ -525,6 +649,34 @@ function buildHtml({ classif, itens }) {
     function fmtAreaKey(fmt) {
       const m = String(fmt || '').match(/(\\d+)\\s*x\\s*(\\d+)/i);
       return m ? Number(m[1]) * Number(m[2]) : 0;
+    }
+    function getQty(cod) {
+      const n = Number(qtyMap[String(cod)] || 0);
+      return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+    }
+    function setQty(cod, val) {
+      const n = Math.max(0, Math.floor(Number(val) || 0));
+      if (n > 0) qtyMap[String(cod)] = n;
+      else delete qtyMap[String(cod)];
+      localStorage.setItem(QTY_KEY, JSON.stringify(qtyMap));
+      renderPedido();
+      if (filterQtyOnly) applySearch(document.getElementById('search').value);
+    }
+    function parseM2Caixa(item) {
+      if (item.m2_por_caixa) return Number(item.m2_por_caixa);
+      const m = String(item.unidade || item.descricao || '').match(/CX\\s*([\\d,]+)\\s*M2/i) || String(item.descricao || '').match(/([\\d,]+)\\s*M2/i);
+      return m ? Number(m[1].replace(',', '.')) : null;
+    }
+    function itemSubtotal(item, qty) {
+      const m2cx = parseM2Caixa(item);
+      const preco = Number(item.preco_m2);
+      if (!qty || !m2cx || !preco) return null;
+      return qty * m2cx * preco;
+    }
+    function pedidoItens() {
+      return CATALOGO.itens
+        .map((item) => ({ item, qty: getQty(item.codigo_tintao) }))
+        .filter((x) => x.qty > 0);
     }
     function tipoKey(item) {
       if (item.linha === 'polida') return 'polida';
@@ -576,28 +728,34 @@ function buildHtml({ classif, itens }) {
       }
       return tree;
     }
+    function getGaleria(item) {
+      const imgs = Array.isArray(item.imagens) ? item.imagens.filter((i) => i && i.url) : [];
+      if (imgs.length) return imgs;
+      return item.imagem_url ? [{ url: item.imagem_url, tipo: 'principal' }] : [];
+    }
     function renderRow(item) {
-      const img = item.imagem_url || '';
+      const imgs = getGaleria(item);
+      const img = imgs[0]?.url || item.imagem_url || '';
       const titulo = item.formigres_titulo || item.descricao;
-      const fid = item.formigres_id || '';
-      const foto = img && fid
-        ? '<button type="button" class="thumb-btn has-gallery" data-formigres-id="' + esc(fid) + '" data-thumb="' + esc(img) + '" data-title="' + esc(titulo) + '" title="Clique para ver fotos"><img src="' + esc(img) + '" alt="" loading="lazy" /><span class="thumb-more" aria-hidden="true">▦</span></button>'
-        : img
-          ? '<button type="button" class="thumb-btn" data-thumb="' + esc(img) + '" data-title="' + esc(titulo) + '"><img src="' + esc(img) + '" alt="" loading="lazy" /></button>'
-          : '<span class="thumb-empty">—</span>';
+      const cod = item.codigo_tintao;
+      const qty = getQty(cod);
+      const foto = img
+        ? '<button type="button" class="thumb-btn' + (imgs.length > 1 ? ' has-gallery' : '') + '" data-cod="' + esc(cod) + '" data-title="' + esc(titulo) + '" title="Clique para ver fotos"><img src="' + esc(img) + '" alt="" loading="lazy" />' + (imgs.length > 1 ? '<span class="thumb-more" aria-hidden="true">▦</span>' : '') + '</button>'
+        : '<span class="thumb-empty">—</span>';
       const warn = item.match_status !== 'encontrado' ? ' <span class="badge warn">sem match</span>' : '';
-      return '<tr class="model-row" data-search="' + esc((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato).toLowerCase()) + '">' +
+      return '<tr class="model-row" data-cod="' + esc(cod) + '" data-search="' + esc((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato).toLowerCase()) + '" data-qty="' + qty + '">' +
         '<td class="col-foto">' + foto + '</td>' +
         '<td class="col-modelo"><strong>' + esc(titulo) + '</strong>' + warn + '</td>' +
         '<td class="col-desc">' + esc(item.descricao) + '</td>' +
         '<td class="col-acab">' + esc(item.formigres_acabamento || '—') + '</td>' +
         '<td class="col-preco">' + esc(fmtMoney(item.preco_m2)) + '</td>' +
-        '<td class="col-cod">' + esc(item.codigo_tintao) + '</td></tr>';
+        '<td class="col-qty"><input type="number" class="qty-input" min="0" step="1" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="Caixas" placeholder="0" /></td>' +
+        '<td class="col-cod">' + esc(cod) + '</td></tr>';
     }
     function renderFormato(formato, items) {
       const n = items.length;
       return '<details class="acc acc-formato"><summary><span class="acc-title">Formato ' + esc(formato) + '</span><span class="acc-count">' + n + ' modelo' + (n === 1 ? '' : 's') + '</span></summary>' +
-        '<div class="table-wrap"><table class="model-table"><thead><tr><th>Foto</th><th>Modelo</th><th>Descrição Tintão</th><th>Acabamento</th><th>Preço/m²</th><th>Cód.</th></tr></thead><tbody>' +
+        '<div class="table-wrap"><table class="model-table"><thead><tr><th>Foto</th><th>Modelo</th><th>Descrição Tintão</th><th>Acabamento</th><th>Preço/m²</th><th>Caixas</th><th>Cód.</th></tr></thead><tbody>' +
         items.map(renderRow).join('') + '</tbody></table></div></details>';
     }
     function renderGrupo(key, formatosMap, linha) {
@@ -633,7 +791,10 @@ function buildHtml({ classif, itens }) {
     function applySearch(termRaw) {
       const term = normalize(termRaw.trim());
       for (const row of dom.rows) {
-        const show = !term || normalize(row.textContent).includes(term);
+        const qty = Number(row.dataset.qty || 0);
+        const showQty = !filterQtyOnly || qty > 0;
+        const showTerm = !term || normalize(row.textContent).includes(term);
+        const show = showQty && showTerm;
         row.classList.toggle('hidden', !show);
       }
       for (const fmt of dom.formatos) {
@@ -647,56 +808,106 @@ function buildHtml({ classif, itens }) {
       }
     }
 
-    function absUrl(rel) {
-      if (!rel) return '';
-      if (rel.startsWith('http')) return rel;
-      return FORMIGRES_API + (rel.startsWith('/') ? rel : '/' + rel);
+    function renderPedido() {
+      const rows = pedidoItens();
+      let totalCaixas = 0;
+      let totalM2 = 0;
+      let totalValor = 0;
+      const body = rows.map(({ item, qty }) => {
+        const m2cx = parseM2Caixa(item);
+        const m2tot = m2cx ? qty * m2cx : null;
+        const sub = itemSubtotal(item, qty);
+        totalCaixas += qty;
+        if (m2tot) totalM2 += m2tot;
+        if (sub) totalValor += sub;
+        const imgs = getGaleria(item);
+        const img = imgs[0]?.url || '';
+        const titulo = item.formigres_titulo || item.descricao;
+        return '<tr>' +
+          '<td>' + (img ? '<img src="' + esc(img) + '" alt="" width="48" height="48" style="object-fit:cover;border-radius:6px" />' : '—') + '</td>' +
+          '<td><strong>' + esc(titulo) + '</strong><br><small>' + esc(item.codigo_tintao) + '</small></td>' +
+          '<td>' + esc(item.formato || '—') + '</td>' +
+          '<td>' + qty + '</td>' +
+          '<td>' + (m2cx ? m2cx.toFixed(2).replace('.', ',') : '—') + '</td>' +
+          '<td>' + (m2tot ? m2tot.toFixed(2).replace('.', ',') : '—') + '</td>' +
+          '<td>' + esc(fmtMoney(item.preco_m2)) + '</td>' +
+          '<td class="col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
+      }).join('');
+      document.getElementById('pedido-body').innerHTML = body || '<tr><td colspan="8" style="color:var(--muted);text-align:center">Nenhum item com quantidade definida.</td></tr>';
+      document.getElementById('pedido-resumo').innerHTML =
+        '<span class="stat"><strong>' + rows.length + '</strong> modelos</span>' +
+        '<span class="stat"><strong>' + totalCaixas + '</strong> caixas</span>' +
+        '<span class="stat"><strong>' + totalM2.toFixed(2).replace('.', ',') + '</strong> m²</span>';
+      document.getElementById('pedido-total').innerHTML =
+        '<span>Total estimado: <strong>' + fmtMoney(totalValor) + '</strong></span>';
     }
-    function isPlaceholder(url) {
-      return !url || /placeholder/i.test(url);
-    }
-    function extractImagens(prod) {
-      if (!prod) return [];
-      const imgs = [];
-      if (!isPlaceholder(prod.imagem_url)) imgs.push({ url: absUrl(prod.imagem_url), tipo: 'principal' });
-      if (!isPlaceholder(prod.imagem_amb_url)) imgs.push({ url: absUrl(prod.imagem_amb_url), tipo: 'ambiente' });
-      if (!isPlaceholder(prod.imagem_piso_url)) imgs.push({ url: absUrl(prod.imagem_piso_url), tipo: 'piso' });
-      const faces = Array.isArray(prod.faces) ? prod.faces : [];
-      faces.forEach((u, i) => {
-        if (!isPlaceholder(u)) imgs.push({ url: absUrl(u), tipo: 'face' });
-      });
-      const seen = new Set();
-      return imgs.filter((img) => {
-        if (seen.has(img.url)) return false;
-        seen.add(img.url);
-        return true;
-      });
-    }
-    async function fetchGaleria(formigresId, thumbUrl) {
-      if (!formigresId) return thumbUrl ? [{ url: thumbUrl, tipo: 'principal' }] : [];
-      if (galleryCache.has(formigresId)) return galleryCache.get(formigresId);
-      const fallback = thumbUrl ? [{ url: thumbUrl, tipo: 'principal' }] : [];
-      try {
-        const res = await fetch(FORMIGRES_API + '/api/produto.php?id=' + encodeURIComponent(formigresId));
-        if (!res.ok) { galleryCache.set(formigresId, fallback); return fallback; }
-        const data = await res.json();
-        const imgs = extractImagens(data.produto);
-        const result = imgs.length ? imgs : fallback;
-        galleryCache.set(formigresId, result);
-        return result;
-      } catch {
-        galleryCache.set(formigresId, fallback);
-        return fallback;
-      }
+
+    function buildPedidoPrintHtml() {
+      const rows = pedidoItens();
+      let totalCaixas = 0, totalM2 = 0, totalValor = 0;
+      const body = rows.map(({ item, qty }) => {
+        const m2cx = parseM2Caixa(item);
+        const m2tot = m2cx ? qty * m2cx : null;
+        const sub = itemSubtotal(item, qty);
+        totalCaixas += qty;
+        if (m2tot) totalM2 += m2tot;
+        if (sub) totalValor += sub;
+        const img = getGaleria(item)[0]?.url || '';
+        const titulo = item.formigres_titulo || item.descricao;
+        return '<tr><td>' + (img ? '<img src="' + img + '" alt="" />' : '') + '</td><td>' + titulo + '<br><small>' + item.codigo_tintao + '</small></td><td>' + (item.formato || '—') + '</td><td style="text-align:center">' + qty + '</td><td>' + (m2cx ? m2cx.toFixed(2) : '—') + '</td><td>' + (m2tot ? m2tot.toFixed(2) : '—') + '</td><td>' + fmtMoney(item.preco_m2) + '</td><td style="text-align:right">' + (sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
+      }).join('');
+      return '<div style="font-family:Arial,sans-serif;padding:24px;color:#111">' +
+        '<h1 style="margin:0 0 4px;font-size:20px">Pedido — Catálogo Tintão × Formigres</h1>' +
+        '<p style="margin:0 0 16px;color:#555;font-size:12px">Gerado em ' + new Date().toLocaleString('pt-BR') + '</p>' +
+        '<table><thead><tr><th>Foto</th><th>Modelo</th><th>Formato</th><th>Caixas</th><th>m²/cx</th><th>m² total</th><th>Preço/m²</th><th>Subtotal</th></tr></thead><tbody>' + body + '</tbody></table>' +
+        '<p style="text-align:right;margin-top:16px;font-size:14px"><strong>' + rows.length + ' modelos · ' + totalCaixas + ' caixas · ' + totalM2.toFixed(2) + ' m² · Total: ' + fmtMoney(totalValor) + '</strong></p></div>';
     }
 
     const q = document.getElementById('search');
     const groupSel = document.getElementById('group-by');
+    const btnFilterQty = document.getElementById('filter-qty');
+    const btnPedido = document.getElementById('toggle-pedido');
+    const btnPdf = document.getElementById('pdf-pedido');
+    const pedidoPanel = document.getElementById('pedido-panel');
 
     q.addEventListener('input', () => applySearch(q.value));
     groupSel.addEventListener('change', () => {
       groupBy = groupSel.value;
       renderCatalogo();
+    });
+    btnFilterQty.addEventListener('click', () => {
+      filterQtyOnly = !filterQtyOnly;
+      btnFilterQty.classList.toggle('active', filterQtyOnly);
+      applySearch(q.value);
+    });
+    btnPedido.addEventListener('click', () => {
+      pedidoOpen = !pedidoOpen;
+      pedidoPanel.classList.toggle('open', pedidoOpen);
+      btnPedido.classList.toggle('active', pedidoOpen);
+      if (pedidoOpen) renderPedido();
+    });
+    btnPdf.addEventListener('click', () => {
+      if (!pedidoItens().length) {
+        alert('Defina quantidades de caixa antes de gerar o PDF.');
+        return;
+      }
+      document.getElementById('pedido-print').innerHTML = buildPedidoPrintHtml();
+      window.print();
+    });
+
+    document.getElementById('catalogo').addEventListener('input', (e) => {
+      const input = e.target.closest('.qty-input');
+      if (!input) return;
+      setQty(input.dataset.cod, input.value);
+      const row = input.closest('.model-row');
+      if (row) row.dataset.qty = String(getQty(input.dataset.cod));
+    });
+    document.getElementById('catalogo').addEventListener('change', (e) => {
+      const input = e.target.closest('.qty-input');
+      if (!input) return;
+      setQty(input.dataset.cod, input.value);
+      const row = input.closest('.model-row');
+      if (row) row.dataset.qty = String(getQty(input.dataset.cod));
     });
 
     document.getElementById('expand-all').addEventListener('click', () => {
@@ -707,6 +918,7 @@ function buildHtml({ classif, itens }) {
     });
 
     renderCatalogo();
+    renderPedido();
 
     const lb = document.getElementById('lightbox');
     const lbImg = document.getElementById('lightbox-img');
@@ -753,17 +965,11 @@ function buildHtml({ classif, itens }) {
       galeriaAtual = [];
     }
 
-    async function onThumbClick(btn) {
+    function onThumbClick(btn) {
       const title = btn.dataset.title || 'Modelo';
-      const thumb = btn.dataset.thumb || '';
-      const fid = btn.dataset.formigresId || '';
-      const inicial = thumb ? [{ url: thumb, tipo: 'principal' }] : [];
-      openGaleria(inicial, title, Boolean(fid));
-      if (!fid) return;
-      const completa = await fetchGaleria(fid, thumb);
-      if (!lb.classList.contains('open')) return;
-      galeriaAtual = completa;
-      renderGaleriaIdx(galeriaIdx);
+      const item = itemsByCode.get(String(btn.dataset.cod || ''));
+      const imagens = item ? getGaleria(item) : [];
+      openGaleria(imagens, title, false);
     }
 
     document.getElementById('catalogo').addEventListener('click', (e) => {
@@ -792,6 +998,13 @@ function buildHtml({ classif, itens }) {
 }
 
 function main() {
+  return mainAsync().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
+
+async function mainAsync() {
   const jsonPath = findLatestClassifJson();
   if (!jsonPath) {
     console.error('JSON de classificação não encontrado. Rode: npm run catalogo:classificar-tintao');
@@ -805,7 +1018,9 @@ function main() {
     process.exit(1);
   }
 
-  const itens = enrichItens(classif.itens || [], snapshot);
+  const itensBase = enrichItens(classif.itens || [], snapshot);
+  console.error('A carregar fotos do site Formigres…');
+  const itens = await enrichImagensFromApi(itensBase);
   const html = buildHtml({ classif, itens });
 
   fs.mkdirSync(path.dirname(OUT_HTML), { recursive: true });
@@ -815,6 +1030,7 @@ function main() {
     ok: true,
     itens: itens.length,
     comFoto: itens.filter((i) => i.imagem_url).length,
+    comGaleria: itens.filter((i) => (i.imagens || []).length > 1).length,
     fonte: jsonPath,
     html: OUT_HTML,
   }, null, 2));

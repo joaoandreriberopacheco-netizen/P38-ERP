@@ -6,6 +6,7 @@ import {
   normFmt,
   parseDesc,
   scoreMatch,
+  formatosProximos,
   stripAccents,
 } from './formigresCatalog.mjs';
 
@@ -108,7 +109,7 @@ export function findInSnapshot(snapshot, desc, { minScore = 30, requireFormato =
   const produtos = snapshot.produtos || [];
 
   const pool = requireFormato && parsed.formato
-    ? produtos.filter((p) => p.formato === parsed.formato)
+    ? produtos.filter((p) => p.formato === parsed.formato || formatosProximos(parsed.formato, p.formato))
     : produtos;
 
   let best = null;

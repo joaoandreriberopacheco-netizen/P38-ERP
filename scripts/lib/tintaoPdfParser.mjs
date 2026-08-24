@@ -80,7 +80,7 @@ export function parseTintaoPdf(pdfPath) {
   let match;
   const re = new RegExp(ITEM_RE.source, 'gis');
   while ((match = re.exec(text)) !== null) {
-    const descricao = match[6].replace(/\s+/g, ' ').trim();
+    const descricao = match[6].replace(/\s+/g, ' ').trim().replace(/\s*Usu[aá]rio:.*/i, '').replace(/\s*Impresso em:.*/i, '').trim();
     itens.push({
       codigo_tintao: match[1],
       unidade: match[2],

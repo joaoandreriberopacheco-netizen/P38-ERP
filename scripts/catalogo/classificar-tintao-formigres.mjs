@@ -36,13 +36,18 @@ function toCsv(rows) {
     'codigo_tintao', 'descricao', 'lista', 'formato',
     'linha', 'subtipo', 'variante_lisa', 'rotulo', 'confianca',
     'match_status', 'match_score', 'formigres_id', 'formigres_titulo',
-    'formigres_tipo', 'formigres_acabamento', 'preco_m2', 'total', 'pdf',
+    'formigres_tipo', 'formigres_acabamento', 'preco_m2', 'm2_por_caixa', 'unidade', 'total', 'pdf',
   ];
   const lines = [headers.join(',')];
   for (const r of rows) {
     lines.push(headers.map((h) => csvEscape(r[h])).join(','));
   }
   return `${lines.join('\n')}\n`;
+}
+
+function parseM2Caixa(unidade) {
+  const m = String(unidade || '').match(/([\d,]+)\s*M2/i);
+  return m ? Number(m[1].replace(',', '.')) : null;
 }
 
 function main() {
@@ -92,6 +97,8 @@ function main() {
       formigres_tipo: match?.tipo || '',
       formigres_acabamento: match?.acabamento || '',
       preco_m2: item.preco_m2,
+      m2_por_caixa: parseM2Caixa(item.unidade),
+      unidade: item.unidade || '',
       total: item.total,
       pdf: item.pdf,
     };
