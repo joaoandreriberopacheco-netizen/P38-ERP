@@ -189,6 +189,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
   const gerado = new Date(classif.geradoEm || Date.now()).toLocaleString('pt-BR');
   const total = itens.length;
   const comFoto = itens.filter((i) => i.imagem_url).length;
+  const loadSquaresHtml = Array.from({ length: 20 }, () => '<span class="load-square"></span>').join('');
   const catalogoJson = JSON.stringify({
     itens: itens.map(slimItem),
     config: {
@@ -273,6 +274,19 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       margin: 0 auto;
       aspect-ratio: 306 / 184;
     }
+    .load-pct {
+      position: absolute;
+      left: 50%;
+      top: 54%;
+      transform: translate(-50%, -50%);
+      font-size: .92rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+      color: var(--text-strong);
+      text-shadow: 0 0 10px var(--bg), 0 0 4px var(--bg);
+      font-variant-numeric: tabular-nums;
+      pointer-events: none;
+    }
     .load-logo-ant img {
       display: block;
       width: 100%;
@@ -297,6 +311,27 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       bottom: 0;
       width: 100%;
       height: auto;
+    }
+    .load-squares {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 5px;
+      max-width: 240px;
+      margin: 16px auto 0;
+    }
+    .load-square {
+      width: 10px;
+      height: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface-3);
+      opacity: .45;
+      transition: background .2s ease, border-color .2s ease, opacity .2s ease;
+    }
+    .load-square.filled {
+      background: #e31e24;
+      border-color: #c91920;
+      opacity: 1;
     }
     * { box-sizing: border-box; }
     body {
@@ -330,7 +365,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       visibility: hidden;
       pointer-events: none;
     }
-    .load-panel { text-align: center; padding: 24px; max-width: 280px; }
+    .load-panel { text-align: center; padding: 24px; max-width: 300px; }
     .load-sr {
       position: absolute;
       width: 1px;
@@ -619,6 +654,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
     @media (max-width: 720px) {
       .qty-input { width: 52px; min-height: 40px; font-size: .95rem; }
     }
+    .model-meta-mobile { display: none; }
     .model-row { cursor: pointer; transition: background .2s ease; }
     .model-row.qty-focus-row {
       background: var(--accent-soft);
@@ -968,14 +1004,74 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       .acc-inner { padding-left: calc(6px + var(--depth, 0) * 10px); }
       .acc-title { font-size: .88rem; }
       .acc-count { font-size: .7rem; padding: 2px 7px; }
-      .col-desc, .model-table thead th:nth-child(3) { display: none; }
-      .model-table { font-size: .78rem; }
-      .col-qty, .model-table thead th:nth-child(6) {
-        position: sticky; right: 0; background: var(--surface); z-index: 1;
-        box-shadow: -4px 0 6px rgba(0,0,0,.05);
+      .table-wrap { overflow-x: visible; padding: 0 4px 8px; }
+      .model-table {
+        border: 0;
+        background: transparent;
+        font-size: .82rem;
       }
-      .model-table thead th:nth-child(6) { background: var(--surface-2); z-index: 2; }
-      .col-cod, .model-table thead th:nth-child(7) { display: none; }
+      .model-table thead { display: none; }
+      .model-table tbody { display: block; }
+      .model-table tbody tr { border-bottom: 0; }
+      .model-table tbody tr.model-row {
+        display: grid;
+        grid-template-columns: 54px 1fr;
+        grid-template-areas:
+          "foto modelo"
+          "qty qty";
+        gap: 10px 12px;
+        padding: 12px;
+        margin-bottom: 8px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: var(--shadow-soft);
+      }
+      .model-table tbody tr.model-row:last-child { margin-bottom: 0; }
+      .model-table td {
+        display: block;
+        padding: 0;
+        border: 0;
+        position: static;
+        box-shadow: none;
+      }
+      .model-meta-mobile {
+        display: block;
+        margin-top: 6px;
+        font-size: .78rem;
+        color: var(--muted);
+        line-height: 1.35;
+      }
+      .col-foto { grid-area: foto; width: auto; align-self: start; }
+      .col-modelo { grid-area: modelo; min-width: 0; }
+      .col-desc, .col-acab, .col-preco, .col-cod { display: none !important; }
+      .col-qty {
+        grid-area: qty;
+        width: 100%;
+        text-align: left;
+        padding-top: 4px;
+        border-top: 1px solid var(--border);
+      }
+      .col-qty::before {
+        content: "Caixas";
+        display: block;
+        font-size: .66rem;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 6px;
+        font-weight: 600;
+      }
+      .col-qty .qty-input {
+        width: 100%;
+        max-width: none;
+        min-height: 46px;
+        font-size: 1rem;
+      }
+      .model-row.qty-focus-row {
+        box-shadow: inset 0 3px 0 var(--accent), var(--shadow-soft);
+      }
+      .thumb-btn, .thumb-empty { width: 54px; height: 54px; }
       .lightbox { padding: 10px; }
       .gallery-nav { width: 36px; height: 36px; }
     }
@@ -983,13 +1079,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       .toolbar-mobile-only { display: none !important; }
     }
     @media (max-width: 480px) {
-      .col-acab, .col-cod,
-      .model-table thead th:nth-child(4),
-      .model-table thead th:nth-child(7) { display: none; }
-      .col-qty, .model-table thead th:nth-child(6) { right: 0; }
       .stats { gap: 6px; }
       .stat { font-size: .75rem; padding: 5px 10px; }
-      .model-table td, .model-table th { padding: 7px 8px; }
+      .model-table tbody tr.model-row { padding: 11px 10px 12px; gap: 8px 10px; }
       .lightbox-head h3 { font-size: .88rem; }
       .lightbox-stage { min-height: 220px; }
       .lightbox-stage img { max-height: 58vh; }
@@ -1004,7 +1096,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
         <div class="load-ant-fill-wrap" id="load-ant-fill-wrap">
           <img src="${antLogoDataUri || ''}" alt="" width="200" height="120" />
         </div>
+        <span class="load-pct" id="load-pct" aria-hidden="true">0%</span>
       </div>
+      <div class="load-squares" id="load-squares" aria-hidden="true">${loadSquaresHtml}</div>
       <p class="load-sr" id="load-msg">A carregar fotos do catálogo</p>
     </div>
   </div>
@@ -1407,9 +1501,10 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
         ? '<button type="button" class="thumb-btn' + (imgs.length > 1 ? ' has-gallery' : '') + '" tabindex="-1" data-cod="' + esc(cod) + '" data-title="' + esc(titulo) + '" title="Ver fotos"><img src="' + esc(img) + '" alt="" loading="lazy" />' + (imgs.length > 1 ? '<span class="thumb-more" aria-hidden="true">▦</span>' : '') + '</button>'
         : '<span class="thumb-empty">—</span>';
       const warn = item.match_status !== 'encontrado' ? ' <span class="badge warn">sem match</span>' : '';
+      const metaMobile = '<div class="model-meta-mobile">' + esc(item.formigres_acabamento || '—') + ' · ' + fmtPrecoHtml(item.preco_m2) + '</div>';
       return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod).toLowerCase()) + '" data-qty="' + qty + '">' +
         '<td class="col-foto">' + foto + '</td>' +
-        '<td class="col-modelo"><strong>' + esc(titulo) + '</strong>' + warn + '<br><small style="color:var(--muted)">#' + esc(cod) + '</small></td>' +
+        '<td class="col-modelo"><strong>' + esc(titulo) + '</strong>' + warn + '<br><small style="color:var(--muted)">#' + esc(cod) + '</small>' + metaMobile + '</td>' +
         '<td class="col-desc">' + esc(item.descricao) + '</td>' +
         '<td class="col-acab">' + esc(item.formigres_acabamento || '—') + '</td>' +
         '<td class="col-preco' + (descontoPct ? ' has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
@@ -1620,8 +1715,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       const pct = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
       const wrap = document.getElementById('load-ant-fill-wrap');
       if (wrap) wrap.style.height = pct + '%';
+      const pctEl = document.getElementById('load-pct');
+      if (pctEl) pctEl.textContent = pct + '%';
+      const squares = document.querySelectorAll('#load-squares .load-square');
+      const filled = total > 0 ? Math.round((done / total) * squares.length) : 0;
+      squares.forEach((sq, i) => sq.classList.toggle('filled', i < filled));
       const msg = document.getElementById('load-msg');
-      if (msg && total > 0) msg.textContent = 'A carregar fotos do catálogo — ' + done + ' de ' + total;
+      if (msg && total > 0) msg.textContent = 'A carregar fotos do catálogo — ' + pct + '% (' + done + ' de ' + total + ')';
     }
     function preloadImages(urls) {
       return new Promise((resolve) => {
