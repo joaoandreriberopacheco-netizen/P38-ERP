@@ -240,6 +240,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       --radius: 0;
       --shadow: 0 16px 40px rgba(0,0,0,.45);
       --shadow-soft: 0 4px 16px rgba(0,0,0,.28);
+      --load-charcoal: #3a3a42;
+      --load-charcoal-deep: #2c2c32;
+      --load-charcoal-ghost: #6e6e78;
       font-family: "Libre Franklin", "Segoe UI", system-ui, -apple-system, sans-serif;
     }
     html[data-theme="light"] {
@@ -266,6 +269,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       --accent-border: rgba(0,0,0,.14);
       --shadow: 0 16px 40px rgba(0,0,0,.1);
       --shadow-soft: 0 2px 12px rgba(0,0,0,.06);
+      --load-charcoal: #2f2f36;
+      --load-charcoal-deep: #222228;
+      --load-charcoal-ghost: #9a9aa4;
     }
     html[data-theme="light"] .load-overlay { background: rgba(242,242,240,.97); }
     .load-logo-ant {
@@ -293,8 +299,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       height: auto;
     }
     .load-ant-ghost {
-      opacity: .22;
-      filter: grayscale(1) brightness(1.15);
+      opacity: .32;
+      filter: grayscale(1) brightness(1.35) contrast(.95);
     }
     .load-ant-fill-wrap {
       position: absolute;
@@ -311,6 +317,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       bottom: 0;
       width: 100%;
       height: auto;
+      filter: grayscale(1) brightness(0.46) contrast(1.14);
     }
     .load-squares {
       display: flex;
@@ -329,8 +336,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       transition: background .2s ease, border-color .2s ease, opacity .2s ease;
     }
     .load-square.filled {
-      background: #e31e24;
-      border-color: #c91920;
+      background: var(--load-charcoal);
+      border-color: var(--load-charcoal-deep);
       opacity: 1;
     }
     * { box-sizing: border-box; }
