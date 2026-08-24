@@ -14,6 +14,16 @@ import { extractImagensFromDetalhe, fetchProdutoDetalhe } from '../lib/formigres
 const ROOT = process.cwd();
 const CLASSIF_DIR = path.join(ROOT, 'docs', 'imports-local', 'tintao', 'classificacao');
 const OUT_HTML = path.join(ROOT, 'docs', 'imports-local', 'tintao', 'catalogo-tintao-formigres.html');
+const ANT_LOGO_PATH = path.join(ROOT, 'scripts', 'catalogo', 'assets', 'formigres-ant.png');
+
+function loadAntLogoDataUri() {
+  try {
+    const buf = fs.readFileSync(ANT_LOGO_PATH);
+    return `data:image/png;base64,${buf.toString('base64')}`;
+  } catch {
+    return '';
+  }
+}
 
 const LINHA_ORDER = ['bold', 'retificada', 'polida', 'desconhecida'];
 const LINHA_LABEL = {
@@ -174,7 +184,7 @@ function slimItem(item) {
   };
 }
 
-function buildHtml({ classif, itens }) {
+function buildHtml({ classif, itens, antLogoDataUri = '' }) {
   const gerado = new Date(classif.geradoEm || Date.now()).toLocaleString('pt-BR');
   const total = itens.length;
   const comFoto = itens.filter((i) => i.imagem_url).length;
@@ -256,8 +266,37 @@ function buildHtml({ classif, itens }) {
       --shadow-soft: 0 2px 12px rgba(0,0,0,.06);
     }
     html[data-theme="light"] .load-overlay { background: rgba(242,242,240,.97); }
-    html[data-theme="light"] .load-ant-svg ellipse,
-    html[data-theme="light"] .load-ant-svg circle { fill: #e8e8ea; stroke: #787884; }
+    .load-logo-ant {
+      position: relative;
+      width: min(168px, 52vw);
+      margin: 0 auto;
+      aspect-ratio: 72 / 50;
+    }
+    .load-logo-ant img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .load-ant-ghost {
+      opacity: .22;
+      filter: grayscale(1) brightness(1.15);
+    }
+    .load-ant-fill-wrap {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      overflow: hidden;
+      height: 0;
+      transition: height .28s ease;
+    }
+    .load-ant-fill-wrap img {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: auto;
+    }
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -290,27 +329,7 @@ function buildHtml({ classif, itens }) {
       visibility: hidden;
       pointer-events: none;
     }
-    .load-panel { text-align: center; padding: 24px; max-width: 340px; }
-    .load-ant-wrap {
-      display: inline-block;
-      animation: ant-march 1.1s ease-in-out infinite;
-    }
-    @keyframes ant-march {
-      0%, 100% { transform: translateX(-6px); }
-      50% { transform: translateX(6px); }
-    }
-    .load-ant-svg { display: block; margin: 0 auto; overflow: visible; }
-    .load-ant-svg .ant-leg {
-      transform-origin: center top;
-      animation: ant-leg .35s ease-in-out infinite alternate;
-    }
-    .load-ant-svg .leg-a { animation-delay: 0s; }
-    .load-ant-svg .leg-b { animation-delay: .12s; }
-    .load-ant-svg .leg-c { animation-delay: .24s; }
-    @keyframes ant-leg {
-      from { transform: rotate(-18deg); }
-      to { transform: rotate(18deg); }
-    }
+    .load-panel { text-align: center; padding: 24px; max-width: 360px; }
     .load-title {
       margin: 18px 0 4px;
       font-size: .82rem;
@@ -327,25 +346,32 @@ function buildHtml({ classif, itens }) {
       font-variant-numeric: tabular-nums;
       letter-spacing: .04em;
     }
-    .load-trail {
+    .theme-fab {
+      position: fixed;
+      left: 14px;
+      bottom: calc(14px + env(safe-area-inset-bottom));
+      z-index: 40;
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius);
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--accent-bright);
+      box-shadow: var(--shadow);
+      cursor: pointer;
       display: flex;
+      align-items: center;
       justify-content: center;
-      gap: 6px;
-      margin-top: 14px;
+      padding: 0;
+      transition: transform .2s ease, box-shadow .2s ease, background .2s ease, color .2s ease;
     }
-    .load-trail span {
-      width: 6px;
-      height: 6px;
-      background: var(--accent-border);
-      opacity: .35;
-      animation: trail-dot 1.2s ease-in-out infinite;
+    .theme-fab:hover {
+      transform: scale(1.04);
+      border-color: var(--accent-border);
+      background: var(--accent-muted);
     }
-    .load-trail span:nth-child(2) { animation-delay: .15s; }
-    .load-trail span:nth-child(3) { animation-delay: .3s; }
-    @keyframes trail-dot {
-      0%, 100% { opacity: .2; transform: scale(.85); }
-      50% { opacity: 1; transform: scale(1); }
-    }
+    .theme-fab svg { width: 22px; height: 22px; stroke-width: 2; }
+    .theme-fab svg[hidden] { display: none; }
     .site-bar {
       background: var(--surface-2);
       border-bottom: 1px solid var(--border);
@@ -646,14 +672,6 @@ function buildHtml({ classif, itens }) {
       background: var(--accent-muted);
     }
     .fab svg { width: 22px; height: 22px; stroke-width: 2; }
-    .fab-theme.is-active {
-      background: var(--accent-dim);
-      border-color: var(--accent-border);
-      color: var(--accent-on);
-      opacity: 1;
-    }
-    .fab-theme:not(.is-active) { opacity: .5; }
-    .fab-theme:not(.is-active):hover { opacity: .85; }
     .cart-fab {
       border-color: var(--accent-border);
       color: var(--accent-bright);
@@ -938,9 +956,9 @@ function buildHtml({ classif, itens }) {
       .toolbar-desktop-only { display: none !important; }
       .search { flex: 1; min-width: 0; }
       .select-group, .btn { font-size: .78rem; padding: 8px 10px; }
-      .fab-stack { right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); gap: 6px; }
-      .fab { width: 44px; height: 44px; }
-      .fab svg { width: 20px; height: 20px; }
+      .fab-stack { right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); }
+      .theme-fab { left: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); width: 44px; height: 44px; }
+      .theme-fab svg { width: 20px; height: 20px; }
       .pedido-overlay.open { align-items: center; padding: 12px; }
       .pedido-overlay.open .pedido-panel {
         border-radius: var(--radius);
@@ -985,24 +1003,15 @@ function buildHtml({ classif, itens }) {
 <body class="is-loading">
   <div class="load-overlay" id="load-overlay" role="status" aria-live="polite" aria-busy="true">
     <div class="load-panel">
-      <div class="load-ant-wrap" aria-hidden="true">
-        <svg class="load-ant-svg" width="96" height="56" viewBox="0 0 96 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="44" cy="30" rx="20" ry="12" fill="#2c2c32" stroke="#c8c8d0" stroke-width="1.2"/>
-          <circle cx="64" cy="24" r="9" fill="#2c2c32" stroke="#c8c8d0" stroke-width="1.2"/>
-          <circle cx="67" cy="22" r="1.5" fill="#ececf0"/>
-          <line class="ant-leg leg-a" x1="36" y1="38" x2="28" y2="50" stroke="#a8a8b2" stroke-width="2" stroke-linecap="square"/>
-          <line class="ant-leg leg-b" x1="44" y1="40" x2="44" y2="52" stroke="#a8a8b2" stroke-width="2" stroke-linecap="square"/>
-          <line class="ant-leg leg-c" x1="52" y1="38" x2="60" y2="50" stroke="#a8a8b2" stroke-width="2" stroke-linecap="square"/>
-          <line class="ant-leg leg-a" x1="38" y1="34" x2="30" y2="24" stroke="#a8a8b2" stroke-width="2" stroke-linecap="square"/>
-          <line class="ant-leg leg-b" x1="46" y1="32" x2="46" y2="20" stroke="#a8a8b2" stroke-width="2" stroke-linecap="square"/>
-          <line class="ant-leg leg-c" x1="54" y1="34" x2="62" y2="24" stroke="#a8a8b2" stroke-width="2" stroke-linecap="square"/>
-          <path d="M72 24 L82 22 L82 26 Z" fill="#c8c8d0"/>
-        </svg>
+      <div class="load-logo-ant" aria-hidden="true">
+        <img class="load-ant-ghost" src="${antLogoDataUri || ''}" alt="" width="144" height="100" />
+        <div class="load-ant-fill-wrap" id="load-ant-fill-wrap">
+          <img src="${antLogoDataUri || ''}" alt="" width="144" height="100" />
+        </div>
       </div>
       <p class="load-title">Formigres</p>
       <p class="load-sub" id="load-msg">A carregar fotos do catálogo…</p>
       <p class="load-progress" id="load-progress">0 / 0</p>
-      <div class="load-trail" aria-hidden="true"><span></span><span></span><span></span></div>
     </div>
   </div>
 
@@ -1061,17 +1070,16 @@ function buildHtml({ classif, itens }) {
     <section class="catalogo" id="catalogo"></section>
   </div>
 
+  <button type="button" class="theme-fab" id="theme-toggle" aria-label="Mudar para tema escuro" title="Tema">
+    <svg id="theme-icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+    </svg>
+    <svg id="theme-icon-moon" hidden xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+    </svg>
+  </button>
+
   <div class="fab-stack" id="fab-stack">
-    <button type="button" class="fab fab-theme" id="theme-light" aria-label="Tema claro" title="Claro">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
-      </svg>
-    </button>
-    <button type="button" class="fab fab-theme" id="theme-dark" aria-label="Tema escuro" title="Escuro">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
-      </svg>
-    </button>
     <button type="button" class="fab cart-fab" id="cart-fab" aria-label="Minha seleção">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
@@ -1194,8 +1202,16 @@ function buildHtml({ classif, itens }) {
       const next = theme === 'light' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
       localStorage.setItem(THEME_KEY, next);
-      document.getElementById('theme-light')?.classList.toggle('is-active', next === 'light');
-      document.getElementById('theme-dark')?.classList.toggle('is-active', next === 'dark');
+      const sun = document.getElementById('theme-icon-sun');
+      const moon = document.getElementById('theme-icon-moon');
+      const btn = document.getElementById('theme-toggle');
+      if (sun) sun.hidden = next === 'light';
+      if (moon) moon.hidden = next === 'dark';
+      if (btn) btn.setAttribute('aria-label', next === 'light' ? 'Mudar para tema escuro' : 'Mudar para tema claro');
+    }
+    function toggleTheme() {
+      const cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+      applyTheme(cur === 'light' ? 'dark' : 'light');
     }
     function initTopControls() {
       applyTheme(localStorage.getItem(THEME_KEY) === 'light' ? 'light' : 'dark');
@@ -1205,8 +1221,7 @@ function buildHtml({ classif, itens }) {
         inp.addEventListener('input', () => setDesconto(inp.value));
         inp.addEventListener('change', () => setDesconto(inp.value));
       }
-      bindClick('theme-light', () => applyTheme('light'));
-      bindClick('theme-dark', () => applyTheme('dark'));
+      bindClick('theme-toggle', toggleTheme);
     }
     function getQty(cod) {
       const n = Number(qtyMap[String(cod)] || 0);
@@ -1411,21 +1426,21 @@ function buildHtml({ classif, itens }) {
     }
     function renderFormato(formato, items) {
       const n = items.length;
-      return '<details class="acc acc-formato" open><summary><span class="acc-title">Formato ' + esc(formato) + '</span><span class="acc-count">' + n + '</span></summary>' +
+      return '<details class="acc acc-formato" open><summary><span class="acc-title">Formato ' + esc(formato) + '</span><span class="acc-count" data-total="' + n + '">' + n + '</span></summary>' +
         '<div class="table-wrap"><table class="model-table"><thead><tr><th>Foto</th><th>Modelo</th><th>Descrição</th><th>Acab.</th><th>Preço/m²</th><th>Caixas</th><th>Formato</th></tr></thead><tbody>' +
         items.map(renderTableRow).join('') + '</tbody></table></div></details>';
     }
     function renderGrupo(key, formatosMap, linha) {
       const formatos = Object.keys(formatosMap).sort((a, b) => a.localeCompare(b, 'pt-BR'));
       const n = formatos.reduce((s, f) => s + formatosMap[f].length, 0);
-      return '<details class="acc acc-grupo" open><summary><span class="acc-title">' + esc(grupoLabel(key, linha)) + '</span><span class="acc-count">' + n + ' itens</span></summary>' +
+      return '<details class="acc acc-grupo" open><summary><span class="acc-title">' + esc(grupoLabel(key, linha)) + '</span><span class="acc-count" data-total="' + n + '" data-suffix="itens">' + n + ' itens</span></summary>' +
         '<div class="acc-inner">' + formatos.map((f) => renderFormato(f, formatosMap[f])).join('') + '</div></details>';
     }
     function renderLinha(linha, gruposMap) {
       const keys = sortGrupos(Object.keys(gruposMap), linha);
       const n = keys.reduce((s, k) => s + Object.values(gruposMap[k]).reduce((a, arr) => a + arr.length, 0), 0);
       const label = CFG.linhaLabel[linha] || linha;
-      return '<details class="acc acc-linha" open><summary><span class="acc-title linha-' + esc(linha) + '">' + esc(label) + '</span><span class="acc-count">' + n + '</span></summary>' +
+      return '<details class="acc acc-linha" open><summary><span class="acc-title linha-' + esc(linha) + '">' + esc(label) + '</span><span class="acc-count" data-total="' + n + '">' + n + '</span></summary>' +
         '<div class="acc-inner">' + keys.map((k) => renderGrupo(k, gruposMap[k], linha)).join('') + '</div></details>';
     }
     function renderCatalogo() {
@@ -1464,6 +1479,21 @@ function buildHtml({ classif, itens }) {
         l.classList.toggle('hidden', l.querySelectorAll('.acc-grupo:not(.hidden)').length === 0);
       }
       updateModelosCount();
+      updateAccordionCounts();
+    }
+    function formatAccCount(visible, total, suffix) {
+      if (visible === total) return suffix ? (visible + ' ' + suffix) : String(visible);
+      return suffix ? (visible + ' de ' + total + ' ' + suffix) : (visible + ' de ' + total);
+    }
+    function updateAccordionCounts() {
+      for (const acc of dom.allDetails) {
+        const el = acc.querySelector(':scope > summary .acc-count[data-total]');
+        if (!el) continue;
+        const total = Number(el.dataset.total || 0);
+        const suffix = el.dataset.suffix || '';
+        const visible = acc.querySelectorAll('.model-row:not(.hidden)').length;
+        el.textContent = formatAccCount(visible, total, suffix);
+      }
     }
     function updateModelosCount() {
       const visible = dom.rows.length
@@ -1592,16 +1622,23 @@ function buildHtml({ classif, itens }) {
       }
       return [...urls];
     }
+    function setLoadProgress(done, total) {
+      const pct = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
+      const wrap = document.getElementById('load-ant-fill-wrap');
+      if (wrap) wrap.style.height = pct + '%';
+      const prog = document.getElementById('load-progress');
+      if (prog) prog.textContent = total ? (done + ' / ' + total) : '—';
+    }
     function preloadImages(urls) {
       return new Promise((resolve) => {
-        if (!urls.length) { resolve(); return; }
+        if (!urls.length) { setLoadProgress(0, 0); resolve(); return; }
         let done = 0;
         const total = urls.length;
-        const prog = document.getElementById('load-progress');
-        const finish = () => { clearTimeout(timeout); resolve(); };
+        setLoadProgress(0, total);
+        const finish = () => { clearTimeout(timeout); setLoadProgress(total, total); resolve(); };
         const tick = () => {
           done += 1;
-          if (prog) prog.textContent = done + ' / ' + total;
+          setLoadProgress(done, total);
           if (done >= total) finish();
         };
         const timeout = setTimeout(finish, 35000);
@@ -1625,8 +1662,7 @@ function buildHtml({ classif, itens }) {
     }
     async function bootApp() {
       const urls = collectImageUrls();
-      const prog = document.getElementById('load-progress');
-      if (prog) prog.textContent = urls.length ? ('0 / ' + urls.length) : '—';
+      setLoadProgress(0, urls.length);
       await preloadImages(urls);
       renderCatalogo();
       renderPedido();
@@ -1818,7 +1854,8 @@ async function mainAsync() {
   const itensBase = enrichItens(classif.itens || [], snapshot);
   console.error('A carregar fotos do site Formigres…');
   const itens = await enrichImagensFromApi(itensBase);
-  const html = buildHtml({ classif, itens });
+  const antLogoDataUri = loadAntLogoDataUri();
+  const html = buildHtml({ classif, itens, antLogoDataUri });
 
   fs.mkdirSync(path.dirname(OUT_HTML), { recursive: true });
   fs.writeFileSync(OUT_HTML, html);
