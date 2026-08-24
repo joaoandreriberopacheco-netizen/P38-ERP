@@ -1011,74 +1011,43 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
       .acc-inner { padding-left: calc(6px + var(--depth, 0) * 10px); }
       .acc-title { font-size: .88rem; }
       .acc-count { font-size: .7rem; padding: 2px 7px; }
-      .table-wrap { overflow-x: visible; padding: 0 4px 8px; }
-      .model-table {
-        border: 0;
-        background: transparent;
-        font-size: .82rem;
-      }
-      .model-table thead { display: none; }
-      .model-table tbody { display: block; }
-      .model-table tbody tr { border-bottom: 0; }
-      .model-table tbody tr.model-row {
-        display: grid;
-        grid-template-columns: 54px 1fr;
-        grid-template-areas:
-          "foto modelo"
-          "qty qty";
-        gap: 10px 12px;
-        padding: 12px;
-        margin-bottom: 8px;
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        background: var(--surface);
-        box-shadow: var(--shadow-soft);
-      }
-      .model-table tbody tr.model-row:last-child { margin-bottom: 0; }
-      .model-table td {
-        display: block;
-        padding: 0;
-        border: 0;
-        position: static;
-        box-shadow: none;
-      }
       .model-meta-mobile {
         display: block;
-        margin-top: 6px;
-        font-size: .78rem;
+        margin-top: 4px;
+        font-size: .74rem;
         color: var(--muted);
-        line-height: 1.35;
+        line-height: 1.3;
       }
-      .col-foto { grid-area: foto; width: auto; align-self: start; }
-      .col-modelo { grid-area: modelo; min-width: 0; }
-      .col-desc, .col-acab, .col-preco, .col-cod { display: none !important; }
-      .col-qty {
-        grid-area: qty;
-        width: 100%;
-        text-align: left;
-        padding-top: 4px;
-        border-top: 1px solid var(--border);
+      .col-desc, .col-acab, .col-preco, .col-cod,
+      .model-table thead th:nth-child(3),
+      .model-table thead th:nth-child(4),
+      .model-table thead th:nth-child(5),
+      .model-table thead th:nth-child(7) { display: none; }
+      .model-table { font-size: .78rem; }
+      .model-table td, .model-table th { padding: 8px 6px; }
+      .col-foto { width: 44px; }
+      .col-modelo { min-width: 0; max-width: 1px; }
+      .col-modelo strong { font-size: .82rem; line-height: 1.25; }
+      .col-modelo small { font-size: .7rem; }
+      .thumb-btn, .thumb-empty { width: 40px; height: 40px; }
+      .col-qty, .model-table thead th:nth-child(6) {
+        position: sticky;
+        right: 0;
+        background: var(--surface);
+        z-index: 1;
+        width: 58px;
+        min-width: 58px;
+        padding-left: 4px;
+        padding-right: 4px;
+        box-shadow: -4px 0 6px rgba(0,0,0,.05);
       }
-      .col-qty::before {
-        content: "Caixas";
-        display: block;
-        font-size: .66rem;
-        letter-spacing: .08em;
-        text-transform: uppercase;
-        color: var(--muted);
-        margin-bottom: 6px;
-        font-weight: 600;
-      }
+      .model-table thead th:nth-child(6) { background: var(--surface-2); z-index: 2; }
       .col-qty .qty-input {
-        width: 100%;
-        max-width: none;
-        min-height: 46px;
-        font-size: 1rem;
+        width: 48px;
+        min-height: 40px;
+        font-size: .92rem;
+        padding: 6px 2px;
       }
-      .model-row.qty-focus-row {
-        box-shadow: inset 0 3px 0 var(--accent), var(--shadow-soft);
-      }
-      .thumb-btn, .thumb-empty { width: 54px; height: 54px; }
       .lightbox { padding: 10px; }
       .gallery-nav { width: 36px; height: 36px; }
     }
@@ -1088,7 +1057,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '' }) {
     @media (max-width: 480px) {
       .stats { gap: 6px; }
       .stat { font-size: .75rem; padding: 5px 10px; }
-      .model-table tbody tr.model-row { padding: 11px 10px 12px; gap: 8px 10px; }
+      .model-table td, .model-table th { padding: 7px 5px; }
+      .col-qty, .model-table thead th:nth-child(6) { width: 54px; min-width: 54px; }
+      .col-qty .qty-input { width: 44px; min-height: 38px; }
       .lightbox-head h3 { font-size: .88rem; }
       .lightbox-stage { min-height: 220px; }
       .lightbox-stage img { max-height: 58vh; }
