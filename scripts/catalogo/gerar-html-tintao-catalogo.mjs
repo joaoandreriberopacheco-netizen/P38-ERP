@@ -1263,21 +1263,21 @@ function buildHtml({ classif, itens }) {
     }
     function renderFormato(formato, items) {
       const n = items.length;
-      return '<details class="acc acc-formato"><summary><span class="acc-title">Formato ' + esc(formato) + '</span><span class="acc-count">' + n + '</span></summary>' +
+      return '<details class="acc acc-formato" open><summary><span class="acc-title">Formato ' + esc(formato) + '</span><span class="acc-count">' + n + '</span></summary>' +
         '<div class="table-wrap"><table class="model-table"><thead><tr><th>Foto</th><th>Modelo</th><th>Descrição</th><th>Acab.</th><th>Preço/m²</th><th>Caixas</th><th>Formato</th></tr></thead><tbody>' +
         items.map(renderTableRow).join('') + '</tbody></table></div></details>';
     }
     function renderGrupo(key, formatosMap, linha) {
       const formatos = Object.keys(formatosMap).sort((a, b) => fmtAreaKey(b) - fmtAreaKey(a) || a.localeCompare(b));
       const n = formatos.reduce((s, f) => s + formatosMap[f].length, 0);
-      return '<details class="acc acc-grupo"><summary><span class="acc-title">' + esc(grupoLabel(key, linha)) + '</span><span class="acc-count">' + n + ' itens</span></summary>' +
+      return '<details class="acc acc-grupo" open><summary><span class="acc-title">' + esc(grupoLabel(key, linha)) + '</span><span class="acc-count">' + n + ' itens</span></summary>' +
         '<div class="acc-inner">' + formatos.map((f) => renderFormato(f, formatosMap[f])).join('') + '</div></details>';
     }
     function renderLinha(linha, gruposMap) {
       const keys = sortGrupos(Object.keys(gruposMap), linha);
       const n = keys.reduce((s, k) => s + Object.values(gruposMap[k]).reduce((a, arr) => a + arr.length, 0), 0);
       const label = CFG.linhaLabel[linha] || linha;
-      return '<details class="acc acc-linha"><summary><span class="acc-title linha-' + esc(linha) + '">' + esc(label) + '</span><span class="acc-count">' + n + '</span></summary>' +
+      return '<details class="acc acc-linha" open><summary><span class="acc-title linha-' + esc(linha) + '">' + esc(label) + '</span><span class="acc-count">' + n + '</span></summary>' +
         '<div class="acc-inner">' + keys.map((k) => renderGrupo(k, gruposMap[k], linha)).join('') + '</div></details>';
     }
     function renderCatalogo() {
