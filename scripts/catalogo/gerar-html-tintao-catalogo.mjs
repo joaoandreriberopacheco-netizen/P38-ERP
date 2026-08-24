@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Gera HTML partilhável — catálogo Tintão × Formigres (accordion + lightbox).
+ * Gera HTML partilhável — pedido Formigres para lojistas (B2B).
+ * Persona: lojista que compara modelos, marca caixas e revisa total — não consumidor final.
  *
  * npm run catalogo:html-tintao
  */
@@ -193,7 +194,7 @@ function buildHtml({ classif, itens }) {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Catálogo Tintão — Formigres</title>
+  <title>Pedido Formigres — Lojistas</title>
   <style>
     :root {
       --bg: #1f1d22;
@@ -472,6 +473,34 @@ function buildHtml({ classif, itens }) {
     .product-card.has-qty {
       border-color: rgba(164,206,51,.45);
       box-shadow: 0 0 0 1px rgba(164,206,51,.12);
+      opacity: 1;
+    }
+    body.has-selection .product-card:not(.has-qty) {
+      opacity: .72;
+    }
+    body.has-selection .product-card:not(.has-qty):hover {
+      opacity: .92;
+    }
+    .card-cod {
+      font-size: .68rem;
+      font-family: ui-monospace, monospace;
+      color: var(--accent);
+      letter-spacing: .03em;
+    }
+    .card-specs {
+      font-size: .75rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .card-line-total {
+      margin-top: 8px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: rgba(164,206,51,.12);
+      border: 1px solid rgba(164,206,51,.25);
+      font-size: .78rem;
+      color: #e8f0c8;
+      font-weight: 600;
     }
     .product-card.qty-focus-row {
       border-color: var(--accent);
@@ -612,6 +641,12 @@ function buildHtml({ classif, itens }) {
       display: flex;
       flex-direction: column;
       gap: 2px;
+      background: none;
+      border: 0;
+      color: inherit;
+      text-align: left;
+      cursor: pointer;
+      padding: 4px 0;
     }
     #bb-summary { font-size: .78rem; color: var(--muted); }
     #bb-total { font-size: 1.05rem; color: var(--accent); }
@@ -834,25 +869,24 @@ function buildHtml({ classif, itens }) {
 <body>
   <div class="wrap">
     <header class="hero">
-      <h1>Catálogo Tintão — Formigres</h1>
-      <p>Lista orçamento · pisos Formigres</p>
+      <h1>Pedido Formigres</h1>
+      <p>Para lojistas — escolha o modelo, marque as caixas e revise o total</p>
       <div class="stats">
-        <span class="stat"><strong>${total}</strong> modelos</span>
-        <span class="stat stat-hide-mobile"><strong>${comFoto}</strong> com foto</span>
+        <span class="stat"><strong>${total}</strong> modelos na lista</span>
       </div>
       <div class="flow-steps" aria-hidden="true">
-        <div class="flow-step active" id="flow-1"><span class="flow-icon">1</span><span class="flow-label">Ver</span></div>
+        <div class="flow-step active" id="flow-1"><span class="flow-icon">1</span><span class="flow-label">Explorar</span></div>
         <span class="flow-line" id="flow-line-1"></span>
         <div class="flow-step" id="flow-2"><span class="flow-icon">2</span><span class="flow-label">Caixas</span></div>
         <span class="flow-line" id="flow-line-2"></span>
-        <div class="flow-step" id="flow-3"><span class="flow-icon">3</span><span class="flow-label">Pedido</span></div>
+        <div class="flow-step" id="flow-3"><span class="flow-icon">3</span><span class="flow-label">Revisar</span></div>
       </div>
-      <button type="button" class="hero-cta" id="start-qty">Montar pedido</button>
+      <button type="button" class="hero-cta" id="start-qty">Começar pedido</button>
     </header>
 
     <div class="toolbar">
       <div class="toolbar-main">
-        <input id="search" class="search" type="search" placeholder="Buscar modelo…" />
+        <input id="search" class="search" type="search" placeholder="Código, modelo ou formato…" />
         <button type="button" class="btn btn-icon toolbar-mobile-only" id="toolbar-more" aria-label="Mais opções">⋯</button>
       </div>
       <div class="toolbar-extra toolbar-mobile-only" id="toolbar-extra" hidden>
@@ -860,7 +894,7 @@ function buildHtml({ classif, itens }) {
           <option value="tipo">Por tipo</option>
           <option value="acabamento">Por acabamento</option>
         </select>
-        <button type="button" class="btn" id="filter-qty">Com quantidade</button>
+        <button type="button" class="btn" id="filter-qty">Na seleção</button>
         <button type="button" class="btn" id="clear-qty">Limpar</button>
         <button type="button" class="btn" id="expand-all">Abrir</button>
         <button type="button" class="btn" id="collapse-all">Fechar</button>
@@ -870,7 +904,7 @@ function buildHtml({ classif, itens }) {
           <option value="tipo">Agrupar: tipo</option>
           <option value="acabamento">Agrupar: acabamento</option>
         </select>
-        <button type="button" class="btn" id="filter-qty-d">Só com quantidade</button>
+        <button type="button" class="btn" id="filter-qty-d">Só na seleção</button>
         <button type="button" class="btn" id="clear-qty-d">Limpar seleção</button>
         <button type="button" class="btn btn-primary" id="start-qty-d">Preencher caixas</button>
         <button type="button" class="btn" id="toggle-pedido">Ver pedido</button>
@@ -880,8 +914,8 @@ function buildHtml({ classif, itens }) {
       </div>
     </div>
 
-    <section class="pedido-panel" id="pedido-panel" aria-label="Resumo do pedido">
-      <h2>Resumo do pedido</h2>
+    <section class="pedido-panel" id="pedido-panel" aria-label="Minha seleção">
+      <h2>Minha seleção</h2>
       <div class="pedido-resumo" id="pedido-resumo"></div>
       <div class="table-wrap">
         <table class="pedido-table" id="pedido-table">
@@ -901,17 +935,17 @@ function buildHtml({ classif, itens }) {
     <footer class="note">Catálogo offline · fotos embutidas · ${esc(gerado)}</footer>
   </div>
 
-  <nav class="bottom-bar" id="bottom-bar" aria-label="Pedido rápido">
+  <nav class="bottom-bar" id="bottom-bar" aria-label="Minha seleção">
     <div class="bottom-bar-inner">
       <button type="button" class="bottom-pedido" id="bb-pedido">
-        <span class="bb-icon" aria-hidden="true">🛒</span>
+        <span class="bb-icon" aria-hidden="true">📋</span>
         <span class="bb-badge" id="bb-badge">0</span>
-        <span class="bb-label">Pedido</span>
+        <span class="bb-label">Seleção</span>
       </button>
-      <div class="bottom-meta">
-        <span id="bb-summary">Toque + para adicionar</span>
+      <button type="button" class="bottom-meta" id="bb-meta">
+        <span id="bb-summary">Marque as caixas com +</span>
         <strong id="bb-total" hidden></strong>
-      </div>
+      </button>
       <button type="button" class="bottom-pdf btn-primary" id="bb-pdf" disabled>PDF</button>
     </div>
   </nav>
@@ -974,6 +1008,7 @@ function buildHtml({ classif, itens }) {
       document.querySelectorAll('.model-row[data-cod="' + cod + '"]').forEach((row) => {
         row.dataset.qty = String(n);
         row.classList.toggle('has-qty', n > 0);
+        refreshCardLineTotal(row, cod, n);
       });
       document.querySelectorAll('.qty-input[data-cod="' + cod + '"]').forEach((input) => {
         if (document.activeElement !== input) input.value = n || '';
@@ -985,6 +1020,24 @@ function buildHtml({ classif, itens }) {
     }
     function adjustQty(cod, delta) {
       setQty(cod, getQty(cod) + delta);
+    }
+    function refreshCardLineTotal(row, cod, qty) {
+      const item = itemsByCode.get(String(cod));
+      if (!item) return;
+      const body = row.querySelector('.card-body');
+      if (!body) return;
+      body.querySelector('.card-line-total')?.remove();
+      if (qty <= 0) return;
+      const m2cx = parseM2Caixa(item);
+      const sub = itemSubtotal(item, qty);
+      if (sub == null) return;
+      const el = document.createElement('div');
+      el.className = 'card-line-total';
+      el.textContent = qty + ' cx' +
+        (m2cx ? ' · ' + (qty * m2cx).toFixed(2).replace('.', ',') + ' m²' : '') +
+        ' · ' + fmtMoney(sub);
+      const price = body.querySelector('.card-price');
+      if (price) price.after(el);
     }
     function clearAllQty() {
       const hasQty = Object.keys(qtyMap).length > 0 || [...document.querySelectorAll('.qty-input')].some((el) => Number(el.value) > 0);
@@ -1122,17 +1175,30 @@ function buildHtml({ classif, itens }) {
       const titulo = item.formigres_titulo || item.descricao;
       const cod = item.codigo_tintao;
       const qty = getQty(cod);
+      const m2cx = parseM2Caixa(item);
+      const sub = qty > 0 ? itemSubtotal(item, qty) : null;
       const foto = img
         ? '<button type="button" class="thumb-btn' + (imgs.length > 1 ? ' has-gallery' : '') + '" data-cod="' + esc(cod) + '" data-title="' + esc(titulo) + '" title="Ver fotos"><img src="' + esc(img) + '" alt="" loading="lazy" />' + (imgs.length > 1 ? '<span class="thumb-more" aria-hidden="true">▦</span>' : '') + '</button>'
         : '<span class="thumb-empty">—</span>';
       const warn = item.match_status !== 'encontrado' ? '<span class="badge warn">sem match</span>' : '';
-      return '<article class="product-card model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato).toLowerCase()) + '" data-qty="' + qty + '">' +
+      const specs = [
+        m2cx ? m2cx.toFixed(2).replace('.', ',') + ' m²/cx' : '',
+        item.formigres_acabamento || '',
+      ].filter(Boolean).join(' · ');
+      const lineTotal = sub != null
+        ? '<div class="card-line-total">' + qty + ' cx' +
+          (m2cx ? ' · ' + (qty * m2cx).toFixed(2).replace('.', ',') + ' m²' : '') +
+          ' · ' + esc(fmtMoney(sub)) + '</div>'
+        : '';
+      return '<article class="product-card model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod).toLowerCase()) + '" data-qty="' + qty + '">' +
         '<div class="card-main">' + foto +
-        '<div class="card-body"><h4 class="card-title">' + esc(titulo) + '</h4>' +
+        '<div class="card-body"><div class="card-cod">#' + esc(cod) + '</div>' +
+        '<h4 class="card-title">' + esc(titulo) + '</h4>' +
         '<div class="card-meta"><span class="card-chip">' + esc(item.formato || '—') + '</span>' +
-        (item.formigres_acabamento ? '<span class="card-chip">' + esc(item.formigres_acabamento) + '</span>' : '') +
         warn + '</div>' +
-        '<div class="card-price">' + esc(fmtMoney(item.preco_m2)) + '<span style="font-weight:400;color:var(--muted)"> /m²</span></div></div></div>' +
+        (specs ? '<div class="card-specs">' + esc(specs) + '</div>' : '') +
+        '<div class="card-price">' + esc(fmtMoney(item.preco_m2)) + '<span style="font-weight:400;color:var(--muted)"> /m²</span></div>' +
+        lineTotal + '</div></div>' +
         '<div class="card-qty-row"><span class="qty-label">Caixas</span>' + qtyStepperHtml(cod, qty, titulo) + '</div></article>';
     }
     function renderFormato(formato, items) {
@@ -1150,7 +1216,7 @@ function buildHtml({ classif, itens }) {
       const keys = sortGrupos(Object.keys(gruposMap), linha);
       const n = keys.reduce((s, k) => s + Object.values(gruposMap[k]).reduce((a, arr) => a + arr.length, 0), 0);
       const label = CFG.linhaLabel[linha] || linha;
-      return '<details class="acc acc-linha" open><summary><span class="acc-title linha-' + esc(linha) + '">' + esc(label) + '</span><span class="acc-count">' + n + ' itens</span></summary>' +
+      return '<details class="acc acc-linha"><summary><span class="acc-title linha-' + esc(linha) + '">' + esc(label) + '</span><span class="acc-count">' + n + '</span></summary>' +
         '<div class="acc-inner">' + keys.map((k) => renderGrupo(k, gruposMap[k], linha)).join('') + '</div></details>';
     }
     function renderCatalogo() {
@@ -1241,7 +1307,7 @@ function buildHtml({ classif, itens }) {
       const pdf = document.getElementById('bb-pdf');
       const bar = document.getElementById('bottom-bar');
       if (badge) badge.textContent = String(rows.length);
-      if (summary) summary.textContent = rows.length ? (totalCaixas + ' cx · ' + rows.length + ' modelos') : 'Toque + para adicionar';
+      if (summary) summary.textContent = rows.length ? (totalCaixas + ' caixas · ' + rows.length + ' modelos') : 'Marque as caixas com +';
       if (totalEl) {
         totalEl.textContent = totalValor > 0 ? fmtMoney(totalValor) : '';
         totalEl.hidden = totalValor <= 0;
@@ -1249,6 +1315,7 @@ function buildHtml({ classif, itens }) {
       if (pdf) pdf.disabled = rows.length === 0;
       if (bar) bar.classList.toggle('has-items', rows.length > 0);
       document.body.classList.add('has-bottom-bar');
+      document.body.classList.toggle('has-selection', rows.length > 0);
     }
 
     function updateFlowSteps() {
@@ -1304,7 +1371,7 @@ function buildHtml({ classif, itens }) {
         return '<tr><td>' + (img ? '<img src="' + img + '" alt="" />' : '') + '</td><td>' + titulo + '<br><small>' + item.codigo_tintao + '</small></td><td>' + (item.formato || '—') + '</td><td style="text-align:center">' + qty + '</td><td>' + (m2cx ? m2cx.toFixed(2) : '—') + '</td><td>' + (m2tot ? m2tot.toFixed(2) : '—') + '</td><td>' + fmtMoney(item.preco_m2) + '</td><td style="text-align:right">' + (sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
       }).join('');
       return '<div style="font-family:Arial,sans-serif;padding:24px;color:#111">' +
-        '<h1 style="margin:0 0 4px;font-size:20px">Pedido — Catálogo Tintão × Formigres</h1>' +
+        '<h1 style="margin:0 0 4px;font-size:20px">Pedido Formigres — seleção do lojista</h1>' +
         '<p style="margin:0 0 16px;color:#555;font-size:12px">Gerado em ' + new Date().toLocaleString('pt-BR') + '</p>' +
         '<table><thead><tr><th>Foto</th><th>Modelo</th><th>Formato</th><th>Caixas</th><th>m²/cx</th><th>m² total</th><th>Preço/m²</th><th>Subtotal</th></tr></thead><tbody>' + body + '</tbody></table>' +
         '<p style="text-align:right;margin-top:16px;font-size:14px"><strong>' + rows.length + ' modelos · ' + totalCaixas + ' caixas · ' + totalM2.toFixed(2) + ' m² · Total: ' + fmtMoney(totalValor) + '</strong></p></div>';
@@ -1344,6 +1411,9 @@ function buildHtml({ classif, itens }) {
     bindClick('toggle-pedido', () => (pedidoOpen ? closePedidoPanel() : openPedidoPanel()));
     bindClick('pdf-pedido', printPedidoPdf);
     bindClick('bb-pedido', () => (pedidoOpen ? closePedidoPanel() : openPedidoPanel()));
+    bindClick('bb-meta', () => {
+      if (pedidoItens().length) openPedidoPanel();
+    });
     bindClick('bb-pdf', printPedidoPdf);
     bindClick('toolbar-more', () => {
       const extra = document.getElementById('toolbar-extra');
