@@ -279,6 +279,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', imageData = {} }) {
       --load-charcoal: #3a3a42;
       --load-charcoal-deep: #2c2c32;
       --load-charcoal-ghost: #6e6e78;
+      --pedido-divider: rgba(255,255,255,.12);
       font-family: "Libre Franklin", "Segoe UI", system-ui, -apple-system, sans-serif;
     }
     html[data-theme="light"] {
@@ -308,6 +309,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', imageData = {} }) {
       --load-charcoal: #2f2f36;
       --load-charcoal-deep: #222228;
       --load-charcoal-ghost: #9a9aa4;
+      --pedido-divider: #d5d5d5;
     }
     html[data-theme="light"] .load-overlay { background: rgba(242,242,240,.97); }
     .load-logo-ant {
@@ -866,7 +868,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', imageData = {} }) {
     .pedido-cards { display: flex; flex-direction: column; }
     .pedido-card {
       padding: 14px 0;
-      border-bottom: 0.5px solid color-mix(in srgb, var(--border) 38%, transparent);
+      border-bottom: 1px solid var(--pedido-divider);
     }
     .pedido-card:last-child { border-bottom: 0; }
     .pedido-card-head {
@@ -1233,7 +1235,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', imageData = {} }) {
       .pedido-total {
         margin-top: 10px;
         padding: 10px 0 12px;
-        border-top: 0.5px solid color-mix(in srgb, var(--border) 38%, transparent);
+        border-top: 1px solid var(--pedido-divider);
         flex-direction: column;
         align-items: stretch;
         gap: 4px;
@@ -1989,7 +1991,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', imageData = {} }) {
       return Math.ceil(Number(px || 0) * 25.4 / 96);
     }
     function printPageWidthPx() {
-      return Math.min(430, Math.max(340, window.innerWidth || 390));
+      const w = window.innerWidth || 390;
+      return Math.min(480, Math.max(360, Math.round(w * 0.96)));
     }
     function printPageWidthMm() {
       return Math.max(88, pxToMm(printPageWidthPx()));
@@ -2032,8 +2035,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', imageData = {} }) {
     function pedidoPdfThemeBlock(theme) {
       if (theme === 'light') {
         return '.print-render-root[data-theme="light"] {' +
-          '--pdf-bg:#f2f2f0;--pdf-surface:#ffffff;--pdf-surface-2:#fafafa;--pdf-text:#5a5a5a;--pdf-text-strong:#2f2f2f;' +
-          '--pdf-muted:#767676;--pdf-border:#d5d5d5;--pdf-divider:rgba(0,0,0,.08);--pdf-accent-bright:#1f1f24;--pdf-resumo-bg:#f4f4f4;--pdf-resumo-border:#d5d5d5;' +
+          '--pdf-bg:#ffffff;--pdf-surface:#ffffff;--pdf-surface-2:#fafafa;--pdf-text:#5a5a5a;--pdf-text-strong:#2f2f2f;' +
+          '--pdf-muted:#767676;--pdf-border:#d5d5d5;--pdf-divider:#d5d5d5;--pdf-accent-bright:#1f1f24;--pdf-resumo-bg:#f7f7f7;--pdf-resumo-border:#d5d5d5;' +
         '}';
       }
       return '.print-render-root[data-theme="dark"] {' +
@@ -2043,13 +2046,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', imageData = {} }) {
     }
     function printPedidoPrintCss(pageWmm, pageHmm, theme) {
       const pageRule = pageHmm != null
-        ? '@page { size: ' + pageWmm + 'mm ' + pageHmm + 'mm; margin: 5mm 4mm; }'
+        ? '@page { size: ' + pageWmm + 'mm ' + pageHmm + 'mm; margin: 3mm 2mm; }'
         : '';
       return pageRule +
         pedidoPdfThemeBlock(theme) +
         'html, body { margin: 0; padding: 0; }' +
-        '.print-render-root { background: var(--pdf-bg); color: var(--pdf-text); font-family: "Libre Franklin", "Segoe UI", system-ui, sans-serif; font-size: 13px; -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; }' +
-        '.print-sheet { width: 100%; box-sizing: border-box; background: var(--pdf-surface); color: var(--pdf-text); padding: 2px 0; }' +
+        '.print-render-root { background: var(--pdf-bg); color: var(--pdf-text); font-family: "Libre Franklin", "Segoe UI", system-ui, sans-serif; font-size: 13px; -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; width: 100%; }' +
+        '.print-sheet { width: 100%; max-width: 100%; margin: 0 auto; box-sizing: border-box; background: var(--pdf-surface); color: var(--pdf-text); padding: 4px 14px 2px; }' +
         '.print-head { margin-bottom: 10px; }' +
         'h1 { margin: 0 0 4px; font-size: 17px; letter-spacing: .08em; text-transform: uppercase; color: var(--pdf-text-strong); font-weight: 600; }' +
         '.print-meta, .print-note { margin: 0 0 6px; color: var(--pdf-muted); font-size: 11px; line-height: 1.35; }' +
@@ -2057,7 +2060,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', imageData = {} }) {
         '.print-resumo-stat { flex: 1; min-width: 0; text-align: center; padding: 7px 4px; border: 1px solid var(--pdf-resumo-border); border-radius: 0; background: var(--pdf-resumo-bg); font-size: 10px; color: var(--pdf-muted); }' +
         '.print-resumo-stat strong { display: block; font-size: 14px; color: var(--pdf-text-strong); margin-bottom: 2px; font-weight: 600; }' +
         '.print-cards { display: flex; flex-direction: column; }' +
-        '.pedido-card { padding: 14px 0; border-bottom: 0.5px solid var(--pdf-divider); break-inside: avoid; page-break-inside: avoid; background: transparent; }' +
+        '.pedido-card { padding: 14px 0; border-bottom: 1px solid var(--pdf-divider); break-inside: avoid; page-break-inside: avoid; background: transparent; }' +
         '.pedido-card:last-child { border-bottom: 0; }' +
         '.pedido-card-head { display: flex; align-items: flex-start; gap: 10px; }' +
         '.pedido-card-thumb { width: 48px; height: 48px; border-radius: 0; object-fit: cover; flex-shrink: 0; background: var(--pdf-surface-2); }' +
@@ -2076,11 +2079,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', imageData = {} }) {
         '.pedido-card-price-val .preco-orig { font-size: .62rem; line-height: 1.1; display: block; text-decoration: line-through; color: var(--pdf-muted); }' +
         '.pedido-card-price-val .preco-desc { font-size: .78rem; font-weight: 600; color: var(--pdf-text-strong); display: block; }' +
         '.pedido-card-price-val:not(.has-desc) { font-size: .78rem; font-weight: 600; color: var(--pdf-text-strong); }' +
-        '.print-totals { text-align: right; margin: 14px 0 0; padding-top: 10px; border-top: 0.5px solid var(--pdf-divider); font-size: 14px; color: var(--pdf-text); break-inside: avoid; page-break-inside: avoid; }' +
+        '.print-totals { text-align: right; margin: 14px 0 0; padding-top: 10px; border-top: 1px solid var(--pdf-divider); font-size: 14px; color: var(--pdf-text); break-inside: avoid; page-break-inside: avoid; }' +
         '.print-totals strong { font-size: 16px; color: var(--pdf-accent-bright); font-weight: 600; }';
     }
     function pdfCanvasBackground(theme) {
-      return theme === 'light' ? '#f2f2f0' : '#121214';
+      return '#ffffff';
     }
     const HTML2PDF_URL = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
     let pedidoPdfBlob = null;
@@ -2192,7 +2195,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', imageData = {} }) {
         host.insertBefore(pageStyle, wrap);
         revokePedidoPdfBlob();
         pedidoPdfBlob = await html2pdf().set({
-          margin: [5, 4, 5, 4],
+          margin: [3, 2, 3, 2],
           filename: pedidoPdfFilename(),
           image: { type: 'jpeg', quality: 0.94 },
           html2canvas: {
