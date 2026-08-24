@@ -1507,9 +1507,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', imageData = {} }) {
       if (!url) return '';
       return IMAGE_DATA[url] || url;
     }
-    function currentTheme() {
-      return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
-    }
+    const PDF_THEME = 'light';
     function fmtMoney(v) {
       if (v == null || v === '') return '—';
       const n = Number(v);
@@ -2119,7 +2117,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', imageData = {} }) {
     function mountPedidoPdfRender() {
       const pageWpx = printPageWidthPx();
       const pageWmm = printPageWidthMm();
-      const theme = currentTheme();
+      const theme = PDF_THEME;
       const host = document.getElementById('pedido-pdf-render-host');
       if (!host) return null;
       host.innerHTML = '';
