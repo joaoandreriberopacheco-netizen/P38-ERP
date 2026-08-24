@@ -458,216 +458,201 @@ function buildHtml({ classif, itens }) {
       border-color: var(--accent);
       background: #1a1c14;
     }
-    .product-list {
-      display: grid;
-      gap: 10px;
-      padding: 8px 10px 12px;
+    .model-row.has-qty {
+      background: rgba(164,206,51,.06);
     }
-    .product-card {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 12px;
-      transition: border-color .2s, box-shadow .2s;
+    body.has-selection .model-row:not(.has-qty) {
+      opacity: .78;
     }
-    .product-card.has-qty {
-      border-color: rgba(164,206,51,.45);
-      box-shadow: 0 0 0 1px rgba(164,206,51,.12);
-      opacity: 1;
+    body.has-selection .model-row:not(.has-qty):hover {
+      opacity: .95;
     }
-    body.has-selection .product-card:not(.has-qty) {
-      opacity: .72;
-    }
-    body.has-selection .product-card:not(.has-qty):hover {
-      opacity: .92;
-    }
-    .card-cod {
-      font-size: .68rem;
-      font-family: ui-monospace, monospace;
-      color: var(--accent);
-      letter-spacing: .03em;
-    }
-    .card-specs {
-      font-size: .75rem;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-    .card-line-total {
-      margin-top: 8px;
-      padding: 6px 10px;
-      border-radius: 8px;
-      background: rgba(164,206,51,.12);
-      border: 1px solid rgba(164,206,51,.25);
-      font-size: .78rem;
-      color: #e8f0c8;
-      font-weight: 600;
-    }
-    .product-card.qty-focus-row {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 2px rgba(164,206,51,.2);
-    }
-    .card-main {
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-    }
-    .card-body { flex: 1; min-width: 0; }
-    .card-title {
-      margin: 0 0 4px;
-      font-size: .95rem;
-      font-weight: 600;
-      line-height: 1.25;
-    }
-    .card-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 6px;
-    }
-    .card-chip {
-      font-size: .68rem;
-      padding: 3px 8px;
-      border-radius: 999px;
+    .qty-cell-btn {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      min-width: 52px;
+      min-height: 44px;
+      padding: 0 12px;
+      border-radius: 10px;
+      border: 1px dashed var(--border);
       background: var(--surface-2);
       color: var(--muted);
-      border: 1px solid var(--border);
-    }
-    .card-price {
-      font-size: .88rem;
-      color: var(--accent);
-      font-weight: 600;
-    }
-    .card-qty-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid var(--border);
-    }
-    .qty-label {
-      font-size: .72rem;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      color: var(--muted);
-      font-weight: 600;
-    }
-    .qty-stepper {
-      display: flex;
-      align-items: center;
-      gap: 0;
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    .qty-step {
-      width: 44px;
-      height: 44px;
-      border: 0;
-      background: transparent;
-      color: var(--accent);
-      font-size: 1.35rem;
+      font-size: 1rem;
       font-weight: 600;
       cursor: pointer;
-      display: grid;
-      place-items: center;
-      line-height: 1;
     }
-    .qty-step:active { background: rgba(164,206,51,.15); }
-    .qty-stepper .qty-input {
-      width: 52px;
-      height: 44px;
-      border: 0;
-      border-left: 1px solid var(--border);
-      border-right: 1px solid var(--border);
-      border-radius: 0;
-      background: var(--bg);
-      font-size: 1.05rem;
-      font-weight: 600;
+    .qty-cell-btn.has-value {
+      border-style: solid;
+      border-color: var(--accent-dim);
+      background: rgba(164,206,51,.12);
+      color: var(--accent);
     }
-    .bottom-bar {
-      display: none;
-      position: fixed;
-      left: 0; right: 0; bottom: 0;
-      z-index: 40;
-      background: rgba(31,29,34,.96);
-      backdrop-filter: blur(12px);
-      border-top: 1px solid var(--border);
-      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-      box-shadow: 0 -8px 32px rgba(0,0,0,.4);
+    .qty-dialog {
+      position: fixed; inset: 0; z-index: 55;
+      background: rgba(8,7,10,.75);
+      display: none; align-items: flex-end; justify-content: center;
+      padding: 0;
     }
-    .bottom-bar.has-items { border-top-color: rgba(164,206,51,.35); }
-    .bottom-bar-inner {
-      max-width: 1100px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .bottom-pedido {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
+    .qty-dialog.open { display: flex; }
+    .qty-dialog-panel {
+      width: 100%; max-width: 420px;
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 8px 14px;
-      color: var(--text);
-      cursor: pointer;
-      min-width: 64px;
+      border-radius: 18px 18px 0 0;
+      padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+      box-shadow: var(--shadow);
     }
-    .bottom-pedido .bb-icon { font-size: 1.2rem; line-height: 1; }
-    .bottom-pedido .bb-label { font-size: .62rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
-    .bb-badge {
-      position: absolute;
-      top: -4px; right: -4px;
-      min-width: 20px; height: 20px;
-      padding: 0 5px;
+    .qty-dialog-panel::before {
+      content: "";
+      display: block;
+      width: 40px; height: 4px;
+      background: var(--border);
       border-radius: 999px;
-      background: var(--accent);
+      margin: 0 auto 14px;
+    }
+    .qty-dialog-title { margin: 0 0 4px; font-size: 1rem; font-weight: 600; }
+    .qty-dialog-meta { margin: 0 0 16px; font-size: .78rem; color: var(--muted); }
+    .qty-dialog-stepper {
+      display: flex; align-items: center; justify-content: center;
+      gap: 0; margin-bottom: 16px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      max-width: 220px;
+      margin-left: auto; margin-right: auto;
+    }
+    .qty-dialog-stepper .qty-step {
+      width: 56px; height: 56px;
+      border: 0; background: transparent;
+      color: var(--accent); font-size: 1.5rem; font-weight: 600;
+      cursor: pointer;
+    }
+    .qty-dialog-stepper .qty-input {
+      width: 72px; height: 56px;
+      border: 0; border-left: 1px solid var(--border); border-right: 1px solid var(--border);
+      border-radius: 0; font-size: 1.25rem; font-weight: 600;
+    }
+    .qty-dialog-actions {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+    .qty-dialog-actions .btn { border-radius: 12px; padding: 14px; font-size: .95rem; }
+    .qty-dialog-actions .btn-save {
+      background: var(--accent-dim);
+      border-color: var(--accent);
       color: #1a1a12;
-      font-size: .7rem;
       font-weight: 700;
+    }
+    @media (min-width: 721px) {
+      .qty-dialog { align-items: center; padding: 20px; }
+      .qty-dialog-panel { border-radius: var(--radius); max-width: 380px; }
+      .qty-dialog-panel::before { display: none; }
+      .qty-cell-btn { display: none !important; }
+    }
+    .cart-fab {
+      position: fixed;
+      right: 16px;
+      bottom: calc(16px + env(safe-area-inset-bottom));
+      z-index: 40;
+      width: 56px;
+      height: 56px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
+      border: 2px solid rgba(164,206,51,.5);
+      color: #1a1a12;
+      box-shadow: 0 10px 32px rgba(0,0,0,.45);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .cart-fab:hover { transform: scale(1.04); box-shadow: 0 12px 36px rgba(164,206,51,.25); }
+    .cart-fab svg { width: 26px; height: 26px; stroke-width: 2.2; }
+    .cart-fab-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: #fff;
+      color: #1a1a12;
+      font-size: .72rem;
+      font-weight: 800;
       display: grid;
       place-items: center;
+      border: 2px solid var(--accent-dim);
+      box-shadow: 0 2px 8px rgba(0,0,0,.3);
     }
-    .bottom-meta {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      background: none;
-      border: 0;
-      color: inherit;
-      text-align: left;
-      cursor: pointer;
-      padding: 4px 0;
+    .cart-fab-badge:empty,
+    .cart-fab-badge[data-count="0"] { display: none; }
+    .pedido-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 45;
+      background: rgba(8,7,10,.78);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0;
     }
-    #bb-summary { font-size: .78rem; color: var(--muted); }
-    #bb-total { font-size: 1.05rem; color: var(--accent); }
-    .bottom-pdf {
-      padding: 12px 18px;
-      border-radius: 12px;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-    .bottom-pdf:disabled { opacity: .4; cursor: not-allowed; }
-    body.has-bottom-bar { padding-bottom: 88px; }
+    .pedido-overlay.open { display: flex; }
     .pedido-panel {
       display: none;
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px;
-      margin-bottom: 16px;
+      border-radius: 18px 18px 0 0;
+      padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+      width: 100%;
+      max-width: 1100px;
+      max-height: 88vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow);
     }
-    .pedido-panel.open { display: block; }
-    .pedido-panel h2 { margin: 0 0 12px; font-size: 1.1rem; }
+    .pedido-overlay.open .pedido-panel { display: block; }
+    .pedido-panel::before {
+      content: "";
+      display: block;
+      width: 40px; height: 4px;
+      background: var(--border);
+      border-radius: 999px;
+      margin: 0 auto 12px;
+    }
+    .pedido-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .pedido-head h2 { margin: 0; font-size: 1.1rem; }
+    .pedido-close {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      width: 36px; height: 36px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+    .pedido-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+    .pedido-actions .btn { flex: 1; min-width: 120px; border-radius: 12px; padding: 12px; }
+    .pedido-empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 28px 12px;
+      font-size: .9rem;
+    }
     .pedido-resumo {
       display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;
     }
@@ -808,12 +793,19 @@ function buildHtml({ classif, itens }) {
     footer.note {
       margin-top: 20px; color: var(--muted); font-size: .78rem; text-align: center;
     }
+    .cart-fab.has-items {
+      animation: cart-pulse 2.4s ease-in-out infinite;
+    }
+    @keyframes cart-pulse {
+      0%, 100% { box-shadow: 0 10px 32px rgba(0,0,0,.45); }
+      50% { box-shadow: 0 10px 32px rgba(164,206,51,.35); }
+    }
+    body.has-cart .wrap {
+      padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    }
     @media (max-width: 720px) {
       .wrap { padding: 14px 10px 36px; }
-      body.has-bottom-bar .wrap { padding-bottom: 100px; }
       .hero-cta { display: block; }
-      .bottom-bar { display: block; }
-      body.has-bottom-bar { padding-bottom: 0; }
       header.hero { padding: 16px 14px; }
       header.hero h1 { font-size: 1.15rem; }
       .stat-hide-mobile { display: none; }
@@ -821,24 +813,13 @@ function buildHtml({ classif, itens }) {
       .toolbar-desktop-only { display: none !important; }
       .search { flex: 1; min-width: 0; }
       .select-group, .btn { font-size: .8rem; padding: 9px 12px; }
-      .pedido-panel.open {
-        position: fixed;
-        left: 0; right: 0; bottom: 0;
-        z-index: 45;
+      .pedido-overlay.open { align-items: center; padding: 20px; }
+      .pedido-overlay.open .pedido-panel {
+        border-radius: var(--radius);
         max-height: 85vh;
-        overflow-y: auto;
-        border-radius: 18px 18px 0 0;
-        margin: 0;
-        box-shadow: 0 -16px 48px rgba(0,0,0,.5);
       }
-      .pedido-panel.open::before {
-        content: "";
-        display: block;
-        width: 40px; height: 4px;
-        background: var(--border);
-        border-radius: 999px;
-        margin: 0 auto 12px;
-      }
+      .pedido-overlay.open .pedido-panel::before { display: none; }
+      .cart-fab { right: 20px; bottom: 20px; }
       footer.note { display: none; }
       details.acc > summary {
         padding: 12px 12px 12px calc(10px + var(--depth, 0) * 12px);
@@ -847,16 +828,31 @@ function buildHtml({ classif, itens }) {
       .acc-inner { padding-left: calc(8px + var(--depth, 0) * 12px); }
       .acc-title { font-size: .92rem; }
       .acc-count { font-size: .72rem; padding: 3px 8px; }
-      .thumb-btn { width: 72px; height: 72px; border-radius: 12px; }
-      .thumb-empty { width: 72px; height: 72px; }
+      .col-desc, .model-table thead th:nth-child(3) { display: none; }
+      .model-table { font-size: .8rem; }
+      .qty-input-desktop { display: none !important; }
+      .qty-cell-btn { display: inline-flex; }
+      .qty-input { width: 64px; min-height: 44px; font-size: 1rem; }
+      .col-qty, .model-table thead th:nth-child(6) {
+        position: sticky; right: 52px; background: var(--bg); z-index: 1;
+        box-shadow: -6px 0 8px rgba(0,0,0,.2);
+      }
+      .model-table thead th:nth-child(6) { background: #232027; z-index: 2; }
+      .col-cod, .model-table thead th:nth-child(7) {
+        position: sticky; right: 0; background: var(--bg); z-index: 1;
+      }
+      .model-table thead th:nth-child(7) { background: #232027; z-index: 2; }
       .lightbox { padding: 10px; }
       .gallery-nav { width: 36px; height: 36px; }
     }
     @media (min-width: 721px) {
       .toolbar-mobile-only { display: none !important; }
-      .product-list { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
     }
     @media (max-width: 480px) {
+      .col-acab, .col-cod,
+      .model-table thead th:nth-child(4),
+      .model-table thead th:nth-child(7) { display: none; }
+      .col-qty, .model-table thead th:nth-child(6) { right: 0; }
       .stats { gap: 6px; }
       .stat { font-size: .75rem; padding: 5px 10px; }
       .model-table td, .model-table th { padding: 7px 8px; }
@@ -907,17 +903,36 @@ function buildHtml({ classif, itens }) {
         <button type="button" class="btn" id="filter-qty-d">Só na seleção</button>
         <button type="button" class="btn" id="clear-qty-d">Limpar seleção</button>
         <button type="button" class="btn btn-primary" id="start-qty-d">Preencher caixas</button>
-        <button type="button" class="btn" id="toggle-pedido">Ver pedido</button>
-        <button type="button" class="btn btn-primary" id="pdf-pedido">PDF do pedido</button>
         <button type="button" class="btn" id="expand-all-d">Abrir tudo</button>
         <button type="button" class="btn" id="collapse-all-d">Fechar tudo</button>
       </div>
     </div>
 
-    <section class="pedido-panel" id="pedido-panel" aria-label="Minha seleção">
-      <h2>Minha seleção</h2>
+    <section class="catalogo" id="catalogo"></section>
+
+    <footer class="note">Catálogo offline · fotos embutidas · ${esc(gerado)}</footer>
+  </div>
+
+  <button type="button" class="cart-fab" id="cart-fab" aria-label="Minha seleção">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
+      <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+    </svg>
+    <span class="cart-fab-badge" id="cart-fab-badge" data-count="0">0</span>
+  </button>
+
+  <div class="pedido-overlay" id="pedido-overlay" role="dialog" aria-modal="true" aria-label="Minha seleção">
+    <section class="pedido-panel" id="pedido-panel">
+      <div class="pedido-head">
+        <div>
+          <h2>Minha seleção</h2>
+          <p style="margin:4px 0 0;font-size:.78rem;color:var(--muted)">Revise caixas, m² e total antes de exportar</p>
+        </div>
+        <button type="button" class="pedido-close" id="pedido-close" aria-label="Fechar">×</button>
+      </div>
       <div class="pedido-resumo" id="pedido-resumo"></div>
-      <div class="table-wrap">
+      <div class="pedido-empty hidden" id="pedido-empty">Nenhum modelo na seleção — marque caixas na tabela.</div>
+      <div class="table-wrap" id="pedido-table-wrap">
         <table class="pedido-table" id="pedido-table">
           <thead>
             <tr>
@@ -928,29 +943,30 @@ function buildHtml({ classif, itens }) {
         </table>
       </div>
       <div class="pedido-total" id="pedido-total"></div>
+      <div class="pedido-actions">
+        <button type="button" class="btn" id="clear-qty-panel">Limpar seleção</button>
+        <button type="button" class="btn btn-primary" id="pdf-pedido-panel" disabled>PDF do pedido</button>
+      </div>
     </section>
-
-    <section class="catalogo" id="catalogo"></section>
-
-    <footer class="note">Catálogo offline · fotos embutidas · ${esc(gerado)}</footer>
   </div>
 
-  <nav class="bottom-bar" id="bottom-bar" aria-label="Minha seleção">
-    <div class="bottom-bar-inner">
-      <button type="button" class="bottom-pedido" id="bb-pedido">
-        <span class="bb-icon" aria-hidden="true">📋</span>
-        <span class="bb-badge" id="bb-badge">0</span>
-        <span class="bb-label">Seleção</span>
-      </button>
-      <button type="button" class="bottom-meta" id="bb-meta">
-        <span id="bb-summary">Marque as caixas com +</span>
-        <strong id="bb-total" hidden></strong>
-      </button>
-      <button type="button" class="bottom-pdf btn-primary" id="bb-pdf" disabled>PDF</button>
-    </div>
-  </nav>
-
   <div id="pedido-print"></div>
+
+  <div class="qty-dialog" id="qty-dialog" role="dialog" aria-modal="true" aria-label="Quantidade de caixas">
+    <div class="qty-dialog-panel">
+      <h3 class="qty-dialog-title" id="qty-dialog-title">Modelo</h3>
+      <p class="qty-dialog-meta" id="qty-dialog-meta"></p>
+      <div class="qty-dialog-stepper">
+        <button type="button" class="qty-step minus" id="qty-dialog-minus" aria-label="Menos">−</button>
+        <input type="number" class="qty-input" id="qty-dialog-input" min="0" step="1" inputmode="numeric" autocomplete="off" placeholder="0" />
+        <button type="button" class="qty-step plus" id="qty-dialog-plus" aria-label="Mais">+</button>
+      </div>
+      <div class="qty-dialog-actions">
+        <button type="button" class="btn" id="qty-dialog-cancel">Cancelar</button>
+        <button type="button" class="btn btn-save" id="qty-dialog-save">Salvar</button>
+      </div>
+    </div>
+  </div>
 
   <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Galeria do produto">
     <div class="lightbox-panel">
@@ -1000,6 +1016,12 @@ function buildHtml({ classif, itens }) {
       const n = Number(qtyMap[String(cod)] || 0);
       return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
     }
+    function syncQtyCellDisplay(cod, n) {
+      document.querySelectorAll('.qty-cell-btn[data-cod="' + cod + '"]').forEach((btn) => {
+        btn.textContent = n > 0 ? String(n) : '+';
+        btn.classList.toggle('has-value', n > 0);
+      });
+    }
     function setQty(cod, val) {
       const n = Math.max(0, Math.floor(Number(val) || 0));
       if (n > 0) qtyMap[String(cod)] = n;
@@ -1008,36 +1030,18 @@ function buildHtml({ classif, itens }) {
       document.querySelectorAll('.model-row[data-cod="' + cod + '"]').forEach((row) => {
         row.dataset.qty = String(n);
         row.classList.toggle('has-qty', n > 0);
-        refreshCardLineTotal(row, cod, n);
       });
+      syncQtyCellDisplay(cod, n);
       document.querySelectorAll('.qty-input[data-cod="' + cod + '"]').forEach((input) => {
         if (document.activeElement !== input) input.value = n || '';
       });
       renderPedido();
-      updateBottomBar();
+      updateCartFab();
       updateFlowSteps();
       if (filterQtyOnly) applySearch(document.getElementById('search').value);
     }
     function adjustQty(cod, delta) {
       setQty(cod, getQty(cod) + delta);
-    }
-    function refreshCardLineTotal(row, cod, qty) {
-      const item = itemsByCode.get(String(cod));
-      if (!item) return;
-      const body = row.querySelector('.card-body');
-      if (!body) return;
-      body.querySelector('.card-line-total')?.remove();
-      if (qty <= 0) return;
-      const m2cx = parseM2Caixa(item);
-      const sub = itemSubtotal(item, qty);
-      if (sub == null) return;
-      const el = document.createElement('div');
-      el.className = 'card-line-total';
-      el.textContent = qty + ' cx' +
-        (m2cx ? ' · ' + (qty * m2cx).toFixed(2).replace('.', ',') + ' m²' : '') +
-        ' · ' + fmtMoney(sub);
-      const price = body.querySelector('.card-price');
-      if (price) price.after(el);
     }
     function clearAllQty() {
       const hasQty = Object.keys(qtyMap).length > 0 || [...document.querySelectorAll('.qty-input')].some((el) => Number(el.value) > 0);
@@ -1047,19 +1051,28 @@ function buildHtml({ classif, itens }) {
       localStorage.removeItem(QTY_KEY);
       document.querySelectorAll('.qty-input').forEach((input) => {
         input.value = '';
-        const row = input.closest('.model-row');
-        if (row) {
-          row.dataset.qty = '0';
-          row.classList.remove('has-qty');
-        }
+      });
+      document.querySelectorAll('.qty-cell-btn').forEach((btn) => {
+        btn.textContent = '+';
+        btn.classList.remove('has-value');
+      });
+      document.querySelectorAll('.model-row').forEach((row) => {
+        row.dataset.qty = '0';
+        row.classList.remove('has-qty');
       });
       renderPedido();
-      updateBottomBar();
+      updateCartFab();
       updateFlowSteps();
       if (filterQtyOnly) applySearch(document.getElementById('search').value);
     }
     function visibleQtyInputs() {
-      return [...document.querySelectorAll('.model-row:not(.hidden) .qty-input')];
+      return [...document.querySelectorAll('.model-row:not(.hidden) .qty-input-desktop')];
+    }
+    function visibleRows() {
+      return [...document.querySelectorAll('.model-row:not(.hidden)')];
+    }
+    function isMobileQty() {
+      return window.matchMedia('(max-width: 720px)').matches;
     }
     function clearQtyFocusRows() {
       document.querySelectorAll('.model-row.qty-focus-row').forEach((r) => r.classList.remove('qty-focus-row'));
@@ -1087,9 +1100,44 @@ function buildHtml({ classif, itens }) {
     function startQtyEntry() {
       dom.allDetails.forEach((d) => { d.open = true; });
       applySearch(document.getElementById('search').value);
-      const list = visibleQtyInputs();
-      const empty = list.find((i) => !Number(i.value));
-      focusQtyInput(empty || list[0]);
+      const rows = visibleRows();
+      const empty = rows.find((r) => !getQty(r.dataset.cod));
+      const target = empty || rows[0];
+      if (!target) return;
+      const cod = target.dataset.cod;
+      if (isMobileQty()) openQtyDialog(cod);
+      else focusQtyInput(target.querySelector('.qty-input-desktop'));
+    }
+    let qtyDialogCod = null;
+    function openQtyDialog(cod) {
+      const item = itemsByCode.get(String(cod));
+      if (!item) return;
+      qtyDialogCod = String(cod);
+      const titulo = item.formigres_titulo || item.descricao;
+      document.getElementById('qty-dialog-title').textContent = titulo;
+      const meta = [item.formato, item.formigres_acabamento, '#' + item.codigo_tintao].filter(Boolean).join(' · ');
+      document.getElementById('qty-dialog-meta').textContent = meta;
+      const input = document.getElementById('qty-dialog-input');
+      input.value = getQty(cod) || '';
+      document.getElementById('qty-dialog').classList.add('open');
+      document.body.style.overflow = 'hidden';
+      requestAnimationFrame(() => { input.focus(); input.select(); });
+    }
+    function closeQtyDialog() {
+      document.getElementById('qty-dialog').classList.remove('open');
+      qtyDialogCod = null;
+      syncBodyScrollLock();
+    }
+    function saveQtyDialog() {
+      if (!qtyDialogCod) return;
+      setQty(qtyDialogCod, document.getElementById('qty-dialog-input').value);
+      closeQtyDialog();
+    }
+    function syncBodyScrollLock() {
+      const locked = pedidoOpen
+        || document.getElementById('qty-dialog').classList.contains('open')
+        || document.getElementById('lightbox')?.classList.contains('open');
+      document.body.style.overflow = locked ? 'hidden' : '';
     }
     function parseM2Caixa(item) {
       if (item.m2_por_caixa) return Number(item.m2_por_caixa);
@@ -1162,49 +1210,33 @@ function buildHtml({ classif, itens }) {
       if (imgs.length) return imgs;
       return item.imagem_url ? [{ url: item.imagem_url, tipo: 'principal' }] : [];
     }
-    function qtyStepperHtml(cod, qty, titulo) {
-      return '<div class="qty-stepper">' +
-        '<button type="button" class="qty-step minus" data-cod="' + esc(cod) + '" aria-label="Menos">−</button>' +
-        '<input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="Caixas" placeholder="0" />' +
-        '<button type="button" class="qty-step plus" data-cod="' + esc(cod) + '" aria-label="Mais">+</button>' +
-        '</div>';
-    }
-    function renderProductCard(item) {
+    function renderTableRow(item) {
       const imgs = getGaleria(item);
       const img = imgs[0]?.url || item.imagem_url || '';
       const titulo = item.formigres_titulo || item.descricao;
       const cod = item.codigo_tintao;
       const qty = getQty(cod);
-      const m2cx = parseM2Caixa(item);
-      const sub = qty > 0 ? itemSubtotal(item, qty) : null;
       const foto = img
         ? '<button type="button" class="thumb-btn' + (imgs.length > 1 ? ' has-gallery' : '') + '" data-cod="' + esc(cod) + '" data-title="' + esc(titulo) + '" title="Ver fotos"><img src="' + esc(img) + '" alt="" loading="lazy" />' + (imgs.length > 1 ? '<span class="thumb-more" aria-hidden="true">▦</span>' : '') + '</button>'
         : '<span class="thumb-empty">—</span>';
-      const warn = item.match_status !== 'encontrado' ? '<span class="badge warn">sem match</span>' : '';
-      const specs = [
-        m2cx ? m2cx.toFixed(2).replace('.', ',') + ' m²/cx' : '',
-        item.formigres_acabamento || '',
-      ].filter(Boolean).join(' · ');
-      const lineTotal = sub != null
-        ? '<div class="card-line-total">' + qty + ' cx' +
-          (m2cx ? ' · ' + (qty * m2cx).toFixed(2).replace('.', ',') + ' m²' : '') +
-          ' · ' + esc(fmtMoney(sub)) + '</div>'
-        : '';
-      return '<article class="product-card model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod).toLowerCase()) + '" data-qty="' + qty + '">' +
-        '<div class="card-main">' + foto +
-        '<div class="card-body"><div class="card-cod">#' + esc(cod) + '</div>' +
-        '<h4 class="card-title">' + esc(titulo) + '</h4>' +
-        '<div class="card-meta"><span class="card-chip">' + esc(item.formato || '—') + '</span>' +
-        warn + '</div>' +
-        (specs ? '<div class="card-specs">' + esc(specs) + '</div>' : '') +
-        '<div class="card-price">' + esc(fmtMoney(item.preco_m2)) + '<span style="font-weight:400;color:var(--muted)"> /m²</span></div>' +
-        lineTotal + '</div></div>' +
-        '<div class="card-qty-row"><span class="qty-label">Caixas</span>' + qtyStepperHtml(cod, qty, titulo) + '</div></article>';
+      const warn = item.match_status !== 'encontrado' ? ' <span class="badge warn">sem match</span>' : '';
+      return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod).toLowerCase()) + '" data-qty="' + qty + '">' +
+        '<td class="col-foto">' + foto + '</td>' +
+        '<td class="col-modelo"><strong>' + esc(titulo) + '</strong>' + warn + '<br><small style="color:var(--muted)">#' + esc(cod) + '</small></td>' +
+        '<td class="col-desc">' + esc(item.descricao) + '</td>' +
+        '<td class="col-acab">' + esc(item.formigres_acabamento || '—') + '</td>' +
+        '<td class="col-preco">' + esc(fmtMoney(item.preco_m2)) + '</td>' +
+        '<td class="col-qty">' +
+        '<input type="number" class="qty-input qty-input-desktop" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="Caixas" placeholder="0" />' +
+        '<button type="button" class="qty-cell-btn' + (qty > 0 ? ' has-value' : '') + '" data-cod="' + esc(cod) + '" aria-label="Caixas">' + (qty > 0 ? qty : '+') + '</button>' +
+        '</td>' +
+        '<td class="col-cod">' + esc(item.formato || '—') + '</td></tr>';
     }
     function renderFormato(formato, items) {
       const n = items.length;
       return '<details class="acc acc-formato"><summary><span class="acc-title">Formato ' + esc(formato) + '</span><span class="acc-count">' + n + '</span></summary>' +
-        '<div class="product-list">' + items.map(renderProductCard).join('') + '</div></details>';
+        '<div class="table-wrap"><table class="model-table"><thead><tr><th>Foto</th><th>Modelo</th><th>Descrição</th><th>Acab.</th><th>Preço/m²</th><th>Caixas</th><th>Formato</th></tr></thead><tbody>' +
+        items.map(renderTableRow).join('') + '</tbody></table></div></details>';
     }
     function renderGrupo(key, formatosMap, linha) {
       const formatos = Object.keys(formatosMap).sort((a, b) => fmtAreaKey(b) - fmtAreaKey(a) || a.localeCompare(b));
@@ -1281,41 +1313,41 @@ function buildHtml({ classif, itens }) {
           '<td>' + esc(fmtMoney(item.preco_m2)) + '</td>' +
           '<td class="col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
       }).join('');
-      document.getElementById('pedido-body').innerHTML = body || '<tr><td colspan="8" style="color:var(--muted);text-align:center;padding:24px;font-size:2rem">📦</td></tr>';
-      document.getElementById('pedido-resumo').innerHTML =
-        '<span class="stat"><strong>' + rows.length + '</strong> modelos</span>' +
-        '<span class="stat"><strong>' + totalCaixas + '</strong> caixas</span>' +
-        '<span class="stat"><strong>' + totalM2.toFixed(2).replace('.', ',') + '</strong> m²</span>';
-      document.getElementById('pedido-total').innerHTML =
-        '<span>Total estimado: <strong>' + fmtMoney(totalValor) + '</strong></span>';
-      updateBottomBar();
+      document.getElementById('pedido-body').innerHTML = body;
+      document.getElementById('pedido-empty')?.classList.toggle('hidden', rows.length > 0);
+      document.getElementById('pedido-table-wrap')?.classList.toggle('hidden', rows.length === 0);
+      document.getElementById('pedido-resumo').innerHTML = rows.length
+        ? '<span class="stat"><strong>' + rows.length + '</strong> modelos</span>' +
+          '<span class="stat"><strong>' + totalCaixas + '</strong> caixas</span>' +
+          '<span class="stat"><strong>' + totalM2.toFixed(2).replace('.', ',') + '</strong> m²</span>'
+        : '';
+      document.getElementById('pedido-total').innerHTML = rows.length
+        ? '<span>Total estimado: <strong>' + fmtMoney(totalValor) + '</strong></span>'
+        : '';
+      document.getElementById('pdf-pedido-panel')?.toggleAttribute('disabled', rows.length === 0);
+      updateCartFab();
       updateFlowSteps();
     }
 
-    function updateBottomBar() {
+    function updateCartFab() {
       const rows = pedidoItens();
       let totalCaixas = 0;
-      let totalValor = 0;
-      for (const { item, qty } of rows) {
-        totalCaixas += qty;
-        const sub = itemSubtotal(item, qty);
-        if (sub) totalValor += sub;
+      for (const { qty } of rows) totalCaixas += qty;
+      const count = rows.length;
+      const badge = document.getElementById('cart-fab-badge');
+      const fab = document.getElementById('cart-fab');
+      if (badge) {
+        badge.textContent = String(count);
+        badge.dataset.count = String(count);
       }
-      const badge = document.getElementById('bb-badge');
-      const summary = document.getElementById('bb-summary');
-      const totalEl = document.getElementById('bb-total');
-      const pdf = document.getElementById('bb-pdf');
-      const bar = document.getElementById('bottom-bar');
-      if (badge) badge.textContent = String(rows.length);
-      if (summary) summary.textContent = rows.length ? (totalCaixas + ' caixas · ' + rows.length + ' modelos') : 'Marque as caixas com +';
-      if (totalEl) {
-        totalEl.textContent = totalValor > 0 ? fmtMoney(totalValor) : '';
-        totalEl.hidden = totalValor <= 0;
+      if (fab) {
+        fab.classList.toggle('has-items', count > 0);
+        fab.setAttribute('aria-label', count
+          ? 'Minha seleção — ' + count + ' modelos, ' + totalCaixas + ' caixas'
+          : 'Minha seleção vazia');
       }
-      if (pdf) pdf.disabled = rows.length === 0;
-      if (bar) bar.classList.toggle('has-items', rows.length > 0);
-      document.body.classList.add('has-bottom-bar');
-      document.body.classList.toggle('has-selection', rows.length > 0);
+      document.body.classList.add('has-cart');
+      document.body.classList.toggle('has-selection', count > 0);
     }
 
     function updateFlowSteps() {
@@ -1337,17 +1369,17 @@ function buildHtml({ classif, itens }) {
 
     function openPedidoPanel() {
       pedidoOpen = true;
-      pedidoPanel.classList.add('open');
-      document.getElementById('toggle-pedido')?.classList.add('active');
+      document.getElementById('pedido-overlay').classList.add('open');
       renderPedido();
       updateFlowSteps();
+      syncBodyScrollLock();
     }
 
     function closePedidoPanel() {
       pedidoOpen = false;
-      pedidoPanel.classList.remove('open');
-      document.getElementById('toggle-pedido')?.classList.remove('active');
+      document.getElementById('pedido-overlay').classList.remove('open');
       updateFlowSteps();
+      syncBodyScrollLock();
     }
 
     function printPedidoPdf() {
@@ -1380,7 +1412,6 @@ function buildHtml({ classif, itens }) {
     const q = document.getElementById('search');
     const groupSel = document.getElementById('group-by');
     const groupSelD = document.getElementById('group-by-desktop');
-    const pedidoPanel = document.getElementById('pedido-panel');
 
     function syncGroupBy(val) {
       groupBy = val;
@@ -1408,13 +1439,32 @@ function buildHtml({ classif, itens }) {
     bindClick('clear-qty-d', clearAllQty);
     bindClick('start-qty', startQtyEntry);
     bindClick('start-qty-d', startQtyEntry);
-    bindClick('toggle-pedido', () => (pedidoOpen ? closePedidoPanel() : openPedidoPanel()));
-    bindClick('pdf-pedido', printPedidoPdf);
-    bindClick('bb-pedido', () => (pedidoOpen ? closePedidoPanel() : openPedidoPanel()));
-    bindClick('bb-meta', () => {
-      if (pedidoItens().length) openPedidoPanel();
+    bindClick('cart-fab', () => (pedidoOpen ? closePedidoPanel() : openPedidoPanel()));
+    bindClick('pedido-close', closePedidoPanel);
+    bindClick('pdf-pedido-panel', printPedidoPdf);
+    bindClick('clear-qty-panel', () => { clearAllQty(); if (!pedidoItens().length) closePedidoPanel(); });
+    document.getElementById('pedido-overlay')?.addEventListener('click', (e) => {
+      if (e.target.id === 'pedido-overlay') closePedidoPanel();
     });
-    bindClick('bb-pdf', printPedidoPdf);
+    bindClick('qty-dialog-cancel', closeQtyDialog);
+    bindClick('qty-dialog-save', saveQtyDialog);
+    bindClick('qty-dialog-minus', () => {
+      if (!qtyDialogCod) return;
+      const input = document.getElementById('qty-dialog-input');
+      input.value = Math.max(0, (Number(input.value) || 0) - 1);
+    });
+    bindClick('qty-dialog-plus', () => {
+      if (!qtyDialogCod) return;
+      const input = document.getElementById('qty-dialog-input');
+      input.value = (Number(input.value) || 0) + 1;
+    });
+    document.getElementById('qty-dialog')?.addEventListener('click', (e) => {
+      if (e.target.id === 'qty-dialog') closeQtyDialog();
+    });
+    document.getElementById('qty-dialog-input')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); saveQtyDialog(); }
+      if (e.key === 'Escape') closeQtyDialog();
+    });
     bindClick('toolbar-more', () => {
       const extra = document.getElementById('toolbar-extra');
       if (extra) extra.hidden = !extra.hidden;
@@ -1447,7 +1497,7 @@ function buildHtml({ classif, itens }) {
       input.closest('.model-row')?.classList.remove('qty-focus-row');
     });
     document.getElementById('catalogo').addEventListener('keydown', (e) => {
-      const input = e.target.closest('.qty-input');
+      const input = e.target.closest('.qty-input-desktop');
       if (!input) return;
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -1457,10 +1507,12 @@ function buildHtml({ classif, itens }) {
     });
 
     document.getElementById('catalogo').addEventListener('click', (e) => {
-      const step = e.target.closest('.qty-step');
-      if (step) {
+      const qtyBtn = e.target.closest('.qty-cell-btn');
+      if (qtyBtn) {
         e.stopPropagation();
-        adjustQty(step.dataset.cod, step.classList.contains('plus') ? 1 : -1);
+        const cod = qtyBtn.dataset.cod;
+        if (isMobileQty()) openQtyDialog(cod);
+        else focusQtyInput(qtyBtn.closest('.model-row')?.querySelector('.qty-input-desktop'));
         return;
       }
       const btn = e.target.closest('.thumb-btn');
@@ -1471,7 +1523,8 @@ function buildHtml({ classif, itens }) {
       if (e.target.closest('.qty-input, .qty-stepper')) return;
       const row = e.target.closest('.model-row');
       if (!row || row.classList.contains('hidden')) return;
-      focusQtyInput(row.querySelector('.qty-input'));
+      if (isMobileQty()) openQtyDialog(row.dataset.cod);
+      else focusQtyInput(row.querySelector('.qty-input-desktop'));
     });
 
     if (!sessionStorage.getItem('tintao-seen')) {
@@ -1481,7 +1534,7 @@ function buildHtml({ classif, itens }) {
 
     renderCatalogo();
     renderPedido();
-    updateBottomBar();
+    updateCartFab();
     updateFlowSteps();
 
     const lb = document.getElementById('lightbox');
@@ -1519,14 +1572,14 @@ function buildHtml({ classif, itens }) {
       }
       renderGaleriaIdx(0);
       lb.classList.add('open');
-      document.body.style.overflow = 'hidden';
+      syncBodyScrollLock();
     }
 
     function closeLightbox() {
       lb.classList.remove('open', 'has-multi');
-      document.body.style.overflow = '';
       lbImg.src = '';
       galeriaAtual = [];
+      syncBodyScrollLock();
     }
 
     function onThumbClick(btn) {
@@ -1546,8 +1599,12 @@ function buildHtml({ classif, itens }) {
     document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
     lb.addEventListener('click', (e) => { if (e.target === lb) closeLightbox(); });
     document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (document.getElementById('qty-dialog').classList.contains('open')) closeQtyDialog();
+        else if (lb.classList.contains('open')) closeLightbox();
+        else if (pedidoOpen) closePedidoPanel();
+      }
       if (!lb.classList.contains('open')) return;
-      if (e.key === 'Escape') closeLightbox();
       if (e.key === 'ArrowLeft') renderGaleriaIdx(galeriaIdx - 1);
       if (e.key === 'ArrowRight') renderGaleriaIdx(galeriaIdx + 1);
     });
