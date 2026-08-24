@@ -26,9 +26,23 @@ function tokenizeTitulo(titulo) {
     .filter((t) => t.length >= 2);
 }
 
+function resolveImagemUrl(raw) {
+  const imagemUrl = String(raw.imagem_url || '').trim();
+  const imagem = String(raw.imagem || raw.imagem_ambiente || '').trim();
+
+  if (imagemUrl && !/placeholder/i.test(imagemUrl)) {
+    return absUrl(imagemUrl);
+  }
+  if (!imagem || /placeholder/i.test(imagem)) return '';
+
+  if (imagem.startsWith('http')) return imagem;
+  if (imagem.startsWith('/uploads/')) return absUrl(imagem);
+  if (imagem.startsWith('/produtos/')) return absUrl(`/uploads${imagem}`);
+  if (imagem.startsWith('produtos/')) return absUrl(`/uploads/${imagem}`);
+  return absUrl(imagem);
+}
+
 export function normalizeProduto(raw) {
-  const imagem = raw.imagem || raw.imagem_url || '';
-  const imagemRel = imagem.startsWith('http') ? imagem.replace(FORMIGRES_BASE, '') : imagem;
   const imagemAmb = raw.imagem_ambiente || raw.imagem_amb_url || '';
 
   return {
@@ -42,8 +56,8 @@ export function normalizeProduto(raw) {
     tipo: raw.tipo || '',
     referencia: raw.referencia || '',
     categoria: raw.categoria || '',
-    imagem_url: imagemRel ? absUrl(imagemRel) : '',
-    imagem_amb_url: imagemAmb ? absUrl(imagemAmb) : '',
+    imagem_url: resolveImagemUrl(raw),
+    imagem_amb_url: imagemAmb ? absUrl(imagemAmb.startsWith('http') ? imagemAmb : imagemAmb) : '',
     produto_url: `${FORMIGRES_BASE}/produto/${raw.id}`,
     busca_tokens: tokenizeTitulo(raw.titulo || ''),
   };

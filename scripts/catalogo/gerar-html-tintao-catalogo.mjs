@@ -109,33 +109,25 @@ function buildTree(itens) {
   return tree;
 }
 
-function renderModelCard(item) {
+function renderTableRow(item) {
   const img = item.imagem_url || '';
   const titulo = item.formigres_titulo || item.descricao;
-  const hasImg = Boolean(img);
-  const imgBlock = hasImg
+  const foto = img
     ? `<button type="button" class="thumb-btn" data-lightbox="${esc(img)}" data-title="${esc(titulo)}" aria-label="Ampliar ${esc(titulo)}">
-         <img src="${esc(img)}" alt="${esc(titulo)}" loading="lazy" />
+         <img src="${esc(img)}" alt="" loading="lazy" />
        </button>`
-    : `<div class="thumb-placeholder" aria-hidden="true"><span>sem foto</span></div>`;
+    : `<span class="thumb-empty">—</span>`;
 
-  const badge = item.match_status !== 'encontrado'
-    ? '<span class="badge warn">sem match</span>'
-    : '';
+  const warn = item.match_status !== 'encontrado' ? ' <span class="badge warn">sem match</span>' : '';
 
-  return `<article class="model-card">
-    ${imgBlock}
-    <div class="model-body">
-      <h4 class="model-title">${esc(titulo)}</h4>
-      <p class="model-desc">${esc(item.descricao)}</p>
-      <dl class="model-meta">
-        <div><dt>Acab.</dt><dd>${esc(item.formigres_acabamento || '—')}</dd></div>
-        <div><dt>Preço/m²</dt><dd>${esc(fmtMoney(item.preco_m2))}</dd></div>
-        <div><dt>Cód. Tintão</dt><dd>${esc(item.codigo_tintao)}</dd></div>
-      </dl>
-      ${badge}
-    </div>
-  </article>`;
+  return `<tr class="model-row" data-search="${esc(`${titulo} ${item.descricao} ${item.formigres_acabamento} ${item.formato}`.toLowerCase())}">
+    <td class="col-foto">${foto}</td>
+    <td class="col-modelo"><strong>${esc(titulo)}</strong>${warn}</td>
+    <td class="col-desc">${esc(item.descricao)}</td>
+    <td class="col-acab">${esc(item.formigres_acabamento || '—')}</td>
+    <td class="col-preco">${esc(fmtMoney(item.preco_m2))}</td>
+    <td class="col-cod">${esc(item.codigo_tintao)}</td>
+  </tr>`;
 }
 
 function renderFormatoBlock(formato, items) {
@@ -145,7 +137,21 @@ function renderFormatoBlock(formato, items) {
       <span class="acc-title">Formato ${esc(formato)}</span>
       <span class="acc-count">${count} modelo${count === 1 ? '' : 's'}</span>
     </summary>
-    <div class="models-grid">${items.map(renderModelCard).join('')}</div>
+    <div class="table-wrap">
+      <table class="model-table">
+        <thead>
+          <tr>
+            <th>Foto</th>
+            <th>Modelo Formigres</th>
+            <th>Descrição Tintão</th>
+            <th>Acabamento</th>
+            <th>Preço/m²</th>
+            <th>Cód.</th>
+          </tr>
+        </thead>
+        <tbody>${items.map(renderTableRow).join('')}</tbody>
+      </table>
+    </div>
   </details>`;
 }
 
@@ -175,14 +181,22 @@ function renderLinhaBlock(linha, tiposMap) {
   </details>`;
 }
 
+function fixImageUrl(url) {
+  if (!url) return '';
+  if (url.includes('formigres.com.br/produtos/') && !url.includes('/uploads/produtos/')) {
+    return url.replace('formigres.com.br/produtos/', 'formigres.com.br/uploads/produtos/');
+  }
+  return url;
+}
+
 function enrichItens(itens, snapshot) {
   const byId = new Map((snapshot?.produtos || []).map((p) => [String(p.id), p]));
   return itens.map((item) => {
     const prod = byId.get(String(item.formigres_id));
     return {
       ...item,
-      imagem_url: prod?.imagem_url || '',
-      imagem_amb_url: prod?.imagem_amb_url || '',
+      imagem_url: fixImageUrl(prod?.imagem_url || ''),
+      imagem_amb_url: fixImageUrl(prod?.imagem_amb_url || ''),
       produto_url: prod?.produto_url || '',
     };
   });
@@ -320,27 +334,49 @@ function buildHtml({ classif, itens, tree }) {
     .linha-bold { color: #e8f0c8; }
     .linha-retificada { color: #c8dff0; }
     .linha-polida { color: #f0e6c8; }
-    .models-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 10px;
-      padding: 8px;
-    }
-    .model-card {
+    .table-wrap { padding: 0 8px 10px; overflow-x: auto; }
+    .model-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .84rem;
       background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 10px;
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      min-height: 100%;
     }
+    .model-table thead th {
+      text-align: left;
+      padding: 9px 10px;
+      background: #232027;
+      color: var(--muted);
+      font-size: .72rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .model-table tbody tr {
+      border-bottom: 1px solid var(--border);
+    }
+    .model-table tbody tr:last-child { border-bottom: 0; }
+    .model-table tbody tr:hover { background: rgba(164,206,51,.04); }
+    .model-table td {
+      padding: 8px 10px;
+      vertical-align: middle;
+    }
+    .col-foto { width: 58px; }
+    .col-modelo { min-width: 140px; }
+    .col-desc { min-width: 180px; color: var(--muted); font-size: .78rem; }
+    .col-acab { white-space: nowrap; font-size: .78rem; }
+    .col-preco { white-space: nowrap; text-align: right; }
+    .col-cod { white-space: nowrap; color: var(--muted); font-size: .78rem; text-align: right; }
     .thumb-btn {
       display: block;
-      width: 100%;
-      aspect-ratio: 1;
+      width: 48px;
+      height: 48px;
       padding: 0;
-      border: 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
       background: #151418;
       cursor: zoom-in;
       overflow: hidden;
@@ -349,31 +385,16 @@ function buildHtml({ classif, itens, tree }) {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transition: transform .2s ease;
     }
-    .thumb-btn:hover img { transform: scale(1.04); }
-    .thumb-placeholder {
-      aspect-ratio: 1;
-      display: grid;
+    .thumb-btn:hover { border-color: var(--accent-dim); }
+    .thumb-empty {
+      display: inline-grid;
       place-items: center;
-      background: #151418;
+      width: 48px;
+      height: 48px;
       color: var(--muted);
-      font-size: .78rem;
-      text-transform: uppercase;
-      letter-spacing: .06em;
+      font-size: .75rem;
     }
-    .model-body { padding: 10px 12px 12px; display: grid; gap: 6px; flex: 1; }
-    .model-title { margin: 0; font-size: .92rem; line-height: 1.25; }
-    .model-desc { margin: 0; font-size: .76rem; color: var(--muted); }
-    .model-meta {
-      margin: 0;
-      display: grid;
-      gap: 4px;
-      font-size: .74rem;
-    }
-    .model-meta div { display: flex; justify-content: space-between; gap: 8px; }
-    .model-meta dt { color: var(--muted); }
-    .model-meta dd { margin: 0; text-align: right; }
     .badge {
       display: inline-block;
       font-size: .68rem;
@@ -415,9 +436,9 @@ function buildHtml({ classif, itens, tree }) {
     footer.note {
       margin-top: 20px; color: var(--muted); font-size: .78rem; text-align: center;
     }
-    @media (max-width: 560px) {
-      .models-grid { grid-template-columns: 1fr 1fr; }
-      .model-title { font-size: .85rem; }
+    @media (max-width: 720px) {
+      .col-desc, .model-table thead th:nth-child(3) { display: none; }
+      .model-table { font-size: .8rem; }
     }
   </style>
 </head>
@@ -460,7 +481,7 @@ function buildHtml({ classif, itens, tree }) {
 
   <script>
     const q = document.getElementById('search');
-    const cards = [...document.querySelectorAll('.model-card')];
+    const rows = [...document.querySelectorAll('.model-row')];
     const formatos = [...document.querySelectorAll('.acc-formato')];
     const tipos = [...document.querySelectorAll('.acc-tipo')];
     const linhas = [...document.querySelectorAll('.acc-linha')];
@@ -472,13 +493,13 @@ function buildHtml({ classif, itens, tree }) {
 
     q.addEventListener('input', () => {
       const term = normalize(q.value.trim());
-      for (const card of cards) {
-        const text = normalize(card.textContent);
+      for (const row of rows) {
+        const text = normalize(row.textContent);
         const show = !term || text.includes(term);
-        card.classList.toggle('hidden', !show);
+        row.classList.toggle('hidden', !show);
       }
       for (const fmt of formatos) {
-        const visible = fmt.querySelectorAll('.model-card:not(.hidden)').length > 0;
+        const visible = fmt.querySelectorAll('.model-row:not(.hidden)').length > 0;
         fmt.classList.toggle('hidden', !visible);
       }
       for (const t of tipos) {
