@@ -48,15 +48,16 @@ async function main() {
     const m = src.match(/contentWpx = Math\.round\(contentWmm \* 96 \/ 25\.4\)/);
     const rowLine = src.includes("const rowLine = '#707070'");
     const tablePdf = src.includes('print-pedido-table pedido-table');
-    const printCard = src.includes('print-pedido-item');
+    const printCard = src.includes('pedido-card-pdf');
     const printFormatGroup = src.includes('print-format-group');
-    const printGemeas = src.includes('pedido-row-gemeas') || src.includes('print-pedido-item-gemeas');
+    const printGemeas = src.includes('pedido-row-gemeas');
     const printResist = src.includes('pedido-row-resist');
+    const resistCol = src.includes('pedido-col-resist');
     const a4 = src.includes("format: 'a4'");
     const scale3 = src.includes('PDF_CANVAS_SCALE = 3');
     const printThumb72 = src.includes('PDF_PRINT_THUMB_PX = 72');
     const precoStack = src.includes('preco-stack-pdf');
-    return { hasA4: a4, hasRowLine: rowLine, hasTablePdf: tablePdf, printCard, printFormatGroup, printGemeas, printResist, hasLayoutFn: !!m, scale3, printThumb72, precoStack };
+    return { hasA4: a4, hasRowLine: rowLine, hasTablePdf: tablePdf, printCard, printFormatGroup, printGemeas, printResist, resistCol, hasLayoutFn: !!m, scale3, printThumb72, precoStack };
   });
 
   await page.click('#cart-fab');
@@ -80,6 +81,7 @@ async function main() {
     && layoutProbe.printFormatGroup
     && layoutProbe.printGemeas
     && layoutProbe.printResist
+    && layoutProbe.resistCol
     && layoutProbe.hasLayoutFn
     && layoutProbe.scale3
     && layoutProbe.printThumb72

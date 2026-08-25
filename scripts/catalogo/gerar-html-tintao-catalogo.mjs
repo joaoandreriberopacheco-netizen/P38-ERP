@@ -726,10 +726,10 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   const qtyLabelPl = cfg.qtyLabelPl || (isFormigresSkin ? 'paletes' : 'caixas');
   const qtyUnit = cfg.qtyUnit || (isFormigresSkin ? 'palete' : 'caixa');
   const pedidoTableColgroup = isFormigresSkin
-    ? '<colgroup><col class="col-foto"><col class="col-modelo"><col class="col-qty"><col class="col-m2"><col class="col-cx"><col class="col-peso"><col class="col-emb"><col class="col-preco"><col class="col-sub"></colgroup>'
+    ? '<colgroup><col class="col-foto"><col class="col-modelo"><col class="col-resist"><col class="col-qty"><col class="col-m2"><col class="col-cx"><col class="col-peso"><col class="col-emb"><col class="col-preco"><col class="col-sub"></colgroup>'
     : '<colgroup><col class="col-foto"><col class="col-modelo"><col class="col-qty"><col class="col-m2u"><col class="col-m2"><col class="col-preco"><col class="col-sub"></colgroup>';
   const pedidoTableHead = isFormigresSkin
-    ? '<th class="pedido-col-foto">Foto</th><th class="pedido-col-modelo">Modelo</th><th class="pedido-col-qty">Paletes</th><th class="pedido-col-num">m² total</th><th class="pedido-col-num">Caixas</th><th class="pedido-col-num">Peso</th><th class="pedido-col-emb">Por palete</th><th class="pedido-col-num">Preço/m²</th><th class="pedido-col-num col-subtotal">Subtotal</th>'
+    ? '<th class="pedido-col-foto">Foto</th><th class="pedido-col-modelo">Modelo</th><th class="pedido-col-resist">Resistência</th><th class="pedido-col-qty">Paletes</th><th class="pedido-col-num">m² total</th><th class="pedido-col-num">Caixas</th><th class="pedido-col-num">Peso</th><th class="pedido-col-emb">Por palete</th><th class="pedido-col-num">Preço/m²</th><th class="pedido-col-num col-subtotal">Subtotal</th>'
     : '<th class="pedido-col-foto">Foto</th><th class="pedido-col-modelo">Modelo</th><th class="pedido-col-qty">Caixas</th><th class="pedido-col-num">m²/cx</th><th class="pedido-col-num">m² total</th><th class="pedido-col-num">Preço/m²</th><th class="pedido-col-num col-subtotal">Subtotal</th>';
   const catalogoJson = JSON.stringify({
     itens: itens.map(slimItem),
@@ -1504,7 +1504,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     .pedido-table col.col-foto,
     html[data-skin="formigres"] .catalog-pedido-table col.col-foto { width: 52px; }
     .pedido-table col.col-modelo,
-    html[data-skin="formigres"] .catalog-pedido-table col.col-modelo { width: 28%; }
+    html[data-skin="formigres"] .catalog-pedido-table col.col-modelo { width: 24%; }
+    .pedido-table col.col-resist,
+    html[data-skin="formigres"] .catalog-pedido-table col.col-resist { width: 52px; }
     .pedido-table col.col-qty,
     html[data-skin="formigres"] .catalog-pedido-table col.col-qty { width: 68px; }
     .pedido-table col.col-m2,
@@ -1522,7 +1524,23 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     .pedido-table col.col-sub,
     html[data-skin="formigres"] .catalog-pedido-table col.col-sub { width: 98px; }
     html[data-skin="formigres"] .pedido-table,
-    html[data-skin="formigres"] .catalog-pedido-table { min-width: 860px; }
+    html[data-skin="formigres"] .catalog-pedido-table { min-width: 900px; }
+    html[data-skin="formigres"] .catalog-pedido-table .pedido-col-resist,
+    html[data-skin="formigres"] .pedido-table .pedido-col-resist {
+      text-align: center;
+      font-weight: 700;
+      letter-spacing: .1em;
+      color: var(--text-strong);
+      white-space: nowrap;
+      font-size: .78rem;
+      vertical-align: middle;
+    }
+    html[data-skin="formigres"] .catalog-pedido-table thead th.pedido-col-resist {
+      font-size: .68rem;
+      letter-spacing: .03em;
+      font-weight: 500;
+      color: var(--muted);
+    }
     .pedido-col-foto { width: 52px; padding-left: 0; padding-right: 6px; }
     .pedido-col-modelo { min-width: 0; }
     .pedido-row-title {
@@ -3024,6 +3042,10 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '<span class="' + labelCls + '">Resistência</span>' +
         '<strong class="' + valCls + '">' + esc(resist) + '</strong></div>';
     }
+    function renderResistenciaCell(item) {
+      const resist = modelResistencia(item);
+      return resist ? esc(resist) : '';
+    }
     function renderGemeasMarcasLine(item, kind) {
       const g = item.gemeas;
       if (!g || g.length < 2) return '';
@@ -3049,7 +3071,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           '<td class="gemeas-col-cod">#' + esc(row.codigo) + '</td></tr>';
       }).join('');
       return '<tr class="model-gemeas-detail hidden" id="gemeas-panel-' + esc(cod) + '" data-gemeas-for="' + esc(cod) + '">' +
-        '<td colspan="9"><div class="model-gemeas-wrap">' +
+        '<td colspan="10"><div class="model-gemeas-wrap">' +
         '<p class="model-gemeas-caption">Mesmo modelo nestas marcas</p>' +
         '<table class="model-gemeas-table"><thead><tr><th>Marca</th><th>Código</th></tr></thead><tbody>' +
         rows + '</tbody></table></div></td></tr>';
@@ -3109,7 +3131,6 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         }
         rowMetaParts.push(esc(item.formato || '—'));
         const rowMeta = rowMetaParts.join(' · ');
-        const resistHtml = renderResistenciaLine(item, 'catalog');
         const gemeasMarcasHtml = renderGemeasMarcasLine(item, 'catalog');
         const gemeasTrigger = renderGemeasTrigger(item, cod);
         const searchExtra = gemeasSearchText(item);
@@ -3120,7 +3141,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           : '<span class="pedido-row-title">' + esc(titulo) + '</span>';
         return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + searchExtra).toLowerCase()) + '" data-qty="' + qty + '">' +
           '<td class="pedido-col-foto col-foto">' + foto + '</td>' +
-          '<td class="pedido-col-modelo col-modelo">' + titleHtml + warn + resistHtml + gemeasMarcasHtml + '<div class="pedido-row-meta">' + rowMeta + '</div></td>' +
+          '<td class="pedido-col-modelo col-modelo">' + titleHtml + warn + gemeasMarcasHtml + '<div class="pedido-row-meta">' + rowMeta + '</div></td>' +
+          '<td class="pedido-col-resist col-resist">' + renderResistenciaCell(item) + '</td>' +
           '<td class="pedido-col-qty col-qty">' +
             '<input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" tabindex="0" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="' + esc(QTY_LABEL) + '" placeholder="" />' +
           '</td>' +
@@ -3311,6 +3333,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         return '<tr>' +
           '<td class="pedido-col-foto">' + thumbCell + '</td>' +
           '<td class="pedido-col-modelo"><span class="pedido-row-title">' + esc(titulo) + '</span><div class="pedido-row-meta">' + rowMeta + '</div></td>' +
+          '<td class="pedido-col-resist">' + renderResistenciaCell(item) + '</td>' +
           '<td class="pedido-col-qty">' + qty + '</td>' +
           '<td class="pedido-col-num">' + (m2tot ? fmtDecimal(m2tot) : '—') + '</td>' +
           '<td class="pedido-col-num">' + (cxTot ? fmtDecimal(cxTot, 0) : '—') + '</td>' +
@@ -3374,71 +3397,22 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           const imgs = getGaleria(item);
           const img = imgs[0]?.url || '';
           const titulo = item.formigres_titulo || item.descricao;
-          parts.push(renderPedidoPrintCard(
-            { item, qty, img, titulo, m2unit, m2tot, pesoTot, cxTot, cxpl: emb.cxpl, sub },
-            thumbs,
+          parts.push(renderPedidoCard(
+            { item, qty, img, titulo, m2unit, m2tot, pesoUnit: itemPesoUnit(item), pesoTot, cxTot, cxpl: emb.cxpl, sub },
+            { pdf: true, thumbs },
           ));
         }
       }
       return parts.length ? '<div class="print-pedido-list">' + parts.join('') + '</div>' : '';
     }
-    function renderPedidoPrintCard({ item, qty, img, titulo, m2unit, m2tot, pesoTot, cxTot, cxpl, sub }, thumbs) {
-      const emb = itemEmbalagem(item);
-      const imgSrc = pdfImgSrcForPrint(img, thumbs, item);
-      const thumbPx = PDF_PRINT_THUMB_PX;
-      const thumb = imgSrc
-        ? '<img src="' + esc(imgSrc) + '" alt="" width="' + thumbPx + '" height="' + thumbPx + '" />'
-        : '<span class="print-pedido-item-thumb-empty" aria-hidden="true">—</span>';
-      const hasGemeas = item.gemeas && item.gemeas.length > 1;
-      const resistHtml = renderResistenciaLine(item, 'pdf');
-      const gemeasMarcasHtml = renderGemeasMarcasLine(item, 'pdf');
-      const metaParts = [];
-      if (!hasGemeas) {
-        metaParts.push('#' + esc(item.codigo_tintao));
-        if (item.marca_nome) metaParts.push(esc(item.marca_nome));
-      }
-      const metaHtml = metaParts.length
-        ? '<div class="print-pedido-item-meta">' + metaParts.join(' · ') + '</div>'
-        : '';
-      const qtyShort = QTY_UNIT === 'palete' ? 'pl' : 'cx';
-      const metrics = [];
-      metrics.push('<strong>' + qty + ' ' + esc(qtyShort) + '</strong>');
-      if (m2tot) metrics.push(fmtDecimal(m2tot) + ' m²');
-      if (QTY_UNIT === 'palete' && cxTot) metrics.push(fmtDecimal(cxTot, 0) + ' cx');
-      if (QTY_UNIT === 'palete' && pesoTot) metrics.push(fmtKg(pesoTot));
-      if (QTY_UNIT !== 'palete' && m2unit) metrics.push(fmtDecimal(m2unit) + ' m²/cx');
-      const embParts = [];
-      if (QTY_UNIT === 'palete') {
-        if (cxpl || emb.cxpl) embParts.push((cxpl || emb.cxpl) + ' cx/pl');
-        if (m2unit) embParts.push(fmtDecimal(m2unit) + ' m²/pl');
-      } else {
-        const pack = fmtEmbalagemText(item);
-        if (pack && pack !== '—') embParts.push(esc(pack));
-      }
-      if (embParts.length) metrics.push(embParts.join(' · '));
-      const precoHtml = fmtPrecoHtml(item.preco_m2, { pdf: true });
-      metrics.push('<span class="print-pedido-metric-preco' + (hasDescontoAtivo() ? ' has-desc' : '') + '">' + precoHtml + '</span>');
-      return '<article class="print-pedido-item">' +
-        '<div class="print-pedido-item-top">' +
-          '<div class="print-pedido-item-thumb">' + thumb + '</div>' +
-          '<div class="print-pedido-item-desc">' +
-            '<div class="print-pedido-item-title">' + esc(titulo) + '</div>' +
-            resistHtml +
-            gemeasMarcasHtml +
-            metaHtml +
-          '</div>' +
-          '<div class="print-pedido-item-sub">' +
-            '<strong>' + esc(sub != null ? fmtMoney(sub) : '—') + '</strong>' +
-            '<span>Subtotal</span>' +
-          '</div>' +
-        '</div>' +
-        '<div class="print-pedido-item-metrics">' + metrics.join(' · ') + '</div>' +
-      '</article>';
-    }
     function renderPedidoCard({ item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl, sub }, opts) {
       const forPdf = opts && opts.pdf;
-      const thumb = img
-        ? '<img class="pedido-card-thumb" src="' + esc(img) + '" alt=""' + (forPdf ? ' width="48" height="48"' : ' loading="lazy"') + ' />'
+      const thumbs = opts && opts.thumbs;
+      const thumbPx = forPdf ? PDF_PRINT_THUMB_PX : 52;
+      const imgSrc = forPdf ? (pdfImgSrcForPrint(img, thumbs, item) || img) : img;
+      const precoOpts = forPdf ? { pdf: true } : null;
+      const thumb = imgSrc
+        ? '<img class="pedido-card-thumb" src="' + esc(imgSrc) + '" alt=""' + (forPdf ? ' width="' + thumbPx + '" height="' + thumbPx + '"' : ' loading="lazy"') + ' />'
         : '<span class="pedido-card-thumb pedido-card-thumb-empty" aria-hidden="true">—</span>';
       const row1 = renderPedidoCardRow1({ thumb, titulo, item, qty, m2tot, sub });
 
@@ -3447,7 +3421,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         if (cxpl) embParts.push(cxpl + ' cx/pl');
         if (m2unit) embParts.push(fmtDecimal(m2unit) + ' m²/pl');
         const spec = renderPedidoSpecTable([
-          { label: 'Preço/m²', preco: true, html: fmtPrecoHtml(item.preco_m2) },
+          { label: 'Preço/m²', preco: true, html: fmtPrecoHtml(item.preco_m2, precoOpts) },
           { label: 'Caixas', text: cxTot ? fmtDecimal(cxTot, 0) : '—' },
           { label: 'Peso', peso: true, text: pesoTot ? fmtKg(pesoTot) : '—' },
           { label: 'Por palete', palete: true, text: embParts.length ? embParts.join(' · ') : '—' },
@@ -3456,7 +3430,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       }
 
       const spec = renderPedidoSpecTable([
-        { label: 'Preço/m²', preco: true, html: fmtPrecoHtml(item.preco_m2) },
+        { label: 'Preço/m²', preco: true, html: fmtPrecoHtml(item.preco_m2, precoOpts) },
         { label: 'm²/cx', text: m2unit ? fmtDecimal(m2unit) : '—' },
         { label: 'm² total', text: m2tot ? fmtDecimal(m2tot) : '—' },
         { label: 'Embalagem', text: fmtEmbalagemText(item) },
@@ -3638,7 +3612,6 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function printPedidoPrintCss() {
       const rowLine = '#707070';
       const thumb = PDF_PRINT_THUMB_PX;
-      const metricsPad = thumb + 12;
       return '@page { size: A4 portrait; margin: 8mm; }' +
         'html, body { margin: 0; padding: 0; }' +
         '.print-render-root { background: #ffffff; color: #5a5a5a; font-family: "Libre Franklin", "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 13px; -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; width: 100%; }' +
@@ -3655,35 +3628,40 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '.print-format-group-stat { font-size: 12px; font-weight: 600; color: #2f2f2f; font-variant-numeric: tabular-nums; }' +
         '.print-format-group-sep { color: #767676; font-weight: 400; font-size: 11px; }' +
         '.print-pedido-list { display: flex; flex-direction: column; gap: 0; margin-top: 4px; }' +
-        '.print-pedido-item { border-bottom: 1px solid ' + rowLine + '; padding: 12px 0; break-inside: avoid; page-break-inside: avoid; }' +
-        '.print-pedido-item:first-child { padding-top: 4px; }' +
-        '.print-pedido-item-top { display: flex; align-items: flex-start; gap: 12px; }' +
-        '.print-pedido-item-thumb { flex-shrink: 0; width: ' + thumb + 'px; }' +
-        '.print-pedido-item-thumb img { display: block; width: ' + thumb + 'px; height: ' + thumb + 'px; border-radius: 6px; object-fit: cover; image-rendering: auto; }' +
-        '.print-pedido-item-thumb-empty { display: flex; align-items: center; justify-content: center; width: ' + thumb + 'px; height: ' + thumb + 'px; border-radius: 6px; background: #f0f0f0; color: #767676; font-size: 11px; }' +
-        '.print-pedido-item-desc { flex: 1; min-width: 0; padding-top: 2px; }' +
-        '.print-pedido-item-title { font-size: 14px; font-weight: 600; line-height: 1.35; color: #2f2f2f; word-break: break-word; }' +
-        '.print-pedido-item-resist { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 8px; margin-top: 4px; line-height: 1.35; }' +
-        '.print-pedido-item-resist-label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .05em; color: #767676; }' +
-        '.print-pedido-item-resist-val { font-size: 13px; font-weight: 700; letter-spacing: .1em; color: #2f2f2f; }' +
-        '.print-pedido-item-gemeas { margin-top: 4px; font-size: 10px; color: #767676; line-height: 1.45; }' +
-        '.print-pedido-item-meta { margin-top: 4px; font-size: 11px; color: #767676; line-height: 1.35; }' +
-        '.print-pedido-item-sub { flex-shrink: 0; text-align: right; min-width: 96px; padding-top: 2px; }' +
-        '.print-pedido-item-sub strong { display: block; font-size: 15px; font-weight: 700; color: #b01219; white-space: nowrap; }' +
-        '.print-pedido-item-sub span { display: block; margin-top: 2px; font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: #767676; }' +
-        '.print-pedido-item-metrics { margin-top: 8px; padding-left: ' + metricsPad + 'px; font-size: 11px; color: #767676; line-height: 1.5; }' +
-        '.print-pedido-item-metrics strong { color: #2f2f2f; font-weight: 700; }' +
-        '.print-pedido-metric-preco { white-space: nowrap; }' +
-        '.print-pedido-metric-preco .preco-stack-pdf, .print-pedido-metric-preco .preco-stack { display: inline-block; text-align: left; vertical-align: middle; line-height: 1.2; }' +
-        '.print-pedido-metric-preco .preco-orig { display: inline; text-decoration: line-through; margin-right: 4px; font-size: 10px; }' +
-        '.print-pedido-metric-preco .preco-desc { display: inline; font-weight: 600; font-size: 11px; color: #2f2f2f; }' +
+        '.pedido-card-pdf { border-bottom: 1px solid ' + rowLine + '; padding: 12px 0; break-inside: avoid; page-break-inside: avoid; color: #5a5a5a; }' +
+        '.print-pedido-list > .pedido-card-pdf:first-child { padding-top: 4px; }' +
+        '.pedido-card-pdf .pedido-card-head { column-gap: 12px; }' +
+        '.pedido-card-pdf .pedido-card-head-main { column-gap: 10px; grid-template-columns: minmax(0, 1fr) auto minmax(72px, 1fr); }' +
+        '.pedido-card-pdf .pedido-card-thumb { width: ' + thumb + 'px; height: ' + thumb + 'px; border-radius: 6px; object-fit: cover; display: block; }' +
+        '.pedido-card-pdf .pedido-card-thumb-empty { width: ' + thumb + 'px; height: ' + thumb + 'px; border-radius: 6px; background: #f0f0f0; color: #767676; font-size: 11px; }' +
+        '.pedido-card-pdf .pedido-card-hero { font-size: 14px; font-weight: 700; line-height: 1.35; color: #2f2f2f; font-variant-numeric: tabular-nums; }' +
+        '.pedido-card-pdf .pedido-card-title.pedido-card-hero { word-break: break-word; }' +
+        '.pedido-card-pdf .pedido-card-meta { margin-top: 4px; font-size: 11px; color: #767676; line-height: 1.35; }' +
+        '.pedido-card-pdf .pedido-row-resist { margin-top: 4px; gap: 6px 8px; line-height: 1.35; }' +
+        '.pedido-card-pdf .pedido-row-resist-label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .05em; color: #767676; }' +
+        '.pedido-card-pdf .pedido-row-resist-val { font-size: 13px; font-weight: 700; letter-spacing: .1em; color: #2f2f2f; }' +
+        '.pedido-card-pdf .pedido-row-gemeas { margin-top: 4px; font-size: 10px; color: #767676; line-height: 1.45; }' +
+        '.pedido-card-pdf .pedido-card-qty-sub { font-size: 11px; color: #767676; margin-top: 2px; }' +
+        '.pedido-card-pdf .pedido-card-total .pedido-card-hero { color: #b01219; white-space: nowrap; }' +
+        '.pedido-card-pdf .pedido-card-total-label { font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: #767676; }' +
+        '.pedido-card-pdf .pedido-card-spec { margin-top: 8px; padding-top: 10px; border-top: 1px solid ' + rowLine + '; table-layout: fixed; }' +
+        '.pedido-card-pdf .pedido-card-spec td { padding: 6px 8px; vertical-align: top; border: 0; }' +
+        '.pedido-card-pdf .pedido-card-spec td + td { border-left: 1px solid ' + rowLine + '; }' +
+        '.pedido-card-pdf .pedido-card-spec-l { font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: .04em; color: #767676; margin-bottom: 4px; }' +
+        '.pedido-card-pdf .pedido-card-spec-v { font-size: 11px; font-weight: 600; color: #2f2f2f; margin-top: 0; padding-top: 0; border-top: 0; line-height: 1.3; }' +
+        '.pedido-card-pdf .pedido-card-spec-v.pedido-card-spec-palete { font-size: 10px; font-weight: 500; line-height: 1.35; }' +
+        '.pedido-card-pdf .pedido-card-spec-preco .preco-stack-pdf, .pedido-card-pdf .pedido-card-spec-preco .preco-stack { display: block; line-height: 1.2; }' +
+        '.pedido-card-pdf .pedido-card-spec-preco .preco-orig { display: block; text-decoration: line-through; color: #767676; font-size: 9px; font-weight: 400; margin: 0 0 2px; }' +
+        '.pedido-card-pdf .pedido-card-spec-preco .preco-desc { display: block; font-weight: 600; font-size: 11px; color: #2f2f2f; }' +
         '.print-pedido-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 13px; margin-top: 0; }' +
         '.print-pedido-table th, .print-pedido-table td { padding: 12px 7px; vertical-align: top; }' +
         '.print-pedido-table thead th { text-align: left; color: #767676; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid ' + rowLine + '; white-space: nowrap; padding-top: 8px; padding-bottom: 8px; vertical-align: bottom; }' +
         '.print-pedido-table tbody td { border-bottom: 1px solid ' + rowLine + '; }' +
         '.print-pedido-table tbody tr:last-child td { border-bottom: 1px solid ' + rowLine + '; }' +
         '.print-pedido-table col.col-foto { width: ' + (thumb + 8) + 'px; }' +
-        '.print-pedido-table col.col-modelo { width: 32%; }' +
+        '.print-pedido-table col.col-modelo { width: 28%; }' +
+        '.print-pedido-table col.col-resist { width: 48px; }' +
+        '.print-pedido-table .pedido-col-resist { text-align: center; font-weight: 700; letter-spacing: .1em; color: #2f2f2f; vertical-align: middle; font-size: 12px; }' +
         '.print-pedido-table .pedido-row-title { display: block; font-weight: 600; line-height: 1.35; color: #2f2f2f; font-size: 13px; word-break: break-word; }' +
         '.print-pedido-table .pedido-row-meta { margin-top: 4px; font-size: 11px; color: #767676; line-height: 1.35; }' +
         '.print-pedido-table .pedido-col-num, .print-pedido-table th.pedido-col-num, .print-pedido-table .col-subtotal { text-align: right; font-variant-numeric: tabular-nums; vertical-align: middle; }' +
@@ -3809,7 +3787,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
             onclone: injectPdfFontClone,
           },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['css', 'legacy'], avoid: ['.print-pedido-item', '.print-pedido-table tbody tr'] },
+          pagebreak: { mode: ['css', 'legacy'], avoid: ['.pedido-card-pdf', '.print-pedido-table tbody tr'] },
         }).from(sheet).outputPdf('blob');
         if (!blob || blob.size < 12000) throw new Error('PDF gerado vazio');
         return blob;
