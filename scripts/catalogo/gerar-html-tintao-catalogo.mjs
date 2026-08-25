@@ -1974,6 +1974,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     const THEME_KEY = '${cfg.themeKey}';
     const DESCONTO_KEY = '${cfg.descontoKey}';
     const GROUP_KEY = '${cfg.groupKey}';
+    const PEDIDO_TABLE_COLGROUP_HTML = ${JSON.stringify(pedidoTableColgroup)};
+    const PEDIDO_TABLE_HEAD_HTML = ${JSON.stringify(pedidoTableHead)};
     let qtyMap = {};
     try { qtyMap = JSON.parse(localStorage.getItem(QTY_KEY) || '{}'); } catch { qtyMap = {}; }
     let descontoPct = 0;
@@ -2574,6 +2576,38 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '</div>' +
       '</div>';
     }
+    function renderPedidoTableRow({ item, qty, img, titulo, m2unit, m2tot, pesoTot, cxTot, cxpl, sub }, thumbs, opts) {
+      const forPdf = opts && opts.pdf;
+      const emb = itemEmbalagem(item);
+      const rowMeta = '#' + esc(item.codigo_tintao) + ' · ' + esc(item.formato || '—');
+      const imgSrc = forPdf ? pdfImgSrc(img, thumbs, item) : img;
+      const thumbCell = imgSrc
+        ? '<img src="' + esc(imgSrc) + '" alt="" width="48" height="48" style="object-fit:cover;border-radius:6px" />'
+        : '—';
+      if (QTY_UNIT === 'palete') {
+        const embParts = [];
+        if (cxpl || emb.cxpl) embParts.push((cxpl || emb.cxpl) + ' cx/pl');
+        if (m2unit) embParts.push(fmtDecimal(m2unit) + ' m²/pl');
+        return '<tr>' +
+          '<td class="pedido-col-foto">' + thumbCell + '</td>' +
+          '<td class="pedido-col-modelo"><span class="pedido-row-title">' + esc(titulo) + '</span><div class="pedido-row-meta">' + rowMeta + '</div></td>' +
+          '<td class="pedido-col-qty">' + qty + '</td>' +
+          '<td class="pedido-col-num">' + (m2tot ? fmtDecimal(m2tot) : '—') + '</td>' +
+          '<td class="pedido-col-num">' + (cxTot ? fmtDecimal(cxTot, 0) : '—') + '</td>' +
+          '<td class="pedido-col-num pedido-col-peso">' + (pesoTot ? fmtKg(pesoTot) : '—') + '</td>' +
+          '<td class="pedido-col-emb">' + esc(embParts.length ? embParts.join(' · ') : '—') + '</td>' +
+          '<td class="pedido-col-num pedido-col-preco ' + (descontoPct ? 'has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
+          '<td class="pedido-col-num col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
+      }
+      return '<tr>' +
+        '<td class="pedido-col-foto">' + thumbCell + '</td>' +
+        '<td class="pedido-col-modelo"><span class="pedido-row-title">' + esc(titulo) + '</span><div class="pedido-row-meta">' + rowMeta + '</div></td>' +
+        '<td class="pedido-col-qty">' + qty + '</td>' +
+        '<td class="pedido-col-num">' + (m2unit ? fmtDecimal(m2unit) : '—') + '</td>' +
+        '<td class="pedido-col-num">' + (m2tot ? fmtDecimal(m2tot) : '—') + '</td>' +
+        '<td class="pedido-col-num pedido-col-preco ' + (descontoPct ? 'has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
+        '<td class="pedido-col-num col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
+    }
     function renderPedidoCard({ item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl, sub }, opts) {
       const forPdf = opts && opts.pdf;
       const thumb = img
@@ -2628,34 +2662,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const img = imgs[0]?.url || '';
         const titulo = item.formigres_titulo || item.descricao;
         const rowData = { item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub };
-        const rowMeta = '#' + esc(item.codigo_tintao) + ' · ' + esc(item.formato || '—');
-        const thumbCell = img
-          ? '<img src="' + esc(img) + '" alt="" width="48" height="48" style="object-fit:cover" />'
-          : '—';
-        if (QTY_UNIT === 'palete') {
-          const embParts = [];
-          if (emb.cxpl) embParts.push(emb.cxpl + ' cx/pl');
-          if (m2unit) embParts.push(fmtDecimal(m2unit) + ' m²/pl');
-          bodyRows.push('<tr>' +
-            '<td class="pedido-col-foto">' + thumbCell + '</td>' +
-            '<td class="pedido-col-modelo"><span class="pedido-row-title">' + esc(titulo) + '</span><div class="pedido-row-meta">' + rowMeta + '</div></td>' +
-            '<td class="pedido-col-qty">' + qty + '</td>' +
-            '<td class="pedido-col-num">' + (m2tot ? fmtDecimal(m2tot) : '—') + '</td>' +
-            '<td class="pedido-col-num">' + (cxTot ? fmtDecimal(cxTot, 0) : '—') + '</td>' +
-            '<td class="pedido-col-num pedido-col-peso">' + (pesoTot ? fmtKg(pesoTot) : '—') + '</td>' +
-            '<td class="pedido-col-emb">' + esc(embParts.length ? embParts.join(' · ') : '—') + '</td>' +
-            '<td class="pedido-col-num pedido-col-preco ' + (descontoPct ? 'has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
-            '<td class="pedido-col-num col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>');
-        } else {
-          bodyRows.push('<tr>' +
-            '<td class="pedido-col-foto">' + thumbCell + '</td>' +
-            '<td class="pedido-col-modelo"><span class="pedido-row-title">' + esc(titulo) + '</span><div class="pedido-row-meta">' + rowMeta + '</div></td>' +
-            '<td class="pedido-col-qty">' + qty + '</td>' +
-            '<td class="pedido-col-num">' + (m2unit ? fmtDecimal(m2unit) : '—') + '</td>' +
-            '<td class="pedido-col-num">' + (m2tot ? fmtDecimal(m2tot) : '—') + '</td>' +
-            '<td class="pedido-col-num pedido-col-preco ' + (descontoPct ? 'has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
-            '<td class="pedido-col-num col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>');
-        }
+        bodyRows.push(renderPedidoTableRow(rowData, null, null));
         cardRows.push(renderPedidoCard(rowData));
       }
       document.getElementById('pedido-body').innerHTML = bodyRows.join('');
@@ -2724,15 +2731,15 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return Math.ceil(Number(px || 0) * 25.4 / 96);
     }
     function printPageWidthPx() {
-      return 390;
+      return 920;
     }
     function printPageWidthMm() {
-      return Math.max(88, pxToMm(printPageWidthPx()));
+      return Math.max(210, pxToMm(printPageWidthPx()));
     }
     function buildPedidoPrintHtml(thumbs) {
       const rows = pedidoItens();
       let totalQty = 0, totalM2 = 0, totalPeso = 0, totalCaixas = 0, totalValor = 0;
-      const cards = [];
+      const bodyRows = [];
       for (const { item, qty } of rows) {
         const emb = itemEmbalagem(item);
         const m2unit = itemM2Unit(item);
@@ -2747,11 +2754,21 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         if (cxTot) totalCaixas += cxTot;
         if (sub) totalValor += sub;
         const imgs = getGaleria(item);
-        const img = pdfImgSrc(imgs[0]?.url || '', thumbs, item);
+        const img = imgs[0]?.url || '';
         const titulo = item.formigres_titulo || item.descricao;
-        cards.push(renderPedidoCard({ item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub }, { pdf: true }));
+        bodyRows.push(renderPedidoTableRow(
+          { item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub },
+          thumbs,
+          { pdf: true },
+        ));
       }
-      const cardsHtml = cards.join('');
+      const tableHtml = bodyRows.length
+        ? '<table class="print-pedido-table">' +
+            PEDIDO_TABLE_COLGROUP_HTML +
+            '<thead><tr>' + PEDIDO_TABLE_HEAD_HTML + '</tr></thead>' +
+            '<tbody>' + bodyRows.join('') + '</tbody>' +
+          '</table>'
+        : '';
       const descNote = descontoPct ? '<p class="print-note">Desconto comercial aplicado: ' + descontoPct + '% sobre a tabela.</p>' : '';
       const caixasResumo = QTY_UNIT === 'palete' && totalCaixas
         ? '<span class="print-resumo-stat"><strong>' + fmtDecimal(totalCaixas, 0) + '</strong> caixas</span>'
@@ -2759,8 +2776,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const pesoResumo = QTY_UNIT === 'palete' && totalPeso
         ? '<span class="print-resumo-stat"><strong>' + fmtDecimal(totalPeso, 1) + '</strong> kg</span>'
         : '';
+      const resumoCols = QTY_UNIT === 'palete' ? 5 : 3;
       const resumo = rows.length
-        ? '<div class="print-resumo">' +
+        ? '<div class="print-resumo" style="grid-template-columns:repeat(' + resumoCols + ',minmax(0,1fr))">' +
             '<span class="print-resumo-stat"><strong>' + rows.length + '</strong> modelos</span>' +
             '<span class="print-resumo-stat"><strong>' + totalQty + '</strong> ' + QTY_LABEL_PL + '</span>' +
             caixasResumo +
@@ -2778,7 +2796,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           descNote +
         '</header>' +
         resumo +
-        '<div class="print-cards">' + cardsHtml + '</div>' +
+        tableHtml +
         pesoPrintLine +
         '<p class="print-totals"><strong>Total estimado: ' + fmtMoney(totalValor) + '</strong></p>' +
       '</div>';
@@ -2797,32 +2815,30 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '.print-resumo { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 12px; margin-bottom: 10px; }' +
         '.print-resumo-stat { min-width: 0; font-size: 10px; color: #767676; }' +
         '.print-resumo-stat strong { display: block; font-size: 14px; color: #2f2f2f; margin-bottom: 2px; font-weight: 600; }' +
-        '.print-cards { display: flex; flex-direction: column; }' +
-        '.pedido-card-pdf { padding: 14px 0; break-inside: avoid; page-break-inside: avoid; background: #ffffff; border-top: 1px solid #d5d5d5; }' +
-        '.print-cards > .pedido-card-pdf:first-child { border-top: none; }' +
-        '.pedido-card-head { display: flex; align-items: flex-start; gap: 10px; }' +
-        '.pedido-card-thumb { width: 48px; height: 48px; border-radius: 0; object-fit: cover; flex-shrink: 0; background: #fafafa; display: block; }' +
-        '.pedido-card-thumb-empty { display: flex; align-items: center; justify-content: center; color: #767676; font-size: 12px; }' +
-        '.pedido-card-intro { flex: 1; min-width: 0; }' +
-        '.pedido-card-aside { text-align: right; flex-shrink: 0; min-width: 72px; max-width: 42%; }' +
-        '.pedido-card-title { font-size: .88rem; font-weight: 600; line-height: 1.25; color: #2f2f2f; }' +
-        '.pedido-card-meta { margin-top: 3px; font-size: .72rem; color: #767676; line-height: 1.3; }' +
-        '.pedido-card-subtotal-label, .pedido-card-unit-label { display: block; font-size: .6rem; text-transform: uppercase; letter-spacing: .05em; color: #767676; margin-bottom: 2px; }' +
-        '.pedido-card-subtotal strong { display: block; font-size: .92rem; font-weight: 600; color: #1f1f24; white-space: nowrap; line-height: 1.2; }' +
-        '.pedido-card-metrics { margin-top: 10px; }' +
-        '.pedido-card-hero { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 12px; }' +
-        '.pedido-card-hero-label { display: block; font-size: .58rem; text-transform: uppercase; letter-spacing: .05em; color: #767676; margin-bottom: 2px; }' +
-        '.pedido-card-hero-val { display: block; font-size: .86rem; font-weight: 600; color: #2f2f2f; font-variant-numeric: tabular-nums; }' +
-        '.pedido-card-hero-item.is-primary .pedido-card-hero-val { font-size: .94rem; font-weight: 700; color: #b01219; }' +
-        '.pedido-card-detail { margin-top: 6px; font-size: .66rem; color: #767676; line-height: 1.35; }' +
-        '.pedido-card-unit { margin-top: 8px; }' +
-        '.pedido-card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 10px; margin-top: 10px; }' +
-        '.pedido-card-kv-label { display: block; font-size: .62rem; text-transform: uppercase; letter-spacing: .04em; color: #767676; margin-bottom: 2px; }' +
-        '.pedido-card-kv-val { font-size: .84rem; font-weight: 500; color: #2f2f2f; font-variant-numeric: tabular-nums; }' +
-        '.pedido-card-price-val { display: block; line-height: 1.15; }' +
-        '.pedido-card-price-val .preco-orig { font-size: .62rem; line-height: 1.1; display: block; text-decoration: line-through; color: #767676; }' +
-        '.pedido-card-price-val .preco-desc { font-size: .78rem; font-weight: 600; color: #2f2f2f; display: block; }' +
-        '.pedido-card-price-val:not(.has-desc) { font-size: .78rem; font-weight: 600; color: #2f2f2f; }' +
+        '.print-pedido-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 11px; margin-top: 4px; }' +
+        '.print-pedido-table th, .print-pedido-table td { padding: 8px 6px; border-bottom: 1px solid #e4e4e4; vertical-align: middle; }' +
+        '.print-pedido-table thead th { text-align: left; color: #767676; font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid #d8d8d8; white-space: nowrap; }' +
+        '.print-pedido-table col.col-foto { width: 52px; }' +
+        '.print-pedido-table col.col-modelo { width: 28%; }' +
+        '.print-pedido-table col.col-qty { width: 56px; }' +
+        '.print-pedido-table col.col-m2, .print-pedido-table col.col-m2u { width: 72px; }' +
+        '.print-pedido-table col.col-cx { width: 56px; }' +
+        '.print-pedido-table col.col-peso { width: 80px; }' +
+        '.print-pedido-table col.col-emb { width: 118px; }' +
+        '.print-pedido-table col.col-preco { width: 72px; }' +
+        '.print-pedido-table col.col-sub { width: 86px; }' +
+        '.print-pedido-table .pedido-row-title { display: block; font-weight: 600; line-height: 1.25; color: #2f2f2f; font-size: 11px; }' +
+        '.print-pedido-table .pedido-row-meta { margin-top: 2px; font-size: 9px; color: #767676; line-height: 1.3; }' +
+        '.print-pedido-table .pedido-col-emb { font-size: 9px; color: #767676; line-height: 1.35; }' +
+        '.print-pedido-table .pedido-col-num, .print-pedido-table th.pedido-col-num, .print-pedido-table .col-subtotal { text-align: right; font-variant-numeric: tabular-nums; }' +
+        '.print-pedido-table .pedido-col-qty, .print-pedido-table th.pedido-col-qty { text-align: center; font-variant-numeric: tabular-nums; font-weight: 600; }' +
+        '.print-pedido-table .col-subtotal { font-weight: 700; color: #b01219; white-space: nowrap; }' +
+        '.print-pedido-table .pedido-col-peso { font-weight: 500; color: #2f2f2f; white-space: nowrap; }' +
+        '.print-pedido-table .pedido-col-preco { font-size: 10px; }' +
+        '.print-pedido-table .pedido-col-foto img { display: block; border-radius: 4px; }' +
+        '.print-pedido-table tr { break-inside: avoid; page-break-inside: avoid; }' +
+        '.print-peso { margin: 8px 0 0; font-size: 11px; color: #767676; text-align: right; }' +
+        '.print-peso strong { color: #2f2f2f; font-weight: 600; }' +
         '.print-totals { text-align: right; margin: 14px 0 0; padding-top: 10px; border-top: 1px solid #d5d5d5; font-size: 14px; color: #5a5a5a; break-inside: avoid; page-break-inside: avoid; }' +
         '.print-totals strong { font-size: 16px; color: #1f1f24; font-weight: 600; }';
     }
