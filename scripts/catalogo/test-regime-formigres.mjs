@@ -46,6 +46,7 @@ async function main() {
     hasCompradorUf: !!document.getElementById('regime-comprador-uf'),
     hasInlineOptions: !!document.getElementById('regime-options'),
     hasSummary: !!document.getElementById('regime-summary'),
+    compradorUfs: [...document.querySelectorAll('#regime-comprador-uf option')].map((o) => o.value),
   }));
 
   const regimeCases = [
@@ -147,7 +148,9 @@ async function main() {
     && uiProbe.hasEditBtn
     && uiProbe.hasCompradorUf
     && uiProbe.hasSummary
-    && !uiProbe.hasInlineOptions;
+    && !uiProbe.hasInlineOptions
+    && uiProbe.compradorUfs.length === 4
+    && ['AM', 'RR', 'AP', 'AC'].every((uf) => uiProbe.compradorUfs.includes(uf));
   const acumOk = compound.comercial === 5
     && compound.acumuladoPct != null
     && Math.abs(compound.acumuladoPct - expectedAcum) < 0.02;

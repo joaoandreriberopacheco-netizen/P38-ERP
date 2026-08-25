@@ -40,6 +40,16 @@ export const UF_LIST = [
   { uf: 'TO', nome: 'Tocantins' },
 ];
 
+/** UFs elegíveis no diálogo de regime — Amazônia Ocidental (Suframa). */
+export const REGIME_COMPRADOR_UF_LIST = ['AM', 'RR', 'AP', 'AC'].map((uf) =>
+  UF_LIST.find((row) => row.uf === uf),
+).filter(Boolean);
+
+export function isRegimeCompradorUf(uf) {
+  const code = String(uf || '').toUpperCase();
+  return REGIME_COMPRADOR_UF_LIST.some((row) => row.uf === code);
+}
+
 /** PIS/COFINS desonerados — fixos (não variam por UF). */
 export const PIS_DESONERADO_PCT = 1.65;
 export const COFINS_DESONERADO_PCT = 7.6;
@@ -119,6 +129,7 @@ export function buildSuframaClientJs({ fabricanteUf = 'SP', fabricanteNome = 'Fo
     const FABRICANTE_UF = ${JSON.stringify(String(fabricanteUf).toUpperCase())};
     const FABRICANTE_NOME = ${JSON.stringify(fabricanteNome)};
     const UF_LIST = ${JSON.stringify(UF_LIST)};
+    const REGIME_COMPRADOR_UF_LIST = ${JSON.stringify(REGIME_COMPRADOR_UF_LIST)};
     const PIS_DESONERADO_PCT = ${PIS_DESONERADO_PCT};
     const COFINS_DESONERADO_PCT = ${COFINS_DESONERADO_PCT};
     const ICMS_ALIQUOTA_REDUCIDA_FATOR = ${ICMS_ALIQUOTA_REDUCIDA_FATOR};

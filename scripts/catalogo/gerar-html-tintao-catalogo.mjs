@@ -13,7 +13,7 @@ import { readJson, snapshotPath } from '../lib/catalogoPaths.mjs';
 import { extractImagensFromDetalhe, fetchProdutoDetalhe } from '../lib/formigresCatalog.mjs';
 import { loadSnapshotFromFile } from '../lib/formigresSnapshot.mjs';
 import { dedupeFormigresGemeas } from '../lib/formigresGemeas.mjs';
-import { UF_LIST, buildSuframaClientJs } from '../lib/catalogoSuframa.mjs';
+import { REGIME_COMPRADOR_UF_LIST, buildSuframaClientJs, isRegimeCompradorUf } from '../lib/catalogoSuframa.mjs';
 
 const ROOT = process.cwd();
 const args = process.argv.slice(2);
@@ -826,8 +826,8 @@ const FORMIGRES_SKIN_CSS = `
 `;
 
 function buildRegimeUfOptions(selectedUf = 'AM') {
-  const sel = String(selectedUf || 'AM').toUpperCase();
-  return UF_LIST.map(({ uf, nome }) =>
+  const sel = isRegimeCompradorUf(selectedUf) ? String(selectedUf).toUpperCase() : 'AM';
+  return REGIME_COMPRADOR_UF_LIST.map(({ uf, nome }) =>
     `<option value="${uf}"${uf === sel ? ' selected' : ''}>${uf} — ${escTpl(nome)}</option>`,
   ).join('');
 }
@@ -2614,8 +2614,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     let regimeState = { enabled: false, compradorUf: 'AM', destino: 'zfm', tributario: 'lucro_presumido' };
     let regimeDialogMode = null;
     function isValidRegimeUf(uf) {
-      if (!IS_FORMIGRES || typeof UF_LIST === 'undefined') return false;
-      return UF_LIST.some((row) => row.uf === String(uf || '').toUpperCase());
+      if (!IS_FORMIGRES || typeof REGIME_COMPRADOR_UF_LIST === 'undefined') return false;
+      return REGIME_COMPRADOR_UF_LIST.some((row) => row.uf === String(uf || '').toUpperCase());
     }
     function loadRegimeState() {
       if (!IS_FORMIGRES || !REGIME_KEY) return;

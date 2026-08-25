@@ -5,8 +5,10 @@
 import {
   calcRegimeIncentivoFromState,
   icmsInterestadual,
+  isRegimeCompradorUf,
   PIS_DESONERADO_PCT,
   COFINS_DESONERADO_PCT,
+  REGIME_COMPRADOR_UF_LIST,
 } from '../lib/catalogoSuframa.mjs';
 
 const cases = [
@@ -40,6 +42,15 @@ const cases = [
 ];
 
 let ok = true;
+
+const regimeUfs = REGIME_COMPRADOR_UF_LIST.map((row) => row.uf);
+if (regimeUfs.join(',') === 'AM,RR,AP,AC' && !isRegimeCompradorUf('SP') && isRegimeCompradorUf('RR')) {
+  console.log('OK regime comprador UF list (Amazônia Ocidental)', regimeUfs);
+} else {
+  ok = false;
+  console.log('FAIL regime comprador UF list', regimeUfs);
+}
+
 for (const c of cases) {
   const icms = icmsInterestadual(c.input.fabricanteUf, c.input.compradorUf);
   const r = calcRegimeIncentivoFromState(c.input);
