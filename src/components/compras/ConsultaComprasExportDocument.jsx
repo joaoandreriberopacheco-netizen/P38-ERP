@@ -25,7 +25,11 @@ export default function ConsultaComprasExportDocument({
       )}
       style={{ width: MOBILE_EXPORT_WIDTH_PX }}
     >
-      <div id="consulta-export-capture" className="px-3 py-4 min-w-0 max-w-full overflow-hidden">
+      <div
+        id="consulta-export-capture"
+        className="px-4 py-5 min-w-0 max-w-full overflow-visible"
+        style={{ paddingBottom: 24 }}
+      >
         {filtrosDesc ? (
           <p className="text-[10px] leading-snug text-muted-foreground mb-3 font-light normal-case">
             {filtrosDesc}

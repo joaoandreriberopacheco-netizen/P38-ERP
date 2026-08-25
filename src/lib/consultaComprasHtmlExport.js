@@ -29,7 +29,36 @@ async function waitForCaptureLayout(container) {
     }
   }
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  await new Promise((resolve) => setTimeout(resolve, 120));
   void container.offsetHeight;
+}
+
+function prepareCloneForPdfCapture(clonedDoc) {
+  if (!clonedDoc) return;
+  clonedDoc.querySelectorAll('#consulta-export-capture, #consulta-export-capture *').forEach((node) => {
+    if (!(node instanceof HTMLElement)) return;
+    const style = clonedDoc.defaultView?.getComputedStyle(node);
+    if (style?.overflow === 'hidden' || style?.overflowX === 'hidden') {
+      node.style.overflow = 'visible';
+      node.style.overflowX = 'visible';
+    }
+    if (style?.textOverflow === 'ellipsis' || node.classList.contains('truncate') || node.classList.contains('line-clamp-2')) {
+      node.style.textOverflow = 'clip';
+      node.style.whiteSpace = 'normal';
+      node.style.overflow = 'visible';
+      node.style.display = 'block';
+      node.style.webkitLineClamp = 'unset';
+      node.style.webkitBoxOrient = 'unset';
+    }
+  });
+  const root = clonedDoc.getElementById('consulta-export-capture');
+  if (root instanceof HTMLElement) {
+    root.style.overflow = 'visible';
+    root.style.paddingLeft = '18px';
+    root.style.paddingRight = '18px';
+    root.style.paddingTop = '20px';
+    root.style.paddingBottom = '28px';
+  }
 }
 
 /**
@@ -47,8 +76,15 @@ export async function renderConsultaElementToPdfBlob(element, { theme = 'light' 
     logging: false,
     width: MOBILE_EXPORT_WIDTH_PX,
     windowWidth: MOBILE_EXPORT_WIDTH_PX,
+    scrollX: 0,
+    scrollY: 0,
+    x: 0,
+    y: 0,
     ignoreElements: (node) =>
       typeof node?.classList?.contains === 'function' && node.classList.contains('no-pdf-capture'),
+    onclone: (clonedDoc) => {
+      prepareCloneForPdfCapture(clonedDoc);
+    },
   });
 
   const pageHeightPx = Math.floor((MOBILE_PAGE_HEIGHT_MM / MOBILE_PAGE_WIDTH_MM) * canvas.width);
@@ -100,11 +136,13 @@ function buildExportHost() {
   host.setAttribute('data-consulta-export-host', 'true');
   host.style.cssText = [
     'position:fixed',
-    'left:-10000px',
+    'left:0',
     'top:0',
+    'width:' + MOBILE_EXPORT_WIDTH_PX + 'px',
     'z-index:-1',
     'pointer-events:none',
     'opacity:1',
+    'overflow:visible',
   ].join(';');
   document.body.appendChild(host);
   return host;

@@ -87,21 +87,31 @@ function ConsultaEmbarqueCard({
   const metaSemStatus = detalhes.filter((d) => d !== displayStatus);
 
   const headerShellClass = cn(
-    'w-full text-left min-w-0 py-3 pr-1',
+    'w-full text-left min-w-0',
+    exportMode ? 'py-3.5 pr-1 overflow-visible' : 'py-3 pr-1',
     CONSULTA_HIER.sep,
     !exportMode && 'hover:bg-muted/20 transition-colors',
   );
   const headerContent = (
-    <div className="space-y-1.5 min-w-0 w-full">
-      <p className={CONSULTA_TITLE}>
+    <div className="space-y-2 min-w-0 w-full overflow-visible">
+      <p className={cn(CONSULTA_TITLE, exportMode && 'line-clamp-none leading-snug')}>
         {card._display_code || card.numero}
         {ehNecessidade ? (
           <span className="text-muted-foreground font-light normal-case text-sm"> · falta vir</span>
         ) : null}
       </p>
-      <p className={cn(CONSULTA_SUBTITLE, 'normal-case')}>{fornecedor}</p>
-      <div className="flex items-end justify-between gap-3 min-w-0">
-        <div className={cn(caixaTypo.meta, 'normal-case min-w-0 flex-1 font-light flex flex-wrap items-start gap-x-1.5 gap-y-1')}>
+      <p className={cn(CONSULTA_SUBTITLE, 'normal-case', exportMode && 'line-clamp-none')}>{fornecedor}</p>
+      <div className={cn(
+        'flex min-w-0 gap-3',
+        exportMode ? 'flex-col items-stretch' : 'items-end justify-between',
+      )}
+      >
+        <div className={cn(
+          caixaTypo.meta,
+          'normal-case min-w-0 font-light',
+          exportMode ? 'flex flex-col items-start gap-1' : 'flex flex-wrap items-start gap-x-1.5 gap-y-1 flex-1',
+        )}
+        >
           {displayStatus ? (
             <div className="flex flex-col items-start gap-0.5 shrink-0">
               <ComprasStatusChip displayStatus={displayStatus} fallbackStatus={card.status}>
@@ -123,14 +133,14 @@ function ConsultaEmbarqueCard({
           tone="neutral"
           signed={false}
           size="sm"
-          className="shrink-0"
+          className={exportMode ? 'self-end' : 'shrink-0'}
         />
       </div>
     </div>
   );
 
   return (
-    <div className={cn('min-w-0 max-w-full overflow-hidden', !isLast && CONSULTA_HIER.sep)}>
+    <div className={cn('min-w-0 max-w-full', exportMode ? 'overflow-visible' : 'overflow-hidden', !isLast && CONSULTA_HIER.sep)}>
       {exportMode ? (
         <div className={headerShellClass}>{headerContent}</div>
       ) : (
@@ -143,13 +153,14 @@ function ConsultaEmbarqueCard({
         </button>
       )}
       {itensEmbarque.length > 0 ? (
-        <div className={cn(CONSULTA_HIER.l2, 'pb-1 pt-0.5')}>
+        <div className={cn(CONSULTA_HIER.l2, exportMode ? 'pb-1.5 pt-1 overflow-visible' : 'pb-1 pt-0.5')}>
           {itensEmbarque.map((item, idx) => {
             const exib = getItemCompraExibicaoVitrine(item);
             return (
               <ConsultaProdutoRow
                 key={`${card._virtual_key || card.id}-${item.produto_id || idx}`}
                 compact
+                exportPdf={exportMode}
                 quantidade={Number(item.quantidade) || exib.quantidade}
                 unidade={item.unidade_medida || exib.unidade_medida}
                 nome={item.produto_nome}
@@ -227,7 +238,7 @@ function ConsultaGrupoEmbarques({
       {exportMode ? (
         <div
           className={cn(
-            'w-full min-w-0 text-left overflow-hidden flex items-start gap-2 py-2.5',
+            'w-full min-w-0 text-left overflow-visible flex items-start gap-2 py-3',
             CONSULTA_HIER.sep,
           )}
         >
@@ -246,7 +257,7 @@ function ConsultaGrupoEmbarques({
         </button>
       )}
       {open ? (
-        <div className={cn(CONSULTA_HIER.l1, 'space-y-0')}>
+        <div className={cn(CONSULTA_HIER.l1, exportMode ? 'space-y-0 overflow-visible' : 'space-y-0')}>
           {grupo.cards.map((card, index) => (
             <ConsultaEmbarqueCard
               key={card._virtual_key || card.id}
@@ -335,7 +346,7 @@ export default function ConsultaComprasPedidos({
   }
 
   return (
-    <div className="space-y-4 min-w-0 max-w-full overflow-x-hidden font-din-1451">
+    <div className={cn('space-y-4 min-w-0 max-w-full', exportMode ? 'overflow-visible' : 'overflow-x-hidden', 'font-din-1451')}>
       <div className="flex flex-col gap-3 min-w-0 max-w-full">
         <div className="min-w-0">
           <p className={cn(caixaTypo.labelSm, 'font-light uppercase tracking-wide')}>{contextLabel}</p>
@@ -370,6 +381,7 @@ export default function ConsultaComprasPedidos({
             <ConsultaProdutoRow
               key={p.key}
               compact
+              exportPdf={exportMode}
               quantidade={p.quantidade}
               unidade={p.unidade}
               nome={p.nome}
@@ -380,7 +392,7 @@ export default function ConsultaComprasPedidos({
           ))}
         </P38MobileLineList>
       ) : (
-        <div className="space-y-4 min-w-0 max-w-full overflow-x-hidden">
+        <div className={cn('space-y-4 min-w-0 max-w-full', exportMode ? 'overflow-visible' : 'overflow-x-hidden')}>
           {!exportMode && gruposEmbarque.length > 0 ? (
             <div className="flex items-center justify-end gap-2 min-w-0">
               {!todosGruposAbertos ? (
