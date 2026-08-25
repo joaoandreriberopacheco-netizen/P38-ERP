@@ -23,7 +23,6 @@ import {
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
 import { lerArquivoPedidoImportDoBridge, limparArquivoPedidoImportBridge } from '@/lib/torrePedidoImportBridge';
 import { buildLlmTelemetryContext } from '@/lib/p38LlmTelemetry';
-import { isP38SessionErrorMessage } from '@/lib/supabaseBrowserClient';
 
 export default function ImportadorPedidoCompra({
   isOpen,
@@ -316,15 +315,6 @@ export default function ImportadorPedidoCompra({
       setStep('review');
     } catch (error) {
       toast({ title: 'Erro na análise', description: error.message, variant: 'destructive' });
-      if (isP38SessionErrorMessage(error?.message)) {
-        setTimeout(() => {
-          try {
-            base44.auth.redirectToLogin(window.location.href);
-          } catch {
-            window.location.href = '/login';
-          }
-        }, 1200);
-      }
       setStep(selectedFileRef.current || selectedFile ? 'discount' : 'upload');
     } finally {
       setIsUploading(false);

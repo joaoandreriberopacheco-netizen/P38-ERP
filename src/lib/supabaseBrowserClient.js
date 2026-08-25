@@ -98,9 +98,3 @@ export async function resolveP38AccessToken(supabase) {
 
   return null;
 }
-
-export function isP38SessionErrorMessage(message) {
-  return /sessão expirada|sessão ausente|sessão supabase ausente|não autenticado/i.test(
-    String(message || '')
-  );
-}

@@ -1,43 +1,17 @@
 /**
  * Proxy same-origin para a Edge Function Supabase `p38-core` (InvokeLLM, etc.).
- * Repassa o JWT do utilizador — evita falhas de gateway/CORS no browser.
+ * Repassa JWT do utilizador + apikey — evita falhas de gateway/CORS no browser.
  */
-function resolveP38CoreUrl() {
-  const explicit = String(process.env.P38_CORE_URL || '').trim();
-  if (explicit) return explicit;
-  const base = String(
-    process.env.VITE_SUPABASE_URL ||
-      process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      process.env.SUPABASE_URL ||
-      ''
-  ).trim();
-  if (base) return `${base.replace(/\/$/, '')}/functions/v1/p38-core`;
-  return '';
-}
+import {
+  applyCors,
+  buildUpstreamHeaders,
+  resolveEdgeFunctionUrl,
+} from './_p38UpstreamProxy.js';
 
-const P38_CORE_URL = resolveP38CoreUrl();
-
-function pickSessionAuthorization(req) {
-  const raw = req.headers.authorization || req.headers.Authorization;
-  if (typeof raw !== 'string') return null;
-  const trimmed = raw.trim();
-  if (/^Bearer eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(trimmed)) {
-    return trimmed;
-  }
-  return null;
-}
-
-function buildUpstreamHeaders(req) {
-  const headers = { 'Content-Type': 'application/json' };
-  const sessionAuth = pickSessionAuthorization(req);
-  if (sessionAuth) headers.Authorization = sessionAuth;
-  return headers;
-}
+const P38_CORE_URL = resolveEdgeFunctionUrl('p38-core');
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'content-type, authorization');
+  applyCors(res);
 
   if (req.method === 'OPTIONS') {
     res.status(204).end();
@@ -50,7 +24,9 @@ export default async function handler(req, res) {
   }
 
   if (!P38_CORE_URL) {
-    res.status(502).json({ error: 'P38_CORE_URL / VITE_SUPABASE_URL não configurado no servidor.' });
+    res.status(502).json({
+      error: 'VITE_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_URL não configurado no servidor.',
+    });
     return;
   }
 

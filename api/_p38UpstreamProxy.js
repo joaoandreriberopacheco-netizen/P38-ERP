@@ -30,8 +30,21 @@ export function pickSessionAuthorization(req) {
   return null;
 }
 
+function resolveSupabaseAnonKey() {
+  return String(
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.VITE_SUPABASE_ANON_KEY ||
+      process.env.SUPABASE_ANON_KEY ||
+      ''
+  ).trim();
+}
+
 export function buildUpstreamHeaders(req) {
   const headers = { 'Content-Type': 'application/json' };
+  const anonKey = resolveSupabaseAnonKey();
+  if (anonKey.startsWith('eyJ')) {
+    headers.apikey = anonKey;
+  }
   const sessionAuth = pickSessionAuthorization(req);
   if (sessionAuth) headers.Authorization = sessionAuth;
   return headers;

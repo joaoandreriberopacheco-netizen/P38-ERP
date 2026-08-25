@@ -1,7 +1,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { flushSync } from 'react-dom';
 import { useLocation } from 'react-router-dom';
-import { getCachedUserSession, setCachedUserSession, clearUserSessionCache } from '@/lib/userSessionCache';
+import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCache';
 
 import { base44, p38 } from '@/api/base44Client';
 import FontScaleInitializer from '@/components/accessibility/FontScaleInitializer';
@@ -133,18 +133,6 @@ export default function Layout({ children, currentPageName }) {
       }
     } catch (error) {
       console.error('Erro ao carregar usuário:', error);
-      const isAuthFailure =
-        error?.status === 401 ||
-        /sessão|session|autentic|unauthorized|não autenticado/i.test(String(error?.message || ''));
-      if (isSupabaseAuthEnabled() && isAuthFailure) {
-        clearUserSessionCache();
-        try {
-          base44.auth.redirectToLogin(window.location.href);
-        } catch {
-          window.location.href = '/login';
-        }
-        return;
-      }
       const cached = getCachedUserSession();
       if (cached?.user) {
         setCurrentUser(cached.user);

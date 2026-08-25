@@ -8,6 +8,8 @@ import { p38PublicEnv } from '@/lib/p38PublicEnv';
 function resolveFunctionUrls() {
   const urls = [];
   if (typeof window !== 'undefined' && window.location?.origin) {
+    // p38-edge funciona no deploy Next.js; /api/p38-core isolado falhava no gateway Supabase.
+    urls.push(`${window.location.origin}/api/p38-edge/p38-core`);
     urls.push(`${window.location.origin}/api/p38-core`);
   }
   const base = normalizeSupabaseProjectUrl(p38PublicEnv('VITE_SUPABASE_URL') || '');
@@ -52,7 +54,13 @@ function buildHeaders(url, { sessionToken, anonKey }) {
 function humanizeP38CoreError(payload, status) {
   const raw = payload?.error || payload?.message || '';
   const msg = String(raw || '').trim();
-  if (/não autenticado|missing authorization|unauthorized/i.test(msg) || status === 401) {
+  if (/no api key found/i.test(msg)) {
+    return 'Serviço de análise indisponível (ligação ao servidor). Tente novamente em instantes.';
+  }
+  if (/não autenticado|missing authorization/i.test(msg)) {
+    return 'Sessão expirada ou ausente. Saia e entre novamente em /login.';
+  }
+  if (status === 401 && /unauthorized/i.test(msg)) {
     return 'Sessão expirada ou ausente. Saia e entre novamente em /login.';
   }
   if (/GEMINI_API_KEY|GOOGLE_API_KEY/i.test(msg)) {
@@ -64,6 +72,15 @@ function humanizeP38CoreError(payload, status) {
   if (msg) return msg;
   if (status === 502) return 'Serviço de análise indisponível. Tente novamente em instantes.';
   return `Erro na análise (${status || 'servidor'}).`;
+}
+
+function shouldRetryWithNextUrl(msg, status) {
+  return (
+    /invalid jwt|no api key found|no `apikey`|requested function was not found/i.test(msg) ||
+    status === 502 ||
+    status === 503 ||
+    status === 504
+  );
 }
 
 /**
@@ -108,13 +125,17 @@ export async function invokeP38Core(body) {
       }
 
       const msg = humanizeP38CoreError(payload, response.status);
-      if (/invalid jwt/i.test(msg) && urls.length > 1) {
+      if (shouldRetryWithNextUrl(msg, response.status) && urls.length > 1) {
         lastHttpError = new Error(msg);
         continue;
       }
       throw new Error(msg);
     } catch (err) {
       if (err instanceof Error && err.message && !/failed to fetch/i.test(err.message)) {
+        if (shouldRetryWithNextUrl(err.message, 0) && urls.length > 1) {
+          lastHttpError = err;
+          continue;
+        }
         throw err;
       }
       lastNetworkError = err;
