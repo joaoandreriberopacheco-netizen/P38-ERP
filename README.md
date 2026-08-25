@@ -7,7 +7,7 @@
 | **Repositório** | [github.com/joaoandreriberopacheco-netizen/P38-ERP](https://github.com/joaoandreriberopacheco-netizen/P38-ERP) |
 | **Produção** | [p-38erp.vercel.app](https://p-38erp.vercel.app) |
 | **Apresentação** | [/landing.html](https://p-38erp.vercel.app/landing.html) |
-| **Catálogo B2B Tintão (Formigres)** | [/catalogo/tintao/](https://p-38erp.vercel.app/catalogo/tintao/) — regenerar: `npm run catalogo:publicar-tintao` |
+| **Catálogo B2B Tintão (Formigres)** | Projecto Vercel isolado — ver [`deploy/catalogo-tintao/README.md`](deploy/catalogo-tintao/README.md) · regenerar: `npm run catalogo:publicar-tintao` |
 | **Stack** | Next.js 15 · Supabase (Postgres) · Vercel |
 
 ---

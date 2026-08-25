@@ -15,9 +15,10 @@ import { extractImagensFromDetalhe, fetchProdutoDetalhe } from '../lib/formigres
 const ROOT = process.cwd();
 const CLASSIF_DIR = path.join(ROOT, 'docs', 'imports-local', 'tintao', 'classificacao');
 const OUT_HTML = path.join(ROOT, 'docs', 'imports-local', 'tintao', 'Catálogo B2B Tintão - Formigres.html');
-const OUT_PUBLIC_HTML = path.join(ROOT, 'public', 'catalogo', 'tintao', 'index.html');
-const PUBLIC_URL_PATH = '/catalogo/tintao/';
-const PUBLIC_URL = 'https://p-38erp.vercel.app/catalogo/tintao/';
+const OUT_DEPLOY_HTML = path.join(ROOT, 'deploy', 'catalogo-tintao', 'index.html');
+const PUBLIC_URL = (
+  process.env.CATALOGO_TINTAO_PUBLIC_URL || 'https://catalogo-tintao-formigres.vercel.app/'
+).replace(/\/?$/, '/');
 const OUT_PDF_THUMBS = path.join(ROOT, 'docs', 'imports-local', 'tintao', 'catalogo-tintao-pdf-thumbs.json');
 const ANT_LOGO_PATH = path.join(ROOT, 'scripts', 'catalogo', 'assets', 'formigres-ant.png');
 const PDF_FONT_WOFF2 = path.join(ROOT, 'scripts', 'catalogo', 'assets', 'fonts', 'libre-franklin-latin.woff2');
@@ -263,13 +264,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
   const pdfFontCssSafe = String(pdfFontCss).replace(/<\/style/gi, '<\\/style');
 
   return `<!DOCTYPE html>
-<html lang="pt-BR" data-theme="dark">
+<html lang="pt-BR" data-theme="light">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Pedido Formigres — Lojistas</title>
   <script>
-    (function(){try{var t=localStorage.getItem('tintao-theme-v1');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark');}catch(e){}})();
+    (function(){try{var t=localStorage.getItem('tintao-theme-v1');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');}catch(e){}})();
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -1207,6 +1208,19 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
       0%, 100% { box-shadow: var(--shadow); }
       50% { box-shadow: 0 10px 28px var(--accent-glow); }
     }
+    .catalog-powered {
+      margin-top: 28px;
+      padding: 16px 0 calc(72px + env(safe-area-inset-bottom));
+      text-align: center;
+      font-size: .72rem;
+      color: var(--muted);
+      letter-spacing: .02em;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .catalog-powered strong {
+      color: var(--text);
+      font-weight: 600;
+    }
     @media (max-width: 720px) {
       .wrap { padding: 10px 10px 20px; }
       .page-head { margin-bottom: 8px; padding-bottom: 8px; }
@@ -1437,13 +1451,16 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
     </div>
 
     <section class="catalogo" id="catalogo"></section>
+    <footer class="catalog-powered" aria-label="Créditos">
+      Powered by <strong>P38 sistemas</strong>
+    </footer>
   </div>
 
   <button type="button" class="theme-fab" id="theme-toggle" aria-label="Mudar para tema escuro" title="Tema">
-    <svg id="theme-icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <svg id="theme-icon-sun" hidden xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
     </svg>
-    <svg id="theme-icon-moon" hidden xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <svg id="theme-icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
     </svg>
   </button>
@@ -1642,7 +1659,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
       applyTheme(cur === 'light' ? 'dark' : 'light');
     }
     function initTopControls() {
-      applyTheme(localStorage.getItem(THEME_KEY) === 'light' ? 'light' : 'dark');
+      applyTheme(localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light');
       const inp = document.getElementById('desconto-pct');
       if (inp) {
         inp.value = descontoPct ? String(descontoPct) : '';
@@ -2640,12 +2657,12 @@ async function mainAsync() {
   const html = buildHtml({ classif, itens, antLogoDataUri, pdfThumbs, pdfFontCss });
 
   fs.mkdirSync(path.dirname(OUT_HTML), { recursive: true });
-  fs.mkdirSync(path.dirname(OUT_PUBLIC_HTML), { recursive: true });
+  fs.mkdirSync(path.dirname(OUT_DEPLOY_HTML), { recursive: true });
   fs.writeFileSync(OUT_HTML, html);
-  fs.writeFileSync(OUT_PUBLIC_HTML, html);
+  fs.writeFileSync(OUT_DEPLOY_HTML, html);
   fs.writeFileSync(OUT_PDF_THUMBS, `${JSON.stringify(pdfThumbs)}\n`);
 
-  const htmlKb = Math.round(fs.statSync(OUT_PUBLIC_HTML).size / 1024);
+  const htmlKb = Math.round(fs.statSync(OUT_DEPLOY_HTML).size / 1024);
   const thumbsKb = Math.round(fs.statSync(OUT_PDF_THUMBS).size / 1024);
 
   console.log(JSON.stringify({
@@ -2658,8 +2675,7 @@ async function mainAsync() {
     thumbsKb,
     fonte: jsonPath,
     html: OUT_HTML,
-    publicHtml: OUT_PUBLIC_HTML,
-    publicUrlPath: PUBLIC_URL_PATH,
+    deployHtml: OUT_DEPLOY_HTML,
     publicUrl: PUBLIC_URL,
     pdfThumbsFile: OUT_PDF_THUMBS,
   }, null, 2));
