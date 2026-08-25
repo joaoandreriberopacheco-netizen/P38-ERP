@@ -1,6 +1,7 @@
 /**
- * Embalagem Formigres por formato — m²/caixa, caixas/palete, peso (kg/caixa).
+ * Embalagem Formigres (SP) por formato — m²/caixa, caixas/palete, peso (kg/caixa).
  * Base: ficha técnica NBR 13006 (formigres.com.br) + referências comerciais premium.
+ * Arielle usa `arielleEmbalagem.mjs` (tabela própria Carmelo Fior / Polo SE).
  */
 import { normFmt } from './formigresCatalog.mjs';
 
@@ -60,5 +61,6 @@ export function resolveEmbalagemFormigres(prod) {
     peso_kg_caixa: pesoKgCaixa,
     m2_por_palete: m2PorPalete,
     peso_kg_palete: pesoKgPalete,
+    embalagem_marca: 'formigres',
   };
 }

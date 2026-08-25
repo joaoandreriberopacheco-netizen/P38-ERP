@@ -63,6 +63,8 @@ function main() {
       m2_por_palete: emb.m2_por_palete,
       peso_kg_caixa: emb.peso_kg_caixa,
       peso_kg_palete: emb.peso_kg_palete,
+      embalagem_marca: emb.embalagem_marca,
+      embalagem_fonte: emb.embalagem_fonte || null,
       unidade: '',
       total: null,
       pdf: '',
