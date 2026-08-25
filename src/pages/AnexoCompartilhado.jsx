@@ -822,10 +822,10 @@ export default function AnexoCompartilhado() {
 
   return (
     <>
-    <div className={`relative flex min-h-[100dvh] flex-col ${brandSurface.pageScreen}`}>
+    <div className={cn('relative flex flex-1 min-h-0 w-full flex-col overflow-hidden', brandSurface.pageScreen)}>
       {etapa === 'torre_controle' ? (
         <>
-          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain">
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain pb-[calc(5.75rem+env(safe-area-inset-bottom))]">
             <div className="px-4 pt-5 md:px-5">
               <div className="flex items-center gap-3">
                 <button
@@ -958,7 +958,7 @@ export default function AnexoCompartilhado() {
             </div>
           </div>
 
-          <div className="shrink-0 border-t border-border/40 bg-background/95 px-4 py-4 backdrop-blur-md md:px-5 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+          <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-background/95 px-4 py-3 backdrop-blur-md shadow-[0_-8px_24px_rgba(0,0,0,0.12)] md:px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <button
               type="button"
               onClick={() => setEtapa('opcoes')}
