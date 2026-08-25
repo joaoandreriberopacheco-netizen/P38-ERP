@@ -1537,6 +1537,34 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       color: var(--muted);
       line-height: 1.3;
     }
+    html[data-skin="formigres"] .pedido-row-resist {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      margin-top: 4px;
+      line-height: 1.3;
+    }
+    html[data-skin="formigres"] .pedido-row-resist-label {
+      font-size: .62rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: var(--muted);
+    }
+    html[data-skin="formigres"] .pedido-row-resist-val {
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      color: var(--text-strong);
+    }
+    html[data-skin="formigres"] .pedido-row-gemeas {
+      margin-top: 3px;
+      font-size: .68rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    html[data-skin="formigres"] .pedido-card-desc .pedido-row-resist { margin-top: 3px; }
+    html[data-skin="formigres"] .pedido-card-desc .pedido-row-gemeas { margin-top: 2px; font-size: .62rem; }
     .pedido-col-emb {
       font-size: .72rem;
       color: var(--muted);
@@ -2981,11 +3009,34 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       if (!item.gemeas || !item.gemeas.length) return '';
       return item.gemeas.map((g) => [g.marca, g.referencia, g.codigo].join(' ')).join(' ');
     }
+    function modelResistencia(item) {
+      const r = String(item.referencia || '').trim();
+      return r && r !== '—' ? r : '';
+    }
+    function renderResistenciaLine(item, kind) {
+      const resist = modelResistencia(item);
+      if (!resist) return '';
+      const pdf = kind === 'pdf';
+      const cls = pdf ? 'print-pedido-item-resist' : 'pedido-row-resist';
+      const labelCls = pdf ? 'print-pedido-item-resist-label' : 'pedido-row-resist-label';
+      const valCls = pdf ? 'print-pedido-item-resist-val' : 'pedido-row-resist-val';
+      return '<div class="' + cls + '">' +
+        '<span class="' + labelCls + '">Resistência</span>' +
+        '<strong class="' + valCls + '">' + esc(resist) + '</strong></div>';
+    }
+    function renderGemeasMarcasLine(item, kind) {
+      const g = item.gemeas;
+      if (!g || g.length < 2) return '';
+      const parts = g.map((row) => '#' + esc(row.codigo) + ' ' + esc(row.marca));
+      const pdf = kind === 'pdf';
+      const cls = pdf ? 'print-pedido-item-gemeas' : 'pedido-row-gemeas';
+      return '<div class="' + cls + '">' + parts.join(' · ') + '</div>';
+    }
     function renderGemeasTrigger(item, cod) {
       const g = item.gemeas;
       if (!g || g.length < 2) return '';
       const n = g.length;
-      const tip = 'Mesmo modelo em ' + n + ' marcas — toque para ver referências';
+      const tip = 'Mesmo modelo em ' + n + ' marcas — toque para ver códigos';
       return '<button type="button" class="model-gemeas-badge model-gemeas-trigger" data-cod="' + esc(cod) + '" aria-expanded="false" aria-controls="gemeas-panel-' + esc(cod) + '" title="' + esc(tip) + '" aria-label="' + esc(tip) + '">' + n + '</button>';
     }
     function renderGemeasDetailRow(item, cod) {
@@ -2995,13 +3046,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const isCurrent = String(row.codigo) === String(cod);
         return '<tr class="' + (isCurrent ? 'gemeas-row-current' : '') + '">' +
           '<td class="gemeas-col-marca">' + esc(row.marca) + '</td>' +
-          '<td class="gemeas-col-ref">' + esc(row.referencia) + '</td>' +
           '<td class="gemeas-col-cod">#' + esc(row.codigo) + '</td></tr>';
       }).join('');
       return '<tr class="model-gemeas-detail hidden" id="gemeas-panel-' + esc(cod) + '" data-gemeas-for="' + esc(cod) + '">' +
         '<td colspan="9"><div class="model-gemeas-wrap">' +
         '<p class="model-gemeas-caption">Mesmo modelo nestas marcas</p>' +
-        '<table class="model-gemeas-table"><thead><tr><th>Marca</th><th>Resistência</th><th>Código</th></tr></thead><tbody>' +
+        '<table class="model-gemeas-table"><thead><tr><th>Marca</th><th>Código</th></tr></thead><tbody>' +
         rows + '</tbody></table></div></td></tr>';
     }
     function toggleGemeasPanel(cod) {
@@ -3054,18 +3104,23 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const pesoTot = qty ? itemPesoTotal(item, qty) : null;
         const sub = qty ? itemSubtotal(item, qty) : null;
         const rowMetaParts = ['#' + esc(cod)];
-        if (item.marca_nome) rowMetaParts.push(esc(item.marca_nome));
+        if (!item.gemeas || item.gemeas.length < 2) {
+          if (item.marca_nome) rowMetaParts.push(esc(item.marca_nome));
+        }
         rowMetaParts.push(esc(item.formato || '—'));
         const rowMeta = rowMetaParts.join(' · ');
+        const resistHtml = renderResistenciaLine(item, 'catalog');
+        const gemeasMarcasHtml = renderGemeasMarcasLine(item, 'catalog');
         const gemeasTrigger = renderGemeasTrigger(item, cod);
         const searchExtra = gemeasSearchText(item);
+        const resistSearch = modelResistencia(item);
         const porPalete = fmtPorPaleteText(item);
         const titleHtml = gemeasTrigger
           ? '<span class="pedido-row-title-line"><span class="pedido-row-title">' + esc(titulo) + '</span>' + gemeasTrigger + '</span>'
           : '<span class="pedido-row-title">' + esc(titulo) + '</span>';
-        return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack + ' ' + searchExtra).toLowerCase()) + '" data-qty="' + qty + '">' +
+        return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + searchExtra).toLowerCase()) + '" data-qty="' + qty + '">' +
           '<td class="pedido-col-foto col-foto">' + foto + '</td>' +
-          '<td class="pedido-col-modelo col-modelo">' + titleHtml + warn + '<div class="pedido-row-meta">' + rowMeta + '</div></td>' +
+          '<td class="pedido-col-modelo col-modelo">' + titleHtml + warn + resistHtml + gemeasMarcasHtml + '<div class="pedido-row-meta">' + rowMeta + '</div></td>' +
           '<td class="pedido-col-qty col-qty">' +
             '<input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" tabindex="0" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="' + esc(QTY_LABEL) + '" placeholder="" />' +
           '</td>' +
@@ -3224,6 +3279,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '<div class="pedido-card-head-main">' +
           '<div class="pedido-card-desc">' +
             '<div class="pedido-card-title pedido-card-hero">' + esc(titulo) + '</div>' +
+            renderResistenciaLine(item, 'catalog') +
+            renderGemeasMarcasLine(item, 'catalog') +
             '<div class="pedido-card-meta">#' + esc(item.codigo_tintao) + ' · ' + esc(item.formato || '—') + '</div>' +
           '</div>' +
           '<div class="pedido-card-qty">' +
@@ -3270,26 +3327,6 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '<td class="pedido-col-num">' + (m2tot ? fmtDecimal(m2tot) : '—') + '</td>' +
         '<td class="pedido-col-num pedido-col-preco ' + (hasDescontoAtivo() ? 'has-desc' : '') + '">' + precoCell + '</td>' +
         '<td class="pedido-col-num col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
-    }
-    function renderGemeasPdfResist(item) {
-      const g = item.gemeas;
-      if (!g || g.length < 2) return '';
-      const parts = g.map((row) => {
-        const resist = row.referencia && row.referencia !== '—' ? ' · <strong>' + esc(row.referencia) + '</strong>' : '';
-        return '#' + esc(row.codigo) + ' ' + esc(row.marca) + resist;
-      });
-      return '<div class="print-pedido-item-resist print-pedido-item-resist-gemeas">' +
-        '<span class="print-pedido-item-resist-label">Resistência</span>' +
-        '<span class="print-pedido-item-resist-list">' + parts.join(' · ') + '</span></div>';
-    }
-    function renderPedidoPrintResistLine(item) {
-      const hasGemeas = item.gemeas && item.gemeas.length > 1;
-      if (hasGemeas) return renderGemeasPdfResist(item);
-      const resist = String(item.referencia || '').trim();
-      if (!resist || resist === '—') return '';
-      return '<div class="print-pedido-item-resist">' +
-        '<span class="print-pedido-item-resist-label">Resistência</span>' +
-        '<strong class="print-pedido-item-resist-val">' + esc(resist) + '</strong></div>';
     }
     function renderPrintFormatGroupHeader(fmt, qtyPl, pesoKg, m2tot) {
       const fmtLabel = esc(String(fmt || '—').toUpperCase());
@@ -3353,7 +3390,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         ? '<img src="' + esc(imgSrc) + '" alt="" width="' + thumbPx + '" height="' + thumbPx + '" />'
         : '<span class="print-pedido-item-thumb-empty" aria-hidden="true">—</span>';
       const hasGemeas = item.gemeas && item.gemeas.length > 1;
-      const refHtml = renderPedidoPrintResistLine(item);
+      const resistHtml = renderResistenciaLine(item, 'pdf');
+      const gemeasMarcasHtml = renderGemeasMarcasLine(item, 'pdf');
       const metaParts = [];
       if (!hasGemeas) {
         metaParts.push('#' + esc(item.codigo_tintao));
@@ -3385,7 +3423,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           '<div class="print-pedido-item-thumb">' + thumb + '</div>' +
           '<div class="print-pedido-item-desc">' +
             '<div class="print-pedido-item-title">' + esc(titulo) + '</div>' +
-            refHtml +
+            resistHtml +
+            gemeasMarcasHtml +
             metaHtml +
           '</div>' +
           '<div class="print-pedido-item-sub">' +
@@ -3627,10 +3666,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '.print-pedido-item-resist { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 8px; margin-top: 4px; line-height: 1.35; }' +
         '.print-pedido-item-resist-label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .05em; color: #767676; }' +
         '.print-pedido-item-resist-val { font-size: 13px; font-weight: 700; letter-spacing: .1em; color: #2f2f2f; }' +
-        '.print-pedido-item-resist-gemeas { display: block; }' +
-        '.print-pedido-item-resist-gemeas .print-pedido-item-resist-label { display: block; margin-bottom: 3px; }' +
-        '.print-pedido-item-resist-list { display: block; font-size: 10px; color: #767676; line-height: 1.45; }' +
-        '.print-pedido-item-resist-list strong { color: #2f2f2f; font-weight: 700; letter-spacing: .08em; }' +
+        '.print-pedido-item-gemeas { margin-top: 4px; font-size: 10px; color: #767676; line-height: 1.45; }' +
         '.print-pedido-item-meta { margin-top: 4px; font-size: 11px; color: #767676; line-height: 1.35; }' +
         '.print-pedido-item-sub { flex-shrink: 0; text-align: right; min-width: 96px; padding-top: 2px; }' +
         '.print-pedido-item-sub strong { display: block; font-size: 15px; font-weight: 700; color: #b01219; white-space: nowrap; }' +
