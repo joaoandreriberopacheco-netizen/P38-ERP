@@ -1367,14 +1367,8 @@
       </div>
       <div class="toolbar-extra toolbar-mobile-only" id="toolbar-extra" hidden>
         <select id="group-by" class="select-group" title="Agrupar">
-          <option value="acabamento" selected>Por acabamento</option>
-          <option value="tipo">Por tipo</option>
-          <option value="formato">Por formato</option>
-        </select>
-        <select id="sort-by" class="select-group" title="Ordenar">
-          <option value="formato" selected>Ordenar: formato</option>
-          <option value="tipo">Ordenar: tipo</option>
-          <option value="modelo">Ordenar: modelo</option>
+          <option value="formato-acabamento" selected>Formato › acabamento</option>
+          <option value="acabamento-formato">Acabamento › formato</option>
         </select>
         <button type="button" class="btn btn-primary" id="start-qty">Paletes</button>
         <button type="button" class="btn" id="filter-qty">Na seleção</button>
@@ -1384,14 +1378,8 @@
       </div>
       <div class="toolbar-extra toolbar-desktop-only">
         <select id="group-by-desktop" class="select-group">
-          <option value="acabamento" selected>Agrupar: acabamento</option>
-          <option value="tipo">Agrupar: tipo</option>
-          <option value="formato">Agrupar: formato</option>
-        </select>
-        <select id="sort-by-desktop" class="select-group">
-          <option value="formato" selected>Ordenar: formato</option>
-          <option value="tipo">Ordenar: tipo</option>
-          <option value="modelo">Ordenar: modelo</option>
+          <option value="formato-acabamento" selected>Agrupar: formato › acabamento</option>
+          <option value="acabamento-formato">Agrupar: acabamento › formato</option>
         </select>
         <button type="button" class="btn" id="filter-qty-d">Só na seleção</button>
         <button type="button" class="btn" id="clear-qty-d">Limpar seleção</button>
@@ -1516,7 +1504,6 @@
     const QTY_KEY = 'formigres-catalog-qty-v1';
     const THEME_KEY = 'formigres-catalog-theme-v1';
     const DESCONTO_KEY = 'formigres-catalog-desconto-v1';
-    const SORT_KEY = 'formigres-catalog-sort-v1';
     const GROUP_KEY = 'formigres-catalog-group-v1';
     let qtyMap = {};
     try { qtyMap = JSON.parse(localStorage.getItem(QTY_KEY) || '{}'); } catch { qtyMap = {}; }
@@ -1525,16 +1512,16 @@
       const d = Number(localStorage.getItem(DESCONTO_KEY));
       if (Number.isFinite(d) && d >= 0 && d <= 100) descontoPct = d;
     } catch { descontoPct = 0; }
-    let groupBy = 'acabamento';
-    let sortBy = 'formato';
+    let groupBy = 'formato-acabamento';
     try {
       const savedGroup = localStorage.getItem(GROUP_KEY);
-      if (savedGroup === 'acabamento' || savedGroup === 'tipo' || savedGroup === 'formato') groupBy = savedGroup;
+      groupBy = normalizeGroupBy(savedGroup);
     } catch { /* ignore */ }
-    try {
-      const savedSort = localStorage.getItem(SORT_KEY);
-      if (savedSort === 'formato' || savedSort === 'tipo' || savedSort === 'modelo') sortBy = savedSort;
-    } catch { /* ignore */ }
+    function normalizeGroupBy(val) {
+      if (val === 'formato-acabamento' || val === 'acabamento-formato') return val;
+      if (val === 'acabamento') return 'acabamento-formato';
+      return 'formato-acabamento';
+    }
     let filterQtyOnly = false;
     let pedidoOpen = false;
     let pedidoPdfSheetOpen = false;
@@ -1811,39 +1798,23 @@
       if (byFmt !== 0) return byFmt;
       return itemTitulo(a).localeCompare(itemTitulo(b), 'pt-BR');
     }
-    function compareTipoKeys(a, b, linha) {
-      const order = CFG.tipoOrder[linha] || [];
-      const ia = order.indexOf(a);
-      const ib = order.indexOf(b);
-      if (ia >= 0 && ib >= 0) return ia - ib;
-      if (ia >= 0) return -1;
-      if (ib >= 0) return 1;
-      return a.localeCompare(b, 'pt-BR');
-    }
-    function compareItensCatalogo(a, b) {
-      if (sortBy === 'modelo') {
-        const byNome = itemTitulo(a).localeCompare(itemTitulo(b), 'pt-BR');
-        if (byNome !== 0) return byNome;
-        return compareFormato(a.formato, b.formato);
-      }
-      if (sortBy === 'tipo') {
-        const linha = a.linha || b.linha || 'desconhecida';
-        const byTipo = compareTipoKeys(tipoKey(a), tipoKey(b), linha);
-        if (byTipo !== 0) return byTipo;
-        const byFmt = compareFormato(a.formato, b.formato);
-        if (byFmt !== 0) return byFmt;
-        return itemTitulo(a).localeCompare(itemTitulo(b), 'pt-BR');
-      }
-      return compareItensFormatoNome(a, b);
-    }
     function sortItemList(items) {
-      return [...items].sort(compareItensCatalogo);
+      return [...items].sort((a, b) => itemTitulo(a).localeCompare(itemTitulo(b), 'pt-BR'));
+    }
+    function sortAcabKeys(keys) {
+      const order = CFG.acabOrder || [];
+      return [...keys].sort((a, b) => {
+        const ia = order.indexOf(a); const ib = order.indexOf(b);
+        if (ia >= 0 && ib >= 0) return ia - ib;
+        if (ia >= 0) return -1; if (ib >= 0) return 1;
+        return a.localeCompare(b, 'pt-BR');
+      });
     }
     function pedidoItens() {
       return CATALOGO.itens
         .map((item) => ({ item, qty: getQty(item.codigo_tintao) }))
         .filter((x) => x.qty > 0)
-        .sort((a, b) => compareItensCatalogo(a.item, b.item));
+        .sort((a, b) => compareItensFormatoNome(a.item, b.item));
     }
     function tipoKey(item) {
       if (item.linha === 'polida') return 'polida';
@@ -1856,57 +1827,49 @@
       const a = String(item.formigres_acabamento || '').trim();
       return a || 'Sem acabamento';
     }
-    function grupoLabel(key, linha) {
-      if (groupBy === 'formato') return 'Formato ' + key;
-      if (groupBy === 'acabamento') return key;
-      return (CFG.tipoLabel[key] || key);
+    function grupoLabelFormato(key) {
+      return 'Formato ' + key;
     }
-    function sortGrupos(keys, linha) {
-      if (groupBy === 'formato') {
+    function sortGruposNivel1(keys) {
+      if (groupBy === 'formato-acabamento') {
         return [...keys].sort(compareFormato);
       }
-      if (groupBy === 'acabamento') {
-        const order = CFG.acabOrder || [];
-        return [...keys].sort((a, b) => {
-          const ia = order.indexOf(a); const ib = order.indexOf(b);
-          if (ia >= 0 && ib >= 0) return ia - ib;
-          if (ia >= 0) return -1; if (ib >= 0) return 1;
-          return a.localeCompare(b, 'pt-BR');
-        });
-      }
-      const order = CFG.tipoOrder[linha] || [];
-      return order.filter((k) => keys.includes(k)).concat(keys.filter((k) => !order.includes(k)).sort());
+      return sortAcabKeys(keys);
     }
     function buildTree(itens) {
       const tree = {};
-      if (groupBy === 'formato') {
+      if (groupBy === 'formato-acabamento') {
         for (const item of itens) {
           const linha = item.linha || 'desconhecida';
           const fmt = item.formato || '—';
+          const acab = acabKey(item);
           tree[linha] ??= {};
-          tree[linha][fmt] ??= [];
-          tree[linha][fmt].push(item);
+          tree[linha][fmt] ??= {};
+          tree[linha][fmt][acab] ??= [];
+          tree[linha][fmt][acab].push(item);
         }
         for (const linha of Object.keys(tree)) {
           for (const fmt of Object.keys(tree[linha])) {
-            tree[linha][fmt] = sortItemList(tree[linha][fmt]);
+            for (const acab of Object.keys(tree[linha][fmt])) {
+              tree[linha][fmt][acab] = sortItemList(tree[linha][fmt][acab]);
+            }
           }
         }
         return tree;
       }
       for (const item of itens) {
         const linha = item.linha || 'desconhecida';
-        const grupo = groupBy === 'acabamento' ? acabKey(item) : tipoKey(item);
+        const acab = acabKey(item);
         const formato = item.formato || '—';
         tree[linha] ??= {};
-        tree[linha][grupo] ??= {};
-        tree[linha][grupo][formato] ??= [];
-        tree[linha][grupo][formato].push(item);
+        tree[linha][acab] ??= {};
+        tree[linha][acab][formato] ??= [];
+        tree[linha][acab][formato].push(item);
       }
       for (const linha of Object.keys(tree)) {
-        for (const grupo of Object.keys(tree[linha])) {
-          for (const formato of Object.keys(tree[linha][grupo])) {
-            tree[linha][grupo][formato] = sortItemList(tree[linha][grupo][formato]);
+        for (const acab of Object.keys(tree[linha])) {
+          for (const formato of Object.keys(tree[linha][acab])) {
+            tree[linha][acab][formato] = sortItemList(tree[linha][acab][formato]);
           }
         }
       }
@@ -1939,33 +1902,47 @@
         '</td>' +
         '<td class="col-cod">' + esc(item.formato || '—') + '</td></tr>';
     }
+    function renderItemsTable(items) {
+      return '<div class="table-wrap"><table class="model-table"><thead><tr><th>Foto</th><th>Modelo</th><th>Descrição</th><th>Acab.</th><th>Preço/m²</th><th>' + esc(QTY_LABEL) + '</th><th>Formato</th></tr></thead><tbody>' +
+        items.map(renderTableRow).join('') + '</tbody></table></div>';
+    }
+    function renderAcabamentoLeaf(acab, items) {
+      const n = items.length;
+      return '<details class="acc acc-acab" open><summary><span class="acc-title">' + esc(acab) + '</span><span class="acc-count" data-total="' + n + '">' + n + '</span></summary>' +
+        renderItemsTable(items) + '</details>';
+    }
+    function renderFormatoComAcab(formato, acabMap) {
+      const acabs = sortAcabKeys(Object.keys(acabMap));
+      const n = acabs.reduce((s, a) => s + acabMap[a].length, 0);
+      return '<details class="acc acc-grupo acc-grupo-formato" open><summary><span class="acc-title">' + esc(grupoLabelFormato(formato)) + '</span><span class="acc-count" data-total="' + n + '" data-suffix="itens">' + n + ' itens</span></summary>' +
+        '<div class="acc-inner">' + acabs.map((a) => renderAcabamentoLeaf(a, acabMap[a])).join('') + '</div></details>';
+    }
     function renderFormato(formato, items) {
       const n = items.length;
-      return '<details class="acc acc-formato" open><summary><span class="acc-title">Formato ' + esc(formato) + '</span><span class="acc-count" data-total="' + n + '">' + n + '</span></summary>' +
-        '<div class="table-wrap"><table class="model-table"><thead><tr><th>Foto</th><th>Modelo</th><th>Descrição</th><th>Acab.</th><th>Preço/m²</th><th>' + esc(QTY_LABEL) + '</th><th>Formato</th></tr></thead><tbody>' +
-        items.map(renderTableRow).join('') + '</tbody></table></div></details>';
+      return '<details class="acc acc-formato" open><summary><span class="acc-title">' + esc(grupoLabelFormato(formato)) + '</span><span class="acc-count" data-total="' + n + '">' + n + '</span></summary>' +
+        renderItemsTable(items) + '</details>';
     }
-    function renderGrupoFlat(key, items, linha) {
-      const n = items.length;
-      return '<details class="acc acc-grupo acc-grupo-flat" open><summary><span class="acc-title">' + esc(grupoLabel(key, linha)) + '</span><span class="acc-count" data-total="' + n + '" data-suffix="itens">' + n + ' itens</span></summary>' +
-        '<div class="table-wrap"><table class="model-table"><thead><tr><th>Foto</th><th>Modelo</th><th>Descrição</th><th>Acab.</th><th>Preço/m²</th><th>' + esc(QTY_LABEL) + '</th><th>Formato</th></tr></thead><tbody>' +
-        items.map(renderTableRow).join('') + '</tbody></table></div></details>';
-    }
-    function renderGrupo(key, formatosMap, linha) {
+    function renderGrupoAcab(acab, formatosMap) {
       const formatos = Object.keys(formatosMap).sort(compareFormato);
       const n = formatos.reduce((s, f) => s + formatosMap[f].length, 0);
-      return '<details class="acc acc-grupo" open><summary><span class="acc-title">' + esc(grupoLabel(key, linha)) + '</span><span class="acc-count" data-total="' + n + '" data-suffix="itens">' + n + ' itens</span></summary>' +
+      return '<details class="acc acc-grupo" open><summary><span class="acc-title">' + esc(acab) + '</span><span class="acc-count" data-total="' + n + '" data-suffix="itens">' + n + ' itens</span></summary>' +
         '<div class="acc-inner">' + formatos.map((f) => renderFormato(f, formatosMap[f])).join('') + '</div></details>';
     }
+    function countLinhaMap(gruposMap) {
+      if (groupBy === 'formato-acabamento') {
+        return Object.keys(gruposMap).reduce((s, fmt) =>
+          s + Object.keys(gruposMap[fmt]).reduce((a, ac) => a + gruposMap[fmt][ac].length, 0), 0);
+      }
+      return Object.keys(gruposMap).reduce((s, ac) =>
+        s + Object.keys(gruposMap[ac]).reduce((a, f) => a + gruposMap[ac][f].length, 0), 0);
+    }
     function renderLinha(linha, gruposMap) {
-      const keys = sortGrupos(Object.keys(gruposMap), linha);
-      const n = groupBy === 'formato'
-        ? keys.reduce((s, k) => s + gruposMap[k].length, 0)
-        : keys.reduce((s, k) => s + Object.values(gruposMap[k]).reduce((a, arr) => a + arr.length, 0), 0);
+      const keys = sortGruposNivel1(Object.keys(gruposMap));
+      const n = countLinhaMap(gruposMap);
       const label = CFG.linhaLabel[linha] || linha;
-      const inner = groupBy === 'formato'
-        ? keys.map((k) => renderGrupoFlat(k, gruposMap[k], linha)).join('')
-        : keys.map((k) => renderGrupo(k, gruposMap[k], linha)).join('');
+      const inner = groupBy === 'formato-acabamento'
+        ? keys.map((k) => renderFormatoComAcab(k, gruposMap[k])).join('')
+        : keys.map((k) => renderGrupoAcab(k, gruposMap[k])).join('');
       return '<details class="acc acc-linha" open><summary><span class="acc-title linha-' + esc(linha) + '">' + esc(label) + '</span><span class="acc-count" data-total="' + n + '">' + n + '</span></summary>' +
         '<div class="acc-inner">' + inner + '</div></details>';
     }
@@ -1978,8 +1955,8 @@
     }
     function refreshDom() {
       dom.rows = [...document.querySelectorAll('.model-row')];
-      dom.formatos = [...document.querySelectorAll('.acc-formato')];
-      dom.grupos = [...document.querySelectorAll('.acc-grupo')];
+      dom.formatos = [...document.querySelectorAll('.acc-formato, .acc-grupo-formato')];
+      dom.grupos = [...document.querySelectorAll('.acc-grupo, .acc-acab')];
       dom.linhas = [...document.querySelectorAll('.acc-linha')];
       dom.allDetails = [...document.querySelectorAll('details.acc')];
     }
@@ -1999,10 +1976,10 @@
         fmt.classList.toggle('hidden', fmt.querySelectorAll('.model-row:not(.hidden)').length === 0);
       }
       for (const g of dom.grupos) {
-        g.classList.toggle('hidden', g.querySelectorAll('.acc-formato:not(.hidden)').length === 0);
+        g.classList.toggle('hidden', g.querySelectorAll('.model-row:not(.hidden)').length === 0);
       }
       for (const l of dom.linhas) {
-        l.classList.toggle('hidden', l.querySelectorAll('.acc-grupo:not(.hidden)').length === 0);
+        l.classList.toggle('hidden', l.querySelectorAll('.model-row:not(.hidden)').length === 0);
       }
       updateModelosCount();
       updateAccordionCounts();
@@ -2619,29 +2596,17 @@
     const q = document.getElementById('search');
     const groupSel = document.getElementById('group-by');
     const groupSelD = document.getElementById('group-by-desktop');
-    const sortSel = document.getElementById('sort-by');
-    const sortSelD = document.getElementById('sort-by-desktop');
 
     function syncGroupBy(val) {
-      groupBy = val;
-      if (groupSel) groupSel.value = val;
-      if (groupSelD) groupSelD.value = val;
-      try { localStorage.setItem(GROUP_KEY, val); } catch { /* ignore */ }
+      groupBy = normalizeGroupBy(val);
+      if (groupSel) groupSel.value = groupBy;
+      if (groupSelD) groupSelD.value = groupBy;
+      try { localStorage.setItem(GROUP_KEY, groupBy); } catch { /* ignore */ }
       renderCatalogo();
-    }
-    function syncSortBy(val) {
-      sortBy = val;
-      if (sortSel) sortSel.value = val;
-      if (sortSelD) sortSelD.value = val;
-      try { localStorage.setItem(SORT_KEY, val); } catch { /* ignore */ }
-      renderCatalogo();
-      renderPedido();
     }
     function initCatalogControls() {
       if (groupSel) groupSel.value = groupBy;
       if (groupSelD) groupSelD.value = groupBy;
-      if (sortSel) sortSel.value = sortBy;
-      if (sortSelD) sortSelD.value = sortBy;
     }
     function toggleFilterQty(btn) {
       filterQtyOnly = !filterQtyOnly;
@@ -2659,8 +2624,6 @@
     q?.addEventListener('input', () => applySearch(q.value));
     groupSel?.addEventListener('change', () => syncGroupBy(groupSel.value));
     groupSelD?.addEventListener('change', () => syncGroupBy(groupSelD.value));
-    sortSel?.addEventListener('change', () => syncSortBy(sortSel.value));
-    sortSelD?.addEventListener('change', () => syncSortBy(sortSelD.value));
 
     bindClick('filter-qty', (e) => toggleFilterQty(e.currentTarget));
     bindClick('filter-qty-d', (e) => toggleFilterQty(e.currentTarget));
