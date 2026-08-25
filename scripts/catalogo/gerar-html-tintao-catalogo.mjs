@@ -489,6 +489,17 @@ const FORMIGRES_SKIN_CSS = `
       width: auto;
       display: block;
     }
+    html[data-skin="formigres"] .site-brand-right {
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+    html[data-skin="formigres"] .site-sub-lead {
+      font-size: .78rem;
+      font-weight: 500;
+      letter-spacing: .02em;
+      text-transform: none;
+      color: var(--muted);
+    }
     html[data-skin="formigres"] .site-sub {
       color: var(--muted);
       font-size: .78rem;
@@ -967,13 +978,19 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       </div>`;
   const siteBrandHtml = isB2bSkin
     ? (cfg.skin === 'arielle'
-      ? `<a class="site-brand-lockup" href="${escTpl(cfg.brandSiteUrl || 'https://www.carmelofior.com.br/produtos?category=4')}" target="_blank" rel="noopener noreferrer" aria-label="${escTpl(cfg.brandSiteLabel || 'Arielle')}">
-        <img class="site-logo" src="${headerLogo}" alt="Arielle" width="148" height="25" />
-      </a>`
+      ? ''
       : `<a class="site-brand-lockup" href="https://www.formigres.com.br/" target="_blank" rel="noopener noreferrer" aria-label="Formigres — site oficial">
         <img class="site-logo" src="${headerLogo}" alt="Formigres" width="148" height="25" />
       </a>`)
     : `<span class="site-brand">Formigres</span>`;
+  const siteBrandRightHtml = (isB2bSkin && cfg.skin === 'arielle')
+    ? `<a class="site-brand-lockup site-brand-right" href="${escTpl(cfg.brandSiteUrl || 'https://www.carmelofior.com.br/produtos?category=4')}" target="_blank" rel="noopener noreferrer" aria-label="${escTpl(cfg.brandSiteLabel || 'Arielle')}">
+        <img class="site-logo" src="${headerLogo}" alt="Arielle" width="148" height="25" />
+      </a>`
+    : '';
+  const siteBarLeadHtml = (isB2bSkin && cfg.skin === 'arielle')
+    ? `<span class="site-sub site-sub-lead">${escTpl(cfg.siteSub || 'Arielle · Carmelo Fior · Catálogo B2B')}</span>`
+    : `${siteBrandHtml}<span class="site-divider" aria-hidden="true"></span><span class="site-sub">${escTpl(cfg.siteSub || 'Pedido B2B · Lojistas')}</span>`;
   const themeToggleHtml = cfg.hideThemeToggle ? '' : `<button type="button" class="theme-fab" id="theme-toggle" aria-label="Mudar para tema escuro" title="Tema">
     <svg id="theme-icon-sun" hidden xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
@@ -2345,7 +2362,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       .page-head h1 { font-size: 1rem; }
       .page-head-hint { display: none; }
       .site-bar-inner { padding: 8px 10px; gap: 8px; }
-      .site-divider, .site-sub { display: none; }
+      .site-divider, .site-sub:not(.site-sub-lead) { display: none; }
+      html[data-skin="arielle"] .site-sub-lead {
+        display: none;
+      }
+      html[data-skin="arielle"] .site-brand-right .site-logo {
+        height: 28px;
+      }
       .site-desconto label { display: none; }
       #desconto-pct { width: 56px; padding: 6px 4px; }
       .site-stat { font-size: .72rem; }
@@ -2554,9 +2577,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   <div id="app-shell" class="app-shell" aria-hidden="true">
   <header class="site-bar">
     <div class="site-bar-inner">
-      ${siteBrandHtml}
-      <span class="site-divider" aria-hidden="true"></span>
-      <span class="site-sub">${escTpl(cfg.siteSub || 'Pedido B2B · Lojistas')}</span>
+      ${siteBarLeadHtml}
       <span class="site-bar-spacer" aria-hidden="true"></span>
       <div class="site-desconto">
         <label for="desconto-pct">${isB2bSkin ? 'Desc. comercial' : 'Desconto'}</label>
@@ -2566,6 +2587,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         </div>
       </div>
       <span class="site-stat" id="stat-modelos"><strong id="stat-modelos-count">${total}</strong> <span id="stat-modelos-label">modelos</span></span>
+      ${siteBrandRightHtml}
     </div>
   </header>
   <div class="wrap">

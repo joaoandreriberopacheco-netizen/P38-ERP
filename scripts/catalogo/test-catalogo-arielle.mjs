@@ -23,6 +23,7 @@ const hasRetificada = html.includes('"linha":"retificada"');
 const hasAcabPolida = html.includes('"acabamento_label":"Polida"');
 const fabricanteUfSe = html.includes('const FABRICANTE_UF = "SE"');
 const fabricanteHintSe = html.includes('Polo SE') && html.includes('(SE)');
+const logoHeaderRight = html.includes('site-brand-right') && html.includes('site-brand-lockup site-brand-right');
 
 let classifSummary = null;
 if (fs.existsSync(classifDir)) {
@@ -50,7 +51,8 @@ const ok = hasSkin
   && hasRetificada
   && hasAcabPolida
   && fabricanteUfSe
-  && fabricanteHintSe;
+  && fabricanteHintSe
+  && logoHeaderRight;
 
 console.log(JSON.stringify({
   ok,
@@ -63,6 +65,7 @@ console.log(JSON.stringify({
   hasAcabPolida,
   fabricanteUfSe,
   fabricanteHintSe,
+  logoHeaderRight,
   htmlKb: Math.round(fs.statSync(htmlPath).size / 1024),
   classifSummary,
 }, null, 2));
