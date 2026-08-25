@@ -55,6 +55,8 @@ async function main() {
     const a4 = src.includes("format: 'a4'");
     const scale3 = src.includes('PDF_CANVAS_SCALE = 3');
     const printThumb48 = src.includes('PDF_PRINT_THUMB_PX = 48');
+    const printFooter = src.includes('print-footer');
+    const printTfoot = src.includes('print-pedido-tfoot');
     const precoStack = src.includes('preco-stack-pdf');
     return {
       hasA4: a4,
@@ -64,6 +66,8 @@ async function main() {
       landscapePage,
       tableForPalete,
       metaResist,
+      printFooter,
+      printTfoot,
       hasLayoutFn: !!m,
       scale3,
       printThumb48,
@@ -93,6 +97,8 @@ async function main() {
     && layoutProbe.landscapePage
     && layoutProbe.tableForPalete
     && layoutProbe.metaResist
+    && layoutProbe.printFooter
+    && layoutProbe.printTfoot
     && layoutProbe.hasLayoutFn
     && layoutProbe.scale3
     && layoutProbe.printThumb48

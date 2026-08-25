@@ -3461,11 +3461,19 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const rowData = { item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub };
         bodyRows.push(renderPedidoTableRow(rowData, thumbs, { pdf: true }));
       }
+      const pdfColCount = QTY_UNIT === 'palete' ? 9 : 7;
+      const tableFoot = rows.length
+        ? '<tfoot><tr class="print-pedido-tfoot">' +
+            '<td colspan="' + (pdfColCount - 1) + '" class="print-pedido-total-label">Total estimado</td>' +
+            '<td class="pedido-col-num col-subtotal print-pedido-total-val">' + esc(fmtMoney(totalValor)) + '</td>' +
+          '</tr></tfoot>'
+        : '';
       const tableHtml = rows.length
         ? '<table class="print-pedido-table pedido-table">' +
             PEDIDO_TABLE_COLGROUP_HTML +
             '<thead><tr>' + PEDIDO_TABLE_HEAD_HTML + '</tr></thead>' +
             '<tbody>' + bodyRows.join('') + '</tbody>' +
+            tableFoot +
           '</table>'
         : '';
       const descNote = hasDescontoAtivo() ? '<p class="print-note">' + esc(descontoNoteText()) + ' sobre a tabela.</p>' : '';
@@ -3488,16 +3496,21 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const pesoPrintLine = QTY_UNIT === 'palete' && totalPeso
         ? '<p class="print-peso">Peso estimado: <strong>' + fmtKg(totalPeso) + '</strong></p>'
         : '';
+      const footerHtml = rows.length
+        ? '<footer class="print-footer">' +
+            '<p class="print-totals">Total estimado: <strong>' + esc(fmtMoney(totalValor)) + '</strong></p>' +
+            pesoPrintLine +
+            descNote +
+          '</footer>'
+        : '';
       return '<div class="print-sheet">' +
         '<header class="print-head">' +
           '<h1>' + esc(PDF_TITLE) + '</h1>' +
           '<p class="print-meta">1ª via · Gerado em ' + esc(new Date().toLocaleString('pt-BR')) + '</p>' +
-          descNote +
         '</header>' +
         resumo +
         tableHtml +
-        pesoPrintLine +
-        '<p class="print-totals"><strong>Total estimado: ' + fmtMoney(totalValor) + '</strong></p>' +
+        footerHtml +
       '</div>';
     }
     function printPedidoPrintCss() {
@@ -3506,7 +3519,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return '@page { size: A4 landscape; margin: 8mm; }' +
         'html, body { margin: 0; padding: 0; }' +
         '.print-render-root { background: #ffffff; color: #5a5a5a; font-family: "Libre Franklin", "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; width: 100%; }' +
-        '.print-sheet { width: 100%; max-width: 100%; margin: 0; box-sizing: border-box; background: #ffffff; color: #5a5a5a; padding: 0; }' +
+        '.print-sheet { width: 100%; max-width: 100%; margin: 0; box-sizing: border-box; background: #ffffff; color: #5a5a5a; padding: 0 0 24px; }' +
         '.print-head { margin-bottom: 10px; }' +
         'h1 { margin: 0 0 4px; font-size: 15px; letter-spacing: .08em; text-transform: uppercase; color: #2f2f2f; font-weight: 600; }' +
         '.print-meta, .print-note { margin: 0 0 4px; color: #767676; font-size: 10px; line-height: 1.35; }' +
@@ -3540,10 +3553,15 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '.print-pedido-table .preco-desc { display: block; color: #2f2f2f; font-weight: 600; font-size: 11px; white-space: nowrap; margin: 0; }' +
         '.print-pedido-table .pedido-col-foto img { display: block; border-radius: 6px; width: ' + thumb + 'px; height: ' + thumb + 'px; object-fit: cover; }' +
         '.print-pedido-table tbody tr { break-inside: avoid; page-break-inside: avoid; }' +
-        '.print-peso { margin: 10px 0 0; font-size: 12px; color: #767676; text-align: right; }' +
+        '.print-pedido-table tfoot td { border-top: 2px solid ' + rowLine + '; padding-top: 10px; padding-bottom: 10px; vertical-align: middle; }' +
+        '.print-pedido-table .print-pedido-total-label { text-align: right; font-size: 12px; font-weight: 600; color: #2f2f2f; padding-right: 10px; }' +
+        '.print-pedido-table .print-pedido-total-val { font-size: 15px; font-weight: 700; color: #b01219; white-space: nowrap; }' +
+        '.print-footer { margin-top: 12px; padding-top: 10px; border-top: 1px solid ' + rowLine + '; text-align: right; break-inside: avoid; page-break-inside: avoid; }' +
+        '.print-peso { margin: 6px 0 0; font-size: 12px; color: #767676; text-align: right; }' +
         '.print-peso strong { color: #2f2f2f; font-weight: 600; }' +
-        '.print-totals { text-align: right; margin: 14px 0 0; padding-top: 10px; border-top: 1px solid ' + rowLine + '; font-size: 14px; color: #5a5a5a; break-inside: avoid; page-break-inside: avoid; }' +
-        '.print-totals strong { font-size: 16px; color: #1f1f24; font-weight: 600; }';
+        '.print-totals { margin: 0; font-size: 14px; color: #5a5a5a; text-align: right; }' +
+        '.print-totals strong { font-size: 17px; color: #b01219; font-weight: 700; }' +
+        '.print-footer .print-note { margin: 8px 0 0; text-align: right; font-size: 10px; color: #767676; }';
     }
     function pdfCanvasBackground(theme) {
       return '#ffffff';
@@ -3636,8 +3654,16 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         await waitPrintImagesRoot(doc.body);
         await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         const sheet = doc.querySelector('.print-sheet');
+        const root = doc.querySelector('.print-render-root');
         if (!sheet) throw new Error('Conteúdo do PDF indisponível');
-        const heightPx = Math.max(sheet.scrollHeight || 0, sheet.offsetHeight || 0, 280);
+        const measureEl = root || sheet;
+        const heightPx = Math.ceil(Math.max(
+          measureEl.scrollHeight || 0,
+          measureEl.offsetHeight || 0,
+          sheet.scrollHeight || 0,
+          sheet.offsetHeight || 0,
+          280,
+        ) + 48);
         const blob = await win.html2pdf().set({
           margin: layout.marginMm,
           filename: pedidoPdfFilename(),
@@ -3655,8 +3681,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
             onclone: injectPdfFontClone,
           },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
-          pagebreak: { mode: ['css', 'legacy'], avoid: ['.print-pedido-table tbody tr'] },
-        }).from(sheet).outputPdf('blob');
+          pagebreak: { mode: ['css', 'legacy'], avoid: ['.print-pedido-table tbody tr', '.print-footer'] },
+        }).from(measureEl).outputPdf('blob');
         if (!blob || blob.size < 12000) throw new Error('PDF gerado vazio');
         return blob;
       } finally {
