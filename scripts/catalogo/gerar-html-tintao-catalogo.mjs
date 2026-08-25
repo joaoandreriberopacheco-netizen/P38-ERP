@@ -69,6 +69,7 @@ const CONFIGS = {
     themeKey: 'formigres-catalog-theme-v1',
     qtyKey: 'formigres-catalog-qty-v1',
     descontoKey: 'formigres-catalog-desconto-v1',
+    regimeKey: 'formigres-regime-especial-v1',
     groupKey: 'formigres-catalog-group-v1',
     classifError: 'JSON de classificação não encontrado. Rode: npm run catalogo:classificar-formigres',
     skin: 'formigres',
@@ -469,6 +470,132 @@ const FORMIGRES_SKIN_CSS = `
       color: var(--gray-500, #888);
     }
     html[data-skin="formigres"] .catalog-powered strong { color: var(--text-strong); }
+    html[data-skin="formigres"] .regime-panel {
+      margin-bottom: 12px;
+      padding: 12px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    html[data-skin="formigres"] .regime-panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    html[data-skin="formigres"] .regime-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--text-strong);
+    }
+    html[data-skin="formigres"] .regime-switch input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    html[data-skin="formigres"] .regime-switch-ui {
+      width: 38px;
+      height: 22px;
+      border-radius: 999px;
+      background: var(--border);
+      position: relative;
+      transition: background .2s ease;
+      flex-shrink: 0;
+    }
+    html[data-skin="formigres"] .regime-switch-ui::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 2px rgba(0,0,0,.18);
+      transition: transform .2s ease;
+    }
+    html[data-skin="formigres"] .regime-switch input:checked + .regime-switch-ui {
+      background: var(--accent);
+    }
+    html[data-skin="formigres"] .regime-switch input:checked + .regime-switch-ui::after {
+      transform: translateX(16px);
+    }
+    html[data-skin="formigres"] .regime-switch input:focus-visible + .regime-switch-ui {
+      box-shadow: 0 0 0 3px var(--accent-ring);
+    }
+    html[data-skin="formigres"] .regime-aliquota-pill {
+      font-size: .74rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    html[data-skin="formigres"] .regime-aliquota-pill strong {
+      color: var(--accent-bright);
+      font-size: .92rem;
+      font-weight: 700;
+    }
+    html[data-skin="formigres"] .regime-options {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 12px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-subtle);
+    }
+    html[data-skin="formigres"] .regime-options[hidden] { display: none !important; }
+    html[data-skin="formigres"] .regime-field label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: .68rem;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    html[data-skin="formigres"] .regime-field select {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-strong);
+      padding: 9px 10px;
+      font-size: .82rem;
+    }
+    html[data-skin="formigres"] .regime-field select:focus {
+      border-color: var(--accent);
+      outline: none;
+      box-shadow: 0 0 0 3px var(--accent-ring);
+    }
+    html[data-skin="formigres"] .regime-hint {
+      grid-column: 1 / -1;
+      margin: 0;
+      font-size: .74rem;
+      line-height: 1.4;
+      color: var(--muted);
+      padding: 8px 10px;
+      background: var(--surface-2);
+      border-radius: var(--radius);
+      border-left: 3px solid var(--accent-dim);
+    }
+    html[data-skin="formigres"] .regime-hint[hidden] { display: none !important; }
+    html[data-skin="formigres"] #desconto-pct:disabled {
+      opacity: .72;
+      cursor: not-allowed;
+      background: var(--surface-2);
+    }
+    @media (max-width: 720px) {
+      html[data-skin="formigres"] .regime-panel { padding: 10px 12px; margin-bottom: 8px; }
+      html[data-skin="formigres"] .regime-options { grid-template-columns: 1fr; gap: 8px; }
+      html[data-skin="formigres"] .regime-switch-label { font-size: .72rem; }
+    }
 `;
 
 function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '', pdfThumbs = {}, pdfFontCss = '', cfg = CFG }) {
@@ -525,6 +652,41 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
     </svg>
   </button>`;
+  const regimePanelHtml = isFormigresSkin
+    ? `<section class="regime-panel" id="regime-panel" aria-label="Regime especial Suframa">
+      <div class="regime-panel-head">
+        <label class="regime-switch">
+          <input type="checkbox" id="regime-especial-enabled" />
+          <span class="regime-switch-ui" aria-hidden="true"></span>
+          <span class="regime-switch-label">Regime especial</span>
+        </label>
+        <span class="regime-aliquota-pill" id="regime-aliquota-pill" hidden>
+          Desconto <strong id="regime-aliquota-val">0%</strong>
+        </span>
+      </div>
+      <div class="regime-options" id="regime-options" hidden>
+        <div class="regime-field">
+          <label for="regime-destino">Destino</label>
+          <select id="regime-destino">
+            <option value="zfm">ZFM (Manaus e entorno)</option>
+            <option value="alc">ALC (cidades de fronteira)</option>
+            <option value="amoc">Amazônia Ocidental</option>
+          </select>
+        </div>
+        <div class="regime-field">
+          <label for="regime-tributario">Regime do comprador</label>
+          <select id="regime-tributario">
+            <option value="lucro_presumido">Lucro presumido / Simples</option>
+            <option value="lucro_real">Lucro real</option>
+          </select>
+        </div>
+        <p class="regime-hint" id="regime-hint-amoc" hidden>
+          Para produtos cerâmicos (NCM 6907), o benefício da Amazônia Ocidental aplica-se ao IPI.
+          Como este produto já possui alíquota zero de IPI na tabela nacional, o preço não sofre alterações.
+        </p>
+      </div>
+    </section>`
+    : '';
 
   return `<!DOCTYPE html>
 <html lang="pt-BR" data-theme="light" data-skin="${escTpl(cfg.skin || 'default')}">
@@ -1907,6 +2069,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       <p class="page-head-hint">${escTpl(cfg.hint)}</p>
     </div>
     ${cfg.demoBanner ? `<p class="demo-banner" role="note">${escTpl(cfg.demoBanner)}</p>` : ''}
+    ${regimePanelHtml}
 
     <div class="toolbar">
       <div class="toolbar-main">
@@ -2053,6 +2216,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     const QTY_KEY = '${cfg.qtyKey}';
     const THEME_KEY = '${cfg.themeKey}';
     const DESCONTO_KEY = '${cfg.descontoKey}';
+    const REGIME_KEY = '${cfg.regimeKey || ''}';
+    const IS_FORMIGRES = ${isFormigresSkin};
     const GROUP_KEY = '${cfg.groupKey}';
     const PEDIDO_TABLE_COLGROUP_HTML = ${JSON.stringify(pedidoTableColgroup)};
     const PEDIDO_TABLE_HEAD_HTML = ${JSON.stringify(pedidoTableHead)};
@@ -2065,6 +2230,111 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const d = Number(localStorage.getItem(DESCONTO_KEY));
       if (Number.isFinite(d) && d >= 0 && d <= 100) descontoPct = d;
     } catch { descontoPct = 0; }
+    const REGIME_DESCONTO = {
+      zfm: { lucro_presumido: 16.25, lucro_real: 16.25 },
+      alc: { lucro_presumido: 16.25, lucro_real: 7 },
+      amoc: { lucro_presumido: 0, lucro_real: 0 },
+    };
+    const REGIME_DESTINO_LABEL = {
+      zfm: 'ZFM',
+      alc: 'ALC',
+      amoc: 'Amazônia Ocidental',
+    };
+    const REGIME_TRIBUTARIO_LABEL = {
+      lucro_presumido: 'Lucro presumido/Simples',
+      lucro_real: 'Lucro real',
+    };
+    let regimeState = { enabled: false, destino: 'zfm', tributario: 'lucro_presumido' };
+    function loadRegimeState() {
+      if (!IS_FORMIGRES || !REGIME_KEY) return;
+      try {
+        const raw = JSON.parse(localStorage.getItem(REGIME_KEY) || '{}');
+        if (typeof raw.enabled === 'boolean') regimeState.enabled = raw.enabled;
+        if (raw.destino === 'zfm' || raw.destino === 'alc' || raw.destino === 'amoc') regimeState.destino = raw.destino;
+        if (raw.tributario === 'lucro_presumido' || raw.tributario === 'lucro_real') regimeState.tributario = raw.tributario;
+      } catch { /* ignore */ }
+    }
+    function saveRegimeState() {
+      if (!IS_FORMIGRES || !REGIME_KEY) return;
+      localStorage.setItem(REGIME_KEY, JSON.stringify(regimeState));
+    }
+    function calcRegimeDescontoPct() {
+      const dest = REGIME_DESCONTO[regimeState.destino];
+      if (!dest) return 0;
+      return dest[regimeState.tributario] ?? 0;
+    }
+    function descontoNoteText() {
+      if (!descontoPct) return '';
+      if (regimeState.enabled) {
+        const dest = REGIME_DESTINO_LABEL[regimeState.destino] || regimeState.destino;
+        const trib = REGIME_TRIBUTARIO_LABEL[regimeState.tributario] || regimeState.tributario;
+        return 'Desconto Suframa (' + dest + ' · ' + trib + '): ' + descontoPct + '%';
+      }
+      return 'Preços com ' + descontoPct + '% de desconto comercial';
+    }
+    function applyEffectiveDesconto() {
+      if (regimeState.enabled) {
+        descontoPct = calcRegimeDescontoPct();
+      } else {
+        try {
+          const d = Number(localStorage.getItem(DESCONTO_KEY));
+          descontoPct = Number.isFinite(d) && d >= 0 && d <= 100 ? d : 0;
+        } catch { descontoPct = 0; }
+      }
+      syncDescontoInputUi();
+    }
+    function syncDescontoInputUi() {
+      const inp = document.getElementById('desconto-pct');
+      if (!inp) return;
+      if (document.activeElement !== inp) inp.value = descontoPct ? String(descontoPct) : '';
+      inp.disabled = !!(IS_FORMIGRES && regimeState.enabled);
+      inp.setAttribute('aria-readonly', regimeState.enabled ? 'true' : 'false');
+    }
+    function syncRegimePanelUi() {
+      if (!IS_FORMIGRES) return;
+      const enabledEl = document.getElementById('regime-especial-enabled');
+      const optionsEl = document.getElementById('regime-options');
+      const destinoEl = document.getElementById('regime-destino');
+      const tributarioEl = document.getElementById('regime-tributario');
+      const pillEl = document.getElementById('regime-aliquota-pill');
+      const valEl = document.getElementById('regime-aliquota-val');
+      const hintEl = document.getElementById('regime-hint-amoc');
+      if (enabledEl) enabledEl.checked = regimeState.enabled;
+      if (destinoEl) destinoEl.value = regimeState.destino;
+      if (tributarioEl) tributarioEl.value = regimeState.tributario;
+      if (optionsEl) optionsEl.hidden = !regimeState.enabled;
+      if (pillEl) pillEl.hidden = !regimeState.enabled;
+      if (valEl) valEl.textContent = fmtDecimal(calcRegimeDescontoPct(), 2) + '%';
+      if (hintEl) hintEl.hidden = !(regimeState.enabled && regimeState.destino === 'amoc');
+    }
+    function commitRegimeChange() {
+      saveRegimeState();
+      applyEffectiveDesconto();
+      syncRegimePanelUi();
+      renderCatalogo();
+      renderPedido();
+    }
+    function initRegimeControls() {
+      if (!IS_FORMIGRES) return;
+      loadRegimeState();
+      syncRegimePanelUi();
+      applyEffectiveDesconto();
+      const enabledEl = document.getElementById('regime-especial-enabled');
+      const destinoEl = document.getElementById('regime-destino');
+      const tributarioEl = document.getElementById('regime-tributario');
+      enabledEl?.addEventListener('change', () => {
+        regimeState.enabled = !!enabledEl.checked;
+        commitRegimeChange();
+      });
+      destinoEl?.addEventListener('change', () => {
+        regimeState.destino = destinoEl.value === 'alc' || destinoEl.value === 'amoc' ? destinoEl.value : 'zfm';
+        commitRegimeChange();
+      });
+      tributarioEl?.addEventListener('change', () => {
+        regimeState.tributario = tributarioEl.value === 'lucro_real' ? 'lucro_real' : 'lucro_presumido';
+        commitRegimeChange();
+      });
+    }
     let groupBy = 'formato-acabamento';
     try {
       const savedGroup = localStorage.getItem(GROUP_KEY);
@@ -2184,11 +2454,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return '<span class="preco-orig">' + esc(fmtMoney(base)) + '</span><strong class="preco-desc">' + esc(fmtMoney(eff)) + '</strong>';
     }
     function setDesconto(val) {
+      if (IS_FORMIGRES && regimeState.enabled) return;
       const n = Math.max(0, Math.min(100, Number(val) || 0));
       descontoPct = Math.round(n * 10) / 10;
       localStorage.setItem(DESCONTO_KEY, String(descontoPct));
-      const inp = document.getElementById('desconto-pct');
-      if (inp && document.activeElement !== inp) inp.value = descontoPct ? String(descontoPct) : '';
+      syncDescontoInputUi();
       renderCatalogo();
       renderPedido();
     }
@@ -2209,9 +2479,10 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     function initTopControls() {
       applyTheme(localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light');
+      initRegimeControls();
       const inp = document.getElementById('desconto-pct');
       if (inp) {
-        inp.value = descontoPct ? String(descontoPct) : '';
+        syncDescontoInputUi();
         inp.addEventListener('input', () => setDesconto(inp.value));
         inp.addEventListener('change', () => setDesconto(inp.value));
       }
@@ -2829,7 +3100,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       document.getElementById('pedido-total').innerHTML = rows.length
         ? '<span>Total estimado: <strong>' + fmtMoney(totalValor) + '</strong></span>' +
           pesoTotalLine +
-          (descontoPct ? '<p class="pedido-desconto-note">Preços com ' + descontoPct + '% de desconto comercial</p>' : '')
+          (descontoPct ? '<p class="pedido-desconto-note">' + esc(descontoNoteText()) + '</p>' : '')
         : '';
       document.getElementById('pdf-pedido-panel')?.toggleAttribute('disabled', rows.length === 0);
       updateCartFab();
@@ -2914,7 +3185,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
             '<tbody>' + bodyRows.join('') + '</tbody>' +
           '</table>'
         : '';
-      const descNote = descontoPct ? '<p class="print-note">Desconto comercial aplicado: ' + descontoPct + '% sobre a tabela.</p>' : '';
+      const descNote = descontoPct ? '<p class="print-note">' + esc(descontoNoteText()) + ' sobre a tabela.</p>' : '';
       const caixasResumo = QTY_UNIT === 'palete' && totalCaixas
         ? '<span class="print-resumo-stat"><strong>' + fmtDecimal(totalCaixas, 0) + '</strong> caixas</span>'
         : '';
