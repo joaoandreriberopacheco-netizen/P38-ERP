@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Valida PDF do catálogo Formigres: tabela desktop A4 + linhas entre produtos.
+ * Valida PDF do catálogo Formigres: tabela do carrinho A4 paisagem.
  * Uso: node scripts/catalogo/test-pdf-formigres.mjs
  */
 import fs from 'node:fs';
@@ -48,15 +48,33 @@ async function main() {
     const m = src.match(/contentWpx = Math\.round\(contentWmm \* 96 \/ 25\.4\)/);
     const rowLine = src.includes("const rowLine = '#707070'");
     const tablePdf = src.includes('print-pedido-table pedido-table');
-    const printCard = src.includes('print-pedido-item');
-    const printFormatGroup = src.includes('print-format-group');
-    const printGemeas = src.includes('pedido-row-gemeas') || src.includes('print-pedido-item-gemeas');
-    const printResist = src.includes('pedido-row-resist');
+    const landscape = src.includes("orientation: 'landscape'");
+    const landscapePage = src.includes('const pageWmm = 297');
+    const tableForPalete = src.includes('bodyRows.push(renderPedidoTableRow(rowData, thumbs, { pdf: true }))');
+    const metaResist = src.includes('pedido-meta-resist');
     const a4 = src.includes("format: 'a4'");
     const scale3 = src.includes('PDF_CANVAS_SCALE = 3');
-    const printThumb72 = src.includes('PDF_PRINT_THUMB_PX = 72');
+    const printThumb48 = src.includes('PDF_PRINT_THUMB_PX = 48');
+    const printFooter = src.includes('print-footer');
+    const printTfoot = src.includes('print-pedido-tfoot');
+    const fmtResumo = src.includes('print-fmt-resumo-table');
     const precoStack = src.includes('preco-stack-pdf');
-    return { hasA4: a4, hasRowLine: rowLine, hasTablePdf: tablePdf, printCard, printFormatGroup, printGemeas, printResist, hasLayoutFn: !!m, scale3, printThumb72, precoStack };
+    return {
+      hasA4: a4,
+      hasRowLine: rowLine,
+      hasTablePdf: tablePdf,
+      landscape,
+      landscapePage,
+      tableForPalete,
+      metaResist,
+      printFooter,
+      printTfoot,
+      fmtResumo,
+      hasLayoutFn: !!m,
+      scale3,
+      printThumb48,
+      precoStack,
+    };
   });
 
   await page.click('#cart-fab');
@@ -76,13 +94,17 @@ async function main() {
   const hasImages = pdfText.includes('/Subtype /Image') || pdfText.includes('/DCTDecode');
   const ok = layoutProbe.hasA4
     && layoutProbe.hasRowLine
-    && layoutProbe.printCard
-    && layoutProbe.printFormatGroup
-    && layoutProbe.printGemeas
-    && layoutProbe.printResist
+    && layoutProbe.hasTablePdf
+    && layoutProbe.landscape
+    && layoutProbe.landscapePage
+    && layoutProbe.tableForPalete
+    && layoutProbe.metaResist
+    && layoutProbe.printFooter
+    && layoutProbe.printTfoot
+    && layoutProbe.fmtResumo
     && layoutProbe.hasLayoutFn
     && layoutProbe.scale3
-    && layoutProbe.printThumb72
+    && layoutProbe.printThumb48
     && layoutProbe.precoStack
     && pdfBuf.length > 20000
     && hasImages

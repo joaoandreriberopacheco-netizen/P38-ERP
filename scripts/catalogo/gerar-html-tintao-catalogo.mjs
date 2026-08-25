@@ -117,7 +117,7 @@ function loadPdfFontFaceCss() {
     return (
       "@font-face{font-family:'Libre Franklin';font-style:normal;font-weight:400 700;font-display:swap;" +
       "src:url(data:font/woff2;base64," + b64 + ") format('woff2');}" +
-      "html,body,.print-render-root,.print-sheet,.pedido-card-pdf{font-family:'Libre Franklin',system-ui,-apple-system,'Segoe UI',sans-serif;}"
+      "html,body,.print-render-root,.print-sheet{font-family:'Libre Franklin',system-ui,-apple-system,'Segoe UI',sans-serif;}"
     );
   } catch {
     return "html,body,.print-render-root{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;}";
@@ -1523,6 +1523,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     html[data-skin="formigres"] .catalog-pedido-table col.col-sub { width: 98px; }
     html[data-skin="formigres"] .pedido-table,
     html[data-skin="formigres"] .catalog-pedido-table { min-width: 860px; }
+    html[data-skin="formigres"] .pedido-meta-resist {
+      font-weight: 700;
+      letter-spacing: .1em;
+      color: var(--text-strong);
+    }
     .pedido-col-foto { width: 52px; padding-left: 0; padding-right: 6px; }
     .pedido-col-modelo { min-width: 0; }
     .pedido-row-title {
@@ -1537,33 +1542,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       color: var(--muted);
       line-height: 1.3;
     }
-    html[data-skin="formigres"] .pedido-row-resist {
-      display: flex;
-      align-items: baseline;
-      gap: 6px;
-      margin-top: 4px;
-      line-height: 1.3;
-    }
-    html[data-skin="formigres"] .pedido-row-resist-label {
-      font-size: .62rem;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: .04em;
-      color: var(--muted);
-    }
-    html[data-skin="formigres"] .pedido-row-resist-val {
-      font-size: .78rem;
-      font-weight: 700;
-      letter-spacing: .1em;
-      color: var(--text-strong);
-    }
     html[data-skin="formigres"] .pedido-row-gemeas {
       margin-top: 3px;
       font-size: .68rem;
       color: var(--muted);
       line-height: 1.4;
     }
-    html[data-skin="formigres"] .pedido-card-desc .pedido-row-resist { margin-top: 3px; }
     html[data-skin="formigres"] .pedido-card-desc .pedido-row-gemeas { margin-top: 2px; font-size: .62rem; }
     .pedido-col-emb {
       font-size: .72rem;
@@ -2554,7 +2538,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return isPdfDataUri(src) ? src : '';
     }
     const PDF_THUMB_PX = 112;
-    const PDF_PRINT_THUMB_PX = 72;
+    const PDF_PRINT_THUMB_PX = 48;
     const PDF_CANVAS_SCALE = 3;
     function pedidoPdfImageUrls() {
       const urls = new Set();
@@ -3013,16 +2997,18 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const r = String(item.referencia || '').trim();
       return r && r !== '—' ? r : '';
     }
-    function renderResistenciaLine(item, kind) {
+    function renderResistenciaBold(item) {
       const resist = modelResistencia(item);
-      if (!resist) return '';
-      const pdf = kind === 'pdf';
-      const cls = pdf ? 'print-pedido-item-resist' : 'pedido-row-resist';
-      const labelCls = pdf ? 'print-pedido-item-resist-label' : 'pedido-row-resist-label';
-      const valCls = pdf ? 'print-pedido-item-resist-val' : 'pedido-row-resist-val';
-      return '<div class="' + cls + '">' +
-        '<span class="' + labelCls + '">Resistência</span>' +
-        '<strong class="' + valCls + '">' + esc(resist) + '</strong></div>';
+      return resist ? '<strong class="pedido-meta-resist">' + esc(resist) + '</strong> ' : '';
+    }
+    function renderItemMetaHtml(item, cod) {
+      const codStr = cod != null ? cod : item.codigo_tintao;
+      const parts = ['#' + esc(codStr)];
+      if (!item.gemeas || item.gemeas.length < 2) {
+        if (item.marca_nome) parts.push(esc(item.marca_nome));
+      }
+      parts.push(esc(item.formato || '—'));
+      return renderResistenciaBold(item) + parts.join(' · ');
     }
     function renderGemeasMarcasLine(item, kind) {
       const g = item.gemeas;
@@ -3103,13 +3089,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const cxTot = qty ? itemCaixasTotal(item, qty) : null;
         const pesoTot = qty ? itemPesoTotal(item, qty) : null;
         const sub = qty ? itemSubtotal(item, qty) : null;
-        const rowMetaParts = ['#' + esc(cod)];
-        if (!item.gemeas || item.gemeas.length < 2) {
-          if (item.marca_nome) rowMetaParts.push(esc(item.marca_nome));
-        }
-        rowMetaParts.push(esc(item.formato || '—'));
-        const rowMeta = rowMetaParts.join(' · ');
-        const resistHtml = renderResistenciaLine(item, 'catalog');
+        const rowMeta = renderItemMetaHtml(item, cod);
         const gemeasMarcasHtml = renderGemeasMarcasLine(item, 'catalog');
         const gemeasTrigger = renderGemeasTrigger(item, cod);
         const searchExtra = gemeasSearchText(item);
@@ -3120,7 +3100,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           : '<span class="pedido-row-title">' + esc(titulo) + '</span>';
         return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + searchExtra).toLowerCase()) + '" data-qty="' + qty + '">' +
           '<td class="pedido-col-foto col-foto">' + foto + '</td>' +
-          '<td class="pedido-col-modelo col-modelo">' + titleHtml + warn + resistHtml + gemeasMarcasHtml + '<div class="pedido-row-meta">' + rowMeta + '</div></td>' +
+          '<td class="pedido-col-modelo col-modelo">' + titleHtml + warn + gemeasMarcasHtml + '<div class="pedido-row-meta">' + rowMeta + '</div></td>' +
           '<td class="pedido-col-qty col-qty">' +
             '<input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" tabindex="0" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="' + esc(QTY_LABEL) + '" placeholder="" />' +
           '</td>' +
@@ -3279,9 +3259,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '<div class="pedido-card-head-main">' +
           '<div class="pedido-card-desc">' +
             '<div class="pedido-card-title pedido-card-hero">' + esc(titulo) + '</div>' +
-            renderResistenciaLine(item, 'catalog') +
             renderGemeasMarcasLine(item, 'catalog') +
-            '<div class="pedido-card-meta">#' + esc(item.codigo_tintao) + ' · ' + esc(item.formato || '—') + '</div>' +
+            '<div class="pedido-card-meta">' + renderItemMetaHtml(item) + '</div>' +
           '</div>' +
           '<div class="pedido-card-qty">' +
             '<span class="pedido-card-qty-main pedido-card-hero">' + qty + ' <span>' + esc(qtyShort) + '</span></span>' +
@@ -3297,7 +3276,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function renderPedidoTableRow({ item, qty, img, titulo, m2unit, m2tot, pesoTot, cxTot, cxpl, sub }, thumbs, opts) {
       const forPdf = opts && opts.pdf;
       const emb = itemEmbalagem(item);
-      const rowMeta = '#' + esc(item.codigo_tintao) + ' · ' + esc(item.formato || '—');
+      const rowMeta = renderItemMetaHtml(item);
       const imgSrc = forPdf ? pdfImgSrcForPrint(img, thumbs, item) : pdfImgSrc(img, thumbs, item) || img;
       const thumbPx = forPdf ? PDF_PRINT_THUMB_PX : 48;
       const thumbCell = imgSrc
@@ -3328,117 +3307,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '<td class="pedido-col-num pedido-col-preco ' + (hasDescontoAtivo() ? 'has-desc' : '') + '">' + precoCell + '</td>' +
         '<td class="pedido-col-num col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
     }
-    function renderPrintFormatGroupHeader(fmt, qtyPl, pesoKg, m2tot) {
-      const fmtLabel = esc(String(fmt || '—').toUpperCase());
-      const qtyLabel = QTY_UNIT === 'palete' ? 'paletes' : QTY_LABEL_PL;
-      const qtyPad = String(qtyPl || 0).padStart(2, '0');
-      const peso = pesoKg ? fmtKg(pesoKg) : '—';
-      const m2 = m2tot ? fmtDecimal(m2tot) + ' m²' : '';
-      const bits = [
-        '<span class="print-format-group-fmt">' + fmtLabel + '</span>',
-        '<span class="print-format-group-stat">' + qtyPad + ' ' + esc(qtyLabel) + '</span>',
-        '<span class="print-format-group-stat">' + esc(peso) + '</span>',
-      ];
-      if (m2) bits.push('<span class="print-format-group-stat">' + esc(m2) + '</span>');
-      return '<div class="print-format-group">' + bits.join('<span class="print-format-group-sep">|</span>') + '</div>';
-    }
-    function buildPedidoPrintCardsHtml(thumbs, rows) {
-      const groups = new Map();
-      for (const row of rows) {
-        const fmt = row.item.formato || '—';
-        if (!groups.has(fmt)) groups.set(fmt, []);
-        groups.get(fmt).push(row);
-      }
-      const fmtKeys = [...groups.keys()].sort(compareFormato);
-      const parts = [];
-      for (const fmt of fmtKeys) {
-        const groupRows = groups.get(fmt);
-        let gQty = 0;
-        let gPeso = 0;
-        let gM2 = 0;
-        for (const { item, qty } of groupRows) {
-          gQty += qty;
-          const pt = itemPesoTotal(item, qty);
-          if (pt) gPeso += pt;
-          const m2 = itemM2Total(item, qty);
-          if (m2) gM2 += m2;
-        }
-        parts.push(renderPrintFormatGroupHeader(fmt, gQty, gPeso, gM2));
-        for (const { item, qty } of groupRows) {
-          const emb = itemEmbalagem(item);
-          const m2unit = itemM2Unit(item);
-          const m2tot = itemM2Total(item, qty);
-          const pesoTot = itemPesoTotal(item, qty);
-          const cxTot = itemCaixasTotal(item, qty);
-          const sub = itemSubtotal(item, qty);
-          const imgs = getGaleria(item);
-          const img = imgs[0]?.url || '';
-          const titulo = item.formigres_titulo || item.descricao;
-          parts.push(renderPedidoPrintCard(
-            { item, qty, img, titulo, m2unit, m2tot, pesoTot, cxTot, cxpl: emb.cxpl, sub },
-            thumbs,
-          ));
-        }
-      }
-      return parts.length ? '<div class="print-pedido-list">' + parts.join('') + '</div>' : '';
-    }
-    function renderPedidoPrintCard({ item, qty, img, titulo, m2unit, m2tot, pesoTot, cxTot, cxpl, sub }, thumbs) {
-      const emb = itemEmbalagem(item);
-      const imgSrc = pdfImgSrcForPrint(img, thumbs, item);
-      const thumbPx = PDF_PRINT_THUMB_PX;
-      const thumb = imgSrc
-        ? '<img src="' + esc(imgSrc) + '" alt="" width="' + thumbPx + '" height="' + thumbPx + '" />'
-        : '<span class="print-pedido-item-thumb-empty" aria-hidden="true">—</span>';
-      const hasGemeas = item.gemeas && item.gemeas.length > 1;
-      const resistHtml = renderResistenciaLine(item, 'pdf');
-      const gemeasMarcasHtml = renderGemeasMarcasLine(item, 'pdf');
-      const metaParts = [];
-      if (!hasGemeas) {
-        metaParts.push('#' + esc(item.codigo_tintao));
-        if (item.marca_nome) metaParts.push(esc(item.marca_nome));
-      }
-      const metaHtml = metaParts.length
-        ? '<div class="print-pedido-item-meta">' + metaParts.join(' · ') + '</div>'
-        : '';
-      const qtyShort = QTY_UNIT === 'palete' ? 'pl' : 'cx';
-      const metrics = [];
-      metrics.push('<strong>' + qty + ' ' + esc(qtyShort) + '</strong>');
-      if (m2tot) metrics.push(fmtDecimal(m2tot) + ' m²');
-      if (QTY_UNIT === 'palete' && cxTot) metrics.push(fmtDecimal(cxTot, 0) + ' cx');
-      if (QTY_UNIT === 'palete' && pesoTot) metrics.push(fmtKg(pesoTot));
-      if (QTY_UNIT !== 'palete' && m2unit) metrics.push(fmtDecimal(m2unit) + ' m²/cx');
-      const embParts = [];
-      if (QTY_UNIT === 'palete') {
-        if (cxpl || emb.cxpl) embParts.push((cxpl || emb.cxpl) + ' cx/pl');
-        if (m2unit) embParts.push(fmtDecimal(m2unit) + ' m²/pl');
-      } else {
-        const pack = fmtEmbalagemText(item);
-        if (pack && pack !== '—') embParts.push(esc(pack));
-      }
-      if (embParts.length) metrics.push(embParts.join(' · '));
-      const precoHtml = fmtPrecoHtml(item.preco_m2, { pdf: true });
-      metrics.push('<span class="print-pedido-metric-preco' + (hasDescontoAtivo() ? ' has-desc' : '') + '">' + precoHtml + '</span>');
-      return '<article class="print-pedido-item">' +
-        '<div class="print-pedido-item-top">' +
-          '<div class="print-pedido-item-thumb">' + thumb + '</div>' +
-          '<div class="print-pedido-item-desc">' +
-            '<div class="print-pedido-item-title">' + esc(titulo) + '</div>' +
-            resistHtml +
-            gemeasMarcasHtml +
-            metaHtml +
-          '</div>' +
-          '<div class="print-pedido-item-sub">' +
-            '<strong>' + esc(sub != null ? fmtMoney(sub) : '—') + '</strong>' +
-            '<span>Subtotal</span>' +
-          '</div>' +
-        '</div>' +
-        '<div class="print-pedido-item-metrics">' + metrics.join(' · ') + '</div>' +
-      '</article>';
-    }
-    function renderPedidoCard({ item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl, sub }, opts) {
-      const forPdf = opts && opts.pdf;
+    function renderPedidoCard({ item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl, sub }) {
       const thumb = img
-        ? '<img class="pedido-card-thumb" src="' + esc(img) + '" alt=""' + (forPdf ? ' width="48" height="48"' : ' loading="lazy"') + ' />'
+        ? '<img class="pedido-card-thumb" src="' + esc(img) + '" alt="" loading="lazy" />'
         : '<span class="pedido-card-thumb pedido-card-thumb-empty" aria-hidden="true">—</span>';
       const row1 = renderPedidoCardRow1({ thumb, titulo, item, qty, m2tot, sub });
 
@@ -3452,7 +3323,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           { label: 'Peso', peso: true, text: pesoTot ? fmtKg(pesoTot) : '—' },
           { label: 'Por palete', palete: true, text: embParts.length ? embParts.join(' · ') : '—' },
         ]);
-        return '<article class="pedido-card' + (forPdf ? ' pedido-card-pdf' : '') + '"><div class="pedido-card-layout">' + row1 + spec + '</div></article>';
+        return '<article class="pedido-card"><div class="pedido-card-layout">' + row1 + spec + '</div></article>';
       }
 
       const spec = renderPedidoSpecTable([
@@ -3461,7 +3332,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         { label: 'm² total', text: m2tot ? fmtDecimal(m2tot) : '—' },
         { label: 'Embalagem', text: fmtEmbalagemText(item) },
       ]);
-      return '<article class="pedido-card' + (forPdf ? ' pedido-card-pdf' : '') + '"><div class="pedido-card-layout">' + row1 + spec + '</div></article>';
+      return '<article class="pedido-card"><div class="pedido-card-layout">' + row1 + spec + '</div></article>';
     }
     function renderPedido() {
       const rows = pedidoItens();
@@ -3559,13 +3430,65 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     function printPdfLayout() {
       const marginMm = 8;
-      const pageWmm = 210;
+      const pageWmm = 297;
       const contentWmm = pageWmm - marginMm * 2;
       const contentWpx = Math.round(contentWmm * 96 / 25.4);
-      return { marginMm, pageWmm, contentWmm, contentWpx };
+      return { marginMm, pageWmm, contentWmm, contentWpx, orientation: 'landscape' };
     }
     function printPageWidthPx() {
       return printPdfLayout().contentWpx;
+    }
+    function buildPrintFormatoResumoHtml(rows) {
+      if (!rows.length || QTY_UNIT !== 'palete') return '';
+      const groups = new Map();
+      for (const { item, qty } of rows) {
+        const fmt = item.formato || '—';
+        if (!groups.has(fmt)) groups.set(fmt, { qty: 0, m2: 0, cx: 0, peso: 0 });
+        const g = groups.get(fmt);
+        g.qty += qty;
+        const m2 = itemM2Total(item, qty);
+        if (m2) g.m2 += m2;
+        const cx = itemCaixasTotal(item, qty);
+        if (cx) g.cx += cx;
+        const pt = itemPesoTotal(item, qty);
+        if (pt) g.peso += pt;
+      }
+      const fmtKeys = [...groups.keys()].sort(compareFormato);
+      let totQty = 0;
+      let totM2 = 0;
+      let totCx = 0;
+      let totPeso = 0;
+      const bodyRows = fmtKeys.map((fmt) => {
+        const g = groups.get(fmt);
+        totQty += g.qty;
+        totM2 += g.m2;
+        totCx += g.cx;
+        totPeso += g.peso;
+        return '<tr>' +
+          '<td class="print-fmt-resumo-fmt">' + esc(grupoLabelFormato(fmt)) + '</td>' +
+          '<td class="print-fmt-resumo-num">' + g.qty + '</td>' +
+          '<td class="print-fmt-resumo-num">' + (g.m2 ? fmtDecimal(g.m2) : '—') + '</td>' +
+          '<td class="print-fmt-resumo-num">' + (g.cx ? fmtDecimal(g.cx, 0) : '—') + '</td>' +
+          '<td class="print-fmt-resumo-num">' + (g.peso ? fmtKg(g.peso) : '—') + '</td>' +
+        '</tr>';
+      }).join('');
+      const totalRow = '<tr class="print-fmt-resumo-total">' +
+        '<td class="print-fmt-resumo-fmt"><strong>Total</strong></td>' +
+        '<td class="print-fmt-resumo-num"><strong>' + totQty + '</strong></td>' +
+        '<td class="print-fmt-resumo-num"><strong>' + fmtDecimal(totM2) + '</strong></td>' +
+        '<td class="print-fmt-resumo-num"><strong>' + fmtDecimal(totCx, 0) + '</strong></td>' +
+        '<td class="print-fmt-resumo-num"><strong>' + fmtKg(totPeso) + '</strong></td>' +
+      '</tr>';
+      return '<section class="print-fmt-resumo-wrap">' +
+        '<p class="print-fmt-resumo-title">Resumo por formato</p>' +
+        '<table class="print-fmt-resumo-table">' +
+          '<colgroup><col class="col-fmt-res-fmt"><col class="col-fmt-res-num"><col class="col-fmt-res-num"><col class="col-fmt-res-num"><col class="col-fmt-res-num"></colgroup>' +
+          '<thead><tr>' +
+            '<th>Formato</th><th>Paletes</th><th>m²</th><th>Caixas</th><th>Peso</th>' +
+          '</tr></thead>' +
+          '<tbody>' + bodyRows + totalRow + '</tbody>' +
+        '</table>' +
+      '</section>';
     }
     function buildPedidoPrintHtml(thumbs) {
       const rows = pedidoItens();
@@ -3588,18 +3511,21 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const img = imgs[0]?.url || '';
         const titulo = item.formigres_titulo || item.descricao;
         const rowData = { item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub };
-        if (QTY_UNIT !== 'palete') {
-          bodyRows.push(renderPedidoTableRow(rowData, thumbs, { pdf: true }));
-        }
+        bodyRows.push(renderPedidoTableRow(rowData, thumbs, { pdf: true }));
       }
-      const listHtml = rows.length && QTY_UNIT === 'palete'
-        ? buildPedidoPrintCardsHtml(thumbs, rows)
+      const pdfColCount = QTY_UNIT === 'palete' ? 9 : 7;
+      const tableFoot = rows.length
+        ? '<tfoot><tr class="print-pedido-tfoot">' +
+            '<td colspan="' + (pdfColCount - 1) + '" class="print-pedido-total-label">Total estimado</td>' +
+            '<td class="pedido-col-num col-subtotal print-pedido-total-val">' + esc(fmtMoney(totalValor)) + '</td>' +
+          '</tr></tfoot>'
         : '';
-      const tableHtml = bodyRows.length && QTY_UNIT !== 'palete'
+      const tableHtml = rows.length
         ? '<table class="print-pedido-table pedido-table">' +
             PEDIDO_TABLE_COLGROUP_HTML +
             '<thead><tr>' + PEDIDO_TABLE_HEAD_HTML + '</tr></thead>' +
             '<tbody>' + bodyRows.join('') + '</tbody>' +
+            tableFoot +
           '</table>'
         : '';
       const descNote = hasDescontoAtivo() ? '<p class="print-note">' + esc(descontoNoteText()) + ' sobre a tabela.</p>' : '';
@@ -3622,82 +3548,85 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const pesoPrintLine = QTY_UNIT === 'palete' && totalPeso
         ? '<p class="print-peso">Peso estimado: <strong>' + fmtKg(totalPeso) + '</strong></p>'
         : '';
+      const formatoResumoHtml = buildPrintFormatoResumoHtml(rows);
+      const footerHtml = rows.length
+        ? '<footer class="print-footer">' +
+            '<p class="print-totals">Total estimado: <strong>' + esc(fmtMoney(totalValor)) + '</strong></p>' +
+            pesoPrintLine +
+            descNote +
+          '</footer>'
+        : '';
       return '<div class="print-sheet">' +
         '<header class="print-head">' +
           '<h1>' + esc(PDF_TITLE) + '</h1>' +
           '<p class="print-meta">1ª via · Gerado em ' + esc(new Date().toLocaleString('pt-BR')) + '</p>' +
-          descNote +
         '</header>' +
         resumo +
-        listHtml +
         tableHtml +
-        pesoPrintLine +
-        '<p class="print-totals"><strong>Total estimado: ' + fmtMoney(totalValor) + '</strong></p>' +
+        formatoResumoHtml +
+        footerHtml +
       '</div>';
     }
     function printPedidoPrintCss() {
       const rowLine = '#707070';
       const thumb = PDF_PRINT_THUMB_PX;
-      const metricsPad = thumb + 12;
-      return '@page { size: A4 portrait; margin: 8mm; }' +
+      return '@page { size: A4 landscape; margin: 8mm; }' +
         'html, body { margin: 0; padding: 0; }' +
-        '.print-render-root { background: #ffffff; color: #5a5a5a; font-family: "Libre Franklin", "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 13px; -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; width: 100%; }' +
-        '.print-sheet { width: 100%; max-width: 100%; margin: 0; box-sizing: border-box; background: #ffffff; color: #5a5a5a; padding: 0; }' +
-        '.print-head { margin-bottom: 12px; }' +
-        'h1 { margin: 0 0 4px; font-size: 17px; letter-spacing: .08em; text-transform: uppercase; color: #2f2f2f; font-weight: 600; }' +
-        '.print-meta, .print-note { margin: 0 0 6px; color: #767676; font-size: 11px; line-height: 1.35; }' +
-        '.print-resumo { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px 12px; margin-bottom: 12px; }' +
-        '.print-resumo-stat { min-width: 0; font-size: 10px; color: #767676; }' +
-        '.print-resumo-stat strong { display: block; font-size: 14px; color: #2f2f2f; margin-bottom: 2px; font-weight: 600; }' +
-        '.print-format-group { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 10px; padding: 10px 0 8px; margin-top: 10px; border-bottom: 2px solid ' + rowLine + '; break-inside: avoid; page-break-inside: avoid; }' +
-        '.print-pedido-list > .print-format-group:first-child { margin-top: 0; padding-top: 4px; }' +
-        '.print-format-group-fmt { font-size: 13px; font-weight: 700; letter-spacing: .05em; color: #2f2f2f; text-transform: uppercase; }' +
-        '.print-format-group-stat { font-size: 12px; font-weight: 600; color: #2f2f2f; font-variant-numeric: tabular-nums; }' +
-        '.print-format-group-sep { color: #767676; font-weight: 400; font-size: 11px; }' +
-        '.print-pedido-list { display: flex; flex-direction: column; gap: 0; margin-top: 4px; }' +
-        '.print-pedido-item { border-bottom: 1px solid ' + rowLine + '; padding: 12px 0; break-inside: avoid; page-break-inside: avoid; }' +
-        '.print-pedido-item:first-child { padding-top: 4px; }' +
-        '.print-pedido-item-top { display: flex; align-items: flex-start; gap: 12px; }' +
-        '.print-pedido-item-thumb { flex-shrink: 0; width: ' + thumb + 'px; }' +
-        '.print-pedido-item-thumb img { display: block; width: ' + thumb + 'px; height: ' + thumb + 'px; border-radius: 6px; object-fit: cover; image-rendering: auto; }' +
-        '.print-pedido-item-thumb-empty { display: flex; align-items: center; justify-content: center; width: ' + thumb + 'px; height: ' + thumb + 'px; border-radius: 6px; background: #f0f0f0; color: #767676; font-size: 11px; }' +
-        '.print-pedido-item-desc { flex: 1; min-width: 0; padding-top: 2px; }' +
-        '.print-pedido-item-title { font-size: 14px; font-weight: 600; line-height: 1.35; color: #2f2f2f; word-break: break-word; }' +
-        '.print-pedido-item-resist { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 8px; margin-top: 4px; line-height: 1.35; }' +
-        '.print-pedido-item-resist-label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .05em; color: #767676; }' +
-        '.print-pedido-item-resist-val { font-size: 13px; font-weight: 700; letter-spacing: .1em; color: #2f2f2f; }' +
-        '.print-pedido-item-gemeas { margin-top: 4px; font-size: 10px; color: #767676; line-height: 1.45; }' +
-        '.print-pedido-item-meta { margin-top: 4px; font-size: 11px; color: #767676; line-height: 1.35; }' +
-        '.print-pedido-item-sub { flex-shrink: 0; text-align: right; min-width: 96px; padding-top: 2px; }' +
-        '.print-pedido-item-sub strong { display: block; font-size: 15px; font-weight: 700; color: #b01219; white-space: nowrap; }' +
-        '.print-pedido-item-sub span { display: block; margin-top: 2px; font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: #767676; }' +
-        '.print-pedido-item-metrics { margin-top: 8px; padding-left: ' + metricsPad + 'px; font-size: 11px; color: #767676; line-height: 1.5; }' +
-        '.print-pedido-item-metrics strong { color: #2f2f2f; font-weight: 700; }' +
-        '.print-pedido-metric-preco { white-space: nowrap; }' +
-        '.print-pedido-metric-preco .preco-stack-pdf, .print-pedido-metric-preco .preco-stack { display: inline-block; text-align: left; vertical-align: middle; line-height: 1.2; }' +
-        '.print-pedido-metric-preco .preco-orig { display: inline; text-decoration: line-through; margin-right: 4px; font-size: 10px; }' +
-        '.print-pedido-metric-preco .preco-desc { display: inline; font-weight: 600; font-size: 11px; color: #2f2f2f; }' +
-        '.print-pedido-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 13px; margin-top: 0; }' +
-        '.print-pedido-table th, .print-pedido-table td { padding: 12px 7px; vertical-align: top; }' +
-        '.print-pedido-table thead th { text-align: left; color: #767676; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid ' + rowLine + '; white-space: nowrap; padding-top: 8px; padding-bottom: 8px; vertical-align: bottom; }' +
+        '.print-render-root { background: #ffffff; color: #5a5a5a; font-family: "Libre Franklin", "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; width: 100%; }' +
+        '.print-sheet { width: 100%; max-width: 100%; margin: 0; box-sizing: border-box; background: #ffffff; color: #5a5a5a; padding: 0 0 24px; }' +
+        '.print-head { margin-bottom: 10px; }' +
+        'h1 { margin: 0 0 4px; font-size: 15px; letter-spacing: .08em; text-transform: uppercase; color: #2f2f2f; font-weight: 600; }' +
+        '.print-meta, .print-note { margin: 0 0 4px; color: #767676; font-size: 10px; line-height: 1.35; }' +
+        '.print-resumo { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px 10px; margin-bottom: 10px; }' +
+        '.print-resumo-stat { min-width: 0; font-size: 9px; color: #767676; }' +
+        '.print-resumo-stat strong { display: block; font-size: 13px; color: #2f2f2f; margin-bottom: 2px; font-weight: 600; }' +
+        '.print-pedido-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 12px; margin-top: 0; }' +
+        '.print-pedido-table th, .print-pedido-table td { padding: 8px 5px; vertical-align: middle; }' +
+        '.print-pedido-table thead th { text-align: left; color: #767676; font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid ' + rowLine + '; white-space: nowrap; padding-top: 6px; padding-bottom: 6px; vertical-align: bottom; }' +
         '.print-pedido-table tbody td { border-bottom: 1px solid ' + rowLine + '; }' +
         '.print-pedido-table tbody tr:last-child td { border-bottom: 1px solid ' + rowLine + '; }' +
-        '.print-pedido-table col.col-foto { width: ' + (thumb + 8) + 'px; }' +
-        '.print-pedido-table col.col-modelo { width: 32%; }' +
-        '.print-pedido-table .pedido-row-title { display: block; font-weight: 600; line-height: 1.35; color: #2f2f2f; font-size: 13px; word-break: break-word; }' +
-        '.print-pedido-table .pedido-row-meta { margin-top: 4px; font-size: 11px; color: #767676; line-height: 1.35; }' +
-        '.print-pedido-table .pedido-col-num, .print-pedido-table th.pedido-col-num, .print-pedido-table .col-subtotal { text-align: right; font-variant-numeric: tabular-nums; vertical-align: middle; }' +
-        '.print-pedido-table .pedido-col-qty, .print-pedido-table th.pedido-col-qty { text-align: center; font-variant-numeric: tabular-nums; font-weight: 700; color: #2f2f2f; vertical-align: middle; }' +
+        '.print-pedido-table col.col-foto { width: ' + (thumb + 6) + 'px; }' +
+        '.print-pedido-table col.col-modelo { width: 22%; }' +
+        '.print-pedido-table col.col-qty { width: 44px; }' +
+        '.print-pedido-table col.col-m2 { width: 62px; }' +
+        '.print-pedido-table col.col-cx { width: 52px; }' +
+        '.print-pedido-table col.col-peso { width: 72px; }' +
+        '.print-pedido-table col.col-emb { width: 108px; }' +
+        '.print-pedido-table col.col-preco { width: 72px; }' +
+        '.print-pedido-table col.col-sub { width: 82px; }' +
+        '.print-pedido-table .pedido-meta-resist { font-weight: 700; letter-spacing: .1em; color: #2f2f2f; }' +
+        '.print-pedido-table .pedido-row-title { display: block; font-weight: 600; line-height: 1.3; color: #2f2f2f; font-size: 12px; word-break: break-word; }' +
+        '.print-pedido-table .pedido-row-meta { margin-top: 2px; font-size: 10px; color: #767676; line-height: 1.3; }' +
+        '.print-pedido-table .pedido-col-num, .print-pedido-table th.pedido-col-num, .print-pedido-table .col-subtotal { text-align: right; font-variant-numeric: tabular-nums; }' +
+        '.print-pedido-table .pedido-col-qty, .print-pedido-table th.pedido-col-qty { text-align: center; font-variant-numeric: tabular-nums; font-weight: 700; color: #2f2f2f; font-size: 13px; }' +
+        '.print-pedido-table .pedido-col-peso { font-weight: 600; color: #2f2f2f; white-space: nowrap; }' +
+        '.print-pedido-table .pedido-col-emb { font-size: 10px; color: #767676; line-height: 1.3; }' +
         '.print-pedido-table .col-subtotal { font-weight: 700; color: #b01219; white-space: nowrap; }' +
         '.print-pedido-table .preco-stack, .print-pedido-table .preco-stack-pdf { display: block; text-align: right; line-height: 1.2; }' +
-        '.print-pedido-table .preco-orig { display: block; text-decoration: line-through; color: #767676; font-size: 10px; font-weight: 400; margin: 0 0 2px; white-space: nowrap; }' +
-        '.print-pedido-table .preco-desc { display: block; color: #2f2f2f; font-weight: 600; font-size: 12px; white-space: nowrap; margin: 0; }' +
+        '.print-pedido-table .preco-orig { display: block; text-decoration: line-through; color: #767676; font-size: 9px; font-weight: 400; margin: 0 0 1px; white-space: nowrap; }' +
+        '.print-pedido-table .preco-desc { display: block; color: #2f2f2f; font-weight: 600; font-size: 11px; white-space: nowrap; margin: 0; }' +
         '.print-pedido-table .pedido-col-foto img { display: block; border-radius: 6px; width: ' + thumb + 'px; height: ' + thumb + 'px; object-fit: cover; }' +
         '.print-pedido-table tbody tr { break-inside: avoid; page-break-inside: avoid; }' +
-        '.print-peso { margin: 10px 0 0; font-size: 12px; color: #767676; text-align: right; }' +
+        '.print-pedido-table tfoot td { border-top: 2px solid ' + rowLine + '; padding-top: 10px; padding-bottom: 10px; vertical-align: middle; }' +
+        '.print-pedido-table .print-pedido-total-label { text-align: right; font-size: 12px; font-weight: 600; color: #2f2f2f; padding-right: 10px; }' +
+        '.print-pedido-table .print-pedido-total-val { font-size: 15px; font-weight: 700; color: #b01219; white-space: nowrap; }' +
+        '.print-footer { margin-top: 12px; padding-top: 10px; border-top: 1px solid ' + rowLine + '; text-align: right; break-inside: avoid; page-break-inside: avoid; }' +
+        '.print-peso { margin: 6px 0 0; font-size: 12px; color: #767676; text-align: right; }' +
         '.print-peso strong { color: #2f2f2f; font-weight: 600; }' +
-        '.print-totals { text-align: right; margin: 14px 0 0; padding-top: 10px; border-top: 1px solid ' + rowLine + '; font-size: 14px; color: #5a5a5a; break-inside: avoid; page-break-inside: avoid; }' +
-        '.print-totals strong { font-size: 16px; color: #1f1f24; font-weight: 600; }';
+        '.print-totals { margin: 0; font-size: 14px; color: #5a5a5a; text-align: right; }' +
+        '.print-totals strong { font-size: 17px; color: #b01219; font-weight: 700; }' +
+        '.print-footer .print-note { margin: 8px 0 0; text-align: right; font-size: 10px; color: #767676; }' +
+        '.print-fmt-resumo-wrap { margin-top: 14px; break-inside: avoid; page-break-inside: avoid; }' +
+        '.print-fmt-resumo-title { margin: 0 0 6px; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #767676; }' +
+        '.print-fmt-resumo-table { width: auto; min-width: 320px; max-width: 480px; border-collapse: collapse; font-size: 10px; table-layout: fixed; }' +
+        '.print-fmt-resumo-table th, .print-fmt-resumo-table td { padding: 4px 8px; border-bottom: 1px solid ' + rowLine + '; vertical-align: middle; font-variant-numeric: tabular-nums; }' +
+        '.print-fmt-resumo-table thead th { font-size: 8px; font-weight: 500; text-transform: uppercase; letter-spacing: .04em; color: #767676; text-align: right; border-bottom: 1px solid ' + rowLine + '; white-space: nowrap; }' +
+        '.print-fmt-resumo-table thead th:first-child, .print-fmt-resumo-table .print-fmt-resumo-fmt { text-align: left; }' +
+        '.print-fmt-resumo-table .print-fmt-resumo-num { text-align: right; color: #2f2f2f; white-space: nowrap; }' +
+        '.print-fmt-resumo-table .print-fmt-resumo-fmt { color: #2f2f2f; font-weight: 600; letter-spacing: .03em; }' +
+        '.print-fmt-resumo-table .print-fmt-resumo-total td { border-top: 2px solid ' + rowLine + '; border-bottom: 0; padding-top: 6px; font-weight: 600; }' +
+        '.print-fmt-resumo-table col.col-fmt-res-fmt { width: 88px; }' +
+        '.print-fmt-resumo-table col.col-fmt-res-num { width: 56px; }';
     }
     function pdfCanvasBackground(theme) {
       return '#ffffff';
@@ -3790,8 +3719,16 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         await waitPrintImagesRoot(doc.body);
         await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         const sheet = doc.querySelector('.print-sheet');
+        const root = doc.querySelector('.print-render-root');
         if (!sheet) throw new Error('Conteúdo do PDF indisponível');
-        const heightPx = Math.max(sheet.scrollHeight || 0, sheet.offsetHeight || 0, 280);
+        const measureEl = root || sheet;
+        const heightPx = Math.ceil(Math.max(
+          measureEl.scrollHeight || 0,
+          measureEl.offsetHeight || 0,
+          sheet.scrollHeight || 0,
+          sheet.offsetHeight || 0,
+          280,
+        ) + 48);
         const blob = await win.html2pdf().set({
           margin: layout.marginMm,
           filename: pedidoPdfFilename(),
@@ -3808,9 +3745,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
             backgroundColor: pdfCanvasBackground(PDF_THEME),
             onclone: injectPdfFontClone,
           },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['css', 'legacy'], avoid: ['.print-pedido-item', '.print-pedido-table tbody tr'] },
-        }).from(sheet).outputPdf('blob');
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+          pagebreak: { mode: ['css', 'legacy'], avoid: ['.print-pedido-table tbody tr', '.print-footer', '.print-fmt-resumo-wrap'] },
+        }).from(measureEl).outputPdf('blob');
         if (!blob || blob.size < 12000) throw new Error('PDF gerado vazio');
         return blob;
       } finally {
