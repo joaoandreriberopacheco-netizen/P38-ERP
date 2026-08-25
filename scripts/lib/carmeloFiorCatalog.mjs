@@ -121,17 +121,40 @@ export function imageUrl(imageFile) {
   return `${IMAGE_BASE}/${imageFile}`;
 }
 
-/** Galeria no formato do catálogo P38. */
+function pickThumbImage(images = []) {
+  const faceImg = images.find((i) => Number(i.face) === 1);
+  const mainImg = images.find((i) => Number(i.main) === 1);
+  return faceImg || mainImg || images[0] || null;
+}
+
+/** Galeria no formato do catálogo P38 — cerâmica (face) primeiro, ambiente depois. */
 export function extractImagensFromProduto(prod) {
+  const images = prod?.images || [];
+  const faceImg = images.find((i) => Number(i.face) === 1);
+  const mainImg = images.find((i) => Number(i.main) === 1);
   const out = [];
-  for (const img of prod?.images || []) {
+  const seen = new Set();
+
+  function push(img, tipo) {
+    if (!img) return;
     const url = imageUrl(img.image || img.thumb);
-    if (!url) continue;
-    let tipo = 'detalhe';
-    if (Number(img.main) === 1) tipo = 'principal';
-    else if (Number(img.face) === 1) tipo = 'face';
+    if (!url || seen.has(url)) return;
+    seen.add(url);
     out.push({ url, tipo });
   }
+
+  if (faceImg) {
+    push(faceImg, 'principal');
+    if (mainImg && mainImg !== faceImg) push(mainImg, 'ambiente');
+  } else if (mainImg) {
+    push(mainImg, 'principal');
+  }
+
+  for (const img of images) {
+    if (img === faceImg || img === mainImg) continue;
+    push(img, 'detalhe');
+  }
+
   if (!out.length && prod?.imagem_url) {
     out.push({ url: prod.imagem_url, tipo: 'principal' });
   }
@@ -146,8 +169,8 @@ export function normalizeProduto(raw) {
   const { formato, retificada } = parseTamanhoAttr(tamanho?.option_title || tamanho?.text || '');
   const acabSup = mapSuperficie(superficie?.option_title || superficie?.text || '');
   const tipo = mapAcabamentoTipo(acabamento?.option_title || acabamento?.text || '', retificada);
-  const mainImg = (raw.images || []).find((i) => Number(i.main) === 1) || raw.images?.[0];
-  const imagem_url = imageUrl(mainImg?.image || mainImg?.thumb || '');
+  const thumbImg = pickThumbImage(raw.images || []);
+  const imagem_url = imageUrl(thumbImg?.image || thumbImg?.thumb || '');
 
   return {
     id: String(raw.id),
