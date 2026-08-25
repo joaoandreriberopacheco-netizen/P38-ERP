@@ -1313,8 +1313,79 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       max-width: 100%;
       overflow: hidden;
       box-sizing: border-box;
+      padding: 8px 0;
     }
     html[data-skin="formigres"] .catalog-card.pedido-card:last-child { border-bottom: 0; }
+    html[data-skin="formigres"] .catalog-card-head {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      column-gap: 8px;
+      align-items: start;
+    }
+    html[data-skin="formigres"] .catalog-card-body {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    html[data-skin="formigres"] .catalog-card-title-row {
+      font-size: .82rem;
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--text-strong);
+    }
+    html[data-skin="formigres"] .catalog-card-title-row .pedido-row-title-line {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    html[data-skin="formigres"] .catalog-card-row-qty {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    html[data-skin="formigres"] .catalog-card-sub {
+      flex: 1;
+      min-width: 0;
+      text-align: right;
+      font-size: .82rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-strong);
+    }
+    html[data-skin="formigres"] .catalog-card-sub:empty::before,
+    html[data-skin="formigres"] .catalog-card-sub .model-col-sub:empty::before {
+      content: '—';
+      color: var(--muted);
+      font-weight: 500;
+    }
+    html[data-skin="formigres"] .catalog-card-meta-line {
+      font-size: .62rem;
+      line-height: 1.3;
+      color: var(--muted);
+      word-break: break-word;
+    }
+    html[data-skin="formigres"] .catalog-card-meta-id .pedido-meta-resist {
+      color: var(--text-strong);
+      font-weight: 700;
+    }
+    html[data-skin="formigres"] .catalog-card-meta-sep {
+      margin: 0 4px;
+      opacity: .65;
+    }
+    html[data-skin="formigres"] .catalog-card-meta-preco {
+      margin-left: 2px;
+      white-space: nowrap;
+    }
+    html[data-skin="formigres"] .catalog-card-meta-preco .preco-orig {
+      display: inline;
+      font-size: .58rem;
+      opacity: .75;
+      text-decoration: line-through;
+      margin-right: 3px;
+    }
+    html[data-skin="formigres"] .catalog-card .pedido-card-spec { display: none; }
     html[data-skin="formigres"] .catalog-card-thumb-btn {
       flex-shrink: 0;
       padding: 0;
@@ -1322,12 +1393,6 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       background: transparent;
       cursor: pointer;
       line-height: 0;
-    }
-    html[data-skin="formigres"] .catalog-card-palete {
-      margin-top: 2px;
-      font-size: .58rem;
-      color: var(--muted);
-      line-height: 1.25;
     }
     html[data-skin="formigres"] .catalog-card-qty .qty-input {
       width: 100%;
@@ -1339,7 +1404,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       padding: 6px 4px;
     }
     html[data-skin="formigres"] .catalog-card-qty {
-      min-width: 52px;
+      flex: 0 0 56px;
+      min-width: 56px;
       max-width: 64px;
     }
     html[data-skin="formigres"] .model-gemeas-detail-card {
@@ -3040,6 +3106,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         row.querySelector('.model-col-peso') && (row.querySelector('.model-col-peso').textContent = '');
         row.querySelector('.model-col-sub') && (row.querySelector('.model-col-sub').textContent = '');
       });
+      document.querySelectorAll('.catalog-card.model-row').forEach((row) => {
+        if (row.dataset.cod) updateModelRowCalcs(row.dataset.cod);
+      });
       renderPedido();
       updateCartFab();
       if (filterQtyOnly) applySearch(document.getElementById('search').value);
@@ -3284,6 +3353,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const cxTot = qty ? itemCaixasTotal(item, qty) : null;
       const pesoTot = qty ? itemPesoTotal(item, qty) : null;
       const sub = qty ? itemSubtotal(item, qty) : null;
+      const emb = itemEmbalagem(item);
+      const cxMeta = qty && cxTot ? fmtDecimal(cxTot, 0) : (emb.cxpl ? String(emb.cxpl) : '—');
+      const m2Meta = qty && m2tot ? fmtDecimal(m2tot) : (emb.m2pl ? fmtDecimal(emb.m2pl) : '—');
       document.querySelectorAll('.model-row[data-cod="' + cod + '"]').forEach((row) => {
         const setCell = (sel, text) => {
           const el = row.querySelector(sel);
@@ -3293,6 +3365,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         setCell('.model-col-cx', cxTot ? fmtDecimal(cxTot, 0) : '');
         setCell('.model-col-peso', pesoTot ? fmtKg(pesoTot) : '');
         setCell('.model-col-sub', sub ? fmtMoney(sub) : '');
+        if (row.classList.contains('catalog-card')) {
+          setCell('.catalog-meta-cx', cxMeta);
+          setCell('.catalog-meta-m2', m2Meta);
+          setCell('.catalog-meta-pal', qty ? String(qty) : '0');
+        }
       });
     }
     function fmtEmbalagemText(item) {
@@ -3462,6 +3539,30 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const resistSearch = modelResistencia(item);
       return (titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + (extra || '')).toLowerCase();
     }
+    function renderCatalogCardMetaLine(item, cod, qty) {
+      const emb = itemEmbalagem(item);
+      const cxTot = qty ? itemCaixasTotal(item, qty) : null;
+      const m2tot = qty ? itemM2Total(item, qty) : null;
+      const cxMeta = qty && cxTot ? fmtDecimal(cxTot, 0) : (emb.cxpl ? String(emb.cxpl) : '—');
+      const m2Meta = qty && m2tot ? fmtDecimal(m2tot) : (emb.m2pl ? fmtDecimal(emb.m2pl) : '—');
+      const palMeta = qty ? String(qty) : '0';
+      const resist = modelResistencia(item);
+      const marca = (!item.gemeas || item.gemeas.length < 2) && item.marca_nome ? item.marca_nome : '';
+      const idParts = [];
+      if (resist) idParts.push('<strong class="pedido-meta-resist">' + esc(resist) + '</strong>');
+      idParts.push('#' + esc(cod));
+      if (marca) idParts.push('. ' + esc(marca));
+      const precoHtml = '<span class="catalog-card-meta-preco' + (hasDescontoAtivo() ? ' has-desc' : '') + '"> · ' + fmtPrecoHtml(item.preco_m2) + '</span>';
+      return '<div class="catalog-card-meta-line">' +
+        '<span class="catalog-card-meta-id">' + idParts.join(' ') + '</span>' +
+        '<span class="catalog-card-meta-sep" aria-hidden="true">|</span>' +
+        '<span class="catalog-card-meta-totals">' +
+          '<span class="catalog-meta-cx">' + esc(cxMeta) + '</span> cx . ' +
+          '<span class="catalog-meta-m2">' + esc(m2Meta) + '</span> m² . ' +
+          '<span class="catalog-meta-pal">' + esc(palMeta) + '</span> pal' +
+          precoHtml +
+        '</span></div>';
+    }
     function renderCatalogCardFormigres(item) {
       const imgs = getGaleria(item);
       const img = imgs[0]?.url || item.imagem_url || '';
@@ -3469,46 +3570,32 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const cod = item.codigo_tintao;
       const qty = getQty(cod);
       const pack = fmtEmbalagemText(item);
-      const porPalete = fmtPorPaleteText(item);
-      const m2tot = qty ? itemM2Total(item, qty) : null;
-      const cxTot = qty ? itemCaixasTotal(item, qty) : null;
-      const pesoTot = qty ? itemPesoTotal(item, qty) : null;
       const sub = qty ? itemSubtotal(item, qty) : null;
-      const rowMeta = renderItemMetaHtml(item, cod);
       const gemeasMarcasHtml = renderGemeasMarcasLine(item, 'catalog');
       const gemeasTrigger = renderGemeasTrigger(item, cod);
       const searchExtra = gemeasSearchText(item);
       const warn = item.match_status !== 'encontrado' ? ' <span class="badge warn">sem match</span>' : '';
       const titleHtml = gemeasTrigger
-        ? '<span class="pedido-row-title-line"><span class="pedido-card-title pedido-card-hero">' + esc(titulo) + '</span>' + gemeasTrigger + '</span>'
-        : '<span class="pedido-card-title pedido-card-hero">' + esc(titulo) + '</span>';
+        ? '<span class="pedido-row-title-line"><span>' + esc(titulo) + '</span>' + gemeasTrigger + '</span>'
+        : esc(titulo);
       const thumb = img
         ? '<button type="button" class="thumb-btn catalog-card-thumb-btn' + (imgs.length > 1 ? ' has-gallery' : '') + '" tabindex="-1" data-cod="' + esc(cod) + '" data-title="' + esc(titulo) + '" title="Ver fotos"><img class="pedido-card-thumb" src="' + esc(img) + '" alt="" loading="lazy" />' + (imgs.length > 1 ? '<span class="thumb-more" aria-hidden="true">▦</span>' : '') + '</button>'
         : '<span class="pedido-card-thumb pedido-card-thumb-empty" aria-hidden="true">—</span>';
-      const head = '<div class="pedido-card-head">' + thumb +
-        '<div class="pedido-card-head-main">' +
-          '<div class="pedido-card-desc">' +
-            titleHtml + warn + gemeasMarcasHtml +
-            '<div class="pedido-card-meta">' + rowMeta + '</div>' +
-            '<div class="catalog-card-palete">' + esc(porPalete) + '</div>' +
+      const body = '<div class="catalog-card-body">' +
+          '<div class="catalog-card-title-row">' + titleHtml + warn + '</div>' +
+          '<div class="catalog-card-row-qty">' +
+            '<div class="catalog-card-qty">' +
+              '<input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" tabindex="0" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="' + esc(QTY_LABEL) + '" placeholder="" />' +
+            '</div>' +
+            '<div class="catalog-card-sub"><span class="model-col-sub">' + esc(sub ? fmtMoney(sub) : '') + '</span></div>' +
           '</div>' +
-          '<div class="catalog-card-qty pedido-card-qty">' +
-            '<input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" tabindex="0" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="' + esc(QTY_LABEL) + '" placeholder="" />' +
-          '</div>' +
-          '<div class="pedido-card-total">' +
-            '<strong class="pedido-card-hero model-col-sub">' + esc(sub ? fmtMoney(sub) : '—') + '</strong>' +
-            '<span class="pedido-card-total-label">Subtotal</span>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
-      const spec = renderPedidoSpecTable([
-        { label: 'Preço/m²', preco: true, html: fmtPrecoHtml(item.preco_m2) },
-        { label: 'm²', extraClass: 'model-col-m2', text: m2tot ? fmtDecimal(m2tot) : '—' },
-        { label: 'Caixas', extraClass: 'model-col-cx', text: cxTot ? fmtDecimal(cxTot, 0) : '—' },
-        { label: 'Peso', extraClass: 'model-col-peso', text: pesoTot ? fmtKg(pesoTot) : '—' },
-      ]);
+          renderCatalogCardMetaLine(item, cod, qty) +
+          gemeasMarcasHtml +
+        '</div>';
       return '<article class="catalog-card pedido-card model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(formigresItemSearchKey(item, cod, pack, titulo, searchExtra)) + '" data-qty="' + qty + '">' +
-        '<div class="pedido-card-layout">' + head + spec + '</div></article>';
+        '<div class="catalog-card-layout">' +
+          '<div class="catalog-card-head">' + thumb + body + '</div>' +
+        '</div></article>';
     }
     function renderItemsTable(items) {
       if (CATALOG_SKIN === 'formigres') {
