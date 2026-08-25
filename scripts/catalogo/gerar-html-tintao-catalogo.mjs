@@ -17,6 +17,7 @@ const CLASSIF_DIR = path.join(ROOT, 'docs', 'imports-local', 'tintao', 'classifi
 const OUT_HTML = path.join(ROOT, 'docs', 'imports-local', 'tintao', 'catalogo-tintao-formigres.html');
 const OUT_PDF_THUMBS = path.join(ROOT, 'docs', 'imports-local', 'tintao', 'catalogo-tintao-pdf-thumbs.json');
 const ANT_LOGO_PATH = path.join(ROOT, 'scripts', 'catalogo', 'assets', 'formigres-ant.png');
+const PDF_FONT_WOFF2 = path.join(ROOT, 'scripts', 'catalogo', 'assets', 'fonts', 'libre-franklin-latin.woff2');
 // Silhueta vermelha Formigres (recorte do logo vertical da marca); fundo transparente.
 
 function loadAntLogoDataUri() {
@@ -25,6 +26,19 @@ function loadAntLogoDataUri() {
     return `data:image/png;base64,${buf.toString('base64')}`;
   } catch {
     return '';
+  }
+}
+
+function loadPdfFontFaceCss() {
+  try {
+    const b64 = fs.readFileSync(PDF_FONT_WOFF2).toString('base64');
+    return (
+      "@font-face{font-family:'Libre Franklin';font-style:normal;font-weight:400 700;font-display:swap;" +
+      "src:url(data:font/woff2;base64," + b64 + ") format('woff2');}" +
+      "html,body,.print-render-root,.print-sheet,.pedido-card-pdf{font-family:'Libre Franklin',system-ui,-apple-system,'Segoe UI',sans-serif;}"
+    );
+  } catch {
+    return "html,body,.print-render-root{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;}";
   }
 }
 
@@ -227,7 +241,7 @@ function slimItem(item) {
   };
 }
 
-function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {} }) {
+function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFontCss = '' }) {
   const gerado = new Date(classif.geradoEm || Date.now()).toLocaleString('pt-BR');
   const total = itens.length;
   const comFoto = itens.filter((i) => i.imagem_url).length;
@@ -243,6 +257,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {} }) {
     },
   }).replace(/</g, '\\u003c');
   const pdfThumbsJson = JSON.stringify(pdfThumbs).replace(/</g, '\\u003c');
+  const pdfFontCssJson = JSON.stringify(pdfFontCss);
 
   return `<!DOCTYPE html>
 <html lang="pt-BR" data-theme="dark">
@@ -1522,6 +1537,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {} }) {
       return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
     const PDF_THEME = 'light';
+    const PDF_FONT_FACE_CSS = ${pdfFontCssJson};
     let pdfThumbsCache = null;
     function loadPdfThumbs() {
       if (pdfThumbsCache) return pdfThumbsCache;
@@ -2103,7 +2119,6 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {} }) {
       return '#ffffff';
     }
     const HTML2PDF_URL = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-    const PDF_FONT_URL = 'https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&display=swap';
     let pedidoPdfBlob = null;
     let pedidoPdfBlobUrl = null;
 
@@ -2118,21 +2133,27 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {} }) {
       pedidoPdfBlob = null;
     }
     function pedidoPdfIframeHead(pageWmm) {
-      return '<meta charset="utf-8">' +
-        '<link rel="preconnect" href="https://fonts.googleapis.com">' +
-        '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' +
-        '<link rel="stylesheet" href="' + PDF_FONT_URL + '">' +
-        '<style>' + printPedidoPrintCss(pageWmm, null) + '</style>';
+      return '<meta charset="utf-8"><style>' + PDF_FONT_FACE_CSS + printPedidoPrintCss(pageWmm, null) + '</style>';
+    }
+    function injectPdfFontClone(clonedDoc) {
+      if (!clonedDoc || !PDF_FONT_FACE_CSS) return;
+      const style = clonedDoc.createElement('style');
+      style.textContent = PDF_FONT_FACE_CSS;
+      clonedDoc.head.appendChild(style);
+      clonedDoc.documentElement.style.fontFamily = "'Libre Franklin', system-ui, sans-serif";
     }
     async function waitPrintFontsRoot(doc) {
       try {
-        if (doc.fonts && doc.fonts.ready) await doc.fonts.ready;
         if (doc.fonts && doc.fonts.load) {
           await doc.fonts.load('400 13px "Libre Franklin"');
           await doc.fonts.load('600 13px "Libre Franklin"');
         }
+        if (doc.fonts && doc.fonts.ready) await doc.fonts.ready;
+        if (doc.fonts && doc.fonts.check && !doc.fonts.check('13px "Libre Franklin"')) {
+          await new Promise((resolve) => setTimeout(resolve, 400));
+        }
       } catch { /* ignore */ }
-      await new Promise((resolve) => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 250));
     }
     function loadHtml2PdfInWindow(win, doc) {
       if (win.html2pdf) return Promise.resolve(win.html2pdf);
@@ -2159,7 +2180,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {} }) {
         doc.open();
         doc.write(
           '<!DOCTYPE html><html><head>' + pedidoPdfIframeHead(pageWmm) +
-          '</head><body style="margin:0"><div class="print-render-root" style="width:' + pageWpx + 'px">' +
+          "</head><body style=\\"margin:0;font-family:'Libre Franklin',system-ui,sans-serif\\"><div class=\\"print-render-root\\" style=\\"width:" + pageWpx + "px\\">" +
           html +
           '</div></body></html>'
         );
@@ -2190,6 +2211,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {} }) {
             height: heightPx,
             windowHeight: heightPx,
             backgroundColor: pdfCanvasBackground(PDF_THEME),
+            onclone: injectPdfFontClone,
           },
           jsPDF: { unit: 'mm', format: [pageWmm, pageHmm], orientation: 'portrait' },
           pagebreak: { mode: ['css', 'legacy'] },
@@ -2534,7 +2556,8 @@ async function mainAsync() {
   const pdfThumbs = await buildPdfThumbMap(itens);
   const thumbsCount = Object.values(pdfThumbs).filter(Boolean).length;
   const antLogoDataUri = loadAntLogoDataUri();
-  const html = buildHtml({ classif, itens, antLogoDataUri, pdfThumbs });
+  const pdfFontCss = loadPdfFontFaceCss();
+  const html = buildHtml({ classif, itens, antLogoDataUri, pdfThumbs, pdfFontCss });
 
   fs.mkdirSync(path.dirname(OUT_HTML), { recursive: true });
   fs.writeFileSync(OUT_HTML, html);
