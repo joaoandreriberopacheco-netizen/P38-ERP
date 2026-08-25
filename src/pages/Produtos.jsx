@@ -66,6 +66,8 @@ import {
   useFornecedoresQuery,
   usePedidosVenda90dQuery,
 } from '@/hooks/useP38Entities';
+import { usePermissoesUsuario } from '@/hooks/usePermissoesUsuario';
+import { filtrarColunasCatalogoPorPermissao } from '@/lib/permissaoKit';
 
 const CATALOG_GROUP_BY_CATEGORY_KEY = 'catalogo.groupTreeByCategory';
 
@@ -159,6 +161,9 @@ function calculateProdutoStats(produtosList, catalogStockContext = null) {
 }
 
 function ProdutosPageContent() {
+  const { tem: podePerm } = usePermissoesUsuario();
+  const podeVerCusto = podePerm('estoque.ver_custo_compra', 'estoque.visualizar_produtos');
+
   const [produtos, setProdutos] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
   const [categorias, setCategorias] = useState([]);
@@ -180,6 +185,10 @@ function ProdutosPageContent() {
   const [isColumnSelectorOpen, setIsColumnSelectorOpen] = useState(false);
   const [produtoParaExcluir, setProdutoParaExcluir] = useState(null);
   const [visibleColumns, setVisibleColumns] = useState(() => loadCatalogProdutoColumns());
+  const visibleColumnsEffective = useMemo(
+    () => filtrarColunasCatalogoPorPermissao(visibleColumns, podeVerCusto),
+    [visibleColumns, podeVerCusto]
+  );
   // ── Nível de expansão do TreeGrid (controlado pelo painel fixo externo) ─────
   const [treeLevel, setTreeLevel] = useState(TREE_GRID_EXPAND_ALL_LEVEL);
 
@@ -1208,7 +1217,10 @@ function ProdutosPageContent() {
     () => calculateProdutoStats(filteredProdutos, catalogStockContext),
     [filteredProdutos, catalogStockContext],
   );
-  const headerStats = filteredStats;
+  const headerStats = useMemo(() => {
+    if (podeVerCusto) return filteredStats;
+    return { ...filteredStats, valorEstoque: 0, valorEstoqueAtivo: 0 };
+  }, [filteredStats, podeVerCusto]);
 
   const handleGroupTreeByCategoryChange = useCallback((value) => {
     setGroupTreeByCategory(value);
@@ -1493,6 +1505,7 @@ function ProdutosPageContent() {
 
   const produtosHeaderProps = useMemo(() => ({
     stats: headerStats,
+    podeVerCusto,
     filters,
     categorias,
     fornecedores,
@@ -1532,6 +1545,7 @@ function ProdutosPageContent() {
     onGroupTreeByCategoryChange: handleGroupTreeByCategoryChange,
     onClearFilters: handleClearCatalogFilters,
   }), [
+    podeVerCusto,
     headerStats,
     filters,
     categorias,
@@ -1608,14 +1622,14 @@ function ProdutosPageContent() {
 
               {isDesktop && viewMode === 'dinamica' && (
                 <div className="flex flex-col w-full h-full min-h-0">
-                  <TreeGrid produtos={filteredProdutos} onEdit={handleEdit} onDelete={setProdutoParaExcluir} visibleColumns={visibleColumns} masterLevel={treeLevel} sortOrder={sortOrder} groupByCategory={groupTreeByCategory} onExpandedKeysChange={handleCatalogExpandedKeysChange} salesVelocityMap={salesVelocityMap} catalogStockContext={catalogStockContext} catalogFilters={filters} />
+                  <TreeGrid produtos={filteredProdutos} onEdit={handleEdit} onDelete={setProdutoParaExcluir} visibleColumns={visibleColumnsEffective} masterLevel={treeLevel} sortOrder={sortOrder} groupByCategory={groupTreeByCategory} onExpandedKeysChange={handleCatalogExpandedKeysChange} salesVelocityMap={salesVelocityMap} catalogStockContext={catalogStockContext} catalogFilters={filters} />
                 </div>
               )}
 
               {isDesktop && viewMode === 'plana' && (
                 <ProdutosPlanaTable
                   filteredProdutos={filteredProdutos}
-                  visibleColumns={visibleColumns}
+                  visibleColumns={visibleColumnsEffective}
                   handleEdit={handleEdit}
                   setProdutoParaExcluir={setProdutoParaExcluir}
                   formatarNumero={formatarNumero}

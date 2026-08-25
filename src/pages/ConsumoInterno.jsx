@@ -18,10 +18,16 @@ import { CONSUMO_FORM_OVERLAY_Z, CONSUMO_FORM_DIALOG_CONTENT_Z, dismissConsumoOv
 import { gerarNumeroSequencial } from '@/lib/gerarNumeroSequencial';
 import { buildAnexoMovimentoTag } from '@/components/anexos/buildAnexoMovimentoTag';
 import { renderTaggedImage } from '@/components/anexos/renderTaggedImage';
+import { usePermissoesUsuario } from '@/hooks/usePermissoesUsuario';
 
 const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
 export default function ConsumoInternoPage() {
+  const { tem: podePerm } = usePermissoesUsuario();
+  const podeRegistrar = podePerm('consumo_interno.registrar', 'consumo_interno.acesso');
+  const podeVerHistorico = podePerm('consumo_interno.visualizar_historico', 'consumo_interno.acesso');
+  const podeAnexos = podePerm('consumo_interno.anexos_assinatura', 'consumo_interno.acesso');
+
   const [currentUser, setCurrentUser] = useState(null);
   const [turnos, setTurnos] = useState([]);
   const [produtos, setProdutos] = useState([]);
@@ -301,6 +307,10 @@ export default function ConsumoInternoPage() {
 
   const handleSubmit = async () => {
     if (isSubmitting) return;
+    if (!podeRegistrar) {
+      toast.error('Sem permissão para registrar consumo interno');
+      return;
+    }
     if (!formData.destinacao || !formData.responsavel_recebimento || !formData.itens.length) {
       toast.error('Preencha destinação, responsável e itens');
       return;
@@ -447,15 +457,52 @@ export default function ConsumoInternoPage() {
         consumosAgrupadosPorDia={consumosAgrupadosPorDia}
         onRefresh={loadData}
         onView={async (item) => {
+          if (!podeVerHistorico) {
+            toast.error('Sem permissão para visualizar histórico');
+            return;
+          }
           setConsumoSelecionado(item);
           setShowResumo(true);
           await carregarAnexosConsumo(item);
         }}
-        onViewAttachments={handleVerAnexos}
-        onEdit={handleEditar}
-        onAttach={handleAnexarDocumento}
-        onDelete={handleDelete}
-        onNovoFormulario={() => setShowForm(true)}
+        onViewAttachments={async (item) => {
+          if (!podeAnexos) {
+            toast.error('Sem permissão para ver anexos');
+            return;
+          }
+          await handleVerAnexos(item);
+        }}
+        onEdit={(item) => {
+          if (!podeRegistrar) {
+            toast.error('Sem permissão para editar consumo');
+            return;
+          }
+          handleEditar(item);
+        }}
+        onAttach={(item) => {
+          if (!podeAnexos) {
+            toast.error('Sem permissão para anexar documentos');
+            return;
+          }
+          handleAnexarDocumento(item);
+        }}
+        onDelete={(item) => {
+          if (!podeRegistrar) {
+            toast.error('Sem permissão para excluir consumo');
+            return;
+          }
+          handleDelete(item);
+        }}
+        onNovoFormulario={() => {
+          if (!podeRegistrar) {
+            toast.error('Sem permissão para registrar consumo interno');
+            return;
+          }
+          setShowForm(true);
+        }}
+        podeRegistrar={podeRegistrar}
+        podeVerHistorico={podeVerHistorico}
+        podeAnexos={podeAnexos}
       />
 
       <input ref={anexoInputRef} type="file" multiple accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={handleAnexoFileChange} />

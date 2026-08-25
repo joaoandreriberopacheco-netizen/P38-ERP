@@ -196,9 +196,7 @@ export const ALL_MENU_ITEMS = [
       p?.estoque?.compras?.sugestoes ||
       p?.estoque?.compras?.cotacoes ||
       p?.estoque?.compras?.pedidos ||
-      p?.estoque?.compras?.conferencia ||
-      p?.estoque?.compras?.logistica ||
-      p?.estoque?.logistica,
+      p?.estoque?.compras?.conferencia,
     submenu: [
       {
         name: SMART_SUPPLY_MENU_LABEL,
@@ -223,13 +221,14 @@ export const ALL_MENU_ITEMS = [
         name: 'Conferência de Entrada',
         page: 'ConferenciaEntrada',
         icon: ScanLine,
-        permissaoCheck: (p) => p?.estoque?.compras?.conferencia === true || p?.estoque?.logistica === true
+        permissaoCheck: (p) => p?.estoque?.compras?.conferencia === true
       },
       {
         name: 'Boats',
         page: 'ItinerarioFluvial',
         icon: Ship,
-        permissaoCheck: (p) => p?.estoque?.compras?.logistica === true || p?.estoque?.logistica === true
+        permissaoCheck: (p) =>
+          p?.estoque?.compras?.conferencia === true || p?.estoque?.compras?.pedidos === true
       },
       {
         name: 'Portal catálogo',
@@ -240,7 +239,6 @@ export const ALL_MENU_ITEMS = [
           p?.estoque?.compras?.cotacoes ||
           p?.estoque?.compras?.pedidos ||
           p?.estoque?.compras?.conferencia ||
-          p?.estoque?.compras?.logistica ||
           p?.estoque?.compras_ativo,
       }
     ]
@@ -360,13 +358,13 @@ export const ALL_MENU_ITEMS = [
         name: 'Contas',
         page: 'ContasFinanceiras',
         icon: Wallet,
-        permissaoCheck: (p) => p?.financeiro?.acesso === true
+        permissaoCheck: (p) => p?.financeiro?.contas === true || p?.financeiro?.acesso === true
       },
       {
         name: 'Aprovações',
         page: 'AprovacoesFinanceiras',
         icon: CreditCard,
-        permissaoCheck: (p) => p?.financeiro?.acesso === true
+        permissaoCheck: (p) => p?.financeiro?.aprovar_pagamentos === true || p?.financeiro?.acesso === true
       },
       {
         name: 'Caixas Ativos',

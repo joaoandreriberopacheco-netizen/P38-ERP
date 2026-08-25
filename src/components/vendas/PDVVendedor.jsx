@@ -48,9 +48,15 @@ import {
 } from '@/lib/hierarquiaPortal/produtoPdvDisponibilidade';
 import ProdutoThumb from '@/components/produtos/ProdutoThumb';
 import { consumirOrcamentoParaPdv } from '@/lib/orcamentoRapidoPdvBridge';
+import { usePermissoesUsuario } from '@/hooks/usePermissoesUsuario';
 
 export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   const navigate = useNavigate();
+  const { tem: podePerm } = usePermissoesUsuario();
+  const podeDesconto = podePerm('pdv.aplicar_desconto', 'pdv.acesso_vendedor');
+  const podeRemoverItem = podePerm('pdv.cancelar_item_venda', 'pdv.acesso_vendedor');
+  const podeCancelarVenda = podePerm('pdv.cancelar_venda', 'pdv.acesso_vendedor');
+  const podeHistorico = podePerm('pdv.ver_historico_vendas', 'pdv.acesso_vendedor');
 
   const handleClose = () => {
     if (overlayMode && onClose) {
@@ -767,10 +773,18 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   };
 
   const handleRemoveItem = (itemKey) => {
+    if (!podeRemoverItem) {
+      showFeedback('error', 'Sem permissão para remover itens do carrinho', 3000);
+      return;
+    }
     setCarrinho(carrinho.filter((item) => item.item_key !== itemKey));
   };
 
   const handleLimparCarrinho = () => {
+    if (!podeCancelarVenda) {
+      showFeedback('error', 'Sem permissão para cancelar/limpar a venda', 3000);
+      return;
+    }
     setCarrinho([]);
     setProdutoSelecionado(null);
     setValorAjuste(0);
@@ -1132,14 +1146,18 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <Button variant="ghost" size="icon" onClick={() => setShowOrcamentosRecentes(true)}
-                className="h-9 w-9 rounded-2xl bg-muted dark:bg-card text-muted-foreground hover:text-foreground/90 hover:bg-muted dark:hover:bg-muted" title="Orçamentos recentes">
-                <FileText className="w-4 h-4 stroke-[1.5]" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={() => setShowReeditarDialog(true)}
-                className="h-9 w-9 rounded-2xl bg-muted dark:bg-card text-muted-foreground hover:text-foreground/90 hover:bg-muted dark:hover:bg-muted" title="Reeditar rascunho">
-                <Edit className="w-4 h-4 stroke-[1.5]" />
-              </Button>
+              {podeHistorico && (
+                <Button variant="ghost" size="icon" onClick={() => setShowOrcamentosRecentes(true)}
+                  className="h-9 w-9 rounded-2xl bg-muted dark:bg-card text-muted-foreground hover:text-foreground/90 hover:bg-muted dark:hover:bg-muted" title="Orçamentos recentes">
+                  <FileText className="w-4 h-4 stroke-[1.5]" />
+                </Button>
+              )}
+              {podeHistorico && (
+                <Button variant="ghost" size="icon" onClick={() => setShowReeditarDialog(true)}
+                  className="h-9 w-9 rounded-2xl bg-muted dark:bg-card text-muted-foreground hover:text-foreground/90 hover:bg-muted dark:hover:bg-muted" title="Reeditar rascunho">
+                  <Edit className="w-4 h-4 stroke-[1.5]" />
+                </Button>
+              )}
               <Button variant="ghost" size="icon" onClick={handleSair}
                 className="h-9 w-9 rounded-2xl bg-muted dark:bg-card text-muted-foreground hover:text-foreground/90 hover:bg-muted dark:hover:bg-muted">
                 <Undo2 className="w-4 h-4 stroke-[1.5]" />
@@ -1345,10 +1363,12 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                           <p className="mt-0.5 text-[10px] text-muted-foreground/80 font-mono tracking-wide">#{item.codigo_interno}</p>
                         ) : null}
                       </div>
+                      {podeRemoverItem && (
                       <button onClick={() => handleRemoveItem(item.item_key)}
                         className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-red-500 flex-shrink-0 rounded-md hover:bg-red-50">
                         <X className="w-3.5 h-3.5" />
                       </button>
+                      )}
                     </div>
                     {/* Preço livre editável */}
                      {item.preco_livre && (
@@ -1414,6 +1434,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
               </div>
 
               {/* Desconto Two-Way */}
+              {podeDesconto && (
               <div className="bg-muted/40 dark:bg-muted/60 rounded-xl p-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Desconto</span>
@@ -1442,6 +1463,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                 </div>
                 {ajusteExcedido && <p className="text-xs text-red-500">Excede limite de {Math.max(currentUser?.limite_desconto || 0, tabelaPreco?.percentual_desconto_maximo || 0)}%</p>}
               </div>
+              )}
 
               <div className="flex justify-between items-center pt-1">
                 <span className="text-sm text-muted-foreground">Total</span>
@@ -1846,10 +1868,12 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                          <p className="text-xs text-muted-foreground mt-0.5">{item.quantidade} {item.unidade_medida || 'UN'} × R$ {item.preco_unitario_praticado.toFixed(2).replace('.', ',')}</p>
                        )}
                     </div>
-                    <button onClick={() => handleRemoveItem(item.item_key)}
-                      className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-red-400 rounded-lg flex-shrink-0">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {podeRemoverItem && (
+                      <button onClick={() => handleRemoveItem(item.item_key)}
+                        className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-red-400 rounded-lg flex-shrink-0">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
@@ -1882,6 +1906,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
             </div>
 
             {/* Desconto Two-Way - Mobile */}
+            {podeDesconto && (
             <div className="bg-muted/40 dark:bg-card rounded-2xl p-3 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">Desconto</span>
@@ -1910,6 +1935,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
               </div>
               {ajusteExcedido && <p className="text-[10px] text-red-500">Excede limite de {Math.max(currentUser?.limite_desconto || 0, tabelaPreco?.percentual_desconto_maximo || 0)}%</p>}
             </div>
+            )}
 
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Total</span>

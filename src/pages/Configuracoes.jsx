@@ -3,6 +3,12 @@ import { base44 } from '@/api/base44Client';
 import { ShieldAlert } from 'lucide-react';
 import { podeAcessarConfiguracoes } from '@/lib/perfilPermissoes';
 import { getCachedUserSession } from '@/lib/userSessionCache';
+import {
+  podeVerAbaConfig,
+  podeVerSubAbaConfigFin,
+  podeVerSubAbaConfigGeral,
+  primeiraAbaConfigPermitida,
+} from '@/lib/configuracoesPermissoes';
 import { TrendingUp, Package, DollarSign, BarChart3, Settings, Building2, Users, Sliders, Tags, Wallet, CreditCard, Smartphone, Bookmark, Wrench, Shield, MapPin, Printer, Trash2, Activity } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
@@ -57,6 +63,35 @@ export default function ConfiguracoesPage() {
     }).catch(() => setUserLoaded(true));
   }, []);
 
+  useEffect(() => {
+    if (!userLoaded || !user) return;
+    const primeira = primeiraAbaConfigPermitida(user, perfilDeAcesso);
+    if (primeira && !podeVerAbaConfig(user, perfilDeAcesso, tab)) {
+      setTab(primeira);
+    }
+  }, [userLoaded, user, perfilDeAcesso, tab]);
+
+  const abasVisiveis = {
+    vendas: podeVerAbaConfig(user, perfilDeAcesso, 'vendas'),
+    operacoes: podeVerAbaConfig(user, perfilDeAcesso, 'operacoes'),
+    financeiro: podeVerAbaConfig(user, perfilDeAcesso, 'financeiro'),
+    geral: podeVerAbaConfig(user, perfilDeAcesso, 'geral'),
+    sistema: podeVerAbaConfig(user, perfilDeAcesso, 'sistema'),
+  };
+
+  const geralSubs = {
+    empresa: podeVerSubAbaConfigGeral(user, perfilDeAcesso, 'empresa'),
+    'usuarios-app': podeVerSubAbaConfigGeral(user, perfilDeAcesso, 'usuarios-app'),
+    'perfis-acesso': podeVerSubAbaConfigGeral(user, perfilDeAcesso, 'perfis-acesso'),
+  };
+
+  const finSubs = {
+    contas: podeVerSubAbaConfigFin(user, perfilDeAcesso, 'contas'),
+    categorias: podeVerSubAbaConfigFin(user, perfilDeAcesso, 'categorias'),
+    formas: podeVerSubAbaConfigFin(user, perfilDeAcesso, 'formas'),
+    maquininhas: podeVerSubAbaConfigFin(user, perfilDeAcesso, 'maquininhas'),
+  };
+
   if (!userLoaded) return null;
 
   const hasConfigAccess = podeAcessarConfiguracoes(user, perfilDeAcesso);
@@ -84,11 +119,21 @@ export default function ConfiguracoesPage() {
 
       {/* Tabs principais */}
       <GlacialTabsList scrollable>
-        <GlacialTabsTrigger value="vendas"     activeValue={tab} onSelect={setTab} icon={TrendingUp}  label="Vendas" pulseSensor="configuracoes.tab-vendas" />
-        <GlacialTabsTrigger value="operacoes"  activeValue={tab} onSelect={setTab} icon={Package}     label="Operações" />
-        <GlacialTabsTrigger value="financeiro" activeValue={tab} onSelect={setTab} icon={DollarSign}  label="Financeiro" />
-        <GlacialTabsTrigger value="geral"      activeValue={tab} onSelect={setTab} icon={Settings}    label="Parâmetros" />
-        <GlacialTabsTrigger value="sistema"    activeValue={tab} onSelect={setTab} icon={Wrench}      label="Ferramentas" />
+        {abasVisiveis.vendas && (
+          <GlacialTabsTrigger value="vendas" activeValue={tab} onSelect={setTab} icon={TrendingUp} label="Vendas" pulseSensor="configuracoes.tab-vendas" />
+        )}
+        {abasVisiveis.operacoes && (
+          <GlacialTabsTrigger value="operacoes" activeValue={tab} onSelect={setTab} icon={Package} label="Operações" />
+        )}
+        {abasVisiveis.financeiro && (
+          <GlacialTabsTrigger value="financeiro" activeValue={tab} onSelect={setTab} icon={DollarSign} label="Financeiro" />
+        )}
+        {abasVisiveis.geral && (
+          <GlacialTabsTrigger value="geral" activeValue={tab} onSelect={setTab} icon={Settings} label="Parâmetros" />
+        )}
+        {abasVisiveis.sistema && (
+          <GlacialTabsTrigger value="sistema" activeValue={tab} onSelect={setTab} icon={Wrench} label="Ferramentas" />
+        )}
       </GlacialTabsList>
 
       <div className="pt-1">
@@ -126,16 +171,24 @@ export default function ConfiguracoesPage() {
         {tab === 'financeiro' && (
           <div className="space-y-4">
             <GlacialSubTabsList>
-              <GlacialSubTabsTrigger value="contas"      activeValue={finTab} onSelect={setFinTab} icon={Wallet}     label="Contas" />
-              <GlacialSubTabsTrigger value="formas"      activeValue={finTab} onSelect={setFinTab} icon={CreditCard} label="Pagamentos" />
-              <GlacialSubTabsTrigger value="maquininhas" activeValue={finTab} onSelect={setFinTab} icon={Smartphone} label="Maquininhas" />
-              <GlacialSubTabsTrigger value="categorias"  activeValue={finTab} onSelect={setFinTab} icon={Bookmark}   label="Categorias" />
+              {finSubs.contas && (
+                <GlacialSubTabsTrigger value="contas" activeValue={finTab} onSelect={setFinTab} icon={Wallet} label="Contas" />
+              )}
+              {finSubs.formas && (
+                <GlacialSubTabsTrigger value="formas" activeValue={finTab} onSelect={setFinTab} icon={CreditCard} label="Pagamentos" />
+              )}
+              {finSubs.maquininhas && (
+                <GlacialSubTabsTrigger value="maquininhas" activeValue={finTab} onSelect={setFinTab} icon={Smartphone} label="Maquininhas" />
+              )}
+              {finSubs.categorias && (
+                <GlacialSubTabsTrigger value="categorias" activeValue={finTab} onSelect={setFinTab} icon={Bookmark} label="Categorias" />
+              )}
             </GlacialSubTabsList>
             <div>
-              {finTab === 'contas'      && <ContasFinanceirasManager />}
-              {finTab === 'formas'      && <FormasPagamentoManager />}
-              {finTab === 'maquininhas' && <MaquininhasManager />}
-              {finTab === 'categorias'  && <CategoriasFinanceirasManager />}
+              {finTab === 'contas' && finSubs.contas && <ContasFinanceirasManager />}
+              {finTab === 'formas' && finSubs.formas && <FormasPagamentoManager />}
+              {finTab === 'maquininhas' && finSubs.maquininhas && <MaquininhasManager />}
+              {finTab === 'categorias' && finSubs.categorias && <CategoriasFinanceirasManager />}
             </div>
           </div>
         )}
@@ -144,14 +197,20 @@ export default function ConfiguracoesPage() {
         {tab === 'geral' && (
           <div className="space-y-4">
             <GlacialSubTabsList>
-              <GlacialSubTabsTrigger value="empresa"       activeValue={geralTab} onSelect={setGeralTab} icon={Building2} label="Dados da Empresa" />
-              <GlacialSubTabsTrigger value="usuarios-app"  activeValue={geralTab} onSelect={setGeralTab} icon={Users}     label="Usuários" />
-              <GlacialSubTabsTrigger value="perfis-acesso" activeValue={geralTab} onSelect={setGeralTab} icon={Shield}    label="Perfis de Acesso" />
+              {geralSubs.empresa && (
+                <GlacialSubTabsTrigger value="empresa" activeValue={geralTab} onSelect={setGeralTab} icon={Building2} label="Dados da Empresa" />
+              )}
+              {geralSubs['usuarios-app'] && (
+                <GlacialSubTabsTrigger value="usuarios-app" activeValue={geralTab} onSelect={setGeralTab} icon={Users} label="Usuários" />
+              )}
+              {geralSubs['perfis-acesso'] && (
+                <GlacialSubTabsTrigger value="perfis-acesso" activeValue={geralTab} onSelect={setGeralTab} icon={Shield} label="Perfis de Acesso" />
+              )}
             </GlacialSubTabsList>
             <div>
-              {geralTab === 'empresa'       && <DadosEmpresaManager />}
-              {geralTab === 'usuarios-app'  && <ListaUsuariosApp />}
-              {geralTab === 'perfis-acesso' && <PerfisDeAcessoManager />}
+              {geralTab === 'empresa' && geralSubs.empresa && <DadosEmpresaManager />}
+              {geralTab === 'usuarios-app' && geralSubs['usuarios-app'] && <ListaUsuariosApp />}
+              {geralTab === 'perfis-acesso' && geralSubs['perfis-acesso'] && <PerfisDeAcessoManager />}
             </div>
           </div>
         )}

@@ -27,7 +27,7 @@ export const MODULOS = [
     key: 'homepage', label: 'Página Inicial',
     submodulos: [
       { key: 'resumo_vendas_home', label: 'Resumo de Vendas' },
-      { key: 'kpis_home', label: 'KPIs Rápidos' },
+      { key: 'kpis_home', label: 'KPIs Rápidos', cosmetic: true },
       { key: 'avisos_home', label: 'Avisos e Alertas' },
       { key: 'atalhos_personalizados', label: 'Atalhos Personalizados' },
       { key: 'acoes_rapidas', label: 'Ações Rápidas (PDV, Caixa...)' },
@@ -103,7 +103,7 @@ export const MODULOS = [
       { key: 'contas', label: 'Contas e Saldos' },
       { key: 'criar_lancamento', label: 'Criar Lançamento' },
       { key: 'aprovar_pagamentos', label: 'Aprovar Pagamentos' },
-      { key: 'conciliar_movimentos', label: 'Conciliação Bancária' },
+      { key: 'conciliar_movimentos', label: 'Conciliação Bancária', cosmetic: true },
       { key: 'ver_extrato', label: 'Ver Extrato' },
       { key: 'caixas_ativos', label: 'Caixas Ativos' },
     ]
@@ -215,6 +215,11 @@ function TreePermissionRow({ item, moduloKey, caminho = [], permissoes, onChange
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <span className="truncate text-sm font-medium text-foreground/90">{item.label}</span>
+              {item.cosmetic && (
+                <span className="rounded-md bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-amber-700 dark:text-amber-400">
+                  só perfil
+                </span>
+              )}
               {temSubitens && (
                 <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-mono ${
                   childCount.ativas > 0 ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground' : 'bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground'
