@@ -981,6 +981,13 @@ function isB2bCatalogSkin(skin) {
   return skin === 'formigres' || skin === 'arielle' || skin === 'ecuaceramica';
 }
 
+/** Seletor CSS partilhado — catálogo B2B (cards no mobile, tabela no desktop). */
+function b2bCatalogCss(suffix) {
+  return ['formigres', 'arielle', 'ecuaceramica']
+    .map((skin) => `html[data-skin="${skin}"]${suffix ? ` ${suffix}` : ''}`)
+    .join(', ');
+}
+
 const BRAND_SKIN_TOKENS = {
   formigres: { accent: '#da1c24', accentBright: '#b01219', accentRgb: '218,28,36', demoBg: '#f9e5e6' },
   arielle: { accent: '#23674c', accentBright: '#1a5239', accentRgb: '35,103,76', demoBg: '#e8f3ee' },
@@ -1508,14 +1515,14 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     .btn-clear-qty svg { width: 20px; height: 20px; }
     .catalog-items { display: block; }
     .catalog-cards-wrap { display: none; }
-    html[data-skin="formigres"] .catalog-card.pedido-card {
+    ${b2bCatalogCss('.catalog-card.pedido-card')} {
       border-bottom: 1px solid var(--border-subtle);
       max-width: 100%;
       overflow: hidden;
       box-sizing: border-box;
     }
-    html[data-skin="formigres"] .catalog-card.pedido-card:last-child { border-bottom: 0; }
-    html[data-skin="formigres"] .catalog-card-thumb-btn {
+    ${b2bCatalogCss('.catalog-card.pedido-card:last-child')} { border-bottom: 0; }
+    ${b2bCatalogCss('.catalog-card-thumb-btn')} {
       flex-shrink: 0;
       padding: 0;
       border: 0;
@@ -1524,17 +1531,17 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       line-height: 0;
       display: block;
     }
-    html[data-skin="formigres"] .catalog-card-thumb-btn .pedido-card-thumb {
+    ${b2bCatalogCss('.catalog-card-thumb-btn .pedido-card-thumb')} {
       display: block;
     }
-    html[data-skin="formigres"] .catalog-card-qty-edit {
+    ${b2bCatalogCss('.catalog-card-qty-edit')} {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 2px;
       min-width: 52px;
     }
-    html[data-skin="formigres"] .catalog-card-qty-label {
+    ${b2bCatalogCss('.catalog-card-qty-label')} {
       font-size: .58rem;
       font-weight: 600;
       letter-spacing: .06em;
@@ -1542,7 +1549,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       color: var(--muted);
       line-height: 1;
     }
-    html[data-skin="formigres"] .catalog-card-qty-edit .qty-input {
+    ${b2bCatalogCss('.catalog-card-qty-edit .qty-input')} {
       width: 52px;
       min-width: 0;
       min-height: 36px;
@@ -1551,18 +1558,18 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       font-weight: 700;
       padding: 4px 2px;
     }
-    html[data-skin="formigres"] .catalog-card .pedido-card-qty-sub {
+    ${b2bCatalogCss('.catalog-card .pedido-card-qty-sub')} {
       font-size: .58rem;
       line-height: 1.25;
       color: var(--muted);
       font-weight: 500;
     }
-    html[data-skin="formigres"] .model-gemeas-detail-card {
+    ${b2bCatalogCss('.model-gemeas-detail-card')} {
       padding: 0 8px 10px;
       background: var(--surface-2);
       border-bottom: 1px solid var(--border-subtle);
     }
-    html[data-skin="formigres"] .model-gemeas-detail-card.hidden { display: none !important; }
+    ${b2bCatalogCss('.model-gemeas-detail-card.hidden')} { display: none !important; }
     .search {
       flex: 1 1 220px;
       background: var(--surface);
@@ -2498,36 +2505,43 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       .pedido-cards-wrap { display: block; overflow-x: hidden; max-width: 100%; }
       .pedido-cards { overflow-x: hidden; max-width: 100%; }
       .pedido-card { max-width: 100%; overflow: hidden; box-sizing: border-box; }
-      html[data-skin="formigres"] .catalog-table-wrap { display: none !important; }
-      html[data-skin="formigres"] .catalog-cards-wrap {
+      ${b2bCatalogCss('.catalog-table-wrap')} { display: none !important; }
+      ${b2bCatalogCss('.catalog-cards-wrap')} {
         display: block;
         padding: 0 0 10px;
         overflow-x: hidden;
         max-width: 100%;
       }
-      html[data-skin="formigres"] .acc-inner {
+      ${b2bCatalogCss('.acc-inner')} {
         padding-left: 0;
         padding-right: 0;
       }
-      html[data-skin="formigres"] .acc-acab {
+      ${b2bCatalogCss('.acc-acab')} {
         --depth: 2;
       }
-      html[data-skin="formigres"] details.acc > .catalog-items,
-      html[data-skin="formigres"] .catalog-items {
+      ${b2bCatalogCss('details.acc > .catalog-items')},
+      ${b2bCatalogCss('.catalog-items')} {
         padding-left: 0;
         padding-right: 0;
       }
-      html[data-skin="formigres"] .model-gemeas-detail-card {
+      ${b2bCatalogCss('.model-gemeas-detail-card')} {
         padding: 0 0 10px;
       }
-      html[data-skin="formigres"] .catalog-cards {
+      ${b2bCatalogCss('.catalog-cards')} {
         display: flex;
         flex-direction: column;
         overflow-x: hidden;
         max-width: 100%;
       }
-      html[data-skin="formigres"] .wrap,
-      html[data-skin="formigres"] .catalogo { overflow-x: hidden; max-width: 100%; }
+      ${b2bCatalogCss('.wrap')},
+      ${b2bCatalogCss('.catalogo')} {
+        overflow-x: hidden;
+        max-width: 100%;
+      }
+      ${b2bCatalogCss('')} {
+        overflow-x: hidden;
+        max-width: 100%;
+      }
       .pedido-card-head { column-gap: 8px; }
       .pedido-card-head-main { column-gap: 8px; }
       .pedido-card-hero { font-size: .82rem; font-weight: 700; line-height: 1.15; }
@@ -2580,15 +2594,15 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       .col-pack, .col-preco,
       .model-table:not(.catalog-pedido-table) thead th:nth-child(3),
       .model-table:not(.catalog-pedido-table) thead th:nth-child(4) { display: none; }
-      html[data-skin="formigres"] .catalog-pedido-table {
+      ${b2bCatalogCss('.catalog-pedido-table')} {
         min-width: 860px;
         font-size: .78rem;
       }
-      html[data-skin="formigres"] .catalog-table-wrap .catalog-pedido-table {
+      ${b2bCatalogCss('.catalog-table-wrap .catalog-pedido-table')} {
         min-width: 860px;
       }
-      html[data-skin="formigres"] .catalog-pedido-table td,
-      html[data-skin="formigres"] .catalog-pedido-table th { padding: 8px 6px; }
+      ${b2bCatalogCss('.catalog-pedido-table td')},
+      ${b2bCatalogCss('.catalog-pedido-table th')} { padding: 8px 6px; }
       .model-table:not(.catalog-pedido-table) { font-size: .78rem; }
       .model-table td, .model-table th { padding: 8px 6px; }
       .col-foto { width: 44px; }
