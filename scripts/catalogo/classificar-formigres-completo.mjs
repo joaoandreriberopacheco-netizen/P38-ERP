@@ -10,6 +10,7 @@ import { classificarFormigres, resumirClassificacoes } from '../lib/formigresCla
 import { readJson, snapshotPath } from '../lib/catalogoPaths.mjs';
 import { loadSnapshotFromFile } from '../lib/formigresSnapshot.mjs';
 import { resolvePrecoFormigres, TABELA_FORMIGRES_META } from '../lib/formigresTabelaPrecos.mjs';
+import { resolveEmbalagemFormigres } from '../lib/formigresEmbalagem.mjs';
 
 const OUT_DIR = path.join(process.cwd(), 'docs', 'imports-local', 'formigres', 'classificacao');
 
@@ -29,6 +30,7 @@ function main() {
     });
     const id = String(p.id);
     const { preco, faixa, motivo } = resolvePrecoFormigres(p, classif);
+    const emb = resolveEmbalagemFormigres(p);
     if (faixa) faixaCount[faixa] = (faixaCount[faixa] || 0) + 1;
     else faixaCount.sem_preco = (faixaCount.sem_preco || 0) + 1;
 
@@ -52,7 +54,11 @@ function main() {
       preco_m2: preco,
       preco_faixa: faixa,
       preco_motivo: motivo || null,
-      m2_por_caixa: null,
+      m2_por_caixa: emb.m2_por_caixa,
+      caixas_por_palete: emb.caixas_por_palete,
+      m2_por_palete: emb.m2_por_palete,
+      peso_kg_caixa: emb.peso_kg_caixa,
+      peso_kg_palete: emb.peso_kg_palete,
       unidade: '',
       total: null,
       pdf: '',

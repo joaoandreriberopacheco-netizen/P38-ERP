@@ -35,6 +35,9 @@ const CONFIGS = {
     title: 'Pedido Formigres — Lojistas',
     h1: 'Pedido Formigres',
     hint: 'Marque caixas na tabela · revise no carrinho',
+    qtyUnit: 'caixa',
+    qtyLabel: 'Caixas',
+    qtyLabelPl: 'caixas',
     demoBanner: '',
     themeKey: 'tintao-theme-v1',
     qtyKey: 'tintao-pedido-qty-v1',
@@ -57,7 +60,10 @@ const CONFIGS = {
     skipPdfThumbs: true,
     title: 'Catálogo Formigres — Pisos e Porcelanatos',
     h1: 'Pisos e Revestimentos Cerâmicos',
-    hint: 'Qualidade, tecnologia e design — linha completa para montar pedido',
+    hint: 'Marque paletes na tabela · revise m², peso e total no carrinho',
+    qtyUnit: 'palete',
+    qtyLabel: 'Paletes',
+    qtyLabelPl: 'paletes',
     demoBanner: '',
     themeKey: 'formigres-catalog-theme-v1',
     qtyKey: 'formigres-catalog-qty-v1',
@@ -301,6 +307,10 @@ function slimItem(item) {
     match_status: item.match_status,
     preco_m2: item.preco_m2,
     m2_por_caixa: item.m2_por_caixa ?? null,
+    caixas_por_palete: item.caixas_por_palete ?? null,
+    m2_por_palete: item.m2_por_palete ?? null,
+    peso_kg_caixa: item.peso_kg_caixa ?? null,
+    peso_kg_palete: item.peso_kg_palete ?? null,
     unidade: item.unidade || '',
     imagem_url: item.imagem_url || '',
     imagens: (item.imagens || []).map((img) => ({ url: img.url, tipo: img.tipo || 'principal' })),
@@ -464,6 +474,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   const total = itens.length;
   const comFoto = itens.filter((i) => i.imagem_url).length;
   const loadSquaresHtml = Array.from({ length: 20 }, () => '<span class="load-square"></span>').join('');
+  const isFormigresSkin = cfg.skin === 'formigres';
+  const qtyLabel = cfg.qtyLabel || (isFormigresSkin ? 'Paletes' : 'Caixas');
+  const qtyLabelPl = cfg.qtyLabelPl || (isFormigresSkin ? 'paletes' : 'caixas');
+  const qtyUnit = cfg.qtyUnit || (isFormigresSkin ? 'palete' : 'caixa');
+  const pedidoTableHead = isFormigresSkin
+    ? '<th>Foto</th><th>Modelo</th><th>Formato</th><th>Paletes</th><th>m²/pl</th><th>Peso/pl</th><th>m² total</th><th>Preço/m²</th><th>Subtotal</th>'
+    : '<th>Foto</th><th>Modelo</th><th>Formato</th><th>Caixas</th><th>m²/cx</th><th>m² total</th><th>Preço/m²</th><th>Subtotal</th>';
   const catalogoJson = JSON.stringify({
     itens: itens.map(slimItem),
     config: {
@@ -472,12 +489,14 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       tipoOrder: TIPO_ORDER,
       tipoLabel: TIPO_LABEL,
       acabOrder: ACAB_ORDER,
+      qtyUnit,
+      qtyLabel,
+      qtyLabelPl,
     },
   }).replace(/</g, '\\u003c');
   const pdfThumbsJson = JSON.stringify(pdfThumbs).replace(/</g, '\\u003c');
   const pdfFontCssSafe = String(pdfFontCss).replace(/<\/style/gi, '<\\/style');
 
-  const isFormigresSkin = cfg.skin === 'formigres';
   const headerLogo = brandLogoDataUri || antLogoDataUri;
   const loaderHtml = isFormigresSkin
     ? `<div class="load-logo-formigres" aria-hidden="true"><img src="${headerLogo}" alt="" width="240" height="41" /></div>`
@@ -1680,7 +1699,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           <option value="acabamento" selected>Por acabamento</option>
           <option value="tipo">Por tipo</option>
         </select>
-        <button type="button" class="btn btn-primary" id="start-qty">Caixas</button>
+        <button type="button" class="btn btn-primary" id="start-qty">${escTpl(qtyLabel)}</button>
         <button type="button" class="btn" id="filter-qty">Na seleção</button>
         <button type="button" class="btn" id="clear-qty">Limpar</button>
         <button type="button" class="btn" id="expand-all">Abrir</button>
@@ -1693,7 +1712,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         </select>
         <button type="button" class="btn" id="filter-qty-d">Só na seleção</button>
         <button type="button" class="btn" id="clear-qty-d">Limpar seleção</button>
-        <button type="button" class="btn btn-primary" id="start-qty-d">Preencher caixas</button>
+        <button type="button" class="btn btn-primary" id="start-qty-d">Preencher ${escTpl(qtyLabelPl)}</button>
         <button type="button" class="btn" id="expand-all-d">Abrir tudo</button>
         <button type="button" class="btn" id="collapse-all-d">Fechar tudo</button>
       </div>
@@ -1722,19 +1741,19 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       <div class="pedido-head">
         <div>
           <h2>Minha seleção</h2>
-          <p style="margin:4px 0 0;font-size:.78rem;color:var(--muted)">Revise caixas, m² e total antes de exportar</p>
+          <p style="margin:4px 0 0;font-size:.78rem;color:var(--muted)">Revise ${escTpl(qtyLabelPl)}, m²${isFormigresSkin ? ', peso' : ''} e total antes de exportar</p>
         </div>
         <button type="button" class="pedido-close" id="pedido-close" aria-label="Fechar">×</button>
       </div>
       <div class="pedido-scroll" id="pedido-scroll">
       <div class="pedido-resumo" id="pedido-resumo"></div>
-      <div class="pedido-empty hidden" id="pedido-empty">Nenhum modelo na seleção — marque caixas na tabela.</div>
+      <div class="pedido-empty hidden" id="pedido-empty">Nenhum modelo na seleção — marque ${escTpl(qtyLabelPl)} na tabela.</div>
       <div class="pedido-list-wrap hidden" id="pedido-list-wrap">
         <div class="table-wrap pedido-table-wrap" id="pedido-table-wrap">
           <table class="pedido-table" id="pedido-table">
             <thead>
               <tr>
-                <th>Foto</th><th>Modelo</th><th>Formato</th><th>Caixas</th><th>m²/cx</th><th>m² total</th><th>Preço/m²</th><th>Subtotal</th>
+                ${pedidoTableHead}
               </tr>
             </thead>
             <tbody id="pedido-body"></tbody>
@@ -1807,6 +1826,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     const PDF_TITLE = '${escTpl(cfg.h1)}';
     const CATALOG_SKIN = '${escTpl(cfg.skin || 'default')}';
+    const QTY_UNIT = CFG.qtyUnit || 'caixa';
+    const QTY_LABEL = CFG.qtyLabel || 'Caixas';
+    const QTY_LABEL_PL = CFG.qtyLabelPl || 'caixas';
     const TIPO_LABEL_GAL = { principal: 'Cerâmica', ambiente: 'Ambiente', piso: 'Piso', face: 'Face', outro: 'Imagem' };
     const QTY_KEY = '${cfg.qtyKey}';
     const THEME_KEY = '${cfg.themeKey}';
@@ -1935,7 +1957,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function clearAllQty() {
       const hasQty = Object.keys(qtyMap).length > 0 || [...document.querySelectorAll('.qty-input')].some((el) => Number(el.value) > 0);
       if (!hasQty) return;
-      if (!confirm('Limpar todas as quantidades de caixa?')) return;
+      if (!confirm('Limpar todas as quantidades de ' + QTY_LABEL_PL + '?')) return;
       qtyMap = {};
       localStorage.removeItem(QTY_KEY);
       document.querySelectorAll('.qty-input').forEach((input) => {
@@ -2022,16 +2044,50 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         || document.getElementById('lightbox')?.classList.contains('open');
       document.body.style.overflow = locked ? 'hidden' : '';
     }
+    function fmtKg(v) {
+      if (v == null || v === '') return '—';
+      return fmtDecimal(v, 1) + ' kg';
+    }
     function parseM2Caixa(item) {
       if (item.m2_por_caixa) return Number(item.m2_por_caixa);
       const m = String(item.unidade || item.descricao || '').match(/CX\\s*([\\d,]+)\\s*M2/i) || String(item.descricao || '').match(/([\\d,]+)\\s*M2/i);
       return m ? Number(m[1].replace(',', '.')) : null;
     }
-    function itemSubtotal(item, qty) {
+    function itemEmbalagem(item) {
       const m2cx = parseM2Caixa(item);
+      const cxpl = item.caixas_por_palete ? Number(item.caixas_por_palete) : null;
+      const m2pl = item.m2_por_palete ? Number(item.m2_por_palete) : (m2cx && cxpl ? Math.round(m2cx * cxpl * 100) / 100 : null);
+      const pesoPl = item.peso_kg_palete ? Number(item.peso_kg_palete) : null;
+      const pesoCx = item.peso_kg_caixa ? Number(item.peso_kg_caixa) : null;
+      return { m2cx, cxpl, m2pl, pesoPl, pesoCx };
+    }
+    function itemM2Unit(item) {
+      if (QTY_UNIT === 'palete') {
+        const { m2pl } = itemEmbalagem(item);
+        return m2pl;
+      }
+      return parseM2Caixa(item);
+    }
+    function itemM2Total(item, qty) {
+      const m2unit = itemM2Unit(item);
+      if (!qty || !m2unit) return null;
+      return Math.round(qty * m2unit * 100) / 100;
+    }
+    function itemPesoUnit(item) {
+      if (QTY_UNIT !== 'palete') return null;
+      const { pesoPl } = itemEmbalagem(item);
+      return pesoPl;
+    }
+    function itemPesoTotal(item, qty) {
+      const pesoUnit = itemPesoUnit(item);
+      if (!qty || !pesoUnit) return null;
+      return Math.round(qty * pesoUnit * 10) / 10;
+    }
+    function itemSubtotal(item, qty) {
+      const m2tot = itemM2Total(item, qty);
       const preco = precoEfetivo(item.preco_m2);
-      if (!qty || !m2cx || !preco) return null;
-      return qty * m2cx * preco;
+      if (!qty || !m2tot || !preco) return null;
+      return Math.round(m2tot * preco * 100) / 100;
     }
     function fmtAreaKey(fmt) {
       const m = String(fmt || '').match(/(\\d+)\\s*x\\s*(\\d+)/i);
@@ -2129,14 +2185,14 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '<td class="col-acab">' + esc(item.formigres_acabamento || '—') + '</td>' +
         '<td class="col-preco' + (descontoPct ? ' has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
         '<td class="col-qty">' +
-        '<input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" tabindex="0" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="Caixas" placeholder="0" />' +
+        '<input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" tabindex="0" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="' + esc(QTY_LABEL) + '" placeholder="0" />' +
         '</td>' +
         '<td class="col-cod">' + esc(item.formato || '—') + '</td></tr>';
     }
     function renderFormato(formato, items) {
       const n = items.length;
       return '<details class="acc acc-formato" open><summary><span class="acc-title">Formato ' + esc(formato) + '</span><span class="acc-count" data-total="' + n + '">' + n + '</span></summary>' +
-        '<div class="table-wrap"><table class="model-table"><thead><tr><th>Foto</th><th>Modelo</th><th>Descrição</th><th>Acab.</th><th>Preço/m²</th><th>Caixas</th><th>Formato</th></tr></thead><tbody>' +
+        '<div class="table-wrap"><table class="model-table"><thead><tr><th>Foto</th><th>Modelo</th><th>Descrição</th><th>Acab.</th><th>Preço/m²</th><th>' + esc(QTY_LABEL) + '</th><th>Formato</th></tr></thead><tbody>' +
         items.map(renderTableRow).join('') + '</tbody></table></div></details>';
     }
     function renderGrupo(key, formatosMap, linha) {
@@ -2218,11 +2274,17 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       }
     }
 
-    function renderPedidoCard({ item, qty, img, titulo, m2cx, m2tot, sub }, opts) {
+    function renderPedidoCard({ item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, sub }, opts) {
       const forPdf = opts && opts.pdf;
       const thumb = img
         ? '<img class="pedido-card-thumb" src="' + esc(img) + '" alt=""' + (forPdf ? ' width="48" height="48"' : ' loading="lazy"') + ' />'
         : '<span class="pedido-card-thumb pedido-card-thumb-empty" aria-hidden="true">—</span>';
+      const m2Label = QTY_UNIT === 'palete' ? 'm²/pl' : 'm²/cx';
+      const qtyLabel = QTY_LABEL;
+      const gridExtra = QTY_UNIT === 'palete'
+        ? '<div class="pedido-card-kv"><span class="pedido-card-kv-label">Peso/pl</span><span class="pedido-card-kv-val">' + esc(pesoUnit ? fmtKg(pesoUnit) : '—') + '</span></div>'
+        : '';
+      const gridCols = QTY_UNIT === 'palete' ? 4 : 3;
       return '<article class="pedido-card' + (forPdf ? ' pedido-card-pdf' : '') + '">' +
         '<div class="pedido-card-head">' +
           thumb +
@@ -2241,37 +2303,46 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
             '</div>' +
           '</div>' +
         '</div>' +
-        '<div class="pedido-card-grid">' +
-          '<div class="pedido-card-kv"><span class="pedido-card-kv-label">Caixas</span><span class="pedido-card-kv-val">' + qty + '</span></div>' +
-          '<div class="pedido-card-kv"><span class="pedido-card-kv-label">m²/cx</span><span class="pedido-card-kv-val">' + esc(m2cx ? fmtDecimal(m2cx) : '—') + '</span></div>' +
+        '<div class="pedido-card-grid" style="grid-template-columns:repeat(' + gridCols + ',minmax(0,1fr))">' +
+          '<div class="pedido-card-kv"><span class="pedido-card-kv-label">' + esc(qtyLabel) + '</span><span class="pedido-card-kv-val">' + qty + '</span></div>' +
+          '<div class="pedido-card-kv"><span class="pedido-card-kv-label">' + esc(m2Label) + '</span><span class="pedido-card-kv-val">' + esc(m2unit ? fmtDecimal(m2unit) : '—') + '</span></div>' +
+          gridExtra +
           '<div class="pedido-card-kv"><span class="pedido-card-kv-label">m² total</span><span class="pedido-card-kv-val">' + esc(m2tot ? fmtDecimal(m2tot) : '—') + '</span></div>' +
         '</div>' +
       '</article>';
     }
     function renderPedido() {
       const rows = pedidoItens();
-      let totalCaixas = 0;
+      let totalQty = 0;
       let totalM2 = 0;
+      let totalPeso = 0;
       let totalValor = 0;
       const bodyRows = [];
       const cardRows = [];
       for (const { item, qty } of rows) {
-        const m2cx = parseM2Caixa(item);
-        const m2tot = m2cx ? qty * m2cx : null;
+        const m2unit = itemM2Unit(item);
+        const m2tot = itemM2Total(item, qty);
+        const pesoUnit = itemPesoUnit(item);
+        const pesoTot = itemPesoTotal(item, qty);
         const sub = itemSubtotal(item, qty);
-        totalCaixas += qty;
+        totalQty += qty;
         if (m2tot) totalM2 += m2tot;
+        if (pesoTot) totalPeso += pesoTot;
         if (sub) totalValor += sub;
         const imgs = getGaleria(item);
         const img = imgs[0]?.url || '';
         const titulo = item.formigres_titulo || item.descricao;
-        const rowData = { item, qty, img, titulo, m2cx, m2tot, sub };
+        const rowData = { item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, sub };
+        const pesoCol = QTY_UNIT === 'palete'
+          ? '<td>' + (pesoUnit ? fmtKg(pesoUnit) : '—') + '</td>'
+          : '';
         bodyRows.push('<tr>' +
           '<td>' + (img ? '<img src="' + esc(img) + '" alt="" width="48" height="48" style="object-fit:cover;border-radius:6px" />' : '—') + '</td>' +
           '<td><strong>' + esc(titulo) + '</strong><br><small>' + esc(item.codigo_tintao) + '</small></td>' +
           '<td>' + esc(item.formato || '—') + '</td>' +
           '<td>' + qty + '</td>' +
-          '<td>' + (m2cx ? fmtDecimal(m2cx) : '—') + '</td>' +
+          '<td>' + (m2unit ? fmtDecimal(m2unit) : '—') + '</td>' +
+          pesoCol +
           '<td>' + (m2tot ? fmtDecimal(m2tot) : '—') + '</td>' +
           '<td class="' + (descontoPct ? 'has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
           '<td class="col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>');
@@ -2281,13 +2352,21 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       document.getElementById('pedido-cards').innerHTML = cardRows.join('');
       document.getElementById('pedido-empty')?.classList.toggle('hidden', rows.length > 0);
       document.getElementById('pedido-list-wrap')?.classList.toggle('hidden', rows.length === 0);
+      const pesoStat = QTY_UNIT === 'palete' && totalPeso
+        ? '<span class="stat"><strong>' + fmtDecimal(totalPeso, 1) + '</strong> kg</span>'
+        : '';
       document.getElementById('pedido-resumo').innerHTML = rows.length
         ? '<span class="stat"><strong>' + rows.length + '</strong> modelos</span>' +
-          '<span class="stat"><strong>' + totalCaixas + '</strong> caixas</span>' +
-          '<span class="stat"><strong>' + fmtDecimal(totalM2) + '</strong> m²</span>'
+          '<span class="stat"><strong>' + totalQty + '</strong> ' + QTY_LABEL_PL + '</span>' +
+          '<span class="stat"><strong>' + fmtDecimal(totalM2) + '</strong> m²</span>' +
+          pesoStat
+        : '';
+      const pesoTotalLine = QTY_UNIT === 'palete' && totalPeso
+        ? '<p class="pedido-peso-note">Peso estimado: <strong>' + fmtKg(totalPeso) + '</strong></p>'
         : '';
       document.getElementById('pedido-total').innerHTML = rows.length
         ? '<span>Total estimado: <strong>' + fmtMoney(totalValor) + '</strong></span>' +
+          pesoTotalLine +
           (descontoPct ? '<p class="pedido-desconto-note">Preços com ' + descontoPct + '% de desconto comercial</p>' : '')
         : '';
       document.getElementById('pdf-pedido-panel')?.toggleAttribute('disabled', rows.length === 0);
@@ -2296,8 +2375,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
 
     function updateCartFab() {
       const rows = pedidoItens();
-      let totalCaixas = 0;
-      for (const { qty } of rows) totalCaixas += qty;
+      let totalQty = 0;
+      for (const { qty } of rows) totalQty += qty;
       const count = rows.length;
       const badge = document.getElementById('cart-fab-badge');
       const fab = document.getElementById('cart-fab');
@@ -2308,7 +2387,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       if (fab) {
         fab.classList.toggle('has-items', count > 0);
         fab.setAttribute('aria-label', count
-          ? 'Minha seleção — ' + count + ' modelos, ' + totalCaixas + ' caixas'
+          ? 'Minha seleção — ' + count + ' modelos, ' + totalQty + ' ' + QTY_LABEL_PL
           : 'Minha seleção vazia');
       }
       document.body.classList.toggle('has-selection', count > 0);
@@ -2338,28 +2417,38 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     function buildPedidoPrintHtml(thumbs) {
       const rows = pedidoItens();
-      let totalCaixas = 0, totalM2 = 0, totalValor = 0;
+      let totalQty = 0, totalM2 = 0, totalPeso = 0, totalValor = 0;
       const cards = [];
       for (const { item, qty } of rows) {
-        const m2cx = parseM2Caixa(item);
-        const m2tot = m2cx ? qty * m2cx : null;
+        const m2unit = itemM2Unit(item);
+        const m2tot = itemM2Total(item, qty);
+        const pesoUnit = itemPesoUnit(item);
+        const pesoTot = itemPesoTotal(item, qty);
         const sub = itemSubtotal(item, qty);
-        totalCaixas += qty;
+        totalQty += qty;
         if (m2tot) totalM2 += m2tot;
+        if (pesoTot) totalPeso += pesoTot;
         if (sub) totalValor += sub;
         const imgs = getGaleria(item);
         const img = pdfImgSrc(imgs[0]?.url || '', thumbs, item);
         const titulo = item.formigres_titulo || item.descricao;
-        cards.push(renderPedidoCard({ item, qty, img, titulo, m2cx, m2tot, sub }, { pdf: true }));
+        cards.push(renderPedidoCard({ item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, sub }, { pdf: true }));
       }
       const cardsHtml = cards.join('');
       const descNote = descontoPct ? '<p class="print-note">Desconto comercial aplicado: ' + descontoPct + '% sobre a tabela.</p>' : '';
+      const pesoResumo = QTY_UNIT === 'palete' && totalPeso
+        ? '<span class="print-resumo-stat"><strong>' + fmtDecimal(totalPeso, 1) + '</strong> kg</span>'
+        : '';
       const resumo = rows.length
         ? '<div class="print-resumo">' +
             '<span class="print-resumo-stat"><strong>' + rows.length + '</strong> modelos</span>' +
-            '<span class="print-resumo-stat"><strong>' + totalCaixas + '</strong> caixas</span>' +
+            '<span class="print-resumo-stat"><strong>' + totalQty + '</strong> ' + QTY_LABEL_PL + '</span>' +
             '<span class="print-resumo-stat"><strong>' + fmtDecimal(totalM2) + '</strong> m²</span>' +
+            pesoResumo +
           '</div>'
+        : '';
+      const pesoPrintLine = QTY_UNIT === 'palete' && totalPeso
+        ? '<p class="print-peso">Peso estimado: <strong>' + fmtKg(totalPeso) + '</strong></p>'
         : '';
       return '<div class="print-sheet">' +
         '<header class="print-head">' +
@@ -2369,6 +2458,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '</header>' +
         resumo +
         '<div class="print-cards">' + cardsHtml + '</div>' +
+        pesoPrintLine +
         '<p class="print-totals"><strong>Total estimado: ' + fmtMoney(totalValor) + '</strong></p>' +
       '</div>';
     }
