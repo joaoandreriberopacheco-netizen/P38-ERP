@@ -3274,8 +3274,18 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function renderGemeasPdfRefs(item) {
       const g = item.gemeas;
       if (!g || g.length < 2) return '';
-      const parts = g.map((row) => '#' + esc(row.codigo) + ' ' + esc(row.marca));
-      return '<div class="print-pedido-item-gemeas">' + parts.join(' · ') + '</div>';
+      const parts = g.map((row) => {
+        const ref = row.referencia && row.referencia !== '—' ? ' <strong>' + esc(row.referencia) + '</strong>' : '';
+        return '#' + esc(row.codigo) + ' ' + esc(row.marca) + ref;
+      });
+      return '<div class="print-pedido-item-ref print-pedido-item-ref-gemeas">' + parts.join(' · ') + '</div>';
+    }
+    function renderPedidoPrintRefLine(item) {
+      const hasGemeas = item.gemeas && item.gemeas.length > 1;
+      if (hasGemeas) return renderGemeasPdfRefs(item);
+      const ref = String(item.referencia || '').trim();
+      if (!ref || ref === '—') return '';
+      return '<div class="print-pedido-item-ref">' + esc(ref) + '</div>';
     }
     function renderPrintFormatGroupHeader(fmt, qtyPl, pesoKg, m2tot) {
       const fmtLabel = esc(String(fmt || '—').toUpperCase());
@@ -3339,16 +3349,15 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         ? '<img src="' + esc(imgSrc) + '" alt="" width="' + thumbPx + '" height="' + thumbPx + '" />'
         : '<span class="print-pedido-item-thumb-empty" aria-hidden="true">—</span>';
       const hasGemeas = item.gemeas && item.gemeas.length > 1;
+      const refHtml = renderPedidoPrintRefLine(item);
       const metaParts = [];
       if (!hasGemeas) {
         metaParts.push('#' + esc(item.codigo_tintao));
         if (item.marca_nome) metaParts.push(esc(item.marca_nome));
       }
-      if (item.referencia) metaParts.push('ref. ' + esc(item.referencia));
       const metaHtml = metaParts.length
         ? '<div class="print-pedido-item-meta">' + metaParts.join(' · ') + '</div>'
         : '';
-      const gemeasHtml = renderGemeasPdfRefs(item);
       const qtyShort = QTY_UNIT === 'palete' ? 'pl' : 'cx';
       const metrics = [];
       metrics.push('<strong>' + qty + ' ' + esc(qtyShort) + '</strong>');
@@ -3372,8 +3381,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           '<div class="print-pedido-item-thumb">' + thumb + '</div>' +
           '<div class="print-pedido-item-desc">' +
             '<div class="print-pedido-item-title">' + esc(titulo) + '</div>' +
+            refHtml +
             metaHtml +
-            gemeasHtml +
           '</div>' +
           '<div class="print-pedido-item-sub">' +
             '<strong>' + esc(sub != null ? fmtMoney(sub) : '—') + '</strong>' +
@@ -3611,8 +3620,10 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '.print-pedido-item-thumb-empty { display: flex; align-items: center; justify-content: center; width: ' + thumb + 'px; height: ' + thumb + 'px; border-radius: 6px; background: #f0f0f0; color: #767676; font-size: 11px; }' +
         '.print-pedido-item-desc { flex: 1; min-width: 0; padding-top: 2px; }' +
         '.print-pedido-item-title { font-size: 14px; font-weight: 600; line-height: 1.35; color: #2f2f2f; word-break: break-word; }' +
+        '.print-pedido-item-ref { margin-top: 4px; font-size: 12px; font-weight: 700; letter-spacing: .08em; color: #2f2f2f; line-height: 1.35; }' +
+        '.print-pedido-item-ref-gemeas { font-size: 10px; font-weight: 500; letter-spacing: 0; line-height: 1.45; color: #767676; }' +
+        '.print-pedido-item-ref-gemeas strong { color: #2f2f2f; font-weight: 700; letter-spacing: .08em; }' +
         '.print-pedido-item-meta { margin-top: 4px; font-size: 11px; color: #767676; line-height: 1.35; }' +
-        '.print-pedido-item-gemeas { margin-top: 5px; font-size: 10px; color: #767676; line-height: 1.45; }' +
         '.print-pedido-item-sub { flex-shrink: 0; text-align: right; min-width: 96px; padding-top: 2px; }' +
         '.print-pedido-item-sub strong { display: block; font-size: 15px; font-weight: 700; color: #b01219; white-space: nowrap; }' +
         '.print-pedido-item-sub span { display: block; margin-top: 2px; font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: #767676; }' +
