@@ -1635,7 +1635,56 @@
       if (!url) return '';
       if (thumbs?.[url]) return thumbs[url];
       if (item?.imagem_url && thumbs?.[item.imagem_url]) return thumbs[item.imagem_url];
-      return '';
+      return url;
+    }
+    function pedidoPdfImageUrls() {
+      const urls = new Set();
+      for (const { item } of pedidoItens()) {
+        const imgs = getGaleria(item);
+        const url = imgs[0]?.url || item.imagem_url;
+        if (url) urls.add(url);
+      }
+      return [...urls];
+    }
+    function rasterizePdfThumb(img, size) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return '';
+      const scale = Math.max(size / img.naturalWidth, size / img.naturalHeight);
+      const w = img.naturalWidth * scale;
+      const h = img.naturalHeight * scale;
+      ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+      try {
+        return canvas.toDataURL('image/jpeg', 0.48);
+      } catch {
+        return '';
+      }
+    }
+    function loadPdfThumbFromUrl(url) {
+      return new Promise((resolve) => {
+        if (!url) { resolve(''); return; }
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        const finish = (value) => {
+          clearTimeout(timer);
+          resolve(value || url);
+        };
+        const timer = setTimeout(() => finish(url), 12000);
+        img.onload = () => finish(rasterizePdfThumb(img, 80) || url);
+        img.onerror = () => finish(url);
+        img.src = url;
+      });
+    }
+    async function ensurePedidoPdfThumbs(baseThumbs) {
+      const thumbs = { ...(baseThumbs || {}) };
+      const missing = pedidoPdfImageUrls().filter((url) => !thumbs[url]);
+      if (!missing.length) return thumbs;
+      await Promise.all(missing.map(async (url) => {
+        thumbs[url] = await loadPdfThumbFromUrl(url);
+      }));
+      return thumbs;
     }
     function fmtMoney(v) {
       if (v == null || v === '') return '—';
@@ -2541,14 +2590,13 @@
       const btn = document.getElementById('pdf-pedido-panel');
       const prevLabel = btn?.textContent || 'PDF do pedido';
       if (btn) { btn.disabled = true; btn.textContent = 'Gerando PDF…'; }
-      const thumbs = loadPdfThumbs();
-      const thumbCount = Object.values(thumbs).filter(Boolean).length;
-      if (!thumbCount) {
-        alert('As miniaturas do PDF não carregaram. Recarregue a página e tente de novo.');
-        if (btn) { btn.disabled = !pedidoItens().length; btn.textContent = prevLabel; }
-        return;
-      }
       try {
+        let thumbs = loadPdfThumbs();
+        const missingCount = pedidoPdfImageUrls().filter((url) => !thumbs[url]).length;
+        if (missingCount) {
+          if (btn) btn.textContent = 'A preparar fotos…';
+          thumbs = await ensurePedidoPdfThumbs(thumbs);
+        }
         revokePedidoPdfBlob();
         pedidoPdfBlob = await renderPedidoPdfBlob(thumbs);
         pedidoPdfBlobUrl = URL.createObjectURL(pedidoPdfBlob);
