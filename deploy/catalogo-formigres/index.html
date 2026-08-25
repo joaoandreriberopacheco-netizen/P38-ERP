@@ -592,7 +592,7 @@
     }
     .col-foto { width: 58px; }
     .col-modelo { min-width: 140px; }
-    .col-desc { min-width: 180px; color: var(--muted); font-size: .78rem; }
+    .col-pack { min-width: 120px; max-width: 180px; color: var(--muted); font-size: .72rem; line-height: 1.35; white-space: nowrap; }
     .col-acab { white-space: nowrap; font-size: .78rem; }
     .col-preco { white-space: nowrap; text-align: right; }
     .col-cod { white-space: nowrap; color: var(--muted); font-size: .78rem; text-align: right; }
@@ -1259,11 +1259,9 @@
         color: var(--muted);
         line-height: 1.3;
       }
-      .col-desc, .col-acab, .col-preco, .col-cod,
+      .col-pack, .col-preco,
       .model-table thead th:nth-child(3),
-      .model-table thead th:nth-child(4),
-      .model-table thead th:nth-child(5),
-      .model-table thead th:nth-child(7) { display: none; }
+      .model-table thead th:nth-child(4) { display: none; }
       .model-table { font-size: .78rem; }
       .model-table td, .model-table th { padding: 8px 6px; }
       .col-foto { width: 44px; }
@@ -1271,7 +1269,7 @@
       .col-modelo strong { font-size: .82rem; line-height: 1.25; }
       .col-modelo small { font-size: .7rem; }
       .thumb-btn, .thumb-empty { width: 40px; height: 40px; }
-      .col-qty, .model-table thead th:nth-child(6) {
+      .col-qty, .model-table thead th:nth-child(5) {
         position: sticky;
         right: 0;
         background: var(--surface);
@@ -1282,7 +1280,7 @@
         padding-right: 4px;
         box-shadow: -4px 0 6px rgba(0,0,0,.05);
       }
-      .model-table thead th:nth-child(6) { background: var(--surface-2); z-index: 2; }
+      .model-table thead th:nth-child(5) { background: var(--surface-2); z-index: 2; }
       .col-qty .qty-input {
         width: 48px;
         min-height: 40px;
@@ -1299,7 +1297,7 @@
       .stats { gap: 6px; }
       .stat { font-size: .75rem; padding: 5px 10px; }
       .model-table td, .model-table th { padding: 7px 5px; }
-      .col-qty, .model-table thead th:nth-child(6) { width: 54px; min-width: 54px; }
+      .col-qty, .model-table thead th:nth-child(5) { width: 54px; min-width: 54px; }
       .col-qty .qty-input { width: 44px; min-height: 38px; }
       .lightbox-head h3 { font-size: .88rem; }
       .lightbox-stage { min-height: 220px; }
@@ -1875,6 +1873,20 @@
       }
       return tree;
     }
+    function fmtEmbalagemText(item) {
+      const emb = itemEmbalagem(item);
+      if (QTY_UNIT === 'palete') {
+        const parts = [];
+        if (emb.cxpl) parts.push(emb.cxpl + ' cx/pl');
+        if (emb.m2pl) parts.push(fmtDecimal(emb.m2pl) + ' m²/pl');
+        if (emb.pesoPl) parts.push(fmtDecimal(emb.pesoPl, 1) + ' kg/pl');
+        return parts.length ? parts.join(' · ') : '—';
+      }
+      const m2cx = parseM2Caixa(item);
+      if (m2cx) return fmtDecimal(m2cx) + ' m²/cx';
+      const un = String(item.unidade || '').trim();
+      return un || '—';
+    }
     function getGaleria(item) {
       const imgs = Array.isArray(item.imagens) ? item.imagens.filter((i) => i && i.url) : [];
       if (imgs.length) return imgs;
@@ -1886,24 +1898,23 @@
       const titulo = item.formigres_titulo || item.descricao;
       const cod = item.codigo_tintao;
       const qty = getQty(cod);
+      const pack = fmtEmbalagemText(item);
       const foto = img
         ? '<button type="button" class="thumb-btn' + (imgs.length > 1 ? ' has-gallery' : '') + '" tabindex="-1" data-cod="' + esc(cod) + '" data-title="' + esc(titulo) + '" title="Ver fotos"><img src="' + esc(img) + '" alt="" loading="lazy" />' + (imgs.length > 1 ? '<span class="thumb-more" aria-hidden="true">▦</span>' : '') + '</button>'
         : '<span class="thumb-empty">—</span>';
       const warn = item.match_status !== 'encontrado' ? ' <span class="badge warn">sem match</span>' : '';
-      const metaMobile = '<div class="model-meta-mobile">' + esc(item.formigres_acabamento || '—') + ' · ' + fmtPrecoHtml(item.preco_m2) + '</div>';
-      return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod).toLowerCase()) + '" data-qty="' + qty + '">' +
+      const metaMobile = '<div class="model-meta-mobile">' + esc(pack) + ' · ' + fmtPrecoHtml(item.preco_m2) + '</div>';
+      return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack).toLowerCase()) + '" data-qty="' + qty + '">' +
         '<td class="col-foto">' + foto + '</td>' +
         '<td class="col-modelo"><strong>' + esc(titulo) + '</strong>' + warn + '<br><small style="color:var(--muted)">#' + esc(cod) + '</small>' + metaMobile + '</td>' +
-        '<td class="col-desc">' + esc(item.descricao) + '</td>' +
-        '<td class="col-acab">' + esc(item.formigres_acabamento || '—') + '</td>' +
+        '<td class="col-pack">' + esc(pack) + '</td>' +
         '<td class="col-preco' + (descontoPct ? ' has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
         '<td class="col-qty">' +
         '<input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" tabindex="0" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="' + esc(QTY_LABEL) + '" placeholder="0" />' +
-        '</td>' +
-        '<td class="col-cod">' + esc(item.formato || '—') + '</td></tr>';
+        '</td></tr>';
     }
     function renderItemsTable(items) {
-      return '<div class="table-wrap"><table class="model-table"><thead><tr><th>Foto</th><th>Modelo</th><th>Descrição</th><th>Acab.</th><th>Preço/m²</th><th>' + esc(QTY_LABEL) + '</th><th>Formato</th></tr></thead><tbody>' +
+      return '<div class="table-wrap"><table class="model-table"><thead><tr><th>Foto</th><th>Modelo</th><th>Embalagem</th><th>Preço/m²</th><th>' + esc(QTY_LABEL) + '</th></tr></thead><tbody>' +
         items.map(renderTableRow).join('') + '</tbody></table></div>';
     }
     function renderAcabamentoLeaf(acab, items) {
