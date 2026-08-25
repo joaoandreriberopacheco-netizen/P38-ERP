@@ -1,5 +1,7 @@
 import { Checkbox } from '@/components/ui/checkbox';
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
+import ProdutoThumb from '@/components/produtos/ProdutoThumb';
+import { getProdutoLabel } from '@/components/compras/productMatchingUtils';
 import { cn } from '@/lib/utils';
 
 function SpecCell({ label, value, highlight = false }) {
@@ -46,6 +48,17 @@ export default function ImportadorOcrItemCard({
     item.confianca ? `IA ${item.confianca}` : null,
   ].filter(Boolean);
 
+  const selectedId =
+    item.selected_product_id && item.selected_product_id !== 'create_new'
+      ? item.selected_product_id
+      : null;
+  const suggestedProduct = getSuggestedProduct(item);
+  const catalogProduto = selectedId
+    ? produtos.find((p) => p.id === selectedId) || suggestedProduct
+    : suggestedProduct;
+  const catalogLabel = catalogProduto ? getProdutoLabel(catalogProduto) : null;
+  const catalogConfirmado = Boolean(selectedId);
+
   return (
     <article
       className={cn(
@@ -68,12 +81,34 @@ export default function ImportadorOcrItemCard({
           />
         </div>
 
+        <ProdutoThumb
+          produto={catalogProduto}
+          size="lg"
+          roundedClassName="rounded-lg"
+          className="shadow-sm"
+          enableGaleria
+          asDiv
+        />
+
         <div className="min-w-0 flex-1">
           <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 items-start">
             <div className="min-w-0">
               <h3 className="text-base font-bold leading-snug text-foreground">{item.descricao}</h3>
               {metaParts.length > 0 ? (
                 <p className="mt-1 text-sm text-muted-foreground leading-snug">{metaParts.join(' · ')}</p>
+              ) : null}
+              {catalogLabel ? (
+                <p
+                  className={cn(
+                    'mt-1.5 text-sm font-medium leading-snug',
+                    catalogConfirmado
+                      ? 'text-emerald-700 dark:text-emerald-400'
+                      : 'text-amber-700 dark:text-amber-300',
+                  )}
+                >
+                  {catalogConfirmado ? 'Catálogo: ' : 'Sugestão: '}
+                  {catalogLabel}
+                </p>
               ) : null}
             </div>
             <div className="text-right flex-none">
@@ -98,10 +133,7 @@ export default function ImportadorOcrItemCard({
 
           <div className="mt-3 grid grid-cols-3 gap-2 rounded-2xl bg-muted/50 p-3">
             <SpecCell label="Qtd" value={String(qty)} />
-            <SpecCell
-              label="Preço un."
-              value={`R$ ${formatCurrency(unitPrice)}`}
-            />
+            <SpecCell label="Preço un." value={`R$ ${formatCurrency(unitPrice)}`} />
             <SpecCell label="Total" value={`R$ ${formatCurrency(lineTotal)}`} highlight />
           </div>
 
@@ -120,8 +152,8 @@ export default function ImportadorOcrItemCard({
               onProductCreated={onProductCreated}
               size="comfortable"
             />
-            {item.selected_product_id && item.selected_product_id !== 'create_new' ? (() => {
-              const p = produtos.find((x) => x.id === item.selected_product_id);
+            {catalogConfirmado ? (() => {
+              const p = produtos.find((x) => x.id === selectedId);
               if (!p) return null;
               const opt = resolverUnidadeCompra(p, item.unidade_medida_documento);
               const eq = textoEquivEstoque(p, qty, opt);

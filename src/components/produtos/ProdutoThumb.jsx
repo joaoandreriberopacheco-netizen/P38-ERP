@@ -8,6 +8,7 @@ const SIZE_CLASS = {
   xs: 'w-9 h-9',
   sm: 'w-10 h-10',
   md: 'w-12 h-12',
+  lg: 'w-[52px] h-[52px]',
 };
 
 /**
