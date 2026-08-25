@@ -7,8 +7,16 @@ O código do **Catálogo B2B white-label** está a ser separado do P38-ERP para 
 | | |
 |--|--|
 | **Nome** | `p38-catalogo-b2b` (público) |
-| **URL** | https://github.com/joaoandreriberopacheco-netizen/p38-catalogo-b2b |
-| **Código preparado** | pasta `p38-catalogo-b2b/` na raiz do workspace (gitignored aqui) |
+| **URL dedicado** | https://github.com/joaoandreriberopacheco-netizen/p38-catalogo-b2b *(criar repo vazio — ver abaixo)* |
+| **Código já no GitHub** | Branch [`p38-catalogo-b2b`](https://github.com/joaoandreriberopacheco-netizen/P38-ERP/tree/p38-catalogo-b2b) no P38-ERP |
+| **Local** | pasta `p38-catalogo-b2b/` (gitignored no P38-ERP) |
+
+## Criar repo dedicado (1 passo teu + 1 comando)
+
+1. https://github.com/new → `p38-catalogo-b2b` · **público** · **vazio** (sem README)
+2. Na pasta local: `cd p38-catalogo-b2b && npm run repo:publicar`
+
+Links Vercel **não mudam** até migrar origem Git (`docs/MIGRACAO_VERCEL.md` no branch).
 
 ## Links dos catálogos (não mudam)
 
@@ -24,14 +32,9 @@ Os projectos Vercel **continuam ligados ao P38-ERP** até migrar a origem Git. O
 ## Criar o repo no GitHub (uma vez)
 
 1. https://github.com/new → nome `p38-catalogo-b2b`, **público**, sem README
-2. No terminal:
+2. `cd p38-catalogo-b2b && npm run repo:publicar`
 
-```bash
-cd p38-catalogo-b2b
-git push -u origin main
-```
-
-(O commit inicial já está feito localmente.)
+O código já está no branch [`p38-catalogo-b2b`](https://github.com/joaoandreriberopacheco-netizen/P38-ERP/tree/p38-catalogo-b2b) do P38-ERP.
 
 ## Depois da migração
 
