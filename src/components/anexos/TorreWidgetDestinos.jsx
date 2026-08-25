@@ -13,7 +13,6 @@ import {
   Receipt,
   RadioTower,
 } from 'lucide-react';
-import { brandSurface } from '@/lib/brandSurfaces';
 import { formatarValorBRL } from '@/lib/extrairDadosComprovante';
 import {
   obterFilhosWidget,
@@ -21,6 +20,8 @@ import {
   titulosBreadcrumb,
   widgetPathParent,
 } from '@/lib/torreWidgetTree';
+import { P38_FIELD_SURFACE, P38_KPI_SHELL, P38_ACCENT } from '@/components/financeiro/fluxo/financeiroP38';
+import { cn } from '@/lib/utils';
 
 const ICON_MAP = {
   'shopping-cart': ShoppingCart,
@@ -46,26 +47,34 @@ function WidgetCard({ icon: Icon, titulo, descricao, onClick, disabled, nivel = 
       type="button"
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
-      className={`flex w-full items-center gap-3 text-left transition-colors ${
+      className={cn(
+        'flex w-full items-center gap-3 text-left transition-colors',
         isPai
-          ? `rounded-2xl p-4 shadow-sm md:rounded-3xl md:p-5 ${brandSurface.card} ${
-              disabled ? 'cursor-not-allowed opacity-45' : 'hover:bg-muted/40 dark:hover:bg-muted/30'
-            }`
-          : `rounded-2xl border border-border/50 px-4 py-3.5 dark:border-border/40 ${
-              disabled ? 'cursor-not-allowed opacity-45' : 'hover:bg-muted/30'
-            }`
-      }`}
+          ? cn(
+              'rounded-2xl p-4',
+              P38_FIELD_SURFACE,
+              disabled ? 'cursor-not-allowed opacity-45' : 'hover:bg-muted/30 active:scale-[0.99]',
+            )
+          : cn(
+              'rounded-xl border border-border/40 px-4 py-3.5 dark:border-white/10',
+              disabled ? 'cursor-not-allowed opacity-45' : 'hover:bg-muted/20',
+            ),
+      )}
     >
       {isPai ? (
-        <div className={`flex h-11 w-11 shrink-0 items-center justify-center md:h-12 md:w-12 ${brandSurface.iconCapsule}`}>
-          <Icon className="h-5 w-5 text-foreground/90 dark:text-foreground" />
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-muted/50 md:h-12 md:w-12">
+          <Icon className={cn('h-5 w-5', P38_ACCENT)} />
         </div>
       ) : (
         <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
       )}
       <div className="min-w-0 flex-1">
-        <p className={`${isPai ? 'text-sm font-semibold' : 'text-sm font-medium'} text-foreground`}>{titulo}</p>
-        {descricao && <p className={`mt-0.5 text-xs ${brandSurface.textLabel}`}>{descricao}</p>}
+        <p className={cn('text-foreground', isPai ? 'text-sm font-semibold' : 'text-sm font-medium')}>
+          {titulo}
+        </p>
+        {descricao ? (
+          <p className="mt-0.5 text-xs text-muted-foreground">{descricao}</p>
+        ) : null}
       </div>
       <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
     </button>
@@ -120,23 +129,25 @@ export default function TorreWidgetDestinos({
   return (
     <div className="flex flex-col gap-3 px-4 md:px-5">
       {(valorLabel || lendoComprovante || dadosComprovante?.descricao) && (
-        <div className={`rounded-2xl px-4 py-3 ${brandSurface.card}`}>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <div className={cn('rounded-2xl px-4 py-3', P38_KPI_SHELL)}>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             Leitura do comprovante
           </p>
           {lendoComprovante ? (
-            <p className="mt-1 text-sm text-muted-foreground">A ler valor e descrição…</p>
+            <p className="mt-2 text-sm text-muted-foreground">A ler valor e descrição…</p>
           ) : (
             <>
-              {valorLabel && (
-                <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">{valorLabel}</p>
-              )}
-              {dadosComprovante?.descricao && (
-                <p className={`mt-0.5 truncate text-xs ${brandSurface.textLabel}`}>{dadosComprovante.descricao}</p>
-              )}
-              {!valorLabel && !dadosComprovante?.descricao && (
-                <p className="mt-1 text-sm text-muted-foreground">Não foi possível detectar o valor automaticamente.</p>
-              )}
+              {valorLabel ? (
+                <p className={cn('mt-2 text-xl font-semibold tabular-nums', P38_ACCENT)}>{valorLabel}</p>
+              ) : null}
+              {dadosComprovante?.descricao ? (
+                <p className="mt-1 truncate text-xs text-muted-foreground">{dadosComprovante.descricao}</p>
+              ) : null}
+              {!valorLabel && !dadosComprovante?.descricao ? (
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Não foi possível detectar o valor automaticamente.
+                </p>
+              ) : null}
             </>
           )}
         </div>
@@ -147,28 +158,26 @@ export default function TorreWidgetDestinos({
           <button
             type="button"
             onClick={() => onWidgetPathChange(widgetPathParent(widgetPath))}
-            className="flex items-center gap-2 self-start rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/50"
+            className="flex items-center gap-2 self-start rounded-full bg-muted/40 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/60"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Voltar
           </button>
-          {breadcrumb.length > 0 && (
-            <p className="px-0.5 text-xs text-muted-foreground">
-              {breadcrumb.join(' › ')}
-            </p>
-          )}
+          {breadcrumb.length > 0 ? (
+            <p className="px-0.5 text-xs text-muted-foreground">{breadcrumb.join(' › ')}</p>
+          ) : null}
         </div>
       )}
 
-      {widgetPath?.length === 0 && (
-        <p className="px-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+      {widgetPath?.length === 0 ? (
+        <p className="px-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
           Para onde vai este arquivo?
         </p>
-      )}
+      ) : null}
 
-      {widgetPath?.length > 0 && noAtual && !noAtual.action && (
+      {widgetPath?.length > 0 && noAtual && !noAtual.action ? (
         <p className="px-0.5 text-sm font-semibold text-foreground">{noAtual.titulo}</p>
-      )}
+      ) : null}
 
       <div className="flex flex-col gap-2">
         {filhos.map((no) => {

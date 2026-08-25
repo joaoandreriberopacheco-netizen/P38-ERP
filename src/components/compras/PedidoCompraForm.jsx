@@ -74,7 +74,6 @@ import {
 } from '@/lib/productUnits';
 import { savePedidoCompraItem } from '@/functions/savePedidoCompraItem';
 import { uploadAnexoParaPedidoCompra } from '@/lib/uploadAnexoReferencia';
-import { limparArquivoPedidoImportBridge } from '@/lib/torrePedidoImportBridge';
 import { mergeLoteIntoItems, parseLoteQuantidade } from '@/lib/catalogLoteUtils';
 import {
   calcularResumoNecessidadeDetalhe,
@@ -1863,7 +1862,6 @@ export default function PedidoCompraForm({
       <ImportadorPedidoCompra
         isOpen={isImportadorPedidoOpen}
         onClose={() => {
-          limparArquivoPedidoImportBridge();
           setImporterLaunchPdfPicker(false);
           setIsImportadorPedidoOpen(false);
         }}

@@ -21,7 +21,11 @@ import {
   normalizePurchaseItemToCommercial,
 } from '@/lib/productUnits';
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
-import { lerArquivoPedidoImportDoBridge, limparArquivoPedidoImportBridge } from '@/lib/torrePedidoImportBridge';
+import {
+  guardarArquivoParaPedidoImport,
+  lerArquivoPedidoImportDoBridge,
+  limparArquivoPedidoImportBridge,
+} from '@/lib/torrePedidoImportBridge';
 import { buildLlmTelemetryContext } from '@/lib/p38LlmTelemetry';
 import { useCompactShell } from '@/hooks/use-breakpoint';
 import ImportadorOcrItemCard from '@/components/compras/ImportadorOcrItemCard';
@@ -74,9 +78,10 @@ export default function ImportadorPedidoCompra({
     modalEstavaAbertoRef.current = true;
 
     const temArquivoBridge = !!lerArquivoPedidoImportDoBridge();
+    const temArquivoMemoria = !!selectedFileRef.current;
 
     setMode('pdf');
-    setStep('upload');
+    setStep(temArquivoBridge || temArquivoMemoria ? 'discount' : 'upload');
     setItems([]);
     if (!temArquivoBridge && !selectedFileRef.current) {
       setSelectedFile(null);
@@ -181,6 +186,7 @@ export default function ImportadorPedidoCompra({
   const discountNumber = parseFloat(discountValue) || 0;
 
   const isAcrescimo = adjustMode === 'acrescimo';
+  const arquivoAtivo = selectedFile || selectedFileRef.current;
   // Sync adjustMode → discountType (always percentage for now)
   const effectiveDiscountType = isAcrescimo ? 'acrescimo_percentual' : 'percentual';
 
@@ -358,6 +364,16 @@ export default function ImportadorPedidoCompra({
       selectedFileRef.current = file;
       setSelectedFile(file);
       if (opts.assumePdf) setMode('pdf');
+      try {
+        await guardarArquivoParaPedidoImport(
+          file,
+          file.name,
+          file.type,
+          tipoDocumentoTorreRef.current || 'Comprovante',
+        );
+      } catch (bridgeErr) {
+        console.warn('[ImportadorPedido] não foi possível guardar cópia do PDF:', bridgeErr);
+      }
       setStep('discount');
     } catch (err) {
       toast({
@@ -591,6 +607,19 @@ export default function ImportadorPedidoCompra({
 
         {step === 'discount' && (
           <div className="flex flex-col h-[calc(100vh-80px)]">
+            {arquivoAtivo ? (
+              <div className="mb-4 flex items-center gap-3 rounded-2xl border border-border/40 bg-muted/40 px-4 py-3 dark:bg-muted/30">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-card shadow-sm">
+                  <FileText className="h-5 w-5 text-primary" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-foreground">{arquivoAtivo.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    PDF guardado · {(arquivoAtivo.size / 1024).toFixed(0)} KB
+                  </p>
+                </div>
+              </div>
+            ) : null}
             {/* Tab switcher */}
             <div className="rounded-2xl bg-muted p-1 flex gap-1 mb-6">
               <button
