@@ -47,6 +47,16 @@ async function main() {
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(400);
 
+  const fmtResumoProbe = await page.evaluate(() => {
+    const rows = pedidoItens();
+    const html = buildPrintFormatoResumoHtml(rows);
+    return {
+      rows: rows.length,
+      resumoLen: html.length,
+      hasResumoTitle: html.includes('Resumo por formato'),
+    };
+  });
+
   await page.click('#cart-fab');
   await page.waitForSelector('#pedido-overlay.open');
   await page.click('#pdf-pedido-panel');
@@ -62,7 +72,9 @@ async function main() {
   const pdfText = pdfBuf.toString('latin1');
   const hasImages = pdfText.includes('/Subtype /Image') || pdfText.includes('/DCTDecode');
   const pdfBytes = pdfBuf.length;
-  const ok = embedCheck.dataUris > 0 && pdfBytes > 10000 && hasImages;
+  const ok = embedCheck.dataUris > 0 && pdfBytes > 10000 && hasImages
+    && fmtResumoProbe.resumoLen > 100
+    && fmtResumoProbe.hasResumoTitle;
 
   console.log(JSON.stringify({
     ok,
@@ -71,6 +83,7 @@ async function main() {
     pdfHasImages: hasImages,
     codTestado: cod,
     embedCheck,
+    fmtResumoProbe,
   }, null, 2));
 
   await browser.close();

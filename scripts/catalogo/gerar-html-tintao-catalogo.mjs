@@ -4213,19 +4213,24 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return printPdfLayout().contentWpx;
     }
     function buildPrintFormatoResumoHtml(rows) {
-      if (!rows.length || QTY_UNIT !== 'palete') return '';
+      if (!rows.length) return '';
+      const isPalete = QTY_UNIT === 'palete';
       const groups = new Map();
       for (const { item, qty } of rows) {
         const fmt = item.formato || '—';
-        if (!groups.has(fmt)) groups.set(fmt, { qty: 0, m2: 0, cx: 0, peso: 0 });
+        if (!groups.has(fmt)) {
+          groups.set(fmt, isPalete ? { qty: 0, m2: 0, cx: 0, peso: 0 } : { qty: 0, m2: 0 });
+        }
         const g = groups.get(fmt);
         g.qty += qty;
         const m2 = itemM2Total(item, qty);
         if (m2) g.m2 += m2;
-        const cx = itemCaixasTotal(item, qty);
-        if (cx) g.cx += cx;
-        const pt = itemPesoTotal(item, qty);
-        if (pt) g.peso += pt;
+        if (isPalete) {
+          const cx = itemCaixasTotal(item, qty);
+          if (cx) g.cx += cx;
+          const pt = itemPesoTotal(item, qty);
+          if (pt) g.peso += pt;
+        }
       }
       const fmtKeys = [...groups.keys()].sort(compareFormato);
       let totQty = 0;
@@ -4236,30 +4241,47 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const g = groups.get(fmt);
         totQty += g.qty;
         totM2 += g.m2;
-        totCx += g.cx;
-        totPeso += g.peso;
+        if (isPalete) {
+          totCx += g.cx;
+          totPeso += g.peso;
+          return '<tr>' +
+            '<td class="print-fmt-resumo-fmt">' + esc(grupoLabelFormato(fmt)) + '</td>' +
+            '<td class="print-fmt-resumo-num">' + g.qty + '</td>' +
+            '<td class="print-fmt-resumo-num">' + (g.m2 ? fmtDecimal(g.m2) : '—') + '</td>' +
+            '<td class="print-fmt-resumo-num">' + (g.cx ? fmtDecimal(g.cx, 0) : '—') + '</td>' +
+            '<td class="print-fmt-resumo-num">' + (g.peso ? fmtKg(g.peso) : '—') + '</td>' +
+          '</tr>';
+        }
         return '<tr>' +
           '<td class="print-fmt-resumo-fmt">' + esc(grupoLabelFormato(fmt)) + '</td>' +
           '<td class="print-fmt-resumo-num">' + g.qty + '</td>' +
           '<td class="print-fmt-resumo-num">' + (g.m2 ? fmtDecimal(g.m2) : '—') + '</td>' +
-          '<td class="print-fmt-resumo-num">' + (g.cx ? fmtDecimal(g.cx, 0) : '—') + '</td>' +
-          '<td class="print-fmt-resumo-num">' + (g.peso ? fmtKg(g.peso) : '—') + '</td>' +
         '</tr>';
       }).join('');
-      const totalRow = '<tr class="print-fmt-resumo-total">' +
-        '<td class="print-fmt-resumo-fmt"><strong>Total</strong></td>' +
-        '<td class="print-fmt-resumo-num"><strong>' + totQty + '</strong></td>' +
-        '<td class="print-fmt-resumo-num"><strong>' + fmtDecimal(totM2) + '</strong></td>' +
-        '<td class="print-fmt-resumo-num"><strong>' + fmtDecimal(totCx, 0) + '</strong></td>' +
-        '<td class="print-fmt-resumo-num"><strong>' + fmtKg(totPeso) + '</strong></td>' +
-      '</tr>';
+      const totalRow = isPalete
+        ? '<tr class="print-fmt-resumo-total">' +
+            '<td class="print-fmt-resumo-fmt"><strong>Total</strong></td>' +
+            '<td class="print-fmt-resumo-num"><strong>' + totQty + '</strong></td>' +
+            '<td class="print-fmt-resumo-num"><strong>' + fmtDecimal(totM2) + '</strong></td>' +
+            '<td class="print-fmt-resumo-num"><strong>' + fmtDecimal(totCx, 0) + '</strong></td>' +
+            '<td class="print-fmt-resumo-num"><strong>' + fmtKg(totPeso) + '</strong></td>' +
+          '</tr>'
+        : '<tr class="print-fmt-resumo-total">' +
+            '<td class="print-fmt-resumo-fmt"><strong>Total</strong></td>' +
+            '<td class="print-fmt-resumo-num"><strong>' + totQty + '</strong></td>' +
+            '<td class="print-fmt-resumo-num"><strong>' + fmtDecimal(totM2) + '</strong></td>' +
+          '</tr>';
+      const colgroup = isPalete
+        ? '<colgroup><col class="col-fmt-res-fmt"><col class="col-fmt-res-num"><col class="col-fmt-res-num"><col class="col-fmt-res-num"><col class="col-fmt-res-num"></colgroup>'
+        : '<colgroup><col class="col-fmt-res-fmt"><col class="col-fmt-res-num"><col class="col-fmt-res-num"></colgroup>';
+      const head = isPalete
+        ? '<thead><tr><th>Formato</th><th>' + esc(QTY_LABEL) + '</th><th>m²</th><th>Caixas</th><th>Peso</th></tr></thead>'
+        : '<thead><tr><th>Formato</th><th>' + esc(QTY_LABEL) + '</th><th>m²</th></tr></thead>';
       return '<section class="print-fmt-resumo-wrap">' +
         '<p class="print-fmt-resumo-title">Resumo por formato</p>' +
         '<table class="print-fmt-resumo-table">' +
-          '<colgroup><col class="col-fmt-res-fmt"><col class="col-fmt-res-num"><col class="col-fmt-res-num"><col class="col-fmt-res-num"><col class="col-fmt-res-num"></colgroup>' +
-          '<thead><tr>' +
-            '<th>Formato</th><th>Paletes</th><th>m²</th><th>Caixas</th><th>Peso</th>' +
-          '</tr></thead>' +
+          colgroup +
+          head +
           '<tbody>' + bodyRows + totalRow + '</tbody>' +
         '</table>' +
       '</section>';
