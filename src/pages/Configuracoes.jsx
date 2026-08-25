@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { ShieldAlert } from 'lucide-react';
+import { podeAcessarConfiguracoes } from '@/lib/perfilPermissoes';
+import { getCachedUserSession } from '@/lib/userSessionCache';
 import { TrendingUp, Package, DollarSign, BarChart3, Settings, Building2, Users, Sliders, Tags, Wallet, CreditCard, Smartphone, Bookmark, Wrench, Shield, MapPin, Printer, Trash2, Activity } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
@@ -24,6 +26,7 @@ import { useNavigate } from 'react-router-dom';
 export default function ConfiguracoesPage() {
   const [userLoaded, setUserLoaded] = useState(false);
   const [user, setUser] = useState(null);
+  const [perfilDeAcesso, setPerfilDeAcesso] = useState(null);
   const [tab, setTab] = useState('vendas');
   const [vendaTab, setVendaTab] = useState('fluxo');
   const [opTab, setOpTab] = useState('estoque');
@@ -31,13 +34,32 @@ export default function ConfiguracoesPage() {
   const [geralTab, setGeralTab] = useState('empresa');
 
   useEffect(() => {
-    base44.auth.me().then(u => { setUser(u); setUserLoaded(true); }).catch(() => setUserLoaded(true));
+    const cached = getCachedUserSession();
+    if (cached?.user) {
+      setUser(cached.user);
+      setPerfilDeAcesso(cached.perfilDeAcesso ?? null);
+      setUserLoaded(true);
+    }
+
+    base44.auth.me().then(async (u) => {
+      setUser(u);
+      let perfil = cached?.perfilDeAcesso ?? null;
+      if (u?.perfil_acesso_id) {
+        try {
+          const perfis = await base44.entities.PerfilDeAcesso.filter({ id: u.perfil_acesso_id });
+          perfil = perfis?.[0] || null;
+        } catch {
+          perfil = null;
+        }
+      }
+      setPerfilDeAcesso(perfil);
+      setUserLoaded(true);
+    }).catch(() => setUserLoaded(true));
   }, []);
 
   if (!userLoaded) return null;
 
-  const isAdmin = user?.role === 'admin';
-  const hasConfigAccess = isAdmin || user?.override_permissoes?.['configuracoes.acesso'] === true;
+  const hasConfigAccess = podeAcessarConfiguracoes(user, perfilDeAcesso);
 
   if (!hasConfigAccess) {
     return (

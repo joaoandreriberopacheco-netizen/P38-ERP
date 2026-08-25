@@ -7,6 +7,7 @@ import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
+import PageAccessGuard from '@/components/guard/PageAccessGuard';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { NavigationTransitionProvider } from '@/lib/NavigationTransitionContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -78,7 +79,9 @@ const AuthenticatedApp = () => {
             path="/"
             element={
               <LayoutWrapper currentPageName={mainPage}>
-                {MainPage ? <MainPage /> : null}
+                <PageAccessGuard pageName={mainPage}>
+                  {MainPage ? <MainPage /> : null}
+                </PageAccessGuard>
               </LayoutWrapper>
             }
           />
@@ -88,7 +91,9 @@ const AuthenticatedApp = () => {
               path={`/${path}`}
               element={
                 <LayoutWrapper currentPageName={path}>
-                  <Page />
+                  <PageAccessGuard pageName={path}>
+                    <Page />
+                  </PageAccessGuard>
                 </LayoutWrapper>
               }
             />

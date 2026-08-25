@@ -6,6 +6,7 @@ import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCac
 import { base44, p38 } from '@/api/base44Client';
 import FontScaleInitializer from '@/components/accessibility/FontScaleInitializer';
 import { buildMenuItems } from '@/components/config/usePermissoesResolvidas';
+import { podeAcessarConfiguracoes } from '@/lib/perfilPermissoes';
 import { WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import GlacialBottomNav from '@/components/navigation/GlacialBottomNav';
@@ -190,6 +191,11 @@ export default function Layout({ children, currentPageName }) {
    if (!currentUser) return [];
    return buildMenuItems(currentUser, perfilDeAcesso);
   }, [currentUser, perfilDeAcesso]);
+
+  const showConfiguracoesLink = React.useMemo(
+    () => podeAcessarConfiguracoes(currentUser, perfilDeAcesso),
+    [currentUser, perfilDeAcesso]
+  );
 
   const allSearchableItems = React.useMemo(() => {
    const items = [];
@@ -404,6 +410,7 @@ export default function Layout({ children, currentPageName }) {
                 toggleDarkMode={toggleDarkMode}
                 searchableItems={allSearchableItems}
                 onSearchCollapsedActivate={openSearchOverlay}
+                showConfiguracoesLink={showConfiguracoesLink}
               />
             </Suspense>
           </div>
@@ -464,6 +471,7 @@ export default function Layout({ children, currentPageName }) {
             toggleDarkMode={toggleDarkMode}
             externalOpen={showMobileUserMenu}
             onExternalClose={() => setShowMobileUserMenu(false)}
+            showConfiguracoesLink={showConfiguracoesLink}
           />
         )}
       </div>

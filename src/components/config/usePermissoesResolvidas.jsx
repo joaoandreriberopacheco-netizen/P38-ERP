@@ -63,7 +63,7 @@ export function buildMenuItems(user, perfilDeAcesso) {
   const temPerfil = !!user?.perfil_acesso_id;
 
   if (usuarioLegadoSemMatrizPerfil(user)) {
-    return ALL_MENU_ITEMS.filter((item) => !item.adminOnly);
+    return ALL_MENU_ITEMS.filter((item) => item.page !== 'Configuracoes');
   }
 
   const perfilEfetivo = perfilResolvidoParaUsuario(user, perfilDeAcesso);
@@ -72,7 +72,12 @@ export function buildMenuItems(user, perfilDeAcesso) {
   const permissoes = resolverPermissoes(perfilEfetivo, user?.override_permissoes);
 
   if (perfilTemEscopoTotal(perfilEfetivo)) {
-    return ALL_MENU_ITEMS.filter((item) => !item.adminOnly);
+    return ALL_MENU_ITEMS.filter((item) => {
+      if (item.page === 'Configuracoes') {
+        return permissoes?.configuracoes?.acesso === true;
+      }
+      return true;
+    });
   }
 
   const algumaPermissao = Object.values(permissoes || {}).some((mod) => {
@@ -387,7 +392,6 @@ export const ALL_MENU_ITEMS = [
     name: 'Configurações',
     icon: Settings,
     page: 'Configuracoes',
-    adminOnly: true,
     permissaoCheck: (p) => p?.configuracoes?.acesso === true
   }
 ];

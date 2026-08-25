@@ -11,7 +11,7 @@ import { useForceLandscape } from '@/hooks/useForceLandscape';
 import { getP38PortalRoot } from '@/lib/p38PortalRoot';
 import { pulseSensor } from '@/lib/pulseSensor';
 
-export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen, onExternalClose }) {
+export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen, onExternalClose, showConfiguracoesLink = false }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState(null);
@@ -136,14 +136,15 @@ export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen,
               {/* Divisor */}
               <div className="h-px bg-muted my-2" />
 
-              {/* Configurações */}
-              <button
-                onClick={() => { navigate(createPageUrl('Configuracoes')); handleClose(); }}
-                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-muted/40 dark:hover:bg-muted transition-colors"
-              >
-                <Settings className="w-5 h-5 text-muted-foreground" />
-                <span className="text-sm text-foreground/90">Configurações</span>
-              </button>
+              {showConfiguracoesLink ? (
+                <button
+                  onClick={() => { navigate(createPageUrl('Configuracoes')); handleClose(); }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-muted/40 dark:hover:bg-muted transition-colors"
+                >
+                  <Settings className="w-5 h-5 text-muted-foreground" />
+                  <span className="text-sm text-foreground/90">Configurações</span>
+                </button>
+              ) : null}
 
               {/* Sair */}
               <button
