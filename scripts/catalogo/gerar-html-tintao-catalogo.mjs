@@ -264,7 +264,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Catálogo B2B Tintão - Formigres</title>
+  <title>Pedido Formigres — Lojistas</title>
   <script>
     (function(){try{var t=localStorage.getItem('tintao-theme-v1');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark');}catch(e){}})();
   </script>
