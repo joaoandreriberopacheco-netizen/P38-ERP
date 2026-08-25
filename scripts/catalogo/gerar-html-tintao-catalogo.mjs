@@ -3438,6 +3438,58 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function printPageWidthPx() {
       return printPdfLayout().contentWpx;
     }
+    function buildPrintFormatoResumoHtml(rows) {
+      if (!rows.length || QTY_UNIT !== 'palete') return '';
+      const groups = new Map();
+      for (const { item, qty } of rows) {
+        const fmt = item.formato || '—';
+        if (!groups.has(fmt)) groups.set(fmt, { qty: 0, m2: 0, cx: 0, peso: 0 });
+        const g = groups.get(fmt);
+        g.qty += qty;
+        const m2 = itemM2Total(item, qty);
+        if (m2) g.m2 += m2;
+        const cx = itemCaixasTotal(item, qty);
+        if (cx) g.cx += cx;
+        const pt = itemPesoTotal(item, qty);
+        if (pt) g.peso += pt;
+      }
+      const fmtKeys = [...groups.keys()].sort(compareFormato);
+      let totQty = 0;
+      let totM2 = 0;
+      let totCx = 0;
+      let totPeso = 0;
+      const bodyRows = fmtKeys.map((fmt) => {
+        const g = groups.get(fmt);
+        totQty += g.qty;
+        totM2 += g.m2;
+        totCx += g.cx;
+        totPeso += g.peso;
+        return '<tr>' +
+          '<td class="print-fmt-resumo-fmt">' + esc(grupoLabelFormato(fmt)) + '</td>' +
+          '<td class="print-fmt-resumo-num">' + g.qty + '</td>' +
+          '<td class="print-fmt-resumo-num">' + (g.m2 ? fmtDecimal(g.m2) : '—') + '</td>' +
+          '<td class="print-fmt-resumo-num">' + (g.cx ? fmtDecimal(g.cx, 0) : '—') + '</td>' +
+          '<td class="print-fmt-resumo-num">' + (g.peso ? fmtKg(g.peso) : '—') + '</td>' +
+        '</tr>';
+      }).join('');
+      const totalRow = '<tr class="print-fmt-resumo-total">' +
+        '<td class="print-fmt-resumo-fmt"><strong>Total</strong></td>' +
+        '<td class="print-fmt-resumo-num"><strong>' + totQty + '</strong></td>' +
+        '<td class="print-fmt-resumo-num"><strong>' + fmtDecimal(totM2) + '</strong></td>' +
+        '<td class="print-fmt-resumo-num"><strong>' + fmtDecimal(totCx, 0) + '</strong></td>' +
+        '<td class="print-fmt-resumo-num"><strong>' + fmtKg(totPeso) + '</strong></td>' +
+      '</tr>';
+      return '<section class="print-fmt-resumo-wrap">' +
+        '<p class="print-fmt-resumo-title">Resumo por formato</p>' +
+        '<table class="print-fmt-resumo-table">' +
+          '<colgroup><col class="col-fmt-res-fmt"><col class="col-fmt-res-num"><col class="col-fmt-res-num"><col class="col-fmt-res-num"><col class="col-fmt-res-num"></colgroup>' +
+          '<thead><tr>' +
+            '<th>Formato</th><th>Paletes</th><th>m²</th><th>Caixas</th><th>Peso</th>' +
+          '</tr></thead>' +
+          '<tbody>' + bodyRows + totalRow + '</tbody>' +
+        '</table>' +
+      '</section>';
+    }
     function buildPedidoPrintHtml(thumbs) {
       const rows = pedidoItens();
       let totalQty = 0, totalM2 = 0, totalPeso = 0, totalCaixas = 0, totalValor = 0;
@@ -3496,6 +3548,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const pesoPrintLine = QTY_UNIT === 'palete' && totalPeso
         ? '<p class="print-peso">Peso estimado: <strong>' + fmtKg(totalPeso) + '</strong></p>'
         : '';
+      const formatoResumoHtml = buildPrintFormatoResumoHtml(rows);
       const footerHtml = rows.length
         ? '<footer class="print-footer">' +
             '<p class="print-totals">Total estimado: <strong>' + esc(fmtMoney(totalValor)) + '</strong></p>' +
@@ -3510,6 +3563,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '</header>' +
         resumo +
         tableHtml +
+        formatoResumoHtml +
         footerHtml +
       '</div>';
     }
@@ -3561,7 +3615,18 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '.print-peso strong { color: #2f2f2f; font-weight: 600; }' +
         '.print-totals { margin: 0; font-size: 14px; color: #5a5a5a; text-align: right; }' +
         '.print-totals strong { font-size: 17px; color: #b01219; font-weight: 700; }' +
-        '.print-footer .print-note { margin: 8px 0 0; text-align: right; font-size: 10px; color: #767676; }';
+        '.print-footer .print-note { margin: 8px 0 0; text-align: right; font-size: 10px; color: #767676; }' +
+        '.print-fmt-resumo-wrap { margin-top: 14px; break-inside: avoid; page-break-inside: avoid; }' +
+        '.print-fmt-resumo-title { margin: 0 0 6px; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #767676; }' +
+        '.print-fmt-resumo-table { width: auto; min-width: 320px; max-width: 480px; border-collapse: collapse; font-size: 10px; table-layout: fixed; }' +
+        '.print-fmt-resumo-table th, .print-fmt-resumo-table td { padding: 4px 8px; border-bottom: 1px solid ' + rowLine + '; vertical-align: middle; font-variant-numeric: tabular-nums; }' +
+        '.print-fmt-resumo-table thead th { font-size: 8px; font-weight: 500; text-transform: uppercase; letter-spacing: .04em; color: #767676; text-align: right; border-bottom: 1px solid ' + rowLine + '; white-space: nowrap; }' +
+        '.print-fmt-resumo-table thead th:first-child, .print-fmt-resumo-table .print-fmt-resumo-fmt { text-align: left; }' +
+        '.print-fmt-resumo-table .print-fmt-resumo-num { text-align: right; color: #2f2f2f; white-space: nowrap; }' +
+        '.print-fmt-resumo-table .print-fmt-resumo-fmt { color: #2f2f2f; font-weight: 600; letter-spacing: .03em; }' +
+        '.print-fmt-resumo-table .print-fmt-resumo-total td { border-top: 2px solid ' + rowLine + '; border-bottom: 0; padding-top: 6px; font-weight: 600; }' +
+        '.print-fmt-resumo-table col.col-fmt-res-fmt { width: 88px; }' +
+        '.print-fmt-resumo-table col.col-fmt-res-num { width: 56px; }';
     }
     function pdfCanvasBackground(theme) {
       return '#ffffff';
@@ -3681,7 +3746,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
             onclone: injectPdfFontClone,
           },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
-          pagebreak: { mode: ['css', 'legacy'], avoid: ['.print-pedido-table tbody tr', '.print-footer'] },
+          pagebreak: { mode: ['css', 'legacy'], avoid: ['.print-pedido-table tbody tr', '.print-footer', '.print-fmt-resumo-wrap'] },
         }).from(measureEl).outputPdf('blob');
         if (!blob || blob.size < 12000) throw new Error('PDF gerado vazio');
         return blob;

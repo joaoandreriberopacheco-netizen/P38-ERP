@@ -57,6 +57,7 @@ async function main() {
     const printThumb48 = src.includes('PDF_PRINT_THUMB_PX = 48');
     const printFooter = src.includes('print-footer');
     const printTfoot = src.includes('print-pedido-tfoot');
+    const fmtResumo = src.includes('print-fmt-resumo-table');
     const precoStack = src.includes('preco-stack-pdf');
     return {
       hasA4: a4,
@@ -68,6 +69,7 @@ async function main() {
       metaResist,
       printFooter,
       printTfoot,
+      fmtResumo,
       hasLayoutFn: !!m,
       scale3,
       printThumb48,
@@ -99,6 +101,7 @@ async function main() {
     && layoutProbe.metaResist
     && layoutProbe.printFooter
     && layoutProbe.printTfoot
+    && layoutProbe.fmtResumo
     && layoutProbe.hasLayoutFn
     && layoutProbe.scale3
     && layoutProbe.printThumb48
