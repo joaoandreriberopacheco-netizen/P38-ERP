@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import {
   FileText,
-  File,
   Loader2,
   CheckCircle2,
   ArrowLeft,
@@ -23,6 +22,7 @@ import { mapDestinoQueryToEtapa, SHARE_DESTINO_QUERY } from '@/lib/pwaShareTarge
 import AgefinImportador from '@/components/agefin/AgefinImportador';
 import BoletoRecorrentePicker from '@/components/financeiro/BoletoRecorrentePicker';
 import { brandSurface } from '@/lib/brandSurfaces';
+import { cn } from '@/lib/utils';
 import { navegarParaNovoPedidoImport } from '@/lib/torrePedidoImportBridge';
 import { navegarParaNovoLancamentoTorre } from '@/lib/torreLancamentoBridge';
 import { extrairDadosComprovante } from '@/lib/extrairDadosComprovante';
@@ -33,6 +33,8 @@ import {
   widgetPathParent,
 } from '@/lib/torreWidgetTree';
 import TorreWidgetDestinos from '@/components/anexos/TorreWidgetDestinos';
+import TorreArquivoCard from '@/components/anexos/TorreArquivoCard';
+import { P38_FIELD_SURFACE, P38_KPI_SHELL, P38_ACCENT } from '@/components/financeiro/fluxo/financeiroP38';
 
 export default function AnexoCompartilhado() {
   const [arquivo, setArquivo] = useState(null);
@@ -825,120 +827,143 @@ export default function AnexoCompartilhado() {
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-[calc(7rem+env(safe-area-inset-bottom))]">
       {etapa === 'torre_controle' ? (
         <>
-          <div className="flex items-center gap-3 px-4 pt-5 md:px-5">
-            <button
-              type="button"
-              onClick={() => window.history.back()}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground dark:bg-muted dark:text-foreground"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </button>
-            <div className="flex min-w-0 flex-1 items-center gap-2.5">
-              <RadioTower
-                className="h-6 w-6 shrink-0 text-foreground/90 dark:text-primary"
-                aria-hidden
+          <div className="px-4 pt-5 md:px-5">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => window.history.back()}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted/80 text-muted-foreground transition-colors hover:bg-muted"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  Entrada de documentos
+                </p>
+                <div className="mt-0.5 flex items-center gap-2">
+                  <RadioTower className={cn('h-5 w-5 shrink-0', P38_ACCENT)} aria-hidden />
+                  <h1 className="truncate text-lg font-semibold text-foreground">
+                    Torre de controle
+                  </h1>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAjudaTorreAberta((v) => !v)}
+                className={cn(
+                  'flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted/80 text-muted-foreground transition-colors hover:bg-muted',
+                  ajudaTorreAberta && 'ring-2 ring-primary/40',
+                )}
+                aria-expanded={ajudaTorreAberta}
+                aria-label="Ajuda: tipo de documento"
+              >
+                <HelpCircle className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-5 space-y-4 px-4 md:px-5">
+            <section className={cn('rounded-2xl p-4', P38_FIELD_SURFACE)}>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                Tipo de documento
+              </p>
+              <div className="mt-3">
+                <TipoDocumentoSearch
+                  tipos={tiposDocumentoDisponiveis}
+                  value={tipoDocumento}
+                  onChange={setTipoDocumento}
+                  generousPadding
+                  deferKeyboardUntilTap
+                  onAdicionarTipoNovo={(t) =>
+                    setTiposDocumentoCustom((prev) => {
+                      if (prev.includes(t)) return prev;
+                      const next = [...prev, t];
+                      saveTiposCustomAnexo(next);
+                      return next;
+                    })
+                  }
+                />
+              </div>
+            </section>
+
+            <section className={cn('rounded-2xl p-4', P38_FIELD_SURFACE)}>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                Arquivo
+              </p>
+              <div className="mt-3">
+                <TorreArquivoCard arquivo={arquivo} />
+              </div>
+
+              <input
+                ref={inputArquivoManualRef}
+                type="file"
+                accept="*/*"
+                onChange={handleSelecionarArquivoManual}
+                className="hidden"
               />
-              <h1 className="truncate text-lg font-semibold text-foreground">
-                Torre de controle
-              </h1>
-            </div>
-            <button
-              type="button"
-              onClick={() => setAjudaTorreAberta((v) => !v)}
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors dark:bg-muted dark:text-foreground ${ajudaTorreAberta ? 'ring-2 ring-primary/40' : ''}`}
-              aria-expanded={ajudaTorreAberta}
-              aria-label="Ajuda: tipo de documento"
-            >
-              <HelpCircle className="h-5 w-5" />
-            </button>
-          </div>
+              <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => inputArquivoManualRef.current?.click()}
+                  className="flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                >
+                  <FolderOpen className="h-4 w-4" />
+                  Selecionar arquivo
+                </button>
+                <button
+                  type="button"
+                  onClick={handleColarDaAreaTransferencia}
+                  className="flex h-12 items-center justify-center gap-2 rounded-xl border border-border/50 bg-muted/30 px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted/50 dark:border-white/10"
+                >
+                  <Clipboard className="h-4 w-4" />
+                  Colar
+                </button>
+              </div>
+              {(feedbackClipboard || modoAtalhoClipboard) && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {feedbackClipboard || 'Toque em "Colar" para usar o conteúdo copiado.'}
+                </p>
+              )}
+              {erroCompartilhamento && (
+                <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                  {erroCompartilhamento}
+                </p>
+              )}
+            </section>
 
-          <div className="mt-3 px-4 md:px-5">
-            <TipoDocumentoSearch
-              tipos={tiposDocumentoDisponiveis}
-              value={tipoDocumento}
-              onChange={setTipoDocumento}
-              generousPadding
-              deferKeyboardUntilTap
-              onAdicionarTipoNovo={(t) =>
-                setTiposDocumentoCustom((prev) => {
-                  if (prev.includes(t)) return prev;
-                  const next = [...prev, t];
-                  saveTiposCustomAnexo(next);
-                  return next;
-                })
-              }
-            />
-          </div>
-
-          <div className="px-4 md:px-5">
-            <input
-              ref={inputArquivoManualRef}
-              type="file"
-              accept="*/*"
-              onChange={handleSelecionarArquivoManual}
-              className="hidden"
-            />
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={() => inputArquivoManualRef.current?.click()}
-                className={`flex h-12 items-center justify-center gap-2 rounded-2xl px-4 text-sm font-medium ${brandSurface.card}`}
-              >
-                <FolderOpen className="h-4 w-4" />
-                Selecionar arquivo
-              </button>
-              <button
-                type="button"
-                onClick={handleColarDaAreaTransferencia}
-                className={`flex h-12 items-center justify-center gap-2 rounded-2xl px-4 text-sm font-medium ${brandSurface.card}`}
-              >
-                <Clipboard className="h-4 w-4" />
-                Colar da área de transferência
-              </button>
-            </div>
-            {(feedbackClipboard || modoAtalhoClipboard) && (
-              <p className={`mt-2 text-xs ${brandSurface.textLabel}`}>
-                {feedbackClipboard || 'Toque em "Colar da área de transferência" para continuar com o conteúdo copiado.'}
-              </p>
-            )}
-            {erroCompartilhamento && (
-              <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-                {erroCompartilhamento}
-              </p>
-            )}
-          </div>
-
-          {ajudaTorreAberta && (
-            <div className={`mx-4 mt-3 rounded-2xl px-4 py-3 text-sm leading-snug md:mx-5 ${brandSurface.card}`}>
-              <p className={brandSurface.textMuted}>
-                Escolha o tipo que melhor descreve o arquivo. Use a busca para filtrar ou crie um tipo novo; ele fica salvo neste aparelho para as próximas vezes. Depois avance para escolher o destino no P38.
-              </p>
-            </div>
-          )}
-
-          <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 pt-3 md:px-5">
-            <ArquivoPreview arquivo={arquivo} />
             {(lendoComprovante || dadosComprovante?.valor != null) && (
-              <div className={`rounded-2xl px-4 py-3 text-sm ${brandSurface.card}`}>
+              <section className={cn('rounded-2xl px-4 py-3', P38_KPI_SHELL)}>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  Leitura automática
+                </p>
                 {lendoComprovante ? (
-                  <p className={brandSurface.textMuted}>A ler valor do comprovante…</p>
+                  <p className="mt-2 text-sm text-muted-foreground">A ler valor do comprovante…</p>
                 ) : (
-                  <p className="font-medium text-foreground">
-                    Valor detectado:{' '}
+                  <p className={cn('mt-2 text-xl font-semibold tabular-nums', P38_ACCENT)}>
                     {Number(dadosComprovante.valor).toLocaleString('pt-BR', {
                       style: 'currency',
                       currency: 'BRL',
                     })}
                   </p>
                 )}
-              </div>
+              </section>
             )}
+
+            {ajudaTorreAberta && (
+              <section className={cn('rounded-2xl px-4 py-3 text-sm leading-snug', P38_FIELD_SURFACE)}>
+                <p className="text-muted-foreground">
+                  Escolha o tipo que melhor descreve o arquivo. Use a busca para filtrar ou crie um tipo novo; ele fica salvo neste aparelho para as próximas vezes. Depois avance para escolher o destino no P38.
+                </p>
+              </section>
+            )}
+          </div>
+
+          <div className="sticky bottom-0 z-20 mt-6 border-t border-border/40 bg-background/95 px-4 py-4 backdrop-blur-md md:px-5 pb-[calc(1rem+env(safe-area-inset-bottom))]">
             <button
               type="button"
               onClick={() => setEtapa('opcoes')}
               disabled={!String(tipoDocumento || '').trim()}
-              className="mt-auto flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-40 md:mt-2"
+              className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
             >
               Continuar para destinos
               <ChevronRight className="h-4 w-4" />
@@ -963,9 +988,12 @@ export default function AnexoCompartilhado() {
               <ArrowLeft className="h-4 w-4" />
             </button>
             <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                Destinos
+              </p>
               <h1 className="text-lg font-semibold text-foreground">Comprovante recebido</h1>
               {etapa === 'opcoes' && (
-                <p className={`text-xs ${brandSurface.textLabel}`}>O que deseja fazer com este arquivo?</p>
+                <p className="text-xs text-muted-foreground">O que deseja fazer com este arquivo?</p>
               )}
             </div>
           </div>
@@ -975,7 +1003,7 @@ export default function AnexoCompartilhado() {
       {etapa === 'opcoes' && (
         <div className="flex flex-col gap-3 pb-4">
           <div className="px-4 md:px-5">
-            <ArquivoPreview arquivo={arquivo} />
+            <TorreArquivoCard arquivo={arquivo} compact />
           </div>
           <TorreWidgetDestinos
             widgetPath={widgetPath}
@@ -999,25 +1027,5 @@ export default function AnexoCompartilhado() {
     </div>
     {overlaysFullscreen}
     </>
-  );
-}
-
-function ArquivoPreview({ arquivo }) {
-  if (!arquivo) {
-    return (
-      <div className={`flex flex-col items-center gap-3 rounded-3xl p-5 shadow-sm md:p-6 ${brandSurface.card}`}>
-        <File className="h-10 w-10 text-muted-foreground dark:text-muted-foreground" />
-        <p className={`text-sm ${brandSurface.textMuted}`}>Nenhum arquivo detectado</p>
-      </div>
-    );
-  }
-  return (
-    <div className={`flex items-center gap-3 overflow-hidden rounded-3xl p-4 shadow-sm md:gap-4 md:p-5 ${brandSurface.card}`}>
-      <FileText className="h-6 w-6 shrink-0 text-muted-foreground dark:text-muted-foreground md:h-7 md:w-7" />
-      <div className="min-w-0">
-        <p className="truncate text-sm font-medium text-foreground dark:text-foreground">{arquivo.nome}</p>
-        {arquivo.file?.size && <p className={`text-xs ${brandSurface.textLabel}`}>{(arquivo.file.size / 1024).toFixed(1)} KB</p>}
-      </div>
-    </div>
   );
 }
