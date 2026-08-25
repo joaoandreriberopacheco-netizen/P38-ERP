@@ -354,7 +354,9 @@ export default function Layout({ children, currentPageName }) {
     );
     const fullscreenBody = (
       <>
-        <div className={fullscreenShell}>{pageContent}</div>
+        <div className={fullscreenShell}>
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{pageContent}</div>
+        </div>
         {searchOverlay}
       </>
     );
