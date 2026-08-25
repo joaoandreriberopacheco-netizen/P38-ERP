@@ -10,8 +10,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { readJson, snapshotPath } from '../lib/catalogoPaths.mjs';
+import { extractImagensFromDetalhe } from '../lib/formigresCatalog.mjs';
 import { loadSnapshotFromFile } from '../lib/formigresSnapshot.mjs';
-import { extractImagensFromDetalhe, fetchProdutoDetalhe } from '../lib/formigresCatalog.mjs';
+import { dedupeFormigresGemeas } from '../lib/formigresGemeas.mjs';
 
 const ROOT = process.cwd();
 const args = process.argv.slice(2);
@@ -265,6 +266,8 @@ function enrichItens(itens, snapshot) {
       imagem_url,
       imagem_amb_url,
       produto_url: prod?.produto_url || '',
+      marca_nome: prod?.marca_nome || item.marca_nome || '',
+      referencia: prod?.referencia || item.referencia || '',
       imagens: imagens.length ? imagens : (imagem_url ? [{ url: imagem_url, tipo: 'principal' }] : []),
     };
   });
@@ -307,6 +310,13 @@ function slimItem(item) {
     formigres_id: item.formigres_id || '',
     formigres_titulo: item.formigres_titulo || '',
     formigres_acabamento: item.formigres_acabamento || '',
+    marca_nome: item.marca_nome || '',
+    referencia: item.referencia || '',
+    gemeas: (item.gemeas || []).map((g) => ({
+      codigo: String(g.codigo),
+      marca: g.marca || '—',
+      referencia: g.referencia || '—',
+    })),
     match_status: item.match_status,
     preco_m2: item.preco_m2,
     m2_por_caixa: item.m2_por_caixa ?? null,
@@ -611,6 +621,98 @@ const FORMIGRES_SKIN_CSS = `
       html[data-skin="formigres"] .regime-panel { padding: 10px 12px; margin-bottom: 8px; }
       html[data-skin="formigres"] .regime-options { grid-template-columns: 1fr; gap: 8px; }
       html[data-skin="formigres"] .regime-switch-label { font-size: .72rem; }
+    }
+    html[data-skin="formigres"] .pedido-row-title-line {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      max-width: 100%;
+    }
+    html[data-skin="formigres"] .model-gemeas-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 5px;
+      margin: 0;
+      border: 2px solid var(--surface);
+      border-radius: 999px;
+      background: var(--accent);
+      color: var(--accent-on);
+      font-size: .68rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      letter-spacing: 0;
+      cursor: pointer;
+      flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .12);
+      transition: transform .12s ease, background .12s ease, box-shadow .12s ease;
+    }
+    html[data-skin="formigres"] .model-gemeas-badge:hover {
+      background: var(--accent-bright);
+      transform: scale(1.06);
+    }
+    html[data-skin="formigres"] .model-gemeas-badge[aria-expanded="true"] {
+      background: var(--accent-deep);
+      box-shadow: 0 0 0 2px var(--accent-ring);
+    }
+    html[data-skin="formigres"] .model-gemeas-detail.hidden { display: none; }
+    html[data-skin="formigres"] .model-gemeas-detail td {
+      padding: 0 8px 10px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-2);
+    }
+    html[data-skin="formigres"] .model-gemeas-wrap {
+      margin-left: 52px;
+      max-width: 420px;
+    }
+    html[data-skin="formigres"] .model-gemeas-caption {
+      margin: 0 0 6px;
+      font-size: .68rem;
+      color: var(--muted);
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+    html[data-skin="formigres"] .model-gemeas-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: .72rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    html[data-skin="formigres"] .model-gemeas-table th,
+    html[data-skin="formigres"] .model-gemeas-table td {
+      padding: 7px 8px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    html[data-skin="formigres"] .model-gemeas-table tbody tr:last-child td { border-bottom: 0; }
+    html[data-skin="formigres"] .model-gemeas-table thead th {
+      text-align: left;
+      color: var(--muted);
+      font-size: .62rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      background: var(--surface-2);
+    }
+    html[data-skin="formigres"] .model-gemeas-table .gemeas-col-cod {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-strong);
+      white-space: nowrap;
+    }
+    html[data-skin="formigres"] .model-gemeas-table .gemeas-row-current td {
+      background: var(--accent-muted);
+      font-weight: 600;
+    }
+    @media (max-width: 720px) {
+      html[data-skin="formigres"] .model-gemeas-wrap { margin-left: 0; max-width: none; }
     }
 `;
 
@@ -2874,6 +2976,66 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       if (imgs.length) return imgs;
       return item.imagem_url ? [{ url: item.imagem_url, tipo: 'principal' }] : [];
     }
+    function gemeasSearchText(item) {
+      if (!item.gemeas || !item.gemeas.length) return '';
+      return item.gemeas.map((g) => [g.marca, g.referencia, g.codigo].join(' ')).join(' ');
+    }
+    function renderGemeasTrigger(item, cod) {
+      const g = item.gemeas;
+      if (!g || g.length < 2) return '';
+      const n = g.length;
+      const tip = 'Mesmo modelo em ' + n + ' marcas — toque para ver referências';
+      return '<button type="button" class="model-gemeas-badge model-gemeas-trigger" data-cod="' + esc(cod) + '" aria-expanded="false" aria-controls="gemeas-panel-' + esc(cod) + '" title="' + esc(tip) + '" aria-label="' + esc(tip) + '">' + n + '</button>';
+    }
+    function renderGemeasDetailRow(item, cod) {
+      const g = item.gemeas;
+      if (!g || g.length < 2) return '';
+      const rows = g.map((row) => {
+        const isCurrent = String(row.codigo) === String(cod);
+        return '<tr class="' + (isCurrent ? 'gemeas-row-current' : '') + '">' +
+          '<td class="gemeas-col-marca">' + esc(row.marca) + '</td>' +
+          '<td class="gemeas-col-ref">' + esc(row.referencia) + '</td>' +
+          '<td class="gemeas-col-cod">#' + esc(row.codigo) + '</td></tr>';
+      }).join('');
+      return '<tr class="model-gemeas-detail hidden" id="gemeas-panel-' + esc(cod) + '" data-gemeas-for="' + esc(cod) + '">' +
+        '<td colspan="9"><div class="model-gemeas-wrap">' +
+        '<p class="model-gemeas-caption">Mesmo modelo nestas marcas</p>' +
+        '<table class="model-gemeas-table"><thead><tr><th>Marca</th><th>Referência</th><th>Código</th></tr></thead><tbody>' +
+        rows + '</tbody></table></div></td></tr>';
+    }
+    function toggleGemeasPanel(cod) {
+      const panel = document.getElementById('gemeas-panel-' + cod);
+      const btn = document.querySelector('.model-gemeas-trigger[data-cod="' + cod + '"]');
+      if (!panel) return;
+      const wasHidden = panel.classList.contains('hidden');
+      if (wasHidden) closeAllGemeasPanels();
+      panel.classList.toggle('hidden');
+      const isOpen = !panel.classList.contains('hidden');
+      if (btn) btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    }
+    function closeAllGemeasPanels() {
+      document.querySelectorAll('.model-gemeas-detail:not(.hidden)').forEach((el) => el.classList.add('hidden'));
+      document.querySelectorAll('.model-gemeas-trigger[aria-expanded="true"]').forEach((btn) => btn.setAttribute('aria-expanded', 'false'));
+    }
+    function migrateHiddenTwinQty() {
+      if (CATALOG_SKIN !== 'formigres') return;
+      let changed = false;
+      for (const item of CATALOGO.itens) {
+        if (!item.gemeas || item.gemeas.length < 2) continue;
+        const canonical = String(item.codigo_tintao);
+        for (const g of item.gemeas) {
+          const cod = String(g.codigo);
+          if (cod === canonical) continue;
+          const q = Number(qtyMap[cod] || 0);
+          if (q > 0) {
+            qtyMap[canonical] = (Number(qtyMap[canonical] || 0) || 0) + q;
+            delete qtyMap[cod];
+            changed = true;
+          }
+        }
+      }
+      if (changed) localStorage.setItem(QTY_KEY, JSON.stringify(qtyMap));
+    }
     function renderTableRow(item) {
       const imgs = getGaleria(item);
       const img = imgs[0]?.url || item.imagem_url || '';
@@ -2890,11 +3052,19 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const cxTot = qty ? itemCaixasTotal(item, qty) : null;
         const pesoTot = qty ? itemPesoTotal(item, qty) : null;
         const sub = qty ? itemSubtotal(item, qty) : null;
-        const rowMeta = '#' + esc(cod) + ' · ' + esc(item.formato || '—');
+        const rowMetaParts = ['#' + esc(cod)];
+        if (item.marca_nome) rowMetaParts.push(esc(item.marca_nome));
+        rowMetaParts.push(esc(item.formato || '—'));
+        const rowMeta = rowMetaParts.join(' · ');
+        const gemeasTrigger = renderGemeasTrigger(item, cod);
+        const searchExtra = gemeasSearchText(item);
         const porPalete = fmtPorPaleteText(item);
-        return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack).toLowerCase()) + '" data-qty="' + qty + '">' +
+        const titleHtml = gemeasTrigger
+          ? '<span class="pedido-row-title-line"><span class="pedido-row-title">' + esc(titulo) + '</span>' + gemeasTrigger + '</span>'
+          : '<span class="pedido-row-title">' + esc(titulo) + '</span>';
+        return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack + ' ' + searchExtra).toLowerCase()) + '" data-qty="' + qty + '">' +
           '<td class="pedido-col-foto col-foto">' + foto + '</td>' +
-          '<td class="pedido-col-modelo col-modelo"><span class="pedido-row-title">' + esc(titulo) + '</span>' + warn + '<div class="pedido-row-meta">' + rowMeta + '</div></td>' +
+          '<td class="pedido-col-modelo col-modelo">' + titleHtml + warn + '<div class="pedido-row-meta">' + rowMeta + '</div></td>' +
           '<td class="pedido-col-qty col-qty">' +
             '<input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" tabindex="0" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="' + esc(QTY_LABEL) + '" placeholder="" />' +
           '</td>' +
@@ -2917,10 +3087,14 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     function renderItemsTable(items) {
       if (CATALOG_SKIN === 'formigres') {
+        const body = items.map((item) => {
+          const cod = item.codigo_tintao;
+          return renderTableRow(item) + renderGemeasDetailRow(item, cod);
+        }).join('');
         return '<div class="table-wrap"><table class="model-table catalog-pedido-table">' +
           CATALOG_TABLE_COLGROUP_HTML +
           '<thead><tr>' + CATALOG_TABLE_HEAD_HTML + '</tr></thead><tbody>' +
-          items.map(renderTableRow).join('') + '</tbody></table></div>';
+          body + '</tbody></table></div>';
       }
       return '<div class="table-wrap"><table class="model-table"><thead><tr><th>Foto</th><th>Modelo</th><th>Embalagem</th><th>Preço/m²</th><th>' + esc(QTY_LABEL) + '</th></tr></thead><tbody>' +
         items.map(renderTableRow).join('') + '</tbody></table></div>';
@@ -3579,6 +3753,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     function ensureAppRendered() {
       try {
+        migrateHiddenTwinQty();
         renderCatalogo();
         renderPedido();
         updateCartFab();
@@ -3708,6 +3883,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     document.getElementById('catalogo').addEventListener('keydown', handleQtyKeyboardNav);
 
     document.getElementById('catalogo').addEventListener('click', (e) => {
+      const gemeasBtn = e.target.closest('.model-gemeas-trigger');
+      if (gemeasBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleGemeasPanel(gemeasBtn.dataset.cod);
+        return;
+      }
       const btn = e.target.closest('.thumb-btn');
       if (btn) {
         onThumbClick(btn);
@@ -3833,6 +4015,13 @@ async function mainAsync() {
   } else {
     console.error('Modo snapshot — a saltar chamadas API individuais.');
   }
+  let gemeasStats = null;
+  if (CFG.skin === 'formigres') {
+    const deduped = dedupeFormigresGemeas(itens);
+    itens = deduped.itens;
+    gemeasStats = deduped.stats;
+    console.error(`Gêmeas: ${gemeasStats.twinGroups} grupos · ${gemeasStats.hidden} linhas fundidas · ${gemeasStats.visible} visíveis`);
+  }
   let pdfThumbs = {};
   if (!CFG.skipPdfThumbs) {
     console.error('A gerar miniaturas leves para PDF…');
@@ -3861,6 +4050,7 @@ async function mainAsync() {
     itens: itens.length,
     comFoto: itens.filter((i) => i.imagem_url).length,
     comGaleria: itens.filter((i) => (i.imagens || []).length > 1).length,
+    gemeas: gemeasStats,
     pdfThumbs: thumbsCount,
     htmlKb,
     thumbsKb,

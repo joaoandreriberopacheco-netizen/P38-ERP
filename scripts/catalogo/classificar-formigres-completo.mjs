@@ -51,6 +51,8 @@ function main() {
       formigres_titulo: p.titulo || '',
       formigres_tipo: p.tipo || '',
       formigres_acabamento: p.acabamento || '',
+      marca_nome: p.marca_nome || '',
+      referencia: p.referencia || '',
       preco_m2: preco,
       preco_faixa: faixa,
       preco_motivo: motivo || null,
