@@ -51,13 +51,14 @@ async function main() {
     const printCard = src.includes('pedido-card-pdf');
     const printFormatGroup = src.includes('print-format-group');
     const printGemeas = src.includes('pedido-row-gemeas');
-    const printResist = src.includes('pedido-row-resist');
-    const resistCol = src.includes('pedido-col-resist');
+    const metaResist = src.includes('pedido-meta-resist');
+    const noResistCol = !src.includes('pedido-col-resist');
+    const noResistLabel = !src.includes('Resistência</span>');
     const a4 = src.includes("format: 'a4'");
     const scale3 = src.includes('PDF_CANVAS_SCALE = 3');
     const printThumb72 = src.includes('PDF_PRINT_THUMB_PX = 72');
     const precoStack = src.includes('preco-stack-pdf');
-    return { hasA4: a4, hasRowLine: rowLine, hasTablePdf: tablePdf, printCard, printFormatGroup, printGemeas, printResist, resistCol, hasLayoutFn: !!m, scale3, printThumb72, precoStack };
+    return { hasA4: a4, hasRowLine: rowLine, hasTablePdf: tablePdf, printCard, printFormatGroup, printGemeas, metaResist, noResistCol, noResistLabel, hasLayoutFn: !!m, scale3, printThumb72, precoStack };
   });
 
   await page.click('#cart-fab');
@@ -80,8 +81,9 @@ async function main() {
     && layoutProbe.printCard
     && layoutProbe.printFormatGroup
     && layoutProbe.printGemeas
-    && layoutProbe.printResist
-    && layoutProbe.resistCol
+    && layoutProbe.metaResist
+    && layoutProbe.noResistCol
+    && layoutProbe.noResistLabel
     && layoutProbe.hasLayoutFn
     && layoutProbe.scale3
     && layoutProbe.printThumb72

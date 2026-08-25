@@ -726,10 +726,10 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   const qtyLabelPl = cfg.qtyLabelPl || (isFormigresSkin ? 'paletes' : 'caixas');
   const qtyUnit = cfg.qtyUnit || (isFormigresSkin ? 'palete' : 'caixa');
   const pedidoTableColgroup = isFormigresSkin
-    ? '<colgroup><col class="col-foto"><col class="col-modelo"><col class="col-resist"><col class="col-qty"><col class="col-m2"><col class="col-cx"><col class="col-peso"><col class="col-emb"><col class="col-preco"><col class="col-sub"></colgroup>'
+    ? '<colgroup><col class="col-foto"><col class="col-modelo"><col class="col-qty"><col class="col-m2"><col class="col-cx"><col class="col-peso"><col class="col-emb"><col class="col-preco"><col class="col-sub"></colgroup>'
     : '<colgroup><col class="col-foto"><col class="col-modelo"><col class="col-qty"><col class="col-m2u"><col class="col-m2"><col class="col-preco"><col class="col-sub"></colgroup>';
   const pedidoTableHead = isFormigresSkin
-    ? '<th class="pedido-col-foto">Foto</th><th class="pedido-col-modelo">Modelo</th><th class="pedido-col-resist">Resistência</th><th class="pedido-col-qty">Paletes</th><th class="pedido-col-num">m² total</th><th class="pedido-col-num">Caixas</th><th class="pedido-col-num">Peso</th><th class="pedido-col-emb">Por palete</th><th class="pedido-col-num">Preço/m²</th><th class="pedido-col-num col-subtotal">Subtotal</th>'
+    ? '<th class="pedido-col-foto">Foto</th><th class="pedido-col-modelo">Modelo</th><th class="pedido-col-qty">Paletes</th><th class="pedido-col-num">m² total</th><th class="pedido-col-num">Caixas</th><th class="pedido-col-num">Peso</th><th class="pedido-col-emb">Por palete</th><th class="pedido-col-num">Preço/m²</th><th class="pedido-col-num col-subtotal">Subtotal</th>'
     : '<th class="pedido-col-foto">Foto</th><th class="pedido-col-modelo">Modelo</th><th class="pedido-col-qty">Caixas</th><th class="pedido-col-num">m²/cx</th><th class="pedido-col-num">m² total</th><th class="pedido-col-num">Preço/m²</th><th class="pedido-col-num col-subtotal">Subtotal</th>';
   const catalogoJson = JSON.stringify({
     itens: itens.map(slimItem),
@@ -1504,9 +1504,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     .pedido-table col.col-foto,
     html[data-skin="formigres"] .catalog-pedido-table col.col-foto { width: 52px; }
     .pedido-table col.col-modelo,
-    html[data-skin="formigres"] .catalog-pedido-table col.col-modelo { width: 24%; }
-    .pedido-table col.col-resist,
-    html[data-skin="formigres"] .catalog-pedido-table col.col-resist { width: 52px; }
+    html[data-skin="formigres"] .catalog-pedido-table col.col-modelo { width: 28%; }
     .pedido-table col.col-qty,
     html[data-skin="formigres"] .catalog-pedido-table col.col-qty { width: 68px; }
     .pedido-table col.col-m2,
@@ -1524,22 +1522,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     .pedido-table col.col-sub,
     html[data-skin="formigres"] .catalog-pedido-table col.col-sub { width: 98px; }
     html[data-skin="formigres"] .pedido-table,
-    html[data-skin="formigres"] .catalog-pedido-table { min-width: 900px; }
-    html[data-skin="formigres"] .catalog-pedido-table .pedido-col-resist,
-    html[data-skin="formigres"] .pedido-table .pedido-col-resist {
-      text-align: center;
+    html[data-skin="formigres"] .catalog-pedido-table { min-width: 860px; }
+    html[data-skin="formigres"] .pedido-meta-resist {
       font-weight: 700;
       letter-spacing: .1em;
       color: var(--text-strong);
-      white-space: nowrap;
-      font-size: .78rem;
-      vertical-align: middle;
-    }
-    html[data-skin="formigres"] .catalog-pedido-table thead th.pedido-col-resist {
-      font-size: .68rem;
-      letter-spacing: .03em;
-      font-weight: 500;
-      color: var(--muted);
     }
     .pedido-col-foto { width: 52px; padding-left: 0; padding-right: 6px; }
     .pedido-col-modelo { min-width: 0; }
@@ -1555,33 +1542,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       color: var(--muted);
       line-height: 1.3;
     }
-    html[data-skin="formigres"] .pedido-row-resist {
-      display: flex;
-      align-items: baseline;
-      gap: 6px;
-      margin-top: 4px;
-      line-height: 1.3;
-    }
-    html[data-skin="formigres"] .pedido-row-resist-label {
-      font-size: .62rem;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: .04em;
-      color: var(--muted);
-    }
-    html[data-skin="formigres"] .pedido-row-resist-val {
-      font-size: .78rem;
-      font-weight: 700;
-      letter-spacing: .1em;
-      color: var(--text-strong);
-    }
     html[data-skin="formigres"] .pedido-row-gemeas {
       margin-top: 3px;
       font-size: .68rem;
       color: var(--muted);
       line-height: 1.4;
     }
-    html[data-skin="formigres"] .pedido-card-desc .pedido-row-resist { margin-top: 3px; }
     html[data-skin="formigres"] .pedido-card-desc .pedido-row-gemeas { margin-top: 2px; font-size: .62rem; }
     .pedido-col-emb {
       font-size: .72rem;
@@ -3031,20 +2997,18 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const r = String(item.referencia || '').trim();
       return r && r !== '—' ? r : '';
     }
-    function renderResistenciaLine(item, kind) {
+    function renderResistenciaBold(item) {
       const resist = modelResistencia(item);
-      if (!resist) return '';
-      const pdf = kind === 'pdf';
-      const cls = pdf ? 'print-pedido-item-resist' : 'pedido-row-resist';
-      const labelCls = pdf ? 'print-pedido-item-resist-label' : 'pedido-row-resist-label';
-      const valCls = pdf ? 'print-pedido-item-resist-val' : 'pedido-row-resist-val';
-      return '<div class="' + cls + '">' +
-        '<span class="' + labelCls + '">Resistência</span>' +
-        '<strong class="' + valCls + '">' + esc(resist) + '</strong></div>';
+      return resist ? '<strong class="pedido-meta-resist">' + esc(resist) + '</strong> ' : '';
     }
-    function renderResistenciaCell(item) {
-      const resist = modelResistencia(item);
-      return resist ? esc(resist) : '';
+    function renderItemMetaHtml(item, cod) {
+      const codStr = cod != null ? cod : item.codigo_tintao;
+      const parts = ['#' + esc(codStr)];
+      if (!item.gemeas || item.gemeas.length < 2) {
+        if (item.marca_nome) parts.push(esc(item.marca_nome));
+      }
+      parts.push(esc(item.formato || '—'));
+      return renderResistenciaBold(item) + parts.join(' · ');
     }
     function renderGemeasMarcasLine(item, kind) {
       const g = item.gemeas;
@@ -3071,7 +3035,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           '<td class="gemeas-col-cod">#' + esc(row.codigo) + '</td></tr>';
       }).join('');
       return '<tr class="model-gemeas-detail hidden" id="gemeas-panel-' + esc(cod) + '" data-gemeas-for="' + esc(cod) + '">' +
-        '<td colspan="10"><div class="model-gemeas-wrap">' +
+        '<td colspan="9"><div class="model-gemeas-wrap">' +
         '<p class="model-gemeas-caption">Mesmo modelo nestas marcas</p>' +
         '<table class="model-gemeas-table"><thead><tr><th>Marca</th><th>Código</th></tr></thead><tbody>' +
         rows + '</tbody></table></div></td></tr>';
@@ -3125,12 +3089,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const cxTot = qty ? itemCaixasTotal(item, qty) : null;
         const pesoTot = qty ? itemPesoTotal(item, qty) : null;
         const sub = qty ? itemSubtotal(item, qty) : null;
-        const rowMetaParts = ['#' + esc(cod)];
-        if (!item.gemeas || item.gemeas.length < 2) {
-          if (item.marca_nome) rowMetaParts.push(esc(item.marca_nome));
-        }
-        rowMetaParts.push(esc(item.formato || '—'));
-        const rowMeta = rowMetaParts.join(' · ');
+        const rowMeta = renderItemMetaHtml(item, cod);
         const gemeasMarcasHtml = renderGemeasMarcasLine(item, 'catalog');
         const gemeasTrigger = renderGemeasTrigger(item, cod);
         const searchExtra = gemeasSearchText(item);
@@ -3142,7 +3101,6 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + searchExtra).toLowerCase()) + '" data-qty="' + qty + '">' +
           '<td class="pedido-col-foto col-foto">' + foto + '</td>' +
           '<td class="pedido-col-modelo col-modelo">' + titleHtml + warn + gemeasMarcasHtml + '<div class="pedido-row-meta">' + rowMeta + '</div></td>' +
-          '<td class="pedido-col-resist col-resist">' + renderResistenciaCell(item) + '</td>' +
           '<td class="pedido-col-qty col-qty">' +
             '<input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" tabindex="0" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="' + esc(QTY_LABEL) + '" placeholder="" />' +
           '</td>' +
@@ -3301,9 +3259,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '<div class="pedido-card-head-main">' +
           '<div class="pedido-card-desc">' +
             '<div class="pedido-card-title pedido-card-hero">' + esc(titulo) + '</div>' +
-            renderResistenciaLine(item, 'catalog') +
             renderGemeasMarcasLine(item, 'catalog') +
-            '<div class="pedido-card-meta">#' + esc(item.codigo_tintao) + ' · ' + esc(item.formato || '—') + '</div>' +
+            '<div class="pedido-card-meta">' + renderItemMetaHtml(item) + '</div>' +
           '</div>' +
           '<div class="pedido-card-qty">' +
             '<span class="pedido-card-qty-main pedido-card-hero">' + qty + ' <span>' + esc(qtyShort) + '</span></span>' +
@@ -3319,7 +3276,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function renderPedidoTableRow({ item, qty, img, titulo, m2unit, m2tot, pesoTot, cxTot, cxpl, sub }, thumbs, opts) {
       const forPdf = opts && opts.pdf;
       const emb = itemEmbalagem(item);
-      const rowMeta = '#' + esc(item.codigo_tintao) + ' · ' + esc(item.formato || '—');
+      const rowMeta = renderItemMetaHtml(item);
       const imgSrc = forPdf ? pdfImgSrcForPrint(img, thumbs, item) : pdfImgSrc(img, thumbs, item) || img;
       const thumbPx = forPdf ? PDF_PRINT_THUMB_PX : 48;
       const thumbCell = imgSrc
@@ -3333,7 +3290,6 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         return '<tr>' +
           '<td class="pedido-col-foto">' + thumbCell + '</td>' +
           '<td class="pedido-col-modelo"><span class="pedido-row-title">' + esc(titulo) + '</span><div class="pedido-row-meta">' + rowMeta + '</div></td>' +
-          '<td class="pedido-col-resist">' + renderResistenciaCell(item) + '</td>' +
           '<td class="pedido-col-qty">' + qty + '</td>' +
           '<td class="pedido-col-num">' + (m2tot ? fmtDecimal(m2tot) : '—') + '</td>' +
           '<td class="pedido-col-num">' + (cxTot ? fmtDecimal(cxTot, 0) : '—') + '</td>' +
@@ -3637,9 +3593,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '.pedido-card-pdf .pedido-card-hero { font-size: 14px; font-weight: 700; line-height: 1.35; color: #2f2f2f; font-variant-numeric: tabular-nums; }' +
         '.pedido-card-pdf .pedido-card-title.pedido-card-hero { word-break: break-word; }' +
         '.pedido-card-pdf .pedido-card-meta { margin-top: 4px; font-size: 11px; color: #767676; line-height: 1.35; }' +
-        '.pedido-card-pdf .pedido-row-resist { margin-top: 4px; gap: 6px 8px; line-height: 1.35; }' +
-        '.pedido-card-pdf .pedido-row-resist-label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .05em; color: #767676; }' +
-        '.pedido-card-pdf .pedido-row-resist-val { font-size: 13px; font-weight: 700; letter-spacing: .1em; color: #2f2f2f; }' +
+        '.pedido-card-pdf .pedido-meta-resist { font-weight: 700; letter-spacing: .1em; color: #2f2f2f; }' +
         '.pedido-card-pdf .pedido-row-gemeas { margin-top: 4px; font-size: 10px; color: #767676; line-height: 1.45; }' +
         '.pedido-card-pdf .pedido-card-qty-sub { font-size: 11px; color: #767676; margin-top: 2px; }' +
         '.pedido-card-pdf .pedido-card-total .pedido-card-hero { color: #b01219; white-space: nowrap; }' +
@@ -3659,9 +3613,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '.print-pedido-table tbody td { border-bottom: 1px solid ' + rowLine + '; }' +
         '.print-pedido-table tbody tr:last-child td { border-bottom: 1px solid ' + rowLine + '; }' +
         '.print-pedido-table col.col-foto { width: ' + (thumb + 8) + 'px; }' +
-        '.print-pedido-table col.col-modelo { width: 28%; }' +
-        '.print-pedido-table col.col-resist { width: 48px; }' +
-        '.print-pedido-table .pedido-col-resist { text-align: center; font-weight: 700; letter-spacing: .1em; color: #2f2f2f; vertical-align: middle; font-size: 12px; }' +
+        '.print-pedido-table col.col-modelo { width: 32%; }' +
+        '.print-pedido-table .pedido-meta-resist { font-weight: 700; letter-spacing: .1em; color: #2f2f2f; }' +
         '.print-pedido-table .pedido-row-title { display: block; font-weight: 600; line-height: 1.35; color: #2f2f2f; font-size: 13px; word-break: break-word; }' +
         '.print-pedido-table .pedido-row-meta { margin-top: 4px; font-size: 11px; color: #767676; line-height: 1.35; }' +
         '.print-pedido-table .pedido-col-num, .print-pedido-table th.pedido-col-num, .print-pedido-table .col-subtotal { text-align: right; font-variant-numeric: tabular-nums; vertical-align: middle; }' +
