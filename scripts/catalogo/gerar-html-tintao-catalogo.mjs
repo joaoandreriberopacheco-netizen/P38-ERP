@@ -444,6 +444,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
       white-space: nowrap;
       border: 0;
     }
+    .load-hint {
+      margin: 14px 0 0;
+      font-size: .78rem;
+      color: var(--load-charcoal-muted);
+      line-height: 1.35;
+      min-height: 1.35em;
+    }
     .theme-fab {
       position: fixed;
       left: 14px;
@@ -1359,7 +1366,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
         <span class="load-pct" id="load-pct" aria-hidden="true">0%</span>
       </div>
       <div class="load-squares" id="load-squares" aria-hidden="true">${loadSquaresHtml}</div>
-      <p class="load-sr" id="load-msg">A carregar fotos do catálogo</p>
+      <p class="load-hint" id="load-msg" aria-live="polite">A abrir catálogo…</p>
     </div>
   </div>
 
@@ -2308,6 +2315,10 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
       }
       return [...urls];
     }
+    function prefersFastBoot() {
+      return window.matchMedia('(max-width: 768px)').matches
+        || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent || '');
+    }
     function setLoadProgress(done, total) {
       const pct = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
       const wrap = document.getElementById('load-ant-fill-wrap');
@@ -2318,21 +2329,32 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
       const filled = total > 0 ? Math.round((done / total) * squares.length) : 0;
       squares.forEach((sq, i) => sq.classList.toggle('filled', i < filled));
       const msg = document.getElementById('load-msg');
-      if (msg && total > 0) msg.textContent = 'A carregar fotos do catálogo — ' + pct + '% (' + done + ' de ' + total + ')';
+      if (msg && total > 0) {
+        msg.textContent = prefersFastBoot()
+          ? 'A abrir catálogo — ' + pct + '%'
+          : 'A aquecer fotos — ' + pct + '% (' + done + ' de ' + total + ')';
+      }
     }
-    function preloadImages(urls) {
+    function preloadImages(urls, maxMs) {
       return new Promise((resolve) => {
-        if (!urls.length) { setLoadProgress(0, 0); resolve(); return; }
+        if (!urls.length) { setLoadProgress(1, 1); resolve(); return; }
         let done = 0;
+        let finished = false;
         const total = urls.length;
         setLoadProgress(0, total);
-        const finish = () => { clearTimeout(timeout); setLoadProgress(total, total); resolve(); };
+        const finish = () => {
+          if (finished) return;
+          finished = true;
+          clearTimeout(timeout);
+          setLoadProgress(total, total);
+          resolve();
+        };
         const tick = () => {
           done += 1;
           setLoadProgress(done, total);
           if (done >= total) finish();
         };
-        const timeout = setTimeout(finish, 35000);
+        const timeout = setTimeout(finish, maxMs || 5000);
         urls.forEach((url) => {
           const img = new Image();
           img.onload = tick;
@@ -2351,15 +2373,46 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
         overlay.setAttribute('aria-hidden', 'true');
       }
     }
-    async function bootApp() {
-      const urls = collectImageUrls();
-      setLoadProgress(0, urls.length);
-      await preloadImages(urls);
-      renderCatalogo();
-      renderPedido();
-      updateCartFab();
-      requestAnimationFrame(() => requestAnimationFrame(revealApp));
+    function ensureAppRendered() {
+      try {
+        renderCatalogo();
+        renderPedido();
+        updateCartFab();
+      } catch (err) {
+        console.error(err);
+      }
     }
+    async function bootApp() {
+      const fast = prefersFastBoot();
+      const minSplashMs = fast ? 650 : 1100;
+      const splashStart = Date.now();
+      const msg = document.getElementById('load-msg');
+      if (msg) msg.textContent = fast ? 'A abrir catálogo…' : 'A preparar pedido Formigres…';
+      try {
+        ensureAppRendered();
+        if (!fast) {
+          const urls = collectImageUrls().slice(0, 28);
+          await Promise.race([
+            preloadImages(urls, 5000),
+            new Promise((resolve) => setTimeout(resolve, 5000)),
+          ]);
+        } else {
+          setLoadProgress(1, 1);
+        }
+      } catch (err) {
+        console.error(err);
+        ensureAppRendered();
+      } finally {
+        const wait = Math.max(0, minSplashMs - (Date.now() - splashStart));
+        if (wait) await new Promise((resolve) => setTimeout(resolve, wait));
+        requestAnimationFrame(() => requestAnimationFrame(revealApp));
+      }
+    }
+    let bootSafetyTimer = setTimeout(function bootSafetyReveal() {
+      if (!document.body.classList.contains('is-loading')) return;
+      ensureAppRendered();
+      revealApp();
+    }, 9000);
 
     const q = document.getElementById('search');
     const groupSel = document.getElementById('group-by');
@@ -2382,6 +2435,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
     }
     initTopControls();
 
+    try {
     q.addEventListener('input', () => applySearch(q.value));
     groupSel?.addEventListener('change', () => syncGroupBy(groupSel.value));
     groupSelD?.addEventListener('change', () => syncGroupBy(groupSelD.value));
@@ -2450,7 +2504,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
       focusQtyInput(row.querySelector('.qty-input'));
     });
 
-    bootApp();
+    bootApp().finally(function () { clearTimeout(bootSafetyTimer); });
+    } catch (bootErr) {
+      console.error(bootErr);
+      clearTimeout(bootSafetyTimer);
+      ensureAppRendered();
+      revealApp();
+    }
 
     const lb = document.getElementById('lightbox');
     const lbImg = document.getElementById('lightbox-img');
