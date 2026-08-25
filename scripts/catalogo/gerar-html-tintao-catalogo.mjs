@@ -79,7 +79,7 @@ const CONFIGS = {
     hideThemeToggle: true,
     fontsUrl: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&display=swap',
     logoPath: path.join(ROOT, 'scripts', 'catalogo', 'assets', 'formigres-logo.png'),
-    fabricanteUf: 'SC',
+    fabricanteUf: 'SP',
     fabricanteNome: 'Formigres',
   },
 };
@@ -888,7 +888,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   </button>`;
   const suframaClientJs = isFormigresSkin
     ? buildSuframaClientJs({
-      fabricanteUf: cfg.fabricanteUf || 'SC',
+      fabricanteUf: cfg.fabricanteUf || 'SP',
       fabricanteNome: cfg.fabricanteNome || 'Formigres',
     })
     : '';
@@ -919,7 +919,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           <h2>Regime especial Suframa</h2>
           <button type="button" class="regime-dialog-close" id="regime-dialog-close" aria-label="Fechar">×</button>
         </div>
-        <p class="regime-dialog-fabricante" id="regime-fabricante-hint">Fabricante: ${escTpl(cfg.fabricanteNome || 'Formigres')} (${escTpl(cfg.fabricanteUf || 'SC')})</p>
+        <p class="regime-dialog-fabricante" id="regime-fabricante-hint">Fabricante: ${escTpl(cfg.fabricanteNome || 'Formigres')} (${escTpl(cfg.fabricanteUf || 'SP')})</p>
         <div class="regime-dialog-fields">
           <div class="regime-field">
             <label for="regime-comprador-uf">Seu estado (UF)</label>

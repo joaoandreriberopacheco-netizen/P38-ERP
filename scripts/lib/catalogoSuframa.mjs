@@ -5,7 +5,7 @@
  * Regra de negócio (quadro aprovado):
  * - PIS 1,65% e COFINS 7,60% fixos quando aplicáveis.
  * - ICMS: alíquota interestadual integral (ex.: BA→AM 12%); Sul/Sudeste→N/NE/CO
- *   com 25% usa fator 28% → desconto ICMS 7% (Formigres/SC).
+ *   com 25% usa fator 28% → desconto ICMS 7% (Formigres/SP).
  * - ALC + lucro real: só ICMS (PIS/COFINS vedados).
  * - Amazônia Ocidental: 0% (IPI já zero em cerâmica).
  */
@@ -114,7 +114,7 @@ export function calcRegimeIncentivoFromState({ fabricanteUf, compradorUf, destin
 }
 
 /** Gera bloco JS para embed no HTML do catálogo (mesma lógica, sem imports). */
-export function buildSuframaClientJs({ fabricanteUf = 'SC', fabricanteNome = 'Formigres' } = {}) {
+export function buildSuframaClientJs({ fabricanteUf = 'SP', fabricanteNome = 'Formigres' } = {}) {
   return `
     const FABRICANTE_UF = ${JSON.stringify(String(fabricanteUf).toUpperCase())};
     const FABRICANTE_NOME = ${JSON.stringify(fabricanteNome)};

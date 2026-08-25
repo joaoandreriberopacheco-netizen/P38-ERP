@@ -11,8 +11,8 @@ import {
 
 const cases = [
   {
-    label: 'SC→AM ZFM presumido (Formigres)',
-    input: { fabricanteUf: 'SC', compradorUf: 'AM', destino: 'zfm', tributario: 'lucro_presumido' },
+    label: 'SP→AM ZFM presumido (Formigres)',
+    input: { fabricanteUf: 'SP', compradorUf: 'AM', destino: 'zfm', tributario: 'lucro_presumido' },
     icms: 25,
     icmsDesconto: 7,
     pis: PIS_DESONERADO_PCT,
@@ -20,8 +20,8 @@ const cases = [
     incentivo: 16.25,
   },
   {
-    label: 'SC→AM ALC lucro real (só ICMS)',
-    input: { fabricanteUf: 'SC', compradorUf: 'AM', destino: 'alc', tributario: 'lucro_real' },
+    label: 'SP→AM ALC lucro real (só ICMS)',
+    input: { fabricanteUf: 'SP', compradorUf: 'AM', destino: 'alc', tributario: 'lucro_real' },
     icms: 25,
     icmsDesconto: 7,
     pis: 0,
