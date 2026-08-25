@@ -1,8 +1,6 @@
 /**
- * Tour de onboarding (product tour) — catálogos B2B Formigres / Arielle.
- * Spotlight + overlay + passos; primeira visita automática; botão Ajuda repete.
+ * Tour de onboarding (product tour) — catálogos B2B Formigres / Arielle / portfolio.
  */
-
 const HELP_FAB_TOKENS = {
   formigres: {
     bg: '#d6f2f4',
@@ -18,21 +16,47 @@ const HELP_FAB_TOKENS = {
     fg: '#8b3a4a',
     glow: 'rgba(139, 58, 74, 0.16)',
   },
+  ecuaceramica: {
+    bg: '#efe4d8',
+    bgHover: '#e6d9c9',
+    border: '#c9b59a',
+    fg: '#6b5344',
+    glow: 'rgba(107, 83, 68, 0.16)',
+  },
+  tintao: {
+    bg: '#ececf0',
+    bgHover: '#e0e0e6',
+    border: '#b8b8c0',
+    fg: '#3a3a42',
+    glow: 'rgba(58, 58, 66, 0.14)',
+  },
 };
 
 export function buildCatalogTourSteps({ skin = 'formigres', qtyLabelPl = 'paletes' } = {}) {
   const isArielle = skin === 'arielle';
-  const marca = isArielle ? 'Arielle · Carmelo Fior' : 'Formigres';
+  const isPortfolio = skin === 'ecuaceramica';
+  const isTintao = skin === 'tintao' || skin === 'default';
+  const marca = isPortfolio
+    ? 'Ecuaceramica (exemplo portfolio P38)'
+    : (isTintao ? 'Formigres (Tintão)' : (isArielle ? 'Arielle · Carmelo Fior' : 'Formigres'));
   const linhas = isArielle ? 'Bold e Retificada' : 'Bold, Retificada e Polida';
   const regimeOrigem = isArielle
     ? 'Origem Sergipe (Polo SE).'
     : 'Origem São Paulo (SP).';
 
-  return [
+  const steps = [
     {
       id: 'welcome',
-      title: isArielle ? 'Bem-vindo ao catálogo Arielle' : 'Bem-vindo ao catálogo Formigres',
-      text: `Tour rápido (~2 min) do catálogo ${marca}: busca, ${qtyLabelPl}, regime Suframa, carrinho e PDF para o representante. Pode pular a qualquer momento.`,
+      title: isPortfolio
+        ? 'Exemplo de catálogo B2B white-label'
+        : (isTintao
+          ? 'Bem-vindo ao pedido Formigres'
+          : (isArielle ? 'Bem-vindo ao catálogo Arielle' : 'Bem-vindo ao catálogo Formigres')),
+      text: isPortfolio
+        ? `Tour rápido (~2 min) do ${marca}: busca, ${qtyLabelPl}, carrinho e PDF. Dados ilustrativos — sem vínculo com concorrentes do seu mercado.`
+        : (isTintao
+          ? `Tour rápido (~2 min): busca por código ou modelo, marque caixas na tabela, revise m² por caixa e total no carrinho e gere o PDF para enviar ao vendedor. Pode pular a qualquer momento.`
+          : `Tour rápido (~2 min) do catálogo ${marca}: busca, ${qtyLabelPl}, regime Suframa, carrinho e PDF para o representante. Pode pular a qualquer momento.`),
       center: true,
       prepare: 'closePanels',
     },
@@ -40,26 +64,42 @@ export function buildCatalogTourSteps({ skin = 'formigres', qtyLabelPl = 'palete
       id: 'desconto',
       selector: '#desconto-pct',
       title: 'Desconto comercial',
-      text: 'Opcional: percentual negociado com o cliente. Combina com o incentivo Suframa quando o regime especial estiver ativo.',
+      text: isTintao
+        ? 'Opcional: percentual negociado com o vendedor. Entra no total do pedido.'
+        : (isPortfolio
+          ? 'Opcional: percentual negociado com o cliente. Combina com o regime Suframa quando activo.'
+          : 'Opcional: percentual negociado com o cliente. Combina com o incentivo Suframa quando o regime especial estiver ativo.'),
       placement: 'bottom',
       prepare: 'closePanels',
     },
-    {
-      id: 'regime',
-      selector: '#regime-panel',
-      title: 'Regime especial Suframa',
-      text: `Ative o interruptor para compras destinadas a AM, RR, AP ou AC. ${regimeOrigem} O incentivo entra automaticamente nos preços.`,
-      placement: 'bottom',
-      prepare: 'closePanels',
-    },
-    {
-      id: 'regime-edit',
-      selector: '#regime-dialog',
-      title: 'Parâmetros do regime',
-      text: 'Ajuste UF do comprador, destino Suframa (ZFM, ALC ou Amazônia Ocidental) e regime tributário. Toque em Aplicar para recalcular os preços. O ícone de lápis no painel reabre este formulário.',
-      placement: 'bottom',
-      prepare: 'regimeDialog',
-    },
+  ];
+
+  if (!isTintao) {
+    steps.push(
+      {
+        id: 'regime',
+        selector: '#regime-panel',
+        title: 'Regime especial Suframa',
+        text: isPortfolio
+          ? 'Demonstração: ative para compras destinadas a AM, RR, AP ou AC. Origem demo SP (importação). O incentivo entra nos preços.'
+          : `Ative o interruptor para compras destinadas a AM, RR, AP ou AC. ${regimeOrigem} O incentivo entra automaticamente nos preços.`,
+        placement: 'bottom',
+        prepare: 'closePanels',
+      },
+      {
+        id: 'regime-edit',
+        selector: '#regime-dialog',
+        title: 'Parâmetros do regime',
+        text: isPortfolio
+          ? 'UF do comprador, destino Suframa (ZFM, ALC ou Amazônia Ocidental) e regime tributário — igual ao catálogo real P38.'
+          : 'Ajuste UF do comprador, destino Suframa (ZFM, ALC ou Amazônia Ocidental) e regime tributário. Toque em Aplicar para recalcular os preços. O ícone de lápis no painel reabre este formulário.',
+        placement: 'bottom',
+        prepare: 'regimeDialog',
+      },
+    );
+  }
+
+  steps.push(
     {
       id: 'search',
       selector: '#search',
@@ -83,7 +123,9 @@ export function buildCatalogTourSteps({ skin = 'formigres', qtyLabelPl = 'palete
       id: 'catalogo',
       selector: '#catalogo',
       title: 'Montar o pedido',
-      text: `Abra ${linhas}, escolha formato e acabamento e preencha a coluna de ${qtyLabelPl} em cada linha.`,
+      text: isTintao
+        ? 'Navegue por linha (Bold, Retificada, Polida), formato e acabamento. Na coluna Caixas, indique quantas unidades quer — o m²/cx e o m² total calculam automaticamente.'
+        : `Abra ${linhas}, escolha formato e acabamento e preencha a coluna de ${qtyLabelPl} em cada linha.`,
       placement: 'top',
       prepare: 'closePanels',
     },
@@ -91,7 +133,9 @@ export function buildCatalogTourSteps({ skin = 'formigres', qtyLabelPl = 'palete
       id: 'cart',
       selector: '#cart-fab',
       title: 'Carrinho — Minha seleção',
-      text: `Toque no carrinho para abrir a seleção: revise ${qtyLabelPl}, m², peso e subtotais antes de exportar.`,
+      text: isTintao
+        ? 'Toque no carrinho para abrir a seleção: revise caixas, m²/cx, m² total e subtotais antes de exportar.'
+        : `Toque no carrinho para abrir a seleção: revise ${qtyLabelPl}, m², peso e subtotais antes de exportar.`,
       placement: 'left',
       prepare: 'closePanels',
     },
@@ -100,7 +144,9 @@ export function buildCatalogTourSteps({ skin = 'formigres', qtyLabelPl = 'palete
       selector: '#pedido-actions',
       selectorMobile: '#pedido-panel',
       title: 'Revisar antes do PDF',
-      text: 'Confira cada linha do pedido. Pode limpar a seleção ou ajustar quantidades voltando ao catálogo.',
+      text: isTintao
+        ? 'Confira cada linha: caixas, m² por caixa e m² total. Pode limpar a seleção ou ajustar quantidades voltando ao catálogo.'
+        : 'Confira cada linha do pedido. Pode limpar a seleção ou ajustar quantidades voltando ao catálogo.',
       placement: 'top',
       prepare: 'pedidoOpen',
     },
@@ -108,18 +154,26 @@ export function buildCatalogTourSteps({ skin = 'formigres', qtyLabelPl = 'palete
       id: 'pdf',
       selector: '#pdf-pedido-panel',
       title: 'Gerar PDF do pedido',
-      text: 'Com itens na seleção, toque em PDF do pedido. O ficheiro baixa no telemóvel ou computador — ideal para arquivar ou enviar.',
+      text: isTintao
+        ? 'Com itens na seleção, toque em PDF do pedido. O ficheiro baixa no telemóvel ou computador — ideal para enviar ao vendedor.'
+        : 'Com itens na seleção, toque em PDF do pedido. O ficheiro baixa no telemóvel ou computador — ideal para arquivar ou enviar.',
       placement: 'top',
       prepare: 'pedidoOpen',
     },
     {
       id: 'enviar',
-      title: 'Envie ao representante',
-      text: 'Depois de gerar o PDF, reenvie-o ao seu representante comercial (WhatsApp, e-mail ou canal habitual) para formalizar cotação ou pedido.',
+      title: isTintao ? 'Envie ao vendedor' : 'Envie ao representante',
+      text: isTintao
+        ? 'Depois de gerar o PDF, envie ao vendedor Formigres (WhatsApp, e-mail ou canal habitual) para formalizar cotação ou pedido.'
+        : (isPortfolio
+          ? 'Depois de gerar o PDF, imagine enviar ao representante da sua fábrica — é o fluxo que o P38 entrega no white-label.'
+          : 'Depois de gerar o PDF, reenvie-o ao seu representante comercial (WhatsApp, e-mail ou canal habitual) para formalizar cotação ou pedido.'),
       center: true,
       prepare: 'closePanels',
     },
-  ];
+  );
+
+  return steps;
 }
 
 export function buildCatalogTourCss(skin = 'formigres') {
@@ -270,6 +324,7 @@ export function buildCatalogTourClientJs({ tourKey, skin = 'formigres', qtyLabel
   const stepsJson = JSON.stringify(buildCatalogTourSteps({ skin, qtyLabelPl }));
   const key = JSON.stringify(tourKey || 'catalog-tour-v1');
   return `
+    const HAS_CATALOG_TOUR = true;
     const TOUR_KEY = ${key};
     const TOUR_STEPS = ${stepsJson};
     let tourIndex = 0;
@@ -386,7 +441,7 @@ export function buildCatalogTourClientJs({ tourKey, skin = 'formigres', qtyLabel
     }
 
     function startTour(fromStart) {
-      if (!IS_B2B_CATALOG || !TOUR_STEPS.length) return;
+      if (!HAS_CATALOG_TOUR || !TOUR_STEPS.length) return;
       tourIndex = fromStart ? 0 : tourIndex;
       tourOpen = true;
       document.body.classList.add('catalog-tour-active');
@@ -407,7 +462,7 @@ export function buildCatalogTourClientJs({ tourKey, skin = 'formigres', qtyLabel
     }
 
     function initCatalogTour() {
-      if (!IS_B2B_CATALOG) return;
+      if (!HAS_CATALOG_TOUR) return;
       bindClick('catalog-tour-next', tourNext);
       bindClick('catalog-tour-prev', tourPrev);
       bindClick('catalog-tour-skip', function () { endTour(true); });

@@ -52,6 +52,7 @@ const CONFIGS = {
     qtyKey: 'tintao-pedido-qty-v1',
     descontoKey: 'tintao-desconto-v1',
     groupKey: 'tintao-catalog-group-v1',
+    tourKey: 'tintao-catalog-tour-v2',
     classifError: 'JSON de classificação não encontrado. Rode: npm run catalogo:classificar-tintao',
     skin: 'default',
     siteSub: 'Pedido B2B · Lojistas',
@@ -126,6 +127,44 @@ const CONFIGS = {
     brandSiteLabel: 'Arielle — Carmelo Fior',
     fabricanteUf: 'SE',
     fabricanteNome: 'Arielle · Polo SE (Carmelo Fior)',
+  },
+  ecuaceramica: {
+    classifDir: path.join(ROOT, 'docs', 'imports-local', 'ecuaceramica', 'classificacao'),
+    classifPattern: /^ecuaceramica-completo-\d{4}-\d{2}-\d{2}\.json$/,
+    outHtml: path.join(ROOT, 'docs', 'imports-local', 'ecuaceramica', 'Catálogo Ecuaceramica — Portfolio P38.html'),
+    outDeploy: path.join(ROOT, 'deploy', 'catalogo-ecuaceramica', 'index.html'),
+    outPdfThumbs: path.join(ROOT, 'docs', 'imports-local', 'ecuaceramica', 'catalogo-ecuaceramica-pdf-thumbs.json'),
+    publicUrl: (process.env.CATALOGO_ECUA_PUBLIC_URL || 'https://catalogo-demo-p38.vercel.app/').replace(/\/?$/, '/'),
+    snapshotSlug: 'ecuaceramica',
+    skipApiEnrich: true,
+    skipPdfThumbs: false,
+    skipGemeasDedup: true,
+    regimeKey: 'ecuaceramica-regime-especial-v1',
+    fabricanteUf: 'SP',
+    title: 'Catálogo B2B — Ecuaceramica (exemplo portfolio)',
+    h1: 'Porcelanatos — Catálogo B2B',
+    hint: 'Exemplo ilustrativo · marque paletes e revise m², peso e total no carrinho',
+    qtyUnit: 'palete',
+    qtyLabel: 'Paletes',
+    qtyLabelPl: 'paletes',
+    demoBanner: 'Exemplo portfolio P38 · embalagem oficial · PEI por produto · preços demo ~R$ 40/m² (varia por formato)',
+    moeda: 'BRL',
+    moedaSimbolo: 'R$',
+    themeKey: 'ecuaceramica-catalog-theme-v1',
+    qtyKey: 'ecuaceramica-catalog-qty-v1',
+    descontoKey: 'ecuaceramica-catalog-desconto-v1',
+    groupKey: 'ecuaceramica-catalog-group-v1',
+    tourKey: 'ecuaceramica-catalog-tour-v1',
+    classifError: 'JSON de classificação não encontrado. Rode: npm run catalogo:classificar-ecuaceramica',
+    skin: 'ecuaceramica',
+    siteSub: 'Portfolio P38 · Catálogo B2B demonstrativo',
+    hideThemeToggle: true,
+    fontsUrl: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&display=swap',
+    logoPath: path.join(ROOT, 'scripts', 'catalogo', 'assets', 'ecuaceramica-logo.jpg'),
+    brandSiteUrl: 'https://ecuaceramica.com/6-porcelanato',
+    brandSiteLabel: 'Ecuaceramica — site oficial (Equador)',
+    fabricanteNome: 'Ecuaceramica · Equador',
+    poweredByHtml: 'Catálogo B2B by <strong>P38 sistemas</strong> · exemplo white-label',
   },
 };
 
@@ -400,6 +439,9 @@ function slimItem(item) {
     acabamento_label: item.acabamento_label || '',
     marca_nome: item.marca_nome || '',
     referencia: item.referencia || '',
+    pei: item.pei ?? null,
+    pei_label: item.pei_label || '',
+    pei_raw: item.pei_raw || '',
     gemeas: (item.gemeas || []).map((g) => ({
       codigo: String(g.codigo),
       marca: g.marca || '—',
@@ -937,12 +979,20 @@ const FORMIGRES_SKIN_CSS = `
 `;
 
 function isB2bCatalogSkin(skin) {
-  return skin === 'formigres' || skin === 'arielle';
+  return skin === 'formigres' || skin === 'arielle' || skin === 'ecuaceramica';
+}
+
+/** Seletor CSS partilhado — catálogo B2B (cards no mobile, tabela no desktop). */
+function b2bCatalogCss(suffix) {
+  return ['formigres', 'arielle', 'ecuaceramica']
+    .map((skin) => `html[data-skin="${skin}"]${suffix ? ` ${suffix}` : ''}`)
+    .join(', ');
 }
 
 const BRAND_SKIN_TOKENS = {
   formigres: { accent: '#da1c24', accentBright: '#b01219', accentRgb: '218,28,36', demoBg: '#f9e5e6' },
   arielle: { accent: '#23674c', accentBright: '#1a5239', accentRgb: '35,103,76', demoBg: '#e8f3ee' },
+  ecuaceramica: { accent: '#9d7b5c', accentBright: '#7d6249', accentRgb: '157, 123, 92', demoBg: '#f3ebe3' },
 };
 
 function buildBrandSkinCss(skin) {
@@ -969,6 +1019,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   const comFoto = itens.filter((i) => i.imagem_url).length;
   const loadSquaresHtml = Array.from({ length: 20 }, () => '<span class="load-square"></span>').join('');
   const isB2bSkin = isB2bCatalogSkin(cfg.skin);
+  const hasCatalogTour = isB2bSkin || Boolean(cfg.tourKey);
+  const tourSkin = cfg.skin === 'default' ? 'tintao' : cfg.skin;
   const qtyLabel = cfg.qtyLabel || (isB2bSkin ? 'Paletes' : 'Caixas');
   const qtyLabelPl = cfg.qtyLabelPl || (isB2bSkin ? 'paletes' : 'caixas');
   const qtyUnit = cfg.qtyUnit || (isB2bSkin ? 'palete' : 'caixa');
@@ -1030,10 +1082,10 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       fabricanteNome: cfg.fabricanteNome || 'Formigres',
     })
     : '';
-  const catalogTourJs = isB2bSkin
-    ? buildCatalogTourClientJs({ tourKey: cfg.tourKey, skin: cfg.skin, qtyLabelPl })
+  const catalogTourJs = hasCatalogTour
+    ? buildCatalogTourClientJs({ tourKey: cfg.tourKey, skin: tourSkin, qtyLabelPl })
     : '';
-  const regimePanelHtml = isB2bSkin
+  const regimePanelHtml = isB2bSkin && !cfg.skipRegimePanel
     ? `<section class="regime-panel" id="regime-panel" aria-label="Regime especial Suframa">
       <div class="regime-panel-head">
         <label class="regime-switch">
@@ -1053,7 +1105,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       <p class="regime-summary" id="regime-summary" hidden></p>
     </section>`
     : '';
-  const regimeDialogHtml = isB2bSkin
+  const regimeDialogHtml = isB2bSkin && !cfg.skipRegimePanel
     ? `<div class="regime-overlay" id="regime-overlay" role="dialog" aria-modal="true" aria-label="Regime especial Suframa">
       <section class="regime-dialog" id="regime-dialog">
         <div class="regime-dialog-head">
@@ -1178,7 +1230,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     html[data-theme="light"] .load-overlay { background: rgba(242,242,240,.97); }
     ${isB2bSkin ? buildBrandSkinCss(cfg.skin) : ''}
-    ${isB2bSkin ? buildCatalogTourCss(cfg.skin) : ''}
+    ${hasCatalogTour ? buildCatalogTourCss(tourSkin) : ''}
     .load-logo-ant {
       position: relative;
       width: min(200px, 58vw);
@@ -1466,14 +1518,14 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     .btn-clear-qty svg { width: 20px; height: 20px; }
     .catalog-items { display: block; }
     .catalog-cards-wrap { display: none; }
-    html[data-skin="formigres"] .catalog-card.pedido-card {
+    ${b2bCatalogCss('.catalog-card.pedido-card')} {
       border-bottom: 1px solid var(--border-subtle);
       max-width: 100%;
       overflow: hidden;
       box-sizing: border-box;
     }
-    html[data-skin="formigres"] .catalog-card.pedido-card:last-child { border-bottom: 0; }
-    html[data-skin="formigres"] .catalog-card-thumb-btn {
+    ${b2bCatalogCss('.catalog-card.pedido-card:last-child')} { border-bottom: 0; }
+    ${b2bCatalogCss('.catalog-card-thumb-btn')} {
       flex-shrink: 0;
       padding: 0;
       border: 0;
@@ -1482,17 +1534,17 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       line-height: 0;
       display: block;
     }
-    html[data-skin="formigres"] .catalog-card-thumb-btn .pedido-card-thumb {
+    ${b2bCatalogCss('.catalog-card-thumb-btn .pedido-card-thumb')} {
       display: block;
     }
-    html[data-skin="formigres"] .catalog-card-qty-edit {
+    ${b2bCatalogCss('.catalog-card-qty-edit')} {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 2px;
       min-width: 52px;
     }
-    html[data-skin="formigres"] .catalog-card-qty-label {
+    ${b2bCatalogCss('.catalog-card-qty-label')} {
       font-size: .58rem;
       font-weight: 600;
       letter-spacing: .06em;
@@ -1500,7 +1552,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       color: var(--muted);
       line-height: 1;
     }
-    html[data-skin="formigres"] .catalog-card-qty-edit .qty-input {
+    ${b2bCatalogCss('.catalog-card-qty-edit .qty-input')} {
       width: 52px;
       min-width: 0;
       min-height: 36px;
@@ -1509,18 +1561,18 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       font-weight: 700;
       padding: 4px 2px;
     }
-    html[data-skin="formigres"] .catalog-card .pedido-card-qty-sub {
+    ${b2bCatalogCss('.catalog-card .pedido-card-qty-sub')} {
       font-size: .58rem;
       line-height: 1.25;
       color: var(--muted);
       font-weight: 500;
     }
-    html[data-skin="formigres"] .model-gemeas-detail-card {
+    ${b2bCatalogCss('.model-gemeas-detail-card')} {
       padding: 0 8px 10px;
       background: var(--surface-2);
       border-bottom: 1px solid var(--border-subtle);
     }
-    html[data-skin="formigres"] .model-gemeas-detail-card.hidden { display: none !important; }
+    ${b2bCatalogCss('.model-gemeas-detail-card.hidden')} { display: none !important; }
     .search {
       flex: 1 1 220px;
       background: var(--surface);
@@ -1906,6 +1958,18 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       font-weight: 700;
       letter-spacing: .1em;
       color: var(--text-strong);
+    }
+    html[data-skin="ecuaceramica"] .pedido-meta-pei {
+      display: inline-block;
+      font-weight: 700;
+      font-size: .68rem;
+      letter-spacing: .04em;
+      color: var(--accent);
+      background: rgba(var(--accent-rgb), .1);
+      border: 1px solid rgba(var(--accent-rgb), .22);
+      border-radius: 999px;
+      padding: 1px 7px;
+      vertical-align: middle;
     }
     .pedido-col-foto { width: 52px; padding-left: 0; padding-right: 6px; }
     .pedido-col-modelo { min-width: 0; }
@@ -2444,36 +2508,43 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       .pedido-cards-wrap { display: block; overflow-x: hidden; max-width: 100%; }
       .pedido-cards { overflow-x: hidden; max-width: 100%; }
       .pedido-card { max-width: 100%; overflow: hidden; box-sizing: border-box; }
-      html[data-skin="formigres"] .catalog-table-wrap { display: none !important; }
-      html[data-skin="formigres"] .catalog-cards-wrap {
+      ${b2bCatalogCss('.catalog-table-wrap')} { display: none !important; }
+      ${b2bCatalogCss('.catalog-cards-wrap')} {
         display: block;
         padding: 0 0 10px;
         overflow-x: hidden;
         max-width: 100%;
       }
-      html[data-skin="formigres"] .acc-inner {
+      ${b2bCatalogCss('.acc-inner')} {
         padding-left: 0;
         padding-right: 0;
       }
-      html[data-skin="formigres"] .acc-acab {
+      ${b2bCatalogCss('.acc-acab')} {
         --depth: 2;
       }
-      html[data-skin="formigres"] details.acc > .catalog-items,
-      html[data-skin="formigres"] .catalog-items {
+      ${b2bCatalogCss('details.acc > .catalog-items')},
+      ${b2bCatalogCss('.catalog-items')} {
         padding-left: 0;
         padding-right: 0;
       }
-      html[data-skin="formigres"] .model-gemeas-detail-card {
+      ${b2bCatalogCss('.model-gemeas-detail-card')} {
         padding: 0 0 10px;
       }
-      html[data-skin="formigres"] .catalog-cards {
+      ${b2bCatalogCss('.catalog-cards')} {
         display: flex;
         flex-direction: column;
         overflow-x: hidden;
         max-width: 100%;
       }
-      html[data-skin="formigres"] .wrap,
-      html[data-skin="formigres"] .catalogo { overflow-x: hidden; max-width: 100%; }
+      ${b2bCatalogCss('.wrap')},
+      ${b2bCatalogCss('.catalogo')} {
+        overflow-x: hidden;
+        max-width: 100%;
+      }
+      ${b2bCatalogCss('')} {
+        overflow-x: hidden;
+        max-width: 100%;
+      }
       .pedido-card-head { column-gap: 8px; }
       .pedido-card-head-main { column-gap: 8px; }
       .pedido-card-hero { font-size: .82rem; font-weight: 700; line-height: 1.15; }
@@ -2526,15 +2597,15 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       .col-pack, .col-preco,
       .model-table:not(.catalog-pedido-table) thead th:nth-child(3),
       .model-table:not(.catalog-pedido-table) thead th:nth-child(4) { display: none; }
-      html[data-skin="formigres"] .catalog-pedido-table {
+      ${b2bCatalogCss('.catalog-pedido-table')} {
         min-width: 860px;
         font-size: .78rem;
       }
-      html[data-skin="formigres"] .catalog-table-wrap .catalog-pedido-table {
+      ${b2bCatalogCss('.catalog-table-wrap .catalog-pedido-table')} {
         min-width: 860px;
       }
-      html[data-skin="formigres"] .catalog-pedido-table td,
-      html[data-skin="formigres"] .catalog-pedido-table th { padding: 8px 6px; }
+      ${b2bCatalogCss('.catalog-pedido-table td')},
+      ${b2bCatalogCss('.catalog-pedido-table th')} { padding: 8px 6px; }
       .model-table:not(.catalog-pedido-table) { font-size: .78rem; }
       .model-table td, .model-table th { padding: 8px 6px; }
       .col-foto { width: 44px; }
@@ -2669,13 +2740,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
 
     <section class="catalogo" id="catalogo"></section>
     <footer class="catalog-powered" aria-label="Créditos">
-      Powered by <strong>P38 sistemas</strong>
+      ${cfg.poweredByHtml || 'Powered by <strong>P38 sistemas</strong>'}
     </footer>
   </div>
 
   ${themeToggleHtml}
 
-  ${isB2bSkin ? buildCatalogTourFabHtml() : ''}
+  ${hasCatalogTour ? buildCatalogTourFabHtml() : ''}
 
   <div class="fab-stack" id="fab-stack">
     <button type="button" class="fab cart-fab" id="cart-fab" aria-label="Minha seleção">
@@ -2725,7 +2796,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   </div>
 
   ${regimeDialogHtml}
-  ${isB2bSkin ? buildCatalogTourHtml() : ''}
+  ${hasCatalogTour ? buildCatalogTourHtml() : ''}
 
   <div id="pedido-print"></div>
 
@@ -2790,6 +2861,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     const DESCONTO_KEY = '${cfg.descontoKey}';
     const REGIME_KEY = '${cfg.regimeKey || ''}';
     const IS_B2B_CATALOG = ${isB2bSkin};
+    const MOEDA_SIMBOLO = ${JSON.stringify(cfg.moedaSimbolo || 'R$')};
     ${suframaClientJs ? `${suframaClientJs}\n    ` : ''}const GROUP_KEY = '${cfg.groupKey}';
     const PEDIDO_TABLE_COLGROUP_HTML = ${JSON.stringify(pedidoTableColgroup)};
     const PEDIDO_TABLE_HEAD_HTML = ${JSON.stringify(pedidoTableHead)};
@@ -3139,7 +3211,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       if (Number.isNaN(n)) return String(v);
       const parts = n.toFixed(2).split('.');
       parts[0] = parts[0].replace(/\\B(?=(\\d{3})+(?!\\d))/g, '.');
-      return 'R$ ' + parts.join(',');
+      return MOEDA_SIMBOLO + ' ' + parts.join(',');
     }
     function fmtDecimal(v, digits) {
       if (v == null || v === '') return '—';
@@ -3538,6 +3610,21 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const resist = modelResistencia(item);
       return resist ? '<strong class="pedido-meta-resist">' + esc(resist) + '</strong> ' : '';
     }
+    function itemPeiSearch(item) {
+      const parts = [];
+      if (item.pei_label) parts.push(String(item.pei_label));
+      if (item.pei_raw) parts.push(String(item.pei_raw));
+      if (item.pei != null) parts.push('pei ' + item.pei);
+      return parts.join(' ');
+    }
+    function renderPeiBadge(item) {
+      const label = String(item.pei_label || '').trim();
+      if (!label) return '';
+      const tip = item.pei != null
+        ? 'Resistência ao desgaste (PEI ' + item.pei + ')'
+        : 'Indicador de tráfico no site da fábrica';
+      return '<span class="pedido-meta-pei" title="' + esc(tip) + '">' + esc(label) + '</span>';
+    }
     function renderItemMetaHtml(item, cod) {
       const codStr = cod != null ? cod : item.codigo_tintao;
       const parts = ['#' + esc(codStr)];
@@ -3545,6 +3632,10 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         if (item.marca_nome) parts.push(esc(item.marca_nome));
       }
       parts.push(esc(item.formato || '—'));
+      if (CATALOG_SKIN === 'ecuaceramica') {
+        const pei = renderPeiBadge(item);
+        if (pei) parts.push(pei);
+      }
       return renderResistenciaBold(item) + parts.join(' · ');
     }
     function renderGemeasMarcasLine(item, kind) {
@@ -3643,11 +3734,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const gemeasTrigger = renderGemeasTrigger(item, cod);
         const searchExtra = gemeasSearchText(item);
         const resistSearch = modelResistencia(item);
+        const peiSearch = CATALOG_SKIN === 'ecuaceramica' ? itemPeiSearch(item) : '';
         const porPalete = fmtPorPaleteText(item);
         const titleHtml = gemeasTrigger
           ? '<span class="pedido-row-title-line"><span class="pedido-row-title">' + esc(titulo) + '</span>' + gemeasTrigger + '</span>'
           : '<span class="pedido-row-title">' + esc(titulo) + '</span>';
-        return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(normalize((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + formatSearchBlob(item.formato) + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + searchExtra))) + '" data-qty="' + qty + '">' +
+        return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(normalize((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + formatSearchBlob(item.formato) + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + peiSearch + ' ' + searchExtra))) + '" data-qty="' + qty + '">' +
           '<td class="pedido-col-foto col-foto">' + foto + '</td>' +
           '<td class="pedido-col-modelo col-modelo">' + titleHtml + warn + gemeasMarcasHtml + '<div class="pedido-row-meta">' + rowMeta + '</div></td>' +
           '<td class="pedido-col-qty col-qty">' +
@@ -3672,8 +3764,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     function formigresItemSearchKey(item, cod, pack, titulo, extra) {
       const resistSearch = modelResistencia(item);
+      const peiSearch = CATALOG_SKIN === 'ecuaceramica' ? itemPeiSearch(item) : '';
       const fmtBlob = formatSearchBlob(item.formato);
-      return normalize(titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + fmtBlob + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + (extra || ''));
+      return normalize(titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + fmtBlob + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + peiSearch + ' ' + (extra || ''));
     }
     function formatSearchBlob(fmt) {
       const raw = String(fmt || '').trim();
@@ -3753,6 +3846,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       if (m2unit) embParts.push(fmtDecimal(m2unit) + ' m²/pl');
       const spec = renderPedidoSpecTable([
         { label: 'Preço/m²', preco: true, html: fmtPrecoHtml(item.preco_m2) },
+        ...(CATALOG_SKIN === 'ecuaceramica' && item.pei_label ? [{ label: 'PEI', text: item.pei_label }] : []),
         { label: 'Caixas', extraClass: 'model-col-cx', text: cxTot ? fmtDecimal(cxTot, 0) : '—' },
         { label: 'Peso', extraClass: 'model-col-peso', text: pesoTot ? fmtKg(pesoTot) : '—' },
         { label: 'Por palete', palete: true, text: embParts.length ? embParts.join(' · ') : '—' },
@@ -4119,19 +4213,24 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return printPdfLayout().contentWpx;
     }
     function buildPrintFormatoResumoHtml(rows) {
-      if (!rows.length || QTY_UNIT !== 'palete') return '';
+      if (!rows.length) return '';
+      const isPalete = QTY_UNIT === 'palete';
       const groups = new Map();
       for (const { item, qty } of rows) {
         const fmt = item.formato || '—';
-        if (!groups.has(fmt)) groups.set(fmt, { qty: 0, m2: 0, cx: 0, peso: 0 });
+        if (!groups.has(fmt)) {
+          groups.set(fmt, isPalete ? { qty: 0, m2: 0, cx: 0, peso: 0 } : { qty: 0, m2: 0 });
+        }
         const g = groups.get(fmt);
         g.qty += qty;
         const m2 = itemM2Total(item, qty);
         if (m2) g.m2 += m2;
-        const cx = itemCaixasTotal(item, qty);
-        if (cx) g.cx += cx;
-        const pt = itemPesoTotal(item, qty);
-        if (pt) g.peso += pt;
+        if (isPalete) {
+          const cx = itemCaixasTotal(item, qty);
+          if (cx) g.cx += cx;
+          const pt = itemPesoTotal(item, qty);
+          if (pt) g.peso += pt;
+        }
       }
       const fmtKeys = [...groups.keys()].sort(compareFormato);
       let totQty = 0;
@@ -4142,30 +4241,47 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const g = groups.get(fmt);
         totQty += g.qty;
         totM2 += g.m2;
-        totCx += g.cx;
-        totPeso += g.peso;
+        if (isPalete) {
+          totCx += g.cx;
+          totPeso += g.peso;
+          return '<tr>' +
+            '<td class="print-fmt-resumo-fmt">' + esc(grupoLabelFormato(fmt)) + '</td>' +
+            '<td class="print-fmt-resumo-num">' + g.qty + '</td>' +
+            '<td class="print-fmt-resumo-num">' + (g.m2 ? fmtDecimal(g.m2) : '—') + '</td>' +
+            '<td class="print-fmt-resumo-num">' + (g.cx ? fmtDecimal(g.cx, 0) : '—') + '</td>' +
+            '<td class="print-fmt-resumo-num">' + (g.peso ? fmtKg(g.peso) : '—') + '</td>' +
+          '</tr>';
+        }
         return '<tr>' +
           '<td class="print-fmt-resumo-fmt">' + esc(grupoLabelFormato(fmt)) + '</td>' +
           '<td class="print-fmt-resumo-num">' + g.qty + '</td>' +
           '<td class="print-fmt-resumo-num">' + (g.m2 ? fmtDecimal(g.m2) : '—') + '</td>' +
-          '<td class="print-fmt-resumo-num">' + (g.cx ? fmtDecimal(g.cx, 0) : '—') + '</td>' +
-          '<td class="print-fmt-resumo-num">' + (g.peso ? fmtKg(g.peso) : '—') + '</td>' +
         '</tr>';
       }).join('');
-      const totalRow = '<tr class="print-fmt-resumo-total">' +
-        '<td class="print-fmt-resumo-fmt"><strong>Total</strong></td>' +
-        '<td class="print-fmt-resumo-num"><strong>' + totQty + '</strong></td>' +
-        '<td class="print-fmt-resumo-num"><strong>' + fmtDecimal(totM2) + '</strong></td>' +
-        '<td class="print-fmt-resumo-num"><strong>' + fmtDecimal(totCx, 0) + '</strong></td>' +
-        '<td class="print-fmt-resumo-num"><strong>' + fmtKg(totPeso) + '</strong></td>' +
-      '</tr>';
+      const totalRow = isPalete
+        ? '<tr class="print-fmt-resumo-total">' +
+            '<td class="print-fmt-resumo-fmt"><strong>Total</strong></td>' +
+            '<td class="print-fmt-resumo-num"><strong>' + totQty + '</strong></td>' +
+            '<td class="print-fmt-resumo-num"><strong>' + fmtDecimal(totM2) + '</strong></td>' +
+            '<td class="print-fmt-resumo-num"><strong>' + fmtDecimal(totCx, 0) + '</strong></td>' +
+            '<td class="print-fmt-resumo-num"><strong>' + fmtKg(totPeso) + '</strong></td>' +
+          '</tr>'
+        : '<tr class="print-fmt-resumo-total">' +
+            '<td class="print-fmt-resumo-fmt"><strong>Total</strong></td>' +
+            '<td class="print-fmt-resumo-num"><strong>' + totQty + '</strong></td>' +
+            '<td class="print-fmt-resumo-num"><strong>' + fmtDecimal(totM2) + '</strong></td>' +
+          '</tr>';
+      const colgroup = isPalete
+        ? '<colgroup><col class="col-fmt-res-fmt"><col class="col-fmt-res-num"><col class="col-fmt-res-num"><col class="col-fmt-res-num"><col class="col-fmt-res-num"></colgroup>'
+        : '<colgroup><col class="col-fmt-res-fmt"><col class="col-fmt-res-num"><col class="col-fmt-res-num"></colgroup>';
+      const head = isPalete
+        ? '<thead><tr><th>Formato</th><th>' + esc(QTY_LABEL) + '</th><th>m²</th><th>Caixas</th><th>Peso</th></tr></thead>'
+        : '<thead><tr><th>Formato</th><th>' + esc(QTY_LABEL) + '</th><th>m²</th></tr></thead>';
       return '<section class="print-fmt-resumo-wrap">' +
         '<p class="print-fmt-resumo-title">Resumo por formato</p>' +
         '<table class="print-fmt-resumo-table">' +
-          '<colgroup><col class="col-fmt-res-fmt"><col class="col-fmt-res-num"><col class="col-fmt-res-num"><col class="col-fmt-res-num"><col class="col-fmt-res-num"></colgroup>' +
-          '<thead><tr>' +
-            '<th>Formato</th><th>Paletes</th><th>m²</th><th>Caixas</th><th>Peso</th>' +
-          '</tr></thead>' +
+          colgroup +
+          head +
           '<tbody>' + bodyRows + totalRow + '</tbody>' +
         '</table>' +
       '</section>';

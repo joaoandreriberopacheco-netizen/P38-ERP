@@ -44,6 +44,12 @@ async function main() {
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(600);
 
+  const fmtResumoRuntime = await page.evaluate(() => {
+    const rows = pedidoItens();
+    const html = buildPrintFormatoResumoHtml(rows);
+    return { rows: rows.length, resumoLen: html.length, inPrint: buildPedidoPrintHtml({}).includes('print-fmt-resumo-wrap') };
+  });
+
   const layoutProbe = await page.evaluate(() => {
     const src = [...document.scripts].map((s) => s.textContent || '').join('\n');
     const m = src.match(/contentWpx = Math\.round\(contentWmm \* 96 \/ 25\.4\)/);
@@ -107,6 +113,8 @@ async function main() {
     && layoutProbe.scale3
     && layoutProbe.printThumb48
     && layoutProbe.precoStack
+    && fmtResumoRuntime.resumoLen > 100
+    && fmtResumoRuntime.inPrint
     && pdfBuf.length > 20000
     && hasImages
     && pageMatches.length >= 1;
@@ -119,6 +127,7 @@ async function main() {
     pdfHasImages: hasImages,
     codesTestados: codes,
     layoutProbe,
+    fmtResumoRuntime,
   }, null, 2));
 
   await browser.close();
