@@ -791,15 +791,86 @@
       font-weight: 600;
       margin-bottom: 1px;
     }
-    .pedido-table { width: 100%; border-collapse: collapse; font-size: .84rem; }
-    .pedido-table th, .pedido-table td {
-      padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle;
+    .pedido-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .pedido-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: .84rem;
     }
-    .pedido-table th {
-      text-align: left; color: var(--muted); font-size: .72rem; text-transform: uppercase;
+    .pedido-table th,
+    .pedido-table td {
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
     }
-    .pedido-table .col-subtotal { text-align: right; white-space: nowrap; }
+    .pedido-table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: var(--surface);
+      padding-top: 8px;
+      padding-bottom: 8px;
+      text-align: left;
+      color: var(--muted);
+      font-size: .68rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      border-bottom: 1px solid var(--border-subtle);
+      white-space: nowrap;
+    }
+    .pedido-table col.col-foto { width: 52px; }
+    .pedido-table col.col-modelo { width: 28%; }
+    .pedido-table col.col-qty { width: 68px; }
+    .pedido-table col.col-m2,
+    .pedido-table col.col-m2u { width: 82px; }
+    .pedido-table col.col-cx { width: 68px; }
+    .pedido-table col.col-peso { width: 92px; }
+    .pedido-table col.col-emb { width: 128px; }
+    .pedido-table col.col-preco { width: 84px; }
+    .pedido-table col.col-sub { width: 98px; }
+    html[data-skin="formigres"] .pedido-table { min-width: 860px; }
+    .pedido-col-foto { width: 52px; padding-left: 0; padding-right: 6px; }
+    .pedido-col-modelo { min-width: 0; }
+    .pedido-row-title {
+      display: block;
+      font-weight: 600;
+      line-height: 1.25;
+      color: var(--text-strong);
+    }
+    .pedido-row-meta {
+      margin-top: 2px;
+      font-size: .72rem;
+      color: var(--muted);
+      line-height: 1.3;
+    }
+    .pedido-col-emb {
+      font-size: .72rem;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+    .pedido-col-num,
+    .pedido-table th.pedido-col-num,
+    .pedido-table .col-subtotal {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    .pedido-col-qty,
+    .pedido-table th.pedido-col-qty {
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+    }
+    .pedido-table tbody .pedido-col-qty { font-weight: 700; color: var(--text-strong); }
+    .pedido-table .col-subtotal {
+      font-weight: 700;
+      color: var(--accent-bright);
+      white-space: nowrap;
+    }
     .pedido-table .pedido-col-peso { font-weight: 600; white-space: nowrap; }
+    .pedido-table .pedido-col-preco { font-size: .8rem; }
+    .pedido-table .pedido-col-foto img { display: block; border-radius: 6px; }
     .pedido-row-hint { color: var(--muted); font-size: .68rem; }
     .pedido-cards-wrap { display: none; }
     .pedido-cards { display: flex; flex-direction: column; }
@@ -1435,9 +1506,10 @@
       <div class="pedido-list-wrap hidden" id="pedido-list-wrap">
         <div class="table-wrap pedido-table-wrap" id="pedido-table-wrap">
           <table class="pedido-table" id="pedido-table">
+            <colgroup><col class="col-foto"><col class="col-modelo"><col class="col-qty"><col class="col-m2"><col class="col-cx"><col class="col-peso"><col class="col-emb"><col class="col-preco"><col class="col-sub"></colgroup>
             <thead>
               <tr>
-                <th>Foto</th><th>Modelo</th><th>Formato</th><th>Paletes</th><th>m² total</th><th>Caixas</th><th>Peso</th><th>Preço/m²</th><th>Subtotal</th>
+                <th class="pedido-col-foto">Foto</th><th class="pedido-col-modelo">Modelo</th><th class="pedido-col-qty">Paletes</th><th class="pedido-col-num">m² total</th><th class="pedido-col-num">Caixas</th><th class="pedido-col-num">Peso</th><th class="pedido-col-emb">Por palete</th><th class="pedido-col-num">Preço/m²</th><th class="pedido-col-num col-subtotal">Subtotal</th>
               </tr>
             </thead>
             <tbody id="pedido-body"></tbody>
@@ -2127,26 +2199,34 @@
         const img = imgs[0]?.url || '';
         const titulo = item.formigres_titulo || item.descricao;
         const rowData = { item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub };
-        const paleteExtraCols = QTY_UNIT === 'palete'
-          ? '<td>' + (cxTot ? fmtDecimal(cxTot, 0) : '—') + '</td>' +
-            '<td class="pedido-col-peso">' + (pesoTot ? fmtKg(pesoTot) : '—') + '</td>'
-          : '';
-        const tintaoMidCols = QTY_UNIT === 'palete'
-          ? ''
-          : '<td>' + (m2unit ? fmtDecimal(m2unit) : '—') + '</td>';
-        const embalagemHint = QTY_UNIT === 'palete' && emb.cxpl
-          ? '<br><small class="pedido-row-hint">' + esc(emb.cxpl + ' cx/pl · ' + (m2unit ? fmtDecimal(m2unit) + ' m²/pl' : '—')) + '</small>'
-          : '';
-        bodyRows.push('<tr>' +
-          '<td>' + (img ? '<img src="' + esc(img) + '" alt="" width="48" height="48" style="object-fit:cover;border-radius:6px" />' : '—') + '</td>' +
-          '<td><strong>' + esc(titulo) + '</strong><br><small>' + esc(item.codigo_tintao) + '</small>' + embalagemHint + '</td>' +
-          '<td>' + esc(item.formato || '—') + '</td>' +
-          '<td>' + qty + '</td>' +
-          tintaoMidCols +
-          '<td>' + (m2tot ? fmtDecimal(m2tot) : '—') + '</td>' +
-          paleteExtraCols +
-          '<td class="' + (descontoPct ? 'has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
-          '<td class="col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>');
+        const rowMeta = '#' + esc(item.codigo_tintao) + ' · ' + esc(item.formato || '—');
+        const thumbCell = img
+          ? '<img src="' + esc(img) + '" alt="" width="48" height="48" style="object-fit:cover" />'
+          : '—';
+        if (QTY_UNIT === 'palete') {
+          const embParts = [];
+          if (emb.cxpl) embParts.push(emb.cxpl + ' cx/pl');
+          if (m2unit) embParts.push(fmtDecimal(m2unit) + ' m²/pl');
+          bodyRows.push('<tr>' +
+            '<td class="pedido-col-foto">' + thumbCell + '</td>' +
+            '<td class="pedido-col-modelo"><span class="pedido-row-title">' + esc(titulo) + '</span><div class="pedido-row-meta">' + rowMeta + '</div></td>' +
+            '<td class="pedido-col-qty">' + qty + '</td>' +
+            '<td class="pedido-col-num">' + (m2tot ? fmtDecimal(m2tot) : '—') + '</td>' +
+            '<td class="pedido-col-num">' + (cxTot ? fmtDecimal(cxTot, 0) : '—') + '</td>' +
+            '<td class="pedido-col-num pedido-col-peso">' + (pesoTot ? fmtKg(pesoTot) : '—') + '</td>' +
+            '<td class="pedido-col-emb">' + esc(embParts.length ? embParts.join(' · ') : '—') + '</td>' +
+            '<td class="pedido-col-num pedido-col-preco ' + (descontoPct ? 'has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
+            '<td class="pedido-col-num col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>');
+        } else {
+          bodyRows.push('<tr>' +
+            '<td class="pedido-col-foto">' + thumbCell + '</td>' +
+            '<td class="pedido-col-modelo"><span class="pedido-row-title">' + esc(titulo) + '</span><div class="pedido-row-meta">' + rowMeta + '</div></td>' +
+            '<td class="pedido-col-qty">' + qty + '</td>' +
+            '<td class="pedido-col-num">' + (m2unit ? fmtDecimal(m2unit) : '—') + '</td>' +
+            '<td class="pedido-col-num">' + (m2tot ? fmtDecimal(m2tot) : '—') + '</td>' +
+            '<td class="pedido-col-num pedido-col-preco ' + (descontoPct ? 'has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
+            '<td class="pedido-col-num col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>');
+        }
         cardRows.push(renderPedidoCard(rowData));
       }
       document.getElementById('pedido-body').innerHTML = bodyRows.join('');
