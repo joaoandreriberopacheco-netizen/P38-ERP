@@ -666,7 +666,7 @@ const FORMIGRES_SKIN_CSS = `
     html[data-skin="formigres"] .regime-overlay {
       position: fixed;
       inset: 0;
-      z-index: 46;
+      z-index: 100;
       background: rgba(8,7,10,.78);
       display: none;
       align-items: center;
@@ -1699,7 +1699,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     .pedido-overlay {
       position: fixed;
       inset: 0;
-      z-index: 45;
+      z-index: 100;
       background: rgba(8,7,10,.78);
       display: none;
       align-items: flex-end;
@@ -2137,7 +2137,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     .pedido-pdf-sheet {
       position: fixed;
       inset: 0;
-      z-index: 55;
+      z-index: 110;
       display: none;
       align-items: flex-end;
       justify-content: center;
@@ -2235,7 +2235,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     .badge.warn { background: rgba(201,149,106,.12); color: var(--warn); border: 1px solid rgba(201,149,106,.3); }
     .hidden { display: none !important; }
     .lightbox {
-      position: fixed; inset: 0; z-index: 50;
+      position: fixed; inset: 0; z-index: 110;
       background: rgba(8,7,10,.88);
       display: none; align-items: center; justify-content: center;
       padding: 20px;
