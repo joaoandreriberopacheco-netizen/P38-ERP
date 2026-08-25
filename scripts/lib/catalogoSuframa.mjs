@@ -3,8 +3,9 @@
  * Fabricante (UF origem) vem do template; comprador informa UF destino no diálogo.
  *
  * Regra de negócio (quadro aprovado):
- * - PIS (1,65%) e COFINS (7,60%) são fixos quando aplicáveis.
- * - Só o ICMS muda conforme o par origem → destino (28% da alíquota interestadual).
+ * - PIS 1,65% e COFINS 7% fixos quando aplicáveis.
+ * - ICMS: alíquota interestadual integral (ex.: BA→AM 12%); Sul/Sudeste→N/NE/CO
+ *   com 25% usa fator 28% → desconto ICMS 7% (Formigres/SC).
  * - ALC + lucro real: só ICMS (PIS/COFINS vedados).
  * - Amazônia Ocidental: 0% (IPI já zero em cerâmica).
  */
@@ -41,9 +42,10 @@ export const UF_LIST = [
 
 /** PIS/COFINS desonerados — fixos (não variam por UF). */
 export const PIS_DESONERADO_PCT = 1.65;
-export const COFINS_DESONERADO_PCT = 7.6;
-/** Incentivo ICMS = 28% da alíquota interestadual (ex.: SC→AM 25% → 7%). */
-export const ICMS_INCENTIVO_FATOR = 0.28;
+export const COFINS_DESONERADO_PCT = 7;
+/** ICMS 25% (Sul/Sudeste → N/NE/CO): desconto = 28% da alíquota (7%). Demais: integral. */
+export const ICMS_ALIQUOTA_REDUCIDA_FATOR = 0.28;
+export const ICMS_ALIQUOTA_SUL_N = 25;
 
 const SUL_SUDESTE = new Set(['PR', 'SC', 'RS', 'SP', 'RJ', 'MG']);
 const N_NE_CO_ES = new Set([
@@ -74,6 +76,15 @@ function roundPct(n) {
   return Math.round(Number(n) * 100) / 100;
 }
 
+/** Desconto ICMS (%): integral se alíquota < 25%; se 25% (Sul→N) aplica 28% → 7%. */
+export function calcIcmsDescontoPct(icms) {
+  const ic = Number(icms) || 0;
+  if (ic >= ICMS_ALIQUOTA_SUL_N) {
+    return roundPct(ic * ICMS_ALIQUOTA_REDUCIDA_FATOR);
+  }
+  return roundPct(ic);
+}
+
 /**
  * Desconto regime Suframa (% sobre preço de fábrica).
  * Retorna detalhe ICMS + PIS/COFINS + total.
@@ -83,7 +94,7 @@ export function calcDescontoRegime({ icms, destino, tributario }) {
   if (destino === 'amoc') {
     return { icms: ic, icmsDesconto: 0, pis: 0, cofins: 0, incentivo: 0 };
   }
-  const icmsDesconto = roundPct(ic * ICMS_INCENTIVO_FATOR);
+  const icmsDesconto = calcIcmsDescontoPct(ic);
   const vedaPisCofins = destino === 'alc' && tributario === 'lucro_real';
   const pis = vedaPisCofins ? 0 : PIS_DESONERADO_PCT;
   const cofins = vedaPisCofins ? 0 : COFINS_DESONERADO_PCT;
@@ -110,7 +121,8 @@ export function buildSuframaClientJs({ fabricanteUf = 'SC', fabricanteNome = 'Fo
     const UF_LIST = ${JSON.stringify(UF_LIST)};
     const PIS_DESONERADO_PCT = ${PIS_DESONERADO_PCT};
     const COFINS_DESONERADO_PCT = ${COFINS_DESONERADO_PCT};
-    const ICMS_INCENTIVO_FATOR = ${ICMS_INCENTIVO_FATOR};
+    const ICMS_ALIQUOTA_REDUCIDA_FATOR = ${ICMS_ALIQUOTA_REDUCIDA_FATOR};
+    const ICMS_ALIQUOTA_SUL_N = ${ICMS_ALIQUOTA_SUL_N};
     const _SUL_SUDESTE = new Set(['PR','SC','RS','SP','RJ','MG']);
     const _N_NE_CO_ES = new Set(['AC','AM','AP','PA','RO','RR','TO','AL','BA','CE','MA','PB','PE','PI','RN','SE','DF','GO','MT','MS','ES']);
     function icmsInterestadual(ufOrigem, ufDestino) {
@@ -129,12 +141,19 @@ export function buildSuframaClientJs({ fabricanteUf = 'SC', fabricanteNome = 'Fo
       if (oNneCoEs && dNneCoEs) return 12;
       return 12;
     }
+    function calcIcmsDescontoPct(icms) {
+      const ic = Number(icms) || 0;
+      if (ic >= ICMS_ALIQUOTA_SUL_N) {
+        return Math.round(ic * ICMS_ALIQUOTA_REDUCIDA_FATOR * 100) / 100;
+      }
+      return Math.round(ic * 100) / 100;
+    }
     function calcDescontoRegime(opts) {
       const ic = Number(opts.icms) || 0;
       if (opts.destino === 'amoc') {
         return { icms: ic, icmsDesconto: 0, pis: 0, cofins: 0, incentivo: 0 };
       }
-      const icmsDesconto = Math.round(ic * ICMS_INCENTIVO_FATOR * 100) / 100;
+      const icmsDesconto = calcIcmsDescontoPct(ic);
       const vedaPisCofins = opts.destino === 'alc' && opts.tributario === 'lucro_real';
       const pis = vedaPisCofins ? 0 : PIS_DESONERADO_PCT;
       const cofins = vedaPisCofins ? 0 : COFINS_DESONERADO_PCT;

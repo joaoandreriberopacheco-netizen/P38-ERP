@@ -11,13 +11,13 @@ import {
 
 const cases = [
   {
-    label: 'SC→AM ZFM presumido (referência quadro)',
+    label: 'SC→AM ZFM presumido (Formigres)',
     input: { fabricanteUf: 'SC', compradorUf: 'AM', destino: 'zfm', tributario: 'lucro_presumido' },
     icms: 25,
     icmsDesconto: 7,
     pis: PIS_DESONERADO_PCT,
     cofins: COFINS_DESONERADO_PCT,
-    incentivo: 16.25,
+    incentivo: 15.65,
   },
   {
     label: 'SC→AM ALC lucro real (só ICMS)',
@@ -32,10 +32,10 @@ const cases = [
     label: 'BA→AM ALC presumido',
     input: { fabricanteUf: 'BA', compradorUf: 'AM', destino: 'alc', tributario: 'lucro_presumido' },
     icms: 12,
-    icmsDesconto: 3.36,
+    icmsDesconto: 12,
     pis: PIS_DESONERADO_PCT,
     cofins: COFINS_DESONERADO_PCT,
-    incentivo: 12.61,
+    incentivo: 20.65,
   },
 ];
 

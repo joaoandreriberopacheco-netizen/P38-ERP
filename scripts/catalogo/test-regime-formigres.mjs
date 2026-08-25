@@ -43,7 +43,7 @@ async function main() {
   }));
 
   const regimeCases = [
-    { destino: 'zfm', tributario: 'lucro_presumido', compradorUf: 'AM', incentivo: 16.25 },
+    { destino: 'zfm', tributario: 'lucro_presumido', compradorUf: 'AM', incentivo: 15.65 },
     { destino: 'alc', tributario: 'lucro_real', compradorUf: 'AM', incentivo: 7 },
     { destino: 'amoc', tributario: 'lucro_presumido', compradorUf: 'AM', incentivo: 0 },
   ];
@@ -108,8 +108,8 @@ async function main() {
     };
   });
 
-  const expectedAcum = acumuladoPct(5, 16.25);
-  const expectedPrice = precoFinal(compound.base, 5, 16.25);
+  const expectedAcum = acumuladoPct(5, 15.65);
+  const expectedPrice = precoFinal(compound.base, 5, 15.65);
 
   await page.evaluate((code) => {
     localStorage.setItem('formigres-catalog-qty-v1', JSON.stringify({ [String(code)]: 1 }));
