@@ -1,20 +1,19 @@
 #!/usr/bin/env node
-/**
- * Valida conversão preço caixa → preço/m².
- * npm run catalogo:test-ecuaceramica-precos
- */
 import { resolvePrecoEcuaceramica } from '../lib/ecuaceramicaTabelaPrecos.mjs';
 
 const classif = { linha: 'retificada' };
-const r = resolvePrecoEcuaceramica({ formato: '60x60', preco_caixa: 43.2 }, classif);
-const esperado = Math.round((43.2 / 1.8) * 100) / 100;
+const r = resolvePrecoEcuaceramica({ formato: '60x60' }, classif);
+const esperado = 41.0; // 40 + 1 retificada
 
-if (r.preco !== esperado || r.preco_caixa !== 43.2 || r.motivo !== 'site_caixa_div_m2_oficial') {
+if (r.preco !== esperado || r.moeda !== 'BRL' || r.motivo !== 'demo_brl_por_formato') {
   console.error(JSON.stringify({ ok: false, r, esperado }, null, 2));
   process.exit(1);
 }
 
-const sem = resolvePrecoEcuaceramica({ formato: '60x60', preco_caixa: null }, classif);
-if (sem.preco != null) process.exit(1);
+const site = resolvePrecoEcuaceramica({ formato: '60x60', preco_caixa: 72 }, classif);
+if (site.preco !== 40 || site.moeda !== 'USD') {
+  console.error(JSON.stringify({ ok: false, site }, null, 2));
+  process.exit(1);
+}
 
-console.log(JSON.stringify({ ok: true, exemplo: r, semPreco: sem.motivo }, null, 2));
+console.log(JSON.stringify({ ok: true, demo: r, site }, null, 2));

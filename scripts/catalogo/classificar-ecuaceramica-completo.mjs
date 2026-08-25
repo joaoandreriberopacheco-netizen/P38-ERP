@@ -27,7 +27,7 @@ function main() {
     const classif = classificarEcuaceramica(p);
     const peiInfo = normalizePeiEcuaceramica(p.pei);
     const id = String(p.id);
-    const { preco, preco_caixa, faixa, motivo } = resolvePrecoEcuaceramica(p, classif);
+    const { preco, preco_caixa, faixa, motivo, moeda: moedaPreco } = resolvePrecoEcuaceramica(p, classif);
     const emb = resolveEmbalagemEcuaceramica(p);
     if (faixa) faixaCount[faixa] = (faixaCount[faixa] || 0) + 1;
     else faixaCount.sem_preco = (faixaCount.sem_preco || 0) + 1;
@@ -60,7 +60,7 @@ function main() {
       preco_m2: preco,
       preco_faixa: faixa,
       preco_motivo: motivo || null,
-      moeda: p.moeda || 'USD',
+      moeda: moedaPreco || p.moeda || 'BRL',
       pecas_por_caixa: emb.pecas_por_caixa,
       m2_por_caixa: emb.m2_por_caixa,
       caixas_por_palete: emb.caixas_por_palete,
