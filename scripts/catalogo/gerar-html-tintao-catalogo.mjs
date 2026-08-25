@@ -1283,6 +1283,22 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     .stat strong { color: var(--accent); font-weight: 600; }
     .toolbar {
       display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;
+      position: sticky;
+      top: 0;
+      z-index: 70;
+      background: var(--surface);
+      padding-top: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+      box-shadow: 0 4px 16px rgba(0,0,0,.04);
+    }
+    html[data-skin="formigres"] .toolbar {
+      background: rgba(255,255,255,.94);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    html[data-theme="dark"][data-skin="formigres"] .toolbar {
+      background: rgba(28,28,32,.94);
     }
     .toolbar-main { display: flex; gap: 10px; flex: 1 1 100%; }
     .toolbar-extra {
@@ -2466,7 +2482,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
 
     <div class="toolbar">
       <div class="toolbar-main">
-        <input id="search" class="search" type="search" placeholder="Código, modelo ou formato…" />
+        <input id="search" class="search" type="search" placeholder="Código, modelo ou formato (ex.: 45x45)…" />
         <button type="button" class="btn btn-icon btn-clear-qty" id="clear-qty-main" aria-label="Limpar seleção" title="Limpar seleção">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/>
@@ -3475,7 +3491,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const titleHtml = gemeasTrigger
           ? '<span class="pedido-row-title-line"><span class="pedido-row-title">' + esc(titulo) + '</span>' + gemeasTrigger + '</span>'
           : '<span class="pedido-row-title">' + esc(titulo) + '</span>';
-        return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + searchExtra).toLowerCase()) + '" data-qty="' + qty + '">' +
+        return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(normalize((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + formatSearchBlob(item.formato) + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + searchExtra))) + '" data-qty="' + qty + '">' +
           '<td class="pedido-col-foto col-foto">' + foto + '</td>' +
           '<td class="pedido-col-modelo col-modelo">' + titleHtml + warn + gemeasMarcasHtml + '<div class="pedido-row-meta">' + rowMeta + '</div></td>' +
           '<td class="pedido-col-qty col-qty">' +
@@ -3500,7 +3516,34 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     function formigresItemSearchKey(item, cod, pack, titulo, extra) {
       const resistSearch = modelResistencia(item);
-      return (titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + (extra || '')).toLowerCase();
+      const fmtBlob = formatSearchBlob(item.formato);
+      return normalize(titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + fmtBlob + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + (extra || ''));
+    }
+    function formatSearchBlob(fmt) {
+      const raw = String(fmt || '').trim();
+      if (!raw) return '';
+      const m = raw.match(/(\\d+)\\s*[x×X]\\s*(\\d+)/i);
+      if (!m) return raw;
+      const a = m[1];
+      const b = m[2];
+      return [a + 'x' + b, a + ' x ' + b, a + '×' + b, 'formato ' + a + 'x' + b].join(' ');
+    }
+    function searchTermsFromQuery(termRaw) {
+      const term = normalize(String(termRaw || '').trim());
+      if (!term) return [];
+      const terms = new Set([term]);
+      terms.add(term.replace(/(\\d+)\\s*[x×]\\s*(\\d+)/gi, (_, a, b) => a + 'x' + b));
+      const re = /(\\d+)\\s*[x×X]\\s*(\\d+)/gi;
+      let match;
+      while ((match = re.exec(String(termRaw || ''))) !== null) {
+        terms.add(normalize(match[1] + 'x' + match[2]));
+      }
+      return [...terms].filter(Boolean);
+    }
+    function rowMatchesSearch(row, terms) {
+      if (!terms.length) return true;
+      const hay = normalize((row.dataset.search || '') + ' ' + (row.textContent || ''));
+      return terms.some((t) => hay.includes(t));
     }
     function renderCatalogCardThumb(item, cod, titulo, imgs, img) {
       if (!img) {
@@ -3654,11 +3697,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return (s || '').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');
     }
     function applySearch(termRaw) {
-      const term = normalize(termRaw.trim());
+      const terms = searchTermsFromQuery(termRaw);
       for (const row of document.querySelectorAll('#catalogo .model-row')) {
         const qty = Number(row.dataset.qty || 0);
         const showQty = !filterQtyOnly || qty > 0;
-        const showTerm = !term || normalize(row.textContent).includes(term);
+        const showTerm = rowMatchesSearch(row, terms);
         const show = showQty && showTerm;
         row.classList.toggle('hidden', !show);
         const cod = row.dataset.cod;

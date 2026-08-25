@@ -186,6 +186,21 @@ async function main() {
     && mobileProbe.cardCount > 0
     && mobileProbe.catalogScrollWidth <= mobileProbe.catalogClientWidth + 2;
 
+  const stickyToolbar = await page.evaluate(() => getComputedStyle(document.querySelector('.toolbar')).position === 'sticky');
+
+  const formatSearchOk = await page.evaluate(async () => {
+    const total = document.querySelectorAll('.catalog-cards-wrap .model-row').length;
+    document.getElementById('search').value = '45 x 45';
+    document.getElementById('search').dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 100));
+    const visible = document.querySelectorAll('.catalog-cards-wrap .model-row:not(.hidden)').length;
+    const has45 = [...document.querySelectorAll('.catalog-cards-wrap .model-row:not(.hidden)')].some((row) =>
+      (row.dataset.search || '').includes('45x45'));
+    document.getElementById('search').value = '';
+    document.getElementById('search').dispatchEvent(new Event('input', { bubbles: true }));
+    return has45 && visible > 0 && visible < total;
+  });
+
   let clearOk = false;
   if (compound.cod) {
     await page.evaluate((code) => {
@@ -202,13 +217,15 @@ async function main() {
     });
   }
 
-  const ok = uiOk && results.every((r) => r.ok) && acumOk && priceOk && mobileOk && clearOk;
+  const ok = uiOk && results.every((r) => r.ok) && acumOk && priceOk && mobileOk && clearOk && stickyToolbar && formatSearchOk;
   console.log(JSON.stringify({
     ok,
     uiProbe: { ...uiProbe, uiOk },
     regimeCases: results,
     compound: { ...compound, expectedAcum, expectedPrice, acumOk, priceOk, priceProbe },
     mobileProbe: { ...mobileProbe, mobileOk },
+    stickyToolbar,
+    formatSearchOk,
     clearOk,
   }, null, 2));
 
