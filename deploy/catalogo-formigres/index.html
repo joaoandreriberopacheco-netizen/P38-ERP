@@ -971,40 +971,37 @@
       margin-top: 10px;
       table-layout: fixed;
     }
-    .pedido-card-spec th,
     .pedido-card-spec td {
-      padding: 6px 8px 6px 0;
+      padding: 8px 6px;
       vertical-align: top;
       text-align: left;
-      font-weight: 400;
-      border: 0;
+      border-top: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border-subtle);
     }
-    .pedido-card-spec th + th,
     .pedido-card-spec td + td {
-      padding-left: 8px;
       border-left: 1px solid var(--border-subtle);
     }
-    .pedido-card-spec-head th {
-      padding-bottom: 6px;
+    .pedido-card-spec-l {
+      display: block;
       font-size: .62rem;
       font-weight: 500;
       color: var(--muted);
+      margin-bottom: 4px;
       line-height: 1.2;
-      border-bottom: 1px solid var(--border-subtle);
     }
-    .pedido-card-spec-body td {
-      padding-top: 7px;
+    .pedido-card-spec-v {
+      display: block;
       font-size: .76rem;
       font-weight: 600;
       color: var(--text-strong);
       font-variant-numeric: tabular-nums;
       line-height: 1.25;
     }
-    .pedido-card-spec-body td.is-peso {
+    .pedido-card-spec-v.is-peso {
       font-weight: 700;
       color: var(--accent-bright);
     }
-    .pedido-card-spec-body td.pedido-card-spec-preco .preco-orig {
+    .pedido-card-spec-v.pedido-card-spec-preco .preco-orig {
       display: block;
       font-size: .58rem;
       font-weight: 400;
@@ -1012,12 +1009,13 @@
       color: var(--muted);
       line-height: 1.1;
     }
-    .pedido-card-spec-body td.pedido-card-spec-preco .preco-desc { font-weight: 600; }
-    .pedido-card-spec-body td.pedido-card-spec-preco:not(.has-desc) { font-size: .76rem; }
-    .pedido-card-spec-body td.pedido-card-spec-palete {
+    .pedido-card-spec-v.pedido-card-spec-preco .preco-desc { font-weight: 600; }
+    .pedido-card-spec-v.pedido-card-spec-preco:not(.has-desc) { font-size: .76rem; }
+    .pedido-card-spec-v.pedido-card-spec-palete {
       font-size: .68rem;
       font-weight: 500;
-      line-height: 1.3;
+      color: var(--text);
+      line-height: 1.35;
     }
     .pedido-total {
       margin-top: 12px; padding-top: 12px; border-top: 0.5px solid color-mix(in srgb, var(--accent-border) 55%, transparent);
@@ -1304,8 +1302,9 @@
       .pedido-card-row1 { gap: 8px 10px; }
       .pedido-card-qty-main { font-size: 1rem; }
       .pedido-card-total strong { font-size: .86rem; }
-      .pedido-card-spec-head th { font-size: .58rem; }
-      .pedido-card-spec-body td { font-size: .72rem; }
+      .pedido-card-spec-l { font-size: .58rem; }
+      .pedido-card-spec-v { font-size: .72rem; }
+      .pedido-card-spec-v.pedido-card-spec-palete { font-size: .64rem; }
       .pedido-card-thumb { width: 48px; height: 48px; }
       .pedido-total {
         margin-top: 10px;
@@ -2160,20 +2159,17 @@
     }
 
     function renderPedidoSpecTable(cells) {
-      const head = cells.map((c) => '<th scope="col">' + esc(c.label) + '</th>').join('');
-      const body = cells.map((c) => {
-        const cls = [
-          c.peso ? 'is-peso' : '',
-          c.preco ? 'pedido-card-spec-preco' + (descontoPct ? ' has-desc' : '') : '',
-          c.palete ? 'pedido-card-spec-palete' : '',
-        ].filter(Boolean).join(' ');
-        const val = c.html != null ? c.html : esc(c.text ?? '—');
-        return '<td' + (cls ? ' class="' + cls + '"' : '') + '>' + val + '</td>';
-      }).join('');
-      return '<table class="pedido-card-spec" role="presentation">' +
-        '<tr class="pedido-card-spec-head">' + head + '</tr>' +
-        '<tr class="pedido-card-spec-body">' + body + '</tr>' +
-      '</table>';
+      return '<table class="pedido-card-spec" role="presentation"><tr>' +
+        cells.map((c) => {
+          const cls = [
+            c.peso ? ' is-peso' : '',
+            c.preco ? ' pedido-card-spec-preco' + (descontoPct ? ' has-desc' : '') : '',
+            c.palete ? ' pedido-card-spec-palete' : '',
+          ].join('');
+          const val = c.html != null ? c.html : esc(c.text ?? '—');
+          return '<td><span class="pedido-card-spec-l">' + esc(c.label) + '</span><span class="pedido-card-spec-v' + cls + '">' + val + '</span></td>';
+        }).join('') +
+      '</tr></table>';
     }
     function renderPedidoCardRow1({ thumb, titulo, item, qty, m2tot, sub }) {
       const qtyShort = QTY_UNIT === 'palete' ? 'pl' : 'cx';
