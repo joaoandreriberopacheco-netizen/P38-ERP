@@ -2,9 +2,9 @@
 
 Site estático **separado do P38 ERP**. Só o HTML do catálogo Formigres — sem login, sem rotas do ERP.
 
-## Link público (após configurar projecto Vercel)
+## Link público
 
-Substituir pelo domínio real do projecto (ex.: `https://catalogo-tintao-formigres.vercel.app/`).
+**https://catalogo-tintao-formigres.vercel.app/**
 
 Regenerar conteúdo:
 
@@ -23,6 +23,8 @@ Isto grava `deploy/catalogo-tintao/index.html`.
 5. **Output Directory:** `.` (raiz da pasta)
 6. Nome sugerido: `catalogo-tintao-formigres`
 7. Copiar **Project ID** → GitHub Secret `VERCEL_CATALOGO_TINTAO_PROJECT_ID`
+   - Projecto criado: `catalogo-tintao-formigres`
+   - ID: `prj_ruX5PmXVYsT3kfcBbD8SliMyiLnr`
 8. `VERCEL_TOKEN` e `VERCEL_ORG_ID` são os mesmos do deploy principal P38
 
 Push na `main` que altere `deploy/catalogo-tintao/**` dispara o workflow **Vercel Deploy — Catálogo Tintão**.
