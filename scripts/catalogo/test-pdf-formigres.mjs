@@ -50,8 +50,9 @@ async function main() {
     const tablePdf = src.includes('print-pedido-table pedido-table');
     const a4 = src.includes("format: 'a4'");
     const scale3 = src.includes('PDF_CANVAS_SCALE = 3');
+    const printThumb68 = src.includes('PDF_PRINT_THUMB_PX = 68');
     const precoStack = src.includes('preco-stack-pdf');
-    return { hasA4: a4, hasRowLine: rowLine, hasTablePdf: tablePdf, hasLayoutFn: !!m, scale3, precoStack };
+    return { hasA4: a4, hasRowLine: rowLine, hasTablePdf: tablePdf, hasLayoutFn: !!m, scale3, printThumb68, precoStack };
   });
 
   await page.click('#cart-fab');
@@ -74,6 +75,7 @@ async function main() {
     && layoutProbe.hasTablePdf
     && layoutProbe.hasLayoutFn
     && layoutProbe.scale3
+    && layoutProbe.printThumb68
     && layoutProbe.precoStack
     && pdfBuf.length > 20000
     && hasImages
