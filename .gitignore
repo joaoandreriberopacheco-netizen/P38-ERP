@@ -13,6 +13,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 .vercel
+p38-catalogo-b2b/
 node_modules
 
 # Exportações locais (dados do catálogo — não versionar)
