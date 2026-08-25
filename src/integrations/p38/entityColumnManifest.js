@@ -259,7 +259,8 @@ export const TABLE_PROMOTION_MANIFEST = {
   transportadora: ['ativo', 'nome', 'saida_referencia', 'cnpj', 'contato', 'email', 'telefone', 'observacoes'],
   usuario: [
     'caixas_pdv_autorizados_ids', 'email', 'full_name', 'role', 'login', 'auth_ativado', 'nickname',
-    'perfil', 'perfil_acesso_id', 'perfil_acesso_nome', 'tabela_preco_id', 'tabela_preco_nome',
+    'perfil', 'perfil_acesso_id', 'perfil_acesso_nome', 'override_permissoes',
+    'tabela_preco_id', 'tabela_preco_nome',
   ],
   vale_compra: [
     'cliente_id', 'cliente_nome', 'codigo', 'historico_uso', 'origem_tipo', 'pedido_origem_id',

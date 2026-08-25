@@ -1,26 +1,50 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { createP38UserAsAdmin } from '@/functions/p38Auth';
 import { isValidP38Login, normalizeP38Login } from '@/lib/p38InternalAuth';
 import { isSupabaseAuthEnabled } from '@/integrations/p38/providers';
+import { resolverPermissoes } from '@/lib/perfilPermissoes';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Users, Edit, Shield, UserPlus, AlertTriangle, CheckCircle2, ArrowRight, Monitor, Tag, AtSign } from 'lucide-react';
-import { useToast } from "@/components/ui/use-toast";
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import {
+  Users, Shield, UserPlus, AlertTriangle, CheckCircle2, ArrowRight,
+  Search, Pencil, Lock, Backpack,
+} from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import { MODULOS, contarPermissoes } from './PerfilFormTela';
+import UsuarioKitEditor from './UsuarioKitEditor';
 
-const MAPA_LEGADO = {
-  'Admin': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
-  'Gerente': 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
-  'Vendedor': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-  'Operador de Caixa': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-  'Estoquista': 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
-  'Financeiro': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
-};
+function Avatar({ name }) {
+  const initials = (name || '?').split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase();
+  return (
+    <div className="w-10 h-10 rounded-2xl bg-muted flex items-center justify-center text-sm font-semibold text-muted-foreground flex-shrink-0">
+      {initials}
+    </div>
+  );
+}
+
+function KitProgress({ permissoes, isAdmin }) {
+  if (isAdmin) {
+    return <span className="text-[10px] text-muted-foreground">Acesso total</span>;
+  }
+  const totalAtivas = MODULOS.reduce((acc, m) => acc + contarPermissoes(permissoes, m.key).ativas, 0);
+  const totalGeral = MODULOS.reduce((acc, m) => acc + contarPermissoes(permissoes, m.key).total, 0);
+  const pct = totalGeral > 0 ? Math.round((totalAtivas / totalGeral) * 100) : 0;
+
+  return (
+    <div className="flex items-center gap-2 min-w-[120px]">
+      <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+        <div
+          className="h-full bg-primary/70 dark:bg-foreground/40 rounded-full transition-all"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <span className="text-[10px] font-mono text-muted-foreground whitespace-nowrap">{totalAtivas}/{totalGeral}</span>
+    </div>
+  );
+}
 
 export default function ListaUsuariosApp() {
   const [usuarios, setUsuarios] = useState([]);
@@ -28,12 +52,9 @@ export default function ListaUsuariosApp() {
   const [contasCaixa, setContasCaixa] = useState([]);
   const [tabelasPreco, setTabelasPreco] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [editingUser, setEditingUser] = useState(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedPerfilId, setSelectedPerfilId] = useState('');
-  const [selectedCaixas, setSelectedCaixas] = useState([]);
-  const [selectedTabelaId, setSelectedTabelaId] = useState('');
-  const [selectedNickname, setSelectedNickname] = useState('');
+  const [editando, setEditando] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [busca, setBusca] = useState('');
   const [orfaos, setOrfaos] = useState([]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createLogin, setCreateLogin] = useState('');
@@ -43,6 +64,7 @@ export default function ListaUsuariosApp() {
   const { toast } = useToast();
 
   const supabaseAuthAtivo = isSupabaseAuthEnabled();
+  const perfisAtivos = perfisAcesso.filter((p) => p.ativo !== false);
 
   useEffect(() => { carregarDados(); }, []);
 
@@ -52,72 +74,70 @@ export default function ListaUsuariosApp() {
       base44.entities.User.list(),
       base44.entities.PerfilDeAcesso.list(),
       base44.entities.ContasFinanceiras.filter({ tipo: 'Caixa Físico', ativo: true }),
-      base44.entities.TabelaPreco.filter({ ativo: true })
+      base44.entities.TabelaPreco.filter({ ativo: true }),
     ]);
     setUsuarios(users || []);
     setPerfisAcesso(perfis || []);
     setContasCaixa(contas || []);
     setTabelasPreco(tabelas || []);
-    setOrfaos((users || []).filter(u => !u.perfil_acesso_id));
+    setOrfaos((users || []).filter((u) => !u.perfil_acesso_id && u.role !== 'admin'));
     setIsLoading(false);
   };
 
-  const handleEditar = (user) => {
-    setEditingUser(user);
-    setSelectedPerfilId(user.perfil_acesso_id || '');
-    setSelectedCaixas(user.caixas_pdv_autorizados_ids || []);
-    setSelectedTabelaId(user.tabela_preco_id || '');
-    setSelectedNickname(user.nickname || '');
-    setIsDialogOpen(true);
-  };
+  const usuariosFiltrados = useMemo(() => {
+    const q = busca.trim().toLowerCase();
+    if (!q) return usuarios;
+    return usuarios.filter((u) =>
+      u.full_name?.toLowerCase().includes(q) ||
+      u.login?.toLowerCase().includes(q) ||
+      u.email?.toLowerCase().includes(q) ||
+      u.perfil_acesso_nome?.toLowerCase().includes(q) ||
+      u.nickname?.toLowerCase().includes(q)
+    );
+  }, [usuarios, busca]);
 
-  const handleSalvar = async () => {
-    if (!editingUser) return;
-    const perfilSelecionado = perfisAcesso.find(p => p.id === selectedPerfilId);
-    const tabelaSelecionada = tabelasPreco.find(t => t.id === selectedTabelaId);
-    await base44.entities.User.update(editingUser.id, {
-      nickname: selectedNickname.trim() || null,
-      perfil_acesso_id: selectedPerfilId || null,
-      perfil_acesso_nome: perfilSelecionado?.nome || null,
-      perfil: perfilSelecionado?.nome || editingUser.perfil,
-      caixas_pdv_autorizados_ids: selectedCaixas,
-      tabela_preco_id: selectedTabelaId || null,
-      tabela_preco_nome: tabelaSelecionada?.nome_tabela || null
-    });
-    toast({ title: 'Usuário atualizado', className: 'bg-green-50 text-green-800' });
-    setIsDialogOpen(false);
-    carregarDados();
+  const handleSalvarKit = async (dados) => {
+    if (!editando) return;
+    setSaving(true);
+    try {
+      await base44.entities.User.update(editando.id, dados);
+      toast({ title: 'Kit atualizado', description: 'Permissões e operação guardadas.', className: 'bg-green-50 text-green-800' });
+      setEditando(null);
+      carregarDados();
+    } catch (err) {
+      toast({ title: 'Erro ao guardar', description: err?.message || 'Tente novamente.', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleMigrarOrfaos = async () => {
-    if (!window.confirm(`Vincular automaticamente ${orfaos.length} usuário(s) por nome?`)) return;
+    if (!window.confirm(`Vincular automaticamente ${orfaos.length} utilizador(es) por nome de perfil legado?`)) return;
     let migrados = 0;
     for (const user of orfaos) {
       const perfilCorrespondente = perfisAcesso.find(
-        p => p.nome?.toLowerCase() === user.perfil?.toLowerCase()
+        (p) => p.nome?.toLowerCase() === user.perfil?.toLowerCase()
       );
       if (perfilCorrespondente) {
         await base44.entities.User.update(user.id, {
           perfil_acesso_id: perfilCorrespondente.id,
-          perfil_acesso_nome: perfilCorrespondente.nome
+          perfil_acesso_nome: perfilCorrespondente.nome,
         });
         migrados++;
       }
     }
-    toast({ title: `Migração concluída`, description: `${migrados}/${orfaos.length} vinculados automaticamente.`, className: 'bg-green-50 text-green-800' });
+    toast({
+      title: 'Migração concluída',
+      description: `${migrados}/${orfaos.length} vinculados.`,
+      className: 'bg-green-50 text-green-800',
+    });
     carregarDados();
-  };
-
-  const toggleCaixa = (id) => {
-    setSelectedCaixas(prev =>
-      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
-    );
   };
 
   const abrirCriar = () => {
     setCreateLogin('');
     setCreateFullName('');
-    setCreatePerfilId(perfisAcesso.find(p => p.ativo !== false)?.id || '');
+    setCreatePerfilId(perfisAtivos[0]?.id || '');
     setIsCreateOpen(true);
   };
 
@@ -131,7 +151,7 @@ export default function ListaUsuariosApp() {
       toast({ title: 'Selecione um perfil de acesso', variant: 'destructive' });
       return;
     }
-    const perfil = perfisAcesso.find(p => p.id === createPerfilId);
+    const perfil = perfisAtivos.find((p) => p.id === createPerfilId);
     setCreating(true);
     try {
       const result = await createP38UserAsAdmin({
@@ -142,7 +162,7 @@ export default function ListaUsuariosApp() {
       });
       toast({
         title: 'Utilizador criado',
-        description: `${result.login}: peça para activar em /ativar-acesso`,
+        description: `${result.login}: activar em /ativar-acesso`,
         className: 'bg-green-50 text-green-800',
         duration: 8000,
       });
@@ -160,435 +180,239 @@ export default function ListaUsuariosApp() {
       abrirCriar();
       return;
     }
-    toast({ title: 'Para convidar usuários', description: 'Use a função convidarUsuarios no dashboard > functions', duration: 6000 });
+    toast({ title: 'Convites', description: 'Use convidarUsuarios no dashboard Base44.', duration: 6000 });
   };
 
-  const perfisAtivos = perfisAcesso.filter((p) => p.ativo !== false);
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="w-5 h-5 border-2 border-border/40 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
 
-  const getBadgePerfil = (user) => {
-    if (user.perfil_acesso_nome) {
-      return <Badge className="bg-muted text-foreground/90 dark:bg-muted dark:text-foreground/90 border-0 font-normal text-xs">{user.perfil_acesso_nome}</Badge>;
-    }
-    if (user.perfil) {
-      return (
-        <div className="flex items-center gap-1">
-          <Badge className={`border-0 font-normal text-xs ${MAPA_LEGADO[user.perfil] || 'bg-muted text-muted-foreground'}`}>{user.perfil}</Badge>
-          <Badge className="bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400 border-0 text-[10px]">legado</Badge>
-        </div>
-      );
-    }
-    return <Badge className="bg-red-50 text-red-500 border-0 text-xs">sem perfil</Badge>;
-  };
-
-  if (isLoading) return (
-    <div className="flex items-center justify-center py-12">
-      <div className="w-5 h-5 border-2 border-border/40 border-t-primary rounded-full animate-spin" />
-    </div>
-  );
+  if (editando) {
+    return (
+      <UsuarioKitEditor
+        usuario={editando}
+        perfisAcesso={perfisAcesso}
+        contasCaixa={contasCaixa}
+        tabelasPreco={tabelasPreco}
+        onSalvar={handleSalvarKit}
+        onCancelar={() => setEditando(null)}
+        saving={saving}
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">
-      {/* Banner de órfãos */}
-      {orfaos.length > 0 && (
-        <Card className="border-0 shadow-sm bg-amber-50 dark:bg-amber-900/10">
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
-                  {orfaos.length} usuário{orfaos.length > 1 ? 's' : ''} sem Perfil de Acesso vinculado
-                </p>
-                <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Perfil legado ou sem perfil. Use a migração automática ou edite manualmente.</p>
-              </div>
-              {perfisAcesso.length > 0 && (
-                <Button
-                  size="sm" variant="outline" onClick={handleMigrarOrfaos}
-                  className="text-amber-700 border-amber-300 hover:bg-amber-100 dark:text-amber-400 dark:border-amber-700 h-8 text-xs gap-1.5 shrink-0"
-                >
-                  <ArrowRight className="w-3.5 h-3.5" />
-                  Migrar
-                </Button>
-              )}
+      {orfaos.length > 0 ? (
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-50/60 dark:bg-amber-900/10 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex items-start gap-3 flex-1">
+            <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
+                {orfaos.length} utilizador{orfaos.length > 1 ? 'es' : ''} sem kit (perfil) atribuído
+              </p>
+              <p className="text-xs text-amber-700/90 dark:text-amber-300/80 mt-0.5">
+                Atribua um perfil para cada pessoa — é o template da mochila de acesso.
+              </p>
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-sm font-semibold text-foreground">Usuários do Sistema</h2>
-          <p className="text-xs text-muted-foreground font-light mt-0.5">Vincule perfil de acesso e caixas autorizados</p>
+          </div>
+          {perfisAcesso.length > 0 ? (
+            <Button size="sm" variant="outline" onClick={handleMigrarOrfaos} className="h-8 text-xs gap-1.5 shrink-0">
+              <ArrowRight className="w-3.5 h-3.5" />
+              Migrar por nome
+            </Button>
+          ) : null}
         </div>
-        <Button
-          size="sm"
-          className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:text-foreground gap-1.5 h-8 px-3 text-xs"
-          onClick={handleConvidarOuCriar}
-        >
+      ) : null}
+
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <Backpack className="w-4 h-4 text-muted-foreground" />
+            Quarter Master — Utilizadores
+          </h2>
+          <p className="text-xs text-muted-foreground mt-0.5 max-w-xl">
+            Cada utilizador leva um kit: perfil base + ajustes individuais. O que não está no kit não aparece no menu nem abre por URL.
+          </p>
+        </div>
+        <Button size="sm" onClick={handleConvidarOuCriar} className="h-8 text-xs gap-1.5 shrink-0">
           <UserPlus className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">{supabaseAuthAtivo ? 'Novo utilizador' : 'Convidar'}</span>
+          {supabaseAuthAtivo ? 'Novo utilizador' : 'Convidar'}
         </Button>
       </div>
 
-      {/* Tabela */}
-      <Card className="border-0 shadow-sm bg-card overflow-hidden">
-        <CardHeader className="border-b border-border/40 bg-muted/50/50 pb-3 pt-3 px-4">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium text-foreground/90 flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Lista de Usuários
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              {orfaos.length === 0 && usuarios.length > 0 && (
-                <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  Todos vinculados
-                </span>
-              )}
-              <span className="text-xs text-muted-foreground">{usuarios.length} usuário{usuarios.length !== 1 ? 's' : ''}</span>
-            </div>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+        <Input
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar por nome, login ou perfil…"
+          className="pl-9 h-9 text-sm bg-card border-border/40"
+        />
+      </div>
+
+      <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+        <span className="flex items-center gap-1.5">
+          <Users className="w-3.5 h-3.5" />
+          {usuariosFiltrados.length} utilizador{usuariosFiltrados.length !== 1 ? 'es' : ''}
+        </span>
+        {orfaos.length === 0 && usuarios.length > 0 ? (
+          <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            Todos com kit
+          </span>
+        ) : null}
+      </div>
+
+      <div className="space-y-2">
+        {usuariosFiltrados.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border/50 bg-card py-14 text-center">
+            <Users className="w-8 h-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+            <p className="text-sm text-muted-foreground">
+              {busca ? `Nenhum resultado para "${busca}"` : 'Nenhum utilizador encontrado'}
+            </p>
           </div>
-        </CardHeader>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent border-border/40">
-                <TableHead className="text-xs text-muted-foreground font-medium">Nome</TableHead>
-                <TableHead className="text-xs text-muted-foreground font-medium hidden sm:table-cell">Utilizador</TableHead>
-                <TableHead className="text-xs text-muted-foreground font-medium">Perfil</TableHead>
-                {supabaseAuthAtivo ? (
-                  <TableHead className="text-xs text-muted-foreground font-medium hidden sm:table-cell">Acesso</TableHead>
-                ) : null}
-                <TableHead className="text-xs text-muted-foreground font-medium hidden md:table-cell">Caixas</TableHead>
-                <TableHead className="text-xs text-muted-foreground font-medium hidden desktop-layout:table-cell">Tabela Preço</TableHead>
-                <TableHead className="text-right text-xs text-muted-foreground font-medium">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {usuarios.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="h-32 text-center text-muted-foreground text-sm">
-                    Nenhum usuário encontrado.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                usuarios.map(user => {
-                  const caixasVinculadas = (user.caixas_pdv_autorizados_ids || []).length;
-                  return (
-                    <TableRow key={user.id} className="border-border/40 hover:bg-muted/40 dark:hover:bg-muted/50">
-                      <TableCell>
-                       <div className="font-medium text-foreground/90 text-sm">{user.full_name || '-'}</div>
-                       {user.nickname && (
-                         <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-0.5">
-                           <AtSign className="w-2.5 h-2.5" />
-                           {user.nickname}
-                         </div>
-                       )}
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        <div className="text-xs text-muted-foreground font-mono">
-                          {user.login || user.nickname || '—'}
-                        </div>
-                      </TableCell>
-                      <TableCell>{getBadgePerfil(user)}</TableCell>
-                      {supabaseAuthAtivo ? (
-                        <TableCell className="hidden sm:table-cell">
-                          {user.auth_ativado ? (
-                            <Badge className="bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border-0 text-[10px]">
-                              activo
-                            </Badge>
-                          ) : (
-                            <Badge className="bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 border-0 text-[10px]">
-                              pendente
-                            </Badge>
-                          )}
-                        </TableCell>
+        ) : (
+          usuariosFiltrados.map((user) => {
+            const isAdmin = user.role === 'admin';
+            const perfil = perfisAcesso.find((p) => p.id === user.perfil_acesso_id);
+            const overrides = user.override_permissoes || {};
+            const qtdOverrides = Object.keys(overrides).length;
+            const permissoesFinais = isAdmin
+              ? null
+              : resolverPermissoes(perfil, overrides);
+
+            return (
+              <div
+                key={user.id}
+                className="rounded-2xl bg-card border border-border/30 p-4 flex flex-col sm:flex-row sm:items-center gap-4 shadow-sm"
+              >
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <Avatar name={user.full_name} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-medium text-foreground truncate">{user.full_name || user.login || '—'}</p>
+                      {isAdmin ? (
+                        <Badge variant="outline" className="text-[10px] gap-0.5 border-amber-500/40">
+                          <Lock className="w-2.5 h-2.5" /> Admin
+                        </Badge>
                       ) : null}
-                      <TableCell className="hidden md:table-cell">
-                         {caixasVinculadas > 0 ? (
-                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                             <Monitor className="w-3 h-3" />
-                             {caixasVinculadas} caixa{caixasVinculadas !== 1 ? 's' : ''}
-                           </span>
-                         ) : (
-                           <span className="text-xs text-muted-foreground dark:text-muted-foreground">—</span>
-                         )}
-                       </TableCell>
-                       <TableCell className="hidden desktop-layout:table-cell">
-                         {user.tabela_preco_nome ? (
-                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                             <Tag className="w-3 h-3" />
-                             {user.tabela_preco_nome}
-                           </span>
-                         ) : (
-                           <span className="text-[10px] text-muted-foreground dark:text-muted-foreground italic">usa padrão</span>
-                         )}
-                       </TableCell>
-                       <TableCell className="text-right">
-                        <Button
-                          size="sm" variant="ghost"
-                          className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground/90 dark:hover:text-muted-foreground"
-                          onClick={() => handleEditar(user)}
-                        >
-                          <Edit className="w-3.5 h-3.5" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </Card>
-
-      {/* Dialog de edição */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-sm dark:bg-background dark:border-border/40">
-          <DialogHeader>
-            <DialogTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <Shield className="w-4 h-4 text-muted-foreground" />
-              Configurar Acesso
-            </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground">
-              {editingUser?.full_name} — {editingUser?.email}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-2">
-            {/* Nickname */}
-            <div className="space-y-1.5">
-              <label className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
-                <AtSign className="w-3.5 h-3.5" />
-                Nickname (apelido nas operações)
-              </label>
-              <Input
-                placeholder="Ex: João, Mari, Caixa 1..."
-                value={selectedNickname}
-                onChange={(e) => setSelectedNickname(e.target.value)}
-                className="bg-muted/50 border-0 shadow-sm h-9 text-sm"
-              />
-              <p className="text-[10px] text-muted-foreground pl-1">
-                Usado para identificar o usuário em vendas, caixa e relatórios.
-              </p>
-            </div>
-
-            {/* Perfil de acesso */}
-            <div className="space-y-1.5">
-              <label className="text-xs text-muted-foreground font-medium">Perfil de Acesso</label>
-              {perfisAtivos.length === 0 ? (
-                <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/10 p-2 rounded-lg">
-                  Crie Perfis de Acesso primeiro na aba "Perfis de Acesso".
-                </p>
-              ) : (
-                <div className="space-y-1 max-h-40 overflow-y-auto pr-0.5">
-                  {perfisAtivos.map((p) => {
-                    const ativo = selectedPerfilId === p.id;
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => setSelectedPerfilId(p.id)}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors ${
-                          ativo
-                            ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground'
-                            : 'bg-muted/50 text-foreground/90 hover:bg-muted'
-                        }`}
-                      >
-                        <div className={`w-4 h-4 rounded flex-shrink-0 flex items-center justify-center ${
-                          ativo ? 'bg-card/20 dark:bg-black/10' : 'border border-border/40 dark:border-border/40'
-                        }`}>
-                          {ativo && (
-                            <svg className="w-2.5 h-2.5 text-primary-foreground dark:text-foreground" fill="none" viewBox="0 0 12 12">
-                              <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          )}
-                        </div>
-                        <span className="text-xs font-medium">{p.nome}</span>
-                      </button>
-                    );
-                  })}
+                      {user.nickname ? (
+                        <span className="text-[10px] text-muted-foreground">@{user.nickname}</span>
+                      ) : null}
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate mt-0.5 font-mono">
+                      {user.login || user.email || '—'}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      {isAdmin ? (
+                        <span className="text-xs text-muted-foreground">Bypass técnico — todas as rotas</span>
+                      ) : perfil ? (
+                        <>
+                          <Badge variant="secondary" className="text-[10px] font-normal gap-1">
+                            <Shield className="w-3 h-3" />
+                            {perfil.nome}
+                          </Badge>
+                          {qtdOverrides > 0 ? (
+                            <Badge className="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-0">
+                              +{qtdOverrides} ajuste{qtdOverrides > 1 ? 's' : ''}
+                            </Badge>
+                          ) : null}
+                        </>
+                      ) : (
+                        <Badge variant="destructive" className="text-[10px] font-normal">Sem kit</Badge>
+                      )}
+                      {supabaseAuthAtivo && !user.auth_ativado ? (
+                        <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-500/40">Pendente activação</Badge>
+                      ) : null}
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
 
-            {/* Tabela de Preço */}
-            <div className="space-y-1.5">
-              <label className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
-                <Tag className="w-3.5 h-3.5" />
-                Tabela de Preço
-              </label>
-              {tabelasPreco.length === 0 ? (
-                <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/10 p-2 rounded-lg">
-                  Crie Tabelas de Preço primeiro na aba "Tabelas de Preço".
-                </p>
-              ) : (
-                <Select
-                  value={selectedTabelaId || '__default__'}
-                  onValueChange={(value) => setSelectedTabelaId(value === '__default__' ? '' : value)}
-                >
-                  <SelectTrigger className="bg-muted/50 border-0 shadow-sm h-9 text-sm">
-                    <SelectValue placeholder="Usar tabela padrão do sistema" />
-                  </SelectTrigger>
-                  <SelectContent className="z-[100] dark:bg-card dark:border-border/40">
-                    <SelectItem value="__default__">
-                      <span className="text-muted-foreground italic text-xs">Usar tabela padrão do sistema</span>
-                    </SelectItem>
-                    {tabelasPreco.map(t => (
-                      <SelectItem key={t.id} value={t.id}>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm">{t.nome_tabela}</span>
-                          {t.is_default && <span className="text-[10px] text-yellow-500">★ padrão</span>}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              <p className="text-[10px] text-muted-foreground pl-1">
-                Se não selecionada, usa a tabela marcada como padrão.
-              </p>
-            </div>
-
-            {/* Caixas PDV autorizados */}
-            {contasCaixa.length > 0 && (
-              <div className="space-y-1.5">
-                <label className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
-                  <Monitor className="w-3.5 h-3.5" />
-                  Caixas PDV Autorizados
-                </label>
-                <div className="space-y-1">
-                  {contasCaixa.map(conta => {
-                    const ativo = selectedCaixas.includes(conta.id);
-                    return (
-                      <button
-                        key={conta.id}
-                        type="button"
-                        onClick={() => toggleCaixa(conta.id)}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors ${
-                          ativo
-                            ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground'
-                            : 'bg-muted/50 text-foreground/90 hover:bg-muted'
-                        }`}
-                      >
-                        <div className={`w-4 h-4 rounded flex-shrink-0 flex items-center justify-center ${
-                          ativo ? 'bg-card/20 dark:bg-black/10' : 'border border-border/40 dark:border-border/40'
-                        }`}>
-                          {ativo && (
-                            <svg className="w-2.5 h-2.5 text-foreground" fill="none" viewBox="0 0 12 12">
-                              <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          )}
-                        </div>
-                        <span className="text-xs font-medium">{conta.nome}</span>
-                      </button>
-                    );
-                  })}
+                <div className="flex items-center gap-3 sm:flex-shrink-0">
+                  <KitProgress permissoes={permissoesFinais || {}} isAdmin={isAdmin} />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs gap-1.5"
+                    onClick={() => setEditando(user)}
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                    Montar kit
+                  </Button>
                 </div>
-                <p className="text-[10px] text-muted-foreground pl-1">
-                  Se nenhum selecionado, o usuário verá todos os caixas disponíveis.
-                </p>
               </div>
-            )}
-          </div>
+            );
+          })
+        )}
+      </div>
 
-          <DialogFooter className="gap-2 pt-1">
-            <Button variant="ghost" size="sm" onClick={() => setIsDialogOpen(false)} className="h-8 text-xs">
-              Cancelar
-            </Button>
-            <Button
-              size="sm"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:text-foreground h-8 text-xs"
-              onClick={handleSalvar}
-            >
-              Salvar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog criar utilizador (login interno) */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="max-w-sm dark:bg-background dark:border-border/40">
+        <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <UserPlus className="w-4 h-4 text-muted-foreground" />
+            <DialogTitle className="text-sm flex items-center gap-2">
+              <UserPlus className="w-4 h-4" />
               Novo utilizador
             </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground">
-              Cria login e perfil. A pessoa define a senha em <strong>/ativar-acesso</strong>.
+            <DialogDescription className="text-xs">
+              Cria login e perfil base. A pessoa define a senha em <strong>/ativar-acesso</strong>.
             </DialogDescription>
           </DialogHeader>
-
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <label className="text-xs text-muted-foreground font-medium">Utilizador (login)</label>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">Login</label>
               <Input
-                placeholder="Ex: maria, caixa2…"
+                placeholder="maria, caixa2…"
                 value={createLogin}
                 onChange={(e) => setCreateLogin(e.target.value)}
-                className="bg-muted/50 border-0 shadow-sm h-9 text-sm font-mono"
+                className="h-9 text-sm font-mono"
               />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-xs text-muted-foreground font-medium">Nome completo</label>
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">Nome completo</label>
               <Input
-                placeholder="Nome para exibir no sistema"
+                placeholder="Nome no sistema"
                 value={createFullName}
                 onChange={(e) => setCreateFullName(e.target.value)}
-                className="bg-muted/50 border-0 shadow-sm h-9 text-sm"
+                className="h-9 text-sm"
               />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-xs text-muted-foreground font-medium">Perfil de Acesso</label>
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">Perfil base (kit)</label>
               {perfisAtivos.length === 0 ? (
-                <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/10 p-2 rounded-lg">
-                  Crie Perfis de Acesso primeiro na aba "Perfis de Acesso".
+                <p className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-900/10 p-2 rounded-lg">
+                  Crie perfis em &quot;Perfis de Acesso&quot; primeiro.
                 </p>
               ) : (
-                <div className="space-y-1 max-h-40 overflow-y-auto pr-0.5">
-                  {perfisAtivos.map((p) => {
-                    const ativo = createPerfilId === p.id;
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => setCreatePerfilId(p.id)}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors ${
-                          ativo
-                            ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground'
-                            : 'bg-muted/50 text-foreground/90 hover:bg-muted'
-                        }`}
-                      >
-                        <div className={`w-4 h-4 rounded flex-shrink-0 flex items-center justify-center ${
-                          ativo ? 'bg-card/20 dark:bg-black/10' : 'border border-border/40 dark:border-border/40'
-                        }`}>
-                          {ativo && (
-                            <svg className="w-2.5 h-2.5 text-primary-foreground dark:text-foreground" fill="none" viewBox="0 0 12 12">
-                              <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          )}
-                        </div>
-                        <span className="text-xs font-medium">{p.nome}</span>
-                      </button>
-                    );
-                  })}
+                <div className="space-y-1 max-h-36 overflow-y-auto">
+                  {perfisAtivos.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setCreatePerfilId(p.id)}
+                      className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-colors ${
+                        createPerfilId === p.id
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted/50 hover:bg-muted'
+                      }`}
+                    >
+                      {p.nome}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
           </div>
-
-          <DialogFooter className="gap-2 pt-1">
-            <Button variant="ghost" size="sm" onClick={() => setIsCreateOpen(false)} className="h-8 text-xs" disabled={creating}>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setIsCreateOpen(false)} disabled={creating}>
               Cancelar
             </Button>
-            <Button
-              size="sm"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:text-foreground h-8 text-xs"
-              onClick={handleCriarUtilizador}
-              disabled={creating}
-            >
-              {creating ? 'A criar…' : 'Criar utilizador'}
+            <Button size="sm" onClick={handleCriarUtilizador} disabled={creating}>
+              {creating ? 'A criar…' : 'Criar'}
             </Button>
           </DialogFooter>
         </DialogContent>
