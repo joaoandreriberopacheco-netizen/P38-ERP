@@ -145,7 +145,7 @@ const CONFIGS = {
     qtyUnit: 'palete',
     qtyLabel: 'Paletes',
     qtyLabelPl: 'paletes',
-    demoBanner: 'Exemplo portfolio P38 · Ecuaceramica (Equador) · embalagem oficial · preço/m² = preço caixa (site) ÷ m²/caixa',
+    demoBanner: 'Exemplo portfolio P38 · embalagem oficial · PEI por produto · preço/m² = preço caixa (site) ÷ m²/caixa',
     moeda: 'USD',
     moedaSimbolo: 'US$',
     themeKey: 'ecuaceramica-catalog-theme-v1',
@@ -437,6 +437,9 @@ function slimItem(item) {
     acabamento_label: item.acabamento_label || '',
     marca_nome: item.marca_nome || '',
     referencia: item.referencia || '',
+    pei: item.pei ?? null,
+    pei_label: item.pei_label || '',
+    pei_raw: item.pei_raw || '',
     gemeas: (item.gemeas || []).map((g) => ({
       codigo: String(g.codigo),
       marca: g.marca || '—',
@@ -1944,6 +1947,18 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       font-weight: 700;
       letter-spacing: .1em;
       color: var(--text-strong);
+    }
+    html[data-skin="ecuaceramica"] .pedido-meta-pei {
+      display: inline-block;
+      font-weight: 700;
+      font-size: .68rem;
+      letter-spacing: .04em;
+      color: var(--accent);
+      background: rgba(var(--accent-rgb), .1);
+      border: 1px solid rgba(var(--accent-rgb), .22);
+      border-radius: 999px;
+      padding: 1px 7px;
+      vertical-align: middle;
     }
     .pedido-col-foto { width: 52px; padding-left: 0; padding-right: 6px; }
     .pedido-col-modelo { min-width: 0; }
@@ -3577,6 +3592,21 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const resist = modelResistencia(item);
       return resist ? '<strong class="pedido-meta-resist">' + esc(resist) + '</strong> ' : '';
     }
+    function itemPeiSearch(item) {
+      const parts = [];
+      if (item.pei_label) parts.push(String(item.pei_label));
+      if (item.pei_raw) parts.push(String(item.pei_raw));
+      if (item.pei != null) parts.push('pei ' + item.pei);
+      return parts.join(' ');
+    }
+    function renderPeiBadge(item) {
+      const label = String(item.pei_label || '').trim();
+      if (!label) return '';
+      const tip = item.pei != null
+        ? 'Resistência ao desgaste (PEI ' + item.pei + ')'
+        : 'Indicador de tráfico no site da fábrica';
+      return '<span class="pedido-meta-pei" title="' + esc(tip) + '">' + esc(label) + '</span>';
+    }
     function renderItemMetaHtml(item, cod) {
       const codStr = cod != null ? cod : item.codigo_tintao;
       const parts = ['#' + esc(codStr)];
@@ -3584,6 +3614,10 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         if (item.marca_nome) parts.push(esc(item.marca_nome));
       }
       parts.push(esc(item.formato || '—'));
+      if (CATALOG_SKIN === 'ecuaceramica') {
+        const pei = renderPeiBadge(item);
+        if (pei) parts.push(pei);
+      }
       return renderResistenciaBold(item) + parts.join(' · ');
     }
     function renderGemeasMarcasLine(item, kind) {
@@ -3682,11 +3716,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const gemeasTrigger = renderGemeasTrigger(item, cod);
         const searchExtra = gemeasSearchText(item);
         const resistSearch = modelResistencia(item);
+        const peiSearch = CATALOG_SKIN === 'ecuaceramica' ? itemPeiSearch(item) : '';
         const porPalete = fmtPorPaleteText(item);
         const titleHtml = gemeasTrigger
           ? '<span class="pedido-row-title-line"><span class="pedido-row-title">' + esc(titulo) + '</span>' + gemeasTrigger + '</span>'
           : '<span class="pedido-row-title">' + esc(titulo) + '</span>';
-        return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(normalize((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + formatSearchBlob(item.formato) + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + searchExtra))) + '" data-qty="' + qty + '">' +
+        return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(normalize((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + formatSearchBlob(item.formato) + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + peiSearch + ' ' + searchExtra))) + '" data-qty="' + qty + '">' +
           '<td class="pedido-col-foto col-foto">' + foto + '</td>' +
           '<td class="pedido-col-modelo col-modelo">' + titleHtml + warn + gemeasMarcasHtml + '<div class="pedido-row-meta">' + rowMeta + '</div></td>' +
           '<td class="pedido-col-qty col-qty">' +
@@ -3711,8 +3746,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     function formigresItemSearchKey(item, cod, pack, titulo, extra) {
       const resistSearch = modelResistencia(item);
+      const peiSearch = CATALOG_SKIN === 'ecuaceramica' ? itemPeiSearch(item) : '';
       const fmtBlob = formatSearchBlob(item.formato);
-      return normalize(titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + fmtBlob + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + (extra || ''));
+      return normalize(titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + fmtBlob + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + peiSearch + ' ' + (extra || ''));
     }
     function formatSearchBlob(fmt) {
       const raw = String(fmt || '').trim();
@@ -3792,6 +3828,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       if (m2unit) embParts.push(fmtDecimal(m2unit) + ' m²/pl');
       const spec = renderPedidoSpecTable([
         { label: 'Preço/m²', preco: true, html: fmtPrecoHtml(item.preco_m2) },
+        ...(CATALOG_SKIN === 'ecuaceramica' && item.pei_label ? [{ label: 'PEI', text: item.pei_label }] : []),
         { label: 'Caixas', extraClass: 'model-col-cx', text: cxTot ? fmtDecimal(cxTot, 0) : '—' },
         { label: 'Peso', extraClass: 'model-col-peso', text: pesoTot ? fmtKg(pesoTot) : '—' },
         { label: 'Por palete', palete: true, text: embParts.length ? embParts.join(' · ') : '—' },

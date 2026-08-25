@@ -7,6 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { classificarEcuaceramica, resumirClassificacoes } from '../lib/ecuaceramicaClassificar.mjs';
+import { normalizePeiEcuaceramica } from '../lib/ecuaceramicaPei.mjs';
 import { readJson, snapshotPath } from '../lib/catalogoPaths.mjs';
 import { loadSnapshotFromFile } from '../lib/ecuaceramicaSnapshot.mjs';
 import { resolvePrecoEcuaceramica, TABELA_ECUA_META } from '../lib/ecuaceramicaTabelaPrecos.mjs';
@@ -24,6 +25,7 @@ function main() {
   const faixaCount = {};
   const rows = snapshot.produtos.map((p) => {
     const classif = classificarEcuaceramica(p);
+    const peiInfo = normalizePeiEcuaceramica(p.pei);
     const id = String(p.id);
     const { preco, preco_caixa, faixa, motivo } = resolvePrecoEcuaceramica(p, classif);
     const emb = resolveEmbalagemEcuaceramica(p);
@@ -50,6 +52,10 @@ function main() {
       formigres_acabamento: p.acabamento || '',
       marca_nome: 'Ecuaceramica',
       referencia: p.referencia || '',
+      pei: peiInfo.pei,
+      pei_label: peiInfo.pei_label,
+      pei_raw: peiInfo.pei_raw,
+      pei_fonte: peiInfo.pei_fonte,
       preco_caixa: preco_caixa ?? p.preco_caixa ?? null,
       preco_m2: preco,
       preco_faixa: faixa,
