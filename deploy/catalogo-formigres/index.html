@@ -336,6 +336,22 @@
       border-left: 3px solid var(--accent-dim);
     }
     html[data-skin="formigres"] .regime-hint[hidden] { display: none !important; }
+    html[data-skin="formigres"] .regime-acumulado {
+      grid-column: 1 / -1;
+      margin: 0;
+      font-size: .74rem;
+      line-height: 1.45;
+      color: var(--muted);
+      padding: 8px 10px;
+      background: var(--accent-muted);
+      border-radius: var(--radius);
+      border: 1px solid var(--border-subtle);
+    }
+    html[data-skin="formigres"] .regime-acumulado strong { color: var(--text-strong); font-weight: 600; }
+    html[data-skin="formigres"] .regime-acumulado .regime-acumulado-total {
+      color: var(--accent-bright);
+      font-size: .88rem;
+    }
     html[data-skin="formigres"] #desconto-pct:disabled {
       opacity: .72;
       cursor: not-allowed;
@@ -1638,7 +1654,7 @@
       <span class="site-sub">Catálogo B2B · Demonstração</span>
       <span class="site-bar-spacer" aria-hidden="true"></span>
       <div class="site-desconto">
-        <label for="desconto-pct">Desconto</label>
+        <label for="desconto-pct">Desc. comercial</label>
         <div class="desconto-row">
           <input type="number" id="desconto-pct" min="0" max="100" step="0.1" inputmode="decimal" placeholder="0" aria-label="Desconto comercial em percentual" />
           <span class="pct-suffix">%</span>
@@ -1661,7 +1677,7 @@
           <span class="regime-switch-label">Regime especial</span>
         </label>
         <span class="regime-aliquota-pill" id="regime-aliquota-pill" hidden>
-          Desconto <strong id="regime-aliquota-val">0%</strong>
+          Incentivo <strong id="regime-aliquota-val">0%</strong>
         </span>
       </div>
       <div class="regime-options" id="regime-options" hidden>
@@ -1680,6 +1696,12 @@
             <option value="lucro_real">Lucro real</option>
           </select>
         </div>
+        <p class="regime-acumulado" id="regime-acumulado-note" hidden>
+          Desconto comercial <strong id="regime-comercial-val">0%</strong>
+          + incentivo <strong id="regime-incentivo-val">0%</strong>
+          sobre o valor já descontado → acumulado
+          <strong class="regime-acumulado-total" id="regime-acumulado-val">0%</strong>
+        </p>
         <p class="regime-hint" id="regime-hint-amoc" hidden>
           Para produtos cerâmicos (NCM 6907), o benefício da Amazônia Ocidental aplica-se ao IPI.
           Como este produto já possui alíquota zero de IPI na tabela nacional, o preço não sofre alterações.
@@ -1841,11 +1863,11 @@
     const CATALOG_TABLE_HEAD_HTML = PEDIDO_TABLE_HEAD_HTML;
     let qtyMap = {};
     try { qtyMap = JSON.parse(localStorage.getItem(QTY_KEY) || '{}'); } catch { qtyMap = {}; }
-    let descontoPct = 0;
+    let descontoComercialPct = 0;
     try {
       const d = Number(localStorage.getItem(DESCONTO_KEY));
-      if (Number.isFinite(d) && d >= 0 && d <= 100) descontoPct = d;
-    } catch { descontoPct = 0; }
+      if (Number.isFinite(d) && d >= 0 && d <= 100) descontoComercialPct = d;
+    } catch { descontoComercialPct = 0; }
     const REGIME_DESCONTO = {
       zfm: { lucro_presumido: 16.25, lucro_real: 16.25 },
       alc: { lucro_presumido: 16.25, lucro_real: 7 },
@@ -1879,32 +1901,39 @@
       if (!dest) return 0;
       return dest[regimeState.tributario] ?? 0;
     }
+    function descontoIncentivoPct() {
+      return regimeState.enabled ? calcRegimeDescontoPct() : 0;
+    }
+    function descontoAcumuladoPct() {
+      const com = descontoComercialPct / 100;
+      const inc = descontoIncentivoPct() / 100;
+      if (!com && !inc) return 0;
+      return Math.round((1 - (1 - com) * (1 - inc)) * 10000) / 100;
+    }
+    function hasDescontoAtivo() {
+      return descontoComercialPct > 0 || descontoIncentivoPct() > 0;
+    }
     function descontoNoteText() {
-      if (!descontoPct) return '';
-      if (regimeState.enabled) {
+      if (!hasDescontoAtivo()) return '';
+      const com = descontoComercialPct;
+      const inc = descontoIncentivoPct();
+      const acum = descontoAcumuladoPct();
+      if (com > 0 && inc > 0) {
         const dest = REGIME_DESTINO_LABEL[regimeState.destino] || regimeState.destino;
         const trib = REGIME_TRIBUTARIO_LABEL[regimeState.tributario] || regimeState.tributario;
-        return 'Desconto Suframa (' + dest + ' · ' + trib + '): ' + descontoPct + '%';
+        return 'Desconto comercial ' + com + '% + incentivo Suframa (' + dest + ' · ' + trib + ') ' + inc + '% sobre valor já descontado (acumulado ' + acum + '%)';
       }
-      return 'Preços com ' + descontoPct + '% de desconto comercial';
-    }
-    function applyEffectiveDesconto() {
-      if (regimeState.enabled) {
-        descontoPct = calcRegimeDescontoPct();
-      } else {
-        try {
-          const d = Number(localStorage.getItem(DESCONTO_KEY));
-          descontoPct = Number.isFinite(d) && d >= 0 && d <= 100 ? d : 0;
-        } catch { descontoPct = 0; }
+      if (inc > 0) {
+        const dest = REGIME_DESTINO_LABEL[regimeState.destino] || regimeState.destino;
+        const trib = REGIME_TRIBUTARIO_LABEL[regimeState.tributario] || regimeState.tributario;
+        return 'Incentivo Suframa (' + dest + ' · ' + trib + '): ' + inc + '%';
       }
-      syncDescontoInputUi();
+      return 'Desconto comercial: ' + com + '%';
     }
     function syncDescontoInputUi() {
       const inp = document.getElementById('desconto-pct');
       if (!inp) return;
-      if (document.activeElement !== inp) inp.value = descontoPct ? String(descontoPct) : '';
-      inp.disabled = !!(IS_FORMIGRES && regimeState.enabled);
-      inp.setAttribute('aria-readonly', regimeState.enabled ? 'true' : 'false');
+      if (document.activeElement !== inp) inp.value = descontoComercialPct ? String(descontoComercialPct) : '';
     }
     function syncRegimePanelUi() {
       if (!IS_FORMIGRES) return;
@@ -1915,26 +1944,38 @@
       const pillEl = document.getElementById('regime-aliquota-pill');
       const valEl = document.getElementById('regime-aliquota-val');
       const hintEl = document.getElementById('regime-hint-amoc');
+      const acumNoteEl = document.getElementById('regime-acumulado-note');
+      const comValEl = document.getElementById('regime-comercial-val');
+      const incValEl = document.getElementById('regime-incentivo-val');
+      const acumValEl = document.getElementById('regime-acumulado-val');
+      const incentivo = descontoIncentivoPct();
       if (enabledEl) enabledEl.checked = regimeState.enabled;
       if (destinoEl) destinoEl.value = regimeState.destino;
       if (tributarioEl) tributarioEl.value = regimeState.tributario;
       if (optionsEl) optionsEl.hidden = !regimeState.enabled;
-      if (pillEl) pillEl.hidden = !regimeState.enabled;
-      if (valEl) valEl.textContent = fmtDecimal(calcRegimeDescontoPct(), 2) + '%';
+      if (pillEl) pillEl.hidden = !regimeState.enabled || !incentivo;
+      if (valEl) valEl.textContent = fmtDecimal(incentivo, 2) + '%';
       if (hintEl) hintEl.hidden = !(regimeState.enabled && regimeState.destino === 'amoc');
+      const showAcum = regimeState.enabled && descontoComercialPct > 0 && incentivo > 0;
+      if (acumNoteEl) acumNoteEl.hidden = !showAcum;
+      if (comValEl) comValEl.textContent = fmtDecimal(descontoComercialPct, 2) + '%';
+      if (incValEl) incValEl.textContent = fmtDecimal(incentivo, 2) + '%';
+      if (acumValEl) acumValEl.textContent = fmtDecimal(descontoAcumuladoPct(), 2) + '%';
+    }
+    function refreshDescontoUi() {
+      syncDescontoInputUi();
+      syncRegimePanelUi();
     }
     function commitRegimeChange() {
       saveRegimeState();
-      applyEffectiveDesconto();
-      syncRegimePanelUi();
+      refreshDescontoUi();
       renderCatalogo();
       renderPedido();
     }
     function initRegimeControls() {
       if (!IS_FORMIGRES) return;
       loadRegimeState();
-      syncRegimePanelUi();
-      applyEffectiveDesconto();
+      refreshDescontoUi();
       const enabledEl = document.getElementById('regime-especial-enabled');
       const destinoEl = document.getElementById('regime-destino');
       const tributarioEl = document.getElementById('regime-tributario');
@@ -2059,22 +2100,24 @@
     function precoEfetivo(preco) {
       const base = Number(preco);
       if (!Number.isFinite(base) || base <= 0) return null;
-      if (!descontoPct) return base;
-      return Math.round(base * (1 - descontoPct / 100) * 100) / 100;
+      let v = base;
+      if (descontoComercialPct) v = v * (1 - descontoComercialPct / 100);
+      const incentivo = descontoIncentivoPct();
+      if (incentivo) v = v * (1 - incentivo / 100);
+      return Math.round(v * 100) / 100;
     }
     function fmtPrecoHtml(preco) {
       const base = Number(preco);
       if (!Number.isFinite(base) || base <= 0) return '—';
       const eff = precoEfetivo(base);
-      if (!descontoPct) return esc(fmtMoney(eff));
+      if (!hasDescontoAtivo()) return esc(fmtMoney(eff));
       return '<span class="preco-orig">' + esc(fmtMoney(base)) + '</span><strong class="preco-desc">' + esc(fmtMoney(eff)) + '</strong>';
     }
     function setDesconto(val) {
-      if (IS_FORMIGRES && regimeState.enabled) return;
       const n = Math.max(0, Math.min(100, Number(val) || 0));
-      descontoPct = Math.round(n * 10) / 10;
-      localStorage.setItem(DESCONTO_KEY, String(descontoPct));
-      syncDescontoInputUi();
+      descontoComercialPct = Math.round(n * 10) / 10;
+      localStorage.setItem(DESCONTO_KEY, String(descontoComercialPct));
+      refreshDescontoUi();
       renderCatalogo();
       renderPedido();
     }
@@ -2444,7 +2487,7 @@
           '<td class="pedido-col-num model-col-cx">' + (cxTot ? fmtDecimal(cxTot, 0) : '') + '</td>' +
           '<td class="pedido-col-num pedido-col-peso model-col-peso">' + (pesoTot ? fmtKg(pesoTot) : '') + '</td>' +
           '<td class="pedido-col-emb">' + esc(porPalete) + '</td>' +
-          '<td class="pedido-col-num pedido-col-preco col-preco' + (descontoPct ? ' has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
+          '<td class="pedido-col-num pedido-col-preco col-preco' + (hasDescontoAtivo() ? ' has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
           '<td class="pedido-col-num col-subtotal model-col-sub">' + (sub ? esc(fmtMoney(sub)) : '') + '</td></tr>';
       }
       const metaMobile = '<div class="model-meta-mobile">' + esc(pack) + ' · ' + fmtPrecoHtml(item.preco_m2) + '</div>';
@@ -2452,7 +2495,7 @@
         '<td class="col-foto">' + foto + '</td>' +
         '<td class="col-modelo"><strong>' + esc(titulo) + '</strong>' + warn + '<br><small style="color:var(--muted)">#' + esc(cod) + '</small>' + metaMobile + '</td>' +
         '<td class="col-pack">' + esc(pack) + '</td>' +
-        '<td class="col-preco' + (descontoPct ? ' has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
+        '<td class="col-preco' + (hasDescontoAtivo() ? ' has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
         '<td class="col-qty">' +
         '<input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" tabindex="0" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="' + esc(QTY_LABEL) + '" placeholder="0" />' +
         '</td></tr>';
@@ -2577,7 +2620,7 @@
       return '<table class="pedido-card-spec" role="presentation"><tr>' +
         cells.map((c) => {
           const cls = [
-            c.preco ? ' pedido-card-spec-preco' + (descontoPct ? ' has-desc' : '') : '',
+            c.preco ? ' pedido-card-spec-preco' + (hasDescontoAtivo() ? ' has-desc' : '') : '',
             c.palete ? ' pedido-card-spec-palete' : '',
           ].join('');
           const val = c.html != null ? c.html : esc(c.text ?? '—');
@@ -2624,7 +2667,7 @@
           '<td class="pedido-col-num">' + (cxTot ? fmtDecimal(cxTot, 0) : '—') + '</td>' +
           '<td class="pedido-col-num pedido-col-peso">' + (pesoTot ? fmtKg(pesoTot) : '—') + '</td>' +
           '<td class="pedido-col-emb">' + esc(embParts.length ? embParts.join(' · ') : '—') + '</td>' +
-          '<td class="pedido-col-num pedido-col-preco ' + (descontoPct ? 'has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
+          '<td class="pedido-col-num pedido-col-preco ' + (hasDescontoAtivo() ? 'has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
           '<td class="pedido-col-num col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
       }
       return '<tr>' +
@@ -2633,7 +2676,7 @@
         '<td class="pedido-col-qty">' + qty + '</td>' +
         '<td class="pedido-col-num">' + (m2unit ? fmtDecimal(m2unit) : '—') + '</td>' +
         '<td class="pedido-col-num">' + (m2tot ? fmtDecimal(m2tot) : '—') + '</td>' +
-        '<td class="pedido-col-num pedido-col-preco ' + (descontoPct ? 'has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
+        '<td class="pedido-col-num pedido-col-preco ' + (hasDescontoAtivo() ? 'has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
         '<td class="pedido-col-num col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
     }
     function renderPedidoCard({ item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl, sub }, opts) {
@@ -2716,7 +2759,7 @@
       document.getElementById('pedido-total').innerHTML = rows.length
         ? '<span>Total estimado: <strong>' + fmtMoney(totalValor) + '</strong></span>' +
           pesoTotalLine +
-          (descontoPct ? '<p class="pedido-desconto-note">' + esc(descontoNoteText()) + '</p>' : '')
+          (hasDescontoAtivo() ? '<p class="pedido-desconto-note">' + esc(descontoNoteText()) + '</p>' : '')
         : '';
       document.getElementById('pdf-pedido-panel')?.toggleAttribute('disabled', rows.length === 0);
       updateCartFab();
@@ -2801,7 +2844,7 @@
             '<tbody>' + bodyRows.join('') + '</tbody>' +
           '</table>'
         : '';
-      const descNote = descontoPct ? '<p class="print-note">' + esc(descontoNoteText()) + ' sobre a tabela.</p>' : '';
+      const descNote = hasDescontoAtivo() ? '<p class="print-note">' + esc(descontoNoteText()) + ' sobre a tabela.</p>' : '';
       const caixasResumo = QTY_UNIT === 'palete' && totalCaixas
         ? '<span class="print-resumo-stat"><strong>' + fmtDecimal(totalCaixas, 0) + '</strong> caixas</span>'
         : '';
