@@ -1,8 +1,6 @@
 /**
- * Tour de onboarding (product tour) — catálogos B2B Formigres / Arielle.
- * Spotlight + overlay + passos; primeira visita automática; botão Ajuda repete.
+ * Tour de onboarding (product tour) — catálogos B2B Formigres / Arielle / portfolio.
  */
-
 const HELP_FAB_TOKENS = {
   formigres: {
     bg: '#d6f2f4',
@@ -18,21 +16,35 @@ const HELP_FAB_TOKENS = {
     fg: '#8b3a4a',
     glow: 'rgba(139, 58, 74, 0.16)',
   },
+  ecuaceramica: {
+    bg: '#dce8f7',
+    bgHover: '#c9dbf0',
+    border: '#8eb4dc',
+    fg: '#1a4d8c',
+    glow: 'rgba(26, 77, 140, 0.16)',
+  },
 };
 
 export function buildCatalogTourSteps({ skin = 'formigres', qtyLabelPl = 'paletes' } = {}) {
   const isArielle = skin === 'arielle';
-  const marca = isArielle ? 'Arielle · Carmelo Fior' : 'Formigres';
+  const isPortfolio = skin === 'ecuaceramica';
+  const marca = isPortfolio
+    ? 'Ecuaceramica (exemplo portfolio P38)'
+    : (isArielle ? 'Arielle · Carmelo Fior' : 'Formigres');
   const linhas = isArielle ? 'Bold e Retificada' : 'Bold, Retificada e Polida';
   const regimeOrigem = isArielle
     ? 'Origem Sergipe (Polo SE).'
     : 'Origem São Paulo (SP).';
 
-  return [
+  const steps = [
     {
       id: 'welcome',
-      title: isArielle ? 'Bem-vindo ao catálogo Arielle' : 'Bem-vindo ao catálogo Formigres',
-      text: `Tour rápido (~2 min) do catálogo ${marca}: busca, ${qtyLabelPl}, regime Suframa, carrinho e PDF para o representante. Pode pular a qualquer momento.`,
+      title: isPortfolio
+        ? 'Exemplo de catálogo B2B white-label'
+        : (isArielle ? 'Bem-vindo ao catálogo Arielle' : 'Bem-vindo ao catálogo Formigres'),
+      text: isPortfolio
+        ? `Tour rápido (~2 min) do ${marca}: busca, ${qtyLabelPl}, carrinho e PDF. Dados ilustrativos — sem vínculo com concorrentes do seu mercado.`
+        : `Tour rápido (~2 min) do catálogo ${marca}: busca, ${qtyLabelPl}, regime Suframa, carrinho e PDF para o representante. Pode pular a qualquer momento.`,
       center: true,
       prepare: 'closePanels',
     },
@@ -40,26 +52,36 @@ export function buildCatalogTourSteps({ skin = 'formigres', qtyLabelPl = 'palete
       id: 'desconto',
       selector: '#desconto-pct',
       title: 'Desconto comercial',
-      text: 'Opcional: percentual negociado com o cliente. Combina com o incentivo Suframa quando o regime especial estiver ativo.',
+      text: isPortfolio
+        ? 'Opcional: percentual negociado com o cliente. Nos catálogos reais, combina com incentivos fiscais quando aplicável.'
+        : 'Opcional: percentual negociado com o cliente. Combina com o incentivo Suframa quando o regime especial estiver ativo.',
       placement: 'bottom',
       prepare: 'closePanels',
     },
-    {
-      id: 'regime',
-      selector: '#regime-panel',
-      title: 'Regime especial Suframa',
-      text: `Ative o interruptor para compras destinadas a AM, RR, AP ou AC. ${regimeOrigem} O incentivo entra automaticamente nos preços.`,
-      placement: 'bottom',
-      prepare: 'closePanels',
-    },
-    {
-      id: 'regime-edit',
-      selector: '#regime-dialog',
-      title: 'Parâmetros do regime',
-      text: 'Ajuste UF do comprador, destino Suframa (ZFM, ALC ou Amazônia Ocidental) e regime tributário. Toque em Aplicar para recalcular os preços. O ícone de lápis no painel reabre este formulário.',
-      placement: 'bottom',
-      prepare: 'regimeDialog',
-    },
+  ];
+
+  if (!isPortfolio) {
+    steps.push(
+      {
+        id: 'regime',
+        selector: '#regime-panel',
+        title: 'Regime especial Suframa',
+        text: `Ative o interruptor para compras destinadas a AM, RR, AP ou AC. ${regimeOrigem} O incentivo entra automaticamente nos preços.`,
+        placement: 'bottom',
+        prepare: 'closePanels',
+      },
+      {
+        id: 'regime-edit',
+        selector: '#regime-dialog',
+        title: 'Parâmetros do regime',
+        text: 'Ajuste UF do comprador, destino Suframa (ZFM, ALC ou Amazônia Ocidental) e regime tributário. Toque em Aplicar para recalcular os preços. O ícone de lápis no painel reabre este formulário.',
+        placement: 'bottom',
+        prepare: 'regimeDialog',
+      },
+    );
+  }
+
+  steps.push(
     {
       id: 'search',
       selector: '#search',
@@ -115,11 +137,15 @@ export function buildCatalogTourSteps({ skin = 'formigres', qtyLabelPl = 'palete
     {
       id: 'enviar',
       title: 'Envie ao representante',
-      text: 'Depois de gerar o PDF, reenvie-o ao seu representante comercial (WhatsApp, e-mail ou canal habitual) para formalizar cotação ou pedido.',
+      text: isPortfolio
+        ? 'Depois de gerar o PDF, imagine enviar ao representante da sua fábrica — é o fluxo que o P38 entrega no white-label.'
+        : 'Depois de gerar o PDF, reenvie-o ao seu representante comercial (WhatsApp, e-mail ou canal habitual) para formalizar cotação ou pedido.',
       center: true,
       prepare: 'closePanels',
     },
-  ];
+  );
+
+  return steps;
 }
 
 export function buildCatalogTourCss(skin = 'formigres') {

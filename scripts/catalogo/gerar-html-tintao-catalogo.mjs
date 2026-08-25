@@ -127,6 +127,41 @@ const CONFIGS = {
     fabricanteUf: 'SE',
     fabricanteNome: 'Arielle · Polo SE (Carmelo Fior)',
   },
+  ecuaceramica: {
+    classifDir: path.join(ROOT, 'docs', 'imports-local', 'ecuaceramica', 'classificacao'),
+    classifPattern: /^ecuaceramica-completo-\d{4}-\d{2}-\d{2}\.json$/,
+    outHtml: path.join(ROOT, 'docs', 'imports-local', 'ecuaceramica', 'Catálogo Ecuaceramica — Portfolio P38.html'),
+    outDeploy: path.join(ROOT, 'deploy', 'catalogo-ecuaceramica', 'index.html'),
+    outPdfThumbs: path.join(ROOT, 'docs', 'imports-local', 'ecuaceramica', 'catalogo-ecuaceramica-pdf-thumbs.json'),
+    publicUrl: (process.env.CATALOGO_ECUA_PUBLIC_URL || 'https://catalogo-demo-p38.vercel.app/').replace(/\/?$/, '/'),
+    snapshotSlug: 'ecuaceramica',
+    skipApiEnrich: true,
+    skipPdfThumbs: false,
+    skipGemeasDedup: true,
+    skipRegimePanel: true,
+    title: 'Catálogo B2B — Ecuaceramica (exemplo portfolio)',
+    h1: 'Porcelanatos — Catálogo B2B',
+    hint: 'Exemplo ilustrativo · marque paletes e revise m², peso e total no carrinho',
+    qtyUnit: 'palete',
+    qtyLabel: 'Paletes',
+    qtyLabelPl: 'paletes',
+    demoBanner: 'Exemplo de portfolio P38 · dados públicos Ecuaceramica (Equador) · preços e embalagens demonstrativos, sem vínculo comercial',
+    themeKey: 'ecuaceramica-catalog-theme-v1',
+    qtyKey: 'ecuaceramica-catalog-qty-v1',
+    descontoKey: 'ecuaceramica-catalog-desconto-v1',
+    groupKey: 'ecuaceramica-catalog-group-v1',
+    tourKey: 'ecuaceramica-catalog-tour-v1',
+    classifError: 'JSON de classificação não encontrado. Rode: npm run catalogo:classificar-ecuaceramica',
+    skin: 'ecuaceramica',
+    siteSub: 'Portfolio P38 · Catálogo B2B demonstrativo',
+    hideThemeToggle: true,
+    fontsUrl: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&display=swap',
+    logoPath: path.join(ROOT, 'scripts', 'catalogo', 'assets', 'ecuaceramica-logo.jpg'),
+    brandSiteUrl: 'https://ecuaceramica.com/6-porcelanato',
+    brandSiteLabel: 'Ecuaceramica — site oficial (Equador)',
+    fabricanteNome: 'Ecuaceramica · Equador',
+    poweredByHtml: 'Catálogo B2B by <strong>P38 sistemas</strong> · exemplo white-label',
+  },
 };
 
 const CFG = CONFIGS[MODO] || CONFIGS.tintao;
@@ -937,12 +972,13 @@ const FORMIGRES_SKIN_CSS = `
 `;
 
 function isB2bCatalogSkin(skin) {
-  return skin === 'formigres' || skin === 'arielle';
+  return skin === 'formigres' || skin === 'arielle' || skin === 'ecuaceramica';
 }
 
 const BRAND_SKIN_TOKENS = {
   formigres: { accent: '#da1c24', accentBright: '#b01219', accentRgb: '218,28,36', demoBg: '#f9e5e6' },
   arielle: { accent: '#23674c', accentBright: '#1a5239', accentRgb: '35,103,76', demoBg: '#e8f3ee' },
+  ecuaceramica: { accent: '#1a4d8c', accentBright: '#123a6b', accentRgb: '26,77,140', demoBg: '#e8eef5' },
 };
 
 function buildBrandSkinCss(skin) {
@@ -1033,7 +1069,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   const catalogTourJs = isB2bSkin
     ? buildCatalogTourClientJs({ tourKey: cfg.tourKey, skin: cfg.skin, qtyLabelPl })
     : '';
-  const regimePanelHtml = isB2bSkin
+  const regimePanelHtml = isB2bSkin && !cfg.skipRegimePanel
     ? `<section class="regime-panel" id="regime-panel" aria-label="Regime especial Suframa">
       <div class="regime-panel-head">
         <label class="regime-switch">
@@ -1053,7 +1089,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       <p class="regime-summary" id="regime-summary" hidden></p>
     </section>`
     : '';
-  const regimeDialogHtml = isB2bSkin
+  const regimeDialogHtml = isB2bSkin && !cfg.skipRegimePanel
     ? `<div class="regime-overlay" id="regime-overlay" role="dialog" aria-modal="true" aria-label="Regime especial Suframa">
       <section class="regime-dialog" id="regime-dialog">
         <div class="regime-dialog-head">
@@ -2669,7 +2705,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
 
     <section class="catalogo" id="catalogo"></section>
     <footer class="catalog-powered" aria-label="Créditos">
-      Powered by <strong>P38 sistemas</strong>
+      ${cfg.poweredByHtml || 'Powered by <strong>P38 sistemas</strong>'}
     </footer>
   </div>
 
