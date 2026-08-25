@@ -2332,9 +2332,24 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       html[data-skin="formigres"] .catalog-table-wrap { display: none !important; }
       html[data-skin="formigres"] .catalog-cards-wrap {
         display: block;
-        padding: 0 8px 10px;
+        padding: 0 0 10px;
         overflow-x: hidden;
         max-width: 100%;
+      }
+      html[data-skin="formigres"] .acc-inner {
+        padding-left: 0;
+        padding-right: 0;
+      }
+      html[data-skin="formigres"] .acc-acab {
+        --depth: 2;
+      }
+      html[data-skin="formigres"] details.acc > .catalog-items,
+      html[data-skin="formigres"] .catalog-items {
+        padding-left: 0;
+        padding-right: 0;
+      }
+      html[data-skin="formigres"] .model-gemeas-detail-card {
+        padding: 0 0 10px;
       }
       html[data-skin="formigres"] .catalog-cards {
         display: flex;
