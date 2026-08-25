@@ -11,6 +11,7 @@ import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
 import {
   buildEfficientPedidoCompraPrompt,
   findLocalBestFornecedorMatch,
+  getProdutoLabel,
   resolveOcrProductMatch,
 } from '@/components/compras/productMatchingUtils';
 import {
@@ -330,7 +331,7 @@ export default function ImportadorPedidoCompra({
       setProcessingStep(5);
       setProcessingStatus('Validando correspondências');
 
-      setItems((result.itens || []).map((item) => {
+      const mappedItems = (result.itens || []).map((item) => {
         const resolved = resolveOcrProductMatch(
           item,
           catalogoProdutos,
@@ -343,8 +344,16 @@ export default function ImportadorPedidoCompra({
           confianca: resolved.confianca,
           ignored: false,
         };
-      }));
-      setProductSearch({});
+      });
+      const initialSearch = {};
+      mappedItems.forEach((item, index) => {
+        const id = item.selected_product_id || item.produto_id_match;
+        if (!id || id === 'create_new') return;
+        const produto = catalogoProdutos.find((p) => p.id === id);
+        if (produto) initialSearch[index] = getProdutoLabel(produto);
+      });
+      setItems(mappedItems);
+      setProductSearch(initialSearch);
       setStep('review');
     } catch (error) {
       toast({ title: 'Erro na análise', description: error.message, variant: 'destructive' });
@@ -789,7 +798,7 @@ export default function ImportadorPedidoCompra({
               ) : null}
 
               {isMobile ? (
-                <div className="rounded-2xl border border-border/50 bg-card/40 px-1">
+                <div className="rounded-2xl border border-border/50 bg-card/40">
                   {items.map((item, index) => (
                     <ImportadorOcrItemCard
                       key={index}
