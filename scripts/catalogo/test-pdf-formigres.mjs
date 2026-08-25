@@ -49,11 +49,13 @@ async function main() {
     const rowLine = src.includes("const rowLine = '#707070'");
     const tablePdf = src.includes('print-pedido-table pedido-table');
     const printCard = src.includes('print-pedido-item');
+    const printFormatGroup = src.includes('print-format-group');
+    const printGemeas = src.includes('print-pedido-item-gemeas');
     const a4 = src.includes("format: 'a4'");
     const scale3 = src.includes('PDF_CANVAS_SCALE = 3');
     const printThumb72 = src.includes('PDF_PRINT_THUMB_PX = 72');
     const precoStack = src.includes('preco-stack-pdf');
-    return { hasA4: a4, hasRowLine: rowLine, hasTablePdf: tablePdf, printCard, hasLayoutFn: !!m, scale3, printThumb72, precoStack };
+    return { hasA4: a4, hasRowLine: rowLine, hasTablePdf: tablePdf, printCard, printFormatGroup, printGemeas, hasLayoutFn: !!m, scale3, printThumb72, precoStack };
   });
 
   await page.click('#cart-fab');
@@ -74,6 +76,8 @@ async function main() {
   const ok = layoutProbe.hasA4
     && layoutProbe.hasRowLine
     && layoutProbe.printCard
+    && layoutProbe.printFormatGroup
+    && layoutProbe.printGemeas
     && layoutProbe.hasLayoutFn
     && layoutProbe.scale3
     && layoutProbe.printThumb72

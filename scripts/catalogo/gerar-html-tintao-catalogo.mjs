@@ -3271,6 +3271,66 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '<td class="pedido-col-num pedido-col-preco ' + (hasDescontoAtivo() ? 'has-desc' : '') + '">' + precoCell + '</td>' +
         '<td class="pedido-col-num col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
     }
+    function renderGemeasPdfRefs(item) {
+      const g = item.gemeas;
+      if (!g || g.length < 2) return '';
+      const parts = g.map((row) => '#' + esc(row.codigo) + ' ' + esc(row.marca));
+      return '<div class="print-pedido-item-gemeas">' + parts.join(' · ') + '</div>';
+    }
+    function renderPrintFormatGroupHeader(fmt, qtyPl, pesoKg, m2tot) {
+      const fmtLabel = esc(String(fmt || '—').toUpperCase());
+      const qtyLabel = QTY_UNIT === 'palete' ? 'paletes' : QTY_LABEL_PL;
+      const qtyPad = String(qtyPl || 0).padStart(2, '0');
+      const peso = pesoKg ? fmtKg(pesoKg) : '—';
+      const m2 = m2tot ? fmtDecimal(m2tot) + ' m²' : '';
+      const bits = [
+        '<span class="print-format-group-fmt">' + fmtLabel + '</span>',
+        '<span class="print-format-group-stat">' + qtyPad + ' ' + esc(qtyLabel) + '</span>',
+        '<span class="print-format-group-stat">' + esc(peso) + '</span>',
+      ];
+      if (m2) bits.push('<span class="print-format-group-stat">' + esc(m2) + '</span>');
+      return '<div class="print-format-group">' + bits.join('<span class="print-format-group-sep">|</span>') + '</div>';
+    }
+    function buildPedidoPrintCardsHtml(thumbs, rows) {
+      const groups = new Map();
+      for (const row of rows) {
+        const fmt = row.item.formato || '—';
+        if (!groups.has(fmt)) groups.set(fmt, []);
+        groups.get(fmt).push(row);
+      }
+      const fmtKeys = [...groups.keys()].sort(compareFormato);
+      const parts = [];
+      for (const fmt of fmtKeys) {
+        const groupRows = groups.get(fmt);
+        let gQty = 0;
+        let gPeso = 0;
+        let gM2 = 0;
+        for (const { item, qty } of groupRows) {
+          gQty += qty;
+          const pt = itemPesoTotal(item, qty);
+          if (pt) gPeso += pt;
+          const m2 = itemM2Total(item, qty);
+          if (m2) gM2 += m2;
+        }
+        parts.push(renderPrintFormatGroupHeader(fmt, gQty, gPeso, gM2));
+        for (const { item, qty } of groupRows) {
+          const emb = itemEmbalagem(item);
+          const m2unit = itemM2Unit(item);
+          const m2tot = itemM2Total(item, qty);
+          const pesoTot = itemPesoTotal(item, qty);
+          const cxTot = itemCaixasTotal(item, qty);
+          const sub = itemSubtotal(item, qty);
+          const imgs = getGaleria(item);
+          const img = imgs[0]?.url || '';
+          const titulo = item.formigres_titulo || item.descricao;
+          parts.push(renderPedidoPrintCard(
+            { item, qty, img, titulo, m2unit, m2tot, pesoTot, cxTot, cxpl: emb.cxpl, sub },
+            thumbs,
+          ));
+        }
+      }
+      return parts.length ? '<div class="print-pedido-list">' + parts.join('') + '</div>' : '';
+    }
     function renderPedidoPrintCard({ item, qty, img, titulo, m2unit, m2tot, pesoTot, cxTot, cxpl, sub }, thumbs) {
       const emb = itemEmbalagem(item);
       const imgSrc = pdfImgSrcForPrint(img, thumbs, item);
@@ -3278,9 +3338,17 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const thumb = imgSrc
         ? '<img src="' + esc(imgSrc) + '" alt="" width="' + thumbPx + '" height="' + thumbPx + '" />'
         : '<span class="print-pedido-item-thumb-empty" aria-hidden="true">—</span>';
-      const metaParts = ['#' + esc(item.codigo_tintao)];
-      if (item.marca_nome) metaParts.push(esc(item.marca_nome));
-      metaParts.push(esc(item.formato || '—'));
+      const hasGemeas = item.gemeas && item.gemeas.length > 1;
+      const metaParts = [];
+      if (!hasGemeas) {
+        metaParts.push('#' + esc(item.codigo_tintao));
+        if (item.marca_nome) metaParts.push(esc(item.marca_nome));
+      }
+      if (item.referencia) metaParts.push('ref. ' + esc(item.referencia));
+      const metaHtml = metaParts.length
+        ? '<div class="print-pedido-item-meta">' + metaParts.join(' · ') + '</div>'
+        : '';
+      const gemeasHtml = renderGemeasPdfRefs(item);
       const qtyShort = QTY_UNIT === 'palete' ? 'pl' : 'cx';
       const metrics = [];
       metrics.push('<strong>' + qty + ' ' + esc(qtyShort) + '</strong>');
@@ -3304,7 +3372,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           '<div class="print-pedido-item-thumb">' + thumb + '</div>' +
           '<div class="print-pedido-item-desc">' +
             '<div class="print-pedido-item-title">' + esc(titulo) + '</div>' +
-            '<div class="print-pedido-item-meta">' + metaParts.join(' · ') + '</div>' +
+            metaHtml +
+            gemeasHtml +
           '</div>' +
           '<div class="print-pedido-item-sub">' +
             '<strong>' + esc(sub != null ? fmtMoney(sub) : '—') + '</strong>' +
@@ -3467,14 +3536,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const img = imgs[0]?.url || '';
         const titulo = item.formigres_titulo || item.descricao;
         const rowData = { item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub };
-        if (QTY_UNIT === 'palete') {
-          bodyRows.push(renderPedidoPrintCard(rowData, thumbs));
-        } else {
+        if (QTY_UNIT !== 'palete') {
           bodyRows.push(renderPedidoTableRow(rowData, thumbs, { pdf: true }));
         }
       }
-      const listHtml = bodyRows.length && QTY_UNIT === 'palete'
-        ? '<div class="print-pedido-list">' + bodyRows.join('') + '</div>'
+      const listHtml = rows.length && QTY_UNIT === 'palete'
+        ? buildPedidoPrintCardsHtml(thumbs, rows)
         : '';
       const tableHtml = bodyRows.length && QTY_UNIT !== 'palete'
         ? '<table class="print-pedido-table pedido-table">' +
@@ -3530,6 +3597,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '.print-resumo { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px 12px; margin-bottom: 12px; }' +
         '.print-resumo-stat { min-width: 0; font-size: 10px; color: #767676; }' +
         '.print-resumo-stat strong { display: block; font-size: 14px; color: #2f2f2f; margin-bottom: 2px; font-weight: 600; }' +
+        '.print-format-group { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 10px; padding: 10px 0 8px; margin-top: 10px; border-bottom: 2px solid ' + rowLine + '; break-inside: avoid; page-break-inside: avoid; }' +
+        '.print-pedido-list > .print-format-group:first-child { margin-top: 0; padding-top: 4px; }' +
+        '.print-format-group-fmt { font-size: 13px; font-weight: 700; letter-spacing: .05em; color: #2f2f2f; text-transform: uppercase; }' +
+        '.print-format-group-stat { font-size: 12px; font-weight: 600; color: #2f2f2f; font-variant-numeric: tabular-nums; }' +
+        '.print-format-group-sep { color: #767676; font-weight: 400; font-size: 11px; }' +
         '.print-pedido-list { display: flex; flex-direction: column; gap: 0; margin-top: 4px; }' +
         '.print-pedido-item { border-bottom: 1px solid ' + rowLine + '; padding: 12px 0; break-inside: avoid; page-break-inside: avoid; }' +
         '.print-pedido-item:first-child { padding-top: 4px; }' +
@@ -3540,6 +3612,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '.print-pedido-item-desc { flex: 1; min-width: 0; padding-top: 2px; }' +
         '.print-pedido-item-title { font-size: 14px; font-weight: 600; line-height: 1.35; color: #2f2f2f; word-break: break-word; }' +
         '.print-pedido-item-meta { margin-top: 4px; font-size: 11px; color: #767676; line-height: 1.35; }' +
+        '.print-pedido-item-gemeas { margin-top: 5px; font-size: 10px; color: #767676; line-height: 1.45; }' +
         '.print-pedido-item-sub { flex-shrink: 0; text-align: right; min-width: 96px; padding-top: 2px; }' +
         '.print-pedido-item-sub strong { display: block; font-size: 15px; font-weight: 700; color: #b01219; white-space: nowrap; }' +
         '.print-pedido-item-sub span { display: block; margin-top: 2px; font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: #767676; }' +
