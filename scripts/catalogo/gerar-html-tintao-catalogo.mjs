@@ -2416,6 +2416,15 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       if (item?.imagem_url && thumbs?.[item.imagem_url]) return thumbs[item.imagem_url];
       return url;
     }
+    function isPdfDataUri(src) {
+      return typeof src === 'string' && src.startsWith('data:image/');
+    }
+    function pdfImgSrcForPrint(url, thumbs, item) {
+      const src = pdfImgSrc(url, thumbs, item);
+      return isPdfDataUri(src) ? src : '';
+    }
+    const PDF_THUMB_PX = 112;
+    const PDF_CANVAS_SCALE = 3;
     function pedidoPdfImageUrls() {
       const urls = new Set();
       for (const { item } of pedidoItens()) {
@@ -2436,32 +2445,51 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const h = img.naturalHeight * scale;
       ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
       try {
-        return canvas.toDataURL('image/jpeg', 0.48);
+        return canvas.toDataURL('image/jpeg', 0.82);
       } catch {
         return '';
       }
     }
-    function loadPdfThumbFromUrl(url) {
-      return new Promise((resolve) => {
-        if (!url) { resolve(''); return; }
+    async function loadPdfThumbFromUrlAsync(url) {
+      if (!url) return '';
+      const viaImage = () => new Promise((resolve) => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
-        const finish = (value) => {
+        const timer = setTimeout(() => resolve(''), 15000);
+        const done = (value) => {
           clearTimeout(timer);
-          resolve(value || url);
+          resolve(value || '');
         };
-        const timer = setTimeout(() => finish(url), 12000);
-        img.onload = () => finish(rasterizePdfThumb(img, 80) || url);
-        img.onerror = () => finish(url);
+        img.onload = () => done(rasterizePdfThumb(img, PDF_THUMB_PX));
+        img.onerror = () => done('');
         img.src = url;
       });
+      let data = await viaImage();
+      if (data) return data;
+      try {
+        const res = await fetch(url, { mode: 'cors', credentials: 'omit' });
+        if (!res.ok) return '';
+        const blob = await res.blob();
+        const objUrl = URL.createObjectURL(blob);
+        try {
+          data = await new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve(rasterizePdfThumb(img, PDF_THUMB_PX) || '');
+            img.onerror = () => resolve('');
+            img.src = objUrl;
+          });
+        } finally {
+          URL.revokeObjectURL(objUrl);
+        }
+      } catch { /* ignore */ }
+      return data || '';
     }
     async function ensurePedidoPdfThumbs(baseThumbs) {
       const thumbs = { ...(baseThumbs || {}) };
-      const missing = pedidoPdfImageUrls().filter((url) => !thumbs[url]);
-      if (!missing.length) return thumbs;
-      await Promise.all(missing.map(async (url) => {
-        thumbs[url] = await loadPdfThumbFromUrl(url);
+      const todo = pedidoPdfImageUrls().filter((url) => !isPdfDataUri(thumbs[url]));
+      if (!todo.length) return thumbs;
+      await Promise.all(todo.map(async (url) => {
+        thumbs[url] = await loadPdfThumbFromUrlAsync(url);
       }));
       return thumbs;
     }
@@ -2490,12 +2518,15 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       if (incentivo) v = v * (1 - incentivo / 100);
       return Math.round(v * 100) / 100;
     }
-    function fmtPrecoHtml(preco) {
+    function fmtPrecoHtml(preco, opts) {
       const base = Number(preco);
       if (!Number.isFinite(base) || base <= 0) return '—';
       const eff = precoEfetivo(base);
       if (!hasDescontoAtivo()) return esc(fmtMoney(eff));
-      return '<span class="preco-orig">' + esc(fmtMoney(base)) + '</span><strong class="preco-desc">' + esc(fmtMoney(eff)) + '</strong>';
+      const pdfStack = opts && opts.pdf;
+      return '<span class="preco-stack' + (pdfStack ? ' preco-stack-pdf' : '') + '">' +
+        '<span class="preco-orig">' + esc(fmtMoney(base)) + '</span>' +
+        '<strong class="preco-desc">' + esc(fmtMoney(eff)) + '</strong></span>';
     }
     function setDesconto(val) {
       const n = Math.max(0, Math.min(100, Number(val) || 0));
@@ -3035,10 +3066,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const forPdf = opts && opts.pdf;
       const emb = itemEmbalagem(item);
       const rowMeta = '#' + esc(item.codigo_tintao) + ' · ' + esc(item.formato || '—');
-      const imgSrc = forPdf ? pdfImgSrc(img, thumbs, item) : img;
+      const imgSrc = forPdf ? pdfImgSrcForPrint(img, thumbs, item) : pdfImgSrc(img, thumbs, item) || img;
       const thumbCell = imgSrc
-        ? '<img src="' + esc(imgSrc) + '" alt="" width="48" height="48" style="object-fit:cover;border-radius:6px" />'
+        ? '<img src="' + esc(imgSrc) + '" alt="" width="' + (forPdf ? '52' : '48') + '" height="' + (forPdf ? '52' : '48') + '" style="object-fit:cover;border-radius:6px" />'
         : '—';
+      const precoCell = fmtPrecoHtml(item.preco_m2, forPdf ? { pdf: true } : null);
       if (QTY_UNIT === 'palete') {
         const embParts = [];
         if (cxpl || emb.cxpl) embParts.push((cxpl || emb.cxpl) + ' cx/pl');
@@ -3051,7 +3083,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           '<td class="pedido-col-num">' + (cxTot ? fmtDecimal(cxTot, 0) : '—') + '</td>' +
           '<td class="pedido-col-num pedido-col-peso">' + (pesoTot ? fmtKg(pesoTot) : '—') + '</td>' +
           '<td class="pedido-col-emb">' + esc(embParts.length ? embParts.join(' · ') : '—') + '</td>' +
-          '<td class="pedido-col-num pedido-col-preco ' + (hasDescontoAtivo() ? 'has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
+          '<td class="pedido-col-num pedido-col-preco ' + (hasDescontoAtivo() ? 'has-desc' : '') + '">' + precoCell + '</td>' +
           '<td class="pedido-col-num col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
       }
       return '<tr>' +
@@ -3060,7 +3092,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '<td class="pedido-col-qty">' + qty + '</td>' +
         '<td class="pedido-col-num">' + (m2unit ? fmtDecimal(m2unit) : '—') + '</td>' +
         '<td class="pedido-col-num">' + (m2tot ? fmtDecimal(m2tot) : '—') + '</td>' +
-        '<td class="pedido-col-num pedido-col-preco ' + (hasDescontoAtivo() ? 'has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
+        '<td class="pedido-col-num pedido-col-preco ' + (hasDescontoAtivo() ? 'has-desc' : '') + '">' + precoCell + '</td>' +
         '<td class="pedido-col-num col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
     }
     function renderPedidoCard({ item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl, sub }, opts) {
@@ -3284,7 +3316,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '.print-pedido-table col.col-cx { width: 68px; }' +
         '.print-pedido-table col.col-peso { width: 92px; }' +
         '.print-pedido-table col.col-emb { width: 128px; }' +
-        '.print-pedido-table col.col-preco { width: 84px; }' +
+        '.print-pedido-table col.col-preco { width: 92px; }' +
         '.print-pedido-table col.col-sub { width: 98px; }' +
         '.print-pedido-table .pedido-row-title { display: block; font-weight: 600; line-height: 1.25; color: #2f2f2f; font-size: 13px; }' +
         '.print-pedido-table .pedido-row-meta { margin-top: 2px; font-size: 11px; color: #767676; line-height: 1.3; }' +
@@ -3293,8 +3325,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '.print-pedido-table .pedido-col-qty, .print-pedido-table th.pedido-col-qty { text-align: center; font-variant-numeric: tabular-nums; font-weight: 700; color: #2f2f2f; }' +
         '.print-pedido-table .col-subtotal { font-weight: 700; color: #b01219; white-space: nowrap; }' +
         '.print-pedido-table .pedido-col-peso { font-weight: 500; color: #2f2f2f; white-space: nowrap; }' +
-        '.print-pedido-table .pedido-col-preco { font-size: 12px; }' +
-        '.print-pedido-table .pedido-col-foto img { display: block; border-radius: 6px; width: 48px; height: 48px; object-fit: cover; }' +
+        '.print-pedido-table .pedido-col-preco { font-size: 12px; vertical-align: middle; }' +
+        '.print-pedido-table .preco-stack, .print-pedido-table .preco-stack-pdf { display: block; text-align: right; line-height: 1.2; }' +
+        '.print-pedido-table .preco-orig { display: block; text-decoration: line-through; color: #767676; font-size: 10px; font-weight: 400; margin: 0 0 2px; white-space: nowrap; }' +
+        '.print-pedido-table .preco-desc { display: block; color: #2f2f2f; font-weight: 600; font-size: 12px; white-space: nowrap; margin: 0; }' +
+        '.print-pedido-table .pedido-col-foto img { display: block; border-radius: 6px; width: 52px; height: 52px; object-fit: cover; image-rendering: auto; }' +
         '.print-pedido-table tbody tr { break-inside: avoid; page-break-inside: avoid; }' +
         '.print-peso { margin: 10px 0 0; font-size: 12px; color: #767676; text-align: right; }' +
         '.print-peso strong { color: #2f2f2f; font-weight: 600; }' +
@@ -3329,6 +3364,20 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       clonedDoc.head.appendChild(style);
       clonedDoc.documentElement.style.fontFamily = "'Libre Franklin', system-ui, sans-serif";
     }
+    async function waitPrintImagesRoot(root) {
+      const imgs = [...root.querySelectorAll('img')];
+      if (!imgs.length) return;
+      await Promise.all(imgs.map((img) => {
+        if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+        return new Promise((resolve) => {
+          const done = () => resolve();
+          img.addEventListener('load', done, { once: true });
+          img.addEventListener('error', done, { once: true });
+          setTimeout(done, 8000);
+        });
+      }));
+      await new Promise((resolve) => setTimeout(resolve, 120));
+    }
     async function waitPrintFontsRoot(doc) {
       try {
         if (doc.fonts && doc.fonts.load) {
@@ -3356,7 +3405,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     async function renderPedidoPdfBlob(thumbs) {
       const layout = printPdfLayout();
       const pageWpx = layout.contentWpx;
-      const html = buildPedidoPrintHtml(thumbs);
+      const readyThumbs = await ensurePedidoPdfThumbs(thumbs);
+      const html = buildPedidoPrintHtml(readyThumbs);
       const iframe = document.createElement('iframe');
       iframe.setAttribute('aria-hidden', 'true');
       iframe.style.cssText = 'position:fixed;left:0;top:0;width:' + pageWpx + 'px;height:2400px;border:0;opacity:0;pointer-events:none;z-index:2147483646;';
@@ -3382,11 +3432,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const blob = await win.html2pdf().set({
           margin: layout.marginMm,
           filename: pedidoPdfFilename(),
-          image: { type: 'jpeg', quality: 0.94 },
+          image: { type: 'jpeg', quality: 0.96 },
           html2canvas: {
-            scale: 2,
+            scale: PDF_CANVAS_SCALE,
             useCORS: true,
-            allowTaint: true,
+            allowTaint: false,
             logging: false,
             width: pageWpx,
             windowWidth: pageWpx,
@@ -3403,17 +3453,6 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       } finally {
         iframe.remove();
       }
-    }
-    async function waitPrintImagesRoot(root) {
-      const imgs = [...root.querySelectorAll('img')];
-      if (!imgs.length) return;
-      await Promise.all(imgs.map((img) => {
-        if (img.complete) return Promise.resolve();
-        return new Promise((resolve) => {
-          img.addEventListener('load', resolve, { once: true });
-          img.addEventListener('error', resolve, { once: true });
-        });
-      }));
     }
     function openPedidoPdfSheet() {
       pedidoPdfSheetOpen = true;
@@ -3442,10 +3481,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       if (btn) { btn.disabled = true; btn.textContent = 'Gerando PDF…'; }
       try {
         let thumbs = loadPdfThumbs();
-        const missingCount = pedidoPdfImageUrls().filter((url) => !thumbs[url]).length;
-        if (missingCount) {
-          if (btn) btn.textContent = 'A preparar fotos…';
-          thumbs = await ensurePedidoPdfThumbs(thumbs);
+        if (btn) btn.textContent = 'A preparar fotos…';
+        thumbs = await ensurePedidoPdfThumbs(thumbs);
+        const readyUrls = pedidoPdfImageUrls().filter((url) => isPdfDataUri(thumbs[url])).length;
+        const totalUrls = pedidoPdfImageUrls().length;
+        if (totalUrls && readyUrls < totalUrls) {
+          console.warn('[pdf] Miniaturas incompletas:', readyUrls + '/' + totalUrls);
         }
         revokePedidoPdfBlob();
         pedidoPdfBlob = await renderPedidoPdfBlob(thumbs);

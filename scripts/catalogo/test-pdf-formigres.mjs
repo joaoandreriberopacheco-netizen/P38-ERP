@@ -33,6 +33,12 @@ async function main() {
     const qty = {};
     for (const code of list) qty[String(code)] = 2;
     localStorage.setItem('formigres-catalog-qty-v1', JSON.stringify(qty));
+    localStorage.setItem('formigres-catalog-desconto-v1', '5');
+    localStorage.setItem('formigres-regime-especial-v1', JSON.stringify({
+      enabled: true,
+      destino: 'zfm',
+      tributario: 'lucro_presumido',
+    }));
   }, codes);
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(600);
@@ -43,7 +49,9 @@ async function main() {
     const rowLine = src.includes("const rowLine = '#707070'");
     const tablePdf = src.includes('print-pedido-table pedido-table');
     const a4 = src.includes("format: 'a4'");
-    return { hasA4: a4, hasRowLine: rowLine, hasTablePdf: tablePdf, hasLayoutFn: !!m };
+    const scale3 = src.includes('PDF_CANVAS_SCALE = 3');
+    const precoStack = src.includes('preco-stack-pdf');
+    return { hasA4: a4, hasRowLine: rowLine, hasTablePdf: tablePdf, hasLayoutFn: !!m, scale3, precoStack };
   });
 
   await page.click('#cart-fab');
@@ -65,7 +73,10 @@ async function main() {
     && layoutProbe.hasRowLine
     && layoutProbe.hasTablePdf
     && layoutProbe.hasLayoutFn
-    && pdfBuf.length > 15000
+    && layoutProbe.scale3
+    && layoutProbe.precoStack
+    && pdfBuf.length > 20000
+    && hasImages
     && pageMatches.length >= 1;
 
   console.log(JSON.stringify({
