@@ -1479,10 +1479,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
   <div class="pedido-pdf-sheet" id="pedido-pdf-sheet" role="dialog" aria-modal="true" aria-label="PDF do pedido">
     <div class="pedido-pdf-sheet-panel">
       <h3>PDF pronto</h3>
-      <p>Abra no leitor do telemóvel ou guarde o ficheiro.</p>
+      <p>O ficheiro deve baixar sozinho. Se não baixar, toque no botão abaixo.</p>
       <div class="pedido-pdf-sheet-actions">
-        <button type="button" class="btn btn-primary" id="pedido-pdf-open">Abrir PDF</button>
-        <button type="button" class="btn" id="pedido-pdf-download">Baixar PDF</button>
+        <button type="button" class="btn btn-primary" id="pedido-pdf-download">Baixar PDF</button>
         <button type="button" class="btn" id="pedido-pdf-close">Fechar</button>
       </div>
     </div>
@@ -2241,10 +2240,6 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
       document.getElementById('pedido-pdf-sheet')?.classList.remove('open');
       syncBodyScrollLock();
     }
-    function openPedidoPdfFile() {
-      if (!pedidoPdfBlobUrl) return;
-      window.open(pedidoPdfBlobUrl, '_blank', 'noopener,noreferrer');
-    }
     function downloadPedidoPdfFile() {
       if (!pedidoPdfBlobUrl) return;
       const a = document.createElement('a');
@@ -2273,6 +2268,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
         pedidoPdfBlobUrl = URL.createObjectURL(pedidoPdfBlob);
         closePedidoPanel();
         openPedidoPdfSheet();
+        downloadPedidoPdfFile();
       } catch (err) {
         console.error(err);
         alert('Não foi possível gerar o PDF. Verifique a ligação à internet e tente de novo.');
@@ -2428,7 +2424,6 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
     bindClick('cart-fab', () => (pedidoOpen ? closePedidoPanel() : openPedidoPanel()));
     bindClick('pedido-close', closePedidoPanel);
     bindClick('pdf-pedido-panel', exportPedidoPdf);
-    bindClick('pedido-pdf-open', openPedidoPdfFile);
     bindClick('pedido-pdf-download', downloadPedidoPdfFile);
     bindClick('pedido-pdf-close', closePedidoPdfSheet);
     document.getElementById('pedido-pdf-sheet')?.addEventListener('click', (e) => {
