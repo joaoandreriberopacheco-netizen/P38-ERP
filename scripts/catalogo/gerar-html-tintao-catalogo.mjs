@@ -52,6 +52,7 @@ const CONFIGS = {
     qtyKey: 'tintao-pedido-qty-v1',
     descontoKey: 'tintao-desconto-v1',
     groupKey: 'tintao-catalog-group-v1',
+    tourKey: 'tintao-catalog-tour-v1',
     classifError: 'JSON de classificação não encontrado. Rode: npm run catalogo:classificar-tintao',
     skin: 'default',
     siteSub: 'Pedido B2B · Lojistas',
@@ -1018,6 +1019,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   const comFoto = itens.filter((i) => i.imagem_url).length;
   const loadSquaresHtml = Array.from({ length: 20 }, () => '<span class="load-square"></span>').join('');
   const isB2bSkin = isB2bCatalogSkin(cfg.skin);
+  const hasCatalogTour = isB2bSkin || Boolean(cfg.tourKey);
+  const tourSkin = cfg.skin === 'default' ? 'tintao' : cfg.skin;
   const qtyLabel = cfg.qtyLabel || (isB2bSkin ? 'Paletes' : 'Caixas');
   const qtyLabelPl = cfg.qtyLabelPl || (isB2bSkin ? 'paletes' : 'caixas');
   const qtyUnit = cfg.qtyUnit || (isB2bSkin ? 'palete' : 'caixa');
@@ -1079,8 +1082,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       fabricanteNome: cfg.fabricanteNome || 'Formigres',
     })
     : '';
-  const catalogTourJs = isB2bSkin
-    ? buildCatalogTourClientJs({ tourKey: cfg.tourKey, skin: cfg.skin, qtyLabelPl })
+  const catalogTourJs = hasCatalogTour
+    ? buildCatalogTourClientJs({ tourKey: cfg.tourKey, skin: tourSkin, qtyLabelPl })
     : '';
   const regimePanelHtml = isB2bSkin && !cfg.skipRegimePanel
     ? `<section class="regime-panel" id="regime-panel" aria-label="Regime especial Suframa">
@@ -1227,7 +1230,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     html[data-theme="light"] .load-overlay { background: rgba(242,242,240,.97); }
     ${isB2bSkin ? buildBrandSkinCss(cfg.skin) : ''}
-    ${isB2bSkin ? buildCatalogTourCss(cfg.skin) : ''}
+    ${hasCatalogTour ? buildCatalogTourCss(tourSkin) : ''}
     .load-logo-ant {
       position: relative;
       width: min(200px, 58vw);
@@ -2743,7 +2746,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
 
   ${themeToggleHtml}
 
-  ${isB2bSkin ? buildCatalogTourFabHtml() : ''}
+  ${hasCatalogTour ? buildCatalogTourFabHtml() : ''}
 
   <div class="fab-stack" id="fab-stack">
     <button type="button" class="fab cart-fab" id="cart-fab" aria-label="Minha seleção">
@@ -2793,7 +2796,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   </div>
 
   ${regimeDialogHtml}
-  ${isB2bSkin ? buildCatalogTourHtml() : ''}
+  ${hasCatalogTour ? buildCatalogTourHtml() : ''}
 
   <div id="pedido-print"></div>
 
