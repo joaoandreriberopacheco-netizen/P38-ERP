@@ -1204,7 +1204,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto auto;
       gap: 10px 12px;
-      align-items: center;
+      align-items: start;
     }
     .pedido-card-row1-lead {
       display: flex;
@@ -1227,7 +1227,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       color: var(--muted);
       font-size: .78rem;
     }
-    .pedido-card-qty { min-width: 0; text-align: center; padding: 0 2px; }
+    .pedido-card-qty { min-width: 52px; text-align: center; padding: 0 2px; align-self: start; }
     .pedido-card-qty-main {
       display: block;
       font-size: 1.05rem;
@@ -1253,6 +1253,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       text-align: right;
       flex-shrink: 0;
       min-width: 0;
+      align-self: start;
     }
     .pedido-card-total-label {
       display: block;
@@ -1260,7 +1261,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       text-transform: uppercase;
       letter-spacing: .05em;
       color: var(--muted);
-      margin-bottom: 2px;
+      margin-top: 3px;
+      line-height: 1.2;
     }
     .pedido-card-total strong {
       display: block;
@@ -1268,7 +1270,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       font-weight: 700;
       color: var(--accent-bright);
       white-space: nowrap;
-      line-height: 1.2;
+      line-height: 1.15;
       font-variant-numeric: tabular-nums;
     }
     .pedido-card-spec {
@@ -1277,46 +1279,54 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       margin-top: 10px;
       table-layout: fixed;
     }
+    .pedido-card-spec th,
     .pedido-card-spec td {
-      padding: 8px 4px;
+      padding: 6px 8px 6px 0;
       vertical-align: top;
-      text-align: center;
-      border-top: 1px solid var(--border-subtle);
-      border-bottom: 1px solid var(--border-subtle);
+      text-align: left;
+      font-weight: 400;
+      border: 0;
     }
+    .pedido-card-spec th + th,
     .pedido-card-spec td + td {
+      padding-left: 8px;
       border-left: 1px solid var(--border-subtle);
     }
-    .pedido-card-spec-l {
-      display: block;
-      font-size: .56rem;
-      text-transform: uppercase;
-      letter-spacing: .04em;
+    .pedido-card-spec-head th {
+      padding-bottom: 6px;
+      font-size: .62rem;
+      font-weight: 500;
       color: var(--muted);
-      margin-bottom: 3px;
       line-height: 1.2;
+      border-bottom: 1px solid var(--border-subtle);
     }
-    .pedido-card-spec-v {
-      display: block;
+    .pedido-card-spec-body td {
+      padding-top: 7px;
       font-size: .76rem;
       font-weight: 600;
       color: var(--text-strong);
       font-variant-numeric: tabular-nums;
-      line-height: 1.2;
+      line-height: 1.25;
     }
-    .pedido-card-spec-v.is-peso {
+    .pedido-card-spec-body td.is-peso {
       font-weight: 700;
       color: var(--accent-bright);
     }
-    .pedido-card-spec-v.pedido-card-spec-preco .preco-orig {
+    .pedido-card-spec-body td.pedido-card-spec-preco .preco-orig {
       display: block;
       font-size: .58rem;
       font-weight: 400;
       text-decoration: line-through;
       color: var(--muted);
+      line-height: 1.1;
     }
-    .pedido-card-spec-v.pedido-card-spec-preco .preco-desc { font-weight: 600; }
-    .pedido-card-spec-v.pedido-card-spec-preco:not(.has-desc) { font-size: .76rem; }
+    .pedido-card-spec-body td.pedido-card-spec-preco .preco-desc { font-weight: 600; }
+    .pedido-card-spec-body td.pedido-card-spec-preco:not(.has-desc) { font-size: .76rem; }
+    .pedido-card-spec-body td.pedido-card-spec-palete {
+      font-size: .68rem;
+      font-weight: 500;
+      line-height: 1.3;
+    }
     .pedido-total {
       margin-top: 12px; padding-top: 12px; border-top: 0.5px solid color-mix(in srgb, var(--accent-border) 55%, transparent);
       display: flex; justify-content: flex-end; gap: 24px; font-size: 1rem;
@@ -1602,7 +1612,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       .pedido-card-row1 { gap: 8px 10px; }
       .pedido-card-qty-main { font-size: 1rem; }
       .pedido-card-total strong { font-size: .86rem; }
-      .pedido-card-spec-l { font-size: .52rem; }
+      .pedido-card-spec-head th { font-size: .58rem; }
+      .pedido-card-spec-body td { font-size: .72rem; }
       .pedido-card-thumb { width: 48px; height: 48px; }
       .pedido-total {
         margin-top: 10px;
@@ -2405,9 +2416,20 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
 
     function renderPedidoSpecTable(cells) {
-      return '<table class="pedido-card-spec" role="presentation"><tr>' +
-        cells.map((c) => '<td><span class="pedido-card-spec-l">' + esc(c.label) + '</span><span class="pedido-card-spec-v' + (c.peso ? ' is-peso' : '') + (c.preco ? ' pedido-card-spec-preco' + (descontoPct ? ' has-desc' : '') : '') + '">' + (c.html != null ? c.html : esc(c.text ?? '—')) + '</span></td>').join('') +
-        '</tr></table>';
+      const head = cells.map((c) => '<th scope="col">' + esc(c.label) + '</th>').join('');
+      const body = cells.map((c) => {
+        const cls = [
+          c.peso ? 'is-peso' : '',
+          c.preco ? 'pedido-card-spec-preco' + (descontoPct ? ' has-desc' : '') : '',
+          c.palete ? 'pedido-card-spec-palete' : '',
+        ].filter(Boolean).join(' ');
+        const val = c.html != null ? c.html : esc(c.text ?? '—');
+        return '<td' + (cls ? ' class="' + cls + '"' : '') + '>' + val + '</td>';
+      }).join('');
+      return '<table class="pedido-card-spec" role="presentation">' +
+        '<tr class="pedido-card-spec-head">' + head + '</tr>' +
+        '<tr class="pedido-card-spec-body">' + body + '</tr>' +
+      '</table>';
     }
     function renderPedidoCardRow1({ thumb, titulo, item, qty, m2tot, sub }) {
       const qtyShort = QTY_UNIT === 'palete' ? 'pl' : 'cx';
@@ -2423,8 +2445,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           '<span class="pedido-card-qty-sub">' + esc(m2tot ? fmtDecimal(m2tot) + ' m²' : '—') + '</span>' +
         '</div>' +
         '<div class="pedido-card-total">' +
-          '<span class="pedido-card-total-label">Subtotal</span>' +
           '<strong>' + esc(sub != null ? fmtMoney(sub) : '—') + '</strong>' +
+          '<span class="pedido-card-total-label">Subtotal</span>' +
         '</div>' +
       '</div>';
     }
@@ -2443,7 +2465,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           { label: 'Preço/m²', preco: true, html: fmtPrecoHtml(item.preco_m2) },
           { label: 'Caixas', text: cxTot ? fmtDecimal(cxTot, 0) : '—' },
           { label: 'Peso', peso: true, text: pesoTot ? fmtKg(pesoTot) : '—' },
-          { label: 'Por palete', text: embParts.length ? embParts.join(' · ') : '—' },
+          { label: 'Por palete', palete: true, text: embParts.length ? embParts.join(' · ') : '—' },
         ]);
         return '<article class="pedido-card' + (forPdf ? ' pedido-card-pdf' : '') + '">' + row1 + spec + '</article>';
       }
