@@ -1263,7 +1263,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     .pedido-card:last-child { border-bottom: 0; }
     .pedido-card-titlebar { min-width: 0; }
     .pedido-card-title {
-      font-size: .84rem;
+      font-size: .82rem;
       font-weight: 700;
       line-height: 1.15;
       color: var(--text-strong);
@@ -1276,11 +1276,18 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     .pedido-card-layout {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto minmax(96px, 1fr);
-      column-gap: 8px;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      column-gap: 10px;
       align-items: start;
     }
     .pedido-card-row1 { display: contents; }
+    .pedido-card-hero {
+      font-size: .82rem;
+      font-weight: 700;
+      line-height: 1.15;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-strong);
+    }
     .pedido-card-row1-lead {
       grid-column: 1;
       display: flex;
@@ -1312,16 +1319,15 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     .pedido-card-qty-main {
       display: block;
-      font-size: .84rem;
-      font-weight: 700;
-      color: var(--text-strong);
-      font-variant-numeric: tabular-nums;
-      line-height: 1.15;
+      font-size: inherit;
+      font-weight: inherit;
+      color: inherit;
+      line-height: inherit;
     }
     .pedido-card-qty-main span {
-      font-size: .84rem;
-      font-weight: 700;
-      color: var(--text-strong);
+      font-size: inherit;
+      font-weight: inherit;
+      color: inherit;
     }
     .pedido-card-qty-sub {
       display: block;
@@ -1348,20 +1354,19 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       margin-top: 3px;
       line-height: 1.2;
     }
-    .pedido-card-total strong {
+    .pedido-card-total .pedido-card-hero {
       display: block;
-      font-size: .84rem;
-      font-weight: 700;
-      color: var(--accent-bright);
       white-space: nowrap;
-      line-height: 1.15;
-      font-variant-numeric: tabular-nums;
+      color: var(--accent-bright);
     }
     .pedido-card-spec {
       grid-column: 1 / -1;
       width: 100%;
+      box-sizing: border-box;
       border-collapse: collapse;
-      margin-top: 10px;
+      margin-top: 0;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-subtle);
       table-layout: fixed;
     }
     .pedido-card-spec td {
@@ -1390,6 +1395,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       color: var(--text-strong);
       font-variant-numeric: tabular-nums;
       line-height: 1.25;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px solid var(--border-subtle);
     }
     .pedido-card-spec-v.pedido-card-spec-preco .preco-orig {
       display: block;
@@ -1700,11 +1708,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       .pedido-table-wrap { display: none !important; }
       .pedido-cards-wrap { display: block; }
       .pedido-card-row1 { gap: 0; }
-      .pedido-card-layout { column-gap: 8px; }
-      .pedido-card-title,
-      .pedido-card-qty-main,
-      .pedido-card-qty-main span,
-      .pedido-card-total strong { font-size: .84rem; font-weight: 700; line-height: 1.15; }
+      .pedido-card-layout { column-gap: 10px; }
+      .pedido-card-hero { font-size: .82rem; font-weight: 700; line-height: 1.15; }
+      .pedido-card-title.pedido-card-hero,
+      .pedido-card-qty-main.pedido-card-hero,
+      .pedido-card-total .pedido-card-hero { font-size: .82rem; }
       .pedido-card-spec-l,
       .pedido-card-spec-v,
       .pedido-card-spec-v.pedido-card-spec-preco:not(.has-desc),
@@ -2579,16 +2587,16 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return '<div class="pedido-card-row1">' +
         '<div class="pedido-card-row1-lead">' + thumb +
           '<div class="pedido-card-titlebar">' +
-            '<div class="pedido-card-title">' + esc(titulo) + '</div>' +
+            '<div class="pedido-card-title pedido-card-hero">' + esc(titulo) + '</div>' +
             '<div class="pedido-card-meta">#' + esc(item.codigo_tintao) + ' · ' + esc(item.formato || '—') + '</div>' +
           '</div>' +
         '</div>' +
         '<div class="pedido-card-qty">' +
-          '<span class="pedido-card-qty-main">' + qty + ' <span>' + esc(qtyShort) + '</span></span>' +
+          '<span class="pedido-card-qty-main pedido-card-hero">' + qty + ' <span>' + esc(qtyShort) + '</span></span>' +
           '<span class="pedido-card-qty-sub">' + esc(m2tot ? fmtDecimal(m2tot) + ' m²' : '—') + '</span>' +
         '</div>' +
         '<div class="pedido-card-total">' +
-          '<strong>' + esc(sub != null ? fmtMoney(sub) : '—') + '</strong>' +
+          '<strong class="pedido-card-hero">' + esc(sub != null ? fmtMoney(sub) : '—') + '</strong>' +
           '<span class="pedido-card-total-label">Subtotal</span>' +
         '</div>' +
       '</div>';
