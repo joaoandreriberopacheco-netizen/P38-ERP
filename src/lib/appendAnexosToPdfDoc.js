@@ -41,32 +41,102 @@ function getExtensionFromMime(mimeType = '') {
   return 'JPEG';
 }
 
-function measureImageLayout(imageSource, mimeType, layout) {
-  return new Promise((resolve, reject) => {
-    const img = new window.Image();
-    img.onload = () => {
-      const pageWidth = layout.pageWidth;
-      const maxWidth = pageWidth - layout.margin * 2;
-      const maxHeight = Math.max(20, layout.contentBottom - layout.contentTop);
-      const ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
-      resolve({
-        width: img.width * ratio,
-        height: img.height * ratio,
-        mimeType: getExtensionFromMime(mimeType),
-        source: imageSource,
-      });
-    };
-    img.onerror = () => reject(new Error('Falha ao carregar imagem do anexo'));
-    img.src = imageSource;
-  });
+/**
+ * Escala o anexo para ocupar a largura útil da página.
+ * Comprovantes altos (ex.: screenshot mobile) não devem ser reduzidos pela altura
+ * disponível — isso gera miniaturas ilegíveis.
+ */
+function measureImageWidthFirst(img, layout) {
+  const maxWidth = layout.pageWidth - layout.margin * 2;
+  const ratio = maxWidth / img.width;
+  return {
+    width: maxWidth,
+    height: img.height * ratio,
+    ratio,
+  };
 }
 
-function drawImageBlock(doc, measured, layout) {
+function sliceImageToDataUrls(img, measured, chunkHeightMm) {
+  const chunkHeightPx = chunkHeightMm / measured.ratio;
+  const slices = [];
+  let offsetY = 0;
+
+  while (offsetY < img.height) {
+    const slicePx = Math.min(chunkHeightPx, img.height - offsetY);
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = Math.ceil(slicePx);
+    const context = canvas.getContext('2d');
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(img, 0, offsetY, img.width, slicePx, 0, 0, img.width, slicePx);
+    slices.push({
+      dataUrl: canvas.toDataURL('image/jpeg', 0.92),
+      heightMm: slicePx * measured.ratio,
+    });
+    offsetY += slicePx;
+  }
+
+  return slices;
+}
+
+async function prepareImageBlock(source, mimeType, layout) {
+  const img = await loadImage(source);
+  const measured = measureImageWidthFirst(img, layout);
+  return {
+    img,
+    measured,
+    mimeType: getExtensionFromMime(mimeType),
+  };
+}
+
+async function drawImageBlockPaginated(doc, block, layout, renderOptions = {}) {
+  const { img, measured } = block;
+  const {
+    contentTop,
+    contentBottom,
+    newPageContentTop,
+    onNeedNewPage,
+    startY,
+    centerSingleSlice = false,
+  } = layout;
+
   const pageWidth = doc.internal.pageSize.getWidth();
   const x = (pageWidth - measured.width) / 2;
-  const y = layout.contentTop + Math.max(0, (layout.contentBottom - layout.contentTop - measured.height) / 2);
-  doc.addImage(measured.source, measured.mimeType, x, y, measured.width, measured.height);
-  return y + measured.height;
+  const maxChunkHeight = contentBottom - contentTop;
+  const slices = sliceImageToDataUrls(img, measured, maxChunkHeight);
+
+  let y = typeof startY === 'number' ? startY : contentTop;
+
+  for (let index = 0; index < slices.length; index += 1) {
+    const slice = slices[index];
+    const availableOnPage = contentBottom - y;
+
+    if (slice.heightMm > availableOnPage) {
+      onNeedNewPage?.();
+      y = newPageContentTop ?? contentTop;
+    }
+
+    if (
+      index === 0
+      && centerSingleSlice
+      && slices.length === 1
+      && slice.heightMm <= maxChunkHeight
+      && typeof startY !== 'number'
+    ) {
+      y = contentTop + Math.max(0, (maxChunkHeight - slice.heightMm) / 2);
+    }
+
+    doc.addImage(slice.dataUrl, 'JPEG', x, y, measured.width, slice.heightMm);
+    y += slice.heightMm;
+
+    if (index < slices.length - 1) {
+      onNeedNewPage?.();
+      y = newPageContentTop ?? contentTop;
+    }
+  }
+
+  return y;
 }
 
 function addTextFallbackPage(doc, title, message, layout = {}) {
@@ -111,6 +181,11 @@ export async function appendAnexosToPdfDoc(doc, anexos = [], options = {}) {
     onPageAdded?.(doc.internal.getNumberOfPages());
   };
 
+  const addContinuationPage = () => {
+    doc.addPage();
+    registerPage();
+  };
+
   const beginDedicatedPage = (title, margin, titleY, contentTop, contentBottom) => {
     if (!(useFirstPage && pagesAdded === 0 && doc.internal.getNumberOfPages() === 1)) {
       doc.addPage();
@@ -149,52 +224,46 @@ export async function appendAnexosToPdfDoc(doc, anexos = [], options = {}) {
         const contentBottom = layout.contentBottom ?? pageHeight - bottomPad;
         const newPageY = flow?.newPageY ?? 16;
         const gapBefore = isFirstBlock && flow ? (flow.gapBefore ?? 3) : 0;
-        let placedInline = false;
+        const dedicatedTitleY = newPageY + 1;
+        const dedicatedContentTop = dedicatedTitleY + 4.5;
+        const newPageContentTop = dedicatedContentTop;
+
+        const blockPrepared = await prepareImageBlock(block.source, block.mime, {
+          pageWidth,
+          margin,
+        });
 
         if (cursorY != null) {
           const candidateTitleY = cursorY + gapBefore;
           const candidateContentTop = candidateTitleY + 4.5;
           const availableHeight = contentBottom - candidateContentTop;
 
-          if (availableHeight >= 35) {
-            try {
-              const measured = await measureImageLayout(block.source, block.mime, {
-                pageWidth,
-                margin,
-                contentTop: candidateContentTop,
-                contentBottom,
-              });
-
-              if (measured.height <= availableHeight) {
-                doc.setFontSize(7.5);
-                doc.text(block.title, margin, candidateTitleY);
-                const endY = drawImageBlock(doc, measured, {
-                  contentTop: candidateContentTop,
-                  contentBottom,
-                });
-                cursorY = endY + 2;
-                placedInline = true;
-                isFirstBlock = false;
-                continue;
-              }
-            } catch {
-              // segue para página dedicada
-            }
+          if (availableHeight >= 35 && blockPrepared.measured.height <= availableHeight) {
+            doc.setFontSize(7.5);
+            doc.text(block.title, margin, candidateTitleY);
+            const endY = await drawImageBlockPaginated(doc, blockPrepared, {
+              contentTop: candidateContentTop,
+              contentBottom,
+              newPageContentTop,
+              onNeedNewPage: addContinuationPage,
+              startY: candidateContentTop,
+            });
+            cursorY = endY + 2;
+            isFirstBlock = false;
+            continue;
           }
         }
 
-        const titleY = newPageY + 1;
-        const contentTop = titleY + 4.5;
-        beginDedicatedPage(block.title, margin, titleY, contentTop, contentBottom);
+        beginDedicatedPage(block.title, margin, dedicatedTitleY, dedicatedContentTop, contentBottom);
         cursorY = null;
 
-        const measured = await measureImageLayout(block.source, block.mime, {
-          pageWidth,
-          margin,
-          contentTop,
+        const endY = await drawImageBlockPaginated(doc, blockPrepared, {
+          contentTop: dedicatedContentTop,
           contentBottom,
+          newPageContentTop,
+          onNeedNewPage: addContinuationPage,
+          centerSingleSlice: true,
         });
-        const endY = drawImageBlock(doc, measured, { contentTop, contentBottom });
         cursorY = endY + 2;
         isFirstBlock = false;
       }
