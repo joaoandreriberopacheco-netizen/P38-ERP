@@ -1148,9 +1148,28 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       font-size: .9rem;
     }
     .pedido-resumo {
-      display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px 14px;
+      margin-bottom: 14px;
     }
-    .pedido-resumo .stat strong { font-size: 1rem; }
+    .pedido-resumo .stat {
+      min-width: 0;
+      padding: 0;
+      background: none;
+      border: none;
+      border-radius: 0;
+      font-size: .72rem;
+      color: var(--muted);
+      line-height: 1.25;
+    }
+    .pedido-resumo .stat strong {
+      display: block;
+      font-size: .95rem;
+      color: var(--text-strong);
+      font-weight: 600;
+      margin-bottom: 1px;
+    }
     .pedido-table { width: 100%; border-collapse: collapse; font-size: .84rem; }
     .pedido-table th, .pedido-table td {
       padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle;
@@ -1231,18 +1250,10 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     .pedido-card-hero {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px 10px;
+      gap: 6px 12px;
     }
     .pedido-card-hero-item {
       min-width: 0;
-      padding: 8px 10px;
-      border-radius: 8px;
-      background: var(--surface-2);
-      border: 1px solid var(--border-subtle);
-    }
-    .pedido-card-hero-item.is-primary {
-      background: color-mix(in srgb, var(--accent) 8%, var(--surface-2));
-      border-color: color-mix(in srgb, var(--accent) 22%, var(--border-subtle));
     }
     .pedido-card-hero-label {
       display: block;
@@ -1250,20 +1261,20 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       text-transform: uppercase;
       letter-spacing: .05em;
       color: var(--muted);
-      margin-bottom: 3px;
+      margin-bottom: 2px;
     }
     .pedido-card-hero-val {
       display: block;
-      font-size: .88rem;
+      font-size: .86rem;
       font-weight: 600;
       color: var(--text-strong);
       font-variant-numeric: tabular-nums;
-      line-height: 1.15;
+      line-height: 1.2;
     }
     .pedido-card-hero-item.is-primary .pedido-card-hero-val {
-      font-size: .98rem;
+      font-size: .94rem;
       font-weight: 700;
-      color: var(--text-strong);
+      color: var(--accent-bright);
     }
     .pedido-card-detail {
       margin-top: 7px;
@@ -1583,20 +1594,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         -webkit-overflow-scrolling: touch;
       }
       .pedido-resumo {
-        gap: 6px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px 10px;
         margin-bottom: 10px;
       }
-      .pedido-resumo .stat {
-        flex: 1;
-        min-width: 0;
-        text-align: center;
-        padding: 8px 6px;
-        font-size: .72rem;
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--radius);
-        background: var(--surface-2);
-      }
-      .pedido-resumo .stat strong { font-size: .92rem; display: block; margin-bottom: 2px; }
+      .pedido-resumo .stat strong { font-size: .88rem; }
       .pedido-table-wrap { display: none !important; }
       .pedido-cards-wrap { display: block; }
       .pedido-card-thumb { width: 48px; height: 48px; }
@@ -2468,10 +2470,21 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
             '</div>' +
           '</div>' +
         '</div>' +
-        '<div class="pedido-card-grid">' +
-          '<div class="pedido-card-kv"><span class="pedido-card-kv-label">' + esc(QTY_LABEL) + '</span><span class="pedido-card-kv-val">' + qty + '</span></div>' +
-          '<div class="pedido-card-kv"><span class="pedido-card-kv-label">m²/cx</span><span class="pedido-card-kv-val">' + esc(m2unit ? fmtDecimal(m2unit) : '—') + '</span></div>' +
-          '<div class="pedido-card-kv"><span class="pedido-card-kv-label">m² total</span><span class="pedido-card-kv-val">' + esc(m2tot ? fmtDecimal(m2tot) : '—') + '</span></div>' +
+        '<div class="pedido-card-metrics">' +
+          '<div class="pedido-card-hero">' +
+            '<div class="pedido-card-hero-item">' +
+              '<span class="pedido-card-hero-label">' + esc(QTY_LABEL) + '</span>' +
+              '<span class="pedido-card-hero-val">' + qty + '</span>' +
+            '</div>' +
+            '<div class="pedido-card-hero-item">' +
+              '<span class="pedido-card-hero-label">m² total</span>' +
+              '<span class="pedido-card-hero-val">' + esc(m2tot ? fmtDecimal(m2tot) : '—') + '</span>' +
+            '</div>' +
+            '<div class="pedido-card-hero-item">' +
+              '<span class="pedido-card-hero-label">m²/cx</span>' +
+              '<span class="pedido-card-hero-val">' + esc(m2unit ? fmtDecimal(m2unit) : '—') + '</span>' +
+            '</div>' +
+          '</div>' +
         '</div>' +
       '</article>';
     }
@@ -2659,8 +2672,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '.print-head { margin-bottom: 10px; }' +
         'h1 { margin: 0 0 4px; font-size: 17px; letter-spacing: .08em; text-transform: uppercase; color: #2f2f2f; font-weight: 600; }' +
         '.print-meta, .print-note { margin: 0 0 6px; color: #767676; font-size: 11px; line-height: 1.35; }' +
-        '.print-resumo { display: flex; gap: 6px; margin-bottom: 10px; }' +
-        '.print-resumo-stat { flex: 1; min-width: 0; text-align: center; padding: 7px 4px; border: 1px solid #d5d5d5; border-radius: 0; background: #f7f7f7; font-size: 10px; color: #767676; }' +
+        '.print-resumo { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 12px; margin-bottom: 10px; }' +
+        '.print-resumo-stat { min-width: 0; font-size: 10px; color: #767676; }' +
         '.print-resumo-stat strong { display: block; font-size: 14px; color: #2f2f2f; margin-bottom: 2px; font-weight: 600; }' +
         '.print-cards { display: flex; flex-direction: column; }' +
         '.pedido-card-pdf { padding: 14px 0; break-inside: avoid; page-break-inside: avoid; background: #ffffff; border-top: 1px solid #d5d5d5; }' +
@@ -2675,12 +2688,10 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '.pedido-card-subtotal-label, .pedido-card-unit-label { display: block; font-size: .6rem; text-transform: uppercase; letter-spacing: .05em; color: #767676; margin-bottom: 2px; }' +
         '.pedido-card-subtotal strong { display: block; font-size: .92rem; font-weight: 600; color: #1f1f24; white-space: nowrap; line-height: 1.2; }' +
         '.pedido-card-metrics { margin-top: 10px; }' +
-        '.pedido-card-hero { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 10px; }' +
-        '.pedido-card-hero-item { min-width: 0; padding: 7px 8px; border: 1px solid #e8e8e8; background: #f7f7f7; }' +
-        '.pedido-card-hero-item.is-primary { background: #fff5f5; border-color: #f0c8ca; }' +
+        '.pedido-card-hero { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 12px; }' +
         '.pedido-card-hero-label { display: block; font-size: .58rem; text-transform: uppercase; letter-spacing: .05em; color: #767676; margin-bottom: 2px; }' +
         '.pedido-card-hero-val { display: block; font-size: .86rem; font-weight: 600; color: #2f2f2f; font-variant-numeric: tabular-nums; }' +
-        '.pedido-card-hero-item.is-primary .pedido-card-hero-val { font-size: .94rem; font-weight: 700; }' +
+        '.pedido-card-hero-item.is-primary .pedido-card-hero-val { font-size: .94rem; font-weight: 700; color: #b01219; }' +
         '.pedido-card-detail { margin-top: 6px; font-size: .66rem; color: #767676; line-height: 1.35; }' +
         '.pedido-card-unit { margin-top: 8px; }' +
         '.pedido-card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 10px; margin-top: 10px; }' +
