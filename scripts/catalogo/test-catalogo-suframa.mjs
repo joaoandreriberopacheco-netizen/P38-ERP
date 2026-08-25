@@ -17,7 +17,7 @@ const cases = [
     icmsDesconto: 7,
     pis: PIS_DESONERADO_PCT,
     cofins: COFINS_DESONERADO_PCT,
-    incentivo: 15.65,
+    incentivo: 16.25,
   },
   {
     label: 'SC→AM ALC lucro real (só ICMS)',
@@ -35,7 +35,7 @@ const cases = [
     icmsDesconto: 12,
     pis: PIS_DESONERADO_PCT,
     cofins: COFINS_DESONERADO_PCT,
-    incentivo: 20.65,
+    incentivo: 21.25,
   },
 ];
 

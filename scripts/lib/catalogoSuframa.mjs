@@ -3,7 +3,7 @@
  * Fabricante (UF origem) vem do template; comprador informa UF destino no diálogo.
  *
  * Regra de negócio (quadro aprovado):
- * - PIS 1,65% e COFINS 7% fixos quando aplicáveis.
+ * - PIS 1,65% e COFINS 7,60% fixos quando aplicáveis.
  * - ICMS: alíquota interestadual integral (ex.: BA→AM 12%); Sul/Sudeste→N/NE/CO
  *   com 25% usa fator 28% → desconto ICMS 7% (Formigres/SC).
  * - ALC + lucro real: só ICMS (PIS/COFINS vedados).
@@ -42,7 +42,7 @@ export const UF_LIST = [
 
 /** PIS/COFINS desonerados — fixos (não variam por UF). */
 export const PIS_DESONERADO_PCT = 1.65;
-export const COFINS_DESONERADO_PCT = 7;
+export const COFINS_DESONERADO_PCT = 7.6;
 /** ICMS 25% (Sul/Sudeste → N/NE/CO): desconto = 28% da alíquota (7%). Demais: integral. */
 export const ICMS_ALIQUOTA_REDUCIDA_FATOR = 0.28;
 export const ICMS_ALIQUOTA_SUL_N = 25;
