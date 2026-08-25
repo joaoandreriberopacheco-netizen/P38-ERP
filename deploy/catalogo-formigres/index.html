@@ -792,19 +792,32 @@
       margin-bottom: 1px;
     }
     .pedido-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .pedido-table {
+    .pedido-table,
+    html[data-skin="formigres"] .catalog-pedido-table {
       width: 100%;
       border-collapse: collapse;
       table-layout: fixed;
       font-size: .84rem;
     }
+    html[data-skin="formigres"] .catalog-pedido-table {
+      background: var(--surface);
+      border: 0;
+      border-radius: 0;
+      overflow: visible;
+    }
     .pedido-table th,
-    .pedido-table td {
+    .pedido-table td,
+    html[data-skin="formigres"] .catalog-pedido-table th,
+    html[data-skin="formigres"] .catalog-pedido-table td {
       padding: 10px 8px;
       border-bottom: 1px solid var(--border);
       vertical-align: middle;
     }
-    .pedido-table thead th {
+    html[data-skin="formigres"] .catalog-pedido-table tbody tr:hover {
+      background: var(--accent-muted);
+    }
+    .pedido-table thead th,
+    html[data-skin="formigres"] .catalog-pedido-table thead th {
       position: sticky;
       top: 0;
       z-index: 1;
@@ -820,17 +833,28 @@
       border-bottom: 1px solid var(--border-subtle);
       white-space: nowrap;
     }
-    .pedido-table col.col-foto { width: 52px; }
-    .pedido-table col.col-modelo { width: 28%; }
-    .pedido-table col.col-qty { width: 68px; }
+    .pedido-table col.col-foto,
+    html[data-skin="formigres"] .catalog-pedido-table col.col-foto { width: 52px; }
+    .pedido-table col.col-modelo,
+    html[data-skin="formigres"] .catalog-pedido-table col.col-modelo { width: 28%; }
+    .pedido-table col.col-qty,
+    html[data-skin="formigres"] .catalog-pedido-table col.col-qty { width: 68px; }
     .pedido-table col.col-m2,
-    .pedido-table col.col-m2u { width: 82px; }
-    .pedido-table col.col-cx { width: 68px; }
-    .pedido-table col.col-peso { width: 92px; }
-    .pedido-table col.col-emb { width: 128px; }
-    .pedido-table col.col-preco { width: 84px; }
-    .pedido-table col.col-sub { width: 98px; }
-    html[data-skin="formigres"] .pedido-table { min-width: 860px; }
+    .pedido-table col.col-m2u,
+    html[data-skin="formigres"] .catalog-pedido-table col.col-m2,
+    html[data-skin="formigres"] .catalog-pedido-table col.col-m2u { width: 82px; }
+    .pedido-table col.col-cx,
+    html[data-skin="formigres"] .catalog-pedido-table col.col-cx { width: 68px; }
+    .pedido-table col.col-peso,
+    html[data-skin="formigres"] .catalog-pedido-table col.col-peso { width: 92px; }
+    .pedido-table col.col-emb,
+    html[data-skin="formigres"] .catalog-pedido-table col.col-emb { width: 128px; }
+    .pedido-table col.col-preco,
+    html[data-skin="formigres"] .catalog-pedido-table col.col-preco { width: 84px; }
+    .pedido-table col.col-sub,
+    html[data-skin="formigres"] .catalog-pedido-table col.col-sub { width: 98px; }
+    html[data-skin="formigres"] .pedido-table,
+    html[data-skin="formigres"] .catalog-pedido-table { min-width: 860px; }
     .pedido-col-foto { width: 52px; padding-left: 0; padding-right: 6px; }
     .pedido-col-modelo { min-width: 0; }
     .pedido-row-title {
@@ -852,25 +876,47 @@
     }
     .pedido-col-num,
     .pedido-table th.pedido-col-num,
-    .pedido-table .col-subtotal {
+    .pedido-table .col-subtotal,
+    html[data-skin="formigres"] .catalog-pedido-table .pedido-col-num,
+    html[data-skin="formigres"] .catalog-pedido-table th.pedido-col-num,
+    html[data-skin="formigres"] .catalog-pedido-table .col-subtotal {
       text-align: right;
       font-variant-numeric: tabular-nums;
     }
     .pedido-col-qty,
-    .pedido-table th.pedido-col-qty {
+    .pedido-table th.pedido-col-qty,
+    html[data-skin="formigres"] .catalog-pedido-table .pedido-col-qty,
+    html[data-skin="formigres"] .catalog-pedido-table th.pedido-col-qty {
       text-align: center;
       font-variant-numeric: tabular-nums;
       font-weight: 600;
     }
-    .pedido-table tbody .pedido-col-qty { font-weight: 700; color: var(--text-strong); }
-    .pedido-table .col-subtotal {
+    .pedido-table tbody .pedido-col-qty,
+    html[data-skin="formigres"] .catalog-pedido-table tbody .pedido-col-qty { font-weight: 700; color: var(--text-strong); }
+    html[data-skin="formigres"] .catalog-pedido-table tbody .pedido-col-qty.col-qty { font-weight: 400; }
+    .pedido-table .col-subtotal,
+    html[data-skin="formigres"] .catalog-pedido-table .col-subtotal {
       font-weight: 700;
       color: var(--accent-bright);
       white-space: nowrap;
     }
-    .pedido-table .pedido-col-peso { font-weight: 500; white-space: nowrap; color: var(--text-strong); }
-    .pedido-table .pedido-col-preco { font-size: .8rem; }
-    .pedido-table .pedido-col-foto img { display: block; border-radius: 6px; }
+    html[data-skin="formigres"] .catalog-pedido-table .model-col-m2,
+    html[data-skin="formigres"] .catalog-pedido-table .model-col-cx,
+    html[data-skin="formigres"] .catalog-pedido-table .model-col-peso,
+    html[data-skin="formigres"] .catalog-pedido-table .model-col-sub {
+      color: var(--text-strong);
+    }
+    html[data-skin="formigres"] .catalog-pedido-table .model-col-sub:empty {
+      color: transparent;
+    }
+    .pedido-table .pedido-col-peso,
+    html[data-skin="formigres"] .catalog-pedido-table .pedido-col-peso { font-weight: 500; white-space: nowrap; color: var(--text-strong); }
+    .pedido-table .pedido-col-preco,
+    html[data-skin="formigres"] .catalog-pedido-table .pedido-col-preco { font-size: .8rem; }
+    .pedido-table .pedido-col-foto img,
+    html[data-skin="formigres"] .catalog-pedido-table .pedido-col-foto img,
+    html[data-skin="formigres"] .catalog-pedido-table .pedido-col-foto .thumb-btn,
+    html[data-skin="formigres"] .catalog-pedido-table .pedido-col-foto .thumb-empty { display: block; border-radius: 6px; }
     .pedido-row-hint { color: var(--muted); font-size: .68rem; }
     .pedido-cards-wrap { display: none; }
     .pedido-cards { display: flex; flex-direction: column; }
@@ -1378,16 +1424,22 @@
         line-height: 1.3;
       }
       .col-pack, .col-preco,
-      .model-table thead th:nth-child(3),
-      .model-table thead th:nth-child(4) { display: none; }
-      .model-table { font-size: .78rem; }
+      .model-table:not(.catalog-pedido-table) thead th:nth-child(3),
+      .model-table:not(.catalog-pedido-table) thead th:nth-child(4) { display: none; }
+      html[data-skin="formigres"] .catalog-pedido-table {
+        min-width: 860px;
+        font-size: .78rem;
+      }
+      html[data-skin="formigres"] .catalog-pedido-table td,
+      html[data-skin="formigres"] .catalog-pedido-table th { padding: 8px 6px; }
+      .model-table:not(.catalog-pedido-table) { font-size: .78rem; }
       .model-table td, .model-table th { padding: 8px 6px; }
       .col-foto { width: 44px; }
       .col-modelo { min-width: 0; max-width: 1px; }
       .col-modelo strong { font-size: .82rem; line-height: 1.25; }
       .col-modelo small { font-size: .7rem; }
       .thumb-btn, .thumb-empty { width: 40px; height: 40px; }
-      .col-qty, .model-table thead th:nth-child(5) {
+      .col-qty, .model-table:not(.catalog-pedido-table) thead th:nth-child(5) {
         position: sticky;
         right: 0;
         background: var(--surface);
@@ -1398,7 +1450,7 @@
         padding-right: 4px;
         box-shadow: -4px 0 6px rgba(0,0,0,.05);
       }
-      .model-table thead th:nth-child(5) { background: var(--surface-2); z-index: 2; }
+      .model-table:not(.catalog-pedido-table) thead th:nth-child(5) { background: var(--surface-2); z-index: 2; }
       .col-qty .qty-input {
         width: 48px;
         min-height: 40px;
@@ -1415,7 +1467,7 @@
       .stats { gap: 6px; }
       .stat { font-size: .75rem; padding: 5px 10px; }
       .model-table td, .model-table th { padding: 7px 5px; }
-      .col-qty, .model-table thead th:nth-child(5) { width: 54px; min-width: 54px; }
+      .col-qty, .model-table:not(.catalog-pedido-table) thead th:nth-child(5) { width: 54px; min-width: 54px; }
       .col-qty .qty-input { width: 44px; min-height: 38px; }
       .lightbox-head h3 { font-size: .88rem; }
       .lightbox-stage { min-height: 220px; }
@@ -1624,6 +1676,8 @@
     const GROUP_KEY = 'formigres-catalog-group-v1';
     const PEDIDO_TABLE_COLGROUP_HTML = "<colgroup><col class=\"col-foto\"><col class=\"col-modelo\"><col class=\"col-qty\"><col class=\"col-m2\"><col class=\"col-cx\"><col class=\"col-peso\"><col class=\"col-emb\"><col class=\"col-preco\"><col class=\"col-sub\"></colgroup>";
     const PEDIDO_TABLE_HEAD_HTML = "<th class=\"pedido-col-foto\">Foto</th><th class=\"pedido-col-modelo\">Modelo</th><th class=\"pedido-col-qty\">Paletes</th><th class=\"pedido-col-num\">m² total</th><th class=\"pedido-col-num\">Caixas</th><th class=\"pedido-col-num\">Peso</th><th class=\"pedido-col-emb\">Por palete</th><th class=\"pedido-col-num\">Preço/m²</th><th class=\"pedido-col-num col-subtotal\">Subtotal</th>";
+    const CATALOG_TABLE_COLGROUP_HTML = PEDIDO_TABLE_COLGROUP_HTML;
+    const CATALOG_TABLE_HEAD_HTML = PEDIDO_TABLE_HEAD_HTML;
     let qtyMap = {};
     try { qtyMap = JSON.parse(localStorage.getItem(QTY_KEY) || '{}'); } catch { qtyMap = {}; }
     let descontoPct = 0;
@@ -1799,6 +1853,7 @@
       document.querySelectorAll('.qty-input[data-cod="' + cod + '"]').forEach((input) => {
         if (document.activeElement !== input) input.value = n || '';
       });
+      updateModelRowCalcs(cod);
       renderPedido();
       updateCartFab();
       if (filterQtyOnly) applySearch(document.getElementById('search').value);
@@ -1815,6 +1870,10 @@
       document.querySelectorAll('.model-row').forEach((row) => {
         row.dataset.qty = '0';
         row.classList.remove('has-qty');
+        row.querySelector('.model-col-m2') && (row.querySelector('.model-col-m2').textContent = '');
+        row.querySelector('.model-col-cx') && (row.querySelector('.model-col-cx').textContent = '');
+        row.querySelector('.model-col-peso') && (row.querySelector('.model-col-peso').textContent = '');
+        row.querySelector('.model-col-sub') && (row.querySelector('.model-col-sub').textContent = '');
       });
       renderPedido();
       updateCartFab();
@@ -2043,6 +2102,34 @@
       }
       return tree;
     }
+    function fmtPorPaleteText(item) {
+      const emb = itemEmbalagem(item);
+      const m2unit = itemM2Unit(item);
+      const parts = [];
+      if (emb.cxpl) parts.push(emb.cxpl + ' cx/pl');
+      if (m2unit) parts.push(fmtDecimal(m2unit) + ' m²/pl');
+      return parts.length ? parts.join(' · ') : '—';
+    }
+    function updateModelRowCalcs(cod) {
+      if (CATALOG_SKIN !== 'formigres') return;
+      const item = itemsByCode.get(String(cod));
+      if (!item) return;
+      const qty = getQty(cod);
+      const m2tot = qty ? itemM2Total(item, qty) : null;
+      const cxTot = qty ? itemCaixasTotal(item, qty) : null;
+      const pesoTot = qty ? itemPesoTotal(item, qty) : null;
+      const sub = qty ? itemSubtotal(item, qty) : null;
+      document.querySelectorAll('.model-row[data-cod="' + cod + '"]').forEach((row) => {
+        const setCell = (sel, text) => {
+          const el = row.querySelector(sel);
+          if (el) el.textContent = text;
+        };
+        setCell('.model-col-m2', m2tot ? fmtDecimal(m2tot) : '');
+        setCell('.model-col-cx', cxTot ? fmtDecimal(cxTot, 0) : '');
+        setCell('.model-col-peso', pesoTot ? fmtKg(pesoTot) : '');
+        setCell('.model-col-sub', sub ? fmtMoney(sub) : '');
+      });
+    }
     function fmtEmbalagemText(item) {
       const emb = itemEmbalagem(item);
       if (QTY_UNIT === 'palete') {
@@ -2073,6 +2160,26 @@
         ? '<button type="button" class="thumb-btn' + (imgs.length > 1 ? ' has-gallery' : '') + '" tabindex="-1" data-cod="' + esc(cod) + '" data-title="' + esc(titulo) + '" title="Ver fotos"><img src="' + esc(img) + '" alt="" loading="lazy" />' + (imgs.length > 1 ? '<span class="thumb-more" aria-hidden="true">▦</span>' : '') + '</button>'
         : '<span class="thumb-empty">—</span>';
       const warn = item.match_status !== 'encontrado' ? ' <span class="badge warn">sem match</span>' : '';
+      if (CATALOG_SKIN === 'formigres') {
+        const m2tot = qty ? itemM2Total(item, qty) : null;
+        const cxTot = qty ? itemCaixasTotal(item, qty) : null;
+        const pesoTot = qty ? itemPesoTotal(item, qty) : null;
+        const sub = qty ? itemSubtotal(item, qty) : null;
+        const rowMeta = '#' + esc(cod) + ' · ' + esc(item.formato || '—');
+        const porPalete = fmtPorPaleteText(item);
+        return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack).toLowerCase()) + '" data-qty="' + qty + '">' +
+          '<td class="pedido-col-foto col-foto">' + foto + '</td>' +
+          '<td class="pedido-col-modelo col-modelo"><span class="pedido-row-title">' + esc(titulo) + '</span>' + warn + '<div class="pedido-row-meta">' + rowMeta + '</div></td>' +
+          '<td class="pedido-col-qty col-qty">' +
+            '<input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" tabindex="0" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="' + esc(QTY_LABEL) + '" placeholder="" />' +
+          '</td>' +
+          '<td class="pedido-col-num model-col-m2">' + (m2tot ? fmtDecimal(m2tot) : '') + '</td>' +
+          '<td class="pedido-col-num model-col-cx">' + (cxTot ? fmtDecimal(cxTot, 0) : '') + '</td>' +
+          '<td class="pedido-col-num pedido-col-peso model-col-peso">' + (pesoTot ? fmtKg(pesoTot) : '') + '</td>' +
+          '<td class="pedido-col-emb">' + esc(porPalete) + '</td>' +
+          '<td class="pedido-col-num pedido-col-preco col-preco' + (descontoPct ? ' has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
+          '<td class="pedido-col-num col-subtotal model-col-sub">' + (sub ? esc(fmtMoney(sub)) : '') + '</td></tr>';
+      }
       const metaMobile = '<div class="model-meta-mobile">' + esc(pack) + ' · ' + fmtPrecoHtml(item.preco_m2) + '</div>';
       return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack).toLowerCase()) + '" data-qty="' + qty + '">' +
         '<td class="col-foto">' + foto + '</td>' +
@@ -2084,6 +2191,12 @@
         '</td></tr>';
     }
     function renderItemsTable(items) {
+      if (CATALOG_SKIN === 'formigres') {
+        return '<div class="table-wrap"><table class="model-table catalog-pedido-table">' +
+          CATALOG_TABLE_COLGROUP_HTML +
+          '<thead><tr>' + CATALOG_TABLE_HEAD_HTML + '</tr></thead><tbody>' +
+          items.map(renderTableRow).join('') + '</tbody></table></div>';
+      }
       return '<div class="table-wrap"><table class="model-table"><thead><tr><th>Foto</th><th>Modelo</th><th>Embalagem</th><th>Preço/m²</th><th>' + esc(QTY_LABEL) + '</th></tr></thead><tbody>' +
         items.map(renderTableRow).join('') + '</tbody></table></div>';
     }
