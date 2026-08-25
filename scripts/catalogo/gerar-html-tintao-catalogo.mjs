@@ -2572,12 +2572,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       if (!IS_FORMIGRES) return;
       const draft = readRegimeDialogForm();
       const merged = Object.assign({}, regimeState, draft);
-      const icms = typeof calcRegimeIncentivoFromState === 'function'
-        ? calcRegimeIncentivoFromState(merged).icms
-        : 0;
-      const incentivo = typeof calcRegimeIncentivoFromState === 'function'
-        ? calcRegimeIncentivoFromState(merged).incentivo
-        : 0;
+      const breakdown = typeof calcRegimeIncentivoFromState === 'function'
+        ? calcRegimeIncentivoFromState(merged)
+        : { icms: 0, icmsDesconto: 0, pis: 0, cofins: 0, incentivo: 0 };
+      const icms = breakdown.icms || 0;
+      const incentivo = breakdown.incentivo || 0;
       const icmsHint = document.getElementById('regime-icms-hint');
       const hintAmoc = document.getElementById('regime-hint-amoc');
       const acumNoteEl = document.getElementById('regime-acumulado-note');
@@ -2585,8 +2584,17 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const incValEl = document.getElementById('regime-incentivo-val');
       const acumValEl = document.getElementById('regime-acumulado-val');
       if (icmsHint) {
-        icmsHint.innerHTML = 'ICMS interestadual <strong>' + esc(FABRICANTE_UF) + ' → ' + esc(draft.compradorUf) + '</strong>: <strong>' + fmtDecimal(icms, 0) + '%</strong>'
-          + (incentivo > 0 ? ' · Incentivo estimado <strong>' + fmtDecimal(incentivo, 2) + '%</strong>' : '');
+        let hint = 'ICMS interestadual <strong>' + esc(FABRICANTE_UF) + ' → ' + esc(draft.compradorUf) + '</strong>: <strong>' + fmtDecimal(icms, 0) + '%</strong>';
+        if (incentivo > 0) {
+          hint += '<br>Desconto: ICMS <strong>' + fmtDecimal(breakdown.icmsDesconto, 2) + '%</strong>';
+          if (breakdown.pis || breakdown.cofins) {
+            hint += ' + PIS <strong>' + fmtDecimal(breakdown.pis, 2) + '%</strong> + COFINS <strong>' + fmtDecimal(breakdown.cofins, 2) + '%</strong>';
+          } else if (draft.destino === 'alc' && draft.tributario === 'lucro_real') {
+            hint += ' <span style="opacity:.85">(PIS/COFINS não aplicável — ALC lucro real)</span>';
+          }
+          hint += ' → total <strong>' + fmtDecimal(incentivo, 2) + '%</strong>';
+        }
+        icmsHint.innerHTML = hint;
       }
       if (hintAmoc) hintAmoc.hidden = draft.destino !== 'amoc';
       const showAcum = descontoComercialPct > 0 && incentivo > 0;
