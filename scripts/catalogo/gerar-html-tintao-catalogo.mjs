@@ -138,7 +138,8 @@ const CONFIGS = {
     skipApiEnrich: true,
     skipPdfThumbs: false,
     skipGemeasDedup: true,
-    skipRegimePanel: true,
+    regimeKey: 'ecuaceramica-regime-especial-v1',
+    fabricanteUf: 'SP',
     title: 'Catálogo B2B — Ecuaceramica (exemplo portfolio)',
     h1: 'Porcelanatos — Catálogo B2B',
     hint: 'Exemplo ilustrativo · marque paletes e revise m², peso e total no carrinho',
@@ -983,7 +984,7 @@ function isB2bCatalogSkin(skin) {
 const BRAND_SKIN_TOKENS = {
   formigres: { accent: '#da1c24', accentBright: '#b01219', accentRgb: '218,28,36', demoBg: '#f9e5e6' },
   arielle: { accent: '#23674c', accentBright: '#1a5239', accentRgb: '35,103,76', demoBg: '#e8f3ee' },
-  ecuaceramica: { accent: '#1a4d8c', accentBright: '#123a6b', accentRgb: '26,77,140', demoBg: '#e8eef5' },
+  ecuaceramica: { accent: '#9d7b5c', accentBright: '#7d6249', accentRgb: '157, 123, 92', demoBg: '#f3ebe3' },
 };
 
 function buildBrandSkinCss(skin) {

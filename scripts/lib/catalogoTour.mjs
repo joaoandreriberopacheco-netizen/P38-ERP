@@ -17,11 +17,11 @@ const HELP_FAB_TOKENS = {
     glow: 'rgba(139, 58, 74, 0.16)',
   },
   ecuaceramica: {
-    bg: '#dce8f7',
-    bgHover: '#c9dbf0',
-    border: '#8eb4dc',
-    fg: '#1a4d8c',
-    glow: 'rgba(26, 77, 140, 0.16)',
+    bg: '#efe4d8',
+    bgHover: '#e6d9c9',
+    border: '#c9b59a',
+    fg: '#6b5344',
+    glow: 'rgba(107, 83, 68, 0.16)',
   },
 };
 
@@ -53,33 +53,35 @@ export function buildCatalogTourSteps({ skin = 'formigres', qtyLabelPl = 'palete
       selector: '#desconto-pct',
       title: 'Desconto comercial',
       text: isPortfolio
-        ? 'Opcional: percentual negociado com o cliente. Nos catálogos reais, combina com incentivos fiscais quando aplicável.'
+        ? 'Opcional: percentual negociado com o cliente. Combina com o regime Suframa quando activo.'
         : 'Opcional: percentual negociado com o cliente. Combina com o incentivo Suframa quando o regime especial estiver ativo.',
       placement: 'bottom',
       prepare: 'closePanels',
     },
   ];
 
-  if (!isPortfolio) {
-    steps.push(
-      {
-        id: 'regime',
-        selector: '#regime-panel',
-        title: 'Regime especial Suframa',
-        text: `Ative o interruptor para compras destinadas a AM, RR, AP ou AC. ${regimeOrigem} O incentivo entra automaticamente nos preços.`,
-        placement: 'bottom',
-        prepare: 'closePanels',
-      },
-      {
-        id: 'regime-edit',
-        selector: '#regime-dialog',
-        title: 'Parâmetros do regime',
-        text: 'Ajuste UF do comprador, destino Suframa (ZFM, ALC ou Amazônia Ocidental) e regime tributário. Toque em Aplicar para recalcular os preços. O ícone de lápis no painel reabre este formulário.',
-        placement: 'bottom',
-        prepare: 'regimeDialog',
-      },
-    );
-  }
+  steps.push(
+    {
+      id: 'regime',
+      selector: '#regime-panel',
+      title: 'Regime especial Suframa',
+      text: isPortfolio
+        ? 'Demonstração: ative para compras destinadas a AM, RR, AP ou AC. Origem demo SP (importação). O incentivo entra nos preços.'
+        : `Ative o interruptor para compras destinadas a AM, RR, AP ou AC. ${regimeOrigem} O incentivo entra automaticamente nos preços.`,
+      placement: 'bottom',
+      prepare: 'closePanels',
+    },
+    {
+      id: 'regime-edit',
+      selector: '#regime-dialog',
+      title: 'Parâmetros do regime',
+      text: isPortfolio
+        ? 'UF do comprador, destino Suframa (ZFM, ALC ou Amazônia Ocidental) e regime tributário — igual ao catálogo real P38.'
+        : 'Ajuste UF do comprador, destino Suframa (ZFM, ALC ou Amazônia Ocidental) e regime tributário. Toque em Aplicar para recalcular os preços. O ícone de lápis no painel reabre este formulário.',
+      placement: 'bottom',
+      prepare: 'regimeDialog',
+    },
+  );
 
   steps.push(
     {
