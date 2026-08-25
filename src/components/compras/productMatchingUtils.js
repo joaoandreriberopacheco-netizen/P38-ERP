@@ -371,7 +371,15 @@ export function resolveOcrProductMatch(item, catalogoProdutos = [], llmProdutoId
   }
 
   const autoSelect =
-    matchId && (confianca === 'alta' || confianca === 'media') ? matchId : '';
+    matchId &&
+    (
+      confianca === 'alta' ||
+      confianca === 'media' ||
+      (localId === matchId && localScore >= 0.32) ||
+      (llmId === matchId && (llmConf === 'alta' || llmConf === 'media'))
+    )
+      ? matchId
+      : '';
 
   return {
     produto_id_match: matchId,
