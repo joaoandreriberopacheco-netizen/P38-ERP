@@ -14,3 +14,19 @@ export function resolveSupabaseDeployEnv() {
     projectRef: s.projectRef || undefined,
   };
 }
+
+/**
+ * Opções pg.Client para Postgres Supabase em runners sem rota IPv6 (ex.: GitHub Actions).
+ * @param {string} connectionString
+ * @param {Record<string, unknown>} [extra]
+ */
+export function buildSupabasePgClientConfig(connectionString, extra = {}) {
+  const trimmed = String(connectionString || '').trim();
+  return {
+    connectionString: trimmed,
+    ssl: trimmed.includes('supabase') ? { rejectUnauthorized: false } : undefined,
+    connectionTimeoutMillis: 15000,
+    family: 4,
+    ...extra,
+  };
+}

@@ -14,7 +14,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import pg from 'pg';
-import { resolveSupabaseDeployEnv } from './supabase-env.mjs';
+import { buildSupabasePgClientConfig, resolveSupabaseDeployEnv } from './supabase-env.mjs';
 import { P38_CANONICAL_PROJECT_REF } from './p38-secrets.mjs';
 
 const ROOT = process.cwd();
@@ -70,14 +70,7 @@ function summarizeApiCounts(result) {
 }
 
 async function collectDbMetrics(databaseUrl) {
-  const trimmed = databaseUrl.trim();
-  const client = new pg.Client({
-    connectionString: trimmed,
-    ssl: trimmed.includes('supabase') ? { rejectUnauthorized: false } : undefined,
-    connectionTimeoutMillis: 15000,
-    // GitHub Actions: runners often lack rota IPv6 até Supabase (ENETUNREACH).
-    family: 4,
-  });
+  const client = new pg.Client(buildSupabasePgClientConfig(databaseUrl));
 
   await client.connect();
   try {
