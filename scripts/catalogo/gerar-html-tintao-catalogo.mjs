@@ -199,6 +199,38 @@ const ACAB_ORDER = [
   'Sem acabamento',
 ];
 
+const ARIELLE_LINHA_ORDER = ['bold', 'retificada'];
+const ARIELLE_LINHA_LABEL = {
+  bold: 'Bold',
+  retificada: 'Retificada',
+};
+const ARIELLE_ACAB_ORDER = [
+  'Polida',
+  'Brilhante',
+  'Mate',
+  'Granilhado',
+  'Sem acabamento',
+];
+
+function getCatalogConfig(cfg = CFG) {
+  if (cfg.skin === 'arielle') {
+    return {
+      linhaOrder: ARIELLE_LINHA_ORDER,
+      linhaLabel: ARIELLE_LINHA_LABEL,
+      tipoOrder: TIPO_ORDER,
+      tipoLabel: TIPO_LABEL,
+      acabOrder: ARIELLE_ACAB_ORDER,
+    };
+  }
+  return {
+    linhaOrder: LINHA_ORDER,
+    linhaLabel: LINHA_LABEL,
+    tipoOrder: TIPO_ORDER,
+    tipoLabel: TIPO_LABEL,
+    acabOrder: ACAB_ORDER,
+  };
+}
+
 function findLatestClassifJson() {
   const custom = argValue('--json');
   if (custom && fs.existsSync(custom)) return custom;
@@ -351,6 +383,7 @@ function slimItem(item) {
     formigres_id: item.formigres_id || '',
     formigres_titulo: item.formigres_titulo || '',
     formigres_acabamento: item.formigres_acabamento || '',
+    acabamento_label: item.acabamento_label || '',
     marca_nome: item.marca_nome || '',
     referencia: item.referencia || '',
     gemeas: (item.gemeas || []).map((g) => ({
@@ -905,14 +938,15 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   const pedidoTableHead = isB2bSkin
     ? '<th class="pedido-col-foto">Foto</th><th class="pedido-col-modelo">Modelo</th><th class="pedido-col-qty">Paletes</th><th class="pedido-col-num">m² total</th><th class="pedido-col-num">Caixas</th><th class="pedido-col-num">Peso</th><th class="pedido-col-emb">Por palete</th><th class="pedido-col-num">Preço/m²</th><th class="pedido-col-num col-subtotal">Subtotal</th>'
     : '<th class="pedido-col-foto">Foto</th><th class="pedido-col-modelo">Modelo</th><th class="pedido-col-qty">Caixas</th><th class="pedido-col-num">m²/cx</th><th class="pedido-col-num">m² total</th><th class="pedido-col-num">Preço/m²</th><th class="pedido-col-num col-subtotal">Subtotal</th>';
+  const catalogCfg = getCatalogConfig(cfg);
   const catalogoJson = JSON.stringify({
     itens: itens.map(slimItem),
     config: {
-      linhaOrder: LINHA_ORDER,
-      linhaLabel: LINHA_LABEL,
-      tipoOrder: TIPO_ORDER,
-      tipoLabel: TIPO_LABEL,
-      acabOrder: ACAB_ORDER,
+      linhaOrder: catalogCfg.linhaOrder,
+      linhaLabel: catalogCfg.linhaLabel,
+      tipoOrder: catalogCfg.tipoOrder,
+      tipoLabel: catalogCfg.tipoLabel,
+      acabOrder: catalogCfg.acabOrder,
       qtyUnit,
       qtyLabel,
       qtyLabelPl,
@@ -3327,6 +3361,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return item.subtipo || 'outros';
     }
     function acabKey(item) {
+      const label = String(item.acabamento_label || '').trim();
+      if (label) return label;
       const a = String(item.formigres_acabamento || '').trim();
       return a || 'Sem acabamento';
     }

@@ -6,7 +6,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { classificarFormigres, resumirClassificacoes } from '../lib/formigresClassificar.mjs';
+import { classificarArielle, resumirClassificacoesArielle } from '../lib/classificarArielle.mjs';
 import { readJson, snapshotPath } from '../lib/catalogoPaths.mjs';
 import { loadSnapshotFromFile } from '../lib/carmeloFiorSnapshot.mjs';
 import { resolvePrecoArielle, TABELA_ARIELLE_META } from '../lib/arielleTabelaPrecos.mjs';
@@ -23,7 +23,7 @@ function main() {
 
   const faixaCount = {};
   const rows = snapshot.produtos.map((p) => {
-    const classif = classificarFormigres({
+    const classif = classificarArielle({
       tipo: p.tipo,
       acabamento: p.acabamento,
       titulo: p.titulo,
@@ -51,6 +51,7 @@ function main() {
       formigres_titulo: p.titulo || '',
       formigres_tipo: p.tipo || '',
       formigres_acabamento: p.acabamento || '',
+      acabamento_label: classif.acabamento_label || '',
       referencia: p.referencia || p.codigo || '',
       marca_nome: p.marca_nome || 'Arielle',
       preco_m2: preco,
@@ -69,7 +70,7 @@ function main() {
   });
 
   const comPreco = rows.filter((r) => r.preco_m2 != null).length;
-  const resumo = resumirClassificacoes(rows);
+  const resumo = resumirClassificacoesArielle(rows);
 
   fs.mkdirSync(OUT_DIR, { recursive: true });
   const stamp = new Date().toISOString().slice(0, 10);
