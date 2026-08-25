@@ -1263,9 +1263,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     .pedido-card:last-child { border-bottom: 0; }
     .pedido-card-titlebar { min-width: 0; }
     .pedido-card-title {
-      font-size: .88rem;
-      font-weight: 600;
-      line-height: 1.25;
+      font-size: .84rem;
+      font-weight: 700;
+      line-height: 1.15;
       color: var(--text-strong);
     }
     .pedido-card-meta {
@@ -1274,13 +1274,15 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       color: var(--muted);
       line-height: 1.3;
     }
-    .pedido-card-row1 {
+    .pedido-card-layout {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto auto;
-      gap: 10px 12px;
+      grid-template-columns: minmax(0, 1fr) auto minmax(96px, 1fr);
+      column-gap: 8px;
       align-items: start;
     }
+    .pedido-card-row1 { display: contents; }
     .pedido-card-row1-lead {
+      grid-column: 1;
       display: flex;
       align-items: center;
       gap: 10px;
@@ -1301,18 +1303,24 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       color: var(--muted);
       font-size: .78rem;
     }
-    .pedido-card-qty { min-width: 52px; text-align: center; padding: 0 2px; align-self: start; }
+    .pedido-card-qty {
+      grid-column: 2;
+      justify-self: center;
+      min-width: 52px;
+      text-align: center;
+      padding: 0 2px;
+    }
     .pedido-card-qty-main {
       display: block;
-      font-size: 1.05rem;
+      font-size: .84rem;
       font-weight: 700;
       color: var(--text-strong);
       font-variant-numeric: tabular-nums;
       line-height: 1.15;
     }
     .pedido-card-qty-main span {
-      font-size: .72rem;
-      font-weight: 600;
+      font-size: .84rem;
+      font-weight: 700;
       color: var(--text-strong);
     }
     .pedido-card-qty-sub {
@@ -1324,10 +1332,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       line-height: 1.2;
     }
     .pedido-card-total {
+      grid-column: 3;
+      justify-self: end;
       text-align: right;
       flex-shrink: 0;
       min-width: 0;
-      align-self: start;
+      width: 100%;
     }
     .pedido-card-total-label {
       display: block;
@@ -1340,7 +1350,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     .pedido-card-total strong {
       display: block;
-      font-size: .92rem;
+      font-size: .84rem;
       font-weight: 700;
       color: var(--accent-bright);
       white-space: nowrap;
@@ -1348,6 +1358,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       font-variant-numeric: tabular-nums;
     }
     .pedido-card-spec {
+      grid-column: 1 / -1;
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
@@ -1359,6 +1370,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       text-align: left;
       border: 0;
     }
+    .pedido-card-spec td:first-child { padding-left: 0; }
+    .pedido-card-spec td:last-child { padding-right: 0; }
     .pedido-card-spec td + td {
       border-left: 1px solid var(--border-subtle);
     }
@@ -1686,9 +1699,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       .pedido-resumo .stat strong { font-size: .88rem; }
       .pedido-table-wrap { display: none !important; }
       .pedido-cards-wrap { display: block; }
-      .pedido-card-row1 { gap: 8px 10px; }
-      .pedido-card-qty-main { font-size: 1rem; }
-      .pedido-card-total strong { font-size: .86rem; }
+      .pedido-card-row1 { gap: 0; }
+      .pedido-card-layout { column-gap: 8px; }
+      .pedido-card-title,
+      .pedido-card-qty-main,
+      .pedido-card-qty-main span,
+      .pedido-card-total strong { font-size: .84rem; font-weight: 700; line-height: 1.15; }
       .pedido-card-spec-l,
       .pedido-card-spec-v,
       .pedido-card-spec-v.pedido-card-spec-preco:not(.has-desc),
@@ -2626,7 +2642,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           { label: 'Peso', peso: true, text: pesoTot ? fmtKg(pesoTot) : '—' },
           { label: 'Por palete', palete: true, text: embParts.length ? embParts.join(' · ') : '—' },
         ]);
-        return '<article class="pedido-card' + (forPdf ? ' pedido-card-pdf' : '') + '">' + row1 + spec + '</article>';
+        return '<article class="pedido-card' + (forPdf ? ' pedido-card-pdf' : '') + '"><div class="pedido-card-layout">' + row1 + spec + '</div></article>';
       }
 
       const spec = renderPedidoSpecTable([
@@ -2635,7 +2651,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         { label: 'm² total', text: m2tot ? fmtDecimal(m2tot) : '—' },
         { label: 'Embalagem', text: fmtEmbalagemText(item) },
       ]);
-      return '<article class="pedido-card' + (forPdf ? ' pedido-card-pdf' : '') + '">' + row1 + spec + '</article>';
+      return '<article class="pedido-card' + (forPdf ? ' pedido-card-pdf' : '') + '"><div class="pedido-card-layout">' + row1 + spec + '</div></article>';
     }
     function renderPedido() {
       const rows = pedidoItens();
