@@ -14,6 +14,10 @@ npm run catalogo:publicar-ecuaceramica
 
 ## Deploy Vercel
 
+Projecto isolado `catalogo-demo-p38` (ID: `prj_TPzR3iQjzd053qpwh6D7OnN5qHcj`). Secret GitHub: `VERCEL_CATALOGO_ECUA_PROJECT_ID`.
+
+**Live:** https://catalogo-demo-p38.vercel.app/
+
 ```bash
 cd deploy/catalogo-ecuaceramica && vercel --prod
 ```
