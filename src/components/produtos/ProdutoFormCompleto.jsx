@@ -1121,17 +1121,10 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       });
 
       setTemAlteracoesNaoSalvas(false);
-      const unitSnapshot = produtoId
-        ? {
-            id: produtoId,
-            unidade_vitrine: savedPayload.unidade_vitrine,
-            unidade_show_ativa: savedPayload.unidade_show_ativa,
-            unidades: savedPayload.unidades,
-            unidades_alternativas: savedPayload.unidades_alternativas,
-            unidade_principal: savedPayload.unidade_principal,
-          }
+      const savedForCallback = produtoId
+        ? { ...savedPayload, id: produtoId }
         : null;
-      await Promise.resolve(onSave?.(unitSnapshot));
+      await Promise.resolve(onSave?.(savedForCallback));
       if (produtoId) loadMovimentacoes();
       // onClose(); // Mantendo aberto para feedback
     } catch (error) {

@@ -9,15 +9,17 @@ export default function NovoProdutoRapidoDialog({ isOpen, onClose, onSuccess, no
     ? { campo_hierarquico_1: nomeInicial, nome: nomeInicial }
     : null;
 
-  const handleSave = async () => {
-    // Após salvar, busca o produto mais recente criado para passar ao callback
+  const handleSave = async (savedProduto) => {
+    if (!savedProduto?.id) {
+      onClose();
+      return;
+    }
+
     try {
-      const todos = await base44.entities.Produto.list('-created_date', 1);
-      if (todos?.[0]) {
-        onSuccess(todos[0]);
-      }
-    } catch (e) {
-      // ignora erro ao buscar — fluxo continua
+      const fresh = await base44.entities.Produto.get(savedProduto.id);
+      onSuccess(fresh?.id ? fresh : savedProduto);
+    } catch {
+      onSuccess(savedProduto);
     }
     onClose();
   };

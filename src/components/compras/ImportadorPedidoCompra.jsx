@@ -11,7 +11,7 @@ import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
 import {
   buildEfficientPedidoCompraPrompt,
   findLocalBestFornecedorMatch,
-  findLocalBestProductMatch,
+  resolveOcrProductMatch,
 } from '@/components/compras/productMatchingUtils';
 import {
   buildPurchaseUnitOptions,
@@ -125,23 +125,39 @@ export default function ImportadorPedidoCompra({
     return produtos.find((produto) => produto.id === item.produto_id_match) || null;
   };
 
-  const handleProdutoCriadoNoImportador = (novoProduto, itemIndex) => {
+  const handleProdutoCriadoNoImportador = async (novoProduto, itemIndex) => {
     if (!novoProduto?.id) return;
+
+    let produtoCompleto = novoProduto;
+    try {
+      const fresh = await base44.entities.Produto.get(novoProduto.id);
+      if (fresh?.id) produtoCompleto = fresh;
+    } catch {
+      // mantém o objeto devolvido pelo formulário
+    }
+
+    const label = produtoCompleto.nome || produtoCompleto.campo_hierarquico_1 || '';
+
     setProdutos((prev) => {
-      if (prev.some((produto) => produto.id === novoProduto.id)) return prev;
-      return [...prev, novoProduto];
+      const semDuplicado = prev.filter((produto) => produto.id !== produtoCompleto.id);
+      return [...semDuplicado, produtoCompleto];
     });
+
     if (typeof itemIndex === 'number') {
       setItems((prev) => prev.map((item, currentIndex) => (
         currentIndex === itemIndex
           ? {
               ...item,
-              produto_id_match: novoProduto.id,
-              selected_product_id: novoProduto.id,
+              produto_id_match: produtoCompleto.id,
+              selected_product_id: produtoCompleto.id,
+              confianca: 'alta',
               ignored: false,
             }
           : item
       )));
+      if (label) {
+        setProductSearch((prev) => ({ ...prev, [itemIndex]: label }));
+      }
     }
   };
 
@@ -271,7 +287,6 @@ export default function ImportadorPedidoCompra({
       setProcessingStatus('Identificando fornecedor');
 
       const result = typeof aiRes === 'string' ? JSON.parse(aiRes) : aiRes;
-      const catalogoIds = new Set(catalogoProdutos.map((p) => p.id));
       const fornecedorIds = new Set(listaFornecedores.map((f) => f.id));
       const fornecedorIdLlm = result.fornecedor?.id_match;
       const fornecedorMatch = fornecedorIdLlm && fornecedorIds.has(fornecedorIdLlm)
@@ -292,22 +307,16 @@ export default function ImportadorPedidoCompra({
       setProcessingStatus('Validando correspondências');
 
       setItems((result.itens || []).map((item) => {
-        let produtoId = item.produto_id_match && catalogoIds.has(item.produto_id_match)
-          ? item.produto_id_match
-          : '';
-        let confianca = item.confianca || '';
-        if (!produtoId) {
-          const fallback = findLocalBestProductMatch(null, catalogoProdutos, item);
-          if (fallback?.produto?.id) {
-            produtoId = fallback.produto.id;
-            confianca = fallback.confianca || 'baixa';
-          }
-        }
+        const resolved = resolveOcrProductMatch(
+          item,
+          catalogoProdutos,
+          item.produto_id_match,
+        );
         return {
           ...item,
-          produto_id_match: produtoId,
-          selected_product_id: produtoId,
-          confianca,
+          produto_id_match: resolved.produto_id_match,
+          selected_product_id: resolved.selected_product_id,
+          confianca: resolved.confianca,
           ignored: false,
         };
       }));

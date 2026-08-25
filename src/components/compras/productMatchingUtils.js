@@ -325,6 +325,61 @@ export function findLocalBestProductMatch(textoIdentificado, catalogoProdutos = 
   return { produto: best, confianca, score: bestScore };
 }
 
+function normalizeMatchConfianca(value, fallback = 'baixa') {
+  const c = String(value || '').toLowerCase().trim();
+  if (c === 'alta' || c === 'media' || c === 'baixa') return c;
+  return fallback;
+}
+
+/**
+ * Após OCR/LLM: separa sugestão (produto_id_match) de seleção automática (selected_product_id).
+ * Evita preencher linha com match fraco (ex.: sempre cair em porcelanato genérico).
+ */
+export function resolveOcrProductMatch(item, catalogoProdutos = [], llmProdutoId = '') {
+  const catalogoIds = new Set(catalogoProdutos.map((p) => p.id));
+  const llmId = llmProdutoId && catalogoIds.has(llmProdutoId) ? llmProdutoId : '';
+  const local = findLocalBestProductMatch(null, catalogoProdutos, item);
+  const localId = local?.produto?.id || '';
+  const localScore = local?.score ?? 0;
+  const llmConf = normalizeMatchConfianca(item?.confianca, '');
+
+  let matchId = '';
+  let confianca = '';
+
+  if (llmId && localId) {
+    if (llmId === localId) {
+      matchId = llmId;
+      confianca = normalizeMatchConfianca(llmConf || local.confianca, local.confianca || 'media');
+    } else if (localScore >= 0.55) {
+      matchId = localId;
+      confianca = normalizeMatchConfianca(local.confianca, 'baixa');
+    } else if (llmConf === 'alta') {
+      matchId = llmId;
+      confianca = 'media';
+    }
+  } else if (llmId) {
+    if (localId === llmId && localScore >= 0.4) {
+      matchId = llmId;
+      confianca = normalizeMatchConfianca(llmConf, local.confianca || 'media');
+    } else if (llmConf === 'alta') {
+      matchId = llmId;
+      confianca = 'baixa';
+    }
+  } else if (localId) {
+    matchId = localId;
+    confianca = normalizeMatchConfianca(local.confianca, 'baixa');
+  }
+
+  const autoSelect =
+    matchId && (confianca === 'alta' || confianca === 'media') ? matchId : '';
+
+  return {
+    produto_id_match: matchId,
+    selected_product_id: autoSelect,
+    confianca: matchId ? confianca : '',
+  };
+}
+
 /** Matching local de fornecedor por CNPJ ou nome após OCR. */
 export function findLocalBestFornecedorMatch({ nome, cnpj } = {}, fornecedores = []) {
   if (!fornecedores.length) return null;
@@ -407,7 +462,8 @@ export function buildEfficientPedidoCompraPrompt({
 REGRAS DE MATCH (produtos):
 - Correspondência semântica: ignore maiúsculas, acentos e abreviações (ex.: CIM→cimento, AC-I→AC-1, ARGAM→argamassa).
 - produto_id_match = id exato da coluna 1 do catálogo, ou string vazia se não houver similar.
-- Prefira confiança "baixa" a deixar vazio; só vazio se realmente não existir equivalente.
+- Deixe produto_id_match vazio se a correspondência não for clara — não invente match genérico.
+- Use confiança "alta" só com certeza; "media" com boa similaridade; "baixa" se duvidoso (o utilizador confirma).
 - fornecedor.id_match = id exato da lista de fornecedores, ou vazio.
 
 FORNECEDORES (id|nome|cnpj):
@@ -444,7 +500,7 @@ REGRAS OBRIGATÓRIAS DE MATCHING:
 1. Use correspondência SEMÂNTICA - ignore abreviações, acentos, maiúsculas/minúsculas e variações ortográficas.
 2. Exemplos: "CIM CPIV 50KG"→cimento CP IV 50kg; "ARGAM AC III 20KG"→argamassa AC-III 20kg; "AC-I"→AC-1.
 3. produto_id_match = id exato (coluna 1) ou vazio.
-4. Prefira confiança "baixa" a deixar o match vazio.
+4. Deixe vazio se não houver correspondência clara; não force match por categoria genérica (ex.: outro porcelanato).
 
 Fornecedores (id|nome|cnpj):
 ${fornecedoresStr}

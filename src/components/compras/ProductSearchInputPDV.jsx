@@ -227,7 +227,7 @@ export default function ProductSearchInputPDV({
         isOpen={showNovoProduto}
         onClose={() => setShowNovoProduto(false)}
         onSuccess={handleNovoProdutoSuccess}
-        nomeInicial={currentQuery}
+        nomeInicial={currentQuery || item?.descricao || ''}
       />
 
       {enableLotePicker && onLoteRows && (
