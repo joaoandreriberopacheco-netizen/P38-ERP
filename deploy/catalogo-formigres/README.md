@@ -1,6 +1,6 @@
 # Catálogo Formigres — demonstração P38
 
-Site estático **separado** do ERP e do catálogo Tintão. Linha completa Formigres (~1 500 modelos) para mostrar à fábrica o conceito de app B2B.
+Site estático **separado** do ERP. Linha completa Formigres (~1 500 modelos) — demonstração B2B.
 
 ## Link público
 
@@ -14,13 +14,11 @@ Visual alinhado ao site [formigres.com.br](https://www.formigres.com.br/) — ve
 npm run catalogo:publicar-formigres
 ```
 
-Isto corre classificação (snapshot + preços Tintão onde existir) e gera `deploy/catalogo-formigres/index.html`.
+Isto corre classificação do snapshot e gera `deploy/catalogo-formigres/index.html`.
 
 ## Preços
 
-- **~174 modelos** têm preço de referência (cruzamento com listas Tintão).
-- **Restantes** aparecem como “—” (consultar distribuidor).
-- Banner no site explica isto.
+- Por formato e linha (Cerâmica / Premium / RT), aplicados automaticamente na classificação.
 
 ## Deploy Vercel
 

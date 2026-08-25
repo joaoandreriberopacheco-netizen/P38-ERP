@@ -58,7 +58,7 @@ const CONFIGS = {
     title: 'Catálogo Formigres — Pisos e Porcelanatos',
     h1: 'Pisos e Revestimentos Cerâmicos',
     hint: 'Qualidade, tecnologia e design — linha completa para montar pedido',
-    demoBanner: 'Preços de referência (Tintão) onde disponível — nos restantes modelos, consulte o distribuidor.',
+    demoBanner: '',
     themeKey: 'formigres-catalog-theme-v1',
     qtyKey: 'formigres-catalog-qty-v1',
     descontoKey: 'formigres-catalog-desconto-v1',

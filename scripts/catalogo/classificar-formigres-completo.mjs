@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Catálogo completo Formigres (snapshot) com preços Tintão onde existir cruzamento.
+ * Catálogo completo Formigres (snapshot) com tabela de preços Formigres.
  *
  * npm run catalogo:classificar-formigres
  */
@@ -9,31 +9,9 @@ import path from 'node:path';
 import { classificarFormigres, resumirClassificacoes } from '../lib/formigresClassificar.mjs';
 import { readJson, snapshotPath } from '../lib/catalogoPaths.mjs';
 import { loadSnapshotFromFile } from '../lib/formigresSnapshot.mjs';
+import { resolvePrecoFormigres, TABELA_FORMIGRES_META } from '../lib/formigresTabelaPrecos.mjs';
 
-const ROOT = process.cwd();
-const TINTAO_CLASSIF_DIR = path.join(ROOT, 'docs', 'imports-local', 'tintao', 'classificacao');
-const OUT_DIR = path.join(ROOT, 'docs', 'imports-local', 'formigres', 'classificacao');
-
-function findLatestTintaoClassif() {
-  if (!fs.existsSync(TINTAO_CLASSIF_DIR)) return null;
-  const files = fs.readdirSync(TINTAO_CLASSIF_DIR)
-    .filter((f) => /^tintao-formigres-\d{4}-\d{2}-\d{2}\.json$/.test(f))
-    .sort()
-    .reverse();
-  return files[0] ? path.join(TINTAO_CLASSIF_DIR, files[0]) : null;
-}
-
-function buildTintaoPriceMap(tintaoJsonPath) {
-  const map = new Map();
-  if (!tintaoJsonPath) return map;
-  const data = readJson(tintaoJsonPath);
-  for (const row of data?.itens || []) {
-    const id = String(row.formigres_id || '').trim();
-    const preco = Number(row.preco_m2);
-    if (id && Number.isFinite(preco) && preco > 0) map.set(id, preco);
-  }
-  return map;
-}
+const OUT_DIR = path.join(process.cwd(), 'docs', 'imports-local', 'formigres', 'classificacao');
 
 function main() {
   const snapshot = loadSnapshotFromFile(readJson(snapshotPath('formigres')));
@@ -42,9 +20,7 @@ function main() {
     process.exit(1);
   }
 
-  const tintaoPath = findLatestTintaoClassif();
-  const priceMap = buildTintaoPriceMap(tintaoPath);
-
+  const faixaCount = {};
   const rows = snapshot.produtos.map((p) => {
     const classif = classificarFormigres({
       tipo: p.tipo,
@@ -52,7 +28,9 @@ function main() {
       titulo: p.titulo,
     });
     const id = String(p.id);
-    const preco = priceMap.get(id) ?? null;
+    const { preco, faixa, motivo } = resolvePrecoFormigres(p, classif);
+    if (faixa) faixaCount[faixa] = (faixaCount[faixa] || 0) + 1;
+    else faixaCount.sem_preco = (faixaCount.sem_preco || 0) + 1;
 
     return {
       codigo_tintao: id,
@@ -72,7 +50,8 @@ function main() {
       formigres_tipo: p.tipo || '',
       formigres_acabamento: p.acabamento || '',
       preco_m2: preco,
-      preco_referencia_tintao: preco != null,
+      preco_faixa: faixa,
+      preco_motivo: motivo || null,
       m2_por_caixa: null,
       unidade: '',
       total: null,
@@ -93,22 +72,24 @@ function main() {
     modo: 'formigres-completo',
     snapshot: snapshotPath('formigres'),
     snapshotCount: snapshot.count || rows.length,
-    tintaoClassifFonte: tintaoPath,
-    comPrecoReferenciaTintao: comPreco,
+    tabelaPrecos: TABELA_FORMIGRES_META,
+    comPreco,
+    faixaCount,
     itens: rows,
   };
 
   fs.writeFileSync(jsonPath, `${JSON.stringify(payload, null, 2)}\n`);
-  fs.writeFileSync(resumoPath, `${JSON.stringify({ resumo, comPreco, total: rows.length }, null, 2)}\n`);
+  fs.writeFileSync(resumoPath, `${JSON.stringify({ resumo, comPreco, faixaCount, total: rows.length }, null, 2)}\n`);
 
   console.log(JSON.stringify({
     ok: true,
     total: rows.length,
-    comPrecoReferenciaTintao: comPreco,
+    comPreco,
     semPreco: rows.length - comPreco,
+    faixaCount,
     json: jsonPath,
     resumo: resumoPath,
-    tintaoFonte: tintaoPath,
+    tabela: TABELA_FORMIGRES_META,
   }, null, 2));
 }
 
