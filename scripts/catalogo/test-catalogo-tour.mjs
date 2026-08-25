@@ -13,14 +13,22 @@ function checkSkin(skin) {
   const groupOk = skin === 'formigres'
     ? steps.find((s) => s.id === 'group')?.text.includes('Polida')
     : steps.find((s) => s.id === 'group')?.text.includes('Bold/Retificada');
+  const hasRegimeEdit = steps.some((s) => s.id === 'regime-edit' && s.prepare === 'regimeDialog');
+  const hasPdf = steps.some((s) => s.id === 'pdf' && s.selector === '#pdf-pedido-panel');
+  const hasEnviar = steps.some((s) => s.id === 'enviar' && /representante/i.test(s.text || ''));
+  const hasCart = steps.some((s) => s.id === 'cart' && s.selector === '#cart-fab');
   return {
     skin,
-    ok: steps.length >= 5 && steps.length <= 8
+    ok: steps.length >= 8 && steps.length <= 14
       && steps[0].center === true
       && steps.some((s) => s.selector === '#search' || s.selectorDesktop)
       && welcomeOk
       && linhaOk
-      && groupOk,
+      && groupOk
+      && hasRegimeEdit
+      && hasPdf
+      && hasEnviar
+      && hasCart,
     steps: steps.length,
     ids,
   };

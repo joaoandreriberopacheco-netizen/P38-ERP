@@ -79,7 +79,7 @@ const CONFIGS = {
     qtyKey: 'formigres-catalog-qty-v1',
     descontoKey: 'formigres-catalog-desconto-v1',
     regimeKey: 'formigres-regime-especial-v1',
-    tourKey: 'formigres-catalog-tour-v1',
+    tourKey: 'formigres-catalog-tour-v2',
     groupKey: 'formigres-catalog-group-v1',
     classifError: 'JSON de classificação não encontrado. Rode: npm run catalogo:classificar-formigres',
     skin: 'formigres',
@@ -115,7 +115,7 @@ const CONFIGS = {
     descontoKey: 'arielle-catalog-desconto-v1',
     regimeKey: 'arielle-regime-especial-v1',
     groupKey: 'arielle-catalog-group-v1',
-    tourKey: 'arielle-catalog-tour-v1',
+    tourKey: 'arielle-catalog-tour-v2',
     classifError: 'JSON de classificação não encontrado. Rode: npm run catalogo:classificar-arielle',
     skin: 'arielle',
     siteSub: 'Arielle · Carmelo Fior · Catálogo B2B',
@@ -1178,7 +1178,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     html[data-theme="light"] .load-overlay { background: rgba(242,242,240,.97); }
     ${isB2bSkin ? buildBrandSkinCss(cfg.skin) : ''}
-    ${isB2bSkin ? buildCatalogTourCss() : ''}
+    ${isB2bSkin ? buildCatalogTourCss(cfg.skin) : ''}
     .load-logo-ant {
       position: relative;
       width: min(200px, 58vw);
@@ -2675,8 +2675,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
 
   ${themeToggleHtml}
 
+  ${isB2bSkin ? buildCatalogTourFabHtml() : ''}
+
   <div class="fab-stack" id="fab-stack">
-    ${isB2bSkin ? buildCatalogTourFabHtml() : ''}
     <button type="button" class="fab cart-fab" id="cart-fab" aria-label="Minha seleção">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>

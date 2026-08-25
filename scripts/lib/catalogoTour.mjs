@@ -1,22 +1,40 @@
 /**
  * Tour de onboarding (product tour) — catálogos B2B Formigres / Arielle.
- * Spotlight + passos; primeira visita automática; botão Ajuda repete.
+ * Spotlight + overlay + passos; primeira visita automática; botão Ajuda repete.
  */
+
+const HELP_FAB_TOKENS = {
+  formigres: {
+    bg: '#d6f2f4',
+    bgHover: '#c4ebef',
+    border: '#8ecfd8',
+    fg: '#156b73',
+    glow: 'rgba(21, 107, 115, 0.18)',
+  },
+  arielle: {
+    bg: '#fae4e8',
+    bgHover: '#f5d4db',
+    border: '#e8a8b8',
+    fg: '#8b3a4a',
+    glow: 'rgba(139, 58, 74, 0.16)',
+  },
+};
 
 export function buildCatalogTourSteps({ skin = 'formigres', qtyLabelPl = 'paletes' } = {}) {
   const isArielle = skin === 'arielle';
   const marca = isArielle ? 'Arielle · Carmelo Fior' : 'Formigres';
   const linhas = isArielle ? 'Bold e Retificada' : 'Bold, Retificada e Polida';
   const regimeOrigem = isArielle
-    ? 'Produtos Arielle (Polo SE): o incentivo considera origem Sergipe.'
-    : 'Produtos Formigres (SP): o incentivo considera origem São Paulo.';
+    ? 'Origem Sergipe (Polo SE).'
+    : 'Origem São Paulo (SP).';
 
   return [
     {
       id: 'welcome',
       title: isArielle ? 'Bem-vindo ao catálogo Arielle' : 'Bem-vindo ao catálogo Formigres',
-      text: `Tour rápido (~1 min) do catálogo ${marca}: busca, ${qtyLabelPl}, regime Suframa e revisão do pedido. Pode pular a qualquer momento.`,
+      text: `Tour rápido (~2 min) do catálogo ${marca}: busca, ${qtyLabelPl}, regime Suframa, carrinho e PDF para o representante. Pode pular a qualquer momento.`,
       center: true,
+      prepare: 'closePanels',
     },
     {
       id: 'desconto',
@@ -24,13 +42,23 @@ export function buildCatalogTourSteps({ skin = 'formigres', qtyLabelPl = 'palete
       title: 'Desconto comercial',
       text: 'Opcional: percentual negociado com o cliente. Combina com o incentivo Suframa quando o regime especial estiver ativo.',
       placement: 'bottom',
+      prepare: 'closePanels',
     },
     {
       id: 'regime',
       selector: '#regime-panel',
       title: 'Regime especial Suframa',
-      text: `Ative para compras para AM, RR, AP ou AC. Informe UF, destino (ZFM/ALC) e regime tributário — o desconto entra nos preços. ${regimeOrigem}`,
+      text: `Ative o interruptor para compras destinadas a AM, RR, AP ou AC. ${regimeOrigem} O incentivo entra automaticamente nos preços.`,
       placement: 'bottom',
+      prepare: 'closePanels',
+    },
+    {
+      id: 'regime-edit',
+      selector: '#regime-dialog',
+      title: 'Parâmetros do regime',
+      text: 'Ajuste UF do comprador, destino Suframa (ZFM, ALC ou Amazônia Ocidental) e regime tributário. Toque em Aplicar para recalcular os preços. O ícone de lápis no painel reabre este formulário.',
+      placement: 'bottom',
+      prepare: 'regimeDialog',
     },
     {
       id: 'search',
@@ -38,6 +66,7 @@ export function buildCatalogTourSteps({ skin = 'formigres', qtyLabelPl = 'palete
       title: 'Busca',
       text: 'Procure por código, nome do modelo ou formato (ex.: 84x84, 60x120).',
       placement: 'bottom',
+      prepare: 'closePanels',
     },
     {
       id: 'group',
@@ -48,6 +77,7 @@ export function buildCatalogTourSteps({ skin = 'formigres', qtyLabelPl = 'palete
         ? 'Escolha ver por formato › acabamento ou acabamento › formato — Bold/Retificada e Mate/Brilhante/Polida ficam organizados.'
         : 'Escolha ver por formato › acabamento ou acabamento › formato — Bold, Retificada e Polida no mesmo nível, com acabamentos dentro de cada linha.',
       placement: 'bottom',
+      prepare: 'closePanels',
     },
     {
       id: 'catalogo',
@@ -55,19 +85,71 @@ export function buildCatalogTourSteps({ skin = 'formigres', qtyLabelPl = 'palete
       title: 'Montar o pedido',
       text: `Abra ${linhas}, escolha formato e acabamento e preencha a coluna de ${qtyLabelPl} em cada linha.`,
       placement: 'top',
+      prepare: 'closePanels',
     },
     {
       id: 'cart',
       selector: '#cart-fab',
-      title: 'Minha seleção',
-      text: 'Revise itens, m², peso e total. Daqui exporta PDF ou partilha o pedido com a equipe.',
+      title: 'Carrinho — Minha seleção',
+      text: `Toque no carrinho para abrir a seleção: revise ${qtyLabelPl}, m², peso e subtotais antes de exportar.`,
       placement: 'left',
+      prepare: 'closePanels',
+    },
+    {
+      id: 'pedido',
+      selector: '#pedido-actions',
+      selectorMobile: '#pedido-panel',
+      title: 'Revisar antes do PDF',
+      text: 'Confira cada linha do pedido. Pode limpar a seleção ou ajustar quantidades voltando ao catálogo.',
+      placement: 'top',
+      prepare: 'pedidoOpen',
+    },
+    {
+      id: 'pdf',
+      selector: '#pdf-pedido-panel',
+      title: 'Gerar PDF do pedido',
+      text: 'Com itens na seleção, toque em PDF do pedido. O ficheiro baixa no telemóvel ou computador — ideal para arquivar ou enviar.',
+      placement: 'top',
+      prepare: 'pedidoOpen',
+    },
+    {
+      id: 'enviar',
+      title: 'Envie ao representante',
+      text: 'Depois de gerar o PDF, reenvie-o ao seu representante comercial (WhatsApp, e-mail ou canal habitual) para formalizar cotação ou pedido.',
+      center: true,
+      prepare: 'closePanels',
     },
   ];
 }
 
-export function buildCatalogTourCss() {
+export function buildCatalogTourCss(skin = 'formigres') {
+  const help = HELP_FAB_TOKENS[skin] || HELP_FAB_TOKENS.formigres;
   return `
+    .help-fab-anchor {
+      position: fixed;
+      left: 14px;
+      bottom: calc(14px + env(safe-area-inset-bottom));
+      z-index: 40;
+    }
+    .help-fab {
+      width: 48px;
+      height: 48px;
+      border-radius: 999px;
+      background: ${help.bg};
+      border: 1px solid ${help.border};
+      color: ${help.fg};
+      box-shadow: 0 4px 16px ${help.glow};
+      font-size: 1.12rem;
+      font-weight: 700;
+      font-family: inherit;
+    }
+    .help-fab:hover {
+      transform: scale(1.04);
+      background: ${help.bgHover};
+      border-color: ${help.border};
+      color: ${help.fg};
+      box-shadow: 0 8px 22px ${help.glow};
+    }
     .catalog-tour-overlay {
       position: fixed;
       inset: 0;
@@ -75,15 +157,35 @@ export function buildCatalogTourCss() {
       pointer-events: auto;
     }
     .catalog-tour-overlay[hidden] { display: none !important; }
+    .catalog-tour-dim {
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      background: rgba(8, 7, 10, 0.48);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .22s ease;
+    }
+    .catalog-tour-overlay:not([hidden]) .catalog-tour-dim {
+      opacity: 1;
+    }
     .catalog-tour-spotlight {
       position: fixed;
       border-radius: var(--radius, 8px);
-      box-shadow: 0 0 0 9999px rgba(8, 7, 10, .78);
+      box-shadow: 0 0 0 9999px rgba(8, 7, 10, 0.38);
+      outline: 2px solid rgba(255, 255, 255, 0.22);
+      outline-offset: 1px;
       z-index: 121;
       pointer-events: none;
-      transition: top .2s ease, left .2s ease, width .2s ease, height .2s ease;
+      transition: top .2s ease, left .2s ease, width .2s ease, height .2s ease, opacity .2s ease;
     }
-    .catalog-tour-spotlight.is-center { display: none; }
+    .catalog-tour-spotlight.is-center {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      box-shadow: none;
+      outline: none;
+    }
     .catalog-tour-card {
       position: fixed;
       z-index: 122;
@@ -93,7 +195,7 @@ export function buildCatalogTourCss() {
       border-top: 3px solid var(--accent);
       border-radius: var(--radius);
       padding: 14px 14px 12px;
-      box-shadow: var(--shadow);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
     }
     .catalog-tour-step {
       margin: 0 0 6px;
@@ -133,14 +235,10 @@ export function buildCatalogTourCss() {
       margin-right: auto;
     }
     .catalog-tour-skip:hover { color: var(--accent); }
-    .help-fab {
-      font-size: 1.05rem;
-      font-weight: 700;
-      font-family: inherit;
-    }
     body.catalog-tour-active { overflow: hidden; }
     @media (max-width: 720px) {
       .catalog-tour-card { width: min(320px, calc(100vw - 20px)); }
+      .help-fab-anchor { left: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); }
     }
   `.trim();
 }
@@ -149,6 +247,7 @@ export function buildCatalogTourCss() {
 export function buildCatalogTourHtml() {
   return `
   <div class="catalog-tour-overlay" id="catalog-tour-overlay" hidden aria-hidden="true">
+    <div class="catalog-tour-dim" id="catalog-tour-dim" aria-hidden="true"></div>
     <div class="catalog-tour-spotlight is-center" id="catalog-tour-spotlight" aria-hidden="true"></div>
     <div class="catalog-tour-card" id="catalog-tour-card" role="dialog" aria-modal="true" aria-labelledby="catalog-tour-title">
       <p class="catalog-tour-step" id="catalog-tour-step"></p>
@@ -164,7 +263,7 @@ export function buildCatalogTourHtml() {
 }
 
 export function buildCatalogTourFabHtml() {
-  return `<button type="button" class="fab help-fab" id="help-tour-fab" aria-label="Ajuda — tour do catálogo" title="Ajuda">?</button>`;
+  return `<div class="help-fab-anchor"><button type="button" class="fab help-fab" id="help-tour-fab" aria-label="Ajuda — tour do catálogo" title="Ajuda — tour do catálogo">?</button></div>`;
 }
 
 export function buildCatalogTourClientJs({ tourKey, skin = 'formigres', qtyLabelPl = 'paletes' }) {
@@ -183,6 +282,26 @@ export function buildCatalogTourClientJs({ tourKey, skin = 'formigres', qtyLabel
       if (!sel) return null;
       const el = document.querySelector(sel);
       return el && el.offsetParent !== null ? el : document.querySelector(step.selector || sel);
+    }
+
+    function tourResetPrepare() {
+      if (typeof closeRegimeDialog === 'function') closeRegimeDialog();
+      if (typeof closePedidoPdfSheet === 'function') closePedidoPdfSheet();
+      if (typeof closePedidoPanel === 'function') closePedidoPanel();
+    }
+
+    function tourApplyPrepare(step) {
+      tourResetPrepare();
+      if (!step || !step.prepare) return;
+      if (step.prepare === 'regimeDialog') {
+        if (typeof populateRegimeDialogForm === 'function') populateRegimeDialogForm();
+        if (typeof openRegimeDialog === 'function') openRegimeDialog('edit');
+        return;
+      }
+      if (step.prepare === 'pedidoOpen') {
+        if (typeof openPedidoPanel === 'function') openPedidoPanel();
+        return;
+      }
     }
 
     function tourPlaceCard(target, placement, center) {
@@ -229,6 +348,7 @@ export function buildCatalogTourClientJs({ tourKey, skin = 'formigres', qtyLabel
     function tourRenderStep() {
       const step = TOUR_STEPS[tourIndex];
       if (!step) return endTour(true);
+      tourApplyPrepare(step);
       const titleEl = document.getElementById('catalog-tour-title');
       const textEl = document.getElementById('catalog-tour-text');
       const stepEl = document.getElementById('catalog-tour-step');
@@ -254,6 +374,7 @@ export function buildCatalogTourClientJs({ tourKey, skin = 'formigres', qtyLabel
     function endTour(markDone) {
       tourOpen = false;
       document.body.classList.remove('catalog-tour-active');
+      tourResetPrepare();
       const overlay = document.getElementById('catalog-tour-overlay');
       if (overlay) {
         overlay.hidden = true;
@@ -292,7 +413,7 @@ export function buildCatalogTourClientJs({ tourKey, skin = 'formigres', qtyLabel
       bindClick('catalog-tour-skip', function () { endTour(true); });
       bindClick('help-tour-fab', function () { tourIndex = 0; startTour(true); });
       document.getElementById('catalog-tour-overlay')?.addEventListener('click', function (e) {
-        if (e.target.id === 'catalog-tour-overlay') endTour(true);
+        if (e.target.id === 'catalog-tour-overlay' || e.target.id === 'catalog-tour-dim') endTour(true);
       });
       window.addEventListener('resize', function () {
         if (tourOpen) tourRenderStep();
