@@ -2538,7 +2538,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return isPdfDataUri(src) ? src : '';
     }
     const PDF_THUMB_PX = 112;
-    const PDF_PRINT_THUMB_PX = 72;
+    const PDF_PRINT_THUMB_PX = 48;
     const PDF_CANVAS_SCALE = 3;
     function pedidoPdfImageUrls() {
       const urls = new Set();
@@ -3307,68 +3307,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '<td class="pedido-col-num pedido-col-preco ' + (hasDescontoAtivo() ? 'has-desc' : '') + '">' + precoCell + '</td>' +
         '<td class="pedido-col-num col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
     }
-    function renderPrintFormatGroupHeader(fmt, qtyPl, pesoKg, m2tot) {
-      const fmtLabel = esc(String(fmt || '—').toUpperCase());
-      const qtyLabel = QTY_UNIT === 'palete' ? 'paletes' : QTY_LABEL_PL;
-      const qtyPad = String(qtyPl || 0).padStart(2, '0');
-      const peso = pesoKg ? fmtKg(pesoKg) : '—';
-      const m2 = m2tot ? fmtDecimal(m2tot) + ' m²' : '';
-      const bits = [
-        '<span class="print-format-group-fmt">' + fmtLabel + '</span>',
-        '<span class="print-format-group-stat">' + qtyPad + ' ' + esc(qtyLabel) + '</span>',
-        '<span class="print-format-group-stat">' + esc(peso) + '</span>',
-      ];
-      if (m2) bits.push('<span class="print-format-group-stat">' + esc(m2) + '</span>');
-      return '<div class="print-format-group">' + bits.join('<span class="print-format-group-sep">|</span>') + '</div>';
-    }
-    function buildPedidoPrintCardsHtml(thumbs, rows) {
-      const groups = new Map();
-      for (const row of rows) {
-        const fmt = row.item.formato || '—';
-        if (!groups.has(fmt)) groups.set(fmt, []);
-        groups.get(fmt).push(row);
-      }
-      const fmtKeys = [...groups.keys()].sort(compareFormato);
-      const parts = [];
-      for (const fmt of fmtKeys) {
-        const groupRows = groups.get(fmt);
-        let gQty = 0;
-        let gPeso = 0;
-        let gM2 = 0;
-        for (const { item, qty } of groupRows) {
-          gQty += qty;
-          const pt = itemPesoTotal(item, qty);
-          if (pt) gPeso += pt;
-          const m2 = itemM2Total(item, qty);
-          if (m2) gM2 += m2;
-        }
-        parts.push(renderPrintFormatGroupHeader(fmt, gQty, gPeso, gM2));
-        for (const { item, qty } of groupRows) {
-          const emb = itemEmbalagem(item);
-          const m2unit = itemM2Unit(item);
-          const m2tot = itemM2Total(item, qty);
-          const pesoTot = itemPesoTotal(item, qty);
-          const cxTot = itemCaixasTotal(item, qty);
-          const sub = itemSubtotal(item, qty);
-          const imgs = getGaleria(item);
-          const img = imgs[0]?.url || '';
-          const titulo = item.formigres_titulo || item.descricao;
-          parts.push(renderPedidoCard(
-            { item, qty, img, titulo, m2unit, m2tot, pesoUnit: itemPesoUnit(item), pesoTot, cxTot, cxpl: emb.cxpl, sub },
-            { pdf: true, thumbs },
-          ));
-        }
-      }
-      return parts.length ? '<div class="print-pedido-list">' + parts.join('') + '</div>' : '';
-    }
-    function renderPedidoCard({ item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl, sub }, opts) {
-      const forPdf = opts && opts.pdf;
-      const thumbs = opts && opts.thumbs;
-      const thumbPx = forPdf ? PDF_PRINT_THUMB_PX : 52;
-      const imgSrc = forPdf ? (pdfImgSrcForPrint(img, thumbs, item) || img) : img;
-      const precoOpts = forPdf ? { pdf: true } : null;
-      const thumb = imgSrc
-        ? '<img class="pedido-card-thumb" src="' + esc(imgSrc) + '" alt=""' + (forPdf ? ' width="' + thumbPx + '" height="' + thumbPx + '"' : ' loading="lazy"') + ' />'
+    function renderPedidoCard({ item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl, sub }) {
+      const thumb = img
+        ? '<img class="pedido-card-thumb" src="' + esc(img) + '" alt="" loading="lazy" />'
         : '<span class="pedido-card-thumb pedido-card-thumb-empty" aria-hidden="true">—</span>';
       const row1 = renderPedidoCardRow1({ thumb, titulo, item, qty, m2tot, sub });
 
@@ -3377,21 +3318,21 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         if (cxpl) embParts.push(cxpl + ' cx/pl');
         if (m2unit) embParts.push(fmtDecimal(m2unit) + ' m²/pl');
         const spec = renderPedidoSpecTable([
-          { label: 'Preço/m²', preco: true, html: fmtPrecoHtml(item.preco_m2, precoOpts) },
+          { label: 'Preço/m²', preco: true, html: fmtPrecoHtml(item.preco_m2) },
           { label: 'Caixas', text: cxTot ? fmtDecimal(cxTot, 0) : '—' },
           { label: 'Peso', peso: true, text: pesoTot ? fmtKg(pesoTot) : '—' },
           { label: 'Por palete', palete: true, text: embParts.length ? embParts.join(' · ') : '—' },
         ]);
-        return '<article class="pedido-card' + (forPdf ? ' pedido-card-pdf' : '') + '"><div class="pedido-card-layout">' + row1 + spec + '</div></article>';
+        return '<article class="pedido-card"><div class="pedido-card-layout">' + row1 + spec + '</div></article>';
       }
 
       const spec = renderPedidoSpecTable([
-        { label: 'Preço/m²', preco: true, html: fmtPrecoHtml(item.preco_m2, precoOpts) },
+        { label: 'Preço/m²', preco: true, html: fmtPrecoHtml(item.preco_m2) },
         { label: 'm²/cx', text: m2unit ? fmtDecimal(m2unit) : '—' },
         { label: 'm² total', text: m2tot ? fmtDecimal(m2tot) : '—' },
         { label: 'Embalagem', text: fmtEmbalagemText(item) },
       ]);
-      return '<article class="pedido-card' + (forPdf ? ' pedido-card-pdf' : '') + '"><div class="pedido-card-layout">' + row1 + spec + '</div></article>';
+      return '<article class="pedido-card"><div class="pedido-card-layout">' + row1 + spec + '</div></article>';
     }
     function renderPedido() {
       const rows = pedidoItens();
@@ -3489,10 +3430,10 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     function printPdfLayout() {
       const marginMm = 8;
-      const pageWmm = 210;
+      const pageWmm = 297;
       const contentWmm = pageWmm - marginMm * 2;
       const contentWpx = Math.round(contentWmm * 96 / 25.4);
-      return { marginMm, pageWmm, contentWmm, contentWpx };
+      return { marginMm, pageWmm, contentWmm, contentWpx, orientation: 'landscape' };
     }
     function printPageWidthPx() {
       return printPdfLayout().contentWpx;
@@ -3518,14 +3459,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const img = imgs[0]?.url || '';
         const titulo = item.formigres_titulo || item.descricao;
         const rowData = { item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub };
-        if (QTY_UNIT !== 'palete') {
-          bodyRows.push(renderPedidoTableRow(rowData, thumbs, { pdf: true }));
-        }
+        bodyRows.push(renderPedidoTableRow(rowData, thumbs, { pdf: true }));
       }
-      const listHtml = rows.length && QTY_UNIT === 'palete'
-        ? buildPedidoPrintCardsHtml(thumbs, rows)
-        : '';
-      const tableHtml = bodyRows.length && QTY_UNIT !== 'palete'
+      const tableHtml = rows.length
         ? '<table class="print-pedido-table pedido-table">' +
             PEDIDO_TABLE_COLGROUP_HTML +
             '<thead><tr>' + PEDIDO_TABLE_HEAD_HTML + '</tr></thead>' +
@@ -3559,7 +3495,6 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           descNote +
         '</header>' +
         resumo +
-        listHtml +
         tableHtml +
         pesoPrintLine +
         '<p class="print-totals"><strong>Total estimado: ' + fmtMoney(totalValor) + '</strong></p>' +
@@ -3568,61 +3503,41 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function printPedidoPrintCss() {
       const rowLine = '#707070';
       const thumb = PDF_PRINT_THUMB_PX;
-      return '@page { size: A4 portrait; margin: 8mm; }' +
+      return '@page { size: A4 landscape; margin: 8mm; }' +
         'html, body { margin: 0; padding: 0; }' +
-        '.print-render-root { background: #ffffff; color: #5a5a5a; font-family: "Libre Franklin", "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 13px; -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; width: 100%; }' +
+        '.print-render-root { background: #ffffff; color: #5a5a5a; font-family: "Libre Franklin", "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; width: 100%; }' +
         '.print-sheet { width: 100%; max-width: 100%; margin: 0; box-sizing: border-box; background: #ffffff; color: #5a5a5a; padding: 0; }' +
-        '.print-head { margin-bottom: 12px; }' +
-        'h1 { margin: 0 0 4px; font-size: 17px; letter-spacing: .08em; text-transform: uppercase; color: #2f2f2f; font-weight: 600; }' +
-        '.print-meta, .print-note { margin: 0 0 6px; color: #767676; font-size: 11px; line-height: 1.35; }' +
-        '.print-resumo { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px 12px; margin-bottom: 12px; }' +
-        '.print-resumo-stat { min-width: 0; font-size: 10px; color: #767676; }' +
-        '.print-resumo-stat strong { display: block; font-size: 14px; color: #2f2f2f; margin-bottom: 2px; font-weight: 600; }' +
-        '.print-format-group { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 10px; padding: 10px 0 8px; margin-top: 10px; border-bottom: 2px solid ' + rowLine + '; break-inside: avoid; page-break-inside: avoid; }' +
-        '.print-pedido-list > .print-format-group:first-child { margin-top: 0; padding-top: 4px; }' +
-        '.print-format-group-fmt { font-size: 13px; font-weight: 700; letter-spacing: .05em; color: #2f2f2f; text-transform: uppercase; }' +
-        '.print-format-group-stat { font-size: 12px; font-weight: 600; color: #2f2f2f; font-variant-numeric: tabular-nums; }' +
-        '.print-format-group-sep { color: #767676; font-weight: 400; font-size: 11px; }' +
-        '.print-pedido-list { display: flex; flex-direction: column; gap: 0; margin-top: 4px; }' +
-        '.pedido-card-pdf { border-bottom: 1px solid ' + rowLine + '; padding: 12px 0; break-inside: avoid; page-break-inside: avoid; color: #5a5a5a; }' +
-        '.print-pedido-list > .pedido-card-pdf:first-child { padding-top: 4px; }' +
-        '.pedido-card-pdf .pedido-card-head { column-gap: 12px; }' +
-        '.pedido-card-pdf .pedido-card-head-main { column-gap: 10px; grid-template-columns: minmax(0, 1fr) auto minmax(72px, 1fr); }' +
-        '.pedido-card-pdf .pedido-card-thumb { width: ' + thumb + 'px; height: ' + thumb + 'px; border-radius: 6px; object-fit: cover; display: block; }' +
-        '.pedido-card-pdf .pedido-card-thumb-empty { width: ' + thumb + 'px; height: ' + thumb + 'px; border-radius: 6px; background: #f0f0f0; color: #767676; font-size: 11px; }' +
-        '.pedido-card-pdf .pedido-card-hero { font-size: 14px; font-weight: 700; line-height: 1.35; color: #2f2f2f; font-variant-numeric: tabular-nums; }' +
-        '.pedido-card-pdf .pedido-card-title.pedido-card-hero { word-break: break-word; }' +
-        '.pedido-card-pdf .pedido-card-meta { margin-top: 4px; font-size: 11px; color: #767676; line-height: 1.35; }' +
-        '.pedido-card-pdf .pedido-meta-resist { font-weight: 700; letter-spacing: .1em; color: #2f2f2f; }' +
-        '.pedido-card-pdf .pedido-row-gemeas { margin-top: 4px; font-size: 10px; color: #767676; line-height: 1.45; }' +
-        '.pedido-card-pdf .pedido-card-qty-sub { font-size: 11px; color: #767676; margin-top: 2px; }' +
-        '.pedido-card-pdf .pedido-card-total .pedido-card-hero { color: #b01219; white-space: nowrap; }' +
-        '.pedido-card-pdf .pedido-card-total-label { font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: #767676; }' +
-        '.pedido-card-pdf .pedido-card-spec { margin-top: 8px; padding-top: 10px; border-top: 1px solid ' + rowLine + '; table-layout: fixed; }' +
-        '.pedido-card-pdf .pedido-card-spec td { padding: 6px 8px; vertical-align: top; border: 0; }' +
-        '.pedido-card-pdf .pedido-card-spec td + td { border-left: 1px solid ' + rowLine + '; }' +
-        '.pedido-card-pdf .pedido-card-spec-l { font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: .04em; color: #767676; margin-bottom: 4px; }' +
-        '.pedido-card-pdf .pedido-card-spec-v { font-size: 11px; font-weight: 600; color: #2f2f2f; margin-top: 0; padding-top: 0; border-top: 0; line-height: 1.3; }' +
-        '.pedido-card-pdf .pedido-card-spec-v.pedido-card-spec-palete { font-size: 10px; font-weight: 500; line-height: 1.35; }' +
-        '.pedido-card-pdf .pedido-card-spec-preco .preco-stack-pdf, .pedido-card-pdf .pedido-card-spec-preco .preco-stack { display: block; line-height: 1.2; }' +
-        '.pedido-card-pdf .pedido-card-spec-preco .preco-orig { display: block; text-decoration: line-through; color: #767676; font-size: 9px; font-weight: 400; margin: 0 0 2px; }' +
-        '.pedido-card-pdf .pedido-card-spec-preco .preco-desc { display: block; font-weight: 600; font-size: 11px; color: #2f2f2f; }' +
-        '.print-pedido-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 13px; margin-top: 0; }' +
-        '.print-pedido-table th, .print-pedido-table td { padding: 12px 7px; vertical-align: top; }' +
-        '.print-pedido-table thead th { text-align: left; color: #767676; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid ' + rowLine + '; white-space: nowrap; padding-top: 8px; padding-bottom: 8px; vertical-align: bottom; }' +
+        '.print-head { margin-bottom: 10px; }' +
+        'h1 { margin: 0 0 4px; font-size: 15px; letter-spacing: .08em; text-transform: uppercase; color: #2f2f2f; font-weight: 600; }' +
+        '.print-meta, .print-note { margin: 0 0 4px; color: #767676; font-size: 10px; line-height: 1.35; }' +
+        '.print-resumo { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px 10px; margin-bottom: 10px; }' +
+        '.print-resumo-stat { min-width: 0; font-size: 9px; color: #767676; }' +
+        '.print-resumo-stat strong { display: block; font-size: 13px; color: #2f2f2f; margin-bottom: 2px; font-weight: 600; }' +
+        '.print-pedido-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 12px; margin-top: 0; }' +
+        '.print-pedido-table th, .print-pedido-table td { padding: 8px 5px; vertical-align: middle; }' +
+        '.print-pedido-table thead th { text-align: left; color: #767676; font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid ' + rowLine + '; white-space: nowrap; padding-top: 6px; padding-bottom: 6px; vertical-align: bottom; }' +
         '.print-pedido-table tbody td { border-bottom: 1px solid ' + rowLine + '; }' +
         '.print-pedido-table tbody tr:last-child td { border-bottom: 1px solid ' + rowLine + '; }' +
-        '.print-pedido-table col.col-foto { width: ' + (thumb + 8) + 'px; }' +
-        '.print-pedido-table col.col-modelo { width: 32%; }' +
+        '.print-pedido-table col.col-foto { width: ' + (thumb + 6) + 'px; }' +
+        '.print-pedido-table col.col-modelo { width: 22%; }' +
+        '.print-pedido-table col.col-qty { width: 44px; }' +
+        '.print-pedido-table col.col-m2 { width: 62px; }' +
+        '.print-pedido-table col.col-cx { width: 52px; }' +
+        '.print-pedido-table col.col-peso { width: 72px; }' +
+        '.print-pedido-table col.col-emb { width: 108px; }' +
+        '.print-pedido-table col.col-preco { width: 72px; }' +
+        '.print-pedido-table col.col-sub { width: 82px; }' +
         '.print-pedido-table .pedido-meta-resist { font-weight: 700; letter-spacing: .1em; color: #2f2f2f; }' +
-        '.print-pedido-table .pedido-row-title { display: block; font-weight: 600; line-height: 1.35; color: #2f2f2f; font-size: 13px; word-break: break-word; }' +
-        '.print-pedido-table .pedido-row-meta { margin-top: 4px; font-size: 11px; color: #767676; line-height: 1.35; }' +
-        '.print-pedido-table .pedido-col-num, .print-pedido-table th.pedido-col-num, .print-pedido-table .col-subtotal { text-align: right; font-variant-numeric: tabular-nums; vertical-align: middle; }' +
-        '.print-pedido-table .pedido-col-qty, .print-pedido-table th.pedido-col-qty { text-align: center; font-variant-numeric: tabular-nums; font-weight: 700; color: #2f2f2f; vertical-align: middle; }' +
+        '.print-pedido-table .pedido-row-title { display: block; font-weight: 600; line-height: 1.3; color: #2f2f2f; font-size: 12px; word-break: break-word; }' +
+        '.print-pedido-table .pedido-row-meta { margin-top: 2px; font-size: 10px; color: #767676; line-height: 1.3; }' +
+        '.print-pedido-table .pedido-col-num, .print-pedido-table th.pedido-col-num, .print-pedido-table .col-subtotal { text-align: right; font-variant-numeric: tabular-nums; }' +
+        '.print-pedido-table .pedido-col-qty, .print-pedido-table th.pedido-col-qty { text-align: center; font-variant-numeric: tabular-nums; font-weight: 700; color: #2f2f2f; font-size: 13px; }' +
+        '.print-pedido-table .pedido-col-peso { font-weight: 600; color: #2f2f2f; white-space: nowrap; }' +
+        '.print-pedido-table .pedido-col-emb { font-size: 10px; color: #767676; line-height: 1.3; }' +
         '.print-pedido-table .col-subtotal { font-weight: 700; color: #b01219; white-space: nowrap; }' +
         '.print-pedido-table .preco-stack, .print-pedido-table .preco-stack-pdf { display: block; text-align: right; line-height: 1.2; }' +
-        '.print-pedido-table .preco-orig { display: block; text-decoration: line-through; color: #767676; font-size: 10px; font-weight: 400; margin: 0 0 2px; white-space: nowrap; }' +
-        '.print-pedido-table .preco-desc { display: block; color: #2f2f2f; font-weight: 600; font-size: 12px; white-space: nowrap; margin: 0; }' +
+        '.print-pedido-table .preco-orig { display: block; text-decoration: line-through; color: #767676; font-size: 9px; font-weight: 400; margin: 0 0 1px; white-space: nowrap; }' +
+        '.print-pedido-table .preco-desc { display: block; color: #2f2f2f; font-weight: 600; font-size: 11px; white-space: nowrap; margin: 0; }' +
         '.print-pedido-table .pedido-col-foto img { display: block; border-radius: 6px; width: ' + thumb + 'px; height: ' + thumb + 'px; object-fit: cover; }' +
         '.print-pedido-table tbody tr { break-inside: avoid; page-break-inside: avoid; }' +
         '.print-peso { margin: 10px 0 0; font-size: 12px; color: #767676; text-align: right; }' +
@@ -3739,8 +3654,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
             backgroundColor: pdfCanvasBackground(PDF_THEME),
             onclone: injectPdfFontClone,
           },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['css', 'legacy'], avoid: ['.pedido-card-pdf', '.print-pedido-table tbody tr'] },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+          pagebreak: { mode: ['css', 'legacy'], avoid: ['.print-pedido-table tbody tr'] },
         }).from(sheet).outputPdf('blob');
         if (!blob || blob.size < 12000) throw new Error('PDF gerado vazio');
         return blob;
