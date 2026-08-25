@@ -23,6 +23,9 @@ import {
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
 import { lerArquivoPedidoImportDoBridge, limparArquivoPedidoImportBridge } from '@/lib/torrePedidoImportBridge';
 import { buildLlmTelemetryContext } from '@/lib/p38LlmTelemetry';
+import { useCompactShell } from '@/hooks/use-breakpoint';
+import ImportadorOcrItemCard from '@/components/compras/ImportadorOcrItemCard';
+import { cn } from '@/lib/utils';
 
 export default function ImportadorPedidoCompra({
   isOpen,
@@ -55,6 +58,7 @@ export default function ImportadorPedidoCompra({
   /** Só repor estado ao passar de fechado → aberto; enquanto o modal fica aberto não limpar (senão some o PDF a meio do fluxo). */
   const modalEstavaAbertoRef = useRef(false);
   const { toast } = useToast();
+  const isMobile = useCompactShell();
 
   useEffect(() => {
     if (!isOpen) {
@@ -187,6 +191,20 @@ export default function ImportadorPedidoCompra({
     if (effectiveDiscountType === 'acrescimo_percentual') return original + (original * discountNumber / 100);
     return original;
   };
+
+  const reviewResumo = useMemo(() => {
+    const ativos = items.filter((item) => !item.ignored);
+    const totalEstimado = ativos.reduce((sum, item) => {
+      const qty = Number(item.quantidade) || 1;
+      return sum + qty * getDiscountedUnitPrice(item);
+    }, 0);
+    const vinculados = ativos.filter((item) => item.selected_product_id && item.selected_product_id !== 'create_new').length;
+    return {
+      totalItens: ativos.length,
+      vinculados,
+      totalEstimado,
+    };
+  }, [items, discountNumber, effectiveDiscountType]);
 
   const processSelectedFile = async () => {
     const arquivo =
@@ -488,11 +506,17 @@ export default function ImportadorPedidoCompra({
               <X className="w-4 h-4" />
             </Button>
             <div>
-              <p className="font-glacial text-lg text-foreground">Importar novo pedido</p>
-              <p className="text-xs text-muted-foreground">Lê PDF e boas imagens para preencher os itens</p>
+              <p className="font-glacial text-lg text-foreground">
+                {step === 'review' && isMobile ? 'Revisar itens' : 'Importar novo pedido'}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {step === 'review' && isMobile
+                  ? 'Vincule cada linha ao catálogo'
+                  : 'Lê PDF e boas imagens para preencher os itens'}
+              </p>
             </div>
           </div>
-          {step === 'review' && (
+          {step === 'review' && !isMobile && (
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -513,7 +537,7 @@ export default function ImportadorPedidoCompra({
         </div>
       </div>
 
-      <div className="p-4 md:p-6 max-w-5xl mx-auto">
+      <div className={cn('p-4 md:p-6 max-w-5xl mx-auto', step === 'review' && isMobile && 'pb-32')}>
         {step === 'upload' && (
           <div className="space-y-4">
             <div className="flex gap-2">
@@ -671,11 +695,40 @@ export default function ImportadorPedidoCompra({
 
         {step === 'review' && (
           <div className="space-y-4">
+            {isMobile ? (
+              <div className="rounded-2xl border border-border/50 bg-muted/30 p-4 space-y-3">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    Revisão do pedido
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Confira cada linha do documento e vincule ao produto do catálogo.
+                  </p>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="rounded-xl bg-card/80 px-2 py-3">
+                    <p className="text-lg font-bold tabular-nums text-foreground">{reviewResumo.totalItens}</p>
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Itens</p>
+                  </div>
+                  <div className="rounded-xl bg-card/80 px-2 py-3">
+                    <p className="text-lg font-bold tabular-nums text-foreground">{reviewResumo.vinculados}</p>
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Vinculados</p>
+                  </div>
+                  <div className="rounded-xl bg-card/80 px-2 py-3">
+                    <p className="text-lg font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
+                      R$ {formatCurrency(reviewResumo.totalEstimado)}
+                    </p>
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Total</p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
             <div className="grid gap-4 md:grid-cols-3">
               <div className="rounded-3xl bg-muted/50/60 p-5 shadow-sm md:col-span-2">
                 <Label className="text-xs text-muted-foreground mb-2 block">Fornecedor</Label>
                 <Select value={fornecedorInfo.id || 'new'} onValueChange={(value) => setFornecedorInfo(prev => ({ ...prev, id: value }))}>
-                  <SelectTrigger className="h-14 border-0 rounded-2xl bg-card shadow-sm text-base text-foreground dark:text-white">
+                  <SelectTrigger className={cn('border-0 rounded-2xl bg-card shadow-sm text-foreground dark:text-white', isMobile ? 'h-14 text-base' : 'h-14 text-base')}>
                     <SelectValue placeholder="Selecionar fornecedor" />
                   </SelectTrigger>
                   <SelectContent>
@@ -688,30 +741,54 @@ export default function ImportadorPedidoCompra({
                 <>
                   <div className="rounded-2xl bg-muted/50/60 p-4 shadow-sm">
                     <Label className="text-xs text-muted-foreground mb-2 block">Nome</Label>
-                    <Input value={fornecedorInfo.nome} onChange={(e) => setFornecedorInfo(prev => ({ ...prev, nome: e.target.value }))} className="border-0 bg-card shadow-sm" />
+                    <Input value={fornecedorInfo.nome} onChange={(e) => setFornecedorInfo(prev => ({ ...prev, nome: e.target.value }))} className={cn('border-0 bg-card shadow-sm', isMobile && 'h-12 text-base')} />
                   </div>
                   <div className="rounded-2xl bg-muted/50/60 p-4 shadow-sm">
                     <Label className="text-xs text-muted-foreground mb-2 block">CNPJ</Label>
-                    <Input value={fornecedorInfo.cnpj} onChange={(e) => setFornecedorInfo(prev => ({ ...prev, cnpj: e.target.value }))} className="border-0 bg-card shadow-sm" />
+                    <Input value={fornecedorInfo.cnpj} onChange={(e) => setFornecedorInfo(prev => ({ ...prev, cnpj: e.target.value }))} className={cn('border-0 bg-card shadow-sm', isMobile && 'h-12 text-base')} />
                   </div>
                 </>
               )}
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground px-1">
-                <Package className="w-4 h-4" />
-                <span>{items.length} itens identificados</span>
-              </div>
-              {items.map((item, index) => (
+              {!isMobile ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground px-1">
+                  <Package className="w-4 h-4" />
+                  <span>{items.length} itens identificados</span>
+                </div>
+              ) : null}
+
+              {isMobile ? (
+                <div className="rounded-2xl border border-border/50 bg-card/40 px-1">
+                  {items.map((item, index) => (
+                    <ImportadorOcrItemCard
+                      key={index}
+                      item={item}
+                      index={index}
+                      isAcrescimo={isAcrescimo}
+                      discountNumber={discountNumber}
+                      getDiscountedUnitPrice={getDiscountedUnitPrice}
+                      formatCurrency={formatCurrency}
+                      produtos={produtos}
+                      getSuggestedProduct={getSuggestedProduct}
+                      setItems={setItems}
+                      setProductSearch={setProductSearch}
+                      productSearch={productSearch}
+                      onProductCreated={(novoProduto) => handleProdutoCriadoNoImportador(novoProduto, index)}
+                      resolverUnidadeCompra={resolverUnidadeCompra}
+                      textoEquivEstoque={textoEquivEstoque}
+                    />
+                  ))}
+                </div>
+              ) : (
+                items.map((item, index) => (
                 <div key={index} className={`rounded-2xl transition-all ${
                   item.ignored ? 'opacity-40' : ''
                 } ${
                   index % 2 === 0 ? 'bg-card/60' : 'bg-muted/40/80 dark:bg-background/60'
                 } shadow-sm`}>
-                  {/* Card inner padding */}
                   <div className="p-4">
-                    {/* Linha superior: checkbox + descrição do doc + preço */}
                     <div className="flex items-start gap-3 mb-3">
                       <div className="pt-0.5 flex-none">
                         <Checkbox checked={!item.ignored} onCheckedChange={(checked) => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, ignored: !checked } : current))} />
@@ -735,7 +812,6 @@ export default function ImportadorPedidoCompra({
                         <p className="text-xs text-muted-foreground">= R$ {formatCurrency((item.quantidade || 1) * getDiscountedUnitPrice(item))}</p>
                       </div>
                     </div>
-                    {/* Linha inferior: busca no catálogo (desktop: alinhada; mobile: full width) */}
                     <div className="pl-7 space-y-1">
                       <ProductSearchInputPDV
                         item={item}
@@ -762,11 +838,44 @@ export default function ImportadorPedidoCompra({
                     </div>
                   </div>
                 </div>
-              ))}
+              ))
+              )}
             </div>
           </div>
         )}
       </div>
+
+      {step === 'review' && isMobile ? (
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/60 bg-card/95 backdrop-blur px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(0,0,0,0.08)]">
+          <div className="mx-auto flex max-w-5xl items-center gap-3">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                selectedFileRef.current = null;
+                setSelectedFile(null);
+                setStep('upload');
+              }}
+              className="h-12 w-12 shrink-0 rounded-2xl border-0 shadow-sm"
+              aria-label="Voltar"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                Total estimado
+              </p>
+              <p className="text-lg font-bold tabular-nums text-foreground">
+                R$ {formatCurrency(reviewResumo.totalEstimado)}
+              </p>
+            </div>
+            <Button onClick={handleConfirm} className="h-12 shrink-0 rounded-2xl px-5 shadow-sm">
+              <Check className="w-4 h-4 mr-2" />
+              Confirmar
+            </Button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
