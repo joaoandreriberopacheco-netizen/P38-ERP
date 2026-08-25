@@ -108,6 +108,15 @@ function mapSuperficie(title = '') {
   return t || '';
 }
 
+/** Carmel Fior por vezes marca superfície errada; regras de negócio Arielle. */
+function resolveSuperficie(prodTitle = '', superficieTitle = '') {
+  const titulo = String(prodTitle || '');
+  const sup = String(superficieTitle || '').trim();
+  // Linha Plus AC = acetinado (mate) — ex. Tinharé Plus AC vinha como Polido na API.
+  if (/\bPLUS\s+AC\b/i.test(titulo)) return 'Acetinado';
+  return sup;
+}
+
 function mapAcabamentoTipo(title = '', retificada = false) {
   const t = String(title || '').trim().toUpperCase();
   if (t === 'RETIFICADO' || retificada) return 'RETIFICADO';
@@ -167,7 +176,9 @@ export function normalizeProduto(raw) {
   const superficie = attrById(raw.attributes, ATTR.superficie);
   const acabamento = attrById(raw.attributes, ATTR.acabamento);
   const { formato, retificada } = parseTamanhoAttr(tamanho?.option_title || tamanho?.text || '');
-  const acabSup = mapSuperficie(superficie?.option_title || superficie?.text || '');
+  const superficieRaw = superficie?.option_title || superficie?.text || '';
+  const superficieResolved = resolveSuperficie(raw.title, superficieRaw);
+  const acabSup = mapSuperficie(superficieResolved);
   const tipo = mapAcabamentoTipo(acabamento?.option_title || acabamento?.text || '', retificada);
   const thumbImg = pickThumbImage(raw.images || []);
   const imagem_url = imageUrl(thumbImg?.image || thumbImg?.thumb || '');
@@ -179,7 +190,7 @@ export function normalizeProduto(raw) {
     slug: raw.slug || '',
     formato,
     acabamento: acabSup,
-    acabamento_info: superficie?.option_title || '',
+    acabamento_info: superficieResolved || superficieRaw,
     tipo,
     referencia: raw.code || '',
     marca_nome: 'Arielle',
