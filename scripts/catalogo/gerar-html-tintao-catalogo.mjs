@@ -1276,24 +1276,29 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     .pedido-card-layout {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+    .pedido-card-head {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
       column-gap: 10px;
       align-items: start;
     }
-    .pedido-card-row1 { display: contents; }
+    .pedido-card-head-main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      column-gap: 8px;
+      align-items: start;
+      min-width: 0;
+    }
+    .pedido-card-desc { min-width: 0; }
     .pedido-card-hero {
       font-size: .82rem;
       font-weight: 700;
       line-height: 1.15;
       font-variant-numeric: tabular-nums;
       color: var(--text-strong);
-    }
-    .pedido-card-row1-lead {
-      grid-column: 1;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 0;
     }
     .pedido-card-thumb {
       width: 52px;
@@ -1311,9 +1316,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       font-size: .78rem;
     }
     .pedido-card-qty {
-      grid-column: 2;
       justify-self: center;
-      min-width: 52px;
+      align-self: start;
+      min-width: 0;
       text-align: center;
       padding: 0 2px;
     }
@@ -1338,10 +1343,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       line-height: 1.2;
     }
     .pedido-card-total {
-      grid-column: 3;
       justify-self: end;
+      align-self: start;
       text-align: right;
-      flex-shrink: 0;
       min-width: 0;
       width: 100%;
     }
@@ -1360,7 +1364,6 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       color: var(--accent-bright);
     }
     .pedido-card-spec {
-      grid-column: 1 / -1;
       width: 100%;
       box-sizing: border-box;
       border-collapse: collapse;
@@ -1707,8 +1710,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       .pedido-resumo .stat strong { font-size: .88rem; }
       .pedido-table-wrap { display: none !important; }
       .pedido-cards-wrap { display: block; }
-      .pedido-card-row1 { gap: 0; }
-      .pedido-card-layout { column-gap: 10px; }
+      .pedido-card-head { column-gap: 8px; }
+      .pedido-card-head-main { column-gap: 8px; }
       .pedido-card-hero { font-size: .82rem; font-weight: 700; line-height: 1.15; }
       .pedido-card-title.pedido-card-hero,
       .pedido-card-qty-main.pedido-card-hero,
@@ -2584,20 +2587,20 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     function renderPedidoCardRow1({ thumb, titulo, item, qty, m2tot, sub }) {
       const qtyShort = QTY_UNIT === 'palete' ? 'pl' : 'cx';
-      return '<div class="pedido-card-row1">' +
-        '<div class="pedido-card-row1-lead">' + thumb +
-          '<div class="pedido-card-titlebar">' +
+      return '<div class="pedido-card-head">' + thumb +
+        '<div class="pedido-card-head-main">' +
+          '<div class="pedido-card-desc">' +
             '<div class="pedido-card-title pedido-card-hero">' + esc(titulo) + '</div>' +
             '<div class="pedido-card-meta">#' + esc(item.codigo_tintao) + ' · ' + esc(item.formato || '—') + '</div>' +
           '</div>' +
-        '</div>' +
-        '<div class="pedido-card-qty">' +
-          '<span class="pedido-card-qty-main pedido-card-hero">' + qty + ' <span>' + esc(qtyShort) + '</span></span>' +
-          '<span class="pedido-card-qty-sub">' + esc(m2tot ? fmtDecimal(m2tot) + ' m²' : '—') + '</span>' +
-        '</div>' +
-        '<div class="pedido-card-total">' +
-          '<strong class="pedido-card-hero">' + esc(sub != null ? fmtMoney(sub) : '—') + '</strong>' +
-          '<span class="pedido-card-total-label">Subtotal</span>' +
+          '<div class="pedido-card-qty">' +
+            '<span class="pedido-card-qty-main pedido-card-hero">' + qty + ' <span>' + esc(qtyShort) + '</span></span>' +
+            '<span class="pedido-card-qty-sub">' + esc(m2tot ? fmtDecimal(m2tot) + ' m²' : '—') + '</span>' +
+          '</div>' +
+          '<div class="pedido-card-total">' +
+            '<strong class="pedido-card-hero">' + esc(sub != null ? fmtMoney(sub) : '—') + '</strong>' +
+            '<span class="pedido-card-total-label">Subtotal</span>' +
+          '</div>' +
         '</div>' +
       '</div>';
     }
