@@ -69,3 +69,38 @@ export async function waitForSupabaseSession(supabase, { timeoutMs = 8000 } = {}
   }
   return null;
 }
+
+async function readAccessToken(supabase) {
+  const { data } = await supabase.auth.getSession();
+  return data?.session?.access_token ?? null;
+}
+
+/**
+ * Resolve JWT do utilizador para Edge Functions (OCR, etc.).
+ * Tenta getSession → refreshSession → getUser antes de desistir.
+ */
+export async function resolveP38AccessToken(supabase) {
+  if (!supabase) return null;
+
+  let token = await readAccessToken(supabase);
+  if (token) return token;
+
+  const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+  if (!refreshError && refreshed?.session?.access_token) {
+    return refreshed.session.access_token;
+  }
+
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (!userError && userData?.user) {
+    token = await readAccessToken(supabase);
+    if (token) return token;
+  }
+
+  return null;
+}
+
+export function isP38SessionErrorMessage(message) {
+  return /sessão expirada|sessão ausente|sessão supabase ausente|não autenticado/i.test(
+    String(message || '')
+  );
+}

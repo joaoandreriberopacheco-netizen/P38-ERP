@@ -1,4 +1,4 @@
-import { getSupabaseBrowserClient, normalizeSupabaseProjectUrl } from '@/lib/supabaseBrowserClient';
+import { getSupabaseBrowserClient, normalizeSupabaseProjectUrl, resolveP38AccessToken } from '@/lib/supabaseBrowserClient';
 
 import { p38PublicEnv } from '@/lib/p38PublicEnv';
 
@@ -81,8 +81,7 @@ export async function invokeP38Auth(body, { authorized = false } = {}) {
   let sessionToken = null;
   if (authorized) {
     if (!supabase) throw new Error('Supabase não configurado.');
-    const { data } = await supabase.auth.getSession();
-    sessionToken = data?.session?.access_token;
+    sessionToken = await resolveP38AccessToken(supabase);
     if (!sessionToken) throw new Error('Sessão ausente.');
   }
 

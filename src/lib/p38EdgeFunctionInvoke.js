@@ -1,4 +1,8 @@
-import { getSupabaseBrowserClient, normalizeSupabaseProjectUrl } from '@/lib/supabaseBrowserClient';
+import {
+  getSupabaseBrowserClient,
+  normalizeSupabaseProjectUrl,
+  resolveP38AccessToken,
+} from '@/lib/supabaseBrowserClient';
 import { p38PublicEnv } from '@/lib/p38PublicEnv';
 import { toSupabaseEdgeFunctionName } from '@/lib/p38EdgeFunctionNames';
 
@@ -116,8 +120,7 @@ export async function invokeP38EdgeFunction(functionName, body, { supabase: supa
   }
 
   const supabase = supabaseClient || getSupabaseBrowserClient();
-  const { data: sessionData } = await supabase?.auth.getSession() ?? { data: null };
-  const sessionToken = sessionData?.session?.access_token ?? null;
+  const sessionToken = (await resolveP38AccessToken(supabase)) ?? null;
 
   let lastNetworkError = null;
   let lastHttpError = null;
@@ -175,8 +178,7 @@ export async function invokeP38EdgeFunctionBinary(functionName, body, options = 
   const urls = resolveFunctionUrls(edgeName);
   const anonKey = String(p38PublicEnv('VITE_SUPABASE_ANON_KEY') || '').trim();
   const supabase = options.supabase || getSupabaseBrowserClient();
-  const { data: sessionData } = await supabase?.auth.getSession() ?? { data: null };
-  const sessionToken = sessionData?.session?.access_token ?? null;
+  const sessionToken = (await resolveP38AccessToken(supabase)) ?? null;
 
   if (!urls.length) {
     throw new Error(`Função "${functionName}" indisponível: Supabase não configurado.`);
