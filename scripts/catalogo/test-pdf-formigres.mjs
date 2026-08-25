@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Valida PDF do catálogo Formigres: tabela do carrinho A4 paisagem.
+ * Valida PDF do catálogo Formigres: layout mobile em retrato (cards).
  * Uso: node scripts/catalogo/test-pdf-formigres.mjs
  */
 import fs from 'node:fs';
@@ -21,7 +21,7 @@ async function main() {
   fs.mkdirSync(path.dirname(OUT_PDF), { recursive: true });
 
   const browser = await chromium.launch({ headless: true });
-  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await page.goto(pathToFileURL(HTML).href, { waitUntil: 'domcontentloaded' });
 
   const codes = await page.evaluate(() => {
@@ -46,35 +46,23 @@ async function main() {
 
   const layoutProbe = await page.evaluate(() => {
     const src = [...document.scripts].map((s) => s.textContent || '').join('\n');
-    const m = src.match(/contentWpx = Math\.round\(contentWmm \* 96 \/ 25\.4\)/);
-    const rowLine = src.includes("const rowLine = '#707070'");
-    const tablePdf = src.includes('print-pedido-table pedido-table');
-    const landscape = src.includes("orientation: 'landscape'");
-    const landscapePage = src.includes('const pageWmm = 297');
-    const tableForPalete = src.includes('bodyRows.push(renderPedidoTableRow(rowData, thumbs, { pdf: true }))');
-    const metaResist = src.includes('pedido-meta-resist');
-    const a4 = src.includes("format: 'a4'");
-    const scale3 = src.includes('PDF_CANVAS_SCALE = 3');
-    const printThumb48 = src.includes('PDF_PRINT_THUMB_PX = 48');
+    const portraitWidth = src.includes('const PDF_PAGE_WIDTH_PX = 390');
+    const cardPdf = src.includes('pedido-card-pdf');
+    const printCards = src.includes('<div class="print-cards">');
+    const portrait = src.includes("orientation: 'portrait'");
+    const dynamicPage = src.includes('format: [pageWmm, pageHmm]');
+    const scale2 = src.includes('const PDF_CANVAS_SCALE = 2');
     const printFooter = src.includes('print-footer');
-    const printTfoot = src.includes('print-pedido-tfoot');
     const fmtResumo = src.includes('print-fmt-resumo-table');
-    const precoStack = src.includes('preco-stack-pdf');
     return {
-      hasA4: a4,
-      hasRowLine: rowLine,
-      hasTablePdf: tablePdf,
-      landscape,
-      landscapePage,
-      tableForPalete,
-      metaResist,
+      portraitWidth,
+      cardPdf,
+      printCards,
+      portrait,
+      dynamicPage,
+      scale2,
       printFooter,
-      printTfoot,
       fmtResumo,
-      hasLayoutFn: !!m,
-      scale3,
-      printThumb48,
-      precoStack,
     };
   });
 
@@ -93,20 +81,14 @@ async function main() {
   const pdfText = pdfBuf.toString('latin1');
   const pageMatches = pdfText.match(/\/Type\s*\/Page[^s]/g) || [];
   const hasImages = pdfText.includes('/Subtype /Image') || pdfText.includes('/DCTDecode');
-  const ok = layoutProbe.hasA4
-    && layoutProbe.hasRowLine
-    && layoutProbe.hasTablePdf
-    && layoutProbe.landscape
-    && layoutProbe.landscapePage
-    && layoutProbe.tableForPalete
-    && layoutProbe.metaResist
+  const ok = layoutProbe.portraitWidth
+    && layoutProbe.cardPdf
+    && layoutProbe.printCards
+    && layoutProbe.portrait
+    && layoutProbe.dynamicPage
+    && layoutProbe.scale2
     && layoutProbe.printFooter
-    && layoutProbe.printTfoot
     && layoutProbe.fmtResumo
-    && layoutProbe.hasLayoutFn
-    && layoutProbe.scale3
-    && layoutProbe.printThumb48
-    && layoutProbe.precoStack
     && pdfBuf.length > 20000
     && hasImages
     && pageMatches.length >= 1;
