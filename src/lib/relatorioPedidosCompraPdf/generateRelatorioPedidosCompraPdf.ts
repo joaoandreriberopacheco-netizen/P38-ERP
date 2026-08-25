@@ -282,6 +282,7 @@ const getTextoPedidoRelatorio = (pedido) => {
 const COMPRAS_PDF_ACCENT = {
   aprovado: { dot: [132, 204, 22], line: [132, 204, 22] },
   success: { dot: [16, 185, 129], line: [16, 185, 129] },
+  citrus: { dot: [232, 184, 36], line: [232, 184, 36] },
   info: { dot: [78, 189, 180], line: [78, 189, 180] },
   warning: { dot: [217, 111, 85], line: [217, 111, 85] },
   danger: { dot: [239, 68, 68], line: [239, 68, 68] },
@@ -292,7 +293,7 @@ const comprasAccentFromDisplayStatusPdf = (displayStatus) => {
   const status = String(displayStatus || '').trim();
   if (status === 'Aprovado') return 'aprovado';
   if (status === 'Concluído' || status === 'Concluido') return 'success';
-  if (status === 'Despachado') return 'info';
+  if (status === 'Despachado') return 'citrus';
   if (status === 'Aguardando' || status.includes('Aguard') || status.includes('Aprova')) return 'warning';
   if (status === 'Necessidade' || status === 'Cancelado') return 'danger';
   return 'muted';

@@ -80,6 +80,14 @@ export const p38Accent = {
     dot: 'bg-[#4ECDC4] dark:bg-[#4ECDC4]',
     border: 'border-l-[#4ECDC4] dark:border-l-[#4ECDC4]',
   },
+  /** Amarelo suco — embarques / consulta no modo claro (substitui ciano operacional). */
+  citrus: {
+    solid: '#e8b824',
+    solidDark: '#a4ce33',
+    text: 'text-[#a8942e] dark:text-[#a4ce33]',
+    dot: 'bg-[#e8b824] dark:bg-[#a4ce33]',
+    border: 'border-l-[#e8b824] dark:border-l-[#a4ce33]',
+  },
   danger: {
     solid: '#b91c1c',
     solidDark: '#dc2626',

@@ -10,6 +10,7 @@ import { formatCommercialQuantity } from '@/lib/productUnits';
 function resolveConsultaAccentDot(accent) {
   if (accent === 'aprovado') return p38Accent.aprovado.dot;
   if (accent === 'muted') return p38Accent.muted.dot;
+  if (accent === 'citrus') return p38Accent.citrus.dot;
   if (accent === 'info') return p38Accent.info.dot;
   if (accent === 'warning') return p38Accent.warning.dot;
   if (accent === 'danger') return p38Accent.danger.dot;
@@ -20,6 +21,7 @@ function resolveConsultaAccentDot(accent) {
 function resolveConsultaAccentBorder(accent) {
   if (accent === 'aprovado') return p38Accent.aprovado.border;
   if (accent === 'muted') return p38Accent.muted.border;
+  if (accent === 'citrus') return p38Accent.citrus.border;
   if (accent === 'info') return p38Accent.info.border;
   if (accent === 'warning') return p38Accent.warning.border;
   if (accent === 'danger') return p38Accent.danger.border;
@@ -98,7 +100,7 @@ export function ConsultaProdutoRow({
     ? 'danger'
     : accent === 'muted'
       ? 'neutral'
-      : accent === 'info'
+      : accent === 'citrus' || accent === 'info'
         ? 'info'
         : accent === 'aprovado'
           ? 'success'

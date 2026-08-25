@@ -375,7 +375,7 @@ export default function ConsultaComprasPedidos({
               nome={p.nome}
               valorTotal={p.total}
               striped={index % 2 === 1}
-              accent="info"
+              accent="citrus"
             />
           ))}
         </P38MobileLineList>
