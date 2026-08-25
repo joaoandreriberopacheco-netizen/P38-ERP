@@ -117,7 +117,7 @@ function loadPdfFontFaceCss() {
     return (
       "@font-face{font-family:'Libre Franklin';font-style:normal;font-weight:400 700;font-display:swap;" +
       "src:url(data:font/woff2;base64," + b64 + ") format('woff2');}" +
-      "html,body,.print-render-root,.print-sheet,.pedido-card-pdf{font-family:'Libre Franklin',system-ui,-apple-system,'Segoe UI',sans-serif;}"
+      "html,body,.print-render-root,.print-sheet{font-family:'Libre Franklin',system-ui,-apple-system,'Segoe UI',sans-serif;}"
     );
   } catch {
     return "html,body,.print-render-root{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;}";
