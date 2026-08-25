@@ -7,30 +7,98 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { readJson, snapshotPath } from '../lib/catalogoPaths.mjs';
 import { loadSnapshotFromFile } from '../lib/formigresSnapshot.mjs';
 import { extractImagensFromDetalhe, fetchProdutoDetalhe } from '../lib/formigresCatalog.mjs';
 
 const ROOT = process.cwd();
-const CLASSIF_DIR = path.join(ROOT, 'docs', 'imports-local', 'tintao', 'classificacao');
-const OUT_HTML = path.join(ROOT, 'docs', 'imports-local', 'tintao', 'Catálogo B2B Tintão - Formigres.html');
-const OUT_DEPLOY_HTML = path.join(ROOT, 'deploy', 'catalogo-tintao', 'index.html');
-const PUBLIC_URL = (
-  process.env.CATALOGO_TINTAO_PUBLIC_URL || 'https://catalogo-tintao-formigres.vercel.app/'
-).replace(/\/?$/, '/');
-const OUT_PDF_THUMBS = path.join(ROOT, 'docs', 'imports-local', 'tintao', 'catalogo-tintao-pdf-thumbs.json');
+const args = process.argv.slice(2);
+function argValue(flag) {
+  const i = args.indexOf(flag);
+  return i >= 0 ? args[i + 1] : null;
+}
+
+const MODO = argValue('--modo') || 'tintao';
+
+const CONFIGS = {
+  tintao: {
+    classifDir: path.join(ROOT, 'docs', 'imports-local', 'tintao', 'classificacao'),
+    classifPattern: /^tintao-formigres-\d{4}-\d{2}-\d{2}\.json$/,
+    outHtml: path.join(ROOT, 'docs', 'imports-local', 'tintao', 'Catálogo B2B Tintão - Formigres.html'),
+    outDeploy: path.join(ROOT, 'deploy', 'catalogo-tintao', 'index.html'),
+    outPdfThumbs: path.join(ROOT, 'docs', 'imports-local', 'tintao', 'catalogo-tintao-pdf-thumbs.json'),
+    publicUrl: (process.env.CATALOGO_TINTAO_PUBLIC_URL || 'https://catalogo-tintao-formigres.vercel.app/').replace(/\/?$/, '/'),
+    skipApiEnrich: false,
+    skipPdfThumbs: false,
+    title: 'Pedido Formigres — Lojistas',
+    h1: 'Pedido Formigres',
+    hint: 'Marque caixas na tabela · revise no carrinho',
+    demoBanner: '',
+    themeKey: 'tintao-theme-v1',
+    qtyKey: 'tintao-pedido-qty-v1',
+    descontoKey: 'tintao-desconto-v1',
+    classifError: 'JSON de classificação não encontrado. Rode: npm run catalogo:classificar-tintao',
+    skin: 'default',
+    siteSub: 'Pedido B2B · Lojistas',
+    hideThemeToggle: false,
+    fontsUrl: 'https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&display=swap',
+    logoPath: null,
+  },
+  formigres: {
+    classifDir: path.join(ROOT, 'docs', 'imports-local', 'formigres', 'classificacao'),
+    classifPattern: /^formigres-completo-\d{4}-\d{2}-\d{2}\.json$/,
+    outHtml: path.join(ROOT, 'docs', 'imports-local', 'formigres', 'Catálogo Formigres — Demonstração.html'),
+    outDeploy: path.join(ROOT, 'deploy', 'catalogo-formigres', 'index.html'),
+    outPdfThumbs: path.join(ROOT, 'docs', 'imports-local', 'formigres', 'catalogo-formigres-pdf-thumbs.json'),
+    publicUrl: (process.env.CATALOGO_FORMIGRES_PUBLIC_URL || 'https://catalogo-formigres-p38.vercel.app/').replace(/\/?$/, '/'),
+    skipApiEnrich: true,
+    skipPdfThumbs: true,
+    title: 'Catálogo Formigres — Pisos e Porcelanatos',
+    h1: 'Pisos e Revestimentos Cerâmicos',
+    hint: 'Qualidade, tecnologia e design — linha completa para montar pedido',
+    demoBanner: 'Preços de referência (Tintão) onde disponível — nos restantes modelos, consulte o distribuidor.',
+    themeKey: 'formigres-catalog-theme-v1',
+    qtyKey: 'formigres-catalog-qty-v1',
+    descontoKey: 'formigres-catalog-desconto-v1',
+    classifError: 'JSON de classificação não encontrado. Rode: npm run catalogo:classificar-formigres',
+    skin: 'formigres',
+    siteSub: 'Catálogo B2B · Demonstração',
+    hideThemeToggle: true,
+    fontsUrl: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&display=swap',
+    logoPath: path.join(ROOT, 'scripts', 'catalogo', 'assets', 'formigres-logo.png'),
+  },
+};
+
+const CFG = CONFIGS[MODO] || CONFIGS.tintao;
+const CLASSIF_DIR = CFG.classifDir;
+const OUT_HTML = CFG.outHtml;
+const OUT_DEPLOY_HTML = CFG.outDeploy;
+const PUBLIC_URL = CFG.publicUrl;
+const OUT_PDF_THUMBS = CFG.outPdfThumbs;
 const ANT_LOGO_PATH = path.join(ROOT, 'scripts', 'catalogo', 'assets', 'formigres-ant.png');
 const PDF_FONT_WOFF2 = path.join(ROOT, 'scripts', 'catalogo', 'assets', 'fonts', 'libre-franklin-latin.woff2');
 // Silhueta vermelha Formigres (recorte do logo vertical da marca); fundo transparente.
 
-function loadAntLogoDataUri() {
+function loadImageDataUri(filePath) {
   try {
-    const buf = fs.readFileSync(ANT_LOGO_PATH);
-    return `data:image/png;base64,${buf.toString('base64')}`;
+    const buf = fs.readFileSync(filePath);
+    const ext = path.extname(filePath).toLowerCase();
+    const mime = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
+    return `data:${mime};base64,${buf.toString('base64')}`;
   } catch {
     return '';
   }
+}
+
+function loadAntLogoDataUri() {
+  return loadImageDataUri(ANT_LOGO_PATH);
+}
+
+function loadBrandLogoDataUri(cfg) {
+  if (cfg.logoPath) return loadImageDataUri(cfg.logoPath);
+  return loadAntLogoDataUri();
 }
 
 function loadPdfFontFaceCss() {
@@ -83,18 +151,12 @@ const ACAB_ORDER = [
   'Sem acabamento',
 ];
 
-function argValue(flag) {
-  const args = process.argv.slice(2);
-  const i = args.indexOf(flag);
-  return i >= 0 ? args[i + 1] : null;
-}
-
 function findLatestClassifJson() {
   const custom = argValue('--json');
   if (custom && fs.existsSync(custom)) return custom;
   if (!fs.existsSync(CLASSIF_DIR)) return null;
   const files = fs.readdirSync(CLASSIF_DIR)
-    .filter((f) => /^tintao-formigres-\d{4}-\d{2}-\d{2}\.json$/.test(f))
+    .filter((f) => CFG.classifPattern.test(f))
     .sort()
     .reverse();
   return files[0] ? path.join(CLASSIF_DIR, files[0]) : null;
@@ -245,7 +307,159 @@ function slimItem(item) {
   };
 }
 
-function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFontCss = '' }) {
+function escTpl(s) {
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+const FORMIGRES_SKIN_CSS = `
+    html[data-skin="formigres"] {
+      --bg: #ffffff;
+      --bg-elevated: #ffffff;
+      --surface: #ffffff;
+      --surface-2: #f4f4f4;
+      --surface-3: #f4f4f4;
+      --border: #e8e8e8;
+      --border-subtle: rgba(0,0,0,.05);
+      --text: #444444;
+      --text-strong: #111111;
+      --muted: #666666;
+      --accent: #da1c24;
+      --accent-bright: #b01219;
+      --accent-dim: #da1c24;
+      --accent-deep: #b01219;
+      --accent-hover: #b01219;
+      --accent-on: #ffffff;
+      --accent-muted: rgba(218,28,36,.06);
+      --accent-soft: rgba(218,28,36,.10);
+      --accent-glow: rgba(218,28,36,.22);
+      --accent-ring: rgba(218,28,36,.14);
+      --accent-border: rgba(218,28,36,.28);
+      --warn: #da1c24;
+      --radius: 8px;
+      --shadow: 0 2px 16px rgba(0,0,0,.08);
+      --shadow-soft: 0 2px 12px rgba(0,0,0,.06);
+      --load-charcoal: #da1c24;
+      --load-charcoal-deep: #b01219;
+      --load-charcoal-ghost: #e8e8e8;
+      --pedido-divider: #e8e8e8;
+      font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+    }
+    html[data-skin="formigres"] .page-head h1,
+    html[data-skin="formigres"] .site-brand-text,
+    html[data-skin="formigres"] .acc-title,
+    html[data-skin="formigres"] .pedido-head h2 {
+      font-family: "Montserrat", "Inter", sans-serif;
+      font-weight: 700;
+      letter-spacing: -.02em;
+    }
+    html[data-skin="formigres"] .page-head h1::before {
+      content: '';
+      display: block;
+      width: 50px;
+      height: 3px;
+      background: var(--accent);
+      margin-bottom: .65rem;
+    }
+    html[data-skin="formigres"] .page-head h1 {
+      font-size: clamp(1.35rem, 4vw, 2rem);
+      font-weight: 800;
+      color: var(--text-strong);
+      line-height: 1.15;
+    }
+    html[data-skin="formigres"] .page-head-hint {
+      font-size: .95rem;
+      letter-spacing: 0;
+      text-transform: none;
+      color: var(--muted);
+      max-width: 42rem;
+    }
+    html[data-skin="formigres"] .site-bar {
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      border-left: none;
+      box-shadow: 0 2px 12px rgba(0,0,0,.04);
+    }
+    html[data-skin="formigres"] .site-brand-lockup {
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+      text-decoration: none;
+      color: inherit;
+    }
+    html[data-skin="formigres"] .site-logo {
+      height: 34px;
+      width: auto;
+      display: block;
+    }
+    html[data-skin="formigres"] .site-sub {
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 500;
+      letter-spacing: .02em;
+      text-transform: none;
+    }
+    html[data-skin="formigres"] .site-stat strong { color: var(--accent); }
+    html[data-skin="formigres"] .demo-banner {
+      background: #f9e5e6;
+      border: 1px solid rgba(218,28,36,.18);
+      color: var(--text-strong);
+      border-radius: var(--radius);
+    }
+    html[data-skin="formigres"] .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    html[data-skin="formigres"] .btn-primary:hover {
+      background: var(--accent-bright);
+      border-color: var(--accent-bright);
+      color: #fff;
+    }
+    html[data-skin="formigres"] .cart-fab,
+    html[data-skin="formigres"] .fab {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    html[data-skin="formigres"] .cart-fab:hover,
+    html[data-skin="formigres"] .fab:hover {
+      background: var(--accent-bright);
+      border-color: var(--accent-bright);
+    }
+    html[data-skin="formigres"] .load-overlay { background: rgba(255,255,255,.97); }
+    html[data-skin="formigres"] .load-logo-formigres {
+      width: min(240px, 72vw);
+      margin: 0 auto 18px;
+    }
+    html[data-skin="formigres"] .load-logo-formigres img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    html[data-skin="formigres"] .load-square.filled {
+      background: var(--accent);
+      border-color: var(--accent-deep);
+    }
+    html[data-skin="formigres"] .load-hint { color: var(--muted); }
+    html[data-skin="formigres"] .search:focus,
+    html[data-skin="formigres"] #desconto-pct:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-ring);
+    }
+    html[data-skin="formigres"] .model-row.has-qty {
+      box-shadow: inset 3px 0 0 var(--accent);
+    }
+    html[data-skin="formigres"] .linha-retificada { color: var(--text-strong); }
+    html[data-skin="formigres"] .linha-polida { color: var(--accent); }
+    html[data-skin="formigres"] .catalog-powered {
+      border-top-color: var(--border);
+      color: var(--gray-500, #888);
+    }
+    html[data-skin="formigres"] .catalog-powered strong { color: var(--text-strong); }
+`;
+
+function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '', pdfThumbs = {}, pdfFontCss = '', cfg = CFG }) {
   const gerado = new Date(classif.geradoEm || Date.now()).toLocaleString('pt-BR');
   const total = itens.length;
   const comFoto = itens.filter((i) => i.imagem_url).length;
@@ -263,18 +477,43 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
   const pdfThumbsJson = JSON.stringify(pdfThumbs).replace(/</g, '\\u003c');
   const pdfFontCssSafe = String(pdfFontCss).replace(/<\/style/gi, '<\\/style');
 
+  const isFormigresSkin = cfg.skin === 'formigres';
+  const headerLogo = brandLogoDataUri || antLogoDataUri;
+  const loaderHtml = isFormigresSkin
+    ? `<div class="load-logo-formigres" aria-hidden="true"><img src="${headerLogo}" alt="" width="240" height="41" /></div>`
+    : `<div class="load-logo-ant" aria-hidden="true">
+        <img class="load-ant-ghost" src="${antLogoDataUri || ''}" alt="" width="200" height="120" />
+        <div class="load-ant-fill-wrap" id="load-ant-fill-wrap">
+          <img src="${antLogoDataUri || ''}" alt="" width="200" height="120" />
+        </div>
+        <span class="load-pct" id="load-pct" aria-hidden="true">0%</span>
+      </div>`;
+  const siteBrandHtml = isFormigresSkin
+    ? `<a class="site-brand-lockup" href="https://www.formigres.com.br/" target="_blank" rel="noopener noreferrer" aria-label="Formigres — site oficial">
+        <img class="site-logo" src="${headerLogo}" alt="Formigres" width="148" height="25" />
+      </a>`
+    : `<span class="site-brand">Formigres</span>`;
+  const themeToggleHtml = cfg.hideThemeToggle ? '' : `<button type="button" class="theme-fab" id="theme-toggle" aria-label="Mudar para tema escuro" title="Tema">
+    <svg id="theme-icon-sun" hidden xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+    </svg>
+    <svg id="theme-icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+    </svg>
+  </button>`;
+
   return `<!DOCTYPE html>
-<html lang="pt-BR" data-theme="light">
+<html lang="pt-BR" data-theme="light" data-skin="${escTpl(cfg.skin || 'default')}">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pedido Formigres — Lojistas</title>
+  <title>${escTpl(cfg.title)}</title>
   <script>
-    (function(){try{var t=localStorage.getItem('tintao-theme-v1');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');}catch(e){}})();
+    (function(){try{var t=localStorage.getItem('${cfg.themeKey}');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');}catch(e){}})();
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="${escTpl(cfg.fontsUrl || 'https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&display=swap')}" rel="stylesheet" />
   <style id="pdf-font-face-embedded">${pdfFontCssSafe}</style>
   <style>
     :root {
@@ -339,6 +578,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
       --pedido-divider: #d5d5d5;
     }
     html[data-theme="light"] .load-overlay { background: rgba(242,242,240,.97); }
+    ${isFormigresSkin ? FORMIGRES_SKIN_CSS : ''}
     .load-logo-ant {
       position: relative;
       width: min(200px, 58vw);
@@ -1221,6 +1461,20 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
       color: var(--text);
       font-weight: 600;
     }
+    .demo-banner {
+      margin: 0 0 12px;
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      background: rgba(196, 30, 58, .08);
+      border: 1px solid rgba(196, 30, 58, .18);
+      color: var(--text);
+      font-size: .78rem;
+      line-height: 1.45;
+    }
+    html[data-theme="dark"] .demo-banner {
+      background: rgba(196, 30, 58, .12);
+      border-color: rgba(196, 30, 58, .28);
+    }
     @media (max-width: 720px) {
       .wrap { padding: 10px 10px 20px; }
       .page-head { margin-bottom: 8px; padding-bottom: 8px; }
@@ -1386,24 +1640,18 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
   </script>
   <div class="load-overlay" id="load-overlay" role="status" aria-live="polite" aria-busy="true">
     <div class="load-panel">
-      <div class="load-logo-ant" aria-hidden="true">
-        <img class="load-ant-ghost" src="${antLogoDataUri || ''}" alt="" width="200" height="120" />
-        <div class="load-ant-fill-wrap" id="load-ant-fill-wrap">
-          <img src="${antLogoDataUri || ''}" alt="" width="200" height="120" />
-        </div>
-        <span class="load-pct" id="load-pct" aria-hidden="true">0%</span>
-      </div>
+      ${loaderHtml}
       <div class="load-squares" id="load-squares" aria-hidden="true">${loadSquaresHtml}</div>
-      <p class="load-hint" id="load-msg" aria-live="polite">A abrir catálogo…</p>
+      <p class="load-hint" id="load-msg" aria-live="polite">${isFormigresSkin ? 'A carregar catálogo…' : 'A abrir catálogo…'}</p>
     </div>
   </div>
 
   <div id="app-shell" class="app-shell" aria-hidden="true">
   <header class="site-bar">
     <div class="site-bar-inner">
-      <span class="site-brand">Formigres</span>
+      ${siteBrandHtml}
       <span class="site-divider" aria-hidden="true"></span>
-      <span class="site-sub">Pedido B2B · Lojistas</span>
+      <span class="site-sub">${escTpl(cfg.siteSub || 'Pedido B2B · Lojistas')}</span>
       <span class="site-bar-spacer" aria-hidden="true"></span>
       <div class="site-desconto">
         <label for="desconto-pct">Desconto</label>
@@ -1417,9 +1665,10 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
   </header>
   <div class="wrap">
     <div class="page-head">
-      <h1>Pedido Formigres</h1>
-      <p class="page-head-hint">Marque caixas na tabela · revise no carrinho</p>
+      <h1>${escTpl(cfg.h1)}</h1>
+      <p class="page-head-hint">${escTpl(cfg.hint)}</p>
     </div>
+    ${cfg.demoBanner ? `<p class="demo-banner" role="note">${escTpl(cfg.demoBanner)}</p>` : ''}
 
     <div class="toolbar">
       <div class="toolbar-main">
@@ -1456,14 +1705,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
     </footer>
   </div>
 
-  <button type="button" class="theme-fab" id="theme-toggle" aria-label="Mudar para tema escuro" title="Tema">
-    <svg id="theme-icon-sun" hidden xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
-    </svg>
-    <svg id="theme-icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
-    </svg>
-  </button>
+  ${themeToggleHtml}
 
   <div class="fab-stack" id="fab-stack">
     <button type="button" class="fab cart-fab" id="cart-fab" aria-label="Minha seleção">
@@ -1563,10 +1805,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
       CFG = CATALOGO.config;
       itemsByCode = new Map();
     }
+    const PDF_TITLE = '${escTpl(cfg.h1)}';
+    const CATALOG_SKIN = '${escTpl(cfg.skin || 'default')}';
     const TIPO_LABEL_GAL = { principal: 'Cerâmica', ambiente: 'Ambiente', piso: 'Piso', face: 'Face', outro: 'Imagem' };
-    const QTY_KEY = 'tintao-pedido-qty-v1';
-    const THEME_KEY = 'tintao-theme-v1';
-    const DESCONTO_KEY = 'tintao-desconto-v1';
+    const QTY_KEY = '${cfg.qtyKey}';
+    const THEME_KEY = '${cfg.themeKey}';
+    const DESCONTO_KEY = '${cfg.descontoKey}';
     let qtyMap = {};
     try { qtyMap = JSON.parse(localStorage.getItem(QTY_KEY) || '{}'); } catch { qtyMap = {}; }
     let descontoPct = 0;
@@ -2119,7 +2363,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
         : '';
       return '<div class="print-sheet">' +
         '<header class="print-head">' +
-          '<h1>Pedido Formigres</h1>' +
+          '<h1>' + esc(PDF_TITLE) + '</h1>' +
           '<p class="print-meta">1ª via · Gerado em ' + esc(new Date().toLocaleString('pt-BR')) + '</p>' +
           descNote +
         '</header>' +
@@ -2416,7 +2660,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
       }
     }
     async function bootApp() {
-      const fast = prefersFastBoot();
+      const fast = prefersFastBoot() || CATALOG_SKIN === 'formigres';
       if (fast) {
         setLoadProgress(1, 1);
         revealApp();
@@ -2632,10 +2876,12 @@ function main() {
   });
 }
 
+export { main, mainAsync };
+
 async function mainAsync() {
   const jsonPath = findLatestClassifJson();
   if (!jsonPath) {
-    console.error('JSON de classificação não encontrado. Rode: npm run catalogo:classificar-tintao');
+    console.error(CFG.classifError);
     process.exit(1);
   }
 
@@ -2647,14 +2893,25 @@ async function mainAsync() {
   }
 
   const itensBase = enrichItens(classif.itens || [], snapshot);
-  console.error('A carregar fotos do site Formigres…');
-  const itens = await enrichImagensFromApi(itensBase);
-  console.error('A gerar miniaturas leves para PDF…');
-  const pdfThumbs = await buildPdfThumbMap(itens);
+  let itens = itensBase;
+  if (!CFG.skipApiEnrich) {
+    console.error('A carregar fotos do site Formigres…');
+    itens = await enrichImagensFromApi(itensBase);
+  } else {
+    console.error('Modo snapshot — a saltar chamadas API individuais.');
+  }
+  let pdfThumbs = {};
+  if (!CFG.skipPdfThumbs) {
+    console.error('A gerar miniaturas leves para PDF…');
+    pdfThumbs = await buildPdfThumbMap(itens);
+  } else {
+    console.error('A saltar miniaturas PDF embutidas (catálogo grande).');
+  }
   const thumbsCount = Object.values(pdfThumbs).filter(Boolean).length;
   const antLogoDataUri = loadAntLogoDataUri();
+  const brandLogoDataUri = loadBrandLogoDataUri(CFG);
   const pdfFontCss = loadPdfFontFaceCss();
-  const html = buildHtml({ classif, itens, antLogoDataUri, pdfThumbs, pdfFontCss });
+  const html = buildHtml({ classif, itens, antLogoDataUri, brandLogoDataUri, pdfThumbs, pdfFontCss, cfg: CFG });
 
   fs.mkdirSync(path.dirname(OUT_HTML), { recursive: true });
   fs.mkdirSync(path.dirname(OUT_DEPLOY_HTML), { recursive: true });
@@ -2667,6 +2924,7 @@ async function mainAsync() {
 
   console.log(JSON.stringify({
     ok: true,
+    modo: MODO,
     itens: itens.length,
     comFoto: itens.filter((i) => i.imagem_url).length,
     comGaleria: itens.filter((i) => (i.imagens || []).length > 1).length,
@@ -2681,4 +2939,5 @@ async function mainAsync() {
   }, null, 2));
 }
 
-main();
+const isMain = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
+if (isMain) main();

@@ -1,0 +1,65 @@
+# Deploy estático — catálogo Formigres demo (projecto Vercel separado).
+
+name: Vercel Deploy — Catálogo Formigres
+
+concurrency:
+  group: vercel-deploy-catalogo-formigres
+  cancel-in-progress: false
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'deploy/catalogo-formigres/**'
+      - '.github/workflows/vercel-deploy-catalogo-formigres.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sanitizar secrets Vercel
+        shell: bash
+        env:
+          RAW_VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          RAW_VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          RAW_VERCEL_PROJECT_ID: ${{ secrets.VERCEL_CATALOGO_FORMIGRES_PROJECT_ID }}
+        run: |
+          set -e
+          trim() { printf '%s' "$1" | tr -d '\n\r'; }
+          token=$(trim "$RAW_VERCEL_TOKEN")
+          org=$(trim "$RAW_VERCEL_ORG_ID")
+          project=$(trim "$RAW_VERCEL_PROJECT_ID")
+          if [ -z "$token" ] || [ -z "$org" ] || [ -z "$project" ]; then
+            echo "::warning::Secrets Vercel do catálogo Formigres em falta — deploy ignorado."
+            echo "Configure VERCEL_CATALOGO_FORMIGRES_PROJECT_ID (ver deploy/catalogo-formigres/README.md)."
+            exit 0
+          fi
+          {
+            echo "VERCEL_TOKEN=$token"
+            echo "VERCEL_ORG_ID=$org"
+            echo "VERCEL_PROJECT_ID=$project"
+          } >> "$GITHUB_ENV"
+
+      - name: Validar index.html
+        run: |
+          set -e
+          if [ ! -f deploy/catalogo-formigres/index.html ]; then
+            echo "::error::deploy/catalogo-formigres/index.html em falta. Rode npm run catalogo:publicar-formigres"
+            exit 1
+          fi
+          bytes=$(wc -c < deploy/catalogo-formigres/index.html)
+          if [ "$bytes" -lt 100000 ]; then
+            echo "::error::index.html demasiado pequeno ($bytes bytes)."
+            exit 1
+          fi
+          echo "OK: index.html ($bytes bytes)"
+
+      - name: Vercel deploy (catálogo Formigres)
+        working-directory: deploy/catalogo-formigres
+        run: |
+          url=$(npx --yes vercel@latest deploy --prod --yes --token "$VERCEL_TOKEN")
+          echo "Deploy URL: $url"
