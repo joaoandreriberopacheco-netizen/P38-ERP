@@ -69,6 +69,8 @@ export async function applySupabaseMigrations({ databaseUrl, dryRun = false, cli
     : new pg.Client({
         connectionString: databaseUrl.trim(),
         ssl: databaseUrl.includes('supabase') ? { rejectUnauthorized: false } : undefined,
+        // GitHub Actions: runners often lack rota IPv6 até Supabase (ENETUNREACH).
+        family: 4,
       });
 
   const client = externalClient || ownClient;
