@@ -41,6 +41,7 @@ on:
       - 'supabase/migrations/**'
       - 'supabase/functions/**'
       - 'scripts/apply-supabase-migrations.mjs'
+      - 'scripts/lib/pg-connect-ipv4.mjs'
       - 'scripts/deploy-supabase*.mjs'
       - 'scripts/supabase-env.mjs'
 
