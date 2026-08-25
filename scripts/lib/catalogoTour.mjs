@@ -55,7 +55,7 @@ export function buildCatalogTourSteps({ skin = 'formigres', qtyLabelPl = 'palete
       text: isPortfolio
         ? `Tour rápido (~2 min) do ${marca}: busca, ${qtyLabelPl}, carrinho e PDF. Dados ilustrativos — sem vínculo com concorrentes do seu mercado.`
         : (isTintao
-          ? `Tour rápido (~2 min): busca por código ou modelo, marque ${qtyLabelPl} na tabela, revise no carrinho e gere o PDF para enviar ao representante. Pode pular a qualquer momento.`
+          ? `Tour rápido (~2 min): busca por código ou modelo, marque caixas na tabela, revise m² por caixa e total no carrinho e gere o PDF para enviar ao vendedor. Pode pular a qualquer momento.`
           : `Tour rápido (~2 min) do catálogo ${marca}: busca, ${qtyLabelPl}, regime Suframa, carrinho e PDF para o representante. Pode pular a qualquer momento.`),
       center: true,
       prepare: 'closePanels',
@@ -65,7 +65,7 @@ export function buildCatalogTourSteps({ skin = 'formigres', qtyLabelPl = 'palete
       selector: '#desconto-pct',
       title: 'Desconto comercial',
       text: isTintao
-        ? 'Opcional: percentual negociado com o representante. Entra no total do pedido.'
+        ? 'Opcional: percentual negociado com o vendedor. Entra no total do pedido.'
         : (isPortfolio
           ? 'Opcional: percentual negociado com o cliente. Combina com o regime Suframa quando activo.'
           : 'Opcional: percentual negociado com o cliente. Combina com o incentivo Suframa quando o regime especial estiver ativo.'),
@@ -124,7 +124,7 @@ export function buildCatalogTourSteps({ skin = 'formigres', qtyLabelPl = 'palete
       selector: '#catalogo',
       title: 'Montar o pedido',
       text: isTintao
-        ? `Navegue por linha (Bold, Retificada, Polida), formato e acabamento. Preencha a coluna de ${qtyLabelPl} em cada modelo.`
+        ? 'Navegue por linha (Bold, Retificada, Polida), formato e acabamento. Na coluna Caixas, indique quantas unidades quer — o m²/cx e o m² total calculam automaticamente.'
         : `Abra ${linhas}, escolha formato e acabamento e preencha a coluna de ${qtyLabelPl} em cada linha.`,
       placement: 'top',
       prepare: 'closePanels',
@@ -133,7 +133,9 @@ export function buildCatalogTourSteps({ skin = 'formigres', qtyLabelPl = 'palete
       id: 'cart',
       selector: '#cart-fab',
       title: 'Carrinho — Minha seleção',
-      text: `Toque no carrinho para abrir a seleção: revise ${qtyLabelPl}, m², peso e subtotais antes de exportar.`,
+      text: isTintao
+        ? 'Toque no carrinho para abrir a seleção: revise caixas, m²/cx, m² total e subtotais antes de exportar.'
+        : `Toque no carrinho para abrir a seleção: revise ${qtyLabelPl}, m², peso e subtotais antes de exportar.`,
       placement: 'left',
       prepare: 'closePanels',
     },
@@ -142,7 +144,9 @@ export function buildCatalogTourSteps({ skin = 'formigres', qtyLabelPl = 'palete
       selector: '#pedido-actions',
       selectorMobile: '#pedido-panel',
       title: 'Revisar antes do PDF',
-      text: 'Confira cada linha do pedido. Pode limpar a seleção ou ajustar quantidades voltando ao catálogo.',
+      text: isTintao
+        ? 'Confira cada linha: caixas, m² por caixa e m² total. Pode limpar a seleção ou ajustar quantidades voltando ao catálogo.'
+        : 'Confira cada linha do pedido. Pode limpar a seleção ou ajustar quantidades voltando ao catálogo.',
       placement: 'top',
       prepare: 'pedidoOpen',
     },
@@ -150,15 +154,17 @@ export function buildCatalogTourSteps({ skin = 'formigres', qtyLabelPl = 'palete
       id: 'pdf',
       selector: '#pdf-pedido-panel',
       title: 'Gerar PDF do pedido',
-      text: 'Com itens na seleção, toque em PDF do pedido. O ficheiro baixa no telemóvel ou computador — ideal para arquivar ou enviar.',
+      text: isTintao
+        ? 'Com itens na seleção, toque em PDF do pedido. O ficheiro baixa no telemóvel ou computador — ideal para enviar ao vendedor.'
+        : 'Com itens na seleção, toque em PDF do pedido. O ficheiro baixa no telemóvel ou computador — ideal para arquivar ou enviar.',
       placement: 'top',
       prepare: 'pedidoOpen',
     },
     {
       id: 'enviar',
-      title: 'Envie ao representante',
+      title: isTintao ? 'Envie ao vendedor' : 'Envie ao representante',
       text: isTintao
-        ? 'Depois de gerar o PDF, envie ao representante Formigres (WhatsApp, e-mail ou canal habitual) para formalizar cotação ou pedido.'
+        ? 'Depois de gerar o PDF, envie ao vendedor Formigres (WhatsApp, e-mail ou canal habitual) para formalizar cotação ou pedido.'
         : (isPortfolio
           ? 'Depois de gerar o PDF, imagine enviar ao representante da sua fábrica — é o fluxo que o P38 entrega no white-label.'
           : 'Depois de gerar o PDF, reenvie-o ao seu representante comercial (WhatsApp, e-mail ou canal habitual) para formalizar cotação ou pedido.'),

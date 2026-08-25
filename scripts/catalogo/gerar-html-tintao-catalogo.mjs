@@ -52,7 +52,7 @@ const CONFIGS = {
     qtyKey: 'tintao-pedido-qty-v1',
     descontoKey: 'tintao-desconto-v1',
     groupKey: 'tintao-catalog-group-v1',
-    tourKey: 'tintao-catalog-tour-v1',
+    tourKey: 'tintao-catalog-tour-v2',
     classifError: 'JSON de classificação não encontrado. Rode: npm run catalogo:classificar-tintao',
     skin: 'default',
     siteSub: 'Pedido B2B · Lojistas',
