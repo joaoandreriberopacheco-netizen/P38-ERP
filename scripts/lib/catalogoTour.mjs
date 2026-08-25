@@ -3,12 +3,19 @@
  * Spotlight + passos; primeira visita automática; botão Ajuda repete.
  */
 
-export function buildCatalogTourSteps({ qtyLabelPl = 'paletes' } = {}) {
+export function buildCatalogTourSteps({ skin = 'formigres', qtyLabelPl = 'paletes' } = {}) {
+  const isArielle = skin === 'arielle';
+  const marca = isArielle ? 'Arielle · Carmelo Fior' : 'Formigres';
+  const linhas = isArielle ? 'Bold e Retificada' : 'Bold, Retificada e Polida';
+  const regimeOrigem = isArielle
+    ? 'Produtos Arielle (Polo SE): o incentivo considera origem Sergipe.'
+    : 'Produtos Formigres (SP): o incentivo considera origem São Paulo.';
+
   return [
     {
       id: 'welcome',
-      title: 'Bem-vindo ao catálogo',
-      text: 'Tour rápido (~1 min): onde buscar, marcar paletes, regime Suframa e revisar o pedido. Pode pular a qualquer momento.',
+      title: isArielle ? 'Bem-vindo ao catálogo Arielle' : 'Bem-vindo ao catálogo Formigres',
+      text: `Tour rápido (~1 min) do catálogo ${marca}: busca, ${qtyLabelPl}, regime Suframa e revisão do pedido. Pode pular a qualquer momento.`,
       center: true,
     },
     {
@@ -22,14 +29,14 @@ export function buildCatalogTourSteps({ qtyLabelPl = 'paletes' } = {}) {
       id: 'regime',
       selector: '#regime-panel',
       title: 'Regime especial Suframa',
-      text: 'Ative para compras para AM, RR, AP ou AC. Informe UF, destino (ZFM/ALC) e regime tributário — o desconto entra nos preços.',
+      text: `Ative para compras para AM, RR, AP ou AC. Informe UF, destino (ZFM/ALC) e regime tributário — o desconto entra nos preços. ${regimeOrigem}`,
       placement: 'bottom',
     },
     {
       id: 'search',
       selector: '#search',
       title: 'Busca',
-      text: 'Procure por código, nome do modelo ou formato (ex.: 84x84, Laredo, Tinharé).',
+      text: 'Procure por código, nome do modelo ou formato (ex.: 84x84, 60x120).',
       placement: 'bottom',
     },
     {
@@ -37,14 +44,16 @@ export function buildCatalogTourSteps({ qtyLabelPl = 'paletes' } = {}) {
       selectorDesktop: '#group-by-desktop',
       selectorMobile: '#group-by',
       title: 'Agrupar catálogo',
-      text: 'Escolha ver por formato › acabamento ou acabamento › formato — Bold/Retificada e Mate/Brilhante ficam organizados.',
+      text: isArielle
+        ? 'Escolha ver por formato › acabamento ou acabamento › formato — Bold/Retificada e Mate/Brilhante/Polida ficam organizados.'
+        : 'Escolha ver por formato › acabamento ou acabamento › formato — Bold, Retificada e Polida no mesmo nível, com acabamentos dentro de cada linha.',
       placement: 'bottom',
     },
     {
       id: 'catalogo',
       selector: '#catalogo',
       title: 'Montar o pedido',
-      text: `Abra Bold ou Retificada, escolha o acabamento e preencha a coluna de ${qtyLabelPl} em cada linha.`,
+      text: `Abra ${linhas}, escolha formato e acabamento e preencha a coluna de ${qtyLabelPl} em cada linha.`,
       placement: 'top',
     },
     {
@@ -158,8 +167,8 @@ export function buildCatalogTourFabHtml() {
   return `<button type="button" class="fab help-fab" id="help-tour-fab" aria-label="Ajuda — tour do catálogo" title="Ajuda">?</button>`;
 }
 
-export function buildCatalogTourClientJs({ tourKey, qtyLabelPl = 'paletes' }) {
-  const stepsJson = JSON.stringify(buildCatalogTourSteps({ qtyLabelPl }));
+export function buildCatalogTourClientJs({ tourKey, skin = 'formigres', qtyLabelPl = 'paletes' }) {
+  const stepsJson = JSON.stringify(buildCatalogTourSteps({ skin, qtyLabelPl }));
   const key = JSON.stringify(tourKey || 'catalog-tour-v1');
   return `
     const TOUR_KEY = ${key};

@@ -87,6 +87,8 @@ const CONFIGS = {
     hideThemeToggle: true,
     fontsUrl: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&display=swap',
     logoPath: path.join(ROOT, 'scripts', 'catalogo', 'assets', 'formigres-logo.png'),
+    brandSiteUrl: 'https://www.formigres.com.br/',
+    brandSiteLabel: 'Formigres — site oficial',
     fabricanteUf: 'SP',
     fabricanteNome: 'Formigres',
   },
@@ -195,8 +197,7 @@ const TIPO_LABEL = {
   outros: 'Outros',
 };
 
-const ACAB_ORDER = [
-  'POLIDO',
+const FORMIGRES_ACAB_ORDER = [
   'BRILHANTE',
   'MATE',
   'GRANILHADO',
@@ -205,6 +206,11 @@ const ACAB_ORDER = [
   'MATE ABS',
   'GOTEJADO',
   'Sem acabamento',
+];
+
+const ACAB_ORDER = [
+  'POLIDO',
+  ...FORMIGRES_ACAB_ORDER,
 ];
 
 const ARIELLE_LINHA_ORDER = ['bold', 'retificada'];
@@ -235,7 +241,7 @@ function getCatalogConfig(cfg = CFG) {
     linhaLabel: LINHA_LABEL,
     tipoOrder: TIPO_ORDER,
     tipoLabel: TIPO_LABEL,
-    acabOrder: ACAB_ORDER,
+    acabOrder: FORMIGRES_ACAB_ORDER,
   };
 }
 
@@ -1000,19 +1006,15 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         <span class="load-pct" id="load-pct" aria-hidden="true">0%</span>
       </div>`;
   const siteBrandHtml = isB2bSkin
-    ? (cfg.skin === 'arielle'
-      ? ''
-      : `<a class="site-brand-lockup" href="https://www.formigres.com.br/" target="_blank" rel="noopener noreferrer" aria-label="Formigres — site oficial">
-        <img class="site-logo" src="${headerLogo}" alt="Formigres" width="148" height="25" />
-      </a>`)
+    ? ''
     : `<span class="site-brand">Formigres</span>`;
-  const pageHeadBrandHtml = (isB2bSkin && cfg.skin === 'arielle')
-    ? `<a class="page-head-brand-lockup" href="${escTpl(cfg.brandSiteUrl || 'https://www.carmelofior.com.br/produtos?category=4')}" target="_blank" rel="noopener noreferrer" aria-label="${escTpl(cfg.brandSiteLabel || 'Arielle')}">
-        <img class="page-head-logo" src="${headerLogo}" alt="Arielle" width="180" height="31" />
+  const pageHeadBrandHtml = isB2bSkin && headerLogo
+    ? `<a class="page-head-brand-lockup" href="${escTpl(cfg.brandSiteUrl || (cfg.skin === 'arielle' ? 'https://www.carmelofior.com.br/produtos?category=4' : 'https://www.formigres.com.br/'))}" target="_blank" rel="noopener noreferrer" aria-label="${escTpl(cfg.brandSiteLabel || (cfg.skin === 'arielle' ? 'Arielle' : 'Formigres'))}">
+        <img class="page-head-logo" src="${headerLogo}" alt="${escTpl(cfg.skin === 'arielle' ? 'Arielle' : 'Formigres')}" width="180" height="31" />
       </a>`
     : '';
-  const siteBarLeadHtml = (isB2bSkin && cfg.skin === 'arielle')
-    ? `<span class="site-sub site-sub-lead">${escTpl(cfg.siteSub || 'Arielle · Carmelo Fior · Catálogo B2B')}</span>`
+  const siteBarLeadHtml = isB2bSkin
+    ? `<span class="site-sub site-sub-lead">${escTpl(cfg.siteSub || 'Catálogo B2B')}</span>`
     : `${siteBrandHtml}<span class="site-divider" aria-hidden="true"></span><span class="site-sub">${escTpl(cfg.siteSub || 'Pedido B2B · Lojistas')}</span>`;
   const themeToggleHtml = cfg.hideThemeToggle ? '' : `<button type="button" class="theme-fab" id="theme-toggle" aria-label="Mudar para tema escuro" title="Tema">
     <svg id="theme-icon-sun" hidden xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1029,7 +1031,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     })
     : '';
   const catalogTourJs = isB2bSkin
-    ? buildCatalogTourClientJs({ tourKey: cfg.tourKey, qtyLabelPl })
+    ? buildCatalogTourClientJs({ tourKey: cfg.tourKey, skin: cfg.skin, qtyLabelPl })
     : '';
   const regimePanelHtml = isB2bSkin
     ? `<section class="regime-panel" id="regime-panel" aria-label="Regime especial Suframa">
@@ -2390,11 +2392,14 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       .page-head-hint { display: none; }
       .site-bar-inner { padding: 8px 10px; gap: 8px; }
       .site-divider, .site-sub:not(.site-sub-lead) { display: none; }
-      html[data-skin="arielle"] .site-sub-lead {
+      html[data-skin="arielle"] .site-sub-lead,
+      html[data-skin="formigres"] .site-sub-lead {
         display: none;
       }
-      html[data-skin="arielle"] .page-head-with-brand { gap: 10px; align-items: flex-start; }
-      html[data-skin="arielle"] .page-head-logo { height: 34px; }
+      html[data-skin="arielle"] .page-head-with-brand,
+      html[data-skin="formigres"] .page-head-with-brand { gap: 10px; align-items: flex-start; }
+      html[data-skin="arielle"] .page-head-logo,
+      html[data-skin="formigres"] .page-head-logo { height: 34px; }
       .site-desconto label { display: none; }
       #desconto-pct { width: 56px; padding: 6px 4px; }
       .site-stat { font-size: .72rem; }
@@ -3780,8 +3785,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return '<details class="acc acc-acab" open><summary><span class="acc-title">' + esc(acab) + '</span><span class="acc-count" data-total="' + n + '">' + n + '</span></summary>' +
         renderItemsTable(items) + '</details>';
     }
-    function renderFormatoComAcab(formato, acabMap) {
+    function renderFormatoComAcab(formato, acabMap, linha) {
       const acabs = sortAcabKeys(Object.keys(acabMap));
+      const flatPolida = linha === 'polida' || (acabs.length === 1 && /^polida?$/i.test(String(acabs[0]).normalize('NFD').replace(/[\u0300-\u036f]/g, '')));
+      if (flatPolida) {
+        const items = acabs.flatMap((a) => acabMap[a]);
+        return renderFormato(formato, items);
+      }
       const n = acabs.reduce((s, a) => s + acabMap[a].length, 0);
       return '<details class="acc acc-grupo acc-grupo-formato" open><summary><span class="acc-title">' + esc(grupoLabelFormato(formato)) + '</span><span class="acc-count" data-total="' + n + '" data-suffix="itens">' + n + ' itens</span></summary>' +
         '<div class="acc-inner">' + acabs.map((a) => renderAcabamentoLeaf(a, acabMap[a])).join('') + '</div></details>';
@@ -3809,9 +3819,17 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const keys = sortGruposNivel1(Object.keys(gruposMap));
       const n = countLinhaMap(gruposMap);
       const label = CFG.linhaLabel[linha] || linha;
-      const inner = groupBy === 'formato-acabamento'
-        ? keys.map((k) => renderFormatoComAcab(k, gruposMap[k])).join('')
-        : keys.map((k) => renderGrupoAcab(k, gruposMap[k])).join('');
+      let inner;
+      if (groupBy === 'formato-acabamento') {
+        inner = keys.map((k) => renderFormatoComAcab(k, gruposMap[k], linha)).join('');
+      } else if (linha === 'polida') {
+        inner = keys.flatMap((acab) => {
+          const formatos = Object.keys(gruposMap[acab]).sort(compareFormato);
+          return formatos.map((f) => renderFormato(f, gruposMap[acab][f]));
+        }).join('');
+      } else {
+        inner = keys.map((k) => renderGrupoAcab(k, gruposMap[k])).join('');
+      }
       return '<details class="acc acc-linha" open><summary><span class="acc-title linha-' + esc(linha) + '">' + esc(label) + '</span><span class="acc-count" data-total="' + n + '">' + n + '</span></summary>' +
         '<div class="acc-inner">' + inner + '</div></details>';
     }
