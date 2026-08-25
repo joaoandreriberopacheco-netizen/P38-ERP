@@ -145,7 +145,9 @@ const CONFIGS = {
     qtyUnit: 'palete',
     qtyLabel: 'Paletes',
     qtyLabelPl: 'paletes',
-    demoBanner: 'Exemplo de portfolio P38 · dados públicos Ecuaceramica (Equador) · preços e embalagens demonstrativos, sem vínculo comercial',
+    demoBanner: 'Exemplo portfolio P38 · Ecuaceramica (Equador) · embalagem oficial · preço/m² = preço caixa (site) ÷ m²/caixa',
+    moeda: 'USD',
+    moedaSimbolo: 'US$',
     themeKey: 'ecuaceramica-catalog-theme-v1',
     qtyKey: 'ecuaceramica-catalog-qty-v1',
     descontoKey: 'ecuaceramica-catalog-desconto-v1',
@@ -2826,6 +2828,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     const DESCONTO_KEY = '${cfg.descontoKey}';
     const REGIME_KEY = '${cfg.regimeKey || ''}';
     const IS_B2B_CATALOG = ${isB2bSkin};
+    const MOEDA_SIMBOLO = ${JSON.stringify(cfg.moedaSimbolo || 'R$')};
     ${suframaClientJs ? `${suframaClientJs}\n    ` : ''}const GROUP_KEY = '${cfg.groupKey}';
     const PEDIDO_TABLE_COLGROUP_HTML = ${JSON.stringify(pedidoTableColgroup)};
     const PEDIDO_TABLE_HEAD_HTML = ${JSON.stringify(pedidoTableHead)};
@@ -3175,7 +3178,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       if (Number.isNaN(n)) return String(v);
       const parts = n.toFixed(2).split('.');
       parts[0] = parts[0].replace(/\\B(?=(\\d{3})+(?!\\d))/g, '.');
-      return 'R$ ' + parts.join(',');
+      return MOEDA_SIMBOLO + ' ' + parts.join(',');
     }
     function fmtDecimal(v, digits) {
       if (v == null || v === '') return '—';

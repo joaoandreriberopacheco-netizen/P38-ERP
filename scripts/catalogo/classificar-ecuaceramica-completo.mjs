@@ -10,7 +10,7 @@ import { classificarEcuaceramica, resumirClassificacoes } from '../lib/ecuaceram
 import { readJson, snapshotPath } from '../lib/catalogoPaths.mjs';
 import { loadSnapshotFromFile } from '../lib/ecuaceramicaSnapshot.mjs';
 import { resolvePrecoEcuaceramica, TABELA_ECUA_META } from '../lib/ecuaceramicaTabelaPrecos.mjs';
-import { resolveEmbalagemEcuaceramica } from '../lib/ecuaceramicaEmbalagem.mjs';
+import { resolveEmbalagemEcuaceramica, EMBALAGEM_ECUA_META } from '../lib/ecuaceramicaEmbalagem.mjs';
 
 const OUT_DIR = path.join(process.cwd(), 'docs', 'imports-local', 'ecuaceramica', 'classificacao');
 
@@ -25,7 +25,7 @@ function main() {
   const rows = snapshot.produtos.map((p) => {
     const classif = classificarEcuaceramica(p);
     const id = String(p.id);
-    const { preco, faixa, motivo } = resolvePrecoEcuaceramica(p, classif);
+    const { preco, preco_caixa, faixa, motivo } = resolvePrecoEcuaceramica(p, classif);
     const emb = resolveEmbalagemEcuaceramica(p);
     if (faixa) faixaCount[faixa] = (faixaCount[faixa] || 0) + 1;
     else faixaCount.sem_preco = (faixaCount.sem_preco || 0) + 1;
@@ -50,9 +50,12 @@ function main() {
       formigres_acabamento: p.acabamento || '',
       marca_nome: 'Ecuaceramica',
       referencia: p.referencia || '',
+      preco_caixa: preco_caixa ?? p.preco_caixa ?? null,
       preco_m2: preco,
       preco_faixa: faixa,
       preco_motivo: motivo || null,
+      moeda: p.moeda || 'USD',
+      pecas_por_caixa: emb.pecas_por_caixa,
       m2_por_caixa: emb.m2_por_caixa,
       caixas_por_palete: emb.caixas_por_palete,
       m2_por_palete: emb.m2_por_palete,
@@ -79,6 +82,7 @@ function main() {
     snapshot: snapshotPath('ecuaceramica'),
     snapshotCount: snapshot.count || rows.length,
     tabelaPrecos: TABELA_ECUA_META,
+    embalagem: EMBALAGEM_ECUA_META,
     comPreco,
     faixaCount,
     itens: rows,

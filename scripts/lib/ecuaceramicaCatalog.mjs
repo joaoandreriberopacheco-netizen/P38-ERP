@@ -51,6 +51,26 @@ function tokenizeTitulo(titulo) {
     .filter((t) => t.length >= 2);
 }
 
+function parsePrecoCaixaFromProductJson(prodJson) {
+  if (!prodJson) return { preco_caixa: null, preco_motivo_site: 'sem_data_product' };
+  const amount = Number(prodJson.price_amount);
+  if (Number.isFinite(amount) && amount > 0) {
+    return { preco_caixa: amount, preco_motivo_site: 'price_amount' };
+  }
+  const raw = String(prodJson.price || '').trim();
+  if (raw && !/0[,.]00/.test(raw)) {
+    const cleaned = raw.replace(/[^\d,.-]/g, '');
+    const normalized = cleaned.includes(',') && !cleaned.includes('.')
+      ? cleaned.replace(',', '.')
+      : cleaned.replace(/\./g, '').replace(',', '.');
+    const v = Number(normalized);
+    if (Number.isFinite(v) && v > 0) {
+      return { preco_caixa: v, preco_motivo_site: 'price_string' };
+    }
+  }
+  return { preco_caixa: null, preco_motivo_site: 'preco_oculto_site' };
+}
+
 /** URLs de produto na categoria Porcelanato (paginação PrestaShop). */
 export async function fetchCategoryProductUrls({ resultsPerPage = 100 } = {}) {
   const urls = new Set();
@@ -90,10 +110,14 @@ export async function fetchProdutoDetalhe(url) {
     || html.match(/(\d+-large_default\/[^"]+\.(?:jpg|webp|png))"/)?.[1]?.replace(/^/, `${ECUA_BASE}/`)
     || '';
   let reference = '';
+  let preco_caixa = null;
+  let preco_motivo_site = 'preco_oculto_site';
   const dataProduct = html.match(/data-product="([^"]+)"/);
   if (dataProduct) {
     try {
-      reference = JSON.parse(decodeHtmlEntities(dataProduct[1])).reference || '';
+      const prodJson = JSON.parse(decodeHtmlEntities(dataProduct[1]));
+      reference = prodJson.reference || '';
+      ({ preco_caixa, preco_motivo_site } = parsePrecoCaixaFromProductJson(prodJson));
     } catch { /* ignore */ }
   }
 
@@ -108,6 +132,9 @@ export async function fetchProdutoDetalhe(url) {
     referencia: reference,
     imagem_url,
     produto_url: url,
+    preco_caixa,
+    preco_motivo_site,
+    moeda: 'USD',
     tipo: feats.Material || 'Porcelanato',
     acabamento: feats.Acabado || '',
     rectificado: feats.Rectificado || '',

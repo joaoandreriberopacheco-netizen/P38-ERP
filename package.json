@@ -126,6 +126,8 @@
     "catalogo:html-ecuaceramica": "node scripts/catalogo/gerar-html-ecuaceramica-catalogo.mjs",
     "catalogo:fetch-ecuaceramica-logo": "node scripts/catalogo/fetch-ecuaceramica-logo.mjs",
     "catalogo:publicar-ecuaceramica": "node scripts/catalogo/fetch-ecuaceramica-logo.mjs && node scripts/catalogo/snapshot-ecuaceramica.mjs && node scripts/catalogo/classificar-ecuaceramica-completo.mjs && node scripts/catalogo/gerar-html-ecuaceramica-catalogo.mjs",
+    "catalogo:test-ecuaceramica-embalagem": "node scripts/catalogo/test-catalogo-ecuaceramica-embalagem.mjs",
+    "catalogo:test-ecuaceramica-precos": "node scripts/catalogo/test-catalogo-ecuaceramica-precos.mjs",
     "produto:nome:restaurar": "node scripts/restaurar-nomes-produto-hierarquia.mjs",
     "produto:nome:restaurar:apply": "node scripts/restaurar-nomes-produto-hierarquia.mjs --apply",
     "git:ship": "node scripts/git-ship.mjs",
