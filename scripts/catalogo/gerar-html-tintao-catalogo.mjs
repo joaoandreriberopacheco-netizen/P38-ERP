@@ -2068,7 +2068,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {} }) {
         : '';
       return pageRule +
         'html, body { margin: 0; padding: 0; }' +
-        '.print-render-root { background: #ffffff; color: #5a5a5a; font-family: "Libre Franklin", "Segoe UI", system-ui, sans-serif; font-size: 13px; -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; width: 100%; }' +
+        '.print-render-root { background: #ffffff; color: #5a5a5a; font-family: "Libre Franklin", "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 13px; -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; width: 100%; }' +
         '.print-sheet { width: 100%; max-width: 100%; margin: 0 auto; box-sizing: border-box; background: #ffffff; color: #5a5a5a; padding: 4px 14px 2px; }' +
         '.print-head { margin-bottom: 10px; }' +
         'h1 { margin: 0 0 4px; font-size: 17px; letter-spacing: .08em; text-transform: uppercase; color: #2f2f2f; font-weight: 600; }' +
@@ -2103,6 +2103,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {} }) {
       return '#ffffff';
     }
     const HTML2PDF_URL = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+    const PDF_FONT_URL = 'https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&display=swap';
     let pedidoPdfBlob = null;
     let pedidoPdfBlobUrl = null;
 
@@ -2115,6 +2116,23 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {} }) {
         pedidoPdfBlobUrl = null;
       }
       pedidoPdfBlob = null;
+    }
+    function pedidoPdfIframeHead(pageWmm) {
+      return '<meta charset="utf-8">' +
+        '<link rel="preconnect" href="https://fonts.googleapis.com">' +
+        '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' +
+        '<link rel="stylesheet" href="' + PDF_FONT_URL + '">' +
+        '<style>' + printPedidoPrintCss(pageWmm, null) + '</style>';
+    }
+    async function waitPrintFontsRoot(doc) {
+      try {
+        if (doc.fonts && doc.fonts.ready) await doc.fonts.ready;
+        if (doc.fonts && doc.fonts.load) {
+          await doc.fonts.load('400 13px "Libre Franklin"');
+          await doc.fonts.load('600 13px "Libre Franklin"');
+        }
+      } catch { /* ignore */ }
+      await new Promise((resolve) => setTimeout(resolve, 150));
     }
     function loadHtml2PdfInWindow(win, doc) {
       if (win.html2pdf) return Promise.resolve(win.html2pdf);
@@ -2140,14 +2158,14 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {} }) {
         const doc = win.document;
         doc.open();
         doc.write(
-          '<!DOCTYPE html><html><head><meta charset="utf-8"><style>' +
-          printPedidoPrintCss(pageWmm, null) +
-          '</style></head><body style="margin:0"><div class="print-render-root" style="width:' + pageWpx + 'px">' +
+          '<!DOCTYPE html><html><head>' + pedidoPdfIframeHead(pageWmm) +
+          '</head><body style="margin:0"><div class="print-render-root" style="width:' + pageWpx + 'px">' +
           html +
           '</div></body></html>'
         );
         doc.close();
         await loadHtml2PdfInWindow(win, doc);
+        await waitPrintFontsRoot(doc);
         await waitPrintImagesRoot(doc.body);
         await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         const sheet = doc.querySelector('.print-sheet');
