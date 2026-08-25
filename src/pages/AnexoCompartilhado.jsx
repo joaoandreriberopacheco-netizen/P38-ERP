@@ -676,6 +676,28 @@ export default function AnexoCompartilhado() {
   /** Fullscreen acima de tudo; fora da árvore do #root evita overflow/transform a partir do Layout/PWA. */
   const portalAlvo = typeof document !== 'undefined' ? document.body : null;
 
+  const torreContinuarBar =
+    etapa === 'torre_controle' &&
+    portalAlvo &&
+    createPortal(
+      <div
+        className="fixed inset-x-0 bottom-0 z-[9999] border-t border-border/60 bg-background px-4 py-3 shadow-[0_-12px_32px_rgba(0,0,0,0.18)] md:px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+        role="region"
+        aria-label="Avançar para destinos"
+      >
+        <button
+          type="button"
+          onClick={() => setEtapa('opcoes')}
+          disabled={!String(tipoDocumento || '').trim()}
+          className="flex h-14 w-full max-w-lg mx-auto items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
+        >
+          Continuar para destinos
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>,
+      portalAlvo,
+    );
+
   const overlaysFullscreen =
     portalAlvo &&
     createPortal(
@@ -822,7 +844,7 @@ export default function AnexoCompartilhado() {
 
   return (
     <>
-    <div className={cn('relative flex flex-1 min-h-0 w-full flex-col overflow-hidden', brandSurface.pageScreen)}>
+    <div className={cn('relative flex flex-1 min-h-0 w-full flex-col overflow-hidden bg-background')}>
       {etapa === 'torre_controle' ? (
         <>
           <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain pb-[calc(5.75rem+env(safe-area-inset-bottom))]">
@@ -957,18 +979,6 @@ export default function AnexoCompartilhado() {
               )}
             </div>
           </div>
-
-          <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-background/95 px-4 py-3 backdrop-blur-md shadow-[0_-8px_24px_rgba(0,0,0,0.12)] md:px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-            <button
-              type="button"
-              onClick={() => setEtapa('opcoes')}
-              disabled={!String(tipoDocumento || '').trim()}
-              className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
-            >
-              Continuar para destinos
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
         </>
       ) : (
       /* Scroll só aqui: overlays fullscreen vão para document.body (portal). */
@@ -1025,6 +1035,7 @@ export default function AnexoCompartilhado() {
       </div>
       )}
     </div>
+    {torreContinuarBar}
     {overlaysFullscreen}
     </>
   );
