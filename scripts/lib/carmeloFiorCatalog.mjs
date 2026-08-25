@@ -1,0 +1,175 @@
+/**
+ * API Carmel Fior (Cerâmica) — produtos por marca.
+ * Arielle = id_category 4.
+ */
+import { normFmt, stripAccents } from './formigresCatalog.mjs';
+
+export const CARMELO_FIOR_BASE = 'https://www.carmelofior.com.br';
+export const IMAGE_BASE = `${CARMELO_FIOR_BASE}/public/images/product`;
+export const ARIELLE_CATEGORY_ID = 4;
+export const UA = 'P38-ERP-catalogo/1.0';
+
+const ATTR = {
+  tamanho: 1,
+  superficie: 2,
+  acabamento: 4,
+};
+
+function parseSetCookie(headers) {
+  const raw = headers.getSetCookie ? headers.getSetCookie() : [];
+  return raw.map((c) => c.split(';')[0]).join('; ');
+}
+
+/** @returns {Promise<{ token: string, cookies: string }>} */
+export async function bootstrapSession() {
+  const res = await fetch(`${CARMELO_FIOR_BASE}/produtos`, {
+    headers: { 'User-Agent': UA },
+  });
+  const text = await res.text();
+  const token = text.match(/request\.tk="([^"]+)"/)?.[1];
+  if (!token) throw new Error('Carmelo Fior: Transaction-Token não encontrado');
+  return { token, cookies: parseSetCookie(res.headers) };
+}
+
+async function postTransaction(token, cookies, module, action, body = {}) {
+  const res = await fetch(`${CARMELO_FIOR_BASE}/transaction/${module}/${action}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/json',
+      'X-Requested-With': 'XMLHttpRequest',
+      'Transaction-Token': token,
+      'User-Agent': UA,
+      Cookie: cookies,
+      Referer: `${CARMELO_FIOR_BASE}/produtos`,
+      Origin: CARMELO_FIOR_BASE,
+    },
+    body: JSON.stringify(body),
+  });
+  const json = await res.json();
+  if (json.status !== 200) {
+    throw new Error(`Carmelo Fior ${module}/${action}: ${json.error?.message || json.status}`);
+  }
+  return json.data;
+}
+
+/** Lista produtos paginados (marca Arielle por defeito). */
+export async function listProdutos(session, { idCategory = ARIELLE_CATEGORY_ID, pag = 1, prp = 50 } = {}) {
+  return postTransaction(session.token, session.cookies, 'Product', 'list', {
+    ord: 'recent',
+    id_category: idCategory,
+    attributes: {},
+    features: [],
+    title: '',
+    status: 1,
+    pag,
+    prp,
+  });
+}
+
+export async function fetchAllProdutosArielle({ onProgress } = {}) {
+  const session = await bootstrapSession();
+  const all = [];
+  let pag = 1;
+  let size = Infinity;
+  while (all.length < size) {
+    const data = await listProdutos(session, { pag, prp: 50 });
+    size = data.size ?? data.results?.length ?? 0;
+    const batch = data.results || [];
+    all.push(...batch);
+    if (onProgress) onProgress(all.length, size);
+    if (!batch.length) break;
+    pag += 1;
+  }
+  return all;
+}
+
+function attrById(attributes, idAttribute) {
+  return (attributes || []).find((a) => Number(a.id_attribute) === idAttribute) || null;
+}
+
+/** "84x84 cm RT" → { formato: "84x84", retificada: true } */
+export function parseTamanhoAttr(text = '') {
+  const raw = String(text || '').trim();
+  const rt = /\bRT\b/i.test(raw);
+  const m = raw.match(/(\d+(?:[.,]\d+)?)\s*[x×X]\s*(\d+(?:[.,]\d+)?)/);
+  if (!m) return { formato: '', retificada: rt };
+  const a = m[1].replace(',', '.');
+  const b = m[2].replace(',', '.');
+  const fmt = normFmt(`${a}x${b}`) || `${Math.round(Number(a))}x${Math.round(Number(b))}`.toLowerCase();
+  return { formato: fmt, retificada: rt };
+}
+
+function mapSuperficie(title = '') {
+  const t = String(title || '').trim().toUpperCase();
+  if (t === 'POLIDO') return 'POLIDO';
+  if (t === 'BRILHANTE') return 'BRILHANTE';
+  if (t === 'ACETINADO' || t === 'SOFT' || t === 'NATURAL') return 'MATE';
+  if (t.includes('GRANILH') || t.includes('ESCORREG')) return 'GRANILHADO ABS';
+  return t || '';
+}
+
+function mapAcabamentoTipo(title = '', retificada = false) {
+  const t = String(title || '').trim().toUpperCase();
+  if (t === 'RETIFICADO' || retificada) return 'RETIFICADO';
+  if (t === 'BOLD') return 'BOLD';
+  return retificada ? 'RETIFICADO' : 'BOLD';
+}
+
+export function imageUrl(imageFile) {
+  if (!imageFile) return '';
+  if (String(imageFile).startsWith('http')) return imageFile;
+  return `${IMAGE_BASE}/${imageFile}`;
+}
+
+/** Galeria no formato do catálogo P38. */
+export function extractImagensFromProduto(prod) {
+  const out = [];
+  for (const img of prod?.images || []) {
+    const url = imageUrl(img.image || img.thumb);
+    if (!url) continue;
+    let tipo = 'detalhe';
+    if (Number(img.main) === 1) tipo = 'principal';
+    else if (Number(img.face) === 1) tipo = 'face';
+    out.push({ url, tipo });
+  }
+  if (!out.length && prod?.imagem_url) {
+    out.push({ url: prod.imagem_url, tipo: 'principal' });
+  }
+  return out;
+}
+
+export function normalizeProduto(raw) {
+  if (!raw?.id) return null;
+  const tamanho = attrById(raw.attributes, ATTR.tamanho);
+  const superficie = attrById(raw.attributes, ATTR.superficie);
+  const acabamento = attrById(raw.attributes, ATTR.acabamento);
+  const { formato, retificada } = parseTamanhoAttr(tamanho?.option_title || tamanho?.text || '');
+  const acabSup = mapSuperficie(superficie?.option_title || superficie?.text || '');
+  const tipo = mapAcabamentoTipo(acabamento?.option_title || acabamento?.text || '', retificada);
+  const mainImg = (raw.images || []).find((i) => Number(i.main) === 1) || raw.images?.[0];
+  const imagem_url = imageUrl(mainImg?.image || mainImg?.thumb || '');
+
+  return {
+    id: String(raw.id),
+    titulo: raw.title || '',
+    codigo: raw.code || '',
+    slug: raw.slug || '',
+    formato,
+    acabamento: acabSup,
+    acabamento_info: superficie?.option_title || '',
+    tipo,
+    referencia: raw.code || '',
+    marca_nome: 'Arielle',
+    categoria: 'Arielle',
+    imagem_url,
+    imagem_amb_url: '',
+    produto_url: `${CARMELO_FIOR_BASE}/produto/${raw.slug || raw.id}`,
+    busca_tokens: stripAccents(raw.title || '')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, ' ')
+      .split(' ')
+      .filter((t) => t.length >= 2),
+    images: raw.images || [],
+    attributes: raw.attributes || [],
+  };
+}

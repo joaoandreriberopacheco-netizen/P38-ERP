@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { readJson, snapshotPath } from '../lib/catalogoPaths.mjs';
 import { extractImagensFromDetalhe, fetchProdutoDetalhe } from '../lib/formigresCatalog.mjs';
+import { extractImagensFromProduto } from '../lib/carmeloFiorCatalog.mjs';
 import { loadSnapshotFromFile } from '../lib/formigresSnapshot.mjs';
 import { dedupeFormigresGemeas } from '../lib/formigresGemeas.mjs';
 import { REGIME_COMPRADOR_UF_LIST, buildSuframaClientJs, isRegimeCompradorUf } from '../lib/catalogoSuframa.mjs';
@@ -81,6 +82,40 @@ const CONFIGS = {
     logoPath: path.join(ROOT, 'scripts', 'catalogo', 'assets', 'formigres-logo.png'),
     fabricanteUf: 'SP',
     fabricanteNome: 'Formigres',
+  },
+  arielle: {
+    classifDir: path.join(ROOT, 'docs', 'imports-local', 'arielle', 'classificacao'),
+    classifPattern: /^arielle-completo-\d{4}-\d{2}-\d{2}\.json$/,
+    outHtml: path.join(ROOT, 'docs', 'imports-local', 'arielle', 'Catálogo Arielle — Carmelo Fior.html'),
+    outDeploy: path.join(ROOT, 'deploy', 'catalogo-arielle', 'index.html'),
+    outPdfThumbs: path.join(ROOT, 'docs', 'imports-local', 'arielle', 'catalogo-arielle-pdf-thumbs.json'),
+    publicUrl: (process.env.CATALOGO_ARIELLE_PUBLIC_URL || 'https://catalogo-arielle-p38.vercel.app/').replace(/\/?$/, '/'),
+    snapshotSlug: 'arielle',
+    skipApiEnrich: true,
+    skipPdfThumbs: false,
+    skipGemeasDedup: true,
+    title: 'Catálogo Arielle — Pisos e Porcelanatos',
+    h1: 'Pisos e Revestimentos Cerâmicos',
+    hint: 'Marca Arielle · Carmelo Fior · marque paletes e revise no carrinho',
+    qtyUnit: 'palete',
+    qtyLabel: 'Paletes',
+    qtyLabelPl: 'paletes',
+    demoBanner: '',
+    themeKey: 'arielle-catalog-theme-v1',
+    qtyKey: 'arielle-catalog-qty-v1',
+    descontoKey: 'arielle-catalog-desconto-v1',
+    regimeKey: 'arielle-regime-especial-v1',
+    groupKey: 'arielle-catalog-group-v1',
+    classifError: 'JSON de classificação não encontrado. Rode: npm run catalogo:classificar-arielle',
+    skin: 'arielle',
+    siteSub: 'Arielle · Carmelo Fior · Catálogo B2B',
+    hideThemeToggle: true,
+    fontsUrl: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&display=swap',
+    logoPath: path.join(ROOT, 'scripts', 'catalogo', 'assets', 'arielle-logo.webp'),
+    brandSiteUrl: 'https://www.carmelofior.com.br/produtos?category=4',
+    brandSiteLabel: 'Arielle — Carmelo Fior',
+    fabricanteUf: 'SP',
+    fabricanteNome: 'Arielle (Carmelo Fior)',
   },
 };
 
@@ -252,18 +287,21 @@ async function buildPdfThumbMap(itens) {
   return map;
 }
 
-function enrichItens(itens, snapshot) {
+function enrichItens(itens, snapshot, cfg = CFG) {
   const byId = new Map((snapshot?.produtos || []).map((p) => [String(p.id), p]));
+  const useCarmelo = cfg.skin === 'arielle';
   return itens.map((item) => {
     const prod = byId.get(String(item.formigres_id));
     const imagem_url = fixImageUrl(prod?.imagem_url || '');
     const imagem_amb_url = fixImageUrl(prod?.imagem_amb_url || '');
-    const imagens = extractImagensFromDetalhe({
-      imagem_url,
-      imagem_amb_url,
-      imagem_piso_url: fixImageUrl(prod?.imagem_piso_url || ''),
-      faces: prod?.faces || [],
-    });
+    const imagens = useCarmelo
+      ? extractImagensFromProduto(prod)
+      : extractImagensFromDetalhe({
+        imagem_url,
+        imagem_amb_url,
+        imagem_piso_url: fixImageUrl(prod?.imagem_piso_url || ''),
+        faces: prod?.faces || [],
+      });
     return {
       ...item,
       imagem_url,
@@ -825,6 +863,26 @@ const FORMIGRES_SKIN_CSS = `
     }
 `;
 
+function isB2bCatalogSkin(skin) {
+  return skin === 'formigres' || skin === 'arielle';
+}
+
+const BRAND_SKIN_TOKENS = {
+  formigres: { accent: '#da1c24', accentBright: '#b01219', accentRgb: '218,28,36', demoBg: '#f9e5e6' },
+  arielle: { accent: '#23674c', accentBright: '#1a5239', accentRgb: '35,103,76', demoBg: '#e8f3ee' },
+};
+
+function buildBrandSkinCss(skin) {
+  const tokens = BRAND_SKIN_TOKENS[skin];
+  if (!tokens) return '';
+  return FORMIGRES_SKIN_CSS
+    .replaceAll('formigres', skin)
+    .replaceAll('#da1c24', tokens.accent)
+    .replaceAll('#b01219', tokens.accentBright)
+    .replaceAll('rgba(218,28,36', `rgba(${tokens.accentRgb}`)
+    .replaceAll('#f9e5e6', tokens.demoBg);
+}
+
 function buildRegimeUfOptions(selectedUf = 'AM') {
   const sel = isRegimeCompradorUf(selectedUf) ? String(selectedUf).toUpperCase() : 'AM';
   return REGIME_COMPRADOR_UF_LIST.map(({ uf, nome }) =>
@@ -837,14 +895,14 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   const total = itens.length;
   const comFoto = itens.filter((i) => i.imagem_url).length;
   const loadSquaresHtml = Array.from({ length: 20 }, () => '<span class="load-square"></span>').join('');
-  const isFormigresSkin = cfg.skin === 'formigres';
-  const qtyLabel = cfg.qtyLabel || (isFormigresSkin ? 'Paletes' : 'Caixas');
-  const qtyLabelPl = cfg.qtyLabelPl || (isFormigresSkin ? 'paletes' : 'caixas');
-  const qtyUnit = cfg.qtyUnit || (isFormigresSkin ? 'palete' : 'caixa');
-  const pedidoTableColgroup = isFormigresSkin
+  const isB2bSkin = isB2bCatalogSkin(cfg.skin);
+  const qtyLabel = cfg.qtyLabel || (isB2bSkin ? 'Paletes' : 'Caixas');
+  const qtyLabelPl = cfg.qtyLabelPl || (isB2bSkin ? 'paletes' : 'caixas');
+  const qtyUnit = cfg.qtyUnit || (isB2bSkin ? 'palete' : 'caixa');
+  const pedidoTableColgroup = isB2bSkin
     ? '<colgroup><col class="col-foto"><col class="col-modelo"><col class="col-qty"><col class="col-m2"><col class="col-cx"><col class="col-peso"><col class="col-emb"><col class="col-preco"><col class="col-sub"></colgroup>'
     : '<colgroup><col class="col-foto"><col class="col-modelo"><col class="col-qty"><col class="col-m2u"><col class="col-m2"><col class="col-preco"><col class="col-sub"></colgroup>';
-  const pedidoTableHead = isFormigresSkin
+  const pedidoTableHead = isB2bSkin
     ? '<th class="pedido-col-foto">Foto</th><th class="pedido-col-modelo">Modelo</th><th class="pedido-col-qty">Paletes</th><th class="pedido-col-num">m² total</th><th class="pedido-col-num">Caixas</th><th class="pedido-col-num">Peso</th><th class="pedido-col-emb">Por palete</th><th class="pedido-col-num">Preço/m²</th><th class="pedido-col-num col-subtotal">Subtotal</th>'
     : '<th class="pedido-col-foto">Foto</th><th class="pedido-col-modelo">Modelo</th><th class="pedido-col-qty">Caixas</th><th class="pedido-col-num">m²/cx</th><th class="pedido-col-num">m² total</th><th class="pedido-col-num">Preço/m²</th><th class="pedido-col-num col-subtotal">Subtotal</th>';
   const catalogoJson = JSON.stringify({
@@ -864,8 +922,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   const pdfFontCssSafe = String(pdfFontCss).replace(/<\/style/gi, '<\\/style');
 
   const headerLogo = brandLogoDataUri || antLogoDataUri;
-  const loaderHtml = isFormigresSkin
-    ? `<div class="load-logo-formigres" aria-hidden="true"><img src="${headerLogo}" alt="" width="240" height="41" /></div>`
+  const loaderHtml = isB2bSkin
+    ? `<div class="load-logo-${escTpl(cfg.skin)}" aria-hidden="true"><img src="${headerLogo}" alt="" width="240" height="41" /></div>`
     : `<div class="load-logo-ant" aria-hidden="true">
         <img class="load-ant-ghost" src="${antLogoDataUri || ''}" alt="" width="200" height="120" />
         <div class="load-ant-fill-wrap" id="load-ant-fill-wrap">
@@ -873,10 +931,14 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         </div>
         <span class="load-pct" id="load-pct" aria-hidden="true">0%</span>
       </div>`;
-  const siteBrandHtml = isFormigresSkin
-    ? `<a class="site-brand-lockup" href="https://www.formigres.com.br/" target="_blank" rel="noopener noreferrer" aria-label="Formigres — site oficial">
-        <img class="site-logo" src="${headerLogo}" alt="Formigres" width="148" height="25" />
+  const siteBrandHtml = isB2bSkin
+    ? (cfg.skin === 'arielle'
+      ? `<a class="site-brand-lockup" href="${escTpl(cfg.brandSiteUrl || 'https://www.carmelofior.com.br/produtos?category=4')}" target="_blank" rel="noopener noreferrer" aria-label="${escTpl(cfg.brandSiteLabel || 'Arielle')}">
+        <img class="site-logo" src="${headerLogo}" alt="Arielle" width="148" height="25" />
       </a>`
+      : `<a class="site-brand-lockup" href="https://www.formigres.com.br/" target="_blank" rel="noopener noreferrer" aria-label="Formigres — site oficial">
+        <img class="site-logo" src="${headerLogo}" alt="Formigres" width="148" height="25" />
+      </a>`)
     : `<span class="site-brand">Formigres</span>`;
   const themeToggleHtml = cfg.hideThemeToggle ? '' : `<button type="button" class="theme-fab" id="theme-toggle" aria-label="Mudar para tema escuro" title="Tema">
     <svg id="theme-icon-sun" hidden xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -886,13 +948,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
     </svg>
   </button>`;
-  const suframaClientJs = isFormigresSkin
+  const suframaClientJs = isB2bSkin
     ? buildSuframaClientJs({
       fabricanteUf: cfg.fabricanteUf || 'SP',
       fabricanteNome: cfg.fabricanteNome || 'Formigres',
     })
     : '';
-  const regimePanelHtml = isFormigresSkin
+  const regimePanelHtml = isB2bSkin
     ? `<section class="regime-panel" id="regime-panel" aria-label="Regime especial Suframa">
       <div class="regime-panel-head">
         <label class="regime-switch">
@@ -912,7 +974,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       <p class="regime-summary" id="regime-summary" hidden></p>
     </section>`
     : '';
-  const regimeDialogHtml = isFormigresSkin
+  const regimeDialogHtml = isB2bSkin
     ? `<div class="regime-overlay" id="regime-overlay" role="dialog" aria-modal="true" aria-label="Regime especial Suframa">
       <section class="regime-dialog" id="regime-dialog">
         <div class="regime-dialog-head">
@@ -1036,7 +1098,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       --pedido-divider: #d5d5d5;
     }
     html[data-theme="light"] .load-overlay { background: rgba(242,242,240,.97); }
-    ${isFormigresSkin ? FORMIGRES_SKIN_CSS : ''}
+    ${isB2bSkin ? buildBrandSkinCss(cfg.skin) : ''}
     .load-logo-ant {
       position: relative;
       width: min(200px, 58vw);
@@ -2451,7 +2513,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     <div class="load-panel">
       ${loaderHtml}
       <div class="load-squares" id="load-squares" aria-hidden="true">${loadSquaresHtml}</div>
-      <p class="load-hint" id="load-msg" aria-live="polite">${isFormigresSkin ? 'A carregar catálogo…' : 'A abrir catálogo…'}</p>
+      <p class="load-hint" id="load-msg" aria-live="polite">${isB2bSkin ? 'A carregar catálogo…' : 'A abrir catálogo…'}</p>
     </div>
   </div>
 
@@ -2463,7 +2525,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       <span class="site-sub">${escTpl(cfg.siteSub || 'Pedido B2B · Lojistas')}</span>
       <span class="site-bar-spacer" aria-hidden="true"></span>
       <div class="site-desconto">
-        <label for="desconto-pct">${isFormigresSkin ? 'Desc. comercial' : 'Desconto'}</label>
+        <label for="desconto-pct">${isB2bSkin ? 'Desc. comercial' : 'Desconto'}</label>
         <div class="desconto-row">
           <input type="number" id="desconto-pct" min="0" max="100" step="0.1" inputmode="decimal" placeholder="0" aria-label="Desconto comercial em percentual" />
           <span class="pct-suffix">%</span>
@@ -2539,7 +2601,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       <div class="pedido-head">
         <div>
           <h2>Minha seleção</h2>
-          <p style="margin:4px 0 0;font-size:.78rem;color:var(--muted)">Revise ${escTpl(qtyLabelPl)}, m²${isFormigresSkin ? ', peso' : ''} e total antes de exportar</p>
+          <p style="margin:4px 0 0;font-size:.78rem;color:var(--muted)">Revise ${escTpl(qtyLabelPl)}, m²${isB2bSkin ? ', peso' : ''} e total antes de exportar</p>
         </div>
         <button type="button" class="pedido-close" id="pedido-close" aria-label="Fechar">×</button>
       </div>
@@ -2635,7 +2697,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     const THEME_KEY = '${cfg.themeKey}';
     const DESCONTO_KEY = '${cfg.descontoKey}';
     const REGIME_KEY = '${cfg.regimeKey || ''}';
-    const IS_FORMIGRES = ${isFormigresSkin};
+    const IS_B2B_CATALOG = ${isB2bSkin};
     ${suframaClientJs ? `${suframaClientJs}\n    ` : ''}const GROUP_KEY = '${cfg.groupKey}';
     const PEDIDO_TABLE_COLGROUP_HTML = ${JSON.stringify(pedidoTableColgroup)};
     const PEDIDO_TABLE_HEAD_HTML = ${JSON.stringify(pedidoTableHead)};
@@ -2660,11 +2722,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     let regimeState = { enabled: false, compradorUf: 'AM', destino: 'zfm', tributario: 'lucro_presumido' };
     let regimeDialogMode = null;
     function isValidRegimeUf(uf) {
-      if (!IS_FORMIGRES || typeof REGIME_COMPRADOR_UF_LIST === 'undefined') return false;
+      if (!IS_B2B_CATALOG || typeof REGIME_COMPRADOR_UF_LIST === 'undefined') return false;
       return REGIME_COMPRADOR_UF_LIST.some((row) => row.uf === String(uf || '').toUpperCase());
     }
     function loadRegimeState() {
-      if (!IS_FORMIGRES || !REGIME_KEY) return;
+      if (!IS_B2B_CATALOG || !REGIME_KEY) return;
       try {
         const raw = JSON.parse(localStorage.getItem(REGIME_KEY) || '{}');
         if (typeof raw.enabled === 'boolean') regimeState.enabled = raw.enabled;
@@ -2676,11 +2738,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       } catch { /* ignore */ }
     }
     function saveRegimeState() {
-      if (!IS_FORMIGRES || !REGIME_KEY) return;
+      if (!IS_B2B_CATALOG || !REGIME_KEY) return;
       localStorage.setItem(REGIME_KEY, JSON.stringify(regimeState));
     }
     function calcRegimeDescontoPct() {
-      if (!IS_FORMIGRES || typeof calcRegimeIncentivoFromState !== 'function') return 0;
+      if (!IS_B2B_CATALOG || typeof calcRegimeIncentivoFromState !== 'function') return 0;
       if (!regimeState.compradorUf) return 0;
       return calcRegimeIncentivoFromState(regimeState).incentivo;
     }
@@ -2701,7 +2763,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return { compradorUf, destino, tributario };
     }
     function syncRegimeDialogPreview() {
-      if (!IS_FORMIGRES) return;
+      if (!IS_B2B_CATALOG) return;
       const draft = readRegimeDialogForm();
       const merged = Object.assign({}, regimeState, draft);
       const breakdown = typeof calcRegimeIncentivoFromState === 'function'
@@ -2750,7 +2812,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       syncRegimeDialogPreview();
     }
     function openRegimeDialog(mode) {
-      if (!IS_FORMIGRES) return;
+      if (!IS_B2B_CATALOG) return;
       regimeDialogMode = mode;
       populateRegimeDialogForm();
       document.getElementById('regime-overlay')?.classList.add('open');
@@ -2807,7 +2869,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       if (document.activeElement !== inp) inp.value = descontoComercialPct ? String(descontoComercialPct) : '';
     }
     function syncRegimePanelUi() {
-      if (!IS_FORMIGRES) return;
+      if (!IS_B2B_CATALOG) return;
       const enabledEl = document.getElementById('regime-especial-enabled');
       const pillEl = document.getElementById('regime-aliquota-pill');
       const valEl = document.getElementById('regime-aliquota-val');
@@ -2834,7 +2896,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       renderPedido();
     }
     function initRegimeControls() {
-      if (!IS_FORMIGRES) return;
+      if (!IS_B2B_CATALOG) return;
       loadRegimeState();
       refreshDescontoUi();
       const enabledEl = document.getElementById('regime-especial-enabled');
@@ -3325,7 +3387,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return parts.length ? parts.join(' · ') : '—';
     }
     function updateModelRowCalcs(cod) {
-      if (CATALOG_SKIN !== 'formigres') return;
+      if (!IS_B2B_CATALOG) return;
       const item = itemsByCode.get(String(cod));
       if (!item) return;
       const qty = getQty(cod);
@@ -3448,7 +3510,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       document.querySelectorAll('.model-gemeas-trigger[aria-expanded="true"]').forEach((btn) => btn.setAttribute('aria-expanded', 'false'));
     }
     function migrateHiddenTwinQty() {
-      if (CATALOG_SKIN !== 'formigres') return;
+      if (!IS_B2B_CATALOG) return;
       let changed = false;
       for (const item of CATALOGO.itens) {
         if (!item.gemeas || item.gemeas.length < 2) continue;
@@ -3477,7 +3539,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         ? '<button type="button" class="thumb-btn' + (imgs.length > 1 ? ' has-gallery' : '') + '" tabindex="-1" data-cod="' + esc(cod) + '" data-title="' + esc(titulo) + '" title="Ver fotos"><img src="' + esc(img) + '" alt="" loading="lazy" />' + (imgs.length > 1 ? '<span class="thumb-more" aria-hidden="true">▦</span>' : '') + '</button>'
         : '<span class="thumb-empty">—</span>';
       const warn = item.match_status !== 'encontrado' ? ' <span class="badge warn">sem match</span>' : '';
-      if (CATALOG_SKIN === 'formigres') {
+      if (IS_B2B_CATALOG) {
         const m2tot = qty ? itemM2Total(item, qty) : null;
         const cxTot = qty ? itemCaixasTotal(item, qty) : null;
         const pesoTot = qty ? itemPesoTotal(item, qty) : null;
@@ -3605,7 +3667,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '<div class="pedido-card-layout">' + row1 + spec + '</div></article>';
     }
     function renderItemsTable(items) {
-      if (CATALOG_SKIN === 'formigres') {
+      if (IS_B2B_CATALOG) {
         const body = items.map((item) => {
           const cod = item.codigo_tintao;
           return renderTableRow(item) + renderGemeasDetailRow(item, cod);
@@ -3673,7 +3735,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       applySearch(document.getElementById('search').value);
     }
     function catalogRowSelector() {
-      if (CATALOG_SKIN === 'formigres') {
+      if (IS_B2B_CATALOG) {
         return window.matchMedia('(max-width: 720px)').matches
           ? '.catalog-cards-wrap .model-row'
           : '.catalog-table-wrap .model-row';
@@ -4399,7 +4461,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       }
     }
     async function bootApp() {
-      const fast = prefersFastBoot() || CATALOG_SKIN === 'formigres';
+      const fast = prefersFastBoot() || IS_B2B_CATALOG;
       if (fast) {
         setLoadProgress(1, 1);
         revealApp();
@@ -4668,13 +4730,14 @@ async function mainAsync() {
   }
 
   const classif = readJson(jsonPath);
-  const snapshot = loadSnapshotFromFile(readJson(snapshotPath('formigres')));
+  const snapshotSlug = CFG.snapshotSlug || 'formigres';
+  const snapshot = loadSnapshotFromFile(readJson(snapshotPath(snapshotSlug)));
   if (!snapshot) {
-    console.error('Snapshot Formigres ausente. Rode: npm run catalogo:snapshot-formigres');
+    console.error(`Snapshot ${snapshotSlug} ausente. Rode: npm run catalogo:snapshot-${snapshotSlug}`);
     process.exit(1);
   }
 
-  const itensBase = enrichItens(classif.itens || [], snapshot);
+  const itensBase = enrichItens(classif.itens || [], snapshot, CFG);
   let itens = itensBase;
   if (!CFG.skipApiEnrich) {
     console.error('A carregar fotos do site Formigres…');
@@ -4683,7 +4746,7 @@ async function mainAsync() {
     console.error('Modo snapshot — a saltar chamadas API individuais.');
   }
   let gemeasStats = null;
-  if (CFG.skin === 'formigres') {
+  if (CFG.skin === 'formigres' && !CFG.skipGemeasDedup) {
     const deduped = dedupeFormigresGemeas(itens);
     itens = deduped.itens;
     gemeasStats = deduped.stats;
