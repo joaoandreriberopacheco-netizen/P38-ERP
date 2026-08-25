@@ -1066,14 +1066,6 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
       color: var(--muted);
       line-height: 1.4;
     }
-    .pedido-pdf-preview {
-      width: 100%;
-      height: min(360px, 42vh);
-      border: 1px solid var(--border);
-      background: #fff;
-      margin: 0 0 12px;
-      border-radius: var(--radius);
-    }
     .pedido-pdf-sheet-actions {
       display: flex;
       flex-direction: column;
@@ -1487,8 +1479,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
   <div class="pedido-pdf-sheet" id="pedido-pdf-sheet" role="dialog" aria-modal="true" aria-label="PDF do pedido">
     <div class="pedido-pdf-sheet-panel">
       <h3>PDF pronto</h3>
-      <p>Pré-visualização abaixo. Use Baixar PDF para guardar no telemóvel.</p>
-      <iframe id="pedido-pdf-preview" class="pedido-pdf-preview" title="Pré-visualização do PDF"></iframe>
+      <p>Abra no leitor do telemóvel ou guarde o ficheiro.</p>
       <div class="pedido-pdf-sheet-actions">
         <button type="button" class="btn btn-primary" id="pedido-pdf-open">Abrir PDF</button>
         <button type="button" class="btn" id="pedido-pdf-download">Baixar PDF</button>
@@ -2248,22 +2239,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
     function closePedidoPdfSheet() {
       pedidoPdfSheetOpen = false;
       document.getElementById('pedido-pdf-sheet')?.classList.remove('open');
-      document.getElementById('pedido-pdf-preview')?.removeAttribute('src');
       syncBodyScrollLock();
-    }
-    function updatePedidoPdfPreview() {
-      const frame = document.getElementById('pedido-pdf-preview');
-      if (!frame) return;
-      if (pedidoPdfBlobUrl) frame.src = pedidoPdfBlobUrl;
-      else frame.removeAttribute('src');
     }
     function openPedidoPdfFile() {
       if (!pedidoPdfBlobUrl) return;
-      updatePedidoPdfPreview();
-      document.getElementById('pedido-pdf-preview')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      try {
-        window.open(pedidoPdfBlobUrl, '_blank', 'noopener,noreferrer');
-      } catch { /* preview iframe já mostra o PDF */ }
+      window.open(pedidoPdfBlobUrl, '_blank', 'noopener,noreferrer');
     }
     function downloadPedidoPdfFile() {
       if (!pedidoPdfBlobUrl) return;
@@ -2291,7 +2271,6 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
         revokePedidoPdfBlob();
         pedidoPdfBlob = await renderPedidoPdfBlob(thumbs);
         pedidoPdfBlobUrl = URL.createObjectURL(pedidoPdfBlob);
-        updatePedidoPdfPreview();
         closePedidoPanel();
         openPedidoPdfSheet();
       } catch (err) {
