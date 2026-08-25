@@ -13,7 +13,6 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import pg from 'pg';
 import { resolveSupabaseDeployEnv } from './supabase-env.mjs';
 import { P38_CANONICAL_PROJECT_REF } from './p38-secrets.mjs';
 import { connectPg } from './lib/pg-connect-ipv4.mjs';
