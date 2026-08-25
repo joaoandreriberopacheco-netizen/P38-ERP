@@ -868,7 +868,7 @@
       color: var(--accent-bright);
       white-space: nowrap;
     }
-    .pedido-table .pedido-col-peso { font-weight: 600; white-space: nowrap; }
+    .pedido-table .pedido-col-peso { font-weight: 500; white-space: nowrap; color: var(--text-strong); }
     .pedido-table .pedido-col-preco { font-size: .8rem; }
     .pedido-table .pedido-col-foto img { display: block; border-radius: 6px; }
     .pedido-row-hint { color: var(--muted); font-size: .68rem; }
@@ -975,8 +975,7 @@
       padding: 8px 6px;
       vertical-align: top;
       text-align: left;
-      border-top: 1px solid var(--border-subtle);
-      border-bottom: 1px solid var(--border-subtle);
+      border: 0;
     }
     .pedido-card-spec td + td {
       border-left: 1px solid var(--border-subtle);
@@ -991,15 +990,11 @@
     }
     .pedido-card-spec-v {
       display: block;
-      font-size: .76rem;
-      font-weight: 600;
+      font-size: .74rem;
+      font-weight: 500;
       color: var(--text-strong);
       font-variant-numeric: tabular-nums;
       line-height: 1.25;
-    }
-    .pedido-card-spec-v.is-peso {
-      font-weight: 700;
-      color: var(--accent-bright);
     }
     .pedido-card-spec-v.pedido-card-spec-preco .preco-orig {
       display: block;
@@ -1009,12 +1004,12 @@
       color: var(--muted);
       line-height: 1.1;
     }
-    .pedido-card-spec-v.pedido-card-spec-preco .preco-desc { font-weight: 600; }
-    .pedido-card-spec-v.pedido-card-spec-preco:not(.has-desc) { font-size: .76rem; }
+    .pedido-card-spec-v.pedido-card-spec-preco .preco-desc { font-weight: 500; }
+    .pedido-card-spec-v.pedido-card-spec-preco:not(.has-desc) { font-size: .74rem; font-weight: 500; }
     .pedido-card-spec-v.pedido-card-spec-palete {
       font-size: .68rem;
       font-weight: 500;
-      color: var(--text);
+      color: var(--muted);
       line-height: 1.35;
     }
     .pedido-total {
@@ -1022,6 +1017,16 @@
       display: flex; justify-content: flex-end; gap: 24px; font-size: 1rem;
     }
     .pedido-total strong { color: var(--accent-bright); font-size: 1.15rem; font-weight: 600; }
+    .pedido-peso-note {
+      margin: 4px 0 0;
+      font-size: .82rem;
+      color: var(--muted);
+      text-align: right;
+    }
+    .pedido-peso-note strong {
+      color: var(--text-strong);
+      font-weight: 600;
+    }
     .btn-primary {
       background: var(--accent-dim);
       border-color: var(--accent-border);
@@ -2162,7 +2167,6 @@
       return '<table class="pedido-card-spec" role="presentation"><tr>' +
         cells.map((c) => {
           const cls = [
-            c.peso ? ' is-peso' : '',
             c.preco ? ' pedido-card-spec-preco' + (descontoPct ? ' has-desc' : '') : '',
             c.palete ? ' pedido-card-spec-palete' : '',
           ].join('');
