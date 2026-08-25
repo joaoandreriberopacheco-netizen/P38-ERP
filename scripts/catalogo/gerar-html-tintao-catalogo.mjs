@@ -488,7 +488,7 @@ const FORMIGRES_SKIN_CSS = `
       color: inherit;
     }
     html[data-skin="formigres"] .page-head-logo {
-      height: 46px;
+      height: 52px;
       width: auto;
       display: block;
     }
