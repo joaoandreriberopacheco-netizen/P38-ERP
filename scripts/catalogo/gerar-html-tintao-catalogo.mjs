@@ -114,8 +114,8 @@ const CONFIGS = {
     logoPath: path.join(ROOT, 'scripts', 'catalogo', 'assets', 'arielle-logo.webp'),
     brandSiteUrl: 'https://www.carmelofior.com.br/produtos?category=4',
     brandSiteLabel: 'Arielle — Carmelo Fior',
-    fabricanteUf: 'SP',
-    fabricanteNome: 'Arielle (Carmelo Fior)',
+    fabricanteUf: 'SE',
+    fabricanteNome: 'Arielle · Polo SE (Carmelo Fior)',
   },
 };
 

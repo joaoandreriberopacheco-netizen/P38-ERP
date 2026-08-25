@@ -39,6 +39,24 @@ const cases = [
     cofins: COFINS_DESONERADO_PCT,
     incentivo: 21.25,
   },
+  {
+    label: 'SE→AM ZFM presumido (Arielle Polo SE)',
+    input: { fabricanteUf: 'SE', compradorUf: 'AM', destino: 'zfm', tributario: 'lucro_presumido' },
+    icms: 12,
+    icmsDesconto: 12,
+    pis: PIS_DESONERADO_PCT,
+    cofins: COFINS_DESONERADO_PCT,
+    incentivo: 21.25,
+  },
+  {
+    label: 'SE→AM ALC lucro real (Arielle — só ICMS)',
+    input: { fabricanteUf: 'SE', compradorUf: 'AM', destino: 'alc', tributario: 'lucro_real' },
+    icms: 12,
+    icmsDesconto: 12,
+    pis: 0,
+    cofins: 0,
+    incentivo: 12,
+  },
 ];
 
 let ok = true;

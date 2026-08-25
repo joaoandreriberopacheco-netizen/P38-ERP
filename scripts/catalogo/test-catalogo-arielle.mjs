@@ -21,6 +21,8 @@ const linhaPolida = (html.match(/"linha":"polida"/g) || []).length;
 const hasBold = html.includes('"linha":"bold"');
 const hasRetificada = html.includes('"linha":"retificada"');
 const hasAcabPolida = html.includes('"acabamento_label":"Polida"');
+const fabricanteUfSe = html.includes('const FABRICANTE_UF = "SE"');
+const fabricanteHintSe = html.includes('Polo SE') && html.includes('(SE)');
 
 let classifSummary = null;
 if (fs.existsSync(classifDir)) {
@@ -46,7 +48,9 @@ const ok = hasSkin
   && linhaPolida === 0
   && hasBold
   && hasRetificada
-  && hasAcabPolida;
+  && hasAcabPolida
+  && fabricanteUfSe
+  && fabricanteHintSe;
 
 console.log(JSON.stringify({
   ok,
@@ -57,6 +61,8 @@ console.log(JSON.stringify({
   hasBold,
   hasRetificada,
   hasAcabPolida,
+  fabricanteUfSe,
+  fabricanteHintSe,
   htmlKb: Math.round(fs.statSync(htmlPath).size / 1024),
   classifSummary,
 }, null, 2));

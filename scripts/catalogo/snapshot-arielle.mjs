@@ -40,7 +40,7 @@ function upsertIndice(meta) {
     exportedAt: meta.exportedAt,
     match: {
       roteamento: ['37x59', '45x45', '50x50', '60x60', '66x66', '68x68', '84x84'],
-      nota: 'Marca Arielle — grupo Carmelo Fior (SP)',
+      nota: 'Marca Arielle — Carmelo Fior · Polo SE (Nossa Senhora do Socorro/SE)',
     },
   };
 
