@@ -29,7 +29,8 @@
     "catalogo:test-ecuaceramica-precos": "node scripts/catalogo/test-catalogo-ecuaceramica-precos.mjs",
     "catalogo:test-ecuaceramica-pei": "node scripts/catalogo/test-catalogo-ecuaceramica-pei.mjs",
     "catalogo:test-tour": "node scripts/catalogo/test-catalogo-tour.mjs",
-    "catalogo:test-suframa": "node scripts/catalogo/test-catalogo-suframa.mjs"
+    "catalogo:test-suframa": "node scripts/catalogo/test-catalogo-suframa.mjs",
+    "repo:publicar": "bash scripts/publicar-github-repo.sh"
   },
   "engines": {
     "node": ">=22"
