@@ -117,6 +117,18 @@ function resolveSuperficie(prodTitle = '', superficieTitle = '') {
   return sup;
 }
 
+/** Formatos arbitrados quando Carmel Fior não informa tamanho (referência → formato). */
+const FORMATO_OVERRIDE_BY_CODE = {
+  56819: '84x84', // RETIF Laredo — tamanho ausente na API
+};
+
+function resolveFormato(raw, parsedFormato = '') {
+  const code = Number(String(raw?.code || '').trim());
+  const override = FORMATO_OVERRIDE_BY_CODE[code];
+  if (override) return override;
+  return parsedFormato || '';
+}
+
 function mapAcabamentoTipo(title = '', retificada = false) {
   const t = String(title || '').trim().toUpperCase();
   if (t === 'RETIFICADO' || retificada) return 'RETIFICADO';
@@ -175,7 +187,8 @@ export function normalizeProduto(raw) {
   const tamanho = attrById(raw.attributes, ATTR.tamanho);
   const superficie = attrById(raw.attributes, ATTR.superficie);
   const acabamento = attrById(raw.attributes, ATTR.acabamento);
-  const { formato, retificada } = parseTamanhoAttr(tamanho?.option_title || tamanho?.text || '');
+  const { formato: formatoParsed, retificada } = parseTamanhoAttr(tamanho?.option_title || tamanho?.text || '');
+  const formato = resolveFormato(raw, formatoParsed);
   const superficieRaw = superficie?.option_title || superficie?.text || '';
   const superficieResolved = resolveSuperficie(raw.title, superficieRaw);
   const acabSup = mapSuperficie(superficieResolved);
