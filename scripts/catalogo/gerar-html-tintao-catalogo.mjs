@@ -59,7 +59,7 @@ const CONFIGS = {
     outPdfThumbs: path.join(ROOT, 'docs', 'imports-local', 'formigres', 'catalogo-formigres-pdf-thumbs.json'),
     publicUrl: (process.env.CATALOGO_FORMIGRES_PUBLIC_URL || 'https://catalogo-formigres-p38.vercel.app/').replace(/\/?$/, '/'),
     skipApiEnrich: true,
-    skipPdfThumbs: true,
+    skipPdfThumbs: false,
     title: 'Catálogo Formigres — Pisos e Porcelanatos',
     h1: 'Pisos e Revestimentos Cerâmicos',
     hint: 'Marque paletes na tabela · revise m², peso e total no carrinho',
