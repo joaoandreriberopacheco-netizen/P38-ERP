@@ -15,6 +15,12 @@ import { extractImagensFromProduto } from '../lib/carmeloFiorCatalog.mjs';
 import { loadSnapshotFromFile } from '../lib/formigresSnapshot.mjs';
 import { dedupeFormigresGemeas } from '../lib/formigresGemeas.mjs';
 import { REGIME_COMPRADOR_UF_LIST, buildSuframaClientJs, isRegimeCompradorUf } from '../lib/catalogoSuframa.mjs';
+import {
+  buildCatalogTourClientJs,
+  buildCatalogTourCss,
+  buildCatalogTourFabHtml,
+  buildCatalogTourHtml,
+} from '../lib/catalogoTour.mjs';
 
 const ROOT = process.cwd();
 const args = process.argv.slice(2);
@@ -73,6 +79,7 @@ const CONFIGS = {
     qtyKey: 'formigres-catalog-qty-v1',
     descontoKey: 'formigres-catalog-desconto-v1',
     regimeKey: 'formigres-regime-especial-v1',
+    tourKey: 'formigres-catalog-tour-v1',
     groupKey: 'formigres-catalog-group-v1',
     classifError: 'JSON de classificação não encontrado. Rode: npm run catalogo:classificar-formigres',
     skin: 'formigres',
@@ -106,6 +113,7 @@ const CONFIGS = {
     descontoKey: 'arielle-catalog-desconto-v1',
     regimeKey: 'arielle-regime-especial-v1',
     groupKey: 'arielle-catalog-group-v1',
+    tourKey: 'arielle-catalog-tour-v1',
     classifError: 'JSON de classificação não encontrado. Rode: npm run catalogo:classificar-arielle',
     skin: 'arielle',
     siteSub: 'Arielle · Carmelo Fior · Catálogo B2B',
@@ -1020,6 +1028,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       fabricanteNome: cfg.fabricanteNome || 'Formigres',
     })
     : '';
+  const catalogTourJs = isB2bSkin
+    ? buildCatalogTourClientJs({ tourKey: cfg.tourKey, qtyLabelPl })
+    : '';
   const regimePanelHtml = isB2bSkin
     ? `<section class="regime-panel" id="regime-panel" aria-label="Regime especial Suframa">
       <div class="regime-panel-head">
@@ -1165,6 +1176,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     html[data-theme="light"] .load-overlay { background: rgba(242,242,240,.97); }
     ${isB2bSkin ? buildBrandSkinCss(cfg.skin) : ''}
+    ${isB2bSkin ? buildCatalogTourCss() : ''}
     .load-logo-ant {
       position: relative;
       width: min(200px, 58vw);
@@ -2659,6 +2671,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   ${themeToggleHtml}
 
   <div class="fab-stack" id="fab-stack">
+    ${isB2bSkin ? buildCatalogTourFabHtml() : ''}
     <button type="button" class="fab cart-fab" id="cart-fab" aria-label="Minha seleção">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
@@ -2706,6 +2719,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   </div>
 
   ${regimeDialogHtml}
+  ${isB2bSkin ? buildCatalogTourHtml() : ''}
 
   <div id="pedido-print"></div>
 
@@ -4523,6 +4537,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         overlay.setAttribute('aria-busy', 'false');
         overlay.setAttribute('aria-hidden', 'true');
       }
+      (window.__tintaoAfterReveal || []).forEach(function (fn) {
+        try { fn(); } catch (err) { console.error(err); }
+      });
     }
     function ensureAppRendered() {
       try {
@@ -4598,7 +4615,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     initTopControls();
     initCatalogControls();
-    window.matchMedia('(max-width: 720px)').addEventListener('change', () => {
+    ${catalogTourJs ? `${catalogTourJs}\n    ` : ''}window.matchMedia('(max-width: 720px)').addEventListener('change', () => {
       refreshDom();
       applySearch(q?.value || '');
     });

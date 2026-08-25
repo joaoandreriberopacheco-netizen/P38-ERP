@@ -24,6 +24,7 @@ const hasAcabPolida = html.includes('"acabamento_label":"Polida"');
 const fabricanteUfSe = html.includes('const FABRICANTE_UF = "SE"');
 const fabricanteHintSe = html.includes('Polo SE') && html.includes('(SE)');
 const logoPageHeadRight = html.includes('page-head-brand-lockup') && html.includes('page-head-logo');
+const hasTour = html.includes('catalog-tour-overlay') && html.includes('help-tour-fab');
 
 let classifSummary = null;
 if (fs.existsSync(classifDir)) {
@@ -52,7 +53,8 @@ const ok = hasSkin
   && hasAcabPolida
   && fabricanteUfSe
   && fabricanteHintSe
-  && logoPageHeadRight;
+  && logoPageHeadRight
+  && hasTour;
 
 console.log(JSON.stringify({
   ok,
@@ -66,6 +68,7 @@ console.log(JSON.stringify({
   fabricanteUfSe,
   fabricanteHintSe,
   logoPageHeadRight,
+  hasTour,
   htmlKb: Math.round(fs.statSync(htmlPath).size / 1024),
   classifSummary,
 }, null, 2));
