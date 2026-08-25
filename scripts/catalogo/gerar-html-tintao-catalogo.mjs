@@ -10,9 +10,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { readJson, snapshotPath } from '../lib/catalogoPaths.mjs';
-import { extractImagensFromDetalhe } from '../lib/formigresCatalog.mjs';
+import { extractImagensFromDetalhe, fetchProdutoDetalhe } from '../lib/formigresCatalog.mjs';
 import { loadSnapshotFromFile } from '../lib/formigresSnapshot.mjs';
 import { dedupeFormigresGemeas } from '../lib/formigresGemeas.mjs';
+import { REGIME_COMPRADOR_UF_LIST, buildSuframaClientJs, isRegimeCompradorUf } from '../lib/catalogoSuframa.mjs';
 
 const ROOT = process.cwd();
 const args = process.argv.slice(2);
@@ -78,6 +79,8 @@ const CONFIGS = {
     hideThemeToggle: true,
     fontsUrl: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&display=swap',
     logoPath: path.join(ROOT, 'scripts', 'catalogo', 'assets', 'formigres-logo.png'),
+    fabricanteUf: 'SP',
+    fabricanteNome: 'Formigres',
   },
 };
 
@@ -117,7 +120,7 @@ function loadPdfFontFaceCss() {
     return (
       "@font-face{font-family:'Libre Franklin';font-style:normal;font-weight:400 700;font-display:swap;" +
       "src:url(data:font/woff2;base64," + b64 + ") format('woff2');}" +
-      "html,body,.print-render-root,.print-sheet,.pedido-card-pdf{font-family:'Libre Franklin',system-ui,-apple-system,'Segoe UI',sans-serif;}"
+      "html,body,.print-render-root,.print-sheet{font-family:'Libre Franklin',system-ui,-apple-system,'Segoe UI',sans-serif;}"
     );
   } catch {
     return "html,body,.print-render-root{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;}";
@@ -552,15 +555,116 @@ const FORMIGRES_SKIN_CSS = `
       font-size: .92rem;
       font-weight: 700;
     }
-    html[data-skin="formigres"] .regime-options {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px 12px;
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid var(--border-subtle);
+    html[data-skin="formigres"] .regime-panel-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
     }
-    html[data-skin="formigres"] .regime-options[hidden] { display: none !important; }
+    html[data-skin="formigres"] .regime-edit-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface-2);
+      color: var(--muted);
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: border-color .2s ease, color .2s ease;
+    }
+    html[data-skin="formigres"] .regime-edit-btn:hover {
+      border-color: var(--accent-border);
+      color: var(--accent);
+    }
+    html[data-skin="formigres"] .regime-edit-btn:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px var(--accent-ring);
+    }
+    html[data-skin="formigres"] .regime-edit-btn[hidden] { display: none !important; }
+    html[data-skin="formigres"] .regime-summary {
+      margin: 8px 0 0;
+      font-size: .74rem;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+    html[data-skin="formigres"] .regime-summary[hidden] { display: none !important; }
+    html[data-skin="formigres"] .regime-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 46;
+      background: rgba(8,7,10,.78);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    html[data-skin="formigres"] .regime-overlay.open { display: flex; }
+    html[data-skin="formigres"] .regime-dialog {
+      width: min(440px, 100%);
+      max-height: min(90vh, 640px);
+      overflow-y: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+      box-shadow: var(--shadow);
+    }
+    html[data-skin="formigres"] .regime-dialog-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    html[data-skin="formigres"] .regime-dialog-head h2 {
+      margin: 0;
+      font-size: .95rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--text-strong);
+    }
+    html[data-skin="formigres"] .regime-dialog-close {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--radius);
+      width: 34px;
+      height: 34px;
+      cursor: pointer;
+      font-size: 1.15rem;
+      flex-shrink: 0;
+    }
+    html[data-skin="formigres"] .regime-dialog-close:hover {
+      border-color: var(--accent-bright);
+      color: var(--accent);
+    }
+    html[data-skin="formigres"] .regime-dialog-fabricante {
+      margin: 0 0 12px;
+      font-size: .74rem;
+      color: var(--muted);
+    }
+    html[data-skin="formigres"] .regime-dialog-fields {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    html[data-skin="formigres"] .regime-dialog-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    html[data-skin="formigres"] .regime-dialog-actions .btn {
+      flex: 1;
+      min-width: 0;
+      padding: 11px;
+      border-radius: var(--radius);
+    }
     html[data-skin="formigres"] .regime-field label {
       display: block;
       margin-bottom: 4px;
@@ -619,8 +723,13 @@ const FORMIGRES_SKIN_CSS = `
     }
     @media (max-width: 720px) {
       html[data-skin="formigres"] .regime-panel { padding: 10px 12px; margin-bottom: 8px; }
-      html[data-skin="formigres"] .regime-options { grid-template-columns: 1fr; gap: 8px; }
       html[data-skin="formigres"] .regime-switch-label { font-size: .72rem; }
+      html[data-skin="formigres"] .regime-overlay { align-items: flex-end; padding: 0; }
+      html[data-skin="formigres"] .regime-dialog {
+        width: 100%;
+        max-height: 88vh;
+        border-radius: var(--radius) var(--radius) 0 0;
+      }
     }
     html[data-skin="formigres"] .pedido-row-title-line {
       display: inline-flex;
@@ -716,6 +825,13 @@ const FORMIGRES_SKIN_CSS = `
     }
 `;
 
+function buildRegimeUfOptions(selectedUf = 'AM') {
+  const sel = isRegimeCompradorUf(selectedUf) ? String(selectedUf).toUpperCase() : 'AM';
+  return REGIME_COMPRADOR_UF_LIST.map(({ uf, nome }) =>
+    `<option value="${uf}"${uf === sel ? ' selected' : ''}>${uf} — ${escTpl(nome)}</option>`,
+  ).join('');
+}
+
 function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '', pdfThumbs = {}, pdfFontCss = '', cfg = CFG }) {
   const gerado = new Date(classif.geradoEm || Date.now()).toLocaleString('pt-BR');
   const total = itens.length;
@@ -770,6 +886,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
     </svg>
   </button>`;
+  const suframaClientJs = isFormigresSkin
+    ? buildSuframaClientJs({
+      fabricanteUf: cfg.fabricanteUf || 'SP',
+      fabricanteNome: cfg.fabricanteNome || 'Formigres',
+    })
+    : '';
   const regimePanelHtml = isFormigresSkin
     ? `<section class="regime-panel" id="regime-panel" aria-label="Regime especial Suframa">
       <div class="regime-panel-head">
@@ -778,26 +900,48 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           <span class="regime-switch-ui" aria-hidden="true"></span>
           <span class="regime-switch-label">Regime especial</span>
         </label>
-        <span class="regime-aliquota-pill" id="regime-aliquota-pill" hidden>
-          Incentivo <strong id="regime-aliquota-val">0%</strong>
-        </span>
+        <div class="regime-panel-actions">
+          <span class="regime-aliquota-pill" id="regime-aliquota-pill" hidden>
+            Incentivo <strong id="regime-aliquota-val">0%</strong>
+          </span>
+          <button type="button" class="regime-edit-btn" id="regime-edit-btn" hidden aria-label="Editar regime especial" title="Editar regime">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </button>
+        </div>
       </div>
-      <div class="regime-options" id="regime-options" hidden>
-        <div class="regime-field">
-          <label for="regime-destino">Destino</label>
-          <select id="regime-destino">
-            <option value="zfm">ZFM (Manaus e entorno)</option>
-            <option value="alc">ALC (cidades de fronteira)</option>
-            <option value="amoc">Amazônia Ocidental</option>
-          </select>
+      <p class="regime-summary" id="regime-summary" hidden></p>
+    </section>`
+    : '';
+  const regimeDialogHtml = isFormigresSkin
+    ? `<div class="regime-overlay" id="regime-overlay" role="dialog" aria-modal="true" aria-label="Regime especial Suframa">
+      <section class="regime-dialog" id="regime-dialog">
+        <div class="regime-dialog-head">
+          <h2>Regime especial Suframa</h2>
+          <button type="button" class="regime-dialog-close" id="regime-dialog-close" aria-label="Fechar">×</button>
         </div>
-        <div class="regime-field">
-          <label for="regime-tributario">Regime do comprador</label>
-          <select id="regime-tributario">
-            <option value="lucro_presumido">Lucro presumido / Simples</option>
-            <option value="lucro_real">Lucro real</option>
-          </select>
+        <p class="regime-dialog-fabricante" id="regime-fabricante-hint">Fabricante: ${escTpl(cfg.fabricanteNome || 'Formigres')} (${escTpl(cfg.fabricanteUf || 'SP')})</p>
+        <div class="regime-dialog-fields">
+          <div class="regime-field">
+            <label for="regime-comprador-uf">Seu estado (UF)</label>
+            <select id="regime-comprador-uf">${buildRegimeUfOptions('AM')}</select>
+          </div>
+          <div class="regime-field">
+            <label for="regime-destino">Destino Suframa</label>
+            <select id="regime-destino">
+              <option value="zfm">ZFM (Manaus e entorno)</option>
+              <option value="alc">ALC (cidades de fronteira)</option>
+              <option value="amoc">Amazônia Ocidental</option>
+            </select>
+          </div>
+          <div class="regime-field">
+            <label for="regime-tributario">Regime tributário do comprador</label>
+            <select id="regime-tributario">
+              <option value="lucro_presumido">Lucro presumido / Simples</option>
+              <option value="lucro_real">Lucro real</option>
+            </select>
+          </div>
         </div>
+        <p class="regime-hint" id="regime-icms-hint"></p>
         <p class="regime-acumulado" id="regime-acumulado-note" hidden>
           Desconto comercial <strong id="regime-comercial-val">0%</strong>
           + incentivo <strong id="regime-incentivo-val">0%</strong>
@@ -808,8 +952,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           Para produtos cerâmicos (NCM 6907), o benefício da Amazônia Ocidental aplica-se ao IPI.
           Como este produto já possui alíquota zero de IPI na tabela nacional, o preço não sofre alterações.
         </p>
-      </div>
-    </section>`
+        <div class="regime-dialog-actions">
+          <button type="button" class="btn" id="regime-dialog-cancel">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="regime-dialog-apply">Aplicar</button>
+        </div>
+      </section>
+    </div>`
     : '';
 
   return `<!DOCTYPE html>
@@ -1135,6 +1283,22 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     .stat strong { color: var(--accent); font-weight: 600; }
     .toolbar {
       display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;
+      position: sticky;
+      top: 0;
+      z-index: 70;
+      background: var(--surface);
+      padding-top: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+      box-shadow: 0 4px 16px rgba(0,0,0,.04);
+    }
+    html[data-skin="formigres"] .toolbar {
+      background: rgba(255,255,255,.94);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    html[data-theme="dark"][data-skin="formigres"] .toolbar {
+      background: rgba(28,28,32,.94);
     }
     .toolbar-main { display: flex; gap: 10px; flex: 1 1 100%; }
     .toolbar-extra {
@@ -1142,6 +1306,79 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     .toolbar-extra[hidden] { display: none !important; }
     .btn-icon { min-width: 44px; padding: 10px; font-size: 1.1rem; line-height: 1; }
+    .btn-clear-qty {
+      flex-shrink: 0;
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+    }
+    .btn-clear-qty:hover {
+      color: var(--accent);
+      border-color: var(--accent-border);
+      background: var(--accent-muted);
+    }
+    .btn-clear-qty svg { width: 20px; height: 20px; }
+    .catalog-items { display: block; }
+    .catalog-cards-wrap { display: none; }
+    html[data-skin="formigres"] .catalog-card.pedido-card {
+      border-bottom: 1px solid var(--border-subtle);
+      max-width: 100%;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+    html[data-skin="formigres"] .catalog-card.pedido-card:last-child { border-bottom: 0; }
+    html[data-skin="formigres"] .catalog-card-thumb-btn {
+      flex-shrink: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      line-height: 0;
+      display: block;
+    }
+    html[data-skin="formigres"] .catalog-card-thumb-btn .pedido-card-thumb {
+      display: block;
+    }
+    html[data-skin="formigres"] .catalog-card-qty-edit {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      min-width: 52px;
+    }
+    html[data-skin="formigres"] .catalog-card-qty-label {
+      font-size: .58rem;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      line-height: 1;
+    }
+    html[data-skin="formigres"] .catalog-card-qty-edit .qty-input {
+      width: 52px;
+      min-width: 0;
+      min-height: 36px;
+      text-align: center;
+      font-size: .92rem;
+      font-weight: 700;
+      padding: 4px 2px;
+    }
+    html[data-skin="formigres"] .catalog-card .pedido-card-qty-sub {
+      font-size: .58rem;
+      line-height: 1.25;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    html[data-skin="formigres"] .model-gemeas-detail-card {
+      padding: 0 8px 10px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    html[data-skin="formigres"] .model-gemeas-detail-card.hidden { display: none !important; }
     .search {
       flex: 1 1 220px;
       background: var(--surface);
@@ -1523,6 +1760,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     html[data-skin="formigres"] .catalog-pedido-table col.col-sub { width: 98px; }
     html[data-skin="formigres"] .pedido-table,
     html[data-skin="formigres"] .catalog-pedido-table { min-width: 860px; }
+    html[data-skin="formigres"] .pedido-meta-resist {
+      font-weight: 700;
+      letter-spacing: .1em;
+      color: var(--text-strong);
+    }
     .pedido-col-foto { width: 52px; padding-left: 0; padding-right: 6px; }
     .pedido-col-modelo { min-width: 0; }
     .pedido-row-title {
@@ -1537,33 +1779,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       color: var(--muted);
       line-height: 1.3;
     }
-    html[data-skin="formigres"] .pedido-row-resist {
-      display: flex;
-      align-items: baseline;
-      gap: 6px;
-      margin-top: 4px;
-      line-height: 1.3;
-    }
-    html[data-skin="formigres"] .pedido-row-resist-label {
-      font-size: .62rem;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: .04em;
-      color: var(--muted);
-    }
-    html[data-skin="formigres"] .pedido-row-resist-val {
-      font-size: .78rem;
-      font-weight: 700;
-      letter-spacing: .1em;
-      color: var(--text-strong);
-    }
     html[data-skin="formigres"] .pedido-row-gemeas {
       margin-top: 3px;
       font-size: .68rem;
       color: var(--muted);
       line-height: 1.4;
     }
-    html[data-skin="formigres"] .pedido-card-desc .pedido-row-resist { margin-top: 3px; }
     html[data-skin="formigres"] .pedido-card-desc .pedido-row-gemeas { margin-top: 2px; font-size: .62rem; }
     .pedido-col-emb {
       font-size: .72rem;
@@ -2059,6 +2280,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         flex: 1;
         min-height: 0;
         overflow-y: auto;
+        overflow-x: hidden;
         padding: 8px 14px 0;
         -webkit-overflow-scrolling: touch;
       }
@@ -2069,7 +2291,39 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       }
       .pedido-resumo .stat strong { font-size: .88rem; }
       .pedido-table-wrap { display: none !important; }
-      .pedido-cards-wrap { display: block; }
+      .pedido-cards-wrap { display: block; overflow-x: hidden; max-width: 100%; }
+      .pedido-cards { overflow-x: hidden; max-width: 100%; }
+      .pedido-card { max-width: 100%; overflow: hidden; box-sizing: border-box; }
+      html[data-skin="formigres"] .catalog-table-wrap { display: none !important; }
+      html[data-skin="formigres"] .catalog-cards-wrap {
+        display: block;
+        padding: 0 0 10px;
+        overflow-x: hidden;
+        max-width: 100%;
+      }
+      html[data-skin="formigres"] .acc-inner {
+        padding-left: 0;
+        padding-right: 0;
+      }
+      html[data-skin="formigres"] .acc-acab {
+        --depth: 2;
+      }
+      html[data-skin="formigres"] details.acc > .catalog-items,
+      html[data-skin="formigres"] .catalog-items {
+        padding-left: 0;
+        padding-right: 0;
+      }
+      html[data-skin="formigres"] .model-gemeas-detail-card {
+        padding: 0 0 10px;
+      }
+      html[data-skin="formigres"] .catalog-cards {
+        display: flex;
+        flex-direction: column;
+        overflow-x: hidden;
+        max-width: 100%;
+      }
+      html[data-skin="formigres"] .wrap,
+      html[data-skin="formigres"] .catalogo { overflow-x: hidden; max-width: 100%; }
       .pedido-card-head { column-gap: 8px; }
       .pedido-card-head-main { column-gap: 8px; }
       .pedido-card-hero { font-size: .82rem; font-weight: 700; line-height: 1.15; }
@@ -2125,6 +2379,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       html[data-skin="formigres"] .catalog-pedido-table {
         min-width: 860px;
         font-size: .78rem;
+      }
+      html[data-skin="formigres"] .catalog-table-wrap .catalog-pedido-table {
+        min-width: 860px;
       }
       html[data-skin="formigres"] .catalog-pedido-table td,
       html[data-skin="formigres"] .catalog-pedido-table th { padding: 8px 6px; }
@@ -2225,7 +2482,14 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
 
     <div class="toolbar">
       <div class="toolbar-main">
-        <input id="search" class="search" type="search" placeholder="Código, modelo ou formato…" />
+        <input id="search" class="search" type="search" placeholder="Código, modelo ou formato (ex.: 45x45)…" />
+        <button type="button" class="btn btn-icon btn-clear-qty" id="clear-qty-main" aria-label="Limpar seleção" title="Limpar seleção">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/>
+            <path d="M22 21H7"/>
+            <path d="m5 11 9 9"/>
+          </svg>
+        </button>
         <button type="button" class="btn btn-icon toolbar-mobile-only" id="toolbar-more" aria-label="Mais opções">⋯</button>
       </div>
       <div class="toolbar-extra toolbar-mobile-only" id="toolbar-extra" hidden>
@@ -2307,6 +2571,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     </section>
   </div>
 
+  ${regimeDialogHtml}
+
   <div id="pedido-print"></div>
 
   <div id="pedido-pdf-render-host" aria-hidden="true"></div>
@@ -2370,7 +2636,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     const DESCONTO_KEY = '${cfg.descontoKey}';
     const REGIME_KEY = '${cfg.regimeKey || ''}';
     const IS_FORMIGRES = ${isFormigresSkin};
-    const GROUP_KEY = '${cfg.groupKey}';
+    ${suframaClientJs ? `${suframaClientJs}\n    ` : ''}const GROUP_KEY = '${cfg.groupKey}';
     const PEDIDO_TABLE_COLGROUP_HTML = ${JSON.stringify(pedidoTableColgroup)};
     const PEDIDO_TABLE_HEAD_HTML = ${JSON.stringify(pedidoTableHead)};
     const CATALOG_TABLE_COLGROUP_HTML = PEDIDO_TABLE_COLGROUP_HTML;
@@ -2382,11 +2648,6 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const d = Number(localStorage.getItem(DESCONTO_KEY));
       if (Number.isFinite(d) && d >= 0 && d <= 100) descontoComercialPct = d;
     } catch { descontoComercialPct = 0; }
-    const REGIME_DESCONTO = {
-      zfm: { lucro_presumido: 16.25, lucro_real: 16.25 },
-      alc: { lucro_presumido: 16.25, lucro_real: 7 },
-      amoc: { lucro_presumido: 0, lucro_real: 0 },
-    };
     const REGIME_DESTINO_LABEL = {
       zfm: 'ZFM',
       alc: 'ALC',
@@ -2396,7 +2657,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       lucro_presumido: 'Lucro presumido/Simples',
       lucro_real: 'Lucro real',
     };
-    let regimeState = { enabled: false, destino: 'zfm', tributario: 'lucro_presumido' };
+    let regimeState = { enabled: false, compradorUf: 'AM', destino: 'zfm', tributario: 'lucro_presumido' };
+    let regimeDialogMode = null;
+    function isValidRegimeUf(uf) {
+      if (!IS_FORMIGRES || typeof REGIME_COMPRADOR_UF_LIST === 'undefined') return false;
+      return REGIME_COMPRADOR_UF_LIST.some((row) => row.uf === String(uf || '').toUpperCase());
+    }
     function loadRegimeState() {
       if (!IS_FORMIGRES || !REGIME_KEY) return;
       try {
@@ -2404,6 +2670,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         if (typeof raw.enabled === 'boolean') regimeState.enabled = raw.enabled;
         if (raw.destino === 'zfm' || raw.destino === 'alc' || raw.destino === 'amoc') regimeState.destino = raw.destino;
         if (raw.tributario === 'lucro_presumido' || raw.tributario === 'lucro_real') regimeState.tributario = raw.tributario;
+        if (typeof raw.compradorUf === 'string' && isValidRegimeUf(raw.compradorUf)) {
+          regimeState.compradorUf = raw.compradorUf.toUpperCase();
+        }
       } catch { /* ignore */ }
     }
     function saveRegimeState() {
@@ -2411,9 +2680,97 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       localStorage.setItem(REGIME_KEY, JSON.stringify(regimeState));
     }
     function calcRegimeDescontoPct() {
-      const dest = REGIME_DESCONTO[regimeState.destino];
-      if (!dest) return 0;
-      return dest[regimeState.tributario] ?? 0;
+      if (!IS_FORMIGRES || typeof calcRegimeIncentivoFromState !== 'function') return 0;
+      if (!regimeState.compradorUf) return 0;
+      return calcRegimeIncentivoFromState(regimeState).incentivo;
+    }
+    function regimeSummaryText() {
+      const dest = REGIME_DESTINO_LABEL[regimeState.destino] || regimeState.destino;
+      const trib = REGIME_TRIBUTARIO_LABEL[regimeState.tributario] || regimeState.tributario;
+      return regimeState.compradorUf + ' · ' + dest + ' · ' + trib;
+    }
+    function readRegimeDialogForm() {
+      const compradorEl = document.getElementById('regime-comprador-uf');
+      const destinoEl = document.getElementById('regime-destino');
+      const tributarioEl = document.getElementById('regime-tributario');
+      const compradorUf = compradorEl?.value && isValidRegimeUf(compradorEl.value)
+        ? compradorEl.value.toUpperCase()
+        : 'AM';
+      const destino = destinoEl?.value === 'alc' || destinoEl?.value === 'amoc' ? destinoEl.value : 'zfm';
+      const tributario = tributarioEl?.value === 'lucro_real' ? 'lucro_real' : 'lucro_presumido';
+      return { compradorUf, destino, tributario };
+    }
+    function syncRegimeDialogPreview() {
+      if (!IS_FORMIGRES) return;
+      const draft = readRegimeDialogForm();
+      const merged = Object.assign({}, regimeState, draft);
+      const breakdown = typeof calcRegimeIncentivoFromState === 'function'
+        ? calcRegimeIncentivoFromState(merged)
+        : { icms: 0, icmsDesconto: 0, pis: 0, cofins: 0, incentivo: 0 };
+      const icms = breakdown.icms || 0;
+      const incentivo = breakdown.incentivo || 0;
+      const icmsHint = document.getElementById('regime-icms-hint');
+      const hintAmoc = document.getElementById('regime-hint-amoc');
+      const acumNoteEl = document.getElementById('regime-acumulado-note');
+      const comValEl = document.getElementById('regime-comercial-val');
+      const incValEl = document.getElementById('regime-incentivo-val');
+      const acumValEl = document.getElementById('regime-acumulado-val');
+      if (icmsHint) {
+        let hint = 'ICMS interestadual <strong>' + esc(FABRICANTE_UF) + ' → ' + esc(draft.compradorUf) + '</strong>: <strong>' + fmtDecimal(icms, 0) + '%</strong>';
+        if (incentivo > 0) {
+          hint += '<br>Desconto: ICMS <strong>' + fmtDecimal(breakdown.icmsDesconto, 2) + '%</strong>';
+          if (breakdown.pis || breakdown.cofins) {
+            hint += ' + PIS <strong>' + fmtDecimal(breakdown.pis, 2) + '%</strong> + COFINS <strong>' + fmtDecimal(breakdown.cofins, 2) + '%</strong>';
+          } else if (draft.destino === 'alc' && draft.tributario === 'lucro_real') {
+            hint += ' <span style="opacity:.85">(PIS/COFINS não aplicável — ALC lucro real)</span>';
+          }
+          hint += ' → total <strong>' + fmtDecimal(incentivo, 2) + '%</strong>';
+        }
+        icmsHint.innerHTML = hint;
+      }
+      if (hintAmoc) hintAmoc.hidden = draft.destino !== 'amoc';
+      const showAcum = descontoComercialPct > 0 && incentivo > 0;
+      if (acumNoteEl) acumNoteEl.hidden = !showAcum;
+      if (comValEl) comValEl.textContent = fmtDecimal(descontoComercialPct, 2) + '%';
+      if (incValEl) incValEl.textContent = fmtDecimal(incentivo, 2) + '%';
+      if (acumValEl) {
+        const com = descontoComercialPct / 100;
+        const inc = incentivo / 100;
+        const acum = com || inc ? Math.round((1 - (1 - com) * (1 - inc)) * 10000) / 100 : 0;
+        acumValEl.textContent = fmtDecimal(acum, 2) + '%';
+      }
+    }
+    function populateRegimeDialogForm() {
+      const compradorEl = document.getElementById('regime-comprador-uf');
+      const destinoEl = document.getElementById('regime-destino');
+      const tributarioEl = document.getElementById('regime-tributario');
+      if (compradorEl) compradorEl.value = regimeState.compradorUf || 'AM';
+      if (destinoEl) destinoEl.value = regimeState.destino;
+      if (tributarioEl) tributarioEl.value = regimeState.tributario;
+      syncRegimeDialogPreview();
+    }
+    function openRegimeDialog(mode) {
+      if (!IS_FORMIGRES) return;
+      regimeDialogMode = mode;
+      populateRegimeDialogForm();
+      document.getElementById('regime-overlay')?.classList.add('open');
+    }
+    function closeRegimeDialog() {
+      regimeDialogMode = null;
+      document.getElementById('regime-overlay')?.classList.remove('open');
+    }
+    function applyRegimeDialog() {
+      const draft = readRegimeDialogForm();
+      regimeState.compradorUf = draft.compradorUf;
+      regimeState.destino = draft.destino;
+      regimeState.tributario = draft.tributario;
+      if (regimeDialogMode === 'enable') regimeState.enabled = true;
+      closeRegimeDialog();
+      commitRegimeChange();
+    }
+    function cancelRegimeDialog() {
+      closeRegimeDialog();
+      syncRegimePanelUi();
     }
     function descontoIncentivoPct() {
       return regimeState.enabled ? calcRegimeDescontoPct() : 0;
@@ -2452,29 +2809,19 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function syncRegimePanelUi() {
       if (!IS_FORMIGRES) return;
       const enabledEl = document.getElementById('regime-especial-enabled');
-      const optionsEl = document.getElementById('regime-options');
-      const destinoEl = document.getElementById('regime-destino');
-      const tributarioEl = document.getElementById('regime-tributario');
       const pillEl = document.getElementById('regime-aliquota-pill');
       const valEl = document.getElementById('regime-aliquota-val');
-      const hintEl = document.getElementById('regime-hint-amoc');
-      const acumNoteEl = document.getElementById('regime-acumulado-note');
-      const comValEl = document.getElementById('regime-comercial-val');
-      const incValEl = document.getElementById('regime-incentivo-val');
-      const acumValEl = document.getElementById('regime-acumulado-val');
+      const editBtn = document.getElementById('regime-edit-btn');
+      const summaryEl = document.getElementById('regime-summary');
       const incentivo = descontoIncentivoPct();
       if (enabledEl) enabledEl.checked = regimeState.enabled;
-      if (destinoEl) destinoEl.value = regimeState.destino;
-      if (tributarioEl) tributarioEl.value = regimeState.tributario;
-      if (optionsEl) optionsEl.hidden = !regimeState.enabled;
       if (pillEl) pillEl.hidden = !regimeState.enabled || !incentivo;
       if (valEl) valEl.textContent = fmtDecimal(incentivo, 2) + '%';
-      if (hintEl) hintEl.hidden = !(regimeState.enabled && regimeState.destino === 'amoc');
-      const showAcum = regimeState.enabled && descontoComercialPct > 0 && incentivo > 0;
-      if (acumNoteEl) acumNoteEl.hidden = !showAcum;
-      if (comValEl) comValEl.textContent = fmtDecimal(descontoComercialPct, 2) + '%';
-      if (incValEl) incValEl.textContent = fmtDecimal(incentivo, 2) + '%';
-      if (acumValEl) acumValEl.textContent = fmtDecimal(descontoAcumuladoPct(), 2) + '%';
+      if (editBtn) editBtn.hidden = !regimeState.enabled;
+      if (summaryEl) {
+        summaryEl.hidden = !regimeState.enabled;
+        if (regimeState.enabled) summaryEl.textContent = regimeSummaryText();
+      }
     }
     function refreshDescontoUi() {
       syncDescontoInputUi();
@@ -2491,20 +2838,28 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       loadRegimeState();
       refreshDescontoUi();
       const enabledEl = document.getElementById('regime-especial-enabled');
+      const compradorEl = document.getElementById('regime-comprador-uf');
       const destinoEl = document.getElementById('regime-destino');
       const tributarioEl = document.getElementById('regime-tributario');
       enabledEl?.addEventListener('change', () => {
-        regimeState.enabled = !!enabledEl.checked;
-        commitRegimeChange();
+        if (enabledEl.checked) {
+          enabledEl.checked = false;
+          openRegimeDialog('enable');
+        } else {
+          regimeState.enabled = false;
+          commitRegimeChange();
+        }
       });
-      destinoEl?.addEventListener('change', () => {
-        regimeState.destino = destinoEl.value === 'alc' || destinoEl.value === 'amoc' ? destinoEl.value : 'zfm';
-        commitRegimeChange();
+      bindClick('regime-edit-btn', () => openRegimeDialog('edit'));
+      bindClick('regime-dialog-apply', applyRegimeDialog);
+      bindClick('regime-dialog-cancel', cancelRegimeDialog);
+      bindClick('regime-dialog-close', cancelRegimeDialog);
+      document.getElementById('regime-overlay')?.addEventListener('click', (e) => {
+        if (e.target.id === 'regime-overlay') cancelRegimeDialog();
       });
-      tributarioEl?.addEventListener('change', () => {
-        regimeState.tributario = tributarioEl.value === 'lucro_real' ? 'lucro_real' : 'lucro_presumido';
-        commitRegimeChange();
-      });
+      compradorEl?.addEventListener('change', syncRegimeDialogPreview);
+      destinoEl?.addEventListener('change', syncRegimeDialogPreview);
+      tributarioEl?.addEventListener('change', syncRegimeDialogPreview);
     }
     let groupBy = 'formato-acabamento';
     try {
@@ -2554,7 +2909,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return isPdfDataUri(src) ? src : '';
     }
     const PDF_THUMB_PX = 112;
-    const PDF_PRINT_THUMB_PX = 72;
+    const PDF_PRINT_THUMB_PX = 48;
     const PDF_CANVAS_SCALE = 3;
     function pedidoPdfImageUrls() {
       const urls = new Set();
@@ -2717,7 +3072,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function clearAllQty() {
       const hasQty = Object.keys(qtyMap).length > 0 || [...document.querySelectorAll('.qty-input')].some((el) => Number(el.value) > 0);
       if (!hasQty) return;
-      if (!confirm('Limpar todas as quantidades de ' + QTY_LABEL_PL + '?')) return;
+      if (!confirm('Limpar toda a seleção?\\n\\nAs ' + QTY_LABEL_PL + ' marcadas serão apagadas.')) return;
       qtyMap = {};
       localStorage.removeItem(QTY_KEY);
       document.querySelectorAll('.qty-input').forEach((input) => {
@@ -2731,15 +3086,18 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         row.querySelector('.model-col-peso') && (row.querySelector('.model-col-peso').textContent = '');
         row.querySelector('.model-col-sub') && (row.querySelector('.model-col-sub').textContent = '');
       });
+      document.querySelectorAll('.catalog-card.model-row').forEach((row) => {
+        if (row.dataset.cod) updateModelRowCalcs(row.dataset.cod);
+      });
       renderPedido();
       updateCartFab();
       if (filterQtyOnly) applySearch(document.getElementById('search').value);
     }
     function visibleQtyInputs() {
-      return [...document.querySelectorAll('.model-row:not(.hidden) .qty-input')];
+      return [...document.querySelectorAll('#catalogo ' + catalogRowSelector() + ':not(.hidden) .qty-input')];
     }
     function visibleRows() {
-      return [...document.querySelectorAll('.model-row:not(.hidden)')];
+      return [...document.querySelectorAll('#catalogo ' + catalogRowSelector() + ':not(.hidden)')];
     }
     function clearQtyFocusRows() {
       document.querySelectorAll('.model-row.qty-focus-row').forEach((r) => r.classList.remove('qty-focus-row'));
@@ -2980,10 +3338,17 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           const el = row.querySelector(sel);
           if (el) el.textContent = text;
         };
-        setCell('.model-col-m2', m2tot ? fmtDecimal(m2tot) : '');
-        setCell('.model-col-cx', cxTot ? fmtDecimal(cxTot, 0) : '');
-        setCell('.model-col-peso', pesoTot ? fmtKg(pesoTot) : '');
-        setCell('.model-col-sub', sub ? fmtMoney(sub) : '');
+        if (row.classList.contains('catalog-card')) {
+          setCell('.catalog-card-qty-m2', m2tot ? fmtDecimal(m2tot) + ' m²' : '—');
+          setCell('.model-col-sub', sub ? fmtMoney(sub) : '—');
+          setCell('.model-col-cx', cxTot ? fmtDecimal(cxTot, 0) : '—');
+          setCell('.model-col-peso', pesoTot ? fmtKg(pesoTot) : '—');
+        } else {
+          setCell('.model-col-m2', m2tot ? fmtDecimal(m2tot) : '');
+          setCell('.model-col-cx', cxTot ? fmtDecimal(cxTot, 0) : '');
+          setCell('.model-col-peso', pesoTot ? fmtKg(pesoTot) : '');
+          setCell('.model-col-sub', sub ? fmtMoney(sub) : '');
+        }
       });
     }
     function fmtEmbalagemText(item) {
@@ -3013,16 +3378,18 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const r = String(item.referencia || '').trim();
       return r && r !== '—' ? r : '';
     }
-    function renderResistenciaLine(item, kind) {
+    function renderResistenciaBold(item) {
       const resist = modelResistencia(item);
-      if (!resist) return '';
-      const pdf = kind === 'pdf';
-      const cls = pdf ? 'print-pedido-item-resist' : 'pedido-row-resist';
-      const labelCls = pdf ? 'print-pedido-item-resist-label' : 'pedido-row-resist-label';
-      const valCls = pdf ? 'print-pedido-item-resist-val' : 'pedido-row-resist-val';
-      return '<div class="' + cls + '">' +
-        '<span class="' + labelCls + '">Resistência</span>' +
-        '<strong class="' + valCls + '">' + esc(resist) + '</strong></div>';
+      return resist ? '<strong class="pedido-meta-resist">' + esc(resist) + '</strong> ' : '';
+    }
+    function renderItemMetaHtml(item, cod) {
+      const codStr = cod != null ? cod : item.codigo_tintao;
+      const parts = ['#' + esc(codStr)];
+      if (!item.gemeas || item.gemeas.length < 2) {
+        if (item.marca_nome) parts.push(esc(item.marca_nome));
+      }
+      parts.push(esc(item.formato || '—'));
+      return renderResistenciaBold(item) + parts.join(' · ');
     }
     function renderGemeasMarcasLine(item, kind) {
       const g = item.gemeas;
@@ -3039,29 +3406,41 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const tip = 'Mesmo modelo em ' + n + ' marcas — toque para ver códigos';
       return '<button type="button" class="model-gemeas-badge model-gemeas-trigger" data-cod="' + esc(cod) + '" aria-expanded="false" aria-controls="gemeas-panel-' + esc(cod) + '" title="' + esc(tip) + '" aria-label="' + esc(tip) + '">' + n + '</button>';
     }
-    function renderGemeasDetailRow(item, cod) {
+    function renderGemeasDetailInner(item) {
       const g = item.gemeas;
       if (!g || g.length < 2) return '';
+      const cod = item.codigo_tintao;
       const rows = g.map((row) => {
         const isCurrent = String(row.codigo) === String(cod);
         return '<tr class="' + (isCurrent ? 'gemeas-row-current' : '') + '">' +
           '<td class="gemeas-col-marca">' + esc(row.marca) + '</td>' +
           '<td class="gemeas-col-cod">#' + esc(row.codigo) + '</td></tr>';
       }).join('');
-      return '<tr class="model-gemeas-detail hidden" id="gemeas-panel-' + esc(cod) + '" data-gemeas-for="' + esc(cod) + '">' +
-        '<td colspan="9"><div class="model-gemeas-wrap">' +
+      return '<div class="model-gemeas-wrap">' +
         '<p class="model-gemeas-caption">Mesmo modelo nestas marcas</p>' +
         '<table class="model-gemeas-table"><thead><tr><th>Marca</th><th>Código</th></tr></thead><tbody>' +
-        rows + '</tbody></table></div></td></tr>';
+        rows + '</tbody></table></div>';
+    }
+    function renderGemeasDetailRow(item, cod) {
+      const inner = renderGemeasDetailInner(item);
+      if (!inner) return '';
+      return '<tr class="model-gemeas-detail hidden" data-gemeas-for="' + esc(cod) + '">' +
+        '<td colspan="9">' + inner + '</td></tr>';
+    }
+    function renderGemeasDetailCard(item, cod) {
+      const inner = renderGemeasDetailInner(item);
+      if (!inner) return '';
+      return '<div class="model-gemeas-detail model-gemeas-detail-card hidden" data-gemeas-for="' + esc(cod) + '">' +
+        inner + '</div>';
     }
     function toggleGemeasPanel(cod) {
-      const panel = document.getElementById('gemeas-panel-' + cod);
+      const panels = document.querySelectorAll('.model-gemeas-detail[data-gemeas-for="' + cod + '"]');
       const btn = document.querySelector('.model-gemeas-trigger[data-cod="' + cod + '"]');
-      if (!panel) return;
-      const wasHidden = panel.classList.contains('hidden');
+      if (!panels.length) return;
+      const wasHidden = [...panels].every((p) => p.classList.contains('hidden'));
       if (wasHidden) closeAllGemeasPanels();
-      panel.classList.toggle('hidden');
-      const isOpen = !panel.classList.contains('hidden');
+      const isOpen = wasHidden;
+      panels.forEach((panel) => panel.classList.toggle('hidden', !isOpen));
       if (btn) btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     }
     function closeAllGemeasPanels() {
@@ -3103,13 +3482,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const cxTot = qty ? itemCaixasTotal(item, qty) : null;
         const pesoTot = qty ? itemPesoTotal(item, qty) : null;
         const sub = qty ? itemSubtotal(item, qty) : null;
-        const rowMetaParts = ['#' + esc(cod)];
-        if (!item.gemeas || item.gemeas.length < 2) {
-          if (item.marca_nome) rowMetaParts.push(esc(item.marca_nome));
-        }
-        rowMetaParts.push(esc(item.formato || '—'));
-        const rowMeta = rowMetaParts.join(' · ');
-        const resistHtml = renderResistenciaLine(item, 'catalog');
+        const rowMeta = renderItemMetaHtml(item, cod);
         const gemeasMarcasHtml = renderGemeasMarcasLine(item, 'catalog');
         const gemeasTrigger = renderGemeasTrigger(item, cod);
         const searchExtra = gemeasSearchText(item);
@@ -3118,9 +3491,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const titleHtml = gemeasTrigger
           ? '<span class="pedido-row-title-line"><span class="pedido-row-title">' + esc(titulo) + '</span>' + gemeasTrigger + '</span>'
           : '<span class="pedido-row-title">' + esc(titulo) + '</span>';
-        return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + searchExtra).toLowerCase()) + '" data-qty="' + qty + '">' +
+        return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(normalize((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + formatSearchBlob(item.formato) + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + searchExtra))) + '" data-qty="' + qty + '">' +
           '<td class="pedido-col-foto col-foto">' + foto + '</td>' +
-          '<td class="pedido-col-modelo col-modelo">' + titleHtml + warn + resistHtml + gemeasMarcasHtml + '<div class="pedido-row-meta">' + rowMeta + '</div></td>' +
+          '<td class="pedido-col-modelo col-modelo">' + titleHtml + warn + gemeasMarcasHtml + '<div class="pedido-row-meta">' + rowMeta + '</div></td>' +
           '<td class="pedido-col-qty col-qty">' +
             '<input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" tabindex="0" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="' + esc(QTY_LABEL) + '" placeholder="" />' +
           '</td>' +
@@ -3141,16 +3514,113 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '<input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" tabindex="0" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="' + esc(QTY_LABEL) + '" placeholder="0" />' +
         '</td></tr>';
     }
+    function formigresItemSearchKey(item, cod, pack, titulo, extra) {
+      const resistSearch = modelResistencia(item);
+      const fmtBlob = formatSearchBlob(item.formato);
+      return normalize(titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + fmtBlob + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + (extra || ''));
+    }
+    function formatSearchBlob(fmt) {
+      const raw = String(fmt || '').trim();
+      if (!raw) return '';
+      const m = raw.match(/(\\d+)\\s*[x×X]\\s*(\\d+)/i);
+      if (!m) return raw;
+      const a = m[1];
+      const b = m[2];
+      return [a + 'x' + b, a + ' x ' + b, a + '×' + b, 'formato ' + a + 'x' + b].join(' ');
+    }
+    function searchTermsFromQuery(termRaw) {
+      const term = normalize(String(termRaw || '').trim());
+      if (!term) return [];
+      const terms = new Set([term]);
+      terms.add(term.replace(/(\\d+)\\s*[x×]\\s*(\\d+)/gi, (_, a, b) => a + 'x' + b));
+      const re = /(\\d+)\\s*[x×X]\\s*(\\d+)/gi;
+      let match;
+      while ((match = re.exec(String(termRaw || ''))) !== null) {
+        terms.add(normalize(match[1] + 'x' + match[2]));
+      }
+      return [...terms].filter(Boolean);
+    }
+    function rowMatchesSearch(row, terms) {
+      if (!terms.length) return true;
+      const hay = normalize((row.dataset.search || '') + ' ' + (row.textContent || ''));
+      return terms.some((t) => hay.includes(t));
+    }
+    function renderCatalogCardThumb(item, cod, titulo, imgs, img) {
+      if (!img) {
+        return '<span class="pedido-card-thumb pedido-card-thumb-empty" aria-hidden="true">—</span>';
+      }
+      return '<button type="button" class="thumb-btn catalog-card-thumb-btn' + (imgs.length > 1 ? ' has-gallery' : '') + '" tabindex="-1" data-cod="' + esc(cod) + '" data-title="' + esc(titulo) + '" title="Ver fotos"><img class="pedido-card-thumb" src="' + esc(img) + '" alt="" loading="lazy" />' + (imgs.length > 1 ? '<span class="thumb-more" aria-hidden="true">▦</span>' : '') + '</button>';
+    }
+    function renderCatalogCardQtyEdit(cod, qty, m2tot) {
+      return '<div class="pedido-card-qty catalog-card-qty-edit">' +
+        '<span class="catalog-card-qty-label">' + esc(QTY_LABEL) + '</span>' +
+        '<input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" tabindex="0" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="' + esc(QTY_LABEL) + '" placeholder="" />' +
+        '<span class="pedido-card-qty-sub catalog-card-qty-m2">' + esc(m2tot ? fmtDecimal(m2tot) + ' m²' : '—') + '</span>' +
+      '</div>';
+    }
+    function renderCatalogCardFormigres(item) {
+      const imgs = getGaleria(item);
+      const img = imgs[0]?.url || item.imagem_url || '';
+      const titulo = item.formigres_titulo || item.descricao;
+      const cod = item.codigo_tintao;
+      const qty = getQty(cod);
+      const pack = fmtEmbalagemText(item);
+      const emb = itemEmbalagem(item);
+      const m2unit = itemM2Unit(item);
+      const m2tot = qty ? itemM2Total(item, qty) : null;
+      const cxTot = qty ? itemCaixasTotal(item, qty) : null;
+      const pesoTot = qty ? itemPesoTotal(item, qty) : null;
+      const sub = qty ? itemSubtotal(item, qty) : null;
+      const gemeasTrigger = renderGemeasTrigger(item, cod);
+      const searchExtra = gemeasSearchText(item);
+      const warn = item.match_status !== 'encontrado' ? ' <span class="badge warn">sem match</span>' : '';
+      const thumb = renderCatalogCardThumb(item, cod, titulo, imgs, img);
+      const titleHtml = gemeasTrigger
+        ? '<span class="pedido-row-title-line"><span class="pedido-card-title pedido-card-hero">' + esc(titulo) + '</span>' + gemeasTrigger + '</span>' + warn
+        : '<div class="pedido-card-title pedido-card-hero">' + esc(titulo) + warn + '</div>';
+      const row1 = '<div class="pedido-card-head">' + thumb +
+        '<div class="pedido-card-head-main">' +
+          '<div class="pedido-card-desc">' +
+            titleHtml +
+            renderGemeasMarcasLine(item, 'catalog') +
+            '<div class="pedido-card-meta">' + renderItemMetaHtml(item, cod) + '</div>' +
+          '</div>' +
+          renderCatalogCardQtyEdit(cod, qty, m2tot) +
+          '<div class="pedido-card-total">' +
+            '<strong class="pedido-card-hero model-col-sub">' + esc(sub != null ? fmtMoney(sub) : '—') + '</strong>' +
+            '<span class="pedido-card-total-label">Subtotal</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+      const embParts = [];
+      if (emb.cxpl) embParts.push(emb.cxpl + ' cx/pl');
+      if (m2unit) embParts.push(fmtDecimal(m2unit) + ' m²/pl');
+      const spec = renderPedidoSpecTable([
+        { label: 'Preço/m²', preco: true, html: fmtPrecoHtml(item.preco_m2) },
+        { label: 'Caixas', extraClass: 'model-col-cx', text: cxTot ? fmtDecimal(cxTot, 0) : '—' },
+        { label: 'Peso', extraClass: 'model-col-peso', text: pesoTot ? fmtKg(pesoTot) : '—' },
+        { label: 'Por palete', palete: true, text: embParts.length ? embParts.join(' · ') : '—' },
+      ]);
+      return '<article class="catalog-card pedido-card model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(formigresItemSearchKey(item, cod, pack, titulo, searchExtra)) + '" data-qty="' + qty + '">' +
+        '<div class="pedido-card-layout">' + row1 + spec + '</div></article>';
+    }
     function renderItemsTable(items) {
       if (CATALOG_SKIN === 'formigres') {
         const body = items.map((item) => {
           const cod = item.codigo_tintao;
           return renderTableRow(item) + renderGemeasDetailRow(item, cod);
         }).join('');
-        return '<div class="table-wrap"><table class="model-table catalog-pedido-table">' +
+        const cards = items.map((item) => {
+          const cod = item.codigo_tintao;
+          return renderCatalogCardFormigres(item) + renderGemeasDetailCard(item, cod);
+        }).join('');
+        return '<div class="catalog-items">' +
+          '<div class="catalog-table-wrap table-wrap"><table class="model-table catalog-pedido-table">' +
           CATALOG_TABLE_COLGROUP_HTML +
           '<thead><tr>' + CATALOG_TABLE_HEAD_HTML + '</tr></thead><tbody>' +
-          body + '</tbody></table></div>';
+          body + '</tbody></table></div>' +
+          '<div class="catalog-cards-wrap"><div class="catalog-cards">' + cards + '</div></div>' +
+          '</div>';
       }
       return '<div class="table-wrap"><table class="model-table"><thead><tr><th>Foto</th><th>Modelo</th><th>Embalagem</th><th>Preço/m²</th><th>' + esc(QTY_LABEL) + '</th></tr></thead><tbody>' +
         items.map(renderTableRow).join('') + '</tbody></table></div>';
@@ -3202,8 +3672,22 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       refreshDom();
       applySearch(document.getElementById('search').value);
     }
+    function catalogRowSelector() {
+      if (CATALOG_SKIN === 'formigres') {
+        return window.matchMedia('(max-width: 720px)').matches
+          ? '.catalog-cards-wrap .model-row'
+          : '.catalog-table-wrap .model-row';
+      }
+      return '.model-row';
+    }
+    function catalogModelRows() {
+      return [...document.querySelectorAll('#catalogo ' + catalogRowSelector())];
+    }
+    function accHasVisibleModelRows(acc) {
+      return acc.querySelectorAll(catalogRowSelector() + ':not(.hidden)').length > 0;
+    }
     function refreshDom() {
-      dom.rows = [...document.querySelectorAll('.model-row')];
+      dom.rows = catalogModelRows();
       dom.formatos = [...document.querySelectorAll('.acc-formato, .acc-grupo-formato')];
       dom.grupos = [...document.querySelectorAll('.acc-grupo, .acc-acab')];
       dom.linhas = [...document.querySelectorAll('.acc-linha')];
@@ -3213,22 +3697,28 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return (s || '').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');
     }
     function applySearch(termRaw) {
-      const term = normalize(termRaw.trim());
-      for (const row of dom.rows) {
+      const terms = searchTermsFromQuery(termRaw);
+      for (const row of document.querySelectorAll('#catalogo .model-row')) {
         const qty = Number(row.dataset.qty || 0);
         const showQty = !filterQtyOnly || qty > 0;
-        const showTerm = !term || normalize(row.textContent).includes(term);
+        const showTerm = rowMatchesSearch(row, terms);
         const show = showQty && showTerm;
         row.classList.toggle('hidden', !show);
+        const cod = row.dataset.cod;
+        if (cod && !show) {
+          document.querySelectorAll('.model-gemeas-detail[data-gemeas-for="' + cod + '"]').forEach((el) => el.classList.add('hidden'));
+          document.querySelector('.model-gemeas-trigger[data-cod="' + cod + '"]')?.setAttribute('aria-expanded', 'false');
+        }
       }
+      dom.rows = catalogModelRows();
       for (const fmt of dom.formatos) {
-        fmt.classList.toggle('hidden', fmt.querySelectorAll('.model-row:not(.hidden)').length === 0);
+        fmt.classList.toggle('hidden', !accHasVisibleModelRows(fmt));
       }
       for (const g of dom.grupos) {
-        g.classList.toggle('hidden', g.querySelectorAll('.model-row:not(.hidden)').length === 0);
+        g.classList.toggle('hidden', !accHasVisibleModelRows(g));
       }
       for (const l of dom.linhas) {
-        l.classList.toggle('hidden', l.querySelectorAll('.model-row:not(.hidden)').length === 0);
+        l.classList.toggle('hidden', !accHasVisibleModelRows(l));
       }
       updateModelosCount();
       updateAccordionCounts();
@@ -3243,7 +3733,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         if (!el) continue;
         const total = Number(el.dataset.total || 0);
         const suffix = el.dataset.suffix || '';
-        const visible = acc.querySelectorAll('.model-row:not(.hidden)').length;
+        const visible = acc.querySelectorAll(catalogRowSelector() + ':not(.hidden)').length;
         el.textContent = formatAccCount(visible, total, suffix);
       }
     }
@@ -3267,6 +3757,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           const cls = [
             c.preco ? ' pedido-card-spec-preco' + (hasDescontoAtivo() ? ' has-desc' : '') : '',
             c.palete ? ' pedido-card-spec-palete' : '',
+            c.extraClass ? ' ' + c.extraClass : '',
           ].join('');
           const val = c.html != null ? c.html : esc(c.text ?? '—');
           return '<td><span class="pedido-card-spec-l">' + esc(c.label) + '</span><span class="pedido-card-spec-v' + cls + '">' + val + '</span></td>';
@@ -3279,9 +3770,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '<div class="pedido-card-head-main">' +
           '<div class="pedido-card-desc">' +
             '<div class="pedido-card-title pedido-card-hero">' + esc(titulo) + '</div>' +
-            renderResistenciaLine(item, 'catalog') +
             renderGemeasMarcasLine(item, 'catalog') +
-            '<div class="pedido-card-meta">#' + esc(item.codigo_tintao) + ' · ' + esc(item.formato || '—') + '</div>' +
+            '<div class="pedido-card-meta">' + renderItemMetaHtml(item) + '</div>' +
           '</div>' +
           '<div class="pedido-card-qty">' +
             '<span class="pedido-card-qty-main pedido-card-hero">' + qty + ' <span>' + esc(qtyShort) + '</span></span>' +
@@ -3297,7 +3787,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function renderPedidoTableRow({ item, qty, img, titulo, m2unit, m2tot, pesoTot, cxTot, cxpl, sub }, thumbs, opts) {
       const forPdf = opts && opts.pdf;
       const emb = itemEmbalagem(item);
-      const rowMeta = '#' + esc(item.codigo_tintao) + ' · ' + esc(item.formato || '—');
+      const rowMeta = renderItemMetaHtml(item);
       const imgSrc = forPdf ? pdfImgSrcForPrint(img, thumbs, item) : pdfImgSrc(img, thumbs, item) || img;
       const thumbPx = forPdf ? PDF_PRINT_THUMB_PX : 48;
       const thumbCell = imgSrc
@@ -3328,117 +3818,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '<td class="pedido-col-num pedido-col-preco ' + (hasDescontoAtivo() ? 'has-desc' : '') + '">' + precoCell + '</td>' +
         '<td class="pedido-col-num col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
     }
-    function renderPrintFormatGroupHeader(fmt, qtyPl, pesoKg, m2tot) {
-      const fmtLabel = esc(String(fmt || '—').toUpperCase());
-      const qtyLabel = QTY_UNIT === 'palete' ? 'paletes' : QTY_LABEL_PL;
-      const qtyPad = String(qtyPl || 0).padStart(2, '0');
-      const peso = pesoKg ? fmtKg(pesoKg) : '—';
-      const m2 = m2tot ? fmtDecimal(m2tot) + ' m²' : '';
-      const bits = [
-        '<span class="print-format-group-fmt">' + fmtLabel + '</span>',
-        '<span class="print-format-group-stat">' + qtyPad + ' ' + esc(qtyLabel) + '</span>',
-        '<span class="print-format-group-stat">' + esc(peso) + '</span>',
-      ];
-      if (m2) bits.push('<span class="print-format-group-stat">' + esc(m2) + '</span>');
-      return '<div class="print-format-group">' + bits.join('<span class="print-format-group-sep">|</span>') + '</div>';
-    }
-    function buildPedidoPrintCardsHtml(thumbs, rows) {
-      const groups = new Map();
-      for (const row of rows) {
-        const fmt = row.item.formato || '—';
-        if (!groups.has(fmt)) groups.set(fmt, []);
-        groups.get(fmt).push(row);
-      }
-      const fmtKeys = [...groups.keys()].sort(compareFormato);
-      const parts = [];
-      for (const fmt of fmtKeys) {
-        const groupRows = groups.get(fmt);
-        let gQty = 0;
-        let gPeso = 0;
-        let gM2 = 0;
-        for (const { item, qty } of groupRows) {
-          gQty += qty;
-          const pt = itemPesoTotal(item, qty);
-          if (pt) gPeso += pt;
-          const m2 = itemM2Total(item, qty);
-          if (m2) gM2 += m2;
-        }
-        parts.push(renderPrintFormatGroupHeader(fmt, gQty, gPeso, gM2));
-        for (const { item, qty } of groupRows) {
-          const emb = itemEmbalagem(item);
-          const m2unit = itemM2Unit(item);
-          const m2tot = itemM2Total(item, qty);
-          const pesoTot = itemPesoTotal(item, qty);
-          const cxTot = itemCaixasTotal(item, qty);
-          const sub = itemSubtotal(item, qty);
-          const imgs = getGaleria(item);
-          const img = imgs[0]?.url || '';
-          const titulo = item.formigres_titulo || item.descricao;
-          parts.push(renderPedidoPrintCard(
-            { item, qty, img, titulo, m2unit, m2tot, pesoTot, cxTot, cxpl: emb.cxpl, sub },
-            thumbs,
-          ));
-        }
-      }
-      return parts.length ? '<div class="print-pedido-list">' + parts.join('') + '</div>' : '';
-    }
-    function renderPedidoPrintCard({ item, qty, img, titulo, m2unit, m2tot, pesoTot, cxTot, cxpl, sub }, thumbs) {
-      const emb = itemEmbalagem(item);
-      const imgSrc = pdfImgSrcForPrint(img, thumbs, item);
-      const thumbPx = PDF_PRINT_THUMB_PX;
-      const thumb = imgSrc
-        ? '<img src="' + esc(imgSrc) + '" alt="" width="' + thumbPx + '" height="' + thumbPx + '" />'
-        : '<span class="print-pedido-item-thumb-empty" aria-hidden="true">—</span>';
-      const hasGemeas = item.gemeas && item.gemeas.length > 1;
-      const resistHtml = renderResistenciaLine(item, 'pdf');
-      const gemeasMarcasHtml = renderGemeasMarcasLine(item, 'pdf');
-      const metaParts = [];
-      if (!hasGemeas) {
-        metaParts.push('#' + esc(item.codigo_tintao));
-        if (item.marca_nome) metaParts.push(esc(item.marca_nome));
-      }
-      const metaHtml = metaParts.length
-        ? '<div class="print-pedido-item-meta">' + metaParts.join(' · ') + '</div>'
-        : '';
-      const qtyShort = QTY_UNIT === 'palete' ? 'pl' : 'cx';
-      const metrics = [];
-      metrics.push('<strong>' + qty + ' ' + esc(qtyShort) + '</strong>');
-      if (m2tot) metrics.push(fmtDecimal(m2tot) + ' m²');
-      if (QTY_UNIT === 'palete' && cxTot) metrics.push(fmtDecimal(cxTot, 0) + ' cx');
-      if (QTY_UNIT === 'palete' && pesoTot) metrics.push(fmtKg(pesoTot));
-      if (QTY_UNIT !== 'palete' && m2unit) metrics.push(fmtDecimal(m2unit) + ' m²/cx');
-      const embParts = [];
-      if (QTY_UNIT === 'palete') {
-        if (cxpl || emb.cxpl) embParts.push((cxpl || emb.cxpl) + ' cx/pl');
-        if (m2unit) embParts.push(fmtDecimal(m2unit) + ' m²/pl');
-      } else {
-        const pack = fmtEmbalagemText(item);
-        if (pack && pack !== '—') embParts.push(esc(pack));
-      }
-      if (embParts.length) metrics.push(embParts.join(' · '));
-      const precoHtml = fmtPrecoHtml(item.preco_m2, { pdf: true });
-      metrics.push('<span class="print-pedido-metric-preco' + (hasDescontoAtivo() ? ' has-desc' : '') + '">' + precoHtml + '</span>');
-      return '<article class="print-pedido-item">' +
-        '<div class="print-pedido-item-top">' +
-          '<div class="print-pedido-item-thumb">' + thumb + '</div>' +
-          '<div class="print-pedido-item-desc">' +
-            '<div class="print-pedido-item-title">' + esc(titulo) + '</div>' +
-            resistHtml +
-            gemeasMarcasHtml +
-            metaHtml +
-          '</div>' +
-          '<div class="print-pedido-item-sub">' +
-            '<strong>' + esc(sub != null ? fmtMoney(sub) : '—') + '</strong>' +
-            '<span>Subtotal</span>' +
-          '</div>' +
-        '</div>' +
-        '<div class="print-pedido-item-metrics">' + metrics.join(' · ') + '</div>' +
-      '</article>';
-    }
-    function renderPedidoCard({ item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl, sub }, opts) {
-      const forPdf = opts && opts.pdf;
+    function renderPedidoCard({ item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl, sub }) {
       const thumb = img
-        ? '<img class="pedido-card-thumb" src="' + esc(img) + '" alt=""' + (forPdf ? ' width="48" height="48"' : ' loading="lazy"') + ' />'
+        ? '<img class="pedido-card-thumb" src="' + esc(img) + '" alt="" loading="lazy" />'
         : '<span class="pedido-card-thumb pedido-card-thumb-empty" aria-hidden="true">—</span>';
       const row1 = renderPedidoCardRow1({ thumb, titulo, item, qty, m2tot, sub });
 
@@ -3452,7 +3834,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           { label: 'Peso', peso: true, text: pesoTot ? fmtKg(pesoTot) : '—' },
           { label: 'Por palete', palete: true, text: embParts.length ? embParts.join(' · ') : '—' },
         ]);
-        return '<article class="pedido-card' + (forPdf ? ' pedido-card-pdf' : '') + '"><div class="pedido-card-layout">' + row1 + spec + '</div></article>';
+        return '<article class="pedido-card"><div class="pedido-card-layout">' + row1 + spec + '</div></article>';
       }
 
       const spec = renderPedidoSpecTable([
@@ -3461,7 +3843,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         { label: 'm² total', text: m2tot ? fmtDecimal(m2tot) : '—' },
         { label: 'Embalagem', text: fmtEmbalagemText(item) },
       ]);
-      return '<article class="pedido-card' + (forPdf ? ' pedido-card-pdf' : '') + '"><div class="pedido-card-layout">' + row1 + spec + '</div></article>';
+      return '<article class="pedido-card"><div class="pedido-card-layout">' + row1 + spec + '</div></article>';
     }
     function renderPedido() {
       const rows = pedidoItens();
@@ -3559,13 +3941,65 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     function printPdfLayout() {
       const marginMm = 8;
-      const pageWmm = 210;
+      const pageWmm = 297;
       const contentWmm = pageWmm - marginMm * 2;
       const contentWpx = Math.round(contentWmm * 96 / 25.4);
-      return { marginMm, pageWmm, contentWmm, contentWpx };
+      return { marginMm, pageWmm, contentWmm, contentWpx, orientation: 'landscape' };
     }
     function printPageWidthPx() {
       return printPdfLayout().contentWpx;
+    }
+    function buildPrintFormatoResumoHtml(rows) {
+      if (!rows.length || QTY_UNIT !== 'palete') return '';
+      const groups = new Map();
+      for (const { item, qty } of rows) {
+        const fmt = item.formato || '—';
+        if (!groups.has(fmt)) groups.set(fmt, { qty: 0, m2: 0, cx: 0, peso: 0 });
+        const g = groups.get(fmt);
+        g.qty += qty;
+        const m2 = itemM2Total(item, qty);
+        if (m2) g.m2 += m2;
+        const cx = itemCaixasTotal(item, qty);
+        if (cx) g.cx += cx;
+        const pt = itemPesoTotal(item, qty);
+        if (pt) g.peso += pt;
+      }
+      const fmtKeys = [...groups.keys()].sort(compareFormato);
+      let totQty = 0;
+      let totM2 = 0;
+      let totCx = 0;
+      let totPeso = 0;
+      const bodyRows = fmtKeys.map((fmt) => {
+        const g = groups.get(fmt);
+        totQty += g.qty;
+        totM2 += g.m2;
+        totCx += g.cx;
+        totPeso += g.peso;
+        return '<tr>' +
+          '<td class="print-fmt-resumo-fmt">' + esc(grupoLabelFormato(fmt)) + '</td>' +
+          '<td class="print-fmt-resumo-num">' + g.qty + '</td>' +
+          '<td class="print-fmt-resumo-num">' + (g.m2 ? fmtDecimal(g.m2) : '—') + '</td>' +
+          '<td class="print-fmt-resumo-num">' + (g.cx ? fmtDecimal(g.cx, 0) : '—') + '</td>' +
+          '<td class="print-fmt-resumo-num">' + (g.peso ? fmtKg(g.peso) : '—') + '</td>' +
+        '</tr>';
+      }).join('');
+      const totalRow = '<tr class="print-fmt-resumo-total">' +
+        '<td class="print-fmt-resumo-fmt"><strong>Total</strong></td>' +
+        '<td class="print-fmt-resumo-num"><strong>' + totQty + '</strong></td>' +
+        '<td class="print-fmt-resumo-num"><strong>' + fmtDecimal(totM2) + '</strong></td>' +
+        '<td class="print-fmt-resumo-num"><strong>' + fmtDecimal(totCx, 0) + '</strong></td>' +
+        '<td class="print-fmt-resumo-num"><strong>' + fmtKg(totPeso) + '</strong></td>' +
+      '</tr>';
+      return '<section class="print-fmt-resumo-wrap">' +
+        '<p class="print-fmt-resumo-title">Resumo por formato</p>' +
+        '<table class="print-fmt-resumo-table">' +
+          '<colgroup><col class="col-fmt-res-fmt"><col class="col-fmt-res-num"><col class="col-fmt-res-num"><col class="col-fmt-res-num"><col class="col-fmt-res-num"></colgroup>' +
+          '<thead><tr>' +
+            '<th>Formato</th><th>Paletes</th><th>m²</th><th>Caixas</th><th>Peso</th>' +
+          '</tr></thead>' +
+          '<tbody>' + bodyRows + totalRow + '</tbody>' +
+        '</table>' +
+      '</section>';
     }
     function buildPedidoPrintHtml(thumbs) {
       const rows = pedidoItens();
@@ -3588,18 +4022,21 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const img = imgs[0]?.url || '';
         const titulo = item.formigres_titulo || item.descricao;
         const rowData = { item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub };
-        if (QTY_UNIT !== 'palete') {
-          bodyRows.push(renderPedidoTableRow(rowData, thumbs, { pdf: true }));
-        }
+        bodyRows.push(renderPedidoTableRow(rowData, thumbs, { pdf: true }));
       }
-      const listHtml = rows.length && QTY_UNIT === 'palete'
-        ? buildPedidoPrintCardsHtml(thumbs, rows)
+      const pdfColCount = QTY_UNIT === 'palete' ? 9 : 7;
+      const tableFoot = rows.length
+        ? '<tfoot><tr class="print-pedido-tfoot">' +
+            '<td colspan="' + (pdfColCount - 1) + '" class="print-pedido-total-label">Total estimado</td>' +
+            '<td class="pedido-col-num col-subtotal print-pedido-total-val">' + esc(fmtMoney(totalValor)) + '</td>' +
+          '</tr></tfoot>'
         : '';
-      const tableHtml = bodyRows.length && QTY_UNIT !== 'palete'
+      const tableHtml = rows.length
         ? '<table class="print-pedido-table pedido-table">' +
             PEDIDO_TABLE_COLGROUP_HTML +
             '<thead><tr>' + PEDIDO_TABLE_HEAD_HTML + '</tr></thead>' +
             '<tbody>' + bodyRows.join('') + '</tbody>' +
+            tableFoot +
           '</table>'
         : '';
       const descNote = hasDescontoAtivo() ? '<p class="print-note">' + esc(descontoNoteText()) + ' sobre a tabela.</p>' : '';
@@ -3622,82 +4059,85 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const pesoPrintLine = QTY_UNIT === 'palete' && totalPeso
         ? '<p class="print-peso">Peso estimado: <strong>' + fmtKg(totalPeso) + '</strong></p>'
         : '';
+      const formatoResumoHtml = buildPrintFormatoResumoHtml(rows);
+      const footerHtml = rows.length
+        ? '<footer class="print-footer">' +
+            '<p class="print-totals">Total estimado: <strong>' + esc(fmtMoney(totalValor)) + '</strong></p>' +
+            pesoPrintLine +
+            descNote +
+          '</footer>'
+        : '';
       return '<div class="print-sheet">' +
         '<header class="print-head">' +
           '<h1>' + esc(PDF_TITLE) + '</h1>' +
           '<p class="print-meta">1ª via · Gerado em ' + esc(new Date().toLocaleString('pt-BR')) + '</p>' +
-          descNote +
         '</header>' +
         resumo +
-        listHtml +
         tableHtml +
-        pesoPrintLine +
-        '<p class="print-totals"><strong>Total estimado: ' + fmtMoney(totalValor) + '</strong></p>' +
+        formatoResumoHtml +
+        footerHtml +
       '</div>';
     }
     function printPedidoPrintCss() {
       const rowLine = '#707070';
       const thumb = PDF_PRINT_THUMB_PX;
-      const metricsPad = thumb + 12;
-      return '@page { size: A4 portrait; margin: 8mm; }' +
+      return '@page { size: A4 landscape; margin: 8mm; }' +
         'html, body { margin: 0; padding: 0; }' +
-        '.print-render-root { background: #ffffff; color: #5a5a5a; font-family: "Libre Franklin", "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 13px; -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; width: 100%; }' +
-        '.print-sheet { width: 100%; max-width: 100%; margin: 0; box-sizing: border-box; background: #ffffff; color: #5a5a5a; padding: 0; }' +
-        '.print-head { margin-bottom: 12px; }' +
-        'h1 { margin: 0 0 4px; font-size: 17px; letter-spacing: .08em; text-transform: uppercase; color: #2f2f2f; font-weight: 600; }' +
-        '.print-meta, .print-note { margin: 0 0 6px; color: #767676; font-size: 11px; line-height: 1.35; }' +
-        '.print-resumo { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px 12px; margin-bottom: 12px; }' +
-        '.print-resumo-stat { min-width: 0; font-size: 10px; color: #767676; }' +
-        '.print-resumo-stat strong { display: block; font-size: 14px; color: #2f2f2f; margin-bottom: 2px; font-weight: 600; }' +
-        '.print-format-group { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 10px; padding: 10px 0 8px; margin-top: 10px; border-bottom: 2px solid ' + rowLine + '; break-inside: avoid; page-break-inside: avoid; }' +
-        '.print-pedido-list > .print-format-group:first-child { margin-top: 0; padding-top: 4px; }' +
-        '.print-format-group-fmt { font-size: 13px; font-weight: 700; letter-spacing: .05em; color: #2f2f2f; text-transform: uppercase; }' +
-        '.print-format-group-stat { font-size: 12px; font-weight: 600; color: #2f2f2f; font-variant-numeric: tabular-nums; }' +
-        '.print-format-group-sep { color: #767676; font-weight: 400; font-size: 11px; }' +
-        '.print-pedido-list { display: flex; flex-direction: column; gap: 0; margin-top: 4px; }' +
-        '.print-pedido-item { border-bottom: 1px solid ' + rowLine + '; padding: 12px 0; break-inside: avoid; page-break-inside: avoid; }' +
-        '.print-pedido-item:first-child { padding-top: 4px; }' +
-        '.print-pedido-item-top { display: flex; align-items: flex-start; gap: 12px; }' +
-        '.print-pedido-item-thumb { flex-shrink: 0; width: ' + thumb + 'px; }' +
-        '.print-pedido-item-thumb img { display: block; width: ' + thumb + 'px; height: ' + thumb + 'px; border-radius: 6px; object-fit: cover; image-rendering: auto; }' +
-        '.print-pedido-item-thumb-empty { display: flex; align-items: center; justify-content: center; width: ' + thumb + 'px; height: ' + thumb + 'px; border-radius: 6px; background: #f0f0f0; color: #767676; font-size: 11px; }' +
-        '.print-pedido-item-desc { flex: 1; min-width: 0; padding-top: 2px; }' +
-        '.print-pedido-item-title { font-size: 14px; font-weight: 600; line-height: 1.35; color: #2f2f2f; word-break: break-word; }' +
-        '.print-pedido-item-resist { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 8px; margin-top: 4px; line-height: 1.35; }' +
-        '.print-pedido-item-resist-label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .05em; color: #767676; }' +
-        '.print-pedido-item-resist-val { font-size: 13px; font-weight: 700; letter-spacing: .1em; color: #2f2f2f; }' +
-        '.print-pedido-item-gemeas { margin-top: 4px; font-size: 10px; color: #767676; line-height: 1.45; }' +
-        '.print-pedido-item-meta { margin-top: 4px; font-size: 11px; color: #767676; line-height: 1.35; }' +
-        '.print-pedido-item-sub { flex-shrink: 0; text-align: right; min-width: 96px; padding-top: 2px; }' +
-        '.print-pedido-item-sub strong { display: block; font-size: 15px; font-weight: 700; color: #b01219; white-space: nowrap; }' +
-        '.print-pedido-item-sub span { display: block; margin-top: 2px; font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: #767676; }' +
-        '.print-pedido-item-metrics { margin-top: 8px; padding-left: ' + metricsPad + 'px; font-size: 11px; color: #767676; line-height: 1.5; }' +
-        '.print-pedido-item-metrics strong { color: #2f2f2f; font-weight: 700; }' +
-        '.print-pedido-metric-preco { white-space: nowrap; }' +
-        '.print-pedido-metric-preco .preco-stack-pdf, .print-pedido-metric-preco .preco-stack { display: inline-block; text-align: left; vertical-align: middle; line-height: 1.2; }' +
-        '.print-pedido-metric-preco .preco-orig { display: inline; text-decoration: line-through; margin-right: 4px; font-size: 10px; }' +
-        '.print-pedido-metric-preco .preco-desc { display: inline; font-weight: 600; font-size: 11px; color: #2f2f2f; }' +
-        '.print-pedido-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 13px; margin-top: 0; }' +
-        '.print-pedido-table th, .print-pedido-table td { padding: 12px 7px; vertical-align: top; }' +
-        '.print-pedido-table thead th { text-align: left; color: #767676; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid ' + rowLine + '; white-space: nowrap; padding-top: 8px; padding-bottom: 8px; vertical-align: bottom; }' +
+        '.print-render-root { background: #ffffff; color: #5a5a5a; font-family: "Libre Franklin", "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; width: 100%; }' +
+        '.print-sheet { width: 100%; max-width: 100%; margin: 0; box-sizing: border-box; background: #ffffff; color: #5a5a5a; padding: 0 0 24px; }' +
+        '.print-head { margin-bottom: 10px; }' +
+        'h1 { margin: 0 0 4px; font-size: 15px; letter-spacing: .08em; text-transform: uppercase; color: #2f2f2f; font-weight: 600; }' +
+        '.print-meta, .print-note { margin: 0 0 4px; color: #767676; font-size: 10px; line-height: 1.35; }' +
+        '.print-resumo { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px 10px; margin-bottom: 10px; }' +
+        '.print-resumo-stat { min-width: 0; font-size: 9px; color: #767676; }' +
+        '.print-resumo-stat strong { display: block; font-size: 13px; color: #2f2f2f; margin-bottom: 2px; font-weight: 600; }' +
+        '.print-pedido-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 12px; margin-top: 0; }' +
+        '.print-pedido-table th, .print-pedido-table td { padding: 8px 5px; vertical-align: middle; }' +
+        '.print-pedido-table thead th { text-align: left; color: #767676; font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid ' + rowLine + '; white-space: nowrap; padding-top: 6px; padding-bottom: 6px; vertical-align: bottom; }' +
         '.print-pedido-table tbody td { border-bottom: 1px solid ' + rowLine + '; }' +
         '.print-pedido-table tbody tr:last-child td { border-bottom: 1px solid ' + rowLine + '; }' +
-        '.print-pedido-table col.col-foto { width: ' + (thumb + 8) + 'px; }' +
-        '.print-pedido-table col.col-modelo { width: 32%; }' +
-        '.print-pedido-table .pedido-row-title { display: block; font-weight: 600; line-height: 1.35; color: #2f2f2f; font-size: 13px; word-break: break-word; }' +
-        '.print-pedido-table .pedido-row-meta { margin-top: 4px; font-size: 11px; color: #767676; line-height: 1.35; }' +
-        '.print-pedido-table .pedido-col-num, .print-pedido-table th.pedido-col-num, .print-pedido-table .col-subtotal { text-align: right; font-variant-numeric: tabular-nums; vertical-align: middle; }' +
-        '.print-pedido-table .pedido-col-qty, .print-pedido-table th.pedido-col-qty { text-align: center; font-variant-numeric: tabular-nums; font-weight: 700; color: #2f2f2f; vertical-align: middle; }' +
+        '.print-pedido-table col.col-foto { width: ' + (thumb + 6) + 'px; }' +
+        '.print-pedido-table col.col-modelo { width: 22%; }' +
+        '.print-pedido-table col.col-qty { width: 44px; }' +
+        '.print-pedido-table col.col-m2 { width: 62px; }' +
+        '.print-pedido-table col.col-cx { width: 52px; }' +
+        '.print-pedido-table col.col-peso { width: 72px; }' +
+        '.print-pedido-table col.col-emb { width: 108px; }' +
+        '.print-pedido-table col.col-preco { width: 72px; }' +
+        '.print-pedido-table col.col-sub { width: 82px; }' +
+        '.print-pedido-table .pedido-meta-resist { font-weight: 700; letter-spacing: .1em; color: #2f2f2f; }' +
+        '.print-pedido-table .pedido-row-title { display: block; font-weight: 600; line-height: 1.3; color: #2f2f2f; font-size: 12px; word-break: break-word; }' +
+        '.print-pedido-table .pedido-row-meta { margin-top: 2px; font-size: 10px; color: #767676; line-height: 1.3; }' +
+        '.print-pedido-table .pedido-col-num, .print-pedido-table th.pedido-col-num, .print-pedido-table .col-subtotal { text-align: right; font-variant-numeric: tabular-nums; }' +
+        '.print-pedido-table .pedido-col-qty, .print-pedido-table th.pedido-col-qty { text-align: center; font-variant-numeric: tabular-nums; font-weight: 700; color: #2f2f2f; font-size: 13px; }' +
+        '.print-pedido-table .pedido-col-peso { font-weight: 600; color: #2f2f2f; white-space: nowrap; }' +
+        '.print-pedido-table .pedido-col-emb { font-size: 10px; color: #767676; line-height: 1.3; }' +
         '.print-pedido-table .col-subtotal { font-weight: 700; color: #b01219; white-space: nowrap; }' +
         '.print-pedido-table .preco-stack, .print-pedido-table .preco-stack-pdf { display: block; text-align: right; line-height: 1.2; }' +
-        '.print-pedido-table .preco-orig { display: block; text-decoration: line-through; color: #767676; font-size: 10px; font-weight: 400; margin: 0 0 2px; white-space: nowrap; }' +
-        '.print-pedido-table .preco-desc { display: block; color: #2f2f2f; font-weight: 600; font-size: 12px; white-space: nowrap; margin: 0; }' +
+        '.print-pedido-table .preco-orig { display: block; text-decoration: line-through; color: #767676; font-size: 9px; font-weight: 400; margin: 0 0 1px; white-space: nowrap; }' +
+        '.print-pedido-table .preco-desc { display: block; color: #2f2f2f; font-weight: 600; font-size: 11px; white-space: nowrap; margin: 0; }' +
         '.print-pedido-table .pedido-col-foto img { display: block; border-radius: 6px; width: ' + thumb + 'px; height: ' + thumb + 'px; object-fit: cover; }' +
         '.print-pedido-table tbody tr { break-inside: avoid; page-break-inside: avoid; }' +
-        '.print-peso { margin: 10px 0 0; font-size: 12px; color: #767676; text-align: right; }' +
+        '.print-pedido-table tfoot td { border-top: 2px solid ' + rowLine + '; padding-top: 10px; padding-bottom: 10px; vertical-align: middle; }' +
+        '.print-pedido-table .print-pedido-total-label { text-align: right; font-size: 12px; font-weight: 600; color: #2f2f2f; padding-right: 10px; }' +
+        '.print-pedido-table .print-pedido-total-val { font-size: 15px; font-weight: 700; color: #b01219; white-space: nowrap; }' +
+        '.print-footer { margin-top: 12px; padding-top: 10px; border-top: 1px solid ' + rowLine + '; text-align: right; break-inside: avoid; page-break-inside: avoid; }' +
+        '.print-peso { margin: 6px 0 0; font-size: 12px; color: #767676; text-align: right; }' +
         '.print-peso strong { color: #2f2f2f; font-weight: 600; }' +
-        '.print-totals { text-align: right; margin: 14px 0 0; padding-top: 10px; border-top: 1px solid ' + rowLine + '; font-size: 14px; color: #5a5a5a; break-inside: avoid; page-break-inside: avoid; }' +
-        '.print-totals strong { font-size: 16px; color: #1f1f24; font-weight: 600; }';
+        '.print-totals { margin: 0; font-size: 14px; color: #5a5a5a; text-align: right; }' +
+        '.print-totals strong { font-size: 17px; color: #b01219; font-weight: 700; }' +
+        '.print-footer .print-note { margin: 8px 0 0; text-align: right; font-size: 10px; color: #767676; }' +
+        '.print-fmt-resumo-wrap { margin-top: 14px; break-inside: avoid; page-break-inside: avoid; }' +
+        '.print-fmt-resumo-title { margin: 0 0 6px; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #767676; }' +
+        '.print-fmt-resumo-table { width: auto; min-width: 320px; max-width: 480px; border-collapse: collapse; font-size: 10px; table-layout: fixed; }' +
+        '.print-fmt-resumo-table th, .print-fmt-resumo-table td { padding: 4px 8px; border-bottom: 1px solid ' + rowLine + '; vertical-align: middle; font-variant-numeric: tabular-nums; }' +
+        '.print-fmt-resumo-table thead th { font-size: 8px; font-weight: 500; text-transform: uppercase; letter-spacing: .04em; color: #767676; text-align: right; border-bottom: 1px solid ' + rowLine + '; white-space: nowrap; }' +
+        '.print-fmt-resumo-table thead th:first-child, .print-fmt-resumo-table .print-fmt-resumo-fmt { text-align: left; }' +
+        '.print-fmt-resumo-table .print-fmt-resumo-num { text-align: right; color: #2f2f2f; white-space: nowrap; }' +
+        '.print-fmt-resumo-table .print-fmt-resumo-fmt { color: #2f2f2f; font-weight: 600; letter-spacing: .03em; }' +
+        '.print-fmt-resumo-table .print-fmt-resumo-total td { border-top: 2px solid ' + rowLine + '; border-bottom: 0; padding-top: 6px; font-weight: 600; }' +
+        '.print-fmt-resumo-table col.col-fmt-res-fmt { width: 88px; }' +
+        '.print-fmt-resumo-table col.col-fmt-res-num { width: 56px; }';
     }
     function pdfCanvasBackground(theme) {
       return '#ffffff';
@@ -3790,8 +4230,16 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         await waitPrintImagesRoot(doc.body);
         await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         const sheet = doc.querySelector('.print-sheet');
+        const root = doc.querySelector('.print-render-root');
         if (!sheet) throw new Error('Conteúdo do PDF indisponível');
-        const heightPx = Math.max(sheet.scrollHeight || 0, sheet.offsetHeight || 0, 280);
+        const measureEl = root || sheet;
+        const heightPx = Math.ceil(Math.max(
+          measureEl.scrollHeight || 0,
+          measureEl.offsetHeight || 0,
+          sheet.scrollHeight || 0,
+          sheet.offsetHeight || 0,
+          280,
+        ) + 48);
         const blob = await win.html2pdf().set({
           margin: layout.marginMm,
           filename: pedidoPdfFilename(),
@@ -3808,9 +4256,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
             backgroundColor: pdfCanvasBackground(PDF_THEME),
             onclone: injectPdfFontClone,
           },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['css', 'legacy'], avoid: ['.print-pedido-item', '.print-pedido-table tbody tr'] },
-        }).from(sheet).outputPdf('blob');
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+          pagebreak: { mode: ['css', 'legacy'], avoid: ['.print-pedido-table tbody tr', '.print-footer', '.print-fmt-resumo-wrap'] },
+        }).from(measureEl).outputPdf('blob');
         if (!blob || blob.size < 12000) throw new Error('PDF gerado vazio');
         return blob;
       } finally {
@@ -4014,9 +4462,38 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     initTopControls();
     initCatalogControls();
+    window.matchMedia('(max-width: 720px)').addEventListener('change', () => {
+      refreshDom();
+      applySearch(q?.value || '');
+    });
 
     try {
-    q?.addEventListener('input', () => applySearch(q.value));
+    let searchDebounceTimer = null;
+    const SEARCH_DEBOUNCE_MS = 320;
+    function flushSearchNow() {
+      if (searchDebounceTimer) {
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = null;
+      }
+      applySearch(q?.value || '');
+    }
+    function scheduleSearchFromInput() {
+      if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(() => {
+        searchDebounceTimer = null;
+        applySearch(q?.value || '');
+      }, SEARCH_DEBOUNCE_MS);
+    }
+    q?.addEventListener('input', scheduleSearchFromInput);
+    q?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        flushSearchNow();
+      }
+    });
+    q?.addEventListener('search', () => {
+      if (!q.value) flushSearchNow();
+    });
     groupSel?.addEventListener('change', () => syncGroupBy(groupSel.value));
     groupSelD?.addEventListener('change', () => syncGroupBy(groupSelD.value));
 
@@ -4024,6 +4501,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     bindClick('filter-qty-d', (e) => toggleFilterQty(e.currentTarget));
     bindClick('clear-qty', clearAllQty);
     bindClick('clear-qty-d', clearAllQty);
+    bindClick('clear-qty-main', clearAllQty);
     bindClick('start-qty', startQtyEntry);
     bindClick('start-qty-d', startQtyEntry);
     bindClick('cart-fab', () => (pedidoOpen ? closePedidoPanel() : openPedidoPanel()));
