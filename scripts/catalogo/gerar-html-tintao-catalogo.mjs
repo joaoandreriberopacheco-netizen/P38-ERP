@@ -2526,7 +2526,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return isPdfDataUri(src) ? src : '';
     }
     const PDF_THUMB_PX = 112;
-    const PDF_PRINT_THUMB_PX = 68;
+    const PDF_PRINT_THUMB_PX = 72;
     const PDF_CANVAS_SCALE = 3;
     function pedidoPdfImageUrls() {
       const urls = new Set();
@@ -3271,6 +3271,49 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '<td class="pedido-col-num pedido-col-preco ' + (hasDescontoAtivo() ? 'has-desc' : '') + '">' + precoCell + '</td>' +
         '<td class="pedido-col-num col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
     }
+    function renderPedidoPrintCard({ item, qty, img, titulo, m2unit, m2tot, pesoTot, cxTot, cxpl, sub }, thumbs) {
+      const emb = itemEmbalagem(item);
+      const imgSrc = pdfImgSrcForPrint(img, thumbs, item);
+      const thumbPx = PDF_PRINT_THUMB_PX;
+      const thumb = imgSrc
+        ? '<img src="' + esc(imgSrc) + '" alt="" width="' + thumbPx + '" height="' + thumbPx + '" />'
+        : '<span class="print-pedido-item-thumb-empty" aria-hidden="true">—</span>';
+      const metaParts = ['#' + esc(item.codigo_tintao)];
+      if (item.marca_nome) metaParts.push(esc(item.marca_nome));
+      metaParts.push(esc(item.formato || '—'));
+      const qtyShort = QTY_UNIT === 'palete' ? 'pl' : 'cx';
+      const metrics = [];
+      metrics.push('<strong>' + qty + ' ' + esc(qtyShort) + '</strong>');
+      if (m2tot) metrics.push(fmtDecimal(m2tot) + ' m²');
+      if (QTY_UNIT === 'palete' && cxTot) metrics.push(fmtDecimal(cxTot, 0) + ' cx');
+      if (QTY_UNIT === 'palete' && pesoTot) metrics.push(fmtKg(pesoTot));
+      if (QTY_UNIT !== 'palete' && m2unit) metrics.push(fmtDecimal(m2unit) + ' m²/cx');
+      const embParts = [];
+      if (QTY_UNIT === 'palete') {
+        if (cxpl || emb.cxpl) embParts.push((cxpl || emb.cxpl) + ' cx/pl');
+        if (m2unit) embParts.push(fmtDecimal(m2unit) + ' m²/pl');
+      } else {
+        const pack = fmtEmbalagemText(item);
+        if (pack && pack !== '—') embParts.push(esc(pack));
+      }
+      if (embParts.length) metrics.push(embParts.join(' · '));
+      const precoHtml = fmtPrecoHtml(item.preco_m2, { pdf: true });
+      metrics.push('<span class="print-pedido-metric-preco' + (hasDescontoAtivo() ? ' has-desc' : '') + '">' + precoHtml + '</span>');
+      return '<article class="print-pedido-item">' +
+        '<div class="print-pedido-item-top">' +
+          '<div class="print-pedido-item-thumb">' + thumb + '</div>' +
+          '<div class="print-pedido-item-desc">' +
+            '<div class="print-pedido-item-title">' + esc(titulo) + '</div>' +
+            '<div class="print-pedido-item-meta">' + metaParts.join(' · ') + '</div>' +
+          '</div>' +
+          '<div class="print-pedido-item-sub">' +
+            '<strong>' + esc(sub != null ? fmtMoney(sub) : '—') + '</strong>' +
+            '<span>Subtotal</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="print-pedido-item-metrics">' + metrics.join(' · ') + '</div>' +
+      '</article>';
+    }
     function renderPedidoCard({ item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl, sub }, opts) {
       const forPdf = opts && opts.pdf;
       const thumb = img
@@ -3423,13 +3466,17 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const imgs = getGaleria(item);
         const img = imgs[0]?.url || '';
         const titulo = item.formigres_titulo || item.descricao;
-        bodyRows.push(renderPedidoTableRow(
-          { item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub },
-          thumbs,
-          { pdf: true },
-        ));
+        const rowData = { item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub };
+        if (QTY_UNIT === 'palete') {
+          bodyRows.push(renderPedidoPrintCard(rowData, thumbs));
+        } else {
+          bodyRows.push(renderPedidoTableRow(rowData, thumbs, { pdf: true }));
+        }
       }
-      const tableHtml = bodyRows.length
+      const listHtml = bodyRows.length && QTY_UNIT === 'palete'
+        ? '<div class="print-pedido-list">' + bodyRows.join('') + '</div>'
+        : '';
+      const tableHtml = bodyRows.length && QTY_UNIT !== 'palete'
         ? '<table class="print-pedido-table pedido-table">' +
             PEDIDO_TABLE_COLGROUP_HTML +
             '<thead><tr>' + PEDIDO_TABLE_HEAD_HTML + '</tr></thead>' +
@@ -3463,6 +3510,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           descNote +
         '</header>' +
         resumo +
+        listHtml +
         tableHtml +
         pesoPrintLine +
         '<p class="print-totals"><strong>Total estimado: ' + fmtMoney(totalValor) + '</strong></p>' +
@@ -3471,7 +3519,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function printPedidoPrintCss() {
       const rowLine = '#707070';
       const thumb = PDF_PRINT_THUMB_PX;
-      const fotoCol = thumb + 8;
+      const metricsPad = thumb + 12;
       return '@page { size: A4 portrait; margin: 8mm; }' +
         'html, body { margin: 0; padding: 0; }' +
         '.print-render-root { background: #ffffff; color: #5a5a5a; font-family: "Libre Franklin", "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 13px; -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; width: 100%; }' +
@@ -3482,34 +3530,41 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '.print-resumo { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px 12px; margin-bottom: 12px; }' +
         '.print-resumo-stat { min-width: 0; font-size: 10px; color: #767676; }' +
         '.print-resumo-stat strong { display: block; font-size: 14px; color: #2f2f2f; margin-bottom: 2px; font-weight: 600; }' +
+        '.print-pedido-list { display: flex; flex-direction: column; gap: 0; margin-top: 4px; }' +
+        '.print-pedido-item { border-bottom: 1px solid ' + rowLine + '; padding: 12px 0; break-inside: avoid; page-break-inside: avoid; }' +
+        '.print-pedido-item:first-child { padding-top: 4px; }' +
+        '.print-pedido-item-top { display: flex; align-items: flex-start; gap: 12px; }' +
+        '.print-pedido-item-thumb { flex-shrink: 0; width: ' + thumb + 'px; }' +
+        '.print-pedido-item-thumb img { display: block; width: ' + thumb + 'px; height: ' + thumb + 'px; border-radius: 6px; object-fit: cover; image-rendering: auto; }' +
+        '.print-pedido-item-thumb-empty { display: flex; align-items: center; justify-content: center; width: ' + thumb + 'px; height: ' + thumb + 'px; border-radius: 6px; background: #f0f0f0; color: #767676; font-size: 11px; }' +
+        '.print-pedido-item-desc { flex: 1; min-width: 0; padding-top: 2px; }' +
+        '.print-pedido-item-title { font-size: 14px; font-weight: 600; line-height: 1.35; color: #2f2f2f; word-break: break-word; }' +
+        '.print-pedido-item-meta { margin-top: 4px; font-size: 11px; color: #767676; line-height: 1.35; }' +
+        '.print-pedido-item-sub { flex-shrink: 0; text-align: right; min-width: 96px; padding-top: 2px; }' +
+        '.print-pedido-item-sub strong { display: block; font-size: 15px; font-weight: 700; color: #b01219; white-space: nowrap; }' +
+        '.print-pedido-item-sub span { display: block; margin-top: 2px; font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: #767676; }' +
+        '.print-pedido-item-metrics { margin-top: 8px; padding-left: ' + metricsPad + 'px; font-size: 11px; color: #767676; line-height: 1.5; }' +
+        '.print-pedido-item-metrics strong { color: #2f2f2f; font-weight: 700; }' +
+        '.print-pedido-metric-preco { white-space: nowrap; }' +
+        '.print-pedido-metric-preco .preco-stack-pdf, .print-pedido-metric-preco .preco-stack { display: inline-block; text-align: left; vertical-align: middle; line-height: 1.2; }' +
+        '.print-pedido-metric-preco .preco-orig { display: inline; text-decoration: line-through; margin-right: 4px; font-size: 10px; }' +
+        '.print-pedido-metric-preco .preco-desc { display: inline; font-weight: 600; font-size: 11px; color: #2f2f2f; }' +
         '.print-pedido-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 13px; margin-top: 0; }' +
         '.print-pedido-table th, .print-pedido-table td { padding: 12px 7px; vertical-align: top; }' +
         '.print-pedido-table thead th { text-align: left; color: #767676; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid ' + rowLine + '; white-space: nowrap; padding-top: 8px; padding-bottom: 8px; vertical-align: bottom; }' +
         '.print-pedido-table tbody td { border-bottom: 1px solid ' + rowLine + '; }' +
         '.print-pedido-table tbody tr:last-child td { border-bottom: 1px solid ' + rowLine + '; }' +
-        '.print-pedido-table col.col-foto { width: ' + fotoCol + 'px; }' +
+        '.print-pedido-table col.col-foto { width: ' + (thumb + 8) + 'px; }' +
         '.print-pedido-table col.col-modelo { width: 32%; }' +
-        '.print-pedido-table col.col-qty { width: 64px; }' +
-        '.print-pedido-table col.col-m2, .print-pedido-table col.col-m2u { width: 78px; }' +
-        '.print-pedido-table col.col-cx { width: 64px; }' +
-        '.print-pedido-table col.col-peso { width: 88px; }' +
-        '.print-pedido-table col.col-emb { width: 118px; }' +
-        '.print-pedido-table col.col-preco { width: 88px; }' +
-        '.print-pedido-table col.col-sub { width: 94px; }' +
-        '.print-pedido-table .pedido-col-foto { width: ' + fotoCol + 'px; padding-left: 0; padding-right: 8px; vertical-align: top; }' +
-        '.print-pedido-table .pedido-col-modelo { vertical-align: top; min-width: 0; }' +
         '.print-pedido-table .pedido-row-title { display: block; font-weight: 600; line-height: 1.35; color: #2f2f2f; font-size: 13px; word-break: break-word; }' +
         '.print-pedido-table .pedido-row-meta { margin-top: 4px; font-size: 11px; color: #767676; line-height: 1.35; }' +
-        '.print-pedido-table .pedido-col-emb { font-size: 10px; color: #767676; line-height: 1.35; vertical-align: middle; }' +
         '.print-pedido-table .pedido-col-num, .print-pedido-table th.pedido-col-num, .print-pedido-table .col-subtotal { text-align: right; font-variant-numeric: tabular-nums; vertical-align: middle; }' +
         '.print-pedido-table .pedido-col-qty, .print-pedido-table th.pedido-col-qty { text-align: center; font-variant-numeric: tabular-nums; font-weight: 700; color: #2f2f2f; vertical-align: middle; }' +
         '.print-pedido-table .col-subtotal { font-weight: 700; color: #b01219; white-space: nowrap; }' +
-        '.print-pedido-table .pedido-col-peso { font-weight: 500; color: #2f2f2f; white-space: nowrap; }' +
-        '.print-pedido-table .pedido-col-preco { font-size: 12px; vertical-align: middle; }' +
         '.print-pedido-table .preco-stack, .print-pedido-table .preco-stack-pdf { display: block; text-align: right; line-height: 1.2; }' +
         '.print-pedido-table .preco-orig { display: block; text-decoration: line-through; color: #767676; font-size: 10px; font-weight: 400; margin: 0 0 2px; white-space: nowrap; }' +
         '.print-pedido-table .preco-desc { display: block; color: #2f2f2f; font-weight: 600; font-size: 12px; white-space: nowrap; margin: 0; }' +
-        '.print-pedido-table .pedido-col-foto img { display: block; border-radius: 6px; width: ' + thumb + 'px; height: ' + thumb + 'px; object-fit: cover; image-rendering: auto; }' +
+        '.print-pedido-table .pedido-col-foto img { display: block; border-radius: 6px; width: ' + thumb + 'px; height: ' + thumb + 'px; object-fit: cover; }' +
         '.print-pedido-table tbody tr { break-inside: avoid; page-break-inside: avoid; }' +
         '.print-peso { margin: 10px 0 0; font-size: 12px; color: #767676; text-align: right; }' +
         '.print-peso strong { color: #2f2f2f; font-weight: 600; }' +
@@ -3626,7 +3681,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
             onclone: injectPdfFontClone,
           },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['css', 'legacy'], avoid: '.print-pedido-table tbody tr' },
+          pagebreak: { mode: ['css', 'legacy'], avoid: ['.print-pedido-item', '.print-pedido-table tbody tr'] },
         }).from(sheet).outputPdf('blob');
         if (!blob || blob.size < 12000) throw new Error('PDF gerado vazio');
         return blob;

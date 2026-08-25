@@ -48,11 +48,12 @@ async function main() {
     const m = src.match(/contentWpx = Math\.round\(contentWmm \* 96 \/ 25\.4\)/);
     const rowLine = src.includes("const rowLine = '#707070'");
     const tablePdf = src.includes('print-pedido-table pedido-table');
+    const printCard = src.includes('print-pedido-item');
     const a4 = src.includes("format: 'a4'");
     const scale3 = src.includes('PDF_CANVAS_SCALE = 3');
-    const printThumb68 = src.includes('PDF_PRINT_THUMB_PX = 68');
+    const printThumb72 = src.includes('PDF_PRINT_THUMB_PX = 72');
     const precoStack = src.includes('preco-stack-pdf');
-    return { hasA4: a4, hasRowLine: rowLine, hasTablePdf: tablePdf, hasLayoutFn: !!m, scale3, printThumb68, precoStack };
+    return { hasA4: a4, hasRowLine: rowLine, hasTablePdf: tablePdf, printCard, hasLayoutFn: !!m, scale3, printThumb72, precoStack };
   });
 
   await page.click('#cart-fab');
@@ -72,10 +73,10 @@ async function main() {
   const hasImages = pdfText.includes('/Subtype /Image') || pdfText.includes('/DCTDecode');
   const ok = layoutProbe.hasA4
     && layoutProbe.hasRowLine
-    && layoutProbe.hasTablePdf
+    && layoutProbe.printCard
     && layoutProbe.hasLayoutFn
     && layoutProbe.scale3
-    && layoutProbe.printThumb68
+    && layoutProbe.printThumb72
     && layoutProbe.precoStack
     && pdfBuf.length > 20000
     && hasImages
