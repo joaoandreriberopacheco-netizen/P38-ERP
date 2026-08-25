@@ -1367,12 +1367,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       font-size: .62rem;
       font-weight: 500;
       color: var(--muted);
-      margin-bottom: 4px;
-      line-height: 1.2;
+      margin-bottom: 3px;
+      line-height: 1.25;
     }
     .pedido-card-spec-v {
       display: block;
-      font-size: .74rem;
+      font-size: .62rem;
       font-weight: 500;
       color: var(--text-strong);
       font-variant-numeric: tabular-nums;
@@ -1384,15 +1384,15 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       font-weight: 400;
       text-decoration: line-through;
       color: var(--muted);
-      line-height: 1.1;
+      line-height: 1.2;
     }
-    .pedido-card-spec-v.pedido-card-spec-preco .preco-desc { font-weight: 500; }
-    .pedido-card-spec-v.pedido-card-spec-preco:not(.has-desc) { font-size: .74rem; font-weight: 500; }
+    .pedido-card-spec-v.pedido-card-spec-preco .preco-desc { font-weight: 500; font-size: .62rem; }
+    .pedido-card-spec-v.pedido-card-spec-preco:not(.has-desc) { font-size: .62rem; font-weight: 500; }
     .pedido-card-spec-v.pedido-card-spec-palete {
-      font-size: .68rem;
+      font-size: .62rem;
       font-weight: 500;
-      color: var(--muted);
-      line-height: 1.35;
+      color: var(--text-strong);
+      line-height: 1.25;
     }
     .pedido-total {
       margin-top: 12px; padding-top: 12px; border-top: 0.5px solid color-mix(in srgb, var(--accent-border) 55%, transparent);
@@ -1689,9 +1689,10 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       .pedido-card-row1 { gap: 8px 10px; }
       .pedido-card-qty-main { font-size: 1rem; }
       .pedido-card-total strong { font-size: .86rem; }
-      .pedido-card-spec-l { font-size: .58rem; }
-      .pedido-card-spec-v { font-size: .72rem; }
-      .pedido-card-spec-v.pedido-card-spec-palete { font-size: .64rem; }
+      .pedido-card-spec-l,
+      .pedido-card-spec-v,
+      .pedido-card-spec-v.pedido-card-spec-preco:not(.has-desc),
+      .pedido-card-spec-v.pedido-card-spec-palete { font-size: .58rem; line-height: 1.25; }
       .pedido-card-thumb { width: 48px; height: 48px; }
       .pedido-total {
         margin-top: 10px;
