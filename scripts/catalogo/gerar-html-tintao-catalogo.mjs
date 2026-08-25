@@ -3001,7 +3001,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return '<tr class="model-gemeas-detail hidden" id="gemeas-panel-' + esc(cod) + '" data-gemeas-for="' + esc(cod) + '">' +
         '<td colspan="9"><div class="model-gemeas-wrap">' +
         '<p class="model-gemeas-caption">Mesmo modelo nestas marcas</p>' +
-        '<table class="model-gemeas-table"><thead><tr><th>Marca</th><th>Referência</th><th>Código</th></tr></thead><tbody>' +
+        '<table class="model-gemeas-table"><thead><tr><th>Marca</th><th>Resistência</th><th>Código</th></tr></thead><tbody>' +
         rows + '</tbody></table></div></td></tr>';
     }
     function toggleGemeasPanel(cod) {
@@ -3271,21 +3271,25 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '<td class="pedido-col-num pedido-col-preco ' + (hasDescontoAtivo() ? 'has-desc' : '') + '">' + precoCell + '</td>' +
         '<td class="pedido-col-num col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
     }
-    function renderGemeasPdfRefs(item) {
+    function renderGemeasPdfResist(item) {
       const g = item.gemeas;
       if (!g || g.length < 2) return '';
       const parts = g.map((row) => {
-        const ref = row.referencia && row.referencia !== '—' ? ' <strong>' + esc(row.referencia) + '</strong>' : '';
-        return '#' + esc(row.codigo) + ' ' + esc(row.marca) + ref;
+        const resist = row.referencia && row.referencia !== '—' ? ' · <strong>' + esc(row.referencia) + '</strong>' : '';
+        return '#' + esc(row.codigo) + ' ' + esc(row.marca) + resist;
       });
-      return '<div class="print-pedido-item-ref print-pedido-item-ref-gemeas">' + parts.join(' · ') + '</div>';
+      return '<div class="print-pedido-item-resist print-pedido-item-resist-gemeas">' +
+        '<span class="print-pedido-item-resist-label">Resistência</span>' +
+        '<span class="print-pedido-item-resist-list">' + parts.join(' · ') + '</span></div>';
     }
-    function renderPedidoPrintRefLine(item) {
+    function renderPedidoPrintResistLine(item) {
       const hasGemeas = item.gemeas && item.gemeas.length > 1;
-      if (hasGemeas) return renderGemeasPdfRefs(item);
-      const ref = String(item.referencia || '').trim();
-      if (!ref || ref === '—') return '';
-      return '<div class="print-pedido-item-ref">' + esc(ref) + '</div>';
+      if (hasGemeas) return renderGemeasPdfResist(item);
+      const resist = String(item.referencia || '').trim();
+      if (!resist || resist === '—') return '';
+      return '<div class="print-pedido-item-resist">' +
+        '<span class="print-pedido-item-resist-label">Resistência</span>' +
+        '<strong class="print-pedido-item-resist-val">' + esc(resist) + '</strong></div>';
     }
     function renderPrintFormatGroupHeader(fmt, qtyPl, pesoKg, m2tot) {
       const fmtLabel = esc(String(fmt || '—').toUpperCase());
@@ -3349,7 +3353,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         ? '<img src="' + esc(imgSrc) + '" alt="" width="' + thumbPx + '" height="' + thumbPx + '" />'
         : '<span class="print-pedido-item-thumb-empty" aria-hidden="true">—</span>';
       const hasGemeas = item.gemeas && item.gemeas.length > 1;
-      const refHtml = renderPedidoPrintRefLine(item);
+      const refHtml = renderPedidoPrintResistLine(item);
       const metaParts = [];
       if (!hasGemeas) {
         metaParts.push('#' + esc(item.codigo_tintao));
@@ -3620,9 +3624,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '.print-pedido-item-thumb-empty { display: flex; align-items: center; justify-content: center; width: ' + thumb + 'px; height: ' + thumb + 'px; border-radius: 6px; background: #f0f0f0; color: #767676; font-size: 11px; }' +
         '.print-pedido-item-desc { flex: 1; min-width: 0; padding-top: 2px; }' +
         '.print-pedido-item-title { font-size: 14px; font-weight: 600; line-height: 1.35; color: #2f2f2f; word-break: break-word; }' +
-        '.print-pedido-item-ref { margin-top: 4px; font-size: 12px; font-weight: 700; letter-spacing: .08em; color: #2f2f2f; line-height: 1.35; }' +
-        '.print-pedido-item-ref-gemeas { font-size: 10px; font-weight: 500; letter-spacing: 0; line-height: 1.45; color: #767676; }' +
-        '.print-pedido-item-ref-gemeas strong { color: #2f2f2f; font-weight: 700; letter-spacing: .08em; }' +
+        '.print-pedido-item-resist { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 8px; margin-top: 4px; line-height: 1.35; }' +
+        '.print-pedido-item-resist-label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .05em; color: #767676; }' +
+        '.print-pedido-item-resist-val { font-size: 13px; font-weight: 700; letter-spacing: .1em; color: #2f2f2f; }' +
+        '.print-pedido-item-resist-gemeas { display: block; }' +
+        '.print-pedido-item-resist-gemeas .print-pedido-item-resist-label { display: block; margin-bottom: 3px; }' +
+        '.print-pedido-item-resist-list { display: block; font-size: 10px; color: #767676; line-height: 1.45; }' +
+        '.print-pedido-item-resist-list strong { color: #2f2f2f; font-weight: 700; letter-spacing: .08em; }' +
         '.print-pedido-item-meta { margin-top: 4px; font-size: 11px; color: #767676; line-height: 1.35; }' +
         '.print-pedido-item-sub { flex-shrink: 0; text-align: right; min-width: 96px; padding-top: 2px; }' +
         '.print-pedido-item-sub strong { display: block; font-size: 15px; font-weight: 700; color: #b01219; white-space: nowrap; }' +

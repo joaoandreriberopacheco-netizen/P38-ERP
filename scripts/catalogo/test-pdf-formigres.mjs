@@ -50,7 +50,7 @@ async function main() {
     const tablePdf = src.includes('print-pedido-table pedido-table');
     const printCard = src.includes('print-pedido-item');
     const printFormatGroup = src.includes('print-format-group');
-    const printGemeas = src.includes('print-pedido-item-ref-gemeas');
+    const printGemeas = src.includes('print-pedido-item-resist-gemeas');
     const a4 = src.includes("format: 'a4'");
     const scale3 = src.includes('PDF_CANVAS_SCALE = 3');
     const printThumb72 = src.includes('PDF_PRINT_THUMB_PX = 72');
