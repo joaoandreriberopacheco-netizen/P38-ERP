@@ -192,7 +192,7 @@ async function main() {
     const total = document.querySelectorAll('.catalog-cards-wrap .model-row').length;
     document.getElementById('search').value = '45 x 45';
     document.getElementById('search').dispatchEvent(new Event('input', { bubbles: true }));
-    await new Promise((r) => setTimeout(r, 100));
+    await new Promise((r) => setTimeout(r, 400));
     const visible = document.querySelectorAll('.catalog-cards-wrap .model-row:not(.hidden)').length;
     const has45 = [...document.querySelectorAll('.catalog-cards-wrap .model-row:not(.hidden)')].some((row) =>
       (row.dataset.search || '').includes('45x45'));

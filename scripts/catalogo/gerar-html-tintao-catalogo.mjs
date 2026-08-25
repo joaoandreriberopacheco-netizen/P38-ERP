@@ -4468,7 +4468,32 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     });
 
     try {
-    q?.addEventListener('input', () => applySearch(q.value));
+    let searchDebounceTimer = null;
+    const SEARCH_DEBOUNCE_MS = 320;
+    function flushSearchNow() {
+      if (searchDebounceTimer) {
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = null;
+      }
+      applySearch(q?.value || '');
+    }
+    function scheduleSearchFromInput() {
+      if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(() => {
+        searchDebounceTimer = null;
+        applySearch(q?.value || '');
+      }, SEARCH_DEBOUNCE_MS);
+    }
+    q?.addEventListener('input', scheduleSearchFromInput);
+    q?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        flushSearchNow();
+      }
+    });
+    q?.addEventListener('search', () => {
+      if (!q.value) flushSearchNow();
+    });
     groupSel?.addEventListener('change', () => syncGroupBy(groupSel.value));
     groupSelD?.addEventListener('change', () => syncGroupBy(groupSelD.value));
 
