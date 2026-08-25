@@ -15,6 +15,9 @@ import { extractImagensFromDetalhe, fetchProdutoDetalhe } from '../lib/formigres
 const ROOT = process.cwd();
 const CLASSIF_DIR = path.join(ROOT, 'docs', 'imports-local', 'tintao', 'classificacao');
 const OUT_HTML = path.join(ROOT, 'docs', 'imports-local', 'tintao', 'Catálogo B2B Tintão - Formigres.html');
+const OUT_PUBLIC_HTML = path.join(ROOT, 'public', 'catalogo', 'tintao', 'index.html');
+const PUBLIC_URL_PATH = '/catalogo/tintao/';
+const PUBLIC_URL = 'https://p-38erp.vercel.app/catalogo/tintao/';
 const OUT_PDF_THUMBS = path.join(ROOT, 'docs', 'imports-local', 'tintao', 'catalogo-tintao-pdf-thumbs.json');
 const ANT_LOGO_PATH = path.join(ROOT, 'scripts', 'catalogo', 'assets', 'formigres-ant.png');
 const PDF_FONT_WOFF2 = path.join(ROOT, 'scripts', 'catalogo', 'assets', 'fonts', 'libre-franklin-latin.woff2');
@@ -2637,10 +2640,12 @@ async function mainAsync() {
   const html = buildHtml({ classif, itens, antLogoDataUri, pdfThumbs, pdfFontCss });
 
   fs.mkdirSync(path.dirname(OUT_HTML), { recursive: true });
+  fs.mkdirSync(path.dirname(OUT_PUBLIC_HTML), { recursive: true });
   fs.writeFileSync(OUT_HTML, html);
+  fs.writeFileSync(OUT_PUBLIC_HTML, html);
   fs.writeFileSync(OUT_PDF_THUMBS, `${JSON.stringify(pdfThumbs)}\n`);
 
-  const htmlKb = Math.round(fs.statSync(OUT_HTML).size / 1024);
+  const htmlKb = Math.round(fs.statSync(OUT_PUBLIC_HTML).size / 1024);
   const thumbsKb = Math.round(fs.statSync(OUT_PDF_THUMBS).size / 1024);
 
   console.log(JSON.stringify({
@@ -2653,6 +2658,9 @@ async function mainAsync() {
     thumbsKb,
     fonte: jsonPath,
     html: OUT_HTML,
+    publicHtml: OUT_PUBLIC_HTML,
+    publicUrlPath: PUBLIC_URL_PATH,
+    publicUrl: PUBLIC_URL,
     pdfThumbsFile: OUT_PDF_THUMBS,
   }, null, 2));
 }

@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const HTML = path.resolve(__dirname, '../../docs/imports-local/tintao/Catálogo B2B Tintão - Formigres.html');
+const HTML = path.resolve(__dirname, '../../public/catalogo/tintao/index.html');
 
 async function runViewport(name, viewport) {
   const browser = await chromium.launch({ headless: true });
