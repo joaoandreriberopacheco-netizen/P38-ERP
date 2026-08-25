@@ -257,7 +257,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
     },
   }).replace(/</g, '\\u003c');
   const pdfThumbsJson = JSON.stringify(pdfThumbs).replace(/</g, '\\u003c');
-  const pdfFontCssJson = JSON.stringify(pdfFontCss);
+  const pdfFontCssSafe = String(pdfFontCss).replace(/<\/style/gi, '<\\/style');
 
   return `<!DOCTYPE html>
 <html lang="pt-BR" data-theme="dark">
@@ -271,6 +271,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style id="pdf-font-face-embedded">${pdfFontCssSafe}</style>
   <style>
     :root {
       --bg: #121214;
@@ -1348,6 +1349,24 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
   </style>
 </head>
 <body class="is-loading">
+  <script>
+    (function () {
+      function forceReveal() {
+        if (window.__tintaoBootDone) return;
+        window.__tintaoBootDone = 1;
+        document.body.classList.remove('is-loading');
+        var shell = document.getElementById('app-shell');
+        if (shell) shell.removeAttribute('aria-hidden');
+        var overlay = document.getElementById('load-overlay');
+        if (overlay) {
+          overlay.setAttribute('aria-hidden', 'true');
+          overlay.setAttribute('aria-busy', 'false');
+        }
+      }
+      window.__tintaoForceReveal = forceReveal;
+      setTimeout(forceReveal, 2800);
+    })();
+  </script>
   <div class="load-overlay" id="load-overlay" role="status" aria-live="polite" aria-busy="true">
     <div class="load-panel">
       <div class="load-logo-ant" aria-hidden="true">
@@ -1509,14 +1528,25 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
   <script id="pdf-thumbs-data" type="application/json">${pdfThumbsJson}</script>
   <script id="catalogo-data" type="application/json">${catalogoJson}</script>
   <script>
-    const CATALOGO = JSON.parse(document.getElementById('catalogo-data').textContent);
-    const CFG = CATALOGO.config;
+    let CATALOGO;
+    let CFG;
+    let itemsByCode;
+    let TOTAL_MODELOS = 0;
+    try {
+      CATALOGO = JSON.parse(document.getElementById('catalogo-data').textContent);
+      CFG = CATALOGO.config;
+      itemsByCode = new Map(CATALOGO.itens.map((i) => [String(i.codigo_tintao), i]));
+      TOTAL_MODELOS = CATALOGO.itens.length;
+    } catch (bootParseErr) {
+      console.error(bootParseErr);
+      CATALOGO = { itens: [], config: { linhaOrder: [], linhaLabel: {}, tipoOrder: {}, tipoLabel: {}, acabOrder: [] } };
+      CFG = CATALOGO.config;
+      itemsByCode = new Map();
+    }
     const TIPO_LABEL_GAL = { principal: 'Cerâmica', ambiente: 'Ambiente', piso: 'Piso', face: 'Face', outro: 'Imagem' };
     const QTY_KEY = 'tintao-pedido-qty-v1';
     const THEME_KEY = 'tintao-theme-v1';
     const DESCONTO_KEY = 'tintao-desconto-v1';
-    const itemsByCode = new Map(CATALOGO.itens.map((i) => [String(i.codigo_tintao), i]));
-    const TOTAL_MODELOS = CATALOGO.itens.length;
     let qtyMap = {};
     try { qtyMap = JSON.parse(localStorage.getItem(QTY_KEY) || '{}'); } catch { qtyMap = {}; }
     let descontoPct = 0;
@@ -1534,7 +1564,10 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
       return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
     const PDF_THEME = 'light';
-    const PDF_FONT_FACE_CSS = ${pdfFontCssJson};
+    function getPdfFontFaceCss() {
+      const el = document.getElementById('pdf-font-face-embedded');
+      return (el && el.textContent) || '';
+    }
     let pdfThumbsCache = null;
     function loadPdfThumbs() {
       if (pdfThumbsCache) return pdfThumbsCache;
@@ -2130,12 +2163,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
       pedidoPdfBlob = null;
     }
     function pedidoPdfIframeHead(pageWmm) {
-      return '<meta charset="utf-8"><style>' + PDF_FONT_FACE_CSS + printPedidoPrintCss(pageWmm, null) + '</style>';
+      return '<meta charset="utf-8"><style>' + getPdfFontFaceCss() + printPedidoPrintCss(pageWmm, null) + '</style>';
     }
     function injectPdfFontClone(clonedDoc) {
-      if (!clonedDoc || !PDF_FONT_FACE_CSS) return;
+      const css = getPdfFontFaceCss();
+      if (!clonedDoc || !css) return;
       const style = clonedDoc.createElement('style');
-      style.textContent = PDF_FONT_FACE_CSS;
+      style.textContent = css;
       clonedDoc.head.appendChild(style);
       clonedDoc.documentElement.style.fontFamily = "'Libre Franklin', system-ui, sans-serif";
     }
@@ -2291,8 +2325,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
       return [...urls];
     }
     function prefersFastBoot() {
-      return window.matchMedia('(max-width: 768px)').matches
-        || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent || '');
+      return !!(
+        (window.matchMedia && window.matchMedia('(max-width: 768px)').matches)
+        || (navigator.maxTouchPoints || 0) > 0
+        || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent || '')
+      );
     }
     function setLoadProgress(done, total) {
       const pct = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
@@ -2339,6 +2376,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
       });
     }
     function revealApp() {
+      window.__tintaoBootDone = 1;
       document.body.classList.remove('is-loading');
       const shell = document.getElementById('app-shell');
       if (shell) shell.removeAttribute('aria-hidden');
@@ -2359,35 +2397,41 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
     }
     async function bootApp() {
       const fast = prefersFastBoot();
-      const minSplashMs = fast ? 650 : 1100;
+      if (fast) {
+        setLoadProgress(1, 1);
+        revealApp();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        try { ensureAppRendered(); } catch (err) { console.error(err); }
+        return;
+      }
+      const minSplashMs = 900;
       const splashStart = Date.now();
       const msg = document.getElementById('load-msg');
-      if (msg) msg.textContent = fast ? 'A abrir catálogo…' : 'A preparar pedido Formigres…';
+      if (msg) msg.textContent = 'A preparar pedido Formigres…';
       try {
         ensureAppRendered();
-        if (!fast) {
-          const urls = collectImageUrls().slice(0, 28);
-          await Promise.race([
-            preloadImages(urls, 5000),
-            new Promise((resolve) => setTimeout(resolve, 5000)),
-          ]);
-        } else {
-          setLoadProgress(1, 1);
-        }
+        const urls = collectImageUrls().slice(0, 28);
+        await Promise.race([
+          preloadImages(urls, 5000),
+          new Promise((resolve) => setTimeout(resolve, 5000)),
+        ]);
       } catch (err) {
         console.error(err);
         ensureAppRendered();
       } finally {
         const wait = Math.max(0, minSplashMs - (Date.now() - splashStart));
         if (wait) await new Promise((resolve) => setTimeout(resolve, wait));
-        requestAnimationFrame(() => requestAnimationFrame(revealApp));
+        revealApp();
       }
     }
     let bootSafetyTimer = setTimeout(function bootSafetyReveal() {
-      if (!document.body.classList.contains('is-loading')) return;
-      ensureAppRendered();
-      revealApp();
-    }, 9000);
+      if (window.__tintaoBootDone) return;
+      try { ensureAppRendered(); } catch (err) { console.error(err); }
+      if (window.__tintaoForceReveal) window.__tintaoForceReveal();
+      else revealApp();
+    }, 4000);
+
+    bootApp().finally(function () { clearTimeout(bootSafetyTimer); });
 
     const q = document.getElementById('search');
     const groupSel = document.getElementById('group-by');
@@ -2402,7 +2446,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
     function toggleFilterQty(btn) {
       filterQtyOnly = !filterQtyOnly;
       document.querySelectorAll('#filter-qty, #filter-qty-d').forEach((b) => b?.classList.toggle('active', filterQtyOnly));
-      applySearch(q.value);
+      applySearch(q?.value || '');
     }
     function bindClick(id, fn) {
       const el = document.getElementById(id);
@@ -2411,7 +2455,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
     initTopControls();
 
     try {
-    q.addEventListener('input', () => applySearch(q.value));
+    q?.addEventListener('input', () => applySearch(q.value));
     groupSel?.addEventListener('change', () => syncGroupBy(groupSel.value));
     groupSelD?.addEventListener('change', () => syncGroupBy(groupSelD.value));
 
@@ -2478,7 +2522,6 @@ function buildHtml({ classif, itens, antLogoDataUri = '', pdfThumbs = {}, pdfFon
       focusQtyInput(row.querySelector('.qty-input'));
     });
 
-    bootApp().finally(function () { clearTimeout(bootSafetyTimer); });
     } catch (bootErr) {
       console.error(bootErr);
       clearTimeout(bootSafetyTimer);
