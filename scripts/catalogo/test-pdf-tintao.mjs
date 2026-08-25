@@ -9,7 +9,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const HTML = path.resolve(__dirname, '../../docs/imports-local/tintao/catalogo-tintao-formigres.html');
+const HTML = path.resolve(__dirname, '../../docs/imports-local/tintao/Catálogo B2B Tintão - Formigres.html');
 const OUT_PDF = '/tmp/tintao-pedido-test.pdf';
 
 async function main() {
