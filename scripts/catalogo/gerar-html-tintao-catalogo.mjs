@@ -470,6 +470,28 @@ const FORMIGRES_SKIN_CSS = `
       color: var(--muted);
       max-width: 42rem;
     }
+    html[data-skin="formigres"] .page-head-with-brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    html[data-skin="formigres"] .page-head-copy {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    html[data-skin="formigres"] .page-head-brand-lockup {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      text-decoration: none;
+      color: inherit;
+    }
+    html[data-skin="formigres"] .page-head-logo {
+      height: 46px;
+      width: auto;
+      display: block;
+    }
     html[data-skin="formigres"] .site-bar {
       background: rgba(255,255,255,.92);
       backdrop-filter: blur(10px);
@@ -494,13 +516,6 @@ const FORMIGRES_SKIN_CSS = `
       margin-left: 8px;
     }
     html[data-skin="formigres"] .site-sub-lead {
-      font-size: .78rem;
-      font-weight: 500;
-      letter-spacing: .02em;
-      text-transform: none;
-      color: var(--muted);
-    }
-    html[data-skin="formigres"] .site-sub {
       color: var(--muted);
       font-size: .78rem;
       font-weight: 500;
@@ -983,9 +998,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         <img class="site-logo" src="${headerLogo}" alt="Formigres" width="148" height="25" />
       </a>`)
     : `<span class="site-brand">Formigres</span>`;
-  const siteBrandRightHtml = (isB2bSkin && cfg.skin === 'arielle')
-    ? `<a class="site-brand-lockup site-brand-right" href="${escTpl(cfg.brandSiteUrl || 'https://www.carmelofior.com.br/produtos?category=4')}" target="_blank" rel="noopener noreferrer" aria-label="${escTpl(cfg.brandSiteLabel || 'Arielle')}">
-        <img class="site-logo" src="${headerLogo}" alt="Arielle" width="148" height="25" />
+  const pageHeadBrandHtml = (isB2bSkin && cfg.skin === 'arielle')
+    ? `<a class="page-head-brand-lockup" href="${escTpl(cfg.brandSiteUrl || 'https://www.carmelofior.com.br/produtos?category=4')}" target="_blank" rel="noopener noreferrer" aria-label="${escTpl(cfg.brandSiteLabel || 'Arielle')}">
+        <img class="page-head-logo" src="${headerLogo}" alt="Arielle" width="180" height="31" />
       </a>`
     : '';
   const siteBarLeadHtml = (isB2bSkin && cfg.skin === 'arielle')
@@ -2366,9 +2381,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       html[data-skin="arielle"] .site-sub-lead {
         display: none;
       }
-      html[data-skin="arielle"] .site-brand-right .site-logo {
-        height: 28px;
-      }
+      html[data-skin="arielle"] .page-head-with-brand { gap: 10px; align-items: flex-start; }
+      html[data-skin="arielle"] .page-head-logo { height: 34px; }
       .site-desconto label { display: none; }
       #desconto-pct { width: 56px; padding: 6px 4px; }
       .site-stat { font-size: .72rem; }
@@ -2587,13 +2601,15 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         </div>
       </div>
       <span class="site-stat" id="stat-modelos"><strong id="stat-modelos-count">${total}</strong> <span id="stat-modelos-label">modelos</span></span>
-      ${siteBrandRightHtml}
     </div>
   </header>
   <div class="wrap">
-    <div class="page-head">
-      <h1>${escTpl(cfg.h1)}</h1>
-      <p class="page-head-hint">${escTpl(cfg.hint)}</p>
+    <div class="page-head${pageHeadBrandHtml ? ' page-head-with-brand' : ''}">
+      <div class="page-head-copy">
+        <h1>${escTpl(cfg.h1)}</h1>
+        <p class="page-head-hint">${escTpl(cfg.hint)}</p>
+      </div>
+      ${pageHeadBrandHtml}
     </div>
     ${cfg.demoBanner ? `<p class="demo-banner" role="note">${escTpl(cfg.demoBanner)}</p>` : ''}
     ${regimePanelHtml}
