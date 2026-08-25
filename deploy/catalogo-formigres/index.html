@@ -780,6 +780,8 @@
       text-align: left; color: var(--muted); font-size: .72rem; text-transform: uppercase;
     }
     .pedido-table .col-subtotal { text-align: right; white-space: nowrap; }
+    .pedido-table .pedido-col-peso { font-weight: 600; white-space: nowrap; }
+    .pedido-row-hint { color: var(--muted); font-size: .68rem; }
     .pedido-cards-wrap { display: none; }
     .pedido-cards { display: flex; flex-direction: column; }
     .pedido-card {
@@ -845,6 +847,50 @@
     }
     .pedido-card-unit {
       margin-top: 8px;
+    }
+    .pedido-card-metrics { margin-top: 10px; }
+    .pedido-card-hero {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px 10px;
+    }
+    .pedido-card-hero-item {
+      min-width: 0;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: var(--surface-2);
+      border: 1px solid var(--border-subtle);
+    }
+    .pedido-card-hero-item.is-primary {
+      background: color-mix(in srgb, var(--accent) 8%, var(--surface-2));
+      border-color: color-mix(in srgb, var(--accent) 22%, var(--border-subtle));
+    }
+    .pedido-card-hero-label {
+      display: block;
+      font-size: .58rem;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+    .pedido-card-hero-val {
+      display: block;
+      font-size: .88rem;
+      font-weight: 600;
+      color: var(--text-strong);
+      font-variant-numeric: tabular-nums;
+      line-height: 1.15;
+    }
+    .pedido-card-hero-item.is-primary .pedido-card-hero-val {
+      font-size: .98rem;
+      font-weight: 700;
+      color: var(--text-strong);
+    }
+    .pedido-card-detail {
+      margin-top: 7px;
+      font-size: .68rem;
+      color: var(--muted);
+      line-height: 1.35;
     }
     .pedido-card-grid {
       display: grid;
@@ -1378,7 +1424,7 @@
           <table class="pedido-table" id="pedido-table">
             <thead>
               <tr>
-                <th>Foto</th><th>Modelo</th><th>Formato</th><th>Paletes</th><th>m²/pl</th><th>Peso/pl</th><th>m² total</th><th>Preço/m²</th><th>Subtotal</th>
+                <th>Foto</th><th>Modelo</th><th>Formato</th><th>Paletes</th><th>m² total</th><th>Caixas</th><th>Peso</th><th>Preço/m²</th><th>Subtotal</th>
               </tr>
             </thead>
             <tbody id="pedido-body"></tbody>
@@ -1708,6 +1754,15 @@
       if (!qty || !pesoUnit) return null;
       return Math.round(qty * pesoUnit * 10) / 10;
     }
+    function itemCaixasTotal(item, qty) {
+      if (!qty) return null;
+      if (QTY_UNIT === 'palete') {
+        const { cxpl } = itemEmbalagem(item);
+        if (!cxpl) return null;
+        return qty * cxpl;
+      }
+      return qty;
+    }
     function itemSubtotal(item, qty) {
       const m2tot = itemM2Total(item, qty);
       const preco = precoEfetivo(item.preco_m2);
@@ -1899,17 +1954,56 @@
       }
     }
 
-    function renderPedidoCard({ item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, sub }, opts) {
+    function renderPedidoCard({ item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl, sub }, opts) {
       const forPdf = opts && opts.pdf;
       const thumb = img
         ? '<img class="pedido-card-thumb" src="' + esc(img) + '" alt=""' + (forPdf ? ' width="48" height="48"' : ' loading="lazy"') + ' />'
         : '<span class="pedido-card-thumb pedido-card-thumb-empty" aria-hidden="true">—</span>';
-      const m2Label = QTY_UNIT === 'palete' ? 'm²/pl' : 'm²/cx';
-      const qtyLabel = QTY_LABEL;
-      const gridExtra = QTY_UNIT === 'palete'
-        ? '<div class="pedido-card-kv"><span class="pedido-card-kv-label">Peso/pl</span><span class="pedido-card-kv-val">' + esc(pesoUnit ? fmtKg(pesoUnit) : '—') + '</span></div>'
-        : '';
-      const gridCols = QTY_UNIT === 'palete' ? 4 : 3;
+
+      if (QTY_UNIT === 'palete') {
+        const detailParts = [];
+        if (cxTot) detailParts.push(fmtDecimal(cxTot, 0) + ' cx');
+        if (cxpl) detailParts.push(cxpl + ' cx/pl');
+        if (m2unit) detailParts.push(fmtDecimal(m2unit) + ' m²/pl');
+        const preco = precoEfetivo(item.preco_m2);
+        if (preco) detailParts.push(fmtMoney(preco) + '/m²');
+        const detailHtml = detailParts.length
+          ? '<p class="pedido-card-detail">' + esc(detailParts.join(' · ')) + '</p>'
+          : '';
+        return '<article class="pedido-card' + (forPdf ? ' pedido-card-pdf' : '') + '">' +
+          '<div class="pedido-card-head">' +
+            thumb +
+            '<div class="pedido-card-intro">' +
+              '<div class="pedido-card-title">' + esc(titulo) + '</div>' +
+              '<div class="pedido-card-meta">#' + esc(item.codigo_tintao) + ' · ' + esc(item.formato || '—') + '</div>' +
+            '</div>' +
+            '<div class="pedido-card-aside">' +
+              '<div class="pedido-card-subtotal">' +
+                '<span class="pedido-card-subtotal-label">Subtotal</span>' +
+                '<strong>' + esc(sub != null ? fmtMoney(sub) : '—') + '</strong>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="pedido-card-metrics">' +
+            '<div class="pedido-card-hero">' +
+              '<div class="pedido-card-hero-item">' +
+                '<span class="pedido-card-hero-label">' + esc(QTY_LABEL) + '</span>' +
+                '<span class="pedido-card-hero-val">' + qty + '</span>' +
+              '</div>' +
+              '<div class="pedido-card-hero-item">' +
+                '<span class="pedido-card-hero-label">m² total</span>' +
+                '<span class="pedido-card-hero-val">' + esc(m2tot ? fmtDecimal(m2tot) : '—') + '</span>' +
+              '</div>' +
+              '<div class="pedido-card-hero-item is-primary">' +
+                '<span class="pedido-card-hero-label">Peso</span>' +
+                '<span class="pedido-card-hero-val">' + esc(pesoTot ? fmtKg(pesoTot) : '—') + '</span>' +
+              '</div>' +
+            '</div>' +
+            detailHtml +
+          '</div>' +
+        '</article>';
+      }
+
       return '<article class="pedido-card' + (forPdf ? ' pedido-card-pdf' : '') + '">' +
         '<div class="pedido-card-head">' +
           thumb +
@@ -1928,10 +2022,9 @@
             '</div>' +
           '</div>' +
         '</div>' +
-        '<div class="pedido-card-grid" style="grid-template-columns:repeat(' + gridCols + ',minmax(0,1fr))">' +
-          '<div class="pedido-card-kv"><span class="pedido-card-kv-label">' + esc(qtyLabel) + '</span><span class="pedido-card-kv-val">' + qty + '</span></div>' +
-          '<div class="pedido-card-kv"><span class="pedido-card-kv-label">' + esc(m2Label) + '</span><span class="pedido-card-kv-val">' + esc(m2unit ? fmtDecimal(m2unit) : '—') + '</span></div>' +
-          gridExtra +
+        '<div class="pedido-card-grid">' +
+          '<div class="pedido-card-kv"><span class="pedido-card-kv-label">' + esc(QTY_LABEL) + '</span><span class="pedido-card-kv-val">' + qty + '</span></div>' +
+          '<div class="pedido-card-kv"><span class="pedido-card-kv-label">m²/cx</span><span class="pedido-card-kv-val">' + esc(m2unit ? fmtDecimal(m2unit) : '—') + '</span></div>' +
           '<div class="pedido-card-kv"><span class="pedido-card-kv-label">m² total</span><span class="pedido-card-kv-val">' + esc(m2tot ? fmtDecimal(m2tot) : '—') + '</span></div>' +
         '</div>' +
       '</article>';
@@ -1941,34 +2034,45 @@
       let totalQty = 0;
       let totalM2 = 0;
       let totalPeso = 0;
+      let totalCaixas = 0;
       let totalValor = 0;
       const bodyRows = [];
       const cardRows = [];
       for (const { item, qty } of rows) {
+        const emb = itemEmbalagem(item);
         const m2unit = itemM2Unit(item);
         const m2tot = itemM2Total(item, qty);
         const pesoUnit = itemPesoUnit(item);
         const pesoTot = itemPesoTotal(item, qty);
+        const cxTot = itemCaixasTotal(item, qty);
         const sub = itemSubtotal(item, qty);
         totalQty += qty;
         if (m2tot) totalM2 += m2tot;
         if (pesoTot) totalPeso += pesoTot;
+        if (cxTot) totalCaixas += cxTot;
         if (sub) totalValor += sub;
         const imgs = getGaleria(item);
         const img = imgs[0]?.url || '';
         const titulo = item.formigres_titulo || item.descricao;
-        const rowData = { item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, sub };
-        const pesoCol = QTY_UNIT === 'palete'
-          ? '<td>' + (pesoUnit ? fmtKg(pesoUnit) : '—') + '</td>'
+        const rowData = { item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub };
+        const paleteExtraCols = QTY_UNIT === 'palete'
+          ? '<td>' + (cxTot ? fmtDecimal(cxTot, 0) : '—') + '</td>' +
+            '<td class="pedido-col-peso">' + (pesoTot ? fmtKg(pesoTot) : '—') + '</td>'
+          : '';
+        const tintaoMidCols = QTY_UNIT === 'palete'
+          ? ''
+          : '<td>' + (m2unit ? fmtDecimal(m2unit) : '—') + '</td>';
+        const embalagemHint = QTY_UNIT === 'palete' && emb.cxpl
+          ? '<br><small class="pedido-row-hint">' + esc(emb.cxpl + ' cx/pl · ' + (m2unit ? fmtDecimal(m2unit) + ' m²/pl' : '—')) + '</small>'
           : '';
         bodyRows.push('<tr>' +
           '<td>' + (img ? '<img src="' + esc(img) + '" alt="" width="48" height="48" style="object-fit:cover;border-radius:6px" />' : '—') + '</td>' +
-          '<td><strong>' + esc(titulo) + '</strong><br><small>' + esc(item.codigo_tintao) + '</small></td>' +
+          '<td><strong>' + esc(titulo) + '</strong><br><small>' + esc(item.codigo_tintao) + '</small>' + embalagemHint + '</td>' +
           '<td>' + esc(item.formato || '—') + '</td>' +
           '<td>' + qty + '</td>' +
-          '<td>' + (m2unit ? fmtDecimal(m2unit) : '—') + '</td>' +
-          pesoCol +
+          tintaoMidCols +
           '<td>' + (m2tot ? fmtDecimal(m2tot) : '—') + '</td>' +
+          paleteExtraCols +
           '<td class="' + (descontoPct ? 'has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
           '<td class="col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>');
         cardRows.push(renderPedidoCard(rowData));
@@ -1977,12 +2081,16 @@
       document.getElementById('pedido-cards').innerHTML = cardRows.join('');
       document.getElementById('pedido-empty')?.classList.toggle('hidden', rows.length > 0);
       document.getElementById('pedido-list-wrap')?.classList.toggle('hidden', rows.length === 0);
+      const caixasStat = QTY_UNIT === 'palete' && totalCaixas
+        ? '<span class="stat"><strong>' + fmtDecimal(totalCaixas, 0) + '</strong> caixas</span>'
+        : '';
       const pesoStat = QTY_UNIT === 'palete' && totalPeso
         ? '<span class="stat"><strong>' + fmtDecimal(totalPeso, 1) + '</strong> kg</span>'
         : '';
       document.getElementById('pedido-resumo').innerHTML = rows.length
         ? '<span class="stat"><strong>' + rows.length + '</strong> modelos</span>' +
           '<span class="stat"><strong>' + totalQty + '</strong> ' + QTY_LABEL_PL + '</span>' +
+          caixasStat +
           '<span class="stat"><strong>' + fmtDecimal(totalM2) + '</strong> m²</span>' +
           pesoStat
         : '';
@@ -2042,25 +2150,31 @@
     }
     function buildPedidoPrintHtml(thumbs) {
       const rows = pedidoItens();
-      let totalQty = 0, totalM2 = 0, totalPeso = 0, totalValor = 0;
+      let totalQty = 0, totalM2 = 0, totalPeso = 0, totalCaixas = 0, totalValor = 0;
       const cards = [];
       for (const { item, qty } of rows) {
+        const emb = itemEmbalagem(item);
         const m2unit = itemM2Unit(item);
         const m2tot = itemM2Total(item, qty);
         const pesoUnit = itemPesoUnit(item);
         const pesoTot = itemPesoTotal(item, qty);
+        const cxTot = itemCaixasTotal(item, qty);
         const sub = itemSubtotal(item, qty);
         totalQty += qty;
         if (m2tot) totalM2 += m2tot;
         if (pesoTot) totalPeso += pesoTot;
+        if (cxTot) totalCaixas += cxTot;
         if (sub) totalValor += sub;
         const imgs = getGaleria(item);
         const img = pdfImgSrc(imgs[0]?.url || '', thumbs, item);
         const titulo = item.formigres_titulo || item.descricao;
-        cards.push(renderPedidoCard({ item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, sub }, { pdf: true }));
+        cards.push(renderPedidoCard({ item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub }, { pdf: true }));
       }
       const cardsHtml = cards.join('');
       const descNote = descontoPct ? '<p class="print-note">Desconto comercial aplicado: ' + descontoPct + '% sobre a tabela.</p>' : '';
+      const caixasResumo = QTY_UNIT === 'palete' && totalCaixas
+        ? '<span class="print-resumo-stat"><strong>' + fmtDecimal(totalCaixas, 0) + '</strong> caixas</span>'
+        : '';
       const pesoResumo = QTY_UNIT === 'palete' && totalPeso
         ? '<span class="print-resumo-stat"><strong>' + fmtDecimal(totalPeso, 1) + '</strong> kg</span>'
         : '';
@@ -2068,6 +2182,7 @@
         ? '<div class="print-resumo">' +
             '<span class="print-resumo-stat"><strong>' + rows.length + '</strong> modelos</span>' +
             '<span class="print-resumo-stat"><strong>' + totalQty + '</strong> ' + QTY_LABEL_PL + '</span>' +
+            caixasResumo +
             '<span class="print-resumo-stat"><strong>' + fmtDecimal(totalM2) + '</strong> m²</span>' +
             pesoResumo +
           '</div>'
@@ -2113,6 +2228,14 @@
         '.pedido-card-meta { margin-top: 3px; font-size: .72rem; color: #767676; line-height: 1.3; }' +
         '.pedido-card-subtotal-label, .pedido-card-unit-label { display: block; font-size: .6rem; text-transform: uppercase; letter-spacing: .05em; color: #767676; margin-bottom: 2px; }' +
         '.pedido-card-subtotal strong { display: block; font-size: .92rem; font-weight: 600; color: #1f1f24; white-space: nowrap; line-height: 1.2; }' +
+        '.pedido-card-metrics { margin-top: 10px; }' +
+        '.pedido-card-hero { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 10px; }' +
+        '.pedido-card-hero-item { min-width: 0; padding: 7px 8px; border: 1px solid #e8e8e8; background: #f7f7f7; }' +
+        '.pedido-card-hero-item.is-primary { background: #fff5f5; border-color: #f0c8ca; }' +
+        '.pedido-card-hero-label { display: block; font-size: .58rem; text-transform: uppercase; letter-spacing: .05em; color: #767676; margin-bottom: 2px; }' +
+        '.pedido-card-hero-val { display: block; font-size: .86rem; font-weight: 600; color: #2f2f2f; font-variant-numeric: tabular-nums; }' +
+        '.pedido-card-hero-item.is-primary .pedido-card-hero-val { font-size: .94rem; font-weight: 700; }' +
+        '.pedido-card-detail { margin-top: 6px; font-size: .66rem; color: #767676; line-height: 1.35; }' +
         '.pedido-card-unit { margin-top: 8px; }' +
         '.pedido-card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 10px; margin-top: 10px; }' +
         '.pedido-card-kv-label { display: block; font-size: .62rem; text-transform: uppercase; letter-spacing: .04em; color: #767676; margin-bottom: 2px; }' +
