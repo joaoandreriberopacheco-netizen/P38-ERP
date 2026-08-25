@@ -808,10 +808,30 @@
       border-bottom: 1px solid var(--pedido-divider);
     }
     .pedido-card:last-child { border-bottom: 0; }
-    .pedido-card-head {
+    .pedido-card-titlebar { min-width: 0; }
+    .pedido-card-title {
+      font-size: .88rem;
+      font-weight: 600;
+      line-height: 1.25;
+      color: var(--text-strong);
+    }
+    .pedido-card-meta {
+      margin-top: 2px;
+      font-size: .72rem;
+      color: var(--muted);
+      line-height: 1.3;
+    }
+    .pedido-card-row1 {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 10px 12px;
+      align-items: center;
+    }
+    .pedido-card-row1-lead {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       gap: 10px;
+      min-width: 0;
     }
     .pedido-card-thumb {
       width: 52px;
@@ -828,55 +848,34 @@
       color: var(--muted);
       font-size: .78rem;
     }
-    .pedido-card-intro { flex: 1; min-width: 0; }
-    .pedido-card-title {
-      font-size: .88rem;
+    .pedido-card-qty { min-width: 0; text-align: center; padding: 0 2px; }
+    .pedido-card-qty-main {
+      display: block;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-strong);
+      font-variant-numeric: tabular-nums;
+      line-height: 1.15;
+    }
+    .pedido-card-qty-main span {
+      font-size: .72rem;
       font-weight: 600;
-      line-height: 1.25;
       color: var(--text-strong);
     }
-    .pedido-card-meta {
+    .pedido-card-qty-sub {
+      display: block;
       margin-top: 3px;
-      font-size: .72rem;
+      font-size: .78rem;
       color: var(--muted);
-      line-height: 1.3;
-    }
-    .pedido-card-aside {
-      text-align: right;
-      flex-shrink: 0;
-      min-width: 72px;
-      max-width: 42%;
-    }
-    .pedido-card-subtotal-label,
-    .pedido-card-unit-label {
-      display: block;
-      font-size: .6rem;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-      color: var(--muted);
-      margin-bottom: 2px;
-    }
-    .pedido-card-subtotal strong {
-      display: block;
-      font-size: .92rem;
-      font-weight: 600;
-      color: var(--accent-bright);
-      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
       line-height: 1.2;
     }
-    .pedido-card-unit {
-      margin-top: 8px;
-    }
-    .pedido-card-metrics { margin-top: 10px; }
-    .pedido-card-hero {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 6px 12px;
-    }
-    .pedido-card-hero-item {
+    .pedido-card-total {
+      text-align: right;
+      flex-shrink: 0;
       min-width: 0;
     }
-    .pedido-card-hero-label {
+    .pedido-card-total-label {
       display: block;
       font-size: .58rem;
       text-transform: uppercase;
@@ -884,62 +883,61 @@
       color: var(--muted);
       margin-bottom: 2px;
     }
-    .pedido-card-hero-val {
+    .pedido-card-total strong {
       display: block;
-      font-size: .86rem;
+      font-size: .92rem;
+      font-weight: 700;
+      color: var(--accent-bright);
+      white-space: nowrap;
+      line-height: 1.2;
+      font-variant-numeric: tabular-nums;
+    }
+    .pedido-card-spec {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      table-layout: fixed;
+    }
+    .pedido-card-spec td {
+      padding: 8px 4px;
+      vertical-align: top;
+      text-align: center;
+      border-top: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .pedido-card-spec td + td {
+      border-left: 1px solid var(--border-subtle);
+    }
+    .pedido-card-spec-l {
+      display: block;
+      font-size: .56rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: var(--muted);
+      margin-bottom: 3px;
+      line-height: 1.2;
+    }
+    .pedido-card-spec-v {
+      display: block;
+      font-size: .76rem;
       font-weight: 600;
       color: var(--text-strong);
       font-variant-numeric: tabular-nums;
       line-height: 1.2;
     }
-    .pedido-card-hero-item.is-primary .pedido-card-hero-val {
-      font-size: .94rem;
+    .pedido-card-spec-v.is-peso {
       font-weight: 700;
       color: var(--accent-bright);
     }
-    .pedido-card-detail {
-      margin-top: 7px;
-      font-size: .68rem;
-      color: var(--muted);
-      line-height: 1.35;
-    }
-    .pedido-card-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px 10px;
-      margin-top: 10px;
-    }
-    .pedido-card-kv-label {
+    .pedido-card-spec-v.pedido-card-spec-preco .preco-orig {
       display: block;
-      font-size: .62rem;
-      text-transform: uppercase;
-      letter-spacing: .04em;
+      font-size: .58rem;
+      font-weight: 400;
+      text-decoration: line-through;
       color: var(--muted);
-      margin-bottom: 2px;
     }
-    .pedido-card-kv-val {
-      font-size: .84rem;
-      font-weight: 500;
-      color: var(--text-strong);
-      font-variant-numeric: tabular-nums;
-    }
-    .pedido-card-price-val {
-      display: block;
-      line-height: 1.15;
-    }
-    .pedido-card-price-val .preco-orig {
-      font-size: .62rem;
-      line-height: 1.1;
-    }
-    .pedido-card-price-val .preco-desc {
-      font-size: .78rem;
-      font-weight: 600;
-    }
-    .pedido-card-price-val:not(.has-desc) {
-      font-size: .78rem;
-      font-weight: 600;
-      color: var(--text-strong);
-    }
+    .pedido-card-spec-v.pedido-card-spec-preco .preco-desc { font-weight: 600; }
+    .pedido-card-spec-v.pedido-card-spec-preco:not(.has-desc) { font-size: .76rem; }
     .pedido-total {
       margin-top: 12px; padding-top: 12px; border-top: 0.5px solid color-mix(in srgb, var(--accent-border) 55%, transparent);
       display: flex; justify-content: flex-end; gap: 24px; font-size: 1rem;
@@ -1222,6 +1220,10 @@
       .pedido-resumo .stat strong { font-size: .88rem; }
       .pedido-table-wrap { display: none !important; }
       .pedido-cards-wrap { display: block; }
+      .pedido-card-row1 { gap: 8px 10px; }
+      .pedido-card-qty-main { font-size: 1rem; }
+      .pedido-card-total strong { font-size: .86rem; }
+      .pedido-card-spec-l { font-size: .52rem; }
       .pedido-card-thumb { width: 48px; height: 48px; }
       .pedido-total {
         margin-top: 10px;
@@ -2025,91 +2027,57 @@
       }
     }
 
+    function renderPedidoSpecTable(cells) {
+      return '<table class="pedido-card-spec" role="presentation"><tr>' +
+        cells.map((c) => '<td><span class="pedido-card-spec-l">' + esc(c.label) + '</span><span class="pedido-card-spec-v' + (c.peso ? ' is-peso' : '') + (c.preco ? ' pedido-card-spec-preco' + (descontoPct ? ' has-desc' : '') : '') + '">' + (c.html != null ? c.html : esc(c.text ?? '—')) + '</span></td>').join('') +
+        '</tr></table>';
+    }
+    function renderPedidoCardRow1({ thumb, titulo, item, qty, m2tot, sub }) {
+      const qtyShort = QTY_UNIT === 'palete' ? 'pl' : 'cx';
+      return '<div class="pedido-card-row1">' +
+        '<div class="pedido-card-row1-lead">' + thumb +
+          '<div class="pedido-card-titlebar">' +
+            '<div class="pedido-card-title">' + esc(titulo) + '</div>' +
+            '<div class="pedido-card-meta">#' + esc(item.codigo_tintao) + ' · ' + esc(item.formato || '—') + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="pedido-card-qty">' +
+          '<span class="pedido-card-qty-main">' + qty + ' <span>' + esc(qtyShort) + '</span></span>' +
+          '<span class="pedido-card-qty-sub">' + esc(m2tot ? fmtDecimal(m2tot) + ' m²' : '—') + '</span>' +
+        '</div>' +
+        '<div class="pedido-card-total">' +
+          '<span class="pedido-card-total-label">Subtotal</span>' +
+          '<strong>' + esc(sub != null ? fmtMoney(sub) : '—') + '</strong>' +
+        '</div>' +
+      '</div>';
+    }
     function renderPedidoCard({ item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl, sub }, opts) {
       const forPdf = opts && opts.pdf;
       const thumb = img
         ? '<img class="pedido-card-thumb" src="' + esc(img) + '" alt=""' + (forPdf ? ' width="48" height="48"' : ' loading="lazy"') + ' />'
         : '<span class="pedido-card-thumb pedido-card-thumb-empty" aria-hidden="true">—</span>';
+      const row1 = renderPedidoCardRow1({ thumb, titulo, item, qty, m2tot, sub });
 
       if (QTY_UNIT === 'palete') {
-        const detailParts = [];
-        if (cxTot) detailParts.push(fmtDecimal(cxTot, 0) + ' cx');
-        if (cxpl) detailParts.push(cxpl + ' cx/pl');
-        if (m2unit) detailParts.push(fmtDecimal(m2unit) + ' m²/pl');
-        const preco = precoEfetivo(item.preco_m2);
-        if (preco) detailParts.push(fmtMoney(preco) + '/m²');
-        const detailHtml = detailParts.length
-          ? '<p class="pedido-card-detail">' + esc(detailParts.join(' · ')) + '</p>'
-          : '';
-        return '<article class="pedido-card' + (forPdf ? ' pedido-card-pdf' : '') + '">' +
-          '<div class="pedido-card-head">' +
-            thumb +
-            '<div class="pedido-card-intro">' +
-              '<div class="pedido-card-title">' + esc(titulo) + '</div>' +
-              '<div class="pedido-card-meta">#' + esc(item.codigo_tintao) + ' · ' + esc(item.formato || '—') + '</div>' +
-            '</div>' +
-            '<div class="pedido-card-aside">' +
-              '<div class="pedido-card-subtotal">' +
-                '<span class="pedido-card-subtotal-label">Subtotal</span>' +
-                '<strong>' + esc(sub != null ? fmtMoney(sub) : '—') + '</strong>' +
-              '</div>' +
-            '</div>' +
-          '</div>' +
-          '<div class="pedido-card-metrics">' +
-            '<div class="pedido-card-hero">' +
-              '<div class="pedido-card-hero-item">' +
-                '<span class="pedido-card-hero-label">' + esc(QTY_LABEL) + '</span>' +
-                '<span class="pedido-card-hero-val">' + qty + '</span>' +
-              '</div>' +
-              '<div class="pedido-card-hero-item">' +
-                '<span class="pedido-card-hero-label">m² total</span>' +
-                '<span class="pedido-card-hero-val">' + esc(m2tot ? fmtDecimal(m2tot) : '—') + '</span>' +
-              '</div>' +
-              '<div class="pedido-card-hero-item is-primary">' +
-                '<span class="pedido-card-hero-label">Peso</span>' +
-                '<span class="pedido-card-hero-val">' + esc(pesoTot ? fmtKg(pesoTot) : '—') + '</span>' +
-              '</div>' +
-            '</div>' +
-            detailHtml +
-          '</div>' +
-        '</article>';
+        const embParts = [];
+        if (cxpl) embParts.push(cxpl + ' cx/pl');
+        if (m2unit) embParts.push(fmtDecimal(m2unit) + ' m²/pl');
+        const spec = renderPedidoSpecTable([
+          { label: 'Preço/m²', preco: true, html: fmtPrecoHtml(item.preco_m2) },
+          { label: 'Caixas', text: cxTot ? fmtDecimal(cxTot, 0) : '—' },
+          { label: 'Peso', peso: true, text: pesoTot ? fmtKg(pesoTot) : '—' },
+          { label: 'Por palete', text: embParts.length ? embParts.join(' · ') : '—' },
+        ]);
+        return '<article class="pedido-card' + (forPdf ? ' pedido-card-pdf' : '') + '">' + row1 + spec + '</article>';
       }
 
-      return '<article class="pedido-card' + (forPdf ? ' pedido-card-pdf' : '') + '">' +
-        '<div class="pedido-card-head">' +
-          thumb +
-          '<div class="pedido-card-intro">' +
-            '<div class="pedido-card-title">' + esc(titulo) + '</div>' +
-            '<div class="pedido-card-meta">#' + esc(item.codigo_tintao) + ' · ' + esc(item.formato || '—') + '</div>' +
-          '</div>' +
-          '<div class="pedido-card-aside">' +
-            '<div class="pedido-card-subtotal">' +
-              '<span class="pedido-card-subtotal-label">Subtotal</span>' +
-              '<strong>' + esc(sub != null ? fmtMoney(sub) : '—') + '</strong>' +
-            '</div>' +
-            '<div class="pedido-card-unit">' +
-              '<span class="pedido-card-unit-label">Preço/m²</span>' +
-              '<span class="pedido-card-price-val' + (descontoPct ? ' has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</span>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-        '<div class="pedido-card-metrics">' +
-          '<div class="pedido-card-hero">' +
-            '<div class="pedido-card-hero-item">' +
-              '<span class="pedido-card-hero-label">' + esc(QTY_LABEL) + '</span>' +
-              '<span class="pedido-card-hero-val">' + qty + '</span>' +
-            '</div>' +
-            '<div class="pedido-card-hero-item">' +
-              '<span class="pedido-card-hero-label">m² total</span>' +
-              '<span class="pedido-card-hero-val">' + esc(m2tot ? fmtDecimal(m2tot) : '—') + '</span>' +
-            '</div>' +
-            '<div class="pedido-card-hero-item">' +
-              '<span class="pedido-card-hero-label">m²/cx</span>' +
-              '<span class="pedido-card-hero-val">' + esc(m2unit ? fmtDecimal(m2unit) : '—') + '</span>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-      '</article>';
+      const spec = renderPedidoSpecTable([
+        { label: 'Preço/m²', preco: true, html: fmtPrecoHtml(item.preco_m2) },
+        { label: 'm²/cx', text: m2unit ? fmtDecimal(m2unit) : '—' },
+        { label: 'm² total', text: m2tot ? fmtDecimal(m2tot) : '—' },
+        { label: 'Embalagem', text: fmtEmbalagemText(item) },
+      ]);
+      return '<article class="pedido-card' + (forPdf ? ' pedido-card-pdf' : '') + '">' + row1 + spec + '</article>';
     }
     function renderPedido() {
       const rows = pedidoItens();
