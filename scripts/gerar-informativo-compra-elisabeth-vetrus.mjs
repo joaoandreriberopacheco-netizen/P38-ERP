@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Informativo de compra — pedido 9H2-57F (Vetrus) · cliente Elisabeth Prieto Navas
+ * Informativo de compra — pedido 8YU-MLP (Vetrus) · cliente Elisabeth Prieto Navas
  *
  * Uso: node scripts/gerar-informativo-compra-elisabeth-vetrus.mjs [caminho-saida.pdf]
  */
@@ -13,41 +13,51 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 
 const PRECO_M2 = 76;
-const M2_POR_CAIXA = 2.38;
 const DATA_DOCUMENTO = '13/03/2026';
 
 const META = {
   cliente: 'Elisabeth Prieto Navas',
-  pedido: '9H2-57F',
-  embarque: '9H2-57F-01',
+  pedido: '8YU-MLP',
+  embarque: '8YU-MLP-01',
   fornecedor: 'VETRUS DO BRASIL',
 };
 
-/** Nomes comerciais usados com a cliente → produto do embarque → destino da obra */
+/** Pedido 8YU-MLP — embarque 01 (fonte: Supabase embarque_item) */
 const LINHAS = [
+  {
+    modeloCliente: 'Medice',
+    produto: 'PORCELANATO 76X76 RET MEDICI ACT WHITE',
+    destino: 'Paredes do banheiro',
+    m2: 221.44,
+    m2PorCaixa: 1.73,
+  },
+  {
+    modeloCliente: 'Taipa',
+    produto: 'PORCELANATO 76X76 RET SOLO MATE TAIPA',
+    destino: 'Habitaciones (quartos)',
+    m2: 318.32,
+    m2PorCaixa: 1.73,
+  },
+  {
+    modeloCliente: 'Calcário',
+    produto: 'PORCELANATO 76X76 RET SOLO MATE CALCARIO',
+    destino: 'Áreas comuns e locais comerciais',
+    m2: 226.63,
+    m2PorCaixa: 1.73,
+  },
   {
     modeloCliente: 'Galícia',
     produto: 'REV 34X50 EURO GALICIA MARROM EXT.',
     destino: 'Jacuzzis',
-    m2: 99.96,
+    m2: 52.36,
+    m2PorCaixa: 2.38,
   },
   {
-    modeloCliente: 'Taipa',
-    produto: 'REV. 34X50 FILETO RÚSTICO - MIX',
-    destino: 'Habitaciones (quartos)',
-    m2: 199.92,
-  },
-  {
-    modeloCliente: 'Calcário',
-    produto: 'REV. 34X50 FILETO PIETRA CLARO',
-    destino: 'Áreas comuns e locais comerciais',
-    m2: 199.92,
-  },
-  {
-    modeloCliente: 'Medice',
-    produto: 'REV. 34X50 FILETO DINAMARCA MIX',
-    destino: 'Paredes do banheiro',
-    m2: 199.92,
+    modeloCliente: '',
+    produto: 'PORCELANATO 60X120 RET SLATE SOFT AS BEGE',
+    destino: '',
+    m2: 51.84,
+    m2PorCaixa: 1.44,
   },
 ];
 
@@ -106,10 +116,17 @@ function brNum(value, digits = 2) {
 
 function prepareLinhas() {
   return LINHAS.map((linha) => {
-    const caixas = Math.round((linha.m2 / M2_POR_CAIXA) * 100) / 100;
-    const caixasInt = Math.round(linha.m2 / M2_POR_CAIXA);
+    const caixasInt = Math.round(linha.m2 / linha.m2PorCaixa);
     const total = Math.round(linha.m2 * PRECO_M2 * 100) / 100;
-    return { ...linha, caixas: caixasInt, m2Fmt: brNum(linha.m2), total, totalFmt: brl(total) };
+    return {
+      ...linha,
+      caixas: caixasInt,
+      m2Fmt: brNum(linha.m2),
+      total,
+      totalFmt: brl(total),
+      modeloCliente: linha.modeloCliente || '—',
+      destino: linha.destino || '—',
+    };
   });
 }
 
@@ -153,7 +170,7 @@ function drawRow(doc, row, font, y, col) {
   const produtoLines = splitLines(doc, row.produto, col.produtoW, 8.2, font);
   const destinoLines = splitLines(doc, row.destino, col.destinoW, 8.2, font);
 
-  doc.setFont(font, 'bold');
+  doc.setFont(font, row.modeloCliente === '—' ? 'normal' : 'bold');
   doc.setFontSize(9);
   doc.setTextColor(0, 0, 0);
   doc.text(modeloLines, col.modelo, y);
@@ -221,14 +238,14 @@ export async function generateInformativoCompraElisabethPdf(outputPath) {
   doc.setFont(font, 'bold');
   doc.setFontSize(11);
   doc.setTextColor(0, 0, 0);
-  doc.text(normalizePdfText('Revestimentos 34×50 cm · 2,38 m² por caixa'), M, y);
+  doc.text(normalizePdfText('Revestimentos e porcelanatos — pedido completo Vetrus'), M, y);
 
   y += 6;
   doc.setFont(font, 'normal');
   doc.setFontSize(9);
   doc.setTextColor(72, 72, 72);
   doc.text(
-    normalizePdfText('Valores de venda acordados com a cliente. Preço único de R$ 76,00/m² em todos os modelos.'),
+    normalizePdfText('Valores de venda acordados com a cliente. Preço único de R$ 76,00/m² em todos os itens.'),
     M,
     y,
   );
@@ -268,9 +285,11 @@ export async function generateInformativoCompraElisabethPdf(outputPath) {
   return { outputPath, totalM2, totalCaixas, totalGeral, linhas };
 }
 
+const OUTPUT_BASENAME = 'informativo-compra-elisabeth-vetrus-8yu-mlp-13-03-2026.pdf';
+
 async function main() {
-  const defaultOut = path.join(ROOT, 'docs', 'exports', 'informativo-compra-elisabeth-vetrus-9h2-13-03-2026.pdf');
-  const artifactOut = '/opt/cursor/artifacts/informativo-compra-elisabeth-vetrus-9h2-13-03-2026.pdf';
+  const defaultOut = path.join(ROOT, 'docs', 'exports', OUTPUT_BASENAME);
+  const artifactOut = path.join('/opt/cursor/artifacts', OUTPUT_BASENAME);
   const outArg = process.argv[2];
 
   const result = await generateInformativoCompraElisabethPdf(outArg || defaultOut);
