@@ -1,6 +1,7 @@
-/** Rolo térmico 80mm — área útil típica de impressão (margens laterais da impressora). */
+/** Rolo térmico 80mm — margens laterais ~10mm cada (área útil ~60mm). */
 export const CUPOM_PAPEL_MM = 80;
-export const CUPOM_LARGURA_IMPRESSAO_MM = 72;
+export const CUPOM_MARGEM_LATERAL_MM = 10;
+export const CUPOM_LARGURA_IMPRESSAO_MM = CUPOM_PAPEL_MM - 2 * CUPOM_MARGEM_LATERAL_MM;
 export const CUPOM_LARGURA_IMPRESSAO_CSS = `${CUPOM_LARGURA_IMPRESSAO_MM}mm`;
 
 /** Cupom térmico — Barlow regular, peso normal. */

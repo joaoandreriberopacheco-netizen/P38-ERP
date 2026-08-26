@@ -46,7 +46,7 @@ export async function shareOrDownloadBlob(blob, filename, mimeType, title) {
 }
 
 /**
- * Mesma lógica dos comprovantes: captura do DOM → PDF (térmica 72mm útil ou A4).
+ * Mesma lógica dos comprovantes: captura do DOM → PDF (térmica 60mm útil ou A4).
  */
 async function loadPdfCaptureLibs() {
   const [html2canvasModule, jspdfModule] = await Promise.all([

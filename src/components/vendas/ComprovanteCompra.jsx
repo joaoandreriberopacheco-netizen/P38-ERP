@@ -24,6 +24,7 @@ import {
   CUPOM_FONT_GOOGLE,
   CUPOM_LARGURA_IMPRESSAO_CSS,
   CUPOM_LARGURA_IMPRESSAO_MM,
+  CUPOM_MARGEM_LATERAL_MM,
   CUPOM_PAPEL_MM,
 } from '@/lib/cupomTermicoConstants';
 import { ensureCupomTermicoFontLoaded } from '@/lib/cupomTermicoFont';
@@ -643,7 +644,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
       const imgH = pageW / ratio;
       pdf.addImage(imgData, 'PNG', 0, 0, pageW, Math.min(imgH, pageH));
     } else {
-      // Cupom térmico: largura útil 72mm (não 80mm de rolo)
+      // Cupom térmico: largura útil 60mm (rolo 80mm − 10mm de margem de cada lado)
       const widthMm = CUPOM_LARGURA_MM;
       const heightMm = (canvas.height / canvas.width) * widthMm;
       pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: [widthMm, heightMm] });
@@ -774,7 +775,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             size="sm"
             variant={formato === '80mm' ? 'default' : 'outline'}
             className="h-8 text-xs"
-            title={`Rolo ${CUPOM_PAPEL_MM}mm · impressão ${CUPOM_LARGURA_MM}mm`}
+            title={`Rolo ${CUPOM_PAPEL_MM}mm · útil ${CUPOM_LARGURA_MM}mm (${CUPOM_MARGEM_LATERAL_MM}mm margem/lado)`}
           >
             Térmica
           </Button>
