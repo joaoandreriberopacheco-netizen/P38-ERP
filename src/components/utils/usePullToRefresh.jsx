@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+const PULL_ARM_THRESHOLD = 12;
+
 /**
  * usePullToRefresh - attaches pull-to-refresh gesture to a scrollable element.
  * @param {Function} onRefresh - async function called when refresh is triggered
@@ -12,6 +14,7 @@ export default function usePullToRefresh(onRefresh, { threshold = 80, scrollRoot
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const startY = useRef(0);
+  const pullArmed = useRef(false);
   const pulling = useRef(false);
   const pullDistanceRef = useRef(0);
   const isRefreshingRef = useRef(false);
@@ -24,16 +27,26 @@ export default function usePullToRefresh(onRefresh, { threshold = 80, scrollRoot
   useEffect(() => {
     if (!scrollRoot) return undefined;
 
+    const setPullDistanceIfChanged = (next) => {
+      if (pullDistanceRef.current === next) return;
+      pullDistanceRef.current = next;
+      setPullDistance(next);
+    };
+
     const resetPull = () => {
+      pullArmed.current = false;
       pulling.current = false;
-      pullDistanceRef.current = 0;
-      setPullDistance(0);
+      setPullDistanceIfChanged(0);
     };
 
     const onTouchStart = (e) => {
-      if (scrollRoot.scrollTop > 0) return;
+      if (scrollRoot.scrollTop > 0) {
+        pullArmed.current = false;
+        return;
+      }
       startY.current = e.touches[0].clientY;
-      pulling.current = true;
+      pullArmed.current = true;
+      pulling.current = false;
     };
 
     const onTouchMove = (e) => {
@@ -42,27 +55,28 @@ export default function usePullToRefresh(onRefresh, { threshold = 80, scrollRoot
         resetPull();
         return;
       }
-      if (!pulling.current) return;
+      if (!pullArmed.current) return;
 
       const delta = e.touches[0].clientY - startY.current;
       if (delta < 0) {
         resetPull();
         return;
       }
+      if (delta < PULL_ARM_THRESHOLD) return;
 
-      const clamped = Math.min(delta * 0.5, threshold * 1.2);
-      pullDistanceRef.current = clamped;
-      setPullDistance(clamped);
+      pulling.current = true;
+      const clamped = Math.min((delta - PULL_ARM_THRESHOLD) * 0.5, threshold * 1.2);
+      setPullDistanceIfChanged(clamped);
     };
 
     const onTouchEnd = async () => {
+      pullArmed.current = false;
       if (!pulling.current) return;
       pulling.current = false;
       if (pullDistanceRef.current >= threshold) {
         isRefreshingRef.current = true;
         setIsRefreshing(true);
-        setPullDistance(0);
-        pullDistanceRef.current = 0;
+        setPullDistanceIfChanged(0);
         try {
           await onRefreshRef.current?.();
         } finally {
@@ -70,7 +84,7 @@ export default function usePullToRefresh(onRefresh, { threshold = 80, scrollRoot
           setIsRefreshing(false);
         }
       } else {
-        resetPull();
+        setPullDistanceIfChanged(0);
       }
     };
 

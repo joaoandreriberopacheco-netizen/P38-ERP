@@ -1614,7 +1614,7 @@ function ProdutosPageContent() {
             <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
               {!isDesktop && (
                 <div className="flex flex-col flex-1 min-h-0 h-full w-full min-w-0 max-w-full">
-                  <CatalogoMobileScrollShell catalogChrome={mobileCatalogChrome} onRefresh={loadData}>
+                  <CatalogoMobileScrollShell catalogChrome={mobileCatalogChrome}>
                     <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} flatList groupByCategory={false} masterLevel={treeLevel} sortOrder={sortOrder} onExpandedKeysChange={handleCatalogExpandedKeysChange} catalogFilters={filters} salesVelocityMap={salesVelocityMap} catalogStockContext={catalogStockContext} />
                   </CatalogoMobileScrollShell>
                 </div>
