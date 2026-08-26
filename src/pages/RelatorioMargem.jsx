@@ -1921,7 +1921,7 @@ export default function RelatorioMargemVendas() {
 
   return (
     <TooltipProvider delayDuration={200}>
-    <div className="font-din-1451 flex flex-col flex-1 min-h-0 h-full overflow-hidden bg-background md:overflow-x-hidden">
+    <div className="font-din-1451 flex flex-col h-full min-h-0 overflow-hidden bg-background md:overflow-x-hidden">
       <div className="max-w-full mx-auto min-w-0 flex flex-col flex-1 min-h-0 overflow-hidden">
         {/* Cabeçalho fixo — só título e ações */}
         <div className="flex-none bg-background border-b border-border z-20">

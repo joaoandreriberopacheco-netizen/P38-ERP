@@ -1440,7 +1440,7 @@ export default function PDVCaixa({
   const screenShellBg = overlayMode ? 'bg-muted dark:bg-background' : 'bg-muted/40 dark:bg-background';
 
   const rootClassName = overlayMode || inAppLayout
-    ? `flex flex-col flex-1 min-h-0 h-full ${screenShellBg} ${caixaTypo.screen}`
+    ? `flex flex-col h-full min-h-0 ${screenShellBg} ${caixaTypo.screen}`
     : `${caixaShell} ${screenShellBg} ${caixaTypo.screen}`;
 
   return (
