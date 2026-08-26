@@ -516,6 +516,7 @@ html[data-p38-force-landscape='true'] .p38-orientation-rotated-stage .p38-fullsc
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y pinch-zoom;
 }
 
 /* ==========================================

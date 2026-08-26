@@ -422,9 +422,9 @@ export default function Layout({ children, currentPageName }) {
           data-p38-overlay-sidebar={useDesktopOverlaySidebar ? 'true' : undefined}
           className={`flex-1 transition-[margin] duration-200 ease-out ${
             isMobile 
-              ? `ml-0 min-h-0 ${
+              ? `ml-0 flex min-h-0 flex-col ${
                   MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName)
-                    ? 'h-full max-h-full overflow-hidden'
+                    ? 'flex-1 overflow-hidden'
                     : 'overflow-y-auto overscroll-y-contain p38-stage-panel-scroll p38-layout-mobile-scroll-pad touch-pan-y'
                 }`
               : (useDesktopOverlaySidebar ? 'ml-[64px]' : (isOpen ? 'ml-[300px]' : 'ml-[64px]'))
@@ -437,7 +437,7 @@ export default function Layout({ children, currentPageName }) {
           }}
         >
           {MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) ? (
-            <div className="h-full min-h-0 overflow-hidden">
+            <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
               <LayoutOutlet>{pageContent}</LayoutOutlet>
             </div>
           ) : (
