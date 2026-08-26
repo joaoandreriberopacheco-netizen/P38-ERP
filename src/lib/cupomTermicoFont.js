@@ -1,10 +1,10 @@
 import { CUPOM_FONT_GOOGLE } from '@/lib/cupomTermicoConstants';
 
-const LINK_ID = 'p38-cupom-barlow-condensed';
+const LINK_ID = 'p38-cupom-barlow';
 
 let loadPromise = null;
 
-/** Garante Barlow Condensed no documento (preview, PDF html2canvas e impressão). */
+/** Garante Barlow no documento (preview, PDF html2canvas e impressão). */
 export function ensureCupomTermicoFontLoaded() {
   if (typeof document === 'undefined') return Promise.resolve();
   if (loadPromise) return loadPromise;
@@ -20,14 +20,14 @@ export function ensureCupomTermicoFontLoaded() {
 
     try {
       if (document.fonts?.load) {
-        await document.fonts.load('400 12px "Barlow Condensed"');
-        await document.fonts.load('400 18px "Barlow Condensed"');
+        await document.fonts.load('400 12px "Barlow"');
+        await document.fonts.load('400 18px "Barlow"');
         await document.fonts.ready;
       } else {
         await new Promise((resolve) => setTimeout(resolve, 300));
       }
     } catch {
-      /* fallback Arial Narrow */
+      /* fallback sans-serif */
     }
   })();
 

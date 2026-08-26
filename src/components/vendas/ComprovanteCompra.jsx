@@ -102,29 +102,19 @@ function CupomTermico({ pedido, dadosEmpresa }) {
   const F_TOTAL = F + 6;
   const F_PAGAMENTO = F + 3;
   const preto = PRETO_CUPOM;
-  const estiloTabela = {
-    width: '100%',
-    tableLayout: 'fixed',
-    borderCollapse: 'collapse',
-    fontSize: F_CORPO,
-    fontWeight: '400',
-  };
-  const estiloTh = {
-    fontWeight: '400',
+  const gridCols = '22% 18% 30% 30%';
+  const estiloGridValores = {
+    display: 'grid',
+    gridTemplateColumns: gridCols,
+    columnGap: '2px',
     fontSize: F,
-    padding: '1px 0',
-    verticalAlign: 'bottom',
+    fontWeight: 'normal',
   };
-  const estiloTd = {
-    padding: '3px 0',
-    verticalAlign: 'top',
-    fontWeight: '400',
-  };
-  const estiloPreco = {
-    textAlign: 'right',
-    whiteSpace: 'nowrap',
-    paddingLeft: '2px',
-    fontSize: F,
+  const estiloGridHeader = {
+    ...estiloGridValores,
+    fontSize: F - 1,
+    marginBottom: '4px',
+    opacity: 0.85,
   };
 
   const empresa = buildEmpresaCupom(dadosEmpresa);
@@ -133,9 +123,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
     <div style={{ margin: '2mm 0', borderTop: `1px solid ${preto}`, width: '100%', opacity: 0.35 }} />
   );
   const SepItem = () => (
-    <tr aria-hidden="true">
-      <td colSpan={5} style={{ padding: 0, borderBottom: `1px solid ${preto}`, opacity: 0.35, lineHeight: 0 }} />
-    </tr>
+    <div style={{ margin: '4px 0', borderTop: `1px solid ${preto}`, width: '100%', opacity: 0.35 }} />
   );
 
   return (
@@ -147,7 +135,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
         maxWidth: CUPOM_LARGURA_CSS,
         boxSizing: 'border-box',
         background: '#fff', color: preto,
-        fontFamily: font, fontSize: F_CORPO,
+        fontFamily: font, fontSize: F_CORPO, fontWeight: 'normal',
         padding: '2mm 1mm 3mm', margin: '0 auto', lineHeight: '1.35',
       }}
     >
@@ -157,7 +145,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
           <img src={dadosEmpresa.logo_url} alt="Logo" style={{ maxWidth: '100px', maxHeight: '50px', filter: 'grayscale(100%) contrast(200%)', display: 'block', margin: '0 auto 6px' }} />
         )}
         {/* Nome Fantasia — maior */}
-        <div style={{ fontSize: F + 7, fontWeight: '400', letterSpacing: '0.5px', lineHeight: 1.1, marginBottom: '3px' }}>
+        <div style={{ fontSize: F + 7, fontWeight: 'normal', letterSpacing: '0.5px', lineHeight: 1.1, marginBottom: '3px' }}>
           {empresa.nomeFantasia}
         </div>
         {/* Razão Social */}
@@ -188,59 +176,49 @@ function CupomTermico({ pedido, dadosEmpresa }) {
 
       <Sep />
 
-      {/* ── Itens (tabela fixa 72mm — evita sobreposição PREÇO/TOTAL) ── */}
-      <table style={estiloTabela}>
-        <colgroup>
-          <col style={{ width: '11%' }} />
-          <col style={{ width: '9%' }} />
-          <col style={{ width: '38%' }} />
-          <col style={{ width: '21%' }} />
-          <col style={{ width: '21%' }} />
-        </colgroup>
-        <thead>
-          <tr>
-            <th style={{ ...estiloTh, textAlign: 'center' }}>QTD</th>
-            <th style={{ ...estiloTh, textAlign: 'center' }}>UN</th>
-            <th style={{ ...estiloTh, textAlign: 'left' }}>DESC.</th>
-            <th style={{ ...estiloTh, ...estiloPreco }}>PREÇO</th>
-            <th style={{ ...estiloTh, ...estiloPreco }}>TOTAL</th>
-          </tr>
-        </thead>
-        <tbody>
-          {itens.map((item, idx) => {
-            const nome = item.produto_nome || '';
-            const qtd = String(parseFloat(item.quantidade) || 0);
-            const precoItem = fmtV(item.preco_unitario_praticado);
-            const totalItem = fmtV(item.total);
-            const unidade = getUnidadeMedidaItemPedidoVenda(item).substring(0, 4);
+      {/* ── Itens: descrição em cima, valores em grid, linha entre itens ── */}
+      <div style={{ fontWeight: 'normal' }}>
+        <div style={estiloGridHeader}>
+          <span style={{ textAlign: 'center' }}>QTD</span>
+          <span style={{ textAlign: 'center' }}>UN</span>
+          <span style={{ textAlign: 'right' }}>PREÇO</span>
+          <span style={{ textAlign: 'right' }}>TOTAL</span>
+        </div>
+        {itens.map((item, idx) => {
+          const nome = item.produto_nome || '';
+          const qtd = String(parseFloat(item.quantidade) || 0);
+          const precoItem = fmtV(item.preco_unitario_praticado);
+          const totalItem = fmtV(item.total);
+          const unidade = getUnidadeMedidaItemPedidoVenda(item).substring(0, 4);
 
-            return (
-              <React.Fragment key={item.pedido_venda_item_id || item.produto_id || idx}>
-                <tr>
-                  <td style={{ ...estiloTd, textAlign: 'center' }}>{qtd}</td>
-                  <td style={{ ...estiloTd, textAlign: 'center' }}>{unidade}</td>
-                  <td
-                    lang="pt-BR"
-                    style={{
-                      ...estiloTd,
-                      textTransform: 'uppercase',
-                      wordBreak: 'break-word',
-                      overflowWrap: 'break-word',
-                      lineHeight: 1.3,
-                      paddingRight: '3px',
-                    }}
-                  >
-                    {nome}
-                  </td>
-                  <td style={{ ...estiloTd, ...estiloPreco }}>{precoItem}</td>
-                  <td style={{ ...estiloTd, ...estiloPreco }}>{totalItem}</td>
-                </tr>
-                {idx < itens.length - 1 ? <SepItem /> : null}
-              </React.Fragment>
-            );
-          })}
-        </tbody>
-      </table>
+          return (
+            <React.Fragment key={item.pedido_venda_item_id || item.produto_id || idx}>
+              <div>
+                <div
+                  lang="pt-BR"
+                  style={{
+                    textTransform: 'uppercase',
+                    wordBreak: 'break-word',
+                    overflowWrap: 'break-word',
+                    lineHeight: 1.3,
+                    marginBottom: '3px',
+                    fontWeight: 'normal',
+                  }}
+                >
+                  {nome}
+                </div>
+                <div style={estiloGridValores}>
+                  <span style={{ textAlign: 'center' }}>{qtd}</span>
+                  <span style={{ textAlign: 'center' }}>{unidade}</span>
+                  <span style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>{precoItem}</span>
+                  <span style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>{totalItem}</span>
+                </div>
+              </div>
+              {idx < itens.length - 1 ? <SepItem /> : null}
+            </React.Fragment>
+          );
+        })}
+      </div>
 
       <Sep />
 
@@ -597,7 +575,8 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html, body {
           background: #fff;
-          font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+          font-family: 'Barlow', sans-serif;
+          font-weight: normal;
         }
         ${larguraPaginaCss}
         table { table-layout: fixed; width: 100%; border-collapse: collapse; }

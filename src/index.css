@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400&display=swap');
 @import './styles/p38-identity.css';
 @import './styles/p38-typography.css';
 @import './styles/p38-tablet.css';
@@ -7,9 +7,11 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Cupom térmico / comprovante — Barlow Condensed (não Arial do sistema) */
+/* Cupom térmico / comprovante — Barlow regular, peso normal */
 .p38-cupom-termico {
-  font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  font-family: 'Barlow', sans-serif;
+  font-weight: 400;
+  font-synthesis: none;
 }
 
 @keyframes app-toast-progress {
