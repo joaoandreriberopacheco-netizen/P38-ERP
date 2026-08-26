@@ -1595,7 +1595,7 @@ function ProdutosPageContent() {
         </div>
       )}
 
-      <div className="flex flex-1 min-h-0 flex-col overflow-hidden w-full min-w-0">
+      <div className="flex flex-1 min-h-0 h-0 flex-col overflow-hidden w-full min-w-0">
         {isDesktop && (
           <div>
             <ProdutosCommandBar
@@ -1610,9 +1610,11 @@ function ProdutosPageContent() {
         )}
 
         {!isDesktop && (
-          <CatalogoMobileScrollShell catalogChrome={mobileCatalogChrome}>
-            <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} flatList groupByCategory={false} masterLevel={treeLevel} sortOrder={sortOrder} onExpandedKeysChange={handleCatalogExpandedKeysChange} catalogFilters={filters} salesVelocityMap={salesVelocityMap} catalogStockContext={catalogStockContext} />
-          </CatalogoMobileScrollShell>
+          <div className="relative flex-1 min-h-0 h-0 w-full overflow-hidden">
+            <CatalogoMobileScrollShell catalogChrome={mobileCatalogChrome}>
+              <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} flatList groupByCategory={false} masterLevel={treeLevel} sortOrder={sortOrder} onExpandedKeysChange={handleCatalogExpandedKeysChange} catalogFilters={filters} salesVelocityMap={salesVelocityMap} catalogStockContext={catalogStockContext} />
+            </CatalogoMobileScrollShell>
+          </div>
         )}
 
         {isDesktop && viewMode === 'dinamica' && (

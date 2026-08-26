@@ -423,7 +423,7 @@ export default function Layout({ children, currentPageName }) {
           className={`flex-1 transition-[margin] duration-200 ease-out ${
             isMobile 
               ? MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName)
-                ? 'ml-0 flex min-h-0 flex-col h-full max-h-full overflow-hidden'
+                ? 'ml-0 min-h-0 h-full max-h-full overflow-hidden touch-pan-y'
                 : 'ml-0 min-h-0 overflow-y-auto overscroll-y-contain p38-stage-panel-scroll p38-layout-mobile-scroll-pad touch-pan-y'
               : (useDesktopOverlaySidebar ? 'ml-[64px]' : (isOpen ? 'ml-[300px]' : 'ml-[64px]'))
           } ${MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) && !isMobile ? 'h-screen max-h-screen overflow-hidden' : ''}`}
@@ -435,7 +435,7 @@ export default function Layout({ children, currentPageName }) {
           }}
         >
           {MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) ? (
-            <div className="flex h-full min-h-0 flex-col overflow-hidden">
+            <div className="h-full min-h-0 overflow-hidden touch-pan-y">
               <LayoutOutlet>{pageContent}</LayoutOutlet>
             </div>
           ) : (

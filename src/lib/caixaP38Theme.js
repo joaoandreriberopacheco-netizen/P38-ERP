@@ -112,9 +112,9 @@ export const caixaPanelBody = 'p38-panel__body';
 
 /** Layout fullscreen — scroll interno sem cortar botões sob a barra inferior */
 export const caixaShell = 'h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden';
-export const caixaMain = 'flex-1 min-h-0 overflow-hidden flex flex-col';
-export const caixaTabsRoot = 'flex flex-1 min-h-0 flex-col overflow-hidden';
-export const caixaTabPanel = 'flex-1 min-h-0 p38-stage-panel-scroll touch-pan-y mt-0 data-[state=inactive]:hidden';
+export const caixaMain = 'flex-1 min-h-0 h-0 overflow-hidden flex flex-col';
+export const caixaTabsRoot = 'flex-1 min-h-0 h-0 flex flex-col overflow-hidden';
+export const caixaTabPanel = 'absolute inset-0 overflow-y-auto overscroll-y-contain touch-pan-y mt-0 data-[state=inactive]:hidden';
 export const caixaTabPanelPad = 'p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]';
 /** Painéis com GlacialBottomNav visível no shell mobile */
 export const caixaTabPanelPadInLayout = 'p-4 pb-[var(--p38-scroll-pad-below-nav)]';

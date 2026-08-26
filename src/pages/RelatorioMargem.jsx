@@ -1922,7 +1922,7 @@ export default function RelatorioMargemVendas() {
   return (
     <TooltipProvider delayDuration={200}>
     <div className="font-din-1451 flex flex-col h-full min-h-0 overflow-hidden bg-background md:overflow-x-hidden">
-      <div className="max-w-full mx-auto min-w-0 flex flex-col flex-1 min-h-0 overflow-hidden">
+      <div className="max-w-full mx-auto min-w-0 flex flex-col flex-1 min-h-0 h-0 overflow-hidden">
         {/* Cabeçalho fixo — só título e ações */}
         <div className="flex-none bg-background border-b border-border z-20">
           <div className="w-full min-w-0 px-3 py-2">
@@ -2029,9 +2029,10 @@ export default function RelatorioMargemVendas() {
           )}
 
         {/* Área rolável — filtros sobem; cabeçalho da tabela fixa ao rolar (mobile) */}
+        <div className="relative flex-1 min-h-0 h-0 overflow-hidden">
         <div
           ref={mainScrollRef}
-          className="flex-1 min-h-0 min-w-0 p38-stage-panel-scroll overflow-x-hidden touch-pan-y pb-[var(--p38-scroll-pad-below-nav)]"
+          className="absolute inset-0 min-w-0 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y pb-[var(--p38-scroll-pad-below-nav)]"
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
           {!toolsCollapsed && (
@@ -2378,6 +2379,7 @@ export default function RelatorioMargemVendas() {
             </div>
           )}
           </div>
+        </div>
         </div>
       </div>
     </div>
