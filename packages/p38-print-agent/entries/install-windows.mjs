@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 /**
- * Instalador interativo — Windows (Node ou .exe via pkg).
- * Grava config em ~/.p38-print-agent/config.json e mostra o token para ligar no P38.
+ * Instalador para o PC da loja — Windows (.exe ou Node).
+ * Release: Supabase P38 já vem embutido; o cliente só informa IP da impressora.
  */
 import readline from 'readline';
 import { mkdirSync, writeFileSync, existsSync, unlinkSync } from 'fs';
 import { homedir, platform } from 'os';
 import { dirname, join } from 'path';
 import { generateAgentToken, resolveConfig, saveConfig } from '../src/config.mjs';
+import { P38_SUPABASE_URL, P38_SUPABASE_ANON_KEY } from '../defaults.p38.mjs';
 
 function ask(rl, question, defaultValue = '') {
   const hint = defaultValue ? ` [${defaultValue}]` : '';
@@ -31,7 +32,6 @@ function pause(message = '\nPrima Enter para fechar...') {
 
 function installDir() {
   if (process.pkg) return dirname(process.execPath);
-  // Desenvolvimento (node / .bat): pasta do pacote print-agent
   return join(process.cwd(), 'packages/p38-print-agent');
 }
 
@@ -63,7 +63,6 @@ function registerWindowsAutoStart(installRoot, enabled) {
     if (existsSync(startupBat)) {
       try {
         unlinkSync(startupBat);
-        console.log('Arranque automático removido:', startupBat);
       } catch {
         /* ignore */
       }
@@ -73,7 +72,7 @@ function registerWindowsAutoStart(installRoot, enabled) {
 
   mkdirSync(startup, { recursive: true });
   writeFileSync(startupBat, buildLauncherBat(installRoot), 'utf8');
-  console.log('Arranque automático activado:', startupBat);
+  console.log('Arranque automático activado (abre ao ligar o PC).');
   return startupBat;
 }
 
@@ -83,45 +82,65 @@ function createWindowsShortcut(installRoot) {
 
   const shortcutBat = join(desktop, 'P38 Agente Impressao.bat');
   writeFileSync(shortcutBat, buildLauncherBat(installRoot), 'utf8');
-  console.log(`Atalho criado: ${shortcutBat}`);
+  console.log('Atalho criado no Ambiente de Trabalho.');
+}
+
+function resolveSupabaseCredentials(cfg) {
+  const bundled = Boolean(P38_SUPABASE_URL && P38_SUPABASE_ANON_KEY);
+  const url =
+    cfg.supabaseUrl ||
+    P38_SUPABASE_URL ||
+    process.env.P38_SUPABASE_URL ||
+    process.env.VITE_SUPABASE_URL ||
+    '';
+  const anonKey =
+    cfg.supabaseAnonKey ||
+    P38_SUPABASE_ANON_KEY ||
+    process.env.P38_SUPABASE_ANON_KEY ||
+    process.env.VITE_SUPABASE_ANON_KEY ||
+    '';
+  return { bundled, url, anonKey };
 }
 
 async function main() {
   console.log('');
   console.log('========================================');
   console.log('  P38 — Instalação do Agente de Impressão');
-  console.log('  (impressora térmica na rede da loja)');
   console.log('========================================');
   console.log('');
 
   const cfg = resolveConfig();
+  const { bundled, url: presetUrl, anonKey: presetAnon } = resolveSupabaseCredentials(cfg);
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
-  console.log('Preencha os dados abaixo (Enter aceita o valor entre [ ]).');
-  console.log('');
+  let supabaseUrl = presetUrl;
+  let supabaseAnonKey = presetAnon;
 
-  const supabaseUrl = await ask(
-    rl,
-    'URL Supabase',
-    cfg.supabaseUrl || process.env.P38_SUPABASE_URL || process.env.VITE_SUPABASE_URL || '',
-  );
-
-  let supabaseAnonKey = cfg.supabaseAnonKey || process.env.P38_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
-  if (!supabaseAnonKey) {
-    supabaseAnonKey = await ask(rl, 'Chave anon Supabase (eyJ...)', '');
+  if (bundled) {
+    console.log('Sistema P38: ligação já configurada neste instalador.');
+    console.log('Só precisa do IP da impressora térmica na loja.');
+    console.log('');
   } else {
-    const k = await ask(rl, 'Chave anon Supabase (Enter = manter a atual)', '(manter)');
-    if (k && k !== '(manter)') supabaseAnonKey = k;
+    console.log('(Modo técnico — servidor não embutido no instalador.)');
+    console.log('');
+    supabaseUrl = await ask(rl, 'URL Supabase', supabaseUrl);
+    if (!supabaseAnonKey) {
+      supabaseAnonKey = await ask(rl, 'Chave anon Supabase (eyJ...)', '');
+    }
   }
 
-  const printerHost = await ask(rl, 'IP da impressora térmica', cfg.printerHost || '192.168.1.100');
+  const printerHost = await ask(
+    rl,
+    'IP da impressora térmica na rede',
+    cfg.printerHost || '192.168.1.100',
+  );
   const printerPort = await ask(rl, 'Porta da impressora', String(cfg.printerPort || 9100));
 
   let autoStart = true;
   if (platform() === 'win32') {
     const resp = await ask(
       rl,
-      'Iniciar agente automaticamente quando o Windows ligar? (S/n)',
+      'Abrir agente automaticamente quando o Windows ligar? (S/n)',
       'S',
     );
     autoStart = !/^n/i.test(resp);
@@ -130,13 +149,13 @@ async function main() {
   rl.close();
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.error('\nErro: URL e chave anon Supabase são obrigatórias.');
+    console.error('\nErro: instalador sem ligação ao P38. Peça o ficheiro .exe correcto à equipa.');
     await pause();
     process.exit(1);
   }
 
   const token = generateAgentToken();
-  const saved = saveConfig({
+  saveConfig({
     agentToken: token,
     supabaseUrl,
     supabaseAnonKey,
@@ -150,39 +169,34 @@ async function main() {
       createWindowsShortcut(root);
       registerWindowsAutoStart(root, autoStart);
     } catch (e) {
-      console.warn('Não foi possível criar atalho/arranque automático:', e?.message || e);
+      console.warn('Aviso (atalho/arranque):', e?.message || e);
     }
   }
 
   console.log('');
   console.log('=== Instalação concluída ===');
   console.log('');
-  console.log('Config gravada em:', saved.configFile || join(homedir(), '.p38-print-agent', 'config.json'));
-  console.log('');
-  console.log('--- TOKEN (use uma vez no P38) ---');
+  console.log('--- TOKEN (copie — usa uma vez no P38) ---');
   console.log('');
   console.log(`  ${token}`);
   console.log('');
-  console.log('Próximos passos:');
-  console.log('  1. Abra o P38 no browser (PC do caixa) → Comprovante de venda');
+  console.log('No P38 (browser):');
+  console.log('  1. Abra um Comprovante de venda');
   console.log('  2. IP impressora:', printerHost);
-  console.log('  3. Cole o TOKEN acima → botão "Ligar agente"');
-  if (autoStart && platform() === 'win32') {
-    console.log('  4. Arranque automático: SIM — após reiniciar o PC o agente abre sozinho');
-    console.log('     (pode iniciar já agora com o atalho "P38 Agente Impressao" no Ambiente de Trabalho)');
-  } else {
-    console.log('  4. Inicie o agente: duplo clique em "P38 Agente Impressao" (Ambiente de Trabalho)');
-    console.log('     ou execute P38-Iniciar-Agente.exe na pasta deste instalador');
-  }
+  console.log('  3. Cole o TOKEN → botão "Ligar agente"');
   console.log('');
-  console.log('Teste: abra http://127.0.0.1:3920/health com o agente a correr.');
+  if (autoStart && platform() === 'win32') {
+    console.log('O agente abrirá sozinho quando o PC ligar.');
+  } else {
+    console.log('Para imprimir: abra "P38 Agente Impressao" no Ambiente de Trabalho.');
+  }
   console.log('');
 
   await pause();
 }
 
 main().catch(async (e) => {
-  console.error('\nErro na instalação:', e?.message || e);
+  console.error('\nErro:', e?.message || e);
   await pause();
   process.exit(1);
 });

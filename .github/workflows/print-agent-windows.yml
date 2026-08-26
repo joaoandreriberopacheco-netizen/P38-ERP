@@ -25,8 +25,14 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
 
+      - name: Gravar ligação P38 no instalador (cliente)
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: node packages/p38-print-agent/scripts/write-release-defaults.mjs
+
       - name: Build Windows executables
-        run: npm run print-agent:build-win
+        run: node packages/p38-print-agent/scripts/build-windows-exe.mjs
 
       - name: Upload release folder
         uses: actions/upload-artifact@v4

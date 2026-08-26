@@ -10,23 +10,18 @@ Com fila remota, alguém em **São Paulo** (ou noutro sítio) pode aprovar pagam
 
 ## Download do agente (`.exe` para a loja)
 
-**Link directo (GitHub Actions):**  
-https://github.com/joaoandreriberopacheco-netizen/P38-ERP/actions/workflows/print-agent-windows.yml
+**Link:** https://github.com/joaoandreriberopacheco-netizen/P38-ERP/actions/workflows/print-agent-windows.yml
 
-1. Abra o link acima  
-2. Clique no **último run** com ✓ verde (workflow *Print Agent Windows*)  
-3. Role até **Artifacts** → descarregue **`p38-print-agent-windows`** (ficheiro `.zip`)  
-4. Descompacte numa pasta no PC do caixa, por exemplo: `C:\P38-Agente\`
-
-Conteúdo da pasta:
+1. Último run **✓ verde** → **Artifacts** → `p38-print-agent-windows.zip`
+2. Descompactar no PC (ex.: `C:\P38-Agente\`)
+3. **`P38-Instalar-Agente.exe`** — ligação ao P38 **já vem pronta**; o cliente só informa o **IP da impressora**
+4. Copiar **TOKEN** → P38 → Comprovante → **Ligar agente**
 
 | Ficheiro | Função |
 |---|---|
 | `P38-Instalar-Agente.exe` | Instalação (uma vez) |
 | `P38-Iniciar-Agente.exe` | Agente (ou arranque automático) |
 | `LEIA-ME.txt` | Instruções rápidas |
-
-> Se ainda não existir artefacto verde, o build automático pode estar a correr — volte ao link em alguns minutos ou peça ajuda para gerar o `.zip`.
 
 ---
 

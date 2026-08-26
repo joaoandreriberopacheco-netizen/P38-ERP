@@ -44,21 +44,16 @@ execSync(
 // README rápido na pasta release
 writeFileSync(
   join(release, 'LEIA-ME.txt'),
-  `P38 — Agente de impressão térmica (CASA ISRAEL / loja)
+  `P38 — Agente de impressão térmica
 
 1. Duplo clique: P38-Instalar-Agente.exe
-   (só na primeira vez — gera TOKEN e grava config)
+   (ligaçao ao P38 ja vem pronta — so pede IP da impressora)
 
-2. No P38 (browser): Comprovante → IP impressora → colar TOKEN → "Ligar agente"
+2. Copie o TOKEN → P38 Comprovante → "Ligar agente"
 
-3. Todos os dias: o agente pode abrir SOZINHO ao ligar o PC
-   (o instalador pergunta isto — resposta padrão: Sim)
+3. O agente abre sozinho ao ligar o PC (padrao: Sim)
 
-   Manualmente: P38-Iniciar-Agente.exe ou atalho "P38 Agente Impressao"
-
-Teste: http://127.0.0.1:3920/health
-
-Doc completa: docs/print-agent/README.md no repositório P38-ERP.
+Manual: P38-Iniciar-Agente.exe ou atalho "P38 Agente Impressao"
 `,
   'utf8',
 );

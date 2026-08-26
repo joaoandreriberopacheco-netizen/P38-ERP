@@ -74,3 +74,5 @@ supabase/.temp/
 # P38 Print Agent — builds Windows (.exe)
 packages/p38-print-agent/dist/
 packages/p38-print-agent/release/
+# defaults com anon key (gerado no CI)
+packages/p38-print-agent/defaults.p38.mjs
