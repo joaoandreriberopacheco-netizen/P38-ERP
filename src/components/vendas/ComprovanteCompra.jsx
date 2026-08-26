@@ -6,7 +6,11 @@ import { format } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import {
-  checkPrintAgentHealth,
+  isValidPairingCode,
+  maskPairingCodeInput,
+  normalizePairingCode,
+} from '@/lib/printAgentPairingCode';
+import {
   enqueueRemotePrint,
   getStoredAgentId,
   getStoredAgentNome,
@@ -684,9 +688,9 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
   };
 
   const handleLigarAgente = async () => {
-    const token = agentTokenRegistro.trim();
-    if (!token) {
-      toast.error('Cole o token gerado no PC (npm run print-agent:setup)');
+    const token = normalizePairingCode(agentTokenRegistro);
+    if (!isValidPairingCode(token)) {
+      toast.error('Digite o código de 6 dígitos do PC (000-000)');
       return;
     }
     setLigandoAgente(true);
@@ -696,7 +700,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
         nome: 'Caixa principal',
         ip_impressora: ipImpressora || undefined,
       });
-      toast.success(`Agente "${agente.nome}" ligado — inicie o agente no PC da loja`);
+      toast.success(`Agente "${agente.nome}" ligado — pode imprimir térmica`);
       setAgenteRemotoId(agente.id);
       setAgenteRemotoNome(agente.nome);
       setAgentTokenRegistro('');
@@ -823,10 +827,13 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
         {!agenteRemotoId && (
           <div className="flex items-center gap-2">
             <Input
-              placeholder="Token do agente (npm run print-agent:setup no PC)"
+              placeholder="000-000"
+              inputMode="numeric"
+              autoComplete="off"
               value={agentTokenRegistro}
-              onChange={(e) => setAgentTokenRegistro(e.target.value)}
-              className="h-8 text-xs flex-1 font-mono"
+              onChange={(e) => setAgentTokenRegistro(maskPairingCodeInput(e.target.value))}
+              className="h-8 text-xs flex-1 font-mono tracking-widest text-center max-w-[7rem]"
+              maxLength={7}
             />
             <Button
               onClick={handleLigarAgente}

@@ -17,10 +17,19 @@ async function readJson(req: Request) {
   }
 }
 
-function randomToken() {
-  const bytes = new Uint8Array(24);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+function randomPairingCode() {
+  const n = crypto.getRandomValues(new Uint32Array(1))[0]! % 1_000_000;
+  return String(n).padStart(6, '0');
+}
+
+function normalizePairingCode(raw: string) {
+  return String(raw || '').replace(/\D/g, '').slice(0, 6);
+}
+
+function formatPairingCode(digits: string) {
+  const d = normalizePairingCode(digits);
+  if (d.length !== 6) return d;
+  return `${d.slice(0, 3)}-${d.slice(3)}`;
 }
 
 async function loadAgentByToken(token: string) {
@@ -52,7 +61,35 @@ export async function handle(req: Request, base44: Awaited<ReturnType<typeof cre
       const nome = String(body.nome || 'Caixa principal').trim();
       const ip_impressora = body.ip_impressora ? String(body.ip_impressora).trim() : null;
       const porta = Number(body.porta) || 9100;
-      const token = body.token ? String(body.token).trim() : randomToken();
+      const token = body.token ? normalizePairingCode(String(body.token)) : randomPairingCode();
+      if (token.length !== 6) {
+        return json({ error: 'Código inválido — use 6 dígitos (000-000)' }, 400);
+      }
+
+      const { data: existing } = await db
+        .from('agente_impressao')
+        .select('id')
+        .eq('token', token)
+        .maybeSingle();
+
+      if (existing?.id) {
+        const { data, error } = await db
+          .from('agente_impressao')
+          .update({
+            nome,
+            ip_impressora,
+            porta,
+            ativo: true,
+          })
+          .eq('id', existing.id)
+          .select('id, nome, token, ip_impressora, porta')
+          .single();
+        if (error) return json({ error: error.message }, 500);
+        return json({
+          success: true,
+          agente: { ...data, codigo: formatPairingCode(data.token) },
+        });
+      }
 
       const { data, error } = await db
         .from('agente_impressao')
@@ -67,7 +104,10 @@ export async function handle(req: Request, base44: Awaited<ReturnType<typeof cre
         .single();
 
       if (error) return json({ error: error.message }, 500);
-      return json({ success: true, agente: data });
+      return json({
+        success: true,
+        agente: { ...data, codigo: formatPairingCode(data.token) },
+      });
     }
 
     if (action === 'enqueue') {

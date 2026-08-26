@@ -46,14 +46,13 @@ writeFileSync(
   join(release, 'LEIA-ME.txt'),
   `P38 — Agente de impressão térmica
 
-1. Duplo clique: P38-Instalar-Agente.exe
-   (ligaçao ao P38 ja vem pronta — so pede IP da impressora)
+1. Duplo clique: P38-Instalar-Agente.exe (sem perguntas)
 
-2. Copie o TOKEN → P38 Comprovante → "Ligar agente"
+2. Anote o codigo 000-000 que aparece no ecra
 
-3. O agente abre sozinho ao ligar o PC (padrao: Sim)
+3. P38 → Comprovante → digite o codigo → "Ligar agente"
 
-Manual: P38-Iniciar-Agente.exe ou atalho "P38 Agente Impressao"
+4. Agente abre sozinho ao ligar o PC
 `,
   'utf8',
 );
