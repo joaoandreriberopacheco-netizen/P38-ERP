@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Printer, Zap, Share2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { format } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import {
@@ -93,14 +92,28 @@ const PRETO_CUPOM = '#000';
 const CUPOM_LARGURA_MM = CUPOM_LARGURA_IMPRESSAO_MM;
 const CUPOM_LARGURA_CSS = CUPOM_LARGURA_IMPRESSAO_CSS;
 
-const ordenarItensComprovante = (itens = []) =>
-  [...itens].sort((a, b) =>
+function readLocalStorage(key, fallback = '') {
+  try {
+    if (typeof localStorage === 'undefined') return fallback;
+    return localStorage.getItem(key) || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+const ordenarItensComprovante = (itens) => {
+  const list = Array.isArray(itens) ? itens : [];
+  return [...list].sort((a, b) =>
     String(a?.produto_nome || '').localeCompare(String(b?.produto_nome || ''), 'pt-BR', { sensitivity: 'base' })
   );
+};
+
+const listarPagamentosComprovante = (pagamentos) => (Array.isArray(pagamentos) ? pagamentos : []);
 
 // ── Cupom Térmico 80mm ────────────────────────────────────────────────────────
 function CupomTermico({ pedido, dadosEmpresa }) {
-  const itens = ordenarItensComprovante(pedido.itens || []);
+  const itens = ordenarItensComprovante(pedido?.itens);
+  const pagamentos = listarPagamentosComprovante(pedido?.pagamentos);
   const font = CUPOM_FONT;
   /** Base compacta; F+3 = padrão amarelo legível (meta, itens, subtotal). */
   const F = 12;
@@ -181,7 +194,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       <div style={{ fontSize: F_CORPO, fontWeight: CUPOM_FONT_WEIGHT, lineHeight: 1.5 }}>
         <div>{fmtDtTZ(pedido.created_date || new Date())}</div>
         <div>Nº {pedido.numero || 'S/N'}</div>
-        {pedido.cliente_nome && <div>Cliente: {pedido.cliente_nome.toUpperCase()}</div>}
+        {pedido.cliente_nome && <div>Cliente: {String(pedido.cliente_nome).toUpperCase()}</div>}
         {pedido.vendedor_nome && <div>Vendedor: {pedido.vendedor_nome}</div>}
       </div>
 
@@ -258,9 +271,9 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       </div>
 
       {/* ── Pagamentos ── */}
-      {pedido.pagamentos && pedido.pagamentos.length > 0 && (
+      {pagamentos.length > 0 && (
         <div style={{ marginTop: '2px', fontWeight: CUPOM_FONT_WEIGHT }}>
-          {pedido.pagamentos.map((pag, i) => (
+          {pagamentos.map((pag, i) => (
             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_PAGAMENTO, color: preto }}>
               <span>{(pag.forma_pagamento || '').toUpperCase()}{pag.parcelas > 1 ? ` ${pag.parcelas}x` : ''}</span>
               <span>R$ {fmtV(pag.valor)}</span>
@@ -289,18 +302,27 @@ function PreviewScaled({ children }) {
   const docWidthPx = Math.round((CUPOM_LARGURA_MM / 25.4) * 96);
 
   useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return undefined;
+
     const calc = () => {
-      if (!containerRef.current) return;
-      const available = containerRef.current.offsetWidth - 32;
-      setScale(Math.min(1, available / docWidthPx));
+      const available = el.offsetWidth - 32;
+      if (available <= 0) return;
+      setScale(Math.min(1, Math.max(0.25, available / docWidthPx)));
     };
+
     calc();
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(calc) : null;
+    ro?.observe(el);
     window.addEventListener('resize', calc);
-    return () => window.removeEventListener('resize', calc);
-  }, []);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener('resize', calc);
+    };
+  }, [docWidthPx]);
 
   return (
-    <div ref={containerRef} className="w-full flex justify-center py-4 px-4">
+    <div ref={containerRef} className="w-full min-w-0 flex justify-center py-4 px-4">
       <div
         style={{
           width: docWidthPx,
@@ -318,7 +340,8 @@ function PreviewScaled({ children }) {
 
 // ── Cupom A4 (mesma estrutura do 80mm; cabeçalho em duas colunas) ─────────────
 function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
-  const itens = ordenarItensComprovante(pedido.itens || []);
+  const itens = ordenarItensComprovante(pedido?.itens);
+  const pagamentos = listarPagamentosComprovante(pedido?.pagamentos);
   const font = CUPOM_FONT;
   const F = 14;
   const preto = PRETO_CUPOM;
@@ -390,7 +413,7 @@ function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
 
           {cliente && (
             <div style={{ marginTop: '10px', fontSize: F, lineHeight: 1.5, color: preto }}>
-              {cliente.nome && <div style={{ fontWeight: '500' }}>Cliente: {cliente.nome.toUpperCase()}</div>}
+              {cliente.nome && <div style={{ fontWeight: '500' }}>Cliente: {String(cliente.nome).toUpperCase()}</div>}
               {cliente.enderecoLinha && <div>{cliente.enderecoLinha}</div>}
               {cliente.cidadeLinha && <div>{cliente.cidadeLinha}{cliente.cep ? ` — CEP: ${cliente.cep}` : ''}</div>}
               {cliente.telefone && <div>Fone: {cliente.telefone}</div>}
@@ -472,9 +495,9 @@ function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
         </div>
       </div>
 
-      {pedido.pagamentos && pedido.pagamentos.length > 0 && (
+      {pagamentos.length > 0 && (
         <div style={{ marginTop: '4px' }}>
-          {pedido.pagamentos.map((pag, i) => (
+          {pagamentos.map((pag, i) => (
             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: F + 4, fontWeight: '400', color: preto }}>
               <span>{(pag.forma_pagamento || '').toUpperCase()}{pag.parcelas > 1 ? ` ${pag.parcelas}x` : ''}</span>
               <span>R$ {fmtV(pag.valor)}</span>
@@ -506,7 +529,7 @@ function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
 }
 
 // ── Componente principal ──────────────────────────────────────────────────────
-export default function ComprovanteCompra({ pedido, open, onClose }) {
+export default function ComprovanteCompra({ pedido, open = true, onClose }) {
   const nestedZ = useCaixaNestedDialogZ();
   const [dadosEmpresa, setDadosEmpresa] = useState(null);
   const [dadosCliente, setDadosCliente] = useState(null);
@@ -517,7 +540,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
   const [agenteRemotoNome, setAgenteRemotoNome] = useState(() => getStoredAgentNome());
   const [agentTokenRegistro, setAgentTokenRegistro] = useState('');
   const [ligandoAgente, setLigandoAgente] = useState(false);
-  const [formato, setFormato] = useState(() => localStorage.getItem('comprovante_formato_venda') || 'a4');
+  const [formato, setFormato] = useState(() => readLocalStorage('comprovante_formato_venda', 'a4'));
   const [gerando, setGerando] = useState(false);
 
   const escolherFormato = (novoFormato) => {
@@ -527,13 +550,13 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
   useEffect(() => {
     if (!open) return;
-    setFormato(localStorage.getItem('comprovante_formato_venda') || 'a4');
+    setFormato(readLocalStorage('comprovante_formato_venda', 'a4'));
     setDadosCliente(null);
     base44.entities.DadosEmpresa.list().then(r => r?.length && setDadosEmpresa(r[0])).catch(() => {});
     if (pedido?.cliente_id) {
       base44.entities.Terceiro.get(pedido.cliente_id).then(setDadosCliente).catch(() => {});
     }
-    const ip = localStorage.getItem('ip_impressora_termica');
+    const ip = readLocalStorage('ip_impressora_termica');
     if (ip) setIpImpressora(ip);
     setAgenteRemotoId(getStoredAgentId());
     setAgenteRemotoNome(getStoredAgentNome());

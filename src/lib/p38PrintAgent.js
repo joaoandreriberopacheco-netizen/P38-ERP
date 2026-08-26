@@ -77,9 +77,19 @@ export async function enqueueRemotePrint({ pedido_id, agente_id, ip_impressora, 
 }
 
 export function getStoredAgentId() {
-  return localStorage.getItem(LS_AGENT_ID);
+  try {
+    if (typeof localStorage === 'undefined') return null;
+    return localStorage.getItem(LS_AGENT_ID);
+  } catch {
+    return null;
+  }
 }
 
 export function getStoredAgentNome() {
-  return localStorage.getItem(LS_AGENT_NOME);
+  try {
+    if (typeof localStorage === 'undefined') return null;
+    return localStorage.getItem(LS_AGENT_NOME);
+  } catch {
+    return null;
+  }
 }

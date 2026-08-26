@@ -220,6 +220,7 @@ export default function ReimpressaoDocumentos() {
             ) : (
               <ComprovanteCompra
                 pedido={documentoSelecionado}
+                open
                 onClose={() => setShowComprovante(false)}
               />
             )}
