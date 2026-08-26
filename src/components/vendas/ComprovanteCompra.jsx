@@ -23,6 +23,7 @@ import {
   CUPOM_FONT,
   CUPOM_FONT_GOOGLE,
   CUPOM_FONT_WEIGHT,
+  CUPOM_FONT_WEIGHT_STRONG,
   CUPOM_LARGURA_IMPRESSAO_CSS,
   CUPOM_LARGURA_IMPRESSAO_MM,
   CUPOM_MARGEM_LATERAL_MM,
@@ -115,17 +116,22 @@ function CupomTermico({ pedido, dadosEmpresa }) {
   const estiloGridHeader = {
     ...estiloGridValores,
     fontSize: F,
+    fontWeight: CUPOM_FONT_WEIGHT_STRONG,
     marginBottom: '4px',
     opacity: 0.85,
   };
 
   const empresa = buildEmpresaCupom(dadosEmpresa);
+  const estiloLinhaTracejada = {
+    margin: '2mm 0',
+    borderTop: `1px dashed ${preto}`,
+    width: '100%',
+    opacity: 0.45,
+  };
 
-  const Sep = () => (
-    <div style={{ margin: '2mm 0', borderTop: `1px solid ${preto}`, width: '100%', opacity: 0.35 }} />
-  );
+  const Sep = () => <div style={estiloLinhaTracejada} />;
   const SepItem = () => (
-    <div style={{ margin: '4px 0', borderTop: `1px solid ${preto}`, width: '100%', opacity: 0.35 }} />
+    <div style={{ ...estiloLinhaTracejada, margin: '4px 0' }} />
   );
 
   return (
@@ -147,7 +153,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
           <img src={dadosEmpresa.logo_url} alt="Logo" style={{ maxWidth: '100px', maxHeight: '50px', filter: 'grayscale(100%) contrast(200%)', display: 'block', margin: '0 auto 6px' }} />
         )}
         {/* Nome Fantasia — maior */}
-        <div style={{ fontSize: F + 7, fontWeight: CUPOM_FONT_WEIGHT, letterSpacing: '0.5px', lineHeight: 1.1, marginBottom: '3px' }}>
+        <div style={{ fontSize: F + 7, fontWeight: CUPOM_FONT_WEIGHT_STRONG, letterSpacing: '0.5px', lineHeight: 1.1, marginBottom: '3px' }}>
           {empresa.nomeFantasia}
         </div>
         {/* Razão Social */}
@@ -225,24 +231,24 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       <Sep />
 
       {/* ── Totais ── */}
-      <div style={{ marginTop: '2px' }}>
+      <div style={{ marginTop: '2px', fontWeight: CUPOM_FONT_WEIGHT_STRONG }}>
         {pedido.subtotal > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_CORPO, fontWeight: CUPOM_FONT_WEIGHT, color: preto }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_CORPO, color: preto }}>
             <span>Subtotal</span><span>R$ {fmtV(pedido.subtotal)}</span>
           </div>
         )}
         {pedido.valor_desconto > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_CORPO, fontWeight: CUPOM_FONT_WEIGHT, color: preto }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_CORPO, color: preto }}>
             <span>Desconto</span><span>-R$ {fmtV(pedido.valor_desconto)}</span>
           </div>
         )}
         {pedido.valor_frete > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_CORPO, fontWeight: CUPOM_FONT_WEIGHT, color: preto }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_CORPO, color: preto }}>
             <span>Frete</span><span>R$ {fmtV(pedido.valor_frete)}</span>
           </div>
         )}
         {/* TOTAL — hierarquia só por tamanho (padrão amarelo original) */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_TOTAL, fontWeight: CUPOM_FONT_WEIGHT, margin: '5px 0 3px', color: preto }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_TOTAL, margin: '5px 0 3px', color: preto }}>
           <span>TOTAL</span>
           <span>R$ {fmtV(pedido.valor_total || 0)}</span>
         </div>
@@ -250,9 +256,9 @@ function CupomTermico({ pedido, dadosEmpresa }) {
 
       {/* ── Pagamentos ── */}
       {pedido.pagamentos && pedido.pagamentos.length > 0 && (
-        <div style={{ marginTop: '2px' }}>
+        <div style={{ marginTop: '2px', fontWeight: CUPOM_FONT_WEIGHT_STRONG }}>
           {pedido.pagamentos.map((pag, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_PAGAMENTO, fontWeight: CUPOM_FONT_WEIGHT, color: preto }}>
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_PAGAMENTO, color: preto }}>
               <span>{(pag.forma_pagamento || '').toUpperCase()}{pag.parcelas > 1 ? ` ${pag.parcelas}x` : ''}</span>
               <span>R$ {fmtV(pag.valor)}</span>
             </div>
