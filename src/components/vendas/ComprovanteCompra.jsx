@@ -79,6 +79,9 @@ const PRETO_CUPOM = '#000';
 /** Cupom 80mm — Barlow Condensed (estreita), peso normal; fallback Arial Narrow. */
 const CUPOM_FONT = "'Barlow Condensed', 'Arial Narrow', sans-serif";
 const CUPOM_FONT_GOOGLE = 'https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400&display=swap';
+/** Rolo 80mm; área útil de impressão da térmica (margens laterais ~4mm). */
+const CUPOM_LARGURA_MM = 72;
+const CUPOM_LARGURA_CSS = `${CUPOM_LARGURA_MM}mm`;
 
 const ordenarItensComprovante = (itens = []) =>
   [...itens].sort((a, b) =>
@@ -95,9 +98,9 @@ function CupomTermico({ pedido, dadosEmpresa }) {
   const F_TOTAL = F + 6;
   const F_PAGAMENTO = F + 3;
   const preto = PRETO_CUPOM;
-  /** Grid: quant | un | descrição (flex) | preço | total — colunas numéricas estreitas */
-  const gridItens = '28px 24px minmax(0, 1fr) 44px 48px';
-  const gapCol = '4px';
+  /** Grid proporcional à largura útil 72mm */
+  const gridItens = '6mm 5mm minmax(0, 1fr) 10mm 11mm';
+  const gapCol = '1mm';
   const estiloGridLinha = {
     display: 'grid',
     gridTemplateColumns: gridItens,
@@ -120,18 +123,19 @@ function CupomTermico({ pedido, dadosEmpresa }) {
   const empresa = buildEmpresaCupom(dadosEmpresa);
 
   const Sep = () => (
-    <div style={{ margin: '4px 0', fontSize: F - 1, fontFamily: font, color: preto, letterSpacing: '1px' }}>
-      {'- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -'}
-    </div>
+    <div style={{ margin: '2mm 0', borderTop: `0.5px dashed ${preto}`, width: '100%' }} />
   );
 
   return (
     <div
       id="cupom-print"
       style={{
-        width: '275px', background: '#fff', color: preto,
+        width: CUPOM_LARGURA_CSS,
+        maxWidth: CUPOM_LARGURA_CSS,
+        boxSizing: 'border-box',
+        background: '#fff', color: preto,
         fontFamily: font, fontSize: F_CORPO, fontStretch: 'condensed',
-        padding: '8px 10px 12px', margin: '0 auto', lineHeight: '1.4',
+        padding: '2mm 1mm 3mm', margin: '0 auto', lineHeight: '1.35',
       }}
     >
       {/* ── Cabeçalho ── */}
@@ -175,9 +179,9 @@ function CupomTermico({ pedido, dadosEmpresa }) {
 
       {/* ── Cabeçalho colunas ── */}
       <div style={{ ...estiloGridLinha, fontSize: F_CORPO, fontWeight: '400', color: preto, lineHeight: 1.35, marginBottom: '4px' }}>
-        <span style={estiloCelulaCentro}>QUANT</span>
+        <span style={estiloCelulaCentro}>QTD</span>
         <span style={estiloCelulaCentro}>UN</span>
-        <span style={{ textAlign: 'left' }}>DESCRIÇÃO</span>
+        <span style={{ textAlign: 'left' }}>DESC.</span>
         <span style={{ textAlign: 'right' }}>PREÇO</span>
         <span style={{ textAlign: 'right' }}>TOTAL</span>
       </div>
@@ -270,7 +274,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
 function PreviewScaled({ children }) {
   const containerRef = useRef(null);
   const [scale, setScale] = useState(1);
-  const docWidthPx = 275;
+  const docWidthPx = Math.round((CUPOM_LARGURA_MM / 25.4) * 96);
 
   useEffect(() => {
     const calc = () => {
@@ -546,7 +550,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
       return;
     }
 
-    const pageSize = formato === 'a4' ? 'A4 portrait' : '80mm auto';
+    const pageSize = formato === 'a4' ? 'A4 portrait' : `${CUPOM_LARGURA_MM}mm auto`;
 
     const html = `<!DOCTYPE html><html><head>
       <meta charset="UTF-8">
@@ -554,7 +558,14 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
       <link href="${CUPOM_FONT_GOOGLE}" rel="stylesheet">
       <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { background: #fff; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-stretch: condensed; }
+        html, body {
+          background: #fff;
+          font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+          font-stretch: condensed;
+          width: ${CUPOM_LARGURA_MM}mm;
+          max-width: ${CUPOM_LARGURA_MM}mm;
+        }
+        #cupom-print { width: ${CUPOM_LARGURA_MM}mm !important; max-width: ${CUPOM_LARGURA_MM}mm !important; }
         @page { size: ${pageSize}; margin: 0; }
       </style>
     </head><body>${el.outerHTML}</body></html>`;
@@ -615,8 +626,8 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
       const imgH = pageW / ratio;
       pdf.addImage(imgData, 'PNG', 0, 0, pageW, Math.min(imgH, pageH));
     } else {
-      // 80mm cupom: largura fixa 80mm, altura proporcional
-      const widthMm = 80;
+      // Cupom térmico: largura útil 72mm (não 80mm de rolo)
+      const widthMm = CUPOM_LARGURA_MM;
       const heightMm = (canvas.height / canvas.width) * widthMm;
       pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: [widthMm, heightMm] });
       pdf.addImage(imgData, 'PNG', 0, 0, widthMm, heightMm);
@@ -805,7 +816,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
       <div className="flex-1 overflow-y-auto w-full">
         {formato === '80mm' ? (
           <div className="w-full h-full flex justify-center py-4 px-4">
-            <div style={{ width: '275px', transformOrigin: 'top center', transform: 'scale(1)' }} className="shadow-2xl rounded-sm overflow-hidden">
+            <div style={{ width: CUPOM_LARGURA_CSS, transformOrigin: 'top center', transform: 'scale(1)' }} className="shadow-2xl rounded-sm overflow-hidden">
               <CupomTermico pedido={pedido} dadosEmpresa={dadosEmpresa} />
             </div>
           </div>
