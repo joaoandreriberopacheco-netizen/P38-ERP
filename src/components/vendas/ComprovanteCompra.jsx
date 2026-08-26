@@ -85,15 +85,15 @@ const ordenarItensComprovante = (itens = []) =>
 // ── Cupom Térmico 80mm ────────────────────────────────────────────────────────
 function CupomTermico({ pedido, dadosEmpresa }) {
   const itens = ordenarItensComprovante(pedido.itens || []);
-  const font = "'Barlow Condensed', 'Arial Narrow', Arial, sans-serif";
-  /** Padrão extenso — corpo legível em térmica 80mm (antes base 12px). */
-  const F = 15;
-  const F_TOTAL = F + 4;
-  const F_PAGAMENTO = F + 2;
-  const F_NOME_LOJA = F + 6;
+  const font = "'Barlow Condensed', 'Arial Narrow', sans-serif";
+  /** Base compacta; F+3 = padrão amarelo legível (meta, itens, subtotal). */
+  const F = 12;
+  const F_CORPO = F + 3;
+  const F_TOTAL = F + 6;
+  const F_PAGAMENTO = F + 3;
   const preto = PRETO_CUPOM;
   /** Grid: quant | un | descrição (flex) | preço | total — colunas numéricas estreitas */
-  const gridItens = '32px 28px minmax(0, 1fr) 52px 56px';
+  const gridItens = '28px 24px minmax(0, 1fr) 44px 48px';
   const gapCol = '4px';
   const estiloGridLinha = {
     display: 'grid',
@@ -117,7 +117,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
   const empresa = buildEmpresaCupom(dadosEmpresa);
 
   const Sep = () => (
-    <div style={{ margin: '4px 0', fontSize: F, fontFamily: font, fontWeight: '500', color: preto, letterSpacing: '1px' }}>
+    <div style={{ margin: '4px 0', fontSize: F - 1, fontFamily: font, color: preto, letterSpacing: '1px' }}>
       {'- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -'}
     </div>
   );
@@ -127,7 +127,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       id="cupom-print"
       style={{
         width: '275px', background: '#fff', color: preto,
-        fontFamily: font, fontSize: F, fontWeight: '500',
+        fontFamily: font, fontSize: F_CORPO,
         padding: '8px 10px 12px', margin: '0 auto', lineHeight: '1.4',
       }}
     >
@@ -137,29 +137,29 @@ function CupomTermico({ pedido, dadosEmpresa }) {
           <img src={dadosEmpresa.logo_url} alt="Logo" style={{ maxWidth: '100px', maxHeight: '50px', filter: 'grayscale(100%) contrast(200%)', display: 'block', margin: '0 auto 6px' }} />
         )}
         {/* Nome Fantasia — maior */}
-        <div style={{ fontSize: F_NOME_LOJA, fontWeight: '500', letterSpacing: '0.5px', lineHeight: 1.1, marginBottom: '3px' }}>
+        <div style={{ fontSize: F + 7, fontWeight: '400', letterSpacing: '0.5px', lineHeight: 1.1, marginBottom: '3px' }}>
           {empresa.nomeFantasia}
         </div>
         {/* Razão Social */}
         {empresa.razaoSocial && (
-          <div style={{ fontSize: F, fontWeight: '500', color: preto, lineHeight: 1.3 }}>
+          <div style={{ fontSize: F - 1, fontWeight: '400', color: preto, lineHeight: 1.3 }}>
             {empresa.razaoSocial}
           </div>
         )}
-        {/* Dados da empresa */}
-        <div style={{ fontSize: F, fontWeight: '500', color: preto, lineHeight: 1.35, marginTop: '2px' }}>
+        {/* Dados da empresa — compactos (fora do padrão amarelo) */}
+        <div style={{ fontSize: F - 1, fontWeight: '400', color: preto, lineHeight: 1.35, marginTop: '2px' }}>
           {empresa.cnpj && <div>CNPJ: {empresa.cnpj}</div>}
           {empresa.endereco && <div>{empresa.endereco}</div>}
           {empresa.bairro_cidade && <div>{empresa.bairro_cidade}</div>}
           {empresa.telefone && <div>Fone: {empresa.telefone}</div>}
         </div>
-        <div style={{ fontSize: F, fontWeight: '500', color: preto, marginTop: '3px' }}>Cupom nº {pedido.numero || 'S/N'}</div>
+        <div style={{ fontSize: F - 1, color: preto, marginTop: '3px' }}>Cupom nº {pedido.numero || 'S/N'}</div>
       </div>
 
       <Sep />
 
       {/* ── Meta do pedido ── */}
-      <div style={{ fontSize: F, fontWeight: '500', lineHeight: 1.55 }}>
+      <div style={{ fontSize: F_CORPO, lineHeight: 1.55 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <span>{fmtDtTZ(pedido.created_date || new Date())}</span>
           <span>Nº {pedido.numero || 'S/N'}</span>
@@ -171,7 +171,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       <Sep />
 
       {/* ── Cabeçalho colunas ── */}
-      <div style={{ ...estiloGridLinha, fontSize: F, fontWeight: '600', color: preto, lineHeight: 1.35, marginBottom: '4px' }}>
+      <div style={{ ...estiloGridLinha, fontSize: F_CORPO, fontWeight: '600', color: preto, lineHeight: 1.35, marginBottom: '4px' }}>
         <span style={estiloCelulaCentro}>QUANT</span>
         <span style={estiloCelulaCentro}>UN</span>
         <span style={{ textAlign: 'left' }}>DESCRIÇÃO</span>
@@ -194,8 +194,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
               key={item.pedido_venda_item_id || item.produto_id || idx}
               style={{
                 ...estiloGridLinha,
-                fontSize: F,
-                fontWeight: '500',
+                fontSize: F_CORPO,
                 color: preto,
                 padding: '8px 0',
                 marginBottom: idx < itens.length - 1 ? '4px' : 0,
@@ -217,22 +216,22 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       {/* ── Totais ── */}
       <div style={{ marginTop: '2px' }}>
         {pedido.subtotal > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F, fontWeight: '500', color: preto }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_CORPO, color: preto }}>
             <span>Subtotal</span><span>R$ {fmtV(pedido.subtotal)}</span>
           </div>
         )}
         {pedido.valor_desconto > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F, fontWeight: '500', color: preto }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_CORPO, color: preto }}>
             <span>Desconto</span><span>-R$ {fmtV(pedido.valor_desconto)}</span>
           </div>
         )}
         {pedido.valor_frete > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F, fontWeight: '500', color: preto }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_CORPO, color: preto }}>
             <span>Frete</span><span>R$ {fmtV(pedido.valor_frete)}</span>
           </div>
         )}
-        {/* TOTAL — hierarquia só por tamanho */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_TOTAL, fontWeight: '500', margin: '5px 0 3px', color: preto }}>
+        {/* TOTAL — hierarquia só por tamanho (padrão amarelo original) */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_TOTAL, fontWeight: '400', margin: '5px 0 3px', color: preto }}>
           <span>TOTAL</span>
           <span>R$ {fmtV(pedido.valor_total || 0)}</span>
         </div>
@@ -242,7 +241,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       {pedido.pagamentos && pedido.pagamentos.length > 0 && (
         <div style={{ marginTop: '2px' }}>
           {pedido.pagamentos.map((pag, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_PAGAMENTO, fontWeight: '500', color: preto }}>
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_PAGAMENTO, fontWeight: '400', color: preto }}>
               <span>{(pag.forma_pagamento || '').toUpperCase()}{pag.parcelas > 1 ? ` ${pag.parcelas}x` : ''}</span>
               <span>R$ {fmtV(pag.valor)}</span>
             </div>
@@ -254,10 +253,10 @@ function CupomTermico({ pedido, dadosEmpresa }) {
 
       {/* ── Rodapé ── */}
       <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: F_PAGAMENTO, fontWeight: '500', letterSpacing: '0.5px', margin: '4px 0 3px', color: preto }}>
+        <div style={{ fontSize: F_PAGAMENTO, fontWeight: '400', letterSpacing: '0.5px', margin: '4px 0 3px', color: preto }}>
           {empresa.mensagem}
         </div>
-        <div style={{ fontSize: F, fontWeight: '500', color: preto }}>Este documento não possui validade fiscal.</div>
+        <div style={{ fontSize: F - 1, color: preto }}>Este documento não possui validade fiscal.</div>
       </div>
     </div>
   );

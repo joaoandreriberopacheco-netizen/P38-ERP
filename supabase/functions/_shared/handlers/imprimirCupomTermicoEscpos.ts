@@ -1,4 +1,4 @@
-// Geração ESC/POS partilhada (Edge + agente local).
+// Geração ESC/POS partilhada (Edge + agente local) — alinhada ao cupom original.
 
 const ESC = '\x1B';
 const GS = '\x1D';
@@ -40,6 +40,7 @@ type PedidoCupom = Record<string, unknown> & {
   valor_desconto?: number;
   valor_frete?: number;
   valor_total?: number;
+  total?: number;
   itens?: Array<Record<string, unknown>>;
   pagamentos?: Array<Record<string, unknown>>;
 };
@@ -73,23 +74,21 @@ export function gerarCupomESCPOS(pedido: PedidoCupom, dadosEmpresa: Record<strin
   cupom += linha() + ESCPOS.LINE_FEED;
 
   cupom += ESCPOS.SIZE_DOUBLE + ESCPOS.BOLD_ON;
-  cupom += centralizar('CUPOM Nº ' + (String(pedido.numero || 'S/N'))) + ESCPOS.LINE_FEED;
+  cupom += centralizar('CUPOM Nº ' + String(pedido.numero || 'S/N')) + ESCPOS.LINE_FEED;
   cupom += ESCPOS.BOLD_OFF + ESCPOS.SIZE_NORMAL;
 
   cupom += linha() + ESCPOS.LINE_FEED;
   cupom += ESCPOS.ALIGN_LEFT;
 
-  const dataHora = new Date(String(pedido.created_date || new Date()));
+  const dataHora = new Date(String(pedido.created_date || pedido.created_at || new Date()));
   const dataFormatada = String(dataHora.getDate()).padStart(2, '0') + '/' +
     String(dataHora.getMonth() + 1).padStart(2, '0') + '/' +
     String(dataHora.getFullYear()).slice(-2) + ' ' +
     String(dataHora.getHours()).padStart(2, '0') + ':' +
     String(dataHora.getMinutes()).padStart(2, '0');
 
-  cupom += ESCPOS.SIZE_DOUBLE;
   cupom += 'DATA/HORA: ' + dataFormatada + ESCPOS.LINE_FEED;
-  cupom += 'CLIENTE: ' + String(pedido.cliente_nome || 'AVULSO').substring(0, 28).toUpperCase() + ESCPOS.LINE_FEED;
-  cupom += ESCPOS.SIZE_NORMAL;
+  cupom += 'CLIENTE: ' + String(pedido.cliente_nome || 'AVULSO').substring(0, 30).toUpperCase() + ESCPOS.LINE_FEED;
 
   cupom += linha() + ESCPOS.LINE_FEED;
 
@@ -105,17 +104,13 @@ export function gerarCupomESCPOS(pedido: PedidoCupom, dadosEmpresa: Record<strin
     const preco = formatarValor(item?.preco_unitario_praticado);
     const total = formatarValor(item?.total);
 
-    cupom += ESCPOS.SIZE_DOUBLE + ESCPOS.BOLD_ON;
-    cupom += String(idx + 1).padStart(2, '0') + ' ' + nome.substring(0, 32) + ESCPOS.LINE_FEED;
-    cupom += ESCPOS.BOLD_OFF;
-    cupom += '  ' + qtd + ' UN x R$ ' + preco + ' = R$ ' + total + ESCPOS.LINE_FEED;
-    cupom += ESCPOS.SIZE_NORMAL;
+    cupom += String(idx + 1).padStart(2, '0') + ' ' + nome.substring(0, 44) + ESCPOS.LINE_FEED;
+    cupom += '   ' + qtd + ' UN x R$ ' + preco + ' = R$ ' + total + ESCPOS.LINE_FEED;
   });
 
   cupom += linha() + ESCPOS.LINE_FEED;
 
   cupom += ESCPOS.ALIGN_RIGHT;
-  cupom += ESCPOS.SIZE_DOUBLE;
   cupom += 'SUBTOTAL: R$ ' + formatarValor(pedido.subtotal || 0) + ESCPOS.LINE_FEED;
 
   if (Number(pedido.valor_desconto) > 0) {
@@ -126,22 +121,18 @@ export function gerarCupomESCPOS(pedido: PedidoCupom, dadosEmpresa: Record<strin
     cupom += 'FRETE: R$ ' + formatarValor(pedido.valor_frete) + ESCPOS.LINE_FEED;
   }
 
-  cupom += ESCPOS.BOLD_ON;
-  cupom += 'TOTAL: R$ ' + formatarValor(pedido.valor_total || 0) + ESCPOS.LINE_FEED;
+  cupom += ESCPOS.BOLD_ON + ESCPOS.SIZE_DOUBLE;
+  cupom += 'TOTAL: R$ ' + formatarValor(pedido.valor_total || pedido.total || 0) + ESCPOS.LINE_FEED;
   cupom += ESCPOS.BOLD_OFF + ESCPOS.SIZE_NORMAL;
 
   cupom += ESCPOS.ALIGN_LEFT;
   cupom += linha() + ESCPOS.LINE_FEED;
 
   if (pedido.pagamentos?.length) {
-    cupom += ESCPOS.SIZE_DOUBLE + ESCPOS.BOLD_ON;
-    cupom += 'PAGAMENTO:' + ESCPOS.BOLD_OFF + ESCPOS.LINE_FEED;
+    cupom += ESCPOS.BOLD_ON + 'FORMAS DE PAGAMENTO:' + ESCPOS.BOLD_OFF + ESCPOS.LINE_FEED;
     pedido.pagamentos.forEach((pag) => {
-      const forma = String(pag?.forma_pagamento || '').toUpperCase();
-      const parcelas = Number(pag?.parcelas) > 1 ? ` ${pag.parcelas}x` : '';
-      cupom += forma + parcelas + ': R$ ' + formatarValor(pag?.valor) + ESCPOS.LINE_FEED;
+      cupom += String(pag?.forma_pagamento || '') + ': R$ ' + formatarValor(pag?.valor) + ESCPOS.LINE_FEED;
     });
-    cupom += ESCPOS.SIZE_NORMAL;
     cupom += linha() + ESCPOS.LINE_FEED;
   }
 

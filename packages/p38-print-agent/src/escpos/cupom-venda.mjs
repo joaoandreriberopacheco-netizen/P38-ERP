@@ -1,5 +1,5 @@
 /**
- * Geração ESC/POS — espelho de imprimirCupomTermicoEscpos.ts (padrão extenso).
+ * Geração ESC/POS — espelho de imprimirCupomTermicoEscpos.ts (layout original).
  */
 
 const ESC = '\x1B';
@@ -74,10 +74,8 @@ export function gerarCupomESCPOS(pedido, dadosEmpresa) {
     String(dataHora.getHours()).padStart(2, '0') + ':' +
     String(dataHora.getMinutes()).padStart(2, '0');
 
-  cupom += ESCPOS.SIZE_DOUBLE;
   cupom += 'DATA/HORA: ' + dataFormatada + ESCPOS.LINE_FEED;
-  cupom += 'CLIENTE: ' + String(pedido.cliente_nome || 'AVULSO').substring(0, 28).toUpperCase() + ESCPOS.LINE_FEED;
-  cupom += ESCPOS.SIZE_NORMAL;
+  cupom += 'CLIENTE: ' + String(pedido.cliente_nome || 'AVULSO').substring(0, 30).toUpperCase() + ESCPOS.LINE_FEED;
   cupom += linha() + ESCPOS.LINE_FEED;
 
   const itens = pedido.itens
@@ -92,17 +90,13 @@ export function gerarCupomESCPOS(pedido, dadosEmpresa) {
     const preco = formatarValor(item?.preco_unitario_praticado);
     const total = formatarValor(item?.total);
 
-    cupom += ESCPOS.SIZE_DOUBLE + ESCPOS.BOLD_ON;
-    cupom += String(idx + 1).padStart(2, '0') + ' ' + nome.substring(0, 32) + ESCPOS.LINE_FEED;
-    cupom += ESCPOS.BOLD_OFF;
-    cupom += '  ' + qtd + ' UN x R$ ' + preco + ' = R$ ' + total + ESCPOS.LINE_FEED;
-    cupom += ESCPOS.SIZE_NORMAL;
+    cupom += String(idx + 1).padStart(2, '0') + ' ' + nome.substring(0, 44) + ESCPOS.LINE_FEED;
+    cupom += '   ' + qtd + ' UN x R$ ' + preco + ' = R$ ' + total + ESCPOS.LINE_FEED;
   });
 
   cupom += linha() + ESCPOS.LINE_FEED;
   cupom += ESCPOS.ALIGN_RIGHT;
-  cupom += ESCPOS.SIZE_DOUBLE;
-  cupom += 'SUBTOTAL: R$ ' + formatarValor(pedido.subtotal || pedido.total || 0) + ESCPOS.LINE_FEED;
+  cupom += 'SUBTOTAL: R$ ' + formatarValor(pedido.subtotal || 0) + ESCPOS.LINE_FEED;
 
   if (Number(pedido.valor_desconto) > 0) {
     cupom += 'DESCONTO: R$ ' + formatarValor(pedido.valor_desconto) + ESCPOS.LINE_FEED;
@@ -111,21 +105,17 @@ export function gerarCupomESCPOS(pedido, dadosEmpresa) {
     cupom += 'FRETE: R$ ' + formatarValor(pedido.valor_frete) + ESCPOS.LINE_FEED;
   }
 
-  cupom += ESCPOS.BOLD_ON;
+  cupom += ESCPOS.BOLD_ON + ESCPOS.SIZE_DOUBLE;
   cupom += 'TOTAL: R$ ' + formatarValor(pedido.valor_total || pedido.total || 0) + ESCPOS.LINE_FEED;
   cupom += ESCPOS.BOLD_OFF + ESCPOS.SIZE_NORMAL;
   cupom += ESCPOS.ALIGN_LEFT;
   cupom += linha() + ESCPOS.LINE_FEED;
 
   if (pedido.pagamentos?.length) {
-    cupom += ESCPOS.SIZE_DOUBLE + ESCPOS.BOLD_ON;
-    cupom += 'PAGAMENTO:' + ESCPOS.BOLD_OFF + ESCPOS.LINE_FEED;
+    cupom += ESCPOS.BOLD_ON + 'FORMAS DE PAGAMENTO:' + ESCPOS.BOLD_OFF + ESCPOS.LINE_FEED;
     pedido.pagamentos.forEach((pag) => {
-      const forma = String(pag?.forma_pagamento || '').toUpperCase();
-      const parcelas = Number(pag?.parcelas) > 1 ? ` ${pag.parcelas}x` : '';
-      cupom += forma + parcelas + ': R$ ' + formatarValor(pag?.valor) + ESCPOS.LINE_FEED;
+      cupom += String(pag?.forma_pagamento || '') + ': R$ ' + formatarValor(pag?.valor) + ESCPOS.LINE_FEED;
     });
-    cupom += ESCPOS.SIZE_NORMAL;
     cupom += linha() + ESCPOS.LINE_FEED;
   }
 
