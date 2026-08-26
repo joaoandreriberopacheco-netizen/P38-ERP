@@ -18,6 +18,7 @@ import { getUnidadeMedidaItemPedidoVenda } from '@/lib/productUnits';
 import { TIMEZONE_SISTEMA } from '@/components/utils/dateUtils';
 import { shareOrDownloadBlob, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
 import { useCaixaNestedDialogZ } from '@/components/vendas/caixa/CaixaOverlayStackContext';
+import { cn } from '@/components/utils';
 import {
   CUPOM_LARGURA_IMPRESSAO_CSS,
   CUPOM_LARGURA_IMPRESSAO_MM,
@@ -129,7 +130,12 @@ function CupomTermico({ pedido, dadosEmpresa }) {
   const empresa = buildEmpresaCupom(dadosEmpresa);
 
   const Sep = () => (
-    <div style={{ margin: '2mm 0', borderTop: `0.5px dashed ${preto}`, width: '100%' }} />
+    <div style={{ margin: '2mm 0', borderTop: `1px solid ${preto}`, width: '100%', opacity: 0.35 }} />
+  );
+  const SepItem = () => (
+    <tr aria-hidden="true">
+      <td colSpan={5} style={{ padding: 0, borderBottom: `1px solid ${preto}`, opacity: 0.35, lineHeight: 0 }} />
+    </tr>
   );
 
   return (
@@ -208,30 +214,28 @@ function CupomTermico({ pedido, dadosEmpresa }) {
             const unidade = getUnidadeMedidaItemPedidoVenda(item).substring(0, 4);
 
             return (
-              <tr
-                key={item.pedido_venda_item_id || item.produto_id || idx}
-                style={{
-                  borderBottom: idx < itens.length - 1 ? `0.5px solid ${preto}` : 'none',
-                }}
-              >
-                <td style={{ ...estiloTd, textAlign: 'center' }}>{qtd}</td>
-                <td style={{ ...estiloTd, textAlign: 'center' }}>{unidade}</td>
-                <td
-                  lang="pt-BR"
-                  style={{
-                    ...estiloTd,
-                    textTransform: 'uppercase',
-                    wordBreak: 'break-word',
-                    overflowWrap: 'break-word',
-                    lineHeight: 1.3,
-                    paddingRight: '3px',
-                  }}
-                >
-                  {nome}
-                </td>
-                <td style={{ ...estiloTd, ...estiloPreco }}>{precoItem}</td>
-                <td style={{ ...estiloTd, ...estiloPreco }}>{totalItem}</td>
-              </tr>
+              <React.Fragment key={item.pedido_venda_item_id || item.produto_id || idx}>
+                <tr>
+                  <td style={{ ...estiloTd, textAlign: 'center' }}>{qtd}</td>
+                  <td style={{ ...estiloTd, textAlign: 'center' }}>{unidade}</td>
+                  <td
+                    lang="pt-BR"
+                    style={{
+                      ...estiloTd,
+                      textTransform: 'uppercase',
+                      wordBreak: 'break-word',
+                      overflowWrap: 'break-word',
+                      lineHeight: 1.3,
+                      paddingRight: '3px',
+                    }}
+                  >
+                    {nome}
+                  </td>
+                  <td style={{ ...estiloTd, ...estiloPreco }}>{precoItem}</td>
+                  <td style={{ ...estiloTd, ...estiloPreco }}>{totalItem}</td>
+                </tr>
+                {idx < itens.length - 1 ? <SepItem /> : null}
+              </React.Fragment>
             );
           })}
         </tbody>
