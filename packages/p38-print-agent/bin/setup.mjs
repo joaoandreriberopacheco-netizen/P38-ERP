@@ -8,8 +8,8 @@ const token = process.argv.includes('--keep-token') && cfg.agentToken
 
 const next = saveConfig({
   agentToken: token,
-  supabaseUrl: process.env.P38_SUPABASE_URL || process.env.VITE_SUPABASE_URL || cfg.supabaseUrl || '',
-  supabaseAnonKey: process.env.P38_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || cfg.supabaseAnonKey || '',
+  supabaseUrl: process.env.P38_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL || cfg.supabaseUrl || '',
+  supabaseAnonKey: process.env.P38_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || cfg.supabaseAnonKey || '',
   printerHost: process.env.P38_PRINTER_HOST || cfg.printerHost || '',
   printerPort: Number(process.env.P38_PRINTER_PORT || cfg.printerPort || 9100),
 });
