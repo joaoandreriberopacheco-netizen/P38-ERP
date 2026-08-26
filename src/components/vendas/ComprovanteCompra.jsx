@@ -101,26 +101,29 @@ function CupomTermico({ pedido, dadosEmpresa }) {
   const F_TOTAL = F + 6;
   const F_PAGAMENTO = F + 3;
   const preto = PRETO_CUPOM;
-  /** Grid proporcional à largura útil 72mm */
-  const gridItens = '6mm 5mm minmax(0, 1fr) 10mm 11mm';
-  const gapCol = '1mm';
-  const estiloGridLinha = {
-    display: 'grid',
-    gridTemplateColumns: gridItens,
-    columnGap: gapCol,
-    alignItems: 'start',
+  const estiloTabela = {
     width: '100%',
+    tableLayout: 'fixed',
+    borderCollapse: 'collapse',
+    fontSize: F_CORPO,
+    fontWeight: '400',
   };
-  const estiloCelulaCentro = { textAlign: 'center', alignSelf: 'center' };
-  const estiloDescricao = {
-    textAlign: 'justify',
-    hyphens: 'auto',
-    WebkitHyphens: 'auto',
-    msHyphens: 'auto',
-    wordBreak: 'break-word',
-    overflowWrap: 'break-word',
-    lineHeight: 1.32,
-    paddingRight: '2px',
+  const estiloTh = {
+    fontWeight: '400',
+    fontSize: F,
+    padding: '1px 0',
+    verticalAlign: 'bottom',
+  };
+  const estiloTd = {
+    padding: '3px 0',
+    verticalAlign: 'top',
+    fontWeight: '400',
+  };
+  const estiloPreco = {
+    textAlign: 'right',
+    whiteSpace: 'nowrap',
+    paddingLeft: '2px',
+    fontSize: F,
   };
 
   const empresa = buildEmpresaCupom(dadosEmpresa);
@@ -169,58 +172,70 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       <Sep />
 
       {/* ── Meta do pedido ── */}
-      <div style={{ fontSize: F_CORPO, fontWeight: '400', lineHeight: 1.55 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span>{fmtDtTZ(pedido.created_date || new Date())}</span>
-          <span>Nº {pedido.numero || 'S/N'}</span>
-        </div>
+      <div style={{ fontSize: F_CORPO, fontWeight: '400', lineHeight: 1.5 }}>
+        <div>{fmtDtTZ(pedido.created_date || new Date())}</div>
+        <div>Nº {pedido.numero || 'S/N'}</div>
         {pedido.cliente_nome && <div>Cliente: {pedido.cliente_nome.toUpperCase()}</div>}
         {pedido.vendedor_nome && <div>Vendedor: {pedido.vendedor_nome}</div>}
       </div>
 
       <Sep />
 
-      {/* ── Cabeçalho colunas ── */}
-      <div style={{ ...estiloGridLinha, fontSize: F_CORPO, fontWeight: '400', color: preto, lineHeight: 1.35, marginBottom: '4px' }}>
-        <span style={estiloCelulaCentro}>QTD</span>
-        <span style={estiloCelulaCentro}>UN</span>
-        <span style={{ textAlign: 'left' }}>DESC.</span>
-        <span style={{ textAlign: 'right' }}>PREÇO</span>
-        <span style={{ textAlign: 'right' }}>TOTAL</span>
-      </div>
+      {/* ── Itens (tabela fixa 72mm — evita sobreposição PREÇO/TOTAL) ── */}
+      <table style={estiloTabela}>
+        <colgroup>
+          <col style={{ width: '11%' }} />
+          <col style={{ width: '9%' }} />
+          <col style={{ width: '38%' }} />
+          <col style={{ width: '21%' }} />
+          <col style={{ width: '21%' }} />
+        </colgroup>
+        <thead>
+          <tr>
+            <th style={{ ...estiloTh, textAlign: 'center' }}>QTD</th>
+            <th style={{ ...estiloTh, textAlign: 'center' }}>UN</th>
+            <th style={{ ...estiloTh, textAlign: 'left' }}>DESC.</th>
+            <th style={{ ...estiloTh, ...estiloPreco }}>PREÇO</th>
+            <th style={{ ...estiloTh, ...estiloPreco }}>TOTAL</th>
+          </tr>
+        </thead>
+        <tbody>
+          {itens.map((item, idx) => {
+            const nome = item.produto_nome || '';
+            const qtd = String(parseFloat(item.quantidade) || 0);
+            const precoItem = fmtV(item.preco_unitario_praticado);
+            const totalItem = fmtV(item.total);
+            const unidade = getUnidadeMedidaItemPedidoVenda(item).substring(0, 4);
 
-      <Sep />
-
-      <div style={{ padding: '4px 0 2px' }}>
-        {itens.map((item, idx) => {
-          const nome = item.produto_nome || '';
-          const qtd = String(parseFloat(item.quantidade) || 0);
-          const precoItem = fmtV(item.preco_unitario_praticado);
-          const totalItem = fmtV(item.total);
-          const unidade = getUnidadeMedidaItemPedidoVenda(item).substring(0, 4);
-
-          return (
-            <div
-              key={item.pedido_venda_item_id || item.produto_id || idx}
-              style={{
-                ...estiloGridLinha,
-                fontSize: F_CORPO,
-                fontWeight: '400',
-                color: preto,
-                padding: '8px 0',
-                marginBottom: idx < itens.length - 1 ? '4px' : 0,
-                borderBottom: idx < itens.length - 1 ? `0.5px solid ${preto}` : 'none',
-              }}
-            >
-              <span style={estiloCelulaCentro}>{qtd}</span>
-              <span style={estiloCelulaCentro}>{unidade}</span>
-              <span lang="pt-BR" style={{ ...estiloDescricao, textTransform: 'uppercase' }}>{nome}</span>
-              <span style={{ textAlign: 'right', whiteSpace: 'nowrap', alignSelf: 'center' }}>{precoItem}</span>
-              <span style={{ textAlign: 'right', whiteSpace: 'nowrap', alignSelf: 'center' }}>{totalItem}</span>
-            </div>
-          );
-        })}
-      </div>
+            return (
+              <tr
+                key={item.pedido_venda_item_id || item.produto_id || idx}
+                style={{
+                  borderBottom: idx < itens.length - 1 ? `0.5px solid ${preto}` : 'none',
+                }}
+              >
+                <td style={{ ...estiloTd, textAlign: 'center' }}>{qtd}</td>
+                <td style={{ ...estiloTd, textAlign: 'center' }}>{unidade}</td>
+                <td
+                  lang="pt-BR"
+                  style={{
+                    ...estiloTd,
+                    textTransform: 'uppercase',
+                    wordBreak: 'break-word',
+                    overflowWrap: 'break-word',
+                    lineHeight: 1.3,
+                    paddingRight: '3px',
+                  }}
+                >
+                  {nome}
+                </td>
+                <td style={{ ...estiloTd, ...estiloPreco }}>{precoItem}</td>
+                <td style={{ ...estiloTd, ...estiloPreco }}>{totalItem}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
 
       <Sep />
 
@@ -579,6 +594,8 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
           font-stretch: condensed;
         }
         ${larguraPaginaCss}
+        table { table-layout: fixed; width: 100%; border-collapse: collapse; }
+        th, td { overflow: hidden; }
         @page { size: ${pageSize}; margin: 0; }
       </style>
     </head><body>${el.outerHTML}</body></html>`;
