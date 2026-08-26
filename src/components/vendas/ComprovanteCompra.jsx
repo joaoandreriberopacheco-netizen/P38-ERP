@@ -22,6 +22,7 @@ import { cn } from '@/components/utils';
 import {
   CUPOM_FONT,
   CUPOM_FONT_GOOGLE,
+  CUPOM_FONT_WEIGHT,
   CUPOM_LARGURA_IMPRESSAO_CSS,
   CUPOM_LARGURA_IMPRESSAO_MM,
   CUPOM_MARGEM_LATERAL_MM,
@@ -109,7 +110,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
     gridTemplateColumns: gridCols,
     columnGap: '2px',
     fontSize: F,
-    fontWeight: 'normal',
+    fontWeight: CUPOM_FONT_WEIGHT,
   };
   const estiloGridHeader = {
     ...estiloGridValores,
@@ -136,7 +137,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
         maxWidth: CUPOM_LARGURA_CSS,
         boxSizing: 'border-box',
         background: '#fff', color: preto,
-        fontFamily: font, fontSize: F_CORPO, fontWeight: 'normal',
+        fontFamily: font, fontSize: F_CORPO, fontWeight: CUPOM_FONT_WEIGHT,
         padding: '2mm 1mm 3mm', margin: '0 auto', lineHeight: '1.35',
       }}
     >
@@ -146,17 +147,17 @@ function CupomTermico({ pedido, dadosEmpresa }) {
           <img src={dadosEmpresa.logo_url} alt="Logo" style={{ maxWidth: '100px', maxHeight: '50px', filter: 'grayscale(100%) contrast(200%)', display: 'block', margin: '0 auto 6px' }} />
         )}
         {/* Nome Fantasia — maior */}
-        <div style={{ fontSize: F + 7, fontWeight: 'normal', letterSpacing: '0.5px', lineHeight: 1.1, marginBottom: '3px' }}>
+        <div style={{ fontSize: F + 7, fontWeight: CUPOM_FONT_WEIGHT, letterSpacing: '0.5px', lineHeight: 1.1, marginBottom: '3px' }}>
           {empresa.nomeFantasia}
         </div>
         {/* Razão Social */}
         {empresa.razaoSocial && (
-          <div style={{ fontSize: F - 1, fontWeight: '400', color: preto, lineHeight: 1.3 }}>
+          <div style={{ fontSize: F - 1, fontWeight: CUPOM_FONT_WEIGHT, color: preto, lineHeight: 1.3 }}>
             {empresa.razaoSocial}
           </div>
         )}
         {/* Dados da empresa — compactos (fora do padrão amarelo) */}
-        <div style={{ fontSize: F - 1, fontWeight: '400', color: preto, lineHeight: 1.35, marginTop: '2px' }}>
+        <div style={{ fontSize: F - 1, fontWeight: CUPOM_FONT_WEIGHT, color: preto, lineHeight: 1.35, marginTop: '2px' }}>
           {empresa.cnpj && <div>CNPJ: {empresa.cnpj}</div>}
           {empresa.endereco && <div>{empresa.endereco}</div>}
           {empresa.bairro_cidade && <div>{empresa.bairro_cidade}</div>}
@@ -168,7 +169,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       <Sep />
 
       {/* ── Meta do pedido ── */}
-      <div style={{ fontSize: F_CORPO, fontWeight: '400', lineHeight: 1.5 }}>
+      <div style={{ fontSize: F_CORPO, fontWeight: CUPOM_FONT_WEIGHT, lineHeight: 1.5 }}>
         <div>{fmtDtTZ(pedido.created_date || new Date())}</div>
         <div>Nº {pedido.numero || 'S/N'}</div>
         {pedido.cliente_nome && <div>Cliente: {pedido.cliente_nome.toUpperCase()}</div>}
@@ -178,7 +179,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       <Sep />
 
       {/* ── Itens: descrição em cima, valores em grid, linha entre itens ── */}
-      <div style={{ fontWeight: 'normal' }}>
+      <div style={{ fontWeight: CUPOM_FONT_WEIGHT }}>
         <div style={estiloGridHeader}>
           <span style={{ textAlign: 'center' }}>QTD</span>
           <span style={{ textAlign: 'center' }}>UN</span>
@@ -194,16 +195,15 @@ function CupomTermico({ pedido, dadosEmpresa }) {
 
           return (
             <React.Fragment key={item.pedido_venda_item_id || item.produto_id || idx}>
-              <div>
+              <div style={{ width: '100%', maxWidth: '100%' }}>
                 <div
                   lang="pt-BR"
+                  className="p38-cupom-item-desc"
                   style={{
                     textTransform: 'uppercase',
-                    wordBreak: 'break-word',
-                    overflowWrap: 'break-word',
                     lineHeight: 1.3,
                     marginBottom: '3px',
-                    fontWeight: 'normal',
+                    fontWeight: CUPOM_FONT_WEIGHT,
                   }}
                 >
                   {nome}
@@ -226,22 +226,22 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       {/* ── Totais ── */}
       <div style={{ marginTop: '2px' }}>
         {pedido.subtotal > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_CORPO, fontWeight: '400', color: preto }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_CORPO, fontWeight: CUPOM_FONT_WEIGHT, color: preto }}>
             <span>Subtotal</span><span>R$ {fmtV(pedido.subtotal)}</span>
           </div>
         )}
         {pedido.valor_desconto > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_CORPO, fontWeight: '400', color: preto }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_CORPO, fontWeight: CUPOM_FONT_WEIGHT, color: preto }}>
             <span>Desconto</span><span>-R$ {fmtV(pedido.valor_desconto)}</span>
           </div>
         )}
         {pedido.valor_frete > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_CORPO, fontWeight: '400', color: preto }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_CORPO, fontWeight: CUPOM_FONT_WEIGHT, color: preto }}>
             <span>Frete</span><span>R$ {fmtV(pedido.valor_frete)}</span>
           </div>
         )}
         {/* TOTAL — hierarquia só por tamanho (padrão amarelo original) */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_TOTAL, fontWeight: '400', margin: '5px 0 3px', color: preto }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_TOTAL, fontWeight: CUPOM_FONT_WEIGHT, margin: '5px 0 3px', color: preto }}>
           <span>TOTAL</span>
           <span>R$ {fmtV(pedido.valor_total || 0)}</span>
         </div>
@@ -251,7 +251,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       {pedido.pagamentos && pedido.pagamentos.length > 0 && (
         <div style={{ marginTop: '2px' }}>
           {pedido.pagamentos.map((pag, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_PAGAMENTO, fontWeight: '400', color: preto }}>
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_PAGAMENTO, fontWeight: CUPOM_FONT_WEIGHT, color: preto }}>
               <span>{(pag.forma_pagamento || '').toUpperCase()}{pag.parcelas > 1 ? ` ${pag.parcelas}x` : ''}</span>
               <span>R$ {fmtV(pag.valor)}</span>
             </div>
@@ -263,7 +263,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
 
       {/* ── Rodapé ── */}
       <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: F_PAGAMENTO, fontWeight: '400', letterSpacing: '0.5px', margin: '4px 0 3px', color: preto }}>
+        <div style={{ fontSize: F_PAGAMENTO, fontWeight: CUPOM_FONT_WEIGHT, letterSpacing: '0.5px', margin: '4px 0 3px', color: preto }}>
           {empresa.mensagem}
         </div>
         <div style={{ fontSize: F - 1, color: preto }}>Este documento não possui validade fiscal.</div>
@@ -577,9 +577,16 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
         html, body {
           background: #fff;
           font-family: 'Barlow', sans-serif;
-          font-weight: normal;
+          font-weight: ${CUPOM_FONT_WEIGHT};
         }
         ${larguraPaginaCss}
+        .p38-cupom-item-desc {
+          width: 100%;
+          max-width: 100%;
+          white-space: normal;
+          overflow-wrap: anywhere;
+          word-break: break-word;
+        }
         table { table-layout: fixed; width: 100%; border-collapse: collapse; }
         th, td { overflow: hidden; }
         @page { size: ${pageSize}; margin: 0; }
@@ -835,7 +842,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
       <div className="flex-1 overflow-y-auto w-full">
         {formato === '80mm' ? (
           <div className="w-full h-full flex justify-center py-4 px-4">
-            <div style={{ width: CUPOM_LARGURA_CSS, transformOrigin: 'top center', transform: 'scale(1)' }} className="shadow-2xl rounded-sm overflow-hidden">
+            <div style={{ width: CUPOM_LARGURA_CSS, maxWidth: CUPOM_LARGURA_CSS, transformOrigin: 'top center', transform: 'scale(1)' }} className="shadow-2xl rounded-sm">
               <CupomTermico pedido={pedido} dadosEmpresa={dadosEmpresa} />
             </div>
           </div>

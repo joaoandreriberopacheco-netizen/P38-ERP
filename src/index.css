@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300&display=swap');
 @import './styles/p38-identity.css';
 @import './styles/p38-typography.css';
 @import './styles/p38-tablet.css';
@@ -7,11 +7,23 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Cupom térmico / comprovante — Barlow regular, peso normal */
+/* Cupom térmico / comprovante — Barlow Light (300) */
 .p38-cupom-termico {
   font-family: 'Barlow', sans-serif;
-  font-weight: 400;
+  font-weight: 300;
   font-synthesis: none;
+}
+
+/* Descrição do item — quebra em várias linhas dentro dos 60mm úteis */
+.p38-cupom-termico .p38-cupom-item-desc {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+  -webkit-hyphens: auto;
 }
 
 @keyframes app-toast-progress {

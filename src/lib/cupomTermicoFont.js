@@ -1,6 +1,6 @@
-import { CUPOM_FONT_GOOGLE } from '@/lib/cupomTermicoConstants';
+import { CUPOM_FONT_GOOGLE, CUPOM_FONT_WEIGHT } from '@/lib/cupomTermicoConstants';
 
-const LINK_ID = 'p38-cupom-barlow';
+const LINK_ID = 'p38-cupom-barlow-300';
 
 let loadPromise = null;
 
@@ -20,8 +20,8 @@ export function ensureCupomTermicoFontLoaded() {
 
     try {
       if (document.fonts?.load) {
-        await document.fonts.load('400 12px "Barlow"');
-        await document.fonts.load('400 18px "Barlow"');
+        await document.fonts.load(`${CUPOM_FONT_WEIGHT} 12px "Barlow"`);
+        await document.fonts.load(`${CUPOM_FONT_WEIGHT} 18px "Barlow"`);
         await document.fonts.ready;
       } else {
         await new Promise((resolve) => setTimeout(resolve, 300));
