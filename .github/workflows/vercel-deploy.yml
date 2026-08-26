@@ -28,6 +28,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      # Evita falha ETARGET quando `latest` aponta para versão ainda não publicada no npm
+      VERCEL_CLI_VERSION: '59.6.2'
     steps:
       - uses: actions/checkout@v4
 
@@ -142,7 +145,7 @@ jobs:
         run: npm run secrets:check -- --context=vercel-deploy
 
       - name: Vercel pull (production)
-        run: npx --yes vercel@latest pull --yes --environment=production --token "$VERCEL_TOKEN"
+        run: npx --yes vercel@${{ env.VERCEL_CLI_VERSION }} pull --yes --environment=production --token "$VERCEL_TOKEN"
 
       - name: Alinhar projecto Vercel (Next.js — sem outputDirectory dist)
         run: bash scripts/sync-vercel-project-settings.sh
