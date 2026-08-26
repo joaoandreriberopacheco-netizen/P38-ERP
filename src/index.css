@@ -12,6 +12,8 @@
   font-family: 'Barlow', sans-serif;
   font-weight: 300;
   font-synthesis: none;
+  overflow-x: clip;
+  max-width: 100%;
 }
 
 /* Descrição do item — quebra em várias linhas dentro dos 60mm úteis */

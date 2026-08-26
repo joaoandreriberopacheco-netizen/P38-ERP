@@ -108,13 +108,15 @@ function CupomTermico({ pedido, dadosEmpresa }) {
   const F_TOTAL = F + 6;
   const F_PAGAMENTO = F + 3;
   const preto = PRETO_CUPOM;
-  const gridCols = '22% 18% 30% 30%';
+  const gridCols = 'minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1.35fr) minmax(0, 1.35fr)';
   const estiloGridValores = {
     display: 'grid',
     gridTemplateColumns: gridCols,
-    columnGap: '2px',
+    columnGap: '1px',
     fontSize: F_CORPO,
     fontWeight: CUPOM_FONT_WEIGHT,
+    width: '100%',
+    maxWidth: '100%',
   };
   const estiloGridHeader = {
     ...estiloGridValores,
@@ -144,7 +146,8 @@ function CupomTermico({ pedido, dadosEmpresa }) {
         boxSizing: 'border-box',
         background: '#fff', color: preto,
         fontFamily: font, fontSize: F_CORPO, fontWeight: CUPOM_FONT_WEIGHT,
-        padding: '2mm 1mm 3mm', margin: '0 auto', lineHeight: '1.35',
+        padding: '2mm 0 3mm', margin: '0 auto', lineHeight: '1.35',
+        overflowX: 'clip',
       }}
     >
       {/* ── Cabeçalho ── */}
@@ -216,10 +219,10 @@ function CupomTermico({ pedido, dadosEmpresa }) {
                   {nome}
                 </div>
                 <div style={estiloGridValores}>
-                  <span style={{ textAlign: 'center' }}>{qtd}</span>
-                  <span style={{ textAlign: 'center' }}>{unidade}</span>
-                  <span style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>{precoItem}</span>
-                  <span style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>{totalItem}</span>
+                  <span style={{ textAlign: 'center', minWidth: 0 }}>{qtd}</span>
+                  <span style={{ textAlign: 'center', minWidth: 0 }}>{unidade}</span>
+                  <span style={{ textAlign: 'right', whiteSpace: 'nowrap', minWidth: 0 }}>{precoItem}</span>
+                  <span style={{ textAlign: 'right', whiteSpace: 'nowrap', minWidth: 0 }}>{totalItem}</span>
                 </div>
               </div>
               {idx < itens.length - 1 ? <SepItem /> : null}
@@ -562,16 +565,19 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
     }
 
     const isCupomTermico = formato !== 'a4';
-    const pageSize = isCupomTermico ? `${CUPOM_LARGURA_MM}mm auto` : 'A4 portrait';
+    const pageSize = isCupomTermico ? `${CUPOM_PAPEL_MM}mm auto` : 'A4 portrait';
     const larguraPaginaCss = isCupomTermico
       ? `
         html, body {
-          width: ${CUPOM_LARGURA_MM}mm;
-          max-width: ${CUPOM_LARGURA_MM}mm;
+          width: ${CUPOM_PAPEL_MM}mm;
+          max-width: ${CUPOM_PAPEL_MM}mm;
         }
         #cupom-print {
           width: ${CUPOM_LARGURA_MM}mm !important;
           max-width: ${CUPOM_LARGURA_MM}mm !important;
+          margin-left: ${CUPOM_MARGEM_LATERAL_MM}mm !important;
+          margin-right: ${CUPOM_MARGEM_LATERAL_MM}mm !important;
+          overflow-x: clip !important;
         }`
       : '';
 
@@ -593,6 +599,9 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
           white-space: normal;
           overflow-wrap: anywhere;
           word-break: break-word;
+        }
+        .p38-cupom-termico {
+          overflow-x: clip;
         }
         table { table-layout: fixed; width: 100%; border-collapse: collapse; }
         th, td { overflow: hidden; }
@@ -658,11 +667,12 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
       const imgH = pageW / ratio;
       pdf.addImage(imgData, 'PNG', 0, 0, pageW, Math.min(imgH, pageH));
     } else {
-      // Cupom térmico: largura útil 60mm (rolo 80mm − 10mm de margem de cada lado)
+      // Rolo 80mm — conteúdo 60mm centrado (10mm margem de cada lado)
       const widthMm = CUPOM_LARGURA_MM;
+      const pageWidthMm = CUPOM_PAPEL_MM;
       const heightMm = (canvas.height / canvas.width) * widthMm;
-      pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: [widthMm, heightMm] });
-      pdf.addImage(imgData, 'PNG', 0, 0, widthMm, heightMm);
+      pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: [pageWidthMm, heightMm] });
+      pdf.addImage(imgData, 'PNG', CUPOM_MARGEM_LATERAL_MM, 0, widthMm, heightMm);
     }
 
     return pdf;
@@ -849,13 +859,11 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
       </div>
 
       {/* Preview com scale - ocupa toda a tela */}
-      <div className="flex-1 overflow-y-auto w-full">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden w-full min-w-0">
         {formato === '80mm' ? (
-          <div className="w-full h-full flex justify-center py-4 px-4">
-            <div style={{ width: CUPOM_LARGURA_CSS, maxWidth: CUPOM_LARGURA_CSS, transformOrigin: 'top center', transform: 'scale(1)' }} className="shadow-2xl rounded-sm">
-              <CupomTermico pedido={pedido} dadosEmpresa={dadosEmpresa} />
-            </div>
-          </div>
+          <PreviewScaled>
+            <CupomTermico pedido={pedido} dadosEmpresa={dadosEmpresa} />
+          </PreviewScaled>
         ) : (
           <div className="w-full flex justify-center py-4 px-4">
             <div style={{ width: `${210 * 3.7795}px`, transformOrigin: 'top center' }} className="shadow-2xl rounded-sm overflow-hidden">
