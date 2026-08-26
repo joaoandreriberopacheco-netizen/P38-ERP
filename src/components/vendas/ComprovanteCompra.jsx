@@ -159,7 +159,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       <Sep />
 
       {/* ── Meta do pedido ── */}
-      <div style={{ fontSize: F_CORPO, lineHeight: 1.55 }}>
+      <div style={{ fontSize: F_CORPO, fontWeight: '400', lineHeight: 1.55 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <span>{fmtDtTZ(pedido.created_date || new Date())}</span>
           <span>Nº {pedido.numero || 'S/N'}</span>
@@ -171,7 +171,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       <Sep />
 
       {/* ── Cabeçalho colunas ── */}
-      <div style={{ ...estiloGridLinha, fontSize: F_CORPO, fontWeight: '600', color: preto, lineHeight: 1.35, marginBottom: '4px' }}>
+      <div style={{ ...estiloGridLinha, fontSize: F_CORPO, fontWeight: '400', color: preto, lineHeight: 1.35, marginBottom: '4px' }}>
         <span style={estiloCelulaCentro}>QUANT</span>
         <span style={estiloCelulaCentro}>UN</span>
         <span style={{ textAlign: 'left' }}>DESCRIÇÃO</span>
@@ -195,6 +195,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
               style={{
                 ...estiloGridLinha,
                 fontSize: F_CORPO,
+                fontWeight: '400',
                 color: preto,
                 padding: '8px 0',
                 marginBottom: idx < itens.length - 1 ? '4px' : 0,
@@ -216,17 +217,17 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       {/* ── Totais ── */}
       <div style={{ marginTop: '2px' }}>
         {pedido.subtotal > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_CORPO, color: preto }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_CORPO, fontWeight: '400', color: preto }}>
             <span>Subtotal</span><span>R$ {fmtV(pedido.subtotal)}</span>
           </div>
         )}
         {pedido.valor_desconto > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_CORPO, color: preto }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_CORPO, fontWeight: '400', color: preto }}>
             <span>Desconto</span><span>-R$ {fmtV(pedido.valor_desconto)}</span>
           </div>
         )}
         {pedido.valor_frete > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_CORPO, color: preto }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_CORPO, fontWeight: '400', color: preto }}>
             <span>Frete</span><span>R$ {fmtV(pedido.valor_frete)}</span>
           </div>
         )}

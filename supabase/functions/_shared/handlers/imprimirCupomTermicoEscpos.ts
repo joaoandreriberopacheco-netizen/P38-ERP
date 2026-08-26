@@ -87,8 +87,10 @@ export function gerarCupomESCPOS(pedido: PedidoCupom, dadosEmpresa: Record<strin
     String(dataHora.getHours()).padStart(2, '0') + ':' +
     String(dataHora.getMinutes()).padStart(2, '0');
 
+  cupom += ESCPOS.SIZE_DOUBLE;
   cupom += 'DATA/HORA: ' + dataFormatada + ESCPOS.LINE_FEED;
   cupom += 'CLIENTE: ' + String(pedido.cliente_nome || 'AVULSO').substring(0, 30).toUpperCase() + ESCPOS.LINE_FEED;
+  cupom += ESCPOS.SIZE_NORMAL;
 
   cupom += linha() + ESCPOS.LINE_FEED;
 
@@ -104,34 +106,45 @@ export function gerarCupomESCPOS(pedido: PedidoCupom, dadosEmpresa: Record<strin
     const preco = formatarValor(item?.preco_unitario_praticado);
     const total = formatarValor(item?.total);
 
+    cupom += ESCPOS.SIZE_DOUBLE;
     cupom += String(idx + 1).padStart(2, '0') + ' ' + nome.substring(0, 44) + ESCPOS.LINE_FEED;
     cupom += '   ' + qtd + ' UN x R$ ' + preco + ' = R$ ' + total + ESCPOS.LINE_FEED;
+    cupom += ESCPOS.SIZE_NORMAL;
   });
 
   cupom += linha() + ESCPOS.LINE_FEED;
 
   cupom += ESCPOS.ALIGN_RIGHT;
+  cupom += ESCPOS.SIZE_DOUBLE;
   cupom += 'SUBTOTAL: R$ ' + formatarValor(pedido.subtotal || 0) + ESCPOS.LINE_FEED;
+  cupom += ESCPOS.SIZE_NORMAL;
 
   if (Number(pedido.valor_desconto) > 0) {
+    cupom += ESCPOS.SIZE_DOUBLE;
     cupom += 'DESCONTO: R$ ' + formatarValor(pedido.valor_desconto) + ESCPOS.LINE_FEED;
+    cupom += ESCPOS.SIZE_NORMAL;
   }
 
   if (Number(pedido.valor_frete) > 0) {
+    cupom += ESCPOS.SIZE_DOUBLE;
     cupom += 'FRETE: R$ ' + formatarValor(pedido.valor_frete) + ESCPOS.LINE_FEED;
+    cupom += ESCPOS.SIZE_NORMAL;
   }
 
-  cupom += ESCPOS.BOLD_ON + ESCPOS.SIZE_DOUBLE;
+  cupom += ESCPOS.SIZE_DOUBLE;
   cupom += 'TOTAL: R$ ' + formatarValor(pedido.valor_total || pedido.total || 0) + ESCPOS.LINE_FEED;
-  cupom += ESCPOS.BOLD_OFF + ESCPOS.SIZE_NORMAL;
+  cupom += ESCPOS.SIZE_NORMAL;
 
   cupom += ESCPOS.ALIGN_LEFT;
   cupom += linha() + ESCPOS.LINE_FEED;
 
   if (pedido.pagamentos?.length) {
-    cupom += ESCPOS.BOLD_ON + 'FORMAS DE PAGAMENTO:' + ESCPOS.BOLD_OFF + ESCPOS.LINE_FEED;
     pedido.pagamentos.forEach((pag) => {
-      cupom += String(pag?.forma_pagamento || '') + ': R$ ' + formatarValor(pag?.valor) + ESCPOS.LINE_FEED;
+      const forma = String(pag?.forma_pagamento || '').toUpperCase();
+      const parcelas = Number(pag?.parcelas) > 1 ? ` ${pag.parcelas}x` : '';
+      cupom += ESCPOS.SIZE_DOUBLE;
+      cupom += forma + parcelas + ': R$ ' + formatarValor(pag?.valor) + ESCPOS.LINE_FEED;
+      cupom += ESCPOS.SIZE_NORMAL;
     });
     cupom += linha() + ESCPOS.LINE_FEED;
   }
