@@ -8,7 +8,27 @@ A nuvem **não alcança** IP `192.168.x.x` da impressora. O agente corre **no PC
 
 Com fila remota, alguém em **São Paulo** (ou noutro sítio) pode aprovar pagamento e o cupom **sai na loja** quando o PC do caixa estiver online com o agente a correr.
 
-## Instalação (PC da loja — Windows)
+## Download do agente (`.exe` para a loja)
+
+**Link directo (GitHub Actions):**  
+https://github.com/joaoandreriberopacheco-netizen/P38-ERP/actions/workflows/print-agent-windows.yml
+
+1. Abra o link acima  
+2. Clique no **último run** com ✓ verde (workflow *Print Agent Windows*)  
+3. Role até **Artifacts** → descarregue **`p38-print-agent-windows`** (ficheiro `.zip`)  
+4. Descompacte numa pasta no PC do caixa, por exemplo: `C:\P38-Agente\`
+
+Conteúdo da pasta:
+
+| Ficheiro | Função |
+|---|---|
+| `P38-Instalar-Agente.exe` | Instalação (uma vez) |
+| `P38-Iniciar-Agente.exe` | Agente (ou arranque automático) |
+| `LEIA-ME.txt` | Instruções rápidas |
+
+> Se ainda não existir artefacto verde, o build automático pode estar a correr — volte ao link em alguns minutos ou peça ajuda para gerar o `.zip`.
+
+---
 
 **Opção recomendada: ficheiros `.exe`** (não precisa instalar Node.js)
 

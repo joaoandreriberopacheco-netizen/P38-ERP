@@ -18,26 +18,26 @@ mkdirSync(release, { recursive: true });
 console.log('[build-win] A agrupar scripts com esbuild...');
 
 execSync(
-  `npx --yes esbuild "${join(pkgRoot, 'entries/install-windows.mjs')}" --bundle --platform=node --format=cjs --target=node20 --outfile="${join(dist, 'install.cjs')}"`,
+  `npx --yes esbuild "${join(pkgRoot, 'entries/install-windows.mjs')}" --bundle --platform=node --format=cjs --target=node18 --outfile="${join(dist, 'install.cjs')}"`,
   { stdio: 'inherit', cwd: pkgRoot },
 );
 
 execSync(
-  `npx --yes esbuild "${join(pkgRoot, 'entries/start-windows.mjs')}" --bundle --platform=node --format=cjs --target=node20 --outfile="${join(dist, 'start.cjs')}"`,
+  `npx --yes esbuild "${join(pkgRoot, 'entries/start-windows.mjs')}" --bundle --platform=node --format=cjs --target=node18 --outfile="${join(dist, 'start.cjs')}"`,
   { stdio: 'inherit', cwd: pkgRoot },
 );
 
 console.log('[build-win] A gerar .exe com pkg (pode demorar)...');
 
-const pkgBin = 'npx --yes @yao-pkg/pkg';
+const pkgBin = 'npx --yes @yao-pkg/pkg@5.16.0';
 
 execSync(
-  `${pkgBin} "${join(dist, 'install.cjs')}" --targets node20-win-x64 --output "${join(release, 'P38-Instalar-Agente')}" --compress GZip`,
+  `${pkgBin} "${join(dist, 'install.cjs')}" --targets node18-win-x64 --output "${join(release, 'P38-Instalar-Agente')}"`,
   { stdio: 'inherit', cwd: pkgRoot },
 );
 
 execSync(
-  `${pkgBin} "${join(dist, 'start.cjs')}" --targets node20-win-x64 --output "${join(release, 'P38-Iniciar-Agente')}" --compress GZip`,
+  `${pkgBin} "${join(dist, 'start.cjs')}" --targets node18-win-x64 --output "${join(release, 'P38-Iniciar-Agente')}"`,
   { stdio: 'inherit', cwd: pkgRoot },
 );
 
