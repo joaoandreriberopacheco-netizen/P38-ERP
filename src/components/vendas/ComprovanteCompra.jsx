@@ -20,10 +20,13 @@ import { shareOrDownloadBlob, shouldUseMobileDocumentExport } from '@/lib/mobile
 import { useCaixaNestedDialogZ } from '@/components/vendas/caixa/CaixaOverlayStackContext';
 import { cn } from '@/components/utils';
 import {
+  CUPOM_FONT,
+  CUPOM_FONT_GOOGLE,
   CUPOM_LARGURA_IMPRESSAO_CSS,
   CUPOM_LARGURA_IMPRESSAO_MM,
   CUPOM_PAPEL_MM,
 } from '@/lib/cupomTermicoConstants';
+import { ensureCupomTermicoFontLoaded } from '@/lib/cupomTermicoFont';
 
 /** Exibição de data/hora no fuso do negócio (Tabatinga — `TIMEZONE_SISTEMA`). */
 const fmtDtTZ = (d) => d ? new Intl.DateTimeFormat('pt-BR', { timeZone: TIMEZONE_SISTEMA, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(d)) : '-';
@@ -81,9 +84,6 @@ const fmtV = (v) => {
   return parts.join(',');
 };
 const PRETO_CUPOM = '#000';
-/** Cupom térmico — Barlow Condensed (estreita), peso normal; fallback Arial Narrow. */
-const CUPOM_FONT = "'Barlow Condensed', 'Arial Narrow', sans-serif";
-const CUPOM_FONT_GOOGLE = 'https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400&display=swap';
 const CUPOM_LARGURA_MM = CUPOM_LARGURA_IMPRESSAO_MM;
 const CUPOM_LARGURA_CSS = CUPOM_LARGURA_IMPRESSAO_CSS;
 
@@ -141,12 +141,13 @@ function CupomTermico({ pedido, dadosEmpresa }) {
   return (
     <div
       id="cupom-print"
+      className="p38-cupom-termico"
       style={{
         width: CUPOM_LARGURA_CSS,
         maxWidth: CUPOM_LARGURA_CSS,
         boxSizing: 'border-box',
         background: '#fff', color: preto,
-        fontFamily: font, fontSize: F_CORPO, fontStretch: 'condensed',
+        fontFamily: font, fontSize: F_CORPO,
         padding: '2mm 1mm 3mm', margin: '0 auto', lineHeight: '1.35',
       }}
     >
@@ -366,6 +367,7 @@ function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
   return (
     <div
       id="cupom-print"
+      className="p38-cupom-termico"
       style={{
         width: '210mm', minHeight: '297mm',
         background: '#fff', color: preto,
@@ -547,6 +549,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
     setAgenteRemotoId(getStoredAgentId());
     setAgenteRemotoNome(getStoredAgentNome());
     checkPrintAgentHealth().then((health) => setAgenteLocalOk(Boolean(health?.ok))).catch(() => setAgenteLocalOk(false));
+    ensureCupomTermicoFontLoaded().catch(() => {});
   }, [open]);
 
   const handlePrint = async () => {
@@ -595,7 +598,6 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
         html, body {
           background: #fff;
           font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
-          font-stretch: condensed;
         }
         ${larguraPaginaCss}
         table { table-layout: fixed; width: 100%; border-collapse: collapse; }
@@ -636,6 +638,8 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
   const gerarPDF = async () => {
     const el = document.getElementById('cupom-print');
     if (!el) return null;
+
+    await ensureCupomTermicoFontLoaded();
 
     const isA4 = formato === 'a4';
 
