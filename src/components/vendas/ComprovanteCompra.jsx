@@ -5,7 +5,14 @@ import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
-import { imprimirCupomTermico } from '@/functions/imprimirCupomTermico';
+import {
+  checkPrintAgentHealth,
+  enqueueRemotePrint,
+  getStoredAgentId,
+  getStoredAgentNome,
+  printCupomViaLocalAgent,
+  registerPrintAgent,
+} from '@/lib/p38PrintAgent';
 import { loadHtml2Canvas, loadJsPDF } from '@/lib/lazyPdfLibs';
 import { getUnidadeMedidaItemPedidoVenda } from '@/lib/productUnits';
 import { TIMEZONE_SISTEMA } from '@/components/utils/dateUtils';
@@ -485,6 +492,11 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
   const [dadosCliente, setDadosCliente] = useState(null);
   const [ipImpressora, setIpImpressora] = useState('');
   const [imprimindoTermica, setImprimindoTermica] = useState(false);
+  const [agenteLocalOk, setAgenteLocalOk] = useState(false);
+  const [agenteRemotoId, setAgenteRemotoId] = useState(() => getStoredAgentId());
+  const [agenteRemotoNome, setAgenteRemotoNome] = useState(() => getStoredAgentNome());
+  const [agentTokenRegistro, setAgentTokenRegistro] = useState('');
+  const [ligandoAgente, setLigandoAgente] = useState(false);
   const [formato, setFormato] = useState(() => localStorage.getItem('comprovante_formato_venda') || 'a4');
   const [gerando, setGerando] = useState(false);
 
@@ -503,6 +515,9 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
     }
     const ip = localStorage.getItem('ip_impressora_termica');
     if (ip) setIpImpressora(ip);
+    setAgenteRemotoId(getStoredAgentId());
+    setAgenteRemotoNome(getStoredAgentNome());
+    checkPrintAgentHealth().then((health) => setAgenteLocalOk(Boolean(health?.ok))).catch(() => setAgenteLocalOk(false));
   }, [open]);
 
   const handlePrint = async () => {
@@ -621,19 +636,57 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
     }
   };
 
+  const handleLigarAgente = async () => {
+    const token = agentTokenRegistro.trim();
+    if (!token) {
+      toast.error('Cole o token gerado no PC (npm run print-agent:setup)');
+      return;
+    }
+    setLigandoAgente(true);
+    try {
+      const agente = await registerPrintAgent({
+        token,
+        nome: 'Caixa principal',
+        ip_impressora: ipImpressora || undefined,
+      });
+      toast.success(`Agente "${agente.nome}" ligado — inicie o agente no PC da loja`);
+      setAgenteRemotoId(agente.id);
+      setAgenteRemotoNome(agente.nome);
+      setAgentTokenRegistro('');
+    } catch (e) {
+      toast.error(e?.message || 'Não foi possível ligar o agente');
+    } finally {
+      setLigandoAgente(false);
+    }
+  };
+
   const handleImprimirTermica = async () => {
     if (!ipImpressora) { toast.error('Informe o IP da impressora térmica'); return; }
     setImprimindoTermica(true);
     try {
-      const response = await imprimirCupomTermico({ pedido_id: pedido.id, ip_impressora: ipImpressora });
-      if (response.data.success) {
+      localStorage.setItem('ip_impressora_termica', ipImpressora);
+
+      if (agenteLocalOk) {
+        await printCupomViaLocalAgent({
+          pedido_id: pedido.id,
+          ip_impressora: ipImpressora,
+        });
         toast.success('Cupom enviado para impressora térmica!');
-        localStorage.setItem('ip_impressora_termica', ipImpressora);
-      } else {
-        toast.error(response.data.error || 'Erro ao imprimir');
+        return;
       }
-    } catch {
-      toast.error('Falha na comunicação com a impressora');
+
+      if (agenteRemotoId) {
+        await enqueueRemotePrint({
+          pedido_id: pedido.id,
+          ip_impressora: ipImpressora,
+        });
+        toast.success('Enviado para a loja — o cupom sai quando o PC do caixa estiver online');
+        return;
+      }
+
+      toast.error('Instale o P38 Print Agent no PC do caixa (ver docs/print-agent) ou use Imprimir pelo browser');
+    } catch (e) {
+      toast.error(e?.message || 'Falha na comunicação com a impressora');
     } finally {
       setImprimindoTermica(false);
     }
@@ -697,6 +750,11 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             A4
           </Button>
         </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className={`text-[11px] px-2 py-0.5 rounded-full ${agenteLocalOk ? 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200' : agenteRemotoId ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-100' : 'bg-muted text-muted-foreground'}`}>
+            {agenteLocalOk ? 'Agente local OK' : agenteRemotoId ? `Remoto: ${agenteRemotoNome || 'loja'}` : 'Sem agente no PC'}
+          </span>
+        </div>
         <div className="flex items-center gap-2">
           <Input
             placeholder="IP impressora térmica (ex: 192.168.1.100)"
@@ -714,6 +772,25 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             {imprimindoTermica ? 'Enviando...' : 'Térmica'}
           </Button>
         </div>
+        {!agenteRemotoId && (
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="Token do agente (npm run print-agent:setup no PC)"
+              value={agentTokenRegistro}
+              onChange={(e) => setAgentTokenRegistro(e.target.value)}
+              className="h-8 text-xs flex-1 font-mono"
+            />
+            <Button
+              onClick={handleLigarAgente}
+              disabled={ligandoAgente}
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs whitespace-nowrap"
+            >
+              {ligandoAgente ? 'Ligando...' : 'Ligar agente'}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Preview com scale - ocupa toda a tela */}

@@ -49,6 +49,7 @@ Todas ✅ via Edge portada + Storage (`uploadAnexoDrive`/`deletarAnexo` usam buc
 | gerarRelatorioPrecificacao | Edge (PDF) | ✅ |
 | gerarRelatorioSupermanifesto | Edge (PDF) | ✅ |
 | imprimirCupomTermico | Edge (TCP) | ✅ |
+| printAgent | Edge (fila agente local) | ✅ |
 
 ## Onda 3 — Compras, logística, operacional
 

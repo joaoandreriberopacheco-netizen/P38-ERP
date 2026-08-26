@@ -33,6 +33,8 @@
     "pulse:predeploy": "npm run pulse:refresh-roteiro && npm run pulse:all && npm run pulse:corridor",
     "flare:export": "node scripts/export-flare-pending.mjs",
     "flare:api": "node scripts/flare-local-api.mjs",
+    "print-agent:start": "node packages/p38-print-agent/bin/start.mjs",
+    "print-agent:setup": "node packages/p38-print-agent/bin/setup.mjs",
     "audit:fluxo-dia": "node scripts/audit-fluxo-dia.mjs",
     "financeiro:corte-saldos": "node scripts/aplicar-corte-financeiro-saldos.mjs",
     "audit:pedido-sugestao": "node scripts/audit-pedido-sugestao-estoque.mjs",
