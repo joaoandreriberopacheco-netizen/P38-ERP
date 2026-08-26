@@ -76,6 +76,9 @@ const fmtV = (v) => {
   return parts.join(',');
 };
 const PRETO_CUPOM = '#000';
+/** Cupom 80mm — Barlow Condensed (estreita), peso normal; fallback Arial Narrow. */
+const CUPOM_FONT = "'Barlow Condensed', 'Arial Narrow', sans-serif";
+const CUPOM_FONT_GOOGLE = 'https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400&display=swap';
 
 const ordenarItensComprovante = (itens = []) =>
   [...itens].sort((a, b) =>
@@ -85,7 +88,7 @@ const ordenarItensComprovante = (itens = []) =>
 // ── Cupom Térmico 80mm ────────────────────────────────────────────────────────
 function CupomTermico({ pedido, dadosEmpresa }) {
   const itens = ordenarItensComprovante(pedido.itens || []);
-  const font = "'Barlow Condensed', 'Arial Narrow', sans-serif";
+  const font = CUPOM_FONT;
   /** Base compacta; F+3 = padrão amarelo legível (meta, itens, subtotal). */
   const F = 12;
   const F_CORPO = F + 3;
@@ -127,7 +130,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       id="cupom-print"
       style={{
         width: '275px', background: '#fff', color: preto,
-        fontFamily: font, fontSize: F_CORPO,
+        fontFamily: font, fontSize: F_CORPO, fontStretch: 'condensed',
         padding: '8px 10px 12px', margin: '0 auto', lineHeight: '1.4',
       }}
     >
@@ -300,7 +303,7 @@ function PreviewScaled({ children }) {
 // ── Cupom A4 (mesma estrutura do 80mm; cabeçalho em duas colunas) ─────────────
 function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
   const itens = ordenarItensComprovante(pedido.itens || []);
-  const font = "'Barlow Condensed', 'Arial Narrow', sans-serif";
+  const font = CUPOM_FONT;
   const F = 14;
   const preto = PRETO_CUPOM;
   const empresa = buildEmpresaCupom(dadosEmpresa);
@@ -548,10 +551,10 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
     const html = `<!DOCTYPE html><html><head>
       <meta charset="UTF-8">
       <title>Pedido ${pedido?.numero || ''}</title>
-      <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500&display=swap" rel="stylesheet">
+      <link href="${CUPOM_FONT_GOOGLE}" rel="stylesheet">
       <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { background: #fff; }
+        html, body { background: #fff; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-stretch: condensed; }
         @page { size: ${pageSize}; margin: 0; }
       </style>
     </head><body>${el.outerHTML}</body></html>`;
@@ -570,13 +573,18 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
     iframe.contentDocument.close();
 
     // Aguarda fontes/imagens carregarem, então imprime
-    iframe.onload = () => {
+    iframe.onload = async () => {
+      try {
+        await iframe.contentDocument?.fonts?.ready;
+      } catch {
+        /* segue com timeout */
+      }
       setTimeout(() => {
         iframe.contentWindow.focus();
         iframe.contentWindow.print();
         // Remove após impressão
         setTimeout(() => iframe.remove(), 2000);
-      }, 300);
+      }, 250);
     };
   };
 
