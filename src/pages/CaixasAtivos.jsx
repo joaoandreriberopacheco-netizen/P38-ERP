@@ -11,7 +11,6 @@ import {
   fetchRascunhosAguardando,
 } from '@/lib/caixaTurnoData';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel } from '@/components/ui/p38-mobile-line';
-import PullToRefreshScrollArea from '@/components/ui/PullToRefreshScrollArea';
 import { caixaTypo } from '@/lib/caixaP38Theme';
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 
@@ -194,10 +193,7 @@ export default function CaixasAtivosPage() {
   // Tela de seleção de caixa
   return (
     <div className={`h-full min-h-0 flex flex-col bg-background ${caixaTypo.screen}`}>
-      <PullToRefreshScrollArea
-        onRefresh={loadTurnos}
-        className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y p-4 md:p-6 pb-[var(--p38-scroll-pad-below-nav)] md:pb-6"
-      >
+      <div className="flex-1 min-h-0 h-0 overflow-y-auto overscroll-y-contain touch-pan-y p-4 md:p-6 pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
@@ -385,7 +381,7 @@ export default function CaixasAtivosPage() {
           </div>
         )}
       </div>
-      </PullToRefreshScrollArea>
+      </div>
 
         {showSenhasPage && (
           <div className={`fixed inset-0 z-50 bg-background flex flex-col ${caixaTypo.screen}`}>
