@@ -1,10 +1,11 @@
 #!/usr/bin/env node
-import { generateAgentToken, resolveConfig, saveConfig } from '../src/config.mjs';
+import { resolveConfig, saveConfig } from '../src/config.mjs';
+import { formatPairingCode, generateAgentPairingCode } from '../src/pairing-code.mjs';
 
 const cfg = resolveConfig();
 const token = process.argv.includes('--keep-token') && cfg.agentToken
   ? cfg.agentToken
-  : generateAgentToken();
+  : generateAgentPairingCode();
 
 const next = saveConfig({
   agentToken: token,
@@ -19,8 +20,8 @@ console.log('=== P38 Print Agent — configuração ===');
 console.log('');
 console.log('Ficheiro:', next.configFile || '(memória)');
 console.log('');
-console.log('1) Token gerado (guarde no PC da loja):');
-console.log(`   ${token}`);
+console.log('1) Código gerado (digite uma vez no P38 → Ligar agente):');
+console.log(`   ${formatPairingCode(token)}`);
 console.log('');
 console.log('2) No sistema (logado), registe o agente uma vez:');
 console.log('   Comprovante → botão "Ligar agente"');

@@ -1,7 +1,6 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
-import { randomBytes } from 'crypto';
 
 const CONFIG_DIR = process.env.P38_PRINT_AGENT_CONFIG_DIR || join(homedir(), '.p38-print-agent');
 const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
@@ -38,6 +37,9 @@ export function resolveConfig() {
   };
 }
 
+export { generateAgentPairingCode, normalizePairingCode, formatPairingCode, isValidPairingCode } from './pairing-code.mjs';
+
+/** @deprecated use generateAgentPairingCode */
 export function generateAgentToken() {
-  return randomBytes(24).toString('hex');
+  return generateAgentPairingCode();
 }
