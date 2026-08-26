@@ -117,6 +117,10 @@ export default function Layout({ children, currentPageName }) {
   );
 
   useEffect(() => {
+    if (!mobilePullRefreshEnabled) bindScrollRoot(null);
+  }, [mobilePullRefreshEnabled, bindScrollRoot]);
+
+  useEffect(() => {
     setIsOpen(false);
     document.documentElement.dataset.p38Shell = isMobile ? 'mobile' : 'desktop';
   }, [isMobile]);

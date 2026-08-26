@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 
 function findRowIndexAtOffset(offsets, itemCount, value) {
   if (itemCount <= 0) return 0;
@@ -41,6 +41,18 @@ export function useVirtualRows({
 
   const totalSize = offsets[itemCount] || 0;
   const [range, setRange] = useState({ startIndex: 0, endIndex: Math.min(itemCount, 30) });
+  const [scrollMount, setScrollMount] = useState(0);
+
+  useLayoutEffect(() => {
+    const scrollEl = scrollElementRef?.current;
+    if (!scrollEl) return undefined;
+    const bump = () => setScrollMount((n) => n + 1);
+    bump();
+    const resizeObserver =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(bump) : null;
+    resizeObserver?.observe(scrollEl);
+    return () => resizeObserver?.disconnect();
+  }, [scrollElementRef, itemCount]);
 
   const updateRange = useCallback(() => {
     if (itemCount <= 0) {
@@ -95,7 +107,7 @@ export function useVirtualRows({
       resizeObserver?.disconnect();
       window.removeEventListener('resize', scheduleUpdate);
     };
-  }, [scrollElementRef, updateRange, itemCount]);
+  }, [scrollElementRef, updateRange, itemCount, scrollMount]);
 
   const startIndex = itemCount > 0 ? Math.min(range.startIndex, itemCount - 1) : 0;
   const endIndex = itemCount > 0 ? Math.min(Math.max(range.endIndex, startIndex + 1), itemCount) : 0;
