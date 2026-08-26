@@ -109,12 +109,12 @@ function CupomTermico({ pedido, dadosEmpresa }) {
     display: 'grid',
     gridTemplateColumns: gridCols,
     columnGap: '2px',
-    fontSize: F,
+    fontSize: F_CORPO,
     fontWeight: CUPOM_FONT_WEIGHT,
   };
   const estiloGridHeader = {
     ...estiloGridValores,
-    fontSize: F - 1,
+    fontSize: F,
     marginBottom: '4px',
     opacity: 0.85,
   };
@@ -200,6 +200,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
                   lang="pt-BR"
                   className="p38-cupom-item-desc"
                   style={{
+                    fontSize: F,
                     textTransform: 'uppercase',
                     lineHeight: 1.3,
                     marginBottom: '3px',
