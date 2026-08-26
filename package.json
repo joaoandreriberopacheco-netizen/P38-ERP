@@ -35,6 +35,8 @@
     "flare:api": "node scripts/flare-local-api.mjs",
     "print-agent:start": "node packages/p38-print-agent/bin/start.mjs",
     "print-agent:setup": "node packages/p38-print-agent/bin/setup.mjs",
+    "print-agent:install": "node packages/p38-print-agent/entries/install-windows.mjs",
+    "print-agent:build-win": "node packages/p38-print-agent/scripts/build-windows-exe.mjs",
     "audit:fluxo-dia": "node scripts/audit-fluxo-dia.mjs",
     "financeiro:corte-saldos": "node scripts/aplicar-corte-financeiro-saldos.mjs",
     "audit:pedido-sugestao": "node scripts/audit-pedido-sugestao-estoque.mjs",

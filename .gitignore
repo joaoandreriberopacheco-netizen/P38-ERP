@@ -70,3 +70,7 @@ docs/imports-local/
 .env
 base44/.app.jsonc
 supabase/.temp/
+
+# P38 Print Agent — builds Windows (.exe)
+packages/p38-print-agent/dist/
+packages/p38-print-agent/release/

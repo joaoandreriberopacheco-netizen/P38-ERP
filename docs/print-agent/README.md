@@ -8,7 +8,29 @@ A nuvem **não alcança** IP `192.168.x.x` da impressora. O agente corre **no PC
 
 Com fila remota, alguém em **São Paulo** (ou noutro sítio) pode aprovar pagamento e o cupom **sai na loja** quando o PC do caixa estiver online com o agente a correr.
 
-## Instalação (PC Windows da loja)
+## Instalação (PC da loja — Windows)
+
+**Opção recomendada: ficheiros `.exe`** (não precisa instalar Node.js)
+
+1. Descarregar a pasta `release/` do artefacto **p38-print-agent-windows** (GitHub Actions → workflow *Print Agent Windows* → último run → Artifacts).
+2. Copiar para o PC do caixa (ex.: `C:\P38-Agente\`).
+3. **Primeira vez:** duplo clique em **`P38-Instalar-Agente.exe`**
+   - Pede URL Supabase, chave anon, IP da impressora
+   - Mostra o **TOKEN** — copiar
+4. No browser (P38): Comprovante → IP → colar TOKEN → **Ligar agente**
+5. **Todos os dias:** duplo clique em **`P38-Iniciar-Agente.exe`** (deixar janela aberta)
+
+Para **gerar os .exe** a partir do código (desenvolvimento):
+
+```bash
+npm run print-agent:build-win
+```
+
+Saída: `packages/p38-print-agent/release/`
+
+---
+
+## Instalação (PC Windows da loja) — com Node.js
 
 ### 1. Node.js 22
 
