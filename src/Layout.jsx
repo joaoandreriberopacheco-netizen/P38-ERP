@@ -1,6 +1,7 @@
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useCallback } from 'react';
 import { flushSync } from 'react-dom';
 import { useLocation } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCache';
 
 import { base44, p38 } from '@/api/base44Client';
@@ -21,6 +22,9 @@ import FinanceiroAccessGuard from '@/components/guard/FinanceiroAccessGuard';
 import { isFinanceiroProtectedPage } from '@/config/financeiroGate';
 import { isSupabaseAuthEnabled } from '@/integrations/p38/providers';
 import { cn } from '@/lib/utils';
+import usePullToRefresh, { usePullToRefreshScrollRoot } from '@/components/utils/usePullToRefresh';
+import PullToRefreshIndicator from '@/components/ui/PullToRefreshIndicator';
+import { runDefaultP38PullRefresh } from '@/lib/p38PullRefresh';
 
 const GlacialSidebar = React.lazy(() => import('@/components/navigation/GlacialSidebar'));
 const PinSetupDialog = React.lazy(() => import('@/components/auth/PinSetupDialog'));
@@ -52,6 +56,7 @@ const LayoutOutlet = React.memo(function LayoutOutlet({ children }) {
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
+  const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useCompactShell();
   const forceLandscape = useForceLandscape();
@@ -98,6 +103,18 @@ export default function Layout({ children, currentPageName }) {
     !showMobileUserMenu &&
     shouldHideBottomNavOnScroll(currentPageName);
   const bottomNavVisible = useBottomNavScrollVisibility(bottomNavScrollEnabled);
+  const mobilePullRefreshEnabled =
+    isMobile &&
+    !isFullscreen &&
+    !MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName);
+  const { scrollRoot, bindScrollRoot } = usePullToRefreshScrollRoot();
+  const handleMobilePullRefresh = useCallback(async () => {
+    await runDefaultP38PullRefresh(queryClient, currentPageName);
+  }, [queryClient, currentPageName]);
+  const { isRefreshing: isPullRefreshing, pullDistance } = usePullToRefresh(
+    handleMobilePullRefresh,
+    { scrollRoot: mobilePullRefreshEnabled ? scrollRoot : null },
+  );
 
   useEffect(() => {
     setIsOpen(false);
@@ -419,16 +436,20 @@ export default function Layout({ children, currentPageName }) {
         )}
 
         <div 
+          ref={mobilePullRefreshEnabled ? bindScrollRoot : undefined}
           data-p38-overlay-sidebar={useDesktopOverlaySidebar ? 'true' : undefined}
-          className={`flex-1 transition-[margin] duration-200 ease-out ${
-            isMobile 
-              ? `ml-0 min-h-0 ${
+          className={cn(
+            'flex-1 transition-[margin] duration-200 ease-out',
+            isMobile
+              ? cn(
+                  'ml-0 min-h-0',
                   MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName)
                     ? 'h-full max-h-full overflow-hidden'
-                    : 'overflow-y-auto overscroll-y-contain p38-stage-panel-scroll p38-layout-mobile-scroll-pad touch-pan-y'
-                }`
-              : (useDesktopOverlaySidebar ? 'ml-[64px]' : (isOpen ? 'ml-[300px]' : 'ml-[64px]'))
-          } ${MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) && !isMobile ? 'h-screen max-h-screen overflow-hidden' : ''}`}
+                    : 'relative overflow-y-auto overscroll-y-contain p38-stage-panel-scroll p38-layout-mobile-scroll-pad touch-pan-y',
+                )
+              : (useDesktopOverlaySidebar ? 'ml-[64px]' : (isOpen ? 'ml-[300px]' : 'ml-[64px]')),
+            MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) && !isMobile && 'h-screen max-h-screen overflow-hidden',
+          )}
           style={{
             willChange: 'margin',
             paddingTop: isMobile
@@ -436,15 +457,29 @@ export default function Layout({ children, currentPageName }) {
               : undefined,
           }}
         >
-          {MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) ? (
-            <div className="h-full min-h-0 overflow-hidden">
-              <LayoutOutlet>{pageContent}</LayoutOutlet>
-            </div>
-          ) : (
-            <div className="p-4 md:p-6 tablet-landscape:p-7 overflow-x-hidden max-w-full">
-              <LayoutOutlet>{pageContent}</LayoutOutlet>
-            </div>
-          )}
+          {mobilePullRefreshEnabled ? (
+            <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isPullRefreshing} />
+          ) : null}
+          <div
+            style={
+              mobilePullRefreshEnabled && pullDistance > 0
+                ? {
+                    transform: `translateY(${pullDistance}px)`,
+                    transition: 'transform 0.2s ease',
+                  }
+                : undefined
+            }
+          >
+            {MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) ? (
+              <div className="h-full min-h-0 overflow-hidden">
+                <LayoutOutlet>{pageContent}</LayoutOutlet>
+              </div>
+            ) : (
+              <div className="p-4 md:p-6 tablet-landscape:p-7 overflow-x-hidden max-w-full">
+                <LayoutOutlet>{pageContent}</LayoutOutlet>
+              </div>
+            )}
+          </div>
         </div>
         {isMobile && !isFullscreen && (
           <GlacialBottomNav

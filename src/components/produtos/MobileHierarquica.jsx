@@ -40,6 +40,8 @@ import { p38Accent } from '@/lib/p38ThemeSurfaces';
 import { cn } from '@/components/utils';
 import FontScaleControl from '@/components/accessibility/FontScaleControl';
 import { FONT_SCALE_CHANGE_EVENT, getStoredFontScale } from '@/lib/fontScale';
+import usePullToRefresh, { usePullToRefreshScrollRoot } from '@/components/utils/usePullToRefresh';
+import PullToRefreshIndicator from '@/components/ui/PullToRefreshIndicator';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
@@ -849,8 +851,16 @@ function useCatalogColumnHeaderPin(scrollRef) {
 }
 
 /** Scroll mobile: amarelo (catalogChrome) some; azul (colunas) fixa ao atingir o topo. */
-export function CatalogoMobileScrollShell({ catalogChrome, children }) {
+export function CatalogoMobileScrollShell({ catalogChrome, children, onRefresh }) {
   const scrollRef = useRef(null);
+  const { scrollRoot, bindScrollRoot } = usePullToRefreshScrollRoot();
+  const { isRefreshing, pullDistance } = usePullToRefresh(onRefresh, {
+    scrollRoot: onRefresh ? scrollRoot : null,
+  });
+  const setScrollRef = useCallback((node) => {
+    scrollRef.current = node;
+    bindScrollRoot(node);
+  }, [bindScrollRoot]);
   const { sentinelRef, pinned, pinFrame } = useCatalogColumnHeaderPin(scrollRef);
   const pinStyle = pinned
     ? { top: pinFrame.top, left: pinFrame.left, width: pinFrame.width }
@@ -859,10 +869,23 @@ export function CatalogoMobileScrollShell({ catalogChrome, children }) {
   return (
     <CatalogoMobileScrollContext.Provider value={scrollRef}>
       <div
-        ref={scrollRef}
-        className="flex flex-col flex-1 min-h-0 h-full w-full overflow-y-auto overscroll-y-contain touch-pan-y pb-[var(--p38-scroll-pad-below-nav)]"
+        ref={setScrollRef}
+        className="relative flex flex-col flex-1 min-h-0 h-full w-full overflow-y-auto overscroll-y-contain touch-pan-y pb-[var(--p38-scroll-pad-below-nav)]"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
+        {onRefresh ? (
+          <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
+        ) : null}
+        <div
+          style={
+            onRefresh && pullDistance > 0
+              ? {
+                  transform: `translateY(${pullDistance}px)`,
+                  transition: 'transform 0.2s ease',
+                }
+              : undefined
+          }
+        >
         {catalogChrome}
         <div ref={sentinelRef} className="h-px w-full shrink-0" aria-hidden />
         <CatalogoMobileColumnHeader
@@ -876,6 +899,7 @@ export function CatalogoMobileScrollShell({ catalogChrome, children }) {
           />
         ) : null}
         {children}
+        </div>
       </div>
     </CatalogoMobileScrollContext.Provider>
   );
