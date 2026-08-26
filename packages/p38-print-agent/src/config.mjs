@@ -26,8 +26,8 @@ export function resolveConfig() {
   const file = loadConfig();
   return {
     port: Number(process.env.P38_PRINT_AGENT_PORT || file.port || 3920),
-    supabaseUrl: process.env.P38_SUPABASE_URL || process.env.VITE_SUPABASE_URL || file.supabaseUrl || '',
-    supabaseAnonKey: process.env.P38_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || file.supabaseAnonKey || '',
+    supabaseUrl: process.env.P38_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL || file.supabaseUrl || '',
+    supabaseAnonKey: process.env.P38_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || file.supabaseAnonKey || '',
     agentToken: process.env.P38_PRINT_AGENT_TOKEN || file.agentToken || '',
     agentId: process.env.P38_PRINT_AGENT_ID || file.agentId || '',
     printerHost: process.env.P38_PRINTER_HOST || file.printerHost || '',
