@@ -13,8 +13,12 @@ import AnaliseEntrega from './AnaliseEntrega';
 import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
 import { buildSaleUnitOptions, pickDefaultSaleUnit, hasAlternativeUnits, normalizeItemToCanonicalFactorOne } from '@/lib/productUnits';
 import { savePedidoVendaItem } from '@/functions/savePedidoVendaItem';
+import { usePermissoesUsuario } from '@/hooks/usePermissoesUsuario';
 
 export default function PedidoVendaForm({ pedido, onSave, onClose }) {
+  const { tem: podePerm } = usePermissoesUsuario();
+  const podeDesconto = podePerm('pdv.aplicar_desconto', 'pdv.acesso_vendedor');
+  const podeCancelarPedido = podePerm('vendas.cancelar_pedido', 'vendas.acesso');
   const [formData, setFormData] = useState(pedido || {
     cliente_id: '',
     cliente_nome: '',
@@ -191,6 +195,15 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
       return;
     }
 
+    if (formData.status === 'Cancelado' && !podeCancelarPedido) {
+      toast({
+        variant: 'destructive',
+        title: 'Sem permissão',
+        description: 'Você não pode cancelar pedidos.',
+      });
+      return;
+    }
+
     if (descontoExcedido) {
       toast({
         title: "Desconto excedido",
@@ -323,7 +336,9 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
                     <SelectItem value="Aguardando Pagamento" className="dark:text-foreground dark:hover:bg-primary/90">Aguardando Pagamento</SelectItem>
                     <SelectItem value="Aprovado" className="dark:text-foreground dark:hover:bg-primary/90">Aprovado</SelectItem>
                     <SelectItem value="Finalizado" className="dark:text-foreground dark:hover:bg-primary/90">Finalizado</SelectItem>
-                    <SelectItem value="Cancelado" className="dark:text-foreground dark:hover:bg-primary/90">Cancelado</SelectItem>
+                    {podeCancelarPedido && (
+                      <SelectItem value="Cancelado" className="dark:text-foreground dark:hover:bg-primary/90">Cancelado</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -460,6 +475,7 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
             </div>
 
             <div className="space-y-4">
+              {podeDesconto ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-xs text-muted-foreground mb-2 block">Desconto (%)</Label>
@@ -494,17 +510,22 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
                     className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none px-0 h-10 text-sm dark:text-foreground"
                   />
                 </div>
+              </div>
+              ) : (
+                formData.valor_desconto > 0 && (
+                  <p className="text-xs text-muted-foreground">Desconto aplicado: {formatCurrency(formData.valor_desconto)} (sem permissão para alterar)</p>
+                )
+              )}
 
-                <div className="md:col-span-2">
-                  <Label className="text-xs text-muted-foreground mb-2 block">Frete (R$)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={formData.valor_frete}
-                    onChange={e => handleChange('valor_frete', parseFloat(e.target.value) || 0)}
-                    className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none px-0 h-10 text-sm dark:text-foreground"
-                  />
-                </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-2 block">Frete (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.valor_frete}
+                  onChange={e => handleChange('valor_frete', parseFloat(e.target.value) || 0)}
+                  className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none px-0 h-10 text-sm dark:text-foreground"
+                />
               </div>
 
               {descontoExcedido && (

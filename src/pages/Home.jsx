@@ -63,10 +63,24 @@ export default function HomePage() {
     if (currentUser.role === 'admin') return true;
     if (usuarioLegadoSemMatrizPerfil(currentUser)) return true;
     return !!(
+      permissoes?.homepage?.resumo_vendas_home ||
       permissoes?.dashboard?.acesso ||
-      permissoes?.dashboard?.resumo_vendas_home ||
       permissoes?.vendas?.acesso
     );
+  }, [currentUser, permissoes]);
+
+  const podeVerAcoesRapidas = useMemo(() => {
+    if (!currentUser) return false;
+    if (currentUser.role === 'admin') return true;
+    if (usuarioLegadoSemMatrizPerfil(currentUser)) return true;
+    return permissoes?.homepage?.acoes_rapidas === true;
+  }, [currentUser, permissoes]);
+
+  const podeVerAvisosHome = useMemo(() => {
+    if (!currentUser) return false;
+    if (currentUser.role === 'admin') return true;
+    if (usuarioLegadoSemMatrizPerfil(currentUser)) return true;
+    return permissoes?.homepage?.avisos_home === true;
   }, [currentUser, permissoes]);
 
   useEffect(() => {
@@ -184,33 +198,35 @@ export default function HomePage() {
 
         {podeVerResumoVendas && <HomeSalesSummaryLazy />}
 
-        <div>
-          <div className="flex items-center justify-between mb-3 px-1">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              Acesso Rápido
-            </h2>
-            {podePersonalizar && (
-              <button
-                type="button"
-                data-pulse-sensor="home.personalizar"
-                onClick={() => setShowPersonalizar(true)}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors p-1 touch-manipulation"
-              >
-                <Settings2 className="w-3.5 h-3.5" />
-                <span>Personalizar</span>
-              </button>
-            )}
+        {podeVerAcoesRapidas && quickActions.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-3 px-1">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Acesso Rápido
+              </h2>
+              {podePersonalizar && (
+                <button
+                  type="button"
+                  data-pulse-sensor="home.personalizar"
+                  onClick={() => setShowPersonalizar(true)}
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors p-1 touch-manipulation"
+                >
+                  <Settings2 className="w-3.5 h-3.5" />
+                  <span>Personalizar</span>
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {quickActions.map((action) => (
+                <HomeQuickActionLink key={action.id} action={action} />
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            {quickActions.map((action) => (
-              <HomeQuickActionLink key={action.id} action={action} />
-            ))}
-          </div>
-        </div>
+        )}
 
-        <HomeAlertsPanelLazy allowedActionIds={allowedActionIds} />
+        {podeVerAvisosHome && <HomeAlertsPanelLazy allowedActionIds={allowedActionIds} />}
 
-        {allowedActionIds.includes('consumo_interno') && (
+        {(currentUser?.role === 'admin' || usuarioLegadoSemMatrizPerfil(currentUser) || permissoes?.consumo_interno?.registrar || permissoes?.consumo_interno?.acesso) && allowedActionIds.includes('consumo_interno') && (
           <Link
             to="/ConsumoInterno"
             className="bg-card rounded-2xl p-4 shadow-sm border border-border/40 flex items-start gap-3 hover:shadow-md transition-shadow touch-manipulation active:scale-[0.99]"

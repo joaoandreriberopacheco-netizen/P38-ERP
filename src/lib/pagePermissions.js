@@ -9,6 +9,7 @@ import {
   podeAcessarConfiguracoes,
   usuarioLegadoSemMatrizPerfil,
 } from '@/lib/perfilPermissoes';
+import { podeAcessarPaginaGranular } from '@/lib/permissaoKit';
 
 export function extrairNomePagina(pageRef) {
   if (!pageRef) return '';
@@ -159,5 +160,10 @@ export function podeAcessarPagina(user, perfilDeAcesso, pageName) {
   const kit = paginasPermitidasNoKit(user, perfilDeAcesso);
   if (kit === null) return true;
 
-  return kit.has(base);
+  if (kit.has(base)) return true;
+
+  const granular = podeAcessarPaginaGranular(user, perfilDeAcesso, base);
+  if (granular === true) return true;
+
+  return false;
 }

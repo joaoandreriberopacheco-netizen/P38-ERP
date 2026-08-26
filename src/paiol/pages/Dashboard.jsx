@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { BarChart3, TrendingUp, ShoppingCart, Package, DollarSign } from 'lucide-react';
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
@@ -11,9 +11,24 @@ import FinanceiroTab from '@/paiol/components/dashboard/tabs/FinanceiroTab';
 import DashboardVendedor from '@/pages/DashboardVendedor';
 import DashboardCaixa from '@/pages/DashboardCaixa';
 import { P38_SHELL_DESC, P38_SHELL_TITLE } from '@/lib/p38FormTypography';
+import { usePermissoesUsuario } from '@/hooks/usePermissoesUsuario';
 
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState('geral');
+  const { tem: podePerm } = usePermissoesUsuario();
+  const podeKpisVendas = podePerm('dashboard.ver_kpis_vendas', 'dashboard.acesso');
+  const podeKpisEstoque = podePerm('dashboard.ver_kpis_estoque', 'dashboard.acesso');
+  const podeKpisFinanceiro = podePerm('dashboard.ver_kpis_financeiro', 'dashboard.acesso');
+  const podeKpisGeral = podePerm('dashboard.acesso');
+
+  const defaultTab = useMemo(() => {
+    if (podeKpisGeral) return 'geral';
+    if (podeKpisVendas) return 'vendas';
+    if (podeKpisEstoque) return 'estoque';
+    if (podeKpisFinanceiro) return 'financeiro';
+    return 'geral';
+  }, [podeKpisGeral, podeKpisVendas, podeKpisEstoque, podeKpisFinanceiro]);
+
+  const [activeTab, setActiveTab] = useState(defaultTab);
   const [visitedTabs, setVisitedTabs] = useState(() => new Set(['geral']));
   const [currentUser, setCurrentUser] = useState(null);
 
@@ -57,35 +72,45 @@ export default function DashboardPage() {
       </div>
 
       <GlacialTabsList scrollable>
+        {podeKpisGeral && (
         <GlacialTabsTrigger value="geral"      activeValue={activeTab} onSelect={handleTabSelect} icon={BarChart3}      label="Geral" pulseSensor="dashboard.tab-geral" />
+        )}
+        {podeKpisVendas && (
         <GlacialTabsTrigger value="vendas"     activeValue={activeTab} onSelect={handleTabSelect} icon={TrendingUp}      label="Vendas" />
+        )}
+        {podeKpisGeral && (
         <GlacialTabsTrigger value="compras"    activeValue={activeTab} onSelect={handleTabSelect} icon={ShoppingCart}    label="Compras" />
+        )}
+        {podeKpisEstoque && (
         <GlacialTabsTrigger value="estoque"    activeValue={activeTab} onSelect={handleTabSelect} icon={Package}         label="Estoque" />
+        )}
+        {podeKpisFinanceiro && (
         <GlacialTabsTrigger value="financeiro" activeValue={activeTab} onSelect={handleTabSelect} icon={DollarSign}      label="Financeiro" />
+        )}
       </GlacialTabsList>
 
       <div>
-        {visitedTabs.has('geral') && (
+        {podeKpisGeral && visitedTabs.has('geral') && (
           <div hidden={activeTab !== 'geral'}>
             <GeralTab />
           </div>
         )}
-        {visitedTabs.has('vendas') && (
+        {podeKpisVendas && visitedTabs.has('vendas') && (
           <div hidden={activeTab !== 'vendas'}>
             <VendasTab enabled={visitedTabs.has('vendas')} />
           </div>
         )}
-        {visitedTabs.has('compras') && (
+        {podeKpisGeral && visitedTabs.has('compras') && (
           <div hidden={activeTab !== 'compras'}>
             <ComprasTab />
           </div>
         )}
-        {visitedTabs.has('estoque') && (
+        {podeKpisEstoque && visitedTabs.has('estoque') && (
           <div hidden={activeTab !== 'estoque'}>
             <EstoqueTab enabled={visitedTabs.has('estoque')} />
           </div>
         )}
-        {visitedTabs.has('financeiro') && (
+        {podeKpisFinanceiro && visitedTabs.has('financeiro') && (
           <div hidden={activeTab !== 'financeiro'}>
             <FinanceiroTab />
           </div>

@@ -38,6 +38,7 @@ import { P38_SHELL_DESC, P38_SHELL_TITLE } from '@/lib/p38FormTypography';
 
 function ProdutosHeader({
   stats,
+  podeVerCusto = true,
   filters,
   categorias,
   fornecedores,
@@ -101,10 +102,12 @@ function ProdutosHeader({
                 />
               )}
               <span className="truncate">{stats.total} produtos</span>
-              <span className="truncate">
-                R$ {formatarNumero(stats.valorEstoqueAtivo || 0)}
-                {filters.estoqueVirtual ? ' ~' : ''}
-              </span>
+              {podeVerCusto && (
+                <span className="truncate">
+                  R$ {formatarNumero(stats.valorEstoqueAtivo || 0)}
+                  {filters.estoqueVirtual ? ' ~' : ''}
+                </span>
+              )}
               {stats.abaixoMinimo > 0 && <span className="text-red-500 flex-shrink-0">{stats.abaixoMinimo} abaixo mín.</span>}
             </div>
           </div>

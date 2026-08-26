@@ -13,6 +13,7 @@ import { cn } from '@/components/utils';
 import { P38PageHeader } from '@/components/layout/P38PageHeader';
 import { filterAndSortProducts, sortProductsAlphabetically } from '@/components/compras/productMatchingUtils';
 import ProdutoThumb from '@/components/produtos/ProdutoThumb';
+import { usePermissoesUsuario } from '@/hooks/usePermissoesUsuario';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
@@ -88,6 +89,9 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
 
 // ── Componente principal ───────────────────────────────────────────────────────
 export default function TabelaPrecosConsulta() {
+  const { tem: podePerm } = usePermissoesUsuario();
+  const podeGerarOrcamento = podePerm('estoque.gerar_orcamento', 'estoque.tabela_precos');
+
   const [produtos, setProdutos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -220,6 +224,7 @@ export default function TabelaPrecosConsulta() {
         )}
       </div>
 
+      {podeGerarOrcamento && (
       <button
         onClick={() => setShowOrcamento(true)}
         className="fixed right-4 z-[55] flex h-14 w-14 items-center justify-center rounded-2xl bg-background shadow-xl transition-all hover:bg-primary/90 active:scale-95 dark:bg-muted dark:hover:bg-muted p38-bottom-fab1 lg:right-6"
@@ -227,7 +232,9 @@ export default function TabelaPrecosConsulta() {
       >
         <Calculator className="w-6 h-6 text-foreground" />
       </button>
+      )}
 
+      {podeGerarOrcamento && (
       <OrcamentoSheet
         isOpen={showOrcamento}
         onClose={() => setShowOrcamento(false)}
@@ -237,6 +244,7 @@ export default function TabelaPrecosConsulta() {
         nomeTabela={tabelaSelecionada?.nome_tabela}
         empresa={empresa}
       />
+      )}
     </div>
   );
 }
