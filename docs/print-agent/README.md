@@ -18,7 +18,9 @@ Com fila remota, alguém em **São Paulo** (ou noutro sítio) pode aprovar pagam
    - Pede URL Supabase, chave anon, IP da impressora
    - Mostra o **TOKEN** — copiar
 4. No browser (P38): Comprovante → IP → colar TOKEN → **Ligar agente**
-5. **Todos os dias:** duplo clique em **`P38-Iniciar-Agente.exe`** (deixar janela aberta)
+5. **Todos os dias:** o agente pode **abrir sozinho** ao ligar o PC (o instalador pergunta — padrão **Sim**). A janela fica aberta; não fechar.
+
+Ou manualmente: **`P38-Iniciar-Agente.exe`**
 
 Para **gerar os .exe** a partir do código (desenvolvimento):
 
@@ -63,7 +65,16 @@ set P38_PRINTER_PORT=9100
 3. Cole o **token** do passo 2
 4. Clique **Ligar agente**
 
-### 5. Iniciar o agente (sempre que a loja abrir)
+### 5. Agente ao ligar o PC (arranque automático)
+
+No **`P38-Instalar-Agente.exe`**, a última pergunta é:
+
+> *Iniciar agente automaticamente quando o Windows ligar? (S/n)*
+
+- **Enter** ou **S** → o agente abre **sozinho** cada vez que o PC liga (pasta Iniciar do Windows).
+- **n** → só arranca manualmente (atalho ou `P38-Iniciar-Agente.exe`).
+
+### 6. Iniciar manualmente (se precisar)
 
 ```bash
 npm run print-agent:start

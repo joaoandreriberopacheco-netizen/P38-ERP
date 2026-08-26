@@ -4,7 +4,7 @@
  * Grava config em ~/.p38-print-agent/config.json e mostra o token para ligar no P38.
  */
 import readline from 'readline';
-import { mkdirSync, writeFileSync, existsSync } from 'fs';
+import { mkdirSync, writeFileSync, existsSync, unlinkSync } from 'fs';
 import { homedir, platform } from 'os';
 import { dirname, join } from 'path';
 import { generateAgentToken, resolveConfig, saveConfig } from '../src/config.mjs';
@@ -35,24 +35,54 @@ function installDir() {
   return join(process.cwd(), 'packages/p38-print-agent');
 }
 
+function buildLauncherBat(installRoot) {
+  const iniciarExe = join(installRoot, 'P38-Iniciar-Agente.exe');
+  const iniciarBat = join(installRoot, 'iniciar-agente.bat');
+
+  if (existsSync(iniciarExe)) {
+    return `@echo off\r\ntitle P38 Print Agent\r\ncd /d "${installRoot}"\r\nstart "" "${iniciarExe}"\r\n`;
+  }
+  if (existsSync(iniciarBat)) {
+    return `@echo off\r\ntitle P38 Print Agent\r\ncd /d "${installRoot}"\r\n"${iniciarBat}"\r\n`;
+  }
+  return `@echo off\r\ntitle P38 Print Agent\r\ncd /d "${installRoot}"\r\nnode packages/p38-print-agent/bin/start.mjs\r\n`;
+}
+
+function windowsStartupDir() {
+  const appData = process.env.APPDATA;
+  if (!appData) return null;
+  return join(appData, 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup');
+}
+
+function registerWindowsAutoStart(installRoot, enabled) {
+  const startup = windowsStartupDir();
+  if (!startup) return null;
+
+  const startupBat = join(startup, 'P38 Agente Impressao.bat');
+  if (!enabled) {
+    if (existsSync(startupBat)) {
+      try {
+        unlinkSync(startupBat);
+        console.log('Arranque automático removido:', startupBat);
+      } catch {
+        /* ignore */
+      }
+    }
+    return null;
+  }
+
+  mkdirSync(startup, { recursive: true });
+  writeFileSync(startupBat, buildLauncherBat(installRoot), 'utf8');
+  console.log('Arranque automático activado:', startupBat);
+  return startupBat;
+}
+
 function createWindowsShortcut(installRoot) {
   const desktop = join(homedir(), 'Desktop');
   if (!existsSync(desktop)) return;
 
-  const iniciarExe = join(installRoot, 'P38-Iniciar-Agente.exe');
-  const iniciarBat = join(installRoot, 'iniciar-agente.bat');
   const shortcutBat = join(desktop, 'P38 Agente Impressao.bat');
-
-  let launcher;
-  if (existsSync(iniciarExe)) {
-    launcher = `@echo off\r\ntitle P38 Print Agent\r\ncd /d "${installRoot}"\r\nstart "" "${iniciarExe}"\r\n`;
-  } else if (existsSync(iniciarBat)) {
-    launcher = `@echo off\r\ntitle P38 Print Agent\r\ncd /d "${installRoot}"\r\n"${iniciarBat}"\r\n`;
-  } else {
-    launcher = `@echo off\r\ntitle P38 Print Agent\r\ncd /d "${installRoot}"\r\nnode packages/p38-print-agent/bin/start.mjs\r\npause\r\n`;
-  }
-
-  writeFileSync(shortcutBat, launcher, 'utf8');
+  writeFileSync(shortcutBat, buildLauncherBat(installRoot), 'utf8');
   console.log(`Atalho criado: ${shortcutBat}`);
 }
 
@@ -87,6 +117,16 @@ async function main() {
   const printerHost = await ask(rl, 'IP da impressora térmica', cfg.printerHost || '192.168.1.100');
   const printerPort = await ask(rl, 'Porta da impressora', String(cfg.printerPort || 9100));
 
+  let autoStart = true;
+  if (platform() === 'win32') {
+    const resp = await ask(
+      rl,
+      'Iniciar agente automaticamente quando o Windows ligar? (S/n)',
+      'S',
+    );
+    autoStart = !/^n/i.test(resp);
+  }
+
   rl.close();
 
   if (!supabaseUrl || !supabaseAnonKey) {
@@ -108,8 +148,9 @@ async function main() {
   if (platform() === 'win32') {
     try {
       createWindowsShortcut(root);
+      registerWindowsAutoStart(root, autoStart);
     } catch (e) {
-      console.warn('Não foi possível criar atalho no Ambiente de Trabalho:', e?.message || e);
+      console.warn('Não foi possível criar atalho/arranque automático:', e?.message || e);
     }
   }
 
@@ -126,8 +167,13 @@ async function main() {
   console.log('  1. Abra o P38 no browser (PC do caixa) → Comprovante de venda');
   console.log('  2. IP impressora:', printerHost);
   console.log('  3. Cole o TOKEN acima → botão "Ligar agente"');
-  console.log('  4. Inicie o agente: duplo clique em "P38 Agente Impressao" (Ambiente de Trabalho)');
-  console.log('     ou execute P38-Iniciar-Agente.exe na pasta deste instalador');
+  if (autoStart && platform() === 'win32') {
+    console.log('  4. Arranque automático: SIM — após reiniciar o PC o agente abre sozinho');
+    console.log('     (pode iniciar já agora com o atalho "P38 Agente Impressao" no Ambiente de Trabalho)');
+  } else {
+    console.log('  4. Inicie o agente: duplo clique em "P38 Agente Impressao" (Ambiente de Trabalho)');
+    console.log('     ou execute P38-Iniciar-Agente.exe na pasta deste instalador');
+  }
   console.log('');
   console.log('Teste: abra http://127.0.0.1:3920/health com o agente a correr.');
   console.log('');

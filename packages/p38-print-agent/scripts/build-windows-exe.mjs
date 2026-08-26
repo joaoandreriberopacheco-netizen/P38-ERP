@@ -51,7 +51,10 @@ writeFileSync(
 
 2. No P38 (browser): Comprovante → IP impressora → colar TOKEN → "Ligar agente"
 
-3. Todos os dias: P38-Iniciar-Agente.exe (deixar janela aberta)
+3. Todos os dias: o agente pode abrir SOZINHO ao ligar o PC
+   (o instalador pergunta isto — resposta padrão: Sim)
+
+   Manualmente: P38-Iniciar-Agente.exe ou atalho "P38 Agente Impressao"
 
 Teste: http://127.0.0.1:3920/health
 
