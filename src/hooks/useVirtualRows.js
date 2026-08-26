@@ -89,14 +89,7 @@ export function useVirtualRows({
     resizeObserver?.observe(scrollEl);
     window.addEventListener('resize', scheduleUpdate);
 
-    // Recalcula quando o contentor ganha altura após o layout flex (mobile).
-    scheduleUpdate();
-    const t1 = window.setTimeout(scheduleUpdate, 0);
-    const t2 = window.setTimeout(scheduleUpdate, 100);
-
     return () => {
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
       if (frame != null) cancelAnimationFrame(frame);
       scrollEl.removeEventListener('scroll', scheduleUpdate);
       resizeObserver?.disconnect();

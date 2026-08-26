@@ -192,8 +192,8 @@ export default function CaixasAtivosPage() {
 
   // Tela de seleção de caixa
   return (
-    <div className={`flex flex-col flex-1 min-h-0 h-0 bg-background ${caixaTypo.screen}`}>
-      <div className="flex-1 min-h-0 h-0 overflow-y-auto overscroll-y-contain touch-pan-y p-4 md:p-6 pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
+    <div className={`h-full min-h-0 flex flex-col bg-background ${caixaTypo.screen}`}>
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y p-4 md:p-6 pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
