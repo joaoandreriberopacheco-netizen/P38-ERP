@@ -10,7 +10,6 @@ import {
   normalizePairingCode,
 } from '@/lib/printAgentPairingCode';
 import {
-  checkPrintAgentHealth,
   enqueueRemotePrint,
   getStoredAgentId,
   getStoredAgentNome,
@@ -561,9 +560,20 @@ export default function ComprovanteCompra({ pedido, open = true, onClose }) {
     if (ip) setIpImpressora(ip);
     setAgenteRemotoId(getStoredAgentId());
     setAgenteRemotoNome(getStoredAgentNome());
-    checkPrintAgentHealth().then((health) => setAgenteLocalOk(Boolean(health?.ok))).catch(() => setAgenteLocalOk(false));
+    let cancelled = false;
+    import('@/lib/p38PrintAgent')
+      .then(({ checkPrintAgentHealth }) => checkPrintAgentHealth())
+      .then((health) => {
+        if (!cancelled) setAgenteLocalOk(Boolean(health?.ok));
+      })
+      .catch(() => {
+        if (!cancelled) setAgenteLocalOk(false);
+      });
     ensureCupomTermicoFontLoaded().catch(() => {});
-  }, [open]);
+    return () => {
+      cancelled = true;
+    };
+  }, [open, pedido?.cliente_id]);
 
   const handlePrint = async () => {
     const el = document.getElementById('cupom-print');
