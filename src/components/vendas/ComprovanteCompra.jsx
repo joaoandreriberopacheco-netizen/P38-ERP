@@ -18,7 +18,11 @@ import { getUnidadeMedidaItemPedidoVenda } from '@/lib/productUnits';
 import { TIMEZONE_SISTEMA } from '@/components/utils/dateUtils';
 import { shareOrDownloadBlob, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
 import { useCaixaNestedDialogZ } from '@/components/vendas/caixa/CaixaOverlayStackContext';
-import { cn } from '@/components/utils';
+import {
+  CUPOM_LARGURA_IMPRESSAO_CSS,
+  CUPOM_LARGURA_IMPRESSAO_MM,
+  CUPOM_PAPEL_MM,
+} from '@/lib/cupomTermicoConstants';
 
 /** Exibição de data/hora no fuso do negócio (Tabatinga — `TIMEZONE_SISTEMA`). */
 const fmtDtTZ = (d) => d ? new Intl.DateTimeFormat('pt-BR', { timeZone: TIMEZONE_SISTEMA, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(d)) : '-';
@@ -76,12 +80,11 @@ const fmtV = (v) => {
   return parts.join(',');
 };
 const PRETO_CUPOM = '#000';
-/** Cupom 80mm — Barlow Condensed (estreita), peso normal; fallback Arial Narrow. */
+/** Cupom térmico — Barlow Condensed (estreita), peso normal; fallback Arial Narrow. */
 const CUPOM_FONT = "'Barlow Condensed', 'Arial Narrow', sans-serif";
 const CUPOM_FONT_GOOGLE = 'https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400&display=swap';
-/** Rolo 80mm; área útil de impressão da térmica (margens laterais ~4mm). */
-const CUPOM_LARGURA_MM = 72;
-const CUPOM_LARGURA_CSS = `${CUPOM_LARGURA_MM}mm`;
+const CUPOM_LARGURA_MM = CUPOM_LARGURA_IMPRESSAO_MM;
+const CUPOM_LARGURA_CSS = CUPOM_LARGURA_IMPRESSAO_CSS;
 
 const ordenarItensComprovante = (itens = []) =>
   [...itens].sort((a, b) =>
@@ -550,7 +553,19 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
       return;
     }
 
-    const pageSize = formato === 'a4' ? 'A4 portrait' : `${CUPOM_LARGURA_MM}mm auto`;
+    const isCupomTermico = formato !== 'a4';
+    const pageSize = isCupomTermico ? `${CUPOM_LARGURA_MM}mm auto` : 'A4 portrait';
+    const larguraPaginaCss = isCupomTermico
+      ? `
+        html, body {
+          width: ${CUPOM_LARGURA_MM}mm;
+          max-width: ${CUPOM_LARGURA_MM}mm;
+        }
+        #cupom-print {
+          width: ${CUPOM_LARGURA_MM}mm !important;
+          max-width: ${CUPOM_LARGURA_MM}mm !important;
+        }`
+      : '';
 
     const html = `<!DOCTYPE html><html><head>
       <meta charset="UTF-8">
@@ -562,10 +577,8 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
           background: #fff;
           font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
           font-stretch: condensed;
-          width: ${CUPOM_LARGURA_MM}mm;
-          max-width: ${CUPOM_LARGURA_MM}mm;
         }
-        #cupom-print { width: ${CUPOM_LARGURA_MM}mm !important; max-width: ${CUPOM_LARGURA_MM}mm !important; }
+        ${larguraPaginaCss}
         @page { size: ${pageSize}; margin: 0; }
       </style>
     </head><body>${el.outerHTML}</body></html>`;
@@ -757,8 +770,9 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             size="sm"
             variant={formato === '80mm' ? 'default' : 'outline'}
             className="h-8 text-xs"
+            title={`Rolo ${CUPOM_PAPEL_MM}mm · impressão ${CUPOM_LARGURA_MM}mm`}
           >
-            80mm
+            Térmica
           </Button>
           <Button
             onClick={() => escolherFormato('a4')}
