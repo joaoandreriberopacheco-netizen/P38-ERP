@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Informativo de compra — pedido 8YU-MLP (Vetrus) · cliente Elisabeth Prieto Navas
+ * Informativo de compra — pedido 8YU-MLP · cliente Elisabeth Prieto Navas
  *
  * Uso: node scripts/gerar-informativo-compra-elisabeth-vetrus.mjs [caminho-saida.pdf]
  */
@@ -19,42 +19,53 @@ const META = {
   cliente: 'Elisabeth Prieto Navas',
   pedido: '8YU-MLP',
   embarque: '8YU-MLP-01',
-  fornecedor: 'VETRUS DO BRASIL',
 };
 
-/** Pedido 8YU-MLP — embarque 01 (fonte: Supabase embarque_item) */
+const PALETTE = {
+  ink: [24, 24, 24],
+  muted: [92, 92, 92],
+  faint: [140, 140, 140],
+  line: [210, 210, 210],
+  headerFill: [245, 245, 245],
+  cardFill: [252, 252, 252],
+  cardFillAlt: [248, 248, 248],
+  accent: [34, 34, 34],
+  totalFill: [238, 238, 238],
+};
+
+/** Pedido 8YU-MLP — embarque 01 */
 const LINHAS = [
   {
     modeloCliente: 'Medice',
-    produto: 'PORCELANATO 76X76 RET MEDICI ACT WHITE',
+    produto: 'Porcelanato 76×76 Ret Medici Act White',
     destino: 'Paredes do banheiro',
     m2: 221.44,
     m2PorCaixa: 1.73,
   },
   {
     modeloCliente: 'Taipa',
-    produto: 'PORCELANATO 76X76 RET SOLO MATE TAIPA',
+    produto: 'Porcelanato 76×76 Ret Solo Mate Taipa',
     destino: 'Habitaciones (quartos)',
     m2: 318.32,
     m2PorCaixa: 1.73,
   },
   {
     modeloCliente: 'Calcário',
-    produto: 'PORCELANATO 76X76 RET SOLO MATE CALCARIO',
+    produto: 'Porcelanato 76×76 Ret Solo Mate Calcário',
     destino: 'Áreas comuns e locais comerciais',
     m2: 226.63,
     m2PorCaixa: 1.73,
   },
   {
     modeloCliente: 'Galícia',
-    produto: 'REV 34X50 EURO GALICIA MARROM EXT.',
+    produto: 'Rev 34×50 Euro Galicia Marrom Ext.',
     destino: 'Jacuzzis',
     m2: 52.36,
     m2PorCaixa: 2.38,
   },
   {
-    modeloCliente: '',
-    produto: 'PORCELANATO 60X120 RET SLATE SOFT AS BEGE',
+    modeloCliente: 'Slate',
+    produto: 'Porcelanato 60×120 Ret Slate Soft AS Bege',
     destino: '',
     m2: 51.84,
     m2PorCaixa: 1.44,
@@ -114,6 +125,19 @@ function brNum(value, digits = 2) {
   });
 }
 
+function setFill(doc, rgb) {
+  doc.setFillColor(...rgb);
+}
+
+function setStroke(doc, rgb, width = 0.2) {
+  doc.setDrawColor(...rgb);
+  doc.setLineWidth(width);
+}
+
+function setText(doc, rgb) {
+  doc.setTextColor(...rgb);
+}
+
 function prepareLinhas() {
   return LINHAS.map((linha) => {
     const caixasInt = Math.round(linha.m2 / linha.m2PorCaixa);
@@ -124,74 +148,140 @@ function prepareLinhas() {
       m2Fmt: brNum(linha.m2),
       total,
       totalFmt: brl(total),
-      modeloCliente: linha.modeloCliente || '—',
-      destino: linha.destino || '—',
+      destino: linha.destino || '',
     };
   });
 }
 
-function drawTableHeader(doc, font, y, col) {
-  doc.setFont(font, 'bold');
+function measureCardHeight(doc, font, row, innerW) {
+  let h = 10;
+  doc.setFont(font, 'normal');
   doc.setFontSize(8.5);
-  doc.setTextColor(72, 72, 72);
-  doc.text('MODELO', col.modelo, y);
-  doc.text('PRODUTO', col.produto, y);
-  doc.text('DESTINO / USO', col.destino, y);
-  doc.text('R$/M²', col.preco, y, { align: 'right' });
-  doc.text('CAIXAS', col.caixas, y, { align: 'right' });
-  doc.text('M²', col.m2, y, { align: 'right' });
-  doc.text('TOTAL', col.total, y, { align: 'right' });
-  const lineY = y + 2;
-  doc.setDrawColor(110, 110, 110);
-  doc.setLineWidth(0.15);
-  doc.line(col.left, lineY, col.right, lineY);
-  return lineY + 5;
+  const produtoLines = doc.splitTextToSize(normalizePdfText(row.produto), innerW);
+  h += produtoLines.length * 4.1;
+  if (row.destino) {
+    doc.setFontSize(8.2);
+    const destinoLines = doc.splitTextToSize(normalizePdfText(row.destino), innerW);
+    h += 1.5 + destinoLines.length * 3.8;
+  }
+  h += 9;
+  return h;
 }
 
-function splitLines(doc, text, width, fontSize, font) {
-  doc.setFont(font, 'normal');
-  doc.setFontSize(fontSize);
-  return doc.splitTextToSize(normalizePdfText(text), width);
-}
+function drawCard(doc, font, row, y, layout, index) {
+  const { left, right, width } = layout;
+  const innerPad = 5;
+  const innerW = width - innerPad * 2;
+  const cardH = measureCardHeight(doc, font, row, innerW);
+  const fill = index % 2 === 0 ? PALETTE.cardFill : PALETTE.cardFillAlt;
 
-function measureRowHeight(doc, row, font, col) {
-  const blocks = [
-    splitLines(doc, row.modeloCliente, col.modeloW, 9, font),
-    splitLines(doc, row.produto, col.produtoW, 8.2, font),
-    splitLines(doc, row.destino, col.destinoW, 8.2, font),
-  ];
-  const lines = Math.max(...blocks.map((b) => b.length), 1);
-  return 4 + lines * 4.2;
-}
+  setFill(doc, fill);
+  setStroke(doc, PALETTE.line, 0.15);
+  doc.roundedRect(left, y, width, cardH, 2, 2, 'FD');
 
-function drawRow(doc, row, font, y, col) {
-  const rowH = measureRowHeight(doc, row, font, col);
-  const modeloLines = splitLines(doc, row.modeloCliente, col.modeloW, 9, font);
-  const produtoLines = splitLines(doc, row.produto, col.produtoW, 8.2, font);
-  const destinoLines = splitLines(doc, row.destino, col.destinoW, 8.2, font);
-
-  doc.setFont(font, row.modeloCliente === '—' ? 'normal' : 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(0, 0, 0);
-  doc.text(modeloLines, col.modelo, y);
-
-  doc.setFont(font, 'normal');
-  doc.setFontSize(8.2);
-  doc.text(produtoLines, col.produto, y);
-  doc.text(destinoLines, col.destino, y);
-
-  doc.setFontSize(8.8);
-  doc.text(brl(PRECO_M2), col.preco, y, { align: 'right' });
-  doc.text(String(row.caixas), col.caixas, y, { align: 'right' });
-  doc.text(row.m2Fmt, col.m2, y, { align: 'right' });
+  let cy = y + 6.5;
   doc.setFont(font, 'bold');
-  doc.text(row.totalFmt, col.total, y, { align: 'right' });
+  doc.setFontSize(11);
+  setText(doc, PALETTE.ink);
+  doc.text(normalizePdfText(row.modeloCliente.toUpperCase()), left + innerPad, cy);
 
-  const bottom = y + rowH - 1;
-  doc.setDrawColor(220, 220, 220);
-  doc.setLineWidth(0.08);
-  doc.line(col.left, bottom, col.right, bottom);
-  return bottom + 2.5;
+  doc.setFont(font, 'bold');
+  doc.setFontSize(10.5);
+  doc.text(row.totalFmt, right - innerPad, cy, { align: 'right' });
+
+  cy += 5.5;
+  doc.setFont(font, 'normal');
+  doc.setFontSize(8.5);
+  setText(doc, PALETTE.muted);
+  const produtoLines = doc.splitTextToSize(normalizePdfText(row.produto), innerW);
+  doc.text(produtoLines, left + innerPad, cy);
+  cy += produtoLines.length * 4.1;
+
+  if (row.destino) {
+    cy += 1.2;
+    doc.setFont(font, 'normal');
+    doc.setFontSize(8.2);
+    setText(doc, PALETTE.faint);
+    const destinoLines = doc.splitTextToSize(normalizePdfText(row.destino), innerW);
+    doc.text(destinoLines, left + innerPad, cy);
+    cy += destinoLines.length * 3.8;
+  }
+
+  cy += 3.5;
+  setStroke(doc, PALETTE.line, 0.08);
+  doc.line(left + innerPad, cy, right - innerPad, cy);
+  cy += 4.5;
+
+  doc.setFont(font, 'normal');
+  doc.setFontSize(8.4);
+  setText(doc, PALETTE.muted);
+  const metrics = [
+  `${row.caixas} caixas`,
+  `${row.m2Fmt} m²`,
+  `${brl(PRECO_M2)}/m²`,
+  ];
+  const metricText = metrics.join('   ·   ');
+  doc.text(normalizePdfText(metricText), left + innerPad, cy);
+
+  return y + cardH + 3.5;
+}
+
+function drawMetaBlock(doc, font, y, layout) {
+  const { left, right, width } = layout;
+  const blockH = 22;
+
+  setFill(doc, PALETTE.headerFill);
+  setStroke(doc, PALETTE.line, 0.15);
+  doc.roundedRect(left, y, width, blockH, 2, 2, 'FD');
+
+  const colMid = left + width / 2;
+  const textY = y + 8;
+
+  doc.setFont(font, 'normal');
+  doc.setFontSize(7.5);
+  setText(doc, PALETTE.faint);
+  doc.text(normalizePdfText('CLIENTE'), left + 5, textY);
+  doc.text(normalizePdfText('DATA'), colMid + 5, textY);
+  doc.text(normalizePdfText('REFERÊNCIA'), right - 5, textY, { align: 'right' });
+
+  doc.setFont(font, 'bold');
+  doc.setFontSize(9.5);
+  setText(doc, PALETTE.ink);
+  doc.text(normalizePdfText(META.cliente), left + 5, textY + 5.5);
+  doc.text(normalizePdfText(DATA_DOCUMENTO), colMid + 5, textY + 5.5);
+  doc.text(normalizePdfText(`${META.pedido} · ${META.embarque}`), right - 5, textY + 5.5, { align: 'right' });
+
+  return y + blockH + 8;
+}
+
+function drawTotalsBox(doc, font, y, layout, totals) {
+  const { left, right, width } = layout;
+  const boxH = 18;
+
+  setFill(doc, PALETTE.totalFill);
+  setStroke(doc, PALETTE.accent, 0.35);
+  doc.roundedRect(left, y, width, boxH, 2, 2, 'FD');
+
+  doc.setFont(font, 'bold');
+  doc.setFontSize(10);
+  setText(doc, PALETTE.ink);
+  doc.text(normalizePdfText('TOTAL GERAL'), left + 5, y + 7);
+
+  doc.setFont(font, 'normal');
+  doc.setFontSize(8.6);
+  setText(doc, PALETTE.muted);
+  doc.text(
+    normalizePdfText(`${totals.totalCaixas} caixas   ·   ${brNum(totals.totalM2)} m²   ·   ${brl(PRECO_M2)}/m²`),
+    left + 5,
+    y + 12.5,
+  );
+
+  doc.setFont(font, 'bold');
+  doc.setFontSize(13);
+  setText(doc, PALETTE.ink);
+  doc.text(brl(totals.totalGeral), right - 5, y + 10.5, { align: 'right' });
+
+  return y + boxH + 8;
 }
 
 export async function generateInformativoCompraElisabethPdf(outputPath) {
@@ -203,81 +293,63 @@ export async function generateInformativoCompraElisabethPdf(outputPath) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const font = await registerFonts(doc);
   const pageW = doc.internal.pageSize.getWidth();
-  const M = 14;
-  const col = {
-    left: M,
-    right: pageW - M,
-    modelo: M,
-    modeloW: 18,
-    produto: M + 20,
-    produtoW: 52,
-    destino: M + 74,
-    destinoW: 48,
-    preco: pageW - M - 44,
-    caixas: pageW - M - 34,
-    m2: pageW - M - 22,
-    total: pageW - M,
-  };
+  const pageH = doc.internal.pageSize.getHeight();
+  const M = 16;
+  const layout = { left: M, right: pageW - M, width: pageW - M * 2 };
 
   let y = 18;
+
   doc.setFont(font, 'bold');
-  doc.setFontSize(16);
-  doc.setTextColor(0, 0, 0);
-  doc.text(normalizePdfText('INFORMATIVO DE COMPRA'), M, y);
+  doc.setFontSize(20);
+  setText(doc, PALETTE.ink);
+  doc.text(normalizePdfText('Informativo de Compra'), M, y);
 
-  y += 8;
+  y += 5;
+  setStroke(doc, PALETTE.accent, 0.5);
+  doc.line(M, y, pageW - M, y);
+
+  y += 7;
   doc.setFont(font, 'normal');
-  doc.setFontSize(10);
-  doc.setTextColor(72, 72, 72);
-  doc.text(normalizePdfText(`Data: ${DATA_DOCUMENTO}`), M, y);
-  doc.text(normalizePdfText(`Cliente: ${META.cliente}`), M, y + 5);
-  doc.text(normalizePdfText(`Fornecedor: ${META.fornecedor}`), M, y + 10);
-  doc.text(normalizePdfText(`Pedido / Embarque: ${META.pedido} · ${META.embarque}`), M, y + 15);
-
-  y += 24;
-  doc.setFont(font, 'bold');
-  doc.setFontSize(11);
-  doc.setTextColor(0, 0, 0);
-  doc.text(normalizePdfText('Revestimentos e porcelanatos — pedido completo Vetrus'), M, y);
-
-  y += 6;
-  doc.setFont(font, 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(72, 72, 72);
+  doc.setFontSize(9.5);
+  setText(doc, PALETTE.muted);
   doc.text(
-    normalizePdfText('Valores de venda acordados com a cliente. Preço único de R$ 76,00/m² em todos os itens.'),
+    normalizePdfText('Relação de materiais, quantidades e valores acordados.'),
     M,
     y,
   );
 
   y += 8;
-  y = drawTableHeader(doc, font, y, col);
-  for (const linha of linhas) {
-    y = drawRow(doc, linha, font, y, col);
-  }
-
-  y += 4;
-  doc.setDrawColor(110, 110, 110);
-  doc.setLineWidth(0.2);
-  doc.line(M, y, pageW - M, y);
-  y += 7;
+  y = drawMetaBlock(doc, font, y, layout);
 
   doc.setFont(font, 'bold');
-  doc.setFontSize(10.5);
-  doc.text(normalizePdfText('TOTAIS'), M, y);
-  doc.text(normalizePdfText(`${totalCaixas} caixas`), col.caixas, y, { align: 'right' });
-  doc.text(brNum(totalM2), col.m2, y, { align: 'right' });
-  doc.text(brl(totalGeral), col.total, y, { align: 'right' });
+  doc.setFontSize(9);
+  setText(doc, PALETTE.muted);
+  doc.text(normalizePdfText('ITENS'), M, y);
+  y += 5;
 
-  y += 10;
+  for (let i = 0; i < linhas.length; i += 1) {
+    const cardH = measureCardHeight(doc, font, linhas[i], layout.width - 10);
+    if (y + cardH > pageH - 36) {
+      doc.addPage();
+      y = 18;
+    }
+    y = drawCard(doc, font, linhas[i], y, layout, i);
+  }
+
+  if (y + 26 > pageH - 14) {
+    doc.addPage();
+    y = 18;
+  }
+
+  y = drawTotalsBox(doc, font, y, layout, { totalM2, totalCaixas, totalGeral });
+
   doc.setFont(font, 'normal');
-  doc.setFontSize(8.5);
-  doc.setTextColor(72, 72, 72);
+  doc.setFontSize(7.5);
+  setText(doc, PALETTE.faint);
   const nota = normalizePdfText(
-    'Documento informativo para registo da operação comercial. Não substitui nota fiscal nem pedido de venda formal.',
+    'Documento informativo. Não substitui nota fiscal nem pedido de venda formal.',
   );
-  const notaLines = doc.splitTextToSize(nota, pageW - M * 2);
-  doc.text(notaLines, M, y);
+  doc.text(nota, M, pageH - 10);
 
   const pdfBytes = doc.output('arraybuffer');
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
@@ -300,9 +372,6 @@ async function main() {
   console.log('PDF gerado:', result.outputPath);
   if (!outArg) console.log('Cópia em:', artifactOut);
   console.log('Totais:', result.totalCaixas, 'caixas |', brNum(result.totalM2), 'm² |', brl(result.totalGeral));
-  for (const l of result.linhas) {
-    console.log(`- ${l.modeloCliente}: ${l.caixas} cx | ${l.m2Fmt} m² | ${l.destino}`);
-  }
 }
 
 main().catch((err) => {
