@@ -1,7 +1,6 @@
-import React, { useState, useEffect, Suspense, useCallback } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { flushSync } from 'react-dom';
 import { useLocation } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
 import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCache';
 
 import { base44, p38 } from '@/api/base44Client';
@@ -22,9 +21,6 @@ import FinanceiroAccessGuard from '@/components/guard/FinanceiroAccessGuard';
 import { isFinanceiroProtectedPage } from '@/config/financeiroGate';
 import { isSupabaseAuthEnabled } from '@/integrations/p38/providers';
 import { cn } from '@/lib/utils';
-import usePullToRefresh, { usePullToRefreshScrollRoot } from '@/components/utils/usePullToRefresh';
-import PullToRefreshIndicator from '@/components/ui/PullToRefreshIndicator';
-import { runDefaultP38PullRefresh } from '@/lib/p38PullRefresh';
 
 const GlacialSidebar = React.lazy(() => import('@/components/navigation/GlacialSidebar'));
 const PinSetupDialog = React.lazy(() => import('@/components/auth/PinSetupDialog'));
@@ -56,7 +52,6 @@ const LayoutOutlet = React.memo(function LayoutOutlet({ children }) {
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
-  const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useCompactShell();
   const forceLandscape = useForceLandscape();
@@ -103,22 +98,6 @@ export default function Layout({ children, currentPageName }) {
     !showMobileUserMenu &&
     shouldHideBottomNavOnScroll(currentPageName);
   const bottomNavVisible = useBottomNavScrollVisibility(bottomNavScrollEnabled);
-  const mobilePullRefreshEnabled =
-    isMobile &&
-    !isFullscreen &&
-    !MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName);
-  const { scrollRoot, bindScrollRoot } = usePullToRefreshScrollRoot();
-  const handleMobilePullRefresh = useCallback(async () => {
-    await runDefaultP38PullRefresh(queryClient, currentPageName);
-  }, [queryClient, currentPageName]);
-  const { isRefreshing: isPullRefreshing, pullDistance } = usePullToRefresh(
-    handleMobilePullRefresh,
-    { scrollRoot: mobilePullRefreshEnabled ? scrollRoot : null },
-  );
-
-  useEffect(() => {
-    if (!mobilePullRefreshEnabled) bindScrollRoot(null);
-  }, [mobilePullRefreshEnabled, bindScrollRoot]);
 
   useEffect(() => {
     setIsOpen(false);
@@ -440,20 +419,16 @@ export default function Layout({ children, currentPageName }) {
         )}
 
         <div 
-          ref={mobilePullRefreshEnabled ? bindScrollRoot : undefined}
           data-p38-overlay-sidebar={useDesktopOverlaySidebar ? 'true' : undefined}
-          className={cn(
-            'flex-1 transition-[margin] duration-200 ease-out',
-            isMobile
-              ? cn(
-                  'ml-0 min-h-0',
+          className={`flex-1 transition-[margin] duration-200 ease-out ${
+            isMobile 
+              ? `ml-0 min-h-0 flex flex-col ${
                   MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName)
-                    ? 'h-full max-h-full overflow-hidden'
-                    : 'relative overflow-y-auto overscroll-y-contain p38-stage-panel-scroll p38-layout-mobile-scroll-pad touch-pan-y',
-                )
-              : (useDesktopOverlaySidebar ? 'ml-[64px]' : (isOpen ? 'ml-[300px]' : 'ml-[64px]')),
-            MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) && !isMobile && 'h-screen max-h-screen overflow-hidden',
-          )}
+                    ? 'flex-1 min-h-0 overflow-hidden'
+                    : 'overflow-y-auto overscroll-y-contain p38-stage-panel-scroll p38-layout-mobile-scroll-pad touch-pan-y'
+                }`
+              : (useDesktopOverlaySidebar ? 'ml-[64px]' : (isOpen ? 'ml-[300px]' : 'ml-[64px]'))
+          } ${MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) && !isMobile ? 'h-screen max-h-screen overflow-hidden' : ''}`}
           style={{
             willChange: 'margin',
             paddingTop: isMobile
@@ -461,11 +436,8 @@ export default function Layout({ children, currentPageName }) {
               : undefined,
           }}
         >
-          {mobilePullRefreshEnabled ? (
-            <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isPullRefreshing} />
-          ) : null}
           {MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) ? (
-            <div className="h-full min-h-0 overflow-hidden">
+            <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
               <LayoutOutlet>{pageContent}</LayoutOutlet>
             </div>
           ) : (
