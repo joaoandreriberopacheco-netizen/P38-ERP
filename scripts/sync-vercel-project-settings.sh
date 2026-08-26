@@ -10,7 +10,7 @@ install_cmd="${VERCEL_INSTALL_COMMAND:-npm ci}"
 
 echo "[sync-vercel-project] A alinhar framework/build do projecto ${project_name}…"
 
-result=$(npx --yes vercel@latest project update "$project_name" \
+result=$(npx --yes "vercel@${VERCEL_CLI_VERSION:-59.6.2}" project update "$project_name" \
   --framework nextjs \
   --build-command "$build_cmd" \
   --install-command "$install_cmd" \

@@ -19,7 +19,7 @@ add_env() {
   if [[ "$name" == NEXT_PUBLIC_* || "$name" == VITE_* ]]; then
     sensitive_flags=(--no-sensitive)
   fi
-  printf '%s' "$value" | npx --yes vercel@latest env add "$name" production --token "$VERCEL_TOKEN" --force "${sensitive_flags[@]}" >/dev/null
+  printf '%s' "$value" | npx --yes "vercel@${VERCEL_CLI_VERSION:-59.6.2}" env add "$name" production --token "$VERCEL_TOKEN" --force "${sensitive_flags[@]}" >/dev/null
   echo "  $name → production (Vercel)"
 }
 
