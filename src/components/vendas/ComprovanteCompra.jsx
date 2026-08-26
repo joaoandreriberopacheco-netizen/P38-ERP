@@ -10,6 +10,7 @@ import {
   normalizePairingCode,
 } from '@/lib/printAgentPairingCode';
 import {
+  checkPrintAgentHealth,
   enqueueRemotePrint,
   getStoredAgentId,
   getStoredAgentNome,
