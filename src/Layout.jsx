@@ -26,15 +26,27 @@ const GlacialSidebar = React.lazy(() => import('@/components/navigation/GlacialS
 const PinSetupDialog = React.lazy(() => import('@/components/auth/PinSetupDialog'));
 const MobileFunctionSelector = React.lazy(() => import('@/components/navigation/MobileFunctionSelector'));
 
-/** Páginas com scroll interno no mobile (evita body + nested scroll e zoom por overflow). */
+/** Mobile: scroll interno na página (evita body + nested scroll). Produtos/PDVCaixa usam scroll do painel como VendasGestao. */
 const MOBILE_FULL_VIEWPORT_PAGES = new Set([
+  'RelatorioMargem',
+  'PrecoJustoDashboard',
+  'RelatorioCatalogoEstoque',
+  'CaixasAtivos',
+  'TurnosFechados',
+  'PDVVendedor',
+  'PDV',
+  'TabelaPrecosConsulta',
+  'Compras',
+]);
+
+/** Desktop: catálogo/relatórios densos ocupam altura do viewport. */
+const DESKTOP_FULL_HEIGHT_PAGES = new Set([
   'Produtos',
   'RelatorioMargem',
   'PrecoJustoDashboard',
   'RelatorioCatalogoEstoque',
   'CaixasAtivos',
   'TurnosFechados',
-  'PDVCaixa',
   'PDVVendedor',
   'PDV',
   'TabelaPrecosConsulta',
@@ -90,6 +102,9 @@ export default function Layout({ children, currentPageName }) {
     fullscreenPages.some((page) => location.pathname.includes(page));
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const useDesktopOverlaySidebar = !isMobile && DESKTOP_OVERLAY_SIDEBAR_PAGES.has(currentPageName);
+  const usesFullViewportShell = isMobile
+    ? MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName)
+    : DESKTOP_FULL_HEIGHT_PAGES.has(currentPageName);
   const bottomNavScrollEnabled =
     isMobile &&
     !isFullscreen &&
@@ -422,11 +437,11 @@ export default function Layout({ children, currentPageName }) {
           data-p38-overlay-sidebar={useDesktopOverlaySidebar ? 'true' : undefined}
           className={`flex-1 transition-[margin] duration-200 ease-out ${
             isMobile 
-              ? MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName)
+              ? usesFullViewportShell
                 ? 'ml-0 min-h-0 h-full max-h-full overflow-hidden touch-pan-y'
                 : 'ml-0 min-h-0 overflow-y-auto overscroll-y-contain p38-stage-panel-scroll p38-layout-mobile-scroll-pad touch-pan-y'
               : (useDesktopOverlaySidebar ? 'ml-[64px]' : (isOpen ? 'ml-[300px]' : 'ml-[64px]'))
-          } ${MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) && !isMobile ? 'h-screen max-h-screen overflow-hidden' : ''}`}
+          } ${usesFullViewportShell && !isMobile ? 'h-screen max-h-screen overflow-hidden' : ''}`}
           style={{
             willChange: 'margin',
             paddingTop: isMobile
@@ -434,7 +449,7 @@ export default function Layout({ children, currentPageName }) {
               : undefined,
           }}
         >
-          {MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) ? (
+          {usesFullViewportShell ? (
             <div className="h-full min-h-0 overflow-hidden touch-pan-y">
               <LayoutOutlet>{pageContent}</LayoutOutlet>
             </div>

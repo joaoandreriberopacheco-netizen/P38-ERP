@@ -77,12 +77,14 @@ import {
   CAIXA_TOAST_SUCCESS,
   caixaClasses,
   caixaMain,
+  caixaMainInLayout,
   caixaMobileTabBar,
   caixaShell,
   caixaTabPanel,
+  caixaTabPanelInLayout,
   caixaTabPanelPad,
-  caixaTabPanelPadInLayout,
   caixaTabsRoot,
+  caixaTabsRootInLayout,
   caixaTypo,
   conferenciaTone,
   movimentoTone,
@@ -181,7 +183,10 @@ export default function PDVCaixa({
   const queryClient = useQueryClient();
   const isMobileShell = useCompactShell();
   const inAppLayout = isMobileShell && !overlayMode;
-  const tabPanelPad = inAppLayout ? caixaTabPanelPadInLayout : caixaTabPanelPad;
+  const tabPanelPad = inAppLayout ? '' : caixaTabPanelPad;
+  const mainClassName = inAppLayout ? caixaMainInLayout : caixaMain;
+  const tabsRootClassName = inAppLayout ? caixaTabsRootInLayout : caixaTabsRoot;
+  const tabPanelClassName = inAppLayout ? caixaTabPanelInLayout : caixaTabPanel;
   const fechamentoSectionRef = useRef(null);
   const handleClose = () => {
     if (overlayMode && onClose) {
@@ -1439,9 +1444,11 @@ export default function PDVCaixa({
 
   const screenShellBg = overlayMode ? 'bg-muted dark:bg-background' : 'bg-muted/40 dark:bg-background';
 
-  const rootClassName = overlayMode || inAppLayout
+  const rootClassName = overlayMode
     ? `flex flex-col h-full min-h-0 ${screenShellBg} ${caixaTypo.screen}`
-    : `${caixaShell} ${screenShellBg} ${caixaTypo.screen}`;
+    : inAppLayout
+      ? `flex flex-col w-full max-w-7xl mx-auto space-y-0 overflow-x-hidden ${screenShellBg} ${caixaTypo.screen}`
+      : `${caixaShell} ${screenShellBg} ${caixaTypo.screen}`;
 
   return (
     <CaixaOverlayStackProvider active={overlayMode}>
@@ -1513,7 +1520,7 @@ export default function PDVCaixa({
       </div>
 
       {/* Conteúdo Principal */}
-      <div className={`${caixaMain} relative ${screenShellBg}`}>
+      <div className={`${mainClassName} ${inAppLayout ? '' : 'relative'} ${screenShellBg}`}>
         {!caixaSelecionado ? (
           <div className="h-full flex items-center justify-center">
             <div className="text-center text-muted-foreground dark:text-muted-foreground">
@@ -1524,7 +1531,7 @@ export default function PDVCaixa({
         ) : view === 'dashboard' &&
         <>
             {/* Desktop e Mobile - Sistema de Abas Unificado */}
-              <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="balanco" className={caixaTabsRoot}>
+              <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="balanco" className={tabsRootClassName}>
                 {/* Abas mobile — abaixo do header; bottom nav fica no shell global */}
                 <TabsList className={`${caixaMobileTabBar} grid grid-cols-3 h-14 bg-card dark:bg-card border-b border-border/40 dark:border-border/40 rounded-none p-0`}>
                   <TabsTrigger value="balanco" className="flex flex-col items-center justify-center gap-0.5 data-[state=active]:bg-muted/40 dark:data-[state=active]:bg-muted h-full rounded-none border-0">
@@ -1580,7 +1587,7 @@ export default function PDVCaixa({
                 </div>
 
                 <div className="relative flex-1 min-h-0 h-0 overflow-hidden">
-                <TabsContent value="balanco" data-caixa-tab-scroll className={`${caixaTabPanel} ${tabPanelPad}`}>
+                <TabsContent value="balanco" data-caixa-tab-scroll className={`${tabPanelClassName} ${tabPanelPad}`}>
                   <div className="max-w-4xl mx-auto space-y-4 pb-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <CaixaMovimentacoesTurno
@@ -1852,7 +1859,7 @@ export default function PDVCaixa({
                      })()}
                  </TabsContent>
 
-                 <TabsContent value="vendas" data-caixa-tab-scroll className={`${caixaTabPanel} ${tabPanelPad} space-y-3`}>
+                 <TabsContent value="vendas" data-caixa-tab-scroll className={`${tabPanelClassName} ${tabPanelPad} space-y-3`}>
                    <div className="max-w-4xl mx-auto space-y-4">
                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                        <div className="flex rounded-2xl bg-muted/50 p-1 gap-1">
@@ -1914,7 +1921,7 @@ export default function PDVCaixa({
                             </div>
                             </TabsContent>
 
-                <TabsContent value="movimentos" data-caixa-tab-scroll className={`${caixaTabPanel} ${tabPanelPad} space-y-3`}>
+                <TabsContent value="movimentos" data-caixa-tab-scroll className={`${tabPanelClassName} ${tabPanelPad} space-y-3`}>
                   <div className="max-w-4xl mx-auto space-y-3">
                     {/* Botões de ação */}
                     <div className="grid grid-cols-3 gap-2">
