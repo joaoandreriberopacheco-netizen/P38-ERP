@@ -8,15 +8,10 @@ try {
   if (localStorage.getItem('theme') === 'dark') {
     document.documentElement.classList.add('dark');
   }
-  if (localStorage.getItem('p38_orientation_mode') === 'landscape' && window.innerHeight > window.innerWidth) {
-    var w = window.innerWidth, h = window.innerHeight;
-    document.documentElement.setAttribute('data-p38-force-landscape', 'true');
-    document.documentElement.style.setProperty('--p38-force-landscape-shift', w + 'px');
-    document.documentElement.style.setProperty('--p38-force-landscape-width', h + 'px');
-    document.documentElement.style.setProperty('--p38-force-landscape-height', w + 'px');
-    document.documentElement.style.setProperty('--p38-stage-height', w + 'px');
-    document.documentElement.style.setProperty('--p38-stage-width', h + 'px');
+  if (localStorage.getItem('p38_orientation_mode') === 'landscape') {
+    localStorage.setItem('p38_orientation_mode', 'auto');
   }
+  document.documentElement.removeAttribute('data-p38-force-landscape');
 } catch (_) {}
 `;
 

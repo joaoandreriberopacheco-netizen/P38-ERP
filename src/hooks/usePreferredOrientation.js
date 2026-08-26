@@ -11,14 +11,22 @@ export function usePreferredOrientation() {
   useEffect(() => {
     const sync = () => setOrientation(getPreferredOrientation());
     window.addEventListener(ORIENTATION_CHANGE_EVENT, sync);
-    return () => window.removeEventListener(ORIENTATION_CHANGE_EVENT, sync);
+    window.addEventListener('orientationchange', sync);
+    screen.orientation?.addEventListener?.('change', sync);
+    return () => {
+      window.removeEventListener(ORIENTATION_CHANGE_EVENT, sync);
+      window.removeEventListener('orientationchange', sync);
+      screen.orientation?.removeEventListener?.('change', sync);
+    };
   }, []);
 
-  const landscape = orientation === 'landscape';
+  const rotationUnlocked = orientation === 'auto';
 
   return {
     orientation,
-    landscape,
+    rotationUnlocked,
+    /** @deprecated usar rotationUnlocked */
+    landscape: rotationUnlocked,
     toggle: () => togglePreferredOrientation(),
   };
 }

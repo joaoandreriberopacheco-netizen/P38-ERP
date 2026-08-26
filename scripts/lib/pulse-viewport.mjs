@@ -58,7 +58,7 @@ export function resolveViewportProfile(args = {}) {
 }
 
 /**
- * Cria contexto Playwright com perfil e opcional Modo Paisagem (localStorage).
+ * Cria contexto Playwright com perfil e opcional rotação livre (localStorage auto).
  */
 export async function createPulseBrowserContext(browser, { profile, modoPaisagem = false } = {}) {
   const resolved = profile?.contextOptions
@@ -70,7 +70,7 @@ export async function createPulseBrowserContext(browser, { profile, modoPaisagem
   if (modoPaisagem) {
     await context.addInitScript(() => {
       try {
-        window.localStorage.setItem('p38_orientation_mode', 'landscape');
+        window.localStorage.setItem('p38_orientation_mode', 'auto');
       } catch {
         /* ignore */
       }

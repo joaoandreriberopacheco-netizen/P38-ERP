@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
-import { ChevronRight, Sun, Moon, ALargeSmall, Shield, User, Settings, LogOut, RectangleHorizontal, Smartphone } from 'lucide-react';
+import { ChevronRight, Sun, Moon, ALargeSmall, Shield, User, Settings, LogOut, RotateCw, Lock } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import PinSetupDialog from '@/components/auth/PinSetupDialog';
 import P38Logo from '@/components/brand/P38Logo';
@@ -49,7 +49,7 @@ export default function GlacialSidebar({
   });
   const location = useLocation();
   const isDark = useDarkMode();
-  const { landscape, toggle: toggleLandscape } = usePreferredOrientation();
+  const { rotationUnlocked, toggle: toggleRotationLock } = usePreferredOrientation();
 
   useEffect(() => {
     if (!currentUser) {
@@ -309,18 +309,18 @@ export default function GlacialSidebar({
                 </button>
 
                 <button
-                  onClick={() => { toggleLandscape(); setUserPanelOpen(false); }}
+                  onClick={() => { toggleRotationLock(); setUserPanelOpen(false); }}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left"
                   style={{ color: c.text }}
                   onMouseEnter={e => e.currentTarget.style.background = c.hoverBg}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                   {...pulseSensor('perfil.modo-paisagem')}
                 >
-                  {landscape
-                    ? <Smartphone size={15} style={{ color: c.iconColor }} />
-                    : <RectangleHorizontal size={15} style={{ color: c.iconColor }} />
+                  {rotationUnlocked
+                    ? <Lock size={15} style={{ color: c.iconColor }} />
+                    : <RotateCw size={15} style={{ color: c.iconColor }} />
                   }
-                  <span className="text-sm">{landscape ? 'Modo Retrato' : 'Modo Paisagem'}</span>
+                  <span className="text-sm">{rotationUnlocked ? 'Bloquear rotação' : 'Rotação livre'}</span>
                 </button>
 
                 <button

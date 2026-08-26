@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/components/utils';
-import { User, LogOut, Settings, Sun, Moon, X, HelpCircle, Shield, RectangleHorizontal, Smartphone } from 'lucide-react';
+import { User, LogOut, Settings, Sun, Moon, X, HelpCircle, Shield, RotateCw, Lock } from 'lucide-react';
 import PinSetupDialog from '@/components/auth/PinSetupDialog';
 import FontScaleControl from '@/components/accessibility/FontScaleControl';
 import { usePreferredOrientation } from '@/hooks/usePreferredOrientation';
@@ -16,7 +16,7 @@ export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen,
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [showPin, setShowPin] = useState(false);
-  const { landscape, toggle: toggleLandscape } = usePreferredOrientation();
+  const { rotationUnlocked, toggle: toggleRotationLock } = usePreferredOrientation();
   const forceLandscape = useForceLandscape();
 
   useEffect(() => {
@@ -97,16 +97,16 @@ export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen,
 
               <button
                 type="button"
-                onClick={() => { toggleLandscape(); handleClose(); }}
+                onClick={() => { toggleRotationLock(); handleClose(); }}
                 className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-muted/40 dark:hover:bg-muted transition-colors"
                 {...pulseSensor('perfil.modo-paisagem')}
               >
-                {landscape
-                  ? <Smartphone className="w-5 h-5 text-muted-foreground" />
-                  : <RectangleHorizontal className="w-5 h-5 text-muted-foreground" />
+                {rotationUnlocked
+                  ? <Lock className="w-5 h-5 text-muted-foreground" />
+                  : <RotateCw className="w-5 h-5 text-muted-foreground" />
                 }
                 <span className="text-sm text-foreground/90">
-                  {landscape ? 'Modo Retrato' : 'Modo Paisagem'}
+                  {rotationUnlocked ? 'Bloquear rotação' : 'Rotação livre'}
                 </span>
               </button>
 
