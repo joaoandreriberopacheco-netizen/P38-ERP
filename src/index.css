@@ -520,6 +520,17 @@ html[data-p38-force-landscape='true'] .p38-orientation-rotated-stage .p38-fullsc
   touch-action: pan-y pinch-zoom;
 }
 
+/* Scroll interno em flex mobile — altura limitada (Produtos, Caixa, Margem…) */
+.p38-flex-scroll-y {
+  flex: 1 1 auto;
+  height: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y pinch-zoom;
+}
+
 /* ==========================================
    SCROLLBAR GLOBAL — estilo Cursor (P38)
    Preto no claro, cinza no escuro; trilho transparente.
