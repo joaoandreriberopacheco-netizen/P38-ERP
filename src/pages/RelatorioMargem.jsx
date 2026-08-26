@@ -52,6 +52,7 @@ import {
 import { useVirtualRows } from '@/hooks/useVirtualRows';
 import { parseSearchTerms } from '@/lib/searchTokens';
 import { isP38Dev } from '@/lib/p38PublicEnv';
+import PullToRefreshScrollArea from '@/components/ui/PullToRefreshScrollArea';
 
 
 const PDF_COL_GAP_MM = 2;
@@ -2029,8 +2030,9 @@ export default function RelatorioMargemVendas() {
           )}
 
         {/* Área rolável — filtros sobem; cabeçalho da tabela fixa ao rolar (mobile) */}
-        <div
-          ref={mainScrollRef}
+        <PullToRefreshScrollArea
+          onRefresh={loadData}
+          scrollRef={mainScrollRef}
           className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y pb-[var(--p38-scroll-pad-below-nav)]"
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
@@ -2378,7 +2380,7 @@ export default function RelatorioMargemVendas() {
             </div>
           )}
           </div>
-        </div>
+        </PullToRefreshScrollArea>
       </div>
     </div>
     </TooltipProvider>
