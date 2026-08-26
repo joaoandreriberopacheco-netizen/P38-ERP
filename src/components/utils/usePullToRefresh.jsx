@@ -24,6 +24,12 @@ export default function usePullToRefresh(onRefresh, { threshold = 80, scrollRoot
   useEffect(() => {
     if (!scrollRoot) return undefined;
 
+    const resetPull = () => {
+      pulling.current = false;
+      pullDistanceRef.current = 0;
+      setPullDistance(0);
+    };
+
     const onTouchStart = (e) => {
       if (scrollRoot.scrollTop > 0) return;
       startY.current = e.touches[0].clientY;
@@ -31,9 +37,20 @@ export default function usePullToRefresh(onRefresh, { threshold = 80, scrollRoot
     };
 
     const onTouchMove = (e) => {
-      if (!pulling.current || isRefreshingRef.current) return;
-      const dist = Math.max(0, e.touches[0].clientY - startY.current);
-      const clamped = Math.min(dist * 0.5, threshold * 1.2);
+      if (isRefreshingRef.current) return;
+      if (scrollRoot.scrollTop > 0) {
+        resetPull();
+        return;
+      }
+      if (!pulling.current) return;
+
+      const delta = e.touches[0].clientY - startY.current;
+      if (delta < 0) {
+        resetPull();
+        return;
+      }
+
+      const clamped = Math.min(delta * 0.5, threshold * 1.2);
       pullDistanceRef.current = clamped;
       setPullDistance(clamped);
     };
@@ -53,8 +70,7 @@ export default function usePullToRefresh(onRefresh, { threshold = 80, scrollRoot
           setIsRefreshing(false);
         }
       } else {
-        setPullDistance(0);
-        pullDistanceRef.current = 0;
+        resetPull();
       }
     };
 

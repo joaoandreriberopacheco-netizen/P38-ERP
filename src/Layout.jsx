@@ -460,26 +460,15 @@ export default function Layout({ children, currentPageName }) {
           {mobilePullRefreshEnabled ? (
             <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isPullRefreshing} />
           ) : null}
-          <div
-            style={
-              mobilePullRefreshEnabled && pullDistance > 0
-                ? {
-                    transform: `translateY(${pullDistance}px)`,
-                    transition: 'transform 0.2s ease',
-                  }
-                : undefined
-            }
-          >
-            {MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) ? (
-              <div className="h-full min-h-0 overflow-hidden">
-                <LayoutOutlet>{pageContent}</LayoutOutlet>
-              </div>
-            ) : (
-              <div className="p-4 md:p-6 tablet-landscape:p-7 overflow-x-hidden max-w-full">
-                <LayoutOutlet>{pageContent}</LayoutOutlet>
-              </div>
-            )}
-          </div>
+          {MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) ? (
+            <div className="h-full min-h-0 overflow-hidden">
+              <LayoutOutlet>{pageContent}</LayoutOutlet>
+            </div>
+          ) : (
+            <div className="p-4 md:p-6 tablet-landscape:p-7 overflow-x-hidden max-w-full">
+              <LayoutOutlet>{pageContent}</LayoutOutlet>
+            </div>
+          )}
         </div>
         {isMobile && !isFullscreen && (
           <GlacialBottomNav

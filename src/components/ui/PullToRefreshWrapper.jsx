@@ -13,14 +13,7 @@ export default function PullToRefreshWrapper({ onRefresh, children, className = 
   return (
     <div ref={bindScrollRoot} className={`relative overflow-auto ${className}`}>
       <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
-      <div
-        style={{
-          transform: pullDistance > 0 ? `translateY(${pullDistance}px)` : undefined,
-          transition: pullDistance === 0 ? 'transform 0.2s ease' : undefined,
-        }}
-      >
-        {children}
-      </div>
+      {children}
     </div>
   );
 }

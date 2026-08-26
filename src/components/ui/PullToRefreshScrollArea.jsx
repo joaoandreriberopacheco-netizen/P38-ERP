@@ -6,6 +6,7 @@ import PullToRefreshIndicator from '@/components/ui/PullToRefreshIndicator';
 /**
  * Área de scroll com pull-to-refresh (mobile).
  * Aceita scrollRef externo para lógica que depende do contentor (ex.: cabeçalho fixo).
+ * Conteúdo fica directo no scroll container — sem wrapper intermédio que quebra flex/overflow.
  */
 export default function PullToRefreshScrollArea({
   onRefresh,
@@ -39,18 +40,7 @@ export default function PullToRefreshScrollArea({
       {enabled ? (
         <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
       ) : null}
-      <div
-        style={
-          enabled && pullDistance > 0
-            ? {
-                transform: `translateY(${pullDistance}px)`,
-                transition: 'transform 0.2s ease',
-              }
-            : undefined
-        }
-      >
-        {children}
-      </div>
+      {children}
     </div>
   );
 }

@@ -876,16 +876,6 @@ export function CatalogoMobileScrollShell({ catalogChrome, children, onRefresh }
         {onRefresh ? (
           <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
         ) : null}
-        <div
-          style={
-            onRefresh && pullDistance > 0
-              ? {
-                  transform: `translateY(${pullDistance}px)`,
-                  transition: 'transform 0.2s ease',
-                }
-              : undefined
-          }
-        >
         {catalogChrome}
         <div ref={sentinelRef} className="h-px w-full shrink-0" aria-hidden />
         <CatalogoMobileColumnHeader
@@ -899,7 +889,6 @@ export function CatalogoMobileScrollShell({ catalogChrome, children, onRefresh }
           />
         ) : null}
         {children}
-        </div>
       </div>
     </CatalogoMobileScrollContext.Provider>
   );
