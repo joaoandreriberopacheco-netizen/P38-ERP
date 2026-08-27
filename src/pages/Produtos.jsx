@@ -1588,14 +1588,14 @@ function ProdutosPageContent() {
   );
 
   return (
-    <div className="flex flex-col h-full min-h-0 overflow-hidden w-full max-w-full bg-background">
+    <div className="flex flex-1 min-h-0 h-full flex-col overflow-hidden w-full max-w-full bg-background">
       {isDesktop && (
         <div className="flex-none">
           <ProdutosHeader key="catalog-desktop" {...produtosHeaderProps} />
         </div>
       )}
 
-      <div className="flex flex-col flex-1 min-h-0 h-0 overflow-hidden w-full min-w-0">
+      <div className="flex flex-1 min-h-0 flex-col overflow-hidden w-full min-w-0">
         {isDesktop && (
           <div>
             <ProdutosCommandBar

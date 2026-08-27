@@ -439,8 +439,8 @@ export default function Layout({ children, currentPageName }) {
           className={`flex-1 transition-[margin] duration-200 ease-out ${
             isMobile 
               ? usesFullViewportShell
-                ? 'ml-0 min-h-0 h-full max-h-full flex flex-col overflow-hidden'
-                : 'ml-0 min-h-0 overflow-y-auto overscroll-y-contain p38-stage-panel-scroll p38-layout-mobile-scroll-pad touch-pan-y'
+                ? 'ml-0 flex flex-1 min-h-0 flex-col overflow-hidden'
+                : 'ml-0 flex min-h-0 flex-col overflow-y-auto overscroll-y-contain p38-stage-panel-scroll p38-layout-mobile-scroll-pad touch-pan-y'
               : (useDesktopOverlaySidebar ? 'ml-[64px]' : (isOpen ? 'ml-[300px]' : 'ml-[64px]'))
           } ${usesFullViewportShell && !isMobile ? 'h-screen max-h-screen overflow-hidden' : ''}`}
           style={{
@@ -451,7 +451,7 @@ export default function Layout({ children, currentPageName }) {
           }}
         >
           {usesFullViewportShell ? (
-            <div className="flex flex-col h-full min-h-0 overflow-hidden">
+            <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
               <LayoutOutlet>{pageContent}</LayoutOutlet>
             </div>
           ) : (
