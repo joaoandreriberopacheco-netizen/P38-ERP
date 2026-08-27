@@ -61,7 +61,8 @@ Metáfora: em vez da bola a rolar na horizontal (abrir 36 páginas reais), o **c
 |---------|-----------|
 | `npm run pulse:corridor` | Comboio — 1 visita Playwright, recolhe 36 sacas |
 | `npm run pulse:sensors` | Modo lento — visita cada página real (opcional) |
-| `npm run pulse:predeploy` | Rotas (41) + corredor comboio |
+| `npm run pulse:predeploy` | Refresh + rotas (41) + corredor (validação completa manual) |
+| `npm run pulse:predeploy:ci` | Só corredor comboio (~20s; usa build existente) |
 
 Relatório: `docs/pulse/corridor-report.json` (gerado em cada corrida; não versionado).
 
@@ -116,7 +117,7 @@ Cada elemento tem `data-pulse-sensor="id"` no código. O shell `.shell` é injet
 
 ## CI
 
-O workflow `.github/workflows/ci.yml` corre `npm run pulse:predeploy` (41 rotas + corredor comboio) em cada push.
+O workflow `.github/workflows/ci.yml` corre `npm run pulse:predeploy:ci` (comboio, ~20s após build) + `pulse:shipping:critico`. O `pulse:predeploy` completo (41 rotas) é opcional/manual.
 
 ### Debugger automático diário
 

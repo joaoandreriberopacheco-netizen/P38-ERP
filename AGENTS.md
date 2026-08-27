@@ -51,7 +51,7 @@ Três níveis (metáfora comboio):
 | Goal | Command |
 |------|---------|
 | Regenerar roteiro (manifestos) | `npm run pulse:refresh-roteiro` |
-| Pré-deploy CI | `npm run pulse:predeploy` (refresh + rotas + comboio) |
+| Pré-deploy CI | `npm run pulse:predeploy:ci` (comboio ~20s; build já feito no passo anterior) |
 | Gerar sensores/shipping JSON | `npm run pulse:generate-sensors` |
 
 **Refresh do roteiro no trem/shipping — comentado por defeito.** Em `scripts/pulse-sensors.mjs` e `scripts/pulse-shipping.mjs`, o bloco `refreshPulseRoteiro()` fica comentado no meio do script para corridas mais rápidas. Não descomentar salvo job periódico ou pedido explícito.
@@ -66,7 +66,7 @@ npm run pulse:refresh-roteiro && npm run pulse:shipping
 # Opção B — descomentar import + refreshPulseRoteiro() nos dois scripts
 ```
 
-O CI em push continua a fazer refresh via `pulse:predeploy`. Sensores UI usam `data-pulse-sensor` no JSX; mapa de controlos em `scripts/generate-pulse-sensors-geral.mjs` (`CONTROLS`, `SHIPPING_OVERRIDES`).
+O CI em push corre `pulse:predeploy:ci` (comboio) + `pulse:shipping:critico`. O `pulse:predeploy` completo (refresh + 41 rotas + comboio) fica para validação manual ou `pulse:diario`. Sensores UI usam `data-pulse-sensor` no JSX; mapa de controlos em `scripts/generate-pulse-sensors-geral.mjs` (`CONTROLS`, `SHIPPING_OVERRIDES`).
 
 **Debugger diário (trem + shipping):** workflow `.github/workflows/pulse-diario.yml` — 05:00 Tabatinga, `npm run pulse:diario`. Notifica João André via **WhatsApp** (CallMeBot: `PULSE_NOTIFY_WHATSAPP_PHONE` + `PULSE_NOTIFY_CALLMEBOT_APIKEY`), issue GitHub ou Telegram. Auto-reparo: só refresh de manifestos + retry.
 
