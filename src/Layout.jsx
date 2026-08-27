@@ -442,7 +442,7 @@ export default function Layout({ children, currentPageName }) {
                 ? 'ml-0 flex flex-1 min-h-0 flex-col overflow-hidden'
                 : 'ml-0 flex min-h-0 flex-col overflow-y-auto overscroll-y-contain p38-stage-panel-scroll p38-layout-mobile-scroll-pad touch-pan-y'
               : (useDesktopOverlaySidebar ? 'ml-[64px]' : (isOpen ? 'ml-[300px]' : 'ml-[64px]'))
-          } ${usesFullViewportShell && !isMobile ? 'h-screen max-h-screen overflow-hidden' : ''}`}
+          } ${usesFullViewportShell && !isMobile ? 'flex h-screen max-h-screen flex-col overflow-hidden' : ''}`}
           style={{
             willChange: 'margin',
             paddingTop: isMobile
