@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
-# Sincroniza env de produção no projecto Vercel (Next.js + fallback Vite legado).
+# Sincroniza env no projecto Vercel (Next.js + fallback Vite legado).
+# VERCEL_TARGET_ENV: production (default) | preview | development
 set -euo pipefail
 : "${VERCEL_TOKEN:?VERCEL_TOKEN em falta}"
+
+TARGET_ENV="${VERCEL_TARGET_ENV:-production}"
 
 add_env() {
   local name="$1"
@@ -19,8 +22,8 @@ add_env() {
   if [[ "$name" == NEXT_PUBLIC_* || "$name" == VITE_* ]]; then
     sensitive_flags=(--no-sensitive)
   fi
-  printf '%s' "$value" | npx --yes "vercel@${VERCEL_CLI_VERSION:-59.6.2}" env add "$name" production --token "$VERCEL_TOKEN" --force "${sensitive_flags[@]}" >/dev/null
-  echo "  $name → production (Vercel)"
+  printf '%s' "$value" | npx --yes "vercel@${VERCEL_CLI_VERSION:-59.6.2}" env add "$name" "$TARGET_ENV" --token "$VERCEL_TOKEN" --force "${sensitive_flags[@]}" >/dev/null
+  echo "  $name → $TARGET_ENV (Vercel)"
 }
 
 # Next.js produção — NEXT_PUBLIC_* canónico; VITE_* só espelho para scripts locais.
@@ -31,7 +34,7 @@ bypass="${NEXT_PUBLIC_P38_BYPASS_BASE44:-${VITE_P38_BYPASS_BASE44:-true}}"
 use_auth="${NEXT_PUBLIC_P38_USE_SUPABASE_AUTH:-${VITE_P38_USE_SUPABASE_AUTH:-true}}"
 google_login="${NEXT_PUBLIC_P38_ENABLE_GOOGLE_LOGIN:-${VITE_P38_ENABLE_GOOGLE_LOGIN:-}}"
 
-echo "[sync-vercel-env] A actualizar env vars de produção no Vercel (Next.js)…"
+echo "[sync-vercel-env] A actualizar env vars ($TARGET_ENV) no Vercel (Next.js)…"
 
 # Next.js (produção canónica)
 add_env NEXT_PUBLIC_P38_PROVIDER "$provider"

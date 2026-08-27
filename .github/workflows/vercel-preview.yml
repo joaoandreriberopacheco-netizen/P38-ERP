@@ -1,0 +1,214 @@
+# Preview Vercel — URL temporária para testar antes do deploy em produção.
+# Usa os mesmos secrets do workflow Vercel Deploy (VERCEL_* + Supabase).
+#
+# Dispara em PRs para main e manualmente (Actions → Vercel Preview → Run workflow).
+
+name: Vercel Preview
+
+concurrency:
+  group: vercel-preview-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      VERCEL_CLI_VERSION: '59.6.2'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Sanitizar secrets Vercel (trim newlines)
+        shell: bash
+        env:
+          RAW_VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          RAW_VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          RAW_VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          set -e
+          trim() { printf '%s' "$1" | tr -d '\n\r'; }
+          token=$(trim "$RAW_VERCEL_TOKEN")
+          org=$(trim "$RAW_VERCEL_ORG_ID")
+          project=$(trim "$RAW_VERCEL_PROJECT_ID")
+          if [ -z "$token" ] || [ -z "$org" ] || [ -z "$project" ]; then
+            echo "::error::VERCEL_TOKEN / VERCEL_ORG_ID / VERCEL_PROJECT_ID em falta."
+            exit 1
+          fi
+          {
+            echo "VERCEL_TOKEN=$token"
+            echo "VERCEL_ORG_ID=$org"
+            echo "VERCEL_PROJECT_ID=$project"
+          } >> "$GITHUB_ENV"
+
+      - name: Resolver secrets Supabase (Next.js)
+        shell: bash
+        env:
+          RAW_NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          RAW_NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          RAW_VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          RAW_VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
+          RAW_VITE_P38_USE_SUPABASE_AUTH: ${{ secrets.VITE_P38_USE_SUPABASE_AUTH || secrets.NEXT_PUBLIC_P38_USE_SUPABASE_AUTH }}
+          RAW_VITE_P38_ENABLE_GOOGLE_LOGIN: ${{ secrets.VITE_P38_ENABLE_GOOGLE_LOGIN || secrets.NEXT_PUBLIC_P38_ENABLE_GOOGLE_LOGIN }}
+        run: |
+          set -e
+          trim() { printf '%s' "$1" | tr -d '\n\r'; }
+          next_url=$(trim "$RAW_NEXT_PUBLIC_SUPABASE_URL")
+          next_anon=$(trim "$RAW_NEXT_PUBLIC_SUPABASE_ANON_KEY")
+          vite_url=$(trim "$RAW_VITE_SUPABASE_URL")
+          vite_anon=$(trim "$RAW_VITE_SUPABASE_ANON_KEY")
+          supabase_url="${next_url:-$vite_url}"
+          supabase_anon="${next_anon:-$vite_anon}"
+          if [ -z "$supabase_url" ] || [ -z "$supabase_anon" ]; then
+            echo "::error::Secrets Supabase em falta para preview."
+            exit 1
+          fi
+          use_auth=$(trim "${RAW_VITE_P38_USE_SUPABASE_AUTH:-true}")
+          google_login=$(trim "$RAW_VITE_P38_ENABLE_GOOGLE_LOGIN")
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$supabase_url"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$supabase_anon"
+            echo "VITE_SUPABASE_URL=$supabase_url"
+            echo "VITE_SUPABASE_ANON_KEY=$supabase_anon"
+            echo "VITE_P38_USE_SUPABASE_AUTH=$use_auth"
+            echo "VITE_P38_ENABLE_GOOGLE_LOGIN=$google_login"
+          } >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Vercel CLI (versão fixa)
+        run: npm install -g "vercel@${VERCEL_CLI_VERSION}"
+
+      - name: Vercel pull (preview)
+        run: vercel pull --yes --environment=preview --token "$VERCEL_TOKEN"
+
+      - name: Alinhar projecto Vercel (Next.js)
+        run: bash scripts/sync-vercel-project-settings.sh
+
+      - name: Sincronizar env Supabase no Vercel (preview)
+        run: VERCEL_TARGET_ENV=preview bash scripts/sync-vercel-production-env.sh
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ env.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_URL: ${{ env.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ env.VITE_SUPABASE_ANON_KEY }}
+          VITE_P38_USE_SUPABASE_AUTH: ${{ env.VITE_P38_USE_SUPABASE_AUTH }}
+          VITE_P38_ENABLE_GOOGLE_LOGIN: ${{ env.VITE_P38_ENABLE_GOOGLE_LOGIN }}
+
+      - name: Escrever env de preview para o Next
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ env.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          VITE_P38_USE_SUPABASE_AUTH: ${{ env.VITE_P38_USE_SUPABASE_AUTH }}
+          VITE_P38_ENABLE_GOOGLE_LOGIN: ${{ env.VITE_P38_ENABLE_GOOGLE_LOGIN }}
+        run: |
+          set -e
+          use_auth="${VITE_P38_USE_SUPABASE_AUTH:-true}"
+          google_login="${VITE_P38_ENABLE_GOOGLE_LOGIN:-}"
+          {
+            echo "NEXT_PUBLIC_P38_PROVIDER=supabase"
+            echo "NEXT_PUBLIC_P38_BYPASS_BASE44=true"
+            echo "NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}"
+            echo "NEXT_PUBLIC_P38_USE_SUPABASE_AUTH=${use_auth}"
+            echo "NEXT_PUBLIC_P38_ENABLE_GOOGLE_LOGIN=${google_login}"
+            echo "NEXT_PUBLIC_HIERARQUIA_PORTAL_ENABLED=false"
+            echo "NEXT_PUBLIC_CADASTRO_PRODUTO_V2_ENABLED=false"
+            echo "NEXT_PUBLIC_MODELO_CATALOGO_ENABLED=false"
+            echo "VITE_P38_PROVIDER=supabase"
+            echo "VITE_P38_BYPASS_BASE44=true"
+            echo "VITE_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}"
+            echo "VITE_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}"
+            echo "VITE_P38_USE_SUPABASE_AUTH=${use_auth}"
+            echo "VITE_P38_ENABLE_GOOGLE_LOGIN=${google_login}"
+          } > .env.production.local
+
+      - name: Vercel build (preview, prebuilt)
+        run: vercel build --token "$VERCEL_TOKEN"
+        env:
+          NEXT_PUBLIC_P38_PROVIDER: supabase
+          NEXT_PUBLIC_P38_BYPASS_BASE44: 'true'
+          NEXT_PUBLIC_SUPABASE_URL: ${{ env.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_P38_USE_SUPABASE_AUTH: ${{ env.VITE_P38_USE_SUPABASE_AUTH || 'true' }}
+          NEXT_PUBLIC_P38_ENABLE_GOOGLE_LOGIN: ${{ env.VITE_P38_ENABLE_GOOGLE_LOGIN || '' }}
+          NEXT_PUBLIC_HIERARQUIA_PORTAL_ENABLED: 'false'
+          NEXT_PUBLIC_CADASTRO_PRODUTO_V2_ENABLED: 'false'
+          NEXT_PUBLIC_MODELO_CATALOGO_ENABLED: 'false'
+          VITE_P38_PROVIDER: supabase
+          VITE_P38_BYPASS_BASE44: 'true'
+          VITE_SUPABASE_URL: ${{ env.NEXT_PUBLIC_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          VITE_P38_USE_SUPABASE_AUTH: ${{ env.VITE_P38_USE_SUPABASE_AUTH || 'true' }}
+          VITE_P38_ENABLE_GOOGLE_LOGIN: ${{ env.VITE_P38_ENABLE_GOOGLE_LOGIN || '' }}
+
+      - name: Vercel deploy (preview — não produção)
+        id: deploy
+        run: |
+          url=$(vercel deploy --prebuilt --yes --archive=tgz --token "$VERCEL_TOKEN")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "## Preview Vercel" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**URL:** $url" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Testa no telemóvel antes de fazer merge. Produção (p-38erp.vercel.app) só muda após merge na \`main\` + workflow Vercel Deploy." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comentar URL no PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        env:
+          PREVIEW_URL: ${{ steps.deploy.outputs.url }}
+        with:
+          script: |
+            const marker = '<!-- p38-vercel-preview -->';
+            const body = [
+              marker,
+              '## Preview Vercel (antes do deploy em produção)',
+              '',
+              `**URL:** ${process.env.PREVIEW_URL}`,
+              '',
+              'Testa no telemóvel aqui. A produção (`p-38erp.vercel.app`) só muda depois do merge na `main`.',
+              '',
+              `_Atualizado em ${new Date().toISOString()}_`,
+            ].join('\n');
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const { data: comments } = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+            const existing = comments.find((c) => c.body?.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body,
+              });
+            }
