@@ -23,6 +23,8 @@ jobs:
   preview:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
     env:
       VERCEL_CLI_VERSION: '59.6.2'
     steps:
@@ -163,11 +165,13 @@ jobs:
         run: |
           url=$(vercel deploy --prebuilt --yes --archive=tgz --token "$VERCEL_TOKEN")
           echo "url=$url" >> "$GITHUB_OUTPUT"
-          echo "## Preview Vercel" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "**URL:** $url" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Testa no telemóvel antes de fazer merge. Produção (p-38erp.vercel.app) só muda após merge na \`main\` + workflow Vercel Deploy." >> "$GITHUB_STEP_SUMMARY"
+          echo "Deploy URL: $url"
+
+      - name: Link clicável para abrir o preview
+        if: success()
+        env:
+          DEPLOY_URL: ${{ steps.deploy.outputs.url }}
+        run: bash scripts/write-github-deploy-link-summary.sh "$DEPLOY_URL" "Abrir preview no browser" preview
 
       - name: Comentar URL no PR
         if: github.event_name == 'pull_request'
@@ -177,11 +181,18 @@ jobs:
         with:
           script: |
             const marker = '<!-- p38-vercel-preview -->';
+            const url = process.env.PREVIEW_URL;
             const body = [
               marker,
               '## Preview Vercel (antes do deploy em produção)',
               '',
-              `**URL:** ${process.env.PREVIEW_URL}`,
+              `[**👉 Clicar para abrir o preview**](${url})`,
+              '',
+              `| Atalho | Link |`,
+              `|--------|------|`,
+              `| App | [${url}](${url}) |`,
+              `| Login | [${url}/login](${url}/login) |`,
+              `| Produtos | [${url}/Produtos](${url}/Produtos) |`,
               '',
               'Testa no telemóvel aqui. A produção (`p-38erp.vercel.app`) só muda depois do merge na `main`.',
               '',

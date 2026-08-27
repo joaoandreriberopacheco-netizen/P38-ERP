@@ -24,8 +24,10 @@ Opcional: `VITE_P38_USE_SUPABASE_AUTH` = `true` quando login Supabase estiver ac
 
 O workflow **Vercel Preview** (`.github/workflows/vercel-preview.yml`) publica uma **URL temporária** para testar no telemóvel **antes** do merge:
 
-- **Automático:** em cada PR para `main` (comenta/atualiza o link no PR)
+- **Automático:** em cada PR para `main` (comenta/atualiza o link no PR + **Job summary** com botão clicável no final do build)
 - **Manual:** Actions → **Vercel Preview** → Run workflow (útil numa branch sem PR)
+
+No final do job, abre o separador **Summary** na corrida do GitHub Actions — há um link **👉 Abrir preview no browser**.
 
 Usa os **mesmos secrets** do deploy de produção. A produção (`p-38erp.vercel.app`) **não muda** até merge na `main` + workflow **Vercel Deploy**.
 

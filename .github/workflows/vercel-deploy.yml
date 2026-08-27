@@ -28,6 +28,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
     env:
       # Evita falha ETARGET quando `latest` aponta para versão ainda não publicada no npm
       VERCEL_CLI_VERSION: '59.6.2'
@@ -262,3 +264,9 @@ jobs:
             exit 1
           fi
           echo "OK: produção Next contém ref Supabase ($ref)."
+
+      - name: Link clicável para abrir produção
+        if: success()
+        env:
+          DEPLOY_URL: ${{ steps.deploy.outputs.url }}
+        run: bash scripts/write-github-deploy-link-summary.sh "$DEPLOY_URL" "Abrir produção no browser" production
