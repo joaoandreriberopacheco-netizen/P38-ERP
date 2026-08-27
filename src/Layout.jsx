@@ -52,6 +52,7 @@ const DESKTOP_FULL_HEIGHT_PAGES = new Set([
   'PDV',
   'TabelaPrecosConsulta',
   'Compras',
+  'Cotacoes',
 ]);
 
 /** Rotas PDV no mobile: mantêm GlacialBottomNav (atalho rápido em overlay continua fullscreen). */

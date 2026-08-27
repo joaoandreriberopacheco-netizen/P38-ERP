@@ -3,10 +3,10 @@ import { P38HelpPopover } from '@/components/ui/p38-help-popover';
 
 export default function CotacoesPage() {
   return (
-    <div className="w-full min-w-0 overflow-x-hidden font-din-1451 bg-background px-3 py-3 sm:p-4 lg:p-6 pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
-      <div className="pb-3 border-b border-border/40">
+    <div className="flex h-full min-h-0 w-full max-w-full flex-col overflow-hidden bg-background font-din-1451">
+      <div className="shrink-0 border-b border-border/40 px-3 py-3 sm:px-4 sm:py-4">
         <div className="flex items-center gap-1.5 min-w-0">
-          <h1 className="text-lg sm:text-xl font-medium text-foreground truncate">
+          <h1 className="truncate text-lg font-medium text-foreground sm:text-xl">
             Cotações
           </h1>
           <P38HelpPopover label="Ajuda: cotações" side="bottom" align="start">
@@ -22,11 +22,11 @@ export default function CotacoesPage() {
             </p>
           </P38HelpPopover>
         </div>
-        <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-snug">
+        <p className="mt-0.5 text-xs leading-snug text-muted-foreground sm:text-sm">
           Lista manda · Disputa compara · Aprovar gera pedido
         </p>
       </div>
-      <div className="mt-3 flex min-h-[min(70dvh,720px)] flex-col sm:mt-4 sm:min-h-[480px]">
+      <div className="flex min-h-0 flex-1 flex-col px-3 sm:px-4">
         <CotacoesManager />
       </div>
     </div>
