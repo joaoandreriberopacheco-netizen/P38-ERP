@@ -81,8 +81,17 @@ const CATALOG_MOBILE_SKU_SURFACE = {
 
 const CatalogoMobileScrollContext = createContext(null);
 
-export function useCatalogoMobileScrollRef() {
+/** Elemento que faz scroll (painel `.p38-stage-panel-scroll` do Layout no mobile). */
+export function useCatalogoMobileScrollElement() {
   return useContext(CatalogoMobileScrollContext);
+}
+
+/** @deprecated Preferir useCatalogoMobileScrollElement — mantido para compat. */
+export function useCatalogoMobileScrollRef() {
+  const scrollElement = useCatalogoMobileScrollElement();
+  const scrollRef = useRef(null);
+  scrollRef.current = scrollElement;
+  return scrollRef;
 }
 
 /** Mesma diagramação do relatório de margem mobile (2×3 valores). */
@@ -794,17 +803,17 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle,
   );
 });
 
-function useCatalogColumnHeaderPin(scrollRef) {
+function useCatalogColumnHeaderPin(scrollElement) {
   const sentinelRef = useRef(null);
   const [pinned, setPinned] = useState(false);
   const [pinFrame, setPinFrame] = useState({ top: 0, left: 0, width: 0 });
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
-    if (!sentinel) return;
+    if (!sentinel || !scrollElement) return;
 
     const sync = () => {
-      const scrollEl = scrollRef.current;
+      const scrollEl = scrollElement;
       const sentinelRect = sentinel.getBoundingClientRect();
       const usesInnerScroll = Boolean(
         scrollEl && scrollEl.scrollHeight > scrollEl.clientHeight + 1,
@@ -824,7 +833,7 @@ function useCatalogColumnHeaderPin(scrollRef) {
       });
     };
 
-    const scrollEl = scrollRef.current;
+    const scrollEl = scrollElement;
     scrollEl?.addEventListener('scroll', sync, { passive: true });
     window.addEventListener('scroll', sync, { passive: true });
     window.addEventListener('resize', sync);
@@ -843,26 +852,30 @@ function useCatalogColumnHeaderPin(scrollRef) {
       window.removeEventListener('orientationchange', sync);
       resizeObserver.disconnect();
     };
-  }, [scrollRef]);
+  }, [scrollElement]);
 
   return { sentinelRef, pinned, pinFrame };
 }
 
-/** Scroll mobile: amarelo (catalogChrome) some; azul (colunas) fixa ao atingir o topo. */
+/** Catálogo mobile — scroll no painel do Layout (como VendasGestao); cabeçalho amarelo some ao rolar. */
 export function CatalogoMobileScrollShell({ catalogChrome, children }) {
-  const scrollRef = useRef(null);
-  const { sentinelRef, pinned, pinFrame } = useCatalogColumnHeaderPin(scrollRef);
+  const hostRef = useRef(null);
+  const [scrollElement, setScrollElement] = useState(null);
+  const { sentinelRef, pinned, pinFrame } = useCatalogColumnHeaderPin(scrollElement);
   const pinStyle = pinned
     ? { top: pinFrame.top, left: pinFrame.left, width: pinFrame.width }
     : null;
 
+  useLayoutEffect(() => {
+    const resolve = () => hostRef.current?.closest('.p38-stage-panel-scroll') || null;
+    setScrollElement(resolve());
+    const frame = window.requestAnimationFrame(() => setScrollElement(resolve()));
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
   return (
-    <CatalogoMobileScrollContext.Provider value={scrollRef}>
-      <div
-        ref={scrollRef}
-        className="flex flex-col flex-1 min-h-0 w-full min-w-0 overflow-y-auto overscroll-y-contain touch-pan-y pb-[var(--p38-scroll-pad-below-nav)]"
-        style={{ WebkitOverflowScrolling: 'touch' }}
-      >
+    <CatalogoMobileScrollContext.Provider value={scrollElement}>
+      <div ref={hostRef} className="w-full min-w-0 pb-[var(--p38-scroll-pad-below-nav)]">
         {catalogChrome}
         <div ref={sentinelRef} className="h-px w-full shrink-0" aria-hidden />
         <CatalogoMobileColumnHeader
@@ -883,7 +896,7 @@ export function CatalogoMobileScrollShell({ catalogChrome, children }) {
 
 // ── Componente principal ───────────────────────────────────────────────────────
 export default function MobileHierarquica({ produtos, onEdit, groupByCategory = false, masterLevel = 2, sortOrder = 'az', onExpandedKeysChange, catalogFilters = null, salesVelocityMap = {}, catalogStockContext = null, flatList = false }) {
-  const scrollRef = useCatalogoMobileScrollRef();
+  const scrollElement = useCatalogoMobileScrollElement();
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [pricingProduto, setPricingProduto] = useState(null);
   const pendingScrollRestoreRef = useRef(null);
@@ -918,9 +931,9 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
     setExpandedKeys(
       resolveExpandedKeysForMasterLevel(tree, level, effectiveGroupByCategory),
     );
-    const scrollEl = scrollRef?.current;
+    const scrollEl = scrollElement;
     if (scrollEl) scrollEl.scrollTop = 0;
-  }, [produtosStructureSig, effectiveGroupByCategory, masterLevel, groupAnalysisSig, scrollRef, tree, flatList]);
+  }, [produtosStructureSig, effectiveGroupByCategory, masterLevel, groupAnalysisSig, scrollElement, tree, flatList]);
 
   useEffect(() => {
     onExpandedKeysChange?.(expandedKeys);
@@ -944,11 +957,15 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
     [rows]
   );
 
+  const scrollRef = useRef(scrollElement);
+  scrollRef.current = scrollElement;
+
   const virtualRows = useVirtualRows({
     itemCount: rows.length,
     estimateSize: estimateRowSize,
     overscan: 6,
     scrollElementRef: scrollRef,
+    scrollElement,
   });
 
   const visibleRows = useMemo(
@@ -960,18 +977,18 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
   const paddingBottom = shouldVirtualizeRows ? virtualRows.paddingBottom : 0;
 
   useLayoutEffect(() => {
-    const scrollEl = scrollRef?.current;
+    const scrollEl = scrollElement;
     if (scrollEl) pendingScrollRestoreRef.current = scrollEl.scrollTop;
-  }, [expandedKeys, rows.length, scrollRef]);
+  }, [expandedKeys, rows.length, scrollElement]);
 
   useLayoutEffect(() => {
-    const scrollEl = scrollRef?.current;
+    const scrollEl = scrollElement;
     const top = pendingScrollRestoreRef.current;
     if (scrollEl != null && top != null) {
       scrollEl.scrollTop = top;
       pendingScrollRestoreRef.current = null;
     }
-  }, [expandedKeys, rows.length, scrollRef]);
+  }, [expandedKeys, rows.length, scrollElement]);
 
   const handleToggle = useCallback((key) => {
     setExpandedKeys(prev => {
@@ -982,14 +999,14 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
   }, []);
 
   const handleExpandAll = useCallback(() => {
-    pendingScrollRestoreRef.current = scrollRef?.current?.scrollTop ?? 0;
+    pendingScrollRestoreRef.current = scrollElement?.scrollTop ?? 0;
     setExpandedKeys(resolveExpandedKeysForMasterLevel(tree, TREE_GRID_EXPAND_ALL_LEVEL, groupByCategory));
-  }, [tree, groupByCategory, scrollRef]);
+  }, [tree, groupByCategory, scrollElement]);
 
   const handleCollapseAll = useCallback(() => {
-    pendingScrollRestoreRef.current = scrollRef?.current?.scrollTop ?? 0;
+    pendingScrollRestoreRef.current = scrollElement?.scrollTop ?? 0;
     setExpandedKeys(resolveExpandedKeysForMasterLevel(tree, 1, groupByCategory));
-  }, [tree, groupByCategory, scrollRef]);
+  }, [tree, groupByCategory, scrollElement]);
 
   if (produtos.length === 0) {
     return (

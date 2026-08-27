@@ -83,6 +83,7 @@ import {
   caixaTabPanel,
   caixaTabPanelInLayout,
   caixaTabPanelPad,
+  caixaTabPanelPadInLayout,
   caixaTabsRoot,
   caixaTabsRootInLayout,
   caixaTypo,
@@ -183,7 +184,7 @@ export default function PDVCaixa({
   const queryClient = useQueryClient();
   const isMobileShell = useCompactShell();
   const inAppLayout = isMobileShell && !overlayMode;
-  const tabPanelPad = inAppLayout ? '' : caixaTabPanelPad;
+  const tabPanelPad = inAppLayout ? caixaTabPanelPadInLayout : caixaTabPanelPad;
   const mainClassName = inAppLayout ? caixaMainInLayout : caixaMain;
   const tabsRootClassName = inAppLayout ? caixaTabsRootInLayout : caixaTabsRoot;
   const tabPanelClassName = inAppLayout ? caixaTabPanelInLayout : caixaTabPanel;
@@ -1586,7 +1587,7 @@ export default function PDVCaixa({
                   </TabsList>
                 </div>
 
-                <div className="relative flex-1 min-h-0 h-0 overflow-hidden">
+                <div className={inAppLayout ? 'w-full min-w-0' : 'relative flex-1 min-h-0 h-0 overflow-hidden'}>
                 <TabsContent value="balanco" data-caixa-tab-scroll className={`${tabPanelClassName} ${tabPanelPad}`}>
                   <div className="max-w-4xl mx-auto space-y-4 pb-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
