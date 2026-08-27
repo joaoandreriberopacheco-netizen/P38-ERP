@@ -47,7 +47,7 @@ export const p38Table = {
   /** Catálogo mobile — fundo transparente; linha suave */
   catalogMobileRow: 'border-b border-border/35 dark:border-white/10 py-4.5 tablet-portrait:py-5 min-w-0 bg-transparent font-din-1451',
   catalogMobileHeader:
-    'relative flex-shrink-0 border-b border-border/35 dark:border-white/10 bg-muted/45 dark:bg-background text-foreground shadow-sm before:absolute before:top-0 before:inset-x-0 before:h-px before:bg-gradient-to-r before:from-[#e8b824]/35 before:via-[#4a5240]/14 before:to-transparent dark:before:from-[#a4ce33]/80 dark:before:via-[#a4ce33]/40 dark:before:to-transparent',
+    'relative flex-shrink-0 border-b border-border/35 dark:border-white/10 bg-muted dark:bg-background text-foreground shadow-sm before:absolute before:top-0 before:inset-x-0 before:h-px before:bg-gradient-to-r before:from-[#e8b824]/35 before:via-[#4a5240]/14 before:to-transparent dark:before:from-[#a4ce33]/80 dark:before:via-[#a4ce33]/40 dark:before:to-transparent',
   /** Mesma linha com barra lateral semântica mais fina (1px) — financeiro */
   mobileLineThin: 'border-b border-border/35 dark:border-white/10 border-l py-3 pr-14 pl-3 sm:pr-4 sm:pl-4 min-w-0 bg-background font-din-1451',
   mobileLineInteractive: 'active:bg-secondary/30 cursor-pointer select-none min-h-[52px] tablet-portrait:min-h-[60px] touch-pan-y',
