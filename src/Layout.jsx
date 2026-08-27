@@ -26,8 +26,9 @@ const GlacialSidebar = React.lazy(() => import('@/components/navigation/GlacialS
 const PinSetupDialog = React.lazy(() => import('@/components/auth/PinSetupDialog'));
 const MobileFunctionSelector = React.lazy(() => import('@/components/navigation/MobileFunctionSelector'));
 
-/** Mobile: scroll interno na página (evita body + nested scroll). Produtos/PDVCaixa usam scroll do painel como VendasGestao. */
+/** Mobile: scroll interno na página (evita body + nested scroll). PDVCaixa usa scroll do painel como VendasGestao. */
 const MOBILE_FULL_VIEWPORT_PAGES = new Set([
+  'Produtos',
   'RelatorioMargem',
   'PrecoJustoDashboard',
   'RelatorioCatalogoEstoque',

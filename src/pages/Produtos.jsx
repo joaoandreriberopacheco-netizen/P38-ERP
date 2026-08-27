@@ -1587,21 +1587,17 @@ function ProdutosPageContent() {
     [produtosHeaderProps],
   );
 
-  const rootClassName = isDesktop
-    ? 'flex flex-col h-full min-h-0 overflow-hidden w-full max-w-full bg-background'
-    : 'max-w-7xl mx-auto space-y-4 overflow-x-hidden w-full';
-
   return (
-    <div className={rootClassName}>
+    <div className="flex flex-col h-full min-h-0 overflow-hidden w-full max-w-full bg-background">
       {isDesktop && (
         <div className="flex-none">
           <ProdutosHeader key="catalog-desktop" {...produtosHeaderProps} />
         </div>
       )}
 
-      {isDesktop ? (
-      <div className="flex flex-col flex-1 min-h-0 overflow-hidden w-full min-w-0">
-        <div>
+      <div className="flex flex-col flex-1 min-h-0 h-0 overflow-hidden w-full min-w-0">
+        {isDesktop && (
+          <div>
             <ProdutosCommandBar
               sortOrder={sortOrder}
               setSortOrder={setSortOrder}
@@ -1611,34 +1607,34 @@ function ProdutosPageContent() {
               onGroupTreeByCategoryChange={handleGroupTreeByCategoryChange}
             />
           </div>
+        )}
 
-            <div className="flex flex-col flex-1 min-h-0 overflow-hidden w-full min-w-0">
-              {viewMode === 'dinamica' && (
-                <div className="flex flex-col w-full h-full min-h-0">
-                  <TreeGrid produtos={filteredProdutos} onEdit={handleEdit} onDelete={setProdutoParaExcluir} visibleColumns={visibleColumnsEffective} masterLevel={treeLevel} sortOrder={sortOrder} groupByCategory={groupTreeByCategory} onExpandedKeysChange={handleCatalogExpandedKeysChange} salesVelocityMap={salesVelocityMap} catalogStockContext={catalogStockContext} catalogFilters={filters} />
-                </div>
-              )}
+        {!isDesktop && (
+          <CatalogoMobileScrollShell catalogChrome={mobileCatalogChrome}>
+            <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} flatList groupByCategory={false} masterLevel={treeLevel} sortOrder={sortOrder} onExpandedKeysChange={handleCatalogExpandedKeysChange} catalogFilters={filters} salesVelocityMap={salesVelocityMap} catalogStockContext={catalogStockContext} />
+          </CatalogoMobileScrollShell>
+        )}
 
-              {viewMode === 'plana' && (
-                <ProdutosPlanaTable
-                  filteredProdutos={filteredProdutos}
-                  visibleColumns={visibleColumnsEffective}
-                  handleEdit={handleEdit}
-                  setProdutoParaExcluir={setProdutoParaExcluir}
-                  formatarNumero={formatarNumero}
-                  fornecedorMap={fornecedorMap}
-                  handleCreateSimilar={handleCreateSimilar}
-                  salesVelocityMap={salesVelocityMap}
-                  catalogStockContext={catalogStockContext}
-                />
-              )}
-            </div>
+        {isDesktop && viewMode === 'dinamica' && (
+          <div className="flex flex-col w-full h-full min-h-0">
+            <TreeGrid produtos={filteredProdutos} onEdit={handleEdit} onDelete={setProdutoParaExcluir} visibleColumns={visibleColumnsEffective} masterLevel={treeLevel} sortOrder={sortOrder} groupByCategory={groupTreeByCategory} onExpandedKeysChange={handleCatalogExpandedKeysChange} salesVelocityMap={salesVelocityMap} catalogStockContext={catalogStockContext} catalogFilters={filters} />
+          </div>
+        )}
+
+        {isDesktop && viewMode === 'plana' && (
+          <ProdutosPlanaTable
+            filteredProdutos={filteredProdutos}
+            visibleColumns={visibleColumnsEffective}
+            handleEdit={handleEdit}
+            setProdutoParaExcluir={setProdutoParaExcluir}
+            formatarNumero={formatarNumero}
+            fornecedorMap={fornecedorMap}
+            handleCreateSimilar={handleCreateSimilar}
+            salesVelocityMap={salesVelocityMap}
+            catalogStockContext={catalogStockContext}
+          />
+        )}
       </div>
-      ) : (
-        <CatalogoMobileScrollShell catalogChrome={mobileCatalogChrome}>
-          <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} flatList groupByCategory={false} masterLevel={treeLevel} sortOrder={sortOrder} onExpandedKeysChange={handleCatalogExpandedKeysChange} catalogFilters={filters} salesVelocityMap={salesVelocityMap} catalogStockContext={catalogStockContext} />
-        </CatalogoMobileScrollShell>
-      )}
 
       {/* Tela completa para o formulário */}
       {isFormOpen && (

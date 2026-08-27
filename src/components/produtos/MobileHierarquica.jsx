@@ -66,11 +66,6 @@ const CATALOGO_MOBILE_NOME_TYPO =
   'text-[13px] font-normal leading-relaxed uppercase break-words [overflow-wrap:anywhere]';
 const CATALOGO_MOBILE_ROW_H_GROUP = 118;
 const CATALOGO_MOBILE_ROW_H_SKU = 196;
-/** Lista rolável — mesmo padrão de VendasGestao (altura máxima + overflow interno). */
-const CATALOGO_MOBILE_LIST_STYLE = {
-  maxHeight: 'calc(100dvh - 260px)',
-  WebkitOverflowScrolling: 'touch',
-};
 
 /** Faixa de grupo — faixa analítica compacta (≠ linha de produto). */
 const CATALOG_MOBILE_GROUP_BAND = {
@@ -86,7 +81,7 @@ const CATALOG_MOBILE_SKU_SURFACE = {
 
 const CatalogoMobileScrollContext = createContext(null);
 
-/** Elemento que faz scroll (lista interna do catálogo mobile). */
+/** Elemento que faz scroll (contentor flex do catálogo mobile). */
 export function useCatalogoMobileScrollElement() {
   return useContext(CatalogoMobileScrollContext);
 }
@@ -862,7 +857,7 @@ function useCatalogColumnHeaderPin(scrollElement) {
   return { sentinelRef, pinned, pinFrame };
 }
 
-/** Catálogo mobile — scroll interno na lista (padrão VendasGestao); cabeçalho amarelo some ao rolar. */
+/** Catálogo mobile — amarelo some ao rolar; colunas fixam no topo (scroll flex, não caixa com maxHeight). */
 export function CatalogoMobileScrollShell({ catalogChrome, children }) {
   const scrollRef = useRef(null);
   const [scrollElement, setScrollElement] = useState(null);
@@ -879,7 +874,11 @@ export function CatalogoMobileScrollShell({ catalogChrome, children }) {
 
   return (
     <CatalogoMobileScrollContext.Provider value={scrollElement}>
-      <div className="w-full min-w-0 pb-[var(--p38-scroll-pad-below-nav)]">
+      <div
+        ref={scrollRef}
+        className="p38-flex-scroll-y w-full min-w-0 overflow-x-hidden touch-pan-y pb-[var(--p38-scroll-pad-below-nav)]"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         {catalogChrome}
         <div ref={sentinelRef} className="h-px w-full shrink-0" aria-hidden />
         <CatalogoMobileColumnHeader
@@ -892,13 +891,7 @@ export function CatalogoMobileScrollShell({ catalogChrome, children }) {
             pinStyle={pinStyle}
           />
         ) : null}
-        <div
-          ref={scrollRef}
-          className="min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y"
-          style={CATALOGO_MOBILE_LIST_STYLE}
-        >
-          {children}
-        </div>
+        {children}
       </div>
     </CatalogoMobileScrollContext.Provider>
   );
