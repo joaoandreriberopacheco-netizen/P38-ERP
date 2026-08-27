@@ -876,7 +876,7 @@ export function CatalogoMobileScrollShell({ catalogChrome, children }) {
     <CatalogoMobileScrollContext.Provider value={scrollElement}>
       <div
         ref={scrollRef}
-        className="flex flex-1 min-h-0 w-full min-w-0 p38-stage-panel-scroll overflow-x-hidden touch-pan-y pb-[var(--p38-scroll-pad-below-nav)]"
+        className="flex flex-1 min-h-0 w-full min-w-0 flex-col p38-stage-panel-scroll overflow-x-hidden touch-pan-y pb-[var(--p38-scroll-pad-below-nav)]"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {catalogChrome}
