@@ -136,7 +136,9 @@ async function main() {
   try {
     if (!args.skipServer) {
       console.log('[pulse:corridor] A subir next start…');
-      server = await startPulseServer({ bypassAuth: true });
+      const skipBuild =
+        process.env.PULSE_SKIP_BUILD === '1' || process.env.PULSE_SKIP_BUILD === 'true';
+      server = await startPulseServer({ bypassAuth: true, skipBuild });
     }
 
     const browser = await chromium.launch({ headless: true });

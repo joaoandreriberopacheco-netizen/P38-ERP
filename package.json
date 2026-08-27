@@ -31,6 +31,7 @@
     "pulse:refresh-roteiro": "node scripts/pulse-refresh-roteiro.mjs",
     "pulse:diario": "node scripts/pulse-diario.mjs",
     "pulse:predeploy": "npm run pulse:refresh-roteiro && npm run pulse:all && npm run pulse:corridor",
+    "pulse:predeploy:ci": "npm run pulse:corridor",
     "flare:export": "node scripts/export-flare-pending.mjs",
     "flare:api": "node scripts/flare-local-api.mjs",
     "print-agent:start": "node packages/p38-print-agent/bin/start.mjs",
