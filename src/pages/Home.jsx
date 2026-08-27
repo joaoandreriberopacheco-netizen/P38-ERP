@@ -179,7 +179,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-6 font-din-1451">
+    <div className="bg-background pb-4 md:pb-6 font-din-1451">
       <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="flex-1">

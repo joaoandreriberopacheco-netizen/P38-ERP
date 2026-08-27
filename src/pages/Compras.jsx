@@ -368,9 +368,9 @@ export default function ComprasPage() {
   const [sugestaoKey, setSugestaoKey] = useState(0);
   const [activeTab, setActiveTab] = useState('sugestoes');
   const isMobile = useCompactShell();
-  const sugestoesFullHeight = isMobile && activeTab === 'sugestoes';
   const cotacoesFullHeight = activeTab === 'cotacoes';
-  const tabFullHeight = sugestoesFullHeight || cotacoesFullHeight;
+  const tabFullHeight = isMobile || cotacoesFullHeight;
+  const tabContentScrolls = isMobile && activeTab !== 'sugestoes' && activeTab !== 'cotacoes';
 
   const handleTabChange = (value) => {
     setActiveTab(value);
@@ -432,7 +432,12 @@ export default function ComprasPage() {
       <div
         className={cn(
           tabFullHeight
-            ? 'flex-1 min-h-0 overflow-hidden px-4 desktop-layout:px-0'
+            ? cn(
+                'flex-1 min-h-0 px-4 desktop-layout:px-0',
+                tabContentScrolls
+                  ? 'overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y pb-6'
+                  : 'overflow-hidden',
+              )
             : 'px-4 md:px-0 pt-4 min-w-0 max-w-full overflow-x-clip',
         )}
       >

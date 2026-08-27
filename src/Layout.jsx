@@ -448,6 +448,12 @@ export default function Layout({ children, currentPageName }) {
             paddingTop: isMobile
               ? (forceLandscape ? '0.75rem' : `calc(3rem + env(safe-area-inset-top))`)
               : undefined,
+            // O bottom nav mobile é `docked` (já ocupa espaço no flex).
+            // Na Home basta a folga visual; reservar novamente os 68px criava uma faixa vazia.
+            paddingBottom:
+              isMobile && !usesFullViewportShell && currentPageName === 'Home'
+                ? '1.5rem'
+                : undefined,
           }}
         >
           {usesFullViewportShell ? (

@@ -304,7 +304,7 @@ export function SugestaoCompraMobileScrollShell({ chrome, children }) {
   return (
     <div
       ref={scrollRef}
-      className="flex flex-col flex-1 min-h-0 h-full w-full min-w-0 max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y pb-[calc(var(--p38-bottom-nav-total,0px)+5.25rem)]"
+      className="flex flex-col flex-1 min-h-0 h-full w-full min-w-0 max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y pb-[5.25rem]"
       style={{ WebkitOverflowScrolling: 'touch' }}
     >
       {chrome}
