@@ -848,11 +848,8 @@ function useCatalogColumnHeaderPin(scrollRef) {
   return { sentinelRef, pinned, pinFrame };
 }
 
-/** Lista mobile do catálogo — scroll interno com altura máxima (mesmo padrão de VendasGestao). */
-const CATALOGO_MOBILE_LIST_MAX_HEIGHT = 'calc(100dvh - 260px)';
-
-/** Scroll mobile: cabeçalho de colunas fixa ao atingir o topo da lista. */
-export function CatalogoMobileScrollShell({ catalogChrome = null, children, listMaxHeight = CATALOGO_MOBILE_LIST_MAX_HEIGHT }) {
+/** Scroll mobile: amarelo (catalogChrome) some; azul (colunas) fixa ao atingir o topo. */
+export function CatalogoMobileScrollShell({ catalogChrome, children }) {
   const scrollRef = useRef(null);
   const { sentinelRef, pinned, pinFrame } = useCatalogColumnHeaderPin(scrollRef);
   const pinStyle = pinned
@@ -863,8 +860,8 @@ export function CatalogoMobileScrollShell({ catalogChrome = null, children, list
     <CatalogoMobileScrollContext.Provider value={scrollRef}>
       <div
         ref={scrollRef}
-        className="w-full min-w-0 overflow-y-auto overscroll-y-contain touch-pan-y rounded-lg border-0 shadow-sm bg-background dark:border dark:border-white/10"
-        style={{ maxHeight: listMaxHeight, WebkitOverflowScrolling: 'touch' }}
+        className="flex flex-col flex-1 min-h-0 h-full w-full overflow-y-auto overscroll-y-contain touch-pan-y pb-[var(--p38-scroll-pad-below-nav)]"
+        style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {catalogChrome}
         <div ref={sentinelRef} className="h-px w-full shrink-0" aria-hidden />
