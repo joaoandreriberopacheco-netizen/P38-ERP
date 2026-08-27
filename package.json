@@ -72,6 +72,7 @@
     "usuario:resync": "node scripts/resync-usuario-from-base44.mjs",
     "usuario:provision-auth": "node scripts/provision-supabase-auth-users.mjs",
     "usuario:provision-login-auth": "node scripts/provision-login-auth-users.mjs",
+    "usuario:audit-emails": "node scripts/audit-usuario-emails.mjs",
     "auth:enable-google": "node scripts/enable-supabase-google-auth.mjs",
     "retificar:5r8b3": "node scripts/retificar-embarque-5r8b3-once.mjs",
     "corrigir:recepcao": "node scripts/corrigir-recepcao-pedido.mjs",

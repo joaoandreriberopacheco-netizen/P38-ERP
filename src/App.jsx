@@ -14,6 +14,8 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import LoginPage from '@/components/auth/LoginPage';
 import AuthCallbackPage from '@/components/auth/AuthCallbackPage';
 import AtivarAcessoPage from '@/components/auth/AtivarAcessoPage';
+import EsqueciSenhaPage from '@/components/auth/EsqueciSenhaPage';
+import RedefinirSenhaPage from '@/components/auth/RedefinirSenhaPage';
 import GlobalQuickAccessLaunchers from '@/components/global/GlobalQuickAccessLaunchers';
 import { PageLoadFallback, ChunkErrorBoundary } from '@/lib/lazyPage';
 import { loadPortalCatalog } from '@/lib/hierarquiaPortal/fetchPortalCatalog';
@@ -25,7 +27,13 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
   : <>{children}</>;
 
-const AUTH_PUBLIC_PATHS = new Set(['/login', '/auth/callback', '/ativar-acesso']);
+const AUTH_PUBLIC_PATHS = new Set([
+  '/login',
+  '/auth/callback',
+  '/ativar-acesso',
+  '/esqueci-senha',
+  '/redefinir-senha',
+]);
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, p38NeedsBootstrap, mustActivateAccess } = useAuth();
@@ -75,6 +83,8 @@ const AuthenticatedApp = () => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/ativar-acesso" element={<AtivarAcessoPage />} />
+          <Route path="/esqueci-senha" element={<EsqueciSenhaPage />} />
+          <Route path="/redefinir-senha" element={<RedefinirSenhaPage />} />
           <Route
             path="/"
             element={

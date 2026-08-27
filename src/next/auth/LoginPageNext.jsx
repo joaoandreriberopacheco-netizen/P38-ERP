@@ -190,12 +190,20 @@ export default function LoginPageNext() {
                 />
               </div>
               <div className="space-y-2">
-                <label
-                  htmlFor="login-password"
-                  className="text-xs font-medium uppercase tracking-[0.16em] text-neutral-600 dark:text-neutral-400"
-                >
-                  Senha
-                </label>
+                <div className="flex items-center justify-between gap-2">
+                  <label
+                    htmlFor="login-password"
+                    className="text-xs font-medium uppercase tracking-[0.16em] text-neutral-600 dark:text-neutral-400"
+                  >
+                    Senha
+                  </label>
+                  <Link
+                    href="/esqueci-senha"
+                    className="text-xs text-neutral-500 underline-offset-4 hover:underline dark:text-neutral-400"
+                  >
+                    Esqueci a senha
+                  </Link>
+                </div>
                 <Input
                   id="login-password"
                   type="password"

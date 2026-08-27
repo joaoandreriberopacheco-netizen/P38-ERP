@@ -162,3 +162,11 @@ export async function activateP38User({ login, password }) {
 export async function createP38UserAsAdmin(payload) {
   return invokeP38Auth({ op: 'create_user', ...payload }, { authorized: true });
 }
+
+export async function requestP38PasswordReset({ login, app_origin }) {
+  return invokeP38Auth({
+    op: 'request_password_reset',
+    login,
+    app_origin,
+  });
+}

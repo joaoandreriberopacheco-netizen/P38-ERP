@@ -8,8 +8,10 @@ import {
   isValidLogin,
   loginFromAuthEmail,
   loginToAuthEmail,
+  maskOperationalEmail,
   normalizeLogin,
   randomPassword,
+  resolveUsuarioOperationalEmail,
 } from '../_shared/p38AuthHelpers.ts';
 
 type UsuarioRow = {
@@ -343,6 +345,133 @@ async function handleCreateUser(req: Request, body: Record<string, unknown>) {
   });
 }
 
+const GENERIC_RESET_MESSAGE =
+  'Se o utilizador existir e tiver email cadastrado, enviámos um link para redefinir a senha.';
+
+function resolveAppOrigin(req: Request, body: Record<string, unknown>): string {
+  const fromBody = String(body.app_origin || body.redirect_origin || '').trim();
+  if (fromBody && /^https?:\/\//i.test(fromBody)) {
+    try {
+      return new URL(fromBody).origin;
+    } catch {
+      /* ignore */
+    }
+  }
+  const headerOrigin = req.headers.get('origin')?.trim();
+  if (headerOrigin && /^https?:\/\//i.test(headerOrigin)) {
+    return headerOrigin;
+  }
+  const site =
+    Deno.env.get('P38_APP_URL') ||
+    Deno.env.get('SITE_URL') ||
+    'https://p-38erp.vercel.app';
+  return site.replace(/\/$/, '');
+}
+
+async function sendOperationalEmail(to: string, subject: string, text: string) {
+  const key = Deno.env.get('RESEND_API_KEY') ?? '';
+  if (!key) throw new Error('RESEND_API_KEY não configurado — não é possível enviar email.');
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${key}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: Deno.env.get('RESEND_FROM') || 'P38 ERP <no-reply@p38.app>',
+      to,
+      subject,
+      text,
+    }),
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`Email falhou (${res.status}): ${txt}`);
+  }
+}
+
+async function handleRequestPasswordReset(req: Request, body: Record<string, unknown>) {
+  const login = normalizeLogin(body.login);
+  if (!isValidLogin(login)) return badRequest('Utilizador inválido (mín. 2 caracteres, sem espaços).');
+
+  const client = serviceClient();
+  const row = await findUsuarioByLogin(client, login);
+  const operationalEmail = row ? resolveUsuarioOperationalEmail(row) : null;
+  const authUser = await findAuthUserByLogin(client.auth.admin, login);
+
+  if (!row || !operationalEmail || !authUser) {
+    return jsonResponse({
+      ok: true,
+      sent: false,
+      message: GENERIC_RESET_MESSAGE,
+    });
+  }
+
+  const origin = resolveAppOrigin(req, body);
+  const redirectTo = `${origin}/redefinir-senha`;
+  const authEmail = loginToAuthEmail(login);
+
+  const { data, error } = await client.auth.admin.generateLink({
+    type: 'recovery',
+    email: authEmail,
+    options: { redirectTo },
+  });
+  if (error) {
+    console.error('[p38-auth] generateLink recovery failed:', error.message);
+    return jsonResponse({
+      ok: true,
+      sent: false,
+      message: GENERIC_RESET_MESSAGE,
+    });
+  }
+
+  const actionLink =
+    data?.properties?.action_link ||
+    (data as { action_link?: string })?.action_link ||
+    '';
+  if (!actionLink) {
+    console.error('[p38-auth] generateLink sem action_link');
+    return jsonResponse({
+      ok: true,
+      sent: false,
+      message: GENERIC_RESET_MESSAGE,
+    });
+  }
+
+  const displayName =
+    row.full_name || String(row.dados?.full_name || '') || login;
+
+  try {
+    await sendOperationalEmail(
+      operationalEmail,
+      'Redefinir senha — P38 ERP',
+      [
+        `Olá, ${displayName}!`,
+        '',
+        `Recebemos um pedido para redefinir a senha do utilizador "${login}" no P38 ERP.`,
+        '',
+        'Clique no link abaixo (válido por tempo limitado):',
+        '',
+        actionLink,
+        '',
+        'Se não pediu esta alteração, ignore este email.',
+        '',
+        '— Equipe P38 ERP',
+      ].join('\n'),
+    );
+  } catch (e) {
+    console.error('[p38-auth] send reset email failed:', e);
+    return jsonResponse({ error: 'Não foi possível enviar o email. Tente mais tarde ou contacte o administrador.' }, 502);
+  }
+
+  return jsonResponse({
+    ok: true,
+    sent: true,
+    email_masked: maskOperationalEmail(operationalEmail),
+    message: `Enviamos um link para ${maskOperationalEmail(operationalEmail)}.`,
+  });
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, {
@@ -367,6 +496,8 @@ Deno.serve(async (req) => {
         return await handleActivate(body);
       case 'create_user':
         return await handleCreateUser(req, body);
+      case 'request_password_reset':
+        return await handleRequestPasswordReset(req, body);
       default:
         return badRequest(`op inválida: ${op}`);
     }
