@@ -106,22 +106,31 @@ function matchPecaEletroduto(row, peca, size) {
   return matchSizeInRow(row, size);
 }
 
-function buildFamiliaRows(familia, p38Rows, mix) {
+function buildFamiliaRows(familia, p38Rows, mix, novosPayload = null) {
   const grupo = mix.grupos?.find((g) => g.codigo === familia.grupo);
   const lmUrls = mix.lm_urls;
   const tipo = familia.tipo_matriz ?? 'legacy';
   const rows = [];
 
   if (tipo === 'disjuntor') {
+    const cadastroVazio = novosPayload?.cadastro_actual === 'vazio';
+    const novosKeys = new Set((novosPayload?.novos ?? []).map((n) => `${n.tipo}|${n.amperagem}`));
     for (const v of familia.variantes) {
       for (const amp of v.amperagens) {
-        const hits = p38Rows.filter((r) => { const d = parseDisjuntor(r); return d && d.tipo === v.tipo && d.amperagem === amp; });
-        const status = hits.length ? (hits.length > 1 ? 'duplicado' : 'tem') : 'falta';
+        const hits = cadastroVazio
+          ? []
+          : p38Rows.filter((r) => { const d = parseDisjuntor(r); return d && d.tipo === v.tipo && d.amperagem === amp; });
+        const key = `${v.tipo}|${amp}`;
+        let status = hits.length ? (hits.length > 1 ? 'duplicado' : 'tem') : 'falta';
+        let acao = status === 'falta' ? 'cadastrar' : status === 'duplicado' ? 'revisar duplicado' : '';
+        if (cadastroVazio && novosKeys.has(key)) {
+          status = 'novo';
+          acao = 'cadastrar (aprovado estudo)';
+        }
         rows.push(rowBase(familia, grupo, lmUrls, {
           variante: v.tipo, amperagem_ou_eixo: amp, status, qtd_p38: hits.length,
           codigos_p38: hits.map((h) => h.codigo_interno).join(', '), sku_exemplo: hits[0]?.sku_atual,
-          lm_url: lmUrls.disjuntores,
-          acao: status === 'falta' ? 'cadastrar' : status === 'duplicado' ? 'revisar duplicado' : '',
+          lm_url: lmUrls.disjuntores, acao,
         }));
       }
     }
@@ -194,8 +203,8 @@ function buildFamiliaRows(familia, p38Rows, mix) {
   return rows;
 }
 
-function buildBenchmark(p38Rows, mix) {
-  return mix.familias.flatMap((fam) => buildFamiliaRows(fam, p38Rows, mix));
+function buildBenchmark(p38Rows, mix, novosPayload) {
+  return mix.familias.flatMap((fam) => buildFamiliaRows(fam, p38Rows, mix, novosPayload));
 }
 
 function loadNovosDisjuntores(mixPath = DEFAULT_NOVOS) {
@@ -204,12 +213,16 @@ function loadNovosDisjuntores(mixPath = DEFAULT_NOVOS) {
 }
 
 function applyNovosDisjuntores(matrix, novosPayload) {
-  const keys = new Set(novosPayload.novos.map((n) => `${n.tipo}|${n.amperagem}`));
+  const keys = new Set((novosPayload.novos ?? []).map((n) => `${n.tipo}|${n.amperagem}`));
+  const cadastroVazio = novosPayload.cadastro_actual === 'vazio';
   return matrix.map((row) => {
-    if (row.familia !== 'disjuntor' || row.status !== 'falta') return row;
+    if (row.familia !== 'disjuntor') return row;
     const key = `${row.variante}|${row.amperagem_ou_eixo}`;
     if (!keys.has(key)) return row;
-    return { ...row, status: 'novo', acao: 'cadastrar (aprovado estudo)', prioridade: 'nucleo' };
+    if (cadastroVazio || row.status === 'falta') {
+      return { ...row, status: 'novo', acao: 'cadastrar (aprovado estudo)', prioridade: 'nucleo', qtd_p38: 0, codigos_p38: '', sku_exemplo: '' };
+    }
+    return row;
   });
 }
 
@@ -311,6 +324,16 @@ async function writeXlsx(outPath, matrix, p38Rows, mix, novosPayload) {
   styleHeader(inv.getRow(1), 'FF1A4D6B');
   for (const r of p38Rows) inv.addRow([r.sub_bloco, r.produto_compra, r.eixo_a, r.eixo_b, r.codigo_interno, r.sku_atual]);
 
+  const legado = wb.addWorksheet('Legado export zumbi');
+  legado.addRow(['codigo_interno', 'sku_estudo', 'nota']);
+  styleHeader(legado.getRow(1), 'FF5C4A3A');
+  for (const cod of novosPayload.legado_export_estudo?.codigos ?? []) {
+    const hit = p38Rows.find((r) => r.codigo_interno === cod);
+    legado.addRow([cod, hit?.sku_atual ?? '', novosPayload.legado_export_estudo?.nota ?? '']);
+  }
+  legado.getColumn(2).width = 48;
+  legado.getColumn(3).width = 56;
+
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   await wb.xlsx.writeFile(outPath);
 }
@@ -320,7 +343,7 @@ async function main() {
   const mix = JSON.parse(fs.readFileSync(mixPath, 'utf8'));
   const novosPayload = loadNovosDisjuntores();
   const p38Rows = await loadBEletrica(inPath);
-  let matrix = buildBenchmark(p38Rows, mix);
+  let matrix = buildBenchmark(p38Rows, mix, novosPayload);
   matrix = applyNovosDisjuntores(matrix, novosPayload);
   await writeXlsx(outPath, matrix, p38Rows, mix, novosPayload);
 
@@ -330,7 +353,7 @@ async function main() {
   console.log(`  saída: ${outPath}`);
   console.log(`  mix: ${matrix.length} · tem: ${matrix.filter((r) => r.status === 'tem').length} · novo: ${novos.length} · falta: ${matrix.filter((r) => r.status === 'falta').length}`);
   if (novos.length) {
-    console.log('  Novos disjuntores (#1–6):');
+    console.log(`  Novos disjuntores (#1–${novosPayload.novos.length} mix completo):`);
     for (const n of novosPayload.novos) console.log(`    #${n.numero} ${n.novo_sku}`);
   }
   const parcial = matrix.filter((r) => r.status === 'parcial');

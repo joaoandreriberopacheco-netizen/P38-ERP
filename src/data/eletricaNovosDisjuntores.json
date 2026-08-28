@@ -1,6 +1,7 @@
 {
   "version": "2026-08-28",
-  "nota": "Novos SKUs disjuntor DIN — complemento mix LM/P38 (estudo Excel; ainda não cadastrar na BD salvo pedido).",
+  "nota": "Cadastro actual P38: sem disjuntores DIN mono/bi/tri operacionais (export estudo antigo tinha 10 linhas legado — não contar como 'tem'). Mix completo a cadastrar.",
+  "cadastro_actual": "vazio",
   "referencia_existente": {
     "produto_compra": "DISJUNTOR",
     "eixo_a": "DIN",
@@ -9,62 +10,25 @@
     "etapa": "3 — Instalações brutas",
     "sub_bloco": "08 — Quadro e proteção"
   },
-  "revisar": [
-    {
-      "item": "MONOFÁSICO 25A",
-      "motivo": "duplicado no catálogo",
-      "codigos": ["34P-JDG", "OW6-Q7Y"],
-      "acao": "inactivar um ou fundir"
-    }
-  ],
+  "legado_export_estudo": {
+    "nota": "10 SKUs no CSV estudo — tratar como zumbi/legado se ainda existirem na BD; mix alvo = lista novos abaixo",
+    "codigos": ["3QN-44X", "MPD-3IJ", "34P-JDG", "OW6-Q7Y", "NNE-4ZB", "MMC-V6H", "381-H0T", "LHR-X51", "L03-P3M", "UL8-U9I"]
+  },
   "novos": [
-    {
-      "numero": 1,
-      "tipo": "MONOFÁSICO",
-      "amperagem": "16A",
-      "eixo_b": "MONOFÁSICO",
-      "novo_sku": "DISJUNTOR DIN MONOFÁSICO 16A",
-      "nota": "Iluminação e circuitos leves — LM núcleo"
-    },
-    {
-      "numero": 2,
-      "tipo": "TRIFÁSICO",
-      "amperagem": "20A",
-      "eixo_b": "TRIFÁSICO",
-      "novo_sku": "DISJUNTOR DIN TRIFÁSICO 20A",
-      "nota": "Carga trifásica básica"
-    },
-    {
-      "numero": 3,
-      "tipo": "TRIFÁSICO",
-      "amperagem": "32A",
-      "eixo_b": "TRIFÁSICO",
-      "novo_sku": "DISJUNTOR DIN TRIFÁSICO 32A",
-      "nota": ""
-    },
-    {
-      "numero": 4,
-      "tipo": "TRIFÁSICO",
-      "amperagem": "40A",
-      "eixo_b": "TRIFÁSICO",
-      "novo_sku": "DISJUNTOR DIN TRIFÁSICO 40A",
-      "nota": ""
-    },
-    {
-      "numero": 5,
-      "tipo": "TRIFÁSICO",
-      "amperagem": "50A",
-      "eixo_b": "TRIFÁSICO",
-      "novo_sku": "DISJUNTOR DIN TRIFÁSICO 50A",
-      "nota": ""
-    },
-    {
-      "numero": 6,
-      "tipo": "TRIFÁSICO",
-      "amperagem": "63A",
-      "eixo_b": "TRIFÁSICO",
-      "novo_sku": "DISJUNTOR DIN TRIFÁSICO 63A",
-      "nota": "Motores / carga trifásica maior"
-    }
+    { "numero": 1, "tipo": "MONOFÁSICO", "amperagem": "10A", "eixo_b": "MONOFÁSICO", "novo_sku": "DISJUNTOR DIN MONOFÁSICO 10A" },
+    { "numero": 2, "tipo": "MONOFÁSICO", "amperagem": "16A", "eixo_b": "MONOFÁSICO", "novo_sku": "DISJUNTOR DIN MONOFÁSICO 16A", "nota": "Iluminação / circuitos leves" },
+    { "numero": 3, "tipo": "MONOFÁSICO", "amperagem": "20A", "eixo_b": "MONOFÁSICO", "novo_sku": "DISJUNTOR DIN MONOFÁSICO 20A" },
+    { "numero": 4, "tipo": "MONOFÁSICO", "amperagem": "25A", "eixo_b": "MONOFÁSICO", "novo_sku": "DISJUNTOR DIN MONOFÁSICO 25A" },
+    { "numero": 5, "tipo": "MONOFÁSICO", "amperagem": "32A", "eixo_b": "MONOFÁSICO", "novo_sku": "DISJUNTOR DIN MONOFÁSICO 32A" },
+    { "numero": 6, "tipo": "MONOFÁSICO", "amperagem": "40A", "eixo_b": "MONOFÁSICO", "novo_sku": "DISJUNTOR DIN MONOFÁSICO 40A" },
+    { "numero": 7, "tipo": "BIFÁSICO", "amperagem": "20A", "eixo_b": "BIFÁSICO", "novo_sku": "DISJUNTOR DIN BIFÁSICO 20A", "nota": "Chuveiro 220V" },
+    { "numero": 8, "tipo": "BIFÁSICO", "amperagem": "32A", "eixo_b": "BIFÁSICO", "novo_sku": "DISJUNTOR DIN BIFÁSICO 32A" },
+    { "numero": 9, "tipo": "BIFÁSICO", "amperagem": "40A", "eixo_b": "BIFÁSICO", "novo_sku": "DISJUNTOR DIN BIFÁSICO 40A" },
+    { "numero": 10, "tipo": "BIFÁSICO", "amperagem": "50A", "eixo_b": "BIFÁSICO", "novo_sku": "DISJUNTOR DIN BIFÁSICO 50A" },
+    { "numero": 11, "tipo": "TRIFÁSICO", "amperagem": "20A", "eixo_b": "TRIFÁSICO", "novo_sku": "DISJUNTOR DIN TRIFÁSICO 20A" },
+    { "numero": 12, "tipo": "TRIFÁSICO", "amperagem": "32A", "eixo_b": "TRIFÁSICO", "novo_sku": "DISJUNTOR DIN TRIFÁSICO 32A" },
+    { "numero": 13, "tipo": "TRIFÁSICO", "amperagem": "40A", "eixo_b": "TRIFÁSICO", "novo_sku": "DISJUNTOR DIN TRIFÁSICO 40A" },
+    { "numero": 14, "tipo": "TRIFÁSICO", "amperagem": "50A", "eixo_b": "TRIFÁSICO", "novo_sku": "DISJUNTOR DIN TRIFÁSICO 50A" },
+    { "numero": 15, "tipo": "TRIFÁSICO", "amperagem": "63A", "eixo_b": "TRIFÁSICO", "novo_sku": "DISJUNTOR DIN TRIFÁSICO 63A", "nota": "Motores / carga trifásica" }
   ]
 }
