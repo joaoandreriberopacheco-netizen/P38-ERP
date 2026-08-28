@@ -1,5 +1,5 @@
 /**
- * Macro-blocos A (Edificações) e B (Instalações / hidráulica) — estudo Excel.
+ * Macro-blocos A (Edificações) e B (Instalações: hidráulica + elétrica) — estudo Excel.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -44,35 +44,43 @@ function pcMatch(row, patterns = []) {
   });
 }
 
+function findSubBHidraulica(codigo) {
+  return load().sub_blocos_b_hidraulica.find((s) => s.codigo === codigo);
+}
+
+function findSubBEletrica(codigo) {
+  return load().sub_blocos_b_eletrica.find((s) => s.codigo === codigo);
+}
+
 /** Classifica SKU hidráulico em B01–B05. */
 export function subBlocoHidraulica(row = {}) {
   const core = String(row.core ?? '').trim();
   const linha = linhaBase(row.linha);
-  const cfg = load();
 
   if (core === 'AGUA_FRIA_SOLDAVEL' || linha === 'SOLDÁVEL') {
-    return cfg.sub_blocos_b.find((s) => s.codigo === 'B01');
+    return findSubBHidraulica('B01');
   }
 
   if (pcMatch(row, ['TUBO OCRE', 'POCO', 'POÇO', 'CAIXA D AGUA', "CAIXA D'ÁGUA", 'ADAPTADOR CAIXA'])) {
-    return cfg.sub_blocos_b.find((s) => s.codigo === 'B04');
+    return findSubBHidraulica('B04');
   }
 
   if (core === 'ESGOTO' || linha === 'ESGOTO') {
-    return cfg.sub_blocos_b.find((s) => s.codigo === 'B02');
+    return findSubBHidraulica('B02');
   }
 
   if (core === 'AGUA_FRIA_ROSCAVEL' || linha === 'ROSCÁVEL') {
-    return cfg.sub_blocos_b.find((s) => s.codigo === 'B03');
+    return findSubBHidraulica('B03');
   }
 
   if (core === 'HIDRAULICA_GERAL' || linha === 'HIDRÁULICA') {
+    if (pcMatch(row, ['REGULADOR P/GAS', 'REGULADOR P GAS'])) return null;
     if (pcMatch(row, ['CAIXA D', 'ADAPTADOR CAIXA', 'VALVULA', 'VÁLVULA', 'POCO', 'POÇO'])) {
       const isPoco = pcMatch(row, ['POCO', 'POÇO']);
       const isCaixa = pcMatch(row, ["CAIXA D'ÁGUA", 'CAIXA D AGUA', 'ADAPTADOR CAIXA']);
-      if (isPoco || isCaixa) return cfg.sub_blocos_b.find((s) => s.codigo === 'B04');
+      if (isPoco || isCaixa) return findSubBHidraulica('B04');
     }
-    return cfg.sub_blocos_b.find((s) => s.codigo === 'B05');
+    return findSubBHidraulica('B05');
   }
 
   return null;
@@ -85,4 +93,83 @@ export function isEtapaEdificacoes(etapa = '') {
 export function isHidraulica(row = {}) {
   const core = String(row.core ?? '').trim();
   return load().cores_hidraulica.includes(core);
+}
+
+/** SKU elétrico candidato (com ou sem core). */
+export function isEletricaCandidata(row = {}) {
+  const core = String(row.core ?? '').trim();
+  const linha = linhaBase(row.linha);
+  const etapa = String(row.etapa ?? '');
+  if (load().cores_eletrica.includes(core)) return true;
+  if (etapa.includes('Instalação elétrica')) return true;
+  if (etapa.includes('Instalações brutas') && ['ELETRODUTO', 'FIOS ELÉTRICOS', 'MATERIAL ELÉTRICO', 'ILUMINAÇÃO'].includes(linha)) {
+    return true;
+  }
+  if (linha === 'MATERIAL ELÉTRICO' && (etapa.includes('Instalações') || etapa.includes('elétrica'))) return true;
+  return false;
+}
+
+/** Parte visível → acabamentos (tomada, lâmpada, etc.). */
+export function isEletricaAcabamentos(row = {}) {
+  const cfg = load();
+  if (pcMatch(row, ['RESISTÊNCIA', 'RESISTENCIA']) && pcMatch(row, ['AQUECEDOR', 'SHOWER', 'VERSATIL'])) return true;
+  if (pcMatch(row, cfg.acabamentos_eletrica_pc)) return true;
+  if (pcMatch(row, cfg.acabamentos_eletrica_sku)) return true;
+  const core = String(row.core ?? '').trim();
+  if (core === 'ILUMINACAO' && !pcMatch(row, cfg.caixas_espera_pc)) return true;
+  if (core === 'PONTOS_ELETRICOS' && !pcMatch(row, cfg.caixas_espera_pc)) return true;
+  return false;
+}
+
+/** Instalação elétrica = candidato elétrico que não é acabamento visível. */
+export function isEletricaInstalacao(row = {}) {
+  if (!isEletricaCandidata(row)) return false;
+  if (isEletricaAcabamentos(row)) return false;
+  if (pcMatch(row, ['REGULADOR P/GAS', 'REGULADOR P GAS'])) return false;
+  return true;
+}
+
+/** Classifica elétrica de instalação em B06–B09. */
+export function subBlocoEletrica(row = {}) {
+  const core = String(row.core ?? '').trim();
+  const linha = linhaBase(row.linha);
+  const cfg = load();
+
+  if (core === 'PADRAO_ELETRICO' || pcMatch(row, ['PONTALETE', 'ATERRAMENTO', 'ROLDANA', 'BENJAMIN PADRAO', 'BENJAMIN PADRÃO', 'ARMAÇÃO NUCLEAR', 'CONTADOR'])) {
+    return findSubBEletrica('B06');
+  }
+
+  if (core === 'QUADRO_ELETRICO' || pcMatch(row, ['DISJUNTOR', 'QUADRO DE DISTRIBUI'])) {
+    return findSubBEletrica('B08');
+  }
+
+  if (
+    core === 'INFRA_ELETRICA'
+    || linha === 'ELETRODUTO'
+    || linha === 'FIOS ELÉTRICOS'
+    || pcMatch(row, ['ELETRODUTO', 'FIO ELÉTRICO', 'FIO PARALELO', 'CONDUITE', 'GRAMPO P/ FIO', 'CANALETA'])
+  ) {
+    return findSubBEletrica('B07');
+  }
+
+  if (pcMatch(row, ['CAIXINHA DE LUZ', 'PLACA CEGA', 'TAPA-FURO', 'CAIXA DE STOP'])) {
+    return findSubBEletrica('B09');
+  }
+
+  if (pcMatch(row, ['CAIXA DE LUZ']) && !pcMatch(row, ['CONTADOR'])) {
+    return findSubBEletrica('B09');
+  }
+
+  if (core === 'PONTOS_ELETRICOS') {
+    return findSubBEletrica('B09');
+  }
+
+  return findSubBEletrica('B07');
+}
+
+export function pathwayDestino(row = {}) {
+  if (isEletricaAcabamentos(row)) return 'acabamentos';
+  if (isEletricaInstalacao(row)) return 'instalacao';
+  if (isHidraulica(row)) return 'instalacao';
+  return '';
 }

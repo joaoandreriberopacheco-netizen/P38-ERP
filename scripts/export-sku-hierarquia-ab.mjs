@@ -1,16 +1,22 @@
 #!/usr/bin/env node
 /**
- * Excel estudo — macro-blocos A (Edificações) e B (Instalações / hidráulica).
- *
- * Lê P38-sku-hierarquia-core.xlsx (ou CSV) e gera folhas separadas para revisão.
- * Não altera catálogo nem UI.
+ * Excel estudo — A (Edificações) e B (Instalações: hidráulica + elétrica até caixa de espera).
  *
  *   npm run export:sku-hierarquia-ab
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import ExcelJS from 'exceljs';
-import { getMacroConfig, isEtapaEdificacoes, isHidraulica, subBlocoEdificacoes, subBlocoHidraulica } from './lib/hierarquiaMacroBlocos.mjs';
+import {
+  getMacroConfig,
+  isEtapaEdificacoes,
+  isHidraulica,
+  isEletricaInstalacao,
+  isEletricaAcabamentos,
+  subBlocoEdificacoes,
+  subBlocoHidraulica,
+  subBlocoEletrica,
+} from './lib/hierarquiaMacroBlocos.mjs';
 import { getLegendaLinha, getMapaEtapasCategoria } from './lib/etapaCategoriaMap.mjs';
 import { listarCoresObra } from './lib/inferenciaCoreObra.mjs';
 
@@ -129,6 +135,38 @@ function buildHidraulicaRows(catalog) {
         _sort: sortKey([subCod, row.produto_compra, row.eixo_a, row.eixo_b, row.sku_atual]),
       };
     })
+    .filter((row) => row.sub_bloco !== '(classificar)')
+    .sort((a, b) => a._sort.localeCompare(b._sort, 'pt-BR'));
+}
+
+function buildEletricaInstalacaoRows(catalog) {
+  return catalog
+    .filter((row) => isEletricaInstalacao(row))
+    .map((row) => {
+      const sub = subBlocoEletrica(row);
+      const subNome = sub ? sub.nome : '(classificar)';
+      const subCod = sub?.codigo ?? 'B??';
+      return {
+        bloco: 'B — Instalações',
+        sub_bloco: subNome,
+        ...row,
+        status_mix: 'tem',
+        _sort: sortKey([subCod, row.produto_compra, row.eixo_a, row.sku_atual]),
+      };
+    })
+    .sort((a, b) => a._sort.localeCompare(b._sort, 'pt-BR'));
+}
+
+function buildAcabamentosPreviaRows(catalog) {
+  return catalog
+    .filter((row) => isEletricaAcabamentos(row))
+    .map((row) => ({
+      bloco: 'C — Acabamentos (prévia)',
+      sub_bloco: 'C-Elétrica visível',
+      ...row,
+      status_mix: '→ acabamentos',
+      _sort: sortKey([row.produto_compra, row.sku_atual]),
+    }))
     .sort((a, b) => a._sort.localeCompare(b._sort, 'pt-BR'));
 }
 
@@ -140,7 +178,7 @@ function addDataSheet(wb, name, rows, headerColor) {
     const { _sort, ...data } = row;
     ws.addRow(ROW_HEADERS.map((h) => data[h] ?? ''));
   }
-  const widths = [18, 22, 28, 20, 24, 28, 10, 14, 14, 40, 40, 12];
+  const widths = [18, 26, 28, 20, 24, 28, 10, 14, 14, 40, 40, 14];
   widths.forEach((w, i) => {
     ws.getColumn(i + 1).width = w;
   });
@@ -150,7 +188,7 @@ function addDataSheet(wb, name, rows, headerColor) {
   return ws;
 }
 
-function addResumoSheet(wb, edifRows, hidRows) {
+function addResumoSheet(wb, edifRows, hidRows, elecRows, acabPreviaRows) {
   const ws = wb.addWorksheet('Resumo', { views: [{ state: 'frozen', ySplit: 1 }] });
   ws.addRow(['bloco', 'sub_bloco', 'skus', 'produtos_compra']);
   styleHeader(ws.getRow(1), 'FF2D5016');
@@ -167,18 +205,21 @@ function addResumoSheet(wb, edifRows, hidRows) {
     return [...map.values()].sort((a, b) => a.sub.localeCompare(b.sub, 'pt-BR'));
   };
 
-  for (const g of [...countGroups(edifRows), ...countGroups(hidRows)]) {
+  for (const g of [...countGroups(edifRows), ...countGroups(hidRows), ...countGroups(elecRows), ...countGroups(acabPreviaRows)]) {
     ws.addRow([g.bloco, g.sub, g.skus, g.pcs.size]);
   }
 
-  ws.getColumn(1).width = 20;
-  ws.getColumn(2).width = 28;
+  ws.getColumn(1).width = 22;
+  ws.getColumn(2).width = 30;
   ws.getColumn(3).width = 8;
   ws.getColumn(4).width = 16;
 
   ws.addRow([]);
   ws.addRow(['Total A — Edificações', '', edifRows.length, new Set(edifRows.map((r) => r.produto_compra).filter(Boolean)).size]);
   ws.addRow(['Total B — Hidráulica', '', hidRows.length, new Set(hidRows.map((r) => r.produto_compra).filter(Boolean)).size]);
+  ws.addRow(['Total B — Elétrica (instalação)', '', elecRows.length, new Set(elecRows.map((r) => r.produto_compra).filter(Boolean)).size]);
+  ws.addRow(['Total B — Instalações', '', hidRows.length + elecRows.length, '']);
+  ws.addRow(['→ C prévia (elétrica visível)', '', acabPreviaRows.length, new Set(acabPreviaRows.map((r) => r.produto_compra).filter(Boolean)).size]);
 }
 
 function addLegendaSheet(wb) {
@@ -191,22 +232,29 @@ function addLegendaSheet(wb) {
     ws.addRow(['Bloco', b.codigo, `${b.nome} — ${b.descricao}`]);
   }
   ws.addRow([]);
+  ws.addRow(['Regra', '', cfg.regra_limite.instalacao]);
+  ws.addRow(['Regra', '', cfg.regra_limite.acabamentos]);
+  ws.addRow(['Regra', '', cfg.regra_limite.gas]);
+  ws.addRow([]);
   ws.addRow(['Sub A', 'Código', 'Etapa']);
   for (const s of cfg.sub_blocos_a) {
     ws.addRow(['Sub A', s.codigo, s.etapa]);
   }
   ws.addRow([]);
   ws.addRow(['Sub B', 'Código', 'Ramo hidráulico']);
-  for (const s of cfg.sub_blocos_b) {
+  for (const s of cfg.sub_blocos_b_hidraulica) {
     ws.addRow(['Sub B', s.codigo, s.nome]);
+  }
+  ws.addRow([]);
+  ws.addRow(['Sub B', 'Código', 'Ramo elétrico (até caixa de espera)']);
+  for (const s of cfg.sub_blocos_b_eletrica) {
+    ws.addRow(['Sub B', s.codigo, `${s.nome}${s.nota ? ` — ${s.nota}` : ''}`]);
   }
   ws.addRow([]);
   ws.addRow(['Linha ·N/·C/·R', 'Sufixo', 'Significado']);
   for (const [suf, desc] of Object.entries(getLegendaLinha())) {
     ws.addRow(['Glitch linha', suf, desc]);
   }
-  ws.addRow([]);
-  ws.addRow(['Nota', '', 'Fora deste export: elétrica (etapa 3/7), banheiro (etapa 5), transversal (etapa 8). Mix/fechos do estudo → coluna status_mix.']);
 
   ws.getColumn(1).width = 14;
   ws.getColumn(2).width = 12;
@@ -236,20 +284,24 @@ function addReferenciaSheets(wb) {
 async function main() {
   const { inPath, outPath } = parseArgs(process.argv.slice(2));
   if (!fs.existsSync(inPath)) {
-    throw new Error(`Entrada em falta: ${inPath}\nCorra antes: npm run export:sku-hierarquia-core -- --skip-regen (se CSV base existir)`);
+    throw new Error(`Entrada em falta: ${inPath}\nCorra antes: npm run export:sku-hierarquia-core -- --skip-regen`);
   }
 
   const catalog = await loadCatalogRows(inPath);
   const edifRows = buildEdificacoesRows(catalog);
   const hidRows = buildHidraulicaRows(catalog);
+  const elecRows = buildEletricaInstalacaoRows(catalog);
+  const acabPreviaRows = buildAcabamentosPreviaRows(catalog);
 
   const wb = new ExcelJS.Workbook();
   wb.creator = 'P38 export-sku-hierarquia-ab';
   wb.created = new Date();
 
-  addResumoSheet(wb, edifRows, hidRows);
+  addResumoSheet(wb, edifRows, hidRows, elecRows, acabPreviaRows);
   addDataSheet(wb, 'A — Edificações', edifRows, 'FF2D5016');
-  addDataSheet(wb, 'B — Instalações (hidráulica)', hidRows, 'FF1A4D6B');
+  addDataSheet(wb, 'B — Hidráulica', hidRows, 'FF1A4D6B');
+  addDataSheet(wb, 'B — Elétrica', elecRows, 'FF4A3A8C');
+  addDataSheet(wb, 'C prévia — elétrica visível', acabPreviaRows, 'FF6B5A2D');
   addLegendaSheet(wb);
   addReferenciaSheets(wb);
 
@@ -257,13 +309,15 @@ async function main() {
   await wb.xlsx.writeFile(outPath);
 
   console.log('[export-sku-hierarquia-ab] OK');
-  console.log(`  entrada: ${inPath}`);
-  console.log(`  saída:   ${outPath}`);
-  console.log(`  A — Edificações: ${edifRows.length} SKUs`);
-  console.log(`  B — Hidráulica:  ${hidRows.length} SKUs`);
+  console.log(`  saída: ${outPath}`);
+  console.log(`  A — Edificações:           ${edifRows.length} SKUs`);
+  console.log(`  B — Hidráulica:            ${hidRows.length} SKUs`);
+  console.log(`  B — Elétrica (instalação): ${elecRows.length} SKUs`);
+  console.log(`  → C prévia (visível):      ${acabPreviaRows.length} SKUs`);
 
   const bySub = {};
-  for (const r of hidRows) bySub[r.sub_bloco] = (bySub[r.sub_bloco] || 0) + 1;
+  for (const r of elecRows) bySub[r.sub_bloco] = (bySub[r.sub_bloco] || 0) + 1;
+  console.log('  Elétrica por ramo:');
   for (const [k, v] of Object.entries(bySub).sort()) console.log(`    ${k}: ${v}`);
 }
 

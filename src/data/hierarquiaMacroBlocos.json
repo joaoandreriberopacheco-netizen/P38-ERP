@@ -1,6 +1,11 @@
 {
   "version": "2026-08-28",
-  "nota": "Macro-blocos do estudo Excel (João André). A = Edificações; B = Instalações (hidráulica). Sem UI/BD.",
+  "nota": "Macro-blocos estudo Excel. B = hidráulica + elétrica até caixa de espera. Visível → acabamentos.",
+  "regra_limite": {
+    "instalacao": "Tudo até a caixa de espera (caixinha/ponto bruto, quadro, fio, tubo, registro embutido).",
+    "acabamentos": "Parte visível ao utilizador: tomada, interruptor, lâmpada, luminária, torneira, louça, metais.",
+    "gas": "Fora de B — botijão/regulador avulso, não pathway de instalação."
+  },
   "blocos": [
     {
       "codigo": "A",
@@ -10,7 +15,12 @@
     {
       "codigo": "B",
       "nome": "B — Instalações",
-      "descricao": "Instalações — neste export só hidráulica bruta (soldável, esgoto, roscável, captação, componentes)"
+      "descricao": "Hidráulica + elétrica (obra bruta até caixa de espera / quadro / registro)"
+    },
+    {
+      "codigo": "C",
+      "nome": "C — Acabamentos",
+      "descricao": "Prévia — peças visíveis (tomada, luz, torneira, louça, tinta, cerâmica…)"
     }
   ],
   "sub_blocos_a": [
@@ -19,23 +29,39 @@
     { "codigo": "A4", "etapa": "4 — Revestimentos", "nome": "Revestimentos" },
     { "codigo": "A6", "etapa": "6 — Acabamento seco", "nome": "Acabamento seco" }
   ],
-  "sub_blocos_b": [
-    { "codigo": "B01", "nome": "01 — Soldável", "cores": ["AGUA_FRIA_SOLDAVEL"], "linhas": ["SOLDÁVEL"] },
-    { "codigo": "B02", "nome": "02 — Esgoto", "cores": ["ESGOTO"], "linhas": ["ESGOTO"], "excluir_produto_compra": ["TUBO OCRE"] },
-    { "codigo": "B03", "nome": "03 — Roscável", "cores": ["AGUA_FRIA_ROSCAVEL"], "linhas": ["ROSCÁVEL"] },
-    {
-      "codigo": "B04",
-      "nome": "04 — Captação",
-      "cores": ["HIDRAULICA_GERAL", "ESGOTO"],
-      "produto_compra_contem": ["CAIXA D'ÁGUA", "ADAPTADOR CAIXA", "TUBO OCRE", "VÁLVULA"],
-      "sku_contem": ["POÇO", "POCO", "OCRE P/POÇO", "OCRE P/POCO"]
-    },
-    {
-      "codigo": "B05",
-      "nome": "05 — Componentes",
-      "cores": ["HIDRAULICA_GERAL"],
-      "fallback_hidraulica": true
-    }
+  "sub_blocos_b_hidraulica": [
+    { "codigo": "B01", "nome": "01 — Soldável" },
+    { "codigo": "B02", "nome": "02 — Esgoto" },
+    { "codigo": "B03", "nome": "03 — Roscável" },
+    { "codigo": "B04", "nome": "04 — Captação" },
+    { "codigo": "B05", "nome": "05 — Componentes" }
+  ],
+  "sub_blocos_b_eletrica": [
+    { "codigo": "B06", "nome": "06 — Padrão de entrada", "cores": ["PADRAO_ELETRICO"] },
+    { "codigo": "B07", "nome": "07 — Infra (eletroduto e fios)", "cores": ["INFRA_ELETRICA"], "linhas": ["ELETRODUTO", "FIOS ELÉTRICOS"] },
+    { "codigo": "B08", "nome": "08 — Quadro e proteção", "cores": ["QUADRO_ELETRICO"] },
+    { "codigo": "B09", "nome": "09 — Caixas de espera", "nota": "Caixinha/caixa de luz, placa cega, tapa-furo — antes da tomada/interruptor visível" }
+  ],
+  "acabamentos_eletrica_pc": [
+    "TOMADA",
+    "INTERRUPTOR",
+    "LAMPADA",
+    "LUMINÁRIA",
+    "LUMINARIA",
+    "SPOT LED",
+    "SPOT ",
+    "PLAFON",
+    "PLUG MACHO",
+    "PLUG FEMEA",
+    "PLUG FÊMEA"
+  ],
+  "acabamentos_eletrica_sku": ["NICHO EMBUTIR"],
+  "caixas_espera_pc": [
+    "CAIXINHA DE LUZ",
+    "CAIXA DE LUZ",
+    "PLACA CEGA",
+    "TAPA-FURO",
+    "CAIXA DE STOP"
   ],
   "etapas_a": [
     "1 — Estrutura / alvenaria",
@@ -43,5 +69,6 @@
     "4 — Revestimentos",
     "6 — Acabamento seco"
   ],
-  "cores_hidraulica": ["ESGOTO", "AGUA_FRIA_SOLDAVEL", "AGUA_FRIA_ROSCAVEL", "HIDRAULICA_GERAL"]
+  "cores_hidraulica": ["ESGOTO", "AGUA_FRIA_SOLDAVEL", "AGUA_FRIA_ROSCAVEL", "HIDRAULICA_GERAL"],
+  "cores_eletrica": ["PADRAO_ELETRICO", "INFRA_ELETRICA", "QUADRO_ELETRICO", "PONTOS_ELETRICOS", "ILUMINACAO"]
 }
