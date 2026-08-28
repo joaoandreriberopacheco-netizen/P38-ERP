@@ -16,15 +16,16 @@ export default function VendaValorResumo({
   formaPagamentoLabel,
   pagamentoMisto = false,
 }) {
-  const subtotal = roundToTwoDecimals(Number(venda?.subtotal) || 0);
+  const subtotalBruto = roundToTwoDecimals(Number(venda?.subtotal) || 0);
   const desconto = roundToTwoDecimals(Number(venda?.valor_desconto) || 0);
   const total = roundToTwoDecimals(Number(venda?.valor_total) || 0);
+  const subtotal = subtotalBruto > 0 ? subtotalBruto : roundToTwoDecimals(total + desconto);
   const temDesconto = desconto > 0.009;
   const valorExibir = valorDestaque != null ? roundToTwoDecimals(valorDestaque) : total;
   const percentualDesconto = temDesconto && subtotal > 0
     ? (desconto / subtotal) * 100
     : 0;
-  const percentualDescontoLabel = percentualDesconto > 0
+  const percentualDescontoLabel = temDesconto && percentualDesconto > 0
     ? percentualDesconto.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 1 })
     : null;
 
@@ -35,15 +36,17 @@ export default function VendaValorResumo({
   const sz = sizeMap[size] || sizeMap.sm;
 
   return (
-    <div className={cn('flex flex-col items-end gap-0.5 text-right', className)}>
+    <div className={cn('flex flex-col items-end gap-0.5 text-right flex-shrink-0 min-w-[7.5rem]', className)}>
       {temDesconto && (
         <>
-          <span className={cn(sz.meta, 'text-muted-foreground line-through tabular-nums')}>
+          <span className={cn(sz.meta, 'text-muted-foreground line-through tabular-nums whitespace-nowrap')}>
             {formatCaixaR(subtotal)}
           </span>
-          <span className={cn(sz.meta, caixaClasses('danger').text, 'tabular-nums')}>
+          <span className={cn(sz.meta, caixaClasses('danger').text, 'tabular-nums whitespace-nowrap')}>
             −{formatCaixaR(desconto)}
-            {percentualDescontoLabel ? ` (${percentualDescontoLabel}%)` : ''}
+            {percentualDescontoLabel ? (
+              <span className="text-muted-foreground/90"> ({percentualDescontoLabel}%)</span>
+            ) : null}
           </span>
         </>
       )}

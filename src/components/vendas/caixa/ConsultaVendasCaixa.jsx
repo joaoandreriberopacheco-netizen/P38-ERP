@@ -206,8 +206,8 @@ export default function ConsultaVendasCaixa({
 
                 return (
                 <div key={venda.id} className="bg-card rounded-2xl shadow-sm overflow-hidden">
-                  <div className="w-full flex items-center justify-between gap-3 px-4 py-3 border-b border-border/40">
-                    <div className="min-w-0">
+                  <div className="w-full flex items-start justify-between gap-3 px-4 py-3 border-b border-border/40">
+                    <div className="min-w-0 flex-1">
                       <p className={`${p38Table.mobileLineTitle} truncate`}>{venda.numero}</p>
                       <p className={`${p38Table.mobileLineSubtitle} truncate`}>
                         {venda.cliente_nome || 'Avulso'}
