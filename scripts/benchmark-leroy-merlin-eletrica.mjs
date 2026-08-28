@@ -13,6 +13,7 @@ const DEFAULT_MIX = path.join(process.cwd(), 'src', 'data', 'leroyMerlinMixEletr
 const DEFAULT_OUT = path.join(process.cwd(), 'docs', 'exports', 'P38-eletrica-benchmark-lm.xlsx');
 const DEFAULT_NOVOS = path.join(process.cwd(), 'src', 'data', 'eletricaNovosDisjuntores.json');
 const DEFAULT_NOVOS_INFRA = path.join(process.cwd(), 'src', 'data', 'eletricaNovosConexoesContatores.json');
+const DEFAULT_NOVOS_COMPLETAR = path.join(process.cwd(), 'src', 'data', 'eletricaNovosCompletarBenchmark.json');
 
 function parseArgs(argv) {
   const get = (p) => argv.find((a) => a.startsWith(p))?.slice(p.length);
@@ -117,6 +118,43 @@ function parseDisjuntor(row) {
 function matchFio(row, eixoMatch) {
   const blob = blobRow(row).replace(/\s/g, '');
   return blob.includes(norm(eixoMatch).replace(/\s/g, ''));
+}
+
+function isFioFlexProduto(row) {
+  const pc = norm(row.produto_compra);
+  return pc.includes('FIO FLEX') || pc.includes('CABO FLEX') || pc === 'FIO ELÉTRICO' || pc === 'FIO ELETRICO';
+}
+
+function matchFioFlex(row, eixoMatch) {
+  if (!isFioFlexProduto(row)) return false;
+  return matchFio(row, eixoMatch);
+}
+
+function matchQuadroPlastico(row, eixoA) {
+  const blob = blobRow(row);
+  if (!blob.includes('QUADRO DE DISTRIBUI')) return false;
+  if (/METAL|METÁLIC|METALIC/.test(blob)) return false;
+  return norm(row.eixo_a).startsWith(norm(eixoA)) || blob.includes(` ${eixoA} `) || blob.includes(` ${eixoA}/`);
+}
+
+function matchQuadroMetalico(row, eixoA) {
+  const blob = blobRow(row);
+  if (blob.includes('QUADRO MET') || (blob.includes('QUADRO') && /METAL|METÁLIC|METALIC/.test(blob))) {
+    return norm(row.eixo_a).startsWith(norm(eixoA)) || new RegExp(`\\b${eixoA}\\b`).test(blob);
+  }
+  return false;
+}
+
+function matchPecaEletrodutoSingle(row, peca, size) {
+  return matchPecaEletroduto(row, peca, size);
+}
+
+function completarRowKey(row) {
+  return `${row.familia}|${row.variante}|${row.amperagem_ou_eixo}`;
+}
+
+function completarNovoKey(n) {
+  return `${n.familia}|${n.variante}|${n.amperagem_ou_eixo}`;
 }
 
 function matchSizeInRow(row, size) {
@@ -252,12 +290,77 @@ function buildFamiliaRows(familia, p38Rows, mix, novosEstudo = null) {
     return rows;
   }
 
+  if (tipo === 'eletroduto_peca') {
+    const payload = novosEstudo?.completar;
+    const cadastroVazio = payload?.cadastro_actual === 'vazio';
+    const novosMap = new Map((payload?.novos ?? []).filter((n) => n.familia === familia.id).map((n) => [completarNovoKey(n), n]));
+    for (const v of familia.variantes) {
+      const hits = p38Rows.filter((r) => matchPecaEletrodutoSingle(r, familia.peca, v.size));
+      const variante = v.label;
+      const amperagem = v.size;
+      const key = `${familia.id}|${variante}|${amperagem}`;
+      let status = hits.length ? 'tem' : 'falta';
+      let acao = status === 'falta' ? 'cadastrar' : '';
+      const novoItem = novosMap.get(key);
+      if (cadastroVazio && novoItem) {
+        status = 'novo';
+        acao = 'cadastrar (aprovado estudo)';
+      }
+      rows.push(rowBase(familia, grupo, lmUrls, {
+        variante, amperagem_ou_eixo: amperagem, status, qtd_p38: hits.length,
+        produto_compra: familia.produto_compra,
+        codigos_p38: hits.map((h) => h.codigo_interno).join(', '),
+        sku_exemplo: hits[0]?.sku_atual ?? novoItem?.novo_sku ?? '',
+        lm_url: lmUrls.eletroduto, acao, nota: novoItem?.nota ?? '',
+      }));
+    }
+    return rows;
+  }
+
+  if (tipo === 'quadro_material') {
+    const payload = novosEstudo?.completar;
+    const cadastroVazio = payload?.cadastro_actual === 'vazio';
+    const novosMap = new Map((payload?.novos ?? []).filter((n) => n.familia === familia.id).map((n) => [completarNovoKey(n), n]));
+    const isMetal = familia.material === 'METÁLICO';
+    const marcas = (familia.marcas_ref ?? []).join('/');
+    for (const v of familia.variantes) {
+      const hits = isMetal
+        ? p38Rows.filter((r) => matchQuadroMetalico(r, v.eixo_a))
+        : p38Rows.filter((r) => matchQuadroPlastico(r, v.eixo_a));
+      const key = `${familia.id}|${v.label}|${v.eixo_a}`;
+      let status = hits.length ? (hits.length > 1 ? 'duplicado' : 'tem') : 'falta';
+      let acao = status === 'falta' ? 'cadastrar' : '';
+      let nota = isMetal ? `Metálico — ref. ${marcas}` : `Plástico — ref. ${marcas}`;
+      if (!isMetal && hits.length && hits.some((h) => norm(h.sku_atual).includes('TRIAL'))) {
+        nota += ' · revisar marca (Trial no cadastro)';
+      }
+      const novoItem = novosMap.get(key);
+      if (cadastroVazio && novoItem) {
+        status = 'novo';
+        acao = 'cadastrar (aprovado estudo)';
+        nota = novoItem.nota ?? nota;
+      }
+      rows.push(rowBase(familia, grupo, lmUrls, {
+        variante: v.label, amperagem_ou_eixo: v.eixo_a, status, qtd_p38: hits.length,
+        produto_compra: familia.produto_compra,
+        codigos_p38: hits.map((h) => h.codigo_interno).join(', '),
+        sku_exemplo: hits[0]?.sku_atual ?? novoItem?.novo_sku ?? '',
+        lm_url: lmUrls.quadros, acao, nota,
+      }));
+    }
+    return rows;
+  }
+
   for (const v of familia.variantes) {
     const prio = v.prioridade ?? familia.prioridade ?? 'nucleo';
     let hits = [];
+    let notaExtra = '';
 
-    if (tipo === 'quadro_polo') {
-      hits = p38Rows.filter((r) => norm(r.produto_compra).includes('QUADRO DE DISTRIBUI') && norm(r.eixo_a).startsWith(norm(v.eixo_a)));
+    if (tipo === 'fio_flex') {
+      hits = p38Rows.filter((r) => matchFioFlex(r, v.eixo_match));
+      if (hits.some((h) => norm(h.produto_compra).includes('FIO ELÉTRICO'))) {
+        notaExtra = 'Legado FIO ELÉTRICO — migrar para FIO FLEXÍVEL';
+      }
     } else if (tipo === 'eixo_a') {
       hits = p38Rows.filter((r) => norm(r.produto_compra) === norm(familia.produto_compra) && norm(r.eixo_a) === norm(v.eixo_a));
     } else if (tipo === 'fio') {
@@ -285,14 +388,18 @@ function buildFamiliaRows(familia, p38Rows, mix, novosEstudo = null) {
     }
 
     const status = hits.length ? 'tem' : 'falta';
+    const ampEixo = tipo === 'eletroduto_size'
+      ? (v.size ?? v.label)
+      : (v.eixo_match ?? v.eixo_a ?? v.size ?? v.label ?? '');
     rows.push(rowBase(familia, grupo, lmUrls, {
       variante: v.label ?? v.eixo_a ?? v.size ?? familia.produto_compra,
-      amperagem_ou_eixo: v.label ?? v.eixo_a ?? v.size ?? '',
+      amperagem_ou_eixo: ampEixo,
       status, qtd_p38: hits.length, prioridade: prio,
       codigos_p38: hits.map((h) => h.codigo_interno).join(', '),
       sku_exemplo: hits[0]?.sku_atual ?? '',
       lm_url: lmUrls[familia.id] ?? lmUrls.eletroduto ?? lmUrls.fios ?? lmUrls.padrao_entrada,
       acao: status === 'falta' ? 'cadastrar' : '',
+      nota: notaExtra,
     }));
   }
   return rows;
@@ -309,11 +416,16 @@ function loadNovosEstudo() {
   const infra = fs.existsSync(DEFAULT_NOVOS_INFRA)
     ? JSON.parse(fs.readFileSync(DEFAULT_NOVOS_INFRA, 'utf8'))
     : { conexoes: { novos: [], cadastro_actual: 'vazio' }, contatores: { novos: [], cadastro_actual: 'vazio' } };
+  const completar = fs.existsSync(DEFAULT_NOVOS_COMPLETAR)
+    ? JSON.parse(fs.readFileSync(DEFAULT_NOVOS_COMPLETAR, 'utf8'))
+    : { novos: [], cadastro_actual: 'vazio' };
   return {
     disjuntores,
     conexoes: infra.conexoes ?? { novos: [], cadastro_actual: 'vazio' },
     contatores: infra.contatores ?? { novos: [], cadastro_actual: 'vazio' },
-    nota_estrategia: infra.nota_estrategia ?? '',
+    completar,
+    nota_estrategia: [infra.nota_estrategia, completar.nota].filter(Boolean).join(' '),
+    fio_flexivel: completar.fio_flexivel ?? {},
   };
 }
 
@@ -345,6 +457,46 @@ function applyNovosEstudo(matrix, novosEstudo) {
     }
     return row;
   });
+}
+
+function applyCompletarBenchmark(matrix, completar) {
+  if (!completar?.novos?.length) return matrix;
+  const novosMap = new Map(completar.novos.map((n) => [completarNovoKey(n), n]));
+  const cadastroVazio = completar.cadastro_actual === 'vazio';
+  return matrix.map((row) => {
+    const key = completarRowKey(row);
+    const novoItem = novosMap.get(key);
+    if (!novoItem) return row;
+    if (!cadastroVazio && row.status !== 'falta' && row.status !== 'parcial') return row;
+    return {
+      ...row,
+      status: 'novo',
+      acao: 'cadastrar (aprovado estudo)',
+      prioridade: novoItem.prioridade ?? row.prioridade ?? 'nucleo',
+      qtd_p38: row.status === 'tem' ? row.qtd_p38 : 0,
+      codigos_p38: row.status === 'tem' ? row.codigos_p38 : '',
+      sku_exemplo: novoItem.novo_sku ?? row.sku_exemplo,
+      nota: novoItem.nota ?? row.nota,
+      produto_compra: novoItem.produto_compra ?? row.produto_compra,
+    };
+  });
+}
+
+function buildNovosCompletarRows(completar) {
+  return (completar?.novos ?? []).map((n) => ({
+    numero: n.numero,
+    bloco: 'B — Instalações',
+    sub_bloco: n.sub_bloco ?? '',
+    familia: n.familia,
+    produto_compra: n.produto_compra ?? '',
+    eixo_a: n.eixo_a ?? n.amperagem_ou_eixo ?? '',
+    variante: n.variante ?? '',
+    codigo_interno: '',
+    novo_sku: n.novo_sku,
+    status_mix: 'novo',
+    prioridade: n.prioridade ?? 'nucleo',
+    nota: n.nota ?? '',
+  }));
 }
 
 function buildNovosCadastroRows(section, payload) {
@@ -449,7 +601,7 @@ async function writeXlsx(outPath, matrix, p38Rows, mix, novosEstudo) {
   resumo.addRow(['P38 — parcial (kit incompleto)', matrix.filter((r) => r.status === 'parcial').length]);
   resumo.addRow(['P38 — duplicado', revisar.length]);
   resumo.addRow(['SKUs B Elétrica', p38Rows.length]);
-  if (novosEstudo.nota_estrategia) resumo.addRow(['Estratégia', novosEstudo.nota_estrategia]);
+  if (novosEstudo.fio_flexivel?.nota_operacao) resumo.addRow(['Fio flexível', novosEstudo.fio_flexivel.nota_operacao]);
   resumo.addRow([]);
   for (const g of mix.grupos ?? []) {
     const gRows = matrix.filter((r) => r.grupo === g.nome);
@@ -466,6 +618,9 @@ async function writeXlsx(outPath, matrix, p38Rows, mix, novosEstudo) {
   addSheet(wb, 'Novos — disjuntores', novosHeaders, buildNovosCadastroRows('disjuntores', novosEstudo.disjuntores), 'FF6B4A8C');
   addSheet(wb, 'Novos — conexões', novosHeaders, buildNovosCadastroRows('conexoes', novosEstudo.conexoes), 'FF4A6B8C');
   addSheet(wb, 'Novos — contatores', novosHeaders, buildNovosCadastroRows('contatores', novosEstudo.contatores), 'FF8C6B4A');
+
+  const completarHeaders = ['numero', 'bloco', 'sub_bloco', 'familia', 'produto_compra', 'eixo_a', 'variante', 'codigo_interno', 'novo_sku', 'status_mix', 'prioridade', 'nota'];
+  addSheet(wb, 'Novos — completar 06-08', completarHeaders, buildNovosCompletarRows(novosEstudo.completar), 'FF5A6B4A');
 
   const mixHeaders = ['tipo', 'amperagem', 'status', 'codigo_p38', 'sku', 'acao'];
   addSheet(wb, 'Mix disjuntores alvo', mixHeaders, buildMixDisjuntorAlvo(matrix, novosEstudo), 'FF4A5C6B');
@@ -496,6 +651,19 @@ async function main() {
   const p38Rows = await loadBEletrica(inPath);
   let matrix = buildBenchmark(p38Rows, mix, novosEstudo);
   matrix = applyNovosEstudo(matrix, novosEstudo);
+  matrix = applyCompletarBenchmark(matrix, novosEstudo.completar);
+  matrix = matrix.map((row) => {
+    if (row.familia !== 'eletroduto_kit' || row.status !== 'parcial') return row;
+    if (!String(row.amperagem_ou_eixo).includes('1 1/4')) return row;
+    const buchaNovo = novosEstudo.completar?.novos?.some((n) => n.familia === 'bucha_eletroduto');
+    if (!buchaNovo) return row;
+    return {
+      ...row,
+      status: 'novo',
+      acao: 'cadastrar bucha 1¼ (fecha kit)',
+      detalhe: 'Kit quase completo — falta só bucha 1¼ (proposta estudo)',
+    };
+  });
   await writeXlsx(outPath, matrix, p38Rows, mix, novosEstudo);
 
   const novos = matrix.filter((r) => r.status === 'novo');

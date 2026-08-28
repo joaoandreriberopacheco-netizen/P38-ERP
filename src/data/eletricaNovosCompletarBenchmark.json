@@ -1,0 +1,95 @@
+{
+  "version": "2026-08-28",
+  "nota": "Fecha lacunas 06/07/08 do benchmark LM. Operação P38: só fio/cabo flexível (cadastro legado FIO ELÉTRICO → migrar nomenclatura). Quadros: plástico boa marca (Tigre/Krona) + metálico boa marca (Steck/Schneider).",
+  "cadastro_actual": "vazio",
+  "fio_flexivel": {
+    "nota_operacao": "Trabalhamos somente com fio flexível; hits legado FIO ELÉTRICO contam como tem até renomear SKU."
+  },
+  "novos": [
+    {
+      "numero": 1,
+      "familia": "pontalete",
+      "variante": "TRIFÁSICO",
+      "amperagem_ou_eixo": "TRIFÁSICO",
+      "sub_bloco": "06 — Padrão de entrada",
+      "produto_compra": "PONTALETE",
+      "novo_sku": "PONTALETE GALVANIZADO LEVE TRIFÁSICO 3 MT",
+      "nota": "Fecha mix padrão trifásico"
+    },
+    {
+      "numero": 2,
+      "familia": "fio_flex",
+      "variante": "16 mm² (#4) — entrada longa / carga alta",
+      "amperagem_ou_eixo": "16,00MM",
+      "sub_bloco": "07 — Infra (fios, eletroduto, conduíte)",
+      "produto_compra": "FIO FLEXÍVEL",
+      "eixo_a": "1 X 16,00MM #04",
+      "novo_sku": "FIO FLEXÍVEL 1 X 16,00MM #04",
+      "prioridade": "complemento"
+    },
+    {
+      "numero": 3,
+      "familia": "conduite",
+      "variante": "Conduíte 1\"",
+      "amperagem_ou_eixo": "1\"",
+      "sub_bloco": "07 — Infra (fios, eletroduto, conduíte)",
+      "produto_compra": "CONDUITE CORRUGADO",
+      "novo_sku": "CONDUITE CORRUGADO 1\" TRAMONTINA",
+      "prioridade": "complemento"
+    },
+    {
+      "numero": 4,
+      "familia": "bucha_eletroduto",
+      "variante": "Bucha 1¼\"",
+      "amperagem_ou_eixo": "1 1/4'",
+      "sub_bloco": "07 — Infra (fios, eletroduto, conduíte)",
+      "produto_compra": "BUCHA ELETRODUTO",
+      "novo_sku": "BUCHA ELETRODUTO 1 1/4' INCA",
+      "nota": "Completa kit eletroduto 1¼\""
+    },
+    {
+      "numero": 5,
+      "familia": "quadro_plastico",
+      "variante": "8 disjuntores — plástico",
+      "amperagem_ou_eixo": "8",
+      "sub_bloco": "08 — Quadro e proteção",
+      "produto_compra": "QUADRO DE DISTRIBUIÇÃO",
+      "eixo_a": "8",
+      "novo_sku": "QUADRO DE DISTRIBUIÇÃO 8 DISJUNTORES — TIGRE",
+      "nota": "Plástico — marca referência Tigre (alternativa Krona)"
+    },
+    {
+      "numero": 6,
+      "familia": "quadro_metalico",
+      "variante": "8 disjuntores — metálico",
+      "amperagem_ou_eixo": "8",
+      "sub_bloco": "08 — Quadro e proteção",
+      "produto_compra": "QUADRO METÁLICO DE DISJUNTORES",
+      "eixo_a": "8",
+      "novo_sku": "QUADRO METÁLICO DE DISJUNTORES 8 — STECK",
+      "nota": "Metálico — marca referência Steck (alternativa Schneider)"
+    },
+    {
+      "numero": 7,
+      "familia": "quadro_metalico",
+      "variante": "12 disjuntores — metálico",
+      "amperagem_ou_eixo": "12",
+      "sub_bloco": "08 — Quadro e proteção",
+      "produto_compra": "QUADRO METÁLICO DE DISJUNTORES",
+      "eixo_a": "12",
+      "novo_sku": "QUADRO METÁLICO DE DISJUNTORES 12 — STECK",
+      "nota": "Metálico — marca referência Steck"
+    },
+    {
+      "numero": 8,
+      "familia": "quadro_metalico",
+      "variante": "16 disjuntores — metálico",
+      "amperagem_ou_eixo": "16",
+      "sub_bloco": "08 — Quadro e proteção",
+      "produto_compra": "QUADRO METÁLICO DE DISJUNTORES",
+      "eixo_a": "16",
+      "novo_sku": "QUADRO METÁLICO DE DISJUNTORES 16 — STECK",
+      "nota": "Metálico — marca referência Steck"
+    }
+  ]
+}

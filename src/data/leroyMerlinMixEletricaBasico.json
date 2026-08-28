@@ -1,7 +1,7 @@
 {
   "version": "2026-08-28",
   "fonte": "Leroy Merlin BR — Materiais Elétricos. Mix básico para hidratar o que a P38 já vende (não clonar LM).",
-  "nota_metodo": "Comparar B — Elétrica vs matriz. Eletroduto: núcleo = tubo + curva + luva + bucha + arruela no mesmo Ø.",
+  "nota_metodo": "Comparar B — Elétrica vs matriz. Fios: alvo FIO FLEXÍVEL (P38 legado ainda FIO ELÉTRICO). Quadros: plástico (Tigre/Krona) + metálico (Steck/Schneider) produtos distintos. Eletroduto: núcleo = tubo + curva + luva + bucha + arruela no mesmo Ø.",
   "lm_urls": {
     "disjuntores": "https://www.leroymerlin.com.br/disjuntores-din",
     "contatores": "https://www.leroymerlin.com.br/contatores",
@@ -67,16 +67,33 @@
       ]
     },
     {
-      "id": "quadro",
+      "id": "quadro_plastico",
       "grupo": "G3",
       "produto_compra": "QUADRO DE DISTRIBUIÇÃO",
-      "lm_caminho": "Quadros e Complementos",
+      "lm_caminho": "Quadros e Complementos > Plástico (sobrepor/embutir)",
       "prioridade": "nucleo",
-      "tipo_matriz": "quadro_polo",
+      "tipo_matriz": "quadro_material",
+      "material": "PLÁSTICO",
+      "marcas_ref": ["TIGRE", "KRONA"],
       "variantes": [
-        { "eixo_a": "8", "label": "8 disjuntores" },
-        { "eixo_a": "12", "label": "12 disjuntores" },
-        { "eixo_a": "16", "label": "16 disjuntores" }
+        { "eixo_a": "8", "label": "8 disjuntores — plástico" },
+        { "eixo_a": "12", "label": "12 disjuntores — plástico" },
+        { "eixo_a": "16", "label": "16 disjuntores — plástico" }
+      ]
+    },
+    {
+      "id": "quadro_metalico",
+      "grupo": "G3",
+      "produto_compra": "QUADRO METÁLICO DE DISJUNTORES",
+      "lm_caminho": "Quadros e Complementos > Metálico",
+      "prioridade": "nucleo",
+      "tipo_matriz": "quadro_material",
+      "material": "METÁLICO",
+      "marcas_ref": ["STECK", "SCHNEIDER"],
+      "variantes": [
+        { "eixo_a": "8", "label": "8 disjuntores — metálico" },
+        { "eixo_a": "12", "label": "12 disjuntores — metálico" },
+        { "eixo_a": "16", "label": "16 disjuntores — metálico" }
       ]
     },
     {
@@ -158,12 +175,12 @@
       "variantes": [{ "label": "Benjamin 10A" }]
     },
     {
-      "id": "fio",
+      "id": "fio_flex",
       "grupo": "G2",
-      "produto_compra": "FIO ELÉTRICO",
-      "lm_caminho": "Fios e Cabos > Fio rígido",
+      "produto_compra": "FIO FLEXÍVEL",
+      "lm_caminho": "Fios e Cabos > Cabo/fio flexível",
       "prioridade": "nucleo",
-      "tipo_matriz": "fio",
+      "tipo_matriz": "fio_flex",
       "variantes": [
         { "eixo_match": "1,50MM", "label": "1,5 mm² (#14) — iluminação/tomada leve" },
         { "eixo_match": "2,50MM", "label": "2,5 mm² (#12) — tomada padrão" },
@@ -177,7 +194,7 @@
       "id": "fio_paralelo",
       "grupo": "G2",
       "produto_compra": "FIO PARALELO",
-      "lm_caminho": "Fios e Cabos > Paralelo",
+      "lm_caminho": "Fios e Cabos > Paralelo flexível",
       "prioridade": "nucleo",
       "tipo_matriz": "fio",
       "variantes": [
@@ -213,6 +230,16 @@
         { "size": "1\"", "label": "Kit eletroduto 1\"" },
         { "size": "1 1/4'", "label": "Kit eletroduto 1¼\"" }
       ]
+    },
+    {
+      "id": "bucha_eletroduto",
+      "grupo": "G2",
+      "produto_compra": "BUCHA ELETRODUTO",
+      "lm_caminho": "Eletrodutos > Buchas",
+      "prioridade": "nucleo",
+      "tipo_matriz": "eletroduto_peca",
+      "peca": "BUCHA ELETRODUTO",
+      "variantes": [{ "size": "1 1/4'", "label": "Bucha 1¼\"" }]
     },
     {
       "id": "grampo_fio",
