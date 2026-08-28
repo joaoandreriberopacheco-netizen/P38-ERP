@@ -1,6 +1,8 @@
 /**
- * Pedidos/embarques excluídos de Necessidade e Consulta (legado / decisão operacional).
- * Normalização: trim, sem espaços, maiúsculas (ex.: E62-67G, 49K-PKG-A).
+ * Pedidos/embarques excluídos de Necessidade (legado / decisão operacional).
+ * Normalização: trim, sem espaços, maiúsculas (ex.: E62-67G, NXJ-53K, 49K-PKG-A).
+ *
+ * Importante: despachos com estes códigos continuam na lista Embarques e na Consulta.
  */
 export const EMBARQUE_CODIGOS_EXCLUIDOS_OPERACIONAL = [
   'E62-67G',
@@ -42,14 +44,26 @@ export function resolverCodigoEmbarqueExibicao(pedido, embarque) {
   return base;
 }
 
-/** Exclui card da Necessidade e da Consulta de embarques. */
+function isNecessidadeEmbarque(embarque) {
+  if (!embarque) return false;
+  if (embarque.tipo === 'Necessidade') return true;
+  return (
+    !!embarque.observacoes
+    && String(embarque.observacoes).includes('criado automaticamente para itens pendentes')
+  );
+}
+
+/** Exclui apenas cards de Necessidade legados. Despachos do mesmo pedido permanecem visíveis. */
 export function embarqueExcluidoOperacional(pedido, embarque, displayCode = '') {
+  if (!isNecessidadeEmbarque(embarque)) return false;
+
   const candidatos = [
     displayCode,
     pedido?.numero,
     embarque?.codigo_exibicao,
     embarque?.numero,
+    resolverCodigoEmbarqueExibicao(pedido, embarque),
   ].filter(Boolean);
-  if (candidatos.some((c) => codigoEmbarqueExcluidoOperacional(c))) return true;
-  return codigoEmbarqueExcluidoOperacional(resolverCodigoEmbarqueExibicao(pedido, embarque));
+
+  return candidatos.some((c) => codigoEmbarqueExcluidoOperacional(c));
 }

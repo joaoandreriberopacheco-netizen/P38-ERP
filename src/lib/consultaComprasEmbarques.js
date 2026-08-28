@@ -3,7 +3,7 @@ import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 import { resolveEmbarqueQuantidadeComercial, resolveEmbarqueLinhaUnidade, resolveEmbarqueQuantidadeBase } from '@/lib/embarqueQuantityResolve';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { getTotalLinhaPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
-import { resolveValorLinhaEmbarqueProporcional } from '@/lib/embarqueValorFinanceiro';
+import { calcValorEmbarqueCard, resolveValorLinhaEmbarqueProporcional } from '@/lib/embarqueValorFinanceiro';
 
 export { calcValorEmbarqueCard, resolveValorLinhaEmbarqueProporcional } from '@/lib/embarqueValorFinanceiro';
 import {
@@ -119,20 +119,20 @@ function buildLinhaConsultaItem(pedido, pedidoItem, sqlLine = null, produto = nu
 
 /**
  * Metodologia consulta por embarque (EmbarqueItem SQL):
+ * - modo `integral`: espelha a lista Embarques (valor/itens do split visível no filtro).
+ * - modo `pendente`: saldo ainda não recebido (KPIs, necessidade, relatórios de pendência).
  * - Pedido completo primeiro; splits (despacho / Necessidade) são independentes.
- * - Embarque concluído: não aparece na Consulta.
- * - Despacho em trânsito: só saldo pendente deste split (embarcado − recebido).
- * - Necessidade: só o que ainda falta vir neste split.
- * - Códigos operacionais excluídos (ex.: E62-67G legado): não entram na Consulta.
+ * - Códigos operacionais excluídos (ex.: E62-67G legado): só no modo pendente.
  */
-export function buildConsultaItensEmbarque(card = {}, produtosMap = {}) {
+export function buildConsultaItensEmbarque(card = {}, produtosMap = {}, { modo = 'pendente' } = {}) {
+  const somentePendente = modo === 'pendente';
   const pedido = card;
   const embarque = card._embarque;
   const ehNecessidade = card._is_necessidade || isNecessidadeRenderizada(embarque);
 
-  if (embarqueExcluidoOperacional(pedido, embarque, card._display_code)) return [];
+  if (somentePendente && embarqueExcluidoOperacional(pedido, embarque, card._display_code)) return [];
 
-  if (isEmbarqueConcluidoParaConsulta(card, embarque)) return [];
+  if (somentePendente && isEmbarqueConcluidoParaConsulta(card, embarque)) return [];
 
   const produtoDaLinha = (pedidoItem, sqlLine) => {
     const pid = pedidoItem?.produto_id || sqlLine?.produto_id;
@@ -159,14 +159,29 @@ export function buildConsultaItensEmbarque(card = {}, produtosMap = {}) {
       .map((sqlLine) => {
         const pedidoItem = (pedido.itens || []).find((pi) => pi.produto_id === sqlLine.produto_id);
         const produto = produtoDaLinha(pedidoItem, sqlLine);
-        const linhaPendente = sqlLineComSaldoPendente(sqlLine, pedidoItem, produto);
-        if (!linhaPendente) return null;
+        if (somentePendente) {
+          const linhaPendente = sqlLineComSaldoPendente(sqlLine, pedidoItem, produto);
+          if (!linhaPendente) return null;
+          return buildLinhaConsultaItem(
+            pedido,
+            pedidoItem,
+            linhaPendente,
+            produto,
+            'embarcada',
+          );
+        }
+
+        const qtyEmbarcada = resolveEmbarqueQuantidadeComercial(sqlLine, 'embarcada');
+        const qtyPedida = resolveEmbarqueQuantidadeComercial(sqlLine, 'pedida');
+        const qtyUsar = qtyEmbarcada > MIN_QTD_PENDENTE_CONSULTA ? qtyEmbarcada : qtyPedida;
+        if (qtyUsar <= MIN_QTD_PENDENTE_CONSULTA) return null;
+        const qtyKind = qtyEmbarcada > MIN_QTD_PENDENTE_CONSULTA ? 'embarcada' : 'pedida';
         return buildLinhaConsultaItem(
           pedido,
           pedidoItem,
-          linhaPendente,
+          sqlLine,
           produto,
-          'embarcada',
+          qtyKind,
         );
       })
       .filter(Boolean);
@@ -175,7 +190,7 @@ export function buildConsultaItensEmbarque(card = {}, produtosMap = {}) {
   const outrosEmbarques = (pedido._embarques || []).filter(
     (e) => e.id !== embarque?.id && !isNecessidadeRenderizada(e),
   );
-  if (outrosEmbarques.some((e) => hasLinkedItems(e))) return [];
+  if (somentePendente && outrosEmbarques.some((e) => hasLinkedItems(e))) return [];
 
   return (pedido.itens || [])
     .map((pedidoItem) => {
@@ -191,11 +206,12 @@ export function buildConsultaItensEmbarque(card = {}, produtosMap = {}) {
     .filter(Boolean);
 }
 
-/** @deprecated alias */
-export const buildConsultaItensPendentes = buildConsultaItensEmbarque;
+/** Saldo pendente de recebimento (modo legado da consulta). */
+export const buildConsultaItensPendentes = (card, produtosMap = {}) =>
+  buildConsultaItensEmbarque(card, produtosMap, { modo: 'pendente' });
 
-export function calcConsultaValorEmbarque(card, itens) {
-  const linhas = itens || buildConsultaItensEmbarque(card);
+export function calcConsultaValorEmbarque(card, itens, { modo = 'pendente' } = {}) {
+  const linhas = itens || buildConsultaItensEmbarque(card, {}, { modo });
   if (!linhas.length) return 0;
   return roundToTwoDecimals(
     linhas.reduce((acc, item) => acc + (Number(item.valor_total_item) || Number(item.total) || 0), 0),
@@ -206,12 +222,18 @@ export function calcConsultaValorEmbarque(card, itens) {
 export const calcConsultaValorPendenteEmbarque = calcConsultaValorEmbarque;
 
 export function enrichEmbarqueParaConsulta(card, produtosMap = {}) {
-  const itens = buildConsultaItensEmbarque(card, produtosMap);
+  const itensDisplay = Array.isArray(card._display_itens) ? card._display_itens : [];
+  const itensIntegral = buildConsultaItensEmbarque(card, produtosMap, { modo: 'integral' });
+  const itens = itensDisplay.length > 0 ? itensDisplay : itensIntegral;
+  const displayValor = Number(card._display_valor);
+  const valorIntegral = Number.isFinite(displayValor) && displayValor >= 0
+    ? roundToTwoDecimals(displayValor)
+    : calcValorEmbarqueCard(card, produtosMap);
   const ehNecessidade = card._is_necessidade || isNecessidadeRenderizada(card._embarque);
   return {
     ...card,
     _consulta_itens: itens,
-    _consulta_valor: calcConsultaValorEmbarque(card, itens),
+    _consulta_valor: valorIntegral,
     _consulta_papel: ehNecessidade ? 'necessidade' : 'despacho',
   };
 }
