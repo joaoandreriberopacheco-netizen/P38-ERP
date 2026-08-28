@@ -1,0 +1,47 @@
+{
+  "version": "2026-08-28",
+  "nota": "Macro-blocos do estudo Excel (João André). A = Edificações; B = Instalações (hidráulica). Sem UI/BD.",
+  "blocos": [
+    {
+      "codigo": "A",
+      "nome": "A — Edificações",
+      "descricao": "Estrutura, cobertura, revestimentos e acabamento seco da obra"
+    },
+    {
+      "codigo": "B",
+      "nome": "B — Instalações",
+      "descricao": "Instalações — neste export só hidráulica bruta (soldável, esgoto, roscável, captação, componentes)"
+    }
+  ],
+  "sub_blocos_a": [
+    { "codigo": "A1", "etapa": "1 — Estrutura / alvenaria", "nome": "Estrutura / alvenaria" },
+    { "codigo": "A2", "etapa": "2 — Cobertura", "nome": "Cobertura" },
+    { "codigo": "A4", "etapa": "4 — Revestimentos", "nome": "Revestimentos" },
+    { "codigo": "A6", "etapa": "6 — Acabamento seco", "nome": "Acabamento seco" }
+  ],
+  "sub_blocos_b": [
+    { "codigo": "B01", "nome": "01 — Soldável", "cores": ["AGUA_FRIA_SOLDAVEL"], "linhas": ["SOLDÁVEL"] },
+    { "codigo": "B02", "nome": "02 — Esgoto", "cores": ["ESGOTO"], "linhas": ["ESGOTO"], "excluir_produto_compra": ["TUBO OCRE"] },
+    { "codigo": "B03", "nome": "03 — Roscável", "cores": ["AGUA_FRIA_ROSCAVEL"], "linhas": ["ROSCÁVEL"] },
+    {
+      "codigo": "B04",
+      "nome": "04 — Captação",
+      "cores": ["HIDRAULICA_GERAL", "ESGOTO"],
+      "produto_compra_contem": ["CAIXA D'ÁGUA", "ADAPTADOR CAIXA", "TUBO OCRE", "VÁLVULA"],
+      "sku_contem": ["POÇO", "POCO", "OCRE P/POÇO", "OCRE P/POCO"]
+    },
+    {
+      "codigo": "B05",
+      "nome": "05 — Componentes",
+      "cores": ["HIDRAULICA_GERAL"],
+      "fallback_hidraulica": true
+    }
+  ],
+  "etapas_a": [
+    "1 — Estrutura / alvenaria",
+    "2 — Cobertura",
+    "4 — Revestimentos",
+    "6 — Acabamento seco"
+  ],
+  "cores_hidraulica": ["ESGOTO", "AGUA_FRIA_SOLDAVEL", "AGUA_FRIA_ROSCAVEL", "HIDRAULICA_GERAL"]
+}

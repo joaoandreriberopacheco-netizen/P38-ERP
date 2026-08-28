@@ -63,3 +63,27 @@ https://github.com/joaoandreriberopacheco-netizen/P38-ERP/raw/main/docs/exports/
 | [P38-linhas-catalogo-por-categoria.csv](./P38-linhas-catalogo-por-categoria.csv) | Mesmo em CSV |
 
 Regenerar: `npm run export:linhas-categoria`
+
+---
+
+## Estudo hierarquia — blocos A (Edificações) e B (Instalações / hidráulica)
+
+Excel para revisão do estudo **sem UI**. Organiza o catálogo core em dois macro-blocos.
+
+| Ficheiro | Descrição |
+|----------|-----------|
+| [P38-sku-hierarquia-ab.xlsx](./P38-sku-hierarquia-ab.xlsx) | **Resumo** + folha **A — Edificações** + **B — Instalações (hidráulica)** + legenda |
+| [P38-sku-hierarquia-core.xlsx](./P38-sku-hierarquia-core.xlsx) | Catálogo completo delimitado (etapa → core → linha → produto compra) |
+
+Regenerar:
+
+```bash
+npm run export:sku-hierarquia-core -- --skip-regen   # se CSV estudo já existir
+npm run export:sku-hierarquia-ab
+```
+
+**A — Edificações:** etapas 1 (alvenaria), 2 (cobertura), 4 (revestimentos), 6 (acabamento seco).
+
+**B — Hidráulica:** sub-ramos 01 Soldável · 02 Esgoto · 03 Roscável · 04 Captação · 05 Componentes.
+
+Fora deste export (próximos passos): elétrica, banheiro, transversal.
