@@ -67,6 +67,8 @@ Variáveis: copiar `.env.example` → `.env.local`. Guia completo em [`docs/migr
 
 Push na `main` → GitHub Actions **Vercel Deploy** (build com secrets) + **Supabase Deploy** (quando `supabase/**` muda).
 
+**Testar antes de produção:** abrir PR para `main` → workflow **Vercel Preview** gera URL temporária. Guia: [`docs/PREVIEW_ANTES_PRODUCAO.md`](docs/PREVIEW_ANTES_PRODUCAO.md).
+
 - Secrets canónicos: [`docs/migration/P38_SECRETS_CANONICOS.md`](docs/migration/P38_SECRETS_CANONICOS.md)
 - Continuidade operacional: [`docs/migration/P38_CONTINUIDADE_OPERACIONAL.md`](docs/migration/P38_CONTINUIDADE_OPERACIONAL.md)
 
