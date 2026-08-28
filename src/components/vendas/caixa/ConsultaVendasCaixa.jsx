@@ -55,14 +55,13 @@ function sortByComprovante(vendas) {
   });
 }
 
-function TrocaResumoLinha({ venda, meta, onVerDetalhes }) {
-  return <TrocaCaixaCard venda={venda} meta={meta} onVerDetalhes={onVerDetalhes} />;
+function TrocaResumoLinha({ venda, meta }) {
+  return <TrocaCaixaCard venda={venda} meta={meta} />;
 }
 
 export default function ConsultaVendasCaixa({
   vendasFinalizadas = [],
   metaPorPedidoId = {},
-  onVerDetalhes,
   contextLabel = 'Consulta do turno',
   emptyMessage = 'Nenhuma venda finalizada no turno',
   formaPagamentoKey = null,
@@ -149,7 +148,6 @@ export default function ConsultaVendasCaixa({
                     key={venda.id}
                     venda={venda}
                     meta={metaPorPedidoId[venda.id]}
-                    onVerDetalhes={onVerDetalhes}
                   />
                 ))}
               </div>
@@ -189,7 +187,6 @@ export default function ConsultaVendasCaixa({
                   key={venda.id}
                   venda={venda}
                   meta={metaPorPedidoId[venda.id]}
-                  onVerDetalhes={onVerDetalhes}
                 />
               ))}
             </div>
@@ -209,11 +206,7 @@ export default function ConsultaVendasCaixa({
 
                 return (
                 <div key={venda.id} className="bg-card rounded-2xl shadow-sm overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => onVerDetalhes?.(venda)}
-                    className="w-full flex items-center justify-between gap-3 px-4 py-3 border-b border-border/40 text-left hover:bg-muted/30 transition-colors"
-                  >
+                  <div className="w-full flex items-center justify-between gap-3 px-4 py-3 border-b border-border/40">
                     <div className="min-w-0">
                       <p className={`${p38Table.mobileLineTitle} truncate`}>{venda.numero}</p>
                       <p className={`${p38Table.mobileLineSubtitle} truncate`}>
@@ -229,7 +222,7 @@ export default function ConsultaVendasCaixa({
                       formaPagamentoLabel={formaPagamentoLabel}
                       pagamentoMisto={pagamentoMisto}
                     />
-                  </button>
+                  </div>
                   <P38MobileLineList allViewports className="rounded-none border-0">
                     {(venda.itens || []).map((item, idx) => (
                       <ConsultaProdutoRow

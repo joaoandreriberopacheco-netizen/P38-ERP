@@ -539,7 +539,6 @@ export default function VisualizadorCaixa({
                 <ConsultaVendasCaixa
                   vendasFinalizadas={vendasFinalizadas}
                   metaPorPedidoId={substituicoesCtx?.metaPorPedidoId}
-                  onVerDetalhes={setVendaDetalhada}
                 />
               ) : rascunhosAguardando.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16">
@@ -625,7 +624,6 @@ export default function VisualizadorCaixa({
         formaPagamentoKey={formaPagamentoDialog}
         vendasFinalizadas={vendasFinalizadas}
         metaPorPedidoId={substituicoesCtx?.metaPorPedidoId}
-        onVerDetalhes={setVendaDetalhada}
       />
 
       {rascunhoDetalhesTab && (

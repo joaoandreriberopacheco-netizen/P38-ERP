@@ -15,7 +15,6 @@ export default function VendasFormaPagamentoDialog({
   formaPagamentoKey,
   vendasFinalizadas = [],
   metaPorPedidoId = {},
-  onVerDetalhes,
 }) {
   const label = FORMA_CAIXA_LABELS[formaPagamentoKey] || 'Forma de pagamento';
 
@@ -54,7 +53,6 @@ export default function VendasFormaPagamentoDialog({
           <ConsultaVendasCaixa
             vendasFinalizadas={vendasFiltradas}
             metaPorPedidoId={metaPorPedidoId}
-            onVerDetalhes={onVerDetalhes}
             contextLabel={`Recebimentos em ${label}`}
             emptyMessage={`Nenhuma venda com ${label} no turno`}
             formaPagamentoKey={formaPagamentoKey}
