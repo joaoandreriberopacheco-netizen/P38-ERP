@@ -1,58 +1,150 @@
 {
   "version": "2026-08-28",
-  "fonte": "Referência Leroy Merlin BR (departamento Materiais Elétricos) — mix básico obra residencial/comercial pequena. Não clonar catálogo completo; hidratar o que a P38 já vende.",
-  "nota_metodo": "Comparar SKUs B — Elétrica (instalação) vs matriz núcleo. Lacuna = combinação produto_compra + eixo sem SKU activo.",
+  "fonte": "Leroy Merlin BR — Materiais Elétricos. Mix básico para hidratar o que a P38 já vende (não clonar LM).",
+  "nota_metodo": "Comparar B — Elétrica vs matriz. Eletroduto: núcleo = tubo + curva + luva + bucha + arruela no mesmo Ø.",
   "lm_urls": {
     "disjuntores": "https://www.leroymerlin.com.br/disjuntores-din",
-    "disjuntor_mono": "https://www.leroymerlin.com.br/disjuntores-din/tipos-de-polos/Monopolar",
-    "disjuntor_bi": "https://www.leroymerlin.com.br/disjuntores-din/tipos-de-polos/Bipolar",
-    "disjuntor_tri": "https://www.leroymerlin.com.br/disjuntores-din/tipos-de-polos/Tripolar",
     "quadros": "https://www.leroymerlin.com.br/quadros-de-distribuicao",
     "fios": "https://www.leroymerlin.com.br/fios-e-cabos-eletricos",
-    "eletroduto": "https://www.leroymerlin.com.br/eletroduto"
+    "eletroduto": "https://www.leroymerlin.com.br/eletroduto",
+    "conduite": "https://www.leroymerlin.com.br/conduite-corrugado",
+    "aterramento": "https://www.leroymerlin.com.br/aterramento",
+    "padrao_entrada": "https://www.leroymerlin.com.br/padrao-de-entrada"
   },
+  "grupos": [
+    { "codigo": "G1", "nome": "06 — Padrão de entrada" },
+    { "codigo": "G2", "nome": "07 — Infra (fios, eletroduto, conduíte)" },
+    { "codigo": "G3", "nome": "08 — Quadro e proteção" },
+    { "codigo": "G4", "nome": "09 — Caixas de espera" }
+  ],
   "familias": [
     {
       "id": "disjuntor",
+      "grupo": "G3",
       "produto_compra": "DISJUNTOR",
-      "lm_caminho": "Materiais Elétricos > Proteção > Disjuntores DIN",
+      "lm_caminho": "Proteção > Disjuntores DIN",
       "prioridade": "nucleo",
+      "tipo_matriz": "disjuntor",
       "variantes": [
-        { "tipo": "MONOFÁSICO", "amperagens": ["10A", "16A", "20A", "25A", "32A", "40A"], "nota": "LM núcleo: 10–40A; 16A muito usado em iluminação" },
-        { "tipo": "BIFÁSICO", "amperagens": ["20A", "32A", "40A", "50A"], "nota": "Chuveiro/torneira 220V" },
-        { "tipo": "TRIFÁSICO", "amperagens": ["20A", "32A", "40A", "50A", "63A"], "nota": "Motores / carga trifásica — P38 sem trifásico hoje" }
+        { "tipo": "MONOFÁSICO", "amperagens": ["10A", "16A", "20A", "25A", "32A", "40A"] },
+        { "tipo": "BIFÁSICO", "amperagens": ["20A", "32A", "40A", "50A"] },
+        { "tipo": "TRIFÁSICO", "amperagens": ["20A", "32A", "40A", "50A", "63A"] }
       ]
     },
     {
       "id": "quadro",
+      "grupo": "G3",
       "produto_compra": "QUADRO DE DISTRIBUIÇÃO",
-      "lm_caminho": "Materiais Elétricos > Quadros e Complementos",
+      "lm_caminho": "Quadros e Complementos",
       "prioridade": "nucleo",
+      "tipo_matriz": "quadro_polo",
       "variantes": [
-        { "eixo_a": "8", "nota": "Obra pequena / kit apartamento" },
-        { "eixo_a": "12", "nota": "Residencial padrão" },
-        { "eixo_a": "16", "nota": "Residencial médio" },
-        { "eixo_a": "24", "nota": "Sob consulta — mix enxuto pode ficar fora" }
+        { "eixo_a": "8", "label": "8 disjuntores" },
+        { "eixo_a": "12", "label": "12 disjuntores" },
+        { "eixo_a": "16", "label": "16 disjuntores" }
       ]
     },
     {
-      "id": "fio",
-      "produto_compra": "FIO ELÉTRICO",
-      "lm_caminho": "Materiais Elétricos > Fios e Cabos",
+      "id": "pontalete",
+      "grupo": "G1",
+      "produto_compra": "PONTALETE",
+      "lm_caminho": "Padrão de Entrada > Pontaletes",
       "prioridade": "nucleo",
+      "tipo_matriz": "sku_contem",
       "variantes": [
-        { "eixo_match": "1,50MM", "label": "1,5 mm² (#14)" },
-        { "eixo_match": "2,50MM", "label": "2,5 mm² (#12)" },
+        { "match": "PONTALETE", "label": "MONOFÁSICO", "sku_contem": "MONOF" },
+        { "match": "PONTALETE", "label": "BIFÁSICO", "sku_contem": "BIFAS" },
+        { "match": "PONTALETE", "label": "TRIFÁSICO", "sku_contem": "TRIF" }
+      ]
+    },
+    {
+      "id": "armacao_pontalete",
+      "grupo": "G1",
+      "produto_compra": "ARMAÇÃO NUCLEAR P/ PONTALETE",
+      "lm_caminho": "Padrão de Entrada > Armações",
+      "prioridade": "nucleo",
+      "tipo_matriz": "eixo_a",
+      "variantes": [
+        { "eixo_a": "MONOFÁSICA 2 POLOS", "label": "Monofásica" },
+        { "eixo_a": "BIFÁSICA 3 POLOS", "label": "Bifásica" },
+        { "eixo_a": "TRIFÁSICA 4 POLOS", "label": "Trifásica" }
+      ]
+    },
+    {
+      "id": "caixa_contador",
+      "grupo": "G1",
+      "produto_compra": "CAIXA DE LUZ",
+      "lm_caminho": "Padrão de Entrada > Caixas p/ contador",
+      "prioridade": "nucleo",
+      "tipo_matriz": "sku_contem",
+      "variantes": [
+        { "match": "CONTADOR", "label": "MONOFÁSICA", "sku_contem": "MONOF" },
+        { "match": "CONTADOR", "label": "BIFÁSICA", "sku_contem": "BIF" },
+        { "match": "CONTADOR", "label": "TRIFÁSICA", "sku_contem": "TRIF" }
+      ]
+    },
+    {
+      "id": "aterramento_haste",
+      "grupo": "G1",
+      "produto_compra": "HASTE DE ATERRAMENTO",
+      "lm_caminho": "Aterramento > Hastes",
+      "prioridade": "nucleo",
+      "tipo_matriz": "eixo_a",
+      "variantes": [
+        { "eixo_a": "10.00 MM - 1,5 M", "label": "Haste cobre 10mm × 1,5m" },
+        { "eixo_a": "10.00 MM - 2,0 M", "label": "Haste cobre 10mm × 2,0m" }
+      ]
+    },
+    {
+      "id": "aterramento_acessorio",
+      "grupo": "G1",
+      "produto_compra": "CONECTOR P/HASTE ATERRAM",
+      "lm_caminho": "Aterramento > Conectores",
+      "prioridade": "nucleo",
+      "tipo_matriz": "produto_compra_contem",
+      "variantes": [{ "match": "ATERRAM", "label": "Conector haste 1/2\"" }]
+    },
+    {
+      "id": "roldana",
+      "grupo": "G1",
+      "produto_compra": "ISOLADOR",
+      "lm_caminho": "Padrão de Entrada > Isoladores",
+      "prioridade": "complemento",
+      "tipo_matriz": "sku_contem",
+      "variantes": [{ "match": "ISOLADOR", "label": "Roldana padrão", "sku_contem": "ROLDANA" }]
+    },
+    {
+      "id": "benjamin",
+      "grupo": "G1",
+      "produto_compra": "BENJAMIN PADRÃO",
+      "lm_caminho": "Padrão de Entrada",
+      "prioridade": "complemento",
+      "tipo_matriz": "produto_compra",
+      "variantes": [{ "label": "Benjamin 10A" }]
+    },
+    {
+      "id": "fio",
+      "grupo": "G2",
+      "produto_compra": "FIO ELÉTRICO",
+      "lm_caminho": "Fios e Cabos > Fio rígido",
+      "prioridade": "nucleo",
+      "tipo_matriz": "fio",
+      "variantes": [
+        { "eixo_match": "1,50MM", "label": "1,5 mm² (#14) — iluminação/tomada leve" },
+        { "eixo_match": "2,50MM", "label": "2,5 mm² (#12) — tomada padrão" },
         { "eixo_match": "4,00MM", "label": "4 mm² (#10)" },
-        { "eixo_match": "6,00MM", "label": "6 mm² (#8) — chuveiro" },
-        { "eixo_match": "10,00MM", "label": "10 mm² (#6) — chuveiro 127V forte" }
+        { "eixo_match": "6,00MM", "label": "6 mm² (#8) — chuveiro 220V" },
+        { "eixo_match": "10,00MM", "label": "10 mm² (#6) — chuveiro 127V" },
+        { "eixo_match": "16,00MM", "label": "16 mm² (#4) — entrada longa / carga alta", "prioridade": "complemento" }
       ]
     },
     {
       "id": "fio_paralelo",
+      "grupo": "G2",
       "produto_compra": "FIO PARALELO",
-      "lm_caminho": "Materiais Elétricos > Fios e Cabos > Paralelo",
-      "prioridade": "complemento",
+      "lm_caminho": "Fios e Cabos > Paralelo",
+      "prioridade": "nucleo",
+      "tipo_matriz": "fio",
       "variantes": [
         { "eixo_match": "2 X 01,00MM", "label": "2×1 mm²" },
         { "eixo_match": "2 X 01,50MM", "label": "2×1,5 mm²" },
@@ -61,26 +153,70 @@
       ]
     },
     {
-      "id": "eletroduto_tubo",
-      "produto_compra": "TUBO ELETRODUTO",
-      "lm_caminho": "Materiais Elétricos > Eletrodutos",
+      "id": "conduite",
+      "grupo": "G2",
+      "produto_compra": "CONDUITE CORRUGADO",
+      "lm_caminho": "Conduítes > Corrugado",
       "prioridade": "nucleo",
+      "tipo_matriz": "eletroduto_size",
       "variantes": [
-        { "eixo_a": "1/2'", "nota": "Curva + luva + bucha no mesmo Ø" },
-        { "eixo_a": "3/4'" },
-        { "eixo_a": "1\"" },
-        { "eixo_a": "1 1/4'" }
+        { "size": "1/2'", "label": "Conduíte ½\"" },
+        { "size": "3/4'", "label": "Conduíte ¾\"" },
+        { "size": "1\"", "label": "Conduíte 1\"", "prioridade": "complemento" }
       ]
     },
     {
-      "id": "caixinha",
-      "produto_compra": "CAIXINHA DE LUZ",
-      "lm_caminho": "Materiais Elétricos > Caixas e Conduítes",
+      "id": "eletroduto_kit",
+      "grupo": "G2",
+      "lm_caminho": "Eletrodutos e Conexões",
       "prioridade": "nucleo",
+      "tipo_matriz": "eletroduto_kit",
+      "pecas": ["TUBO ELETRODUTO", "CURVA ELETRODUTO", "LUVA", "BUCHA ELETRODUTO", "ARRUELA ELETRODUTO"],
       "variantes": [
-        { "eixo_match": "4X2", "label": "4×2 (espera tomada/interruptor)" },
+        { "size": "1/2'", "label": "Kit eletroduto ½\"" },
+        { "size": "3/4'", "label": "Kit eletroduto ¾\"" },
+        { "size": "1\"", "label": "Kit eletroduto 1\"" },
+        { "size": "1 1/4'", "label": "Kit eletroduto 1¼\"" }
+      ]
+    },
+    {
+      "id": "grampo_fio",
+      "grupo": "G2",
+      "produto_compra": "GRAMPO P/ FIO",
+      "lm_caminho": "Fixação > Grampos",
+      "prioridade": "complemento",
+      "tipo_matriz": "produto_compra",
+      "variantes": [{ "label": "Grampo (mix bitolas)" }]
+    },
+    {
+      "id": "canaleta",
+      "grupo": "G2",
+      "produto_compra": "CANALETA ELETRODUTO",
+      "lm_caminho": "Eletrodutos > Canaletas",
+      "prioridade": "complemento",
+      "tipo_matriz": "produto_compra",
+      "variantes": [{ "label": "Canaleta 2m" }]
+    },
+    {
+      "id": "caixinha",
+      "grupo": "G4",
+      "produto_compra": "CAIXINHA DE LUZ",
+      "lm_caminho": "Caixas > Caixinhas",
+      "prioridade": "nucleo",
+      "tipo_matriz": "caixinha",
+      "variantes": [
+        { "eixo_match": "4X2", "label": "4×2" },
         { "eixo_match": "4 X 4", "label": "4×4" }
       ]
+    },
+    {
+      "id": "tapa_furo",
+      "grupo": "G4",
+      "produto_compra": "TAPA-FURO",
+      "lm_caminho": "Caixas > Tapas",
+      "prioridade": "complemento",
+      "tipo_matriz": "produto_compra",
+      "variantes": [{ "label": "Mix diâmetros (20–50mm)" }]
     }
   ]
 }
