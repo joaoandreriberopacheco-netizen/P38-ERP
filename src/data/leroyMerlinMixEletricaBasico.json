@@ -1,0 +1,86 @@
+{
+  "version": "2026-08-28",
+  "fonte": "Referência Leroy Merlin BR (departamento Materiais Elétricos) — mix básico obra residencial/comercial pequena. Não clonar catálogo completo; hidratar o que a P38 já vende.",
+  "nota_metodo": "Comparar SKUs B — Elétrica (instalação) vs matriz núcleo. Lacuna = combinação produto_compra + eixo sem SKU activo.",
+  "lm_urls": {
+    "disjuntores": "https://www.leroymerlin.com.br/disjuntores-din",
+    "disjuntor_mono": "https://www.leroymerlin.com.br/disjuntores-din/tipos-de-polos/Monopolar",
+    "disjuntor_bi": "https://www.leroymerlin.com.br/disjuntores-din/tipos-de-polos/Bipolar",
+    "disjuntor_tri": "https://www.leroymerlin.com.br/disjuntores-din/tipos-de-polos/Tripolar",
+    "quadros": "https://www.leroymerlin.com.br/quadros-de-distribuicao",
+    "fios": "https://www.leroymerlin.com.br/fios-e-cabos-eletricos",
+    "eletroduto": "https://www.leroymerlin.com.br/eletroduto"
+  },
+  "familias": [
+    {
+      "id": "disjuntor",
+      "produto_compra": "DISJUNTOR",
+      "lm_caminho": "Materiais Elétricos > Proteção > Disjuntores DIN",
+      "prioridade": "nucleo",
+      "variantes": [
+        { "tipo": "MONOFÁSICO", "amperagens": ["10A", "16A", "20A", "25A", "32A", "40A"], "nota": "LM núcleo: 10–40A; 16A muito usado em iluminação" },
+        { "tipo": "BIFÁSICO", "amperagens": ["20A", "32A", "40A", "50A"], "nota": "Chuveiro/torneira 220V" },
+        { "tipo": "TRIFÁSICO", "amperagens": ["20A", "32A", "40A", "50A", "63A"], "nota": "Motores / carga trifásica — P38 sem trifásico hoje" }
+      ]
+    },
+    {
+      "id": "quadro",
+      "produto_compra": "QUADRO DE DISTRIBUIÇÃO",
+      "lm_caminho": "Materiais Elétricos > Quadros e Complementos",
+      "prioridade": "nucleo",
+      "variantes": [
+        { "eixo_a": "8", "nota": "Obra pequena / kit apartamento" },
+        { "eixo_a": "12", "nota": "Residencial padrão" },
+        { "eixo_a": "16", "nota": "Residencial médio" },
+        { "eixo_a": "24", "nota": "Sob consulta — mix enxuto pode ficar fora" }
+      ]
+    },
+    {
+      "id": "fio",
+      "produto_compra": "FIO ELÉTRICO",
+      "lm_caminho": "Materiais Elétricos > Fios e Cabos",
+      "prioridade": "nucleo",
+      "variantes": [
+        { "eixo_match": "1,50MM", "label": "1,5 mm² (#14)" },
+        { "eixo_match": "2,50MM", "label": "2,5 mm² (#12)" },
+        { "eixo_match": "4,00MM", "label": "4 mm² (#10)" },
+        { "eixo_match": "6,00MM", "label": "6 mm² (#8) — chuveiro" },
+        { "eixo_match": "10,00MM", "label": "10 mm² (#6) — chuveiro 127V forte" }
+      ]
+    },
+    {
+      "id": "fio_paralelo",
+      "produto_compra": "FIO PARALELO",
+      "lm_caminho": "Materiais Elétricos > Fios e Cabos > Paralelo",
+      "prioridade": "complemento",
+      "variantes": [
+        { "eixo_match": "2 X 01,00MM", "label": "2×1 mm²" },
+        { "eixo_match": "2 X 01,50MM", "label": "2×1,5 mm²" },
+        { "eixo_match": "2 X 02,50MM", "label": "2×2,5 mm²" },
+        { "eixo_match": "2 X 04,00MM", "label": "2×4 mm²" }
+      ]
+    },
+    {
+      "id": "eletroduto_tubo",
+      "produto_compra": "TUBO ELETRODUTO",
+      "lm_caminho": "Materiais Elétricos > Eletrodutos",
+      "prioridade": "nucleo",
+      "variantes": [
+        { "eixo_a": "1/2'", "nota": "Curva + luva + bucha no mesmo Ø" },
+        { "eixo_a": "3/4'" },
+        { "eixo_a": "1\"" },
+        { "eixo_a": "1 1/4'" }
+      ]
+    },
+    {
+      "id": "caixinha",
+      "produto_compra": "CAIXINHA DE LUZ",
+      "lm_caminho": "Materiais Elétricos > Caixas e Conduítes",
+      "prioridade": "nucleo",
+      "variantes": [
+        { "eixo_match": "4X2", "label": "4×2 (espera tomada/interruptor)" },
+        { "eixo_match": "4 X 4", "label": "4×4" }
+      ]
+    }
+  ]
+}

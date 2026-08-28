@@ -103,6 +103,7 @@
     "export:linhas-mestre": "node scripts/export-linhas-mestre.mjs",
     "export:sku-hierarquia-core": "node scripts/export-sku-hierarquia-core.mjs",
     "export:sku-hierarquia-ab": "node scripts/export-sku-hierarquia-ab.mjs",
+    "benchmark:leroy-eletrica": "node scripts/benchmark-leroy-merlin-eletrica.mjs",
     "export:catalogo-skus": "node scripts/export-catalogo-skus.mjs",
     "export:conta-azul": "node scripts/export-catalogo-conta-azul.mjs",
     "portal:excel-manifest": "node scripts/build-portal-excel-manifest.mjs",

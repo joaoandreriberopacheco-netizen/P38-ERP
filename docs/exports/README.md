@@ -86,4 +86,22 @@ npm run export:sku-hierarquia-ab
 
 **B — Hidráulica:** sub-ramos 01 Soldável · 02 Esgoto · 03 Roscável · 04 Captação · 05 Componentes.
 
-Fora deste export (próximos passos): elétrica, banheiro, transversal.
+**B — Elétrica (até caixa de espera):** 06 Padrão · 07 Infra · 08 Quadro · 09 Caixas de espera. Tomada/lâmpada → folha **C prévia**.
+
+Fora deste export (próximos passos): banheiro (torneira/louça), transversal.
+
+---
+
+## Benchmark elétrica vs Leroy Merlin (mix básico)
+
+Compara folha **B — Elétrica** com matriz núcleo LM (disjuntores, quadros, fios, eletroduto, caixinhas).
+
+| Ficheiro | Descrição |
+|----------|-----------|
+| [P38-eletrica-benchmark-lm.xlsx](./P38-eletrica-benchmark-lm.xlsx) | Resumo · Matriz · **Falta cadastrar** · Já temos · Inventário P38 |
+
+Regenerar (após `export:sku-hierarquia-ab`):
+
+```bash
+npm run benchmark:leroy-eletrica
+```
