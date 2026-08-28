@@ -14,6 +14,7 @@ const DEFAULT_OUT = path.join(process.cwd(), 'docs', 'exports', 'P38-eletrica-be
 const DEFAULT_NOVOS = path.join(process.cwd(), 'src', 'data', 'eletricaNovosDisjuntores.json');
 const DEFAULT_NOVOS_INFRA = path.join(process.cwd(), 'src', 'data', 'eletricaNovosConexoesContatores.json');
 const DEFAULT_NOVOS_COMPLETAR = path.join(process.cwd(), 'src', 'data', 'eletricaNovosCompletarBenchmark.json');
+const DEFAULT_NOVOS_PROTECAO = path.join(process.cwd(), 'src', 'data', 'eletricaNovosProtecaoQuadro.json');
 
 function parseArgs(argv) {
   const get = (p) => argv.find((a) => a.startsWith(p))?.slice(p.length);
@@ -113,6 +114,33 @@ function parseDisjuntor(row) {
   else if (/TRIF/.test(blob)) tipo = 'TRIFÁSICO';
   const amp = blob.match(/(\d+)\s*A\b/);
   return tipo && amp ? { tipo, amperagem: `${amp[1]}A` } : null;
+}
+
+function parseDR(row) {
+  const blob = blobRow(row);
+  if (!/(^|\s)DR\b|DIFERENCIAL|IDR/.test(blob) && !norm(row.produto_compra).includes('DR')) return null;
+  let polos = '';
+  if (/\b4P\b|4\s*POLOS|TRIF/.test(blob)) polos = '4P';
+  else if (/\b2P\b|2\s*POLOS|BIF|MONOF/.test(blob)) polos = '2P';
+  const amp = blob.match(/(\d+)\s*A\b/);
+  return polos && amp ? { polos, amperagem: `${amp[1]}A` } : null;
+}
+
+function parseDPS(row) {
+  const blob = blobRow(row).replace(/\s/g, '');
+  if (!/DPS|PROTECTOR|SURTO|PARARAIOS/.test(blob)) return null;
+  if (/4P.*40|40.*4P|4POLOS.*40|40KA.*4P/.test(blob)) return { config: '4P 40KA' };
+  if (/2P.*20|20.*2P|20KA.*2P/.test(blob)) return { config: '2P 20KA' };
+  return null;
+}
+
+function matchMontagemDin(row, produtoCompra, eixoMatch, eixoA) {
+  const pc = norm(row.produto_compra);
+  const want = norm(produtoCompra);
+  if (pc !== want) return false;
+  const blob = blobRow(row).replace(/\s/g, '');
+  const keys = [norm(eixoA), norm(eixoMatch)].filter(Boolean).map((k) => k.replace(/\s/g, ''));
+  return keys.some((k) => blob.includes(k));
 }
 
 function matchFio(row, eixoMatch) {
@@ -270,6 +298,93 @@ function buildFamiliaRows(familia, p38Rows, mix, novosEstudo = null) {
     return rows;
   }
 
+  if (tipo === 'protecao_dr') {
+    const payload = novosEstudo?.dr_idr;
+    const cadastroVazio = payload?.cadastro_actual === 'vazio';
+    const novosMap = new Map((payload?.novos ?? []).map((n) => [`${n.polos}|${n.amperagem}`, n]));
+    const novosKeys = new Set(novosMap.keys());
+    for (const v of familia.variantes) {
+      for (const amp of v.amperagens) {
+        const hits = cadastroVazio
+          ? []
+          : p38Rows.filter((r) => { const d = parseDR(r); return d && d.polos === v.polos && d.amperagem === amp; });
+        const key = `${v.polos}|${amp}`;
+        let status = hits.length ? (hits.length > 1 ? 'duplicado' : 'tem') : 'falta';
+        let acao = status === 'falta' ? 'cadastrar' : status === 'duplicado' ? 'revisar duplicado' : '';
+        let prio = (v.amperagens_complemento ?? []).includes(amp) ? 'complemento' : familia.prioridade ?? 'nucleo';
+        const marked = markNovoEstudo({ cadastroVazio, novosKeys, key, status, acao, novoItem: novosMap.get(key) });
+        status = marked.status;
+        acao = marked.acao;
+        if (marked.prioridade) prio = marked.prioridade;
+        rows.push(rowBase(familia, grupo, lmUrls, {
+          variante: v.polos, amperagem_ou_eixo: amp, status, qtd_p38: hits.length, prioridade: prio,
+          produto_compra: 'DR',
+          codigos_p38: hits.map((h) => h.codigo_interno).join(', '), sku_exemplo: hits[0]?.sku_atual ?? novosMap.get(key)?.novo_sku ?? '',
+          lm_url: lmUrls.dr_idr, acao,
+          nota: novosMap.get(key)?.nota ?? `Ecossistema DIN ${familia.ecossistema_din ?? 'TIGRE'}`,
+        }));
+      }
+    }
+    return rows;
+  }
+
+  if (tipo === 'protecao_dps') {
+    const payload = novosEstudo?.dps;
+    const cadastroVazio = payload?.cadastro_actual === 'vazio';
+    const novosMap = new Map((payload?.novos ?? []).map((n) => [n.config, n]));
+    const novosKeys = new Set(novosMap.keys());
+    for (const v of familia.variantes) {
+      const hits = cadastroVazio
+        ? []
+        : p38Rows.filter((r) => { const d = parseDPS(r); return d && d.config === v.config; });
+      const key = v.config;
+      let status = hits.length ? (hits.length > 1 ? 'duplicado' : 'tem') : 'falta';
+      let acao = status === 'falta' ? 'cadastrar' : status === 'duplicado' ? 'revisar duplicado' : '';
+      let prio = v.prioridade ?? familia.prioridade ?? 'nucleo';
+      const marked = markNovoEstudo({ cadastroVazio, novosKeys, key, status, acao, novoItem: novosMap.get(key) });
+      status = marked.status;
+      acao = marked.acao;
+      if (marked.prioridade) prio = marked.prioridade;
+      rows.push(rowBase(familia, grupo, lmUrls, {
+        variante: v.label, amperagem_ou_eixo: v.config, status, qtd_p38: hits.length, prioridade: prio,
+        produto_compra: 'DPS',
+        codigos_p38: hits.map((h) => h.codigo_interno).join(', '), sku_exemplo: hits[0]?.sku_atual ?? novosMap.get(key)?.novo_sku ?? '',
+        lm_url: lmUrls.dps, acao,
+        nota: novosMap.get(key)?.nota ?? `Ecossistema DIN ${familia.ecossistema_din ?? 'TIGRE'}`,
+      }));
+    }
+    return rows;
+  }
+
+  if (tipo === 'montagem_din') {
+    const payload = novosEstudo?.montagem_din;
+    const cadastroVazio = payload?.cadastro_actual === 'vazio';
+    const novosMap = new Map((payload?.novos ?? []).map((n) => [`${n.produto_compra}|${n.eixo_a}`, n]));
+    const novosKeys = new Set(novosMap.keys());
+    for (const v of familia.variantes) {
+      const hits = cadastroVazio
+        ? []
+        : p38Rows.filter((r) => matchMontagemDin(r, v.produto_compra, v.eixo_match, v.eixo_a));
+      const key = `${v.produto_compra}|${v.eixo_a}`;
+      const novoItem = novosMap.get(key);
+      let status = hits.length ? (hits.length > 1 ? 'duplicado' : 'tem') : 'falta';
+      let acao = status === 'falta' ? 'cadastrar' : status === 'duplicado' ? 'revisar duplicado' : '';
+      let prio = v.prioridade ?? familia.prioridade ?? 'nucleo';
+      const marked = markNovoEstudo({ cadastroVazio, novosKeys, key, status, acao, novoItem });
+      status = marked.status;
+      acao = marked.acao;
+      if (marked.prioridade) prio = marked.prioridade;
+      rows.push(rowBase(familia, grupo, lmUrls, {
+        variante: v.label, amperagem_ou_eixo: v.eixo_a, status, qtd_p38: hits.length, prioridade: prio,
+        produto_compra: v.produto_compra,
+        codigos_p38: hits.map((h) => h.codigo_interno).join(', '), sku_exemplo: hits[0]?.sku_atual ?? novoItem?.novo_sku ?? '',
+        lm_url: lmUrls.montagem_din, acao,
+        nota: novoItem?.nota ?? `Trilho/barramento ${familia.ecossistema_din ?? 'TIGRE'} — par quadros plásticos`,
+      }));
+    }
+    return rows;
+  }
+
   if (tipo === 'eletroduto_kit') {
     for (const v of familia.variantes) {
       const pecasOk = [];
@@ -330,7 +445,7 @@ function buildFamiliaRows(familia, p38Rows, mix, novosEstudo = null) {
       const key = `${familia.id}|${v.label}|${v.eixo_a}`;
       let status = hits.length ? (hits.length > 1 ? 'duplicado' : 'tem') : 'falta';
       let acao = status === 'falta' ? 'cadastrar' : '';
-      let nota = isMetal ? `Metálico — ref. ${marcas}` : `Plástico — ref. ${marcas}`;
+      let nota = isMetal ? `Metálico — ref. ${marcas}` : `Plástico Tigre/Krona — ecossistema DIN ${familia.ecossistema_din ?? 'TIGRE'}`;
       if (!isMetal && hits.length && hits.some((h) => norm(h.sku_atual).includes('TRIAL'))) {
         nota += ' · revisar marca (Trial no cadastro)';
       }
@@ -419,11 +534,18 @@ function loadNovosEstudo() {
   const completar = fs.existsSync(DEFAULT_NOVOS_COMPLETAR)
     ? JSON.parse(fs.readFileSync(DEFAULT_NOVOS_COMPLETAR, 'utf8'))
     : { novos: [], cadastro_actual: 'vazio' };
+  const protecao = fs.existsSync(DEFAULT_NOVOS_PROTECAO)
+    ? JSON.parse(fs.readFileSync(DEFAULT_NOVOS_PROTECAO, 'utf8'))
+    : { montagem_din: { novos: [] }, dr_idr: { novos: [] }, dps: { novos: [] } };
   return {
     disjuntores,
     conexoes: infra.conexoes ?? { novos: [], cadastro_actual: 'vazio' },
     contatores: infra.contatores ?? { novos: [], cadastro_actual: 'vazio' },
     completar,
+    montagem_din: protecao.montagem_din ?? { novos: [], cadastro_actual: 'vazio' },
+    dr_idr: protecao.dr_idr ?? { novos: [], cadastro_actual: 'vazio' },
+    dps: protecao.dps ?? { novos: [], cadastro_actual: 'vazio' },
+    ecossistema_din: protecao.ecossistema_din ?? {},
     nota_estrategia: [infra.nota_estrategia, completar.nota].filter(Boolean).join(' '),
     fio_flexivel: completar.fio_flexivel ?? {},
   };
@@ -434,6 +556,9 @@ function applyNovosEstudo(matrix, novosEstudo) {
     { familia: 'disjuntor', payload: novosEstudo.disjuntores, rowKey: (r) => `${r.variante}|${r.amperagem_ou_eixo}`, novoKey: (n) => `${n.tipo}|${n.amperagem}` },
     { familia: 'contator', payload: novosEstudo.contatores, rowKey: (r) => `${r.variante}|${r.amperagem_ou_eixo}`, novoKey: (n) => `${n.polos}|${n.amperagem}` },
     { familia: 'conexao_sem_fita', payload: novosEstudo.conexoes, rowKey: (r) => `${r.produto_compra}|${r.amperagem_ou_eixo}`, novoKey: (n) => `${n.produto_compra}|${n.eixo_a}` },
+    { familia: 'dr_idr', payload: novosEstudo.dr_idr, rowKey: (r) => `${r.variante}|${r.amperagem_ou_eixo}`, novoKey: (n) => `${n.polos}|${n.amperagem}` },
+    { familia: 'dps', payload: novosEstudo.dps, rowKey: (r) => r.amperagem_ou_eixo, novoKey: (n) => n.config },
+    { familia: 'montagem_din', payload: novosEstudo.montagem_din, rowKey: (r) => `${r.produto_compra}|${r.amperagem_ou_eixo}`, novoKey: (n) => `${n.produto_compra}|${n.eixo_a}` },
   ];
   return matrix.map((row) => {
     const rule = rules.find((x) => x.familia === row.familia);
@@ -480,6 +605,34 @@ function applyCompletarBenchmark(matrix, completar) {
       produto_compra: novoItem.produto_compra ?? row.produto_compra,
     };
   });
+}
+
+function buildNovosProtecaoRows(novosEstudo) {
+  const sections = [
+    ['montagem_din', novosEstudo.montagem_din],
+    ['dr_idr', novosEstudo.dr_idr],
+    ['dps', novosEstudo.dps],
+  ];
+  const rows = [];
+  for (const [sec, payload] of sections) {
+    for (const n of payload?.novos ?? []) {
+      rows.push({
+        secao: sec,
+        numero: n.numero,
+        bloco: 'B — Instalações',
+        sub_bloco: payload.referencia_existente?.sub_bloco ?? '08 — Quadro e proteção',
+        produto_compra: n.produto_compra ?? (sec === 'dr_idr' ? 'DR' : sec === 'dps' ? 'DPS' : n.produto_compra),
+        eixo_a: n.eixo_a ?? n.config ?? `${n.polos ?? ''} ${n.amperagem ?? ''}`.trim(),
+        eixo_b: n.eixo_b ?? n.classe ?? '',
+        codigo_interno: '',
+        novo_sku: n.novo_sku,
+        status_mix: 'novo',
+        prioridade: n.prioridade ?? 'nucleo',
+        nota: n.nota ?? '',
+      });
+    }
+  }
+  return rows;
 }
 
 function buildNovosCompletarRows(completar) {
@@ -602,6 +755,7 @@ async function writeXlsx(outPath, matrix, p38Rows, mix, novosEstudo) {
   resumo.addRow(['P38 — duplicado', revisar.length]);
   resumo.addRow(['SKUs B Elétrica', p38Rows.length]);
   if (novosEstudo.fio_flexivel?.nota_operacao) resumo.addRow(['Fio flexível', novosEstudo.fio_flexivel.nota_operacao]);
+  if (novosEstudo.ecossistema_din?.nota) resumo.addRow(['Ecossistema DIN', novosEstudo.ecossistema_din.nota]);
   resumo.addRow([]);
   for (const g of mix.grupos ?? []) {
     const gRows = matrix.filter((r) => r.grupo === g.nome);
@@ -621,6 +775,9 @@ async function writeXlsx(outPath, matrix, p38Rows, mix, novosEstudo) {
 
   const completarHeaders = ['numero', 'bloco', 'sub_bloco', 'familia', 'produto_compra', 'eixo_a', 'variante', 'codigo_interno', 'novo_sku', 'status_mix', 'prioridade', 'nota'];
   addSheet(wb, 'Novos — completar 06-08', completarHeaders, buildNovosCompletarRows(novosEstudo.completar), 'FF5A6B4A');
+
+  const protecaoHeaders = ['secao', 'numero', 'bloco', 'sub_bloco', 'produto_compra', 'eixo_a', 'eixo_b', 'codigo_interno', 'novo_sku', 'status_mix', 'prioridade', 'nota'];
+  addSheet(wb, 'Novos — trilho DR DPS', protecaoHeaders, buildNovosProtecaoRows(novosEstudo), 'FF4A5A7B');
 
   const mixHeaders = ['tipo', 'amperagem', 'status', 'codigo_p38', 'sku', 'acao'];
   addSheet(wb, 'Mix disjuntores alvo', mixHeaders, buildMixDisjuntorAlvo(matrix, novosEstudo), 'FF4A5C6B');

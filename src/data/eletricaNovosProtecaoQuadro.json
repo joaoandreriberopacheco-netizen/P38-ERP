@@ -1,0 +1,49 @@
+{
+  "version": "2026-08-28",
+  "ecossistema_din": {
+    "marca_principal": "TIGRE",
+    "nota": "Trilho DIN 35mm, barramentos, DR/IDR e DPS alinhados ao sistema modular dos quadros plásticos Tigre (já no cadastro). Krona: compatível trilho 35mm padrão. Quadro metálico Steck: trilho DIN universal — mesma bitola 35mm."
+  },
+  "montagem_din": {
+    "cadastro_actual": "vazio",
+    "referencia_existente": {
+      "core": "QUADRO_ELETRICO",
+      "linha": "MATERIAL ELÉTRICO",
+      "sub_bloco": "08 — Quadro e proteção"
+    },
+    "novos": [
+      { "numero": 1, "produto_compra": "TRILHO DIN", "eixo_a": "35MM 1M", "eixo_b": "TIGRE", "novo_sku": "TRILHO DIN 35MM 1M — TIGRE", "nota": "Base montagem modular — ecossistema quadro Tigre" },
+      { "numero": 2, "produto_compra": "TRILHO DIN", "eixo_a": "35MM 2M", "eixo_b": "TIGRE", "novo_sku": "TRILHO DIN 35MM 2M — TIGRE", "prioridade": "complemento" },
+      { "numero": 3, "produto_compra": "BARRAMENTO NEUTRO", "eixo_a": "12 POLOS", "eixo_b": "TIGRE", "novo_sku": "BARRAMENTO NEUTRO 12 POLOS — TIGRE", "nota": "Par com quadro 12 disj. plástico" },
+      { "numero": 4, "produto_compra": "BARRAMENTO NEUTRO", "eixo_a": "16 POLOS", "eixo_b": "TIGRE", "novo_sku": "BARRAMENTO NEUTRO 16 POLOS — TIGRE", "nota": "Par com quadro 16 disj." },
+      { "numero": 5, "produto_compra": "BARRAMENTO TERRA", "eixo_a": "12 POLOS", "eixo_b": "TIGRE", "novo_sku": "BARRAMENTO TERRA 12 POLOS — TIGRE" },
+      { "numero": 6, "produto_compra": "BARRAMENTO TERRA", "eixo_a": "16 POLOS", "eixo_b": "TIGRE", "novo_sku": "BARRAMENTO TERRA 16 POLOS — TIGRE" }
+    ]
+  },
+  "dr_idr": {
+    "cadastro_actual": "vazio",
+    "referencia_existente": {
+      "core": "QUADRO_ELETRICO",
+      "linha": "MATERIAL ELÉTRICO",
+      "sub_bloco": "08 — Quadro e proteção"
+    },
+    "novos": [
+      { "numero": 1, "polos": "2P", "amperagem": "25A", "eixo_a": "DIN", "eixo_b": "DR", "novo_sku": "DR 25A 2P — TIGRE", "nota": "IDR residencial — chuveiro/tomadas" },
+      { "numero": 2, "polos": "2P", "amperagem": "40A", "eixo_a": "DIN", "eixo_b": "DR", "novo_sku": "DR 40A 2P — TIGRE" },
+      { "numero": 3, "polos": "2P", "amperagem": "63A", "eixo_a": "DIN", "eixo_b": "DR", "novo_sku": "DR 63A 2P — TIGRE", "prioridade": "complemento" },
+      { "numero": 4, "polos": "4P", "amperagem": "40A", "eixo_a": "DIN", "eixo_b": "DR", "novo_sku": "DR 40A 4P — TIGRE", "nota": "Trifásico + neutro" }
+    ]
+  },
+  "dps": {
+    "cadastro_actual": "vazio",
+    "referencia_existente": {
+      "core": "QUADRO_ELETRICO",
+      "linha": "MATERIAL ELÉTRICO",
+      "sub_bloco": "08 — Quadro e proteção"
+    },
+    "novos": [
+      { "numero": 1, "classe": "CLASSE II", "config": "2P 20KA", "eixo_a": "DIN", "eixo_b": "DPS", "novo_sku": "DPS 20KA 2P CLASSE II — TIGRE", "nota": "Surto residencial mono/bi" },
+      { "numero": 2, "classe": "CLASSE II", "config": "4P 40KA", "eixo_a": "DIN", "eixo_b": "DPS", "novo_sku": "DPS 40KA 4P CLASSE II — TIGRE", "prioridade": "complemento", "nota": "Entrada trifásica / projeto" }
+    ]
+  }
+}

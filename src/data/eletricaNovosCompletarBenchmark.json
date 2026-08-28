@@ -18,17 +18,6 @@
     },
     {
       "numero": 2,
-      "familia": "fio_flex",
-      "variante": "16 mm² (#4) — entrada longa / carga alta",
-      "amperagem_ou_eixo": "16,00MM",
-      "sub_bloco": "07 — Infra (fios, eletroduto, conduíte)",
-      "produto_compra": "FIO FLEXÍVEL",
-      "eixo_a": "1 X 16,00MM #04",
-      "novo_sku": "FIO FLEXÍVEL 1 X 16,00MM #04",
-      "prioridade": "complemento"
-    },
-    {
-      "numero": 3,
       "familia": "conduite",
       "variante": "Conduíte 1\"",
       "amperagem_ou_eixo": "1\"",
@@ -38,7 +27,7 @@
       "prioridade": "complemento"
     },
     {
-      "numero": 4,
+      "numero": 3,
       "familia": "bucha_eletroduto",
       "variante": "Bucha 1¼\"",
       "amperagem_ou_eixo": "1 1/4'",
@@ -48,7 +37,7 @@
       "nota": "Completa kit eletroduto 1¼\""
     },
     {
-      "numero": 5,
+      "numero": 4,
       "familia": "quadro_plastico",
       "variante": "8 disjuntores — plástico",
       "amperagem_ou_eixo": "8",
@@ -56,10 +45,10 @@
       "produto_compra": "QUADRO DE DISTRIBUIÇÃO",
       "eixo_a": "8",
       "novo_sku": "QUADRO DE DISTRIBUIÇÃO 8 DISJUNTORES — TIGRE",
-      "nota": "Plástico — marca referência Tigre (alternativa Krona)"
+      "nota": "Plástico Tigre — ecossistema DIN (trilho/barramento/DR/DPS mesma linha)"
     },
     {
-      "numero": 6,
+      "numero": 5,
       "familia": "quadro_metalico",
       "variante": "8 disjuntores — metálico",
       "amperagem_ou_eixo": "8",
@@ -70,7 +59,7 @@
       "nota": "Metálico — marca referência Steck (alternativa Schneider)"
     },
     {
-      "numero": 7,
+      "numero": 6,
       "familia": "quadro_metalico",
       "variante": "12 disjuntores — metálico",
       "amperagem_ou_eixo": "12",
@@ -81,7 +70,7 @@
       "nota": "Metálico — marca referência Steck"
     },
     {
-      "numero": 8,
+      "numero": 7,
       "familia": "quadro_metalico",
       "variante": "16 disjuntores — metálico",
       "amperagem_ou_eixo": "16",

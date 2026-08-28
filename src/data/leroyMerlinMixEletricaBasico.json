@@ -1,12 +1,15 @@
 {
   "version": "2026-08-28",
   "fonte": "Leroy Merlin BR — Materiais Elétricos. Mix básico para hidratar o que a P38 já vende (não clonar LM).",
-  "nota_metodo": "Comparar B — Elétrica vs matriz. Fios: alvo FIO FLEXÍVEL (P38 legado ainda FIO ELÉTRICO). Quadros: plástico (Tigre/Krona) + metálico (Steck/Schneider) produtos distintos. Eletroduto: núcleo = tubo + curva + luva + bucha + arruela no mesmo Ø.",
+  "nota_metodo": "Comparar B — Elétrica vs matriz. Fios: FIO FLEXÍVEL até 10mm² (sem 16mm). Quadros plástico Tigre/Krona + metálico Steck; trilho/barramento/DR/DPS ecossistema DIN Tigre. Eletroduto: tubo + curva + luva + bucha + arruela no mesmo Ø.",
   "lm_urls": {
     "disjuntores": "https://www.leroymerlin.com.br/disjuntores-din",
     "contatores": "https://www.leroymerlin.com.br/contatores",
     "conexoes": "https://www.leroymerlin.com.br/conectores-eletricos",
     "quadros": "https://www.leroymerlin.com.br/quadros-de-distribuicao",
+    "dr_idr": "https://www.leroymerlin.com.br/disjuntor-diferencial-residual",
+    "dps": "https://www.leroymerlin.com.br/protetor-surto-dps",
+    "montagem_din": "https://www.leroymerlin.com.br/trilho-din",
     "fios": "https://www.leroymerlin.com.br/fios-e-cabos-eletricos",
     "eletroduto": "https://www.leroymerlin.com.br/eletroduto",
     "conduite": "https://www.leroymerlin.com.br/conduite-corrugado",
@@ -75,6 +78,7 @@
       "tipo_matriz": "quadro_material",
       "material": "PLÁSTICO",
       "marcas_ref": ["TIGRE", "KRONA"],
+      "ecossistema_din": "TIGRE",
       "variantes": [
         { "eixo_a": "8", "label": "8 disjuntores — plástico" },
         { "eixo_a": "12", "label": "12 disjuntores — plástico" },
@@ -94,6 +98,49 @@
         { "eixo_a": "8", "label": "8 disjuntores — metálico" },
         { "eixo_a": "12", "label": "12 disjuntores — metálico" },
         { "eixo_a": "16", "label": "16 disjuntores — metálico" }
+      ]
+    },
+    {
+      "id": "montagem_din",
+      "grupo": "G3",
+      "produto_compra": "TRILHO DIN",
+      "lm_caminho": "Quadros > Trilho DIN e barramentos",
+      "prioridade": "nucleo",
+      "tipo_matriz": "montagem_din",
+      "ecossistema_din": "TIGRE",
+      "variantes": [
+        { "produto_compra": "TRILHO DIN", "eixo_a": "35MM 1M", "eixo_match": "35MM 1M", "label": "Trilho DIN 35mm 1m" },
+        { "produto_compra": "TRILHO DIN", "eixo_a": "35MM 2M", "eixo_match": "35MM 2M", "label": "Trilho DIN 35mm 2m", "prioridade": "complemento" },
+        { "produto_compra": "BARRAMENTO NEUTRO", "eixo_a": "12 POLOS", "eixo_match": "NEUTRO 12", "label": "Barramento neutro 12 polos" },
+        { "produto_compra": "BARRAMENTO NEUTRO", "eixo_a": "16 POLOS", "eixo_match": "NEUTRO 16", "label": "Barramento neutro 16 polos" },
+        { "produto_compra": "BARRAMENTO TERRA", "eixo_a": "12 POLOS", "eixo_match": "TERRA 12", "label": "Barramento terra 12 polos" },
+        { "produto_compra": "BARRAMENTO TERRA", "eixo_a": "16 POLOS", "eixo_match": "TERRA 16", "label": "Barramento terra 16 polos" }
+      ]
+    },
+    {
+      "id": "dr_idr",
+      "grupo": "G3",
+      "produto_compra": "DR",
+      "lm_caminho": "Proteção > DR / IDR",
+      "prioridade": "nucleo",
+      "tipo_matriz": "protecao_dr",
+      "ecossistema_din": "TIGRE",
+      "variantes": [
+        { "polos": "2P", "amperagens": ["25A", "40A", "63A"], "amperagens_complemento": ["63A"] },
+        { "polos": "4P", "amperagens": ["40A"] }
+      ]
+    },
+    {
+      "id": "dps",
+      "grupo": "G3",
+      "produto_compra": "DPS",
+      "lm_caminho": "Proteção > DPS (surto)",
+      "prioridade": "nucleo",
+      "tipo_matriz": "protecao_dps",
+      "ecossistema_din": "TIGRE",
+      "variantes": [
+        { "config": "2P 20KA", "label": "DPS 20kA 2P classe II" },
+        { "config": "4P 40KA", "label": "DPS 40kA 4P classe II", "prioridade": "complemento" }
       ]
     },
     {
@@ -186,8 +233,7 @@
         { "eixo_match": "2,50MM", "label": "2,5 mm² (#12) — tomada padrão" },
         { "eixo_match": "4,00MM", "label": "4 mm² (#10)" },
         { "eixo_match": "6,00MM", "label": "6 mm² (#8) — chuveiro 220V" },
-        { "eixo_match": "10,00MM", "label": "10 mm² (#6) — chuveiro 127V" },
-        { "eixo_match": "16,00MM", "label": "16 mm² (#4) — entrada longa / carga alta", "prioridade": "complemento" }
+        { "eixo_match": "10,00MM", "label": "10 mm² (#6) — chuveiro 127V" }
       ]
     },
     {
