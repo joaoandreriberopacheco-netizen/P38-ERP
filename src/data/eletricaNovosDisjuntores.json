@@ -1,0 +1,70 @@
+{
+  "version": "2026-08-28",
+  "nota": "Novos SKUs disjuntor DIN — complemento mix LM/P38 (estudo Excel; ainda não cadastrar na BD salvo pedido).",
+  "referencia_existente": {
+    "produto_compra": "DISJUNTOR",
+    "eixo_a": "DIN",
+    "core": "QUADRO_ELETRICO",
+    "linha": "MATERIAL ELÉTRICO",
+    "etapa": "3 — Instalações brutas",
+    "sub_bloco": "08 — Quadro e proteção"
+  },
+  "revisar": [
+    {
+      "item": "MONOFÁSICO 25A",
+      "motivo": "duplicado no catálogo",
+      "codigos": ["34P-JDG", "OW6-Q7Y"],
+      "acao": "inactivar um ou fundir"
+    }
+  ],
+  "novos": [
+    {
+      "numero": 1,
+      "tipo": "MONOFÁSICO",
+      "amperagem": "16A",
+      "eixo_b": "MONOFÁSICO",
+      "novo_sku": "DISJUNTOR DIN MONOFÁSICO 16A",
+      "nota": "Iluminação e circuitos leves — LM núcleo"
+    },
+    {
+      "numero": 2,
+      "tipo": "TRIFÁSICO",
+      "amperagem": "20A",
+      "eixo_b": "TRIFÁSICO",
+      "novo_sku": "DISJUNTOR DIN TRIFÁSICO 20A",
+      "nota": "Carga trifásica básica"
+    },
+    {
+      "numero": 3,
+      "tipo": "TRIFÁSICO",
+      "amperagem": "32A",
+      "eixo_b": "TRIFÁSICO",
+      "novo_sku": "DISJUNTOR DIN TRIFÁSICO 32A",
+      "nota": ""
+    },
+    {
+      "numero": 4,
+      "tipo": "TRIFÁSICO",
+      "amperagem": "40A",
+      "eixo_b": "TRIFÁSICO",
+      "novo_sku": "DISJUNTOR DIN TRIFÁSICO 40A",
+      "nota": ""
+    },
+    {
+      "numero": 5,
+      "tipo": "TRIFÁSICO",
+      "amperagem": "50A",
+      "eixo_b": "TRIFÁSICO",
+      "novo_sku": "DISJUNTOR DIN TRIFÁSICO 50A",
+      "nota": ""
+    },
+    {
+      "numero": 6,
+      "tipo": "TRIFÁSICO",
+      "amperagem": "63A",
+      "eixo_b": "TRIFÁSICO",
+      "novo_sku": "DISJUNTOR DIN TRIFÁSICO 63A",
+      "nota": "Motores / carga trifásica maior"
+    }
+  ]
+}

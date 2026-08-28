@@ -11,6 +11,7 @@ import ExcelJS from 'exceljs';
 const DEFAULT_IN = path.join(process.cwd(), 'docs', 'exports', 'P38-sku-hierarquia-ab.xlsx');
 const DEFAULT_MIX = path.join(process.cwd(), 'src', 'data', 'leroyMerlinMixEletricaBasico.json');
 const DEFAULT_OUT = path.join(process.cwd(), 'docs', 'exports', 'P38-eletrica-benchmark-lm.xlsx');
+const DEFAULT_NOVOS = path.join(process.cwd(), 'src', 'data', 'eletricaNovosDisjuntores.json');
 
 function parseArgs(argv) {
   const get = (p) => argv.find((a) => a.startsWith(p))?.slice(p.length);
@@ -197,6 +198,66 @@ function buildBenchmark(p38Rows, mix) {
   return mix.familias.flatMap((fam) => buildFamiliaRows(fam, p38Rows, mix));
 }
 
+function loadNovosDisjuntores(mixPath = DEFAULT_NOVOS) {
+  if (!fs.existsSync(mixPath)) return { novos: [], revisar: [], referencia_existente: {} };
+  return JSON.parse(fs.readFileSync(mixPath, 'utf8'));
+}
+
+function applyNovosDisjuntores(matrix, novosPayload) {
+  const keys = new Set(novosPayload.novos.map((n) => `${n.tipo}|${n.amperagem}`));
+  return matrix.map((row) => {
+    if (row.familia !== 'disjuntor' || row.status !== 'falta') return row;
+    const key = `${row.variante}|${row.amperagem_ou_eixo}`;
+    if (!keys.has(key)) return row;
+    return { ...row, status: 'novo', acao: 'cadastrar (aprovado estudo)', prioridade: 'nucleo' };
+  });
+}
+
+function buildNovosDisjuntorRows(novosPayload) {
+  const ref = novosPayload.referencia_existente ?? {};
+  return novosPayload.novos.map((n) => ({
+    numero: n.numero,
+    bloco: 'B — Instalações',
+    sub_bloco: ref.sub_bloco ?? '08 — Quadro e proteção',
+    etapa: ref.etapa ?? '',
+    core: ref.core ?? '',
+    linha: ref.linha ?? '',
+    produto_compra: ref.produto_compra ?? 'DISJUNTOR',
+    eixo_a: ref.eixo_a ?? 'DIN',
+    eixo_b: n.eixo_b ?? n.tipo,
+    amperagem: n.amperagem,
+    codigo_interno: '',
+    novo_sku: n.novo_sku,
+    sku_atual: n.novo_sku,
+    status_mix: 'novo',
+    nota: n.nota ?? '',
+  }));
+}
+
+function buildMixDisjuntorAlvo(matrix, novosPayload) {
+  const disj = matrix.filter((r) => r.familia === 'disjuntor');
+  const revisar = novosPayload.revisar ?? [];
+  const rows = disj.map((r) => ({
+    tipo: r.variante,
+    amperagem: r.amperagem_ou_eixo,
+    status: r.status,
+    codigo_p38: r.codigos_p38,
+    sku: r.sku_exemplo || (r.status === 'novo' ? `DISJUNTOR DIN ${r.variante} ${r.amperagem_ou_eixo}` : ''),
+    acao: r.acao,
+  }));
+  for (const rev of revisar) {
+    rows.push({
+      tipo: rev.item,
+      amperagem: '',
+      status: 'duplicado',
+      codigo_p38: rev.codigos?.join(', ') ?? '',
+      sku: rev.item,
+      acao: rev.acao,
+    });
+  }
+  return rows.sort((a, b) => `${a.tipo}\x00${a.amperagem}`.localeCompare(`${b.tipo}\x00${b.amperagem}`, 'pt-BR'));
+}
+
 function addSheet(wb, name, headers, dataRows, color) {
   const ws = wb.addWorksheet(name, { views: [{ state: 'frozen', ySplit: 1 }] });
   ws.addRow(headers);
@@ -207,11 +268,12 @@ function addSheet(wb, name, headers, dataRows, color) {
   if (dataRows.length) ws.autoFilter = { from: 'A1', to: `${String.fromCharCode(64 + Math.min(headers.length, 26))}${dataRows.length + 1}` };
 }
 
-async function writeXlsx(outPath, matrix, p38Rows, mix) {
+async function writeXlsx(outPath, matrix, p38Rows, mix, novosPayload) {
   const wb = new ExcelJS.Workbook();
   const headers = ['grupo', 'familia', 'produto_compra', 'variante', 'amperagem_ou_eixo', 'status', 'qtd_p38', 'codigos_p38', 'sku_exemplo', 'lm_caminho', 'lm_url', 'nota', 'prioridade', 'acao', 'detalhe'];
 
   const falta = matrix.filter((r) => r.status === 'falta' || r.status === 'parcial');
+  const novos = matrix.filter((r) => r.status === 'novo');
   const tem = matrix.filter((r) => r.status === 'tem');
   const revisar = matrix.filter((r) => r.status === 'duplicado');
 
@@ -220,10 +282,12 @@ async function writeXlsx(outPath, matrix, p38Rows, mix) {
   styleHeader(resumo.getRow(1), 'FF2D5016');
   resumo.addRow(['Mix LM (posições)', matrix.length]);
   resumo.addRow(['P38 — tem', tem.length]);
+  resumo.addRow(['P38 — novo (disjuntor estudo)', novos.length]);
   resumo.addRow(['P38 — falta', matrix.filter((r) => r.status === 'falta').length]);
   resumo.addRow(['P38 — parcial (kit incompleto)', matrix.filter((r) => r.status === 'parcial').length]);
   resumo.addRow(['P38 — duplicado', revisar.length]);
   resumo.addRow(['SKUs B Elétrica', p38Rows.length]);
+  resumo.addRow(['Mix disjuntor alvo (com novos)', tem.length + novos.length]);
   resumo.addRow([]);
   for (const g of mix.grupos ?? []) {
     const gRows = matrix.filter((r) => r.grupo === g.nome);
@@ -235,6 +299,12 @@ async function writeXlsx(outPath, matrix, p38Rows, mix) {
   addSheet(wb, 'Matriz completa', headers, matrix, 'FF3A4A5C');
   addSheet(wb, 'Falta ou parcial', headers, falta, 'FFB84A4A');
   addSheet(wb, 'Já temos', headers, tem, 'FF2D6B4A');
+
+  const novosHeaders = ['numero', 'bloco', 'sub_bloco', 'etapa', 'core', 'linha', 'produto_compra', 'eixo_a', 'eixo_b', 'amperagem', 'codigo_interno', 'novo_sku', 'status_mix', 'nota'];
+  addSheet(wb, 'Novos — disjuntores', novosHeaders, buildNovosDisjuntorRows(novosPayload), 'FF6B4A8C');
+
+  const mixHeaders = ['tipo', 'amperagem', 'status', 'codigo_p38', 'sku', 'acao'];
+  addSheet(wb, 'Mix disjuntores alvo', mixHeaders, buildMixDisjuntorAlvo(matrix, novosPayload), 'FF4A5C6B');
 
   const inv = wb.addWorksheet('Inventário P38 B');
   inv.addRow(['sub_bloco', 'produto_compra', 'eixo_a', 'eixo_b', 'codigo_interno', 'sku_atual']);
@@ -248,16 +318,21 @@ async function writeXlsx(outPath, matrix, p38Rows, mix) {
 async function main() {
   const { inPath, mixPath, outPath } = parseArgs(process.argv.slice(2));
   const mix = JSON.parse(fs.readFileSync(mixPath, 'utf8'));
+  const novosPayload = loadNovosDisjuntores();
   const p38Rows = await loadBEletrica(inPath);
-  const matrix = buildBenchmark(p38Rows, mix);
-  await writeXlsx(outPath, matrix, p38Rows, mix);
+  let matrix = buildBenchmark(p38Rows, mix);
+  matrix = applyNovosDisjuntores(matrix, novosPayload);
+  await writeXlsx(outPath, matrix, p38Rows, mix, novosPayload);
 
   const falta = matrix.filter((r) => r.status === 'falta' && r.prioridade === 'nucleo');
+  const novos = matrix.filter((r) => r.status === 'novo');
   console.log('[benchmark-leroy-eletrica] OK');
   console.log(`  saída: ${outPath}`);
-  console.log(`  mix: ${matrix.length} · tem: ${matrix.filter((r) => r.status === 'tem').length} · falta: ${matrix.filter((r) => r.status === 'falta').length} · parcial: ${matrix.filter((r) => r.status === 'parcial').length}`);
-  console.log('  Falta núcleo:');
-  for (const r of falta) console.log(`    [${r.familia}] ${r.variante} ${r.amperagem_ou_eixo}`);
+  console.log(`  mix: ${matrix.length} · tem: ${matrix.filter((r) => r.status === 'tem').length} · novo: ${novos.length} · falta: ${matrix.filter((r) => r.status === 'falta').length}`);
+  if (novos.length) {
+    console.log('  Novos disjuntores (#1–6):');
+    for (const n of novosPayload.novos) console.log(`    #${n.numero} ${n.novo_sku}`);
+  }
   const parcial = matrix.filter((r) => r.status === 'parcial');
   if (parcial.length) {
     console.log('  Parcial (kits):');
