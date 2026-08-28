@@ -172,13 +172,16 @@ export function buildConsultaItensEmbarque(card = {}, produtosMap = {}, { modo =
         }
 
         const qtyEmbarcada = resolveEmbarqueQuantidadeComercial(sqlLine, 'embarcada');
-        if (qtyEmbarcada <= MIN_QTD_PENDENTE_CONSULTA) return null;
+        const qtyPedida = resolveEmbarqueQuantidadeComercial(sqlLine, 'pedida');
+        const qtyUsar = qtyEmbarcada > MIN_QTD_PENDENTE_CONSULTA ? qtyEmbarcada : qtyPedida;
+        if (qtyUsar <= MIN_QTD_PENDENTE_CONSULTA) return null;
+        const qtyKind = qtyEmbarcada > MIN_QTD_PENDENTE_CONSULTA ? 'embarcada' : 'pedida';
         return buildLinhaConsultaItem(
           pedido,
           pedidoItem,
           sqlLine,
           produto,
-          'embarcada',
+          qtyKind,
         );
       })
       .filter(Boolean);
@@ -219,12 +222,11 @@ export function calcConsultaValorEmbarque(card, itens, { modo = 'pendente' } = {
 export const calcConsultaValorPendenteEmbarque = calcConsultaValorEmbarque;
 
 export function enrichEmbarqueParaConsulta(card, produtosMap = {}) {
-  let itens = buildConsultaItensEmbarque(card, produtosMap, { modo: 'integral' });
-  if (!itens.length && Array.isArray(card._display_itens) && card._display_itens.length > 0) {
-    itens = card._display_itens;
-  }
+  const itensDisplay = Array.isArray(card._display_itens) ? card._display_itens : [];
+  const itensIntegral = buildConsultaItensEmbarque(card, produtosMap, { modo: 'integral' });
+  const itens = itensDisplay.length > 0 ? itensDisplay : itensIntegral;
   const displayValor = Number(card._display_valor);
-  const valorIntegral = Number.isFinite(displayValor) && displayValor > 0
+  const valorIntegral = Number.isFinite(displayValor) && displayValor >= 0
     ? roundToTwoDecimals(displayValor)
     : calcValorEmbarqueCard(card, produtosMap);
   const ehNecessidade = card._is_necessidade || isNecessidadeRenderizada(card._embarque);
