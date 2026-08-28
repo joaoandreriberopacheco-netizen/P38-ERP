@@ -21,6 +21,12 @@ export default function VendaValorResumo({
   const total = roundToTwoDecimals(Number(venda?.valor_total) || 0);
   const temDesconto = desconto > 0.009;
   const valorExibir = valorDestaque != null ? roundToTwoDecimals(valorDestaque) : total;
+  const percentualDesconto = temDesconto && subtotal > 0
+    ? (desconto / subtotal) * 100
+    : 0;
+  const percentualDescontoLabel = percentualDesconto > 0
+    ? percentualDesconto.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 1 })
+    : null;
 
   const sizeMap = {
     sm: { total: 'sm', meta: 'text-[11px]' },
@@ -37,6 +43,7 @@ export default function VendaValorResumo({
           </span>
           <span className={cn(sz.meta, caixaClasses('danger').text, 'tabular-nums')}>
             −{formatCaixaR(desconto)}
+            {percentualDescontoLabel ? ` (${percentualDescontoLabel}%)` : ''}
           </span>
         </>
       )}
