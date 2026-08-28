@@ -4,6 +4,8 @@
   "nota_metodo": "Comparar B — Elétrica vs matriz. Eletroduto: núcleo = tubo + curva + luva + bucha + arruela no mesmo Ø.",
   "lm_urls": {
     "disjuntores": "https://www.leroymerlin.com.br/disjuntores-din",
+    "contatores": "https://www.leroymerlin.com.br/contatores",
+    "conexoes": "https://www.leroymerlin.com.br/conectores-eletricos",
     "quadros": "https://www.leroymerlin.com.br/quadros-de-distribuicao",
     "fios": "https://www.leroymerlin.com.br/fios-e-cabos-eletricos",
     "eletroduto": "https://www.leroymerlin.com.br/eletroduto",
@@ -28,7 +30,40 @@
       "variantes": [
         { "tipo": "MONOFÁSICO", "amperagens": ["10A", "16A", "20A", "25A", "32A", "40A"] },
         { "tipo": "BIFÁSICO", "amperagens": ["20A", "32A", "40A", "50A"] },
-        { "tipo": "TRIFÁSICO", "amperagens": ["20A", "32A", "40A", "50A", "63A"] }
+        { "tipo": "TRIFÁSICO", "amperagens": ["20A", "32A", "40A", "50A", "63A", "80A", "100A"], "amperagens_complemento": ["80A", "100A"] }
+      ]
+    },
+    {
+      "id": "contator",
+      "grupo": "G3",
+      "produto_compra": "CONTATOR",
+      "lm_caminho": "Proteção e Comando > Contatores",
+      "prioridade": "nucleo",
+      "tipo_matriz": "contator",
+      "variantes": [
+        { "polos": "1NA", "amperagens": ["9A", "12A", "18A", "25A"] },
+        { "polos": "TRIFÁSICO", "amperagens": ["12A", "18A", "25A", "32A"], "prioridade": "complemento" }
+      ]
+    },
+    {
+      "id": "conexao_sem_fita",
+      "grupo": "G2",
+      "produto_compra": "CONECTOR EMENDA RÁPIDA",
+      "lm_caminho": "Conexões > Emendas rápidas (push-in)",
+      "prioridade": "nucleo",
+      "tipo_matriz": "conexao",
+      "variantes": [
+        { "produto_compra": "CONECTOR EMENDA RÁPIDA", "eixo_a": "2 VIAS 1,5-2,5 MM²", "eixo_match": "2 VIAS 1,5-2,5", "label": "Emenda 2 vias 1,5-2,5 mm²" },
+        { "produto_compra": "CONECTOR EMENDA RÁPIDA", "eixo_a": "3 VIAS 1,5-2,5 MM²", "eixo_match": "3 VIAS 1,5-2,5", "label": "Emenda 3 vias 1,5-2,5 mm²" },
+        { "produto_compra": "CONECTOR EMENDA RÁPIDA", "eixo_a": "5 VIAS 1,5-2,5 MM²", "eixo_match": "5 VIAS 1,5-2,5", "label": "Emenda 5 vias 1,5-2,5 mm²" },
+        { "produto_compra": "CONECTOR EMENDA RÁPIDA", "eixo_a": "2 VIAS 4-6 MM²", "eixo_match": "2 VIAS 4-6", "label": "Emenda 2 vias 4-6 mm²" },
+        { "produto_compra": "TERMINAL OLHAL", "eixo_a": "#14", "eixo_match": "#14", "label": "Terminal olhal #14" },
+        { "produto_compra": "TERMINAL OLHAL", "eixo_a": "#12", "eixo_match": "#12", "label": "Terminal olhal #12" },
+        { "produto_compra": "TERMINAL OLHAL", "eixo_a": "#10", "eixo_match": "#10", "label": "Terminal olhal #10" },
+        { "produto_compra": "TERMINAL GARFO", "eixo_a": "#14", "eixo_match": "#14", "label": "Terminal garfo #14" },
+        { "produto_compra": "TERMINAL GARFO", "eixo_a": "#12", "eixo_match": "#12", "label": "Terminal garfo #12" },
+        { "produto_compra": "CONECTOR PERFURANTE", "eixo_a": "1,5-6 MM²", "eixo_match": "1,5-6", "label": "Conector perfurante derivador" },
+        { "produto_compra": "BLOCO TERMINAL DIN", "eixo_a": "12 POLOS", "eixo_match": "12 POLOS", "label": "Bloco terminal DIN 12 polos", "prioridade": "complemento" }
       ]
     },
     {

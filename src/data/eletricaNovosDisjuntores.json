@@ -1,6 +1,6 @@
 {
   "version": "2026-08-28",
-  "nota": "Cadastro actual P38: sem disjuntores DIN mono/bi/tri operacionais (export estudo antigo tinha 10 linhas legado — não contar como 'tem'). Mix completo a cadastrar.",
+  "nota": "Cadastro actual P38: sem disjuntores DIN mono/bi/tri operacionais (export estudo antigo tinha 10 linhas legado — não contar como 'tem'). Mix núcleo + trifásico beyond (80/100A) a cadastrar.",
   "cadastro_actual": "vazio",
   "referencia_existente": {
     "produto_compra": "DISJUNTOR",
@@ -29,6 +29,8 @@
     { "numero": 12, "tipo": "TRIFÁSICO", "amperagem": "32A", "eixo_b": "TRIFÁSICO", "novo_sku": "DISJUNTOR DIN TRIFÁSICO 32A" },
     { "numero": 13, "tipo": "TRIFÁSICO", "amperagem": "40A", "eixo_b": "TRIFÁSICO", "novo_sku": "DISJUNTOR DIN TRIFÁSICO 40A" },
     { "numero": 14, "tipo": "TRIFÁSICO", "amperagem": "50A", "eixo_b": "TRIFÁSICO", "novo_sku": "DISJUNTOR DIN TRIFÁSICO 50A" },
-    { "numero": 15, "tipo": "TRIFÁSICO", "amperagem": "63A", "eixo_b": "TRIFÁSICO", "novo_sku": "DISJUNTOR DIN TRIFÁSICO 63A", "nota": "Motores / carga trifásica" }
+    { "numero": 15, "tipo": "TRIFÁSICO", "amperagem": "63A", "eixo_b": "TRIFÁSICO", "novo_sku": "DISJUNTOR DIN TRIFÁSICO 63A", "nota": "Motores / carga trifásica" },
+    { "numero": 16, "tipo": "TRIFÁSICO", "amperagem": "80A", "eixo_b": "TRIFÁSICO", "novo_sku": "DISJUNTOR DIN TRIFÁSICO 80A", "prioridade": "complemento", "nota": "Infra beyond — poucas unidades; mix para projetos" },
+    { "numero": 17, "tipo": "TRIFÁSICO", "amperagem": "100A", "eixo_b": "TRIFÁSICO", "novo_sku": "DISJUNTOR DIN TRIFÁSICO 100A", "prioridade": "complemento", "nota": "Infra beyond — poucas unidades; entrada trifásica pesada" }
   ]
 }
