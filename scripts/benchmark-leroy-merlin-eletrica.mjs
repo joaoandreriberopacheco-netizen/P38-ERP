@@ -321,7 +321,7 @@ function buildFamiliaRows(familia, p38Rows, mix, novosEstudo = null) {
           produto_compra: 'DR',
           codigos_p38: hits.map((h) => h.codigo_interno).join(', '), sku_exemplo: hits[0]?.sku_atual ?? novosMap.get(key)?.novo_sku ?? '',
           lm_url: lmUrls.dr_idr, acao,
-          nota: novosMap.get(key)?.nota ?? `Ecossistema DIN ${familia.ecossistema_din ?? 'TIGRE'}`,
+          nota: novosMap.get(key)?.nota ?? (familia.criterio_marca ?? 'Boa marca — modular DIN'),
         }));
       }
     }
@@ -379,7 +379,7 @@ function buildFamiliaRows(familia, p38Rows, mix, novosEstudo = null) {
         produto_compra: v.produto_compra,
         codigos_p38: hits.map((h) => h.codigo_interno).join(', '), sku_exemplo: hits[0]?.sku_atual ?? novoItem?.novo_sku ?? '',
         lm_url: lmUrls.montagem_din, acao,
-        nota: novoItem?.nota ?? `Trilho/barramento ${familia.ecossistema_din ?? 'TIGRE'} — par quadros plásticos`,
+        nota: novoItem?.nota ?? (familia.criterio_marca ?? 'Trilho/barramento — sistema DIN 35mm, boa marca'),
       }));
     }
     return rows;
@@ -437,7 +437,6 @@ function buildFamiliaRows(familia, p38Rows, mix, novosEstudo = null) {
     const cadastroVazio = payload?.cadastro_actual === 'vazio';
     const novosMap = new Map((payload?.novos ?? []).filter((n) => n.familia === familia.id).map((n) => [completarNovoKey(n), n]));
     const isMetal = familia.material === 'METÁLICO';
-    const marcas = (familia.marcas_ref ?? []).join('/');
     for (const v of familia.variantes) {
       const hits = isMetal
         ? p38Rows.filter((r) => matchQuadroMetalico(r, v.eixo_a))
@@ -445,9 +444,11 @@ function buildFamiliaRows(familia, p38Rows, mix, novosEstudo = null) {
       const key = `${familia.id}|${v.label}|${v.eixo_a}`;
       let status = hits.length ? (hits.length > 1 ? 'duplicado' : 'tem') : 'falta';
       let acao = status === 'falta' ? 'cadastrar' : '';
-      let nota = isMetal ? `Metálico — ref. ${marcas}` : `Plástico Tigre/Krona — ecossistema DIN ${familia.ecossistema_din ?? 'TIGRE'}`;
-      if (!isMetal && hits.length && hits.some((h) => norm(h.sku_atual).includes('TRIAL'))) {
-        nota += ' · revisar marca (Trial no cadastro)';
+      let nota = isMetal
+        ? 'Metálico — boa marca na compra'
+        : 'Plástico — boa marca; compatível trilho DIN 35mm';
+      if (!isMetal && hits.length && hits.some((h) => /TRIAL|MECTRONIC/i.test(h.sku_atual ?? ''))) {
+        nota += ' · cadastro legado — revisar marca na próxima compra';
       }
       const novoItem = novosMap.get(key);
       if (cadastroVazio && novoItem) {
@@ -545,7 +546,7 @@ function loadNovosEstudo() {
     montagem_din: protecao.montagem_din ?? { novos: [], cadastro_actual: 'vazio' },
     dr_idr: protecao.dr_idr ?? { novos: [], cadastro_actual: 'vazio' },
     dps: protecao.dps ?? { novos: [], cadastro_actual: 'vazio' },
-    ecossistema_din: protecao.ecossistema_din ?? {},
+    sistema_din: protecao.sistema_din ?? {},
     nota_estrategia: [infra.nota_estrategia, completar.nota].filter(Boolean).join(' '),
     fio_flexivel: completar.fio_flexivel ?? {},
   };
@@ -755,7 +756,7 @@ async function writeXlsx(outPath, matrix, p38Rows, mix, novosEstudo) {
   resumo.addRow(['P38 — duplicado', revisar.length]);
   resumo.addRow(['SKUs B Elétrica', p38Rows.length]);
   if (novosEstudo.fio_flexivel?.nota_operacao) resumo.addRow(['Fio flexível', novosEstudo.fio_flexivel.nota_operacao]);
-  if (novosEstudo.ecossistema_din?.nota) resumo.addRow(['Ecossistema DIN', novosEstudo.ecossistema_din.nota]);
+  if (novosEstudo.sistema_din?.nota) resumo.addRow(['Sistema DIN', novosEstudo.sistema_din.nota]);
   resumo.addRow([]);
   for (const g of mix.grupos ?? []) {
     const gRows = matrix.filter((r) => r.grupo === g.nome);

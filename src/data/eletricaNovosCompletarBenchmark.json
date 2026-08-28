@@ -1,6 +1,6 @@
 {
   "version": "2026-08-28",
-  "nota": "Fecha lacunas 06/07/08 do benchmark LM. Operação P38: só fio/cabo flexível (cadastro legado FIO ELÉTRICO → migrar nomenclatura). Quadros: plástico boa marca (Tigre/Krona) + metálico boa marca (Steck/Schneider).",
+  "nota": "Fecha lacunas 06/07/08 do benchmark LM. Operação P38: só fio/cabo flexível (cadastro legado FIO ELÉTRICO → migrar nomenclatura). Quadros plástico e metálico — boa marca na compra, sem travar fabricante.",
   "cadastro_actual": "vazio",
   "fio_flexivel": {
     "nota_operacao": "Trabalhamos somente com fio flexível; hits legado FIO ELÉTRICO contam como tem até renomear SKU."
@@ -23,7 +23,7 @@
       "amperagem_ou_eixo": "1\"",
       "sub_bloco": "07 — Infra (fios, eletroduto, conduíte)",
       "produto_compra": "CONDUITE CORRUGADO",
-      "novo_sku": "CONDUITE CORRUGADO 1\" TRAMONTINA",
+      "novo_sku": "CONDUITE CORRUGADO 1\"",
       "prioridade": "complemento"
     },
     {
@@ -33,7 +33,7 @@
       "amperagem_ou_eixo": "1 1/4'",
       "sub_bloco": "07 — Infra (fios, eletroduto, conduíte)",
       "produto_compra": "BUCHA ELETRODUTO",
-      "novo_sku": "BUCHA ELETRODUTO 1 1/4' INCA",
+      "novo_sku": "BUCHA ELETRODUTO 1 1/4'",
       "nota": "Completa kit eletroduto 1¼\""
     },
     {
@@ -44,8 +44,8 @@
       "sub_bloco": "08 — Quadro e proteção",
       "produto_compra": "QUADRO DE DISTRIBUIÇÃO",
       "eixo_a": "8",
-      "novo_sku": "QUADRO DE DISTRIBUIÇÃO 8 DISJUNTORES — TIGRE",
-      "nota": "Plástico Tigre — ecossistema DIN (trilho/barramento/DR/DPS mesma linha)"
+      "novo_sku": "QUADRO DE DISTRIBUIÇÃO 8 DISJUNTORES PLÁSTICO",
+      "nota": "Plástico — boa marca; compatível trilho DIN 35mm"
     },
     {
       "numero": 5,
@@ -55,8 +55,8 @@
       "sub_bloco": "08 — Quadro e proteção",
       "produto_compra": "QUADRO METÁLICO DE DISJUNTORES",
       "eixo_a": "8",
-      "novo_sku": "QUADRO METÁLICO DE DISJUNTORES 8 — STECK",
-      "nota": "Metálico — marca referência Steck (alternativa Schneider)"
+      "novo_sku": "QUADRO METÁLICO DE DISJUNTORES 8",
+      "nota": "Metálico — boa marca"
     },
     {
       "numero": 6,
@@ -66,8 +66,8 @@
       "sub_bloco": "08 — Quadro e proteção",
       "produto_compra": "QUADRO METÁLICO DE DISJUNTORES",
       "eixo_a": "12",
-      "novo_sku": "QUADRO METÁLICO DE DISJUNTORES 12 — STECK",
-      "nota": "Metálico — marca referência Steck"
+      "novo_sku": "QUADRO METÁLICO DE DISJUNTORES 12",
+      "nota": "Metálico — boa marca"
     },
     {
       "numero": 7,
@@ -77,8 +77,8 @@
       "sub_bloco": "08 — Quadro e proteção",
       "produto_compra": "QUADRO METÁLICO DE DISJUNTORES",
       "eixo_a": "16",
-      "novo_sku": "QUADRO METÁLICO DE DISJUNTORES 16 — STECK",
-      "nota": "Metálico — marca referência Steck"
+      "novo_sku": "QUADRO METÁLICO DE DISJUNTORES 16",
+      "nota": "Metálico — boa marca"
     }
   ]
 }

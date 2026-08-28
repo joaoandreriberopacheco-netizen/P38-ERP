@@ -1,7 +1,7 @@
 {
   "version": "2026-08-28",
   "fonte": "Leroy Merlin BR — Materiais Elétricos. Mix básico para hidratar o que a P38 já vende (não clonar LM).",
-  "nota_metodo": "Comparar B — Elétrica vs matriz. Fios: FIO FLEXÍVEL até 10mm² (sem 16mm). Quadros plástico Tigre/Krona + metálico Steck; trilho/barramento/DR/DPS ecossistema DIN Tigre. Eletroduto: tubo + curva + luva + bucha + arruela no mesmo Ø.",
+  "nota_metodo": "Comparar B — Elétrica vs matriz. Fios: FIO FLEXÍVEL até 10mm² (sem 16mm). Quadros plástico + metálico (produtos distintos); trilho/barramento/DR/DPS sistema DIN 35mm — boa marca na compra, sem travar fabricante. Eletroduto: tubo + curva + luva + bucha + arruela no mesmo Ø.",
   "lm_urls": {
     "disjuntores": "https://www.leroymerlin.com.br/disjuntores-din",
     "contatores": "https://www.leroymerlin.com.br/contatores",
@@ -77,8 +77,7 @@
       "prioridade": "nucleo",
       "tipo_matriz": "quadro_material",
       "material": "PLÁSTICO",
-      "marcas_ref": ["TIGRE", "KRONA"],
-      "ecossistema_din": "TIGRE",
+      "criterio_marca": "boa marca — escolher na compra",
       "variantes": [
         { "eixo_a": "8", "label": "8 disjuntores — plástico" },
         { "eixo_a": "12", "label": "12 disjuntores — plástico" },
@@ -93,7 +92,7 @@
       "prioridade": "nucleo",
       "tipo_matriz": "quadro_material",
       "material": "METÁLICO",
-      "marcas_ref": ["STECK", "SCHNEIDER"],
+      "criterio_marca": "boa marca — escolher na compra",
       "variantes": [
         { "eixo_a": "8", "label": "8 disjuntores — metálico" },
         { "eixo_a": "12", "label": "12 disjuntores — metálico" },
@@ -107,7 +106,7 @@
       "lm_caminho": "Quadros > Trilho DIN e barramentos",
       "prioridade": "nucleo",
       "tipo_matriz": "montagem_din",
-      "ecossistema_din": "TIGRE",
+      "criterio_marca": "boa marca — sistema DIN 35mm compatível com quadros",
       "variantes": [
         { "produto_compra": "TRILHO DIN", "eixo_a": "35MM 1M", "eixo_match": "35MM 1M", "label": "Trilho DIN 35mm 1m" },
         { "produto_compra": "TRILHO DIN", "eixo_a": "35MM 2M", "eixo_match": "35MM 2M", "label": "Trilho DIN 35mm 2m", "prioridade": "complemento" },
@@ -124,7 +123,7 @@
       "lm_caminho": "Proteção > DR / IDR",
       "prioridade": "nucleo",
       "tipo_matriz": "protecao_dr",
-      "ecossistema_din": "TIGRE",
+      "criterio_marca": "boa marca — modular DIN",
       "variantes": [
         { "polos": "2P", "amperagens": ["25A", "40A", "63A"], "amperagens_complemento": ["63A"] },
         { "polos": "4P", "amperagens": ["40A"] }
@@ -137,7 +136,7 @@
       "lm_caminho": "Proteção > DPS (surto)",
       "prioridade": "nucleo",
       "tipo_matriz": "protecao_dps",
-      "ecossistema_din": "TIGRE",
+      "criterio_marca": "boa marca — modular DIN",
       "variantes": [
         { "config": "2P 20KA", "label": "DPS 20kA 2P classe II" },
         { "config": "4P 40KA", "label": "DPS 40kA 4P classe II", "prioridade": "complemento" }
