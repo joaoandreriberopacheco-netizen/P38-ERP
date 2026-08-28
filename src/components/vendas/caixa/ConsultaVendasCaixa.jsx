@@ -10,9 +10,14 @@ import { formatarDataHora } from '@/components/utils/dateUtils';
 import FormaPagamentoBadges from '@/components/vendas/FormaPagamentoBadges';
 import TrocaCaixaCard from '@/components/vendas/caixa/TrocaCaixaCard';
 import { ConsultaProdutoRow } from '@/components/vendas/caixa/ConsultaProdutoRow';
+import VendaValorResumo from '@/components/vendas/caixa/VendaValorResumo';
 import {
   partitionVendasConsultaCaixa,
 } from '@/lib/substituicoesVendaCaixa';
+import {
+  isPagamentoMistoParaForma,
+  valorFormaPagamentoNoPedido,
+} from '@/lib/formasPagamentoCaixa';
 
 function parseNumeroComprovante(numero) {
   const digits = String(numero || '').replace(/\D/g, '');
@@ -60,8 +65,13 @@ export default function ConsultaVendasCaixa({
   onVerDetalhes,
   contextLabel = 'Consulta do turno',
   emptyMessage = 'Nenhuma venda finalizada no turno',
+  formaPagamentoKey = null,
+  formaPagamentoLabel = null,
+  totalFormaPagamento = null,
+  forcarModoComprovante = false,
 }) {
   const [modo, setModo] = useState('comprovante');
+  const modoEfetivo = forcarModoComprovante || formaPagamentoKey ? 'comprovante' : modo;
 
   const { trocas, normais } = useMemo(
     () => partitionVendasConsultaCaixa(vendasFinalizadas, metaPorPedidoId),
@@ -72,10 +82,12 @@ export default function ConsultaVendasCaixa({
   const vendasOrdenadas = useMemo(() => sortByComprovante(normais), [normais]);
   const trocasOrdenadas = useMemo(() => sortByComprovante(trocas), [trocas]);
 
-  const totalGeral = useMemo(
-    () => roundToTwoDecimals(vendasFinalizadas.reduce((acc, v) => acc + (Number(v.valor_total) || 0), 0)),
-    [vendasFinalizadas]
-  );
+  const totalGeral = useMemo(() => {
+    if (formaPagamentoKey && totalFormaPagamento != null) {
+      return roundToTwoDecimals(totalFormaPagamento);
+    }
+    return roundToTwoDecimals(vendasFinalizadas.reduce((acc, v) => acc + (Number(v.valor_total) || 0), 0));
+  }, [vendasFinalizadas, formaPagamentoKey, totalFormaPagamento]);
 
   const totalTrocas = useMemo(
     () => roundToTwoDecimals(trocas.reduce((acc, v) => acc + (Number(v.valor_total) || 0), 0)),
@@ -104,25 +116,27 @@ export default function ConsultaVendasCaixa({
               : ''}
           </p>
         </div>
-        <div className="flex rounded-2xl bg-muted/50 p-1 gap-1">
-          <button
-            type="button"
-            onClick={() => setModo('produto')}
-            className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${modo === 'produto' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
-          >
-            Por produto
-          </button>
-          <button
-            type="button"
-            onClick={() => setModo('comprovante')}
-            className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${modo === 'comprovante' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
-          >
-            Por comprovante
-          </button>
-        </div>
+        {!forcarModoComprovante && (
+          <div className="flex rounded-2xl bg-muted/50 p-1 gap-1">
+            <button
+              type="button"
+              onClick={() => setModo('produto')}
+              className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${modo === 'produto' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
+            >
+              Por produto
+            </button>
+            <button
+              type="button"
+              onClick={() => setModo('comprovante')}
+              className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${modo === 'comprovante' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
+            >
+              Por comprovante
+            </button>
+          </div>
+        )}
       </div>
 
-      {modo === 'produto' ? (
+      {modoEfetivo === 'produto' ? (
         <div className="space-y-4">
           {trocasOrdenadas.length > 0 && (
             <div className="space-y-2">
@@ -185,7 +199,15 @@ export default function ConsultaVendasCaixa({
               {trocasOrdenadas.length > 0 && (
                 <p className={`${caixaTypo.labelSm} px-1`}>Vendas ({vendasOrdenadas.length})</p>
               )}
-              {vendasOrdenadas.map((venda) => (
+              {vendasOrdenadas.map((venda) => {
+                const pagamentoMisto = formaPagamentoKey
+                  ? isPagamentoMistoParaForma(venda, formaPagamentoKey)
+                  : false;
+                const valorForma = formaPagamentoKey && pagamentoMisto
+                  ? valorFormaPagamentoNoPedido(venda, formaPagamentoKey)
+                  : null;
+
+                return (
                 <div key={venda.id} className="bg-card rounded-2xl shadow-sm overflow-hidden">
                   <button
                     type="button"
@@ -200,7 +222,13 @@ export default function ConsultaVendasCaixa({
                       </p>
                       <FormaPagamentoBadges pagamentos={venda.pagamentos} className="mt-1.5" size="xs" />
                     </div>
-                    <CaixaValorDisplay valor={venda.valor_total} tone="success" size="sm" />
+                    <VendaValorResumo
+                      venda={venda}
+                      size="sm"
+                      valorDestaque={valorForma}
+                      formaPagamentoLabel={formaPagamentoLabel}
+                      pagamentoMisto={pagamentoMisto}
+                    />
                   </button>
                   <P38MobileLineList allViewports className="rounded-none border-0">
                     {(venda.itens || []).map((item, idx) => (
@@ -218,7 +246,8 @@ export default function ConsultaVendasCaixa({
                     ))}
                   </P38MobileLineList>
                 </div>
-              ))}
+              );
+              })}
             </div>
           )}
         </div>

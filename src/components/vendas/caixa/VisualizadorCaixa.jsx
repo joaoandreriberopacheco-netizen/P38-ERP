@@ -28,7 +28,9 @@ import {
 } from '@/lib/caixaP38Theme';
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 import CaixaMovimentacoesTurno from '@/components/vendas/caixa/CaixaMovimentacoesTurno';
+import CaixaRecebimentosTurno from '@/components/vendas/caixa/CaixaRecebimentosTurno';
 import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
+import VendasFormaPagamentoDialog from '@/components/vendas/caixa/VendasFormaPagamentoDialog';
 import { CaixaOverlayStackProvider } from '@/components/vendas/caixa/CaixaOverlayStackContext';
 import { cleanupQuickAccessPortalLayers } from '@/lib/quickAccessOverlay';
 
@@ -133,6 +135,7 @@ export default function VisualizadorCaixa({
   const [showDespesasDialog, setShowDespesasDialog] = useState(false);
   const [vendaDetalhada, setVendaDetalhada] = useState(null);
   const [showSaldoConsolidadoDialog, setShowSaldoConsolidadoDialog] = useState(false);
+  const [formaPagamentoDialog, setFormaPagamentoDialog] = useState(null);
   const [recebimentosDinheiro, setRecebimentosDinheiro] = useState('0,00');
   const [loading, setLoading] = useState(true);
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState(null);
@@ -464,111 +467,20 @@ export default function VisualizadorCaixa({
                 />
 
                 {/* Recebimentos - BLOQUEADO */}
-                <div className="bg-card rounded-2xl p-5 shadow-sm">
-                  <h3 className="text-foreground mb-4 text-base font-semibold">Recebimentos do Turno</h3>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between py-2 px-3 rounded-xl bg-muted cursor-not-allowed opacity-60">
-                      <div>
-                        <span className="text-sm text-muted-foreground">Dinheiro</span>
-                        <p className="text-xs text-muted-foreground">somente leitura</p>
-                      </div>
-                      <span className="text-lg font-bold text-muted-foreground">{formatValor(dinheiroNaGaveta)}</span>
-                    </div>
-                    <div className="flex items-center justify-between py-2 px-3">
-                      <span className="text-sm text-muted-foreground">PIX</span>
-                      <span className="text-base font-medium text-foreground">{formatValor(caixaData.recebimentos.pix)}</span>
-                    </div>
-                    <div className="flex items-center justify-between py-2 px-3">
-                      <span className="text-sm text-muted-foreground">Cartão Crédito</span>
-                      <span className="text-base font-medium text-foreground">{formatValor(caixaData.recebimentos.credito || 0)}</span>
-                    </div>
-                    <div className="flex items-center justify-between py-2 px-3">
-                      <span className="text-sm text-muted-foreground">Cartão Débito</span>
-                      <span className="text-base font-medium text-foreground">{formatValor(caixaData.recebimentos.debito || 0)}</span>
-                    </div>
-                    {(caixaData.recebimentos.vale || 0) > 0 && (
-                      <div className="flex items-center justify-between py-2 px-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground">Vale Troca</span>
-                          <span className={`text-xs px-1.5 py-0.5 rounded ${caixaClasses('success').pill}`}>não monetário</span>
-                        </div>
-                        <span className={`text-base font-medium ${caixaClasses('success').panelText}`}>{formatValor(caixaData.recebimentos.vale)}</span>
-                      </div>
-                    )}
-                    {(caixaData.fiado || 0) > 0 && (
-                      <div className="flex items-center justify-between py-2 px-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground">Fiado</span>
-                          <span className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded">a receber</span>
-                        </div>
-                        <span className="text-base font-medium text-foreground/90">{formatValor(caixaData.fiado)}</span>
-                      </div>
-                    )}
-                    
-                    {/* Conferência de fechamento */}
-                    <div className="pt-3 mt-1 border-t border-border/40 space-y-3">
-                      <div className="flex items-center justify-between px-1">
-                        <span className="text-sm font-medium text-foreground/90">Total Conferido</span>
-                        <span className="text-2xl font-bold text-foreground font-glacial">
-                          {modoFechado ? formatValor(totalConferidoFechamento) : formatValor(caixaData.liquidez)}
-                        </span>
-                      </div>
-                      {modoFechado ? (
-                        <>
-                          <div className="flex items-center justify-between px-1 text-sm">
-                            <span className="text-muted-foreground">Dinheiro conferido</span>
-                            <span className="font-semibold text-foreground">
-                              {formatValor(dinheiroConferidoFechamento)}
-                            </span>
-                          </div>
-                          <div
-                            className={`p-4 rounded-xl ${
-                              conferenciaOk
-                                ? caixaClasses('success').panel
-                                : caixaClasses('warning').panel
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span
-                                className={`text-sm font-medium ${
-                                  conferenciaOk
-                                    ? caixaClasses('success').panelText
-                                    : caixaClasses('warning').panelText
-                                }`}
-                              >
-                                {conferenciaOk ? '✓ Valores conferem' : 'Diferença no fechamento'}
-                              </span>
-                              <span
-                                className={`text-2xl font-bold font-glacial ${
-                                  conferenciaOk
-                                    ? caixaClasses('success').panelText
-                                    : caixaClasses(diferencaFechamento > 0 ? 'info' : 'danger').panelText
-                                }`}
-                              >
-                                {diferencaFechamento > 0 ? '+' : ''}
-                                {formatValor(diferencaFechamento)}
-                              </span>
-                            </div>
-                          </div>
-                          {turnoAtivo?.usuario_fechamento_nome && (
-                            <p className="text-xs text-center text-muted-foreground">
-                              Fechado por {turnoAtivo.usuario_fechamento_nome}
-                            </p>
-                          )}
-                        </>
-                      ) : (
-                        <div className={`p-4 rounded-xl opacity-60 ${caixaClasses('success').panel}`}>
-                          <div className="flex items-center justify-between">
-                            <span className={`text-sm font-medium ${caixaClasses('success').panelText}`}>✓ Valores Conferem</span>
-                            <span className={`text-2xl font-bold font-glacial ${caixaClasses('success').panelText}`}>
-                              {formatValor(0)}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <CaixaRecebimentosTurno
+                  dinheiroNaGaveta={dinheiroNaGaveta}
+                  recebimentos={caixaData.recebimentos}
+                  fiado={caixaData.fiado || 0}
+                  totalConferido={caixaData.liquidez}
+                  modoFechado={modoFechado}
+                  dinheiroConferidoFechamento={dinheiroConferidoFechamento}
+                  totalConferidoFechamento={totalConferidoFechamento}
+                  diferencaFechamento={diferencaFechamento}
+                  conferenciaOk={conferenciaOk}
+                  usuarioFechamentoNome={turnoAtivo?.usuario_fechamento_nome}
+                  formatValor={formatValor}
+                  onVerFormaPagamento={setFormaPagamentoDialog}
+                />
               </div>
 
               <div className="bg-card rounded-2xl p-4 shadow-sm space-y-2">
@@ -706,6 +618,14 @@ export default function VisualizadorCaixa({
         vendasFinalizadas={vendasFinalizadas}
         movimentos={movimentos}
         formatValor={formatValor}
+      />
+      <VendasFormaPagamentoDialog
+        open={!!formaPagamentoDialog}
+        onOpenChange={(open) => { if (!open) setFormaPagamentoDialog(null); }}
+        formaPagamentoKey={formaPagamentoDialog}
+        vendasFinalizadas={vendasFinalizadas}
+        metaPorPedidoId={substituicoesCtx?.metaPorPedidoId}
+        onVerDetalhes={setVendaDetalhada}
       />
 
       {rascunhoDetalhesTab && (
