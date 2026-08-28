@@ -33,7 +33,7 @@ import {
   pedidoDeveExibirCardNecessidade,
   quantidadePendenteNecessidadePedido,
 } from '@/lib/pedidoCompraNecessidade';
-import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta, buildConsultaItensEmbarque, calcConsultaValorEmbarque, buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
+import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta, buildConsultaItensPendentes, calcConsultaValorEmbarque, buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
 import { calcValorEmbarqueCard, calcValorEmbarcadoPedido } from '@/lib/embarqueValorFinanceiro';
 import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
@@ -779,7 +779,7 @@ export default function PedidosCompraPage() {
     if (!embarques.length) return 0;
     return embarques.reduce((acc, embarque) => {
       const card = { ...pedido, _embarque: embarque, _embarques: embarques };
-      return acc + calcConsultaValorEmbarque(card, buildConsultaItensEmbarque(card, produtosMap));
+      return acc + calcConsultaValorEmbarque(card, buildConsultaItensPendentes(card, produtosMap));
     }, 0);
   };
 
@@ -917,7 +917,6 @@ export default function PedidosCompraPage() {
       .filter((card) => keysVisiveis.has(card._virtual_key))
       .filter((card) => !embarqueExcluidoDeNecessidade(card, card._embarque, card._display_code))
       .map((card) => enrichEmbarqueParaConsulta(card, produtosMap))
-      .filter((card) => (card._consulta_itens || []).length > 0)
       .sort((a, b) => compareEmbarquesConsulta(a, b, sortOrder, groupBy));
   }, [filtrados, filtradosSemBusca, embarques, search, sortOrder, groupBy, produtosMap]);
 

@@ -7,7 +7,7 @@ import {
   calcValorEmbarqueCard,
   calcValorCargaEmbarque,
 } from '@/lib/embarqueValorFinanceiro';
-import { calcConsultaValorEmbarque, buildConsultaItensEmbarque } from '@/lib/consultaComprasEmbarques';
+import { calcConsultaValorEmbarque, buildConsultaItensPendentes } from '@/lib/consultaComprasEmbarques';
 
 /** Total integral do pedido (formulário, financeiro, aprovação). */
 export function valorPedidoCompra(pedido = {}) {
@@ -37,7 +37,7 @@ export function valorConsultaEmbarque(card = {}, produtosMap = {}) {
   if (Number.isFinite(cached) && cached >= 0 && card._consulta_itens) {
     return cached;
   }
-  return calcConsultaValorEmbarque(card, buildConsultaItensEmbarque(card, produtosMap));
+  return calcConsultaValorEmbarque(card, buildConsultaItensPendentes(card, produtosMap));
 }
 
 /**

@@ -10,7 +10,7 @@
 
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 import { resolveEmbarqueQuantidadeComercial } from '@/lib/embarqueQuantityResolve';
-import { buildConsultaItensEmbarque, calcConsultaValorEmbarque } from '@/lib/consultaComprasEmbarques';
+import { buildConsultaItensPendentes, calcConsultaValorEmbarque } from '@/lib/consultaComprasEmbarques';
 import {
   EMBARQUE_CODIGOS_EXCLUIDOS_OPERACIONAL,
   NECESSIDADE_EMBARQUE_CODIGOS_EXCLUIDOS,
@@ -238,7 +238,7 @@ export function calcularResumoNecessidadeDetalhe(pedido, embarque, embarquesDoPe
     _is_necessidade: true,
     _embarques: embarquesDoPedido,
   };
-  const itens = buildConsultaItensEmbarque(card, produtosMap);
+  const itens = buildConsultaItensPendentes(card, produtosMap);
   if (!itens.length) return null;
 
   return {
