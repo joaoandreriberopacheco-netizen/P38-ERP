@@ -122,7 +122,7 @@ function buildLinhaConsultaItem(pedido, pedidoItem, sqlLine = null, produto = nu
  * - modo `integral`: espelha a lista Embarques (valor/itens do split visível no filtro).
  * - modo `pendente`: saldo ainda não recebido (KPIs, necessidade, relatórios de pendência).
  * - Pedido completo primeiro; splits (despacho / Necessidade) são independentes.
- * - Códigos operacionais excluídos (ex.: E62-67G legado): não entram na Consulta.
+ * - Códigos operacionais excluídos (ex.: E62-67G legado): só no modo pendente.
  */
 export function buildConsultaItensEmbarque(card = {}, produtosMap = {}, { modo = 'pendente' } = {}) {
   const somentePendente = modo === 'pendente';
@@ -130,7 +130,7 @@ export function buildConsultaItensEmbarque(card = {}, produtosMap = {}, { modo =
   const embarque = card._embarque;
   const ehNecessidade = card._is_necessidade || isNecessidadeRenderizada(embarque);
 
-  if (embarqueExcluidoOperacional(pedido, embarque, card._display_code)) return [];
+  if (somentePendente && embarqueExcluidoOperacional(pedido, embarque, card._display_code)) return [];
 
   if (somentePendente && isEmbarqueConcluidoParaConsulta(card, embarque)) return [];
 
@@ -219,7 +219,10 @@ export function calcConsultaValorEmbarque(card, itens, { modo = 'pendente' } = {
 export const calcConsultaValorPendenteEmbarque = calcConsultaValorEmbarque;
 
 export function enrichEmbarqueParaConsulta(card, produtosMap = {}) {
-  const itens = buildConsultaItensEmbarque(card, produtosMap, { modo: 'integral' });
+  let itens = buildConsultaItensEmbarque(card, produtosMap, { modo: 'integral' });
+  if (!itens.length && Array.isArray(card._display_itens) && card._display_itens.length > 0) {
+    itens = card._display_itens;
+  }
   const displayValor = Number(card._display_valor);
   const valorIntegral = Number.isFinite(displayValor) && displayValor > 0
     ? roundToTwoDecimals(displayValor)

@@ -901,24 +901,22 @@ export default function PedidosCompraPage() {
     || filtroSomenteNaoConcluidos !== FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT;
 
   const pedidosConsulta = useMemo(() => {
-    const keysVisiveis = new Set(filtrados.map((card) => card._virtual_key));
+    let cards = filtrados;
 
     if (search) {
+      const keysVisiveis = new Set(filtrados.map((card) => card._virtual_key));
       const searchLower = search.toLowerCase();
-      filtradosSemBusca.forEach((card) => {
-        if (keysVisiveis.has(card._virtual_key)) return;
-        if (cardMatchesSearch(card, searchLower, { includeProdutos: true })) {
-          keysVisiveis.add(card._virtual_key);
-        }
-      });
+      const extras = filtradosSemBusca.filter(
+        (card) => !keysVisiveis.has(card._virtual_key)
+          && cardMatchesSearch(card, searchLower, { includeProdutos: true }),
+      );
+      if (extras.length) cards = [...filtrados, ...extras];
     }
 
-    return embarques
-      .filter((card) => keysVisiveis.has(card._virtual_key))
-      .filter((card) => !embarqueExcluidoDeNecessidade(card, card._embarque, card._display_code))
+    return cards
       .map((card) => enrichEmbarqueParaConsulta(card, produtosMap))
       .sort((a, b) => compareEmbarquesConsulta(a, b, sortOrder, groupBy));
-  }, [filtrados, filtradosSemBusca, embarques, search, sortOrder, groupBy, produtosMap]);
+  }, [filtrados, filtradosSemBusca, search, sortOrder, groupBy, produtosMap]);
 
   const gruposConsultaRelatorio = useMemo(
     () => buildGruposConsultaEmbarques(pedidosConsulta, groupBy, sortOrder).map((g) => ({
