@@ -2,22 +2,24 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import CatalogoNovoEntry from '@/components/catalogo-novo/CatalogoNovoEntry';
 import { createPageUrl } from '@/components/utils';
 import { cn } from '@/components/utils';
 
 /**
  * Entrada ao portal de catálogo cerâmica — trabalha em tabela auxiliar, não altera cadastro real.
  */
-export default function HierarquiaPortalEntry({ className, variant = 'outline', size = 'sm' }) {
+export default function HierarquiaPortalEntry({ className, variant = 'outline', size = 'sm', showCatalogoNovo = true }) {
   const isIcon = size === 'icon';
 
   return (
-    <Button
+    <span className={cn('inline-flex items-center gap-1', className)}>
+      {showCatalogoNovo ? <CatalogoNovoEntry variant={variant} size={size} /> : null}
+      <Button
       variant={variant}
       size={size}
       className={cn(
         !isIcon && 'gap-1.5 border-dashed border-amber-500/50 text-amber-800 dark:text-amber-200/90',
-        className,
       )}
       asChild
     >
@@ -35,5 +37,6 @@ export default function HierarquiaPortalEntry({ className, variant = 'outline', 
         )}
       </Link>
     </Button>
+    </span>
   );
 }

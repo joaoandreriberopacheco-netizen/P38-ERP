@@ -48,6 +48,7 @@ export const PAGINAS_ALIASES_PERMISSAO = {
   EditarProdutosEmMassa: 'Produtos',
   EdicaoMassivaCustos: 'Produtos',
   ModeloCatalogo: 'HierarquiaPortal',
+  CatalogoNovo: 'HierarquiaPortal',
   Intervenientes: 'Produtos',
   Terceiros: 'Produtos',
 

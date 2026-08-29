@@ -16,6 +16,7 @@ export const P38_PAGE_NAMES = [
   "CadastroProdutoV2",
   "CaixasAtivos",
   "Campanhas",
+  "CatalogoNovo",
   "Compras",
   "ConferenciaEditor",
   "ConferenciaEntrada",
