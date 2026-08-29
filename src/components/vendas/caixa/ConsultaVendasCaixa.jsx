@@ -19,6 +19,11 @@ import {
   valorFormaPagamentoNoPedido,
 } from '@/lib/formasPagamentoCaixa';
 
+function horaDaVenda(venda) {
+  if (!venda?.created_date) return '';
+  return formatarDataHora(venda.created_date).split(' ')[1] || '';
+}
+
 function parseNumeroComprovante(numero) {
   const digits = String(numero || '').replace(/\D/g, '');
   return digits ? parseInt(digits, 10) : 0;
@@ -203,15 +208,22 @@ export default function ConsultaVendasCaixa({
                 const valorForma = formaPagamentoKey && pagamentoMisto
                   ? valorFormaPagamentoNoPedido(venda, formaPagamentoKey)
                   : null;
+                const hora = horaDaVenda(venda);
 
                 return (
                 <div key={venda.id} className={caixaConsultaCard}>
                   <div className="w-full flex items-start justify-between gap-2 px-4 py-3 border-b border-border/40 dark:border-white/10 overflow-visible">
                     <div className="min-w-0 flex-1">
-                      <p className={`${p38Table.mobileLineTitle} truncate`}>{venda.numero}</p>
+                      <p className={`${p38Table.mobileLineTitle} flex items-center gap-1.5 min-w-0`}>
+                        <span className="truncate">{venda.numero}</span>
+                        {hora ? (
+                          <span className={`${p38Table.mobileLineSubtitle} shrink-0`}>
+                            · {hora}
+                          </span>
+                        ) : null}
+                      </p>
                       <p className={`${p38Table.mobileLineSubtitle} truncate`}>
                         {venda.cliente_nome || 'Avulso'}
-                        {venda.created_date ? ` · ${formatarDataHora(venda.created_date).split(' ')[1] || ''}` : ''}
                       </p>
                       <FormaPagamentoBadges pagamentos={venda.pagamentos} className="mt-1.5" size="xs" />
                     </div>

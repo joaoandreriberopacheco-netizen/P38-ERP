@@ -66,7 +66,12 @@ export default function TrocaCaixaCard({ venda, meta, onVerDetalhes }) {
       <HeaderTag {...headerProps}>
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
-            <p className={`${p38Table.mobileLineTitle} truncate`}>{venda.numero}</p>
+            <p className={`${p38Table.mobileLineTitle} flex items-center gap-1.5 min-w-0`}>
+              <span className="truncate">{venda.numero}</span>
+              {hora ? (
+                <span className={`${p38Table.mobileLineSubtitle} shrink-0`}>· {hora}</span>
+              ) : null}
+            </p>
             <Badge
               variant="outline"
               className="text-[10px] px-1.5 py-0 border-orange-300 text-orange-800 dark:border-orange-700 dark:text-orange-300"
@@ -85,7 +90,6 @@ export default function TrocaCaixaCard({ venda, meta, onVerDetalhes }) {
           </div>
           <p className={`${p38Table.mobileLineSubtitle} truncate`}>
             {venda.cliente_nome || 'Avulso'}
-            {hora ? ` · ${hora}` : ''}
             {resumo.pedidoOrigem ? ` · origem ${resumo.pedidoOrigem}` : ''}
           </p>
         </div>
