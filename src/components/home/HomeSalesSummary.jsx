@@ -10,9 +10,9 @@ function formatValor(valor) {
 
 function SalesSummarySkeleton() {
   return (
-    <div className="space-y-2" aria-busy="true" aria-label="Carregando resumo de vendas">
-      <Skeleton className="h-9 w-44 rounded-lg" />
-      <Skeleton className="h-4 w-36 rounded-md" />
+    <div className="mt-1 space-y-1.5" aria-busy="true" aria-label="Carregando resumo de vendas">
+      <Skeleton className="h-7 w-36 rounded-md compact-shell:h-6 compact-shell:w-32" />
+      <Skeleton className="h-3.5 w-28 rounded-md" />
     </div>
   );
 }
@@ -23,39 +23,40 @@ export default function HomeSalesSummary() {
   const { kpis, isPending } = useKPIsCache({ enabled: true });
 
   return (
-    <div className="bg-card rounded-3xl p-6 shadow-sm border border-border/40">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <p className="text-xs text-muted-foreground uppercase tracking-wide">Resumo de Vendas</p>
-          <p className="text-xs text-muted-foreground/80 mt-0.5">Hoje</p>
+    <div className="bg-card rounded-2xl compact-shell:rounded-xl p-4 compact-shell:p-3 md:p-5 shadow-sm border border-border/40">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wide leading-tight">
+            Resumo de Vendas · Hoje
+          </p>
+          {isPending ? (
+            <SalesSummarySkeleton />
+          ) : showBalance ? (
+            <>
+              <div className="text-xl md:text-2xl font-bold text-foreground mt-1 leading-none">
+                R$ {formatValor(kpis.valorVendasHoje)}
+              </div>
+              <p className="text-[11px] md:text-xs text-muted-foreground mt-1 uppercase tracking-wide">
+                {kpis.vendasHoje} {kpis.vendasHoje === 1 ? 'venda realizada' : 'vendas realizadas'}
+              </p>
+            </>
+          ) : (
+            <div className="text-xl md:text-2xl font-bold text-muted-foreground/50 mt-1 leading-none">••••••</div>
+          )}
         </div>
         <button
           type="button"
           onClick={() => setShowBalance(!showBalance)}
-          className="p-2 hover:bg-muted rounded-xl transition-colors touch-manipulation"
+          className="p-1.5 hover:bg-muted rounded-lg transition-colors touch-manipulation shrink-0"
           aria-label={showBalance ? 'Ocultar valores' : 'Mostrar valores'}
         >
           {showBalance ? (
-            <Eye className="w-5 h-5 text-muted-foreground" />
+            <Eye className="w-4 h-4 text-muted-foreground" />
           ) : (
-            <EyeOff className="w-5 h-5 text-muted-foreground" />
+            <EyeOff className="w-4 h-4 text-muted-foreground" />
           )}
         </button>
       </div>
-      {isPending ? (
-        <SalesSummarySkeleton />
-      ) : showBalance ? (
-        <>
-          <div className="text-3xl font-bold text-foreground mb-1">
-            R$ {formatValor(kpis.valorVendasHoje)}
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {kpis.vendasHoje} {kpis.vendasHoje === 1 ? 'venda realizada' : 'vendas realizadas'}
-          </p>
-        </>
-      ) : (
-        <div className="text-3xl font-bold text-muted-foreground/50 mb-1">••••••</div>
-      )}
     </div>
   );
 }
