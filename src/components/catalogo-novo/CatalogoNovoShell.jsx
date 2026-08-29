@@ -41,6 +41,7 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const {
+    loading,
     manifestMeta,
     portalFilters,
     setPortalFilters,
@@ -55,6 +56,8 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
     enriched,
     totalSkus,
     tipoCounts,
+    estoqueStats,
+    estoqueVirtualAtivo,
   } = useCatalogoEstudoData();
 
   const searchTerm = portalFilters.searchTerm || '';
@@ -102,15 +105,26 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
           Só alertas
         </Button>
       )}
+      <Button
+        variant={estoqueVirtualAtivo ? 'secondary' : 'outline'}
+        size="sm"
+        className="h-9 w-full sm:w-auto"
+        onClick={() => setPortalFilters((f) => ({ ...f, estoqueVirtual: !f.estoqueVirtual }))}
+      >
+        Estoque virtual {estoqueVirtualAtivo ? '~' : ''}
+      </Button>
     </>
   );
 
   const kpiLine = useMemo(() => {
     const parts = [`${enriched.length} SKUs visíveis`];
+    if (estoqueStats?.total) {
+      parts.push(`${estoqueStats.found}/${estoqueStats.total} com estoque real`);
+    }
     if (isSupply) parts.push(`${filteredSupply.length} esquadras`);
-    parts.push('Excel estudo');
+    if (estoqueVirtualAtivo) parts.push('estoque ~');
     return parts.join(' · ');
-  }, [enriched.length, filteredSupply.length, isSupply]);
+  }, [enriched.length, estoqueStats, filteredSupply.length, isSupply, estoqueVirtualAtivo]);
 
   return (
     <div
@@ -133,7 +147,7 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
               <p className={cn('p38-page-subtitle', isMobile ? 'text-xs line-clamp-2' : 'text-sm')}>
                 {isSupply
                   ? 'Reposição por LINHA — giro, ponto futuro e alertas (Excel estudo)'
-                  : 'Bloco → sub-bloco → LINHA → produto compra → SKU'}
+                  : 'Bloco → sub-bloco → core → pathway → LINHA → produto compra → SKU'}
               </p>
             </div>
             {!isMobile && (
@@ -207,6 +221,9 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
       </div>
 
       <div className="flex-1 w-full min-w-0 px-2 sm:px-3 md:px-4 py-3 md:py-4">
+        {loading && !isSupply ? (
+          <p className="text-sm text-muted-foreground text-center py-8">A carregar estoque do cadastro…</p>
+        ) : null}
         {!isSupply ? (
           <CatalogoEstudoList tree={tree} filtroTipos={filtroTipos} mobileComfortable={isMobile} />
         ) : (
@@ -223,7 +240,6 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
 
         <p className="text-[11px] text-muted-foreground text-center mt-4 px-2 tabular-nums leading-relaxed">
           {kpiLine}
-          {isSupply ? ' · estoque simulado' : ''}
         </p>
       </div>
     </div>

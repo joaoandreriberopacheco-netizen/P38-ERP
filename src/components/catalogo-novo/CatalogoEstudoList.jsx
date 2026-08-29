@@ -2,10 +2,9 @@ import React, { useMemo, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/components/utils';
 import {
-  CATALOGO_HIER_L0,
-  CATALOGO_HIER_L1,
-  CATALOGO_HIER_L2,
-  CATALOGO_HIER_L3,
+  CATALOGO_LEVEL,
+  CATALOGO_LEVEL_ROW,
+  CATALOGO_LEVEL_TITLE,
   CATALOGO_LIST_SHELL,
   CATALOGO_ROW_BASE,
   CATALOGO_SEP,
@@ -14,6 +13,7 @@ import {
   CATALOGO_TIPO_CHIP,
   CATALOGO_SUPPLY_BORDER,
 } from '@/lib/catalogoP38Theme';
+import { pathwayPapelLabel } from '@/lib/estudoCatalog/pathwayMeta';
 import CatalogoSupplyLed from '@/components/catalogo-novo/CatalogoSupplyLed';
 
 const TIPO_LABEL = { solo: 'Solo', mix: 'Mix', portfolio: 'Portfolio' };
@@ -32,16 +32,60 @@ function TipoPill({ tipo }) {
   );
 }
 
-function SkuRow({ row, isLast, comfortable }) {
+function StockBadge({ label, virtual, className }) {
+  if (!label || label === '—') return null;
+  return (
+    <span
+      className={cn(
+        'text-[11px] tabular-nums shrink-0 font-medium',
+        virtual ? 'text-[#a8942e] dark:text-[#A8B56E]' : 'text-muted-foreground',
+        className,
+      )}
+    >
+      {label}
+    </span>
+  );
+}
+
+function HierButton({ level, open, onToggle, title, subtitle, meta, stockLabel, stockVirtual, comfortable, children }) {
+  return (
+    <div className={cn(CATALOGO_LEVEL[level], CATALOGO_LEVEL_ROW[level], !open && CATALOGO_SEP)}>
+      <button
+        type="button"
+        onClick={onToggle}
+        className={cn(
+          CATALOGO_ROW_BASE,
+          'border-l-0 w-full',
+          comfortable && 'py-3 min-h-[48px]',
+        )}
+      >
+        <div className="flex items-start gap-1.5 min-w-0 w-full">
+          <ChevronRight className={cn('h-3.5 w-3.5 shrink-0 mt-0.5 transition-transform text-[#a8942e] dark:text-[#A8B56E]', open && 'rotate-90')} />
+          <div className="flex-1 min-w-0 space-y-0.5">
+            <div className="flex items-center gap-2 flex-wrap min-w-0">
+              <p className={cn(CATALOGO_TITLE, CATALOGO_LEVEL_TITLE[level], 'flex-1 min-w-0')}>{title}</p>
+              {meta}
+            </div>
+            {subtitle ? <p className={CATALOGO_SUBTITLE}>{subtitle}</p> : null}
+          </div>
+          <StockBadge label={stockLabel} virtual={stockVirtual} />
+        </div>
+      </button>
+      {open ? children : null}
+    </div>
+  );
+}
+
+function SkuRow({ row, isLast, comfortable, level = 6 }) {
   const tone = row.zerado ? 'ruptura' : row.abaixo_ponto ? 'alerta' : row.alerta_estudo ? 'alerta_escuro' : 'off';
   const meta = [row.eixo_a, row.eixo_b].filter(Boolean).join(' · ');
 
   return (
-    <div className={cn('relative', !isLast && CATALOGO_SEP, CATALOGO_HIER_L3)}>
+    <div className={cn(CATALOGO_LEVEL[level], !isLast && CATALOGO_SEP)}>
       <div
         className={cn(
           CATALOGO_ROW_BASE,
-          'pl-3 cursor-default hover:bg-transparent',
+          'border-l-0 cursor-default hover:bg-transparent',
           comfortable && 'py-3.5 min-h-[52px]',
           CATALOGO_SUPPLY_BORDER[tone],
         )}
@@ -49,14 +93,14 @@ function SkuRow({ row, isLast, comfortable }) {
         <div className="flex items-start gap-1.5 min-w-0">
           <CatalogoSupplyLed tone={tone} pulse={tone === 'ruptura'} />
           <div className="flex-1 min-w-0 space-y-0.5">
-            <p className={cn(CATALOGO_SUBTITLE, 'text-foreground/85 line-clamp-2 normal-case')}>
+            <p className={cn(CATALOGO_SUBTITLE, 'text-foreground/90 line-clamp-2 normal-case')}>
               {row.novo_sku || row.sku_atual}
             </p>
             <p className="text-[10px] text-muted-foreground/70 tabular-nums">
-              {[row.codigo_interno, meta].filter(Boolean).join(' · ')}
+              {[row.codigo_interno, meta, row.estoque_encontrado ? null : 'estoque sim.'].filter(Boolean).join(' · ')}
             </p>
           </div>
-          <span className="text-[11px] tabular-nums text-muted-foreground shrink-0">{row.estoque_label}</span>
+          <StockBadge label={row.estoque_label} virtual={row.estoque_virtual} />
         </div>
       </div>
     </div>
@@ -67,21 +111,16 @@ function ProdutoCompraBlock({ pc, open, onToggle, isLast, comfortable }) {
   const skus = pc.skus || [];
   return (
     <>
-      <div className={cn('relative', !isLast && !open && CATALOGO_SEP, CATALOGO_HIER_L2)}>
-        <button
-          type="button"
-          onClick={onToggle}
-          className={cn(CATALOGO_ROW_BASE, 'pl-3 border-l-[#e8b824]/45 dark:border-l-[#636B2F]/50', comfortable && 'py-3 min-h-[48px]')}
-        >
-          <div className="flex items-start gap-1.5 min-w-0 w-full">
-            <ChevronRight className={cn('h-3.5 w-3.5 shrink-0 mt-0.5 transition-transform text-[#a8942e] dark:text-[#A8B56E]', open && 'rotate-90')} />
-            <div className="flex-1 min-w-0 space-y-0.5">
-              <p className={CATALOGO_TITLE}>{pc.produto_compra_nome}</p>
-              <p className={CATALOGO_SUBTITLE}>{skus.length} SKU(s)</p>
-            </div>
-          </div>
-        </button>
-      </div>
+      <HierButton
+        level={5}
+        open={open}
+        onToggle={onToggle}
+        title={pc.produto_compra_nome}
+        subtitle={`${skus.length} SKU(s)`}
+        stockLabel={pc.estoque_label}
+        stockVirtual={skus.some((s) => s.estoque_virtual)}
+        comfortable={comfortable}
+      />
       {open && skus.map((s, i) => (
         <SkuRow key={s.codigo_interno || i} row={s} isLast={isLast && i === skus.length - 1} comfortable={comfortable} />
       ))}
@@ -97,7 +136,9 @@ function LinhaBlock({ linha, filtroTipos, comfortable }) {
 
   const pcs = linha.pcs || [];
   const solos = linha.solos || [];
-  const totalSkus = pcs.reduce((a, p) => a + (p.skus?.length || 0), 0) + solos.length;
+  const title = linha.pathway_sufixo
+    ? `${linha.linha_nome || linha.linha_display} ·${linha.pathway_sufixo}`
+    : (linha.linha_nome || linha.linha_display);
 
   const togglePc = (codigo) => {
     setOpenPc((prev) => {
@@ -110,26 +151,17 @@ function LinhaBlock({ linha, filtroTipos, comfortable }) {
 
   return (
     <>
-      <div className={cn(CATALOGO_HIER_L2, CATALOGO_SEP)}>
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className={cn(CATALOGO_ROW_BASE, 'pl-3 border-l-[#4a5240]/45 dark:border-l-[#636B2F]/55', comfortable && 'py-3 min-h-[48px]')}
-        >
-          <div className="flex items-start gap-1.5 min-w-0 w-full">
-            <ChevronRight className={cn('h-3.5 w-3.5 shrink-0 mt-0.5 transition-transform', open && 'rotate-90')} />
-            <div className="flex-1 min-w-0 space-y-0.5">
-              <div className="flex items-center gap-2 flex-wrap">
-                <p className={cn(CATALOGO_TITLE, 'flex-1 min-w-0')}>{linha.linha_nome}</p>
-                <TipoPill tipo={linha.linha_tipo} />
-              </div>
-              <p className={CATALOGO_SUBTITLE}>
-                {linha.core ? `${linha.core} · ` : ''}{totalSkus} SKU(s)
-              </p>
-            </div>
-          </div>
-        </button>
-      </div>
+      <HierButton
+        level={4}
+        open={open}
+        onToggle={() => setOpen((v) => !v)}
+        title={title}
+        subtitle={`${linha.sku_count ?? pcs.reduce((a, p) => a + p.skus.length, 0) + solos.length} SKU(s)`}
+        meta={<TipoPill tipo={linha.linha_tipo} />}
+        stockLabel={linha.estoque_label}
+        stockVirtual={pcs.concat(solos).some((s) => s.skus?.some?.((x) => x.estoque_virtual) || s.estoque_virtual)}
+        comfortable={comfortable}
+      />
       {open && (
         <>
           {pcs.map((pc, idx) => (
@@ -151,33 +183,77 @@ function LinhaBlock({ linha, filtroTipos, comfortable }) {
   );
 }
 
-function SubBlocoBlock({ sub, filtroTipos, comfortable }) {
-  const [open, setOpen] = useState(true);
-  const skuCount = (sub.linhas || []).reduce((acc, lin) => {
-    const pcs = lin.pcs || [];
-    const solos = lin.solos || [];
-    return acc + pcs.reduce((a, p) => a + (p.skus?.length || 0), 0) + solos.length;
-  }, 0);
+function PathwayBlock({ pathway, filtroTipos, comfortable }) {
+  const [open, setOpen] = useState(pathway.pathway_papel === 'nucleo');
+  const linhas = (pathway.linhas || []).filter((lin) => !filtroTipos?.size || filtroTipos.has(lin.linha_tipo));
+  if (!linhas.length) return null;
+
+  const hidePathwayHeader = pathway.pathway_papel === 'default' && linhas.length === 1;
+
+  if (hidePathwayHeader) {
+    return linhas.map((linha) => (
+      <LinhaBlock key={linha.linha_pathway_key} linha={linha} filtroTipos={filtroTipos} comfortable={comfortable} />
+    ));
+  }
 
   return (
     <>
-      <div className={cn(CATALOGO_HIER_L1, CATALOGO_SEP)}>
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className={cn(CATALOGO_ROW_BASE, 'pl-2 border-l-[#e8b824]/50 dark:border-l-[#636B2F]/55', comfortable && 'py-3 min-h-[48px]')}
-        >
-          <div className="flex items-start gap-1.5 min-w-0 w-full">
-            <ChevronRight className={cn('h-4 w-4 shrink-0 mt-0.5 transition-transform', open && 'rotate-90')} />
-            <div className="flex-1 min-w-0">
-              <p className={CATALOGO_TITLE}>{sub.sub_bloco}</p>
-              <p className={CATALOGO_SUBTITLE}>{sub.linhas?.length || 0} LINHA(s) · {skuCount} SKU(s)</p>
-            </div>
-          </div>
-        </button>
-      </div>
-      {open && (sub.linhas || []).map((linha) => (
-        <LinhaBlock key={linha.linha_codigo} linha={linha} filtroTipos={filtroTipos} comfortable={comfortable} />
+      <HierButton
+        level={3}
+        open={open}
+        onToggle={() => setOpen((v) => !v)}
+        title={pathwayPapelLabel(pathway.pathway_papel)}
+        subtitle={`${linhas.length} LINHA(s)`}
+        stockLabel={pathway.estoque_label}
+        comfortable={comfortable}
+      />
+      {open && linhas.map((linha) => (
+        <LinhaBlock key={linha.linha_pathway_key} linha={linha} filtroTipos={filtroTipos} comfortable={comfortable} />
+      ))}
+    </>
+  );
+}
+
+function CoreBlock({ coreNode, filtroTipos, comfortable }) {
+  const [open, setOpen] = useState(true);
+  const pathways = coreNode.pathways || [];
+  const linhaCount = pathways.reduce((a, p) => a + (p.linhas?.length || 0), 0);
+
+  return (
+    <>
+      <HierButton
+        level={2}
+        open={open}
+        onToggle={() => setOpen((v) => !v)}
+        title={coreNode.core}
+        subtitle={`${pathways.length} papel(is) · ${linhaCount} LINHA(s)`}
+        stockLabel={coreNode.estoque_label}
+        comfortable={comfortable}
+      />
+      {open && pathways.map((pw) => (
+        <PathwayBlock key={pw.pathway_papel} pathway={pw} filtroTipos={filtroTipos} comfortable={comfortable} />
+      ))}
+    </>
+  );
+}
+
+function SubBlocoBlock({ sub, filtroTipos, comfortable }) {
+  const [open, setOpen] = useState(true);
+  const cores = sub.cores || [];
+
+  return (
+    <>
+      <HierButton
+        level={1}
+        open={open}
+        onToggle={() => setOpen((v) => !v)}
+        title={sub.sub_bloco}
+        subtitle={sub.sku_count != null ? `${cores.length} core(s) · ${sub.sku_count} SKU(s)` : `${cores.length} core(s)`}
+        stockLabel={sub.estoque_label}
+        comfortable={comfortable}
+      />
+      {open && cores.map((coreNode) => (
+        <CoreBlock key={coreNode.core} coreNode={coreNode} filtroTipos={filtroTipos} comfortable={comfortable} />
       ))}
     </>
   );
@@ -188,18 +264,14 @@ function BlocoBlock({ bloco, filtroTipos, comfortable }) {
 
   return (
     <div className={CATALOGO_SEP}>
-      <div className={cn(CATALOGO_HIER_L0, 'px-3 py-2 bg-[#e8b824]/[0.06] dark:bg-[#636B2F]/[0.12] border-l-2 border-l-[#e8b824]/60 dark:border-l-[#636B2F]/70')}>
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="w-full text-left flex items-center gap-2"
-        >
-          <ChevronRight className={cn('h-4 w-4 shrink-0 transition-transform', open && 'rotate-90')} />
-          <p className="text-xs uppercase tracking-wide font-medium text-[#a8942e] dark:text-[#A8B56E] flex-1">
-            {bloco.bloco}
-          </p>
-        </button>
-      </div>
+      <HierButton
+        level={0}
+        open={open}
+        onToggle={() => setOpen((v) => !v)}
+        title={bloco.bloco}
+        subtitle={`${bloco.sub_blocos?.length || 0} etapa(s)`}
+        comfortable={comfortable}
+      />
       {open && (bloco.sub_blocos || []).map((sub) => (
         <SubBlocoBlock key={sub.sub_bloco} sub={sub} filtroTipos={filtroTipos} comfortable={comfortable} />
       ))}
@@ -207,7 +279,7 @@ function BlocoBlock({ bloco, filtroTipos, comfortable }) {
   );
 }
 
-/** Catálogo com camadas do Excel: bloco → sub_bloco → LINHA → produto compra → SKU */
+/** Catálogo: bloco → sub_bloco → core → pathway → LINHA → produto compra → SKU */
 export default function CatalogoEstudoList({ tree, filtroTipos, mobileComfortable = false }) {
   const visible = useMemo(() => tree || [], [tree]);
 

@@ -17,7 +17,38 @@ export const CATALOGO_CITRUS_TEXT = '#a8942e';
 
 export const CATALOGO_SEP = COMPRAS_SEP;
 
-/** Recuo + linha vertical fina (1px). */
+/** Níveis da árvore — recuo + vline distintos (pais → filhos → netos). */
+export const CATALOGO_LEVEL = {
+  0: 'ml-0 pl-2.5 border-l-[3px] border-l-[#e8b824] dark:border-l-[#A8B56E]/90',
+  1: 'ml-1 pl-3 border-l-2 border-l-[#4a5240]/70 dark:border-l-[#636B2F]/75',
+  2: 'ml-3 pl-3 border-l-2 border-l-[#4a5240]/55 dark:border-l-[#A8B56E]/50',
+  3: 'ml-5 pl-3 border-l border-l-dashed border-l-[#e8b824]/70 dark:border-l-[#636B2F]/55',
+  4: 'ml-7 pl-3 border-l border-l-[#e8b824]/50 dark:border-l-[#636B2F]/50',
+  5: 'ml-9 pl-3 border-l border-l-border/50 dark:border-l-white/12',
+  6: 'ml-11 pl-3 border-l border-l-border/35 dark:border-l-white/[0.08]',
+};
+
+export const CATALOGO_LEVEL_ROW = {
+  0: 'bg-[#e8b824]/[0.10] dark:bg-[#636B2F]/[0.18]',
+  1: 'bg-muted/20 dark:bg-white/[0.03]',
+  2: 'bg-[#4a5240]/[0.04] dark:bg-[#636B2F]/[0.08]',
+  3: 'bg-[#e8b824]/[0.04] dark:bg-[#636B2F]/[0.07]',
+  4: 'bg-transparent',
+  5: 'bg-muted/10 dark:bg-white/[0.015]',
+  6: 'bg-transparent',
+};
+
+export const CATALOGO_LEVEL_TITLE = {
+  0: 'text-[15px] font-normal tracking-wide',
+  1: 'text-sm font-light',
+  2: 'text-sm font-light text-foreground/95',
+  3: 'text-[13px] font-light text-[#a8942e] dark:text-[#A8B56E]',
+  4: 'text-sm font-light',
+  5: 'text-[13px] font-light normal-case',
+  6: 'text-[13px] font-light normal-case',
+};
+
+/** @deprecated use CATALOGO_LEVEL */
 export const CATALOGO_HIER_L0 = 'pl-2 min-w-0 max-w-full';
 export const CATALOGO_HIER_L1 = cn('ml-1 pl-2 md:ml-2 md:pl-3 min-w-0 max-w-full', P38_LIGHT_VLINE);
 export const CATALOGO_HIER_L2 = cn('ml-1 pl-2 md:ml-3 md:pl-3.5 min-w-0 max-w-full border-l border-[#e8b824]/35 dark:border-[#636B2F]/45');

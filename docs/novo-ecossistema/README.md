@@ -33,8 +33,8 @@ No **mobile**, alternar entre os dois com **tabs no topo** (sem voltar ao menu).
 - **Fonte actual:** Excel de estudo → JSON gerado (`npm run estudo:catalog-manifest`).
 - Ficheiro Excel: `docs/exports/P38-sku-hierarquia-ab.xlsx` (934 SKUs no estudo AB).
 - Manifest: `src/data/estudoCatalogManifest.generated.json`.
-- Hook: `useCatalogoEstudoData` — **não chama Supabase nem Base44** no preview (protege produção).
-- Estoque / velocidade / LEDs no preview: **simulados ou derivados do manifest**, salvo evolução explícita.
+- Hook: `useCatalogoEstudoData` — hierarquia Excel + **estoque real** do cadastro (Base44/Supabase via `fetchProdutosAtivos`); fallback simulado quando SKU não existe no cadastro.
+- Estoque / velocidade / LEDs no preview: **estoque real quando há match**; LEDs de mix/ruptura derivados do cadastro + regras de estudo.
 
 ### Hierarquia de negócio (estudo A / B / C)
 
@@ -76,7 +76,7 @@ A1 Estrutura / alvenaria
 
 **Consumíveis transversais:** categoria ERP `J — FERRAMENTAS E CONSUMÍVEIS` (etapa 8) é **transversal** — distinto dos complementos **·C** dentro de um core (ex.: aditivo na alvenaria).
 
-**Estado no preview UI:** o Excel já traz `core` + sufixos; a árvore mostra `core` no subtítulo da LINHA, mas **ainda agrupa** `MATERIAIS BÁSICOS·N` e `·C` numa só LINHA mestre — próximo passo é nível explícito **core → núcleo/complemento/receita**.
+**Estado no preview UI:** árvore com níveis **bloco → sub-bloco → core → pathway (N/C/R) → LINHA → produto compra → SKU**. Estoque real vem do cadastro (`codigo_interno`); SKUs sem match mantêm estoque simulado.
 
 
 **Solo, mix e portfolio não são etiquetas.** Definem **como a reposição e a grelha funcionam**.

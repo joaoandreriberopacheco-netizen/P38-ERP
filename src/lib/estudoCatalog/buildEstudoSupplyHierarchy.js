@@ -1,11 +1,12 @@
 /** Hierarquia SMART SUPPLY a partir de linhas de estudo (Excel). */
 
 function computeGroupMetrics(skus = []) {
-  const estoque = skus.reduce((a, s) => a + (Number(s.estoque) || 0), 0);
+  const estoque = skus.reduce((a, s) => a + (Number(s.estoque_vitrine ?? s.estoque) || 0), 0);
+  const sigla = skus.find((s) => s.estoque_sigla)?.estoque_sigla || 'cx';
   const media30 = Math.max(1, Math.round(skus.length * 1.2));
   const pontoFuturo = estoque - media30;
   return {
-    estoque_label: `${estoque} cx`,
+    estoque_label: `${estoque} ${sigla}`,
     media30_label: `${media30} cx/mês*`,
     ponto_futuro_label: `${pontoFuturo >= 0 ? '+' : ''}${pontoFuturo} cx*`,
     ponto_futuro: pontoFuturo,
@@ -37,15 +38,18 @@ export function buildEstudoSupplyHierarchy(supplyLines = []) {
   const byLinha = new Map();
 
   for (const line of supplyLines) {
-    const key = line.linha_codigo;
+    const key = line.linha_pathway_key || line.linha_codigo;
     if (!byLinha.has(key)) {
       byLinha.set(key, {
         linha_codigo: line.linha_codigo,
+        linha_pathway_key: key,
         linha_nome: line.linha_nome,
         linha_tipo: line.linha_tipo,
         linha_ordem: line.linha_ordem,
         bloco: line.bloco,
         sub_bloco: line.sub_bloco,
+        core: line.core,
+        pathway_papel: line.pathway_papel,
         esquadras: [],
       });
     }

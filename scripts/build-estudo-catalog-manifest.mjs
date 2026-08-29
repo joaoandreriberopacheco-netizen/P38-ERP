@@ -87,6 +87,13 @@ async function readSheet(ws, linhasIndex) {
 
     const linhaCell = get('linha');
     const meta = resolveLinhaMeta(linhaCell, linhasIndex);
+    const pathway = (() => {
+      const match = linhaCell.match(/^(.*)·([NRC])$/i);
+      if (!match) return { sufixo: '', papel: 'default' };
+      const sufixo = match[2].toUpperCase();
+      const papel = { N: 'nucleo', C: 'complemento', R: 'receita' }[sufixo] || 'default';
+      return { sufixo, papel };
+    })();
     const pc = get('produto_compra');
     const solo = meta.tipo === 'solo';
 
@@ -94,8 +101,12 @@ async function readSheet(ws, linhasIndex) {
       bloco: get('bloco'),
       sub_bloco: get('sub_bloco'),
       etapa: get('etapa'),
-      core: get('core'),
+      core: get('core') || '',
       linha: linhaCell,
+      linha_display: linhaCell.replace(/·[NRC]$/i, '').trim() || linhaCell,
+      pathway_sufixo: pathway.sufixo,
+      pathway_papel: pathway.papel,
+      linha_pathway_key: pathway.sufixo ? `${meta.codigo}::${pathway.sufixo}` : meta.codigo,
       linha_codigo: meta.codigo,
       linha_nome: meta.nome,
       linha_tipo: meta.tipo,
