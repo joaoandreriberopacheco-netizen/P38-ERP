@@ -11,7 +11,7 @@ import { formatarSoData } from '@/components/utils/dateUtils';
 import { getTotalLinhaPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
 import { buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
 import { buildConsultaItemCustoDetalhe } from '@/lib/consultaItemCustoDetalhe';
-import { comprasAccentFromDisplayStatus, getComprasDisplayStatusLabel } from '@/lib/comprasEmbarquesPalette';
+import { comprasAccentFromDisplayStatus, comprasStatusBorderClass, getComprasDisplayStatusLabel } from '@/lib/comprasEmbarquesPalette';
 import ComprasStatusChip, { ComprasRecebimentoDateChip } from '@/components/compras/ComprasStatusChip';
 
 import { COMPRAS_HIER_L1, COMPRAS_HIER_L2, COMPRAS_SEP } from '@/lib/comprasP38Theme';
@@ -84,6 +84,7 @@ function ConsultaEmbarqueCard({
   const displayStatus = card._display_status || card.status;
   const { fornecedor, detalhes } = buildEmbarqueMetaLinhas(card);
   const statusAccent = comprasAccentFromDisplayStatus(displayStatus);
+  const statusBorder = comprasStatusBorderClass(displayStatus, card.status);
   const metaSemStatus = detalhes.filter((d) => d !== displayStatus);
 
   const headerShellClass = cn(
@@ -168,6 +169,7 @@ function ConsultaEmbarqueCard({
                 precoUnitario={item.preco_unitario || exib.preco_unitario}
                 striped={idx % 2 === 1}
                 accent={statusAccent}
+                borderClass={statusBorder}
                 valorTone="neutral"
                 signedValor={false}
                 detalheCustos={

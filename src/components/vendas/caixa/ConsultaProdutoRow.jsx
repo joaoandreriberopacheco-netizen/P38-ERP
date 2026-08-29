@@ -85,9 +85,10 @@ export function ConsultaProdutoRow({
   compact = false,
   detalheCustos = null,
   exportPdf = false,
+  borderClass: borderClassProp,
 }) {
   const precoListaEff = precoLista ?? precoUnitario;
-  const borderClass = resolveConsultaAccentBorder(accent);
+  const borderClass = borderClassProp ?? resolveConsultaAccentBorder(accent);
   const valorNum = Number(valorTotal) || 0;
   const precoEfetivo = resolvePrecoUnitarioEfetivo({
     quantidade,

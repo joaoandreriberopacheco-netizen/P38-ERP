@@ -80,6 +80,27 @@ export function comprasAccentBorderClass(tone) {
   return p38Accent.success.border;
 }
 
+/** Bordas laterais alinhadas aos chips de status (lista Embarques + consulta). */
+export const COMPRAS_STATUS_BORDER = {
+  Rascunho: 'border-l-slate-400/70 dark:border-l-slate-500/60',
+  Aguardando: 'border-l-[#D96F55] dark:border-l-[#D96F55]',
+  'Aguardando Aprovação Financeira': 'border-l-[#D96F55] dark:border-l-[#D96F55]',
+  'Aguardando Liberação Financeira': 'border-l-[#D96F55] dark:border-l-[#D96F55]',
+  'Aguardando Liberação': 'border-l-[#D96F55] dark:border-l-[#D96F55]',
+  Aprovado: 'border-l-lime-500 dark:border-l-[#a4ce33]',
+  Necessidade: 'border-l-red-600 dark:border-l-red-600/70',
+  Despachado: 'border-l-[#e8b824] dark:border-l-[#4ECDC4]',
+  Concluído: 'border-l-emerald-600 dark:border-l-emerald-500',
+  Cancelado: 'border-l-rose-600 dark:border-l-rose-500',
+  Pendência: 'border-l-[#D96F55] dark:border-l-[#D96F55]',
+};
+
+export function comprasStatusBorderClass(displayStatus, fallbackStatus) {
+  const status = String(displayStatus || fallbackStatus || '').trim();
+  if (COMPRAS_STATUS_BORDER[status]) return COMPRAS_STATUS_BORDER[status];
+  return comprasAccentBorderClass(comprasAccentFromDisplayStatus(status));
+}
+
 /** Tom P38 das linhas de produto — alinhado a ListaPedidosCompra / status do embarque. */
 export function comprasAccentFromDisplayStatus(displayStatus) {
   const status = String(displayStatus || '').trim();
