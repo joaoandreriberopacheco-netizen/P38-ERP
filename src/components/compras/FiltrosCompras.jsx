@@ -406,6 +406,7 @@ export default function FiltrosCompras({
   onRecebimentoFinal,
   hasActiveFilters,
   onLimparFiltros,
+  mobileLeading = null,
 }) {
   const isMobile = useCompactShell();
   const [showFilters, setShowFilters] = useState(false);
@@ -647,7 +648,8 @@ export default function FiltrosCompras({
   if (isMobile) {
     return (
       <div className="space-y-2.5 min-w-0">
-        <div className="flex gap-2.5 min-w-0">
+        <div className="flex gap-2.5 min-w-0 items-center">
+          {mobileLeading}
           {searchBar}
           {filterToggleButton}
         </div>

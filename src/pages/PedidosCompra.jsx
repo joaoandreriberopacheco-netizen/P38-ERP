@@ -519,6 +519,46 @@ function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
   return { pedidosComResumoReal, cardsDeEmbarque };
 }
 
+const COMPRAS_VIEW_TAB_BTN =
+  'relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-all';
+
+function ComprasViewTabsInline({ activeView, onSelect }) {
+  return (
+    <div className="flex shrink-0 items-center gap-1.5">
+      <button
+        type="button"
+        className={cn(
+          COMPRAS_VIEW_TAB_BTN,
+          activeView === 'embarques'
+            ? 'bg-[#e8b824] text-[#242424] dark:bg-[#a4ce33] dark:text-[#1f1d22]'
+            : 'bg-muted dark:bg-muted text-foreground/90',
+        )}
+        onClick={() => onSelect('embarques')}
+        aria-label="Embarques"
+        aria-pressed={activeView === 'embarques'}
+        data-pulse-sensor="pedidos-compra.tab-embarques"
+      >
+        <Package className="h-5 w-5" />
+      </button>
+      <button
+        type="button"
+        className={cn(
+          COMPRAS_VIEW_TAB_BTN,
+          activeView === 'consulta'
+            ? 'bg-[#e8b824] text-[#242424] dark:bg-[#a4ce33] dark:text-[#1f1d22]'
+            : 'bg-muted dark:bg-muted text-foreground/90',
+        )}
+        onClick={() => onSelect('consulta')}
+        aria-label="Consulta de compras"
+        aria-pressed={activeView === 'consulta'}
+        data-pulse-sensor="pedidos-compra.tab-consulta"
+      >
+        <Receipt className="h-5 w-5" />
+      </button>
+    </div>
+  );
+}
+
 export default function PedidosCompraPage() {
   const isPhone = useCompactShell();
   const { chromeVisible, scrollRef } = useScrollChromeVisibility(isPhone, {
@@ -1007,16 +1047,14 @@ export default function PedidosCompraPage() {
                   </div>
                 ) : null}
               </div>
-
-              <GlacialTabsList className="w-full" scrollable>
-                <GlacialTabsTrigger value="embarques" activeValue={activeView} onSelect={setActiveView} label="Embarques" icon={Package} pulseSensor="pedidos-compra.tab-embarques" />
-                <GlacialTabsTrigger value="consulta" activeValue={activeView} onSelect={setActiveView} label="Consulta" icon={Receipt} pulseSensor="pedidos-compra.tab-consulta" />
-              </GlacialTabsList>
             </div>
           </P38ScrollChromeCollapse>
 
           <div className="shrink-0 px-4 pb-2">
             <FiltrosCompras
+              mobileLeading={(
+                <ComprasViewTabsInline activeView={activeView} onSelect={setActiveView} />
+              )}
               search={search} onSearch={setSearch}
               filtroUltimos30Dias={filtroUltimos30Dias} onFiltroUltimos30Dias={setFiltroUltimos30Dias}
               filtroSomenteNaoConcluidos={filtroSomenteNaoConcluidos} onFiltroSomenteNaoConcluidos={setFiltroSomenteNaoConcluidos}
