@@ -13,6 +13,14 @@ Documento completo: [`docs/novo-ecossistema/README.md`](docs/novo-ecossistema/RE
 5. **Visual:** `catalogoP38Theme.js` — cítrico/oliva, vlines 1px, LEDs 1.5px.
 6. **Produção:** SMART SUPPLY real continua em `SugestoesCompra`; catálogo real em `Produtos`.
 
+## Comportamento solo / mix / portfolio (negócio)
+
+- **solo** — não exige mix nem variedade; SKUs directos na LINHA (cimento Portland, prego).
+- **mix** — esquadra intercambiável no produto compra (soldável: joelho + medidas).
+- **portfolio** — substituíveis na LINHA/produto compra (cerâmicas).
+
+Ver `docs/novo-ecossistema/README.md` e `hierarquiaPortalLinhas.json`.
+
 ## Rotas
 
 - `/CatalogoNovo`

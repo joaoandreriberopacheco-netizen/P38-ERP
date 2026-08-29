@@ -44,15 +44,20 @@ No **mobile**, alternar entre os dois com **tabs no topo** (sem voltar ao menu).
 
 Árvore UI: `bloco → sub_bloco → LINHA → produto_compra → SKU` (eixos A/B quando existirem).
 
-### Tipos de LINHA
+### Tipos de LINHA — comportamento (regra João André, 2026-08)
 
-| Tipo | Significado na UI |
-|------|-------------------|
-| `solo` | LINHA isolada |
-| `mix` | mix de referências |
-| `portfolio` | portfolio alargado |
+**Solo, mix e portfolio não são etiquetas decorativas.** Definem **como a reposição e a grelha funcionam** na LINHA / produto compra.
 
-Filtro `PortalTipoFilter` + chips na lista e no Smart Supply.
+| Tipo | Comportamento | Exemplo |
+|------|---------------|---------|
+| **solo** | **Não precisa de mix nem de variedade.** Cada SKU vale por si; não há peças intercambiáveis numa esquadra. Na árvore: SKUs **directos na LINHA** (sem produto compra). | **CIMENTO PORTLAND** — compra-se o saco; não monta esquadra. **PREGO** — medidas **não** se substituem entre si. |
+| **mix** | **Produto compra com peças intercambiáveis** na esquadra — completar o mix (várias referências que se complementam). | **JOELHO SOLDÁVEL** (e a LINHA SOLDÁVEL): joelho, luva, tee, medidas que **completam** a reposição. |
+| **portfolio** | **Referências intercambiáveis** dentro do mesmo produto compra **ou** dentro da LINHA — substituíveis (formato/modelo/cor). | **Cerâmicas** — peças substituíveis no mesmo produto compra ou na família da LINHA. |
+
+**Onde está escrito:** `src/data/hierarquiaPortalLinhas.json` (`tipo` + `principios`).  
+**No Excel AB:** coluna `linha` → cruza com a mestre; **não** há coluna solo/mix/portfolio na folha (só `status_mix`, que é outra regra).
+
+Filtro `PortalTipoFilter` + chips na lista e no Smart Supply aplicam este comportamento na UI.
 
 ## Visual — o que copiar
 

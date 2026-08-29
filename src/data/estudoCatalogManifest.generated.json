@@ -25,7 +25,7 @@
     {
       "codigo": "CIMENTO",
       "nome": "CIMENTO",
-      "tipo": "mix",
+      "tipo": "solo",
       "ordem": 10,
       "grupo": "materiais_construcao",
       "sku_count": 2
@@ -441,18 +441,18 @@
       "linha": "CIMENTO·N",
       "linha_codigo": "CIMENTO",
       "linha_nome": "CIMENTO",
-      "linha_tipo": "mix",
+      "linha_tipo": "solo",
       "linha_ordem": 10,
       "linha_grupo": "materiais_construcao",
-      "produto_compra": "CIMENTO BRANCO",
-      "produto_compra_nome": "CIMENTO BRANCO",
+      "produto_compra": "",
+      "produto_compra_nome": "",
       "eixo_a": "01 KG #G",
       "eixo_b": "",
       "codigo_interno": "1LZ-Q4B",
       "novo_sku": "CIMENTO BRANCO 01 KG #G",
       "sku_atual": "CIMENTO BRANCO 01 KG #G",
       "status_mix": "tem",
-      "solo": false
+      "solo": true
     },
     {
       "bloco": "A — Edificações",
@@ -462,18 +462,18 @@
       "linha": "CIMENTO·N",
       "linha_codigo": "CIMENTO",
       "linha_nome": "CIMENTO",
-      "linha_tipo": "mix",
+      "linha_tipo": "solo",
       "linha_ordem": 10,
       "linha_grupo": "materiais_construcao",
-      "produto_compra": "CIMENTO PORTLAND",
-      "produto_compra_nome": "CIMENTO PORTLAND",
+      "produto_compra": "",
+      "produto_compra_nome": "",
       "eixo_a": "42,5 KG",
       "eixo_b": "",
       "codigo_interno": "510-4Z4",
       "novo_sku": "CIMENTO PORTLAND 42,5 KG",
       "sku_atual": "CIMENTO PORTLAND 42,5 KG",
       "status_mix": "tem",
-      "solo": false
+      "solo": true
     },
     {
       "bloco": "A — Edificações",
