@@ -43,6 +43,8 @@ jobs:
       - name: Recalcular curva ABCDE no SQL
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_TOKEN: ${{ secrets.SUPABASE_TOKEN }}
         run: |
           set -euo pipefail
           ARGS=""
