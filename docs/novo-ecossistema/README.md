@@ -30,11 +30,11 @@ No **mobile**, alternar entre os dois com **tabs no topo** (sem voltar ao menu).
 
 ## Dados — regra de ouro
 
-- **Fonte actual:** Excel de estudo → JSON gerado (`npm run estudo:catalog-manifest`).
-- Ficheiro Excel: `docs/exports/P38-sku-hierarquia-ab.xlsx` (934 SKUs no estudo AB).
-- Manifest: `src/data/estudoCatalogManifest.generated.json`.
-- Hook: `useCatalogoEstudoData` — hierarquia Excel + **estoque real** do cadastro (Base44/Supabase via `fetchProdutosAtivos`); fallback simulado quando SKU não existe no cadastro.
-- Estoque / velocidade / LEDs no preview: **estoque real quando há match**; LEDs de mix/ruptura derivados do cadastro + regras de estudo.
+- **Fonte canónica:** Excel de estudo `docs/exports/P38-sku-hierarquia-ab.xlsx` — **actualizar o Excel** quando a lógica de distribuição mudar (sem overrides JSON no build).
+- Regenerar manifest: `npm run estudo:catalog-manifest` (corre também no `npm run build`).
+- Mestre de LINHAs (solo/mix/portfolio): `src/data/hierarquiaPortalLinhas.json` — tipos de comportamento, cruzado com coluna `linha` do Excel.
+- Manifest gerado: `src/data/estudoCatalogManifest.generated.json`.
+- Hook: `useCatalogoEstudoData` — hierarquia Excel + **estoque real** do cadastro; fallback simulado sem match.
 
 ### Hierarquia de negócio (estudo A / B / C)
 
@@ -75,9 +75,18 @@ A1 Estrutura / alvenaria
 
 **Assentamento (bloco C — Acabamentos):** `ARGAMASSA` (mix), `REJUNTE` (portfolio), cerâmicas (portfolio) — sub-bloco `C1 Revestimentos`, core `ASSENTAMENTO_CERAMICA`.
 
-**Pintura (bloco C — Acabamentos):** `TINTA`, `VERNIZ`, `THINNER`, massas, lixas e afins — sub-bloco `C2 Pintura`. **TINTA SPRAY** e **TINTA SPRAY METÁLICO** são LINHAs **portfolio** separadas (metálico: eixos **cor × volume**). Aditivos em `ALVENARIA·C` ficam em Edificações.
+**Pintura (bloco C — Acabamentos):** sub-bloco `C2 Pintura`. **TINTA SPRAY** e **TINTA SPRAY METÁLICO** são LINHAs portfolio no Excel. Aditivos em `ALVENARIA·C` ficam em Edificações (folha A).
 
-Override canónico: `src/data/estudoCatalogBlocoOverrides.json`.
+### Folhas Excel (estudo AB)
+
+| Folha | Conteúdo |
+|-------|----------|
+| `A — Edificações` | Estrutura, cobertura, aditivos alvenaria… |
+| `B — Hidráulica` / `B — Elétrica` | Instalações |
+| `C — Acabamentos (prévia)` | Revestimentos (C1) + pintura (C2) |
+| `C prévia — elétrica visível` | Acabamentos eléctricos visíveis |
+
+**Fluxo:** editar Excel → `npm run estudo:catalog-manifest` → preview UI. Até ao corte/migração produção, o Excel é a base viva.
 
 **Consumíveis transversais:** categoria ERP `J — FERRAMENTAS E CONSUMÍVEIS` (etapa 8) é **transversal** — distinto dos complementos **·C** dentro de um core (ex.: aditivo na alvenaria).
 
@@ -127,7 +136,9 @@ Labels canónicos: `src/config/smartSupplyFlags.js` (`NOVO_ECOSISTEMA_*`, `SMART
 
 ```bash
 npm run estudo:catalog-manifest   # Excel → JSON (corre também no build)
-npm run build                     # gate toolchain + bundle
+# Migração pontual Excel (só se houver script de decisões pendente):
+npm run estudo:catalog-excel-apply
+npm run build
 ```
 
 ## Preview Vercel (PR #596)

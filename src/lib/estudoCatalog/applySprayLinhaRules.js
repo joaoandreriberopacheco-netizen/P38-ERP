@@ -1,7 +1,4 @@
-/**
- * Regras de negócio — TINTA SPRAY vs TINTA SPRAY METÁLICO (portfolio).
- * Metálico: eixo_a = cor, eixo_b = volume.
- */
+/** Regras TINTA SPRAY — aplicadas ao Excel via scripts/apply-estudo-catalog-excel-decisoes.mjs; manifest lê só o xlsx. */
 
 function normPc(s) {
   return String(s ?? '')

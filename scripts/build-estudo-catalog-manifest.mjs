@@ -1,40 +1,24 @@
 #!/usr/bin/env node
 /**
  * Gera manifest JSON a partir do Excel de estudo (P38-sku-hierarquia-ab.xlsx).
- * Fonte externa — não toca Supabase nem Base44.
+ * Fonte canónica: o Excel — sem overrides JSON. Actualizar o xlsx e regenerar.
  *
  *   npm run estudo:catalog-manifest
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import ExcelJS from 'exceljs';
-import { applySprayLinhaRulesAll } from '../src/lib/estudoCatalog/applySprayLinhaRules.js';
 
 const EXCEL_PATH = path.join(process.cwd(), 'docs', 'exports', 'P38-sku-hierarquia-ab.xlsx');
 const LINHAS_JSON = path.join(process.cwd(), 'src', 'data', 'hierarquiaPortalLinhas.json');
-const BLOCO_OVERRIDES_JSON = path.join(process.cwd(), 'src', 'data', 'estudoCatalogBlocoOverrides.json');
 const OUT = path.join(process.cwd(), 'src', 'data', 'estudoCatalogManifest.generated.json');
 
 const DATA_SHEETS = [
   'A — Edificações',
   'B — Hidráulica',
   'B — Elétrica',
+  'C — Acabamentos (prévia)',
   'C prévia — elétrica visível',
-];
-
-const HEADERS = [
-  'bloco',
-  'sub_bloco',
-  'etapa',
-  'core',
-  'linha',
-  'produto_compra',
-  'eixo_a',
-  'eixo_b',
-  'codigo_interno',
-  'novo_sku',
-  'sku_atual',
-  'status_mix',
 ];
 
 function cellStr(cell) {
@@ -61,7 +45,7 @@ function loadLinhasMestre() {
     byNome.set(normLinha(l.nome), l);
     byCodigo.set(normLinha(l.codigo), l);
   }
-  return { byNome, byCodigo, version: raw.version, linhas: raw.linhas || [] };
+  return { byNome, byCodigo, version: raw.version };
 }
 
 function resolveLinhaMeta(linhaCell, { byNome, byCodigo }) {
@@ -73,56 +57,6 @@ function resolveLinhaMeta(linhaCell, { byNome, byCodigo }) {
     ordem: 900,
     grupo: 'fallback',
   };
-}
-
-function loadBlocoOverrides() {
-  if (!fs.existsSync(BLOCO_OVERRIDES_JSON)) {
-    return { version: null, por_linha_codigo: {}, por_linha_parcial: [] };
-  }
-  const raw = JSON.parse(fs.readFileSync(BLOCO_OVERRIDES_JSON, 'utf8'));
-  return {
-    version: raw.version || null,
-    por_linha_codigo: raw.por_linha_codigo || {},
-    por_linha_parcial: raw.por_linha_parcial || [],
-  };
-}
-
-function mergeBlocoOverride(row, patch) {
-  if (!patch) return row;
-  return {
-    ...row,
-    ...(patch.bloco != null ? { bloco: patch.bloco } : {}),
-    ...(patch.sub_bloco != null ? { sub_bloco: patch.sub_bloco } : {}),
-    ...(patch.etapa != null ? { etapa: patch.etapa } : {}),
-    ...(patch.core != null ? { core: patch.core } : {}),
-    ...(patch.linha_tipo != null ? { linha_tipo: patch.linha_tipo } : {}),
-  };
-}
-
-function matchesBlocoExceto(row, exceto = {}) {
-  if (exceto.core && row.core === exceto.core) return true;
-  if (exceto.sub_bloco && row.sub_bloco === exceto.sub_bloco) return true;
-  const pc = `${row.produto_compra_nome || ''} ${row.produto_compra || ''}`.trim();
-  if (exceto.produto_compra_regex && pc) {
-    const re = new RegExp(exceto.produto_compra_regex, 'i');
-    if (re.test(pc)) return true;
-  }
-  return false;
-}
-
-function applyBlocoOverrides(rows, { por_linha_codigo = {}, por_linha_parcial = [] } = {}) {
-  const hasFull = por_linha_codigo && Object.keys(por_linha_codigo).length;
-  const hasPartial = por_linha_parcial?.length;
-  if (!hasFull && !hasPartial) return rows;
-
-  return rows.map((row) => {
-    for (const rule of por_linha_parcial) {
-      if (row.linha_codigo !== rule.linha_codigo) continue;
-      if (matchesBlocoExceto(row, rule.exceto)) return row;
-      return mergeBlocoOverride(row, rule.aplicar);
-    }
-    return mergeBlocoOverride(row, por_linha_codigo[row.linha_codigo]);
-  });
 }
 
 async function readSheet(ws, linhasIndex) {
@@ -184,11 +118,10 @@ async function main() {
   }
 
   const linhasIndex = loadLinhasMestre();
-  const blocoOverrides = loadBlocoOverrides();
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.readFile(EXCEL_PATH);
 
-  const skusRaw = [];
+  const skus = [];
   const sheetsRead = [];
 
   for (const name of DATA_SHEETS) {
@@ -198,15 +131,8 @@ async function main() {
       continue;
     }
     const part = await readSheet(ws, linhasIndex);
-    skusRaw.push(...part);
+    skus.push(...part);
     sheetsRead.push({ name, count: part.length });
-  }
-
-  const skusSpray = applySprayLinhaRulesAll(skusRaw, linhasIndex.linhas);
-  const skus = applyBlocoOverrides(skusSpray, blocoOverrides);
-  const overrideCount = skus.filter((row, i) => row !== skusSpray[i]).length;
-  if (overrideCount) {
-    console.log(`[estudo-manifest] ${overrideCount} SKU(s) com bloco/tipo override (estudoCatalogBlocoOverrides.json)`);
   }
 
   const linhasMap = new Map();
@@ -237,7 +163,6 @@ async function main() {
     version: new Date().toISOString().slice(0, 10),
     source: 'docs/exports/P38-sku-hierarquia-ab.xlsx',
     linhas_mestre_version: linhasIndex.version,
-    bloco_overrides_version: blocoOverrides.version || null,
     sheets: sheetsRead,
     count: skus.length,
     linhas: [...linhasMap.values()].sort((a, b) => a.ordem - b.ordem),
@@ -246,7 +171,7 @@ async function main() {
   };
 
   fs.writeFileSync(OUT, `${JSON.stringify(payload, null, 2)}\n`);
-  console.log(`[estudo-manifest] ${skus.length} SKUs → ${OUT}`);
+  console.log(`[estudo-manifest] ${skus.length} SKUs → ${OUT} (fonte: Excel, sem overrides)`);
   for (const s of sheetsRead) console.log(`  · ${s.name}: ${s.count}`);
 }
 

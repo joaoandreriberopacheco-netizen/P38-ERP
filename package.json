@@ -105,6 +105,7 @@
     "export:conta-azul": "node scripts/export-catalogo-conta-azul.mjs",
     "portal:excel-manifest": "node scripts/build-portal-excel-manifest.mjs",
     "estudo:catalog-manifest": "node scripts/build-estudo-catalog-manifest.mjs",
+    "estudo:catalog-excel-apply": "node scripts/apply-estudo-catalog-excel-decisoes.mjs",
     "modelo:seed-ceramica": "node scripts/seed-modelo-catalogo-ceramica.mjs",
     "formigres:enriquecer-pisos": "node scripts/enriquecer-pisos-formigres.mjs",
     "formigres:pdf-pisos": "node scripts/gerar-pdf-pisos-formigres.mjs",
