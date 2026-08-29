@@ -180,19 +180,19 @@ export default function HomePage() {
 
   return (
     <div className="bg-background pb-4 md:pb-6 font-din-1451">
-      <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-4 compact-shell:space-y-3 md:space-y-6">
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div className="flex-1">
-            <p className="text-sm text-muted-foreground">
-              {format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR })}
-            </p>
-            <h1 className="text-3xl md:text-4xl font-semibold text-foreground mt-2">
+      <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
+        <div>
+          <p className="text-sm text-muted-foreground">
+            {format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR })}
+          </p>
+          <div className="flex items-start justify-between gap-4 mt-2">
+            <h1 className="text-3xl md:text-4xl font-semibold text-foreground flex-1 min-w-0">
               Olá, {currentUser?.full_name?.split(' ')[0] || 'Usuário'}
             </h1>
-          </div>
-          <div className="flex justify-end md:items-start shrink-0">
-            <P38Logo surface="home.headerMobile" className="md:hidden" />
-            <P38Logo surface="home.headerDesktop" className="hidden md:flex" />
+            <div className="shrink-0">
+              <P38Logo surface="home.headerMobile" className="md:hidden" />
+              <P38Logo surface="home.headerDesktop" className="hidden md:flex" />
+            </div>
           </div>
         </div>
 
