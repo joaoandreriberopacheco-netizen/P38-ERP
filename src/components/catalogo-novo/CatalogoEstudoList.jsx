@@ -2,53 +2,21 @@ import React, { useMemo, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/components/utils';
 import {
-  CATALOGO_GRADE_TITLE,
   CATALOGO_GRID_HEADER_BTN,
-  CATALOGO_GRID_LEAF,
   CATALOGO_GRID_ROW,
   CATALOGO_LEVEL,
   CATALOGO_LEVEL_ROW,
   CATALOGO_LEVEL_TITLE,
   CATALOGO_LIST_SHELL,
-  CATALOGO_PC_TITLE,
   CATALOGO_SUBTITLE,
   CATALOGO_TITLE,
   CATALOGO_TIPO_CHIP,
-  CATALOGO_SUPPLY_BORDER,
 } from '@/lib/catalogoP38Theme';
 import { pathwayPapelLabel } from '@/lib/estudoCatalog/pathwayMeta';
-import CatalogoSupplyLed from '@/components/catalogo-novo/CatalogoSupplyLed';
+import CatalogoLinhaMixTable from '@/components/catalogo-novo/CatalogoLinhaMixTable';
 
 const TIPO_LABEL = { solo: 'Solo', mix: 'Mix', portfolio: 'Portfolio' };
 const MAX_LEVEL = 8;
-
-function trim(s) {
-  return String(s ?? '').trim();
-}
-
-function gradeLabel(row) {
-  const a = trim(row.eixo_a);
-  const b = trim(row.eixo_b);
-  if (a && b && b !== a) return `${a} · ${b}`;
-  return a || b || trim(row.novo_sku) || trim(row.sku_atual) || trim(row.codigo_interno) || '—';
-}
-
-function skuTone(row) {
-  if (row.zerado) return 'ruptura';
-  if (row.abaixo_ponto) return 'alerta';
-  if (row.alerta_estudo) return 'alerta_escuro';
-  return 'off';
-}
-
-function worstTone(rows = []) {
-  const order = ['ruptura', 'alerta_escuro', 'alerta', 'off'];
-  let worst = 'off';
-  for (const row of rows) {
-    const t = skuTone(row);
-    if (order.indexOf(t) < order.indexOf(worst)) worst = t;
-  }
-  return worst;
-}
 
 function TipoPill({ tipo }) {
   if (!tipo) return null;
@@ -117,85 +85,6 @@ function GridHeader({ level, open, onToggle, title, subtitle, meta, stockLabel, 
   );
 }
 
-function GridLeaf({ level, title, titleClass, subtitle, stockLabel, stockVirtual, tone = 'off', comfortable, pulse }) {
-  return (
-    <GridLevel level={level}>
-      <div className={cn(CATALOGO_GRID_ROW, CATALOGO_SUPPLY_BORDER[tone])}>
-        <div className={cn(CATALOGO_GRID_LEAF, comfortable && 'py-3 min-h-[44px]')}>
-          <CatalogoSupplyLed tone={tone} pulse={pulse} />
-          <div className="flex-1 min-w-0 space-y-0.5">
-            <p className={titleClass}>{title}</p>
-            {subtitle ? (
-              <p className="text-[10px] text-muted-foreground/70 tabular-nums line-clamp-1">{subtitle}</p>
-            ) : null}
-          </div>
-          <StockBadge label={stockLabel} virtual={stockVirtual} />
-        </div>
-      </div>
-    </GridLevel>
-  );
-}
-
-function GradeRows({ skus, level, comfortable, showCodigo = true }) {
-  return skus.map((row) => {
-    const tone = skuTone(row);
-    return (
-      <GridLeaf
-        key={row.codigo_interno || gradeLabel(row)}
-        level={level}
-        title={gradeLabel(row)}
-        titleClass={CATALOGO_GRADE_TITLE}
-        subtitle={
-          showCodigo
-            ? [row.codigo_interno, row.estoque_encontrado ? null : 'estoque sim.'].filter(Boolean).join(' · ')
-            : null
-        }
-        stockLabel={row.estoque_label}
-        stockVirtual={row.estoque_virtual}
-        tone={tone}
-        pulse={tone === 'ruptura'}
-        comfortable={comfortable}
-      />
-    );
-  });
-}
-
-function ProdutoCompraRows({ pc, linhaTipo, level, comfortable }) {
-  const skus = pc.skus || [];
-  const showGrades = linhaTipo === 'mix' || linhaTipo === 'portfolio';
-
-  if (showGrades) {
-    return (
-      <>
-        <GridLeaf
-          level={level}
-          title={pc.produto_compra_nome}
-          titleClass={CATALOGO_PC_TITLE}
-          subtitle={`${skus.length} grade(s)`}
-          stockLabel={pc.estoque_label}
-          stockVirtual={skus.some((s) => s.estoque_virtual)}
-          tone={worstTone(skus)}
-          comfortable={comfortable}
-        />
-        <GradeRows skus={skus} level={level + 1} comfortable={comfortable} />
-      </>
-    );
-  }
-
-  return (
-    <GridLeaf
-      level={level}
-      title={pc.produto_compra_nome}
-      titleClass={CATALOGO_PC_TITLE}
-      subtitle={skus[0] ? gradeLabel(skus[0]) : undefined}
-      stockLabel={pc.estoque_label}
-      stockVirtual={skus.some((s) => s.estoque_virtual)}
-      tone={worstTone(skus)}
-      comfortable={comfortable}
-    />
-  );
-}
-
 function LinhaBlock({ linha, filtroTipos, comfortable, level = 5 }) {
   const [open, setOpen] = useState(false);
 
@@ -207,7 +96,7 @@ function LinhaBlock({ linha, filtroTipos, comfortable, level = 5 }) {
     ? `${linha.linha_nome || linha.linha_display} ·${linha.pathway_sufixo}`
     : (linha.linha_nome || linha.linha_display);
   const skuCount = linha.sku_count ?? pcs.reduce((a, p) => a + p.skus.length, 0) + solos.length;
-  const pcCount = pcs.length + (linha.linha_tipo === 'solo' ? solos.length : 0);
+  const pcCount = pcs.length || (linha.linha_tipo === 'solo' ? 1 : 0);
 
   return (
     <>
@@ -222,22 +111,11 @@ function LinhaBlock({ linha, filtroTipos, comfortable, level = 5 }) {
         stockVirtual={pcs.concat(solos).some((s) => s.skus?.some?.((x) => x.estoque_virtual) || s.estoque_virtual)}
         comfortable={comfortable}
       />
-      {open && (
-        <>
-          {linha.linha_tipo === 'solo' && solos.length > 0 ? (
-            <GradeRows skus={solos} level={level + 1} comfortable={comfortable} />
-          ) : null}
-          {pcs.map((pc) => (
-            <ProdutoCompraRows
-              key={pc.produto_compra_codigo}
-              pc={pc}
-              linhaTipo={linha.linha_tipo}
-              level={level + 1}
-              comfortable={comfortable}
-            />
-          ))}
-        </>
-      )}
+      {open ? (
+        <GridLevel level={level + 1}>
+          <CatalogoLinhaMixTable linha={linha} />
+        </GridLevel>
+      ) : null}
     </>
   );
 }
@@ -369,7 +247,7 @@ function BlocoBlock({ bloco, filtroTipos, comfortable }) {
   );
 }
 
-/** Catálogo em grelha: bloco → … → LINHA → produto_compra → grades (mix/portfolio). */
+/** Catálogo: árvore + tabela mix por LINHA (Produto compra | SKUs | Eixos). */
 export default function CatalogoEstudoList({ tree, filtroTipos, mobileComfortable = false }) {
   const visible = useMemo(() => tree || [], [tree]);
 

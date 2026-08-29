@@ -138,3 +138,54 @@ export const CATALOGO_SUPPLY_BORDER = {
 
 export const CATALOGO_KPI_STRIP =
   'flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-xs tabular-nums border-b border-border/35 bg-[#e8b824]/[0.04] dark:bg-[#636B2F]/[0.08]';
+
+/** Tabela mix — Produto compra | SKUs | Eixos (grelha). */
+export const CATALOGO_MIX_TABLE = cn(
+  'mx-1 my-1.5 overflow-hidden rounded-md',
+  'border border-border/40 dark:border-white/[0.08]',
+  'bg-background/90 dark:bg-black/25',
+);
+
+export const CATALOGO_MIX_TABLE_CAP = cn(
+  'px-3 py-2 border-b border-border/35 dark:border-white/[0.07]',
+  'bg-muted/20 dark:bg-white/[0.025]',
+);
+
+export const CATALOGO_MIX_TABLE_CAP_TITLE = cn(
+  'font-din-1451 font-light text-[12px] text-foreground/95 normal-case tracking-wide',
+);
+
+export const CATALOGO_MIX_TABLE_CAP_CORE = 'font-mono text-[#a8942e] dark:text-[#A8B56E]';
+
+export const CATALOGO_MIX_TABLE_CAP_LINHA = cn(
+  'mt-1 font-din-1451 font-light text-[10px] text-muted-foreground normal-case leading-relaxed',
+);
+
+export const CATALOGO_MIX_TABLE_HEAD = cn(
+  'grid grid-cols-[minmax(0,1.15fr)_2.5rem_minmax(0,1.5fr)] sm:grid-cols-[minmax(0,1.2fr)_3rem_minmax(0,1.6fr)]',
+  'gap-x-2 px-3 py-1.5 border-b border-border/35 dark:border-white/[0.08]',
+  'text-[9px] sm:text-[10px] uppercase tracking-wider text-muted-foreground/90',
+  'bg-muted/15 dark:bg-white/[0.02]',
+);
+
+export const CATALOGO_MIX_TABLE_ROW = cn(
+  'grid grid-cols-[minmax(0,1.15fr)_2.5rem_minmax(0,1.5fr)] sm:grid-cols-[minmax(0,1.2fr)_3rem_minmax(0,1.6fr)]',
+  'gap-x-2 px-3 py-2.5 items-start',
+  'border-b border-border/30 dark:border-white/[0.06] last:border-b-0',
+  'hover:bg-muted/10 dark:hover:bg-white/[0.02] transition-colors',
+);
+
+export const CATALOGO_MIX_TABLE_PC = cn(
+  CATALOGO_PC_TITLE,
+  'text-[11px] sm:text-[12px] leading-snug pr-1',
+);
+
+export const CATALOGO_MIX_TABLE_SKU = 'text-[11px] tabular-nums text-muted-foreground text-center pt-0.5';
+
+export const CATALOGO_MIX_TABLE_EIXOS = cn(
+  'font-din-1451 font-light text-[11px] normal-case text-foreground/85 leading-relaxed break-words',
+);
+
+export const CATALOGO_MIX_TABLE_CHIP = 'whitespace-nowrap';
+export const CATALOGO_MIX_TABLE_CHIP_ALERT = 'font-semibold text-[#a8942e] dark:text-[#A8B56E]';
+export const CATALOGO_MIX_TABLE_DOT = 'text-muted-foreground/45 mx-0.5';
