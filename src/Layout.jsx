@@ -6,6 +6,7 @@ import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCac
 import { base44, p38 } from '@/api/base44Client';
 import FontScaleInitializer from '@/components/accessibility/FontScaleInitializer';
 import { buildMenuItems } from '@/components/config/usePermissoesResolvidas';
+import { flattenMenuPages as flattenMenuPagesDeep } from '@/lib/menuNavUtils';
 import { podeAcessarConfiguracoes } from '@/lib/perfilPermissoes';
 import { WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -218,18 +219,7 @@ export default function Layout({ children, currentPageName }) {
     [currentUser, perfilDeAcesso]
   );
 
-  const allSearchableItems = React.useMemo(() => {
-   const items = [];
-   menuItems.forEach(item => {
-     if (item.page) items.push({ name: item.name, page: item.page, icon: item.icon, parent: null });
-     if (item.submenu) {
-       item.submenu.forEach(sub => {
-         items.push({ name: sub.name, page: sub.page, icon: item.icon, parent: item.name });
-       });
-     }
-   });
-   return items;
-  }, [menuItems]);
+  const allSearchableItems = React.useMemo(() => flattenMenuPagesDeep(menuItems), [menuItems]);
 
   const openSearchOverlay = React.useCallback(() => {
     armGlobalSearchOpenGuard();

@@ -5,6 +5,7 @@
  * Rotas filhas herdam a permissão da rota-pai (ex.: PedidoCompraDetalhe → PedidosCompra).
  */
 import { buildMenuItems } from '@/components/config/usePermissoesResolvidas';
+import { flattenMenuPages as flattenMenuPagesDeep } from '@/lib/menuNavUtils';
 import {
   podeAcessarConfiguracoes,
   usuarioLegadoSemMatrizPerfil,
@@ -47,8 +48,9 @@ export const PAGINAS_ALIASES_PERMISSAO = {
   CadastroProdutoV2: 'Produtos',
   EditarProdutosEmMassa: 'Produtos',
   EdicaoMassivaCustos: 'Produtos',
-  ModeloCatalogo: 'HierarquiaPortal',
-  CatalogoNovo: 'HierarquiaPortal',
+  ModeloCatalogo: 'CatalogoNovo',
+  CatalogoNovo: 'CatalogoNovo',
+  SmartSupplyNovo: 'SmartSupplyNovo',
   Intervenientes: 'Produtos',
   Terceiros: 'Produtos',
 
@@ -111,11 +113,8 @@ export const PAGINAS_ALIASES_PERMISSAO = {
 
 function flattenMenuPages(menuItems) {
   const pages = new Set();
-  for (const item of menuItems || []) {
-    if (item.page) pages.add(extrairNomePagina(item.page));
-    for (const sub of item.submenu || []) {
-      if (sub.page) pages.add(extrairNomePagina(sub.page));
-    }
+  for (const entry of flattenMenuPagesDeep(menuItems)) {
+    pages.add(extrairNomePagina(entry.page));
   }
   return pages;
 }

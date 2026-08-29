@@ -32,7 +32,7 @@ function TipoPill({ tipo }) {
   );
 }
 
-function SkuRow({ row, isLast }) {
+function SkuRow({ row, isLast, comfortable }) {
   const tone = row.zerado ? 'ruptura' : row.abaixo_ponto ? 'alerta' : row.alerta_estudo ? 'alerta_escuro' : 'off';
   const meta = [row.eixo_a, row.eixo_b].filter(Boolean).join(' · ');
 
@@ -42,6 +42,7 @@ function SkuRow({ row, isLast }) {
         className={cn(
           CATALOGO_ROW_BASE,
           'pl-3 cursor-default hover:bg-transparent',
+          comfortable && 'py-3.5 min-h-[52px]',
           CATALOGO_SUPPLY_BORDER[tone],
         )}
       >
@@ -62,7 +63,7 @@ function SkuRow({ row, isLast }) {
   );
 }
 
-function ProdutoCompraBlock({ pc, open, onToggle, isLast }) {
+function ProdutoCompraBlock({ pc, open, onToggle, isLast, comfortable }) {
   const skus = pc.skus || [];
   return (
     <>
@@ -70,7 +71,7 @@ function ProdutoCompraBlock({ pc, open, onToggle, isLast }) {
         <button
           type="button"
           onClick={onToggle}
-          className={cn(CATALOGO_ROW_BASE, 'pl-3 border-l-[#e8b824]/45 dark:border-l-[#636B2F]/50')}
+          className={cn(CATALOGO_ROW_BASE, 'pl-3 border-l-[#e8b824]/45 dark:border-l-[#636B2F]/50', comfortable && 'py-3 min-h-[48px]')}
         >
           <div className="flex items-start gap-1.5 min-w-0 w-full">
             <ChevronRight className={cn('h-3.5 w-3.5 shrink-0 mt-0.5 transition-transform text-[#a8942e] dark:text-[#A8B56E]', open && 'rotate-90')} />
@@ -82,13 +83,13 @@ function ProdutoCompraBlock({ pc, open, onToggle, isLast }) {
         </button>
       </div>
       {open && skus.map((s, i) => (
-        <SkuRow key={s.codigo_interno || i} row={s} isLast={isLast && i === skus.length - 1} />
+        <SkuRow key={s.codigo_interno || i} row={s} isLast={isLast && i === skus.length - 1} comfortable={comfortable} />
       ))}
     </>
   );
 }
 
-function LinhaBlock({ linha, filtroTipos }) {
+function LinhaBlock({ linha, filtroTipos, comfortable }) {
   const [open, setOpen] = useState(false);
   const [openPc, setOpenPc] = useState(() => new Set());
 
@@ -113,7 +114,7 @@ function LinhaBlock({ linha, filtroTipos }) {
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className={cn(CATALOGO_ROW_BASE, 'pl-3 border-l-[#4a5240]/45 dark:border-l-[#636B2F]/55')}
+          className={cn(CATALOGO_ROW_BASE, 'pl-3 border-l-[#4a5240]/45 dark:border-l-[#636B2F]/55', comfortable && 'py-3 min-h-[48px]')}
         >
           <div className="flex items-start gap-1.5 min-w-0 w-full">
             <ChevronRight className={cn('h-3.5 w-3.5 shrink-0 mt-0.5 transition-transform', open && 'rotate-90')} />
@@ -138,10 +139,11 @@ function LinhaBlock({ linha, filtroTipos }) {
               open={openPc.has(pc.produto_compra_codigo)}
               onToggle={() => togglePc(pc.produto_compra_codigo)}
               isLast={idx === pcs.length - 1 && !solos.length}
+              comfortable={comfortable}
             />
           ))}
           {solos.map((s, i) => (
-            <SkuRow key={s.codigo_interno || i} row={s} isLast={i === solos.length - 1} />
+            <SkuRow key={s.codigo_interno || i} row={s} isLast={i === solos.length - 1} comfortable={comfortable} />
           ))}
         </>
       )}
@@ -149,7 +151,7 @@ function LinhaBlock({ linha, filtroTipos }) {
   );
 }
 
-function SubBlocoBlock({ sub, filtroTipos }) {
+function SubBlocoBlock({ sub, filtroTipos, comfortable }) {
   const [open, setOpen] = useState(true);
   const skuCount = (sub.linhas || []).reduce((acc, lin) => {
     const pcs = lin.pcs || [];
@@ -163,7 +165,7 @@ function SubBlocoBlock({ sub, filtroTipos }) {
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className={cn(CATALOGO_ROW_BASE, 'pl-2 border-l-[#e8b824]/50 dark:border-l-[#636B2F]/55')}
+          className={cn(CATALOGO_ROW_BASE, 'pl-2 border-l-[#e8b824]/50 dark:border-l-[#636B2F]/55', comfortable && 'py-3 min-h-[48px]')}
         >
           <div className="flex items-start gap-1.5 min-w-0 w-full">
             <ChevronRight className={cn('h-4 w-4 shrink-0 mt-0.5 transition-transform', open && 'rotate-90')} />
@@ -175,13 +177,13 @@ function SubBlocoBlock({ sub, filtroTipos }) {
         </button>
       </div>
       {open && (sub.linhas || []).map((linha) => (
-        <LinhaBlock key={linha.linha_codigo} linha={linha} filtroTipos={filtroTipos} />
+        <LinhaBlock key={linha.linha_codigo} linha={linha} filtroTipos={filtroTipos} comfortable={comfortable} />
       ))}
     </>
   );
 }
 
-function BlocoBlock({ bloco, filtroTipos }) {
+function BlocoBlock({ bloco, filtroTipos, comfortable }) {
   const [open, setOpen] = useState(true);
 
   return (
@@ -199,14 +201,14 @@ function BlocoBlock({ bloco, filtroTipos }) {
         </button>
       </div>
       {open && (bloco.sub_blocos || []).map((sub) => (
-        <SubBlocoBlock key={sub.sub_bloco} sub={sub} filtroTipos={filtroTipos} />
+        <SubBlocoBlock key={sub.sub_bloco} sub={sub} filtroTipos={filtroTipos} comfortable={comfortable} />
       ))}
     </div>
   );
 }
 
 /** Catálogo com camadas do Excel: bloco → sub_bloco → LINHA → produto compra → SKU */
-export default function CatalogoEstudoList({ tree, filtroTipos }) {
+export default function CatalogoEstudoList({ tree, filtroTipos, mobileComfortable = false }) {
   const visible = useMemo(() => tree || [], [tree]);
 
   if (!visible.length) {
@@ -220,7 +222,7 @@ export default function CatalogoEstudoList({ tree, filtroTipos }) {
   return (
     <div className={CATALOGO_LIST_SHELL}>
       {visible.map((bloco) => (
-        <BlocoBlock key={bloco.bloco} bloco={bloco} filtroTipos={filtroTipos} />
+        <BlocoBlock key={bloco.bloco} bloco={bloco} filtroTipos={filtroTipos} comfortable={mobileComfortable} />
       ))}
     </div>
   );

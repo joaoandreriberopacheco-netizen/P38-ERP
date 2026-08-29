@@ -19,14 +19,20 @@ import {
   usuarioLegadoSemMatrizPerfil,
   perfilResolvidoParaUsuario,
 } from '@/lib/perfilPermissoes';
-import { SMART_SUPPLY_MENU_LABEL } from '@/config/smartSupplyFlags';
+import {
+  SMART_SUPPLY_MENU_LABEL,
+  NOVO_ECOSISTEMA_MENU_LABEL,
+  NOVO_CATALOGO_MENU_LABEL,
+  SMART_SUPPLY_ECOSYSTEM_LABEL,
+} from '@/config/smartSupplyFlags';
+import { filterSubmenuByPermissoes } from '@/lib/menuNavUtils';
 import {
   LayoutDashboard, House, Monitor, Banknote, TrendingUp, Package,
   DollarSign, BookOpen, Settings, ShoppingCart, Warehouse, Truck, ClipboardPenLine,
   Users, TrendingDown, Lightbulb, FileText, PackageSearch, Ship,
   ScanLine, ClipboardList, Tags, Upload, CheckSquare, Search, Activity,
   ArrowLeftRight, CreditCard, Clock, Wallet, ReceiptText, AlertCircle, Repeat2, CalendarClock, Target, LineChart,
-  Sparkles,
+  Sparkles, LayoutGrid, Zap,
 } from 'lucide-react';
 
 export { resolverPermissoes };
@@ -53,9 +59,12 @@ const MINIMAL_MENU_ITEMS = [
   },
 ];
 
-function filterSubmenuByPermissoes(submenu, permissoes) {
-  return submenu.filter((sub) => (sub.permissaoCheck ? sub.permissaoCheck(permissoes) : true));
-}
+const podeNovoEcosistemaCompras = (p) =>
+  p?.estoque?.compras?.sugestoes ||
+  p?.estoque?.compras?.cotacoes ||
+  p?.estoque?.compras?.pedidos ||
+  p?.estoque?.compras?.conferencia ||
+  p?.estoque?.compras_ativo;
 
 export function buildMenuItems(user, perfilDeAcesso) {
   if (user?.role === 'admin') return ALL_MENU_ITEMS;
@@ -231,16 +240,24 @@ export const ALL_MENU_ITEMS = [
           p?.estoque?.compras?.conferencia === true || p?.estoque?.compras?.pedidos === true
       },
       {
-        name: 'Portal catálogo',
-        page: 'HierarquiaPortal',
+        name: NOVO_ECOSISTEMA_MENU_LABEL,
         icon: Sparkles,
-        permissaoCheck: (p) =>
-          p?.estoque?.compras?.sugestoes ||
-          p?.estoque?.compras?.cotacoes ||
-          p?.estoque?.compras?.pedidos ||
-          p?.estoque?.compras?.conferencia ||
-          p?.estoque?.compras_ativo,
-      }
+        permissaoCheck: podeNovoEcosistemaCompras,
+        submenu: [
+          {
+            name: NOVO_CATALOGO_MENU_LABEL,
+            page: 'CatalogoNovo',
+            icon: LayoutGrid,
+            permissaoCheck: podeNovoEcosistemaCompras,
+          },
+          {
+            name: SMART_SUPPLY_ECOSYSTEM_LABEL,
+            page: 'SmartSupplyNovo',
+            icon: Zap,
+            permissaoCheck: podeNovoEcosistemaCompras,
+          },
+        ],
+      },
     ]
   },
   {

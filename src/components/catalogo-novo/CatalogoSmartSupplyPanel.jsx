@@ -70,7 +70,7 @@ function SkuSupplyRows({ skus, massaCritica }) {
   });
 }
 
-function EsquadraRow({ eq, open, onToggle, isLast }) {
+function EsquadraRow({ eq, open, onToggle, isLast, comfortable = false }) {
   const tone = resolveEsquadraSupplyTone(eq);
   const m = eq.metrics;
 
@@ -80,7 +80,7 @@ function EsquadraRow({ eq, open, onToggle, isLast }) {
         <button
           type="button"
           onClick={onToggle}
-          className={cn(CATALOGO_ROW_BASE, 'pl-3', CATALOGO_SUPPLY_BORDER[tone])}
+          className={cn(CATALOGO_ROW_BASE, 'pl-3', CATALOGO_SUPPLY_BORDER[tone], comfortable && 'py-3 min-h-[48px]')}
         >
           <div className="flex items-start gap-1.5 min-w-0 w-full">
             <ChevronRight className={cn('h-3.5 w-3.5 shrink-0 mt-0.5 transition-transform', open && 'rotate-90')} />
@@ -102,7 +102,7 @@ function EsquadraRow({ eq, open, onToggle, isLast }) {
   );
 }
 
-function LinhaSupplyBlock({ linha }) {
+function LinhaSupplyBlock({ linha, comfortable = false }) {
   const [open, setOpen] = useState(true);
   const [openEq, setOpenEq] = useState(() => new Set());
   const tone = resolveLinhaSupplyTone(linha);
@@ -123,7 +123,7 @@ function LinhaSupplyBlock({ linha }) {
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className={cn(CATALOGO_ROW_BASE, 'pl-2', CATALOGO_SUPPLY_BORDER[tone])}
+          className={cn(CATALOGO_ROW_BASE, 'pl-2', CATALOGO_SUPPLY_BORDER[tone], comfortable && 'py-3 min-h-[52px]')}
         >
           <div className="flex items-start gap-1.5 min-w-0 w-full">
             <ChevronRight className={cn('h-4 w-4 shrink-0 mt-0.5 transition-transform', open && 'rotate-90')} />
@@ -158,6 +158,7 @@ function LinhaSupplyBlock({ linha }) {
           open={openEq.has(eq.key)}
           onToggle={() => toggleEq(eq.key)}
           isLast={idx === linha.esquadras.length - 1}
+          comfortable={comfortable}
         />
       ))}
     </div>
@@ -192,6 +193,7 @@ export default function CatalogoSmartSupplyPanel({
   loadingVelocity,
   view,
   onViewChange,
+  mobileComfortable = false,
 }) {
   const activeView = SUPPLY_VIEWS.find((v) => v.id === view) || SUPPLY_VIEWS[0];
 
@@ -224,7 +226,7 @@ export default function CatalogoSmartSupplyPanel({
 
   return (
     <div className="space-y-0">
-      <div className={CATALOGO_VIEW_TAB_GROUP} role="tablist" aria-label="Visão SMART SUPPLY">
+      <div className={cn(CATALOGO_VIEW_TAB_GROUP, mobileComfortable && 'sticky top-0 z-10 -mx-1 px-1 py-1 bg-background/95 backdrop-blur-sm border-b border-border/20')} role="tablist" aria-label="Visão SMART SUPPLY">
         {SUPPLY_VIEWS.map((v) => (
           <button
             key={v.id}
@@ -233,7 +235,7 @@ export default function CatalogoSmartSupplyPanel({
             aria-selected={view === v.id}
             data-active={view === v.id}
             onClick={() => onViewChange(v.id)}
-            className={CATALOGO_VIEW_TAB}
+            className={cn(CATALOGO_VIEW_TAB, mobileComfortable && 'py-3 text-xs')}
           >
             {v.label}
           </button>
@@ -256,7 +258,7 @@ export default function CatalogoSmartSupplyPanel({
       ) : (
         <div className={CATALOGO_LIST_SHELL}>
           {visibleHierarchy.map((linha) => (
-            <LinhaSupplyBlock key={linha.linha_codigo} linha={linha} />
+            <LinhaSupplyBlock key={linha.linha_codigo} linha={linha} comfortable={mobileComfortable} />
           ))}
         </div>
       )}
