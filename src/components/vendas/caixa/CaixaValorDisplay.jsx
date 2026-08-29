@@ -49,9 +49,13 @@ export default function CaixaValorDisplay({
 
   if (reserveSignSpace || showSign) {
     return (
-      <span className={`inline-flex items-baseline justify-end tabular-nums ${sizeCls} ${className}`}>
+      <span
+        className={`inline-flex items-baseline justify-end tabular-nums ${sizeCls} ${className}`}
+        data-caixa-valor-display={tone !== 'neutral' ? tone : undefined}
+      >
         <span
           className={`w-[0.75em] shrink-0 text-right ${showSign ? signClass : 'invisible select-none'}`}
+          data-caixa-valor-tone={showSign ? tone : undefined}
           aria-hidden={!showSign}
         >
           {sign}

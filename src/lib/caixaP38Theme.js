@@ -9,7 +9,46 @@ import {
   P38_KPI_SHELL,
 } from '@/components/financeiro/fluxo/financeiroP38';
 
-export { P38_FIELD_SURFACE as caixaFieldSurface, P38_KPI_SHELL as caixaKpiShell };
+export { P38_FIELD_SURFACE as caixaFieldSurfaceBase, P38_KPI_SHELL as caixaKpiShellBase };
+
+export const caixaFieldSurface =
+  `${P38_FIELD_SURFACE} dark:!bg-[#1a2035] dark:border dark:border-[rgba(94,231,255,0.1)] dark:shadow-none`;
+export const caixaKpiShell =
+  `${P38_KPI_SHELL} dark:!bg-[#121825] dark:border dark:border-[rgba(94,231,255,0.12)] dark:shadow-none`;
+
+/**
+ * Lightning Storm — paleta escura do caixa (navy profundo + ciano elétrico).
+ * Inspiração: tempestade nocturna; evita limão gritante no PDV.
+ */
+export const CAIXA_STORM = {
+  bg: '#0a0e1a',
+  surface: '#121825',
+  surfaceMuted: '#1a2035',
+  surfaceHover: '#2a3350',
+  accent: '#5ee7ff',
+  accentSoft: '#7df9ff',
+  accentOn: '#0a0e1a',
+  textMuted: '#8b9bb5',
+  border: 'rgba(94, 231, 255, 0.12)',
+  glow: '0 0 12px rgba(94, 231, 255, 0.28)',
+};
+
+export const caixaStormBg = 'dark:bg-[#0a0e1a]';
+export const caixaStormHeader = 'dark:bg-[#0a0e1a] dark:border-[rgba(94,231,255,0.12)]';
+export const caixaStormSurface = 'dark:bg-[#121825]';
+export const caixaStormSurfaceMuted = 'dark:bg-[#1a2035]';
+export const caixaStormSurfaceHover = 'dark:hover:bg-[#2a3350]';
+export const caixaStormBorder = 'dark:border-[rgba(94,231,255,0.12)]';
+export const caixaStormChipTrack = 'dark:bg-[#1a2035]';
+export const caixaStormChipActive =
+  'dark:bg-[#5ee7ff]/18 dark:text-[#5ee7ff] dark:shadow-[0_0_12px_rgba(94,231,255,0.22)]';
+export const caixaStormChipInactive = 'dark:text-[#8b9bb5]';
+export const caixaStormTabActive =
+  'dark:data-[state=active]:bg-[#5ee7ff]/18 dark:data-[state=active]:text-[#5ee7ff] dark:data-[state=active]:shadow-[0_0_12px_rgba(94,231,255,0.22)]';
+export const caixaStormCta =
+  'dark:bg-[#5ee7ff]/18 dark:text-[#5ee7ff] dark:border dark:border-[#5ee7ff]/25 dark:hover:bg-[#5ee7ff]/26';
+export const caixaStormValorSuccess = 'dark:text-[#5ee7ff]';
+export const caixaStormValorInfo = 'dark:text-[#7df9ff]';
 
 export const CAIXA_PRINT = {
   success: p38Accent.success.solid,
@@ -36,15 +75,15 @@ export function normalizeCaixaTone(tone) {
 
 export const caixaTone = {
   success: {
-    well: 'bg-primary/10 dark:bg-primary/15',
-    icon: 'text-primary',
-    text: p38Accent.success.text,
-    panel: 'bg-primary/10 dark:bg-primary/15',
-    panelText: p38Accent.success.text,
-    btn: 'bg-primary hover:bg-primary/90 text-primary-foreground',
-    hover: 'hover:bg-primary/10 dark:hover:bg-primary/15',
-    pill: 'bg-primary/10 text-primary',
-    dot: p38Accent.success.dot,
+    well: 'bg-primary/10 dark:bg-[#5ee7ff]/10',
+    icon: 'text-primary dark:text-[#5ee7ff]',
+    text: 'text-[#3a4232] dark:text-[#5ee7ff]/90',
+    panel: 'bg-primary/10 dark:bg-[#5ee7ff]/10',
+    panelText: 'text-[#3a4232] dark:text-[#5ee7ff]/90',
+    btn: 'bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-[#5ee7ff]/20 dark:text-[#5ee7ff] dark:hover:bg-[#5ee7ff]/28',
+    hover: 'hover:bg-primary/10 dark:hover:bg-[#5ee7ff]/10',
+    pill: 'bg-primary/10 text-primary dark:bg-[#5ee7ff]/12 dark:text-[#5ee7ff]',
+    dot: 'bg-[#4a5240] dark:bg-[#5ee7ff]/70',
   },
   info: {
     well: 'bg-cyan-500/10 dark:bg-cyan-500/15',
@@ -112,8 +151,8 @@ export function conferenciaTone({ temDiferenca, diferenca }) {
   return 'danger';
 }
 
-/** Painel P38 com barra oliva (black olive / limão no escuro) */
-export const caixaPanel = 'p38-panel rounded-2xl border border-border/40 dark:border-white/10';
+/** Painel P38 — barra accent vira raio eléctrico no escuro (.caixa-screen) */
+export const caixaPanel = 'p38-panel caixa-storm-panel rounded-2xl border border-border/40 dark:border-[rgba(94,231,255,0.12)]';
 export const caixaPanelBody = 'p38-panel__body';
 
 /** Layout fullscreen — scroll interno sem cortar botões sob a barra inferior */
@@ -129,7 +168,7 @@ export const caixaTabPanelPad = 'p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))
 export const caixaTabPanelPadInLayout = 'p-4 pb-[var(--p38-scroll-pad-below-nav)]';
 export const caixaMobileTabBar = 'md:hidden flex-shrink-0';
 /** Detalhe embutido (Caixas Ativos / Turnos Fechados) — portal no body, acima dos atalhos rápidos */
-export const caixaOverlayShell = `fixed inset-0 ${CAIXA_MIRROR_SHELL_CLASS} h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden bg-background pointer-events-auto`;
+export const caixaOverlayShell = `fixed inset-0 ${CAIXA_MIRROR_SHELL_CLASS} h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden bg-background dark:bg-[#0a0e1a] pointer-events-auto`;
 
 /** Tipografia da tela de caixa — maiúsculas + corpo maior (alinhado ao fluxo P38) */
 export const caixaTypo = {
@@ -149,23 +188,29 @@ export const caixaTypo = {
  * Superfícies do caixa — contraste garantido no modo claro (oliva + texto claro)
  * e comportamento escuro preservado via dark:*.
  */
-/** Abas mobile — chips estilo Planejamento financeiro no escuro */
+/** Abas mobile — chips lightning storm no escuro */
 export const caixaMobileTabsList =
-  'grid grid-cols-3 h-14 rounded-none p-1 gap-0 border-b border-border/40 dark:border-white/10 bg-card dark:bg-transparent';
+  'grid grid-cols-3 h-14 rounded-none p-1 gap-0 border-b border-border/40 dark:border-[rgba(94,231,255,0.12)] bg-card dark:bg-[#0a0e1a]';
 
 export const caixaMobileTabTrigger =
   'flex flex-col items-center justify-center gap-0.5 h-full rounded-lg border-0 ' +
   'data-[state=active]:bg-muted/40 data-[state=active]:shadow-sm ' +
-  'dark:data-[state=inactive]:text-foreground/80 dark:data-[state=active]:bg-[#a4ce33] dark:data-[state=active]:text-[#1f1d22]';
+  'dark:data-[state=inactive]:text-[#8b9bb5] ' +
+  caixaStormTabActive;
 
 export const caixaDesktopTabTrigger =
   'flex items-center gap-2 h-12 px-6 rounded-t-xl rounded-b-none border-0 ' +
   'data-[state=active]:bg-card data-[state=active]:shadow-sm ' +
-  'dark:data-[state=active]:bg-[#a4ce33] dark:data-[state=active]:text-[#1f1d22]';
+  caixaStormTabActive;
 
-/** Card de consulta de vendas — superfície planejamento no escuro */
+/** Card de consulta de vendas — superfície storm no escuro */
 export const caixaConsultaCard =
-  'rounded-2xl border-0 shadow-sm bg-card dark:p38-field-surface dark:shadow-none overflow-hidden';
+  'rounded-2xl border-0 shadow-sm bg-card dark:bg-[#121825] dark:border dark:border-[rgba(94,231,255,0.12)] dark:shadow-none overflow-hidden';
+
+export const caixaChipTrack = 'bg-muted/50 dark:bg-[#1a2035]';
+export const caixaChipActive =
+  'bg-card shadow-sm text-foreground dark:bg-[#5ee7ff]/18 dark:text-[#5ee7ff] dark:shadow-[0_0_12px_rgba(94,231,255,0.22)]';
+export const caixaChipInactive = 'text-muted-foreground dark:text-[#8b9bb5]';
 
 export const caixaSurface = {
   /** Botão de acção compacto (maquininha, fiado, chips) */

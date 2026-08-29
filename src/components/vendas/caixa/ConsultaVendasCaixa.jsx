@@ -4,7 +4,7 @@ import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import { cn } from '@/components/utils';
 import { p38Table } from '@/lib/p38TableSurfaces';
 import CaixaValorDisplay, { formatCaixaR } from '@/components/vendas/caixa/CaixaValorDisplay';
-import { caixaConsultaCard, caixaTypo } from '@/lib/caixaP38Theme';
+import { caixaConsultaCard, caixaChipActive, caixaChipInactive, caixaChipTrack, caixaTypo } from '@/lib/caixaP38Theme';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { formatarDataHora } from '@/components/utils/dateUtils';
 import FormaPagamentoBadges from '@/components/vendas/FormaPagamentoBadges';
@@ -116,18 +116,18 @@ export default function ConsultaVendasCaixa({
           </p>
         </div>
         {!forcarModoComprovante && (
-          <div className="flex rounded-2xl bg-muted/50 dark:bg-[#26262e] p-1 gap-1">
+          <div className={`flex rounded-2xl p-1 gap-1 ${caixaChipTrack}`}>
             <button
               type="button"
               onClick={() => setModo('produto')}
-              className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${modo === 'produto' ? 'bg-card shadow-sm text-foreground dark:bg-[#a4ce33] dark:text-[#1f1d22]' : 'text-muted-foreground'}`}
+              className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${modo === 'produto' ? caixaChipActive : caixaChipInactive}`}
             >
               Por produto
             </button>
             <button
               type="button"
               onClick={() => setModo('comprovante')}
-              className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${modo === 'comprovante' ? 'bg-card shadow-sm text-foreground dark:bg-[#a4ce33] dark:text-[#1f1d22]' : 'text-muted-foreground'}`}
+              className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${modo === 'comprovante' ? caixaChipActive : caixaChipInactive}`}
             >
               Por comprovante
             </button>

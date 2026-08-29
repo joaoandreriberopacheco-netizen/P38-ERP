@@ -76,10 +76,15 @@ import {
   CAIXA_PRINT,
   CAIXA_TOAST_SUCCESS,
   caixaClasses,
+  caixaChipActive,
+  caixaChipInactive,
+  caixaChipTrack,
   caixaConsultaCard,
   caixaDesktopTabTrigger,
   caixaFieldSurface,
   caixaKpiShell,
+  caixaStormBg,
+  caixaStormHeader,
   caixaMain,
   caixaMainInLayout,
   caixaMobileTabBar,
@@ -1454,7 +1459,7 @@ export default function PDVCaixa({
     // Não faz nada, pois o balanço está sempre visível
   };
 
-  const screenShellBg = overlayMode ? 'bg-muted dark:bg-background' : 'bg-muted/40 dark:bg-background';
+  const screenShellBg = overlayMode ? 'bg-muted dark:bg-[#0a0e1a]' : `bg-muted/40 ${caixaStormBg}`;
 
   const rootClassName = overlayMode
     ? `flex flex-col h-full min-h-0 ${screenShellBg} ${caixaTypo.screen}`
@@ -1494,7 +1499,7 @@ export default function PDVCaixa({
       )}
 
       {/* Header Minimalista */}
-      <div className="flex-shrink-0 bg-card dark:bg-background border-b border-border/40 dark:border-white/10 px-4 py-3 flex items-center justify-between">
+      <div className={`flex-shrink-0 bg-card border-b border-border/40 px-4 py-3 flex items-center justify-between ${caixaStormHeader}`}>
         <button
           type="button"
           onClick={handleClose}
@@ -1778,18 +1783,18 @@ export default function PDVCaixa({
                  <TabsContent value="vendas" data-caixa-tab-scroll className={`${tabPanelClassName} ${tabPanelPad} space-y-3`}>
                    <div className="max-w-4xl mx-auto space-y-4">
                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                       <div className="flex rounded-2xl bg-muted/50 dark:bg-[#26262e] p-1 gap-1">
+                       <div className={`flex rounded-2xl p-1 gap-1 ${caixaChipTrack}`}>
                          <button
                            type="button"
                            onClick={() => setVendasView('aguardando')}
-                           className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${vendasView === 'aguardando' ? 'bg-card shadow-sm text-foreground dark:bg-[#a4ce33] dark:text-[#1f1d22]' : 'text-muted-foreground'}`}
+                           className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${vendasView === 'aguardando' ? caixaChipActive : caixaChipInactive}`}
                          >
                            Aguardando ({rascunhosAguardando.length})
                          </button>
                          <button
                            type="button"
                            onClick={() => setVendasView('consulta')}
-                           className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${vendasView === 'consulta' ? 'bg-card shadow-sm text-foreground dark:bg-[#a4ce33] dark:text-[#1f1d22]' : 'text-muted-foreground'}`}
+                           className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${vendasView === 'consulta' ? caixaChipActive : caixaChipInactive}`}
                          >
                            Consulta ({vendasFinalizadas.length})
                          </button>
