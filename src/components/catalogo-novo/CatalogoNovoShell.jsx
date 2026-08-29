@@ -9,6 +9,7 @@ import { createPageUrl } from '@/components/utils';
 import { cn } from '@/components/utils';
 import { useCompactShell } from '@/hooks/use-breakpoint';
 import CatalogoTipoTabs from '@/components/catalogo-novo/CatalogoTipoTabs';
+import CatalogoVistaToggle from '@/components/catalogo-novo/CatalogoVistaToggle';
 import CatalogoEstudoList from '@/components/catalogo-novo/CatalogoEstudoList';
 import CatalogoSmartSupplyPanel from '@/components/catalogo-novo/CatalogoSmartSupplyPanel';
 import { useCatalogoEstudoData } from '@/hooks/useCatalogoEstudoData';
@@ -39,6 +40,7 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
   const [somenteAlerta, setSomenteAlerta] = useState(false);
   const [supplyView, setSupplyView] = useState('mobile');
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [vistaCatalogo, setVistaCatalogo] = useState('pathway');
 
   const {
     loading,
@@ -78,7 +80,10 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
   const filterControls = (
     <>
       {!isSupply ? (
-        <CatalogoTipoTabs tipoAtivo={tipoAtivo} onChange={setTipoAtivo} counts={tipoCounts} />
+        <>
+          <CatalogoTipoTabs tipoAtivo={tipoAtivo} onChange={setTipoAtivo} counts={tipoCounts} />
+          <CatalogoVistaToggle vista={vistaCatalogo} onChange={setVistaCatalogo} />
+        </>
       ) : null}
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1 min-w-0">
@@ -154,7 +159,7 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
               <p className={cn('p38-page-subtitle', isMobile ? 'text-xs line-clamp-2' : 'text-sm')}>
                 {isSupply
                   ? 'Reposição por LINHA — giro, ponto futuro e alertas (Excel estudo)'
-                  : 'Árvore hierárquica (como TreeGrid) — valores em tabela por LINHA'}
+                  : 'Pathway (árvore da obra) ou Plano SKU — mesmo dado, duas leituras'}
               </p>
             </div>
             {!isMobile && (
@@ -232,7 +237,12 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
           <p className="text-sm text-muted-foreground text-center py-8">A carregar estoque do cadastro…</p>
         ) : null}
         {!isSupply ? (
-          <CatalogoEstudoList tree={tree} tipo={tipoAtivo} mobileComfortable={isMobile} />
+          <CatalogoEstudoList
+            tree={tree}
+            tipo={tipoAtivo}
+            vista={vistaCatalogo}
+            mobileComfortable={isMobile}
+          />
         ) : (
           <CatalogoSmartSupplyPanel
             hierarchy={hierarchy}

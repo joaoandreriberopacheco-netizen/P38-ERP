@@ -117,6 +117,14 @@ export const CATALOGO_TIPO_TAB = cn(
   'dark:data-[active=true]:border-white/20 dark:data-[active=true]:text-foreground',
 );
 
+/** Pathway vs Plano SKU */
+export const CATALOGO_VISTA_TAB_GROUP = cn(
+  CATALOGO_VIEW_TAB_GROUP,
+  'rounded-md border border-border/30 dark:border-white/[0.06]',
+);
+
+export const CATALOGO_VISTA_TAB = CATALOGO_TIPO_TAB;
+
 /** Tabelas de valores (SKU / PC / eixos) — grid plano, sem expandir na árvore. */
 export const CATALOGO_VALUE_TABLE = cn(
   'my-1 overflow-hidden rounded-sm',

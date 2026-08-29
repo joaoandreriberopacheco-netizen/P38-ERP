@@ -21,10 +21,19 @@ Compras
 
 | Ecrã | Rota | Job do utilizador |
 |------|------|-------------------|
-| **Novo Catálogo** | `CatalogoNovo` | **Explorar** a árvore de compras: bloco → sub-bloco → LINHA → produto compra → SKU. Ver tipo de LINHA (solo/mix/portfolio) e LEDs de estado (estudo). |
+| **Novo Catálogo** | `CatalogoNovo` | **Explorar** compras: abas **Solo / Mix / Portfolio** (comportamentos separados) + **Pathway** (árvore da obra) ou **Plano SKU** (grade linear). |
 | **Smart Supply** | `SmartSupplyNovo` | **Decidir reposição**: visão por LINHA, esquadras saldáveis, estoque, ponto futuro, filtro “só alertas”, tabs Mobile / Mix / Portfolio. |
 
 Shell partilhado: `src/components/catalogo-novo/CatalogoNovoShell.jsx` (`mode="catalog"` | `mode="supply"`).
+
+### Duas leituras do mesmo catálogo (não é capricho)
+
+| Vista | Para quê |
+|-------|----------|
+| **Pathway** | Administrar como a **obra** — bloco → ramo → core → LINHA; tabela de valores por LINHA. |
+| **Plano SKU** | **Grade linear** — um SKU por linha (auditoria, cadastro, conversão legado). |
+
+Ambas usam o **mesmo Excel/manifest**. Quem começa do zero numa plataforma “redondinha” entra já com as duas vistas; quem migra mix legado usa **Plano SKU** para conferir SKU a SKU e **Pathway** para validar a distribuição nova.
 
 No **mobile**, alternar entre os dois com **tabs no topo** (sem voltar ao menu). Filtros pesados ficam num **bottom sheet** para não roubar espaço à lista.
 
