@@ -1,6 +1,18 @@
 {
-  "version": "2026-08-29",
-  "decisao": "Argamassa, rejunte e cerâmicas saem de Edificações → bloco C Acabamentos (decisão João André).",
+  "version": "2026-08-29b",
+  "decisao": "Assentamento + pintura → bloco C Acabamentos. Aditivos (ALVENARIA ·C) permanecem em Edificações.",
+  "destino_pintura": {
+    "bloco": "C — Acabamentos (prévia)",
+    "sub_bloco": "C2 Pintura",
+    "etapa": "6 — Acabamento seco",
+    "core": "PINTURA_OBRA"
+  },
+  "destino_revestimentos": {
+    "bloco": "C — Acabamentos (prévia)",
+    "sub_bloco": "C1 Revestimentos",
+    "etapa": "4 — Revestimentos",
+    "core": "ASSENTAMENTO_CERAMICA"
+  },
   "por_linha_codigo": {
     "ARGAMASSA": {
       "bloco": "C — Acabamentos (prévia)",
@@ -36,6 +48,64 @@
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha_tipo": "portfolio"
+    },
+    "TINTA": {
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
+      "etapa": "6 — Acabamento seco",
+      "core": "PINTURA_OBRA"
+    },
+    "VERNIZ": {
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
+      "etapa": "6 — Acabamento seco",
+      "core": "PINTURA_OBRA"
+    },
+    "THINNER": {
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
+      "etapa": "6 — Acabamento seco",
+      "core": "PINTURA_OBRA"
+    },
+    "MASSA_CORRIDA": {
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
+      "etapa": "6 — Acabamento seco",
+      "core": "PINTURA_OBRA"
+    },
+    "MASSA_ACRILICA": {
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
+      "etapa": "6 — Acabamento seco",
+      "core": "PINTURA_OBRA"
+    },
+    "LIXA": {
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
+      "etapa": "6 — Acabamento seco",
+      "core": "PINTURA_OBRA"
+    },
+    "FERRAMENTAS": {
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
+      "etapa": "6 — Acabamento seco",
+      "core": "PINTURA_OBRA"
     }
-  }
+  },
+  "por_linha_parcial": [
+    {
+      "linha_codigo": "PINTURA_QUIMICOS",
+      "nota": "Aditivos em ALVENARIA·C ficam em Edificações; resto (A6) vai para C2 Pintura",
+      "exceto": {
+        "core": "ALVENARIA",
+        "produto_compra_regex": "ADITIVO"
+      },
+      "aplicar": {
+        "bloco": "C — Acabamentos (prévia)",
+        "sub_bloco": "C2 Pintura",
+        "etapa": "6 — Acabamento seco",
+        "core": "PINTURA_OBRA"
+      }
+    }
+  ]
 }

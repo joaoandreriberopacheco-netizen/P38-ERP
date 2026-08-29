@@ -2,7 +2,7 @@
   "version": "2026-08-29",
   "source": "docs/exports/P38-sku-hierarquia-ab.xlsx",
   "linhas_mestre_version": "2026-08-29",
-  "bloco_overrides_version": "2026-08-29",
+  "bloco_overrides_version": "2026-08-29b",
   "sheets": [
     {
       "name": "A — Edificações",
@@ -280,7 +280,12 @@
     {
       "bloco": "A — Edificações",
       "sub_bloco": "A6 Acabamento seco",
-      "sku_count": 236
+      "sku_count": 26
+    },
+    {
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
+      "sku_count": 210
     },
     {
       "bloco": "B — Instalações",
@@ -9210,8 +9215,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "FERRAMENTAS",
@@ -9235,8 +9240,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "FERRAMENTAS",
@@ -9260,8 +9265,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "FERRAMENTAS",
@@ -9285,8 +9290,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "FERRAMENTAS",
@@ -9310,8 +9315,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "FERRAMENTAS",
@@ -9335,8 +9340,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "FERRAMENTAS",
@@ -9360,8 +9365,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "FERRAMENTAS",
@@ -9385,8 +9390,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "FERRAMENTAS",
@@ -9410,8 +9415,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "FERRAMENTAS",
@@ -9435,8 +9440,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "FERRAMENTAS",
@@ -9460,8 +9465,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "FERRAMENTAS",
@@ -9485,8 +9490,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "FERRAMENTAS",
@@ -9510,8 +9515,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "FERRAMENTAS",
@@ -9535,8 +9540,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "FERRAMENTAS",
@@ -9560,8 +9565,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -9585,8 +9590,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -9610,8 +9615,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -9635,8 +9640,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -9660,8 +9665,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -9685,8 +9690,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -9710,8 +9715,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -9735,8 +9740,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -9760,8 +9765,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -9785,8 +9790,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -9810,8 +9815,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -9835,8 +9840,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -9860,8 +9865,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -9885,8 +9890,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -9910,8 +9915,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -9935,8 +9940,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -9960,8 +9965,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -9985,8 +9990,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -10010,8 +10015,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -10035,8 +10040,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -10060,8 +10065,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -10085,8 +10090,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -10110,8 +10115,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -10135,8 +10140,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -10160,8 +10165,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -10185,8 +10190,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -10210,8 +10215,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -10235,8 +10240,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -10260,8 +10265,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -10285,8 +10290,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -10310,8 +10315,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -10335,8 +10340,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "LIXA",
@@ -10360,8 +10365,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "MASSA ACRÍLICA",
@@ -10385,8 +10390,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "MASSA ACRÍLICA",
@@ -10410,8 +10415,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "MASSA ACRÍLICA",
@@ -10435,8 +10440,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "MASSA ACRÍLICA",
@@ -10460,8 +10465,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "MASSA CORRIDA",
@@ -10485,8 +10490,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "MASSA CORRIDA",
@@ -10510,8 +10515,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "MASSA CORRIDA",
@@ -10535,8 +10540,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "MASSA CORRIDA",
@@ -10560,8 +10565,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -10585,8 +10590,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -10610,8 +10615,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -10635,8 +10640,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -10660,8 +10665,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -10685,8 +10690,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -10710,8 +10715,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -10735,8 +10740,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -10760,8 +10765,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -10785,8 +10790,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -10810,8 +10815,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -10835,8 +10840,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -10860,8 +10865,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -10885,8 +10890,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -10910,8 +10915,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -10935,8 +10940,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -10960,8 +10965,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -10985,8 +10990,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -11010,8 +11015,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -11035,8 +11040,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -11060,8 +11065,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -11085,8 +11090,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -11110,8 +11115,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -11135,8 +11140,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -11160,8 +11165,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -11185,8 +11190,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -11210,8 +11215,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "PINTURA E QUÍMICOS",
@@ -11235,8 +11240,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "THINNER",
@@ -11260,8 +11265,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "THINNER",
@@ -11285,8 +11290,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "THINNER",
@@ -11310,8 +11315,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "THINNER",
@@ -11335,8 +11340,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "THINNER",
@@ -11360,8 +11365,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "THINNER",
@@ -11385,8 +11390,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "THINNER",
@@ -11410,8 +11415,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -11435,8 +11440,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -11460,8 +11465,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -11485,8 +11490,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -11510,8 +11515,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -11535,8 +11540,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -11560,8 +11565,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -11585,8 +11590,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -11610,8 +11615,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -11635,8 +11640,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -11660,8 +11665,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -11685,8 +11690,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -11710,8 +11715,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -11735,8 +11740,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -11760,8 +11765,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -11785,8 +11790,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -11810,8 +11815,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -11835,8 +11840,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -11860,8 +11865,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -11885,8 +11890,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -11910,8 +11915,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -11935,8 +11940,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -11960,8 +11965,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -11985,8 +11990,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12010,8 +12015,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12035,8 +12040,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12060,8 +12065,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12085,8 +12090,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12110,8 +12115,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12135,8 +12140,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12160,8 +12165,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12185,8 +12190,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12210,8 +12215,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12235,8 +12240,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12260,8 +12265,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12285,8 +12290,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12310,8 +12315,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12335,8 +12340,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12360,8 +12365,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12385,8 +12390,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12410,8 +12415,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12435,8 +12440,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12460,8 +12465,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12485,8 +12490,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12510,8 +12515,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12535,8 +12540,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12560,8 +12565,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12585,8 +12590,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12610,8 +12615,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12635,8 +12640,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12660,8 +12665,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12685,8 +12690,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12710,8 +12715,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12735,8 +12740,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12760,8 +12765,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12785,8 +12790,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12810,8 +12815,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12835,8 +12840,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12860,8 +12865,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12885,8 +12890,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12910,8 +12915,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12935,8 +12940,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12960,8 +12965,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -12985,8 +12990,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13010,8 +13015,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13035,8 +13040,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13060,8 +13065,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13085,8 +13090,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13110,8 +13115,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13135,8 +13140,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13160,8 +13165,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13185,8 +13190,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13210,8 +13215,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13235,8 +13240,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13260,8 +13265,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13285,8 +13290,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13310,8 +13315,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13335,8 +13340,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13360,8 +13365,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13385,8 +13390,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13410,8 +13415,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13435,8 +13440,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13460,8 +13465,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13485,8 +13490,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13510,8 +13515,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13535,8 +13540,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13560,8 +13565,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13585,8 +13590,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13610,8 +13615,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13635,8 +13640,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13660,8 +13665,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13685,8 +13690,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13710,8 +13715,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13735,8 +13740,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "TINTA",
@@ -13760,8 +13765,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -13785,8 +13790,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -13810,8 +13815,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -13835,8 +13840,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -13860,8 +13865,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -13885,8 +13890,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -13910,8 +13915,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -13935,8 +13940,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -13960,8 +13965,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -13985,8 +13990,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -14010,8 +14015,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -14035,8 +14040,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -14060,8 +14065,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -14085,8 +14090,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -14110,8 +14115,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -14135,8 +14140,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -14160,8 +14165,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -14185,8 +14190,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -14210,8 +14215,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -14235,8 +14240,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -14260,8 +14265,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -14285,8 +14290,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -14310,8 +14315,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -14335,8 +14340,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -14360,8 +14365,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -14385,8 +14390,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -14410,8 +14415,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",
@@ -14435,8 +14440,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A6 Acabamento seco",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA",
       "linha": "VERNIZ",

@@ -70,10 +70,14 @@ Organização da **obra** no Excel (`P38-sku-hierarquia-ab.xlsx`, folha **Legend
 A1 Estrutura / alvenaria
 └── ALVENARIA (core)
     ├── ·N núcleo     → CIMENTO·N, MATERIAIS BÁSICOS·N
-    └── ·C complemento → MATERIAIS BÁSICOS·C, PINTURA E QUÍMICOS·C
+    └── ·C complemento → MATERIAIS BÁSICOS·C, **ADITIVO** (plastificante — fica em Edificações)
 ```
 
-**Assentamento (bloco C — Acabamentos):** `ARGAMASSA` (mix), `REJUNTE` (portfolio), `CERÂMICA BOLD/RETIF` (portfolio) — core `ASSENTAMENTO_CERAMICA`, sub-bloco `C1 Revestimentos`. Override canónico: `src/data/estudoCatalogBlocoOverrides.json`.
+**Assentamento (bloco C — Acabamentos):** `ARGAMASSA` (mix), `REJUNTE` (portfolio), cerâmicas (portfolio) — sub-bloco `C1 Revestimentos`, core `ASSENTAMENTO_CERAMICA`.
+
+**Pintura (bloco C — Acabamentos):** `TINTA`, `VERNIZ`, `THINNER`, massas, lixas e afins de pintura — sub-bloco `C2 Pintura`, core `PINTURA_OBRA`. **Aditivos** (`ADITIVO PLASTIFICANTE` em `ALVENARIA·C`) **permanecem em Edificações**.
+
+Override canónico: `src/data/estudoCatalogBlocoOverrides.json`.
 
 **Consumíveis transversais:** categoria ERP `J — FERRAMENTAS E CONSUMÍVEIS` (etapa 8) é **transversal** — distinto dos complementos **·C** dentro de um core (ex.: aditivo na alvenaria).
 

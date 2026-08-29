@@ -75,24 +75,52 @@ function resolveLinhaMeta(linhaCell, { byNome, byCodigo }) {
 }
 
 function loadBlocoOverrides() {
-  if (!fs.existsSync(BLOCO_OVERRIDES_JSON)) return { por_linha_codigo: {} };
+  if (!fs.existsSync(BLOCO_OVERRIDES_JSON)) {
+    return { version: null, por_linha_codigo: {}, por_linha_parcial: [] };
+  }
   const raw = JSON.parse(fs.readFileSync(BLOCO_OVERRIDES_JSON, 'utf8'));
-  return raw.por_linha_codigo ? raw : { por_linha_codigo: raw };
+  return {
+    version: raw.version || null,
+    por_linha_codigo: raw.por_linha_codigo || {},
+    por_linha_parcial: raw.por_linha_parcial || [],
+  };
 }
 
-function applyBlocoOverrides(rows, porLinhaCodigo = {}) {
-  if (!porLinhaCodigo || !Object.keys(porLinhaCodigo).length) return rows;
+function mergeBlocoOverride(row, patch) {
+  if (!patch) return row;
+  return {
+    ...row,
+    ...(patch.bloco != null ? { bloco: patch.bloco } : {}),
+    ...(patch.sub_bloco != null ? { sub_bloco: patch.sub_bloco } : {}),
+    ...(patch.etapa != null ? { etapa: patch.etapa } : {}),
+    ...(patch.core != null ? { core: patch.core } : {}),
+    ...(patch.linha_tipo != null ? { linha_tipo: patch.linha_tipo } : {}),
+  };
+}
+
+function matchesBlocoExceto(row, exceto = {}) {
+  if (exceto.core && row.core === exceto.core) return true;
+  if (exceto.sub_bloco && row.sub_bloco === exceto.sub_bloco) return true;
+  const pc = `${row.produto_compra_nome || ''} ${row.produto_compra || ''}`.trim();
+  if (exceto.produto_compra_regex && pc) {
+    const re = new RegExp(exceto.produto_compra_regex, 'i');
+    if (re.test(pc)) return true;
+  }
+  return false;
+}
+
+function applyBlocoOverrides(rows, { por_linha_codigo = {}, por_linha_parcial = [] } = {}) {
+  const hasFull = por_linha_codigo && Object.keys(por_linha_codigo).length;
+  const hasPartial = por_linha_parcial?.length;
+  if (!hasFull && !hasPartial) return rows;
+
   return rows.map((row) => {
-    const o = porLinhaCodigo[row.linha_codigo];
-    if (!o) return row;
-    return {
-      ...row,
-      ...(o.bloco != null ? { bloco: o.bloco } : {}),
-      ...(o.sub_bloco != null ? { sub_bloco: o.sub_bloco } : {}),
-      ...(o.etapa != null ? { etapa: o.etapa } : {}),
-      ...(o.core != null ? { core: o.core } : {}),
-      ...(o.linha_tipo != null ? { linha_tipo: o.linha_tipo } : {}),
-    };
+    for (const rule of por_linha_parcial) {
+      if (row.linha_codigo !== rule.linha_codigo) continue;
+      if (matchesBlocoExceto(row, rule.exceto)) return row;
+      return mergeBlocoOverride(row, rule.aplicar);
+    }
+    return mergeBlocoOverride(row, por_linha_codigo[row.linha_codigo]);
   });
 }
 
@@ -173,7 +201,7 @@ async function main() {
     sheetsRead.push({ name, count: part.length });
   }
 
-  const skus = applyBlocoOverrides(skusRaw, blocoOverrides.por_linha_codigo);
+  const skus = applyBlocoOverrides(skusRaw, blocoOverrides);
   const overrideCount = skus.filter((row, i) => row !== skusRaw[i]).length;
   if (overrideCount) {
     console.log(`[estudo-manifest] ${overrideCount} SKU(s) com bloco/tipo override (estudoCatalogBlocoOverrides.json)`);
