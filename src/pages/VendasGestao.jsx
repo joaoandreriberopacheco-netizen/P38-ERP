@@ -1,4 +1,6 @@
 import { memo, useState, useRef, useMemo, useEffect } from 'react';
+import { useCompactShell } from '@/hooks/use-breakpoint';
+import { cn } from '@/lib/utils';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { base44 } from '@/api/base44Client';
 import {
@@ -448,6 +450,7 @@ function VendasGestaoPage() {
     throw new Error('[PULSE-TEST] Gestão de vendas quebrada de propósito');
   }
 
+  const isPhone = useCompactShell();
   const { invalidateHomeKpis } = useP38QueryInvalidation();
   const [dataInicio, setDataInicio] = useState(() => getPeriodoMesCorrente().start);
   const [dataFim, setDataFim] = useState(() => getPeriodoMesCorrente().end);
@@ -753,7 +756,16 @@ function VendasGestaoPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-4 overflow-x-hidden">
+    <>
+    <div
+      className={cn(
+        'w-full min-w-0 max-w-full',
+        isPhone
+          ? 'flex flex-col h-full min-h-0 overflow-hidden'
+          : 'max-w-7xl mx-auto space-y-4 overflow-x-hidden',
+      )}
+    >
+      <div className={cn(isPhone ? 'shrink-0 space-y-4 px-4' : 'space-y-4')}>
       {/* Header limpo */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <P38PageHeader
@@ -813,6 +825,7 @@ function VendasGestaoPage() {
         <GlacialTabsTrigger value="consulta" activeValue={activeTab} onSelect={handleActiveTabChange} label="Consulta" icon={Receipt} />
         <GlacialTabsTrigger value="vales" activeValue={activeTab} onSelect={handleActiveTabChange} label="Vales" icon={Ticket} />
       </GlacialTabsList>
+      </div>
 
       <Drawer open={showFiltros} onOpenChange={setShowFiltros}>
         {showFiltros ? (
@@ -931,7 +944,13 @@ function VendasGestaoPage() {
         ) : null}
       </Drawer>
 
-      <div>
+      <div
+        className={cn(
+          isPhone
+            ? 'flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y px-4 pb-4'
+            : undefined,
+        )}
+      >
 
         {activeTab === 'rascunhos' && (
         <div className="space-y-4 min-w-0">
@@ -1080,6 +1099,7 @@ function VendasGestaoPage() {
           />
         )}
       </div>
+    </div>
 
       {/* Dialogs de operações — montar só quando abertos (evita loops Radix/portals) */}
       {showAlterarPagamento ? (
@@ -1141,7 +1161,7 @@ function VendasGestaoPage() {
 
       {/* FAB Relatórios */}
       <VendasRelatorisFAB />
-    </div>
+    </>
   );
 }
 

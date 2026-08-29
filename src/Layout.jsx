@@ -26,7 +26,7 @@ const GlacialSidebar = React.lazy(() => import('@/components/navigation/GlacialS
 const PinSetupDialog = React.lazy(() => import('@/components/auth/PinSetupDialog'));
 const MobileFunctionSelector = React.lazy(() => import('@/components/navigation/MobileFunctionSelector'));
 
-/** Mobile: scroll interno na página (evita body + nested scroll). PDVCaixa usa scroll do painel como VendasGestao. */
+/** Mobile: scroll interno na página (evita body + nested scroll). */
 const MOBILE_FULL_VIEWPORT_PAGES = new Set([
   'Produtos',
   'RelatorioMargem',
@@ -40,6 +40,7 @@ const MOBILE_FULL_VIEWPORT_PAGES = new Set([
   'TabelaPrecosConsulta',
   'Compras',
   'PedidosCompra',
+  'VendasGestao',
 ]);
 
 /** Desktop: catálogo/relatórios densos ocupam altura do viewport. */
@@ -56,6 +57,7 @@ const DESKTOP_FULL_HEIGHT_PAGES = new Set([
   'TabelaPrecosConsulta',
   'Compras',
   'PedidosCompra',
+  'VendasGestao',
 ]);
 
 /** Rotas PDV no mobile: mantêm GlacialBottomNav (atalho rápido em overlay continua fullscreen). */
