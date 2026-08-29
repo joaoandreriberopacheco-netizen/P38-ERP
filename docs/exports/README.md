@@ -24,6 +24,31 @@ Regenerar: `npm run export:catalogo-skus`
 
 ---
 
+## Excel estudo AB — Novo Catálogo + Smart Supply (preview)
+
+| Ficheiro | Papel |
+|----------|--------|
+| [P38-sku-hierarquia-ab.xlsx](./P38-sku-hierarquia-ab.xlsx) | **Fonte viva** da nomenclatura nova (bloco, LINHA, produto compra, eixos, `novo_sku`). Hidrata `/CatalogoNovo` e `/SmartSupplyNovo`. |
+| `src/data/estudoCatalogManifest.generated.json` | Gerado pelo build — **não editar à mão**. |
+
+**Fluxo:**
+
+```bash
+# 1) Opcional: puxar sku_atual do cadastro + propor nomenclatura (PISO→CERÂMICA, soldável, etc.)
+npm run estudo:catalog-sync-nomenclatura          # requer DATABASE_URL ou export:catalogo-skus recente
+npm run estudo:catalog-sync-nomenclatura -- --dry-run
+
+# 2) Excel → manifest → UI
+npm run estudo:catalog-manifest
+npm run build
+```
+
+**Regra:** hierarquia e `novo_sku` vêm do **Excel**; **estoque** na UI vem do cadastro (`codigo_interno`), em `useCatalogoEstudoData`.
+
+Doc completa: [../novo-ecossistema/README.md](../novo-ecossistema/README.md)
+
+---
+
 ## LINHAS mestre — aprovação (próximo passo BD)
 
 Tabela **LINHA** + tipo (solo/mix/portfolio) antes de SQL. Marque **STATUS** na folha.

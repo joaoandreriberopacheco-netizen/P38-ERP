@@ -106,7 +106,7 @@
     "portal:excel-manifest": "node scripts/build-portal-excel-manifest.mjs",
     "estudo:catalog-manifest": "node scripts/build-estudo-catalog-manifest.mjs",
     "estudo:catalog-excel-apply": "node scripts/apply-estudo-catalog-excel-decisoes.mjs",
-    "estudo:catalog-b-hierarquia": "node scripts/apply-estudo-b-instalacoes-hierarquia.mjs",
+    "estudo:catalog-sync-nomenclatura": "node scripts/sync-estudo-excel-nomenclatura.mjs",
     "modelo:seed-ceramica": "node scripts/seed-modelo-catalogo-ceramica.mjs",
     "formigres:enriquecer-pisos": "node scripts/enriquecer-pisos-formigres.mjs",
     "formigres:pdf-pisos": "node scripts/gerar-pdf-pisos-formigres.mjs",

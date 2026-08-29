@@ -115,7 +115,14 @@ A1 Estrutura / alvenaria
 | `C — Acabamentos (prévia)` | Revestimentos (C1) + pintura (C2) |
 | `C prévia — elétrica visível` | Acabamentos eléctricos visíveis |
 
-**Fluxo:** editar Excel → `npm run estudo:catalog-manifest` → preview UI. Até ao corte/migração produção, o Excel é a base viva.
+**Fluxo canónico (Excel → UI, estoque do cadastro):**
+
+1. **Editar / sincronizar** `docs/exports/P38-sku-hierarquia-ab.xlsx` — nomenclatura nova (`novo_sku`, LINHA, produto compra, eixos, bloco…). **Não** gravar hierarquia no Supabase para o preview.
+2. **Opcional — alimentar Excel a partir do cadastro:** `npm run estudo:catalog-sync-nomenclatura` (actualiza `sku_atual` sempre; propõe `novo_sku` onde ainda há legado, ex. PISO → CERÂMICA BOLD/RETIF). Requer `DATABASE_URL` ou fallback `P38-catalogo-skus-completo.xlsx`.
+3. **Regenerar manifest:** `npm run estudo:catalog-manifest` (corre também no `npm run build`).
+4. **UI:** `useCatalogoEstudoData` cruza manifest + **estoque real** por `codigo_interno` (cadastro); SKUs sem match mantêm estoque simulado.
+
+Até ao corte/migração produção, o **Excel é a base viva** da nomenclatura; a BD legada (h1–h5) só entra via sync ou manual.
 
 **Consumíveis transversais:** categoria ERP `J — FERRAMENTAS E CONSUMÍVEIS` (etapa 8) é **transversal** — distinto dos complementos **·C** dentro de um core (ex.: aditivo na alvenaria).
 
@@ -164,6 +171,7 @@ Labels canónicos: `src/config/smartSupplyFlags.js` (`NOVO_ECOSISTEMA_*`, `SMART
 ## Comandos
 
 ```bash
+npm run estudo:catalog-sync-nomenclatura   # cadastro → Excel (sku_atual + nomenclatura proposta)
 npm run estudo:catalog-manifest   # Excel → JSON (corre também no build)
 # Migração pontual Excel (só se houver script de decisões pendente):
 npm run estudo:catalog-excel-apply
