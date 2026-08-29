@@ -16,6 +16,7 @@ import { useForceLandscape } from '@/hooks/useForceLandscape';
 import { useBottomNavScrollVisibility } from '@/hooks/useBottomNavScrollVisibility';
 import { shouldHideBottomNavOnScroll } from '@/config/bottomNavScrollPolicy';
 import { shouldOpenGlobalSearchFromKeyboard } from '@/lib/globalSearchShortcut';
+import { shouldOpenDesktopSidebarFromKeyboard } from '@/lib/sidebarNavLetters';
 import { armGlobalSearchOpenGuard, registerOpenSearchOverlaySync } from '@/lib/openGlobalSearch';
 import FinanceiroAccessGuard from '@/components/guard/FinanceiroAccessGuard';
 import { isFinanceiroProtectedPage } from '@/config/financeiroGate';
@@ -258,6 +259,12 @@ export default function Layout({ children, currentPageName }) {
         setShowMobileMenu(false);
         return;
       }
+      if (!isMobile && shouldOpenDesktopSidebarFromKeyboard(e)) {
+        e.preventDefault();
+        setSearchOverlayOpen(false);
+        setIsOpen(true);
+        return;
+      }
       if (e.key === 'Escape') {
         setSearchOverlayOpen(false);
       }
@@ -273,7 +280,7 @@ export default function Layout({ children, currentPageName }) {
       document.removeEventListener('keydown', down, true);
       window.removeEventListener('open-global-search', handleGlobalSearch);
     };
-  }, [openSearchOverlay]);
+  }, [openSearchOverlay, isMobile]);
 
   useEffect(() => {
     if (!showDesktopUserPanel) return;

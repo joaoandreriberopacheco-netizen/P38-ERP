@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
 import { ChevronLeft, ChevronRight, Sun, Moon, ALargeSmall, Shield, User, Settings, LogOut, RotateCw, Lock } from 'lucide-react';
-import { indexToNavLetter, letterKeyToIndex, isTypingTarget } from '@/lib/sidebarNavLetters';
+import { indexToNavLetter, letterKeyToIndex, isTypingTarget, getDesktopSidebarShortcutLabel } from '@/lib/sidebarNavLetters';
 import { base44 } from '@/api/base44Client';
 import PinSetupDialog from '@/components/auth/PinSetupDialog';
 import P38Logo from '@/components/brand/P38Logo';
@@ -114,6 +114,7 @@ export default function GlacialSidebar({
   const fontLabel = fontSize === 1 ? 'A' : fontSize < 1 ? 'A-' : 'A+';
 
   const c = getP38ShellColors(isDark);
+  const sidebarShortcutLabel = getDesktopSidebarShortcutLabel();
 
   const useDesktopDrilldown = !isMobile;
 
@@ -278,7 +279,9 @@ export default function GlacialSidebar({
               ) : (
                 <span className="flex items-center justify-between gap-2">
                   <span className="p38-sidebar-section-label tracking-widest" style={{ color: c.sectionLabel }}>Menu</span>
-                  <span className="normal-case tracking-normal text-[9px]" style={{ color: c.textSub }}>A–Z · Esc</span>
+                  <span className="normal-case tracking-normal text-[9px]" style={{ color: c.textSub }}>
+                    {sidebarShortcutLabel} · A–Z · Esc
+                  </span>
                 </span>
               )}
             </p>
