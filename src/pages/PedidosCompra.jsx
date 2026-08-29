@@ -521,8 +521,7 @@ function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
 
 export default function PedidosCompraPage() {
   const isPhone = useCompactShell();
-  const scrollRef = useRef(null);
-  const chromeVisible = useScrollChromeVisibility(scrollRef, isPhone);
+  const { chromeVisible, scrollRef } = useScrollChromeVisibility(isPhone);
   const navigate = useNavigate();
   const [pedidos, setPedidos] = useState([]);
   const [embarques, setEmbarques] = useState([]);
@@ -941,7 +940,7 @@ export default function PedidosCompraPage() {
         'w-full min-w-0 max-w-full font-din-1451 bg-background',
         isPhone
           ? 'flex flex-col h-full min-h-0 overflow-hidden'
-          : 'overflow-x-hidden space-y-4',
+          : 'flex flex-col h-full min-h-0 overflow-hidden',
       )}
     >
       {isPhone ? (
@@ -1080,7 +1079,7 @@ export default function PedidosCompraPage() {
         </>
       ) : (
         <>
-      <div className="space-y-4">
+      <div className="shrink-0 space-y-4 px-4 md:px-6 pt-4 md:pt-6">
       {/* Header */}
       <div className="pb-3 mb-1 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="space-y-1.5 min-w-0">
@@ -1178,6 +1177,7 @@ export default function PedidosCompraPage() {
       />
       </div>
 
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain px-4 md:px-6 pb-4 md:pb-6">
       {activeView === 'embarques' ? (
         <ListaPedidosCompra
           grupos={grupos}
@@ -1202,6 +1202,7 @@ export default function PedidosCompraPage() {
           emptyMessage="Nenhum embarque no período selecionado"
         />
       )}
+      </div>
         </>
       )}
     </div>

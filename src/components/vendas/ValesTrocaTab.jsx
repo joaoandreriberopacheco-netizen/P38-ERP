@@ -53,19 +53,30 @@ function ValeMobileLine({ vale, striped }) {
   );
 }
 
-function VirtualizedValesMobile({ vales }) {
-  const parentRef = useRef(null);
+function VirtualizedValesMobile({ vales, pageScrollEl = null }) {
+  const innerRef = useRef(null);
   const rowVirtualizer = useVirtualizer({
     count: vales.length,
-    getScrollElement: () => parentRef.current,
+    getScrollElement: () => pageScrollEl ?? innerRef.current,
     estimateSize: () => 96,
     getItemKey: (index) => vales[index]?.id ?? index,
     overscan: P38_VIRTUAL_OVERSCAN,
   });
   const virtualItems = rowVirtualizer.getVirtualItems();
+  const embedInPageScroll = Boolean(pageScrollEl);
+
+  useEffect(() => {
+    if (pageScrollEl) rowVirtualizer.measure();
+  }, [pageScrollEl, rowVirtualizer]);
 
   return (
-    <P38MobileLineList ref={parentRef} className="desktop-layout:hidden pr-1" style={{ maxHeight: P38_VIRTUAL_LIST_MAX_HEIGHT }}>
+    <P38MobileLineList
+      ref={embedInPageScroll ? null : innerRef}
+      className={embedInPageScroll
+        ? 'desktop-layout:hidden overflow-visible max-h-none border-0 shadow-none rounded-none bg-transparent dark:border-0 pr-1'
+        : 'desktop-layout:hidden pr-1'}
+      style={embedInPageScroll ? undefined : { maxHeight: P38_VIRTUAL_LIST_MAX_HEIGHT }}
+    >
       <div className="relative w-full" style={{ height: `${rowVirtualizer.getTotalSize()}px` }}>
         {virtualItems.map((virtualRow) => {
           const vale = vales[virtualRow.index];
@@ -156,7 +167,7 @@ function VirtualizedValesTable({ vales }) {
   );
 }
 
-export default function ValesTrocaTab({ searchTerm, statusFiltro, dataInicio, dataFim, activeTab }) {
+export default function ValesTrocaTab({ searchTerm, statusFiltro, dataInicio, dataFim, activeTab, pageScrollEl = null }) {
   const [vales, setVales] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -229,7 +240,7 @@ export default function ValesTrocaTab({ searchTerm, statusFiltro, dataInicio, da
         </div>
       ) : shouldVirtualize ? (
         <>
-          <VirtualizedValesMobile vales={filteredVales} />
+          <VirtualizedValesMobile vales={filteredVales} pageScrollEl={pageScrollEl} />
           <VirtualizedValesTable vales={filteredVales} />
         </>
       ) : (

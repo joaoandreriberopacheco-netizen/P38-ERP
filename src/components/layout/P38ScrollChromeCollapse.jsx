@@ -15,7 +15,7 @@ export function P38ScrollChromeCollapse({
     <div
       className={cn(
         'grid transition-[grid-template-rows] duration-300 ease-out',
-        visible ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+        visible ? 'grid-rows-[auto]' : 'grid-rows-[0fr]',
         className,
       )}
     >

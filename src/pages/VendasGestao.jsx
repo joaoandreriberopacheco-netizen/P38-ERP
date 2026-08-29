@@ -89,6 +89,9 @@ const FILTRO_SELECT_CONTENT =
   'z-[320] max-h-[min(50vh,20rem)] border border-border/40 bg-popover shadow-lg dark:border-white/10 dark:bg-card';
 
 const VIRTUAL_LIST_STYLE = { maxHeight: 'calc(100vh - 260px)' };
+/** Lista virtual embutida no scroll da página (mobile viewport shell). */
+const PAGE_EMBED_LIST_CLASS =
+  'overflow-visible max-h-none border-0 shadow-none rounded-none bg-transparent dark:border-0 desktop-layout:hidden';
 /** Altura inicial por card mobile (pedido: título + nº + status/pagamento/vendedor). */
 const PEDIDO_MOBILE_ESTIMATE = 104;
 const RASCUNHO_MOBILE_ESTIMATE = 96;
@@ -159,20 +162,29 @@ function PedidoMobileLine({ pedido, onVerDetalhes, onEdit, onReimprimir, onCorri
   );
 }
 
-function VirtualizedPedidoCards({ pedidos, onVerDetalhes, onEdit, onReimprimir, onCorrigirCliente }) {
-  const parentRef = useRef(null);
+function VirtualizedPedidoCards({ pedidos, onVerDetalhes, onEdit, onReimprimir, onCorrigirCliente, pageScrollEl = null }) {
+  const innerRef = useRef(null);
   const rowVirtualizer = useVirtualizer({
     count: pedidos.length,
-    getScrollElement: () => parentRef.current,
+    getScrollElement: () => pageScrollEl ?? innerRef.current,
     estimateSize: () => PEDIDO_MOBILE_ESTIMATE,
     getItemKey: (index) => pedidos[index]?.id ?? index,
     measureElement: measureVirtualItem,
     overscan: P38_VIRTUAL_OVERSCAN,
   });
   const virtualItems = rowVirtualizer.getVirtualItems();
+  const embedInPageScroll = Boolean(pageScrollEl);
+
+  useEffect(() => {
+    if (pageScrollEl) rowVirtualizer.measure();
+  }, [pageScrollEl, rowVirtualizer]);
 
   return (
-    <P38MobileLineList ref={parentRef} className="pr-1" style={VIRTUAL_LIST_STYLE}>
+    <P38MobileLineList
+      ref={embedInPageScroll ? null : innerRef}
+      className={cn('pr-1', embedInPageScroll && PAGE_EMBED_LIST_CLASS)}
+      style={embedInPageScroll ? undefined : VIRTUAL_LIST_STYLE}
+    >
       <div className="relative w-full" style={{ height: `${rowVirtualizer.getTotalSize()}px` }}>
         {virtualItems.map((virtualRow) => {
           const pedido = pedidos[virtualRow.index];
@@ -328,20 +340,29 @@ function RascunhoMobileLine({ rascunho, onInutilizar, striped }) {
   );
 }
 
-function VirtualizedRascunhoLines({ rascunhos, onInutilizar }) {
-  const parentRef = useRef(null);
+function VirtualizedRascunhoLines({ rascunhos, onInutilizar, pageScrollEl = null }) {
+  const innerRef = useRef(null);
   const rowVirtualizer = useVirtualizer({
     count: rascunhos.length,
-    getScrollElement: () => parentRef.current,
+    getScrollElement: () => pageScrollEl ?? innerRef.current,
     estimateSize: () => RASCUNHO_MOBILE_ESTIMATE,
     getItemKey: (index) => rascunhos[index]?.id ?? index,
     measureElement: measureVirtualItem,
     overscan: P38_VIRTUAL_OVERSCAN,
   });
   const virtualItems = rowVirtualizer.getVirtualItems();
+  const embedInPageScroll = Boolean(pageScrollEl);
+
+  useEffect(() => {
+    if (pageScrollEl) rowVirtualizer.measure();
+  }, [pageScrollEl, rowVirtualizer]);
 
   return (
-    <P38MobileLineList ref={parentRef} className="pr-1" style={VIRTUAL_LIST_STYLE}>
+    <P38MobileLineList
+      ref={embedInPageScroll ? null : innerRef}
+      className={cn('pr-1', embedInPageScroll && PAGE_EMBED_LIST_CLASS)}
+      style={embedInPageScroll ? undefined : VIRTUAL_LIST_STYLE}
+    >
       <div className="relative w-full" style={{ height: `${rowVirtualizer.getTotalSize()}px` }}>
         {virtualItems.map((virtualRow) => {
           const rascunho = rascunhos[virtualRow.index];
@@ -453,8 +474,7 @@ function VendasGestaoPage() {
   }
 
   const isPhone = useCompactShell();
-  const scrollRef = useRef(null);
-  const chromeVisible = useScrollChromeVisibility(scrollRef, isPhone);
+  const { chromeVisible, scrollRef, scrollEl } = useScrollChromeVisibility(isPhone);
   const { invalidateHomeKpis } = useP38QueryInvalidation();
   const [dataInicio, setDataInicio] = useState(() => getPeriodoMesCorrente().start);
   const [dataFim, setDataFim] = useState(() => getPeriodoMesCorrente().end);
@@ -1039,6 +1059,7 @@ function VendasGestaoPage() {
             <VirtualizedRascunhoLines
               rascunhos={rascunhosFiltrados}
               onInutilizar={handleInutilizarRascunho}
+              pageScrollEl={isPhone ? scrollEl : null}
             />
             <VirtualizedRascunhosTable
               rascunhos={rascunhosFiltrados}
@@ -1079,6 +1100,7 @@ function VendasGestaoPage() {
               onEdit={handleEdit}
               onReimprimir={handleReimprimir}
               onCorrigirCliente={handleCorrigirCliente}
+              pageScrollEl={isPhone ? scrollEl : null}
             />
             <VirtualizedPedidosTable
               pedidos={pedidosFiltrados}
@@ -1122,6 +1144,7 @@ function VendasGestaoPage() {
               onEdit={handleEdit}
               onReimprimir={handleReimprimir}
               onCorrigirCliente={handleCorrigirCliente}
+              pageScrollEl={isPhone ? scrollEl : null}
             />
             <VirtualizedPedidosTable
               pedidos={orcamentosFiltrados}
@@ -1159,6 +1182,7 @@ function VendasGestaoPage() {
             dataInicio={dataInicio}
             dataFim={dataFim}
             activeTab={activeTab}
+            pageScrollEl={isPhone ? scrollEl : null}
           />
         )}
       </div>

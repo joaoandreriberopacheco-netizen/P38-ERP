@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /** Esconder chrome após ~48px de scroll para baixo. */
 const HIDE_AFTER_Y = 48;
@@ -7,11 +7,16 @@ const MIN_DELTA = 6;
 
 /**
  * Mostra/esconde chrome superior conforme direção do scroll num contentor interno.
- * Scroll para baixo → esconde; scroll para cima ou perto do topo → mostra.
+ * Retorna callback ref — garante listener após mount do painel scrollável.
  */
-export function useScrollChromeVisibility(scrollRef, enabled = true) {
+export function useScrollChromeVisibility(enabled = true) {
   const [visible, setVisible] = useState(true);
+  const [scrollEl, setScrollEl] = useState(null);
   const lastYRef = useRef(0);
+
+  const scrollRef = useCallback((node) => {
+    setScrollEl(node);
+  }, []);
 
   useEffect(() => {
     setVisible(true);
@@ -19,11 +24,10 @@ export function useScrollChromeVisibility(scrollRef, enabled = true) {
   }, [enabled]);
 
   useEffect(() => {
-    const el = scrollRef?.current;
-    if (!enabled || !el) return undefined;
+    if (!enabled || !scrollEl) return undefined;
 
     const onScroll = () => {
-      const y = el.scrollTop;
+      const y = scrollEl.scrollTop;
       const delta = y - lastYRef.current;
       if (Math.abs(delta) < MIN_DELTA) return;
 
@@ -38,9 +42,9 @@ export function useScrollChromeVisibility(scrollRef, enabled = true) {
       lastYRef.current = y;
     };
 
-    el.addEventListener('scroll', onScroll, { passive: true });
-    return () => el.removeEventListener('scroll', onScroll);
-  }, [enabled, scrollRef]);
+    scrollEl.addEventListener('scroll', onScroll, { passive: true });
+    return () => scrollEl.removeEventListener('scroll', onScroll);
+  }, [enabled, scrollEl]);
 
-  return visible;
+  return { chromeVisible: visible, scrollRef, scrollEl };
 }
