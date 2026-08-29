@@ -14,7 +14,7 @@ export const LINHAS_MESTRE = [
   { ordem: 110, codigo: 'MASSA_CORRIDA', nome: 'MASSA CORRIDA', tipo: 'mix', notas: '' },
   { ordem: 120, codigo: 'MASSA_ACRILICA', nome: 'MASSA ACRÍLICA', tipo: 'mix', notas: '' },
   { ordem: 130, codigo: 'REJUNTE', nome: 'REJUNTE', tipo: 'mix', notas: '' },
-  { ordem: 140, codigo: 'PREGO', nome: 'PREGO', tipo: 'solo', notas: '' },
+  { ordem: 140, codigo: 'PREGO', nome: 'PREGO', tipo: 'mix', notas: 'Esquadra de medidas — não substituíveis; comportamento mix' },
   { ordem: 150, codigo: 'PARAFUSO', nome: 'PARAFUSO', tipo: 'mix', notas: '' },
   { ordem: 160, codigo: 'TORNEIRA', nome: 'TORNEIRA', tipo: 'portfolio', notas: '' },
   { ordem: 170, codigo: 'METAIS_SANITARIOS', nome: 'METAIS SANITÁRIOS', tipo: 'portfolio', notas: '' },

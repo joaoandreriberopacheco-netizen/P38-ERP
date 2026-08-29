@@ -5,13 +5,13 @@ const TIPOS = [
   {
     id: 'solo',
     label: 'Solo',
-    title: 'Sem mix nem variedade — SKU directo na LINHA (ex.: cimento Portland, prego)',
+    title: 'Sem mix nem variedade (ex.: cimento Portland)',
     className: 'data-[active=true]:bg-slate-600 data-[active=true]:text-white dark:data-[active=true]:bg-slate-500',
   },
   {
     id: 'mix',
     label: 'Mix',
-    title: 'Esquadra intercambiável no produto compra (ex.: joelho soldável + medidas)',
+    title: 'Esquadra no produto compra — intercambiável (soldável) ou medidas distintas (prego)',
     className: 'data-[active=true]:bg-blue-600 data-[active=true]:text-white dark:data-[active=true]:bg-blue-500',
   },
   {

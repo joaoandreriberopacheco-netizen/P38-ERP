@@ -46,13 +46,13 @@ No **mobile**, alternar entre os dois com **tabs no topo** (sem voltar ao menu).
 
 ### Tipos de LINHA — comportamento (regra João André, 2026-08)
 
-**Solo, mix e portfolio não são etiquetas decorativas.** Definem **como a reposição e a grelha funcionam** na LINHA / produto compra.
+**Solo, mix e portfolio não são etiquetas.** Definem **como a reposição e a grelha funcionam**.
 
 | Tipo | Comportamento | Exemplo |
 |------|---------------|---------|
-| **solo** | **Não precisa de mix nem de variedade.** Cada SKU vale por si; não há peças intercambiáveis numa esquadra. Na árvore: SKUs **directos na LINHA** (sem produto compra). | **CIMENTO PORTLAND** — compra-se o saco; não monta esquadra. **PREGO** — medidas **não** se substituem entre si. |
-| **mix** | **Produto compra com peças intercambiáveis** na esquadra — completar o mix (várias referências que se complementam). | **JOELHO SOLDÁVEL** (e a LINHA SOLDÁVEL): joelho, luva, tee, medidas que **completam** a reposição. |
-| **portfolio** | **Referências intercambiáveis** dentro do mesmo produto compra **ou** dentro da LINHA — substituíveis (formato/modelo/cor). | **Cerâmicas** — peças substituíveis no mesmo produto compra ou na família da LINHA. |
+| **solo** | **Não precisa de mix nem de variedade.** Compra-se o item; não monta esquadra. | **CIMENTO PORTLAND** — o saco; sem grelha de peças. |
+| **mix** | **Produto compra com esquadra** — várias referências que **completam** a reposição na LINHA. Podem ser **intercambiáveis** (soldável: joelho, luva, medidas) ou **não substituíveis** (prego: cada medida é distinta, mas a LINHA exige mix de tamanhos). | **JOELHO SOLDÁVEL** · **PREGO** |
+| **portfolio** | **Substituíveis** dentro do mesmo produto compra ou da LINHA — troca formato/modelo/cor. | **Cerâmicas** — peças equivalentes na família. |
 
 **Onde está escrito:** `src/data/hierarquiaPortalLinhas.json` (`tipo` + `principios`).  
 **No Excel AB:** coluna `linha` → cruza com a mestre; **não** há coluna solo/mix/portfolio na folha (só `status_mix`, que é outra regra).

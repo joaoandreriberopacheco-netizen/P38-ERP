@@ -28,7 +28,7 @@ const LINHAS_MESTRE = [
   { ordem: 110, codigo: 'MASSA_CORRIDA', nome: 'MASSA CORRIDA', tipo: 'mix', notas: '' },
   { ordem: 120, codigo: 'MASSA_ACRILICA', nome: 'MASSA ACRÍLICA', tipo: 'mix', notas: '' },
   { ordem: 130, codigo: 'REJUNTE', nome: 'REJUNTE', tipo: 'mix', notas: 'Marca × cor (h3×h4 hoje)' },
-  { ordem: 140, codigo: 'PREGO', nome: 'PREGO', tipo: 'solo', notas: 'Pode virar mix se separar medida' },
+  { ordem: 140, codigo: 'PREGO', nome: 'PREGO', tipo: 'mix', notas: 'Esquadra de medidas — não substituíveis; comportamento mix' },
   { ordem: 150, codigo: 'PARAFUSO', nome: 'PARAFUSO', tipo: 'mix', notas: '' },
   { ordem: 160, codigo: 'TORNEIRA', nome: 'TORNEIRA', tipo: 'portfolio', notas: 'Aplicação × modelo (template futuro)' },
   { ordem: 170, codigo: 'METAIS_SANITARIOS', nome: 'METAIS SANITÁRIOS', tipo: 'portfolio', notas: 'Chuveiro, válvula, registro…' },
@@ -164,9 +164,9 @@ async function main() {
   styleHeader(ws.getRow(1));
 
   const tipoHelp = {
-    solo: 'Lista simples — pouca ou nenhuma grelha',
-    mix: 'Grelha A × B',
-    portfolio: 'Família com variantes (modelos, cores…)',
+    solo: 'Comportamento solo — sem mix nem variedade (ex.: cimento Portland)',
+    mix: 'Comportamento mix — esquadra no produto compra (soldável intercambiável; prego medidas distintas)',
+    portfolio: 'Comportamento portfolio — referências substituíveis (cerâmicas, tintas…)',
   };
 
   for (const l of LINHAS_MESTRE) {
