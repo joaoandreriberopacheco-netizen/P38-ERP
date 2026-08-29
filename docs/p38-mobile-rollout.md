@@ -17,7 +17,23 @@ Em **2026-07-29**, João André validou a ecrã **Planejamento financeiro** no t
 | **Código** | `src/features/planejamento-financeiro-v2/` · `src/components/financeiro/fluxo/financeiroP38.js` · `src/lib/p38Palette.js` |
 | **Regra Cursor** | [`.cursor/rules/p38-mobile-referencia-planejamento.mdc`](../.cursor/rules/p38-mobile-referencia-planejamento.mdc) |
 
-**Como usar:** Margem = referência de **linhas densas**; Planejamento = referência de **composição + paleta + CTA** em ecrãs financeiras/operacionais. Não inventar segunda paleta — reutilizar tokens.
+**Como usar:** Margem = referência de **linhas densas**; Planejamento = referência de **composição + paleta + CTA** em ecrãs financeiras/operacionais. **Oliva** = referência de **módulos operacionais densos** (Caixa, Embarques) — ver secção 0.1. Não inventar segunda paleta — reutilizar tokens.
+
+---
+
+## 0.1 Referência viva — Oliva operacional (Caixa + Embarques)
+
+Em **2026-08-29**, João André aprovou alinhar **Embarques mobile** à paleta **oliva mediterrânea** já usada no **Caixa** — em substituição do limão `#a4ce33` nesses ecrãs (filtros, busca, abas, FAB, status Aprovado).
+
+| | |
+|--|--|
+| **URLs** | [PedidosCompra](https://p-38erp.vercel.app/PedidosCompra) · [PDVCaixa](https://p-38erp.vercel.app/PDVCaixa) |
+| **Feeling** | Carvão `#1f1d22` + oliva `#636B2F` / texto `#A8B56E`; chips wash `rgba(99,107,47,0.18)`; layout compacto busca+abas (`h-10`/`h-8`/`h-9`). |
+| **Código** | `src/lib/caixaP38Theme.js` (`CAIXA_OLIVE`) · `src/lib/comprasP38Theme.js` · `src/lib/comprasEmbarquesPalette.js` |
+| **Doc** | [`docs/p38-paleta-oliva.md`](p38-paleta-oliva.md) |
+| **Regra Cursor** | [`.cursor/rules/p38-paleta-oliva-operacional.mdc`](../.cursor/rules/p38-paleta-oliva-operacional.mdc) |
+
+**Limão vs oliva:** Planejamento mantém limão nos CTAs hero; operacional denso (caixa, embarques) usa oliva. Não misturar no mesmo controlo activo.
 
 ---
 
