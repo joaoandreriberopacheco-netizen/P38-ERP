@@ -11,7 +11,7 @@ import {
   fetchRascunhosAguardando,
 } from '@/lib/caixaTurnoData';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel } from '@/components/ui/p38-mobile-line';
-import { caixaTypo } from '@/lib/caixaP38Theme';
+import { caixaTypo, caixaSpinner, caixaIconBtn, caixaEyeBtn } from '@/lib/caixaP38Theme';
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 
 export default function CaixasAtivosPage() {
@@ -201,14 +201,14 @@ export default function CaixasAtivosPage() {
             <h1 className={`${caixaTypo.title} text-2xl mb-2`}>Caixas Ativos</h1>
             <p className={caixaTypo.meta}>Visualize o balanço de caixas em operação</p>
           </div>
-          <button data-pulse-sensor="caixas-ativos.atualizar" onClick={loadTurnos} className="p-3 rounded-2xl bg-card border border-border/40 shadow-sm hover:bg-muted transition-colors" style={{ minWidth: '48px', minHeight: '48px' }}>
+          <button data-pulse-sensor="caixas-ativos.atualizar" onClick={loadTurnos} className={caixaIconBtn} style={{ minWidth: '48px', minHeight: '48px' }}>
             <RefreshCw className="w-5 h-5 text-muted-foreground" />
           </button>
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-4 border-border border-t-foreground rounded-full animate-spin" />
+            <div className={caixaSpinner} />
           </div>
         ) : turnosAtivos.length === 0 ? (
           <div className="bg-card rounded-2xl p-12 text-center shadow-sm border border-border/40">
@@ -230,6 +230,7 @@ export default function CaixasAtivosPage() {
                     thinAccent
                     striped={index % 2 === 1}
                     accent="success"
+                    palette="caixa"
                     onClick={() => handleSelecionarCaixa(turno)}
                     title={turno.conta_caixa_pdv_nome}
                     subtitle={liq?.turnoAberto ? (
@@ -241,7 +242,7 @@ export default function CaixasAtivosPage() {
                     meta={
                       liq ? (
                         <>
-                          <P38StatusLabel tone="success">Aberto</P38StatusLabel>
+                          <P38StatusLabel tone="success" palette="caixa">Aberto</P38StatusLabel>
                           <span className="inline-flex items-center gap-1">
                             Gaveta:
                             <CaixaValorDisplay valor={liq.dinheiroNaGaveta} tone="neutral" signed={false} size="sm" />
@@ -334,8 +335,8 @@ export default function CaixasAtivosPage() {
                           </div>
                           <div className="flex items-center gap-2">
                             <CaixaValorDisplay valor={data.total} tone="danger" signed size="sm" />
-                            <button onClick={() => toggleDestinacao(dest)} className="p-1 rounded-lg hover:bg-muted transition-colors">
-                              {expanded ? <EyeOff className="w-4 h-4 text-muted-foreground" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
+                            <button onClick={() => toggleDestinacao(dest)} className="p-1 rounded-lg hover:bg-muted transition-colors" aria-label={expanded ? 'Ocultar detalhes' : 'Ver detalhes'}>
+                              {expanded ? <EyeOff className="w-4 h-4 text-muted-foreground dark:text-[#8F9A5C]" /> : <Eye className="w-4 h-4 text-muted-foreground dark:text-[#A8B56E]" />}
                             </button>
                           </div>
                         </div>
@@ -362,7 +363,7 @@ export default function CaixasAtivosPage() {
                                     <button
                                       type="button"
                                       onClick={() => setConsumoSelecionado(consumo)}
-                                      className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted text-muted-foreground shadow-sm hover:bg-muted/80"
+                                      className={caixaEyeBtn}
                                       aria-label="Ver detalhes do consumo"
                                     >
                                       <Eye className="h-4 w-4" />
@@ -417,6 +418,7 @@ export default function CaixasAtivosPage() {
                       thinAccent
                       striped={index % 2 === 1}
                       accent="warning"
+                      palette="caixa"
                       title={`Senha ${String(rascunho.senha_atendimento || '').slice(-4) || '----'}`}
                       subtitle={`${rascunho.cliente_nome || 'Avulso'} · ${rascunho.vendedor_nome || 'Sem vendedor'}`}
                       value={<CaixaValorDisplay valor={rascunho.valor_total} tone="warning" signed={false} size="sm" />}

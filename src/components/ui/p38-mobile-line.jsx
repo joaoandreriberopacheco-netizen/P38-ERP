@@ -2,6 +2,12 @@ import React from 'react';
 import { cn } from '@/components/utils';
 import { p38Table } from '@/lib/p38TableSurfaces';
 import { p38Accent } from '@/lib/p38ThemeSurfaces';
+import {
+  caixaMobileAccents,
+  caixaStatusDots,
+  caixaStatusPills,
+  caixaStatusText,
+} from '@/lib/caixaP38Theme';
 
 const ACCENT_BORDER = {
   default: 'border-l-transparent',
@@ -14,21 +20,28 @@ const ACCENT_BORDER = {
   none: 'border-l-transparent',
 };
 
-/** Ponto de status semântico (verde, amarelo, ciano, vermelho). */
-export function P38StatusDot({ tone = 'success', className }) {
-  const dotClass =
-    tone === 'aprovado'
-      ? p38Accent.aprovado.dot
-      : tone === 'warning'
-      ? p38Accent.warning.dot
-      : tone === 'info'
-        ? p38Accent.info.dot
-        : tone === 'danger'
-          ? p38Accent.danger.dot
-          : tone === 'muted'
-            ? p38Accent.muted.dot
-            : p38Accent.success.dot;
+function resolveAccentBorder(accent, palette) {
+  if (palette === 'caixa') {
+    return caixaMobileAccents[accent] ?? caixaMobileAccents.default;
+  }
+  return ACCENT_BORDER[accent] ?? ACCENT_BORDER.default;
+}
 
+function resolveStatusDot(tone, palette) {
+  if (palette === 'caixa') {
+    return caixaStatusDots[tone] ?? caixaStatusDots.success;
+  }
+  if (tone === 'aprovado') return p38Accent.aprovado.dot;
+  if (tone === 'warning') return p38Accent.warning.dot;
+  if (tone === 'info') return p38Accent.info.dot;
+  if (tone === 'danger') return p38Accent.danger.dot;
+  if (tone === 'muted') return p38Accent.muted.dot;
+  return p38Accent.success.dot;
+}
+
+/** Ponto de status semântico (verde, amarelo, ciano, vermelho). */
+export function P38StatusDot({ tone = 'success', palette = 'default', className }) {
+  const dotClass = resolveStatusDot(tone, palette);
   return <span className={cn('inline-block w-1.5 h-1.5 rounded-full shrink-0', dotClass, className)} aria-hidden />;
 }
 
@@ -56,6 +69,7 @@ export function P38MobileLine({
   thinAccent = false,
   comfortable = false,
   striped = false,
+  palette = 'default',
   className,
   children,
   ...props
@@ -63,7 +77,7 @@ export function P38MobileLine({
   const rowClass = cn(
     thinAccent ? p38Table.mobileLineThin : p38Table.mobileLine,
     comfortable && COMFORTABLE_LINE,
-    ACCENT_BORDER[accent] ?? ACCENT_BORDER.default,
+    resolveAccentBorder(accent, palette),
     striped && 'bg-secondary/15 dark:bg-secondary/20',
     onClick && p38Table.mobileLineInteractive,
     className
@@ -162,7 +176,10 @@ export function p38AccentKeyFromTone(tone) {
   return 'success';
 }
 
-export function p38StatusTextClass(tone) {
+export function p38StatusTextClass(tone, palette = 'default') {
+  if (palette === 'caixa') {
+    return caixaStatusText[tone] ?? caixaStatusText.success;
+  }
   if (tone === 'aprovado') return p38Accent.aprovado.text;
   if (tone === 'danger') return p38Accent.danger.text;
   if (tone === 'warning') return p38Accent.warning.text;
@@ -171,11 +188,11 @@ export function p38StatusTextClass(tone) {
 }
 
 /** Ponto + texto colorido para status em linhas/tabelas. */
-export function P38StatusLabel({ tone = 'success', children, className }) {
+export function P38StatusLabel({ tone = 'success', palette = 'default', children, className }) {
   return (
     <span className={cn('inline-flex items-center gap-1 text-xs', className)}>
-      <P38StatusDot tone={tone} />
-      <span className={p38StatusTextClass(tone)}>{children}</span>
+      <P38StatusDot tone={tone} palette={palette} />
+      <span className={p38StatusTextClass(tone, palette)}>{children}</span>
     </span>
   );
 }
@@ -190,12 +207,15 @@ const PILL_TONE_CLASS = {
 };
 
 /** Chip com fundo suave — mesmo padrão de “Despachado” em pedidos de compra. */
-export function P38StatusPill({ tone = 'success', children, className }) {
+export function P38StatusPill({ tone = 'success', palette = 'default', children, className }) {
+  const pillClass = palette === 'caixa'
+    ? (caixaStatusPills[tone] ?? caixaStatusPills.success)
+    : (PILL_TONE_CLASS[tone] ?? PILL_TONE_CLASS.success);
   return (
     <span
       className={cn(
         'inline-flex max-w-full items-center rounded-full px-2 py-0.5 text-[11px] font-semibold leading-normal whitespace-nowrap',
-        PILL_TONE_CLASS[tone] ?? PILL_TONE_CLASS.success,
+        pillClass,
         className,
       )}
     >

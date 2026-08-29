@@ -24,6 +24,54 @@ export const caixaAccentBorder = 'border-l-[#4a5240] dark:border-l-[#636B2F]/55'
 export const caixaFormaBadgeDinheiro =
   'dark:bg-[rgba(99,107,47,0.22)] dark:text-[#A8B56E] dark:border-[rgba(99,107,47,0.4)]';
 
+/** Listas mobile (Caixas Ativos, Turnos Fechados) — oliva em vez de limão no escuro. */
+export const caixaMobileAccents = {
+  default: 'border-l-transparent',
+  none: 'border-l-transparent',
+  aprovado: caixaAccentBorder,
+  success: caixaAccentBorder,
+  warning: p38Accent.warning.border,
+  info: p38Accent.info.border,
+  danger: p38Accent.danger.border,
+  muted: p38Accent.muted.border,
+};
+
+export const caixaStatusDots = {
+  aprovado: caixaAccentDot,
+  success: caixaAccentDot,
+  warning: p38Accent.warning.dot,
+  info: p38Accent.info.dot,
+  danger: p38Accent.danger.dot,
+  muted: p38Accent.muted.dot,
+};
+
+export const caixaStatusText = {
+  aprovado: 'text-[#3a4232] dark:text-[#A8B56E]',
+  success: 'text-[#3a4232] dark:text-[#A8B56E]',
+  warning: p38Accent.warning.text,
+  info: p38Accent.info.text,
+  danger: p38Accent.danger.text,
+  muted: p38Accent.muted.text,
+};
+
+export const caixaStatusPills = {
+  aprovado: 'bg-[#4a5240]/12 text-[#3a4232] dark:bg-[rgba(99,107,47,0.18)] dark:text-[#A8B56E]',
+  success: 'bg-[#4a5240]/12 text-[#3a4232] dark:bg-[rgba(99,107,47,0.18)] dark:text-[#A8B56E]',
+  warning: 'bg-[#D96F55]/12 text-[#9c4228] dark:bg-[#D96F55]/15 dark:text-[#D96F55]',
+  danger: 'bg-red-500/10 text-red-700 dark:bg-red-950/30 dark:text-red-500',
+  info: 'bg-[#4ECDC4]/12 text-[#1a7a73] dark:bg-[#4ECDC4]/15 dark:text-[#4ECDC4]',
+  muted: 'bg-muted/80 text-muted-foreground',
+};
+
+export const caixaSpinner =
+  'w-8 h-8 border-4 border-border border-t-[#4a5240] dark:border-t-[#636B2F] rounded-full animate-spin';
+
+export const caixaIconBtn =
+  'p-3 rounded-2xl bg-card border border-border/40 shadow-sm hover:bg-muted transition-colors dark:border-white/10 dark:hover:bg-[#383e47]';
+
+export const caixaEyeBtn =
+  'flex h-9 w-9 items-center justify-center rounded-xl bg-muted text-muted-foreground shadow-sm hover:bg-muted/80 dark:text-[#A8B56E] dark:hover:bg-[rgba(99,107,47,0.14)]';
+
 /** Mesmas superfícies do Home / Planejamento — carvão, acentos oliva */
 export const caixaFieldSurface = P38_FIELD_SURFACE;
 export const caixaKpiShell =

@@ -32,6 +32,8 @@ import {
   caixaTabPanelPad,
   caixaTabsRoot,
   caixaTypo,
+  caixaSurface,
+  caixaSpinner,
   movimentoTone,
 } from '@/lib/caixaP38Theme';
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
@@ -355,7 +357,7 @@ export default function VisualizadorCaixa({
   if (loading) {
     return renderInPortal(
       <div className={`${caixaOverlayShell} ${caixaTypo.screen} items-center justify-center`}>
-        <div className="w-8 h-8 border-4 border-border border-t-foreground rounded-full animate-spin" />
+        <div className={caixaSpinner} />
       </div>
     );
   }
@@ -388,11 +390,11 @@ export default function VisualizadorCaixa({
           <button
             type="button"
             onClick={refreshCaixa}
-            className="p-2 hover:bg-muted rounded-lg transition-colors"
+            className="p-2 hover:bg-muted dark:hover:bg-[rgba(99,107,47,0.14)] rounded-xl transition-colors"
             style={{ minWidth: '44px', minHeight: '44px' }}
             title="Atualizar"
           >
-            <RefreshCw className="w-5 h-5 text-muted-foreground" />
+            <RefreshCw className="w-5 h-5 text-muted-foreground dark:text-[#A8B56E]" />
           </button>
           <div className="text-sm text-muted-foreground flex items-center gap-1">
             <Clock className="w-4 h-4" />
@@ -424,7 +426,7 @@ export default function VisualizadorCaixa({
             <div className="grid grid-cols-2 gap-3 max-w-4xl mx-auto">
               <div className={caixaKpiShell}>
                 <div className="text-xs text-muted-foreground mb-2">Saldo do Turno</div>
-                <div className="text-3xl font-bold text-foreground font-glacial">{formatValor(caixaData.liquidez)}</div>
+                <div className={`text-3xl font-bold font-glacial ${caixaClasses('success').text}`}>{formatValor(caixaData.liquidez)}</div>
                 <div className="text-xs text-muted-foreground mt-1">Inicial + vendas + reforços − recolhimentos</div>
               </div>
               <div className={caixaKpiShell}>
@@ -493,7 +495,7 @@ export default function VisualizadorCaixa({
               </div>
 
               <div className={`${caixaFieldSurface} rounded-2xl p-4 space-y-2`}>
-                <button onClick={imprimirRelatorio} className="w-full h-12 bg-primary text-primary-foreground rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm hover:opacity-90 transition-opacity dark:bg-[#26262e] dark:text-foreground dark:hover:bg-[#383e47]" style={{ minHeight: '48px' }}>
+                <button onClick={imprimirRelatorio} className={`w-full h-12 rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm ${caixaSurface.confirmBtn}`} style={{ minHeight: '48px' }}>
                   <Printer className="w-4 h-4" /> Imprimir Relatório
                 </button>
                 {modoFechado && onSolicitarReabertura && (
@@ -501,7 +503,7 @@ export default function VisualizadorCaixa({
                     type="button"
                     onClick={onSolicitarReabertura}
                     disabled={reabrindo}
-                    className="w-full h-12 rounded-2xl border border-border bg-muted text-foreground font-semibold flex items-center justify-center gap-2 text-sm hover:bg-muted/80 transition-colors disabled:opacity-50"
+                    className={`w-full h-12 rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm disabled:opacity-50 ${caixaSurface.secondaryBtn}`}
                     style={{ minHeight: '48px' }}
                   >
                     <RotateCcw className="w-4 h-4" />
@@ -536,11 +538,11 @@ export default function VisualizadorCaixa({
                 <button
                   type="button"
                   onClick={refreshCaixa}
-                  className="p-2 hover:bg-muted rounded-xl transition-colors self-end sm:self-auto"
+                  className="p-2 hover:bg-muted dark:hover:bg-[rgba(99,107,47,0.14)] rounded-xl transition-colors self-end sm:self-auto"
                   style={{ minWidth: '44px', minHeight: '44px' }}
                   title="Atualizar"
                 >
-                  <RefreshCw className="w-5 h-5 text-muted-foreground" />
+                  <RefreshCw className="w-5 h-5 text-muted-foreground dark:text-[#A8B56E]" />
                 </button>
               </div>
 
