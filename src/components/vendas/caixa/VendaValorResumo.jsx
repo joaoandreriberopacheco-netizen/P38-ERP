@@ -17,11 +17,17 @@ export default function VendaValorResumo({
   formaPagamentoLabel,
   pagamentoMisto = false,
 }) {
-  const { subtotal, desconto, total, temDesconto, percentualDesconto } = resolvePedidoVendaTotais(venda);
+  const {
+    subtotal,
+    desconto,
+    total,
+    temDesconto,
+    percentualDescontoLabel,
+  } = resolvePedidoVendaTotais(venda);
   const valorExibir = valorDestaque != null ? roundToTwoDecimals(valorDestaque) : total;
-  const percentualDescontoLabel = temDesconto && percentualDesconto > 0
-    ? percentualDesconto.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 1 })
-    : null;
+  const descontoTexto = percentualDescontoLabel
+    ? `−${formatCaixaR(desconto)} (${percentualDescontoLabel}%)`
+    : `−${formatCaixaR(desconto)}`;
 
   const sizeMap = {
     sm: { total: 'sm', meta: 'text-[11px]' },
@@ -31,17 +37,17 @@ export default function VendaValorResumo({
   const dangerText = caixaClasses('danger').text;
 
   return (
-    <div className={cn('flex flex-col items-end gap-0.5 text-right flex-shrink-0', className)}>
+    <div className={cn('flex flex-col items-end gap-0.5 text-right flex-shrink-0 min-w-[9.5rem]', className)}>
       {temDesconto && (
         <>
           <span className={cn(sz.meta, 'text-muted-foreground line-through tabular-nums whitespace-nowrap')}>
             {formatCaixaR(subtotal)}
           </span>
-          <span className={cn(sz.meta, dangerText, 'tabular-nums leading-tight text-right')}>
-            <span className="whitespace-nowrap">−{formatCaixaR(desconto)}</span>
-            {percentualDescontoLabel ? (
-              <span className="whitespace-nowrap"> ({percentualDescontoLabel}%)</span>
-            ) : null}
+          <span
+            className={cn(sz.meta, dangerText, 'tabular-nums whitespace-nowrap')}
+            data-pulse-sensor="venda-desconto-percentual"
+          >
+            {descontoTexto}
           </span>
         </>
       )}

@@ -218,7 +218,6 @@ export default function ConsultaVendasCaixa({
                     <VendaValorResumo
                       venda={venda}
                       size="sm"
-                      className="max-w-[45%] sm:max-w-none"
                       valorDestaque={valorForma}
                       formaPagamentoLabel={formaPagamentoLabel}
                       pagamentoMisto={pagamentoMisto}
