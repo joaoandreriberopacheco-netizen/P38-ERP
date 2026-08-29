@@ -24,26 +24,26 @@ function useDarkMode() {
   return isDark;
 }
 
-function NavLetterBadge({ letter, color, onActivate }) {
-  if (!letter) return null;
+function NavItemLabel({ letter, name, nameColor, letterColor, onLetterActivate }) {
   return (
-    <kbd
-      type="button"
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        onActivate();
-      }}
-      className="flex-shrink-0 inline-flex items-center justify-center min-w-[22px] h-[22px] px-1 rounded-md text-[11px] font-semibold tracking-wide cursor-pointer select-none"
-      style={{
-        color,
-        background: 'rgba(148, 163, 184, 0.14)',
-        border: `1px solid ${color}33`,
-      }}
-      title={`Atalho ${letter}`}
-    >
-      {letter}
-    </kbd>
+    <span className="flex-1 min-w-0 truncate text-left text-sm tablet-landscape:text-base font-medium" style={{ color: nameColor }}>
+      {letter ? (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onLetterActivate?.();
+          }}
+          className="mr-1 align-baseline text-[11px] font-normal tracking-wide cursor-pointer select-none opacity-50 hover:opacity-75 transition-opacity"
+          style={{ color: letterColor }}
+          title={`Atalho ${letter}`}
+        >
+          {letter}.
+        </button>
+      ) : null}
+      {name}
+    </span>
   );
 }
 
@@ -330,8 +330,13 @@ export default function GlacialSidebar({
                       }}
                     >
                       <Icon className="flex-shrink-0 tablet-landscape:w-5 tablet-landscape:h-5" size={18} style={{ color: c.iconColor }} />
-                      <span className="flex-1 text-sm tablet-landscape:text-base font-medium truncate" style={{ color: c.text }}>{item.name}</span>
-                      <NavLetterBadge letter={letter} color={c.textSub} onActivate={() => activateNavItemAtIndex(index)} />
+                      <NavItemLabel
+                        letter={letter}
+                        name={item.name}
+                        nameColor={c.text}
+                        letterColor={c.textSub}
+                        onLetterActivate={() => activateNavItemAtIndex(index)}
+                      />
                     </Link>
                   );
                 }
@@ -351,8 +356,13 @@ export default function GlacialSidebar({
                       }}
                     >
                       <Icon className="flex-shrink-0 tablet-landscape:w-5 tablet-landscape:h-5" size={18} style={{ color: c.iconColor }} />
-                      <span className="flex-1 text-left text-sm tablet-landscape:text-base font-medium truncate" style={{ color: c.text }}>{item.name}</span>
-                      <NavLetterBadge letter={letter} color={c.textSub} onActivate={() => activateNavItemAtIndex(index)} />
+                      <NavItemLabel
+                        letter={letter}
+                        name={item.name}
+                        nameColor={c.text}
+                        letterColor={c.textSub}
+                        onLetterActivate={() => activateNavItemAtIndex(index)}
+                      />
                       <ChevronRight size={14} style={{ color: c.chevron }} />
                     </button>
                   );
@@ -376,8 +386,13 @@ export default function GlacialSidebar({
                     }}
                   >
                     {Icon && <Icon className="flex-shrink-0 tablet-landscape:w-5 tablet-landscape:h-5" size={18} style={{ color: c.iconColor }} />}
-                    <span className="flex-1 text-sm tablet-landscape:text-base font-medium truncate">{item.name}</span>
-                    <NavLetterBadge letter={letter} color={c.textSub} onActivate={() => activateNavItemAtIndex(index)} />
+                    <NavItemLabel
+                      letter={letter}
+                      name={item.name}
+                      nameColor={isActive ? c.text : c.textSub}
+                      letterColor={c.textSub}
+                      onLetterActivate={() => activateNavItemAtIndex(index)}
+                    />
                   </Link>
                 );
               })}
