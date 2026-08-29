@@ -3,7 +3,7 @@ import { cn } from '@/components/utils';
 import { p38Table } from '@/lib/p38TableSurfaces';
 import { p38Accent } from '@/lib/p38ThemeSurfaces';
 import CaixaValorDisplay, { formatCaixaR } from '@/components/vendas/caixa/CaixaValorDisplay';
-import { caixaTypo } from '@/lib/caixaP38Theme';
+import { caixaAccentDot, caixaAccentBorder, caixaTypo } from '@/lib/caixaP38Theme';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { formatCommercialQuantity } from '@/lib/productUnits';
 
@@ -14,7 +14,7 @@ function resolveConsultaAccentDot(accent) {
   if (accent === 'info') return p38Accent.info.dot;
   if (accent === 'warning') return p38Accent.warning.dot;
   if (accent === 'danger') return p38Accent.danger.dot;
-  if (accent === 'success') return p38Accent.success.dot;
+  if (accent === 'success') return caixaAccentDot;
   return p38Table.accentDot;
 }
 
@@ -25,7 +25,7 @@ function resolveConsultaAccentBorder(accent) {
   if (accent === 'info') return p38Accent.info.border;
   if (accent === 'warning') return p38Accent.warning.border;
   if (accent === 'danger') return p38Accent.danger.border;
-  return p38Accent.success.border;
+  return caixaAccentBorder;
 }
 
 function ConsultaQtdUnCol({ qtd, unidade, accent = 'success', compact = false, exportPdf = false }) {

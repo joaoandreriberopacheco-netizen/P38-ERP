@@ -25,7 +25,7 @@ function chipLevou() {
   return (
     <Badge
       variant="outline"
-      className="text-[10px] px-1.5 py-0 gap-0.5 border-emerald-300 text-emerald-700 dark:border-emerald-700 dark:text-emerald-300 inline-flex items-center"
+      className="text-[10px] px-1.5 py-0 gap-0.5 border-emerald-300 text-emerald-700 dark:border-[rgba(99,107,47,0.45)] dark:text-[#A8B56E] inline-flex items-center"
     >
       <ArrowUp className="w-3 h-3" aria-hidden />
       Levou
@@ -86,7 +86,7 @@ export default function TrocaCaixaCard({ venda, meta, onVerDetalhes }) {
                 {resumo.devolucaoNumero}
               </Badge>
             )}
-            <FormaPagamentoBadges pagamentos={venda.pagamentos} size="xs" />
+            <FormaPagamentoBadges pagamentos={venda.pagamentos} size="xs" palette="caixa" />
           </div>
           <p className={`${p38Table.mobileLineSubtitle} truncate`}>
             {venda.cliente_nome || 'Avulso'}

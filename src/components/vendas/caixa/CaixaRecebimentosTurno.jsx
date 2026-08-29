@@ -31,7 +31,7 @@ function RecebimentoRow({
             style={{ minWidth: '28px', minHeight: '28px' }}
             aria-label={`Ver vendas: ${label}`}
           >
-            <Eye className="w-4 h-4 text-foreground/70 dark:text-foreground/80" />
+            <Eye className="w-4 h-4 text-foreground/70 dark:text-[#A8B56E]" />
           </button>
         ) : (
           <span className="w-7" aria-hidden />
@@ -94,7 +94,7 @@ function DinheiroConferenciaRow({
             style={{ minWidth: '28px', minHeight: '28px' }}
             aria-label={`Ver vendas: ${label}`}
           >
-            <Eye className="w-4 h-4 text-foreground/70 dark:text-foreground/80" />
+            <Eye className="w-4 h-4 text-foreground/70 dark:text-[#A8B56E]" />
           </button>
         ) : (
           <span className="w-7" aria-hidden />

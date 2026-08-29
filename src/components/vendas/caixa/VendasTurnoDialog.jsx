@@ -53,7 +53,7 @@ function VendaTurnoCard({ venda, meta, formatValor, onVerDetalhes, compact }) {
             <div className="flex items-center gap-2 flex-wrap mb-1">
               <span className="text-sm font-semibold text-foreground">{venda.numero}</span>
               <span className="text-xs text-muted-foreground">{fmtHora(venda.created_date)}</span>
-              <FormaPagamentoBadges pagamentos={venda.pagamentos} size="xs" />
+              <FormaPagamentoBadges pagamentos={venda.pagamentos} size="xs" palette="caixa" />
               {isSubstituto && (
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-300">
                   Substituição
@@ -91,7 +91,7 @@ function VendaTurnoCard({ venda, meta, formatValor, onVerDetalhes, compact }) {
           <div className="flex items-center gap-2 flex-wrap mb-2">
             <span className="text-sm font-semibold text-foreground">{venda.numero}</span>
             <span className="text-xs text-muted-foreground">{fmtHora(venda.created_date)}</span>
-            <FormaPagamentoBadges pagamentos={venda.pagamentos} size="xs" />
+            <FormaPagamentoBadges pagamentos={venda.pagamentos} size="xs" palette="caixa" />
             {isSubstituto && (
               <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-300">
                 Substituição

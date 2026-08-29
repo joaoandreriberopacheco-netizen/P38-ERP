@@ -37,6 +37,19 @@ const FORMA_STYLES = {
   ),
 };
 
+const FORMA_STYLES_CAIXA = {
+  dinheiro: cn(
+    LIGHT_CITRUS_CHIP,
+    'dark:bg-[rgba(99,107,47,0.22)] dark:text-[#A8B56E] dark:border-[rgba(99,107,47,0.4)]',
+  ),
+  pix: FORMA_STYLES.pix,
+  debito: FORMA_STYLES.debito,
+  credito: FORMA_STYLES.credito,
+  fiado: FORMA_STYLES.fiado,
+  vale: FORMA_STYLES.vale,
+  outro: FORMA_STYLES.outro,
+};
+
 function resolveFormaKey(forma) {
   const f = (forma || '').toLowerCase();
   if (f.includes('dinheiro')) return 'dinheiro';
@@ -62,13 +75,19 @@ export function labelFormaPagamento(pag) {
 
 /**
  * Badges compactos das formas de pagamento de uma venda.
- * @param {{ pagamentos?: Array, className?: string, size?: 'xs'|'sm' }} props
+ * @param {{ pagamentos?: Array, className?: string, size?: 'xs'|'sm', palette?: 'default'|'caixa' }} props
  */
-export default function FormaPagamentoBadges({ pagamentos = [], className, size = 'sm' }) {
+export default function FormaPagamentoBadges({
+  pagamentos = [],
+  className,
+  size = 'sm',
+  palette = 'default',
+}) {
   const pags = Array.isArray(pagamentos) ? pagamentos.filter((p) => p?.forma_pagamento) : [];
   if (pags.length === 0) return null;
 
   const sizeClass = size === 'xs' ? 'text-[10px] px-1.5 py-0' : 'text-[11px] px-2 py-0.5';
+  const styles = palette === 'caixa' ? FORMA_STYLES_CAIXA : FORMA_STYLES;
 
   return (
     <div className={cn('flex flex-wrap gap-1', className)}>
@@ -80,7 +99,7 @@ export default function FormaPagamentoBadges({ pagamentos = [], className, size 
             className={cn(
               'inline-flex items-center rounded-full border font-medium leading-tight whitespace-nowrap',
               sizeClass,
-              FORMA_STYLES[key],
+              styles[key],
             )}
             title={pag.forma_pagamento}
           >

@@ -6,8 +6,8 @@ export function formatCaixaR(v) {
   return `R$ ${(Math.round((v || 0) * 100) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-/** Sufixo +/− à direita do valor — cinza claro; só saída (−) em vermelho */
-const SIGN_CLASS_PLUS = 'text-muted-foreground dark:text-[#94949c]';
+/** Sufixo +/− à direita — oliva suave no escuro para entradas; só saída (−) em vermelho */
+const SIGN_CLASS_PLUS = 'text-muted-foreground dark:text-[#8F9A5C]';
 const SIGN_CLASS_MINUS = p38Accent.danger.text;
 
 const SIZE_CLASS = {

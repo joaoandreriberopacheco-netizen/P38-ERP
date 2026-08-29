@@ -1,6 +1,6 @@
 /**
  * Paleta P38 para o módulo de caixa — substitui emerald/blue/red genéricos.
- * Modo escuro alinhado ao Home (#1f1d22 / #2d333b / #26262e) — calmo, monocromático.
+ * Modo escuro: carvão (#1f1d22 / #2d333b / #26262e) + verde oliva mediterrâneo (#636B2F).
  */
 import { p38Accent } from '@/lib/p38ThemeSurfaces';
 import { CAIXA_MIRROR_SHELL_CLASS } from '@/lib/quickAccessOverlay';
@@ -8,20 +8,37 @@ import {
   P38_FIELD_SURFACE,
 } from '@/components/financeiro/fluxo/financeiroP38';
 
-/** Mesmas superfícies do Home / Planejamento — sem overrides storm */
+/** Verde oliva mediterrâneo — escuro sobre carvão; claro mantém oliva P38 (#4a5240). */
+export const CAIXA_OLIVE = {
+  solid: '#636B2F',
+  solidLight: '#4a5240',
+  textDark: '#A8B56E',
+  textDarkSoft: '#8F9A5C',
+  wash: 'rgba(99, 107, 47, 0.14)',
+  washStrong: 'rgba(99, 107, 47, 0.22)',
+  border: 'rgba(99, 107, 47, 0.35)',
+};
+
+export const caixaAccentDot = 'bg-[#4a5240] dark:bg-[#636B2F]';
+export const caixaAccentBorder = 'border-l-[#4a5240] dark:border-l-[#636B2F]/55';
+export const caixaFormaBadgeDinheiro =
+  'dark:bg-[rgba(99,107,47,0.22)] dark:text-[#A8B56E] dark:border-[rgba(99,107,47,0.4)]';
+
+/** Mesmas superfícies do Home / Planejamento — carvão, acentos oliva */
 export const caixaFieldSurface = P38_FIELD_SURFACE;
 export const caixaKpiShell =
   'rounded-2xl bg-card border border-border/40 shadow-sm px-5 py-5 dark:border-white/10 dark:shadow-none';
 
 export const CAIXA_PRINT = {
-  success: p38Accent.success.solid,
+  success: CAIXA_OLIVE.solidLight,
   info: p38Accent.info.solid,
   danger: p38Accent.danger.solid,
   warning: p38Accent.warning.solid,
   muted: '#9ca3af',
 };
 
-export const CAIXA_TOAST_SUCCESS = 'bg-primary/15 text-primary border border-primary/20';
+export const CAIXA_TOAST_SUCCESS =
+  'bg-primary/15 text-primary border border-primary/20 dark:bg-[rgba(99,107,47,0.18)] dark:text-[#A8B56E] dark:border-[rgba(99,107,47,0.35)]';
 
 const TONE_MAP = {
   emerald: 'success',
@@ -38,15 +55,15 @@ export function normalizeCaixaTone(tone) {
 
 export const caixaTone = {
   success: {
-    well: 'bg-primary/10 dark:bg-white/5',
-    icon: 'text-primary dark:text-foreground/70',
-    text: 'text-[#3a4232] dark:text-foreground',
-    panel: 'bg-primary/10 dark:bg-white/5',
-    panelText: 'text-[#3a4232] dark:text-foreground',
-    btn: 'bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-[#26262e] dark:text-foreground dark:hover:bg-[#383e47]',
-    hover: 'hover:bg-primary/10 dark:hover:bg-white/5',
-    pill: 'bg-primary/10 text-primary dark:bg-white/8 dark:text-foreground',
-    dot: 'bg-[#4a5240] dark:bg-foreground/40',
+    well: 'bg-primary/10 dark:bg-[rgba(99,107,47,0.14)]',
+    icon: 'text-primary dark:text-[#A8B56E]',
+    text: 'text-[#3a4232] dark:text-[#A8B56E]',
+    panel: 'bg-primary/10 dark:bg-[rgba(99,107,47,0.14)]',
+    panelText: 'text-[#3a4232] dark:text-[#A8B56E]',
+    btn: 'bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-[#636B2F] dark:text-[#fafafa] dark:hover:bg-[#636B2F]/90',
+    hover: 'hover:bg-primary/10 dark:hover:bg-[rgba(99,107,47,0.14)]',
+    pill: 'bg-primary/10 text-primary dark:bg-[rgba(99,107,47,0.18)] dark:text-[#A8B56E] dark:border dark:border-[rgba(99,107,47,0.35)]',
+    dot: caixaAccentDot,
   },
   info: {
     well: 'bg-cyan-500/10 dark:bg-white/5',
@@ -144,9 +161,9 @@ export const caixaTypo = {
   groupHeader: 'text-sm font-semibold uppercase tracking-wide text-muted-foreground sm:tracking-widest',
 };
 
-/** Abas — chip monocromático (Home / P38 escuro) */
+/** Abas — carvão com destaque oliva suave no escuro */
 export const caixaDarkTabActive =
-  'dark:data-[state=active]:bg-[#26262e] dark:data-[state=active]:text-foreground dark:data-[state=active]:shadow-none';
+  'dark:data-[state=active]:bg-[rgba(99,107,47,0.18)] dark:data-[state=active]:text-[#A8B56E] dark:data-[state=active]:shadow-none';
 export const caixaDarkTabInactive = 'dark:data-[state=inactive]:text-muted-foreground';
 
 export const caixaMobileTabsList =
@@ -168,23 +185,23 @@ export const caixaConsultaCard =
 
 export const caixaChipTrack = 'bg-muted/50 dark:bg-[#26262e]/60';
 export const caixaChipActive =
-  'bg-card shadow-sm text-foreground dark:bg-[#383e47] dark:text-foreground dark:shadow-none';
+  'bg-card shadow-sm text-foreground dark:bg-[rgba(99,107,47,0.18)] dark:text-[#A8B56E] dark:shadow-none';
 export const caixaChipInactive = 'text-muted-foreground';
 
 export const caixaSurface = {
   chipBtn:
     'rounded-xl bg-primary text-primary-foreground border border-primary/70 px-3 py-2 text-xs font-semibold shadow-sm ' +
     'hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring ' +
-    'dark:bg-[#26262e] dark:text-foreground dark:border-transparent dark:hover:bg-[#383e47]',
+    'dark:bg-[#26262e] dark:text-[#A8B56E] dark:border-[rgba(99,107,47,0.35)] dark:hover:bg-[#383e47]',
   confirmBtn:
     'rounded-xl bg-primary text-primary-foreground border border-primary/70 font-semibold ' +
     'hover:bg-primary/90 disabled:opacity-40 ' +
-    'dark:bg-[#26262e] dark:text-foreground dark:border-transparent dark:hover:bg-[#383e47]',
+    'dark:bg-[#636B2F] dark:text-[#fafafa] dark:border-transparent dark:hover:bg-[#636B2F]/90',
   secondaryBtn: 'rounded-xl bg-muted text-foreground hover:bg-muted/80 dark:hover:bg-[#383e47]',
   paymentRow: 'bg-muted/50 hover:bg-muted dark:bg-[#26262e]/40 dark:hover:bg-[#383e47]/60',
-  paymentRowActive: 'bg-muted ring-1 ring-primary/35 dark:ring-white/10 dark:bg-[#383e47]',
-  chipSelected: 'bg-primary text-primary-foreground ring-1 ring-primary/30 dark:bg-[#383e47] dark:text-foreground dark:ring-white/10',
+  paymentRowActive: 'bg-muted ring-1 ring-primary/35 dark:ring-[rgba(99,107,47,0.35)] dark:bg-[#383e47]',
+  chipSelected: 'bg-primary text-primary-foreground ring-1 ring-primary/30 dark:bg-[rgba(99,107,47,0.22)] dark:text-[#A8B56E] dark:ring-[rgba(99,107,47,0.35)]',
   chipIdle: 'bg-muted text-muted-foreground hover:bg-muted dark:bg-[#26262e] dark:hover:bg-[#383e47]',
-  itemSelected: 'bg-primary/12 text-foreground ring-1 ring-primary/25 dark:bg-[#383e47] dark:text-foreground dark:ring-white/10',
+  itemSelected: 'bg-primary/12 text-foreground ring-1 ring-primary/25 dark:bg-[rgba(99,107,47,0.16)] dark:text-[#A8B56E] dark:ring-[rgba(99,107,47,0.3)]',
   itemIdle: 'bg-muted/50 text-foreground hover:bg-muted dark:bg-[#26262e]/40 dark:hover:bg-[#383e47]/60',
 };

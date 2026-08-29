@@ -15,7 +15,7 @@ export default function VendaDetalheDialog({ venda, onClose, formatValor }) {
           <DialogTitle className="text-lg text-foreground">
             Detalhes da Venda - {venda.numero}
           </DialogTitle>
-          <FormaPagamentoBadges pagamentos={venda.pagamentos} className="pt-1" />
+          <FormaPagamentoBadges pagamentos={venda.pagamentos} className="pt-1" palette="caixa" />
         </DialogHeader>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4 text-sm">

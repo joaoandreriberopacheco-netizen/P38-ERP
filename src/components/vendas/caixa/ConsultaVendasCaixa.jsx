@@ -225,7 +225,7 @@ export default function ConsultaVendasCaixa({
                       <p className={`${p38Table.mobileLineSubtitle} truncate`}>
                         {venda.cliente_nome || 'Avulso'}
                       </p>
-                      <FormaPagamentoBadges pagamentos={venda.pagamentos} className="mt-1.5" size="xs" />
+                      <FormaPagamentoBadges pagamentos={venda.pagamentos} className="mt-1.5" size="xs" palette="caixa" />
                     </div>
                     <VendaValorResumo
                       venda={venda}
