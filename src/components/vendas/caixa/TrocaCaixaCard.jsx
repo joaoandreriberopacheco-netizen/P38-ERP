@@ -36,6 +36,16 @@ function chipLevou() {
 export default function TrocaCaixaCard({ venda, meta, onVerDetalhes }) {
   const resumo = resolveResumoTrocaCaixa(venda, meta);
   const hora = venda.created_date ? formatarDataHora(venda.created_date).split(' ')[1] || '' : '';
+  const HeaderTag = onVerDetalhes ? 'button' : 'div';
+  const headerProps = onVerDetalhes
+    ? {
+        type: 'button',
+        onClick: () => onVerDetalhes(venda),
+        className: 'w-full flex items-center justify-between gap-3 px-4 py-3 border-b border-border/40 text-left hover:bg-muted/30 transition-colors',
+      }
+    : {
+        className: 'w-full flex items-center justify-between gap-3 px-4 py-3 border-b border-border/40',
+      };
   const linhas = [
     ...resumo.itensRetorno.map((item, idx) => ({
       key: `ret-${idx}`,
@@ -53,11 +63,7 @@ export default function TrocaCaixaCard({ venda, meta, onVerDetalhes }) {
 
   return (
     <div className="bg-card rounded-2xl shadow-sm overflow-hidden">
-      <button
-        type="button"
-        onClick={() => onVerDetalhes?.(venda)}
-        className="w-full flex items-center justify-between gap-3 px-4 py-3 border-b border-border/40 text-left hover:bg-muted/30 transition-colors"
-      >
+      <HeaderTag {...headerProps}>
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <p className={`${p38Table.mobileLineTitle} truncate`}>{venda.numero}</p>
@@ -84,7 +90,7 @@ export default function TrocaCaixaCard({ venda, meta, onVerDetalhes }) {
           </p>
         </div>
         <CaixaValorDisplay valor={resumo.entradaCaixa} tone="success" size="sm" />
-      </button>
+      </HeaderTag>
 
       {linhas.length > 0 && (
         <P38MobileLineList allViewports className="rounded-none border-0">

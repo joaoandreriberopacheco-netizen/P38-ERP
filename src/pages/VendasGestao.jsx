@@ -1063,7 +1063,6 @@ function VendasGestaoPage() {
           ) : (
             <ConsultaVendasCaixa
               vendasFinalizadas={pedidosConsultaComItens}
-              onVerDetalhes={handleVerDetalhes}
               contextLabel="Consulta de vendas"
               emptyMessage="Nenhuma venda finalizada no período selecionado"
             />
