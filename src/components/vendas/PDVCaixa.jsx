@@ -84,17 +84,14 @@ import {
   caixaFieldSurface,
   caixaKpiShell,
   caixaMain,
-  caixaMainInLayout,
   caixaMobileTabBar,
   caixaMobileTabTrigger,
   caixaMobileTabsList,
   caixaShell,
   caixaTabPanel,
-  caixaTabPanelInLayout,
   caixaTabPanelPad,
   caixaTabPanelPadInLayout,
   caixaTabsRoot,
-  caixaTabsRootInLayout,
   caixaTypo,
   movimentoTone,
 } from '@/lib/caixaP38Theme';
@@ -195,9 +192,9 @@ export default function PDVCaixa({
   const isMobileShell = useCompactShell();
   const inAppLayout = isMobileShell && !overlayMode;
   const tabPanelPad = inAppLayout ? caixaTabPanelPadInLayout : caixaTabPanelPad;
-  const mainClassName = inAppLayout ? caixaMainInLayout : caixaMain;
-  const tabsRootClassName = inAppLayout ? caixaTabsRootInLayout : caixaTabsRoot;
-  const tabPanelClassName = inAppLayout ? caixaTabPanelInLayout : caixaTabPanel;
+  const mainClassName = caixaMain;
+  const tabsRootClassName = caixaTabsRoot;
+  const tabPanelClassName = caixaTabPanel;
   const fechamentoSectionRef = useRef(null);
   const handleClose = () => {
     if (overlayMode && onClose) {
@@ -1462,7 +1459,7 @@ export default function PDVCaixa({
   const rootClassName = overlayMode
     ? `flex flex-col h-full min-h-0 ${screenShellBg} ${caixaTypo.screen}`
     : inAppLayout
-      ? `flex flex-col w-full max-w-7xl mx-auto space-y-0 overflow-x-hidden ${screenShellBg} ${caixaTypo.screen}`
+      ? `flex flex-col flex-1 min-h-0 h-full overflow-hidden w-full max-w-7xl mx-auto ${screenShellBg} ${caixaTypo.screen}`
       : `${caixaShell} ${screenShellBg} ${caixaTypo.screen}`;
 
   return (
@@ -1535,7 +1532,7 @@ export default function PDVCaixa({
       </div>
 
       {/* Conteúdo Principal */}
-      <div className={`${mainClassName} ${inAppLayout ? '' : 'relative'} ${screenShellBg}`}>
+      <div className={`${mainClassName} relative ${screenShellBg}`}>
         {!caixaSelecionado ? (
           <div className="h-full flex items-center justify-center">
             <div className="text-center text-muted-foreground dark:text-muted-foreground">
@@ -1601,7 +1598,7 @@ export default function PDVCaixa({
                   </TabsList>
                 </div>
 
-                <div className={inAppLayout ? 'w-full min-w-0' : 'relative flex-1 min-h-0 h-0 overflow-hidden'}>
+                <div className="relative flex-1 min-h-0 h-0 overflow-hidden">
                 <TabsContent value="balanco" data-caixa-tab-scroll className={`${tabPanelClassName} ${tabPanelPad}`}>
                   <div className="max-w-4xl mx-auto space-y-4 pb-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

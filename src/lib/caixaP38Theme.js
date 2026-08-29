@@ -127,7 +127,7 @@ export const caixaTabsRootInLayout = 'flex flex-col w-full min-w-0';
 export const caixaTabPanel = 'absolute inset-0 overflow-y-auto overscroll-y-contain touch-pan-y mt-0 data-[state=inactive]:hidden';
 export const caixaTabPanelInLayout = 'mt-0 data-[state=inactive]:hidden';
 export const caixaTabPanelPad = 'p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]';
-export const caixaTabPanelPadInLayout = 'p-4 pb-[var(--p38-scroll-pad-below-nav)]';
+export const caixaTabPanelPadInLayout = 'p-4 pb-4';
 export const caixaMobileTabBar = 'md:hidden flex-shrink-0';
 export const caixaOverlayShell = `fixed inset-0 ${CAIXA_MIRROR_SHELL_CLASS} h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden bg-background pointer-events-auto`;
 
