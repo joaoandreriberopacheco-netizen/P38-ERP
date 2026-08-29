@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
-import { ChevronRight, Sun, Moon, ALargeSmall, Shield, User, Settings, LogOut, RotateCw, Lock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Sun, Moon, ALargeSmall, Shield, User, Settings, LogOut, RotateCw, Lock } from 'lucide-react';
+import { indexToNavLetter, letterKeyToIndex, isTypingTarget } from '@/lib/sidebarNavLetters';
 import { base44 } from '@/api/base44Client';
 import PinSetupDialog from '@/components/auth/PinSetupDialog';
 import P38Logo from '@/components/brand/P38Logo';
@@ -23,9 +24,33 @@ function useDarkMode() {
   return isDark;
 }
 
+function NavItemLabel({ letter, name, nameColor, letterColor, onLetterActivate }) {
+  return (
+    <span className="flex-1 min-w-0 truncate text-left text-sm tablet-landscape:text-base font-medium" style={{ color: nameColor }}>
+      {letter ? (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onLetterActivate?.();
+          }}
+          className="mr-1 align-baseline text-[11px] font-normal tracking-wide cursor-pointer select-none opacity-50 hover:opacity-75 transition-opacity"
+          style={{ color: letterColor }}
+          title={`Atalho ${letter}`}
+        >
+          {letter}.
+        </button>
+      ) : null}
+      {name}
+    </span>
+  );
+}
+
 export default function GlacialSidebar({
   isOpen,
   onClose,
+  onRequestClose,
   menuItems,
   currentPageName,
   isMobile,
@@ -35,8 +60,11 @@ export default function GlacialSidebar({
   searchableItems = [],
   onSearchCollapsedActivate,
   showConfiguracoesLink = false,
+  searchOverlayOpen = false,
 }) {
   const [expandedMenus, setExpandedMenus] = useState({});
+  const [activeGroup, setActiveGroup] = useState(null);
+  const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(currentUserProp || null);
   const [showPinSetup, setShowPinSetup] = useState(false);
   const [userPanelOpen, setUserPanelOpen] = useState(false);
@@ -87,6 +115,8 @@ export default function GlacialSidebar({
 
   const c = getP38ShellColors(isDark);
 
+  const useDesktopDrilldown = !isMobile;
+
   const toggleSubmenu = (menuName) => {
     setExpandedMenus(prev => {
       const newExpanded = {};
@@ -94,6 +124,82 @@ export default function GlacialSidebar({
       return newExpanded;
     });
   };
+
+  const groupedItems = useMemo(
+    () => menuItems.filter((item) => item.submenu?.length || item.page),
+    [menuItems],
+  );
+
+  const visibleNavItems = useMemo(() => {
+    if (!useDesktopDrilldown || !isOpen) return [];
+    if (activeGroup?.submenu?.length) return activeGroup.submenu;
+    return groupedItems;
+  }, [useDesktopDrilldown, isOpen, activeGroup, groupedItems]);
+
+  useEffect(() => {
+    if (!isOpen) setActiveGroup(null);
+  }, [isOpen]);
+
+  const navigateToPage = useCallback((page) => {
+    navigate(createPageUrl(page));
+    setActiveGroup(null);
+    if (isMobile) onClose?.();
+    else onRequestClose?.();
+  }, [navigate, isMobile, onClose, onRequestClose]);
+
+  const activateNavItem = useCallback((item, { inSubmenu = false } = {}) => {
+    if (item.page && (inSubmenu || !item.submenu?.length)) {
+      navigateToPage(item.page);
+      return;
+    }
+    if (item.submenu?.length) {
+      setActiveGroup(item);
+    }
+  }, [navigateToPage]);
+
+  const activateNavItemAtIndex = useCallback((index) => {
+    const item = visibleNavItems[index];
+    if (!item) return;
+    activateNavItem(item, { inSubmenu: Boolean(activeGroup) });
+  }, [visibleNavItems, activeGroup, activateNavItem]);
+
+  useEffect(() => {
+    if (!useDesktopDrilldown || !isOpen || searchOverlayOpen) return undefined;
+
+    const onKeyDown = (e) => {
+      if (isTypingTarget(e.target)) return;
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (activeGroup) {
+          setActiveGroup(null);
+        } else {
+          onRequestClose?.();
+        }
+        return;
+      }
+
+      const index = letterKeyToIndex(e.key);
+      if (index >= 0) {
+        const item = visibleNavItems[index];
+        if (!item) return;
+        e.preventDefault();
+        activateNavItem(item, { inSubmenu: Boolean(activeGroup) });
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => document.removeEventListener('keydown', onKeyDown, true);
+  }, [
+    useDesktopDrilldown,
+    isOpen,
+    searchOverlayOpen,
+    activeGroup,
+    visibleNavItems,
+    activateNavItem,
+    onRequestClose,
+  ]);
 
   const isPageActive = (item) => {
     if (item.page) return currentPageName === item.page || location.pathname.includes(item.page);
@@ -149,7 +255,36 @@ export default function GlacialSidebar({
 
         {/* Menu */}
         <nav className="px-2 py-3 space-y-0.5" style={{ flex: '1 1 0', overflowY: 'auto', minHeight: 0 }}>
-          {isOpen && (
+          {useDesktopDrilldown && isOpen && (
+            <p
+              className="px-3 mb-2 text-[10px] uppercase tracking-widest"
+              style={{ color: c.textSub }}
+            >
+              {activeGroup ? (
+                <span className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveGroup(null)}
+                    className="inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors"
+                    style={{ background: c.hoverBg, color: c.textSub }}
+                    title="Voltar (Esc)"
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+                  <span className="truncate font-medium normal-case tracking-normal text-xs" style={{ color: c.text }}>
+                    {activeGroup.name}
+                  </span>
+                </span>
+              ) : (
+                <span className="flex items-center justify-between gap-2">
+                  <span className="p38-sidebar-section-label tracking-widest" style={{ color: c.sectionLabel }}>Menu</span>
+                  <span className="normal-case tracking-normal text-[9px]" style={{ color: c.textSub }}>A–Z · Esc</span>
+                </span>
+              )}
+            </p>
+          )}
+
+          {(!useDesktopDrilldown || !isOpen) && isOpen && (
             <p
               className="p38-sidebar-section-label text-[10px] tablet-landscape:text-xs px-3 mb-2 uppercase tracking-widest"
               style={{ color: c.sectionLabel }}
@@ -168,7 +303,102 @@ export default function GlacialSidebar({
             className={isOpen ? "mb-2 mx-1" : "mb-1"}
           />
 
-          {menuItems.map(item => {
+          {useDesktopDrilldown && isOpen ? (
+            <div className="space-y-0.5">
+              {visibleNavItems.map((item, index) => {
+                const letter = indexToNavLetter(index);
+                const Icon = activeGroup ? (item.icon || activeGroup.icon) : item.icon;
+                const isActive = activeGroup
+                  ? (currentPageName === item.page || location.pathname.includes(item.page))
+                  : isPageActive(item);
+
+                if (!activeGroup && item.page && !item.submenu?.length) {
+                  return (
+                    <Link
+                      key={item.name}
+                      to={createPageUrl(item.page)}
+                      onClick={() => {
+                        setActiveGroup(null);
+                        onRequestClose?.();
+                      }}
+                      className="flex items-center rounded-xl transition-colors"
+                      style={{
+                        gap: 10,
+                        padding: '10px 12px',
+                        background: isActive ? c.activeBg : 'transparent',
+                        color: isActive ? c.text : c.textSub,
+                      }}
+                    >
+                      <Icon className="flex-shrink-0 tablet-landscape:w-5 tablet-landscape:h-5" size={18} style={{ color: c.iconColor }} />
+                      <NavItemLabel
+                        letter={letter}
+                        name={item.name}
+                        nameColor={c.text}
+                        letterColor={c.textSub}
+                        onLetterActivate={() => activateNavItemAtIndex(index)}
+                      />
+                    </Link>
+                  );
+                }
+
+                if (!activeGroup && item.submenu?.length) {
+                  return (
+                    <button
+                      key={item.name}
+                      type="button"
+                      onClick={() => setActiveGroup(item)}
+                      className="w-full flex items-center rounded-xl transition-colors"
+                      style={{
+                        gap: 10,
+                        padding: '10px 12px',
+                        background: isActive ? c.activeBg : 'transparent',
+                        color: isActive ? c.text : c.textSub,
+                      }}
+                    >
+                      <Icon className="flex-shrink-0 tablet-landscape:w-5 tablet-landscape:h-5" size={18} style={{ color: c.iconColor }} />
+                      <NavItemLabel
+                        letter={letter}
+                        name={item.name}
+                        nameColor={c.text}
+                        letterColor={c.textSub}
+                        onLetterActivate={() => activateNavItemAtIndex(index)}
+                      />
+                      <ChevronRight size={14} style={{ color: c.chevron }} />
+                    </button>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={item.page || item.name}
+                    to={createPageUrl(item.page)}
+                    onClick={() => {
+                      setActiveGroup(null);
+                      onRequestClose?.();
+                    }}
+                    className="flex items-center rounded-xl transition-colors"
+                    style={{
+                      gap: 10,
+                      padding: '10px 12px',
+                      background: isActive ? c.activeBg : 'transparent',
+                      color: isActive ? c.text : c.textSub,
+                      fontWeight: isActive ? 600 : 400,
+                    }}
+                  >
+                    {Icon && <Icon className="flex-shrink-0 tablet-landscape:w-5 tablet-landscape:h-5" size={18} style={{ color: c.iconColor }} />}
+                    <NavItemLabel
+                      letter={letter}
+                      name={item.name}
+                      nameColor={isActive ? c.text : c.textSub}
+                      letterColor={c.textSub}
+                      onLetterActivate={() => activateNavItemAtIndex(index)}
+                    />
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            menuItems.map(item => {
             const Icon = item.icon;
             const isActive = isPageActive(item);
             const hasSubmenu = item.submenu && item.submenu.length > 0;
@@ -247,7 +477,8 @@ export default function GlacialSidebar({
                 )}
               </div>
             );
-          })}
+          })
+          )}
 
           <div style={{ height: 12 }} />
         </nav>

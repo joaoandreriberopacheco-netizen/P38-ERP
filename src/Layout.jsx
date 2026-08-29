@@ -296,6 +296,10 @@ export default function Layout({ children, currentPageName }) {
     setIsOpen(false);
   }, []);
 
+  const closeDesktopSidebar = React.useCallback(() => {
+    setIsOpen(false);
+  }, []);
+
   const handleMobileMenuToggle = () => {
     setIsOpen(!isOpen);
   };
@@ -433,6 +437,8 @@ export default function Layout({ children, currentPageName }) {
                 searchableItems={allSearchableItems}
                 onSearchCollapsedActivate={openSearchOverlay}
                 showConfiguracoesLink={showConfiguracoesLink}
+                onRequestClose={closeDesktopSidebar}
+                searchOverlayOpen={searchOverlayOpen}
               />
             </Suspense>
           </div>
