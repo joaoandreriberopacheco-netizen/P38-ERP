@@ -1,169 +1,279 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { cn } from '@/components/utils';
 import {
-  CATALOGO_DRILL_BACK,
-  CATALOGO_DRILL_BREADCRUMB,
-  CATALOGO_DRILL_BREADCRUMB_CHIP,
-  CATALOGO_DRILL_BREADCRUMB_SEP,
-  CATALOGO_DRILL_LEVEL_LABEL,
-  CATALOGO_DRILL_LIST,
-  CATALOGO_DRILL_ROW,
-  CATALOGO_DRILL_ROW_BTN,
-  CATALOGO_DRILL_ROW_META,
-  CATALOGO_DRILL_ROW_TITLE,
   CATALOGO_LIST_SHELL,
-  CATALOGO_TIPO_CHIP,
+  CATALOGO_TREE_ROW,
+  CATALOGO_TREE_ROW_HINT,
+  CATALOGO_TREE_TABLE_SLOT,
 } from '@/lib/catalogoP38Theme';
-import {
-  drillBack,
-  drillBreadcrumb,
-  drillEnter,
-  getDrillLevel,
-} from '@/lib/estudoCatalog/catalogoEstudoDrill';
-import CatalogoLinhaMixTable from '@/components/catalogo-novo/CatalogoLinhaMixTable';
+import { pathwayPapelLabel } from '@/lib/estudoCatalog/pathwayMeta';
+import CatalogoLinhaValueTable from '@/components/catalogo-novo/CatalogoLinhaValueTable';
 
-const TIPO_LABEL = { solo: 'Solo', mix: 'Mix', portfolio: 'Portfolio' };
+const HIER_STEP = 16;
+const BASE_PAD = 10;
 
-function TipoPill({ tipo }) {
-  if (!tipo) return null;
+function padLeft(depth) {
+  return BASE_PAD + depth * HIER_STEP;
+}
+
+function TreeToggle({ depth, open, onToggle, label, hint, comfortable }) {
   return (
-    <span
-      className={cn(
-        'inline-flex shrink-0 rounded border px-1 py-0 text-[9px] font-medium uppercase',
-        CATALOGO_TIPO_CHIP[tipo] || CATALOGO_TIPO_CHIP.mix,
-      )}
+    <button
+      type="button"
+      onClick={onToggle}
+      style={{ paddingLeft: padLeft(depth) }}
+      className={cn(CATALOGO_TREE_ROW, comfortable && 'min-h-[44px] py-2.5')}
     >
-      {TIPO_LABEL[tipo] || tipo}
-    </span>
+      <ChevronRight
+        className={cn(
+          'h-3 w-3 shrink-0 text-muted-foreground/50 transition-transform',
+          open && 'rotate-90',
+        )}
+        aria-hidden
+      />
+      <span className="flex-1 min-w-0 truncate font-light normal-case text-left">{label}</span>
+      {hint ? <span className={CATALOGO_TREE_ROW_HINT}>{hint}</span> : null}
+    </button>
   );
 }
 
-function LinhaRow({ item, openKey, onToggle }) {
-  const open = openKey === item.key;
-  const { linha } = item;
+function LinhaBlock({ linha, depth, tipo, comfortable }) {
+  const [open, setOpen] = useState(false);
+  const title = linha.pathway_sufixo
+    ? `${linha.linha_nome || linha.linha_display} ·${linha.pathway_sufixo}`
+    : (linha.linha_nome || linha.linha_display);
+  const pcs = linha.pcs || [];
+  const solos = linha.solos || [];
+  const skuCount = linha.sku_count ?? pcs.reduce((a, p) => a + (p.skus?.length || 0), 0) + solos.length;
 
   return (
-    <div className="border-b border-border/20 dark:border-white/[0.04] last:border-b-0">
-      <button
-        type="button"
-        onClick={() => onToggle(item.key)}
-        className={cn(CATALOGO_DRILL_ROW_BTN, open && 'bg-muted/20 dark:bg-white/[0.03]')}
-      >
-        <ChevronRight
-          className={cn(
-            'h-3.5 w-3.5 shrink-0 text-[#a8942e] dark:text-[#A8B56E] transition-transform',
-            open && 'rotate-90',
-          )}
-        />
-        <span className={CATALOGO_DRILL_ROW_TITLE}>{item.label}</span>
-        <TipoPill tipo={linha.linha_tipo} />
-        <span className={CATALOGO_DRILL_ROW_META}>{item.meta}</span>
-      </button>
+    <>
+      <TreeToggle
+        depth={depth}
+        open={open}
+        onToggle={() => setOpen((v) => !v)}
+        label={title}
+        hint={`${skuCount} SKU`}
+        comfortable={comfortable}
+      />
       {open ? (
-        <div className="px-2 pb-2 pt-0">
-          <CatalogoLinhaMixTable linha={linha} />
+        <div className={CATALOGO_TREE_TABLE_SLOT} style={{ paddingLeft: padLeft(depth + 1) }}>
+          <CatalogoLinhaValueTable linha={linha} tipo={tipo} />
         </div>
       ) : null}
-    </div>
+    </>
   );
 }
 
-/** Catálogo: drill-down (1 nível de cada vez) + tabela mix ao abrir LINHA. */
-export default function CatalogoEstudoList({ tree, filtroTipos, mobileComfortable = false }) {
-  const [path, setPath] = useState([]);
-  const [openLinhaKey, setOpenLinhaKey] = useState(null);
+function PathwayBlock({ pathway, depth, tipo, comfortable }) {
+  const [open, setOpen] = useState(false);
+  const linhas = pathway.linhas || [];
+  if (!linhas.length) return null;
 
-  const crumbs = useMemo(() => drillBreadcrumb(path), [path]);
-  const level = useMemo(() => getDrillLevel(path, tree, filtroTipos), [path, tree, filtroTipos]);
+  const hideHeader = pathway.pathway_papel === 'default' && linhas.length === 1;
+  if (hideHeader) {
+    return (
+      <LinhaBlock
+        key={linhas[0].linha_pathway_key}
+        linha={linhas[0]}
+        depth={depth}
+        tipo={tipo}
+        comfortable={comfortable}
+      />
+    );
+  }
 
-  useEffect(() => {
-    setPath([]);
-    setOpenLinhaKey(null);
-  }, [tree, filtroTipos]);
+  return (
+    <>
+      <TreeToggle
+        depth={depth}
+        open={open}
+        onToggle={() => setOpen((v) => !v)}
+        label={pathwayPapelLabel(pathway.pathway_papel)}
+        hint={`${linhas.length} LINHA`}
+        comfortable={comfortable}
+      />
+      {open
+        ? linhas.map((linha) => (
+            <LinhaBlock
+              key={linha.linha_pathway_key}
+              linha={linha}
+              depth={depth + 1}
+              tipo={tipo}
+              comfortable={comfortable}
+            />
+          ))
+        : null}
+    </>
+  );
+}
 
+function CoreBlock({ coreNode, depth, tipo, comfortable }) {
+  const [open, setOpen] = useState(false);
+  const pathways = coreNode.pathways || [];
+  const linhaCount = pathways.reduce((a, pw) => a + (pw.linhas?.length || 0), 0);
+  if (!linhaCount) return null;
+
+  if (pathways.length === 1) {
+    return (
+      <PathwayBlock
+        pathway={pathways[0]}
+        depth={depth}
+        tipo={tipo}
+        comfortable={comfortable}
+      />
+    );
+  }
+
+  return (
+    <>
+      <TreeToggle
+        depth={depth}
+        open={open}
+        onToggle={() => setOpen((v) => !v)}
+        label={coreNode.core}
+        hint={`${linhaCount} LINHA`}
+        comfortable={comfortable}
+      />
+      {open
+        ? pathways.map((pw) => (
+            <PathwayBlock
+              key={pw.pathway_papel}
+              pathway={pw}
+              depth={depth + 1}
+              tipo={tipo}
+              comfortable={comfortable}
+            />
+          ))
+        : null}
+    </>
+  );
+}
+
+function GrupoBlock({ grupoNode, depth, tipo, comfortable }) {
+  const [open, setOpen] = useState(false);
+  const cores = grupoNode.cores || [];
+  const hasGrupo = Boolean(grupoNode.grupo);
+
+  if (!hasGrupo) {
+    return cores.map((coreNode) => (
+      <CoreBlock
+        key={coreNode.core}
+        coreNode={coreNode}
+        depth={depth}
+        tipo={tipo}
+        comfortable={comfortable}
+      />
+    ));
+  }
+
+  const linhaCount = cores.reduce(
+    (a, c) => a + (c.pathways || []).reduce((b, pw) => b + (pw.linhas?.length || 0), 0),
+    0,
+  );
+  if (!linhaCount) return null;
+
+  return (
+    <>
+      <TreeToggle
+        depth={depth}
+        open={open}
+        onToggle={() => setOpen((v) => !v)}
+        label={grupoNode.grupo}
+        hint={`${linhaCount} LINHA`}
+        comfortable={comfortable}
+      />
+      {open
+        ? cores.map((coreNode) => (
+            <CoreBlock
+              key={coreNode.core}
+              coreNode={coreNode}
+              depth={depth + 1}
+              tipo={tipo}
+              comfortable={comfortable}
+            />
+          ))
+        : null}
+    </>
+  );
+}
+
+function SubBlocoBlock({ sub, depth, tipo, comfortable }) {
+  const [open, setOpen] = useState(false);
+  const grupos = sub.grupos || [];
+
+  return (
+    <>
+      <TreeToggle
+        depth={depth}
+        open={open}
+        onToggle={() => setOpen((v) => !v)}
+        label={sub.sub_bloco}
+        hint={sub.sku_count != null ? `${sub.sku_count} SKU` : undefined}
+        comfortable={comfortable}
+      />
+      {open
+        ? grupos.map((grupoNode) => (
+            <GrupoBlock
+              key={grupoNode.grupo || '__direct__'}
+              grupoNode={grupoNode}
+              depth={depth + 1}
+              tipo={tipo}
+              comfortable={comfortable}
+            />
+          ))
+        : null}
+    </>
+  );
+}
+
+function BlocoBlock({ bloco, tipo, comfortable }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <TreeToggle
+        depth={0}
+        open={open}
+        onToggle={() => setOpen((v) => !v)}
+        label={bloco.bloco}
+        hint={`${bloco.sub_blocos?.length || 0} ramo`}
+        comfortable={comfortable}
+      />
+      {open
+        ? (bloco.sub_blocos || []).map((sub) => (
+            <SubBlocoBlock
+              key={sub.sub_bloco}
+              sub={sub}
+              depth={1}
+              tipo={tipo}
+              comfortable={comfortable}
+            />
+          ))
+        : null}
+    </>
+  );
+}
+
+/**
+ * Novo Catálogo — árvore hierárquica (expande à direita) + tabela plana nos valores.
+ * Um tipo por ecrã: solo | mix | portfolio (prop `tipo`).
+ */
+export default function CatalogoEstudoList({ tree, tipo = 'mix', mobileComfortable = false }) {
   if (!tree?.length) {
     return (
       <div className="py-12 text-center text-sm text-muted-foreground">
-        Nada encontrado com estes filtros.
+        Nada encontrado neste comportamento com os filtros actuais.
       </div>
     );
   }
 
-  const handleEnter = (item) => {
-    setOpenLinhaKey(null);
-    setPath((p) => drillEnter(p, item, tree, filtroTipos));
-  };
-
-  const handleBack = () => {
-    setOpenLinhaKey(null);
-    setPath((p) => drillBack(p));
-  };
-
-  const handleCrumb = (index) => {
-    setOpenLinhaKey(null);
-    setPath((p) => drillBack(p, index));
-  };
-
   return (
     <div className={CATALOGO_LIST_SHELL}>
-      {path.length > 0 ? (
-        <div className="border-b border-border/25 dark:border-white/[0.06] px-2 py-2 space-y-1.5">
-          <button type="button" onClick={handleBack} className={CATALOGO_DRILL_BACK}>
-            <ChevronLeft className="h-3.5 w-3.5 shrink-0" />
-            Voltar
-          </button>
-          <nav className={CATALOGO_DRILL_BREADCRUMB} aria-label="Caminho no catálogo">
-            {crumbs.map((crumb, i) => (
-              <React.Fragment key={`${crumb.kind}-${crumb.key}`}>
-                {i > 0 ? <span className={CATALOGO_DRILL_BREADCRUMB_SEP} aria-hidden>/</span> : null}
-                <button
-                  type="button"
-                  onClick={() => handleCrumb(crumb.index)}
-                  className={CATALOGO_DRILL_BREADCRUMB_CHIP}
-                  title={crumb.label}
-                >
-                  {crumb.label}
-                </button>
-              </React.Fragment>
-            ))}
-          </nav>
-        </div>
-      ) : null}
-
-      <p className={cn(CATALOGO_DRILL_LEVEL_LABEL, mobileComfortable && 'py-2')}>
-        {level.label}
-      </p>
-
-      <div className={CATALOGO_DRILL_LIST}>
-        {level.kind === 'linhas'
-          ? level.items.map((item) => (
-              <LinhaRow
-                key={item.key}
-                item={item}
-                openKey={openLinhaKey}
-                onToggle={(key) => setOpenLinhaKey((cur) => (cur === key ? null : key))}
-              />
-            ))
-          : level.items.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => handleEnter(item)}
-                className={CATALOGO_DRILL_ROW}
-              >
-                <span className={CATALOGO_DRILL_ROW_TITLE}>{item.label}</span>
-                {item.meta ? <span className={CATALOGO_DRILL_ROW_META}>{item.meta}</span> : null}
-                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70 ml-1" />
-              </button>
-            ))}
-      </div>
-
-      {!level.items.length ? (
-        <p className="py-8 text-center text-sm text-muted-foreground px-3">
-          Sem itens neste ramo com os filtros actuais.
-        </p>
-      ) : null}
+      {tree.map((bloco) => (
+        <BlocoBlock key={bloco.bloco} bloco={bloco} tipo={tipo} comfortable={mobileComfortable} />
+      ))}
     </div>
   );
 }

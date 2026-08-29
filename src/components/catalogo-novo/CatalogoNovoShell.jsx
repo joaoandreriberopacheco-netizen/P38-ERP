@@ -8,7 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { createPageUrl } from '@/components/utils';
 import { cn } from '@/components/utils';
 import { useCompactShell } from '@/hooks/use-breakpoint';
-import PortalTipoFilter from '@/components/hierarquia-portal/PortalTipoFilter';
+import CatalogoTipoTabs from '@/components/catalogo-novo/CatalogoTipoTabs';
 import CatalogoEstudoList from '@/components/catalogo-novo/CatalogoEstudoList';
 import CatalogoSmartSupplyPanel from '@/components/catalogo-novo/CatalogoSmartSupplyPanel';
 import { useCatalogoEstudoData } from '@/hooks/useCatalogoEstudoData';
@@ -47,8 +47,8 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
     setPortalFilters,
     filtroLinha,
     setFiltroLinha,
-    filtroTipos,
-    setFiltroTipos,
+    tipoAtivo,
+    setTipoAtivo,
     tree,
     hierarchy,
     filteredSupply,
@@ -66,13 +66,20 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
   const title = isSupply ? SMART_SUPPLY_ECOSYSTEM_LABEL : NOVO_CATALOGO_MENU_LABEL;
   const TitleIcon = isSupply ? Zap : LayoutGrid;
 
+  const linhasVisiveis = useMemo(
+    () => (isSupply ? linhas : linhas.filter((l) => l.tipo === tipoAtivo)),
+    [linhas, tipoAtivo, isSupply],
+  );
+
   const siblingLink = isSupply
     ? { page: 'CatalogoNovo', label: NOVO_CATALOGO_MENU_LABEL }
     : { page: 'SmartSupplyNovo', label: SMART_SUPPLY_ECOSYSTEM_LABEL };
 
   const filterControls = (
     <>
-      <PortalTipoFilter activeTipos={filtroTipos} onChange={setFiltroTipos} counts={tipoCounts} />
+      {!isSupply ? (
+        <CatalogoTipoTabs tipoAtivo={tipoAtivo} onChange={setTipoAtivo} counts={tipoCounts} />
+      ) : null}
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1 min-w-0">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
@@ -89,7 +96,7 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas as LINHAs</SelectItem>
-            {linhas.map((l) => (
+            {linhasVisiveis.map((l) => (
               <SelectItem key={l.codigo} value={l.codigo}>{l.nome}</SelectItem>
             ))}
           </SelectContent>
@@ -147,7 +154,7 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
               <p className={cn('p38-page-subtitle', isMobile ? 'text-xs line-clamp-2' : 'text-sm')}>
                 {isSupply
                   ? 'Reposição por LINHA — giro, ponto futuro e alertas (Excel estudo)'
-                  : 'Escolhe bloco e ramo; abre a LINHA para ver produto compra · SKUs · eixos'}
+                  : 'Árvore hierárquica (como TreeGrid) — valores em tabela por LINHA'}
               </p>
             </div>
             {!isMobile && (
@@ -225,7 +232,7 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
           <p className="text-sm text-muted-foreground text-center py-8">A carregar estoque do cadastro…</p>
         ) : null}
         {!isSupply ? (
-          <CatalogoEstudoList tree={tree} filtroTipos={filtroTipos} mobileComfortable={isMobile} />
+          <CatalogoEstudoList tree={tree} tipo={tipoAtivo} mobileComfortable={isMobile} />
         ) : (
           <CatalogoSmartSupplyPanel
             hierarchy={hierarchy}

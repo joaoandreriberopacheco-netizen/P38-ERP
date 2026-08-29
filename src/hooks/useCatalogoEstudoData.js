@@ -45,7 +45,7 @@ function matchSearch(row, q) {
 export function useCatalogoEstudoData() {
   const [portalFilters, setPortalFilters] = useState(getDefaultPortalCatalogFilters);
   const [filtroLinha, setFiltroLinha] = useState('');
-  const [filtroTipos, setFiltroTipos] = useState(() => new Set(['solo', 'mix', 'portfolio']));
+  const [tipoAtivo, setTipoAtivo] = useState('mix');
 
   const manifestMeta = useMemo(() => getEstudoManifestMeta(), []);
   const manifest = useMemo(() => getEstudoCatalogManifest(), []);
@@ -88,11 +88,11 @@ export function useCatalogoEstudoData() {
   const filteredRows = useMemo(() => {
     let rows = enrichedAll;
     if (filtroLinha) rows = rows.filter((r) => r.linha_codigo === filtroLinha);
-    if (filtroTipos?.size) rows = rows.filter((r) => filtroTipos.has(r.linha_tipo));
+    rows = rows.filter((r) => r.linha_tipo === tipoAtivo);
     const q = (portalFilters.searchTerm || '').trim().toLowerCase();
     if (q) rows = rows.filter((r) => matchSearch(r, q));
     return rows;
-  }, [enrichedAll, filtroLinha, filtroTipos, portalFilters.searchTerm]);
+  }, [enrichedAll, filtroLinha, tipoAtivo, portalFilters.searchTerm]);
 
   const tree = useMemo(
     () => buildEstudoTree(filteredRows, { catalogStockContext }),
@@ -120,8 +120,8 @@ export function useCatalogoEstudoData() {
     setPortalFilters,
     filtroLinha,
     setFiltroLinha,
-    filtroTipos,
-    setFiltroTipos,
+    tipoAtivo,
+    setTipoAtivo,
     tree,
     hierarchy,
     filteredSupply: supplyLinesPanel,
