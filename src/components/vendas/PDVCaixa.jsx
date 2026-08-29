@@ -54,7 +54,7 @@ import { processarVendaCaixa } from '@/functions/processarVendaCaixa';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 import ConfirmarImpressaoDialog from '@/components/vendas/ConfirmarImpressaoDialog';
 import { roundToTwoDecimals, resolveValorPedidoVenda, pagamentosCobremTotal } from '@/lib/financialUtils';
-import { selectAllOnFocus, handleCentavosMaskKeyDown } from '@/lib/inputFocusUtils';
+import { handleCentavosMaskKeyDown } from '@/lib/inputFocusUtils';
 import {
   descricaoPadraoVale,
   listarPessoasFolhaParaVale,
@@ -76,9 +76,15 @@ import {
   CAIXA_PRINT,
   CAIXA_TOAST_SUCCESS,
   caixaClasses,
+  caixaConsultaCard,
+  caixaDesktopTabTrigger,
+  caixaFieldSurface,
+  caixaKpiShell,
   caixaMain,
   caixaMainInLayout,
   caixaMobileTabBar,
+  caixaMobileTabTrigger,
+  caixaMobileTabsList,
   caixaShell,
   caixaTabPanel,
   caixaTabPanelInLayout,
@@ -87,12 +93,13 @@ import {
   caixaTabsRoot,
   caixaTabsRootInLayout,
   caixaTypo,
-  conferenciaTone,
   movimentoTone,
 } from '@/lib/caixaP38Theme';
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 import CaixaMovimentacoesTurno from '@/components/vendas/caixa/CaixaMovimentacoesTurno';
+import CaixaRecebimentosTurno from '@/components/vendas/caixa/CaixaRecebimentosTurno';
 import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
+import VendasFormaPagamentoDialog from '@/components/vendas/caixa/VendasFormaPagamentoDialog';
 import { CaixaOverlayStackProvider } from '@/components/vendas/caixa/CaixaOverlayStackContext';
 import { cleanupQuickAccessPortalLayers } from '@/lib/quickAccessOverlay';
 import { getCachedUserSession } from '@/lib/userSessionCache';
@@ -255,9 +262,6 @@ export default function PDVCaixa({
     moeda005: 0
   });
   const [recebimentosDinheiro, setRecebimentosDinheiro] = useState('');
-  const [recebimentosPix, setRecebimentosPix] = useState('');
-  const [recebimentosCredito, setRecebimentosCredito] = useState('');
-  const [recebimentosDebito, setRecebimentosDebito] = useState('');
 
   const [pagamentosDinheiro, setPagamentosDinheiro] = useState(0);
   const [pagamentosPix, setPagamentosPix] = useState(0);
@@ -324,6 +328,7 @@ export default function PDVCaixa({
   const [showDespesaDialog, setShowDespesaDialog] = useState(false);
   const [salvandoDespesa, setSalvandoDespesa] = useState(false);
   const [showSaldoConsolidadoDialog, setShowSaldoConsolidadoDialog] = useState(false);
+  const [formaPagamentoDialog, setFormaPagamentoDialog] = useState(null);
   const [showGerenciarMovimentoDialog, setShowGerenciarMovimentoDialog] = useState(false);
   const [movimentoSelecionado, setMovimentoSelecionado] = useState(null);
   const [valorDespesa, setValorDespesa] = useState('');
@@ -660,6 +665,7 @@ export default function PDVCaixa({
     showSangriasDialog ||
     showDespesasDialog ||
     showSaldoConsolidadoDialog ||
+    formaPagamentoDialog != null ||
     showGerenciarMovimentoDialog ||
     showLiberacaoEntrega ||
     showComprovanteDespesa ||
@@ -1297,9 +1303,6 @@ export default function PDVCaixa({
         (caixaData.recebimentos?.vale || 0)
     );
     setRecebimentosDinheiro(formatarValorExibicao(dinheiroCalculado));
-    setRecebimentosPix(formatarValorExibicao(caixaData.recebimentos?.pix || 0));
-    setRecebimentosCredito(formatarValorExibicao(caixaData.recebimentos?.credito || 0));
-    setRecebimentosDebito(formatarValorExibicao(caixaData.recebimentos?.debito || 0));
   }, [caixaData]);
 
   const handleFecharCaixa = async () => {
@@ -1409,6 +1412,14 @@ export default function PDVCaixa({
     return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
+  const dinheiroNaGaveta = roundToTwoDecimals(
+    (caixaData.liquidez || 0) -
+      (caixaData.recebimentos?.pix || 0) -
+      (caixaData.recebimentos?.credito || 0) -
+      (caixaData.recebimentos?.debito || 0) -
+      (caixaData.recebimentos?.vale || 0),
+  );
+
   const movimentosTimelineItems = useMemo(() => {
     const itensMovimentos = movimentos.map(m => ({
       id: m.id,
@@ -1483,7 +1494,7 @@ export default function PDVCaixa({
       )}
 
       {/* Header Minimalista */}
-      <div className="flex-shrink-0 bg-card dark:bg-card border-b border-border/40 dark:border-border/40 px-4 py-3 flex items-center justify-between">
+      <div className="flex-shrink-0 bg-card dark:bg-background border-b border-border/40 dark:border-white/10 px-4 py-3 flex items-center justify-between">
         <button
           type="button"
           onClick={handleClose}
@@ -1534,16 +1545,16 @@ export default function PDVCaixa({
             {/* Desktop e Mobile - Sistema de Abas Unificado */}
               <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="balanco" className={tabsRootClassName}>
                 {/* Abas mobile — abaixo do header; bottom nav fica no shell global */}
-                <TabsList className={`${caixaMobileTabBar} grid grid-cols-3 h-14 bg-card dark:bg-card border-b border-border/40 dark:border-border/40 rounded-none p-0`}>
-                  <TabsTrigger value="balanco" className="flex flex-col items-center justify-center gap-0.5 data-[state=active]:bg-muted/40 dark:data-[state=active]:bg-muted h-full rounded-none border-0">
+                <TabsList className={`${caixaMobileTabBar} ${caixaMobileTabsList}`}>
+                  <TabsTrigger value="balanco" className={caixaMobileTabTrigger}>
                     <PieChart className="w-5 h-5" />
                     <span className={caixaTypo.labelSm}>Balanço</span>
                   </TabsTrigger>
-                  <TabsTrigger value="vendas" data-pulse-sensor="pdv-caixa.tab-vendas" className="flex flex-col items-center justify-center gap-0.5 data-[state=active]:bg-muted/40 dark:data-[state=active]:bg-muted h-full rounded-none border-0">
+                  <TabsTrigger value="vendas" data-pulse-sensor="pdv-caixa.tab-vendas" className={caixaMobileTabTrigger}>
                     <ShoppingCart className="w-5 h-5" />
                     <span className={caixaTypo.labelSm}>Vendas</span>
                   </TabsTrigger>
-                  <TabsTrigger value="movimentos" className="flex flex-col items-center justify-center gap-0.5 data-[state=active]:bg-muted/40 dark:data-[state=active]:bg-muted h-full rounded-none border-0">
+                  <TabsTrigger value="movimentos" className={caixaMobileTabTrigger}>
                     <Wallet className="w-5 h-5" />
                     <span className={caixaTypo.labelSm}>Movimentos</span>
                   </TabsTrigger>
@@ -1552,35 +1563,35 @@ export default function PDVCaixa({
                 {/* KPIs Superiores - Apenas Desktop */}
                 <div className="hidden md:block p-4 pb-0">
                   <div className="grid grid-cols-2 gap-3 max-w-4xl mx-auto">
-                    <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm">
-                     <div className="text-xs text-muted-foreground dark:text-muted-foreground mb-2">Saldo do Turno</div>
+                    <div className={caixaKpiShell}>
+                     <div className="text-xs text-muted-foreground mb-2">Saldo do Turno</div>
                      <div className="text-3xl font-bold text-foreground dark:text-white font-glacial">
                        {formatValor(caixaData.liquidez)}
                      </div>
                      <div className="text-xs text-muted-foreground dark:text-muted-foreground mt-1">Inicial + vendas + reforços − recolhimentos</div>
                     </div>
-                    <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm">
-                      <div className="text-xs text-muted-foreground dark:text-muted-foreground mb-2">Dinheiro na Gaveta</div>
+                    <div className={caixaKpiShell}>
+                      <div className="text-xs text-muted-foreground mb-2">Dinheiro na Gaveta</div>
                       <div className="text-3xl font-bold text-foreground dark:text-white font-glacial">
-                        {formatValor(caixaData.liquidez - (caixaData.recebimentos?.pix || 0) - (caixaData.recebimentos?.credito || 0) - (caixaData.recebimentos?.debito || 0) - (caixaData.recebimentos?.vale || 0))}
+                        {formatValor(dinheiroNaGaveta)}
                       </div>
-                      <div className="text-xs text-muted-foreground dark:text-muted-foreground mt-1">Liquidez − (PIX + Crédito + Débito + Vale)</div>
+                      <div className="text-xs text-muted-foreground mt-1">Liquidez − (PIX + Crédito + Débito + Vale)</div>
                     </div>
                   </div>
                 </div>
 
                 {/* Tabs Navigation - Desktop */}
-                <div className="hidden md:block border-b border-border/40 dark:border-border/40 px-4">
+                <div className="hidden md:block border-b border-border/40 dark:border-white/10 px-4 bg-background">
                   <TabsList className="h-auto bg-transparent border-0 gap-1 justify-start max-w-4xl mx-auto p-0">
-                    <TabsTrigger value="balanco" className="flex items-center gap-2 data-[state=active]:bg-card dark:data-[state=active]:bg-card data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+                    <TabsTrigger value="balanco" className={caixaDesktopTabTrigger}>
                       <PieChart className="w-4 h-4" />
                       <span className={caixaTypo.tab}>Balanço</span>
                     </TabsTrigger>
-                    <TabsTrigger value="vendas" data-pulse-sensor="pdv-caixa.tab-vendas" className="flex items-center gap-2 data-[state=active]:bg-card dark:data-[state=active]:bg-card data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+                    <TabsTrigger value="vendas" data-pulse-sensor="pdv-caixa.tab-vendas" className={caixaDesktopTabTrigger}>
                       <Receipt className="w-4 h-4" />
                       <span className={caixaTypo.tab}>Vendas</span>
                     </TabsTrigger>
-                    <TabsTrigger value="movimentos" className="flex items-center gap-2 data-[state=active]:bg-card dark:data-[state=active]:bg-card data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+                    <TabsTrigger value="movimentos" className={caixaDesktopTabTrigger}>
                       <Wallet className="w-4 h-4" />
                       <span className={caixaTypo.tab}>Movimentos</span>
                     </TabsTrigger>
@@ -1606,125 +1617,29 @@ export default function PDVCaixa({
                   onLiquidez={() => setShowSaldoConsolidadoDialog(true)}
                 />
 
-                {/* Recebimentos do Turno */}
-                <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm">
-                  <h3 className={`${caixaTypo.title} mb-4 text-foreground dark:text-white`}>
-                    Recebimentos do Turno
-                  </h3>
-                  <div className="space-y-2">
-                    {/* Dinheiro - campo editável clicável (bloqueado em modo visualização) */}
-                    <div
-                      className={`flex items-center justify-between py-2 px-3 rounded-xl ${modoVisualizacao ? 'bg-muted dark:bg-card' : 'bg-muted/40 dark:bg-muted/50 cursor-pointer hover:bg-muted dark:hover:bg-muted'} transition-colors group`}
-                      onClick={() => {
-                        if (modoVisualizacao) return;
-                        const el = document.getElementById('input-dinheiro-conferido');
-                        el?.focus();
-                        el?.select();
-                      }}>
-                      <div>
-                        <span className={caixaTypo.label}>Dinheiro</span>
-                        <p className={caixaTypo.meta}>{modoVisualizacao ? 'somente leitura' : 'toque para conferir'}</p>
-                      </div>
-                      <input autoComplete="off"
-                        id="input-dinheiro-conferido"
-                        type="text"
-                        inputMode="decimal"
-                        value={recebimentosDinheiro}
-                        onChange={(e) => {
-                          if (modoVisualizacao) return;
-                          conferenciaDinheiroEditadoRef.current = true;
-                          setRecebimentosDinheiro(e.target.value);
-                        }}
-                        onFocus={(e) => {
-                          conferenciaDinheiroFocusedRef.current = true;
-                          selectAllOnFocus(e);
-                        }}
-                        onBlur={() => {
-                          conferenciaDinheiroFocusedRef.current = false;
-                        }}
-                        disabled={modoVisualizacao}
-                        className={`w-36 text-right text-lg font-bold bg-transparent border-0 focus:outline-none text-foreground dark:text-white ${modoVisualizacao ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
-                        placeholder={formatarValorExibicao(caixaData.saldoAtual || 0)}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between py-2 px-3">
-                      <span className={caixaTypo.label}>PIX</span>
-                      <CaixaValorDisplay valor={caixaData.recebimentos.pix} tone="neutral" signed={false} size="md" />
-                    </div>
-                    <div className="flex items-center justify-between py-2 px-3">
-                      <span className={caixaTypo.label}>Cartão Crédito</span>
-                      <CaixaValorDisplay valor={caixaData.recebimentos.credito || 0} tone="neutral" signed={false} size="md" />
-                    </div>
-                    <div className="flex items-center justify-between py-2 px-3">
-                      <span className={caixaTypo.label}>Cartão Débito</span>
-                      <CaixaValorDisplay valor={caixaData.recebimentos.debito || 0} tone="neutral" signed={false} size="md" />
-                    </div>
-                    {(caixaData.recebimentos.vale || 0) > 0 && (
-                     <div className="flex items-center justify-between py-2 px-3">
-                       <div className="flex items-center gap-2">
-                         <span className={caixaTypo.label}>Vale Troca</span>
-                         <span className={`text-xs px-1.5 py-0.5 rounded ${caixaClasses('success').pill}`}>não monetário</span>
-                       </div>
-                       <CaixaValorDisplay valor={caixaData.recebimentos.vale || 0} tone="neutral" signed={false} size="md" />
-                     </div>
-                    )}
-                    {(caixaData.recebimentos.fiado || 0) > 0 && (
-                     <div className="flex items-center justify-between py-2 px-3">
-                       <div className="flex items-center gap-2">
-                         <span className={caixaTypo.label}>Conta a Pagar</span>
-                         <span className={`text-xs px-1.5 py-0.5 rounded ${caixaClasses('warning').pill}`}>a receber</span>
-                       </div>
-                       <CaixaValorDisplay valor={caixaData.recebimentos.fiado || 0} tone="warning" signed={false} size="md" />
-                     </div>
-                    )}
-
-                    {/* Total e Diferença */}
-                    <div className="pt-3 mt-1 border-t border-border/40 dark:border-border/40 space-y-3">
-                      {(() => {
-                        const dinheiroConferido = roundToTwoDecimals(
-                          parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0
-                        );
-                        // Total conferido = dinheiro(conferido) + pix + crédito + débito (fiado não entra — é a receber)
-                        const totalConferido = roundToTwoDecimals(
-                          dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0)
-                        );
-                        // Esperado = liquidez (já exclui fiado e vale)
-                        const esperado = roundToTwoDecimals(caixaData.liquidez - (caixaData.recebimentos.vale || 0));
-                        const diferenca = roundToTwoDecimals(totalConferido - esperado);
-                        const temDiferenca = Math.abs(diferenca) > 0.01;
-
-                        return (
-                          <>
-                            <div className="flex items-center justify-between px-1">
-                              <span className={caixaTypo.section}>Total Conferido</span>
-                              <CaixaValorDisplay valor={totalConferido} tone="neutral" signed={false} size="lg" />
-                            </div>
-                            <div className={`p-4 rounded-xl transition-colors ${caixaClasses(conferenciaTone({ temDiferenca, diferenca })).panel}`}>
-                              <div className="flex items-center justify-between">
-                                <span className={`text-sm font-medium ${caixaClasses(conferenciaTone({ temDiferenca, diferenca })).panelText}`}>
-                                  {!temDiferenca ? '✓ Confere' : diferenca > 0 ? 'Sobrando' : 'Faltando'}
-                                </span>
-                                <CaixaValorDisplay
-                                  valor={!temDiferenca ? 0 : Math.abs(diferenca)}
-                                  tone={conferenciaTone({ temDiferenca, diferenca })}
-                                  signed={temDiferenca}
-                                  size="lg"
-                                />
-                              </div>
-                              {temDiferenca && (
-                                <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1">
-                                  Esperado: {formatValor(esperado)}
-                                </p>
-                              )}
-                            </div>
-                          </>
-                        );
-                      })()}
-                    </div>
-                  </div>
-                </div>
+                <CaixaRecebimentosTurno
+                  dinheiroNaGaveta={dinheiroNaGaveta}
+                  recebimentos={caixaData.recebimentos}
+                  fiado={caixaData.recebimentos?.fiado || 0}
+                  liquidez={caixaData.liquidez}
+                  modoConferenciaAtivo={!modoVisualizacao}
+                  modoVisualizacao={modoVisualizacao}
+                  recebimentosDinheiro={recebimentosDinheiro}
+                  onRecebimentosDinheiroChange={(e) => {
+                    if (modoVisualizacao) return;
+                    conferenciaDinheiroEditadoRef.current = true;
+                    setRecebimentosDinheiro(e.target.value);
+                  }}
+                  onRecebimentosDinheiroFocus={() => {
+                    conferenciaDinheiroFocusedRef.current = true;
+                  }}
+                  onRecebimentosDinheiroBlur={() => {
+                    conferenciaDinheiroFocusedRef.current = false;
+                  }}
+                  dinheiroPlaceholder={formatarValorExibicao(caixaData.saldoAtual || 0)}
+                  formatValor={formatValor}
+                  onVerFormaPagamento={setFormaPagamentoDialog}
+                />
                 </div>
                 </div>
 
@@ -1829,7 +1744,7 @@ export default function PDVCaixa({
                        }
                      };
                      return (
-                       <div ref={fechamentoSectionRef} id="secao-fechamento-caixa" className="bg-card dark:bg-card rounded-2xl p-4 shadow-sm max-w-4xl mx-auto">
+                       <div ref={fechamentoSectionRef} id="secao-fechamento-caixa" className={`${caixaFieldSurface} rounded-2xl p-4 max-w-4xl mx-auto`}>
                          <div className="flex items-center justify-between mb-3">
                            <h3 className="text-sm font-semibold text-foreground/90 dark:text-muted-foreground">Fechamento de Caixa</h3>
                            {!temDiferenca ? (
@@ -1863,18 +1778,18 @@ export default function PDVCaixa({
                  <TabsContent value="vendas" data-caixa-tab-scroll className={`${tabPanelClassName} ${tabPanelPad} space-y-3`}>
                    <div className="max-w-4xl mx-auto space-y-4">
                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                       <div className="flex rounded-2xl bg-muted/50 p-1 gap-1">
+                       <div className="flex rounded-2xl bg-muted/50 dark:bg-[#26262e] p-1 gap-1">
                          <button
                            type="button"
                            onClick={() => setVendasView('aguardando')}
-                           className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${vendasView === 'aguardando' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
+                           className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${vendasView === 'aguardando' ? 'bg-card shadow-sm text-foreground dark:bg-[#a4ce33] dark:text-[#1f1d22]' : 'text-muted-foreground'}`}
                          >
                            Aguardando ({rascunhosAguardando.length})
                          </button>
                          <button
                            type="button"
                            onClick={() => setVendasView('consulta')}
-                           className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${vendasView === 'consulta' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
+                           className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${vendasView === 'consulta' ? 'bg-card shadow-sm text-foreground dark:bg-[#a4ce33] dark:text-[#1f1d22]' : 'text-muted-foreground'}`}
                          >
                            Consulta ({vendasFinalizadas.length})
                          </button>
@@ -2125,6 +2040,13 @@ export default function PDVCaixa({
           formatValor={formatValor}
         />
 
+        <VendasFormaPagamentoDialog
+          open={!!formaPagamentoDialog}
+          onOpenChange={(open) => { if (!open) setFormaPagamentoDialog(null); }}
+          formaPagamentoKey={formaPagamentoDialog}
+          vendasFinalizadas={vendasFinalizadas}
+          metaPorPedidoId={substituicoesCtx?.metaPorPedidoId}
+        />
         <VendasTurnoDialog
           open={showVendasDialog} onOpenChange={setShowVendasDialog}
           vendasFinalizadas={vendasFinalizadas} turnoAtivo={turnoAtivo}

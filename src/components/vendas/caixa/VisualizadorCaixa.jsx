@@ -17,8 +17,13 @@ import { CAIXA_MIRROR_DIALOG_CHILD_CLASS } from '@/lib/quickAccessOverlay';
 import {
   CAIXA_PRINT,
   caixaClasses,
+  caixaDesktopTabTrigger,
+  caixaFieldSurface,
+  caixaKpiShell,
   caixaMain,
   caixaMobileTabBar,
+  caixaMobileTabTrigger,
+  caixaMobileTabsList,
   caixaOverlayShell,
   caixaTabPanel,
   caixaTabPanelPad,
@@ -89,7 +94,7 @@ function MovimentoTimelineCard({ item }) {
   const Icon = toneKey === 'success' || toneKey === 'emerald' ? Plus : toneKey === 'info' || toneKey === 'blue' ? Minus : DollarSign;
   const valorTone = toneKey === 'muted' ? 'neutral' : (toneKey === 'emerald' ? 'success' : toneKey === 'blue' ? 'info' : toneKey === 'red' ? 'danger' : toneKey);
   return (
-    <div className="bg-card rounded-2xl px-4 py-3 shadow-sm flex items-center justify-between gap-3">
+    <div className="bg-card dark:p38-field-surface rounded-2xl px-4 py-3 shadow-sm dark:shadow-none flex items-center justify-between gap-3">
       <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${tone.well}`}>
         <Icon className={`w-4 h-4 ${tone.icon}`} />
       </div>
@@ -356,7 +361,7 @@ export default function VisualizadorCaixa({
     <CaixaOverlayStackProvider active stack="mirror">
     <div className={`${caixaOverlayShell} ${caixaTypo.screen}`}>
       {/* Header */}
-      <div className="bg-card border-b border-border/40 px-4 py-3 flex items-center justify-between flex-shrink-0">
+      <div className="bg-card dark:bg-background border-b border-border/40 dark:border-white/10 px-4 py-3 flex items-center justify-between flex-shrink-0">
         <button onClick={onVoltar} className="p-2 -ml-2 hover:bg-muted rounded-lg transition-colors" style={{ minWidth: '44px', minHeight: '44px' }}>
           <ArrowLeft className="w-6 h-6 text-foreground/90" />
         </button>
@@ -396,16 +401,16 @@ export default function VisualizadorCaixa({
       {/* Conteúdo — caixaMain estabelece flex-col para TabsContent poder rolar no mobile */}
       <div className={`${caixaMain} bg-background`}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className={caixaTabsRoot}>
-          <TabsList className={`${caixaMobileTabBar} grid grid-cols-3 h-14 bg-card border-b border-border/40 rounded-none p-0`}>
-            <TabsTrigger value="balanco" className="flex flex-col items-center justify-center gap-0.5 data-[state=active]:bg-muted h-full rounded-none border-0">
+          <TabsList className={`${caixaMobileTabBar} ${caixaMobileTabsList}`}>
+            <TabsTrigger value="balanco" className={caixaMobileTabTrigger}>
               <PieChart className="w-5 h-5" />
               <span className="text-xs">Balanço</span>
             </TabsTrigger>
-            <TabsTrigger value="vendas" className="flex flex-col items-center justify-center gap-0.5 data-[state=active]:bg-muted h-full rounded-none border-0">
+            <TabsTrigger value="vendas" className={caixaMobileTabTrigger}>
               <ShoppingCart className="w-5 h-5" />
               <span className={caixaTypo.labelSm}>Vendas</span>
             </TabsTrigger>
-            <TabsTrigger value="movimentos" className="flex flex-col items-center justify-center gap-0.5 data-[state=active]:bg-muted h-full rounded-none border-0">
+            <TabsTrigger value="movimentos" className={caixaMobileTabTrigger}>
               <Wallet className="w-5 h-5" />
               <span className="text-xs">Movimentos</span>
             </TabsTrigger>
@@ -414,12 +419,12 @@ export default function VisualizadorCaixa({
           {/* KPIs - Desktop */}
           <div className="hidden md:block p-4 pb-0 bg-background">
             <div className="grid grid-cols-2 gap-3 max-w-4xl mx-auto">
-              <div className="bg-card rounded-2xl p-5 shadow-sm">
+              <div className={caixaKpiShell}>
                 <div className="text-xs text-muted-foreground mb-2">Saldo do Turno</div>
                 <div className="text-3xl font-bold text-foreground font-glacial">{formatValor(caixaData.liquidez)}</div>
                 <div className="text-xs text-muted-foreground mt-1">Inicial + vendas + reforços − recolhimentos</div>
               </div>
-              <div className="bg-card rounded-2xl p-5 shadow-sm">
+              <div className={caixaKpiShell}>
                 <div className="text-xs text-muted-foreground mb-2">Dinheiro na Gaveta</div>
                 <div className="text-3xl font-bold text-foreground font-glacial">
                   {formatValor(dinheiroNaGaveta)}
@@ -430,17 +435,17 @@ export default function VisualizadorCaixa({
           </div>
 
           {/* Tabs - Desktop */}
-          <div className="hidden md:block border-b border-border/40 px-4 bg-background">
+          <div className="hidden md:block border-b border-border/40 dark:border-white/10 px-4 bg-background">
             <TabsList className="h-auto bg-transparent border-0 gap-1 justify-start max-w-4xl mx-auto p-0">
-              <TabsTrigger value="balanco" className="flex items-center gap-2 data-[state=active]:bg-card data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+              <TabsTrigger value="balanco" className={caixaDesktopTabTrigger}>
                 <PieChart className="w-4 h-4" />
                 <span className="text-sm">Balanço</span>
               </TabsTrigger>
-              <TabsTrigger value="vendas" className="flex items-center gap-2 data-[state=active]:bg-card data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+              <TabsTrigger value="vendas" className={caixaDesktopTabTrigger}>
                 <ShoppingCart className="w-4 h-4" />
                 <span className="text-sm">Vendas</span>
               </TabsTrigger>
-              <TabsTrigger value="movimentos" className="flex items-center gap-2 data-[state=active]:bg-card data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+              <TabsTrigger value="movimentos" className={caixaDesktopTabTrigger}>
                 <Wallet className="w-4 h-4" />
                 <span className="text-sm">Movimentos</span>
               </TabsTrigger>
@@ -470,7 +475,8 @@ export default function VisualizadorCaixa({
                 <CaixaRecebimentosTurno
                   dinheiroNaGaveta={dinheiroNaGaveta}
                   recebimentos={caixaData.recebimentos}
-                  fiado={caixaData.fiado || 0}
+                  fiado={caixaData.recebimentos?.fiado || caixaData.fiado || 0}
+                  liquidez={caixaData.liquidez}
                   totalConferido={caixaData.liquidez}
                   modoFechado={modoFechado}
                   dinheiroConferidoFechamento={dinheiroConferidoFechamento}
@@ -483,8 +489,8 @@ export default function VisualizadorCaixa({
                 />
               </div>
 
-              <div className="bg-card rounded-2xl p-4 shadow-sm space-y-2">
-                <button onClick={imprimirRelatorio} className="w-full h-12 bg-primary text-primary-foreground rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm hover:opacity-90 transition-opacity" style={{ minHeight: '48px' }}>
+              <div className={`${caixaFieldSurface} rounded-2xl p-4 space-y-2`}>
+                <button onClick={imprimirRelatorio} className="w-full h-12 bg-primary text-primary-foreground rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm hover:opacity-90 transition-opacity dark:bg-[#a4ce33] dark:text-[#1f1d22]" style={{ minHeight: '48px' }}>
                   <Printer className="w-4 h-4" /> Imprimir Relatório
                 </button>
                 {modoFechado && onSolicitarReabertura && (
@@ -506,12 +512,12 @@ export default function VisualizadorCaixa({
           <TabsContent value="vendas" className={`${caixaTabPanel} ${caixaTabPanelPad} space-y-3`}>
             <div className="max-w-4xl mx-auto space-y-4 pb-4">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="flex rounded-2xl bg-muted/50 p-1 gap-1">
+                <div className="flex rounded-2xl bg-muted/50 dark:bg-[#26262e] p-1 gap-1">
                   {!modoFechado && (
                     <button
                       type="button"
                       onClick={() => setVendasView('aguardando')}
-                      className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${vendasView === 'aguardando' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
+                      className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${vendasView === 'aguardando' ? 'bg-card shadow-sm text-foreground dark:bg-[#a4ce33] dark:text-[#1f1d22]' : 'text-muted-foreground'}`}
                     >
                       Aguardando ({rascunhosAguardando.length})
                     </button>
@@ -519,7 +525,7 @@ export default function VisualizadorCaixa({
                   <button
                     type="button"
                     onClick={() => setVendasView('consulta')}
-                    className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${vendasView === 'consulta' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
+                    className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${vendasView === 'consulta' ? 'bg-card shadow-sm text-foreground dark:bg-[#a4ce33] dark:text-[#1f1d22]' : 'text-muted-foreground'}`}
                   >
                     Consulta ({vendasFinalizadas.length})
                   </button>

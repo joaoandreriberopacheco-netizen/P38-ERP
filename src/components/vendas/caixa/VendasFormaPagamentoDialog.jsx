@@ -3,6 +3,8 @@ import { Dialog } from '@/components/ui/dialog';
 import { CaixaDialogContent } from './CaixaDialogContent';
 import { ArrowLeft } from 'lucide-react';
 import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
+import { caixaFieldSurface } from '@/lib/caixaP38Theme';
+import { cn } from '@/components/utils';
 import {
   FORMA_CAIXA_LABELS,
   filtrarVendasPorFormaPagamentoCaixa,
@@ -33,7 +35,7 @@ export default function VendasFormaPagamentoDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <CaixaDialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-background flex flex-col">
-        <div className="bg-card border-b border-border/40 px-4 py-3 flex items-center flex-shrink-0">
+        <div className={cn('border-b border-border/40 dark:border-white/10 px-4 py-3 flex items-center flex-shrink-0', caixaFieldSurface)}>
           <button
             type="button"
             onClick={() => onOpenChange(false)}

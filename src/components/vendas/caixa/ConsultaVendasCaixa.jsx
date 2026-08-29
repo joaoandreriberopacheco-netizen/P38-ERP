@@ -4,7 +4,7 @@ import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import { cn } from '@/components/utils';
 import { p38Table } from '@/lib/p38TableSurfaces';
 import CaixaValorDisplay, { formatCaixaR } from '@/components/vendas/caixa/CaixaValorDisplay';
-import { caixaTypo } from '@/lib/caixaP38Theme';
+import { caixaConsultaCard, caixaTypo } from '@/lib/caixaP38Theme';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { formatarDataHora } from '@/components/utils/dateUtils';
 import FormaPagamentoBadges from '@/components/vendas/FormaPagamentoBadges';
@@ -116,18 +116,18 @@ export default function ConsultaVendasCaixa({
           </p>
         </div>
         {!forcarModoComprovante && (
-          <div className="flex rounded-2xl bg-muted/50 p-1 gap-1">
+          <div className="flex rounded-2xl bg-muted/50 dark:bg-[#26262e] p-1 gap-1">
             <button
               type="button"
               onClick={() => setModo('produto')}
-              className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${modo === 'produto' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
+              className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${modo === 'produto' ? 'bg-card shadow-sm text-foreground dark:bg-[#a4ce33] dark:text-[#1f1d22]' : 'text-muted-foreground'}`}
             >
               Por produto
             </button>
             <button
               type="button"
               onClick={() => setModo('comprovante')}
-              className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${modo === 'comprovante' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
+              className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${modo === 'comprovante' ? 'bg-card shadow-sm text-foreground dark:bg-[#a4ce33] dark:text-[#1f1d22]' : 'text-muted-foreground'}`}
             >
               Por comprovante
             </button>
@@ -205,8 +205,8 @@ export default function ConsultaVendasCaixa({
                   : null;
 
                 return (
-                <div key={venda.id} className="bg-card rounded-2xl shadow-sm">
-                  <div className="w-full flex items-start justify-between gap-2 px-4 py-3 border-b border-border/40 overflow-visible">
+                <div key={venda.id} className={caixaConsultaCard}>
+                  <div className="w-full flex items-start justify-between gap-2 px-4 py-3 border-b border-border/40 dark:border-white/10 overflow-visible">
                     <div className="min-w-0 flex-1">
                       <p className={`${p38Table.mobileLineTitle} truncate`}>{venda.numero}</p>
                       <p className={`${p38Table.mobileLineSubtitle} truncate`}>

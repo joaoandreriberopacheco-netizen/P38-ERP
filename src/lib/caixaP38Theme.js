@@ -4,6 +4,12 @@
  */
 import { p38Accent } from '@/lib/p38ThemeSurfaces';
 import { CAIXA_MIRROR_SHELL_CLASS } from '@/lib/quickAccessOverlay';
+import {
+  P38_FIELD_SURFACE,
+  P38_KPI_SHELL,
+} from '@/components/financeiro/fluxo/financeiroP38';
+
+export { P38_FIELD_SURFACE as caixaFieldSurface, P38_KPI_SHELL as caixaKpiShell };
 
 export const CAIXA_PRINT = {
   success: p38Accent.success.solid,
@@ -143,6 +149,24 @@ export const caixaTypo = {
  * Superfícies do caixa — contraste garantido no modo claro (oliva + texto claro)
  * e comportamento escuro preservado via dark:*.
  */
+/** Abas mobile — chips estilo Planejamento financeiro no escuro */
+export const caixaMobileTabsList =
+  'grid grid-cols-3 h-14 rounded-none p-1 gap-0 border-b border-border/40 dark:border-white/10 bg-card dark:bg-transparent';
+
+export const caixaMobileTabTrigger =
+  'flex flex-col items-center justify-center gap-0.5 h-full rounded-lg border-0 ' +
+  'data-[state=active]:bg-muted/40 data-[state=active]:shadow-sm ' +
+  'dark:data-[state=inactive]:text-foreground/80 dark:data-[state=active]:bg-[#a4ce33] dark:data-[state=active]:text-[#1f1d22]';
+
+export const caixaDesktopTabTrigger =
+  'flex items-center gap-2 h-12 px-6 rounded-t-xl rounded-b-none border-0 ' +
+  'data-[state=active]:bg-card data-[state=active]:shadow-sm ' +
+  'dark:data-[state=active]:bg-[#a4ce33] dark:data-[state=active]:text-[#1f1d22]';
+
+/** Card de consulta de vendas — superfície planejamento no escuro */
+export const caixaConsultaCard =
+  'rounded-2xl border-0 shadow-sm bg-card dark:p38-field-surface dark:shadow-none overflow-hidden';
+
 export const caixaSurface = {
   /** Botão de acção compacto (maquininha, fiado, chips) */
   chipBtn:
