@@ -1,6 +1,8 @@
 /**
  * Paleta P38 para o módulo de caixa — substitui emerald/blue/red genéricos.
  * Modo escuro: carvão (#1f1d22 / #2d333b / #26262e) + verde oliva mediterrâneo (#636B2F).
+ *
+ * Referência para agentes: docs/p38-paleta-oliva.md · .cursor/rules/p38-paleta-oliva-operacional.mdc
  */
 import { p38Accent } from '@/lib/p38ThemeSurfaces';
 import { CAIXA_MIRROR_SHELL_CLASS } from '@/lib/quickAccessOverlay';

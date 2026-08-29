@@ -121,6 +121,7 @@ Após gravar secrets no Cursor: **nova sessão** → `npm run secrets:audit`
 
 - Canonical **hosted** deploy path today: this repo → Base44 / Vercel legacy. Future canonical stack: **a29-erp** (Next.js + Supabase). See root `README.md` and `.cursor/rules/transicao-vercel-base44.mdc`.
 - **Mobile visual north star (finance/ops):** Planejamento financeiro dark — palette/feeling approved by João André; see `.cursor/rules/p38-mobile-referencia-planejamento.mdc` and `docs/p38-mobile-rollout.md` §0.
+- **Paleta oliva operacional (Caixa + Embarques):** ver `.cursor/rules/p38-paleta-oliva-operacional.mdc` e `docs/p38-paleta-oliva.md` — tokens em `caixaP38Theme.js` / `comprasP38Theme.js`; não usar `#a4ce33` em novos CTAs operacionais mobile.
 - **Flare** workflow: `docs/flare-export/README.md`, rule `.cursor/rules/busca-de-flares.mdc` — do not commit `flare-pending.json` with sensitive data.
 
 ### Optional services (not VM startup)

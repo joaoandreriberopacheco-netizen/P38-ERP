@@ -9,7 +9,7 @@ import { CAIXA_OLIVE } from '@/lib/caixaP38Theme';
 import { P38_LIGHT_HEADER_ACCENT, P38_LIGHT_VLINE } from '@/lib/p38LightTheme';
 import { P38_FORM_TYPO_SCOPE } from '@/lib/p38FormTypography';
 
-/** Verde oliva mediterrâneo — alinhado ao módulo Caixa (dark). */
+/** Verde oliva mediterrâneo — alinhado ao módulo Caixa (dark). Ver docs/p38-paleta-oliva.md */
 export const COMPRAS_OLIVE = CAIXA_OLIVE;
 
 export { P38_CHIP_ACTIVE };

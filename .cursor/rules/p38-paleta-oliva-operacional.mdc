@@ -1,0 +1,60 @@
+# Paleta oliva — Caixa e Embarques (referência operacional mobile)
+
+## Porquê existe
+
+Em **2026-08-29**, João André aprovou a paleta **oliva mediterrânea** nos Embarques mobile, alinhada ao **Caixa** — substituindo o limão vibrante `#a4ce33` nesses ecrãs operacionais densos (filtros, busca, abas inline, FAB).
+
+**Limão** mantém-se canónico no **Planejamento financeiro** (`.cursor/rules/p38-mobile-referencia-planejamento.mdc`). Não confundir os dois contextos.
+
+## Fonte única de tokens
+
+| Objecto | Ficheiro |
+|---------|----------|
+| `CAIXA_OLIVE` | `src/lib/caixaP38Theme.js` |
+| `COMPRAS_OLIVE` (= `CAIXA_OLIVE`) | `src/lib/comprasP38Theme.js` |
+| Status lista Embarques | `src/lib/comprasEmbarquesPalette.js` |
+
+Documento humano + mapa completo: [`docs/p38-paleta-oliva.md`](docs/p38-paleta-oliva.md).
+
+## Hex canónicos (dark mobile)
+
+- Sólido: `#636B2F`
+- Texto acento: `#A8B56E`
+- Wash chip: `rgba(99,107,47,0.18)`
+- Fundo página: `#1f1d22` (carvão — inalterado)
+
+Modo claro: sólido `#4a5240`, texto `#3a4232`.
+
+## Ecrãs de referência
+
+- Embarques: https://p-38erp.vercel.app/PedidosCompra
+- Caixa: https://p-38erp.vercel.app/PDVCaixa
+
+Código âncora layout compacto: `ComprasViewTabsInline` em `src/pages/PedidosCompra.jsx`, `FiltrosCompras.jsx` (`mobileLeading`, `COMPRAS_SEARCH_INPUT_COMPACT`).
+
+## Quando aplicar
+
+- Novos trabalhos em **Caixa**, **Embarques**, **Compras**, **PDV recebimentos** (dark mobile).
+- Utilizador pede “paleta do caixa”, “oliva”, “tirar limão”.
+- Refactor de filtros/busca mobile onde ícones competem por espaço.
+
+## Classes preferidas (importar, não copiar hex)
+
+De `comprasP38Theme.js`: `COMPRAS_FAB`, `COMPRAS_VIEW_TAB_*`, `COMPRAS_CHIP_ACTIVE_OLIVE`, `COMPRAS_KPI_ACCENT`, `COMPRAS_MOBILE_CTA`, `COMPRAS_MOBILE_ICON_BTN`, `COMPRAS_SEARCH_INPUT_COMPACT`.
+
+De `caixaP38Theme.js`: `caixaStatusPills`, `caixaMobileAccents`, `caixaAccentDot`, `caixaEyeBtn`.
+
+## O que NÃO fazer
+
+- Não usar `#a4ce33` em CTAs/chips activos de ecrãs operacionais novos.
+- Não inventar hex soltos — reutilizar `CAIXA_OLIVE` / tokens `COMPRAS_*`.
+- Não usar ícones `h-5`+ na linha busca+abas+filtro mobile (referência: abas `h-8` + ícones `h-4`, busca `h-10`, filtro `h-9`).
+- Não trocar cores semânticas de status (Despachado = ciano, Aguardando = coral).
+
+## Relação com outras referências
+
+| Referência | Papel |
+|------------|-------|
+| Planejamento | Composição + **limão** em CTAs hero |
+| Margem | Linhas densas / grelha |
+| **Oliva (esta regra)** | Operacional denso — caixa, embarques, listas + filtros |
