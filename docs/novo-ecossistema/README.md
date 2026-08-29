@@ -51,7 +51,7 @@ No **mobile**, alternar entre os dois com **tabs no topo** (sem voltar ao menu).
 | Tipo | Comportamento | Exemplo |
 |------|---------------|---------|
 | **solo** | **Não precisa de mix nem de variedade.** Compra-se o item; não monta esquadra. | **CIMENTO PORTLAND** — o saco; sem grelha de peças. |
-| **mix** | **Produto compra com esquadra** — várias referências que **completam** a reposição na LINHA. Podem ser **intercambiáveis** (soldável: joelho, luva, medidas) ou **não substituíveis** (prego: cada medida é distinta, mas a LINHA exige mix de tamanhos). | **JOELHO SOLDÁVEL** · **PREGO** |
+| **mix** | **Esquadra** no produto compra — várias referências que **completam** a LINHA, mas **não são substituíveis** (cada peça/medida conta). | **JOELHO SOLDÁVEL** · **PREGO** |
 | **portfolio** | **Substituíveis** dentro do mesmo produto compra ou da LINHA — troca formato/modelo/cor. | **Cerâmicas** — peças equivalentes na família. |
 
 **Onde está escrito:** `src/data/hierarquiaPortalLinhas.json` (`tipo` + `principios`).  

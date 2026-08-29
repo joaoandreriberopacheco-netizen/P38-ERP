@@ -16,7 +16,7 @@ Documento completo: [`docs/novo-ecossistema/README.md`](docs/novo-ecossistema/RE
 ## Comportamento solo / mix / portfolio (negócio)
 
 - **solo** — não exige mix nem variedade (ex.: cimento Portland).
-- **mix** — esquadra no produto compra; intercambiável (soldável) ou medidas distintas que completam gama (prego).
+- **mix** — esquadra; peças **não substituíveis** que completam a gama (joelho soldável, prego).
 - **portfolio** — substituíveis na LINHA/produto compra (cerâmicas).
 
 Ver `docs/novo-ecossistema/README.md` e `hierarquiaPortalLinhas.json`.

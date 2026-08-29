@@ -5,7 +5,7 @@
     "LINHA = família do produto (tipo), não categoria ERP",
     "tipo (solo | mix | portfolio) = COMPORTAMENTO de reposição e grelha — não rótulo decorativo",
     "solo: não precisa de mix nem de variedade — cada compra é por si (ex.: CIMENTO PORTLAND)",
-    "mix: esquadra no produto compra — peças que completam reposição; podem ser intercambiáveis (soldável: joelho×medida) ou não (prego: medidas distintas, não substituíveis)",
+    "mix: esquadra no produto compra — referências que completam a LINHA e não são substituíveis entre si (ex.: joelho soldável por peça/medida, prego por medida)",
     "portfolio: referências substituíveis no produto compra ou na LINHA (ex.: cerâmicas — formatos/modelos trocáveis)",
     "Não existe LINHA TUBO genérica — tubo vai para ESGOTO / SOLDÁVEL / ROSCÁVEL / ELETRODUTO",
     "Peças avulsas (joelho, luva, tee, cap…) na LINHA da conexão",
