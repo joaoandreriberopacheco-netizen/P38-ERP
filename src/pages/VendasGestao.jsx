@@ -1,6 +1,8 @@
 import { memo, useState, useRef, useMemo, useEffect } from 'react';
 import { useCompactShell } from '@/hooks/use-breakpoint';
+import { useScrollChromeVisibility } from '@/hooks/useScrollChromeVisibility';
 import { cn } from '@/lib/utils';
+import { P38ScrollChromeCollapse } from '@/components/layout/P38ScrollChromeCollapse';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { base44 } from '@/api/base44Client';
 import {
@@ -451,6 +453,8 @@ function VendasGestaoPage() {
   }
 
   const isPhone = useCompactShell();
+  const scrollRef = useRef(null);
+  const chromeVisible = useScrollChromeVisibility(scrollRef, isPhone);
   const { invalidateHomeKpis } = useP38QueryInvalidation();
   const [dataInicio, setDataInicio] = useState(() => getPeriodoMesCorrente().start);
   const [dataFim, setDataFim] = useState(() => getPeriodoMesCorrente().end);
@@ -765,7 +769,64 @@ function VendasGestaoPage() {
           : 'max-w-7xl mx-auto space-y-4 overflow-x-hidden',
       )}
     >
-      <div className={cn(isPhone ? 'shrink-0 space-y-4 px-4' : 'space-y-4')}>
+      {isPhone ? (
+        <>
+          <P38ScrollChromeCollapse visible={chromeVisible} enabled className="shrink-0">
+            <div className="space-y-4 px-4">
+              <div className="flex flex-col gap-3">
+                <P38PageHeader
+                  title="Gestão de Vendas"
+                  description="Orçamentos, pedidos e acompanhamento"
+                />
+                <div className="grid grid-cols-4 gap-1.5 flex-shrink-0 w-full">
+                  <Button variant="ghost" size="icon" className="h-11 w-full rounded-2xl bg-muted dark:bg-muted" title="Devolução" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Devolução')}>
+                    <RotateCcw className="w-4 h-4 text-muted-foreground" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-11 w-full rounded-2xl bg-muted dark:bg-muted" title="Troca" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Troca')}>
+                    <RefreshCw className="w-4 h-4 text-muted-foreground" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-11 w-full rounded-2xl bg-muted dark:bg-muted" title="Alterar Pagamento" onClick={() => setShowAlterarPagamento(true)}>
+                    <CreditCard className="w-4 h-4 text-muted-foreground" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-11 w-full rounded-2xl bg-muted dark:bg-muted"
+                    onClick={() => setShowFiltros(true)}
+                  >
+                    <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
+                  </Button>
+                </div>
+              </div>
+
+              <GlacialTabsList className="w-full" scrollable>
+                <GlacialTabsTrigger value="rascunhos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Senhas" icon={FileText} />
+                <GlacialTabsTrigger value="pedidos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Pedidos" icon={ShoppingCart} />
+                <GlacialTabsTrigger value="orcamentos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Orçamentos" icon={ScrollText} />
+                <GlacialTabsTrigger value="consulta" activeValue={activeTab} onSelect={handleActiveTabChange} label="Consulta" icon={Receipt} />
+                <GlacialTabsTrigger value="vales" activeValue={activeTab} onSelect={handleActiveTabChange} label="Vales" icon={Ticket} />
+              </GlacialTabsList>
+            </div>
+          </P38ScrollChromeCollapse>
+
+          <div className="shrink-0 px-4 pb-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="relative flex-1 min-w-0">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  data-pulse-sensor="vendas-gestao.busca"
+                  variant="search"
+                  placeholder="Buscar por número, cliente..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 h-12 bg-card dark:bg-muted border-0 rounded-2xl min-w-0 shadow-sm"
+                />
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+      <div className="space-y-4">
       {/* Header limpo */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <P38PageHeader
@@ -826,6 +887,7 @@ function VendasGestaoPage() {
         <GlacialTabsTrigger value="vales" activeValue={activeTab} onSelect={handleActiveTabChange} label="Vales" icon={Ticket} />
       </GlacialTabsList>
       </div>
+      )}
 
       <Drawer open={showFiltros} onOpenChange={setShowFiltros}>
         {showFiltros ? (
@@ -945,6 +1007,7 @@ function VendasGestaoPage() {
       </Drawer>
 
       <div
+        ref={scrollRef}
         className={cn(
           isPhone
             ? 'flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y px-4 pb-4'

@@ -1,6 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useCompactShell } from '@/hooks/use-breakpoint';
+import { useScrollChromeVisibility } from '@/hooks/useScrollChromeVisibility';
 import { cn } from '@/lib/utils';
+import { P38ScrollChromeCollapse } from '@/components/layout/P38ScrollChromeCollapse';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
@@ -519,6 +521,8 @@ function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
 
 export default function PedidosCompraPage() {
   const isPhone = useCompactShell();
+  const scrollRef = useRef(null);
+  const chromeVisible = useScrollChromeVisibility(scrollRef, isPhone);
   const navigate = useNavigate();
   const [pedidos, setPedidos] = useState([]);
   const [embarques, setEmbarques] = useState([]);
@@ -940,7 +944,143 @@ export default function PedidosCompraPage() {
           : 'overflow-x-hidden space-y-4',
       )}
     >
-      <div className={cn(isPhone ? 'shrink-0 space-y-4 px-4' : 'space-y-4')}>
+      {isPhone ? (
+        <>
+          <P38ScrollChromeCollapse visible={chromeVisible} enabled className="shrink-0">
+            <div className="space-y-4 px-4">
+              {/* Header */}
+              <div className="pb-3 mb-1 flex flex-col gap-3">
+                <div className="space-y-1.5 min-w-0">
+                  <p className="text-xl font-medium text-foreground font-din-1451">
+                    {activeView === 'consulta' ? 'Consulta de compras' : 'Embarques'}
+                  </p>
+                  {activeView === 'consulta' ? (
+                    <p className="text-sm leading-normal text-foreground/85 font-din-1451">
+                      {pedidosConsulta.length} embarque{pedidosConsulta.length === 1 ? '' : 's'} no período
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-sm leading-normal text-foreground/85 font-din-1451">{filtrados.length} embarques visíveis · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                      <p className="text-sm leading-normal text-emerald-600 dark:text-emerald-400">Aprovados financeiramente e ainda não recebidos no filtro: R$ {valorPagoNaoEntregue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                    </>
+                  )}
+                </div>
+                {activeView === 'embarques' || activeView === 'consulta' ? (
+                  <div className="flex items-center gap-2 justify-end flex-nowrap max-w-full overflow-x-auto">
+                    <ComprasRelatoriosMenu
+                      pedidos={activeView === 'consulta' ? pedidosConsulta : filtrados}
+                      grupos={activeView === 'consulta' ? gruposConsultaRelatorio : grupos}
+                      produtosMap={produtosMap}
+                      groupBy={groupBy}
+                      sortOrder={sortOrder}
+                      filtrosDesc={`Busca: ${search || 'todas'} · Status: ${statusSel.join(', ') || 'todos'} · Tags: ${tagsSel.length || 0} · Período: ${dataInicial || '-'} até ${dataFinal || '-'} · ETA: ${etaFiltroModo || 'todos'}${etaFiltroModo === 'antes' || etaFiltroModo === 'depois' ? ` (${etaData || '-'})` : ''}${etaFiltroModo === 'entre' || etaFiltroModo === 'personalizado' ? ` (${etaInicial || '-'} até ${etaFinal || '-'})` : ''}`}
+                      kpis={{
+                        totalPedidos: filtrados.length,
+                        totalGeral: valorTotal,
+                        totalEmAberto: filtrados.filter(p => ['Rascunho', 'Aguardando Aprovação Financeira', 'Aprovado'].includes(p.status)).reduce((acc, p) => acc + Number(p._display_valor || p.valor_total || 0), 0),
+                        totalPagoNaoEntregue: valorPagoNaoEntregue,
+                      }}
+                    />
+                    <ComprasOperacoesMenu
+                      onImportarPedido={handleImportarPedido}
+                      onImportarNF={() => setShowImportador(true)}
+                      onDownloadTemplate={handleDownloadTemplate}
+                      onEnviarFinanceiroLote={handleAbrirEnvioFinanceiroLote}
+                      onToggleModoSelecao={handleToggleModoSelecao}
+                      onAtualizarPrecosFiltrados={() => setShowAtualizarPrecosFiltrados(true)}
+                      modoSelecao={modoSelecao}
+                      quantidadeSelecionados={selecionadosIds.length}
+                      enviandoLote={enviandoLote}
+                    />
+                    <PedidosCompraOrganizer
+                      groupBy={groupBy}
+                      sortOrder={sortOrder}
+                      onGroupByChange={setGroupBy}
+                      onSortOrderToggle={() => setSortOrder((prev) => prev === 'asc' ? 'desc' : 'asc')}
+                    />
+                    <StatusPedidoCompraPicker
+                      statusSel={statusSel}
+                      onStatusSel={setStatusSel}
+                      onFiltroSomenteNaoConcluidos={setFiltroSomenteNaoConcluidos}
+                    />
+                  </div>
+                ) : null}
+              </div>
+
+              <GlacialTabsList className="w-full" scrollable>
+                <GlacialTabsTrigger value="embarques" activeValue={activeView} onSelect={setActiveView} label="Embarques" icon={Package} pulseSensor="pedidos-compra.tab-embarques" />
+                <GlacialTabsTrigger value="consulta" activeValue={activeView} onSelect={setActiveView} label="Consulta" icon={Receipt} pulseSensor="pedidos-compra.tab-consulta" />
+              </GlacialTabsList>
+            </div>
+          </P38ScrollChromeCollapse>
+
+          <div className="shrink-0 px-4 pb-2">
+            <FiltrosCompras
+              search={search} onSearch={setSearch}
+              filtroUltimos30Dias={filtroUltimos30Dias} onFiltroUltimos30Dias={setFiltroUltimos30Dias}
+              filtroSomenteNaoConcluidos={filtroSomenteNaoConcluidos} onFiltroSomenteNaoConcluidos={setFiltroSomenteNaoConcluidos}
+              statusSel={statusSel} onStatusSel={setStatusSel}
+              todasTags={todasTags} tagsSel={tagsSel} onTagsSel={setTagsSel}
+              dataInicial={dataInicial} onDataInicial={setDataInicial}
+              dataFinal={dataFinal} onDataFinal={setDataFinal}
+              etaFiltroModo={etaFiltroModo} onEtaFiltroModo={setEtaFiltroModo}
+              etaData={etaData} onEtaData={setEtaData}
+              etaInicial={etaInicial} onEtaInicial={setEtaInicial}
+              etaFinal={etaFinal} onEtaFinal={setEtaFinal}
+              recebimentoInicial={recebimentoInicial} onRecebimentoInicial={setRecebimentoInicial}
+              recebimentoFinal={recebimentoFinal} onRecebimentoFinal={setRecebimentoFinal}
+              hasActiveFilters={hasActiveFilters}
+              onLimparFiltros={() => {
+                setSearch('');
+                setStatusSel(filtroComprasStatusSelInicial());
+                setFiltroUltimos30Dias(FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT);
+                setFiltroSomenteNaoConcluidos(FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT);
+                setTagsSel([]);
+                setDataInicial('');
+                setDataFinal('');
+                setEtaFiltroModo('');
+                setEtaData('');
+                setEtaInicial('');
+                setEtaFinal('');
+                setRecebimentoInicial('');
+                setRecebimentoFinal('');
+              }}
+            />
+          </div>
+
+          <div
+            ref={scrollRef}
+            className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y px-4 pb-4"
+          >
+            {activeView === 'embarques' ? (
+              <ListaPedidosCompra
+                grupos={grupos}
+                loading={loading}
+                onEdit={handleOpenPedido}
+                onDelete={loadData}
+                selecionadosIds={selecionadosIds}
+                onToggleSelecao={handleToggleSelecao}
+                modoSelecao={modoSelecao}
+              />
+            ) : loading ? (
+              <div className="flex justify-center py-12">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-border/40" />
+              </div>
+            ) : (
+              <ConsultaComprasPedidos
+                pedidosFiltrados={pedidosConsulta}
+                onVerPedido={handleOpenPedido}
+                groupBy={groupBy}
+                sortOrder={sortOrder}
+                contextLabel="Resumo do período"
+                emptyMessage="Nenhum embarque no período selecionado"
+              />
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+      <div className="space-y-4">
       {/* Header */}
       <div className="pb-3 mb-1 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="space-y-1.5 min-w-0">
@@ -985,15 +1125,6 @@ export default function PedidosCompraPage() {
               quantidadeSelecionados={selecionadosIds.length}
               enviandoLote={enviandoLote}
             />
-            {activeView === 'consulta' && pedidosConsulta.length > 0 ? (
-              <button
-                type="button"
-                onClick={() => setShowAtualizarPrecosFiltrados(true)}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-card shadow-sm text-sm font-medium text-foreground hover:shadow-md transition"
-              >
-                Atualizar preços
-              </button>
-            ) : null}
             <PedidosCompraOrganizer
               groupBy={groupBy}
               sortOrder={sortOrder}
@@ -1014,7 +1145,6 @@ export default function PedidosCompraPage() {
         <GlacialTabsTrigger value="consulta" activeValue={activeView} onSelect={setActiveView} label="Consulta" icon={Receipt} pulseSensor="pedidos-compra.tab-consulta" />
       </GlacialTabsList>
 
-      {/* Filtros */}
       <FiltrosCompras
         search={search} onSearch={setSearch}
         filtroUltimos30Dias={filtroUltimos30Dias} onFiltroUltimos30Dias={setFiltroUltimos30Dias}
@@ -1048,13 +1178,6 @@ export default function PedidosCompraPage() {
       />
       </div>
 
-      <div
-        className={cn(
-          isPhone
-            ? 'flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y px-4 pb-4'
-            : undefined,
-        )}
-      >
       {activeView === 'embarques' ? (
         <ListaPedidosCompra
           grupos={grupos}
@@ -1079,8 +1202,8 @@ export default function PedidosCompraPage() {
           emptyMessage="Nenhum embarque no período selecionado"
         />
       )}
-
-      </div>
+        </>
+      )}
     </div>
 
       <ImportadorNotaFiscal 
