@@ -147,7 +147,7 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
               <p className={cn('p38-page-subtitle', isMobile ? 'text-xs line-clamp-2' : 'text-sm')}>
                 {isSupply
                   ? 'Reposição por LINHA — giro, ponto futuro e alertas (Excel estudo)'
-                  : 'Bloco → sub-bloco → core → pathway → LINHA → produto compra → SKU'}
+                  : 'Escolhe bloco e ramo; abre a LINHA para ver produto compra · SKUs · eixos'}
               </p>
             </div>
             {!isMobile && (

@@ -86,7 +86,52 @@ export const CATALOGO_HEADER_ACCENT = P38_LIGHT_HEADER_ACCENT;
 export const CATALOGO_LIST_SHELL = cn(
   'overflow-hidden rounded-lg bg-background dark:bg-[#1f1d22]/40',
   'border border-border/30 dark:border-white/[0.06]',
-  'shadow-sm divide-y divide-border/20 dark:divide-white/[0.04]',
+  'shadow-sm',
+);
+
+/** Drill-down — um nível por ecrã, sem boneca russa. */
+export const CATALOGO_DRILL_BACK = cn(
+  'inline-flex items-center gap-0.5 text-[11px] text-[#a8942e] dark:text-[#A8B56E]',
+  'hover:underline min-h-[28px] px-1 -ml-1',
+);
+
+export const CATALOGO_DRILL_BREADCRUMB = cn(
+  'flex flex-wrap items-center gap-x-1 gap-y-1 min-w-0',
+  'text-[10px] text-muted-foreground normal-case',
+);
+
+export const CATALOGO_DRILL_BREADCRUMB_SEP = 'text-muted-foreground/40 select-none';
+
+export const CATALOGO_DRILL_BREADCRUMB_CHIP = cn(
+  'max-w-[9rem] sm:max-w-[12rem] truncate rounded px-1 py-0.5',
+  'hover:bg-muted/40 dark:hover:bg-white/[0.05] text-foreground/80',
+  'border border-transparent hover:border-border/30',
+);
+
+export const CATALOGO_DRILL_LEVEL_LABEL = cn(
+  'px-3 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground/80',
+  'border-b border-border/20 dark:border-white/[0.04] bg-muted/10 dark:bg-white/[0.02]',
+);
+
+export const CATALOGO_DRILL_LIST = 'divide-y divide-border/20 dark:divide-white/[0.04]';
+
+export const CATALOGO_DRILL_ROW = cn(
+  'flex w-full items-center gap-2 min-w-0 px-3 py-2.5 text-left',
+  'hover:bg-muted/25 dark:hover:bg-white/[0.035] transition-colors',
+);
+
+export const CATALOGO_DRILL_ROW_BTN = cn(
+  CATALOGO_DRILL_ROW,
+  'cursor-pointer',
+);
+
+export const CATALOGO_DRILL_ROW_TITLE = cn(
+  'flex-1 min-w-0 font-din-1451 font-light text-sm text-foreground leading-snug',
+  'truncate normal-case',
+);
+
+export const CATALOGO_DRILL_ROW_META = cn(
+  'shrink-0 text-[10px] tabular-nums text-muted-foreground',
 );
 
 export const CATALOGO_ROW_BASE = cn(
