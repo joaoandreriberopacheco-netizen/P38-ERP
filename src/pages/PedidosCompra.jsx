@@ -52,6 +52,13 @@ import PedidosCompraOrganizer from '@/components/compras/PedidosCompraOrganizer'
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
 import { Package, Receipt } from 'lucide-react';
 import {
+  COMPRAS_VIEW_TAB_ACTIVE,
+  COMPRAS_VIEW_TAB_BTN,
+  COMPRAS_VIEW_TAB_GROUP,
+  COMPRAS_VIEW_TAB_IDLE,
+  COMPRAS_KPI_ACCENT,
+} from '@/lib/comprasP38Theme';
+import {
   buildPurchaseUnitOptions,
   normalizeUnitCode,
   commercialQuantityFromBase,
@@ -519,41 +526,34 @@ function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
   return { pedidosComResumoReal, cardsDeEmbarque };
 }
 
-const COMPRAS_VIEW_TAB_BTN =
-  'relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-all';
-
 function ComprasViewTabsInline({ activeView, onSelect }) {
   return (
-    <div className="flex shrink-0 items-center gap-1.5">
+    <div className={COMPRAS_VIEW_TAB_GROUP}>
       <button
         type="button"
         className={cn(
           COMPRAS_VIEW_TAB_BTN,
-          activeView === 'embarques'
-            ? 'bg-[#e8b824] text-[#242424] dark:bg-[#a4ce33] dark:text-[#1f1d22]'
-            : 'bg-muted dark:bg-muted text-foreground/90',
+          activeView === 'embarques' ? COMPRAS_VIEW_TAB_ACTIVE : COMPRAS_VIEW_TAB_IDLE,
         )}
         onClick={() => onSelect('embarques')}
         aria-label="Embarques"
         aria-pressed={activeView === 'embarques'}
         data-pulse-sensor="pedidos-compra.tab-embarques"
       >
-        <Package className="h-5 w-5" />
+        <Package className="h-4 w-4" />
       </button>
       <button
         type="button"
         className={cn(
           COMPRAS_VIEW_TAB_BTN,
-          activeView === 'consulta'
-            ? 'bg-[#e8b824] text-[#242424] dark:bg-[#a4ce33] dark:text-[#1f1d22]'
-            : 'bg-muted dark:bg-muted text-foreground/90',
+          activeView === 'consulta' ? COMPRAS_VIEW_TAB_ACTIVE : COMPRAS_VIEW_TAB_IDLE,
         )}
         onClick={() => onSelect('consulta')}
         aria-label="Consulta de compras"
         aria-pressed={activeView === 'consulta'}
         data-pulse-sensor="pedidos-compra.tab-consulta"
       >
-        <Receipt className="h-5 w-5" />
+        <Receipt className="h-4 w-4" />
       </button>
     </div>
   );
@@ -1002,7 +1002,7 @@ export default function PedidosCompraPage() {
                   ) : (
                     <>
                       <p className="text-sm leading-normal text-foreground/85 font-din-1451">{filtrados.length} embarques visíveis · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                      <p className="text-sm leading-normal text-emerald-600 dark:text-emerald-400">Aprovados financeiramente e ainda não recebidos no filtro: R$ {valorPagoNaoEntregue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                      <p className={cn('text-sm leading-normal font-din-1451', COMPRAS_KPI_ACCENT)}>Aprovados financeiramente e ainda não recebidos no filtro: R$ {valorPagoNaoEntregue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                     </>
                   )}
                 </div>

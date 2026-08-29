@@ -28,12 +28,15 @@ import {
   COMPRAS_FILTRO_STATUS_RECEBIMENTO,
 } from '@/lib/comprasEmbarquesPalette';
 import {
-  COMPRAS_CHIP_ACTIVE_CITRUS,
   COMPRAS_CHIP_ACTIVE_OLIVE,
   COMPRAS_CHIP_IDLE,
   COMPRAS_DIVIDER_TOP,
+  COMPRAS_FILTER_BADGE,
   COMPRAS_ICON_ACCENT,
+  COMPRAS_MOBILE_CTA,
+  COMPRAS_MOBILE_ICON_BTN,
   COMPRAS_SEARCH_INPUT,
+  COMPRAS_SEARCH_INPUT_COMPACT,
   COMPRAS_SECTION_CARD,
 } from '@/lib/comprasP38Theme';
 import { statusPedidoCompraExplicitos } from '@/components/compras/StatusPedidoCompraPicker';
@@ -58,7 +61,7 @@ function QuickFilterToggle({ label, checked, onCheckedChange }) {
       className={cn(
         'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] leading-none transition-colors whitespace-nowrap font-light uppercase tracking-wide',
         checked
-          ? COMPRAS_CHIP_ACTIVE_CITRUS
+          ? COMPRAS_CHIP_ACTIVE_OLIVE
           : 'bg-card text-muted-foreground hover:bg-secondary/30 dark:bg-muted/50 dark:hover:bg-muted/80 dark:hover:text-foreground/80',
       )}
       aria-pressed={checked}
@@ -66,7 +69,7 @@ function QuickFilterToggle({ label, checked, onCheckedChange }) {
       <span
         className={cn(
           'h-1.5 w-1.5 rounded-full shrink-0',
-          checked ? 'bg-[#e8b824] dark:bg-[#a4ce33]' : 'bg-muted-foreground/35',
+          checked ? 'bg-[#4a5240] dark:bg-[#636B2F]' : 'bg-muted-foreground/35',
         )}
         aria-hidden
       />
@@ -90,7 +93,7 @@ function FilterSection({ title, icon: Icon, children, className }) {
 function ActiveFilterChip({ label, onRemove, tone = 'neutral' }) {
   const toneClass =
     tone === 'accent'
-      ? 'bg-[#e8b824] text-[#242424] dark:bg-[#a4ce33] dark:text-[#1f1d22]'
+      ? 'bg-[#4a5240] text-white dark:bg-[#636B2F] dark:text-[#A8B56E]'
       : 'bg-card text-foreground/90 shadow-sm';
 
   return (
@@ -605,17 +608,17 @@ export default function FiltrosCompras({
       type="button"
       onClick={isMobile ? () => setShowFilters(true) : undefined}
       className={cn(
-        'relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-all',
-        'bg-muted dark:bg-muted text-foreground/90',
-        !isMobile && showFilters && 'ring-2 ring-[#e8b824]/28 bg-[#e8b824]/8 dark:bg-[#a4ce33]/10',
+        COMPRAS_MOBILE_ICON_BTN,
+        !isMobile && 'h-12 w-12 rounded-2xl',
+        !isMobile && showFilters && 'ring-2 ring-[#4a5240]/28 bg-[#4a5240]/8 dark:ring-[rgba(99,107,47,0.35)] dark:bg-[rgba(99,107,47,0.14)]',
       )}
       title="Filtros"
       aria-label="Filtros"
       aria-expanded={showFilters}
     >
-      <SlidersHorizontal className="h-5 w-5" />
+      <SlidersHorizontal className={cn(isMobile && mobileLeading ? 'h-4 w-4' : 'h-5 w-5')} />
       {hasActiveFilters && (
-        <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#e8b824] px-1 text-[10px] font-semibold leading-none text-[#242424] dark:bg-[#a4ce33] dark:text-[#1f1d22]">
+        <span className={COMPRAS_FILTER_BADGE}>
           {activeFilterCount > 9 ? '9+' : activeFilterCount}
         </span>
       )}
@@ -624,13 +627,18 @@ export default function FiltrosCompras({
 
   const searchBar = (
     <div className="relative min-w-0 flex-1">
-      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <Search className={cn(
+        'absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground',
+        isMobile && mobileLeading ? 'h-3.5 w-3.5' : 'h-4 w-4',
+      )} />
       <input
         autoComplete="off"
         value={search}
         onChange={(e) => onSearch(e.target.value)}
         placeholder="Buscar pedido, embarque, fornecedor..."
-        className={COMPRAS_SEARCH_INPUT}
+        className={cn(
+          isMobile && mobileLeading ? COMPRAS_SEARCH_INPUT_COMPACT : COMPRAS_SEARCH_INPUT,
+        )}
       />
       {search ? (
         <button
@@ -648,7 +656,7 @@ export default function FiltrosCompras({
   if (isMobile) {
     return (
       <div className="space-y-2.5 min-w-0">
-        <div className="flex gap-2.5 min-w-0 items-center">
+        <div className={cn('flex min-w-0 items-center', mobileLeading ? 'gap-2' : 'gap-2.5')}>
           {mobileLeading}
           {searchBar}
           {filterToggleButton}
@@ -696,7 +704,7 @@ export default function FiltrosCompras({
                 <button
                   type="button"
                   onClick={() => setShowFilters(false)}
-                  className="h-11 flex-1 rounded-2xl bg-[#e8b824] text-sm font-light text-[#242424] dark:bg-[#a4ce33] dark:text-[#1f1d22]"
+                  className={cn('h-11 flex-1 rounded-2xl text-sm font-light', COMPRAS_MOBILE_CTA)}
                 >
                   Aplicar
                 </button>
@@ -767,7 +775,7 @@ export default function FiltrosCompras({
             <button
               type="button"
               onClick={() => setShowFilters(false)}
-              className="h-10 rounded-xl bg-[#e8b824] px-4 text-sm font-light text-[#242424] dark:bg-[#a4ce33] dark:text-[#1f1d22]"
+              className={cn('h-10 rounded-xl px-4 text-sm font-light', COMPRAS_MOBILE_CTA)}
             >
               Fechar painel
             </button>
