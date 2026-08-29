@@ -83,8 +83,6 @@ import {
   caixaDesktopTabTrigger,
   caixaFieldSurface,
   caixaKpiShell,
-  caixaStormBg,
-  caixaStormHeader,
   caixaMain,
   caixaMainInLayout,
   caixaMobileTabBar,
@@ -1459,7 +1457,7 @@ export default function PDVCaixa({
     // Não faz nada, pois o balanço está sempre visível
   };
 
-  const screenShellBg = overlayMode ? 'bg-muted dark:bg-[#0a0e1a]' : `bg-muted/40 ${caixaStormBg}`;
+  const screenShellBg = overlayMode ? 'bg-muted dark:bg-background' : 'bg-muted/40 dark:bg-background';
 
   const rootClassName = overlayMode
     ? `flex flex-col h-full min-h-0 ${screenShellBg} ${caixaTypo.screen}`
@@ -1499,7 +1497,7 @@ export default function PDVCaixa({
       )}
 
       {/* Header Minimalista */}
-      <div className={`flex-shrink-0 bg-card border-b border-border/40 px-4 py-3 flex items-center justify-between ${caixaStormHeader}`}>
+      <div className="flex-shrink-0 bg-card dark:bg-background border-b border-border/40 dark:border-white/10 px-4 py-3 flex items-center justify-between">
         <button
           type="button"
           onClick={handleClose}

@@ -28,9 +28,6 @@ import {
   caixaMobileTabTrigger,
   caixaMobileTabsList,
   caixaOverlayShell,
-  caixaStormBg,
-  caixaStormCta,
-  caixaStormHeader,
   caixaTabPanel,
   caixaTabPanelPad,
   caixaTabsRoot,
@@ -100,7 +97,7 @@ function MovimentoTimelineCard({ item }) {
   const Icon = toneKey === 'success' || toneKey === 'emerald' ? Plus : toneKey === 'info' || toneKey === 'blue' ? Minus : DollarSign;
   const valorTone = toneKey === 'muted' ? 'neutral' : (toneKey === 'emerald' ? 'success' : toneKey === 'blue' ? 'info' : toneKey === 'red' ? 'danger' : toneKey);
   return (
-    <div className="bg-card dark:p38-field-surface rounded-2xl px-4 py-3 shadow-sm dark:shadow-none flex items-center justify-between gap-3">
+    <div className="bg-card dark:p38-field-surface rounded-2xl px-4 py-3 shadow-sm dark:shadow-none border border-border/40 dark:border-white/10 flex items-center justify-between gap-3">
       <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${tone.well}`}>
         <Icon className={`w-4 h-4 ${tone.icon}`} />
       </div>
@@ -367,7 +364,7 @@ export default function VisualizadorCaixa({
     <CaixaOverlayStackProvider active stack="mirror">
     <div className={`${caixaOverlayShell} ${caixaTypo.screen}`}>
       {/* Header */}
-      <div className={`bg-card border-b border-border/40 px-4 py-3 flex items-center justify-between flex-shrink-0 ${caixaStormHeader}`}>
+      <div className="bg-card dark:bg-background border-b border-border/40 dark:border-white/10 px-4 py-3 flex items-center justify-between flex-shrink-0">
         <button onClick={onVoltar} className="p-2 -ml-2 hover:bg-muted rounded-lg transition-colors" style={{ minWidth: '44px', minHeight: '44px' }}>
           <ArrowLeft className="w-6 h-6 text-foreground/90" />
         </button>
@@ -405,7 +402,7 @@ export default function VisualizadorCaixa({
       </div>
 
       {/* Conteúdo — caixaMain estabelece flex-col para TabsContent poder rolar no mobile */}
-      <div className={`${caixaMain} bg-background ${caixaStormBg}`}>
+      <div className={`${caixaMain} bg-background`}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className={caixaTabsRoot}>
           <TabsList className={`${caixaMobileTabBar} ${caixaMobileTabsList}`}>
             <TabsTrigger value="balanco" className={caixaMobileTabTrigger}>
@@ -496,7 +493,7 @@ export default function VisualizadorCaixa({
               </div>
 
               <div className={`${caixaFieldSurface} rounded-2xl p-4 space-y-2`}>
-                <button onClick={imprimirRelatorio} className={`w-full h-12 bg-primary text-primary-foreground rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm hover:opacity-90 transition-opacity ${caixaStormCta}`} style={{ minHeight: '48px' }}>
+                <button onClick={imprimirRelatorio} className="w-full h-12 bg-primary text-primary-foreground rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm hover:opacity-90 transition-opacity dark:bg-[#26262e] dark:text-foreground dark:hover:bg-[#383e47]" style={{ minHeight: '48px' }}>
                   <Printer className="w-4 h-4" /> Imprimir Relatório
                 </button>
                 {modoFechado && onSolicitarReabertura && (

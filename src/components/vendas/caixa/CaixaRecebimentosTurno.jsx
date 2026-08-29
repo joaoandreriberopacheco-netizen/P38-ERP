@@ -1,6 +1,6 @@
 import React from 'react';
 import { Eye } from 'lucide-react';
-import { caixaClasses, caixaPanel, caixaPanelBody, caixaStormSurfaceHover, caixaTypo, conferenciaTone } from '@/lib/caixaP38Theme';
+import { caixaClasses, caixaPanel, caixaPanelBody, caixaTypo, conferenciaTone } from '@/lib/caixaP38Theme';
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 import { selectAllOnFocus } from '@/lib/inputFocusUtils';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
@@ -19,7 +19,7 @@ function RecebimentoRow({
     <div
       className={cn(
         `${ROW_GRID} py-2 px-1 rounded-xl`,
-        muted && 'bg-muted/60 dark:bg-[#1a2035]/80 opacity-60',
+        muted && 'bg-muted/60 dark:bg-[#26262e]/50 opacity-60',
       )}
     >
       <div className="flex justify-center">
@@ -72,8 +72,8 @@ function DinheiroConferenciaRow({
       className={cn(
         `${ROW_GRID} py-2 px-1 rounded-xl transition-colors`,
         disabled
-          ? 'bg-muted/60 dark:bg-[#1a2035]/80 opacity-60'
-          : `bg-muted/40 dark:bg-[#1a2035] cursor-pointer hover:bg-muted ${caixaStormSurfaceHover}`,
+          ? 'bg-muted/60 dark:bg-[#26262e]/50 opacity-60'
+          : 'bg-muted/40 dark:bg-[#26262e]/40 cursor-pointer hover:bg-muted dark:hover:bg-[#383e47]/60',
       )}
       onClick={() => {
         if (disabled) return;

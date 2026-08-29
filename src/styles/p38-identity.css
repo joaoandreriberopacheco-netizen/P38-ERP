@@ -311,32 +311,8 @@
   }
 
   .dark .caixa-screen .p38-panel__accent-bar {
-    background: linear-gradient(180deg, #7df9ff 0%, #5ee7ff 45%, #3b82f6 100%);
-    box-shadow: 0 0 10px rgba(94, 231, 255, 0.45);
-  }
-
-  .dark .caixa-screen .p38-panel,
-  .dark .caixa-screen .caixa-storm-panel {
-    background-color: #121825;
-    border-color: rgba(94, 231, 255, 0.12);
-  }
-
-  .dark .caixa-screen .p38-field-surface {
-    background-color: #1a2035;
-    border-color: rgba(94, 231, 255, 0.1);
-  }
-
-  .dark .caixa-screen {
-    background-color: #0a0e1a;
-    color: #e8eef7;
-  }
-
-  .dark .caixa-screen [data-caixa-valor-display='success'] {
-    color: #5ee7ff;
-  }
-
-  .dark .caixa-screen [data-caixa-valor-display='info'] {
-    color: #7df9ff;
+    background-color: rgba(255, 255, 255, 0.14);
+    box-shadow: none;
   }
 
   .p38-panel__body {
