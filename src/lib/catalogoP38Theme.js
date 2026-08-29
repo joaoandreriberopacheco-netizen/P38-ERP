@@ -1,9 +1,6 @@
 /**
  * Catálogo novo + SMART SUPPLY — linhas finas, cítrico (claro) e oliva-caixa (dark).
- * Inspirado na lista de Embarques (LED 1.5px, vlines, hierarquia L1/L2/L3).
- *
- * Intenção de produto: docs/novo-ecossistema/README.md
- * Mobile feeling: Planejamento financeiro dark (calma, acento parcimonioso) + linhas Margem/Embarques.
+ * Inspirado na lista de Embarques (LED 1.5px, vlines, hierarquia L0–L7).
  */
 import { cn } from '@/components/utils';
 import { P38_LIGHT_HEADER_ACCENT, P38_LIGHT_VLINE } from '@/lib/p38LightTheme';
@@ -17,27 +14,29 @@ export const CATALOGO_CITRUS_TEXT = '#a8942e';
 
 export const CATALOGO_SEP = COMPRAS_SEP;
 
-/** Níveis da árvore — recuo + vline distintos (pais → filhos → netos). */
+/** Recuo + vline por nível (grid tree). */
 export const CATALOGO_LEVEL = {
   0: 'ml-0 pl-2.5 border-l-[3px] border-l-[#e8b824] dark:border-l-[#A8B56E]/90',
-  1: 'ml-1 pl-3 border-l-2 border-l-[#4a5240]/70 dark:border-l-[#636B2F]/75',
-  2: 'ml-3 pl-3 border-l-2 border-l-[#4a5240]/55 dark:border-l-[#A8B56E]/50',
-  3: 'ml-5 pl-3 border-l border-l-dashed border-l-[#e8b824]/70 dark:border-l-[#636B2F]/55',
-  4: 'ml-7 pl-3 border-l border-l-[#e8b824]/50 dark:border-l-[#636B2F]/50',
-  5: 'ml-9 pl-3 border-l border-l-border/50 dark:border-l-white/12',
-  6: 'ml-11 pl-3 border-l border-l-border/35 dark:border-l-white/[0.08]',
-  7: 'ml-[3.25rem] pl-3 border-l border-l-border/25 dark:border-l-white/[0.06]',
+  1: 'ml-0.5 pl-3 border-l-2 border-l-[#4a5240]/75 dark:border-l-[#636B2F]/80',
+  2: 'ml-2 pl-3 border-l-2 border-l-[#4a5240]/55 dark:border-l-[#A8B56E]/55',
+  3: 'ml-4 pl-3 border-l border-l-dashed border-l-[#e8b824]/65 dark:border-l-[#636B2F]/50',
+  4: 'ml-6 pl-3 border-l border-l-[#e8b824]/45 dark:border-l-[#636B2F]/45',
+  5: 'ml-8 pl-3 border-l border-l-border/45 dark:border-l-white/12',
+  6: 'ml-10 pl-3 border-l border-l-border/35 dark:border-l-white/10',
+  7: 'ml-12 pl-3 border-l border-l-border/28 dark:border-l-white/[0.08]',
+  8: 'ml-14 pl-3 border-l border-l-dotted border-l-border/25 dark:border-l-white/[0.06]',
 };
 
 export const CATALOGO_LEVEL_ROW = {
   0: 'bg-[#e8b824]/[0.10] dark:bg-[#636B2F]/[0.18]',
-  1: 'bg-muted/20 dark:bg-white/[0.03]',
-  2: 'bg-[#4a5240]/[0.04] dark:bg-[#636B2F]/[0.08]',
-  3: 'bg-[#e8b824]/[0.04] dark:bg-[#636B2F]/[0.07]',
+  1: 'bg-muted/25 dark:bg-white/[0.035]',
+  2: 'bg-[#4a5240]/[0.05] dark:bg-[#636B2F]/[0.09]',
+  3: 'bg-[#e8b824]/[0.05] dark:bg-[#636B2F]/[0.07]',
   4: 'bg-transparent',
-  5: 'bg-muted/10 dark:bg-white/[0.015]',
+  5: 'bg-muted/15 dark:bg-white/[0.02]',
   6: 'bg-transparent',
-  7: 'bg-transparent',
+  7: 'bg-muted/8 dark:bg-white/[0.012]',
+  8: 'bg-transparent',
 };
 
 export const CATALOGO_LEVEL_TITLE = {
@@ -47,11 +46,32 @@ export const CATALOGO_LEVEL_TITLE = {
   3: 'text-[13px] font-light text-[#a8942e] dark:text-[#A8B56E]',
   4: 'text-sm font-light',
   5: 'text-[13px] font-light normal-case',
-  6: 'text-[13px] font-light normal-case',
+  6: 'text-[12px] font-light normal-case tracking-wide',
   7: 'text-[12px] font-light normal-case',
+  8: 'text-[11px] font-light normal-case text-muted-foreground',
 };
 
-/** @deprecated use CATALOGO_LEVEL */
+/** Linha de grelha — header expansível ou folha (PC / grade). */
+export const CATALOGO_GRID_ROW = cn(
+  'relative w-full min-w-0',
+  CATALOGO_SEP,
+);
+
+export const CATALOGO_GRID_INNER = cn(
+  'flex items-start gap-1.5 min-w-0 w-full py-2.5 pr-2.5 pl-0.5',
+  'transition-colors',
+);
+
+export const CATALOGO_GRID_HEADER_BTN = cn(
+  CATALOGO_GRID_INNER,
+  'text-left cursor-pointer hover:bg-muted/25 dark:hover:bg-white/[0.04]',
+);
+
+export const CATALOGO_GRID_LEAF = cn(
+  CATALOGO_GRID_INNER,
+  'cursor-default',
+);
+
 export const CATALOGO_HIER_L0 = 'pl-2 min-w-0 max-w-full';
 export const CATALOGO_HIER_L1 = cn('ml-1 pl-2 md:ml-2 md:pl-3 min-w-0 max-w-full', P38_LIGHT_VLINE);
 export const CATALOGO_HIER_L2 = cn('ml-1 pl-2 md:ml-3 md:pl-3.5 min-w-0 max-w-full border-l border-[#e8b824]/35 dark:border-[#636B2F]/45');
@@ -63,8 +83,11 @@ export const CATALOGO_HEADER = cn(
 );
 export const CATALOGO_HEADER_ACCENT = P38_LIGHT_HEADER_ACCENT;
 
-export const CATALOGO_LIST_SHELL =
-  'overflow-hidden rounded-lg bg-background dark:bg-[#1f1d22]/40 border-0 shadow-sm dark:border dark:border-white/[0.06]';
+export const CATALOGO_LIST_SHELL = cn(
+  'overflow-hidden rounded-lg bg-background dark:bg-[#1f1d22]/40',
+  'border border-border/30 dark:border-white/[0.06]',
+  'shadow-sm divide-y divide-border/20 dark:divide-white/[0.04]',
+);
 
 export const CATALOGO_ROW_BASE = cn(
   'w-full text-left transition-colors min-w-0 py-2.5 pr-2 cursor-pointer border-l',
@@ -76,6 +99,12 @@ export const CATALOGO_TITLE =
   'font-din-1451 font-light text-sm uppercase tracking-wide text-foreground leading-snug line-clamp-2 break-words';
 export const CATALOGO_SUBTITLE =
   'font-din-1451 font-light text-[11px] text-muted-foreground line-clamp-2 break-words normal-case';
+
+export const CATALOGO_PC_TITLE =
+  'font-din-1451 font-light text-[12px] uppercase tracking-wide text-foreground/92 leading-snug line-clamp-2 break-words';
+
+export const CATALOGO_GRADE_TITLE =
+  'font-din-1451 font-light text-[11px] normal-case text-foreground/85 leading-snug line-clamp-2 break-words';
 
 export const CATALOGO_VIEW_TAB_GROUP = 'flex w-full border-b border-border/35 bg-background';
 export const CATALOGO_VIEW_TAB = cn(
