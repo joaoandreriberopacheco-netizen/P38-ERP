@@ -1,5 +1,5 @@
 {
-  "version": "2026-08-29",
+  "version": "2026-08-29c",
   "formula_novo_sku": "produto_compra + eixo_a + eixo_b",
   "principios": [
     "LINHA = família do produto (tipo), não categoria ERP",
@@ -10,6 +10,7 @@
     "Não existe LINHA TUBO genérica — tubo vai para ESGOTO / SOLDÁVEL / ROSCÁVEL / ELETRODUTO",
     "Peças avulsas (joelho, luva, tee, cap…) na LINHA da conexão",
     "Thinners/vernizes/tintas: mesma LINHA por tipo; produto compra distingue marca/receita",
+    "TINTA SPRAY e TINTA SPRAY METÁLICO são LINHAs portfolio distintas (metálico: eixos cor × volume)",
     "Fixação LM (parafuso, barra roscada, bucha, porca): LINHA PARAFUSO ou PREGO — não FERRAGEM genérica"
   ],
   "linhas": [
@@ -28,6 +29,8 @@
     { "ordem": 80, "codigo": "ROSCAVEL", "nome": "ROSCÁVEL", "tipo": "mix", "grupo": "hidraulica", "nota": "Tubos e conexões roscáveis" },
     { "ordem": 88, "codigo": "PINTURA_QUIMICOS", "nome": "PINTURA E QUÍMICOS", "tipo": "portfolio", "grupo": "pintura", "nota": "Fallback ERP — preferir LINHA específica (TINTA, VERNIZ, THINNER…)" },
     { "ordem": 90, "codigo": "TINTA", "nome": "TINTA", "tipo": "portfolio", "grupo": "pintura" },
+    { "ordem": 91, "codigo": "TINTA_SPRAY", "nome": "TINTA SPRAY", "tipo": "portfolio", "grupo": "pintura", "nota": "Spray comum — portfolio; cores substituíveis na esquadra" },
+    { "ordem": 92, "codigo": "TINTA_SPRAY_METALICO", "nome": "TINTA SPRAY METÁLICO", "tipo": "portfolio", "grupo": "pintura", "nota": "Portfolio — eixos cor (A) × volume (B)" },
     { "ordem": 100, "codigo": "VERNIZ", "nome": "VERNIZ", "tipo": "portfolio", "grupo": "pintura" },
     { "ordem": 105, "codigo": "THINNER", "nome": "THINNER", "tipo": "portfolio", "grupo": "pintura", "nota": "Mesma LINHA para todas as receitas; produto compra distingue 237 vs 2750 etc." },
     { "ordem": 110, "codigo": "MASSA_CORRIDA", "nome": "MASSA CORRIDA", "tipo": "mix", "grupo": "pintura" },

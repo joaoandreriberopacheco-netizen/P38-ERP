@@ -75,7 +75,7 @@ A1 Estrutura / alvenaria
 
 **Assentamento (bloco C — Acabamentos):** `ARGAMASSA` (mix), `REJUNTE` (portfolio), cerâmicas (portfolio) — sub-bloco `C1 Revestimentos`, core `ASSENTAMENTO_CERAMICA`.
 
-**Pintura (bloco C — Acabamentos):** `TINTA`, `VERNIZ`, `THINNER`, massas, lixas e afins de pintura — sub-bloco `C2 Pintura`, core `PINTURA_OBRA`. **Aditivos** (`ADITIVO PLASTIFICANTE` em `ALVENARIA·C`) **permanecem em Edificações**.
+**Pintura (bloco C — Acabamentos):** `TINTA`, `VERNIZ`, `THINNER`, massas, lixas e afins — sub-bloco `C2 Pintura`. **TINTA SPRAY** e **TINTA SPRAY METÁLICO** são LINHAs **portfolio** separadas (metálico: eixos **cor × volume**). Aditivos em `ALVENARIA·C` ficam em Edificações.
 
 Override canónico: `src/data/estudoCatalogBlocoOverrides.json`.
 

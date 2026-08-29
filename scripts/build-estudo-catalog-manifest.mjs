@@ -8,6 +8,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import ExcelJS from 'exceljs';
+import { applySprayLinhaRulesAll } from '../src/lib/estudoCatalog/applySprayLinhaRules.js';
 
 const EXCEL_PATH = path.join(process.cwd(), 'docs', 'exports', 'P38-sku-hierarquia-ab.xlsx');
 const LINHAS_JSON = path.join(process.cwd(), 'src', 'data', 'hierarquiaPortalLinhas.json');
@@ -60,7 +61,7 @@ function loadLinhasMestre() {
     byNome.set(normLinha(l.nome), l);
     byCodigo.set(normLinha(l.codigo), l);
   }
-  return { byNome, byCodigo, version: raw.version };
+  return { byNome, byCodigo, version: raw.version, linhas: raw.linhas || [] };
 }
 
 function resolveLinhaMeta(linhaCell, { byNome, byCodigo }) {
@@ -201,8 +202,9 @@ async function main() {
     sheetsRead.push({ name, count: part.length });
   }
 
-  const skus = applyBlocoOverrides(skusRaw, blocoOverrides);
-  const overrideCount = skus.filter((row, i) => row !== skusRaw[i]).length;
+  const skusSpray = applySprayLinhaRulesAll(skusRaw, linhasIndex.linhas);
+  const skus = applyBlocoOverrides(skusSpray, blocoOverrides);
+  const overrideCount = skus.filter((row, i) => row !== skusSpray[i]).length;
   if (overrideCount) {
     console.log(`[estudo-manifest] ${overrideCount} SKU(s) com bloco/tipo override (estudoCatalogBlocoOverrides.json)`);
   }

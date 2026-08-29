@@ -50,7 +50,9 @@ export function inferirLinhaCodigo(produto) {
   if (n1 === 'PISO') return 'PISO';
   if (n1 === 'PORCELANATO' || n1 === 'PORCELENATO') return 'PORCELANATO';
   if (n1 === 'REVESTIMENTO') return 'REVESTIMENTO';
-  if (n1 === 'TINTA' || n1 === 'TINTA SPRAY') return 'TINTA';
+  if (n1 === 'TINTA SPRAY METÁLICO' || n1 === 'TINTA SPRAY METALICO') return 'TINTA_SPRAY_METALICO';
+  if (n1 === 'TINTA SPRAY') return 'TINTA_SPRAY';
+  if (n1 === 'TINTA') return 'TINTA';
   if (n1 === 'VERNIZ') return 'VERNIZ';
   if (n1.includes('MASSA CORRIDA')) return 'MASSA_CORRIDA';
   if (n1.includes('MASSA ACR')) return 'MASSA_ACRILICA';

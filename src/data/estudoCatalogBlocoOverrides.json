@@ -90,6 +90,20 @@
       "sub_bloco": "C2 Pintura",
       "etapa": "6 — Acabamento seco",
       "core": "PINTURA_OBRA"
+    },
+    "TINTA_SPRAY": {
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
+      "etapa": "6 — Acabamento seco",
+      "core": "PINTURA_OBRA",
+      "linha_tipo": "portfolio"
+    },
+    "TINTA_SPRAY_METALICO": {
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C2 Pintura",
+      "etapa": "6 — Acabamento seco",
+      "core": "PINTURA_OBRA",
+      "linha_tipo": "portfolio"
     }
   },
   "por_linha_parcial": [
