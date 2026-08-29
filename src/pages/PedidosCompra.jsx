@@ -521,7 +521,9 @@ function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
 
 export default function PedidosCompraPage() {
   const isPhone = useCompactShell();
-  const { chromeVisible, scrollRef } = useScrollChromeVisibility(isPhone);
+  const { chromeVisible, scrollRef } = useScrollChromeVisibility(isPhone, {
+    revealAfterUpPx: 120,
+  });
   const navigate = useNavigate();
   const [pedidos, setPedidos] = useState([]);
   const [embarques, setEmbarques] = useState([]);
