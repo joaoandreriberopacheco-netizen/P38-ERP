@@ -1,6 +1,9 @@
 /**
  * Catálogo novo + SMART SUPPLY — linhas finas, cítrico (claro) e oliva-caixa (dark).
  * Inspirado na lista de Embarques (LED 1.5px, vlines, hierarquia L1/L2/L3).
+ *
+ * Intenção de produto: docs/novo-ecossistema/README.md
+ * Mobile feeling: Planejamento financeiro dark (calma, acento parcimonioso) + linhas Margem/Embarques.
  */
 import { cn } from '@/components/utils';
 import { P38_LIGHT_HEADER_ACCENT, P38_LIGHT_VLINE } from '@/lib/p38LightTheme';

@@ -1,0 +1,19 @@
+# Novo Ecosistema — catálogo + Smart Supply (preview)
+
+## Autoridade
+
+Documento completo: [`docs/novo-ecossistema/README.md`](docs/novo-ecossistema/README.md)
+
+## Regras rápidas para agentes
+
+1. **Entrada única:** `Compras → Novo Ecosistema → Novo Catálogo | Smart Supply`. Não recriar botões em Produtos, Compras header, Sugestões ou portal.
+2. **Dois jobs:** Catálogo = explorar hierarquia; Smart Supply = reposição/alertas por LINHA. Shell: `CatalogoNovoShell.jsx`.
+3. **Dados preview:** Excel estudo → manifest JSON. `useCatalogoEstudoData` — sem Supabase/Base44 até corte explícito.
+4. **Mobile first:** sticky header, tabs entre ecrãs, filtros em sheet, LEDs + estoque legíveis; feeling alinhado a Planejamento financeiro dark + linhas Embarques/Margem.
+5. **Visual:** `catalogoP38Theme.js` — cítrico/oliva, vlines 1px, LEDs 1.5px.
+6. **Produção:** SMART SUPPLY real continua em `SugestoesCompra`; catálogo real em `Produtos`.
+
+## Rotas
+
+- `/CatalogoNovo`
+- `/SmartSupplyNovo`

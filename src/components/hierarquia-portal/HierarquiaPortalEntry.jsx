@@ -7,9 +7,10 @@ import { createPageUrl } from '@/components/utils';
 import { cn } from '@/components/utils';
 
 /**
- * Entrada ao portal de catálogo cerâmica — trabalha em tabela auxiliar, não altera cadastro real.
+ * Entrada ao portal de catálogo cerâmica (legado piloto).
+ * Preview novo: Compras → Novo Ecosistema — ver docs/novo-ecossistema/README.md
  */
-export default function HierarquiaPortalEntry({ className, variant = 'outline', size = 'sm', showCatalogoNovo = true }) {
+export default function HierarquiaPortalEntry({ className, variant = 'outline', size = 'sm', showCatalogoNovo = false }) {
   const isIcon = size === 'icon';
 
   return (

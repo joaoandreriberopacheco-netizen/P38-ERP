@@ -24,7 +24,15 @@ import {
 } from '@/lib/catalogoP38Theme';
 
 /**
- * @param {'catalog' | 'supply'} mode — ecrã dedicado (menu Compras → Novo Ecosistema)
+ * Novo Ecosistema — shell partilhado (Compras).
+ *
+ * Intenção (ver docs/novo-ecossistema/README.md):
+ * - Novo Catálogo: explorar bloco → sub-bloco → LINHA → produto compra → SKU (Excel estudo).
+ * - Smart Supply: reposição por LINHA — LEDs, esquadras, ponto futuro, tabs Mobile/Mix/Portfolio.
+ * - Mobile first: header sticky, tabs entre ecrãs, filtros em sheet; info crucial sempre legível.
+ * - Única entrada de menu: Compras → Novo Ecosistema (não espalhar atalhos noutros módulos).
+ *
+ * @param {'catalog' | 'supply'} mode — ecrã dedicado
  */
 export default function CatalogoNovoShell({ mode = 'catalog' }) {
   const isMobile = useCompactShell();

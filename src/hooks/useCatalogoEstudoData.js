@@ -29,7 +29,9 @@ function matchSearch(row, q) {
 
 /**
  * Catálogo novo — dados 100% do Excel de estudo (manifest JSON).
- * Não chama Supabase, Base44 nem fetch de produtos activos.
+ * Não chama Supabase, Base44 nem fetch de produtos activos (preview seguro).
+ *
+ * Regenerar: npm run estudo:catalog-manifest · docs/novo-ecossistema/README.md
  */
 export function useCatalogoEstudoData() {
   const [portalFilters, setPortalFilters] = useState(getDefaultPortalCatalogFilters);

@@ -122,6 +122,7 @@ Após gravar secrets no Cursor: **nova sessão** → `npm run secrets:audit`
 - Canonical **hosted** deploy path today: this repo → Base44 / Vercel legacy. Future canonical stack: **a29-erp** (Next.js + Supabase). See root `README.md` and `.cursor/rules/transicao-vercel-base44.mdc`.
 - **Mobile visual north star (finance/ops):** Planejamento financeiro dark — palette/feeling approved by João André; see `.cursor/rules/p38-mobile-referencia-planejamento.mdc` and `docs/p38-mobile-rollout.md` §0.
 - **Flare** workflow: `docs/flare-export/README.md`, rule `.cursor/rules/busca-de-flares.mdc` — do not commit `flare-pending.json` with sensitive data.
+- **Novo Ecosistema (preview catálogo + Smart Supply):** `docs/novo-ecossistema/README.md` — intenção, menu Compras, dados Excel, mobile first; rotas `CatalogoNovo` / `SmartSupplyNovo`.
 
 ### Optional services (not VM startup)
 
