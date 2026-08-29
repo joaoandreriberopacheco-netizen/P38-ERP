@@ -42,9 +42,42 @@ No **mobile**, alternar entre os dois com **tabs no topo** (sem voltar ao menu).
 - **B** — hidráulica, eléctrica, etc.
 - **C** — acabamentos visíveis (pintura, revestimentos, banheiro…).
 
-Árvore UI: `bloco → sub_bloco → LINHA → produto_compra → SKU` (eixos A/B quando existirem).
+Árvore UI (alvo): `bloco → sub_bloco → core → papel pathway → LINHA → produto_compra → SKU`.
 
-### Tipos de LINHA — comportamento (regra João André, 2026-08)
+### Pathway, core e papéis ·N / ·C / ·R (Excel AB)
+
+Organização da **obra** no Excel (`P38-sku-hierarquia-ab.xlsx`, folha **Legenda A-B**):
+
+| Camada | Coluna / sufixo | Significado | Exemplo mental |
+|--------|-----------------|-------------|----------------|
+| **Bloco** | `bloco` | Grande fase A/B/C | `A — Edificações` |
+| **Sub-bloco** | `sub_bloco` | Etapa dentro do bloco | `A1 Estrutura / alvenaria` |
+| **Core** | `core` | Núcleo funcional do pathway | `ALVENARIA`, `ARMADURA`, `COBERTURA` |
+| **Papel na LINHA** | sufixo `·N` / `·C` / `·R` na coluna `linha` | Papel dentro do core | ver abaixo |
+| **LINHA mestre** | nome sem sufixo → `hierarquiaPortalLinhas.json` | Família + tipo solo/mix/portfolio | `CIMENTO`, `ARGAMASSA` |
+
+**Sufixos na coluna `linha` (pathway):**
+
+| Sufixo | Papel | O que João descreveu | Exemplo no Excel |
+|--------|-------|----------------------|------------------|
+| **·N** | **Núcleo** do pathway | `alvenaria.core` | `CIMENTO·N`, `MATERIAIS BÁSICOS·N` (areia, bloco) |
+| **·C** | **Complemento** | `alvenaria.complementos` / consumíveis da etapa | `MATERIAIS BÁSICOS·C` (compensado, cal), `ADESIVO·C` |
+| **·R** | **Receita pronta** | argamassa industrializada | `ARGAMASSA·R` (AC-1, AC-2…) |
+
+**Exemplo concreto — core `ALVENARIA` (A1):**
+
+```
+A1 Estrutura / alvenaria
+└── ALVENARIA (core)
+    ├── ·N núcleo     → CIMENTO·N, MATERIAIS BÁSICOS·N
+    ├── ·C complemento → MATERIAIS BÁSICOS·C, PINTURA E QUÍMICOS·C
+    └── ·R receita     → ARGAMASSA·R
+```
+
+**Consumíveis transversais:** categoria ERP `J — FERRAMENTAS E CONSUMÍVEIS` (etapa 8) é **transversal** — distinto dos complementos **·C** dentro de um core (ex.: aditivo na alvenaria).
+
+**Estado no preview UI:** o Excel já traz `core` + sufixos; a árvore mostra `core` no subtítulo da LINHA, mas **ainda agrupa** `MATERIAIS BÁSICOS·N` e `·C` numa só LINHA mestre — próximo passo é nível explícito **core → núcleo/complemento/receita**.
+
 
 **Solo, mix e portfolio não são etiquetas.** Definem **como a reposição e a grelha funcionam**.
 
