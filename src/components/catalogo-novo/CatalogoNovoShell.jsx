@@ -9,7 +9,7 @@ import { createPageUrl } from '@/components/utils';
 import { cn } from '@/components/utils';
 import { useCompactShell } from '@/hooks/use-breakpoint';
 import CatalogoTipoTabs from '@/components/catalogo-novo/CatalogoTipoTabs';
-import CatalogoVistaToggle from '@/components/catalogo-novo/CatalogoVistaToggle';
+import CatalogoLeituraToggle from '@/components/catalogo-novo/CatalogoLeituraToggle';
 import CatalogoEstudoList from '@/components/catalogo-novo/CatalogoEstudoList';
 import CatalogoSmartSupplyPanel from '@/components/catalogo-novo/CatalogoSmartSupplyPanel';
 import { useCatalogoEstudoData } from '@/hooks/useCatalogoEstudoData';
@@ -40,7 +40,7 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
   const [somenteAlerta, setSomenteAlerta] = useState(false);
   const [supplyView, setSupplyView] = useState('mobile');
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [vistaCatalogo, setVistaCatalogo] = useState('pathway');
+  const [leitura, setLeitura] = useState('catalogo');
 
   const {
     loading,
@@ -51,7 +51,8 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
     setFiltroLinha,
     tipoAtivo,
     setTipoAtivo,
-    tree,
+    treeCatalogo,
+    treeCompra,
     hierarchy,
     filteredSupply,
     linhas,
@@ -68,10 +69,13 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
   const title = isSupply ? SMART_SUPPLY_ECOSYSTEM_LABEL : NOVO_CATALOGO_MENU_LABEL;
   const TitleIcon = isSupply ? Zap : LayoutGrid;
 
-  const linhasVisiveis = useMemo(
-    () => (isSupply ? linhas : linhas.filter((l) => l.tipo === tipoAtivo)),
-    [linhas, tipoAtivo, isSupply],
-  );
+  const linhasVisiveis = useMemo(() => {
+    if (isSupply) return linhas;
+    if (leitura === 'catalogo') return linhas;
+    return linhas.filter((l) => l.tipo === tipoAtivo);
+  }, [linhas, tipoAtivo, isSupply, leitura]);
+
+  const treeAtivo = leitura === 'catalogo' ? treeCatalogo : treeCompra;
 
   const siblingLink = isSupply
     ? { page: 'CatalogoNovo', label: NOVO_CATALOGO_MENU_LABEL }
@@ -81,8 +85,10 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
     <>
       {!isSupply ? (
         <>
-          <CatalogoTipoTabs tipoAtivo={tipoAtivo} onChange={setTipoAtivo} counts={tipoCounts} />
-          <CatalogoVistaToggle vista={vistaCatalogo} onChange={setVistaCatalogo} />
+          <CatalogoLeituraToggle leitura={leitura} onChange={setLeitura} />
+          {leitura === 'compra' ? (
+            <CatalogoTipoTabs tipoAtivo={tipoAtivo} onChange={setTipoAtivo} counts={tipoCounts} />
+          ) : null}
         </>
       ) : null}
       <div className="flex flex-col sm:flex-row gap-2">
@@ -159,7 +165,9 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
               <p className={cn('p38-page-subtitle', isMobile ? 'text-xs line-clamp-2' : 'text-sm')}>
                 {isSupply
                   ? 'Reposição por LINHA — giro, ponto futuro e alertas (Excel estudo)'
-                  : 'Pathway (árvore da obra) ou Plano SKU — mesmo dado, duas leituras'}
+                  : leitura === 'catalogo'
+                    ? 'Catálogo plano — SKU a SKU, A–Z; busca e filtros de LINHA'
+                    : 'Compra — pathway da obra, ecrã por comportamento (Solo / Mix / Portfolio)'}
               </p>
             </div>
             {!isMobile && (
@@ -238,9 +246,9 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
         ) : null}
         {!isSupply ? (
           <CatalogoEstudoList
-            tree={tree}
+            tree={treeAtivo}
             tipo={tipoAtivo}
-            vista={vistaCatalogo}
+            leitura={leitura}
             mobileComfortable={isMobile}
           />
         ) : (

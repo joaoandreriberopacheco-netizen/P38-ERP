@@ -26,14 +26,14 @@ Compras
 
 Shell partilhado: `src/components/catalogo-novo/CatalogoNovoShell.jsx` (`mode="catalog"` | `mode="supply"`).
 
-### Duas leituras do mesmo catálogo (não é capricho)
+### Duas visões de negócio (não é capricho)
 
-| Vista | Para quê |
-|-------|----------|
-| **Pathway** | Administrar como a **obra** — bloco → ramo → core → LINHA; tabela de valores por LINHA. |
-| **Plano SKU** | **Grade linear** — um SKU por linha (auditoria, cadastro, conversão legado). |
+| Visão | UI | Para quê |
+|-------|-----|----------|
+| **Catálogo** | Linha plana — SKU a SKU, **ordem A–Z**; coluna Tipo; filtros de **busca** e **LINHA** (estilo catálogo Produtos) | Auditar cadastro, converter legado, “estou a ver tudo?” |
+| **Compra** | **Pathway** da obra; abas **Solo / Mix / Portfolio** (ecrã separado por comportamento) | Administrar distribuição — bloco → ramo → LINHA → produto compra / eixos |
 
-Ambas usam o **mesmo Excel/manifest**. Quem começa do zero numa plataforma “redondinha” entra já com as duas vistas; quem migra mix legado usa **Plano SKU** para conferir SKU a SKU e **Pathway** para validar a distribuição nova.
+Mesmo Excel/manifest. Quem começa do zero usa as duas desde o dia 1; quem migra mix legado usa **Catálogo** plano para conferir SKU a SKU e **Compra** para validar a árvore nova.
 
 No **mobile**, alternar entre os dois com **tabs no topo** (sem voltar ao menu). Filtros pesados ficam num **bottom sheet** para não roubar espaço à lista.
 

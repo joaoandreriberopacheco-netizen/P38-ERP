@@ -85,20 +85,30 @@ export function useCatalogoEstudoData() {
 
   const estoqueStats = useMemo(() => countEstudoEstoqueEncontrado(enrichedAll), [enrichedAll]);
 
-  const filteredRows = useMemo(() => {
+  const filteredRowsBase = useMemo(() => {
     let rows = enrichedAll;
     if (filtroLinha) rows = rows.filter((r) => r.linha_codigo === filtroLinha);
-    rows = rows.filter((r) => r.linha_tipo === tipoAtivo);
     const q = (portalFilters.searchTerm || '').trim().toLowerCase();
     if (q) rows = rows.filter((r) => matchSearch(r, q));
     return rows;
-  }, [enrichedAll, filtroLinha, tipoAtivo, portalFilters.searchTerm]);
+  }, [enrichedAll, filtroLinha, portalFilters.searchTerm]);
 
-  const tree = useMemo(
-    () => buildEstudoTree(filteredRows, { catalogStockContext }),
-    [filteredRows, catalogStockContext],
+  const filteredRowsCompra = useMemo(
+    () => filteredRowsBase.filter((r) => r.linha_tipo === tipoAtivo),
+    [filteredRowsBase, tipoAtivo],
   );
-  const supplyLines = useMemo(() => buildEstudoSupplyLines(filteredRows), [filteredRows]);
+
+  const treeCatalogo = useMemo(
+    () => buildEstudoTree(filteredRowsBase, { catalogStockContext }),
+    [filteredRowsBase, catalogStockContext],
+  );
+
+  const treeCompra = useMemo(
+    () => buildEstudoTree(filteredRowsCompra, { catalogStockContext }),
+    [filteredRowsCompra, catalogStockContext],
+  );
+
+  const supplyLines = useMemo(() => buildEstudoSupplyLines(filteredRowsCompra), [filteredRowsCompra]);
   const supplyLinesPanel = useMemo(() => enrichEstudoSupplyForPanel(supplyLines), [supplyLines]);
   const hierarchy = useMemo(() => buildEstudoSupplyHierarchy(supplyLinesPanel), [supplyLinesPanel]);
   const linhas = useMemo(() => listEstudoLinhas(enrichedAll), [enrichedAll]);
@@ -122,11 +132,15 @@ export function useCatalogoEstudoData() {
     setFiltroLinha,
     tipoAtivo,
     setTipoAtivo,
-    tree,
+    treeCatalogo,
+    treeCompra,
+    /** @deprecated use treeCatalogo ou treeCompra */
+    tree: treeCompra,
     hierarchy,
     filteredSupply: supplyLinesPanel,
     linhas,
-    enriched: filteredRows,
+    enriched: filteredRowsBase,
+    enrichedCompra: filteredRowsCompra,
     totalSkus: enrichedAll.length,
     tipoCounts,
     estoqueVirtualAtivo,

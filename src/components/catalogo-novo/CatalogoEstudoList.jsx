@@ -1,28 +1,28 @@
 import React from 'react';
-import { CatalogoEstudoPlanoList } from '@/components/catalogo-novo/CatalogoEstudoPlanoList';
+import { CatalogoEstudoCatalogoList } from '@/components/catalogo-novo/CatalogoEstudoCatalogoList';
 import CatalogoEstudoTree from '@/components/catalogo-novo/CatalogoEstudoTree';
 
 /**
- * Novo Catálogo — duas leituras do mesmo dado:
- * - pathway: árvore da obra (expande à direita; tabela por LINHA)
- * - plano: grade linear SKU a SKU
+ * Novo Catálogo — duas visões de negócio:
+ * - catalogo: linha plana SKU A–Z (auditoria / cadastro)
+ * - compra: pathway por comportamento (solo | mix | portfolio)
  */
 export default function CatalogoEstudoList({
   tree,
   tipo = 'mix',
-  vista = 'pathway',
+  leitura = 'catalogo',
   mobileComfortable = false,
 }) {
   if (!tree?.length) {
     return (
       <div className="py-12 text-center text-sm text-muted-foreground">
-        Nada encontrado neste comportamento com os filtros actuais.
+        Nada encontrado com os filtros actuais.
       </div>
     );
   }
 
-  if (vista === 'plano') {
-    return <CatalogoEstudoPlanoList tree={tree} tipo={tipo} />;
+  if (leitura === 'catalogo') {
+    return <CatalogoEstudoCatalogoList tree={tree} />;
   }
 
   return (

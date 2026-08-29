@@ -1,3 +1,4 @@
+import { montarNomePortalSku } from '@/lib/hierarquiaPortal/montarNomePortalSku';
 import { pathwayPapelLabel } from '@/lib/estudoCatalog/pathwayMeta';
 
 function sortKey(...parts) {
@@ -5,10 +6,10 @@ function sortKey(...parts) {
 }
 
 /**
- * Percorre a árvore estudo e devolve uma fila linear de SKUs (vista plana).
- * Mantém contexto hierárquico para breadcrumb / ordenação.
+ * Percorre a árvore estudo e devolve fila linear de SKUs.
+ * @param {'alpha' | 'hierarchy'} sort — catálogo plano usa alpha; hierarquia preservada para export
  */
-export function flattenEstudoCatalogSkus(tree) {
+export function flattenEstudoCatalogSkus(tree, { sort = 'alpha' } = {}) {
   const rows = [];
 
   for (const bloco of tree || []) {
@@ -56,6 +57,17 @@ export function flattenEstudoCatalogSkus(tree) {
         }
       }
     }
+  }
+
+  if (sort === 'alpha') {
+    rows.sort((a, b) => {
+      const na = montarNomePortalSku(a.sku).toLowerCase();
+      const nb = montarNomePortalSku(b.sku).toLowerCase();
+      const cmp = na.localeCompare(nb, 'pt', { sensitivity: 'base' });
+      if (cmp !== 0) return cmp;
+      return String(a.sku.codigo_interno || '').localeCompare(String(b.sku.codigo_interno || ''), 'pt');
+    });
+    return rows;
   }
 
   rows.sort((a, b) => {
