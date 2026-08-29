@@ -931,7 +931,16 @@ export default function PedidosCompraPage() {
   );
 
   return (
-    <div className={cn('w-full min-w-0 max-w-full overflow-x-hidden space-y-4 font-din-1451 bg-background', isPhone && 'pb-[var(--p38-scroll-pad-below-nav)]')}>
+    <>
+    <div
+      className={cn(
+        'w-full min-w-0 max-w-full font-din-1451 bg-background',
+        isPhone
+          ? 'flex flex-col h-full min-h-0 overflow-hidden'
+          : 'overflow-x-hidden space-y-4',
+      )}
+    >
+      <div className={cn(isPhone ? 'shrink-0 space-y-4 px-4' : 'space-y-4')}>
       {/* Header */}
       <div className="pb-3 mb-1 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="space-y-1.5 min-w-0">
@@ -1037,7 +1046,15 @@ export default function PedidosCompraPage() {
           setRecebimentoFinal('');
         }}
       />
+      </div>
 
+      <div
+        className={cn(
+          isPhone
+            ? 'flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y px-4 pb-4'
+            : undefined,
+        )}
+      >
       {activeView === 'embarques' ? (
         <ListaPedidosCompra
           grupos={grupos}
@@ -1063,7 +1080,8 @@ export default function PedidosCompraPage() {
         />
       )}
 
-
+      </div>
+    </div>
 
       <ImportadorNotaFiscal 
         isOpen={showImportador}
@@ -1094,6 +1112,6 @@ export default function PedidosCompraPage() {
         pedidosFiltrados={pedidosConsulta}
       />
 
-    </div>
+    </>
   );
 }
