@@ -1,5 +1,5 @@
 {
-  "version": "2026-08-19",
+  "version": "2026-08-29",
   "formula_novo_sku": "produto_compra + eixo_a + eixo_b",
   "principios": [
     "LINHA = família do produto (tipo), não categoria ERP",
@@ -14,7 +14,7 @@
   ],
   "linhas": [
     { "ordem": 10, "codigo": "CIMENTO", "nome": "CIMENTO", "tipo": "solo", "grupo": "materiais_construcao", "nota": "Portland/branco — não exige mix nem variedade na esquadra" },
-    { "ordem": 20, "codigo": "ARGAMASSA", "nome": "ARGAMASSA", "tipo": "mix", "grupo": "materiais_construcao" },
+    { "ordem": 20, "codigo": "ARGAMASSA", "nome": "ARGAMASSA", "tipo": "mix", "grupo": "revestimentos", "nota": "Assentamento — bloco C Acabamentos (fora de alvenaria estrutural)" },
     { "ordem": 30, "codigo": "PISO", "nome": "PISO / CERÂMICA DE PISO", "tipo": "portfolio", "grupo": "revestimentos" },
     { "ordem": 40, "codigo": "PORCELANATO", "nome": "PORCELANATO", "tipo": "portfolio", "grupo": "revestimentos" },
     { "ordem": 50, "codigo": "REVESTIMENTO", "nome": "REVESTIMENTO", "tipo": "portfolio", "grupo": "revestimentos" },
@@ -32,7 +32,7 @@
     { "ordem": 105, "codigo": "THINNER", "nome": "THINNER", "tipo": "portfolio", "grupo": "pintura", "nota": "Mesma LINHA para todas as receitas; produto compra distingue 237 vs 2750 etc." },
     { "ordem": 110, "codigo": "MASSA_CORRIDA", "nome": "MASSA CORRIDA", "tipo": "mix", "grupo": "pintura" },
     { "ordem": 120, "codigo": "MASSA_ACRILICA", "nome": "MASSA ACRÍLICA", "tipo": "mix", "grupo": "pintura" },
-    { "ordem": 130, "codigo": "REJUNTE", "nome": "REJUNTE", "tipo": "mix", "grupo": "revestimentos" },
+    { "ordem": 130, "codigo": "REJUNTE", "nome": "REJUNTE", "tipo": "portfolio", "grupo": "revestimentos", "nota": "Cores substituíveis na esquadra — bloco C Acabamentos" },
     { "ordem": 140, "codigo": "PREGO", "nome": "PREGO", "tipo": "mix", "grupo": "fixacao", "nota": "Esquadra de medidas — não substituíveis entre si, mas comportamento mix (completar gama)" },
     { "ordem": 150, "codigo": "PARAFUSO", "nome": "PARAFUSO", "tipo": "mix", "grupo": "fixacao", "nota": "Inclui barra roscada, bucha plástica/química, porca e arruela (LM: Fixação e Montagem)" },
     { "ordem": 160, "codigo": "TORNEIRA", "nome": "TORNEIRA", "tipo": "portfolio", "grupo": "hidraulica" },

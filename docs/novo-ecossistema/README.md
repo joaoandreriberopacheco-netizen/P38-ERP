@@ -62,7 +62,7 @@ Organização da **obra** no Excel (`P38-sku-hierarquia-ab.xlsx`, folha **Legend
 |--------|-------|----------------------|------------------|
 | **·N** | **Núcleo** do pathway | `alvenaria.core` | `CIMENTO·N`, `MATERIAIS BÁSICOS·N` (areia, bloco) |
 | **·C** | **Complemento** | `alvenaria.complementos` / consumíveis da etapa | `MATERIAIS BÁSICOS·C` (compensado, cal), `ADESIVO·C` |
-| **·R** | **Receita pronta** | argamassa industrializada | `ARGAMASSA·R` (AC-1, AC-2…) |
+| **·R** | **Receita pronta** | argamassa industrializada (assentamento — **bloco C**, não alvenaria A) | `ARGAMASSA·R` (AC-1, AC-2…) |
 
 **Exemplo concreto — core `ALVENARIA` (A1):**
 
@@ -70,9 +70,10 @@ Organização da **obra** no Excel (`P38-sku-hierarquia-ab.xlsx`, folha **Legend
 A1 Estrutura / alvenaria
 └── ALVENARIA (core)
     ├── ·N núcleo     → CIMENTO·N, MATERIAIS BÁSICOS·N
-    ├── ·C complemento → MATERIAIS BÁSICOS·C, PINTURA E QUÍMICOS·C
-    └── ·R receita     → ARGAMASSA·R
+    └── ·C complemento → MATERIAIS BÁSICOS·C, PINTURA E QUÍMICOS·C
 ```
+
+**Assentamento (bloco C — Acabamentos):** `ARGAMASSA` (mix), `REJUNTE` (portfolio), `CERÂMICA BOLD/RETIF` (portfolio) — core `ASSENTAMENTO_CERAMICA`, sub-bloco `C1 Revestimentos`. Override canónico: `src/data/estudoCatalogBlocoOverrides.json`.
 
 **Consumíveis transversais:** categoria ERP `J — FERRAMENTAS E CONSUMÍVEIS` (etapa 8) é **transversal** — distinto dos complementos **·C** dentro de um core (ex.: aditivo na alvenaria).
 
@@ -85,7 +86,7 @@ A1 Estrutura / alvenaria
 |------|---------------|---------|
 | **solo** | **Não precisa de mix nem de variedade.** Compra-se o item; não monta esquadra. | **CIMENTO PORTLAND** — o saco; sem grelha de peças. |
 | **mix** | **Esquadra** no produto compra — várias referências que **completam** a LINHA, mas **não são substituíveis** (cada peça/medida conta). | **JOELHO SOLDÁVEL** · **PREGO** |
-| **portfolio** | **Substituíveis** dentro do mesmo produto compra ou da LINHA — troca formato/modelo/cor. | **Cerâmicas** — peças equivalentes na família. |
+| **portfolio** | **Substituíveis** dentro do mesmo produto compra ou da LINHA — troca formato/modelo/cor. | **Cerâmicas**, **rejunte** (cores) |
 
 **Onde está escrito:** `src/data/hierarquiaPortalLinhas.json` (`tipo` + `principios`).  
 **No Excel AB:** coluna `linha` → cruza com a mestre; **não** há coluna solo/mix/portfolio na folha (só `status_mix`, que é outra regra).

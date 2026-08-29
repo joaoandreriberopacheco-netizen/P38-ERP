@@ -11,6 +11,7 @@ import ExcelJS from 'exceljs';
 
 const EXCEL_PATH = path.join(process.cwd(), 'docs', 'exports', 'P38-sku-hierarquia-ab.xlsx');
 const LINHAS_JSON = path.join(process.cwd(), 'src', 'data', 'hierarquiaPortalLinhas.json');
+const BLOCO_OVERRIDES_JSON = path.join(process.cwd(), 'src', 'data', 'estudoCatalogBlocoOverrides.json');
 const OUT = path.join(process.cwd(), 'src', 'data', 'estudoCatalogManifest.generated.json');
 
 const DATA_SHEETS = [
@@ -73,6 +74,28 @@ function resolveLinhaMeta(linhaCell, { byNome, byCodigo }) {
   };
 }
 
+function loadBlocoOverrides() {
+  if (!fs.existsSync(BLOCO_OVERRIDES_JSON)) return { por_linha_codigo: {} };
+  const raw = JSON.parse(fs.readFileSync(BLOCO_OVERRIDES_JSON, 'utf8'));
+  return raw.por_linha_codigo ? raw : { por_linha_codigo: raw };
+}
+
+function applyBlocoOverrides(rows, porLinhaCodigo = {}) {
+  if (!porLinhaCodigo || !Object.keys(porLinhaCodigo).length) return rows;
+  return rows.map((row) => {
+    const o = porLinhaCodigo[row.linha_codigo];
+    if (!o) return row;
+    return {
+      ...row,
+      ...(o.bloco != null ? { bloco: o.bloco } : {}),
+      ...(o.sub_bloco != null ? { sub_bloco: o.sub_bloco } : {}),
+      ...(o.etapa != null ? { etapa: o.etapa } : {}),
+      ...(o.core != null ? { core: o.core } : {}),
+      ...(o.linha_tipo != null ? { linha_tipo: o.linha_tipo } : {}),
+    };
+  });
+}
+
 async function readSheet(ws, linhasIndex) {
   const headerRow = ws.getRow(1);
   const headers = headerRow.values.slice(1).map((h) => String(h ?? '').trim());
@@ -132,10 +155,11 @@ async function main() {
   }
 
   const linhasIndex = loadLinhasMestre();
+  const blocoOverrides = loadBlocoOverrides();
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.readFile(EXCEL_PATH);
 
-  const skus = [];
+  const skusRaw = [];
   const sheetsRead = [];
 
   for (const name of DATA_SHEETS) {
@@ -145,8 +169,14 @@ async function main() {
       continue;
     }
     const part = await readSheet(ws, linhasIndex);
-    skus.push(...part);
+    skusRaw.push(...part);
     sheetsRead.push({ name, count: part.length });
+  }
+
+  const skus = applyBlocoOverrides(skusRaw, blocoOverrides.por_linha_codigo);
+  const overrideCount = skus.filter((row, i) => row !== skusRaw[i]).length;
+  if (overrideCount) {
+    console.log(`[estudo-manifest] ${overrideCount} SKU(s) com bloco/tipo override (estudoCatalogBlocoOverrides.json)`);
   }
 
   const linhasMap = new Map();
@@ -177,6 +207,7 @@ async function main() {
     version: new Date().toISOString().slice(0, 10),
     source: 'docs/exports/P38-sku-hierarquia-ab.xlsx',
     linhas_mestre_version: linhasIndex.version,
+    bloco_overrides_version: blocoOverrides.version || null,
     sheets: sheetsRead,
     count: skus.length,
     linhas: [...linhasMap.values()].sort((a, b) => a.ordem - b.ordem),

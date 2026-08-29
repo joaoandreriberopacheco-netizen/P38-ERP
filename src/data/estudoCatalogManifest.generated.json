@@ -1,7 +1,8 @@
 {
   "version": "2026-08-29",
   "source": "docs/exports/P38-sku-hierarquia-ab.xlsx",
-  "linhas_mestre_version": "2026-08-19",
+  "linhas_mestre_version": "2026-08-29",
+  "bloco_overrides_version": "2026-08-29",
   "sheets": [
     {
       "name": "A — Edificações",
@@ -35,7 +36,7 @@
       "nome": "ARGAMASSA",
       "tipo": "mix",
       "ordem": 20,
-      "grupo": "materiais_construcao",
+      "grupo": "revestimentos",
       "sku_count": 5
     },
     {
@@ -153,7 +154,7 @@
     {
       "codigo": "REJUNTE",
       "nome": "REJUNTE",
-      "tipo": "mix",
+      "tipo": "portfolio",
       "ordem": 130,
       "grupo": "revestimentos",
       "sku_count": 23
@@ -249,7 +250,7 @@
     {
       "codigo": "PISOS_E_REVESTIMENTOS",
       "nome": "PISOS E REVESTIMENTOS",
-      "tipo": "mix",
+      "tipo": "portfolio",
       "ordem": 900,
       "grupo": "fallback",
       "sku_count": 70
@@ -257,9 +258,14 @@
   ],
   "blocos": [
     {
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
+      "sku_count": 273
+    },
+    {
       "bloco": "A — Edificações",
       "sub_bloco": "A1 Estrutura / alvenaria",
-      "sku_count": 38
+      "sku_count": 33
     },
     {
       "bloco": "A — Edificações",
@@ -269,7 +275,7 @@
     {
       "bloco": "A — Edificações",
       "sub_bloco": "A4 Revestimentos",
-      "sku_count": 284
+      "sku_count": 16
     },
     {
       "bloco": "A — Edificações",
@@ -329,10 +335,10 @@
   ],
   "skus": [
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A1 Estrutura / alvenaria",
-      "etapa": "1 — Estrutura / alvenaria",
-      "core": "ALVENARIA",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
+      "etapa": "4 — Revestimentos",
+      "core": "ASSENTAMENTO_CERAMICA",
       "linha": "ARGAMASSA·R",
       "linha_display": "ARGAMASSA",
       "pathway_sufixo": "R",
@@ -342,7 +348,7 @@
       "linha_nome": "ARGAMASSA",
       "linha_tipo": "mix",
       "linha_ordem": 20,
-      "linha_grupo": "materiais_construcao",
+      "linha_grupo": "revestimentos",
       "produto_compra": "ARGAMASSA AC-1",
       "produto_compra_nome": "ARGAMASSA AC-1",
       "eixo_a": "15 KG",
@@ -354,10 +360,10 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A1 Estrutura / alvenaria",
-      "etapa": "1 — Estrutura / alvenaria",
-      "core": "ALVENARIA",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
+      "etapa": "4 — Revestimentos",
+      "core": "ASSENTAMENTO_CERAMICA",
       "linha": "ARGAMASSA·R",
       "linha_display": "ARGAMASSA",
       "pathway_sufixo": "R",
@@ -367,7 +373,7 @@
       "linha_nome": "ARGAMASSA",
       "linha_tipo": "mix",
       "linha_ordem": 20,
-      "linha_grupo": "materiais_construcao",
+      "linha_grupo": "revestimentos",
       "produto_compra": "ARGAMASSA AC-2",
       "produto_compra_nome": "ARGAMASSA AC-2",
       "eixo_a": "15 KG",
@@ -379,10 +385,10 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A1 Estrutura / alvenaria",
-      "etapa": "1 — Estrutura / alvenaria",
-      "core": "ALVENARIA",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
+      "etapa": "4 — Revestimentos",
+      "core": "ASSENTAMENTO_CERAMICA",
       "linha": "ARGAMASSA·R",
       "linha_display": "ARGAMASSA",
       "pathway_sufixo": "R",
@@ -392,7 +398,7 @@
       "linha_nome": "ARGAMASSA",
       "linha_tipo": "mix",
       "linha_ordem": 20,
-      "linha_grupo": "materiais_construcao",
+      "linha_grupo": "revestimentos",
       "produto_compra": "ARGAMASSA AC-2",
       "produto_compra_nome": "ARGAMASSA AC-2",
       "eixo_a": "20 KG",
@@ -404,10 +410,10 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A1 Estrutura / alvenaria",
-      "etapa": "1 — Estrutura / alvenaria",
-      "core": "ALVENARIA",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
+      "etapa": "4 — Revestimentos",
+      "core": "ASSENTAMENTO_CERAMICA",
       "linha": "ARGAMASSA·R",
       "linha_display": "ARGAMASSA",
       "pathway_sufixo": "R",
@@ -417,7 +423,7 @@
       "linha_nome": "ARGAMASSA",
       "linha_tipo": "mix",
       "linha_ordem": 20,
-      "linha_grupo": "materiais_construcao",
+      "linha_grupo": "revestimentos",
       "produto_compra": "ARGAMASSA AC-3",
       "produto_compra_nome": "ARGAMASSA AC-3",
       "eixo_a": "15 KG",
@@ -429,10 +435,10 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A1 Estrutura / alvenaria",
-      "etapa": "1 — Estrutura / alvenaria",
-      "core": "ALVENARIA",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
+      "etapa": "4 — Revestimentos",
+      "core": "ASSENTAMENTO_CERAMICA",
       "linha": "ARGAMASSA·R",
       "linha_display": "ARGAMASSA",
       "pathway_sufixo": "R",
@@ -442,7 +448,7 @@
       "linha_nome": "ARGAMASSA",
       "linha_tipo": "mix",
       "linha_ordem": 20,
-      "linha_grupo": "materiais_construcao",
+      "linha_grupo": "revestimentos",
       "produto_compra": "ARGAMASSA AC-3",
       "produto_compra_nome": "ARGAMASSA AC-3",
       "eixo_a": "20 KG",
@@ -1629,8 +1635,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -1654,8 +1660,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -1679,8 +1685,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -1704,8 +1710,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -1729,8 +1735,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -1754,8 +1760,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -1779,8 +1785,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -1804,8 +1810,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -1829,8 +1835,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -1854,8 +1860,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -1879,8 +1885,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -1904,8 +1910,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -1929,8 +1935,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -1954,8 +1960,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -1979,8 +1985,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2004,8 +2010,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2029,8 +2035,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2054,8 +2060,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2079,8 +2085,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2104,8 +2110,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2129,8 +2135,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2154,8 +2160,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2179,8 +2185,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2204,8 +2210,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2229,8 +2235,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2254,8 +2260,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2279,8 +2285,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2304,8 +2310,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2329,8 +2335,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2354,8 +2360,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2379,8 +2385,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2404,8 +2410,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2429,8 +2435,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2454,8 +2460,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2479,8 +2485,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2504,8 +2510,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2529,8 +2535,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2554,8 +2560,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2579,8 +2585,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2604,8 +2610,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2629,8 +2635,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2654,8 +2660,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2679,8 +2685,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2704,8 +2710,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2729,8 +2735,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2754,8 +2760,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2779,8 +2785,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2804,8 +2810,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2829,8 +2835,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2854,8 +2860,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2879,8 +2885,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2904,8 +2910,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2929,8 +2935,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2954,8 +2960,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -2979,8 +2985,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3004,8 +3010,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3029,8 +3035,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3054,8 +3060,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3079,8 +3085,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3104,8 +3110,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3129,8 +3135,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3154,8 +3160,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3179,8 +3185,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3204,8 +3210,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3229,8 +3235,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3254,8 +3260,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3279,8 +3285,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3304,8 +3310,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3329,8 +3335,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3354,8 +3360,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3379,8 +3385,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3404,8 +3410,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3429,8 +3435,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3454,8 +3460,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3479,8 +3485,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3504,8 +3510,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3529,8 +3535,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3554,8 +3560,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3579,8 +3585,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3604,8 +3610,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3629,8 +3635,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3654,8 +3660,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3679,8 +3685,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3704,8 +3710,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3729,8 +3735,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3754,8 +3760,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3779,8 +3785,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3804,8 +3810,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3829,8 +3835,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3854,8 +3860,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3879,8 +3885,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3904,8 +3910,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3929,8 +3935,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3954,8 +3960,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -3979,8 +3985,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -4004,8 +4010,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -4029,8 +4035,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -4054,8 +4060,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA BOLD",
@@ -4079,8 +4085,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4104,8 +4110,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4129,8 +4135,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4154,8 +4160,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4179,8 +4185,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4204,8 +4210,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4229,8 +4235,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4254,8 +4260,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4279,8 +4285,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4304,8 +4310,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4329,8 +4335,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4354,8 +4360,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4379,8 +4385,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4404,8 +4410,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4429,8 +4435,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4454,8 +4460,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4479,8 +4485,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4504,8 +4510,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4529,8 +4535,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4554,8 +4560,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4579,8 +4585,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4604,8 +4610,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4629,8 +4635,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4654,8 +4660,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4679,8 +4685,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4704,8 +4710,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4729,8 +4735,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4754,8 +4760,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4779,8 +4785,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4804,8 +4810,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4829,8 +4835,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4854,8 +4860,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4879,8 +4885,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4904,8 +4910,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4929,8 +4935,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4954,8 +4960,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -4979,8 +4985,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5004,8 +5010,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5029,8 +5035,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5054,8 +5060,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5079,8 +5085,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5104,8 +5110,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5129,8 +5135,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5154,8 +5160,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5179,8 +5185,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5204,8 +5210,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5229,8 +5235,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5254,8 +5260,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5279,8 +5285,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5304,8 +5310,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5329,8 +5335,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5354,8 +5360,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5379,8 +5385,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5404,8 +5410,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5429,8 +5435,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5454,8 +5460,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5479,8 +5485,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5504,8 +5510,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5529,8 +5535,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5554,8 +5560,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5579,8 +5585,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5604,8 +5610,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5629,8 +5635,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5654,8 +5660,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5679,8 +5685,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5704,8 +5710,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5729,8 +5735,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5754,8 +5760,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5779,8 +5785,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5804,8 +5810,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5829,8 +5835,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5854,8 +5860,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5879,8 +5885,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5904,8 +5910,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5929,8 +5935,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5954,8 +5960,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -5979,8 +5985,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "CERÂMICA RETIF",
@@ -6004,8 +6010,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6015,7 +6021,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "CERAMICA A",
@@ -6029,8 +6035,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6040,7 +6046,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "ESPAÇADOR NIVELADOR DE REVESTIMENTO",
@@ -6054,8 +6060,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6065,7 +6071,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "ESPAÇADOR NIVELADOR DE REVESTIMENTO",
@@ -6079,8 +6085,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6090,7 +6096,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "JUNTA PISO EM CRUZ",
@@ -6104,8 +6110,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6115,7 +6121,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "JUNTA PISO EM CRUZ",
@@ -6129,8 +6135,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6140,7 +6146,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "JUNTA PISO EM CRUZ",
@@ -6154,8 +6160,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6165,7 +6171,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PAVER HEXAGONAL",
@@ -6179,8 +6185,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6190,7 +6196,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PAVER RETANG. 10,00 CM",
@@ -6204,8 +6210,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6215,7 +6221,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6229,8 +6235,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6240,7 +6246,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6254,8 +6260,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6265,7 +6271,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6279,8 +6285,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6290,7 +6296,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6304,8 +6310,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6315,7 +6321,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6329,8 +6335,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6340,7 +6346,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6354,8 +6360,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6365,7 +6371,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6379,8 +6385,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6390,7 +6396,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6404,8 +6410,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6415,7 +6421,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6429,8 +6435,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6440,7 +6446,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6454,8 +6460,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6465,7 +6471,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6479,8 +6485,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6490,7 +6496,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6504,8 +6510,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6515,7 +6521,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6529,8 +6535,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6540,7 +6546,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6554,8 +6560,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6565,7 +6571,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6579,8 +6585,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6590,7 +6596,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6604,8 +6610,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6615,7 +6621,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6629,8 +6635,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6640,7 +6646,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6654,8 +6660,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6665,7 +6671,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6679,8 +6685,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6690,7 +6696,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6704,8 +6710,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6715,7 +6721,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6729,8 +6735,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6740,7 +6746,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6754,8 +6760,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6765,7 +6771,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6779,8 +6785,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6790,7 +6796,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6804,8 +6810,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6815,7 +6821,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6829,8 +6835,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6840,7 +6846,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6854,8 +6860,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6865,7 +6871,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6879,8 +6885,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6890,7 +6896,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6904,8 +6910,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6915,7 +6921,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6929,8 +6935,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6940,7 +6946,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6954,8 +6960,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6965,7 +6971,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PISO",
@@ -6979,8 +6985,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -6990,7 +6996,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PORCELANATO",
@@ -7004,8 +7010,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7015,7 +7021,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PORCELANATO",
@@ -7029,8 +7035,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7040,7 +7046,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PORCELANATO",
@@ -7054,8 +7060,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7065,7 +7071,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PORCELANATO",
@@ -7079,8 +7085,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7090,7 +7096,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PORCELANATO",
@@ -7104,8 +7110,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7115,7 +7121,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PORCELANATO",
@@ -7129,8 +7135,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7140,7 +7146,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PORCELANATO",
@@ -7154,8 +7160,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7165,7 +7171,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PORCELANATO",
@@ -7179,8 +7185,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7190,7 +7196,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PORCELANATO",
@@ -7204,8 +7210,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7215,7 +7221,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PORCELANATO",
@@ -7229,8 +7235,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7240,7 +7246,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PORCELANATO",
@@ -7254,8 +7260,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7265,7 +7271,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PORCELANATO",
@@ -7279,8 +7285,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7290,7 +7296,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PORCELANATO",
@@ -7304,8 +7310,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7315,7 +7321,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PORCELANATO",
@@ -7329,8 +7335,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7340,7 +7346,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PORCELANATO",
@@ -7354,8 +7360,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7365,7 +7371,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PORCELANATO",
@@ -7379,8 +7385,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7390,7 +7396,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PORCELANATO",
@@ -7404,8 +7410,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7415,7 +7421,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PORCELENATO 60X120 SAFIRA MATE",
@@ -7429,8 +7435,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7440,7 +7446,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "PORCELENATO",
@@ -7454,8 +7460,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7465,7 +7471,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "REV EKP 34X50 DINAMARCA",
@@ -7479,8 +7485,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7490,7 +7496,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "REV. 7,5X15 LINHA SOFT",
@@ -7504,8 +7510,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7515,7 +7521,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "REVESTIMENTO",
@@ -7529,8 +7535,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7540,7 +7546,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "REVESTIMENTO",
@@ -7554,8 +7560,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7565,7 +7571,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "REVESTIMENTO",
@@ -7579,8 +7585,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7590,7 +7596,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "REVESTIMENTO",
@@ -7604,8 +7610,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7615,7 +7621,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "REVESTIMENTO",
@@ -7629,8 +7635,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7640,7 +7646,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "REVESTIMENTO",
@@ -7654,8 +7660,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7665,7 +7671,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "REVESTIMENTO",
@@ -7679,8 +7685,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7690,7 +7696,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "REVESTIMENTO",
@@ -7704,8 +7710,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7715,7 +7721,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "REVESTIMENTO",
@@ -7729,8 +7735,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "PISOS E REVESTIMENTOS",
@@ -7740,7 +7746,7 @@
       "linha_pathway_key": "PISOS_E_REVESTIMENTOS",
       "linha_codigo": "PISOS_E_REVESTIMENTOS",
       "linha_nome": "PISOS E REVESTIMENTOS",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 900,
       "linha_grupo": "fallback",
       "produto_compra": "TECPLUS 1 QUARTZOLIT 3,6",
@@ -7754,8 +7760,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "REJUNTE",
@@ -7765,7 +7771,7 @@
       "linha_pathway_key": "REJUNTE",
       "linha_codigo": "REJUNTE",
       "linha_nome": "REJUNTE",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 130,
       "linha_grupo": "revestimentos",
       "produto_compra": "REJUNTE JBMIX",
@@ -7779,8 +7785,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "REJUNTE",
@@ -7790,7 +7796,7 @@
       "linha_pathway_key": "REJUNTE",
       "linha_codigo": "REJUNTE",
       "linha_nome": "REJUNTE",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 130,
       "linha_grupo": "revestimentos",
       "produto_compra": "REJUNTE JBMIX",
@@ -7804,8 +7810,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "REJUNTE",
@@ -7815,7 +7821,7 @@
       "linha_pathway_key": "REJUNTE",
       "linha_codigo": "REJUNTE",
       "linha_nome": "REJUNTE",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 130,
       "linha_grupo": "revestimentos",
       "produto_compra": "REJUNTE JBMIX",
@@ -7829,8 +7835,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "REJUNTE",
@@ -7840,7 +7846,7 @@
       "linha_pathway_key": "REJUNTE",
       "linha_codigo": "REJUNTE",
       "linha_nome": "REJUNTE",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 130,
       "linha_grupo": "revestimentos",
       "produto_compra": "REJUNTE JBMIX",
@@ -7854,8 +7860,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "REJUNTE",
@@ -7865,7 +7871,7 @@
       "linha_pathway_key": "REJUNTE",
       "linha_codigo": "REJUNTE",
       "linha_nome": "REJUNTE",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 130,
       "linha_grupo": "revestimentos",
       "produto_compra": "REJUNTE JBMIX",
@@ -7879,8 +7885,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "REJUNTE",
@@ -7890,7 +7896,7 @@
       "linha_pathway_key": "REJUNTE",
       "linha_codigo": "REJUNTE",
       "linha_nome": "REJUNTE",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 130,
       "linha_grupo": "revestimentos",
       "produto_compra": "REJUNTE JBMIX",
@@ -7904,8 +7910,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "REJUNTE",
@@ -7915,7 +7921,7 @@
       "linha_pathway_key": "REJUNTE",
       "linha_codigo": "REJUNTE",
       "linha_nome": "REJUNTE",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 130,
       "linha_grupo": "revestimentos",
       "produto_compra": "REJUNTE JBMIX",
@@ -7929,8 +7935,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "REJUNTE",
@@ -7940,7 +7946,7 @@
       "linha_pathway_key": "REJUNTE",
       "linha_codigo": "REJUNTE",
       "linha_nome": "REJUNTE",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 130,
       "linha_grupo": "revestimentos",
       "produto_compra": "REJUNTE JBMIX",
@@ -7954,8 +7960,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "REJUNTE",
@@ -7965,7 +7971,7 @@
       "linha_pathway_key": "REJUNTE",
       "linha_codigo": "REJUNTE",
       "linha_nome": "REJUNTE",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 130,
       "linha_grupo": "revestimentos",
       "produto_compra": "REJUNTE JBMIX",
@@ -7979,8 +7985,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "REJUNTE",
@@ -7990,7 +7996,7 @@
       "linha_pathway_key": "REJUNTE",
       "linha_codigo": "REJUNTE",
       "linha_nome": "REJUNTE",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 130,
       "linha_grupo": "revestimentos",
       "produto_compra": "REJUNTE JBMIX",
@@ -8004,8 +8010,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "REJUNTE",
@@ -8015,7 +8021,7 @@
       "linha_pathway_key": "REJUNTE",
       "linha_codigo": "REJUNTE",
       "linha_nome": "REJUNTE",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 130,
       "linha_grupo": "revestimentos",
       "produto_compra": "REJUNTE JBMIX",
@@ -8029,8 +8035,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "REJUNTE",
@@ -8040,7 +8046,7 @@
       "linha_pathway_key": "REJUNTE",
       "linha_codigo": "REJUNTE",
       "linha_nome": "REJUNTE",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 130,
       "linha_grupo": "revestimentos",
       "produto_compra": "REJUNTE JBMIX",
@@ -8054,8 +8060,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "REJUNTE",
@@ -8065,7 +8071,7 @@
       "linha_pathway_key": "REJUNTE",
       "linha_codigo": "REJUNTE",
       "linha_nome": "REJUNTE",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 130,
       "linha_grupo": "revestimentos",
       "produto_compra": "REJUNTE QUARTZOLIT",
@@ -8079,8 +8085,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "REJUNTE",
@@ -8090,7 +8096,7 @@
       "linha_pathway_key": "REJUNTE",
       "linha_codigo": "REJUNTE",
       "linha_nome": "REJUNTE",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 130,
       "linha_grupo": "revestimentos",
       "produto_compra": "REJUNTE QUARTZOLIT",
@@ -8104,8 +8110,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "REJUNTE",
@@ -8115,7 +8121,7 @@
       "linha_pathway_key": "REJUNTE",
       "linha_codigo": "REJUNTE",
       "linha_nome": "REJUNTE",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 130,
       "linha_grupo": "revestimentos",
       "produto_compra": "REJUNTE QUARTZOLIT",
@@ -8129,8 +8135,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "REJUNTE",
@@ -8140,7 +8146,7 @@
       "linha_pathway_key": "REJUNTE",
       "linha_codigo": "REJUNTE",
       "linha_nome": "REJUNTE",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 130,
       "linha_grupo": "revestimentos",
       "produto_compra": "REJUNTE QUARTZOLIT",
@@ -8154,8 +8160,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "REJUNTE",
@@ -8165,7 +8171,7 @@
       "linha_pathway_key": "REJUNTE",
       "linha_codigo": "REJUNTE",
       "linha_nome": "REJUNTE",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 130,
       "linha_grupo": "revestimentos",
       "produto_compra": "REJUNTE QUARTZOLIT",
@@ -8179,8 +8185,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "REJUNTE",
@@ -8190,7 +8196,7 @@
       "linha_pathway_key": "REJUNTE",
       "linha_codigo": "REJUNTE",
       "linha_nome": "REJUNTE",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 130,
       "linha_grupo": "revestimentos",
       "produto_compra": "REJUNTE QUARTZOLIT",
@@ -8204,8 +8210,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "REJUNTE",
@@ -8215,7 +8221,7 @@
       "linha_pathway_key": "REJUNTE",
       "linha_codigo": "REJUNTE",
       "linha_nome": "REJUNTE",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 130,
       "linha_grupo": "revestimentos",
       "produto_compra": "REJUNTE QUARTZOLIT",
@@ -8229,8 +8235,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "REJUNTE",
@@ -8240,7 +8246,7 @@
       "linha_pathway_key": "REJUNTE",
       "linha_codigo": "REJUNTE",
       "linha_nome": "REJUNTE",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 130,
       "linha_grupo": "revestimentos",
       "produto_compra": "REJUNTE QUARTZOLIT",
@@ -8254,8 +8260,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "REJUNTE",
@@ -8265,7 +8271,7 @@
       "linha_pathway_key": "REJUNTE",
       "linha_codigo": "REJUNTE",
       "linha_nome": "REJUNTE",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 130,
       "linha_grupo": "revestimentos",
       "produto_compra": "REJUNTE QUARTZOLIT",
@@ -8279,8 +8285,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "REJUNTE",
@@ -8290,7 +8296,7 @@
       "linha_pathway_key": "REJUNTE",
       "linha_codigo": "REJUNTE",
       "linha_nome": "REJUNTE",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 130,
       "linha_grupo": "revestimentos",
       "produto_compra": "REJUNTE QUARTZOLIT",
@@ -8304,8 +8310,8 @@
       "solo": false
     },
     {
-      "bloco": "A — Edificações",
-      "sub_bloco": "A4 Revestimentos",
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
       "etapa": "4 — Revestimentos",
       "core": "ASSENTAMENTO_CERAMICA",
       "linha": "REJUNTE",
@@ -8315,7 +8321,7 @@
       "linha_pathway_key": "REJUNTE",
       "linha_codigo": "REJUNTE",
       "linha_nome": "REJUNTE",
-      "linha_tipo": "mix",
+      "linha_tipo": "portfolio",
       "linha_ordem": 130,
       "linha_grupo": "revestimentos",
       "produto_compra": "REJUNTE QUARTZOLIT",

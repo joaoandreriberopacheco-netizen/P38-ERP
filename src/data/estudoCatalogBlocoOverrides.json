@@ -1,0 +1,41 @@
+{
+  "version": "2026-08-29",
+  "decisao": "Argamassa, rejunte e cerâmicas saem de Edificações → bloco C Acabamentos (decisão João André).",
+  "por_linha_codigo": {
+    "ARGAMASSA": {
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
+      "etapa": "4 — Revestimentos",
+      "core": "ASSENTAMENTO_CERAMICA",
+      "linha_tipo": "mix"
+    },
+    "REJUNTE": {
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
+      "etapa": "4 — Revestimentos",
+      "core": "ASSENTAMENTO_CERAMICA",
+      "linha_tipo": "portfolio"
+    },
+    "CERAMICA_BOLD": {
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
+      "etapa": "4 — Revestimentos",
+      "core": "ASSENTAMENTO_CERAMICA",
+      "linha_tipo": "portfolio"
+    },
+    "CERAMICA_RETIF": {
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
+      "etapa": "4 — Revestimentos",
+      "core": "ASSENTAMENTO_CERAMICA",
+      "linha_tipo": "portfolio"
+    },
+    "PISOS_E_REVESTIMENTOS": {
+      "bloco": "C — Acabamentos (prévia)",
+      "sub_bloco": "C1 Revestimentos",
+      "etapa": "4 — Revestimentos",
+      "core": "ASSENTAMENTO_CERAMICA",
+      "linha_tipo": "portfolio"
+    }
+  }
+}
