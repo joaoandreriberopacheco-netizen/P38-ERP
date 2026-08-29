@@ -13,6 +13,13 @@ import { readJson, snapshotPath } from '../lib/catalogoPaths.mjs';
 import { extractImagensFromDetalhe } from '../lib/formigresCatalog.mjs';
 import { loadSnapshotFromFile } from '../lib/formigresSnapshot.mjs';
 import { dedupeFormigresGemeas } from '../lib/formigresGemeas.mjs';
+import {
+  buildCatalogTourClientJs,
+  buildCatalogTourCss,
+  buildCatalogTourFabHtml,
+  buildCatalogTourHtml,
+} from '../lib/catalogoTour.mjs';
+import { buildCatalogPdfMobileClientJs } from '../lib/catalogoPdfMobileJs.mjs';
 
 const ROOT = process.cwd();
 const args = process.argv.slice(2);
@@ -44,6 +51,8 @@ const CONFIGS = {
     qtyKey: 'tintao-pedido-qty-v1',
     descontoKey: 'tintao-desconto-v1',
     groupKey: 'tintao-catalog-group-v1',
+    tourKey: 'tintao-catalog-tour-v3',
+    pdfLayout: 'mobile',
     classifError: 'JSON de classificação não encontrado. Rode: npm run catalogo:classificar-tintao',
     skin: 'default',
     siteSub: 'Pedido B2B · Lojistas',
@@ -72,6 +81,7 @@ const CONFIGS = {
     descontoKey: 'formigres-catalog-desconto-v1',
     regimeKey: 'formigres-regime-especial-v1',
     groupKey: 'formigres-catalog-group-v1',
+    pdfLayout: 'landscape',
     classifError: 'JSON de classificação não encontrado. Rode: npm run catalogo:classificar-formigres',
     skin: 'formigres',
     siteSub: 'Catálogo B2B · Demonstração',
@@ -722,6 +732,14 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   const comFoto = itens.filter((i) => i.imagem_url).length;
   const loadSquaresHtml = Array.from({ length: 20 }, () => '<span class="load-square"></span>').join('');
   const isFormigresSkin = cfg.skin === 'formigres';
+  const pdfLayout = cfg.pdfLayout || (isFormigresSkin ? 'landscape' : 'mobile');
+  const useMobilePdf = pdfLayout === 'mobile';
+  const mobilePdfJs = useMobilePdf ? buildCatalogPdfMobileClientJs() : '';
+  const hasCatalogTour = Boolean(cfg.tourKey);
+  const tourSkin = cfg.skin === 'default' ? 'tintao' : cfg.skin;
+  const catalogTourJs = hasCatalogTour
+    ? buildCatalogTourClientJs({ tourKey: cfg.tourKey, skin: tourSkin, qtyLabelPl: cfg.qtyLabelPl || (isFormigresSkin ? 'paletes' : 'caixas') })
+    : '';
   const qtyLabel = cfg.qtyLabel || (isFormigresSkin ? 'Paletes' : 'Caixas');
   const qtyLabelPl = cfg.qtyLabelPl || (isFormigresSkin ? 'paletes' : 'caixas');
   const qtyUnit = cfg.qtyUnit || (isFormigresSkin ? 'palete' : 'caixa');
@@ -889,6 +907,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     html[data-theme="light"] .load-overlay { background: rgba(242,242,240,.97); }
     ${isFormigresSkin ? FORMIGRES_SKIN_CSS : ''}
+    ${hasCatalogTour ? buildCatalogTourCss(tourSkin) : ''}
     .load-logo-ant {
       position: relative;
       width: min(200px, 58vw);
@@ -2244,6 +2263,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
 
   ${themeToggleHtml}
 
+  ${hasCatalogTour ? buildCatalogTourFabHtml() : ''}
+
   <div class="fab-stack" id="fab-stack">
     <button type="button" class="fab cart-fab" id="cart-fab" aria-label="Minha seleção">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -2290,6 +2311,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       </div>
     </section>
   </div>
+
+  ${hasCatalogTour ? buildCatalogTourHtml() : ''}
 
   <div id="pedido-print"></div>
 
@@ -3428,6 +3451,71 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function pxToMm(px) {
       return Math.ceil(Number(px || 0) * 25.4 / 96);
     }
+    function pdfCanvasBackground(theme) {
+      return '#ffffff';
+    }
+    const HTML2PDF_URL = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+    let pedidoPdfBlob = null;
+    let pedidoPdfBlobUrl = null;
+
+    function pedidoPdfFilename() {
+      return 'pedido-formigres-' + new Date().toISOString().slice(0, 10) + '.pdf';
+    }
+    function revokePedidoPdfBlob() {
+      if (pedidoPdfBlobUrl) {
+        URL.revokeObjectURL(pedidoPdfBlobUrl);
+        pedidoPdfBlobUrl = null;
+      }
+      pedidoPdfBlob = null;
+    }
+    function injectPdfFontClone(clonedDoc) {
+      const css = getPdfFontFaceCss();
+      if (!clonedDoc || !css) return;
+      const style = clonedDoc.createElement('style');
+      style.textContent = css;
+      clonedDoc.head.appendChild(style);
+      clonedDoc.documentElement.style.fontFamily = "'Libre Franklin', system-ui, sans-serif";
+    }
+    async function waitPrintImagesRoot(root) {
+      const imgs = [...root.querySelectorAll('img')];
+      if (!imgs.length) return;
+      await Promise.all(imgs.map((img) => {
+        if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+        return new Promise((resolve) => {
+          const done = () => resolve();
+          img.addEventListener('load', done, { once: true });
+          img.addEventListener('error', done, { once: true });
+          setTimeout(done, 8000);
+        });
+      }));
+      await new Promise((resolve) => setTimeout(resolve, 120));
+    }
+    async function waitPrintFontsRoot(doc) {
+      try {
+        if (doc.fonts && doc.fonts.load) {
+          await doc.fonts.load('400 13px "Libre Franklin"');
+          await doc.fonts.load('600 13px "Libre Franklin"');
+        }
+        if (doc.fonts && doc.fonts.ready) await doc.fonts.ready;
+        if (doc.fonts && doc.fonts.check && !doc.fonts.check('13px "Libre Franklin"')) {
+          await new Promise((resolve) => setTimeout(resolve, 400));
+        }
+      } catch { /* ignore */ }
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+    function loadHtml2PdfInWindow(win, doc) {
+      if (win.html2pdf) return Promise.resolve(win.html2pdf);
+      return new Promise((resolve, reject) => {
+        const script = doc.createElement('script');
+        script.src = HTML2PDF_URL;
+        script.async = true;
+        script.onload = () => resolve(win.html2pdf);
+        script.onerror = () => reject(new Error('Falha ao carregar gerador PDF'));
+        (doc.head || doc.body || doc.documentElement).appendChild(script);
+      });
+    }
+    ${mobilePdfJs}
+    ${!useMobilePdf ? `
     function printPdfLayout() {
       const marginMm = 8;
       const pageWmm = 297;
@@ -3628,71 +3716,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '.print-fmt-resumo-table col.col-fmt-res-fmt { width: 88px; }' +
         '.print-fmt-resumo-table col.col-fmt-res-num { width: 56px; }';
     }
-    function pdfCanvasBackground(theme) {
-      return '#ffffff';
-    }
-    const HTML2PDF_URL = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-    let pedidoPdfBlob = null;
-    let pedidoPdfBlobUrl = null;
-
-    function pedidoPdfFilename() {
-      return 'pedido-formigres-' + new Date().toISOString().slice(0, 10) + '.pdf';
-    }
-    function revokePedidoPdfBlob() {
-      if (pedidoPdfBlobUrl) {
-        URL.revokeObjectURL(pedidoPdfBlobUrl);
-        pedidoPdfBlobUrl = null;
-      }
-      pedidoPdfBlob = null;
-    }
     function pedidoPdfIframeHead() {
       return '<meta charset="utf-8"><style>' + getPdfFontFaceCss() + printPedidoPrintCss() + '</style>';
-    }
-    function injectPdfFontClone(clonedDoc) {
-      const css = getPdfFontFaceCss();
-      if (!clonedDoc || !css) return;
-      const style = clonedDoc.createElement('style');
-      style.textContent = css;
-      clonedDoc.head.appendChild(style);
-      clonedDoc.documentElement.style.fontFamily = "'Libre Franklin', system-ui, sans-serif";
-    }
-    async function waitPrintImagesRoot(root) {
-      const imgs = [...root.querySelectorAll('img')];
-      if (!imgs.length) return;
-      await Promise.all(imgs.map((img) => {
-        if (img.complete && img.naturalWidth > 0) return Promise.resolve();
-        return new Promise((resolve) => {
-          const done = () => resolve();
-          img.addEventListener('load', done, { once: true });
-          img.addEventListener('error', done, { once: true });
-          setTimeout(done, 8000);
-        });
-      }));
-      await new Promise((resolve) => setTimeout(resolve, 120));
-    }
-    async function waitPrintFontsRoot(doc) {
-      try {
-        if (doc.fonts && doc.fonts.load) {
-          await doc.fonts.load('400 13px "Libre Franklin"');
-          await doc.fonts.load('600 13px "Libre Franklin"');
-        }
-        if (doc.fonts && doc.fonts.ready) await doc.fonts.ready;
-        if (doc.fonts && doc.fonts.check && !doc.fonts.check('13px "Libre Franklin"')) {
-          await new Promise((resolve) => setTimeout(resolve, 400));
-        }
-      } catch { /* ignore */ }
-      await new Promise((resolve) => setTimeout(resolve, 250));
-    }
-    function loadHtml2PdfInWindow(win, doc) {
-      if (win.html2pdf) return Promise.resolve(win.html2pdf);
-      return new Promise((resolve, reject) => {
-        const script = doc.createElement('script');
-        script.src = HTML2PDF_URL;
-        script.async = true;
-        script.onload = () => resolve(win.html2pdf);
-        script.onerror = () => reject(new Error('Falha ao carregar gerador PDF'));
-        (doc.head || doc.body || doc.documentElement).appendChild(script);
-      });
     }
     async function renderPedidoPdfBlob(thumbs) {
       const layout = printPdfLayout();
@@ -3754,6 +3779,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         iframe.remove();
       }
     }
+    ` : ''}
     function openPedidoPdfSheet() {
       pedidoPdfSheetOpen = true;
       document.getElementById('pedido-pdf-sheet')?.classList.add('open');
@@ -3951,7 +3977,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     initTopControls();
     initCatalogControls();
-
+    ${catalogTourJs ? `${catalogTourJs}\n    ` : ''}
     try {
     q?.addEventListener('input', () => applySearch(q.value));
     groupSel?.addEventListener('change', () => syncGroupBy(groupSel.value));
@@ -4117,7 +4143,7 @@ function main() {
   });
 }
 
-export { main, mainAsync };
+export { main, mainAsync, buildHtml };
 
 async function mainAsync() {
   const jsonPath = findLatestClassifJson();
