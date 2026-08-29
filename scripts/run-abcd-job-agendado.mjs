@@ -8,6 +8,7 @@
  */
 import pg from 'pg';
 import { loadDotEnvFiles } from './base44-env.mjs';
+import { connectPg } from './lib/pg-connect-ipv4.mjs';
 import {
   ABCD_CURVA_VERSAO,
   abcdClasseParaProduto,
@@ -194,8 +195,7 @@ async function main() {
     process.exit(1);
   }
 
-  const client = new pg.Client({ connectionString: databaseUrl });
-  await client.connect();
+  const client = await connectPg(databaseUrl);
 
   try {
     console.log('[abcd:recalcular] Carregando produtos e vendas 90d…');
