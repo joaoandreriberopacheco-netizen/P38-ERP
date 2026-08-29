@@ -3,6 +3,7 @@ import { cn } from '@/components/utils';
 import CaixaValorDisplay, { formatCaixaR } from '@/components/vendas/caixa/CaixaValorDisplay';
 import { caixaClasses } from '@/lib/caixaP38Theme';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { resolvePedidoVendaTotais } from '@/lib/pedidoVendaValores';
 
 /**
  * Subtotal riscado, desconto e total — usado nos cards de consulta de vendas.
@@ -16,15 +17,8 @@ export default function VendaValorResumo({
   formaPagamentoLabel,
   pagamentoMisto = false,
 }) {
-  const subtotalBruto = roundToTwoDecimals(Number(venda?.subtotal) || 0);
-  const desconto = roundToTwoDecimals(Number(venda?.valor_desconto) || 0);
-  const total = roundToTwoDecimals(Number(venda?.valor_total) || 0);
-  const subtotal = subtotalBruto > 0 ? subtotalBruto : roundToTwoDecimals(total + desconto);
-  const temDesconto = desconto > 0.009;
+  const { subtotal, desconto, total, temDesconto, percentualDesconto } = resolvePedidoVendaTotais(venda);
   const valorExibir = valorDestaque != null ? roundToTwoDecimals(valorDestaque) : total;
-  const percentualDesconto = temDesconto && subtotal > 0
-    ? (desconto / subtotal) * 100
-    : 0;
   const percentualDescontoLabel = temDesconto && percentualDesconto > 0
     ? percentualDesconto.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 1 })
     : null;
@@ -34,18 +28,19 @@ export default function VendaValorResumo({
     md: { total: 'md', meta: 'text-xs' },
   };
   const sz = sizeMap[size] || sizeMap.sm;
+  const dangerText = caixaClasses('danger').text;
 
   return (
-    <div className={cn('flex flex-col items-end gap-0.5 text-right flex-shrink-0 min-w-[7.5rem]', className)}>
+    <div className={cn('flex flex-col items-end gap-0.5 text-right flex-shrink-0', className)}>
       {temDesconto && (
         <>
           <span className={cn(sz.meta, 'text-muted-foreground line-through tabular-nums whitespace-nowrap')}>
             {formatCaixaR(subtotal)}
           </span>
-          <span className={cn(sz.meta, caixaClasses('danger').text, 'tabular-nums whitespace-nowrap')}>
-            −{formatCaixaR(desconto)}
+          <span className={cn(sz.meta, dangerText, 'tabular-nums leading-tight text-right')}>
+            <span className="whitespace-nowrap">−{formatCaixaR(desconto)}</span>
             {percentualDescontoLabel ? (
-              <span className="text-muted-foreground/90"> ({percentualDescontoLabel}%)</span>
+              <span className="whitespace-nowrap"> ({percentualDescontoLabel}%)</span>
             ) : null}
           </span>
         </>

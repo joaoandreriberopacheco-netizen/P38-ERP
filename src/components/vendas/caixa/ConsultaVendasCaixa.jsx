@@ -205,8 +205,8 @@ export default function ConsultaVendasCaixa({
                   : null;
 
                 return (
-                <div key={venda.id} className="bg-card rounded-2xl shadow-sm overflow-hidden">
-                  <div className="w-full flex items-start justify-between gap-3 px-4 py-3 border-b border-border/40">
+                <div key={venda.id} className="bg-card rounded-2xl shadow-sm">
+                  <div className="w-full flex items-start justify-between gap-2 px-4 py-3 border-b border-border/40 overflow-visible">
                     <div className="min-w-0 flex-1">
                       <p className={`${p38Table.mobileLineTitle} truncate`}>{venda.numero}</p>
                       <p className={`${p38Table.mobileLineSubtitle} truncate`}>
@@ -218,12 +218,13 @@ export default function ConsultaVendasCaixa({
                     <VendaValorResumo
                       venda={venda}
                       size="sm"
+                      className="max-w-[45%] sm:max-w-none"
                       valorDestaque={valorForma}
                       formaPagamentoLabel={formaPagamentoLabel}
                       pagamentoMisto={pagamentoMisto}
                     />
                   </div>
-                  <P38MobileLineList allViewports className="rounded-none border-0">
+                  <P38MobileLineList allViewports className="rounded-none border-0 overflow-hidden rounded-b-2xl">
                     {(venda.itens || []).map((item, idx) => (
                       <ConsultaProdutoRow
                         key={`${venda.id}-${idx}`}
