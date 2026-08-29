@@ -26,6 +26,7 @@ export const CATALOGO_LEVEL = {
   4: 'ml-7 pl-3 border-l border-l-[#e8b824]/50 dark:border-l-[#636B2F]/50',
   5: 'ml-9 pl-3 border-l border-l-border/50 dark:border-l-white/12',
   6: 'ml-11 pl-3 border-l border-l-border/35 dark:border-l-white/[0.08]',
+  7: 'ml-[3.25rem] pl-3 border-l border-l-border/25 dark:border-l-white/[0.06]',
 };
 
 export const CATALOGO_LEVEL_ROW = {
@@ -36,6 +37,7 @@ export const CATALOGO_LEVEL_ROW = {
   4: 'bg-transparent',
   5: 'bg-muted/10 dark:bg-white/[0.015]',
   6: 'bg-transparent',
+  7: 'bg-transparent',
 };
 
 export const CATALOGO_LEVEL_TITLE = {
@@ -46,6 +48,7 @@ export const CATALOGO_LEVEL_TITLE = {
   4: 'text-sm font-light',
   5: 'text-[13px] font-light normal-case',
   6: 'text-[13px] font-light normal-case',
+  7: 'text-[12px] font-light normal-case',
 };
 
 /** @deprecated use CATALOGO_LEVEL */

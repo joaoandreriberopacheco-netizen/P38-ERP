@@ -48,6 +48,7 @@ export function buildEstudoSupplyHierarchy(supplyLines = []) {
         linha_ordem: line.linha_ordem,
         bloco: line.bloco,
         sub_bloco: line.sub_bloco,
+        grupo: line.grupo,
         core: line.core,
         pathway_papel: line.pathway_papel,
         esquadras: [],

@@ -42,7 +42,26 @@ No **mobile**, alternar entre os dois com **tabs no topo** (sem voltar ao menu).
 - **B** — hidráulica, eléctrica, etc.
 - **C** — acabamentos visíveis (pintura, revestimentos, banheiro…).
 
-Árvore UI (alvo): `bloco → sub_bloco → core → papel pathway → LINHA → produto_compra → SKU`.
+Árvore UI (alvo): `bloco → sub_bloco → grupo → core → papel pathway → LINHA → produto_compra → SKU`.
+
+**Bloco B — Instalações** (decisão recente, prioridade sobre legado B01–B09 plano):
+
+```
+B — Instalações
+├─ B1 — Hidráulica
+│   ├─ C&C — Canos e Conexões · Soldável
+│   ├─ C&C — Canos e Conexões · Esgoto
+│   ├─ C&C — Canos e Conexões · Roscável
+│   ├─ Captação
+│   └─ Componentes
+└─ B2 — Elétrica
+    ├─ Padrão de entrada
+    ├─ Infra (eletroduto e fios)
+    ├─ Quadro e proteção
+    └─ Caixas de espera
+```
+
+Colunas Excel (folhas B): `sub_bloco` = B1/B2; `grupo` + `grupo_ordem` = camada C&C ou etapa eléctrica. Blocos A/C mantêm `grupo` vazio (core directo sob sub-bloco).
 
 ### Pathway, core e papéis ·N / ·C / ·R (Excel AB)
 
@@ -51,7 +70,8 @@ Organização da **obra** no Excel (`P38-sku-hierarquia-ab.xlsx`, folha **Legend
 | Camada | Coluna / sufixo | Significado | Exemplo mental |
 |--------|-----------------|-------------|----------------|
 | **Bloco** | `bloco` | Grande fase A/B/C | `A — Edificações` |
-| **Sub-bloco** | `sub_bloco` | Etapa dentro do bloco | `A1 Estrutura / alvenaria` |
+| **Sub-bloco** | `sub_bloco` | Ramo dentro do bloco | `A1 Estrutura / alvenaria`, `B1 — Hidráulica` |
+| **Grupo** | `grupo` | Agrupamento dentro do ramo (B) | `C&C — Canos e Conexões · Soldável` |
 | **Core** | `core` | Núcleo funcional do pathway | `ALVENARIA`, `ARMADURA`, `COBERTURA` |
 | **Papel na LINHA** | sufixo `·N` / `·C` / `·R` na coluna `linha` | Papel dentro do core | ver abaixo |
 | **LINHA mestre** | nome sem sufixo → `hierarquiaPortalLinhas.json` | Família + tipo solo/mix/portfolio | `CIMENTO`, `ARGAMASSA` |
@@ -90,7 +110,7 @@ A1 Estrutura / alvenaria
 
 **Consumíveis transversais:** categoria ERP `J — FERRAMENTAS E CONSUMÍVEIS` (etapa 8) é **transversal** — distinto dos complementos **·C** dentro de um core (ex.: aditivo na alvenaria).
 
-**Estado no preview UI:** árvore com níveis **bloco → sub-bloco → core → pathway (N/C/R) → LINHA → produto compra → SKU**. Estoque real vem do cadastro (`codigo_interno`); SKUs sem match mantêm estoque simulado.
+**Estado no preview UI:** árvore com níveis **bloco → sub-bloco → grupo (B) → core → pathway (N/C/R) → LINHA → produto compra → SKU**. Estoque real vem do cadastro (`codigo_interno`); SKUs sem match mantêm estoque simulado.
 
 
 **Solo, mix e portfolio não são etiquetas.** Definem **como a reposição e a grelha funcionam**.

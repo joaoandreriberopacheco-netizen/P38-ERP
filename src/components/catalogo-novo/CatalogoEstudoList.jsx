@@ -76,7 +76,7 @@ function HierButton({ level, open, onToggle, title, subtitle, meta, stockLabel, 
   );
 }
 
-function SkuRow({ row, isLast, comfortable, level = 6 }) {
+function SkuRow({ row, isLast, comfortable, level = 7 }) {
   const tone = row.zerado ? 'ruptura' : row.abaixo_ponto ? 'alerta' : row.alerta_estudo ? 'alerta_escuro' : 'off';
   const meta = [row.eixo_a, row.eixo_b].filter(Boolean).join(' · ');
 
@@ -107,12 +107,12 @@ function SkuRow({ row, isLast, comfortable, level = 6 }) {
   );
 }
 
-function ProdutoCompraBlock({ pc, open, onToggle, isLast, comfortable }) {
+function ProdutoCompraBlock({ pc, open, onToggle, isLast, comfortable, level = 6 }) {
   const skus = pc.skus || [];
   return (
     <>
       <HierButton
-        level={5}
+        level={level}
         open={open}
         onToggle={onToggle}
         title={pc.produto_compra_nome}
@@ -122,13 +122,13 @@ function ProdutoCompraBlock({ pc, open, onToggle, isLast, comfortable }) {
         comfortable={comfortable}
       />
       {open && skus.map((s, i) => (
-        <SkuRow key={s.codigo_interno || i} row={s} isLast={isLast && i === skus.length - 1} comfortable={comfortable} />
+        <SkuRow key={s.codigo_interno || i} row={s} isLast={isLast && i === skus.length - 1} comfortable={comfortable} level={level + 1} />
       ))}
     </>
   );
 }
 
-function LinhaBlock({ linha, filtroTipos, comfortable }) {
+function LinhaBlock({ linha, filtroTipos, comfortable, level = 5 }) {
   const [open, setOpen] = useState(false);
   const [openPc, setOpenPc] = useState(() => new Set());
 
@@ -152,7 +152,7 @@ function LinhaBlock({ linha, filtroTipos, comfortable }) {
   return (
     <>
       <HierButton
-        level={4}
+        level={level}
         open={open}
         onToggle={() => setOpen((v) => !v)}
         title={title}
@@ -172,10 +172,11 @@ function LinhaBlock({ linha, filtroTipos, comfortable }) {
               onToggle={() => togglePc(pc.produto_compra_codigo)}
               isLast={idx === pcs.length - 1 && !solos.length}
               comfortable={comfortable}
+              level={level + 1}
             />
           ))}
           {solos.map((s, i) => (
-            <SkuRow key={s.codigo_interno || i} row={s} isLast={i === solos.length - 1} comfortable={comfortable} />
+            <SkuRow key={s.codigo_interno || i} row={s} isLast={i === solos.length - 1} comfortable={comfortable} level={level + 1} />
           ))}
         </>
       )}
@@ -183,7 +184,7 @@ function LinhaBlock({ linha, filtroTipos, comfortable }) {
   );
 }
 
-function PathwayBlock({ pathway, filtroTipos, comfortable }) {
+function PathwayBlock({ pathway, filtroTipos, comfortable, level = 4 }) {
   const [open, setOpen] = useState(pathway.pathway_papel === 'nucleo');
   const linhas = (pathway.linhas || []).filter((lin) => !filtroTipos?.size || filtroTipos.has(lin.linha_tipo));
   if (!linhas.length) return null;
@@ -192,14 +193,14 @@ function PathwayBlock({ pathway, filtroTipos, comfortable }) {
 
   if (hidePathwayHeader) {
     return linhas.map((linha) => (
-      <LinhaBlock key={linha.linha_pathway_key} linha={linha} filtroTipos={filtroTipos} comfortable={comfortable} />
+      <LinhaBlock key={linha.linha_pathway_key} linha={linha} filtroTipos={filtroTipos} comfortable={comfortable} level={level} />
     ));
   }
 
   return (
     <>
       <HierButton
-        level={3}
+        level={level}
         open={open}
         onToggle={() => setOpen((v) => !v)}
         title={pathwayPapelLabel(pathway.pathway_papel)}
@@ -208,13 +209,13 @@ function PathwayBlock({ pathway, filtroTipos, comfortable }) {
         comfortable={comfortable}
       />
       {open && linhas.map((linha) => (
-        <LinhaBlock key={linha.linha_pathway_key} linha={linha} filtroTipos={filtroTipos} comfortable={comfortable} />
+        <LinhaBlock key={linha.linha_pathway_key} linha={linha} filtroTipos={filtroTipos} comfortable={comfortable} level={level + 1} />
       ))}
     </>
   );
 }
 
-function CoreBlock({ coreNode, filtroTipos, comfortable }) {
+function CoreBlock({ coreNode, filtroTipos, comfortable, level = 3 }) {
   const [open, setOpen] = useState(true);
   const pathways = coreNode.pathways || [];
   const linhaCount = pathways.reduce((a, p) => a + (p.linhas?.length || 0), 0);
@@ -222,7 +223,7 @@ function CoreBlock({ coreNode, filtroTipos, comfortable }) {
   return (
     <>
       <HierButton
-        level={2}
+        level={level}
         open={open}
         onToggle={() => setOpen((v) => !v)}
         title={coreNode.core}
@@ -231,7 +232,37 @@ function CoreBlock({ coreNode, filtroTipos, comfortable }) {
         comfortable={comfortable}
       />
       {open && pathways.map((pw) => (
-        <PathwayBlock key={pw.pathway_papel} pathway={pw} filtroTipos={filtroTipos} comfortable={comfortable} />
+        <PathwayBlock key={pw.pathway_papel} pathway={pw} filtroTipos={filtroTipos} comfortable={comfortable} level={level + 1} />
+      ))}
+    </>
+  );
+}
+
+function GrupoBlock({ grupoNode, filtroTipos, comfortable }) {
+  const [open, setOpen] = useState(true);
+  const cores = grupoNode.cores || [];
+  const hasGrupo = Boolean(grupoNode.grupo);
+  const coreLevel = hasGrupo ? 3 : 2;
+
+  if (!hasGrupo) {
+    return cores.map((coreNode) => (
+      <CoreBlock key={coreNode.core} coreNode={coreNode} filtroTipos={filtroTipos} comfortable={comfortable} level={coreLevel} />
+    ));
+  }
+
+  return (
+    <>
+      <HierButton
+        level={2}
+        open={open}
+        onToggle={() => setOpen((v) => !v)}
+        title={grupoNode.grupo}
+        subtitle={grupoNode.sku_count != null ? `${cores.length} core(s) · ${grupoNode.sku_count} SKU(s)` : `${cores.length} core(s)`}
+        stockLabel={grupoNode.estoque_label}
+        comfortable={comfortable}
+      />
+      {open && cores.map((coreNode) => (
+        <CoreBlock key={coreNode.core} coreNode={coreNode} filtroTipos={filtroTipos} comfortable={comfortable} level={coreLevel} />
       ))}
     </>
   );
@@ -239,7 +270,8 @@ function CoreBlock({ coreNode, filtroTipos, comfortable }) {
 
 function SubBlocoBlock({ sub, filtroTipos, comfortable }) {
   const [open, setOpen] = useState(true);
-  const cores = sub.cores || [];
+  const grupos = sub.grupos || [];
+  const grupoCount = grupos.filter((g) => g.grupo).length || grupos.length;
 
   return (
     <>
@@ -248,12 +280,12 @@ function SubBlocoBlock({ sub, filtroTipos, comfortable }) {
         open={open}
         onToggle={() => setOpen((v) => !v)}
         title={sub.sub_bloco}
-        subtitle={sub.sku_count != null ? `${cores.length} core(s) · ${sub.sku_count} SKU(s)` : `${cores.length} core(s)`}
+        subtitle={sub.sku_count != null ? `${grupoCount} grupo(s) · ${sub.sku_count} SKU(s)` : `${grupoCount} grupo(s)`}
         stockLabel={sub.estoque_label}
         comfortable={comfortable}
       />
-      {open && cores.map((coreNode) => (
-        <CoreBlock key={coreNode.core} coreNode={coreNode} filtroTipos={filtroTipos} comfortable={comfortable} />
+      {open && grupos.map((grupoNode) => (
+        <GrupoBlock key={grupoNode.grupo || '__direct__'} grupoNode={grupoNode} filtroTipos={filtroTipos} comfortable={comfortable} />
       ))}
     </>
   );
@@ -269,7 +301,7 @@ function BlocoBlock({ bloco, filtroTipos, comfortable }) {
         open={open}
         onToggle={() => setOpen((v) => !v)}
         title={bloco.bloco}
-        subtitle={`${bloco.sub_blocos?.length || 0} etapa(s)`}
+        subtitle={`${bloco.sub_blocos?.length || 0} ramo(s)`}
         comfortable={comfortable}
       />
       {open && (bloco.sub_blocos || []).map((sub) => (
@@ -279,7 +311,7 @@ function BlocoBlock({ bloco, filtroTipos, comfortable }) {
   );
 }
 
-/** Catálogo: bloco → sub_bloco → core → pathway → LINHA → produto compra → SKU */
+/** Catálogo: bloco → sub_bloco → grupo → core → pathway → LINHA → produto compra → SKU */
 export default function CatalogoEstudoList({ tree, filtroTipos, mobileComfortable = false }) {
   const visible = useMemo(() => tree || [], [tree]);
 

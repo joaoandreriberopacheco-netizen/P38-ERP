@@ -61,8 +61,16 @@ function resolveLinhaMeta(linhaCell, { byNome, byCodigo }) {
 
 async function readSheet(ws, linhasIndex) {
   const headerRow = ws.getRow(1);
-  const headers = headerRow.values.slice(1).map((h) => String(h ?? '').trim());
-  const idx = Object.fromEntries(headers.map((h, i) => [h, i + 1]));
+  const idx = {};
+  const headers = [];
+  for (let c = 1; c <= headerRow.cellCount; c += 1) {
+    const h = cellStr(headerRow.getCell(c));
+    if (!h) continue;
+    if (idx[h] == null) {
+      idx[h] = c;
+      headers.push(h);
+    }
+  }
   const rows = [];
 
   for (let r = 2; r <= ws.rowCount; r += 1) {
@@ -86,6 +94,8 @@ async function readSheet(ws, linhasIndex) {
     rows.push({
       bloco: get('bloco'),
       sub_bloco: get('sub_bloco'),
+      grupo: get('grupo'),
+      grupo_ordem: Number(get('grupo_ordem')) || 0,
       etapa: get('etapa'),
       core: get('core') || '',
       linha: linhaCell,
@@ -152,9 +162,14 @@ async function main() {
 
   const blocosMap = new Map();
   for (const row of skus) {
-    const k = `${row.bloco}\x00${row.sub_bloco}`;
+    const k = `${row.bloco}\x00${row.sub_bloco}\x00${row.grupo || ''}`;
     if (!blocosMap.has(k)) {
-      blocosMap.set(k, { bloco: row.bloco, sub_bloco: row.sub_bloco, sku_count: 0 });
+      blocosMap.set(k, {
+        bloco: row.bloco,
+        sub_bloco: row.sub_bloco,
+        grupo: row.grupo || '',
+        sku_count: 0,
+      });
     }
     blocosMap.get(k).sku_count += 1;
   }

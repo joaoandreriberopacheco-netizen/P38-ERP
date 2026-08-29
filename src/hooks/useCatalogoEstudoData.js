@@ -24,6 +24,7 @@ function matchSearch(row, q) {
   const blob = [
     row.bloco,
     row.sub_bloco,
+    row.grupo,
     row.core,
     row.pathway_papel,
     row.linha_nome,
