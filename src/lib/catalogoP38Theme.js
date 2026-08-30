@@ -105,6 +105,14 @@ export const CATALOGO_TREE_TABLE_SLOT = cn(
   'pb-2 pr-2 border-b border-border/35 dark:border-white/10',
 );
 
+export const CATALOGO_VIEW_TAB_GROUP = 'flex w-full border-b border-border/35 bg-background';
+export const CATALOGO_VIEW_TAB = cn(
+  'flex-1 py-2.5 px-2 text-[11px] font-light uppercase tracking-wide border-b-2 border-transparent transition-colors min-w-0',
+  'text-muted-foreground',
+  'data-[active=true]:border-[#e8b824] data-[active=true]:text-[#a8942e]',
+  'dark:data-[active=true]:border-[#636B2F] dark:data-[active=true]:text-[#A8B56E]',
+);
+
 /** Abas exclusivas Solo | Mix | Portfolio */
 export const CATALOGO_TIPO_TAB_GROUP = cn(
   CATALOGO_VIEW_TAB_GROUP,
@@ -174,14 +182,6 @@ export const CATALOGO_PC_TITLE =
 
 export const CATALOGO_GRADE_TITLE =
   'font-din-1451 font-light text-[11px] normal-case text-foreground/85 leading-snug line-clamp-2 break-words';
-
-export const CATALOGO_VIEW_TAB_GROUP = 'flex w-full border-b border-border/35 bg-background';
-export const CATALOGO_VIEW_TAB = cn(
-  'flex-1 py-2.5 px-2 text-[11px] font-light uppercase tracking-wide border-b-2 border-transparent transition-colors min-w-0',
-  'text-muted-foreground',
-  'data-[active=true]:border-[#e8b824] data-[active=true]:text-[#a8942e]',
-  'dark:data-[active=true]:border-[#636B2F] dark:data-[active=true]:text-[#A8B56E]',
-);
 
 export const CATALOGO_TIPO_CHIP = {
   solo: 'bg-muted/80 text-muted-foreground border-border/40',
