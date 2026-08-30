@@ -41,9 +41,15 @@ npm run estudo:catalog-sync-nomenclatura -- --dry-run
 # 2) Excel → manifest → UI
 npm run estudo:catalog-manifest
 npm run build
+
+# 3) Opcional — job nocturno ou manual: cadastro → colunas estoque no Excel
+npm run estudo:catalog-sync-estoque          # requer DATABASE_URL ou export:catalogo-skus recente
+npm run estudo:catalog-sync-estoque -- --dry-run
 ```
 
-**Regra:** hierarquia e `novo_sku` vêm do **Excel**; **estoque** na UI vem do cadastro (`codigo_interno`), em `useCatalogoEstudoData`.
+**Regra:** hierarquia, nomenclatura e **estoque** vêm só do **Excel** (manifest). A UI **não** lê Supabase em runtime. Jobs nocturnos actualizam o xlsx via `codigo_interno`.
+
+Colunas de estoque no Excel AB: `estoque_atual`, `estoque_sigla`, `estoque_minimo`, `estoque_atualizado_em`.
 
 Doc completa: [../novo-ecossistema/README.md](../novo-ecossistema/README.md)
 

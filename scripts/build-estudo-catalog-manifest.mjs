@@ -75,7 +75,7 @@ async function readSheet(ws, linhasIndex) {
 
   for (let r = 2; r <= ws.rowCount; r += 1) {
     const row = ws.getRow(r);
-    const get = (k) => cellStr(row.getCell(idx[k]));
+    const get = (k) => (idx[k] != null ? cellStr(row.getCell(idx[k])) : '');
     const codigo = get('codigo_interno');
     if (!codigo) continue;
 
@@ -90,6 +90,9 @@ async function readSheet(ws, linhasIndex) {
     })();
     const pc = get('produto_compra');
     const solo = meta.tipo === 'solo';
+
+    const estoqueRaw = get('estoque_atual');
+    const estoqueNum = estoqueRaw === '' ? null : Number(estoqueRaw);
 
     rows.push({
       bloco: get('bloco'),
@@ -116,6 +119,10 @@ async function readSheet(ws, linhasIndex) {
       novo_sku: get('novo_sku') || get('sku_atual'),
       sku_atual: get('sku_atual'),
       status_mix: get('status_mix') || 'tem',
+      estoque_atual: Number.isFinite(estoqueNum) ? estoqueNum : null,
+      estoque_sigla: get('estoque_sigla') || '',
+      estoque_minimo: Number(get('estoque_minimo')) || 0,
+      estoque_atualizado_em: get('estoque_atualizado_em') || '',
       solo,
     });
   }
@@ -174,12 +181,24 @@ async function main() {
     blocosMap.get(k).sku_count += 1;
   }
 
+  let estoqueComDados = 0;
+  let estoqueSnapshotEm = null;
+  for (const row of skus) {
+    if (row.estoque_atual != null && Number.isFinite(row.estoque_atual)) {
+      estoqueComDados += 1;
+      const em = row.estoque_atualizado_em;
+      if (em && (!estoqueSnapshotEm || em > estoqueSnapshotEm)) estoqueSnapshotEm = em;
+    }
+  }
+
   const payload = {
     version: new Date().toISOString().slice(0, 10),
     source: 'docs/exports/P38-sku-hierarquia-ab.xlsx',
     linhas_mestre_version: linhasIndex.version,
     sheets: sheetsRead,
     count: skus.length,
+    estoque_com_dados: estoqueComDados,
+    estoque_snapshot_em: estoqueSnapshotEm,
     linhas: [...linhasMap.values()].sort((a, b) => a.ordem - b.ordem),
     blocos: [...blocosMap.values()],
     skus,

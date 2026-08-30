@@ -43,7 +43,11 @@ No **mobile**, alternar entre os dois com **tabs no topo** (sem voltar ao menu).
 - Regenerar manifest: `npm run estudo:catalog-manifest` (corre também no `npm run build`).
 - Mestre de LINHAs (solo/mix/portfolio): `src/data/hierarquiaPortalLinhas.json` — tipos de comportamento, cruzado com coluna `linha` do Excel.
 - Manifest gerado: `src/data/estudoCatalogManifest.generated.json`.
-- Hook: `useCatalogoEstudoData` — hierarquia Excel + **estoque real** do cadastro; fallback simulado sem match.
+- Hook: `useCatalogoEstudoData` — **só manifest Excel** (hierarquia + estoque nas colunas do xlsx). **Sem Supabase/Base44 em runtime.**
+
+Colunas de estoque no Excel AB: `estoque_atual`, `estoque_sigla`, `estoque_minimo`, `estoque_atualizado_em` (chave `codigo_interno`).
+
+Job nocturno (00:00 Tabatinga): `npm run estudo:catalog-sync-estoque` → regenera manifest. Workflow GitHub: **Estudo Excel estoque nocturno**.
 
 ### Hierarquia de negócio (estudo A / B / C)
 
@@ -115,18 +119,19 @@ A1 Estrutura / alvenaria
 | `C — Acabamentos (prévia)` | Revestimentos (C1) + pintura (C2) |
 | `C prévia — elétrica visível` | Acabamentos eléctricos visíveis |
 
-**Fluxo canónico (Excel → UI, estoque do cadastro):**
+**Fluxo canónico (Excel = única fonte na UI):**
 
-1. **Editar / sincronizar** `docs/exports/P38-sku-hierarquia-ab.xlsx` — nomenclatura nova (`novo_sku`, LINHA, produto compra, eixos, bloco…). **Não** gravar hierarquia no Supabase para o preview.
-2. **Opcional — alimentar Excel a partir do cadastro:** `npm run estudo:catalog-sync-nomenclatura` (actualiza `sku_atual` sempre; propõe `novo_sku` onde ainda há legado, ex. PISO → CERÂMICA BOLD/RETIF). Requer `DATABASE_URL` ou fallback `P38-catalogo-skus-completo.xlsx`.
-3. **Regenerar manifest:** `npm run estudo:catalog-manifest` (corre também no `npm run build`).
-4. **UI:** `useCatalogoEstudoData` cruza manifest + **estoque real** por `codigo_interno` (cadastro); SKUs sem match mantêm estoque simulado.
+1. **Editar / sincronizar** `docs/exports/P38-sku-hierarquia-ab.xlsx` — nomenclatura (`novo_sku`, LINHA, produto compra, eixos, bloco…) e colunas de estoque.
+2. **Opcional — nomenclatura a partir do cadastro:** `npm run estudo:catalog-sync-nomenclatura` (actualiza `sku_atual`; propõe `novo_sku` onde ainda há legado).
+3. **Opcional — estoque a partir do cadastro (job nocturno ou manual):** `npm run estudo:catalog-sync-estoque` — grava `estoque_atual` etc. no Excel por `codigo_interno`. Requer `DATABASE_URL` ou fallback `P38-catalogo-skus-completo.xlsx`.
+4. **Regenerar manifest:** `npm run estudo:catalog-manifest` (corre também no `npm run build`).
+5. **UI:** `useCatalogoEstudoData` lê **apenas** o manifest — nada do Supabase em runtime.
 
-Até ao corte/migração produção, o **Excel é a base viva** da nomenclatura; a BD legada (h1–h5) só entra via sync ou manual.
+Até ao corte/migração produção, o **Excel é a base viva** para Novo Catálogo e Smart Supply; a BD legada só entra via jobs de sync, nunca na leitura directa das telas.
 
 **Consumíveis transversais:** categoria ERP `J — FERRAMENTAS E CONSUMÍVEIS` (etapa 8) é **transversal** — distinto dos complementos **·C** dentro de um core (ex.: aditivo na alvenaria).
 
-**Estado no preview UI:** árvore com níveis **bloco → sub-bloco → grupo (B) → core → pathway (N/C/R) → LINHA → produto compra → SKU**. Estoque real vem do cadastro (`codigo_interno`); SKUs sem match mantêm estoque simulado.
+**Estado no preview UI:** árvore com níveis **bloco → sub-bloco → grupo (B) → core → pathway (N/C/R) → LINHA → produto compra → SKU**. Estoque vem das colunas Excel (job nocturno); SKUs sem estoque no Excel mostram **—**.
 
 
 **Solo, mix e portfolio não são etiquetas.** Definem **como a reposição e a grelha funcionam**.
@@ -154,7 +159,7 @@ Paleta **cítrico (claro) / oliva-caixa (dark):** tokens em `src/lib/catalogoP38
 
 1. **Nome da LINHA** e tipo (solo/mix/portfolio).
 2. **LED** semântico (ok / alerta / ruptura / ponto futuro negativo).
-3. **Estoque** (label tabular) — no preview, simulado mas consistente.
+3. **Estoque** (label tabular) — do Excel (pode estar desactualizado até ao job nocturno).
 4. Smart Supply: **esquadras saldáveis**, **ponto futuro**, contagem de SKUs.
 5. Mobile: **KPI compacto** no rodapé + contagem total de SKUs no header.
 

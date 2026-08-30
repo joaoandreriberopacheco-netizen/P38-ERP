@@ -1,8 +1,8 @@
 /**
- * Modelo de catálogo a partir do manifest Excel (estudo) + estoque real do cadastro.
+ * Modelo de catálogo a partir do manifest Excel (estudo) — única fonte na UI Novo Ecosistema.
+ * Estoque vem das colunas Excel (job nocturno actualiza via codigo_interno); sem Supabase em runtime.
  */
 
-import { portalEstoqueSku, portalEstoqueGrupo } from '@/lib/hierarquiaPortal/portalStockFormat';
 import { linhaPathwayKey, PATHWAY_PAPEL_ORDER } from '@/lib/estudoCatalog/pathwayMeta';
 
 function trim(s) {
@@ -19,22 +19,23 @@ function slugPc(nome) {
     .slice(0, 48) || 'PC';
 }
 
-function normCodigo(c) {
-  return trim(c).toUpperCase();
+function formatQtyLabel(quantidade, sigla) {
+  const q = Number(quantidade) || 0;
+  const unit = sigla || 'UN';
+  return `${q.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} ${unit}`;
 }
 
-/** Estoque simulado quando SKU não existe no cadastro (fallback preview). */
-function estoqueSimulado(codigo) {
-  let h = 0;
-  const s = String(codigo || '');
-  for (let i = 0; i < s.length; i += 1) h = (h * 31 + s.charCodeAt(i)) % 997;
-  return h % 24;
+function hasExcelStock(raw) {
+  if (raw.estoque_atual == null || raw.estoque_atual === '') return false;
+  const n = Number(raw.estoque_atual);
+  return Number.isFinite(n);
 }
 
-function mapRowSimulado(raw) {
-  const est = estoqueSimulado(raw.codigo_interno);
-  const zerado = est <= 0;
-  const abaixo = est > 0 && est < 4;
+function mapRowFromExcel(raw) {
+  const hasStock = hasExcelStock(raw);
+  const est = hasStock ? Number(raw.estoque_atual) : 0;
+  const sigla = trim(raw.estoque_sigla) || 'UN';
+  const ponto = Number(raw.estoque_minimo) || 0;
   const alertaMix = raw.status_mix && raw.status_mix !== 'tem';
 
   return {
@@ -42,13 +43,15 @@ function mapRowSimulado(raw) {
     id: raw.codigo_interno,
     estoque: est,
     estoque_vitrine: est,
-    estoque_sigla: 'cx',
-    estoque_label: `${est} cx`,
+    estoque_sigla: sigla,
+    estoque_label: hasStock ? formatQtyLabel(est, sigla) : '—',
     estoque_virtual: false,
     estoque_pendente: 0,
-    estoque_encontrado: false,
-    zerado,
-    abaixo_ponto: abaixo,
+    estoque_encontrado: hasStock,
+    estoque_minimo: ponto,
+    estoque_atualizado_em: raw.estoque_atualizado_em || null,
+    zerado: hasStock ? est <= 0 : false,
+    abaixo_ponto: hasStock && ponto > 0 && est < ponto,
     alerta_estudo: alertaMix,
     fonte_excel: true,
     produto: null,
@@ -56,63 +59,45 @@ function mapRowSimulado(raw) {
   };
 }
 
-function mapRowComProduto(raw, produto, catalogStockContext) {
-  const vitrine = portalEstoqueSku(produto, catalogStockContext);
-  const estoqueBase = vitrine.quantidade;
-  const ponto = Number(produto.estoque_minimo) || 0;
-  const alertaMix = raw.status_mix && raw.status_mix !== 'tem';
+/** Agrega estoque de SKUs enriquecidos (só colunas Excel). */
+function estudoEstoqueGrupo(skus) {
+  const enrichedRows = skus || [];
+  if (!enrichedRows.length) return { label: '—', quantidade: 0, sigla: '', mixed: false, virtual: false };
 
+  const withStock = enrichedRows.filter((s) => s.estoque_encontrado);
+  if (!withStock.length) return { label: '—', quantidade: 0, sigla: '', mixed: false, virtual: false };
+
+  const siglas = new Set(withStock.map((s) => s.estoque_sigla || 'UN'));
+  if (siglas.size > 1) {
+    const q = withStock.reduce((a, s) => a + (s.estoque_vitrine ?? 0), 0);
+    return {
+      quantidade: q,
+      sigla: 'UN',
+      label: formatQtyLabel(q, 'UN'),
+      mixed: true,
+      virtual: false,
+    };
+  }
+
+  const sigla = [...siglas][0] || 'UN';
+  const q = withStock.reduce((a, s) => a + (s.estoque_vitrine ?? 0), 0);
   return {
-    ...raw,
-    id: raw.codigo_interno,
-    produto,
-    produto_id: produto.id,
-    estoque: estoqueBase,
-    estoque_vitrine: vitrine.quantidade,
-    estoque_sigla: vitrine.sigla,
-    estoque_label: vitrine.label,
-    estoque_virtual: vitrine.virtual,
-    estoque_pendente: vitrine.pendente,
-    estoque_encontrado: true,
-    zerado: estoqueBase <= 0,
-    abaixo_ponto: ponto > 0 && estoqueBase < ponto,
-    alerta_estudo: alertaMix,
-    fonte_excel: true,
-    produto_compra_codigo: raw.solo ? '' : slugPc(raw.produto_compra_nome || raw.produto_compra),
+    quantidade: q,
+    sigla,
+    label: formatQtyLabel(q, sigla),
+    mixed: false,
+    virtual: false,
   };
 }
 
-/** Indexa produtos activos por codigo_interno. */
-export function indexProdutosPorCodigo(produtos = []) {
-  const map = new Map();
-  for (const p of produtos) {
-    const cod = normCodigo(p?.codigo_interno);
-    if (cod && !map.has(cod)) map.set(cod, p);
-  }
-  return map;
-}
-
-/** Enriquece linhas do manifest com estoque real (cadastro) ou simulado. */
-export function enrichEstudoRows(manifest, { produtoByCodigo = null, catalogStockContext = null } = {}) {
+/** Enriquece linhas do manifest — só Excel, sem cadastro em runtime. */
+export function enrichEstudoRows(manifest) {
   const rows = manifest?.skus || [];
-  if (!produtoByCodigo?.size) {
-    return rows.map(mapRowSimulado);
-  }
-  return rows.map((raw) => {
-    const produto = produtoByCodigo.get(normCodigo(raw.codigo_interno));
-    if (produto) return mapRowComProduto(raw, produto, catalogStockContext);
-    return mapRowSimulado(raw);
-  });
+  return rows.map(mapRowFromExcel);
 }
 
-function countSkusInLinha(lin) {
-  const pcs = lin.pcs || [];
-  const solos = lin.solos || [];
-  return pcs.reduce((a, p) => a + (p.skus?.length || 0), 0) + solos.length;
-}
-
-function attachStockSummary(node, skus, catalogStockContext = null) {
-  const grp = portalEstoqueGrupo(skus, catalogStockContext);
+function attachStockSummary(node, skus) {
+  const grp = estudoEstoqueGrupo(skus);
   return {
     ...node,
     estoque_label: grp.label,
@@ -123,7 +108,7 @@ function attachStockSummary(node, skus, catalogStockContext = null) {
 }
 
 /** Árvore: bloco → sub_bloco → grupo → core → pathway → LINHA → produto compra → SKU */
-export function buildEstudoTree(enriched, { catalogStockContext = null } = {}) {
+export function buildEstudoTree(enriched) {
   const blocoMap = new Map();
 
   for (const row of enriched) {
@@ -205,13 +190,12 @@ export function buildEstudoTree(enriched, { catalogStockContext = null } = {}) {
   const finalizeLinha = (lin) => {
     const pcs = [...lin.pcs.values()].sort(sortPc).map((pc) => {
       const skus = pc.skus || [];
-      return attachStockSummary({ ...pc, skus }, skus, catalogStockContext);
+      return attachStockSummary({ ...pc, skus }, skus);
     });
     const allSkus = [...pcs.flatMap((p) => p.skus), ...(lin.solos || [])];
     return attachStockSummary(
       { ...lin, pcs, solos: lin.solos.sort((a, b) => (a.novo_sku || '').localeCompare(b.novo_sku || '', 'pt-BR')) },
       allSkus,
-      catalogStockContext,
     );
   };
 
@@ -240,20 +224,19 @@ export function buildEstudoTree(enriched, { catalogStockContext = null } = {}) {
                         .sort((a, b) => a.linha_ordem - b.linha_ordem || (a.linha_nome || '').localeCompare(b.linha_nome || '', 'pt-BR'))
                         .map(finalizeLinha);
                       const pwSkus = linhas.flatMap((l) => [...(l.pcs || []).flatMap((p) => p.skus), ...(l.solos || [])]);
-                      return attachStockSummary({ ...pw, linhas }, pwSkus, catalogStockContext);
+                      return attachStockSummary({ ...pw, linhas }, pwSkus);
                     });
                   const coreSkus = pathways.flatMap((p) => p.linhas.flatMap((l) => [...(l.pcs || []).flatMap((pc) => pc.skus), ...(l.solos || [])]));
-                  return attachStockSummary({ core: coreNode.core, pathways }, coreSkus, catalogStockContext);
+                  return attachStockSummary({ core: coreNode.core, pathways }, coreSkus);
                 });
               const grupoSkus = cores.flatMap((c) => c.pathways.flatMap((p) => p.linhas.flatMap((l) => [...(l.pcs || []).flatMap((pc) => pc.skus), ...(l.solos || [])])));
               return attachStockSummary(
                 { grupo: grupoNode.grupo, grupo_ordem: grupoNode.grupo_ordem, cores },
                 grupoSkus,
-                catalogStockContext,
               );
             });
           const subSkus = grupos.flatMap((g) => g.cores.flatMap((c) => c.pathways.flatMap((p) => p.linhas.flatMap((l) => [...(l.pcs || []).flatMap((pc) => pc.skus), ...(l.solos || [])]))));
-          return attachStockSummary({ sub_bloco: sub.sub_bloco, grupos }, subSkus, catalogStockContext);
+          return attachStockSummary({ sub_bloco: sub.sub_bloco, grupos }, subSkus);
         }),
     }));
 }

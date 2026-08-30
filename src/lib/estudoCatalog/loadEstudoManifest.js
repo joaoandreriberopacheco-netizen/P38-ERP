@@ -15,5 +15,7 @@ export function getEstudoManifestMeta() {
     version: m.version,
     count: m.count,
     sheets: m.sheets || [],
+    estoque_snapshot_em: m.estoque_snapshot_em || null,
+    estoque_com_dados: m.estoque_com_dados ?? null,
   };
 }

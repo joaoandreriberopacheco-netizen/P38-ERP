@@ -3,8 +3,8 @@
  * Sincroniza nomenclatura do Excel estudo (fonte do Novo Catálogo) com o cadastro actual.
  *
  * Regra de negócio (João André):
- * - Excel = hierarquia + novo_sku (nomenclatura nova); NÃO Supabase na UI de preview.
- * - Cadastro = sku_atual + estoque (hidratação na UI via codigo_interno).
+ * - Excel = hierarquia + novo_sku + estoque (única fonte na UI Novo Ecosistema).
+ * - Cadastro entra só via jobs (sync nomenclatura / sync estoque), nunca em runtime na UI.
  *
  *   npm run estudo:catalog-sync-nomenclatura
  *   npm run estudo:catalog-sync-nomenclatura -- --dry-run

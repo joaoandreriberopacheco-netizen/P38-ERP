@@ -43,7 +43,6 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
   const [leitura, setLeitura] = useState('catalogo');
 
   const {
-    loading,
     manifestMeta,
     portalFilters,
     setPortalFilters,
@@ -60,7 +59,6 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
     totalSkus,
     tipoCounts,
     estoqueStats,
-    estoqueVirtualAtivo,
   } = useCatalogoEstudoData();
 
   const searchTerm = portalFilters.searchTerm || '';
@@ -123,26 +121,30 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
           Só alertas
         </Button>
       )}
-      <Button
-        variant={estoqueVirtualAtivo ? 'secondary' : 'outline'}
-        size="sm"
-        className="h-9 w-full sm:w-auto"
-        onClick={() => setPortalFilters((f) => ({ ...f, estoqueVirtual: !f.estoqueVirtual }))}
-      >
-        Estoque virtual {estoqueVirtualAtivo ? '~' : ''}
-      </Button>
     </>
   );
+
+  const estoqueSnapshotLabel = useMemo(() => {
+    const em = manifestMeta.estoque_snapshot_em;
+    if (!em) return null;
+    try {
+      const d = new Date(em);
+      if (Number.isNaN(d.getTime())) return em;
+      return d.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+    } catch {
+      return em;
+    }
+  }, [manifestMeta.estoque_snapshot_em]);
 
   const kpiLine = useMemo(() => {
     const parts = [`${enriched.length} SKUs visíveis`];
     if (estoqueStats?.total) {
-      parts.push(`${estoqueStats.found}/${estoqueStats.total} com estoque real`);
+      parts.push(`${estoqueStats.found}/${estoqueStats.total} com estoque no Excel`);
     }
+    if (estoqueSnapshotLabel) parts.push(`snapshot ${estoqueSnapshotLabel}`);
     if (isSupply) parts.push(`${filteredSupply.length} esquadras`);
-    if (estoqueVirtualAtivo) parts.push('estoque ~');
     return parts.join(' · ');
-  }, [enriched.length, estoqueStats, filteredSupply.length, isSupply, estoqueVirtualAtivo]);
+  }, [enriched.length, estoqueStats, estoqueSnapshotLabel, filteredSupply.length, isSupply]);
 
   return (
     <div
@@ -241,9 +243,6 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
       </div>
 
       <div className="flex-1 w-full min-w-0 px-2 sm:px-3 md:px-4 py-3 md:py-4">
-        {loading && !isSupply ? (
-          <p className="text-sm text-muted-foreground text-center py-8">A carregar estoque do cadastro…</p>
-        ) : null}
         {!isSupply ? (
           <CatalogoEstudoList
             tree={treeAtivo}

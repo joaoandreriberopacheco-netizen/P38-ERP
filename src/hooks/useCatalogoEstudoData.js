@@ -1,6 +1,4 @@
 import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import {
   buildEstudoSupplyHierarchy,
   enrichEstudoSupplyForPanel,
@@ -9,16 +7,11 @@ import {
   buildEstudoSupplyLines,
   buildEstudoTree,
   enrichEstudoRows,
-  indexProdutosPorCodigo,
   listEstudoLinhas,
   countEstudoEstoqueEncontrado,
 } from '@/lib/estudoCatalog/buildEstudoModel';
 import { getEstudoCatalogManifest, getEstudoManifestMeta } from '@/lib/estudoCatalog/loadEstudoManifest';
 import { getDefaultPortalCatalogFilters } from '@/lib/hierarquiaPortal/portalCatalogFilters';
-import { fetchProdutosAtivos } from '@/lib/fetchProdutosAtivos';
-import { createCatalogStockContext } from '@/lib/catalogEstoqueVirtual';
-import { fetchPedidosCompraParaSugestaoEstoque } from '@/lib/fetchPedidosCompraParaSugestaoEstoque';
-import { buildPendenteAprovadoFinanceiroPorProduto } from '@/lib/sugestaoCompraEstoquePendente';
 
 function matchSearch(row, q) {
   const blob = [
@@ -40,7 +33,8 @@ function matchSearch(row, q) {
 }
 
 /**
- * Catálogo novo — hierarquia Excel + estoque real do cadastro (Base44/Supabase).
+ * Novo Ecosistema — hierarquia + estoque 100% Excel (manifest offline).
+ * Cadastro/Supabase só entra via job nocturno que actualiza o xlsx (codigo_interno).
  */
 export function useCatalogoEstudoData() {
   const [portalFilters, setPortalFilters] = useState(getDefaultPortalCatalogFilters);
@@ -50,38 +44,7 @@ export function useCatalogoEstudoData() {
   const manifestMeta = useMemo(() => getEstudoManifestMeta(), []);
   const manifest = useMemo(() => getEstudoCatalogManifest(), []);
 
-  const { data: produtos = [], isLoading: loadingProdutos, isFetching: fetchingProdutos } = useQuery({
-    queryKey: ['catalogo-estudo', 'produtos-ativos'],
-    staleTime: 5 * 60 * 1000,
-    queryFn: () => fetchProdutosAtivos(),
-  });
-
-  const produtoByCodigo = useMemo(() => indexProdutosPorCodigo(produtos), [produtos]);
-
-  const estoqueVirtualAtivo = portalFilters.estoqueVirtual === true;
-  const { data: pendentePorProduto = {} } = useQuery({
-    queryKey: ['catalogo-estudo', 'pendente-estoque'],
-    enabled: estoqueVirtualAtivo,
-    staleTime: 5 * 60 * 1000,
-    queryFn: async () => {
-      const data = await fetchPedidosCompraParaSugestaoEstoque(base44);
-      return buildPendenteAprovadoFinanceiroPorProduto(
-        data.pedidosAbertos,
-        data.recebidosPorPedidoProduto,
-        { embarques: data.embarques, pedidosParaEmbarque: data.pedidosTodos },
-      );
-    },
-  });
-
-  const catalogStockContext = useMemo(
-    () => createCatalogStockContext(estoqueVirtualAtivo, pendentePorProduto),
-    [estoqueVirtualAtivo, pendentePorProduto],
-  );
-
-  const enrichedAll = useMemo(
-    () => enrichEstudoRows(manifest, { produtoByCodigo, catalogStockContext }),
-    [manifest, produtoByCodigo, catalogStockContext],
-  );
+  const enrichedAll = useMemo(() => enrichEstudoRows(manifest), [manifest]);
 
   const estoqueStats = useMemo(() => countEstudoEstoqueEncontrado(enrichedAll), [enrichedAll]);
 
@@ -98,15 +61,9 @@ export function useCatalogoEstudoData() {
     [filteredRowsBase, tipoAtivo],
   );
 
-  const treeCatalogo = useMemo(
-    () => buildEstudoTree(filteredRowsBase, { catalogStockContext }),
-    [filteredRowsBase, catalogStockContext],
-  );
+  const treeCatalogo = useMemo(() => buildEstudoTree(filteredRowsBase), [filteredRowsBase]);
 
-  const treeCompra = useMemo(
-    () => buildEstudoTree(filteredRowsCompra, { catalogStockContext }),
-    [filteredRowsCompra, catalogStockContext],
-  );
+  const treeCompra = useMemo(() => buildEstudoTree(filteredRowsCompra), [filteredRowsCompra]);
 
   const supplyLines = useMemo(() => buildEstudoSupplyLines(filteredRowsCompra), [filteredRowsCompra]);
   const supplyLinesPanel = useMemo(() => enrichEstudoSupplyForPanel(supplyLines), [supplyLines]);
@@ -122,9 +79,9 @@ export function useCatalogoEstudoData() {
   }, [linhas]);
 
   return {
-    loading: loadingProdutos || fetchingProdutos,
+    loading: false,
     loadingVelocity: false,
-    dataSource: produtoByCodigo.size ? 'excel-estudo+cadastro' : 'excel-estudo',
+    dataSource: 'excel-estudo',
     manifestMeta,
     portalFilters,
     setPortalFilters,
@@ -143,8 +100,6 @@ export function useCatalogoEstudoData() {
     enrichedCompra: filteredRowsCompra,
     totalSkus: enrichedAll.length,
     tipoCounts,
-    estoqueVirtualAtivo,
     estoqueStats,
-    catalogStockContext,
   };
 }
