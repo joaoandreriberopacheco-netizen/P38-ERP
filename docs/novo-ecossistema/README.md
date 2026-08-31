@@ -68,7 +68,23 @@ Job nocturno (00:00 Tabatinga): `npm run estudo:catalog-sync-estoque` → regene
 - **B** — hidráulica, eléctrica, etc.
 - **C** — acabamentos visíveis (pintura, revestimentos, banheiro…).
 
-Árvore UI (alvo): `bloco → sub_bloco → grupo → core → papel pathway → LINHA → produto_compra → SKU`.
+Árvore **Excel / vista Compra** (detalhe técnico): `bloco → sub_bloco → grupo → core → pathway (N/C/R) → LINHA → produto_compra → SKU`.
+
+Árvore **Catálogo** (leitura João André — 5 níveis):
+
+```
+Edificações → Alvenaria (core) → LINHA → Produto compra → SKU
+```
+
+| Nível UI | Coluna Excel | Exemplo |
+|----------|--------------|---------|
+| Edificações | `bloco` | `A — Edificações` → mostra **Edificações** |
+| Alvenaria | `core` | `ALVENARIA` → **Alvenaria** |
+| LINHA | `linha` / mestre | `CIMENTO`, `MATERIAIS BÁSICOS` |
+| Produto compra | `produto_compra_nome` | `CAL SUPERCAL` |
+| SKU | `novo_sku` | folha (lista) |
+
+SKUs **solo** (sem produto compra) ficam directamente sob a LINHA. Sub-bloco, grupo e sufixos ·N/·C/·R continuam no Excel e na vista **Compra**; o adapter `mapEstudoToProdutoCatalogRow.js` colapsa para os 5 níveis no TreeGrid/mobile.
 
 **Bloco B — Instalações** (decisão recente, prioridade sobre legado B01–B09 plano):
 
@@ -144,7 +160,7 @@ Até ao corte/migração produção, o **Excel é a base viva** para Novo Catál
 
 **Consumíveis transversais:** categoria ERP `J — FERRAMENTAS E CONSUMÍVEIS` (etapa 8) é **transversal** — distinto dos complementos **·C** dentro de um core (ex.: aditivo na alvenaria).
 
-**Estado no preview UI:** árvore com níveis **bloco → sub-bloco → grupo (B) → core → pathway (N/C/R) → LINHA → produto compra → SKU**. Estoque vem das colunas Excel (job nocturno); SKUs sem estoque no Excel mostram **—**.
+**Estado no preview UI:** catálogo com **5 níveis** (Edificações → core → LINHA → produto compra → SKU); vista Compra mantém árvore pathway completa. Estoque vem das colunas Excel (job nocturno); SKUs sem estoque no Excel mostram **—**.
 
 
 **Solo, mix e portfolio não são etiquetas.** Definem **como a reposição e a grelha funcionam**.

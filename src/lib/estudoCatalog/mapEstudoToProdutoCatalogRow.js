@@ -4,10 +4,26 @@
  */
 
 import { montarNomePortalSku } from '@/lib/hierarquiaPortal/montarNomePortalSku';
-import { pathwayPapelLabel } from '@/lib/estudoCatalog/pathwayMeta';
 
 function trim(s) {
   return String(s ?? '').trim();
+}
+
+/** "A — Edificações" → "Edificações" */
+function formatBlocoLabel(bloco) {
+  const b = trim(bloco);
+  const m = b.match(/^[A-C]\s*—\s*(.+)$/i);
+  return m ? trim(m[1]) : b || '(sem bloco)';
+}
+
+/** "ALVENARIA" → "Alvenaria" */
+function formatCoreLabel(core) {
+  const c = trim(core);
+  if (!c) return '';
+  return c
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .replace(/(?:^|\s)\S/g, (ch) => ch.toUpperCase());
 }
 
 function normCodigo(c) {
@@ -16,27 +32,26 @@ function normCodigo(c) {
 
 /**
  * Camadas pathway → pseudo h1–h4 para TreeGrid (só visualização).
- * Edificações → sub-bloco → grupo/core → LINHA · produto compra
+ *
+ * Modelo de negócio (João André):
+ *   Edificações → Alvenaria (core) → LINHA → Produto compra → SKU
+ *
+ * Excel guarda mais detalhe (sub_bloco, grupo, pathway N/C/R); aqui colapsamos
+ * para os 5 níveis legíveis no catálogo. SKUs solo ficam sob LINHA (h4 vazio).
  */
 export function pathwayFieldsForTreeGrid(estudoRow) {
-  const h1 = trim(estudoRow.bloco) || '(sem bloco)';
-  const h2 = trim(estudoRow.sub_bloco) || '(sem sub-bloco)';
+  const h1 = formatBlocoLabel(estudoRow.bloco);
 
-  const grupoCore = [trim(estudoRow.grupo), trim(estudoRow.core)].filter(Boolean);
-  const pathway =
-    estudoRow.pathway_papel && estudoRow.pathway_papel !== 'default'
-      ? pathwayPapelLabel(estudoRow.pathway_papel)
-      : '';
-  const h3Parts = [...grupoCore];
-  if (pathway) h3Parts.push(pathway);
-  const h3 = h3Parts.join(' · ') || trim(estudoRow.linha_display || estudoRow.linha_nome) || '(sem core)';
+  const h2 =
+    formatCoreLabel(estudoRow.core) ||
+    trim(estudoRow.sub_bloco) ||
+    '(sem núcleo)';
 
-  const linhaLabel = trim(estudoRow.linha_display || estudoRow.linha_nome);
+  const h3 = trim(estudoRow.linha_display || estudoRow.linha_nome) || '(sem LINHA)';
+
   let h4 = '';
-  if (estudoRow.solo) {
-    h4 = linhaLabel;
-  } else {
-    h4 = [linhaLabel, trim(estudoRow.produto_compra_nome || estudoRow.produto_compra)].filter(Boolean).join(' · ');
+  if (!estudoRow.solo) {
+    h4 = trim(estudoRow.produto_compra_nome || estudoRow.produto_compra);
   }
 
   return { h1, h2, h3, h4 };
