@@ -42,10 +42,7 @@ function normCodigo(c) {
 export function pathwayFieldsForTreeGrid(estudoRow) {
   const h1 = formatBlocoLabel(estudoRow.bloco);
 
-  const h2 =
-    formatCoreLabel(estudoRow.core) ||
-    trim(estudoRow.sub_bloco) ||
-    '(sem núcleo)';
+  const h2 = formatCoreLabel(estudoRow.core) || '(sem núcleo)';
 
   const h3 = trim(estudoRow.linha_display || estudoRow.linha_nome) || '(sem LINHA)';
 

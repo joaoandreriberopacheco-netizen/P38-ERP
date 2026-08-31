@@ -188,37 +188,18 @@ function GrupoBlock({ grupoNode, depth, tipo, comfortable }) {
   );
 }
 
-function SubBlocoBlock({ sub, depth, tipo, comfortable }) {
-  const [open, setOpen] = useState(false);
-  const grupos = sub.grupos || [];
-
-  return (
-    <>
-      <TreeToggle
-        depth={depth}
-        open={open}
-        onToggle={() => setOpen((v) => !v)}
-        label={sub.sub_bloco}
-        hint={sub.sku_count != null ? `${sub.sku_count} SKU` : undefined}
-        comfortable={comfortable}
-      />
-      {open
-        ? grupos.map((grupoNode) => (
-            <GrupoBlock
-              key={grupoNode.grupo || '__direct__'}
-              grupoNode={grupoNode}
-              depth={depth + 1}
-              tipo={tipo}
-              comfortable={comfortable}
-            />
-          ))
-        : null}
-    </>
-  );
-}
-
 function BlocoBlock({ bloco, tipo, comfortable }) {
   const [open, setOpen] = useState(false);
+  const grupos = bloco.grupos || [];
+  const linhaCount = grupos.reduce(
+    (a, g) =>
+      a +
+      (g.cores || []).reduce(
+        (b, c) => b + (c.pathways || []).reduce((d, pw) => d + (pw.linhas?.length || 0), 0),
+        0,
+      ),
+    0,
+  );
 
   return (
     <>
@@ -227,12 +208,18 @@ function BlocoBlock({ bloco, tipo, comfortable }) {
         open={open}
         onToggle={() => setOpen((v) => !v)}
         label={bloco.bloco}
-        hint={`${bloco.sub_blocos?.length || 0} ramo`}
+        hint={`${linhaCount} LINHA`}
         comfortable={comfortable}
       />
       {open
-        ? (bloco.sub_blocos || []).map((sub) => (
-            <SubBlocoBlock key={sub.sub_bloco} sub={sub} depth={1} tipo={tipo} comfortable={comfortable} />
+        ? grupos.map((grupoNode) => (
+            <GrupoBlock
+              key={grupoNode.grupo || '__direct__'}
+              grupoNode={grupoNode}
+              depth={1}
+              tipo={tipo}
+              comfortable={comfortable}
+            />
           ))
         : null}
     </>

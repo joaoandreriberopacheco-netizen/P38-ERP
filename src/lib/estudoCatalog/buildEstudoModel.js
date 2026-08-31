@@ -107,32 +107,26 @@ function attachStockSummary(node, skus) {
   };
 }
 
-/** Árvore: bloco → sub_bloco → grupo → core → pathway → LINHA → produto compra → SKU */
+/** Árvore: bloco → grupo → core → pathway → LINHA → produto compra → SKU */
 export function buildEstudoTree(enriched) {
   const blocoMap = new Map();
 
   for (const row of enriched) {
     const blocoKey = row.bloco || '(sem bloco)';
     if (!blocoMap.has(blocoKey)) {
-      blocoMap.set(blocoKey, { bloco: blocoKey, sub_blocos: new Map() });
+      blocoMap.set(blocoKey, { bloco: blocoKey, grupos: new Map() });
     }
     const bloco = blocoMap.get(blocoKey);
 
-    const subKey = row.sub_bloco || '(sem sub-bloco)';
-    if (!bloco.sub_blocos.has(subKey)) {
-      bloco.sub_blocos.set(subKey, { sub_bloco: subKey, grupos: new Map() });
-    }
-    const sub = bloco.sub_blocos.get(subKey);
-
     const grupoKey = trim(row.grupo) || '';
-    if (!sub.grupos.has(grupoKey)) {
-      sub.grupos.set(grupoKey, {
+    if (!bloco.grupos.has(grupoKey)) {
+      bloco.grupos.set(grupoKey, {
         grupo: grupoKey,
         grupo_ordem: Number(row.grupo_ordem) || (grupoKey ? 900 : 0),
         cores: new Map(),
       });
     }
-    const grupoNode = sub.grupos.get(grupoKey);
+    const grupoNode = bloco.grupos.get(grupoKey);
 
     const coreKey = trim(row.core) || '(sem core)';
     if (!grupoNode.cores.has(coreKey)) {
@@ -201,44 +195,39 @@ export function buildEstudoTree(enriched) {
 
   return [...blocoMap.entries()]
     .sort(([a], [b]) => a.localeCompare(b, 'pt-BR'))
-    .map(([_, bloco]) => ({
-      bloco: bloco.bloco,
-      sub_blocos: [...bloco.sub_blocos.entries()]
-        .sort(([a], [b]) => a.localeCompare(b, 'pt-BR'))
-        .map(([__, sub]) => {
-          const grupos = [...sub.grupos.entries()]
-            .sort(([, a], [, b]) => {
-              const ordA = a.grupo_ordem ?? 900;
-              const ordB = b.grupo_ordem ?? 900;
-              if (ordA !== ordB) return ordA - ordB;
-              return (a.grupo || '').localeCompare(b.grupo || '', 'pt-BR');
-            })
-            .map(([, grupoNode]) => {
-              const cores = [...grupoNode.cores.entries()]
-                .sort(([a], [b]) => a.localeCompare(b, 'pt-BR'))
-                .map(([____, coreNode]) => {
-                  const pathways = [...coreNode.pathways.values()]
-                    .sort((a, b) => a.pathway_ordem - b.pathway_ordem)
-                    .map((pw) => {
-                      const linhas = [...pw.linhas.values()]
-                        .sort((a, b) => a.linha_ordem - b.linha_ordem || (a.linha_nome || '').localeCompare(b.linha_nome || '', 'pt-BR'))
-                        .map(finalizeLinha);
-                      const pwSkus = linhas.flatMap((l) => [...(l.pcs || []).flatMap((p) => p.skus), ...(l.solos || [])]);
-                      return attachStockSummary({ ...pw, linhas }, pwSkus);
-                    });
-                  const coreSkus = pathways.flatMap((p) => p.linhas.flatMap((l) => [...(l.pcs || []).flatMap((pc) => pc.skus), ...(l.solos || [])]));
-                  return attachStockSummary({ core: coreNode.core, pathways }, coreSkus);
+    .map(([_, bloco]) => {
+      const grupos = [...bloco.grupos.entries()]
+        .sort(([, a], [, b]) => {
+          const ordA = a.grupo_ordem ?? 900;
+          const ordB = b.grupo_ordem ?? 900;
+          if (ordA !== ordB) return ordA - ordB;
+          return (a.grupo || '').localeCompare(b.grupo || '', 'pt-BR');
+        })
+        .map(([, grupoNode]) => {
+          const cores = [...grupoNode.cores.entries()]
+            .sort(([a], [b]) => a.localeCompare(b, 'pt-BR'))
+            .map(([____, coreNode]) => {
+              const pathways = [...coreNode.pathways.values()]
+                .sort((a, b) => a.pathway_ordem - b.pathway_ordem)
+                .map((pw) => {
+                  const linhas = [...pw.linhas.values()]
+                    .sort((a, b) => a.linha_ordem - b.linha_ordem || (a.linha_nome || '').localeCompare(b.linha_nome || '', 'pt-BR'))
+                    .map(finalizeLinha);
+                  const pwSkus = linhas.flatMap((l) => [...(l.pcs || []).flatMap((p) => p.skus), ...(l.solos || [])]);
+                  return attachStockSummary({ ...pw, linhas }, pwSkus);
                 });
-              const grupoSkus = cores.flatMap((c) => c.pathways.flatMap((p) => p.linhas.flatMap((l) => [...(l.pcs || []).flatMap((pc) => pc.skus), ...(l.solos || [])])));
-              return attachStockSummary(
-                { grupo: grupoNode.grupo, grupo_ordem: grupoNode.grupo_ordem, cores },
-                grupoSkus,
-              );
+              const coreSkus = pathways.flatMap((p) => p.linhas.flatMap((l) => [...(l.pcs || []).flatMap((pc) => pc.skus), ...(l.solos || [])]));
+              return attachStockSummary({ core: coreNode.core, pathways }, coreSkus);
             });
-          const subSkus = grupos.flatMap((g) => g.cores.flatMap((c) => c.pathways.flatMap((p) => p.linhas.flatMap((l) => [...(l.pcs || []).flatMap((pc) => pc.skus), ...(l.solos || [])]))));
-          return attachStockSummary({ sub_bloco: sub.sub_bloco, grupos }, subSkus);
-        }),
-    }));
+          const grupoSkus = cores.flatMap((c) => c.pathways.flatMap((p) => p.linhas.flatMap((l) => [...(l.pcs || []).flatMap((pc) => pc.skus), ...(l.solos || [])])));
+          return attachStockSummary(
+            { grupo: grupoNode.grupo, grupo_ordem: grupoNode.grupo_ordem, cores },
+            grupoSkus,
+          );
+        });
+      const blocoSkus = grupos.flatMap((g) => g.cores.flatMap((c) => c.pathways.flatMap((p) => p.linhas.flatMap((l) => [...(l.pcs || []).flatMap((pc) => pc.skus), ...(l.solos || [])]))));
+      return attachStockSummary({ bloco: bloco.bloco, grupos }, blocoSkus);
+    });
 }
 
 function pcKey(row) {

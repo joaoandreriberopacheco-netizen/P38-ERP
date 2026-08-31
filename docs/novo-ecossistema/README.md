@@ -68,7 +68,9 @@ Job nocturno (00:00 Tabatinga): `npm run estudo:catalog-sync-estoque` → regene
 - **B** — hidráulica, eléctrica, etc.
 - **C** — acabamentos visíveis (pintura, revestimentos, banheiro…).
 
-Árvore **Excel / vista Compra** (detalhe técnico): `bloco → sub_bloco → grupo → core → pathway (N/C/R) → LINHA → produto_compra → SKU`.
+Árvore **Excel / vista Compra** (detalhe técnico): `bloco → grupo → core → pathway (N/C/R) → LINHA → produto_compra → SKU`.
+
+A coluna `sub_bloco` permanece no Excel (classificação interna B1/B2, A1…), mas **não** é nível de navegação na UI — evita arrasto extra.
 
 Árvore **Catálogo** (leitura João André — 5 níveis):
 
@@ -84,7 +86,7 @@ Edificações → Alvenaria (core) → LINHA → Produto compra → SKU
 | Produto compra | `produto_compra_nome` | `CAL SUPERCAL` |
 | SKU | `novo_sku` | folha (lista) |
 
-SKUs **solo** (sem produto compra) ficam directamente sob a LINHA. Sub-bloco, grupo e sufixos ·N/·C/·R continuam no Excel e na vista **Compra**; o adapter `mapEstudoToProdutoCatalogRow.js` colapsa para os 5 níveis no TreeGrid/mobile.
+SKUs **solo** (sem produto compra) ficam directamente sob a LINHA. Grupo e sufixos ·N/·C/·R continuam no Excel e na vista **Compra**; `sub_bloco` fica só no ficheiro. O adapter `mapEstudoToProdutoCatalogRow.js` colapsa para os 5 níveis no TreeGrid/mobile.
 
 **Bloco B — Instalações** (decisão recente, prioridade sobre legado B01–B09 plano):
 
@@ -103,7 +105,7 @@ B — Instalações
     └─ Caixas de espera
 ```
 
-Colunas Excel (folhas B): `sub_bloco` = B1/B2; `grupo` + `grupo_ordem` = camada C&C ou etapa eléctrica. Blocos A/C mantêm `grupo` vazio (core directo sob sub-bloco).
+Colunas Excel (folhas B): `sub_bloco` = B1/B2 (só arquivo, não UI); `grupo` + `grupo_ordem` = camada C&C ou etapa eléctrica. Blocos A/C mantêm `grupo` vazio (core directo sob bloco).
 
 ### Pathway, core e papéis ·N / ·C / ·R (Excel AB)
 
@@ -112,7 +114,7 @@ Organização da **obra** no Excel (`P38-sku-hierarquia-ab.xlsx`, folha **Legend
 | Camada | Coluna / sufixo | Significado | Exemplo mental |
 |--------|-----------------|-------------|----------------|
 | **Bloco** | `bloco` | Grande fase A/B/C | `A — Edificações` |
-| **Sub-bloco** | `sub_bloco` | Ramo dentro do bloco | `A1 Estrutura / alvenaria`, `B1 — Hidráulica` |
+| **Sub-bloco** | `sub_bloco` | Classificação no Excel (não navega na UI) | `A1 Estrutura / alvenaria`, `B1 — Hidráulica` |
 | **Grupo** | `grupo` | Agrupamento dentro do ramo (B) | `C&C — Canos e Conexões · Soldável` |
 | **Core** | `core` | Núcleo funcional do pathway | `ALVENARIA`, `ARMADURA`, `COBERTURA` |
 | **Papel na LINHA** | sufixo `·N` / `·C` / `·R` na coluna `linha` | Papel dentro do core | ver abaixo |
