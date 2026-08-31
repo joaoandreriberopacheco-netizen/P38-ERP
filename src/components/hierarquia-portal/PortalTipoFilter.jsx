@@ -2,9 +2,24 @@ import React from 'react';
 import { cn } from '@/components/utils';
 
 const TIPOS = [
-  { id: 'solo', label: 'Solo', className: 'data-[active=true]:bg-slate-600 data-[active=true]:text-white dark:data-[active=true]:bg-slate-500' },
-  { id: 'mix', label: 'Mix', className: 'data-[active=true]:bg-blue-600 data-[active=true]:text-white dark:data-[active=true]:bg-blue-500' },
-  { id: 'portfolio', label: 'Portfolio', className: 'data-[active=true]:bg-violet-600 data-[active=true]:text-white dark:data-[active=true]:bg-violet-500' },
+  {
+    id: 'solo',
+    label: 'Solo',
+    title: 'Sem mix nem variedade (ex.: cimento Portland)',
+    className: 'data-[active=true]:bg-slate-600 data-[active=true]:text-white dark:data-[active=true]:bg-slate-500',
+  },
+  {
+    id: 'mix',
+    label: 'Mix',
+    title: 'Esquadra no produto compra — intercambiável (soldável) ou medidas distintas (prego)',
+    className: 'data-[active=true]:bg-blue-600 data-[active=true]:text-white dark:data-[active=true]:bg-blue-500',
+  },
+  {
+    id: 'portfolio',
+    label: 'Portfolio',
+    title: 'Referências substituíveis na LINHA ou produto compra (ex.: cerâmicas)',
+    className: 'data-[active=true]:bg-violet-600 data-[active=true]:text-white dark:data-[active=true]:bg-violet-500',
+  },
 ];
 
 export default function PortalTipoFilter({ activeTipos, onChange, counts }) {
@@ -42,6 +57,7 @@ export default function PortalTipoFilter({ activeTipos, onChange, counts }) {
         <button
           key={t.id}
           type="button"
+          title={t.title}
           data-active={activeTipos.has(t.id)}
           onClick={() => toggle(t.id)}
           className={cn(

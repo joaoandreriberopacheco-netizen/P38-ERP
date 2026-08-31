@@ -261,7 +261,7 @@ function HierarquiaPortalInner() {
         <div className="w-full px-3 md:px-4 py-3 space-y-3">
           <div className="flex flex-wrap items-start gap-3 justify-between">
             <div className="space-y-1 min-w-0">
-              <Button variant="ghost" size="sm" className="h-8 -ml-2 gap-1 text-muted-foreground" asChild>
+              <Button variant="ghost" size="sm" className="h-8 gap-1 text-muted-foreground" asChild>
                 <Link to={createPageUrl('Compras')}>
                   <ArrowLeft className="h-3.5 w-3.5" />
                   Voltar a Compras

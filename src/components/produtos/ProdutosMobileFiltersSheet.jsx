@@ -93,6 +93,7 @@ export default function ProdutosMobileFiltersSheet({
   setTreeLevel,
   sortOrder,
   setSortOrder,
+  extraTop = null,
 }) {
   const quantidadeOperador = filters.quantidadeOperador || 'all';
 
@@ -133,6 +134,8 @@ export default function ProdutosMobileFiltersSheet({
             <X className="h-4 w-4" />
           </Button>
         </div>
+
+        {extraTop ? <div className="px-4 pb-1">{extraTop}</div> : null}
 
         <div className="max-h-[calc(88dvh-9rem)] space-y-3 overflow-y-auto overscroll-y-contain px-4 pb-2">
           <MobileFilterSection

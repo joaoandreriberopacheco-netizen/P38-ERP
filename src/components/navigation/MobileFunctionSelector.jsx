@@ -8,6 +8,7 @@ import MenuSearchBar from '@/components/navigation/MenuSearchBar';
 import { getP38ShellColors } from '@/lib/p38ShellColors';
 import { useForceLandscape } from '@/hooks/useForceLandscape';
 import { getP38PortalRoot } from '@/lib/p38PortalRoot';
+import { menuItemContainsPage } from '@/lib/menuNavUtils';
 
 function useDarkMode() {
   const [isDark, setIsDark] = useState(() =>
@@ -26,12 +27,17 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
   const location = useLocation();
   const isDark = useDarkMode();
   const forceLandscape = useForceLandscape();
-  const [activeGroup, setActiveGroup] = useState(null);
+  const [drillStack, setDrillStack] = useState([]);
 
   const groupedItems = useMemo(() => menuItems.filter(item => item.submenu?.length || item.page), [menuItems]);
+  const currentGroup = drillStack.length ? drillStack[drillStack.length - 1] : null;
+  const currentList = currentGroup?.submenu || groupedItems;
 
-  const currentList = activeGroup?.submenu || [];
-  const isItemActive = (page) => location.pathname.includes(page);
+  useEffect(() => {
+    if (!isOpen) setDrillStack([]);
+  }, [isOpen]);
+
+  const isItemActive = (item) => menuItemContainsPage(item, null, location.pathname);
 
   const c = getP38ShellColors(isDark);
 
@@ -74,14 +80,14 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
         <MenuSearchBar isDark={isDark} onOpen={onClose} searchableItems={searchableItems} />
       </div>
 
-      {!activeGroup ? (
+      {!currentGroup ? (
         <div className="flex flex-1 min-h-0 flex-col p38-stage-panel-scroll p38-nav-menu px-4 py-4 touch-pan-y">
           <div className="rounded-[24px] p-4" style={{ background: c.cardBg, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
             <h3 className="text-base font-semibold mb-3" style={{ color: c.textMuted }}>Funções</h3>
             <div className="space-y-0.5">
               {groupedItems.map((item) => {
                 const Icon = item.icon;
-                const active = item.submenu?.some(sub => isItemActive(sub.page)) || (item.page && isItemActive(item.page));
+                const active = isItemActive(item);
 
                 const itemStyle = { background: active ? c.btnBg : 'transparent' };
 
@@ -104,7 +110,7 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
                 return (
                   <button
                     key={item.name}
-                    onClick={() => setActiveGroup(item)}
+                    onClick={() => setDrillStack([item])}
                     className="w-full flex items-center gap-3 px-3 py-3.5 rounded-2xl transition-colors"
                     style={itemStyle}
                   >
@@ -122,27 +128,51 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
         <div className="flex flex-1 min-h-0 flex-col p38-stage-panel-scroll p38-nav-menu px-4 py-4 touch-pan-y">
           <div className="flex items-center gap-3 mb-5">
             <button
-              onClick={() => setActiveGroup(null)}
+              onClick={() => setDrillStack((prev) => prev.slice(0, -1))}
               className="w-10 h-10 rounded-2xl flex items-center justify-center"
               style={{ background: c.backBg, color: c.textSub }}
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <h3 className="text-[1.6rem] font-semibold" style={{ color: c.text }}>{activeGroup.name}</h3>
+            <h3 className="text-[1.6rem] font-semibold truncate" style={{ color: c.text }}>{currentGroup.name}</h3>
           </div>
 
           <div>
             {currentList.map((subItem) => {
-              const Icon = subItem.icon || activeGroup?.icon;
+              const Icon = subItem.icon || currentGroup?.icon;
+              const hasNested = subItem.submenu?.length > 0;
+              const active = subItem.page
+                ? location.pathname.includes(subItem.page)
+                : menuItemContainsPage(subItem, null, location.pathname);
+
+              if (hasNested) {
+                return (
+                  <button
+                    key={subItem.name}
+                    type="button"
+                    onClick={() => setDrillStack((prev) => [...prev, subItem])}
+                    className="w-full flex items-center gap-3 px-3 py-3.5 rounded-2xl transition-colors"
+                    style={{
+                      background: active ? c.btnBg : 'transparent',
+                      color: active ? c.text : c.textSub,
+                    }}
+                  >
+                    {Icon && <Icon className="w-5 h-5 flex-none" style={{ color: c.iconColor }} />}
+                    <span className="flex-1 text-left text-[1.04rem] font-semibold leading-tight tracking-[0.01em]">{subItem.name}</span>
+                    <ChevronRight className="w-4 h-4" style={{ color: c.chevron }} />
+                  </button>
+                );
+              }
+
               return (
                 <Link
-                  key={subItem.page}
+                  key={subItem.page || subItem.name}
                   to={createPageUrl(subItem.page)}
                   onClick={onClose}
                   className="flex items-center gap-3 px-3 py-3.5 rounded-2xl transition-colors"
                   style={{
-                    background: isItemActive(subItem.page) ? c.btnBg : 'transparent',
-                    color: isItemActive(subItem.page) ? c.text : c.textSub,
+                    background: active ? c.btnBg : 'transparent',
+                    color: active ? c.text : c.textSub,
                   }}
                 >
                   {Icon && <Icon className="w-5 h-5 flex-none" style={{ color: c.iconColor }} />}

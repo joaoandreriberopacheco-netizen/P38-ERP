@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { P38PageHeader } from '@/components/layout/P38PageHeader';
 import SugestaoCompra from '@/components/compras/SugestaoCompra';
-import HierarquiaPortalEntry from '@/components/hierarquia-portal/HierarquiaPortalEntry';
-import ModeloCatalogoEntry from '@/components/modelo-catalogo/ModeloCatalogoEntry';
 import {
   SMART_SUPPLY_SUBTITLE,
   SMART_SUPPLY_TITLE,
@@ -17,13 +15,8 @@ export default function SugestoesCompraPage() {
         <P38PageHeader
           variant="page"
           title={SMART_SUPPLY_TITLE}
-          description={`${SMART_SUPPLY_SUBTITLE}. O catálogo cuida do cadastro; aqui vive a reposição (sugestão + cotação). Piloto cerâmica: use o preview por LINHA no portal.`}
-        >
-          <div className="flex flex-wrap gap-2 shrink-0">
-            <ModeloCatalogoEntry className="shrink-0" />
-            <HierarquiaPortalEntry className="shrink-0" />
-          </div>
-        </P38PageHeader>
+          description={`${SMART_SUPPLY_SUBTITLE}. O catálogo cuida do cadastro; aqui vive a reposição (sugestão + cotação).`}
+        />
         <SugestaoCompra key={sugestaoKey} />
       </div>
     </div>

@@ -1,0 +1,57 @@
+# Job nocturno — actualiza estoque no Excel estudo (Novo Catálogo / Smart Supply).
+#
+# Agenda: todos os dias 00:00 Tabatinga (America/Rio_Branco, UTC-5) = 05:00 UTC.
+# A UI lê só o Excel/manifest — este job é a ponte cadastro → Excel (codigo_interno).
+#
+# Secrets: DATABASE_URL
+# Disparo manual: Actions → "Estudo Excel estoque nocturno" → Run workflow
+
+name: Estudo Excel estoque nocturno
+
+concurrency:
+  group: estudo-excel-estoque-nocturno
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    # 05:00 UTC = 00:00 Tabatinga (UTC-5)
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync-estoque:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Sincronizar estoque cadastro → Excel estudo
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npm run estudo:catalog-sync-estoque
+
+      - name: Regenerar manifest
+        run: npm run estudo:catalog-manifest
+
+      - name: Commit Excel + manifest (se houver alterações)
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/exports/P38-sku-hierarquia-ab.xlsx src/data/estudoCatalogManifest.generated.json
+          if git diff --staged --quiet; then
+            echo "Sem alterações — skip commit"
+            exit 0
+          fi
+          git commit -m "chore(estudo): sync estoque nocturno Excel + manifest"
+          git push

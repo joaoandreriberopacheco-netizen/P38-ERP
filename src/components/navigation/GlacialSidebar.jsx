@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
 import { ChevronLeft, ChevronRight, Sun, Moon, ALargeSmall, Shield, User, Settings, LogOut, RotateCw, Lock } from 'lucide-react';
 import { indexToNavLetter, letterKeyToIndex, isTypingTarget, getDesktopSidebarShortcutLabel } from '@/lib/sidebarNavLetters';
+import { menuItemContainsPage } from '@/lib/menuNavUtils';
 import { base44 } from '@/api/base44Client';
 import PinSetupDialog from '@/components/auth/PinSetupDialog';
 import P38Logo from '@/components/brand/P38Logo';
@@ -22,6 +23,83 @@ function useDarkMode() {
     return () => observer.disconnect();
   }, []);
   return isDark;
+}
+
+function MobileSubmenuList({
+  items,
+  parentKey,
+  depth,
+  expandedMenus,
+  toggleSubmenu,
+  currentPageName,
+  location,
+  closeMobileMenu,
+  c,
+}) {
+  return (
+    <div className={depth > 0 ? 'ml-4 mt-1 space-y-1 pl-2 border-l border-border/30' : 'ml-8 mt-1 space-y-1 pl-2'}>
+      {items.map((subItem) => {
+        const key = `${parentKey}/${subItem.name}`;
+        const hasNested = subItem.submenu?.length > 0;
+        const isExpanded = expandedMenus[key];
+        const isSubActive = subItem.page
+          ? currentPageName === subItem.page || location.pathname.includes(subItem.page)
+          : menuItemContainsPage(subItem, currentPageName, location.pathname);
+
+        if (hasNested) {
+          return (
+            <div key={key}>
+              <button
+                type="button"
+                onClick={() => toggleSubmenu(key)}
+                className="w-full flex items-center gap-2 px-2 py-2.5 rounded-lg text-sm transition-colors min-h-[40px]"
+                style={{
+                  background: isSubActive ? c.activeBg : 'transparent',
+                  color: isSubActive ? c.text : c.textSub,
+                  fontWeight: isSubActive ? 600 : 400,
+                }}
+              >
+                <span className="flex-1 text-left">{subItem.name}</span>
+                <ChevronRight
+                  size={14}
+                  style={{ color: c.chevron, transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}
+                />
+              </button>
+              {isExpanded ? (
+                <MobileSubmenuList
+                  items={subItem.submenu}
+                  parentKey={key}
+                  depth={depth + 1}
+                  expandedMenus={expandedMenus}
+                  toggleSubmenu={toggleSubmenu}
+                  currentPageName={currentPageName}
+                  location={location}
+                  closeMobileMenu={closeMobileMenu}
+                  c={c}
+                />
+              ) : null}
+            </div>
+          );
+        }
+
+        return (
+          <Link
+            key={subItem.page || key}
+            to={createPageUrl(subItem.page)}
+            onClick={closeMobileMenu}
+            className="flex items-center gap-2 px-2 py-2.5 rounded-lg text-sm transition-colors min-h-[40px]"
+            style={{
+              background: isSubActive ? c.activeBg : 'transparent',
+              color: isSubActive ? c.text : c.textSub,
+              fontWeight: isSubActive ? 600 : 400,
+            }}
+          >
+            {subItem.name}
+          </Link>
+        );
+      })}
+    </div>
+  );
 }
 
 function NavItemLabel({ letter, name, nameColor, letterColor, onLetterActivate }) {
@@ -63,7 +141,7 @@ export default function GlacialSidebar({
   searchOverlayOpen = false,
 }) {
   const [expandedMenus, setExpandedMenus] = useState({});
-  const [activeGroup, setActiveGroup] = useState(null);
+  const [drillStack, setDrillStack] = useState([]);
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(currentUserProp || null);
   const [showPinSetup, setShowPinSetup] = useState(false);
@@ -119,12 +197,10 @@ export default function GlacialSidebar({
   const useDesktopDrilldown = !isMobile;
 
   const toggleSubmenu = (menuName) => {
-    setExpandedMenus(prev => {
-      const newExpanded = {};
-      if (!prev[menuName]) newExpanded[menuName] = true;
-      return newExpanded;
-    });
+    setExpandedMenus((prev) => ({ ...prev, [menuName]: !prev[menuName] }));
   };
+
+  const currentGroup = drillStack.length ? drillStack[drillStack.length - 1] : null;
 
   const groupedItems = useMemo(
     () => menuItems.filter((item) => item.submenu?.length || item.page),
@@ -133,17 +209,17 @@ export default function GlacialSidebar({
 
   const visibleNavItems = useMemo(() => {
     if (!useDesktopDrilldown || !isOpen) return [];
-    if (activeGroup?.submenu?.length) return activeGroup.submenu;
+    if (currentGroup?.submenu?.length) return currentGroup.submenu;
     return groupedItems;
-  }, [useDesktopDrilldown, isOpen, activeGroup, groupedItems]);
+  }, [useDesktopDrilldown, isOpen, currentGroup, groupedItems]);
 
   useEffect(() => {
-    if (!isOpen) setActiveGroup(null);
+    if (!isOpen) setDrillStack([]);
   }, [isOpen]);
 
   const navigateToPage = useCallback((page) => {
     navigate(createPageUrl(page));
-    setActiveGroup(null);
+    setDrillStack([]);
     if (isMobile) onClose?.();
     else onRequestClose?.();
   }, [navigate, isMobile, onClose, onRequestClose]);
@@ -154,15 +230,15 @@ export default function GlacialSidebar({
       return;
     }
     if (item.submenu?.length) {
-      setActiveGroup(item);
+      setDrillStack((prev) => [...prev, item]);
     }
   }, [navigateToPage]);
 
   const activateNavItemAtIndex = useCallback((index) => {
     const item = visibleNavItems[index];
     if (!item) return;
-    activateNavItem(item, { inSubmenu: Boolean(activeGroup) });
-  }, [visibleNavItems, activeGroup, activateNavItem]);
+    activateNavItem(item, { inSubmenu: Boolean(currentGroup) });
+  }, [visibleNavItems, currentGroup, activateNavItem]);
 
   useEffect(() => {
     if (!useDesktopDrilldown || !isOpen || searchOverlayOpen) return undefined;
@@ -173,8 +249,8 @@ export default function GlacialSidebar({
       if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
-        if (activeGroup) {
-          setActiveGroup(null);
+        if (currentGroup) {
+          setDrillStack((prev) => prev.slice(0, -1));
         } else {
           onRequestClose?.();
         }
@@ -186,7 +262,7 @@ export default function GlacialSidebar({
         const item = visibleNavItems[index];
         if (!item) return;
         e.preventDefault();
-        activateNavItem(item, { inSubmenu: Boolean(activeGroup) });
+        activateNavItem(item, { inSubmenu: Boolean(currentGroup) });
       }
     };
 
@@ -196,17 +272,13 @@ export default function GlacialSidebar({
     useDesktopDrilldown,
     isOpen,
     searchOverlayOpen,
-    activeGroup,
+    currentGroup,
     visibleNavItems,
     activateNavItem,
     onRequestClose,
   ]);
 
-  const isPageActive = (item) => {
-    if (item.page) return currentPageName === item.page || location.pathname.includes(item.page);
-    if (item.submenu) return item.submenu.some(sub => currentPageName === sub.page || location.pathname.includes(sub.page));
-    return false;
-  };
+  const isPageActive = (item) => menuItemContainsPage(item, currentPageName, location.pathname);
 
   const closeMobileMenu = () => { if (isMobile) onClose?.(); };
 
@@ -261,11 +333,11 @@ export default function GlacialSidebar({
               className="px-3 mb-2 text-[10px] uppercase tracking-widest"
               style={{ color: c.textSub }}
             >
-              {activeGroup ? (
+              {currentGroup ? (
                 <span className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setActiveGroup(null)}
+                    onClick={() => setDrillStack((prev) => prev.slice(0, -1))}
                     className="inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors"
                     style={{ background: c.hoverBg, color: c.textSub }}
                     title="Voltar (Esc)"
@@ -273,7 +345,7 @@ export default function GlacialSidebar({
                     <ChevronLeft size={14} />
                   </button>
                   <span className="truncate font-medium normal-case tracking-normal text-xs" style={{ color: c.text }}>
-                    {activeGroup.name}
+                    {currentGroup.name}
                   </span>
                 </span>
               ) : (
@@ -310,18 +382,20 @@ export default function GlacialSidebar({
             <div className="space-y-0.5">
               {visibleNavItems.map((item, index) => {
                 const letter = indexToNavLetter(index);
-                const Icon = activeGroup ? (item.icon || activeGroup.icon) : item.icon;
-                const isActive = activeGroup
-                  ? (currentPageName === item.page || location.pathname.includes(item.page))
+                const Icon = currentGroup ? (item.icon || currentGroup.icon) : item.icon;
+                const isActive = currentGroup
+                  ? (item.page
+                    ? (currentPageName === item.page || location.pathname.includes(item.page))
+                    : menuItemContainsPage(item, currentPageName, location.pathname))
                   : isPageActive(item);
 
-                if (!activeGroup && item.page && !item.submenu?.length) {
+                if (!currentGroup && item.page && !item.submenu?.length) {
                   return (
                     <Link
                       key={item.name}
                       to={createPageUrl(item.page)}
                       onClick={() => {
-                        setActiveGroup(null);
+                        setDrillStack([]);
                         onRequestClose?.();
                       }}
                       className="flex items-center rounded-xl transition-colors"
@@ -344,12 +418,12 @@ export default function GlacialSidebar({
                   );
                 }
 
-                if (!activeGroup && item.submenu?.length) {
+                if (!currentGroup && item.submenu?.length) {
                   return (
                     <button
                       key={item.name}
                       type="button"
-                      onClick={() => setActiveGroup(item)}
+                      onClick={() => setDrillStack([item])}
                       className="w-full flex items-center rounded-xl transition-colors"
                       style={{
                         gap: 10,
@@ -371,12 +445,39 @@ export default function GlacialSidebar({
                   );
                 }
 
+                if (item.submenu?.length) {
+                  return (
+                    <button
+                      key={item.name}
+                      type="button"
+                      onClick={() => setDrillStack((prev) => [...prev, item])}
+                      className="w-full flex items-center rounded-xl transition-colors"
+                      style={{
+                        gap: 10,
+                        padding: '10px 12px',
+                        background: isActive ? c.activeBg : 'transparent',
+                        color: isActive ? c.text : c.textSub,
+                      }}
+                    >
+                      {Icon && <Icon className="flex-shrink-0 tablet-landscape:w-5 tablet-landscape:h-5" size={18} style={{ color: c.iconColor }} />}
+                      <NavItemLabel
+                        letter={letter}
+                        name={item.name}
+                        nameColor={c.text}
+                        letterColor={c.textSub}
+                        onLetterActivate={() => activateNavItemAtIndex(index)}
+                      />
+                      <ChevronRight size={14} style={{ color: c.chevron }} />
+                    </button>
+                  );
+                }
+
                 return (
                   <Link
                     key={item.page || item.name}
                     to={createPageUrl(item.page)}
                     onClick={() => {
-                      setActiveGroup(null);
+                      setDrillStack([]);
                       onRequestClose?.();
                     }}
                     className="flex items-center rounded-xl transition-colors"
@@ -435,28 +536,17 @@ export default function GlacialSidebar({
                     </button>
 
                     {isExpanded && isOpen && (
-                      <div
-                        className="ml-8 mt-1 space-y-1 pl-2"
-                      >
-                        {item.submenu.map(subItem => {
-                          const isSubActive = currentPageName === subItem.page || location.pathname.includes(subItem.page);
-                          return (
-                            <Link
-                              key={subItem.page}
-                              to={createPageUrl(subItem.page)}
-                              onClick={closeMobileMenu}
-                              className="flex items-center gap-2 px-2 py-2 rounded-lg text-sm transition-colors min-h-[36px]"
-                              style={{
-                                background: isSubActive ? c.activeBg : 'transparent',
-                                color: isSubActive ? c.text : c.textSub,
-                                fontWeight: isSubActive ? 600 : 400,
-                              }}
-                            >
-                              {subItem.name}
-                            </Link>
-                          );
-                        })}
-                      </div>
+                      <MobileSubmenuList
+                        items={item.submenu}
+                        parentKey={item.name}
+                        depth={0}
+                        expandedMenus={expandedMenus}
+                        toggleSubmenu={toggleSubmenu}
+                        currentPageName={currentPageName}
+                        location={location}
+                        closeMobileMenu={closeMobileMenu}
+                        c={c}
+                      />
                     )}
                   </>
                 ) : (

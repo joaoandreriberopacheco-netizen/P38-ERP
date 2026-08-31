@@ -19,3 +19,9 @@ export const SMART_SUPPLY_MENU_LABEL = 'SMART SUPPLY';
 
 /** Portal = laboratório/preview; produção = SMART_SUPPLY_PAGE. */
 export const SMART_SUPPLY_PORTAL_PREVIEW_LABEL = 'Preview SMART SUPPLY (piloto)';
+
+/** Novo Ecosistema (Compras) — menus e títulos dedicados. Ver docs/novo-ecossistema/README.md */
+export const NOVO_ECOSISTEMA_MENU_LABEL = 'Novo Ecosistema';
+export const NOVO_CATALOGO_MENU_LABEL = 'Novo Catálogo';
+/** Preview supply por LINHA — distinto do SMART SUPPLY produção (SugestoesCompra). */
+export const SMART_SUPPLY_ECOSYSTEM_LABEL = 'Smart Supply';

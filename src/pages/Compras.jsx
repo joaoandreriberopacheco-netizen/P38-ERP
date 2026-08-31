@@ -17,7 +17,6 @@ import SugestaoCompra from '../components/compras/SugestaoCompra';
 import CotacoesManager from '../components/compras/CotacoesManager';
 import ImportadorNotaFiscal from '../components/compras/ImportadorNotaFiscal';
 import GestaoCodigosConferencia from '../components/logistica/GestaoCodigosConferencia';
-import HierarquiaPortalEntry from '@/components/hierarquia-portal/HierarquiaPortalEntry';
 import PainelConferencias from '../components/compras/PainelConferencias';
 import { cn } from '@/components/utils';
 import { P38PageHeader } from '@/components/layout/P38PageHeader';
@@ -399,7 +398,6 @@ export default function ComprasPage() {
         <P38PageHeader
           title="Compras"
           description="Gestão completa do ciclo de suprimentos"
-          children={<HierarquiaPortalEntry className="shrink-0" />}
         />
       </div>
 
