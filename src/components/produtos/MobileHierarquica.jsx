@@ -858,24 +858,34 @@ function useCatalogColumnHeaderPin(scrollElement) {
 }
 
 /** Catálogo mobile — amarelo some ao rolar; colunas fixam no topo (scroll flex, não caixa com maxHeight). */
-export function CatalogoMobileScrollShell({ catalogChrome, children }) {
-  const scrollRef = useRef(null);
+export function CatalogoMobileScrollShell({ catalogChrome, children, scrollRef: externalScrollRef }) {
+  const internalScrollRef = useRef(null);
   const [scrollElement, setScrollElement] = useState(null);
   const { sentinelRef, pinned, pinFrame } = useCatalogColumnHeaderPin(scrollElement);
   const pinStyle = pinned
     ? { top: pinFrame.top, left: pinFrame.left, width: pinFrame.width }
     : null;
 
+  const assignScrollRef = useCallback((node) => {
+    internalScrollRef.current = node;
+    setScrollElement(node);
+    if (typeof externalScrollRef === 'function') {
+      externalScrollRef(node);
+    } else if (externalScrollRef && typeof externalScrollRef === 'object') {
+      externalScrollRef.current = node;
+    }
+  }, [externalScrollRef]);
+
   useLayoutEffect(() => {
-    setScrollElement(scrollRef.current);
-    const frame = window.requestAnimationFrame(() => setScrollElement(scrollRef.current));
+    setScrollElement(internalScrollRef.current);
+    const frame = window.requestAnimationFrame(() => setScrollElement(internalScrollRef.current));
     return () => window.cancelAnimationFrame(frame);
   }, []);
 
   return (
     <CatalogoMobileScrollContext.Provider value={scrollElement}>
       <div
-        ref={scrollRef}
+        ref={assignScrollRef}
         className="flex flex-1 min-h-0 w-full min-w-0 flex-col p38-stage-panel-scroll overflow-x-hidden touch-pan-y pb-[var(--p38-scroll-pad-below-nav)]"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >

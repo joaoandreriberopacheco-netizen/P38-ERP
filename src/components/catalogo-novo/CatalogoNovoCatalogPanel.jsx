@@ -25,12 +25,17 @@ export default function CatalogoNovoCatalogPanel({
   loading = false,
   onRefresh,
   mobileComfortable = false,
+  scrollRef = null,
+  sortOrder: sortOrderProp,
+  onSortOrderChange,
 }) {
   const isDesktop = useDesktopContent();
   const queryClient = useQueryClient();
 
   const [viewMode, setViewMode] = useState('dinamica');
-  const [sortOrder, setSortOrder] = useState('az');
+  const [sortOrderInternal, setSortOrderInternal] = useState('az');
+  const sortOrder = sortOrderProp ?? sortOrderInternal;
+  const setSortOrder = onSortOrderChange ?? setSortOrderInternal;
   const [treeLevel] = useState(4);
   const [groupTreeByCategory, setGroupTreeByCategory] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(() => loadCatalogProdutoColumns());
@@ -106,7 +111,7 @@ export default function CatalogoNovoCatalogPanel({
       {isDesktop ? commandBar : null}
 
       {!isDesktop ? (
-        <CatalogoMobileScrollShell>
+        <CatalogoMobileScrollShell scrollRef={scrollRef}>
           <MobileHierarquica
             produtos={filteredProdutos}
             onEdit={handleEdit}
