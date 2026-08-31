@@ -41,6 +41,8 @@ import { cn } from '@/components/utils';
 import FontScaleControl from '@/components/accessibility/FontScaleControl';
 import { FONT_SCALE_CHANGE_EVENT, getStoredFontScale } from '@/lib/fontScale';
 
+import { CATALOGO_CURSOR } from '@/lib/catalogoCursorTableTheme';
+
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 
@@ -66,6 +68,37 @@ const CATALOGO_MOBILE_NOME_TYPO =
   'text-[13px] font-normal leading-relaxed uppercase break-words [overflow-wrap:anywhere]';
 const CATALOGO_MOBILE_ROW_H_GROUP = 118;
 const CATALOGO_MOBILE_ROW_H_SKU = 196;
+
+function catalogoMobileSurfaceStyles(tableVariant = 'default') {
+  if (tableVariant === 'cursor') {
+    return {
+      header: CATALOGO_CURSOR.mobileHeader,
+      row: CATALOGO_CURSOR.mobileRow,
+      headerLabel: CATALOGO_CURSOR.mobileHeaderLabel,
+      bodyText: CATALOGO_CURSOR.mobileBodyValue,
+      rowTitleTypo: CATALOGO_CURSOR.mobileRowTitle,
+      skuBadge: CATALOGO_CURSOR.mobileSkuBadge,
+      groupBand: CATALOGO_CURSOR.mobileGroupBand,
+      skuSurface: CATALOGO_CURSOR.mobileSkuSurface,
+      listFrame: 'relative border-0',
+      listInner: 'relative border-b border-border/25 dark:border-white/[0.06] bg-transparent',
+      emptyShell: 'py-16 text-center px-8 border-0',
+    };
+  }
+  return {
+    header: p38Table.catalogMobileHeader,
+    row: p38Table.catalogMobileRow,
+    headerLabel: CATALOGO_MOBILE_HEADER_LABEL,
+    bodyText: CATALOGO_MOBILE_BODY_TEXT,
+    rowTitleTypo: CATALOGO_MOBILE_NOME_TYPO,
+    skuBadge: 'text-[9px] font-semibold uppercase tracking-wide text-[#a8942e] dark:text-[#a4ce33]/90',
+    groupBand: null,
+    skuSurface: null,
+    listFrame: 'relative border-x border-t-0 border-border/40 dark:border-white/10',
+    listInner: 'relative border-b border-border/40 dark:border-white/10 bg-background',
+    emptyShell: 'py-16 text-center px-8 border-x border-t-0 border-border/40 dark:border-white/10',
+  };
+}
 
 /** Faixa de grupo — faixa analítica compacta (≠ linha de produto). */
 const CATALOG_MOBILE_GROUP_BAND = {
@@ -126,10 +159,10 @@ function catalogNomeColorClass(tier) {
   return 'text-foreground';
 }
 
-function CatalogoMobileDescBlock({ nome, tier }) {
+function CatalogoMobileDescBlock({ nome, tier, titleClassName }) {
   return (
     <div className={cn(CATALOGO_MOBILE_DESC_MIN_H, CATALOGO_MOBILE_DESC_GAP, 'min-w-0 overflow-hidden')}>
-      <p lang="pt-BR" className={cn('line-clamp-3', CATALOGO_MOBILE_NOME_TYPO, catalogNomeColorClass(tier))}>
+      <p lang="pt-BR" className={cn('line-clamp-3', titleClassName || CATALOGO_MOBILE_NOME_TYPO, !titleClassName && catalogNomeColorClass(tier))}>
         {nome}
       </p>
     </div>
@@ -458,11 +491,12 @@ function PricingDialog({ produto, open, onOpenChange }) {
   );
 }
 
-export function CatalogoMobileColumnHeader({ className = '', invisible = false, pinStyle = null }) {
+export function CatalogoMobileColumnHeader({ className = '', invisible = false, pinStyle = null, tableVariant = 'default' }) {
+  const styles = catalogoMobileSurfaceStyles(tableVariant);
   return (
     <div
       className={cn(
-        p38Table.catalogMobileHeader,
+        styles.header,
         'relative',
         invisible && 'invisible pointer-events-none',
         pinStyle && 'fixed z-[60]',
@@ -473,8 +507,8 @@ export function CatalogoMobileColumnHeader({ className = '', invisible = false, 
       <CatalogoMobileSacredAxis />
       <div className={cn('relative flex min-w-0 py-3.5 pr-12', CATALOG_ROW_PL)}>
         <CatalogoMobileQtdColShell className="!py-2">
-          <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right`}>EST.</p>
-          <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right mt-1.5`}>UN</p>
+          <p className={`${styles.headerLabel} text-right`}>EST.</p>
+          <p className={`${styles.headerLabel} text-right mt-1.5`}>UN</p>
         </CatalogoMobileQtdColShell>
         <div
           className="flex-1 min-w-0"
@@ -486,7 +520,7 @@ export function CatalogoMobileColumnHeader({ className = '', invisible = false, 
               className={`${CATALOGO_MOBILE_VALUES_GRID} ${rowIdx === 0 ? '' : 'mt-1.5'}`}
             >
               {valueRow.map(({ label }) => (
-                <p key={label} className={CATALOGO_MOBILE_HEADER_LABEL}>
+                <p key={label} className={styles.headerLabel}>
                   {label}
                 </p>
               ))}
@@ -498,7 +532,8 @@ export function CatalogoMobileColumnHeader({ className = '', invisible = false, 
   );
 }
 
-function CatalogoMobileTabulatedValues({ produto, catalogStockContext = null, className = '' }) {
+function CatalogoMobileTabulatedValues({ produto, catalogStockContext = null, className = '', tableVariant = 'default' }) {
+  const styles = catalogoMobileSurfaceStyles(tableVariant);
   const values = buildCatalogoMobileTabulatedValues(produto, catalogStockContext);
 
   return (
@@ -511,7 +546,7 @@ function CatalogoMobileTabulatedValues({ produto, catalogStockContext = null, cl
           {valueRow.map(({ key }) => (
             <p
               key={key}
-              className={`${CATALOGO_MOBILE_BODY_TEXT} tabular-nums text-right truncate ${catalogoMetricValueClass(key)}`}
+              className={`${styles.bodyText} truncate ${catalogoMetricValueClass(key)}`}
             >
               {values[key]}
             </p>
@@ -523,7 +558,8 @@ function CatalogoMobileTabulatedValues({ produto, catalogStockContext = null, cl
 }
 
 // ── Linha de SKU — cartão de produto (grelha completa, ≠ faixa de família) ─────
-const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing, catalogStockContext = null, underOpenGroup = false }) {
+const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing, catalogStockContext = null, underOpenGroup = false, tableVariant = 'default' }) {
+  const styles = catalogoMobileSurfaceStyles(tableVariant);
   const p = row.produto;
   const est = resolveCatalogEstoqueExibicao(p, catalogStockContext);
   const estoqueExibicao = est.quantidade;
@@ -537,9 +573,9 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing, catalo
 
   return (
     <div className={cn(
-      p38Table.catalogMobileRow,
+      styles.row,
       'flex min-w-0 max-w-full py-4 tablet-portrait:py-5',
-      catalogoSkuSurfaceClass(row, underOpenGroup),
+      tableVariant === 'cursor' ? styles.skuSurface : catalogoSkuSurfaceClass(row, underOpenGroup),
     )}>
       <button
         type="button"
@@ -561,17 +597,17 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing, catalo
             style={{ paddingLeft: catalogContentPadAfterLine(row.level ?? 1) }}
           >
             <div className="mb-1 flex items-center gap-1.5">
-              <span className="text-[9px] font-semibold uppercase tracking-wide text-[#a8942e] dark:text-[#a4ce33]/90">
+              <span className={styles.skuBadge}>
                 SKU
               </span>
               {p.codigo_interno && (
-                <span className="text-[10px] font-mono truncate text-foreground/75 dark:text-muted-foreground">
+                <span className="text-[10px] font-mono truncate text-muted-foreground dark:text-white/40">
                   #{p.codigo_interno}
                 </span>
               )}
             </div>
-            <CatalogoMobileDescBlock nome={p.nome} tier={tier} />
-            <CatalogoMobileTabulatedValues produto={p} catalogStockContext={catalogStockContext} className="mt-0.5" />
+            <CatalogoMobileDescBlock nome={p.nome} tier={tier} titleClassName={tableVariant === 'cursor' ? styles.rowTitleTypo : undefined} />
+            <CatalogoMobileTabulatedValues produto={p} catalogStockContext={catalogStockContext} className="mt-0.5" tableVariant={tableVariant} />
             {apresent && (
               <p className="mt-2 text-[9px] text-muted-foreground truncate">
                 {apresent.rotulo || 'unidade de exibição'}
@@ -731,7 +767,8 @@ function CatalogoMobileTreeToolbar({ onExpandAll, onCollapseAll }) {
 }
 
 // ── Faixa de grupo (resumo analítico — não é linha de produto) ─────────────────
-const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle, catalogStockContext = null }) {
+const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle, catalogStockContext = null, tableVariant = 'default' }) {
+  const styles = catalogoMobileSurfaceStyles(tableVariant);
   const metrics = useMemo(
     () => buildGroupMobileMetrics(row, catalogStockContext),
     [row, catalogStockContext],
@@ -749,9 +786,9 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle,
       onClick={() => onToggle(row.key)}
       aria-expanded={isExpanded}
       className={cn(
-        p38Table.catalogMobileRow,
+        styles.row,
         'flex w-full min-w-0 text-left overflow-hidden py-2.5',
-        catalogoGroupBandClass(row),
+        tableVariant === 'cursor' ? styles.groupBand : catalogoGroupBandClass(row),
       )}
     >
       <div className={cn('flex flex-1 min-w-0 items-stretch', CATALOG_ROW_PL)}>
@@ -858,7 +895,7 @@ function useCatalogColumnHeaderPin(scrollElement) {
 }
 
 /** Catálogo mobile — amarelo some ao rolar; colunas fixam no topo (scroll flex, não caixa com maxHeight). */
-export function CatalogoMobileScrollShell({ catalogChrome, children, scrollRef: externalScrollRef }) {
+export function CatalogoMobileScrollShell({ catalogChrome, children, scrollRef: externalScrollRef, tableVariant = 'default' }) {
   const internalScrollRef = useRef(null);
   const [scrollElement, setScrollElement] = useState(null);
   const { sentinelRef, pinned, pinFrame } = useCatalogColumnHeaderPin(scrollElement);
@@ -892,13 +929,15 @@ export function CatalogoMobileScrollShell({ catalogChrome, children, scrollRef: 
         {catalogChrome}
         <div ref={sentinelRef} className="h-px w-full shrink-0" aria-hidden />
         <CatalogoMobileColumnHeader
-          className="border-x border-border/40 dark:border-white/10"
+          className={cn(tableVariant === 'cursor' ? 'border-0' : 'border-x border-border/40 dark:border-white/10')}
           invisible={pinned}
+          tableVariant={tableVariant}
         />
         {pinned ? (
           <CatalogoMobileColumnHeader
-            className="border-x border-border/40 dark:border-white/10"
+            className={cn(tableVariant === 'cursor' ? 'border-0' : 'border-x border-border/40 dark:border-white/10')}
             pinStyle={pinStyle}
+            tableVariant={tableVariant}
           />
         ) : null}
         {children}
@@ -908,7 +947,8 @@ export function CatalogoMobileScrollShell({ catalogChrome, children, scrollRef: 
 }
 
 // ── Componente principal ───────────────────────────────────────────────────────
-export default function MobileHierarquica({ produtos, onEdit, groupByCategory = false, masterLevel = 2, sortOrder = 'az', onExpandedKeysChange, catalogFilters = null, salesVelocityMap = {}, catalogStockContext = null, flatList = false }) {
+export default function MobileHierarquica({ produtos, onEdit, groupByCategory = false, masterLevel = 2, sortOrder = 'az', onExpandedKeysChange, catalogFilters = null, salesVelocityMap = {}, catalogStockContext = null, flatList = false, tableVariant = 'default' }) {
+  const surface = catalogoMobileSurfaceStyles(tableVariant);
   const scrollElement = useCatalogoMobileScrollElement();
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [pricingProduto, setPricingProduto] = useState(null);
@@ -1023,7 +1063,7 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
 
   if (produtos.length === 0) {
     return (
-      <div className="py-16 text-center px-8 border-x border-t-0 border-border/40 dark:border-white/10">
+      <div className={surface.emptyShell}>
         <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-3">
           <Package className="w-7 h-7 text-muted-foreground dark:text-muted-foreground" />
         </div>
@@ -1041,9 +1081,9 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
           onCollapseAll={handleCollapseAll}
         />
       ) : null}
-      <div className="relative border-x border-t-0 border-border/40 dark:border-white/10">
+      <div className={surface.listFrame}>
         <CatalogoMobileSacredAxis />
-        <div className="relative border-b border-border/40 dark:border-white/10 bg-background">
+        <div className={surface.listInner}>
           {paddingTop > 0 && <div aria-hidden="true" style={{ height: paddingTop }} />}
           {visibleRows.map((row, index) => {
             const prev = index > 0 ? visibleRows[index - 1] : null;
@@ -1059,6 +1099,7 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
                     isExpanded={expandedKeys.has(row.key)}
                     onToggle={handleToggle}
                     catalogStockContext={catalogStockContext}
+                    tableVariant={tableVariant}
                   />
                 ) : (
                   <SkuCard
@@ -1067,6 +1108,7 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
                     onOpenPricing={setPricingProduto}
                     catalogStockContext={catalogStockContext}
                     underOpenGroup={underOpenGroup}
+                    tableVariant={tableVariant}
                   />
                 )}
               </div>

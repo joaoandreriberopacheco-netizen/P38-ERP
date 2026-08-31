@@ -111,7 +111,7 @@ export default function CatalogoNovoCatalogPanel({
       {isDesktop ? commandBar : null}
 
       {!isDesktop ? (
-        <CatalogoMobileScrollShell scrollRef={scrollRef}>
+        <CatalogoMobileScrollShell scrollRef={scrollRef} tableVariant="cursor">
           <MobileHierarquica
             produtos={filteredProdutos}
             onEdit={handleEdit}
@@ -123,6 +123,7 @@ export default function CatalogoNovoCatalogPanel({
             catalogFilters={portalFilters}
             salesVelocityMap={salesVelocityMap}
             catalogStockContext={catalogStockContext}
+            tableVariant="cursor"
           />
         </CatalogoMobileScrollShell>
       ) : null}

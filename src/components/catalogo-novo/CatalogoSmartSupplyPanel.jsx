@@ -18,6 +18,7 @@ import {
   CATALOGO_VIEW_TAB,
   CATALOGO_VIEW_TAB_GROUP,
 } from '@/lib/catalogoP38Theme';
+import { CATALOGO_CURSOR } from '@/lib/catalogoCursorTableTheme';
 import {
   resolveEsquadraSupplyTone,
   resolveLinhaSupplyTone,
@@ -46,7 +47,7 @@ function filterLinesByTipos(lines, tipos) {
 
 function Metric({ label, value, neg }) {
   return (
-    <span className={cn('tabular-nums', neg && 'text-red-600 dark:text-red-400 font-medium')}>
+    <span className={cn(CATALOGO_CURSOR.supplyMetric, neg && CATALOGO_CURSOR.supplyMetricNeg)}>
       {value ?? '—'}
     </span>
   );
@@ -57,11 +58,11 @@ function SkuSupplyRows({ skus, massaCritica }) {
     const tone = resolveSkuSupplyTone(s, massaCritica);
     const label = montarNomePortalSku(s);
     return (
-      <div key={s.produto?.id} className={cn(CATALOGO_HIER_L3, CATALOGO_SEP)}>
-        <div className={cn(CATALOGO_ROW_BASE, 'pl-3 cursor-default hover:bg-transparent', CATALOGO_SUPPLY_BORDER[tone])}>
-          <div className="flex items-start gap-1.5 min-w-0">
+      <div key={s.produto?.id} className={cn(CATALOGO_HIER_L3, CATALOGO_SEP, 'pl-0 border-l-0')}>
+        <div className={cn(CATALOGO_ROW_BASE, 'pl-3 pr-3 cursor-default hover:bg-transparent', CATALOGO_SUPPLY_BORDER[tone])}>
+          <div className="flex items-start gap-2 min-w-0">
             <CatalogoSupplyLed tone={tone} pulse={tone === 'ruptura' || tone === 'ruptura_pfut'} />
-            <p className={cn(CATALOGO_SUBTITLE, 'flex-1 text-foreground/85')}>{label}</p>
+            <p className={cn(CATALOGO_SUBTITLE, 'flex-1 normal-case')}>{label}</p>
             <Metric value={s.estoque_label} neg={tone === 'ruptura'} />
           </div>
         </div>
@@ -76,14 +77,14 @@ function EsquadraRow({ eq, open, onToggle, isLast, comfortable = false }) {
 
   return (
     <>
-      <div className={cn(!isLast && !open && CATALOGO_SEP, CATALOGO_HIER_L2)}>
+      <div className={cn(!isLast && !open && CATALOGO_SEP, CATALOGO_HIER_L2, 'border-l-0 pl-0')}>
         <button
           type="button"
           onClick={onToggle}
-          className={cn(CATALOGO_ROW_BASE, 'pl-3', CATALOGO_SUPPLY_BORDER[tone], comfortable && 'py-3 min-h-[48px]')}
+          className={cn(CATALOGO_ROW_BASE, 'px-3', CATALOGO_SUPPLY_BORDER[tone], comfortable && 'py-3 min-h-[48px]')}
         >
-          <div className="flex items-start gap-1.5 min-w-0 w-full">
-            <ChevronRight className={cn('h-3.5 w-3.5 shrink-0 mt-0.5 transition-transform', open && 'rotate-90')} />
+          <div className="flex items-start gap-2 min-w-0 w-full">
+            <ChevronRight className={cn('h-3.5 w-3.5 shrink-0 mt-0.5 transition-transform text-muted-foreground dark:text-white/40', open && 'rotate-90')} />
             <CatalogoSupplyLed tone={tone} pulse={tone === 'ruptura' || tone === 'ruptura_pfut'} />
             <div className="flex-1 min-w-0 space-y-0.5">
               <p className={CATALOGO_TITLE}>{eq.produto_compra_nome}</p>
@@ -91,7 +92,7 @@ function EsquadraRow({ eq, open, onToggle, isLast, comfortable = false }) {
                 {eq.sku_count} SKU · est. {m?.estoque_label || '—'} · P.fut {m?.ponto_futuro_label || '—'}
               </p>
             </div>
-            <span className="text-[10px] tabular-nums text-muted-foreground shrink-0">
+            <span className={CATALOGO_CURSOR.supplyMetric}>
               {eq.linhas_com_massa_critica}/{CERAM_MIN_LINHAS_SALDAVEL}
             </span>
           </div>
@@ -119,21 +120,21 @@ function LinhaSupplyBlock({ linha, comfortable = false }) {
 
   return (
     <div className={CATALOGO_SEP}>
-      <div className={CATALOGO_HIER_L1}>
+      <div className={cn(CATALOGO_HIER_L1, 'border-l-0 pl-0 ml-0')}>
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className={cn(CATALOGO_ROW_BASE, 'pl-2', CATALOGO_SUPPLY_BORDER[tone], comfortable && 'py-3 min-h-[52px]')}
+          className={cn(CATALOGO_ROW_BASE, 'px-3', CATALOGO_SUPPLY_BORDER[tone], comfortable && 'py-3 min-h-[52px]')}
         >
-          <div className="flex items-start gap-1.5 min-w-0 w-full">
-            <ChevronRight className={cn('h-4 w-4 shrink-0 mt-0.5 transition-transform', open && 'rotate-90')} />
+          <div className="flex items-start gap-2 min-w-0 w-full">
+            <ChevronRight className={cn('h-4 w-4 shrink-0 mt-0.5 transition-transform text-muted-foreground dark:text-white/40', open && 'rotate-90')} />
             <CatalogoSupplyLed tone={tone} pulse={tone === 'ruptura' || tone === 'ruptura_pfut'} />
             <div className="flex-1 min-w-0 space-y-0.5">
               <div className="flex items-center gap-2 flex-wrap">
                 <p className={cn(CATALOGO_TITLE, 'flex-1 min-w-0')}>{linha.linha_nome}</p>
                 <span
                   className={cn(
-                    'text-[9px] uppercase px-1.5 py-0 rounded-full border',
+                    'text-[9px] uppercase px-1.5 py-0 rounded-full border font-medium',
                     CATALOGO_TIPO_CHIP[linha.linha_tipo] || CATALOGO_TIPO_CHIP.mix,
                   )}
                 >
@@ -144,9 +145,9 @@ function LinhaSupplyBlock({ linha, comfortable = false }) {
                 {linha.resumo?.sku_total} SKU · {linha.resumo?.esquadras_saldaveis}/{linha.resumo?.esquadras_total} saldáveis
               </p>
             </div>
-            <div className="text-right shrink-0 text-[10px] text-muted-foreground tabular-nums">
+            <div className={cn('text-right shrink-0 space-y-0.5', CATALOGO_CURSOR.supplyMetric)}>
               <div>{m?.estoque_label}</div>
-              <div className={m?.ponto_negativo ? 'text-red-600 dark:text-red-400' : ''}>{m?.ponto_futuro_label}</div>
+              <div className={m?.ponto_negativo ? CATALOGO_CURSOR.supplyMetricNeg : undefined}>{m?.ponto_futuro_label}</div>
             </div>
           </div>
         </button>
@@ -169,18 +170,19 @@ function SupplyKpiBar({ flatLines, linhasVisiveis }) {
   const stats = useMemo(() => summarizePortalSupply(flatLines), [flatLines]);
   return (
     <div className={CATALOGO_KPI_STRIP}>
-      <span><strong>{linhasVisiveis}</strong> LINHA</span>
-      <span className="text-muted-foreground">·</span>
-      <span><strong>{stats.total}</strong> esq</span>
-      <span className="text-muted-foreground">·</span>
+      <span><span className={CATALOGO_CURSOR.kpiStrong}>{linhasVisiveis}</span> <span className={CATALOGO_CURSOR.kpiMuted}>LINHA</span></span>
+      <span className={CATALOGO_CURSOR.kpiMuted}>·</span>
+      <span><span className={CATALOGO_CURSOR.kpiStrong}>{stats.total}</span> <span className={CATALOGO_CURSOR.kpiMuted}>esq</span></span>
+      <span className={CATALOGO_CURSOR.kpiMuted}>·</span>
       <span className="inline-flex items-center gap-1">
         <CatalogoSupplyLed tone="off" />
-        <strong>{stats.saldaveis}</strong>
+        <span className={CATALOGO_CURSOR.kpiStrong}>{stats.saldaveis}</span>
       </span>
-      <span className="text-muted-foreground">·</span>
+      <span className={CATALOGO_CURSOR.kpiMuted}>·</span>
       <span className="inline-flex items-center gap-1">
         <CatalogoSupplyLed tone={stats.alertas > 0 ? 'alerta' : 'off'} pulse={stats.alertas > 0} />
-        <strong>{stats.alertas}</strong> alerta
+        <span className={CATALOGO_CURSOR.kpiStrong}>{stats.alertas}</span>
+        <span className={CATALOGO_CURSOR.kpiMuted}>alerta</span>
       </span>
     </div>
   );

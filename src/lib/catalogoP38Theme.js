@@ -1,10 +1,11 @@
 /**
- * Catálogo novo + SMART SUPPLY — linhas finas, cítrico (claro) e oliva-caixa (dark).
- * Inspirado na lista de Embarques (LED 1.5px, vlines, hierarquia L0–L7).
+ * Catálogo novo + SMART SUPPLY — estética tabela tipo Cursor IDE (Novo Ecosistema).
+ * Linhas finas, rótulos bold, dados em cinza tabular; cítrico/oliva só em acentos pontuais.
  */
 import { cn } from '@/components/utils';
 import { P38_LIGHT_HEADER_ACCENT, P38_LIGHT_VLINE } from '@/lib/p38LightTheme';
 import { COMPRAS_SEP } from '@/lib/comprasP38Theme';
+import { CATALOGO_CURSOR as C } from '@/lib/catalogoCursorTableTheme';
 
 export const CATALOGO_OLIVE_LIGHT = '#4a5240';
 export const CATALOGO_OLIVE_DARK = '#636B2F';
@@ -83,22 +84,18 @@ export const CATALOGO_HEADER = cn(
 );
 export const CATALOGO_HEADER_ACCENT = P38_LIGHT_HEADER_ACCENT;
 
-export const CATALOGO_LIST_SHELL = cn(
-  'overflow-hidden rounded-lg bg-background dark:bg-[#1f1d22]/40',
-  'border border-border/30 dark:border-white/[0.06]',
-  'shadow-sm',
-);
+export const CATALOGO_LIST_SHELL = C.listShell;
 
-/** Árvore hierárquica — linhas finas, texto legível (estilo Embarques / TreeGrid). */
+/** Árvore hierárquica — linhas finas, legível. */
 export const CATALOGO_TREE_ROW = cn(
   'flex w-full items-center gap-1.5 min-w-0 pr-3 py-2 text-left',
-  'border-b border-border/35 dark:border-white/10',
+  C.sep,
   'font-din-1451 text-sm text-foreground/90',
   'hover:bg-muted/12 dark:hover:bg-white/[0.02] transition-colors',
 );
 
 export const CATALOGO_TREE_ROW_HINT = cn(
-  'shrink-0 text-[10px] tabular-nums text-muted-foreground/75 font-light',
+  'shrink-0 text-[11px] tabular-nums text-muted-foreground dark:text-white/40 font-normal',
 );
 
 export const CATALOGO_TREE_TABLE_SLOT = cn(
@@ -133,52 +130,34 @@ export const CATALOGO_VISTA_TAB_GROUP = cn(
 
 export const CATALOGO_VISTA_TAB = CATALOGO_TIPO_TAB;
 
-/** Tabelas de valores (SKU / PC / eixos) — grid plano, sem expandir na árvore. */
-export const CATALOGO_VALUE_TABLE = cn(
-  'my-1 overflow-hidden rounded-sm',
-  'border border-border/35 dark:border-white/10',
-  'bg-background dark:bg-transparent',
-);
+/** Tabelas de valores (SKU / PC / eixos) — grid plano estilo Cursor. */
+export const CATALOGO_VALUE_TABLE = C.valueTable;
 
 export const CATALOGO_VALUE_TABLE_HEAD = cn(
   'grid grid-cols-[minmax(0,1.2fr)_minmax(0,0.75fr)_5rem] sm:grid-cols-[minmax(0,1.25fr)_minmax(0,0.8fr)_6rem]',
-  'gap-x-2 px-3 py-1.5 border-b border-border/35 dark:border-white/10',
-  'text-[9px] uppercase tracking-wider text-muted-foreground/80 font-light',
+  C.valueHead,
 );
 
 export const CATALOGO_VALUE_TABLE_ROW = cn(
   'grid grid-cols-[minmax(0,1.2fr)_minmax(0,0.75fr)_5rem] sm:grid-cols-[minmax(0,1.25fr)_minmax(0,0.8fr)_6rem]',
-  'gap-x-2 px-3 py-2 items-start',
-  'border-b border-border/30 dark:border-white/[0.06] last:border-b-0',
-  'hover:bg-muted/8 dark:hover:bg-white/[0.015]',
+  C.valueRow,
 );
 
-export const CATALOGO_VALUE_TABLE_CELL = cn(
-  'font-din-1451 font-light text-[12px] normal-case text-foreground/90 leading-snug break-words',
+export const CATALOGO_VALUE_TABLE_CELL = cn(C.valueLabel, C.labelCol);
+
+export const CATALOGO_VALUE_TABLE_CELL_MUTED = C.valueDataMuted;
+
+export const CATALOGO_VALUE_TABLE_NUM = C.valueData;
+
+export const CATALOGO_ROW_BASE = C.supplyRow;
+
+export const CATALOGO_TITLE = C.supplyTitle;
+export const CATALOGO_SUBTITLE = C.supplySubtitle;
+
+export const CATALOGO_PC_TITLE = cn(
+  C.supplyTitle,
+  'text-[12px] leading-snug line-clamp-2',
 );
-
-export const CATALOGO_VALUE_TABLE_CELL_MUTED = cn(
-  CATALOGO_VALUE_TABLE_CELL,
-  'text-muted-foreground/85 text-[11px] tabular-nums',
-);
-
-export const CATALOGO_VALUE_TABLE_NUM = cn(
-  'text-[11px] tabular-nums text-muted-foreground text-right pt-0.5',
-);
-
-export const CATALOGO_ROW_BASE = cn(
-  'w-full text-left transition-colors min-w-0 py-2.5 pr-2 cursor-pointer border-l',
-  CATALOGO_SEP,
-  'hover:bg-muted/20 dark:hover:bg-white/[0.03]',
-);
-
-export const CATALOGO_TITLE =
-  'font-din-1451 font-light text-sm uppercase tracking-wide text-foreground leading-snug line-clamp-2 break-words';
-export const CATALOGO_SUBTITLE =
-  'font-din-1451 font-light text-[11px] text-muted-foreground line-clamp-2 break-words normal-case';
-
-export const CATALOGO_PC_TITLE =
-  'font-din-1451 font-light text-[12px] uppercase tracking-wide text-foreground/92 leading-snug line-clamp-2 break-words';
 
 export const CATALOGO_GRADE_TITLE =
   'font-din-1451 font-light text-[11px] normal-case text-foreground/85 leading-snug line-clamp-2 break-words';
@@ -198,25 +177,24 @@ export const CATALOGO_SUPPLY_LED = {
 };
 
 export const CATALOGO_SUPPLY_BORDER = {
-  off: 'border-l-transparent',
-  alerta: 'border-l-[#e8b824]/70 dark:border-l-[#636B2F]/70',
-  alerta_escuro: 'border-l-[#a8942e] dark:border-l-[#636B2F]',
-  ruptura_pfut: 'border-l-[#D96F55]',
-  ruptura: 'border-l-red-500 dark:border-l-red-400',
+  off: 'border-l-0',
+  alerta: 'border-l-0',
+  alerta_escuro: 'border-l-0',
+  ruptura_pfut: 'border-l-0',
+  ruptura: 'border-l-0',
 };
 
-export const CATALOGO_KPI_STRIP =
-  'flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-xs tabular-nums border-b border-border/35 bg-[#e8b824]/[0.04] dark:bg-[#636B2F]/[0.08]';
+export const CATALOGO_KPI_STRIP = C.kpiStrip;
 
 /** Tabela mix — Produto compra | SKUs | Eixos (grelha). */
 export const CATALOGO_MIX_TABLE = CATALOGO_VALUE_TABLE;
 
 export const CATALOGO_MIX_TABLE_CAP = cn(
-  'px-3 py-1.5 border-b border-border/35 dark:border-white/10',
+  'px-3 py-1.5 border-b border-border/30 dark:border-white/[0.08]',
 );
 
 export const CATALOGO_MIX_TABLE_CAP_TITLE = cn(
-  'font-din-1451 font-light text-[11px] text-muted-foreground normal-case',
+  'font-din-1451 text-[11px] font-semibold text-muted-foreground dark:text-white/50 normal-case',
 );
 
 export const CATALOGO_MIX_TABLE_CAP_CORE = 'text-foreground/80 font-mono text-[11px]';
@@ -237,10 +215,11 @@ export const CATALOGO_MIX_TABLE_PC = cn(
   'text-[11px] sm:text-[12px] leading-snug pr-1',
 );
 
-export const CATALOGO_MIX_TABLE_SKU = 'text-[11px] tabular-nums text-muted-foreground text-center pt-0.5';
+export const CATALOGO_MIX_TABLE_SKU = cn(C.valueData, 'text-center pt-0');
 
 export const CATALOGO_MIX_TABLE_EIXOS = cn(
-  'font-din-1451 font-light text-[11px] normal-case text-foreground/85 leading-relaxed break-words',
+  C.valueDataMuted,
+  'normal-case leading-relaxed break-words text-left',
 );
 
 export const CATALOGO_MIX_TABLE_CHIP = 'whitespace-nowrap';
