@@ -78,6 +78,8 @@ function catalogoMobileSurfaceStyles(tableVariant = 'default') {
       bodyText: CATALOGO_CURSOR.mobileBodyValue,
       rowTitleTypo: CATALOGO_CURSOR.mobileRowTitle,
       skuBadge: CATALOGO_CURSOR.mobileSkuBadge,
+      mobileHierarchyBadge: CATALOGO_CURSOR.mobileHierarchyBadge,
+      mobileChevron: CATALOGO_CURSOR.mobileChevron,
       groupBand: CATALOGO_CURSOR.mobileGroupBand,
       skuSurface: CATALOGO_CURSOR.mobileSkuSurface,
       listFrame: 'relative border-0',
@@ -93,6 +95,8 @@ function catalogoMobileSurfaceStyles(tableVariant = 'default') {
     rowTitleTypo: CATALOGO_MOBILE_NOME_TYPO,
     skuBadge: 'text-[9px] font-semibold uppercase tracking-wide text-[#a8942e] dark:text-[#a4ce33]/90',
     groupBand: null,
+    mobileHierarchyBadge: null,
+    mobileChevron: 'text-foreground/70',
     skuSurface: null,
     listFrame: 'relative border-x border-t-0 border-border/40 dark:border-white/10',
     listInner: 'relative border-b border-border/40 dark:border-white/10 bg-background',
@@ -179,12 +183,14 @@ function CatalogoMobileQtdColShell({ children, className = '' }) {
 }
 
 /** Eixo vertical contínuo — uma só linha ininterrupta, não recua com indentação. */
-function CatalogoMobileSacredAxis({ className = '' }) {
+function CatalogoMobileSacredAxis({ className = '', tableVariant = 'default' }) {
   return (
     <div
       className={cn(
         'pointer-events-none absolute inset-y-0 z-[10] w-0',
-        'border-l border-border/40 dark:border-white/20',
+        tableVariant === 'cursor'
+          ? CATALOGO_CURSOR.mobileAxisLine
+          : 'border-l border-border/40 dark:border-white/20',
         className,
       )}
       style={{ left: CATALOG_AXIS_LEFT }}
@@ -504,7 +510,7 @@ export function CatalogoMobileColumnHeader({ className = '', invisible = false, 
       )}
       style={pinStyle || undefined}
     >
-      <CatalogoMobileSacredAxis />
+      <CatalogoMobileSacredAxis tableVariant={tableVariant} />
       <div className={cn('relative flex min-w-0 py-3.5 pr-12', CATALOG_ROW_PL)}>
         <CatalogoMobileQtdColShell className="!py-2">
           <p className={`${styles.headerLabel} text-right`}>EST.</p>
@@ -601,7 +607,7 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing, catalo
                 SKU
               </span>
               {p.codigo_interno && (
-                <span className="text-[10px] font-mono truncate text-muted-foreground dark:text-white/40">
+                <span className={cn('text-[10px] font-mono truncate', tableVariant === 'cursor' ? styles.mobileRowMeta : 'text-foreground/75 dark:text-muted-foreground')}>
                   #{p.codigo_interno}
                 </span>
               )}
@@ -806,14 +812,20 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle,
           <div className="flex min-w-0 items-center gap-1.5">
             <ChevronRight
               className={cn(
-                'h-4 w-4 flex-shrink-0 text-foreground/70 md:transition-transform md:duration-150',
+                'h-4 w-4 flex-shrink-0 md:transition-transform md:duration-150',
+                tableVariant === 'cursor' ? styles.mobileChevron : 'text-foreground/70',
                 isExpanded && 'rotate-90',
               )}
             />
-            <span className="text-[9px] font-bold uppercase tracking-wider text-foreground/75 dark:text-foreground/85">
+            <span className={cn(
+              tableVariant === 'cursor' ? styles.mobileHierarchyBadge : 'text-[9px] font-bold uppercase tracking-wider text-foreground/75 dark:text-foreground/85',
+            )}>
               {hierarchyLabel}
             </span>
-            <span className="text-[10px] tabular-nums text-muted-foreground">
+            <span className={cn(
+              'text-[10px] tabular-nums',
+              tableVariant === 'cursor' ? styles.mobileRowMeta : 'text-muted-foreground',
+            )}>
               {metrics.skuCount} {metrics.skuCount === 1 ? 'SKU' : 'SKUs'}
             </span>
             {row.criticalCount > 0 && (
@@ -826,9 +838,11 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle,
             lang="pt-BR"
             className={cn(
               'mt-0.5 line-clamp-1 uppercase tracking-wide',
-              level <= 1
-                ? 'text-[12px] font-semibold text-foreground'
-                : 'text-[11px] font-medium text-foreground/85',
+              tableVariant === 'cursor'
+                ? styles.rowTitleTypo
+                : level <= 1
+                  ? 'text-[12px] font-semibold text-foreground'
+                  : 'text-[11px] font-medium text-foreground/85',
             )}
           >
             {row.label}
@@ -1082,7 +1096,7 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
         />
       ) : null}
       <div className={surface.listFrame}>
-        <CatalogoMobileSacredAxis />
+        <CatalogoMobileSacredAxis tableVariant={tableVariant} />
         <div className={surface.listInner}>
           {paddingTop > 0 && <div aria-hidden="true" style={{ height: paddingTop }} />}
           {visibleRows.map((row, index) => {

@@ -159,8 +159,10 @@ export const CATALOGO_PC_TITLE = cn(
   'text-[12px] leading-snug line-clamp-2',
 );
 
-export const CATALOGO_GRADE_TITLE =
-  'font-din-1451 font-light text-[11px] normal-case text-foreground/85 leading-snug line-clamp-2 break-words';
+export const CATALOGO_GRADE_TITLE = cn(
+  C.valueDataMuted,
+  'normal-case leading-snug line-clamp-2 break-words text-left',
+);
 
 export const CATALOGO_TIPO_CHIP = {
   solo: 'bg-muted/80 text-muted-foreground border-border/40',
@@ -197,7 +199,9 @@ export const CATALOGO_MIX_TABLE_CAP_TITLE = cn(
   'font-din-1451 text-[11px] font-semibold text-muted-foreground dark:text-white/50 normal-case',
 );
 
-export const CATALOGO_MIX_TABLE_CAP_CORE = 'text-foreground/80 font-mono text-[11px]';
+export const CATALOGO_MIX_TABLE_CAP_CORE = cn(
+  'font-mono text-[11px] text-foreground/75 dark:text-white/60',
+);
 
 export const CATALOGO_MIX_TABLE_CAP_LINHA = cn(
   'mt-1 font-din-1451 font-light text-[10px] text-muted-foreground normal-case leading-relaxed',

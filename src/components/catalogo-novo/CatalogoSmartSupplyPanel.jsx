@@ -84,7 +84,7 @@ function EsquadraRow({ eq, open, onToggle, isLast, comfortable = false }) {
           className={cn(CATALOGO_ROW_BASE, 'px-3', CATALOGO_SUPPLY_BORDER[tone], comfortable && 'py-3 min-h-[48px]')}
         >
           <div className="flex items-start gap-2 min-w-0 w-full">
-            <ChevronRight className={cn('h-3.5 w-3.5 shrink-0 mt-0.5 transition-transform text-muted-foreground dark:text-white/40', open && 'rotate-90')} />
+            <ChevronRight className={cn('h-3.5 w-3.5 shrink-0 mt-0.5 transition-transform', CATALOGO_CURSOR.mobileChevron, open && 'rotate-90')} />
             <CatalogoSupplyLed tone={tone} pulse={tone === 'ruptura' || tone === 'ruptura_pfut'} />
             <div className="flex-1 min-w-0 space-y-0.5">
               <p className={CATALOGO_TITLE}>{eq.produto_compra_nome}</p>
@@ -127,17 +127,12 @@ function LinhaSupplyBlock({ linha, comfortable = false }) {
           className={cn(CATALOGO_ROW_BASE, 'px-3', CATALOGO_SUPPLY_BORDER[tone], comfortable && 'py-3 min-h-[52px]')}
         >
           <div className="flex items-start gap-2 min-w-0 w-full">
-            <ChevronRight className={cn('h-4 w-4 shrink-0 mt-0.5 transition-transform text-muted-foreground dark:text-white/40', open && 'rotate-90')} />
+            <ChevronRight className={cn('h-4 w-4 shrink-0 mt-0.5 transition-transform', CATALOGO_CURSOR.mobileChevron, open && 'rotate-90')} />
             <CatalogoSupplyLed tone={tone} pulse={tone === 'ruptura' || tone === 'ruptura_pfut'} />
             <div className="flex-1 min-w-0 space-y-0.5">
               <div className="flex items-center gap-2 flex-wrap">
                 <p className={cn(CATALOGO_TITLE, 'flex-1 min-w-0')}>{linha.linha_nome}</p>
-                <span
-                  className={cn(
-                    'text-[9px] uppercase px-1.5 py-0 rounded-full border font-medium',
-                    CATALOGO_TIPO_CHIP[linha.linha_tipo] || CATALOGO_TIPO_CHIP.mix,
-                  )}
-                >
+                <span className={cn(CATALOGO_CURSOR.tipoChip)}>
                   {linha.linha_tipo}
                 </span>
               </div>
