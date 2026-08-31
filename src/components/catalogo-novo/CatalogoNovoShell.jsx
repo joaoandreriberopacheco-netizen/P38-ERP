@@ -11,8 +11,11 @@ import { useCompactShell } from '@/hooks/use-breakpoint';
 import CatalogoTipoTabs from '@/components/catalogo-novo/CatalogoTipoTabs';
 import CatalogoLeituraToggle from '@/components/catalogo-novo/CatalogoLeituraToggle';
 import CatalogoEstudoList from '@/components/catalogo-novo/CatalogoEstudoList';
+import CatalogoNovoCatalogPanel from '@/components/catalogo-novo/CatalogoNovoCatalogPanel';
+import CatalogoNovoCadastroPanel from '@/components/catalogo-novo/CatalogoNovoCadastroPanel';
 import CatalogoSmartSupplyPanel from '@/components/catalogo-novo/CatalogoSmartSupplyPanel';
 import { useCatalogoEstudoData } from '@/hooks/useCatalogoEstudoData';
+import { CADASTRO_PRODUTO_V2_ENABLED } from '@/config/cadastroProdutoV2Flags';
 import {
   NOVO_CATALOGO_MENU_LABEL,
   NOVO_ECOSISTEMA_MENU_LABEL,
@@ -43,6 +46,7 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
   const [leitura, setLeitura] = useState('catalogo');
 
   const {
+    loading,
     manifestMeta,
     portalFilters,
     setPortalFilters,
@@ -50,15 +54,17 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
     setFiltroLinha,
     tipoAtivo,
     setTipoAtivo,
-    treeCatalogo,
     treeCompra,
     hierarchy,
     filteredSupply,
     linhas,
     enriched,
+    catalogProdutos,
+    salesVelocityMap,
     totalSkus,
     tipoCounts,
     estoqueStats,
+    refetchProdutos,
   } = useCatalogoEstudoData();
 
   const searchTerm = portalFilters.searchTerm || '';
@@ -73,7 +79,8 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
     return linhas.filter((l) => l.tipo === tipoAtivo);
   }, [linhas, tipoAtivo, isSupply, leitura]);
 
-  const treeAtivo = leitura === 'catalogo' ? treeCatalogo : treeCompra;
+  const treeAtivo = treeCompra;
+  const showCadastroTab = !isSupply && CADASTRO_PRODUTO_V2_ENABLED;
 
   const siblingLink = isSupply
     ? { page: 'CatalogoNovo', label: NOVO_CATALOGO_MENU_LABEL }
@@ -83,12 +90,13 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
     <>
       {!isSupply ? (
         <>
-          <CatalogoLeituraToggle leitura={leitura} onChange={setLeitura} />
+          <CatalogoLeituraToggle leitura={leitura} onChange={setLeitura} showCadastro={showCadastroTab} />
           {leitura === 'compra' ? (
             <CatalogoTipoTabs tipoAtivo={tipoAtivo} onChange={setTipoAtivo} counts={tipoCounts} />
           ) : null}
         </>
       ) : null}
+      {leitura !== 'cadastro' ? (
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1 min-w-0">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
@@ -111,6 +119,7 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
           </SelectContent>
         </Select>
       </div>
+      ) : null}
       {isSupply && (
         <Button
           variant={somenteAlerta ? 'secondary' : 'outline'}
@@ -168,8 +177,10 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
                 {isSupply
                   ? 'Reposição por LINHA — giro, ponto futuro e alertas (Excel estudo)'
                   : leitura === 'catalogo'
-                    ? 'Catálogo plano — SKU a SKU, A–Z; busca e filtros de LINHA'
-                    : 'Compra — pathway da obra, ecrã por comportamento (Solo / Mix / Portfolio)'}
+                    ? 'Igual Produtos — TreeGrid e mobile; árvore pathway (Edificações → …)'
+                    : leitura === 'cadastro'
+                      ? 'Cadastro — LINHA, produto compra, eixo A e eixo B'
+                      : 'Compra — pathway da obra, ecrã por comportamento (Solo / Mix / Portfolio)'}
               </p>
             </div>
             {!isMobile && (
@@ -243,14 +254,27 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
       </div>
 
       <div className="flex-1 w-full min-w-0 px-2 sm:px-3 md:px-4 py-3 md:py-4">
-        {!isSupply ? (
+        {!isSupply && leitura === 'catalogo' ? (
+          <CatalogoNovoCatalogPanel
+            catalogProdutos={catalogProdutos}
+            portalFilters={portalFilters}
+            salesVelocityMap={salesVelocityMap}
+            loading={loading}
+            onRefresh={refetchProdutos}
+          />
+        ) : null}
+        {!isSupply && leitura === 'compra' ? (
           <CatalogoEstudoList
             tree={treeAtivo}
             tipo={tipoAtivo}
             leitura={leitura}
             mobileComfortable={isMobile}
           />
-        ) : (
+        ) : null}
+        {!isSupply && leitura === 'cadastro' ? (
+          <CatalogoNovoCadastroPanel />
+        ) : null}
+        {isSupply ? (
           <CatalogoSmartSupplyPanel
             hierarchy={hierarchy}
             flatLines={filteredSupply}
@@ -260,11 +284,13 @@ export default function CatalogoNovoShell({ mode = 'catalog' }) {
             onViewChange={setSupplyView}
             mobileComfortable={isMobile}
           />
-        )}
+        ) : null}
 
+        {leitura !== 'cadastro' ? (
         <p className="text-[11px] text-muted-foreground text-center mt-4 px-2 tabular-nums leading-relaxed">
           {kpiLine}
         </p>
+        ) : null}
       </div>
     </div>
   );

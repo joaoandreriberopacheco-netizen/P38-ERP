@@ -21,17 +21,27 @@ Compras
 
 | Ecrã | Rota | Job do utilizador |
 |------|------|-------------------|
-| **Novo Catálogo** | `CatalogoNovo` | **Explorar** compras: abas **Solo / Mix / Portfolio** (comportamentos separados) + **Pathway** (árvore da obra) ou **Plano SKU** (grade linear). |
+| **Novo Catálogo** | `CatalogoNovo` | **Igual Produtos** (TreeGrid, mobile, colunas, filtros) — árvore **pathway** (Edificações → … → LINHA → produto compra). Cadastro estrutural: **produto compra + eixo A + eixo B**. |
 | **Smart Supply** | `SmartSupplyNovo` | **Decidir reposição**: visão por LINHA, esquadras saldáveis, estoque, ponto futuro, filtro “só alertas”, tabs Mobile / Mix / Portfolio. |
+
+**Âmbito:** estas regras aplicam-se **só ao Novo Ecosistema** (`/CatalogoNovo`, `/SmartSupplyNovo`). O módulo **Produtos** (`/Produtos`) mantém-se inalterado (h1–h5, fluxo actual).
 
 Shell partilhado: `src/components/catalogo-novo/CatalogoNovoShell.jsx` (`mode="catalog"` | `mode="supply"`).
 
-### Duas visões de negócio (não é capricho)
+### Três modos no Novo Catálogo
+
+| Modo | UI | Para quê |
+|------|-----|----------|
+| **Catálogo** | `TreeGrid` + `MobileHierarquica` (mesmos componentes de Produtos) | Explorar SKUs com colunas comerciais; árvore pathway |
+| **Compra** | Pathway + abas Solo / Mix / Portfolio | Administrar distribuição da obra |
+| **Cadastrar** | `CadastroProdutoV2Form` (só Novo Ecosistema) | LINHA → produto compra → eixo A/B — **não** h1–h5 |
+
+### Duas visões de negócio (Compra vs Catálogo)
 
 | Visão | UI | Para quê |
 |-------|-----|----------|
-| **Catálogo** | Linha plana — SKU a SKU, **ordem A–Z**; coluna Tipo; filtros de **busca** e **LINHA** (estilo catálogo Produtos) | Auditar cadastro, converter legado, “estou a ver tudo?” |
-| **Compra** | **Pathway** da obra; abas **Solo / Mix / Portfolio** (ecrã separado por comportamento) | Administrar distribuição — bloco → ramo → LINHA → produto compra / eixos |
+| **Catálogo** | TreeGrid / mobile como Produtos | Auditar, preços, estoque, ABCD — árvore pathway |
+| **Compra** | **Pathway** da obra; abas **Solo / Mix / Portfolio** | Administrar distribuição — bloco → ramo → LINHA → produto compra / eixos |
 
 Mesmo Excel/manifest. Quem começa do zero usa as duas desde o dia 1; quem migra mix legado usa **Catálogo** plano para conferir SKU a SKU e **Compra** para validar a árvore nova.
 
@@ -43,7 +53,10 @@ No **mobile**, alternar entre os dois com **tabs no topo** (sem voltar ao menu).
 - Regenerar manifest: `npm run estudo:catalog-manifest` (corre também no `npm run build`).
 - Mestre de LINHAs (solo/mix/portfolio): `src/data/hierarquiaPortalLinhas.json` — tipos de comportamento, cruzado com coluna `linha` do Excel.
 - Manifest gerado: `src/data/estudoCatalogManifest.generated.json`.
-- Hook: `useCatalogoEstudoData` — **só manifest Excel** (hierarquia + estoque nas colunas do xlsx). **Sem Supabase/Base44 em runtime.**
+- Hook: `useCatalogoEstudoData` — manifest Excel + **enrich comercial** opcional do cadastro (`codigo_interno`); hierarquia **nunca** do Supabase.
+- Adapter TreeGrid: `src/lib/estudoCatalog/mapEstudoToProdutoCatalogRow.js` (pathway → pseudo h1–h4 **só visualização**).
+- Painel catálogo: `src/components/catalogo-novo/CatalogoNovoCatalogPanel.jsx` (reutiliza `TreeGrid`, `MobileHierarquica`).
+- Cadastro estrutural: `src/components/catalogo-novo/CatalogoNovoCadastroPanel.jsx` → `CadastroProdutoV2Form`.
 
 Colunas de estoque no Excel AB: `estoque_atual`, `estoque_sigla`, `estoque_minimo`, `estoque_atualizado_em` (chave `codigo_interno`).
 

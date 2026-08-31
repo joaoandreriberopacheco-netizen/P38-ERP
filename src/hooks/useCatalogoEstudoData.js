@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   buildEstudoSupplyHierarchy,
   enrichEstudoSupplyForPanel,
@@ -10,8 +11,16 @@ import {
   listEstudoLinhas,
   countEstudoEstoqueEncontrado,
 } from '@/lib/estudoCatalog/buildEstudoModel';
+import {
+  indexProdutosPorCodigo,
+  mapEstudoRowsToCatalogProdutos,
+} from '@/lib/estudoCatalog/mapEstudoToProdutoCatalogRow';
 import { getEstudoCatalogManifest, getEstudoManifestMeta } from '@/lib/estudoCatalog/loadEstudoManifest';
 import { getDefaultPortalCatalogFilters } from '@/lib/hierarquiaPortal/portalCatalogFilters';
+import { fetchProdutosAtivos } from '@/lib/fetchProdutosAtivos';
+import { fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
+import { buildCatalogSalesVelocityMap } from '@/lib/catalogSalesVelocity';
+import { base44 } from '@/api/base44Client';
 
 function matchSearch(row, q) {
   const blob = [
@@ -33,8 +42,7 @@ function matchSearch(row, q) {
 }
 
 /**
- * Novo Ecosistema — hierarquia + estoque 100% Excel (manifest offline).
- * Cadastro/Supabase só entra via job nocturno que actualiza o xlsx (codigo_interno).
+ * Novo Ecosistema — hierarquia + estoque Excel; enrich comercial do cadastro (opcional, por codigo_interno).
  */
 export function useCatalogoEstudoData() {
   const [portalFilters, setPortalFilters] = useState(getDefaultPortalCatalogFilters);
@@ -43,6 +51,25 @@ export function useCatalogoEstudoData() {
 
   const manifestMeta = useMemo(() => getEstudoManifestMeta(), []);
   const manifest = useMemo(() => getEstudoCatalogManifest(), []);
+
+  const { data: produtos = [], isLoading: loadingProdutos, refetch: refetchProdutos } = useQuery({
+    queryKey: ['catalogo-estudo', 'produtos-ativos'],
+    staleTime: 5 * 60 * 1000,
+    queryFn: () => fetchProdutosAtivos(base44),
+  });
+
+  const { data: pedidos90d = [], isLoading: loadingVelocity } = useQuery({
+    queryKey: ['catalogo-estudo', 'pedidos-90d'],
+    staleTime: 5 * 60 * 1000,
+    queryFn: () => fetchPedidosVenda90d(base44),
+  });
+
+  const salesVelocityMap = useMemo(
+    () => buildCatalogSalesVelocityMap(pedidos90d),
+    [pedidos90d],
+  );
+
+  const produtoByCodigo = useMemo(() => indexProdutosPorCodigo(produtos), [produtos]);
 
   const enrichedAll = useMemo(() => enrichEstudoRows(manifest), [manifest]);
 
@@ -59,6 +86,11 @@ export function useCatalogoEstudoData() {
   const filteredRowsCompra = useMemo(
     () => filteredRowsBase.filter((r) => r.linha_tipo === tipoAtivo),
     [filteredRowsBase, tipoAtivo],
+  );
+
+  const catalogProdutos = useMemo(
+    () => mapEstudoRowsToCatalogProdutos(filteredRowsBase, produtoByCodigo),
+    [filteredRowsBase, produtoByCodigo],
   );
 
   const treeCatalogo = useMemo(() => buildEstudoTree(filteredRowsBase), [filteredRowsBase]);
@@ -79,9 +111,9 @@ export function useCatalogoEstudoData() {
   }, [linhas]);
 
   return {
-    loading: false,
-    loadingVelocity: false,
-    dataSource: 'excel-estudo',
+    loading: loadingProdutos,
+    loadingVelocity,
+    dataSource: produtoByCodigo.size ? 'excel-estudo+cadastro-comercial' : 'excel-estudo',
     manifestMeta,
     portalFilters,
     setPortalFilters,
@@ -91,15 +123,17 @@ export function useCatalogoEstudoData() {
     setTipoAtivo,
     treeCatalogo,
     treeCompra,
-    /** @deprecated use treeCatalogo ou treeCompra */
     tree: treeCompra,
     hierarchy,
     filteredSupply: supplyLinesPanel,
     linhas,
     enriched: filteredRowsBase,
     enrichedCompra: filteredRowsCompra,
+    catalogProdutos,
+    salesVelocityMap,
     totalSkus: enrichedAll.length,
     tipoCounts,
     estoqueStats,
+    refetchProdutos,
   };
 }

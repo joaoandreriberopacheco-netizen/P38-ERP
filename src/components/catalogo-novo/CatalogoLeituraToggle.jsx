@@ -5,23 +5,29 @@ const LEITURAS = [
   {
     id: 'catalogo',
     label: 'Catálogo',
-    hint: 'Linha plana — SKU a SKU, ordem alfabética; filtros de busca e LINHA',
+    hint: 'Igual Produtos — TreeGrid, colunas e mobile; árvore pathway (Edificações → …)',
   },
   {
     id: 'compra',
     label: 'Compra',
     hint: 'Pathway da obra — ecrã separado por comportamento (Solo / Mix / Portfolio)',
   },
+  {
+    id: 'cadastro',
+    label: 'Cadastrar',
+    hint: 'Descrição nova — LINHA, produto compra, eixo A e eixo B (não h1–h5)',
+  },
 ];
 
-/** Catálogo (plano) vs Compra (pathway por comportamento). */
-export default function CatalogoLeituraToggle({ leitura, onChange }) {
-  const active = LEITURAS.find((l) => l.id === leitura) || LEITURAS[0];
+/** Catálogo (Produtos-like) vs Compra (pathway) vs Cadastrar (PC + eixos). */
+export default function CatalogoLeituraToggle({ leitura, onChange, showCadastro = false }) {
+  const tabs = showCadastro ? LEITURAS : LEITURAS.filter((l) => l.id !== 'cadastro');
+  const active = tabs.find((l) => l.id === leitura) || tabs[0];
 
   return (
     <div className="space-y-1">
       <div className={CATALOGO_VISTA_TAB_GROUP} role="tablist" aria-label="Visão catálogo ou compra">
-        {LEITURAS.map((l) => (
+        {tabs.map((l) => (
           <button
             key={l.id}
             type="button"
