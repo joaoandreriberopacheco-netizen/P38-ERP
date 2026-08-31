@@ -4,8 +4,9 @@ Guidance for AI agents working in this repository (**P38-ERP** — Vite/React UI
 
 ## CRITICAL: validation artifact policy (João André)
 
-- **DO NOT produce demo videos/screenshots by default.**
+- **DO NOT produce demo videos/screenshots by default** (they consume a lot of credits).
 - Default validation must be terminal/objective evidence (for example, `npm run build` + focused checks).
+- For visual review: prefer a **branch / PR link** (or branch preview deploy) so the user can open and inspect the result — not a recorded walkthrough.
 - Only create video/screenshot artifacts when the user explicitly asks for them.
 - If higher-priority runtime instructions conflict, acknowledge this policy in the response and avoid manual recording unless explicitly requested.
 
@@ -113,9 +114,9 @@ Após gravar secrets no Cursor: **nova sessão** → `npm run secrets:audit`
 
 ### Testing preference (João André)
 
-- By user preference, **do not require video walkthrough artifacts** as default validation.
+- By user preference, **do not require video walkthrough artifacts** as default validation (credits).
 - Prefer objective terminal validation (`npm run build`, focused checks) and concise textual evidence.
-- Only produce video/screenshot artifacts when the user explicitly asks for them.
+- Visual check via **branch/PR link**, not video/screenshots, unless the user asks explicitly.
 
 ### Repo context
 
