@@ -5,13 +5,15 @@ Quando o utilizador **não pedir explicitamente** um asset visual:
 - **Não** gerar imagens (`GenerateImage`) para demonstrar UI, mockups ou “como ficou”.
 - **Não** gravar vídeo de ecrã (`RecordScreen`) para simular testes manuais ou walkthroughs.
 - **Não** criar screenshots ou gravações só para “mostrar que funciona”.
+- **Não** usar `computerUse` por defeito (a ferramenta já produz screenshots e pode disparar custo sem valor).
+- Neste repo Base44, **não** usar `localhost` como evidência principal de fluxo de negócio em produção.
 
 ## Em vez disso
 
 - Validar com **comandos** (`npm run build`, `npm run lint`, testes quando existirem).
 - Descrever alterações em **texto** e, se útil, **citações de código**.
-- Testes manuais no browser só quando forem **necessários** para reproduzir um bug — sem gravar vídeo por defeito.
+- Testes manuais no browser só quando forem **necessários** para reproduzir um bug e com pedido explícito do utilizador.
 
 ## Exceção
 
-Só gerar imagem ou vídeo quando o utilizador **pedir explicitamente** (ex.: “gera um ícone”, “grava um vídeo a mostrar o fluxo”).
+Só gerar imagem, vídeo ou usar `computerUse` quando o utilizador **pedir explicitamente** (ex.: “gera um ícone”, “grava um vídeo a mostrar o fluxo”, “testa manualmente no browser”).
