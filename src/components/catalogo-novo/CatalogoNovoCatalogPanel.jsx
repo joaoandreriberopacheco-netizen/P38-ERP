@@ -24,6 +24,7 @@ export default function CatalogoNovoCatalogPanel({
   catalogStockContext = null,
   loading = false,
   onRefresh,
+  mobileComfortable = false,
 }) {
   const isDesktop = useDesktopContent();
   const queryClient = useQueryClient();
@@ -101,7 +102,7 @@ export default function CatalogoNovoCatalogPanel({
   );
 
   return (
-    <div className="flex flex-col min-h-0 w-full">
+    <div className="flex flex-col flex-1 min-h-0 w-full overflow-hidden">
       {isDesktop ? commandBar : null}
 
       {!isDesktop ? (
@@ -109,7 +110,7 @@ export default function CatalogoNovoCatalogPanel({
           <MobileHierarquica
             produtos={filteredProdutos}
             onEdit={handleEdit}
-            flatList={false}
+            flatList
             groupByCategory={false}
             masterLevel={treeLevel}
             sortOrder={sortOrder}
@@ -163,10 +164,6 @@ export default function CatalogoNovoCatalogPanel({
           }}
         />
       ) : null}
-
-      <p className="text-[10px] text-muted-foreground/80 text-center mt-3 px-2 leading-relaxed">
-        Árvore pathway (Edificações → … → LINHA → produto compra). Comercial do cadastro quando há match por código.
-      </p>
     </div>
   );
 }
