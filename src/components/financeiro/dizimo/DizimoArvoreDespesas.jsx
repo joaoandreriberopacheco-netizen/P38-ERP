@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatFinanceiroValor } from '@/components/financeiro/fluxo/FinanceiroListaShared';
+import { formatarNomeItemDizimoLista } from '@/lib/dizimoCalculos';
 import DedutibilidadeBlocoToggle from '@/components/financeiro/dizimo/DedutibilidadeBlocoToggle';
 
 const LINHA_FINA = 'border-black/[0.06] dark:border-white/10';
@@ -72,7 +73,7 @@ function DizimoItemLinha({ item, onConfigChange }) {
       )}
     >
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium truncate">{item.nome}</p>
+        <p className="text-sm font-medium truncate">{formatarNomeItemDizimoLista(item)}</p>
         <p className="text-[11px] text-muted-foreground mt-0.5 tabular-nums">
           {formatFinanceiroValor(item.valorBruto)}
           {item.categoria ? ` · ${item.categoria}` : ''}

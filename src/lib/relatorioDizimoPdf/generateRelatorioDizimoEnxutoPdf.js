@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { registerJsPdfBarlowFonts, normalizePdfText } from '@/lib/jspdfNotoFont';
+import { formatarNomeItemDizimoLista } from '@/lib/dizimoCalculos';
 
 const ENXUTO_LINE_W = 0.12;
 
@@ -24,7 +25,7 @@ const FONT = {
   footer: 7,
 };
 
-const safe = (value) => normalizePdfText(corrigirTextoPt(value));
+const safe = (value) => normalizePdfText(value);
 const number = (value) => Number(value) || 0;
 const moeda = (value) =>
   `R$ ${number(value).toLocaleString('pt-BR', {
@@ -119,13 +120,14 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
     advance(1.4);
   };
 
-  /** Linha simples: despesa + valor (sem categoria nem dedutibilidade). */
+  /** Linha simples: despesa + valor; parcial exibe `(50%)` no nome. */
   const drawItem = (item, { indent = 0 } = {}) => {
     const nomeX = M + indent;
     const nomeW = CW - indent - 30;
+    const rotulo = formatarNomeItemDizimoLista(item);
 
     setFont('normal', FONT.item);
-    const nomeLines = doc.splitTextToSize(safe(item.nome || '—'), nomeW);
+    const nomeLines = doc.splitTextToSize(safe(rotulo), nomeW);
     const blockH = Math.max(4.8, nomeLines.length * 3.8);
 
     ensureSpace(blockH + 1.2);

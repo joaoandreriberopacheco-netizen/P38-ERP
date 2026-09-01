@@ -1,4 +1,4 @@
-import { corrigirTextoPt } from '@/lib/corrigirTextoPt';
+import { corrigirTextoPt } from './corrigirTextoPt.js';
 
 /**
  * Dízimo — demonstrativo espiritual sobre o lucro operacional estimado.
@@ -165,6 +165,16 @@ export function labelModoDedutivel(modo) {
     default:
       return 'Total';
   }
+}
+
+/** Nome para listagem (PDF/tela): acrescenta `(50%)` quando a dedução é parcial. */
+export function formatarNomeItemDizimoLista(item) {
+  const nome = corrigirTextoPt(item?.nome || '—');
+  const config = normalizarConfigItemDizimo(item?.config);
+  if (config.modo === DIZIMO_MODOS.PARCIAL) {
+    return `${nome} (${config.percentual}%)`;
+  }
+  return nome;
 }
 
 function agregarTotais(itens = []) {

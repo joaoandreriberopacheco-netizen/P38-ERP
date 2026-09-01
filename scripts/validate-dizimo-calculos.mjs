@@ -7,6 +7,7 @@ import {
   montarDemonstrativoDizimo,
   calcularFatorDedutivel,
   resolverConfigItensDizimo,
+  formatarNomeItemDizimoLista,
 } from '../src/lib/dizimoCalculos.js';
 
 function assert(cond, msg) {
@@ -125,5 +126,20 @@ const negativo = montarDemonstrativoDizimo(
 );
 assert(negativo.lucroLiquidoOperacional === -40_000, 'prejuízo operacional');
 assert(negativo.dizimo === 0, 'dízimo zero em prejuízo');
+
+assert(
+  formatarNomeItemDizimoLista({
+    nome: 'Rayne',
+    config: { modo: DIZIMO_MODOS.PARCIAL, percentual: 50 },
+  }) === 'Rayne (50%)',
+  'nome parcial na listagem',
+);
+assert(
+  formatarNomeItemDizimoLista({
+    nome: 'Maria',
+    config: { modo: DIZIMO_MODOS.TOTAL, percentual: 100 },
+  }) === 'Maria',
+  'nome total sem sufixo',
+);
 
 console.log('validate-dizimo-calculos: OK');
