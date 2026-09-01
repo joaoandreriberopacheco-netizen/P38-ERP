@@ -3,7 +3,7 @@ import DizimoPlano from '@/components/financeiro/dizimo/DizimoPlano';
 
 export default function DizimoPage() {
   return (
-    <div className="max-w-7xl mx-auto space-y-4 overflow-x-hidden">
+    <div className="max-w-7xl mx-auto space-y-4 overflow-x-hidden font-['Barlow',sans-serif]">
       <P38PageHeader
         variant="page"
         title="Dízimo"

@@ -1,3 +1,5 @@
+import { corrigirTextoPt } from '@/lib/corrigirTextoPt';
+
 /**
  * Dízimo — demonstrativo espiritual sobre o lucro operacional estimado.
  * Deduções configuráveis por item (conta fixa, colaborador, budget, pauta).
@@ -186,10 +188,10 @@ function montarItemDizimo(linha, configItens, grupoId) {
   const valorDedutivel = valorBruto * fatorDedutivel;
   return {
     id: linha.id,
-    nome: linha.nome,
-    detalhe: linha.detalhe || '',
-    categoria: linha.categoria || '',
-    centroCusto: linha.centroCusto || '',
+    nome: corrigirTextoPt(linha.nome),
+    detalhe: corrigirTextoPt(linha.detalhe || ''),
+    categoria: corrigirTextoPt(linha.categoria || ''),
+    centroCusto: corrigirTextoPt(linha.centroCusto || ''),
     valorBruto,
     config,
     fatorDedutivel,
@@ -293,7 +295,9 @@ function montarSecaoDizimo(def, linhas, configItens) {
   }
 
   const filtradas = filtrarLinhasPlano(linhas, { somenteEntraNoTotal: def.somenteEntraNoTotal });
-  const itens = filtradas.map((linha) => montarItemDizimo(linha, configItens, def.grupoId));
+  const itens = filtradas
+    .map((linha) => montarItemDizimo(linha, configItens, def.grupoId))
+    .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR', { sensitivity: 'base' }));
   return {
     id: def.id,
     label: def.label,

@@ -1,3 +1,5 @@
+import { corrigirTextoPt } from '@/lib/corrigirTextoPt';
+
 const NOTO_REGULAR_URL =
   'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSans/NotoSans-Regular.ttf';
 const NOTO_BOLD_URL =
@@ -33,6 +35,14 @@ const ARIMO_ASSET_BASE = `${readAssetBaseUrl()}fonts/arimo/`;
 const ARIMO_REGULAR_URL = `${ARIMO_ASSET_BASE}Arimo-Regular.ttf`;
 const ARIMO_BOLD_URL = `${ARIMO_ASSET_BASE}Arimo-Bold.ttf`;
 
+/** Barlow (OFL) — sans para relatórios com acentuação PT completa (não usar Condensed). */
+const BARLOW_REGULAR_URL =
+  'https://raw.githubusercontent.com/google/fonts/main/ofl/barlow/Barlow-Regular.ttf';
+const BARLOW_SEMIBOLD_URL =
+  'https://raw.githubusercontent.com/google/fonts/main/ofl/barlow/Barlow-SemiBold.ttf';
+const BARLOW_BOLD_URL =
+  'https://raw.githubusercontent.com/google/fonts/main/ofl/barlow/Barlow-Bold.ttf';
+
 const fontCache = {
   regular: null,
   bold: null,
@@ -44,6 +54,9 @@ const fontCache = {
   nunitoBold: null,
   arimoRegular: null,
   arimoBold: null,
+  barlowRegular: null,
+  barlowSemiBold: null,
+  barlowBold: null,
 };
 
 const arrayBufferToBase64 = (buffer) => {
@@ -160,14 +173,40 @@ export async function registerJsPdfArimoFonts(doc) {
   }
 }
 
+/**
+ * Barlow (OFL) — corpo legível com acentos PT; não usar Condensed.
+ * Fallback: Noto Sans.
+ */
+export async function registerJsPdfBarlowFonts(doc) {
+  try {
+    const [regularBase64, semiBoldBase64, boldBase64] = await Promise.all([
+      loadFontBase64(BARLOW_REGULAR_URL, 'barlowRegular'),
+      loadFontBase64(BARLOW_SEMIBOLD_URL, 'barlowSemiBold'),
+      loadFontBase64(BARLOW_BOLD_URL, 'barlowBold'),
+    ]);
+    doc.addFileToVFS('Barlow-Regular.ttf', regularBase64);
+    doc.addFont('Barlow-Regular.ttf', 'Barlow', 'normal');
+    doc.addFileToVFS('Barlow-SemiBold.ttf', semiBoldBase64);
+    doc.addFont('Barlow-SemiBold.ttf', 'Barlow', 'bold');
+    doc.addFileToVFS('Barlow-Bold.ttf', boldBase64);
+    doc.addFont('Barlow-Bold.ttf', 'Barlow', 'heavy');
+    doc.setFont('Barlow', 'normal');
+    return 'Barlow';
+  } catch (err) {
+    console.error('jspdfNotoFont: falha ao carregar Barlow, fallback Noto Sans:', err);
+    return registerJsPdfNotoFonts(doc);
+  }
+}
+
 /** @deprecated Use registerJsPdfDin1451Fonts */
 export const registerJsPdfPrecisionFonts = registerJsPdfDin1451Fonts;
 
 /** Normaliza texto para PDF (Unicode NFC, aspas e travessões). */
 export function normalizePdfText(texto) {
   if (texto === null || texto === undefined) return '';
-  return String(texto)
+  return corrigirTextoPt(String(texto))
     .normalize('NFC')
+    .replace(/\u2212/g, '-')
     .replace(/[\u2013\u2014]/g, '-')
     .replace(/[\u2018\u2019]/g, "'")
     .replace(/[\u201C\u201D]/g, '"')
