@@ -34,7 +34,6 @@ import FolhaPrevisaoDesligamentoDialog from '@/components/folha-previsao/FolhaPr
 import FolhaPrevisaoProjecao from '@/components/folha-previsao/FolhaPrevisaoProjecao';
 import FolhaCentroCustoDragOverlay from '@/components/folha-previsao/FolhaCentroCustoDragOverlay';
 import FolhaCentrosCustoDialog from '@/components/folha-previsao/FolhaCentrosCustoDialog';
-import FolhaPessoasPorCentroLista from '@/components/folha-previsao/FolhaPessoasPorCentroLista';
 import FolhaSimulacao from '@/components/folha-previsao/FolhaSimulacao';
 import {
   calcularTotaisGrupo,
@@ -704,12 +703,13 @@ export default function FolhaPrevisaoPage() {
                         : '',
                     )}
                   >
-                    <div className="px-3 py-2 border-b border-border/50">
+                    <div className="px-3 py-2 border-b border-border/50 flex items-center justify-between gap-2">
                       <p className="text-sm font-semibold text-foreground print:text-black">{centroLabel}</p>
-                      <FolhaPessoasPorCentroLista
-                        pessoas={pessoas}
-                        colaboradoresMap={colaboradoresMap}
-                      />
+                      {pessoas.length > 0 && (
+                        <span className="text-xs text-muted-foreground print:text-black/70">
+                          {pessoas.length} {pessoas.length === 1 ? 'pessoa' : 'pessoas'}
+                        </span>
+                      )}
                     </div>
                     {pessoas.length > 0 ? (
                       <P38MobileLineList className="block md:!block rounded-none overflow-hidden">
@@ -733,7 +733,7 @@ export default function FolhaPrevisaoPage() {
                               onEdit={setPessoaDialog}
                               onDelete={handleDeletePessoa}
                               striped={idx % 2 === 1}
-                              showTitle={false}
+                              showCentroCusto={false}
                             />
                           </div>
                         ))}
