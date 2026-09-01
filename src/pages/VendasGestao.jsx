@@ -49,6 +49,7 @@ import {
 import { formatarDataHora, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
 import { filterPedidosVendaElegiblesKpi, isPedidoOrcamento } from '@/lib/pedidoVendaEligibility';
 import { resolveValorPedidoVendaGestao } from '@/lib/financialUtils';
+import { buildIndiceDevolucaoPorPedido } from '@/lib/consultaVendaPosMovimentacao';
 const fmtDtHora = (d) => d ? formatarDataHora(d) : '-';
 const fmtDataCurta = (d) => d ? formatarSoData(d) : '';
 
@@ -499,6 +500,7 @@ function VendasGestaoPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pedidosConsultaComItens, setPedidosConsultaComItens] = useState([]);
   const [consultaHydrating, setConsultaHydrating] = useState(false);
+  const [devolucoesConsulta, setDevolucoesConsulta] = useState([]);
 
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [pedidoDetalhes, setPedidoDetalhes] = useState(null);
@@ -689,6 +691,26 @@ function VendasGestaoPage() {
       cancelled = true;
     };
   }, [activeTab, vendasConsulta]);
+
+  useEffect(() => {
+    if (activeTab !== 'consulta') return undefined;
+    let cancelled = false;
+    base44.entities.DevolucaoTroca.list('-created_date', 1000)
+      .then((rows) => {
+        if (!cancelled) setDevolucoesConsulta(Array.isArray(rows) ? rows : []);
+      })
+      .catch(() => {
+        if (!cancelled) setDevolucoesConsulta([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab]);
+
+  const indiceDevolucoesConsulta = useMemo(
+    () => buildIndiceDevolucaoPorPedido(devolucoesConsulta),
+    [devolucoesConsulta],
+  );
 
   const pedidosFiltradosParaSoma = useMemo(
     () => filterPedidosVendaElegiblesKpi(pedidosFiltrados),
@@ -1172,6 +1194,7 @@ function VendasGestaoPage() {
           ) : (
             <ConsultaVendasCaixa
               vendasFinalizadas={pedidosConsultaComItens}
+              indiceDevolucoes={indiceDevolucoesConsulta}
               contextLabel="Consulta de vendas"
               emptyMessage="Nenhuma venda finalizada no período selecionado"
             />

@@ -9,8 +9,10 @@ import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { formatarDataHora } from '@/components/utils/dateUtils';
 import FormaPagamentoBadges from '@/components/vendas/FormaPagamentoBadges';
 import TrocaCaixaCard from '@/components/vendas/caixa/TrocaCaixaCard';
+import ConsultaSubstituicaoPainel from '@/components/vendas/caixa/ConsultaSubstituicaoPainel';
 import { ConsultaProdutoRow } from '@/components/vendas/caixa/ConsultaProdutoRow';
 import VendaValorResumo from '@/components/vendas/caixa/VendaValorResumo';
+import { montarConsultaComprovantePosMovimentacao } from '@/lib/consultaVendaPosMovimentacao';
 import {
   partitionVendasConsultaCaixa,
 } from '@/lib/substituicoesVendaCaixa';
@@ -67,6 +69,7 @@ function TrocaResumoLinha({ venda, meta }) {
 export default function ConsultaVendasCaixa({
   vendasFinalizadas = [],
   metaPorPedidoId = {},
+  indiceDevolucoes = { porPedidoId: new Map(), porPedidoNumero: new Map() },
   contextLabel = 'Consulta do turno',
   emptyMessage = 'Nenhuma venda finalizada no turno',
   formaPagamentoKey = null,
@@ -209,6 +212,10 @@ export default function ConsultaVendasCaixa({
                   ? valorFormaPagamentoNoPedido(venda, formaPagamentoKey)
                   : null;
                 const hora = horaDaVenda(venda);
+                const posMovimentacao = montarConsultaComprovantePosMovimentacao(venda, indiceDevolucoes);
+                const itensExibir = posMovimentacao?.itensAjustados?.length
+                  ? posMovimentacao.itensAjustados
+                  : venda.itens || [];
 
                 return (
                 <div key={venda.id} className={caixaConsultaCard}>
@@ -235,10 +242,10 @@ export default function ConsultaVendasCaixa({
                       pagamentoMisto={pagamentoMisto}
                     />
                   </div>
-                  <P38MobileLineList allViewports className="rounded-none border-0 overflow-hidden rounded-b-2xl">
-                    {(venda.itens || []).map((item, idx) => (
+                  <P38MobileLineList allViewports className="rounded-none border-0 overflow-hidden">
+                    {itensExibir.map((item, idx) => (
                       <ConsultaProdutoRow
-                        key={`${venda.id}-${idx}`}
+                        key={`${venda.id}-${item.produto_id || idx}`}
                         quantidade={item.quantidade}
                         unidade={item.unidade_medida}
                         nome={item.produto_nome}
@@ -246,10 +253,16 @@ export default function ConsultaVendasCaixa({
                         precoLista={item.preco_unitario_praticado}
                         descontoUnitario={item.desconto_unitario}
                         striped={idx % 2 === 1}
-                        accent="muted"
+                        accent={posMovimentacao ? 'info' : 'muted'}
                       />
                     ))}
                   </P38MobileLineList>
+                  {posMovimentacao ? (
+                    <ConsultaSubstituicaoPainel
+                      substituicoes={posMovimentacao.substituicoes}
+                      saldoOperacao={posMovimentacao.saldoOperacao}
+                    />
+                  ) : null}
                 </div>
               );
               })}

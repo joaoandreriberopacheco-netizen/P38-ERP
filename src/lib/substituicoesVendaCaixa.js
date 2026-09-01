@@ -54,6 +54,7 @@ function devolucaoDados(dt) {
 }
 
 export function devolucaoItensSubstitutos(dt) {
+  if (Array.isArray(dt?.itens_substitutos)) return dt.itens_substitutos;
   const dados = devolucaoDados(dt);
   return Array.isArray(dados.itens_substitutos) ? dados.itens_substitutos : [];
 }
