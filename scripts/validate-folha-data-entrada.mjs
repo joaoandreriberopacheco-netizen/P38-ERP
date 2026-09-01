@@ -9,6 +9,7 @@ import {
   diasTrabalhadosNaCompetencia,
   fatorDecimoTerceiroProporcional,
   fatorProporcionalCompetencia,
+  extrairSalarioBase,
   modeloEstaAtivoNaCompetencia,
 } from '../src/lib/folhaPrevisaoCalculos.js';
 
@@ -62,5 +63,13 @@ const modeloLegado = {
 assert(fatorProporcionalCompetencia(modeloLegado, '2026-09') === 1, 'legado fator 1');
 assert(fatorDecimoTerceiroProporcional(modeloLegado, '2026-11') === 1, 'legado 13º cheio');
 assert(competenciaDireitoFerias(modeloLegado) === null, 'legado sem data férias');
+
+// Cenário AGEFIN PDF (entrada dia 17 → salário proporcional no card)
+const salarioAgefin =
+  extrairSalarioBase(modeloNovo) * fatorProporcionalCompetencia(modeloNovo, '2026-09');
+assert(
+  Math.abs(salarioAgefin - 3000 * (14 / 30)) < 0.02,
+  `agefin card salário proporcional (${salarioAgefin})`,
+);
 
 console.log('OK — validate-folha-data-entrada');

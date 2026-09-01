@@ -12,6 +12,7 @@ import {
   dataVencimentoPagamentoFolha,
   extrairSalarioBase,
   FOLHA_DIA_VENCIMENTO,
+  fatorProporcionalCompetencia,
   isSocio,
   mapaModelosPorColaborador,
   modeloEstaAtivoNaCompetencia,
@@ -43,7 +44,7 @@ export function competenciaReferenteAoPagamentoDia5(dataPagamentoIso) {
  * @returns {Promise<{
  *   dataPagamento: string,
  *   competencia: string,
- *   linhas: Array<{ nome: string, salario: number, liquido: number }>,
+ *   linhas: Array<{ nome: string, salario: number, liquido: number, resumoProporcional?: string | null }>,
  *   totalSalarios: number,
  *   totalLiquido: number,
  * }>}
@@ -86,18 +87,21 @@ export async function carregarFolhaParaRelatorioDia5(dataPagamentoIso) {
     if (isSocio(modelo)) continue;
 
     const nome = nomeColaboradorCompetencia(comp, modelosMap) || modelo.colaborador_nome || '—';
-    const salario =
+    const salarioBase =
       extrairSalarioBase(modelo) ||
       extrairSalarioBase({ rubricas: comp.rubricas }) ||
       0;
     const totais = calcularTotaisCompetencia(comp, modelo);
+    const fatorMes = fatorProporcionalCompetencia(modelo, competencia);
+    const salario = (Number(salarioBase) || 0) * fatorMes;
     const liquido = Number(totais.liquido) || 0;
-    if (!(liquido > 0) && !(Number(salario) > 0)) continue;
+    if (!(liquido > 0) && !(salario > 0)) continue;
 
     linhas.push({
       nome,
-      salario: Number(salario) || 0,
+      salario,
       liquido,
+      resumoProporcional: totais.resumoProporcional || null,
     });
   }
 
@@ -155,11 +159,15 @@ export function montarHtmlSecaoFolhaAnaloga({ folha, spx, escapeHtml, formatCurr
   /** Cada funcionário = um bloco; 3 colunas; nome|valor na mesma linha; anotações sem linhas. */
   const artigoDeLinha = (row) => {
     const salarioLabel = row.salario > 0 ? formatCurrency(row.salario) : '—';
+    const proporcionalHint = row.resumoProporcional
+      ? `<p style="margin:4px 0 0;font-size:${spx(8)};line-height:1.1;color:#64748b">Proporcional ${escapeHtml(row.resumoProporcional)}</p>`
+      : '';
     return `<article style="break-inside:avoid;page-break-inside:avoid;border:1px solid #cbd5e1;border-radius:8px;background:#fff;padding:10px 10px 14px;min-height:336px;box-sizing:border-box">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
         <p style="margin:0;flex:1;min-width:0;font-size:${spx(12)};line-height:1.2;font-weight:700;color:#000;text-transform:uppercase;letter-spacing:0.01em">${escapeHtml(row.nome)}</p>
         <p style="margin:0;flex-shrink:0;font-size:${spx(12)};line-height:1.2;font-weight:700;color:#000">${escapeHtml(salarioLabel)}</p>
       </div>
+      ${proporcionalHint}
       <p style="margin:10px 0 0;font-size:${spx(9)};line-height:1.1;color:#64748b;text-transform:uppercase;letter-spacing:0.06em">Anotações</p>
     </article>`;
   };

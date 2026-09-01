@@ -118,7 +118,7 @@ export async function entregarPdfBlob(blob, filename, title) {
  *   totalImpresso: number, // contas do mês + total orçado das provisões (quando houver)
  *   grupos: Array<{ key: string, label: string, contas: object[] }>,
  *   dataPagamentoFolha?: string,
- *   folha?: { competencia: string, linhas: Array<{ nome: string, salario: number, liquido: number }>, dataPagamento: string } | null,
+ *   folha?: { competencia: string, linhas: Array<{ nome: string, salario: number, liquido: number, resumoProporcional?: string | null }>, dataPagamento: string } | null,
  *   budgetsAgrupados?: { competencia: string, grupos: Array<{ centro: string, totalOrcado: number, itens: object[] }>, totalOrcado: number } | null,
  * }} opts
  */
@@ -457,7 +457,18 @@ function desenharFolhaPdf(pdf, { folha, setFont, y, ensureSpace, contentW, forma
       pdf.text(nomeLines, x + pad, textTop);
       pdf.text(valorStr, x + cardW - pad, textTop, { align: 'right' });
 
-      const labelY = textTop + (nomeLines.length > 1 ? 5 : 0) + 6;
+      let labelY = textTop + (nomeLines.length > 1 ? 5 : 0) + 6;
+      if (row.resumoProporcional) {
+        setFont('normal');
+        pdf.setFontSize(FONT_MIN - 1);
+        pdf.setTextColor(100, 116, 139);
+        pdf.text(
+          normalizePdfText(`Proporcional ${row.resumoProporcional}`),
+          x + pad,
+          labelY,
+        );
+        labelY += 4;
+      }
       setFont('normal');
       pdf.setFontSize(FONT_LABEL);
       pdf.setTextColor(100, 116, 139);
