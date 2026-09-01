@@ -353,4 +353,35 @@ export async function fetchPedidosVendaParaMargem() {
   return hidratarPedidosSemItens(pedidos, dataKey);
 }
 
+/** Pedidos origem referenciados em devoluções/trocas (para lucro já contabilizado). */
+export async function fetchPedidosOrigemTrocaMargem(devolucoes = []) {
+  const ids = [
+    ...new Set(
+      (devolucoes || [])
+        .filter((dt) => String(dt?.status || '').toLowerCase() !== 'cancelada')
+        .map((dt) => dt?.pedido_origem_id)
+        .filter(Boolean)
+        .map(String),
+    ),
+  ];
+
+  const map = {};
+  if (!ids.length) return map;
+
+  const dataKey = isoDiasAtrasDateKey(3650);
+  for (const id of ids) {
+    try {
+      const batch = await base44.entities.PedidoVenda.filter({ id });
+      const pedido = rowsFromApi(batch)[0];
+      if (!pedido) continue;
+      const [hidratado] = await hidratarPedidosSemItens([pedido], dataKey);
+      if (hidratado) map[String(id)] = hidratado;
+    } catch {
+      /* pedido origem indisponível */
+    }
+  }
+
+  return map;
+}
+
 export { countLinhasItens };

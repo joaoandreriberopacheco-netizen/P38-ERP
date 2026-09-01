@@ -13,6 +13,12 @@ import {
   resolveCustoTotalUnitBaseProduto,
   resolveValorDescontoCompraPadraoFator1,
 } from '@/lib/productUnits';
+import {
+  aplicarDeducaoLucroTrocaSubstituto,
+  buildIndiceDevolucaoTrocaMargem,
+  resolverDevolucaoTrocaPedidoMargem,
+  valorSubstitutosTrocaMargem,
+} from '@/lib/relatorioMargemTroca';
 
 export const CUSTO_MARGEM_CAMPOS = [
   {
@@ -293,7 +299,7 @@ function roundMoney(value) {
   return Math.round((Number(value) || 0) * 100) / 100;
 }
 
-function itensPedidoValidos(pedido = {}) {
+export function itensPedidoValidos(pedido = {}) {
   return (Array.isArray(pedido.itens) ? pedido.itens : []).filter(
     (item) => item && typeof item === 'object',
   );
@@ -344,14 +350,17 @@ function distribuirValorProporcional(total, pesos = []) {
 /**
  * Rateia o valor_total do pedido nas linhas (peso = total bruto da linha).
  * Garante que a soma da receita líquida = valor do pedido na Consulta de Vendas.
+ * Em pedidos substituto de troca, usa o valor bruto dos substitutos (crédito + diferença).
  */
-export function alocarReceitaPedidoNasLinhas(pedido = {}) {
+export function alocarReceitaPedidoNasLinhas(pedido = {}, trocaMargem = null) {
   const itens = itensPedidoValidos(pedido);
   if (!itens.length) return [];
 
   const brutos = itens.map((item) => resolverTotalLinhaVenda(item));
   const somaBruta = brutos.reduce((acc, valor) => acc + valor, 0);
-  const valorPedido = resolverValorTotalPedido(pedido);
+  const valorSubstitutos = Number(trocaMargem?.valorSubstitutos) || 0;
+  const valorPedido =
+    valorSubstitutos > 0 ? roundMoney(valorSubstitutos) : resolverValorTotalPedido(pedido);
 
   if (valorPedido <= 0 && somaBruta <= 0) {
     return itens.map(() => ({
@@ -383,10 +392,50 @@ function vendaNoIntervalo(sale, from, to) {
   return vendaNoIntervaloConsulta(sale, from, to);
 }
 
+function margemTrocaDeps() {
+  return {
+    alocarReceitaPedidoNasLinhas,
+    resolverCustoUnitarioMargem: resolveCustoUnitarioMargem,
+    resolverTotalLinhaVenda,
+    resolveMargemProdutoKey,
+    itensPedidoValidos,
+  };
+}
+
+function resolverTrocaMargemPedido(pedido, indiceTrocas) {
+  const devolucao = resolverDevolucaoTrocaPedidoMargem(pedido, indiceTrocas);
+  if (!devolucao) return null;
+  const valorSubstitutos = valorSubstitutosTrocaMargem(devolucao, pedido, resolverTotalLinhaVenda);
+  if (valorSubstitutos <= 0) return null;
+  return { devolucao, valorSubstitutos };
+}
+
+function finalizarLinhaMargem(item) {
+  const custo_total = calcularCustoTotalDosComponentes(item);
+  const receita_liquida = item.total_recebido - item.total_desconto_venda;
+  const deducaoTroca = Number(item.lucro_troca_deducao) || 0;
+  const lucro_total = roundMoney(receita_liquida - custo_total - deducaoTroca);
+  return {
+    ...item,
+    custo_total,
+    receita_liquida,
+    lucro_total,
+    lucro_troca_deducao: deducaoTroca,
+  };
+}
+
 /**
  * Agrega vendas por produto no intervalo — espelho do RelatorioMargem.
+ * @param {object[]} [devolucoesTroca] — devolução/troca para ajuste de receita e lucro devolvido
+ * @param {Record<string, object>} [pedidosOrigemTroca] — pedidos origem (id → pedido com itens)
  */
-export function calcularLinhasMargemVendas(sales = [], products = [], intervalo = null) {
+export function calcularLinhasMargemVendas(
+  sales = [],
+  products = [],
+  intervalo = null,
+  devolucoesTroca = [],
+  pedidosOrigemTroca = {},
+) {
   const prodMap = (products || []).reduce((acc, p) => {
     if (p?.id) acc[p.id] = p;
     return acc;
@@ -394,13 +443,15 @@ export function calcularLinhasMargemVendas(sales = [], products = [], intervalo 
 
   const reportMap = {};
   const { from, to } = intervalo || {};
+  const indiceTrocas = buildIndiceDevolucaoTrocaMargem(devolucoesTroca);
 
   for (const sale of sales || []) {
     if (!pedidoElegivelMargem(sale)) continue;
     if (!vendaNoIntervalo(sale, from, to)) continue;
 
+    const trocaMargem = resolverTrocaMargemPedido(sale, indiceTrocas);
     const itens = itensPedidoValidos(sale);
-    const alocacoes = alocarReceitaPedidoNasLinhas(sale);
+    const alocacoes = alocarReceitaPedidoNasLinhas(sale, trocaMargem);
 
     for (let index = 0; index < itens.length; index += 1) {
       const item = itens[index];
@@ -420,6 +471,7 @@ export function calcularLinhasMargemVendas(sales = [], products = [], intervalo 
           total_recebido: 0,
           total_desconto_venda: 0,
           custo_unitario_cadastro: custoCalculado,
+          lucro_troca_deducao: 0,
           ...criarCamposCustoComponentesZerados(),
         };
       }
@@ -441,19 +493,22 @@ export function calcularLinhasMargemVendas(sales = [], products = [], intervalo 
         quantidadeBase,
       );
     }
+
+    if (trocaMargem?.devolucao) {
+      const pedidoOrigem =
+        pedidosOrigemTroca[String(trocaMargem.devolucao.pedido_origem_id || '')] || null;
+      aplicarDeducaoLucroTrocaSubstituto({
+        reportMap,
+        pedido: sale,
+        devolucao: trocaMargem.devolucao,
+        pedidoOrigem,
+        prodMap,
+        deps: margemTrocaDeps(),
+      });
+    }
   }
 
-  return Object.values(reportMap).map((item) => {
-    const custo_total = calcularCustoTotalDosComponentes(item);
-    const receita_liquida = item.total_recebido - item.total_desconto_venda;
-    const lucro_total = receita_liquida - custo_total;
-    return {
-      ...item,
-      custo_total,
-      receita_liquida,
-      lucro_total,
-    };
-  });
+  return Object.values(reportMap).map(finalizarLinhaMargem);
 }
 
 export function calcularTotaisMargem(linhas = []) {

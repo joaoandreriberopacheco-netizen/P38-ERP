@@ -18,7 +18,8 @@ import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import CalendarPopup from '@/components/relatorios/CalendarPopup';
 import { resolveCommercialDisplay, formatCommercialQuantity } from '@/lib/productUnits';
-import { fetchPedidosVendaParaMargem } from '@/lib/fetchPedidosVenda90d';
+import { fetchPedidosVendaParaMargem, fetchPedidosOrigemTrocaMargem } from '@/lib/fetchPedidosVenda90d';
+import { base44 } from '@/api/base44Client';
 import { fetchAllProdutosCatalogo } from '@/lib/fetchProdutosAtivos';
 import {
   pedidoElegivelMargem,
@@ -36,7 +37,15 @@ import {
   resolvePrecoVendaLiquidoUnitarioMargem,
   CUSTO_MARGEM_CAMPOS,
   vendaNoIntervaloConsulta,
+  itensPedidoValidos,
+  resolverTotalLinhaVenda,
 } from '@/lib/relatorioMargemCalculos';
+import {
+  aplicarDeducaoLucroTrocaSubstituto,
+  buildIndiceDevolucaoTrocaMargem,
+  resolverDevolucaoTrocaPedidoMargem,
+  valorSubstitutosTrocaMargem,
+} from '@/lib/relatorioMargemTroca';
 import { registerJsPdfDin1451Fonts, normalizePdfText } from '@/lib/jspdfNotoFont';
 import {
   p38Table,
@@ -748,6 +757,8 @@ function useMarginColumnHeaderPin(scrollRef) {
 export default function RelatorioMargemVendas() {
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
+  const [devolucoesTroca, setDevolucoesTroca] = useState([]);
+  const [pedidosOrigemTroca, setPedidosOrigemTroca] = useState({});
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('plana'); // 'dinamica' | 'plana'
   const [treeLevel, setTreeLevel] = useState(99);
@@ -771,6 +782,12 @@ export default function RelatorioMargemVendas() {
       const prods = await fetchAllProdutosCatalogo();
       setProducts(prods);
 
+      const devolucoes = await base44.entities.DevolucaoTroca.list();
+      setDevolucoesTroca(Array.isArray(devolucoes) ? devolucoes : []);
+
+      const origemMap = await fetchPedidosOrigemTrocaMargem(devolucoes);
+      setPedidosOrigemTroca(origemMap);
+
       const allSales = await fetchPedidosVendaParaMargem();
       setSales(allSales);
 
@@ -791,13 +808,30 @@ export default function RelatorioMargemVendas() {
     }, {});
 
     const reportMap = {};
+    const indiceTrocas = buildIndiceDevolucaoTrocaMargem(devolucoesTroca);
+    const margemTrocaDeps = {
+      alocarReceitaPedidoNasLinhas,
+      resolverCustoUnitarioMargem: resolveCustoUnitarioMargem,
+      resolverTotalLinhaVenda,
+      resolveMargemProdutoKey,
+      itensPedidoValidos,
+    };
 
     sales.forEach(sale => {
        if (!pedidoElegivelMargem(sale)) return;
        if (!vendaNoIntervaloConsulta(sale, dateRange?.from, dateRange?.to)) return;
 
-       const itens = Array.isArray(sale.itens) ? sale.itens.filter((item) => item && typeof item === 'object') : [];
-       const alocacoes = alocarReceitaPedidoNasLinhas(sale);
+       const devolucaoTroca = resolverDevolucaoTrocaPedidoMargem(sale, indiceTrocas);
+       const valorSubstitutos = devolucaoTroca
+         ? valorSubstitutosTrocaMargem(devolucaoTroca, sale, resolverTotalLinhaVenda)
+         : 0;
+       const trocaMargem =
+         devolucaoTroca && valorSubstitutos > 0
+           ? { devolucao: devolucaoTroca, valorSubstitutos }
+           : null;
+
+       const itens = itensPedidoValidos(sale);
+       const alocacoes = alocarReceitaPedidoNasLinhas(sale, trocaMargem);
 
        itens.forEach((item, index) => {
          const alloc = alocacoes[index] || {
@@ -830,6 +864,7 @@ export default function RelatorioMargemVendas() {
              quantidade_base_vendida: 0,
              total_recebido: 0,
              total_desconto_venda: 0,
+             lucro_troca_deducao: 0,
              custo_unitario_cadastro: custoCalculado,
              ...criarCamposCustoComponentesZerados(),
            };
@@ -852,12 +887,26 @@ export default function RelatorioMargemVendas() {
            quantidadeBase,
          );
        });
+
+       if (trocaMargem?.devolucao) {
+         const pedidoOrigem =
+           pedidosOrigemTroca[String(trocaMargem.devolucao.pedido_origem_id || '')] || null;
+         aplicarDeducaoLucroTrocaSubstituto({
+           reportMap,
+           pedido: sale,
+           devolucao: trocaMargem.devolucao,
+           pedidoOrigem,
+           prodMap,
+           deps: margemTrocaDeps,
+         });
+       }
      });
 
     let sorted = Object.values(reportMap).map(item => {
        const custo_total = calcularCustoTotalDosComponentes(item);
        const receita_liquida = item.total_recebido - item.total_desconto_venda;
-       const lucro_total = receita_liquida - custo_total;
+       const deducaoTroca = Number(item.lucro_troca_deducao) || 0;
+       const lucro_total = receita_liquida - custo_total - deducaoTroca;
        const valor_unitario_medio =
          item.quantidade_vendida > 0 ? receita_liquida / item.quantidade_vendida : 0;
        const margem_percentual = receita_liquida > 0 ? (lucro_total / receita_liquida) * 100 : 0;
@@ -918,7 +967,7 @@ export default function RelatorioMargemVendas() {
       console.error('Erro ao processar dados do relatório de margem', error);
       return [];
     }
-  }, [sales, products, dateRange, searchTerm, sortField, sortOrder]);
+  }, [sales, products, devolucoesTroca, pedidosOrigemTroca, dateRange, searchTerm, sortField, sortOrder]);
 
   const marginTree = useMemo(
     () => buildMarginTree(Array.isArray(processedData) ? processedData : []),
