@@ -229,10 +229,6 @@ export default function VendasTab({ enabled = true } = {}) {
             </CardHeader>
             <CardContent className="pt-1">
               <div className={p38Dashboard.innerPanel}>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
-                  Fórmula: mesma base do Relatório de Margem (venda líquida − custo cadastro, com trocas)
-                </p>
-
                 <div className="grid grid-cols-1 sm:grid-cols-[150px,1fr] gap-2.5 items-center">
                   <div className="h-[140px] relative">
                     <ResponsiveContainer width="100%" height="100%">
