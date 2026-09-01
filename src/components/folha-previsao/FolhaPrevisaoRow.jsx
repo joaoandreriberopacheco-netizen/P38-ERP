@@ -46,6 +46,9 @@ export default function FolhaPrevisaoRow({ competencia, modelo, onClick, striped
       )}
       {ultimoMes && <P38StatusLabel tone="warning">Último mês</P38StatusLabel>}
       {desligado && !ultimoMes && <P38StatusLabel tone="muted">Desligou</P38StatusLabel>}
+      {totais.resumoProporcional && (
+        <P38StatusLabel tone="info">Proporcional {totais.resumoProporcional}</P38StatusLabel>
+      )}
       {totais.totalValesPendentes > 0 && (
         <P38StatusLabel tone="warning">Vale em aberto</P38StatusLabel>
       )}

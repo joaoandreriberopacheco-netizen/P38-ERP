@@ -25,6 +25,8 @@ import {
   criarRubricasPadrao,
   extrairSalarioBase,
   formatDataBr,
+  formatCompetenciaLabel,
+  competenciaDireitoFerias,
   gerarIdInterno,
 } from '@/lib/folhaPrevisaoCalculos';
 
@@ -152,6 +154,7 @@ export default function FolhaPessoaDialog({
     onSave({
       ...form,
       rubricas,
+      data_entrada: form.data_entrada?.trim() || null,
       _modoPessoa: editando ? 'existente' : modoPessoa,
       _novoColaborador:
         !editando && modoPessoa === 'nova'
@@ -427,6 +430,33 @@ export default function FolhaPessoaDialog({
               </div>
             </div>
           )}
+
+          <div>
+            <LabelComAjuda label="Data de entrada" ajudaLabel="Ajuda: data de entrada">
+              <p className="text-muted-foreground">
+                <strong className="text-foreground">Quem já está há tempo:</strong> deixe em branco — o sistema considera direito integral (salário, 13º e férias cheios).
+              </p>
+              <p className="text-muted-foreground">
+                <strong className="text-foreground">Quem está entrando agora:</strong> informe o dia de início. O primeiro mês será proporcional aos dias trabalhados; 13º e contagem de férias seguem a mesma regra.
+              </p>
+            </LabelComAjuda>
+            <Input
+              type="date"
+              className="mt-1.5"
+              value={form.data_entrada || ''}
+              onChange={(e) => setForm({ ...form, data_entrada: e.target.value })}
+              disabled={desligado}
+            />
+            {form.data_entrada && !ehSocio && (
+              <p className="text-[10px] text-muted-foreground mt-1.5">
+                Direito a férias a partir de{' '}
+                <strong className="text-foreground">
+                  {formatCompetenciaLabel(competenciaDireitoFerias(form))}
+                </strong>
+                {' '}(12 meses após a entrada).
+              </p>
+            )}
+          </div>
 
           <button
             type="button"

@@ -12,6 +12,8 @@ import {
   CLASSIFICACAO_DESPESA_FOLHA_LABELS,
   formatCurrency,
   extrairSalarioBase,
+  formatDataBr,
+  parseDataIso,
 } from '@/lib/folhaPrevisaoCalculos';
 
 export default function FolhaPrevisaoModeloRow({
@@ -35,6 +37,7 @@ export default function FolhaPrevisaoModeloRow({
     ? CLASSIFICACAO_DESPESA_FOLHA.DIRETA
     : CLASSIFICACAO_DESPESA_FOLHA.INDIRETA;
   const centroCusto = String(modelo.centro_custo || '').trim();
+  const dataEntrada = parseDataIso(modelo.data_entrada);
 
   const resumoPrincipal =
     tipo === 'socio'
@@ -48,6 +51,11 @@ export default function FolhaPrevisaoModeloRow({
   const meta = (
     <>
       <span>{tipo === 'socio' ? 'Sócio' : 'Funcionário'}</span>
+      {dataEntrada && (
+        <span className="text-foreground/80 print:text-black/80">
+          Entrada {formatDataBr(dataEntrada)}
+        </span>
+      )}
       <P38StatusLabel tone={classificacaoDespesa === CLASSIFICACAO_DESPESA_FOLHA.DIRETA ? 'success' : 'warning'}>
         {classificacaoDespesa === CLASSIFICACAO_DESPESA_FOLHA.DIRETA ? 'Direta' : 'Indireta'}
       </P38StatusLabel>

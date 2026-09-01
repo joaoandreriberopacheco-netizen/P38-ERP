@@ -412,6 +412,7 @@ export async function duplicarModelo(modelo, overrides = {}) {
       rubricas,
       situacao: SITUACAO_FOLHA.ATIVO,
       data_desligamento: '',
+      data_entrada: modelo?.data_entrada || null,
       valor_rescisao_previsto: 0,
       ...overrides,
     }),

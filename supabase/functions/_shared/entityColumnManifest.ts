@@ -265,7 +265,7 @@ export const TABLE_PROMOTION_MANIFEST = {
   venda_perdida: ['data_registro', 'motivo', 'origem', 'produto_nome', 'quantidade_desejada', 'vendedor_id'],
   folha_previsao_modelo: [
     'nome', 'descricao', 'ativo', 'colaborador_id', 'colaborador_nome', 'centro_custo',
-    'classificacao_despesa', 'custo_direto', 'data_desligamento', 'decimo_mes_parcela_1',
+    'classificacao_despesa', 'custo_direto', 'data_desligamento', 'data_entrada', 'decimo_mes_parcela_1',
     'decimo_mes_parcela_2', 'decimo_percentual_parcela', 'decimo_terceiro_ativo', 'dia_vencimento',
     'ferias_programadas', 'retirada_frequencia', 'retirada_valor_fixo', 'rubricas', 'situacao',
     'tipo_vinculo', 'valor_rescisao_previsto',
