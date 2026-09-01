@@ -16,6 +16,7 @@ import {
 import {
   aplicarDeducaoLucroTrocaSubstituto,
   buildIndiceDevolucaoTrocaMargem,
+  calcularDeducaoLucroDevolvidoMargem,
   resolverDevolucaoTrocaPedidoMargem,
   valorSubstitutosTrocaMargem,
 } from '@/lib/relatorioMargemTroca';
@@ -82,8 +83,18 @@ export function competenciaParaIntervalo(competencia) {
 /** Mesmo recorte da aba Consulta em VendasGestao. */
 export function pedidoElegivelMargem(pedido) {
   if (!pedido) return false;
-  if (String(pedido.status) === 'Cancelado') return false;
-  return STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA.includes(pedido.status);
+  const status = pedido.status ?? pedido.dados?.status;
+  if (String(status) === 'Cancelado') return false;
+  return STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA.includes(status);
+}
+
+/** Data da venda no Margem — created_date em UTC-5 (Rio Branco), como Consulta de Vendas. */
+export function getDataVendaMargem(pedido) {
+  const key = toLocalDateKey(pedido?.created_date ?? pedido?.created_at);
+  if (!key) return null;
+  const [y, m, d] = key.split('-').map(Number);
+  if (!y || !m || !d) return null;
+  return new Date(y, m - 1, d, 12, 0, 0, 0);
 }
 
 /** Mesma data da Consulta de Vendas: created_date em UTC-5 (Rio Branco). */
@@ -399,6 +410,75 @@ function margemTrocaDeps() {
     resolverTotalLinhaVenda,
     resolveMargemProdutoKey,
     itensPedidoValidos,
+  };
+}
+
+/**
+ * Totais de receita, custo e lucro de um pedido — mesma base do Relatório de Margem.
+ * Inclui receita bruta de trocas e dedução do lucro já contabilizado no devolvido.
+ */
+export function calcularTotaisPedidoMargem(
+  pedido,
+  prodMap = {},
+  { indiceTrocas, pedidosOrigemMap } = {},
+) {
+  const trocaMargem = resolverTrocaMargemPedido(pedido, indiceTrocas || buildIndiceDevolucaoTrocaMargem());
+  const itens = itensPedidoValidos(pedido);
+  const alocacoes = alocarReceitaPedidoNasLinhas(pedido, trocaMargem);
+
+  let receita_liquida = 0;
+  let custo_total = 0;
+  let total_desconto_venda = 0;
+
+  for (let index = 0; index < itens.length; index += 1) {
+    const item = itens[index];
+    const product = item.produto_id ? prodMap[item.produto_id] : null;
+    const alloc = alocacoes[index] || {
+      receita_liquida: 0,
+      total_recebido: 0,
+      total_desconto_venda: 0,
+    };
+    const quantidadeBase =
+      Number(
+        item.quantidade_base ??
+          (Number(item.quantidade || 0) * Number(item.fator_conversao || 1)) ??
+          item.quantidade ??
+          0,
+      ) || 0;
+
+    receita_liquida += alloc.receita_liquida;
+    total_desconto_venda += alloc.total_desconto_venda;
+    custo_total += roundMoney(resolveCustoUnitarioMargem(item, product) * quantidadeBase);
+  }
+
+  receita_liquida = roundMoney(receita_liquida);
+  custo_total = roundMoney(custo_total);
+  total_desconto_venda = roundMoney(total_desconto_venda);
+
+  let lucro_troca_deducao = 0;
+  if (trocaMargem?.devolucao) {
+    const pedidoOrigem =
+      pedidosOrigemMap?.[String(trocaMargem.devolucao.pedido_origem_id || '')] || null;
+    lucro_troca_deducao = calcularDeducaoLucroDevolvidoMargem(
+      trocaMargem.devolucao,
+      pedidoOrigem,
+      prodMap,
+      margemTrocaDeps(),
+    );
+  }
+
+  const lucro_total = roundMoney(receita_liquida - custo_total - lucro_troca_deducao);
+
+  return {
+    receita_liquida,
+    custo_total,
+    lucro_total,
+    lucro_troca_deducao,
+    salesNet: receita_liquida,
+    salesGross: roundMoney(receita_liquida + total_desconto_venda),
+    discounts: total_desconto_venda,
+    cost: custo_total,
+    profit: lucro_total,
   };
 }
 

@@ -1,6 +1,8 @@
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { fetchDashboardVendasPeriodo } from '@/lib/fetchDashboardVendas';
+import { fetchPedidosOrigemTrocaMargem } from '@/lib/fetchPedidosVenda90d';
+import { fetchAllProdutosCatalogo } from '@/lib/fetchProdutosAtivos';
 import {
   getDashboardEstoqueStaleTime,
   getDashboardVendasStaleTime,
@@ -15,15 +17,22 @@ export function useDashboardVendasQuery(selectedMonthKey, { enabled = true } = {
   return useQuery({
     queryKey: p38Keys.dashboardVendas(selectedMonthKey),
     queryFn: async () => {
-      const [configVendaRaw, dashboardData] = await Promise.all([
+      const [configVendaRaw, dashboardData, produtos, devolucoesTroca] = await Promise.all([
         base44.entities.ConfiguracoesVenda.list(),
         fetchDashboardVendasPeriodo({ selectedMonthKey, queryClient }),
+        fetchAllProdutosCatalogo(),
+        base44.entities.DevolucaoTroca.list('-created_date', 500),
       ]);
+
+      const pedidosOrigemTroca = await fetchPedidosOrigemTrocaMargem(
+        Array.isArray(devolucoesTroca) ? devolucoesTroca : [],
+      );
 
       return {
         pedidos: dashboardData.pedidos,
-        productCostMap: dashboardData.productCostMap,
-        sealedMonths: dashboardData.sealedMonths || {},
+        produtos,
+        devolucoesTroca: Array.isArray(devolucoesTroca) ? devolucoesTroca : [],
+        pedidosOrigemTroca,
         kpiConfig: normalizeDashboardKpiConfig(configVendaRaw?.[0] || {}),
       };
     },

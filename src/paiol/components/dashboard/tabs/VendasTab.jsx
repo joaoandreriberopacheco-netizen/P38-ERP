@@ -1,37 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  format,
-  isBefore,
-  isAfter,
-  getDate,
-  parseISO,
-  parse,
-  isValid,
-} from 'date-fns';
 import { useDashboardVendasQuery } from '@/hooks/useDashboardQueries';
 import { AlertCircle, CircleGauge, Target, TrendingUp, CalendarDays } from 'lucide-react';
-import {
-  buildDonutRingData,
-  countElapsedWorkingDaysInMonth,
-  countWorkingDaysInMonth,
-  countWorkingDaysUpToCalendarDay,
-  DONUT_GAUGE_RADII,
-  getDailyMetaFromMonthly,
-} from '@/lib/dashboardKpiConfig';
-import {
-  buildMonthBucket,
-  formatTemporalCutoffLabel,
-  getCurrentMonthKey,
-  getCutoffCalendarDay,
-  getMonthBucketsEndingAt,
-  getReferenceDateForMonth,
-  getTemporalCutoffForMonth,
-  getTemporalStartForMonth,
-  saleWithinMonthTemporalCut,
-} from '@/lib/dashboardVendasPeriod';
-import { getHojeDateKey } from '@/lib/dashboardIncrementalCache';
-import { resolveValorPedidoVenda } from '@/lib/financialUtils';
-import { isPedidoVendaElegivelKpi } from '@/lib/pedidoVendaEligibility';
+import { computeDashboardVendasMetricsMargem } from '@/lib/dashboardMargemVendas';
+import { getCurrentMonthKey } from '@/lib/dashboardVendasPeriod';
 import {
   AcumuladoKpiChart,
   AccumulatedLegendLine,
@@ -51,6 +22,7 @@ import {
   DASHBOARD_CHART_MARGIN,
 } from '@/lib/dashboardChartLayout';
 import { useDashboardChartTheme } from '@/lib/useDashboardChartTheme';
+import { DONUT_GAUGE_RADII } from '@/lib/dashboardKpiConfig';
 import {
   BarChart,
   Bar,
@@ -70,306 +42,9 @@ const BRL = new Intl.NumberFormat('pt-BR', {
   maximumFractionDigits: 0,
 });
 
-const RING_COLORS = {
-  primary: '#c4d068',
-  primaryDark: '#a8b856',
-  secondary: '#8a9470',
-  muted: '#d8d8d8',
-};
-
 const SALES_BAR_COLORS = ['#ddd48a', '#d0c87e', '#c4bc72', '#b8b066', '#aca45c', '#9a9452'];
 
-function parseDate(value) {
-  if (!value) return null;
-  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
-
-  if (typeof value === 'string') {
-    const isoParsed = parseISO(value);
-    if (isValid(isoParsed)) return isoParsed;
-
-    const ptBrParsed = parse(value, 'dd/MM/yyyy', new Date());
-    if (isValid(ptBrParsed)) return ptBrParsed;
-
-    const nativeParsed = new Date(value);
-    if (isValid(nativeParsed)) return nativeParsed;
-    return null;
-  }
-
-  const parsed = new Date(value);
-  if (!isValid(parsed)) return null;
-  return parsed;
-}
-
 const formatShort = formatDashboardCurrency;
-
-function extractSaleNetAmount(sale = {}) {
-  return resolveValorPedidoVenda(sale);
-}
-
-function extractSaleCostAmount(sale = {}, productCostMap = new Map()) {
-  const items = Array.isArray(sale.itens) ? sale.itens : [];
-  return items.reduce((sum, item) => {
-    const quantidadeBase = Number(
-      item.quantidade_base ?? (Number(item.quantidade || 0) * Number(item.fator_conversao || 1))
-    ) || Number(item.quantidade || 0) || 0;
-    const fallbackCost = Number(productCostMap.get(item.produto_id) || 0);
-    const unitCost = Number(
-      item.custo_unitario_momento ??
-      item.custo_unitario ??
-      item.custo_calculado ??
-      fallbackCost ??
-      0
-    );
-    return sum + quantidadeBase * unitCost;
-  }, 0);
-}
-
-function getSaleDate(sale = {}) {
-  return (
-    parseDate(sale.data_venda) ||
-    parseDate(sale.data_emissao) ||
-    parseDate(sale.data_fechamento) ||
-    parseDate(sale.created_date) ||
-    parseDate(sale.updated_date)
-  );
-}
-
-function isSaleEligible(sale) {
-  if (!isPedidoVendaElegivelKpi(sale)) return false;
-  return Boolean(getSaleDate(sale));
-}
-
-function getSealedThroughCalendarDay(sealedPayload, monthKey) {
-  const closedThrough = String(sealedPayload?.closedThrough || '').slice(0, 10);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(closedThrough)) return 0;
-  if (closedThrough.slice(0, 7) !== monthKey) return 0;
-  return Number(closedThrough.slice(8, 10)) || 0;
-}
-
-function applySealedMonthsToBuckets(sealedMonths, salesByMonthDay, profitByMonthDay, monthlyTotals, monthBuckets6) {
-  if (!sealedMonths || typeof sealedMonths !== 'object') return;
-
-  for (const bucket of monthBuckets6) {
-    const snap = sealedMonths[bucket.key];
-    if (!snap?.monthlyTotals) continue;
-
-    const totals = snap.monthlyTotals;
-    monthlyTotals[bucket.key] = {
-      salesGross: Number(totals.salesGross || 0),
-      discounts: Number(totals.discounts || 0),
-      salesNet: Number(totals.salesNet || 0),
-      cost: Number(totals.cost || 0),
-      profit: Number(totals.profit || 0),
-    };
-
-    const salesByDay = snap.salesByDay || {};
-    const profitByDay = snap.profitByDay || {};
-    for (const [dayStr, value] of Object.entries(salesByDay)) {
-      salesByMonthDay[bucket.key][Number(dayStr)] = Number(value || 0);
-    }
-    for (const [dayStr, value] of Object.entries(profitByDay)) {
-      profitByMonthDay[bucket.key][Number(dayStr)] = Number(value || 0);
-    }
-  }
-}
-
-function computeVendasMetrics({ pedidos, productCostMap, kpiConfig, selectedMonthKey, sealedMonths = {} }) {
-  const monthBuckets6 = getMonthBucketsEndingAt(selectedMonthKey, 6);
-  const [y, m] = selectedMonthKey.split('-').map(Number);
-  const selectedBucket = buildMonthBucket(new Date(y, m - 1, 1));
-  const windowStart = getTemporalStartForMonth(monthBuckets6[0]?.key);
-  const windowEnd = getTemporalCutoffForMonth(selectedMonthKey);
-
-  const eligibleSales = (Array.isArray(pedidos) ? pedidos : []).filter((sale) => {
-    if (!isSaleEligible(sale)) return false;
-    const saleDate = getSaleDate(sale);
-    return !isBefore(saleDate, windowStart) && !isAfter(saleDate, windowEnd);
-  });
-
-  const salesByMonthDay = {};
-  const profitByMonthDay = {};
-  const monthlyTotals = {};
-  monthBuckets6.forEach((bucket) => {
-    salesByMonthDay[bucket.key] = {};
-    profitByMonthDay[bucket.key] = {};
-    monthlyTotals[bucket.key] = {
-      salesGross: 0,
-      discounts: 0,
-      salesNet: 0,
-      cost: 0,
-      profit: 0,
-    };
-  });
-
-  monthBuckets6.forEach((bucket) => {
-    salesByMonthDay[bucket.key] = {};
-    profitByMonthDay[bucket.key] = {};
-    monthlyTotals[bucket.key] = {
-      salesGross: 0,
-      discounts: 0,
-      salesNet: 0,
-      cost: 0,
-      profit: 0,
-    };
-  });
-
-  applySealedMonthsToBuckets(sealedMonths, salesByMonthDay, profitByMonthDay, monthlyTotals, monthBuckets6);
-
-  const currentMonthKey = getCurrentMonthKey();
-  const hojeDay = Number(getHojeDateKey().slice(8, 10)) || 0;
-
-  eligibleSales.forEach((sale) => {
-    const saleDate = getSaleDate(sale);
-    if (!saleDate) return;
-    const monthKey = format(saleDate, 'yyyy-MM');
-    if (!monthlyTotals[monthKey]) return;
-    if (!saleWithinMonthTemporalCut(saleDate, monthKey)) return;
-
-    const day = getDate(saleDate);
-    const sealedPayload = sealedMonths[monthKey];
-    if (sealedPayload?.monthlyTotals) {
-      if (monthKey < currentMonthKey) return;
-      const sealedThroughDay = getSealedThroughCalendarDay(sealedPayload, monthKey);
-      if (sealedThroughDay > 0 && day <= sealedThroughDay && day !== hojeDay) return;
-    }
-    const discountAmount = Number(sale.valor_desconto || 0);
-    const netAmount = extractSaleNetAmount(sale);
-    const grossAmount = netAmount + discountAmount;
-    const costAmount = extractSaleCostAmount(sale, productCostMap);
-    const profitAmount = netAmount - costAmount;
-
-    salesByMonthDay[monthKey][day] = (salesByMonthDay[monthKey][day] || 0) + netAmount;
-    profitByMonthDay[monthKey][day] = (profitByMonthDay[monthKey][day] || 0) + profitAmount;
-    monthlyTotals[monthKey].salesGross += grossAmount;
-    monthlyTotals[monthKey].discounts += discountAmount;
-    monthlyTotals[monthKey].salesNet += netAmount;
-    monthlyTotals[monthKey].cost += costAmount;
-    monthlyTotals[monthKey].profit += profitAmount;
-  });
-
-  const cutoffDay = getCutoffCalendarDay(selectedMonthKey);
-  const dailyData = Array.from({ length: selectedBucket.daysInMonth }, (_, idx) => {
-    const day = idx + 1;
-    return {
-      diaNumero: day,
-      diaLabel: `D${String(day).padStart(2, '0')}`,
-      valor: day <= cutoffDay ? Number(salesByMonthDay[selectedMonthKey]?.[day] || 0) : null,
-    };
-  });
-
-  const referenceDate = getReferenceDateForMonth(selectedMonthKey);
-  const elapsedWorkingDays = countElapsedWorkingDaysInMonth(referenceDate);
-  const workingDaysInMonth = countWorkingDaysInMonth(referenceDate);
-  const breakEvenDaily = Number(kpiConfig.kpi_lucro_break_even_diario || 0);
-  const metaLucroDaily = getDailyMetaFromMonthly(kpiConfig.kpi_lucro_meta_mensal, referenceDate);
-  const vendaMinimaDaily = Number(kpiConfig.kpi_venda_minima_diaria || 0);
-  const metaVendaDaily = getDailyMetaFromMonthly(kpiConfig.kpi_venda_meta_mensal, referenceDate);
-
-  let runningSales = 0;
-  const accumulatedSalesData = Array.from({ length: cutoffDay }, (_, idx) => {
-    const day = idx + 1;
-    runningSales += Number(salesByMonthDay[selectedMonthKey]?.[day] || 0);
-    const workingDaysElapsed = countWorkingDaysUpToCalendarDay(referenceDate, day);
-    return {
-      dia: `D${day}`,
-      valor: runningSales,
-      breakEven: vendaMinimaDaily * workingDaysElapsed,
-      meta: metaVendaDaily * workingDaysElapsed,
-    };
-  });
-
-  const monthlySalesData = monthBuckets6.map((bucket, idx) => ({
-    periodo: bucket.shortLabel,
-    valor: Number(monthlyTotals[bucket.key]?.salesNet || 0),
-    isSelected: bucket.key === selectedMonthKey,
-    colorIdx: idx,
-  }));
-
-  const previousMonthKey = monthBuckets6[monthBuckets6.length - 2]?.key;
-  const selectedProfit = Number(monthlyTotals[selectedMonthKey]?.profit || 0);
-  const previousProfit = Number(monthlyTotals[previousMonthKey]?.profit || 0);
-  const ratioPercent = previousProfit > 0 ? (selectedProfit / previousProfit) * 100 : selectedProfit > 0 ? 100 : 0;
-  const ringFill = Math.min(Math.max(ratioPercent, 0), 100);
-  const ringOverflow = Math.min(Math.max(ratioPercent - 100, 0), 100);
-
-  let runningProfit = 0;
-  const accumulatedProfitData = Array.from({ length: cutoffDay }, (_, idx) => {
-    const day = idx + 1;
-    runningProfit += Number(profitByMonthDay[selectedMonthKey]?.[day] || 0);
-    const workingDaysElapsed = countWorkingDaysUpToCalendarDay(referenceDate, day);
-    return {
-      diaLabel: `D${String(day).padStart(2, '0')}`,
-      lucro: runningProfit,
-      breakEven: breakEvenDaily * workingDaysElapsed,
-      meta: metaLucroDaily * workingDaysElapsed,
-    };
-  });
-
-  const avgDailyProfit = elapsedWorkingDays > 0 ? selectedProfit / elapsedWorkingDays : 0;
-  const avgDailySales = elapsedWorkingDays > 0
-    ? Number(monthlyTotals[selectedMonthKey]?.salesNet || 0) / elapsedWorkingDays
-    : 0;
-
-  return {
-    selectedBucket,
-    cutoffLabel: formatTemporalCutoffLabel(selectedMonthKey),
-    dailyData,
-    accumulatedSalesData,
-    monthlySalesData,
-    accumulatedProfitData,
-    breakEvenDaily,
-    metaLucroDaily,
-    metaVendaDaily,
-    vendaMinimaDaily,
-    elapsedWorkingDays,
-    workingDaysInMonth,
-    avgDailySales,
-    avgDailyProfit,
-    lucroDonutKpis: {
-      ringA: {
-        actual: avgDailyProfit,
-        target: breakEvenDaily,
-        ring: buildDonutRingData(avgDailyProfit, breakEvenDaily, RING_COLORS),
-      },
-      ringB: {
-        actual: avgDailyProfit,
-        target: metaLucroDaily,
-        ring: buildDonutRingData(avgDailyProfit, metaLucroDaily, RING_COLORS),
-      },
-    },
-    vendaDonutKpis: {
-      ringA: {
-        actual: avgDailySales,
-        target: vendaMinimaDaily,
-        ring: buildDonutRingData(avgDailySales, vendaMinimaDaily, RING_COLORS),
-      },
-      ringB: {
-        actual: avgDailySales,
-        target: metaVendaDaily,
-        ring: buildDonutRingData(avgDailySales, metaVendaDaily, RING_COLORS),
-      },
-    },
-    lucroKpi: {
-      selectedMonthLabel: selectedBucket.monthLabel,
-      previousMonthLabel: monthBuckets6[monthBuckets6.length - 2]?.monthLabel || 'Mês anterior',
-      selectedProfit,
-      previousProfit,
-      selectedSalesNet: Number(monthlyTotals[selectedMonthKey]?.salesNet || 0),
-      selectedCost: Number(monthlyTotals[selectedMonthKey]?.cost || 0),
-      ratioPercent,
-      ringFill,
-      ringOverflow,
-      ringData: [
-        { name: 'Lucro selecionado x anterior', value: ringFill, color: RING_COLORS.primary },
-        { name: 'Faixa restante', value: Math.max(100 - ringFill, 0), color: RING_COLORS.muted },
-      ],
-      ringOverflowData: [
-        { name: 'Excedente', value: ringOverflow, color: RING_COLORS.primaryDark },
-        { name: 'Excedente restante', value: Math.max(100 - ringOverflow, 0), color: 'transparent' },
-      ],
-    },
-  };
-}
 
 export default function VendasTab({ enabled = true } = {}) {
   const chartTheme = useDashboardChartTheme();
@@ -389,12 +64,13 @@ export default function VendasTab({ enabled = true } = {}) {
 
   const metrics = useMemo(() => {
     if (!rawData) return null;
-    return computeVendasMetrics({
+    return computeDashboardVendasMetricsMargem({
       pedidos: rawData.pedidos,
-      productCostMap: rawData.productCostMap,
+      produtos: rawData.produtos,
+      devolucoesTroca: rawData.devolucoesTroca,
+      pedidosOrigemTroca: rawData.pedidosOrigemTroca,
       kpiConfig: rawData.kpiConfig,
       selectedMonthKey,
-      sealedMonths: rawData.sealedMonths,
     });
   }, [rawData, selectedMonthKey]);
 
@@ -554,7 +230,7 @@ export default function VendasTab({ enabled = true } = {}) {
             <CardContent className="pt-1">
               <div className={p38Dashboard.innerPanel}>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
-                  Fórmula: Venda líquida (valor cobrado) − custo calculado
+                  Fórmula: mesma base do Relatório de Margem (venda líquida − custo cadastro, com trocas)
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-[150px,1fr] gap-2.5 items-center">

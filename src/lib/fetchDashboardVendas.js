@@ -194,15 +194,25 @@ export async function fetchDashboardVendasPeriodo({
 
   const buckets = getMonthBucketsEndingAt(selectedMonthKey, months);
   const allMonthsSealed = buckets.length > 0 && buckets.every((b) => sealedMonthKeys.has(b.key));
+  const plan = planDashboardVendasFetchRanges(selectedMonthKey, months);
 
   let pedidos;
 
   if (allMonthsSealed) {
-    const plan = planDashboardVendasFetchRanges(selectedMonthKey, months);
+    pedidos = await ensurePedidosSegment(
+      queryClient,
+      `window-${dataInicio}_${dataFim}`,
+      dataInicio,
+      dataFim,
+      CLOSED_SEGMENT_STALE,
+    );
     if (plan.hoje) {
-      pedidos = await fetchPedidosVendaHydratedRange(plan.hoje.dataInicio, plan.hoje.dataFim, 500);
-    } else {
-      pedidos = [];
+      const hojePedidos = await fetchPedidosVendaHydratedRange(
+        plan.hoje.dataInicio,
+        plan.hoje.dataFim,
+        500,
+      );
+      pedidos = mergePedidosById(pedidos, hojePedidos);
     }
   } else if (isVendasWindowFullyClosed(selectedMonthKey, months)) {
     pedidos = await ensurePedidosSegment(
