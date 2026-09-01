@@ -52,6 +52,10 @@ import { resolveValorPedidoVendaGestao } from '@/lib/financialUtils';
 const fmtDtHora = (d) => d ? formatarDataHora(d) : '-';
 const fmtDataCurta = (d) => d ? formatarSoData(d) : '';
 
+function devolucaoTrocaPageUrl(tipo) {
+  return `${createPageUrl('DevolucaoTroca')}?tipo=${encodeURIComponent(tipo)}`;
+}
+
 const dateRangeMatches = (valor, inicio, fim) => {
   const chave = toLocalDateKey(valor);
   if (!chave) return false;
@@ -799,10 +803,10 @@ function VendasGestaoPage() {
                   description="Orçamentos, pedidos e acompanhamento"
                 />
                 <div className="grid grid-cols-4 gap-1.5 flex-shrink-0 w-full">
-                  <Button variant="ghost" size="icon" className="h-11 w-full rounded-2xl bg-muted dark:bg-muted" title="Devolução" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Devolução')}>
+                  <Button variant="ghost" size="icon" className="h-11 w-full rounded-2xl bg-muted dark:bg-muted" title="Devolução" onClick={() => { window.location.href = devolucaoTrocaPageUrl('Devolução'); }}>
                     <RotateCcw className="w-4 h-4 text-muted-foreground" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-11 w-full rounded-2xl bg-muted dark:bg-muted" title="Troca" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Troca')}>
+                  <Button variant="ghost" size="icon" className="h-11 w-full rounded-2xl bg-muted dark:bg-muted" title="Troca" onClick={() => { window.location.href = devolucaoTrocaPageUrl('Troca'); }}>
                     <RefreshCw className="w-4 h-4 text-muted-foreground" />
                   </Button>
                   <Button variant="ghost" size="icon" className="h-11 w-full rounded-2xl bg-muted dark:bg-muted" title="Alterar Pagamento" onClick={() => setShowAlterarPagamento(true)}>
@@ -854,10 +858,10 @@ function VendasGestaoPage() {
           description="Orçamentos, pedidos e acompanhamento"
         />
         <div className="grid grid-cols-4 gap-1.5 sm:flex sm:flex-wrap sm:justify-end flex-shrink-0 w-full sm:w-auto">
-          <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-muted dark:bg-muted" title="Devolução" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Devolução')}>
+          <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-muted dark:bg-muted" title="Devolução" onClick={() => { window.location.href = devolucaoTrocaPageUrl('Devolução'); }}>
             <RotateCcw className="w-4 h-4 text-muted-foreground" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-muted dark:bg-muted" title="Troca" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Troca')}>
+          <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-muted dark:bg-muted" title="Troca" onClick={() => { window.location.href = devolucaoTrocaPageUrl('Troca'); }}>
             <RefreshCw className="w-4 h-4 text-muted-foreground" />
           </Button>
           <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-muted dark:bg-muted" title="Alterar Pagamento" onClick={() => setShowAlterarPagamento(true)}>
