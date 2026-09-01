@@ -37,7 +37,7 @@ export const DIZIMO_SECOES = [
       },
     ],
   },
-  { id: GRUPO_PLANO.BUDGETS, grupoId: GRUPO_PLANO.BUDGETS, label: 'Budgets' },
+  { id: GRUPO_PLANO.BUDGETS, grupoId: GRUPO_PLANO.BUDGETS, label: 'Budgets', agruparPorCentroCusto: true },
   {
     id: GRUPO_PLANO.PONTUAIS,
     grupoId: GRUPO_PLANO.PONTUAIS,
@@ -225,7 +225,61 @@ function montarSubsecaoDizimo(def, linhas, configItens, grupoId) {
   };
 }
 
+function slugCentroCustoDizimo(centro = '') {
+  const label = String(centro).trim() || 'Sem centro de custo';
+  const slug =
+    label
+      .toLocaleLowerCase('pt-BR')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '') || 'sem-centro';
+  return { id: `budget-cc-${slug}`, label };
+}
+
+/** Budgets agrupados por centro de custo (Casa, Transportadora, Propriedades…). */
+function montarSubsecoesPorCentroCusto(linhas, configItens, grupoId) {
+  const filtradas = filtrarLinhasPlano(linhas);
+  const mapa = new Map();
+
+  for (const linha of filtradas) {
+    const grupo = slugCentroCustoDizimo(linha.centroCusto);
+    if (!mapa.has(grupo.id)) {
+      mapa.set(grupo.id, { ...grupo, linhas: [] });
+    }
+    mapa.get(grupo.id).linhas.push(linha);
+  }
+
+  return [...mapa.values()]
+    .sort((a, b) => a.label.localeCompare(b.label, 'pt-BR', { sensitivity: 'base' }))
+    .map((grupo) => {
+      const itens = grupo.linhas
+        .sort((a, b) =>
+          String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR', { sensitivity: 'base' }),
+        )
+        .map((linha) => montarItemDizimo(linha, configItens, grupoId));
+      return {
+        id: grupo.id,
+        label: grupo.label,
+        itens,
+        ...agregarTotais(itens),
+      };
+    });
+}
+
 function montarSecaoDizimo(def, linhas, configItens) {
+  if (def.agruparPorCentroCusto) {
+    const subsecoes = montarSubsecoesPorCentroCusto(linhas, configItens, def.grupoId);
+    const itens = subsecoes.flatMap((sub) => sub.itens);
+    return {
+      id: def.id,
+      label: def.label,
+      subsecoes,
+      itens: [],
+      ...agregarTotais(itens),
+    };
+  }
+
   if (def.subsecoes?.length) {
     const subsecoes = def.subsecoes.map((sub) => montarSubsecaoDizimo(sub, linhas, configItens, def.grupoId));
     const itens = subsecoes.flatMap((sub) => sub.itens);
@@ -249,6 +303,64 @@ function montarSecaoDizimo(def, linhas, configItens) {
   };
 }
 
+/** Itens com parte ou total fora da base do dízimo — para anexo do PDF. */
+export function montarAnexoDespesasForaBase(secoes = []) {
+  const coletarFora = (itens = []) =>
+    itens
+      .filter((item) => item.valorNaoDedutivel > 0.009)
+      .map((item) => ({
+        ...item,
+        valorFora: item.valorNaoDedutivel,
+        motivoFora:
+          item.config?.modo === DIZIMO_MODOS.PARCIAL
+            ? `Parcial ${item.config.percentual}%`
+            : labelModoDedutivel(item.config?.modo),
+      }));
+
+  const anexoSecoes = [];
+
+  for (const secao of secoes) {
+    if (secao.subsecoes?.length) {
+      const subsecoes = secao.subsecoes
+        .map((sub) => {
+          const itens = coletarFora(sub.itens);
+          if (!itens.length) return null;
+          return {
+            id: sub.id,
+            label: sub.label,
+            itens,
+            valorFora: itens.reduce((acc, item) => acc + item.valorFora, 0),
+          };
+        })
+        .filter(Boolean);
+      if (!subsecoes.length) continue;
+      anexoSecoes.push({
+        id: secao.id,
+        label: secao.label,
+        subsecoes,
+        itens: [],
+        valorFora: subsecoes.reduce((acc, sub) => acc + sub.valorFora, 0),
+      });
+      continue;
+    }
+
+    const itens = coletarFora(secao.itens);
+    if (!itens.length) continue;
+    anexoSecoes.push({
+      id: secao.id,
+      label: secao.label,
+      subsecoes: [],
+      itens,
+      valorFora: itens.reduce((acc, item) => acc + item.valorFora, 0),
+    });
+  }
+
+  return {
+    secoes: anexoSecoes,
+    totalFora: anexoSecoes.reduce((acc, sec) => acc + sec.valorFora, 0),
+  };
+}
+
 /**
  * @param {object} planoConsolidado
  * @param {object} configItens — mapa itemId → { modo, percentual }
@@ -269,6 +381,8 @@ export function montarDemonstrativoDizimo(planoConsolidado, configItens = {}) {
     montarSecaoDizimo(def, gruposMap[def.grupoId] || [], configResolvida),
   );
 
+  const anexoForaBase = montarAnexoDespesasForaBase(secoes);
+
   const totalOperacionalBruto = secoes.reduce((acc, sec) => acc + sec.valorBruto, 0);
   const totalDedutivel = secoes.reduce((acc, sec) => acc + sec.valorDedutivel, 0);
   const totalNaoDedutivel = secoes.reduce((acc, sec) => acc + sec.valorNaoDedutivel, 0);
@@ -282,6 +396,7 @@ export function montarDemonstrativoDizimo(planoConsolidado, configItens = {}) {
     margemDetalhe: planoConsolidado?.margemDetalhe || null,
     lucroBruto,
     secoes,
+    anexoForaBase,
     totalOperacionalBruto,
     totalDedutivel,
     totalNaoDedutivel,

@@ -190,7 +190,61 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
     }
   };
 
+  const drawItemFora = (item, { indent = 0 } = {}) => {
+    const detalhe = [
+      item.categoria,
+      item.centroCusto ? `Centro: ${item.centroCusto}` : '',
+      item.detalhe && item.detalhe !== 'Sócio' ? item.detalhe : '',
+      `Configuração: ${item.motivoFora}`,
+      item.valorBruto !== item.valorFora ? `Planejado: ${moeda(item.valorBruto)}` : '',
+    ]
+      .filter(Boolean)
+      .join(' · ');
+
+    const nomeX = contentLeft + indent;
+    const nomeW = contentWidth - indent - 28;
+
+    setFont('normal', FONT.itemTitle);
+    const nomeLines = doc.splitTextToSize(safe(item.nome || '—'), nomeW);
+    setFont('normal', FONT.itemDetail, COLOR.muted);
+    const detalheLines = detalhe ? doc.splitTextToSize(safe(detalhe), nomeW) : [];
+    const blockH = Math.max(
+      5.5,
+      nomeLines.length * 3.8 + (detalheLines.length ? detalheLines.length * 3.4 + 0.8 : 0),
+    );
+
+    ensureSpace(blockH + 1.2);
+    const rowY = y;
+    setFont('normal', FONT.itemTitle);
+    nomeLines.forEach((line, index) => doc.text(line, nomeX, rowY + index * 3.8));
+    setFont('bold', FONT.itemTitle);
+    doc.text(moeda(item.valorFora), right, rowY, { align: 'right' });
+    if (detalheLines.length) {
+      const detalheY = rowY + nomeLines.length * 3.8 + 0.5;
+      setFont('normal', FONT.itemDetail, COLOR.muted);
+      detalheLines.forEach((line, index) => doc.text(line, nomeX, detalheY + index * 3.4));
+    }
+    advance(blockH + 1.4);
+    strokeH(y, contentLeft + indent, right);
+    advance(1.2);
+  };
+
+  const drawAnexoTitulo = (titulo, nota = '') => {
+    doc.addPage();
+    y = 12;
+    setFont('bold', 11);
+    doc.text(safe(titulo), contentLeft, y);
+    advance(5);
+    if (nota) {
+      setFont('normal', FONT.nota, COLOR.muted);
+      const lines = doc.splitTextToSize(safe(nota), contentWidth);
+      lines.forEach((line, index) => doc.text(line, contentLeft, y + index * 3.4));
+      advance(lines.length * 3.4 + 2);
+    }
+  };
+
   const margem = demonstrativo.margemDetalhe || {};
+  const anexoForaBase = demonstrativo.anexoForaBase || { secoes: [], totalFora: 0 };
 
   // —— Página 1: resumo ——
   setFont('bold', FONT.title);
@@ -240,6 +294,12 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
     bold: true,
   });
   drawResumoLinha('Dízimo', demonstrativo.dizimo, { prefix: '= ', bold: true });
+  if (number(anexoForaBase.totalFora) > 0) {
+    drawResumoLinha('Total fora da base (ver anexo)', anexoForaBase.totalFora, {
+      prefix: ' ',
+      sublabel: 'Despesas não dedutíveis ou parcialmente excluídas',
+    });
+  }
 
   // —— Detalhamento ——
   doc.addPage();
@@ -275,6 +335,34 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
     advance(3);
   }
 
+  if (number(anexoForaBase.totalFora) > 0) {
+    drawAnexoTitulo(
+      'Anexo — Despesas fora da base do dízimo',
+      'Valores planejados que não entraram no cálculo do lucro líquido operacional estimado (total, parcial ou não dedutível).',
+    );
+    drawResumoLinha('Total fora da base', anexoForaBase.totalFora, { prefix: ' ', bold: true });
+    advance(2);
+
+    for (const secao of anexoForaBase.secoes || []) {
+      drawGrupo(secao.label, secao.valorFora, secao.valorFora);
+
+      if (secao.subsecoes?.length) {
+        for (const sub of secao.subsecoes) {
+          drawSubgrupo(sub.label, sub.valorFora, sub.valorFora);
+          for (const item of sub.itens || []) {
+            drawItemFora(item, { indent: 4 });
+          }
+          advance(2);
+        }
+      } else {
+        for (const item of secao.itens || []) {
+          drawItemFora(item, { indent: 2 });
+        }
+      }
+      advance(3);
+    }
+  }
+
   const pageCount = doc.internal.getNumberOfPages();
   for (let page = 1; page <= pageCount; page += 1) {
     doc.setPage(page);
@@ -285,6 +373,6 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
 
   return {
     data: doc.output('arraybuffer'),
-    version: 'dizimo_enxuto_a4_v1',
+    version: 'dizimo_enxuto_a4_v2',
   };
 }

@@ -33,7 +33,11 @@ const plano = {
     },
     {
       id: 'budgets',
-      items: [{ id: 'budget-1', nome: 'Marketing', valor: 10_000 }],
+      items: [
+        { id: 'budget-1', nome: 'Marketing', valor: 4_000, centroCusto: 'Casa' },
+        { id: 'budget-2', nome: 'Combustível', valor: 3_000, centroCusto: 'Transportadora' },
+        { id: 'budget-3', nome: 'Manutenção', valor: 3_000, centroCusto: 'Propriedades' },
+      ],
     },
     {
       id: 'pontuais',
@@ -77,6 +81,24 @@ const folhaSecao = padrao.secoes.find((s) => s.id === 'folha');
 assert(folhaSecao.subsecoes.length === 2, 'folha tem funcionários e pró-labore');
 assert(folhaSecao.subsecoes[0].itens.length === 2, 'dois funcionários');
 assert(folhaSecao.subsecoes[1].itens.length === 1, 'um pró-labore');
+
+const budgetsSecao = padrao.secoes.find((s) => s.id === 'budgets');
+assert(budgetsSecao.subsecoes.length === 3, 'budgets por centro de custo');
+assert(
+  budgetsSecao.subsecoes.map((s) => s.label).join(',') === 'Casa,Propriedades,Transportadora',
+  'rótulos dos centros de custo',
+);
+
+// Anexo com despesas fora da base
+const comAnexo = montarDemonstrativoDizimo(plano, {
+  'pauta-1': { modo: DIZIMO_MODOS.NAO_DEDUTIVEL, percentual: 0 },
+  'fixa-a': { modo: DIZIMO_MODOS.PARCIAL, percentual: 50 },
+  'budget-1': { modo: DIZIMO_MODOS.NAO_DEDUTIVEL, percentual: 0 },
+});
+assert(comAnexo.anexoForaBase.totalFora === 14_000, 'anexo soma fora da base');
+assert(comAnexo.anexoForaBase.secoes.some((s) => s.id === 'pontuais'), 'pauta no anexo');
+const budgetsAnexo = comAnexo.anexoForaBase.secoes.find((s) => s.id === 'budgets');
+assert(budgetsAnexo?.subsecoes?.some((sub) => sub.label === 'Casa'), 'budget Casa no anexo');
 
 // Herança mês anterior para recorrentes
 const herdado = resolverConfigItensDizimo({
