@@ -78,6 +78,13 @@ function readLegacyItensEspelho(pedido = {}) {
   return [];
 }
 
+/** Hidrata um pedido antes de devolução/troca (itens em PedidoVendaItem SQL). */
+export async function hydratePedidoVendaParaDevolucao(base44, pedido) {
+  if (!pedido?.id) return pedido;
+  const [hydrated] = await hydratePedidosVendaItensFromSql(base44, [pedido]);
+  return hydrated || pedido;
+}
+
 /** Hidrata `itens`: SQL (PedidoVendaItem) primeiro; fallback JSON legado só na leitura. */
 export async function hydratePedidosVendaItensFromSql(base44, pedidos = []) {
   if (!Array.isArray(pedidos) || !pedidos.length) return pedidos || [];

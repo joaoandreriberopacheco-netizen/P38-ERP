@@ -92,11 +92,15 @@ export function derivePedidoVendaItem({ pedido = {}, produto = {}, input = {} })
 
 export function pedidoVendaItemToLegacyMirror(item = {}) {
   const fator = asNumber(item?.fator_aplicado, 1) || 1;
+  const qComercial = asNumber(item?.quantidade_comercial, 0);
+  const qBase = asNumber(item?.quantidade_base, 0);
+  const quantidade =
+    qComercial > 0 ? qComercial : qBase > 0 && fator > 0 ? round6(qBase / fator) : asNumber(item?.quantidade, 0);
   return {
     produto_id: item?.produto_id || "",
     produto_nome: item?.produto_nome || "",
     produto_unidade_id: item?.produto_unidade_id || "",
-    quantidade: asNumber(item?.quantidade_comercial, 0),
+    quantidade,
     unidade_medida: item?.unidade_sigla || "UN",
     fator_conversao: fator,
     quantidade_base: asNumber(item?.quantidade_base, 0),
