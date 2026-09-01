@@ -29,7 +29,7 @@ import {
   carregarConfigDedutivelDizimo,
   salvarConfigDedutivelDizimo,
 } from '@/lib/dizimoConfigStorage';
-import DedutibilidadeBlocoToggle from '@/components/financeiro/dizimo/DedutibilidadeBlocoToggle';
+import DizimoArvoreDespesas from '@/components/financeiro/dizimo/DizimoArvoreDespesas';
 
 function CelulaValor({ valor, positivo, className, prefix = '' }) {
   const n = Number(valor) || 0;
@@ -64,37 +64,6 @@ function LinhaResumo({ label, valor, tipo = 'normal', sublabel, destaque = false
         <CelulaValor valor={valor} positivo={positivo} prefix={prefix} />
       </td>
     </tr>
-  );
-}
-
-function BlocoDespesaDizimo({ bloco, onConfigChange }) {
-  return (
-    <div className={cn('rounded-2xl p-3 lg:p-4 space-y-3', P38_FIELD_SURFACE)}>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-foreground">{bloco.label}</p>
-          <p className="text-xs text-muted-foreground mt-0.5 tabular-nums">
-            Valor planejado: {formatFinanceiroValor(bloco.valorBruto)}
-          </p>
-        </div>
-        <DedutibilidadeBlocoToggle value={bloco.config} onChange={onConfigChange} />
-      </div>
-
-      <div className="grid grid-cols-2 gap-2 text-xs">
-        <div className="rounded-xl bg-muted/30 px-3 py-2">
-          <p className="text-muted-foreground">Dedutível na base</p>
-          <p className="font-semibold tabular-nums text-emerald-700 dark:text-emerald-400 mt-0.5">
-            {formatFinanceiroValor(bloco.valorDedutivel)}
-          </p>
-        </div>
-        <div className="rounded-xl bg-muted/30 px-3 py-2">
-          <p className="text-muted-foreground">Fora da base</p>
-          <p className="font-semibold tabular-nums mt-0.5">
-            {formatFinanceiroValor(bloco.valorNaoDedutivel)}
-          </p>
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -145,15 +114,15 @@ function TabelaResumoDizimo({ demonstrativo }) {
               Despesas operacionais (dedutíveis)
             </td>
           </tr>
-          {demonstrativo.blocos.map((bloco) => (
+          {demonstrativo.secoes.map((secao) => (
             <LinhaResumo
-              key={bloco.id}
-              label={bloco.label}
-              valor={bloco.valorDedutivel}
+              key={secao.id}
+              label={secao.label}
+              valor={secao.valorDedutivel}
               tipo="subtrai"
               sublabel={
-                bloco.valorNaoDedutivel > 0
-                  ? `${formatFinanceiroValor(bloco.valorBruto)} planejado · ${formatFinanceiroValor(bloco.valorNaoDedutivel)} fora da base`
+                secao.valorNaoDedutivel > 0
+                  ? `${formatFinanceiroValor(secao.valorBruto)} planejado · ${formatFinanceiroValor(secao.valorNaoDedutivel)} fora da base`
                   : undefined
               }
             />
@@ -179,10 +148,10 @@ function TabelaResumoDizimo({ demonstrativo }) {
 
 export default function DizimoPlano() {
   const [competencia, setCompetencia] = useState(getCompetenciaAtual);
-  const [configBlocos, setConfigBlocos] = useState(() => carregarConfigDedutivelDizimo(getCompetenciaAtual()));
+  const [configItens, setConfigItens] = useState(() => carregarConfigDedutivelDizimo(getCompetenciaAtual()));
 
   useEffect(() => {
-    setConfigBlocos(carregarConfigDedutivelDizimo(competencia));
+    setConfigItens(carregarConfigDedutivelDizimo(competencia));
   }, [competencia]);
 
   const compLabel = formatCompetenciaLabel(competencia);
@@ -291,14 +260,14 @@ export default function DizimoPlano() {
   );
 
   const demonstrativo = useMemo(
-    () => montarDemonstrativoDizimo(plano, configBlocos),
-    [plano, configBlocos],
+    () => montarDemonstrativoDizimo(plano, configItens),
+    [plano, configItens],
   );
 
-  const atualizarConfigBloco = useCallback(
-    (blocoId, nextConfig) => {
-      setConfigBlocos((prev) => {
-        const merged = { ...prev, [blocoId]: nextConfig };
+  const atualizarConfigItem = useCallback(
+    (itemId, nextConfig) => {
+      setConfigItens((prev) => {
+        const merged = { ...prev, [itemId]: nextConfig };
         salvarConfigDedutivelDizimo(competencia, merged);
         return merged;
       });
@@ -318,7 +287,7 @@ export default function DizimoPlano() {
                 (Agefin, folha, budgets e pauta).
               </p>
               <p className="text-muted-foreground mt-2">
-                Em cada bloco, escolha o que entra na base: total, parcial ou não dedutível. O dízimo é
+                Expanda cada bloco e configure item a item: total, parcial ou não dedutível. O dízimo é
                 10% do lucro líquido operacional estimado resultante.
               </p>
             </P38HelpPopover>
@@ -357,17 +326,9 @@ export default function DizimoPlano() {
 
           <div className="space-y-3">
             <p className="text-xs uppercase tracking-wide text-muted-foreground px-1">
-              Deduções por bloco
+              Deduções por item
             </p>
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-              {demonstrativo.blocos.map((bloco) => (
-                <BlocoDespesaDizimo
-                  key={bloco.id}
-                  bloco={bloco}
-                  onConfigChange={(next) => atualizarConfigBloco(bloco.id, next)}
-                />
-              ))}
-            </div>
+            <DizimoArvoreDespesas secoes={demonstrativo.secoes} onConfigItem={atualizarConfigItem} />
           </div>
 
           <TabelaResumoDizimo demonstrativo={demonstrativo} />

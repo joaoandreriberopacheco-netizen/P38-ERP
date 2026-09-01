@@ -1,7 +1,6 @@
 /**
  * Dízimo — demonstrativo espiritual sobre o lucro operacional estimado.
- * Reutiliza o plano consolidado (margem + despesas planejadas) e aplica
- * dedutibilidade por bloco antes de calcular os 10%.
+ * Deduções configuráveis por item (conta fixa, colaborador, budget, pauta).
  */
 
 export const DIZIMO_MODOS = {
@@ -12,40 +11,46 @@ export const DIZIMO_MODOS = {
 
 export const DIZIMO_PERCENTUAL = 10;
 
-/** Blocos alinhados ao resumo operacional de `montarPlanoFinanceiroConsolidado`. */
-export const DIZIMO_BLOCOS = [
+const GRUPO_PLANO = {
+  FIXAS: 'fixas_recorrentes',
+  FOLHA: 'folha',
+  BUDGETS: 'budgets',
+  PONTUAIS: 'pontuais',
+};
+
+export const DIZIMO_SECOES = [
+  { id: GRUPO_PLANO.FIXAS, grupoId: GRUPO_PLANO.FIXAS, label: 'Contas fixas' },
   {
-    id: 'fixas_recorrentes',
-    resumoKey: 'fixasRecorrentes',
-    label: 'Contas fixas (recorrentes)',
+    id: GRUPO_PLANO.FOLHA,
+    grupoId: GRUPO_PLANO.FOLHA,
+    label: 'Folha',
+    subsecoes: [
+      {
+        id: 'folha_funcionarios',
+        label: 'Funcionários',
+        filtro: (item) => item.detalhe !== 'Sócio',
+      },
+      {
+        id: 'folha_pro_labore',
+        label: 'Pró-labore',
+        filtro: (item) => item.detalhe === 'Sócio',
+      },
+    ],
   },
+  { id: GRUPO_PLANO.BUDGETS, grupoId: GRUPO_PLANO.BUDGETS, label: 'Budgets' },
   {
-    id: 'folha',
-    resumoKey: 'folha',
-    label: 'Folha de pagamento',
-  },
-  {
-    id: 'budgets',
-    resumoKey: 'budgets',
-    label: 'Budgets',
-  },
-  {
-    id: 'pontuais',
-    resumoKey: 'pontuaisExtraPlano',
-    label: 'Pauta do mês (fora do plano fixo)',
+    id: GRUPO_PLANO.PONTUAIS,
+    grupoId: GRUPO_PLANO.PONTUAIS,
+    label: 'Pauta do mês',
+    somenteEntraNoTotal: true,
   },
 ];
 
 export function criarConfigDedutivelPadrao() {
-  return Object.fromEntries(
-    DIZIMO_BLOCOS.map((bloco) => [
-      bloco.id,
-      { modo: DIZIMO_MODOS.TOTAL, percentual: 100 },
-    ]),
-  );
+  return {};
 }
 
-export function normalizarConfigBlocoDizimo(raw = {}) {
+export function normalizarConfigItemDizimo(raw = {}) {
   const modo = Object.values(DIZIMO_MODOS).includes(raw.modo) ? raw.modo : DIZIMO_MODOS.TOTAL;
   const percentual = Math.min(100, Math.max(0, Number(raw.percentual) || 0));
   return {
@@ -54,20 +59,24 @@ export function normalizarConfigBlocoDizimo(raw = {}) {
   };
 }
 
+/** @deprecated alias — configuração por item */
+export function normalizarConfigBlocoDizimo(raw = {}) {
+  return normalizarConfigItemDizimo(raw);
+}
+
 export function normalizarConfigDedutivelDizimo(raw = {}) {
-  const padrao = criarConfigDedutivelPadrao();
-  const out = { ...padrao };
-  for (const bloco of DIZIMO_BLOCOS) {
-    if (raw[bloco.id]) {
-      out[bloco.id] = normalizarConfigBlocoDizimo(raw[bloco.id]);
+  if (!raw || typeof raw !== 'object') return {};
+  const out = {};
+  for (const [itemId, cfg] of Object.entries(raw)) {
+    if (cfg && typeof cfg === 'object') {
+      out[itemId] = normalizarConfigItemDizimo(cfg);
     }
   }
   return out;
 }
 
-/** Fator 0–1 do valor bruto que entra na base do dízimo. */
 export function calcularFatorDedutivel(config = {}) {
-  const normalizado = normalizarConfigBlocoDizimo(config);
+  const normalizado = normalizarConfigItemDizimo(config);
   switch (normalizado.modo) {
     case DIZIMO_MODOS.TOTAL:
       return 1;
@@ -93,36 +102,104 @@ export function labelModoDedutivel(modo) {
   }
 }
 
-/**
- * Monta demonstrativo do dízimo para uma competência.
- * @param {object} planoConsolidado — retorno de `montarPlanoFinanceiroConsolidado`
- * @param {object} configBlocos — mapa blocoId → { modo, percentual }
- */
-export function montarDemonstrativoDizimo(planoConsolidado, configBlocos = {}) {
-  const resumo = planoConsolidado?.resumo || {};
-  const config = normalizarConfigDedutivelDizimo(configBlocos);
-  const lucroBruto = Number(resumo.lucroBruto) || 0;
+function agregarTotais(itens = []) {
+  return itens.reduce(
+    (acc, item) => ({
+      valorBruto: acc.valorBruto + item.valorBruto,
+      valorDedutivel: acc.valorDedutivel + item.valorDedutivel,
+      valorNaoDedutivel: acc.valorNaoDedutivel + item.valorNaoDedutivel,
+    }),
+    { valorBruto: 0, valorDedutivel: 0, valorNaoDedutivel: 0 },
+  );
+}
 
-  const blocos = DIZIMO_BLOCOS.map((def) => {
-    const valorBruto = Number(resumo[def.resumoKey]) || 0;
-    const blocoConfig = config[def.id];
-    const fatorDedutivel = calcularFatorDedutivel(blocoConfig);
-    const valorDedutivel = valorBruto * fatorDedutivel;
-    const valorNaoDedutivel = valorBruto - valorDedutivel;
+function montarItemDizimo(linha, configItens) {
+  const config = normalizarConfigItemDizimo(configItens[linha.id]);
+  const valorBruto = Number(linha.valor) || 0;
+  const fatorDedutivel = calcularFatorDedutivel(config);
+  const valorDedutivel = valorBruto * fatorDedutivel;
+  return {
+    id: linha.id,
+    nome: linha.nome,
+    detalhe: linha.detalhe || '',
+    categoria: linha.categoria || '',
+    centroCusto: linha.centroCusto || '',
+    valorBruto,
+    config,
+    fatorDedutivel,
+    valorDedutivel,
+    valorNaoDedutivel: valorBruto - valorDedutivel,
+    link: linha.link || null,
+  };
+}
 
-    return {
-      ...def,
-      config: blocoConfig,
-      valorBruto,
-      fatorDedutivel,
-      valorDedutivel,
-      valorNaoDedutivel,
-    };
+function filtrarLinhasPlano(linhas = [], { somenteEntraNoTotal = false } = {}) {
+  return (linhas || []).filter((linha) => {
+    if (somenteEntraNoTotal && linha.entraNoTotal === false) return false;
+    return (Number(linha.valor) || 0) > 0;
   });
+}
 
-  const totalOperacionalBruto = blocos.reduce((acc, bloco) => acc + bloco.valorBruto, 0);
-  const totalDedutivel = blocos.reduce((acc, bloco) => acc + bloco.valorDedutivel, 0);
-  const totalNaoDedutivel = blocos.reduce((acc, bloco) => acc + bloco.valorNaoDedutivel, 0);
+function mapaGruposPlano(planoConsolidado) {
+  const mapa = {};
+  for (const grupo of planoConsolidado?.grupos || []) {
+    mapa[grupo.id] = grupo.items || [];
+  }
+  return mapa;
+}
+
+function montarSubsecaoDizimo(def, linhas, configItens) {
+  const filtradas = def.filtro ? linhas.filter(def.filtro) : linhas;
+  const itens = filtradas.map((linha) => montarItemDizimo(linha, configItens));
+  return {
+    id: def.id,
+    label: def.label,
+    itens,
+    ...agregarTotais(itens),
+  };
+}
+
+function montarSecaoDizimo(def, linhas, configItens) {
+  if (def.subsecoes?.length) {
+    const subsecoes = def.subsecoes.map((sub) => montarSubsecaoDizimo(sub, linhas, configItens));
+    const itens = subsecoes.flatMap((sub) => sub.itens);
+    return {
+      id: def.id,
+      label: def.label,
+      subsecoes,
+      itens: [],
+      ...agregarTotais(itens),
+    };
+  }
+
+  const filtradas = filtrarLinhasPlano(linhas, { somenteEntraNoTotal: def.somenteEntraNoTotal });
+  const itens = filtradas.map((linha) => montarItemDizimo(linha, configItens));
+  return {
+    id: def.id,
+    label: def.label,
+    subsecoes: [],
+    itens,
+    ...agregarTotais(itens),
+  };
+}
+
+/**
+ * @param {object} planoConsolidado
+ * @param {object} configItens — mapa itemId → { modo, percentual }
+ */
+export function montarDemonstrativoDizimo(planoConsolidado, configItens = {}) {
+  const config = normalizarConfigDedutivelDizimo(configItens);
+  const resumo = planoConsolidado?.resumo || {};
+  const lucroBruto = Number(resumo.lucroBruto) || 0;
+  const gruposMap = mapaGruposPlano(planoConsolidado);
+
+  const secoes = DIZIMO_SECOES.map((def) =>
+    montarSecaoDizimo(def, gruposMap[def.grupoId] || [], config),
+  );
+
+  const totalOperacionalBruto = secoes.reduce((acc, sec) => acc + sec.valorBruto, 0);
+  const totalDedutivel = secoes.reduce((acc, sec) => acc + sec.valorDedutivel, 0);
+  const totalNaoDedutivel = secoes.reduce((acc, sec) => acc + sec.valorNaoDedutivel, 0);
 
   const lucroLiquidoOperacional = lucroBruto - totalDedutivel;
   const basePositiva = Math.max(0, lucroLiquidoOperacional);
@@ -132,7 +209,7 @@ export function montarDemonstrativoDizimo(planoConsolidado, configBlocos = {}) {
     competencia: planoConsolidado?.competencia || '',
     margemDetalhe: planoConsolidado?.margemDetalhe || null,
     lucroBruto,
-    blocos,
+    secoes,
     totalOperacionalBruto,
     totalDedutivel,
     totalNaoDedutivel,

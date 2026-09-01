@@ -14,39 +14,68 @@ function assert(cond, msg) {
 
 const plano = {
   competencia: '2026-03',
+  grupos: [
+    {
+      id: 'fixas_recorrentes',
+      items: [
+        { id: 'fixa-a', nome: 'Aluguel', valor: 10_000 },
+        { id: 'fixa-b', nome: 'Energia', valor: 10_000 },
+      ],
+    },
+    {
+      id: 'folha',
+      items: [
+        { id: 'folha-1', nome: 'Maria', detalhe: '', valor: 3_000 },
+        { id: 'folha-2', nome: 'João', detalhe: '', valor: 2_000 },
+        { id: 'folha-3', nome: 'André', detalhe: 'Sócio', valor: 25_000 },
+      ],
+    },
+    {
+      id: 'budgets',
+      items: [{ id: 'budget-1', nome: 'Marketing', valor: 10_000 }],
+    },
+    {
+      id: 'pontuais',
+      items: [{ id: 'pauta-1', nome: 'Boleto X', valor: 5_000, entraNoTotal: true }],
+    },
+  ],
   resumo: {
     lucroBruto: 100_000,
-    fixasRecorrentes: 20_000,
-    folha: 30_000,
-    budgets: 10_000,
-    pontuaisExtraPlano: 5_000,
     resultadoOperacional: 35_000,
   },
 };
 
-// Tudo dedutível → igual ao resultado operacional do plano
+// Tudo dedutível
 const tudo = montarDemonstrativoDizimo(plano, {});
+assert(tudo.totalDedutivel === 65_000, 'tudo dedutível soma itens');
 assert(tudo.lucroLiquidoOperacional === 35_000, 'base com tudo dedutível');
 assert(tudo.dizimo === 3_500, '10% de 35k');
 
-// Folha não dedutível
-const folhaFora = montarDemonstrativoDizimo(plano, {
-  folha: { modo: DIZIMO_MODOS.NAO_DEDUTIVEL, percentual: 0 },
+// Item único não dedutível
+const aluguelFora = montarDemonstrativoDizimo(plano, {
+  'fixa-a': { modo: DIZIMO_MODOS.NAO_DEDUTIVEL, percentual: 0 },
 });
-assert(folhaFora.lucroLiquidoOperacional === 65_000, 'folha fora da base');
-assert(folhaFora.dizimo === 6_500, '10% de 65k');
+assert(aluguelFora.totalDedutivel === 55_000, 'aluguel fora da base');
 
-// Parcial 50% em budgets
+// Pró-labore parcial 50%
 assert(calcularFatorDedutivel({ modo: DIZIMO_MODOS.PARCIAL, percentual: 50 }) === 0.5, 'fator parcial');
-const parcial = montarDemonstrativoDizimo(plano, {
-  budgets: { modo: DIZIMO_MODOS.PARCIAL, percentual: 50 },
+const proLaboreParcial = montarDemonstrativoDizimo(plano, {
+  'folha-3': { modo: DIZIMO_MODOS.PARCIAL, percentual: 50 },
 });
-assert(parcial.totalDedutivel === 60_000, 'budgets metade dedutível');
-assert(parcial.dizimo === 4_000, '10% de 40k');
+assert(proLaboreParcial.totalDedutivel === 52_500, 'pró-labore metade dedutível');
+
+// Folha com subseções
+const folhaSecao = tudo.secoes.find((s) => s.id === 'folha');
+assert(folhaSecao.subsecoes.length === 2, 'folha tem funcionários e pró-labore');
+assert(folhaSecao.subsecoes[0].itens.length === 2, 'dois funcionários');
+assert(folhaSecao.subsecoes[1].itens.length === 1, 'um pró-labore');
 
 // Mês negativo → dízimo zero
 const negativo = montarDemonstrativoDizimo(
-  { resumo: { lucroBruto: 10_000, fixasRecorrentes: 50_000, folha: 0, budgets: 0, pontuaisExtraPlano: 0 } },
+  {
+    grupos: [{ id: 'fixas_recorrentes', items: [{ id: 'fixa-x', nome: 'X', valor: 50_000 }] }],
+    resumo: { lucroBruto: 10_000 },
+  },
   {},
 );
 assert(negativo.lucroLiquidoOperacional === -40_000, 'prejuízo operacional');
