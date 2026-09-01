@@ -5,8 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { P38MobileLine, P38MobileLineList, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
-import { ArrowLeft, Search, Printer, CheckCircle2, Minus, Plus, Camera, X } from 'lucide-react';
+import { ArrowLeft, Search, Printer, CheckCircle2, Camera, X } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import QuantidadeFracionadaInput from '@/components/vendas/QuantidadeFracionadaInput';
 import { format } from 'date-fns';
 import { createPageUrl } from '@/components/utils';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
@@ -20,6 +21,7 @@ import {
 } from '@/lib/creditoDevolucaoTroca';
 import { criarRascunhoTrocaParaCaixa } from '@/lib/rascunhoTrocaCaixa';
 import { hydratePedidoVendaParaDevolucao } from '@/lib/fetchPedidoVendaItens';
+import { formatQuantidadeDisplay } from '@/lib/parseQuantidadeInput';
 
 function tituloModulo(tipo) {
   if (tipo === 'Troca') return 'Troca de Produto';
@@ -94,7 +96,6 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
   const [qtds, setQtds] = useState(
     Object.fromEntries((pedido.itens || []).map((i) => [pedidoItemKey(i), 0]))
   );
-  const [focusedKey, setFocusedKey] = useState(null);
   const [formaReembolso, setFormaReembolso] = useState('Vale Troca');
   const [aguardaSubstituto, setAguardaSubstituto] = useState(false);
   const [motivo, setMotivo] = useState('');
@@ -190,7 +191,7 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium">{item.produto_nome}</div>
                   <div className="text-xs text-muted-foreground mt-0.5">
-                    {item.quantidade}x ·{' '}
+                    {formatQuantidadeDisplay(item.quantidade)}x ·{' '}
                     {temDesconto ? (
                       <>
                         <span className="line-through">{formatValorBRL(unitLista)}</span>{' '}
@@ -203,39 +204,11 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setQtds(prev => ({ ...prev, [key]: Math.max(0, (prev[key] || 0) - 1) }))}
-                    className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center active:scale-95 transition-transform"
-                  >
-                    <Minus className="w-4 h-4 text-muted-foreground" />
-                  </button>
-                  <input
-                    autoComplete="off"
-                    type="number"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    min={0}
-                    max={item.quantidade}
-                    value={focusedKey === key ? (qtd === 0 ? '' : qtd) : qtd}
-                    onFocus={(e) => { setFocusedKey(key); e.target.select(); }}
-                    onBlur={() => setFocusedKey(null)}
-                    onChange={(e) => {
-                      const v = parseInt(e.target.value) || 0;
-                      setQtds(prev => ({ ...prev, [key]: Math.min(item.quantidade, Math.max(0, v)) }));
-                    }}
-                    className={`w-14 text-center text-base font-bold tabular-nums rounded-lg border-0 bg-transparent focus:bg-blue-50 dark:focus:bg-blue-900/20 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 transition-all ${qtd > 0 ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'}`}
-                    style={{ minHeight: '36px' }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setQtds(prev => ({ ...prev, [key]: Math.min(item.quantidade, (prev[key] || 0) + 1) }))}
-                    className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center active:scale-95 transition-transform"
-                  >
-                    <Plus className="w-4 h-4 text-muted-foreground" />
-                  </button>
-                </div>
+                <QuantidadeFracionadaInput
+                  value={qtd}
+                  max={item.quantidade}
+                  onChange={(next) => setQtds((prev) => ({ ...prev, [key]: next }))}
+                />
               </P38MobileLine>
             );
           })}

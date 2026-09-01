@@ -3,9 +3,11 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { P38MobileLine, P38MobileLineList, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
-import { Camera, Minus, Plus, Search, ShoppingBag, X } from 'lucide-react';
+import { Camera, Search, ShoppingBag, X } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import QuantidadeFracionadaInput from '@/components/vendas/QuantidadeFracionadaInput';
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
+import { formatQuantidadeDisplay, resolveQuantidadeStep, roundQuantidade } from '@/lib/parseQuantidadeInput';
 import {
   calcularCreditoDevolucao,
   calcularLinhaCreditoDevolucao,
@@ -22,7 +24,6 @@ export default function SelecionarTrocaStep({ pedido, onConfirm }) {
   const [qtds, setQtds] = useState(
     Object.fromEntries((pedido.itens || []).map((i) => [pedidoItemKey(i), 0]))
   );
-  const [focusedKey, setFocusedKey] = useState(null);
   const [substitutos, setSubstitutos] = useState([]);
   const [buscaProduto, setBuscaProduto] = useState('');
   const [produtos, setProdutos] = useState([]);
@@ -77,15 +78,17 @@ export default function SelecionarTrocaStep({ pedido, onConfirm }) {
 
   const adicionarSubstituto = (produto) => {
     const preco = precoVendaProduto(produto);
+    const step = resolveQuantidadeStep(0);
     setSubstitutos((prev) => {
       const existente = prev.find((s) => s.produto_id === produto.id);
       if (existente) {
+        const qtd = roundQuantidade(existente.quantidade + step);
         return prev.map((s) =>
           s.produto_id === produto.id
             ? {
                 ...s,
-                quantidade: s.quantidade + 1,
-                total: (s.quantidade + 1) * s.preco_unitario,
+                quantidade: qtd,
+                total: qtd * s.preco_unitario,
               }
             : s
         );
@@ -95,21 +98,21 @@ export default function SelecionarTrocaStep({ pedido, onConfirm }) {
         {
           produto_id: produto.id,
           produto_nome: produto.nome,
-          quantidade: 1,
+          quantidade: step,
           preco_unitario: preco,
-          total: preco,
+          total: preco * step,
         },
       ];
     });
     setBuscaProduto('');
   };
 
-  const alterarQtdSubstituto = (produtoId, delta) => {
+  const setQuantidadeSubstituto = (produtoId, quantidade) => {
     setSubstitutos((prev) =>
       prev
         .map((s) => {
           if (s.produto_id !== produtoId) return s;
-          const qtd = Math.max(0, s.quantidade + delta);
+          const qtd = roundQuantidade(quantidade);
           return { ...s, quantidade: qtd, total: qtd * s.preco_unitario };
         })
         .filter((s) => s.quantidade > 0)
@@ -218,7 +221,7 @@ export default function SelecionarTrocaStep({ pedido, onConfirm }) {
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium">{item.produto_nome}</div>
                   <div className="mt-0.5 text-xs text-muted-foreground">
-                    {item.quantidade}x ·{' '}
+                    {formatQuantidadeDisplay(item.quantidade)}x ·{' '}
                     {temDescontoLinha ? (
                       <>
                         <span className="line-through">{formatValorBRL(linha.unitLista)}</span>{' '}
@@ -236,48 +239,11 @@ export default function SelecionarTrocaStep({ pedido, onConfirm }) {
                     </div>
                   )}
                 </div>
-                <div className="flex shrink-0 items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setQtds((prev) => ({ ...prev, [key]: Math.max(0, (prev[key] || 0) - 1) }))}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary active:scale-95"
-                  >
-                    <Minus className="h-4 w-4 text-muted-foreground" />
-                  </button>
-                  <input
-                    autoComplete="off"
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    max={item.quantidade}
-                    value={focusedKey === key ? (qtd === 0 ? '' : qtd) : qtd}
-                    onFocus={(e) => {
-                      setFocusedKey(key);
-                      e.target.select();
-                    }}
-                    onBlur={() => setFocusedKey(null)}
-                    onChange={(e) => {
-                      const v = parseInt(e.target.value, 10) || 0;
-                      setQtds((prev) => ({
-                        ...prev,
-                        [key]: Math.min(item.quantidade, Math.max(0, v)),
-                      }));
-                    }}
-                    className={`w-14 rounded-lg border-0 bg-transparent text-center text-base font-bold tabular-nums focus:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:bg-blue-900/20 ${qtd > 0 ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'}`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setQtds((prev) => ({
-                        ...prev,
-                        [key]: Math.min(item.quantidade, (prev[key] || 0) + 1),
-                      }))
-                    }
-                    className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary active:scale-95"
-                  >
-                    <Plus className="h-4 w-4 text-muted-foreground" />
-                  </button>
-                </div>
+                <QuantidadeFracionadaInput
+                  value={qtd}
+                  max={item.quantidade}
+                  onChange={(next) => setQtds((prev) => ({ ...prev, [key]: next }))}
+                />
               </P38MobileLine>
             );
           })}
@@ -346,23 +312,13 @@ export default function SelecionarTrocaStep({ pedido, onConfirm }) {
                       {formatValorBRL(sub.preco_unitario)}/un · Total {formatValorBRL(sub.total)}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => alterarQtdSubstituto(sub.produto_id, -1)}
-                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary"
-                    >
-                      <Minus className="h-4 w-4" />
-                    </button>
-                    <span className="w-8 text-center text-sm font-bold tabular-nums">{sub.quantidade}</span>
-                    <button
-                      type="button"
-                      onClick={() => alterarQtdSubstituto(sub.produto_id, 1)}
-                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </div>
+                  <QuantidadeFracionadaInput
+                    value={sub.quantidade}
+                    onChange={(next) => setQuantidadeSubstituto(sub.produto_id, next)}
+                    activeClassName="text-emerald-700 dark:text-emerald-400"
+                    buttonClassName="h-9 w-9 rounded-lg"
+                    inputClassName="w-14 text-sm"
+                  />
                 </P38MobileLine>
               ))}
             </P38MobileLineList>
