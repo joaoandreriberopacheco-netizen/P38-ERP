@@ -20,7 +20,7 @@ export const COMPRAS_CTA =
 
 /** Pills alinhados a STATUS_CONFIG em ListaPedidosCompra.jsx — sem contorno (ring). */
 export const COMPRAS_PILL = {
-  aprovado: 'bg-[#4a5240]/12 text-[#3a4232] dark:bg-[rgba(99,107,47,0.18)] dark:text-[#A8B56E]',
+  aprovado: 'bg-lime-100 text-lime-800 dark:bg-lime-900/30 dark:text-[#a4ce33]',
   success: 'bg-[#4a5240]/10 text-[#3a4232] dark:bg-[rgba(99,107,47,0.14)] dark:text-[#A8B56E]/85',
   info: 'bg-[#e8b824]/14 text-[#a8942e] dark:bg-[#4ECDC4]/15 dark:text-[#4ECDC4]',
   warning: 'bg-[#D96F55]/12 text-[#9c4228] dark:bg-[#D96F55]/15 dark:text-[#D96F55]',
@@ -28,9 +28,9 @@ export const COMPRAS_PILL = {
   muted: 'bg-muted/80 text-muted-foreground',
 };
 
-/** LED + pill — pedido aprovado (pronto para despacho). */
+/** LED + pill — pedido aprovado (verde lima no claro; oliva no escuro). */
 export const COMPRAS_APROVADO_STYLE = {
-  dot: 'bg-[#4a5240] dark:bg-[#636B2F]',
+  dot: 'bg-lime-500 dark:bg-[#636B2F]',
   pill: COMPRAS_PILL.aprovado,
 };
 
@@ -87,7 +87,7 @@ export const COMPRAS_STATUS_BORDER = {
   'Aguardando Aprovação Financeira': 'border-l-[#D96F55] dark:border-l-[#D96F55]',
   'Aguardando Liberação Financeira': 'border-l-[#D96F55] dark:border-l-[#D96F55]',
   'Aguardando Liberação': 'border-l-[#D96F55] dark:border-l-[#D96F55]',
-  Aprovado: 'border-l-[#4a5240] dark:border-l-[#636B2F]/55',
+  Aprovado: 'border-l-lime-500 dark:border-l-[#636B2F]/55',
   Necessidade: 'border-l-red-600 dark:border-l-red-600/70',
   Despachado: 'border-l-[#e8b824] dark:border-l-[#4ECDC4]',
   Concluído: 'border-l-emerald-600 dark:border-l-emerald-500',
