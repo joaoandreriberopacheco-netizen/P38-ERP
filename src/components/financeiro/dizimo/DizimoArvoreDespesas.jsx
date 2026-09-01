@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
 import { formatFinanceiroValor } from '@/components/financeiro/fluxo/FinanceiroListaShared';
 import DedutibilidadeBlocoToggle from '@/components/financeiro/dizimo/DedutibilidadeBlocoToggle';
+
+const LINHA_FINA = 'border-black/[0.06] dark:border-white/10';
+const DIVISOR = `divide-y ${LINHA_FINA}`;
 
 function DizimoGrupoColapsavel({
   titulo,
@@ -20,21 +22,23 @@ function DizimoGrupoColapsavel({
   return (
     <div
       className={cn(
-        nivel === 0 && 'rounded-2xl overflow-hidden',
-        nivel === 0 ? P38_FIELD_SURFACE : 'rounded-xl border border-border/40 bg-muted/10',
+        'overflow-hidden bg-background',
+        nivel === 0 ? `rounded-xl border ${LINHA_FINA}` : `rounded-lg border ${LINHA_FINA} mx-2`,
       )}
     >
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          'w-full flex items-center justify-between gap-3 py-3 pr-3 text-left transition-colors hover:bg-muted/20',
+          'w-full flex items-center justify-between gap-3 py-2.5 pr-3 text-left transition-colors hover:bg-muted/15',
           paddingLeft,
+          `border-b ${LINHA_FINA}`,
+          open && !vazio && 'border-b',
         )}
       >
         <div className="flex items-center gap-2 min-w-0">
           <ChevronRight
-            className={cn('h-4 w-4 shrink-0 text-muted-foreground transition-transform', open && 'rotate-90')}
+            className={cn('h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform', open && 'rotate-90')}
           />
           <span className={cn('truncate', nivel === 0 ? 'text-sm font-semibold' : 'text-sm font-medium')}>
             {titulo}
@@ -51,7 +55,7 @@ function DizimoGrupoColapsavel({
       </button>
 
       {open ? (
-        <div className={cn('border-t border-border/40', vazio && 'px-3 py-3 text-xs text-muted-foreground')}>
+        <div className={cn(vazio && 'px-3 py-3 text-xs text-muted-foreground')}>
           {vazio ? 'Nenhum item nesta competência.' : children}
         </div>
       ) : null}
@@ -61,7 +65,12 @@ function DizimoGrupoColapsavel({
 
 function DizimoItemLinha({ item, onConfigChange }) {
   return (
-    <div className="flex flex-row items-center justify-between gap-3 py-3 pl-9 pr-3 border-b border-border/30 last:border-b-0">
+    <div
+      className={cn(
+        'flex flex-row items-center justify-between gap-3 py-2.5 pl-9 pr-3',
+        `border-b ${LINHA_FINA} last:border-b-0`,
+      )}
+    >
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium truncate">{item.nome}</p>
         <p className="text-[11px] text-muted-foreground mt-0.5 tabular-nums">
@@ -87,13 +96,13 @@ function DizimoSubsecao({ subsecao, onConfigItem }) {
       defaultOpen={!vazio}
       vazio={vazio}
     >
-      {subsecao.itens.map((item) => (
+      <div className={DIVISOR}>{subsecao.itens.map((item) => (
         <DizimoItemLinha
           key={item.id}
           item={item}
           onConfigChange={(next) => onConfigItem(item.id, next)}
         />
-      ))}
+      ))}</div>
     </DizimoGrupoColapsavel>
   );
 }
@@ -114,19 +123,21 @@ function DizimoSecao({ secao, onConfigItem }) {
       vazio={vazio}
     >
       {temSubsecoes ? (
-        <div className="space-y-2 p-2">
+        <div className={cn('space-y-2 py-2', DIVISOR)}>
           {secao.subsecoes.map((sub) => (
             <DizimoSubsecao key={sub.id} subsecao={sub} onConfigItem={onConfigItem} />
           ))}
         </div>
       ) : (
-        secao.itens.map((item) => (
-          <DizimoItemLinha
-            key={item.id}
-            item={item}
-            onConfigChange={(next) => onConfigItem(item.id, next)}
-          />
-        ))
+        <div className={DIVISOR}>
+          {secao.itens.map((item) => (
+            <DizimoItemLinha
+              key={item.id}
+              item={item}
+              onConfigChange={(next) => onConfigItem(item.id, next)}
+            />
+          ))}
+        </div>
       )}
     </DizimoGrupoColapsavel>
   );
@@ -134,7 +145,7 @@ function DizimoSecao({ secao, onConfigItem }) {
 
 export default function DizimoArvoreDespesas({ secoes = [], onConfigItem }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {secoes.map((secao) => (
         <DizimoSecao key={secao.id} secao={secao} onConfigItem={onConfigItem} />
       ))}

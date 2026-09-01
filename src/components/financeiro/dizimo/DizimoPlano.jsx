@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, Loader2, Save } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { P38HelpPopover } from '@/components/ui/p38-help-popover';
 import {
@@ -29,7 +30,11 @@ import {
   carregarConfigDedutivelDizimo,
   salvarConfigDedutivelDizimo,
 } from '@/lib/dizimoConfigStorage';
+import { gerarRelatorioDizimo } from '@/functions/gerarRelatorioDizimo';
+import { dataHoje } from '@/components/utils/dateUtils';
 import DizimoArvoreDespesas from '@/components/financeiro/dizimo/DizimoArvoreDespesas';
+
+const LINHA_FINA = 'border-black/[0.06] dark:border-white/10';
 
 function CelulaValor({ valor, positivo, className, prefix = '' }) {
   const n = Number(valor) || 0;
@@ -53,14 +58,14 @@ function LinhaResumo({ label, valor, tipo = 'normal', sublabel, destaque = false
     tipo === 'soma' ? Number(valor) >= 0 : tipo === 'resultado' ? Number(valor) >= 0 : undefined;
 
   return (
-    <tr className={cn('border-b border-border/40', destaque && 'bg-muted/20 font-semibold')}>
-      <td className="py-3 pl-3 pr-3 text-sm">
+    <tr className={cn('border-b', LINHA_FINA, destaque && 'bg-muted/10 font-semibold')}>
+      <td className="py-2.5 pl-3 pr-3 text-sm">
         <span className={destaque ? 'font-semibold' : 'font-medium'}>{label}</span>
         {sublabel ? (
           <span className="block text-[11px] font-normal text-muted-foreground mt-0.5">{sublabel}</span>
         ) : null}
       </td>
-      <td className="py-3 pl-3 pr-3 text-right text-sm whitespace-nowrap">
+      <td className="py-2.5 pl-3 pr-3 text-right text-sm whitespace-nowrap">
         <CelulaValor valor={valor} positivo={positivo} prefix={prefix} />
       </td>
     </tr>
@@ -71,8 +76,8 @@ function CartaoDizimo({ demonstrativo }) {
   return (
     <div
       className={cn(
-        'rounded-2xl p-5 lg:p-6 text-center space-y-2 border border-emerald-500/20',
-        'bg-gradient-to-b from-emerald-500/5 to-transparent',
+        'rounded-xl p-5 lg:p-6 text-center space-y-2 border bg-background',
+        LINHA_FINA,
       )}
     >
       <p className="text-xs uppercase tracking-wide text-muted-foreground">Dízimo — {demonstrativo.percentualDizimo}%</p>
@@ -90,12 +95,12 @@ function TabelaResumoDizimo({ demonstrativo }) {
   const margem = demonstrativo.margemDetalhe;
 
   return (
-    <div className={cn('overflow-x-auto rounded-2xl p-2 lg:p-3', P38_FIELD_SURFACE)}>
-      <table className="w-full min-w-[320px] text-left">
+    <div className={cn('overflow-x-auto rounded-xl border bg-background', LINHA_FINA)}>
+      <table className="w-full min-w-[320px] text-left border-collapse">
         <thead>
-          <tr className="border-b border-border/50 text-[11px] uppercase tracking-wide text-muted-foreground">
-            <th className="py-3 pl-3 pr-3 font-medium">Demonstrativo</th>
-            <th className="py-3 pl-3 pr-3 text-right font-medium w-36">Valor</th>
+          <tr className={cn('border-b text-[11px] uppercase tracking-wide text-muted-foreground', LINHA_FINA)}>
+            <th className="py-2.5 pl-3 pr-3 font-medium">Demonstrativo</th>
+            <th className="py-2.5 pl-3 pr-3 text-right font-medium w-36">Valor</th>
           </tr>
         </thead>
         <tbody>
@@ -149,6 +154,9 @@ function TabelaResumoDizimo({ demonstrativo }) {
 export default function DizimoPlano() {
   const [competencia, setCompetencia] = useState(getCompetenciaAtual);
   const [configItens, setConfigItens] = useState(() => criarConfigDedutivelPadrao());
+  const [gerandoPdf, setGerandoPdf] = useState(false);
+  const [salvando, setSalvando] = useState(false);
+  const [configSalvaSnapshot, setConfigSalvaSnapshot] = useState('{}');
 
   const compLabel = formatCompetenciaLabel(competencia);
 
@@ -266,26 +274,76 @@ export default function DizimoPlano() {
 
     setConfigItens((prev) => {
       const resolved = carregarConfigDedutivelDizimo(competencia, contextoItens);
-      if (mudouCompetencia) return resolved;
-      return { ...resolved, ...prev };
+      const next = mudouCompetencia ? resolved : { ...resolved, ...prev };
+      if (mudouCompetencia) {
+        setConfigSalvaSnapshot(JSON.stringify(resolved));
+      }
+      return next;
     });
   }, [competencia, contextoItens]);
+
+  const configAlterada = useMemo(
+    () => JSON.stringify(configItens) !== configSalvaSnapshot,
+    [configItens, configSalvaSnapshot],
+  );
 
   const demonstrativo = useMemo(
     () => montarDemonstrativoDizimo(plano, configItens),
     [plano, configItens],
   );
 
-  const atualizarConfigItem = useCallback(
-    (itemId, nextConfig) => {
-      setConfigItens((prev) => {
-        const merged = { ...prev, [itemId]: nextConfig };
-        salvarConfigDedutivelDizimo(competencia, merged);
-        return merged;
+  const atualizarConfigItem = useCallback((itemId, nextConfig) => {
+    setConfigItens((prev) => ({ ...prev, [itemId]: nextConfig }));
+  }, []);
+
+  const handleSalvar = useCallback(async () => {
+    setSalvando(true);
+    try {
+      salvarConfigDedutivelDizimo(competencia, configItens);
+      setConfigSalvaSnapshot(JSON.stringify(configItens));
+      toast.success('Configuração do dízimo salva', {
+        description: `Competência ${compLabel}`,
       });
-    },
-    [competencia],
-  );
+    } catch (error) {
+      console.error(error);
+      toast.error('Não foi possível salvar', { description: error?.message || String(error) });
+    } finally {
+      setSalvando(false);
+    }
+  }, [competencia, configItens, compLabel]);
+
+  const handleGerarPdf = useCallback(async () => {
+    if (loading || gerandoPdf) return;
+    setGerandoPdf(true);
+    toast.loading('Gerando PDF do dízimo...', { id: 'pdf-dizimo' });
+    try {
+      if (configAlterada) {
+        salvarConfigDedutivelDizimo(competencia, configItens);
+        setConfigSalvaSnapshot(JSON.stringify(configItens));
+      }
+      const resposta = await gerarRelatorioDizimo({
+        competencia,
+        competenciaLabel: compLabel,
+        demonstrativo,
+      });
+      const blob = new Blob([resposta.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `RelatorioDizimo_${competencia}_${dataHoje()}.pdf`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      toast.success('PDF do dízimo gerado', { id: 'pdf-dizimo' });
+    } catch (error) {
+      console.error(error);
+      toast.error('Não foi possível gerar o PDF', {
+        id: 'pdf-dizimo',
+        description: error?.message || String(error),
+      });
+    } finally {
+      setGerandoPdf(false);
+    }
+  }, [loading, gerandoPdf, configAlterada, competencia, compLabel, demonstrativo, configItens]);
 
   return (
     <div className="space-y-4">
@@ -299,16 +357,40 @@ export default function DizimoPlano() {
                 (Agefin, folha, budgets e pauta).
               </p>
               <p className="text-muted-foreground mt-2">
-                Expanda cada bloco e configure item a item: total, parcial (com % na mesma linha) ou não
-                dedutível. Contas fixas, folha e budgets herdam a configuração do mês anterior; a pauta
-                ocasional começa como não dedutível.
+                Configure item a item e clique em Salvar para fixar o mês. O PDF usa a configuração
+                salva (ou salva automaticamente antes de gerar se houver alterações pendentes).
               </p>
             </P38HelpPopover>
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">Competência — {compLabel}</p>
         </div>
 
-        <div className={cn('flex items-center rounded-xl p-1', P38_FIELD_SURFACE)}>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-10 rounded-xl gap-1.5"
+            disabled={loading || salvando || !configAlterada}
+            onClick={handleSalvar}
+          >
+            {salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            <span>Salvar</span>
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-10 rounded-xl gap-1.5"
+            disabled={loading || gerandoPdf}
+            onClick={handleGerarPdf}
+          >
+            {gerandoPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            <span>PDF do mês</span>
+          </Button>
+
+          <div className={cn('flex items-center rounded-xl p-1 border', LINHA_FINA, 'bg-background')}>
           <Button
             type="button"
             variant="ghost"
@@ -328,6 +410,7 @@ export default function DizimoPlano() {
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
+        </div>
         </div>
       </div>
 

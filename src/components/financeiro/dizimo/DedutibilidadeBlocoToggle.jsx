@@ -26,7 +26,7 @@ function ParcialInlineInput({ percentual, onChange }) {
     <div
       className={cn(
         'inline-flex items-center gap-0.5 min-w-[3.25rem] justify-center px-1.5 py-1 rounded-lg',
-        'bg-background text-foreground shadow-sm border border-foreground/20',
+        'bg-muted/40 text-foreground border border-black/[0.1] dark:border-white/15',
       )}
     >
       <input
@@ -64,8 +64,7 @@ export default function DedutibilidadeBlocoToggle({ value, onChange, className }
     <div
       className={cn(
         'inline-flex items-center rounded-xl p-1 gap-0.5 shrink-0',
-        'bg-muted/60 border border-border/80 shadow-sm',
-        'dark:bg-muted/30 dark:border-border/60',
+        'bg-background border border-black/[0.08] dark:border-white/12',
         className,
       )}
     >
@@ -89,8 +88,8 @@ export default function DedutibilidadeBlocoToggle({ value, onChange, className }
             className={cn(
               'px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-colors whitespace-nowrap border',
               ativo
-                ? 'bg-background text-foreground shadow-sm border-foreground/20'
-                : 'text-foreground/65 border-transparent hover:bg-background/70 hover:text-foreground hover:border-border/50',
+                ? 'bg-muted/40 text-foreground border-black/[0.1] dark:border-white/15'
+                : 'text-foreground/55 border-transparent hover:bg-muted/25 hover:text-foreground',
             )}
           >
             {labelModoDedutivel(opcao)}
