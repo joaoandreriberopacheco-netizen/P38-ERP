@@ -19,6 +19,7 @@ import {
   pedidoItemKey,
 } from '@/lib/creditoDevolucaoTroca';
 import { criarRascunhoTrocaParaCaixa } from '@/lib/rascunhoTrocaCaixa';
+import { hydratePedidoVendaParaDevolucao } from '@/lib/fetchPedidoVendaItens';
 
 function tituloModulo(tipo) {
   if (tipo === 'Troca') return 'Troca de Produto';
@@ -41,17 +42,28 @@ function BuscarPedidoStep({ onFound }) {
       p.numero?.toUpperCase() === termo ||
       p.numero?.toUpperCase().includes(termo)
     );
-    setBuscando(false);
     if (!encontrado) {
+      setBuscando(false);
       toast({ title: 'Pedido não encontrado', variant: 'destructive' });
       return;
     }
     const statusOk = ['Financeiro OK', 'Em Separação', 'Em Rota de Entrega', 'Pedido Concluído'];
     if (!statusOk.includes(encontrado.status)) {
+      setBuscando(false);
       toast({ title: 'Este pedido não pode ser devolvido', description: `Status: ${encontrado.status}`, variant: 'destructive' });
       return;
     }
-    onFound(encontrado);
+    const pedidoComItens = await hydratePedidoVendaParaDevolucao(base44, encontrado);
+    setBuscando(false);
+    if (!Array.isArray(pedidoComItens.itens) || pedidoComItens.itens.length === 0) {
+      toast({
+        title: 'Pedido sem itens',
+        description: 'Não foi possível carregar os produtos deste pedido para devolução ou troca.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    onFound(pedidoComItens);
   };
 
   return (
