@@ -35,6 +35,7 @@ export const P38_PAGE_NAMES = [
   "DesignerDocumento",
   "DevolucaoTroca",
   "DiscriminarVolumes",
+  "Dizimo",
   "EdicaoMassivaCustos",
   "EditarProdutosEmMassa",
   "EditorLayoutsTres",
