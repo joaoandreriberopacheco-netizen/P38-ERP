@@ -2,9 +2,11 @@
  * Preferências de dedutibilidade do Dízimo por competência (localStorage).
  */
 
+import { shiftCompetencia } from '@/lib/budgetCalculos';
 import {
   criarConfigDedutivelPadrao,
   normalizarConfigDedutivelDizimo,
+  resolverConfigItensDizimo,
 } from '@/lib/dizimoCalculos';
 
 const STORAGE_KEY = 'p38_dizimo_dedutivel_itens_por_competencia';
@@ -47,15 +49,40 @@ function gravarMapa(mapa, key = STORAGE_KEY) {
   }
 }
 
-export function carregarConfigDedutivelDizimo(competencia) {
+/**
+ * Carrega configuração resolvida para a competência.
+ * @param {string} competencia — YYYY-MM
+ * @param {{ recorrentes?: string[], ocasionais?: string[] }} contextoItens
+ */
+export function carregarConfigDedutivelDizimo(competencia, contextoItens = {}) {
   const comp = String(competencia || '').slice(0, 7);
   if (!comp) return criarConfigDedutivelPadrao();
+
   const mapa = lerMapa(STORAGE_KEY);
-  if (mapa[comp]) {
-    return normalizarConfigDedutivelDizimo(mapa[comp]);
+  let configExplicita = mapa[comp] ? normalizarConfigDedutivelDizimo(mapa[comp]) : null;
+
+  if (!configExplicita) {
+    const legado = lerMapa(STORAGE_KEY_LEGADO);
+    const migrado = migrarConfigLegado(legado[comp]);
+    if (Object.keys(migrado).length) {
+      configExplicita = migrado;
+    }
   }
-  const legado = lerMapa(STORAGE_KEY_LEGADO);
-  return migrarConfigLegado(legado[comp]);
+
+  const mesAnterior = shiftCompetencia(comp, -1);
+  const configMesAnterior = mapa[mesAnterior] ? normalizarConfigDedutivelDizimo(mapa[mesAnterior]) : {};
+
+  const { recorrentes = [], ocasionais = [] } = contextoItens;
+  if (!recorrentes.length && !ocasionais.length) {
+    return configExplicita || criarConfigDedutivelPadrao();
+  }
+
+  return resolverConfigItensDizimo({
+    configExplicita: configExplicita || {},
+    configMesAnterior,
+    recorrentes,
+    ocasionais,
+  });
 }
 
 export function salvarConfigDedutivelDizimo(competencia, config) {

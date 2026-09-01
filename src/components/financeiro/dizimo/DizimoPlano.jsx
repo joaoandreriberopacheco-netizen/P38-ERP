@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,7 @@ import {
   listarLancamentosRecorrentes,
 } from '@/lib/agefinPrevisaoService';
 import { montarPlanoFinanceiroConsolidado } from '@/lib/planoFinanceiroConsolidado';
-import { montarDemonstrativoDizimo } from '@/lib/dizimoCalculos';
+import { montarDemonstrativoDizimo, extrairContextoItensDizimo, criarConfigDedutivelPadrao } from '@/lib/dizimoCalculos';
 import {
   carregarConfigDedutivelDizimo,
   salvarConfigDedutivelDizimo,
@@ -148,11 +148,7 @@ function TabelaResumoDizimo({ demonstrativo }) {
 
 export default function DizimoPlano() {
   const [competencia, setCompetencia] = useState(getCompetenciaAtual);
-  const [configItens, setConfigItens] = useState(() => carregarConfigDedutivelDizimo(getCompetenciaAtual()));
-
-  useEffect(() => {
-    setConfigItens(carregarConfigDedutivelDizimo(competencia));
-  }, [competencia]);
+  const [configItens, setConfigItens] = useState(() => criarConfigDedutivelPadrao());
 
   const compLabel = formatCompetenciaLabel(competencia);
 
@@ -259,6 +255,22 @@ export default function DizimoPlano() {
     ],
   );
 
+  const contextoItens = useMemo(() => extrairContextoItensDizimo(plano), [plano]);
+  const competenciaAnteriorRef = useRef(competencia);
+
+  useEffect(() => {
+    if (!contextoItens.recorrentes.length && !contextoItens.ocasionais.length) return;
+
+    const mudouCompetencia = competenciaAnteriorRef.current !== competencia;
+    competenciaAnteriorRef.current = competencia;
+
+    setConfigItens((prev) => {
+      const resolved = carregarConfigDedutivelDizimo(competencia, contextoItens);
+      if (mudouCompetencia) return resolved;
+      return { ...resolved, ...prev };
+    });
+  }, [competencia, contextoItens]);
+
   const demonstrativo = useMemo(
     () => montarDemonstrativoDizimo(plano, configItens),
     [plano, configItens],
@@ -287,8 +299,9 @@ export default function DizimoPlano() {
                 (Agefin, folha, budgets e pauta).
               </p>
               <p className="text-muted-foreground mt-2">
-                Expanda cada bloco e configure item a item: total, parcial ou não dedutível. O dízimo é
-                10% do lucro líquido operacional estimado resultante.
+                Expanda cada bloco e configure item a item: total, parcial (com % na mesma linha) ou não
+                dedutível. Contas fixas, folha e budgets herdam a configuração do mês anterior; a pauta
+                ocasional começa como não dedutível.
               </p>
             </P38HelpPopover>
           </div>

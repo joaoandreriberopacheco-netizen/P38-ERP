@@ -6,6 +6,7 @@ import {
   DIZIMO_MODOS,
   montarDemonstrativoDizimo,
   calcularFatorDedutivel,
+  resolverConfigItensDizimo,
 } from '../src/lib/dizimoCalculos.js';
 
 function assert(cond, msg) {
@@ -45,8 +46,15 @@ const plano = {
   },
 };
 
-// Tudo dedutível
-const tudo = montarDemonstrativoDizimo(plano, {});
+// Padrão: recorrentes total, ocasionais não dedutíveis
+const padrao = montarDemonstrativoDizimo(plano, {});
+assert(padrao.totalDedutivel === 60_000, 'recorrentes dedutíveis, pauta fora');
+assert(padrao.dizimo === 4_000, '10% de 40k');
+
+// Tudo dedutível explicitamente
+const tudo = montarDemonstrativoDizimo(plano, {
+  'pauta-1': { modo: DIZIMO_MODOS.TOTAL, percentual: 100 },
+});
 assert(tudo.totalDedutivel === 65_000, 'tudo dedutível soma itens');
 assert(tudo.lucroLiquidoOperacional === 35_000, 'base com tudo dedutível');
 assert(tudo.dizimo === 3_500, '10% de 35k');
@@ -55,20 +63,35 @@ assert(tudo.dizimo === 3_500, '10% de 35k');
 const aluguelFora = montarDemonstrativoDizimo(plano, {
   'fixa-a': { modo: DIZIMO_MODOS.NAO_DEDUTIVEL, percentual: 0 },
 });
-assert(aluguelFora.totalDedutivel === 55_000, 'aluguel fora da base');
+assert(aluguelFora.totalDedutivel === 50_000, 'aluguel fora da base');
 
 // Pró-labore parcial 50%
 assert(calcularFatorDedutivel({ modo: DIZIMO_MODOS.PARCIAL, percentual: 50 }) === 0.5, 'fator parcial');
 const proLaboreParcial = montarDemonstrativoDizimo(plano, {
   'folha-3': { modo: DIZIMO_MODOS.PARCIAL, percentual: 50 },
 });
-assert(proLaboreParcial.totalDedutivel === 52_500, 'pró-labore metade dedutível');
+assert(proLaboreParcial.totalDedutivel === 47_500, 'pró-labore metade dedutível');
 
 // Folha com subseções
-const folhaSecao = tudo.secoes.find((s) => s.id === 'folha');
+const folhaSecao = padrao.secoes.find((s) => s.id === 'folha');
 assert(folhaSecao.subsecoes.length === 2, 'folha tem funcionários e pró-labore');
 assert(folhaSecao.subsecoes[0].itens.length === 2, 'dois funcionários');
 assert(folhaSecao.subsecoes[1].itens.length === 1, 'um pró-labore');
+
+// Herança mês anterior para recorrentes
+const herdado = resolverConfigItensDizimo({
+  configExplicita: {},
+  configMesAnterior: {
+    'fixa-a': { modo: DIZIMO_MODOS.PARCIAL, percentual: 40 },
+    'pauta-1': { modo: DIZIMO_MODOS.TOTAL, percentual: 100 },
+  },
+  recorrentes: ['fixa-a', 'fixa-b'],
+  ocasionais: ['pauta-1'],
+});
+assert(herdado['fixa-a'].modo === DIZIMO_MODOS.PARCIAL, 'herda parcial do mês anterior');
+assert(herdado['fixa-a'].percentual === 40, 'herda percentual');
+assert(herdado['fixa-b'].modo === DIZIMO_MODOS.TOTAL, 'novo recorrente = total');
+assert(herdado['pauta-1'].modo === DIZIMO_MODOS.NAO_DEDUTIVEL, 'ocasional sempre não dedutível por padrão');
 
 // Mês negativo → dízimo zero
 const negativo = montarDemonstrativoDizimo(

@@ -55,8 +55,71 @@ export function normalizarConfigItemDizimo(raw = {}) {
   const percentual = Math.min(100, Math.max(0, Number(raw.percentual) || 0));
   return {
     modo,
-    percentual: modo === DIZIMO_MODOS.PARCIAL ? (percentual || 50) : 100,
+    percentual: modo === DIZIMO_MODOS.PARCIAL ? (percentual || 100) : 100,
   };
+}
+
+export function configPadraoItemDizimo({ recorrente = true } = {}) {
+  if (recorrente) {
+    return { modo: DIZIMO_MODOS.TOTAL, percentual: 100 };
+  }
+  return { modo: DIZIMO_MODOS.NAO_DEDUTIVEL, percentual: 0 };
+}
+
+export function isItemDizimoRecorrente(itemId, grupoId) {
+  if (grupoId === GRUPO_PLANO.PONTUAIS) return false;
+  if (String(itemId || '').startsWith('pauta-')) return false;
+  return true;
+}
+
+/** Extrai ids de itens do plano para herança de configuração. */
+export function extrairContextoItensDizimo(planoConsolidado) {
+  const recorrentes = [];
+  const ocasionais = [];
+  for (const grupo of planoConsolidado?.grupos || []) {
+    const recorrente = isItemDizimoRecorrente(null, grupo.id);
+    for (const item of grupo.items || []) {
+      if ((Number(item.valor) || 0) <= 0) continue;
+      if (grupo.id === GRUPO_PLANO.PONTUAIS && item.entraNoTotal === false) continue;
+      if (recorrente && isItemDizimoRecorrente(item.id, grupo.id)) {
+        recorrentes.push(item.id);
+      } else {
+        ocasionais.push(item.id);
+      }
+    }
+  }
+  return { recorrentes, ocasionais };
+}
+
+/**
+ * Resolve configuração completa para todos os itens visíveis.
+ * Recorrentes sem entrada explícita: herdam mês anterior ou Total.
+ * Ocasionais sem entrada: Não dedutível.
+ */
+export function resolverConfigItensDizimo({
+  configExplicita = {},
+  configMesAnterior = {},
+  recorrentes = [],
+  ocasionais = [],
+}) {
+  const out = {};
+  for (const id of recorrentes) {
+    if (configExplicita[id]) {
+      out[id] = normalizarConfigItemDizimo(configExplicita[id]);
+    } else if (configMesAnterior[id]) {
+      out[id] = normalizarConfigItemDizimo(configMesAnterior[id]);
+    } else {
+      out[id] = configPadraoItemDizimo({ recorrente: true });
+    }
+  }
+  for (const id of ocasionais) {
+    if (configExplicita[id]) {
+      out[id] = normalizarConfigItemDizimo(configExplicita[id]);
+    } else {
+      out[id] = configPadraoItemDizimo({ recorrente: false });
+    }
+  }
+  return out;
 }
 
 /** @deprecated alias — configuração por item */
@@ -113,8 +176,11 @@ function agregarTotais(itens = []) {
   );
 }
 
-function montarItemDizimo(linha, configItens) {
-  const config = normalizarConfigItemDizimo(configItens[linha.id]);
+function montarItemDizimo(linha, configItens, grupoId) {
+  const recorrente = isItemDizimoRecorrente(linha.id, grupoId);
+  const config = configItens[linha.id]
+    ? normalizarConfigItemDizimo(configItens[linha.id])
+    : configPadraoItemDizimo({ recorrente });
   const valorBruto = Number(linha.valor) || 0;
   const fatorDedutivel = calcularFatorDedutivel(config);
   const valorDedutivel = valorBruto * fatorDedutivel;
@@ -148,9 +214,9 @@ function mapaGruposPlano(planoConsolidado) {
   return mapa;
 }
 
-function montarSubsecaoDizimo(def, linhas, configItens) {
+function montarSubsecaoDizimo(def, linhas, configItens, grupoId) {
   const filtradas = def.filtro ? linhas.filter(def.filtro) : linhas;
-  const itens = filtradas.map((linha) => montarItemDizimo(linha, configItens));
+  const itens = filtradas.map((linha) => montarItemDizimo(linha, configItens, grupoId));
   return {
     id: def.id,
     label: def.label,
@@ -161,7 +227,7 @@ function montarSubsecaoDizimo(def, linhas, configItens) {
 
 function montarSecaoDizimo(def, linhas, configItens) {
   if (def.subsecoes?.length) {
-    const subsecoes = def.subsecoes.map((sub) => montarSubsecaoDizimo(sub, linhas, configItens));
+    const subsecoes = def.subsecoes.map((sub) => montarSubsecaoDizimo(sub, linhas, configItens, def.grupoId));
     const itens = subsecoes.flatMap((sub) => sub.itens);
     return {
       id: def.id,
@@ -173,7 +239,7 @@ function montarSecaoDizimo(def, linhas, configItens) {
   }
 
   const filtradas = filtrarLinhasPlano(linhas, { somenteEntraNoTotal: def.somenteEntraNoTotal });
-  const itens = filtradas.map((linha) => montarItemDizimo(linha, configItens));
+  const itens = filtradas.map((linha) => montarItemDizimo(linha, configItens, def.grupoId));
   return {
     id: def.id,
     label: def.label,
@@ -189,12 +255,18 @@ function montarSecaoDizimo(def, linhas, configItens) {
  */
 export function montarDemonstrativoDizimo(planoConsolidado, configItens = {}) {
   const config = normalizarConfigDedutivelDizimo(configItens);
+  const contexto = extrairContextoItensDizimo(planoConsolidado);
+  const configResolvida = resolverConfigItensDizimo({
+    configExplicita: config,
+    configMesAnterior: {},
+    ...contexto,
+  });
   const resumo = planoConsolidado?.resumo || {};
   const lucroBruto = Number(resumo.lucroBruto) || 0;
   const gruposMap = mapaGruposPlano(planoConsolidado);
 
   const secoes = DIZIMO_SECOES.map((def) =>
-    montarSecaoDizimo(def, gruposMap[def.grupoId] || [], config),
+    montarSecaoDizimo(def, gruposMap[def.grupoId] || [], configResolvida),
   );
 
   const totalOperacionalBruto = secoes.reduce((acc, sec) => acc + sec.valorBruto, 0);

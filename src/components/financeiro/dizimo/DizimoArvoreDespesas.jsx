@@ -61,7 +61,7 @@ function DizimoGrupoColapsavel({
 
 function DizimoItemLinha({ item, onConfigChange }) {
   return (
-    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between py-3 pl-9 pr-3 border-b border-border/30 last:border-b-0">
+    <div className="flex flex-row items-center justify-between gap-3 py-3 pl-9 pr-3 border-b border-border/30 last:border-b-0">
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium truncate">{item.nome}</p>
         <p className="text-[11px] text-muted-foreground mt-0.5 tabular-nums">
@@ -70,7 +70,7 @@ function DizimoItemLinha({ item, onConfigChange }) {
           {item.detalhe && item.detalhe !== 'Sócio' ? ` · ${item.detalhe}` : ''}
         </p>
       </div>
-      <DedutibilidadeBlocoToggle value={item.config} onChange={onConfigChange} className="sm:shrink-0" />
+      <DedutibilidadeBlocoToggle value={item.config} onChange={onConfigChange} />
     </div>
   );
 }
