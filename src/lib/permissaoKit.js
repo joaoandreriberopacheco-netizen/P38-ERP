@@ -66,6 +66,7 @@ export const FINANCEIRO_PAGE_PERMS = {
   PlanejamentoFinanceiroV2: [{ path: 'financeiro.acesso' }],
   Budgets: [{ path: 'financeiro.acesso' }],
   VisaoFinanceira: [{ path: 'financeiro.acesso' }],
+  Dizimo: [{ path: 'financeiro.acesso' }],
   TurnosFechados: [{ path: 'financeiro.acesso' }],
   AgendaFinanceira: [{ path: 'financeiro.acesso' }],
   LancamentoAnexos: [{ path: 'financeiro.criar_lancamento', fallback: 'financeiro.acesso' }],

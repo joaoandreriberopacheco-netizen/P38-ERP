@@ -20,6 +20,7 @@ export const FINANCEIRO_PROTECTED_PAGES = new Set([
   'PlanejamentoFinanceiroV2',
   'Budgets',
   'VisaoFinanceira',
+  'Dizimo',
   'AgendaFinanceira',
 ]);
 

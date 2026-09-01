@@ -26,7 +26,7 @@ import {
   Users, TrendingDown, Lightbulb, FileText, PackageSearch, Ship,
   ScanLine, ClipboardList, Tags, Upload, CheckSquare, Search, Activity,
   ArrowLeftRight, CreditCard, Clock, Wallet, ReceiptText, AlertCircle, Repeat2, CalendarClock, Target, LineChart,
-  Sparkles,
+  Sparkles, Heart,
 } from 'lucide-react';
 
 export { resolverPermissoes };
@@ -352,6 +352,12 @@ export const ALL_MENU_ITEMS = [
         name: 'Visão Financeira',
         page: 'VisaoFinanceira',
         icon: LineChart,
+        permissaoCheck: (p) => p?.financeiro?.acesso === true
+      },
+      {
+        name: 'Dízimo',
+        page: 'Dizimo',
+        icon: Heart,
         permissaoCheck: (p) => p?.financeiro?.acesso === true
       },
       {
