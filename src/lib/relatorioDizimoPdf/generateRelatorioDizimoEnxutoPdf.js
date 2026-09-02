@@ -18,7 +18,9 @@ const PAD = {
   afterRowRule: 0.4,
   grupoBefore: 4.5,
   grupoText: 4,
-  grupoAfter: 2,
+  grupoAfter: 1.5,
+  grupoBetween: 12,
+  subtotalBefore: 2,
   totalBefore: 4.5,
   colTop: 13,
 };
@@ -228,10 +230,18 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
 
   const continuationHeight = () => {
     let h = 5.5;
-    if (flowCtx.tableHeaders) h += PAD.headerBefore + PAD.headerText + PAD.afterHeaderRule;
     if (flowCtx.grupoLabel) h += PAD.grupoBefore + PAD.grupoText + PAD.grupoAfter;
+    if (flowCtx.tableHeaders) h += PAD.headerBefore + PAD.headerText + PAD.afterHeaderRule;
     return h;
   };
+
+  const grupoTableBlockHeight = () =>
+    PAD.grupoBefore +
+    PAD.grupoText +
+    PAD.grupoAfter +
+    colHeaderHeight() +
+    minRowHeight() +
+    minRowHeight();
 
   const minRowHeight = () =>
     PAD.rowPadTop + LINE_STEP + PAD.rowPadBottom + PAD.afterRowRule + 1;
@@ -270,6 +280,15 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
   const replayContinuationContext = () => {
     if (!flowCtx.active) return;
     drawContinuationBanner(flowCol);
+    if (flowCtx.grupoLabel) {
+      const tc = tableCols(flowCol);
+      flowCol.y += PAD.grupoBefore;
+      setFont('bold', FONT.grupo, INK.muted);
+      doc.text(safe(`${String(flowCtx.grupoLabel).toUpperCase()} — CONTINUAÇÃO`), tc.c1, flowCol.y);
+      flowCol.y += PAD.grupoText;
+      strokeH(flowCol.y, tc.c1, tc.right, INK.lineSoft, LINE.hair);
+      flowCol.y += PAD.grupoAfter;
+    }
     if (flowCtx.tableHeaders) {
       const tc = tableCols(flowCol);
       flowCol.y += PAD.headerBefore;
@@ -285,15 +304,6 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
       strokeH(ruleY, tc.c1, tc.right, INK.line, LINE.fine);
       strokeTableVerticals(tc, headerY - 0.5, ruleY, INK.line);
       flowCol.y += PAD.afterHeaderRule;
-    }
-    if (flowCtx.grupoLabel) {
-      const tc = tableCols(flowCol);
-      flowCol.y += PAD.grupoBefore;
-      setFont('bold', FONT.grupo, INK.muted);
-      doc.text(safe(`${String(flowCtx.grupoLabel).toUpperCase()} — CONTINUAÇÃO`), tc.c1, flowCol.y);
-      flowCol.y += PAD.grupoText;
-      strokeH(flowCol.y, tc.c1, tc.right, INK.lineSoft, LINE.hair);
-      flowCol.y += PAD.grupoAfter;
     }
   };
 
@@ -341,12 +351,104 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
     flowCol.y += PAD.blockLabelAfter;
   };
 
-  const beginNumberedSection = (titulo, headerLabels) => {
+  const beginDetalheSection = (titulo) => {
     clearTableContext();
-    const blockH = sectionTitleHeight() + colHeaderHeight() + minRowHeight();
-    ensureTableBlockFits(blockH);
-    drawSectionTitle(titulo);
-    drawColHeader(headerLabels);
+    ensureTableBlockFits(sectionTitleHeight() + grupoTableBlockHeight());
+    drawSectionTitle(titulo, { remember: false });
+  };
+
+  /** Grupo → cabeçalho colado → linhas (secções 2 e 3). */
+  const beginDetalheGrupo = (label, headerLabels) => {
+    ensureTableBlockFits(grupoTableBlockHeight());
+    const tc = tableCols(flowCol);
+    flowCol.y += PAD.grupoBefore;
+    setFont('bold', FONT.grupo, INK.muted);
+    doc.text(safe(String(label).toUpperCase()), tc.c1, flowCol.y);
+    flowCol.y += PAD.grupoText;
+    strokeH(flowCol.y, tc.c1, tc.right, INK.lineSoft, LINE.hair);
+    flowCol.y += PAD.grupoAfter;
+    flowCtx.grupoLabel = label;
+
+    flowCol.y += PAD.headerBefore;
+    const headerY = flowCol.y;
+    setFont('normal', FONT.header, INK.muted);
+    doc.text(safe(headerLabels[0].toUpperCase()), tc.c1 + CELL_PAD, headerY);
+    doc.text(safe(headerLabels[1].toUpperCase()), tc.c3 - CELL_PAD, headerY, { align: 'right' });
+    doc.text(safe(headerLabels[2].toUpperCase()), tc.c4 - CELL_PAD, headerY, { align: 'right' });
+    doc.text(safe(headerLabels[3].toUpperCase()), tc.right - CELL_PAD, headerY, { align: 'right' });
+    flowCol.y += PAD.headerText;
+    const ruleY = flowCol.y;
+    strokeH(ruleY, tc.c1, tc.right, INK.line, LINE.fine);
+    strokeTableVerticals(tc, headerY - 0.5, ruleY, INK.line);
+    flowCol.y += PAD.afterHeaderRule;
+    flowCtx.tableHeaders = [...headerLabels];
+    flowCtx.active = true;
+  };
+
+  const spacingEntreGrupos = () => {
+    flowCtx.active = false;
+    flowCtx.tableHeaders = null;
+    flowCtx.grupoLabel = null;
+    advanceFlow(PAD.grupoBetween);
+  };
+
+  const drawGrupoSubtotal = (label, totais, { colunaDedutivel = true } = {}) => {
+    flowCol.y += PAD.subtotalBefore;
+    drawRow4(
+      `Subtotal ${label}`,
+      valorMoeda(totais.bruto),
+      totais.naoDed > 0.009 ? valorMoeda(totais.naoDed) : '0,00',
+      colunaDedutivel ? valorMoeda(totais.ded) : '—',
+      { bold: true },
+    );
+  };
+
+  const somarTotaisItens = (itens, { usarFora = false } = {}) =>
+    itens.reduce(
+      (acc, item) => ({
+        bruto: acc.bruto + number(item.valorBruto),
+        naoDed:
+          acc.naoDed +
+          (usarFora
+            ? number(item.valorFora ?? item.valorNaoDedutivel)
+            : number(item.valorNaoDedutivel)),
+        ded: acc.ded + (usarFora ? 0 : number(item.valorDedutivel)),
+      }),
+      { bruto: 0, naoDed: 0, ded: 0 },
+    );
+
+  const renderDetalheGrupos = (secoesLista, { filtroItem, colunaDedutivel = true } = {}) => {
+    let primeiro = true;
+    for (const secao of secoesLista) {
+      const label = ORDEM_SECOES_PDF.find((d) => d.id === secao.id)?.label || secao.label;
+      const itens = [];
+      for (const { item } of iterarItensSecao(secao)) {
+        if (filtroItem && !filtroItem(item)) continue;
+        itens.push(item);
+      }
+      if (!itens.length) continue;
+
+      if (!primeiro) spacingEntreGrupos();
+      primeiro = false;
+
+      beginDetalheGrupo(label, HDR_DETALHE);
+
+      for (const item of itens) {
+        if (colunaDedutivel) {
+          drawDespesaItemRow(item);
+        } else {
+          drawRow4(
+            rotuloDescricao(item),
+            valorMoeda(item.valorBruto),
+            formatarCelulaNaoDedutivel(item),
+            '—',
+          );
+        }
+      }
+
+      const totais = somarTotaisItens(itens, { usarFora: !colunaDedutivel });
+      drawGrupoSubtotal(label, totais, { colunaDedutivel });
+    }
   };
 
   const beginDemonstrativoTable = (blockLabel, headerLabels) => {
@@ -547,47 +649,19 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
   );
 
   // ═══ 2. Despesas dedutíveis (flui esquerda → direita) ═══
-  beginNumberedSection('2. Despesas dedutíveis', HDR_DETALHE);
-
-  for (const secao of secoes) {
-    const label = ORDEM_SECOES_PDF.find((d) => d.id === secao.id)?.label || secao.label;
-    drawGrupoRow(label);
-    for (const { item } of iterarItensSecao(secao)) {
-      if (number(item.valorDedutivel) <= 0.009) continue;
-      drawDespesaItemRow(item);
-    }
-  }
+  beginDetalheSection('2. Despesas dedutíveis');
+  renderDetalheGrupos(secoes, {
+    filtroItem: (item) => number(item.valorDedutivel) > 0.009,
+  });
 
   // ═══ 3. Fora do cálculo ═══
   const secoesFora = ordenarSecoes(anexoForaBase.secoes || []);
   if (number(anexoForaBase.totalFora) > 0 && secoesFora.length) {
-    beginNumberedSection('3. Despesas deixadas de fora do cálculo', HDR_DETALHE);
-
-    for (const secao of secoesFora) {
-      const label = ORDEM_SECOES_PDF.find((d) => d.id === secao.id)?.label || secao.label;
-      drawGrupoRow(label);
-
-      if (secao.subsecoes?.length) {
-        for (const sub of secao.subsecoes) {
-          for (const item of ordenarItens(sub.itens || [])) {
-            const fora = number(item.valorFora ?? item.valorNaoDedutivel);
-            if (fora <= 0.009) continue;
-            drawRow4(
-              rotuloDescricao(item),
-              valorMoeda(item.valorBruto),
-              formatarCelulaNaoDedutivel(item),
-              '—',
-            );
-          }
-        }
-      } else {
-        for (const item of ordenarItens(secao.itens || [])) {
-          const fora = number(item.valorFora ?? item.valorNaoDedutivel);
-          if (fora <= 0.009) continue;
-          drawRow4(rotuloDescricao(item), valorMoeda(item.valorBruto), formatarCelulaNaoDedutivel(item), '—');
-        }
-      }
-    }
+    beginDetalheSection('3. Despesas deixadas de fora do cálculo');
+    renderDetalheGrupos(secoesFora, {
+      filtroItem: (item) => number(item.valorFora ?? item.valorNaoDedutivel) > 0.009,
+      colunaDedutivel: false,
+    });
 
     advanceFlow(PAD.totalBefore);
     drawRow4('Total fora da base', '—', valorMoeda(anexoForaBase.totalFora), '—', { bold: true });
@@ -607,6 +681,6 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
 
   return {
     data: doc.output('arraybuffer'),
-    version: 'dizimo_half_page_columns_v13',
+    version: 'dizimo_half_page_columns_v14',
   };
 }
