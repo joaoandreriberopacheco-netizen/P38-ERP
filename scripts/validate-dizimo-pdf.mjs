@@ -15,6 +15,11 @@ const plano = {
         { id: 'fixa-a', nome: 'Aluguel', valor: 10_000 },
         { id: 'fixa-b', nome: 'Energia', valor: 8_500 },
         { id: 'fixa-c', nome: 'Internet', valor: 450 },
+        { id: 'fixa-d', nome: 'Cartão American Express', valor: 1_258 },
+        { id: 'fixa-e', nome: 'Claro Colombia', valor: 890 },
+        { id: 'fixa-f', nome: 'Contabilidade ADJUS', valor: 2_400 },
+        { id: 'fixa-g', nome: 'Seguro predial', valor: 1_100 },
+        { id: 'fixa-h', nome: 'Limpeza', valor: 780 },
       ],
     },
     {
@@ -60,7 +65,7 @@ const { data, version } = await generateRelatorioDizimoEnxutoPdf({
 const outPath = '/tmp/RelatorioDizimo_sample.pdf';
 writeFileSync(outPath, Buffer.from(data));
 
-if (!version.includes('clean_tables')) {
+if (!version.includes('half_page_columns')) {
   throw new Error(`versão inesperada: ${version}`);
 }
 
