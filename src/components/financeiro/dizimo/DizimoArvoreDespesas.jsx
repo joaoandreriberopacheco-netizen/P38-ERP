@@ -1,3 +1,5 @@
+import { useMemo, useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 import {
   FinanceiroGrupo,
   formatFinanceiroValor,
@@ -6,8 +8,8 @@ import {
   DIZIMO_MODOS,
   formatarNomeItemDizimoLista,
 } from '@/lib/dizimoCalculos';
-import DedutibilidadeBlocoToggle from '@/components/financeiro/dizimo/DedutibilidadeBlocoToggle';
-import { P38MobileLine, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
+import DizimoItemDedutibilidadeDrawer from '@/components/financeiro/dizimo/DizimoItemDedutibilidadeDrawer';
+import { P38MobileLine, P38StatusPill, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import { cn } from '@/lib/utils';
 
 const GRUPO_LABEL_CLASS =
@@ -22,73 +24,45 @@ function accentDedutivel(config = {}) {
   return 'default';
 }
 
-function DizimoItemRow({ item, onConfigChange, striped }) {
+function DizimoItemRow({ item, onOpen, striped }) {
   const modo = item.config?.modo || DIZIMO_MODOS.TOTAL;
-  const metaParts = [];
-
-  if (modo === DIZIMO_MODOS.NAO_DEDUTIVEL) {
-    metaParts.push(
-      <P38StatusLabel key="nao" tone="muted">
-        Fora da base
-      </P38StatusLabel>,
-    );
-  } else if (modo === DIZIMO_MODOS.PARCIAL) {
-    metaParts.push(
-      <P38StatusLabel key="parcial" tone="info">
-        Parcial na base
-      </P38StatusLabel>,
-    );
-  }
-
-  if (item.categoria) {
-    metaParts.push(
-      <span key="cat" className="text-xs text-muted-foreground">
-        {item.categoria}
-      </span>,
-    );
-  }
+  const foraDaBase = modo === DIZIMO_MODOS.NAO_DEDUTIVEL;
 
   const subtitle =
-    item.detalhe && item.detalhe !== 'Sócio'
-      ? item.detalhe
-      : item.valorDedutivel !== item.valorBruto
-        ? `Na base: ${formatFinanceiroValor(item.valorDedutivel)}`
-        : null;
+    item.detalhe && item.detalhe !== 'Sócio' ? item.detalhe : null;
 
   return (
-    <div className="w-full min-w-0 border-b border-border/30 last:border-b-0 dark:border-white/[0.06]">
-      <P38MobileLine
-        thinAccent
-        striped={striped}
-        accent={p38AccentKeyFromTone(accentDedutivel(item.config))}
-        className={cn(
-          'w-full text-left max-md:!py-3.5 max-md:min-h-[58px]',
-          '[&>div>div:first-child]:text-[15px] [&>div>div:first-child]:font-semibold sm:[&>div>div:first-child]:text-base',
-          '[&>div:last-child]:max-w-[46%] sm:[&>div:last-child]:max-w-[42%]',
-        )}
-        title={formatarNomeItemDizimoLista(item)}
-        subtitle={subtitle}
-        meta={metaParts.length ? <>{metaParts}</> : null}
-        value={
-          <>
-            <span className="text-foreground/85">−</span>
-            {formatFinanceiroValor(item.valorBruto)}
-          </>
-        }
-      />
-      <div className="px-3 pb-3 pt-0">
-        <DedutibilidadeBlocoToggle
-          value={item.config}
-          onChange={onConfigChange}
-          fullWidth
-          compact
-        />
-      </div>
-    </div>
+    <P38MobileLine
+      as="button"
+      type="button"
+      thinAccent
+      striped={striped}
+      accent={p38AccentKeyFromTone(accentDedutivel(item.config))}
+      onClick={() => onOpen(item)}
+      className={cn(
+        'w-full text-left max-md:!py-3.5 max-md:min-h-[58px]',
+        '[&>div>div:first-child]:text-[15px] [&>div>div:first-child]:font-semibold sm:[&>div>div:first-child]:text-base',
+        '[&>div:last-child]:max-w-[46%] sm:[&>div:last-child]:max-w-[42%]',
+      )}
+      title={formatarNomeItemDizimoLista(item)}
+      subtitle={subtitle}
+      meta={
+        foraDaBase ? (
+          <P38StatusPill tone="muted">Fora da base</P38StatusPill>
+        ) : null
+      }
+      value={
+        <>
+          <span className="text-foreground/85">−</span>
+          {formatFinanceiroValor(item.valorBruto)}
+        </>
+      }
+      trailing={<ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />}
+    />
   );
 }
 
-function ListaItensDizimo({ itens, onConfigItem }) {
+function ListaItensDizimo({ itens, onOpenItem }) {
   if (!itens?.length) {
     return <p className="px-3 py-4 text-xs text-muted-foreground">Nenhum item nesta competência.</p>;
   }
@@ -98,12 +72,12 @@ function ListaItensDizimo({ itens, onConfigItem }) {
       key={item.id}
       item={item}
       striped={index % 2 === 1}
-      onConfigChange={(next) => onConfigItem(item.id, next)}
+      onOpen={onOpenItem}
     />
   ));
 }
 
-function DizimoSubsecao({ subsecao, onConfigItem }) {
+function DizimoSubsecao({ subsecao, onOpenItem }) {
   if (!subsecao.itens?.length) return null;
 
   return (
@@ -116,13 +90,13 @@ function DizimoSubsecao({ subsecao, onConfigItem }) {
       defaultOpen
     >
       <div className="pl-1 sm:pl-2">
-        <ListaItensDizimo itens={subsecao.itens} onConfigItem={onConfigItem} />
+        <ListaItensDizimo itens={subsecao.itens} onOpenItem={onOpenItem} />
       </div>
     </FinanceiroGrupo>
   );
 }
 
-function DizimoSecao({ secao, onConfigItem }) {
+function DizimoSecao({ secao, onOpenItem }) {
   const temSubsecoes = secao.subsecoes?.length > 0;
   const itensDiretos = secao.itens || [];
   const vazio = temSubsecoes
@@ -146,22 +120,55 @@ function DizimoSecao({ secao, onConfigItem }) {
       {temSubsecoes ? (
         <div className="space-y-1 pl-0.5 sm:pl-1">
           {secao.subsecoes.map((sub) => (
-            <DizimoSubsecao key={sub.id} subsecao={sub} onConfigItem={onConfigItem} />
+            <DizimoSubsecao key={sub.id} subsecao={sub} onOpenItem={onOpenItem} />
           ))}
         </div>
       ) : (
-        <ListaItensDizimo itens={itensDiretos} onConfigItem={onConfigItem} />
+        <ListaItensDizimo itens={itensDiretos} onOpenItem={onOpenItem} />
       )}
     </FinanceiroGrupo>
   );
 }
 
 export default function DizimoArvoreDespesas({ secoes = [], onConfigItem }) {
+  const [itemAbertoId, setItemAbertoId] = useState(null);
+
+  const itemAberto = useMemo(() => {
+    if (!itemAbertoId) return null;
+    for (const secao of secoes) {
+      for (const item of secao.itens || []) {
+        if (item.id === itemAbertoId) return item;
+      }
+      for (const sub of secao.subsecoes || []) {
+        for (const item of sub.itens || []) {
+          if (item.id === itemAbertoId) return item;
+        }
+      }
+    }
+    return null;
+  }, [secoes, itemAbertoId]);
+
+  const handleConfigChange = (next) => {
+    if (!itemAbertoId) return;
+    onConfigItem(itemAbertoId, next);
+  };
+
   return (
-    <div className="min-w-0 w-full max-w-full space-y-2 overflow-x-hidden pb-2 md:pb-0">
-      {secoes.map((secao) => (
-        <DizimoSecao key={secao.id} secao={secao} onConfigItem={onConfigItem} />
-      ))}
-    </div>
+    <>
+      <div className="min-w-0 w-full max-w-full space-y-2 overflow-x-hidden pb-2 md:pb-0">
+        {secoes.map((secao) => (
+          <DizimoSecao key={secao.id} secao={secao} onOpenItem={(item) => setItemAbertoId(item.id)} />
+        ))}
+      </div>
+
+      <DizimoItemDedutibilidadeDrawer
+        item={itemAberto}
+        open={!!itemAberto}
+        onOpenChange={(open) => {
+          if (!open) setItemAbertoId(null);
+        }}
+        onConfigChange={handleConfigChange}
+      />
+    </>
   );
 }

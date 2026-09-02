@@ -482,9 +482,14 @@ export default function DizimoPlano() {
           <CartaoDizimo demonstrativo={demonstrativo} />
 
           <div className="space-y-3">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground px-1">
-              Deduções por item
-            </p>
+            <div className="px-1">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                Deduções por item
+              </p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Toque na despesa para ajustar se entra na base do dízimo.
+              </p>
+            </div>
             <DizimoArvoreDespesas secoes={demonstrativo.secoes} onConfigItem={atualizarConfigItem} />
           </div>
 
