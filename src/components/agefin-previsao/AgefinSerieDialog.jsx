@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -13,10 +13,15 @@ import BudgetCategoriaSelect from '@/components/budget-previsao/BudgetCategoriaS
 import FolhaCentroCustoSelect from '@/components/folha-previsao/FolhaCentroCustoSelect';
 import {
   DESCRICAO_FREQUENCIA_SERIE,
+  formatCompetenciaLabel,
+  formatCurrency,
   FREQUENCIA_SERIE,
   FREQUENCIAS_SERIE_OPCOES,
   MESES_VENCIMENTO_LABELS,
+  MODO_CADASTRO_SERIE,
+  serieEhParcelada,
 } from '@/lib/agefinPrevisaoCalculos';
+import { gerarParcelasProposta } from '@/lib/agefinParcelamentoCalculos';
 import { cn } from '@/lib/utils';
 
 const MESES_CURTOS = [
@@ -53,8 +58,10 @@ export default function AgefinSerieDialog({
   onCentrosChange,
   onSave,
   saving,
+  competenciaMes = '',
 }) {
   const [form, setForm] = useState({
+    modo_cadastro: MODO_CADASTRO_SERIE.RECORRENTE,
     nome: '',
     terceiro_nome: '',
     categoria_id: '',
@@ -65,8 +72,13 @@ export default function AgefinSerieDialog({
     dia_vencimento: 10,
     frequencia: FREQUENCIA_SERIE.MENSAL,
     mes_vencimento: new Date().getMonth() + 1,
+    competencia_inicio_parcelas: '',
+    total_parcelas: 2,
     observacoes: '',
   });
+
+  const editando = Boolean(serie?.id);
+  const modoParcelada = form.modo_cadastro === MODO_CADASTRO_SERIE.PARCELADA;
 
   useEffect(() => {
     if (!open) return;
@@ -80,7 +92,13 @@ export default function AgefinSerieDialog({
       if (match) categoriaId = match.id;
     }
 
+    const parcelada = serieEhParcelada(serie);
+    const competenciaPadrao =
+      String(serie?.competencia_inicio_parcelas || competenciaMes || '').slice(0, 7) ||
+      new Date().toISOString().slice(0, 7);
+
     setForm({
+      modo_cadastro: parcelada ? MODO_CADASTRO_SERIE.PARCELADA : MODO_CADASTRO_SERIE.RECORRENTE,
       nome: serie?.nome || '',
       terceiro_nome: serie?.terceiro_nome || '',
       categoria_id: categoriaId,
@@ -91,11 +109,31 @@ export default function AgefinSerieDialog({
       dia_vencimento: Number(serie?.dia_vencimento) || 10,
       frequencia: serie?.frequencia || FREQUENCIA_SERIE.MENSAL,
       mes_vencimento: Number(serie?.mes_vencimento) || new Date().getMonth() + 1,
+      competencia_inicio_parcelas: competenciaPadrao,
+      total_parcelas: Math.max(2, Number(serie?.total_parcelas) || 2),
       observacoes: serie?.observacoes || '',
     });
-  }, [open, serie, categorias]);
+  }, [open, serie, categorias, competenciaMes]);
 
-  const precisaMesReferencia = form.frequencia !== FREQUENCIA_SERIE.MENSAL;
+  const precisaMesReferencia = !modoParcelada && form.frequencia !== FREQUENCIA_SERIE.MENSAL;
+
+  const previewParcelas = useMemo(() => {
+    if (!modoParcelada) return [];
+    const valor = parseFloat(form.valor_previsto) || 0;
+    if (valor <= 0) return [];
+    return gerarParcelasProposta({
+      competenciaOrigem: form.competencia_inicio_parcelas,
+      valorOriginal: valor,
+      totalParcelas: parseInt(form.total_parcelas, 10) || 2,
+      diaVencimento: parseInt(form.dia_vencimento, 10) || 10,
+    });
+  }, [
+    modoParcelada,
+    form.valor_previsto,
+    form.competencia_inicio_parcelas,
+    form.total_parcelas,
+    form.dia_vencimento,
+  ]);
 
   const handleCategoria = (cat) => {
     if (!cat?.id) return;
@@ -108,22 +146,68 @@ export default function AgefinSerieDialog({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const valorTotal = parseFloat(form.valor_previsto) || 0;
+    const dia = parseInt(form.dia_vencimento, 10) || 10;
+    const competenciaInicio = String(form.competencia_inicio_parcelas || '').slice(0, 7);
+    const totalParcelas = Math.max(2, parseInt(form.total_parcelas, 10) || 2);
+
     onSave?.({
       ...serie,
       ...form,
-      valor_previsto: parseFloat(form.valor_previsto) || 0,
-      dia_vencimento: parseInt(form.dia_vencimento, 10) || 10,
+      modo_cadastro: modoParcelada ? MODO_CADASTRO_SERIE.PARCELADA : MODO_CADASTRO_SERIE.RECORRENTE,
+      valor_previsto: valorTotal,
+      dia_vencimento: dia,
       mes_vencimento: parseInt(form.mes_vencimento, 10) || 1,
+      competencia_inicio_parcelas: modoParcelada ? competenciaInicio : null,
+      total_parcelas: modoParcelada ? totalParcelas : null,
+      _criarParcelamento: modoParcelada && !editando,
     });
   };
+
+  const titulo = editando
+    ? modoParcelada
+      ? 'Editar conta parcelada'
+      : 'Editar conta fixa'
+    : modoParcelada
+      ? 'Nova conta parcelada'
+      : 'Nova conta fixa';
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose?.()}>
       <DialogContent className="w-[calc(100vw-1.25rem)] max-w-md rounded-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle>{serie?.id ? 'Editar conta fixa' : 'Nova conta fixa'}</DialogTitle>
+          <DialogTitle>{titulo}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 min-w-0">
+          {!editando && (
+            <div className="space-y-2">
+              <Label>Tipo de conta</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <OpcaoChip
+                  active={!modoParcelada}
+                  onClick={() =>
+                    setForm((f) => ({ ...f, modo_cadastro: MODO_CADASTRO_SERIE.RECORRENTE }))
+                  }
+                >
+                  Recorrente
+                </OpcaoChip>
+                <OpcaoChip
+                  active={modoParcelada}
+                  onClick={() =>
+                    setForm((f) => ({ ...f, modo_cadastro: MODO_CADASTRO_SERIE.PARCELADA }))
+                  }
+                >
+                  Parcelada
+                </OpcaoChip>
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-snug">
+                {modoParcelada
+                  ? DESCRICAO_FREQUENCIA_SERIE[FREQUENCIA_SERIE.PARCELADA]
+                  : 'Valor fixo que se repete (mensal, anual, etc.).'}
+              </p>
+            </div>
+          )}
+
           <div className="space-y-1.5">
             <Label htmlFor="serie-nome">Nome da conta</Label>
             <Input
@@ -159,52 +243,113 @@ export default function AgefinSerieDialog({
             />
           </div>
 
-          <div className="space-y-2">
-            <Label>Periodicidade</Label>
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
-              {FREQUENCIAS_SERIE_OPCOES.map((freq) => (
-                <OpcaoChip
-                  key={freq}
-                  active={form.frequencia === freq}
-                  onClick={() => setForm((f) => ({ ...f, frequencia: freq }))}
-                  className="col-span-1"
-                >
-                  {freq}
-                </OpcaoChip>
-              ))}
-            </div>
-            <p className="text-[11px] text-muted-foreground leading-snug">
-              {DESCRICAO_FREQUENCIA_SERIE[form.frequencia] ||
-                DESCRICAO_FREQUENCIA_SERIE[FREQUENCIA_SERIE.MENSAL]}
-            </p>
-          </div>
-
-          {precisaMesReferencia && (
-            <div className="space-y-2">
-              <Label>
-                {form.frequencia === FREQUENCIA_SERIE.ANUAL
-                  ? 'Mês do vencimento'
-                  : 'Mês de referência'}
-              </Label>
-              <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-                {MESES_VENCIMENTO_LABELS.map((nome, idx) => {
-                  const mes = idx + 1;
-                  return (
+          {!modoParcelada && (
+            <>
+              <div className="space-y-2">
+                <Label>Periodicidade</Label>
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                  {FREQUENCIAS_SERIE_OPCOES.map((freq) => (
                     <OpcaoChip
-                      key={nome}
-                      active={form.mes_vencimento === mes}
-                      onClick={() => setForm((f) => ({ ...f, mes_vencimento: mes }))}
-                      className="min-h-10 px-1 text-xs sm:text-sm"
-                      title={nome}
+                      key={freq}
+                      active={form.frequencia === freq}
+                      onClick={() => setForm((f) => ({ ...f, frequencia: freq }))}
+                      className="col-span-1"
                     >
-                      {MESES_CURTOS[idx]}
+                      {freq}
                     </OpcaoChip>
-                  );
-                })}
+                  ))}
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-snug">
+                  {DESCRICAO_FREQUENCIA_SERIE[form.frequencia] ||
+                    DESCRICAO_FREQUENCIA_SERIE[FREQUENCIA_SERIE.MENSAL]}
+                </p>
               </div>
-              <p className="text-[11px] text-muted-foreground">
-                Selecionado: {MESES_VENCIMENTO_LABELS[form.mes_vencimento - 1]}
-              </p>
+
+              {precisaMesReferencia && (
+                <div className="space-y-2">
+                  <Label>
+                    {form.frequencia === FREQUENCIA_SERIE.ANUAL
+                      ? 'Mês do vencimento'
+                      : 'Mês de referência'}
+                  </Label>
+                  <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                    {MESES_VENCIMENTO_LABELS.map((nome, idx) => {
+                      const mes = idx + 1;
+                      return (
+                        <OpcaoChip
+                          key={nome}
+                          active={form.mes_vencimento === mes}
+                          onClick={() => setForm((f) => ({ ...f, mes_vencimento: mes }))}
+                          className="min-h-10 px-1 text-xs sm:text-sm"
+                          title={nome}
+                        >
+                          {MESES_CURTOS[idx]}
+                        </OpcaoChip>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Selecionado: {MESES_VENCIMENTO_LABELS[form.mes_vencimento - 1]}
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+
+          {modoParcelada && (
+            <div className="space-y-3 rounded-xl border border-border/50 bg-muted/20 p-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="serie-competencia-inicio">Primeira parcela em</Label>
+                <Input
+                  id="serie-competencia-inicio"
+                  type="month"
+                  value={form.competencia_inicio_parcelas}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, competencia_inicio_parcelas: e.target.value }))
+                  }
+                  className="h-11"
+                  disabled={editando}
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="serie-total-parcelas">Número de parcelas</Label>
+                <Input
+                  id="serie-total-parcelas"
+                  type="number"
+                  inputMode="numeric"
+                  min={2}
+                  max={60}
+                  value={form.total_parcelas}
+                  onChange={(e) => setForm((f) => ({ ...f, total_parcelas: e.target.value }))}
+                  className="h-11"
+                  disabled={editando}
+                  required
+                />
+              </div>
+              {previewParcelas.length >= 2 && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Pré-visualização</p>
+                  <ul className="space-y-1 max-h-36 overflow-y-auto">
+                    {previewParcelas.map((p) => (
+                      <li
+                        key={p.id}
+                        className="flex items-center justify-between text-sm rounded-lg bg-muted/40 px-2.5 py-1.5"
+                      >
+                        <span>
+                          {p.numero}/{previewParcelas.length} · {formatCompetenciaLabel(p.competencia)}
+                        </span>
+                        <span className="font-medium tabular-nums">{formatCurrency(p.valor)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {editando && (
+                <p className="text-[11px] text-muted-foreground">
+                  Para alterar parcelas, remova o parcelamento na previsão do mês e crie de novo.
+                </p>
+              )}
             </div>
           )}
 
@@ -228,7 +373,9 @@ export default function AgefinSerieDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="min-w-0 space-y-1.5">
-              <Label htmlFor="serie-valor">Valor previsto (R$)</Label>
+              <Label htmlFor="serie-valor">
+                {modoParcelada ? 'Valor total (R$)' : 'Valor previsto (R$)'}
+              </Label>
               <Input
                 id="serie-valor"
                 type="number"
@@ -238,6 +385,7 @@ export default function AgefinSerieDialog({
                 value={form.valor_previsto}
                 onChange={(e) => setForm((f) => ({ ...f, valor_previsto: e.target.value }))}
                 className="h-11"
+                required
               />
             </div>
             <div className="min-w-0 space-y-1.5">
@@ -262,7 +410,12 @@ export default function AgefinSerieDialog({
             <Button
               type="submit"
               className="w-full sm:w-auto h-11"
-              disabled={saving || !form.nome.trim() || !form.categoria_id}
+              disabled={
+                saving ||
+                !form.nome.trim() ||
+                !form.categoria_id ||
+                (modoParcelada && !editando && previewParcelas.length < 2)
+              }
             >
               {saving ? 'Salvando…' : 'Salvar'}
             </Button>

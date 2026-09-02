@@ -280,6 +280,7 @@ export default function PlanejamentoFinanceiroV2Page() {
           selectedComp?._parcelamentoId ? actions.handleRemoverParcelamento : undefined
         }
         removendoParcelamento={actions.removendoParcelamento}
+        competenciaMes={competenciaMes}
       />
     </div>
   );

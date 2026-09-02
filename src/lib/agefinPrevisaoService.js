@@ -19,6 +19,7 @@ import {
   normalizarFrequenciaSerie,
   FREQUENCIA_SERIE,
   serieDeveAparecerNaCompetencia,
+  serieEhParcelada,
   serieEstaAtivaNaCompetencia,
 } from '@/lib/agefinPrevisaoCalculos';
 import { listarCentrosCustoRegistros } from '@/lib/folhaPrevisaoService';
@@ -649,7 +650,7 @@ async function sincronizarSerieNoFinanceiro(modelo) {
   }
 
   let criados = 0;
-  if (!rows.length) {
+  if (!rows.length && !serieEhParcelada(modelo)) {
     const compAtual = getCompetenciaAtual();
     const comp =
       serieDeveAparecerNaCompetencia(modelo, compAtual) ? compAtual : competenciaAncoraSerie(modelo, compAtual);

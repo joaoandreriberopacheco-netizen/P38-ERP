@@ -14,6 +14,7 @@ import {
   sincronizarLancamentoFinanceiro,
   subscribeSeriesStorageChanges,
 } from '@/lib/agefinPrevisaoService';
+import { MODO_CADASTRO_SERIE } from '@/lib/agefinPrevisaoCalculos';
 import {
   criarParcelamento,
   listarParcelamentos,
@@ -160,14 +161,37 @@ export function usePlanejamentoActions({
   const handleSaveSerie = async (payload) => {
     setSaving(true);
     try {
-      await salvarSerie(payload);
+      const isParcelada = payload.modo_cadastro === MODO_CADASTRO_SERIE.PARCELADA;
+      const competenciaOrigem =
+        String(payload.competencia_inicio_parcelas || competenciaMes || '').slice(0, 7) ||
+        competenciaMes;
+
+      const serieSalva = await salvarSerie({
+        ...payload,
+        modo_cadastro: isParcelada ? MODO_CADASTRO_SERIE.PARCELADA : MODO_CADASTRO_SERIE.RECORRENTE,
+      });
+
+      if (isParcelada && payload._criarParcelamento) {
+        await criarParcelamento({
+          serieId: serieSalva.id,
+          competenciaOrigem,
+          valorOriginal: Number(payload.valor_previsto) || 0,
+          jurosMulta: 0,
+          totalParcelas: Math.max(2, Number(payload.total_parcelas) || 2),
+          diaVencimento: Number(payload.dia_vencimento) || 10,
+          modelo: serieSalva,
+        });
+        await queryClient.invalidateQueries({ queryKey: agefinQueryKeys.parcelamentos });
+      }
+
       setSerieDialog(null);
       invalidate();
       const freq = payload.frequencia || 'Mensal';
       toast({
-        title: 'Conta salva',
-        description:
-          freq === 'Anual'
+        title: isParcelada ? 'Conta parcelada salva' : 'Conta salva',
+        description: isParcelada
+          ? `${payload.total_parcelas || 2} parcelas a partir de ${formatCompetenciaLabel(competenciaOrigem)}.`
+          : freq === 'Anual'
             ? 'Conta anual cadastrada — aparece no bloco Anual e no mês de vencimento.'
             : 'Ela já entra na programação e na projeção.',
       });

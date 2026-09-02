@@ -46,7 +46,7 @@ export function PlanejamentoFab({ onCentros, onImportar, onNovaConta }) {
               onNovaConta();
             }}
           >
-            Nova conta fixa
+            Nova conta
           </Button>
         </div>
       )}
@@ -79,6 +79,7 @@ export default function PlanejamentoDialogs({
   onCloseParcelamentoDialog,
   onCriarParcelamento,
   salvandoParcelamento,
+  competenciaMes,
   centroDialogOpen,
   onCloseCentroDialog,
   onCentrosChanged,
@@ -144,6 +145,7 @@ export default function PlanejamentoDialogs({
         onCentrosChange={onCentrosChange}
         onSave={onSaveSerie}
         saving={saving}
+        competenciaMes={competenciaMes}
       />
 
       <FolhaCentrosCustoDialog open={centroDialogOpen} onClose={onCloseCentroDialog} onChanged={onCentrosChanged} />
