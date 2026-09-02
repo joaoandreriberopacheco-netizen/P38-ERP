@@ -207,7 +207,7 @@ export default function AgefinPrevisaoDetalheDrawer({
                     {parcela
                       ? 'Ajuste valor e vencimento desta parcela.'
                       : planejamento
-                        ? 'Ajuste valor e vencimento antes de abrir o mês. Salvar grava no cadastro; Anexar guarda o PDF como referência.'
+                        ? 'Ajuste valor e vencimento só deste mês. O cadastro da conta fixa não muda.'
                         : 'Edite valor e vencimento e toque em Salvar. Conta zerada no mês também pode ser corrigida aqui.'}
                   </p>
                 </>

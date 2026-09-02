@@ -166,10 +166,13 @@ export function usePlanejamentoActions({
         String(payload.competencia_inicio_parcelas || competenciaMes || '').slice(0, 7) ||
         competenciaMes;
 
-      const serieSalva = await salvarSerie({
-        ...payload,
-        modo_cadastro: isParcelada ? MODO_CADASTRO_SERIE.PARCELADA : MODO_CADASTRO_SERIE.RECORRENTE,
-      });
+      const serieSalva = await salvarSerie(
+        {
+          ...payload,
+          modo_cadastro: isParcelada ? MODO_CADASTRO_SERIE.PARCELADA : MODO_CADASTRO_SERIE.RECORRENTE,
+        },
+        payload.id ? { competenciaMinima: competenciaMes } : {},
+      );
 
       if (isParcelada && payload._criarParcelamento) {
         await criarParcelamento({
@@ -188,12 +191,14 @@ export function usePlanejamentoActions({
       invalidate();
       const freq = payload.frequencia || 'Mensal';
       toast({
-        title: isParcelada ? 'Conta parcelada salva' : 'Conta salva',
+        title: isParcelada ? 'Conta parcelada salva' : payload.id ? 'Cadastro atualizado' : 'Conta salva',
         description: isParcelada
           ? `${payload.total_parcelas || 2} parcelas a partir de ${formatCompetenciaLabel(competenciaOrigem)}.`
-          : freq === 'Anual'
-            ? 'Conta anual cadastrada — aparece no bloco Anual e no mês de vencimento.'
-            : 'Ela já entra na programação e na projeção.',
+          : payload.id
+            ? `A partir de ${formatCompetenciaLabel(competenciaMes)} — meses anteriores não mudam.`
+            : freq === 'Anual'
+              ? 'Conta anual cadastrada — aparece no bloco Anual e no mês de vencimento.'
+              : 'Ela já entra na programação e na projeção.',
       });
     } catch (e) {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
@@ -325,9 +330,7 @@ export function usePlanejamentoActions({
       refreshSelectedComp(visao);
       toast({
         title: 'Salvo',
-        description: selectedComp?.lancamento_id
-          ? 'Valor e vencimento atualizados no planejamento e no financeiro.'
-          : 'Valor e vencimento gravados no cadastro.',
+        description: 'Valor e vencimento gravados só neste mês.',
       });
     } catch (e) {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });

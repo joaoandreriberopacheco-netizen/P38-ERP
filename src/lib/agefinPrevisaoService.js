@@ -602,15 +602,19 @@ async function listarLancamentosGrupoSerie(modelo) {
 }
 
 /** Grava alterações da série no LancamentoFinanceiro (fonte da AGEFIN). */
-async function sincronizarSerieNoFinanceiro(modelo) {
+async function sincronizarSerieNoFinanceiro(modelo, { competenciaMinima } = {}) {
   if (!modelo?.grupo_lancamento_id || modelo.ativo === false) return { atualizados: 0, criados: 0 };
 
+  const corte = String(competenciaMinima || getCompetenciaAtual()).slice(0, 7);
   const rows = await listarLancamentosGrupoSerie(modelo);
   const abertos = rows.filter((lf) => !lancamentoPago(lf) && !lancamentoCancelado(lf));
   const freq = normalizarFrequenciaSerie(modelo.frequencia);
   let atualizados = 0;
 
   for (const lf of rows) {
+    const mesLf = mesReferenciaLancamento(lf);
+    if (mesLf && mesLf < corte) continue;
+
     if (lancamentoCancelado(lf)) continue;
     const aberto = !lancamentoPago(lf);
     if (!aberto) {
@@ -681,7 +685,7 @@ async function cancelarLancamentosAbertosDaSerie(modelo) {
   return { cancelados };
 }
 
-export async function salvarSerie(payload) {
+export async function salvarSerie(payload, { competenciaMinima } = {}) {
   const existente = payload.id
     ? (await obterSeriesParaEdicao()).find((s) => s.id === payload.id)
     : null;
@@ -694,7 +698,14 @@ export async function salvarSerie(payload) {
     grupo_lancamento_id: grupoId,
   });
 
-  await sincronizarSerieNoFinanceiro(body);
+  const corte =
+    competenciaMinima != null
+      ? String(competenciaMinima).slice(0, 7)
+      : existente
+        ? getCompetenciaAtual()
+        : undefined;
+
+  await sincronizarSerieNoFinanceiro(body, { competenciaMinima: corte });
 
   let entityRow = null;
   try {
@@ -988,42 +999,61 @@ export function podeEditarCompetencia(comp) {
 }
 
 /**
+ * Grava valor/vencimento só na competência do mês (lançamento financeiro).
+ * Não altera o template (cadastro da série).
+ */
+async function gravarLancamentoCompetenciaManual({ modelo, competencia, valor, dataVencimento }) {
+  const comp = String(competencia || '').slice(0, 7);
+  if (!comp) throw new Error('Competência inválida.');
+  const valorNum = Number(valor) || 0;
+  const ven =
+    (dataVencimento || '').slice(0, 10) ||
+    dataVencimentoNaCompetencia(comp, modelo?.dia_vencimento);
+
+  let lf = await buscarLancamentoMes(modelo, comp);
+  if (!lf) {
+    lf = await base44.entities.LancamentoFinanceiro.create({
+      ...payloadLancamentoAuto(modelo, comp),
+      valor: valorNum,
+      valor_liquido: valorNum,
+      data_vencimento: ven,
+    });
+    invalidarCacheLancamentosFinanceiros();
+    return lf;
+  }
+
+  const tags = new Set([...(lf.tags || []), 'conta_pagar']);
+  tags.delete(TAG_LF_GERADO_AUTO);
+  const atualizado = await base44.entities.LancamentoFinanceiro.update(lf.id, {
+    valor: valorNum,
+    valor_liquido: valorNum,
+    data_vencimento: ven,
+    tags: [...tags],
+  });
+  invalidarCacheLancamentosFinanceiros();
+  return atualizado;
+}
+
+/**
  * Atualiza valor e vencimento manualmente (sem ler o boleto).
- * — Com lançamento: grava no LancamentoFinanceiro.
- * — Em planejamento: grava no modelo (cadastro da série).
+ * Grava só na competência do mês — o template (cadastro) não muda.
  */
 export async function atualizarCompetenciaManual({ competencia, modelo, valor, dataVencimento, diaVencimento }) {
   const valorNum = Number(valor) || 0;
   if (valorNum < 0) throw new Error('O valor não pode ser negativo.');
+  if (!modelo?.id) throw new Error('Conta não encontrada.');
 
-  if (competencia?.lancamento_id) {
-    const lf = await base44.entities.LancamentoFinanceiro.get(competencia.lancamento_id);
-    const tags = new Set([...(lf?.tags || []), 'conta_pagar']);
-    tags.delete(TAG_LF_GERADO_AUTO);
-    const ven = (dataVencimento || '').slice(0, 10) || lf?.data_vencimento;
-    const atualizado = await base44.entities.LancamentoFinanceiro.update(competencia.lancamento_id, {
-      valor: valorNum,
-      valor_liquido: valorNum,
-      data_vencimento: ven,
-      tags: [...tags],
-    });
-    if (modelo?.id) {
-      const dia = Number(diaVencimento) || Number((ven || '').slice(8, 10)) || Number(modelo.dia_vencimento) || 10;
-      await salvarSerie({
-        ...modelo,
-        valor_previsto: valorNum,
-        dia_vencimento: dia,
-      });
-    }
-    return atualizado;
-  }
+  const comp = String(competencia?.competencia || '').slice(0, 7);
+  if (!comp) throw new Error('Competência inválida.');
 
-  if (!modelo?.id) throw new Error('Abra o mês antes de editar o valor desta conta.');
+  const ven =
+    (dataVencimento || '').slice(0, 10) ||
+    dataVencimentoNaCompetencia(comp, Number(diaVencimento) || Number(modelo.dia_vencimento) || 10);
 
-  const dia = Number(diaVencimento) || Number(modelo.dia_vencimento) || 10;
-  return salvarSerie({
-    ...modelo,
-    valor_previsto: valorNum,
-    dia_vencimento: dia,
+  return gravarLancamentoCompetenciaManual({
+    modelo,
+    competencia: comp,
+    valor: valorNum,
+    dataVencimento: ven,
   });
 }
