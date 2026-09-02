@@ -38,7 +38,7 @@ import { Input } from '@/components/ui/input';
 import { P38HelpPopover } from '@/components/ui/p38-help-popover';
 import SuperAgefinConsultaDrawer from '@/components/superagefin/SuperAgefinConsultaDrawer';
 import SuperAgefinConsultaOrganizer from '@/components/superagefin/SuperAgefinConsultaOrganizer';
-import { boundsMesCivil, dataHoje, formatarSoData } from '@/components/utils/dateUtils';
+import { dataHoje, formatarSoData } from '@/components/utils/dateUtils';
 import {
   carregarFolhaParaRelatorioDia5,
   dataDia5DoMes,
@@ -86,7 +86,8 @@ import { listarModelos as listarModelosAgefin } from '@/lib/agefinPrevisaoServic
 import { listarParcelamentos } from '@/lib/agefinParcelamentoService';
 import {
   lancamentoEntraPautaAgefinPrevisao,
-  montarContasSinteticasParcelasAgefin,
+  mesclarContasConsultaAgefinMes,
+  montarGruposContasPorVencimento,
 } from '@/lib/agefinPautaPlanejamento';
 import { toast } from 'sonner';
 
@@ -494,32 +495,18 @@ export default function SuperAgefin() {
     [currentMonth, modelosFolha],
   );
 
-  const contasParcelasPlanejamento = useMemo(
+  const monthData = useMemo(
     () =>
-      montarContasSinteticasParcelasAgefin({
-        competencia: currentMonth,
+      mesclarContasConsultaAgefinMes({
+        currentMonth,
+        contas,
         modelosAgefin,
         parcelamentos: parcelamentosAgefin,
-        lancamentosMes: contas,
+        contasSociosSabado,
+        contaFolhaDia5,
       }),
-    [currentMonth, modelosAgefin, parcelamentosAgefin, contas],
+    [contas, currentMonth, contasSociosSabado, contaFolhaDia5, modelosAgefin, parcelamentosAgefin],
   );
-
-  const monthData = useMemo(() => {
-    const { start, end } = boundsMesCivil(currentMonth.getFullYear(), currentMonth.getMonth());
-    const reais = contas.filter((conta) => {
-      if (!conta?.data_vencimento) return false;
-      const vencimento = `${conta.data_vencimento}`.slice(0, 10);
-      return vencimento >= start && vencimento <= end;
-    });
-    // Folha dia 05: entra na consulta como os sócios aos sábados (sem duplicar se já houver LF).
-    const folha =
-      contaFolhaDia5 && !listaJaTemFolhaPagamento(reais) ? [contaFolhaDia5] : [];
-    return [...reais, ...contasParcelasPlanejamento, ...contasSociosSabado, ...folha].sort(
-      (a, b) =>
-        new Date(`${a.data_vencimento}T12:00:00-05:00`) - new Date(`${b.data_vencimento}T12:00:00-05:00`),
-    );
-  }, [contas, currentMonth, contasSociosSabado, contaFolhaDia5, contasParcelasPlanejamento]);
 
   const filteredData = useMemo(() => {
     const todayKey = dataHoje();
@@ -699,26 +686,14 @@ export default function SuperAgefin() {
     [contasParaImpressao]
   );
 
-  const gruposParaImpressao = useMemo(() => {
-    const map = {};
-    contasParaImpressao.forEach((conta) => {
-      const data = (conta.data_vencimento || '').slice(0, 10) || 'sem-data';
-      if (!map[data]) {
-        map[data] = {
-          key: data,
-          label: data === 'sem-data' ? 'Sem vencimento' : formatarSoData(data),
-          orderValue: data === 'sem-data' ? '9999-12-31' : data,
-          contas: [],
-        };
-      }
-      map[data].contas.push(conta);
-    });
-
-    return Object.values(map).sort((a, b) => {
-      const cmp = String(a.orderValue).localeCompare(String(b.orderValue), 'pt-BR', { sensitivity: 'base' });
-      return sortOrder === 'asc' ? cmp : -cmp;
-    });
-  }, [contasParaImpressao, sortOrder]);
+  const gruposParaImpressao = useMemo(
+    () =>
+      montarGruposContasPorVencimento(contasParaImpressao, {
+        sortOrder,
+        formatarData: formatarSoData,
+      }),
+    [contasParaImpressao, sortOrder],
+  );
 
   const limparFiltros = () => {
     setPagamentoFilter('todos');
@@ -735,10 +710,61 @@ export default function SuperAgefin() {
       return;
     }
 
-    if (contasParaImpressao.length === 0) {
+    const [modelosFresh, parcelamentosFresh] = await Promise.all([
+      listarModelosAgefin(),
+      listarParcelamentos(),
+    ]);
+    setModelosAgefin(modelosFresh || []);
+    setParcelamentosAgefin(parcelamentosFresh || []);
+
+    const monthDataImpressao = mesclarContasConsultaAgefinMes({
+      currentMonth,
+      contas,
+      modelosAgefin: modelosFresh,
+      parcelamentos: parcelamentosFresh,
+      contasSociosSabado,
+      contaFolhaDia5,
+    });
+
+    const todayKey = dataHoje();
+    const contasFiltradas = monthDataImpressao.filter((conta) => {
+      if (pagamentoFilter === 'pagos' && !lancamentoPago(conta)) return false;
+      if (pagamentoFilter === 'nao_pagos' && (lancamentoPago(conta) || lancamentoCancelado(conta))) {
+        return false;
+      }
+      if (prazoFilter === 'vencidas' && !lancamentoVencidoOuAtrasado(conta, todayKey)) return false;
+      if (prazoFilter === 'em_dia' && !lancamentoEmDia(conta, todayKey)) return false;
+      if (cmvFilter === 'cmv' && !lancamentoEhCmv(conta)) return false;
+      if (cmvFilter === 'normal' && lancamentoEhCmv(conta)) return false;
+      if (!mostrarCmvRapido && lancamentoEhCmv(conta)) return false;
+      if (freteFilter === 'fretes' && !lancamentoEhFreteItinerario(conta)) return false;
+      if (freteFilter === 'sem_fretes' && lancamentoEhFreteItinerario(conta)) return false;
+      const matchesFrom = !dateFrom || conta.data_vencimento >= dateFrom;
+      const matchesTo = !dateTo || conta.data_vencimento <= dateTo;
+      return matchesFrom && matchesTo;
+    });
+
+    const contasFiltradasOrdenadas = [...contasFiltradas].sort((a, b) => {
+      const da = (a.data_vencimento || '').slice(0, 10);
+      const db = (b.data_vencimento || '').slice(0, 10);
+      const c = da.localeCompare(db);
+      if (c !== 0) return sortOrder === 'asc' ? c : -c;
+      return (a.descricao || '').localeCompare(b.descricao || '', 'pt-BR', { sensitivity: 'base' });
+    });
+
+    const contasImpressaoFinal = modoSelecao
+      ? contasFiltradasOrdenadas.filter((conta) => selecionadosIds.includes(conta.id))
+      : contasFiltradasOrdenadas;
+
+    if (contasImpressaoFinal.length === 0) {
       window.alert('Não há contas para imprimir com os filtros atuais.');
       return;
     }
+
+    const gruposParaPdf = montarGruposContasPorVencimento(contasImpressaoFinal, {
+      sortOrder,
+      formatarData: formatarSoData,
+    });
 
     /** Dia 05: total da folha como conta + grelha analógica no PDF */
     const dataPagamentoFolha = dataDia5DoMes(currentMonth);
@@ -760,7 +786,7 @@ export default function SuperAgefin() {
     }
 
     const gruposComFolha = (() => {
-      const cloned = gruposParaImpressao.map((g) => ({ ...g, contas: [...g.contas] }));
+      const cloned = gruposParaPdf.map((g) => ({ ...g, contas: [...g.contas] }));
       if (!folhaContaSintetica) return cloned;
 
       const idx = cloned.findIndex((g) => g.key === dataPagamentoFolha);
