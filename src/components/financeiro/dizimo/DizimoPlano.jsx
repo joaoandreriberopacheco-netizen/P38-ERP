@@ -91,11 +91,68 @@ function CartaoDizimo({ demonstrativo }) {
   );
 }
 
+function LinhaResumoCard({ label, valor, tipo = 'normal', sublabel, destaque = false }) {
+  const prefix = tipo === 'soma' ? '+' : tipo === 'subtrai' ? '−' : '';
+  const positivo =
+    tipo === 'soma' ? Number(valor) >= 0 : tipo === 'resultado' ? Number(valor) >= 0 : undefined;
+
+  return (
+    <div className={cn('py-3 px-3', LINHA_FINA, 'border-b', destaque && 'bg-muted/10')}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className={cn('text-sm', destaque ? 'font-semibold' : 'font-medium')}>{label}</p>
+          {sublabel ? (
+            <p className="text-[11px] text-muted-foreground mt-0.5">{sublabel}</p>
+          ) : null}
+        </div>
+        <CelulaValor valor={valor} positivo={positivo} prefix={prefix} className="text-sm shrink-0" />
+      </div>
+    </div>
+  );
+}
+
 function TabelaResumoDizimo({ demonstrativo }) {
   const margem = demonstrativo.margemDetalhe;
 
   return (
-    <div className={cn('overflow-x-auto rounded-xl border bg-background', LINHA_FINA)}>
+    <>
+      <div className={cn('md:hidden overflow-hidden rounded-xl border bg-background', LINHA_FINA)}>
+        <div className={cn('px-3 py-2.5 text-[11px] uppercase tracking-wide text-muted-foreground border-b', LINHA_FINA)}>
+          Demonstrativo
+        </div>
+        <LinhaResumoCard label="Lucro bruto (margem)" valor={demonstrativo.lucroBruto} tipo="soma" destaque />
+        {margem?.receita_liquida > 0 ? (
+          <p className="px-3 py-2 text-[11px] text-muted-foreground border-b border-black/[0.06] dark:border-white/10">
+            Receita líq. {formatFinanceiroValor(margem.receita_liquida)} · CMV{' '}
+            {formatFinanceiroValor(margem.custo_total)}
+          </p>
+        ) : null}
+        <div className="px-3 py-2 text-[11px] uppercase tracking-wide text-muted-foreground border-b border-black/[0.06] dark:border-white/10">
+          Despesas operacionais (dedutíveis)
+        </div>
+        {demonstrativo.secoes.map((secao) => (
+          <LinhaResumoCard
+            key={secao.id}
+            label={secao.label}
+            valor={secao.valorDedutivel}
+            tipo="subtrai"
+            sublabel={
+              secao.valorNaoDedutivel > 0
+                ? `${formatFinanceiroValor(secao.valorBruto)} planejado · ${formatFinanceiroValor(secao.valorNaoDedutivel)} fora da base`
+                : undefined
+            }
+          />
+        ))}
+        <LinhaResumoCard label="Total dedutível" valor={demonstrativo.totalDedutivel} tipo="subtrai" destaque />
+        <LinhaResumoCard
+          label="Lucro líquido operacional estimado"
+          valor={demonstrativo.lucroLiquidoOperacional}
+          tipo="resultado"
+          destaque
+        />
+      </div>
+
+      <div className={cn('hidden md:block overflow-x-auto rounded-xl border bg-background', LINHA_FINA)}>
       <table className="w-full min-w-[320px] text-left border-collapse">
         <thead>
           <tr className={cn('border-b text-[11px] uppercase tracking-wide text-muted-foreground', LINHA_FINA)}>
@@ -147,7 +204,8 @@ function TabelaResumoDizimo({ demonstrativo }) {
           />
         </tbody>
       </table>
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -365,12 +423,13 @@ export default function DizimoPlano() {
           <p className="text-xs text-muted-foreground mt-0.5">Competência — {compLabel}</p>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-row sm:items-center sm:flex-wrap">
+          <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:w-auto">
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="h-10 rounded-xl gap-1.5"
+            className="h-10 rounded-xl gap-1.5 w-full sm:w-auto"
             disabled={loading || salvando || !configAlterada}
             onClick={handleSalvar}
           >
@@ -382,15 +441,16 @@ export default function DizimoPlano() {
             type="button"
             variant="outline"
             size="sm"
-            className="h-10 rounded-xl gap-1.5"
+            className="h-10 rounded-xl gap-1.5 w-full sm:w-auto"
             disabled={loading || gerandoPdf}
             onClick={handleGerarPdf}
           >
             {gerandoPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
             <span>PDF do mês</span>
           </Button>
+          </div>
 
-          <div className={cn('flex items-center rounded-xl p-1 border', LINHA_FINA, 'bg-background')}>
+          <div className={cn('flex items-center justify-center rounded-xl p-1 border w-full sm:w-auto', LINHA_FINA, 'bg-background')}>
           <Button
             type="button"
             variant="ghost"

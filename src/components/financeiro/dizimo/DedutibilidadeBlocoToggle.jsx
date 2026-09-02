@@ -45,7 +45,7 @@ function ParcialInlineInput({ percentual, onChange }) {
   );
 }
 
-export default function DedutibilidadeBlocoToggle({ value, onChange, className }) {
+export default function DedutibilidadeBlocoToggle({ value, onChange, className, fullWidth = false }) {
   const modo = value?.modo || DIZIMO_MODOS.TOTAL;
   const percentual = value?.percentual ?? 100;
 
@@ -63,7 +63,8 @@ export default function DedutibilidadeBlocoToggle({ value, onChange, className }
   return (
     <div
       className={cn(
-        'inline-flex items-center rounded-xl p-1 gap-0.5 shrink-0',
+        'items-center rounded-xl p-1 gap-0.5',
+        fullWidth ? 'flex w-full' : 'inline-flex shrink-0',
         'bg-background border border-black/[0.08] dark:border-white/12',
         className,
       )}
@@ -71,11 +72,12 @@ export default function DedutibilidadeBlocoToggle({ value, onChange, className }
       {OPCOES.map((opcao) => {
         if (opcao === DIZIMO_MODOS.PARCIAL && modo === DIZIMO_MODOS.PARCIAL) {
           return (
-            <ParcialInlineInput
-              key={opcao}
-              percentual={percentual}
-              onChange={setPercentual}
-            />
+            <div key={opcao} className={cn(fullWidth && 'flex-1 min-w-0 flex justify-center')}>
+              <ParcialInlineInput
+                percentual={percentual}
+                onChange={setPercentual}
+              />
+            </div>
           );
         }
 
@@ -86,7 +88,8 @@ export default function DedutibilidadeBlocoToggle({ value, onChange, className }
             type="button"
             onClick={() => setModo(opcao)}
             className={cn(
-              'px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-colors whitespace-nowrap border',
+              'py-1.5 rounded-lg text-[11px] font-semibold transition-colors border',
+              fullWidth ? 'flex-1 min-w-0 px-1 text-center' : 'px-2.5 whitespace-nowrap',
               ativo
                 ? 'bg-muted/40 text-foreground border-black/[0.1] dark:border-white/15'
                 : 'text-foreground/55 border-transparent hover:bg-muted/25 hover:text-foreground',
