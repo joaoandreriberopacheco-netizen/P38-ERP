@@ -10,7 +10,7 @@ import {
   ShoppingCart,
   Store,
   AlertCircle,
-  X,
+  Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,18 +31,12 @@ function CartItemRow({
   item,
   onRemoveItem,
   onUpdateQuantity,
-  sidebar = false,
 }) {
   const qty = Number(item.quantidade) || 0;
 
   return (
-    <div
-      className={cn(
-        'group rounded-2xl bg-muted/50 dark:bg-muted/30 px-3 py-3',
-        sidebar ? 'space-y-2.5' : 'flex items-center justify-between gap-3',
-      )}
-    >
-      <div className={cn('flex items-start gap-2.5', sidebar ? 'w-full' : 'min-w-0 flex-1')}>
+    <div className="rounded-2xl bg-muted/50 dark:bg-muted/30 px-3 py-3 space-y-2.5 w-full min-w-0">
+      <div className="flex items-start gap-2.5 w-full min-w-0">
         <ProdutoThumb
           produto={{
             id: item.produto_id,
@@ -50,11 +44,13 @@ function CartItemRow({
             imagem_url: item.imagem_url,
           }}
           size="sm"
-          roundedClassName="rounded-xl"
+          roundedClassName="rounded-xl shrink-0"
           asDiv
         />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-foreground leading-snug break-words">{item.produto_nome}</p>
+          <p className="text-sm font-medium text-foreground leading-snug break-words [overflow-wrap:anywhere]">
+            {item.produto_nome}
+          </p>
           <p className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-1 gap-y-0.5 mt-0.5">
             {item.tem_ajuste_tabela && Number(item.preco_venda_lista) > 0 && (
               <span className="line-through">{formatCurrency(item.preco_venda_lista)}</span>
@@ -69,24 +65,22 @@ function CartItemRow({
           <button
             type="button"
             onClick={() => onRemoveItem(item.item_key)}
-            className={cn(
-              'flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors',
-              sidebar ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
-            )}
-            aria-label="Remover item"
+            className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 active:bg-red-50 transition-colors"
+            aria-label="Excluir item"
           >
-            <X className="w-3.5 h-3.5" />
+            <Trash2 className="w-4 h-4" />
           </button>
         )}
       </div>
 
-      <div className={cn('flex items-center justify-between gap-2', sidebar && 'pl-12')}>
+      <div className="flex items-center justify-between gap-3 pl-11">
         {onUpdateQuantity ? (
           <div className="flex items-center bg-card dark:bg-background rounded-lg overflow-hidden shadow-sm">
             <button
               type="button"
               onClick={() => onUpdateQuantity(item.item_key, qty - 1)}
               className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
+              aria-label="Diminuir quantidade"
             >
               <Minus className="w-3.5 h-3.5" />
             </button>
@@ -95,6 +89,7 @@ function CartItemRow({
               type="button"
               onClick={() => onUpdateQuantity(item.item_key, qty + 1)}
               className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
+              aria-label="Aumentar quantidade"
             >
               <Plus className="w-3.5 h-3.5" />
             </button>
@@ -102,7 +97,7 @@ function CartItemRow({
         ) : (
           <span className="text-xs text-muted-foreground">{qty} {item.unidade || 'UN'}</span>
         )}
-        <p className="text-sm font-semibold text-foreground tabular-nums ml-auto">{formatCurrency(item.total)}</p>
+        <p className="text-sm font-semibold text-foreground tabular-nums shrink-0">{formatCurrency(item.total)}</p>
       </div>
     </div>
   );
@@ -152,14 +147,13 @@ export default function QuickBudgetCartView({
   const isSidebar = layout === 'sidebar';
 
   const itemsList = (
-    <div className={cn('space-y-2 pr-1', isSidebar ? 'flex-1 min-h-0 overflow-y-auto' : 'max-h-64 overflow-y-auto')}>
+    <div className={cn('space-y-2 pr-1 w-full min-w-0', isSidebar ? 'flex-1 min-h-0 overflow-y-auto' : 'overflow-y-auto')}>
       {items.map((item) => (
         <CartItemRow
           key={item.item_key || item.produto_id}
           item={item}
           onRemoveItem={onRemoveItem}
           onUpdateQuantity={onUpdateQuantity}
-          sidebar={isSidebar}
         />
       ))}
     </div>
