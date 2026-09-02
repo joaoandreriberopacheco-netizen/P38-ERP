@@ -1,7 +1,7 @@
 import { loadPdfJsBrowser } from '@/lib/loadPdfJsBrowser';
 
-/** Meia folha A4 em orientação paisagem (210 × 148,5 mm). */
-const HALF_A4_LANDSCAPE_HEIGHT_MM = 148.5;
+/** Conversão px → mm (96 dpi) para manter tamanho “natural” no PDF. */
+const PX_TO_MM = 25.4 / 96;
 
 function loadImage(url) {
   return new Promise((resolve, reject) => {
@@ -44,30 +44,54 @@ function getExtensionFromMime(mimeType = '') {
   return 'JPEG';
 }
 
+function imageSourceToDataUrl(img, mimeType = 'JPEG') {
+  if (img.src?.startsWith('data:')) return img.src;
+  const canvas = document.createElement('canvas');
+  canvas.width = img.width;
+  canvas.height = img.height;
+  const context = canvas.getContext('2d');
+  context.fillStyle = '#ffffff';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(img, 0, 0);
+  const quality = mimeType === 'PNG' ? undefined : 0.92;
+  return canvas.toDataURL(mimeType === 'PNG' ? 'image/png' : 'image/jpeg', quality);
+}
+
 /**
- * Escala o anexo para ocupar a largura útil da página.
- * Comprovantes altos (ex.: screenshot mobile) não devem ser reduzidos pela altura
- * disponível — isso gera miniaturas ilegíveis.
+ * Tamanho natural em mm; só reduz se exceder o retângulo útil (nunca amplia).
  */
-function measureImageWidthFirst(img, layout) {
-  const maxWidth = layout.pageWidth - layout.margin * 2;
-  const ratio = maxWidth / img.width;
+function measureImageNaturalNoUpscale(img, maxWidthMm, maxHeightMm) {
+  const naturalWidth = img.width * PX_TO_MM;
+  const naturalHeight = img.height * PX_TO_MM;
+
+  if (naturalWidth <= maxWidthMm && naturalHeight <= maxHeightMm) {
+    return {
+      width: naturalWidth,
+      height: naturalHeight,
+      ratio: PX_TO_MM,
+    };
+  }
+
+  const scale = Math.min(maxWidthMm / naturalWidth, maxHeightMm / naturalHeight, 1);
   return {
-    width: maxWidth,
-    height: img.height * ratio,
-    ratio,
+    width: naturalWidth * scale,
+    height: naturalHeight * scale,
+    ratio: PX_TO_MM * scale,
   };
 }
 
-/** Encaixa a imagem inteira no retângulo (modo impressão desktop). */
-function measureImageContain(img, maxWidthMm, maxHeightMm) {
-  const ratioW = maxWidthMm / img.width;
-  const ratioH = maxHeightMm / img.height;
-  const ratio = Math.min(ratioW, ratioH);
+/**
+ * Mobile/fluxo: largura até a página, altura livre para paginação; nunca amplia.
+ */
+function measureImageFlowNoUpscale(img, maxWidthMm) {
+  const naturalWidth = img.width * PX_TO_MM;
+  const naturalHeight = img.height * PX_TO_MM;
+  const width = Math.min(maxWidthMm, naturalWidth);
+  const scale = width / naturalWidth;
   return {
-    width: img.width * ratio,
-    height: img.height * ratio,
-    ratio,
+    width,
+    height: naturalHeight * scale,
+    ratio: PX_TO_MM * scale,
   };
 }
 
@@ -95,9 +119,16 @@ function sliceImageToDataUrls(img, measured, chunkHeightMm) {
   return slices;
 }
 
-async function prepareImageBlock(source, mimeType, layout) {
+async function prepareImageBlock(source, mimeType, layout, { flowMode = false } = {}) {
   const img = await loadImage(source);
-  const measured = measureImageWidthFirst(img, layout);
+  const maxWidth = layout.pageWidth - layout.margin * 2;
+  const measured = flowMode
+    ? measureImageFlowNoUpscale(img, maxWidth)
+    : measureImageNaturalNoUpscale(
+        img,
+        maxWidth,
+        layout.maxHeight ?? Number.POSITIVE_INFINITY,
+      );
   return {
     img,
     measured,
@@ -105,74 +136,8 @@ async function prepareImageBlock(source, mimeType, layout) {
   };
 }
 
-async function prepareImageOnly(source, mimeType) {
-  const img = await loadImage(source);
-  return {
-    img,
-    mimeType: getExtensionFromMime(mimeType),
-  };
-}
-
-function getHalfA4SlotMetrics(pageWidth, pageHeight, layout = {}, flow = {}) {
-  const margin = layout.margin ?? 12;
-  const bottomPad = flow.bottomPad ?? layout.bottomPad ?? 12;
-  const contentTop = layout.contentTop ?? ((flow.newPageY ?? 16) + 5.5);
-  const contentBottom = layout.contentBottom ?? pageHeight - bottomPad;
-  const contentWidth = pageWidth - margin * 2;
-  const slotGap = layout.slotGap ?? 2;
-  const titleHeight = 4.5;
-  const availableContent = Math.max(0, contentBottom - contentTop);
-  const slotHeight = Math.min(
-    HALF_A4_LANDSCAPE_HEIGHT_MM,
-    (availableContent - slotGap) / 2,
-  );
-  const imageAreaHeight = Math.max(20, slotHeight - titleHeight - 2);
-
-  return {
-    margin,
-    contentTop,
-    contentBottom,
-    contentWidth,
-    slotHeight,
-    slotGap,
-    titleHeight,
-    imageAreaHeight,
-  };
-}
-
-function imageSourceToDataUrl(img, mimeType = 'JPEG') {
-  if (img.src?.startsWith('data:')) return img.src;
-  const canvas = document.createElement('canvas');
-  canvas.width = img.width;
-  canvas.height = img.height;
-  const context = canvas.getContext('2d');
-  context.fillStyle = '#ffffff';
-  context.fillRect(0, 0, canvas.width, canvas.height);
-  context.drawImage(img, 0, 0);
-  const quality = mimeType === 'PNG' ? undefined : 0.92;
-  return canvas.toDataURL(mimeType === 'PNG' ? 'image/png' : 'image/jpeg', quality);
-}
-
-function drawImageInHalfA4LandscapeSlot(doc, block, slotTopY, metrics) {
-  const { margin, contentWidth, titleHeight, imageAreaHeight } = metrics;
-  const titleY = slotTopY + 1.5;
-  const imageTopY = titleY + titleHeight + 1;
-
-  doc.setFontSize(7.5);
-  const titleLines = doc.splitTextToSize(block.title, contentWidth).slice(0, 2);
-  doc.text(titleLines, margin, titleY);
-
-  const measured = measureImageContain(block.img, contentWidth, imageAreaHeight);
-  const x = margin + Math.max(0, (contentWidth - measured.width) / 2);
-  const y = imageTopY + Math.max(0, (imageAreaHeight - measured.height) / 2);
-  const dataUrl = imageSourceToDataUrl(block.img, block.mimeType);
-
-  doc.addImage(dataUrl, block.mimeType, x, y, measured.width, measured.height);
-  return slotTopY + metrics.slotHeight;
-}
-
-async function drawImageBlockPaginated(doc, block, layout, renderOptions = {}) {
-  const { img, measured } = block;
+async function drawImageBlockPaginated(doc, block, layout) {
+  const { img, measured, mimeType } = block;
   const {
     contentTop,
     contentBottom,
@@ -208,7 +173,7 @@ async function drawImageBlockPaginated(doc, block, layout, renderOptions = {}) {
       y = contentTop + Math.max(0, (maxChunkHeight - slice.heightMm) / 2);
     }
 
-    doc.addImage(slice.dataUrl, 'JPEG', x, y, measured.width, slice.heightMm);
+    doc.addImage(slice.dataUrl, mimeType || 'JPEG', x, y, measured.width, slice.heightMm);
     y += slice.heightMm;
 
     if (index < slices.length - 1) {
@@ -218,6 +183,20 @@ async function drawImageBlockPaginated(doc, block, layout, renderOptions = {}) {
   }
 
   return y;
+}
+
+function drawImageNaturalCentered(doc, block, layout) {
+  const { margin, contentTop, contentBottom } = layout;
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const maxWidth = pageWidth - margin * 2;
+  const maxHeight = contentBottom - contentTop;
+  const measured = measureImageNaturalNoUpscale(block.img, maxWidth, maxHeight);
+  const x = margin + Math.max(0, (maxWidth - measured.width) / 2);
+  const y = contentTop + Math.max(0, (maxHeight - measured.height) / 2);
+  const dataUrl = imageSourceToDataUrl(block.img, block.mimeType);
+
+  doc.addImage(dataUrl, block.mimeType, x, y, measured.width, measured.height);
+  return contentBottom;
 }
 
 function addTextFallbackPage(doc, title, message, layout = {}) {
@@ -230,17 +209,7 @@ function addTextFallbackPage(doc, title, message, layout = {}) {
   return titleY + 18;
 }
 
-function addTextFallbackHalfSlot(doc, title, message, slotTopY, metrics) {
-  const { margin, contentWidth } = metrics;
-  const titleY = slotTopY + 1.5;
-  doc.setFontSize(7.5);
-  doc.text(doc.splitTextToSize(title, contentWidth).slice(0, 2), margin, titleY);
-  doc.setFontSize(7);
-  doc.text(message, margin, titleY + 6, { maxWidth: contentWidth });
-  return slotTopY + metrics.slotHeight;
-}
-
-async function appendAnexosFlowMode(doc, anexos, options = {}) {
+async function appendAnexosFlowMode(doc, anexos = [], options = {}) {
   const { sectionPrefix = 'Anexos', layout = {}, flow, onPageAdded, useFirstPage = false } = options;
   const list = (anexos || []).filter((a) => a?.url_drive);
   if (list.length === 0) {
@@ -265,7 +234,7 @@ async function appendAnexosFlowMode(doc, anexos, options = {}) {
     registerPage();
   };
 
-  const beginDedicatedPage = (title, margin, titleY, contentTop, contentBottom) => {
+  const beginDedicatedPage = (title, margin, titleY) => {
     if (!(useFirstPage && pagesAdded === 0 && doc.internal.getNumberOfPages() === 1)) {
       doc.addPage();
       registerPage();
@@ -274,7 +243,6 @@ async function appendAnexosFlowMode(doc, anexos, options = {}) {
     }
     doc.setFontSize(7.5);
     doc.text(title, margin, titleY);
-    return { titleY, contentTop, contentBottom };
   };
 
   for (const anexo of list) {
@@ -307,10 +275,12 @@ async function appendAnexosFlowMode(doc, anexos, options = {}) {
         const dedicatedContentTop = dedicatedTitleY + 4.5;
         const newPageContentTop = dedicatedContentTop;
 
-        const blockPrepared = await prepareImageBlock(block.source, block.mime, {
-          pageWidth,
-          margin,
-        });
+        const blockPrepared = await prepareImageBlock(
+          block.source,
+          block.mime,
+          { pageWidth, margin },
+          { flowMode: true },
+        );
 
         if (cursorY != null) {
           const candidateTitleY = cursorY + gapBefore;
@@ -333,7 +303,7 @@ async function appendAnexosFlowMode(doc, anexos, options = {}) {
           }
         }
 
-        beginDedicatedPage(block.title, margin, dedicatedTitleY, dedicatedContentTop, contentBottom);
+        beginDedicatedPage(block.title, margin, dedicatedTitleY);
         cursorY = null;
 
         const endY = await drawImageBlockPaginated(doc, blockPrepared, {
@@ -350,13 +320,7 @@ async function appendAnexosFlowMode(doc, anexos, options = {}) {
       const pageHeight = doc.internal.pageSize.getHeight();
       const margin = layout.margin ?? 12;
       const titleY = flow?.newPageY != null ? flow.newPageY + 1 : (layout.titleY ?? 16);
-      beginDedicatedPage(
-        pageTitle,
-        margin,
-        titleY,
-        titleY + 4.5,
-        layout.contentBottom ?? pageHeight - 12,
-      );
+      beginDedicatedPage(pageTitle, margin, titleY);
       cursorY = addTextFallbackPage(
         doc,
         pageTitle,
@@ -372,68 +336,31 @@ async function appendAnexosFlowMode(doc, anexos, options = {}) {
   return { pagesAdded, endPage, endY };
 }
 
-async function appendAnexosHalfA4LandscapeMode(doc, anexos, options = {}) {
+async function appendAnexosOnePerPageMode(doc, anexos = [], options = {}) {
   const { sectionPrefix = 'Anexos', layout = {}, flow, onPageAdded } = options;
   const list = (anexos || []).filter((a) => a?.url_drive);
   if (list.length === 0) {
     return {
       pagesAdded: 0,
       endPage: doc.internal.getNumberOfPages(),
-      endY: flow?.initialY ?? layout.contentTop ?? 20,
+      endY: layout.contentBottom ?? 20,
     };
   }
 
   let pagesAdded = 0;
-  let pageSlotIndex = 0;
-  let firstSlotTopY = null;
-  let lastSlotEndY = null;
-  let isFirstBlock = true;
+  let lastEndY = layout.contentBottom ?? 20;
 
   const registerPage = () => {
     pagesAdded += 1;
     onPageAdded?.(doc.internal.getNumberOfPages());
   };
 
-  const resetPageSlots = () => {
-    pageSlotIndex = 0;
-    firstSlotTopY = null;
-  };
-
-  const addAttachmentPage = () => {
+  const beginAttachmentPage = (title, margin, titleY, contentTop, contentBottom) => {
     doc.addPage();
     registerPage();
-    resetPageSlots();
-  };
-
-  const resolveNextSlotTopY = (metrics) => {
-    const { contentTop, contentBottom, slotHeight, slotGap } = metrics;
-
-    if (pageSlotIndex === 0) {
-      let startY = contentTop;
-      if (isFirstBlock && typeof flow?.initialY === 'number') {
-        const candidateY = flow.initialY + (flow.gapBefore ?? 4);
-        if (contentBottom - candidateY >= slotHeight) {
-          startY = candidateY;
-        } else if (contentBottom - contentTop < slotHeight) {
-          addAttachmentPage();
-          startY = contentTop;
-        }
-      }
-      firstSlotTopY = startY;
-      pageSlotIndex = 1;
-      return startY;
-    }
-
-    const secondSlotY = firstSlotTopY + slotHeight + slotGap;
-    if (pageSlotIndex === 1 && contentBottom - secondSlotY >= slotHeight) {
-      pageSlotIndex = 2;
-      return secondSlotY;
-    }
-
-    addAttachmentPage();
-    firstSlotTopY = contentTop;
-    pageSlotIndex = 1;
-    return contentTop;
+    doc.setFontSize(7.5);
+    doc.text(title, margin, titleY);
+    return { contentTop, contentBottom };
   };
 
   for (const anexo of list) {
@@ -457,36 +384,38 @@ async function appendAnexosHalfA4LandscapeMode(doc, anexos, options = {}) {
       for (const block of blocks) {
         const pageHeight = doc.internal.pageSize.getHeight();
         const pageWidth = doc.internal.pageSize.getWidth();
-        const metrics = getHalfA4SlotMetrics(pageWidth, pageHeight, layout, flow);
-        const slotTopY = resolveNextSlotTopY(metrics);
-        const prepared = await prepareImageOnly(block.source, block.mime);
-        lastSlotEndY = drawImageInHalfA4LandscapeSlot(
-          doc,
-          { ...prepared, title: block.title },
-          slotTopY,
-          metrics,
-        );
-        isFirstBlock = false;
+        const margin = layout.margin ?? 12;
+        const bottomPad = flow?.bottomPad ?? layout.bottomPad ?? 12;
+        const titleY = (flow?.newPageY ?? layout.titleY ?? 16) + 1;
+        const contentTop = titleY + 4.5;
+        const contentBottom = layout.contentBottom ?? pageHeight - bottomPad;
+
+        beginAttachmentPage(block.title, margin, titleY, contentTop, contentBottom);
+        const img = await loadImage(block.source);
+        lastEndY = drawImageNaturalCentered(doc, {
+          img,
+          mimeType: getExtensionFromMime(block.mime),
+        }, { margin, contentTop, contentBottom });
       }
     } catch {
       const pageHeight = doc.internal.pageSize.getHeight();
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const metrics = getHalfA4SlotMetrics(pageWidth, pageHeight, layout, flow);
-      const slotTopY = resolveNextSlotTopY(metrics);
-      lastSlotEndY = addTextFallbackHalfSlot(
+      const margin = layout.margin ?? 12;
+      const titleY = (flow?.newPageY ?? layout.titleY ?? 16) + 1;
+      beginAttachmentPage(pageTitle, margin, titleY, titleY + 4.5, layout.contentBottom ?? pageHeight - 12);
+      lastEndY = addTextFallbackPage(
         doc,
         pageTitle,
         'Não foi possível renderizar este arquivo dentro do PDF final. Abra o anexo original para visualizar o conteúdo completo.',
-        slotTopY,
-        metrics,
+        { margin, titleY },
       );
-      isFirstBlock = false;
     }
   }
 
-  const endPage = doc.internal.getNumberOfPages();
-  const endY = lastSlotEndY ?? (layout.contentBottom ?? doc.internal.pageSize.getHeight() - 12);
-  return { pagesAdded, endPage, endY };
+  return {
+    pagesAdded,
+    endPage: doc.internal.getNumberOfPages(),
+    endY: lastEndY,
+  };
 }
 
 /**
@@ -495,7 +424,7 @@ async function appendAnexosHalfA4LandscapeMode(doc, anexos, options = {}) {
  * @param {Array} anexos
  * @param {{
  *   sectionPrefix?: string,
- *   mode?: 'flow' | 'half_a4_landscape',
+ *   mode?: 'flow' | 'one_per_page',
  *   layout?: { margin?: number, titleY?: number, contentTop?: number, contentBottom?: number },
  *   flow?: { initialY?: number, gapBefore?: number, newPageY?: number, bottomPad?: number },
  *   onPageAdded?: (pageNumber: number) => void,
@@ -504,8 +433,8 @@ async function appendAnexosHalfA4LandscapeMode(doc, anexos, options = {}) {
  */
 export async function appendAnexosToPdfDoc(doc, anexos = [], options = {}) {
   const mode = options.mode ?? 'flow';
-  if (mode === 'half_a4_landscape') {
-    return appendAnexosHalfA4LandscapeMode(doc, anexos, options);
+  if (mode === 'one_per_page') {
+    return appendAnexosOnePerPageMode(doc, anexos, options);
   }
   return appendAnexosFlowMode(doc, anexos, options);
 }

@@ -3277,7 +3277,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       if (!anexos.length) return;
       await appendAnexosToPdfDoc(doc, anexos, {
         sectionPrefix: `Comprovantes ${getPedidoNumeroRelatorio(pedido)}`,
-        mode: isAnexosA4 ? 'half_a4_landscape' : 'flow',
+        mode: isAnexosA4 ? 'one_per_page' : 'flow',
         layout: {
           margin: M,
           titleY: RELATORIO_COMPLETO_CHROME.topContentY + 1,
@@ -3292,8 +3292,6 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
               bottomPad: getBottomPad(),
             }
           : {
-              initialY: minutaEndY,
-              gapBefore: 4,
               newPageY: RELATORIO_COMPLETO_CHROME.topContentY,
               bottomPad: RELATORIO_COMPLETO_CHROME.bottomPad,
             },

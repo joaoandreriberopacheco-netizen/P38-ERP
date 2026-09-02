@@ -26,7 +26,7 @@ export const COMPRAS_RELATORIOS = [
     version: 'expandida_com_anexos_a4',
     label: 'PDF anexos (desktop)',
     icon: 'files',
-    title: 'Minuta A4 + comprovantes (meia folha paisagem, 2 por página)',
+    title: 'Minuta A4 + um comprovante por página (tamanho natural)',
   },
   {
     version: 'expandida_com_anexos',
