@@ -143,6 +143,7 @@ export default function PedidoCompraFAB({
 
           <div
             data-pedido-compra-fab
+            data-tour="pedido-fab-acoes"
             className="fixed right-4 z-[999] flex flex-col-reverse items-end gap-2 p38-bottom-fab1 md:bottom-6 md:right-6"
           >
             <button
