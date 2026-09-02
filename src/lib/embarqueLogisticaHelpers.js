@@ -48,6 +48,12 @@ export function embarqueTemSaldoPendente(embarque, minBase = MIN_SALDO_PENDENTE_
  * Recepção concluída neste split (inclui recepção em pacotes com status ainda Pendente).
  * Usa unidade base; exibição continua em vitrine na UI.
  */
+/** Despacho editável enquanto a recepção deste embarque ainda não começou. */
+export function podeEditarDespachoEmbarque(embarque) {
+  const status = String(embarque?.status_recebimento || embarque?.status_recebimento_embarque || 'Pendente').trim();
+  return !status || status === 'Pendente';
+}
+
 export function embarqueRecepcaoDocumentalCompleta(embarque) {
   const linhas = getEmbarqueItensLinhas(embarque);
   if (!linhas.length) return false;

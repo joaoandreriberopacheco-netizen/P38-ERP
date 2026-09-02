@@ -1821,7 +1821,13 @@ export default function PedidoCompraForm({
           {/* ABA: RECEPÇÃO */}
           <TabsContent value="recepcao" className="mt-0">
             {pedido?.id ? (
-              <AbaRecepção pedido={pedidoLogistica || pedido} />
+              <AbaRecepção
+                pedido={pedidoLogistica || pedido}
+                onPedidoUpdated={(pedidoCompleto) => {
+                  setPedidoLogistica(pedidoCompleto);
+                  setFormData((prev) => ({ ...prev, ...pedidoCompleto }));
+                }}
+              />
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <p className="text-sm text-muted-foreground">Salve o pedido primeiro para registrar recebimentos.</p>

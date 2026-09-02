@@ -8,7 +8,8 @@ import InformarEmbarque from './InformarEmbarque';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
-import { calcularPercentuaisLogistica, derivarStatusEmbarqueAgregado, qtyEmbarcadaBaseLinha, qtyEmbarcadaComercialLinha, calcularItensOrfaosAguardandoDespacho } from '@/lib/embarqueLogisticaHelpers';
+import { calcularPercentuaisLogistica, derivarStatusEmbarqueAgregado, podeEditarDespachoEmbarque, qtyEmbarcadaBaseLinha, qtyEmbarcadaComercialLinha, calcularItensOrfaosAguardandoDespacho } from '@/lib/embarqueLogisticaHelpers';
+import { toast } from 'sonner';
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 
 // Calcula total embarcado por produto em TODOS os embarques
@@ -45,6 +46,17 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
   const codigoExibicao = embarque.codigo_exibicao || `${pedido?.numero || '-----'}-${String.fromCharCode(64 + nivel)}`;
   const statusRecebimento = embarque.status_recebimento || embarque.status_recebimento_embarque || 'Pendente';
   const podeExcluir = !['Recebido OK', 'Recebido Parcial', 'Concluído', 'Concluído OK', 'Concluído com Divergência'].includes(statusRecebimento);
+  const podeEditarDespacho = podeEditarDespachoEmbarque(embarque);
+
+  const handleEditarDespacho = () => {
+    if (!podeEditarDespacho) {
+      toast.message('Recepção já iniciada', {
+        description: 'Só é possível corrigir quantidades embarcadas enquanto o embarque está pendente de recebimento.',
+      });
+      return;
+    }
+    onEdit(embarque);
+  };
   const handleDelete = async () => {
     setDeleting(true);
     await base44.entities.Embarque.delete(embarque.id);
@@ -114,9 +126,23 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
                <Trash2 className="w-3.5 h-3.5 text-red-400" />
              </Button>
            )}
-           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(embarque)}>
-             <Edit3 className="w-3.5 h-3.5 text-muted-foreground" />
-           </Button>
+           {podeEditarDespacho ? (
+             <Button
+               variant="outline"
+               size="sm"
+               className="h-7 px-2.5 text-[10px] border-0 shadow-sm bg-card text-foreground/90 hover:bg-muted"
+               onClick={handleEditarDespacho}
+               title="Corrigir quantidades embarcadas antes da recepção"
+               data-pulse-sensor="pedidos-compra.logistica-corrigir-despacho"
+             >
+               <Edit3 className="w-3 h-3 mr-1" />
+               Corrigir
+             </Button>
+           ) : (
+             <Button variant="ghost" size="icon" className="h-7 w-7 opacity-40" disabled title="Despacho bloqueado após recepção">
+               <Edit3 className="w-3.5 h-3.5 text-muted-foreground" />
+             </Button>
+           )}
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setExpanded(!expanded)}>
             {expanded ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
           </Button>

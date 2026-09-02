@@ -595,15 +595,21 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
         nProdutosVinculados > 0
           ? `${nProdutosVinculados} produto(s) com quantidades embarcadas (${formatQuantity(totalUnidadesEmbarcadas)} un.). `
           : 'Sem linhas novas por produto neste envio (apenas transporte/dados logísticos). ';
-      const seguirRecepcao = 'A seguir abrimos a Recepção.';
+      const seguirRecepcao = isEdicao
+        ? 'Quantidades e dados logísticos gravados — pode receber quando quiser.'
+        : 'A seguir abrimos a Recepção.';
 
       toast.success(msgOk, {
         description: `${resumoItens}${seguirRecepcao}`,
-        duration: 6500,
+        duration: isEdicao ? 4500 : 6500,
       });
-      await new Promise((r) => setTimeout(r, PAUSA_ANTES_RECEPCAO_MS));
+      if (!isEdicao) {
+        await new Promise((r) => setTimeout(r, PAUSA_ANTES_RECEPCAO_MS));
+      }
       onSuccess?.();
-      onIrParaRecepcao?.();
+      if (!isEdicao) {
+        onIrParaRecepcao?.();
+      }
       onClose();
     } catch (err) {
       const det = err?.message || err?.response?.data?.error || 'Erro desconhecido';
