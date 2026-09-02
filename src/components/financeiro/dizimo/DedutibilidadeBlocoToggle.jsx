@@ -45,7 +45,7 @@ function ParcialInlineInput({ percentual, onChange }) {
   );
 }
 
-export default function DedutibilidadeBlocoToggle({ value, onChange, className, fullWidth = false }) {
+export default function DedutibilidadeBlocoToggle({ value, onChange, className, fullWidth = false, compact = false }) {
   const modo = value?.modo || DIZIMO_MODOS.TOTAL;
   const percentual = value?.percentual ?? 100;
 
@@ -63,9 +63,10 @@ export default function DedutibilidadeBlocoToggle({ value, onChange, className, 
   return (
     <div
       className={cn(
-        'items-center rounded-xl p-1 gap-0.5',
+        'items-center rounded-xl gap-0.5',
+        compact ? 'p-0.5' : 'p-1',
         fullWidth ? 'flex w-full' : 'inline-flex shrink-0',
-        'bg-background border border-black/[0.08] dark:border-white/12',
+        'bg-muted/30 border border-border/40 dark:border-white/10',
         className,
       )}
     >
@@ -88,11 +89,12 @@ export default function DedutibilidadeBlocoToggle({ value, onChange, className, 
             type="button"
             onClick={() => setModo(opcao)}
             className={cn(
-              'py-1.5 rounded-lg text-[11px] font-semibold transition-colors border',
+              'rounded-lg font-semibold transition-colors border',
+              compact ? 'py-1 text-[10px]' : 'py-1.5 text-[11px]',
               fullWidth ? 'flex-1 min-w-0 px-1 text-center' : 'px-2.5 whitespace-nowrap',
               ativo
-                ? 'bg-muted/40 text-foreground border-black/[0.1] dark:border-white/15'
-                : 'text-foreground/55 border-transparent hover:bg-muted/25 hover:text-foreground',
+                ? 'bg-background text-foreground border-border/50 shadow-sm dark:bg-[#26262e]/80 dark:border-white/12'
+                : 'text-muted-foreground border-transparent hover:bg-background/60 hover:text-foreground',
             )}
           >
             {labelModoDedutivel(opcao)}

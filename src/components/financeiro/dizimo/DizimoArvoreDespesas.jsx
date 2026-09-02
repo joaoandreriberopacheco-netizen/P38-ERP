@@ -1,184 +1,167 @@
-import { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { formatFinanceiroValor } from '@/components/financeiro/fluxo/FinanceiroListaShared';
-import { formatarNomeItemDizimoLista } from '@/lib/dizimoCalculos';
+import {
+  FinanceiroGrupo,
+  formatFinanceiroValor,
+} from '@/components/financeiro/fluxo/FinanceiroListaShared';
+import {
+  DIZIMO_MODOS,
+  formatarNomeItemDizimoLista,
+} from '@/lib/dizimoCalculos';
 import DedutibilidadeBlocoToggle from '@/components/financeiro/dizimo/DedutibilidadeBlocoToggle';
-import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
-import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
-import { COMPRAS_HIER_L1, COMPRAS_HIER_L2, COMPRAS_SEP } from '@/lib/comprasP38Theme';
+import { P38MobileLine, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
+import { cn } from '@/lib/utils';
 
-const ITEM_TITLE =
-  'font-light text-sm uppercase tracking-wide text-foreground leading-snug line-clamp-3 break-words';
-const ITEM_META = 'text-[11px] font-light text-muted-foreground line-clamp-2 break-words normal-case';
+const GRUPO_LABEL_CLASS =
+  'text-sm font-semibold normal-case tracking-normal text-foreground print:text-black';
+const SUBGRUPO_LABEL_CLASS =
+  'text-[11px] font-semibold normal-case tracking-normal text-foreground/85';
 
-function DizimoGrupoHeader({ titulo, subtotal, subtotalDedutivel, open, onToggle, nivel = 0, vazio = false }) {
+function accentDedutivel(config = {}) {
+  const modo = config?.modo || DIZIMO_MODOS.TOTAL;
+  if (modo === DIZIMO_MODOS.NAO_DEDUTIVEL) return 'muted';
+  if (modo === DIZIMO_MODOS.PARCIAL) return 'info';
+  return 'default';
+}
+
+function DizimoItemRow({ item, onConfigChange, striped }) {
+  const modo = item.config?.modo || DIZIMO_MODOS.TOTAL;
+  const metaParts = [];
+
+  if (modo === DIZIMO_MODOS.NAO_DEDUTIVEL) {
+    metaParts.push(
+      <P38StatusLabel key="nao" tone="muted">
+        Fora da base
+      </P38StatusLabel>,
+    );
+  } else if (modo === DIZIMO_MODOS.PARCIAL) {
+    metaParts.push(
+      <P38StatusLabel key="parcial" tone="info">
+        Parcial na base
+      </P38StatusLabel>,
+    );
+  }
+
+  if (item.categoria) {
+    metaParts.push(
+      <span key="cat" className="text-xs text-muted-foreground">
+        {item.categoria}
+      </span>,
+    );
+  }
+
+  const subtitle =
+    item.detalhe && item.detalhe !== 'Sócio'
+      ? item.detalhe
+      : item.valorDedutivel !== item.valorBruto
+        ? `Na base: ${formatFinanceiroValor(item.valorDedutivel)}`
+        : null;
+
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      disabled={vazio}
-      className={cn(
-        'w-full min-w-0 text-left flex items-start gap-2 py-2.5 pr-1 transition-colors',
-        COMPRAS_SEP,
-        !vazio && 'hover:bg-muted/15',
-        nivel > 0 && 'pl-1',
-      )}
-    >
-      <div className="flex-1 min-w-0 overflow-hidden space-y-0.5">
-        <span
-          className={cn(
-            'block min-w-0',
-            nivel === 0
-              ? 'text-sm font-semibold uppercase tracking-wide text-foreground'
-              : 'text-sm font-medium text-foreground/90 normal-case',
-          )}
-        >
-          {titulo}
-        </span>
-        {subtotalDedutivel != null && subtotalDedutivel !== subtotal ? (
-          <span className="block text-[10px] text-muted-foreground tabular-nums">
-            Deduz {formatFinanceiroValor(subtotalDedutivel)}
-          </span>
-        ) : null}
+    <div className="w-full min-w-0 border-b border-border/30 last:border-b-0 dark:border-white/[0.06]">
+      <P38MobileLine
+        thinAccent
+        striped={striped}
+        accent={p38AccentKeyFromTone(accentDedutivel(item.config))}
+        className={cn(
+          'w-full text-left max-md:!py-3.5 max-md:min-h-[58px]',
+          '[&>div>div:first-child]:text-[15px] [&>div>div:first-child]:font-semibold sm:[&>div>div:first-child]:text-base',
+          '[&>div:last-child]:max-w-[46%] sm:[&>div:last-child]:max-w-[42%]',
+        )}
+        title={formatarNomeItemDizimoLista(item)}
+        subtitle={subtitle}
+        meta={metaParts.length ? <>{metaParts}</> : null}
+        value={
+          <>
+            <span className="text-foreground/85">−</span>
+            {formatFinanceiroValor(item.valorBruto)}
+          </>
+        }
+      />
+      <div className="px-3 pb-3 pt-0">
+        <DedutibilidadeBlocoToggle
+          value={item.config}
+          onChange={onConfigChange}
+          fullWidth
+          compact
+        />
       </div>
-      <div className="flex shrink-0 flex-col items-end gap-0.5 pt-0.5">
-        <CaixaValorDisplay valor={subtotal} tone="neutral" signed={false} size="sm" />
-        {!vazio ? (
-          <ChevronDown
-            className={cn(
-              'w-4 h-4 text-foreground/70 transition-transform duration-200',
-              open ? '' : '-rotate-90',
-            )}
-            aria-hidden
-          />
-        ) : null}
-      </div>
-    </button>
+    </div>
   );
 }
 
-function DizimoItemCard({ item, onConfigChange, isLast = false }) {
-  const metaParts = [
-    item.categoria || null,
-    item.detalhe && item.detalhe !== 'Sócio' ? item.detalhe : null,
-  ].filter(Boolean);
+function ListaItensDizimo({ itens, onConfigItem }) {
+  if (!itens?.length) {
+    return <p className="px-3 py-4 text-xs text-muted-foreground">Nenhum item nesta competência.</p>;
+  }
 
-  return (
-    <div className={cn('min-w-0 max-w-full py-3 pr-1 space-y-2.5', !isLast && COMPRAS_SEP)}>
-      <div className="flex items-start justify-between gap-3 min-w-0">
-        <div className="min-w-0 flex-1 space-y-1">
-          <p className={ITEM_TITLE}>{formatarNomeItemDizimoLista(item)}</p>
-          {metaParts.length ? (
-            <p className={ITEM_META}>{metaParts.join(' · ')}</p>
-          ) : null}
-        </div>
-        <CaixaValorDisplay
-          valor={item.valorBruto}
-          tone="neutral"
-          signed={false}
-          size="sm"
-          className="shrink-0 pt-0.5"
-        />
-      </div>
-      <DedutibilidadeBlocoToggle
-        value={item.config}
-        onChange={onConfigChange}
-        fullWidth
-      />
-    </div>
-  );
+  return itens.map((item, index) => (
+    <DizimoItemRow
+      key={item.id}
+      item={item}
+      striped={index % 2 === 1}
+      onConfigChange={(next) => onConfigItem(item.id, next)}
+    />
+  ));
 }
 
 function DizimoSubsecao({ subsecao, onConfigItem }) {
-  const vazio = !subsecao.itens.length;
-  const [open, setOpen] = useState(!vazio);
+  if (!subsecao.itens?.length) return null;
 
   return (
-    <div className="w-full min-w-0 max-w-full">
-      <DizimoGrupoHeader
-        titulo={subsecao.label}
-        subtotal={subsecao.valorBruto}
-        subtotalDedutivel={subsecao.valorDedutivel}
-        open={open}
-        onToggle={() => setOpen((v) => !v)}
-        nivel={1}
-        vazio={vazio}
-      />
-      {open && !vazio ? (
-        <div className={COMPRAS_HIER_L2}>
-          {subsecao.itens.map((item, index) => (
-            <DizimoItemCard
-              key={item.id}
-              item={item}
-              onConfigChange={(next) => onConfigItem(item.id, next)}
-              isLast={index === subsecao.itens.length - 1}
-            />
-          ))}
-        </div>
-      ) : vazio && open ? (
-        <p className={cn(COMPRAS_HIER_L2, 'py-3 text-xs text-muted-foreground')}>
-          Nenhum item nesta competência.
-        </p>
-      ) : null}
-    </div>
+    <FinanceiroGrupo
+      label={`${subsecao.label} (${subsecao.itens.length})`}
+      labelClassName={SUBGRUPO_LABEL_CLASS}
+      despesas={subsecao.valorBruto}
+      liquido={-subsecao.valorBruto}
+      card={false}
+      defaultOpen
+    >
+      <div className="pl-1 sm:pl-2">
+        <ListaItensDizimo itens={subsecao.itens} onConfigItem={onConfigItem} />
+      </div>
+    </FinanceiroGrupo>
   );
 }
 
 function DizimoSecao({ secao, onConfigItem }) {
   const temSubsecoes = secao.subsecoes?.length > 0;
+  const itensDiretos = secao.itens || [];
   const vazio = temSubsecoes
-    ? secao.subsecoes.every((sub) => !sub.itens.length)
-    : !secao.itens.length;
-  const [open, setOpen] = useState(true);
+    ? secao.subsecoes.every((sub) => !sub.itens?.length)
+    : !itensDiretos.length;
+  const qtdItens = temSubsecoes
+    ? secao.subsecoes.reduce((acc, sub) => acc + (sub.itens?.length || 0), 0)
+    : itensDiretos.length;
+
+  if (vazio) return null;
 
   return (
-    <div className="w-full min-w-0 max-w-full">
-      <DizimoGrupoHeader
-        titulo={secao.label}
-        subtotal={secao.valorBruto}
-        subtotalDedutivel={secao.valorDedutivel}
-        open={open}
-        onToggle={() => setOpen((v) => !v)}
-        nivel={0}
-        vazio={vazio}
-      />
-      {open && !vazio ? (
-        temSubsecoes ? (
-          <div className={cn(COMPRAS_HIER_L1, 'space-y-0')}>
-            {secao.subsecoes.map((sub) => (
-              <DizimoSubsecao key={sub.id} subsecao={sub} onConfigItem={onConfigItem} />
-            ))}
-          </div>
-        ) : (
-          <div className={COMPRAS_HIER_L1}>
-            {secao.itens.map((item, index) => (
-              <DizimoItemCard
-                key={item.id}
-                item={item}
-                onConfigChange={(next) => onConfigItem(item.id, next)}
-                isLast={index === secao.itens.length - 1}
-              />
-            ))}
-          </div>
-        )
-      ) : vazio && open ? (
-        <p className={cn(COMPRAS_HIER_L1, 'py-3 text-xs text-muted-foreground')}>
-          Nenhum item nesta competência.
-        </p>
-      ) : null}
-    </div>
+    <FinanceiroGrupo
+      label={`${secao.label} (${qtdItens})`}
+      labelClassName={GRUPO_LABEL_CLASS}
+      despesas={secao.valorBruto}
+      liquido={-secao.valorBruto}
+      card
+      defaultOpen
+    >
+      {temSubsecoes ? (
+        <div className="space-y-1 pl-0.5 sm:pl-1">
+          {secao.subsecoes.map((sub) => (
+            <DizimoSubsecao key={sub.id} subsecao={sub} onConfigItem={onConfigItem} />
+          ))}
+        </div>
+      ) : (
+        <ListaItensDizimo itens={itensDiretos} onConfigItem={onConfigItem} />
+      )}
+    </FinanceiroGrupo>
   );
 }
 
 export default function DizimoArvoreDespesas({ secoes = [], onConfigItem }) {
   return (
-    <P38MobileLineList allViewports className="rounded-xl max-w-full overflow-hidden">
-      {secoes.map((secao, index) => (
-        <div key={secao.id} className={cn(index > 0 && COMPRAS_SEP)}>
-          <DizimoSecao secao={secao} onConfigItem={onConfigItem} />
-        </div>
+    <div className="min-w-0 w-full max-w-full space-y-2 overflow-x-hidden pb-2 md:pb-0">
+      {secoes.map((secao) => (
+        <DizimoSecao key={secao.id} secao={secao} onConfigItem={onConfigItem} />
       ))}
-    </P38MobileLineList>
+    </div>
   );
 }

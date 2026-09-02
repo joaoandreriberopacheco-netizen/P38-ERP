@@ -76,7 +76,8 @@ function CartaoDizimo({ demonstrativo }) {
   return (
     <div
       className={cn(
-        'rounded-xl p-5 lg:p-6 text-center space-y-2 border bg-background',
+        'rounded-xl p-5 lg:p-6 text-center space-y-2 border',
+        P38_FIELD_SURFACE,
         LINHA_FINA,
       )}
     >
