@@ -24,6 +24,7 @@ import {
   listarLancamentosCompetencia,
   listarLancamentosRecorrentes,
 } from '@/lib/agefinPrevisaoService';
+import { listarParcelamentos } from '@/lib/agefinParcelamentoService';
 import { montarPlanoFinanceiroConsolidado } from '@/lib/planoFinanceiroConsolidado';
 import { montarDemonstrativoDizimo, extrairContextoItensDizimo, criarConfigDedutivelPadrao, normalizarConfigItemDizimo } from '@/lib/dizimoCalculos';
 import {
@@ -183,6 +184,12 @@ export default function DizimoPlano() {
     staleTime: 60_000,
   });
 
+  const { data: parcelamentosAgefin = [], isLoading: loadingParcelamentosAgefin } = useQuery({
+    queryKey: ['dizimo', 'agefin-parcelamentos'],
+    queryFn: listarParcelamentos,
+    staleTime: 60_000,
+  });
+
   const { data: modelosFolha = [], isLoading: loadingFolha } = useQuery({
     queryKey: ['dizimo', 'folha-modelos'],
     queryFn: listarModelosFolha,
@@ -234,6 +241,7 @@ export default function DizimoPlano() {
   const loading =
     loadingAgefin ||
     loadingRecorrentesAgefin ||
+    loadingParcelamentosAgefin ||
     loadingFolha ||
     loadingBudget ||
     loadingCompetenciasFolha ||
@@ -258,12 +266,14 @@ export default function DizimoPlano() {
         lancamentosVencimento,
         lucroBruto: lucroBrutoMes?.lucro_bruto || 0,
         margemDetalhe: lucroBrutoMes,
+        parcelamentosAgefin,
       }),
     [
       competencia,
       modelosAgefin,
       lancamentosAgefin,
       lancamentosRecorrentesAgefin,
+      parcelamentosAgefin,
       modelosFolha,
       competenciasFolha,
       modelosBudget,

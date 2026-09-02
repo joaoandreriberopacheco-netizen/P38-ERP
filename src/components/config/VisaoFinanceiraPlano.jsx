@@ -23,6 +23,7 @@ import {
 } from '@/lib/budgetService';
 import { listarModelos as listarModelosFolha, listarCompetencias as listarCompetenciasFolha } from '@/lib/folhaPrevisaoService';
 import { listarModelos as listarModelosAgefin, listarLancamentosCompetencia, listarLancamentosRecorrentes } from '@/lib/agefinPrevisaoService';
+import { listarParcelamentos } from '@/lib/agefinParcelamentoService';
 import { montarPlanoFinanceiroConsolidado } from '@/lib/planoFinanceiroConsolidado';
 import { gerarRelatorioVisaoFinanceira } from '@/functions/gerarRelatorioVisaoFinanceira';
 import { dataHoje } from '@/components/utils/dateUtils';
@@ -717,6 +718,12 @@ export default function VisaoFinanceiraPlano() {
     staleTime: 60_000,
   });
 
+  const { data: parcelamentosAgefin = [], isLoading: loadingParcelamentosAgefin } = useQuery({
+    queryKey: ['agefin-previsao', 'parcelamentos'],
+    queryFn: listarParcelamentos,
+    staleTime: 60_000,
+  });
+
   const { data: modelosFolha = [], isLoading: loadingFolha } = useQuery({
     queryKey: ['visao-financeira', 'folha-modelos'],
     queryFn: listarModelosFolha,
@@ -778,6 +785,7 @@ export default function VisaoFinanceiraPlano() {
         lancamentosMes,
         lancamentosVencimento,
         lancamentosRecorrentesAgefin,
+        parcelamentosAgefin,
         lucroBruto: lucroBrutoMes?.lucro_bruto || 0,
         margemDetalhe: lucroBrutoMes,
       }),
@@ -792,6 +800,7 @@ export default function VisaoFinanceiraPlano() {
       lancamentosMes,
       lancamentosVencimento,
       lancamentosRecorrentesAgefin,
+      parcelamentosAgefin,
       lucroBrutoMes,
     ],
   );
@@ -804,6 +813,7 @@ export default function VisaoFinanceiraPlano() {
     loadingCompetenciasBudget ||
     loadingLancamentosAgefin ||
     loadingRecorrentesAgefin ||
+    loadingParcelamentosAgefin ||
     loadingLancamentosMes ||
     loadingLancamentosVencimento;
   const lucroBrutoCarregando = loadingLucroBruto && !lucroBrutoMes;
