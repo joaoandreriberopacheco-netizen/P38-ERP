@@ -1,37 +1,71 @@
 import { jsPDF } from 'jspdf';
 import { registerJsPdfBarlowFonts, normalizePdfText } from '@/lib/jspdfNotoFont';
-import { formatarNomeItemDizimoLista } from '@/lib/dizimoCalculos';
+import { DIZIMO_MODOS, normalizarConfigItemDizimo } from '@/lib/dizimoCalculos';
 
-const ENXUTO_LINE_W = 0.12;
+const LINE = { hair: 0.035, fine: 0.05 };
 
-const COLOR = {
+const PAD = {
+  sectionBefore: 12,
+  sectionAfterTitle: 6.5,
+  blockLabelBefore: 4.5,
+  blockLabelAfter: 4,
+  subBlockBetween: 6,
+  headerBefore: 1.5,
+  headerText: 3.8,
+  afterHeaderRule: 3,
+  rowPadTop: 2.8,
+  rowPadBottom: 3.2,
+  afterRowRule: 0.4,
+  grupoBefore: 4.5,
+  grupoText: 4,
+  grupoAfter: 1.5,
+  grupoBetween: 12,
+  subtotalBefore: 2,
+  totalBefore: 4.5,
+  colTop: 13,
+};
+
+/** Padding horizontal dentro de cada célula da tabela. */
+const CELL_PAD = 1.8;
+
+const INK = {
   black: [0, 0, 0],
-  muted: [72, 72, 72],
-  line: [110, 110, 110],
-  section: [236, 236, 236],
-  accent: [74, 82, 64],
+  muted: [100, 100, 100],
+  line: [198, 198, 198],
+  lineSoft: [214, 214, 214],
+  divider: [220, 220, 220],
 };
 
 const FONT = {
-  title: 13,
-  section: 9,
-  resumoLabel: 8.8,
-  resumoValue: 8.8,
-  grupo: 10.5,
-  subgrupo: 9,
-  item: 9.2,
-  nota: 7.8,
-  dizimo: 14.5,
-  footer: 7,
+  title: 12.5,
+  meta: 7.8,
+  section: 9.8,
+  grupo: 8.4,
+  header: 6.8,
+  body: 8.4,
+  bodyBold: 8.4,
+  footer: 7.8,
 };
+
+const LINE_STEP = 3.5;
+const BASELINE = 3;
+
+const ORDEM_SECOES_PDF = [
+  { id: 'fixas_recorrentes', label: 'Contas fixas' },
+  { id: 'folha', label: 'Folha' },
+  { id: 'pontuais', label: 'Contas ocasionais' },
+  { id: 'budgets', label: 'Budgets' },
+];
 
 const safe = (value) => normalizePdfText(value);
 const number = (value) => Number(value) || 0;
-const moeda = (value) =>
-  `R$ ${number(value).toLocaleString('pt-BR', {
+/** Valor numérico sem prefixo — o R$ fica no cabeçalho da coluna. */
+const valorMoeda = (value) =>
+  number(value).toLocaleString('pt-BR', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  })}`;
+  });
+const moeda = (value) => `R$ ${valorMoeda(value)}`;
 
 const compararNome = (a, b) =>
   String(a?.nome || '').localeCompare(String(b?.nome || ''), 'pt-BR', { sensitivity: 'base' });
@@ -40,8 +74,74 @@ function ordenarItens(itens = []) {
   return [...itens].sort(compararNome);
 }
 
+function ordenarSecoes(secoes = []) {
+  const mapa = new Map((secoes || []).map((s) => [s.id, s]));
+  return ORDEM_SECOES_PDF.map((def) => mapa.get(def.id)).filter(Boolean);
+}
+
+function* iterarItensSecao(secao) {
+  if (secao.subsecoes?.length) {
+    for (const sub of secao.subsecoes) {
+      if (!sub.itens?.length) continue;
+      for (const item of ordenarItens(sub.itens)) {
+        yield { item };
+      }
+    }
+    return;
+  }
+  for (const item of ordenarItens(secao.itens || [])) {
+    yield { item };
+  }
+}
+
+function formatarCelulaNaoDedutivel(item) {
+  const valor = number(item.valorNaoDedutivel ?? item.valorFora);
+  if (valor <= 0.009) return '0,00';
+  const cfg = normalizarConfigItemDizimo(item.config);
+  if (cfg.modo === DIZIMO_MODOS.PARCIAL) {
+    return `${valorMoeda(valor)} (${cfg.percentual}%)`;
+  }
+  return valorMoeda(valor);
+}
+
+function percentualDedutivel(item) {
+  const cfg = normalizarConfigItemDizimo(item.config);
+  if (cfg.modo === DIZIMO_MODOS.TOTAL) return 100;
+  if (cfg.modo === DIZIMO_MODOS.NAO_DEDUTIVEL) return 0;
+  return cfg.percentual;
+}
+
+function formatarCelulaDedutivel(item) {
+  const valor = number(item.valorDedutivel);
+  if (valor <= 0.009) return '—';
+  return `${valorMoeda(valor)} (${percentualDedutivel(item)}%)`;
+}
+
+function rotuloDescricao(item) {
+  return safe(item.nome || '—');
+}
+
+function tableCols(half) {
+  const c1 = half.x;
+  const right = half.x + half.w;
+  const c2 = half.x + half.w * 0.4;
+  const c3 = half.x + half.w * 0.62;
+  const c4 = half.x + half.w * 0.8;
+  return {
+    c1,
+    c2,
+    c3,
+    c4,
+    right,
+    w1: c2 - c1 - CELL_PAD * 2,
+    w2: c3 - c2 - CELL_PAD * 2,
+    w3: c4 - c3 - CELL_PAD * 2,
+    w4: right - c4 - CELL_PAD * 2,
+  };
+}
+
 /**
- * PDF enxuto do Dízimo — resumo + listagem por grupo (nome e valor).
+ * PDF do Dízimo — A4 paisagem dividido ao meio: fluxo coluna esquerda → direita → nova página.
  */
 export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
   const {
@@ -53,269 +153,534 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
     }),
   } = payload;
 
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const fontFamily = await registerJsPdfBarlowFonts(doc);
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const M = 10;
-  const right = pageW - M;
-  const CW = pageW - M * 2;
-  const pageBottom = pageH - 10;
-  let y = 12;
+  const pageBottom = pageH - M;
+  /** Margem central = margem das extremidades (linha divisória = “fim da página”). */
+  const halfW = pageW / 2 - M * 2;
+  const dividerX = pageW / 2;
 
-  const setFont = (style = 'normal', size = 9, color = COLOR.black) => {
+  const margem = demonstrativo.margemDetalhe || {};
+  const secoes = ordenarSecoes(demonstrativo.secoes || []);
+  const anexoForaBase = demonstrativo.anexoForaBase || { secoes: [], totalFora: 0 };
+
+  const leftHalf = { x: M, w: halfW, y: PAD.colTop };
+  const rightHalf = { x: pageW / 2 + M, w: halfW, y: PAD.colTop };
+  const pageDividers = [];
+
+  /** Coluna activa no fluxo esquerda → direita → nova página. */
+  let flowCol = leftHalf;
+  /** Contexto para continuação suave entre metades/páginas. */
+  const flowCtx = {
+    active: false,
+    tableHeaders: null,
+    grupoLabel: null,
+    sectionTitle: null,
+  };
+
+  let columnsStartY = PAD.colTop;
+
+  const setFont = (style = 'normal', size = FONT.body, color = INK.black) => {
     doc.setFont(fontFamily, style);
     doc.setFontSize(size);
     doc.setTextColor(...color);
   };
 
-  const strokeLine = (yPos, x0 = M, x1 = right, color = COLOR.line, width = ENXUTO_LINE_W) => {
+  const strokeH = (yPos, x0, x1, color = INK.lineSoft, width = LINE.hair) => {
     doc.setDrawColor(...color);
     doc.setLineWidth(width);
     doc.line(x0, yPos, x1, yPos);
   };
 
+  const strokeV = (x, y0, y1, color = INK.divider, width = LINE.hair) => {
+    doc.setDrawColor(...color);
+    doc.setLineWidth(width);
+    doc.line(x, y0, x, y1);
+  };
+
+  const strokeTableVerticals = (tc, y0, y1, color = INK.lineSoft) => {
+    strokeV(tc.c2, y0, y1, color, LINE.hair);
+    strokeV(tc.c3, y0, y1, color, LINE.hair);
+    strokeV(tc.c4, y0, y1, color, LINE.hair);
+  };
+
+  const splitCellLines = (text, width, { bold = false } = {}) => {
+    setFont(bold ? 'bold' : 'normal', bold ? FONT.bodyBold : FONT.body);
+    const raw = safe(text ?? '');
+    if (!raw || raw === '—') return [];
+    return doc.splitTextToSize(raw, Math.max(4, width));
+  };
+
+  const resetColumns = (topY = PAD.colTop) => {
+    leftHalf.y = topY;
+    rightHalf.y = topY;
+    flowCol = leftHalf;
+  };
+
+  const newPage = (topY = PAD.colTop) => {
+    doc.addPage();
+    resetColumns(topY);
+    setFont('normal', FONT.meta, INK.muted);
+    doc.text(safe(`Dízimo — ${competenciaLabel}`), M, topY - 4);
+    pageDividers.push({ page: doc.internal.getNumberOfPages(), top: topY + 2 });
+  };
+
+  const continuationHeight = () => {
+    let h = 5.5;
+    if (flowCtx.grupoLabel) h += PAD.grupoBefore + PAD.grupoText + PAD.grupoAfter;
+    if (flowCtx.tableHeaders) h += PAD.headerBefore + PAD.headerText + PAD.afterHeaderRule;
+    return h;
+  };
+
+  const grupoTableBlockHeight = () =>
+    PAD.grupoBefore +
+    PAD.grupoText +
+    PAD.grupoAfter +
+    colHeaderHeight() +
+    minRowHeight() +
+    minRowHeight();
+
+  const minRowHeight = () =>
+    PAD.rowPadTop + LINE_STEP + PAD.rowPadBottom + PAD.afterRowRule + 1;
+
+  const sectionTitleHeight = () => PAD.sectionBefore + PAD.sectionAfterTitle + 4;
+
+  const colHeaderHeight = () => PAD.headerBefore + PAD.headerText + PAD.afterHeaderRule + 5;
+
+  const blockLabelHeight = () => PAD.blockLabelBefore + PAD.blockLabelAfter + 3;
+
+  const leftColumnUnused = () => leftHalf.y <= columnsStartY + 1.5;
+
+  /** Evita cabeçalho órfão: título + header + ≥1 linha na mesma metade. */
+  const ensureTableBlockFits = (blockHeight) => {
+    if (flowCol.y + blockHeight <= pageBottom) return;
+
+    if (flowCol === leftHalf) {
+      if (rightHalf.y + blockHeight <= pageBottom && !leftColumnUnused()) {
+        flowCol = rightHalf;
+        return;
+      }
+      newPage();
+      return;
+    }
+
+    newPage();
+  };
+
+  const drawContinuationBanner = (col) => {
+    col.y += 1.5;
+    setFont('normal', FONT.header, INK.muted);
+    doc.text(safe('Continuação'), col.x, col.y);
+    col.y += 4;
+  };
+
+  const replayContinuationContext = () => {
+    if (!flowCtx.active) return;
+    drawContinuationBanner(flowCol);
+    if (flowCtx.grupoLabel) {
+      const tc = tableCols(flowCol);
+      flowCol.y += PAD.grupoBefore;
+      setFont('bold', FONT.grupo, INK.muted);
+      doc.text(safe(`${String(flowCtx.grupoLabel).toUpperCase()} — CONTINUAÇÃO`), tc.c1, flowCol.y);
+      flowCol.y += PAD.grupoText;
+      strokeH(flowCol.y, tc.c1, tc.right, INK.lineSoft, LINE.hair);
+      flowCol.y += PAD.grupoAfter;
+    }
+    if (flowCtx.tableHeaders) {
+      const tc = tableCols(flowCol);
+      flowCol.y += PAD.headerBefore;
+      const headerY = flowCol.y;
+      setFont('normal', FONT.header, INK.muted);
+      const labels = flowCtx.tableHeaders;
+      doc.text(safe(labels[0].toUpperCase()), tc.c1 + CELL_PAD, headerY);
+      doc.text(safe(labels[1].toUpperCase()), tc.c3 - CELL_PAD, headerY, { align: 'right' });
+      doc.text(safe(labels[2].toUpperCase()), tc.c4 - CELL_PAD, headerY, { align: 'right' });
+      doc.text(safe(labels[3].toUpperCase()), tc.right - CELL_PAD, headerY, { align: 'right' });
+      flowCol.y += PAD.headerText;
+      const ruleY = flowCol.y;
+      strokeH(ruleY, tc.c1, tc.right, INK.line, LINE.fine);
+      strokeTableVerticals(tc, headerY - 0.5, ruleY, INK.line);
+      flowCol.y += PAD.afterHeaderRule;
+    }
+  };
+
+  /**
+   * Garante espaço na coluna activa; se não couber, passa à metade direita ou nova página
+   * e repete contexto (cabeçalhos/grupo) para continuar de onde parou.
+   */
   const ensureSpace = (needed) => {
-    if (y + needed <= pageBottom) return;
-    doc.addPage();
-    y = 12;
-    setFont('bold', 8, COLOR.muted);
-    doc.text(safe(`Dízimo — ${competenciaLabel} — continuação`), M, y);
-    y += 6;
-  };
+    if (flowCol.y + needed <= pageBottom) return flowCol;
 
-  const advance = (dy) => {
-    y += dy;
-  };
+    const contH = flowCtx.active ? continuationHeight() : 0;
+    const totalNeeded = needed + contH;
 
-  const drawResumoSecao = (titulo) => {
-    ensureSpace(8);
-    strokeLine(y);
-    advance(3);
-    setFont('bold', FONT.section, COLOR.muted);
-    doc.text(safe(titulo.toUpperCase()), M, y);
-    advance(4.5);
-  };
-
-  const drawResumoLinha = (label, value, { prefix = '', bold = false, sublabel = '' } = {}) => {
-    const labelW = CW * 0.62;
-    setFont(bold ? 'bold' : 'normal', FONT.resumoLabel, bold ? COLOR.black : COLOR.muted);
-    const labelLines = doc.splitTextToSize(safe(label), labelW);
-    const sublabelLines = sublabel ? doc.splitTextToSize(safe(sublabel), labelW) : [];
-    const blockH = Math.max(4.2, labelLines.length * 3.8 + sublabelLines.length * 3.2 + (sublabel ? 0.8 : 0));
-    ensureSpace(blockH + 1.5);
-
-    const rowY = y;
-    labelLines.forEach((line, index) => doc.text(line, M + 2, rowY + index * 3.8));
-    if (sublabelLines.length) {
-      const subY = rowY + labelLines.length * 3.8 + 0.6;
-      setFont('normal', FONT.nota, COLOR.muted);
-      sublabelLines.forEach((line, index) => doc.text(line, M + 2, subY + index * 3.2));
+    if (flowCol === leftHalf) {
+      if (rightHalf.y + totalNeeded <= pageBottom) {
+        flowCol = rightHalf;
+        replayContinuationContext();
+        return flowCol;
+      }
+      newPage();
+      replayContinuationContext();
+      return flowCol;
     }
 
-    setFont(bold ? 'bold' : 'normal', FONT.resumoValue, COLOR.black);
-    doc.text(safe(`${prefix}${moeda(value)}`), right, rowY, { align: 'right' });
-    advance(blockH + 1.2);
-    strokeLine(y, M + 2, right, COLOR.line, 0.06);
-    advance(1.4);
+    newPage();
+    replayContinuationContext();
+    return flowCol;
   };
 
-  /** Linha simples: despesa + valor; parcial exibe `(50%)` no nome. */
-  const drawItem = (item, { indent = 0 } = {}) => {
-    const nomeX = M + indent;
-    const nomeW = CW - indent - 30;
-    const rotulo = formatarNomeItemDizimoLista(item);
-
-    setFont('normal', FONT.item);
-    const nomeLines = doc.splitTextToSize(safe(rotulo), nomeW);
-    const blockH = Math.max(4.8, nomeLines.length * 3.8);
-
-    ensureSpace(blockH + 1.2);
-    const rowY = y;
-    nomeLines.forEach((line, index) => doc.text(line, nomeX, rowY + index * 3.8));
-    setFont('bold', FONT.item);
-    doc.text(moeda(item.valorBruto), right, rowY, { align: 'right' });
-    advance(blockH + 1.2);
-    strokeLine(y, M + indent, right, COLOR.line, 0.06);
-    advance(1);
+  const drawSectionTitle = (titulo, { remember = true } = {}) => {
+    flowCtx.active = false;
+    flowCtx.grupoLabel = null;
+    if (remember) flowCtx.sectionTitle = titulo;
+    flowCol.y += PAD.sectionBefore;
+    setFont('bold', FONT.section);
+    doc.text(safe(titulo), flowCol.x, flowCol.y);
+    flowCol.y += PAD.sectionAfterTitle;
   };
 
-  const drawItemFora = (item, { indent = 0 } = {}) => {
-    drawItem({ ...item, valorBruto: item.valorFora }, { indent });
+  const drawBlockLabel = (label) => {
+    flowCtx.grupoLabel = null;
+    flowCol.y += PAD.blockLabelBefore;
+    setFont('bold', FONT.grupo, INK.muted);
+    doc.text(safe(label), flowCol.x, flowCol.y);
+    flowCol.y += PAD.blockLabelAfter;
   };
 
-  const drawGrupo = (titulo, subtotal) => {
-    ensureSpace(8);
-    strokeLine(y);
-    advance(3.5);
-    setFont('bold', FONT.grupo);
-    doc.text(safe(titulo), M, y);
-    setFont('bold', FONT.grupo);
-    doc.text(moeda(subtotal), right, y, { align: 'right' });
-    advance(4.5);
+  const beginDetalheSection = (titulo) => {
+    clearTableContext();
+    ensureTableBlockFits(sectionTitleHeight() + grupoTableBlockHeight());
+    drawSectionTitle(titulo, { remember: false });
   };
 
-  const drawSubgrupo = (titulo, subtotal) => {
-    ensureSpace(7);
-    setFont('bold', FONT.subgrupo, COLOR.muted);
-    doc.text(safe(titulo), M + 2, y);
-    setFont('bold', FONT.subgrupo);
-    doc.text(moeda(subtotal), right, y, { align: 'right' });
-    advance(4);
+  /** Grupo → cabeçalho colado → linhas (secções 2 e 3). */
+  const beginDetalheGrupo = (label, headerLabels) => {
+    ensureTableBlockFits(grupoTableBlockHeight());
+    const tc = tableCols(flowCol);
+    flowCol.y += PAD.grupoBefore;
+    setFont('bold', FONT.grupo, INK.muted);
+    doc.text(safe(String(label).toUpperCase()), tc.c1, flowCol.y);
+    flowCol.y += PAD.grupoText;
+    strokeH(flowCol.y, tc.c1, tc.right, INK.lineSoft, LINE.hair);
+    flowCol.y += PAD.grupoAfter;
+    flowCtx.grupoLabel = label;
+
+    flowCol.y += PAD.headerBefore;
+    const headerY = flowCol.y;
+    setFont('normal', FONT.header, INK.muted);
+    doc.text(safe(headerLabels[0].toUpperCase()), tc.c1 + CELL_PAD, headerY);
+    doc.text(safe(headerLabels[1].toUpperCase()), tc.c3 - CELL_PAD, headerY, { align: 'right' });
+    doc.text(safe(headerLabels[2].toUpperCase()), tc.c4 - CELL_PAD, headerY, { align: 'right' });
+    doc.text(safe(headerLabels[3].toUpperCase()), tc.right - CELL_PAD, headerY, { align: 'right' });
+    flowCol.y += PAD.headerText;
+    const ruleY = flowCol.y;
+    strokeH(ruleY, tc.c1, tc.right, INK.line, LINE.fine);
+    strokeTableVerticals(tc, headerY - 0.5, ruleY, INK.line);
+    flowCol.y += PAD.afterHeaderRule;
+    flowCtx.tableHeaders = [...headerLabels];
+    flowCtx.active = true;
   };
 
-  const drawAnexoTitulo = (titulo, nota = '') => {
-    doc.addPage();
-    y = 12;
-    setFont('bold', 11);
-    doc.text(safe(titulo), M, y);
-    advance(5);
-    if (nota) {
-      setFont('normal', FONT.nota, COLOR.muted);
-      const lines = doc.splitTextToSize(safe(nota), CW);
-      lines.forEach((line, index) => doc.text(line, M, y + index * 3.4));
-      advance(lines.length * 3.4 + 2);
-    }
+  const spacingEntreGrupos = () => {
+    flowCtx.active = false;
+    flowCtx.tableHeaders = null;
+    flowCtx.grupoLabel = null;
+    advanceFlow(PAD.grupoBetween);
   };
 
-  const margem = demonstrativo.margemDetalhe || {};
-  const anexoForaBase = demonstrativo.anexoForaBase || { secoes: [], totalFora: 0 };
-
-  // —— Página 1: cabeçalho + resumo ——
-  setFont('bold', FONT.title);
-  doc.text(safe('Relatório de Dízimo'), M, y);
-  advance(5.5);
-  setFont('normal', 8, COLOR.muted);
-  doc.text(safe(`Competência ${competenciaLabel} · gerado em ${generatedAt}`), M, y);
-  advance(7);
-
-  const boxH = 20;
-  ensureSpace(boxH + 6);
-  const boxY = y;
-  doc.setFillColor(...COLOR.section);
-  doc.roundedRect(M, boxY, CW, boxH, 2.5, 2.5, 'F');
-  doc.setDrawColor(...COLOR.black);
-  doc.setLineWidth(ENXUTO_LINE_W);
-  doc.roundedRect(M, boxY, CW, boxH, 2.5, 2.5, 'S');
-
-  setFont('normal', 8, COLOR.muted);
-  doc.text('Dízimo estimado', M + 5, boxY + 6.2);
-  setFont('heavy', FONT.dizimo, COLOR.accent);
-  doc.text(moeda(demonstrativo.dizimo), M + 5, boxY + 14.5);
-  setFont('normal', FONT.nota, COLOR.muted);
-  doc.text(
-    safe(`${demonstrativo.percentualDizimo || 10}% do lucro líquido operacional`),
-    M + CW / 2,
-    boxY + 14.5,
-    { align: 'right' },
-  );
-  y = boxY + boxH + 7;
-
-  drawResumoLinha('Lucro bruto (margem)', demonstrativo.lucroBruto, { prefix: '+ ', bold: true });
-  if (number(margem.receita_liquida) > 0) {
-    setFont('normal', FONT.nota, COLOR.muted);
-    doc.text(
-      safe(`Receita líquida ${moeda(margem.receita_liquida)} · CMV ${moeda(margem.custo_total)}`),
-      M + 2,
-      y,
+  const drawGrupoSubtotal = (label, totais, { colunaDedutivel = true } = {}) => {
+    flowCol.y += PAD.subtotalBefore;
+    drawRow4(
+      `Subtotal ${label}`,
+      valorMoeda(totais.bruto),
+      totais.naoDed > 0.009 ? valorMoeda(totais.naoDed) : '0,00',
+      colunaDedutivel ? valorMoeda(totais.ded) : '—',
+      { bold: true },
     );
-    advance(5);
-    strokeLine(y, M + 2, right, COLOR.line, 0.06);
-    advance(2);
+  };
+
+  const somarTotaisItens = (itens, { usarFora = false } = {}) =>
+    itens.reduce(
+      (acc, item) => ({
+        bruto: acc.bruto + number(item.valorBruto),
+        naoDed:
+          acc.naoDed +
+          (usarFora
+            ? number(item.valorFora ?? item.valorNaoDedutivel)
+            : number(item.valorNaoDedutivel)),
+        ded: acc.ded + (usarFora ? 0 : number(item.valorDedutivel)),
+      }),
+      { bruto: 0, naoDed: 0, ded: 0 },
+    );
+
+  const renderDetalheGrupos = (secoesLista, { filtroItem, colunaDedutivel = true } = {}) => {
+    let primeiro = true;
+    for (const secao of secoesLista) {
+      const label = ORDEM_SECOES_PDF.find((d) => d.id === secao.id)?.label || secao.label;
+      const itens = [];
+      for (const { item } of iterarItensSecao(secao)) {
+        if (filtroItem && !filtroItem(item)) continue;
+        itens.push(item);
+      }
+      if (!itens.length) continue;
+
+      if (!primeiro) spacingEntreGrupos();
+      primeiro = false;
+
+      beginDetalheGrupo(label, HDR_DETALHE);
+
+      for (const item of itens) {
+        if (colunaDedutivel) {
+          drawDespesaItemRow(item);
+        } else {
+          drawRow4(
+            rotuloDescricao(item),
+            valorMoeda(item.valorBruto),
+            formatarCelulaNaoDedutivel(item),
+            '—',
+          );
+        }
+      }
+
+      const totais = somarTotaisItens(itens, { usarFora: !colunaDedutivel });
+      drawGrupoSubtotal(label, totais, { colunaDedutivel });
+    }
+  };
+
+  const beginDemonstrativoTable = (blockLabel, headerLabels) => {
+    const blockH = blockLabelHeight() + colHeaderHeight() + minRowHeight();
+    ensureTableBlockFits(blockH);
+    drawBlockLabel(blockLabel);
+    drawColHeader(headerLabels, { remember: false });
+  };
+
+  const drawColHeader = (labels, { remember = true } = {}) => {
+    const needed = PAD.headerBefore + PAD.headerText + PAD.afterHeaderRule + 5;
+    ensureSpace(needed);
+    const tc = tableCols(flowCol);
+    flowCol.y += PAD.headerBefore;
+    const headerY = flowCol.y;
+    setFont('normal', FONT.header, INK.muted);
+    doc.text(safe(labels[0].toUpperCase()), tc.c1 + CELL_PAD, headerY);
+    doc.text(safe(labels[1].toUpperCase()), tc.c3 - CELL_PAD, headerY, { align: 'right' });
+    doc.text(safe(labels[2].toUpperCase()), tc.c4 - CELL_PAD, headerY, { align: 'right' });
+    doc.text(safe(labels[3].toUpperCase()), tc.right - CELL_PAD, headerY, { align: 'right' });
+    flowCol.y += PAD.headerText;
+    const ruleY = flowCol.y;
+    strokeH(ruleY, tc.c1, tc.right, INK.line, LINE.fine);
+    strokeTableVerticals(tc, headerY - 0.5, ruleY, INK.line);
+    flowCol.y += PAD.afterHeaderRule;
+    if (remember) flowCtx.tableHeaders = [...labels];
+  };
+
+  const measureRowCells = (descricao, v2, v3, v4, { bold = false } = {}) => {
+    const tc = tableCols(flowCol);
+    const descLines = splitCellLines(descricao, tc.w1, { bold });
+    const l2 = splitCellLines(v2, tc.w2, { bold });
+    const l3 = splitCellLines(v3, tc.w3, { bold });
+    const l4 = splitCellLines(v4, tc.w4, { bold });
+    const descCount = Math.max(descLines.length, 1);
+    const valCount = Math.max(l2.length, l3.length, l4.length);
+    return { tc, descLines, l2, l3, l4, descCount, valCount };
+  };
+
+  const maxLinesInColumn = () => {
+    const avail = pageBottom - flowCol.y - PAD.rowPadTop - PAD.rowPadBottom;
+    return Math.max(1, Math.floor(avail / LINE_STEP));
+  };
+
+  const drawRowCellChunk = (
+    { tc, descLines, l2, l3, l4 },
+    descOffset,
+    descChunk,
+    rowLines,
+    { bold = false, showValues = false } = {},
+  ) => {
+    const chunkH = PAD.rowPadTop + rowLines * LINE_STEP + PAD.rowPadBottom;
+    const yTop = flowCol.y;
+    const textY = flowCol.y + PAD.rowPadTop + BASELINE;
+    const style = bold ? 'bold' : 'normal';
+
+    setFont(style, bold ? FONT.bodyBold : FONT.body);
+    for (let i = 0; i < descChunk; i += 1) {
+      const li = descOffset + i;
+      const line = descLines[li];
+      if (line) doc.text(line, tc.c1 + CELL_PAD, textY + i * LINE_STEP);
+    }
+
+    if (showValues) {
+      const valLines = Math.max(l2.length, l3.length, l4.length);
+      for (let vi = 0; vi < valLines; vi += 1) {
+        const lineY = textY + vi * LINE_STEP;
+        if (l2[vi]) doc.text(l2[vi], tc.c3 - CELL_PAD, lineY, { align: 'right' });
+        if (l3[vi]) doc.text(l3[vi], tc.c4 - CELL_PAD, lineY, { align: 'right' });
+        if (l4[vi]) doc.text(l4[vi], tc.right - CELL_PAD, lineY, { align: 'right' });
+      }
+    }
+
+    flowCol.y += chunkH;
+    const yBottom = flowCol.y;
+    strokeH(yBottom, tc.c1, tc.right, INK.lineSoft, LINE.hair);
+    strokeTableVerticals(tc, yTop, yBottom, INK.lineSoft);
+    flowCol.y += PAD.afterRowRule;
+  };
+
+  const drawRow4 = (descricao, v2, v3, v4, { bold = false } = {}) => {
+    const cells = measureRowCells(descricao, v2, v3, v4, { bold });
+    let descOffset = 0;
+
+    while (descOffset < cells.descCount) {
+      const descRemaining = cells.descCount - descOffset;
+      const fitDesc = Math.min(maxLinesInColumn(), descRemaining);
+      const isLast = descOffset + fitDesc >= cells.descCount;
+      const rowLines = isLast ? Math.max(fitDesc, cells.valCount) : fitDesc;
+      const chunkH =
+        PAD.rowPadTop + rowLines * LINE_STEP + PAD.rowPadBottom + PAD.afterRowRule + 1;
+      ensureSpace(chunkH);
+
+      const fresh = measureRowCells(descricao, v2, v3, v4, { bold });
+      drawRowCellChunk(fresh, descOffset, fitDesc, rowLines, {
+        bold,
+        showValues: isLast,
+      });
+      descOffset += fitDesc;
+    }
+
+    flowCtx.active = true;
+  };
+
+  const drawGrupoRow = (label) => {
+    const needed = PAD.grupoBefore + PAD.grupoText + PAD.grupoAfter + 2;
+    ensureSpace(needed);
+    const tc = tableCols(flowCol);
+    flowCol.y += PAD.grupoBefore;
+    setFont('bold', FONT.grupo, INK.muted);
+    doc.text(safe(String(label).toUpperCase()), tc.c1, flowCol.y);
+    flowCol.y += PAD.grupoText;
+    strokeH(flowCol.y, tc.c1, tc.right, INK.lineSoft, LINE.hair);
+    flowCol.y += PAD.grupoAfter;
+    flowCtx.grupoLabel = label;
+    flowCtx.active = true;
+  };
+
+  const drawDespesaItemRow = (item) => {
+    drawRow4(
+      rotuloDescricao(item),
+      valorMoeda(item.valorBruto),
+      formatarCelulaNaoDedutivel(item),
+      formatarCelulaDedutivel(item),
+    );
+  };
+
+  const advanceFlow = (dy) => {
+    ensureSpace(dy);
+    flowCol.y += dy;
+  };
+
+  const clearTableContext = () => {
+    flowCtx.active = false;
+    flowCtx.tableHeaders = null;
+    flowCtx.grupoLabel = null;
+    flowCtx.sectionTitle = null;
+  };
+
+  // —— Cabeçalho (largura total, só página 1) ——
+  let yHead = 14;
+  setFont('bold', FONT.title);
+  doc.text(safe('Relatório de Dízimo'), M, yHead);
+  yHead += 5.5;
+  setFont('normal', FONT.meta, INK.muted);
+  doc.text(safe(competenciaLabel), M, yHead);
+  yHead += 3.5;
+  doc.text(safe(`Gerado em ${generatedAt}`), M, yHead);
+
+  columnsStartY = yHead + 8;
+  resetColumns(columnsStartY);
+  pageDividers.push({ page: 1, top: columnsStartY });
+
+  const HDR_RECEITAS = ['Descrição', 'Total R$', 'Custo R$', 'Lucro bruto R$'];
+  const HDR_DESPESAS = ['Descrição', 'Total R$', 'Não dedutível R$', 'Dedutível R$'];
+  const HDR_DETALHE = ['Descrição', 'Total R$', 'Não ded. R$', 'Dedutível R$'];
+
+  // ═══ 1. Demonstrativo ═══
+  ensureTableBlockFits(sectionTitleHeight() + blockLabelHeight() + colHeaderHeight() + minRowHeight());
+  drawSectionTitle('1. Demonstrativo', { remember: false });
+  beginDemonstrativoTable('RECEITAS', HDR_RECEITAS);
+
+  const receita = number(margem.receita_liquida);
+  const custo = number(margem.custo_total);
+  const lucroBruto = number(demonstrativo.lucroBruto);
+
+  drawRow4(
+    'Venda período',
+    receita > 0 ? valorMoeda(receita) : valorMoeda(lucroBruto),
+    custo > 0 ? valorMoeda(custo) : '—',
+    valorMoeda(lucroBruto),
+    { bold: true },
+  );
+
+  advanceFlow(PAD.subBlockBetween);
+  beginDemonstrativoTable('DESPESAS', HDR_DESPESAS);
+
+  for (const secao of secoes) {
+    const label = ORDEM_SECOES_PDF.find((d) => d.id === secao.id)?.label || secao.label;
+    drawRow4(
+      label,
+      valorMoeda(secao.valorBruto),
+      secao.valorNaoDedutivel > 0 ? valorMoeda(secao.valorNaoDedutivel) : '0,00',
+      valorMoeda(secao.valorDedutivel),
+    );
   }
 
-  drawResumoSecao('Despesas dedutíveis na base');
-  for (const secao of demonstrativo.secoes || []) {
-    drawResumoLinha(secao.label, secao.valorDedutivel, {
-      prefix: '- ',
-      sublabel:
-        secao.valorNaoDedutivel > 0
-          ? `${moeda(secao.valorBruto)} planejado · ${moeda(secao.valorNaoDedutivel)} fora da base`
-          : '',
-    });
-  }
-  drawResumoLinha('Total dedutível', demonstrativo.totalDedutivel, { prefix: '- ', bold: true });
-  drawResumoLinha('Lucro líquido operacional estimado', demonstrativo.lucroLiquidoOperacional, {
-    prefix: '= ',
+  advanceFlow(PAD.totalBefore);
+  drawRow4('Lucro operacional', '—', '—', valorMoeda(demonstrativo.lucroLiquidoOperacional), {
     bold: true,
   });
-  drawResumoLinha('Dízimo', demonstrativo.dizimo, { prefix: '= ', bold: true });
-  if (number(anexoForaBase.totalFora) > 0) {
-    drawResumoLinha('Total fora da base (ver anexo)', anexoForaBase.totalFora, {
-      sublabel: 'Despesas não dedutíveis ou parcialmente excluídas',
+  drawRow4(
+    `Dízimo (${demonstrativo.percentualDizimo || 10}%)`,
+    '—',
+    '—',
+    valorMoeda(demonstrativo.dizimo),
+    { bold: true },
+  );
+
+  // ═══ 2. Despesas dedutíveis (flui esquerda → direita) ═══
+  beginDetalheSection('2. Despesas dedutíveis');
+  renderDetalheGrupos(secoes, {
+    filtroItem: (item) => number(item.valorDedutivel) > 0.009,
+  });
+
+  // ═══ 3. Fora do cálculo ═══
+  const secoesFora = ordenarSecoes(anexoForaBase.secoes || []);
+  if (number(anexoForaBase.totalFora) > 0 && secoesFora.length) {
+    beginDetalheSection('3. Despesas deixadas de fora do cálculo');
+    renderDetalheGrupos(secoesFora, {
+      filtroItem: (item) => number(item.valorFora ?? item.valorNaoDedutivel) > 0.009,
+      colunaDedutivel: false,
     });
+
+    advanceFlow(PAD.totalBefore);
+    drawRow4('Total fora da base', '—', valorMoeda(anexoForaBase.totalFora), '—', { bold: true });
   }
 
-  // —— Detalhamento: grupo → subgrupo (se houver) → itens em ordem alfabética ——
-  doc.addPage();
-  y = 12;
-  setFont('bold', 11);
-  doc.text(safe('Detalhamento por despesa'), M, y);
-  advance(5);
-  setFont('normal', FONT.nota, COLOR.muted);
-  doc.text(safe('Valores planejados da competência, agrupados por bloco.'), M, y);
-  advance(7);
-
-  for (const secao of demonstrativo.secoes || []) {
-    drawGrupo(secao.label, secao.valorBruto);
-
-    if (secao.subsecoes?.length) {
-      for (const sub of secao.subsecoes) {
-        if (!sub.itens?.length) continue;
-        drawSubgrupo(sub.label, sub.valorBruto);
-        for (const item of ordenarItens(sub.itens)) {
-          drawItem(item, { indent: 4 });
-        }
-        advance(2);
-      }
-    } else {
-      for (const item of ordenarItens(secao.itens || [])) {
-        drawItem(item, { indent: 2 });
-      }
-    }
-    advance(3);
-  }
-
-  if (number(anexoForaBase.totalFora) > 0) {
-    drawAnexoTitulo(
-      'Anexo — Despesas fora da base do dízimo',
-      'Valores que não entraram no cálculo do lucro líquido operacional estimado.',
-    );
-    drawResumoLinha('Total fora da base', anexoForaBase.totalFora, { bold: true });
-    advance(2);
-
-    for (const secao of anexoForaBase.secoes || []) {
-      drawGrupo(secao.label, secao.valorFora);
-
-      if (secao.subsecoes?.length) {
-        for (const sub of secao.subsecoes) {
-          drawSubgrupo(sub.label, sub.valorFora);
-          for (const item of ordenarItens(sub.itens || [])) {
-            drawItemFora(item, { indent: 4 });
-          }
-          advance(2);
-        }
-      } else {
-        for (const item of ordenarItens(secao.itens || [])) {
-          drawItemFora(item, { indent: 2 });
-        }
-      }
-      advance(3);
-    }
-  }
-
+  // Divisor vertical ao meio de cada página (metade esquerda | metade direita)
   const pageCount = doc.internal.getNumberOfPages();
   for (let page = 1; page <= pageCount; page += 1) {
     doc.setPage(page);
-    strokeLine(pageH - 8, M, right, COLOR.line, 0.2);
-    setFont('normal', FONT.footer, COLOR.muted);
-    doc.text(safe(`Dízimo · ${competenciaLabel}`), M, pageH - 4.5);
-    doc.text(safe(`Gerado em ${generatedAt}`), M + CW / 2, pageH - 4.5, { align: 'center' });
-    doc.text(`Página ${page} de ${pageCount}`, right, pageH - 4.5, { align: 'right' });
+    const div = pageDividers.find((d) => d.page === page);
+    if (div) {
+      strokeV(dividerX, div.top, pageBottom - 2, INK.divider, LINE.hair);
+    }
+    setFont('normal', FONT.footer, INK.muted);
+    doc.text(`Página ${page}/${pageCount}`, pageW / 2, pageH - 6, { align: 'center' });
   }
 
   return {
     data: doc.output('arraybuffer'),
-    version: 'dizimo_enxuto_a4_v3',
+    version: 'dizimo_half_page_columns_v14',
   };
 }

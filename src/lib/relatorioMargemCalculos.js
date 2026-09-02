@@ -604,11 +604,23 @@ export function calcularTotaisMargem(linhas = []) {
 }
 
 /** Lucro bruto do mês (competência YYYY-MM) — mesma base do relatório de margem. */
-export function calcularLucroBrutoCompetencia(sales = [], products = [], competencia) {
+export function calcularLucroBrutoCompetencia(
+  sales = [],
+  products = [],
+  competencia,
+  devolucoesTroca = [],
+  pedidosOrigemTroca = {},
+) {
   const intervalo = competenciaParaIntervalo(competencia);
   if (!intervalo) {
     return { receita_liquida: 0, custo_total: 0, lucro_bruto: 0, quantidade_produtos: 0 };
   }
-  const linhas = calcularLinhasMargemVendas(sales, products, intervalo);
+  const linhas = calcularLinhasMargemVendas(
+    sales,
+    products,
+    intervalo,
+    devolucoesTroca,
+    pedidosOrigemTroca,
+  );
   return calcularTotaisMargem(linhas);
 }

@@ -6,6 +6,7 @@ import { shiftCompetencia } from '@/lib/budgetCalculos';
 import {
   criarConfigDedutivelPadrao,
   normalizarConfigDedutivelDizimo,
+  normalizarConfigItemDizimo,
   resolverConfigItensDizimo,
 } from '@/lib/dizimoCalculos';
 
@@ -41,11 +42,13 @@ function lerMapa(key = STORAGE_KEY) {
 }
 
 function gravarMapa(mapa, key = STORAGE_KEY) {
-  if (typeof localStorage === 'undefined') return;
+  if (typeof localStorage === 'undefined') return false;
   try {
     localStorage.setItem(key, JSON.stringify(mapa || {}));
-  } catch {
-    /* quota / modo privado */
+    return true;
+  } catch (error) {
+    console.error('[dizimoConfigStorage] falha ao gravar localStorage:', error);
+    return false;
   }
 }
 
@@ -87,8 +90,21 @@ export function carregarConfigDedutivelDizimo(competencia, contextoItens = {}) {
 
 export function salvarConfigDedutivelDizimo(competencia, config) {
   const comp = String(competencia || '').slice(0, 7);
-  if (!comp) return;
+  if (!comp) return false;
   const mapa = lerMapa(STORAGE_KEY);
-  mapa[comp] = normalizarConfigDedutivelDizimo(config);
-  gravarMapa(mapa, STORAGE_KEY);
+  const atual = mapa[comp] ? normalizarConfigDedutivelDizimo(mapa[comp]) : {};
+  mapa[comp] = normalizarConfigDedutivelDizimo({ ...atual, ...config });
+  return gravarMapa(mapa, STORAGE_KEY);
+}
+
+/** Persiste um único item (merge no mês) — usado ao alterar dedutibilidade na UI. */
+export function salvarItemConfigDedutivelDizimo(competencia, itemId, config) {
+  const comp = String(competencia || '').slice(0, 7);
+  const id = String(itemId || '').trim();
+  if (!comp || !id) return false;
+  const mapa = lerMapa(STORAGE_KEY);
+  const atual = mapa[comp] ? normalizarConfigDedutivelDizimo(mapa[comp]) : {};
+  atual[id] = normalizarConfigItemDizimo(config);
+  mapa[comp] = atual;
+  return gravarMapa(mapa, STORAGE_KEY);
 }
