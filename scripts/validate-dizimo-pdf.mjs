@@ -60,7 +60,7 @@ const { data, version } = await generateRelatorioDizimoEnxutoPdf({
 const outPath = '/tmp/RelatorioDizimo_sample.pdf';
 writeFileSync(outPath, Buffer.from(data));
 
-if (!version.includes('template_joao')) {
+if (!version.includes('clean_tables')) {
   throw new Error(`versão inesperada: ${version}`);
 }
 
