@@ -16,7 +16,6 @@ import {
   listarCompetencias as listarCompetenciasBudget,
   listarLancamentosMes,
   listarLancamentosVencimentoMes,
-  obterLucroBrutoCompetencia,
 } from '@/lib/budgetService';
 import { listarModelos as listarModelosFolha, listarCompetencias as listarCompetenciasFolha } from '@/lib/folhaPrevisaoService';
 import {
@@ -35,6 +34,8 @@ import {
 import { gerarRelatorioDizimo } from '@/functions/gerarRelatorioDizimo';
 import { dataHoje } from '@/components/utils/dateUtils';
 import DizimoArvoreDespesas from '@/components/financeiro/dizimo/DizimoArvoreDespesas';
+import { useLucroBrutoCompetencia } from '@/hooks/useLucroBrutoCompetencia';
+import { P38_STALE_TIME } from '@/lib/p38QueryConfig';
 
 const LINHA_FINA = 'border-black/[0.06] dark:border-white/10';
 
@@ -61,11 +62,14 @@ function LinhaDemonstrativo4Col({
   );
 }
 
-function TabelaDemonstrativoDizimo({ demonstrativo }) {
+function TabelaDemonstrativoDizimo({ demonstrativo, loadingMargem = false }) {
   const margem = demonstrativo.margemDetalhe;
   const receita = Number(margem?.receita_liquida) || 0;
   const custo = Number(margem?.custo_total) || 0;
   const lucroBruto = Number(demonstrativo.lucroBruto) || 0;
+
+  const valorOuSkeleton = (value, className = 'h-4 w-20') =>
+    loadingMargem ? <span className={cn('inline-block rounded bg-muted animate-pulse', className)} /> : value;
 
   return (
     <div className="space-y-4">
@@ -87,9 +91,9 @@ function TabelaDemonstrativoDizimo({ demonstrativo }) {
           <tbody>
             <LinhaDemonstrativo4Col
               descricao="Venda período"
-              c2={receita > 0 ? formatValorColuna(receita) : formatValorColuna(lucroBruto)}
-              c3={custo > 0 ? formatValorColuna(custo) : '—'}
-              c4={formatValorColuna(lucroBruto)}
+              c2={valorOuSkeleton(receita > 0 ? formatValorColuna(receita) : formatValorColuna(lucroBruto))}
+              c3={valorOuSkeleton(custo > 0 ? formatValorColuna(custo) : '—', 'h-4 w-16')}
+              c4={valorOuSkeleton(formatValorColuna(lucroBruto))}
               bold
             />
           </tbody>
@@ -123,7 +127,7 @@ function TabelaDemonstrativoDizimo({ demonstrativo }) {
               descricao="Lucro operacional"
               c2="—"
               c3="—"
-              c4={formatValorColuna(demonstrativo.lucroLiquidoOperacional)}
+              c4={valorOuSkeleton(formatValorColuna(demonstrativo.lucroLiquidoOperacional))}
               bold
             />
           </tbody>
@@ -133,7 +137,23 @@ function TabelaDemonstrativoDizimo({ demonstrativo }) {
   );
 }
 
-function CartaoDizimo({ demonstrativo }) {
+function CartaoDizimo({ demonstrativo, loadingMargem = false }) {
+  if (loadingMargem) {
+    return (
+      <div
+        className={cn(
+          'rounded-xl p-5 lg:p-6 text-center space-y-3 border animate-pulse',
+          P38_FIELD_SURFACE,
+          LINHA_FINA,
+        )}
+      >
+        <div className="h-3 w-28 bg-muted rounded mx-auto" />
+        <div className="h-10 w-44 bg-muted rounded mx-auto" />
+        <div className="h-3 w-full max-w-sm bg-muted rounded mx-auto" />
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
@@ -175,70 +195,71 @@ export default function DizimoPlano() {
   const { data: modelosAgefin = [], isLoading: loadingAgefin } = useQuery({
     queryKey: ['dizimo', 'agefin-modelos'],
     queryFn: listarModelosAgefin,
-    staleTime: 30_000,
+    staleTime: P38_STALE_TIME,
   });
 
   const { data: lancamentosRecorrentesAgefin = [], isLoading: loadingRecorrentesAgefin } = useQuery({
     queryKey: ['dizimo', 'agefin-recorrentes'],
     queryFn: listarLancamentosRecorrentes,
-    staleTime: 60_000,
+    staleTime: P38_STALE_TIME,
   });
 
   const { data: parcelamentosAgefin = [], isLoading: loadingParcelamentosAgefin } = useQuery({
     queryKey: ['dizimo', 'agefin-parcelamentos'],
     queryFn: listarParcelamentos,
-    staleTime: 60_000,
+    staleTime: P38_STALE_TIME,
   });
 
   const { data: modelosFolha = [], isLoading: loadingFolha } = useQuery({
     queryKey: ['dizimo', 'folha-modelos'],
     queryFn: listarModelosFolha,
-    staleTime: 60_000,
+    staleTime: P38_STALE_TIME,
   });
 
   const { data: modelosBudget = [], isLoading: loadingBudget } = useQuery({
     queryKey: ['dizimo', 'budget-modelos'],
     queryFn: listarModelosBudget,
-    staleTime: 60_000,
+    staleTime: P38_STALE_TIME,
   });
 
   const { data: competenciasFolha = [], isLoading: loadingCompetenciasFolha } = useQuery({
     queryKey: ['dizimo', 'folha-competencias', competencia],
     queryFn: () => listarCompetenciasFolha(competencia),
-    staleTime: 30_000,
+    staleTime: P38_STALE_TIME,
   });
 
   const { data: competenciasBudget = [], isLoading: loadingCompetenciasBudget } = useQuery({
     queryKey: ['dizimo', 'budget-competencias', competencia],
     queryFn: () => listarCompetenciasBudget(competencia),
-    staleTime: 30_000,
+    staleTime: P38_STALE_TIME,
   });
 
   const { data: lancamentosAgefin = [], isLoading: loadingLancamentosAgefin } = useQuery({
     queryKey: ['dizimo', 'agefin-lancamentos', competencia],
     queryFn: () => listarLancamentosCompetencia(competencia),
-    staleTime: 30_000,
+    staleTime: P38_STALE_TIME,
   });
 
   const { data: lancamentosMes = [], isLoading: loadingLancamentosMes } = useQuery({
     queryKey: ['dizimo', 'lancamentos-mes', competencia],
     queryFn: () => listarLancamentosMes(competencia),
-    staleTime: 30_000,
+    staleTime: P38_STALE_TIME,
   });
 
   const { data: lancamentosVencimento = [], isLoading: loadingLancamentosVencimento } = useQuery({
     queryKey: ['dizimo', 'lancamentos-vencimento', competencia],
     queryFn: () => listarLancamentosVencimentoMes(competencia),
-    staleTime: 30_000,
+    staleTime: P38_STALE_TIME,
   });
 
-  const { data: lucroBrutoMes, isLoading: loadingLucroBruto } = useQuery({
-    queryKey: ['dizimo', 'lucro-bruto', competencia],
-    queryFn: () => obterLucroBrutoCompetencia(competencia),
-    staleTime: 60_000,
-  });
+  const {
+    data: lucroBrutoMes,
+    isLoading: loadingLucroBruto,
+    isFetching: fetchingLucroBruto,
+    isPlaceholderData: lucroBrutoPlaceholder,
+  } = useLucroBrutoCompetencia(competencia);
 
-  const loading =
+  const loadingDespesas =
     loadingAgefin ||
     loadingRecorrentesAgefin ||
     loadingParcelamentosAgefin ||
@@ -248,8 +269,13 @@ export default function DizimoPlano() {
     loadingCompetenciasBudget ||
     loadingLancamentosAgefin ||
     loadingLancamentosMes ||
-    loadingLancamentosVencimento ||
-    (loadingLucroBruto && !lucroBrutoMes);
+    loadingLancamentosVencimento;
+
+  const lucroBrutoCarregando =
+    loadingLucroBruto || (fetchingLucroBruto && lucroBrutoPlaceholder);
+
+  const margemDetalheEfetiva = lucroBrutoCarregando ? null : lucroBrutoMes;
+  const lucroBrutoEfetivo = lucroBrutoCarregando ? 0 : lucroBrutoMes?.lucro_bruto || 0;
 
   const plano = useMemo(
     () =>
@@ -264,8 +290,8 @@ export default function DizimoPlano() {
         competenciasBudget,
         lancamentosMes,
         lancamentosVencimento,
-        lucroBruto: lucroBrutoMes?.lucro_bruto || 0,
-        margemDetalhe: lucroBrutoMes,
+        lucroBruto: lucroBrutoEfetivo,
+        margemDetalhe: margemDetalheEfetiva,
         parcelamentosAgefin,
       }),
     [
@@ -280,7 +306,8 @@ export default function DizimoPlano() {
       competenciasBudget,
       lancamentosMes,
       lancamentosVencimento,
-      lucroBrutoMes,
+      lucroBrutoEfetivo,
+      margemDetalheEfetiva,
     ],
   );
 
@@ -374,7 +401,7 @@ export default function DizimoPlano() {
   }, [competencia, configItens, compLabel]);
 
   const handleGerarPdf = useCallback(async () => {
-    if (loading || gerandoPdf) return;
+    if (loadingDespesas || lucroBrutoCarregando || gerandoPdf) return;
     setGerandoPdf(true);
     toast.loading('Gerando PDF do dízimo...', { id: 'pdf-dizimo' });
     try {
@@ -404,7 +431,7 @@ export default function DizimoPlano() {
     } finally {
       setGerandoPdf(false);
     }
-  }, [loading, gerandoPdf, configAlterada, competencia, compLabel, demonstrativo, configItens]);
+  }, [loadingDespesas, lucroBrutoCarregando, gerandoPdf, configAlterada, competencia, compLabel, demonstrativo, configItens]);
 
   return (
     <div className="space-y-4">
@@ -433,7 +460,7 @@ export default function DizimoPlano() {
             variant="outline"
             size="sm"
             className="h-10 rounded-xl gap-1.5 w-full sm:w-auto"
-            disabled={loading || salvando || !configAlterada}
+            disabled={loadingDespesas || salvando || !configAlterada}
             onClick={handleSalvar}
           >
             {salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
@@ -445,7 +472,7 @@ export default function DizimoPlano() {
             variant="outline"
             size="sm"
             className="h-10 rounded-xl gap-1.5 w-full sm:w-auto"
-            disabled={loading || gerandoPdf}
+            disabled={loadingDespesas || lucroBrutoCarregando || gerandoPdf}
             onClick={handleGerarPdf}
           >
             {gerandoPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
@@ -477,12 +504,10 @@ export default function DizimoPlano() {
         </div>
       </div>
 
-      {loading ? (
+      {loadingDespesas ? (
         <FinanceiroListaEstado loading />
       ) : (
         <>
-          <CartaoDizimo demonstrativo={demonstrativo} />
-
           <div className="space-y-3">
             <div className="px-1">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
@@ -495,7 +520,12 @@ export default function DizimoPlano() {
             <DizimoArvoreDespesas secoes={demonstrativo.secoes} onConfigItem={atualizarConfigItem} />
           </div>
 
-          <TabelaDemonstrativoDizimo demonstrativo={demonstrativo} />
+          <CartaoDizimo demonstrativo={demonstrativo} loadingMargem={lucroBrutoCarregando} />
+
+          <TabelaDemonstrativoDizimo
+            demonstrativo={demonstrativo}
+            loadingMargem={lucroBrutoCarregando}
+          />
 
           {demonstrativo.lucroLiquidoOperacional <= 0 ? (
             <p className="text-xs text-muted-foreground px-1">

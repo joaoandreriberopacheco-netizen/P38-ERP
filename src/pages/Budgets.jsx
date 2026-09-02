@@ -50,8 +50,8 @@ import {
   inativarModelo,
   reativarModelo,
   limparDuplicatasBudgets,
-  obterLucroBrutoCompetencia,
 } from '@/lib/budgetService';
+import { useLucroBrutoCompetencia } from '@/hooks/useLucroBrutoCompetencia';
 import {
   calcularTotaisGrupo as calcularTotaisGrupoFolha,
   mapaModelosPorColaborador,
@@ -148,9 +148,7 @@ export default function BudgetsPage() {
     enabled: aba === 'plano',
   });
 
-  const { data: lucroBrutoMes } = useQuery({
-    queryKey: ['budgets', 'lucro-bruto', competenciaMes],
-    queryFn: () => obterLucroBrutoCompetencia(competenciaMes),
+  const { data: lucroBrutoMes } = useLucroBrutoCompetencia(competenciaMes, {
     enabled: aba === 'plano',
   });
 

@@ -19,8 +19,8 @@ import {
   listarCompetencias as listarCompetenciasBudget,
   listarLancamentosMes,
   listarLancamentosVencimentoMes,
-  obterLucroBrutoCompetencia,
 } from '@/lib/budgetService';
+import { useLucroBrutoCompetencia } from '@/hooks/useLucroBrutoCompetencia';
 import { listarModelos as listarModelosFolha, listarCompetencias as listarCompetenciasFolha } from '@/lib/folhaPrevisaoService';
 import { listarModelos as listarModelosAgefin, listarLancamentosCompetencia, listarLancamentosRecorrentes } from '@/lib/agefinPrevisaoService';
 import { listarParcelamentos } from '@/lib/agefinParcelamentoService';
@@ -766,11 +766,7 @@ export default function VisaoFinanceiraPlano() {
     staleTime: 60_000,
   });
 
-  const { data: lucroBrutoMes, isLoading: loadingLucroBruto } = useQuery({
-    queryKey: ['visao-financeira', 'lucro-bruto', competencia],
-    queryFn: () => obterLucroBrutoCompetencia(competencia),
-    staleTime: 60_000,
-  });
+  const { data: lucroBrutoMes, isLoading: loadingLucroBruto } = useLucroBrutoCompetencia(competencia);
 
   const plano = useMemo(
     () =>
