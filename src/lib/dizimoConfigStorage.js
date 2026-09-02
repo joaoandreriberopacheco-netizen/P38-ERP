@@ -6,6 +6,7 @@ import { shiftCompetencia } from '@/lib/budgetCalculos';
 import {
   criarConfigDedutivelPadrao,
   normalizarConfigDedutivelDizimo,
+  normalizarConfigItemDizimo,
   resolverConfigItensDizimo,
 } from '@/lib/dizimoCalculos';
 
@@ -89,6 +90,19 @@ export function salvarConfigDedutivelDizimo(competencia, config) {
   const comp = String(competencia || '').slice(0, 7);
   if (!comp) return;
   const mapa = lerMapa(STORAGE_KEY);
-  mapa[comp] = normalizarConfigDedutivelDizimo(config);
+  const atual = mapa[comp] ? normalizarConfigDedutivelDizimo(mapa[comp]) : {};
+  mapa[comp] = normalizarConfigDedutivelDizimo({ ...atual, ...config });
+  gravarMapa(mapa, STORAGE_KEY);
+}
+
+/** Persiste um único item (merge no mês) — usado ao alterar dedutibilidade na UI. */
+export function salvarItemConfigDedutivelDizimo(competencia, itemId, config) {
+  const comp = String(competencia || '').slice(0, 7);
+  const id = String(itemId || '').trim();
+  if (!comp || !id) return;
+  const mapa = lerMapa(STORAGE_KEY);
+  const atual = mapa[comp] ? normalizarConfigDedutivelDizimo(mapa[comp]) : {};
+  atual[id] = normalizarConfigItemDizimo(config);
+  mapa[comp] = atual;
   gravarMapa(mapa, STORAGE_KEY);
 }

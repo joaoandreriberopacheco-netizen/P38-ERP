@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, Download, Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
@@ -25,10 +25,11 @@ import {
   listarLancamentosRecorrentes,
 } from '@/lib/agefinPrevisaoService';
 import { montarPlanoFinanceiroConsolidado } from '@/lib/planoFinanceiroConsolidado';
-import { montarDemonstrativoDizimo, extrairContextoItensDizimo, criarConfigDedutivelPadrao } from '@/lib/dizimoCalculos';
+import { montarDemonstrativoDizimo, extrairContextoItensDizimo, criarConfigDedutivelPadrao, normalizarConfigItemDizimo } from '@/lib/dizimoCalculos';
 import {
   carregarConfigDedutivelDizimo,
   salvarConfigDedutivelDizimo,
+  salvarItemConfigDedutivelDizimo,
 } from '@/lib/dizimoConfigStorage';
 import { gerarRelatorioDizimo } from '@/functions/gerarRelatorioDizimo';
 import { dataHoje } from '@/components/utils/dateUtils';
@@ -323,23 +324,19 @@ export default function DizimoPlano() {
   );
 
   const contextoItens = useMemo(() => extrairContextoItensDizimo(plano), [plano]);
-  const competenciaAnteriorRef = useRef(competencia);
+  const contextoKey = useMemo(
+    () =>
+      `${competencia}|${[...contextoItens.recorrentes, ...contextoItens.ocasionais].sort().join(',')}`,
+    [competencia, contextoItens],
+  );
 
   useEffect(() => {
-    if (!contextoItens.recorrentes.length && !contextoItens.ocasionais.length) return;
-
-    const mudouCompetencia = competenciaAnteriorRef.current !== competencia;
-    competenciaAnteriorRef.current = competencia;
-
-    setConfigItens((prev) => {
-      const resolved = carregarConfigDedutivelDizimo(competencia, contextoItens);
-      const next = mudouCompetencia ? resolved : { ...resolved, ...prev };
-      if (mudouCompetencia) {
-        setConfigSalvaSnapshot(JSON.stringify(resolved));
-      }
-      return next;
-    });
-  }, [competencia, contextoItens]);
+    const ids = [...contextoItens.recorrentes, ...contextoItens.ocasionais];
+    if (!ids.length) return;
+    const resolved = carregarConfigDedutivelDizimo(competencia, contextoItens);
+    setConfigItens(resolved);
+    setConfigSalvaSnapshot(JSON.stringify(resolved));
+  }, [contextoKey, contextoItens]);
 
   const configAlterada = useMemo(
     () => JSON.stringify(configItens) !== configSalvaSnapshot,
@@ -351,9 +348,26 @@ export default function DizimoPlano() {
     [plano, configItens],
   );
 
-  const atualizarConfigItem = useCallback((itemId, nextConfig) => {
-    setConfigItens((prev) => ({ ...prev, [itemId]: nextConfig }));
-  }, []);
+  const atualizarConfigItem = useCallback(
+    (itemId, nextConfig) => {
+      const normalizado = normalizarConfigItemDizimo(nextConfig);
+      setConfigItens((prev) => {
+        const next = { ...prev, [itemId]: normalizado };
+        setConfigSalvaSnapshot(JSON.stringify(next));
+        return next;
+      });
+      salvarItemConfigDedutivelDizimo(competencia, itemId, normalizado);
+    },
+    [competencia],
+  );
+
+  const mudarCompetencia = useCallback(
+    (delta) => {
+      salvarConfigDedutivelDizimo(competencia, configItens);
+      setCompetencia((c) => shiftCompetencia(c, delta));
+    },
+    [competencia, configItens],
+  );
 
   const handleSalvar = useCallback(async () => {
     setSalvando(true);
@@ -416,8 +430,8 @@ export default function DizimoPlano() {
                 (Agefin, folha, budgets e pauta).
               </p>
               <p className="text-muted-foreground mt-2">
-                Configure item a item e clique em Salvar para fixar o mês. O PDF usa a configuração
-                salva (ou salva automaticamente antes de gerar se houver alterações pendentes).
+                Configure item a item — cada alteração é salva automaticamente neste navegador.
+                Ao mudar de mês, as escolhas da competência ficam guardadas.
               </p>
             </P38HelpPopover>
           </div>
@@ -457,7 +471,7 @@ export default function DizimoPlano() {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => setCompetencia((c) => shiftCompetencia(c, -1))}
+            onClick={() => mudarCompetencia(-1)}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -467,7 +481,7 @@ export default function DizimoPlano() {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => setCompetencia((c) => shiftCompetencia(c, 1))}
+            onClick={() => mudarCompetencia(1)}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
