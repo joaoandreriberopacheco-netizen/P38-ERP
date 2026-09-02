@@ -40,6 +40,7 @@ import {
   lancamentoEntraEmContasFixas,
 } from '@/lib/agefinConsultaData';
 import { competenciaParaIntervalo } from '@/lib/relatorioMargemCalculos';
+import { salvarOverrideCompetenciaMes } from '@/lib/agefinCompetenciaMesService';
 
 export { listarCentrosCustoRegistros };
 
@@ -1002,7 +1003,13 @@ export function podeEditarCompetencia(comp) {
  * Grava valor/vencimento só na competência do mês (lançamento financeiro).
  * Não altera o template (cadastro da série).
  */
-async function gravarLancamentoCompetenciaManual({ modelo, competencia, valor, dataVencimento }) {
+async function gravarLancamentoCompetenciaManual({
+  modelo,
+  competencia,
+  valor,
+  dataVencimento,
+  lancamentoId = null,
+}) {
   const comp = String(competencia || '').slice(0, 7);
   if (!comp) throw new Error('Competência inválida.');
   const valorNum = Number(valor) || 0;
@@ -1010,10 +1017,23 @@ async function gravarLancamentoCompetenciaManual({ modelo, competencia, valor, d
     (dataVencimento || '').slice(0, 10) ||
     dataVencimentoNaCompetencia(comp, modelo?.dia_vencimento);
 
-  let lf = await buscarLancamentoMes(modelo, comp);
+  let lf = null;
+  if (lancamentoId) {
+    try {
+      lf = await base44.entities.LancamentoFinanceiro.get(lancamentoId);
+    } catch {
+      lf = null;
+    }
+  }
+  if (!lf) lf = await buscarLancamentoMes(modelo, comp);
+  if (!lf && modelo?.id) {
+    lf = await buscarLancamentoMesPorSerie(modelo, comp);
+  }
+
   if (!lf) {
+    const grupoId = modelo?.grupo_lancamento_id || gerarGrupoLancamentoId();
     lf = await base44.entities.LancamentoFinanceiro.create({
-      ...payloadLancamentoAuto(modelo, comp),
+      ...payloadLancamentoAuto({ ...modelo, grupo_lancamento_id: grupoId }, comp),
       valor: valorNum,
       valor_liquido: valorNum,
       data_vencimento: ven,
@@ -1034,6 +1054,14 @@ async function gravarLancamentoCompetenciaManual({ modelo, competencia, valor, d
   return atualizado;
 }
 
+async function buscarLancamentoMesPorSerie(modelo, competencia) {
+  if (!modelo?.id) return null;
+  const rows = await base44.entities.LancamentoFinanceiro.filter({
+    referencia_id: modelo.id,
+  }).catch(() => []);
+  return (rows || []).find((lf) => mesReferenciaLancamento(lf) === competencia) || null;
+}
+
 /**
  * Atualiza valor e vencimento manualmente (sem ler o boleto).
  * Grava só na competência do mês — o template (cadastro) não muda.
@@ -1050,10 +1078,19 @@ export async function atualizarCompetenciaManual({ competencia, modelo, valor, d
     (dataVencimento || '').slice(0, 10) ||
     dataVencimentoNaCompetencia(comp, Number(diaVencimento) || Number(modelo.dia_vencimento) || 10);
 
+  await salvarOverrideCompetenciaMes({
+    serieId: modelo.id,
+    competencia: comp,
+    valor: valorNum,
+    dataVencimento: ven,
+    diaVencimento: Number(diaVencimento) || Number((ven || '').slice(8, 10)) || Number(modelo.dia_vencimento) || 10,
+  });
+
   return gravarLancamentoCompetenciaManual({
     modelo,
     competencia: comp,
     valor: valorNum,
     dataVencimento: ven,
+    lancamentoId: competencia?.lancamento_id || null,
   });
 }

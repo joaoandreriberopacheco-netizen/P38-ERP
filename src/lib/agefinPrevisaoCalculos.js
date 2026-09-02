@@ -3,6 +3,7 @@
  */
 
 import { tagsOrigemBoleto } from '@/lib/agefinLancamentosRecorrencia';
+import { aplicarOverrideCompetencia } from '@/lib/agefinCompetenciaMesService';
 import { lancamentoPago, lancamentoCancelado, lancamentoVencidoOuAtrasado } from '@/lib/agefinConsultaFilters';
 
 export const SITUACAO_SERIE = {
@@ -562,8 +563,15 @@ export function competenciaFromLancamento(lf, modelo, competencia) {
 
 /**
  * Mescla lançamentos do mês (fonte AGEFIN / LancamentoFinanceiro) com linhas de planejamento.
+ * overridesPorSerie: ajustes manuais por competência (sem alterar o template).
  */
-export function montarCompetenciasVisao(competenciaMes, modelos, lancamentosMes = [], lancamentosRecorrentes = []) {
+export function montarCompetenciasVisao(
+  competenciaMes,
+  modelos,
+  lancamentosMes = [],
+  lancamentosRecorrentes = [],
+  overridesPorSerie = {},
+) {
   const frequenciasPorGrupo = mapaFrequenciaPorGrupoLancamento(lancamentosRecorrentes);
   const byKey = new Map();
   const lfByGrupo = {};
@@ -602,6 +610,12 @@ export function montarCompetenciasVisao(competenciaMes, modelos, lancamentosMes 
     }
   }
 
+  for (const [key, comp] of byKey.entries()) {
+    const override = overridesPorSerie?.[comp.serie_id];
+    if (!override) continue;
+    byKey.set(key, aplicarOverrideCompetencia(comp, override));
+  }
+
   return [...byKey.values()].sort((a, b) =>
     (a.serie_nome || '').localeCompare(b.serie_nome || '', 'pt-BR'),
   );
@@ -632,6 +646,7 @@ export function filtrarCompetenciasPrevisao(competencias, { busca = '', centro =
 export function dataVencimentoCompetencia(comp, modelo) {
   const lf = comp?._lancamento;
   if (lf?.data_vencimento) return String(lf.data_vencimento).slice(0, 10);
+  if (comp?._overrideDataVencimento) return String(comp._overrideDataVencimento).slice(0, 10);
   const dia = Number(modelo?.dia_vencimento ?? comp?.dia_vencimento) || 10;
   return dataVencimentoNaCompetencia(comp?.competencia, dia);
 }

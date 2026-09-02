@@ -8,5 +8,6 @@ export const agefinQueryKeys = {
   parcelamentos: [...AGEFIN_PREVISAO_ROOT, 'parcelamentos'],
   contas: [...AGEFIN_PREVISAO_ROOT, 'contas'],
   recorrentes: [...AGEFIN_PREVISAO_ROOT, 'lancamentos-recorrentes'],
+  overridesCompetencia: [...AGEFIN_PREVISAO_ROOT, 'competencias-mes'],
   categorias: [...AGEFIN_PREVISAO_ROOT, 'categorias-despesa'],
 };

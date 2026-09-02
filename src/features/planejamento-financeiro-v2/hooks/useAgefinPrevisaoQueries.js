@@ -8,6 +8,7 @@ import {
   listarModelos,
 } from '@/lib/agefinPrevisaoService';
 import { listarParcelamentos } from '@/lib/agefinParcelamentoService';
+import { listarOverridesCompetenciaMes, mapaOverridesCompetenciaMes } from '@/lib/agefinCompetenciaMesService';
 import { listarCategoriasDespesa } from '@/lib/budgetService';
 import { agefinQueryKeys } from '../constants/queryKeys';
 
@@ -28,6 +29,7 @@ export function useAgefinPrevisaoQueries({ abaAtiva, competenciaMes, precisaCont
   const precisaLancamentos = abaAtiva === 'previsao';
   const precisaParcelamentos = abaAtiva === 'previsao';
   const precisaRecorrentes = abaAtiva === 'projecao' || abaAtiva === 'previsao';
+  const precisaOverridesCompetencia = abaAtiva === 'previsao';
 
   const modelosQuery = useQuery({
     queryKey: agefinQueryKeys.modelos,
@@ -64,6 +66,13 @@ export function useAgefinPrevisaoQueries({ abaAtiva, competenciaMes, precisaCont
     staleTime: STALE_PADRAO,
   });
 
+  const overridesCompetenciaQuery = useQuery({
+    queryKey: agefinQueryKeys.overridesCompetencia,
+    queryFn: listarOverridesCompetenciaMes,
+    enabled: precisaOverridesCompetencia,
+    staleTime: STALE_PADRAO,
+  });
+
   const recorrentesQuery = useQuery({
     queryKey: agefinQueryKeys.recorrentes,
     queryFn: listarLancamentosRecorrentes,
@@ -88,6 +97,11 @@ export function useAgefinPrevisaoQueries({ abaAtiva, competenciaMes, precisaCont
     [centrosQuery.data],
   );
 
+  const overridesPorSerie = useMemo(
+    () => mapaOverridesCompetenciaMes(overridesCompetenciaQuery.data, competenciaMes),
+    [overridesCompetenciaQuery.data, competenciaMes],
+  );
+
   return {
     modelos: modelosQuery.data ?? [],
     loadingModelos: modelosQuery.isLoading,
@@ -98,7 +112,11 @@ export function useAgefinPrevisaoQueries({ abaAtiva, competenciaMes, precisaCont
     refetchCategorias: categoriasQuery.refetch,
     lancamentosMes: lancamentosQuery.data ?? [],
     loadingLancamentos: lancamentosQuery.isLoading,
+    refetchLancamentos: lancamentosQuery.refetch,
     parcelamentos: parcelamentosQuery.data ?? [],
+    overridesCompetencia: overridesCompetenciaQuery.data ?? [],
+    overridesPorSerie,
+    refetchOverridesCompetencia: overridesCompetenciaQuery.refetch,
     lancamentosRecorrentes: recorrentesQuery.data ?? [],
     loadingRecorrentes: recorrentesQuery.isLoading,
     contas: contasQuery.data ?? [],

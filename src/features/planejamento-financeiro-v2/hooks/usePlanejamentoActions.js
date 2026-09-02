@@ -22,6 +22,10 @@ import {
   removerParcelamento,
 } from '@/lib/agefinParcelamentoService';
 import { parcelamentoAfetaSerieNoMes, montarCompetenciasVisaoComParcelas } from '@/lib/agefinParcelamentoCalculos';
+import {
+  listarOverridesCompetenciaMes,
+  mapaOverridesCompetenciaMes,
+} from '@/lib/agefinCompetenciaMesService';
 import { invalidarCacheLancamentosFinanceiros } from '@/lib/lancamentoFinanceiroCache';
 import { AGEFIN_PREVISAO_ROOT, agefinQueryKeys } from '../constants/queryKeys';
 
@@ -104,9 +108,20 @@ export function usePlanejamentoActions({
   );
 
   const recarregarVisaoMes = useCallback(async () => {
-    const lancs = await listarLancamentosCompetencia(competenciaMes);
-    const parcs = await listarParcelamentos();
-    return montarCompetenciasVisaoComParcelas(competenciaMes, modelos, lancs, parcs);
+    const [lancs, parcs, overrides] = await Promise.all([
+      listarLancamentosCompetencia(competenciaMes),
+      listarParcelamentos(),
+      listarOverridesCompetenciaMes(),
+    ]);
+    const overridesPorSerie = mapaOverridesCompetenciaMes(overrides, competenciaMes);
+    return montarCompetenciasVisaoComParcelas(
+      competenciaMes,
+      modelos,
+      lancs,
+      parcs,
+      [],
+      overridesPorSerie,
+    );
   }, [competenciaMes, modelos]);
 
   const handleAbrirMes = async () => {
@@ -326,6 +341,10 @@ export function usePlanejamentoActions({
         diaVencimento,
       });
       refreshDepoisDeLancamentos();
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: agefinQueryKeys.lancamentos(competenciaMes) }),
+        queryClient.refetchQueries({ queryKey: agefinQueryKeys.overridesCompetencia }),
+      ]);
       const visao = await recarregarVisaoMes();
       refreshSelectedComp(visao);
       toast({

@@ -29,6 +29,7 @@ export default function PrevisaoMesTab({
   lancamentosMes,
   parcelamentos,
   lancamentosRecorrentes = [],
+  overridesPorSerie = {},
   filtroBusca,
   onBuscaChange,
   filtroCentro,
@@ -51,8 +52,9 @@ export default function PrevisaoMesTab({
         lancamentosMes,
         parcelamentos,
         lancamentosRecorrentes,
+        overridesPorSerie,
       ),
-    [competenciaMes, modelos, lancamentosMes, parcelamentos, lancamentosRecorrentes],
+    [competenciaMes, modelos, lancamentosMes, parcelamentos, lancamentosRecorrentes, overridesPorSerie],
   );
 
   const competenciasExibidas = useMemo(
