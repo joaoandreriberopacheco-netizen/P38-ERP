@@ -1,56 +1,38 @@
 import { jsPDF } from 'jspdf';
 import { registerJsPdfDin1451Fonts, normalizePdfText } from '@/lib/jspdfNotoFont';
-import { formatarNomeItemDizimoLista } from '@/lib/dizimoCalculos';
+import { DIZIMO_MODOS, normalizarConfigItemDizimo } from '@/lib/dizimoCalculos';
 
-const LINE_W = 0.12;
-const SPINE_W = 0.06;
+const LINE_W = 0.08;
+const SECTION_GAP = 9;
+const ROW_GAP = 1.6;
+const ROW_H = 4.8;
+const HEADER_H = 5.2;
 
-const ENXUTO = {
+const INK = {
   black: [0, 0, 0],
   muted: [72, 72, 72],
-  line: [110, 110, 110],
-  section: [236, 236, 236],
-};
-
-/** Mind map: 1 grupo → 2 subgrupo → 3 item (como embarque → pedido → produto). */
-const INDENT = {
-  grupo: 0,
-  spine: 3,
-  subgrupo: 10,
-  item: 16,
-};
-
-const PAD = {
-  bandTextY: 5.5,
-  bandH: 9,
-  layerGap: 2.8,
-  headerBottom: 3.5,
-  itemsAfterRule: 2.5,
-  itemBottom: 3.2,
-  grupoGap: 4,
-  sectionGap: 2,
+  line: [165, 165, 165],
 };
 
 const FONT = {
   title: 13,
   meta: 8,
-  filtros: 8.8,
-  kpiLabel: 8.2,
-  kpiValue: 14.5,
-  grupo: 10.5,
-  grupoMeta: 8.5,
-  subgrupoCodigo: 9,
-  subgrupoNome: 12,
-  subgrupoTotal: 12,
-  subgrupoMeta: 8.8,
-  resumoLabel: 8.6,
-  resumoValue: 8.6,
-  itemNome: 10,
-  itemTotal: 11,
-  nota: 7.6,
-  footer: 9.5,
-  cont: 8,
+  section: 10.5,
+  grupo: 9.5,
+  header: 7.8,
+  body: 9,
+  bodyBold: 9,
+  total: 9.5,
+  footer: 8.5,
 };
+
+/** Ordem pedida: fixas → folha → ocasionais → budgets */
+const ORDEM_SECOES_PDF = [
+  { id: 'fixas_recorrentes', label: 'Contas fixas' },
+  { id: 'folha', label: 'Folha' },
+  { id: 'pontuais', label: 'Contas ocasionais' },
+  { id: 'budgets', label: 'Budgets' },
+];
 
 const safe = (value) => normalizePdfText(value);
 const number = (value) => Number(value) || 0;
@@ -67,18 +49,44 @@ function ordenarItens(itens = []) {
   return [...itens].sort(compararNome);
 }
 
-function contarDespesas(secoes = []) {
-  return secoes.reduce((acc, secao) => {
-    if (secao.subsecoes?.length) {
-      return acc + secao.subsecoes.reduce((subAcc, sub) => subAcc + (sub.itens?.length || 0), 0);
+function ordenarSecoes(secoes = []) {
+  const mapa = new Map((secoes || []).map((s) => [s.id, s]));
+  return ORDEM_SECOES_PDF.map((def) => mapa.get(def.id)).filter(Boolean);
+}
+
+function* iterarItensSecao(secao) {
+  if (secao.subsecoes?.length) {
+    for (const sub of secao.subsecoes) {
+      if (!sub.itens?.length) continue;
+      for (const item of ordenarItens(sub.itens)) {
+        yield { item, subgrupo: sub.label };
+      }
     }
-    return acc + (secao.itens?.length || 0);
-  }, 0);
+    return;
+  }
+  for (const item of ordenarItens(secao.itens || [])) {
+    yield { item, subgrupo: null };
+  }
+}
+
+function formatarCelulaNaoDedutivel(item) {
+  const valor = number(item.valorNaoDedutivel ?? item.valorFora);
+  if (valor <= 0.009) return '—';
+  const cfg = normalizarConfigItemDizimo(item.config);
+  if (cfg.modo === DIZIMO_MODOS.PARCIAL) {
+    return `${moeda(valor)} (${cfg.percentual}%)`;
+  }
+  return moeda(valor);
+}
+
+function rotuloDescricao(item, subgrupo) {
+  const nome = safe(item.nome || '—');
+  if (subgrupo) return `${subgrupo} — ${nome}`;
+  return nome;
 }
 
 /**
- * PDF enxuto do Dízimo — diagramação inspirada no relatório de compras/embarques ENXUTO.
- * A4 paisagem, duas colunas no detalhamento, mind map vertical, DIN 1451.
+ * PDF do Dízimo — fluxo contínuo, tabelas abertas (sem borda externa).
  */
 export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
   const {
@@ -94,382 +102,236 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
   const fontFamily = await registerJsPdfDin1451Fonts(doc);
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  const M = 9;
-  const GUTTER = 6;
+  const M = 10;
   const CW = pageW - M * 2;
-  const COL_W = (CW - GUTTER) / 2;
-  const LEFT_X = M;
-  const RIGHT_X = M + COL_W + GUTTER;
-  const pageBottom = pageH - 8;
-  const contentTop = 12;
-  let yFull = contentTop;
+  const pageBottom = pageH - 9;
+  let y = 12;
 
-  const setFont = (style = 'normal', size = 9, color = ENXUTO.black) => {
+  const margem = demonstrativo.margemDetalhe || {};
+  const secoes = ordenarSecoes(demonstrativo.secoes || []);
+  const anexoForaBase = demonstrativo.anexoForaBase || { secoes: [], totalFora: 0 };
+
+  const cols = {
+    c1: M,
+    c2: M + CW * 0.42,
+    c3: M + CW * 0.62,
+    c4: M + CW * 0.8,
+    right: M + CW,
+  };
+
+  const setFont = (style = 'normal', size = FONT.body, color = INK.black) => {
     doc.setFont(fontFamily, style);
     doc.setFontSize(size);
     doc.setTextColor(...color);
   };
 
-  const strokeH = (yPos, x0, x1, color = ENXUTO.line, width = LINE_W) => {
-    doc.setDrawColor(...color);
+  const strokeH = (yPos, x0 = M, x1 = cols.right, width = LINE_W) => {
+    doc.setDrawColor(...INK.line);
     doc.setLineWidth(width);
     doc.line(x0, yPos, x1, yPos);
   };
 
-  const strokeV = (x, y0, y1, color = ENXUTO.line, width = SPINE_W) => {
-    doc.setDrawColor(...color);
-    doc.setLineWidth(width);
-    doc.line(x, y0, x, y1);
-  };
-
-  const colRight = (col) => col.x + col.w;
-
-  const leftCol = { x: LEFT_X, w: COL_W, y: contentTop };
-  const rightCol = { x: RIGHT_X, w: COL_W, y: contentTop };
-
-  const newPage = () => {
+  const ensureSpace = (needed) => {
+    if (y + needed <= pageBottom) return;
     doc.addPage();
-    yFull = contentTop;
-    return contentTop;
+    y = 12;
+    setFont('normal', FONT.meta, INK.muted);
+    doc.text(safe(`Dízimo — ${competenciaLabel}`), M, y);
+    y += 5;
+    strokeH(y);
+    y += 4;
   };
 
-  const drawVerticalSpan = (col, x, yStart, yEnd, startPage, endPage) => {
-    const topPad = 12;
-    const bottomPad = 9;
-    const savedPage = doc.internal.getNumberOfPages();
-    for (let page = startPage; page <= endPage; page += 1) {
-      doc.setPage(page);
-      const segTop = page === startPage ? yStart : topPad;
-      const segBottom = page === endPage ? yEnd : pageH - bottomPad;
-      if (segBottom > segTop + 0.5) strokeV(x, segTop, segBottom);
-    }
-    doc.setPage(savedPage);
+  const advance = (dy) => {
+    y += dy;
   };
 
-  const drawContinuationBand = (col) => {
-    setFont('bold', FONT.cont, ENXUTO.muted);
-    doc.text(safe(`Dízimo — ${competenciaLabel}`), col.x, col.y);
-    col.y += 4.8;
-    strokeH(col.y, col.x, colRight(col), ENXUTO.line, 0.08);
-    col.y += PAD.itemsAfterRule;
+  const drawSectionTitle = (titulo) => {
+    ensureSpace(SECTION_GAP + 6);
+    advance(SECTION_GAP);
+    setFont('bold', FONT.section);
+    doc.text(safe(titulo), M, y);
+    advance(5.5);
   };
 
-  const startColumnsOnNewPage = () => {
-    newPage();
-    leftCol.y = contentTop;
-    rightCol.y = contentTop;
-    drawContinuationBand(leftCol);
-    rightCol.y = leftCol.y;
+  const drawColHeader = (labels) => {
+    ensureSpace(HEADER_H + ROW_GAP);
+    setFont('bold', FONT.header, INK.muted);
+    doc.text(safe(labels[0]), cols.c1, y);
+    doc.text(safe(labels[1]), cols.c2, y, { align: 'right' });
+    doc.text(safe(labels[2]), cols.c3, y, { align: 'right' });
+    doc.text(safe(labels[3]), cols.right, y, { align: 'right' });
+    advance(HEADER_H);
+    strokeH(y);
+    advance(ROW_GAP);
   };
 
-  const ensureColSpace = (col, needed) => {
-    if (col.y + needed <= pageBottom) return;
-    startColumnsOnNewPage();
+  const measureRow = (descricao, { bold = false } = {}) => {
+    setFont(bold ? 'bold' : 'normal', bold ? FONT.bodyBold : FONT.body);
+    const lines = doc.splitTextToSize(safe(descricao), cols.c2 - cols.c1 - 3);
+    return Math.max(ROW_H, lines.length * 3.8 + 1);
   };
 
-  const ensureFullSpace = (needed) => {
-    if (yFull + needed <= pageBottom) return;
-    newPage();
+  const drawRow4 = (descricao, v2, v3, v4, { bold = false, muted = false } = {}) => {
+    const rowH = measureRow(descricao, { bold });
+    ensureSpace(rowH + ROW_GAP);
+    const rowY = y;
+    setFont(bold ? 'bold' : 'normal', bold ? FONT.bodyBold : FONT.body, muted ? INK.muted : INK.black);
+    const lines = doc.splitTextToSize(safe(descricao), cols.c2 - cols.c1 - 3);
+    lines.forEach((line, i) => doc.text(line, cols.c1, rowY + i * 3.8));
+    doc.text(safe(v2), cols.c2, rowY, { align: 'right' });
+    doc.text(safe(v3), cols.c3, rowY, { align: 'right' });
+    doc.text(safe(v4), cols.right, rowY, { align: 'right' });
+    advance(rowH);
+    strokeH(y, cols.c1, cols.right, 0.06);
+    advance(ROW_GAP);
   };
 
-  const advanceFull = (dy) => {
-    yFull += dy;
+  const drawGrupoRow = (label) => {
+    ensureSpace(ROW_H + ROW_GAP + 1);
+    advance(1.5);
+    setFont('bold', FONT.grupo);
+    doc.text(safe(label), cols.c1, y);
+    advance(ROW_H);
+    strokeH(y, cols.c1, cols.right, 0.1);
+    advance(ROW_GAP);
   };
 
-  const secoes = demonstrativo.secoes || [];
-  const anexoForaBase = demonstrativo.anexoForaBase || { secoes: [], totalFora: 0 };
-  const margem = demonstrativo.margemDetalhe || {};
-  const qtdDespesas = contarDespesas(secoes);
+  const drawDespesaItemRow = (item, subgrupo) => {
+    drawRow4(
+      rotuloDescricao(item, subgrupo),
+      moeda(item.valorBruto),
+      formatarCelulaNaoDedutivel(item),
+      moeda(item.valorDedutivel ?? 0),
+    );
+  };
 
-  // ═══ Cabeçalho (estilo compras enxuto) ═══
+  // —— Cabeçalho ——
   setFont('bold', FONT.title);
-  doc.text(safe('Relatório de Dízimo — ENXUTO'), M, yFull);
-  advanceFull(5.5);
-  setFont('normal', FONT.meta, ENXUTO.muted);
-  doc.text(safe('A4 paisagem   mind map vertical   DIN 1451'), M, yFull);
-  advanceFull(4.5);
-  setFont('normal', FONT.filtros);
-  doc.text(safe(`Competência ${competenciaLabel}`), M, yFull);
-  advanceFull(4.5);
-  setFont('normal', FONT.meta);
-  doc.text(safe(`Gerado em ${generatedAt}`), M, yFull);
-  advanceFull(7);
+  doc.text(safe('Relatório de Dízimo'), M, y);
+  advance(5);
+  setFont('normal', FONT.meta, INK.muted);
+  doc.text(safe(`Competência ${competenciaLabel} · gerado em ${generatedAt}`), M, y);
+  advance(8);
 
-  // ═══ KPI (caixa cinza — Pedidos listados / Total) ═══
-  const boxH = 20;
-  ensureFullSpace(boxH + 6);
-  const boxY = yFull;
-  const boxPadX = 5;
-  const kpiColW = (CW - boxPadX * 2) / 2;
+  // ═══ 1. Demonstrativo ═══
+  drawSectionTitle('Demonstrativo');
 
-  doc.setFillColor(...ENXUTO.section);
-  doc.roundedRect(M, boxY, CW, boxH, 2.5, 2.5, 'F');
-  doc.setDrawColor(...ENXUTO.black);
-  doc.setLineWidth(LINE_W);
-  doc.roundedRect(M, boxY, CW, boxH, 2.5, 2.5, 'S');
+  setFont('bold', FONT.grupo, INK.muted);
+  doc.text(safe('Receita'), cols.c1, y);
+  advance(4.5);
+  drawColHeader(['Descrição', 'Vendas', 'Custo', 'Lucro bruto']);
 
-  const labelY = boxY + 6.2;
-  const valueY = boxY + 14.5;
-  const kpiLeftX = M + boxPadX;
+  const receita = number(margem.receita_liquida);
+  const custo = number(margem.custo_total);
+  const lucroBruto = number(demonstrativo.lucroBruto);
 
-  setFont('normal', FONT.kpiLabel, ENXUTO.muted);
-  doc.text('Despesas listadas', kpiLeftX, labelY);
-  doc.text('Dízimo estimado', kpiLeftX + kpiColW, labelY);
-
-  setFont('bold', FONT.kpiValue);
-  doc.setTextColor(...ENXUTO.black);
-  doc.text(String(qtdDespesas), kpiLeftX, valueY);
-  doc.text(moeda(demonstrativo.dizimo), M + CW - boxPadX, valueY, { align: 'right' });
-
-  setFont('normal', FONT.nota, ENXUTO.muted);
-  doc.text(
-    safe(`${demonstrativo.percentualDizimo || 10}% do lucro líquido operacional`),
-    kpiLeftX + kpiColW,
-    valueY,
+  drawRow4(
+    'Vendas totais',
+    receita > 0 ? moeda(receita) : '—',
+    custo > 0 ? moeda(custo) : '—',
+    moeda(lucroBruto),
+    { bold: true },
   );
-  doc.text(moeda(demonstrativo.lucroLiquidoOperacional), kpiLeftX + kpiColW, valueY + 3.6);
 
-  yFull = boxY + boxH + 6;
-
-  // ═══ Demonstrativo compacto (largura total, entre KPI e detalhe) ═══
-  const drawResumoLinha = (label, value, { prefix = '', bold = false, sublabel = '' } = {}) => {
-    const labelW = CW * 0.55;
-    setFont(bold ? 'bold' : 'normal', FONT.resumoLabel, bold ? ENXUTO.black : ENXUTO.muted);
-    const labelLines = doc.splitTextToSize(safe(label), labelW);
-    const sublabelLines = sublabel ? doc.splitTextToSize(safe(sublabel), labelW) : [];
-    const blockH = Math.max(
-      4,
-      labelLines.length * 3.6 + sublabelLines.length * 3 + (sublabel ? 0.6 : 0),
-    );
-    ensureFullSpace(blockH + 2);
-
-    const rowY = yFull;
-    labelLines.forEach((line, index) => doc.text(line, M + 1.5, rowY + index * 3.6));
-    if (sublabelLines.length) {
-      const subY = rowY + labelLines.length * 3.6 + 0.5;
-      setFont('normal', FONT.nota, ENXUTO.muted);
-      sublabelLines.forEach((line, index) => doc.text(line, M + 1.5, subY + index * 3));
-    }
-
-    setFont(bold ? 'bold' : 'normal', FONT.resumoValue);
-    doc.setTextColor(...ENXUTO.black);
-    doc.text(safe(`${prefix}${moeda(value)}`), M + CW, rowY, { align: 'right' });
-    yFull += blockH + 1;
-    strokeH(yFull, M + 1.5, M + CW, ENXUTO.line, 0.06);
-    yFull += PAD.itemsAfterRule;
-  };
-
-  const resumoTop = yFull;
-  strokeH(resumoTop, M, M + CW);
-  yFull += PAD.layerGap;
-  setFont('bold', FONT.grupo);
-  doc.text(safe('Demonstrativo'), M + INDENT.grupo, yFull + PAD.bandTextY - 2);
-  setFont('normal', FONT.grupoMeta, ENXUTO.muted);
-  doc.text(
-    safe(`Lucro líquido ${moeda(demonstrativo.lucroLiquidoOperacional)}`),
-    M + CW,
-    yFull + PAD.bandTextY - 2,
-    { align: 'right' },
-  );
-  yFull += PAD.bandH;
-  strokeH(yFull, M, M + CW);
-  yFull += PAD.layerGap + 1;
-
-  drawResumoLinha('Lucro bruto (margem)', demonstrativo.lucroBruto, { prefix: '+ ', bold: true });
-  if (number(margem.receita_liquida) > 0) {
-    setFont('normal', FONT.nota, ENXUTO.muted);
-    doc.text(
-      safe(`Receita ${moeda(margem.receita_liquida)} · CMV ${moeda(margem.custo_total)}`),
-      M + 1.5,
-      yFull,
-    );
-    yFull += 4.2;
-    strokeH(yFull, M + 1.5, M + CW, ENXUTO.line, 0.06);
-    yFull += PAD.itemsAfterRule;
-  }
+  advance(3);
+  setFont('bold', FONT.grupo, INK.muted);
+  doc.text(safe('Despesas operacionais'), cols.c1, y);
+  advance(4.5);
+  drawColHeader(['Descrição', 'Planejado', 'Não dedutível', 'Dedutível']);
 
   for (const secao of secoes) {
-    drawResumoLinha(secao.label, secao.valorDedutivel, {
-      prefix: '- ',
-      sublabel:
-        secao.valorNaoDedutivel > 0
-          ? `${moeda(secao.valorBruto)} planejado · ${moeda(secao.valorNaoDedutivel)} fora`
-          : '',
-    });
-  }
-  drawResumoLinha('Total dedutível', demonstrativo.totalDedutivel, { prefix: '- ', bold: true });
-  drawResumoLinha('Lucro líquido operacional', demonstrativo.lucroLiquidoOperacional, {
-    prefix: '= ',
-    bold: true,
-  });
-  drawResumoLinha('Dízimo', demonstrativo.dizimo, { prefix: '= ', bold: true });
-  if (number(anexoForaBase.totalFora) > 0) {
-    drawResumoLinha('Total fora da base', anexoForaBase.totalFora, {
-      sublabel: 'Despesas não dedutíveis ou parcialmente excluídas',
-    });
-  }
-  strokeH(yFull + 0.5, M, M + CW);
-  yFull += PAD.grupoGap + 2;
-
-  // ═══ Detalhamento em duas colunas (mind map compras) ═══
-  leftCol.y = yFull;
-  rightCol.y = yFull;
-
-  const pickShorterCol = () => (leftCol.y <= rightCol.y ? leftCol : rightCol);
-
-  const drawItem = (col, item, { valor = null } = {}) => {
-    const itemX = col.x + INDENT.item;
-    const nomeW = col.w - INDENT.item - 26;
-    const rotulo = formatarNomeItemDizimoLista(item);
-    const valorExibir = valor != null ? valor : item.valorBruto;
-
-    setFont('normal', FONT.itemNome);
-    const nomeLines = doc.splitTextToSize(safe(rotulo), nomeW);
-    const nomeLineStep = 4.2;
-    const blockH = Math.max(5, nomeLines.length * nomeLineStep);
-    ensureColSpace(col, blockH + PAD.itemBottom);
-
-    const rowY = col.y;
-    const branchY = rowY + 2.8;
-    strokeV(col.x + INDENT.spine, rowY, rowY + blockH + PAD.itemBottom);
-    strokeH(branchY, col.x + INDENT.spine, col.x + INDENT.spine + 1.8);
-
-    nomeLines.forEach((line, index) => doc.text(line, itemX, rowY + index * nomeLineStep));
-    setFont('bold', FONT.itemTotal);
-    doc.text(moeda(valorExibir), colRight(col), rowY, { align: 'right' });
-    col.y += blockH + 0.6;
-    strokeH(col.y, itemX, colRight(col), ENXUTO.line, 0.06);
-    col.y += PAD.itemBottom;
-  };
-
-  const drawSubgrupoBloco = (col, sub) => {
-    const pedidoX = col.x + INDENT.subgrupo;
-    const pedidoW = col.w - INDENT.subgrupo;
-    const blockTop = col.y;
-    const startPage = doc.internal.getNumberOfPages();
-
-    ensureColSpace(col, 18);
-    setFont('normal', FONT.subgrupoCodigo, ENXUTO.muted);
-    doc.text(safe(sub.label), pedidoX, blockTop + 6);
-    setFont('normal', FONT.subgrupoCodigo, ENXUTO.muted);
-    doc.text('Total', pedidoX, blockTop + 10.5);
-    setFont('bold', FONT.subgrupoTotal);
-    doc.setTextColor(...ENXUTO.black);
-    doc.text(moeda(sub.valorBruto), pedidoX + pedidoW, blockTop + 10.5, { align: 'right' });
-
-    const itemsTop = blockTop + 13.5;
-    strokeH(itemsTop, pedidoX, colRight(col));
-    col.y = itemsTop + PAD.itemsAfterRule;
-
-    for (const item of ordenarItens(sub.itens || [])) {
-      drawItem(col, item);
-    }
-
-    const endPage = doc.internal.getNumberOfPages();
-    drawVerticalSpan(col, col.x + INDENT.spine, blockTop, col.y, startPage, endPage);
-    col.y += PAD.sectionGap;
-  };
-
-  const drawSecaoDetalhe = (col, secao) => {
-    const itemCount = secao.subsecoes?.length
-      ? secao.subsecoes.reduce((acc, sub) => acc + (sub.itens?.length || 0), 0)
-      : (secao.itens?.length || 0);
-    const blockTop = col.y;
-    const startPage = doc.internal.getNumberOfPages();
-
-    ensureColSpace(col, PAD.bandH + 8);
-    strokeH(blockTop, col.x, colRight(col));
-    setFont('bold', FONT.grupo);
-    doc.setTextColor(...ENXUTO.black);
-    doc.text(safe(secao.label), col.x + INDENT.grupo, blockTop + PAD.bandTextY);
-    setFont('normal', FONT.grupoMeta, ENXUTO.muted);
-    doc.text(
-      safe(`${itemCount} desp.   ${moeda(secao.valorBruto)}`),
-      colRight(col),
-      blockTop + PAD.bandTextY,
-      { align: 'right' },
+    const label =
+      ORDEM_SECOES_PDF.find((d) => d.id === secao.id)?.label || secao.label;
+    drawRow4(
+      label,
+      moeda(secao.valorBruto),
+      secao.valorNaoDedutivel > 0 ? moeda(secao.valorNaoDedutivel) : '—',
+      moeda(secao.valorDedutivel),
     );
-    const bandBottom = blockTop + PAD.bandH;
-    strokeH(bandBottom, col.x, colRight(col));
-    col.y = bandBottom + PAD.layerGap;
+  }
 
-    if (secao.subsecoes?.length) {
-      for (const sub of secao.subsecoes) {
-        if (!sub.itens?.length) continue;
-        drawSubgrupoBloco(col, sub);
-      }
-    } else {
-      const itemsTop = col.y;
-      strokeH(itemsTop, col.x + INDENT.subgrupo, colRight(col));
-      col.y = itemsTop + PAD.itemsAfterRule;
-      for (const item of ordenarItens(secao.itens || [])) {
-        drawItem(col, item);
+  drawRow4('Total dedutível', '—', '—', moeda(demonstrativo.totalDedutivel), { bold: true });
+  drawRow4(
+    'Lucro líquido operacional',
+    '—',
+    '—',
+    moeda(demonstrativo.lucroLiquidoOperacional),
+    { bold: true },
+  );
+  drawRow4(
+    `Dízimo (${demonstrativo.percentualDizimo || 10}%)`,
+    '—',
+    '—',
+    moeda(demonstrativo.dizimo),
+    { bold: true },
+  );
+
+  // ═══ 2. Despesas dedutíveis ═══
+  drawSectionTitle('Despesas dedutíveis');
+  drawColHeader(['Descrição', 'Planejado', 'Não dedutível', 'Dedutível']);
+
+  for (const secao of secoes) {
+    const label =
+      ORDEM_SECOES_PDF.find((d) => d.id === secao.id)?.label || secao.label;
+    drawGrupoRow(label);
+    for (const { item, subgrupo } of iterarItensSecao(secao)) {
+      if (number(item.valorDedutivel) <= 0.009 && number(item.valorBruto) <= 0.009) continue;
+      drawDespesaItemRow(item, subgrupo);
+    }
+  }
+
+  // ═══ 3. Despesas fora do cálculo ═══
+  const secoesFora = ordenarSecoes(anexoForaBase.secoes || []);
+  if (number(anexoForaBase.totalFora) > 0 && secoesFora.length) {
+    drawSectionTitle('Despesas deixadas de fora do cálculo');
+    drawColHeader(['Descrição', 'Planejado', 'Não dedutível', 'Dedutível']);
+
+    for (const secao of secoesFora) {
+      const label =
+        ORDEM_SECOES_PDF.find((d) => d.id === secao.id)?.label || secao.label;
+      drawGrupoRow(label);
+
+      if (secao.subsecoes?.length) {
+        for (const sub of secao.subsecoes) {
+          for (const item of ordenarItens(sub.itens || [])) {
+            const fora = number(item.valorFora ?? item.valorNaoDedutivel);
+            if (fora <= 0.009) continue;
+            drawRow4(
+              rotuloDescricao(item, sub.label),
+              moeda(item.valorBruto),
+              formatarCelulaNaoDedutivel(item),
+              '—',
+            );
+          }
+        }
+      } else {
+        for (const item of ordenarItens(secao.itens || [])) {
+          const fora = number(item.valorFora ?? item.valorNaoDedutivel);
+          if (fora <= 0.009) continue;
+          drawRow4(
+            rotuloDescricao(item, null),
+            moeda(item.valorBruto),
+            formatarCelulaNaoDedutivel(item),
+            '—',
+          );
+        }
       }
     }
 
-    strokeH(col.y + 0.5, col.x, colRight(col));
-    const endPage = doc.internal.getNumberOfPages();
-    drawVerticalSpan(col, col.x + INDENT.spine, blockTop, col.y + 0.5, startPage, endPage);
-    col.y += PAD.grupoGap;
-  };
-
-  ensureColSpace(leftCol, 8);
-  rightCol.y = leftCol.y;
-  setFont('bold', FONT.grupo);
-  doc.text(safe('Detalhamento por despesa'), M, leftCol.y);
-  leftCol.y += 4.5;
-  setFont('normal', FONT.nota, ENXUTO.muted);
-  doc.text(safe('Valores planejados da competência.'), M, leftCol.y);
-  leftCol.y += 5;
-  strokeH(leftCol.y, M, M + CW);
-  leftCol.y += PAD.itemsAfterRule + 1;
-  rightCol.y = leftCol.y;
-
-  for (const secao of secoes) {
-    drawSecaoDetalhe(pickShorterCol(), secao);
+    drawRow4('Total fora da base', '—', moeda(anexoForaBase.totalFora), '—', { bold: true });
   }
 
-  if (number(anexoForaBase.totalFora) > 0 && anexoForaBase.secoes?.length) {
-    const anexoCol = pickShorterCol();
-    anexoCol.y += 3;
-    ensureColSpace(anexoCol, PAD.bandH + 6);
-    const anexoTop = anexoCol.y;
-    strokeH(anexoTop, anexoCol.x, colRight(anexoCol));
-    setFont('bold', FONT.grupo);
-    doc.text(safe('Fora da base'), anexoCol.x + INDENT.grupo, anexoTop + PAD.bandTextY);
-    setFont('normal', FONT.grupoMeta, ENXUTO.muted);
-    doc.text(moeda(anexoForaBase.totalFora), colRight(anexoCol), anexoTop + PAD.bandTextY, {
-      align: 'right',
-    });
-    const anexoBottom = anexoTop + PAD.bandH;
-    strokeH(anexoBottom, anexoCol.x, colRight(anexoCol));
-    anexoCol.y = anexoBottom + PAD.layerGap;
-
-    for (const secao of anexoForaBase.secoes) {
-      const secaoAdaptada = {
-        ...secao,
-        valorBruto: secao.valorFora,
-        subsecoes: (secao.subsecoes || []).map((sub) => ({
-          ...sub,
-          valorBruto: sub.valorFora,
-          itens: (sub.itens || []).map((item) => ({ ...item, valorBruto: item.valorFora })),
-        })),
-        itens: (secao.itens || []).map((item) => ({ ...item, valorBruto: item.valorFora })),
-      };
-      drawSecaoDetalhe(anexoCol, secaoAdaptada);
-    }
-  }
-
-  // ═══ Rodapé (só página, como compras enxuto) ═══
+  // —— Rodapé ——
   const pageCount = doc.internal.getNumberOfPages();
   for (let page = 1; page <= pageCount; page += 1) {
     doc.setPage(page);
-    setFont('normal', FONT.footer, ENXUTO.muted);
-    doc.text(`Página ${page}/${pageCount}`, pageW / 2, pageH - 6, { align: 'center' });
+    setFont('normal', FONT.footer, INK.muted);
+    doc.text(`Página ${page}/${pageCount}`, pageW / 2, pageH - 5.5, { align: 'center' });
   }
 
   return {
     data: doc.output('arraybuffer'),
-    version: 'dizimo_enxuto_compras_landscape_v5',
+    version: 'dizimo_tabelas_abertas_v6',
   };
 }
