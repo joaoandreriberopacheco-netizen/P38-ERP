@@ -41,8 +41,8 @@ const plano = {
   resumo: {
     lucroBruto: 120_000,
     resultadoOperacional: 45_000,
-    margemDetalhe: { receita_liquida: 500_000, custo_total: 380_000 },
   },
+  margemDetalhe: { receita_liquida: 500_000, custo_total: 380_000 },
 };
 
 const demonstrativo = montarDemonstrativoDizimo(plano, {
@@ -60,7 +60,7 @@ const { data, version } = await generateRelatorioDizimoEnxutoPdf({
 const outPath = '/tmp/RelatorioDizimo_sample.pdf';
 writeFileSync(outPath, Buffer.from(data));
 
-if (!version.includes('tabelas_abertas')) {
+if (!version.includes('template_joao')) {
   throw new Error(`versão inesperada: ${version}`);
 }
 

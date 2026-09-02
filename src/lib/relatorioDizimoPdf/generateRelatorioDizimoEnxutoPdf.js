@@ -71,18 +71,27 @@ function* iterarItensSecao(secao) {
 
 function formatarCelulaNaoDedutivel(item) {
   const valor = number(item.valorNaoDedutivel ?? item.valorFora);
-  if (valor <= 0.009) return '—';
-  const cfg = normalizarConfigItemDizimo(item.config);
-  if (cfg.modo === DIZIMO_MODOS.PARCIAL) {
-    return `${moeda(valor)} (${cfg.percentual}%)`;
-  }
+  if (valor <= 0.009) return '0,00';
   return moeda(valor);
 }
 
-function rotuloDescricao(item, subgrupo) {
-  const nome = safe(item.nome || '—');
-  if (subgrupo) return `${subgrupo} — ${nome}`;
-  return nome;
+function percentualDedutivel(item) {
+  const cfg = normalizarConfigItemDizimo(item.config);
+  if (cfg.modo === DIZIMO_MODOS.TOTAL) return 100;
+  if (cfg.modo === DIZIMO_MODOS.NAO_DEDUTIVEL) return 0;
+  return cfg.percentual;
+}
+
+/** Coluna dedutível com % — ex.: R$ 633,00 (100%) */
+function formatarCelulaDedutivel(item) {
+  const valor = number(item.valorDedutivel);
+  if (valor <= 0.009) return '—';
+  const pct = percentualDedutivel(item);
+  return `${moeda(valor)} (${pct}%)`;
+}
+
+function rotuloDescricao(item) {
+  return safe(item.nome || '—');
 }
 
 /**
@@ -191,44 +200,46 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
     ensureSpace(ROW_H + ROW_GAP + 1);
     advance(1.5);
     setFont('bold', FONT.grupo);
-    doc.text(safe(label), cols.c1, y);
+    doc.text(safe(String(label).toUpperCase()), cols.c1, y);
     advance(ROW_H);
     strokeH(y, cols.c1, cols.right, 0.1);
     advance(ROW_GAP);
   };
 
-  const drawDespesaItemRow = (item, subgrupo) => {
+  const drawDespesaItemRow = (item) => {
     drawRow4(
-      rotuloDescricao(item, subgrupo),
+      rotuloDescricao(item),
       moeda(item.valorBruto),
       formatarCelulaNaoDedutivel(item),
-      moeda(item.valorDedutivel ?? 0),
+      formatarCelulaDedutivel(item),
     );
   };
 
-  // —— Cabeçalho ——
+  // —— Cabeçalho (template: título + competência) ——
   setFont('bold', FONT.title);
   doc.text(safe('Relatório de Dízimo'), M, y);
   advance(5);
   setFont('normal', FONT.meta, INK.muted);
-  doc.text(safe(`Competência ${competenciaLabel} · gerado em ${generatedAt}`), M, y);
+  doc.text(safe(competenciaLabel), M, y);
+  advance(3);
+  doc.text(safe(`Gerado em ${generatedAt}`), M, y);
   advance(8);
 
   // ═══ 1. Demonstrativo ═══
-  drawSectionTitle('Demonstrativo');
+  drawSectionTitle('1. Demonstrativo');
 
   setFont('bold', FONT.grupo, INK.muted);
-  doc.text(safe('Receita'), cols.c1, y);
+  doc.text(safe('RECEITAS'), cols.c1, y);
   advance(4.5);
-  drawColHeader(['Descrição', 'Vendas', 'Custo', 'Lucro bruto']);
+  drawColHeader(['Descrição', 'Total', 'Custo', 'Lucro bruto']);
 
   const receita = number(margem.receita_liquida);
   const custo = number(margem.custo_total);
   const lucroBruto = number(demonstrativo.lucroBruto);
 
   drawRow4(
-    'Vendas totais',
-    receita > 0 ? moeda(receita) : '—',
+    'Venda período',
+    receita > 0 ? moeda(receita) : moeda(lucroBruto),
     custo > 0 ? moeda(custo) : '—',
     moeda(lucroBruto),
     { bold: true },
@@ -236,9 +247,9 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
 
   advance(3);
   setFont('bold', FONT.grupo, INK.muted);
-  doc.text(safe('Despesas operacionais'), cols.c1, y);
+  doc.text(safe('DESPESAS'), cols.c1, y);
   advance(4.5);
-  drawColHeader(['Descrição', 'Planejado', 'Não dedutível', 'Dedutível']);
+  drawColHeader(['Descrição', 'Total', 'Não dedutível', 'Dedutível']);
 
   for (const secao of secoes) {
     const label =
@@ -246,14 +257,14 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
     drawRow4(
       label,
       moeda(secao.valorBruto),
-      secao.valorNaoDedutivel > 0 ? moeda(secao.valorNaoDedutivel) : '—',
+      secao.valorNaoDedutivel > 0 ? moeda(secao.valorNaoDedutivel) : '0,00',
       moeda(secao.valorDedutivel),
     );
   }
 
-  drawRow4('Total dedutível', '—', '—', moeda(demonstrativo.totalDedutivel), { bold: true });
+  advance(2);
   drawRow4(
-    'Lucro líquido operacional',
+    'Lucro operacional',
     '—',
     '—',
     moeda(demonstrativo.lucroLiquidoOperacional),
@@ -268,24 +279,24 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
   );
 
   // ═══ 2. Despesas dedutíveis ═══
-  drawSectionTitle('Despesas dedutíveis');
-  drawColHeader(['Descrição', 'Planejado', 'Não dedutível', 'Dedutível']);
+  drawSectionTitle('2. Despesas dedutíveis');
+  drawColHeader(['Descrição', 'Total', 'Não dedutível', 'Dedutível']);
 
   for (const secao of secoes) {
     const label =
       ORDEM_SECOES_PDF.find((d) => d.id === secao.id)?.label || secao.label;
     drawGrupoRow(label);
-    for (const { item, subgrupo } of iterarItensSecao(secao)) {
-      if (number(item.valorDedutivel) <= 0.009 && number(item.valorBruto) <= 0.009) continue;
-      drawDespesaItemRow(item, subgrupo);
+    for (const { item } of iterarItensSecao(secao)) {
+      if (number(item.valorDedutivel) <= 0.009) continue;
+      drawDespesaItemRow(item);
     }
   }
 
   // ═══ 3. Despesas fora do cálculo ═══
   const secoesFora = ordenarSecoes(anexoForaBase.secoes || []);
   if (number(anexoForaBase.totalFora) > 0 && secoesFora.length) {
-    drawSectionTitle('Despesas deixadas de fora do cálculo');
-    drawColHeader(['Descrição', 'Planejado', 'Não dedutível', 'Dedutível']);
+    drawSectionTitle('3. Despesas deixadas de fora do cálculo');
+    drawColHeader(['Descrição', 'Total', 'Não dedutível', 'Dedutível']);
 
     for (const secao of secoesFora) {
       const label =
@@ -298,7 +309,7 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
             const fora = number(item.valorFora ?? item.valorNaoDedutivel);
             if (fora <= 0.009) continue;
             drawRow4(
-              rotuloDescricao(item, sub.label),
+              rotuloDescricao(item),
               moeda(item.valorBruto),
               formatarCelulaNaoDedutivel(item),
               '—',
@@ -310,7 +321,7 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
           const fora = number(item.valorFora ?? item.valorNaoDedutivel);
           if (fora <= 0.009) continue;
           drawRow4(
-            rotuloDescricao(item, null),
+            rotuloDescricao(item),
             moeda(item.valorBruto),
             formatarCelulaNaoDedutivel(item),
             '—',
@@ -332,6 +343,6 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
 
   return {
     data: doc.output('arraybuffer'),
-    version: 'dizimo_tabelas_abertas_v6',
+    version: 'dizimo_template_joao_v7',
   };
 }
