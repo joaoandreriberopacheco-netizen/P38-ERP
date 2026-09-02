@@ -43,6 +43,11 @@ import {
   lancamentoElegivelPautaMes,
   lancamentoPago,
 } from '@/lib/agefinConsultaFilters';
+import {
+  grupoSerieEhParcelado,
+  lancamentoCobreParcelaVirtual,
+  lancamentoEntraPautaAgefinPrevisao,
+} from '@/lib/agefinPautaPlanejamento';
 
 const GRUPO = {
   FIXAS_RECORRENTES: 'fixas_recorrentes',
@@ -114,55 +119,6 @@ function labelValorParcela(frequencia) {
   const f = normalizarFrequenciaSerie(frequencia);
   if (f === FREQUENCIA_SERIE.ANUAL) return 'Valor anual';
   return `Valor ${f.toLowerCase()}`;
-}
-
-function grupoSerieEhParcelado(modelo, lancamentosRecorrentes = []) {
-  if (serieEhParcelada(modelo)) return true;
-  const gid = modelo?.grupo_lancamento_id;
-  if (!gid) return false;
-  return (lancamentosRecorrentes || []).some(
-    (lf) =>
-      lf?.grupo_lancamento_id === gid &&
-      (lf.frequencia_recorrencia === 'Parcelado' || lancamentoEhParcelaPlanejamento(lf)),
-  );
-}
-
-function lancamentoEhParcelaPlanejamento(lancamento) {
-  if (!lancamento) return false;
-  if (lancamento.frequencia_recorrencia === 'Parcelado') return true;
-  const tags = tagsLancamento(lancamento);
-  if (tags.includes('parcelado')) return true;
-  if (lancamento.numero_parcelas_total && lancamento.parcela_atual) return true;
-  return false;
-}
-
-/** Contas do planejamento / fluxo de caixa que entram na pauta (parcelas e avulsos). */
-function lancamentoEntraPautaAgefinPrevisao(lancamento, modelosAgefin = []) {
-  const tags = tagsLancamento(lancamento);
-  if (!tags.includes('agefin_previsao') || tags.includes('folha_previsao')) return false;
-  if (lancamentoEhParcelaPlanejamento(lancamento)) return true;
-
-  const recorrente = Boolean(lancamento.is_recorrente) || tags.includes('recorrente');
-  if (!recorrente) return true;
-
-  const modelo = (modelosAgefin || []).find(
-    (m) => m?.grupo_lancamento_id && m.grupo_lancamento_id === lancamento.grupo_lancamento_id,
-  );
-  return serieEhParcelada(modelo);
-}
-
-function lancamentoCobreParcelaVirtual(lancamentos = [], modelo, parcela) {
-  if (!modelo?.grupo_lancamento_id || !parcela) return false;
-  const mes = String(parcela.competencia || '').slice(0, 7);
-  return (lancamentos || []).some((lf) => {
-    if (lf.grupo_lancamento_id !== modelo.grupo_lancamento_id) return false;
-    if (String(lf.data_vencimento || '').slice(0, 7) !== mes) return false;
-    if (lancamentoEhParcelaPlanejamento(lf)) {
-      if (lf.parcela_atual != null && Number(lf.parcela_atual) === Number(parcela.numero)) return true;
-      return true;
-    }
-    return false;
-  });
 }
 
 function montarLinhasFixas(competencia, modelosAgefin, lancamentosAgefin, lancamentosRecorrentes = []) {

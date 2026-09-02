@@ -82,6 +82,12 @@ import {
 } from '@/lib/p38VirtualList';
 import { cn } from '@/lib/utils';
 import { fetchLancamentosSuperAgefinMes } from '@/lib/fetchLancamentosExtratoAgefin';
+import { listarModelos as listarModelosAgefin } from '@/lib/agefinPrevisaoService';
+import { listarParcelamentos } from '@/lib/agefinParcelamentoService';
+import {
+  lancamentoEntraPautaAgefinPrevisao,
+  montarContasSinteticasParcelasAgefin,
+} from '@/lib/agefinPautaPlanejamento';
 import { toast } from 'sonner';
 
 function formatCurrency(value) {
@@ -383,6 +389,8 @@ export default function SuperAgefin() {
   const [sortOrder, setSortOrder] = useState('asc');
   const [modoSelecao, setModoSelecao] = useState(false);
   const [selecionadosIds, setSelecionadosIds] = useState([]);
+  const [modelosAgefin, setModelosAgefin] = useState([]);
+  const [parcelamentosAgefin, setParcelamentosAgefin] = useState([]);
   const debounceRef = useRef(null);
   const scrollMesAplicadoRef = useRef('');
 
@@ -393,7 +401,9 @@ export default function SuperAgefin() {
           ? 'Folha de pagamento (vencimento dia 05). Figura na consulta e no relatório; edição pela Folha.'
           : conta?._superagefin_socio
             ? 'Sócio (pagamento semanal aos sábados). Figura na consulta e no relatório; edição pela Folha.'
-            : 'Compromisso sintético da SUPERAGEFIN — só para consulta/impressão.',
+            : conta?._superagefin_parcela_planejamento
+              ? 'Parcela do planejamento financeiro. Abra o mês no planejamento para gerar o lançamento real.'
+              : 'Compromisso sintético da SUPERAGEFIN — só para consulta/impressão.',
       });
       return;
     }
@@ -403,16 +413,23 @@ export default function SuperAgefin() {
   const loadContas = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fetchLancamentosSuperAgefinMes(currentMonth);
+      const [data, modelos, parcelamentos] = await Promise.all([
+        fetchLancamentosSuperAgefinMes(currentMonth),
+        listarModelosAgefin(),
+        listarParcelamentos(),
+      ]);
+      setModelosAgefin(modelos || []);
+      setParcelamentosAgefin(parcelamentos || []);
       setContas(
         (data || []).filter((item) => {
           if (lancamentoCancelado(item)) return false;
           if (lancamentoCompraMercadoriaPedidoPagamentoAVista(item)) return false;
           return (
             lancamentoEhContaPagar(item) ||
-            (item?.tipo === 'Despesa' && item?.referencia_tipo === 'EventosLogisticos')
+            (item?.tipo === 'Despesa' && item?.referencia_tipo === 'EventosLogisticos') ||
+            lancamentoEntraPautaAgefinPrevisao(item, modelos)
           );
-        })
+        }),
       );
     } catch (e) {
       console.error(e);
@@ -477,6 +494,17 @@ export default function SuperAgefin() {
     [currentMonth, modelosFolha],
   );
 
+  const contasParcelasPlanejamento = useMemo(
+    () =>
+      montarContasSinteticasParcelasAgefin({
+        competencia: currentMonth,
+        modelosAgefin,
+        parcelamentos: parcelamentosAgefin,
+        lancamentosMes: contas,
+      }),
+    [currentMonth, modelosAgefin, parcelamentosAgefin, contas],
+  );
+
   const monthData = useMemo(() => {
     const { start, end } = boundsMesCivil(currentMonth.getFullYear(), currentMonth.getMonth());
     const reais = contas.filter((conta) => {
@@ -487,11 +515,11 @@ export default function SuperAgefin() {
     // Folha dia 05: entra na consulta como os sócios aos sábados (sem duplicar se já houver LF).
     const folha =
       contaFolhaDia5 && !listaJaTemFolhaPagamento(reais) ? [contaFolhaDia5] : [];
-    return [...reais, ...contasSociosSabado, ...folha].sort(
+    return [...reais, ...contasParcelasPlanejamento, ...contasSociosSabado, ...folha].sort(
       (a, b) =>
         new Date(`${a.data_vencimento}T12:00:00-05:00`) - new Date(`${b.data_vencimento}T12:00:00-05:00`),
     );
-  }, [contas, currentMonth, contasSociosSabado, contaFolhaDia5]);
+  }, [contas, currentMonth, contasSociosSabado, contaFolhaDia5, contasParcelasPlanejamento]);
 
   const filteredData = useMemo(() => {
     const todayKey = dataHoje();

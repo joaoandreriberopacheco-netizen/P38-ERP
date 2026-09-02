@@ -164,7 +164,8 @@ export function contaSuperAgefinSomenteLeitura(conta) {
   return Boolean(
     conta?._superagefin_sintetico ||
       conta?._superagefin_socio ||
-      conta?._superagefin_folha,
+      conta?._superagefin_folha ||
+      conta?._superagefin_parcela_planejamento,
   );
 }
 
