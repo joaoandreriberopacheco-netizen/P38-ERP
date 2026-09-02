@@ -27,7 +27,7 @@ const plano = {
       items: [
         { id: 'folha-1', nome: 'Maria', detalhe: '', valor: 3_200 },
         { id: 'folha-2', nome: 'Rayne', detalhe: '', valor: 2_800 },
-        { id: 'folha-3', nome: 'André', detalhe: 'Sócio', valor: 25_000 },
+        { id: 'folha-4', nome: 'FGTS Carlos Frederico Farias Pacheco', detalhe: '', valor: 1_850 },
       ],
     },
     {
