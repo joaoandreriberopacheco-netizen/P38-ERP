@@ -4,12 +4,9 @@ import {
   FinanceiroGrupo,
   formatFinanceiroValor,
 } from '@/components/financeiro/fluxo/FinanceiroListaShared';
-import {
-  DIZIMO_MODOS,
-  formatarNomeItemDizimoLista,
-} from '@/lib/dizimoCalculos';
 import DizimoItemDedutibilidadeDrawer from '@/components/financeiro/dizimo/DizimoItemDedutibilidadeDrawer';
-import { P38MobileLine, P38StatusPill, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
+import DizimoDedutibilidadeIconCol, { dizimoRowBorderClass } from '@/components/financeiro/dizimo/DizimoDedutibilidadeIconCol';
+import { p38Table } from '@/lib/p38TableSurfaces';
 import { cn } from '@/lib/utils';
 
 const GRUPO_LABEL_CLASS =
@@ -17,48 +14,45 @@ const GRUPO_LABEL_CLASS =
 const SUBGRUPO_LABEL_CLASS =
   'text-[11px] font-semibold normal-case tracking-normal text-foreground/85';
 
-function accentDedutivel(config = {}) {
-  const modo = config?.modo || DIZIMO_MODOS.TOTAL;
-  if (modo === DIZIMO_MODOS.NAO_DEDUTIVEL) return 'muted';
-  if (modo === DIZIMO_MODOS.PARCIAL) return 'info';
-  return 'default';
-}
-
 function DizimoItemRow({ item, onOpen, striped }) {
-  const modo = item.config?.modo || DIZIMO_MODOS.TOTAL;
-  const foraDaBase = modo === DIZIMO_MODOS.NAO_DEDUTIVEL;
-
   const subtitle =
     item.detalhe && item.detalhe !== 'Sócio' ? item.detalhe : null;
 
   return (
-    <P38MobileLine
-      as="button"
+    <button
       type="button"
-      thinAccent
-      striped={striped}
-      accent={p38AccentKeyFromTone(accentDedutivel(item.config))}
       onClick={() => onOpen(item)}
       className={cn(
-        'w-full text-left max-md:!py-3.5 max-md:min-h-[58px]',
-        '[&>div>div:first-child]:text-[15px] [&>div>div:first-child]:font-semibold sm:[&>div>div:first-child]:text-base',
-        '[&>div:last-child]:max-w-[46%] sm:[&>div:last-child]:max-w-[42%]',
+        'flex w-full min-w-0 items-stretch text-left font-din-1451',
+        'border-b border-border/35 dark:border-white/10 border-l-[3px] bg-background',
+        dizimoRowBorderClass(item.config),
+        striped && 'bg-secondary/15 dark:bg-secondary/20',
+        'hover:bg-muted/15 transition-colors',
       )}
-      title={formatarNomeItemDizimoLista(item)}
-      subtitle={subtitle}
-      meta={
-        foraDaBase ? (
-          <P38StatusPill tone="muted">Fora da base</P38StatusPill>
-        ) : null
-      }
-      value={
-        <>
-          <span className="text-foreground/85">−</span>
-          {formatFinanceiroValor(item.valorBruto)}
-        </>
-      }
-      trailing={<ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />}
-    />
+    >
+      <DizimoDedutibilidadeIconCol config={item.config} />
+
+      <div className="flex min-w-0 flex-1 items-center gap-2 py-2.5 pl-2.5 pr-2 max-md:min-h-[58px]">
+        <div className="min-w-0 flex-1">
+          <p className="text-[15px] font-semibold leading-snug line-clamp-2 break-words text-foreground sm:text-base">
+            {item.nome}
+          </p>
+          {subtitle ? (
+            <p className="mt-0.5 text-[11px] font-light text-muted-foreground line-clamp-1">
+              {subtitle}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="flex shrink-0 items-center gap-1.5">
+          <div className={cn('text-right tabular-nums', p38Table.mobileLineValue)}>
+            <span className="text-foreground/85">−</span>
+            {formatFinanceiroValor(item.valorBruto)}
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden />
+        </div>
+      </div>
+    </button>
   );
 }
 
