@@ -10,6 +10,17 @@ import { calcularLucroBrutoCompetencia, competenciaParaIntervalo } from '@/lib/r
 import { fetchPedidosOrigemTrocaMargem, fetchPedidosVendaParaMargem } from '@/lib/fetchPedidosVenda90d';
 import { fetchAllProdutosCatalogo } from '@/lib/fetchProdutosAtivos';
 import { P38_STALE_TIME } from '@/lib/p38QueryConfig';
+import {
+  gravarMargemCompetenciaSnapshot,
+  lerMargemCompetenciaSnapshot,
+} from '@/lib/margemCompetenciaSnapshot';
+import { listarCentrosCustoRegistros } from '@/lib/folhaPrevisaoService';
+import {
+  listarLancamentosMesCompetenciaCache,
+  listarLancamentosVencimentoCompetenciaCache,
+} from '@/lib/lancamentoFinanceiroCache';
+
+export { listarCentrosCustoRegistros };
 
 /** Cache em memória dos dados brutos da margem (vendas, produtos, trocas). */
 let margemBaseCache = null;
@@ -35,18 +46,11 @@ async function obterDadosBaseMargem() {
   return margemBaseCache;
 }
 
-/** Invalida cache de margem após alterações em vendas/produtos (opcional). */
+/** Invalida cache em memória após alterações em vendas/produtos. */
 export function invalidarCacheMargemBase() {
   margemBaseCache = null;
   margemBaseCacheAt = 0;
 }
-import { listarCentrosCustoRegistros } from '@/lib/folhaPrevisaoService';
-import {
-  listarLancamentosMesCompetenciaCache,
-  listarLancamentosVencimentoCompetenciaCache,
-} from '@/lib/lancamentoFinanceiroCache';
-
-export { listarCentrosCustoRegistros };
 
 const DADOS_EMPRESA_MODELOS_KEY = 'budget_modelos';
 const DADOS_EMPRESA_COMPETENCIAS_KEY = 'budget_competencias';
@@ -364,15 +368,23 @@ export async function obterLucroBrutoCompetencia(competencia) {
     return { receita_liquida: 0, custo_total: 0, lucro_bruto: 0, quantidade_produtos: 0 };
   }
 
+  const prefix = String(competencia || '').slice(0, 7);
+  const snapshot = await lerMargemCompetenciaSnapshot(prefix);
+  if (snapshot) return snapshot;
+
   const { sales, products, devolucoesTroca, pedidosOrigemTroca } = await obterDadosBaseMargem();
 
-  return calcularLucroBrutoCompetencia(
+  const resultado = calcularLucroBrutoCompetencia(
     sales,
     products,
     competencia,
     devolucoesTroca,
     pedidosOrigemTroca,
   );
+
+  await gravarMargemCompetenciaSnapshot(prefix, resultado);
+
+  return resultado;
 }
 
 export async function salvarCategoriaDespesa(partial = {}) {
