@@ -228,7 +228,6 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
 
   const continuationHeight = () => {
     let h = 5.5;
-    if (flowCtx.sectionTitle) h += PAD.sectionAfterTitle + 2;
     if (flowCtx.tableHeaders) h += PAD.headerBefore + PAD.headerText + PAD.afterHeaderRule;
     if (flowCtx.grupoLabel) h += PAD.grupoBefore + PAD.grupoText + PAD.grupoAfter;
     return h;
@@ -271,11 +270,6 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
   const replayContinuationContext = () => {
     if (!flowCtx.active) return;
     drawContinuationBanner(flowCol);
-    if (flowCtx.sectionTitle) {
-      setFont('bold', FONT.section);
-      doc.text(safe(flowCtx.sectionTitle), flowCol.x, flowCol.y);
-      flowCol.y += PAD.sectionAfterTitle;
-    }
     if (flowCtx.tableHeaders) {
       const tc = tableCols(flowCol);
       flowCol.y += PAD.headerBefore;
@@ -613,6 +607,6 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
 
   return {
     data: doc.output('arraybuffer'),
-    version: 'dizimo_half_page_columns_v12',
+    version: 'dizimo_half_page_columns_v13',
   };
 }

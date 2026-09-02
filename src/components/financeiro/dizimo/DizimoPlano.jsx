@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, Download, Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
@@ -37,39 +37,98 @@ import DizimoArvoreDespesas from '@/components/financeiro/dizimo/DizimoArvoreDes
 
 const LINHA_FINA = 'border-black/[0.06] dark:border-white/10';
 
-function CelulaValor({ valor, positivo, className, prefix = '' }) {
-  const n = Number(valor) || 0;
-  const cls =
-    positivo === true
-      ? 'text-emerald-700 dark:text-emerald-400'
-      : positivo === false
-        ? 'text-red-700 dark:text-red-400'
-        : '';
+function formatValorColuna(v) {
+  const n = Math.round((Number(v) || 0) * 100) / 100;
+  return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function LinhaDemonstrativo4Col({
+  descricao,
+  c2,
+  c3,
+  c4,
+  bold = false,
+  className,
+}) {
   return (
-    <span className={cn('tabular-nums font-medium', cls, className)}>
-      {prefix}
-      {formatFinanceiroValor(n)}
-    </span>
+    <tr className={cn('border-b', LINHA_FINA, bold && 'bg-muted/10 font-semibold', className)}>
+      <td className={cn('py-2.5 pl-3 pr-2 text-sm', bold && 'font-semibold')}>{descricao}</td>
+      <td className="py-2.5 px-2 text-right text-sm tabular-nums whitespace-nowrap">{c2 ?? '—'}</td>
+      <td className="py-2.5 px-2 text-right text-sm tabular-nums whitespace-nowrap">{c3 ?? '—'}</td>
+      <td className="py-2.5 pl-2 pr-3 text-right text-sm tabular-nums whitespace-nowrap">{c4 ?? '—'}</td>
+    </tr>
   );
 }
 
-function LinhaResumo({ label, valor, tipo = 'normal', sublabel, destaque = false }) {
-  const prefix = tipo === 'soma' ? '+' : tipo === 'subtrai' ? '−' : '';
-  const positivo =
-    tipo === 'soma' ? Number(valor) >= 0 : tipo === 'resultado' ? Number(valor) >= 0 : undefined;
+function TabelaDemonstrativoDizimo({ demonstrativo }) {
+  const margem = demonstrativo.margemDetalhe;
+  const receita = Number(margem?.receita_liquida) || 0;
+  const custo = Number(margem?.custo_total) || 0;
+  const lucroBruto = Number(demonstrativo.lucroBruto) || 0;
 
   return (
-    <tr className={cn('border-b', LINHA_FINA, destaque && 'bg-muted/10 font-semibold')}>
-      <td className="py-2.5 pl-3 pr-3 text-sm">
-        <span className={destaque ? 'font-semibold' : 'font-medium'}>{label}</span>
-        {sublabel ? (
-          <span className="block text-[11px] font-normal text-muted-foreground mt-0.5">{sublabel}</span>
-        ) : null}
-      </td>
-      <td className="py-2.5 pl-3 pr-3 text-right text-sm whitespace-nowrap">
-        <CelulaValor valor={valor} positivo={positivo} prefix={prefix} />
-      </td>
-    </tr>
+    <div className="space-y-4">
+      <p className="text-sm font-semibold px-1">1. Demonstrativo</p>
+
+      <div className={cn('overflow-x-auto rounded-xl border bg-background', LINHA_FINA)}>
+        <p className="px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          Receitas
+        </p>
+        <table className="w-full min-w-[520px] text-left border-collapse">
+          <thead>
+            <tr className={cn('border-b text-[11px] uppercase tracking-wide text-muted-foreground', LINHA_FINA)}>
+              <th className="py-2 pl-3 pr-2 font-medium">Descrição</th>
+              <th className="py-2 px-2 text-right font-medium w-28">Total R$</th>
+              <th className="py-2 px-2 text-right font-medium w-28">Custo R$</th>
+              <th className="py-2 pl-2 pr-3 text-right font-medium w-32">Lucro bruto R$</th>
+            </tr>
+          </thead>
+          <tbody>
+            <LinhaDemonstrativo4Col
+              descricao="Venda período"
+              c2={receita > 0 ? formatValorColuna(receita) : formatValorColuna(lucroBruto)}
+              c3={custo > 0 ? formatValorColuna(custo) : '—'}
+              c4={formatValorColuna(lucroBruto)}
+              bold
+            />
+          </tbody>
+        </table>
+      </div>
+
+      <div className={cn('overflow-x-auto rounded-xl border bg-background', LINHA_FINA)}>
+        <p className="px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          Despesas
+        </p>
+        <table className="w-full min-w-[520px] text-left border-collapse">
+          <thead>
+            <tr className={cn('border-b text-[11px] uppercase tracking-wide text-muted-foreground', LINHA_FINA)}>
+              <th className="py-2 pl-3 pr-2 font-medium">Descrição</th>
+              <th className="py-2 px-2 text-right font-medium w-28">Total R$</th>
+              <th className="py-2 px-2 text-right font-medium w-32">Não dedutível R$</th>
+              <th className="py-2 pl-2 pr-3 text-right font-medium w-28">Dedutível R$</th>
+            </tr>
+          </thead>
+          <tbody>
+            {demonstrativo.secoes.map((secao) => (
+              <LinhaDemonstrativo4Col
+                key={secao.id}
+                descricao={secao.label}
+                c2={formatValorColuna(secao.valorBruto)}
+                c3={secao.valorNaoDedutivel > 0 ? formatValorColuna(secao.valorNaoDedutivel) : '0,00'}
+                c4={formatValorColuna(secao.valorDedutivel)}
+              />
+            ))}
+            <LinhaDemonstrativo4Col
+              descricao="Lucro operacional"
+              c2="—"
+              c3="—"
+              c4={formatValorColuna(demonstrativo.lucroLiquidoOperacional)}
+              bold
+            />
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
 
@@ -93,130 +152,22 @@ function CartaoDizimo({ demonstrativo }) {
   );
 }
 
-function LinhaResumoCard({ label, valor, tipo = 'normal', sublabel, destaque = false }) {
-  const prefix = tipo === 'soma' ? '+' : tipo === 'subtrai' ? '−' : '';
-  const positivo =
-    tipo === 'soma' ? Number(valor) >= 0 : tipo === 'resultado' ? Number(valor) >= 0 : undefined;
-
-  return (
-    <div className={cn('py-3 px-3', LINHA_FINA, 'border-b', destaque && 'bg-muted/10')}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className={cn('text-sm', destaque ? 'font-semibold' : 'font-medium')}>{label}</p>
-          {sublabel ? (
-            <p className="text-[11px] text-muted-foreground mt-0.5">{sublabel}</p>
-          ) : null}
-        </div>
-        <CelulaValor valor={valor} positivo={positivo} prefix={prefix} className="text-sm shrink-0" />
-      </div>
-    </div>
-  );
-}
-
-function TabelaResumoDizimo({ demonstrativo }) {
-  const margem = demonstrativo.margemDetalhe;
-
-  return (
-    <>
-      <div className={cn('md:hidden overflow-hidden rounded-xl border bg-background', LINHA_FINA)}>
-        <div className={cn('px-3 py-2.5 text-[11px] uppercase tracking-wide text-muted-foreground border-b', LINHA_FINA)}>
-          Demonstrativo
-        </div>
-        <LinhaResumoCard label="Lucro bruto (margem)" valor={demonstrativo.lucroBruto} tipo="soma" destaque />
-        {margem?.receita_liquida > 0 ? (
-          <p className="px-3 py-2 text-[11px] text-muted-foreground border-b border-black/[0.06] dark:border-white/10">
-            Receita líq. {formatFinanceiroValor(margem.receita_liquida)} · CMV{' '}
-            {formatFinanceiroValor(margem.custo_total)}
-          </p>
-        ) : null}
-        <div className="px-3 py-2 text-[11px] uppercase tracking-wide text-muted-foreground border-b border-black/[0.06] dark:border-white/10">
-          Despesas operacionais (dedutíveis)
-        </div>
-        {demonstrativo.secoes.map((secao) => (
-          <LinhaResumoCard
-            key={secao.id}
-            label={secao.label}
-            valor={secao.valorDedutivel}
-            tipo="subtrai"
-            sublabel={
-              secao.valorNaoDedutivel > 0
-                ? `${formatFinanceiroValor(secao.valorBruto)} planejado · ${formatFinanceiroValor(secao.valorNaoDedutivel)} fora da base`
-                : undefined
-            }
-          />
-        ))}
-        <LinhaResumoCard label="Total dedutível" valor={demonstrativo.totalDedutivel} tipo="subtrai" destaque />
-        <LinhaResumoCard
-          label="Lucro líquido operacional estimado"
-          valor={demonstrativo.lucroLiquidoOperacional}
-          tipo="resultado"
-          destaque
-        />
-      </div>
-
-      <div className={cn('hidden md:block overflow-x-auto rounded-xl border bg-background', LINHA_FINA)}>
-      <table className="w-full min-w-[320px] text-left border-collapse">
-        <thead>
-          <tr className={cn('border-b text-[11px] uppercase tracking-wide text-muted-foreground', LINHA_FINA)}>
-            <th className="py-2.5 pl-3 pr-3 font-medium">Demonstrativo</th>
-            <th className="py-2.5 pl-3 pr-3 text-right font-medium w-36">Valor</th>
-          </tr>
-        </thead>
-        <tbody>
-          <LinhaResumo label="Lucro bruto (margem)" valor={demonstrativo.lucroBruto} tipo="soma" destaque />
-          {margem?.receita_liquida > 0 ? (
-            <tr className="border-b border-border/20 text-[11px] text-muted-foreground">
-              <td className="py-1 pl-4 pr-3" colSpan={2}>
-                Receita líq. {formatFinanceiroValor(margem.receita_liquida)} · CMV{' '}
-                {formatFinanceiroValor(margem.custo_total)}
-              </td>
-            </tr>
-          ) : null}
-
-          <tr className="border-b border-border/30">
-            <td className="py-2 pl-3 pr-3 text-[11px] uppercase tracking-wide text-muted-foreground" colSpan={2}>
-              Despesas operacionais (dedutíveis)
-            </td>
-          </tr>
-          {demonstrativo.secoes.map((secao) => (
-            <LinhaResumo
-              key={secao.id}
-              label={secao.label}
-              valor={secao.valorDedutivel}
-              tipo="subtrai"
-              sublabel={
-                secao.valorNaoDedutivel > 0
-                  ? `${formatFinanceiroValor(secao.valorBruto)} planejado · ${formatFinanceiroValor(secao.valorNaoDedutivel)} fora da base`
-                  : undefined
-              }
-            />
-          ))}
-          <LinhaResumo
-            label="Total dedutível"
-            valor={demonstrativo.totalDedutivel}
-            tipo="subtrai"
-            destaque
-          />
-
-          <LinhaResumo
-            label="Lucro líquido operacional estimado"
-            valor={demonstrativo.lucroLiquidoOperacional}
-            tipo="resultado"
-            destaque
-          />
-        </tbody>
-      </table>
-      </div>
-    </>
-  );
-}
-
 export default function DizimoPlano() {
   const [competencia, setCompetencia] = useState(getCompetenciaAtual);
   const [configItens, setConfigItens] = useState(() => criarConfigDedutivelPadrao());
   const [gerandoPdf, setGerandoPdf] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [configSalvaSnapshot, setConfigSalvaSnapshot] = useState('{}');
+  const configItensRef = useRef(configItens);
+  const competenciaRef = useRef(competencia);
+
+  useEffect(() => {
+    configItensRef.current = configItens;
+  }, [configItens]);
+
+  useEffect(() => {
+    competenciaRef.current = competencia;
+  }, [competencia]);
 
   const compLabel = formatCompetenciaLabel(competencia);
 
@@ -336,7 +287,22 @@ export default function DizimoPlano() {
     const resolved = carregarConfigDedutivelDizimo(competencia, contextoItens);
     setConfigItens(resolved);
     setConfigSalvaSnapshot(JSON.stringify(resolved));
-  }, [contextoKey, contextoItens]);
+  }, [competencia, contextoKey]);
+
+  useEffect(() => {
+    const flush = () => {
+      const comp = competenciaRef.current;
+      const cfg = configItensRef.current;
+      if (comp && cfg && Object.keys(cfg).length) {
+        salvarConfigDedutivelDizimo(comp, cfg);
+      }
+    };
+    window.addEventListener('beforeunload', flush);
+    return () => {
+      window.removeEventListener('beforeunload', flush);
+      flush();
+    };
+  }, []);
 
   const configAlterada = useMemo(
     () => JSON.stringify(configItens) !== configSalvaSnapshot,
@@ -353,17 +319,28 @@ export default function DizimoPlano() {
       const normalizado = normalizarConfigItemDizimo(nextConfig);
       setConfigItens((prev) => {
         const next = { ...prev, [itemId]: normalizado };
-        setConfigSalvaSnapshot(JSON.stringify(next));
+        const ok = salvarItemConfigDedutivelDizimo(competencia, itemId, normalizado);
+        if (ok) {
+          setConfigSalvaSnapshot(JSON.stringify(next));
+        } else {
+          toast.error('Não foi possível guardar esta alteração', {
+            description: 'O armazenamento local do navegador pode estar bloqueado.',
+          });
+        }
         return next;
       });
-      salvarItemConfigDedutivelDizimo(competencia, itemId, normalizado);
     },
     [competencia],
   );
 
   const mudarCompetencia = useCallback(
     (delta) => {
-      salvarConfigDedutivelDizimo(competencia, configItens);
+      const ok = salvarConfigDedutivelDizimo(competencia, configItens);
+      if (!ok) {
+        toast.error('Não foi possível guardar antes de mudar o mês');
+        return;
+      }
+      setConfigSalvaSnapshot(JSON.stringify(configItens));
       setCompetencia((c) => shiftCompetencia(c, delta));
     },
     [competencia, configItens],
@@ -372,7 +349,8 @@ export default function DizimoPlano() {
   const handleSalvar = useCallback(async () => {
     setSalvando(true);
     try {
-      salvarConfigDedutivelDizimo(competencia, configItens);
+      const ok = salvarConfigDedutivelDizimo(competencia, configItens);
+      if (!ok) throw new Error('Armazenamento local indisponível');
       setConfigSalvaSnapshot(JSON.stringify(configItens));
       toast.success('Configuração do dízimo salva', {
         description: `Competência ${compLabel}`,
@@ -391,8 +369,8 @@ export default function DizimoPlano() {
     toast.loading('Gerando PDF do dízimo...', { id: 'pdf-dizimo' });
     try {
       if (configAlterada) {
-        salvarConfigDedutivelDizimo(competencia, configItens);
-        setConfigSalvaSnapshot(JSON.stringify(configItens));
+        const ok = salvarConfigDedutivelDizimo(competencia, configItens);
+        if (ok) setConfigSalvaSnapshot(JSON.stringify(configItens));
       }
       const resposta = await gerarRelatorioDizimo({
         competencia,
@@ -507,7 +485,7 @@ export default function DizimoPlano() {
             <DizimoArvoreDespesas secoes={demonstrativo.secoes} onConfigItem={atualizarConfigItem} />
           </div>
 
-          <TabelaResumoDizimo demonstrativo={demonstrativo} />
+          <TabelaDemonstrativoDizimo demonstrativo={demonstrativo} />
 
           {demonstrativo.lucroLiquidoOperacional <= 0 ? (
             <p className="text-xs text-muted-foreground px-1">
