@@ -114,11 +114,13 @@ function percentualDedutivel(item) {
 function formatarCelulaDedutivel(item) {
   const valor = number(item.valorDedutivel);
   if (valor <= 0.009) return '—';
-  return `${valorMoeda(valor)} (${percentualDedutivel(item)}%)`;
+  return valorMoeda(valor);
 }
 
 function rotuloDescricao(item) {
-  return safe(item.nome || '—');
+  const pct = percentualDedutivel(item);
+  const nome = safe(item.nome || '—');
+  return `${pct}%  ${nome}`;
 }
 
 function tableCols(half) {
@@ -681,6 +683,6 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
 
   return {
     data: doc.output('arraybuffer'),
-    version: 'dizimo_half_page_columns_v14',
+    version: 'dizimo_half_page_columns_v15',
   };
 }
