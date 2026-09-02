@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Search, Package, Boxes, Loader2, Calculator } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import OrcamentoSheet from '@/components/orcamento/OrcamentoSheet';
+import OrcamentoPanel from '@/components/orcamento/OrcamentoPanel';
 import { calcularPrecoVendaTabela, getSaleUnitContextForTabela } from '@/lib/orcamentoPrecoTabela';
 import { formatEstoqueDisponivelApresentacao, getUnidadeExibicaoSigla, hasAlternativeUnits } from '@/lib/productUnits';
 import { p38Mobile } from '@/lib/p38MobileSurfaces';
@@ -235,14 +235,13 @@ export default function TabelaPrecosConsulta() {
       )}
 
       {podeGerarOrcamento && (
-      <OrcamentoSheet
-        isOpen={showOrcamento}
-        onClose={() => setShowOrcamento(false)}
-        produtos={produtos}
-        tabelaSelecionada={tabelaSelecionada}
-        calcularPreco={calcularPreco}
-        nomeTabela={tabelaSelecionada?.nome_tabela}
-        empresa={empresa}
+      <OrcamentoPanel
+        open={showOrcamento}
+        onOpenChange={setShowOrcamento}
+        origem="tabela"
+        produtosIniciais={produtos}
+        tabelaInicial={tabelaSelecionada}
+        empresaInicial={empresa}
       />
       )}
     </div>
