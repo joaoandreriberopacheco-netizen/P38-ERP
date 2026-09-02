@@ -7,7 +7,8 @@ import {
   lancamentoElegivelBudget,
 } from '@/lib/budgetCalculos';
 import { calcularLucroBrutoCompetencia, competenciaParaIntervalo } from '@/lib/relatorioMargemCalculos';
-import { fetchPedidosVendaParaMargem } from '@/lib/fetchPedidosVenda90d';
+import { fetchPedidosOrigemTrocaMargem, fetchPedidosVendaParaMargem } from '@/lib/fetchPedidosVenda90d';
+import { fetchAllProdutosCatalogo } from '@/lib/fetchProdutosAtivos';
 import { listarCentrosCustoRegistros } from '@/lib/folhaPrevisaoService';
 import {
   listarLancamentosMesCompetenciaCache,
@@ -332,12 +333,22 @@ export async function obterLucroBrutoCompetencia(competencia) {
     return { receita_liquida: 0, custo_total: 0, lucro_bruto: 0, quantidade_produtos: 0 };
   }
 
-  const [sales, products] = await Promise.all([
+  const [sales, products, devolucoes] = await Promise.all([
     fetchPedidosVendaParaMargem(),
-    base44.entities.Produto.list(),
+    fetchAllProdutosCatalogo(),
+    base44.entities.DevolucaoTroca.list(),
   ]);
 
-  return calcularLucroBrutoCompetencia(sales, products, competencia);
+  const devolucoesTroca = Array.isArray(devolucoes) ? devolucoes : [];
+  const pedidosOrigemTroca = await fetchPedidosOrigemTrocaMargem(devolucoesTroca);
+
+  return calcularLucroBrutoCompetencia(
+    sales,
+    products,
+    competencia,
+    devolucoesTroca,
+    pedidosOrigemTroca,
+  );
 }
 
 export async function salvarCategoriaDespesa(partial = {}) {
