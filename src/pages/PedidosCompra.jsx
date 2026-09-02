@@ -44,6 +44,8 @@ import ListaPedidosCompra from '@/components/compras/ListaPedidosCompra';
 import ConsultaComprasPedidos from '@/components/compras/ConsultaComprasPedidos';
 import StatusPedidoCompraPicker, { statusPedidoCompraExplicitos } from '@/components/compras/StatusPedidoCompraPicker';
 import ComprasNovoPedidoFab from '@/components/compras/ComprasNovoPedidoFab';
+import { P38TourFab } from '@/components/ui/p38-tour';
+import { CONSULTA_EMBARQUES_TOUR, EMBARQUES_LISTA_TOUR } from '@/components/compras/comprasEmbarquesOnboarding';
 import ComprasRelatoriosMenu from '@/components/compras/ComprasRelatoriosMenu';
 import ComprasOperacoesMenu from '@/components/compras/ComprasOperacoesMenu';
 import EnvioFinanceiroLoteDialog from '@/components/compras/EnvioFinanceiroLoteDialog';
@@ -526,9 +528,9 @@ function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {}) {
   return { pedidosComResumoReal, cardsDeEmbarque };
 }
 
-function ComprasViewTabsInline({ activeView, onSelect }) {
+function ComprasViewTabsInline({ activeView, onSelect, dataTour }) {
   return (
-    <div className={COMPRAS_VIEW_TAB_GROUP}>
+    <div className={COMPRAS_VIEW_TAB_GROUP} data-tour={dataTour}>
       <button
         type="button"
         className={cn(
@@ -991,7 +993,10 @@ export default function PedidosCompraPage() {
             <div className="space-y-4 px-4">
               {/* Header */}
               <div className="pb-3 mb-1 flex flex-col gap-3">
-                <div className="space-y-1.5 min-w-0">
+                <div
+                  className="space-y-1.5 min-w-0"
+                  data-tour={activeView === 'consulta' ? 'consulta-header' : 'embarques-header'}
+                >
                   <p className="text-xl font-medium text-foreground font-din-1451">
                     {activeView === 'consulta' ? 'Consulta de compras' : 'Embarques'}
                   </p>
@@ -1007,7 +1012,10 @@ export default function PedidosCompraPage() {
                   )}
                 </div>
                 {activeView === 'embarques' || activeView === 'consulta' ? (
-                  <div className="flex items-center gap-2 justify-end flex-nowrap max-w-full overflow-x-auto">
+                  <div
+                    className="flex items-center gap-2 justify-end flex-nowrap max-w-full overflow-x-auto"
+                    data-tour={activeView === 'consulta' ? 'consulta-relatorios' : 'embarques-operacoes'}
+                  >
                     <ComprasRelatoriosMenu
                       pedidos={activeView === 'consulta' ? pedidosConsulta : filtrados}
                       grupos={activeView === 'consulta' ? gruposConsultaRelatorio : grupos}
@@ -1050,10 +1058,14 @@ export default function PedidosCompraPage() {
             </div>
           </P38ScrollChromeCollapse>
 
-          <div className="shrink-0 px-4 pb-2">
+          <div className="shrink-0 px-4 pb-2" data-tour={activeView === 'consulta' ? 'consulta-filtros' : 'embarques-filtros'}>
             <FiltrosCompras
               mobileLeading={(
-                <ComprasViewTabsInline activeView={activeView} onSelect={setActiveView} />
+                <ComprasViewTabsInline
+                  activeView={activeView}
+                  onSelect={setActiveView}
+                  dataTour={activeView === 'consulta' ? 'consulta-tabs' : 'embarques-tabs'}
+                />
               )}
               search={search} onSearch={setSearch}
               filtroUltimos30Dias={filtroUltimos30Dias} onFiltroUltimos30Dias={setFiltroUltimos30Dias}
@@ -1092,28 +1104,32 @@ export default function PedidosCompraPage() {
             className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y px-4 pb-4"
           >
             {activeView === 'embarques' ? (
-              <ListaPedidosCompra
-                grupos={grupos}
-                loading={loading}
-                onEdit={handleOpenPedido}
-                onDelete={loadData}
-                selecionadosIds={selecionadosIds}
-                onToggleSelecao={handleToggleSelecao}
-                modoSelecao={modoSelecao}
-              />
+              <div data-tour="embarques-lista">
+                <ListaPedidosCompra
+                  grupos={grupos}
+                  loading={loading}
+                  onEdit={handleOpenPedido}
+                  onDelete={loadData}
+                  selecionadosIds={selecionadosIds}
+                  onToggleSelecao={handleToggleSelecao}
+                  modoSelecao={modoSelecao}
+                />
+              </div>
             ) : loading ? (
               <div className="flex justify-center py-12">
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-border/40" />
               </div>
             ) : (
-              <ConsultaComprasPedidos
-                pedidosFiltrados={pedidosConsulta}
-                onVerPedido={handleOpenPedido}
-                groupBy={groupBy}
-                sortOrder={sortOrder}
-                contextLabel="Resumo do período"
-                emptyMessage="Nenhum embarque no período selecionado"
-              />
+              <div data-tour="consulta-tabela">
+                <ConsultaComprasPedidos
+                  pedidosFiltrados={pedidosConsulta}
+                  onVerPedido={handleOpenPedido}
+                  groupBy={groupBy}
+                  sortOrder={sortOrder}
+                  contextLabel="Resumo do período"
+                  emptyMessage="Nenhum embarque no período selecionado"
+                />
+              </div>
             )}
           </div>
         </>
@@ -1122,7 +1138,10 @@ export default function PedidosCompraPage() {
       <div className="shrink-0 space-y-4 px-4 md:px-6 pt-4 md:pt-6">
       {/* Header */}
       <div className="pb-3 mb-1 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-        <div className="space-y-1.5 min-w-0">
+        <div
+          className="space-y-1.5 min-w-0"
+          data-tour={activeView === 'consulta' ? 'consulta-header' : 'embarques-header'}
+        >
           <p className="text-xl font-medium text-foreground font-din-1451">
             {activeView === 'consulta' ? 'Consulta de compras' : 'Embarques'}
           </p>
@@ -1138,7 +1157,10 @@ export default function PedidosCompraPage() {
           )}
         </div>
         {activeView === 'embarques' || activeView === 'consulta' ? (
-          <div className="flex items-center gap-2 flex-wrap justify-end">
+          <div
+            className="flex items-center gap-2 flex-wrap justify-end"
+            data-tour={activeView === 'consulta' ? 'consulta-relatorios' : 'embarques-operacoes'}
+          >
             <ComprasRelatoriosMenu
               pedidos={activeView === 'consulta' ? pedidosConsulta : filtrados}
               grupos={activeView === 'consulta' ? gruposConsultaRelatorio : grupos}
@@ -1179,11 +1201,17 @@ export default function PedidosCompraPage() {
         ) : null}
       </div>
 
-      <GlacialTabsList className="w-full" scrollable>
+      <div data-tour={activeView === 'consulta' ? 'consulta-tabs' : 'embarques-tabs'}>
+      <GlacialTabsList
+        className="w-full"
+        scrollable
+      >
         <GlacialTabsTrigger value="embarques" activeValue={activeView} onSelect={setActiveView} label="Embarques" icon={Package} pulseSensor="pedidos-compra.tab-embarques" />
         <GlacialTabsTrigger value="consulta" activeValue={activeView} onSelect={setActiveView} label="Consulta" icon={Receipt} pulseSensor="pedidos-compra.tab-consulta" />
       </GlacialTabsList>
+      </div>
 
+      <div data-tour={activeView === 'consulta' ? 'consulta-filtros' : 'embarques-filtros'}>
       <FiltrosCompras
         search={search} onSearch={setSearch}
         filtroUltimos30Dias={filtroUltimos30Dias} onFiltroUltimos30Dias={setFiltroUltimos30Dias}
@@ -1216,9 +1244,11 @@ export default function PedidosCompraPage() {
         }}
       />
       </div>
+      </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain px-4 md:px-6 pb-4 md:pb-6">
       {activeView === 'embarques' ? (
+        <div data-tour="embarques-lista">
         <ListaPedidosCompra
           grupos={grupos}
           loading={loading}
@@ -1228,11 +1258,13 @@ export default function PedidosCompraPage() {
           onToggleSelecao={handleToggleSelecao}
           modoSelecao={modoSelecao}
         />
+        </div>
       ) : loading ? (
         <div className="flex justify-center py-12">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-border/40" />
         </div>
       ) : (
+        <div data-tour="consulta-tabela">
         <ConsultaComprasPedidos
           pedidosFiltrados={pedidosConsulta}
           onVerPedido={handleOpenPedido}
@@ -1241,6 +1273,7 @@ export default function PedidosCompraPage() {
           contextLabel="Resumo do período"
           emptyMessage="Nenhum embarque no período selecionado"
         />
+        </div>
       )}
       </div>
         </>
@@ -1253,7 +1286,14 @@ export default function PedidosCompraPage() {
         onSuccess={loadData}
       />
 
-      <ComprasNovoPedidoFab onNovopedido={handleNovoPedido} />
+      <ComprasNovoPedidoFab onNovopedido={handleNovoPedido} dataTour="embarques-novo-pedido" />
+
+      <P38TourFab
+        key={activeView}
+        steps={activeView === 'consulta' ? CONSULTA_EMBARQUES_TOUR : EMBARQUES_LISTA_TOUR}
+        label={activeView === 'consulta' ? 'Tour: Consulta de embarques' : 'Tour: Embarques'}
+        stack="fab2"
+      />
 
       <EnvioFinanceiroLoteDialog
         open={showEnvioDialog}

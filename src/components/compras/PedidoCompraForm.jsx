@@ -34,6 +34,8 @@ import AtualizarPrecosDialog from './AtualizarPrecosDialog';
 import PendenciasPedido from './PendenciasPedido';
 import LogsPedidoCompra from './LogsPedidoCompra';
 import PedidoCompraFAB from './PedidoCompraFAB.jsx';
+import { P38TourFab } from '@/components/ui/p38-tour';
+import { buildPedidoCompraFormTour } from './comprasEmbarquesOnboarding';
 import ImportadorPedidoCompra from './ImportadorPedidoCompra.jsx';
 import BannerStatusPedido from './BannerStatusPedido.jsx';
 import AnexosPedidoCompra from './AnexosPedidoCompra.jsx';
@@ -193,6 +195,11 @@ export default function PedidoCompraForm({
   const valorTotalBaseEdicaoRef = useRef(calcValorTotalPedidoCompra(pedido || {}));
   const [pedidoLogistica, setPedidoLogistica] = useState(pedido);
   const [abaPedidoDesktop, setAbaPedidoDesktop] = useState(abaInicial);
+
+  const pedidoCompraTourSteps = useMemo(
+    () => buildPedidoCompraFormTour({ setAba: setAbaPedidoDesktop }),
+    [],
+  );
   const [lancamentosRefreshKey, setLancamentosRefreshKey] = useState(0);
   const [lancamentosPedido, setLancamentosPedido] = useState([]);
   const { toast } = useToast();
@@ -1374,7 +1381,7 @@ export default function PedidoCompraForm({
       {/* Header — grid mobile: kicker + ícones; título; valores em linha própria (sem overlap) */}
       <div className={cn(COMPRAS_FORM_HEADER, 'relative overflow-visible !flex-col !items-stretch !gap-0 !px-0 !py-0')}>
         <span className={COMPRAS_HEADER_ACCENT} />
-        <div className="px-4 py-3 md:py-4 min-w-0">
+        <div className="px-4 py-3 md:py-4 min-w-0" data-tour="pedido-header">
           <div className="grid grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto_auto] gap-x-2 gap-y-1.5 items-center">
             <p className={cn(P38_PAGE_KICKER, 'row-start-1 col-start-1 truncate min-w-0')}>
               Pedido de compra
@@ -1516,7 +1523,7 @@ export default function PedidoCompraForm({
       {/* DESKTOP: Tabs */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <Tabs value={abaPedidoDesktop} onValueChange={setAbaPedidoDesktop} className="flex-1 min-h-0 overflow-hidden flex flex-col">
-          <TabsList className={COMPRAS_TABS_BAR}>
+          <TabsList className={COMPRAS_TABS_BAR} data-tour="pedido-tabs">
             {[
               { value: 'dados-gerais', icon: <FileText className="w-4 h-4 flex-shrink-0" />, short: 'Geral', disabled: false },
               { value: 'itens',        icon: <ShoppingCart className="w-4 h-4 flex-shrink-0" />, short: 'Itens', disabled: false },
@@ -1546,7 +1553,7 @@ export default function PedidoCompraForm({
           )}
 
           <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-6 touch-pan-y">
-            <TabsContent value="dados-gerais" className="mt-0 space-y-6">
+            <TabsContent value="dados-gerais" className="mt-0 space-y-6" data-tour="pedido-tab-dados-gerais">
               <div className="grid grid-cols-12 gap-x-6 gap-y-6">
                 {/* Fornecedor */}
                 <div className="col-span-12 lg:col-span-6">
@@ -1675,7 +1682,7 @@ export default function PedidoCompraForm({
             </TabsContent>
 
             {/* ABA: ITENS — usa o mesmo seletor estilo PDV */}
-            <TabsContent value="itens" className="mt-0 h-full -mx-6 -mt-0">
+            <TabsContent value="itens" className="mt-0 h-full -mx-6 -mt-0" data-tour="pedido-tab-itens">
               <MobileProductSelector
                 items={formData.itens}
                 products={produtos}
@@ -1694,7 +1701,7 @@ export default function PedidoCompraForm({
             </TabsContent>
 
           {/* ABA: PAGAMENTO */}
-          <TabsContent value="pagamento" className="mt-0 space-y-8">
+          <TabsContent value="pagamento" className="mt-0 space-y-8" data-tour="pedido-tab-pagamento">
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <Label className="text-sm font-light text-muted-foreground mb-2 block">Forma de Pagamento *</Label>
@@ -1786,7 +1793,7 @@ export default function PedidoCompraForm({
             </TabsContent>
 
           {/* ABA: LOGÍSTICA */}
-          <TabsContent value="logistica" className="mt-0">
+          <TabsContent value="logistica" className="mt-0" data-tour="pedido-tab-logistica">
             {pedido?.id ? (
               <PedidoCompraLogisticaTab
                 pedido={pedidoLogistica || pedido}
@@ -1819,7 +1826,7 @@ export default function PedidoCompraForm({
           </TabsContent>
 
           {/* ABA: RECEPÇÃO */}
-          <TabsContent value="recepcao" className="mt-0">
+          <TabsContent value="recepcao" className="mt-0" data-tour="pedido-tab-recepcao">
             {pedido?.id ? (
               <AbaRecepção pedido={pedidoLogistica || pedido} />
             ) : (
@@ -1938,6 +1945,12 @@ export default function PedidoCompraForm({
            onSolicitarEdicao={() => setIsSolicitarEdicaoOpen(true)}
            />
            )}
+
+       <P38TourFab
+         steps={pedidoCompraTourSteps}
+         label="Tour: formulário do pedido"
+         stack="fab2"
+       />
 
            <AnexosPedidoCompra
          pedidoId={pedido?.id}
