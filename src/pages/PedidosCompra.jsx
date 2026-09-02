@@ -1016,6 +1016,11 @@ export default function PedidosCompraPage() {
                     className="flex items-center gap-2 justify-end flex-nowrap max-w-full overflow-x-auto"
                     data-tour={activeView === 'consulta' ? 'consulta-relatorios' : 'embarques-operacoes'}
                   >
+                    <P38TourFab
+                      key={activeView}
+                      steps={activeView === 'consulta' ? CONSULTA_EMBARQUES_TOUR : EMBARQUES_LISTA_TOUR}
+                      label={activeView === 'consulta' ? 'Tour: Consulta de embarques' : 'Tour: Embarques'}
+                    />
                     <ComprasRelatoriosMenu
                       pedidos={activeView === 'consulta' ? pedidosConsulta : filtrados}
                       grupos={activeView === 'consulta' ? gruposConsultaRelatorio : grupos}
@@ -1161,6 +1166,11 @@ export default function PedidosCompraPage() {
             className="flex items-center gap-2 flex-wrap justify-end"
             data-tour={activeView === 'consulta' ? 'consulta-relatorios' : 'embarques-operacoes'}
           >
+            <P38TourFab
+              key={activeView}
+              steps={activeView === 'consulta' ? CONSULTA_EMBARQUES_TOUR : EMBARQUES_LISTA_TOUR}
+              label={activeView === 'consulta' ? 'Tour: Consulta de embarques' : 'Tour: Embarques'}
+            />
             <ComprasRelatoriosMenu
               pedidos={activeView === 'consulta' ? pedidosConsulta : filtrados}
               grupos={activeView === 'consulta' ? gruposConsultaRelatorio : grupos}
@@ -1287,13 +1297,6 @@ export default function PedidosCompraPage() {
       />
 
       <ComprasNovoPedidoFab onNovopedido={handleNovoPedido} dataTour="embarques-novo-pedido" />
-
-      <P38TourFab
-        key={activeView}
-        steps={activeView === 'consulta' ? CONSULTA_EMBARQUES_TOUR : EMBARQUES_LISTA_TOUR}
-        label={activeView === 'consulta' ? 'Tour: Consulta de embarques' : 'Tour: Embarques'}
-        stack="fab2"
-      />
 
       <EnvioFinanceiroLoteDialog
         open={showEnvioDialog}

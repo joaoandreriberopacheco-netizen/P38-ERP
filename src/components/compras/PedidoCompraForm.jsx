@@ -1387,6 +1387,10 @@ export default function PedidoCompraForm({
               Pedido de compra
             </p>
             <div className="flex items-center justify-end gap-0.5 shrink-0 row-start-1 col-start-2">
+              <P38TourFab
+                steps={pedidoCompraTourSteps}
+                label="Tour: formulário do pedido"
+              />
               <Button
                 variant="ghost"
                 size="icon"
@@ -1945,12 +1949,6 @@ export default function PedidoCompraForm({
            onSolicitarEdicao={() => setIsSolicitarEdicaoOpen(true)}
            />
            )}
-
-       <P38TourFab
-         steps={pedidoCompraTourSteps}
-         label="Tour: formulário do pedido"
-         stack="fab2"
-       />
 
            <AnexosPedidoCompra
          pedidoId={pedido?.id}

@@ -215,20 +215,18 @@ function TourOverlay({ step, stepIndex, totalSteps, onClose, onPrev, onNext, isF
 }
 
 /**
- * FAB de ajuda + tour virtual passo a passo.
+ * Botão de ajuda + tour virtual passo a passo.
+ * Posicione no canto superior direito do cabeçalho da tela (modo inline).
  * `steps`: [{ target, title, body, placement?, padding?, beforeStep? }]
  */
 export function P38TourFab({
   steps = [],
   label = 'Abrir tour de ajuda',
-  fabClassName,
-  stack = 'fab2',
+  className,
   disabled = false,
 }) {
   const [open, setOpen] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
-
-  const stackClass = stack === 'fab1' ? 'p38-bottom-fab1' : 'p38-bottom-fab2';
 
   const closeTour = useCallback(() => {
     setOpen(false);
@@ -261,16 +259,15 @@ export function P38TourFab({
         type="button"
         onClick={startTour}
         disabled={disabled || !steps.length}
-        data-pulse-sensor="p38-tour.fab-ajuda"
+        data-pulse-sensor="p38-tour.botao-ajuda"
         className={cn(
-          'fixed right-4 z-[56] flex h-12 w-12 items-center justify-center rounded-full bg-card text-[#4a5240] shadow-lg ring-1 ring-border/30 transition-transform hover:scale-[1.03] active:scale-95 disabled:opacity-40 dark:bg-muted dark:text-[#A8B56E] md:right-6',
-          stackClass,
-          fabClassName,
+          'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border/40 bg-card/95 text-[#4a5240] shadow-sm backdrop-blur-sm transition-colors hover:bg-muted disabled:opacity-40 dark:bg-muted/80 dark:text-[#A8B56E]',
+          className,
         )}
         title={label}
         aria-label={label}
       >
-        <HelpCircle className="h-5 w-5" />
+        <HelpCircle className="h-4 w-4" />
       </button>
 
       {open && currentStep && (
