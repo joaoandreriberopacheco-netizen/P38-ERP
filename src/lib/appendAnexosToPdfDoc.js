@@ -1,5 +1,8 @@
 import { loadPdfJsBrowser } from '@/lib/loadPdfJsBrowser';
 
+/** Meia folha A4 em orientação paisagem (210 × 148,5 mm). */
+const HALF_A4_LANDSCAPE_HEIGHT_MM = 148.5;
+
 function loadImage(url) {
   return new Promise((resolve, reject) => {
     const img = new window.Image();
@@ -56,6 +59,18 @@ function measureImageWidthFirst(img, layout) {
   };
 }
 
+/** Encaixa a imagem inteira no retângulo (modo impressão desktop). */
+function measureImageContain(img, maxWidthMm, maxHeightMm) {
+  const ratioW = maxWidthMm / img.width;
+  const ratioH = maxHeightMm / img.height;
+  const ratio = Math.min(ratioW, ratioH);
+  return {
+    width: img.width * ratio,
+    height: img.height * ratio,
+    ratio,
+  };
+}
+
 function sliceImageToDataUrls(img, measured, chunkHeightMm) {
   const chunkHeightPx = chunkHeightMm / measured.ratio;
   const slices = [];
@@ -88,6 +103,72 @@ async function prepareImageBlock(source, mimeType, layout) {
     measured,
     mimeType: getExtensionFromMime(mimeType),
   };
+}
+
+async function prepareImageOnly(source, mimeType) {
+  const img = await loadImage(source);
+  return {
+    img,
+    mimeType: getExtensionFromMime(mimeType),
+  };
+}
+
+function getHalfA4SlotMetrics(pageWidth, pageHeight, layout = {}, flow = {}) {
+  const margin = layout.margin ?? 12;
+  const bottomPad = flow.bottomPad ?? layout.bottomPad ?? 12;
+  const contentTop = layout.contentTop ?? ((flow.newPageY ?? 16) + 5.5);
+  const contentBottom = layout.contentBottom ?? pageHeight - bottomPad;
+  const contentWidth = pageWidth - margin * 2;
+  const slotGap = layout.slotGap ?? 2;
+  const titleHeight = 4.5;
+  const availableContent = Math.max(0, contentBottom - contentTop);
+  const slotHeight = Math.min(
+    HALF_A4_LANDSCAPE_HEIGHT_MM,
+    (availableContent - slotGap) / 2,
+  );
+  const imageAreaHeight = Math.max(20, slotHeight - titleHeight - 2);
+
+  return {
+    margin,
+    contentTop,
+    contentBottom,
+    contentWidth,
+    slotHeight,
+    slotGap,
+    titleHeight,
+    imageAreaHeight,
+  };
+}
+
+function imageSourceToDataUrl(img, mimeType = 'JPEG') {
+  if (img.src?.startsWith('data:')) return img.src;
+  const canvas = document.createElement('canvas');
+  canvas.width = img.width;
+  canvas.height = img.height;
+  const context = canvas.getContext('2d');
+  context.fillStyle = '#ffffff';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(img, 0, 0);
+  const quality = mimeType === 'PNG' ? undefined : 0.92;
+  return canvas.toDataURL(mimeType === 'PNG' ? 'image/png' : 'image/jpeg', quality);
+}
+
+function drawImageInHalfA4LandscapeSlot(doc, block, slotTopY, metrics) {
+  const { margin, contentWidth, titleHeight, imageAreaHeight } = metrics;
+  const titleY = slotTopY + 1.5;
+  const imageTopY = titleY + titleHeight + 1;
+
+  doc.setFontSize(7.5);
+  const titleLines = doc.splitTextToSize(block.title, contentWidth).slice(0, 2);
+  doc.text(titleLines, margin, titleY);
+
+  const measured = measureImageContain(block.img, contentWidth, imageAreaHeight);
+  const x = margin + Math.max(0, (contentWidth - measured.width) / 2);
+  const y = imageTopY + Math.max(0, (imageAreaHeight - measured.height) / 2);
+  const dataUrl = imageSourceToDataUrl(block.img, block.mimeType);
+
+  doc.addImage(dataUrl, block.mimeType, x, y, measured.width, measured.height);
+  return slotTopY + metrics.slotHeight;
 }
 
 async function drawImageBlockPaginated(doc, block, layout, renderOptions = {}) {
@@ -149,19 +230,17 @@ function addTextFallbackPage(doc, title, message, layout = {}) {
   return titleY + 18;
 }
 
-/**
- * Embute anexos (imagens/PDF) num documento jsPDF existente.
- * @param {import('jspdf').jsPDF} doc
- * @param {Array} anexos
- * @param {{
- *   sectionPrefix?: string,
- *   layout?: { margin?: number, titleY?: number, contentTop?: number, contentBottom?: number },
- *   flow?: { initialY?: number, gapBefore?: number, newPageY?: number, bottomPad?: number },
- *   onPageAdded?: (pageNumber: number) => void,
- * }} [options]
- * @returns {Promise<{ pagesAdded: number, endPage: number, endY: number }>}
- */
-export async function appendAnexosToPdfDoc(doc, anexos = [], options = {}) {
+function addTextFallbackHalfSlot(doc, title, message, slotTopY, metrics) {
+  const { margin, contentWidth } = metrics;
+  const titleY = slotTopY + 1.5;
+  doc.setFontSize(7.5);
+  doc.text(doc.splitTextToSize(title, contentWidth).slice(0, 2), margin, titleY);
+  doc.setFontSize(7);
+  doc.text(message, margin, titleY + 6, { maxWidth: contentWidth });
+  return slotTopY + metrics.slotHeight;
+}
+
+async function appendAnexosFlowMode(doc, anexos, options = {}) {
   const { sectionPrefix = 'Anexos', layout = {}, flow, onPageAdded, useFirstPage = false } = options;
   const list = (anexos || []).filter((a) => a?.url_drive);
   if (list.length === 0) {
@@ -291,4 +370,142 @@ export async function appendAnexosToPdfDoc(doc, anexos = [], options = {}) {
   const endPage = doc.internal.getNumberOfPages();
   const endY = cursorY ?? (layout.contentBottom ?? doc.internal.pageSize.getHeight() - 12);
   return { pagesAdded, endPage, endY };
+}
+
+async function appendAnexosHalfA4LandscapeMode(doc, anexos, options = {}) {
+  const { sectionPrefix = 'Anexos', layout = {}, flow, onPageAdded } = options;
+  const list = (anexos || []).filter((a) => a?.url_drive);
+  if (list.length === 0) {
+    return {
+      pagesAdded: 0,
+      endPage: doc.internal.getNumberOfPages(),
+      endY: flow?.initialY ?? layout.contentTop ?? 20,
+    };
+  }
+
+  let pagesAdded = 0;
+  let pageSlotIndex = 0;
+  let firstSlotTopY = null;
+  let lastSlotEndY = null;
+  let isFirstBlock = true;
+
+  const registerPage = () => {
+    pagesAdded += 1;
+    onPageAdded?.(doc.internal.getNumberOfPages());
+  };
+
+  const resetPageSlots = () => {
+    pageSlotIndex = 0;
+    firstSlotTopY = null;
+  };
+
+  const addAttachmentPage = () => {
+    doc.addPage();
+    registerPage();
+    resetPageSlots();
+  };
+
+  const resolveNextSlotTopY = (metrics) => {
+    const { contentTop, contentBottom, slotHeight, slotGap } = metrics;
+
+    if (pageSlotIndex === 0) {
+      let startY = contentTop;
+      if (isFirstBlock && typeof flow?.initialY === 'number') {
+        const candidateY = flow.initialY + (flow.gapBefore ?? 4);
+        if (contentBottom - candidateY >= slotHeight) {
+          startY = candidateY;
+        } else if (contentBottom - contentTop < slotHeight) {
+          addAttachmentPage();
+          startY = contentTop;
+        }
+      }
+      firstSlotTopY = startY;
+      pageSlotIndex = 1;
+      return startY;
+    }
+
+    const secondSlotY = firstSlotTopY + slotHeight + slotGap;
+    if (pageSlotIndex === 1 && contentBottom - secondSlotY >= slotHeight) {
+      pageSlotIndex = 2;
+      return secondSlotY;
+    }
+
+    addAttachmentPage();
+    firstSlotTopY = contentTop;
+    pageSlotIndex = 1;
+    return contentTop;
+  };
+
+  for (const anexo of list) {
+    const isImage = anexo.mime_type?.startsWith('image/');
+    const isPdf = anexo.mime_type?.includes('pdf');
+    if (!isImage && !isPdf) continue;
+
+    const tipo = anexo.tipo_documento || 'Documento';
+    const nome = anexo.nome_arquivo || 'Anexo';
+    const pageTitle = `${sectionPrefix} · ${tipo} — ${nome}`;
+
+    try {
+      const blocks = isImage
+        ? [{ source: anexo.url_drive, mime: anexo.mime_type, title: pageTitle }]
+        : (await renderPdfPagesToImages(anexo.url_drive)).map((source, index, arr) => ({
+            source,
+            mime: 'image/jpeg',
+            title: arr.length > 1 ? `${pageTitle} (pág. ${index + 1}/${arr.length})` : pageTitle,
+          }));
+
+      for (const block of blocks) {
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const metrics = getHalfA4SlotMetrics(pageWidth, pageHeight, layout, flow);
+        const slotTopY = resolveNextSlotTopY(metrics);
+        const prepared = await prepareImageOnly(block.source, block.mime);
+        lastSlotEndY = drawImageInHalfA4LandscapeSlot(
+          doc,
+          { ...prepared, title: block.title },
+          slotTopY,
+          metrics,
+        );
+        isFirstBlock = false;
+      }
+    } catch {
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const metrics = getHalfA4SlotMetrics(pageWidth, pageHeight, layout, flow);
+      const slotTopY = resolveNextSlotTopY(metrics);
+      lastSlotEndY = addTextFallbackHalfSlot(
+        doc,
+        pageTitle,
+        'Não foi possível renderizar este arquivo dentro do PDF final. Abra o anexo original para visualizar o conteúdo completo.',
+        slotTopY,
+        metrics,
+      );
+      isFirstBlock = false;
+    }
+  }
+
+  const endPage = doc.internal.getNumberOfPages();
+  const endY = lastSlotEndY ?? (layout.contentBottom ?? doc.internal.pageSize.getHeight() - 12);
+  return { pagesAdded, endPage, endY };
+}
+
+/**
+ * Embute anexos (imagens/PDF) num documento jsPDF existente.
+ * @param {import('jspdf').jsPDF} doc
+ * @param {Array} anexos
+ * @param {{
+ *   sectionPrefix?: string,
+ *   mode?: 'flow' | 'half_a4_landscape',
+ *   layout?: { margin?: number, titleY?: number, contentTop?: number, contentBottom?: number },
+ *   flow?: { initialY?: number, gapBefore?: number, newPageY?: number, bottomPad?: number },
+ *   onPageAdded?: (pageNumber: number) => void,
+ * }} [options]
+ * @returns {Promise<{ pagesAdded: number, endPage: number, endY: number }>}
+ */
+export async function appendAnexosToPdfDoc(doc, anexos = [], options = {}) {
+  const mode = options.mode ?? 'flow';
+  if (mode === 'half_a4_landscape') {
+    return appendAnexosHalfA4LandscapeMode(doc, anexos, options);
+  }
+  return appendAnexosFlowMode(doc, anexos, options);
 }
