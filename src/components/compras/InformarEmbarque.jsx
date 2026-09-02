@@ -815,6 +815,11 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
               </TabsContent>
 
               <TabsContent value="itens" className="space-y-4 mt-0">
+                {isEdicao && (
+                  <p className="text-xs text-muted-foreground rounded-xl bg-amber-50 dark:bg-amber-900/20 px-4 py-3 leading-relaxed">
+                    Ajuste as quantidades embarcadas (ex.: caixas avariadas) e salve. Só é possível enquanto a recepção ainda não começou.
+                  </p>
+                )}
                 <div className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm ${
                   statusPreview === 'Total' ? 'bg-muted/50 text-muted-foreground' :
                   statusPreview === 'Parcial' ? 'bg-muted/50 text-muted-foreground' :
