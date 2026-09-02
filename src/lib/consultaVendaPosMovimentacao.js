@@ -212,3 +212,38 @@ export function montarConsultaComprovantePosMovimentacao(pedido, indiceDevolucoe
 export function formatSubstituicaoQuantidade(quantidade, unidade) {
   return `${formatQuantidadeDisplay(quantidade)} ${String(unidade || 'UN').toUpperCase()}`;
 }
+
+/** Agrega quantidades por produto usando o estado pós devolução/troca de cada pedido. */
+export function aggregateProdutosConsulta(vendas = [], indiceDevolucoes) {
+  const map = new Map();
+
+  for (const venda of vendas) {
+    const posMovimentacao = montarConsultaComprovantePosMovimentacao(venda, indiceDevolucoes);
+    const itens = posMovimentacao?.itensAjustados?.length
+      ? posMovimentacao.itensAjustados
+      : venda?.itens || [];
+
+    for (const item of itens) {
+      const key = item.produto_id || item.produto_nome || 'sem-id';
+      const qtd = Number(item.quantidade) || 0;
+      if (qtd <= 0) continue;
+      const total =
+        Number(item.total) ||
+        round2((Number(item.preco_unitario_praticado ?? item.preco_unitario) || 0) * qtd);
+      const prev = map.get(key) || {
+        key,
+        nome: item.produto_nome || 'Produto',
+        unidade: item.unidade_medida || item.unidade_sigla || 'UN',
+        quantidade: 0,
+        total: 0,
+      };
+      prev.quantidade = round2(prev.quantidade + qtd);
+      prev.total = round2(prev.total + total);
+      map.set(key, prev);
+    }
+  }
+
+  return [...map.values()]
+    .filter((p) => (Number(p.quantidade) || 0) > 0)
+    .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' }));
+}

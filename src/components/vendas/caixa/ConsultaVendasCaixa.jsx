@@ -12,7 +12,7 @@ import TrocaCaixaCard from '@/components/vendas/caixa/TrocaCaixaCard';
 import ConsultaSubstituicaoPainel from '@/components/vendas/caixa/ConsultaSubstituicaoPainel';
 import { ConsultaProdutoRow } from '@/components/vendas/caixa/ConsultaProdutoRow';
 import VendaValorResumo from '@/components/vendas/caixa/VendaValorResumo';
-import { montarConsultaComprovantePosMovimentacao } from '@/lib/consultaVendaPosMovimentacao';
+import { montarConsultaComprovantePosMovimentacao, aggregateProdutosConsulta } from '@/lib/consultaVendaPosMovimentacao';
 import {
   partitionVendasConsultaCaixa,
 } from '@/lib/substituicoesVendaCaixa';
@@ -29,28 +29,6 @@ function horaDaVenda(venda) {
 function parseNumeroComprovante(numero) {
   const digits = String(numero || '').replace(/\D/g, '');
   return digits ? parseInt(digits, 10) : 0;
-}
-
-function aggregateByProduto(vendas) {
-  const map = new Map();
-  (vendas || []).forEach((venda) => {
-    (venda.itens || []).forEach((item) => {
-      const key = item.produto_id || item.produto_nome || 'sem-id';
-      const qtd = Number(item.quantidade) || 0;
-      const total = Number(item.total) || roundToTwoDecimals((Number(item.preco_unitario_praticado) || 0) * qtd);
-      const prev = map.get(key) || {
-        key,
-        nome: item.produto_nome || 'Produto',
-        unidade: item.unidade_medida || 'UN',
-        quantidade: 0,
-        total: 0,
-      };
-      prev.quantidade += qtd;
-      prev.total = roundToTwoDecimals(prev.total + total);
-      map.set(key, prev);
-    });
-  });
-  return [...map.values()].sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' }));
 }
 
 function sortByComprovante(vendas) {
@@ -85,7 +63,10 @@ export default function ConsultaVendasCaixa({
     [vendasFinalizadas, metaPorPedidoId]
   );
 
-  const produtosAgregados = useMemo(() => aggregateByProduto(normais), [normais]);
+  const produtosAgregados = useMemo(
+    () => aggregateProdutosConsulta(normais, indiceDevolucoes),
+    [normais, indiceDevolucoes],
+  );
   const vendasOrdenadas = useMemo(() => sortByComprovante(normais), [normais]);
   const trocasOrdenadas = useMemo(() => sortByComprovante(trocas), [trocas]);
 
