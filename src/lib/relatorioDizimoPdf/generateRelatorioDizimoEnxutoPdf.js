@@ -25,6 +25,9 @@ const PAD = {
   colTop: 13,
 };
 
+/** Largura da coluna de % dedutível dentro da descrição (grid fixo, como na página). */
+const DESC_PCT_COL_W = 11;
+
 /** Padding horizontal dentro de cada célula da tabela. */
 const CELL_PAD = 1.8;
 
@@ -104,23 +107,20 @@ function formatarCelulaNaoDedutivel(item) {
   return valorMoeda(valor);
 }
 
-function percentualDedutivel(item) {
-  const cfg = normalizarConfigItemDizimo(item.config);
-  if (cfg.modo === DIZIMO_MODOS.TOTAL) return 100;
-  if (cfg.modo === DIZIMO_MODOS.NAO_DEDUTIVEL) return 0;
-  return cfg.percentual;
-}
-
 function formatarCelulaDedutivel(item) {
   const valor = number(item.valorDedutivel);
   if (valor <= 0.009) return '—';
   return valorMoeda(valor);
 }
 
+function rotuloPercentualParcial(item) {
+  const cfg = normalizarConfigItemDizimo(item.config);
+  if (cfg.modo !== DIZIMO_MODOS.PARCIAL) return '';
+  return `${cfg.percentual}%`;
+}
+
 function rotuloDescricao(item) {
-  const pct = percentualDedutivel(item);
-  const nome = safe(item.nome || '—');
-  return `${pct}%  ${nome}`;
+  return safe(item.nome || '—');
 }
 
 function tableCols(half) {
@@ -129,13 +129,17 @@ function tableCols(half) {
   const c2 = half.x + half.w * 0.4;
   const c3 = half.x + half.w * 0.62;
   const c4 = half.x + half.w * 0.8;
+  const c1pct = c1 + DESC_PCT_COL_W;
   return {
     c1,
+    c1pct,
+    pctW: DESC_PCT_COL_W,
     c2,
     c3,
     c4,
     right,
     w1: c2 - c1 - CELL_PAD * 2,
+    wDesc: c2 - c1pct - CELL_PAD * 2,
     w2: c3 - c2 - CELL_PAD * 2,
     w3: c4 - c3 - CELL_PAD * 2,
     w4: right - c4 - CELL_PAD * 2,
@@ -444,6 +448,7 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
             valorMoeda(item.valorBruto),
             formatarCelulaNaoDedutivel(item),
             '—',
+            { pctLabel: rotuloPercentualParcial(item) },
           );
         }
       }
@@ -479,15 +484,17 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
     if (remember) flowCtx.tableHeaders = [...labels];
   };
 
-  const measureRowCells = (descricao, v2, v3, v4, { bold = false } = {}) => {
+  const measureRowCells = (descricao, v2, v3, v4, { bold = false, pctLabel } = {}) => {
     const tc = tableCols(flowCol);
-    const descLines = splitCellLines(descricao, tc.w1, { bold });
+    const usePctGrid = pctLabel !== undefined;
+    const descWidth = usePctGrid ? tc.wDesc : tc.w1;
+    const descLines = splitCellLines(descricao, descWidth, { bold });
     const l2 = splitCellLines(v2, tc.w2, { bold });
     const l3 = splitCellLines(v3, tc.w3, { bold });
     const l4 = splitCellLines(v4, tc.w4, { bold });
     const descCount = Math.max(descLines.length, 1);
     const valCount = Math.max(l2.length, l3.length, l4.length);
-    return { tc, descLines, l2, l3, l4, descCount, valCount };
+    return { tc, descLines, l2, l3, l4, descCount, valCount, usePctGrid, pctLabel: pctLabel || '' };
   };
 
   const maxLinesInColumn = () => {
@@ -496,7 +503,7 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
   };
 
   const drawRowCellChunk = (
-    { tc, descLines, l2, l3, l4 },
+    { tc, descLines, l2, l3, l4, usePctGrid, pctLabel },
     descOffset,
     descChunk,
     rowLines,
@@ -508,10 +515,23 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
     const style = bold ? 'bold' : 'normal';
 
     setFont(style, bold ? FONT.bodyBold : FONT.body);
-    for (let i = 0; i < descChunk; i += 1) {
-      const li = descOffset + i;
-      const line = descLines[li];
-      if (line) doc.text(line, tc.c1 + CELL_PAD, textY + i * LINE_STEP);
+    if (usePctGrid) {
+      if (descOffset === 0 && pctLabel) {
+        setFont('normal', FONT.body - 0.6, INK.muted);
+        doc.text(pctLabel, tc.c1 + tc.pctW / 2, textY, { align: 'center' });
+        setFont(style, bold ? FONT.bodyBold : FONT.body);
+      }
+      for (let i = 0; i < descChunk; i += 1) {
+        const li = descOffset + i;
+        const line = descLines[li];
+        if (line) doc.text(line, tc.c1pct + CELL_PAD, textY + i * LINE_STEP);
+      }
+    } else {
+      for (let i = 0; i < descChunk; i += 1) {
+        const li = descOffset + i;
+        const line = descLines[li];
+        if (line) doc.text(line, tc.c1 + CELL_PAD, textY + i * LINE_STEP);
+      }
     }
 
     if (showValues) {
@@ -527,12 +547,13 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
     flowCol.y += chunkH;
     const yBottom = flowCol.y;
     strokeH(yBottom, tc.c1, tc.right, INK.lineSoft, LINE.hair);
+    if (usePctGrid) strokeV(tc.c1pct, yTop, yBottom, INK.lineSoft, LINE.hair);
     strokeTableVerticals(tc, yTop, yBottom, INK.lineSoft);
     flowCol.y += PAD.afterRowRule;
   };
 
-  const drawRow4 = (descricao, v2, v3, v4, { bold = false } = {}) => {
-    const cells = measureRowCells(descricao, v2, v3, v4, { bold });
+  const drawRow4 = (descricao, v2, v3, v4, { bold = false, pctLabel } = {}) => {
+    const cells = measureRowCells(descricao, v2, v3, v4, { bold, pctLabel });
     let descOffset = 0;
 
     while (descOffset < cells.descCount) {
@@ -544,7 +565,7 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
         PAD.rowPadTop + rowLines * LINE_STEP + PAD.rowPadBottom + PAD.afterRowRule + 1;
       ensureSpace(chunkH);
 
-      const fresh = measureRowCells(descricao, v2, v3, v4, { bold });
+      const fresh = measureRowCells(descricao, v2, v3, v4, { bold, pctLabel });
       drawRowCellChunk(fresh, descOffset, fitDesc, rowLines, {
         bold,
         showValues: isLast,
@@ -575,6 +596,7 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
       valorMoeda(item.valorBruto),
       formatarCelulaNaoDedutivel(item),
       formatarCelulaDedutivel(item),
+      { pctLabel: rotuloPercentualParcial(item) },
     );
   };
 
@@ -683,6 +705,6 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
 
   return {
     data: doc.output('arraybuffer'),
-    version: 'dizimo_half_page_columns_v15',
+    version: 'dizimo_half_page_columns_v16',
   };
 }
