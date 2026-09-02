@@ -442,7 +442,7 @@ export default function DizimoPlano() {
             <P38HelpPopover label="Ajuda: dízimo" size="sm">
               <p className="text-muted-foreground">
                 O lucro bruto vem do Relatório de Margem. As despesas operacionais vêm do planejamento
-                (Agefin, folha, budgets e pauta).
+                (Agefin, folha, gastos sem vencimento e pauta).
               </p>
               <p className="text-muted-foreground mt-2">
                 Configure item a item — cada alteração é salva automaticamente neste navegador.

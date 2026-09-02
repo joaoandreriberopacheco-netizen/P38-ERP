@@ -34,6 +34,7 @@ import {
   lancamentoMatchCategoria,
   montarVisoesBudgets,
   calcularTotaisBudgets,
+  BUDGET_MODULO_LABEL,
 } from '@/lib/budgetCalculos';
 import {
   lancamentoCancelado,
@@ -318,7 +319,7 @@ function montarLinhasBudgets(competencia, modelos, competencias, lancamentos) {
     linhaItem({
       id: `budget-${v.modelo?.id}`,
       grupo: GRUPO.BUDGETS,
-      nome: v.modelo?.nome || 'Budget',
+      nome: v.modelo?.nome || 'Gasto sem vencimento',
       detalhe: '',
       valor: v.orcado || 0,
       valorSecundario: v.realizado || 0,
@@ -684,7 +685,7 @@ const GRUPO_LABELS = {
   [GRUPO.FIXAS_NAO_MENSAIS]: 'Provisão mensal — IPTU, IPVA, alvarás e similares',
   [GRUPO.FOLHA]: 'Folha de pagamento',
   [GRUPO.FOLHA_PROVISOES]: 'Provisões de folha',
-  [GRUPO.BUDGETS]: 'Budgets',
+  [GRUPO.BUDGETS]: BUDGET_MODULO_LABEL,
   [GRUPO.PONTUAIS]: 'Pauta do mês — boletos e ocasionais',
 };
 

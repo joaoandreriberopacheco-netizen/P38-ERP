@@ -37,6 +37,21 @@ export const STATUS_CONSUMO_LABELS = {
   acima: 'Acima',
 };
 
+/** Rótulo de negócio (substitui “Budgets” na interface). */
+export const BUDGET_MODULO_LABEL = 'Gastos sem Vencimento';
+
+const CENTRO_CUSTO_PROPRIEDADES_POR_NOME = [
+  /^casa\s+israel\s*-\s*estivas$/i,
+  /^apartamento\s+de\s+manaus$/i,
+];
+
+/** Alocação fixa de centro de custo por nome do gasto (ex.: imóveis). */
+export function centroCustoCanonicoBudgetPorNome(nome) {
+  const n = String(nome || '').trim();
+  if (!n) return '';
+  return CENTRO_CUSTO_PROPRIEDADES_POR_NOME.some((rx) => rx.test(n)) ? 'Propriedades' : '';
+}
+
 const TAGS_EXCLUIDAS_REALIZADO = new Set(['folha_previsao', 'agefin_previsao']);
 
 export function gerarIdInterno(prefix = 'bdg') {
@@ -117,12 +132,13 @@ export function isDomingo(dataIso) {
 }
 
 export function criarModeloComDefaults(partial = {}) {
+  const nome = String(partial.nome || '').trim();
+  const centroCanonico = centroCustoCanonicoBudgetPorNome(nome);
+  const centro_custo = centroCanonico || String(partial.centro_custo || '').trim();
   return {
     id: partial.id || gerarIdInterno('bdg-mod'),
-    nome: String(partial.nome || '').trim(),
     categoria_id: partial.categoria_id || '',
     categoria_nome: partial.categoria_nome || '',
-    centro_custo: String(partial.centro_custo || '').trim(),
     centro_custo_id: partial.centro_custo_id || '',
     modo_estimativa: partial.modo_estimativa || MODO_ESTIMATIVA.POR_MES,
     valor_entrada: Number(partial.valor_entrada) || 0,
@@ -132,6 +148,8 @@ export function criarModeloComDefaults(partial = {}) {
     observacoes: partial.observacoes || '',
     ordem: Number(partial.ordem) || 0,
     ...partial,
+    nome,
+    centro_custo,
   };
 }
 

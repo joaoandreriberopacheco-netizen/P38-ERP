@@ -1,4 +1,5 @@
 import { corrigirTextoPt } from './corrigirTextoPt.js';
+import { BUDGET_MODULO_LABEL } from './budgetCalculos.js';
 
 /**
  * Dízimo — demonstrativo espiritual sobre o lucro operacional estimado.
@@ -39,7 +40,7 @@ export const DIZIMO_SECOES = [
       },
     ],
   },
-  { id: GRUPO_PLANO.BUDGETS, grupoId: GRUPO_PLANO.BUDGETS, label: 'Budgets', agruparPorCentroCusto: true },
+  { id: GRUPO_PLANO.BUDGETS, grupoId: GRUPO_PLANO.BUDGETS, label: BUDGET_MODULO_LABEL, agruparPorCentroCusto: true },
   {
     id: GRUPO_PLANO.PONTUAIS,
     grupoId: GRUPO_PLANO.PONTUAIS,
@@ -249,7 +250,7 @@ function slugCentroCustoDizimo(centro = '') {
   return { id: `budget-cc-${slug}`, label };
 }
 
-/** Budgets agrupados por centro de custo (Casa, Transportadora, Propriedades…). */
+/** Gastos sem vencimento agrupados por centro de custo (Casa, Transportadora, Propriedades…). */
 function montarSubsecoesPorCentroCusto(linhas, configItens, grupoId) {
   const filtradas = filtrarLinhasPlano(linhas);
   const mapa = new Map();

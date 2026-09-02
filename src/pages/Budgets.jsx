@@ -28,14 +28,15 @@ import BudgetModeloRow from '@/components/budget-previsao/BudgetModeloRow';
 import BudgetModeloDialog from '@/components/budget-previsao/BudgetModeloDialog';
 import BudgetPlanoCompleto from '@/components/budget-previsao/BudgetPlanoCompleto';
 import {
-  calcularTotaisBudgets,
   calcularRealizadoPorTag,
+  calcularTotaisBudgets,
   filtrarVisoesBudget,
   formatCompetenciaLabel,
   getCompetenciaAtual,
   montarVisoesBudgets,
   ordenarModelosPorCentroENome,
   shiftCompetencia,
+  BUDGET_MODULO_LABEL,
 } from '@/lib/budgetCalculos';
 import {
   listarModelos,
@@ -233,7 +234,7 @@ export default function BudgetsPage() {
       await salvarModelo(payload);
       invalidate();
       setModeloDialog(null);
-      toast({ title: 'Budget salvo' });
+      toast({ title: `${BUDGET_MODULO_LABEL} salvo` });
     } catch (e) {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
     } finally {
@@ -261,18 +262,18 @@ export default function BudgetsPage() {
   };
 
   const handleInativarModelo = async (modelo) => {
-    if (!window.confirm(`Inativar o budget "${modelo.nome}"?\n\nEle sai do acompanhamento, mas permanece no cadastro.`)) return;
-    await runAcaoModelo(modelo.id, () => inativarModelo(modelo.id), 'Budget inativado');
+    if (!window.confirm(`Inativar "${modelo.nome}"?\n\nSai do acompanhamento, mas permanece no cadastro.`)) return;
+    await runAcaoModelo(modelo.id, () => inativarModelo(modelo.id), 'Gasto inativado');
   };
 
   const handleReativarModelo = async (modelo) => {
-    await runAcaoModelo(modelo.id, () => reativarModelo(modelo.id), 'Budget reativado');
+    await runAcaoModelo(modelo.id, () => reativarModelo(modelo.id), 'Gasto reativado');
   };
 
   const handleExcluirModelo = async (modelo) => {
     if (
       !window.confirm(
-        `Excluir em definitivo o budget "${modelo.nome}"?\n\nEsta ação não pode ser desfeita.`,
+        `Excluir em definitivo "${modelo.nome}"?\n\nEsta ação não pode ser desfeita.`,
       )
     ) {
       return;
@@ -280,7 +281,7 @@ export default function BudgetsPage() {
     await runAcaoModelo(
       modelo.id,
       () => removerModelo(modelo.id),
-      'Budget excluído',
+      'Gasto excluído',
       {
         atualizarLista: (lista) => (lista || []).filter((m) => m.id !== modelo.id),
       },
@@ -290,7 +291,7 @@ export default function BudgetsPage() {
   const handleLimparDuplicatas = async () => {
     if (
       !window.confirm(
-        'Remover budgets duplicados?\n\nMantém um de cada (mesmo nome, categoria e centro) e apaga as cópias.',
+        `Remover gastos duplicados?\n\nMantém um de cada (mesmo nome, categoria e centro) e apaga as cópias.`,
       )
     ) {
       return;
@@ -304,7 +305,7 @@ export default function BudgetsPage() {
         title: resultado.removidos ? 'Duplicatas removidas' : 'Nenhuma duplicata',
         description: resultado.removidos
           ? `${resultado.removidos} cópia(s) removida(s). Restam ${resultado.total}.`
-          : 'Não há budgets repetidos para limpar.',
+          : 'Não há gastos repetidos para limpar.',
       });
     } catch (e) {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
@@ -344,16 +345,16 @@ export default function BudgetsPage() {
 
     if (gerandoPdf) return;
     if (modoCadastro && !listaCadastro.length) {
-      toast({ title: 'Nada para exportar', description: 'Não há budgets na lista atual.' });
+      toast({ title: 'Nada para exportar', description: `Não há ${BUDGET_MODULO_LABEL.toLowerCase()} na lista atual.` });
       return;
     }
     if (!modoCadastro && !listaAcompanhamento.length) {
-      toast({ title: 'Nada para exportar', description: 'Não há budgets para este mês com os filtros atuais.' });
+      toast({ title: 'Nada para exportar', description: `Não há ${BUDGET_MODULO_LABEL.toLowerCase()} para este mês com os filtros atuais.` });
       return;
     }
 
     setGerandoPdf(true);
-    toast({ title: 'Gerando PDF dos budgets...' });
+    toast({ title: `Gerando PDF de ${BUDGET_MODULO_LABEL.toLowerCase()}...` });
     try {
       const resposta = await gerarRelatorioBudgets({
         competencia: competenciaMes,
@@ -367,10 +368,10 @@ export default function BudgetsPage() {
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = url;
-      anchor.download = `Budgets_${modoCadastro ? 'cadastro' : 'acompanhamento'}_${competenciaMes}_${dataHoje()}.pdf`;
+      anchor.download = `GastosSemVencimento_${modoCadastro ? 'cadastro' : 'acompanhamento'}_${competenciaMes}_${dataHoje()}.pdf`;
       anchor.click();
       URL.revokeObjectURL(url);
-      toast({ title: 'PDF dos budgets gerado' });
+      toast({ title: `PDF de ${BUDGET_MODULO_LABEL.toLowerCase()} gerado` });
     } catch (error) {
       console.error(error);
       toast({
@@ -394,8 +395,8 @@ export default function BudgetsPage() {
     <div className="w-full max-w-[1400px] mx-auto min-w-0 overflow-x-hidden font-din-1451 bg-background px-4 py-4 md:px-6 lg:px-8 lg:py-6 xl:px-10 pb-[calc(var(--p38-scroll-pad-below-nav)+5.5rem)] md:pb-6">
       <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-border/40">
         <div className="flex items-center gap-1.5 min-w-0">
-        <h1 className="text-xl font-medium text-foreground">Budgets</h1>
-        <P38HelpPopover label="Ajuda: budgets" side="bottom" align="start">
+        <h1 className="text-xl font-medium text-foreground">{BUDGET_MODULO_LABEL}</h1>
+        <P38HelpPopover label={`Ajuda: ${BUDGET_MODULO_LABEL.toLowerCase()}`} side="bottom" align="start">
           <p className="font-medium text-foreground">Orçamento de despesas variáveis</p>
           <p className="text-muted-foreground">
             Cadastre metas (alimentação, combustível, etc.) na unidade que fizer sentido — por dia, a cada 7 dias, ciclo ou mês.
@@ -471,7 +472,7 @@ export default function BudgetsPage() {
               type="search"
               value={filtroCadastroBusca}
               onChange={(e) => setFiltroCadastroBusca(e.target.value)}
-              placeholder="Buscar budget"
+              placeholder="Buscar gasto"
               className="w-full border-0 bg-transparent px-3 py-2.5 text-sm shadow-none focus:outline-none focus:ring-0"
             />
           </div>
@@ -508,7 +509,7 @@ export default function BudgetsPage() {
           <FinanceiroListaEstado
             loading={loadingModelos}
             vazio={!loadingModelos && modelosCadastro.length === 0}
-            vazioMensagem="Nenhum budget cadastrado."
+            vazioMensagem={`Nenhum ${BUDGET_MODULO_LABEL.toLowerCase()} cadastrado.`}
             vazioIcon={Target}
           >
             <P38MobileLineList className="block md:!block rounded-xl overflow-hidden">
@@ -559,8 +560,8 @@ export default function BudgetsPage() {
             vazio={!loadingModelos && visoesFiltradas.length === 0}
             vazioMensagem={
               modelos.filter((m) => m.ativo !== false).length === 0
-                ? 'Nenhum budget cadastrado. Crie o primeiro na aba Lista.'
-                : 'Nenhum budget encontrado com estes filtros.'
+                ? `Nenhum ${BUDGET_MODULO_LABEL.toLowerCase()} cadastrado. Crie o primeiro na aba Lista.`
+                : 'Nenhum gasto encontrado com estes filtros.'
             }
             vazioIcon={Target}
           >
@@ -636,7 +637,7 @@ export default function BudgetsPage() {
                   setAba('cadastro');
                 }}
               >
-                Novo budget
+                Novo gasto
               </Button>
             </div>
           )}

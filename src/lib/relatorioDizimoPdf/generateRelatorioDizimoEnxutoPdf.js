@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import { registerJsPdfBarlowFonts, normalizePdfText } from '@/lib/jspdfNotoFont';
 import { DIZIMO_MODOS, normalizarConfigItemDizimo } from '@/lib/dizimoCalculos';
+import { BUDGET_MODULO_LABEL } from '@/lib/budgetCalculos';
 
 const LINE = { hair: 0.035, fine: 0.05 };
 
@@ -57,7 +58,7 @@ const ORDEM_SECOES_PDF = [
   { id: 'fixas_recorrentes', label: 'Contas fixas' },
   { id: 'folha', label: 'Folha' },
   { id: 'pontuais', label: 'Contas ocasionais' },
-  { id: 'budgets', label: 'Budgets' },
+  { id: 'budgets', label: BUDGET_MODULO_LABEL },
 ];
 
 const safe = (value) => normalizePdfText(value);
@@ -425,15 +426,9 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
 
   const renderDetalheGrupos = (secoesLista, { filtroItem, colunaDedutivel = true } = {}) => {
     let primeiro = true;
-    for (const secao of secoesLista) {
-      const label = ORDEM_SECOES_PDF.find((d) => d.id === secao.id)?.label || secao.label;
-      const itens = [];
-      for (const { item } of iterarItensSecao(secao)) {
-        if (filtroItem && !filtroItem(item)) continue;
-        itens.push(item);
-      }
-      if (!itens.length) continue;
 
+    const renderBloco = (label, itens) => {
+      if (!itens.length) return;
       if (!primeiro) spacingEntreGrupos();
       primeiro = false;
 
@@ -455,6 +450,26 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
 
       const totais = somarTotaisItens(itens, { usarFora: !colunaDedutivel });
       drawGrupoSubtotal(label, totais, { colunaDedutivel });
+    };
+
+    for (const secao of secoesLista) {
+      const labelSecao = ORDEM_SECOES_PDF.find((d) => d.id === secao.id)?.label || secao.label;
+
+      if (secao.subsecoes?.length) {
+        for (const sub of secao.subsecoes) {
+          const itens = (sub.itens || []).filter((item) => !filtroItem || filtroItem(item));
+          if (!itens.length) continue;
+          renderBloco(sub.label || labelSecao, itens);
+        }
+        continue;
+      }
+
+      const itens = [];
+      for (const { item } of iterarItensSecao(secao)) {
+        if (filtroItem && !filtroItem(item)) continue;
+        itens.push(item);
+      }
+      renderBloco(labelSecao, itens);
     }
   };
 
