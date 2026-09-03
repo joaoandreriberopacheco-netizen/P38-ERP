@@ -128,6 +128,14 @@ function TabelaDemonstrativoDizimo({ demonstrativo, loadingMargem = false }) {
               />
             ))}
             <LinhaDemonstrativo4Col
+              descricao="Subtotal"
+              c2={formatValorColuna(demonstrativo.totalOperacionalBruto)}
+              c3={formatValorColuna(demonstrativo.totalNaoDedutivel)}
+              c4={formatValorColuna(demonstrativo.totalDedutivel)}
+              bold
+              className="border-t-2"
+            />
+            <LinhaDemonstrativo4Col
               descricao="Lucro operacional"
               c2="—"
               c3="—"
