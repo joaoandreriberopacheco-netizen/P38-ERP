@@ -14,6 +14,19 @@ export const DIZIMO_MODOS = {
 
 export const DIZIMO_PERCENTUAL = 10;
 
+export function normalizarPercentualDedutivel(value) {
+  const n = Number(String(value ?? '').trim().replace(',', '.'));
+  if (!Number.isFinite(n)) return 0;
+  return Math.min(100, Math.max(0, Math.round(n * 100) / 100));
+}
+
+export function formatPercentualDedutivel(value) {
+  return normalizarPercentualDedutivel(value).toLocaleString('pt-BR', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+}
+
 const GRUPO_PLANO = {
   FIXAS: 'fixas_recorrentes',
   FOLHA: 'folha',
@@ -55,7 +68,7 @@ export function criarConfigDedutivelPadrao() {
 
 export function normalizarConfigItemDizimo(raw = {}) {
   const modo = Object.values(DIZIMO_MODOS).includes(raw.modo) ? raw.modo : DIZIMO_MODOS.TOTAL;
-  const percentual = Math.min(100, Math.max(0, Number(raw.percentual) || 0));
+  const percentual = normalizarPercentualDedutivel(raw.percentual);
   return {
     modo,
     percentual: modo === DIZIMO_MODOS.PARCIAL ? (percentual || 100) : 100,
@@ -173,7 +186,7 @@ export function formatarNomeItemDizimoLista(item) {
   const nome = corrigirTextoPt(item?.nome || '—');
   const config = normalizarConfigItemDizimo(item?.config);
   if (config.modo === DIZIMO_MODOS.PARCIAL) {
-    return `${nome} (${config.percentual}%)`;
+    return `${nome} (${formatPercentualDedutivel(config.percentual)}%)`;
   }
   return nome;
 }
@@ -328,7 +341,7 @@ export function montarAnexoDespesasForaBase(secoes = []) {
         valorFora: item.valorNaoDedutivel,
         motivoFora:
           item.config?.modo === DIZIMO_MODOS.PARCIAL
-            ? `Parcial ${item.config.percentual}%`
+            ? `Parcial ${formatPercentualDedutivel(item.config.percentual)}%`
             : labelModoDedutivel(item.config?.modo),
       }));
 

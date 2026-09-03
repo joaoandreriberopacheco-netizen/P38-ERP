@@ -1,6 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { DIZIMO_MODOS, labelModoDedutivel } from '@/lib/dizimoCalculos';
+import {
+  DIZIMO_MODOS,
+  formatPercentualDedutivel,
+  labelModoDedutivel,
+  normalizarPercentualDedutivel,
+} from '@/lib/dizimoCalculos';
 
 const OPCOES = [
   DIZIMO_MODOS.TOTAL,
@@ -8,36 +13,74 @@ const OPCOES = [
   DIZIMO_MODOS.NAO_DEDUTIVEL,
 ];
 
-function clampPercentual(value) {
-  const n = Number(String(value).replace(',', '.'));
-  if (!Number.isFinite(n)) return 0;
-  return Math.min(100, Math.max(0, Math.round(n)));
+const PARTIAL_PERCENTUAL_PATTERN = /^\d{0,3}([,.]\d{0,2})?$/;
+
+function isValidPartialPercentualInput(raw) {
+  const s = String(raw ?? '').trim();
+  if (s === '') return true;
+  return PARTIAL_PERCENTUAL_PATTERN.test(s);
+}
+
+function parsePercentualInput(raw) {
+  const s = String(raw ?? '').trim().replace(',', '.');
+  if (s === '' || s === '.') return null;
+  const n = Number(s);
+  if (!Number.isFinite(n)) return null;
+  return normalizarPercentualDedutivel(n);
 }
 
 function ParcialInlineInput({ percentual, onChange }) {
   const inputRef = useRef(null);
+  const [draft, setDraft] = useState(() => formatPercentualDedutivel(percentual));
+
+  useEffect(() => {
+    setDraft(formatPercentualDedutivel(percentual));
+  }, [percentual]);
 
   useEffect(() => {
     inputRef.current?.focus();
     inputRef.current?.select();
   }, []);
 
+  const commitDraft = () => {
+    const parsed = parsePercentualInput(draft);
+    if (parsed == null) {
+      const fallback = normalizarPercentualDedutivel(percentual);
+      setDraft(formatPercentualDedutivel(fallback));
+      onChange(fallback);
+      return;
+    }
+    setDraft(formatPercentualDedutivel(parsed));
+    onChange(parsed);
+  };
+
   return (
     <div
       className={cn(
-        'inline-flex items-center gap-0.5 min-w-[3.25rem] justify-center px-1.5 py-1 rounded-lg',
+        'inline-flex items-center gap-0.5 min-w-[3.75rem] justify-center px-1.5 py-1 rounded-lg',
         'bg-muted/40 text-foreground border border-black/[0.1] dark:border-white/15',
       )}
     >
       <input
         ref={inputRef}
         type="text"
-        inputMode="numeric"
-        pattern="[0-9]*"
-        value={percentual}
-        onChange={(e) => onChange(clampPercentual(e.target.value))}
+        inputMode="decimal"
+        value={draft}
+        onChange={(e) => {
+          const next = e.target.value;
+          if (!isValidPartialPercentualInput(next)) return;
+          setDraft(next);
+        }}
+        onBlur={commitDraft}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            commitDraft();
+            inputRef.current?.blur();
+          }
+        }}
         onFocus={(e) => e.target.select()}
-        className="w-8 h-4 text-[11px] font-semibold text-center tabular-nums bg-transparent outline-none"
+        className="w-10 h-4 text-[11px] font-semibold text-center tabular-nums bg-transparent outline-none"
         aria-label="Percentual dedutível"
       />
       <span className="text-[10px] font-medium text-foreground/70">%</span>
@@ -57,7 +100,7 @@ export default function DedutibilidadeBlocoToggle({ value, onChange, className, 
   };
 
   const setPercentual = (next) => {
-    onChange?.({ modo: DIZIMO_MODOS.PARCIAL, percentual: clampPercentual(next) });
+    onChange?.({ modo: DIZIMO_MODOS.PARCIAL, percentual: normalizarPercentualDedutivel(next) });
   };
 
   return (

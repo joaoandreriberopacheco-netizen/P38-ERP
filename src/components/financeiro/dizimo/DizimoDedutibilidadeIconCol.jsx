@@ -1,5 +1,5 @@
 import { Check, CircleSlash, Scissors } from 'lucide-react';
-import { DIZIMO_MODOS, normalizarConfigItemDizimo } from '@/lib/dizimoCalculos';
+import { DIZIMO_MODOS, formatPercentualDedutivel, normalizarConfigItemDizimo } from '@/lib/dizimoCalculos';
 import { cn } from '@/lib/utils';
 
 /** Tabela aberta — divisória ícone|texto um pouco mais grossa que as demais. */
@@ -57,7 +57,7 @@ export default function DizimoDedutibilidadeIconCol({ config, className }) {
       ) : null}
 
       <span className={cn('mt-1 text-[10px] font-light tabular-nums leading-none', tone)}>
-        {pct}%
+        {formatPercentualDedutivel(pct)}%
       </span>
     </div>
   );

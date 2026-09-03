@@ -1,13 +1,13 @@
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { formatFinanceiroValor } from '@/components/financeiro/fluxo/FinanceiroListaShared';
-import { DIZIMO_MODOS, labelModoDedutivel } from '@/lib/dizimoCalculos';
+import { DIZIMO_MODOS, formatPercentualDedutivel, labelModoDedutivel } from '@/lib/dizimoCalculos';
 import DedutibilidadeBlocoToggle from '@/components/financeiro/dizimo/DedutibilidadeBlocoToggle';
 import { P38StatusPill } from '@/components/ui/p38-mobile-line';
 
 function resumoDedutibilidade(item) {
   const modo = item.config?.modo || DIZIMO_MODOS.TOTAL;
   if (modo === DIZIMO_MODOS.PARCIAL) {
-    return `${item.config.percentual}% entra na base do dízimo`;
+    return `${formatPercentualDedutivel(item.config.percentual)}% entra na base do dízimo`;
   }
   if (modo === DIZIMO_MODOS.NAO_DEDUTIVEL) {
     return 'Não entra no cálculo do lucro líquido operacional';

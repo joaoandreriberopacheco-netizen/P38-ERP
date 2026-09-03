@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { registerJsPdfBarlowFonts, normalizePdfText } from '@/lib/jspdfNotoFont';
-import { DIZIMO_MODOS, normalizarConfigItemDizimo } from '@/lib/dizimoCalculos';
+import { DIZIMO_MODOS, formatPercentualDedutivel, normalizarConfigItemDizimo } from '@/lib/dizimoCalculos';
 import { BUDGET_MODULO_LABEL } from '@/lib/budgetCalculos';
 
 const LINE = { hair: 0.035, fine: 0.05 };
@@ -103,7 +103,7 @@ function formatarCelulaNaoDedutivel(item) {
   if (valor <= 0.009) return '0,00';
   const cfg = normalizarConfigItemDizimo(item.config);
   if (cfg.modo === DIZIMO_MODOS.PARCIAL) {
-    return `${valorMoeda(valor)} (${cfg.percentual}%)`;
+    return `${valorMoeda(valor)} (${formatPercentualDedutivel(cfg.percentual)}%)`;
   }
   return valorMoeda(valor);
 }
@@ -117,7 +117,7 @@ function formatarCelulaDedutivel(item) {
 function rotuloPercentualParcial(item) {
   const cfg = normalizarConfigItemDizimo(item.config);
   if (cfg.modo !== DIZIMO_MODOS.PARCIAL) return '';
-  return `${cfg.percentual}%`;
+  return `${formatPercentualDedutivel(cfg.percentual)}%`;
 }
 
 function rotuloDescricao(item) {

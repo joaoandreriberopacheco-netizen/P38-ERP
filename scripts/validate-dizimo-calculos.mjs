@@ -8,6 +8,7 @@ import {
   calcularFatorDedutivel,
   resolverConfigItensDizimo,
   formatarNomeItemDizimoLista,
+  formatPercentualDedutivel,
 } from '../src/lib/dizimoCalculos.js';
 import { centroCustoCanonicoBudgetPorNome, criarModeloComDefaults } from '../src/lib/budgetCalculos.js';
 
@@ -77,6 +78,25 @@ const proLaboreParcial = montarDemonstrativoDizimo(plano, {
   'folha-3': { modo: DIZIMO_MODOS.PARCIAL, percentual: 50 },
 });
 assert(proLaboreParcial.totalDedutivel === 47_500, 'pró-labore metade dedutível');
+
+const parcialDecimal = montarDemonstrativoDizimo(plano, {
+  'fixa-a': { modo: DIZIMO_MODOS.PARCIAL, percentual: 4.44 },
+});
+assert(
+  Math.abs(parcialDecimal.totalDedutivel - 50_444) < 0.01,
+  'percentual parcial com duas casas decimais',
+);
+assert(
+  formatPercentualDedutivel(4.44) === '4,44',
+  'formata percentual com vírgula',
+);
+assert(
+  formatarNomeItemDizimoLista({
+    nome: 'Cartão Visa',
+    config: { modo: DIZIMO_MODOS.PARCIAL, percentual: 4.44 },
+  }) === 'Cartão Visa (4,44%)',
+  'nome parcial com duas casas',
+);
 
 // Folha com subseções
 const folhaSecao = padrao.secoes.find((s) => s.id === 'folha');
