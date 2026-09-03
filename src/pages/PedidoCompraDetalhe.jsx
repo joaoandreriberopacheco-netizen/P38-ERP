@@ -11,6 +11,8 @@ import {
   pedidoStatusIndicaAguardandoAprovacaoFinanceira,
   pedidoPrecisaSincronizarAprovacaoFinanceira,
 } from '@/lib/pedidoCompraFinanceiro';
+import { sincronizarPedidoCompraAprovacaoFinanceira } from '@/lib/aprovarPedidoCompraFinanceiro';
+import { normalizeItemToCanonicalFactorOne } from '@/lib/productUnits';
 import { format } from 'date-fns';
 import { isBase44BypassEnabled } from '@/integrations/p38/providers';
 
