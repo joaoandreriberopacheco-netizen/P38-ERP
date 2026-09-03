@@ -44,6 +44,12 @@ export function embarqueTemSaldoPendente(embarque, minBase = MIN_SALDO_PENDENTE_
   );
 }
 
+/** Despacho editável enquanto a recepção deste embarque ainda não começou. */
+export function podeEditarDespachoEmbarque(embarque) {
+  const status = String(embarque?.status_recebimento || embarque?.status_recebimento_embarque || 'Pendente').trim();
+  return !status || status === 'Pendente';
+}
+
 /**
  * Recepção concluída neste split (inclui recepção em pacotes com status ainda Pendente).
  * Usa unidade base; exibição continua em vitrine na UI.
@@ -69,7 +75,7 @@ export function embarqueRecepcaoDocumentalCompleta(embarque) {
 export function calcularPercentuaisLogistica(pedido, embarques = []) {
   const totalPedido = (pedido?.itens || []).reduce(
     (acc, item) => acc + qtyPedidaBaseItem(item),
-    0
+    0,
   );
   if (!totalPedido) {
     return { despachado: 0, concluido: 0, pendente: 100 };

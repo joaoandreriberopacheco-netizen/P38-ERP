@@ -45,7 +45,7 @@ import PainelCentralFinanceiroPedido from './PainelCentralFinanceiroPedido.jsx';
 import PedidoCompraLogisticaTab from './PedidoCompraLogisticaTab.jsx';
 import AbaRecepção from './AbaRecepção.jsx';
 import { filterEmbarquesVisiveisParaPedido } from './embarqueFilters';
-import { hydrateEmbarquesPedidoFromSql } from '@/lib/fetchEmbarqueItens';
+import { refreshPedidoCompraComLogistica } from '@/lib/fetchPedidoCompraItens';
 import {
   calcValorTotalPedidoCompra,
   cancelarLancamentosNaoPagosPedidoCompra,
@@ -1805,21 +1805,12 @@ export default function PedidoCompraForm({
                 onPedidoUpdated={async () => {
                   const pedidoId = (pedidoLogistica || pedido)?.id;
                   if (!pedidoId) return;
-                  const [atualizado, embarquesAtualizados] = await Promise.all([
-                    base44.entities.PedidoCompra.filter({ id: pedidoId }),
-                    base44.entities.Embarque.filter({ pedido_compra_id: pedidoId })
-                  ]);
-                  if (atualizado?.[0]) {
-                    const embarquesHidratados = await hydrateEmbarquesPedidoFromSql(
-                      base44,
-                      pedidoId,
-                      embarquesAtualizados || [],
-                    );
-                    const embarquesVisiveis = filterEmbarquesVisiveisParaPedido(embarquesHidratados);
-                    const pedidoCompleto = { ...atualizado[0], _embarques: embarquesVisiveis };
-                    setPedidoLogistica(pedidoCompleto);
-                    setFormData(prev => ({ ...prev, ...pedidoCompleto }));
-                  }
+                  const pedidoCompleto = await refreshPedidoCompraComLogistica(base44, pedidoId, {
+                    filterEmbarques: filterEmbarquesVisiveisParaPedido,
+                  });
+                  if (!pedidoCompleto) return;
+                  setPedidoLogistica(pedidoCompleto);
+                  setFormData((prev) => ({ ...prev, ...pedidoCompleto }));
                 }}
               />
             ) : (
@@ -1832,7 +1823,13 @@ export default function PedidoCompraForm({
           {/* ABA: RECEPÇÃO */}
           <TabsContent value="recepcao" className="mt-0" data-tour="pedido-tab-recepcao">
             {pedido?.id ? (
-              <AbaRecepção pedido={pedidoLogistica || pedido} />
+              <AbaRecepção
+                pedido={pedidoLogistica || pedido}
+                onPedidoUpdated={(pedidoCompleto) => {
+                  setPedidoLogistica(pedidoCompleto);
+                  setFormData((prev) => ({ ...prev, ...pedidoCompleto }));
+                }}
+              />
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <p className="text-sm text-muted-foreground">Salve o pedido primeiro para registrar recebimentos.</p>

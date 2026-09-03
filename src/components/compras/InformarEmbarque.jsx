@@ -15,7 +15,8 @@ import { calcPercentualValorEmbarcadoPedido } from '@/lib/embarqueValorFinanceir
 import { formatQuantity, roundToTwoDecimals } from '@/lib/financialUtils';
 import { saveEmbarqueItem } from '@/functions/saveEmbarqueItem';
 import { buildItensCanonicosEmbarque } from '@/lib/buildEmbarqueItensCanonicos';
-import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
+import { getEmbarqueItensLinhas, hydrateEmbarquesFromSql } from '@/lib/fetchEmbarqueItens';
+import { ensurePedidoCompraItensCanonico } from '@/lib/fetchPedidoCompraItens';
 import { invokeRecalcularConclusaoPedidoCompra } from '@/lib/p38StockRecalc';
 import {
   buildTransportadoraPersistPayload,
@@ -213,6 +214,11 @@ const PAUSA_ANTES_RECEPCAO_MS = 2200;
 
 export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, onIrParaRecepcao, embarqueExistente }) {
   const isEdicao = !!embarqueExistente;
+  const [pedidoHidratado, setPedidoHidratado] = useState(pedido);
+  const [embarqueEdicaoHidratado, setEmbarqueEdicaoHidratado] = useState(null);
+  const embarqueRef = embarqueEdicaoHidratado || embarqueExistente;
+  const pedidoAtual = pedidoHidratado || pedido;
+  const itensPedido = pedidoAtual?.itens || [];
   const [transportadoras, setTransportadoras] = useState([]);
   const [eventosLogisticos, setEventosLogisticos] = useState([]);
   const [eventoLogisticoId, setEventoLogisticoId] = useState('');
@@ -241,9 +247,33 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
   }, [eventosLogisticos, eventoLogisticoId, eventoVinculado]);
 
   const jaEmbarcadoBase = useMemo(() =>
-    calcularJaEmbarcadoBaseSemEmbarque(pedido, embarqueExistente?.id),
-    [pedido, embarqueExistente]
+    calcularJaEmbarcadoBaseSemEmbarque(pedidoAtual, embarqueExistente?.id),
+    [pedidoAtual, embarqueExistente]
   );
+
+  useEffect(() => {
+    if (!isOpen || !pedido?.id) {
+      setPedidoHidratado(pedido);
+      return undefined;
+    }
+    let cancelled = false;
+    ensurePedidoCompraItensCanonico(base44, pedido).then((hydrated) => {
+      if (!cancelled) setPedidoHidratado(hydrated || pedido);
+    });
+    return () => { cancelled = true; };
+  }, [isOpen, pedido?.id, pedido]);
+
+  useEffect(() => {
+    if (!isOpen || !embarqueExistente?.id) {
+      setEmbarqueEdicaoHidratado(null);
+      return undefined;
+    }
+    let cancelled = false;
+    hydrateEmbarquesFromSql(base44, [embarqueExistente]).then(([hydrated]) => {
+      if (!cancelled && hydrated) setEmbarqueEdicaoHidratado(hydrated);
+    });
+    return () => { cancelled = true; };
+  }, [isOpen, embarqueExistente?.id]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -251,38 +281,38 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
       setEventoVinculado(null);
       return;
     }
-    if (!pedido) return;
-    logDespachoAudit({ action: 'despacho_aberto', pedidoId: pedido.id, edicao: !!embarqueExistente });
+    if (!pedidoAtual) return;
+    logDespachoAudit({ action: 'despacho_aberto', pedidoId: pedidoAtual.id, edicao: !!embarqueExistente });
     setShowTripSelector(false);
     loadTransportadoras();
-    loadEventosLogisticos(embarqueExistente);
+    loadEventosLogisticos(embarqueRef);
     loadFornecedores();
-    setFornecedorLocal({ id: pedido.fornecedor_id || '', nome: pedido.fornecedor_nome || '' });
+    setFornecedorLocal({ id: pedidoAtual.fornecedor_id || '', nome: pedidoAtual.fornecedor_nome || '' });
     setPodeEscolherFornecedor(false);
     setActiveTab('transporte');
     setUnidadeLinha({});
 
-    const jaBase = calcularJaEmbarcadoBaseSemEmbarque(pedido, embarqueExistente?.id);
+    const jaBase = calcularJaEmbarcadoBaseSemEmbarque(pedidoAtual, embarqueExistente?.id);
     const initUnidade = {};
     const initQtd = {};
     const initSel = {};
 
-    if (isEdicao) {
-      setDataDespacho(embarqueExistente.data_embarque ? toLocalDateKey(new Date(embarqueExistente.data_embarque)) : dataHoje());
-      setTransportadoraId(embarqueExistente.transportadora_id || '');
-      setTransportadoraNome(embarqueExistente.transportadora_nome || '');
-      setEventoLogisticoId(embarqueExistente.evento_logistico_id || '');
-      const etaVal = embarqueExistente.eta
-        ? toLocalDateKey(new Date(embarqueExistente.eta))
+    if (isEdicao && embarqueRef) {
+      setDataDespacho(embarqueRef.data_embarque ? toLocalDateKey(new Date(embarqueRef.data_embarque)) : dataHoje());
+      setTransportadoraId(embarqueRef.transportadora_id || '');
+      setTransportadoraNome(embarqueRef.transportadora_nome || '');
+      setEventoLogisticoId(embarqueRef.evento_logistico_id || '');
+      const etaVal = embarqueRef.eta
+        ? toLocalDateKey(new Date(embarqueRef.eta))
         : '';
       setEta(etaVal);
-      const volsCarregados = (embarqueExistente.volumes_detalhados && Array.isArray(embarqueExistente.volumes_detalhados) && embarqueExistente.volumes_detalhados.length > 0)
-        ? embarqueExistente.volumes_detalhados
+      const volsCarregados = (embarqueRef.volumes_detalhados && Array.isArray(embarqueRef.volumes_detalhados) && embarqueRef.volumes_detalhados.length > 0)
+        ? embarqueRef.volumes_detalhados
         : [];
       setVolumes(volsCarregados);
-      setObservacoes(embarqueExistente.observacoes || '');
-      const itensDoEmbarque = getEmbarqueItensLinhas(embarqueExistente);
-      (pedido.itens || []).forEach((item) => {
+      setObservacoes(embarqueRef.observacoes || '');
+      const itensDoEmbarque = getEmbarqueItensLinhas(embarqueRef);
+      itensPedido.forEach((item) => {
         const produto = null;
         const embItem = itensDoEmbarque.find((i) => i.produto_id === item.produto_id);
         const linha = buildUnidadeLinhaInicial(item, produto, embItem);
@@ -304,7 +334,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
       setEta('');
       setVolumes([]);
       setObservacoes('');
-      (pedido.itens || []).forEach((item) => {
+      (itensPedido || []).forEach((item) => {
         const linha = buildUnidadeLinhaInicial(item, null);
         initUnidade[item.produto_id] = linha;
         const pedidaBase = pedidaBaseItem(item);
@@ -321,15 +351,15 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
     setSelectedItems(initSel);
     setUnidadeLinha(initUnidade);
 
-    carregarProdutosMap(pedido.itens || []).then((map) => {
+    carregarProdutosMap(itensPedido || []).then((map) => {
       setProdutosMap(map);
       const unidadeAtualizada = { ...initUnidade };
       const qtdAtualizada = { ...initQtd };
-      (pedido.itens || []).forEach((item) => {
+      (itensPedido || []).forEach((item) => {
         const produto = map[item.produto_id];
         if (!produto) return;
-        if (isEdicao) {
-          const itensDoEmbarque = getEmbarqueItensLinhas(embarqueExistente);
+        if (isEdicao && embarqueRef) {
+          const itensDoEmbarque = getEmbarqueItensLinhas(embarqueRef);
           const embItem = itensDoEmbarque.find((i) => i.produto_id === item.produto_id);
           const linha = enrichLinhaDespacho(produto, buildUnidadeLinhaInicial(item, produto, embItem));
           unidadeAtualizada[item.produto_id] = linha;
@@ -350,7 +380,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
       setUnidadeLinha(unidadeAtualizada);
       setQtdEmbarque(qtdAtualizada);
     });
-  }, [isOpen, pedido, embarqueExistente]);
+  }, [isOpen, pedidoAtual, embarqueExistente, embarqueRef, itensPedido, isEdicao]);
 
   const loadTransportadoras = async () => {
     try {
@@ -410,20 +440,20 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
 
   const statusPreview = useMemo(() =>
     calcularStatusEmbarque(
-      pedido?.itens || [],
+      itensPedido,
       jaEmbarcadoBase,
       qtdEmbarque,
       selectedItems,
       unidadeLinha,
       produtosMap,
     ),
-    [pedido, jaEmbarcadoBase, qtdEmbarque, selectedItems, unidadeLinha, produtosMap]
+    [itensPedido, jaEmbarcadoBase, qtdEmbarque, selectedItems, unidadeLinha, produtosMap]
   );
 
   const handleConfirmUnitDespacho = (unitOption) => {
     const produtoId = unitSelector.produtoId;
     if (!produtoId || !unitOption) return;
-    const item = (pedido.itens || []).find((i) => i.produto_id === produtoId);
+    const item = (itensPedido || []).find((i) => i.produto_id === produtoId);
     if (!item) return;
     const linhaAtual = unidadeLinha[produtoId] || buildUnidadeLinhaInicial(item, produtosMap[produtoId]);
     const qtyAtual = parseFloat(qtdEmbarque[produtoId]) || 0;
@@ -500,9 +530,9 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
         },
         transportadoras,
       );
-      const embarquesExistentes = Array.isArray(pedido._embarques) ? pedido._embarques : [];
+      const embarquesExistentes = Array.isArray(pedidoAtual._embarques) ? pedidoAtual._embarques : [];
       const letraExibicao = String.fromCharCode(65 + embarquesExistentes.length);
-      const itensEmbarcados = (pedido.itens || [])
+      const itensEmbarcados = (itensPedido || [])
         .filter(item => selectedItems[item.produto_id])
         .map(item => {
           const produto = produtosMap[item.produto_id];
@@ -511,7 +541,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
           return buildItemEmbarquePersistido(item, produto, linha, qEmb);
         })
         .filter(i => i.quantidade_embarcada > 0);
-      const itensJaLancados = getEmbarqueItensLinhas(embarqueExistente).filter(
+      const itensJaLancados = getEmbarqueItensLinhas(embarqueRef).filter(
         (item) => (Number(item?.quantidade_embarcada) || 0) > 0
       );
       const podeSalvarSoTransporte = isEdicao && itensEmbarcados.length === 0 && itensJaLancados.length > 0;
@@ -563,7 +593,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
       }
 
       if (!podeSalvarSoTransporte) {
-        const itensCanonicos = buildItensCanonicosEmbarque(itensEmbarcados, pedido.itens || []);
+        const itensCanonicos = buildItensCanonicosEmbarque(itensEmbarcados, itensPedido || []);
         if (itensCanonicos.length === 0) {
           toast.error('Não foi possível gravar as linhas do despacho. Verifique produto e quantidades.');
           return;
@@ -595,15 +625,21 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
         nProdutosVinculados > 0
           ? `${nProdutosVinculados} produto(s) com quantidades embarcadas (${formatQuantity(totalUnidadesEmbarcadas)} un.). `
           : 'Sem linhas novas por produto neste envio (apenas transporte/dados logísticos). ';
-      const seguirRecepcao = 'A seguir abrimos a Recepção.';
+      const seguirRecepcao = isEdicao
+        ? 'Quantidades e dados logísticos gravados — pode receber quando quiser.'
+        : 'A seguir abrimos a Recepção.';
 
       toast.success(msgOk, {
         description: `${resumoItens}${seguirRecepcao}`,
-        duration: 6500,
+        duration: isEdicao ? 4500 : 6500,
       });
-      await new Promise((r) => setTimeout(r, PAUSA_ANTES_RECEPCAO_MS));
+      if (!isEdicao) {
+        await new Promise((r) => setTimeout(r, PAUSA_ANTES_RECEPCAO_MS));
+      }
       onSuccess?.();
-      onIrParaRecepcao?.();
+      if (!isEdicao) {
+        onIrParaRecepcao?.();
+      }
       onClose();
     } catch (err) {
       const det = err?.message || err?.response?.data?.error || 'Erro desconhecido';
@@ -809,6 +845,11 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
               </TabsContent>
 
               <TabsContent value="itens" className="space-y-4 mt-0">
+                {isEdicao && (
+                  <p className="text-xs text-muted-foreground rounded-xl bg-amber-50 dark:bg-amber-900/20 px-4 py-3 leading-relaxed">
+                    Ajuste as quantidades embarcadas (ex.: caixas avariadas) e salve. Só é possível enquanto a recepção ainda não começou.
+                  </p>
+                )}
                 <div className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm ${
                   statusPreview === 'Total' ? 'bg-muted/50 text-muted-foreground' :
                   statusPreview === 'Parcial' ? 'bg-muted/50 text-muted-foreground' :
@@ -825,7 +866,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                 </div>
 
                 <div className="space-y-2">
-                  {(pedido.itens || []).map(item => {
+                  {(itensPedido || []).map(item => {
                     const produto = produtosMap[item.produto_id];
                     const linha = resolveUnidadeLinha(item, produto, unidadeLinha, item.produto_id);
                     const pedidaBase = pedidaBaseItem(item);
