@@ -675,6 +675,17 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
     );
   }
 
+  advanceFlow(PAD.subtotalBefore);
+  drawRow4(
+    'Subtotal',
+    valorMoeda(demonstrativo.totalOperacionalBruto),
+    number(demonstrativo.totalNaoDedutivel) > 0.009
+      ? valorMoeda(demonstrativo.totalNaoDedutivel)
+      : '0,00',
+    valorMoeda(demonstrativo.totalDedutivel),
+    { bold: true },
+  );
+
   advanceFlow(PAD.totalBefore);
   drawRow4('Lucro operacional', '—', '—', valorMoeda(demonstrativo.lucroLiquidoOperacional), {
     bold: true,
@@ -720,6 +731,6 @@ export async function generateRelatorioDizimoEnxutoPdf(payload = {}) {
 
   return {
     data: doc.output('arraybuffer'),
-    version: 'dizimo_half_page_columns_v16',
+    version: 'dizimo_half_page_columns_v17',
   };
 }
