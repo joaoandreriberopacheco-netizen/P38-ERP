@@ -24,6 +24,10 @@ import {
   listarLancamentosRecorrentes,
 } from '@/lib/agefinPrevisaoService';
 import { listarParcelamentos } from '@/lib/agefinParcelamentoService';
+import {
+  listarOverridesCompetenciaMes,
+  mapaOverridesCompetenciaMes,
+} from '@/lib/agefinCompetenciaMesService';
 import { montarPlanoFinanceiroConsolidado } from '@/lib/planoFinanceiroConsolidado';
 import { montarDemonstrativoDizimo, extrairContextoItensDizimo, criarConfigDedutivelPadrao, normalizarConfigItemDizimo } from '@/lib/dizimoCalculos';
 import {
@@ -210,6 +214,17 @@ export default function DizimoPlano() {
     staleTime: P38_STALE_TIME,
   });
 
+  const { data: overridesCompetenciaAgefin = [], isLoading: loadingOverridesAgefin } = useQuery({
+    queryKey: ['dizimo', 'agefin-overrides'],
+    queryFn: listarOverridesCompetenciaMes,
+    staleTime: P38_STALE_TIME,
+  });
+
+  const overridesAgefinPorSerie = useMemo(
+    () => mapaOverridesCompetenciaMes(overridesCompetenciaAgefin, competencia),
+    [overridesCompetenciaAgefin, competencia],
+  );
+
   const { data: modelosFolha = [], isLoading: loadingFolha } = useQuery({
     queryKey: ['dizimo', 'folha-modelos'],
     queryFn: listarModelosFolha,
@@ -263,6 +278,7 @@ export default function DizimoPlano() {
     loadingAgefin ||
     loadingRecorrentesAgefin ||
     loadingParcelamentosAgefin ||
+    loadingOverridesAgefin ||
     loadingFolha ||
     loadingBudget ||
     loadingCompetenciasFolha ||
@@ -293,6 +309,8 @@ export default function DizimoPlano() {
         lucroBruto: lucroBrutoEfetivo,
         margemDetalhe: margemDetalheEfetiva,
         parcelamentosAgefin,
+        fonteFixas: 'previsao_mes',
+        overridesAgefinPorSerie,
       }),
     [
       competencia,
@@ -308,6 +326,7 @@ export default function DizimoPlano() {
       lancamentosVencimento,
       lucroBrutoEfetivo,
       margemDetalheEfetiva,
+      overridesAgefinPorSerie,
     ],
   );
 
@@ -441,8 +460,10 @@ export default function DizimoPlano() {
             <h2 className="text-sm font-semibold text-foreground">Demonstrativo do dízimo</h2>
             <P38HelpPopover label="Ajuda: dízimo" size="sm">
               <p className="text-muted-foreground">
-                O lucro bruto vem do Relatório de Margem. As despesas operacionais vêm do planejamento
-                (Agefin, folha, gastos sem vencimento e pauta).
+                O lucro bruto vem do Relatório de Margem. As contas fixas vêm da{' '}
+                <strong className="text-foreground">previsão do mês</strong> do planejamento
+                (incluindo ajustes guardados na competência). Folha, gastos sem vencimento e pauta
+                seguem as mesmas fontes do plano financeiro.
               </p>
               <p className="text-muted-foreground mt-2">
                 Configure item a item — cada alteração é salva automaticamente neste navegador.

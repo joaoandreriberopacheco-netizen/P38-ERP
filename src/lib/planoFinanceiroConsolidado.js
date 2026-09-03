@@ -45,6 +45,10 @@ import {
   lancamentoPago,
 } from '@/lib/agefinConsultaFilters';
 import {
+  competenciaExcluidaDoTotal,
+  montarCompetenciasVisaoComParcelas,
+} from '@/lib/agefinParcelamentoCalculos';
+import {
   grupoSerieEhParcelado,
   lancamentoCobreParcelaVirtual,
   lancamentoEntraPautaAgefinPrevisao,
@@ -122,7 +126,112 @@ function labelValorParcela(frequencia) {
   return `Valor ${f.toLowerCase()}`;
 }
 
-function montarLinhasFixas(competencia, modelosAgefin, lancamentosAgefin, lancamentosRecorrentes = []) {
+function montarLinhasFixasPrevisaoMes(
+  competencia,
+  modelosAgefin,
+  lancamentosAgefin,
+  lancamentosRecorrentes = [],
+  parcelamentos = [],
+  overridesPorSerie = {},
+) {
+  const frequenciasPorGrupo = mapaFrequenciaPorGrupoLancamento(lancamentosRecorrentes);
+  const modelosMap = Object.fromEntries(
+    (modelosAgefin || []).filter((m) => m?.id).map((m) => [m.id, m]),
+  );
+  const competencias = montarCompetenciasVisaoComParcelas(
+    competencia,
+    modelosAgefin,
+    lancamentosAgefin,
+    parcelamentos,
+    lancamentosRecorrentes,
+    overridesPorSerie,
+  );
+
+  const recorrentes = [];
+  const naoMensais = [];
+  const vistos = new Set();
+
+  for (const comp of competencias) {
+    if (competenciaExcluidaDoTotal(comp) || comp._modoParcela) continue;
+    const modelo = modelosMap[comp.serie_id];
+    if (!modelo) continue;
+    if (grupoSerieEhParcelado(modelo, lancamentosRecorrentes)) continue;
+    if (vistos.has(modelo.id)) continue;
+    vistos.add(modelo.id);
+
+    const frequencia = frequenciaEfetivaSerie(modelo, frequenciasPorGrupo);
+    const mensal = ehFrequenciaMensal(frequencia);
+    const valorParcela = valorEfetivoCompetencia(comp, modelo);
+    if (valorParcela <= 0) continue;
+
+    const centroCusto = comp.centro_custo || modelo.centro_custo || '';
+    const categoria = limparCategoria(comp.categoria_nome || modelo.categoria_nome || '');
+    const dataVencimento = mensal
+      ? dataVencimentoCompetencia(comp, modelo)
+      : dataVencimentoReferenciaSerie(modelo, competencia);
+    const nome = comp.serie_nome || modelo.nome;
+    const venceNesteMes = serieDeveAparecerNaCompetencia(modelo, competencia, frequenciasPorGrupo);
+
+    if (mensal) {
+      recorrentes.push(
+        linhaItem({
+          id: `fixa-${modelo.id}`,
+          grupo: GRUPO.FIXAS_RECORRENTES,
+          nome,
+          detalhe: '',
+          valor: valorParcela,
+          link: `/PlanejamentoFinanceiro?competencia=${competencia}`,
+          centroCusto,
+          categoria,
+          dataVencimento,
+        }),
+      );
+    } else {
+      naoMensais.push(
+        linhaItem({
+          id: `nao-mensal-${modelo.id}`,
+          grupo: GRUPO.FIXAS_NAO_MENSAIS,
+          nome,
+          detalhe: '',
+          valor: provisaoMensalPorFrequencia(valorParcela, frequencia),
+          valorSecundario: valorParcela,
+          valorSecundarioLabel: venceNesteMes ? 'Vence neste mês' : labelValorParcela(frequencia),
+          link: `/PlanejamentoFinanceiro?competencia=${competencia}`,
+          destaque: venceNesteMes,
+          centroCusto,
+          categoria,
+          frequencia,
+          dataVencimento,
+        }),
+      );
+    }
+  }
+
+  return { recorrentes, naoMensais };
+}
+
+function montarLinhasFixas(
+  competencia,
+  modelosAgefin,
+  lancamentosAgefin,
+  lancamentosRecorrentes = [],
+  {
+    fonte = 'template',
+    parcelamentos = [],
+    overridesPorSerie = {},
+  } = {},
+) {
+  if (fonte === 'previsao_mes') {
+    return montarLinhasFixasPrevisaoMes(
+      competencia,
+      modelosAgefin,
+      lancamentosAgefin,
+      lancamentosRecorrentes,
+      parcelamentos,
+      overridesPorSerie,
+    );
+  }
+
   const frequenciasPorGrupo = mapaFrequenciaPorGrupoLancamento(lancamentosRecorrentes);
   const competencias = montarCompetenciasAgefin(competencia, modelosAgefin, lancamentosAgefin);
   const competenciasMap = Object.fromEntries(competencias.map((comp) => [comp.serie_id, comp]));
@@ -750,12 +859,19 @@ export function montarPlanoFinanceiroConsolidado({
   parcelamentosAgefin = [],
   lucroBruto = 0,
   margemDetalhe = null,
+  fonteFixas = 'template',
+  overridesAgefinPorSerie = {},
 }) {
   const { recorrentes, naoMensais } = montarLinhasFixas(
     competencia,
     modelosAgefin,
     lancamentosAgefin,
     lancamentosRecorrentesAgefin,
+    {
+      fonte: fonteFixas,
+      parcelamentos: parcelamentosAgefin,
+      overridesPorSerie: overridesAgefinPorSerie,
+    },
   );
   const { folha, provisoes } = montarLinhasFolha(competencia, modelosFolha, competenciasFolha);
   const budgets = montarLinhasBudgets(competencia, modelosBudget, competenciasBudget, lancamentosMes);
