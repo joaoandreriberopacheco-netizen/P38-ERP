@@ -94,6 +94,7 @@ import {
   contasVisiveisFluxo,
   idsFiltroContasFluxo,
 } from '@/lib/buscaFluxoCaixa';
+import { BUDGET_MODULO_LABEL } from '@/lib/budgetCalculos';
 
 // ─── utils ────────────────────────────────────────────────────────────────────
 function parseDateKey(dateKey) {
@@ -112,7 +113,7 @@ const ABAS_FINANCEIRO_DESKTOP = [
   { value: 'caixas', label: 'Caixas e Bancos', shortLabel: 'Contas' },
   { value: 'fluxo', label: 'Fluxo de Caixa', shortLabel: 'Fluxo' },
   { value: 'folha', label: 'Folha (previsão)', shortLabel: 'Folha' },
-  { value: 'budgets', label: 'Budgets', shortLabel: 'Budgets' },
+  { value: 'budgets', label: BUDGET_MODULO_LABEL, shortLabel: 'Gastos' },
   { value: 'planejamento', label: 'Planejamento', shortLabel: 'Plan.' },
 ];
 

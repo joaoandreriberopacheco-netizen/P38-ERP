@@ -343,7 +343,7 @@ export const ALL_MENU_ITEMS = [
         permissaoCheck: (p) => p?.financeiro?.acesso === true
       },
       {
-        name: 'Budgets',
+        name: 'Gastos sem Vencimento',
         page: 'Budgets',
         icon: Target,
         permissaoCheck: (p) => p?.financeiro?.acesso === true

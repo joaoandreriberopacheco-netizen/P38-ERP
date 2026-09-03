@@ -9,6 +9,7 @@ import {
   resolverConfigItensDizimo,
   formatarNomeItemDizimoLista,
 } from '../src/lib/dizimoCalculos.js';
+import { centroCustoCanonicoBudgetPorNome, criarModeloComDefaults } from '../src/lib/budgetCalculos.js';
 
 function assert(cond, msg) {
   if (!cond) throw new Error(msg);
@@ -141,5 +142,22 @@ assert(
   }) === 'Maria',
   'nome total sem sufixo',
 );
+
+assert(
+  centroCustoCanonicoBudgetPorNome('CASA ISRAEL - ESTIVAS') === 'Propriedades',
+  'estivas → Propriedades',
+);
+assert(
+  centroCustoCanonicoBudgetPorNome('APARTAMENTO DE MANAUS') === 'Propriedades',
+  'apartamento → Propriedades',
+);
+assert(
+  criarModeloComDefaults({ nome: 'CASA ISRAEL - ESTIVAS', centro_custo: '' }).centro_custo ===
+    'Propriedades',
+  'modelo estivas com centro canónico',
+);
+
+const budgetsLabel = padrao.secoes.find((s) => s.id === 'budgets')?.label;
+assert(budgetsLabel === 'Gastos sem Vencimento', 'rótulo gastos sem vencimento');
 
 console.log('validate-dizimo-calculos: OK');

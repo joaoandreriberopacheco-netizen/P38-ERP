@@ -369,15 +369,25 @@ export async function fetchPedidosOrigemTrocaMargem(devolucoes = []) {
   if (!ids.length) return map;
 
   const dataKey = isoDiasAtrasDateKey(3650);
-  for (const id of ids) {
+  const CONCURRENCY = 8;
+
+  async function fetchOne(id) {
     try {
       const batch = await base44.entities.PedidoVenda.filter({ id });
       const pedido = rowsFromApi(batch)[0];
-      if (!pedido) continue;
+      if (!pedido) return null;
       const [hidratado] = await hidratarPedidosSemItens([pedido], dataKey);
-      if (hidratado) map[String(id)] = hidratado;
+      return hidratado ? [String(id), hidratado] : null;
     } catch {
-      /* pedido origem indisponível */
+      return null;
+    }
+  }
+
+  for (let i = 0; i < ids.length; i += CONCURRENCY) {
+    const chunk = ids.slice(i, i + CONCURRENCY);
+    const results = await Promise.all(chunk.map(fetchOne));
+    for (const entry of results) {
+      if (entry) map[entry[0]] = entry[1];
     }
   }
 
