@@ -3,9 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
 import { filterEmbarquesVisiveisParaPedido } from '@/components/compras/embarqueFilters';
-import { normalizeItemToCanonicalFactorOne } from '@/lib/productUnits';
-import { hydrateEmbarquesPedidoFromSql } from '@/lib/fetchEmbarqueItens';
-import { hydratePedidosCompraItensFromSql, refreshPedidoCompraComLogistica } from '@/lib/fetchPedidoCompraItens';
+import { refreshPedidoCompraComLogistica } from '@/lib/fetchPedidoCompraItens';
 import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
 import { gerarNumeroSequencial } from '@/lib/gerarNumeroSequencial';
 import {
@@ -73,10 +71,7 @@ export default function PedidoCompraDetalhe() {
 
     if (keepLoading) setLoading(true);
 
-    const [pedidoRes, embarquesRes] = await Promise.all([
-      base44.entities.PedidoCompra.filter({ id }),
-      base44.entities.Embarque.filter({ pedido_compra_id: id })
-    ]);
+    const pedidoRes = await base44.entities.PedidoCompra.filter({ id });
 
     const pedidoBase = pedidoRes?.[0] || null;
     if (!pedidoBase) {
@@ -85,30 +80,20 @@ export default function PedidoCompraDetalhe() {
       return null;
     }
 
-    const [pedidoHydrated] = await hydratePedidosCompraItensFromSql(base44, [pedidoBase]);
-    let pedidoComItens = pedidoHydrated || pedidoBase;
-
-    const embarquesHidratados = await hydrateEmbarquesPedidoFromSql(
-      base44,
-      pedidoComItens.id,
-      embarquesRes || [],
-    );
-    const embarques = filterEmbarquesVisiveisParaPedido(embarquesHidratados);
-
-    if (!(pedidoComItens.itens || []).length) {
-      const pedidoCompletoDerivado = await refreshPedidoCompraComLogistica(base44, pedidoComItens.id, {
-        filterEmbarques: filterEmbarquesVisiveisParaPedido,
-      });
-      if (pedidoCompletoDerivado) {
-        pedidoComItens = pedidoCompletoDerivado;
-      }
+    const pedidoComItens = await refreshPedidoCompraComLogistica(base44, pedidoBase.id, {
+      filterEmbarques: filterEmbarquesVisiveisParaPedido,
+    });
+    if (!pedidoComItens) {
+      setPedido(null);
+      setLoading(false);
+      return null;
     }
 
-    const embarquesFinais = pedidoComItens._embarques || embarques;
+    const embarquesFinais = pedidoComItens._embarques || [];
     const ultimoEmbarque = [...embarquesFinais]
       .filter((emb) => emb.status !== 'Concluído')
       .sort((a, b) => new Date(a.eta || a.created_date) - new Date(b.eta || b.created_date))[0]
-      || [...embarques].sort((a, b) => new Date(b.updated_date || b.created_date) - new Date(a.updated_date || a.created_date))[0]
+      || [...embarquesFinais].sort((a, b) => new Date(b.updated_date || b.created_date) - new Date(a.updated_date || a.created_date))[0]
       || null;
 
     const pedidoComVerdade = {
