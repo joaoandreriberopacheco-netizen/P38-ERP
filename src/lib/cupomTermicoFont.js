@@ -1,6 +1,6 @@
 import { CUPOM_FONT_GOOGLE, CUPOM_FONT_WEIGHT } from '@/lib/cupomTermicoConstants';
 
-const LINK_ID = 'p38-cupom-barlow-300';
+const LINK_ID = 'p38-cupom-barlow-400';
 
 let loadPromise = null;
 

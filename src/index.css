@@ -7,11 +7,13 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Cupom térmico / comprovante — Barlow Light (300) */
+/* Cupom térmico / comprovante — Barlow Regular (400) */
 .p38-cupom-termico {
   font-family: 'Barlow', sans-serif;
-  font-weight: 300;
+  font-weight: 400;
   font-synthesis: none;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
   overflow-x: clip;
   max-width: 100%;
 }

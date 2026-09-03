@@ -5,8 +5,11 @@ export const CUPOM_LARGURA_IMPRESSAO_MM = CUPOM_PAPEL_MM - 2 * CUPOM_MARGEM_LATE
 export const CUPOM_LARGURA_IMPRESSAO_CSS = `${CUPOM_LARGURA_IMPRESSAO_MM}mm`;
 export const CUPOM_PAPEL_CSS = `${CUPOM_PAPEL_MM}mm`;
 
-/** Cupom térmico — Barlow Light (300) em todo o cupom. */
-export const CUPOM_FONT_WEIGHT = 300;
+/** Cupom térmico — Barlow Regular (400): mais legível que 300, sem parecer negrito. */
+export const CUPOM_FONT_WEIGHT = 400;
 export const CUPOM_FONT = "'Barlow', sans-serif";
 export const CUPOM_FONT_GOOGLE =
-  'https://fonts.googleapis.com/css2?family=Barlow:wght@300&display=swap';
+  'https://fonts.googleapis.com/css2?family=Barlow:wght@400&display=swap';
+
+/** Colunas QTD | UN | PREÇO | TOTAL — larguras fixas em ch para alinhar à margem direita. */
+export const CUPOM_GRID_COLS = '3.5ch 4.5ch 1fr 11ch';

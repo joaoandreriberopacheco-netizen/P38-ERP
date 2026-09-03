@@ -26,6 +26,7 @@ import {
   CUPOM_FONT,
   CUPOM_FONT_GOOGLE,
   CUPOM_FONT_WEIGHT,
+  CUPOM_GRID_COLS,
   CUPOM_LARGURA_IMPRESSAO_CSS,
   CUPOM_LARGURA_IMPRESSAO_MM,
   CUPOM_MARGEM_LATERAL_MM,
@@ -121,13 +122,14 @@ function CupomTermico({ pedido, dadosEmpresa }) {
   const F_TOTAL = F + 6;
   const F_PAGAMENTO = F + 3;
   const preto = PRETO_CUPOM;
-  const gridCols = 'minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1.35fr) minmax(0, 1.35fr)';
+  const gridCols = CUPOM_GRID_COLS;
   const estiloGridValores = {
     display: 'grid',
     gridTemplateColumns: gridCols,
-    columnGap: '1px',
+    columnGap: '2px',
     fontSize: F_CORPO,
     fontWeight: CUPOM_FONT_WEIGHT,
+    fontVariantNumeric: 'tabular-nums',
     width: '100%',
     maxWidth: '100%',
   };
@@ -136,6 +138,14 @@ function CupomTermico({ pedido, dadosEmpresa }) {
     fontSize: F,
     marginBottom: '4px',
     opacity: 0.85,
+  };
+  const estiloLinhaTotal = {
+    display: 'grid',
+    gridTemplateColumns: gridCols,
+    columnGap: '2px',
+    fontVariantNumeric: 'tabular-nums',
+    width: '100%',
+    maxWidth: '100%',
   };
 
   const empresa = buildEmpresaCupom(dadosEmpresa);
@@ -249,24 +259,27 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       {/* ── Totais ── */}
       <div style={{ marginTop: '2px', fontWeight: CUPOM_FONT_WEIGHT }}>
         {pedido.subtotal > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_CORPO, color: preto }}>
-            <span>Subtotal</span><span>R$ {fmtV(pedido.subtotal)}</span>
+          <div style={{ ...estiloLinhaTotal, fontSize: F_CORPO, color: preto }}>
+            <span style={{ gridColumn: '1 / 4' }}>Subtotal</span>
+            <span style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>R$ {fmtV(pedido.subtotal)}</span>
           </div>
         )}
         {pedido.valor_desconto > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_CORPO, color: preto }}>
-            <span>Desconto</span><span>-R$ {fmtV(pedido.valor_desconto)}</span>
+          <div style={{ ...estiloLinhaTotal, fontSize: F_CORPO, color: preto }}>
+            <span style={{ gridColumn: '1 / 4' }}>Desconto</span>
+            <span style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>-R$ {fmtV(pedido.valor_desconto)}</span>
           </div>
         )}
         {pedido.valor_frete > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_CORPO, color: preto }}>
-            <span>Frete</span><span>R$ {fmtV(pedido.valor_frete)}</span>
+          <div style={{ ...estiloLinhaTotal, fontSize: F_CORPO, color: preto }}>
+            <span style={{ gridColumn: '1 / 4' }}>Frete</span>
+            <span style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>R$ {fmtV(pedido.valor_frete)}</span>
           </div>
         )}
         {/* TOTAL — hierarquia só por tamanho (padrão amarelo original) */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_TOTAL, margin: '5px 0 3px', color: preto }}>
-          <span>TOTAL</span>
-          <span>R$ {fmtV(pedido.valor_total || 0)}</span>
+        <div style={{ ...estiloLinhaTotal, fontSize: F_TOTAL, margin: '5px 0 3px', color: preto }}>
+          <span style={{ gridColumn: '1 / 4' }}>TOTAL</span>
+          <span style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>R$ {fmtV(pedido.valor_total || 0)}</span>
         </div>
       </div>
 
@@ -274,9 +287,11 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       {pagamentos.length > 0 && (
         <div style={{ marginTop: '2px', fontWeight: CUPOM_FONT_WEIGHT }}>
           {pagamentos.map((pag, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: F_PAGAMENTO, color: preto }}>
-              <span>{(pag.forma_pagamento || '').toUpperCase()}{pag.parcelas > 1 ? ` ${pag.parcelas}x` : ''}</span>
-              <span>R$ {fmtV(pag.valor)}</span>
+            <div key={i} style={{ ...estiloLinhaTotal, fontSize: F_PAGAMENTO, color: preto }}>
+              <span style={{ gridColumn: '1 / 4' }}>
+                {(pag.forma_pagamento || '').toUpperCase()}{pag.parcelas > 1 ? ` ${pag.parcelas}x` : ''}
+              </span>
+              <span style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>R$ {fmtV(pag.valor)}</span>
             </div>
           ))}
         </div>
