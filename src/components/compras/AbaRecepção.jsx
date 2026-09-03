@@ -9,6 +9,8 @@ import {
 } from '@/lib/movimentacaoRecepcaoCompra';
 import { invokeRecalcularConclusaoPedidoCompra } from '@/lib/p38StockRecalc';
 import { hydrateEmbarquesPedidoFromSql, getEmbarqueItensLinhas, hydrateEmbarquesFromSql } from '@/lib/fetchEmbarqueItens';
+import { refreshPedidoCompraComLogistica } from '@/lib/fetchPedidoCompraItens';
+import { filterEmbarquesVisiveisParaPedido } from '@/components/compras/embarqueFilters';
 import { podeEditarDespachoEmbarque } from '@/lib/embarqueLogisticaHelpers';
 import RecepcionarEmbarque from '@/components/compras/RecepcionarEmbarque';
 import InformarEmbarque from '@/components/compras/InformarEmbarque';
@@ -117,22 +119,14 @@ export default function AbaRecepção({ pedido, onPedidoUpdated }) {
     const pedidoRef = pedidoAtual || pedido;
     const pedidoId = pedidoRef?.id;
     if (!pedidoId) return null;
-    const [atualizado, embarquesAtualizados] = await Promise.all([
-      base44.entities.PedidoCompra.filter({ id: pedidoId }),
-      base44.entities.Embarque.filter({ pedido_compra_id: pedidoId }),
-    ]);
-    const embarquesHidratados = await hydrateEmbarquesPedidoFromSql(
-      base44,
-      pedidoId,
-      embarquesAtualizados || [],
-    );
-    if (atualizado?.[0]) {
-      const pedidoCompleto = { ...atualizado[0], _embarques: embarquesHidratados };
+    const pedidoCompleto = await refreshPedidoCompraComLogistica(base44, pedidoId, {
+      filterEmbarques: filterEmbarquesVisiveisParaPedido,
+    });
+    if (pedidoCompleto) {
       setPedidoAtual(pedidoCompleto);
       onPedidoUpdated?.(pedidoCompleto);
-      return pedidoCompleto;
     }
-    return null;
+    return pedidoCompleto;
   }, [pedido, pedidoAtual, onPedidoUpdated]);
 
   const handleAbrirCorrigirDespacho = useCallback((embarque, evt) => {

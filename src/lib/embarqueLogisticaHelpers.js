@@ -1,4 +1,4 @@
-import { rebuildEmbarqueItensMirror } from '@/lib/embarqueItemContract';
+import { embarqueItemToLegacyMirror, rebuildEmbarqueItensMirror } from '@/lib/embarqueItemContract';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import {
   resolveEmbarqueQuantidadeBase,
@@ -48,6 +48,57 @@ export function embarqueTemSaldoPendente(embarque, minBase = MIN_SALDO_PENDENTE_
  * Recepção concluída neste split (inclui recepção em pacotes com status ainda Pendente).
  * Usa unidade base; exibição continua em vitrine na UI.
  */
+/**
+ * Reconstrói `pedido.itens[]` a partir das linhas EmbarqueItem quando o pedido
+ * chegou sem itens (SQL vazio + espelho JSON removido).
+ */
+export function derivarItensPedidoDeEmbarques(embarques = []) {
+  const byProduto = new Map();
+
+  (embarques || []).forEach((emb) => {
+    getEmbarqueItensLinhas(emb).forEach((linha) => {
+      const pid = linha?.produto_id;
+      if (!pid) return;
+
+      const mirror = embarqueItemToLegacyMirror(linha);
+      const pedidaBase = qtyPedidaBaseItem({
+        ...mirror,
+        quantidade_base: linha.quantidade_pedida_base,
+        quantidade_pedida_apresentacao: linha.quantidade_pedida_comercial,
+        quantidade_pedida: linha.quantidade_pedida_comercial,
+        quantidade: linha.quantidade_pedida_comercial,
+      }) || qtyEmbarcadaBaseLinha(linha);
+
+      const candidato = {
+        produto_id: pid,
+        produto_nome: linha.produto_nome || mirror.produto_nome || '',
+        produto_unidade_id: linha.produto_unidade_id || mirror.produto_unidade_id || '',
+        pedido_compra_item_id: linha.pedido_compra_item_id || mirror.pedido_compra_item_id || '',
+        quantidade: mirror.quantidade_pedida || mirror.quantidade_embarcada || 0,
+        quantidade_base: pedidaBase,
+        unidade_medida: mirror.unidade_medida || 'UN',
+        unidade_apresentacao: mirror.unidade_apresentacao || mirror.unidade_medida || 'UN',
+        fator_conversao: mirror.fator_conversao || 1,
+      };
+
+      const existente = byProduto.get(pid);
+      if (!existente || (candidato.quantidade_base || 0) > (existente.quantidade_base || 0)) {
+        byProduto.set(pid, candidato);
+      }
+    });
+  });
+
+  return [...byProduto.values()];
+}
+
+/** Itens do pedido para telas de despacho/recepção (com fallback em embarques). */
+export function resolverItensPedidoCompra(pedido, embarques = []) {
+  const diretos = Array.isArray(pedido?.itens) ? pedido.itens.filter((item) => item?.produto_id) : [];
+  if (diretos.length) return diretos;
+  const embarquesRef = embarques?.length ? embarques : (pedido?._embarques || []);
+  return derivarItensPedidoDeEmbarques(embarquesRef);
+}
+
 /** Despacho editável enquanto a recepção deste embarque ainda não começou. */
 export function podeEditarDespachoEmbarque(embarque) {
   const status = String(embarque?.status_recebimento || embarque?.status_recebimento_embarque || 'Pendente').trim();
@@ -73,19 +124,23 @@ export function embarqueRecepcaoDocumentalCompleta(embarque) {
  * alinhado à lógica de `integrarPedidosEmbarques` mas sem depender do snapshot no PedidoCompra.
  */
 export function calcularPercentuaisLogistica(pedido, embarques = []) {
-  const totalPedido = (pedido?.itens || []).reduce(
-    (acc, item) => acc + qtyPedidaBaseItem(item),
-    0
-  );
+  const linhasEmb = (embarques || []).filter((emb) => emb?.tipo !== 'Necessidade');
+  const itensPedido = resolverItensPedidoCompra(pedido, linhasEmb);
+
+  let totalPedido = itensPedido.reduce((acc, item) => acc + qtyPedidaBaseItem(item), 0);
+  if (!totalPedido) {
+    totalPedido = linhasEmb.reduce((acc, emb) => {
+      return acc + getEmbarqueItensLinhas(emb).reduce((s, item) => s + qtyEmbarcadaBaseLinha(item), 0);
+    }, 0);
+  }
   if (!totalPedido) {
     return { despachado: 0, concluido: 0, pendente: 100 };
   }
 
-  const linhas = (embarques || []).filter((emb) => emb?.tipo !== 'Necessidade');
   const porProdutoEmb = {};
   const porProdutoRec = {};
 
-  linhas.forEach((emb) => {
+  linhasEmb.forEach((emb) => {
     getEmbarqueItensLinhas(emb).forEach((item) => {
       const pid = item.produto_id;
       if (!pid) return;
@@ -96,7 +151,7 @@ export function calcularPercentuaisLogistica(pedido, embarques = []) {
 
   let totalDespachado = 0;
   let totalConcluido = 0;
-  (pedido?.itens || []).forEach((item) => {
+  itensPedido.forEach((item) => {
     const pedida = qtyPedidaBaseItem(item);
     const emb = porProdutoEmb[item.produto_id] || 0;
     const rec = porProdutoRec[item.produto_id] || 0;

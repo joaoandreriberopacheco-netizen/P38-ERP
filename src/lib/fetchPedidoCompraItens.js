@@ -1,4 +1,6 @@
 import { pedidoCompraItemToLegacyMirror } from '@/lib/pedidoCompraItemContract';
+import { derivarItensPedidoDeEmbarques } from '@/lib/embarqueLogisticaHelpers';
+import { hydrateEmbarquesPedidoFromSql } from '@/lib/fetchEmbarqueItens';
 
 const CHUNK_SIZE = 40;
 
@@ -67,7 +69,7 @@ function attachItensPedido(pedido, itens, fonte) {
   };
 }
 
-/** Hidrata `itens` só a partir de PedidoCompraItem (SQL). Sem fallback JSON. */
+/** Hidrata `itens` a partir de PedidoCompraItem (SQL). Fallback JSON legado se SQL vazio. */
 export async function hydratePedidosCompraItensFromSql(base44, pedidos = []) {
   if (!Array.isArray(pedidos) || !pedidos.length) return pedidos || [];
 
@@ -81,6 +83,37 @@ export async function hydratePedidosCompraItensFromSql(base44, pedidos = []) {
     if (sqlRows?.length) {
       return attachItensPedido(pedido, linhasPedidoCompraToLegacyItens(sqlRows), 'sql');
     }
-    return attachItensPedido(pedido, [], 'vazio');
+    const legado = Array.isArray(pedido?.itens) ? pedido.itens.filter((item) => item?.produto_id) : [];
+    return attachItensPedido(pedido, legado, legado.length ? 'json-legado' : 'vazio');
   });
+}
+
+/** Recarrega cabeçalho + itens (SQL/legado/embarque) + embarques hidratados para abas Logística/Recepção. */
+export async function refreshPedidoCompraComLogistica(base44, pedidoId, { filterEmbarques } = {}) {
+  if (!pedidoId) return null;
+
+  const [atualizado, embarquesAtualizados] = await Promise.all([
+    base44.entities.PedidoCompra.filter({ id: pedidoId }),
+    base44.entities.Embarque.filter({ pedido_compra_id: pedidoId }),
+  ]);
+  if (!atualizado?.[0]) return null;
+
+  let [pedidoComItens] = await hydratePedidosCompraItensFromSql(base44, [atualizado[0]]);
+  const embarquesHidratados = await hydrateEmbarquesPedidoFromSql(
+    base44,
+    pedidoId,
+    embarquesAtualizados || [],
+  );
+  const embarquesVisiveis = typeof filterEmbarques === 'function'
+    ? filterEmbarques(embarquesHidratados)
+    : embarquesHidratados;
+
+  if (!(pedidoComItens.itens || []).length) {
+    const derivados = derivarItensPedidoDeEmbarques(embarquesVisiveis);
+    if (derivados.length) {
+      pedidoComItens = { ...pedidoComItens, itens: derivados, _itens_fonte: 'embarque-item' };
+    }
+  }
+
+  return { ...pedidoComItens, _embarques: embarquesVisiveis };
 }

@@ -5,7 +5,7 @@ import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
 import { filterEmbarquesVisiveisParaPedido } from '@/components/compras/embarqueFilters';
 import { normalizeItemToCanonicalFactorOne } from '@/lib/productUnits';
 import { hydrateEmbarquesPedidoFromSql } from '@/lib/fetchEmbarqueItens';
-import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
+import { hydratePedidosCompraItensFromSql, refreshPedidoCompraComLogistica } from '@/lib/fetchPedidoCompraItens';
 import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
 import { gerarNumeroSequencial } from '@/lib/gerarNumeroSequencial';
 import {
@@ -86,7 +86,7 @@ export default function PedidoCompraDetalhe() {
     }
 
     const [pedidoHydrated] = await hydratePedidosCompraItensFromSql(base44, [pedidoBase]);
-    const pedidoComItens = pedidoHydrated || pedidoBase;
+    let pedidoComItens = pedidoHydrated || pedidoBase;
 
     const embarquesHidratados = await hydrateEmbarquesPedidoFromSql(
       base44,
@@ -94,7 +94,18 @@ export default function PedidoCompraDetalhe() {
       embarquesRes || [],
     );
     const embarques = filterEmbarquesVisiveisParaPedido(embarquesHidratados);
-    const ultimoEmbarque = [...embarques]
+
+    if (!(pedidoComItens.itens || []).length) {
+      const pedidoCompletoDerivado = await refreshPedidoCompraComLogistica(base44, pedidoComItens.id, {
+        filterEmbarques: filterEmbarquesVisiveisParaPedido,
+      });
+      if (pedidoCompletoDerivado) {
+        pedidoComItens = pedidoCompletoDerivado;
+      }
+    }
+
+    const embarquesFinais = pedidoComItens._embarques || embarques;
+    const ultimoEmbarque = [...embarquesFinais]
       .filter((emb) => emb.status !== 'Concluído')
       .sort((a, b) => new Date(a.eta || a.created_date) - new Date(b.eta || b.created_date))[0]
       || [...embarques].sort((a, b) => new Date(b.updated_date || b.created_date) - new Date(a.updated_date || a.created_date))[0]
@@ -102,7 +113,7 @@ export default function PedidoCompraDetalhe() {
 
     const pedidoComVerdade = {
       ...pedidoComItens,
-      _embarques: embarques,
+      _embarques: embarquesFinais,
       _embarque_principal: ultimoEmbarque,
       data_prevista_entrega: ultimoEmbarque?.eta ? String(ultimoEmbarque.eta).slice(0, 10) : pedidoComItens.data_prevista_entrega,
     };
