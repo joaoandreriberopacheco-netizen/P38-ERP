@@ -1,6 +1,6 @@
 # Sincroniza main → canal de performance após cada push na main.
 # O canal recebe o trabalho do "rio" sem agentes terem de commitar em duas branches.
-# Conflitos: o job falha → resolver manualmente na branch do canal.
+# Conflitos: preferir main (-X theirs); ficheiros só do canal mantêm-se.
 
 name: Sync main → canal performance
 
@@ -40,7 +40,8 @@ jobs:
           }
 
           git checkout "${CANAL_BRANCH}"
-          git merge origin/main -m "chore: sync main → canal performance [auto]"
+          # Na branch do canal, "theirs" = origin/main (rio ganha em ficheiros partilhados).
+          git merge origin/main -X theirs -m "chore: sync main → canal performance [auto]"
 
           if git diff --quiet origin/"${CANAL_BRANCH}"..HEAD; then
             echo "Canal já estava alinhado com main — nada a enviar."
