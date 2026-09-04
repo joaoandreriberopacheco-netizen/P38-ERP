@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Gera PDF de 1 página — resumo do estoque físico (reunião).
+ * Gera PDF de 2 páginas — estoque físico + em trânsito (reunião).
  * Estilo: Barlow, linhas finas em grid, tipografia generosa.
  *
  * Uso: node scripts/gerar-resumo-estoque-fisico-pdf.mjs [--out=/caminho/arquivo.pdf]
@@ -64,7 +64,7 @@ const GRID = {
 function parseOutArg(argv) {
   const hit = argv.find((a) => a.startsWith('--out='));
   if (!hit) {
-    return path.join('/opt/cursor/artifacts', `estoque-fisico-pagina1-${new Date().toISOString().slice(0, 10)}.pdf`);
+    return path.join('/opt/cursor/artifacts', `estoque-fisico-reuniao-${new Date().toISOString().slice(0, 10)}.pdf`);
   }
   return hit.slice('--out='.length);
 }
@@ -75,22 +75,26 @@ async function loadModules() {
     const stock = await server.ssrLoadModule('/src/lib/catalogStockTotals.js');
     const unitsLib = await server.ssrLoadModule('/src/lib/productUnits.js');
     const fonts = await server.ssrLoadModule('/src/lib/jspdfNotoFont.js');
-    return { stock, unitsLib, fonts };
+    const pendenteLib = await server.ssrLoadModule('/src/lib/sugestaoCompraEstoquePendente.js');
+    const embarqueLib = await server.ssrLoadModule('/src/lib/fetchEmbarqueItens.js');
+    const abcdLib = await server.ssrLoadModule('/src/lib/catalogAbcdEnrichment.js');
+    const embarqueContract = await server.ssrLoadModule('/src/lib/embarqueItemContract.js');
+    return { stock, unitsLib, fonts, pendenteLib, embarqueLib, abcdLib, embarqueContract };
   } finally {
     await server.close();
   }
 }
 
-async function fetchAllProdutosAtivos() {
+async function fetchSupabaseTable(table, filter = '') {
   const { supabaseAnonKey: key } = resolveP38Secrets();
   const base = 'https://zhonvxkkqabfdyehyxpu.supabase.co';
   let offset = 0;
   const all = [];
   while (true) {
-    const q = `${base}/rest/v1/produto?select=*&ativo=eq.true&limit=1000&offset=${offset}`;
+    const q = `${base}/rest/v1/${table}?select=*${filter}&limit=1000&offset=${offset}`;
     const res = await fetch(q, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
     const rows = await res.json();
-    if (!Array.isArray(rows)) throw new Error(`Supabase: ${JSON.stringify(rows).slice(0, 200)}`);
+    if (!Array.isArray(rows)) throw new Error(`Supabase ${table}: ${JSON.stringify(rows).slice(0, 200)}`);
     all.push(...rows);
     if (rows.length < 1000) break;
     offset += 1000;
@@ -98,7 +102,380 @@ async function fetchAllProdutosAtivos() {
   return all;
 }
 
-function buildResumoData(produtos, { resolveProdutoCustoUnitarioBase, formatEstoqueApresentacao }) {
+async function fetchAllProdutosAtivos() {
+  return fetchSupabaseTable('produto', '&ativo=eq.true');
+}
+
+function groupRowsByField(rows, field) {
+  const map = new Map();
+  for (const row of rows) {
+    const key = String(row[field] || '');
+    if (!key) continue;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(row);
+  }
+  return map;
+}
+
+function pciToLegacy(row) {
+  return {
+    id: row.id,
+    produto_id: row.produto_id,
+    produto_nome: row.produto_nome,
+    quantidade: row.quantidade_comercial,
+    quantidade_comercial: row.quantidade_comercial,
+    quantidade_base: row.quantidade_base,
+    fator_conversao: row.fator_aplicado,
+    fator_aplicado: row.fator_aplicado,
+    unidade_medida: row.unidade_sigla,
+  };
+}
+
+const ABCD_ORDER = ['A', 'B', 'C', 'D', 'E'];
+
+function tituloFamiliaH1(value) {
+  const text = String(value || '').trim();
+  return text || 'Sem categoria';
+}
+
+function buildAbcdDominantePorH1(produtos, resolveProdutoAbcdClasse, valorFn) {
+  const grupos = new Map();
+  for (const produto of produtos) {
+    const h1 = tituloFamiliaH1(produto.campo_hierarquico_1);
+    if (!grupos.has(h1)) grupos.set(h1, []);
+    grupos.get(h1).push(produto);
+  }
+
+  const abcdPorH1 = new Map();
+  for (const [h1, lista] of grupos) {
+    const pesoPorLetra = {};
+    for (const produto of lista) {
+      const letra = resolveProdutoAbcdClasse(produto) || 'E';
+      const valor = valorFn(produto);
+      if (valor <= 0) continue;
+      pesoPorLetra[letra] = (pesoPorLetra[letra] || 0) + valor;
+    }
+    const dominante = Object.entries(pesoPorLetra).sort((a, b) => b[1] - a[1])[0]?.[0] || 'E';
+    abcdPorH1.set(h1, dominante);
+  }
+  return abcdPorH1;
+}
+
+function aggregateValorPorAbcdH1(produtos, abcdPorH1, valorFn) {
+  const acc = Object.fromEntries(ABCD_ORDER.map((letter) => [letter, 0]));
+  for (const produto of produtos) {
+    const valor = valorFn(produto);
+    if (valor <= 0) continue;
+    const h1 = tituloFamiliaH1(produto.campo_hierarquico_1);
+    const letra = abcdPorH1.get(h1) || 'E';
+    if (acc[letra] !== undefined) acc[letra] += valor;
+  }
+  return acc;
+}
+
+function rowsTabelaAbcd(valorPorLetra) {
+  return ABCD_ORDER
+    .map((letra) => ({
+      letra,
+      valor: valorPorLetra[letra] || 0,
+    }))
+    .filter((row) => row.valor > 0);
+}
+
+function formatEta(value) {
+  if (!value) return '—';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '—';
+  return parsed.toLocaleDateString('pt-BR', { timeZone: 'America/Manaus' });
+}
+
+function embarqueEmTransito(embarque = {}) {
+  const statusReceb = String(embarque.status_recebimento || '').trim().toLowerCase();
+  const statusEmb = String(embarque.status || '').trim().toLowerCase();
+  if (statusReceb.includes('recebido ok') || statusReceb.includes('diverg') || statusEmb.includes('conclu')) {
+    return false;
+  }
+  return true;
+}
+
+function codigoEmbarque(embarque = {}, pedido = null) {
+  const pedidoNumero = embarque.pedido_compra_numero || pedido?.numero || '';
+  const embarqueNumero = embarque.numero || '';
+  if (pedidoNumero && embarqueNumero) return `${pedidoNumero}-${embarqueNumero}`;
+  return pedidoNumero || embarqueNumero || '—';
+}
+
+function countVolumesEmbarque(embarque = {}) {
+  const detalhados = embarque.volumes_detalhados || embarque.dados?.volumes_detalhados;
+  if (Array.isArray(detalhados) && detalhados.length) {
+    const total = detalhados.reduce((sum, item) => sum + (Number(item?.quantidade) || 0), 0);
+    if (total > 0) return total;
+  }
+  const linhas = embarque._linhas || [];
+  return linhas.length > 0 ? linhas.length : 1;
+}
+
+async function fetchCompraContext(pendenteLib, embarqueLib, embarqueContract) {
+  const { rebuildEmbarqueItensMirror } = embarqueContract;
+  const { getEmbarqueItensLinhas } = embarqueLib;
+  const {
+    buildRecebidosPorPedidoProdutoFromEmbarques,
+    pedidoCompraAprovadoNaoConcluido,
+    buildPendenteAprovadoFinanceiroPorProduto,
+    resolveQuantidadeBaseItemEmbarque,
+    pedidoCompraEstaConcluido,
+  } = pendenteLib;
+
+  const [pedidos, pciRows, embarques, embarqueItems] = await Promise.all([
+    fetchSupabaseTable('pedido_compra'),
+    fetchSupabaseTable('pedido_compra_item'),
+    fetchSupabaseTable('embarque'),
+    fetchSupabaseTable('embarque_item'),
+  ]);
+
+  const pciByPedido = groupRowsByField(pciRows, 'pedido_compra_id');
+  const embItemsByEmb = groupRowsByField(embarqueItems, 'embarque_id');
+
+  const pedidosHydrated = pedidos.map((pedido) => ({
+    ...pedido,
+    itens: (pciByPedido.get(String(pedido.id)) || []).map(pciToLegacy),
+  }));
+
+  const embarquesHydrated = embarques.map((embarque) => ({
+    ...embarque,
+    _linhas: rebuildEmbarqueItensMirror(embItemsByEmb.get(String(embarque.id)) || []),
+  }));
+
+  const pedidosMap = new Map(pedidosHydrated.map((pedido) => [String(pedido.id), pedido]));
+  const pedidosAbertos = pedidosHydrated.filter(pedidoCompraAprovadoNaoConcluido);
+  const recebidosPorPedidoProduto = buildRecebidosPorPedidoProdutoFromEmbarques(embarquesHydrated, pedidosHydrated);
+
+  const embarquesTransito = embarquesHydrated.filter((embarque) => {
+    if (!embarqueEmTransito(embarque)) return false;
+    const pedido = pedidosMap.get(String(embarque.pedido_compra_id));
+    if (pedido && pedidoCompraEstaConcluido(pedido)) return false;
+    return true;
+  });
+
+  return {
+    getEmbarqueItensLinhas,
+    resolveQuantidadeBaseItemEmbarque,
+    pedidosHydrated,
+    pedidosMap,
+    pedidosAbertos,
+    embarquesHydrated,
+    embarquesTransito,
+    recebidosPorPedidoProduto,
+    buildPendenteAprovadoFinanceiroPorProduto,
+  };
+}
+
+function resolvePedidoItemParaEmbarque(pedido = {}, item = {}) {
+  const itens = Array.isArray(pedido?.itens) ? pedido.itens : [];
+  if (!itens.length) return null;
+  if (item?.pedido_compra_item_id) {
+    const porId = itens.find(
+      (linha) => linha.pedido_compra_item_id === item.pedido_compra_item_id || linha.id === item.pedido_compra_item_id,
+    );
+    if (porId) return porId;
+  }
+  if (item?.produto_id) {
+    return itens.find((linha) => linha.produto_id === item.produto_id) || null;
+  }
+  return null;
+}
+
+function resolveQuantidadeBaseRecebidaItemEmbarque(item = {}, pedidoItem = null, embarque = null, resolveQuantidadeBaseItemEmbarque) {
+  const recebidaBase = Number(item.quantidade_recebida_base);
+  if (Number.isFinite(recebidaBase) && recebidaBase > 0) return recebidaBase;
+
+  let recebida = Number(item.quantidade_recebida ?? item.quantidade_recebida_comercial) || 0;
+  if (recebida <= 0 && embarque) {
+    const statusReceb = String(embarque?.status_recebimento || '').trim().toLowerCase();
+    const statusEmb = String(embarque?.status || '').trim().toLowerCase();
+    const embarqueConcluido = statusReceb === 'recebido ok' || statusReceb === 'com divergencia' || statusEmb === 'concluido';
+    if (embarqueConcluido) {
+      recebida = Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || Number(item.quantidade) || 0;
+    }
+  }
+  if (recebida <= 0) return 0;
+
+  return resolveQuantidadeBaseItemEmbarque(
+    {
+      ...item,
+      quantidade_embarcada: recebida,
+      quantidade_pedida: recebida,
+      quantidade: recebida,
+    },
+    pedidoItem,
+  );
+}
+
+function valorPendenteEmbarque(embarque, pedido, produtoMap, resolveProdutoCustoUnitarioBase, helpers) {
+  const { getEmbarqueItensLinhas, resolveQuantidadeBaseItemEmbarque } = helpers;
+  let total = 0;
+  for (const item of getEmbarqueItensLinhas(embarque)) {
+    const pedidoItem = pedido ? resolvePedidoItemParaEmbarque(pedido, item) : null;
+    const embarcadoBase = resolveQuantidadeBaseItemEmbarque(item, pedidoItem);
+    const recebidoBase = resolveQuantidadeBaseRecebidaItemEmbarque(
+      item,
+      pedidoItem,
+      embarque,
+      resolveQuantidadeBaseItemEmbarque,
+    );
+    const pendenteBase = Math.max(0, embarcadoBase - recebidoBase);
+    if (pendenteBase <= 0) continue;
+    const produto = produtoMap.get(String(item.produto_id));
+    total += pendenteBase * resolveProdutoCustoUnitarioBase(produto || {});
+  }
+  return total;
+}
+
+function buildResumoTransitoData(
+  produtos,
+  compraContext,
+  {
+    resolveProdutoCustoUnitarioBase,
+    resolveProdutoAbcdClasse,
+    sumCatalogTransitStockValue,
+    formatQuantidadeCatalogoApresentacao,
+  },
+) {
+  const {
+    getEmbarqueItensLinhas,
+    resolveQuantidadeBaseItemEmbarque,
+    pedidosMap,
+    pedidosAbertos,
+    embarquesHydrated,
+    embarquesTransito,
+    recebidosPorPedidoProduto,
+    buildPendenteAprovadoFinanceiroPorProduto,
+  } = compraContext;
+
+  const produtoMap = new Map(produtos.map((produto) => [String(produto.id), produto]));
+  const pendentePorProduto = buildPendenteAprovadoFinanceiroPorProduto(
+    pedidosAbertos,
+    recebidosPorPedidoProduto,
+    { embarques: embarquesHydrated, pedidosParaEmbarque: [...pedidosMap.values()] },
+  );
+
+  const valorTransitoProduto = (produto) => {
+    const pendenteBase = Number(pendentePorProduto[String(produto.id)] || 0);
+    if (pendenteBase <= 0) return 0;
+    return pendenteBase * resolveProdutoCustoUnitarioBase(produto);
+  };
+
+  const totalTransito = sumCatalogTransitStockValue(produtos, pendentePorProduto);
+  const abcdPorH1 = buildAbcdDominantePorH1(produtos, resolveProdutoAbcdClasse, valorTransitoProduto);
+  const valorPorAbcd = aggregateValorPorAbcdH1(produtos, abcdPorH1, valorTransitoProduto);
+
+  const helpers = { getEmbarqueItensLinhas, resolveQuantidadeBaseItemEmbarque };
+  const embarques = embarquesTransito
+    .map((embarque) => {
+      const pedido = pedidosMap.get(String(embarque.pedido_compra_id));
+      const valor = valorPendenteEmbarque(embarque, pedido, produtoMap, resolveProdutoCustoUnitarioBase, helpers);
+      return {
+        codigo: codigoEmbarque(embarque, pedido),
+        fornecedor: embarque.fornecedor_nome || pedido?.fornecedor_nome || '—',
+        eta: formatEta(embarque.eta || pedido?.data_prevista_entrega),
+        volumes: countVolumesEmbarque(embarque),
+        valor,
+      };
+    })
+    .filter((row) => row.valor > 0)
+    .sort((a, b) => {
+      const etaA = a.eta === '—' ? '9999' : a.eta;
+      const etaB = b.eta === '—' ? '9999' : b.eta;
+      return etaA.localeCompare(etaB) || b.valor - a.valor;
+    });
+
+  const volumesTotal = embarques.reduce((sum, row) => sum + row.volumes, 0);
+
+  const fornecedorAgg = new Map();
+  for (const row of embarques) {
+    const key = row.fornecedor || '—';
+    if (!fornecedorAgg.has(key)) {
+      fornecedorAgg.set(key, { fornecedor: key, embarques: 0, volumes: 0, valor: 0 });
+    }
+    const agg = fornecedorAgg.get(key);
+    agg.embarques += 1;
+    agg.volumes += row.volumes;
+    agg.valor += row.valor;
+  }
+
+  const porFornecedor = [...fornecedorAgg.values()]
+    .sort((a, b) => b.valor - a.valor)
+    .map((row) => ({
+      fornecedor: row.fornecedor,
+      quantidadePartes: [{ numero: QTD_CELL.format(row.embarques), unidade: 'EMB' }],
+      volumes: row.volumes,
+      valor: row.valor,
+      custoMedioTexto: row.embarques > 0 ? BRL_UNIT.format(row.valor / row.embarques) : '—',
+    }));
+
+  const familiaAgg = new Map();
+  for (const produto of produtos) {
+    const valor = valorTransitoProduto(produto);
+    if (valor <= 0) continue;
+    const familia = tituloFamiliaH1(produto.campo_hierarquico_1);
+    if (!familiaAgg.has(familia)) {
+      familiaAgg.set(familia, { familia, valor: 0, skus: 0, letra: abcdPorH1.get(familia) || 'E' });
+    }
+    const agg = familiaAgg.get(familia);
+    agg.valor += valor;
+    agg.skus += 1;
+  }
+
+  const porFamiliaH1 = [...familiaAgg.values()]
+    .sort((a, b) => b.valor - a.valor)
+    .slice(0, 10)
+    .map((row) => ({
+      familia: row.familia,
+      letra: row.letra,
+      skus: row.skus,
+      valor: row.valor,
+    }));
+
+  const porAbcd = rowsTabelaAbcd(valorPorAbcd).map((row) => ({
+    letra: row.letra,
+    valor: row.valor,
+    custoMedioTexto: '—',
+  }));
+
+  const porProduto = Object.entries(pendentePorProduto)
+    .map(([produtoId, pendenteBase]) => {
+      const produto = produtoMap.get(String(produtoId));
+      if (!produto || pendenteBase <= 0) return null;
+      const apresent = formatQuantidadeCatalogoApresentacao(produto, pendenteBase);
+      const qtd = Number(apresent?.quantidade) || 0;
+      const unidade = apresent?.sigla || String(produto.unidade_principal || 'UN').toUpperCase();
+      const valor = pendenteBase * resolveProdutoCustoUnitarioBase(produto);
+      if (valor <= 0 || qtd <= 0) return null;
+      return {
+        produto: produto.nome || produto.codigo_interno || '—',
+        quantidadePartes: [{ numero: QTD_CELL.format(qtd), unidade }],
+        valor,
+        custoMedioTexto: BRL_UNIT.format(valor / qtd),
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.valor - a.valor)
+    .slice(0, 8);
+
+  return {
+    totalTransito,
+    pedidosAbertos: pedidosAbertos.length,
+    embarquesTransito: embarques.length,
+    volumesTotal,
+    embarques,
+    porFornecedor,
+    porFamiliaH1,
+    porAbcd,
+    porProduto,
+  };
+}
+
+function buildResumoData(produtos, { resolveProdutoCustoUnitarioBase, formatEstoqueApresentacao, resolveProdutoAbcdClasse }) {
   const norm = (s) => String(s || '').trim().toUpperCase().normalize('NFD').replace(/\p{M}/gu, '');
   const qtd = (p) => {
     const ap = formatEstoqueApresentacao(p);
@@ -171,7 +548,53 @@ function buildResumoData(produtos, { resolveProdutoCustoUnitarioBase, formatEsto
     }
   }
 
-  const grupos = matchers
+  const abcdPorH1 = buildAbcdDominantePorH1(produtos, resolveProdutoAbcdClasse, valorFisico);
+  const valorPorAbcd = aggregateValorPorAbcdH1(produtos, abcdPorH1, valorFisico);
+  const porAbcd = rowsTabelaAbcd(valorPorAbcd);
+
+  const familiaAgg = new Map();
+  for (const produto of produtos) {
+    const valor = valorFisico(produto);
+    if (valor <= 0 || (Number(produto.estoque_atual) || 0) <= 0) continue;
+    const familia = tituloFamiliaH1(produto.campo_hierarquico_1);
+    if (!familiaAgg.has(familia)) {
+      familiaAgg.set(familia, { label: familia, valor: 0, skus: 0, units: new Map() });
+    }
+    const agg = familiaAgg.get(familia);
+    agg.valor += valor;
+    agg.skus += 1;
+    const unidade = un(produto);
+    agg.units.set(unidade, (agg.units.get(unidade) || 0) + qtd(produto));
+  }
+
+  const grupos = [...familiaAgg.values()]
+    .map((agg) => {
+      const unidades = [...agg.units.entries()]
+        .map(([u, q]) => ({ u, q: Math.round(q * 100) / 100 }))
+        .sort((a, b) => b.q - a.q);
+      const principal = unidades[0] || { u: 'UN', q: 0 };
+      const custoMedio = principal.q > 0 ? agg.valor / principal.q : null;
+      const quantidadePartes = unidades.length
+        ? unidades.map(({ u, q }) => ({ numero: QTD_CELL.format(q), unidade: u }))
+        : [{ numero: '—', unidade: '' }];
+      return {
+        label: agg.label,
+        valor: agg.valor,
+        skus: agg.skus,
+        unidades,
+        quantidadePartes,
+        quantidadeTexto: unidades.length
+          ? unidades.map(({ u, q }) => `${QTD.format(q)} ${u}`).join(' + ')
+          : '—',
+        custoMedio,
+        custoMedioTexto: custoMedio != null ? BRL_UNIT.format(custoMedio) : '—',
+        letra: abcdPorH1.get(agg.label) || 'E',
+      };
+    })
+    .sort((a, b) => b.valor - a.valor)
+    .slice(0, 14);
+
+  const gruposMatchers = matchers
     .map((m) => sumGroup(m.fn, m.label))
     .filter((g) => g.valor > 0)
     .sort((a, b) => b.valor - a.valor);
@@ -201,8 +624,8 @@ function buildResumoData(produtos, { resolveProdutoCustoUnitarioBase, formatEsto
     });
   };
 
-  pushDestaque('Cerâmica (tudo junto)', grupos.find((g) => g.label.startsWith('Cerâmica')));
-  pushDestaque('Cimento CP-IV 42,5 kg', grupos.find((g) => g.label.startsWith('Cimento')));
+  pushDestaque('Cerâmica (tudo junto)', gruposMatchers.find((g) => g.label.startsWith('Cerâmica')));
+  pushDestaque('Cimento CP-IV 42,5 kg', gruposMatchers.find((g) => g.label.startsWith('Cimento')));
   if (blocos.length) {
     const totalBlocos = blocos.reduce((s, b) => s + b.qtd, 0);
     const totalValor = blocos.reduce((s, b) => s + b.valor, 0);
@@ -213,10 +636,10 @@ function buildResumoData(produtos, { resolveProdutoCustoUnitarioBase, formatEsto
       valor: BRL.format(totalValor),
     });
   }
-  pushDestaque('Estribos', grupos.find((g) => g.label === 'Estribos'));
-  pushDestaque('Massa corrida', grupos.find((g) => g.label === 'Massa corrida'));
-  pushDestaque('Massa acrílica', grupos.find((g) => g.label === 'Massa acrílica'));
-  pushDestaque('Cal', grupos.find((g) => g.label === 'Cal'));
+  pushDestaque('Estribos', gruposMatchers.find((g) => g.label === 'Estribos'));
+  pushDestaque('Massa corrida', gruposMatchers.find((g) => g.label === 'Massa corrida'));
+  pushDestaque('Massa acrílica', gruposMatchers.find((g) => g.label === 'Massa acrílica'));
+  pushDestaque('Cal', gruposMatchers.find((g) => g.label === 'Cal'));
   if (caixas.length) {
     const totalCx = caixas.reduce((s, c) => s + c.qtd, 0);
     const totalValor = caixas.reduce((s, c) => s + c.valor, 0);
@@ -233,6 +656,7 @@ function buildResumoData(produtos, { resolveProdutoCustoUnitarioBase, formatEsto
     total,
     skusCom,
     grupos,
+    porAbcd,
     destaques,
   };
 }
@@ -380,15 +804,59 @@ function drawGridTable(doc, fontFamily, {
   return y + tableH;
 }
 
-async function drawPdf(data, registerJsPdfBarlowFonts, normalizePdfText) {
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const fontFamily = await registerJsPdfBarlowFonts(doc);
-  const pageW = doc.internal.pageSize.getWidth();
-  const pageH = doc.internal.pageSize.getHeight();
-  const M = 14;
-  const CW = pageW - M * 2;
-  let y = M;
+function drawPageFooter(doc, fontFamily, normalizePdfText, M, CW, pageH, leftLabel, rightLabel) {
+  const footerY = pageH - 12;
+  doc.setDrawColor(...COLORS.line);
+  doc.setLineWidth(GRID.lineWidth);
+  doc.line(M, footerY - 4, M + CW, footerY - 4);
+  doc.setFont(fontFamily, 'normal');
+  doc.setFontSize(FONT.footer);
+  setTextColor(doc, COLORS.muted);
+  doc.text(normalizePdfText(leftLabel), M, footerY);
+  doc.text(normalizePdfText(rightLabel), M + CW, footerY, { align: 'right' });
+}
 
+function drawSectionTitle(doc, fontFamily, normalizePdfText, x, y, title) {
+  doc.setFont(fontFamily, 'bold');
+  doc.setFontSize(FONT.section);
+  setTextColor(doc, COLORS.ink);
+  doc.text(normalizePdfText(title), x, y);
+  return y + 6;
+}
+
+function drawTwoColumnBlock(doc, fontFamily, normalizePdfText, layout, y, leftCfg, rightCfg) {
+  const { M, CW } = layout;
+  const gap = 5;
+  const leftWidth = (CW - gap) * (leftCfg.widthRatio ?? 0.58);
+  const rightWidth = CW - gap - leftWidth;
+  const leftX = M;
+  const rightX = M + leftWidth + gap;
+
+  const yAfterLeftTitle = drawSectionTitle(doc, fontFamily, normalizePdfText, leftX, y, leftCfg.title);
+  const yAfterRightTitle = drawSectionTitle(doc, fontFamily, normalizePdfText, rightX, y, rightCfg.title);
+  const tableY = Math.max(yAfterLeftTitle, yAfterRightTitle);
+
+  const leftEnd = drawGridTable(doc, fontFamily, {
+    x: leftX,
+    y: tableY,
+    width: leftWidth,
+    columns: leftCfg.columns,
+    rows: leftCfg.rows,
+  });
+  const rightEnd = drawGridTable(doc, fontFamily, {
+    x: rightX,
+    y: tableY,
+    width: rightWidth,
+    columns: rightCfg.columns,
+    rows: rightCfg.rows,
+  });
+
+  return Math.max(leftEnd, rightEnd) + 7;
+}
+
+function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
+  const { M, CW, pageH } = layout;
+  let y = M;
   const text = (str, x, yy, opts = {}) => doc.text(normalizePdfText(str), x, yy, opts);
 
   doc.setFont(fontFamily, 'heavy');
@@ -431,100 +899,262 @@ async function drawPdf(data, registerJsPdfBarlowFonts, normalizePdfText) {
   doc.line(M, y, M + CW, y);
   y += 9;
 
-  doc.setFont(fontFamily, 'bold');
-  doc.setFontSize(FONT.section);
-  setTextColor(doc, COLORS.ink);
-  text('Resumo por família', M, y);
-  y += 6;
+  y = drawTwoColumnBlock(doc, fontFamily, normalizePdfText, layout, y, {
+    title: 'Resumo por família (nível 1)',
+    widthRatio: 0.64,
+    columns: [
+      { key: 'familia', label: 'FAMÍLIA', width: 0.42, align: 'left' },
+      { key: 'quantidade', label: 'QUANTIDADE', width: 0.28, align: 'left', splitQuantity: true },
+      { key: 'valor', label: 'VALOR', width: 0.30, align: 'right' },
+    ],
+    rows: data.grupos.map((g) => ({
+      familia: `${g.label} (${g.letra})`,
+      quantidadePartes: g.quantidadePartes,
+      valor: BRL.format(g.valor),
+    })),
+  }, {
+    title: 'Por curva ABCD (nível 1)',
+    columns: [
+      { key: 'letra', label: 'CLASSE', width: 0.24, align: 'left' },
+      { key: 'valor', label: 'VALOR', width: 0.76, align: 'right' },
+    ],
+    rows: data.porAbcd.map((row) => ({
+      letra: row.letra,
+      valor: BRL.format(row.valor),
+    })),
+  });
 
-  const familyColumns = [
-    { key: 'familia', label: 'FAMÍLIA', width: 0.36, align: 'left' },
-    { key: 'quantidade', label: 'QUANTIDADE', width: 0.22, align: 'left', splitQuantity: true },
-    { key: 'custoMedio', label: 'CUSTO MÉDIO', width: 0.22, align: 'right' },
-    { key: 'valor', label: 'VALOR', width: 0.20, align: 'right' },
-  ];
+  y = drawSectionTitle(doc, fontFamily, normalizePdfText, M, y, 'Destaques');
 
-  const familyRows = data.grupos.map((g) => ({
-    familia: g.label,
-    quantidadePartes: g.quantidadePartes,
-    custoMedio: g.custoMedioTexto,
-    valor: BRL.format(g.valor),
-  }));
-
-  y = drawGridTable(doc, fontFamily, {
+  drawGridTable(doc, fontFamily, {
     x: M,
     y,
     width: CW,
-    columns: familyColumns,
-    rows: familyRows,
+    columns: [
+      { key: 'label', label: 'ITEM', width: 0.36, align: 'left' },
+      { key: 'quantidade', label: 'QUANTIDADE', width: 0.22, align: 'left', splitQuantity: true },
+      { key: 'custoMedio', label: 'CUSTO MÉDIO', width: 0.22, align: 'right' },
+      { key: 'valor', label: 'VALOR', width: 0.20, align: 'right' },
+    ],
+    rows: data.destaques.map((d) => ({
+      label: d.label,
+      quantidadePartes: d.quantidadePartes,
+      custoMedio: d.custoMedio,
+      valor: d.valor,
+    })),
   });
+
+  drawPageFooter(
+    doc,
+    fontFamily,
+    normalizePdfText,
+    M,
+    CW,
+    pageH,
+    'P38 · Estoque físico · página 1',
+    'Famílias e curva ABCD no nível hierárquico 1',
+  );
+}
+
+function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) {
+  const { M, CW, pageH } = layout;
+  let y = M;
+  const text = (str, x, yy, opts = {}) => doc.text(normalizePdfText(str), x, yy, opts);
+  const embarquesRows = transito.embarques.slice(0, 9);
+
+  doc.setFont(fontFamily, 'heavy');
+  doc.setFontSize(FONT.title);
+  setTextColor(doc, COLORS.ink);
+  text('Estoque em trânsito', M, y);
   y += 9;
 
-  doc.setFont(fontFamily, 'bold');
-  doc.setFontSize(FONT.section);
+  doc.setFont(fontFamily, 'normal');
+  doc.setFontSize(FONT.subtitle);
+  setTextColor(doc, COLORS.muted);
+  text('Compras aprovadas que ainda não entraram no armazém', M, y);
+  y += 5;
+  text(`Atualizado em ${transito.geradoEm} (Tabatinga)`, M, y);
+  y += 10;
+
+  doc.setDrawColor(...COLORS.line);
+  doc.setLineWidth(GRID.lineWidth);
+  doc.line(M, y, M + CW, y);
+  y += 11;
+
+  doc.setFont(fontFamily, 'normal');
+  doc.setFontSize(FONT.kpiLabel);
+  setTextColor(doc, COLORS.muted);
+  text('VALOR TOTAL EM TRÂNSITO (CUSTO)', M, y);
+  y += 10;
+
+  doc.setFont(fontFamily, 'heavy');
+  doc.setFontSize(FONT.kpi);
   setTextColor(doc, COLORS.ink);
-  text('Destaques', M, y);
-  y += 6;
+  text(BRL.format(transito.totalTransito), M, y);
+  y += 7;
 
-  const destaqueColumns = [
-    { key: 'label', label: 'ITEM', width: 0.36, align: 'left' },
-    { key: 'quantidade', label: 'QUANTIDADE', width: 0.22, align: 'left', splitQuantity: true },
-    { key: 'custoMedio', label: 'CUSTO MÉDIO', width: 0.22, align: 'right' },
-    { key: 'valor', label: 'VALOR', width: 0.20, align: 'right' },
-  ];
+  doc.setFont(fontFamily, 'normal');
+  doc.setFontSize(FONT.subtitle);
+  setTextColor(doc, COLORS.muted);
+  text(
+    `${QTD.format(transito.pedidosAbertos)} pedidos em aberto · ${QTD.format(transito.embarquesTransito)} embarques viajando · ${QTD.format(transito.volumesTotal)} volumes`,
+    M,
+    y,
+  );
+  y += 5;
+  text('Valor inclui pedidos aprovados ainda não recebidos (embarcados ou aguardando embarque)', M, y);
+  y += 11;
 
-  const destaqueRows = data.destaques.map((d) => ({
-    label: d.label,
-    quantidadePartes: d.quantidadePartes,
-    custoMedio: d.custoMedio,
-    valor: d.valor,
-  }));
+  doc.line(M, y, M + CW, y);
+  y += 9;
 
-  y = drawGridTable(doc, fontFamily, {
+  y = drawTwoColumnBlock(doc, fontFamily, normalizePdfText, layout, y, {
+    title: 'Embarques em trânsito',
+    widthRatio: 0.56,
+    columns: [
+      { key: 'codigo', label: 'EMBARQUE', width: 0.20, align: 'left' },
+      { key: 'fornecedor', label: 'FORNECEDOR', width: 0.34, align: 'left' },
+      { key: 'eta', label: 'ETA', width: 0.18, align: 'left' },
+      { key: 'valor', label: 'VALOR', width: 0.28, align: 'right' },
+    ],
+    rows: embarquesRows.map((row) => ({
+      codigo: row.codigo,
+      fornecedor: row.fornecedor,
+      eta: row.eta,
+      valor: BRL.format(row.valor),
+    })),
+  }, {
+    title: 'Por fornecedor',
+    columns: [
+      { key: 'fornecedor', label: 'FORNECEDOR', width: 0.48, align: 'left' },
+      { key: 'quantidade', label: 'EMB.', width: 0.18, align: 'left', splitQuantity: true },
+      { key: 'valor', label: 'VALOR', width: 0.34, align: 'right' },
+    ],
+    rows: transito.porFornecedor.map((row) => ({
+      fornecedor: row.fornecedor,
+      quantidadePartes: row.quantidadePartes,
+      valor: BRL.format(row.valor),
+    })),
+  });
+
+  y = drawTwoColumnBlock(doc, fontFamily, normalizePdfText, layout, y, {
+    title: 'Por curva ABCD (nível 1)',
+    widthRatio: 0.34,
+    columns: [
+      { key: 'letra', label: 'CLASSE', width: 0.28, align: 'left' },
+      { key: 'valor', label: 'VALOR', width: 0.72, align: 'right' },
+    ],
+    rows: transito.porAbcd.map((row) => ({
+      letra: row.letra,
+      valor: BRL.format(row.valor),
+    })),
+  }, {
+    title: 'Por família chegando (nível 1)',
+    columns: [
+      { key: 'familia', label: 'FAMÍLIA', width: 0.52, align: 'left' },
+      { key: 'letra', label: 'CL.', width: 0.10, align: 'left' },
+      { key: 'valor', label: 'VALOR', width: 0.38, align: 'right' },
+    ],
+    rows: transito.porFamiliaH1.map((row) => ({
+      familia: row.familia,
+      letra: row.letra,
+      valor: BRL.format(row.valor),
+    })),
+  });
+
+  y = drawSectionTitle(doc, fontFamily, normalizePdfText, M, y, 'Por produto (maiores valores)');
+
+  drawGridTable(doc, fontFamily, {
     x: M,
     y,
     width: CW,
-    columns: destaqueColumns,
-    rows: destaqueRows,
+    columns: [
+      { key: 'produto', label: 'PRODUTO', width: 0.36, align: 'left' },
+      { key: 'quantidade', label: 'QUANTIDADE', width: 0.22, align: 'left', splitQuantity: true },
+      { key: 'custoMedio', label: 'CUSTO MÉDIO', width: 0.22, align: 'right' },
+      { key: 'valor', label: 'VALOR', width: 0.20, align: 'right' },
+    ],
+    rows: transito.porProduto.map((row) => ({
+      produto: row.produto,
+      quantidadePartes: row.quantidadePartes,
+      custoMedio: row.custoMedioTexto,
+      valor: BRL.format(row.valor),
+    })),
   });
 
-  const footerY = pageH - 12;
-  doc.line(M, footerY - 4, M + CW, footerY - 4);
-  doc.setFont(fontFamily, 'normal');
-  doc.setFontSize(FONT.footer);
-  setTextColor(doc, COLORS.muted);
-  text('P38 · Estoque físico · página 1', M, footerY);
-  text('Gerado automaticamente a partir do cadastro ativo', M + CW, footerY, { align: 'right' });
+  drawPageFooter(
+    doc,
+    fontFamily,
+    normalizePdfText,
+    M,
+    CW,
+    pageH,
+    'P38 · Estoque em trânsito · página 2',
+    'Curva ABCD consolidada por família (campo hierárquico nível 1)',
+  );
+}
+
+async function drawPdf({ fisico, transito }, registerJsPdfBarlowFonts, normalizePdfText) {
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const fontFamily = await registerJsPdfBarlowFonts(doc);
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const layout = { M: 14, CW: pageW - 28, pageH };
+
+  drawPage1Fisico(doc, fontFamily, normalizePdfText, fisico, layout);
+  doc.addPage();
+  drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout);
 
   return doc.output('arraybuffer');
 }
 
 async function main() {
   const outPath = parseOutArg(process.argv.slice(2));
-  const { stock, unitsLib, fonts } = await loadModules();
+  const { stock, unitsLib, fonts, pendenteLib, embarqueLib, abcdLib, embarqueContract } = await loadModules();
   const produtos = await fetchAllProdutosAtivos();
-  const data = buildResumoData(produtos, {
+  const compraContext = await fetchCompraContext(pendenteLib, embarqueLib, embarqueContract);
+
+  const fisico = buildResumoData(produtos, {
     resolveProdutoCustoUnitarioBase: stock.resolveProdutoCustoUnitarioBase,
     formatEstoqueApresentacao: unitsLib.formatEstoqueApresentacao,
+    resolveProdutoAbcdClasse: abcdLib.resolveProdutoAbcdClasse,
   });
 
-  const pdfBytes = await drawPdf(data, fonts.registerJsPdfBarlowFonts, fonts.normalizePdfText);
+  const transito = buildResumoTransitoData(produtos, compraContext, {
+    resolveProdutoCustoUnitarioBase: stock.resolveProdutoCustoUnitarioBase,
+    resolveProdutoAbcdClasse: abcdLib.resolveProdutoAbcdClasse,
+    sumCatalogTransitStockValue: stock.sumCatalogTransitStockValue,
+    formatQuantidadeCatalogoApresentacao: unitsLib.formatQuantidadeCatalogoApresentacao,
+  });
+  transito.geradoEm = fisico.geradoEm;
+
+  const pdfBytes = await drawPdf({ fisico, transito }, fonts.registerJsPdfBarlowFonts, fonts.normalizePdfText);
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, Buffer.from(pdfBytes));
 
-  const workspaceCopy = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'estoque-fisico-pagina1.pdf');
-  const publicCopy = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'public', 'estoque-fisico-pagina1.pdf');
-  fs.copyFileSync(outPath, workspaceCopy);
-  fs.copyFileSync(outPath, publicCopy);
+  const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+  const copies = [
+    path.join(repoRoot, 'estoque-fisico-reuniao.pdf'),
+    path.join(repoRoot, 'estoque-fisico-pagina1.pdf'),
+    path.join(repoRoot, 'public', 'estoque-fisico-reuniao.pdf'),
+    path.join(repoRoot, 'public', 'estoque-fisico-pagina1.pdf'),
+  ];
+  for (const target of copies) {
+    fs.copyFileSync(outPath, target);
+  }
 
   console.log(JSON.stringify({
     ok: true,
     out: outPath,
-    workspace: workspaceCopy,
-    public: publicCopy,
-    total: data.total,
-    skusCom: data.skusCom,
-    geradoEm: data.geradoEm,
+    copies,
+    fisico: { total: fisico.total, skusCom: fisico.skusCom },
+    transito: {
+      total: transito.totalTransito,
+      pedidosAbertos: transito.pedidosAbertos,
+      embarques: transito.embarquesTransito,
+      volumes: transito.volumesTotal,
+    },
+    geradoEm: fisico.geradoEm,
   }, null, 2));
 }
 
