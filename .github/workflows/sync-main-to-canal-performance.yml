@@ -1,0 +1,47 @@
+# Sincroniza main → canal de performance após cada push na main.
+# O canal recebe o trabalho do "rio" sem agentes terem de commitar em duas branches.
+# Conflitos: o job falha → resolver manualmente na branch do canal.
+
+name: Sync main → canal performance
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-canal-performance
+  cancel-in-progress: false
+
+jobs:
+  merge-main-into-canal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge origin/main into canal branch
+        run: |
+          set -euo pipefail
+          CANAL_BRANCH="cursor/canal-performance-anotacoes-2ef5"
+
+          git fetch origin main
+          git fetch origin "${CANAL_BRANCH}" || {
+            echo "Branch ${CANAL_BRANCH} ainda não existe no remoto — ignorar sync."
+            exit 0
+          }
+
+          git checkout "${CANAL_BRANCH}"
+          git merge origin/main -m "chore: sync main → canal performance [auto]"
+
+          if git diff --quiet origin/"${CANAL_BRANCH}"..HEAD; then
+            echo "Canal já estava alinhado com main — nada a enviar."
+            exit 0
+          fi
+
+          git push origin "${CANAL_BRANCH}"

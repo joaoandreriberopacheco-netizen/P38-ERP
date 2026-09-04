@@ -24,20 +24,54 @@ Trabalho relacionado com:
 
 **Não** commitar estas alterações diretamente na `main`.
 
-### Comandos iniciais (sempre)
+## Bifurcação: quem atualiza o quê?
+
+**Não** é “todos os agentes commitam na `main` e na branch do canal”. Isso mistura fluxos e aumenta risco de erro.
+
+| Tipo de trabalho | Onde commitar | Canal fica atualizado como? |
+|------------------|---------------|-----------------------------|
+| Feature normal, flare, bugfix, negócio | **`main` só** | Workflow **Sync main → canal performance** (automático após cada push na `main`) |
+| Performance, cache, anotações | **Branch do canal só** | Agente faz `git merge origin/main` **antes** de começar (por precaução) |
+| Publicar otimizações | Merge do **PR canal → `main`** | Aprovação explícita; preview Vercel antes |
+
+### Fluxo (rio + canal)
+
+```
+main (rio / produção)
+  │
+  │  push (qualquer agente, trabalho normal)
+  ▼
+[GitHub Action: sync-main-to-canal-performance]
+  │
+  │  merge automático main → canal
+  ▼
+cursor/canal-performance-anotacoes-2ef5 (canal)
+  │
+  │  commits de performance (agentes no canal)
+  ▼
+PR #614 → preview → merge (quando aprovado) → volta ao rio
+```
+
+### Para agentes — regra simples
+
+1. **Trabalho normal** → `main`, push, **pronto**. Não tocar no canal; o sync trata do resto.
+2. **Trabalho de performance** → checkout do canal → `git merge origin/main` → implementar → push no canal.
+3. **Conflito no sync automático** → o workflow falha no GitHub Actions; um agente resolve na branch do canal (`git merge origin/main`, corrigir, push).
+
+### Comandos (trabalho no canal)
 
 ```bash
 git fetch origin main
 git checkout cursor/canal-performance-anotacoes-2ef5
 git pull origin cursor/canal-performance-anotacoes-2ef5
-git merge origin/main   # manter o canal alinhado com o rio
+git merge origin/main   # extra antes de começar; o sync já traz a main, mas evita surpresas
 ```
 
 Resolver conflitos, `npm run build`, commit, push na **branch do canal**.
 
 ### Outras tarefas (fora de performance)
 
-Correções urgentes, features normais, flares → continuam na **`main`** (regra habitual do repo).
+Correções urgentes, features normais, flares → continuam na **`main`** (regra habitual do repo). O canal recebe essas mudanças sozinho via sync.
 
 ### Publicar na produção
 
@@ -110,15 +144,21 @@ Meta saudável LCP: **&lt; 2,5 s**. INP (~152 ms) está aceitável — o gargalo
 
 ---
 
-## Manter o canal atualizado (“represa”)
+## Manter o canal atualizado
 
-Sempre que outro trabalho for feito na `main` (outro agente, correção urgente):
+### Automático (recomendado)
+
+Cada push na **`main`** dispara o workflow [`.github/workflows/sync-main-to-canal-performance.yml`](../.github/workflows/sync-main-to-canal-performance.yml), que faz merge `main` → canal.
+
+Agentes em trabalho **normal** não precisam de atualizar o canal manualmente.
+
+### Manual (se o sync falhar por conflito)
 
 ```bash
 git checkout cursor/canal-performance-anotacoes-2ef5
 git fetch origin
 git merge origin/main
+# resolver conflitos
+npm run build
 git push origin cursor/canal-performance-anotacoes-2ef5
 ```
-
-Assim o canal recebe as novidades do rio sem misturar o trabalho de performance na produção.

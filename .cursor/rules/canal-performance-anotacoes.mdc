@@ -7,7 +7,16 @@ alwaysApply: true
 
 Pedido explícito do João André (set/2026): otimizações de performance, cache e “anotações” **não vão para produção** até merge aprovado.
 
-## Branch obrigatória para este trabalho
+## Bifurcação — NÃO commitar nas duas branches
+
+| Trabalho | Branch |
+|----------|--------|
+| Normal (feature, bugfix, flare, negócio) | **`main` só** |
+| Performance, cache, snapshots, anotações | **`cursor/canal-performance-anotacoes-2ef5` só** |
+
+Após push na **`main`**, o workflow **Sync main → canal performance** atualiza o canal automaticamente. Agentes em trabalho normal **não** precisam de push no canal.
+
+## Branch obrigatória para performance
 
 ```
 cursor/canal-performance-anotacoes-2ef5
@@ -18,7 +27,7 @@ Antes de editar ficheiros para performance/cache/snapshots/anotações:
 1. `git fetch origin main`
 2. `git checkout cursor/canal-performance-anotacoes-2ef5`
 3. `git pull origin cursor/canal-performance-anotacoes-2ef5`
-4. `git merge origin/main` (alinhar com o rio)
+4. `git merge origin/main`
 5. Commit e push **só nesta branch**
 
 ## Escopo que pertence ao canal
@@ -30,7 +39,7 @@ Antes de editar ficheiros para performance/cache/snapshots/anotações:
 
 ## Fora do canal
 
-Correções urgentes, features de negócio não relacionadas, flares → **`main`** (regra habitual).
+Correções urgentes, features de negócio não relacionadas, flares → **`main`**. O sync traz essas mudanças ao canal.
 
 ## Documentação completa
 
