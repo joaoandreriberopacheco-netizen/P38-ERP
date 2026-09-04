@@ -43,12 +43,12 @@ import { productCodesMatch } from '@/lib/productCode';
 import { isVendaSemEstoquePermitida } from '@/lib/configFlags';
 import { selectAllOnFocus } from '@/lib/inputFocusUtils';
 import {
-  filterProdutosDisponiveisPdv,
   isProdutoDisponivelPdv,
 } from '@/lib/hierarquiaPortal/produtoPdvDisponibilidade';
 import ProdutoThumb from '@/components/produtos/ProdutoThumb';
 import { consumirOrcamentoParaPdv } from '@/lib/orcamentoRapidoPdvBridge';
 import { usePermissoesUsuario } from '@/hooks/usePermissoesUsuario';
+import { useProdutosAtivosPdvQuery, useClientesPdvQuery } from '@/hooks/useP38Entities';
 
 export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   const navigate = useNavigate();
@@ -71,12 +71,20 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [quantidadeAtual, setQuantidadeAtual] = useState(''); // Changed from quantidadeInput
-  const [produtos, setProdutos] = useState([]);
+  const produtosQuery = useProdutosAtivosPdvQuery();
+  const clientesQuery = useClientesPdvQuery();
+  const produtos = produtosQuery.data ?? [];
+  const [clientesNovos, setClientesNovos] = useState([]);
+  const clientes = useMemo(() => {
+    const base = clientesQuery.data ?? [];
+    const ids = new Set(base.map((c) => c.id));
+    const extras = clientesNovos.filter((c) => c?.id && !ids.has(c.id));
+    return [...base, ...extras];
+  }, [clientesQuery.data, clientesNovos]);
   const [currentUser, setCurrentUser] = useState(null);
   const [tabelaPreco, setTabelaPreco] = useState(null);
   const [showClienteDialog, setShowClienteDialog] = useState(false);
   const [showNovoClienteForm, setShowNovoClienteForm] = useState(false);
-  const [clientes, setClientes] = useState([]);
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
   const [buscaCliente, setBuscaCliente] = useState('');
   const [clientesFiltrados, setClientesFiltrados] = useState([]);
@@ -527,15 +535,8 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
 
   const loadDependencies = async () => {
     try {
-      const [produtosData, userData, clientesData] = await Promise.all([
-      base44.entities.Produto.filter({ ativo: true }),
-      base44.auth.me(),
-      base44.entities.Terceiro.filter({ tipo: ['Cliente', 'Ambos'] })]
-      );
-
-      setProdutos(filterProdutosDisponiveisPdv(produtosData));
+      const userData = await base44.auth.me();
       setCurrentUser(userData);
-      setClientes(clientesData);
 
       if (userData.tabela_preco_id) {
         const tabela = await base44.entities.TabelaPreco.get(userData.tabela_preco_id);
@@ -840,7 +841,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
       });
 
       setClienteSelecionado(clienteCriado);
-      setClientes([...clientes, clienteCriado]);
+      setClientesNovos((prev) => [...prev, clienteCriado]);
       setNovoCliente({
         nome: '',
         telefone: '',
@@ -864,7 +865,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
     try {
       const criado = await base44.entities.Terceiro.create({ nome, tipo: 'Cliente', ativo: true });
       setClienteSelecionado(criado);
-      setClientes(prev => [...prev, criado]);
+      setClientesNovos((prev) => [...prev, criado]);
       setBuscaCliente('');
       showFeedback('success', `Cliente "${nome}" registrado!`, 2000);
     } catch (err) {

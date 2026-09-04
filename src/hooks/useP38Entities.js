@@ -24,6 +24,9 @@ import { keepPreviousData } from '@tanstack/react-query';
 export { fetchPedidosVenda90d, fetchDadosVendaAbcd90d };
 import { unifyLogisticaEventos } from '@/components/logistica-sandbox/fluvialDataUtils';
 import { dataHoje } from '@/components/utils/dateUtils';
+import { filterProdutosDisponiveisPdv } from '@/lib/hierarquiaPortal/produtoPdvDisponibilidade';
+import { getGestaoDateRangeStaleTime } from '@/lib/p38GestaoCache';
+import { fetchPedidosCompraGestaoCompleto } from '@/lib/fetchPedidosCompraGestaoCompleto';
 
 const entityQueryDefaults = {
   staleTime: P38_STALE_TIME,
@@ -42,6 +45,14 @@ export function fetchFornecedores() {
   return base44.entities.Terceiro.filter({ $or: [{ tipo: 'Fornecedor' }, { tipo: 'Ambos' }] });
 }
 
+export function fetchProdutosAtivosPdv() {
+  return base44.entities.Produto.filter({ ativo: true });
+}
+
+export function fetchClientesPdv() {
+  return base44.entities.Terceiro.filter({ tipo: ['Cliente', 'Ambos'] });
+}
+
 export async function fetchPedidosVendaList(sort = '-created_date') {
   const pedidos = await base44.entities.PedidoVenda.list(sort);
   return hydratePedidosVendaItensFromSql(base44, pedidos);
@@ -58,10 +69,10 @@ export async function fetchHomeKpis(dateKey, _queryClient) {
 export { fetchHomeVendasHoje, fetchPedidosAguardandoCaixaCount };
 
 const homeQueryDefaults = {
-  staleTime: 30 * 1000,
+  staleTime: 60 * 1000,
   gcTime: P38_GC_TIME,
-  refetchOnMount: 'always',
-  refetchOnWindowFocus: true,
+  refetchOnMount: false,
+  refetchOnWindowFocus: false,
 };
 
 export function useHomeVendasHojeQuery(options = {}) {
@@ -97,6 +108,36 @@ export function useProdutosListQuery(options = {}) {
     queryFn: () => fetchProdutosList(sort),
     ...entityQueryDefaults,
     ...rest,
+  });
+}
+
+/** Catálogo activo PDV — partilhado entre visitas (2 min). */
+export function useProdutosAtivosPdvQuery(options = {}) {
+  return useQuery({
+    queryKey: p38Keys.produtosAtivosPdv(),
+    queryFn: fetchProdutosAtivosPdv,
+    select: (data) => filterProdutosDisponiveisPdv(data ?? []),
+    ...entityQueryDefaults,
+    ...options,
+  });
+}
+
+export function useClientesPdvQuery(options = {}) {
+  return useQuery({
+    queryKey: p38Keys.clientesPdv(),
+    queryFn: fetchClientesPdv,
+    ...entityQueryDefaults,
+    ...options,
+  });
+}
+
+export function usePedidosCompraGestaoInicialQuery(options = {}) {
+  return useQuery({
+    queryKey: p38Keys.pedidosCompraGestaoInicial(),
+    queryFn: () => fetchPedidosCompraGestaoCompleto(base44),
+    staleTime: P38_STALE_TIME,
+    gcTime: P38_GC_TIME,
+    ...options,
   });
 }
 
@@ -183,7 +224,7 @@ export function usePedidosVendaGestaoQuery({ dataInicio, dataFim, enabled = true
     queryFn: () => fetchPedidosVendaGestaoHeaders({ dataInicio, dataFim }),
     enabled: enabled && datesOk,
     placeholderData: keepPreviousData,
-    staleTime: 30 * 1000,
+    staleTime: getGestaoDateRangeStaleTime(dataFim),
     gcTime: P38_GC_TIME,
     ...rest,
   });
@@ -196,7 +237,7 @@ export function useRascunhosPedidoVendaGestaoQuery({ dataInicio, dataFim, enable
     queryFn: () => fetchRascunhosPedidoVendaGestaoHeaders({ dataInicio, dataFim }),
     enabled: enabled && datesOk,
     placeholderData: keepPreviousData,
-    staleTime: 30 * 1000,
+    staleTime: getGestaoDateRangeStaleTime(dataFim),
     gcTime: P38_GC_TIME,
     ...rest,
   });

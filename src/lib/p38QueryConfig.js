@@ -33,6 +33,9 @@ export const p38Keys = {
   ],
   dashboardEstoqueMovimentosHoje: (hojeKey) => [...p38Keys.all, 'dashboard', 'estoque', 'movimentos-hoje', hojeKey],
   pedidosCompraSugestao: () => [...p38Keys.all, 'pedidos-compra', 'sugestao-estoque'],
+  pedidosCompraGestaoInicial: () => [...p38Keys.all, 'pedidos-compra', 'gestao-inicial'],
+  produtosAtivosPdv: () => [...p38Keys.all, 'produto', 'ativos-pdv'],
+  clientesPdv: () => [...p38Keys.all, 'terceiro', 'clientes-pdv'],
   intervenientes: () => [...p38Keys.all, 'intervenientes'],
   /** Lucro bruto mensal (Relatório de Margem) — partilhado entre Dízimo, Budgets e Visão Financeira */
   lucroBrutoCompetencia: (competencia) => [...p38Keys.all, 'lucro-bruto', competencia],

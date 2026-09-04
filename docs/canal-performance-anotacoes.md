@@ -119,10 +119,10 @@ Meta saudável LCP: **&lt; 2,5 s**. INP (~152 ms) está aceitável — o gargalo
 
 ### Fase 1 — Quick wins (sem mudar schema)
 
-- [ ] **PDVVendedor** — reutilizar `useProdutosListQuery` / cache partilhado; não `Produto.filter` em cada mount.
-- [ ] **PedidosCompra** — React Query por janela; embarques fechados com `staleTime: ∞`.
-- [ ] **VendasGestao** — `staleTime: ∞` quando `dataFim < ontem`.
-- [ ] **Home** — suavizar refetch (menos `refetchOnMount: 'always'` onde não for crítico).
+- [x] **PDVVendedor** — `useProdutosAtivosPdvQuery` + `useClientesPdvQuery` (cache 2 min partilhado).
+- [x] **PedidosCompra** — `usePedidosCompraGestaoInicialQuery` (cache 2 min; invalidate após mutações).
+- [x] **VendasGestao** — `staleTime: ∞` quando `dataFim < ontem` (`p38GestaoCache.js`).
+- [x] **Home** — refetch menos agressivo (60 s, sem refetch ao focar janela).
 
 ### Fase 2 — Completar dashboard + margem
 

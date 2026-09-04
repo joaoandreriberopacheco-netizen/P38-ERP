@@ -4,27 +4,23 @@ import { useScrollChromeVisibility } from '@/hooks/useScrollChromeVisibility';
 import { cn } from '@/lib/utils';
 import { P38ScrollChromeCollapse } from '@/components/layout/P38ScrollChromeCollapse';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { buildBypassAuthPayload } from '@/components/auth/operacaoAuthFlags';
 import { enviarPedidoCompraFinanceiroLote } from '@/lib/enviarPedidoCompraFinanceiro';
-import { pedidoLiberadoParaLogistica, sincronizarPedidoCompraAprovacaoFinanceira } from '@/lib/aprovarPedidoCompraFinanceiro';
+import { pedidoLiberadoParaLogistica } from '@/lib/aprovarPedidoCompraFinanceiro';
 import { gerarNumeroSequencial } from '@/lib/gerarNumeroSequencial';
 import {
   evidenciaAprovacaoFinanceiraProcessada,
   calcValorItensPedidoCompra,
   calcValorTotalPedidoCompra,
-  enriquecerPedidosCompraGestaoFinanceiro,
   getTotalLinhaPedidoCompra,
-  listarLancamentosPedidoCompra,
-  pedidoPrecisaSincronizarAprovacaoFinanceira,
-  pedidoStatusIndicaAguardandoAprovacaoFinanceira,
 } from '@/lib/pedidoCompraFinanceiro';
 
 import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
-import { hydrateEmbarquesFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
-import { fetchPedidosCompraGestaoInicial } from '@/lib/fetchPedidosCompraGestao';
-import { carregarProdutosMap } from '@/lib/embarqueVitrineHelpers';
+import { usePedidosCompraGestaoInicialQuery } from '@/hooks/useP38Entities';
+import { p38Keys } from '@/lib/p38QueryConfig';
 import { calcularPercentuaisLogistica, embarqueRecepcaoDocumentalCompleta, embarqueTemSaldoPendente } from '@/lib/embarqueLogisticaHelpers';
 import { getEmbarqueDataRecebimento, recebimentoMatchesFilter } from '@/lib/embarqueRecebimentoDate';
 import {
@@ -37,7 +33,7 @@ import {
 } from '@/lib/pedidoCompraNecessidade';
 import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta, buildConsultaItensPendentes, calcConsultaValorEmbarque, buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
 import { calcValorEmbarqueCard, calcValorEmbarcadoPedido } from '@/lib/embarqueValorFinanceiro';
-import { getBorrowedStatus, materializePedidosCompraView, pedidoNaoConcluido } from '@/lib/comprasEmbarqueCards';
+import { pedidoNaoConcluido } from '@/lib/comprasEmbarqueCards';
 import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
@@ -268,6 +264,8 @@ export default function PedidosCompraPage() {
     revealMode: 'top-only',
   });
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const gestaoQuery = usePedidosCompraGestaoInicialQuery();
   const [pedidos, setPedidos] = useState([]);
   const [embarques, setEmbarques] = useState([]);
   const [produtosMap, setProdutosMap] = useState({});
@@ -285,7 +283,6 @@ export default function PedidosCompraPage() {
   const [recebimentoInicial, setRecebimentoInicial] = useState('');
   const [recebimentoFinal, setRecebimentoFinal] = useState('');
   const [showImportador, setShowImportador] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [selecionadosIds, setSelecionadosIds] = useState([]);
   const [enviandoLote, setEnviandoLote] = useState(false);
   const [modoSelecao, setModoSelecao] = useState(false);
@@ -298,61 +295,23 @@ export default function PedidosCompraPage() {
   const [showAtualizarPrecosFiltrados, setShowAtualizarPrecosFiltrados] = useState(false);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (!gestaoQuery.data) return;
+    setProdutosMap(gestaoQuery.data.produtosMap ?? {});
+    setPedidos(gestaoQuery.data.pedidos ?? []);
+    setEmbarques(gestaoQuery.data.embarques ?? []);
+  }, [gestaoQuery.data]);
+
+  const loading = gestaoQuery.isLoading && !gestaoQuery.data;
 
   const loadData = async () => {
-    setLoading(true);
-    try {
-      const gestao = await fetchPedidosCompraGestaoInicial(base44);
-
-      const pcs = gestao.pedidos;
-      const embarquesHeaders = gestao.embarques;
-
-      const embarquesDb = await hydrateEmbarquesFromSql(base44, embarquesHeaders);
-      const produtoIds = [...new Set([
-        ...pcs.flatMap((p) => (p.itens || []).map((i) => i.produto_id).filter(Boolean)),
-        ...embarquesDb.flatMap((e) => getEmbarqueItensLinhas(e).map((i) => i.produto_id).filter(Boolean)),
-      ])];
-      const produtosMap = await carregarProdutosMap(produtoIds.map((id) => ({ produto_id: id })));
-      setProdutosMap(produtosMap);
-      const refinado = materializePedidosCompraView(pcs, embarquesDb, produtosMap);
-
-      for (const pedido of refinado.pedidosComResumoReal) {
-        if (!pedidoStatusIndicaAguardandoAprovacaoFinanceira(pedido)) continue;
-        try {
-          const lancs = await listarLancamentosPedidoCompra(base44, pedido.id);
-          if (!pedidoPrecisaSincronizarAprovacaoFinanceira(pedido, lancs)) continue;
-          await sincronizarPedidoCompraAprovacaoFinanceira({ base44, pedido, lancamentos: lancs });
-          const [atualizado] = await base44.entities.PedidoCompra.filter({ id: pedido.id });
-          if (atualizado) {
-            pedido.status = atualizado.status;
-            pedido.status_aprovacao_financeira = atualizado.status_aprovacao_financeira;
-            pedido.data_aprovacao_financeira = atualizado.data_aprovacao_financeira;
-          }
-        } catch {
-          /* exibição segue com enriquecimento abaixo */
-        }
-      }
-
-      const { pedidos: pedidosFin, cards: cardsFin } = await enriquecerPedidosCompraGestaoFinanceiro(
-        base44,
-        refinado.pedidosComResumoReal,
-        refinado.cardsDeEmbarque,
-      );
-      const cardsComStatus = cardsFin.map((card) => ({
-        ...card,
-        _display_status: getBorrowedStatus(card, card._embarque, produtosMap, card._embarques || []),
-      }));
-      setPedidos(pedidosFin);
-      setEmbarques(cardsComStatus);
-    } catch (error) {
-      console.error("Erro ao carregar dados:", error);
-      toast.error(error?.message || 'Erro ao carregar embarques');
-    } finally {
-      setLoading(false);
-    }
+    await queryClient.invalidateQueries({ queryKey: p38Keys.pedidosCompraGestaoInicial() });
   };
+
+  useEffect(() => {
+    if (!gestaoQuery.error) return;
+    console.error('Erro ao carregar dados:', gestaoQuery.error);
+    toast.error(gestaoQuery.error?.message || 'Erro ao carregar embarques');
+  }, [gestaoQuery.error]);
 
   const handleSave = async (pedidoData) => {
     const sanitizedDataBase = {

@@ -89,7 +89,7 @@ export default function HomePage() {
     queryClient.prefetchQuery({
       queryKey: p38Keys.homeVendasHoje(dateKey),
       queryFn: () => fetchHomeVendasHoje(dateKey),
-      staleTime: 30 * 1000,
+      staleTime: 60 * 1000,
     });
     return undefined;
   }, [podeVerResumoVendas, queryClient]);
