@@ -20,7 +20,7 @@ Guidance for AI agents working in this repository (**P38-ERP** — Vite/React UI
 
 Trabalho de **performance, cache, snapshots / “anotações”** vai na branch dedicada — **não na `main`**:
 
-- **Branch:** `cursor/canal-performance-anotacoes-2ef5`
+- **Branch:** `cursor/canal-performance-anotacoes-2ef5` (PR [#614](https://github.com/joaoandreriberopacheco-netizen/P38-ERP/pull/614))
 - **Doc:** [`docs/canal-performance-anotacoes.md`](docs/canal-performance-anotacoes.md)
 - **Regra agente:** `.cursor/rules/canal-performance-anotacoes.mdc`
 - **Sync automático:** push na `main` → workflow `sync-main-to-canal-performance` atualiza o canal (agentes normais **não** commitam nas duas branches)

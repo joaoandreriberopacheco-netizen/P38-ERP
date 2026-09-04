@@ -19,7 +19,7 @@ import {
 } from '@/lib/comprasEmbarqueCards';
 import { buildConsultaItensEmbarque } from '@/lib/consultaComprasEmbarques';
 
-export const PDF_BUILD = 'estoque-reuniao-v15';
+export const PDF_BUILD = 'estoque-reuniao-v17';
 
 const BRL_KPI = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -917,6 +917,7 @@ function drawGridTable(doc, fontFamily, {
               ? COLORS.muted
               : COLORS.ink,
           bold: col.key === 'valor',
+          allowTruncate: col.allowTruncate ?? true,
         });
       }
       cursorX += colWidths[i];
@@ -1191,10 +1192,10 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
     title: 'Embarques em trânsito',
     widthRatio: 0.56,
     columns: [
-      { key: 'eta', label: 'ETA', width: 0.13, align: 'left' },
-      { key: 'transportadora', label: 'TRANSPORTADORA', width: 0.34, align: 'left' },
-      { key: 'volumes', label: 'VOL.', width: 0.14, align: 'right' },
-      { key: 'valor', label: 'VALOR (R$)', width: 0.39, align: 'right' },
+      { key: 'eta', label: 'ETA', width: 0.20, align: 'left', allowTruncate: false },
+      { key: 'transportadora', label: 'TRANSPORTADORA', width: 0.38, align: 'left' },
+      { key: 'volumes', label: 'VOL.', width: 0.12, align: 'right', allowTruncate: false },
+      { key: 'valor', label: 'R$', width: 0.30, align: 'right' },
     ],
     rawRows: transito.embarquesPorEtaTransportadora,
     toDisplay: (row) => ({
