@@ -64,16 +64,20 @@ const GRID = {
 };
 
 const TABLE_LIMITS = {
-  familias: 7,
-  embarques: 5,
-  fornecedores: 5,
-  familiasTransito: 6,
-  produtos: 4,
-  destaques: 7,
+  /** Teto de segurança — o ajuste real é dinâmico pelo espaço na página. */
+  maxRows: 40,
+};
+
+const LAYOUT = {
+  blockGapBefore: 6,
+  sectionTitleH: 5.2,
+  titleToTable: 4.8,
+  sectionGapAfter: 9,
+  sectionGapBetween: 7,
 };
 
 const FOOTER_RESERVE = 15;
-const PDF_BUILD = 'estoque-reuniao-v3';
+const PDF_BUILD = 'estoque-reuniao-v4';
 
 function parseOutArg(argv) {
   const hit = argv.find((a) => a.startsWith('--out='));
@@ -208,8 +212,9 @@ function sumValorRows(rows, key = 'valor') {
 
 function consolidateTopRows(rows, maxRows, { tipo, labelKey, valorKey = 'valor', mapOutros }) {
   const list = Array.isArray(rows) ? rows : [];
-  if (list.length <= maxRows) return list;
-  const headCount = Math.max(1, maxRows - 1);
+  const cap = Math.min(maxRows, TABLE_LIMITS.maxRows);
+  if (list.length <= cap) return list;
+  const headCount = Math.max(1, cap - 1);
   const head = list.slice(0, headCount);
   const tail = list.slice(headCount);
   const outros = mapOutros
@@ -219,6 +224,38 @@ function consolidateTopRows(rows, maxRows, { tipo, labelKey, valorKey = 'valor',
       [valorKey]: sumValorRows(tail, valorKey),
     };
   return [...head, outros];
+}
+
+function fitTableRows(rawItems, toDisplayRow, columns, maxHeight, consolidateOptions = null) {
+  const items = (rawItems || []).slice(0, TABLE_LIMITS.maxRows);
+  if (!items.length) return [];
+
+  const displayAll = items.map(toDisplayRow);
+  if (estimateGridTableHeight(displayAll, columns) <= maxHeight) return displayAll;
+
+  if (!consolidateOptions) {
+    for (let count = items.length - 1; count >= 1; count -= 1) {
+      const partial = items.slice(0, count).map(toDisplayRow);
+      if (estimateGridTableHeight(partial, columns) <= maxHeight) return partial;
+    }
+    return items.slice(0, 1).map(toDisplayRow);
+  }
+
+  for (let max = items.length; max >= 2; max -= 1) {
+    const consolidated = consolidateTopRows(items, max, consolidateOptions);
+    const display = consolidated.map(toDisplayRow);
+    if (estimateGridTableHeight(display, columns) <= maxHeight) return display;
+  }
+
+  return consolidateTopRows(items, 1, consolidateOptions).map(toDisplayRow);
+}
+
+function sectionTitleEndY(y) {
+  return y + LAYOUT.blockGapBefore + LAYOUT.sectionTitleH + LAYOUT.titleToTable;
+}
+
+function availableTableHeight(pageH, tableStartY) {
+  return pageH - FOOTER_RESERVE - tableStartY - LAYOUT.sectionGapAfter;
 }
 
 function formatEta(value) {
@@ -869,10 +906,10 @@ function drawSectionTitle(doc, fontFamily, normalizePdfText, x, y, title) {
   doc.setFontSize(FONT.section);
   setTextColor(doc, COLORS.ink);
   doc.text(normalizePdfText(title), x, y);
-  return y + 4.5;
+  return y + LAYOUT.sectionTitleH;
 }
 
-function drawTwoColumnBlock(doc, fontFamily, normalizePdfText, layout, y, leftCfg, rightCfg) {
+function drawTwoColumnBlock(doc, fontFamily, normalizePdfText, layout, y, leftCfg, rightCfg, pageH) {
   const { M, CW } = layout;
   const gap = 5;
   const leftWidth = (CW - gap) * (leftCfg.widthRatio ?? 0.58);
@@ -880,26 +917,37 @@ function drawTwoColumnBlock(doc, fontFamily, normalizePdfText, layout, y, leftCf
   const leftX = M;
   const rightX = M + leftWidth + gap;
 
-  const yAfterLeftTitle = drawSectionTitle(doc, fontFamily, normalizePdfText, leftX, y, leftCfg.title);
-  const yAfterRightTitle = drawSectionTitle(doc, fontFamily, normalizePdfText, rightX, y, rightCfg.title);
-  const tableY = Math.max(yAfterLeftTitle, yAfterRightTitle);
+  const sectionY = y + LAYOUT.blockGapBefore;
+  const yAfterLeftTitle = drawSectionTitle(doc, fontFamily, normalizePdfText, leftX, sectionY, leftCfg.title);
+  const yAfterRightTitle = drawSectionTitle(doc, fontFamily, normalizePdfText, rightX, sectionY, rightCfg.title);
+  const tableY = Math.max(yAfterLeftTitle, yAfterRightTitle) + LAYOUT.titleToTable;
+  const maxTableHeight = leftCfg.maxHeight
+    ?? rightCfg.maxHeight
+    ?? availableTableHeight(pageH, tableY);
+
+  const leftRows = leftCfg.rawRows
+    ? fitTableRows(leftCfg.rawRows, leftCfg.toDisplay, leftCfg.columns, maxTableHeight, leftCfg.consolidate)
+    : leftCfg.rows;
+  const rightRows = rightCfg.rawRows
+    ? fitTableRows(rightCfg.rawRows, rightCfg.toDisplay, rightCfg.columns, maxTableHeight, rightCfg.consolidate)
+    : rightCfg.rows;
 
   const leftEnd = drawGridTable(doc, fontFamily, {
     x: leftX,
     y: tableY,
     width: leftWidth,
     columns: leftCfg.columns,
-    rows: leftCfg.rows,
+    rows: leftRows,
   });
   const rightEnd = drawGridTable(doc, fontFamily, {
     x: rightX,
     y: tableY,
     width: rightWidth,
     columns: rightCfg.columns,
-    rows: rightCfg.rows,
+    rows: rightRows,
   });
 
-  return Math.max(leftEnd, rightEnd) + 5;
+  return Math.max(leftEnd, rightEnd) + LAYOUT.sectionGapAfter;
 }
 
 function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
@@ -907,16 +955,21 @@ function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
   let y = M;
   const text = (str, x, yy, opts = {}) => doc.text(normalizePdfText(str), x, yy, opts);
 
-  const familiasGrupos = consolidateTopRows(data.grupos, TABLE_LIMITS.familias, {
-    tipo: 'famílias',
-    labelKey: 'label',
-    mapOutros: (tail) => ({
-      label: labelOutros(tail.length, 'famílias'),
-      letra: '—',
-      quantidadePartes: [{ numero: '—', unidade: '' }],
-      valor: sumValorRows(tail),
-    }),
-  });
+  const familiasColumns = [
+    { key: 'familia', label: 'FAMÍLIA', width: 0.42, align: 'left' },
+    { key: 'quantidade', label: 'QUANTIDADE', width: 0.28, align: 'left', splitQuantity: true },
+    { key: 'valor', label: 'VALOR', width: 0.30, align: 'right' },
+  ];
+  const abcdColumns = [
+    { key: 'letra', label: 'CLASSE', width: 0.24, align: 'left' },
+    { key: 'valor', label: 'VALOR', width: 0.76, align: 'right' },
+  ];
+  const destaquesColumns = [
+    { key: 'label', label: 'ITEM', width: 0.40, align: 'left' },
+    { key: 'quantidade', label: 'QUANTIDADE', width: 0.24, align: 'left', splitQuantity: true },
+    { key: 'custoMedio', label: 'CUSTO MÉDIO', width: 0.18, align: 'right' },
+    { key: 'valor', label: 'VALOR', width: 0.18, align: 'right' },
+  ];
 
   doc.setFont(fontFamily, 'heavy');
   doc.setFontSize(FONT.title);
@@ -956,66 +1009,76 @@ function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
   y += 8;
 
   doc.line(M, y, M + CW, y);
-  y += 7;
+  y += LAYOUT.sectionGapBetween;
+
+  const destaquesOverhead = LAYOUT.blockGapBefore + LAYOUT.sectionTitleH + LAYOUT.titleToTable;
+  const destaquesAllDisplay = data.destaques.map((d) => ({
+    label: d.label,
+    quantidadePartes: d.quantidadePartes,
+    custoMedio: d.custoMedio,
+    valor: d.valor,
+  }));
+  const destaquesTableH = estimateGridTableHeight(destaquesAllDisplay, destaquesColumns);
+  const destaquesReserved = destaquesOverhead + destaquesTableH + LAYOUT.sectionGapAfter;
+
+  const twoColStartY = y;
+  const twoColTableY = sectionTitleEndY(twoColStartY);
+  const maxTwoColHeight = pageH - FOOTER_RESERVE - destaquesReserved - twoColTableY - LAYOUT.sectionGapBetween;
 
   y = drawTwoColumnBlock(doc, fontFamily, normalizePdfText, layout, y, {
     title: 'Resumo por família (nível 1)',
     widthRatio: 0.64,
-    columns: [
-      { key: 'familia', label: 'FAMÍLIA', width: 0.42, align: 'left' },
-      { key: 'quantidade', label: 'QUANTIDADE', width: 0.28, align: 'left', splitQuantity: true },
-      { key: 'valor', label: 'VALOR', width: 0.30, align: 'right' },
-    ],
-    rows: familiasGrupos.map((g) => ({
+    columns: familiasColumns,
+    rawRows: data.grupos,
+    toDisplay: (g) => ({
       familia: g.letra === '—' ? g.label : `${g.label} (${g.letra})`,
       quantidadePartes: g.quantidadePartes,
       valor: BRL.format(g.valor),
-    })),
+    }),
+    consolidate: {
+      tipo: 'famílias',
+      labelKey: 'label',
+      mapOutros: (tail) => ({
+        label: labelOutros(tail.length, 'famílias'),
+        letra: '—',
+        quantidadePartes: [{ numero: '—', unidade: '' }],
+        valor: sumValorRows(tail),
+      }),
+    },
+    maxHeight: maxTwoColHeight,
   }, {
     title: 'Por curva ABCD (nível 1)',
-    columns: [
-      { key: 'letra', label: 'CLASSE', width: 0.24, align: 'left' },
-      { key: 'valor', label: 'VALOR', width: 0.76, align: 'right' },
-    ],
-    rows: data.porAbcd.map((row) => ({
+    columns: abcdColumns,
+    rawRows: data.porAbcd,
+    toDisplay: (row) => ({
       letra: row.letra,
       valor: BRL.format(row.valor),
-    })),
-  });
+    }),
+  }, pageH);
 
-  y = drawSectionTitle(doc, fontFamily, normalizePdfText, M, y, 'Destaques');
+  y += LAYOUT.sectionGapBetween;
+  y = drawSectionTitle(doc, fontFamily, normalizePdfText, M, y, 'Destaques') + LAYOUT.titleToTable;
 
-  const destaquesColumns = [
-    { key: 'label', label: 'ITEM', width: 0.40, align: 'left' },
-    { key: 'quantidade', label: 'QUANTIDADE', width: 0.24, align: 'left', splitQuantity: true },
-    { key: 'custoMedio', label: 'CUSTO MÉDIO', width: 0.18, align: 'right' },
-    { key: 'valor', label: 'VALOR', width: 0.18, align: 'right' },
-  ];
-  const destaquesRows = data.destaques.slice(0, TABLE_LIMITS.destaques);
-  const destaquesHeight = estimateGridTableHeight(
-    destaquesRows.map((d) => ({
+  const destMaxH = availableTableHeight(pageH, y);
+  const destaquesRows = fitTableRows(
+    data.destaques,
+    (d) => ({
       label: d.label,
       quantidadePartes: d.quantidadePartes,
       custoMedio: d.custoMedio,
       valor: d.valor,
-    })),
+    }),
     destaquesColumns,
-  ) + 4.5;
+    destMaxH,
+  );
 
-  if (fitsOnPage(y, destaquesHeight, pageH)) {
-    drawGridTable(doc, fontFamily, {
-      x: M,
-      y,
-      width: CW,
-      columns: destaquesColumns,
-      rows: destaquesRows.map((d) => ({
-        label: d.label,
-        quantidadePartes: d.quantidadePartes,
-        custoMedio: d.custoMedio,
-        valor: d.valor,
-      })),
-    });
-  }
+  drawGridTable(doc, fontFamily, {
+    x: M,
+    y,
+    width: CW,
+    columns: destaquesColumns,
+    rows: destaquesRows,
+  });
 
   drawPageFooter(
     doc,
@@ -1033,48 +1096,6 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
   const { M, CW, pageH } = layout;
   let y = M;
   const text = (str, x, yy, opts = {}) => doc.text(normalizePdfText(str), x, yy, opts);
-
-  const embarquesRows = consolidateTopRows(transito.embarques, TABLE_LIMITS.embarques, {
-    tipo: 'embarques',
-    labelKey: 'codigo',
-    mapOutros: (tail) => ({
-      codigo: '—',
-      fornecedor: labelOutros(tail.length, 'embarques'),
-      eta: '—',
-      valor: sumValorRows(tail),
-    }),
-  });
-
-  const fornecedorRows = consolidateTopRows(transito.porFornecedor, TABLE_LIMITS.fornecedores, {
-    tipo: 'fornecedores',
-    labelKey: 'fornecedor',
-    mapOutros: (tail) => ({
-      fornecedor: labelOutros(tail.length, 'fornecedores'),
-      quantidadePartes: [{ numero: '—', unidade: '' }],
-      valor: sumValorRows(tail),
-    }),
-  });
-
-  const familiasTransitoRows = consolidateTopRows(transito.porFamiliaH1, TABLE_LIMITS.familiasTransito, {
-    tipo: 'famílias',
-    labelKey: 'familia',
-    mapOutros: (tail) => ({
-      familia: labelOutros(tail.length, 'famílias'),
-      letra: '—',
-      valor: sumValorRows(tail),
-    }),
-  });
-
-  const produtoRows = consolidateTopRows(transito.porProduto, TABLE_LIMITS.produtos, {
-    tipo: 'itens',
-    labelKey: 'produto',
-    mapOutros: (tail) => ({
-      produto: labelOutros(tail.length, 'itens'),
-      quantidadePartes: [{ numero: '—', unidade: '' }],
-      custoMedioTexto: '—',
-      valor: sumValorRows(tail),
-    }),
-  });
 
   doc.setFont(fontFamily, 'heavy');
   doc.setFontSize(FONT.title);
@@ -1120,7 +1141,17 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
   y += 8;
 
   doc.line(M, y, M + CW, y);
-  y += 7;
+  y += LAYOUT.sectionGapBetween;
+
+  const familiaColumns = [
+    { key: 'familia', label: 'FAMÍLIA', width: 0.52, align: 'left' },
+    { key: 'letra', label: 'CL.', width: 0.10, align: 'left' },
+    { key: 'valor', label: 'VALOR', width: 0.38, align: 'right' },
+  ];
+  const block2ReserveMm = 72;
+  const familiaReserveMm = 52;
+  const block1TableY = sectionTitleEndY(y);
+  const maxBlock1Height = pageH - FOOTER_RESERVE - block1TableY - block2ReserveMm - familiaReserveMm - LAYOUT.sectionGapBetween * 2;
 
   y = drawTwoColumnBlock(doc, fontFamily, normalizePdfText, layout, y, {
     title: 'Embarques em trânsito',
@@ -1131,12 +1162,24 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
       { key: 'eta', label: 'ETA', width: 0.18, align: 'left' },
       { key: 'valor', label: 'VALOR', width: 0.28, align: 'right' },
     ],
-    rows: embarquesRows.map((row) => ({
+    rawRows: transito.embarques,
+    toDisplay: (row) => ({
       codigo: row.codigo,
       fornecedor: row.fornecedor,
       eta: row.eta,
       valor: BRL.format(row.valor),
-    })),
+    }),
+    consolidate: {
+      tipo: 'embarques',
+      labelKey: 'codigo',
+      mapOutros: (tail) => ({
+        codigo: '—',
+        fornecedor: labelOutros(tail.length, 'embarques'),
+        eta: '—',
+        valor: sumValorRows(tail),
+      }),
+    },
+    maxHeight: maxBlock1Height,
   }, {
     title: 'Por fornecedor',
     columns: [
@@ -1144,12 +1187,26 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
       { key: 'quantidade', label: 'EMB.', width: 0.18, align: 'left', splitQuantity: true },
       { key: 'valor', label: 'VALOR', width: 0.34, align: 'right' },
     ],
-    rows: fornecedorRows.map((row) => ({
+    rawRows: transito.porFornecedor,
+    toDisplay: (row) => ({
       fornecedor: row.fornecedor,
       quantidadePartes: row.quantidadePartes,
       valor: BRL.format(row.valor),
-    })),
-  });
+    }),
+    consolidate: {
+      tipo: 'fornecedores',
+      labelKey: 'fornecedor',
+      mapOutros: (tail) => ({
+        fornecedor: labelOutros(tail.length, 'fornecedores'),
+        quantidadePartes: [{ numero: '—', unidade: '' }],
+        valor: sumValorRows(tail),
+      }),
+    },
+    maxHeight: maxBlock1Height,
+  }, pageH);
+
+  const block2TableY = sectionTitleEndY(y);
+  const maxBlock2Height = pageH - FOOTER_RESERVE - familiaReserveMm - block2TableY - LAYOUT.sectionGapBetween;
 
   y = drawTwoColumnBlock(doc, fontFamily, normalizePdfText, layout, y, {
     title: 'Por curva ABCD (nível 1)',
@@ -1158,10 +1215,12 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
       { key: 'letra', label: 'CLASSE', width: 0.28, align: 'left' },
       { key: 'valor', label: 'VALOR', width: 0.72, align: 'right' },
     ],
-    rows: transito.porAbcd.map((row) => ({
+    rawRows: transito.porAbcd,
+    toDisplay: (row) => ({
       letra: row.letra,
       valor: BRL.format(row.valor),
-    })),
+    }),
+    maxHeight: maxBlock2Height,
   }, {
     title: 'Por produto (maiores valores)',
     columns: [
@@ -1169,35 +1228,54 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
       { key: 'quantidade', label: 'QTD', width: 0.20, align: 'left', splitQuantity: true },
       { key: 'valor', label: 'VALOR', width: 0.28, align: 'right' },
     ],
-    rows: produtoRows.map((row) => ({
+    rawRows: transito.porProduto,
+    toDisplay: (row) => ({
       produto: row.produto,
       quantidadePartes: row.quantidadePartes,
       valor: BRL.format(row.valor),
-    })),
+    }),
+    consolidate: {
+      tipo: 'itens',
+      labelKey: 'produto',
+      mapOutros: (tail) => ({
+        produto: labelOutros(tail.length, 'itens'),
+        quantidadePartes: [{ numero: '—', unidade: '' }],
+        valor: sumValorRows(tail),
+      }),
+    },
+    maxHeight: maxBlock2Height,
+  }, pageH);
+
+  y += LAYOUT.sectionGapBetween;
+  y = drawSectionTitle(doc, fontFamily, normalizePdfText, M, y, 'Por família chegando (nível 1)') + LAYOUT.titleToTable;
+
+  const familiaRows = fitTableRows(
+    transito.porFamiliaH1,
+    (row) => ({
+      familia: row.familia,
+      letra: row.letra,
+      valor: BRL.format(row.valor),
+    }),
+    familiaColumns,
+    availableTableHeight(pageH, y),
+    {
+      tipo: 'famílias',
+      labelKey: 'familia',
+      mapOutros: (tail) => ({
+        familia: labelOutros(tail.length, 'famílias'),
+        letra: '—',
+        valor: sumValorRows(tail),
+      }),
+    },
+  );
+
+  drawGridTable(doc, fontFamily, {
+    x: M,
+    y,
+    width: CW,
+    columns: familiaColumns,
+    rows: familiaRows,
   });
-
-  const familiaColumns = [
-    { key: 'familia', label: 'FAMÍLIA', width: 0.52, align: 'left' },
-    { key: 'letra', label: 'CL.', width: 0.10, align: 'left' },
-    { key: 'valor', label: 'VALOR', width: 0.38, align: 'right' },
-  ];
-  const familiaRows = familiasTransitoRows.map((row) => ({
-    familia: row.familia,
-    letra: row.letra,
-    valor: BRL.format(row.valor),
-  }));
-  const familiaBlockHeight = estimateGridTableHeight(familiaRows, familiaColumns) + 4.5;
-
-  if (fitsOnPage(y, familiaBlockHeight, pageH)) {
-    y = drawSectionTitle(doc, fontFamily, normalizePdfText, M, y, 'Por família chegando (nível 1)');
-    drawGridTable(doc, fontFamily, {
-      x: M,
-      y,
-      width: CW,
-      columns: familiaColumns,
-      rows: familiaRows,
-    });
-  }
 
   drawPageFooter(
     doc,
@@ -1245,6 +1323,7 @@ async function main() {
   });
   transito.geradoEm = fisico.geradoEm;
 
+  const layoutStats = computeLayoutStats(fisico, transito);
   const pdfBytes = await drawPdf({ fisico, transito }, fonts.registerJsPdfBarlowFonts, fonts.normalizePdfText);
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, Buffer.from(pdfBytes));
@@ -1272,7 +1351,109 @@ async function main() {
       volumes: transito.volumesTotal,
     },
     geradoEm: fisico.geradoEm,
+    build: PDF_BUILD,
+    layout: layoutStats,
   }, null, 2));
+}
+
+function computeLayoutStats(fisico, transito) {
+  const pageH = 297;
+  const M = 12;
+  const familiasColumns = [
+    { key: 'familia', label: 'FAMÍLIA', width: 0.42, align: 'left' },
+    { key: 'quantidade', label: 'QUANTIDADE', width: 0.28, align: 'left', splitQuantity: true },
+    { key: 'valor', label: 'VALOR', width: 0.30, align: 'right' },
+  ];
+  const destaquesColumns = [
+    { key: 'label', label: 'ITEM', width: 0.40, align: 'left' },
+    { key: 'quantidade', label: 'QUANTIDADE', width: 0.24, align: 'left', splitQuantity: true },
+    { key: 'custoMedio', label: 'CUSTO MÉDIO', width: 0.18, align: 'right' },
+    { key: 'valor', label: 'VALOR', width: 0.18, align: 'right' },
+  ];
+  const familiaColumns = [
+    { key: 'familia', label: 'FAMÍLIA', width: 0.52, align: 'left' },
+    { key: 'letra', label: 'CL.', width: 0.10, align: 'left' },
+    { key: 'valor', label: 'VALOR', width: 0.38, align: 'right' },
+  ];
+
+  let y = M + 7 + 4 + 7 + 8 + 6 + 6 + 8 + LAYOUT.sectionGapBetween;
+  const destaquesOverhead = LAYOUT.blockGapBefore + LAYOUT.sectionTitleH + LAYOUT.titleToTable;
+  const destaquesAllDisplay = fisico.destaques.map((d) => ({
+    label: d.label,
+    quantidadePartes: d.quantidadePartes,
+    custoMedio: d.custoMedio,
+    valor: d.valor,
+  }));
+  const destaquesReserved = destaquesOverhead
+    + estimateGridTableHeight(destaquesAllDisplay, destaquesColumns)
+    + LAYOUT.sectionGapAfter;
+  const twoColTableY = y + LAYOUT.blockGapBefore + LAYOUT.sectionTitleH + LAYOUT.titleToTable;
+  const maxTwoColHeight = pageH - FOOTER_RESERVE - destaquesReserved - twoColTableY - LAYOUT.sectionGapBetween;
+  const familiasFit = fitTableRows(
+    fisico.grupos,
+    (g) => ({
+      familia: g.letra === '—' ? g.label : `${g.label} (${g.letra})`,
+      quantidadePartes: g.quantidadePartes,
+      valor: BRL.format(g.valor),
+    }),
+    familiasColumns,
+    maxTwoColHeight,
+    {
+      tipo: 'famílias',
+      labelKey: 'label',
+      mapOutros: (tail) => ({
+        label: labelOutros(tail.length, 'famílias'),
+        letra: '—',
+        quantidadePartes: [{ numero: '—', unidade: '' }],
+        valor: sumValorRows(tail),
+      }),
+    },
+  );
+
+  const block2ReserveMm = 72;
+  const familiaReserveMm = 52;
+  let y2 = M + 7 + 4 + 7 + 8 + 6 + 6 + 4 + 8 + LAYOUT.sectionGapBetween;
+  const block1TableY = y2 + LAYOUT.blockGapBefore + LAYOUT.sectionTitleH + LAYOUT.titleToTable;
+  const maxBlock1Height = pageH - FOOTER_RESERVE - block1TableY - block2ReserveMm - familiaReserveMm - LAYOUT.sectionGapBetween * 2;
+  const embarquesFit = fitTableRows(
+    transito.embarques,
+    (row) => ({
+      codigo: row.codigo,
+      fornecedor: row.fornecedor,
+      eta: row.eta,
+      valor: BRL.format(row.valor),
+    }),
+    [
+      { key: 'codigo', label: 'EMBARQUE', width: 0.20, align: 'left' },
+      { key: 'fornecedor', label: 'FORNECEDOR', width: 0.34, align: 'left' },
+      { key: 'eta', label: 'ETA', width: 0.18, align: 'left' },
+      { key: 'valor', label: 'VALOR', width: 0.28, align: 'right' },
+    ],
+    maxBlock1Height,
+    {
+      tipo: 'embarques',
+      labelKey: 'codigo',
+      mapOutros: (tail) => ({
+        codigo: '—',
+        fornecedor: labelOutros(tail.length, 'embarques'),
+        eta: '—',
+        valor: sumValorRows(tail),
+      }),
+    },
+  );
+
+  return {
+    pagina1: {
+      familiasTotal: fisico.grupos.length,
+      familiasExibidas: familiasFit.length,
+      destaquesExibidos: fisico.destaques.length,
+    },
+    pagina2: {
+      embarquesTotal: transito.embarques.length,
+      embarquesExibidos: embarquesFit.length,
+      familiasChegandoTotal: transito.porFamiliaH1.length,
+    },
+  };
 }
 
 main().catch((err) => {
