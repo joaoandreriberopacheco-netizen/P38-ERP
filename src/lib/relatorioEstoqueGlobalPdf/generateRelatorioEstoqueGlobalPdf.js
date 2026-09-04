@@ -3,10 +3,10 @@ import { resolveProdutoCustoUnitarioBase, sumCatalogTransitStockValue } from '@/
 import { formatEstoqueApresentacao, formatQuantidadeCatalogoApresentacao } from '@/lib/productUnits';
 import { registerJsPdfBarlowFonts, normalizePdfText } from '@/lib/jspdfNotoFont';
 import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
-import { resolveQuantidadeBaseItemEmbarque } from '@/lib/sugestaoCompraEstoquePendente';
+import { resolveQuantidadeBaseItemEmbarque, quantidadePendenteItemPedidoCompra, pedidoCompraTotalmenteRecebido } from '@/lib/sugestaoCompraEstoquePendente';
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 
-export const PDF_BUILD = 'estoque-reuniao-v8';
+export const PDF_BUILD = 'estoque-reuniao-v9';
 
 const BRL_KPI = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -14,14 +14,17 @@ const BRL_KPI = new Intl.NumberFormat('pt-BR', {
   maximumFractionDigits: 0,
 });
 
-const BRL_TAB = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
+const BRL_TAB = new Intl.NumberFormat('pt-BR', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 const PRECO_MED_TAB = new Intl.NumberFormat('pt-BR', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
 
 function fmtTabValor(valor) {
-  return BRL_TAB.format(Math.round(Number(valor) || 0));
+  return BRL_TAB.format(Number(valor) || 0);
 }
 
 function fmtPrecoMedio(valor) {
@@ -63,10 +66,12 @@ const FONT = {
 
 const GRID = {
   lineWidth: 0.1,
-  rowH: 5.4,
-  headerH: 7,
+  rowH: 6.1,
+  headerH: 7.4,
   padX: 2,
-  padY: 3.6,
+  padY: 2.4,
+  cellPadTop: 4.1,
+  headerPadTop: 5.2,
   qtySplitRatio: 0.62,
   qtyLineStep: 3.7,
 };
@@ -134,13 +139,27 @@ function normalizarFornecedorRelatorio(nome) {
   const text = String(nome || '').trim();
   if (!text) return '—';
   const lower = text.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
-  if (
-    (lower.includes('tintao') || lower.includes('tintão'))
-    && (lower.includes('televendas') || lower.includes('nova cidade'))
-  ) {
-    return 'Tintão';
-  }
+  if (lower.includes('tintao') || lower.includes('tintão')) return 'Tintão';
+  if (lower.includes('fortlev')) return 'Fortlev';
   return text;
+}
+
+function recebidosPorProdutoDoPedido(pedido, recebidosPorPedidoProduto = {}) {
+  const pedidoKey = String(pedido?.id || '');
+  return recebidosPorPedidoProduto[pedidoKey] || {};
+}
+
+function valorPendentePedidoCompra(pedido, recebidosPorPedidoProduto, produtoMap, resolveProdutoCustoUnitarioBase) {
+  const recebidos = recebidosPorProdutoDoPedido(pedido, recebidosPorPedidoProduto);
+  if (pedidoCompraTotalmenteRecebido(pedido, recebidos)) return 0;
+  let total = 0;
+  for (const item of pedido?.itens || []) {
+    const pendente = quantidadePendenteItemPedidoCompra(item, recebidos);
+    if (pendente <= 0) continue;
+    const produto = produtoMap.get(String(item.produto_id));
+    total += pendente * resolveProdutoCustoUnitarioBase(produto || {});
+  }
+  return total;
 }
 
 function buildAbcdDominantePorH1(produtos, resolveProdutoAbcdClasse, valorFn) {
@@ -381,9 +400,19 @@ function buildResumoTransitoData(
   const embarquesDetalhe = embarquesTransito
     .map((embarque) => {
       const pedido = pedidosMap.get(String(embarque.pedido_compra_id));
-      const valor = valorPendenteEmbarque(embarque, pedido, produtoMap, resolveProdutoCustoUnitarioBase, helpers);
+      if (!pedido) return null;
+      const recebidos = recebidosPorProdutoDoPedido(pedido, recebidosPorPedidoProduto);
+      if (pedidoCompraTotalmenteRecebido(pedido, recebidos)) return null;
+
+      const valorEmbarque = valorPendenteEmbarque(embarque, pedido, produtoMap, resolveProdutoCustoUnitarioBase, helpers);
+      const valorPedido = valorPendentePedidoCompra(pedido, recebidosPorPedidoProduto, produtoMap, resolveProdutoCustoUnitarioBase);
+      const transportadoraNome = String(embarque.transportadora_nome || '').trim();
+      const semTransportadora = !transportadoraNome;
+      const valor = semTransportadora ? valorPedido : valorEmbarque;
+      if (valor <= 0) return null;
+
       const eta = formatEta(embarque.eta || pedido?.data_prevista_entrega);
-      const transportadora = String(embarque.transportadora_nome || '').trim() || 'Sem transportadora';
+      const transportadora = transportadoraNome || 'Sem transportadora';
       return {
         eta,
         transportadora,
@@ -392,7 +421,7 @@ function buildResumoTransitoData(
         sortEta: eta === '—' ? '9999' : eta,
       };
     })
-    .filter((row) => row.valor > 0);
+    .filter(Boolean);
 
   const embarquesEtaTransportadoraAgg = new Map();
   for (const row of embarquesDetalhe) {
@@ -414,13 +443,48 @@ function buildResumoTransitoData(
   const embarquesPorEtaTransportadora = [...embarquesEtaTransportadoraAgg.values()]
     .sort((a, b) => a.sortEta.localeCompare(b.sortEta) || b.valor - a.valor);
 
+  const pedidosComEmbarqueTransito = new Set(
+    embarquesTransito.map((embarque) => String(embarque.pedido_compra_id)),
+  );
+  let valorAEmbarcar = 0;
+  let pedidosAEmbarcar = 0;
+  for (const pedido of pedidosAbertos) {
+    if (pedidosComEmbarqueTransito.has(String(pedido.id))) continue;
+    const valor = valorPendentePedidoCompra(pedido, recebidosPorPedidoProduto, produtoMap, resolveProdutoCustoUnitarioBase);
+    if (valor <= 0) continue;
+    valorAEmbarcar += valor;
+    pedidosAEmbarcar += 1;
+  }
+  if (valorAEmbarcar > 0) {
+    embarquesPorEtaTransportadora.push({
+      eta: '—',
+      transportadora: `A embarcar (${QTD.format(pedidosAEmbarcar)} ped.)`,
+      volumes: pedidosAEmbarcar,
+      valor: valorAEmbarcar,
+      sortEta: '9998',
+    });
+    embarquesPorEtaTransportadora.sort((a, b) => a.sortEta.localeCompare(b.sortEta) || b.valor - a.valor);
+  }
+
   const volumesTotal = embarquesDetalhe.reduce((sum, row) => sum + row.volumes, 0);
 
   const fornecedorAgg = new Map();
+  for (const pedido of pedidosAbertos) {
+    const valor = valorPendentePedidoCompra(pedido, recebidosPorPedidoProduto, produtoMap, resolveProdutoCustoUnitarioBase);
+    if (valor <= 0) continue;
+    const key = normalizarFornecedorRelatorio(pedido.fornecedor_nome);
+    if (!fornecedorAgg.has(key)) {
+      fornecedorAgg.set(key, { fornecedor: key, embarques: 0, volumes: 0, valor: 0 });
+    }
+    const agg = fornecedorAgg.get(key);
+    agg.valor += valor;
+  }
+
   for (const embarque of embarquesTransito) {
     const pedido = pedidosMap.get(String(embarque.pedido_compra_id));
-    const valor = valorPendenteEmbarque(embarque, pedido, produtoMap, resolveProdutoCustoUnitarioBase, helpers);
-    if (valor <= 0) continue;
+    if (!pedido) continue;
+    const recebidos = recebidosPorProdutoDoPedido(pedido, recebidosPorPedidoProduto);
+    if (pedidoCompraTotalmenteRecebido(pedido, recebidos)) continue;
     const key = normalizarFornecedorRelatorio(embarque.fornecedor_nome || pedido?.fornecedor_nome);
     if (!fornecedorAgg.has(key)) {
       fornecedorAgg.set(key, { fornecedor: key, embarques: 0, volumes: 0, valor: 0 });
@@ -428,7 +492,6 @@ function buildResumoTransitoData(
     const agg = fornecedorAgg.get(key);
     agg.embarques += 1;
     agg.volumes += countVolumesEmbarque(embarque);
-    agg.valor += valor;
   }
 
   const porFornecedor = [...fornecedorAgg.values()]
@@ -626,7 +689,25 @@ function getQuantityPartes(row) {
 
 function measureQuantityRowHeight(partes) {
   const lines = Math.max(1, partes.length);
-  return Math.max(GRID.rowH, lines * GRID.qtyLineStep + 1.8);
+  return Math.max(GRID.rowH, GRID.cellPadTop + lines * GRID.qtyLineStep + 1.2);
+}
+
+function measureQtyNumberWidth(doc, partes) {
+  let max = 0;
+  for (const parte of partes) {
+    max = Math.max(max, doc.getTextWidth(String(parte.numero ?? '—')));
+  }
+  return max;
+}
+
+function measureTableQtyNumberWidth(doc, rows, fontFamily, rowStyle) {
+  doc.setFont(fontFamily, rowStyle);
+  doc.setFontSize(FONT.tableRow);
+  let max = 0;
+  for (const row of rows || []) {
+    max = Math.max(max, measureQtyNumberWidth(doc, getQuantityPartes(row)));
+  }
+  return max;
 }
 
 function columnOffsetX(x, colWidths, index) {
@@ -662,7 +743,6 @@ function drawGridTable(doc, fontFamily, {
     doc.line(splitX, y, splitX, y + tableH);
   }
 
-  let cursorY = y + GRID.padY;
   doc.setFont(fontFamily, headerStyle);
   doc.setFontSize(FONT.tableHead);
   setTextColor(doc, COLORS.muted);
@@ -673,39 +753,45 @@ function drawGridTable(doc, fontFamily, {
     if (col.splitQuantity) {
       const qtyX = cursorX;
       const splitX = qtyX + colWidths[i] * GRID.qtySplitRatio;
-      doc.text('QTD', splitX - GRID.padX, cursorY, { align: 'right' });
-      doc.text('UN', splitX + GRID.padX, cursorY, { align: 'left' });
+      doc.text('QTD', splitX - GRID.padX, y + GRID.headerPadTop, { align: 'right', baseline: 'top' });
+      doc.text('UN', splitX + GRID.padX, y + GRID.headerPadTop, { align: 'left', baseline: 'top' });
     } else {
       const cellX = col.align === 'right'
         ? cursorX + colWidths[i] - GRID.padX
-        : cursorX + GRID.padX;
-      doc.text(col.label, cellX, cursorY, { align: col.align || 'left' });
+        : col.align === 'center'
+          ? cursorX + colWidths[i] / 2
+          : cursorX + GRID.padX;
+      doc.text(col.label, cellX, y + GRID.headerPadTop, { align: col.align || 'left', baseline: 'top' });
     }
     cursorX += colWidths[i];
   }
 
-  cursorY += GRID.headerH;
+  let cursorY = y + GRID.headerH;
   doc.setFont(fontFamily, rowStyle);
   doc.setFontSize(FONT.tableRow);
+  const qtyNumberWidth = qtyColIndex >= 0
+    ? measureTableQtyNumberWidth(doc, rows, fontFamily, rowStyle)
+    : 0;
 
   for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
     const row = rows[rowIndex];
     const rowH = bodyHeights[rowIndex];
-    const textY = cursorY + rowH / 2;
+    const textTop = cursorY + GRID.cellPadTop;
     cursorX = x;
 
     for (let i = 0; i < columns.length; i += 1) {
       const col = columns[i];
       if (col.splitQuantity) {
         const qtyX = cursorX;
-        const splitX = qtyX + colWidths[i] * GRID.qtySplitRatio;
+        const splitX = qtyX + colWidths[qtyColIndex] * GRID.qtySplitRatio;
         const partes = getQuantityPartes(row);
-        const blockH = partes.length * GRID.qtyLineStep;
-        let lineY = textY - blockH / 2 + GRID.qtyLineStep * 0.55;
+        let lineY = textTop;
         setTextColor(doc, COLORS.muted);
         for (const parte of partes) {
-          doc.text(String(parte.numero ?? '—'), splitX - GRID.padX, lineY, { align: 'right', baseline: 'middle' });
-          doc.text(String(parte.unidade ?? ''), splitX + GRID.padX, lineY, { align: 'left', baseline: 'middle' });
+          const numero = String(parte.numero ?? '—');
+          const numeroX = splitX - GRID.padX - (qtyNumberWidth - doc.getTextWidth(numero));
+          doc.text(numero, numeroX, lineY, { align: 'left', baseline: 'top' });
+          doc.text(String(parte.unidade ?? ''), splitX + GRID.padX, lineY, { align: 'left', baseline: 'top' });
           lineY += GRID.qtyLineStep;
         }
       } else {
@@ -716,7 +802,9 @@ function drawGridTable(doc, fontFamily, {
         const line = lines[0] || '—';
         const cellX = col.align === 'right'
           ? cursorX + colWidths[i] - GRID.padX
-          : cursorX + GRID.padX;
+          : col.align === 'center'
+            ? cursorX + colWidths[i] / 2
+            : cursorX + GRID.padX;
         setTextColor(
           doc,
           col.key === 'valor'
@@ -726,7 +814,7 @@ function drawGridTable(doc, fontFamily, {
               : COLORS.ink,
         );
         if (col.key === 'valor') doc.setFont(fontFamily, 'bold');
-        doc.text(line, cellX, textY, { align: col.align || 'left', baseline: 'middle' });
+        doc.text(line, cellX, textTop, { align: col.align || 'left', baseline: 'top' });
         if (col.key === 'valor') doc.setFont(fontFamily, rowStyle);
       }
       cursorX += colWidths[i];
@@ -817,8 +905,8 @@ function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
   const text = (str, x, yy, opts = {}) => doc.text(normalizePdfText(str), x, yy, opts);
 
   const familiasColumns = [
-    { key: 'letra', label: 'CLASSE', width: 0.08, align: 'left' },
-    { key: 'familia', label: 'FAMÍLIA', width: 0.36, align: 'left' },
+    { key: 'letra', label: 'CL.', width: 0.09, align: 'center' },
+    { key: 'familia', label: 'FAMÍLIA', width: 0.35, align: 'left' },
     { key: 'quantidade', label: 'QTD', width: 0.28, align: 'left', splitQuantity: true },
     { key: 'valor', label: 'R$', width: 0.28, align: 'right' },
   ];
