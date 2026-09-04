@@ -19,7 +19,7 @@ import {
 } from '@/lib/comprasEmbarqueCards';
 import { buildConsultaItensEmbarque } from '@/lib/consultaComprasEmbarques';
 
-export const PDF_BUILD = 'estoque-reuniao-v12';
+export const PDF_BUILD = 'estoque-reuniao-v13';
 
 const BRL_KPI = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -80,20 +80,18 @@ const FONT = {
 
 const GRID = {
   lineWidth: 0.1,
-  rowH: 6.1,
-  headerH: 7.4,
+  rowH: 7.4,
+  headerH: 8.6,
   padX: 2.2,
-  padY: 2.4,
-  cellPadTop: 4.1,
-  headerPadTop: 5.2,
+  padY: 1.6,
   qtyMinUnitBandMm: 13,
   qtyMinNumBandMm: 16,
-  qtyLineStep: 3.5,
+  qtyLineStep: 3.6,
 };
 
 const TABLE_LIMITS = {
-  /** Teto de segurança — o ajuste real é dinâmico pelo espaço na página. */
-  maxRows: 40,
+  /** Máximo de linhas visíveis na tabela (última linha pode ser Outros com o restante). */
+  maxVisibleRows: 28,
 };
 
 const LAYOUT = {
@@ -225,7 +223,7 @@ function sumValorRows(rows, key = 'valor') {
 
 function consolidateTopRows(rows, maxRows, { tipo, labelKey, valorKey = 'valor', mapOutros }) {
   const list = Array.isArray(rows) ? rows : [];
-  const cap = Math.min(maxRows, TABLE_LIMITS.maxRows);
+  const cap = Math.min(maxRows, TABLE_LIMITS.maxVisibleRows);
   if (list.length <= cap) return list;
   const headCount = Math.max(1, cap - 1);
   const head = list.slice(0, headCount);
@@ -240,21 +238,22 @@ function consolidateTopRows(rows, maxRows, { tipo, labelKey, valorKey = 'valor',
 }
 
 function fitTableRows(rawItems, toDisplayRow, columns, maxHeight, consolidateOptions = null) {
-  const items = (rawItems || []).slice(0, TABLE_LIMITS.maxRows);
+  const items = rawItems || [];
   if (!items.length) return [];
 
   const displayAll = items.map(toDisplayRow);
   if (estimateGridTableHeight(displayAll, columns) <= maxHeight) return displayAll;
 
   if (!consolidateOptions) {
-    for (let count = items.length - 1; count >= 1; count -= 1) {
+    for (let count = items.length; count >= 1; count -= 1) {
       const partial = items.slice(0, count).map(toDisplayRow);
       if (estimateGridTableHeight(partial, columns) <= maxHeight) return partial;
     }
     return items.slice(0, 1).map(toDisplayRow);
   }
 
-  for (let max = items.length; max >= 2; max -= 1) {
+  const maxCap = Math.min(items.length, TABLE_LIMITS.maxVisibleRows);
+  for (let max = maxCap; max >= 2; max -= 1) {
     const consolidated = consolidateTopRows(items, max, consolidateOptions);
     const display = consolidated.map(toDisplayRow);
     if (estimateGridTableHeight(display, columns) <= maxHeight) return display;
@@ -649,9 +648,19 @@ function getQuantityPartes(row) {
   return [{ numero: '—', unidade: '' }];
 }
 
+function lineHeightMm(fontSize) {
+  return fontSize * 0.3528;
+}
+
+function cellTextY(cellTop, cellHeight, fontSize) {
+  const lh = lineHeightMm(fontSize);
+  return cellTop + Math.max(GRID.padY, (cellHeight - lh) / 2);
+}
+
 function measureQuantityRowHeight(partes) {
   const lines = Math.max(1, partes.length);
-  return Math.max(GRID.rowH, GRID.cellPadTop + lines * GRID.qtyLineStep + 1.2);
+  const blockH = lines * GRID.qtyLineStep + GRID.padY * 2;
+  return Math.max(GRID.rowH, blockH);
 }
 
 function measureQtyNumberWidth(doc, partes) {
@@ -716,6 +725,7 @@ function drawCellText(doc, fontFamily, {
   x,
   y,
   width,
+  cellHeight = GRID.rowH,
   align = 'left',
   style = 'normal',
   fontSize = FONT.tableRow,
@@ -733,7 +743,8 @@ function drawCellText(doc, fontFamily, {
     : align === 'center'
       ? x + width / 2
       : x + GRID.padX;
-  doc.text(fitted, cellX, y, { align, baseline: 'top' });
+  const textY = cellTextY(y, cellHeight, fontSize);
+  doc.text(fitted, cellX, textY, { align, baseline: 'top' });
 }
 
 function drawSplitQuantityRow(doc, fontFamily, {
@@ -742,15 +753,17 @@ function drawSplitQuantityRow(doc, fontFamily, {
   qtySplitX,
   colWidth,
   bands,
-  lineY,
+  lineTop,
+  lineHeight,
   rowStyle,
 }) {
   const unitBand = colWidth - bands.splitOffset;
   drawCellText(doc, fontFamily, {
     text: parte.numero ?? '—',
     x: qtyX,
-    y: lineY,
+    y: lineTop,
     width: bands.splitOffset,
+    cellHeight: lineHeight,
     align: 'right',
     style: rowStyle,
     color: COLORS.muted,
@@ -758,8 +771,9 @@ function drawSplitQuantityRow(doc, fontFamily, {
   drawCellText(doc, fontFamily, {
     text: parte.unidade ?? '',
     x: qtySplitX,
-    y: lineY,
+    y: lineTop,
     width: unitBand,
+    cellHeight: lineHeight,
     align: 'left',
     style: rowStyle,
     color: COLORS.muted,
@@ -821,8 +835,9 @@ function drawGridTable(doc, fontFamily, {
       drawCellText(doc, fontFamily, {
         text: 'QTD',
         x: qtyX,
-        y: y + GRID.headerPadTop,
+        y,
         width: qtyBands.splitOffset,
+        cellHeight: GRID.headerH,
         align: 'right',
         style: headerStyle,
         fontSize: FONT.tableHead,
@@ -832,8 +847,9 @@ function drawGridTable(doc, fontFamily, {
       drawCellText(doc, fontFamily, {
         text: 'UN',
         x: qtySplitX,
-        y: y + GRID.headerPadTop,
+        y,
         width: colWidths[qtyColIndex] - qtyBands.splitOffset,
+        cellHeight: GRID.headerH,
         align: 'left',
         style: headerStyle,
         fontSize: FONT.tableHead,
@@ -844,8 +860,9 @@ function drawGridTable(doc, fontFamily, {
       drawCellText(doc, fontFamily, {
         text: col.label,
         x: cursorX,
-        y: y + GRID.headerPadTop,
+        y,
         width: colWidths[i],
+        cellHeight: GRID.headerH,
         align: col.align || 'left',
         style: headerStyle,
         fontSize: FONT.tableHead,
@@ -863,14 +880,14 @@ function drawGridTable(doc, fontFamily, {
   for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
     const row = rows[rowIndex];
     const rowH = bodyHeights[rowIndex];
-    const textTop = cursorY + GRID.cellPadTop;
     cursorX = x;
 
     for (let i = 0; i < columns.length; i += 1) {
       const col = columns[i];
       if (col.splitQuantity && qtyBands) {
         const partes = getQuantityPartes(row);
-        let lineY = textTop;
+        const blockH = partes.length * GRID.qtyLineStep;
+        let lineTop = cursorY + (rowH - blockH) / 2;
         for (const parte of partes) {
           drawSplitQuantityRow(doc, fontFamily, {
             parte,
@@ -878,18 +895,20 @@ function drawGridTable(doc, fontFamily, {
             qtySplitX,
             colWidth: colWidths[qtyColIndex],
             bands: qtyBands,
-            lineY,
+            lineTop,
+            lineHeight: GRID.qtyLineStep,
             rowStyle,
           });
-          lineY += GRID.qtyLineStep;
+          lineTop += GRID.qtyLineStep;
         }
       } else {
         const raw = row[col.key] ?? '—';
         drawCellText(doc, fontFamily, {
           text: raw,
           x: cursorX,
-          y: textTop,
+          y: cursorY,
           width: colWidths[i],
+          cellHeight: rowH,
           align: col.align || 'left',
           style: rowStyle,
           color: col.key === 'valor'
