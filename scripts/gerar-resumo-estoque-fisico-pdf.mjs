@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Gera PDF de 1 página — resumo do estoque físico (reunião).
- * Estilo limpo: linhas finas, tipografia generosa.
+ * Estilo: Barlow, linhas finas em grid, tipografia generosa.
  *
  * Uso: node scripts/gerar-resumo-estoque-fisico-pdf.mjs [--out=/caminho/arquivo.pdf]
  */
@@ -13,7 +13,6 @@ import { createServer } from 'vite';
 import { resolveP38Secrets } from './p38-secrets.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = path.resolve(__dirname, '..');
 
 const BRL = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -21,12 +20,19 @@ const BRL = new Intl.NumberFormat('pt-BR', {
   maximumFractionDigits: 0,
 });
 
-const QTD = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
+const BRL_UNIT = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const QTD = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
 
 const COLORS = {
   ink: [24, 24, 27],
   muted: [113, 113, 122],
-  line: [228, 228, 231],
+  line: [220, 220, 224],
   accent: [39, 39, 42],
 };
 
@@ -36,10 +42,17 @@ const FONT = {
   kpi: 28,
   kpiLabel: 11,
   section: 13,
-  body: 12,
-  tableHead: 10.5,
-  tableRow: 12,
+  tableHead: 10,
+  tableRow: 11.5,
   footer: 9.5,
+};
+
+const GRID = {
+  lineWidth: 0.1,
+  rowH: 7.2,
+  headerH: 8,
+  padX: 2.4,
+  padY: 5.2,
 };
 
 function parseOutArg(argv) {
@@ -50,12 +63,13 @@ function parseOutArg(argv) {
   return hit.slice('--out='.length);
 }
 
-async function loadStockModules() {
+async function loadModules() {
   const server = await createServer({ server: { middlewareMode: true }, appType: 'custom' });
   try {
     const stock = await server.ssrLoadModule('/src/lib/catalogStockTotals.js');
     const unitsLib = await server.ssrLoadModule('/src/lib/productUnits.js');
-    return { stock, unitsLib };
+    const fonts = await server.ssrLoadModule('/src/lib/jspdfNotoFont.js');
+    return { stock, unitsLib, fonts };
   } finally {
     await server.close();
   }
@@ -122,7 +136,19 @@ function buildResumoData(produtos, { resolveProdutoCustoUnitarioBase, formatEsto
     const unidades = [...units.entries()]
       .map(([u, q]) => ({ u, q: Math.round(q * 100) / 100 }))
       .sort((a, b) => b.q - a.q);
-    return { label, valor, skus, unidades };
+    const principal = unidades[0] || { u: 'UN', q: 0 };
+    const custoMedio = principal.q > 0 ? valor / principal.q : null;
+    return {
+      label,
+      valor,
+      skus,
+      unidades,
+      quantidadeTexto: unidades.length
+        ? unidades.map(({ u, q }) => `${QTD.format(q)} ${u}`).join(' + ')
+        : '—',
+      custoMedio,
+      custoMedioTexto: custoMedio != null ? `${BRL_UNIT.format(custoMedio)}/${principal.u}` : '—',
+    };
   }
 
   let total = 0;
@@ -142,210 +168,292 @@ function buildResumoData(produtos, { resolveProdutoCustoUnitarioBase, formatEsto
 
   const blocos = produtos
     .filter((p) => matchers.find((m) => m.label === 'Blocos de concreto').fn(p) && (Number(p.estoque_atual) || 0) > 0)
-    .map((p) => ({ nome: p.nome, qtd: qtd(p) }))
-    .sort((a, b) => b.qtd - a.qtd);
-
-  const massas = produtos
-    .filter((p) => (/MASSA CORRIDA|MASSA ACRILICA|MASSA ACRÍLICA/.test(norm(p.nome))) && (Number(p.estoque_atual) || 0) > 0)
-    .map((p) => ({ nome: p.nome, qtd: qtd(p), un: un(p) }))
+    .map((p) => ({ nome: p.nome.replace('BLOCO DE CONCRETO ', ''), qtd: qtd(p), valor: valorFisico(p) }))
     .sort((a, b) => b.qtd - a.qtd);
 
   const caixas = produtos
     .filter((p) => matchers.find((m) => m.label === "Caixa d'água").fn(p) && (Number(p.estoque_atual) || 0) > 0)
-    .map((p) => ({ nome: p.nome, qtd: qtd(p) }))
+    .map((p) => ({
+      nome: p.nome.replace("CAIXA D'ÁGUA FORTLEV ", ''),
+      qtd: qtd(p),
+      valor: valorFisico(p),
+    }))
     .sort((a, b) => b.qtd - a.qtd);
+
+  const destaques = [];
+  const pushDestaque = (label, grupo, detalhe = '') => {
+    if (!grupo) return;
+    destaques.push({
+      label,
+      quantidade: grupo.quantidadeTexto,
+      custoMedio: grupo.custoMedioTexto,
+      valor: BRL.format(grupo.valor),
+      detalhe,
+    });
+  };
+
+  pushDestaque('Cerâmica (tudo junto)', grupos.find((g) => g.label.startsWith('Cerâmica')));
+  pushDestaque('Cimento CP-IV 42,5 kg', grupos.find((g) => g.label.startsWith('Cimento')));
+  if (blocos.length) {
+    const totalBlocos = blocos.reduce((s, b) => s + b.qtd, 0);
+    const totalValor = blocos.reduce((s, b) => s + b.valor, 0);
+    destaques.push({
+      label: 'Blocos',
+      quantidade: `${QTD.format(totalBlocos)} UN`,
+      custoMedio: totalBlocos > 0 ? `${BRL_UNIT.format(totalValor / totalBlocos)}/UN` : '—',
+      valor: BRL.format(totalValor),
+      detalhe: blocos.map((b) => `${QTD.format(b.qtd)} (${b.nome})`).join(' · '),
+    });
+  }
+  pushDestaque('Estribos', grupos.find((g) => g.label === 'Estribos'));
+  pushDestaque('Massa corrida', grupos.find((g) => g.label === 'Massa corrida'));
+  pushDestaque('Massa acrílica', grupos.find((g) => g.label === 'Massa acrílica'));
+  pushDestaque('Cal', grupos.find((g) => g.label === 'Cal'));
+  if (caixas.length) {
+    const totalCx = caixas.reduce((s, c) => s + c.qtd, 0);
+    const totalValor = caixas.reduce((s, c) => s + c.valor, 0);
+    destaques.push({
+      label: "Caixa d'água",
+      quantidade: `${QTD.format(totalCx)} UN`,
+      custoMedio: totalCx > 0 ? `${BRL_UNIT.format(totalValor / totalCx)}/UN` : '—',
+      valor: BRL.format(totalValor),
+      detalhe: caixas.map((c) => `${QTD.format(c.qtd)}× ${c.nome}`).join(' · '),
+    });
+  }
 
   return {
     geradoEm: new Date().toLocaleString('pt-BR', { timeZone: 'America/Manaus' }),
     total,
     skusCom,
     grupos,
-    blocos,
-    massas,
-    caixas,
+    destaques,
   };
 }
 
-function formatQuantidadeGrupo(grupo) {
-  if (!grupo.unidades?.length) return '—';
-  return grupo.unidades
-    .map(({ u, q }) => `${QTD.format(q)} ${u}`)
-    .join(' + ');
+function setTextColor(doc, c) {
+  doc.setTextColor(...c);
 }
 
-function drawThinLine(doc, x0, y0, x1, y1) {
+function drawGridLines(doc, x, y, width, rowHeights, colWidths) {
   doc.setDrawColor(...COLORS.line);
-  doc.setLineWidth(0.12);
-  doc.line(x0, y0, x1, y1);
+  doc.setLineWidth(GRID.lineWidth);
+
+  const totalH = rowHeights.reduce((s, h) => s + h, 0);
+  let yy = y;
+  for (let i = 0; i <= rowHeights.length; i += 1) {
+    doc.line(x, yy, x + width, yy);
+    if (i < rowHeights.length) yy += rowHeights[i];
+  }
+
+  let xx = x;
+  for (let i = 0; i <= colWidths.length; i += 1) {
+    doc.line(xx, y, xx, y + totalH);
+    if (i < colWidths.length) xx += colWidths[i];
+  }
 }
 
-function drawPdf(data) {
+function drawGridTable(doc, fontFamily, {
+  x,
+  y,
+  width,
+  columns,
+  rows,
+  headerStyle = 'bold',
+  rowStyle = 'normal',
+}) {
+  const colWidths = columns.map((c) => width * c.width);
+  const headerH = GRID.headerH;
+  const bodyRowH = GRID.rowH;
+  const rowHeights = [headerH, ...rows.map(() => bodyRowH)];
+  drawGridLines(doc, x, y, width, rowHeights, colWidths);
+
+  let cursorY = y + GRID.padY;
+  doc.setFont(fontFamily, headerStyle);
+  doc.setFontSize(FONT.tableHead);
+  setTextColor(doc, COLORS.muted);
+
+  let cursorX = x;
+  for (let i = 0; i < columns.length; i += 1) {
+    const col = columns[i];
+    const cellX = col.align === 'right'
+      ? cursorX + colWidths[i] - GRID.padX
+      : cursorX + GRID.padX;
+    doc.text(col.label, cellX, cursorY, { align: col.align || 'left' });
+    cursorX += colWidths[i];
+  }
+
+  cursorY += headerH - GRID.padY + GRID.padY;
+  doc.setFont(fontFamily, rowStyle);
+  doc.setFontSize(FONT.tableRow);
+
+  for (const row of rows) {
+    cursorX = x;
+    for (let i = 0; i < columns.length; i += 1) {
+      const col = columns[i];
+      const raw = row[col.key] ?? '—';
+      const text = String(raw);
+      const maxW = colWidths[i] - GRID.padX * 2;
+      const lines = doc.splitTextToSize(text, maxW);
+      const line = lines[0] || '—';
+      const cellX = col.align === 'right'
+        ? cursorX + colWidths[i] - GRID.padX
+        : cursorX + GRID.padX;
+      setTextColor(doc, col.key === 'valor' ? COLORS.accent : col.key === 'quantidade' || col.key === 'custoMedio' ? COLORS.muted : COLORS.ink);
+      if (col.key === 'valor') doc.setFont(fontFamily, 'bold');
+      doc.text(line, cellX, cursorY, { align: col.align || 'left' });
+      if (col.key === 'valor') doc.setFont(fontFamily, rowStyle);
+      cursorX += colWidths[i];
+    }
+    cursorY += bodyRowH;
+  }
+
+  return y + rowHeights.reduce((s, h) => s + h, 0);
+}
+
+async function drawPdf(data, registerJsPdfBarlowFonts, normalizePdfText) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const fontFamily = await registerJsPdfBarlowFonts(doc);
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  const M = 16;
+  const M = 14;
   const CW = pageW - M * 2;
   let y = M;
 
-  const setColor = (c) => doc.setTextColor(...c);
-  const text = (str, x, yy, opts = {}) => doc.text(String(str), x, yy, opts);
+  const text = (str, x, yy, opts = {}) => doc.text(normalizePdfText(str), x, yy, opts);
 
-  // Header
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(fontFamily, 'heavy');
   doc.setFontSize(FONT.title);
-  setColor(COLORS.ink);
+  setTextColor(doc, COLORS.ink);
   text('Estoque físico', M, y);
   y += 9;
 
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(fontFamily, 'normal');
   doc.setFontSize(FONT.subtitle);
-  setColor(COLORS.muted);
+  setTextColor(doc, COLORS.muted);
   text('O que está no armazém hoje — pronto para vender ou separar', M, y);
   y += 5;
   text(`Atualizado em ${data.geradoEm} (Tabatinga)`, M, y);
   y += 10;
 
-  drawThinLine(doc, M, y, M + CW, y);
-  y += 12;
+  doc.setDrawColor(...COLORS.line);
+  doc.setLineWidth(GRID.lineWidth);
+  doc.line(M, y, M + CW, y);
+  y += 11;
 
-  // KPI
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(fontFamily, 'normal');
   doc.setFontSize(FONT.kpiLabel);
-  setColor(COLORS.muted);
+  setTextColor(doc, COLORS.muted);
   text('VALOR TOTAL EM ESTOQUE (CUSTO)', M, y);
   y += 10;
 
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(fontFamily, 'heavy');
   doc.setFontSize(FONT.kpi);
-  setColor(COLORS.ink);
+  setTextColor(doc, COLORS.ink);
   text(BRL.format(data.total), M, y);
   y += 7;
 
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(FONT.body);
-  setColor(COLORS.muted);
+  doc.setFont(fontFamily, 'normal');
+  doc.setFontSize(FONT.subtitle);
+  setTextColor(doc, COLORS.muted);
   text(`${QTD.format(data.skusCom)} referências com saldo positivo`, M, y);
-  y += 12;
+  y += 11;
 
-  drawThinLine(doc, M, y, M + CW, y);
-  y += 10;
+  doc.line(M, y, M + CW, y);
+  y += 9;
 
-  // Table header
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(fontFamily, 'bold');
   doc.setFontSize(FONT.section);
-  setColor(COLORS.ink);
+  setTextColor(doc, COLORS.ink);
   text('Resumo por família', M, y);
-  y += 8;
+  y += 6;
 
-  const colFam = M;
-  const colQtd = M + CW * 0.58;
-  const colVal = M + CW;
+  const familyColumns = [
+    { key: 'familia', label: 'FAMÍLIA', width: 0.36, align: 'left' },
+    { key: 'quantidade', label: 'QUANTIDADE', width: 0.22, align: 'left' },
+    { key: 'custoMedio', label: 'CUSTO MÉDIO', width: 0.22, align: 'right' },
+    { key: 'valor', label: 'VALOR', width: 0.20, align: 'right' },
+  ];
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(FONT.tableHead);
-  setColor(COLORS.muted);
-  text('FAMÍLIA', colFam, y);
-  text('QUANTIDADE', colQtd, y);
-  text('VALOR', colVal, y, { align: 'right' });
-  y += 4;
-  drawThinLine(doc, M, y, M + CW, y);
-  y += 7;
+  const familyRows = data.grupos.map((g) => ({
+    familia: g.label,
+    quantidade: g.quantidadeTexto,
+    custoMedio: g.custoMedioTexto,
+    valor: BRL.format(g.valor),
+  }));
 
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(FONT.tableRow);
-  for (const grupo of data.grupos) {
-    if (y > pageH - 48) break;
-    setColor(COLORS.ink);
-    const famLines = doc.splitTextToSize(grupo.label, CW * 0.52);
-    text(famLines[0], colFam, y);
-    setColor(COLORS.muted);
-    text(formatQuantidadeGrupo(grupo), colQtd, y);
-    setColor(COLORS.accent);
-    doc.setFont('helvetica', 'bold');
-    text(BRL.format(grupo.valor), colVal, y, { align: 'right' });
-    doc.setFont('helvetica', 'normal');
-    y += 7.2;
-    drawThinLine(doc, M, y - 2.5, M + CW, y - 2.5);
-  }
+  y = drawGridTable(doc, fontFamily, {
+    x: M,
+    y,
+    width: CW,
+    columns: familyColumns,
+    rows: familyRows,
+  });
+  y += 9;
 
-  y += 4;
-  drawThinLine(doc, M, y, M + CW, y);
-  y += 10;
-
-  // Highlights
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(fontFamily, 'bold');
   doc.setFontSize(FONT.section);
-  setColor(COLORS.ink);
+  setTextColor(doc, COLORS.ink);
   text('Destaques', M, y);
-  y += 8;
+  y += 6;
 
-  const highlights = [];
+  const destaqueColumns = [
+    { key: 'label', label: 'ITEM', width: 0.28, align: 'left' },
+    { key: 'quantidade', label: 'QUANTIDADE', width: 0.22, align: 'left' },
+    { key: 'custoMedio', label: 'CUSTO MÉDIO', width: 0.22, align: 'right' },
+    { key: 'valor', label: 'VALOR', width: 0.14, align: 'right' },
+    { key: 'detalhe', label: 'DETALHE', width: 0.14, align: 'left' },
+  ];
 
-  const ceramica = data.grupos.find((g) => g.label.startsWith('Cerâmica'));
-  const cimento = data.grupos.find((g) => g.label.startsWith('Cimento'));
-  const estribos = data.grupos.find((g) => g.label === 'Estribos');
-  const cal = data.grupos.find((g) => g.label === 'Cal');
+  const destaqueRows = data.destaques.map((d) => ({
+    label: d.label,
+    quantidade: d.quantidade,
+    custoMedio: d.custoMedio,
+    valor: d.valor,
+    detalhe: d.detalhe || '—',
+  }));
 
-  if (ceramica) highlights.push(`Cerâmica (tudo junto): ${formatQuantidadeGrupo(ceramica)} · ${BRL.format(ceramica.valor)}`);
-  if (cimento) highlights.push(`Cimento CP-IV 42,5 kg: ${formatQuantidadeGrupo(cimento)} · ${BRL.format(cimento.valor)}`);
-  if (data.blocos.length) {
-    const totalBlocos = data.blocos.reduce((s, b) => s + b.qtd, 0);
-    const det = data.blocos.map((b) => `${QTD.format(b.qtd)} (${b.nome.replace('BLOCO DE CONCRETO ', '')})`).join(' · ');
-    highlights.push(`Blocos: ${QTD.format(totalBlocos)} no total — ${det}`);
-  }
-  if (estribos) highlights.push(`Estribos: ${formatQuantidadeGrupo(estribos)} · ${BRL.format(estribos.valor)}`);
-  if (data.massas.length) {
-    const corrida = data.grupos.find((g) => g.label === 'Massa corrida');
-    const acrilica = data.grupos.find((g) => g.label === 'Massa acrílica');
-    if (corrida) highlights.push(`Massa corrida: ${formatQuantidadeGrupo(corrida)} · ${BRL.format(corrida.valor)}`);
-    if (acrilica) highlights.push(`Massa acrílica: ${formatQuantidadeGrupo(acrilica)} · ${BRL.format(acrilica.valor)}`);
-  }
-  if (cal) highlights.push(`Cal: ${formatQuantidadeGrupo(cal)} · ${BRL.format(cal.valor)}`);
-  if (data.caixas.length) {
-    const totalCx = data.caixas.reduce((s, c) => s + c.qtd, 0);
-    const det = data.caixas.map((c) => `${QTD.format(c.qtd)}× ${c.nome.replace("CAIXA D'ÁGUA FORTLEV ", '')}`).join(' · ');
-    highlights.push(`Caixa d'água: ${QTD.format(totalCx)} un — ${det}`);
-  }
+  y = drawGridTable(doc, fontFamily, {
+    x: M,
+    y,
+    width: CW,
+    columns: destaqueColumns,
+    rows: destaqueRows,
+  });
 
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(FONT.body);
-  for (const line of highlights) {
-    if (y > pageH - 22) break;
-    const wrapped = doc.splitTextToSize(`· ${line}`, CW - 2);
-    for (const wl of wrapped) {
-      setColor(COLORS.ink);
-      text(wl, M + 1, y);
-      y += 6.2;
-    }
-  }
-
-  y = pageH - 14;
-  drawThinLine(doc, M, y - 4, M + CW, y - 4);
-  doc.setFont('helvetica', 'normal');
+  const footerY = pageH - 12;
+  doc.line(M, footerY - 4, M + CW, footerY - 4);
+  doc.setFont(fontFamily, 'normal');
   doc.setFontSize(FONT.footer);
-  setColor(COLORS.muted);
-  text('P38 · Estoque físico · página 1', M, y);
-  text('Gerado automaticamente a partir do cadastro ativo', M + CW, y, { align: 'right' });
+  setTextColor(doc, COLORS.muted);
+  text('P38 · Estoque físico · página 1', M, footerY);
+  text('Gerado automaticamente a partir do cadastro ativo', M + CW, footerY, { align: 'right' });
 
   return doc.output('arraybuffer');
 }
 
 async function main() {
   const outPath = parseOutArg(process.argv.slice(2));
-  const { stock, unitsLib } = await loadStockModules();
+  const { stock, unitsLib, fonts } = await loadModules();
   const produtos = await fetchAllProdutosAtivos();
   const data = buildResumoData(produtos, {
     resolveProdutoCustoUnitarioBase: stock.resolveProdutoCustoUnitarioBase,
     formatEstoqueApresentacao: unitsLib.formatEstoqueApresentacao,
   });
 
-  const pdfBytes = drawPdf(data);
+  const pdfBytes = await drawPdf(data, fonts.registerJsPdfBarlowFonts, fonts.normalizePdfText);
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, Buffer.from(pdfBytes));
+
+  const workspaceCopy = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'estoque-fisico-pagina1.pdf');
+  const publicCopy = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'public', 'estoque-fisico-pagina1.pdf');
+  fs.copyFileSync(outPath, workspaceCopy);
+  fs.copyFileSync(outPath, publicCopy);
 
   console.log(JSON.stringify({
     ok: true,
     out: outPath,
+    workspace: workspaceCopy,
+    public: publicCopy,
     total: data.total,
     skusCom: data.skusCom,
     geradoEm: data.geradoEm,
