@@ -19,7 +19,7 @@ import {
 } from '@/lib/comprasEmbarqueCards';
 import { buildConsultaItensEmbarque } from '@/lib/consultaComprasEmbarques';
 
-export const PDF_BUILD = 'estoque-reuniao-v18';
+export const PDF_BUILD = 'estoque-reuniao-v19';
 
 const BRL_KPI = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -1109,13 +1109,13 @@ function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
     { key: 'valor', label: 'R$', width: 0.22, align: 'right' },
   ];
   const abcdColumns = [
-    { key: 'letra', label: 'CL.', width: 0.10, align: 'center' },
-    { key: 'valor', label: 'R$', width: 0.90, align: 'right' },
+    { key: 'letra', label: 'CL.', width: 0.16, align: 'center' },
+    { key: 'valor', label: 'R$', width: 0.84, align: 'right' },
   ];
   const composicaoColumns = [
-    { key: 'label', label: 'COMPONENTE', width: 0.54, align: 'left' },
-    { key: 'valor', label: 'R$', width: 0.28, align: 'right' },
-    { key: 'pct', label: '%', width: 0.18, align: 'right' },
+    { key: 'label', label: 'COMPONENTE', width: 0.46, align: 'left' },
+    { key: 'valor', label: 'VALOR (R$)', width: 0.32, align: 'right' },
+    { key: 'pct', label: 'DO TOTAL (%)', width: 0.22, align: 'right' },
   ];
 
   doc.setFont(fontFamily, 'heavy');
@@ -1158,22 +1158,21 @@ function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
   doc.line(M, y, M + CW, y);
   y += LAYOUT.sectionGapBetween;
 
-  const abcdStripMm = GRID.headerH + ABCD_ORDER.length * GRID.rowH + 4;
-  y = drawFullWidthTableBlock(doc, fontFamily, normalizePdfText, layout, y, {
+  const composicaoRows = data.composicaoCusto?.rows || [];
+  const pairRowCount = Math.max(data.porAbcd.length, composicaoRows.length, 1);
+  const pairStripMm = GRID.headerH + pairRowCount * GRID.rowH + 4;
+
+  y = drawTwoColumnBlock(doc, fontFamily, normalizePdfText, layout, y, {
     title: 'Por curva ABCD (nível 1)',
+    widthRatio: 0.32,
     columns: abcdColumns,
     rawRows: data.porAbcd,
     toDisplay: (row) => ({
       letra: row.letra,
       valor: fmtTabValor(row.valor),
     }),
-    maxHeight: abcdStripMm,
-    pageH,
-  });
-
-  const composicaoRows = data.composicaoCusto?.rows || [];
-  const composicaoStripMm = GRID.headerH + composicaoRows.length * GRID.rowH + 4;
-  y = drawFullWidthTableBlock(doc, fontFamily, normalizePdfText, layout, y, {
+    maxHeight: pairStripMm,
+  }, {
     title: 'Composição estimada do custo (cadastro)',
     columns: composicaoColumns,
     rows: composicaoRows.map((row) => ({
@@ -1181,9 +1180,8 @@ function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
       valor: fmtComposicaoValor(row.valor),
       pct: `${PCT_TAB.format(row.pct)}%`,
     })),
-    maxHeight: composicaoStripMm,
-    pageH,
-  });
+    maxHeight: pairStripMm,
+  }, pageH);
 
   drawFullWidthTableBlock(doc, fontFamily, normalizePdfText, layout, y, {
     title: 'Resumo por família (nível 1)',
