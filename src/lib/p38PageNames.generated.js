@@ -82,6 +82,7 @@ export const P38_PAGE_NAMES = [
   "Produtos",
   "ReimpressaoDocumentos",
   "RelatorioCatalogoEstoque",
+  "RelatorioCatalogoEstoqueGlobal",
   "RelatorioCatalogoVendas",
   "RelatorioConsumoInterno",
   "RelatorioMargem",

@@ -213,10 +213,12 @@ function ProdutosPageContent() {
   const [previewCustosData, setPreviewCustosData] = useState(null);
   const [isPreviewCustosDialogOpen, setIsPreviewCustosDialogOpen] = useState(false);
   const [gerandoRelatorioEstoque, setGerandoRelatorioEstoque] = useState(false);
+  const [gerandoRelatorioEstoqueGlobal, setGerandoRelatorioEstoqueGlobal] = useState(false);
   const [gerandoRelatorioVendas, setGerandoRelatorioVendas] = useState(false);
   const [gerandoRelatorioVendasV2, setGerandoRelatorioVendasV2] = useState(false);
   const [gerandoRelatorioIep, setGerandoRelatorioIep] = useState(false);
   const relatorioEstoqueAutoRef = useRef(false);
+  const relatorioEstoqueGlobalAutoRef = useRef(false);
   const relatorioVendasAutoRef = useRef(false);
   const catalogExpandedKeysRef = useRef(new Set());
 
@@ -1270,6 +1272,29 @@ function ProdutosPageContent() {
     }
   }, [filteredProdutos, filters, categorias, fornecedores, viewMode, treeLevel, sortOrder, groupTreeByCategory, catalogStockContext, toast]);
 
+  const handleGerarRelatorioEstoqueGlobal = useCallback(async () => {
+    setGerandoRelatorioEstoqueGlobal(true);
+    toast({ title: 'Gerando resumo global de estoque...' });
+    try {
+      const ativos = produtos.filter((p) => p?.ativo !== false);
+      const { gerarRelatorioEstoqueGlobal } = await import('@/functions/gerarRelatorioEstoqueGlobal');
+      const resposta = await gerarRelatorioEstoqueGlobal({ produtos: ativos });
+      const blob = new Blob([resposta.data], { type: 'application/pdf' });
+      downloadBlob(blob, `ResumoGlobalEstoque_${dataHoje()}.pdf`);
+      toast({ title: 'Resumo global gerado' });
+    } catch (error) {
+      const msg = error?.message || String(error);
+      toast({
+        title: 'Erro ao gerar resumo global',
+        description: msg.length > 300 ? `${msg.slice(0, 300)}…` : msg,
+        variant: 'destructive',
+      });
+      console.error(error);
+    } finally {
+      setGerandoRelatorioEstoqueGlobal(false);
+    }
+  }, [produtos, toast]);
+
   const handleCatalogExpandedKeysChange = useCallback((keys) => {
     catalogExpandedKeysRef.current = keys instanceof Set ? keys : new Set(keys || []);
   }, []);
@@ -1476,6 +1501,21 @@ function ProdutosPageContent() {
   }, [produtos.length, handleGerarRelatorioEstoque]);
 
   useEffect(() => {
+    if (relatorioEstoqueGlobalAutoRef.current) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('relatorioEstoqueGlobal') !== '1') return;
+    if (!produtos.length) return;
+
+    relatorioEstoqueGlobalAutoRef.current = true;
+    params.delete('relatorioEstoqueGlobal');
+    const nextUrl = params.toString()
+      ? `${window.location.pathname}?${params.toString()}`
+      : window.location.pathname;
+    window.history.replaceState({}, '', nextUrl);
+    handleGerarRelatorioEstoqueGlobal();
+  }, [produtos.length, handleGerarRelatorioEstoqueGlobal]);
+
+  useEffect(() => {
     if (relatorioVendasAutoRef.current) return;
     const params = new URLSearchParams(window.location.search);
     const relatorioVendasParam = params.get('relatorioVendas');
@@ -1530,6 +1570,8 @@ function ProdutosPageContent() {
     setIsColumnSelectorOpen,
     onGerarRelatorioEstoque: handleGerarRelatorioEstoque,
     gerandoRelatorioEstoque,
+    onGerarRelatorioEstoqueGlobal: handleGerarRelatorioEstoqueGlobal,
+    gerandoRelatorioEstoqueGlobal,
     onGerarRelatorioVendas: handleGerarRelatorioVendas,
     gerandoRelatorioVendas,
     onGerarRelatorioVendasV2: handleGerarRelatorioVendasV2,
@@ -1566,6 +1608,8 @@ function ProdutosPageContent() {
     sortOrder,
     handleGerarRelatorioEstoque,
     gerandoRelatorioEstoque,
+    handleGerarRelatorioEstoqueGlobal,
+    gerandoRelatorioEstoqueGlobal,
     handleGerarRelatorioVendas,
     gerandoRelatorioVendas,
     handleGerarRelatorioVendasV2,

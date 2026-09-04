@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { createPageUrl } from '@/components/utils';
-import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter, Percent, Loader2, Tag, Tags, LayoutGrid, TrendingUp, Gauge } from 'lucide-react';
+import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter, Percent, Loader2, Tag, Tags, LayoutGrid, TrendingUp, Gauge, Layers } from 'lucide-react';
 import { DEFAULT_PRODUTO_FILTERS, ABCD_FILTER_VALUES, ABCD_FILTER_LABELS } from '@/lib/filterProdutos';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
 import CatalogSearchInput from '@/components/produtos/CatalogSearchInput';
@@ -62,6 +62,8 @@ function ProdutosHeader({
   setIsColumnSelectorOpen,
   onGerarRelatorioEstoque,
   gerandoRelatorioEstoque = false,
+  onGerarRelatorioEstoqueGlobal,
+  gerandoRelatorioEstoqueGlobal = false,
   onGerarRelatorioVendas,
   gerandoRelatorioVendas = false,
   onGerarRelatorioVendasV2,
@@ -134,9 +136,9 @@ function ProdutosHeader({
                   size="icon"
                   className="h-9 w-9 flex-shrink-0"
                   title="Relatórios do catálogo"
-                  disabled={gerandoRelatorioEstoque || gerandoRelatorioVendas || gerandoRelatorioVendasV2 || gerandoRelatorioIep}
+                  disabled={gerandoRelatorioEstoque || gerandoRelatorioEstoqueGlobal || gerandoRelatorioVendas || gerandoRelatorioVendasV2 || gerandoRelatorioIep}
                 >
-                  {gerandoRelatorioEstoque || gerandoRelatorioVendas || gerandoRelatorioVendasV2 || gerandoRelatorioIep ? (
+                  {gerandoRelatorioEstoque || gerandoRelatorioEstoqueGlobal || gerandoRelatorioVendas || gerandoRelatorioVendasV2 || gerandoRelatorioIep ? (
                     <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
                   ) : (
                     <BarChart3 className="w-4 h-4 p38-text-accent" />
@@ -144,6 +146,18 @@ function ProdutosHeader({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className={PRODUTOS_DROPDOWN_MENU}>
+                <DropdownMenuItem
+                  onClick={() => {
+                    window.setTimeout(() => onGerarRelatorioEstoqueGlobal?.(), 0);
+                  }}
+                  className={cn(
+                    cn('text-sm', PRODUTOS_DROPDOWN_ITEM),
+                    gerandoRelatorioEstoqueGlobal && 'pointer-events-none opacity-50',
+                  )}
+                >
+                  <Layers className="w-4 h-4 mr-2 p38-text-accent" />
+                  Resumo global
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
                     window.setTimeout(() => onGerarRelatorioEstoque?.(), 0);

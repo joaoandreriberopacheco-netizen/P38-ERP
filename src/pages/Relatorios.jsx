@@ -125,6 +125,13 @@ export default function RelatoriosPage() {
   ];
 
   const relatoriosEstoque = [
+    {
+      id: 'resumo-global-estoque',
+      nome: 'Resumo global',
+      descricao: 'Estoque físico + trânsito em 2 páginas (reunião)',
+      icon: Warehouse,
+      highlight: true,
+    },
     { 
       id: 'inventario-valorizado',
       nome: "Inventário Valorizado", 
@@ -339,7 +346,9 @@ export default function RelatoriosPage() {
                   key={rel.id} 
                   relatorio={rel}
                   onClickAbrir={(id) => {
-                    if (id === 'inventario-valorizado') {
+                    if (id === 'resumo-global-estoque') {
+                      window.location.href = '/Produtos?relatorioEstoqueGlobal=1';
+                    } else if (id === 'inventario-valorizado') {
                       window.location.href = '/Produtos?relatorioEstoque=1';
                     } else if (id === 'giro-estoque') {
                       window.location.href = '/Produtos?relatorioVendas=1';
