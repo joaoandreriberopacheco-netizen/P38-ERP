@@ -14,7 +14,10 @@ export const HIERARQUIA_PORTAL_ENABLED = p38PublicEnvBool('VITE_HIERARQUIA_PORTA
 /** Só SKUs presentes no Excel mestre (docs/P38-catalogo-skus-completo.xlsx). */
 export const HIERARQUIA_PORTAL_FILTRAR_EXCEL = true;
 
-/** Mesmas LINHAS activas que o catálogo Modelo (piloto cerâmica). */
-export const HIERARQUIA_PORTAL_PILOTO_LINHAS = MODELO_PILOTO_LINHAS_ATIVAS;
+/** Mesmas LINHAS activas que o catálogo Modelo + FORRO PVC piloto Smart Supply. */
+export const HIERARQUIA_PORTAL_PILOTO_LINHAS = [
+  ...MODELO_PILOTO_LINHAS_ATIVAS,
+  { codigo: 'FORRO_PVC', nome: 'FORRO PVC' },
+];
 
 export const HIERARQUIA_PORTAL_PILOTO_PREFIXO_PC = MODELO_PILOTO_PREFIXO_PC;

@@ -17,5 +17,5 @@ export const SMART_SUPPLY_SUBTITLE =
 /** Nome curto para menus e permissões. */
 export const SMART_SUPPLY_MENU_LABEL = 'SMART SUPPLY';
 
-/** Portal = laboratório/preview; produção = SMART_SUPPLY_PAGE. */
-export const SMART_SUPPLY_PORTAL_PREVIEW_LABEL = 'Preview SMART SUPPLY (piloto)';
+/** Tab no Novo Ecosistema (HierarquiaPortal). */
+export const SMART_SUPPLY_PORTAL_PREVIEW_LABEL = 'SMART SUPPLY';

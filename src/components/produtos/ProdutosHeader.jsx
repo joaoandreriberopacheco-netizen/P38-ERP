@@ -75,6 +75,8 @@ function ProdutosHeader({
   onOpenPontosPedido,
   groupTreeByCategory = false,
   onGroupTreeByCategoryChange,
+  estoqueVirtualCarregando = false,
+  estoqueVirtualErro = false,
   onClearFilters,
 }) {
   const isMobileLayout = useCompactShell();
@@ -550,6 +552,12 @@ function ProdutosHeader({
                 {filters.estoqueVirtual ? (
                   <span className="ml-2 normal-case font-medium text-sky-700 dark:text-sky-300">
                     · estoque virtual ativo
+                    {estoqueVirtualCarregando ? (
+                      <span className="text-muted-foreground"> (a carregar pedidos…)</span>
+                    ) : null}
+                    {estoqueVirtualErro ? (
+                      <span className="text-amber-700 dark:text-amber-300"> (falha ao ler compras — mostrando só físico)</span>
+                    ) : null}
                   </span>
                 ) : null}
                 {filters.analisePorAgrupamento ? (

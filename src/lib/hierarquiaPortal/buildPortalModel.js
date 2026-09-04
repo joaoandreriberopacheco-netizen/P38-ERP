@@ -18,7 +18,9 @@ function slugCodigo(s) {
 }
 
 function mapTipoLinha(tipoMestre) {
-  if (tipoMestre === 'solo' || tipoMestre === 'mix' || tipoMestre === 'portfolio') return tipoMestre;
+  if (tipoMestre === 'solo' || tipoMestre === 'mix' || tipoMestre === 'portfolio' || tipoMestre === 'portfolio_kit') {
+    return tipoMestre;
+  }
   return 'mix';
 }
 
@@ -48,6 +50,9 @@ export function enrichProdutoPortal(produto, catalogStockContext = null) {
       linha_nome: linhaMeta.nome,
       linha_tipo: linhaTipo,
       linha_ordem: linhaMeta.ordem ?? 10,
+      faixa: trim(excel.faixa) || '',
+      modelo_portfolio: trim(excel.modelo_portfolio) || '',
+      kit_papel: trim(excel.kit_papel) || '',
       produto_compra_codigo: pcCodigo,
       produto_compra_nome: pcNome,
       solo,
@@ -105,7 +110,13 @@ export function enrichProdutoPortal(produto, catalogStockContext = null) {
 
 function pcKey(row) {
   if (row.solo) return `${row.linha_codigo}::solo`;
-  return `${row.linha_codigo}::${row.produto_compra_codigo}`;
+  return [
+    row.linha_codigo,
+    row.faixa || '',
+    row.modelo_portfolio || '',
+    row.kit_papel || '',
+    row.produto_compra_codigo,
+  ].join('::');
 }
 
 export function buildPortalSupplyLines(enriched) {
@@ -121,6 +132,9 @@ export function buildPortalSupplyLines(enriched) {
         linha_nome: row.linha_nome,
         linha_tipo: row.linha_tipo,
         linha_ordem: row.linha_ordem,
+        faixa: row.faixa || '',
+        modelo_portfolio: row.modelo_portfolio || '',
+        kit_papel: row.kit_papel || '',
         produto_compra_codigo: row.produto_compra_codigo,
         produto_compra_nome: row.solo ? '(solo — SKUs directos)' : row.produto_compra_nome,
         solo: row.solo,

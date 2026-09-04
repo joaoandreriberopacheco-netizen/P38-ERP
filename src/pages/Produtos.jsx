@@ -1157,10 +1157,15 @@ function ProdutosPageContent() {
 
   const estoqueVirtualAtivo = filters.estoqueVirtual === true;
 
-  const { data: pendentePorProduto = {} } = useQuery({
+  const {
+    data: pendentePorProduto = {},
+    isFetching: pendenteEstoqueCarregando,
+    isError: pendenteEstoqueErro,
+  } = useQuery({
     queryKey: ['catalogo', 'pendente-estoque'],
     enabled: estoqueVirtualAtivo,
     staleTime: 5 * 60 * 1000,
+    retry: 2,
     queryFn: async () => {
       const data = await fetchPedidosCompraParaSugestaoEstoque(base44);
       return buildPendenteAprovadoFinanceiroPorProduto(
@@ -1543,6 +1548,8 @@ function ProdutosPageContent() {
     onOpenPontosPedido: handleOpenPontosPedido,
     groupTreeByCategory,
     onGroupTreeByCategoryChange: handleGroupTreeByCategoryChange,
+    estoqueVirtualCarregando: estoqueVirtualAtivo && pendenteEstoqueCarregando,
+    estoqueVirtualErro: estoqueVirtualAtivo && pendenteEstoqueErro,
     onClearFilters: handleClearCatalogFilters,
   }), [
     podeVerCusto,
@@ -1580,6 +1587,9 @@ function ProdutosPageContent() {
     groupTreeByCategory,
     handleGroupTreeByCategoryChange,
     handleClearCatalogFilters,
+    estoqueVirtualAtivo,
+    pendenteEstoqueCarregando,
+    pendenteEstoqueErro,
   ]);
 
   const mobileCatalogChrome = useMemo(

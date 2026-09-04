@@ -4,10 +4,13 @@ import { Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createPageUrl } from '@/components/utils';
 import { cn } from '@/components/utils';
+import {
+  NOVO_ECOSSISTEMA_ENTRY_TITLE,
+  NOVO_ECOSSISTEMA_ROUTE,
+  NOVO_ECOSSISTEMA_TITLE,
+} from '@/config/novoEcosistemaFlags';
 
-/**
- * Entrada ao portal de catálogo cerâmica — trabalha em tabela auxiliar, não altera cadastro real.
- */
+/** Entrada ao Novo Ecosistema (HierarquiaPortal). */
 export default function HierarquiaPortalEntry({ className, variant = 'outline', size = 'sm' }) {
   const isIcon = size === 'icon';
 
@@ -22,15 +25,15 @@ export default function HierarquiaPortalEntry({ className, variant = 'outline', 
       asChild
     >
       <Link
-        to={createPageUrl('HierarquiaPortal')}
-        title="Portal catálogo cerâmica — tabela auxiliar, não altera o cadastro de produção"
-        aria-label="Portal catálogo cerâmica"
+        to={`${createPageUrl(NOVO_ECOSSISTEMA_ROUTE)}?tab=supply`}
+        title={NOVO_ECOSSISTEMA_ENTRY_TITLE}
+        aria-label={NOVO_ECOSSISTEMA_TITLE}
       >
         <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
         {!isIcon && (
           <>
-            <span className="hidden sm:inline">Portal catálogo</span>
-            <span className="sm:hidden">Portal</span>
+            <span className="hidden sm:inline">{NOVO_ECOSSISTEMA_TITLE}</span>
+            <span className="sm:hidden">Novo</span>
           </>
         )}
       </Link>

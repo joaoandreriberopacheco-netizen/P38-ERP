@@ -16,7 +16,6 @@ import {
   listPortalLinhas,
 } from '@/lib/hierarquiaPortal/buildPortalModel';
 import {
-  buildPortalSupplyHierarchy,
   enrichSupplyLinesWithMetrics,
 } from '@/lib/hierarquiaPortal/buildPortalSupplyHierarchy';
 import {
@@ -44,6 +43,11 @@ import {
   HIERARQUIA_PORTAL_PILOTO_LINHAS,
 } from '@/config/hierarquiaPortalFlags';
 import { MODELO_PILOTO_LINHAS_PLANEADAS } from '@/config/modeloCatalogoFlags';
+import { matchesLinhaTipoFilter } from '@/lib/smartSupply/linhaTipoFilter';
+import {
+  NOVO_ECOSSISTEMA_SUBTITLE,
+  NOVO_ECOSSISTEMA_TITLE,
+} from '@/config/novoEcosistemaFlags';
 import { SMART_SUPPLY_PORTAL_PREVIEW_LABEL } from '@/config/smartSupplyFlags';
 
 const PORTAL_TABS = ['cadastro', 'hierarquia', 'supply', 'reserva'];
@@ -194,7 +198,7 @@ function HierarquiaPortalInner() {
   const filteredSupply = useMemo(() => {
     let lines = tab === 'reserva' ? supplyLinesReserva : supplyLines;
     if (filtroLinha) lines = lines.filter((l) => l.linha_codigo === filtroLinha);
-    if (filtroTipos?.size) lines = lines.filter((l) => filtroTipos.has(l.linha_tipo));
+    if (filtroTipos?.size) lines = lines.filter((l) => matchesLinhaTipoFilter(l.linha_tipo, filtroTipos));
     const q = (portalFilters.searchTerm || '').trim().toLowerCase();
     if (q) {
       lines = lines.filter(
@@ -212,17 +216,13 @@ function HierarquiaPortalInner() {
     [filteredSupply],
   );
 
-  const filteredHierarchy = useMemo(
-    () => buildPortalSupplyHierarchy(filteredSupply, velocityMap),
-    [filteredSupply, velocityMap],
-  );
-
   const tipoCounts = useMemo(() => {
-    const counts = { solo: 0, mix: 0, portfolio: 0 };
+    const counts = { solo: 0, mix: 0, portfolio: 0, portfolio_kit: 0 };
     const source = tab === 'supply' ? supplyLines : linhas;
     for (const l of source) {
       const tipo = l.linha_tipo ?? l.tipo;
-      if (counts[tipo] != null) counts[tipo] += 1;
+      if (tipo === 'portfolio_kit') counts.portfolio_kit += 1;
+      else if (counts[tipo] != null) counts[tipo] += 1;
     }
     return counts;
   }, [linhas, supplyLines, tab]);
@@ -268,10 +268,10 @@ function HierarquiaPortalInner() {
                 </Link>
               </Button>
               <h1 className="text-xl md:text-2xl font-semibold font-glacial text-foreground">
-                Portal hierarquia — piloto cerâmica
+                {NOVO_ECOSSISTEMA_TITLE}
               </h1>
               <p className="text-sm text-muted-foreground max-w-3xl hidden md:block">
-                LINHA → produto compra → grade de SKUs (eixos). Hierarquia · SMART SUPPLY · reserva 12 pos.
+                {NOVO_ECOSSISTEMA_SUBTITLE}
               </p>
             </div>
             <div className="rounded-lg border border-violet-500/40 bg-violet-50/80 dark:bg-violet-950/30 px-3 py-2 text-xs text-violet-900 dark:text-violet-100 max-w-sm space-y-1 shrink-0">
@@ -376,7 +376,7 @@ function HierarquiaPortalInner() {
         ) : loading ? (
           <div className="flex items-center justify-center py-16 text-muted-foreground gap-2">
             <Loader2 className="h-5 w-5 animate-spin" />
-            Montando piloto cerâmica…
+            Montando {NOVO_ECOSSISTEMA_TITLE}…
           </div>
         ) : tab === 'hierarquia' ? (
           <PortalTreeGrid
@@ -388,10 +388,11 @@ function HierarquiaPortalInner() {
           />
         ) : tab === 'supply' ? (
           <PortalSmartSupplyPanel
-            hierarchy={filteredHierarchy}
+            supplyLines={filteredSupply}
             flatLines={filteredSupply}
             somenteAlerta={somenteAlerta}
             loadingVelocity={loadingVelocity}
+            velocityMap={velocityMap}
           />
         ) : (
           <PortalReservaPanel
