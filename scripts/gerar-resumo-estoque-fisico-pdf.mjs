@@ -28,6 +28,10 @@ const BRL_UNIT = new Intl.NumberFormat('pt-BR', {
 });
 
 const QTD = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
+const QTD_CELL = new Intl.NumberFormat('pt-BR', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 
 const COLORS = {
   ink: [24, 24, 27],
@@ -53,6 +57,8 @@ const GRID = {
   headerH: 8,
   padX: 2.4,
   padY: 5.2,
+  qtySplitRatio: 0.62,
+  qtyLineStep: 4.1,
 };
 
 function parseOutArg(argv) {
@@ -138,11 +144,15 @@ function buildResumoData(produtos, { resolveProdutoCustoUnitarioBase, formatEsto
       .sort((a, b) => b.q - a.q);
     const principal = unidades[0] || { u: 'UN', q: 0 };
     const custoMedio = principal.q > 0 ? valor / principal.q : null;
+    const quantidadePartes = unidades.length
+      ? unidades.map(({ u, q }) => ({ numero: QTD_CELL.format(q), unidade: u }))
+      : [{ numero: '—', unidade: '' }];
     return {
       label,
       valor,
       skus,
       unidades,
+      quantidadePartes,
       quantidadeTexto: unidades.length
         ? unidades.map(({ u, q }) => `${QTD.format(q)} ${u}`).join(' + ')
         : '—',
@@ -185,7 +195,7 @@ function buildResumoData(produtos, { resolveProdutoCustoUnitarioBase, formatEsto
     if (!grupo) return;
     destaques.push({
       label,
-      quantidade: grupo.quantidadeTexto,
+      quantidadePartes: grupo.quantidadePartes,
       custoMedio: grupo.custoMedioTexto,
       valor: BRL.format(grupo.valor),
       detalhe,
@@ -199,7 +209,7 @@ function buildResumoData(produtos, { resolveProdutoCustoUnitarioBase, formatEsto
     const totalValor = blocos.reduce((s, b) => s + b.valor, 0);
     destaques.push({
       label: 'Blocos',
-      quantidade: `${QTD.format(totalBlocos)} UN`,
+      quantidadePartes: [{ numero: QTD_CELL.format(totalBlocos), unidade: 'UN' }],
       custoMedio: totalBlocos > 0 ? `${BRL_UNIT.format(totalValor / totalBlocos)}/UN` : '—',
       valor: BRL.format(totalValor),
       detalhe: blocos.map((b) => `${QTD.format(b.qtd)} (${b.nome})`).join(' · '),
@@ -214,7 +224,7 @@ function buildResumoData(produtos, { resolveProdutoCustoUnitarioBase, formatEsto
     const totalValor = caixas.reduce((s, c) => s + c.valor, 0);
     destaques.push({
       label: "Caixa d'água",
-      quantidade: `${QTD.format(totalCx)} UN`,
+      quantidadePartes: [{ numero: QTD_CELL.format(totalCx), unidade: 'UN' }],
       custoMedio: totalCx > 0 ? `${BRL_UNIT.format(totalValor / totalCx)}/UN` : '—',
       valor: BRL.format(totalValor),
       detalhe: caixas.map((c) => `${QTD.format(c.qtd)}× ${c.nome}`).join(' · '),
@@ -252,6 +262,24 @@ function drawGridLines(doc, x, y, width, rowHeights, colWidths) {
   }
 }
 
+function getQuantityPartes(row) {
+  if (Array.isArray(row?.quantidadePartes) && row.quantidadePartes.length) {
+    return row.quantidadePartes;
+  }
+  return [{ numero: '—', unidade: '' }];
+}
+
+function measureQuantityRowHeight(partes) {
+  const lines = Math.max(1, partes.length);
+  return Math.max(GRID.rowH, lines * GRID.qtyLineStep + 2.6);
+}
+
+function columnOffsetX(x, colWidths, index) {
+  let offset = x;
+  for (let i = 0; i < index; i += 1) offset += colWidths[i];
+  return offset;
+}
+
 function drawGridTable(doc, fontFamily, {
   x,
   y,
@@ -262,10 +290,22 @@ function drawGridTable(doc, fontFamily, {
   rowStyle = 'normal',
 }) {
   const colWidths = columns.map((c) => width * c.width);
-  const headerH = GRID.headerH;
-  const bodyRowH = GRID.rowH;
-  const rowHeights = [headerH, ...rows.map(() => bodyRowH)];
+  const qtyColIndex = columns.findIndex((c) => c.splitQuantity);
+  const bodyHeights = rows.map((row) => (
+    qtyColIndex >= 0 ? measureQuantityRowHeight(getQuantityPartes(row)) : GRID.rowH
+  ));
+  const rowHeights = [GRID.headerH, ...bodyHeights];
+  const tableH = rowHeights.reduce((s, h) => s + h, 0);
+
   drawGridLines(doc, x, y, width, rowHeights, colWidths);
+
+  if (qtyColIndex >= 0) {
+    const qtyX = columnOffsetX(x, colWidths, qtyColIndex);
+    const splitX = qtyX + colWidths[qtyColIndex] * GRID.qtySplitRatio;
+    doc.setDrawColor(...COLORS.line);
+    doc.setLineWidth(GRID.lineWidth);
+    doc.line(splitX, y, splitX, y + tableH);
+  }
 
   let cursorY = y + GRID.padY;
   doc.setFont(fontFamily, headerStyle);
@@ -275,39 +315,72 @@ function drawGridTable(doc, fontFamily, {
   let cursorX = x;
   for (let i = 0; i < columns.length; i += 1) {
     const col = columns[i];
-    const cellX = col.align === 'right'
-      ? cursorX + colWidths[i] - GRID.padX
-      : cursorX + GRID.padX;
-    doc.text(col.label, cellX, cursorY, { align: col.align || 'left' });
-    cursorX += colWidths[i];
-  }
-
-  cursorY += headerH - GRID.padY + GRID.padY;
-  doc.setFont(fontFamily, rowStyle);
-  doc.setFontSize(FONT.tableRow);
-
-  for (const row of rows) {
-    cursorX = x;
-    for (let i = 0; i < columns.length; i += 1) {
-      const col = columns[i];
-      const raw = row[col.key] ?? '—';
-      const text = String(raw);
-      const maxW = colWidths[i] - GRID.padX * 2;
-      const lines = doc.splitTextToSize(text, maxW);
-      const line = lines[0] || '—';
+    if (col.splitQuantity) {
+      const qtyX = cursorX;
+      const splitX = qtyX + colWidths[i] * GRID.qtySplitRatio;
+      doc.text('QTD', splitX - GRID.padX, cursorY, { align: 'right' });
+      doc.text('UN', splitX + GRID.padX, cursorY, { align: 'left' });
+    } else {
       const cellX = col.align === 'right'
         ? cursorX + colWidths[i] - GRID.padX
         : cursorX + GRID.padX;
-      setTextColor(doc, col.key === 'valor' ? COLORS.accent : col.key === 'quantidade' || col.key === 'custoMedio' ? COLORS.muted : COLORS.ink);
-      if (col.key === 'valor') doc.setFont(fontFamily, 'bold');
-      doc.text(line, cellX, cursorY, { align: col.align || 'left' });
-      if (col.key === 'valor') doc.setFont(fontFamily, rowStyle);
-      cursorX += colWidths[i];
+      doc.text(col.label, cellX, cursorY, { align: col.align || 'left' });
     }
-    cursorY += bodyRowH;
+    cursorX += colWidths[i];
   }
 
-  return y + rowHeights.reduce((s, h) => s + h, 0);
+  cursorY += GRID.headerH;
+  doc.setFont(fontFamily, rowStyle);
+  doc.setFontSize(FONT.tableRow);
+
+  for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+    const row = rows[rowIndex];
+    const rowH = bodyHeights[rowIndex];
+    const baseline = cursorY + GRID.padY + 0.4;
+    cursorX = x;
+
+    for (let i = 0; i < columns.length; i += 1) {
+      const col = columns[i];
+      if (col.splitQuantity) {
+        const qtyX = cursorX;
+        const splitX = qtyX + colWidths[i] * GRID.qtySplitRatio;
+        const partes = getQuantityPartes(row);
+        const blockH = partes.length * GRID.qtyLineStep;
+        let lineY = baseline + Math.max(0, (rowH - blockH) / 2) + 1.2;
+        setTextColor(doc, COLORS.muted);
+        for (const parte of partes) {
+          doc.text(String(parte.numero ?? '—'), splitX - GRID.padX, lineY, { align: 'right' });
+          doc.text(String(parte.unidade ?? ''), splitX + GRID.padX, lineY, { align: 'left' });
+          lineY += GRID.qtyLineStep;
+        }
+      } else {
+        const raw = row[col.key] ?? '—';
+        const text = String(raw);
+        const maxW = colWidths[i] - GRID.padX * 2;
+        const lines = doc.splitTextToSize(text, maxW);
+        const line = lines[0] || '—';
+        const cellX = col.align === 'right'
+          ? cursorX + colWidths[i] - GRID.padX
+          : cursorX + GRID.padX;
+        setTextColor(
+          doc,
+          col.key === 'valor'
+            ? COLORS.accent
+            : col.key === 'custoMedio'
+              ? COLORS.muted
+              : COLORS.ink,
+        );
+        if (col.key === 'valor') doc.setFont(fontFamily, 'bold');
+        doc.text(line, cellX, baseline, { align: col.align || 'left' });
+        if (col.key === 'valor') doc.setFont(fontFamily, rowStyle);
+      }
+      cursorX += colWidths[i];
+    }
+
+    cursorY += rowH;
+  }
+
+  return y + tableH;
 }
 
 async function drawPdf(data, registerJsPdfBarlowFonts, normalizePdfText) {
@@ -369,14 +442,14 @@ async function drawPdf(data, registerJsPdfBarlowFonts, normalizePdfText) {
 
   const familyColumns = [
     { key: 'familia', label: 'FAMÍLIA', width: 0.36, align: 'left' },
-    { key: 'quantidade', label: 'QUANTIDADE', width: 0.22, align: 'left' },
+    { key: 'quantidade', label: 'QUANTIDADE', width: 0.22, align: 'left', splitQuantity: true },
     { key: 'custoMedio', label: 'CUSTO MÉDIO', width: 0.22, align: 'right' },
     { key: 'valor', label: 'VALOR', width: 0.20, align: 'right' },
   ];
 
   const familyRows = data.grupos.map((g) => ({
     familia: g.label,
-    quantidade: g.quantidadeTexto,
+    quantidadePartes: g.quantidadePartes,
     custoMedio: g.custoMedioTexto,
     valor: BRL.format(g.valor),
   }));
@@ -398,7 +471,7 @@ async function drawPdf(data, registerJsPdfBarlowFonts, normalizePdfText) {
 
   const destaqueColumns = [
     { key: 'label', label: 'ITEM', width: 0.28, align: 'left' },
-    { key: 'quantidade', label: 'QUANTIDADE', width: 0.22, align: 'left' },
+    { key: 'quantidade', label: 'QUANTIDADE', width: 0.22, align: 'left', splitQuantity: true },
     { key: 'custoMedio', label: 'CUSTO MÉDIO', width: 0.22, align: 'right' },
     { key: 'valor', label: 'VALOR', width: 0.14, align: 'right' },
     { key: 'detalhe', label: 'DETALHE', width: 0.14, align: 'left' },
@@ -406,7 +479,7 @@ async function drawPdf(data, registerJsPdfBarlowFonts, normalizePdfText) {
 
   const destaqueRows = data.destaques.map((d) => ({
     label: d.label,
-    quantidade: d.quantidade,
+    quantidadePartes: d.quantidadePartes,
     custoMedio: d.custoMedio,
     valor: d.valor,
     detalhe: d.detalhe || '—',
