@@ -6,7 +6,7 @@ import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
 import { resolveQuantidadeBaseItemEmbarque } from '@/lib/sugestaoCompraEstoquePendente';
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 
-export const PDF_BUILD = 'estoque-reuniao-v7';
+export const PDF_BUILD = 'estoque-reuniao-v8';
 
 const BRL_KPI = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -108,9 +108,26 @@ function isArgamassaFamilia(familia) {
   return norm === 'ARGAMASSA' || norm.startsWith('ARGAMASSA ');
 }
 
+function isCeramicaFamilia(familia) {
+  return normH1Key(familia) === 'CERAMICA';
+}
+
 function letraFamiliaRelatorio(familia, abcdPorH1) {
-  if (isArgamassaFamilia(familia)) return 'A';
+  if (isArgamassaFamilia(familia) || isCeramicaFamilia(familia)) return 'A';
   return abcdPorH1.get(familia) || 'E';
+}
+
+function comparePorClasseDepoisAlfabetico(a, b) {
+  const letraA = a.letra || 'E';
+  const letraB = b.letra || 'E';
+  const idxA = ABCD_ORDER.indexOf(letraA);
+  const idxB = ABCD_ORDER.indexOf(letraB);
+  const orderA = idxA >= 0 ? idxA : ABCD_ORDER.length;
+  const orderB = idxB >= 0 ? idxB : ABCD_ORDER.length;
+  if (orderA !== orderB) return orderA - orderB;
+  const labelA = String(a.label || a.familia || '').trim();
+  const labelB = String(b.label || b.familia || '').trim();
+  return labelA.localeCompare(labelB, 'pt-BR', { sensitivity: 'base' });
 }
 
 function normalizarFornecedorRelatorio(nome) {
@@ -170,10 +187,10 @@ function rowsTabelaAbcd(valorPorLetra) {
     .filter((row) => row.valor > 0);
 }
 
-function labelOutros(count, tipo) {
+function labelOutros(count) {
   const n = Number(count) || 0;
   if (n <= 0) return 'Outros';
-  return `Outros — representam ${QTD.format(n)} ${tipo}`;
+  return `Outros (${QTD.format(n)} itens)`;
 }
 
 function sumValorRows(rows, key = 'valor') {
@@ -190,7 +207,7 @@ function consolidateTopRows(rows, maxRows, { tipo, labelKey, valorKey = 'valor',
   const outros = mapOutros
     ? mapOutros(tail)
     : {
-      [labelKey]: labelOutros(tail.length, tipo),
+      [labelKey]: labelOutros(tail.length),
       [valorKey]: sumValorRows(tail, valorKey),
     };
   return [...head, outros];
@@ -438,7 +455,7 @@ function buildResumoTransitoData(
   }
 
   const porFamiliaH1 = [...familiaAgg.values()]
-    .sort((a, b) => b.valor - a.valor)
+    .sort(comparePorClasseDepoisAlfabetico)
     .map((row) => ({
       familia: row.familia,
       letra: row.letra,
@@ -567,7 +584,7 @@ function buildResumoData(produtos, { resolveProdutoCustoUnitarioBase, formatEsto
         letra: letraFamiliaRelatorio(agg.label, abcdPorH1),
       };
     })
-    .sort((a, b) => b.valor - a.valor);
+    .sort(comparePorClasseDepoisAlfabetico);
 
   return {
     geradoEm: new Date().toLocaleString('pt-BR', { timeZone: 'America/Manaus' }),
@@ -800,9 +817,10 @@ function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
   const text = (str, x, yy, opts = {}) => doc.text(normalizePdfText(str), x, yy, opts);
 
   const familiasColumns = [
-    { key: 'familia', label: 'FAMÍLIA', width: 0.42, align: 'left' },
-    { key: 'quantidade', label: 'QUANTIDADE', width: 0.28, align: 'left', splitQuantity: true },
-    { key: 'valor', label: 'R$', width: 0.30, align: 'right' },
+    { key: 'letra', label: 'CLASSE', width: 0.08, align: 'left' },
+    { key: 'familia', label: 'FAMÍLIA', width: 0.36, align: 'left' },
+    { key: 'quantidade', label: 'QTD', width: 0.28, align: 'left', splitQuantity: true },
+    { key: 'valor', label: 'R$', width: 0.28, align: 'right' },
   ];
   const abcdColumns = [
     { key: 'letra', label: 'CLASSE', width: 0.24, align: 'left' },
@@ -857,7 +875,8 @@ function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
     columns: familiasColumns,
     rawRows: data.grupos,
     toDisplay: (g) => ({
-      familia: g.letra === '—' ? g.label : `${g.label} (${g.letra})`,
+      letra: g.letra || '—',
+      familia: g.label,
       quantidadePartes: g.quantidadePartes,
       valor: fmtTabValor(g.valor),
     }),
@@ -865,7 +884,7 @@ function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
       tipo: 'famílias',
       labelKey: 'label',
       mapOutros: (tail) => ({
-        label: labelOutros(tail.length, 'famílias'),
+        label: labelOutros(tail.length),
         letra: '—',
         quantidadePartes: [{ numero: '—', unidade: '' }],
         valor: sumValorRows(tail),
@@ -976,7 +995,7 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
       labelKey: 'transportadora',
       mapOutros: (tail) => ({
         eta: '—',
-        transportadora: labelOutros(tail.length, 'embarques'),
+        transportadora: labelOutros(tail.length),
         volumes: QTD.format(tail.reduce((sum, row) => sum + (Number(row.volumes) || 0), 0)),
         valor: sumValorRows(tail),
       }),
@@ -999,7 +1018,7 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
       tipo: 'fornecedores',
       labelKey: 'fornecedor',
       mapOutros: (tail) => ({
-        fornecedor: labelOutros(tail.length, 'fornecedores'),
+        fornecedor: labelOutros(tail.length),
         quantidadePartes: [{ numero: '—', unidade: '' }],
         valor: sumValorRows(tail),
       }),
@@ -1042,7 +1061,7 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
       tipo: 'famílias',
       labelKey: 'familia',
       mapOutros: (tail) => ({
-        familia: labelOutros(tail.length, 'famílias'),
+        familia: labelOutros(tail.length),
         quantidadePartes: [{ numero: '—', unidade: '' }],
         precoMedio: '—',
         valor: sumValorRows(tail),
@@ -1067,7 +1086,7 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
       tipo: 'famílias',
       labelKey: 'familia',
       mapOutros: (tail) => ({
-        familia: labelOutros(tail.length, 'famílias'),
+        familia: labelOutros(tail.length),
         letra: '—',
         valor: sumValorRows(tail),
       }),
