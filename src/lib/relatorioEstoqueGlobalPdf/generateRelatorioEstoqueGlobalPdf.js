@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { resolveProdutoCustoUnitarioBase } from '@/lib/catalogStockTotals';
-import { commercialQuantityFromBase, formatEstoqueApresentacao } from '@/lib/productUnits';
+import { commercialQuantityFromBase, formatEstoqueApresentacao, resolveAvariaCompraFator1 } from '@/lib/productUnits';
 import { registerJsPdfBarlowFonts, normalizePdfText } from '@/lib/jspdfNotoFont';
 import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
@@ -19,7 +19,7 @@ import {
 } from '@/lib/comprasEmbarqueCards';
 import { buildConsultaItensEmbarque } from '@/lib/consultaComprasEmbarques';
 
-export const PDF_BUILD = 'estoque-reuniao-v17';
+export const PDF_BUILD = 'estoque-reuniao-v18';
 
 const BRL_KPI = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -56,6 +56,10 @@ const VOL_INT = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
 const QTD_CELL = new Intl.NumberFormat('pt-BR', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
+});
+const PCT_TAB = new Intl.NumberFormat('pt-BR', {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
 });
 
 const COLORS = {
@@ -209,6 +213,64 @@ function rowsTabelaAbcd(valorPorLetra) {
       valor: valorPorLetra[letra] || 0,
     }))
     .filter((row) => row.valor > 0);
+}
+
+const COMPOSICAO_CUSTO_DEFS = [
+  { key: 'compra', label: 'Valor de compra' },
+  { key: 'frete', label: 'Frete estimado' },
+  { key: 'avaria', label: 'Avaria estimada' },
+  { key: 'impostos', label: 'Impostos estimados' },
+  { key: 'outros', label: 'Outros custos' },
+  { key: 'desconto', label: 'Desconto (−)', subtract: true },
+];
+
+function aggregateComposicaoCustoEstoque(produtos) {
+  const acc = {
+    compra: 0,
+    frete: 0,
+    avaria: 0,
+    impostos: 0,
+    outros: 0,
+    desconto: 0,
+  };
+  for (const produto of produtos) {
+    const qty = Math.max(0, Number(produto?.estoque_atual) || 0);
+    if (qty <= 0) continue;
+    acc.compra += qty * (Number(produto?.valor_compra) || 0);
+    acc.frete += qty * (Number(produto?.custo_frete_padrao) || 0);
+    acc.impostos += qty * (
+      (Number(produto?.custo_imposto1_padrao) || 0)
+      + (Number(produto?.custo_imposto2_padrao) || 0)
+    );
+    acc.outros += qty * (Number(produto?.custo_outros_padrao) || 0);
+    acc.avaria += qty * resolveAvariaCompraFator1(produto);
+    acc.desconto += qty * (Number(produto?.desconto_compra_padrao) || 0);
+  }
+  return acc;
+}
+
+function rowsComposicaoCusto(acc, totalReferencia) {
+  const total = totalReferencia > 0 ? totalReferencia : 0;
+  const pct = (valor) => (total > 0 ? (Math.abs(valor) / total) * 100 : 0);
+  return COMPOSICAO_CUSTO_DEFS
+    .map((def) => {
+      const bruto = acc[def.key] || 0;
+      const valor = def.subtract ? -Math.abs(bruto) : bruto;
+      return {
+        key: def.key,
+        label: def.label,
+        valor,
+        pct: pct(valor),
+        alwaysShow: def.key === 'compra',
+      };
+    })
+    .filter((row) => row.alwaysShow || Math.abs(row.valor) > 0.004);
+}
+
+function fmtComposicaoValor(valor) {
+  const abs = Math.abs(Number(valor) || 0);
+  const formatted = fmtTabValor(abs);
+  return (Number(valor) || 0) < 0 ? `−${formatted}` : formatted;
 }
 
 function labelOutros(count) {
@@ -610,12 +672,18 @@ function buildResumoData(produtos, { resolveProdutoCustoUnitarioBase, formatEsto
     })
     .sort(comparePorClasseDepoisAlfabetico);
 
+  const composicaoAcc = aggregateComposicaoCustoEstoque(produtos);
+
   return {
     geradoEm: new Date().toLocaleString('pt-BR', { timeZone: 'America/Manaus' }),
     total,
     skusCom,
     grupos,
     porAbcd,
+    composicaoCusto: {
+      acc: composicaoAcc,
+      rows: rowsComposicaoCusto(composicaoAcc, total),
+    },
   };
 }
 
@@ -1044,6 +1112,11 @@ function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
     { key: 'letra', label: 'CL.', width: 0.10, align: 'center' },
     { key: 'valor', label: 'R$', width: 0.90, align: 'right' },
   ];
+  const composicaoColumns = [
+    { key: 'label', label: 'COMPONENTE', width: 0.54, align: 'left' },
+    { key: 'valor', label: 'R$', width: 0.28, align: 'right' },
+    { key: 'pct', label: '%', width: 0.18, align: 'right' },
+  ];
 
   doc.setFont(fontFamily, 'heavy');
   doc.setFontSize(FONT.title);
@@ -1098,6 +1171,20 @@ function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
     pageH,
   });
 
+  const composicaoRows = data.composicaoCusto?.rows || [];
+  const composicaoStripMm = GRID.headerH + composicaoRows.length * GRID.rowH + 4;
+  y = drawFullWidthTableBlock(doc, fontFamily, normalizePdfText, layout, y, {
+    title: 'Composição estimada do custo (cadastro)',
+    columns: composicaoColumns,
+    rows: composicaoRows.map((row) => ({
+      label: row.label,
+      valor: fmtComposicaoValor(row.valor),
+      pct: `${PCT_TAB.format(row.pct)}%`,
+    })),
+    maxHeight: composicaoStripMm,
+    pageH,
+  });
+
   drawFullWidthTableBlock(doc, fontFamily, normalizePdfText, layout, y, {
     title: 'Resumo por família (nível 1)',
     columns: familiasColumns,
@@ -1129,7 +1216,7 @@ function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
     CW,
     pageH,
     `P38 · Estoque físico · p.1 · ${PDF_BUILD}`,
-    'Famílias e curva ABCD no nível hierárquico 1',
+    'Famílias, curva ABCD e composição de custo no nível 1',
   );
 }
 
