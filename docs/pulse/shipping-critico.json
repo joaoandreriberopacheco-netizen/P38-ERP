@@ -1,0 +1,10 @@
+{
+  "version": "1.0",
+  "description": "Shipping crítico — fluxos compostos e estados que rotas/comboio não cobrem (anti-submarino).",
+  "shipmentIds": [
+    "pedidos-compra-logistica",
+    "pedidos-compra",
+    "pdv-vendedor",
+    "fluxo-caixa"
+  ]
+}

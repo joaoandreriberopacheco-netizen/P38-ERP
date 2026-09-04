@@ -29,6 +29,7 @@ export default function PrevisaoMesTab({
   lancamentosMes,
   parcelamentos,
   lancamentosRecorrentes = [],
+  overridesPorSerie = {},
   filtroBusca,
   onBuscaChange,
   filtroCentro,
@@ -51,8 +52,9 @@ export default function PrevisaoMesTab({
         lancamentosMes,
         parcelamentos,
         lancamentosRecorrentes,
+        overridesPorSerie,
       ),
-    [competenciaMes, modelos, lancamentosMes, parcelamentos, lancamentosRecorrentes],
+    [competenciaMes, modelos, lancamentosMes, parcelamentos, lancamentosRecorrentes, overridesPorSerie],
   );
 
   const competenciasExibidas = useMemo(
@@ -80,7 +82,7 @@ export default function PrevisaoMesTab({
   const semFiltros = !filtroBusca && filtroCentro === '__todos__';
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 min-w-0">
       <AgefinPrevisaoCabecalho
         competenciaMes={competenciaMes}
         onMesAnterior={onMesAnterior}
@@ -131,9 +133,9 @@ export default function PrevisaoMesTab({
       </FinanceiroListaEstado>
 
       {!loading && competenciasExibidas.length === 0 && semFiltros && (
-        <div className="flex justify-center -mt-6 pb-4 gap-2">
-          <Button variant="outline" onClick={onNovoLancamento}>
-            Novo lançamento financeiro
+        <div className="flex justify-center -mt-6 pb-4 gap-2 px-1">
+          <Button variant="outline" className="w-full max-w-xs" onClick={onNovoLancamento}>
+            Nova conta fixa
           </Button>
         </div>
       )}

@@ -10,6 +10,7 @@ import ProdutoQuantidadeDialog from './ProdutoQuantidadeDialog';
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
 import { buildSaleUnitOptions, formatEstoqueDisponivelApresentacao, pickDefaultSaleUnit } from '@/lib/productUnits';
 import { getPrecoPisoCustoUnidade, parsePrecoDigitado } from '@/lib/orcamentoPrecoTabela';
+import ProdutoThumb from '@/components/produtos/ProdutoThumb';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -29,6 +30,7 @@ function ProdutoLinha({ produto, preco, unidadeSelecionada, unitOptions, qtdNoCa
       onClick={() => onSelect(produto, preco)}
       className="flex items-center gap-3 mx-3 my-1.5 px-4 py-3 bg-muted/50/60 rounded-2xl active:bg-muted dark:active:bg-muted/60 cursor-pointer shadow-sm"
     >
+      <ProdutoThumb produto={produto} size="sm" roundedClassName="rounded-xl" asDiv />
       <div className={`w-2 h-2 rounded-full flex-shrink-0 ${dotCls}`} />
 
       <div className="flex-1 min-w-0">
@@ -214,6 +216,12 @@ function ItemCarrinho({ item, onSelect, onRemove, onUpdatePreco }) {
   return (
     <div className="mx-3 my-1.5 px-4 py-3 bg-muted/50/60 rounded-2xl shadow-sm">
       <div className="flex items-center gap-3 cursor-pointer" onClick={() => onSelect(item)}>
+        <ProdutoThumb
+          produto={{ id: item.id, nome: item.nome, imagem_url: item.imagem_url }}
+          size="sm"
+          roundedClassName="rounded-xl"
+          asDiv
+        />
         <div className="flex-1 min-w-0">
           <p className="text-[13px] font-medium text-foreground leading-snug line-clamp-2">{item.nome}</p>
           <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -455,6 +463,7 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
             ? {
                 ...i,
                 qtd,
+                imagem_url: produto.imagem_url || i.imagem_url || null,
                 preco_unit: preco ?? i.preco_unit,
                 unidade,
                 unidade_medida: unidade,
@@ -470,6 +479,7 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
       return [...prev, {
         id: produto.id,
         nome: produto.nome,
+        imagem_url: produto.imagem_url || null,
         preco_unit: preco,
         qtd,
         unidade,

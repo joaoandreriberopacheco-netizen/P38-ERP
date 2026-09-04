@@ -63,8 +63,16 @@ html {
 
 body {
   overscroll-behavior: none;
-  touch-action: manipulation;
+  touch-action: pan-x pan-y pinch-zoom;
   background-color: hsl(var(--background));
+}
+
+/* Scroll interno no mobile — pan-y explícito (body não pode bloquear filhos) */
+@media (max-width: 1023px) {
+  .touch-pan-y {
+    touch-action: pan-y pinch-zoom;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 .dark body {

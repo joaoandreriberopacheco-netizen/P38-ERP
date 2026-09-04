@@ -4,7 +4,7 @@ Guia para **configurar uma vez** e o sistema continuar a funcionar sem depender 
 
 **Projecto P38 no Supabase:** `zhonvxkkqabfdyehyxpu`  
 **Site em produção:** https://p-38erp.vercel.app  
-**Repositório:** `joaoandreriberopacheco-netizen/varejosync`
+**Repositório:** `joaoandreriberopacheco-netizen/P38-ERP`
 
 ---
 
@@ -111,7 +111,7 @@ Confirma que a URL contém:
 
 ## PARTE 3 — Gravar no GitHub (produção / continuidade)
 
-1. Abre: https://github.com/joaoandreriberopacheco-netizen/varejosync/settings/secrets/actions  
+1. Abre: https://github.com/joaoandreriberopacheco-netizen/P38-ERP/settings/secrets/actions  
 2. Para **cada** linha da tabela abaixo:
    - Clica **New repository secret**
    - **Name:** nome exacto (copiar da coluna)

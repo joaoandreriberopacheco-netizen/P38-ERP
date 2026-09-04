@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import AnexosModal from '@/components/anexos/AnexosModal';
 import { listarAnexos } from '@/functions/listarAnexos';
+import { COMPRAS_FAB, COMPRAS_FAB_CITRUS, COMPRAS_FAB_SOFT } from '@/lib/comprasP38Theme';
 
 export default function PedidoCompraFAB({
   pedido,
@@ -95,34 +96,34 @@ export default function PedidoCompraFAB({
       icon: <Send className="w-5 h-5" style={{ transform: 'rotate(-45deg)' }} />,
       label: 'Financeiro',
       onClick: () => onEnviarFinanceiro?.(),
-      color: 'bg-emerald-600 text-white',
+      color: COMPRAS_FAB_CITRUS,
     },
     mostrarSolicitarEdicao && {
       icon: <Wrench className="w-5 h-5" />,
       label: 'Solicitar correção',
       onClick: () => onSolicitarEdicao?.(),
-      color: 'bg-amber-500 text-white',
+      color: 'bg-[#e8b824]/85 text-[#242424]',
     },
     {
       icon: <Paperclip className="w-5 h-5" />,
       label: 'Anexos',
       onClick: () => setShowAnexosModal(true),
       disabled: !pedido?.id,
-      color: 'bg-card dark:bg-muted text-foreground/90',
+      color: COMPRAS_FAB_SOFT,
     },
     {
       icon: <FileText className="w-5 h-5" />,
       label: 'PDF',
       onClick: handlePrintPDF,
       disabled: !pedido?.id,
-      color: 'bg-card dark:bg-muted text-foreground/90',
+      color: COMPRAS_FAB_SOFT,
     },
     {
       icon: <Save className="w-5 h-5" />,
       label: 'Salvar',
       onClick: () => onSave?.(),
       disabled: isSaving,
-      color: 'bg-card dark:bg-muted text-foreground/90',
+      color: COMPRAS_FAB,
     },
   ].filter(Boolean);
 
@@ -142,14 +143,17 @@ export default function PedidoCompraFAB({
 
           <div
             data-pedido-compra-fab
+            data-tour="pedido-fab-acoes"
             className="fixed right-4 z-[999] flex flex-col-reverse items-end gap-2 p38-bottom-fab1 md:bottom-6 md:right-6"
           >
             <button
               type="button"
               onClick={() => setIsExpanded(prev => !prev)}
               className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
-                isExpanded ? 'bg-muted dark:bg-muted/400 rotate-45' : 'bg-background dark:bg-muted'
-              } text-white`}
+                isExpanded
+                  ? 'bg-card text-foreground shadow-md rotate-45 dark:bg-muted/400 dark:text-foreground'
+                  : COMPRAS_FAB
+              }`}
               title="Ações do pedido"
             >
               {isExpanded ? <X className="w-6 h-6" /> : <Compass className="w-6 h-6" />}

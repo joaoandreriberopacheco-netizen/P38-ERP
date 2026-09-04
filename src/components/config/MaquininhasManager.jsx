@@ -185,7 +185,9 @@ export default function MaquininhasManager() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-base font-semibold text-foreground font-glacial">Maquininhas</h2>
-          <p className="text-xs text-muted-foreground">Taxas por bandeira e prazos de recebimento</p>
+          <p className="text-xs text-muted-foreground">
+            Taxas por bandeira e prazos de recebimento. O financeiro credita só o líquido; o nominal fica no pedido/comprovante.
+          </p>
         </div>
         <Button onClick={() => { setEditando(maqVazia()); setBandeirExpandida(null); }} size="sm" className="gap-1">
           <Plus className="w-4 h-4" /> Nova

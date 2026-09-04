@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Guidance for AI agents working in this repository (**varejosync** / P38 ERP — Vite + React + Base44).
+Guidance for AI agents working in this repository (**P38-ERP** — Vite/React UI + Supabase, produção Next.js).
 
 ## CRITICAL: validation artifact policy (João André)
 
@@ -35,6 +35,40 @@ Guidance for AI agents working in this repository (**varejosync** / P38 ERP — 
 | Preview build | `npm run preview` |
 | Secrets checklist | `npm run secrets:check` |
 | Auditar acessos (recomendado) | `npm run secrets:audit` |
+
+### Pulso (testador automático — não confundir com Flare)
+
+Doc completa: [`docs/pulse/README.md`](docs/pulse/README.md).
+
+Três níveis (metáfora comboio):
+
+| Nível | Comando | O que verifica |
+|-------|---------|----------------|
+| Comboio | `npm run pulse:corridor` | 36 sensores numa passagem (`/pulse/corredor`) |
+| Trem | `npm run pulse:sensors` | Abre cada ecrã real (Playwright) |
+| Shipping | `npm run pulse:shipping` | Dry run de processos (clicar/digitar sem gravar) |
+
+| Goal | Command |
+|------|---------|
+| Regenerar roteiro (manifestos) | `npm run pulse:refresh-roteiro` |
+| Pré-deploy CI | `npm run pulse:predeploy:ci` (comboio ~20s; build já feito no passo anterior) |
+| Gerar sensores/shipping JSON | `npm run pulse:generate-sensors` |
+
+**Refresh do roteiro no trem/shipping — comentado por defeito.** Em `scripts/pulse-sensors.mjs` e `scripts/pulse-shipping.mjs`, o bloco `refreshPulseRoteiro()` fica comentado no meio do script para corridas mais rápidas. Não descomentar salvo job periódico ou pedido explícito.
+
+Para corrida periódica (cron / GitHub Actions scheduled), usar **uma** destas opções:
+
+```bash
+# Opção A — duas linhas no pipeline (recomendado; não mexe no código)
+npm run pulse:refresh-roteiro && npm run pulse:sensors
+npm run pulse:refresh-roteiro && npm run pulse:shipping
+
+# Opção B — descomentar import + refreshPulseRoteiro() nos dois scripts
+```
+
+O CI em push corre `pulse:predeploy:ci` (comboio) + `pulse:shipping:critico`. O `pulse:predeploy` completo (refresh + 41 rotas + comboio) fica para validação manual ou `pulse:diario`. Sensores UI usam `data-pulse-sensor` no JSX; mapa de controlos em `scripts/generate-pulse-sensors-geral.mjs` (`CONTROLS`, `SHIPPING_OVERRIDES`).
+
+**Debugger diário (trem + shipping):** workflow `.github/workflows/pulse-diario.yml` — 05:00 Tabatinga, `npm run pulse:diario`. Notifica João André via **WhatsApp** (CallMeBot: `PULSE_NOTIFY_WHATSAPP_PHONE` + `PULSE_NOTIFY_CALLMEBOT_APIKEY`), issue GitHub ou Telegram. Auto-reparo: só refresh de manifestos + retry.
 
 There is **no** `test` script; E2E is manual / migration checklists under `docs/migration/`.
 
@@ -86,6 +120,7 @@ Após gravar secrets no Cursor: **nova sessão** → `npm run secrets:audit`
 ### Repo context
 
 - Canonical **hosted** deploy path today: this repo → Base44 / Vercel legacy. Future canonical stack: **a29-erp** (Next.js + Supabase). See root `README.md` and `.cursor/rules/transicao-vercel-base44.mdc`.
+- **Mobile visual north star (finance/ops):** Planejamento financeiro dark — palette/feeling approved by João André; see `.cursor/rules/p38-mobile-referencia-planejamento.mdc` and `docs/p38-mobile-rollout.md` §0.
 - **Flare** workflow: `docs/flare-export/README.md`, rule `.cursor/rules/busca-de-flares.mdc` — do not commit `flare-pending.json` with sensitive data.
 
 ### Optional services (not VM startup)

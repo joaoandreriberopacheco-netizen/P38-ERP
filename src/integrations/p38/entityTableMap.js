@@ -407,6 +407,7 @@ export const ENTITY_TO_TABLE = {
       'perfil',
       'perfil_acesso_id',
       'perfil_acesso_nome',
+      'override_permissoes',
       'tabela_preco_id',
       'tabela_preco_nome'
     ]
@@ -425,6 +426,7 @@ export const ENTITY_TO_TABLE = {
       'perfil',
       'perfil_acesso_id',
       'perfil_acesso_nome',
+      'override_permissoes',
       'tabela_preco_id',
       'tabela_preco_nome'
     ]

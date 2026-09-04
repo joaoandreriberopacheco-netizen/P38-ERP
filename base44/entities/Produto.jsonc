@@ -125,6 +125,11 @@
       "default": 0,
       "description": "Desconto padr\u00e3o de compra por unidade"
     },
+    "avaria_percentual": {
+      "type": "number",
+      "default": 0,
+      "description": "Provis\u00e3o de avaria/perda (% sobre valor de compra) inclu\u00edda no custo"
+    },
     "preco_venda_padrao": {
       "type": "number",
       "description": "Pre\u00e7o base de venda calculado ou informado"

@@ -3,6 +3,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { TrendingUp } from 'lucide-react';
 import { CATALOG_SORT_OPTIONS } from '@/lib/catalogProdutoPerformance';
 import ProdutosTreeByCategoryToggle from '@/components/produtos/ProdutosTreeByCategoryToggle';
+import { cn } from '@/components/utils';
+import {
+  PRODUTOS_DROPDOWN_ITEM,
+  PRODUTOS_DROPDOWN_MENU,
+  PRODUTOS_VIEW_TOGGLE_ACTIVE,
+  PRODUTOS_VIEW_TOGGLE_SHELL,
+} from '@/lib/produtosP38Theme';
 
 export default function ProdutosCommandBar({
   sortOrder,
@@ -24,14 +31,14 @@ export default function ProdutosCommandBar({
               <span className="hidden sm:inline max-w-[180px] truncate">{currentSort.label}</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="dark:bg-muted dark:border-border/40 max-h-[70vh] overflow-y-auto">
+          <DropdownMenuContent align="start" className={cn(PRODUTOS_DROPDOWN_MENU, 'max-h-[70vh] overflow-y-auto')}>
             <DropdownMenuLabel className="text-xs">Ordenar catálogo</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {CATALOG_SORT_OPTIONS.map((opt) => (
               <DropdownMenuItem
                 key={opt.id}
                 onClick={() => setSortOrder(opt.id)}
-                className={`dark:text-foreground dark:hover:bg-primary/90 text-xs ${sortOrder === opt.id ? 'font-semibold' : ''}`}
+                className={cn('text-xs', PRODUTOS_DROPDOWN_ITEM, sortOrder === opt.id && 'font-semibold')}
               >
                 {opt.label}
               </DropdownMenuItem>
@@ -47,9 +54,9 @@ export default function ProdutosCommandBar({
             className="h-7 px-2"
           />
         )}
-        <div className="flex items-center bg-muted rounded p-0.5 gap-0.5">
-          <button onClick={() => setViewMode('dinamica')} className={`text-[10px] px-2 py-1 rounded transition-colors ${viewMode === 'dinamica' ? 'bg-white dark:bg-muted text-foreground/90 shadow-sm font-medium' : 'text-muted-foreground'}`}>Tree Grid</button>
-          <button onClick={() => setViewMode('plana')} className={`text-[10px] px-2 py-1 rounded transition-colors ${viewMode === 'plana' ? 'bg-white dark:bg-muted text-foreground/90 shadow-sm font-medium' : 'text-muted-foreground'}`}>Plana</button>
+        <div className={cn('flex items-center', PRODUTOS_VIEW_TOGGLE_SHELL)}>
+          <button onClick={() => setViewMode('dinamica')} className={cn('text-[10px] px-2 py-1 rounded transition-colors', viewMode === 'dinamica' ? PRODUTOS_VIEW_TOGGLE_ACTIVE : 'text-muted-foreground')}>Tree Grid</button>
+          <button onClick={() => setViewMode('plana')} className={cn('text-[10px] px-2 py-1 rounded transition-colors', viewMode === 'plana' ? PRODUTOS_VIEW_TOGGLE_ACTIVE : 'text-muted-foreground')}>Plana</button>
         </div>
       </div>
     </div>

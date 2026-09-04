@@ -19,13 +19,20 @@ export function normalizeUnitCode(value) {
 
 const MAX_ALTERNATIVE_UNITS = 5;
 
+function newAlternativeUnitId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `u_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
 function normalizeAlternativeUnitRow(item = {}) {
   const unidade = String(item.unidade || "").trim().toUpperCase();
   const fatorConversao = normalizeNumber(item.fator_conversao, 1);
   const ajustePercentual = normalizeNumber(item.ajuste_percentual, 0);
   const fatorPrecoRaw = normalizeNumber(item.fator_preco, 0);
   const row = {
-    id: String(item.id || "").trim() || crypto.randomUUID(),
+    id: String(item.id || "").trim() || newAlternativeUnitId(),
     nome: typeof item.nome === "string" ? item.nome.trim() : "",
     unidade,
     fator_conversao: fatorConversao,
@@ -481,17 +488,50 @@ export function pickDefaultPurchaseUnit(product) {
 }
 
 /** Custo total por unidade base (catálogo / TreeGrid). */
-export function resolveCustoTotalUnitBaseProduto(p) {
-  const salvo = normalizeNumber(p?.preco_custo_calculado, 0);
-  if (salvo > 0) return salvo;
-  return (
-    normalizeNumber(p?.valor_compra, 0) +
-    normalizeNumber(p?.custo_frete_padrao, 0) +
-    normalizeNumber(p?.custo_imposto1_padrao, 0) +
-    normalizeNumber(p?.custo_imposto2_padrao, 0) +
-    normalizeNumber(p?.custo_outros_padrao, 0) -
-    normalizeNumber(p?.desconto_compra_padrao, 0)
+export function resolveAvariaCompraFator1(product = {}, valorCompraOverride = null) {
+  const base =
+    normalizeNumber(valorCompraOverride, NaN) > 0
+      ? normalizeNumber(valorCompraOverride, 0)
+      : normalizeNumber(product?.valor_compra, 0);
+  const pct = normalizeNumber(product?.avaria_percentual, 0);
+  if (pct <= 0 || base <= 0) return 0;
+  return roundToTwoDecimals((base * pct) / 100);
+}
+
+/** Avaria fator-1 na linha de compra (% sobre custo_unitario da linha). */
+export function resolveAvariaLinhaCompraFator1(item = {}, product = null) {
+  const pct = normalizeNumber(item?.avaria_pct_item, NaN);
+  const pctEff = Number.isFinite(pct) && pct > 0
+    ? pct
+    : normalizeNumber(product?.avaria_percentual, 0);
+  const base = normalizeNumber(item?.custo_unitario_fator1 ?? item?.custo_unitario, 0);
+  if (pctEff <= 0 || base <= 0) return 0;
+  return roundToTwoDecimals((base * pctEff) / 100);
+}
+
+/**
+ * Pré-visualização no formulário/import — espelha `p38_calc_preco_custo_fator1` (SQL).
+ * Após gravar, use apenas `preco_custo_calculado` via `resolveCustoTotalUnitBaseProduto`.
+ */
+export function calcPrecoCustoFromComponents(p = {}) {
+  const valorCompra = normalizeNumber(p?.valor_compra, 0);
+  return roundToTwoDecimals(
+    valorCompra +
+      normalizeNumber(p?.custo_frete_padrao, 0) +
+      normalizeNumber(p?.custo_imposto1_padrao, 0) +
+      normalizeNumber(p?.custo_imposto2_padrao, 0) +
+      normalizeNumber(p?.custo_outros_padrao, 0) +
+      resolveAvariaCompraFator1(p, valorCompra) -
+      normalizeNumber(p?.desconto_compra_padrao, 0),
   );
+}
+
+/**
+ * Custo unitário fator-1 canónico — coluna dorsal `produto.preco_custo_calculado` (SQL).
+ * Mantida pelo trigger `p38_calc_preco_custo_fator1`; relatórios e dashboards leem daqui.
+ */
+export function resolveCustoTotalUnitBaseProduto(p) {
+  return normalizeNumber(p?.preco_custo_calculado, 0);
 }
 
 /**
@@ -772,12 +812,16 @@ export function reconcileItemCustoCompra(item = {}, custoApresExplicit = null) {
       ? custoApresExplicit
       : getCustoApresentacaoItem(item),
   );
-  const custoF1 = roundToTwoDecimals(custoApresentacaoParaFator1(custoApres, fator));
+  // Não arredondar fator-1 aqui: CX 73,50÷200 → 0,37×200 infla para 74,00 na UI.
+  const custoF1 = custoApresentacaoParaFator1(custoApres, fator);
   const patched = {
     ...item,
     custo_unitario: custoF1,
     custo_unitario_base: custoF1,
     custo_unitario_apresentacao: custoApres,
+    custo_final_unitario_apresentacao: roundToTwoDecimals(
+      custoApres - Math.abs(getDescontoApresentacaoItem({ ...item, custo_unitario_apresentacao: custoApres })),
+    ),
   };
   return normalizeItemToCanonicalFactorOne(patched, 'custo');
 }
@@ -925,38 +969,83 @@ export function getCustoCompraLiquidoFator1(item = {}) {
     item?.desconto_unitario_fator1 ?? item?.valor_desconto_item ?? item?.desconto_unitario,
     0,
   );
-  return roundToTwoDecimals(custoF1 - ajusteF1);
+  const avariaF1 = resolveAvariaLinhaCompraFator1(item);
+  return roundToTwoDecimals(custoF1 - ajusteF1 + avariaF1);
 }
 
-/** Total da linha: quantidade_base × custo final fator-1 (contrato PedidoCompra). */
+/**
+ * Persistência canônica do pedido de compra: valor pago ao fornecedor (bruto − desconto).
+ * Avaria % é custo interno — não entra no pedido nem no total da NF.
+ */
+export function normalizePedidoCompraItemCustoLiquidoParaPersist(item = {}) {
+  const frete = normalizeNumber(item?.frete_unitario_fator1 ?? item?.custo_frete_unitario, 0);
+  const outros = normalizeNumber(item?.outros_unitario_fator1 ?? item?.custo_outros_unitario, 0);
+  const custoBruto = normalizeNumber(item?.custo_unitario_fator1 ?? item?.custo_unitario, 0);
+  const desconto = normalizeNumber(
+    item?.desconto_unitario_fator1 ?? item?.valor_desconto_item ?? item?.desconto_unitario,
+    0,
+  );
+  const custoLiquidoF1 = roundToTwoDecimals(custoBruto - desconto);
+  const fator = normalizeNumber(item?.fator_aplicado ?? item?.fator_conversao, 1) || 1;
+  const custoTotalUnit = roundToTwoDecimals(custoLiquidoF1 + frete + outros);
+  const qb = normalizeNumber(item?.quantidade_base, NaN);
+  const qty = normalizeNumber(item?.quantidade ?? item?.quantidade_comercial, 0);
+  const qBase = Number.isFinite(qb) && qb > 0 ? qb : qty * fator;
+  const totalExplicito = normalizeNumber(item?.total ?? item?.valor_total_item ?? item?.subtotal, 0);
+  const total = totalExplicito > 0
+    ? roundToTwoDecimals(totalExplicito)
+    : roundToTwoDecimals(qBase * custoTotalUnit);
+
+  return {
+    ...item,
+    custo_unitario_fator1: custoLiquidoF1,
+    custo_unitario: custoLiquidoF1,
+    custo_unitario_base: custoLiquidoF1,
+    custo_unitario_comercial: roundToTwoDecimals(custoLiquidoF1 * fator),
+    custo_unitario_apresentacao: roundToTwoDecimals(custoLiquidoF1 * fator),
+    desconto_unitario_fator1: 0,
+    valor_desconto_item: 0,
+    desconto_unitario: 0,
+    desconto_pct_item: 0,
+    custo_total_unitario_fator1: custoTotalUnit,
+    custo_final_unitario: custoTotalUnit,
+    custo_final_unitario_base: custoTotalUnit,
+    custo_final_unitario_apresentacao: roundToTwoDecimals(custoTotalUnit * fator),
+    total,
+  };
+}
+
+/** Total da linha: quantidade comercial × preço na mesma unidade (CX, M², …), sem avaria interna. */
 export function calcTotalItemCompraPedido(item = {}) {
   const qb = normalizeNumber(item?.quantidade_base, NaN);
   const qty = normalizeNumber(item?.quantidade, 0);
   const fator = normalizeNumber(item?.fator_conversao, 1) || 1;
-  const qBase = Number.isFinite(qb) && qb > 0 ? qb : qty * fator;
+  const qBase = Number.isFinite(qb) && qb > 0 ? qb : roundToTwoDecimals(qty * fator);
+
   const custoF1 = normalizeNumber(item?.custo_unitario, 0);
   const descF1 = normalizeNumber(item?.valor_desconto_item, 0);
   const custoLiquidoF1 = custoF1 - descF1;
-
   const totalViaBase = () => roundToTwoDecimals(qBase * custoLiquidoF1);
 
-  if (item?.preco_eixo === "FATOR_1") {
-    return totalViaBase();
-  }
+  if (qty > 0) {
+    const unitComercial = getCustoFinalApresentacaoItem(item);
+    const custoApres = getCustoApresentacaoItem(item);
 
-  // Embalagem (CX/PAC…): total = qtd comercial × preço/embalagem. Evita (preço÷fator)×(qtd×fator)
-  // arredondar o unitário fator-1 antes do produto (ex.: 110,26÷200 → 0,55 → total 2.200 em vez de 2.205,20).
-  if (fator > 1 && qty > 0) {
-    const custoFinalApres = getCustoFinalApresentacaoItem(item);
-    if (custoFinalApres > 0 || custoF1 > 0) {
-      // Sem snapshot de apresentação: custo ainda em fator-1 (R$/UN) — não fazer 30 CX × 0,37.
+    // Embalagem (CX/PAC…): qtd comercial × preço/embalagem — evita arredondar fator-1 antes do produto.
+    if (fator > 1 && (custoApres > 0 || unitComercial > 0)) {
+      // Preço ainda só em fator-1 (R$/M²) sem snapshot de embalagem.
       if (
         custoLiquidoF1 > 0 &&
-        Math.abs(custoFinalApres - custoLiquidoF1) <= Math.max(0.001, 0.001 * custoLiquidoF1)
+        custoApres > 0 &&
+        Math.abs(custoApres - custoLiquidoF1) <= Math.max(0.001, 0.001 * custoLiquidoF1)
       ) {
         return totalViaBase();
       }
-      return roundToTwoDecimals(qty * custoFinalApres);
+      return roundToTwoDecimals(qty * unitComercial);
+    }
+
+    if (unitComercial > 0) {
+      return roundToTwoDecimals(qty * unitComercial);
     }
   }
 
@@ -1028,11 +1117,26 @@ export function normalizeItemToCanonicalFactorOne(item = {}, axisPrefix = "custo
 
   const unitField = axisPrefix === "preco" ? "preco_unitario_praticado" : "custo_unitario";
   const finalField = axisPrefix === "preco" ? "preco_unitario_praticado" : "custo_final_unitario";
-  const unitVal = normalizeNumber(item?.[unitField], 0);
-  const finalVal = normalizeNumber(item?.[finalField], unitVal);
+  const apresField = axisPrefix === "preco" ? "preco_unitario_apresentacao" : "custo_unitario_apresentacao";
+  const finalApresField = axisPrefix === "preco" ? "preco_unitario_apresentacao" : "custo_final_unitario_apresentacao";
+  const apresExplicit = normalizeNumber(item?.[apresField], NaN);
+  const finalApresExplicit = normalizeNumber(item?.[finalApresField], NaN);
 
-  const unitApresentacao = unitVal * fator;
-  const finalApresentacao = finalVal * fator;
+  let unitVal = normalizeNumber(item?.[unitField], 0);
+  let finalVal = normalizeNumber(item?.[finalField], unitVal);
+
+  // Preço da embalagem (CX/PAC) é fonte da verdade quando já veio do documento/importação.
+  if (fator > 1 && Number.isFinite(apresExplicit) && apresExplicit > 0) {
+    unitVal = apresExplicit / fator;
+  }
+  if (fator > 1 && Number.isFinite(finalApresExplicit) && finalApresExplicit > 0) {
+    finalVal = finalApresExplicit / fator;
+  }
+
+  const unitApresentacao =
+    Number.isFinite(apresExplicit) && apresExplicit > 0 ? apresExplicit : unitVal * fator;
+  const finalApresentacao =
+    Number.isFinite(finalApresExplicit) && finalApresExplicit > 0 ? finalApresExplicit : finalVal * fator;
 
   const payload = {
     ...item,
@@ -1043,9 +1147,13 @@ export function normalizeItemToCanonicalFactorOne(item = {}, axisPrefix = "custo
   };
 
   if (axisPrefix === "preco") {
+    payload[unitField] = unitVal;
+    payload[finalField] = finalVal;
     payload.preco_unitario_base = unitVal;
     payload.preco_unitario_apresentacao = unitApresentacao;
   } else {
+    payload[unitField] = unitVal;
+    payload[finalField] = finalVal;
     payload.custo_unitario_base = unitVal;
     payload.custo_final_unitario_base = finalVal;
     payload.custo_unitario_apresentacao = unitApresentacao;
@@ -1186,8 +1294,14 @@ export function normalizePurchaseItemToCommercial(product, item = {}) {
   const custoUnitarioFator1 = normalizeNumber(item.custo_unitario, 0);
   const custoFinalUnitarioInput = normalizeNumber(item.custo_final_unitario, NaN);
   const custoFinalUnitarioFator1 = Number.isFinite(custoFinalUnitarioInput) ? custoFinalUnitarioInput : custoUnitarioFator1;
-  const custoUnitarioApresentacao = custoUnitarioFator1 * fatorDisplay;
-  const custoFinalUnitarioApresentacao = custoFinalUnitarioFator1 * fatorDisplay;
+  const apresExplicit = normalizeNumber(item.custo_unitario_apresentacao, NaN);
+  const finalApresExplicit = normalizeNumber(item.custo_final_unitario_apresentacao, NaN);
+  const custoUnitarioApresentacao =
+    Number.isFinite(apresExplicit) && apresExplicit > 0 ? apresExplicit : custoUnitarioFator1 * fatorDisplay;
+  const custoFinalUnitarioApresentacao =
+    Number.isFinite(finalApresExplicit) && finalApresExplicit > 0
+      ? finalApresExplicit
+      : custoFinalUnitarioFator1 * fatorDisplay;
 
   return {
     ...item,
@@ -1403,7 +1517,7 @@ export function normalizeItemCompraParaExibicao(item = {}, produto = null) {
   const fallback = item?.unidade_medida || snapshot?.unidade_principal || "UN";
   const snap = buildSnapshotExibicaoComercial(
     snapshot,
-    produto ? resolveUnidadeExibicaoParaCompras(snapshot, item, fallback) : null
+    resolveUnidadeExibicaoParaCompras(snapshot, item, fallback),
   );
   const resolvido = resolveCommercialDisplay(snap, quantidadeBase, fallback);
   const quantidadeShow = Number(resolvido?.quantidade ?? 0) || quantidadeAtual;

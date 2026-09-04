@@ -4,15 +4,30 @@ import { useQuery } from '@tanstack/react-query';
 import { Search, FileText, Receipt, Printer, X, ShoppingCart, Package, Truck } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ComprovantePreVenda from '@/components/vendas/ComprovantePreVenda';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
+import { hydratePedidosVendaItensFromSql } from '@/lib/fetchPedidoVendaItens';
 import { P38MobileLineList, P38MobileLine, P38StatusLabel, p38StatusTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
+import { toast } from 'sonner';
+
+/** Mesmos status que o caixa deixa após aprovar (Financeiro OK) até concluído. */
+const STATUS_VENDA_REIMPRESSAO = [
+  'Financeiro OK',
+  'Em Separação',
+  'Em Rota de Entrega',
+  'Pedido Concluído',
+];
 
 const TIPOS_DOCUMENTO = [
   { value: 'prevenda', label: 'Pré-Vendas', icon: FileText, entity: 'PedidoVenda', filter: (d) => d.tipo === 'Pedido' },
-  { value: 'venda', label: 'Vendas Finalizadas', icon: Receipt, entity: 'PedidoVenda', filter: (d) => d.status === 'Pedido Concluído' },
+  {
+    value: 'venda',
+    label: 'Vendas Finalizadas',
+    icon: Receipt,
+    entity: 'PedidoVenda',
+    filter: (d) => d.tipo !== 'Pedido' && STATUS_VENDA_REIMPRESSAO.includes(d.status),
+  },
   { value: 'pedido_compra', label: 'Pedidos de Compra', icon: ShoppingCart, entity: 'PedidoCompra' },
   { value: 'movimentacao', label: 'Movimentações Estoque', icon: Package, entity: 'MovimentacaoEstoque' },
   { value: 'agenda_entrega', label: 'Agendas de Entrega', icon: Truck, entity: 'AgendaLogistica' },
@@ -23,6 +38,7 @@ export default function ReimpressaoDocumentos() {
   const [busca, setBusca] = useState('');
   const [documentoSelecionado, setDocumentoSelecionado] = useState(null);
   const [showComprovante, setShowComprovante] = useState(false);
+  const [carregandoComprovante, setCarregandoComprovante] = useState(false);
   const [ultimoDocumento, setUltimoDocumento] = useState(null);
 
   // Buscar último documento ao trocar tipo
@@ -81,9 +97,33 @@ export default function ReimpressaoDocumentos() {
     enabled: busca.length >= 3,
   });
 
-  const handlePrint = (doc) => {
-    setDocumentoSelecionado(doc);
-    setShowComprovante(true);
+  const handlePrint = async (doc) => {
+    const tipo = TIPOS_DOCUMENTO.find((t) => t.value === tipoDoc);
+    if (!tipo || tipo.entity !== 'PedidoVenda') {
+      toast.info('Reimpressão deste tipo de documento ainda não está disponível.');
+      return;
+    }
+
+    setCarregandoComprovante(true);
+    try {
+      let enriched = doc;
+      if (!Array.isArray(doc?.itens) || doc.itens.length === 0) {
+        const [hydrated] = await hydratePedidosVendaItensFromSql(base44, [doc]);
+        enriched = hydrated || doc;
+      }
+      setDocumentoSelecionado(enriched);
+      setShowComprovante(true);
+    } catch (error) {
+      console.error('Erro ao preparar comprovante:', error);
+      toast.error('Não foi possível carregar os itens do pedido para reimpressão.');
+    } finally {
+      setCarregandoComprovante(false);
+    }
+  };
+
+  const fecharComprovante = () => {
+    setShowComprovante(false);
+    setDocumentoSelecionado(null);
   };
 
   return (
@@ -197,7 +237,12 @@ export default function ReimpressaoDocumentos() {
                   }
                   value={`R$ ${(doc.valor_total || 0).toFixed(2)}`}
                   trailing={
-                    <Button onClick={() => handlePrint(doc)} size="sm" className="h-8 shrink-0">
+                    <Button
+                      onClick={() => handlePrint(doc)}
+                      size="sm"
+                      className="h-8 shrink-0"
+                      disabled={carregandoComprovante}
+                    >
                       <Printer className="w-4 h-4" />
                     </Button>
                   }
@@ -208,24 +253,22 @@ export default function ReimpressaoDocumentos() {
         )}
       </div>
 
-      {/* Modal de Impressão */}
-      {showComprovante && documentoSelecionado && (
-        <Dialog open={showComprovante} onOpenChange={setShowComprovante}>
-          <DialogContent className="max-w-md p-0">
-            {tipoDoc === 'prevenda' ? (
-              <ComprovantePreVenda
-                pedido={documentoSelecionado}
-                onClose={() => setShowComprovante(false)}
-              />
-            ) : (
-              <ComprovanteCompra
-                pedido={documentoSelecionado}
-                onClose={() => setShowComprovante(false)}
-              />
-            )}
-          </DialogContent>
-        </Dialog>
-      )}
+      {/* Mesmo overlay do caixa (PDVCaixa) — sem Dialog por cima */}
+      {showComprovante && documentoSelecionado && tipoDoc === 'prevenda' ? (
+        <ComprovantePreVenda
+          preVenda={documentoSelecionado}
+          open={showComprovante}
+          onClose={fecharComprovante}
+        />
+      ) : null}
+
+      {showComprovante && documentoSelecionado && tipoDoc === 'venda' ? (
+        <ComprovanteCompra
+          pedido={documentoSelecionado}
+          open={showComprovante}
+          onClose={fecharComprovante}
+        />
+      ) : null}
     </div>
   );
 }

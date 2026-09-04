@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { getCatalogoComercialView, formatEstoqueApresentacao, formatQuantidadeCatalogoApresentacao } from '@/lib/productUnits';
+import { getCatalogoComercialView, formatEstoqueApresentacao, formatQuantidadeCatalogoApresentacao, resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
 import { compareTreeLabels, sortedTreeChildEntries } from '@/lib/treeSort';
 import {
   aggregatePerformanceFromSkus,
@@ -45,18 +45,9 @@ export function isSoloFamilyBranch(node) {
   return collectSkus(node).length === 1;
 }
 
-// ── Calcula o custo real de um produto (usa preco_custo_calculado se válido,
-//    senão reconstrói a partir dos componentes) ────────────────────────────────
+// ── Custo fator-1: coluna SQL preco_custo_calculado ─────────────────────────
 export function calcCusto(p) {
-  const salvo = p.preco_custo_calculado || 0;
-  if (salvo > 0) return salvo;
-  const vc = p.valor_compra || 0;
-  return vc
-    + (p.custo_frete_padrao || 0)
-    + (p.custo_imposto1_padrao || 0)
-    + (p.custo_imposto2_padrao || 0)
-    + (p.custo_outros_padrao || 0)
-    - (p.desconto_compra_padrao || 0);
+  return resolveCustoTotalUnitBaseProduto(p);
 }
 
 // ── Markup % sobre custo na embalagem comercial (alinha ao catálogo A29) ─────
@@ -188,6 +179,7 @@ export function aggregateSkus(skus) {
   const custos = skus.map((p) => getCatalogoComercialView(p).custoNaEmbalagem).filter((v) => v > 0);
   const valorCompras = skus.map((p) => getCatalogoComercialView(p).valorCompraNaEmbalagem).filter((v) => v > 0);
   const markups = skus.map((p) => calcMarkup(p)).filter((v) => v > 0);
+  const avarias = skus.map((p) => Number(p.avaria_percentual) || 0).filter((v) => v > 0);
   const margens = skus
     .map((p) => {
       const cat = getCatalogoComercialView(p);
@@ -202,6 +194,7 @@ export function aggregateSkus(skus) {
     custoMedio:      iqrMean(custos),
     valorCompraMedio:iqrMean(valorCompras),
     markupMedio:     iqrMean(markups),
+    avariaMedia:     iqrMean(avarias),
     margemMedia:     iqrMean(margens),
     lastroTotal:     lastros.reduce((s, v) => s + v, 0),
     estoqueTotal:    skus.reduce((s, p) => s + (p.estoque_atual || 0), 0),
@@ -222,7 +215,7 @@ export function buildCategoryTree(produtos) {
 
   for (const p of produtos) {
     const custo = calcCusto(p);
-    p.inventario_valorizado = custo * (p.estoque_atual || 0);
+    p.inventario_valorizado = custo * Math.max(0, Number(p.estoque_atual) || 0);
     const label = (p.categoria_nome || 'Sem categoria').trim() || 'Sem categoria';
     if (!byCategory.has(label)) byCategory.set(label, []);
     byCategory.get(label).push(p);
@@ -265,7 +258,7 @@ export function buildTree(produtos) {
 
   for (const p of produtos) {
     const custo = calcCusto(p);
-    p.inventario_valorizado = custo * (p.estoque_atual || 0);
+    p.inventario_valorizado = custo * Math.max(0, Number(p.estoque_atual) || 0);
     const h1 = (p.campo_hierarquico_1 || '(sem grupo)').trim();
     const h2 = (p.campo_hierarquico_2 || '').trim();
     const h3 = (p.campo_hierarquico_3 || '').trim();

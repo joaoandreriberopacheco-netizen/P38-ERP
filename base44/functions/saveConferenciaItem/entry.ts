@@ -131,14 +131,6 @@ const itemToLegacyMirror = (item: any) => ({
   conferencia_item_id: item?.id || undefined,
 });
 
-const recomporConferencia = async (base44: any, conferenciaId: string) => {
-  const linhas = await base44.asServiceRole.entities.ConferenciaItem.filter({ conferencia_id: conferenciaId });
-  const ordenadas = (linhas || []).slice().sort((a: any, b: any) => asNumber(a.ordem, 0) - asNumber(b.ordem, 0));
-  const espelho = ordenadas.map(itemToLegacyMirror);
-  await base44.asServiceRole.entities.ConferenciaEstoque.update(conferenciaId, { itens_conferidos: espelho });
-  return { itens_count: espelho.length };
-};
-
 const fetchProduto = async (base44: any, id: string) => {
   const list = await base44.asServiceRole.entities.Produto.filter({ id }, null, 1);
   return Array.isArray(list) && list.length > 0 ? list[0] : null;
@@ -166,8 +158,7 @@ Deno.serve(async (req) => {
       if (!linhas || linhas.length === 0) return Response.json({ error: 'item nao encontrado' }, { status: 404 });
       const conferenciaId = linhas[0].conferencia_id;
       await base44.asServiceRole.entities.ConferenciaItem.delete(id);
-      const recomp = conferenciaId ? await recomporConferencia(base44, conferenciaId) : null;
-      return Response.json({ success: true, recomposto: recomp });
+      return Response.json({ success: true });
     }
 
     if (action === 'create' || action === 'update') {
@@ -196,8 +187,7 @@ Deno.serve(async (req) => {
         await base44.asServiceRole.entities.ConferenciaItem.update(id, derivation.item);
         saved = { id, ...derivation.item };
       }
-      const recomp = await recomporConferencia(base44, conferenciaId);
-      return Response.json({ success: true, item: saved, recomposto: recomp });
+      return Response.json({ success: true, item: saved });
     }
 
     if (action === 'replaceAll') {
@@ -245,8 +235,7 @@ Deno.serve(async (req) => {
         criadas.push(novo);
       }
 
-      const recomp = await recomporConferencia(base44, conferenciaId);
-      return Response.json({ success: true, items: criadas, recomposto: recomp });
+      return Response.json({ success: true, items: criadas, itens_count: criadas.length });
     }
 
     return Response.json({ error: `acao desconhecida: ${action}` }, { status: 400 });

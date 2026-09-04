@@ -1,18 +1,25 @@
-import { memo, useState, useEffect, useRef, useMemo } from 'react';
+import { memo, useState, useRef, useMemo, useEffect } from 'react';
+import { useCompactShell } from '@/hooks/use-breakpoint';
+import { useScrollChromeVisibility } from '@/hooks/useScrollChromeVisibility';
+import { cn } from '@/lib/utils';
+import { P38ScrollChromeCollapse } from '@/components/layout/P38ScrollChromeCollapse';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { base44 } from '@/api/base44Client';
 import {
-  usePedidosVendaListQuery,
-  useRascunhosPedidoVendaListQuery,
+  usePedidosVendaGestaoQuery,
+  useRascunhosPedidoVendaGestaoQuery,
   useP38QueryInvalidation,
 } from '@/hooks/useP38Entities';
+import { hydratePedidosVendaItensFromSql } from '@/lib/fetchPedidoVendaItens';
+import { isValidGestaoDateKey } from '@/lib/fetchPedidosVendaGestao';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { P38PageHeader } from '@/components/layout/P38PageHeader';
 import VendasRelatorisFAB from '@/components/vendas/VendasRelatorisFAB';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, P38TableShell } from '@/components/ui/table';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38StatusTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Search, Edit, ShoppingCart, Eye, FileText, MoreHorizontal, RotateCcw, RefreshCw, CreditCard, Printer, SlidersHorizontal, Ban, Ticket, Receipt, UserRoundPen } from 'lucide-react';
+import { Search, Edit, ShoppingCart, Eye, FileText, MoreHorizontal, RotateCcw, RefreshCw, CreditCard, Printer, SlidersHorizontal, Ban, Ticket, Receipt, UserRoundPen, ScrollText } from 'lucide-react';
 import DetalhesPedidoVenda from '@/components/vendas/DetalhesPedidoVenda';
 import AlterarPagamentoDialog from '@/components/vendas/AlterarPagamentoDialog';
 import AlterarClientePedidoDialog from '@/components/vendas/AlterarClientePedidoDialog';
@@ -28,20 +35,28 @@ import {
 } from '@/lib/formasPagamentoVenda';
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
-import MobileDateRangePicker from '@/components/vendas/MobileDateRangePicker';
+import VendasPeriodoFiltro from '@/components/vendas/VendasPeriodoFiltro';
+import { getPeriodoMesCorrente } from '@/lib/vendasPeriodoFiltro';
 import ValesTrocaTab from '@/components/vendas/ValesTrocaTab';
 import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
 import FormaPagamentoBadges from '@/components/vendas/FormaPagamentoBadges';
 import { STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA } from '@/lib/pdvCaixaTurnoVendas';
-import { dataHoje, boundsMesCivil, formatarDataHora, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
+import {
+  getVirtualPadding,
+  measureVirtualItem,
+  P38_VIRTUAL_OVERSCAN,
+} from '@/lib/p38VirtualList';
+import { formatarDataHora, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
+import { filterPedidosVendaElegiblesKpi, isPedidoOrcamento } from '@/lib/pedidoVendaEligibility';
+import { resolveValorPedidoVendaGestao } from '@/lib/financialUtils';
+import { buildIndiceDevolucaoPorPedido } from '@/lib/consultaVendaPosMovimentacao';
 const fmtDtHora = (d) => d ? formatarDataHora(d) : '-';
 const fmtDataCurta = (d) => d ? formatarSoData(d) : '';
 
-function getPeriodoMesCorrente() {
-  const hoje = dataHoje();
-  const [year, month] = hoje.split('-').map(Number);
-  return boundsMesCivil(year, month - 1);
+function devolucaoTrocaPageUrl(tipo) {
+  return `${createPageUrl('DevolucaoTroca')}?tipo=${encodeURIComponent(tipo)}`;
 }
+
 const dateRangeMatches = (valor, inicio, fim) => {
   const chave = toLocalDateKey(valor);
   if (!chave) return false;
@@ -50,22 +65,41 @@ const dateRangeMatches = (valor, inicio, fim) => {
   return true;
 };
 
-const VIRTUAL_LIST_STYLE = { maxHeight: 'calc(100vh - 260px)' };
-const VIRTUAL_OVERSCAN = 8;
-
-const measureVirtualItem = (element) => element?.getBoundingClientRect().height ?? 0;
-
-const getVirtualPadding = (virtualItems, totalSize) => {
-  if (virtualItems.length === 0) {
-    return { paddingTop: 0, paddingBottom: 0 };
-  }
-
-  const paddingTop = virtualItems[0]?.start ?? 0;
-  const lastItem = virtualItems[virtualItems.length - 1];
-  const paddingBottom = Math.max(0, totalSize - (lastItem?.end ?? 0));
-
-  return { paddingTop, paddingBottom };
+/** Evita crash do Radix Select quando o status não existe nas opções da aba ativa. */
+const STATUS_OPCOES_POR_ABA = {
+  rascunhos: ['Criado', 'Em Edição', 'Aguardando Caixa', 'Convertido', 'Cancelado'],
+  pedidos: ['Aguardando Caixa', 'Financeiro OK', 'Em Separação', 'Pedido Concluído', 'Cancelado'],
+  orcamentos: ['Orçamento'],
+  consulta: ['Financeiro OK', 'Em Separação', 'Em Rota de Entrega', 'Pedido Concluído'],
+  vales: ['Ativo', 'Utilizado Parcialmente', 'Utilizado', 'Expirado', 'Cancelado'],
 };
+
+const STATUS_LABEL_CURTO = {
+  'Aguardando Caixa': 'Ag. Caixa',
+  'Pedido Concluído': 'Concluído',
+};
+
+function statusOpcoesParaAba(activeTab) {
+  return STATUS_OPCOES_POR_ABA[activeTab] || STATUS_OPCOES_POR_ABA.pedidos;
+}
+
+function resolveStatusFiltroParaAba(statusFiltro, activeTab) {
+  if (statusFiltro === 'todos') return 'todos';
+  const opcoes = statusOpcoesParaAba(activeTab);
+  return opcoes.includes(statusFiltro) ? statusFiltro : 'todos';
+}
+
+/** Acima do Drawer (z-310) para o dropdown não ficar atrás do painel de filtros. */
+const FILTRO_SELECT_CONTENT =
+  'z-[320] max-h-[min(50vh,20rem)] border border-border/40 bg-popover shadow-lg dark:border-white/10 dark:bg-card';
+
+const VIRTUAL_LIST_STYLE = { maxHeight: 'calc(100vh - 260px)' };
+/** Lista virtual embutida no scroll da página (mobile viewport shell). */
+const PAGE_EMBED_LIST_CLASS =
+  'overflow-visible max-h-none border-0 shadow-none rounded-none bg-transparent dark:border-0 desktop-layout:hidden';
+/** Altura inicial por card mobile (pedido: título + nº + status/pagamento/vendedor). */
+const PEDIDO_MOBILE_ESTIMATE = 104;
+const RASCUNHO_MOBILE_ESTIMATE = 96;
 
 function PedidoActionsMenu({
   pedido,
@@ -117,7 +151,7 @@ function PedidoMobileLine({ pedido, onVerDetalhes, onEdit, onReimprimir, onCorri
           {pedido.vendedor_nome ? <span className="truncate">{pedido.vendedor_nome}</span> : null}
         </>
       }
-      value={`R$ ${(pedido.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+      value={`R$ ${resolveValorPedidoVendaGestao(pedido).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
       valueSub={fmtDataCurta(pedido.created_date)}
       trailing={
         <PedidoActionsMenu
@@ -133,20 +167,29 @@ function PedidoMobileLine({ pedido, onVerDetalhes, onEdit, onReimprimir, onCorri
   );
 }
 
-function VirtualizedPedidoCards({ pedidos, onVerDetalhes, onEdit, onReimprimir, onCorrigirCliente }) {
-  const parentRef = useRef(null);
+function VirtualizedPedidoCards({ pedidos, onVerDetalhes, onEdit, onReimprimir, onCorrigirCliente, pageScrollEl = null }) {
+  const innerRef = useRef(null);
   const rowVirtualizer = useVirtualizer({
     count: pedidos.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 76,
+    getScrollElement: () => pageScrollEl ?? innerRef.current,
+    estimateSize: () => PEDIDO_MOBILE_ESTIMATE,
     getItemKey: (index) => pedidos[index]?.id ?? index,
     measureElement: measureVirtualItem,
-    overscan: VIRTUAL_OVERSCAN,
+    overscan: P38_VIRTUAL_OVERSCAN,
   });
   const virtualItems = rowVirtualizer.getVirtualItems();
+  const embedInPageScroll = Boolean(pageScrollEl);
+
+  useEffect(() => {
+    if (pageScrollEl) rowVirtualizer.measure();
+  }, [pageScrollEl, rowVirtualizer]);
 
   return (
-    <P38MobileLineList ref={parentRef} className="pr-1" style={VIRTUAL_LIST_STYLE}>
+    <P38MobileLineList
+      ref={embedInPageScroll ? null : innerRef}
+      className={cn('pr-1', embedInPageScroll && PAGE_EMBED_LIST_CLASS)}
+      style={embedInPageScroll ? undefined : VIRTUAL_LIST_STYLE}
+    >
       <div className="relative w-full" style={{ height: `${rowVirtualizer.getTotalSize()}px` }}>
         {virtualItems.map((virtualRow) => {
           const pedido = pedidos[virtualRow.index];
@@ -182,8 +225,7 @@ function VirtualizedPedidosTable({ pedidos, onVerDetalhes, onEdit, onReimprimir,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 74,
     getItemKey: (index) => pedidos[index]?.id ?? index,
-    measureElement: measureVirtualItem,
-    overscan: VIRTUAL_OVERSCAN,
+    overscan: P38_VIRTUAL_OVERSCAN,
   });
   const virtualItems = rowVirtualizer.getVirtualItems();
   const { paddingTop, paddingBottom } = getVirtualPadding(virtualItems, rowVirtualizer.getTotalSize());
@@ -216,7 +258,6 @@ function VirtualizedPedidosTable({ pedidos, onVerDetalhes, onEdit, onReimprimir,
                 <TableRow
                   key={virtualRow.key}
                   data-index={virtualRow.index}
-                  ref={rowVirtualizer.measureElement}
                 >
                   <TableCell>
                     <PedidoActionsMenu
@@ -241,7 +282,7 @@ function VirtualizedPedidosTable({ pedidos, onVerDetalhes, onEdit, onReimprimir,
                     {fmtDtHora(pedido.created_date)}
                   </TableCell>
                   <TableCell className="text-right font-semibold text-foreground tabular-nums">
-                    R$ {(pedido.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    R$ {resolveValorPedidoVendaGestao(pedido).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </TableCell>
                 </TableRow>
               );
@@ -304,20 +345,29 @@ function RascunhoMobileLine({ rascunho, onInutilizar, striped }) {
   );
 }
 
-function VirtualizedRascunhoLines({ rascunhos, onInutilizar }) {
-  const parentRef = useRef(null);
+function VirtualizedRascunhoLines({ rascunhos, onInutilizar, pageScrollEl = null }) {
+  const innerRef = useRef(null);
   const rowVirtualizer = useVirtualizer({
     count: rascunhos.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 88,
+    getScrollElement: () => pageScrollEl ?? innerRef.current,
+    estimateSize: () => RASCUNHO_MOBILE_ESTIMATE,
     getItemKey: (index) => rascunhos[index]?.id ?? index,
     measureElement: measureVirtualItem,
-    overscan: VIRTUAL_OVERSCAN,
+    overscan: P38_VIRTUAL_OVERSCAN,
   });
   const virtualItems = rowVirtualizer.getVirtualItems();
+  const embedInPageScroll = Boolean(pageScrollEl);
+
+  useEffect(() => {
+    if (pageScrollEl) rowVirtualizer.measure();
+  }, [pageScrollEl, rowVirtualizer]);
 
   return (
-    <P38MobileLineList ref={parentRef} className="pr-1" style={VIRTUAL_LIST_STYLE}>
+    <P38MobileLineList
+      ref={embedInPageScroll ? null : innerRef}
+      className={cn('pr-1', embedInPageScroll && PAGE_EMBED_LIST_CLASS)}
+      style={embedInPageScroll ? undefined : VIRTUAL_LIST_STYLE}
+    >
       <div className="relative w-full" style={{ height: `${rowVirtualizer.getTotalSize()}px` }}>
         {virtualItems.map((virtualRow) => {
           const rascunho = rascunhos[virtualRow.index];
@@ -350,8 +400,7 @@ function VirtualizedRascunhosTable({ rascunhos, onInutilizar }) {
     getScrollElement: () => parentRef.current,
     estimateSize: () => 92,
     getItemKey: (index) => rascunhos[index]?.id ?? index,
-    measureElement: measureVirtualItem,
-    overscan: VIRTUAL_OVERSCAN,
+    overscan: P38_VIRTUAL_OVERSCAN,
   });
   const virtualItems = rowVirtualizer.getVirtualItems();
   const { paddingTop, paddingBottom } = getVirtualPadding(virtualItems, rowVirtualizer.getTotalSize());
@@ -383,7 +432,6 @@ function VirtualizedRascunhosTable({ rascunhos, onInutilizar }) {
               <TableRow
                 key={virtualRow.key}
                 data-index={virtualRow.index}
-                ref={rowVirtualizer.measureElement}
                 className="border-b border-border/40 hover:bg-muted/40 dark:hover:bg-muted/50"
               >
                 <TableCell>
@@ -425,26 +473,34 @@ function VirtualizedRascunhosTable({ rascunhos, onInutilizar }) {
 }
 
 function VendasGestaoPage() {
+  // PULSE-TEST: quebra só quando NEXT_PUBLIC_PULSE_TEST_BREAK_VENDAS_GESTAO=true (workflow Pulso diário)
+  if (process.env.NEXT_PUBLIC_PULSE_TEST_BREAK_VENDAS_GESTAO === 'true') {
+    throw new Error('[PULSE-TEST] Gestão de vendas quebrada de propósito');
+  }
+
+  const isPhone = useCompactShell();
+  const { chromeVisible, scrollRef, scrollEl } = useScrollChromeVisibility(isPhone);
   const { invalidateHomeKpis } = useP38QueryInvalidation();
+  const [dataInicio, setDataInicio] = useState(() => getPeriodoMesCorrente().start);
+  const [dataFim, setDataFim] = useState(() => getPeriodoMesCorrente().end);
+  const [periodoPreset, setPeriodoPreset] = useState('mes_atual');
   const {
     data: pedidos = [],
     isLoading: pedidosLoading,
     refetch: refetchPedidos,
-  } = usePedidosVendaListQuery();
+  } = usePedidosVendaGestaoQuery({ dataInicio, dataFim });
   const {
     data: rascunhos = [],
     isLoading: rascunhosLoading,
     refetch: refetchRascunhos,
-  } = useRascunhosPedidoVendaListQuery();
-  const [pedidosFiltrados, setPedidosFiltrados] = useState([]);
-  const [rascunhosFiltrados, setRascunhosFiltrados] = useState([]);
+  } = useRascunhosPedidoVendaGestaoQuery({ dataInicio, dataFim });
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFiltro, setStatusFiltro] = useState('todos');
   const [formasPagamentoFiltro, setFormasPagamentoFiltro] = useState([]);
-  const [dataInicio, setDataInicio] = useState(() => getPeriodoMesCorrente().start);
-  const [dataFim, setDataFim] = useState(() => getPeriodoMesCorrente().end);
-  const [isLoading, setIsLoading] = useState(true);
-
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [pedidosConsultaComItens, setPedidosConsultaComItens] = useState([]);
+  const [consultaHydrating, setConsultaHydrating] = useState(false);
+  const [devolucoesConsulta, setDevolucoesConsulta] = useState([]);
 
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [pedidoDetalhes, setPedidoDetalhes] = useState(null);
@@ -457,17 +513,31 @@ function VendasGestaoPage() {
   const [showComprovante, setShowComprovante] = useState(false);
   const [pedidoParaImprimir, setPedidoParaImprimir] = useState(null);
   const [showFiltros, setShowFiltros] = useState(false);
-  const [stats, setStats] = useState({
-    orcamentos: 0,
-    aprovados: 0,
-    finalizados: 0,
-    totalMes: 0
-  });
+
+  const isLoading = pedidosLoading || rascunhosLoading || isRefreshing;
 
   const formasPagamentoOpcoes = useMemo(
     () => listarFormasPagamentoParaFiltro(pedidos),
     [pedidos],
   );
+
+  const statusFiltroResolvido = useMemo(
+    () => resolveStatusFiltroParaAba(statusFiltro, activeTab),
+    [statusFiltro, activeTab],
+  );
+
+  const statusOpcoesAtivas = useMemo(
+    () => statusOpcoesParaAba(activeTab),
+    [activeTab],
+  );
+
+  const handleActiveTabChange = (tab) => {
+    setActiveTab(tab);
+    setStatusFiltro((prev) => resolveStatusFiltroParaAba(prev, tab));
+    if (tab !== 'pedidos' && tab !== 'consulta') {
+      setFormasPagamentoFiltro([]);
+    }
+  };
 
   const toggleFormaPagamentoFiltro = (forma) => {
     setFormasPagamentoFiltro((prev) =>
@@ -476,34 +546,26 @@ function VendasGestaoPage() {
   };
 
   const loadPedidos = async () => {
-    setIsLoading(true);
-    await Promise.all([refetchPedidos(), refetchRascunhos()]);
-    await Promise.all([invalidateHomeKpis()]);
-    setIsLoading(false);
+    setIsRefreshing(true);
+    try {
+      await Promise.all([refetchPedidos(), refetchRascunhos()]);
+      await invalidateHomeKpis();
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
-  useEffect(() => {
-    setIsLoading(pedidosLoading || rascunhosLoading);
-  }, [pedidosLoading, rascunhosLoading]);
+  const pedidosVenda = useMemo(
+    () => pedidos.filter((p) => !isPedidoOrcamento(p)),
+    [pedidos],
+  );
+  const pedidosOrcamento = useMemo(
+    () => pedidos.filter(isPedidoOrcamento),
+    [pedidos],
+  );
 
-  useEffect(() => {
-    const nextStats = {
-      orcamentos: pedidos.filter((p) => p.status === 'Orçamento').length,
-      aprovados: pedidos.filter((p) => p.status === 'Aprovado').length,
-      finalizados: pedidos.filter((p) => p.status === 'Finalizado').length,
-      totalMes: pedidos
-        .filter(
-          (p) =>
-            p.status === 'Finalizado' &&
-            toLocalDateKey(p.created_date).startsWith(dataHoje().slice(0, 7))
-        )
-        .reduce((acc, p) => acc + (p.valor_total || 0), 0),
-    };
-    setStats(nextStats);
-  }, [pedidos]);
-
-  useEffect(() => {
-    let currentFiltered = pedidos;
+  const pedidosFiltrados = useMemo(() => {
+    let currentFiltered = pedidosVenda;
 
     if (searchTerm) {
       currentFiltered = currentFiltered.filter(p =>
@@ -512,11 +574,10 @@ function VendasGestaoPage() {
       );
     }
 
-    if (statusFiltro !== 'todos') {
-      currentFiltered = currentFiltered.filter(p => p.status === statusFiltro);
+    if (statusFiltroResolvido !== 'todos') {
+      currentFiltered = currentFiltered.filter(p => p.status === statusFiltroResolvido);
     }
 
-    // Filtro de data
     if (dataInicio || dataFim) {
       currentFiltered = currentFiltered.filter(p => dateRangeMatches(p.created_date, dataInicio, dataFim));
     }
@@ -527,10 +588,31 @@ function VendasGestaoPage() {
       );
     }
 
-    setPedidosFiltrados(currentFiltered);
-  }, [pedidos, searchTerm, statusFiltro, dataInicio, dataFim, formasPagamentoFiltro]);
+    return currentFiltered;
+  }, [pedidosVenda, searchTerm, statusFiltroResolvido, dataInicio, dataFim, formasPagamentoFiltro]);
 
-  useEffect(() => {
+  const orcamentosFiltrados = useMemo(() => {
+    let currentFiltered = pedidosOrcamento;
+
+    if (searchTerm) {
+      currentFiltered = currentFiltered.filter(p =>
+        p.numero?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.cliente_nome?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (statusFiltroResolvido !== 'todos') {
+      currentFiltered = currentFiltered.filter(p => p.status === statusFiltroResolvido);
+    }
+
+    if (dataInicio || dataFim) {
+      currentFiltered = currentFiltered.filter(p => dateRangeMatches(p.created_date, dataInicio, dataFim));
+    }
+
+    return currentFiltered;
+  }, [pedidosOrcamento, searchTerm, statusFiltroResolvido, dataInicio, dataFim]);
+
+  const rascunhosFiltrados = useMemo(() => {
     let currentFiltered = rascunhos;
 
     if (searchTerm) {
@@ -540,16 +622,16 @@ function VendasGestaoPage() {
       );
     }
 
-    if (statusFiltro !== 'todos') {
-      currentFiltered = currentFiltered.filter(r => r.status === statusFiltro);
+    if (statusFiltroResolvido !== 'todos') {
+      currentFiltered = currentFiltered.filter(r => r.status === statusFiltroResolvido);
     }
 
     if (dataInicio || dataFim) {
       currentFiltered = currentFiltered.filter(r => dateRangeMatches(r.created_date, dataInicio, dataFim));
     }
 
-    setRascunhosFiltrados(currentFiltered);
-  }, [rascunhos, searchTerm, statusFiltro, dataInicio, dataFim]);
+    return currentFiltered;
+  }, [rascunhos, searchTerm, statusFiltroResolvido, dataInicio, dataFim]);
 
   const vendasConsulta = useMemo(() => {
     let list = pedidos.filter((p) => STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA.includes(p.status));
@@ -562,8 +644,8 @@ function VendasGestaoPage() {
       );
     }
 
-    if (statusFiltro !== 'todos') {
-      list = list.filter((p) => p.status === statusFiltro);
+    if (statusFiltroResolvido !== 'todos') {
+      list = list.filter((p) => p.status === statusFiltroResolvido);
     }
 
     if (dataInicio || dataFim) {
@@ -575,18 +657,80 @@ function VendasGestaoPage() {
     }
 
     return list;
-  }, [pedidos, searchTerm, statusFiltro, dataInicio, dataFim, formasPagamentoFiltro]);
+  }, [pedidos, searchTerm, statusFiltroResolvido, dataInicio, dataFim, formasPagamentoFiltro]);
 
-  // Calcular subtotal dos pedidos filtrados
-  const subtotalFiltrado = activeTab === 'pedidos'
-    ? pedidosFiltrados.reduce((acc, p) => acc + (p.valor_total || 0), 0)
+  useEffect(() => {
+    if (activeTab !== 'consulta') {
+      setPedidosConsultaComItens([]);
+      return undefined;
+    }
+    if (!vendasConsulta.length) {
+      setPedidosConsultaComItens([]);
+      return undefined;
+    }
+    const precisaHidratar = vendasConsulta.some(
+      (pedido) => !Array.isArray(pedido.itens) || pedido.itens.length === 0,
+    );
+    if (!precisaHidratar) {
+      setPedidosConsultaComItens(vendasConsulta);
+      return undefined;
+    }
+    let cancelled = false;
+    setConsultaHydrating(true);
+    hydratePedidosVendaItensFromSql(base44, vendasConsulta)
+      .then((hydrated) => {
+        if (!cancelled) setPedidosConsultaComItens(hydrated);
+      })
+      .catch(() => {
+        if (!cancelled) setPedidosConsultaComItens(vendasConsulta);
+      })
+      .finally(() => {
+        if (!cancelled) setConsultaHydrating(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, vendasConsulta]);
+
+  useEffect(() => {
+    if (activeTab !== 'consulta') return undefined;
+    let cancelled = false;
+    base44.entities.DevolucaoTroca.list('-created_date', 1000)
+      .then((rows) => {
+        if (!cancelled) setDevolucoesConsulta(Array.isArray(rows) ? rows : []);
+      })
+      .catch(() => {
+        if (!cancelled) setDevolucoesConsulta([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab]);
+
+  const indiceDevolucoesConsulta = useMemo(
+    () => buildIndiceDevolucaoPorPedido(devolucoesConsulta),
+    [devolucoesConsulta],
+  );
+
+  const pedidosFiltradosParaSoma = useMemo(
+    () => filterPedidosVendaElegiblesKpi(pedidosFiltrados),
+    [pedidosFiltrados],
+  );
+
+  // Calcular subtotal dos pedidos filtrados (orçamentos listados mas não somam)
+  const subtotalFiltrado = activeTab === 'orcamentos'
+    ? orcamentosFiltrados.reduce((acc, p) => acc + resolveValorPedidoVendaGestao(p), 0)
+    : activeTab === 'pedidos'
+    ? pedidosFiltradosParaSoma.reduce((acc, p) => acc + resolveValorPedidoVendaGestao(p), 0)
     : activeTab === 'consulta'
-      ? vendasConsulta.reduce((acc, p) => acc + (p.valor_total || 0), 0)
+      ? pedidosConsultaComItens.reduce((acc, p) => acc + resolveValorPedidoVendaGestao(p), 0)
       : rascunhosFiltrados.reduce((acc, r) => acc + (r.valor_total || 0), 0);
-  const quantidadeFiltrada = activeTab === 'pedidos'
-    ? pedidosFiltrados.length
+  const quantidadeFiltrada = activeTab === 'orcamentos'
+    ? orcamentosFiltrados.length
+    : activeTab === 'pedidos'
+    ? pedidosFiltradosParaSoma.length
     : activeTab === 'consulta'
-      ? vendasConsulta.length
+      ? pedidosConsultaComItens.length
       : rascunhosFiltrados.length;
 
   const handleEdit = (pedido) => {
@@ -594,13 +738,23 @@ function VendasGestaoPage() {
     console.log('Editar pedido:', pedido);
   };
 
-  const handleVerDetalhes = (pedido) => {
-    setPedidoDetalhes(pedido);
+  const handleVerDetalhes = async (pedido) => {
+    let enriched = pedido;
+    if (!Array.isArray(pedido?.itens) || pedido.itens.length === 0) {
+      const [hydrated] = await hydratePedidosVendaItensFromSql(base44, [pedido]);
+      enriched = hydrated || pedido;
+    }
+    setPedidoDetalhes(enriched);
     setShowDetalhes(true);
   };
 
-  const handleReimprimir = (pedido) => {
-    setPedidoParaImprimir(pedido);
+  const handleReimprimir = async (pedido) => {
+    let enriched = pedido;
+    if (!Array.isArray(pedido?.itens) || pedido.itens.length === 0) {
+      const [hydrated] = await hydratePedidosVendaItensFromSql(base44, [pedido]);
+      enriched = hydrated || pedido;
+    }
+    setPedidoParaImprimir(enriched);
     setShowComprovante(true);
   };
 
@@ -648,21 +802,88 @@ function VendasGestaoPage() {
     const { start, end } = getPeriodoMesCorrente();
     setDataInicio(start);
     setDataFim(end);
+    setPeriodoPreset('mes_atual');
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-4 overflow-x-hidden">
+    <>
+    <div
+      className={cn(
+        'w-full min-w-0 max-w-full',
+        isPhone
+          ? 'flex flex-col h-full min-h-0 overflow-hidden'
+          : 'max-w-7xl mx-auto space-y-4 overflow-x-hidden',
+      )}
+    >
+      {isPhone ? (
+        <>
+          <P38ScrollChromeCollapse visible={chromeVisible} enabled className="shrink-0">
+            <div className="space-y-4 px-4">
+              <div className="flex flex-col gap-3">
+                <P38PageHeader
+                  title="Gestão de Vendas"
+                  description="Orçamentos, pedidos e acompanhamento"
+                />
+                <div className="grid grid-cols-4 gap-1.5 flex-shrink-0 w-full">
+                  <Button variant="ghost" size="icon" className="h-11 w-full rounded-2xl bg-muted dark:bg-muted" title="Devolução" onClick={() => { window.location.href = devolucaoTrocaPageUrl('Devolução'); }}>
+                    <RotateCcw className="w-4 h-4 text-muted-foreground" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-11 w-full rounded-2xl bg-muted dark:bg-muted" title="Troca" onClick={() => { window.location.href = devolucaoTrocaPageUrl('Troca'); }}>
+                    <RefreshCw className="w-4 h-4 text-muted-foreground" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-11 w-full rounded-2xl bg-muted dark:bg-muted" title="Alterar Pagamento" onClick={() => setShowAlterarPagamento(true)}>
+                    <CreditCard className="w-4 h-4 text-muted-foreground" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-11 w-full rounded-2xl bg-muted dark:bg-muted"
+                    onClick={() => setShowFiltros(true)}
+                  >
+                    <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
+                  </Button>
+                </div>
+              </div>
+
+              <GlacialTabsList className="w-full" scrollable>
+                <GlacialTabsTrigger value="rascunhos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Senhas" icon={FileText} />
+                <GlacialTabsTrigger value="pedidos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Pedidos" icon={ShoppingCart} />
+                <GlacialTabsTrigger value="orcamentos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Orçamentos" icon={ScrollText} />
+                <GlacialTabsTrigger value="consulta" activeValue={activeTab} onSelect={handleActiveTabChange} label="Consulta" icon={Receipt} />
+                <GlacialTabsTrigger value="vales" activeValue={activeTab} onSelect={handleActiveTabChange} label="Vales" icon={Ticket} />
+              </GlacialTabsList>
+            </div>
+          </P38ScrollChromeCollapse>
+
+          <div className="shrink-0 px-4 pb-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="relative flex-1 min-w-0">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  data-pulse-sensor="vendas-gestao.busca"
+                  variant="search"
+                  placeholder="Buscar por número, cliente..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 h-12 bg-card dark:bg-muted border-0 rounded-2xl min-w-0 shadow-sm"
+                />
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+      <div className="space-y-4">
       {/* Header limpo */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0 pr-2">
-          <h1 className="text-lg font-semibold text-foreground font-glacial">Gestão de Vendas</h1>
-          <p className="text-xs text-muted-foreground">Orçamentos, pedidos e acompanhamento</p>
-        </div>
+        <P38PageHeader
+          title="Gestão de Vendas"
+          description="Orçamentos, pedidos e acompanhamento"
+        />
         <div className="grid grid-cols-4 gap-1.5 sm:flex sm:flex-wrap sm:justify-end flex-shrink-0 w-full sm:w-auto">
-          <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-muted dark:bg-muted" title="Devolução" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Devolução')}>
+          <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-muted dark:bg-muted" title="Devolução" onClick={() => { window.location.href = devolucaoTrocaPageUrl('Devolução'); }}>
             <RotateCcw className="w-4 h-4 text-muted-foreground" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-muted dark:bg-muted" title="Troca" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Troca')}>
+          <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-muted dark:bg-muted" title="Troca" onClick={() => { window.location.href = devolucaoTrocaPageUrl('Troca'); }}>
             <RefreshCw className="w-4 h-4 text-muted-foreground" />
           </Button>
           <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-muted dark:bg-muted" title="Alterar Pagamento" onClick={() => setShowAlterarPagamento(true)}>
@@ -685,6 +906,7 @@ function VendasGestaoPage() {
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
+              data-pulse-sensor="vendas-gestao.busca"
               variant="search"
               placeholder="Buscar por número, cliente..."
               value={searchTerm}
@@ -704,13 +926,17 @@ function VendasGestaoPage() {
       </div>
 
       <GlacialTabsList className="w-full" scrollable>
-        <GlacialTabsTrigger value="rascunhos" activeValue={activeTab} onSelect={setActiveTab} label="Senhas" icon={FileText} />
-        <GlacialTabsTrigger value="pedidos" activeValue={activeTab} onSelect={setActiveTab} label="Pedidos" icon={ShoppingCart} />
-        <GlacialTabsTrigger value="consulta" activeValue={activeTab} onSelect={setActiveTab} label="Consulta" icon={Receipt} />
-        <GlacialTabsTrigger value="vales" activeValue={activeTab} onSelect={setActiveTab} label="Vales" icon={Ticket} />
+        <GlacialTabsTrigger value="rascunhos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Senhas" icon={FileText} />
+        <GlacialTabsTrigger value="pedidos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Pedidos" icon={ShoppingCart} />
+        <GlacialTabsTrigger value="orcamentos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Orçamentos" icon={ScrollText} />
+        <GlacialTabsTrigger value="consulta" activeValue={activeTab} onSelect={handleActiveTabChange} label="Consulta" icon={Receipt} />
+        <GlacialTabsTrigger value="vales" activeValue={activeTab} onSelect={handleActiveTabChange} label="Vales" icon={Ticket} />
       </GlacialTabsList>
+      </div>
+      )}
 
       <Drawer open={showFiltros} onOpenChange={setShowFiltros}>
+        {showFiltros ? (
         <DrawerContent className="border-0 rounded-t-[28px] bg-card dark:bg-card px-4 pb-6">
           <DrawerHeader className="px-0 pb-2 text-left">
             <DrawerTitle className="font-glacial text-foreground">Filtros</DrawerTitle>
@@ -720,54 +946,31 @@ function VendasGestaoPage() {
             <div>
               <label className="block text-xs text-muted-foreground mb-2">Tipo</label>
               <GlacialTabsList className="w-full" scrollable>
-                <GlacialTabsTrigger value="rascunhos" activeValue={activeTab} onSelect={setActiveTab} label="Senhas" icon={FileText} />
-                <GlacialTabsTrigger value="pedidos" activeValue={activeTab} onSelect={setActiveTab} label="Pedidos" icon={ShoppingCart} />
-                <GlacialTabsTrigger value="consulta" activeValue={activeTab} onSelect={setActiveTab} label="Consulta" icon={Receipt} />
-                <GlacialTabsTrigger value="vales" activeValue={activeTab} onSelect={setActiveTab} label="Vales" icon={Ticket} />
+                <GlacialTabsTrigger value="rascunhos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Senhas" icon={FileText} />
+                <GlacialTabsTrigger value="pedidos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Pedidos" icon={ShoppingCart} />
+                <GlacialTabsTrigger value="orcamentos" activeValue={activeTab} onSelect={handleActiveTabChange} label="Orçamentos" icon={ScrollText} />
+                <GlacialTabsTrigger value="consulta" activeValue={activeTab} onSelect={handleActiveTabChange} label="Consulta" icon={Receipt} />
+                <GlacialTabsTrigger value="vales" activeValue={activeTab} onSelect={handleActiveTabChange} label="Vales" icon={Ticket} />
               </GlacialTabsList>
             </div>
 
             <div>
               <label className="block text-xs text-muted-foreground mb-2">Status</label>
-              <Select value={statusFiltro} onValueChange={setStatusFiltro}>
+              <Select
+                key={`status-filtro-${activeTab}`}
+                value={statusFiltroResolvido}
+                onValueChange={setStatusFiltro}
+              >
                 <SelectTrigger className="h-12 rounded-2xl bg-muted dark:bg-muted border-0">
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-card dark:border-border/40">
+                <SelectContent className={FILTRO_SELECT_CONTENT}>
                   <SelectItem value="todos">Todos</SelectItem>
-                  {activeTab === 'rascunhos' ? (
-                    <>
-                      <SelectItem value="Criado">Criado</SelectItem>
-                      <SelectItem value="Em Edição">Em Edição</SelectItem>
-                      <SelectItem value="Aguardando Caixa">Ag. Caixa</SelectItem>
-                      <SelectItem value="Convertido">Convertido</SelectItem>
-                      <SelectItem value="Cancelado">Cancelado</SelectItem>
-                    </>
-                  ) : activeTab === 'vales' ? (
-                    <>
-                      <SelectItem value="Ativo">Ativo</SelectItem>
-                      <SelectItem value="Utilizado Parcialmente">Utilizado Parcialmente</SelectItem>
-                      <SelectItem value="Utilizado">Utilizado</SelectItem>
-                      <SelectItem value="Expirado">Expirado</SelectItem>
-                      <SelectItem value="Cancelado">Cancelado</SelectItem>
-                    </>
-                  ) : activeTab === 'consulta' ? (
-                    <>
-                      <SelectItem value="Financeiro OK">Financeiro OK</SelectItem>
-                      <SelectItem value="Em Separação">Em Separação</SelectItem>
-                      <SelectItem value="Em Rota de Entrega">Em Rota de Entrega</SelectItem>
-                      <SelectItem value="Pedido Concluído">Concluído</SelectItem>
-                    </>
-                  ) : (
-                    <>
-                      <SelectItem value="Orçamento">Orçamento</SelectItem>
-                      <SelectItem value="Aguardando Caixa">Ag. Caixa</SelectItem>
-                      <SelectItem value="Financeiro OK">Financeiro OK</SelectItem>
-                      <SelectItem value="Em Separação">Em Separação</SelectItem>
-                      <SelectItem value="Pedido Concluído">Concluído</SelectItem>
-                      <SelectItem value="Cancelado">Cancelado</SelectItem>
-                    </>
-                  )}
+                  {statusOpcoesAtivas.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {STATUS_LABEL_CURTO[status] || status}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -813,16 +1016,16 @@ function VendasGestaoPage() {
 
             <div>
               <label className="block text-xs text-muted-foreground mb-2">Período</label>
-              <MobileDateRangePicker
-                startDate={dataInicio}
-                endDate={dataFim}
-                onApply={(inicio, fim) => {
+              <VendasPeriodoFiltro
+                periodoPreset={periodoPreset}
+                onPeriodoPresetChange={setPeriodoPreset}
+                dataInicio={dataInicio}
+                dataFim={dataFim}
+                onDateRangeChange={(inicio, fim) => {
+                  if (!isValidGestaoDateKey(inicio) || !isValidGestaoDateKey(fim)) return;
                   setDataInicio(inicio);
                   setDataFim(fim);
-                }}
-                onClear={() => {
-                  setDataInicio('');
-                  setDataFim('');
+                  setPeriodoPreset('personalizado');
                 }}
               />
             </div>
@@ -846,9 +1049,17 @@ function VendasGestaoPage() {
             </div>
           </div>
         </DrawerContent>
+        ) : null}
       </Drawer>
 
-      <div>
+      <div
+        ref={scrollRef}
+        className={cn(
+          isPhone
+            ? 'flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y px-4 pb-4'
+            : undefined,
+        )}
+      >
 
         {activeTab === 'rascunhos' && (
         <div className="space-y-4 min-w-0">
@@ -874,6 +1085,7 @@ function VendasGestaoPage() {
             <VirtualizedRascunhoLines
               rascunhos={rascunhosFiltrados}
               onInutilizar={handleInutilizarRascunho}
+              pageScrollEl={isPhone ? scrollEl : null}
             />
             <VirtualizedRascunhosTable
               rascunhos={rascunhosFiltrados}
@@ -914,6 +1126,7 @@ function VendasGestaoPage() {
               onEdit={handleEdit}
               onReimprimir={handleReimprimir}
               onCorrigirCliente={handleCorrigirCliente}
+              pageScrollEl={isPhone ? scrollEl : null}
             />
             <VirtualizedPedidosTable
               pedidos={pedidosFiltrados}
@@ -930,16 +1143,58 @@ function VendasGestaoPage() {
         </div>
         )}
 
+        {activeTab === 'orcamentos' && (
+        <div className="space-y-4 min-w-0">
+          <div className="flex items-start justify-between gap-3 text-sm min-w-0">
+            <span className="text-muted-foreground min-w-0">{quantidadeFiltrada} orçamento(s)</span>
+            <span className="text-base sm:text-lg font-semibold text-foreground text-right break-words leading-tight">R$ {formatValor(subtotalFiltrado)}</span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Orçamentos ainda não são vendas — não têm senha nem passaram no caixa.
+          </p>
+          <div>
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-border/40"></div>
+          </div>
+        ) : orcamentosFiltrados.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <ScrollText className="w-10 h-10 mx-auto mb-3 text-muted-foreground dark:text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Nenhum orçamento encontrado</p>
+          </div>
+        ) : (
+          <>
+            <VirtualizedPedidoCards
+              pedidos={orcamentosFiltrados}
+              onVerDetalhes={handleVerDetalhes}
+              onEdit={handleEdit}
+              onReimprimir={handleReimprimir}
+              onCorrigirCliente={handleCorrigirCliente}
+              pageScrollEl={isPhone ? scrollEl : null}
+            />
+            <VirtualizedPedidosTable
+              pedidos={orcamentosFiltrados}
+              onVerDetalhes={handleVerDetalhes}
+              onEdit={handleEdit}
+              onReimprimir={handleReimprimir}
+              onCorrigirCliente={handleCorrigirCliente}
+            />
+          </>
+        )}
+        </div>
+        </div>
+        )}
+
         {activeTab === 'consulta' && (
         <div className="space-y-4 min-w-0">
-          {isLoading ? (
+          {isLoading || consultaHydrating ? (
             <div className="flex justify-center py-12">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-border/40"></div>
             </div>
           ) : (
             <ConsultaVendasCaixa
-              vendasFinalizadas={vendasConsulta}
-              onVerDetalhes={handleVerDetalhes}
+              vendasFinalizadas={pedidosConsultaComItens}
+              indiceDevolucoes={indiceDevolucoesConsulta}
               contextLabel="Consulta de vendas"
               emptyMessage="Nenhuma venda finalizada no período selecionado"
             />
@@ -950,17 +1205,22 @@ function VendasGestaoPage() {
         {activeTab === 'vales' && (
           <ValesTrocaTab
             searchTerm={searchTerm}
-            statusFiltro={statusFiltro}
+            statusFiltro={statusFiltroResolvido}
             dataInicio={dataInicio}
             dataFim={dataFim}
             activeTab={activeTab}
+            pageScrollEl={isPhone ? scrollEl : null}
           />
         )}
       </div>
+    </div>
 
-      {/* Dialogs de operações */}
-      <AlterarPagamentoDialog open={showAlterarPagamento} onClose={() => setShowAlterarPagamento(false)} />
-      <AlterarClientePedidoDialog
+      {/* Dialogs de operações — montar só quando abertos (evita loops Radix/portals) */}
+      {showAlterarPagamento ? (
+        <AlterarPagamentoDialog open={showAlterarPagamento} onClose={() => setShowAlterarPagamento(false)} />
+      ) : null}
+      {showAlterarCliente && pedidoParaAlterarCliente ? (
+        <AlterarClientePedidoDialog
         open={showAlterarCliente}
         pedido={pedidoParaAlterarCliente}
         onClose={() => {
@@ -982,16 +1242,19 @@ function VendasGestaoPage() {
           loadPedidos();
         }}
       />
+      ) : null}
 
-      {/* Dialog de Detalhes */}
-      <DetalhesPedidoVenda
-        pedido={pedidoDetalhes}
-        isOpen={showDetalhes}
-        onClose={() => {
-          setShowDetalhes(false);
-          setPedidoDetalhes(null);
-        }}
-      />
+      {/* Dialog de Detalhes — montar só quando aberto (evita loop de updates com outros dialogs) */}
+      {showDetalhes && pedidoDetalhes ? (
+        <DetalhesPedidoVenda
+          pedido={pedidoDetalhes}
+          isOpen={showDetalhes}
+          onClose={() => {
+            setShowDetalhes(false);
+            setPedidoDetalhes(null);
+          }}
+        />
+      ) : null}
 
       {/* Dialog de Reimpressão */}
       {showComprovante && pedidoParaImprimir && (
@@ -1012,7 +1275,7 @@ function VendasGestaoPage() {
 
       {/* FAB Relatórios */}
       <VendasRelatorisFAB />
-    </div>
+    </>
   );
 }
 

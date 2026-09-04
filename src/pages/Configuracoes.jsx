@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { ShieldAlert } from 'lucide-react';
-import { TrendingUp, Package, DollarSign, BarChart3, Settings, Building2, Users, Sliders, Tags, Wallet, CreditCard, Smartphone, Bookmark, Wrench, Shield, MapPin, Receipt, Printer, Trash2 } from 'lucide-react';
+import { podeAcessarConfiguracoes } from '@/lib/perfilPermissoes';
+import { getCachedUserSession } from '@/lib/userSessionCache';
+import {
+  podeVerAbaConfig,
+  podeVerSubAbaConfigFin,
+  podeVerSubAbaConfigGeral,
+  primeiraAbaConfigPermitida,
+} from '@/lib/configuracoesPermissoes';
+import { TrendingUp, Package, DollarSign, BarChart3, Settings, Building2, Users, Sliders, Tags, Wallet, CreditCard, Smartphone, Bookmark, Wrench, Shield, MapPin, Printer, Trash2, Activity } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
 import { GlacialTabsList, GlacialTabsTrigger, GlacialSubTabsList, GlacialSubTabsTrigger } from '@/components/ui/GlacialTabs';
@@ -21,12 +29,10 @@ import RecomecarDoZero from '@/components/config/RecomecarDoZero';
 import MetasEstoqueConfigTool from '@/components/config/MetasEstoqueConfigTool';
 import CodigoProdutoBackfillTool from '@/components/config/CodigoProdutoBackfillTool';
 import { useNavigate } from 'react-router-dom';
-import PersonalizacaoComprovanteManager from '@/components/config/PersonalizacaoComprovanteManager';
-import EditorLayoutsTres from '@/pages/EditorLayoutsTres';
-
 export default function ConfiguracoesPage() {
   const [userLoaded, setUserLoaded] = useState(false);
   const [user, setUser] = useState(null);
+  const [perfilDeAcesso, setPerfilDeAcesso] = useState(null);
   const [tab, setTab] = useState('vendas');
   const [vendaTab, setVendaTab] = useState('fluxo');
   const [opTab, setOpTab] = useState('estoque');
@@ -34,13 +40,61 @@ export default function ConfiguracoesPage() {
   const [geralTab, setGeralTab] = useState('empresa');
 
   useEffect(() => {
-    base44.auth.me().then(u => { setUser(u); setUserLoaded(true); }).catch(() => setUserLoaded(true));
+    const cached = getCachedUserSession();
+    if (cached?.user) {
+      setUser(cached.user);
+      setPerfilDeAcesso(cached.perfilDeAcesso ?? null);
+      setUserLoaded(true);
+    }
+
+    base44.auth.me().then(async (u) => {
+      setUser(u);
+      let perfil = cached?.perfilDeAcesso ?? null;
+      if (u?.perfil_acesso_id) {
+        try {
+          const perfis = await base44.entities.PerfilDeAcesso.filter({ id: u.perfil_acesso_id });
+          perfil = perfis?.[0] || null;
+        } catch {
+          perfil = null;
+        }
+      }
+      setPerfilDeAcesso(perfil);
+      setUserLoaded(true);
+    }).catch(() => setUserLoaded(true));
   }, []);
+
+  useEffect(() => {
+    if (!userLoaded || !user) return;
+    const primeira = primeiraAbaConfigPermitida(user, perfilDeAcesso);
+    if (primeira && !podeVerAbaConfig(user, perfilDeAcesso, tab)) {
+      setTab(primeira);
+    }
+  }, [userLoaded, user, perfilDeAcesso, tab]);
+
+  const abasVisiveis = {
+    vendas: podeVerAbaConfig(user, perfilDeAcesso, 'vendas'),
+    operacoes: podeVerAbaConfig(user, perfilDeAcesso, 'operacoes'),
+    financeiro: podeVerAbaConfig(user, perfilDeAcesso, 'financeiro'),
+    geral: podeVerAbaConfig(user, perfilDeAcesso, 'geral'),
+    sistema: podeVerAbaConfig(user, perfilDeAcesso, 'sistema'),
+  };
+
+  const geralSubs = {
+    empresa: podeVerSubAbaConfigGeral(user, perfilDeAcesso, 'empresa'),
+    'usuarios-app': podeVerSubAbaConfigGeral(user, perfilDeAcesso, 'usuarios-app'),
+    'perfis-acesso': podeVerSubAbaConfigGeral(user, perfilDeAcesso, 'perfis-acesso'),
+  };
+
+  const finSubs = {
+    contas: podeVerSubAbaConfigFin(user, perfilDeAcesso, 'contas'),
+    categorias: podeVerSubAbaConfigFin(user, perfilDeAcesso, 'categorias'),
+    formas: podeVerSubAbaConfigFin(user, perfilDeAcesso, 'formas'),
+    maquininhas: podeVerSubAbaConfigFin(user, perfilDeAcesso, 'maquininhas'),
+  };
 
   if (!userLoaded) return null;
 
-  const isAdmin = user?.role === 'admin';
-  const hasConfigAccess = isAdmin || user?.override_permissoes?.['configuracoes.acesso'] === true;
+  const hasConfigAccess = podeAcessarConfiguracoes(user, perfilDeAcesso);
 
   if (!hasConfigAccess) {
     return (
@@ -65,12 +119,21 @@ export default function ConfiguracoesPage() {
 
       {/* Tabs principais */}
       <GlacialTabsList scrollable>
-        <GlacialTabsTrigger value="vendas"     activeValue={tab} onSelect={setTab} icon={TrendingUp}  label="Vendas" />
-        <GlacialTabsTrigger value="operacoes"  activeValue={tab} onSelect={setTab} icon={Package}     label="Operações" />
-        <GlacialTabsTrigger value="financeiro" activeValue={tab} onSelect={setTab} icon={DollarSign}  label="Financeiro" />
-        <GlacialTabsTrigger value="relatorios" activeValue={tab} onSelect={setTab} icon={BarChart3}   label="Relatórios" />
-        <GlacialTabsTrigger value="geral"      activeValue={tab} onSelect={setTab} icon={Settings}    label="Parâmetros" />
-        <GlacialTabsTrigger value="sistema"    activeValue={tab} onSelect={setTab} icon={Wrench}      label="Ferramentas" />
+        {abasVisiveis.vendas && (
+          <GlacialTabsTrigger value="vendas" activeValue={tab} onSelect={setTab} icon={TrendingUp} label="Vendas" pulseSensor="configuracoes.tab-vendas" />
+        )}
+        {abasVisiveis.operacoes && (
+          <GlacialTabsTrigger value="operacoes" activeValue={tab} onSelect={setTab} icon={Package} label="Operações" />
+        )}
+        {abasVisiveis.financeiro && (
+          <GlacialTabsTrigger value="financeiro" activeValue={tab} onSelect={setTab} icon={DollarSign} label="Financeiro" />
+        )}
+        {abasVisiveis.geral && (
+          <GlacialTabsTrigger value="geral" activeValue={tab} onSelect={setTab} icon={Settings} label="Parâmetros" />
+        )}
+        {abasVisiveis.sistema && (
+          <GlacialTabsTrigger value="sistema" activeValue={tab} onSelect={setTab} icon={Wrench} label="Ferramentas" />
+        )}
       </GlacialTabsList>
 
       <div className="pt-1">
@@ -81,13 +144,11 @@ export default function ConfiguracoesPage() {
               <GlacialSubTabsTrigger value="fluxo"       activeValue={vendaTab} onSelect={setVendaTab} icon={Sliders}  label="Fluxo & Parâmetros" />
               <GlacialSubTabsTrigger value="metas"       activeValue={vendaTab} onSelect={setVendaTab} icon={BarChart3} label="Metas Dashboard" />
               <GlacialSubTabsTrigger value="tabelas"     activeValue={vendaTab} onSelect={setVendaTab} icon={Tags}     label="Tabelas & Políticas" />
-              <GlacialSubTabsTrigger value="comprovante" activeValue={vendaTab} onSelect={setVendaTab} icon={Receipt}  label="Comprovante" />
             </GlacialSubTabsList>
             <div>
               {vendaTab === 'fluxo'       && <ConfiguracoesVendaManager />}
               {vendaTab === 'metas'       && <MetasDashboardKpiManager />}
               {vendaTab === 'tabelas'     && <TabelasPrecoManager />}
-              {vendaTab === 'comprovante' && <PersonalizacaoComprovanteManager />}
             </div>
           </div>
         )}
@@ -110,24 +171,25 @@ export default function ConfiguracoesPage() {
         {tab === 'financeiro' && (
           <div className="space-y-4">
             <GlacialSubTabsList>
-              <GlacialSubTabsTrigger value="contas"      activeValue={finTab} onSelect={setFinTab} icon={Wallet}     label="Contas" />
-              <GlacialSubTabsTrigger value="formas"      activeValue={finTab} onSelect={setFinTab} icon={CreditCard} label="Pagamentos" />
-              <GlacialSubTabsTrigger value="maquininhas" activeValue={finTab} onSelect={setFinTab} icon={Smartphone} label="Maquininhas" />
-              <GlacialSubTabsTrigger value="categorias"  activeValue={finTab} onSelect={setFinTab} icon={Bookmark}   label="Categorias" />
+              {finSubs.contas && (
+                <GlacialSubTabsTrigger value="contas" activeValue={finTab} onSelect={setFinTab} icon={Wallet} label="Contas" />
+              )}
+              {finSubs.formas && (
+                <GlacialSubTabsTrigger value="formas" activeValue={finTab} onSelect={setFinTab} icon={CreditCard} label="Pagamentos" />
+              )}
+              {finSubs.maquininhas && (
+                <GlacialSubTabsTrigger value="maquininhas" activeValue={finTab} onSelect={setFinTab} icon={Smartphone} label="Maquininhas" />
+              )}
+              {finSubs.categorias && (
+                <GlacialSubTabsTrigger value="categorias" activeValue={finTab} onSelect={setFinTab} icon={Bookmark} label="Categorias" />
+              )}
             </GlacialSubTabsList>
             <div>
-              {finTab === 'contas'      && <ContasFinanceirasManager />}
-              {finTab === 'formas'      && <FormasPagamentoManager />}
-              {finTab === 'maquininhas' && <MaquininhasManager />}
-              {finTab === 'categorias'  && <CategoriasFinanceirasManager />}
+              {finTab === 'contas' && finSubs.contas && <ContasFinanceirasManager />}
+              {finTab === 'formas' && finSubs.formas && <FormasPagamentoManager />}
+              {finTab === 'maquininhas' && finSubs.maquininhas && <MaquininhasManager />}
+              {finTab === 'categorias' && finSubs.categorias && <CategoriasFinanceirasManager />}
             </div>
-          </div>
-        )}
-
-        {/* RELATÓRIOS */}
-        {tab === 'relatorios' && (
-          <div className="space-y-4">
-            <EditorLayoutsTres />
           </div>
         )}
 
@@ -135,14 +197,20 @@ export default function ConfiguracoesPage() {
         {tab === 'geral' && (
           <div className="space-y-4">
             <GlacialSubTabsList>
-              <GlacialSubTabsTrigger value="empresa"       activeValue={geralTab} onSelect={setGeralTab} icon={Building2} label="Dados da Empresa" />
-              <GlacialSubTabsTrigger value="usuarios-app"  activeValue={geralTab} onSelect={setGeralTab} icon={Users}     label="Usuários" />
-              <GlacialSubTabsTrigger value="perfis-acesso" activeValue={geralTab} onSelect={setGeralTab} icon={Shield}    label="Perfis de Acesso" />
+              {geralSubs.empresa && (
+                <GlacialSubTabsTrigger value="empresa" activeValue={geralTab} onSelect={setGeralTab} icon={Building2} label="Dados da Empresa" />
+              )}
+              {geralSubs['usuarios-app'] && (
+                <GlacialSubTabsTrigger value="usuarios-app" activeValue={geralTab} onSelect={setGeralTab} icon={Users} label="Usuários" />
+              )}
+              {geralSubs['perfis-acesso'] && (
+                <GlacialSubTabsTrigger value="perfis-acesso" activeValue={geralTab} onSelect={setGeralTab} icon={Shield} label="Perfis de Acesso" />
+              )}
             </GlacialSubTabsList>
             <div>
-              {geralTab === 'empresa'       && <DadosEmpresaManager />}
-              {geralTab === 'usuarios-app'  && <ListaUsuariosApp />}
-              {geralTab === 'perfis-acesso' && <PerfisDeAcessoManager />}
+              {geralTab === 'empresa' && geralSubs.empresa && <DadosEmpresaManager />}
+              {geralTab === 'usuarios-app' && geralSubs['usuarios-app'] && <ListaUsuariosApp />}
+              {geralTab === 'perfis-acesso' && geralSubs['perfis-acesso'] && <PerfisDeAcessoManager />}
             </div>
           </div>
         )}
@@ -182,25 +250,22 @@ export default function ConfiguracoesPage() {
               </div>
             </div>
 
-            {/* Auditoria de Código */}
-            <div className="rounded-2xl bg-muted/50/60 p-4 space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Manutenção</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Link
-                  to="/AuditoriaCodigoProjeto"
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl bg-card/60 shadow-sm hover:shadow transition-shadow"
-                >
-                  <BarChart3 className="w-5 h-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium text-foreground/90">Auditoria de Código</p>
-                    <p className="text-xs text-muted-foreground">Checklist de código morto e detritos</p>
-                  </div>
-                </Link>
-              </div>
-            </div>
-
             <MetasEstoqueConfigTool />
             <CodigoProdutoBackfillTool />
+
+            <div className="rounded-2xl bg-muted/50/60 p-4 space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Inteligência artificial</p>
+              <Link
+                to={createPageUrl('LlmTelemetria')}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-card/60 shadow-sm hover:shadow transition-shadow"
+              >
+                <Activity className="w-5 h-5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium text-foreground/90">Telemetria de IA (OCR)</p>
+                  <p className="text-xs text-muted-foreground">Tokens, custo estimado e alertas de uso</p>
+                </div>
+              </Link>
+            </div>
 
             <RecomecarDoZero />
           </div>

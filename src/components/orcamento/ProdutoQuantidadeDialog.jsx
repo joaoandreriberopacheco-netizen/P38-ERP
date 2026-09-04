@@ -4,6 +4,7 @@ import { Check, Minus, Plus, Trash2, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getPrecoPisoCustoUnidade, parsePrecoDigitado } from '@/lib/orcamentoPrecoTabela';
+import ProdutoThumb from '@/components/produtos/ProdutoThumb';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -134,6 +135,7 @@ export default function ProdutoQuantidadeDialog({
       >
         <div className="px-5 pt-5 pb-2">
           <div className="flex items-start justify-between gap-3 mb-3">
+            <ProdutoThumb produto={produto} size="md" roundedClassName="rounded-2xl" asDiv />
             <div className="min-w-0 flex-1">
               <p id={dialogTitleId} className="text-[15px] font-semibold text-foreground line-clamp-3">{produto.nome}</p>
               <p className="text-[12px] text-muted-foreground mt-1">

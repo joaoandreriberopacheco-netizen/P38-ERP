@@ -5,10 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Search, RotateCcw, Printer, CheckCircle2, AlertCircle, Minus, Plus } from 'lucide-react';
+import { ArrowLeft, Search, RotateCcw, Printer, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import QuantidadeFracionadaInput from '@/components/vendas/QuantidadeFracionadaInput';
 import { format } from 'date-fns';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
+import { hydratePedidoVendaParaDevolucao } from '@/lib/fetchPedidoVendaItens';
+import { formatQuantidadeDisplay } from '@/lib/parseQuantidadeInput';
 
 // Step 1: Buscar pedido
 function BuscarPedidoStep({ onFound, onClose }) {
@@ -25,17 +28,28 @@ function BuscarPedidoStep({ onFound, onClose }) {
       p.numero?.toUpperCase() === termo ||
       p.numero?.toUpperCase().includes(termo)
     );
-    setBuscando(false);
     if (!encontrado) {
+      setBuscando(false);
       toast({ title: 'Pedido não encontrado', variant: 'destructive' });
       return;
     }
     const statusOk = ['Financeiro OK', 'Em Separação', 'Em Rota de Entrega', 'Pedido Concluído'];
     if (!statusOk.includes(encontrado.status)) {
+      setBuscando(false);
       toast({ title: `Este pedido não pode ser devolvido`, description: `Status: ${encontrado.status}`, variant: 'destructive' });
       return;
     }
-    onFound(encontrado);
+    const pedidoComItens = await hydratePedidoVendaParaDevolucao(base44, encontrado);
+    setBuscando(false);
+    if (!Array.isArray(pedidoComItens.itens) || pedidoComItens.itens.length === 0) {
+      toast({
+        title: 'Pedido sem itens',
+        description: 'Não foi possível carregar os produtos deste pedido para devolução ou troca.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    onFound(pedidoComItens);
   };
 
   return (
@@ -106,24 +120,16 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium text-foreground truncate">{item.produto_nome}</div>
                 <div className="text-xs text-muted-foreground">
-                  {item.quantidade}x · {formatValor(item.preco_unitario_praticado)}/un
+                  {formatQuantidadeDisplay(item.quantidade)}x · {formatValor(item.preco_unitario_praticado)}/un
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setQtds(prev => ({ ...prev, [key]: Math.max(0, (prev[key] || 0) - 1) }))}
-                  className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center"
-                  style={{ minWidth: 32, minHeight: 32 }}>
-                  <Minus className="w-3 h-3 text-muted-foreground" />
-                </button>
-                <span className={`w-6 text-center text-sm font-bold tabular-nums ${qtd > 0 ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'}`}>{qtd}</span>
-                <button
-                  onClick={() => setQtds(prev => ({ ...prev, [key]: Math.min(item.quantidade, (prev[key] || 0) + 1) }))}
-                  className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center"
-                  style={{ minWidth: 32, minHeight: 32 }}>
-                  <Plus className="w-3 h-3 text-muted-foreground" />
-                </button>
-              </div>
+              <QuantidadeFracionadaInput
+                value={qtd}
+                max={item.quantidade}
+                onChange={(next) => setQtds((prev) => ({ ...prev, [key]: next }))}
+                buttonClassName="h-8 w-8 rounded-lg"
+                inputClassName="w-12 text-sm"
+              />
             </div>
           );
         })}
@@ -257,7 +263,7 @@ function ComprovanteStep({ resultado, onClose }) {
         <button onClick={onClose} className="flex-1 h-12 bg-muted text-foreground/90 rounded-2xl font-medium" style={{ minHeight: 48 }}>
           Fechar
         </button>
-        <button onClick={imprimir} className="flex-1 h-12 rounded-2xl font-medium text-white bg-background dark:bg-card dark:text-foreground flex items-center justify-center gap-2" style={{ minHeight: 48 }}>
+        <button onClick={imprimir} className="flex-1 h-12 rounded-2xl font-medium bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground flex items-center justify-center gap-2" style={{ minHeight: 48 }}>
           <Printer className="w-4 h-4" /> Imprimir
         </button>
       </div>

@@ -21,9 +21,11 @@ import { applyUnidadesToProduto, makeUnidade, normalizeSigla } from '@/lib/produ
 import {
   buildProductSnapshotForPricing,
   buildSaleUnitOptions,
+  calcPrecoCustoFromComponents,
   custoDisplayScale,
   getPrecoVendaNaUnidadeCatalogo,
   precoVendaPadraoFromPrecoCatalogo,
+  resolveAvariaCompraFator1,
   resolvePrimaryFromFactorOne,
   resolveUnidadeExibicao,
   resolveCommercialDisplay,
@@ -38,21 +40,75 @@ import { embalagensRowsToLegacyProdutoPatch, legacyProdutoToEmbalagensRows } fro
 import { syncIsComercialOnAlternativas } from '@/components/produtos/massa/embalagensPlanilhaUtils';
 import { cn } from '@/components/utils';
 import { useCompactShell } from '@/hooks/use-breakpoint';
-import { useBottomNavScrollVisibility } from '@/hooks/useBottomNavScrollVisibility';
+import { useScrollVisibility } from '@/hooks/useScrollVisibility';
 import { formatProductCode, generateRandomProductCode } from '@/lib/productCode';
+import {
+  PRODUTOS_DIVIDER_TOP,
+  PRODUTOS_FIELD,
+  PRODUTOS_FIELD_H12,
+  PRODUTOS_FORM_HEADER,
+  PRODUTOS_FORM_PANEL,
+  PRODUTOS_FORM_ROOT,
+  PRODUTOS_FORM_SELECT_CONTENT,
+  PRODUTOS_HEADER_ACCENT,
+  PRODUTOS_INPUT_UNDERLINE,
+  PRODUTOS_SAVE_BTN,
+  PRODUTOS_SECTION,
+  PRODUTOS_SELECT_ITEM,
+  PRODUTOS_STAT_TILE,
+  PRODUTOS_TAB_ICON,
+  PRODUTOS_TAB_ICON_GLYPH,
+  PRODUTOS_TAB_ICON_LABEL,
+  PRODUTOS_TABS_BAR,
+} from '@/lib/produtosP38Theme';
+import {
+  P38_FIELD_HINT,
+  P38_FIELD_LABEL,
+  P38_FIELD_VALUE,
+  P38_PAGE_KICKER,
+  P38_PAGE_SUBTITLE,
+  P38_PAGE_TITLE,
+  P38_SECTION_TITLE,
+} from '@/lib/p38FormTypography';
 
-const P38_FORM_ROOT = 'flex flex-col h-full overflow-hidden font-din-1451 bg-background dark:bg-[#1f1d22]';
-const P38_FORM_HEADER = 'flex-none border-b border-border/40 dark:border-white/10 bg-card dark:bg-[#2d333b]';
-const P38_TAB_LIST = 'grid grid-cols-6 w-full bg-transparent border-b border-border/40 dark:border-white/10 rounded-none h-auto p-0 flex-shrink-0';
-const P38_TAB_TRIGGER = 'group border-b-2 border-transparent data-[state=active]:border-[#4a5240] dark:data-[state=active]:border-[#a4ce33] data-[state=active]:bg-[#26262e]/35 dark:data-[state=active]:bg-[#26262e]/70 rounded-none py-3 text-xs md:text-sm';
-const P38_TAB_ICON = 'w-4 h-4 md:w-5 md:h-5 text-muted-foreground group-data-[state=active]:text-[#4a5240] dark:group-data-[state=active]:text-[#a4ce33]';
-const P38_TAB_LABEL = 'hidden sm:inline ml-2 text-muted-foreground group-data-[state=active]:text-foreground';
-const P38_INPUT = 'bg-secondary/80 dark:bg-[#26262e] border-0 rounded-lg h-10 text-sm text-foreground shadow-none focus-visible:ring-1 focus-visible:ring-border/60';
-const P38_INPUT_UNDERLINE = 'bg-transparent border-0 border-b border-border/40 dark:border-white/10 rounded-none px-0 h-9 text-sm text-foreground focus:border-[#4a5240] dark:focus:border-[#a4ce33]';
-const P38_SECTION = 'rounded-lg border border-border/40 dark:border-white/10 bg-card/70 dark:bg-[#2d333b]/90 p-4';
-const P38_SAVE_BTN = 'bg-[#4a5240] hover:bg-[#4a5240]/90 text-white dark:bg-[#a4ce33] dark:hover:bg-[#a4ce33]/90 dark:text-[#1f1d22] h-10 w-10';
-/** Portal do Select fica no body; precisa ficar acima do shell do formulário (z-[70] / z-[80]). */
-const P38_FORM_SELECT_CONTENT = 'z-[90] max-h-96 dark:bg-muted dark:border-border/40';
+const P38_FORM_ROOT = PRODUTOS_FORM_ROOT;
+const P38_FORM_HEADER = cn(PRODUTOS_FORM_HEADER, 'flex-none relative overflow-visible');
+const P38_HEADER_GRID = 'grid grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto] gap-x-2 gap-y-1.5 items-center';
+const P38_HEADER_TOOLBAR = 'flex items-center justify-end gap-0.5 sm:gap-1 flex-shrink-0 row-start-1 col-start-2';
+const P38_HEADER_ICON_BTN = 'h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0';
+const P38_TAB_LIST = cn(PRODUTOS_TABS_BAR, 'grid grid-cols-6 w-full');
+const P38_TAB_TRIGGER = PRODUTOS_TAB_ICON;
+const P38_TAB_ICON = PRODUTOS_TAB_ICON_GLYPH;
+const P38_TAB_LABEL = PRODUTOS_TAB_ICON_LABEL;
+const P38_INPUT = cn(PRODUTOS_FIELD_H12, 'shadow-sm focus-visible:ring-2 focus-visible:ring-[#e8b824]/22 dark:focus-visible:ring-[#a4ce33]/20');
+const P38_INPUT_UNDERLINE = PRODUTOS_INPUT_UNDERLINE;
+const P38_SECTION = PRODUTOS_SECTION;
+const P38_FORM_PANEL = PRODUTOS_FORM_PANEL;
+const P38_SAVE_BTN = PRODUTOS_SAVE_BTN;
+const P38_FORM_SELECT_CONTENT = PRODUTOS_FORM_SELECT_CONTENT;
+const P38_SELECT_ITEM = PRODUTOS_SELECT_ITEM;
+const SELECT_NONE = '__none__';
+const SELECT_ORPHAN_CAT_PREFIX = '__orphan_cat__:';
+const SELECT_ORPHAN_FORN_PREFIX = '__orphan_forn__:';
+
+function normalizeTipoProduto(tipo) {
+  const t = String(tipo || '').trim();
+  if (t === 'Serviço' || t === 'Servico' || t === '1') return 'Serviço';
+  return 'Produto';
+}
+
+/** Evita crash do Radix Select quando o valor ainda não está na lista de opções. */
+function resolveEntitySelectValue(selectedId, options, { noneValue = SELECT_NONE, orphanPrefix } = {}) {
+  const id = String(selectedId || '').trim();
+  if (!id) return noneValue;
+  if (!Array.isArray(options) || options.length === 0) return noneValue;
+  return options.some((o) => String(o?.id || '').trim() === id) ? id : `${orphanPrefix}${id}`;
+}
+
+function isValidSelectItemValue(value) {
+  const v = String(value ?? '').trim();
+  return v.length > 0;
+}
 
 /** Id estável para linhas legadas sem `id` (evita novo UUID a cada render / reabrir formulário). */
 function hashString(s) {
@@ -148,7 +204,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       codigo_interno: formatProductCode(produtoData?.codigo_interno || ''),
       tags: Array.isArray(produtoData?.tags) ? produtoData.tags : [],
       unidades_alternativas: altsComIsComercial,
-      tipo: produtoData?.tipo || 'Produto',
+      tipo: normalizeTipoProduto(produtoData?.tipo),
       valor_compra: produtoData?.valor_compra || 0,
       preco_venda_padrao: produtoData?.preco_venda_padrao || 0,
       preco_venda_tipo: produtoData?.preco_venda_tipo || 'percentual',
@@ -185,7 +241,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
   const [loadingMovimentacoes, setLoadingMovimentacoes] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState('descritivo');
   const isMobile = useCompactShell();
-  const historicoChromeExpanded = useBottomNavScrollVisibility(isMobile && abaAtiva === 'historico');
+  const historicoChromeExpanded = useScrollVisibility(isMobile && abaAtiva === 'historico');
   const collapseHistoricoShell = isMobile && abaAtiva === 'historico';
   const [temAlteracoesNaoSalvas, setTemAlteracoesNaoSalvas] = useState(false);
   const { toast } = useToast();
@@ -309,13 +365,8 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
 
   // Custo calculado direto dos campos do produto
   const custoBase = parseFloat(formData.valor_compra) || 0;
-  const precoCustoCalculado =
-    custoBase +
-    (parseFloat(formData.custo_frete_padrao) || 0) +
-    (parseFloat(formData.custo_imposto1_padrao) || 0) +
-    (parseFloat(formData.custo_imposto2_padrao) || 0) +
-    (parseFloat(formData.custo_outros_padrao) || 0) -
-    (parseFloat(formData.desconto_compra_padrao) || 0);
+  const precoCustoCalculado = calcPrecoCustoFromComponents(formData);
+  const avariaValorBase = resolveAvariaCompraFator1(formData, custoBase);
 
   const precoVendaCalculado = formData.preco_venda_tipo === 'numerico'
     ? (parseFloat(formData.preco_venda_padrao) || 0)
@@ -441,14 +492,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     const novoBase = typeof conv === 'number' ? conv : precoVendaCalculado;
     setFormData((prev) => {
       saveToHistory(prev);
-      const custoBaseLoc = parseFloat(prev.valor_compra) || 0;
-      const precoCustoLoc =
-        custoBaseLoc +
-        (parseFloat(prev.custo_frete_padrao) || 0) +
-        (parseFloat(prev.custo_imposto1_padrao) || 0) +
-        (parseFloat(prev.custo_imposto2_padrao) || 0) +
-        (parseFloat(prev.custo_outros_padrao) || 0) -
-        (parseFloat(prev.desconto_compra_padrao) || 0);
+      const precoCustoLoc = calcPrecoCustoFromComponents(prev);
       let markup = prev.preco_venda_percentual;
       if (precoCustoLoc > 0) {
         markup = ((novoBase - precoCustoLoc) / precoCustoLoc) * 100;
@@ -589,6 +633,23 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     }
     return '';
   }, [comercialSelectValue, unitOptions]);
+
+  const categoriaSelectValue = useMemo(
+    () => resolveEntitySelectValue(formData.categoria_id, categorias, { orphanPrefix: SELECT_ORPHAN_CAT_PREFIX }),
+    [formData.categoria_id, categorias],
+  );
+
+  const fornecedorSelectValue = useMemo(
+    () => resolveEntitySelectValue(formData.fornecedor_padrao_id, fornecedores, { orphanPrefix: SELECT_ORPHAN_FORN_PREFIX }),
+    [formData.fornecedor_padrao_id, fornecedores],
+  );
+
+  const tipoSelectValue = useMemo(() => normalizeTipoProduto(formData.tipo), [formData.tipo]);
+
+  const tagsLista = useMemo(
+    () => (Array.isArray(formData.tags) ? formData.tags : []),
+    [formData.tags],
+  );
 
   /** Só id/sigla/rótulo: evita re-disparar o efeito de correção a cada mudança de fator/preço (combativo com o editor). */
   const unidadesAlternativasLayoutKey = useMemo(
@@ -740,7 +801,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     toast({
       title: 'Produto similar aplicado',
       description: 'Agora ajuste descrição, modelo, cor, tamanho e demais campos.',
-      className: 'bg-card border border-border/40 dark:bg-muted dark:text-foreground',
+      className: 'bg-card border-0 shadow-sm dark:bg-muted dark:text-foreground',
     });
   };
 
@@ -925,6 +986,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         custo_imposto2_padrao: parseFloat(formData.custo_imposto2_padrao) || 0,
         custo_outros_padrao: parseFloat(formData.custo_outros_padrao) || 0,
         desconto_compra_padrao: parseFloat(formData.desconto_compra_padrao) || 0,
+        avaria_percentual: parseFloat(formData.avaria_percentual) || 0,
       };
 
       let savedPayload = produtoData;
@@ -1054,22 +1116,15 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       toast({
         title: "✓ Produto salvo!",
         description: `${formData.nome} foi ${produto?.id ? 'atualizado' : 'criado'} com sucesso.`,
-        className: "bg-card border border-border/40 dark:bg-muted dark:text-foreground",
+        className: "bg-card border-0 shadow-sm dark:bg-muted dark:text-foreground",
         duration: 3000
       });
 
       setTemAlteracoesNaoSalvas(false);
-      const unitSnapshot = produtoId
-        ? {
-            id: produtoId,
-            unidade_vitrine: savedPayload.unidade_vitrine,
-            unidade_show_ativa: savedPayload.unidade_show_ativa,
-            unidades: savedPayload.unidades,
-            unidades_alternativas: savedPayload.unidades_alternativas,
-            unidade_principal: savedPayload.unidade_principal,
-          }
+      const savedForCallback = produtoId
+        ? { ...savedPayload, id: produtoId }
         : null;
-      await Promise.resolve(onSave?.(unitSnapshot));
+      await Promise.resolve(onSave?.(savedForCallback));
       if (produtoId) loadMovimentacoes();
       // onClose(); // Mantendo aberto para feedback
     } catch (error) {
@@ -1112,43 +1167,46 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <div
           className={cn(
-            'flex-none overflow-hidden transition-[max-height,opacity] duration-300 ease-out',
-            'desktop-layout:max-h-none desktop-layout:opacity-100',
+            'flex-none transition-[max-height,opacity] duration-300 ease-out',
+            collapseHistoricoShell ? 'overflow-hidden' : 'overflow-visible',
             collapseHistoricoShell && (historicoChromeExpanded ? 'max-h-[22rem] opacity-100' : 'max-h-0 opacity-0')
           )}
           aria-hidden={collapseHistoricoShell && !historicoChromeExpanded}
         >
-          {/* Header */}
+          {/* Header — grid: kicker + ícones na mesma linha; título na linha de baixo (largura total) */}
           <div className={P38_FORM_HEADER}>
-            <div className="p-4 md:p-6">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <h2 className="text-lg md:text-xl font-medium text-foreground truncate">
-                    {produto?.id ? 'Editar:' : 'Novo Produto'}
-                  </h2>
-                  <p className="text-xs md:text-sm text-muted-foreground mt-1 truncate">
-                    {formData.nome || 'Sem nome'}
-                  </p>
-                </div>
-                <div className="flex gap-2 flex-shrink-0">
-                  {produto?.id && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleChange('ativo', !formData.ativo)}
-                      disabled={isSaving}
-                      className={`h-10 w-10 ${formData.ativo ? 'text-red-500' : 'text-green-500'}`}
-                      title={formData.ativo ? 'Inativar produto' : 'Reativar produto'}
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </Button>
-                  )}
+            <span className={PRODUTOS_HEADER_ACCENT} />
+            <div className="px-4 py-3 md:px-6 md:py-4">
+              <div className={P38_HEADER_GRID}>
+                <p className={cn(P38_PAGE_KICKER, 'row-start-1 col-start-1 truncate min-w-0')}>
+                  {produto?.id ? 'Editar produto' : 'Novo produto'}
+                </p>
+                <div className={P38_HEADER_TOOLBAR}>
+                  <Button
+                    size="icon"
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className={cn(P38_SAVE_BTN, P38_HEADER_ICON_BTN, 'order-first')}
+                    title="Salvar"
+                  >
+                    <Save className="w-5 h-5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onClose}
+                    disabled={isSaving}
+                    className={cn(P38_HEADER_ICON_BTN, 'hover:bg-muted/60')}
+                    title="Fechar"
+                  >
+                    <X className="w-5 h-5 text-muted-foreground" />
+                  </Button>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={handleUndo}
                     disabled={isSaving || historyIndex <= 0}
-                    className="h-10 w-10"
+                    className={cn(P38_HEADER_ICON_BTN, 'hidden sm:inline-flex')}
                     title="Desfazer (Ctrl+Z)"
                   >
                     <Undo2 className="w-5 h-5 text-muted-foreground" />
@@ -1158,43 +1216,64 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     size="icon"
                     onClick={handleRedo}
                     disabled={isSaving || historyIndex >= history.length - 1}
-                    className="h-10 w-10"
+                    className={cn(P38_HEADER_ICON_BTN, 'hidden sm:inline-flex')}
                     title="Refazer (Ctrl+Y / F4)"
                   >
                     <Redo2 className="w-5 h-5 text-muted-foreground" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={onClose} disabled={isSaving} className="h-10 w-10">
-                    <X className="w-5 h-5 text-muted-foreground" />
-                  </Button>
-                  <Button size="icon" onClick={handleSave} disabled={isSaving} className={P38_SAVE_BTN}>
-                    <Save className="w-5 h-5" />
-                  </Button>
+                  {produto?.id && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleChange('ativo', !formData.ativo)}
+                      disabled={isSaving}
+                      className={cn(
+                        P38_HEADER_ICON_BTN,
+                        formData.ativo ? 'text-red-500' : 'text-green-500',
+                      )}
+                      title={formData.ativo ? 'Inativar produto' : 'Reativar produto'}
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </Button>
+                  )}
                 </div>
+                {produto?.id ? (
+                  <h2
+                    className={cn(
+                      P38_PAGE_TITLE,
+                      'row-start-2 col-span-2 text-lg md:text-xl leading-snug line-clamp-2 min-h-[2.75rem] min-w-0',
+                    )}
+                  >
+                    {formData.nome || 'Sem nome'}
+                  </h2>
+                ) : (
+                  <p className={cn(P38_PAGE_SUBTITLE, 'row-start-2 col-span-2 min-w-0')}>
+                    Preencha os dados do catálogo
+                  </p>
+                )}
               </div>
             </div>
           </div>
 
           {vendasUnitOptions.length > 0 && (
             <div
-              className="flex-none border-b border-border/40 dark:border-white/10 bg-[#26262e]/20 dark:bg-[#26262e]/50 px-4 md:px-6 py-3"
+              className={cn('flex-none border-b border-border/15 dark:border-white/10 px-4 md:px-6 py-3', P38_FORM_PANEL)}
               title="Escolhe qual unidade a precificação segue — o mesmo critério do botão «Outra unidade» no PDV."
             >
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Estação de venda
-                  </span>
-                  <span className="text-sm font-semibold text-foreground dark:text-foreground">
-                    {precoCatalogo.sigla}
-                  </span>
-                  <span className="text-xs tabular-nums text-muted-foreground">
-                    R$ {formatarNumero(precoCatalogo.valor)}
-                  </span>
-                  <span className="text-[11px] text-muted-foreground hidden sm:inline max-w-md truncate">
-                    Precificação e custo na embalagem escolhida; gravação continua na unidade base (fator 1).
-                  </span>
-                </div>
-                <div className="flex flex-wrap items-center justify-end gap-2">
+              <div className="grid grid-cols-[auto_auto_minmax(0,1fr)] items-baseline gap-x-2 gap-y-2">
+                <span className={cn(P38_FIELD_LABEL, 'col-start-1 row-start-1 whitespace-nowrap')}>
+                  Estação de venda
+                </span>
+                <span className={cn(P38_FIELD_VALUE, 'col-start-2 row-start-1 whitespace-nowrap')}>
+                  {precoCatalogo.sigla}
+                </span>
+                <span className="col-start-3 row-start-1 text-xs tabular-nums text-muted-foreground text-right whitespace-nowrap">
+                  R$ {formatarNumero(precoCatalogo.valor)}
+                </span>
+                <p className="col-span-3 row-start-2 text-[11px] text-muted-foreground hidden sm:block">
+                  Precificação e custo na embalagem escolhida; gravação continua na unidade base (fator 1).
+                </p>
+                <div className="col-span-3 row-start-3 flex flex-wrap items-center justify-start gap-2 pt-0.5">
                   {vendasUnitOptions.map((opt) => {
                     const exibNorm = normalizeSigla(formData.unidade_exibicao_sigla || '');
                     const catalogoEhPrincipal = !exibNorm;
@@ -1210,7 +1289,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                         className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all border shadow-sm ${
                           active
                             ? 'border-[#4a5240]/40 bg-[#4a5240] text-white dark:border-[#a4ce33]/40 dark:bg-[#a4ce33] dark:text-[#1f1d22]'
-                            : 'border-border/40 bg-card dark:bg-[#26262e] text-foreground/90 hover:border-[#4a5240]/30 dark:hover:border-[#a4ce33]/30'
+                            : 'border-border/15 bg-card text-foreground/90 hover:border-[#4a5240]/30 hover:bg-secondary/30 dark:bg-[#26262e] dark:hover:border-[#a4ce33]/30'
                         }`}
                       >
                         {opt.unidade}
@@ -1222,7 +1301,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-9 gap-1.5 rounded-xl border-border/40 bg-card shadow-sm dark:border-border/40 dark:bg-background"
+                      className="h-9 gap-1.5 rounded-xl border-border/15 bg-card shadow-sm dark:border-border/15 dark:bg-background"
                       onClick={() => setUnitSelectorOpen(true)}
                       title="Lista completa com conversão e preço sugerido"
                     >
@@ -1287,14 +1366,14 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     className={`${P38_INPUT} h-11`}
                   />
                   {similarSearch.trim() && produtosSimilaresFiltrados.length > 0 ? (
-                    <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-20 overflow-hidden rounded-xl border border-border/40 dark:border-white/10 bg-card dark:bg-[#2d333b] shadow-lg">
+                    <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-20 overflow-hidden rounded-xl bg-card dark:bg-[#2d333b] shadow-lg">
                       <div className="max-h-48 overflow-y-auto p-1">
                         {produtosSimilaresFiltrados.map((item) => (
                           <button
                             key={item.id}
                             type="button"
                             onClick={() => applyProdutoSimilar(item)}
-                            className="w-full rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-secondary/60 dark:hover:bg-[#26262e]"
+                            className="w-full rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-secondary/50 dark:hover:bg-[#26262e]"
                           >
                             <p className="text-sm font-medium text-foreground">{item.nome}</p>
                             <p className="text-xs text-muted-foreground">{item.marca || 'Sem marca'} • {item.categoria_nome || 'Sem categoria'}</p>
@@ -1308,7 +1387,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             )}
 
             <div className={`flex flex-col sm:flex-row gap-4 items-start ${P38_SECTION}`}>
-              <div className="w-28 h-28 shrink-0 bg-secondary/80 dark:bg-[#26262e] rounded-lg flex items-center justify-center overflow-hidden border border-border/40 dark:border-white/10">
+              <div className="w-28 h-28 shrink-0 bg-card dark:bg-[#26262e] rounded-lg flex items-center justify-center overflow-hidden shadow-sm">
                 {formData.imagem_url ? (
                   <img src={formData.imagem_url} alt="Preview" className="w-full h-full object-cover" />
                 ) : (
@@ -1316,7 +1395,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 )}
               </div>
               <div className="flex-1 w-full space-y-3">
-                <Label className="text-xs text-muted-foreground block">URL da Imagem</Label>
+                <Label className={cn(P38_FIELD_LABEL, 'block')}>URL da Imagem</Label>
                 <div className="flex gap-2">
                   <Input 
                     value={formData.imagem_url || ''} 
@@ -1337,7 +1416,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                       type="button"
                       size="sm"
                       variant="outline"
-                      className={`h-10 px-4 text-sm ${P38_INPUT} border border-border/40 dark:border-white/10`}
+                      className={`h-10 px-4 text-sm ${P38_INPUT}`}
                       disabled={isUploading}
                       onClick={() => document.getElementById('image-upload').click()}
                     >
@@ -1350,7 +1429,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     </Button>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className={P38_FIELD_HINT}>
                   Cole a URL ou faça upload de uma imagem do seu computador.
                 </p>
               </div>
@@ -1359,14 +1438,14 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             {/* Campos Hierárquicos */}
             <div className="space-y-1">
               <div className="flex items-center gap-2 mb-3">
-                <Label className="text-sm font-semibold p38-text-accent">Descrição Hierárquica</Label>
+                <Label className={P38_SECTION_TITLE}>Descrição Hierárquica</Label>
               </div>
 
               {/* Preview do nome gerado */}
               {formData.nome && (
-                <div className="mb-4 px-3 py-2 rounded-lg border border-border/40 dark:border-white/10 bg-[#26262e]/20 dark:bg-[#26262e]/50">
-                  <p className="text-[10px] text-muted-foreground uppercase mb-1">Preview da Descrição Completa</p>
-                  <p className="text-sm font-medium text-foreground font-din-1451 uppercase tracking-wide">{formData.nome}</p>
+                <div className={cn('mb-4 px-3 py-2 rounded-lg', P38_FORM_PANEL)}>
+                  <p className={cn(P38_FIELD_LABEL, 'mb-1')}>Preview da Descrição Completa</p>
+                  <p className={cn(P38_FIELD_VALUE, 'font-din-1451 uppercase tracking-wide')}>{formData.nome}</p>
                 </div>
               )}
 
@@ -1380,7 +1459,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 <div key={field} className="grid grid-cols-[20px_1fr] items-center gap-3 py-1">
                   <span className="text-xs font-bold text-muted-foreground text-center">{idx + 1}</span>
                   <div>
-                    <Label className="text-xs text-muted-foreground mb-1 block">{label}</Label>
+                    <Label className={cn(P38_FIELD_LABEL, 'mb-1 block')}>{label}</Label>
                     <Input
                       value={formData[field] || ''}
                       onChange={e => handleChange(field, e.target.value)}
@@ -1410,7 +1489,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   value={formData.codigo_interno} 
                   placeholder="Automático"
                   disabled 
-                  className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none px-0 h-10 text-sm text-muted-foreground dark:text-muted-foreground"
+                  className="bg-transparent border-0 border-b border-border/15 dark:border-border/15 rounded-none px-0 h-10 text-sm text-muted-foreground dark:text-muted-foreground"
                 />
               </div>
 
@@ -1428,16 +1507,24 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             <div>
               <Label className="text-sm text-muted-foreground mb-2 block">Categoria (opcional)</Label>
               <Select
-                value={formData.categoria_id || '__none__'}
-                onValueChange={v => handleChange('categoria_id', v === '__none__' ? '' : v)}
+                value={categoriaSelectValue}
+                onValueChange={v => {
+                  if (String(v).startsWith(SELECT_ORPHAN_CAT_PREFIX)) return;
+                  handleChange('categoria_id', v === SELECT_NONE ? '' : v);
+                }}
               >
                 <SelectTrigger className={`${P38_INPUT_UNDERLINE} h-10`}>
                   <SelectValue placeholder="Categoria" />
                 </SelectTrigger>
                 <SelectContent className={P38_FORM_SELECT_CONTENT}>
-                  <SelectItem value="__none__" className="dark:text-foreground dark:hover:bg-primary/90">Sem categoria</SelectItem>
-                  {categorias.map(cat => (
-                    <SelectItem key={cat.id} value={cat.id} className="dark:text-foreground dark:hover:bg-primary/90">{cat.nome}</SelectItem>
+                  <SelectItem value={SELECT_NONE} className={P38_SELECT_ITEM}>Sem categoria</SelectItem>
+                  {categoriaSelectValue.startsWith(SELECT_ORPHAN_CAT_PREFIX) ? (
+                    <SelectItem value={categoriaSelectValue} className={P38_SELECT_ITEM}>
+                      {formData.categoria_nome || 'Categoria atual (não listada)'}
+                    </SelectItem>
+                  ) : null}
+                  {categorias.filter((cat) => isValidSelectItemValue(cat?.id)).map(cat => (
+                    <SelectItem key={cat.id} value={String(cat.id)} className={P38_SELECT_ITEM}>{cat.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -1446,20 +1533,26 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             <div>
               <Label className="text-sm text-muted-foreground mb-2 block">Fornecedor padrão (opcional)</Label>
               <Select
-                value={formData.fornecedor_padrao_id || '__none__'}
+                value={fornecedorSelectValue}
                 onValueChange={v => {
+                  if (String(v).startsWith(SELECT_ORPHAN_FORN_PREFIX)) return;
                   const forn = fornecedores.find(f => f.id === v);
-                  handleChange('fornecedor_padrao_id', v === '__none__' ? '' : v);
-                  handleChange('fornecedor_padrao_codigo', v === '__none__' ? '' : (forn?.codigo_interno || ''));
+                  handleChange('fornecedor_padrao_id', v === SELECT_NONE ? '' : v);
+                  handleChange('fornecedor_padrao_codigo', v === SELECT_NONE ? '' : (forn?.codigo_interno || ''));
                 }}
               >
                 <SelectTrigger className={`${P38_INPUT_UNDERLINE} h-10`}>
                   <SelectValue placeholder="Fornecedor" />
                 </SelectTrigger>
                 <SelectContent className={P38_FORM_SELECT_CONTENT}>
-                  <SelectItem value="__none__" className="dark:text-foreground dark:hover:bg-primary/90 text-sm">Sem fornecedor</SelectItem>
-                  {fornecedores.map(f => (
-                    <SelectItem key={f.id} value={f.id} className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
+                  <SelectItem value={SELECT_NONE} className={cn(P38_SELECT_ITEM, 'text-sm')}>Sem fornecedor</SelectItem>
+                  {fornecedorSelectValue.startsWith(SELECT_ORPHAN_FORN_PREFIX) ? (
+                    <SelectItem value={fornecedorSelectValue} className={cn(P38_SELECT_ITEM, 'text-sm')}>
+                      {formData.fornecedor_padrao_nome || formData.fornecedor_padrao_codigo || 'Fornecedor atual (não listado)'}
+                    </SelectItem>
+                  ) : null}
+                  {fornecedores.filter((f) => isValidSelectItemValue(f?.id)).map(f => (
+                    <SelectItem key={f.id} value={String(f.id)} className={cn(P38_SELECT_ITEM, 'text-sm')}>
                       {f.nome}
                     </SelectItem>
                   ))}
@@ -1492,8 +1585,8 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 </Button>
               </div>
               <div className="flex flex-wrap gap-2 mt-3">
-                {formData.tags.map(tag => (
-                  <Badge key={tag} className="bg-muted text-foreground/90 border border-border/40 dark:bg-muted dark:text-foreground/90 dark:border-border/40 text-sm py-1 px-3">
+                {tagsLista.map(tag => (
+                  <Badge key={tag} className="bg-card text-foreground/90 border-0 shadow-sm dark:bg-muted dark:text-foreground/90 text-sm py-1 px-3">
                     #{tag}
                     <button onClick={() => handleRemoveTag(tag)} className="ml-2 hover:text-foreground dark:hover:text-foreground">
                       <X className="w-3.5 h-3.5" />
@@ -1508,7 +1601,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
           <TabsContent value="comercial" className="mt-0">
             {false && vendasUnitOptions.length > 0 && (
               <div
-                className="mb-6 rounded-2xl border border-border/40 bg-gradient-to-r from-muted/40 to-muted/60 dark:from-muted/40 dark:to-muted/60 px-4 py-3"
+                className="mb-6 rounded-2xl bg-[#e8b824]/6 dark:from-muted/40 dark:to-muted/60 px-4 py-3"
                 title="Escolha a embalagem para ver preço e custo escalados — alinha com unidade_vitrine e o catálogo."
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1542,7 +1635,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                           className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all border shadow-sm ${
                             active
                               ? 'border-primary/30 bg-primary text-primary-foreground dark:border-white dark:bg-card dark:text-foreground'
-                              : 'border-border/40 bg-card text-foreground/90 hover:border-border/40 dark:border-border/40 dark:bg-muted dark:text-foreground dark:hover:border-border/40'
+                              : 'border-border/15 bg-card text-foreground/90 hover:border-border/15 dark:border-border/15 dark:bg-muted dark:text-foreground dark:hover:border-border/15'
                           }`}
                         >
                           {opt.unidade}
@@ -1554,7 +1647,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="h-9 gap-1.5 rounded-xl border-border/40 bg-card shadow-sm dark:border-border/40 dark:bg-background"
+                        className="h-9 gap-1.5 rounded-xl border-border/15 bg-card shadow-sm dark:border-border/15 dark:bg-background"
                         onClick={() => setUnitSelectorOpen(true)}
                         title="Lista completa com conversão e preço sugerido"
                       >
@@ -1568,24 +1661,24 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             )}
 
             {/* KPIs */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pb-6 mb-8 border-b border-border/40">
-              <div className="text-center p-4 bg-muted/50/50 rounded-lg">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pb-6 mb-8 border-b border-border/15">
+              <div className={cn(PRODUTOS_STAT_TILE)}>
                 <div className="text-xs text-muted-foreground uppercase mb-1">
                   Custo Total{custoCatalogoScale !== 1 && precoCatalogo.sigla ? ` (${precoCatalogo.sigla})` : ''}
                 </div>
                 <div className="text-lg font-semibold text-foreground">R$ {formatarNumero(precoCustoCatalogo)}</div>
               </div>
-              <div className="text-center p-4 bg-muted/50/50 rounded-lg">
+              <div className={cn(PRODUTOS_STAT_TILE)}>
                 <div className="text-xs text-muted-foreground uppercase mb-1">
                   Preço de venda{precoCatalogo.sigla ? ` (${precoCatalogo.sigla})` : ''}
                 </div>
                 <div className="text-lg font-semibold text-foreground">R$ {formatarNumero(precoCatalogo.valor)}</div>
               </div>
-              <div className="text-center p-4 bg-muted/50/50 rounded-lg">
+              <div className={cn(PRODUTOS_STAT_TILE)}>
                 <div className="text-xs text-muted-foreground uppercase mb-1">Markup</div>
                 <div className="text-lg font-semibold text-foreground">{formatarNumero(markupCatalogo)}%</div>
               </div>
-              <div className="text-center p-4 bg-muted/50/50 rounded-lg">
+              <div className={cn(PRODUTOS_STAT_TILE)}>
                 <div className="text-xs text-muted-foreground uppercase mb-1">Margem</div>
                 <div className="text-lg font-semibold text-foreground">{formatarNumero(margemContribuicao)}%</div>
               </div>
@@ -1612,13 +1705,17 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     { label: 'Imposto 1', field: 'custo_imposto1_padrao', icon: <FileText className="w-3.5 h-3.5" />, isCurrency: true },
                     { label: 'Imposto 2', field: 'custo_imposto2_padrao', icon: <FileText className="w-3.5 h-3.5" />, isCurrency: true },
                     { label: 'Outros Custos', field: 'custo_outros_padrao', icon: <Plus className="w-3.5 h-3.5" />, isCurrency: true },
+                    { label: 'Avaria', field: 'avaria_percentual', icon: <Package className="w-3.5 h-3.5" />, isPercent: true },
                     { label: 'Desconto Comercial', field: 'desconto_compra_padrao', icon: <Tag className="w-3.5 h-3.5" />, isCurrency: true, isNegativo: true },
-                  ].map(({ label, field, icon, isNegativo }, custoIdx) => {
+                  ].map(({ label, field, icon, isNegativo, isPercent }, custoIdx) => {
                     const sc = custoCatalogoScale > 0 ? custoCatalogoScale : 1;
                     const baseVal = parseFloat(formData[field]) || 0;
-                    const displayVal = baseVal * sc;
+                    const displayVal = isPercent ? baseVal : baseVal * sc;
+                    const displayMoney = isPercent
+                      ? avariaValorBase * sc
+                      : displayVal;
                     return (
-                      <div key={field} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 py-2.5 border-b border-border/40 last:border-0">
+                      <div key={field} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 py-2.5 border-b border-border/15 last:border-0">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
                           <span className="text-muted-foreground shrink-0">{icon}</span>
                           <span className="truncate">{label}</span>
@@ -1626,22 +1723,23 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                         <div className="flex items-center gap-2 shrink-0">
                           <CurrencyInput
                             value={displayVal}
-                            onChange={(val) => handleChange(field, sc !== 1 ? val / sc : val)}
+                            onChange={(val) => handleChange(field, isPercent ? val : (sc !== 1 ? val / sc : val))}
                             navIndex={custoIdx}
                             placeholder="0"
-                            className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none px-0 h-8 text-sm w-28 text-right text-foreground focus:border-border/40 font-glacial"
+                            isPercentage={isPercent}
+                            className="bg-transparent border-0 border-b border-border/15 dark:border-border/15 rounded-none px-0 h-8 text-sm w-28 text-right text-foreground focus:border-border/15 font-glacial"
                           />
-                          <span className="text-xs text-muted-foreground w-8 shrink-0">(R$)</span>
+                          <span className="text-xs text-muted-foreground w-8 shrink-0">{isPercent ? '%' : '(R$)'}</span>
                         </div>
                         <span className="text-sm font-medium text-foreground text-right tabular-nums font-glacial whitespace-nowrap w-[5.75rem] shrink-0">
-                          {isNegativo ? '-' : ''}R$ {formatarNumero(displayVal)}
+                          {isPercent ? `R$ ${formatarNumero(displayMoney)}` : `${isNegativo ? '-' : ''}R$ ${formatarNumero(displayVal)}`}
                         </span>
                       </div>
                     );
                   })}
 
                   {/* TOTAL */}
-                  <div className="flex items-center justify-between pt-6 mt-4 border-t-2 border-border/40 dark:border-border/40">
+                  <div className="flex items-center justify-between pt-6 mt-4 border-t-2 border-border/15 dark:border-border/15">
                     <span className="text-base font-bold text-foreground">CUSTO TOTAL</span>
                     <span className="text-xl font-bold text-foreground">R$ {formatarNumero(precoCustoCatalogo)}</span>
                   </div>
@@ -1656,7 +1754,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 </div>
 
                 <div className="space-y-1">
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 py-2.5 border-b border-border/40">
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 py-2.5 border-b border-border/15">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
                       <span className="text-muted-foreground shrink-0"><DollarSign className="w-3.5 h-3.5" /></span>
                       <span className="truncate">
@@ -1670,7 +1768,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                         navIndex={6}
                         isLast={false}
                         placeholder="0"
-                        className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none px-0 h-8 text-sm w-28 text-right text-foreground focus:border-border/40 font-glacial"
+                        className="bg-transparent border-0 border-b border-border/15 dark:border-border/15 rounded-none px-0 h-8 text-sm w-28 text-right text-foreground focus:border-border/15 font-glacial"
                       />
                       <span className="text-xs text-muted-foreground w-8 shrink-0">(R$)</span>
                     </div>
@@ -1679,7 +1777,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 py-2.5 border-b border-border/40">
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 py-2.5 border-b border-border/15">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
                       <span className="text-muted-foreground shrink-0"><TrendingUp className="w-3.5 h-3.5" /></span>
                       <span className="truncate">Markup</span>
@@ -1695,7 +1793,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                         isLast
                         placeholder="0"
                         isPercentage={true}
-                        className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none px-0 h-8 text-sm w-20 text-right text-foreground focus:border-border/40 font-glacial"
+                        className="bg-transparent border-0 border-b border-border/15 dark:border-border/15 rounded-none px-0 h-8 text-sm w-20 text-right text-foreground focus:border-border/15 font-glacial"
                       />
                       <span className="text-xs text-muted-foreground w-8 shrink-0">%</span>
                     </div>
@@ -1714,7 +1812,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                         type="text"
                         value={formatarNumero(margemContribuicao)}
                         disabled
-                        className="bg-muted/50 border-0 border-b border-border/40 rounded-none px-0 h-8 text-sm w-20 text-right text-muted-foreground tabular-nums font-glacial"
+                        className="bg-muted/50 border-0 border-b border-border/15 rounded-none px-0 h-8 text-sm w-20 text-right text-muted-foreground tabular-nums font-glacial"
                       />
                       <span className="text-xs text-muted-foreground w-8 shrink-0">%</span>
                     </div>
@@ -1746,7 +1844,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   value={formData.volume_cm3 ? formatarNumero(formData.volume_cm3 / 1000) : '0,00'}
                   disabled
                   placeholder="Auto"
-                  className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none px-0 h-10 text-sm text-muted-foreground dark:text-muted-foreground"
+                  className="bg-transparent border-0 border-b border-border/15 dark:border-border/15 rounded-none px-0 h-10 text-sm text-muted-foreground dark:text-muted-foreground"
                 />
               </div>
 
@@ -1780,9 +1878,9 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     value={formData.unidade_principal}
                     onChange={(e) => handleChange('unidade_principal', e.target.value.toUpperCase())}
                     placeholder="…"
-                    className="bg-transparent border-0 border-b-2 border-border/40 dark:border-border/40 rounded-none px-0 h-10 text-sm text-foreground flex-1 min-w-0"
+                    className="bg-transparent border-0 border-b-2 border-border/15 dark:border-border/15 rounded-none px-0 h-10 text-sm text-foreground flex-1 min-w-0"
                   />
-                  <div className="flex items-center gap-2 shrink-0 pb-1 rounded-full bg-muted/90 dark:bg-background/50 px-3 py-1.5 border border-border/40/80 dark:border-border/80">
+                  <div className="flex items-center gap-2 shrink-0 pb-1 rounded-full bg-card shadow-sm dark:bg-background/50 px-3 py-1.5">
                     <Switch
                       id="catalogo-unidade-principal"
                       className="scale-90"
@@ -1815,7 +1913,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border/40 bg-muted/50/50 p-4 md:p-5 space-y-4">
+            <div className={cn('rounded-2xl p-4 md:p-5 space-y-4', PRODUTOS_SECTION)}>
               <div>
                 {/* Princípio vitrine (truth only): formulário = tradução da escolha gravada; fallbacks visíveis. */}
                 <h3 className="text-sm font-semibold text-foreground">Embalagens e unidades de venda</h3>
@@ -1826,7 +1924,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 </p>
               </div>
 
-              <div className="flex items-start gap-3 border-t border-border/40 pt-4">
+              <div className="flex items-start gap-3 border-t border-border/15 pt-4">
                 <Checkbox
                   id="unidade_show_ativa"
                   checked={formData.unidade_show_ativa !== false}
@@ -1859,7 +1957,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 }}
               />
 
-              <div className="border-t border-border/40 pt-4 space-y-3">
+              <div className="border-t border-border/15 pt-4 space-y-3">
                 <div>
                   <Label className="text-sm text-foreground/90">Unidade de vitrine (lista)</Label>
                   <p className="text-xs text-muted-foreground mt-1 max-w-xl">
@@ -1873,13 +1971,13 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   onValueChange={(v) => applyCommercialUnitSelection(v)}
                 >
                   <SelectTrigger
-                    className="bg-muted/40 dark:bg-background border border-border/40 rounded-xl max-w-md h-11"
+                    className={cn(P38_INPUT, 'max-w-md h-11')}
                     disabled={formData.unidade_show_ativa === false}
                   >
                     <SelectValue placeholder="Sigla" />
                   </SelectTrigger>
                   <SelectContent className={P38_FORM_SELECT_CONTENT}>
-                    {commercialSelectOptions.map((sigla) => (
+                    {commercialSelectOptions.filter(isValidSelectItemValue).map((sigla) => (
                       <SelectItem key={`com-${sigla}`} value={sigla}>
                         {sigla}
                       </SelectItem>
@@ -1925,12 +2023,12 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 )}
               </div>
 
-              <p className="text-xs text-muted-foreground px-1 border-t border-border/40 pt-3">
+              <p className="text-xs text-muted-foreground px-1 border-t border-border/15 pt-3">
                 Sem embalagem extra no catálogo: o sistema usa a unidade base. A lista de siglas é a base + embalagens com sigla preenchida.
               </p>
             </div>
 
-            <div className="border-t pt-6 dark:border-border/40">
+            <div className="border-t pt-6 dark:border-border/15">
               <h3 className="text-base font-semibold mb-4 text-foreground">Níveis de Estoque</h3>
               <div className="grid grid-cols-2 gap-6">
                 <div>
@@ -1972,7 +2070,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     type="number"
                     value={formData.estoque_atual}
                     disabled
-                    className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none px-0 h-10 text-sm text-muted-foreground dark:text-muted-foreground"
+                    className="bg-transparent border-0 border-b border-border/15 dark:border-border/15 rounded-none px-0 h-10 text-sm text-muted-foreground dark:text-muted-foreground"
                   />
                 </div>
               </div>
@@ -1999,13 +2097,13 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
           <TabsContent value="sistema" className="space-y-6 mt-0">
             <div>
               <Label className="text-sm text-muted-foreground mb-2 block">Tipo de Produto *</Label>
-              <Select value={formData.tipo} onValueChange={v => handleChange('tipo', v)}>
+              <Select value={tipoSelectValue} onValueChange={v => handleChange('tipo', v)}>
                 <SelectTrigger className={`${P38_INPUT_UNDERLINE} h-10`}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className={P38_FORM_SELECT_CONTENT}>
-                  <SelectItem value="Produto" className="dark:text-foreground dark:hover:bg-primary/90">Produto (0)</SelectItem>
-                  <SelectItem value="Serviço" className="dark:text-foreground dark:hover:bg-primary/90">Serviço (1)</SelectItem>
+                  <SelectItem value="Produto" className={P38_SELECT_ITEM}>Produto (0)</SelectItem>
+                  <SelectItem value="Serviço" className={P38_SELECT_ITEM}>Serviço (1)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -2015,13 +2113,13 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 checked={formData.ativo} 
                 onCheckedChange={v => handleChange('ativo', v)} 
                 id="ativo"
-                className="dark:border-border/40 h-5 w-5"
+                className="dark:border-border/15 h-5 w-5"
               />
               <Label htmlFor="ativo" className="cursor-pointer text-sm text-foreground/90">Produto Ativo</Label>
             </div>
 
             {/* Preço Livre e Casas Decimais */}
-            <div className="border-t pt-6 dark:border-border/40">
+            <div className="border-t pt-6 dark:border-border/15">
               <h3 className="text-base font-semibold mb-4 text-foreground">Comportamento no PDV</h3>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
@@ -2029,7 +2127,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     checked={formData.preco_livre || false}
                     onCheckedChange={v => handleChange('preco_livre', v)}
                     id="preco_livre"
-                    className="dark:border-border/40 h-5 w-5"
+                    className="dark:border-border/15 h-5 w-5"
                   />
                   <div>
                     <Label htmlFor="preco_livre" className="cursor-pointer text-sm text-foreground/90">Preço Livre</Label>
@@ -2038,7 +2136,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 </div>
                 <div>
                   <Label className="text-sm text-muted-foreground mb-2 block">Casas Decimais na Quantidade</Label>
-                  <div className="flex items-center gap-1 bg-muted/50 rounded-lg border border-border/40 overflow-hidden w-fit">
+                  <div className="flex items-center gap-1 bg-card shadow-sm rounded-lg overflow-hidden w-fit">
                     {[0, 1, 2, 3].map(n => (
                       <button
                         key={n}
@@ -2046,8 +2144,8 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                         onClick={() => handleChange('casas_decimais', n)}
                         className={`w-10 h-9 text-sm font-medium transition-colors ${
                           (formData.casas_decimais ?? 0) === n
-                            ? 'bg-muted text-foreground'
-                            : 'text-muted-foreground hover:bg-muted'
+                            ? 'bg-[#e8b824]/12 text-[#a8942e] dark:bg-[#a4ce33]/15 dark:text-[#a4ce33]'
+                            : 'text-muted-foreground hover:bg-secondary/30'
                         }`}
                       >
                         {n}
@@ -2061,7 +2159,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
               </div>
             </div>
 
-            <div className="border-t pt-6 dark:border-border/40">
+            <div className="border-t pt-6 dark:border-border/15">
               <h3 className="text-base font-semibold mb-4 text-foreground">Rastreabilidade</h3>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
@@ -2069,7 +2167,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     checked={formData.controla_serial}
                     onCheckedChange={v => handleChange('controla_serial', v)}
                     id="serial"
-                    className="dark:border-border/40 h-5 w-5"
+                    className="dark:border-border/15 h-5 w-5"
                   />
                   <Label htmlFor="serial" className="cursor-pointer text-sm text-foreground/90">Controla Número de Série</Label>
                 </div>
@@ -2078,7 +2176,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     checked={formData.controla_lote}
                     onCheckedChange={v => handleChange('controla_lote', v)}
                     id="lote"
-                    className="dark:border-border/40 h-5 w-5"
+                    className="dark:border-border/15 h-5 w-5"
                   />
                   <Label htmlFor="lote" className="cursor-pointer text-sm text-foreground/90">Controla Lote</Label>
                 </div>
@@ -2087,7 +2185,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     checked={formData.controla_validade}
                     onCheckedChange={v => handleChange('controla_validade', v)}
                     id="validade"
-                    className="dark:border-border/40 h-5 w-5"
+                    className="dark:border-border/15 h-5 w-5"
                   />
                   <Label htmlFor="validade" className="cursor-pointer text-sm text-foreground/90">Controla Validade</Label>
                 </div>

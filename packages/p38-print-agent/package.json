@@ -1,0 +1,14 @@
+{
+  "name": "@p38/print-agent",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Agente local P38 — impressão térmica ESC/POS na rede da loja",
+  "bin": {
+    "p38-print-agent": "./bin/start.mjs"
+  },
+  "scripts": {
+    "start": "node ./bin/start.mjs",
+    "setup": "node ./bin/setup.mjs"
+  }
+}

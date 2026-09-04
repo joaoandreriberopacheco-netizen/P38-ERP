@@ -17,8 +17,10 @@ import SugestaoCompra from '../components/compras/SugestaoCompra';
 import CotacoesManager from '../components/compras/CotacoesManager';
 import ImportadorNotaFiscal from '../components/compras/ImportadorNotaFiscal';
 import GestaoCodigosConferencia from '../components/logistica/GestaoCodigosConferencia';
+import HierarquiaPortalEntry from '@/components/hierarquia-portal/HierarquiaPortalEntry';
 import PainelConferencias from '../components/compras/PainelConferencias';
 import { cn } from '@/components/utils';
+import { P38PageHeader } from '@/components/layout/P38PageHeader';
 import { useCompactShell } from '@/hooks/use-breakpoint';
 
 const getStatusBadge = (status) => {
@@ -366,7 +368,9 @@ export default function ComprasPage() {
   const [sugestaoKey, setSugestaoKey] = useState(0);
   const [activeTab, setActiveTab] = useState('sugestoes');
   const isMobile = useCompactShell();
-  const sugestoesFullHeight = isMobile && activeTab === 'sugestoes';
+  const cotacoesFullHeight = activeTab === 'cotacoes';
+  const tabFullHeight = isMobile || cotacoesFullHeight;
+  const tabContentScrolls = isMobile && activeTab !== 'sugestoes' && activeTab !== 'cotacoes';
 
   const handleTabChange = (value) => {
     setActiveTab(value);
@@ -385,19 +389,22 @@ export default function ComprasPage() {
   return (
     <div
       className={cn(
-        sugestoesFullHeight
+        tabFullHeight
           ? 'flex flex-col h-full min-h-0 overflow-hidden w-full max-w-full bg-background'
           : 'max-w-7xl mx-auto space-y-0 px-0 md:px-2 py-2 md:py-4',
       )}
     >
       {/* Header */}
-      <div className={cn('shrink-0', sugestoesFullHeight ? 'px-4 pb-2 pt-0' : 'px-4 md:px-0 pb-4')}>
-        <h1 className="text-xl md:text-2xl font-semibold text-foreground font-glacial">Compras</h1>
-        <p className="text-xs text-muted-foreground mt-0.5">Gestão completa do ciclo de suprimentos</p>
+      <div className={cn('shrink-0', tabFullHeight ? 'px-4 pb-2 pt-0' : 'px-4 md:px-0 pb-4')}>
+        <P38PageHeader
+          title="Compras"
+          description="Gestão completa do ciclo de suprimentos"
+          children={<HierarquiaPortalEntry className="shrink-0" />}
+        />
       </div>
 
       {/* Tab Bar - PDV Style pill tabs */}
-      <div className={cn('shrink-0', sugestoesFullHeight ? 'px-4' : 'px-4 md:px-0')}>
+      <div className={cn('shrink-0', tabFullHeight ? 'px-4' : 'px-4 md:px-0')}>
         <div className="flex gap-1 bg-muted rounded-2xl p-1 w-full overflow-x-auto no-scrollbar">
           {tabs.map(tab => {
             const Icon = tab.icon;
@@ -405,6 +412,7 @@ export default function ComprasPage() {
             return (
               <button
                 key={tab.value}
+                {...(tab.value === 'sugestoes' ? { 'data-pulse-sensor': 'compras.tab-sugestoes' } : {})}
                 onClick={() => handleTabChange(tab.value)}
                 className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-xl text-xs font-medium transition-all duration-200 whitespace-nowrap ${
                   isActive
@@ -423,8 +431,13 @@ export default function ComprasPage() {
       {/* Tab Content */}
       <div
         className={cn(
-          sugestoesFullHeight
-            ? 'flex-1 min-h-0 overflow-hidden'
+          tabFullHeight
+            ? cn(
+                'flex-1 min-h-0 px-4 desktop-layout:px-0',
+                tabContentScrolls
+                  ? 'overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y pb-6'
+                  : 'overflow-hidden',
+              )
             : 'px-4 md:px-0 pt-4 min-w-0 max-w-full overflow-x-clip',
         )}
       >

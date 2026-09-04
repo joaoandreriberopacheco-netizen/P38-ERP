@@ -253,7 +253,7 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
         </Field>
       </div>
       <div className="shrink-0 border-t border-border/40 bg-card p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] dark:border-border/40 dark:bg-background">
-        <button type="button" onClick={() => setStep(1)} className="flex h-16 w-full items-center justify-center gap-2 rounded-2xl bg-background text-lg font-semibold text-white shadow-sm dark:bg-card dark:text-foreground">
+        <button type="button" onClick={() => setStep(1)} className="flex h-16 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-lg font-semibold text-primary-foreground hover:bg-primary/90 shadow-sm dark:bg-card dark:text-foreground">
           Próximo <ChevronRight className="h-5 w-5" />
         </button>
       </div>

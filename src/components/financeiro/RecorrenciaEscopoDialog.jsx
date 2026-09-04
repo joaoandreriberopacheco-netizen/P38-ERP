@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { RefreshCw, ChevronRight, FileEdit, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { lancamentoStackDialogClass, lancamentoStackOverlayClass } from './fluxo/LancamentoPickerDialog';
 
 const OPCOES_PAGAMENTO = [
   { value: 'apenas_esta',  label: 'Apenas esta',          desc: 'Altera somente este lançamento' },
@@ -19,7 +21,13 @@ const OPCOES_CADASTRO = [
   { value: 'todas', label: 'Todas em aberto', desc: 'Todas as parcelas não pagas desta mesma conta (mesmo vínculo).' },
 ];
 
-export default function RecorrenciaEscopoDialog({ open, onClose, onConfirm, mode = 'pagamento' }) {
+export default function RecorrenciaEscopoDialog({
+  open,
+  onClose,
+  onConfirm,
+  mode = 'pagamento',
+  stackElevated = false,
+}) {
   const [working, setWorking] = useState(false);
 
   if (!open) return null;
@@ -32,8 +40,15 @@ export default function RecorrenciaEscopoDialog({ open, onClose, onConfirm, mode
       : 'Como deseja aplicar a alteração?';
 
   return (
-    <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="sm:max-w-xs p-0 gap-0 dark:bg-background dark:border-border/40 rounded-2xl overflow-hidden">
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent
+        overlayClassName={stackElevated ? lancamentoStackOverlayClass : undefined}
+        hideClose={stackElevated}
+        className={cn(
+          'sm:max-w-xs gap-0 overflow-hidden rounded-2xl p-0 dark:border-border/40 dark:bg-background',
+          stackElevated && lancamentoStackDialogClass('sm:max-w-xs'),
+        )}
+      >
         <div className="px-5 pt-5 pb-3 flex items-center gap-2">
           <Icon className="w-4 h-4 text-muted-foreground" />
           <p className="text-sm font-semibold text-foreground">{titulo}</p>

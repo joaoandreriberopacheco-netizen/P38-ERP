@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import VisualizadorCaixa from '@/components/vendas/caixa/VisualizadorCaixa';
 import { runOperacaoAuthBypass } from '@/components/auth/runOperacaoAuthBypass';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel } from '@/components/ui/p38-mobile-line';
-import { caixaTypo, conferenciaTone } from '@/lib/caixaP38Theme';
+import { caixaTypo, conferenciaTone, caixaSpinner, caixaIconBtn } from '@/lib/caixaP38Theme';
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 
 export default function TurnosFechadosPage() {
@@ -159,7 +159,7 @@ export default function TurnosFechadosPage() {
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
             <h1 className={`${caixaTypo.title} text-2xl mb-2 flex items-center gap-2`}>
-              <Lock className="w-6 h-6 text-muted-foreground" />
+              <Lock className="w-6 h-6 text-muted-foreground dark:text-[#A8B56E]" />
               Turnos Fechados
             </h1>
             <p className={caixaTypo.meta}>
@@ -168,7 +168,7 @@ export default function TurnosFechadosPage() {
           </div>
           <button
             onClick={loadData}
-            className="p-3 rounded-2xl bg-card border border-border/40 shadow-sm hover:bg-muted transition-colors"
+            className={caixaIconBtn}
             style={{ minWidth: '48px', minHeight: '48px' }}
             aria-label="Atualizar lista"
           >
@@ -180,6 +180,7 @@ export default function TurnosFechadosPage() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
+              data-pulse-sensor="turnos-fechados.busca"
               placeholder="Buscar turno, caixa ou operador..."
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
@@ -196,7 +197,7 @@ export default function TurnosFechadosPage() {
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-4 border-border border-t-foreground rounded-full animate-spin" />
+            <div className={caixaSpinner} />
           </div>
         ) : turnosFiltrados.length === 0 ? (
           <div className="bg-card rounded-2xl p-12 text-center shadow-sm border border-border/40">
@@ -221,12 +222,13 @@ export default function TurnosFechadosPage() {
                     thinAccent
                     striped={index % 2 === 1}
                     accent={diffOk ? 'muted' : diferenca > 0 ? 'success' : 'danger'}
+                    palette="caixa"
                     onClick={() => handleSelecionarTurno(turno)}
                     title={turno.conta_caixa_pdv_nome || turno.numero}
                     subtitle={`${turno.numero} · ${turno.usuario_abertura_nome || '—'}`}
                     meta={
                       <>
-                        <P38StatusLabel tone="muted">Fechado</P38StatusLabel>
+                        <P38StatusLabel tone="muted" palette="caixa">Fechado</P38StatusLabel>
                         <span>
                           {turno.data_fechamento
                             ? format(new Date(turno.data_fechamento), 'dd/MM HH:mm', { locale: ptBR })

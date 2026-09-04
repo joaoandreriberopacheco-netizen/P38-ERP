@@ -34,6 +34,7 @@ A função `p38-auth` expõe:
 | `status` | público | `{ needsBootstrap, authUserCount }` |
 | `bootstrap` | público (só se 0 users auth) | Admin define 1.ª senha |
 | `activate` | público | Utilizador define senha (`must_activate`) |
+| `request_password_reset` | público | Envia link de recovery para email cadastrado |
 | `create_user` | admin autenticado | Cria `usuario` + credencial pendente |
 
 ### 3. Primeira activação (admin)
@@ -52,6 +53,17 @@ A função `p38-auth` expõe:
 
 `/login` → utilizador + senha → fica logado no dispositivo.
 
+**Esqueci a senha:** `/esqueci-senha` → informa o utilizador → link enviado para o **email cadastrado** em `public.usuario` (coluna `email` ou `dados.email`). Conclusão em `/redefinir-senha`.
+
+Auditar emails cadastrados:
+
+```bash
+DATABASE_URL=... npm run usuario:audit-emails
+npm run usuario:audit-emails -- --only=joaoandreriberopacheco
+```
+
+No Supabase → **Authentication → URL Configuration**, incluir `https://p-38erp.vercel.app/redefinir-senha` (e previews) em **Redirect URLs**.
+
 ## Variáveis de ambiente (Vercel)
 
 | Variável | Obrigatório |
@@ -69,6 +81,8 @@ A função `p38-auth` expõe:
 | `src/lib/p38InternalAuth.js` | Normalização login ↔ email técnico |
 | `src/functions/p38Auth.js` | Cliente da Edge Function |
 | `src/components/auth/LoginPage.jsx` | Login utilizador + senha |
+| `src/components/auth/EsqueciSenhaPage.jsx` | Pedido de reset por email |
+| `src/components/auth/RedefinirSenhaPage.jsx` | Nova senha após link do email |
 | `src/components/auth/AtivarAcessoPage.jsx` | Bootstrap + activação |
 | `supabase/functions/p38-auth/` | API server-side (service role) |
 | `supabase/migrations/027_usuario_login_interno.sql` | Colunas `login`, `auth_ativado` |
@@ -87,3 +101,5 @@ A função `p38-auth` expõe:
 | `create_user` 403 | Sessão admin; `role=admin` em metadata ou `usuario` |
 | Função indisponível | `npm run supabase:deploy:functions` e `verify_jwt = false` em `p38-auth` |
 | Login inválido | Utilizador normalizado (minúsculas, sem espaços) |
+| Esqueci senha não chega | `npm run usuario:audit-emails` — email em `usuario.email` |
+| Reset diz link inválido | Redirect URL `/redefinir-senha` no Supabase Auth |

@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
 @import './styles/p38-identity.css';
 @import './styles/p38-typography.css';
 @import './styles/p38-tablet.css';
@@ -6,6 +7,29 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Cupom térmico / comprovante — Barlow Regular (400) */
+.p38-cupom-termico {
+  font-family: 'Barlow', sans-serif;
+  font-weight: 400;
+  font-synthesis: none;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+  max-width: 100%;
+}
+
+/* Descrição do item — quebra em várias linhas dentro dos 60mm úteis */
+.p38-cupom-termico .p38-cupom-item-desc {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+
 @keyframes app-toast-progress {
   from {
     transform: scaleX(1);
@@ -13,6 +37,21 @@
   to {
     transform: scaleX(0);
   }
+}
+
+@keyframes p38-nav-progress {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(420%);
+  }
+}
+
+.p38-nav-pending {
+  opacity: 0.72;
+  transform: scale(0.98);
+  transition: opacity 80ms ease-out, transform 80ms ease-out;
 }
 
 
@@ -89,36 +128,36 @@ button:focus-visible {
 
 @layer base {
   :root {
-    /* P38 claro — fundo verde-cinza suave + oliva mediterrâneo + cítricos */
-    --background: 82 12% 97%;
-    --foreground: 82 14% 16%;
+    /* P38 claro — branco puro + carvão da informação + amarelo suco (acento) */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 14%;
     --card: 0 0% 100%;
-    --card-foreground: 82 14% 16%;
+    --card-foreground: 0 0% 14%;
     --popover: 0 0% 100%;
-    --popover-foreground: 82 14% 16%;
+    --popover-foreground: 0 0% 14%;
     --primary: 82 18% 28%;
-    --primary-foreground: 0 0% 99%;
-    --secondary: 82 10% 94%;
-    --secondary-foreground: 82 16% 22%;
-    --muted: 82 8% 94%;
-    --muted-foreground: 82 6% 38%;
-    --accent: 43 55% 92%;
-    --accent-foreground: 82 18% 24%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 97%;
+    --secondary-foreground: 0 0% 20%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 38%;
+    --accent: 43 80% 96%;
+    --accent-foreground: 43 74% 52%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 82 10% 86%;
-    --input: 82 10% 86%;
-    --ring: 82 18% 28%;
-    --chart-1: 82 18% 32%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 82 14% 22%;
+    --border: 0 0% 91%;
+    --input: 0 0% 91%;
+    --ring: 43 74% 52%;
+    --chart-1: 43 74% 52%;
+    --chart-2: 0 0% 35%;
+    --chart-3: 0 0% 55%;
     --chart-4: 43 74% 52%;
-    --chart-5: 27 87% 52%;
+    --chart-5: 0 0% 72%;
     /* Paleta P38 — acentos cítricos e oliva (uso em utilitários Tailwind) */
     --p38-olive: 82 18% 28%;
     --p38-lime: 78 55% 51%;
     --p38-citrus-yellow: 43 74% 52%;
-    --p38-citrus-orange: 27 87% 52%;
+    --p38-citrus-orange: 43 74% 52%;
     --p38-mediterranean: 82 18% 36%;
     /* Tipografia — claro mais robusto que escuro */
     --p38-font-weight-body: 400;
@@ -126,15 +165,15 @@ button:focus-visible {
     --p38-font-weight-heading: 600;
     --app-font-scale: 1;
     --radius: 0.75rem;
-    /* Sidebar claro — oliva suave, não carvão */
-    --sidebar-background: 82 12% 97%;
-    --sidebar-foreground: 82 14% 16%;
+    /* Sidebar claro — branco puro, texto carvão */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 14%;
     --sidebar-primary: 82 18% 28%;
-    --sidebar-primary-foreground: 0 0% 99%;
-    --sidebar-accent: 82 10% 92%;
-    --sidebar-accent-foreground: 82 16% 22%;
-    --sidebar-border: 82 10% 86%;
-    --sidebar-ring: 82 18% 28%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 97%;
+    --sidebar-accent-foreground: 0 0% 20%;
+    --sidebar-border: 0 0% 91%;
+    --sidebar-ring: 43 74% 52%;
 
     /* GlacialBottomNav: alinhar FAB + padding de scroll (mobile) */
     --p38-bottom-nav-bar: 68px;
@@ -305,8 +344,39 @@ html[data-p38-bottom-nav-hidden] {
   }
 }
 
-/* Desktop + tablet paisagem: sem bottom nav — FABs encostam ao fundo */
-@media (min-width: 1024px), ((min-width: 768px) and (orientation: landscape)) {
+/* Notebook com rato (menu lateral): FABs encostam ao fundo. Tablet paisagem mantém o menu de baixo. */
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  .p38-bottom-fab1 {
+    bottom: 1.5rem;
+  }
+  .p38-bottom-fab-mid {
+    bottom: 6rem;
+  }
+  .p38-bottom-fab-high {
+    bottom: 7rem;
+  }
+  .p38-bottom-fab2 {
+    bottom: 6rem;
+  }
+  .p38-bottom-fab-xl {
+    bottom: 1.5rem;
+  }
+  .p38-bottom-dock {
+    bottom: 0;
+  }
+  .p38-quick-access-launcher1,
+  .p38-quick-access-launcher2 {
+    bottom: 1.5rem;
+  }
+  .p38-quick-access-launcher2 {
+    bottom: calc(1.5rem + var(--p38-quick-access-size) + var(--p38-quick-access-gap));
+  }
+  .p38-layout-mobile-scroll-pad {
+    padding-bottom: 0;
+  }
+}
+
+html[data-p38-shell="desktop"] {
   .p38-bottom-fab1 {
     bottom: 1.5rem;
   }
@@ -349,6 +419,119 @@ html[data-p38-bottom-nav-hidden] {
 [data-sonner-toaster] {
   --width: 420px;
   z-index: 99999;
+}
+
+/*
+  Fallback de paisagem: gira o stage interno (menu + conteúdo juntos) quando o SO não roda.
+*/
+:root {
+  --p38-stage-height: 100dvh;
+  --p38-stage-width: 100vw;
+}
+
+html[data-p38-force-landscape='true'] {
+  overflow: hidden;
+  height: 100%;
+  --p38-stage-height: var(--p38-force-landscape-height);
+  --p38-stage-width: var(--p38-force-landscape-width);
+  --p38-bottom-nav-total: var(--p38-bottom-nav-bar);
+  --p38-scroll-pad-below-nav: calc(var(--p38-bottom-nav-bar) + 1.5rem);
+  --p38-bottom-nav-total-hidden: 0px;
+  --p38-scroll-pad-below-nav-hidden: 1.5rem;
+}
+
+html[data-p38-force-landscape='true'] body {
+  margin: 0;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+html[data-p38-force-landscape='true'] #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+html[data-p38-force-landscape='true'] .p38-orientation-rotated-stage {
+  position: fixed;
+  top: 0;
+  left: var(--p38-force-landscape-shift, 100vw);
+  width: var(--p38-force-landscape-width, 100vh);
+  height: var(--p38-force-landscape-height, 100vw);
+  margin: 0;
+  transform: rotate(90deg);
+  transform-origin: top left;
+  overflow: hidden;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+html[data-p38-force-landscape='true'] .p38-app-shell-compact {
+  flex: 1 1 0;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+}
+
+/* Overlays portados — fixed no body; absolute quando filho directo do stage rotacionado */
+.p38-portal-overlay {
+  position: fixed;
+  inset: 0;
+}
+
+.p38-orientation-rotated-stage > .p38-portal-overlay {
+  position: absolute;
+  max-height: 100%;
+}
+
+/* Páginas fullscreen (pedido compra, PDV…) — alinhadas ao stage em Modo Paisagem */
+.p38-fullscreen-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+}
+
+html[data-p38-force-landscape='true'] .p38-orientation-rotated-stage .p38-fullscreen-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  max-height: 100%;
+}
+
+html[data-p38-force-landscape='true'] .p38-orientation-rotated-stage .p38-fullscreen-shell {
+  flex: 1 1 0;
+  min-height: 0;
+  height: auto;
+  max-height: 100%;
+}
+
+/* Legado — preferir p38-portal-overlay */
+.p38-stage-overlay {
+  position: absolute;
+  inset: 0;
+}
+
+.p38-stage-panel-scroll {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y pinch-zoom;
+}
+
+/* Scroll interno em flex mobile — altura limitada (Produtos, Caixa, Margem…) */
+.p38-flex-scroll-y {
+  flex: 1 1 auto;
+  height: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y pinch-zoom;
 }
 
 /* ==========================================

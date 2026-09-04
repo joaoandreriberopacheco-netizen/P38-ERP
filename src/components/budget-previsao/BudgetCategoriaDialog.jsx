@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { FileText } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { lancamentoStackClasses } from '@/components/financeiro/fluxo/LancamentoPickerDialog';
 
 export default function BudgetCategoriaDialog({
   open,
@@ -18,9 +20,12 @@ export default function BudgetCategoriaDialog({
   categoria,
   onSave,
   saving,
+  stackElevated = false,
+  stackLevel = 2,
 }) {
   const [nome, setNome] = useState('');
   const [ativo, setAtivo] = useState(true);
+  const stack = lancamentoStackClasses(stackElevated ? stackLevel : 0);
 
   useEffect(() => {
     if (!open) return;
@@ -41,7 +46,10 @@ export default function BudgetCategoriaDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose?.()}>
-      <DialogContent className="max-w-sm rounded-2xl">
+      <DialogContent
+        overlayClassName={stack.overlay}
+        className={cn('max-w-sm rounded-2xl', stack.content)}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
             <FileText className="h-4 w-4 text-muted-foreground" />

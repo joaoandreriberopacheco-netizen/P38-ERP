@@ -86,7 +86,12 @@ async function comCache(map, key, fetcher) {
  * Evita filter server-side que pode falhar no Base44 e devolver [].
  */
 export async function listarLancamentosFinanceirosAgefinBruto() {
-  const rows = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 5000);
+  const desde = dataLimiteRecorrentes();
+  const rows = await base44.entities.LancamentoFinanceiro.filter(
+    { data_vencimento: { $gte: desde } },
+    '-data_vencimento',
+    5000,
+  ).catch(() => base44.entities.LancamentoFinanceiro.list('-data_vencimento', 5000));
   return Array.isArray(rows) ? rows : [];
 }
 

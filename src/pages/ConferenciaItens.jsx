@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { P38PageHeader } from '@/components/layout/P38PageHeader';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -278,10 +279,11 @@ export default function ConferenciaItens() {
             <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
               <Package className="w-6 h-6 text-foreground/90" />
             </div>
-            <div>
-              <h1 className="text-lg font-semibold text-foreground">CONFERÊNCIA DE ITENS</h1>
-              <p className="text-xs text-muted-foreground">Registre o que está recebendo</p>
-            </div>
+            <P38PageHeader
+              variant="compact"
+              title="Conferência de itens"
+              description="Registre o que está recebendo"
+            />
           </div>
 
           <div className="bg-muted/40 border border-border/40 dark:border-white/10 rounded-lg p-3">
@@ -369,7 +371,7 @@ export default function ConferenciaItens() {
             <Button
               onClick={handleFinalizar}
               disabled={finalizando || itensConferidos.length === 0}
-              className="flex-1 h-14 text-base bg-background hover:bg-primary dark:bg-muted dark:hover:bg-muted shadow-lg"
+              className="flex-1 h-14 text-base bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-muted dark:hover:bg-muted/90 dark:text-foreground shadow-lg"
             >
               {finalizando ? (
                 <>
@@ -473,7 +475,7 @@ export default function ConferenciaItens() {
 
             <Button
               onClick={() => setModalLote({ ...modalLote, open: false })}
-              className="w-full h-12 bg-background hover:bg-primary dark:bg-muted dark:hover:bg-muted"
+              className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-muted dark:hover:bg-muted/90 dark:text-foreground"
             >
               <CheckCircle className="w-5 h-5 mr-2" />
               CONFIRMAR LOTES

@@ -1,7 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     darkMode: ["class"],
-    content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
+    content: ["./index.html", "./app/**/*.{ts,tsx,js,jsx}", "./src/**/*.{ts,tsx,js,jsx}"],
   theme: {
   	screens: {
   		sm: '640px',
@@ -128,10 +128,19 @@ module.exports = {
     function ({ addVariant }) {
       // Mobile: telemóvel OU tablet retrato
       addVariant('mobile-layout', '@media (max-width: 767px), ((max-width: 1023px) and (orientation: portrait))');
-      // Desktop: monitor OU tablet paisagem
-      addVariant('desktop-layout', '@media (min-width: 1024px), ((min-width: 768px) and (orientation: landscape))');
-      addVariant('tablet-landscape', '@media (min-width: 768px) and (max-width: 1023px) and (orientation: landscape)');
+      // Desktop: monitor, tablet paisagem, ou paisagem pedida no Perfil
+      addVariant('desktop-layout', [
+        '@media (min-width: 1024px)',
+        '@media ((min-width: 768px) and (orientation: landscape))',
+        'html[data-p38-force-landscape="true"] &',
+      ]);
+      addVariant('tablet-landscape', [
+        '@media (min-width: 768px) and (max-width: 1023px) and (orientation: landscape)',
+        'html[data-p38-force-landscape="true"] &',
+      ]);
       addVariant('tablet-portrait', '@media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait)');
+      addVariant('sidebar-shell', 'html[data-p38-shell="desktop"] &');
+      addVariant('compact-shell', 'html[data-p38-shell="mobile"] &');
     },
   ],
 }

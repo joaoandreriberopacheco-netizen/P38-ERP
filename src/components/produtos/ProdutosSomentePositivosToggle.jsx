@@ -5,6 +5,7 @@ import {
   CATALOG_SOMENTE_POSITIVOS_QUANTIDADE,
   isSomentePositivosFilter,
 } from '@/lib/filterProdutos';
+import { PRODUTOS_FILTER_OPEN, PRODUTOS_ICON_BTN } from '@/lib/produtosP38Theme';
 
 /** Atalho entre a busca e o painel de filtros: alterna todos vs. estoque positivo (> 0). */
 export default function ProdutosSomentePositivosToggle({ filters, setFilters }) {
@@ -32,8 +33,10 @@ export default function ProdutosSomentePositivosToggle({ filters, setFilters }) 
       variant="ghost"
       size="icon"
       className={cn(
-        'h-10 w-10 flex-shrink-0 rounded-xl bg-muted',
-        active && 'text-[#4a5240] dark:text-[#a4ce33] ring-2 ring-[#4a5240]/40 dark:ring-[#a4ce33]/40',
+        'h-10 w-10 flex-shrink-0 rounded-xl',
+        PRODUTOS_ICON_BTN,
+        active && PRODUTOS_FILTER_OPEN,
+        active && 'text-[#a8942e] dark:text-[#a4ce33]',
       )}
       onClick={toggle}
       title={

@@ -1,31 +1,51 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { base44 } from '@/api/base44Client';
-import { Printer, Loader2, ArrowLeft, Search, X, ChevronDown, ChevronRight, Type, TrendingUp, DollarSign, Percent, Package, BarChart3, SlidersHorizontal } from 'lucide-react';
-import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
+import { Printer, Loader2, ArrowLeft, Search, X, ChevronDown, ChevronRight, Type, TrendingUp, DollarSign, Percent, Package, BarChart3, SlidersHorizontal, PanelTopClose, PanelTopOpen } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { LevelControl } from '@/components/produtos/treegrid/LevelControl';
 import {
   buildMarginTree,
   flattenMarginTree,
   buildExpandedForLevel,
+  buildMarginFlatRows,
   collectAllMarginLeaves,
   formatMarginGroupUnidadeLabel,
 } from '@/lib/marginTree';
 import { format, startOfMonth, endOfMonth, subDays } from 'date-fns';
 import { Link } from 'react-router-dom';
-import { jsPDF } from 'jspdf';
+import { loadJsPDF } from '@/lib/lazyPdfLibs';
 import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import CalendarPopup from '@/components/relatorios/CalendarPopup';
 import { resolveCommercialDisplay, formatCommercialQuantity } from '@/lib/productUnits';
-import { fetchPedidosVendaParaMargem } from '@/lib/fetchPedidosVenda90d';
+import { fetchPedidosVendaParaMargem, fetchPedidosOrigemTrocaMargem } from '@/lib/fetchPedidosVenda90d';
+import { base44 } from '@/api/base44Client';
 import { fetchAllProdutosCatalogo } from '@/lib/fetchProdutosAtivos';
 import {
   pedidoElegivelMargem,
-  resolverTotalLinhaVenda,
+  alocarReceitaPedidoNasLinhas,
   resolveMargemProdutoKey,
   resolveCustoUnitarioMargem,
+  resolveCustoComponentesUnitBaseMargem,
+  acumularCustoComponentesMargem,
+  calcularCustoTotalDosComponentes,
+  criarCamposCustoComponentesZerados,
+  somarCamposCustoComponentes,
+  buildCustoBreakdownLineMargem,
+  labelComposicaoCustoMargem,
+  escalarValorCustoMargemUnidadeExibicao,
+  resolvePrecoVendaLiquidoUnitarioMargem,
+  CUSTO_MARGEM_CAMPOS,
   vendaNoIntervaloConsulta,
+  itensPedidoValidos,
+  resolverTotalLinhaVenda,
 } from '@/lib/relatorioMargemCalculos';
+import {
+  aplicarDeducaoLucroTrocaSubstituto,
+  buildIndiceDevolucaoTrocaMargem,
+  resolverDevolucaoTrocaPedidoMargem,
+  valorSubstitutosTrocaMargem,
+} from '@/lib/relatorioMargemTroca';
 import { registerJsPdfDin1451Fonts, normalizePdfText } from '@/lib/jspdfNotoFont';
 import {
   p38Table,
@@ -40,6 +60,7 @@ import {
 } from '@/lib/p38TableSurfaces';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
 import { parseSearchTerms } from '@/lib/searchTokens';
+import { isP38Dev } from '@/lib/p38PublicEnv';
 
 
 const PDF_COL_GAP_MM = 2;
@@ -49,10 +70,10 @@ const MOBILE_PDF_H_MM = 1200;
 const MARGIN_VIRTUALIZE_MIN_ROWS = 50;
 const MARGIN_TABLE_COL_COUNT = 9;
 const MARGIN_DESKTOP_ROW_H_GROUP = 42;
-const MARGIN_DESKTOP_ROW_H_PRODUTO = 52;
-const MARGIN_MOBILE_ROW_H_GROUP = 104;
+const MARGIN_DESKTOP_ROW_H_PRODUTO = 48;
+const MARGIN_MOBILE_ROW_H_GROUP = 88;
 const MARGIN_MOBILE_ROW_H_GROUP_COLLAPSED = 50;
-const MARGIN_MOBILE_ROW_H_PRODUTO = 112;
+const MARGIN_MOBILE_ROW_H_PRODUTO = 100;
 
 /** Paleta e colunas alinhadas ao PDF mobile (`exportToPDF('expandida_mobile')`). */
 const MARGIN_MOBILE_STORM = '#2d333b';
@@ -86,7 +107,7 @@ const MARGIN_METRIC_SORT_FIELD = {
   precoVenda: 'valor_unitario_medio',
   markup: 'markup_percentual',
   custoTotal: 'custo_total',
-  vendaTotal: 'total_recebido',
+  vendaTotal: 'receita_liquida',
   lucro: 'lucro_total',
 };
 
@@ -99,11 +120,7 @@ function getRowMarkup(row) {
 }
 
 function getRowPrecoMedio(row) {
-  if (row.valor_unitario_medio != null && !Number.isNaN(row.valor_unitario_medio)) {
-    return row.valor_unitario_medio;
-  }
-  const qtd = row.quantidade_vendida || 0;
-  return qtd > 0 ? (row.total_recebido || 0) / qtd : 0;
+  return resolvePrecoVendaLiquidoUnitarioMargem(row);
 }
 
 function getRowCustoUnitCalc(row) {
@@ -125,7 +142,7 @@ function buildMarginMobileTabulatedValues(row) {
     precoVenda: formatNumDisplay(getRowPrecoMedio(row)),
     markup: formatPctShortDisplay(getRowMarkup(row)),
     custoTotal: formatNumDisplay(row.custo_total || 0),
-    vendaTotal: formatNumDisplay(row.total_recebido || 0),
+    vendaTotal: formatNumDisplay(row.receita_liquida || 0),
     lucro: formatNumDisplay(row.lucro_total || 0),
   };
 }
@@ -159,23 +176,95 @@ function marginDesktopQuantClass(tier) {
   return `${MARGIN_BODY_TEXT} tabular-nums text-center text-foreground font-semibold`;
 }
 
+function buildCustoBreakdownLine(row, mode = 'unit') {
+  return buildCustoBreakdownLineMargem(row, { mode, formatNum: formatNumDisplay });
+}
+
+function MargemCustoValorTooltip({ row, mode = 'unit', children, className = '' }) {
+  const line = buildCustoBreakdownLine(row, mode);
+  const unidade = String(row?.unidade_exibicao || '').trim().toUpperCase();
+  if (!line) {
+    return <span className={className}>{children}</span>;
+  }
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className={`cursor-default underline decoration-dotted decoration-muted-foreground/35 underline-offset-2 ${className}`}
+        >
+          {children}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent
+        side="top"
+        className="max-w-[min(100vw-2rem,28rem)] bg-popover text-popover-foreground border border-border text-xs font-normal normal-case tracking-normal"
+      >
+        {mode === 'unit' && unidade ? (
+          <p className="text-[10px] text-muted-foreground mb-1">Valores por {unidade}</p>
+        ) : null}
+        {line}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+function MargemCustoDetalheTotais({ totals }) {
+  const items = CUSTO_MARGEM_CAMPOS.map((campo) => ({
+    label: campo.label,
+    value: campo.subtract ? -(totals?.[campo.totalKey] || 0) : (totals?.[campo.totalKey] || 0),
+  })).filter((item) => Math.abs(item.value) > 0.0001);
+
+  if (!items.length) return null;
+
+  return (
+    <div className={`mx-3 md:mx-0 mt-2 rounded-lg border ${MARGIN_TABLE_BORDER} ${MARGIN_TABLE_PANEL} px-3 py-2.5`}>
+      <p className={`${MARGIN_TABLE_MICRO} uppercase tracking-wide text-muted-foreground`}>
+        {labelComposicaoCustoMargem(totals, { porUnidade: false })}
+      </p>
+      <div className="mt-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-3 gap-y-2">
+        {items.map((item) => (
+          <div key={item.label} className="min-w-0">
+            <p className={`${MARGIN_TABLE_MICRO} uppercase tracking-wide text-muted-foreground leading-none truncate`}>
+              {item.label}
+            </p>
+            <p className={`${MARGIN_BODY_TEXT} tabular-nums mt-1 truncate ${MARGIN_MUTED_VALUE}`}>
+              {formatMoneyDisplay(item.value)}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function MargemDesktopMetricCells({ dataRow, showMetrics = true, tier = 'filho' }) {
   if (!showMetrics) {
     return MARGIN_METRIC_KEYS.map((key) => <td key={key} className="py-1.5 px-1.5" />);
   }
   const values = buildMarginMobileTabulatedValues(dataRow);
-  return MARGIN_METRIC_KEYS.map((key) => (
-    <td
-      key={key}
-      className={`py-1.5 px-1.5 text-right ${MARGIN_BODY_TEXT} tabular-nums ${marginMetricValueClass(key, tier)}`}
-      style={{ lineHeight: 1.2 }}
-    >
-      {values[key]}
-    </td>
-  ));
+  return MARGIN_METRIC_KEYS.map((key) => {
+    const value = values[key];
+    const isCusto = key === 'custoUnit' || key === 'custoTotal';
+    const content = isCusto ? (
+      <MargemCustoValorTooltip row={dataRow} mode={key === 'custoUnit' ? 'unit' : 'total'}>
+        {value}
+      </MargemCustoValorTooltip>
+    ) : (
+      value
+    );
+    return (
+      <td
+        key={key}
+        className={`py-1.5 px-1.5 text-right ${MARGIN_BODY_TEXT} tabular-nums ${marginMetricValueClass(key, tier)}`}
+        style={{ lineHeight: 1.2 }}
+      >
+        {content}
+      </td>
+    );
+  });
 }
 
-function buildMarginFiltrosDesc({ dateRange, searchTerm, treeLevel }) {
+function buildMarginFiltrosDesc({ dateRange, searchTerm, treeLevel, viewMode = 'plana' }) {
   const parts = [];
   if (dateRange?.from && dateRange?.to) {
     parts.push(
@@ -183,7 +272,11 @@ function buildMarginFiltrosDesc({ dateRange, searchTerm, treeLevel }) {
     );
   }
   if (searchTerm?.trim()) parts.push(`Busca: ${searchTerm.trim()}`);
-  if (treeLevel !== 99) parts.push(`Nível: ${treeLevel}`);
+  if (viewMode === 'plana') {
+    parts.push('Lista plana');
+  } else if (treeLevel !== 99) {
+    parts.push(`Nível: ${treeLevel}`);
+  }
   return parts.length ? parts.join(' · ') : 'Sem filtros adicionais';
 }
 
@@ -413,9 +506,14 @@ function MargemMobileKpis({ totals, totalMarkup }) {
   );
 }
 
-function MargemMobileColumnHeader({ className = '' }) {
+function MargemMobileColumnHeader({ className = '', invisible = false, pinStyle = null }) {
   return (
-    <div className={`mx-3 md:mx-0 mt-3 mb-1 rounded-lg overflow-hidden ${MARGIN_TABLE_PANEL} border ${MARGIN_TABLE_BORDER} ${className}`}>
+    <div
+      className={`mx-3 md:mx-0 mt-3 mb-1 rounded-lg overflow-hidden ${MARGIN_TABLE_PANEL} border ${MARGIN_TABLE_BORDER} ${
+        invisible ? 'invisible pointer-events-none' : ''
+      } ${pinStyle ? 'fixed z-[60]' : ''} ${className}`}
+      style={pinStyle || undefined}
+    >
       <div className="flex">
         <div className="w-[3.25rem] flex-shrink-0 border-r border-white/15 px-1.5 py-2 text-right">
           <p className={`${MARGIN_MOBILE_HEADER_LABEL} text-right`}>Qtd</p>
@@ -469,14 +567,26 @@ function MargemMobileTabulatedValues({ row, className = '', tier = 'filho' }) {
           key={rowIdx}
           className={`${MARGIN_MOBILE_VALUES_GRID} ${rowIdx === 0 ? '' : 'mt-1'}`}
         >
-          {valueRow.map(({ key }) => (
-            <p
-              key={key}
-              className={`${MARGIN_BODY_TEXT} tabular-nums text-right truncate ${marginMetricValueClass(key, tier)}`}
-            >
-              {values[key]}
-            </p>
-          ))}
+          {valueRow.map(({ key }) => {
+            const value = values[key];
+            const isCusto = key === 'custoUnit' || key === 'custoTotal';
+            const content = isCusto ? (
+              <MargemCustoValorTooltip row={row} mode={key === 'custoUnit' ? 'unit' : 'total'} className="block truncate text-right">
+                {value}
+              </MargemCustoValorTooltip>
+            ) : (
+              value
+            );
+            return (
+              <div key={key} className="min-w-0">
+                <p
+                  className={`${MARGIN_BODY_TEXT} tabular-nums text-right truncate ${marginMetricValueClass(key, tier)}`}
+                >
+                  {content}
+                </p>
+              </div>
+            );
+          })}
         </div>
       ))}
     </div>
@@ -594,10 +704,63 @@ function MargemLinhaMobile({
   );
 }
 
+function useMarginColumnHeaderPin(scrollRef) {
+  const sentinelRef = useRef(null);
+  const [pinned, setPinned] = useState(false);
+  const [pinFrame, setPinFrame] = useState({ top: 0, left: 0, width: 0 });
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const sync = () => {
+      const scrollEl = scrollRef.current;
+      const sentinelRect = sentinel.getBoundingClientRect();
+      const usesInnerScroll = Boolean(
+        scrollEl && scrollEl.scrollHeight > scrollEl.clientHeight + 1,
+      );
+      const scrollRect = scrollEl?.getBoundingClientRect();
+      const anchorTop = usesInnerScroll && scrollRect ? scrollRect.top : 48;
+      const anchorLeft = scrollRect?.left ?? 0;
+      const anchorWidth = scrollRect?.width ?? window.innerWidth;
+
+      setPinned(sentinelRect.top < anchorTop + 0.5);
+      setPinFrame({
+        top: anchorTop,
+        left: anchorLeft,
+        width: anchorWidth,
+      });
+    };
+
+    const scrollEl = scrollRef.current;
+    scrollEl?.addEventListener('scroll', sync, { passive: true });
+    window.addEventListener('resize', sync);
+    window.addEventListener('orientationchange', sync);
+    const resizeObserver = new ResizeObserver(sync);
+    if (scrollEl) resizeObserver.observe(scrollEl);
+    resizeObserver.observe(sentinel);
+    sync();
+    const frame = window.requestAnimationFrame(sync);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      scrollEl?.removeEventListener('scroll', sync);
+      window.removeEventListener('resize', sync);
+      window.removeEventListener('orientationchange', sync);
+      resizeObserver.disconnect();
+    };
+  }, [scrollRef]);
+
+  return { sentinelRef, pinned, pinFrame };
+}
+
 export default function RelatorioMargemVendas() {
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
+  const [devolucoesTroca, setDevolucoesTroca] = useState([]);
+  const [pedidosOrigemTroca, setPedidosOrigemTroca] = useState({});
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState('plana'); // 'dinamica' | 'plana'
   const [treeLevel, setTreeLevel] = useState(99);
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [dateRange, setDateRange] = useState({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) });
@@ -607,7 +770,7 @@ export default function RelatorioMargemVendas() {
   const [sortOrder, setSortOrder] = useState('desc');
   const [showFilterDrawer, setShowFilterDrawer] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
-  
+  const [toolsCollapsed, setToolsCollapsed] = useState(false);
   useEffect(() => {
     loadData();
   }, []);
@@ -618,6 +781,12 @@ export default function RelatorioMargemVendas() {
       // Load all products to get CURRENT costs
       const prods = await fetchAllProdutosCatalogo();
       setProducts(prods);
+
+      const devolucoes = await base44.entities.DevolucaoTroca.list();
+      setDevolucoesTroca(Array.isArray(devolucoes) ? devolucoes : []);
+
+      const origemMap = await fetchPedidosOrigemTrocaMargem(devolucoes);
+      setPedidosOrigemTroca(origemMap);
 
       const allSales = await fetchPedidosVendaParaMargem();
       setSales(allSales);
@@ -632,21 +801,44 @@ export default function RelatorioMargemVendas() {
   const processedData = useMemo(() => {
     if (!sales.length || !products.length) return [];
 
+    try {
     const prodMap = products.reduce((acc, p) => {
       acc[p.id] = p;
       return acc;
     }, {});
 
     const reportMap = {};
+    const indiceTrocas = buildIndiceDevolucaoTrocaMargem(devolucoesTroca);
+    const margemTrocaDeps = {
+      alocarReceitaPedidoNasLinhas,
+      resolverCustoUnitarioMargem: resolveCustoUnitarioMargem,
+      resolverTotalLinhaVenda,
+      resolveMargemProdutoKey,
+      itensPedidoValidos,
+    };
 
     sales.forEach(sale => {
        if (!pedidoElegivelMargem(sale)) return;
        if (!vendaNoIntervaloConsulta(sale, dateRange?.from, dateRange?.to)) return;
 
-       const itens = Array.isArray(sale.itens) ? sale.itens : [];
-       const descontoPorItem = (sale.valor_desconto || 0) / (itens.length || 1);
+       const devolucaoTroca = resolverDevolucaoTrocaPedidoMargem(sale, indiceTrocas);
+       const valorSubstitutos = devolucaoTroca
+         ? valorSubstitutosTrocaMargem(devolucaoTroca, sale, resolverTotalLinhaVenda)
+         : 0;
+       const trocaMargem =
+         devolucaoTroca && valorSubstitutos > 0
+           ? { devolucao: devolucaoTroca, valorSubstitutos }
+           : null;
 
-       itens.forEach(item => {
+       const itens = itensPedidoValidos(sale);
+       const alocacoes = alocarReceitaPedidoNasLinhas(sale, trocaMargem);
+
+       itens.forEach((item, index) => {
+         const alloc = alocacoes[index] || {
+           total_recebido: 0,
+           total_desconto_venda: 0,
+           receita_liquida: 0,
+         };
          const prodKey = resolveMargemProdutoKey(item);
          const prodId = item.produto_id;
          const product = prodId ? prodMap[prodId] : null;
@@ -672,7 +864,9 @@ export default function RelatorioMargemVendas() {
              quantidade_base_vendida: 0,
              total_recebido: 0,
              total_desconto_venda: 0,
-             custo_unitario_cadastro: custoCalculado
+             lucro_troca_deducao: 0,
+             custo_unitario_cadastro: custoCalculado,
+             ...criarCamposCustoComponentesZerados(),
            };
          }
 
@@ -683,26 +877,45 @@ export default function RelatorioMargemVendas() {
           : { quantidade: Number(item.quantidade) || quantidadeBase, unidade: item.unidade_medida || 'UN' };
          entry.vendas_count += 1;
         entry.quantidade_base_vendida += quantidadeBase;
-        entry.quantidade_vendida += quantidadeResolvida.quantidade;
+         entry.quantidade_vendida += quantidadeResolvida.quantidade;
         entry.unidade_exibicao = quantidadeResolvida.unidade || entry.unidade_exibicao || 'UN';
-         entry.total_recebido += resolverTotalLinhaVenda(item);
-         entry.total_desconto_venda += descontoPorItem;
+         entry.total_recebido += alloc.total_recebido;
+         entry.total_desconto_venda += alloc.total_desconto_venda;
+         acumularCustoComponentesMargem(
+           entry,
+           resolveCustoComponentesUnitBaseMargem(product, item),
+           quantidadeBase,
+         );
        });
+
+       if (trocaMargem?.devolucao) {
+         const pedidoOrigem =
+           pedidosOrigemTroca[String(trocaMargem.devolucao.pedido_origem_id || '')] || null;
+         aplicarDeducaoLucroTrocaSubstituto({
+           reportMap,
+           pedido: sale,
+           devolucao: trocaMargem.devolucao,
+           pedidoOrigem,
+           prodMap,
+           deps: margemTrocaDeps,
+         });
+       }
      });
 
     let sorted = Object.values(reportMap).map(item => {
-       const custo_total = item.custo_unitario_cadastro * item.quantidade_base_vendida;
+       const custo_total = calcularCustoTotalDosComponentes(item);
        const receita_liquida = item.total_recebido - item.total_desconto_venda;
-       const lucro_total = receita_liquida - custo_total;
+       const deducaoTroca = Number(item.lucro_troca_deducao) || 0;
+       const lucro_total = receita_liquida - custo_total - deducaoTroca;
        const valor_unitario_medio =
-         item.quantidade_vendida > 0 ? item.total_recebido / item.quantidade_vendida : 0;
+         item.quantidade_vendida > 0 ? receita_liquida / item.quantidade_vendida : 0;
        const margem_percentual = receita_liquida > 0 ? (lucro_total / receita_liquida) * 100 : 0;
        const markup_percentual = custo_total > 0 ? (lucro_total / custo_total) * 100 : 0;
        const lucro_marginal = lucro_total / item.quantidade_vendida;
        const custo_unitario_calc =
          item.quantidade_vendida > 0
            ? custo_total / item.quantidade_vendida
-           : item.custo_unitario_cadastro ?? 0;
+           : escalarValorCustoMargemUnidadeExibicao(item.custo_unitario_cadastro ?? 0, item);
 
       return {
          ...item,
@@ -711,6 +924,7 @@ export default function RelatorioMargemVendas() {
          lucro_total,
          valor_unitario_medio,
          custo_unitario_calc,
+         custo_unitario_exibicao: custo_unitario_calc,
          margem_percentual,
          markup_percentual,
          lucro_marginal
@@ -749,7 +963,11 @@ export default function RelatorioMargemVendas() {
     }
 
     return sorted;
-  }, [sales, products, dateRange, searchTerm, sortField, sortOrder]);
+    } catch (error) {
+      console.error('Erro ao processar dados do relatório de margem', error);
+      return [];
+    }
+  }, [sales, products, devolucoesTroca, pedidosOrigemTroca, dateRange, searchTerm, sortField, sortOrder]);
 
   const marginTree = useMemo(
     () => buildMarginTree(Array.isArray(processedData) ? processedData : []),
@@ -766,15 +984,21 @@ export default function RelatorioMargemVendas() {
     );
   }, [treeLevel, marginTree, processedData?.length]);
 
-  const displayRows = useMemo(
-    () => flattenMarginTree(marginTree, expandedKeys ?? new Set(), '', 0, sortField, sortOrder),
-    [marginTree, expandedKeys, sortField, sortOrder]
-  );
+  const displayRows = useMemo(() => {
+    if (!processedData?.length) return [];
+    if (viewMode === 'plana') {
+      return buildMarginFlatRows(processedData);
+    }
+    return flattenMarginTree(marginTree, expandedKeys ?? new Set(), '', 0, sortField, sortOrder);
+  }, [viewMode, processedData, marginTree, expandedKeys, sortField, sortOrder]);
 
-  const desktopScrollRef = useRef(null);
-  const mobileScrollRef = useRef(null);
-  const pendingDesktopScrollRef = useRef(null);
-  const pendingMobileScrollRef = useRef(null);
+  const mainScrollRef = useRef(null);
+  const pendingScrollRef = useRef(null);
+  const { sentinelRef: mobileHeaderSentinelRef, pinned: mobileHeaderPinned, pinFrame: mobilePinFrame } =
+    useMarginColumnHeaderPin(mainScrollRef);
+  const mobilePinStyle = mobileHeaderPinned
+    ? { top: mobilePinFrame.top, left: mobilePinFrame.left, width: mobilePinFrame.width }
+    : null;
 
   const shouldVirtualizeRows = displayRows.length >= MARGIN_VIRTUALIZE_MIN_ROWS;
 
@@ -804,14 +1028,14 @@ export default function RelatorioMargemVendas() {
     itemCount: displayRows.length,
     estimateSize: estimateDesktopRowSize,
     overscan: 12,
-    scrollElementRef: desktopScrollRef,
+    scrollElementRef: mainScrollRef,
   });
 
   const mobileVirtual = useVirtualRows({
     itemCount: displayRows.length,
     estimateSize: estimateMobileRowSize,
     overscan: 6,
-    scrollElementRef: mobileScrollRef,
+    scrollElementRef: mainScrollRef,
   });
 
   const visibleDesktopRows = useMemo(
@@ -831,31 +1055,24 @@ export default function RelatorioMargemVendas() {
   );
 
   useLayoutEffect(() => {
-    const desktopEl = desktopScrollRef.current;
-    const mobileEl = mobileScrollRef.current;
-    if (desktopEl) pendingDesktopScrollRef.current = desktopEl.scrollTop;
-    if (mobileEl) pendingMobileScrollRef.current = mobileEl.scrollTop;
-  }, [expandedKeys, treeLevel, displayRows.length]);
+    const scrollEl = mainScrollRef.current;
+    if (scrollEl) pendingScrollRef.current = scrollEl.scrollTop;
+  }, [expandedKeys, treeLevel, viewMode, displayRows.length]);
 
   useLayoutEffect(() => {
-    const desktopEl = desktopScrollRef.current;
-    const mobileEl = mobileScrollRef.current;
-    const desktopTop = pendingDesktopScrollRef.current;
-    const mobileTop = pendingMobileScrollRef.current;
-    if (desktopEl != null && desktopTop != null) {
-      desktopEl.scrollTop = desktopTop;
-      pendingDesktopScrollRef.current = null;
-    }
-    if (mobileEl != null && mobileTop != null) {
-      mobileEl.scrollTop = mobileTop;
-      pendingMobileScrollRef.current = null;
+    const scrollEl = mainScrollRef.current;
+    const top = pendingScrollRef.current;
+    if (scrollEl != null && top != null) {
+      scrollEl.scrollTop = top;
+      pendingScrollRef.current = null;
     }
   }, [expandedKeys, displayRows.length]);
 
-  const exportRows = useMemo(
-    () => (processedData.length ? collectAllMarginLeaves(marginTree, sortField, sortOrder) : []),
-    [marginTree, processedData.length, sortField, sortOrder]
-  );
+  const exportRows = useMemo(() => {
+    if (!processedData.length) return [];
+    if (viewMode === 'plana') return processedData;
+    return collectAllMarginLeaves(marginTree, sortField, sortOrder);
+  }, [viewMode, processedData, marginTree, sortField, sortOrder]);
 
   const handleMetricSort = useCallback(
     (metricKey) => {
@@ -907,7 +1124,7 @@ export default function RelatorioMargemVendas() {
             <td
               lang="pt-BR"
               className={`py-1.5 px-2 min-w-0 ${marginDesktopDescClass(tier)}`}
-              style={{ lineHeight: 1.2, minHeight: 46 }}
+              style={{ lineHeight: 1.2, minHeight: 36 }}
             >
               <MargemDescricaoTexto
                 textStart={marginDescTextStart(treeRow.level)}
@@ -968,10 +1185,11 @@ export default function RelatorioMargemVendas() {
         receita_liquida: 0,
         custo_total: 0,
         lucro_total: 0,
+        ...criarCamposCustoComponentesZerados(),
       };
     }
     const desconto = processedData.reduce((d, item) => d + (item.total_desconto_venda || 0), 0);
-    return processedData.reduce(
+    const base = processedData.reduce(
       (acc, item) => ({
         quantidade_vendida: acc.quantidade_vendida + (item.quantidade_vendida || 0),
         total_recebido: acc.total_recebido + (item.total_recebido || 0),
@@ -989,6 +1207,11 @@ export default function RelatorioMargemVendas() {
         lucro_total: 0,
       }
     );
+    const custoComponentes = processedData.reduce(
+      (acc, item) => somarCamposCustoComponentes(acc, item),
+      criarCamposCustoComponentesZerados(),
+    );
+    return { ...base, ...custoComponentes };
   }, [processedData]);
 
   const totalMarkup = totals.custo_total > 0 ? (totals.lucro_total / totals.custo_total) * 100 : 0;
@@ -996,7 +1219,7 @@ export default function RelatorioMargemVendas() {
   const productCount = processedData.length;
   const activeFilterCount = [
     searchTerm.trim(),
-    treeLevel !== 99,
+    viewMode === 'dinamica' && treeLevel !== 99,
   ].filter(Boolean).length;
 
   const formatMoney = (val) => `R$ ${val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -1005,11 +1228,16 @@ export default function RelatorioMargemVendas() {
   const exportToCSV = () => {
     const flat = exportRows.length ? exportRows : processedData;
     const headers =
-      'Produto;Categoria;Quant;Un;Custo Un Calc;Preço Venda Médio;Markup %;Custo Total;Receita Total;Lucro\n';
+      `Produto;Categoria;Quant;Un;Custo Un Calc;Preço Venda Médio;Markup %;Custo Total;Receita Total;Lucro;${CUSTO_MARGEM_CAMPOS.map((c) => c.label).join(';')}\n`;
     const rows = flat
       .map((row) => {
         const values = buildMarginMobileTabulatedValues(row);
-        return `${row.nome};${row.categoria};${row.quantidade_vendida};${row.unidade_exibicao || 'UN'};${values.custoUnit};${values.precoVenda};${values.markup};${values.custoTotal};${values.vendaTotal};${values.lucro}`;
+        const custoPartes = CUSTO_MARGEM_CAMPOS.map((campo) => {
+          const raw = Number(row[campo.totalKey]) || 0;
+          const signed = campo.subtract ? -raw : raw;
+          return (signed).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }).join(';');
+        return `${row.nome};${row.categoria};${row.quantidade_vendida};${row.unidade_exibicao || 'UN'};${values.custoUnit};${values.precoVenda};${values.markup};${values.custoTotal};${values.vendaTotal};${values.lucro};${custoPartes}`;
       })
       .join('\n');
     const csvContent = "data:text/csv;charset=utf-8," + headers + rows;
@@ -1043,7 +1271,7 @@ export default function RelatorioMargemVendas() {
         totals,
         totalMarkup,
         productCount,
-        filtersDesc: buildMarginFiltrosDesc({ dateRange, searchTerm, treeLevel }),
+        filtersDesc: buildMarginFiltrosDesc({ dateRange, searchTerm, treeLevel, viewMode }),
         generatedAt: format(new Date(), 'dd/MM/yyyy HH:mm'),
       });
       const blob = new Blob([resposta.data], { type: 'application/pdf' });
@@ -1059,7 +1287,8 @@ export default function RelatorioMargemVendas() {
     }
 
     if (isMobilePdf) {
-      const pdf = new jsPDF({
+      const JsPDF = await loadJsPDF();
+      const pdf = new JsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: [MOBILE_PDF_W_MM, MOBILE_PDF_H_MM],
@@ -1091,6 +1320,7 @@ export default function RelatorioMargemVendas() {
         dateRange,
         searchTerm,
         treeLevel,
+        viewMode,
       });
 
       const formatNumPdf = (val) =>
@@ -1254,7 +1484,7 @@ export default function RelatorioMargemVendas() {
           precoVenda: formatNumPdf(getRowPrecoMedio(dataRow)),
           markup: formatPctPdf(getRowMarkup(dataRow)),
           custoTotal: formatNumPdf(dataRow.custo_total || 0),
-          vendaTotal: formatNumPdf(dataRow.total_recebido || 0),
+          vendaTotal: formatNumPdf(dataRow.receita_liquida || 0),
           lucro: formatNumPdf(dataRow.lucro_total || 0),
         };
         const row2Y = valoresY + 5.2;
@@ -1439,7 +1669,8 @@ export default function RelatorioMargemVendas() {
       return;
     }
 
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const JsPDF = await loadJsPDF();
+    const pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const pdfFontFamily = await registerJsPdfDin1451Fonts(pdf);
     const setPdfFont = (style = 'normal') => pdf.setFont(pdfFontFamily, style);
     const pageWidth = pdf.internal.pageSize.getWidth();
@@ -1644,7 +1875,7 @@ export default function RelatorioMargemVendas() {
         precoVenda: formatNumPdf(getRowPrecoMedio(dataRow)),
         markup: formatPctPdf(getRowMarkup(dataRow)),
         custoTotal: formatNumPdf(dataRow.custo_total || 0),
-        vendaTotal: formatNumPdf(dataRow.total_recebido || 0),
+        vendaTotal: formatNumPdf(dataRow.receita_liquida || 0),
         lucro: formatNumPdf(dataRow.lucro_total || 0),
       };
 
@@ -1707,7 +1938,7 @@ export default function RelatorioMargemVendas() {
     pdf.save('relatorio_margem.pdf');
     } catch (error) {
       console.error('Erro ao gerar PDF do relatório de margem', error);
-      const devDetail = import.meta.env.DEV && error?.message ? ` (${error.message})` : '';
+      const devDetail = isP38Dev() && error?.message ? ` (${error.message})` : '';
       toast.error(`Não foi possível gerar o PDF. Tente novamente.${devDetail}`);
     }
   };
@@ -1735,12 +1966,15 @@ export default function RelatorioMargemVendas() {
   const desktopRowOffset = shouldVirtualizeRows ? desktopVirtual.startIndex : 0;
   const mobileRowOffset = shouldVirtualizeRows ? mobileVirtual.startIndex : 0;
 
+  const filtrosDesc = buildMarginFiltrosDesc({ dateRange, searchTerm, treeLevel, viewMode });
+
   return (
-    <div className="font-din-1451 h-full min-h-0 flex flex-col overflow-hidden bg-background md:overflow-x-hidden">
-      <div className="max-w-full mx-auto min-w-0 flex flex-col flex-1 min-h-0 overflow-hidden">
-        {/* Header */}
-        <div className="flex-none bg-background border-b border-border z-10">
-          <div className="w-full min-w-0 px-3 py-2 space-y-2">
+    <TooltipProvider delayDuration={200}>
+    <div className="font-din-1451 flex flex-1 min-h-0 h-full flex-col overflow-hidden bg-background md:overflow-x-hidden">
+      <div className="max-w-full mx-auto min-w-0 flex flex-1 min-h-0 flex-col overflow-hidden">
+        {/* Cabeçalho fixo — só título e ações */}
+        <div className="flex-none bg-background border-b border-border z-20">
+          <div className="w-full min-w-0 px-3 py-2">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <Link to="/Relatorios">
@@ -1768,123 +2002,49 @@ export default function RelatorioMargemVendas() {
                   </p>
                 </div>
               </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="h-9 w-9 rounded-xl hover:bg-muted dark:hover:bg-secondary/80 transition text-foreground/90 flex items-center justify-center flex-shrink-0" title="Opções de impressão">
-                    <Printer className="w-4 h-4" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="dark:bg-secondary dark:border-border text-sm">
-                  <DropdownMenuItem onClick={() => exportToPDF('a4')} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer">
-                    PDF (A4)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => exportToPDF('a4_enxuto')}
-                    className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer"
-                  >
-                    PDF enxuto (A4)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => exportToPDF('expandida_mobile')}
-                    className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer"
-                  >
-                    PDF mobile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={exportToCSV} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer">
-                    CSV
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            <div className="flex gap-2 min-w-0 items-center">
-              <div className="relative flex-1 min-w-0">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                <input
-                  autoComplete="off"
-                  type="text"
-                  placeholder="Produto, código, categoria ou tag (espaço ou ; para combinar termos)..."
-                  value={searchDraft}
-                  onChange={(event) => setSearchDraft(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') handleApplySearchFilter();
-                  }}
-                  className="border-none bg-muted dark:bg-secondary h-10 text-sm pl-9 pr-3 text-foreground/90 shadow-none focus:outline-none focus:ring-0 w-full min-w-0 rounded-xl"
-                />
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setToolsCollapsed((collapsed) => !collapsed)}
+                  className="h-9 w-9 rounded-xl hover:bg-muted dark:hover:bg-secondary/80 transition text-foreground/90 flex items-center justify-center"
+                  title={toolsCollapsed ? 'Mostrar filtros e ferramentas' : 'Ocultar filtros e ferramentas'}
+                  aria-expanded={!toolsCollapsed}
+                >
+                  {toolsCollapsed ? (
+                    <PanelTopOpen className="w-4 h-4" />
+                  ) : (
+                    <PanelTopClose className="w-4 h-4" />
+                  )}
+                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="h-9 w-9 rounded-xl hover:bg-muted dark:hover:bg-secondary/80 transition text-foreground/90 flex items-center justify-center flex-shrink-0" title="Opções de impressão">
+                      <Printer className="w-4 h-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="dark:bg-secondary dark:border-border text-sm">
+                    <DropdownMenuItem onClick={() => exportToPDF('a4')} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer">
+                      PDF (A4)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => exportToPDF('a4_enxuto')}
+                      className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer"
+                    >
+                      PDF enxuto (A4)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => exportToPDF('expandida_mobile')}
+                      className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer"
+                    >
+                      PDF mobile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={exportToCSV} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer">
+                      CSV
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-              <button
-                type="button"
-                onClick={handleApplySearchFilter}
-                className="h-10 px-3 rounded-xl bg-background dark:bg-secondary text-foreground hover:bg-primary dark:hover:bg-muted transition text-xs font-semibold whitespace-nowrap flex-shrink-0"
-                title="Aplicar busca"
-              >
-                Filtrar
-              </button>
-              <button
-                type="button"
-                className={`h-10 w-10 flex-shrink-0 rounded-xl relative flex items-center justify-center ${showFilterDrawer || activeFilterCount > 0 ? 'bg-muted dark:bg-muted' : 'bg-muted dark:bg-secondary'}`}
-                onClick={() => setShowFilterDrawer((open) => !open)}
-                title="Filtros"
-              >
-                <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
-                {activeFilterCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-muted text-foreground text-[10px] rounded-full flex items-center justify-center font-bold">
-                    {activeFilterCount}
-                  </span>
-                )}
-              </button>
-              {activeFilterCount > 0 && (
-                <button
-                  onClick={handleClearFilters}
-                  className="h-10 w-10 flex-shrink-0 rounded-xl text-muted-foreground bg-muted dark:bg-secondary hover:bg-muted dark:hover:bg-muted/80 transition flex items-center justify-center"
-                  title="Limpar filtros"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
             </div>
-
-            {showFilterDrawer && (
-              <div className="grid grid-cols-1 md:grid-cols-6 gap-2 pb-1">
-                <div className="flex items-center gap-2 bg-muted dark:bg-secondary rounded-xl md:rounded-lg px-3 h-10 md:h-9 md:col-span-2 overflow-x-auto">
-                  <span className="text-xs text-muted-foreground flex-shrink-0">Nível da TreeGrid</span>
-                  <LevelControl level={treeLevel} onChange={setTreeLevel} />
-                </div>
-                <button
-                  onClick={() => {
-                    const today = new Date();
-                    setDateRange({ from: today, to: today });
-                  }}
-                  className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-muted dark:bg-secondary text-foreground/90 hover:bg-muted dark:hover:bg-muted/80 transition"
-                >
-                  Hoje
-                </button>
-                <button
-                  onClick={() => {
-                    const today = new Date();
-                    setDateRange({ from: subDays(today, 30), to: today });
-                  }}
-                  className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-muted dark:bg-secondary text-foreground/90 hover:bg-muted dark:hover:bg-muted/80 transition"
-                >
-                  30 dias
-                </button>
-                <button
-                  onClick={() => {
-                    const today = new Date();
-                    setDateRange({ from: startOfMonth(today), to: endOfMonth(today) });
-                  }}
-                  className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-muted dark:bg-secondary text-foreground/90 hover:bg-muted dark:hover:bg-muted/80 transition"
-                >
-                  Mês atual
-                </button>
-                <button
-                  onClick={() => setShowCalendar(true)}
-                  className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-muted dark:bg-secondary text-foreground/90 hover:bg-muted dark:hover:bg-muted/80 transition"
-                >
-                  {dateRange.from ? `${format(dateRange.from, 'dd/MM')} - ${dateRange.to ? format(dateRange.to, 'dd/MM') : '...'}` : 'Selecionar período'}
-                </button>
-              </div>
-            )}
           </div>
         </div>
 
@@ -1917,76 +2077,200 @@ export default function RelatorioMargemVendas() {
             document.body
           )}
 
-<div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-           {/* Toolbar */}
-           <div className="px-3 md:mx-4 mb-2 py-2 min-w-0 max-w-full">
-             <div className="flex flex-wrap items-center gap-2 min-w-0 [&_button]:!min-h-9 [&_button]:!min-w-9 md:[&_button]:!min-h-6 md:[&_button]:!min-w-6">
-            <div className="hidden md:contents">
-            <LevelControl level={treeLevel} onChange={setTreeLevel} />
-            <div className="w-px h-8 bg-muted dark:bg-muted mx-0.5 flex-shrink-0" />
-            </div>
-            {/* Critério selecionado - ícone apenas */}
-            <div className="relative">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="flex items-center justify-center w-10 h-10 rounded-xl border border-border/40/80 dark:border-border bg-card dark:bg-secondary hover:bg-muted/40 dark:hover:bg-muted/80 shadow-sm transition" title="Critério de ordenação">
-                    {sortField === 'nome' && <Type className="w-4 h-4 text-foreground/90" />}
-                    {sortField === 'lucro_total' && <DollarSign className="w-4 h-4 text-foreground/90" />}
-                    {sortField === 'total_recebido' && <TrendingUp className="w-4 h-4 text-foreground/90" />}
-                    {sortField === 'markup_percentual' && <Percent className="w-4 h-4 text-foreground/90" />}
-                    {sortField === 'valor_unitario_medio' && <DollarSign className="w-4 h-4 text-foreground/90" />}
-                    {sortField === 'quantidade_vendida' && <Package className="w-4 h-4 text-foreground/90" />}
-                    {sortField === 'custo_total' && <TrendingUp className="w-4 h-4 text-foreground/90 rotate-180" />}
+        {/* Área rolável — filtros sobem; cabeçalho da tabela fixa ao rolar (mobile) */}
+        <div
+          ref={mainScrollRef}
+          className="flex-1 min-h-0 min-w-0 p38-stage-panel-scroll overflow-x-hidden touch-pan-y pb-[var(--p38-scroll-pad-below-nav)]"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
+          {!toolsCollapsed && (
+            <div className="px-3 pt-2 pb-2 space-y-2 border-b border-border/50 bg-background">
+              <div className="flex gap-2 min-w-0 items-center">
+                <div className="relative flex-1 min-w-0">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                  <input
+                    autoComplete="off"
+                    type="text"
+                    data-pulse-sensor="relatorio-margem.busca"
+                    placeholder="Produto, código, categoria ou tag (espaço ou ; para combinar termos)..."
+                    value={searchDraft}
+                    onChange={(event) => setSearchDraft(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') handleApplySearchFilter();
+                    }}
+                    className="border-none bg-muted dark:bg-secondary h-10 text-sm pl-9 pr-3 text-foreground/90 shadow-none focus:outline-none focus:ring-0 w-full min-w-0 rounded-xl"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleApplySearchFilter}
+                  className="h-10 px-3 rounded-xl bg-background dark:bg-secondary text-foreground hover:bg-primary dark:hover:bg-muted transition text-xs font-semibold whitespace-nowrap flex-shrink-0"
+                  title="Aplicar busca"
+                >
+                  Filtrar
+                </button>
+                <button
+                  type="button"
+                  className={`h-10 w-10 flex-shrink-0 rounded-xl relative flex items-center justify-center ${showFilterDrawer || activeFilterCount > 0 ? 'bg-muted dark:bg-muted' : 'bg-muted dark:bg-secondary'}`}
+                  onClick={() => setShowFilterDrawer((open) => !open)}
+                  title="Filtros"
+                >
+                  <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
+                  {activeFilterCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-muted text-foreground text-[10px] rounded-full flex items-center justify-center font-bold">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
+                {activeFilterCount > 0 && (
+                  <button
+                    onClick={handleClearFilters}
+                    className="h-10 w-10 flex-shrink-0 rounded-xl text-muted-foreground bg-muted dark:bg-secondary hover:bg-muted dark:hover:bg-muted/80 transition flex items-center justify-center"
+                    title="Limpar filtros"
+                  >
+                    <X className="w-4 h-4" />
                   </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="dark:bg-secondary dark:border-border">
-                  <DropdownMenuItem onClick={() => { setSortField('nome'); setSortOrder('asc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
-                    <Type className="w-4 h-4" />
-                    <span>Descrição</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setSortField('quantidade_vendida'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
-                    <Package className="w-4 h-4" />
-                    <span>Quant</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setSortField('valor_unitario_medio'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
-                    <DollarSign className="w-4 h-4" />
-                    <span>Preço un médio</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setSortField('total_recebido'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4" />
-                    <span>Receita</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setSortField('custo_total'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 rotate-180" />
-                    <span>Custo</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setSortField('lucro_total'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
-                    <DollarSign className="w-4 h-4" />
-                    <span>Lucro</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setSortField('markup_percentual'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
-                    <Percent className="w-4 h-4" />
-                    <span>Markup</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                )}
+              </div>
+
+              {showFilterDrawer && (
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-2">
+                  {viewMode === 'dinamica' && (
+                    <div className="flex items-center gap-2 bg-muted dark:bg-secondary rounded-xl md:rounded-lg px-3 h-10 md:h-9 md:col-span-2 overflow-x-auto">
+                      <span className="text-xs text-muted-foreground flex-shrink-0">Nível da TreeGrid</span>
+                      <LevelControl level={treeLevel} onChange={setTreeLevel} />
+                    </div>
+                  )}
+                  <button
+                    onClick={() => {
+                      const today = new Date();
+                      setDateRange({ from: today, to: today });
+                    }}
+                    className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-muted dark:bg-secondary text-foreground/90 hover:bg-muted dark:hover:bg-muted/80 transition"
+                  >
+                    Hoje
+                  </button>
+                  <button
+                    onClick={() => {
+                      const today = new Date();
+                      setDateRange({ from: subDays(today, 30), to: today });
+                    }}
+                    className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-muted dark:bg-secondary text-foreground/90 hover:bg-muted dark:hover:bg-muted/80 transition"
+                  >
+                    30 dias
+                  </button>
+                  <button
+                    onClick={() => {
+                      const today = new Date();
+                      setDateRange({ from: startOfMonth(today), to: endOfMonth(today) });
+                    }}
+                    className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-muted dark:bg-secondary text-foreground/90 hover:bg-muted dark:hover:bg-muted/80 transition"
+                  >
+                    Mês atual
+                  </button>
+                  <button
+                    onClick={() => setShowCalendar(true)}
+                    className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-muted dark:bg-secondary text-foreground/90 hover:bg-muted dark:hover:bg-muted/80 transition"
+                  >
+                    {dateRange.from ? `${format(dateRange.from, 'dd/MM')} - ${dateRange.to ? format(dateRange.to, 'dd/MM') : '...'}` : 'Selecionar período'}
+                  </button>
+                </div>
+              )}
+
+              <div className="min-w-0 max-w-full">
+                <div className="flex flex-wrap items-center gap-2 min-w-0 [&_button]:!min-h-9 [&_button]:!min-w-9 md:[&_button]:!min-h-6 md:[&_button]:!min-w-6">
+                  <div className="flex items-center bg-muted dark:bg-secondary rounded-lg p-0.5 gap-0.5 flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('dinamica')}
+                      className={`text-[10px] px-2 py-1 rounded transition-colors ${
+                        viewMode === 'dinamica'
+                          ? 'bg-white dark:bg-muted text-foreground/90 shadow-sm font-medium'
+                          : 'text-muted-foreground'
+                      }`}
+                    >
+                      Tree Grid
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('plana')}
+                      className={`text-[10px] px-2 py-1 rounded transition-colors ${
+                        viewMode === 'plana'
+                          ? 'bg-white dark:bg-muted text-foreground/90 shadow-sm font-medium'
+                          : 'text-muted-foreground'
+                      }`}
+                    >
+                      Plana
+                    </button>
+                  </div>
+                  {viewMode === 'dinamica' && (
+                    <>
+                      <div className="hidden md:contents">
+                        <LevelControl level={treeLevel} onChange={setTreeLevel} />
+                        <div className="w-px h-8 bg-muted dark:bg-muted mx-0.5 flex-shrink-0" />
+                      </div>
+                    </>
+                  )}
+                  <div className="relative">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="flex items-center justify-center w-10 h-10 rounded-xl border border-border/40/80 dark:border-border bg-card dark:bg-secondary hover:bg-muted/40 dark:hover:bg-muted/80 shadow-sm transition" title="Critério de ordenação">
+                          {sortField === 'nome' && <Type className="w-4 h-4 text-foreground/90" />}
+                          {sortField === 'lucro_total' && <DollarSign className="w-4 h-4 text-foreground/90" />}
+                          {sortField === 'receita_liquida' && <TrendingUp className="w-4 h-4 text-foreground/90" />}
+                          {sortField === 'markup_percentual' && <Percent className="w-4 h-4 text-foreground/90" />}
+                          {sortField === 'valor_unitario_medio' && <DollarSign className="w-4 h-4 text-foreground/90" />}
+                          {sortField === 'quantidade_vendida' && <Package className="w-4 h-4 text-foreground/90" />}
+                          {sortField === 'custo_total' && <TrendingUp className="w-4 h-4 text-foreground/90 rotate-180" />}
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="dark:bg-secondary dark:border-border">
+                        <DropdownMenuItem onClick={() => { setSortField('nome'); setSortOrder('asc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
+                          <Type className="w-4 h-4" />
+                          <span>Descrição</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setSortField('quantidade_vendida'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
+                          <Package className="w-4 h-4" />
+                          <span>Quant</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setSortField('valor_unitario_medio'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
+                          <DollarSign className="w-4 h-4" />
+                          <span>Preço un médio</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setSortField('receita_liquida'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4" />
+                          <span>Receita</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setSortField('custo_total'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4 rotate-180" />
+                          <span>Custo</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setSortField('lucro_total'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
+                          <DollarSign className="w-4 h-4" />
+                          <span>Lucro</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setSortField('markup_percentual'); setSortOrder('desc'); }} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer flex items-center gap-2">
+                          <Percent className="w-4 h-4" />
+                          <span>Markup</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <button
+                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                    className="flex items-center justify-center w-11 h-11 md:w-10 md:h-10 flex-shrink-0 rounded-xl border border-border/40/80 dark:border-border bg-card dark:bg-secondary hover:bg-muted/40 dark:hover:bg-muted/80 shadow-sm transition"
+                    title="Alternar direção"
+                  >
+                    <ChevronDown className={`w-4 h-4 text-foreground/90 transition ${
+                      sortOrder === 'desc' ? 'rotate-180' : ''
+                    }`} />
+                  </button>
+                </div>
+              </div>
             </div>
+          )}
 
-            {/* Seta para direção */}
-            <button
-              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              className="flex items-center justify-center w-11 h-11 md:w-10 md:h-10 flex-shrink-0 rounded-xl border border-border/40/80 dark:border-border bg-card dark:bg-secondary hover:bg-muted/40 dark:hover:bg-muted/80 shadow-sm transition"
-              title="Alternar direção"
-            >
-              <ChevronDown className={`w-4 h-4 text-foreground/90 transition ${
-                sortOrder === 'desc' ? 'rotate-180' : ''
-              }`} />
-            </button>
-             </div>
-           </div>
-
-           {/* Table - Desktop Table / Mobile Cards */}
-        <div className="flex-1 min-h-0 p-3 desktop-layout:px-4 desktop-layout:pt-0 desktop-layout:pb-4 min-w-0 max-w-full overflow-hidden" id="relatorio-table">
+          <div className="min-w-0 max-w-full p-3 desktop-layout:px-4 desktop-layout:pb-4" id="relatorio-table">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 px-4 text-center rounded-2xl border border-dashed border-border/40 dark:border-border bg-card/60 dark:bg-background/60">
               <Loader2 className="w-9 h-9 animate-spin text-muted-foreground mb-4" />
@@ -1996,23 +2280,16 @@ export default function RelatorioMargemVendas() {
           ) : processedData.length > 0 ? (
             <>
 
-              {/* Desktop: painel resumo + KPIs (mesmo visual mobile) */}
-              <div className="hidden desktop-layout:block mb-3 space-y-3">
-                <MargemMobileReportHeader
-                  filtrosDesc={buildMarginFiltrosDesc({
-                    dateRange,
-                    searchTerm,
-                    treeLevel,
-                  })}
-                />
-                <MargemMobileKpis totals={totals} totalMarkup={totalMarkup} />
-              </div>
+              {/* Desktop: painel resumo + KPIs (rola com a página) */}
+              {!toolsCollapsed && (
+                <div className="hidden desktop-layout:block mb-3 space-y-3">
+                  <MargemMobileReportHeader filtrosDesc={filtrosDesc} />
+                  <MargemMobileKpis totals={totals} totalMarkup={totalMarkup} />
+                  <MargemCustoDetalheTotais totals={totals} />
+                </div>
+              )}
               {/* Desktop Table View */}
-              <div
-                ref={desktopScrollRef}
-                className="hidden desktop-layout:block h-full min-h-0 min-w-0 overflow-auto overscroll-contain rounded-xl border border-border bg-background shadow-sm"
-                style={{ WebkitOverflowScrolling: 'touch' }}
-              >
+              <div className="hidden desktop-layout:block min-w-0 rounded-xl border border-border bg-background shadow-sm overflow-hidden">
                 <table className={`w-full table-fixed ${MARGIN_BODY_TEXT}`}>
                   <colgroup>
                     <col className="w-[72px]" />
@@ -2090,21 +2367,20 @@ export default function RelatorioMargemVendas() {
                           </table>
               </div>
 
-              {/* Mobile: mesma diagramação do PDF mobile */}
-              <div
-                ref={mobileScrollRef}
-                className="desktop-layout:hidden h-full min-h-0 min-w-0 max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain rounded-lg border border-border bg-background pb-[var(--p38-scroll-pad-below-nav)]"
-                style={{ WebkitOverflowScrolling: 'touch' }}
-              >
-                <MargemMobileReportHeader
-                  filtrosDesc={buildMarginFiltrosDesc({
-                    dateRange,
-                    searchTerm,
-                    treeLevel,
-                  })}
-                />
-                <MargemMobileKpis totals={totals} totalMarkup={totalMarkup} />
-                <MargemMobileColumnHeader className="sticky top-0 z-20 shadow-sm" />
+              {/* Mobile: diagramação do PDF mobile com cabeçalho de colunas fixo ao rolar */}
+              <div className="desktop-layout:hidden min-w-0 max-w-full">
+                {!toolsCollapsed && (
+                  <>
+                    <MargemMobileReportHeader filtrosDesc={filtrosDesc} />
+                    <MargemMobileKpis totals={totals} totalMarkup={totalMarkup} />
+                    <MargemCustoDetalheTotais totals={totals} />
+                  </>
+                )}
+                <div ref={mobileHeaderSentinelRef} className="h-px w-full shrink-0" aria-hidden />
+                <MargemMobileColumnHeader invisible={mobileHeaderPinned} />
+                {mobileHeaderPinned ? (
+                  <MargemMobileColumnHeader pinStyle={mobilePinStyle} className="shadow-sm" />
+                ) : null}
                 {mobilePadTop > 0 && (
                   <div aria-hidden="true" style={{ height: mobilePadTop, flexShrink: 0 }} />
                 )}
@@ -2120,11 +2396,13 @@ export default function RelatorioMargemVendas() {
                       onToggle={() => handleToggleGroup(treeRow.key)}
                     />
                   ) : (
+                    treeRow.item ? (
                     <MargemLinhaMobile
                       key={treeRow.key}
                       row={treeRow.item}
                       level={treeRow.level}
                     />
+                    ) : null
                   )
                 )}
                 {mobilePadBottom > 0 && (
@@ -2148,9 +2426,10 @@ export default function RelatorioMargemVendas() {
               </p>
             </div>
           )}
-        </div>
+          </div>
         </div>
       </div>
     </div>
+    </TooltipProvider>
   );
 }

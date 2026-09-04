@@ -1,7 +1,23 @@
 import { ENTITY_TO_TABLE, resolveEntityMapping } from './entityTableMap.js';
+import { isP38Dev } from '@/lib/p38PublicEnv';
 
 /** Colunas físicas comuns às tabelas managed pelo app. */
 const META_COLUMNS = new Set(['id', 'created_at', 'updated_at', 'created_by']);
+
+/** Coluna promovida vazia (null/undefined/'') — valor legado em `dados` deve prevalecer. */
+function isEmptyPromotedColumnValue(value) {
+  return value === null || value === undefined || value === '';
+}
+
+function mergeOverflowBlob(target, blob) {
+  if (!blob || typeof blob !== 'object') return target;
+  for (const [k, v] of Object.entries(blob)) {
+    if (!(k in target) || isEmptyPromotedColumnValue(target[k])) {
+      target[k] = v;
+    }
+  }
+  return target;
+}
 
 function parseOrder(order) {
   if (order === undefined || order === null || order === '') {
@@ -27,17 +43,13 @@ function decorateRow(row, entityName, mapping) {
   if ('dados' in out && out.dados && typeof out.dados === 'object') {
     const dados = out.dados;
     delete out.dados;
-    for (const [k, v] of Object.entries(dados)) {
-      if (!(k in out)) out[k] = v;
-    }
+    mergeOverflowBlob(out, dados);
   }
 
   if ('extras' in out && out.extras && typeof out.extras === 'object') {
     const extras = out.extras;
     delete out.extras;
-    for (const [k, v] of Object.entries(extras)) {
-      if (!(k in out)) out[k] = v;
-    }
+    mergeOverflowBlob(out, extras);
   }
 
   if (entityName === 'TargetFlare') {
@@ -55,6 +67,28 @@ function decorateRow(row, entityName, mapping) {
       if (out.total == null) out.total = totalLegado;
     } else if (out.total != null && out.valor_total == null) {
       out.valor_total = out.total;
+    }
+  }
+  return out;
+}
+
+function isLikelyDateField(key) {
+  if (key === 'eta' || key === 'data_validade') return true;
+  if (key.startsWith('data_')) return true;
+  if (key.endsWith('_date')) return true;
+  if (key.startsWith('previsao_')) return true;
+  return false;
+}
+
+/** Postgres rejeita `""` em colunas date/timestamptz — converte para null. */
+function sanitizeEmptyDateValues(payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return payload;
+  const out = { ...payload };
+  for (const [k, v] of Object.entries(out)) {
+    if (v === '' && isLikelyDateField(k)) {
+      out[k] = null;
+    } else if (k === 'dados' && v && typeof v === 'object' && !Array.isArray(v)) {
+      out.dados = sanitizeEmptyDateValues(v);
     }
   }
   return out;
@@ -93,7 +127,7 @@ export function prepareWritePayload(payload, entityName, mapping) {
   // Caso 3: modo 'jsonb' puro — só META + `columns` viram coluna; resto em dados.
   const hasOverflowJsonb = mapping?.mode === 'jsonb' || Array.isArray(mapping?.columns);
   if (!hasOverflowJsonb) {
-    return p;
+    return sanitizeEmptyDateValues(p);
   }
 
   const allowedColumns = new Set([...(mapping.columns || []), ...META_COLUMNS]);
@@ -112,7 +146,7 @@ export function prepareWritePayload(payload, entityName, mapping) {
   if (out.created_by === undefined) delete out.created_by;
   // Se nada foi parar em `dados`, remove para não sobrescrever JSONB existente desnecessariamente
   if (Object.keys(out.dados).length === 0) delete out.dados;
-  return out;
+  return sanitizeEmptyDateValues(out);
 }
 
 function normalizeFilterColumn(field, mapping) {
@@ -126,6 +160,9 @@ function normalizeFilterColumn(field, mapping) {
   return field;
 }
 
+/** Campos promovidos que ainda podem existir só em `dados` (legado pós-migração). */
+const FILTER_DADOS_OR_COLUMN = new Set(['turno_caixa_id']);
+
 function applyFilters(query, where, mapping) {
   if (!where || typeof where !== 'object') return query;
   let q = query;
@@ -135,6 +172,20 @@ function applyFilters(query, where, mapping) {
     // Operadores especiais do Base44 (ex: $or) não são suportados aqui — ignorar.
     if (key.startsWith('$')) continue;
     const target = normalizeFilterColumn(key, mapping);
+    const cols = new Set([...(mapping?.columns || []), ...META_COLUMNS]);
+    const hasOverflowJsonb = mapping?.mode === 'jsonb' || Array.isArray(mapping?.columns);
+
+    if (
+      FILTER_DADOS_OR_COLUMN.has(key) &&
+      hasOverflowJsonb &&
+      cols.has(key) &&
+      val !== null &&
+      typeof val !== 'object'
+    ) {
+      const encoded = String(val).replace(/,/g, '\\,');
+      q = q.or(`${target}.eq.${encoded},dados->>${key}.eq.${encoded}`);
+      continue;
+    }
 
     if (val !== null && typeof val === 'object' && !Array.isArray(val) && !(val instanceof Date)) {
       const ops = val;
@@ -159,6 +210,13 @@ function applyFilters(query, where, mapping) {
         q = q.neq(target, ops.$ne);
         applied = true;
       }
+      if ('$in' in ops) {
+        const list = ops.$in;
+        if (Array.isArray(list) && list.length) {
+          q = q.in(target, list);
+        }
+        applied = true;
+      }
       if ('$regex' in ops) {
         const pattern = String(ops.$regex);
         q = ops.$options === 'i' ? q.ilike(target, `%${pattern}%`) : q.like(target, `%${pattern}%`);
@@ -174,6 +232,9 @@ function applyFilters(query, where, mapping) {
 
     if (Array.isArray(val)) {
       q = q.in(target, val);
+    } else if (key === 'tipo' && typeof val === 'string') {
+      // BD usa PRODUTO em maiúsculas; formulários usam Produto.
+      q = q.ilike(target, val);
     } else {
       q = q.eq(target, val);
     }
@@ -300,7 +361,7 @@ function createEntityApi(supabase, entityName, mapping) {
   }
 
   function subscribe(_callback) {
-    if (import.meta.env.DEV) {
+    if (isP38Dev()) {
       console.debug(`[P38][supabase] ${entityName}.subscribe — realtime não ligado (usar Base44 ou canal postgres depois)`);
     }
     return () => {};

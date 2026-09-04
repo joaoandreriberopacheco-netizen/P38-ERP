@@ -2,7 +2,9 @@ import {
   ArrowLeft, Loader2, Package, Printer, Save, Trash2, TrendingDown, TrendingUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { formatCountQuantity, getGroupDisplayFromBase } from '@/lib/inventoryCountUnits';
+import { P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
 
 function DiffBadge({ diferenca, unidade }) {
   if (diferenca === null || Math.abs(diferenca) < 1e-6) {
@@ -25,7 +27,7 @@ function DiffBadge({ diferenca, unidade }) {
 
 function ResumoCard({ valor, label, destaque }) {
   return (
-    <div className="rounded-xl bg-muted/50 px-2 py-2 text-center">
+    <div className={cn('rounded-xl px-2 py-2 text-center', P38_FIELD_SURFACE)}>
       <div className={`text-lg font-bold font-glacial ${destaque || 'text-foreground'}`}>{valor}</div>
       <div className="text-[10px] text-muted-foreground">{label}</div>
     </div>
@@ -113,7 +115,11 @@ export default function ContagemExpressCarrinho({
               <Wrapper
                 type={onEditarItem ? 'button' : undefined}
                 onClick={onEditarItem ? () => onEditarItem(grupo) : undefined}
-                className={`min-w-0 flex-1 rounded-2xl bg-muted/50 p-3.5 text-left ${onEditarItem ? 'transition-colors hover:bg-muted/70 active:bg-muted' : ''}`}
+                className={cn(
+                  'min-w-0 flex-1 rounded-2xl p-4 text-left transition-all active:scale-[0.99]',
+                  P38_FIELD_SURFACE,
+                  onEditarItem && 'hover:opacity-95',
+                )}
               >
                 <div className="flex items-start gap-3">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-card shadow-sm">
@@ -159,7 +165,7 @@ export default function ContagemExpressCarrinho({
                   type="button"
                   onClick={() => onRemoverItem(grupo)}
                   aria-label={`Remover ${grupo.produto_nome} do carrinho`}
-                  className="flex w-11 shrink-0 items-center justify-center rounded-2xl bg-muted/50 text-red-500 transition-colors hover:bg-red-500/10 active:bg-red-500/15 dark:text-red-400"
+                  className="flex w-11 shrink-0 items-center justify-center rounded-2xl text-red-500 transition-colors hover:bg-red-500/10 active:bg-red-500/15 dark:text-red-400"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -169,14 +175,14 @@ export default function ContagemExpressCarrinho({
         })}
       </div>
 
-      <div className="border-t border-border/40 bg-card p-4 dark:bg-background">
+      <div className="border-t border-border/40 bg-card/95 p-4 backdrop-blur-sm dark:bg-background">
         <div className="flex gap-2">
           <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             onClick={onImprimir}
             disabled={imprimindo || itensAgrupados.length === 0 || loadingComparativo}
-            className="h-12 flex-1 rounded-2xl bg-muted/50 text-foreground hover:bg-muted"
+            className="h-12 flex-1 rounded-2xl"
           >
             {imprimindo ? (
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -191,7 +197,7 @@ export default function ContagemExpressCarrinho({
             type="button"
             onClick={onSalvar}
             disabled={finalizando || itensAgrupados.length === 0 || loadingComparativo}
-            className="h-12 flex-1 rounded-2xl font-semibold shadow-none"
+            className="h-12 flex-1 rounded-2xl p38-btn-primary font-semibold shadow-none"
           >
             {finalizando ? (
               <Loader2 className="h-5 w-5 animate-spin" />

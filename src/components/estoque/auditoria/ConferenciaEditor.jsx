@@ -8,6 +8,8 @@ import {
   X, Camera, Lock, AlertTriangle, SendHorizonal, RotateCcw, Boxes
 } from "lucide-react";
 import { saveConferenciaItem } from "@/functions/saveConferenciaItem";
+import { omitConferenciaEspelho } from "@/lib/omitEspelhoPersist";
+import { syncConferenciaItens } from "@/lib/syncConferenciaItens";
 import { calcularSaldoExtratoProduto, parseEstoqueCadastro } from "@/lib/movimentacaoEstoqueSaldo";
 import ProductUnitSelectorDialog from "@/components/produtos/ProductUnitSelectorDialog";
 import {
@@ -63,7 +65,11 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
 
   const salvarItens = async (novosItens) => {
     setSaving(true);
-    await base44.entities.ConferenciaEstoque.update(conferencia_id, { itens_conferidos: novosItens });
+    try {
+      await syncConferenciaItens(conferencia_id, novosItens, produtos);
+    } catch (err) {
+      console.warn('Sincronia ConferenciaItem falhou:', err?.message || err);
+    }
     setSaving(false);
   };
 
@@ -177,11 +183,10 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
   // Ao finalizar, vai para "Aguardando Auditoria" — responsável vai auditar
   const finalizar = async () => {
     setFinalizando(true);
-    await base44.entities.ConferenciaEstoque.update(conferencia_id, {
+    await base44.entities.ConferenciaEstoque.update(conferencia_id, omitConferenciaEspelho({
       status: "Aguardando Auditoria",
       data_fim: new Date().toISOString(),
-      itens_conferidos: itens,
-    });
+    }));
 
     // Sincronia canonica: agrupa contagens por produto, deriva qty_base e
     // divergencia, e regrava em ConferenciaItem (espelho recomposto pelo backend).
@@ -594,7 +599,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
             </div>
             <div className="flex gap-2">
               <Button variant="ghost" onClick={() => setModalQtd(null)} className="flex-1 h-12 rounded-2xl bg-muted text-muted-foreground hover:bg-muted dark:hover:bg-primary/90">Cancelar</Button>
-              <Button onClick={confirmarQtd} className="flex-1 h-12 rounded-2xl bg-background dark:bg-card hover:bg-primary/90 dark:hover:bg-muted text-foreground shadow-none font-semibold">
+              <Button onClick={confirmarQtd} className="flex-1 h-12 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-muted dark:hover:bg-muted/90 dark:text-foreground shadow-none font-semibold">
                 <CheckCircle2 className="w-4 h-4 mr-1.5" /> Confirmar
               </Button>
             </div>

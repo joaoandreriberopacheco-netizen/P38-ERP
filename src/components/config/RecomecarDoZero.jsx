@@ -352,7 +352,7 @@ export default function RecomecarDoZero() {
                 </Button>
                 <Button
                   onClick={handleInitiateDelete}
-                  className="bg-background hover:bg-primary dark:bg-card dark:hover:bg-muted dark:text-foreground rounded-xl"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-card dark:hover:bg-muted dark:text-foreground rounded-xl"
                   disabled={selectedEntities.length === 0 || isProcessing}
                 >
                   {isProcessing ? 'Processando...' : 'Zerar selecionados'}

@@ -20,6 +20,8 @@ export function useVirtualRows({
   estimateSize = 44,
   overscan = 8,
   scrollElementRef,
+  /** Elemento de scroll explícito — força re-subscrição quando o painel do Layout fica disponível. */
+  scrollElement = null,
 }) {
   const getSize = useCallback(
     (index) => {
@@ -95,7 +97,7 @@ export function useVirtualRows({
       resizeObserver?.disconnect();
       window.removeEventListener('resize', scheduleUpdate);
     };
-  }, [scrollElementRef, updateRange, itemCount]);
+  }, [scrollElement, scrollElementRef, updateRange, itemCount]);
 
   const startIndex = itemCount > 0 ? Math.min(range.startIndex, itemCount - 1) : 0;
   const endIndex = itemCount > 0 ? Math.min(Math.max(range.endIndex, startIndex + 1), itemCount) : 0;

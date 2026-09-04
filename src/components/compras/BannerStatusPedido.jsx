@@ -1,22 +1,32 @@
 import React from 'react';
 import { AlertCircle, CheckCircle } from 'lucide-react';
+import {
+  evidenciaAprovacaoFinanceiraProcessada,
+  getPedidoCompraDisplayStatusFinanceiro,
+} from '@/lib/pedidoCompraFinanceiro';
 
 /**
  * Banner contextual no topo do PedidoCompraForm.
  * Reforça o vínculo com aprovações financeiras e o caminho de correção (FAB → Solicitar correção).
  */
-export default function BannerStatusPedido({ pedido, isMobile = false }) {
+export default function BannerStatusPedido({ pedido, lancamentos = [], isMobile = false }) {
   if (!pedido) return null;
 
   const saf = pedido.status_aprovacao_financeira;
+  const aprovadoEfetivo =
+    pedido._financeiro_aprovado_efetivo || evidenciaAprovacaoFinanceiraProcessada(pedido, lancamentos);
+  const statusFinanceiroDisplay = getPedidoCompraDisplayStatusFinanceiro(pedido, lancamentos);
   const isAguardandoFin =
-    pedido.status === 'Aguardando Aprovação Financeira' ||
-    pedido.status === 'Aguardando Liberação' ||
-    saf === 'Aguardando Aprovação Financeira';
+    !aprovadoEfetivo &&
+    (statusFinanceiroDisplay === 'Aguardando Aprovação Financeira' ||
+      pedido.status === 'Aguardando Liberação' ||
+      saf === 'Aguardando Aprovação Financeira');
   const solicitacaoPendente = saf === 'Solicitação de Edição Pendente';
   const financeiroLiberado =
+    aprovadoEfetivo ||
     saf === 'Aprovado Financeiramente' ||
     saf === 'Aprovado' ||
+    statusFinanceiroDisplay === 'Aprovado Financeiramente' ||
     (['Aprovado', 'Despachado', 'Em Recepção', 'Concluído', 'Aguardando Recepção'].includes(pedido.status) &&
       saf !== 'Aguardando Aprovação Financeira' &&
       saf !== 'Pendente' &&

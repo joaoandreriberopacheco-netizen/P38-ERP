@@ -5,6 +5,7 @@ import { FinanceiroGrupo } from '@/components/financeiro/fluxo/FinanceiroListaSh
 import AgefinPrevisaoModeloRow from '@/components/agefin-previsao/AgefinPrevisaoModeloRow';
 import {
   DESCRICAO_FREQUENCIA_SERIE,
+  FREQUENCIA_SERIE,
   ORDEM_FREQUENCIAS_CONTAS_FIXAS,
 } from '@/lib/agefinPrevisaoCalculos';
 
@@ -120,7 +121,11 @@ export default function AgefinContasFixasGrupos({
         return (
           <FinanceiroGrupo
             key={frequencia}
-            label={`Recorrência ${frequencia} (${totalSecao})`}
+            label={
+              frequencia === FREQUENCIA_SERIE.PARCELADA
+                ? `Contas parceladas (${totalSecao})`
+                : `Recorrência ${frequencia} (${totalSecao})`
+            }
             labelClassName="text-xs font-semibold normal-case tracking-normal text-foreground"
             despesas={totalValor}
             liquido={-totalValor}

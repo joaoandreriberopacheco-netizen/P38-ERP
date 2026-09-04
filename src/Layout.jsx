@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { flushSync } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCache';
@@ -6,27 +6,32 @@ import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCac
 import { base44, p38 } from '@/api/base44Client';
 import FontScaleInitializer from '@/components/accessibility/FontScaleInitializer';
 import { buildMenuItems } from '@/components/config/usePermissoesResolvidas';
+import { podeAcessarConfiguracoes } from '@/lib/perfilPermissoes';
 import { WifiOff } from 'lucide-react';
-import PinSetupDialog from '@/components/auth/PinSetupDialog';
 import { Button } from '@/components/ui/button';
 import GlacialBottomNav from '@/components/navigation/GlacialBottomNav';
-import GlacialSidebar from '@/components/navigation/GlacialSidebar';
-import GlobalSearchOverlay from '@/components/navigation/GlobalSearchOverlay';
 import MobileUserMenu from '@/components/layout/MobileUserMenu';
-import MobileFunctionSelector from '@/components/navigation/MobileFunctionSelector';
 import { useCompactShell } from '@/hooks/use-breakpoint';
+import { useForceLandscape } from '@/hooks/useForceLandscape';
 import { useBottomNavScrollVisibility } from '@/hooks/useBottomNavScrollVisibility';
 import { shouldHideBottomNavOnScroll } from '@/config/bottomNavScrollPolicy';
 import { shouldOpenGlobalSearchFromKeyboard } from '@/lib/globalSearchShortcut';
+import { shouldOpenDesktopSidebarFromKeyboard } from '@/lib/sidebarNavLetters';
 import { armGlobalSearchOpenGuard, registerOpenSearchOverlaySync } from '@/lib/openGlobalSearch';
 import FinanceiroAccessGuard from '@/components/guard/FinanceiroAccessGuard';
 import { isFinanceiroProtectedPage } from '@/config/financeiroGate';
 import { isSupabaseAuthEnabled } from '@/integrations/p38/providers';
+import { cn } from '@/lib/utils';
 
-/** Páginas com scroll interno no mobile (evita body + nested scroll e zoom por overflow). */
+const GlacialSidebar = React.lazy(() => import('@/components/navigation/GlacialSidebar'));
+const PinSetupDialog = React.lazy(() => import('@/components/auth/PinSetupDialog'));
+const MobileFunctionSelector = React.lazy(() => import('@/components/navigation/MobileFunctionSelector'));
+
+/** Mobile: scroll interno na página (evita body + nested scroll). */
 const MOBILE_FULL_VIEWPORT_PAGES = new Set([
   'Produtos',
   'RelatorioMargem',
+  'PrecoJustoDashboard',
   'RelatorioCatalogoEstoque',
   'CaixasAtivos',
   'TurnosFechados',
@@ -35,6 +40,23 @@ const MOBILE_FULL_VIEWPORT_PAGES = new Set([
   'PDV',
   'TabelaPrecosConsulta',
   'Compras',
+  'PedidosCompra',
+]);
+
+/** Desktop: catálogo/relatórios densos ocupam altura do viewport. */
+const DESKTOP_FULL_HEIGHT_PAGES = new Set([
+  'Produtos',
+  'RelatorioMargem',
+  'PrecoJustoDashboard',
+  'RelatorioCatalogoEstoque',
+  'CaixasAtivos',
+  'TurnosFechados',
+  'PDVCaixa',
+  'PDVVendedor',
+  'PDV',
+  'TabelaPrecosConsulta',
+  'Compras',
+  'PedidosCompra',
 ]);
 
 /** Rotas PDV no mobile: mantêm GlacialBottomNav (atalho rápido em overlay continua fullscreen). */
@@ -50,6 +72,7 @@ export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useCompactShell();
+  const forceLandscape = useForceLandscape();
   const [currentUser, setCurrentUser] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState({});
@@ -63,6 +86,18 @@ export default function Layout({ children, currentPageName }) {
   const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false);
   const [showMobileUserMenu, setShowMobileUserMenu] = useState(false);
   const [showDesktopUserPanel, setShowDesktopUserPanel] = useState(false);
+  const [SearchOverlayComponent, setSearchOverlayComponent] = useState(null);
+
+  useEffect(() => {
+    if (!searchOverlayOpen || SearchOverlayComponent) return undefined;
+    let cancelled = false;
+    import('@/components/navigation/GlobalSearchOverlay').then((mod) => {
+      if (!cancelled) setSearchOverlayComponent(() => mod.default);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [searchOverlayOpen, SearchOverlayComponent]);
 
   const fullscreenPages = ['PDV', 'PDVVendedor', 'PDVCaixa', 'AutoAtendimento', 'PedidoCompraDetalhe', 'AnexoCompartilhado'];
   const routePage = location.pathname.split('/').filter(Boolean)[0] || '';
@@ -73,6 +108,9 @@ export default function Layout({ children, currentPageName }) {
     fullscreenPages.some((page) => location.pathname.includes(page));
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const useDesktopOverlaySidebar = !isMobile && DESKTOP_OVERLAY_SIDEBAR_PAGES.has(currentPageName);
+  const usesFullViewportShell = isMobile
+    ? MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName)
+    : DESKTOP_FULL_HEIGHT_PAGES.has(currentPageName);
   const bottomNavScrollEnabled =
     isMobile &&
     !isFullscreen &&
@@ -83,9 +121,8 @@ export default function Layout({ children, currentPageName }) {
   const bottomNavVisible = useBottomNavScrollVisibility(bottomNavScrollEnabled);
 
   useEffect(() => {
-    if (!isMobile) {
-      setIsOpen(false);
-    }
+    setIsOpen(false);
+    document.documentElement.dataset.p38Shell = isMobile ? 'mobile' : 'desktop';
   }, [isMobile]);
 
   useEffect(() => {
@@ -176,6 +213,11 @@ export default function Layout({ children, currentPageName }) {
    return buildMenuItems(currentUser, perfilDeAcesso);
   }, [currentUser, perfilDeAcesso]);
 
+  const showConfiguracoesLink = React.useMemo(
+    () => podeAcessarConfiguracoes(currentUser, perfilDeAcesso),
+    [currentUser, perfilDeAcesso]
+  );
+
   const allSearchableItems = React.useMemo(() => {
    const items = [];
    menuItems.forEach(item => {
@@ -217,6 +259,12 @@ export default function Layout({ children, currentPageName }) {
         setShowMobileMenu(false);
         return;
       }
+      if (!isMobile && shouldOpenDesktopSidebarFromKeyboard(e)) {
+        e.preventDefault();
+        setSearchOverlayOpen(false);
+        setIsOpen(true);
+        return;
+      }
       if (e.key === 'Escape') {
         setSearchOverlayOpen(false);
       }
@@ -232,7 +280,7 @@ export default function Layout({ children, currentPageName }) {
       document.removeEventListener('keydown', down, true);
       window.removeEventListener('open-global-search', handleGlobalSearch);
     };
-  }, [openSearchOverlay]);
+  }, [openSearchOverlay, isMobile]);
 
   useEffect(() => {
     if (!showDesktopUserPanel) return;
@@ -252,6 +300,10 @@ export default function Layout({ children, currentPageName }) {
   }, []);
 
   const handleMouseLeave = React.useCallback(() => {
+    setIsOpen(false);
+  }, []);
+
+  const closeDesktopSidebar = React.useCallback(() => {
     setIsOpen(false);
   }, []);
 
@@ -295,7 +347,7 @@ export default function Layout({ children, currentPageName }) {
         </h2>
         <p className="text-muted-foreground text-center mb-6 max-w-md">
           {isConfigError
-            ? 'O servidor não está configurado para ligar ao Supabase. Verifique as variáveis VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no deploy.'
+            ? 'O servidor não está configurado para ligar ao Supabase. Verifique NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY (ou VITE_SUPABASE_*) no deploy.'
             : 'Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.'}
         </p>
         <Button onClick={() => window.location.reload()}>
@@ -305,8 +357,8 @@ export default function Layout({ children, currentPageName }) {
     );
   }
 
-  const searchOverlay = (
-    <GlobalSearchOverlay
+  const searchOverlay = SearchOverlayComponent ? (
+    <SearchOverlayComponent
       open={searchOverlayOpen}
       onClose={closeSearchOverlay}
       isMobile={isMobile}
@@ -317,7 +369,7 @@ export default function Layout({ children, currentPageName }) {
         setIsOpen(false);
       }}
     />
-  );
+  ) : null;
 
   const financeGateActive = isFinanceiroProtectedPage(currentPageName);
   const pageContent = financeGateActive ? (
@@ -327,20 +379,42 @@ export default function Layout({ children, currentPageName }) {
   );
 
   if (isFullscreen) {
-    return (
-      <div className={darkMode ? 'dark' : ''}>
-        <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-white dark:bg-background p38-app">
-          {pageContent}
+    const fullscreenShell = cn(
+      'p38-fullscreen-shell overflow-hidden bg-white dark:bg-background p38-app flex flex-col min-h-0',
+      forceLandscape ? 'flex-1' : 'h-[100dvh] max-h-[100dvh]',
+    );
+    const fullscreenBody = (
+      <>
+        <div className={fullscreenShell}>
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{pageContent}</div>
         </div>
         {searchOverlay}
+      </>
+    );
+    return (
+      <div className={darkMode ? 'dark' : ''}>
+        {forceLandscape ? (
+          <div className="p38-orientation-rotated-stage">{fullscreenBody}</div>
+        ) : (
+          fullscreenBody
+        )}
       </div>
     );
   }
 
   return (
     <div className={darkMode ? 'dark' : ''}>
+      <div className={forceLandscape ? 'p38-orientation-rotated-stage' : undefined}>
       <FontScaleInitializer />
-      <div className="min-h-screen flex font-din-1451 p38-app bg-background">
+      <div
+        className={`font-din-1451 p38-app bg-background ${
+          isMobile
+            ? `relative flex flex-col min-h-0 overflow-hidden p38-app-shell-compact ${
+                forceLandscape ? 'flex-1' : 'h-[100dvh] max-h-[100dvh]'
+              }`
+            : 'min-h-screen flex'
+        }`}
+      >
 
 
         {/* Sidebar Desktop */}
@@ -358,30 +432,49 @@ export default function Layout({ children, currentPageName }) {
               transition: 'width 0.22s ease-out',
             }}
           >
-            <GlacialSidebar
-              isOpen={isOpen}
-              menuItems={menuItems}
-              currentPageName={currentPageName}
-              isMobile={false}
-              currentUser={currentUser}
-              darkMode={darkMode}
-              toggleDarkMode={toggleDarkMode}
-              searchableItems={allSearchableItems}
-              onSearchCollapsedActivate={openSearchOverlay}
-            />
+            <Suspense fallback={<div className="h-full w-full bg-background" aria-hidden />}>
+              <GlacialSidebar
+                isOpen={isOpen}
+                menuItems={menuItems}
+                currentPageName={currentPageName}
+                isMobile={false}
+                currentUser={currentUser}
+                darkMode={darkMode}
+                toggleDarkMode={toggleDarkMode}
+                searchableItems={allSearchableItems}
+                onSearchCollapsedActivate={openSearchOverlay}
+                showConfiguracoesLink={showConfiguracoesLink}
+                onRequestClose={closeDesktopSidebar}
+                searchOverlayOpen={searchOverlayOpen}
+              />
+            </Suspense>
           </div>
         )}
 
         <div 
+          data-p38-overlay-sidebar={useDesktopOverlaySidebar ? 'true' : undefined}
           className={`flex-1 transition-[margin] duration-200 ease-out ${
             isMobile 
-              ? `ml-0 pt-12 ${MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' : 'p38-layout-mobile-scroll-pad'}`
-              : (useDesktopOverlaySidebar ? 'ml-16' : (isOpen ? 'ml-[300px]' : 'ml-16'))
-          } ${MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) && !isMobile ? 'h-screen max-h-screen overflow-hidden' : ''}`}
-          style={{ willChange: 'margin', paddingTop: isMobile ? `calc(3rem + env(safe-area-inset-top))` : undefined }}
+              ? usesFullViewportShell
+                ? 'ml-0 flex flex-1 min-h-0 flex-col overflow-hidden'
+                : 'ml-0 flex min-h-0 flex-col overflow-y-auto overscroll-y-contain p38-stage-panel-scroll p38-layout-mobile-scroll-pad touch-pan-y'
+              : (useDesktopOverlaySidebar ? 'ml-[64px]' : (isOpen ? 'ml-[300px]' : 'ml-[64px]'))
+          } ${usesFullViewportShell && !isMobile ? 'flex h-screen max-h-screen flex-col overflow-hidden' : ''}`}
+          style={{
+            willChange: 'margin',
+            paddingTop: isMobile
+              ? (forceLandscape ? '0.75rem' : `calc(3rem + env(safe-area-inset-top))`)
+              : undefined,
+            // O bottom nav mobile é `docked` (já ocupa espaço no flex).
+            // Na Home basta a folga visual; reservar novamente os 68px criava uma faixa vazia.
+            paddingBottom:
+              isMobile && !usesFullViewportShell && currentPageName === 'Home'
+                ? '1.5rem'
+                : undefined,
+          }}
         >
-          {MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) ? (
-            <div className="h-full min-h-0 overflow-hidden">
+          {usesFullViewportShell ? (
+            <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
               <LayoutOutlet>{pageContent}</LayoutOutlet>
             </div>
           ) : (
@@ -396,16 +489,20 @@ export default function Layout({ children, currentPageName }) {
             onProfileClick={() => setShowMobileUserMenu(true)}
             currentPageName={currentPageName}
             visible={bottomNavVisible}
+            docked
+            skipSafeArea={forceLandscape}
           />
         )}
-        {!isFullscreen && (
-          <MobileFunctionSelector
-            isOpen={showMobileMenu}
-            onClose={() => setShowMobileMenu(false)}
-            menuItems={menuItems}
-            currentUser={currentUser}
-            searchableItems={allSearchableItems}
-          />
+        {!isFullscreen && showMobileMenu && (
+          <Suspense fallback={null}>
+            <MobileFunctionSelector
+              isOpen={showMobileMenu}
+              onClose={() => setShowMobileMenu(false)}
+              menuItems={menuItems}
+              currentUser={currentUser}
+              searchableItems={allSearchableItems}
+            />
+          </Suspense>
         )}
         {!isFullscreen && (
           <MobileUserMenu
@@ -413,17 +510,21 @@ export default function Layout({ children, currentPageName }) {
             toggleDarkMode={toggleDarkMode}
             externalOpen={showMobileUserMenu}
             onExternalClose={() => setShowMobileUserMenu(false)}
+            showConfiguracoesLink={showConfiguracoesLink}
           />
         )}
       </div>
       {showPinSetup && (
-        <PinSetupDialog
-          isOpen={showPinSetup}
-          onClose={() => { setShowPinSetup(false); loadUser(); }}
-          user={currentUser}
-        />
+        <Suspense fallback={null}>
+          <PinSetupDialog
+            isOpen={showPinSetup}
+            onClose={() => { setShowPinSetup(false); loadUser(); }}
+            user={currentUser}
+          />
+        </Suspense>
       )}
       {searchOverlay}
+      </div>
     </div>
   );
 }

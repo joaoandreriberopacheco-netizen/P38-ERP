@@ -15,30 +15,64 @@ export function formatDashboardAxisCurrency(value) {
 
 export const DASHBOARD_CHART_MARGIN = {
   /** Barras densas (ex.: 31 dias). */
-  daily: { top: 4, right: 0, left: -14, bottom: 0 },
+  daily: { top: 4, right: 8, left: 2, bottom: 0 },
   /** Barras mensais / poucos pontos. */
-  categorical: { top: 6, right: 2, left: -10, bottom: 0 },
+  categorical: { top: 6, right: 8, left: 2, bottom: 0 },
   /** Linhas acumuladas. */
-  line: { top: 8, right: 4, left: -10, bottom: 0 },
+  line: { top: 8, right: 8, left: 2, bottom: 0 },
 };
 
+/** Domínio Y compacto — usa quase toda a altura útil do gráfico. */
+export function buildDashboardYDomain(data, valueKeys, { floorZero = true } = {}) {
+  const keys = Array.isArray(valueKeys) ? valueKeys : [valueKeys];
+  let min = Infinity;
+  let max = 0;
+  for (const row of data || []) {
+    for (const key of keys) {
+      const raw = row?.[key];
+      if (raw == null || raw === '') continue;
+      const value = Number(raw);
+      if (!Number.isFinite(value)) continue;
+      min = Math.min(min, value);
+      max = Math.max(max, value);
+    }
+  }
+  if (!Number.isFinite(min) || max <= 0) {
+    return floorZero ? [0, 1] : [0, 1];
+  }
+  const span = max - (floorZero ? 0 : min);
+  const pad = Math.max(span * 0.06, max * 0.02, 1);
+  if (floorZero) return [0, max + pad];
+  return [Math.max(min - pad, 0), max + pad];
+}
+
 export function buildYAxisProps(chartTheme, options = {}) {
-  const { width = 30, tickCount = 4, formatter = formatDashboardAxisCurrency } = options;
+  const {
+    width = 44,
+    tickCount = 4,
+    formatter = formatDashboardAxisCurrency,
+    domain,
+    padding,
+  } = options;
   return {
     tickFormatter: formatter,
-    tick: chartTheme.axisTickY,
+    tick: { ...chartTheme.axisTickY, fontSize: 9 },
     axisLine: false,
     tickLine: false,
     width,
     tickCount,
+    ...(domain ? { domain } : {}),
+    ...(padding ? { padding } : {}),
   };
 }
 
 export function buildXAxisProps(chartTheme, extra = {}) {
   return {
-    tick: chartTheme.axisTickX,
+    tick: { ...chartTheme.axisTickX, fontSize: 8 },
     axisLine: false,
     tickLine: false,
+    height: 22,
+    tickMargin: 4,
     ...extra,
   };
 }

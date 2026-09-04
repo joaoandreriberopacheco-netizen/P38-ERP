@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Package, Play, AlertTriangle, CheckCircle, Clock, Warehouse, Loader2 } from 'lucide-react';
+import { Package, Play, AlertTriangle, CheckCircle, Clock, Warehouse, Loader2, Edit3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
@@ -8,7 +8,12 @@ import {
   movimentoCombinaCodigoEmbarque,
 } from '@/lib/movimentacaoRecepcaoCompra';
 import { invokeRecalcularConclusaoPedidoCompra } from '@/lib/p38StockRecalc';
-import RecepcionarEmbarque from './RecepcionarEmbarque';
+import { hydrateEmbarquesPedidoFromSql, getEmbarqueItensLinhas, hydrateEmbarquesFromSql } from '@/lib/fetchEmbarqueItens';
+import { refreshPedidoCompraComLogistica } from '@/lib/fetchPedidoCompraItens';
+import { filterEmbarquesVisiveisParaPedido } from '@/components/compras/embarqueFilters';
+import { podeEditarDespachoEmbarque } from '@/lib/embarqueLogisticaHelpers';
+import RecepcionarEmbarque from '@/components/compras/RecepcionarEmbarque';
+import InformarEmbarque from '@/components/compras/InformarEmbarque';
 
 function motivoEntradaCompraOk(mov) {
   const m = mov?.motivo;
@@ -17,12 +22,14 @@ function motivoEntradaCompraOk(mov) {
   return String(m).toLowerCase() === 'compra';
 }
 
-export default function AbaRecepção({ pedido }) {
+export default function AbaRecepção({ pedido, onPedidoUpdated }) {
   const [movimentos, setMovimentos] = useState([]);
   const [isLoadingMovimentos, setIsLoadingMovimentos] = useState(false);
   const [pedidoAtual, setPedidoAtual] = useState(pedido);
   const [recebimentoSucesso, setRecebimentoSucesso] = useState(null);
   const [selectedEmbarque, setSelectedEmbarque] = useState(null);
+  const [embarqueEditando, setEmbarqueEditando] = useState(null);
+  const [corrigirDespachoOpen, setCorrigirDespachoOpen] = useState(false);
   const [retificandoEmbId, setRetificandoEmbId] = useState(null);
 
   useEffect(() => {
@@ -106,7 +113,34 @@ export default function AbaRecepção({ pedido }) {
 
   useEffect(() => {
     setSelectedEmbarque(null);
-  }, [pedidoAtual?.embarques_registrados]);
+  }, [pedidoAtual?._embarques]);
+
+  const recarregarPedidoEmbarques = useCallback(async () => {
+    const pedidoRef = pedidoAtual || pedido;
+    const pedidoId = pedidoRef?.id;
+    if (!pedidoId) return null;
+    const pedidoCompleto = await refreshPedidoCompraComLogistica(base44, pedidoId, {
+      filterEmbarques: filterEmbarquesVisiveisParaPedido,
+    });
+    if (pedidoCompleto) {
+      setPedidoAtual(pedidoCompleto);
+      onPedidoUpdated?.(pedidoCompleto);
+    }
+    return pedidoCompleto;
+  }, [pedido, pedidoAtual, onPedidoUpdated]);
+
+  const handleAbrirCorrigirDespacho = useCallback((embarque, evt) => {
+    evt?.preventDefault?.();
+    evt?.stopPropagation?.();
+    if (!podeEditarDespachoEmbarque(embarque)) {
+      toast.message('Recepção já iniciada', {
+        description: 'Só é possível corrigir quantidades embarcadas enquanto o embarque está pendente.',
+      });
+      return;
+    }
+    setEmbarqueEditando(embarque);
+    setCorrigirDespachoOpen(true);
+  }, []);
 
   const handleRetificarStockEmbarque = useCallback(
     async (embarqueEl, codigoExibicaoVal, evt) => {
@@ -120,9 +154,10 @@ export default function AbaRecepção({ pedido }) {
       setRetificandoEmbId(id);
       try {
         const pedidoRef = pedidoAtual || pedido;
+        const [embarqueHidratado] = await hydrateEmbarquesFromSql(base44, [embarqueEl]);
         const n = await criarMovimentosStockRecepcaoEmFalta(base44, {
           pedido: pedidoRef,
-          embarque: { ...embarqueEl, codigo_exibicao: codigoExibicaoVal },
+          embarque: { ...embarqueHidratado, codigo_exibicao: codigoExibicaoVal },
           movimentosExistentes: movimentos,
         });
         if (n === 0) {
@@ -146,18 +181,8 @@ export default function AbaRecepção({ pedido }) {
 
   const embarques = useMemo(() => {
     if (Array.isArray(pedidoAtual?._embarques)) return pedidoAtual._embarques.filter(Boolean);
-    const raw = pedidoAtual?.embarques_registrados;
-    if (Array.isArray(raw)) return raw.filter(Boolean);
-    if (typeof raw === 'string') {
-      try {
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
-      } catch {
-        return [];
-      }
-    }
     return [];
-  }, [pedidoAtual?._embarques, pedidoAtual?.embarques_registrados]);
+  }, [pedidoAtual?._embarques]);
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -204,7 +229,7 @@ export default function AbaRecepção({ pedido }) {
         const statusRecebimento = embarque.status_recebimento || embarque.status_recebimento_embarque || 'Pendente';
         const dataEmbarque = embarque.data_embarque ? new Date(embarque.data_embarque).toLocaleDateString('pt-BR') : '-';
         const eta = embarque.eta ? new Date(embarque.eta).toLocaleDateString('pt-BR') : '-';
-        const itensEmbarque = embarque.itens || embarque.itens_embarcados || [];
+        const itensEmbarque = getEmbarqueItensLinhas(embarque);
         const qtdItens = itensEmbarque.length || 0;
         const codigoExibicao = embarque.codigo_exibicao || `${pedidoAtual?.numero || pedido?.numero || '-----'}-${String.fromCharCode(65 + idx)}`;
 
@@ -336,6 +361,22 @@ export default function AbaRecepção({ pedido }) {
                 )}
                 </div>
 
+                {statusRecebimento === 'Pendente' && podeEditarDespachoEmbarque(embarque) && (
+                  <div className="mt-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-9 rounded-xl border-0 shadow-sm bg-card text-foreground/90 hover:bg-muted"
+                      data-pulse-sensor="pedidos-compra.recepcao-corrigir-despacho"
+                      onClick={(e) => handleAbrirCorrigirDespacho(embarque, e)}
+                    >
+                      <Edit3 className="w-3.5 h-3.5 mr-2" />
+                      Corrigir quantidades embarcadas
+                    </Button>
+                  </div>
+                )}
+
                 {/* Ação - Play Icon */}
                 <div className="flex items-center justify-center">
                 {statusRecebimento === 'Pendente' ? (
@@ -353,6 +394,23 @@ export default function AbaRecepção({ pedido }) {
         );
       })}
 
+      {corrigirDespachoOpen && embarqueEditando && (
+        <InformarEmbarque
+          pedido={pedidoAtual || pedido}
+          isOpen={corrigirDespachoOpen}
+          onClose={() => {
+            setCorrigirDespachoOpen(false);
+            setEmbarqueEditando(null);
+          }}
+          onSuccess={async () => {
+            setCorrigirDespachoOpen(false);
+            setEmbarqueEditando(null);
+            await recarregarPedidoEmbarques();
+          }}
+          embarqueExistente={embarqueEditando}
+        />
+      )}
+
       {selectedEmbarque && (
         <RecepcionarEmbarque
           isOpen={!!selectedEmbarque}
@@ -364,10 +422,15 @@ export default function AbaRecepção({ pedido }) {
             if (pedidoId) {
               const [atualizado, embarquesAtualizados] = await Promise.all([
                 base44.entities.PedidoCompra.filter({ id: pedidoId }),
-                base44.entities.Embarque.filter({ pedido_compra_id: pedidoId })
+                base44.entities.Embarque.filter({ pedido_compra_id: pedidoId }),
               ]);
+              const embarquesHidratados = await hydrateEmbarquesPedidoFromSql(
+                base44,
+                pedidoId,
+                embarquesAtualizados || [],
+              );
               if (atualizado?.[0]) {
-                setPedidoAtual({ ...atualizado[0], _embarques: embarquesAtualizados || [] });
+                setPedidoAtual({ ...atualizado[0], _embarques: embarquesHidratados });
               }
             }
             loadMovimentos();
@@ -382,8 +445,13 @@ export default function AbaRecepção({ pedido }) {
                 base44.entities.PedidoCompra.filter({ id: pedidoId }),
                 base44.entities.Embarque.filter({ pedido_compra_id: pedidoId }),
               ]);
+              const embarquesHidratados = await hydrateEmbarquesPedidoFromSql(
+                base44,
+                pedidoId,
+                embarquesAtualizados || [],
+              );
               if (atualizado?.[0]) {
-                setPedidoAtual({ ...atualizado[0], _embarques: embarquesAtualizados || [] });
+                setPedidoAtual({ ...atualizado[0], _embarques: embarquesHidratados });
               }
             }
             setSelectedEmbarque(null);

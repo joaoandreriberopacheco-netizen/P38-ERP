@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
+import { sincronizarPedidosCompraPorLancamentos } from '@/lib/aprovarPedidoCompraFinanceiro';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import { dataHoje } from '@/components/utils/dateUtils';
@@ -117,6 +118,12 @@ export default function usePagamentoLoteFluxo({ programadas, contas, movimentos,
         movimentos: snapshot?.movs ?? movimentos,
         contaIds: contaIdsAfetados,
       });
+
+      try {
+        await sincronizarPedidosCompraPorLancamentos(base44, sucessos);
+      } catch {
+        /* não bloqueia pagamento em lote */
+      }
 
       const descricaoSucesso = erros.length > 0
         ? `${sucessos.length} de ${itensLote.length} lançamento(s) pago(s) — ${erros.length} falha(s)`

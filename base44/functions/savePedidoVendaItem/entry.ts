@@ -155,8 +155,7 @@ const itemToLegacyMirror = (item: any) => {
 const recomporPedido = async (base44: any, pedidoId: string) => {
   const linhas = await base44.asServiceRole.entities.PedidoVendaItem.filter({ pedido_venda_id: pedidoId });
   const ordenadas = (linhas || []).slice().sort((a: any, b: any) => asNumber(a.ordem, 0) - asNumber(b.ordem, 0));
-  const espelho = ordenadas.map(itemToLegacyMirror);
-  const subtotal = round6(espelho.reduce((acc: number, it: any) => acc + asNumber(it.total, 0), 0));
+  const subtotal = round6(ordenadas.reduce((acc: number, it: any) => acc + asNumber(it?.total, 0), 0));
 
   const pedidoAtual = await base44.asServiceRole.entities.PedidoVenda.filter({ id: pedidoId }, null, 1);
   const desconto = asNumber(pedidoAtual?.[0]?.valor_desconto, 0);
@@ -164,11 +163,10 @@ const recomporPedido = async (base44: any, pedidoId: string) => {
   const valorTotal = round6(subtotal - desconto + frete);
 
   await base44.asServiceRole.entities.PedidoVenda.update(pedidoId, {
-    itens: espelho,
     subtotal,
     valor_total: valorTotal,
   });
-  return { itens_count: espelho.length, subtotal, valor_total: valorTotal };
+  return { itens_count: ordenadas.length, subtotal, valor_total: valorTotal, espelho_json: false };
 };
 
 const fetchProduto = async (base44: any, id: string) => {

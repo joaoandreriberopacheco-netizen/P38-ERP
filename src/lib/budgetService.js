@@ -7,7 +7,13 @@ import {
   lancamentoElegivelBudget,
 } from '@/lib/budgetCalculos';
 import { calcularLucroBrutoCompetencia, competenciaParaIntervalo } from '@/lib/relatorioMargemCalculos';
-import { fetchPedidosVendaParaMargem } from '@/lib/fetchPedidosVenda90d';
+import { fetchPedidosOrigemTrocaMargem, fetchPedidosVendaParaMargem } from '@/lib/fetchPedidosVenda90d';
+import { fetchAllProdutosCatalogo } from '@/lib/fetchProdutosAtivos';
+import { P38_STALE_TIME } from '@/lib/p38QueryConfig';
+import {
+  gravarMargemCompetenciaSnapshot,
+  lerMargemCompetenciaSnapshot,
+} from '@/lib/margemCompetenciaSnapshot';
 import { listarCentrosCustoRegistros } from '@/lib/folhaPrevisaoService';
 import {
   listarLancamentosMesCompetenciaCache,
@@ -15,6 +21,36 @@ import {
 } from '@/lib/lancamentoFinanceiroCache';
 
 export { listarCentrosCustoRegistros };
+
+/** Cache em memória dos dados brutos da margem (vendas, produtos, trocas). */
+let margemBaseCache = null;
+let margemBaseCacheAt = 0;
+
+async function obterDadosBaseMargem() {
+  const now = Date.now();
+  if (margemBaseCache && now - margemBaseCacheAt < P38_STALE_TIME) {
+    return margemBaseCache;
+  }
+
+  const [sales, products, devolucoes] = await Promise.all([
+    fetchPedidosVendaParaMargem(),
+    fetchAllProdutosCatalogo(),
+    base44.entities.DevolucaoTroca.list(),
+  ]);
+
+  const devolucoesTroca = Array.isArray(devolucoes) ? devolucoes : [];
+  const pedidosOrigemTroca = await fetchPedidosOrigemTrocaMargem(devolucoesTroca);
+
+  margemBaseCache = { sales, products, devolucoesTroca, pedidosOrigemTroca };
+  margemBaseCacheAt = now;
+  return margemBaseCache;
+}
+
+/** Invalida cache em memória após alterações em vendas/produtos. */
+export function invalidarCacheMargemBase() {
+  margemBaseCache = null;
+  margemBaseCacheAt = 0;
+}
 
 const DADOS_EMPRESA_MODELOS_KEY = 'budget_modelos';
 const DADOS_EMPRESA_COMPETENCIAS_KEY = 'budget_competencias';
@@ -332,12 +368,23 @@ export async function obterLucroBrutoCompetencia(competencia) {
     return { receita_liquida: 0, custo_total: 0, lucro_bruto: 0, quantidade_produtos: 0 };
   }
 
-  const [sales, products] = await Promise.all([
-    fetchPedidosVendaParaMargem(),
-    base44.entities.Produto.list(),
-  ]);
+  const prefix = String(competencia || '').slice(0, 7);
+  const snapshot = await lerMargemCompetenciaSnapshot(prefix);
+  if (snapshot) return snapshot;
 
-  return calcularLucroBrutoCompetencia(sales, products, competencia);
+  const { sales, products, devolucoesTroca, pedidosOrigemTroca } = await obterDadosBaseMargem();
+
+  const resultado = calcularLucroBrutoCompetencia(
+    sales,
+    products,
+    competencia,
+    devolucoesTroca,
+    pedidosOrigemTroca,
+  );
+
+  await gravarMargemCompetenciaSnapshot(prefix, resultado);
+
+  return resultado;
 }
 
 export async function salvarCategoriaDespesa(partial = {}) {

@@ -1,0 +1,1 @@
+export { generateRelatorioDizimoEnxutoPdf } from './generateRelatorioDizimoEnxutoPdf';

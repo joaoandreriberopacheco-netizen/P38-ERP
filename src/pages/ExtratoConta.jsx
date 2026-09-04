@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,31 +16,94 @@ import {
   Printer,
   Scale,
 } from 'lucide-react';
-import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, isWithinInterval, parseISO } from 'date-fns';
+import { format, subMonths } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 import { printOrShareElementAsPdf } from '@/lib/mobilePrintAndShare';
-import { dataHoje } from '@/components/utils/dateUtils';
+import { dataHoje, dataMenosDiasSistema, boundsMesCivil, formatarDataHora, formatarSoData, inicioSemanaCivilDesdeYmd, toLocalDateKey } from '@/components/utils/dateUtils';
+import { getDataAncoraFluxoKey } from '@/lib/lancamentoFinanceiroStatus';
+import {
+  DATA_CORTE_HISTORICO_PADRAO,
+  lerPreferenciasCorteHistorico,
+  passaFiltroCorteHistorico,
+} from '@/lib/filtroDataFinanceiro';
+import {
+  fetchLancamentosExtratoConta,
+  fetchMovimentosExtratoConta,
+} from '@/lib/fetchLancamentosExtratoAgefin';
 import { roundToTwoDecimals, sortLancamentosPorDescricao } from '@/lib/financialUtils';
 import KpiExtratoConta from '@/components/financeiro/fluxo/KpiExtratoConta';
 import FiltrosExtratoConta, { PERIODOS_EXTRATO } from '@/components/financeiro/fluxo/FiltrosExtratoConta';
 import ListaExtratoConta from '@/components/financeiro/fluxo/ListaExtratoConta';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from '@/components/financeiro/fluxo/FinanceiroListaMeta';
+import TipoFiltroBar from '@/components/financeiro/fluxo/TipoFiltroBar';
+import { FinanceiroToolbarIcon } from '@/components/financeiro/fluxo/FinanceiroToolbarIcon';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { passaFiltroTiposLancamento, labelTiposSelecionados, filtrarGruposPorTipo } from '@/lib/filtroTipoFinanceiro';
 import { formatFinanceiroGrupoLabel } from '@/components/financeiro/fluxo/FinanceiroListaShared';
 import AjusteSaldoDialog from '@/components/config/AjusteSaldoDialog';
 import {
   buildMapaContrapartesTransferencia,
+  buildMapaParIdsTransferencia,
+  calcularSaldoContaAposDataCorte,
   calcularSaldoContaFinanceira,
   contaUsaRegraCaixaPDV,
+  getDataMovimentoCaixa,
   idsMovimentosComLancamentoFinanceiro,
   movimentoParticipaExtrato,
   totaisEntradaSaidaMovimentos,
 } from '@/lib/saldoContaFinanceira';
 import { reconciliarSaldoCaixaPDVSemTurnoAberto, backfillLancamentosMovimentosCaixaPDV } from '@/lib/contaDestinoCaixaPDV';
+import { sincronizarSaldosAposAlteracao } from '@/lib/sincronizarSaldoContasFinanceiras';
+import { criarReforcoPendenteTransferenciaCaixaPDV } from '@/lib/reforcoPendenteCaixaPDV';
+import { consolidarTransferenciasListaFluxo } from '@/lib/gruposMovimentacaoConta';
+import { navigateBackOr } from '@/lib/navigateBackOr';
+
+function getDataKeyMovimentoExtrato(mov) {
+  if (mov?.origem === 'movimento' || (mov?.conta_id && !mov?.conta_financeira_id)) {
+    const raw = getDataMovimentoCaixa(mov);
+    return raw ? toLocalDateKey(raw) : null;
+  }
+  return getDataAncoraFluxoKey(mov);
+}
+
+function intervaloExtratoYmd(periodo, cs, ce) {
+  const hoje = dataHoje();
+  const [ano, mes] = hoje.split('-').map(Number);
+  if (periodo === 'hoje') return { inicio: hoje, fim: hoje };
+  if (periodo === 'ontem') {
+    const ontem = dataMenosDiasSistema(1);
+    return { inicio: ontem, fim: ontem };
+  }
+  if (periodo === 'semana') {
+    return { inicio: inicioSemanaCivilDesdeYmd(hoje), fim: hoje };
+  }
+  if (periodo === 'mes') {
+    const { start, end } = boundsMesCivil(ano, mes - 1);
+    return { inicio: start, fim: end };
+  }
+  if (periodo === 'todos') return { inicio: null, fim: hoje };
+  if (periodo === 'personalizado' && cs && ce) {
+    return { inicio: String(cs).slice(0, 10), fim: String(ce).slice(0, 10) };
+  }
+  return { inicio: null, fim: hoje };
+}
+
+function passaIntervaloExtratoYmd(dataKey, inicio, fim) {
+  if (!dataKey) return false;
+  if (inicio && dataKey < inicio) return false;
+  if (fim && dataKey > fim) return false;
+  return true;
+}
 
 export default function ExtratoContaPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [conta, setConta] = useState(null);
   const [lancamentos, setLancamentos] = useState([]);
   const [movimentosCaixa, setMovimentosCaixa] = useState([]);
+  /** Base completa para saldo quando há corte histórico (lista exibida pode ser recortada). */
+  const [lancsSaldoBase, setLancsSaldoBase] = useState([]);
+  const [movsSaldoBase, setMovsSaldoBase] = useState([]);
   const [contas, setContas] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [fabOpen, setFabOpen] = useState(false);
@@ -48,8 +112,15 @@ export default function ExtratoContaPage() {
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [tiposSel, setTiposSel] = useState([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [ajusteDialogOpen, setAjusteDialogOpen] = useState(false);
+  const [mostrarHistoricoAnterior, setMostrarHistoricoAnterior] = useState(
+    () => lerPreferenciasCorteHistorico().mostrarHistoricoAnterior,
+  );
+  const [dataCorteHistorico, setDataCorteHistorico] = useState(
+    () => lerPreferenciasCorteHistorico().dataCorte || DATA_CORTE_HISTORICO_PADRAO,
+  );
   const { toast } = useToast();
 
   const [formLancamento, setFormLancamento] = useState({
@@ -68,89 +139,156 @@ export default function ExtratoContaPage() {
     descricao: ''
   });
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const contaId = params.get('id');
-    if (contaId) {
-      loadExtrato(contaId);
-    }
+  const voltar = useCallback(() => {
+    navigateBackOr(navigate, 'Financeiro');
+  }, [navigate]);
+
+  const aplicarSaldoBase = useCallback((lancsFull, movsFull) => {
+    if (!Array.isArray(lancsFull) || !Array.isArray(movsFull)) return false;
+    if (!lancsFull.length || !movsFull.length) return false;
+    setLancsSaldoBase(lancsFull);
+    setMovsSaldoBase(movsFull);
+    return true;
   }, []);
 
-  const loadExtrato = async (contaId) => {
-    setIsLoading(true);
-    try {
-      const [contaData, lancamentosData, movimentosData, contasData] = await Promise.all([
-        base44.entities.ContasFinanceiras.filter({ id: contaId }),
+  const runExtratoMaintenance = useCallback(async ({
+    contaAtual,
+    contasData,
+    dataInicio,
+    dataFim,
+    prefsCorte,
+    lancamentosIniciais,
+    movsIniciais,
+    saldoBaseJaCarregado,
+  }) => {
+    let lancamentosFiltrados = lancamentosIniciais;
+    let movsFiltrados = movsIniciais;
+    const isCaixaGeral = contaAtual.is_caixa_geral === true;
+
+    const backfill = await backfillLancamentosMovimentosCaixaPDV(base44, contasData);
+    if (backfill) {
+      lancamentosFiltrados = await fetchLancamentosExtratoConta({
+        contaId: contaAtual.id,
+        isCaixaGeral,
+        dataInicio,
+        dataFim,
+      });
+      if (!isCaixaGeral) {
+        movsFiltrados = await fetchMovimentosExtratoConta({
+          contaId: contaAtual.id,
+          dataInicio,
+          dataFim,
+        });
+      }
+      setLancamentos(lancamentosFiltrados);
+      setMovimentosCaixa(movsFiltrados);
+    }
+
+    let lancsDisplay = lancamentosFiltrados;
+    const reconciliou = await reconciliarSaldoCaixaPDVSemTurnoAberto(
+      base44,
+      contaAtual,
+      contasData,
+      lancamentosFiltrados,
+      movsFiltrados,
+    );
+
+    if (reconciliou) {
+      lancsDisplay = await fetchLancamentosExtratoConta({
+        contaId: contaAtual.id,
+        isCaixaGeral,
+        dataInicio,
+        dataFim,
+      });
+      setLancamentos(lancsDisplay);
+    }
+
+    let lancsSaldo = lancsDisplay;
+    let movsSaldo = movsFiltrados;
+
+    if (!saldoBaseJaCarregado && !prefsCorte.mostrarHistoricoAnterior && prefsCorte.dataCorte) {
+      const [lancsFull, movsFull] = await Promise.all([
         base44.entities.LancamentoFinanceiro.list(),
         base44.entities.MovimentosCaixa.list(),
-        base44.entities.ContasFinanceiras.list()
+      ]);
+      lancsSaldo = lancsFull;
+      movsSaldo = movsFull;
+      aplicarSaldoBase(lancsFull, movsFull);
+    }
+
+    const saldo = !prefsCorte.mostrarHistoricoAnterior && prefsCorte.dataCorte
+      ? calcularSaldoContaAposDataCorte(contaAtual, lancsSaldo, movsSaldo, prefsCorte.dataCorte)
+      : calcularSaldoContaFinanceira(contaAtual, lancsSaldo, movsSaldo);
+
+    if (Math.abs(saldo - Number(contaAtual.saldo_atual || 0)) > 0.009) {
+      await base44.entities.ContasFinanceiras.update(contaAtual.id, { saldo_atual: saldo });
+      setConta({ ...contaAtual, saldo_atual: saldo });
+    } else if (contaUsaRegraCaixaPDV(contaAtual) && Math.abs(saldo) <= 0.009) {
+      await base44.entities.ContasFinanceiras.update(contaAtual.id, { saldo_atual: 0 });
+      setConta({ ...contaAtual, saldo_atual: 0 });
+    }
+  }, [aplicarSaldoBase]);
+
+  const loadExtrato = useCallback(async (contaId, preload) => {
+    setIsLoading(true);
+    try {
+      const prefsCorte = lerPreferenciasCorteHistorico();
+      setMostrarHistoricoAnterior(prefsCorte.mostrarHistoricoAnterior);
+      setDataCorteHistorico(prefsCorte.dataCorte || DATA_CORTE_HISTORICO_PADRAO);
+
+      const hoje = dataHoje();
+      const dataFim = hoje;
+      const dataInicio = !prefsCorte.mostrarHistoricoAnterior && prefsCorte.dataCorte
+        ? prefsCorte.dataCorte
+        : format(subMonths(new Date(`${hoje}T12:00:00`), 24), 'yyyy-MM-dd');
+
+      const preloadConta = preload?.conta?.id === contaId ? preload.conta : null;
+      if (preloadConta) {
+        setConta(preloadConta);
+      }
+
+      const saldoBaseJaCarregado = aplicarSaldoBase(preload?.lancsSaldo, preload?.movsSaldo);
+
+      const [contaData, contasData] = await Promise.all([
+        preloadConta ? Promise.resolve([preloadConta]) : base44.entities.ContasFinanceiras.filter({ id: contaId }),
+        base44.entities.ContasFinanceiras.list(),
       ]);
 
       if (contaData.length > 0) {
         const contaAtual = contaData[0];
-        const contaNome = contaAtual.nome;
         const isCaixaGeral = contaAtual.is_caixa_geral === true;
-        
+
         setConta(contaAtual);
         setContas(contasData);
-        
-        let lancamentosFiltrados = [];
 
-        if (isCaixaGeral) {
-          lancamentosFiltrados = lancamentosData.filter(l => !l.conta_financeira_id);
-        } else {
-          lancamentosFiltrados = lancamentosData.filter(l => l.conta_financeira_id === contaId);
-        }
-
-        const movsFiltrados = movimentosData.filter(m => m.conta_id === contaId);
-
-        const backfill = await backfillLancamentosMovimentosCaixaPDV(base44, contasData);
-        let lancamentosAtual = lancamentosData;
-        if (backfill) {
-          lancamentosAtual = await base44.entities.LancamentoFinanceiro.list();
-          if (isCaixaGeral) {
-            lancamentosFiltrados = lancamentosAtual.filter(l => !l.conta_financeira_id);
-          } else {
-            lancamentosFiltrados = lancamentosAtual.filter(l => l.conta_financeira_id === contaId);
-          }
-        }
+        const [lancamentosFiltrados, movsFiltrados] = await Promise.all([
+          fetchLancamentosExtratoConta({
+            contaId,
+            isCaixaGeral,
+            dataInicio,
+            dataFim,
+          }),
+          isCaixaGeral
+            ? Promise.resolve([])
+            : fetchMovimentosExtratoConta({ contaId, dataInicio, dataFim }),
+        ]);
 
         setLancamentos(lancamentosFiltrados);
         setMovimentosCaixa(movsFiltrados);
+        setIsLoading(false);
 
-        const reconciliou = await reconciliarSaldoCaixaPDVSemTurnoAberto(
-          base44,
+        void runExtratoMaintenance({
           contaAtual,
           contasData,
-          lancamentosFiltrados,
-          movsFiltrados,
-        );
-
-        const saldo = calcularSaldoContaFinanceira(
-          contaAtual,
-          reconciliou
-            ? (await base44.entities.LancamentoFinanceiro.list()).filter(
-                (l) => l.conta_financeira_id === contaId || (!l.conta_financeira_id && contaAtual.is_caixa_geral),
-              )
-            : lancamentosFiltrados,
-          movsFiltrados,
-        );
-
-        if (reconciliou) {
-          const [lancamentosAtualizados] = await Promise.all([
-            base44.entities.LancamentoFinanceiro.list(),
-          ]);
-          const lancsConta = lancamentosAtualizados.filter((l) => l.conta_financeira_id === contaId);
-          setLancamentos(lancsConta);
-        }
-
-        if (Math.abs(saldo - Number(contaAtual.saldo_atual || 0)) > 0.009) {
-          await base44.entities.ContasFinanceiras.update(contaAtual.id, { saldo_atual: saldo });
-          setConta({ ...contaAtual, saldo_atual: saldo });
-        } else if (contaUsaRegraCaixaPDV(contaAtual) && Math.abs(saldo) <= 0.009) {
-          await base44.entities.ContasFinanceiras.update(contaAtual.id, { saldo_atual: 0 });
-          setConta({ ...contaAtual, saldo_atual: 0 });
-        }
+          dataInicio,
+          dataFim,
+          prefsCorte,
+          lancamentosIniciais: lancamentosFiltrados,
+          movsIniciais: movsFiltrados,
+          saldoBaseJaCarregado,
+        });
+      } else {
+        setIsLoading(false);
       }
     } catch (error) {
       toast({
@@ -158,10 +296,19 @@ export default function ExtratoContaPage() {
         description: error.message,
         variant: "destructive"
       });
-    } finally {
       setIsLoading(false);
     }
-  };
+  }, [aplicarSaldoBase, runExtratoMaintenance, toast]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const contaId = params.get('id');
+    if (contaId) {
+      loadExtrato(contaId, location.state?.extratoPreload);
+    } else {
+      setIsLoading(false);
+    }
+  }, [loadExtrato, location.state]);
 
   const handleSaveLancamento = async () => {
     try {
@@ -183,7 +330,6 @@ export default function ExtratoContaPage() {
       });
 
       setDialogType(null);
-      loadExtrato(conta.id);
     } catch (error) {
       toast({
         title: "Erro ao salvar",
@@ -203,31 +349,41 @@ export default function ExtratoContaPage() {
         return;
       }
 
-      // Cria saída na conta origem
-      await base44.entities.LancamentoFinanceiro.create({
-        tipo: 'Despesa',
-        descricao: `Transferência para ${contaDestino.nome}: ${formTransferencia.descricao}`,
-        valor: valor,
-        categoria: 'Outros',
+      const descricao =
+        formTransferencia.descricao?.trim() ||
+        `Transferência ${conta.nome} → ${contaDestino.nome}`;
+
+      const transferencia = await base44.entities.LancamentoFinanceiro.create({
+        tipo: 'Transferência',
+        descricao,
+        valor,
+        categoria: 'Transferência entre Contas',
         data_vencimento: format(new Date(), 'yyyy-MM-dd'),
         data_pagamento: format(new Date(), 'yyyy-MM-dd'),
         status: 'Pago',
+        status_conciliacao: 'N/A',
+        referencia_tipo: 'Manual',
         conta_financeira_id: conta.id,
-        observacoes: `Transferência de ${conta.nome} para ${contaDestino.nome}`
+        conta_financeira_nome: conta.nome,
+        conta_destino_id: contaDestino.id,
+        conta_destino_nome: contaDestino.nome,
+        observacoes: formTransferencia.descricao?.trim() || '',
       });
 
-      // Cria entrada na conta destino
-      await base44.entities.LancamentoFinanceiro.create({
-        tipo: 'Receita',
-        descricao: `Transferência de ${conta.nome}: ${formTransferencia.descricao}`,
-        valor: valor,
-        categoria: 'Outros',
-        data_vencimento: format(new Date(), 'yyyy-MM-dd'),
-        data_pagamento: format(new Date(), 'yyyy-MM-dd'),
-        status: 'Pago',
-        conta_financeira_id: contaDestino.id,
-        observacoes: `Transferência de ${conta.nome} para ${contaDestino.nome}`
-      });
+      await sincronizarSaldosAposAlteracao(base44, [conta.id, contaDestino.id]);
+
+      if (contaUsaRegraCaixaPDV(contaDestino)) {
+        const user = await base44.auth.me().catch(() => null);
+        await criarReforcoPendenteTransferenciaCaixaPDV(base44, {
+          contaDestino,
+          contaOrigem: conta,
+          valor,
+          lancamentoReceitaId: transferencia?.id,
+          usuarioId: user?.id,
+          usuarioNome: user?.full_name || user?.email,
+          observacaoExtra: formTransferencia.descricao?.trim() || '',
+        });
+      }
 
       toast({
         title: "Transferência realizada",
@@ -274,11 +430,35 @@ export default function ExtratoContaPage() {
   };
 
   const getDataMovimento = (mov) => mov.data_pagamento || mov.data_vencimento || mov.data_movimento || mov.created_date;
+  const chaveDiaMovimento = (mov) => getDataKeyMovimentoExtrato(mov) || toLocalDateKey(getDataMovimento(mov));
   const participaDoSaldo = (mov) => movimentoParticipaExtrato(mov, conta);
+  const passaCorteHistorico = (mov) => passaFiltroCorteHistorico(getDataKeyMovimentoExtrato(mov), {
+    mostrarHistoricoAnterior,
+    dataCorte: dataCorteHistorico,
+  });
+
+  const lancsParaSaldo = lancsSaldoBase.length ? lancsSaldoBase : lancamentos;
+  const movsParaSaldo = movsSaldoBase.length ? movsSaldoBase : movimentosCaixa;
+  const todosLancamentosExtrato = lancsParaSaldo;
 
   const movimentosJaNoFinanceiro = useMemo(
-    () => idsMovimentosComLancamentoFinanceiro(lancamentos),
-    [lancamentos],
+    () => idsMovimentosComLancamentoFinanceiro(lancamentos, movimentosCaixa),
+    [lancamentos, movimentosCaixa],
+  );
+
+  const contasById = useMemo(
+    () => Object.fromEntries(contas.map((c) => [c.id, c])),
+    [contas],
+  );
+
+  const lancsParaPares = lancsSaldoBase.length ? lancsSaldoBase : lancamentos;
+  const mapaContrapartesPares = useMemo(
+    () => buildMapaContrapartesTransferencia(lancsParaPares),
+    [lancsParaPares],
+  );
+  const mapaParIdsPares = useMemo(
+    () => buildMapaParIdsTransferencia(lancsParaPares),
+    [lancsParaPares],
   );
 
   // Combina e ordena movimentações (PDV: só o que compõe dinheiro na gaveta)
@@ -286,42 +466,23 @@ export default function ExtratoContaPage() {
     ...lancamentos.map(l => ({ ...l, origem: 'lancamento' })),
     ...movimentosCaixa
       .filter((m) => !movimentosJaNoFinanceiro.has(String(m.id)))
+      .filter((m) => !(m.tipo === 'Reforço' && m.lancamento_financeiro_id))
       .map(m => ({ ...m, origem: 'movimento' }))
   ]
     .filter((mov) => participaDoSaldo(mov))
+    .filter(passaCorteHistorico)
     .sort((a, b) => new Date(getDataMovimento(a)) - new Date(getDataMovimento(b)));
 
-  // Aplica filtro de período
-  const getDataRange = () => {
-    const hoje = new Date();
-    switch (filtroPeriodo) {
-      case 'hoje':
-        return { inicio: startOfDay(hoje), fim: endOfDay(hoje) };
-      case 'ontem':
-        const ontem = subDays(hoje, 1);
-        return { inicio: startOfDay(ontem), fim: endOfDay(ontem) };
-      case 'semana':
-        return { inicio: startOfWeek(hoje, { weekStartsOn: 0 }), fim: endOfWeek(hoje, { weekStartsOn: 0 }) };
-      case 'mes':
-        return { inicio: startOfMonth(hoje), fim: endOfMonth(hoje) };
-      case 'todos':
-        return { inicio: new Date(0), fim: endOfDay(hoje) };
-      case 'personalizado':
-        return dataInicio && dataFim ? 
-          { inicio: startOfDay(parseISO(dataInicio)), fim: endOfDay(parseISO(dataFim)) } : 
-          { inicio: new Date(0), fim: new Date() };
-      default:
-        return { inicio: new Date(0), fim: new Date() };
-    }
-  };
+  const { inicio: inicioYmd, fim: fimYmd } = intervaloExtratoYmd(filtroPeriodo, dataInicio, dataFim);
+  const movimentacoesNoPeriodo = todasMovimentacoes.filter((m) => (
+    passaIntervaloExtratoYmd(chaveDiaMovimento(m), inicioYmd, fimYmd)
+  ));
 
-  const { inicio, fim } = getDataRange();
-  const movimentacoesNoPeriodo = todasMovimentacoes.filter(m => {
-    const dataMovimento = new Date(getDataMovimento(m));
-    return isWithinInterval(dataMovimento, { start: inicio, end: fim });
-  });
+  const movimentacoesPorTipo = movimentacoesNoPeriodo.filter((m) => (
+    passaFiltroTiposLancamento(m, tiposSel)
+  ));
 
-  const movimentacoesFiltradas = movimentacoesNoPeriodo.filter(m => {
+  const movimentacoesFiltradas = movimentacoesPorTipo.filter(m => {
     if (!searchTerm) return true;
     const termo = searchTerm.toLowerCase();
     return (
@@ -333,7 +494,8 @@ export default function ExtratoContaPage() {
 
   // Agrupa por dia e calcula saldos
   const movimentacoesPorDia = movimentacoesFiltradas.reduce((acc, mov) => {
-    const dia = format(new Date(getDataMovimento(mov)), 'yyyy-MM-dd');
+    const dia = chaveDiaMovimento(mov);
+    if (!dia) return acc;
     if (!acc[dia]) acc[dia] = [];
     acc[dia].push(mov);
     return acc;
@@ -341,14 +503,16 @@ export default function ExtratoContaPage() {
 
   const diasOrdenados = Object.keys(movimentacoesPorDia).sort((a, b) => new Date(b) - new Date(a));
 
-  // Saldo canónico (mesma regra da lista de contas)
+  // Saldo canónico (mesma regra da lista de contas / corte histórico)
   const saldoReal = conta
-    ? calcularSaldoContaFinanceira(conta, lancamentos, movimentosCaixa)
+    ? (!mostrarHistoricoAnterior && dataCorteHistorico
+        ? calcularSaldoContaAposDataCorte(conta, lancsParaSaldo, movsParaSaldo, dataCorteHistorico)
+        : calcularSaldoContaFinanceira(conta, lancsParaSaldo, movsParaSaldo))
     : 0;
 
-  const movimentacoesAposPeriodo = todasMovimentacoes.filter(m => {
-    const dataMovimento = new Date(getDataMovimento(m));
-    return dataMovimento > fim && participaDoSaldo(m);
+  const movimentacoesAposPeriodo = todasMovimentacoes.filter((m) => {
+    const dataKey = chaveDiaMovimento(m);
+    return fimYmd && dataKey > fimYmd && participaDoSaldo(m);
   });
 
   const totalEntradasAposPeriodo = totaisEntradaSaidaMovimentos(
@@ -363,27 +527,27 @@ export default function ExtratoContaPage() {
   const saldoNoFimDoPeriodo = saldoReal - totalEntradasAposPeriodo + totalSaidasAposPeriodo;
 
   const totalEntradasPeriodo = totaisEntradaSaidaMovimentos(
-    movimentacoesNoPeriodo.filter(participaDoSaldo),
+    movimentacoesPorTipo.filter(participaDoSaldo),
     conta,
     {
       contasSel: conta ? [conta.id] : null,
-      mapaContrapartes: buildMapaContrapartesTransferencia(lancamentos),
-      todosLancamentos: lancamentos,
+      mapaContrapartes: buildMapaContrapartesTransferencia(todosLancamentosExtrato),
+      todosLancamentos: todosLancamentosExtrato,
     },
   ).entradas;
   const totalSaidasPeriodo = totaisEntradaSaidaMovimentos(
-    movimentacoesNoPeriodo.filter(participaDoSaldo),
+    movimentacoesPorTipo.filter(participaDoSaldo),
     conta,
     {
       contasSel: conta ? [conta.id] : null,
-      mapaContrapartes: buildMapaContrapartesTransferencia(lancamentos),
-      todosLancamentos: lancamentos,
+      mapaContrapartes: buildMapaContrapartesTransferencia(todosLancamentosExtrato),
+      todosLancamentos: todosLancamentosExtrato,
     },
   ).saidas;
 
   let saldoAcumulado = saldoNoFimDoPeriodo - totalEntradasPeriodo + totalSaidasPeriodo;
 
-  const mapaContrapartesExtrato = buildMapaContrapartesTransferencia(lancamentos);
+  const mapaContrapartesExtrato = buildMapaContrapartesTransferencia(todosLancamentosExtrato);
   const optsTotaisExtrato = {
     contasSel: conta ? [conta.id] : null,
     mapaContrapartes: mapaContrapartesExtrato,
@@ -418,7 +582,7 @@ export default function ExtratoContaPage() {
   const diasExibicao = useMemo(() => {
     return diasComSaldo.map((diaData) => ({
       ...diaData,
-      movimentacoes: sortLancamentosPorDescricao(diaData.movimentacoes),
+      movimentacoes: sortLancamentosPorDescricao(diaData.movimentacoes, 'desc'),
     }));
   }, [diasComSaldo]);
 
@@ -438,21 +602,42 @@ export default function ExtratoContaPage() {
 
   const grupos = useMemo(() => {
     const hStr = dataHoje();
-    const oStr = format(subDays(new Date(`${hStr}T12:00:00`), 1), 'yyyy-MM-dd');
-    return diasExibicao.map((diaData) => ({
-      k: diaData.dia,
-      label: formatFinanceiroGrupoLabel(diaData.dia, hStr, oStr),
-      items: diaData.movimentacoes.map(normalizeMov),
-      totais: {
-        r: diaData.totalEntradas,
-        d: diaData.totalSaidas,
-        entrou: diaData.totalEntradas,
-        saiu: diaData.totalSaidas,
-        liquidoOperacional: roundToTwoDecimals(diaData.totalEntradas - diaData.totalSaidas),
-        saldoAcumulado: roundToTwoDecimals(diaData.saldoFinal),
-      },
-    }));
-  }, [diasExibicao]);
+    const oStr = dataMenosDiasSistema(1);
+    return (diasExibicao || []).map((diaData) => {
+      const movsDia = Array.isArray(diaData?.movimentacoes) ? diaData.movimentacoes : [];
+      let items;
+      try {
+        items = sortLancamentosPorDescricao(
+          consolidarTransferenciasListaFluxo(
+            movsDia.map(normalizeMov),
+            {
+              movimentos: movimentosCaixa,
+              mapaContrapartes: mapaContrapartesPares,
+              contasById,
+              mapaParIds: mapaParIdsPares,
+            },
+          ),
+          'desc',
+        );
+      } catch (err) {
+        console.error('[ExtratoConta] consolidarTransferenciasListaFluxo', err);
+        items = movsDia.map(normalizeMov);
+      }
+      return {
+        k: diaData.dia,
+        label: formatFinanceiroGrupoLabel(diaData.dia, hStr, oStr),
+        items,
+        totais: {
+          r: diaData.totalEntradas,
+          d: diaData.totalSaidas,
+          entrou: diaData.totalEntradas,
+          saiu: diaData.totalSaidas,
+          liquidoOperacional: roundToTwoDecimals(diaData.totalEntradas - diaData.totalSaidas),
+          saldoAcumulado: roundToTwoDecimals(diaData.saldoFinal),
+        },
+      };
+    });
+  }, [diasExibicao, movimentosCaixa, mapaContrapartesPares, contasById, mapaParIdsPares]);
 
   const totalMovimentacoes = movimentacoesFiltradas.length;
   const kpisExtrato = useMemo(() => ({
@@ -463,14 +648,14 @@ export default function ExtratoContaPage() {
   }), [totalEntradasPeriodo, totalSaidasPeriodo, saldoCalculado]);
 
   const periodoLabel = PERIODOS_EXTRATO.find((p) => p.v === filtroPeriodo)?.l || 'Período';
-  const hasActiveFilters = filtroPeriodo !== 'mes' || !!dataInicio || !!dataFim;
+  const hasActiveFilters = filtroPeriodo !== 'mes' || !!dataInicio || !!dataFim || tiposSel.length > 0;
 
   // Funções de exportação
   const exportarCSV = () => {
     const csvContent = [
       ['Data', 'Descrição', 'Tipo', 'Categoria', 'Valor', 'Saldo'],
       ...movimentacoesFiltradas.map(m => [
-        format(new Date(getDataMovimento(m)), 'dd/MM/yyyy HH:mm'),
+        formatarDataHora(getDataMovimento(m)),
         m.descricao || m.tipo,
         m.tipo,
         m.categoria || '-',
@@ -509,7 +694,7 @@ export default function ExtratoContaPage() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <p className="text-muted-foreground mb-4">Conta não encontrada</p>
-          <Button onClick={() => window.history.back()} className="gap-2">
+          <Button onClick={voltar} className="gap-2" data-pulse-sensor="extrato-conta.voltar">
             <ArrowLeft className="w-4 h-4" /> Voltar
           </Button>
         </div>
@@ -526,7 +711,7 @@ export default function ExtratoContaPage() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => window.history.back()}
+              onClick={voltar}
               className="h-8 w-8 shrink-0"
               aria-label="Voltar"
             >
@@ -538,32 +723,29 @@ export default function ExtratoContaPage() {
                 {conta.is_caixa_pdv ? 'Dinheiro na gaveta' : conta.tipo}
               </p>
             </div>
-            <div className="flex shrink-0 gap-0.5 no-pdf-capture">
-              <button
-                type="button"
-                onClick={() => setAjusteDialogOpen(true)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg p38-field-surface border-0"
-                aria-label="Ajustar saldo"
-              >
-                <Scale className="h-4 w-4 text-foreground/90" />
-              </button>
-              <button
-                type="button"
-                onClick={exportarCSV}
-                className="flex h-8 w-8 items-center justify-center rounded-lg p38-field-surface border-0"
-                aria-label="Exportar CSV"
-              >
-                <FileDown className="h-4 w-4 text-foreground/90" />
-              </button>
-              <button
-                type="button"
-                onClick={imprimir}
-                className="flex h-8 w-8 items-center justify-center rounded-lg p38-field-surface border-0"
-                aria-label="Imprimir"
-              >
-                <Printer className="h-4 w-4 text-foreground/90" />
-              </button>
-            </div>
+            <TooltipProvider delayDuration={300}>
+              <div className="flex shrink-0 items-center gap-0.5 no-pdf-capture">
+                <TipoFiltroBar sel={tiposSel} onSel={setTiposSel} />
+                <FinanceiroToolbarIcon
+                  label="Ajustar saldo"
+                  onClick={() => setAjusteDialogOpen(true)}
+                >
+                  <Scale className="h-4 w-4 text-foreground/90" />
+                </FinanceiroToolbarIcon>
+                <FinanceiroToolbarIcon
+                  label="Exportar CSV"
+                  onClick={exportarCSV}
+                >
+                  <FileDown className="h-4 w-4 text-foreground/90" />
+                </FinanceiroToolbarIcon>
+                <FinanceiroToolbarIcon
+                  label="Imprimir"
+                  onClick={imprimir}
+                >
+                  <Printer className="h-4 w-4 text-foreground/90" />
+                </FinanceiroToolbarIcon>
+              </div>
+            </TooltipProvider>
           </div>
           <KpiExtratoConta
             kpis={kpisExtrato}
@@ -575,7 +757,7 @@ export default function ExtratoContaPage() {
         {/* Desktop */}
         <div className="hidden min-w-0 items-center gap-3 md:flex">
           <div className="flex shrink-0 items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => window.history.back()} className="h-8 w-8" aria-label="Voltar">
+            <Button variant="ghost" size="icon" onClick={voltar} className="h-8 w-8" aria-label="Voltar">
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
@@ -592,32 +774,29 @@ export default function ExtratoContaPage() {
               saldoLabel={contaUsaRegraCaixaPDV(conta) ? 'Saldo na gaveta' : 'Saldo na conta'}
             />
           </div>
-          <div className="flex shrink-0 gap-1 no-pdf-capture">
-            <button
-              type="button"
-              onClick={() => setAjusteDialogOpen(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg p38-field-surface border-0"
-              aria-label="Ajustar saldo"
-            >
-              <Scale className="h-4 w-4 text-foreground/90" />
-            </button>
-            <button
-              type="button"
-              onClick={exportarCSV}
-              className="flex h-8 w-8 items-center justify-center rounded-lg p38-field-surface border-0"
-              aria-label="Exportar CSV"
-            >
-              <FileDown className="h-4 w-4 text-foreground/90" />
-            </button>
-            <button
-              type="button"
-              onClick={imprimir}
-              className="flex h-8 w-8 items-center justify-center rounded-lg p38-field-surface border-0"
-              aria-label="Imprimir"
-            >
-              <Printer className="h-4 w-4 text-foreground/90" />
-            </button>
-          </div>
+          <TooltipProvider delayDuration={300}>
+            <div className="flex shrink-0 items-center gap-0.5 no-pdf-capture">
+              <TipoFiltroBar sel={tiposSel} onSel={setTiposSel} />
+              <FinanceiroToolbarIcon
+                label="Ajustar saldo"
+                onClick={() => setAjusteDialogOpen(true)}
+              >
+                <Scale className="h-4 w-4 text-foreground/90" />
+              </FinanceiroToolbarIcon>
+              <FinanceiroToolbarIcon
+                label="Exportar CSV"
+                onClick={exportarCSV}
+              >
+                <FileDown className="h-4 w-4 text-foreground/90" />
+              </FinanceiroToolbarIcon>
+              <FinanceiroToolbarIcon
+                label="Imprimir"
+                onClick={imprimir}
+              >
+                <Printer className="h-4 w-4 text-foreground/90" />
+              </FinanceiroToolbarIcon>
+            </div>
+          </TooltipProvider>
         </div>
       </div>
 
@@ -642,11 +821,18 @@ export default function ExtratoContaPage() {
           setFiltroPeriodo('mes');
           setDataInicio('');
           setDataFim('');
+          setTiposSel([]);
           setSearchTerm('');
         }}
         summaryChips={
           <>
+            {!mostrarHistoricoAnterior && dataCorteHistorico && (
+              <FinanceiroSummaryChip>Movimentos desde {formatarSoData(dataCorteHistorico)}</FinanceiroSummaryChip>
+            )}
             {filtroPeriodo !== 'mes' && <FinanceiroSummaryChip>{periodoLabel}</FinanceiroSummaryChip>}
+            {tiposSel.length > 0 && (
+              <FinanceiroSummaryChip>{labelTiposSelecionados(tiposSel)}</FinanceiroSummaryChip>
+            )}
             {searchTerm && <FinanceiroSummaryChip>Busca</FinanceiroSummaryChip>}
           </>
         }

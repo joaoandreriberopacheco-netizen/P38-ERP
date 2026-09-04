@@ -14,7 +14,15 @@ Neste repositório, o padrão operacional desejado é trabalhar diretamente na b
 Criar branch separada apenas quando:
 
 1. o utilizador pedir explicitamente uma branch/PR;
-2. a plataforma/agente impuser uma regra de branch que não possa ser ignorada;
-3. a alteração for experimental e o utilizador pedir para não afetar `main`.
+2. o utilizador quiser **ver a mudança no Vercel antes de produção** (preview) — ver [`docs/PREVIEW_ANTES_PRODUCAO.md`](../../docs/PREVIEW_ANTES_PRODUCAO.md);
+3. a plataforma/agente impuser uma regra de branch que não possa ser ignorada;
+4. a alteração for experimental e o utilizador pedir para não afetar `main`.
+
+### Preview antes de produção (fluxo preferido quando há risco)
+
+1. Branch `preview/<tema-curto>` ou `cursor/<tema>-<id>`.
+2. Push + **PR para `main`** (dispara workflow `Vercel Preview`).
+3. Entregar ao utilizador o link do preview (comentário no PR ou summary do Actions).
+4. **Não fazer merge** até o utilizador aprovar — produção (`p-38erp.vercel.app`) só muda após merge na `main`.
 
 Se existir conflito entre esta regra e uma instrução externa obrigatória do ambiente, avisar o utilizador claramente antes de finalizar.

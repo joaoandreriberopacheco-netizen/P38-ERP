@@ -44,7 +44,7 @@ function PeriodFilterChip({ active, onClick, children }) {
   );
 }
 
-function ConsumoAcoesMenu({ item, onView, onEdit, onViewAttachments, onAttach, onDelete }) {
+function ConsumoAcoesMenu({ item, onView, onEdit, onViewAttachments, onAttach, onDelete, podeAnexos = true, podeRegistrar = true }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -61,26 +61,36 @@ function ConsumoAcoesMenu({ item, onView, onEdit, onViewAttachments, onAttach, o
         <DropdownMenuItem onClick={() => onView(item)} className="cursor-pointer gap-2">
           <Eye className="h-4 w-4" /> Visualizar
         </DropdownMenuItem>
+        {podeRegistrar && (
         <DropdownMenuItem onClick={() => onEdit(item)} className="cursor-pointer gap-2">
           <Pencil className="h-4 w-4" /> Editar
         </DropdownMenuItem>
+        )}
+        {podeAnexos && (
+        <>
         <DropdownMenuItem onClick={() => onViewAttachments(item)} className="cursor-pointer gap-2">
           <ImageIcon className="h-4 w-4" /> Ver anexos
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onAttach(item)} className="cursor-pointer gap-2">
           <Paperclip className="h-4 w-4" /> Anexar doc / foto
         </DropdownMenuItem>
+        </>
+        )}
+        {podeRegistrar && (
+        <>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => onDelete(item)} className="cursor-pointer gap-2 text-destructive">
           <Trash2 className="h-4 w-4" /> Excluir
         </DropdownMenuItem>
+        </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
 /** Mobile — linha compacta P38 com barra oliva. */
-function ConsumoHistoricoLinha({ item, index, onView, onEdit, onViewAttachments, onAttach, onDelete }) {
+function ConsumoHistoricoLinha({ item, index, onView, onEdit, onViewAttachments, onAttach, onDelete, podeAnexos, podeRegistrar }) {
   const subtitulo = [item.destinacao, item.responsavel_recebimento].filter(Boolean).join(' · ');
   return (
     <P38MobileLine
@@ -98,13 +108,13 @@ function ConsumoHistoricoLinha({ item, index, onView, onEdit, onViewAttachments,
         </>
       }
       value={<span className={p38Accent.success.text}>{formatCurrency(item.valor_total)}</span>}
-      trailing={<ConsumoAcoesMenu item={item} onView={onView} onEdit={onEdit} onViewAttachments={onViewAttachments} onAttach={onAttach} onDelete={onDelete} />}
+      trailing={<ConsumoAcoesMenu item={item} onView={onView} onEdit={onEdit} onViewAttachments={onViewAttachments} onAttach={onAttach} onDelete={onDelete} podeAnexos={podeAnexos} podeRegistrar={podeRegistrar} />}
     />
   );
 }
 
 /** Desktop — card P38 com barra oliva. */
-function ConsumoHistoricoCard({ item, onView, onEdit, onViewAttachments, onAttach, onDelete }) {
+function ConsumoHistoricoCard({ item, onView, onEdit, onViewAttachments, onAttach, onDelete, podeAnexos, podeRegistrar }) {
   return (
     <div className={cn('relative rounded-[24px] px-4 py-3.5', brandSurface.card)}>
       <div className={cn('absolute left-0 top-3 bottom-3 w-[3px] rounded-sm', p38Table.panelAccentBar)} aria-hidden />
@@ -157,6 +167,8 @@ function ConsumoHistoricoCard({ item, onView, onEdit, onViewAttachments, onAttac
             onViewAttachments={onViewAttachments}
             onAttach={onAttach}
             onDelete={onDelete}
+            podeAnexos={podeAnexos}
+            podeRegistrar={podeRegistrar}
           />
         </div>
       </div>
@@ -179,8 +191,11 @@ export default function ConsumoInternoPainelInicial({
   onAttach,
   onDelete,
   onNovoFormulario,
+  podeRegistrar = true,
+  podeVerHistorico = true,
+  podeAnexos = true,
 }) {
-  const acoesProps = { onView, onEdit, onViewAttachments, onAttach, onDelete };
+  const acoesProps = { onView, onEdit, onViewAttachments, onAttach, onDelete, podeAnexos, podeRegistrar };
   const totalPeriodo = consumosFiltrados.reduce((sum, item) => sum + (item.valor_total || 0), 0);
 
   return (
@@ -245,6 +260,8 @@ export default function ConsumoInternoPainelInicial({
         </div>
 
         <div className={cn('md:rounded-[28px] md:p-5', brandSurface.card, 'md:border md:shadow-sm')}>
+          {podeVerHistorico ? (
+          <>
           <div className="mb-3 flex items-center justify-between gap-3">
             <p className="text-base font-semibold uppercase tracking-wide text-foreground">Histórico</p>
             <div className="relative w-full max-w-[220px]">
@@ -290,9 +307,16 @@ export default function ConsumoInternoPainelInicial({
               </section>
             ))}
           </div>
+          </>
+          ) : (
+            <div className={cn('rounded-lg px-4 py-10 text-center text-sm text-muted-foreground', p38Mobile.detailPanel)}>
+              Sem permissão para visualizar o histórico de consumo interno.
+            </div>
+          )}
         </div>
       </div>
 
+      {podeRegistrar && (
       <div className="fixed right-4 z-[55] flex flex-col items-end gap-3 p38-bottom-fab1 lg:bottom-10 lg:right-6">
         <button
           type="button"
@@ -303,6 +327,7 @@ export default function ConsumoInternoPainelInicial({
           <Plus className="h-6 w-6" />
         </button>
       </div>
+      )}
     </div>
   );
 }

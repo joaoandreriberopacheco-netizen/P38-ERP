@@ -9,6 +9,7 @@ import {
   p38StatusTone,
   p38AccentKeyFromTone,
 } from '@/components/ui/p38-mobile-line';
+import { cn } from '@/lib/utils';
 import { formatFinanceiroValor } from './FinanceiroListaShared';
 import { isTransferenciaEntreContas } from '@/lib/saldoContaFinanceira';
 
@@ -94,6 +95,12 @@ function rowMeta(l, { showPago = false, dimProgramada = false } = {}) {
     <>
       {l.categoria && l.categoria !== 'Transferência entre Contas' && <span>{l.categoria}</span>}
       {isTransferenciaEntreContas(l) && !l.isTransferenciaConsolidada && <span>Transferência entre contas</span>}
+      {l.reforcoCaixaStatus === 'aguardando_caixa' && (
+        <P38StatusLabel tone="warning">Aguardando caixa</P38StatusLabel>
+      )}
+      {l.reforcoCaixaStatus === 'aceito_caixa' && (
+        <P38StatusLabel tone="success">Aceito no caixa</P38StatusLabel>
+      )}
       {programada && !isPago && (
         <P38StatusLabel tone="warning">Programado</P38StatusLabel>
       )}
@@ -136,7 +143,8 @@ export default function FinanceiroLancRow({
   const isPago = l.status === 'Pago' || !!l.data_pagamento;
   const podeSelecionar = emSelecao && (selecionarPagos ? isPago : !isPago);
   const conc = l.status_conciliacao || 'N/A';
-  const isTransfConsolidada = l.isTransferenciaConsolidada;
+  const isTransfConsolidada = l.isTransferenciaConsolidada || l.perspectivaTransferencia === 'neutra';
+  const perspectiva = l.perspectivaTransferencia;
   const data =
     dataField === 'vencimento'
       ? l.data_vencimento
@@ -154,32 +162,46 @@ export default function FinanceiroLancRow({
     </>
   );
 
-  const subtitle = isTransfConsolidada ? (
-    <>
+  const subtitle = isTransfConsolidada || perspectiva ? (
+    <span className="line-clamp-2 break-words">
       {data ? formatarDataCurta(data) : '—'}
       {l.notaTransferencia ? ` · ${l.notaTransferencia}` : ''}
-    </>
+    </span>
   ) : (
-    <>
+    <span className="line-clamp-2 break-words">
       {data ? formatarDataCurta(data) : '—'}
       {l.conta_financeira_nome ? ` · ${l.conta_financeira_nome}` : ''}
-    </>
+    </span>
   );
 
   const title = isTransfConsolidada ? (
-    <span className="inline-flex min-w-0 items-center gap-1.5">
+    <span className="inline-flex min-w-0 items-center gap-1 text-[13px] sm:text-[15px]">
       <ArrowRightLeft className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
-      <span className="truncate">
+      <span className="line-clamp-2 min-w-0 break-words normal-case leading-snug">
         {l.contaOrigemNome}
         <span className="mx-1 text-muted-foreground">&gt;</span>
         {l.contaDestinoNome}
       </span>
     </span>
+  ) : perspectiva === 'saida' ? (
+    <span className="inline-flex min-w-0 items-center gap-1 text-[13px] sm:text-[15px]">
+      <ArrowRightLeft className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+      <span className="line-clamp-2 min-w-0 break-words normal-case leading-snug">
+        Transferência → {l.contaDestinoNome || 'Destino'}
+      </span>
+    </span>
+  ) : perspectiva === 'entrada' ? (
+    <span className="inline-flex min-w-0 items-center gap-1 text-[13px] sm:text-[15px]">
+      <ArrowRightLeft className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+      <span className="line-clamp-2 min-w-0 break-words normal-case leading-snug">
+        Transferência ← {l.contaOrigemNome || 'Origem'}
+      </span>
+    </span>
   ) : (
-    <span className={cancelado ? 'line-through' : undefined}>{l.descricao}</span>
+    <span className={cn('line-clamp-2 normal-case leading-snug', cancelado && 'line-through')}>{l.descricao}</span>
   );
 
-  const lancamentoClick = isTransfConsolidada ? (l._lancamentoDespesa || l) : l;
+  const lancamentoClick = l._lancamentoTransferencia || (isTransfConsolidada ? (l._lancamentoDespesa || l) : l);
 
   const esmaecido = cancelado || (showPago && isPago) || dimProgramada || l._isProgramada;
 
@@ -187,7 +209,7 @@ export default function FinanceiroLancRow({
     thinAccent: true,
     striped,
     accent: p38AccentKeyFromTone(rowAccent(l, { dimPago: showPago || dimProgramada || l._isProgramada })),
-    className: `w-full text-left ${LINE_TITLE_CLASS} max-md:!py-3.5 max-md:min-h-[58px] [&>div:last-child]:max-w-[50%] sm:[&>div:last-child]:max-w-[46%] [&>div:first-child]:min-w-0 ${esmaecido ? 'opacity-50' : ''}`,
+    className: `w-full text-left ${LINE_TITLE_CLASS} max-md:!py-3.5 max-md:min-h-[58px] [&>div:last-child]:max-w-[44%] sm:[&>div:last-child]:max-w-[38%] [&>div:first-child]:min-w-0 ${esmaecido ? 'opacity-50' : ''}`,
     title,
     subtitle,
     meta: rowMeta(l, { showPago, dimProgramada: dimProgramada || l._isProgramada }),

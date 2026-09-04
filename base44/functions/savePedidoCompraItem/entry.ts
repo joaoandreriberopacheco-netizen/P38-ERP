@@ -95,6 +95,34 @@ const resolveUnidadeForItem = (produto: any, input: any) => {
   return { unidade: comercial, source: 'comercial_default', found: false };
 };
 
+/** Persistência: valor de compra na BD é líquido (bruto − desconto). */
+const normalizePedidoCompraItemCustoLiquidoParaPersist = (item: any) => {
+  const frete = asNumber(item?.frete_unitario_fator1 ?? item?.custo_frete_unitario, 0);
+  const outros = asNumber(item?.outros_unitario_fator1 ?? item?.custo_outros_unitario, 0);
+  const custoBruto = asNumber(item?.custo_unitario_fator1 ?? item?.custo_unitario, 0);
+  const desconto = asNumber(
+    item?.desconto_unitario_fator1 ?? item?.valor_desconto_item ?? item?.desconto_unitario,
+    0,
+  );
+  const custoLiquidoF1 = round6(custoBruto - desconto);
+  const fator = asNumber(item?.fator_aplicado ?? item?.fator_conversao, 1) || 1;
+  const custoTotalUnit = round6(custoLiquidoF1 + frete + outros);
+  const qb = asNumber(item?.quantidade_base, NaN);
+  const qty = asNumber(item?.quantidade ?? item?.quantidade_comercial, 0);
+  const qBase = Number.isFinite(qb) && qb > 0 ? qb : qty * fator;
+  const totalExplicito = asNumber(item?.total ?? item?.valor_total_item ?? item?.subtotal, 0);
+  const total = totalExplicito > 0 ? round6(totalExplicito) : round6(qBase * custoTotalUnit);
+
+  return {
+    ...item,
+    custo_unitario_fator1: custoLiquidoF1,
+    custo_unitario_comercial: round6(custoLiquidoF1 * fator),
+    desconto_unitario_fator1: 0,
+    custo_total_unitario_fator1: custoTotalUnit,
+    total,
+  };
+};
+
 const derivePedidoCompraItem = (pedido: any, produto: any, input: any) => {
   const errors: string[] = [];
   if (!produto?.id) errors.push('produto_id obrigatorio');
@@ -138,7 +166,7 @@ const derivePedidoCompraItem = (pedido: any, produto: any, input: any) => {
   return {
     valid: errors.length === 0,
     errors,
-    item: {
+    item: normalizePedidoCompraItemCustoLiquidoParaPersist({
       pedido_compra_id: pedido?.id || '',
       pedido_compra_numero: pedido?.numero || '',
       produto_id: produto?.id || '',
@@ -160,7 +188,7 @@ const derivePedidoCompraItem = (pedido: any, produto: any, input: any) => {
       ordem: asNumber(input?.ordem, 0),
       observacoes: typeof input?.observacoes === 'string' ? input.observacoes : '',
       status_recebimento: input?.status_recebimento || 'Pendente',
-    },
+    }),
   };
 };
 
@@ -197,17 +225,15 @@ const recomporPedido = async (base44: any, pedidoId: string) => {
   const pedido = await fetchPedido(base44, pedidoId);
   const linhas = await base44.asServiceRole.entities.PedidoCompraItem.filter({ pedido_compra_id: pedidoId });
   const ordenadas = (linhas || []).slice().sort((a: any, b: any) => asNumber(a.ordem, 0) - asNumber(b.ordem, 0));
-  const itensEspelho = ordenadas.map(itemToLegacyMirror);
-  const valorItens = round6(itensEspelho.reduce((acc: number, it: any) => acc + asNumber(it.total, 0), 0));
+  const valorItens = round6(ordenadas.reduce((acc: number, it: any) => acc + asNumber(it?.total, 0), 0));
   const frete = asNumber(pedido?.valor_frete, 0);
   const desconto = asNumber(pedido?.valor_desconto, 0);
   const valorTotal = round6(valorItens + frete - desconto);
   await base44.asServiceRole.entities.PedidoCompra.update(pedidoId, {
-    itens: itensEspelho,
     valor_itens: valorItens,
     valor_total: valorTotal,
   });
-  return { itens_count: itensEspelho.length, valor_itens: valorItens, valor_total: valorTotal };
+  return { itens_count: ordenadas.length, valor_itens: valorItens, valor_total: valorTotal, espelho_json: false };
 };
 
 const fetchProduto = async (base44: any, produtoId: string) => {

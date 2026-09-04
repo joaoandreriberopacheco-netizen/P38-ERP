@@ -39,6 +39,38 @@ Ver também **[PHASE_1_HOMOLOGACAO.md](./PHASE_1_HOMOLOGACAO.md)** (Fase 1 compl
 - `VITE_SUBPAYZE_API_KEY`
 - `VITE_SUBPAYZE_WEBHOOK_SECRET`
 
+### Portal catálogo cerâmica (tabela auxiliar)
+
+O piloto cerâmica do menu **Compras → Portal catálogo** trabalha em **`public.portal_catalog`** (migração `067_portal_catalog.sql`), **não** altera `public.produto` ao reservar SKUs.
+
+**Popular a tabela auxiliar:**
+
+```bash
+npm run supabase:deploy -- --migrations-only   # aplica 067 se pendente
+npm run portal:catalog:seed -- --apply         # 174 SKUs do manifest JSON
+npm run portal:catalog:import -- --apply       # ou directamente do Excel piloto
+```
+
+**Reserva (só `portal_catalog.reserva_portal`):**
+
+```bash
+npm run reserva:listar
+npm run reserva:reativar -- --apply
+```
+
+Se existirem SKUs afectados pela reserva **antiga** (tag `reserva-ceramica` / `ativo=false` no cadastro), use:
+
+```bash
+npm run reserva:reativar -- --apply --legacy-cadastro
+```
+
+Flags opcionais de UI:
+
+- `VITE_CADASTRO_PRODUTO_V2_ENABLED=true` — aba cadastro no portal
+- `VITE_MODELO_CATALOGO_ENABLED=true` — laboratório modelo (opcional)
+
+Leitura de estoque/preço continua a vir de `produto`; hierarquia, reserva e import Excel vivem em `portal_catalog`.
+
 ### Datalink híbrido (entidades → Postgres Supabase)
 
 Com o stack local a correr (`supabase start`), no `.env.local` na raiz do app:

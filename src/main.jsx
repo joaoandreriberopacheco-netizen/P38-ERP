@@ -3,9 +3,11 @@ import ReactDOM from 'react-dom/client'
 import App from '@/App.jsx'
 import '@/index.css'
 import { installMobileFocusPolicy } from '@/lib/focusPolicy'
+import { bootLandscapeFallbackFromStorage, installPortraitOrientationLock } from '@/lib/portraitOrientationLock'
 import { uppercaseInputValue } from '@/lib/uppercaseInputHandlers'
 import { installChunkErrorHandlers, reloadOnceOnChunkError } from '@/lib/lazyPage'
 import { shouldRegisterServiceWorker } from '@/lib/pwaServiceWorkerEnv'
+import { injectSpeedInsights } from '@vercel/speed-insights'
 
 // Tema antes da primeira pintura (splash, login, etc.)
 try {
@@ -15,6 +17,7 @@ try {
 } catch (_) {
   /* ignore */
 }
+bootLandscapeFallbackFromStorage()
 
 // Select-on-focus global: seleciona o texto ao clicar/focar em qualquer input numérico ou de texto
 document.addEventListener('focusin', (e) => {
@@ -32,7 +35,9 @@ document.addEventListener('focusin', (e) => {
 document.addEventListener('blur', (e) => uppercaseInputValue(e.target), true);
 
 installMobileFocusPolicy();
+installPortraitOrientationLock();
 installChunkErrorHandlers();
+injectSpeedInsights();
 
 /** Remove SW antigo no preview/dev (cache de /src/*.jsx quebrava HMR). Produção p38.base44.app mantém SW. */
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator && !shouldRegisterServiceWorker()) {

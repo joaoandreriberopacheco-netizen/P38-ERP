@@ -19,6 +19,20 @@ export const Z_LANCAMENTO = {
   confirm: 72,
 };
 
+/** Classes Tailwind para diálogos/drawers acima do formulário (z 59–60). */
+export function lancamentoStackClasses(level = 1) {
+  if (level >= 3) {
+    return { overlay: 'z-[76] bg-black/70', content: 'z-[78]' };
+  }
+  if (level >= 2) {
+    return { overlay: 'z-[72] bg-black/70', content: 'z-[72]' };
+  }
+  if (level >= 1) {
+    return { overlay: 'z-[68] bg-black/70', content: 'z-[70]' };
+  }
+  return { overlay: undefined, content: undefined };
+}
+
 const sheetBodyClass = 'flex min-h-0 flex-1 flex-col overflow-hidden';
 
 const drawerSheetClass =

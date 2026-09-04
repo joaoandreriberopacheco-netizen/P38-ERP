@@ -78,7 +78,7 @@ export default function CorteDiarioContaT({ conta, compact = false }) {
       }`}
     >
       <header
-        className={`border-b-2 border-border/50 bg-[#f0efe8] text-center dark:bg-muted/40 ${
+        className={`border-b-2 border-border/50 bg-card shadow-sm text-center dark:bg-muted/40 ${
           compact ? 'px-1.5 py-1' : 'px-3 py-2.5'
         }`}
       >

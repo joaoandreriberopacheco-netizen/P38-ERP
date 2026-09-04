@@ -13,17 +13,25 @@ const MONTHS = Array.from({ length: 12 }, (_, index) => ({
 
 const toDate = (value) => {
   if (!value) return undefined;
-  const [year, month, day] = value.split('-').map(Number);
-  return new Date(year, month - 1, day);
+  const parts = value.split('-').map(Number);
+  if (parts.length < 3 || parts.some((n) => Number.isNaN(n))) return undefined;
+  const [year, month, day] = parts;
+  const date = new Date(year, month - 1, day);
+  return Number.isNaN(date.getTime()) ? undefined : date;
 };
 
 const toValue = (date) => {
-  if (!date) return '';
+  if (!date || Number.isNaN(date.getTime())) return '';
   return format(date, 'yyyy-MM-dd');
 };
 
+const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+const isCompleteDateRange = (start, end) =>
+  DATE_KEY_RE.test(start) && DATE_KEY_RE.test(end);
+
 const formatLabel = (date) => {
-  if (!date) return 'Selecionar';
+  if (!date || Number.isNaN(date.getTime())) return 'Selecionar';
   return format(date, 'dd MMM yyyy', { locale: ptBR });
 };
 
@@ -130,7 +138,7 @@ function MonthPanel({ monthDate, onPrev, onNext, onSelectDay, start, end, mode, 
   );
 }
 
-export default function MobileDateRangePicker({ startDate, endDate, onApply, onClear }) {
+export default function MobileDateRangePicker({ startDate, endDate, onApply, onClear, nested = false }) {
   const [open, setOpen] = useState(false);
   const [tempStart, setTempStart] = useState(startDate);
   const [tempEnd, setTempEnd] = useState(endDate);
@@ -153,6 +161,7 @@ export default function MobileDateRangePicker({ startDate, endDate, onApply, onC
   };
 
   const handleSelectDay = (date) => {
+    if (!date || Number.isNaN(date.getTime())) return;
     const picked = toValue(date);
     if (!tempStart || (tempStart && tempEnd)) {
       setTempStart(picked);
@@ -169,9 +178,11 @@ export default function MobileDateRangePicker({ startDate, endDate, onApply, onC
     }
   };
 
-  const summary = startDate && endDate
+  const canApply = isCompleteDateRange(tempStart, tempEnd);
+
+  const summary = isCompleteDateRange(startDate, endDate)
     ? `${formatLabel(toDate(startDate))} - ${formatLabel(toDate(endDate))}`
-    : startDate
+    : startDate && DATE_KEY_RE.test(startDate)
       ? `${formatLabel(toDate(startDate))} - ...`
       : 'Período';
 
@@ -189,7 +200,7 @@ export default function MobileDateRangePicker({ startDate, endDate, onApply, onC
         </span>
       </Button>
 
-      <Drawer open={open} onOpenChange={setOpen}>
+      <Drawer nested={nested} open={open} onOpenChange={setOpen}>
         <DrawerContent className="border-0 rounded-t-[28px] bg-card dark:bg-card px-4 pb-6">
           <DrawerHeader className="px-0 pb-2 text-left">
             <DrawerTitle className="font-glacial text-foreground">Período</DrawerTitle>
@@ -268,8 +279,10 @@ export default function MobileDateRangePicker({ startDate, endDate, onApply, onC
               </Button>
               <Button
                 type="button"
-                className="flex-1 h-11 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground border border-primary/80 dark:border-transparent"
+                disabled={!canApply}
+                className="flex-1 h-11 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground border border-primary/80 dark:border-transparent disabled:opacity-50"
                 onClick={() => {
+                  if (!canApply) return;
                   onApply(tempStart, tempEnd);
                   setOpen(false);
                 }}

@@ -3,8 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Save, Download, Printer, X } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import FormularioPedidoImpresso from './FormularioPedidoImpresso';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
+import { loadHtml2Canvas, loadJsPDF } from '@/lib/lazyPdfLibs';
 import { openPrintWindowOrShareHtml, shareOrDownloadBlob, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
 
 export default function PedidoFAB({ pedido, onSave, isSaving, isDisabled, empresa }) {
@@ -42,13 +41,16 @@ export default function PedidoFAB({ pedido, onSave, isSaving, isDisabled, empres
     const element = document.getElementById('formulario-impresso');
     if (!element) return;
 
+    const html2canvas = await loadHtml2Canvas();
+    const JsPDF = await loadJsPDF();
+
     const canvas = await html2canvas(element, {
       scale: 2,
       backgroundColor: '#ffffff',
       logging: false,
     });
 
-    const pdf = new jsPDF({
+    const pdf = new JsPDF({
       orientation: 'portrait',
       unit: 'mm',
       format: 'a4',
@@ -76,9 +78,9 @@ export default function PedidoFAB({ pedido, onSave, isSaving, isDisabled, empres
           onClick={() => setIsOpen(!isOpen)}
           className={`w-14 h-14 rounded-full shadow-lg transition-all duration-200 flex items-center justify-center ${
             isOpen
-              ? 'bg-muted dark:bg-muted'
-              : 'bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:hover:bg-muted/400'
-          } text-white`}
+              ? 'bg-muted text-foreground dark:bg-muted dark:text-foreground'
+              : 'bg-[#4a5240] text-white hover:bg-[#4a5240]/90 dark:bg-[#a4ce33] dark:text-[#1f1d22] dark:hover:bg-[#a4ce33]/90'
+          }`}
           title="Menu de ações"
         >
           {isOpen ? <X className="w-6 h-6" /> : <Save className="w-6 h-6" />}

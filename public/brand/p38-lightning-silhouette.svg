@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 280" role="img" aria-hidden="true" fill="currentColor">
+  <!-- Silhueta simplificada  Lockheed P-38 Lightning (vista lateral) -->
+  <path d="M40 168 L120 148 L200 132 L280 118 L360 108 L440 100 L520 96 L600 94 L680 96 L760 102
+           L740 108 L660 112 L580 118 L500 128 L420 140 L340 152 L260 162 L180 168 L100 172 Z"/>
+  <path d="M280 118 L300 72 L340 48 L400 38 L460 48 L500 72 L520 96 L500 88 L460 76 L400 72 L340 76 L300 88 Z"/>
+  <path d="M120 148 L100 100 L88 64 L96 48 L120 56 L140 80 L148 108 L152 132 Z"/>
+  <path d="M680 96 L700 56 L720 40 L748 36 L768 44 L776 64 L772 88 L760 102 Z"/>
+  <path d="M200 132 L188 200 L196 228 L212 236 L228 228 L236 200 L240 168 Z"/>
+  <path d="M560 112 L548 200 L556 232 L572 240 L588 232 L596 200 L600 118 Z"/>
+  <path d="M380 108 L372 168 L376 200 L388 208 L404 200 L412 168 L416 112 Z"/>
+  <ellipse cx="400" cy="56" rx="28" ry="14" opacity="0.6"/>
+</svg>

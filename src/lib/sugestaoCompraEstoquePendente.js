@@ -1,5 +1,6 @@
 import { pedidoLiberadoParaLogistica } from '@/lib/aprovarPedidoCompraFinanceiro';
-import { pedidoCompraItemToLegacyMirror } from '@/lib/pedidoCompraItemContract';
+import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
+import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 
 const PEDIDO_COMPRA_APPROVED_STATUSES = new Set([
   'aprovado financeiramente',
@@ -71,12 +72,7 @@ function resolveQuantidadeRecebidaItemEmbarque(item = {}, embarque = {}) {
 }
 
 function somarRecebidosItensEmbarque(acc, embarque = {}, pedido = null) {
-  const itensEmbarcados = Array.isArray(embarque.itens_embarcados)
-    ? embarque.itens_embarcados
-    : Array.isArray(embarque.itens)
-      ? embarque.itens
-      : [];
-  itensEmbarcados.forEach((item) => {
+  getEmbarqueItensLinhas(embarque).forEach((item) => {
     const produtoId = item?.produto_id;
     if (!produtoId) return;
     const produtoKey = String(produtoId);
@@ -174,7 +170,7 @@ export function buildRecebidosPorPedidoProdutoFromEmbarques(embarques = [], pedi
 }
 
 function recebidosEmbeddedNoPedido(pedido = {}) {
-  const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
+  const embarques = Array.isArray(pedido._embarques) ? pedido._embarques : [];
   return embarques.reduce((acc, embarque) => somarRecebidosItensEmbarque(acc, embarque, pedido), {});
 }
 
@@ -291,7 +287,7 @@ export function buildPendenteEmbarcadoNaoRecebidoPorProduto(embarques = [], pedi
     // Embarque em trânsito conta no estoque projetado salvo pedido encerrado/cancelado.
     if (pedido && pedidoCompraEstaConcluido(pedido)) continue;
 
-    const itens = embarque?.itens_embarcados || embarque?.itens || [];
+    const itens = getEmbarqueItensLinhas(embarque);
     for (const item of itens) {
       const produtoId = item?.produto_id;
       if (!produtoId) continue;
@@ -356,35 +352,9 @@ export function resolvePendentePorProduto(pendentePorProduto = {}, produtoId) {
   return Number(pendentePorProduto[produtoId] ?? pendentePorProduto[String(produtoId)]) || 0;
 }
 
-/** Preenche `pedido.itens` a partir de PedidoCompraItem quando o espelho legado vier vazio. */
+/** Preenche `pedido.itens` a partir de PedidoCompraItem (SQL primeiro; espelho se SQL vazio). */
 export async function hydratePedidosCompraItens(base44, pedidos = []) {
-  const semItens = (pedidos || []).filter((p) => !Array.isArray(p.itens) || p.itens.length === 0);
-  if (!semItens.length) return pedidos;
-
-  const pci = base44?.entities?.PedidoCompraItem;
-  if (!pci?.filter) return pedidos;
-
-  const hydratedById = new Map();
-  await Promise.all(
-    semItens.map(async (pedido) => {
-      if (!pedido?.id) return;
-      try {
-        const rows = await pci.filter({ pedido_compra_id: pedido.id });
-        const itens = (rows || []).map(pedidoCompraItemToLegacyMirror).filter((item) => item?.produto_id);
-        if (itens.length) hydratedById.set(pedido.id, itens);
-      } catch {
-        // mantém pedido sem itens
-      }
-    }),
-  );
-
-  if (!hydratedById.size) return pedidos;
-
-  return pedidos.map((pedido) => {
-    const itens = hydratedById.get(pedido.id);
-    if (!itens?.length) return pedido;
-    return { ...pedido, itens };
-  });
+  return hydratePedidosCompraItensFromSql(base44, pedidos);
 }
 
 /** estoque_atual efetivo = físico + pendente aprovado (quando o toggle está ligado). */

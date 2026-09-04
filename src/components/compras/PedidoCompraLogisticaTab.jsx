@@ -8,15 +8,17 @@ import InformarEmbarque from './InformarEmbarque';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
-import { calcularPercentuaisLogistica, derivarStatusEmbarqueAgregado } from '@/lib/embarqueLogisticaHelpers';
+import { calcularPercentuaisLogistica, derivarStatusEmbarqueAgregado, podeEditarDespachoEmbarque, qtyEmbarcadaBaseLinha, qtyEmbarcadaComercialLinha, calcularItensOrfaosAguardandoDespacho } from '@/lib/embarqueLogisticaHelpers';
+import { toast } from 'sonner';
+import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 
 // Calcula total embarcado por produto em TODOS os embarques
 function calcularTotalEmbarcado(embarques) {
   const map = {};
   (embarques || []).forEach((emb) => {
-    (emb.itens_embarcados || emb.itens || []).forEach((item) => {
+    getEmbarqueItensLinhas(emb).forEach((item) => {
       const prev = map[item.produto_id] || 0;
-      const add = Number(item.quantidade_embarcada) || 0;
+      const add = qtyEmbarcadaBaseLinha(item);
       map[item.produto_id] = roundToTwoDecimals(prev + add);
     });
   });
@@ -37,13 +39,24 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
   };
   const dataEmb = parseValidDate(embarque.data_embarque);
   const eta = parseValidDate(embarque.eta);
-  const itensEmbarque = embarque.itens || embarque.itens_embarcados || [];
+  const itensEmbarque = getEmbarqueItensLinhas(embarque);
   const totalItens = roundToTwoDecimals(
-    itensEmbarque.reduce((s, i) => s + (Number(i.quantidade_embarcada) || 0), 0)
+    itensEmbarque.reduce((s, i) => s + qtyEmbarcadaComercialLinha(i), 0)
   );
   const codigoExibicao = embarque.codigo_exibicao || `${pedido?.numero || '-----'}-${String.fromCharCode(64 + nivel)}`;
   const statusRecebimento = embarque.status_recebimento || embarque.status_recebimento_embarque || 'Pendente';
   const podeExcluir = !['Recebido OK', 'Recebido Parcial', 'Concluído', 'Concluído OK', 'Concluído com Divergência'].includes(statusRecebimento);
+  const podeEditarDespacho = podeEditarDespachoEmbarque(embarque);
+
+  const handleEditarDespacho = () => {
+    if (!podeEditarDespacho) {
+      toast.message('Recepção já iniciada', {
+        description: 'Só é possível corrigir quantidades embarcadas enquanto o embarque está pendente de recebimento.',
+      });
+      return;
+    }
+    onEdit(embarque);
+  };
   const handleDelete = async () => {
     setDeleting(true);
     await base44.entities.Embarque.delete(embarque.id);
@@ -113,9 +126,23 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
                <Trash2 className="w-3.5 h-3.5 text-red-400" />
              </Button>
            )}
-           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(embarque)}>
-             <Edit3 className="w-3.5 h-3.5 text-muted-foreground" />
-           </Button>
+           {podeEditarDespacho ? (
+             <Button
+               variant="outline"
+               size="sm"
+               className="h-7 px-2.5 text-[10px] border-0 shadow-sm bg-card text-foreground/90 hover:bg-muted"
+               onClick={handleEditarDespacho}
+               title="Corrigir quantidades embarcadas antes da recepção"
+               data-pulse-sensor="pedidos-compra.logistica-corrigir-despacho"
+             >
+               <Edit3 className="w-3 h-3 mr-1" />
+               Corrigir
+             </Button>
+           ) : (
+             <Button variant="ghost" size="icon" className="h-7 w-7 opacity-40" disabled title="Despacho bloqueado após recepção">
+               <Edit3 className="w-3.5 h-3.5 text-muted-foreground" />
+             </Button>
+           )}
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setExpanded(!expanded)}>
             {expanded ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
           </Button>
@@ -176,7 +203,9 @@ function ItensOrfaos({ itens, onAcordo }) {
         <div key={item.produto_id} className="flex items-start justify-between gap-3">
             <span className="text-sm text-foreground flex-1 leading-tight">{item.produto_nome}</span>
             <span className="text-sm font-semibold text-foreground dark:text-foreground whitespace-nowrap flex-shrink-0">
-              {formatQuantity(item.qtd_pendente)} <span className="text-muted-foreground font-normal">{item.unidade_medida}</span> <span className="text-xs text-muted-foreground">pend.</span>
+              {formatQuantity(item.qtd_pendente_comercial ?? item.qtd_pendente)}{' '}
+              <span className="text-muted-foreground font-normal">{item.unidade_pendente_exibicao || item.unidade_medida}</span>{' '}
+              <span className="text-xs text-muted-foreground">pend.</span>
             </span>
           </div>
         )}
@@ -198,9 +227,9 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated, onIr
   const [embarqueEditando, setEmbarqueEditando] = useState(null);
   const [acordoOpen, setAcordoOpen] = useState(false);
 
-  const embarques = Array.isArray(pedido?._embarques) ? pedido._embarques : (pedido?.embarques_registrados || []);
+  const embarques = Array.isArray(pedido?._embarques) ? pedido._embarques : [];
   const embarquesComDespacho = embarques.filter((emb) => !!(emb?.data_embarque || emb?.eta || emb?.transportadora_id || emb?.transportadora_nome));
-  const embarquesComItensAssociados = embarquesComDespacho.filter((emb) => (emb.itens || emb.itens_embarcados || []).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0));
+  const embarquesComItensAssociados = embarquesComDespacho.filter((emb) => getEmbarqueItensLinhas(emb).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0));
   const percentuaisCalculados = useMemo(
     () => calcularPercentuaisLogistica(pedido, embarques),
     [pedido?.id, pedido?.itens, embarques]
@@ -217,17 +246,11 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated, onIr
   }, [temEmbarqueReal, percentualEmbarcado, pedido?.status_embarque]);
   const totalEmbarcado = useMemo(() => calcularTotalEmbarcado(embarquesComItensAssociados), [embarquesComItensAssociados]);
 
-  // Itens órfãos: qty pedida - qty embarcada em todos os embarques reais
-  const itensOrfaos = useMemo(() => {
-    return (pedido?.itens || []).
-    map((item) => ({
-      ...item,
-      qtd_pendente: roundToTwoDecimals(
-        Math.max(0, (Number(item.quantidade) || 0) - (totalEmbarcado[item.produto_id] || 0))
-      )
-    })).
-    filter((item) => item.qtd_pendente > 0);
-  }, [pedido, totalEmbarcado]);
+  // Itens órfãos: Necessidade (saldo pós-recepção) + pedido ainda não despachado
+  const itensOrfaos = useMemo(
+    () => calcularItensOrfaosAguardandoDespacho(pedido, embarques, totalEmbarcado),
+    [pedido, embarques, totalEmbarcado],
+  );
 
   const temOrfaos = itensOrfaos.length > 0;
   const semEmbarques = embarques.length === 0;
@@ -249,7 +272,7 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated, onIr
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-pulse-sensor="pedidos-compra.logistica-panel">
       <div className="rounded-2xl bg-muted/50 px-4 py-4 shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
@@ -301,7 +324,9 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated, onIr
             size="sm"
             variant="outline"
             onClick={handleNovoEmbarque}
-            className="h-8 px-3 text-xs border-0 shadow-sm bg-card text-foreground/90 hover:bg-muted">
+            className="h-8 px-3 text-xs border-0 shadow-sm bg-card text-foreground/90 hover:bg-muted"
+            data-pulse-sensor="pedidos-compra.logistica-informar-despacho"
+          >
             <Plus className="w-3.5 h-3.5 mr-1" />
             Informar Despacho
           </Button>

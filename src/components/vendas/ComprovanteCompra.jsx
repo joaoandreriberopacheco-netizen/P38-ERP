@@ -2,18 +2,37 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Printer, Zap, Share2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { format } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
-import { imprimirCupomTermico } from '@/functions/imprimirCupomTermico';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
-import { renderTemplate, prepararDadosVenda, ordenarItensComprovante } from '@/lib/templateEngine';
+import {
+  isValidPairingCode,
+  maskPairingCodeInput,
+  normalizePairingCode,
+} from '@/lib/printAgentPairingCode';
+import {
+  enqueueRemotePrint,
+  getStoredAgentId,
+  getStoredAgentNome,
+  printCupomViaLocalAgent,
+  registerPrintAgent,
+} from '@/lib/p38PrintAgent';
+import { loadHtml2Canvas, loadJsPDF } from '@/lib/lazyPdfLibs';
 import { getUnidadeMedidaItemPedidoVenda } from '@/lib/productUnits';
 import { TIMEZONE_SISTEMA } from '@/components/utils/dateUtils';
 import { shareOrDownloadBlob, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
 import { useCaixaNestedDialogZ } from '@/components/vendas/caixa/CaixaOverlayStackContext';
 import { cn } from '@/components/utils';
+import {
+  CUPOM_FONT,
+  CUPOM_FONT_GOOGLE,
+  CUPOM_FONT_WEIGHT,
+  CUPOM_GRID_COLS,
+  CUPOM_LARGURA_IMPRESSAO_CSS,
+  CUPOM_LARGURA_IMPRESSAO_MM,
+  CUPOM_MARGEM_LATERAL_MM,
+  CUPOM_PAPEL_MM,
+} from '@/lib/cupomTermicoConstants';
+import { ensureCupomTermicoFontLoaded } from '@/lib/cupomTermicoFont';
 
 /** Exibição de data/hora no fuso do negócio (Tabatinga — `TIMEZONE_SISTEMA`). */
 const fmtDtTZ = (d) => d ? new Intl.DateTimeFormat('pt-BR', { timeZone: TIMEZONE_SISTEMA, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(d)) : '-';
@@ -71,50 +90,87 @@ const fmtV = (v) => {
   return parts.join(',');
 };
 const PRETO_CUPOM = '#000';
+const CUPOM_LARGURA_MM = CUPOM_LARGURA_IMPRESSAO_MM;
+const CUPOM_LARGURA_CSS = CUPOM_LARGURA_IMPRESSAO_CSS;
+
+function readLocalStorage(key, fallback = '') {
+  try {
+    if (typeof localStorage === 'undefined') return fallback;
+    return localStorage.getItem(key) || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+const ordenarItensComprovante = (itens) => {
+  const list = Array.isArray(itens) ? itens : [];
+  return [...list].sort((a, b) =>
+    String(a?.produto_nome || '').localeCompare(String(b?.produto_nome || ''), 'pt-BR', { sensitivity: 'base' })
+  );
+};
+
+const listarPagamentosComprovante = (pagamentos) => (Array.isArray(pagamentos) ? pagamentos : []);
 
 // ── Cupom Térmico 80mm ────────────────────────────────────────────────────────
 function CupomTermico({ pedido, dadosEmpresa }) {
-  const itens = ordenarItensComprovante(pedido.itens || []);
-  const font = "'Barlow Condensed', 'Arial Narrow', sans-serif";
+  const itens = ordenarItensComprovante(pedido?.itens);
+  const pagamentos = listarPagamentosComprovante(pedido?.pagamentos);
+  const font = CUPOM_FONT;
+  /** Base compacta; F+3 = padrão amarelo legível (meta, itens, subtotal). */
   const F = 12;
+  const F_CORPO = F + 3;
+  const F_TOTAL = F + 6;
+  const F_PAGAMENTO = F + 3;
   const preto = PRETO_CUPOM;
-  /** Grid: quant | un | descrição (flex) | preço | total — colunas numéricas estreitas */
-  const gridItens = '26px 22px minmax(0, 1fr) 42px 46px';
-  const gapCol = '4px';
-  const estiloGridLinha = {
+  const gridCols = CUPOM_GRID_COLS;
+  const estiloGridValores = {
     display: 'grid',
-    gridTemplateColumns: gridItens,
-    columnGap: gapCol,
-    alignItems: 'start',
+    gridTemplateColumns: gridCols,
+    columnGap: '2px',
+    fontSize: F_CORPO,
+    fontWeight: CUPOM_FONT_WEIGHT,
+    fontVariantNumeric: 'tabular-nums',
     width: '100%',
+    maxWidth: '100%',
   };
-  const estiloCelulaCentro = { textAlign: 'center', alignSelf: 'center' };
-  const estiloDescricao = {
-    textAlign: 'justify',
-    hyphens: 'auto',
-    WebkitHyphens: 'auto',
-    msHyphens: 'auto',
-    wordBreak: 'break-word',
-    overflowWrap: 'break-word',
-    lineHeight: 1.32,
-    paddingRight: '2px',
+  const estiloGridHeader = {
+    ...estiloGridValores,
+    fontSize: F,
+    marginBottom: '4px',
+    opacity: 0.85,
+  };
+  const estiloLinhaTotal = {
+    display: 'grid',
+    gridTemplateColumns: gridCols,
+    columnGap: '2px',
+    fontVariantNumeric: 'tabular-nums',
+    width: '100%',
+    maxWidth: '100%',
   };
 
   const empresa = buildEmpresaCupom(dadosEmpresa);
+  const estiloLinha = {
+    margin: '2mm 0',
+    borderTop: `1px solid ${preto}`,
+    width: '100%',
+    opacity: 0.35,
+  };
 
-  const Sep = () => (
-    <div style={{ margin: '4px 0', fontSize: F - 1, fontFamily: font, color: preto, letterSpacing: '1px' }}>
-      {'- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -'}
-    </div>
-  );
+  const Sep = () => <div style={estiloLinha} />;
+  const SepItem = () => <div style={{ ...estiloLinha, margin: '4px 0' }} />;
 
   return (
     <div
       id="cupom-print"
+      className="p38-cupom-termico"
       style={{
-        width: '275px', background: '#fff', color: preto,
-        fontFamily: font, fontSize: F,
-        padding: '8px 10px 12px', margin: '0 auto', lineHeight: '1.4',
+        width: CUPOM_LARGURA_CSS,
+        maxWidth: CUPOM_LARGURA_CSS,
+        boxSizing: 'border-box',
+        background: '#fff', color: preto,
+        fontFamily: font, fontSize: F_CORPO, fontWeight: CUPOM_FONT_WEIGHT,
+        padding: '2mm 0 3mm', margin: '0 auto', lineHeight: '1.35',
+        overflowX: 'clip',
       }}
     >
       {/* ── Cabeçalho ── */}
@@ -123,17 +179,17 @@ function CupomTermico({ pedido, dadosEmpresa }) {
           <img src={dadosEmpresa.logo_url} alt="Logo" style={{ maxWidth: '100px', maxHeight: '50px', filter: 'grayscale(100%) contrast(200%)', display: 'block', margin: '0 auto 6px' }} />
         )}
         {/* Nome Fantasia — maior */}
-        <div style={{ fontSize: F + 7, fontWeight: '400', letterSpacing: '0.5px', lineHeight: 1.1, marginBottom: '3px' }}>
+        <div style={{ fontSize: F + 7, fontWeight: CUPOM_FONT_WEIGHT, letterSpacing: '0.5px', lineHeight: 1.1, marginBottom: '3px' }}>
           {empresa.nomeFantasia}
         </div>
         {/* Razão Social */}
         {empresa.razaoSocial && (
-          <div style={{ fontSize: F - 1, fontWeight: '400', color: preto, lineHeight: 1.3 }}>
+          <div style={{ fontSize: F - 1, fontWeight: CUPOM_FONT_WEIGHT, color: preto, lineHeight: 1.3 }}>
             {empresa.razaoSocial}
           </div>
         )}
-        {/* Dados da empresa — 25% menores */}
-        <div style={{ fontSize: F - 1, fontWeight: '400', color: preto, lineHeight: 1.35, marginTop: '2px' }}>
+        {/* Dados da empresa — compactos (fora do padrão amarelo) */}
+        <div style={{ fontSize: F - 1, fontWeight: CUPOM_FONT_WEIGHT, color: preto, lineHeight: 1.35, marginTop: '2px' }}>
           {empresa.cnpj && <div>CNPJ: {empresa.cnpj}</div>}
           {empresa.endereco && <div>{empresa.endereco}</div>}
           {empresa.bairro_cidade && <div>{empresa.bairro_cidade}</div>}
@@ -145,29 +201,23 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       <Sep />
 
       {/* ── Meta do pedido ── */}
-      <div style={{ fontSize: F, lineHeight: 1.55 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span>{fmtDtTZ(pedido.created_date || new Date())}</span>
-          <span>Nº {pedido.numero || 'S/N'}</span>
-        </div>
-        {pedido.cliente_nome && <div>Cliente: {pedido.cliente_nome.toUpperCase()}</div>}
+      <div style={{ fontSize: F_CORPO, fontWeight: CUPOM_FONT_WEIGHT, lineHeight: 1.5 }}>
+        <div>{fmtDtTZ(pedido.created_date || new Date())}</div>
+        <div>Nº {pedido.numero || 'S/N'}</div>
+        {pedido.cliente_nome && <div>Cliente: {String(pedido.cliente_nome).toUpperCase()}</div>}
         {pedido.vendedor_nome && <div>Vendedor: {pedido.vendedor_nome}</div>}
       </div>
 
       <Sep />
 
-      {/* ── Cabeçalho colunas ── */}
-      <div style={{ ...estiloGridLinha, fontSize: F - 1, fontWeight: '600', color: preto, lineHeight: 1.35, marginBottom: '4px' }}>
-        <span style={estiloCelulaCentro}>QUANT</span>
-        <span style={estiloCelulaCentro}>UN</span>
-        <span style={{ textAlign: 'left' }}>DESCRIÇÃO</span>
-        <span style={{ textAlign: 'right' }}>PREÇO</span>
-        <span style={{ textAlign: 'right' }}>TOTAL</span>
-      </div>
-
-      <Sep />
-
-      <div style={{ padding: '4px 0 2px' }}>
+      {/* ── Itens: descrição em cima, valores em grid, linha entre itens ── */}
+      <div style={{ fontWeight: CUPOM_FONT_WEIGHT }}>
+        <div style={estiloGridHeader}>
+          <span style={{ textAlign: 'center' }}>QTD</span>
+          <span style={{ textAlign: 'center' }}>UN</span>
+          <span style={{ textAlign: 'right' }}>PREÇO</span>
+          <span style={{ textAlign: 'right' }}>TOTAL</span>
+        </div>
         {itens.map((item, idx) => {
           const nome = item.produto_nome || '';
           const qtd = String(parseFloat(item.quantidade) || 0);
@@ -176,23 +226,30 @@ function CupomTermico({ pedido, dadosEmpresa }) {
           const unidade = getUnidadeMedidaItemPedidoVenda(item).substring(0, 4);
 
           return (
-            <div
-              key={item.pedido_venda_item_id || item.produto_id || idx}
-              style={{
-                ...estiloGridLinha,
-                fontSize: F,
-                color: preto,
-                padding: '8px 0',
-                marginBottom: idx < itens.length - 1 ? '4px' : 0,
-                borderBottom: idx < itens.length - 1 ? `0.5px solid ${preto}` : 'none',
-              }}
-            >
-              <span style={estiloCelulaCentro}>{qtd}</span>
-              <span style={estiloCelulaCentro}>{unidade}</span>
-              <span lang="pt-BR" style={{ ...estiloDescricao, textTransform: 'uppercase' }}>{nome}</span>
-              <span style={{ textAlign: 'right', whiteSpace: 'nowrap', alignSelf: 'center' }}>{precoItem}</span>
-              <span style={{ textAlign: 'right', whiteSpace: 'nowrap', alignSelf: 'center' }}>{totalItem}</span>
-            </div>
+            <React.Fragment key={item.pedido_venda_item_id || item.produto_id || idx}>
+              <div style={{ width: '100%', maxWidth: '100%' }}>
+                <div
+                  lang="pt-BR"
+                  className="p38-cupom-item-desc"
+                  style={{
+                    fontSize: F,
+                    textTransform: 'uppercase',
+                    lineHeight: 1.3,
+                    marginBottom: '3px',
+                    fontWeight: CUPOM_FONT_WEIGHT,
+                  }}
+                >
+                  {nome}
+                </div>
+                <div style={estiloGridValores}>
+                  <span style={{ textAlign: 'center', minWidth: 0 }}>{qtd}</span>
+                  <span style={{ textAlign: 'center', minWidth: 0 }}>{unidade}</span>
+                  <span style={{ textAlign: 'right', whiteSpace: 'nowrap', minWidth: 0 }}>{precoItem}</span>
+                  <span style={{ textAlign: 'right', whiteSpace: 'nowrap', minWidth: 0 }}>{totalItem}</span>
+                </div>
+              </div>
+              {idx < itens.length - 1 ? <SepItem /> : null}
+            </React.Fragment>
           );
         })}
       </div>
@@ -200,36 +257,41 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       <Sep />
 
       {/* ── Totais ── */}
-      <div style={{ marginTop: '2px' }}>
+      <div style={{ marginTop: '2px', fontWeight: CUPOM_FONT_WEIGHT }}>
         {pedido.subtotal > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F, color: preto }}>
-            <span>Subtotal</span><span>R$ {fmtV(pedido.subtotal)}</span>
+          <div style={{ ...estiloLinhaTotal, fontSize: F_CORPO, color: preto }}>
+            <span style={{ gridColumn: '1 / 4' }}>Subtotal</span>
+            <span style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>R$ {fmtV(pedido.subtotal)}</span>
           </div>
         )}
         {pedido.valor_desconto > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F, color: preto }}>
-            <span>Desconto</span><span>-R$ {fmtV(pedido.valor_desconto)}</span>
+          <div style={{ ...estiloLinhaTotal, fontSize: F_CORPO, color: preto }}>
+            <span style={{ gridColumn: '1 / 4' }}>Desconto</span>
+            <span style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>-R$ {fmtV(pedido.valor_desconto)}</span>
           </div>
         )}
         {pedido.valor_frete > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F, color: preto }}>
-            <span>Frete</span><span>R$ {fmtV(pedido.valor_frete)}</span>
+          <div style={{ ...estiloLinhaTotal, fontSize: F_CORPO, color: preto }}>
+            <span style={{ gridColumn: '1 / 4' }}>Frete</span>
+            <span style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>R$ {fmtV(pedido.valor_frete)}</span>
           </div>
         )}
-        {/* TOTAL — hierarquia só por tamanho */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F + 6, fontWeight: '400', margin: '5px 0 3px', color: preto }}>
-          <span>TOTAL</span>
-          <span>R$ {fmtV(pedido.valor_total || 0)}</span>
+        {/* TOTAL — hierarquia só por tamanho (padrão amarelo original) */}
+        <div style={{ ...estiloLinhaTotal, fontSize: F_TOTAL, margin: '5px 0 3px', color: preto }}>
+          <span style={{ gridColumn: '1 / 4' }}>TOTAL</span>
+          <span style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>R$ {fmtV(pedido.valor_total || 0)}</span>
         </div>
       </div>
 
       {/* ── Pagamentos ── */}
-      {pedido.pagamentos && pedido.pagamentos.length > 0 && (
-        <div style={{ marginTop: '2px' }}>
-          {pedido.pagamentos.map((pag, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: F + 3, fontWeight: '400', color: preto }}>
-              <span>{(pag.forma_pagamento || '').toUpperCase()}{pag.parcelas > 1 ? ` ${pag.parcelas}x` : ''}</span>
-              <span>R$ {fmtV(pag.valor)}</span>
+      {pagamentos.length > 0 && (
+        <div style={{ marginTop: '2px', fontWeight: CUPOM_FONT_WEIGHT }}>
+          {pagamentos.map((pag, i) => (
+            <div key={i} style={{ ...estiloLinhaTotal, fontSize: F_PAGAMENTO, color: preto }}>
+              <span style={{ gridColumn: '1 / 4' }}>
+                {(pag.forma_pagamento || '').toUpperCase()}{pag.parcelas > 1 ? ` ${pag.parcelas}x` : ''}
+              </span>
+              <span style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>R$ {fmtV(pag.valor)}</span>
             </div>
           ))}
         </div>
@@ -239,7 +301,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
 
       {/* ── Rodapé ── */}
       <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: F + 3, fontWeight: '400', letterSpacing: '0.5px', margin: '4px 0 3px', color: preto }}>
+        <div style={{ fontSize: F_PAGAMENTO, fontWeight: CUPOM_FONT_WEIGHT, letterSpacing: '0.5px', margin: '4px 0 3px', color: preto }}>
           {empresa.mensagem}
         </div>
         <div style={{ fontSize: F - 1, color: preto }}>Este documento não possui validade fiscal.</div>
@@ -252,21 +314,30 @@ function CupomTermico({ pedido, dadosEmpresa }) {
 function PreviewScaled({ children }) {
   const containerRef = useRef(null);
   const [scale, setScale] = useState(1);
-  const docWidthPx = 275;
+  const docWidthPx = Math.round((CUPOM_LARGURA_MM / 25.4) * 96);
 
   useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return undefined;
+
     const calc = () => {
-      if (!containerRef.current) return;
-      const available = containerRef.current.offsetWidth - 32;
-      setScale(Math.min(1, available / docWidthPx));
+      const available = el.offsetWidth - 32;
+      if (available <= 0) return;
+      setScale(Math.min(1, Math.max(0.25, available / docWidthPx)));
     };
+
     calc();
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(calc) : null;
+    ro?.observe(el);
     window.addEventListener('resize', calc);
-    return () => window.removeEventListener('resize', calc);
-  }, []);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener('resize', calc);
+    };
+  }, [docWidthPx]);
 
   return (
-    <div ref={containerRef} className="w-full flex justify-center py-4 px-4">
+    <div ref={containerRef} className="w-full min-w-0 flex justify-center py-4 px-4">
       <div
         style={{
           width: docWidthPx,
@@ -284,8 +355,9 @@ function PreviewScaled({ children }) {
 
 // ── Cupom A4 (mesma estrutura do 80mm; cabeçalho em duas colunas) ─────────────
 function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
-  const itens = ordenarItensComprovante(pedido.itens || []);
-  const font = "'Barlow Condensed', 'Arial Narrow', sans-serif";
+  const itens = ordenarItensComprovante(pedido?.itens);
+  const pagamentos = listarPagamentosComprovante(pedido?.pagamentos);
+  const font = CUPOM_FONT;
   const F = 14;
   const preto = PRETO_CUPOM;
   const empresa = buildEmpresaCupom(dadosEmpresa);
@@ -322,6 +394,7 @@ function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
   return (
     <div
       id="cupom-print"
+      className="p38-cupom-termico"
       style={{
         width: '210mm', minHeight: '297mm',
         background: '#fff', color: preto,
@@ -355,7 +428,7 @@ function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
 
           {cliente && (
             <div style={{ marginTop: '10px', fontSize: F, lineHeight: 1.5, color: preto }}>
-              {cliente.nome && <div style={{ fontWeight: '500' }}>Cliente: {cliente.nome.toUpperCase()}</div>}
+              {cliente.nome && <div style={{ fontWeight: '500' }}>Cliente: {String(cliente.nome).toUpperCase()}</div>}
               {cliente.enderecoLinha && <div>{cliente.enderecoLinha}</div>}
               {cliente.cidadeLinha && <div>{cliente.cidadeLinha}{cliente.cep ? ` — CEP: ${cliente.cep}` : ''}</div>}
               {cliente.telefone && <div>Fone: {cliente.telefone}</div>}
@@ -437,9 +510,9 @@ function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
         </div>
       </div>
 
-      {pedido.pagamentos && pedido.pagamentos.length > 0 && (
+      {pagamentos.length > 0 && (
         <div style={{ marginTop: '4px' }}>
-          {pedido.pagamentos.map((pag, i) => (
+          {pagamentos.map((pag, i) => (
             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: F + 4, fontWeight: '400', color: preto }}>
               <span>{(pag.forma_pagamento || '').toUpperCase()}{pag.parcelas > 1 ? ` ${pag.parcelas}x` : ''}</span>
               <span>R$ {fmtV(pag.valor)}</span>
@@ -471,26 +544,19 @@ function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
 }
 
 // ── Componente principal ──────────────────────────────────────────────────────
-// ── Renderizador de Template HTML ────────────────────────────────────────────
-function TemplateRenderer({ htmlContent }) {
-  return (
-    <div
-      id="cupom-print"
-      dangerouslySetInnerHTML={{ __html: htmlContent }}
-      style={{ background: '#fff', color: '#000' }}
-    />
-  );
-}
-
-export default function ComprovanteCompra({ pedido, open, onClose }) {
+export default function ComprovanteCompra({ pedido, open = true, onClose }) {
   const nestedZ = useCaixaNestedDialogZ();
   const [dadosEmpresa, setDadosEmpresa] = useState(null);
   const [dadosCliente, setDadosCliente] = useState(null);
   const [ipImpressora, setIpImpressora] = useState('');
   const [imprimindoTermica, setImprimindoTermica] = useState(false);
-  const [formato, setFormato] = useState(() => localStorage.getItem('comprovante_formato_venda') || 'a4');
+  const [agenteLocalOk, setAgenteLocalOk] = useState(false);
+  const [agenteRemotoId, setAgenteRemotoId] = useState(() => getStoredAgentId());
+  const [agenteRemotoNome, setAgenteRemotoNome] = useState(() => getStoredAgentNome());
+  const [agentTokenRegistro, setAgentTokenRegistro] = useState('');
+  const [ligandoAgente, setLigandoAgente] = useState(false);
+  const [formato, setFormato] = useState(() => readLocalStorage('comprovante_formato_venda', 'a4'));
   const [gerando, setGerando] = useState(false);
-  const [templates, setTemplates] = useState({ '80mm': null, 'a4': null });
 
   const escolherFormato = (novoFormato) => {
     setFormato(novoFormato);
@@ -499,23 +565,30 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
   useEffect(() => {
     if (!open) return;
-    setFormato(localStorage.getItem('comprovante_formato_venda') || 'a4');
+    setFormato(readLocalStorage('comprovante_formato_venda', 'a4'));
     setDadosCliente(null);
     base44.entities.DadosEmpresa.list().then(r => r?.length && setDadosEmpresa(r[0])).catch(() => {});
     if (pedido?.cliente_id) {
       base44.entities.Terceiro.get(pedido.cliente_id).then(setDadosCliente).catch(() => {});
     }
-    const ip = localStorage.getItem('ip_impressora_termica');
+    const ip = readLocalStorage('ip_impressora_termica');
     if (ip) setIpImpressora(ip);
-    base44.entities.ComprovanteTemplate.filter({ is_default: true }).then(tpls => {
-      const map = { '80mm': null, 'a4': null };
-      tpls.forEach(t => {
-        if (t.tipo === 'venda_80mm') map['80mm'] = t;
-        if (t.tipo === 'venda_a4') map['a4'] = t;
+    setAgenteRemotoId(getStoredAgentId());
+    setAgenteRemotoNome(getStoredAgentNome());
+    let cancelled = false;
+    import('@/lib/p38PrintAgent')
+      .then(({ checkPrintAgentHealth }) => checkPrintAgentHealth())
+      .then((health) => {
+        if (!cancelled) setAgenteLocalOk(Boolean(health?.ok));
+      })
+      .catch(() => {
+        if (!cancelled) setAgenteLocalOk(false);
       });
-      setTemplates(map);
-    }).catch(() => {});
-  }, [open]);
+    ensureCupomTermicoFontLoaded().catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [open, pedido?.cliente_id]);
 
   const handlePrint = async () => {
     const el = document.getElementById('cupom-print');
@@ -540,15 +613,47 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
       return;
     }
 
-    const pageSize = formato === 'a4' ? 'A4 portrait' : '80mm auto';
+    const isCupomTermico = formato !== 'a4';
+    const pageSize = isCupomTermico ? `${CUPOM_PAPEL_MM}mm auto` : 'A4 portrait';
+    const larguraPaginaCss = isCupomTermico
+      ? `
+        html, body {
+          width: ${CUPOM_PAPEL_MM}mm;
+          max-width: ${CUPOM_PAPEL_MM}mm;
+        }
+        #cupom-print {
+          width: ${CUPOM_LARGURA_MM}mm !important;
+          max-width: ${CUPOM_LARGURA_MM}mm !important;
+          margin-left: ${CUPOM_MARGEM_LATERAL_MM}mm !important;
+          margin-right: ${CUPOM_MARGEM_LATERAL_MM}mm !important;
+          overflow-x: clip !important;
+        }`
+      : '';
 
     const html = `<!DOCTYPE html><html><head>
       <meta charset="UTF-8">
       <title>Pedido ${pedido?.numero || ''}</title>
-      <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500&display=swap" rel="stylesheet">
+      <link href="${CUPOM_FONT_GOOGLE}" rel="stylesheet">
       <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { background: #fff; }
+        html, body {
+          background: #fff;
+          font-family: 'Barlow', sans-serif;
+          font-weight: ${CUPOM_FONT_WEIGHT};
+        }
+        ${larguraPaginaCss}
+        .p38-cupom-item-desc {
+          width: 100%;
+          max-width: 100%;
+          white-space: normal;
+          overflow-wrap: anywhere;
+          word-break: break-word;
+        }
+        .p38-cupom-termico {
+          overflow-x: clip;
+        }
+        table { table-layout: fixed; width: 100%; border-collapse: collapse; }
+        th, td { overflow: hidden; }
         @page { size: ${pageSize}; margin: 0; }
       </style>
     </head><body>${el.outerHTML}</body></html>`;
@@ -567,13 +672,18 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
     iframe.contentDocument.close();
 
     // Aguarda fontes/imagens carregarem, então imprime
-    iframe.onload = () => {
+    iframe.onload = async () => {
+      try {
+        await iframe.contentDocument?.fonts?.ready;
+      } catch {
+        /* segue com timeout */
+      }
       setTimeout(() => {
         iframe.contentWindow.focus();
         iframe.contentWindow.print();
         // Remove após impressão
         setTimeout(() => iframe.remove(), 2000);
-      }, 300);
+      }, 250);
     };
   };
 
@@ -581,7 +691,12 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
     const el = document.getElementById('cupom-print');
     if (!el) return null;
 
+    await ensureCupomTermicoFontLoaded();
+
     const isA4 = formato === 'a4';
+
+    const html2canvas = await loadHtml2Canvas();
+    const JsPDF = await loadJsPDF();
 
     const canvas = await html2canvas(el, {
       scale: 3,
@@ -594,18 +709,19 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
     let pdf;
     if (isA4) {
-      pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const pageW = 210;
       const pageH = 297;
       const ratio = canvas.width / canvas.height;
       const imgH = pageW / ratio;
       pdf.addImage(imgData, 'PNG', 0, 0, pageW, Math.min(imgH, pageH));
     } else {
-      // 80mm cupom: largura fixa 80mm, altura proporcional
-      const widthMm = 80;
+      // Rolo 80mm — conteúdo 60mm centrado (10mm margem de cada lado)
+      const widthMm = CUPOM_LARGURA_MM;
+      const pageWidthMm = CUPOM_PAPEL_MM;
       const heightMm = (canvas.height / canvas.width) * widthMm;
-      pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [widthMm, heightMm] });
-      pdf.addImage(imgData, 'PNG', 0, 0, widthMm, heightMm);
+      pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: [pageWidthMm, heightMm] });
+      pdf.addImage(imgData, 'PNG', CUPOM_MARGEM_LATERAL_MM, 0, widthMm, heightMm);
     }
 
     return pdf;
@@ -630,19 +746,57 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
     }
   };
 
+  const handleLigarAgente = async () => {
+    const token = normalizePairingCode(agentTokenRegistro);
+    if (!isValidPairingCode(token)) {
+      toast.error('Digite o código de 6 dígitos do PC (000-000)');
+      return;
+    }
+    setLigandoAgente(true);
+    try {
+      const agente = await registerPrintAgent({
+        token,
+        nome: 'Caixa principal',
+        ip_impressora: ipImpressora || undefined,
+      });
+      toast.success(`Agente "${agente.nome}" ligado — pode imprimir térmica`);
+      setAgenteRemotoId(agente.id);
+      setAgenteRemotoNome(agente.nome);
+      setAgentTokenRegistro('');
+    } catch (e) {
+      toast.error(e?.message || 'Não foi possível ligar o agente');
+    } finally {
+      setLigandoAgente(false);
+    }
+  };
+
   const handleImprimirTermica = async () => {
     if (!ipImpressora) { toast.error('Informe o IP da impressora térmica'); return; }
     setImprimindoTermica(true);
     try {
-      const response = await imprimirCupomTermico({ pedido_id: pedido.id, ip_impressora: ipImpressora });
-      if (response.data.success) {
+      localStorage.setItem('ip_impressora_termica', ipImpressora);
+
+      if (agenteLocalOk) {
+        await printCupomViaLocalAgent({
+          pedido_id: pedido.id,
+          ip_impressora: ipImpressora,
+        });
         toast.success('Cupom enviado para impressora térmica!');
-        localStorage.setItem('ip_impressora_termica', ipImpressora);
-      } else {
-        toast.error(response.data.error || 'Erro ao imprimir');
+        return;
       }
-    } catch {
-      toast.error('Falha na comunicação com a impressora');
+
+      if (agenteRemotoId) {
+        await enqueueRemotePrint({
+          pedido_id: pedido.id,
+          ip_impressora: ipImpressora,
+        });
+        toast.success('Enviado para a loja — o cupom sai quando o PC do caixa estiver online');
+        return;
+      }
+
+      toast.error('Instale o P38 Print Agent no PC do caixa (ver docs/print-agent) ou use Imprimir pelo browser');
+    } catch (e) {
+      toast.error(e?.message || 'Falha na comunicação com a impressora');
     } finally {
       setImprimindoTermica(false);
     }
@@ -694,8 +848,9 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             size="sm"
             variant={formato === '80mm' ? 'default' : 'outline'}
             className="h-8 text-xs"
+            title={`Rolo ${CUPOM_PAPEL_MM}mm · útil ${CUPOM_LARGURA_MM}mm (${CUPOM_MARGEM_LATERAL_MM}mm margem/lado)`}
           >
-            80mm
+            Térmica
           </Button>
           <Button
             onClick={() => escolherFormato('a4')}
@@ -705,6 +860,11 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
           >
             A4
           </Button>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className={`text-[11px] px-2 py-0.5 rounded-full ${agenteLocalOk ? 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200' : agenteRemotoId ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-100' : 'bg-muted text-muted-foreground'}`}>
+            {agenteLocalOk ? 'Agente local OK' : agenteRemotoId ? `Remoto: ${agenteRemotoNome || 'loja'}` : 'Sem agente no PC'}
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <Input
@@ -723,20 +883,36 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             {imprimindoTermica ? 'Enviando...' : 'Térmica'}
           </Button>
         </div>
+        {!agenteRemotoId && (
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="000-000"
+              inputMode="numeric"
+              autoComplete="off"
+              value={agentTokenRegistro}
+              onChange={(e) => setAgentTokenRegistro(maskPairingCodeInput(e.target.value))}
+              className="h-8 text-xs flex-1 font-mono tracking-widest text-center max-w-[7rem]"
+              maxLength={7}
+            />
+            <Button
+              onClick={handleLigarAgente}
+              disabled={ligandoAgente}
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs whitespace-nowrap"
+            >
+              {ligandoAgente ? 'Ligando...' : 'Ligar agente'}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Preview com scale - ocupa toda a tela */}
-      <div className="flex-1 overflow-y-auto w-full">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden w-full min-w-0">
         {formato === '80mm' ? (
-          <div className="w-full h-full flex justify-center py-4 px-4">
-            <div style={{ width: '275px', transformOrigin: 'top center', transform: 'scale(1)' }} className="shadow-2xl rounded-sm overflow-hidden">
-              {templates['80mm'] && dadosEmpresa !== undefined ? (
-                <TemplateRenderer htmlContent={renderTemplate(templates['80mm'].html_template, prepararDadosVenda(pedido, dadosEmpresa))} />
-              ) : (
-                <CupomTermico pedido={pedido} dadosEmpresa={dadosEmpresa} />
-              )}
-            </div>
-          </div>
+          <PreviewScaled>
+            <CupomTermico pedido={pedido} dadosEmpresa={dadosEmpresa} />
+          </PreviewScaled>
         ) : (
           <div className="w-full flex justify-center py-4 px-4">
             <div style={{ width: `${210 * 3.7795}px`, transformOrigin: 'top center' }} className="shadow-2xl rounded-sm overflow-hidden">

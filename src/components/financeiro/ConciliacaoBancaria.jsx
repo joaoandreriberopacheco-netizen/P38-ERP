@@ -786,7 +786,7 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
             <Button
               onClick={confirmarConciliacao}
               disabled={processing}
-              className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-muted dark:text-foreground"
             >
               {processing ? 'Processando...' : 'Confirmar'}
             </Button>

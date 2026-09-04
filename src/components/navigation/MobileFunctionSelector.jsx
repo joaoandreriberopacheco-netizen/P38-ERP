@@ -1,10 +1,13 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import P38Logo from '@/components/brand/P38Logo';
 import MenuSearchBar from '@/components/navigation/MenuSearchBar';
 import { getP38ShellColors } from '@/lib/p38ShellColors';
+import { useForceLandscape } from '@/hooks/useForceLandscape';
+import { getP38PortalRoot } from '@/lib/p38PortalRoot';
 
 function useDarkMode() {
   const [isDark, setIsDark] = useState(() =>
@@ -22,6 +25,7 @@ function useDarkMode() {
 export default function MobileFunctionSelector({ isOpen, onClose, menuItems = [], currentUser, searchableItems = [] }) {
   const location = useLocation();
   const isDark = useDarkMode();
+  const forceLandscape = useForceLandscape();
   const [activeGroup, setActiveGroup] = useState(null);
 
   const groupedItems = useMemo(() => menuItems.filter(item => item.submenu?.length || item.page), [menuItems]);
@@ -33,11 +37,22 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
 
   if (!isOpen) return null;
 
-  // Menu full-screen com bottom nav (mobile + tablet retrato).
-  return (
-    <div className="fixed inset-0 z-[60] desktop-layout:hidden font-din-1451" style={{ background: c.bg }}>
-      {/* Header */}
-      <div style={{ background: c.headerBg, boxShadow: '0 1px 0 rgba(0,0,0,0.06)' }} className="px-4 pt-5 pb-4">
+  const portalRoot = typeof document !== 'undefined' ? getP38PortalRoot() : null;
+  if (!portalRoot) return null;
+
+  const headerTopPad = forceLandscape
+    ? 'pt-4'
+    : 'pt-[max(1rem,env(safe-area-inset-top))]';
+
+  return createPortal(
+    <div
+      className="p38-portal-overlay z-[60] sidebar-shell:hidden font-din-1451 flex flex-col min-h-0 h-full max-h-full"
+      style={{ background: c.bg }}
+    >
+      <div
+        style={{ background: c.headerBg, boxShadow: '0 1px 0 rgba(0,0,0,0.06)' }}
+        className={`shrink-0 px-4 pb-4 ${headerTopPad}`}
+      >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4 min-w-0 flex-1">
             <P38Logo surface="mobile.functionSelector" className="flex-none" />
@@ -60,8 +75,7 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
       </div>
 
       {!activeGroup ? (
-        /* Lista principal */
-        <div className="p38-nav-menu px-4 py-4 overflow-y-auto" style={{ height: 'calc(100vh - 124px - env(safe-area-inset-bottom))' }}>
+        <div className="flex flex-1 min-h-0 flex-col p38-stage-panel-scroll p38-nav-menu px-4 py-4 touch-pan-y">
           <div className="rounded-[24px] p-4" style={{ background: c.cardBg, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
             <h3 className="text-base font-semibold mb-3" style={{ color: c.textMuted }}>Funções</h3>
             <div className="space-y-0.5">
@@ -105,8 +119,7 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
           <div className="h-8" />
         </div>
       ) : (
-        /* Submenu do grupo */
-        <div className="p38-nav-menu px-4 py-4 overflow-y-auto" style={{ height: 'calc(100vh - 124px - env(safe-area-inset-bottom))' }}>
+        <div className="flex flex-1 min-h-0 flex-col p38-stage-panel-scroll p38-nav-menu px-4 py-4 touch-pan-y">
           <div className="flex items-center gap-3 mb-5">
             <button
               onClick={() => setActiveGroup(null)}
@@ -142,6 +155,7 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
           <div className="h-8" />
         </div>
       )}
-    </div>
+    </div>,
+    portalRoot
   );
 }

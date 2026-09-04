@@ -283,6 +283,10 @@ export function obterSalarioBase(rubricas) {
 
 export function modeloEstaAtivoNaCompetencia(modelo, competencia) {
   if (!modelo) return true;
+
+  const entrada = parseDataIso(modelo?.data_entrada);
+  if (entrada && competencia < entrada.slice(0, 7)) return false;
+
   if (modelo.situacao === SITUACAO_FOLHA.DESLIGADO && modelo.data_desligamento) {
     const mesDeslig = String(modelo.data_desligamento).slice(0, 7);
     return competencia <= mesDeslig;
@@ -293,6 +297,122 @@ export function modeloEstaAtivoNaCompetencia(modelo, competencia) {
 export function isMesDesligamento(modelo, competencia) {
   if (!modelo?.data_desligamento) return false;
   return String(modelo.data_desligamento).slice(0, 7) === competencia;
+}
+
+export function isMesEntrada(modelo, competencia) {
+  const entrada = parseDataIso(modelo?.data_entrada);
+  if (!entrada) return false;
+  return entrada.slice(0, 7) === competencia;
+}
+
+/** YYYY-MM-DD válido ou null */
+export function parseDataIso(data) {
+  if (!data) return null;
+  const s = String(data).trim().slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
+}
+
+export function diasNoMes(competencia) {
+  const fim = ultimoDiaCompetencia(competencia);
+  if (!fim) return 30;
+  return parseInt(fim.slice(8, 10), 10);
+}
+
+/**
+ * Dias trabalhados na competência (entrada e desligamento). Sem data_entrada = mês integral no início.
+ */
+export function diasTrabalhadosNaCompetencia(modelo, competencia) {
+  const diasMes = diasNoMes(competencia);
+  let inicio = 1;
+  let fim = diasMes;
+
+  const entrada = parseDataIso(modelo?.data_entrada);
+  if (entrada) {
+    const mesEntrada = entrada.slice(0, 7);
+    if (competencia < mesEntrada) return 0;
+    if (competencia === mesEntrada) {
+      inicio = Math.max(inicio, parseInt(entrada.slice(8, 10), 10));
+    }
+  }
+
+  const deslig = parseDataIso(modelo?.data_desligamento);
+  if (deslig && modelo?.situacao === SITUACAO_FOLHA.DESLIGADO) {
+    const mesDeslig = deslig.slice(0, 7);
+    if (competencia > mesDeslig) return 0;
+    if (competencia === mesDeslig) {
+      fim = Math.min(fim, parseInt(deslig.slice(8, 10), 10));
+    }
+  }
+
+  if (fim < inicio) return 0;
+  return fim - inicio + 1;
+}
+
+/** Fator 0–1 para salário/retirada/encargos no mês. Sem data_entrada = 1 (legado). */
+export function fatorProporcionalCompetencia(modelo, competencia) {
+  const diasMes = diasNoMes(competencia);
+  const diasTrab = diasTrabalhadosNaCompetencia(modelo, competencia);
+  if (diasTrab <= 0) return 0;
+  if (!parseDataIso(modelo?.data_entrada) && diasTrab >= diasMes) return 1;
+  return diasTrab / diasMes;
+}
+
+/**
+ * Avos trabalhados no ano civil até o mês da competência (regra CLT: ≥15 dias no mês de entrada = mês integral).
+ * Sem data_entrada retorna o número do mês (legado com 13º cheio nas parcelas).
+ */
+export function avosTrabalhadosNoAno(modelo, competencia) {
+  const ano = parseInt(String(competencia).slice(0, 4), 10);
+  const mesPagamento = competenciaParaMes(competencia);
+  const entrada = parseDataIso(modelo?.data_entrada);
+
+  if (!entrada) return mesPagamento;
+
+  const anoEntrada = parseInt(entrada.slice(0, 4), 10);
+  const mesEntrada = parseInt(entrada.slice(5, 7), 10);
+  const diaEntrada = parseInt(entrada.slice(8, 10), 10);
+
+  if (ano < anoEntrada) return 0;
+  if (ano > anoEntrada) return mesPagamento;
+
+  let avos = 0;
+  for (let m = mesEntrada; m <= mesPagamento; m += 1) {
+    const compMes = `${ano}-${String(m).padStart(2, '0')}`;
+    if (m === mesEntrada) {
+      const diasMes = diasNoMes(compMes);
+      const diasTrab = diasMes - diaEntrada + 1;
+      if (diasTrab >= 15) avos += 1;
+      else avos += diasTrab / diasMes;
+    } else {
+      avos += 1;
+    }
+  }
+  return avos;
+}
+
+/** Fator proporcional do 13º no ano. Sem data_entrada = 1 (legado). */
+export function fatorDecimoTerceiroProporcional(modelo, competencia) {
+  if (!parseDataIso(modelo?.data_entrada)) return 1;
+  const avos = avosTrabalhadosNoAno(modelo, competencia);
+  return Math.min(1, avos / 12);
+}
+
+/** Competência (YYYY-MM) em que completa 12 meses e passa a ter direito a férias. */
+export function competenciaDireitoFerias(modelo) {
+  const entrada = parseDataIso(modelo?.data_entrada);
+  if (!entrada) return null;
+  const [y, m, d] = entrada.split('-').map(Number);
+  const dt = new Date(y, m - 1 + 12, d);
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+}
+
+export function resumoProporcionalCompetencia(modelo, competencia) {
+  if (!parseDataIso(modelo?.data_entrada)) return null;
+  const fator = fatorProporcionalCompetencia(modelo, competencia);
+  if (fator >= 1) return null;
+  const dias = diasTrabalhadosNaCompetencia(modelo, competencia);
+  const total = diasNoMes(competencia);
+  return `${dias}/${total} dias`;
 }
 
 function sumRubricas(rubricas, tipo) {
@@ -333,6 +453,8 @@ export function calcularProvisoesEventos(competencia, modelo) {
   const salarioBase = obterSalarioBase(rubricas);
   const mesNum = competenciaParaMes(competenciaStr);
   const socio = isSocio(modelo);
+  const fatorMes = fatorProporcionalCompetencia(modelo, competenciaStr);
+  const fatorDecimo = fatorDecimoTerceiroProporcional(modelo, competenciaStr);
 
   if (!socio && modelo.decimo_terceiro_ativo !== false && salarioBase > 0) {
     const p1 = modelo.decimo_mes_parcela_1 ?? DECIMO_PADRAO.decimo_mes_parcela_1;
@@ -344,7 +466,7 @@ export function calcularProvisoesEventos(competencia, modelo) {
         id: `decimo-1-${competenciaStr}`,
         tipo: 'provento',
         nome: '13º salário — 1ª parcela',
-        valor: salarioBase * pct,
+        valor: salarioBase * pct * fatorDecimo,
         categoria: 'decimo_terceiro',
       });
     }
@@ -353,7 +475,7 @@ export function calcularProvisoesEventos(competencia, modelo) {
         id: `decimo-2-${competenciaStr}`,
         tipo: 'provento',
         nome: '13º salário — 2ª parcela',
-        valor: salarioBase * pct,
+        valor: salarioBase * pct * fatorDecimo,
         categoria: 'decimo_terceiro',
       });
     }
@@ -366,13 +488,13 @@ export function calcularProvisoesEventos(competencia, modelo) {
         id: f.id || `ferias-${f.competencia_prevista}`,
         tipo: 'provento',
         nome: f.descricao || 'Férias',
-        valor: Number(f.valor_previsto) || 0,
+        valor: (Number(f.valor_previsto) || 0) * fatorMes,
         categoria: 'ferias',
       });
     }
   }
 
-  const retiradaSocio = valorRetiradaSocioNoMes(modelo, competenciaStr);
+  const retiradaSocio = valorRetiradaSocioNoMes(modelo, competenciaStr) * fatorMes;
   if (retiradaSocio > 0) {
     const freq = modelo.retirada_frequencia || RETIRADA_FREQUENCIA.MENSAL;
     const detalhe =
@@ -411,10 +533,14 @@ export function calcularTotaisCompetencia(competencia, modelo = null) {
   const rubricas = competencia?.rubricas || [];
   const movimentos = competencia?.movimentos || [];
   const provisoes = calcularProvisoesEventos(competencia, modelo);
+  const competenciaStr =
+    typeof competencia === 'string' ? competencia : competencia?.competencia;
+  const fatorMes =
+    modelo && competenciaStr ? fatorProporcionalCompetencia(modelo, competenciaStr) : 1;
 
-  const proventosFixos = sumRubricas(rubricas, RUBRICA_TIPOS.PROVENTO);
-  const descontosFixos = sumRubricas(rubricas, RUBRICA_TIPOS.DESCONTO);
-  const encargosEmpresa = sumRubricas(rubricas, RUBRICA_TIPOS.ENCARGO_EMPRESA);
+  const proventosFixos = sumRubricas(rubricas, RUBRICA_TIPOS.PROVENTO) * fatorMes;
+  const descontosFixos = sumRubricas(rubricas, RUBRICA_TIPOS.DESCONTO) * fatorMes;
+  const encargosEmpresa = sumRubricas(rubricas, RUBRICA_TIPOS.ENCARGO_EMPRESA) * fatorMes;
 
   const proventosEventos = provisoes
     .filter((p) => p.tipo === 'provento')
@@ -478,6 +604,10 @@ export function calcularTotaisCompetencia(competencia, modelo = null) {
     tipoVinculo: modelo?.tipo_vinculo || competencia?.tipo_vinculo || TIPO_VINCULO.FUNCIONARIO,
     desligado: modelo?.situacao === SITUACAO_FOLHA.DESLIGADO,
     mesDesligamento: isMesDesligamento(modelo, competencia?.competencia),
+    mesEntrada: isMesEntrada(modelo, competenciaStr),
+    fatorProporcional: fatorMes,
+    resumoProporcional:
+      modelo && competenciaStr ? resumoProporcionalCompetencia(modelo, competenciaStr) : null,
   };
 }
 
@@ -549,9 +679,10 @@ export function calcularProjecaoCaixa(modelos, meses = 12, competenciaInicio = n
       const ehFuncionario =
         (modelo?.tipo_vinculo || TIPO_VINCULO.FUNCIONARIO) === TIPO_VINCULO.FUNCIONARIO;
       const salarioBaseFuncionario = ehFuncionario ? extrairSalarioBase(modelo) : 0;
+      const fatorMes = fatorProporcionalCompetencia(modelo, competencia);
       // Provisão mensal do 1/3 adicional de férias: (salário / 3) / 12 = salário / 36.
       const provisaoTercoFeriasMensal = salarioBaseFuncionario > 0
-        ? salarioBaseFuncionario / 36
+        ? (salarioBaseFuncionario / 36) * fatorMes
         : 0;
       const custoTotalComProvisao = t.custoTotalEmpresa + provisaoTercoFeriasMensal;
 
@@ -789,6 +920,7 @@ export function criarModeloComDefaults(extra = {}) {
     ...DECIMO_PADRAO,
     decimo_terceiro_ativo: socio ? false : true,
     centro_custo: '',
+    centro_custo_id: '',
     custo_direto: custoDiretoExtra,
     classificacao_despesa: custoDiretoExtra
       ? CLASSIFICACAO_DESPESA_FOLHA.DIRETA

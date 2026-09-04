@@ -1,12 +1,27 @@
 import { useState, useRef, useMemo } from 'react';
-import { Search, Plus, Wand2, X, Pencil } from 'lucide-react';
+import { Search, Plus, Wand2, X, Pencil, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import NovoProdutoRapidoDialog from '@/components/compras/NovoProdutoRapidoDialog';
+import CatalogLoteDialog from '@/components/compras/CatalogLoteDialog';
 import { filterAndSortProducts, getProdutoLabel } from '@/components/compras/productMatchingUtils';
 
-export default function ProductSearchInputPDV({ item, index, produtos, getSuggestedProduct, setItems, setProductSearch, productSearch, onProductCreated }) {
+export default function ProductSearchInputPDV({
+  item,
+  index,
+  produtos,
+  getSuggestedProduct,
+  setItems,
+  setProductSearch,
+  productSearch,
+  onProductCreated,
+  enableLotePicker = false,
+  onLoteRows,
+  size = 'default',
+}) {
+  const comfortable = size === 'comfortable';
   const [isFocused, setIsFocused] = useState(false);
   const [showNovoProduto, setShowNovoProduto] = useState(false);
+  const [loteDialogOpen, setLoteDialogOpen] = useState(false);
   const inputRef = useRef(null);
   const containerRef = useRef(null);
 
@@ -66,9 +81,19 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
     <>
       <div className="relative min-w-0" ref={containerRef}>
         {isConfirmed && !isFocused ? (
-          <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 flex-none" />
-            <span className="flex-1 text-sm font-medium text-emerald-800 dark:text-emerald-300 truncate">
+          <div
+            className={cn(
+              'rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center gap-2',
+              comfortable ? 'px-4 py-3' : 'px-3 py-2',
+            )}
+          >
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 flex-none" />
+            <span
+              className={cn(
+                'flex-1 font-medium text-emerald-800 dark:text-emerald-300 truncate',
+                comfortable ? 'text-base' : 'text-sm',
+              )}
+            >
               {getProdutoLabel(selectedProduct)}
             </span>
             <button
@@ -105,11 +130,9 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
             </button>
           </div>
         ) : (
-          <div className={cn(
-            "rounded-2xl bg-background shadow-sm transition-all",
-            isFocused && "ring-1 ring-border/40 dark:ring-border/40"
-          )}>
-            <div className="flex items-center gap-2 px-2 sm:px-3 h-12">
+          <div className={cn('rounded-2xl bg-card transition-all dark:bg-background', comfortable && 'shadow-sm border border-border/40')}>
+            <div className={cn('flex items-center gap-2 px-2 sm:px-3', comfortable ? 'h-14' : 'h-12')}>
+              {!comfortable ? (
               <span className={cn(
                 "text-[11px] sm:text-xs truncate max-w-[90px] sm:max-w-[110px] text-right",
                 item.selected_product_id === 'create_new' ? 'text-muted-foreground' :
@@ -122,17 +145,42 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
                  suggestedProduct ? `IA: ${getProdutoLabel(suggestedProduct)}` :
                  'Não encontrado'}
               </span>
+              ) : (
+              <span
+                className={cn(
+                  'shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide',
+                  item.selected_product_id === 'create_new'
+                    ? 'bg-muted text-muted-foreground'
+                    : selectedProduct
+                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
+                      : suggestedProduct
+                        ? 'bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-200'
+                        : 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300',
+                )}
+              >
+                {item.selected_product_id === 'create_new'
+                  ? 'Salvando'
+                  : selectedProduct
+                    ? 'OK'
+                    : suggestedProduct
+                      ? 'Sugestão'
+                      : 'Pendente'}
+              </span>
+              )}
 
               <div className="relative flex-1 min-w-0">
-                <Search className="w-3.5 h-3.5 text-muted-foreground absolute left-0 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Search className={cn('text-muted-foreground absolute left-0 top-1/2 -translate-y-1/2 pointer-events-none', comfortable ? 'w-4 h-4' : 'w-3.5 h-3.5')} />
                 <input autoComplete="off"
                   ref={inputRef}
                   type="text"
                   value={currentQuery}
                   onChange={handleChange}
                   onFocus={() => setIsFocused(true)}
-                  className="w-full h-10 bg-transparent pl-5 pr-1 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground outline-none"
-                  placeholder="Buscar item"
+                  className={cn(
+                    'w-full bg-transparent pr-1 text-foreground placeholder:text-foreground/45 dark:placeholder:text-muted-foreground outline-none',
+                    comfortable ? 'h-12 pl-6 text-base' : 'h-10 pl-5 text-xs sm:text-sm',
+                  )}
+                  placeholder={comfortable ? 'Buscar no catálogo…' : 'Buscar item'}
                 />
               </div>
 
@@ -141,10 +189,13 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
                   type="button"
                   tabIndex={-1}
                   onClick={() => handleSelect(suggestedProduct.id, getProdutoLabel(suggestedProduct))}
-                  className="w-6 h-6 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center flex-none"
+                  className={cn(
+                    'rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center flex-none',
+                    comfortable ? 'w-9 h-9' : 'w-6 h-6',
+                  )}
                   title="Aceitar sugestão IA"
                 >
-                  <Wand2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                  <Wand2 className={cn('text-emerald-600 dark:text-emerald-400', comfortable ? 'w-4 h-4' : 'w-3 h-3')} />
                 </button>
               )}
 
@@ -153,9 +204,12 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
                   type="button"
                   tabIndex={-1}
                   onMouseDown={handleClear}
-                  className="w-6 h-6 rounded-full bg-card shadow-sm flex items-center justify-center text-muted-foreground hover:text-foreground/90 flex-none"
+                  className={cn(
+                    'rounded-full bg-card shadow-sm flex items-center justify-center text-muted-foreground hover:text-foreground/90 flex-none',
+                    comfortable ? 'w-9 h-9' : 'w-6 h-6',
+                  )}
                 >
-                  <X className="w-3 h-3" />
+                  <X className={cn(comfortable ? 'w-4 h-4' : 'w-3 h-3')} />
                 </button>
               )}
 
@@ -163,15 +217,18 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
                 type="button"
                 tabIndex={-1}
                 onMouseDown={handleOpenNovoProduto}
-                className="w-7 h-7 rounded-full bg-card shadow-sm flex items-center justify-center text-foreground/90 hover:bg-muted flex-none"
+                className={cn(
+                  'rounded-full bg-card shadow-sm flex items-center justify-center text-foreground/90 hover:bg-muted flex-none',
+                  comfortable ? 'w-10 h-10' : 'w-7 h-7',
+                )}
                 title="Criar novo produto"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className={cn(comfortable ? 'w-5 h-5' : 'w-3.5 h-3.5')} />
               </button>
             </div>
 
             {isFocused && (
-                <div className="border-t border-border/40 max-h-72 overflow-y-auto">
+                <div className={cn('max-h-72 overflow-y-auto bg-card dark:bg-background', comfortable && 'border-t border-border/40')}>
                 {visibleProducts.length > 0 ? (
                   visibleProducts.map(produto => (
                     <button
@@ -179,19 +236,36 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
                       type="button"
                       tabIndex={0}
                       onMouseDown={(e) => { e.preventDefault(); handleSelect(produto.id, getProdutoLabel(produto)); }}
-                      className="w-full px-3 sm:px-4 py-2.5 text-left text-xs sm:text-sm text-foreground hover:bg-muted/40 dark:hover:bg-background border-b border-border/30 dark:border-border/40 last:border-0"
+                      className={cn(
+                        'w-full text-left text-foreground hover:bg-muted/55 dark:hover:bg-muted/40',
+                        comfortable ? 'px-4 py-3.5 text-base' : 'px-3 sm:px-4 py-2.5 text-xs sm:text-sm',
+                      )}
                     >
                       {getProdutoLabel(produto)}
                     </button>
                   ))
                 ) : currentQuery ? (
-                  <div className="px-4 py-3 text-sm text-muted-foreground">
+                  <div className="px-4 py-3 text-sm text-foreground/70">
                     Nenhum produto encontrado para "{currentQuery}"
                   </div>
                 ) : (
-                  <div className="px-4 py-3 text-sm text-muted-foreground">
+                  <div className="px-4 py-3 text-sm text-foreground/70">
                     Nenhum produto no catálogo
                   </div>
+                )}
+                {enableLotePicker && onLoteRows && currentQuery.trim().length >= 2 && (
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-center gap-2 border-t border-border/40 bg-muted/30 px-4 py-3 text-xs font-medium text-foreground hover:bg-muted/50"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setIsFocused(false);
+                      setLoteDialogOpen(true);
+                    }}
+                  >
+                    <Layers className="h-4 w-4" />
+                    Seleção em lote desta busca
+                  </button>
                 )}
               </div>
             )}
@@ -203,8 +277,19 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
         isOpen={showNovoProduto}
         onClose={() => setShowNovoProduto(false)}
         onSuccess={handleNovoProdutoSuccess}
-        nomeInicial={currentQuery}
+        nomeInicial={currentQuery || item?.descricao || ''}
       />
+
+      {enableLotePicker && onLoteRows && (
+        <CatalogLoteDialog
+          open={loteDialogOpen}
+          onOpenChange={setLoteDialogOpen}
+          products={produtos}
+          initialSearch={currentQuery}
+          onConfirm={onLoteRows}
+          confirmLabel="Adicionar linhas"
+        />
+      )}
     </>
   );
 }

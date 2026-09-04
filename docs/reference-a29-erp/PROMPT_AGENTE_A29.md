@@ -21,12 +21,12 @@ Tarefa única: instalar mirrorpass do VarejoSync no A29.
      copiar de ../varejosync/mirror/live/ para legacy/varejosync/
 
    Opção B — com GitHub CLI autenticado:
-     gh api repos/joaoandreriberopacheco-netizen/varejosync/contents/mirror/live/mirrorpass?ref=main --jq '.content' | base64 -d > legacy/varejosync/mirrorpass
+     gh api repos/joaoandreriberopacheco-netizen/P38-ERP/contents/mirror/live/mirrorpass?ref=main --jq '.content' | base64 -d > legacy/varejosync/mirrorpass
      (repetir para VAREJO_UI_SYNC.stamp e MIRROR_PASS.leia-me.txt)
 
    Opção C — clone raso temporário:
-     git clone --depth 1 --branch main https://github.com/joaoandreriberopacheco-netizen/varejosync.git /tmp/varejosync-mirror
-     cp /tmp/varejosync-mirror/mirror/live/mirrorpass /tmp/varejosync-mirror/mirror/live/VAREJO_UI_SYNC.stamp /tmp/varejosync-mirror/mirror/live/MIRROR_PASS.leia-me.txt legacy/varejosync/
+     git clone --depth 1 --branch main https://github.com/joaoandreriberopacheco-netizen/P38-ERP.git /tmp/p38-erp-mirror
+     cp /tmp/p38-erp-mirror/mirror/live/mirrorpass /tmp/p38-erp-mirror/mirror/live/VAREJO_UI_SYNC.stamp /tmp/p38-erp-mirror/mirror/live/MIRROR_PASS.leia-me.txt legacy/varejosync/
 
 2) Garantir que existem em legacy/varejosync/ (criar pasta se faltar).
 

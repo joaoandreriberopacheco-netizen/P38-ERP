@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 
 import { loadDotEnvFiles } from './base44-env.mjs';
+import { connectPg } from './lib/pg-connect-ipv4.mjs';
 
 loadDotEnvFiles();
 
@@ -64,19 +65,13 @@ export async function applySupabaseMigrations({ databaseUrl, dryRun = false, cli
     throw new Error(`Nenhum ficheiro NNN_*.sql em ${migrationsDir}`);
   }
 
-  const ownClient = externalClient
-    ? null
-    : new pg.Client({
-        connectionString: databaseUrl.trim(),
-        ssl: databaseUrl.includes('supabase') ? { rejectUnauthorized: false } : undefined,
-      });
+  const ownClient = externalClient ? null : await connectPg(databaseUrl);
 
   const client = externalClient || ownClient;
   let connectedHere = false;
 
   try {
     if (!externalClient) {
-      await client.connect();
       connectedHere = true;
     }
 

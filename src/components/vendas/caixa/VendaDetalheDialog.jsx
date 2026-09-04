@@ -9,13 +9,13 @@ import FormaPagamentoBadges from '@/components/vendas/FormaPagamentoBadges';
 export default function VendaDetalheDialog({ venda, onClose, formatValor }) {
   if (!venda) return null;
   return (
-    <Dialog open={!!venda} onOpenChange={onClose}>
+    <Dialog open={!!venda} onOpenChange={(nextOpen) => { if (!nextOpen) onClose(); }}>
       <CaixaDialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-background dark:text-foreground">
         <DialogHeader>
           <DialogTitle className="text-lg text-foreground">
             Detalhes da Venda - {venda.numero}
           </DialogTitle>
-          <FormaPagamentoBadges pagamentos={venda.pagamentos} className="pt-1" />
+          <FormaPagamentoBadges pagamentos={venda.pagamentos} className="pt-1" palette="caixa" />
         </DialogHeader>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4 text-sm">

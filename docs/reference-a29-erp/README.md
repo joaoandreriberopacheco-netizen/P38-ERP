@@ -8,8 +8,9 @@
 ||   ESTE DIRECTÓRIO NÃO É CÓDIGO DO VAREJOSYNC. NÃO FAZ PARTE DO BUILD.     ||
 ||   NÃO IMPORTAR EM `src/`. NÃO COPIAR SEGREDOS. NÃO COMMITAR O CHECKOUT.     ||
 ||                                                                            ||
-||   Propósito: ter o código **a29-erp** aqui para comparar política de         ||
-||   embalagens, UX, OCR, catálogo, etc., sem abrir outro workspace.          ||
+||   Propósito: referência local do **Mana** (`a29-erp`). Piloto 2026: Mana é   ||
+||   a **doca seca do Galileu** (app fluvial), não espelho paralelo do P-38.   ||
+||   Ver [`../galileu-pathway.md`](../galileu-pathway.md).                     ||
 ||                                                                            ||
 ================================================================================
 ```

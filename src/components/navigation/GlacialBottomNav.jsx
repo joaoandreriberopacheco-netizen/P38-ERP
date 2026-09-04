@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { openGlobalSearch } from '@/lib/openGlobalSearch';
 
-export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentPageName, visible = true }) {
+export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentPageName, visible = true, docked = false, skipSafeArea = false }) {
   const location = useLocation();
 
   const navItems = [
@@ -43,12 +43,13 @@ export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentP
   return (
     <nav 
       className={cn(
-        'fixed bottom-0 left-0 right-0 z-50 desktop-layout:hidden bg-background/96 backdrop-blur-xl border-t border-border/80 font-din-1451',
+        docked ? 'relative shrink-0 w-full' : 'fixed bottom-0 left-0 right-0',
+        'z-50 sidebar-shell:hidden bg-background/96 backdrop-blur-xl border-t border-border/80 font-din-1451',
         'transition-transform duration-300 ease-out will-change-transform',
         !visible && 'translate-y-full pointer-events-none'
       )}
       style={{ 
-        paddingBottom: 'env(safe-area-inset-bottom)',
+        paddingBottom: skipSafeArea ? 0 : 'env(safe-area-inset-bottom)',
         boxShadow: '0 -6px 24px -12px rgba(0,0,0,0.18)'
       }}
       aria-hidden={!visible}
@@ -114,7 +115,7 @@ export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentP
             <Link
               key={item.id}
               to={createPageUrl(item.page)}
-              className="flex-1 relative"
+              className="flex-1 relative touch-manipulation"
             >
               {content}
             </Link>

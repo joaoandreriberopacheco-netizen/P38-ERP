@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import { registerJsPdfDin1451Fonts, normalizePdfText } from '@/lib/jspdfNotoFont';
 import { formatCommercialQuantity } from '@/lib/productUnits';
 import { formatMarginGroupUnidadeLabel } from '@/lib/marginTree';
+import { resolvePrecoVendaLiquidoUnitarioMargem } from '@/lib/relatorioMargemCalculos';
 
 const PDF_FONT_BOLD = 'bold';
 const PDF_FONT_NORMAL = 'normal';
@@ -58,11 +59,7 @@ function getRowMarkup(row) {
 }
 
 function getRowPrecoMedio(row) {
-  if (row?.valor_unitario_medio != null && !Number.isNaN(row.valor_unitario_medio)) {
-    return row.valor_unitario_medio;
-  }
-  const qtd = row?.quantidade_vendida || 0;
-  return qtd > 0 ? (row.total_recebido || 0) / qtd : 0;
+  return resolvePrecoVendaLiquidoUnitarioMargem(row);
 }
 
 function getRowCustoUnitCalc(row) {
@@ -85,7 +82,7 @@ function linhaMargemPdf(dataRow, { isGroup = false } = {}) {
   const preco = getRowPrecoMedio(dataRow);
   const markup = getRowMarkup(dataRow);
   const custoTotal = dataRow?.custo_total || 0;
-  const receita = dataRow?.total_recebido || 0;
+  const receita = dataRow?.receita_liquida || 0;
   const lucro = dataRow?.lucro_total || 0;
   return {
     quantTexto: formatCommercialQuantity(qtd, unidade),

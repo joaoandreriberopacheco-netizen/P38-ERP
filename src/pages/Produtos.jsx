@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback, Suspense, startTransition, lazy } from 'react';
 import { Button } from '@/components/ui/button';
 import ProdutosAccessGuard from '@/components/guard/ProdutosAccessGuard';
 import { Input } from '@/components/ui/input';
@@ -18,19 +18,19 @@ import { base44 } from '@/api/base44Client';
 import { roundToTwoDecimals, formatCurrency } from '@/lib/financialUtils';
 import { dataHoje } from '@/components/utils/dateUtils';
 import ProdutoFormCompleto from '../components/produtos/ProdutoFormCompleto';
-import ColumnSelector from '../components/produtos/ColumnSelector';
-import MassImageUploader from '../components/produtos/MassImageUploader';
-import MassTagGenerator from '../components/produtos/MassTagGenerator';
-import MassCategoryClassifier from '../components/produtos/MassCategoryClassifier';
-import MassMarkupDialog from '../components/produtos/MassMarkupDialog';
-import PontosPedidoCatalogoDialog from '../components/produtos/PontosPedidoCatalogoDialog';
+const ColumnSelector = lazy(() => import('../components/produtos/ColumnSelector'));
+const MassImageUploader = lazy(() => import('../components/produtos/MassImageUploader'));
+const MassTagGenerator = lazy(() => import('../components/produtos/MassTagGenerator'));
+const MassCategoryClassifier = lazy(() => import('../components/produtos/MassCategoryClassifier'));
+const MassPrecificacaoDialog = lazy(() => import('../components/produtos/MassPrecificacaoDialog'));
+const PontosPedidoCatalogoDialog = lazy(() => import('../components/produtos/PontosPedidoCatalogoDialog'));
+const CatalogTagPrintDialog = lazy(() => import('../components/produtos/CatalogTagPrintDialog'));
 import TreeGrid, { TREE_GRID_EXPAND_ALL_LEVEL } from '../components/produtos/treegrid/TreeGrid';
 import MobileHierarquica, { CatalogoMobileScrollShell } from '../components/produtos/MobileHierarquica';
 import ProdutoFAB from '../components/produtos/ProdutoFAB';
 import ExcluirProdutoDialog from '../components/produtos/ExcluirProdutoDialog';
 import ProdutosHeader from '../components/produtos/ProdutosHeader';
 import ProdutosCommandBar from '../components/produtos/ProdutosCommandBar';
-import CatalogTagPrintDialog from '../components/produtos/CatalogTagPrintDialog';
 import ProdutosPlanaTable from '../components/produtos/ProdutosPlanaTable';
 import { isCadastroIncompleto } from '../components/produtos/ProdutosHelpers';
 import {
@@ -39,6 +39,7 @@ import {
   describeProdutoFilters,
   getCatalogProdutoEntryFilters,
   collectCatalogVitrineUnits,
+  DEFAULT_PRODUTO_FILTERS,
 } from '@/lib/filterProdutos';
 import {
   CATALOG_SALES_WINDOW_LABELS,
@@ -65,8 +66,32 @@ import {
   useFornecedoresQuery,
   usePedidosVenda90dQuery,
 } from '@/hooks/useP38Entities';
+import { usePermissoesUsuario } from '@/hooks/usePermissoesUsuario';
+import { filtrarColunasCatalogoPorPermissao } from '@/lib/permissaoKit';
 
 const CATALOG_GROUP_BY_CATEGORY_KEY = 'catalogo.groupTreeByCategory';
+
+/** Selects do painel de filtros — feedback imediato no controlo. */
+const IMMEDIATE_CATALOG_FILTER_KEYS = new Set([
+  'categoria',
+  'fornecedorId',
+  'statusEstoque',
+  'abcd',
+  'cadastroIncompleto',
+  'ativoStatus',
+  'unidadeVitrine',
+  'searchStartsWith',
+  'quantidadeOperador',
+]);
+
+function catalogRowsShallowEqual(a, b) {
+  if (a === b) return true;
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
 
 function readGroupTreeByCategoryPreference() {
   try {
@@ -136,6 +161,9 @@ function calculateProdutoStats(produtosList, catalogStockContext = null) {
 }
 
 function ProdutosPageContent() {
+  const { tem: podePerm } = usePermissoesUsuario();
+  const podeVerCusto = podePerm('estoque.ver_custo_compra', 'estoque.visualizar_produtos');
+
   const [produtos, setProdutos] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
   const [categorias, setCategorias] = useState([]);
@@ -148,7 +176,7 @@ function ProdutosPageContent() {
 
   const [filters, setFilters] = useState(() => getCatalogProdutoEntryFilters());
   const [sortOrder, setSortOrder] = useState('az');
-  const [viewMode, setViewMode] = useState('dinamica'); // 'dinamica' | 'plana'
+  const [viewMode, setViewMode] = useState('plana'); // 'dinamica' | 'plana'
   const [groupTreeByCategory, setGroupTreeByCategory] = useState(readGroupTreeByCategoryPreference);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -157,6 +185,10 @@ function ProdutosPageContent() {
   const [isColumnSelectorOpen, setIsColumnSelectorOpen] = useState(false);
   const [produtoParaExcluir, setProdutoParaExcluir] = useState(null);
   const [visibleColumns, setVisibleColumns] = useState(() => loadCatalogProdutoColumns());
+  const visibleColumnsEffective = useMemo(
+    () => filtrarColunasCatalogoPorPermissao(visibleColumns, podeVerCusto),
+    [visibleColumns, podeVerCusto]
+  );
   // ── Nível de expansão do TreeGrid (controlado pelo painel fixo externo) ─────
   const [treeLevel, setTreeLevel] = useState(TREE_GRID_EXPAND_ALL_LEVEL);
 
@@ -164,7 +196,7 @@ function ProdutosPageContent() {
   const [isMassImageUploaderOpen, setIsMassImageUploaderOpen] = useState(false);
   const [isMassTagOpen, setIsMassTagOpen] = useState(false);
   const [isMassCategoryOpen, setIsMassCategoryOpen] = useState(false);
-  const [isMassMarkupOpen, setIsMassMarkupOpen] = useState(false);
+  const [isMassPrecificacaoOpen, setIsMassPrecificacaoOpen] = useState(false);
   const [isPontosPedidoOpen, setIsPontosPedidoOpen] = useState(false);
   const [isCatalogTagPrintOpen, setIsCatalogTagPrintOpen] = useState(false);
   // States for unified import (products + costs)
@@ -207,16 +239,31 @@ function ProdutosPageContent() {
       ? fornecedoresData.filter((f) => f && typeof f === 'object' && f !== null)
       : [];
 
-    setProdutos(safeProdutos);
-    setFornecedores(safeFornecedores);
+    setProdutos((prev) => (catalogRowsShallowEqual(prev, safeProdutos) ? prev : safeProdutos));
+    setFornecedores((prev) => (catalogRowsShallowEqual(prev, safeFornecedores) ? prev : safeFornecedores));
 
     const catSet = new Set();
     safeProdutos.forEach((p) => {
       if (p.categoria_nome) catSet.add(p.categoria_nome);
     });
+    const nextCategorias = Array.from(catSet);
+    setCategorias((prev) => {
+      if (prev.length === nextCategorias.length && prev.every((c, i) => c === nextCategorias[i])) return prev;
+      return nextCategorias;
+    });
 
-    setStats(calculateProdutoStats(safeProdutos));
-    setCategorias(Array.from(catSet));
+    const nextStats = calculateProdutoStats(safeProdutos);
+    setStats((prev) => {
+      if (
+        prev.total === nextStats.total
+        && prev.valorEstoque === nextStats.valorEstoque
+        && prev.valorEstoqueAtivo === nextStats.valorEstoqueAtivo
+        && prev.abaixoMinimo === nextStats.abaixoMinimo
+      ) {
+        return prev;
+      }
+      return nextStats;
+    });
     return safeProdutos;
   }, []);
 
@@ -227,14 +274,15 @@ function ProdutosPageContent() {
   }, [produtosQuery, fornecedoresQuery, applyCatalogSnapshot]);
 
   useEffect(() => {
-    saveCatalogProdutoFilters(filters);
+    const timer = window.setTimeout(() => saveCatalogProdutoFilters(filters), 250);
+    return () => window.clearTimeout(timer);
   }, [filters]);
 
   useEffect(() => {
     saveCatalogProdutoColumns(visibleColumns);
   }, [visibleColumns]);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     const [{ data: produtosData }, { data: fornecedoresData }] = await Promise.all([
       refetchProdutos(),
       refetchFornecedores(),
@@ -270,7 +318,7 @@ function ProdutosPageContent() {
       }
     }
 
-  };
+  }, [refetchProdutos, refetchFornecedores, applyCatalogSnapshot, isFormOpen, selectedProduto?.id]);
 
   const handleSave = async (unitSnapshot) => {
     if (unitSnapshot?.id) {
@@ -322,14 +370,27 @@ function ProdutosPageContent() {
   }, []);
 
   const handleFilterChange = React.useCallback((key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    const apply = (prev) => ({ ...prev, [key]: value });
+    if (IMMEDIATE_CATALOG_FILTER_KEYS.has(key)) {
+      setFilters(apply);
+      return;
+    }
+    startTransition(() => setFilters(apply));
   }, []);
+
+  const setFiltersDeferred = useCallback((update) => {
+    startTransition(() => setFilters(update));
+  }, []);
+
+  const handleClearCatalogFilters = useCallback(() => {
+    setFiltersDeferred({ ...DEFAULT_PRODUTO_FILTERS });
+  }, [setFiltersDeferred]);
 
   const formatarNumero = React.useCallback((numero) => {
     return formatCurrency(numero);
   }, []);
 
-  const handleExportarCatalogo = () => {
+  const handleExportarCatalogo = useCallback(() => {
     const headers = [
       "codigo_interno",
       "codigo_barras",
@@ -451,11 +512,11 @@ function ProdutosPageContent() {
       className: "bg-card border border-border/40 dark:bg-muted dark:text-foreground dark:border-border/40",
       duration: 3000
     });
-  };
+  }, [produtos, fornecedores, formatarNumero, toast]);
 
 
 
-  const handleBaixarTemplateUnificado = () => {
+  const handleBaixarTemplateUnificado = useCallback(() => {
     const headers = [
       "codigo_interno",
       "codigo_barras",
@@ -566,7 +627,7 @@ function ProdutosPageContent() {
       className: "bg-card border border-border/40 dark:bg-muted dark:text-foreground dark:border-border/40",
       duration: 3000
     });
-  };
+  }, [toast]);
 
   const handleProcessarImportacaoUnificada = async () => {
     if (!importFile) {
@@ -1135,13 +1196,17 @@ function ProdutosPageContent() {
     return buildCatalogSalesVelocityMap(produtos, pedidosVenda90d);
   }, [needsSalesVelocity, produtos, pedidosVenda90d]);
 
-  const filteredProdutos = useMemo(() => {
-    let filtered = filterProdutos(produtos, filters, { salesVelocityMap, catalogStockContext });
+  const filteredProdutosBase = useMemo(
+    () => filterProdutos(produtos, filters, { salesVelocityMap, catalogStockContext }),
+    [produtos, filters, salesVelocityMap, catalogStockContext],
+  );
 
-    filtered = [...filtered].sort((a, b) => compareProdutosForCatalogSort(a, b, sortOrder));
+  const filteredProdutos = useMemo(
+    () => [...filteredProdutosBase].sort((a, b) => compareProdutosForCatalogSort(a, b, sortOrder)),
+    [filteredProdutosBase, sortOrder],
+  );
 
-    return filtered;
-  }, [produtos, filters, sortOrder, salesVelocityMap, catalogStockContext]);
+  const hasFilteredProdutos = filteredProdutos.length > 0;
 
   const fornecedorMap = useMemo(() => {
     return fornecedores.reduce((acc, f) => {
@@ -1157,7 +1222,10 @@ function ProdutosPageContent() {
     () => calculateProdutoStats(filteredProdutos, catalogStockContext),
     [filteredProdutos, catalogStockContext],
   );
-  const headerStats = filteredStats;
+  const headerStats = useMemo(() => {
+    if (podeVerCusto) return filteredStats;
+    return { ...filteredStats, valorEstoque: 0, valorEstoqueAtivo: 0 };
+  }, [filteredStats, podeVerCusto]);
 
   const handleGroupTreeByCategoryChange = useCallback((value) => {
     setGroupTreeByCategory(value);
@@ -1293,6 +1361,23 @@ function ProdutosPageContent() {
         queryClient.setQueryData(p38Keys.pedidosVenda90d(), pedidos);
       }
 
+      let pendenteMap = pendentePorProduto;
+      if (estoqueVirtualAtivo) {
+        const cachedPendente = queryClient.getQueryData(['catalogo', 'pendente-estoque']);
+        if (cachedPendente && typeof cachedPendente === 'object') {
+          pendenteMap = cachedPendente;
+        } else if (!pendenteMap || Object.keys(pendenteMap).length === 0) {
+          toast({ title: 'Buscando pedidos em trânsito...' });
+          const data = await fetchPedidosCompraParaSugestaoEstoque(base44);
+          pendenteMap = buildPendenteAprovadoFinanceiroPorProduto(
+            data.pedidosAbertos,
+            data.recebidosPorPedidoProduto,
+            { embarques: data.embarques, pedidosParaEmbarque: data.pedidosTodos },
+          );
+          queryClient.setQueryData(['catalogo', 'pendente-estoque'], pendenteMap);
+        }
+      }
+
       toast({ title: 'Montando PDF de vendas v2...' });
       const { generateRelatorioCatalogoVendasPdfV2 } = await import(
         '@/lib/relatorioCatalogoVendasPdf/generateRelatorioCatalogoVendasPdfV2.js'
@@ -1306,6 +1391,8 @@ function ProdutosPageContent() {
         sort_order: sortOrder,
         group_by_category: groupPdfByCategory,
         expanded_keys: [...catalogExpandedKeysRef.current],
+        estoque_virtual: estoqueVirtualAtivo,
+        pendente_por_produto: pendenteMap || {},
       });
 
       const blob = new Blob([resposta.data], { type: 'application/pdf' });
@@ -1326,7 +1413,7 @@ function ProdutosPageContent() {
     } finally {
       setGerandoRelatorioVendasV2(false);
     }
-  }, [filteredProdutos, filters, categorias, fornecedores, viewMode, treeLevel, sortOrder, groupTreeByCategory, queryClient, toast]);
+  }, [filteredProdutos, filters, categorias, fornecedores, viewMode, treeLevel, sortOrder, groupTreeByCategory, queryClient, toast, estoqueVirtualAtivo, pendentePorProduto]);
 
   const handleGerarRelatorioIep = useCallback(async () => {
     setGerandoRelatorioIep(true);
@@ -1415,8 +1502,15 @@ function ProdutosPageContent() {
     handleGerarRelatorioVendas(salesWindow);
   }, [produtos.length, handleGerarRelatorioVendas]);
 
-  const produtosHeaderProps = {
+  const handleOpenCatalogTagPrint = useCallback(() => setIsCatalogTagPrintOpen(true), []);
+  const handleOpenMassTag = useCallback(() => setIsMassTagOpen(true), []);
+  const handleOpenMassCategory = useCallback(() => setIsMassCategoryOpen(true), []);
+  const handleOpenMassPrecificacao = useCallback(() => setIsMassPrecificacaoOpen(true), []);
+  const handleOpenPontosPedido = useCallback(() => setIsPontosPedidoOpen(true), []);
+
+  const produtosHeaderProps = useMemo(() => ({
     stats: headerStats,
+    podeVerCusto,
     filters,
     categorias,
     fornecedores,
@@ -1432,7 +1526,7 @@ function ProdutosPageContent() {
     handleAddNew,
     setFilters,
     formatarNumero,
-    filteredProdutos,
+    hasFilteredProdutos,
     loadData,
     treeLevel,
     setTreeLevel,
@@ -1447,77 +1541,126 @@ function ProdutosPageContent() {
     gerandoRelatorioVendasV2,
     onGerarRelatorioIep: handleGerarRelatorioIep,
     gerandoRelatorioIep,
-    onOpenCatalogTagPrint: () => setIsCatalogTagPrintOpen(true),
-    onOpenMassTag: () => setIsMassTagOpen(true),
-    onOpenMassCategory: () => setIsMassCategoryOpen(true),
-    onOpenMassMarkup: () => setIsMassMarkupOpen(true),
-    onOpenPontosPedido: () => setIsPontosPedidoOpen(true),
+    onOpenCatalogTagPrint: handleOpenCatalogTagPrint,
+    onOpenMassTag: handleOpenMassTag,
+    onOpenMassCategory: handleOpenMassCategory,
+    onOpenMassPrecificacao: handleOpenMassPrecificacao,
+    onOpenPontosPedido: handleOpenPontosPedido,
     groupTreeByCategory,
     onGroupTreeByCategoryChange: handleGroupTreeByCategoryChange,
     estoqueVirtualCarregando: estoqueVirtualAtivo && pendenteEstoqueCarregando,
     estoqueVirtualErro: estoqueVirtualAtivo && pendenteEstoqueErro,
-  };
+    onClearFilters: handleClearCatalogFilters,
+  }), [
+    podeVerCusto,
+    headerStats,
+    filters,
+    categorias,
+    fornecedores,
+    unidadesVitrine,
+    activeFilterCount,
+    filteredStats.total,
+    stats.total,
+    isFilterOpen,
+    handleFilterChange,
+    handleExportarCatalogo,
+    handleBaixarTemplateUnificado,
+    handleAddNew,
+    formatarNumero,
+    hasFilteredProdutos,
+    loadData,
+    treeLevel,
+    sortOrder,
+    handleGerarRelatorioEstoque,
+    gerandoRelatorioEstoque,
+    handleGerarRelatorioVendas,
+    gerandoRelatorioVendas,
+    handleGerarRelatorioVendasV2,
+    gerandoRelatorioVendasV2,
+    handleGerarRelatorioIep,
+    gerandoRelatorioIep,
+    handleOpenCatalogTagPrint,
+    handleOpenMassTag,
+    handleOpenMassCategory,
+    handleOpenMassPrecificacao,
+    handleOpenPontosPedido,
+    groupTreeByCategory,
+    handleGroupTreeByCategoryChange,
+    handleClearCatalogFilters,
+    estoqueVirtualAtivo,
+    pendenteEstoqueCarregando,
+    pendenteEstoqueErro,
+  ]);
+
+  const mobileCatalogChrome = useMemo(
+    () => <ProdutosHeader key="catalog-mobile" {...produtosHeaderProps} />,
+    [produtosHeaderProps],
+  );
 
   return (
-    <div className="flex flex-col h-full overflow-hidden w-full max-w-full bg-background">
-      <div className="hidden desktop-layout:block flex-none">
-        <ProdutosHeader key="catalog-desktop" {...produtosHeaderProps} />
-      </div>
-
-      <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
-        <div className="h-full w-full min-w-0 max-w-full px-0 pb-0">
-          <div className="h-full flex flex-col min-h-0 min-w-0 max-w-full">
-            <div className="hidden desktop-layout:block">
-              <ProdutosCommandBar
-                sortOrder={sortOrder}
-                setSortOrder={setSortOrder}
-                viewMode={viewMode}
-                setViewMode={setViewMode}
-                groupTreeByCategory={groupTreeByCategory}
-                onGroupTreeByCategoryChange={handleGroupTreeByCategoryChange}
-              />
-            </div>
-
-            <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
-              <div className="desktop-layout:hidden flex flex-col flex-1 min-h-0 h-full w-full min-w-0 max-w-full">
-                <CatalogoMobileScrollShell catalogChrome={<ProdutosHeader key="catalog-mobile" {...produtosHeaderProps} />}>
-                  <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} groupByCategory={groupTreeByCategory} masterLevel={treeLevel} sortOrder={sortOrder} onExpandedKeysChange={handleCatalogExpandedKeysChange} catalogFilters={filters} salesVelocityMap={salesVelocityMap} catalogStockContext={catalogStockContext} />
-                </CatalogoMobileScrollShell>
-              </div>
-
-              {isDesktop && viewMode === 'dinamica' && (
-                <div className="flex flex-col w-full h-full min-h-0">
-                  <TreeGrid produtos={filteredProdutos} onEdit={handleEdit} onDelete={setProdutoParaExcluir} visibleColumns={visibleColumns} masterLevel={treeLevel} sortOrder={sortOrder} groupByCategory={groupTreeByCategory} onExpandedKeysChange={handleCatalogExpandedKeysChange} salesVelocityMap={salesVelocityMap} catalogStockContext={catalogStockContext} catalogFilters={filters} />
-                </div>
-              )}
-
-              {viewMode === 'plana' && (
-                <ProdutosPlanaTable
-                  filteredProdutos={filteredProdutos}
-                  visibleColumns={visibleColumns}
-                  handleEdit={handleEdit}
-                  setProdutoParaExcluir={setProdutoParaExcluir}
-                  formatarNumero={formatarNumero}
-                  fornecedorMap={fornecedorMap}
-                  handleCreateSimilar={handleCreateSimilar}
-                  salesVelocityMap={salesVelocityMap}
-                  catalogStockContext={catalogStockContext}
-                />
-              )}
-            </div>
-          </div>
+    <div className="flex flex-1 min-h-0 h-full flex-col overflow-hidden w-full max-w-full bg-background">
+      {isDesktop && (
+        <div className="flex-none">
+          <ProdutosHeader key="catalog-desktop" {...produtosHeaderProps} />
         </div>
+      )}
+
+      <div className="flex flex-1 min-h-0 flex-col overflow-hidden w-full min-w-0">
+        {isDesktop && (
+          <div>
+            <ProdutosCommandBar
+              sortOrder={sortOrder}
+              setSortOrder={setSortOrder}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              groupTreeByCategory={groupTreeByCategory}
+              onGroupTreeByCategoryChange={handleGroupTreeByCategoryChange}
+            />
+          </div>
+        )}
+
+        {!isDesktop && (
+          <CatalogoMobileScrollShell catalogChrome={mobileCatalogChrome}>
+            <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} flatList groupByCategory={false} masterLevel={treeLevel} sortOrder={sortOrder} onExpandedKeysChange={handleCatalogExpandedKeysChange} catalogFilters={filters} salesVelocityMap={salesVelocityMap} catalogStockContext={catalogStockContext} />
+          </CatalogoMobileScrollShell>
+        )}
+
+        {isDesktop && viewMode === 'dinamica' && (
+          <div className="flex flex-col w-full h-full min-h-0">
+            <TreeGrid produtos={filteredProdutos} onEdit={handleEdit} onDelete={setProdutoParaExcluir} visibleColumns={visibleColumnsEffective} masterLevel={treeLevel} sortOrder={sortOrder} groupByCategory={groupTreeByCategory} onExpandedKeysChange={handleCatalogExpandedKeysChange} salesVelocityMap={salesVelocityMap} catalogStockContext={catalogStockContext} catalogFilters={filters} />
+          </div>
+        )}
+
+        {isDesktop && viewMode === 'plana' && (
+          <ProdutosPlanaTable
+            filteredProdutos={filteredProdutos}
+            visibleColumns={visibleColumnsEffective}
+            handleEdit={handleEdit}
+            setProdutoParaExcluir={setProdutoParaExcluir}
+            formatarNumero={formatarNumero}
+            fornecedorMap={fornecedorMap}
+            handleCreateSimilar={handleCreateSimilar}
+            salesVelocityMap={salesVelocityMap}
+            catalogStockContext={catalogStockContext}
+          />
+        )}
       </div>
 
       {/* Tela completa para o formulário */}
       {isFormOpen && (
         <div className="fixed inset-0 z-[70] bg-background dark:bg-[#1f1d22]">
-          <ProdutoFormCompleto
-            produto={selectedProduto}
-            produtoSimilarBase={produtoSimilarBase}
-            onSave={handleSave}
-            onClose={() => { setIsFormOpen(false); setProdutoSimilarBase(null); }}
-          />
+          <Suspense fallback={
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              A carregar formulário…
+            </div>
+          }>
+            <ProdutoFormCompleto
+              produto={selectedProduto}
+              produtoSimilarBase={produtoSimilarBase}
+              onSave={handleSave}
+              onClose={() => { setIsFormOpen(false); setProdutoSimilarBase(null); }}
+            />
+          </Suspense>
         </div>
       )}
 
@@ -1743,59 +1886,87 @@ function ProdutosPageContent() {
       </Dialog>
 
       {/* Column Selector */}
-      <ColumnSelector
-        visibleColumns={visibleColumns}
-        onColumnsChange={(columns) => {
-          setVisibleColumns(columns);
-          saveCatalogProdutoColumns(columns);
-        }}
-        open={isColumnSelectorOpen}
-        onClose={() => setIsColumnSelectorOpen(false)}
-      />
+      {isColumnSelectorOpen && (
+        <Suspense fallback={null}>
+          <ColumnSelector
+            visibleColumns={visibleColumns}
+            onColumnsChange={(columns) => {
+              setVisibleColumns(columns);
+              saveCatalogProdutoColumns(columns);
+            }}
+            open={isColumnSelectorOpen}
+            onClose={() => setIsColumnSelectorOpen(false)}
+          />
+        </Suspense>
+      )}
 
-      <MassImageUploader 
-        isOpen={isMassImageUploaderOpen}
-        onClose={() => setIsMassImageUploaderOpen(false)}
-        onComplete={() => { loadData(); }}
-      />
+      {isMassImageUploaderOpen && (
+        <Suspense fallback={null}>
+          <MassImageUploader
+            isOpen={isMassImageUploaderOpen}
+            onClose={() => setIsMassImageUploaderOpen(false)}
+            onComplete={() => { loadData(); }}
+          />
+        </Suspense>
+      )}
 
-      <MassTagGenerator
-        products={filteredProdutos}
-        onComplete={loadData}
-        open={isMassTagOpen}
-        onOpenChange={setIsMassTagOpen}
-        hideTrigger
-      />
+      {isMassTagOpen && (
+        <Suspense fallback={null}>
+          <MassTagGenerator
+            products={filteredProdutos}
+            onComplete={loadData}
+            open={isMassTagOpen}
+            onOpenChange={setIsMassTagOpen}
+            hideTrigger
+          />
+        </Suspense>
+      )}
 
-      <CatalogTagPrintDialog
-        open={isCatalogTagPrintOpen}
-        onOpenChange={setIsCatalogTagPrintOpen}
-        products={filteredProdutos}
-        filtersSummary={catalogTagFiltersSummary}
-      />
+      {isCatalogTagPrintOpen && (
+        <Suspense fallback={null}>
+          <CatalogTagPrintDialog
+            open={isCatalogTagPrintOpen}
+            onOpenChange={setIsCatalogTagPrintOpen}
+            products={filteredProdutos}
+            filtersSummary={catalogTagFiltersSummary}
+          />
+        </Suspense>
+      )}
 
-      <MassCategoryClassifier
-        products={filteredProdutos}
-        onComplete={loadData}
-        open={isMassCategoryOpen}
-        onOpenChange={setIsMassCategoryOpen}
-        hideTrigger
-      />
+      {isMassCategoryOpen && (
+        <Suspense fallback={null}>
+          <MassCategoryClassifier
+            products={filteredProdutos}
+            onComplete={loadData}
+            open={isMassCategoryOpen}
+            onOpenChange={setIsMassCategoryOpen}
+            hideTrigger
+          />
+        </Suspense>
+      )}
 
-      <MassMarkupDialog
-        products={filteredProdutos}
-        onComplete={loadData}
-        open={isMassMarkupOpen}
-        onOpenChange={setIsMassMarkupOpen}
-        hideTrigger
-      />
+      {isMassPrecificacaoOpen && (
+        <Suspense fallback={null}>
+          <MassPrecificacaoDialog
+            products={filteredProdutos}
+            onComplete={loadData}
+            open={isMassPrecificacaoOpen}
+            onOpenChange={setIsMassPrecificacaoOpen}
+            hideTrigger
+          />
+        </Suspense>
+      )}
 
-      <PontosPedidoCatalogoDialog
-        products={produtos}
-        open={isPontosPedidoOpen}
-        onOpenChange={setIsPontosPedidoOpen}
-        onComplete={loadData}
-      />
+      {isPontosPedidoOpen && (
+        <Suspense fallback={null}>
+          <PontosPedidoCatalogoDialog
+            products={produtos}
+            open={isPontosPedidoOpen}
+            onOpenChange={setIsPontosPedidoOpen}
+            onComplete={loadData}
+          />
+        </Suspense>
+      )}
 
       <ExcluirProdutoDialog
         produto={produtoParaExcluir}

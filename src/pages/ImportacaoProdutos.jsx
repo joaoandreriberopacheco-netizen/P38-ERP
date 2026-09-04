@@ -11,7 +11,8 @@ import DesfazerImportacao from '@/components/produtos/massa/DesfazerImportacao';
 import ExportarPlanilha from '@/components/produtos/massa/ExportarPlanilha';
 import ExportarEmbalagensPlanilha from '@/components/produtos/massa/ExportarEmbalagensPlanilha';
 import ExportarEstoque from '@/components/produtos/massa/ExportarEstoque';
-import { toast } from 'sonner';
+import { P38_SECTION_TITLE } from '@/lib/p38FormTypography';
+import { P38PageHeader } from '@/components/layout/P38PageHeader';
 
 const TAMANHO_LOTE = 25;
 
@@ -212,19 +213,16 @@ export default function ImportacaoProdutosPage() {
     <div className="min-h-screen bg-card p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-semibold text-foreground font-glacial mb-2">
-            Importação de Produtos
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Produtos, embalagens/unidades, estoque e histórico de importações.
-          </p>
-        </div>
+        <P38PageHeader
+          variant="page"
+          title="Importação de Produtos"
+          description="Produtos, embalagens/unidades, estoque e histórico de importações."
+        />
 
         {/* Tabs */}
         <Tabs defaultValue="produtos" className="w-full">
           <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-muted p-1 rounded-xl gap-1">
-            <TabsTrigger value="produtos" className="data-[state=active]:bg-card rounded-lg">
+            <TabsTrigger value="produtos" data-pulse-sensor="importacao-produtos.tab-produtos" className="data-[state=active]:bg-card rounded-lg">
               <Upload className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Produtos</span>
             </TabsTrigger>
@@ -250,7 +248,7 @@ export default function ImportacaoProdutosPage() {
                 <div className="w-8 h-8 rounded-full bg-card text-card-foreground text-sm font-bold flex items-center justify-center">
                   1
                 </div>
-                <h2 className="text-lg font-semibold text-foreground font-glacial">
+                <h2 className={P38_SECTION_TITLE}>
                   Baixar planilha de produtos
                 </h2>
               </div>
@@ -266,7 +264,7 @@ export default function ImportacaoProdutosPage() {
                 <div className="w-8 h-8 rounded-full bg-card text-card-foreground text-sm font-bold flex items-center justify-center">
                   2
                 </div>
-                <h2 className="text-lg font-semibold text-foreground font-glacial">
+                <h2 className={P38_SECTION_TITLE}>
                   Subir planilha editada
                 </h2>
               </div>
@@ -283,7 +281,7 @@ export default function ImportacaoProdutosPage() {
                   <div className="w-8 h-8 rounded-full bg-card text-card-foreground text-sm font-bold flex items-center justify-center">
                     3
                   </div>
-                  <h2 className="text-lg font-semibold text-foreground font-glacial">
+                  <h2 className={P38_SECTION_TITLE}>
                     Validar e confirmar
                   </h2>
                 </div>
@@ -338,7 +336,7 @@ export default function ImportacaoProdutosPage() {
                 <div className="w-8 h-8 rounded-full bg-card text-card-foreground text-sm font-bold flex items-center justify-center">
                   1
                 </div>
-                <h2 className="text-lg font-semibold text-foreground font-glacial">
+                <h2 className={P38_SECTION_TITLE}>
                   Baixar planilha de embalagens
                 </h2>
               </div>
@@ -362,7 +360,7 @@ export default function ImportacaoProdutosPage() {
                 <div className="w-8 h-8 rounded-full bg-card text-card-foreground text-sm font-bold flex items-center justify-center">
                   2
                 </div>
-                <h2 className="text-lg font-semibold text-foreground font-glacial">
+                <h2 className={P38_SECTION_TITLE}>
                   Subir planilha editada
                 </h2>
               </div>
@@ -378,7 +376,7 @@ export default function ImportacaoProdutosPage() {
                   <div className="w-8 h-8 rounded-full bg-card text-card-foreground text-sm font-bold flex items-center justify-center">
                     3
                   </div>
-                  <h2 className="text-lg font-semibold text-foreground font-glacial">
+                  <h2 className={P38_SECTION_TITLE}>
                     Validar e confirmar
                   </h2>
                 </div>
@@ -434,7 +432,7 @@ export default function ImportacaoProdutosPage() {
                 <div className="w-8 h-8 rounded-full bg-card text-card-foreground text-sm font-bold flex items-center justify-center">
                   1
                 </div>
-                <h2 className="text-lg font-semibold text-foreground font-glacial">
+                <h2 className={P38_SECTION_TITLE}>
                   Baixar template de estoque
                 </h2>
               </div>
@@ -450,7 +448,7 @@ export default function ImportacaoProdutosPage() {
                 <div className="w-8 h-8 rounded-full bg-card text-card-foreground text-sm font-bold flex items-center justify-center">
                   2
                 </div>
-                <h2 className="text-lg font-semibold text-foreground font-glacial">
+                <h2 className={P38_SECTION_TITLE}>
                   Subir planilha de inventário
                 </h2>
               </div>
@@ -467,7 +465,7 @@ export default function ImportacaoProdutosPage() {
                   <div className="w-8 h-8 rounded-full bg-card text-card-foreground text-sm font-bold flex items-center justify-center">
                     3
                   </div>
-                  <h2 className="text-lg font-semibold text-foreground font-glacial">
+                  <h2 className={P38_SECTION_TITLE}>
                     Validar e confirmar ajustes
                   </h2>
                 </div>

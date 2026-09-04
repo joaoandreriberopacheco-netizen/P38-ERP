@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Search,
   X,
@@ -6,8 +6,8 @@ import {
   Tag,
   Calendar,
   CalendarClock,
+  CalendarCheck,
   Layers,
-  Building2,
   ChevronDown,
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -22,6 +22,24 @@ import {
   FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT,
   FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT,
 } from '@/lib/filtroVisibilidadePedidosCompra';
+import {
+  COMPRAS_FILTRO_STATUS_ALL,
+  COMPRAS_FILTRO_STATUS_PEDIDO,
+  COMPRAS_FILTRO_STATUS_RECEBIMENTO,
+} from '@/lib/comprasEmbarquesPalette';
+import {
+  COMPRAS_CHIP_ACTIVE_OLIVE,
+  COMPRAS_CHIP_IDLE,
+  COMPRAS_DIVIDER_TOP,
+  COMPRAS_FILTER_BADGE,
+  COMPRAS_ICON_ACCENT,
+  COMPRAS_MOBILE_CTA,
+  COMPRAS_MOBILE_ICON_BTN,
+  COMPRAS_SEARCH_INPUT,
+  COMPRAS_SEARCH_INPUT_COMPACT,
+  COMPRAS_SECTION_CARD,
+} from '@/lib/comprasP38Theme';
+import { statusPedidoCompraExplicitos } from '@/components/compras/StatusPedidoCompraPicker';
 
 const ETA_FILTRO_MODOS = [
   { value: 'antes', label: 'Antes de' },
@@ -30,28 +48,10 @@ const ETA_FILTRO_MODOS = [
   { value: 'personalizado', label: 'Personalizado' },
 ];
 
-const STATUS_OPTIONS = [
-  { codigo: '__nao_concluido__', label: 'Somente não concluídos', cor: 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground' },
-  { codigo: 'Rascunho', label: 'Rascunho', cor: 'bg-muted text-foreground/90' },
-  { codigo: 'Aguardando Liberação', label: 'Aguardando Liberação', cor: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-200' },
-  { codigo: 'Aguardando Aprovação Financeira', label: 'Aguardando Liberação', cor: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-200' },
-  { codigo: 'Aprovado', label: 'Aprovado', cor: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200' },
-  { codigo: 'Despachado', label: 'Despachado', cor: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200' },
-  { codigo: 'Em Trânsito', label: 'Em Trânsito', cor: 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200' },
-  { codigo: 'Pendência', label: 'Pendência', cor: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200' },
-  { codigo: 'Devolvido', label: 'Devolvido', cor: 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200' },
-  { codigo: 'Concluído', label: 'Concluído', cor: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200' },
-  { codigo: 'Cancelado', label: 'Cancelado', cor: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200' },
-  { codigo: 'Aguardando Embarque', label: '↳ Ag. Embarque', cor: 'bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-200' },
-  { codigo: 'Recebido OK', label: '↳ Recebido OK', cor: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200' },
-  { codigo: 'Recebido Parcial', label: '↳ Recebido Parcial', cor: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200' },
-  { codigo: 'Com Divergência', label: '↳ Com Divergência', cor: 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200' },
-];
-
-const CHIP_BASE = 'inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all';
-const CHIP_IDLE = 'bg-muted/80 dark:bg-muted text-muted-foreground hover:bg-muted';
-const CHIP_ACTIVE = 'bg-teal-600 dark:bg-teal-500 text-white font-medium shadow-sm';
-const SECTION_CARD = 'rounded-2xl border border-border/40 bg-muted/20 dark:bg-muted/10 p-3.5 space-y-3';
+const CHIP_BASE = 'inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-full transition-all font-light uppercase tracking-wide';
+const CHIP_IDLE = COMPRAS_CHIP_IDLE;
+const CHIP_ACTIVE = 'font-medium shadow-sm';
+const SECTION_CARD = COMPRAS_SECTION_CARD;
 
 function QuickFilterToggle({ label, checked, onCheckedChange }) {
   return (
@@ -59,17 +59,17 @@ function QuickFilterToggle({ label, checked, onCheckedChange }) {
       type="button"
       onClick={() => onCheckedChange(!checked)}
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] leading-none transition-colors whitespace-nowrap',
+        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] leading-none transition-colors whitespace-nowrap font-light uppercase tracking-wide',
         checked
-          ? 'bg-teal-600/12 text-teal-800 dark:bg-teal-500/20 dark:text-teal-200 font-medium'
-          : 'bg-muted/50 text-muted-foreground hover:bg-muted/80 hover:text-foreground/80',
+          ? COMPRAS_CHIP_ACTIVE_OLIVE
+          : 'bg-card text-muted-foreground hover:bg-secondary/30 dark:bg-muted/50 dark:hover:bg-muted/80 dark:hover:text-foreground/80',
       )}
       aria-pressed={checked}
     >
       <span
         className={cn(
           'h-1.5 w-1.5 rounded-full shrink-0',
-          checked ? 'bg-teal-600 dark:bg-teal-400' : 'bg-muted-foreground/35',
+          checked ? 'bg-[#4a5240] dark:bg-[#636B2F]' : 'bg-muted-foreground/35',
         )}
         aria-hidden
       />
@@ -82,8 +82,8 @@ function FilterSection({ title, icon: Icon, children, className }) {
   return (
     <section className={cn(SECTION_CARD, className)}>
       <div className="flex items-center gap-2">
-        {Icon ? <Icon className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400 shrink-0" /> : null}
-        <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{title}</h3>
+        {Icon ? <Icon className={cn('h-3.5 w-3.5 shrink-0', COMPRAS_ICON_ACCENT)} /> : null}
+        <h3 className="text-[11px] font-light uppercase tracking-wide text-muted-foreground">{title}</h3>
       </div>
       {children}
     </section>
@@ -93,11 +93,11 @@ function FilterSection({ title, icon: Icon, children, className }) {
 function ActiveFilterChip({ label, onRemove, tone = 'neutral' }) {
   const toneClass =
     tone === 'accent'
-      ? 'bg-teal-600/90 dark:bg-teal-700 text-white'
-      : 'bg-card border border-border/50 text-foreground/90 shadow-sm';
+      ? 'bg-[#4a5240] text-white dark:bg-[#636B2F] dark:text-[#A8B56E]'
+      : 'bg-card text-foreground/90 shadow-sm';
 
   return (
-    <span className={cn(CHIP_BASE, toneClass)}>
+    <span className={cn(CHIP_BASE, 'normal-case tracking-normal', toneClass)}>
       <span className="max-w-[180px] truncate">{label}</span>
       <button
         type="button"
@@ -116,12 +116,25 @@ function formatDateLabel(value) {
   return formatarSoData(value) || value;
 }
 
+function StatusChip({ option, selected, onToggle }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(option.codigo)}
+      className={cn(
+        CHIP_BASE,
+        selected ? cn(option.chip, CHIP_ACTIVE) : CHIP_IDLE,
+      )}
+    >
+      {selected ? <span className="h-1.5 w-1.5 rounded-full bg-current shrink-0" /> : null}
+      {option.label}
+    </button>
+  );
+}
+
 function FiltrosComprasPainel({
   statusSel,
   onStatusSel,
-  fornecedores,
-  fornecedorSel,
-  onFornecedorSel,
   todasTags,
   tagsSel,
   onTagsSel,
@@ -137,13 +150,13 @@ function FiltrosComprasPainel({
   onEtaInicial,
   etaFinal,
   onEtaFinal,
+  recebimentoInicial,
+  onRecebimentoInicial,
+  recebimentoFinal,
+  onRecebimentoFinal,
   onFiltroSomenteNaoConcluidos,
-  searchFornecedor,
-  onSearchFornecedor,
   searchTag,
   onSearchTag,
-  fornecedorInputRef,
-  onKeepInputVisible,
   layout = 'drawer',
 }) {
   const tagsFiltradas = useMemo(() => {
@@ -151,13 +164,6 @@ function FiltrosComprasPainel({
     if (!searchTag.trim()) return sorted;
     return sorted.filter((t) => t.toLowerCase().includes(searchTag.toLowerCase()));
   }, [todasTags, searchTag]);
-
-  const fornecedoresFiltrados = useMemo(() => {
-    const sorted = [...fornecedores].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
-    if (!searchFornecedor.trim()) return sorted;
-    const lower = searchFornecedor.toLowerCase();
-    return sorted.filter((f) => f.nome.toLowerCase().includes(lower));
-  }, [fornecedores, searchFornecedor]);
 
   const toggleStatus = (codigo) => {
     if (statusSel.includes(codigo)) {
@@ -168,23 +174,7 @@ function FiltrosComprasPainel({
       onStatusSel([...statusSel.filter((s) => s !== '__nao_concluido__'), codigo]);
       return;
     }
-    if (codigo === '__nao_concluido__') {
-      const ativar = !statusSel.includes(codigo);
-      onFiltroSomenteNaoConcluidos?.(ativar);
-      onStatusSel(ativar
-        ? statusSel.filter((s) => s !== 'Concluído').concat(codigo)
-        : statusSel.filter((s) => s !== codigo));
-      return;
-    }
     onStatusSel([...statusSel, codigo]);
-  };
-
-  const toggleFornecedor = (id) => {
-    if (fornecedorSel.includes(id)) {
-      onFornecedorSel(fornecedorSel.filter((f) => f !== id));
-    } else {
-      onFornecedorSel([...fornecedorSel, id]);
-    }
   };
 
   const toggleTag = (tag) => {
@@ -209,12 +199,12 @@ function FiltrosComprasPainel({
     onEtaFinal('');
   };
 
-  const dateFieldClass = 'h-11 text-sm bg-card dark:bg-muted border border-border/30 shadow-sm rounded-xl';
+  const dateFieldClass = 'h-11 text-sm bg-card dark:bg-muted border-0 shadow-sm rounded-xl';
 
   return (
     <div
       className={cn(
-        'space-y-4',
+        'space-y-4 font-din-1451',
         layout === 'desktop' && 'grid grid-cols-1 xl:grid-cols-2 gap-4 space-y-0',
       )}
     >
@@ -244,8 +234,8 @@ function FiltrosComprasPainel({
                 onClick={() => selecionarModoEta(modo.value)}
                 className={cn(
                   CHIP_BASE,
-                  'justify-center px-2.5 sm:px-3',
-                  selected ? CHIP_ACTIVE : CHIP_IDLE,
+                  'justify-center px-2.5 sm:px-3 normal-case',
+                  selected ? cn(CHIP_ACTIVE, COMPRAS_CHIP_ACTIVE_OLIVE) : CHIP_IDLE,
                 )}
               >
                 {modo.label}
@@ -256,7 +246,7 @@ function FiltrosComprasPainel({
 
         {(etaFiltroModo === 'antes' || etaFiltroModo === 'depois') && (
           <div>
-            <label className="mb-1.5 block text-[11px] text-muted-foreground">
+            <label className="mb-1.5 block text-[11px] font-light text-muted-foreground uppercase tracking-wide">
               {etaFiltroModo === 'antes' ? 'Até a data' : 'A partir da data'}
             </label>
             <Input
@@ -271,7 +261,7 @@ function FiltrosComprasPainel({
         {etaFiltroModo === 'entre' && (
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="mb-1.5 block text-[11px] text-muted-foreground">De</label>
+              <label className="mb-1.5 block text-[11px] font-light text-muted-foreground uppercase tracking-wide">De</label>
               <Input
                 type="date"
                 value={etaInicial}
@@ -280,7 +270,7 @@ function FiltrosComprasPainel({
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-[11px] text-muted-foreground">Até</label>
+              <label className="mb-1.5 block text-[11px] font-light text-muted-foreground uppercase tracking-wide">Até</label>
               <Input
                 type="date"
                 value={etaFinal}
@@ -307,40 +297,62 @@ function FiltrosComprasPainel({
         )}
       </FilterSection>
 
+      <FilterSection title="Período de recebimento" icon={CalendarCheck} className={layout === 'desktop' ? 'h-full' : undefined}>
+        <p className="text-[10px] font-light text-muted-foreground leading-snug">
+          Filtra embarques concluídos pela data em que foram recebidos.
+        </p>
+        <MobileDateRangePicker
+          startDate={recebimentoInicial}
+          endDate={recebimentoFinal}
+          onApply={(inicio, fim) => {
+            onRecebimentoInicial(inicio);
+            onRecebimentoFinal(fim);
+          }}
+          onClear={() => {
+            onRecebimentoInicial('');
+            onRecebimentoFinal('');
+          }}
+        />
+      </FilterSection>
+
       <FilterSection
-        title="Status"
+        title="Status do pedido"
         icon={Layers}
         className={layout === 'desktop' ? 'xl:col-span-2' : undefined}
       >
         <div className="flex flex-wrap gap-1.5 sm:gap-2">
-          {STATUS_OPTIONS.map((s) => {
-            const selected = statusSel.includes(s.codigo);
-            return (
-              <button
-                key={s.codigo}
-                type="button"
-                onClick={() => toggleStatus(s.codigo)}
-                className={cn(
-                  CHIP_BASE,
-                  selected ? `${s.cor} font-medium shadow-sm` : CHIP_IDLE,
-                )}
-              >
-                {selected ? <span className="h-1.5 w-1.5 rounded-full bg-current shrink-0" /> : null}
-                {s.label}
-              </button>
-            );
-          })}
+          {COMPRAS_FILTRO_STATUS_PEDIDO.map((option) => (
+            <StatusChip
+              key={option.codigo}
+              option={option}
+              selected={statusSel.includes(option.codigo)}
+              onToggle={toggleStatus}
+            />
+          ))}
+        </div>
+      </FilterSection>
+
+      <FilterSection title="Status do recebimento" icon={Layers} className={layout === 'desktop' ? 'xl:col-span-2' : undefined}>
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
+          {COMPRAS_FILTRO_STATUS_RECEBIMENTO.map((option) => (
+            <StatusChip
+              key={option.codigo}
+              option={option}
+              selected={statusSel.includes(option.codigo)}
+              onToggle={toggleStatus}
+            />
+          ))}
         </div>
       </FilterSection>
 
       {(todasTags?.length > 0) && (
-        <FilterSection title="Tags" icon={Tag}>
+        <FilterSection title="Tags" icon={Tag} className={layout === 'desktop' ? 'xl:col-span-2' : undefined}>
           <div className="space-y-2">
             <div className="relative">
               <Tag className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Buscar tag..."
-                className="h-10 pl-8 text-xs bg-card dark:bg-muted border border-border/30 shadow-sm rounded-xl"
+                className="h-10 pl-8 text-xs bg-card dark:bg-muted border-0 shadow-sm rounded-xl"
                 value={searchTag}
                 onChange={(e) => onSearchTag(e.target.value)}
               />
@@ -356,40 +368,7 @@ function FiltrosComprasPainel({
                     onCheckedChange={() => toggleTag(tag)}
                     className="h-3.5 w-3.5"
                   />
-                  <span className="truncate text-xs text-foreground/90">{tag}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        </FilterSection>
-      )}
-
-      {fornecedores.length > 0 && (
-        <FilterSection title="Fornecedores" icon={Building2}>
-          <div className="space-y-2">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                ref={fornecedorInputRef}
-                placeholder="Buscar fornecedor..."
-                className="h-10 pl-8 text-xs bg-card dark:bg-muted border border-border/30 shadow-sm rounded-xl"
-                value={searchFornecedor}
-                onFocus={() => onKeepInputVisible?.(fornecedorInputRef)}
-                onChange={(e) => onSearchFornecedor(e.target.value)}
-              />
-            </div>
-            <div className={cn('overflow-y-auto space-y-0.5 pr-1', layout === 'desktop' ? 'max-h-52' : 'max-h-40')}>
-              {fornecedoresFiltrados.map((f) => (
-                <label
-                  key={f.id}
-                  className="flex cursor-pointer items-center gap-2 rounded-xl px-2 py-2 hover:bg-muted/50 dark:hover:bg-muted/40"
-                >
-                  <Checkbox
-                    checked={fornecedorSel.includes(f.id)}
-                    onCheckedChange={() => toggleFornecedor(f.id)}
-                    className="h-3.5 w-3.5"
-                  />
-                  <span className="truncate text-xs text-foreground/90">{f.nome}</span>
+                  <span className="truncate text-xs font-light text-foreground/90">{tag}</span>
                 </label>
               ))}
             </div>
@@ -409,9 +388,6 @@ export default function FiltrosCompras({
   onFiltroSomenteNaoConcluidos,
   statusSel,
   onStatusSel,
-  fornecedores,
-  fornecedorSel,
-  onFornecedorSel,
   todasTags,
   tagsSel,
   onTagsSel,
@@ -427,18 +403,22 @@ export default function FiltrosCompras({
   onEtaInicial,
   etaFinal,
   onEtaFinal,
+  recebimentoInicial,
+  onRecebimentoInicial,
+  recebimentoFinal,
+  onRecebimentoFinal,
   hasActiveFilters,
   onLimparFiltros,
+  mobileLeading = null,
 }) {
   const isMobile = useCompactShell();
   const [showFilters, setShowFilters] = useState(false);
-  const [searchFornecedor, setSearchFornecedor] = useState('');
   const [searchTag, setSearchTag] = useState('');
-  const fornecedorInputRef = useRef(null);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (dataInicial || dataFinal) count += 1;
+    if (recebimentoInicial || recebimentoFinal) count += 1;
     if (
       etaFiltroModo &&
       ((['antes', 'depois'].includes(etaFiltroModo) && etaData) ||
@@ -446,11 +426,10 @@ export default function FiltrosCompras({
     ) {
       count += 1;
     }
-    count += statusSel.filter((s) => s !== '__nao_concluido__').length;
-    count += fornecedorSel.length;
+    count += statusPedidoCompraExplicitos(statusSel).length;
     count += tagsSel.length;
     return count;
-  }, [dataInicial, dataFinal, etaFiltroModo, etaData, etaInicial, etaFinal, statusSel, fornecedorSel, tagsSel]);
+  }, [dataInicial, dataFinal, recebimentoInicial, recebimentoFinal, etaFiltroModo, etaData, etaInicial, etaFinal, statusSel, tagsSel]);
 
   const activeChips = useMemo(() => {
     const chips = [];
@@ -468,6 +447,23 @@ export default function FiltrosCompras({
         onRemove: () => {
           onDataInicial('');
           onDataFinal('');
+        },
+      });
+    }
+
+    if (recebimentoInicial || recebimentoFinal) {
+      const label = recebimentoInicial && recebimentoFinal
+        ? `Recebimento: ${formatDateLabel(recebimentoInicial)} – ${formatDateLabel(recebimentoFinal)}`
+        : recebimentoInicial
+          ? `Recebimento desde ${formatDateLabel(recebimentoInicial)}`
+          : `Recebimento até ${formatDateLabel(recebimentoFinal)}`;
+      chips.push({
+        key: 'periodo-recebimento',
+        label,
+        tone: 'accent',
+        onRemove: () => {
+          onRecebimentoInicial('');
+          onRecebimentoFinal('');
         },
       });
     }
@@ -505,26 +501,14 @@ export default function FiltrosCompras({
       }
     }
 
-    statusSel
-      .filter((s) => s !== '__nao_concluido__')
+    statusPedidoCompraExplicitos(statusSel)
       .forEach((codigo) => {
-        const status = STATUS_OPTIONS.find((s) => s.codigo === codigo);
+        const status = COMPRAS_FILTRO_STATUS_ALL.find((s) => s.codigo === codigo);
         chips.push({
           key: `status-${codigo}`,
           label: status?.label || codigo,
           tone: 'neutral',
           onRemove: () => onStatusSel(statusSel.filter((s) => s !== codigo)),
-        });
-      });
-
-    fornecedores
-      .filter((f) => fornecedorSel.includes(f.id))
-      .forEach((f) => {
-        chips.push({
-          key: `fornecedor-${f.id}`,
-          label: f.nome,
-          tone: 'neutral',
-          onRemove: () => onFornecedorSel(fornecedorSel.filter((id) => id !== f.id)),
         });
       });
 
@@ -541,31 +525,29 @@ export default function FiltrosCompras({
   }, [
     dataInicial,
     dataFinal,
+    recebimentoInicial,
+    recebimentoFinal,
     etaFiltroModo,
     etaData,
     etaInicial,
     etaFinal,
     statusSel,
-    fornecedores,
-    fornecedorSel,
     tagsSel,
     onDataInicial,
     onDataFinal,
+    onRecebimentoInicial,
+    onRecebimentoFinal,
     onEtaFiltroModo,
     onEtaData,
     onEtaInicial,
     onEtaFinal,
     onStatusSel,
-    onFornecedorSel,
     onTagsSel,
   ]);
 
   const painelProps = {
     statusSel,
     onStatusSel,
-    fornecedores,
-    fornecedorSel,
-    onFornecedorSel,
     todasTags,
     tagsSel,
     onTagsSel,
@@ -581,23 +563,17 @@ export default function FiltrosCompras({
     onEtaInicial,
     etaFinal,
     onEtaFinal,
+    recebimentoInicial,
+    onRecebimentoInicial,
+    recebimentoFinal,
+    onRecebimentoFinal,
     onFiltroSomenteNaoConcluidos,
-    searchFornecedor,
-    onSearchFornecedor: setSearchFornecedor,
     searchTag,
     onSearchTag: setSearchTag,
-    fornecedorInputRef,
-    onKeepInputVisible: (inputRef) => {
-      if (typeof window === 'undefined' || !inputRef?.current) return;
-      window.setTimeout(() => {
-        inputRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-      }, 220);
-    },
   };
 
   const limparFiltrosInterno = () => {
     onLimparFiltros();
-    setSearchFornecedor('');
     setSearchTag('');
   };
 
@@ -614,7 +590,11 @@ export default function FiltrosCompras({
         onCheckedChange={(next) => {
           onFiltroSomenteNaoConcluidos?.(next);
           if (next) {
-            onStatusSel(statusSel.filter((s) => s !== 'Concluído').concat('__nao_concluido__'));
+            onStatusSel(
+              statusPedidoCompraExplicitos(statusSel)
+                .filter((s) => s !== 'Concluído')
+                .concat('__nao_concluido__'),
+            );
           } else {
             onStatusSel(statusSel.filter((s) => s !== '__nao_concluido__'));
           }
@@ -628,17 +608,17 @@ export default function FiltrosCompras({
       type="button"
       onClick={isMobile ? () => setShowFilters(true) : undefined}
       className={cn(
-        'relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-all',
-        'bg-muted dark:bg-muted text-foreground/90',
-        !isMobile && showFilters && 'ring-2 ring-teal-500/40 bg-teal-50 dark:bg-teal-950/30',
+        COMPRAS_MOBILE_ICON_BTN,
+        !isMobile && 'h-12 w-12 rounded-2xl',
+        !isMobile && showFilters && 'ring-2 ring-[#4a5240]/28 bg-[#4a5240]/8 dark:ring-[rgba(99,107,47,0.35)] dark:bg-[rgba(99,107,47,0.14)]',
       )}
       title="Filtros"
       aria-label="Filtros"
       aria-expanded={showFilters}
     >
-      <SlidersHorizontal className="h-5 w-5" />
+      <SlidersHorizontal className={cn(isMobile && mobileLeading ? 'h-4 w-4' : 'h-5 w-5')} />
       {hasActiveFilters && (
-        <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-teal-600 px-1 text-[10px] font-semibold leading-none text-white dark:bg-teal-500">
+        <span className={COMPRAS_FILTER_BADGE}>
           {activeFilterCount > 9 ? '9+' : activeFilterCount}
         </span>
       )}
@@ -647,13 +627,18 @@ export default function FiltrosCompras({
 
   const searchBar = (
     <div className="relative min-w-0 flex-1">
-      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <Search className={cn(
+        'absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground',
+        isMobile && mobileLeading ? 'h-3.5 w-3.5' : 'h-4 w-4',
+      )} />
       <input
         autoComplete="off"
         value={search}
         onChange={(e) => onSearch(e.target.value)}
-        placeholder="Buscar embarque, pedido, fornecedor..."
-        className="h-12 w-full rounded-2xl border border-border/30 bg-card pl-10 pr-10 text-sm text-foreground/90 shadow-sm outline-none transition-shadow placeholder:text-muted-foreground focus:ring-2 focus:ring-teal-300 dark:bg-muted dark:text-foreground dark:focus:ring-teal-600"
+        placeholder="Buscar pedido, embarque, fornecedor..."
+        className={cn(
+          isMobile && mobileLeading ? COMPRAS_SEARCH_INPUT_COMPACT : COMPRAS_SEARCH_INPUT,
+        )}
       />
       {search ? (
         <button
@@ -670,8 +655,9 @@ export default function FiltrosCompras({
 
   if (isMobile) {
     return (
-      <div className="space-y-2.5">
-        <div className="flex gap-2.5">
+      <div className="space-y-2.5 min-w-0">
+        <div className={cn('flex min-w-0 items-center', mobileLeading ? 'gap-2' : 'gap-2.5')}>
+          {mobileLeading}
           {searchBar}
           {filterToggleButton}
         </div>
@@ -686,7 +672,7 @@ export default function FiltrosCompras({
             <button
               type="button"
               onClick={limparFiltrosInterno}
-              className="text-xs text-muted-foreground underline-offset-2 hover:underline px-1"
+              className="text-xs font-light text-muted-foreground underline-offset-2 hover:underline px-1"
             >
               Limpar tudo
             </button>
@@ -696,9 +682,9 @@ export default function FiltrosCompras({
         <Drawer open={showFilters} onOpenChange={setShowFilters}>
           <DrawerContent className="max-h-[92vh] border-0 rounded-t-[28px] bg-card px-4 pb-0 dark:bg-card">
             <DrawerHeader className="px-0 pb-1 text-left shrink-0">
-              <DrawerTitle className="font-glacial text-foreground">Filtros</DrawerTitle>
+              <DrawerTitle className="font-glacial font-light uppercase tracking-wide text-foreground">Filtros</DrawerTitle>
               {activeFilterCount > 0 ? (
-                <p className="text-xs text-muted-foreground">{activeFilterCount} filtro(s) ativo(s)</p>
+                <p className="text-xs font-light text-muted-foreground">{activeFilterCount} filtro(s) ativo(s)</p>
               ) : null}
             </DrawerHeader>
 
@@ -706,19 +692,19 @@ export default function FiltrosCompras({
               <FiltrosComprasPainel {...painelProps} layout="drawer" />
             </div>
 
-            <div className="sticky bottom-0 -mx-4 border-t border-border/40 bg-card/95 px-4 py-3 backdrop-blur-sm dark:bg-card/95">
+            <div className={cn('sticky bottom-0 -mx-4 bg-card/95 px-4 py-3 backdrop-blur-sm dark:bg-card/95', COMPRAS_DIVIDER_TOP)}>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={limparFiltrosInterno}
-                  className="h-11 flex-1 rounded-2xl bg-muted text-sm text-muted-foreground dark:bg-muted"
+                  className="h-11 flex-1 rounded-2xl bg-card text-sm font-light text-muted-foreground shadow-sm dark:bg-muted"
                 >
                   Limpar
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowFilters(false)}
-                  className="h-11 flex-1 rounded-2xl bg-teal-600 text-sm text-white dark:bg-teal-500"
+                  className={cn('h-11 flex-1 rounded-2xl text-sm font-light', COMPRAS_MOBILE_CTA)}
                 >
                   Aplicar
                 </button>
@@ -731,8 +717,8 @@ export default function FiltrosCompras({
   }
 
   return (
-    <Collapsible open={showFilters} onOpenChange={setShowFilters} className="space-y-2.5">
-      <div className="flex items-center gap-2.5">
+    <Collapsible open={showFilters} onOpenChange={setShowFilters} className="space-y-2.5 min-w-0">
+      <div className="flex items-center gap-2.5 min-w-0">
         {searchBar}
         <CollapsibleTrigger asChild>
           {filterToggleButton}
@@ -741,7 +727,7 @@ export default function FiltrosCompras({
           <button
             type="button"
             onClick={limparFiltrosInterno}
-            className="hidden lg:inline-flex h-10 items-center gap-1 rounded-xl px-3 text-xs text-muted-foreground hover:bg-muted/60 transition-colors"
+            className="hidden lg:inline-flex h-10 items-center gap-1 rounded-xl px-3 text-xs font-light text-muted-foreground hover:bg-muted/60 transition-colors"
           >
             <X className="h-3.5 w-3.5" />
             Limpar filtros
@@ -760,16 +746,16 @@ export default function FiltrosCompras({
       )}
 
       <CollapsibleContent>
-        <div className="rounded-2xl border border-border/40 bg-card/80 p-4 shadow-sm dark:bg-card/60">
+        <div className={cn(COMPRAS_SECTION_CARD, 'p-4')}>
           <div className="mb-4 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-              <SlidersHorizontal className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+            <div className="flex items-center gap-2 text-sm font-light uppercase tracking-wide text-foreground">
+              <SlidersHorizontal className={cn('h-4 w-4', COMPRAS_ICON_ACCENT)} />
               Filtros avançados
             </div>
             <button
               type="button"
               onClick={() => setShowFilters(false)}
-              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+              className="inline-flex items-center gap-1 text-xs font-light text-muted-foreground hover:text-foreground"
             >
               Recolher
               <ChevronDown className="h-3.5 w-3.5" />
@@ -778,18 +764,18 @@ export default function FiltrosCompras({
 
           <FiltrosComprasPainel {...painelProps} layout="desktop" />
 
-          <div className="mt-4 flex justify-end gap-2 border-t border-border/30 pt-3">
+          <div className={cn('mt-4 flex justify-end gap-2 pt-3', COMPRAS_DIVIDER_TOP)}>
             <button
               type="button"
               onClick={limparFiltrosInterno}
-              className="h-10 rounded-xl px-4 text-sm text-muted-foreground hover:bg-muted/60 transition-colors"
+              className="h-10 rounded-xl px-4 text-sm font-light text-muted-foreground hover:bg-muted/60 transition-colors"
             >
               Limpar tudo
             </button>
             <button
               type="button"
               onClick={() => setShowFilters(false)}
-              className="h-10 rounded-xl bg-teal-600 px-4 text-sm text-white dark:bg-teal-500"
+              className={cn('h-10 rounded-xl px-4 text-sm font-light', COMPRAS_MOBILE_CTA)}
             >
               Fechar painel
             </button>

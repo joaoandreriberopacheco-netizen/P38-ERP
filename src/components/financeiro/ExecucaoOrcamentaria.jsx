@@ -4,11 +4,20 @@ import { format, subDays } from 'date-fns';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { dateRangeFinanceiroCurto, diaBalanceteFromFiltros } from '@/lib/periodoFinanceiro';
 import {
+  fetchLancamentosFinanceirosPeriodo,
+  fetchLancamentosProgramadosFluxo,
+  fetchMovimentosCaixaPeriodo,
+  intervaloFetchFluxoPadrao,
+  intervaloProgramadasFluxo,
+  mergeLancamentosFluxo,
+} from '@/lib/fetchLancamentosFinanceirosFluxo';
+import {
   calcularKpisFluxoPeriodo,
+  calcularSaldosAposDataCorte,
   calcularSaldosTodasContas,
   contaUsaRegraCaixaPDV,
   getDataMovimentoCaixa,
-  isTransferenciaEntreContas,
+  getSaldoExibicaoConta,
   lancamentoPertenceContasSelecionadas,
 } from '@/lib/saldoContaFinanceira';
 import { reconciliarSaldoCaixaPDVSemTurnoAberto, backfillLancamentosMovimentosCaixaPDV } from '@/lib/contaDestinoCaixaPDV';
@@ -33,6 +42,7 @@ import FiltrosFluxoCaixa, { PERIODO_LABELS } from './fluxo/FiltrosFluxoCaixa';
 import FinanceiroPillTabs from './fluxo/FinanceiroPillTabs';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from './fluxo/FinanceiroListaMeta';
 import KpiFluxoBar from './fluxo/KpiFluxoBar';
+import ContasSaldoPicker from './fluxo/ContasSaldoPicker';
 import ListaLancamentos from './fluxo/ListaLancamentos';
 import { formatFinanceiroGrupoLabel } from './fluxo/FinanceiroListaShared';
 import {
@@ -44,10 +54,17 @@ import AgefinImportador from '../agefin/AgefinImportador';
 import ConciliacaoBancaria from './ConciliacaoBancaria';
 import PagamentoLoteDialog from './PagamentoLoteDialog';
 import FluxoToggleProgramadas from './fluxo/FluxoToggleProgramadas';
+import TipoFiltroBar from './fluxo/TipoFiltroBar';
+import { FinanceiroToolbarIcon } from './fluxo/FinanceiroToolbarIcon';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { cn } from '@/components/utils';
+import { P38_PAGE_TITLE } from '@/lib/p38FormTypography';
+import { passaFiltroTiposLancamento, filtrarGruposPorTipo } from '@/lib/filtroTipoFinanceiro';
 import usePagamentoLoteFluxo from './fluxo/usePagamentoLoteFluxo';
 import { CONCILIACAO_LOTE_TAMANHO } from '@/lib/conciliacaoEmLote';
-import { consumirArquivoLancamentoTorreDoBridge } from '@/lib/torreLancamentoBridge';
+import { consumirArquivoLancamentoTorreDoBridge, temFluxoLancamentoTorreAtivo, concluirFluxoTorreCompartilhamento } from '@/lib/torreLancamentoBridge';
 import { uploadAnexoParaLancamentoFinanceiro } from '@/lib/uploadAnexoReferencia';
+import { resolveViewportLayout, useCompactShell } from '@/hooks/use-breakpoint';
 import {
   calcularKpisProgramadas,
   calcularSaldoPrevisto,
@@ -56,11 +73,17 @@ import {
   mesclarProgramadasNosGrupos,
 } from '@/lib/fluxoUnificado';
 import { lerPreferenciasFluxoUnificado, gravarPreferenciasFluxoUnificado } from '@/lib/fluxoUnificadoPreferencias';
+import {
+  gravarPreferenciasSaldoContas,
+  lerPreferenciasSaldoContas,
+  contasParaSaldoKpi,
+} from '@/lib/preferenciasSaldoContas';
 import { consolidarTransferenciasListaFluxo } from '@/lib/gruposMovimentacaoConta';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   DATA_CORTE_HISTORICO_PADRAO,
   gravarPreferenciasCorteHistorico,
+  isContaTransicao,
   lerPreferenciasCorteHistorico,
   passaFiltroCorteHistorico,
 } from '@/lib/filtroDataFinanceiro';
@@ -71,6 +94,7 @@ import {
   contasVisiveisFluxo,
   idsFiltroContasFluxo,
 } from '@/lib/buscaFluxoCaixa';
+import { BUDGET_MODULO_LABEL } from '@/lib/budgetCalculos';
 
 // ─── utils ────────────────────────────────────────────────────────────────────
 function parseDateKey(dateKey) {
@@ -85,10 +109,31 @@ const FAB_ITEMS = [
   { tipo: 'Transferência', icon: ArrowRightLeft, label: 'Transf.' },
 ];
 
+const ABAS_FINANCEIRO_DESKTOP = [
+  { value: 'caixas', label: 'Caixas e Bancos', shortLabel: 'Contas' },
+  { value: 'fluxo', label: 'Fluxo de Caixa', shortLabel: 'Fluxo' },
+  { value: 'folha', label: 'Folha (previsão)', shortLabel: 'Folha' },
+  { value: 'budgets', label: BUDGET_MODULO_LABEL, shortLabel: 'Gastos' },
+  { value: 'planejamento', label: 'Planejamento', shortLabel: 'Plan.' },
+];
+
+const ABAS_FINANCEIRO_MOBILE = ABAS_FINANCEIRO_DESKTOP.slice(0, 2);
+
+const ABAS_SO_DESKTOP = new Set(['folha', 'budgets', 'planejamento']);
+
+function abaFinanceiroInicial() {
+  if (typeof window === 'undefined') return 'caixas';
+  const layout = resolveViewportLayout(window.innerWidth, window.innerHeight);
+  return layout === 'mobile' ? 'caixas' : 'fluxo';
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function ExecucaoOrcamentaria() {
   const [lancs, setLancs] = useState([]);
   const [movimentos, setMovimentos] = useState([]);
+  /** Base completa para saldo da carteira (período filtrado não basta). */
+  const [lancsSaldo, setLancsSaldo] = useState([]);
+  const [movsSaldo, setMovsSaldo] = useState([]);
   const [contas, setContas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -96,6 +141,7 @@ export default function ExecucaoOrcamentaria() {
   const [cs, setCs] = useState('');
   const [ce, setCe] = useState('');
   const [contasSel, setContasSel] = useState([]);
+  const [contasSaldoSel, setContasSaldoSel] = useState(() => lerPreferenciasSaldoContas());
   const [tiposSel, setTiposSel] = useState([]);
   const [statusSel, setStatusSel] = useState([]);
   const [pendentes, setPendentes] = useState(false);
@@ -114,12 +160,13 @@ export default function ExecucaoOrcamentaria() {
     contasSel: [],
   });
   const [corteDiarioInitial, setCorteDiarioInitial] = useState(null);
-  const [aba, setAba] = useState('fluxo'); // 'fluxo' | 'caixas' | 'planejamento' | 'folha'
+  const [aba, setAba] = useState(abaFinanceiroInicial);
   const [showImportadorAgefin, setShowImportadorAgefin] = useState(false);
   const [mostrarProgramadas, setMostrarProgramadas] = useState(
     () => lerPreferenciasFluxoUnificado().mostrarProgramadas,
   );
   const [showNovoFluxo, setShowNovoFluxo] = useState(false);
+  const [origemTorre, setOrigemTorre] = useState(() => temFluxoLancamentoTorreAtivo());
   const [ordemLancamentos, setOrdemLancamentos] = useState('desc');
   const [urlDescricao, setUrlDescricao] = useState('');
   const [urlValor, setUrlValor] = useState('');
@@ -138,15 +185,31 @@ export default function ExecucaoOrcamentaria() {
     gravarPreferenciasCorteHistorico(mostrar, dataCorte);
   }, []);
 
+  const atualizarContasSaldoSel = useCallback((ids) => {
+    setContasSaldoSel(ids);
+    gravarPreferenciasSaldoContas(ids);
+  }, []);
+
+  const { s: ds, e: de } = useMemo(() => dateRange(periodo, cs, ce), [periodo, cs, ce]);
+
+  const isCompactShell = useCompactShell();
+
+  useEffect(() => {
+    if (!isCompactShell) return;
+    setAba((prev) => (ABAS_SO_DESKTOP.has(prev) ? 'caixas' : prev));
+  }, [isCompactShell]);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const abaParam = params.get('aba');
+    const layoutMobile = typeof window !== 'undefined'
+      && resolveViewportLayout(window.innerWidth, window.innerHeight) === 'mobile';
     if (abaParam === 'folha') {
-      setAba('folha');
+      setAba(layoutMobile ? 'caixas' : 'folha');
     } else if (abaParam === 'budgets') {
-      setAba('budgets');
+      setAba(layoutMobile ? 'caixas' : 'budgets');
     } else if (abaParam === 'planejamento' || abaParam === 'agefin') {
-      setAba('planejamento');
+      setAba(layoutMobile ? 'caixas' : 'planejamento');
     }
     if (abaParam === 'folha' || abaParam === 'budgets' || abaParam === 'planejamento' || abaParam === 'agefin') {
       params.delete('aba');
@@ -166,6 +229,11 @@ export default function ExecucaoOrcamentaria() {
     const novoAtalho = params.get('novo');
 
     if (novoAtalho === '1' || novoAtalho === 'true') {
+      if (params.get('torre_anexo') === '1' || temFluxoLancamentoTorreAtivo()) {
+        setOrigemTorre(true);
+      }
+      // Atalho PWA (?novo=1): ir para fluxo e abrir picker Receita/Despesa/Transferência
+      setAba('fluxo');
       if (tipo && FAB_ITEMS.some((item) => item.tipo === tipo)) {
         setNovoTipo(tipo);
         setShowNovoFluxo(true);
@@ -186,7 +254,73 @@ export default function ExecucaoOrcamentaria() {
     window.history.replaceState({}, '', window.location.pathname);
   }, []);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const cts = await base44.entities.ContasFinanceiras.list();
+        if (cancelled) return;
+        setContas(cts);
+        const ativas = cts.filter((c) => c.ativo !== false);
+        setContasSel((prev) => (prev.length ? prev : ativas.map((c) => c.id)));
+      } catch (error) {
+        console.error('[Fluxo de Caixa] Erro ao carregar contas:', error);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const carregarBaseSaldos = useCallback(async () => {
+    const [lancsFull, movsFull] = await Promise.all([
+      base44.entities.LancamentoFinanceiro.list(),
+      base44.entities.MovimentosCaixa.list(),
+    ]);
+    return { lancsFull, movsFull };
+  }, []);
+
+  const carregarDadosPeriodo = useCallback(async ({ ds: dsParam, de: deParam, corteHistorico } = {}) => {
+    const { dataInicio, dataFim } = intervaloFetchFluxoPadrao(dsParam, deParam);
+    const progIntervalo = intervaloProgramadasFluxo(corteHistorico ?? dataCorteHistorico);
+
+    const [realizados, programados, movs] = await Promise.all([
+      fetchLancamentosFinanceirosPeriodo({ dataInicio, dataFim }),
+      fetchLancamentosProgramadosFluxo(progIntervalo),
+      fetchMovimentosCaixaPeriodo({ dataInicio, dataFim }),
+    ]);
+
+    return {
+      lancs: mergeLancamentosFluxo(realizados, programados),
+      movimentos: movs,
+    };
+  }, [dataCorteHistorico]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    Promise.all([
+      carregarDadosPeriodo({ ds, de, corteHistorico: dataCorteHistorico }),
+      carregarBaseSaldos(),
+    ])
+      .then(([{ lancs: ls, movimentos: movs }, { lancsFull, movsFull }]) => {
+        if (!cancelled) {
+          setLancs(ls);
+          setMovimentos(movs);
+          setLancsSaldo(lancsFull);
+          setMovsSaldo(movsFull);
+        }
+      })
+      .catch((error) => {
+        console.error('[Fluxo de Caixa] Erro ao carregar período:', error);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ds, de, dataCorteHistorico, carregarDadosPeriodo, carregarBaseSaldos]);
 
   useEffect(() => {
     if (!showNovoFluxo) return;
@@ -223,54 +357,87 @@ export default function ExecucaoOrcamentaria() {
     }
   };
 
-  const load = async () => {
+  const loadContasEManutencao = async () => {
     setLoading(true);
-    let snapshot = null;
     try {
-      const [ls, cts, movs] = await Promise.all([
-        base44.entities.LancamentoFinanceiro.list('-data_vencimento'),
-        base44.entities.ContasFinanceiras.list(),
-        base44.entities.MovimentosCaixa.list(),
-      ]);
-      snapshot = { ls, cts, movs };
-
-      setLancs(ls);
-      setMovimentos(movs);
+      const cts = await base44.entities.ContasFinanceiras.list();
       setContas(cts);
       const ativas = cts.filter((c) => c.ativo !== false);
       setContasSel((prev) => (prev.length ? prev : ativas.map((c) => c.id)));
-    } catch (error) {
-      console.error('[Fluxo de Caixa] Erro ao carregar:', error);
-    } finally {
-      setLoading(false);
-    }
 
-    if (!snapshot) return null;
-    try {
-      await syncCaixaPDVMaintenance(snapshot.cts, snapshot.movs, snapshot.ls);
-      const [ls2, movs2] = await Promise.all([
-        base44.entities.LancamentoFinanceiro.list('-data_vencimento'),
+      const { lancs: ls, movimentos: movs } = await carregarDadosPeriodo({
+        ds,
+        de,
+        corteHistorico: dataCorteHistorico,
+      });
+      setLancs(ls);
+      setMovimentos(movs);
+
+      await syncCaixaPDVMaintenance(cts, movs, ls);
+      const refreshed = await carregarDadosPeriodo({
+        ds,
+        de,
+        corteHistorico: dataCorteHistorico,
+      });
+      const contaIds = cts.filter((c) => c.ativo !== false).map((c) => c.id);
+      const [lancsCompletos, movsCompletos] = await Promise.all([
+        base44.entities.LancamentoFinanceiro.list(),
         base44.entities.MovimentosCaixa.list(),
       ]);
-      const contaIds = snapshot.cts.filter((c) => c.ativo !== false).map((c) => c.id);
       await sincronizarSaldosContasFinanceiras(base44, {
-        contas: snapshot.cts,
-        lancamentos: ls2,
-        movimentos: movs2,
+        contas: cts,
+        lancamentos: lancsCompletos,
+        movimentos: movsCompletos,
         contaIds,
       });
       const cts2 = await base44.entities.ContasFinanceiras.list();
-      setLancs(ls2);
-      setMovimentos(movs2);
+      setLancs(refreshed.lancs);
+      setMovimentos(refreshed.movimentos);
+      setLancsSaldo(lancsCompletos);
+      setMovsSaldo(movsCompletos);
       setContas(cts2);
-      return { ...snapshot, ls: ls2, movs: movs2, cts: cts2 };
+      return { cts: cts2, ls: refreshed.lancs, movs: refreshed.movimentos };
     } catch (error) {
-      console.error('[Fluxo de Caixa] Erro na manutenção PDV/sincronização:', error);
+      console.error('[Fluxo de Caixa] Erro ao recarregar:', error);
+      return null;
+    } finally {
+      setLoading(false);
     }
-    return snapshot;
   };
 
-  const { s: ds, e: de } = useMemo(() => dateRange(periodo, cs, ce), [periodo, cs, ce]);
+  const load = async () => loadContasEManutencao();
+
+  /** Recarrega lista do período sem bloquear a UI com manutenção pesada de saldos. */
+  const recarregarAposSalvar = useCallback(async () => {
+    try {
+      const [{ lancs: ls, movimentos: movs }, { lancsFull, movsFull }] = await Promise.all([
+        carregarDadosPeriodo({ ds, de, corteHistorico: dataCorteHistorico }),
+        carregarBaseSaldos(),
+      ]);
+      setLancs(ls);
+      setMovimentos(movs);
+      setLancsSaldo(lancsFull);
+      setMovsSaldo(movsFull);
+      void (async () => {
+        try {
+          const cts = await base44.entities.ContasFinanceiras.list();
+          const contaIds = cts.filter((c) => c.ativo !== false).map((c) => c.id);
+          await sincronizarSaldosContasFinanceiras(base44, {
+            contas: cts,
+            lancamentos: lancsFull,
+            movimentos: movsFull,
+            contaIds,
+          });
+          const cts2 = await base44.entities.ContasFinanceiras.list();
+          setContas(cts2);
+        } catch (err) {
+          console.warn('[Fluxo de Caixa] sync saldos em background:', err);
+        }
+      })();
+    } catch (error) {
+      console.error('[Fluxo de Caixa] Erro ao recarregar após salvar:', error);
+    }
+  }, [ds, de, dataCorteHistorico, carregarDadosPeriodo, carregarBaseSaldos]);
 
   const contasById = useMemo(
     () => Object.fromEntries(contas.map((c) => [c.id, c])),
@@ -281,6 +448,16 @@ export default function ExecucaoOrcamentaria() {
     () => contas.filter((c) => c.ativo !== false),
     [contas],
   );
+
+  useEffect(() => {
+    if (!contasAtivas.length) return;
+    setContasSaldoSel((prev) => {
+      if (!prev.length) return prev;
+      const valid = prev.filter((id) => contasAtivas.some((c) => c.id === id));
+      if (valid.length !== prev.length) gravarPreferenciasSaldoContas(valid);
+      return valid;
+    });
+  }, [contasAtivas]);
 
   const contasBuscaFluxo = useMemo(
     () => contasMatchBuscaFluxo(search, contasAtivas),
@@ -298,8 +475,8 @@ export default function ExecucaoOrcamentaria() {
   );
 
   const contasVisiveisSaldo = useMemo(
-    () => contasVisiveisFluxo(contasSel, contasAtivas, contasSelBusca),
-    [contasSel, contasAtivas, contasSelBusca],
+    () => contasParaSaldoKpi(contasSaldoSel, contasAtivas),
+    [contasSaldoSel, contasAtivas],
   );
 
   const filtrados = useMemo(() => lancs.filter(l => {
@@ -311,11 +488,7 @@ export default function ExecucaoOrcamentaria() {
     if (de && dataKey > de) return false;
     if (!passaFiltroCorteHistorico(dataKey, { mostrarHistoricoAnterior, dataCorte: dataCorteHistorico })) return false;
     if (contasSel.length && !lancamentoPertenceContasSelecionadas(l, contasSel, contasById)) return false;
-    if (tiposSel.length) {
-      const matchTipo = tiposSel.includes(l.tipo);
-      const matchTransf = tiposSel.includes('Transferência') && isTransferenciaEntreContas(l);
-      if (!matchTipo && !matchTransf) return false;
-    }
+    if (!passaFiltroTiposLancamento(l, tiposSel)) return false;
     if (statusSel.length && !statusSel.includes(l.status)) return false;
     if (pendentes && l.status_conciliacao !== 'Pendente') return false;
     if (cmvOnly && !l.is_custo_mercadoria) return false;
@@ -330,8 +503,21 @@ export default function ExecucaoOrcamentaria() {
     if (ds && dataKey < ds) return false;
     if (de && dataKey > de) return false;
     if (!passaFiltroCorteHistorico(dataKey, { mostrarHistoricoAnterior, dataCorte: dataCorteHistorico })) return false;
+    if (!passaFiltroTiposLancamento(m, tiposSel)) return false;
     return true;
-  }), [movimentos, ds, de, contasFiltroIds, mostrarHistoricoAnterior, dataCorteHistorico]);
+  }), [movimentos, ds, de, contasFiltroIds, mostrarHistoricoAnterior, dataCorteHistorico, tiposSel]);
+
+  const lancsParaSaldo = lancsSaldo.length ? lancsSaldo : lancs;
+  const movsParaSaldo = movsSaldo.length ? movsSaldo : movimentos;
+  const precisaBaseCarteiraSaldo = !mostrarHistoricoAnterior && !!dataCorteHistorico;
+  const baseCarteiraSaldoDisponivel = lancsSaldo.length > 0 && movsSaldo.length > 0;
+  const saldosCarteiraProntos = !loading && (!precisaBaseCarteiraSaldo || baseCarteiraSaldoDisponivel);
+  const lancsParaSaldoCarteira = baseCarteiraSaldoDisponivel
+    ? lancsSaldo
+    : (precisaBaseCarteiraSaldo ? [] : lancs);
+  const movsParaSaldoCarteira = baseCarteiraSaldoDisponivel
+    ? movsSaldo
+    : (precisaBaseCarteiraSaldo ? [] : movimentos);
 
   const kpis = useMemo(() => {
     const baseKpis = calcularKpisFluxoPeriodo(
@@ -341,13 +527,33 @@ export default function ExecucaoOrcamentaria() {
       contasById,
       contasFiltroIds,
     );
-    const saldosMap = calcularSaldosTodasContas(contasVisiveisSaldo, lancs, movimentos);
-    const saldoContas = contasVisiveisSaldo.reduce((acc, c) => acc + (saldosMap[c.id] || 0), 0);
+    if (!saldosCarteiraProntos) {
+      return { ...baseKpis, saldoContas: null };
+    }
+    const saldosMap = !mostrarHistoricoAnterior && dataCorteHistorico
+      ? calcularSaldosAposDataCorte(contasVisiveisSaldo, lancsParaSaldoCarteira, movsParaSaldoCarteira, dataCorteHistorico)
+      : calcularSaldosTodasContas(contasVisiveisSaldo, lancsParaSaldoCarteira, movsParaSaldoCarteira);
+    const saldoContas = contasVisiveisSaldo.reduce(
+      (acc, c) => acc + getSaldoExibicaoConta(c, saldosMap),
+      0,
+    );
     return {
       ...baseKpis,
       saldoContas: roundToTwoDecimals(saldoContas),
     };
-  }, [filtrados, movimentosFiltrados, lancs, contasById, contasVisiveisSaldo, contasFiltroIds, movimentos]);
+  }, [
+    filtrados,
+    movimentosFiltrados,
+    lancs,
+    contasById,
+    contasVisiveisSaldo,
+    contasFiltroIds,
+    lancsParaSaldoCarteira,
+    movsParaSaldoCarteira,
+    mostrarHistoricoAnterior,
+    dataCorteHistorico,
+    saldosCarteiraProntos,
+  ]);
 
   const grupos = useMemo(() => {
     const hStr = dataHoje();
@@ -390,8 +596,8 @@ export default function ExecucaoOrcamentaria() {
   }), [lancs, contasSel, contasById, contasAtivas, tiposSel, cmvOnly, search, mostrarHistoricoAnterior, dataCorteHistorico]);
 
   const programadasLista = useMemo(
-    () => consolidarTransferenciasListaFluxo(programadasFiltradas),
-    [programadasFiltradas],
+    () => consolidarTransferenciasListaFluxo(programadasFiltradas, { movimentos }),
+    [programadasFiltradas, movimentos],
   );
 
   const kpisProgramadas = useMemo(
@@ -405,15 +611,18 @@ export default function ExecucaoOrcamentaria() {
   );
 
   const gruposExibicao = useMemo(() => {
-    if (!mostrarProgramadas) return grupos;
+    if (!mostrarProgramadas) return filtrarGruposPorTipo(grupos, tiposSel);
     const hStr = dataHoje();
     const oStr = format(subDays(parseDateKey(hStr), 1), 'yyyy-MM-dd');
-    const merged = mesclarProgramadasNosGrupos(grupos, programadasLista, ordemLancamentos);
-    return merged.map((g) => ({
-      ...g,
-      label: g.label || (g.k === 'sem-data' ? 'Sem data' : formatFinanceiroGrupoLabel(g.k, hStr, oStr)),
-    }));
-  }, [grupos, mostrarProgramadas, programadasLista, ordemLancamentos]);
+    const merged = mesclarProgramadasNosGrupos(grupos, programadasLista, ordemLancamentos, { movimentos });
+    return filtrarGruposPorTipo(
+      merged.map((g) => ({
+        ...g,
+        label: g.label || (g.k === 'sem-data' ? 'Sem data' : formatFinanceiroGrupoLabel(g.k, hStr, oStr)),
+      })),
+      tiposSel,
+    );
+  }, [grupos, mostrarProgramadas, programadasLista, ordemLancamentos, movimentos, tiposSel]);
 
   const lote = usePagamentoLoteFluxo({
     programadas: programadasLista,
@@ -438,7 +647,7 @@ export default function ExecucaoOrcamentaria() {
     if (periodo === 'hoje') return 'Hoje';
     if (periodo === 'ontem') return 'Ontem';
     if (periodo === 'semana') return 'Esta semana';
-    if (periodo === 'mes') return 'Este mês';
+    if (periodo === 'mes') return 'Este período';
     if (periodo === 'periodo' && cs && ce) return `${formatarSoData(cs)} até ${formatarSoData(ce)}`;
     return 'Período atual';
   }, [periodo, cs, ce]);
@@ -480,11 +689,7 @@ export default function ExecucaoOrcamentaria() {
       if (deF && dataKey > deF) return false;
       if (!passaFiltroCorteHistorico(dataKey, { mostrarHistoricoAnterior, dataCorte: dataCorteHistorico })) return false;
       if (contasSelFiltro.length && !lancamentoPertenceContasSelecionadas(l, contasSelFiltro, contasById)) return false;
-      if (tiposSelFiltro.length) {
-        const matchTipo = tiposSelFiltro.includes(l.tipo);
-        const matchTransf = tiposSelFiltro.includes('Transferência') && isTransferenciaEntreContas(l);
-        if (!matchTipo && !matchTransf) return false;
-      }
+      if (!passaFiltroTiposLancamento(l, tiposSelFiltro)) return false;
       if (statusSelFiltro.length && !statusSelFiltro.includes(l.status)) return false;
       if (pendentesFiltro && l.status_conciliacao !== 'Pendente') return false;
       if (cmvOnlyFiltro && !l.is_custo_mercadoria) return false;
@@ -499,6 +704,7 @@ export default function ExecucaoOrcamentaria() {
       if (dsF && dataKey < dsF) return false;
       if (deF && dataKey > deF) return false;
       if (!passaFiltroCorteHistorico(dataKey, { mostrarHistoricoAnterior, dataCorte: dataCorteHistorico })) return false;
+      if (!passaFiltroTiposLancamento(m, tiposSelFiltro)) return false;
       return true;
     });
 
@@ -510,8 +716,13 @@ export default function ExecucaoOrcamentaria() {
         contasById,
         contasFiltroIdsF,
       );
-      const saldosMap = calcularSaldosTodasContas(contasVisiveisF, lancs, movimentos);
-      const saldoContas = contasVisiveisF.reduce((acc, c) => acc + (saldosMap[c.id] || 0), 0);
+      const saldosMap = !mostrarHistoricoAnterior && dataCorteHistorico
+        ? calcularSaldosAposDataCorte(contasVisiveisF, lancsParaSaldo, movsParaSaldo, dataCorteHistorico)
+        : calcularSaldosTodasContas(contasVisiveisF, lancsParaSaldo, movsParaSaldo);
+      const saldoContas = contasVisiveisF.reduce(
+        (acc, c) => acc + getSaldoExibicaoConta(c, saldosMap),
+        0,
+      );
       return { ...baseKpis, saldoContas: roundToTwoDecimals(saldoContas) };
     })();
 
@@ -544,6 +755,8 @@ export default function ExecucaoOrcamentaria() {
   }, [
     lancs,
     movimentos,
+    lancsParaSaldo,
+    movsParaSaldo,
     contas,
     contasAtivas,
     contasById,
@@ -616,25 +829,29 @@ export default function ExecucaoOrcamentaria() {
   const planejamentoAtiva = aba === 'planejamento';
   const folhaAtiva = aba === 'folha';
   const budgetsAtiva = aba === 'budgets';
+  const contasSaldoOpcoes = useMemo(
+    () => contasAtivas.filter((c) => !isContaTransicao(c)),
+    [contasAtivas],
+  );
+
   const financeiroShared = useMemo(
     () => ({
       lancs,
       movimentos,
+      lancsSaldo,
+      movsSaldo,
       contas,
       contasAtivas,
       loading,
       reload: load,
+      contasSaldoSel,
+      atualizarContasSaldoSel,
+      contasSaldoOpcoes,
     }),
-    [lancs, movimentos, contas, contasAtivas, loading],
+    [lancs, movimentos, lancsSaldo, movsSaldo, contas, contasAtivas, loading, contasSaldoSel, atualizarContasSaldoSel, contasSaldoOpcoes],
   );
 
-  const abasPrincipais = [
-    { value: 'fluxo', label: 'Fluxo de Caixa', shortLabel: 'Fluxo' },
-    { value: 'caixas', label: 'Caixas e Bancos', shortLabel: 'Caixas' },
-    { value: 'folha', label: 'Folha (previsão)', shortLabel: 'Folha' },
-    { value: 'budgets', label: 'Budgets', shortLabel: 'Bdg.' },
-    { value: 'planejamento', label: 'Planejamento', shortLabel: 'Plan.' },
-  ];
+  const abasPrincipais = isCompactShell ? ABAS_FINANCEIRO_MOBILE : ABAS_FINANCEIRO_DESKTOP;
 
   const handleToggleProgramadas = useCallback((next) => {
     setMostrarProgramadas(next);
@@ -648,28 +865,46 @@ export default function ExecucaoOrcamentaria() {
       {/* Header unificado — título, KPIs do fluxo, abas */}
       <div className="min-w-0 max-w-full space-y-2">
         <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <p className="text-lg font-semibold leading-none text-foreground font-glacial md:text-2xl">Financeiro</p>
+          <div className="flex min-w-0 items-center gap-2">
+            <h1
+              className={cn(P38_PAGE_TITLE, 'min-w-0 flex-1 truncate text-lg md:text-2xl font-glacial leading-none')}
+              data-pulse-sensor="fluxo-caixa.titulo"
+            >
+              Financeiro
+            </h1>
             {aba === 'fluxo' && (
-              <button
-                onClick={abrirMenuRelatorios}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg p38-field-surface border-0 hover:opacity-90 transition-opacity"
-                aria-label="Relatórios — balancete e extrato"
-              >
-                <Printer className="w-4 h-4 text-foreground/90" />
-              </button>
+              <TooltipProvider delayDuration={300}>
+                <div className="flex shrink-0 items-center gap-0.5 no-pdf-capture">
+                  <ContasSaldoPicker
+                    variant="icon"
+                    contas={contasSaldoOpcoes}
+                    sel={contasSaldoSel}
+                    onSel={atualizarContasSaldoSel}
+                  />
+                  <TipoFiltroBar sel={tiposSel} onSel={setTiposSel} />
+                  <FinanceiroToolbarIcon
+                    label="Relatórios — balancete e extrato"
+                    onClick={abrirMenuRelatorios}
+                  >
+                    <Printer className="w-4 h-4 text-foreground/90" />
+                  </FinanceiroToolbarIcon>
+                </div>
+              </TooltipProvider>
             )}
           </div>
 
           {aba === 'fluxo' && (
-            <KpiFluxoBar
-              kpis={kpis}
-              periodoLabel={periodoLabel}
-              mostrarProgramadas={mostrarProgramadas}
-              saldoPrevisto={saldoPrevisto}
-              aReceber={kpisProgramadas.aReceber}
-              aPagar={kpisProgramadas.aPagar}
-            />
+            <div className="min-w-0">
+              <KpiFluxoBar
+                kpis={kpis}
+                periodoLabel={periodoLabel}
+                mostrarProgramadas={mostrarProgramadas}
+                saldoPrevisto={saldoPrevisto}
+                aReceber={kpisProgramadas.aReceber}
+                aPagar={kpisProgramadas.aPagar}
+                saldosCarteiraProntos={saldosCarteiraProntos}
+              />
+            </div>
           )}
 
           <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:gap-3">
@@ -706,8 +941,6 @@ export default function ExecucaoOrcamentaria() {
             contas={contasAtivas}
             contasSel={contasSel}
             onContasSel={setContasSel}
-            tiposSel={tiposSel}
-            onTiposSel={setTiposSel}
             statusSel={statusSel}
             onStatusSel={setStatusSel}
             pendentes={pendentes}
@@ -826,28 +1059,6 @@ export default function ExecucaoOrcamentaria() {
             }}
           />
 
-          {fabOpen && !showNovoFluxo && !showPrintDialog && !showCorteDiario && (
-            <div className="fixed inset-0 z-[54] bg-muted/55 backdrop-blur-[2px]" onClick={() => setFabOpen(false)} />
-          )}
-          <div className="fixed right-4 z-[55] flex flex-col items-end gap-2 p38-bottom-fab1 lg:right-6">
-            {fabOpen && FAB_ITEMS.map(({ tipo, icon: Icon, label }) => (
-              <button key={tipo}
-                onClick={() => {
-                  setFabOpen(false);
-                  setNovoTipo(tipo);
-                  setShowNovoFluxo(true);
-                }}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-lg whitespace-nowrap active:scale-95 transition-transform">
-                <Icon className="w-4 h-4" />{label}
-              </button>
-            ))}
-            <button
-              onClick={() => setFabOpen(o => !o)}
-              className={`w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-xl active:scale-95 transition-all ${fabOpen ? 'bg-[#383e47] rotate-45' : 'bg-[#4a5240] dark:bg-[#a4ce33]'}`}>
-              <Plus className={`w-6 h-6 ${fabOpen ? 'text-white' : 'text-white dark:text-[#1f1d22]'}`} />
-            </button>
-          </div>
-
           <PagamentoLoteDialog
             open={lote.showPagamentoLote}
             onOpenChange={lote.setShowPagamentoLote}
@@ -873,49 +1084,100 @@ export default function ExecucaoOrcamentaria() {
                 setShowNovoFluxo(true);
               }}
               onSaved={async () => {
-                await load();
+                await recarregarAposSalvar();
                 setDetalhe(null);
               }}
             />
           )}
-          <NovoLancamentoDialog
-            open={showNovoFluxo}
-            lancamentoExistente={editando}
-            tipoInicial={novoTipo}
-            descricaoInicial={urlDescricao}
-            valorInicial={urlValor}
-            referenciaId={urlReferenciaId}
-            referenciaTipo={urlReferenciaTipo}
-            onClose={() => {
-              setShowNovoFluxo(false);
-              setEditando(null);
-              setFabOpen(false);
-              setUrlDescricao('');
-              setUrlValor('');
-              setUrlReferenciaId('');
-              setUrlReferenciaTipo('');
-            }}
-            onSaved={async (lancamentoSalvo) => {
-              setEditando(null);
-              await load();
-              const fromTorre = consumirArquivoLancamentoTorreDoBridge();
-              const lancamentoId = lancamentoSalvo?.id;
-              if (fromTorre?.file && lancamentoId) {
-                try {
-                  await uploadAnexoParaLancamentoFinanceiro(base44, {
-                    file: fromTorre.file,
-                    lancamentoId,
-                    descricao: lancamentoSalvo?.descricao || '',
-                    tipoDocumento: fromTorre.tipoDocumento || 'Comprovante',
-                    origem: 'torre_novo_lancamento',
-                  });
-                } catch (e) {
-                  console.warn('[Torre→Lançamento] falha ao anexar comprovante:', e);
-                }
-              }
-            }}
-          />
+        </>
+      )}
 
+      {(aba === 'fluxo' || fabOpen || showNovoFluxo) && (
+        <>
+          {fabOpen && !showNovoFluxo && !showPrintDialog && !showCorteDiario && aba === 'fluxo' && (
+            <div className="fixed inset-0 z-[54] bg-muted/55 backdrop-blur-[2px]" onClick={() => setFabOpen(false)} />
+          )}
+          {aba === 'fluxo' && (
+            <div className="fixed right-4 z-[55] flex flex-col items-end gap-2 p38-bottom-fab1 lg:right-6">
+              {fabOpen && FAB_ITEMS.map(({ tipo, icon: Icon, label }) => (
+                <button key={tipo}
+                  type="button"
+                  onClick={() => {
+                    setFabOpen(false);
+                    setNovoTipo(tipo);
+                    setShowNovoFluxo(true);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-lg whitespace-nowrap active:scale-95 transition-transform">
+                  <Icon className="w-4 h-4" />{label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setFabOpen(o => !o)}
+                data-pulse-sensor="fluxo-caixa.fab"
+                className={`w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-xl active:scale-95 transition-all ${fabOpen ? 'bg-[#383e47] rotate-45' : 'bg-[#4a5240] dark:bg-[#a4ce33]'}`}>
+                <Plus className={`w-6 h-6 ${fabOpen ? 'text-white' : 'text-white dark:text-[#1f1d22]'}`} />
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      <NovoLancamentoDialog
+        open={showNovoFluxo}
+        lancamentoExistente={editando}
+        origemTorre={origemTorre}
+        tipoInicial={novoTipo}
+        descricaoInicial={urlDescricao}
+        valorInicial={urlValor}
+        referenciaId={urlReferenciaId}
+        referenciaTipo={urlReferenciaTipo}
+        onClose={() => {
+          if (origemTorre && !editando) {
+            concluirFluxoTorreCompartilhamento();
+            return;
+          }
+          setShowNovoFluxo(false);
+          setEditando(null);
+          setFabOpen(false);
+          setOrigemTorre(false);
+          setUrlDescricao('');
+          setUrlValor('');
+          setUrlReferenciaId('');
+          setUrlReferenciaTipo('');
+        }}
+        onSaved={async (lancamentoSalvo) => {
+          setEditando(null);
+          void recarregarAposSalvar();
+          const fromTorre = consumirArquivoLancamentoTorreDoBridge();
+          const ids = Array.isArray(lancamentoSalvo?.ids)
+            ? lancamentoSalvo.ids.filter(Boolean)
+            : lancamentoSalvo?.id
+              ? [lancamentoSalvo.id]
+              : [];
+          if (!fromTorre?.file || ids.length === 0) {
+            return { anexoAnexado: false };
+          }
+          try {
+            for (const lancamentoId of ids) {
+              await uploadAnexoParaLancamentoFinanceiro(base44, {
+                file: fromTorre.file,
+                lancamentoId,
+                descricao: lancamentoSalvo?.descricao || '',
+                tipoDocumento: fromTorre.tipoDocumento || 'Comprovante',
+                origem: 'torre_novo_lancamento',
+              });
+            }
+            return { anexoAnexado: true };
+          } catch (e) {
+            console.warn('[Torre→Lançamento] falha ao anexar comprovante:', e);
+            return { anexoAnexado: false };
+          }
+        }}
+      />
+
+      {aba === 'fluxo' && (
+        <>
           <Dialog open={conciliacaoConta != null} onOpenChange={(open) => !open && setConciliacaoConta(null)}>
             <DialogContent className="flex h-[min(85dvh,90vh)] max-h-[min(85dvh,90vh)] w-[calc(100vw-1rem)] max-w-3xl flex-col gap-0 overflow-hidden border-border/40 p-0 dark:border-border/40 dark:bg-muted">
               <DialogHeader className="shrink-0 px-6 pb-3 pt-6">

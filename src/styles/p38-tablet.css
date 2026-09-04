@@ -76,3 +76,37 @@
     font-size: 1rem !important;
   }
 }
+
+/* Paisagem pedida no Perfil: o tablet ainda pode reportar retrato físico */
+@media (min-width: 768px) and (max-width: 1023px) {
+  html[data-p38-force-landscape='true'],
+  html[data-p38-shell='desktop'] {
+    font-size: calc(16px * var(--app-font-scale, 1));
+    --p38-body-size: 1rem;
+    --p38-title-size: 1.125rem;
+    --p38-label-size: 1rem;
+    --p38-meta-size: 1rem;
+    --p38-type-lg: 1.25rem;
+    --p38-type-xl: 1.375rem;
+    --p38-touch-target: 48px;
+  }
+
+  html[data-p38-force-landscape='true'] .p38-sidebar nav button,
+  html[data-p38-force-landscape='true'] .p38-sidebar nav a[href],
+  html[data-p38-shell='desktop'] .p38-sidebar nav button,
+  html[data-p38-shell='desktop'] .p38-sidebar nav a[href] {
+    min-height: var(--p38-touch-target);
+  }
+
+  html[data-p38-force-landscape='true'] .p38-sidebar .p38-sidebar-section-label,
+  html[data-p38-shell='desktop'] .p38-sidebar .p38-sidebar-section-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+  }
+
+  html[data-p38-force-landscape='true'] .p38-sidebar nav .text-sm,
+  html[data-p38-shell='desktop'] .p38-sidebar nav .text-sm {
+    font-size: 1rem;
+    line-height: 1.35;
+  }
+}

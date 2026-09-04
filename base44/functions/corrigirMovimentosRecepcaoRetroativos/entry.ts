@@ -152,7 +152,7 @@ async function recalcularEstoqueLocal(svc: any, produtoId: string) {
     return acc;
   }, 0);
   const estoqueAvariado = Number(produto.estoque_avariado) || 0;
-  const estoqueAtual = Math.max(0, saldoMovimentos - estoqueAvariado);
+  const estoqueAtual = saldoMovimentos - estoqueAvariado;
   await svc.entities.Produto.update(produtoId, { estoque_atual: estoqueAtual });
 }
 

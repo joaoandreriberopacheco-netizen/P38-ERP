@@ -212,7 +212,7 @@ export default function PinValidationDialog({
           <Button
             onClick={handleValidar}
             disabled={loading || pin.length < 6}
-            className="w-full bg-background dark:bg-card dark:text-foreground text-white"
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground"
           >
             {loading ? 'Verificando...' : 'Confirmar'}
           </Button>

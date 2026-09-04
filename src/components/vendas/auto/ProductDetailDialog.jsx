@@ -1,101 +1,99 @@
-import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Minus, Plus, ShoppingCart, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { pickDefaultSaleUnit, getUnidadeExibicaoSigla } from '@/lib/productUnits';
+import {
+  AUTO_PRIMARY_BTN,
+  AUTO_SURFACE_CLASS,
+  AUTO_CARD_HOVER,
+  AUTO_ACCENT_TEXT,
+  AUTO_ACCENT_BG,
+  AUTO_CITRUS_BORDER,
+  formatAutoMoney,
+} from './autoAtendimentoUi';
 
 export default function ProductDetailDialog({ isOpen, onClose, product, onConfirm }) {
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
     if (isOpen) setQuantity(1);
-  }, [isOpen]);
+  }, [isOpen, product?.id]);
 
   if (!product) return null;
-  const displayUnit = pickDefaultSaleUnit(product, 1) || { unidade: getUnidadeExibicaoSigla(product), valor_unitario: product.preco_venda_padrao || 0 };
 
-  const handleIncrement = () => setQuantity(q => q + 1);
-  const handleDecrement = () => setQuantity(q => Math.max(1, q - 1));
+  const displayUnit =
+    pickDefaultSaleUnit(product, 1) || {
+      unidade: getUnidadeExibicaoSigla(product),
+      valor_unitario: product.preco_venda_padrao || 0,
+    };
 
-  const total = (displayUnit.valor_unitario || 0) * quantity;
+  const unitPrice = Number(displayUnit.valor_unitario) || 0;
+  const total = unitPrice * quantity;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl bg-card border-0 rounded-3xl p-0 overflow-hidden">
-        <div className="relative h-64 bg-muted flex items-center justify-center">
+      <DialogContent className="max-w-lg p-0 overflow-hidden gap-0">
+        <div className={`relative h-48 ${AUTO_ACCENT_BG} flex items-center justify-center`}>
           {product.imagem_url ? (
-            <img src={product.imagem_url} alt={product.nome} className="w-full h-full object-cover" />
+            <img src={product.imagem_url} alt="" className="w-full h-full object-cover" loading="lazy" />
           ) : (
-            <div className="text-muted-foreground dark:text-muted-foreground">
-              <ShoppingCart className="w-24 h-24 opacity-20" />
-            </div>
+            <ShoppingCart className="w-16 h-16 text-muted-foreground/30" />
           )}
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onClose}
-            className="absolute top-4 right-4 rounded-full bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm"
+            className="absolute top-3 right-3 rounded-full bg-black/30 hover:bg-black/50 text-white"
           >
             <X className="w-5 h-5" />
           </Button>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-5 space-y-5">
           <div>
-            <h2 className="text-2xl font-bold text-foreground leading-tight mb-2">
-              {product.nome}
-            </h2>
+            <h2 className="text-xl font-bold text-foreground leading-snug">{product.nome}</h2>
+            <div className="flex items-baseline gap-2 mt-2">
+              <span className={`text-2xl font-bold tabular-nums ${AUTO_ACCENT_TEXT}`}>
+                R$ {formatAutoMoney(unitPrice)}
+              </span>
+              <span className="text-sm text-muted-foreground">{displayUnit.unidade || 'UN'}</span>
+            </div>
+          </div>
+
+          <div className={`flex items-center justify-between rounded-xl border ${AUTO_CITRUS_BORDER} p-3 ${AUTO_SURFACE_CLASS}`}>
+            <span className="text-sm font-medium text-muted-foreground">Quantidade</span>
             <div className="flex items-center gap-3">
-               <span className="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">
-                 R$ {(displayUnit.valor_unitario || 0).toFixed(2)}
-               </span>
-               <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded-lg">
-                 {displayUnit.unidade || 'UN'}
-               </span>
-            </div>
-            {product.descricao && (
-               <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
-                 {product.descricao}
-               </p>
-            )}
-          </div>
-
-          <div className="bg-muted/50/50 p-4 rounded-2xl flex items-center justify-between">
-            <span className="text-muted-foreground font-medium">Quantidade</span>
-            <div className="flex items-center gap-4 bg-card rounded-xl p-1 shadow-sm border border-border/40">
-              <button 
-                onClick={handleDecrement}
-                className="w-12 h-12 flex items-center justify-center text-muted-foreground hover:bg-muted rounded-lg transition-colors"
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                className={`w-10 h-10 rounded-lg ${AUTO_ACCENT_BG} flex items-center justify-center ${AUTO_ACCENT_TEXT}`}
               >
-                <Minus className="w-5 h-5" />
+                <Minus className="w-4 h-4" />
               </button>
-              <span className="w-8 text-center font-bold text-xl text-foreground">{quantity}</span>
-              <button 
-                onClick={handleIncrement}
-                className="w-12 h-12 flex items-center justify-center text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+              <span className="w-8 text-center font-bold text-lg">{quantity}</span>
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => q + 1)}
+                className={`w-10 h-10 rounded-lg ${AUTO_ACCENT_BG} flex items-center justify-center ${AUTO_ACCENT_TEXT}`}
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          <DialogFooter className="gap-3 sm:gap-0">
-            <Button 
-              variant="outline" 
-              onClick={onClose}
-              className="h-14 px-6 rounded-xl text-muted-foreground hover:text-foreground/90 border-border/40"
-            >
-              Desistir
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={onClose} className="h-12 rounded-xl flex-1">
+              Voltar
             </Button>
-            <Button 
+            <Button
               onClick={() => {
                 onConfirm(product, quantity);
                 onClose();
               }}
-              className="flex-1 h-14 text-lg font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-600/20"
+              className={`h-12 rounded-xl flex-1 ${AUTO_PRIMARY_BTN}`}
             >
-              Adicionar • R$ {total.toFixed(2)}
+              Adicionar · R$ {formatAutoMoney(total)}
             </Button>
           </DialogFooter>
         </div>

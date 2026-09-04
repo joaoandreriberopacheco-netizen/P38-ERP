@@ -54,6 +54,11 @@
       "format": "date",
       "description": "Data em que parou de trabalhar (último mês previsto)"
     },
+    "data_entrada": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de início na empresa. Vazio = direito integral (legado). Usado para salário, 13º e férias proporcionais."
+    },
     "valor_rescisao_previsto": {
       "type": "number",
       "description": "Valor previsto de rescisão no mês do desligamento"

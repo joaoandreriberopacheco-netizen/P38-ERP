@@ -19,6 +19,23 @@ import { useUnsavedChangesWarning } from '@/components/utils/useUnsavedChangesWa
 import { calculateBaseQuantity, getItemUnitKey, pickDefaultSaleUnit, getUnidadeExibicaoSigla } from '@/lib/productUnits';
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
 import { productCodesMatch } from '@/lib/productCode';
+import { isVendaSemEstoquePermitida } from '@/lib/configFlags';
+import { omitPedidoVendaEspelho } from '@/lib/omitEspelhoPersist';
+import { syncPedidoVendaItens } from '@/lib/syncPedidoVendaItens';
+import { selectAllOnFocus, focusAndSelect, selectAllOnMouseDown, handleCentavosMaskKeyDown } from '@/lib/inputFocusUtils';
+import {
+  filterProdutosDisponiveisPdv,
+  isProdutoDisponivelPdv,
+} from '@/lib/hierarquiaPortal/produtoPdvDisponibilidade';
+import {
+  AUTO_HEADER_CLASS,
+  AUTO_PRIMARY_BTN,
+  AUTO_SURFACE_CLASS,
+  AUTO_SHELL_BG,
+  AUTO_FIELD_CLASS,
+  AUTO_ACCENT_TEXT,
+  AUTO_ACCENT_BG,
+} from '@/components/vendas/auto/autoAtendimentoUi';
 
 export default function PDVSupermercado() {
   const [carrinho, setCarrinho] = useState([]);
@@ -42,6 +59,11 @@ export default function PDVSupermercado() {
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [produtoSelecionadoIndex, setProdutoSelecionadoIndex] = useState(0);
   const [configVenda, setConfigVenda] = useState(null);
+  const [configEstoque, setConfigEstoque] = useState(null);
+  const vendaSemEstoquePermitida = useMemo(
+    () => isVendaSemEstoquePermitida(configVenda, configEstoque),
+    [configVenda, configEstoque]
+  );
 
   // Payment States
   const [pagamentosDinheiro, setPagamentosDinheiro] = useState(0);
@@ -122,20 +144,21 @@ export default function PDVSupermercado() {
 
   const loadDependencies = async () => {
     try {
-      const [produtosData, userData, clientesData, configsVendas] = await Promise.all([
+      const [produtosData, userData, clientesData, configsVendas, configsEstoque] = await Promise.all([
         base44.entities.Produto.filter({ ativo: true }),
         base44.auth.me(),
         base44.entities.Terceiro.filter({ tipo: ['Cliente', 'Ambos'] }),
-        base44.entities.ConfiguracoesVenda.list()
+        base44.entities.ConfiguracoesVenda.list(),
+        base44.entities.ConfiguracoesEstoque.list(),
       ]);
-      setProdutos(produtosData);
+      setProdutos(filterProdutosDisponiveisPdv(produtosData));
       setCurrentUser(userData);
       setClientes(clientesData);
       if (configsVendas.length > 0) {
-        console.log('PDV Supermercado - ConfigVenda carregada:', configsVendas[0]);
         setConfigVenda(configsVendas[0]);
-      } else {
-        console.log('PDV Supermercado - Nenhuma configuração de venda encontrada');
+      }
+      if (configsEstoque.length > 0) {
+        setConfigEstoque(configsEstoque[0]);
       }
       if (userData.tabela_preco_id) {
         const tabela = await TabelaPreco.get(userData.tabela_preco_id);
@@ -159,6 +182,11 @@ export default function PDVSupermercado() {
   }, [buscaProduto, produtos]);
 
   const handleSelecionarProduto = (produto) => {
+    if (!isProdutoDisponivelPdv(produto)) {
+      toast({ title: 'Produto na reserva — não disponível para venda no PDV.', variant: 'destructive' });
+      return;
+    }
+
     setProdutoSelecionado(produto);
     setBuscaProduto('');
     setShowSuggestions(false);
@@ -181,9 +209,7 @@ export default function PDVSupermercado() {
     const quantidadeBaseAdd = calculateBaseQuantity(quantidade, fator);
     const itemKey = getItemUnitKey(produtoSelecionado.id, unidade);
     
-    console.log('PDV Supermercado - Config:', configVenda, 'Vender sem estoque:', configVenda?.vender_sem_estoque, 'Estoque:', produtoSelecionado.estoque_atual, 'Quantidade:', quantidade);
-    
-    if (configVenda?.vender_sem_estoque !== true && produtoSelecionado.estoque_atual < quantidadeBaseAdd) {
+    if (!vendaSemEstoquePermitida && produtoSelecionado.estoque_atual < quantidadeBaseAdd) {
       toast({ title: `Estoque insuficiente: ${produtoSelecionado.estoque_atual} ${produtoSelecionado.unidade_principal || 'UN'} disponível`, variant: "destructive" });
       return;
     }
@@ -255,14 +281,7 @@ export default function PDVSupermercado() {
       if (pagamentosDebito > 0) pagamentos.push({ forma_pagamento: 'Cartão de Débito', valor: pagamentosDebito, parcelas: 1 });
       if (pagamentosCredito > 0) pagamentos.push({ forma_pagamento: 'Cartão de Crédito', valor: pagamentosCredito, parcelas: parcelasCredito });
 
-      const pedidoData = {
-        tipo: 'PDV Supermercado',
-        cliente_id: cliente?.id,
-        cliente_nome: cliente?.nome || 'Consumidor Final',
-        vendedor_id: currentUser.id,
-        vendedor_nome: currentUser.full_name,
-        status: 'Finalizado',
-        itens: carrinho.map(item => ({
+      const itensLegado = carrinho.map(item => ({
           produto_id: item.produto_id,
           produto_nome: item.produto_nome,
           quantidade: item.quantidade,
@@ -271,13 +290,27 @@ export default function PDVSupermercado() {
           fator_conversao: item.fator_conversao || 1,
           preco_unitario_praticado: item.preco_unitario_praticado,
           total: item.total
-        })),
+        }));
+
+      const pedidoData = omitPedidoVendaEspelho({
+        tipo: 'PDV Supermercado',
+        cliente_id: cliente?.id,
+        cliente_nome: cliente?.nome || 'Consumidor Final',
+        vendedor_id: currentUser.id,
+        vendedor_nome: currentUser.full_name,
+        status: 'Finalizado',
         valor_total: totalCarrinho,
         pagamentos: pagamentos,
         caixa_destino_id: currentUser.caixa_destino_id
-      };
+      });
 
       const novoPedido = await base44.entities.PedidoVenda.create(pedidoData);
+
+      try {
+        await syncPedidoVendaItens(novoPedido.id, itensLegado);
+      } catch (canonicalErr) {
+        console.warn('Sincronia PedidoVendaItem falhou:', canonicalErr?.message || canonicalErr);
+      }
       
       // Criar movimentações de estoque para cada item vendido
       for (const item of carrinho) {
@@ -297,7 +330,7 @@ export default function PDVSupermercado() {
         const produto = await base44.entities.Produto.get(item.produto_id);
         if (produto) {
           await base44.entities.Produto.update(item.produto_id, {
-            estoque_atual: Math.max(0, (produto.estoque_atual || 0) - (item.quantidade_base || item.quantidade))
+            estoque_atual: (produto.estoque_atual || 0) - (item.quantidade_base || item.quantidade)
           });
         }
       }
@@ -320,63 +353,102 @@ export default function PDVSupermercado() {
 
   // Formatter helpers
   const formatarValorExibicao = (valor) => valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const aplicarMascaraValor = (valorAtual, tecla) => {
-    let numeros = valorAtual.replace(/\D/g, '');
-    if (/^\d$/.test(tecla)) numeros += tecla;
-    return formatarValorExibicao(parseInt(numeros) / 100);
-  };
 
   const handleInputMascara = (e, setInput, setValor) => {
-    const tecla = e.key;
-    if (tecla === 'Backspace') {
-      e.preventDefault();
-      let numeros = e.target.value.replace(/\D/g, '').slice(0, -1) || '0';
-      const valor = parseInt(numeros) / 100;
-      setInput(formatarValorExibicao(valor));
-      setValor(valor);
-    } else if (/^\d$/.test(tecla)) {
-      e.preventDefault();
-      const novoValor = aplicarMascaraValor(e.target.value, tecla);
-      setInput(novoValor);
-      setValor(parseFloat(novoValor.replace(/\./g, '').replace(',', '.')));
-    }
+    handleCentavosMaskKeyDown(e, {
+      setInput,
+      setValor,
+      formatDisplay: formatarValorExibicao,
+    });
   };
 
+  const getCartItemKey = (item) => item.item_key || item.produto_id;
+
+  const removeCartItem = (item) => {
+    const key = getCartItemKey(item);
+    setCarrinho(carrinho.filter((i) => getCartItemKey(i) !== key));
+  };
+
+  const updateCartItemQuantity = (item, delta) => {
+    const key = getCartItemKey(item);
+    const newQtd = item.quantidade + delta;
+
+    if (newQtd <= 0) {
+      removeCartItem(item);
+      return;
+    }
+
+    const newBase = calculateBaseQuantity(newQtd, item.fator_conversao || 1);
+    if (!vendaSemEstoquePermitida && delta > 0 && newBase > item.estoque_disponivel) {
+      toast({ title: 'Estoque insuficiente', variant: 'destructive' });
+      return;
+    }
+
+    setCarrinho(carrinho.map((i) => (
+      getCartItemKey(i) === key
+        ? {
+            ...i,
+            quantidade: newQtd,
+            quantidade_base: newBase,
+            total: newQtd * i.preco_unitario_praticado,
+          }
+        : i
+    )));
+  };
+
+  const totalItensCarrinho = carrinho.reduce((acc, i) => acc + i.quantidade, 0);
+
   return (
-    <div className="h-screen flex flex-col bg-muted/40 dark:bg-background">
-      {/* Header */}
-      <div className="bg-indigo-600 text-white p-4 flex justify-between items-center shadow-md flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <ShoppingCart className="w-6 h-6" />
-          <div>
-            <h1 className="text-lg font-bold">PDV Supermercado</h1>
-            <p className="text-xs opacity-80">Venda Rápida • Estoque & Financeiro Integrados</p>
+    <div className={`h-screen flex flex-col ${AUTO_SHELL_BG}`}>
+      {/* Header — mesmo visual indigo do auto-atendimento */}
+      <header className={`${AUTO_HEADER_CLASS} px-3 py-2.5 desktop-layout:px-4 desktop-layout:py-3`}>
+        <div className="flex items-center gap-2 desktop-layout:gap-3 min-w-0">
+          <div className="w-9 h-9 desktop-layout:w-10 desktop-layout:h-10 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0">
+            <ShoppingCart className="w-5 h-5" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-base desktop-layout:text-lg font-bold truncate">PDV Supermercado</h1>
+            <p className="text-xs text-indigo-100 hidden desktop-layout:block">Venda Rápida • Estoque & Financeiro Integrados</p>
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 desktop-layout:gap-4 flex-shrink-0">
           <div className="text-right hidden desktop-layout:block">
-             <p className="text-xs opacity-80">Operador</p>
+             <p className="text-xs text-indigo-100">Operador</p>
              <p className="font-semibold text-sm">{currentUser?.full_name}</p>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => window.location.href = '/'} className="hover:bg-indigo-700">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowClienteDialog(true)}
+            className="desktop-layout:hidden h-9 w-9 text-white hover:bg-indigo-700 hover:text-white"
+            aria-label="Selecionar cliente"
+          >
+            <UserPlus className="w-5 h-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => { window.location.href = '/'; }}
+            className="h-9 w-9 text-white hover:bg-indigo-700 hover:text-white"
+          >
             <ArrowRight className="w-5 h-5" />
           </Button>
         </div>
-      </div>
+      </header>
 
       {/* Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left: Product List */}
-        <div className="flex-1 flex flex-col p-4 overflow-hidden pb-28 md:pb-4">
+        <div className="flex-1 flex flex-col p-3 desktop-layout:p-4 overflow-hidden pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] desktop-layout:pb-4">
           {/* Search and Add Product Area - MATCHING PDV VENDEDOR STYLE */}
-          <div className="mb-4 flex-shrink-0" ref={suggestionsRef}>
+          <div className="mb-3 desktop-layout:mb-4 flex-shrink-0 relative px-3 py-3 -mx-3 desktop-layout:mx-0 desktop-layout:px-0 desktop-layout:py-0 bg-background dark:bg-card border-b border-border/40 dark:border-border/40 desktop-layout:bg-transparent desktop-layout:border-0" ref={suggestionsRef}>
             <div className="flex gap-2">
-                <div className="flex-1 relative">
-                  <Barcode className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <div className="flex-1 relative min-w-0">
+                  <Barcode className={`absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 ${AUTO_ACCENT_TEXT} opacity-70`} />
                   <Input 
                     ref={inputProdutoRef}
-                    placeholder="Escanear, nome ou código..."
-                    className="pl-12 pr-14 bg-card dark:bg-card border border-border/40 dark:border-border/40 rounded-xl text-foreground dark:text-muted-foreground h-14 md:h-14 text-base focus:ring-2 focus:ring-border/40 focus:border-border/40 placeholder:text-muted-foreground"
+                    placeholder="Buscar ou escanear..."
+                    className={`pl-10 pr-12 ${AUTO_FIELD_CLASS} text-foreground h-12 desktop-layout:h-14 text-base focus-visible:ring-[#4a5240]/25 placeholder:text-muted-foreground`}
                     value={buscaProduto}
                     onChange={(e) => setBuscaProduto(e.target.value)}
                     onKeyDown={handleKeyDown}
@@ -387,7 +459,7 @@ export default function PDVSupermercado() {
                     variant="ghost"
                     size="icon"
                     onClick={() => setShowBarcodeScanner(true)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 text-muted-foreground hover:text-muted-foreground hover:bg-muted dark:hover:bg-muted"
+                    className={`absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 ${AUTO_ACCENT_TEXT} hover:bg-secondary/60 dark:hover:bg-[#26262e]`}
                   >
                     <Camera className="w-5 h-5" />
                   </Button>
@@ -397,9 +469,10 @@ export default function PDVSupermercado() {
                 type="number"
                 inputMode="numeric"
                 placeholder="Qtd"
-                className="w-20 md:w-24 bg-card dark:bg-card border border-border/40 dark:border-border/40 rounded-xl text-foreground dark:text-muted-foreground h-14 md:h-14 text-center text-lg font-semibold focus:ring-2 focus:ring-border/40"
+                className={`w-[4.5rem] desktop-layout:w-24 ${AUTO_FIELD_CLASS} text-foreground h-12 desktop-layout:h-14 text-center text-lg font-semibold focus-visible:ring-[#4a5240]/25`}
                 value={quantidadeAtual}
                 onChange={(e) => setQuantidadeAtual(parseInt(e.target.value) || 1)}
+                onFocus={selectAllOnFocus}
                 onKeyDown={handleQuantidadeKeyDown}
                 min="1"
                 disabled={!produtoSelecionado}
@@ -408,7 +481,7 @@ export default function PDVSupermercado() {
             
             {/* Suggestions Dropdown */}
             {showSuggestions && produtosSugeridos.length > 0 && (
-                <div className="absolute z-50 mt-2 w-full max-w-3xl bg-card dark:bg-card border border-border/40 dark:border-border/40 rounded-xl shadow-2xl max-h-[400px] overflow-y-auto">
+                <div className={`absolute z-50 left-0 right-0 mt-2 ${AUTO_SURFACE_CLASS} shadow-lg max-h-[min(50dvh,400px)] overflow-y-auto`}>
                   {produtosSugeridos.map((produto, index) => {
                     const defaultOpt = pickDefaultSaleUnit(produto, tabelaPreco?.fator_ajuste || 1);
                     const preco = Number(defaultOpt?.valor_unitario ?? (produto.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1))) || 0;
@@ -417,20 +490,21 @@ export default function PDVSupermercado() {
                     return (
                       <div
                         key={produto.id}
-                        className={`p-3 md:p-4 hover:bg-muted/40 dark:hover:bg-muted/50 border-b border-border/40 dark:border-border/40 last:border-b-0 cursor-pointer transition-all flex justify-between items-center ${
-                          isSelected ? 'bg-muted dark:bg-muted border-l-4 border-l-border pl-3' : 'pl-4'
+                        className={`p-3 desktop-layout:p-4 hover:bg-secondary/60 dark:hover:bg-[#26262e] border-b border-border/40 dark:border-border/40 last:border-b-0 cursor-pointer transition-all flex justify-between items-start gap-3 ${
+                          isSelected ? 'bg-secondary/60 dark:bg-[#26262e] border-l border-l-[#4a5240] dark:border-l-[#a4ce33] pl-3' : 'pl-4'
                         }`}
                         onClick={() => handleSelecionarProduto(produto)}
                       >
-                        <div>
-                          <p className="font-semibold text-foreground dark:text-foreground text-base leading-tight">{produto.nome}</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-foreground dark:text-foreground text-sm desktop-layout:text-base leading-tight line-clamp-2">{produto.nome}</p>
                           <p className="text-[10px] text-muted-foreground/80 dark:text-muted-foreground font-mono tracking-wide mt-1">
                             #{produto.codigo_interno || '—'}
                           </p>
                         </div>
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-foreground dark:text-foreground">R$ {preco.toFixed(2)} / {unidade}</p>
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full ${produto.estoque_atual > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-base desktop-layout:text-lg font-bold text-foreground dark:text-foreground whitespace-nowrap">R$ {preco.toFixed(2)}</p>
+                          <p className="text-[10px] text-muted-foreground">/{unidade}</p>
+                          <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full mt-1 ${produto.estoque_atual > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
                             {produto.estoque_atual} {produto.unidade_principal || 'UN'}
                           </span>
                         </div>
@@ -442,15 +516,15 @@ export default function PDVSupermercado() {
 
             {/* Selected Product Preview (Before Adding) */}
             {produtoSelecionado && (
-              <div className="mt-3 p-3 md:p-4 bg-muted dark:bg-card rounded-xl border border-border/40 dark:border-border/40">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className="w-10 h-10 rounded-lg bg-muted dark:bg-muted flex items-center justify-center">
-                      <Package className="w-5 h-5 text-muted-foreground dark:text-muted-foreground" />
+              <div className={`mt-3 p-3 desktop-layout:p-4 ${AUTO_SURFACE_CLASS}`}>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className={`w-10 h-10 rounded-xl ${AUTO_ACCENT_BG} flex items-center justify-center flex-shrink-0`}>
+                      <Package className={`w-5 h-5 ${AUTO_ACCENT_TEXT}`} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-foreground dark:text-foreground truncate">{produtoSelecionado.nome}</p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground dark:text-muted-foreground">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground dark:text-muted-foreground">
                         <span>R$ {(pickDefaultSaleUnit(produtoSelecionado, tabelaPreco?.fator_ajuste || 1)?.valor_unitario || (produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1))).toFixed(2)} {pickDefaultSaleUnit(produtoSelecionado, tabelaPreco?.fator_ajuste || 1)?.unidade || produtoSelecionado.unidade_principal || 'UN'}</span>
                         <span>•</span>
                         <span className="font-medium text-foreground/90 dark:text-muted-foreground">
@@ -468,16 +542,17 @@ export default function PDVSupermercado() {
                       }}
                       variant="ghost"
                       size="sm"
-                      className="text-muted-foreground hover:text-foreground/90"
+                      className="flex-1 text-muted-foreground hover:text-foreground/90"
                     >
                       Cancelar
                     </Button>
                     <Button
                       onClick={handleConfirmarAdicao}
-                      className="bg-primary hover:bg-primary/90 text-primary-foreground text-white font-medium px-6"
+                      className={`flex-[2] ${AUTO_PRIMARY_BTN}`}
                       size="sm"
                     >
-                      Adicionar (Enter)
+                      <span className="desktop-layout:hidden">Adicionar</span>
+                      <span className="hidden desktop-layout:inline">Adicionar (Enter)</span>
                     </Button>
                   </div>
                 </div>
@@ -486,9 +561,63 @@ export default function PDVSupermercado() {
           </div>
 
           {/* Cart List */}
-          <div className="flex-1 overflow-y-auto bg-card dark:bg-card rounded-lg shadow-sm border p-2">
+          <div className={`flex-1 overflow-y-auto ${AUTO_SURFACE_CLASS} min-h-0 bg-background dark:bg-card`}>
+            {/* Mobile: cards */}
+            <div className="desktop-layout:hidden p-2 space-y-2">
+              {carrinho.map((item) => (
+                <div key={getCartItemKey(item)} className={`${AUTO_SURFACE_CLASS} p-3 hover:border-[#4a5240]/30 transition-colors`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-sm leading-snug line-clamp-2">{item.produto_nome}</p>
+                      {item.codigo_interno ? (
+                        <p className="text-[10px] text-muted-foreground/80 font-mono tracking-wide mt-0.5">#{item.codigo_interno}</p>
+                      ) : null}
+                      <p className="text-xs text-muted-foreground mt-1">
+                        R$ {item.preco_unitario_praticado.toFixed(2)} / {item.unidade_medida || 'UN'}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                      <p className="text-base font-bold tabular-nums">R$ {item.total.toFixed(2)}</p>
+                      <button
+                        type="button"
+                        onClick={() => removeCartItem(item)}
+                        className="min-h-10 min-w-10 inline-flex items-center justify-center rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
+                        aria-label="Remover item"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Quantidade</span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => updateCartItemQuantity(item, -1)}
+                        className={`min-h-11 min-w-11 ${AUTO_ACCENT_BG} ${AUTO_ACCENT_TEXT} rounded-lg hover:bg-muted dark:hover:bg-[#383e47] font-bold text-lg`}
+                        aria-label="Diminuir quantidade"
+                      >
+                        -
+                      </button>
+                      <span className="w-8 text-center font-semibold text-base tabular-nums">{item.quantidade}</span>
+                      <button
+                        type="button"
+                        onClick={() => updateCartItemQuantity(item, 1)}
+                        className={`min-h-11 min-w-11 ${AUTO_ACCENT_BG} ${AUTO_ACCENT_TEXT} rounded-lg hover:bg-muted dark:hover:bg-[#383e47] font-bold text-lg`}
+                        aria-label="Aumentar quantidade"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: table */}
+            <div className="hidden desktop-layout:block p-2">
             <table className="w-full text-left text-sm">
-              <thead className="bg-muted/40 dark:bg-muted text-muted-foreground border-b">
+              <thead className={`${AUTO_ACCENT_BG} text-muted-foreground border-b border-border/40 dark:border-border/40`}>
                 <tr>
                   <th className="p-3">Produto</th>
                   <th className="p-3 text-center">Qtd</th>
@@ -499,7 +628,7 @@ export default function PDVSupermercado() {
               </thead>
               <tbody>
                 {carrinho.map(item => (
-                  <tr key={item.item_key || item.produto_id} className="border-b last:border-0">
+                  <tr key={getCartItemKey(item)} className="border-b last:border-0">
                     <td className="p-3 font-medium">
                       <div className="flex flex-col">
                         <span>{item.produto_nome}</span>
@@ -510,62 +639,52 @@ export default function PDVSupermercado() {
                     </td>
                     <td className="p-3 text-center">
                       <div className="flex items-center justify-center gap-2">
-                        <button onClick={() => {
-                           const newQtd = item.quantidade - 1;
-                           if(newQtd <= 0) setCarrinho(carrinho.filter(i => (i.item_key || i.produto_id) !== (item.item_key || item.produto_id)));
-                           else setCarrinho(carrinho.map(i => (i.item_key || i.produto_id) === (item.item_key || item.produto_id)
-                             ? {...i, quantidade: newQtd, quantidade_base: calculateBaseQuantity(newQtd, i.fator_conversao || 1), total: newQtd * i.preco_unitario_praticado}
-                             : i));
-                        }} className="min-h-11 min-w-11 bg-muted rounded hover:bg-muted font-bold text-base">-</button>
+                        <button type="button" onClick={() => updateCartItemQuantity(item, -1)} className={`min-h-11 min-w-11 ${AUTO_ACCENT_BG} rounded-lg hover:bg-muted dark:hover:bg-[#383e47] font-bold text-base ${AUTO_ACCENT_TEXT}`}>-</button>
                         <span className="w-8 font-semibold">{item.quantidade}</span>
-                        <button onClick={() => {
-                           const newQtd = item.quantidade + 1;
-                           const newBase = calculateBaseQuantity(newQtd, item.fator_conversao || 1);
-                           if (configVenda?.vender_sem_estoque === true || newBase <= item.estoque_disponivel) {
-                             setCarrinho(carrinho.map(i => (i.item_key || i.produto_id) === (item.item_key || item.produto_id)
-                               ? {...i, quantidade: newQtd, quantidade_base: newBase, total: newQtd * i.preco_unitario_praticado}
-                               : i));
-                           } else {
-                             toast({ title: 'Estoque insuficiente', variant: "destructive" });
-                           }
-                        }} className="min-h-11 min-w-11 bg-muted rounded hover:bg-muted font-bold text-base">+</button>
+                        <button type="button" onClick={() => updateCartItemQuantity(item, 1)} className={`min-h-11 min-w-11 ${AUTO_ACCENT_BG} rounded-lg hover:bg-muted dark:hover:bg-[#383e47] font-bold text-base ${AUTO_ACCENT_TEXT}`}>+</button>
                       </div>
                       <div className="text-[10px] text-muted-foreground mt-1">{item.unidade_medida || 'UN'}</div>
                     </td>
                     <td className="p-3 text-right">R$ {item.preco_unitario_praticado.toFixed(2)}</td>
                     <td className="p-3 text-right font-bold">R$ {item.total.toFixed(2)}</td>
                     <td className="p-3">
-                      <Trash2 className="w-4 h-4 text-red-400 cursor-pointer hover:text-red-600" onClick={() => setCarrinho(carrinho.filter(i => (i.item_key || i.produto_id) !== (item.item_key || item.produto_id)))} />
+                      <Trash2 className="w-4 h-4 text-red-400 cursor-pointer hover:text-red-600" onClick={() => removeCartItem(item)} />
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            </div>
+
             {carrinho.length === 0 && (
-              <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50">
-                <ShoppingCart className="w-16 h-16 mb-4" />
-                <p className="text-lg">Carrinho Vazio</p>
-                <p className="text-sm">Escaneie ou busque um produto</p>
+              <div className="h-full min-h-[12rem] flex flex-col items-center justify-center text-muted-foreground p-6 text-center">
+                <div className={`w-16 h-16 desktop-layout:w-20 desktop-layout:h-20 rounded-2xl ${AUTO_ACCENT_BG} flex items-center justify-center mb-3 desktop-layout:mb-4`}>
+                  <ShoppingCart className={`w-8 h-8 desktop-layout:w-10 desktop-layout:h-10 ${AUTO_ACCENT_TEXT}`} />
+                </div>
+                <p className="text-base desktop-layout:text-lg font-medium text-foreground">Carrinho Vazio</p>
+                <p className="text-sm text-muted-foreground">Escaneie ou busque um produto</p>
               </div>
             )}
           </div>
         </div>
 
         {/* Right: Summary & Actions — tablet+ split; telemóvel usa barra inferior */}
-        <div className="hidden desktop-layout:flex flex-col w-72 lg:w-80 xl:w-96 flex-shrink-0 bg-card dark:bg-card border-l p-4 lg:p-6 shadow-lg z-10">
+        <div className={`hidden desktop-layout:flex flex-col w-72 lg:w-80 xl:w-96 flex-shrink-0 bg-background dark:bg-card border-l border-border/40 dark:border-border/40 p-4 lg:p-6 shadow-lg z-10`}>
           <div className="mb-6">
-            <h2 className="text-muted-foreground uppercase text-xs font-bold tracking-wider mb-2">Resumo</h2>
-            <div className="text-4xl font-bold text-foreground dark:text-white mb-1">R$ {totalCarrinho.toFixed(2)}</div>
-            <p className="text-sm text-muted-foreground">{carrinho.reduce((acc, i) => acc + i.quantidade, 0)} itens</p>
+            <h2 className={`${AUTO_ACCENT_TEXT} uppercase text-xs font-bold tracking-wider mb-2 opacity-80`}>Resumo</h2>
+            <div className={`text-4xl font-bold mb-1 tabular-nums ${AUTO_ACCENT_TEXT}`}>R$ {totalCarrinho.toFixed(2)}</div>
+            <p className="text-sm text-muted-foreground">{totalItensCarrinho} itens</p>
           </div>
 
           <div className="space-y-3 mb-auto">
-             <div className="p-3 bg-muted/40 rounded-lg border flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                   <UserPlus className="w-4 h-4 text-muted-foreground" />
-                   <span className="text-sm">{cliente ? cliente.nome : 'Consumidor Final'}</span>
+             <div className={`p-3 ${AUTO_SURFACE_CLASS} flex justify-between items-center`}>
+                <div className="flex items-center gap-2 min-w-0">
+                   <div className={`w-8 h-8 rounded-lg ${AUTO_ACCENT_BG} flex items-center justify-center flex-shrink-0`}>
+                     <UserPlus className={`w-4 h-4 ${AUTO_ACCENT_TEXT}`} />
+                   </div>
+                   <span className="text-sm truncate">{cliente ? cliente.nome : 'Consumidor Final'}</span>
                 </div>
-                <Button variant="link" size="sm" onClick={() => setShowClienteDialog(true)}>Alterar</Button>
+                <Button variant="link" size="sm" onClick={() => setShowClienteDialog(true)} className={`${AUTO_ACCENT_TEXT} shrink-0`}>Alterar</Button>
              </div>
           </div>
 
@@ -580,7 +699,7 @@ export default function PDVSupermercado() {
           )}
           <Button 
             size="lg" 
-            className="h-16 text-xl font-bold bg-emerald-600 hover:bg-emerald-700 w-full rounded-xl shadow-emerald-200"
+            className={`h-16 text-xl font-bold w-full ${AUTO_PRIMARY_BTN}`}
             onClick={handlePaymentOpen}
             disabled={carrinho.length === 0}
           >
@@ -589,71 +708,101 @@ export default function PDVSupermercado() {
         </div>
       </div>
 
-      {/* Barra inferior — smartphone */}
-      <div className="desktop-layout:hidden fixed left-0 right-0 bottom-0 z-50 flex items-center gap-3 border-t border-border/40 bg-card/95 backdrop-blur-md px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] shadow-[0_-8px_24px_rgba(0,0,0,0.08)]">
-        <div className="flex-1 min-w-0">
-          <p className="text-xs text-muted-foreground">{carrinho.reduce((acc, i) => acc + i.quantidade, 0)} itens</p>
-          <p className="text-xl font-bold text-foreground tabular-nums">R$ {totalCarrinho.toFixed(2)}</p>
+      {/* Barra inferior — smartphone (estilo auto-atendimento) */}
+      <div className="desktop-layout:hidden fixed left-0 right-0 bottom-0 z-50 border-t border-border/40 dark:border-border/40 bg-background dark:bg-card shadow-[0_-8px_30px_rgba(0,0,0,0.06)]">
+        <div className="flex items-center gap-3 px-3 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
+          <button
+            type="button"
+            onClick={() => setShowClienteDialog(true)}
+            className={`flex min-w-0 max-w-[34%] flex-col rounded-xl border border-border/40 dark:border-border/40 ${AUTO_ACCENT_BG} px-3 py-2 text-left`}
+          >
+            <span className={`text-[10px] uppercase tracking-wide ${AUTO_ACCENT_TEXT} opacity-80`}>Cliente</span>
+            <span className="truncate text-sm font-medium">{cliente ? cliente.nome : 'Consumidor Final'}</span>
+          </button>
+          <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
+            <div className="relative shrink-0">
+              <div className={`w-11 h-11 ${AUTO_ACCENT_BG} rounded-xl flex items-center justify-center ${AUTO_ACCENT_TEXT}`}>
+                <ShoppingCart className="w-5 h-5" />
+              </div>
+              {totalItensCarrinho > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {totalItensCarrinho}
+                </span>
+              )}
+            </div>
+            <div className="text-right min-w-0">
+              <p className="text-xs text-muted-foreground">{totalItensCarrinho} itens</p>
+              <p className="text-xl font-bold text-foreground tabular-nums">R$ {totalCarrinho.toFixed(2)}</p>
+            </div>
+          </div>
+          <Button
+            size="lg"
+            className={`h-12 shrink-0 px-5 text-base ${AUTO_PRIMARY_BTN}`}
+            onClick={handlePaymentOpen}
+            disabled={carrinho.length === 0}
+          >
+            Finalizar
+          </Button>
         </div>
-        <Button
-          size="lg"
-          className="h-12 px-6 font-bold bg-emerald-600 hover:bg-emerald-700"
-          onClick={handlePaymentOpen}
-          disabled={carrinho.length === 0}
-        >
-          Finalizar
-        </Button>
       </div>
 
-      {/* Payment Dialog */}
       <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Pagamento</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-             <div className="space-y-4">
-                {/* Input fields for payment methods */}
+        <DialogContent className="desktop-layout:max-w-2xl max-w-none w-full h-[100dvh] desktop-layout:h-auto desktop-layout:max-h-[90vh] left-0 top-0 desktop-layout:left-[50%] desktop-layout:top-[50%] translate-x-0 translate-y-0 desktop-layout:translate-x-[-50%] desktop-layout:translate-y-[-50%] rounded-none desktop-layout:rounded-lg overflow-y-auto p-0 desktop-layout:p-0 gap-0">
+          <div className="h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shrink-0" />
+          <div className={`${AUTO_HEADER_CLASS} rounded-none`}>
+            <DialogTitle className="text-lg font-bold text-white">Pagamento</DialogTitle>
+            <p className="text-sm text-indigo-100 tabular-nums">R$ {totalCarrinho.toFixed(2)}</p>
+          </div>
+          <div className={`p-4 desktop-layout:p-6 grid grid-cols-1 desktop-layout:grid-cols-2 gap-4 desktop-layout:gap-8 ${AUTO_SHELL_BG}`}>
+             <div className="space-y-3 desktop-layout:space-y-4 order-2 desktop-layout:order-1">
                 {['Dinheiro', 'PIX', 'Cartão Débito', 'Cartão Crédito'].map((label, i) => {
                    const refs = [inputRefs.dinheiro, inputRefs.pix, inputRefs.debito, inputRefs.credito];
                    const vals = [inputDinheiro, inputPix, inputDebito, inputCredito];
                    const setters = [setInputDinheiro, setInputPix, setInputDebito, setInputCredito];
                    const numSetters = [setPagamentosDinheiro, setPagamentosPix, setPagamentosDebito, setPagamentosCredito];
                    const icons = [Banknote, Smartphone, CreditCard, CreditCard];
+                   const iconBg = [`${AUTO_ACCENT_BG} ${AUTO_ACCENT_TEXT}`, 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700', 'bg-teal-100 dark:bg-teal-900/40 text-teal-700', `${AUTO_ACCENT_BG} ${AUTO_ACCENT_TEXT}`];
                    const Icon = icons[i];
                    
                    return (
                      <div key={label} 
-                        className={`flex items-center justify-between p-3 rounded-lg cursor-pointer ${formaPagamentoAtiva === i ? 'bg-muted border border-indigo-200' : 'border border-transparent'}`}
-                        onClick={() => { setFormaPagamentoAtiva(i); refs[i].current?.focus(); }}
+                        className={`flex items-center justify-between p-4 rounded-2xl cursor-pointer min-h-[3.5rem] transition-all ${
+                          formaPagamentoAtiva === i
+                            ? `${AUTO_SURFACE_CLASS} border-2 border-[#4a5240] dark:border-[#a4ce33] shadow-sm`
+                            : `${AUTO_SURFACE_CLASS} border-2 border-transparent hover:border-[#4a5240]/30`
+                        }`}
+                        onClick={() => { setFormaPagamentoAtiva(i); focusAndSelect(refs[i].current); }}
                      >
-                        <div className="flex items-center gap-2">
-                           <Icon className="w-5 h-5 text-muted-foreground" />
-                           <span>{label}</span>
+                        <div className="flex items-center gap-3 min-w-0">
+                           <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${iconBg[i]}`}>
+                             <Icon className="w-5 h-5" />
+                           </div>
+                           <span className="text-sm desktop-layout:text-base font-medium">{label}</span>
                         </div>
                         <input autoComplete="off" 
                            ref={refs[i]}
                            value={vals[i]}
                            onChange={() => {}}
                            onKeyDown={(e) => handleInputMascara(e, setters[i], numSetters[i])}
-                           onFocus={(e) => { e.target.select(); setFormaPagamentoAtiva(i); }}
-                           className="w-24 text-right bg-transparent font-bold outline-none"
+                           onFocus={(e) => { selectAllOnFocus(e); setFormaPagamentoAtiva(i); }}
+                           onMouseDown={selectAllOnMouseDown}
+                           className={`w-28 desktop-layout:w-24 text-right bg-transparent font-bold outline-none text-base ${AUTO_ACCENT_TEXT}`}
                         />
                      </div>
                    );
                 })}
              </div>
-             <div className="bg-muted/40 p-6 rounded-xl flex flex-col justify-center items-center text-center">
-                <p className="text-sm text-muted-foreground uppercase">Total a Pagar</p>
-                <p className="text-3xl font-bold text-foreground mb-4">R$ {totalCarrinho.toFixed(2)}</p>
+             <div className={`${AUTO_SURFACE_CLASS} p-4 desktop-layout:p-6 flex flex-col justify-center items-center text-center order-1 desktop-layout:order-2 sticky top-0 desktop-layout:static z-10`}>
+                <p className={`text-xs desktop-layout:text-sm ${AUTO_ACCENT_TEXT} uppercase font-semibold tracking-wide opacity-80`}>Total a Pagar</p>
+                <p className={`text-3xl font-bold mb-2 desktop-layout:mb-4 tabular-nums ${AUTO_ACCENT_TEXT}`}>R$ {totalCarrinho.toFixed(2)}</p>
                 
-                {troco > 0 && <p className="text-emerald-600 font-bold text-xl">Troco: R$ {troco.toFixed(2)}</p>}
-                {valorRestante > 0.01 && <p className="text-amber-600 font-bold text-xl">Falta: R$ {valorRestante.toFixed(2)}</p>}
+                {troco > 0 && <p className="text-emerald-600 font-bold text-lg desktop-layout:text-xl tabular-nums">Troco: R$ {troco.toFixed(2)}</p>}
+                {valorRestante > 0.01 && <p className="text-amber-600 font-bold text-lg desktop-layout:text-xl tabular-nums">Falta: R$ {valorRestante.toFixed(2)}</p>}
 
                 <Button 
                   onClick={handleFinalizarVenda} 
                   disabled={!pagamentoValido || isProcessing}
-                  className="w-full mt-6 h-12 text-lg bg-indigo-600 hover:bg-indigo-700"
+                  className={`w-full mt-4 desktop-layout:mt-6 h-12 text-base desktop-layout:text-lg ${AUTO_PRIMARY_BTN}`}
                 >
                   {isProcessing ? 'Processando...' : 'Confirmar'}
                 </Button>
@@ -664,18 +813,21 @@ export default function PDVSupermercado() {
 
       {/* Client Selection Dialog */}
       <Dialog open={showClienteDialog} onOpenChange={setShowClienteDialog}>
-        <DialogContent>
-           <DialogHeader><DialogTitle>Selecionar Cliente</DialogTitle></DialogHeader>
-           <Input placeholder="Buscar cliente..." value={buscaCliente} onChange={e => setBuscaCliente(e.target.value)} autoFocus />
-           <div className="mt-4 max-h-60 overflow-y-auto">
+        <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] desktop-layout:w-full p-0 gap-0 overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+          <div className="p-6 bg-background dark:bg-card">
+           <DialogHeader><DialogTitle className={AUTO_ACCENT_TEXT}>Selecionar Cliente</DialogTitle></DialogHeader>
+           <Input placeholder="Buscar cliente..." value={buscaCliente} onChange={e => setBuscaCliente(e.target.value)} autoFocus className={`mt-4 ${AUTO_FIELD_CLASS}`} />
+           <div className="mt-4 max-h-60 overflow-y-auto space-y-1">
               {clientes.filter(c => c.nome.toLowerCase().includes(buscaCliente.toLowerCase())).map(c => (
-                 <div key={c.id} className="p-3 hover:bg-muted/40 cursor-pointer border-b" onClick={() => { setCliente(c); setShowClienteDialog(false); }}>
+                 <div key={c.id} className="p-3 hover:bg-secondary/60 dark:hover:bg-[#26262e] cursor-pointer rounded-xl border border-transparent hover:border-border/40" onClick={() => { setCliente(c); setShowClienteDialog(false); }}>
                     <p className="font-bold">{c.nome}</p>
                     <p className="text-xs text-muted-foreground">{c.cpf_cnpj}</p>
                  </div>
               ))}
            </div>
-           <Button variant="outline" onClick={() => { setCliente(null); setShowClienteDialog(false); }}>Consumidor Final</Button>
+           <Button variant="outline" onClick={() => { setCliente(null); setShowClienteDialog(false); }} className={`w-full mt-4 rounded-xl border-border/40 ${AUTO_ACCENT_TEXT} hover:bg-secondary/60`}>Consumidor Final</Button>
+          </div>
         </DialogContent>
       </Dialog>
 

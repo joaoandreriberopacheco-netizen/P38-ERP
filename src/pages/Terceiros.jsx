@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTerceirosListQuery, useP38QueryInvalidation } from '@/hooks/useP38Entities';
 import { p38Keys } from '@/lib/p38QueryConfig';
-import { Button } from '@/components/ui/button';
+import { P38PageHeader } from '@/components/layout/P38PageHeader';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -138,10 +138,10 @@ export default function TerceirosPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-4">
       {/* Header glacial */}
-      <div>
-        <h1 className="text-lg font-semibold text-foreground font-glacial">Terceiros</h1>
-        <p className="text-xs text-muted-foreground">Clientes, fornecedores e parceiros</p>
-      </div>
+      <P38PageHeader
+        title="Terceiros"
+        description="Clientes, fornecedores e parceiros"
+      />
 
       {/* Controles */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

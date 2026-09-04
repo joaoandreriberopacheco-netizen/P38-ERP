@@ -60,11 +60,9 @@ export const ALL_QUICK_ACTIONS = [
     label: 'Boats',
     page: 'ItinerarioFluvial',
     permissaoCheck: (p) =>
-      p?.estoque?.logistica === true ||
-      p?.estoque?.compras?.logistica === true ||
-      p?.estoque?.compras?.hub_logistico?.logistica === true ||
-      p?.estoque?.compras?.hub_logistico?.conferencia === true ||
-      p?.estoque?.compras?.pedidos === true,
+      p?.estoque?.compras?.pedidos === true ||
+      p?.estoque?.compras?.conferencia === true ||
+      p?.estoque?.compras?.sugestoes === true,
   },
   {
     id: 'dashboard',
@@ -86,7 +84,7 @@ export const ALL_QUICK_ACTIONS = [
     icon: QrCode,
     label: 'Conferência',
     page: 'ConferenciaEntrada',
-    permissaoCheck: (p) => p?.estoque?.compras?.hub_logistico?.conferencia || p?.estoque?.logistica,
+    permissaoCheck: (p) => p?.estoque?.compras?.conferencia === true,
   },
   {
     id: 'relatorios',
@@ -128,7 +126,7 @@ export const ALL_QUICK_ACTIONS = [
     id: 'agefin_consulta',
     icon: ReceiptText,
     label: 'AGEFIN',
-    page: 'AgefinConsulta',
+    page: 'SuperAgefin',
     permissaoCheck: (p) => p?.financeiro?.acesso || p?.dashboard?.acesso,
   },
   {

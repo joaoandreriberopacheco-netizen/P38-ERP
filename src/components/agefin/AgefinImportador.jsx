@@ -14,6 +14,7 @@ import {
 } from '@/lib/agefinLancamentosRecorrencia';
 import { uploadAnexoParaContaPrevista, uploadAnexoParaLancamentoFinanceiro } from '@/lib/uploadAnexoReferencia';
 import { extrairTextoPdfBrowser, normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
+import { buildLlmTelemetryContext } from '@/lib/p38LlmTelemetry';
 
 function normalizarTexto(value) {
   return String(value || '')
@@ -223,6 +224,7 @@ ${textoPdfLocal.slice(0, 14000)}`
 
       const extractedRaw = await base44.integrations.Core.InvokeLLM({
         file_urls: [file_url],
+        telemetry: buildLlmTelemetryContext({ source: 'agefin_importador', fileCount: 1 }),
         prompt: `Leia visualmente este documento brasileiro de cobran?a e extraia dados REAIS do conte?do do documento, nunca do nome do arquivo.
 
 Regras obrigat?rias:
@@ -273,6 +275,7 @@ Campos a interpretar do documento:
         // Segunda tentativa com prompt enxuto para documentos dif?ceis.
         const retryRaw = await base44.integrations.Core.InvokeLLM({
           file_urls: [file_url],
+          telemetry: buildLlmTelemetryContext({ source: 'agefin_importador_retry', fileCount: 1 }),
           prompt: `Extraia APENAS os campos listados (sem texto extra):
 - descricao
 - valor_pagamento (number)
@@ -550,7 +553,7 @@ ${blocoTextoLocal}`,
           terceiro_id: 'importado-manualmente',
           terceiro_nome: extractedData.terceiro_nome || 'Benefici?rio n?o identificado',
           categoria_financeira_id: 'importacao-pendente',
-          categoria_nome: 'Importa??o pendente',
+          categoria_nome: 'Importação pendente',
           valor_previsto: extractedData.valor,
           frequencia: selectedRecorrencia,
           dia_vencimento: Number((extractedData.data_vencimento || '').slice(8, 10)) || 1,
@@ -628,7 +631,7 @@ ${blocoTextoLocal}`,
         terceiro_id: recorrenteFinal?.terceiro_id || 'importado-manualmente',
         terceiro_nome: recorrenteFinal?.terceiro_nome || extractedData.terceiro_nome || 'Benefici?rio n?o identificado',
         categoria_financeira_id: recorrenteFinal?.categoria_financeira_id || 'importacao-pendente',
-        categoria_nome: recorrenteFinal?.categoria_nome || 'Importa??o pendente',
+        categoria_nome: recorrenteFinal?.categoria_nome || 'Importação pendente',
         valor: extractedData.valor,
         data_vencimento: extractedData.data_vencimento,
         natureza: recorrenteFinal ? 'Recorrente' : selectedNatureza,
@@ -862,7 +865,7 @@ ${blocoTextoLocal}`,
             <Button
               variant="outline"
               onClick={() => onSuccess?.(null, { close: true, voltarAtualizador: true })}
-              className="h-12 w-full rounded-2xl border-0 bg-[#2e2629] text-sm font-semibold text-white hover:bg-[#362d31] dark:bg-[#2e2629] dark:text-white"
+              className="h-12 w-full rounded-2xl border border-border bg-card text-sm font-semibold text-foreground hover:bg-muted dark:border-transparent dark:bg-muted dark:text-foreground"
             >
               Voltar j?
             </Button>
@@ -872,7 +875,7 @@ ${blocoTextoLocal}`,
             <Button
               variant="outline"
               onClick={() => onSuccess?.(null, { close: true })}
-              className="h-14 rounded-2xl border-0 bg-[#2e2629] text-base font-semibold text-white hover:bg-[#362d31] dark:bg-[#2e2629] dark:text-white"
+              className="h-14 rounded-2xl border border-border bg-card text-base font-semibold text-foreground hover:bg-muted dark:border-transparent dark:bg-muted dark:text-foreground"
             >
               Fechar
             </Button>
@@ -1022,13 +1025,13 @@ ${blocoTextoLocal}`,
         </div>
         <div className="sticky bottom-0 z-10 shrink-0 border-t border-white/5 bg-muted/40/95 px-5 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur dark:bg-muted/95 md:pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
           <div className="grid grid-cols-2 gap-3">
-            <Button variant="outline" onClick={resetState} className="h-14 rounded-2xl border-0 bg-[#2e2629] text-base font-semibold text-white">
+            <Button variant="outline" onClick={resetState} className="h-14 rounded-2xl border border-border bg-card text-base font-semibold text-foreground hover:bg-muted dark:border-transparent dark:bg-muted dark:text-foreground">
               Cancelar
             </Button>
             <Button
               onClick={handleConfirm}
               disabled={loading || !file?.original}
-              className="h-14 rounded-2xl bg-muted text-base font-semibold text-foreground"
+              className="h-14 rounded-2xl bg-primary text-base font-semibold text-primary-foreground hover:bg-primary/90 dark:bg-[#a4ce33] dark:text-[#1f1d22] dark:hover:bg-[#a4ce33]/90"
             >
               {loading ? 'Vinculando...' : 'Vincular boleto'}
             </Button>
@@ -1255,14 +1258,14 @@ ${blocoTextoLocal}`,
           <Button
             variant="outline"
             onClick={resetState}
-            className="h-14 rounded-2xl border-0 bg-[#2e2629] text-base font-semibold text-white hover:bg-[#362d31] dark:bg-[#2e2629] dark:text-white"
+            className="h-14 rounded-2xl border border-border bg-card text-base font-semibold text-foreground hover:bg-muted dark:border-transparent dark:bg-muted dark:text-foreground"
           >
             Cancelar
           </Button>
           <Button
             onClick={handleConfirm}
             disabled={loading || (!fluxoListaRecorrentes && !selectedNatureza) || !contaFinanceiraId}
-            className="h-14 rounded-2xl bg-muted text-base font-semibold text-foreground hover:bg-muted-foreground/40 dark:bg-muted dark:text-foreground dark:hover:bg-card"
+            className="h-14 rounded-2xl bg-primary text-base font-semibold text-primary-foreground hover:bg-primary/90 dark:bg-[#a4ce33] dark:text-[#1f1d22] dark:hover:bg-[#a4ce33]/90"
           >
             {loading ? 'Salvando...' : fluxoListaRecorrentes ? 'Guardar boleto' : 'Salvar Conta'}
           </Button>

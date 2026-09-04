@@ -19,12 +19,14 @@ import {
   usuarioLegadoSemMatrizPerfil,
   perfilResolvidoParaUsuario,
 } from '@/lib/perfilPermissoes';
+import { SMART_SUPPLY_MENU_LABEL } from '@/config/smartSupplyFlags';
 import {
   LayoutDashboard, House, Monitor, Banknote, TrendingUp, Package,
   DollarSign, BookOpen, Settings, ShoppingCart, Warehouse, Truck, ClipboardPenLine,
   Users, TrendingDown, Lightbulb, FileText, PackageSearch, Ship,
   ScanLine, ClipboardList, Tags, Upload, CheckSquare, Search, Activity,
-  ArrowLeftRight, CreditCard, Clock, Wallet, ReceiptText, AlertCircle, Repeat2, CalendarClock, Target, LineChart
+  ArrowLeftRight, CreditCard, Clock, Wallet, ReceiptText, AlertCircle, Repeat2, CalendarClock, Target, LineChart,
+  Sparkles, Heart,
 } from 'lucide-react';
 
 export { resolverPermissoes };
@@ -51,12 +53,18 @@ const MINIMAL_MENU_ITEMS = [
   },
 ];
 
+function filterSubmenuByPermissoes(submenu, permissoes) {
+  return submenu.filter((sub) => (sub.permissaoCheck ? sub.permissaoCheck(permissoes) : true));
+}
+
 export function buildMenuItems(user, perfilDeAcesso) {
   if (user?.role === 'admin') return ALL_MENU_ITEMS;
 
   const temPerfil = !!user?.perfil_acesso_id;
 
-  if (usuarioLegadoSemMatrizPerfil(user)) return ALL_MENU_ITEMS.filter((item) => !item.adminOnly);
+  if (usuarioLegadoSemMatrizPerfil(user)) {
+    return ALL_MENU_ITEMS.filter((item) => item.page !== 'Configuracoes');
+  }
 
   const perfilEfetivo = perfilResolvidoParaUsuario(user, perfilDeAcesso);
   if (temPerfil && !perfilEfetivo) return MINIMAL_MENU_ITEMS;
@@ -64,7 +72,12 @@ export function buildMenuItems(user, perfilDeAcesso) {
   const permissoes = resolverPermissoes(perfilEfetivo, user?.override_permissoes);
 
   if (perfilTemEscopoTotal(perfilEfetivo)) {
-    return ALL_MENU_ITEMS.filter((item) => !item.adminOnly);
+    return ALL_MENU_ITEMS.filter((item) => {
+      if (item.page === 'Configuracoes') {
+        return permissoes?.configuracoes?.acesso === true;
+      }
+      return true;
+    });
   }
 
   const algumaPermissao = Object.values(permissoes || {}).some((mod) => {
@@ -80,14 +93,11 @@ export function buildMenuItems(user, perfilDeAcesso) {
   if (!algumaPermissao) return MINIMAL_MENU_ITEMS;
 
   return ALL_MENU_ITEMS
-    .map(item => {
+    .map((item) => {
       if (!item.submenu) return item;
-      const subsFiltrados = item.submenu.filter(sub =>
-        sub.permissaoCheck ? sub.permissaoCheck(permissoes) : true
-      );
-      return { ...item, submenu: subsFiltrados };
+      return { ...item, submenu: filterSubmenuByPermissoes(item.submenu, permissoes) };
     })
-    .filter(item => {
+    .filter((item) => {
       const pass = item.permissaoCheck ? item.permissaoCheck(permissoes) : true;
       if (!pass) return false;
       if (item.submenu) return item.submenu.length > 0;
@@ -186,12 +196,10 @@ export const ALL_MENU_ITEMS = [
       p?.estoque?.compras?.sugestoes ||
       p?.estoque?.compras?.cotacoes ||
       p?.estoque?.compras?.pedidos ||
-      p?.estoque?.compras?.conferencia ||
-      p?.estoque?.compras?.logistica ||
-      p?.estoque?.logistica,
+      p?.estoque?.compras?.conferencia,
     submenu: [
       {
-        name: 'Sugestões de Compra',
+        name: SMART_SUPPLY_MENU_LABEL,
         page: 'SugestoesCompra',
         icon: Lightbulb,
         permissaoCheck: (p) => p?.estoque?.compras?.sugestoes === true
@@ -213,13 +221,25 @@ export const ALL_MENU_ITEMS = [
         name: 'Conferência de Entrada',
         page: 'ConferenciaEntrada',
         icon: ScanLine,
-        permissaoCheck: (p) => p?.estoque?.compras?.conferencia === true || p?.estoque?.logistica === true
+        permissaoCheck: (p) => p?.estoque?.compras?.conferencia === true
       },
       {
         name: 'Boats',
         page: 'ItinerarioFluvial',
         icon: Ship,
-        permissaoCheck: (p) => p?.estoque?.compras?.logistica === true || p?.estoque?.logistica === true
+        permissaoCheck: (p) =>
+          p?.estoque?.compras?.conferencia === true || p?.estoque?.compras?.pedidos === true
+      },
+      {
+        name: 'Portal catálogo',
+        page: 'HierarquiaPortal',
+        icon: Sparkles,
+        permissaoCheck: (p) =>
+          p?.estoque?.compras?.sugestoes ||
+          p?.estoque?.compras?.cotacoes ||
+          p?.estoque?.compras?.pedidos ||
+          p?.estoque?.compras?.conferencia ||
+          p?.estoque?.compras_ativo,
       }
     ]
   },
@@ -312,7 +332,7 @@ export const ALL_MENU_ITEMS = [
       },
       {
         name: 'AGEFIN',
-        page: 'AgefinConsulta',
+        page: 'SuperAgefin',
         icon: Repeat2,
         permissaoCheck: (p) => p?.financeiro?.acesso === true
       },
@@ -323,7 +343,7 @@ export const ALL_MENU_ITEMS = [
         permissaoCheck: (p) => p?.financeiro?.acesso === true
       },
       {
-        name: 'Budgets',
+        name: 'Gastos sem Vencimento',
         page: 'Budgets',
         icon: Target,
         permissaoCheck: (p) => p?.financeiro?.acesso === true
@@ -335,16 +355,22 @@ export const ALL_MENU_ITEMS = [
         permissaoCheck: (p) => p?.financeiro?.acesso === true
       },
       {
+        name: 'Dízimo',
+        page: 'Dizimo',
+        icon: Heart,
+        permissaoCheck: (p) => p?.financeiro?.acesso === true
+      },
+      {
         name: 'Contas',
         page: 'ContasFinanceiras',
         icon: Wallet,
-        permissaoCheck: (p) => p?.financeiro?.acesso === true
+        permissaoCheck: (p) => p?.financeiro?.contas === true || p?.financeiro?.acesso === true
       },
       {
         name: 'Aprovações',
         page: 'AprovacoesFinanceiras',
         icon: CreditCard,
-        permissaoCheck: (p) => p?.financeiro?.acesso === true
+        permissaoCheck: (p) => p?.financeiro?.aprovar_pagamentos === true || p?.financeiro?.acesso === true
       },
       {
         name: 'Caixas Ativos',
@@ -370,7 +396,6 @@ export const ALL_MENU_ITEMS = [
     name: 'Configurações',
     icon: Settings,
     page: 'Configuracoes',
-    adminOnly: true,
     permissaoCheck: (p) => p?.configuracoes?.acesso === true
   }
 ];

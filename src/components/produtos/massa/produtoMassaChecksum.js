@@ -37,6 +37,7 @@ export const PRODUTO_CANON_SEGMENTS = [
   { key: 'custo_frete_padrao', kind: 'num' },
   { key: 'custo_imposto1_padrao', kind: 'num' },
   { key: 'custo_imposto2_padrao', kind: 'num' },
+  { key: 'avaria_percentual', kind: 'num' },
   { key: 'desconto_compra_padrao', kind: 'num' },
   { key: 'preco_venda_padrao', kind: 'num' },
   { key: 'unidade_principal', kind: 'str' },

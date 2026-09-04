@@ -3,121 +3,32 @@ import { Receipt } from 'lucide-react';
 import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import { cn } from '@/components/utils';
 import { p38Table } from '@/lib/p38TableSurfaces';
-import { p38Accent } from '@/lib/p38ThemeSurfaces';
 import CaixaValorDisplay, { formatCaixaR } from '@/components/vendas/caixa/CaixaValorDisplay';
-import { caixaTypo } from '@/lib/caixaP38Theme';
+import { caixaConsultaCard, caixaChipActive, caixaChipInactive, caixaChipTrack, caixaTypo } from '@/lib/caixaP38Theme';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
-import { formatCommercialQuantity } from '@/lib/productUnits';
 import { formatarDataHora } from '@/components/utils/dateUtils';
 import FormaPagamentoBadges from '@/components/vendas/FormaPagamentoBadges';
+import TrocaCaixaCard from '@/components/vendas/caixa/TrocaCaixaCard';
+import ConsultaSubstituicaoPainel from '@/components/vendas/caixa/ConsultaSubstituicaoPainel';
+import { ConsultaProdutoRow } from '@/components/vendas/caixa/ConsultaProdutoRow';
+import VendaValorResumo from '@/components/vendas/caixa/VendaValorResumo';
+import { montarConsultaComprovantePosMovimentacao, aggregateProdutosConsulta } from '@/lib/consultaVendaPosMovimentacao';
+import {
+  partitionVendasConsultaCaixa,
+} from '@/lib/substituicoesVendaCaixa';
+import {
+  isPagamentoMistoParaForma,
+  valorFormaPagamentoNoPedido,
+} from '@/lib/formasPagamentoCaixa';
 
-/** Coluna Qtd (cima) + Un (baixo) + barra vertical — como relatório de compras / margem mobile */
-function ConsultaQtdUnCol({ qtd, unidade, accent = 'success' }) {
-  const dotClass = accent === 'muted' ? p38Accent.muted.dot : p38Table.accentDot;
-  return (
-    <div className="relative w-[3.25rem] flex-shrink-0 border-r border-border/40 dark:border-white/10 pr-1.5 py-2.5 text-right">
-      <span className={`absolute left-0 top-3 ${dotClass}`} aria-hidden />
-      <p className="text-base font-din-1451 tabular-nums text-foreground leading-none">
-        {formatCommercialQuantity(qtd, unidade)}
-      </p>
-      <p className={`${caixaTypo.labelSm} mt-1.5 leading-none truncate`}>
-        {(unidade || 'UN').toUpperCase()}
-      </p>
-    </div>
-  );
-}
-
-function resolvePrecoUnitarioEfetivo({ quantidade, total, precoLista, descontoUnitario }) {
-  const qtd = Number(quantidade) || 0;
-  const totalNum = Number(total);
-  if (qtd > 0 && Number.isFinite(totalNum)) {
-    return roundToTwoDecimals(totalNum / qtd);
-  }
-  const preco = Number(precoLista) || 0;
-  const desconto = Number(descontoUnitario) || 0;
-  return roundToTwoDecimals(preco - desconto);
-}
-
-function ConsultaProdutoRow({
-  quantidade,
-  unidade,
-  nome,
-  valorTotal,
-  precoLista,
-  descontoUnitario,
-  striped = false,
-  accent = 'success',
-}) {
-  const borderClass = accent === 'muted' ? p38Accent.muted.border : p38Accent.success.border;
-  const precoEfetivo = resolvePrecoUnitarioEfetivo({
-    quantidade,
-    total: valorTotal,
-    precoLista,
-    descontoUnitario,
-  });
-  const precoTabela = Number(precoLista) || 0;
-  const temDesconto = precoTabela > precoEfetivo + 0.009;
-
-  return (
-    <div
-      className={cn(
-        p38Table.mobileLineThin,
-        borderClass,
-        'flex min-w-0',
-        striped && 'bg-secondary/15 dark:bg-secondary/20',
-      )}
-    >
-      <ConsultaQtdUnCol qtd={quantidade} unidade={unidade} accent={accent} />
-      <div className="flex-1 min-w-0 py-2 pr-3 pl-2">
-        <p className={cn(p38Table.mobileLineTitle, 'line-clamp-3 leading-snug')}>{nome}</p>
-        <div className="flex items-baseline justify-between gap-3 mt-1">
-          <p className={`${caixaTypo.meta} normal-case tabular-nums min-w-0`}>
-            {temDesconto && (
-              <span className="line-through text-muted-foreground/70 mr-1.5">
-                {formatCaixaR(precoTabela)}
-              </span>
-            )}
-            <span className="text-foreground/90">{formatCaixaR(precoEfetivo)} un.</span>
-          </p>
-          <div className="shrink-0">
-            <CaixaValorDisplay
-              valor={valorTotal}
-              tone={accent === 'muted' ? 'neutral' : 'success'}
-              signed={accent !== 'muted'}
-              size="sm"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+function horaDaVenda(venda) {
+  if (!venda?.created_date) return '';
+  return formatarDataHora(venda.created_date).split(' ')[1] || '';
 }
 
 function parseNumeroComprovante(numero) {
   const digits = String(numero || '').replace(/\D/g, '');
   return digits ? parseInt(digits, 10) : 0;
-}
-
-function aggregateByProduto(vendas) {
-  const map = new Map();
-  (vendas || []).forEach((venda) => {
-    (venda.itens || []).forEach((item) => {
-      const key = item.produto_id || item.produto_nome || 'sem-id';
-      const qtd = Number(item.quantidade) || 0;
-      const total = Number(item.total) || roundToTwoDecimals((Number(item.preco_unitario_praticado) || 0) * qtd);
-      const prev = map.get(key) || {
-        key,
-        nome: item.produto_nome || 'Produto',
-        unidade: item.unidade_medida || 'UN',
-        quantidade: 0,
-        total: 0,
-      };
-      prev.quantidade += qtd;
-      prev.total = roundToTwoDecimals(prev.total + total);
-      map.set(key, prev);
-    });
-  });
-  return [...map.values()].sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' }));
 }
 
 function sortByComprovante(vendas) {
@@ -129,20 +40,46 @@ function sortByComprovante(vendas) {
   });
 }
 
+function TrocaResumoLinha({ venda, meta }) {
+  return <TrocaCaixaCard venda={venda} meta={meta} />;
+}
+
 export default function ConsultaVendasCaixa({
   vendasFinalizadas = [],
-  onVerDetalhes,
+  metaPorPedidoId = {},
+  indiceDevolucoes = { porPedidoId: new Map(), porPedidoNumero: new Map() },
   contextLabel = 'Consulta do turno',
   emptyMessage = 'Nenhuma venda finalizada no turno',
+  formaPagamentoKey = null,
+  formaPagamentoLabel = null,
+  totalFormaPagamento = null,
+  forcarModoComprovante = false,
 }) {
-  const [modo, setModo] = useState('produto');
+  const [modo, setModo] = useState('comprovante');
+  const modoEfetivo = forcarModoComprovante || formaPagamentoKey ? 'comprovante' : modo;
 
-  const produtosAgregados = useMemo(() => aggregateByProduto(vendasFinalizadas), [vendasFinalizadas]);
-  const vendasOrdenadas = useMemo(() => sortByComprovante(vendasFinalizadas), [vendasFinalizadas]);
+  const { trocas, normais } = useMemo(
+    () => partitionVendasConsultaCaixa(vendasFinalizadas, metaPorPedidoId),
+    [vendasFinalizadas, metaPorPedidoId]
+  );
 
-  const totalGeral = useMemo(
-    () => roundToTwoDecimals(vendasFinalizadas.reduce((acc, v) => acc + (Number(v.valor_total) || 0), 0)),
-    [vendasFinalizadas]
+  const produtosAgregados = useMemo(
+    () => aggregateProdutosConsulta(normais, indiceDevolucoes),
+    [normais, indiceDevolucoes],
+  );
+  const vendasOrdenadas = useMemo(() => sortByComprovante(normais), [normais]);
+  const trocasOrdenadas = useMemo(() => sortByComprovante(trocas), [trocas]);
+
+  const totalGeral = useMemo(() => {
+    if (formaPagamentoKey && totalFormaPagamento != null) {
+      return roundToTwoDecimals(totalFormaPagamento);
+    }
+    return roundToTwoDecimals(vendasFinalizadas.reduce((acc, v) => acc + (Number(v.valor_total) || 0), 0));
+  }, [vendasFinalizadas, formaPagamentoKey, totalFormaPagamento]);
+
+  const totalTrocas = useMemo(
+    () => roundToTwoDecimals(trocas.reduce((acc, v) => acc + (Number(v.valor_total) || 0), 0)),
+    [trocas]
   );
 
   if (vendasFinalizadas.length === 0) {
@@ -161,76 +98,157 @@ export default function ConsultaVendasCaixa({
           <p className={caixaTypo.labelSm}>{contextLabel}</p>
           <CaixaValorDisplay valor={totalGeral} tone="success" size="lg" />
           <p className={`${caixaTypo.meta} mt-1`}>
-            {vendasFinalizadas.length} comprovante{vendasFinalizadas.length === 1 ? '' : 's'}
+            {normais.length} venda{normais.length === 1 ? '' : 's'}
+            {trocas.length > 0
+              ? ` · ${trocas.length} troca${trocas.length === 1 ? '' : 's'} (${formatCaixaR(totalTrocas)} no caixa)`
+              : ''}
           </p>
         </div>
-        <div className="flex rounded-2xl bg-muted/50 p-1 gap-1">
-          <button
-            type="button"
-            onClick={() => setModo('produto')}
-            className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${modo === 'produto' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
-          >
-            Por produto
-          </button>
-          <button
-            type="button"
-            onClick={() => setModo('comprovante')}
-            className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${modo === 'comprovante' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
-          >
-            Por comprovante
-          </button>
-        </div>
+        {!forcarModoComprovante && (
+          <div className={`flex rounded-2xl p-1 gap-1 ${caixaChipTrack}`}>
+            <button
+              type="button"
+              onClick={() => setModo('produto')}
+              className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${modo === 'produto' ? caixaChipActive : caixaChipInactive}`}
+            >
+              Por produto
+            </button>
+            <button
+              type="button"
+              onClick={() => setModo('comprovante')}
+              className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${modo === 'comprovante' ? caixaChipActive : caixaChipInactive}`}
+            >
+              Por comprovante
+            </button>
+          </div>
+        )}
       </div>
 
-      {modo === 'produto' ? (
-        <P38MobileLineList allViewports className="rounded-lg">
-          {produtosAgregados.map((p, index) => (
-            <ConsultaProdutoRow
-              key={p.key}
-              quantidade={p.quantidade}
-              unidade={p.unidade}
-              nome={p.nome}
-              valorTotal={p.total}
-              striped={index % 2 === 1}
-            />
-          ))}
-        </P38MobileLineList>
-      ) : (
-        <div className="space-y-3">
-          {vendasOrdenadas.map((venda) => (
-            <div key={venda.id} className="bg-card rounded-2xl shadow-sm overflow-hidden">
-              <button
-                type="button"
-                onClick={() => onVerDetalhes?.(venda)}
-                className="w-full flex items-center justify-between gap-3 px-4 py-3 border-b border-border/40 text-left hover:bg-muted/30 transition-colors"
-              >
-                <div className="min-w-0">
-                  <p className={`${p38Table.mobileLineTitle} truncate`}>{venda.numero}</p>
-                  <p className={`${p38Table.mobileLineSubtitle} truncate`}>
-                    {venda.cliente_nome || 'Avulso'}
-                    {venda.created_date ? ` · ${formatarDataHora(venda.created_date).split(' ')[1] || ''}` : ''}
-                  </p>
-                  <FormaPagamentoBadges pagamentos={venda.pagamentos} className="mt-1.5" size="xs" />
-                </div>
-                <CaixaValorDisplay valor={venda.valor_total} tone="success" size="sm" />
-              </button>
-              <P38MobileLineList allViewports className="rounded-none border-0">
-                {(venda.itens || []).map((item, idx) => (
+      {modoEfetivo === 'produto' ? (
+        <div className="space-y-4">
+          {trocasOrdenadas.length > 0 && (
+            <div className="space-y-2">
+              <p className={`${caixaTypo.labelSm} px-1`}>
+                Trocas ({trocasOrdenadas.length})
+              </p>
+              <div className="space-y-2">
+                {trocasOrdenadas.map((venda) => (
+                  <TrocaResumoLinha
+                    key={venda.id}
+                    venda={venda}
+                    meta={metaPorPedidoId[venda.id]}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+          {produtosAgregados.length > 0 ? (
+            <div className="space-y-2">
+              {trocasOrdenadas.length > 0 && (
+                <p className={`${caixaTypo.labelSm} px-1`}>Vendas por produto</p>
+              )}
+              <P38MobileLineList allViewports className="rounded-lg">
+                {produtosAgregados.map((p, index) => (
                   <ConsultaProdutoRow
-                    key={`${venda.id}-${idx}`}
-                    quantidade={item.quantidade}
-                    unidade={item.unidade_medida}
-                    nome={item.produto_nome}
-                    valorTotal={item.total || (Number(item.preco_unitario_praticado) || 0) * (Number(item.quantidade) || 0)}
-                    precoLista={item.preco_unitario_praticado}
-                    descontoUnitario={item.desconto_unitario}
-                    striped={idx % 2 === 1}
-                    accent="muted"
+                    key={p.key}
+                    quantidade={p.quantidade}
+                    unidade={p.unidade}
+                    nome={p.nome}
+                    valorTotal={p.total}
+                    striped={index % 2 === 1}
                   />
                 ))}
               </P38MobileLineList>
             </div>
-          ))}
+          ) : trocasOrdenadas.length > 0 ? (
+            <p className={`${caixaTypo.meta} px-1`}>Sem vendas normais no turno — apenas trocas.</p>
+          ) : null}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {trocasOrdenadas.length > 0 && (
+            <div className="space-y-3">
+              <p className={`${caixaTypo.labelSm} px-1`}>
+                Trocas ({trocasOrdenadas.length})
+              </p>
+              {trocasOrdenadas.map((venda) => (
+                <TrocaCaixaCard
+                  key={venda.id}
+                  venda={venda}
+                  meta={metaPorPedidoId[venda.id]}
+                />
+              ))}
+            </div>
+          )}
+          {vendasOrdenadas.length > 0 && (
+            <div className="space-y-3">
+              {trocasOrdenadas.length > 0 && (
+                <p className={`${caixaTypo.labelSm} px-1`}>Vendas ({vendasOrdenadas.length})</p>
+              )}
+              {vendasOrdenadas.map((venda) => {
+                const pagamentoMisto = formaPagamentoKey
+                  ? isPagamentoMistoParaForma(venda, formaPagamentoKey)
+                  : false;
+                const valorForma = formaPagamentoKey && pagamentoMisto
+                  ? valorFormaPagamentoNoPedido(venda, formaPagamentoKey)
+                  : null;
+                const hora = horaDaVenda(venda);
+                const posMovimentacao = montarConsultaComprovantePosMovimentacao(venda, indiceDevolucoes);
+                const itensExibir = posMovimentacao?.itensAjustados?.length
+                  ? posMovimentacao.itensAjustados
+                  : venda.itens || [];
+
+                return (
+                <div key={venda.id} className={caixaConsultaCard}>
+                  <div className="w-full flex items-start justify-between gap-2 px-4 py-3 border-b border-border/40 dark:border-white/10 overflow-visible">
+                    <div className="min-w-0 flex-1">
+                      <p className={`${p38Table.mobileLineTitle} flex items-center gap-1.5 min-w-0`}>
+                        <span className="truncate">{venda.numero}</span>
+                        {hora ? (
+                          <span className={`${p38Table.mobileLineSubtitle} shrink-0`}>
+                            · {hora}
+                          </span>
+                        ) : null}
+                      </p>
+                      <p className={`${p38Table.mobileLineSubtitle} truncate`}>
+                        {venda.cliente_nome || 'Avulso'}
+                      </p>
+                      <FormaPagamentoBadges pagamentos={venda.pagamentos} className="mt-1.5" size="xs" palette="caixa" />
+                    </div>
+                    <VendaValorResumo
+                      venda={venda}
+                      size="sm"
+                      valorDestaque={valorForma}
+                      formaPagamentoLabel={formaPagamentoLabel}
+                      pagamentoMisto={pagamentoMisto}
+                    />
+                  </div>
+                  <P38MobileLineList allViewports className="rounded-none border-0 overflow-hidden">
+                    {itensExibir.map((item, idx) => (
+                      <ConsultaProdutoRow
+                        key={`${venda.id}-${item.produto_id || idx}`}
+                        quantidade={item.quantidade}
+                        unidade={item.unidade_medida}
+                        nome={item.produto_nome}
+                        valorTotal={item.total || (Number(item.preco_unitario_praticado) || 0) * (Number(item.quantidade) || 0)}
+                        precoLista={item.preco_unitario_praticado}
+                        descontoUnitario={item.desconto_unitario}
+                        striped={idx % 2 === 1}
+                        accent={posMovimentacao ? 'info' : 'muted'}
+                      />
+                    ))}
+                  </P38MobileLineList>
+                  {posMovimentacao ? (
+                    <ConsultaSubstituicaoPainel
+                      substituicoes={posMovimentacao.substituicoes}
+                      saldoOperacao={posMovimentacao.saldoOperacao}
+                    />
+                  ) : null}
+                </div>
+              );
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>

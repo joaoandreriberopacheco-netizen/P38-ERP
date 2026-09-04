@@ -40,9 +40,23 @@ import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelector
 import { buildSaleUnitOptions, calculateBaseQuantity, formatEstoqueDisponivelLabel, getItemUnitKey, pickDefaultSaleUnit } from '@/lib/productUnits';
 import { filterAndSortProducts, sortProductsAlphabetically } from '@/components/compras/productMatchingUtils';
 import { productCodesMatch } from '@/lib/productCode';
+import { isVendaSemEstoquePermitida } from '@/lib/configFlags';
+import { selectAllOnFocus } from '@/lib/inputFocusUtils';
+import {
+  filterProdutosDisponiveisPdv,
+  isProdutoDisponivelPdv,
+} from '@/lib/hierarquiaPortal/produtoPdvDisponibilidade';
+import ProdutoThumb from '@/components/produtos/ProdutoThumb';
+import { consumirOrcamentoParaPdv } from '@/lib/orcamentoRapidoPdvBridge';
+import { usePermissoesUsuario } from '@/hooks/usePermissoesUsuario';
 
 export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   const navigate = useNavigate();
+  const { tem: podePerm } = usePermissoesUsuario();
+  const podeDesconto = podePerm('pdv.aplicar_desconto', 'pdv.acesso_vendedor');
+  const podeRemoverItem = podePerm('pdv.cancelar_item_venda', 'pdv.acesso_vendedor');
+  const podeCancelarVenda = podePerm('pdv.cancelar_venda', 'pdv.acesso_vendedor');
+  const podeHistorico = podePerm('pdv.ver_historico_vendas', 'pdv.acesso_vendedor');
 
   const handleClose = () => {
     if (overlayMode && onClose) {
@@ -88,6 +102,11 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [sugestoesContextuais, setSugestoesContextuais] = useState([]);
   const [configVenda, setConfigVenda] = useState(null);
+  const [configEstoque, setConfigEstoque] = useState(null);
+  const vendaSemEstoquePermitida = useMemo(
+    () => isVendaSemEstoquePermitida(configVenda, configEstoque),
+    [configVenda, configEstoque]
+  );
   const [showReeditarDialog, setShowReeditarDialog] = useState(false);
   const [senhaReeditar, setSenhaReeditar] = useState('');
   const [rascunhoEmEdicaoId, setRascunhoEmEdicaoId] = useState(null);
@@ -221,6 +240,10 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   useEffect(() => {
     loadDependencies();
     loadConfiguracoesVenda();
+    const urlParams = new URLSearchParams(window.location.search);
+    if (!urlParams.get('rascunho_id')) {
+      verificarOrcamentoRapidoParaPdv();
+    }
     verificarRascunhoParaEdicao();
   }, []);
 
@@ -236,19 +259,49 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
 
   const loadConfiguracoesVenda = async () => {
     try {
-      const configs = await base44.entities.ConfiguracoesVenda.list();
-      if (configs.length > 0) {
-        console.log('ConfigVenda carregada:', configs[0]);
-        setConfigVenda(configs[0]);
-        if (configs[0].auto_delivery_balcao) {
+      const [configsVenda, configsEstoque] = await Promise.all([
+        base44.entities.ConfiguracoesVenda.list(),
+        base44.entities.ConfiguracoesEstoque.list(),
+      ]);
+      if (configsVenda.length > 0) {
+        setConfigVenda(configsVenda[0]);
+        if (configsVenda[0].auto_delivery_balcao) {
           setMetodoEntrega('Retirada');
         }
-      } else {
-        console.log('Nenhuma configuração de venda encontrada');
+      }
+      if (configsEstoque.length > 0) {
+        setConfigEstoque(configsEstoque[0]);
       }
     } catch (error) {
       console.error('Erro ao carregar configurações:', error);
     }
+  };
+
+  const verificarOrcamentoRapidoParaPdv = () => {
+    const payload = consumirOrcamentoParaPdv();
+    if (!payload?.items?.length) return;
+
+    setCarrinho(normalizeCartItems(payload.items));
+
+    if (payload.clienteNome?.trim()) {
+      setClienteSelecionado({ id: null, nome: payload.clienteNome.trim() });
+    }
+
+    if (Number(payload.valorDesconto) > 0) {
+      setTipoAjuste('desconto');
+      setValorAjuste(Number(payload.valorDesconto));
+      setAjusteValor(Number(payload.valorDesconto).toFixed(2));
+      setTipoValorAjuste('valor');
+      setAjustePercentual('');
+    }
+
+    const ref = payload.orcamentoNumero || payload.orcamentoId?.slice(0, 8) || '';
+    showFeedback(
+      'success',
+      ref ? `Orçamento rápido ${ref} no PDV` : 'Orçamento rápido carregado no PDV',
+      3000,
+    );
+    setTimeout(() => inputProdutoRef.current?.focus(), 400);
   };
 
   const verificarRascunhoParaEdicao = async () => {
@@ -480,7 +533,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
       base44.entities.Terceiro.filter({ tipo: ['Cliente', 'Ambos'] })]
       );
 
-      setProdutos(produtosData);
+      setProdutos(filterProdutosDisponiveisPdv(produtosData));
       setCurrentUser(userData);
       setClientes(clientesData);
 
@@ -534,6 +587,11 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   };
 
   const handleSelecionarProduto = (produto) => {
+    if (!isProdutoDisponivelPdv(produto)) {
+      showFeedback('error', 'Produto na reserva — não disponível para venda no PDV.', 3000);
+      return;
+    }
+
     setBuscaProduto('');
     setShowSuggestions(false);
     setQuantidadeAtual('');
@@ -561,9 +619,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
     const fatorConversao = produtoSelecionado.fator_conversao || 1;
     const quantidadeBase = calculateBaseQuantity(quantidade, fatorConversao);
 
-    console.log('Verificando estoque - Config:', configVenda, 'Vender sem estoque:', configVenda?.vender_sem_estoque, 'Estoque:', produtoSelecionado.estoque_atual, 'Quantidade base:', quantidadeBase);
-
-    if (configVenda?.vender_sem_estoque !== true && produtoSelecionado.estoque_atual < quantidadeBase) {
+    if (!vendaSemEstoquePermitida && produtoSelecionado.estoque_atual < quantidadeBase) {
       showFeedback('error', `Estoque insuficiente: ${formatEstoqueDisponivelLabel(produtoSelecionado)} disponível`, 3000);
       return;
     }
@@ -662,7 +718,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
     } else {
       const item = carrinho.find((i) => i.item_key === itemKey);
       const quantidadeBase = calculateBaseQuantity(novaQuantidade, item?.fator_conversao || 1);
-      if (configVenda?.vender_sem_estoque === true || item && quantidadeBase <= item.estoque_disponivel) {
+      if (vendaSemEstoquePermitida || item && quantidadeBase <= item.estoque_disponivel) {
         setCarrinho(carrinho.map((item) =>
         item.item_key === itemKey ?
         { ...item, quantidade: novaQuantidade, quantidade_base: quantidadeBase, total: novaQuantidade * item.preco_unitario } :
@@ -717,10 +773,18 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   };
 
   const handleRemoveItem = (itemKey) => {
+    if (!podeRemoverItem) {
+      showFeedback('error', 'Sem permissão para remover itens do carrinho', 3000);
+      return;
+    }
     setCarrinho(carrinho.filter((item) => item.item_key !== itemKey));
   };
 
   const handleLimparCarrinho = () => {
+    if (!podeCancelarVenda) {
+      showFeedback('error', 'Sem permissão para cancelar/limpar a venda', 3000);
+      return;
+    }
     setCarrinho([]);
     setProdutoSelecionado(null);
     setValorAjuste(0);
@@ -1082,14 +1146,18 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <Button variant="ghost" size="icon" onClick={() => setShowOrcamentosRecentes(true)}
-                className="h-9 w-9 rounded-2xl bg-muted dark:bg-card text-muted-foreground hover:text-foreground/90 hover:bg-muted dark:hover:bg-muted" title="Orçamentos recentes">
-                <FileText className="w-4 h-4 stroke-[1.5]" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={() => setShowReeditarDialog(true)}
-                className="h-9 w-9 rounded-2xl bg-muted dark:bg-card text-muted-foreground hover:text-foreground/90 hover:bg-muted dark:hover:bg-muted" title="Reeditar rascunho">
-                <Edit className="w-4 h-4 stroke-[1.5]" />
-              </Button>
+              {podeHistorico && (
+                <Button variant="ghost" size="icon" onClick={() => setShowOrcamentosRecentes(true)}
+                  className="h-9 w-9 rounded-2xl bg-muted dark:bg-card text-muted-foreground hover:text-foreground/90 hover:bg-muted dark:hover:bg-muted" title="Orçamentos recentes">
+                  <FileText className="w-4 h-4 stroke-[1.5]" />
+                </Button>
+              )}
+              {podeHistorico && (
+                <Button variant="ghost" size="icon" onClick={() => setShowReeditarDialog(true)}
+                  className="h-9 w-9 rounded-2xl bg-muted dark:bg-card text-muted-foreground hover:text-foreground/90 hover:bg-muted dark:hover:bg-muted" title="Reeditar rascunho">
+                  <Edit className="w-4 h-4 stroke-[1.5]" />
+                </Button>
+              )}
               <Button variant="ghost" size="icon" onClick={handleSair}
                 className="h-9 w-9 rounded-2xl bg-muted dark:bg-card text-muted-foreground hover:text-foreground/90 hover:bg-muted dark:hover:bg-muted">
                 <Undo2 className="w-4 h-4 stroke-[1.5]" />
@@ -1109,6 +1177,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                   <Barcode className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
                   <Input
                   ref={inputProdutoRef}
+                  data-pulse-sensor="pdv.busca-produto"
                   placeholder="Nome ou código (espaço ou ; para combinar termos)..."
                   className="w-full pl-12 pr-14 bg-card dark:bg-secondary border-0 outline-none ring-0 shadow-sm rounded-2xl text-foreground h-14 text-base focus:ring-0 focus:border-transparent focus:outline-none focus-visible:ring-0 focus-visible:outline-none active:outline-none appearance-none [-webkit-tap-highlight-color:transparent] placeholder:text-muted-foreground"
                   value={buscaProduto}
@@ -1116,6 +1185,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                   onKeyDown={handleKeyDown}
                   autoFocus={false} />
                   <Button type="button" variant="ghost" size="icon" onClick={() => setShowBarcodeScanner(true)}
+                  data-pulse-sensor="pdv.scanner-codigo"
                   className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 text-muted-foreground hover:text-muted-foreground hover:bg-muted dark:hover:bg-card rounded-xl">
                     <Camera className="w-5 h-5" />
                   </Button>
@@ -1130,6 +1200,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                   className="w-full bg-card dark:bg-secondary border-0 outline-none ring-0 shadow-sm rounded-2xl text-foreground h-14 text-center text-lg font-bold focus:ring-0 focus:border-transparent focus:outline-none focus-visible:ring-0 focus-visible:outline-none active:outline-none appearance-none [-webkit-tap-highlight-color:transparent]"
                   value={quantidadeAtual}
                   onChange={(e) => setQuantidadeAtual(e.target.value)}
+                  onFocus={selectAllOnFocus}
                   onKeyDown={handleQuantidadeKeyDown}
                   min="0.01"
                   disabled={!produtoSelecionado} />
@@ -1159,12 +1230,12 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                     className={`flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors border-b border-border/30 dark:border-border/40 last:border-b-0 ${
                     index === produtoSelecionadoIndex ? 'bg-muted/40 dark:bg-card' : 'hover:bg-muted/40 dark:hover:bg-muted/60'}`}
                     onClick={() => handleSelecionarProduto(produto)}>
-                    {produto.imagem_url
-                      ? <img src={produto.imagem_url} alt={produto.nome} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
-                      : <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${estoqueStatus === 'sem' ? 'bg-red-50 dark:bg-red-900/20' : 'bg-muted dark:bg-card'}`}>
-                          <Package className={`w-5 h-5 ${estoqueStatus === 'sem' ? 'text-red-400' : 'text-muted-foreground'}`} />
-                        </div>
-                    }
+                    <ProdutoThumb
+                      produto={produto}
+                      size="md"
+                      roundedClassName="rounded-xl"
+                      fallbackClassName={estoqueStatus === 'sem' ? 'bg-red-50 dark:bg-red-900/20' : undefined}
+                    />
                     <div className="flex-1 min-w-0">
                       <p className="text-base font-medium text-foreground dark:text-foreground leading-snug break-words whitespace-normal">{produto.nome}</p>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -1201,12 +1272,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                 {produtoSelecionado &&
                 <div className="mt-3 p-4 bg-card dark:bg-background rounded-2xl shadow-sm border border-border/40 dark:border-border/40 space-y-3">
                 <div className="flex items-center gap-3">
-                {produtoSelecionado.imagem_url
-                  ? <img src={produtoSelecionado.imagem_url} alt={produtoSelecionado.nome} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
-                  : <div className="w-12 h-12 rounded-xl bg-muted dark:bg-card flex items-center justify-center flex-shrink-0">
-                      <Package className="w-5 h-5 text-muted-foreground" />
-                    </div>
-                }
+                <ProdutoThumb produto={produtoSelecionado} size="md" roundedClassName="rounded-xl" />
                 <div className="flex-1 min-w-0">
                   <p className="text-base font-semibold text-foreground dark:text-foreground break-words whitespace-normal leading-snug">{produtoSelecionado.nome}</p>
                   {produtoSelecionado.preco_livre ? (
@@ -1222,6 +1288,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                           onChange={(e) => {
                             setProdutoSelecionado({...produtoSelecionado, _preco_digitado_raw: e.target.value});
                           }}
+                          onFocus={selectAllOnFocus}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                               e.preventDefault();
@@ -1280,22 +1347,28 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
             carrinho.map((item) =>
             <div key={item.item_key} className="group p-3 bg-muted/40 dark:bg-muted/60 rounded-xl hover:bg-muted dark:hover:bg-card transition-colors">
                   <div className="flex items-start gap-2.5 mb-2.5">
-                    {item.imagem_url
-                        ? <img src={item.imagem_url} alt={item.produto_nome} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 mt-0.5" />
-                        : <div className="w-10 h-10 rounded-lg bg-muted dark:bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <Package className="w-4 h-4 text-muted-foreground" />
-                          </div>
-                      }
+                    <ProdutoThumb
+                      produto={{
+                        id: item.produto_id,
+                        nome: item.produto_nome,
+                        imagem_url: item.imagem_url,
+                      }}
+                      size="sm"
+                      roundedClassName="rounded-lg"
+                      className="mt-0.5"
+                    />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground leading-snug break-words">{item.produto_nome}</p>
                         {item.codigo_interno ? (
                           <p className="mt-0.5 text-[10px] text-muted-foreground/80 font-mono tracking-wide">#{item.codigo_interno}</p>
                         ) : null}
                       </div>
+                      {podeRemoverItem && (
                       <button onClick={() => handleRemoveItem(item.item_key)}
                         className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-red-500 flex-shrink-0 rounded-md hover:bg-red-50">
                         <X className="w-3.5 h-3.5" />
                       </button>
+                      )}
                     </div>
                     {/* Preço livre editável */}
                      {item.preco_livre && (
@@ -1307,6 +1380,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                              type="text" inputMode="decimal"
                              value={item._preco_editando ?? String(item.preco_unitario_praticado ?? '')}
                              onChange={e => handleUpdatePrecoLivre(item.item_key, e.target.value)}
+                             onFocus={selectAllOnFocus}
                              onBlur={() => handleBlurPrecoLivre(item.item_key)}
                              className="w-full pl-8 h-10 bg-muted/40 dark:bg-muted/70 rounded-lg text-sm text-right border-0 outline-none ring-0 shadow-sm focus:ring-0 focus:outline-none focus-visible:ring-0 text-foreground dark:text-foreground font-semibold"
                            />
@@ -1323,7 +1397,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                         </button>
                         <span className="text-sm font-bold w-9 text-center text-foreground">{item.quantidade}</span>
                         <button onClick={() => handleUpdateQuantity(item.item_key, item.quantidade + 1)}
-                          disabled={!configVenda?.vender_sem_estoque && calculateBaseQuantity(item.quantidade + 1, item.fator_conversao || 1) > item.estoque_disponivel}
+                          disabled={!vendaSemEstoquePermitida && calculateBaseQuantity(item.quantidade + 1, item.fator_conversao || 1) > item.estoque_disponivel}
                           className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:bg-muted dark:hover:bg-card transition-colors disabled:opacity-40">
                           <Plus className="w-3.5 h-3.5" />
                         </button>
@@ -1360,6 +1434,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
               </div>
 
               {/* Desconto Two-Way */}
+              {podeDesconto && (
               <div className="bg-muted/40 dark:bg-muted/60 rounded-xl p-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Desconto</span>
@@ -1371,6 +1446,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                   <div className="relative flex-1">
                     <Input type="number" min="0" max={Math.max(currentUser?.limite_desconto || 0, tabelaPreco?.percentual_desconto_maximo || 0) || 100} step="0.01"
                       value={ajustePercentual} onChange={(e) => handleAjustePercentualChange(e.target.value)}
+                      onFocus={selectAllOnFocus}
                       className="pr-6 h-10 bg-card dark:bg-background border-0 shadow-sm rounded-lg text-sm text-right focus:ring-1 focus:ring-border/40 dark:focus:ring-ring"
                       placeholder="0" />
                     <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span>
@@ -1380,12 +1456,14 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                     <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">R$</span>
                     <Input type="number" min="0" step="0.01"
                       value={ajusteValor} onChange={(e) => handleAjusteValorChange(e.target.value)}
+                      onFocus={selectAllOnFocus}
                       className="pl-7 h-10 bg-card dark:bg-background border-0 shadow-sm rounded-lg text-sm focus:ring-1 focus:ring-border/40 dark:focus:ring-ring"
                       placeholder="0,00" />
                   </div>
                 </div>
                 {ajusteExcedido && <p className="text-xs text-red-500">Excede limite de {Math.max(currentUser?.limite_desconto || 0, tabelaPreco?.percentual_desconto_maximo || 0)}%</p>}
               </div>
+              )}
 
               <div className="flex justify-between items-center pt-1">
                 <span className="text-sm text-muted-foreground">Total</span>
@@ -1755,12 +1833,15 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
           carrinho.map((item) =>
           <div key={item.item_key} className="p-3.5 bg-card dark:bg-background rounded-2xl shadow-sm">
                   <div className="flex items-start gap-3 mb-3">
-                    {item.imagem_url
-                      ? <img src={item.imagem_url} alt={item.produto_nome} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
-                      : <div className="w-12 h-12 rounded-xl bg-muted dark:bg-card flex items-center justify-center flex-shrink-0">
-                          <Package className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                    }
+                    <ProdutoThumb
+                      produto={{
+                        id: item.produto_id,
+                        nome: item.produto_nome,
+                        imagem_url: item.imagem_url,
+                      }}
+                      size="md"
+                      roundedClassName="rounded-xl"
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="min-w-0">
                         <p className="font-medium text-sm text-foreground dark:text-foreground leading-snug break-words">{item.produto_nome}</p>
@@ -1777,6 +1858,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                               type="text" inputMode="decimal"
                               value={item._preco_editando ?? String(item.preco_unitario_praticado ?? '')}
                               onChange={e => handleUpdatePrecoLivre(item.item_key, e.target.value)}
+                              onFocus={selectAllOnFocus}
                               onBlur={() => handleBlurPrecoLivre(item.item_key)}
                               className="w-full pl-8 h-10 bg-muted/40 dark:bg-muted/70 rounded-lg text-sm text-right border-0 outline-none ring-0 shadow-sm focus:ring-0 focus:outline-none focus-visible:ring-0 text-foreground dark:text-foreground font-semibold"
                             />
@@ -1786,10 +1868,12 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                          <p className="text-xs text-muted-foreground mt-0.5">{item.quantidade} {item.unidade_medida || 'UN'} × R$ {item.preco_unitario_praticado.toFixed(2).replace('.', ',')}</p>
                        )}
                     </div>
-                    <button onClick={() => handleRemoveItem(item.item_key)}
-                      className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-red-400 rounded-lg flex-shrink-0">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {podeRemoverItem && (
+                      <button onClick={() => handleRemoveItem(item.item_key)}
+                        className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-red-400 rounded-lg flex-shrink-0">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
@@ -1801,7 +1885,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                       </button>
                       <span className="text-base font-bold w-10 text-center text-foreground dark:text-white">{item.quantidade}</span>
                       <button onClick={() => handleUpdateQuantity(item.item_key, item.quantidade + 1)}
-                        disabled={!configVenda?.vender_sem_estoque && calculateBaseQuantity(item.quantidade + 1, item.fator_conversao || 1) > item.estoque_disponivel}
+                        disabled={!vendaSemEstoquePermitida && calculateBaseQuantity(item.quantidade + 1, item.fator_conversao || 1) > item.estoque_disponivel}
                         className="w-10 h-10 flex items-center justify-center text-muted-foreground active:bg-muted dark:active:bg-muted disabled:opacity-40">
                         <Plus className="w-4 h-4" />
                       </button>
@@ -1822,6 +1906,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
             </div>
 
             {/* Desconto Two-Way - Mobile */}
+            {podeDesconto && (
             <div className="bg-muted/40 dark:bg-card rounded-2xl p-3 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">Desconto</span>
@@ -1833,6 +1918,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                 <div className="relative flex-1">
                   <Input type="number" inputMode="decimal" min="0" max={Math.max(currentUser?.limite_desconto || 0, tabelaPreco?.percentual_desconto_maximo || 0) || 100} step="0.01"
                     value={ajustePercentual} onChange={(e) => handleAjustePercentualChange(e.target.value)}
+                    onFocus={selectAllOnFocus}
                     className="pr-6 h-10 bg-card dark:bg-background border-0 shadow-sm rounded-xl text-sm text-right focus:ring-1 focus:ring-border/40"
                     placeholder="0" />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">%</span>
@@ -1842,12 +1928,14 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                   <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">R$</span>
                   <Input type="number" inputMode="decimal" min="0" step="0.01"
                     value={ajusteValor} onChange={(e) => handleAjusteValorChange(e.target.value)}
+                    onFocus={selectAllOnFocus}
                     className="pl-7 h-10 bg-card dark:bg-background border-0 shadow-sm rounded-xl text-sm focus:ring-1 focus:ring-border/40"
                     placeholder="0,00" />
                 </div>
               </div>
               {ajusteExcedido && <p className="text-[10px] text-red-500">Excede limite de {Math.max(currentUser?.limite_desconto || 0, tabelaPreco?.percentual_desconto_maximo || 0)}%</p>}
             </div>
+            )}
 
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Total</span>

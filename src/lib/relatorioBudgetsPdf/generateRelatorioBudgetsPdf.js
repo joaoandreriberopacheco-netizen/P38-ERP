@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import { registerJsPdfDin1451Fonts, normalizePdfText } from '@/lib/jspdfNotoFont';
 import {
+  BUDGET_MODULO_LABEL,
   STATUS_CONSUMO_LABELS,
   calcularOrcadoMensal,
   ordenarModelosPorCentroENome,
@@ -88,7 +89,7 @@ export async function generateRelatorioBudgetsPdf(payload = {}) {
     doc.addPage();
     y = 12;
     setFont('bold', 8, COLOR.muted);
-    doc.text(safe(`BUDGETS — ${competenciaLabel} — continuação`), margin, y);
+    doc.text(safe(`${BUDGET_MODULO_LABEL.toUpperCase()} — ${competenciaLabel} — continuação`), margin, y);
     y += 6;
   };
 
@@ -98,7 +99,7 @@ export async function generateRelatorioBudgetsPdf(payload = {}) {
 
   const drawHeader = () => {
     setFont('bold', FONT.title, COLOR.black);
-    doc.text(safe('BUDGETS'), margin, y);
+    doc.text(safe(BUDGET_MODULO_LABEL.toUpperCase()), margin, y);
     setFont('normal', FONT.subtitle, COLOR.muted);
     doc.text(safe(competenciaLabel || competencia), right, y, { align: 'right' });
     advance(5);
@@ -106,7 +107,7 @@ export async function generateRelatorioBudgetsPdf(payload = {}) {
     doc.text(
       safe(
         modo === 'cadastro'
-          ? 'Lista de budgets cadastrados com orçamento mensal'
+          ? 'Lista de gastos cadastrados com orçamento mensal'
           : 'Acompanhamento mensal — orçado × realizado',
       ),
       margin,
@@ -127,7 +128,7 @@ export async function generateRelatorioBudgetsPdf(payload = {}) {
       { label: 'Realizado', value: moeda(totais.realizado) },
       { label: 'Saldo', value: moeda(totais.saldo) },
       { label: 'Consumo', value: `${consumo}%` },
-      { label: 'Budgets', value: String(totais.count) },
+      { label: 'Gastos', value: String(totais.count) },
     ];
     const colW = (right - margin) / items.length;
     ensureSpace(12);
@@ -146,7 +147,7 @@ export async function generateRelatorioBudgetsPdf(payload = {}) {
   const drawTableHeaderAcompanhamento = () => {
     ensureSpace(8);
     const cols = [
-      { label: 'Budget', x: margin, align: 'left' },
+      { label: 'Gasto', x: margin, align: 'left' },
       { label: 'Orçado', x: right - 62, align: 'right' },
       { label: 'Realizado', x: right - 42, align: 'right' },
       { label: 'Saldo', x: right - 22, align: 'right' },
@@ -162,7 +163,7 @@ export async function generateRelatorioBudgetsPdf(payload = {}) {
   const drawTableHeaderCadastro = () => {
     ensureSpace(8);
     const cols = [
-      { label: 'Budget', x: margin, align: 'left' },
+      { label: 'Gasto', x: margin, align: 'left' },
       { label: 'Categoria', x: margin + 58, align: 'left' },
       { label: 'Centro', x: margin + 98, align: 'left' },
       { label: 'Orçado/mês', x: right, align: 'right' },

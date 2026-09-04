@@ -463,13 +463,25 @@ export const ENTITY_TO_TABLE = {
   PoliticasDesconto: { table: 'politicas_desconto', mode: 'jsonb' },
   StatusPedidoCompra: { table: 'status_pedido_compra', mode: 'jsonb' },
 
-  FolhaPrevisaoModelo: { table: 'folha_previsao_modelo', mode: 'jsonb' },
-  FolhaPrevisaoCompetencia: { table: 'folha_previsao_competencia', mode: 'jsonb' },
+  FolhaPrevisaoModelo: {
+    table: 'folha_previsao_modelo',
+    mode: 'columns',
+    columns: TABLE_PROMOTION_MANIFEST.folha_previsao_modelo,
+  },
+  FolhaPrevisaoCompetencia: {
+    table: 'folha_previsao_competencia',
+    mode: 'columns',
+    columns: TABLE_PROMOTION_MANIFEST.folha_previsao_competencia,
+  },
+  FolhaCentroCusto: {
+    table: 'folha_centro_custo',
+    mode: 'columns',
+    columns: TABLE_PROMOTION_MANIFEST.folha_centro_custo,
+  },
   AgefinSerieModelo: { table: 'agefin_serie_modelo', mode: 'jsonb' },
   AgefinSerieCompetencia: { table: 'agefin_serie_competencia', mode: 'jsonb' },
   BudgetModelo: { table: 'budget_modelo', mode: 'jsonb' },
   BudgetCompetencia: { table: 'budget_competencia', mode: 'jsonb' },
-  FolhaCentroCusto: { table: 'folha_centro_custo', mode: 'jsonb' },
   AgendaItem: { table: 'agenda_item', mode: 'jsonb' },
 };
 
@@ -477,3 +489,19 @@ export const ENTITY_TO_TABLE = {
  * Resolve uma entrada do mapa para o formato canônico { table, mode, columns }.
  * Aceita string (legado) ou objeto. Retorna null quando a entidade não está mapeada.
  */
+export function resolveEntityMapping(entityName: string) {
+  const raw = ENTITY_TO_TABLE[entityName as keyof typeof ENTITY_TO_TABLE];
+  if (!raw) return null;
+  if (typeof raw === 'string') {
+    return { table: raw, mode: 'columns' as const, columns: null as string[] | null };
+  }
+  return {
+    table: raw.table,
+    mode: (raw.mode || 'columns') as 'columns' | 'jsonb',
+    columns: Array.isArray(raw.columns) ? raw.columns : null,
+  };
+}
+
+export function isEntityLinkedToSupabase(entityName: string) {
+  return Boolean(ENTITY_TO_TABLE[entityName as keyof typeof ENTITY_TO_TABLE]);
+}

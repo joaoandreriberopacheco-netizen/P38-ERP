@@ -34,22 +34,25 @@
 
 @layer base {
   :root {
-    /* Superfícies — tom verde-cinza suave no claro */
-    --p38-bg: 82 12% 97%;
+    /* Superfícies — branco puro neutro (sem tom esverdeado/amarelado) */
+    --p38-bg: 0 0% 100%;
     --p38-surface: 0 0% 100%;
-    --p38-search: 82 8% 94%;
-    --p38-table-head: 82 10% 92%;
-    /* Claro: mediterrâneo queimado · escuro: limão */
+    --p38-search: 0 0% 100%;
+    --p38-table-head: 0 0% 98%;
+    /* Claro: oliva nos CTAs · amarelo suco nos acentos quentes */
     --p38-accent-olive: 82 18% 28%;
     --p38-accent-lime: 78 55% 51%;
-    --p38-accent-citrus: 27 87% 52%;
+    --p38-accent-citrus: 43 74% 52%;
     --p38-accent-citrus-yellow: 43 74% 52%;
-    --p38-divider: 82 10% 86% / 0.6;
+    --p38-divider: 0 0% 91% / 0.85;
     /* Tipografia mobile */
     --p38-tracking: 0.02em;
     --p38-body-size: 1rem;
-    --p38-title-size: 1rem;
+    --p38-title-size: 1.125rem;
     --p38-label-size: 1rem;
+    --p38-page-title-size: 1.2857142857rem;
+    --p38-page-title-size-md: 1.5714285714rem;
+    --p38-section-title-size: 1.0714285714rem;
     --p38-meta-size: 1rem;
     --p38-type-lg: 1.125rem;
     --p38-type-xl: 1.25rem;
@@ -154,15 +157,87 @@
     @apply uppercase tracking-wide text-muted-foreground font-din1451;
   }
 
+  /* ── Hierarquia: título · secção · label · conteúdo ── */
+  .p38-page-title {
+    text-transform: none;
+    letter-spacing: -0.015em;
+    font-size: var(--p38-page-title-size);
+    font-weight: 600;
+    line-height: 1.2;
+    color: hsl(var(--foreground));
+  }
+
+  @media (min-width: 768px) {
+    .p38-page-title {
+      font-size: var(--p38-page-title-size-md);
+    }
+  }
+
+  .p38-page-kicker {
+    font-size: var(--p38-label-size);
+    font-weight: 300;
+    letter-spacing: 0.07em;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .p38-page-subtitle {
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 400;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .p38-section-title {
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: var(--p38-section-title-size);
+    font-weight: 600;
+    color: hsl(var(--foreground));
+  }
+
+  .p38-field-label {
+    font-size: var(--p38-label-size);
+    font-weight: 300;
+    letter-spacing: 0.06em;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .p38-field-hint {
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 400;
+    color: hsl(var(--muted-foreground) / 0.78);
+  }
+
+  .p38-field-value {
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 500;
+    color: hsl(var(--foreground));
+  }
+
   /* Título de linha mobile */
   .p38-line-title {
     font-size: var(--p38-title-size);
     @apply font-din1451 font-medium uppercase tracking-wide text-foreground leading-tight break-words;
   }
 
-  /* Linha compacta (substitui card em smartphone) */
+  /* Linha compacta (substitui card em smartphone) — barra lateral sempre fina (1px) */
   .p38-line {
-    @apply border-b border-border/50 dark:border-white/10 border-l-2 border-l-transparent py-3 pr-3 pl-4 min-w-0 bg-background font-din1451;
+    @apply border-b border-border/50 dark:border-white/10 border-l border-l-transparent py-3 pr-3 pl-4 min-w-0 bg-background font-din1451;
+  }
+
+  /* Linha vertical fina reutilizável (hierarquia, listas, tabelas mobile) */
+  .p38-vline {
+    @apply border-l border-border/35 dark:border-white/10;
+  }
+
+  .p38-vline--citrus {
+    border-left-color: rgb(232 184 36 / 0.55);
+  }
+
+  .dark .p38-vline--citrus {
+    border-left-color: rgb(164 206 51 / 0.55);
   }
 
   .p38-line--interactive {
@@ -174,29 +249,29 @@
   }
 
   .dark .p38-line--success {
-    border-left-color: hsl(var(--p38-accent-lime));
+    border-left-color: rgb(164 206 51 / 0.55);
   }
 
   .p38-line--warning {
-    @apply border-l-amber-500 dark:border-l-amber-400;
+    border-left-color: #D96F55;
   }
 
   .p38-line--danger {
-    @apply border-l-red-500 dark:border-l-red-400;
+    @apply border-l-red-600 dark:border-l-red-600/55;
   }
 
   .p38-line--info {
-    @apply border-l-cyan-500 dark:border-l-cyan-400;
+    border-left-color: #4ECDC4;
   }
 
   /* Contentor lista mobile (oculto em md+ quando há tabela desktop) */
   .p38-list-shell {
-    @apply md:hidden overflow-y-auto rounded-lg border border-border/40 dark:border-white/10 bg-background;
+    @apply md:hidden overflow-y-auto rounded-lg border-0 shadow-sm bg-background dark:border dark:border-white/10;
   }
 
   /* Contentor lista em todos os viewports */
   .p38-line-list-shell {
-    @apply overflow-y-auto rounded-lg border border-border/40 dark:border-white/10 bg-background;
+    @apply overflow-y-auto rounded-lg border-0 shadow-sm bg-background dark:border dark:border-white/10;
   }
 
   /* Inputs operacionais — visual maiúsculo instantâneo; valor normalizado no onChange/blur */
@@ -236,7 +311,8 @@
   }
 
   .dark .caixa-screen .p38-panel__accent-bar {
-    background-color: #a4ce33;
+    background-color: #636B2F;
+    box-shadow: none;
   }
 
   .p38-panel__body {
@@ -264,19 +340,19 @@
   }
 
   .dark .p38-dot {
-    background-color: hsl(var(--p38-accent-lime));
+    background-color: rgb(164 206 51 / 0.7);
   }
 
   .p38-dot--warning {
-    @apply bg-amber-500 dark:bg-amber-400;
+    background-color: #D96F55;
   }
 
   .p38-dot--danger {
-    @apply bg-red-500 dark:bg-red-400;
+    @apply bg-red-600 dark:bg-red-600/70;
   }
 
   .p38-dot--info {
-    @apply bg-cyan-500 dark:bg-cyan-400;
+    background-color: #4ECDC4;
   }
 
   .p38-dot--muted {
@@ -339,11 +415,11 @@
 
   /* Cartão de opção (modal unidade, seletores PDV) */
   .p38-option-card {
-    @apply w-full rounded-2xl p-4 text-left transition-all shadow-sm bg-muted/50 text-foreground border border-transparent;
+    @apply w-full rounded-2xl p-4 text-left transition-all shadow-sm bg-card text-foreground border-0;
   }
 
   .p38-option-card:hover {
-    @apply bg-muted/70;
+    @apply bg-secondary/40;
   }
 
   .p38-option-card--selected {
@@ -398,6 +474,11 @@
   .p38-app [data-preserve-case='true'] *,
   .p38-app .preserve-case,
   .p38-app .normal-case,
+  .p38-app .p38-page-title,
+  .p38-app .p38-page-subtitle,
+  .p38-app .p38-section-title,
+  .p38-app .p38-field-hint,
+  .p38-app .p38-field-value,
   .p38-app input[type='email'],
   .p38-app input[type='url'],
   .p38-app input[type='password'],
@@ -445,6 +526,26 @@
 
   .dark .p38-app [data-placeholder] {
     color: hsl(0 0% 100% / 0.2) !important;
+  }
+
+  /* Catálogo desktop — coluna Produto sticky visível ao rolar (não atrás da sidebar recolhida) */
+  .p38-catalog-table-scroll {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .p38-catalog-sticky-left {
+    background-color: hsl(var(--background));
+  }
+
+  tr.group:hover .p38-catalog-sticky-left,
+  tr.select-none.group:hover .p38-catalog-sticky-left {
+    background-color: hsl(var(--secondary) / 0.25);
+  }
+
+  .dark tr.group:hover .p38-catalog-sticky-left,
+  .dark tr.select-none.group:hover .p38-catalog-sticky-left {
+    background-color: hsl(var(--secondary) / 0.3);
   }
 
 }

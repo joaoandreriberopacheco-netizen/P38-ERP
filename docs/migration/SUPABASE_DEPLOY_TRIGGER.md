@@ -85,8 +85,17 @@ O deploy publica o código; no **Supabase Dashboard → Edge Functions → Secre
 
 | Secret | Função |
 |--------|--------|
+| `GEMINI_API_KEY` ou `GOOGLE_API_KEY` | OCR/importador (`p38-core` → InvokeLLM via Gemini) |
+| `GEMINI_MODEL` | Opcional — default `gemini-3.6-flash` (PDF/imagem) / `gemini-3.5-flash-lite` (texto) |
 | `RESEND_API_KEY` | `gerenciar-pin` (email PIN) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Todas (já injectada pelo Supabase em runtime) |
+| `ABCD_JOB_NOTURNO` | `calcular-iep` — deve ser `true` para o job agendado (`npm run abcd:enable-noturno`) |
+
+**OCR / importar pedido:**
+
+1. [aistudio.google.com/apikey](https://aistudio.google.com/apikey) → criar/copiar chave Gemini
+2. Supabase → **Edge Functions** → **Secrets** → `GEMINI_API_KEY` = a chave
+3. `npm run supabase:deploy:functions` (ou redeploy só `p38-core`)
 
 ## Verificação rápida
 
@@ -108,6 +117,8 @@ DATABASE_URL="..." SUPABASE_ACCESS_TOKEN="..." npm run supabase:deploy
 |---------|---------|
 | `SUPABASE_ACCESS_TOKEN em falta` | Criar PAT em [Account → Access Tokens](https://supabase.com/dashboard/account/tokens) e gravar em **Cursor Cloud Secrets** + **GitHub Actions** |
 | `password authentication failed` | Copiar de novo a connection string em **Project Settings → Database** (a password pode ter sido resetada) |
+| `GEMINI_API_KEY não configurado` / OCR falha após upload | Gravar `GEMINI_API_KEY` em **Edge Functions → Secrets** e redeploy `p38-core` |
+| `503` / pico de demanda no Gemini | Aguardar 30–60s e repetir; `p38-core` já faz até 4 tentativas com backoff |
 | `PROJECT_REF` em falta | Adicionar `VITE_SUPABASE_URL=https://[ref].supabase.co` nos secrets |
 
 Após deploy, no SQL Editor:

@@ -3,14 +3,17 @@ import { base44 } from '@/api/base44Client';
 import { Search, Package, Boxes, Loader2, Calculator } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import OrcamentoSheet from '@/components/orcamento/OrcamentoSheet';
+import OrcamentoPanel from '@/components/orcamento/OrcamentoPanel';
 import { calcularPrecoVendaTabela, getSaleUnitContextForTabela } from '@/lib/orcamentoPrecoTabela';
 import { formatEstoqueDisponivelApresentacao, getUnidadeExibicaoSigla, hasAlternativeUnits } from '@/lib/productUnits';
 import { p38Mobile } from '@/lib/p38MobileSurfaces';
 import { P38MobileLineList, P38StatusDot } from '@/components/ui/p38-mobile-line';
 import { p38Table } from '@/lib/p38TableSurfaces';
 import { cn } from '@/components/utils';
+import { P38PageHeader } from '@/components/layout/P38PageHeader';
 import { filterAndSortProducts, sortProductsAlphabetically } from '@/components/compras/productMatchingUtils';
+import ProdutoThumb from '@/components/produtos/ProdutoThumb';
+import { usePermissoesUsuario } from '@/hooks/usePermissoesUsuario';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
@@ -37,11 +40,7 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
       style={{ boxSizing: 'border-box' }}
     >
       {/* Thumbnail */}
-      <div className="w-12 h-12 bg-muted rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden">
-        {p.imagem_url
-          ? <img src={p.imagem_url} alt="" className="w-full h-full object-cover" />
-          : <Package className="w-5 h-5 text-muted-foreground dark:text-muted-foreground" />}
-      </div>
+      <ProdutoThumb produto={p} size="md" roundedClassName="rounded-2xl" />
 
       {/* Nome + info */}
       <div className="flex-1 min-w-0 overflow-hidden">
@@ -90,6 +89,9 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
 
 // ── Componente principal ───────────────────────────────────────────────────────
 export default function TabelaPrecosConsulta() {
+  const { tem: podePerm } = usePermissoesUsuario();
+  const podeGerarOrcamento = podePerm('estoque.gerar_orcamento', 'estoque.tabela_precos');
+
   const [produtos, setProdutos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -150,11 +152,10 @@ export default function TabelaPrecosConsulta() {
         <div className="px-4 pt-3 pb-2 space-y-3">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <h1 className="text-lg font-semibold text-foreground font-glacial">Tabela de Preços</h1>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {produtosFiltrados.length} produto{produtosFiltrados.length !== 1 ? 's' : ''}
-                {searchTerm && ` · "${searchTerm}"`}
-              </p>
+              <P38PageHeader
+                title="Tabela de Preços"
+                description={`${produtosFiltrados.length} produto${produtosFiltrados.length !== 1 ? 's' : ''}${searchTerm ? ` · "${searchTerm}"` : ''}`}
+              />
             </div>
             <span className="shrink-0 px-3 py-2 rounded-2xl text-xs font-medium bg-muted text-muted-foreground">
               Ordem alfabética (A→Z)
@@ -223,6 +224,7 @@ export default function TabelaPrecosConsulta() {
         )}
       </div>
 
+      {podeGerarOrcamento && (
       <button
         onClick={() => setShowOrcamento(true)}
         className="fixed right-4 z-[55] flex h-14 w-14 items-center justify-center rounded-2xl bg-background shadow-xl transition-all hover:bg-primary/90 active:scale-95 dark:bg-muted dark:hover:bg-muted p38-bottom-fab1 lg:right-6"
@@ -230,16 +232,18 @@ export default function TabelaPrecosConsulta() {
       >
         <Calculator className="w-6 h-6 text-foreground" />
       </button>
+      )}
 
-      <OrcamentoSheet
-        isOpen={showOrcamento}
-        onClose={() => setShowOrcamento(false)}
-        produtos={produtos}
-        tabelaSelecionada={tabelaSelecionada}
-        calcularPreco={calcularPreco}
-        nomeTabela={tabelaSelecionada?.nome_tabela}
-        empresa={empresa}
+      {podeGerarOrcamento && (
+      <OrcamentoPanel
+        open={showOrcamento}
+        onOpenChange={setShowOrcamento}
+        origem="tabela"
+        produtosIniciais={produtos}
+        tabelaInicial={tabelaSelecionada}
+        empresaInicial={empresa}
       />
+      )}
     </div>
   );
 }

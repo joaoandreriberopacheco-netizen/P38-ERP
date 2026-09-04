@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronDown, Plus, Trash2 } from 'lucide-react';
 import { P38HelpPopover } from '@/components/ui/p38-help-popover';
+import FolhaCentroCustoSelect from '@/components/folha-previsao/FolhaCentroCustoSelect';
 import {
   FOLHA_DIA_VENCIMENTO,
   RETIRADA_FREQUENCIA_LABELS,
@@ -24,6 +25,8 @@ import {
   criarRubricasPadrao,
   extrairSalarioBase,
   formatDataBr,
+  formatCompetenciaLabel,
+  competenciaDireitoFerias,
   gerarIdInterno,
 } from '@/lib/folhaPrevisaoCalculos';
 
@@ -81,7 +84,10 @@ export default function FolhaPessoaDialog({
   onClose,
   cadastro,
   colaboradoresDisponiveis = [],
+  centrosCustoRegistros = [],
+  /** @deprecated use centrosCustoRegistros */
   centrosCustoRegistrados = [],
+  onCentrosCustoChange,
   onSave,
   onDesligar,
   onReativar,
@@ -97,6 +103,16 @@ export default function FolhaPessoaDialog({
   const editando = Boolean(cadastro?.id);
   const desligado = form.situacao === SITUACAO_FOLHA.DESLIGADO;
   const ehSocio = form.tipo_vinculo === TIPO_VINCULO.SOCIO;
+
+  const centrosParaSelect = useMemo(() => {
+    if (centrosCustoRegistros?.length) return centrosCustoRegistros;
+    return (centrosCustoRegistrados || []).map((nome, idx) => ({
+      id: '',
+      nome: typeof nome === 'string' ? nome : nome?.nome || '',
+      ativo: true,
+      ordem: idx,
+    })).filter((c) => c.nome);
+  }, [centrosCustoRegistros, centrosCustoRegistrados]);
 
   useEffect(() => {
     if (!open) return;
@@ -138,6 +154,7 @@ export default function FolhaPessoaDialog({
     onSave({
       ...form,
       rubricas,
+      data_entrada: form.data_entrada?.trim() || null,
       _modoPessoa: editando ? 'existente' : modoPessoa,
       _novoColaborador:
         !editando && modoPessoa === 'nova'
@@ -301,54 +318,29 @@ export default function FolhaPessoaDialog({
             <div>
               <LabelComAjuda label="Centro de custo" ajudaLabel="Ajuda: centro de custo">
                 <p className="text-muted-foreground">
-                  Escolha um centro cadastrado pelo botão <strong className="text-foreground">+</strong> na tela principal.
+                  Cadastro partilhado (tabela FolhaCentroCusto), igual às categorias financeiras.
                 </p>
                 <p className="text-muted-foreground">
-                  Para criar um centro novo, use &quot;Novo centro de custo&quot; no menu do +.
+                  Use o botão <strong className="text-foreground">+</strong> no seletor para criar um centro novo.
                 </p>
               </LabelComAjuda>
-              {centrosCustoRegistrados.length === 0 ? (
-                <p className="mt-1.5 text-xs text-muted-foreground rounded-lg border border-dashed border-border/60 px-3 py-2">
-                  Nenhum centro cadastrado. Use o botão <strong className="text-foreground">+</strong> → Novo centro de custo.
-                </p>
-              ) : (
-                <Select
-                  value={
-                    form.centro_custo &&
-                    centrosCustoRegistrados.some(
-                      (c) => c.toLocaleLowerCase('pt-BR') === form.centro_custo.toLocaleLowerCase('pt-BR'),
-                    )
-                      ? centrosCustoRegistrados.find(
-                          (c) => c.toLocaleLowerCase('pt-BR') === form.centro_custo.toLocaleLowerCase('pt-BR'),
-                        )
-                      : '__none__'
-                  }
-                  onValueChange={(v) =>
-                    setForm({ ...form, centro_custo: v === '__none__' ? '' : v })
-                  }
+              <div className="mt-1.5">
+                <FolhaCentroCustoSelect
+                  centros={centrosParaSelect}
+                  value={form.centro_custo || ''}
+                  valueId={form.centro_custo_id || ''}
                   disabled={desligado}
-                >
-                  <SelectTrigger className="mt-1.5">
-                    <SelectValue placeholder="Selecione…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">Sem centro de custo</SelectItem>
-                    {centrosCustoRegistrados.map((item) => (
-                      <SelectItem key={item} value={item}>
-                        {item}
-                      </SelectItem>
-                    ))}
-                    {form.centro_custo &&
-                      !centrosCustoRegistrados.some(
-                        (c) => c.toLocaleLowerCase('pt-BR') === form.centro_custo.toLocaleLowerCase('pt-BR'),
-                      ) && (
-                        <SelectItem value={form.centro_custo} disabled>
-                          {form.centro_custo} (não cadastrado — escolha outro)
-                        </SelectItem>
-                      )}
-                  </SelectContent>
-                </Select>
-              )}
+                  onValueChange={(centro) =>
+                    setForm({
+                      ...form,
+                      centro_custo: centro?.nome || '',
+                      centro_custo_id: centro?.id || '',
+                    })
+                  }
+                  onCentrosChange={onCentrosCustoChange}
+                  placeholder="Escolher centro de custo"
+                />
+              </div>
             </div>
             <div>
               <div className="flex items-center gap-2 rounded-lg border border-border/60 px-3 py-2.5">
@@ -438,6 +430,33 @@ export default function FolhaPessoaDialog({
               </div>
             </div>
           )}
+
+          <div>
+            <LabelComAjuda label="Data de entrada" ajudaLabel="Ajuda: data de entrada">
+              <p className="text-muted-foreground">
+                <strong className="text-foreground">Quem já está há tempo:</strong> deixe em branco — o sistema considera direito integral (salário, 13º e férias cheios).
+              </p>
+              <p className="text-muted-foreground">
+                <strong className="text-foreground">Quem está entrando agora:</strong> informe o dia de início. O primeiro mês será proporcional aos dias trabalhados; 13º e contagem de férias seguem a mesma regra.
+              </p>
+            </LabelComAjuda>
+            <Input
+              type="date"
+              className="mt-1.5"
+              value={form.data_entrada || ''}
+              onChange={(e) => setForm({ ...form, data_entrada: e.target.value })}
+              disabled={desligado}
+            />
+            {form.data_entrada && !ehSocio && (
+              <p className="text-[10px] text-muted-foreground mt-1.5">
+                Direito a férias a partir de{' '}
+                <strong className="text-foreground">
+                  {formatCompetenciaLabel(competenciaDireitoFerias(form))}
+                </strong>
+                {' '}(12 meses após a entrada).
+              </p>
+            )}
+          </div>
 
           <button
             type="button"

@@ -16,19 +16,31 @@ import { CAIXA_POLL_MS } from '@/lib/caixaTurnoData';
 import { CAIXA_MIRROR_DIALOG_CHILD_CLASS } from '@/lib/quickAccessOverlay';
 import {
   CAIXA_PRINT,
+  caixaChipActive,
+  caixaChipInactive,
+  caixaChipTrack,
   caixaClasses,
+  caixaDesktopTabTrigger,
+  caixaFieldSurface,
+  caixaKpiShell,
   caixaMain,
   caixaMobileTabBar,
+  caixaMobileTabTrigger,
+  caixaMobileTabsList,
   caixaOverlayShell,
   caixaTabPanel,
   caixaTabPanelPad,
   caixaTabsRoot,
   caixaTypo,
+  caixaSurface,
+  caixaSpinner,
   movimentoTone,
 } from '@/lib/caixaP38Theme';
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 import CaixaMovimentacoesTurno from '@/components/vendas/caixa/CaixaMovimentacoesTurno';
+import CaixaRecebimentosTurno from '@/components/vendas/caixa/CaixaRecebimentosTurno';
 import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
+import VendasFormaPagamentoDialog from '@/components/vendas/caixa/VendasFormaPagamentoDialog';
 import { CaixaOverlayStackProvider } from '@/components/vendas/caixa/CaixaOverlayStackContext';
 import { cleanupQuickAccessPortalLayers } from '@/lib/quickAccessOverlay';
 
@@ -87,7 +99,7 @@ function MovimentoTimelineCard({ item }) {
   const Icon = toneKey === 'success' || toneKey === 'emerald' ? Plus : toneKey === 'info' || toneKey === 'blue' ? Minus : DollarSign;
   const valorTone = toneKey === 'muted' ? 'neutral' : (toneKey === 'emerald' ? 'success' : toneKey === 'blue' ? 'info' : toneKey === 'red' ? 'danger' : toneKey);
   return (
-    <div className="bg-card rounded-2xl px-4 py-3 shadow-sm flex items-center justify-between gap-3">
+    <div className="bg-card dark:p38-field-surface rounded-2xl px-4 py-3 shadow-sm dark:shadow-none border border-border/40 dark:border-white/10 flex items-center justify-between gap-3">
       <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${tone.well}`}>
         <Icon className={`w-4 h-4 ${tone.icon}`} />
       </div>
@@ -133,6 +145,7 @@ export default function VisualizadorCaixa({
   const [showDespesasDialog, setShowDespesasDialog] = useState(false);
   const [vendaDetalhada, setVendaDetalhada] = useState(null);
   const [showSaldoConsolidadoDialog, setShowSaldoConsolidadoDialog] = useState(false);
+  const [formaPagamentoDialog, setFormaPagamentoDialog] = useState(null);
   const [recebimentosDinheiro, setRecebimentosDinheiro] = useState('0,00');
   const [loading, setLoading] = useState(true);
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState(null);
@@ -344,7 +357,7 @@ export default function VisualizadorCaixa({
   if (loading) {
     return renderInPortal(
       <div className={`${caixaOverlayShell} ${caixaTypo.screen} items-center justify-center`}>
-        <div className="w-8 h-8 border-4 border-border border-t-foreground rounded-full animate-spin" />
+        <div className={caixaSpinner} />
       </div>
     );
   }
@@ -353,7 +366,7 @@ export default function VisualizadorCaixa({
     <CaixaOverlayStackProvider active stack="mirror">
     <div className={`${caixaOverlayShell} ${caixaTypo.screen}`}>
       {/* Header */}
-      <div className="bg-card border-b border-border/40 px-4 py-3 flex items-center justify-between flex-shrink-0">
+      <div className="bg-card dark:bg-background border-b border-border/40 dark:border-white/10 px-4 py-3 flex items-center justify-between flex-shrink-0">
         <button onClick={onVoltar} className="p-2 -ml-2 hover:bg-muted rounded-lg transition-colors" style={{ minWidth: '44px', minHeight: '44px' }}>
           <ArrowLeft className="w-6 h-6 text-foreground/90" />
         </button>
@@ -377,11 +390,11 @@ export default function VisualizadorCaixa({
           <button
             type="button"
             onClick={refreshCaixa}
-            className="p-2 hover:bg-muted rounded-lg transition-colors"
+            className="p-2 hover:bg-muted dark:hover:bg-[rgba(99,107,47,0.14)] rounded-xl transition-colors"
             style={{ minWidth: '44px', minHeight: '44px' }}
             title="Atualizar"
           >
-            <RefreshCw className="w-5 h-5 text-muted-foreground" />
+            <RefreshCw className="w-5 h-5 text-muted-foreground dark:text-[#A8B56E]" />
           </button>
           <div className="text-sm text-muted-foreground flex items-center gap-1">
             <Clock className="w-4 h-4" />
@@ -393,16 +406,16 @@ export default function VisualizadorCaixa({
       {/* Conteúdo — caixaMain estabelece flex-col para TabsContent poder rolar no mobile */}
       <div className={`${caixaMain} bg-background`}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className={caixaTabsRoot}>
-          <TabsList className={`${caixaMobileTabBar} grid grid-cols-3 h-14 bg-card border-b border-border/40 rounded-none p-0`}>
-            <TabsTrigger value="balanco" className="flex flex-col items-center justify-center gap-0.5 data-[state=active]:bg-muted h-full rounded-none border-0">
+          <TabsList className={`${caixaMobileTabBar} ${caixaMobileTabsList}`}>
+            <TabsTrigger value="balanco" className={caixaMobileTabTrigger}>
               <PieChart className="w-5 h-5" />
               <span className="text-xs">Balanço</span>
             </TabsTrigger>
-            <TabsTrigger value="vendas" className="flex flex-col items-center justify-center gap-0.5 data-[state=active]:bg-muted h-full rounded-none border-0">
+            <TabsTrigger value="vendas" className={caixaMobileTabTrigger}>
               <ShoppingCart className="w-5 h-5" />
               <span className={caixaTypo.labelSm}>Vendas</span>
             </TabsTrigger>
-            <TabsTrigger value="movimentos" className="flex flex-col items-center justify-center gap-0.5 data-[state=active]:bg-muted h-full rounded-none border-0">
+            <TabsTrigger value="movimentos" className={caixaMobileTabTrigger}>
               <Wallet className="w-5 h-5" />
               <span className="text-xs">Movimentos</span>
             </TabsTrigger>
@@ -411,12 +424,12 @@ export default function VisualizadorCaixa({
           {/* KPIs - Desktop */}
           <div className="hidden md:block p-4 pb-0 bg-background">
             <div className="grid grid-cols-2 gap-3 max-w-4xl mx-auto">
-              <div className="bg-card rounded-2xl p-5 shadow-sm">
+              <div className={caixaKpiShell}>
                 <div className="text-xs text-muted-foreground mb-2">Saldo do Turno</div>
-                <div className="text-3xl font-bold text-foreground font-glacial">{formatValor(caixaData.liquidez)}</div>
+                <div className={`text-3xl font-bold font-glacial ${caixaClasses('success').text}`}>{formatValor(caixaData.liquidez)}</div>
                 <div className="text-xs text-muted-foreground mt-1">Inicial + vendas + reforços − recolhimentos</div>
               </div>
-              <div className="bg-card rounded-2xl p-5 shadow-sm">
+              <div className={caixaKpiShell}>
                 <div className="text-xs text-muted-foreground mb-2">Dinheiro na Gaveta</div>
                 <div className="text-3xl font-bold text-foreground font-glacial">
                   {formatValor(dinheiroNaGaveta)}
@@ -427,23 +440,24 @@ export default function VisualizadorCaixa({
           </div>
 
           {/* Tabs - Desktop */}
-          <div className="hidden md:block border-b border-border/40 px-4 bg-background">
+          <div className="hidden md:block border-b border-border/40 dark:border-white/10 px-4 bg-background">
             <TabsList className="h-auto bg-transparent border-0 gap-1 justify-start max-w-4xl mx-auto p-0">
-              <TabsTrigger value="balanco" className="flex items-center gap-2 data-[state=active]:bg-card data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+              <TabsTrigger value="balanco" className={caixaDesktopTabTrigger}>
                 <PieChart className="w-4 h-4" />
                 <span className="text-sm">Balanço</span>
               </TabsTrigger>
-              <TabsTrigger value="vendas" className="flex items-center gap-2 data-[state=active]:bg-card data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+              <TabsTrigger value="vendas" className={caixaDesktopTabTrigger}>
                 <ShoppingCart className="w-4 h-4" />
                 <span className="text-sm">Vendas</span>
               </TabsTrigger>
-              <TabsTrigger value="movimentos" className="flex items-center gap-2 data-[state=active]:bg-card data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+              <TabsTrigger value="movimentos" className={caixaDesktopTabTrigger}>
                 <Wallet className="w-4 h-4" />
                 <span className="text-sm">Movimentos</span>
               </TabsTrigger>
             </TabsList>
           </div>
 
+          <div className="relative flex-1 min-h-0 h-0 overflow-hidden">
           <TabsContent value="balanco" className={`${caixaTabPanel} ${caixaTabPanelPad} bg-background`}>
             <div className="max-w-4xl mx-auto space-y-4 pb-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -463,115 +477,25 @@ export default function VisualizadorCaixa({
                 />
 
                 {/* Recebimentos - BLOQUEADO */}
-                <div className="bg-card rounded-2xl p-5 shadow-sm">
-                  <h3 className="text-foreground mb-4 text-base font-semibold">Recebimentos do Turno</h3>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between py-2 px-3 rounded-xl bg-muted cursor-not-allowed opacity-60">
-                      <div>
-                        <span className="text-sm text-muted-foreground">Dinheiro</span>
-                        <p className="text-xs text-muted-foreground">somente leitura</p>
-                      </div>
-                      <span className="text-lg font-bold text-muted-foreground">{formatValor(dinheiroNaGaveta)}</span>
-                    </div>
-                    <div className="flex items-center justify-between py-2 px-3">
-                      <span className="text-sm text-muted-foreground">PIX</span>
-                      <span className="text-base font-medium text-foreground">{formatValor(caixaData.recebimentos.pix)}</span>
-                    </div>
-                    <div className="flex items-center justify-between py-2 px-3">
-                      <span className="text-sm text-muted-foreground">Cartão Crédito</span>
-                      <span className="text-base font-medium text-foreground">{formatValor(caixaData.recebimentos.credito || 0)}</span>
-                    </div>
-                    <div className="flex items-center justify-between py-2 px-3">
-                      <span className="text-sm text-muted-foreground">Cartão Débito</span>
-                      <span className="text-base font-medium text-foreground">{formatValor(caixaData.recebimentos.debito || 0)}</span>
-                    </div>
-                    {(caixaData.recebimentos.vale || 0) > 0 && (
-                      <div className="flex items-center justify-between py-2 px-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground">Vale Troca</span>
-                          <span className={`text-xs px-1.5 py-0.5 rounded ${caixaClasses('success').pill}`}>não monetário</span>
-                        </div>
-                        <span className={`text-base font-medium ${caixaClasses('success').panelText}`}>{formatValor(caixaData.recebimentos.vale)}</span>
-                      </div>
-                    )}
-                    {(caixaData.fiado || 0) > 0 && (
-                      <div className="flex items-center justify-between py-2 px-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground">Fiado</span>
-                          <span className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded">a receber</span>
-                        </div>
-                        <span className="text-base font-medium text-foreground/90">{formatValor(caixaData.fiado)}</span>
-                      </div>
-                    )}
-                    
-                    {/* Conferência de fechamento */}
-                    <div className="pt-3 mt-1 border-t border-border/40 space-y-3">
-                      <div className="flex items-center justify-between px-1">
-                        <span className="text-sm font-medium text-foreground/90">Total Conferido</span>
-                        <span className="text-2xl font-bold text-foreground font-glacial">
-                          {modoFechado ? formatValor(totalConferidoFechamento) : formatValor(caixaData.liquidez)}
-                        </span>
-                      </div>
-                      {modoFechado ? (
-                        <>
-                          <div className="flex items-center justify-between px-1 text-sm">
-                            <span className="text-muted-foreground">Dinheiro conferido</span>
-                            <span className="font-semibold text-foreground">
-                              {formatValor(dinheiroConferidoFechamento)}
-                            </span>
-                          </div>
-                          <div
-                            className={`p-4 rounded-xl ${
-                              conferenciaOk
-                                ? caixaClasses('success').panel
-                                : caixaClasses('warning').panel
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span
-                                className={`text-sm font-medium ${
-                                  conferenciaOk
-                                    ? caixaClasses('success').panelText
-                                    : caixaClasses('warning').panelText
-                                }`}
-                              >
-                                {conferenciaOk ? '✓ Valores conferem' : 'Diferença no fechamento'}
-                              </span>
-                              <span
-                                className={`text-2xl font-bold font-glacial ${
-                                  conferenciaOk
-                                    ? caixaClasses('success').panelText
-                                    : caixaClasses(diferencaFechamento > 0 ? 'info' : 'danger').panelText
-                                }`}
-                              >
-                                {diferencaFechamento > 0 ? '+' : ''}
-                                {formatValor(diferencaFechamento)}
-                              </span>
-                            </div>
-                          </div>
-                          {turnoAtivo?.usuario_fechamento_nome && (
-                            <p className="text-xs text-center text-muted-foreground">
-                              Fechado por {turnoAtivo.usuario_fechamento_nome}
-                            </p>
-                          )}
-                        </>
-                      ) : (
-                        <div className={`p-4 rounded-xl opacity-60 ${caixaClasses('success').panel}`}>
-                          <div className="flex items-center justify-between">
-                            <span className={`text-sm font-medium ${caixaClasses('success').panelText}`}>✓ Valores Conferem</span>
-                            <span className={`text-2xl font-bold font-glacial ${caixaClasses('success').panelText}`}>
-                              {formatValor(0)}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <CaixaRecebimentosTurno
+                  dinheiroNaGaveta={dinheiroNaGaveta}
+                  recebimentos={caixaData.recebimentos}
+                  fiado={caixaData.recebimentos?.fiado || caixaData.fiado || 0}
+                  liquidez={caixaData.liquidez}
+                  totalConferido={caixaData.liquidez}
+                  modoFechado={modoFechado}
+                  dinheiroConferidoFechamento={dinheiroConferidoFechamento}
+                  totalConferidoFechamento={totalConferidoFechamento}
+                  diferencaFechamento={diferencaFechamento}
+                  conferenciaOk={conferenciaOk}
+                  usuarioFechamentoNome={turnoAtivo?.usuario_fechamento_nome}
+                  formatValor={formatValor}
+                  onVerFormaPagamento={setFormaPagamentoDialog}
+                />
               </div>
 
-              <div className="bg-card rounded-2xl p-4 shadow-sm space-y-2">
-                <button onClick={imprimirRelatorio} className="w-full h-12 bg-primary text-primary-foreground rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm hover:opacity-90 transition-opacity" style={{ minHeight: '48px' }}>
+              <div className={`${caixaFieldSurface} rounded-2xl p-4 space-y-2`}>
+                <button onClick={imprimirRelatorio} className={`w-full h-12 rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm ${caixaSurface.confirmBtn}`} style={{ minHeight: '48px' }}>
                   <Printer className="w-4 h-4" /> Imprimir Relatório
                 </button>
                 {modoFechado && onSolicitarReabertura && (
@@ -579,7 +503,7 @@ export default function VisualizadorCaixa({
                     type="button"
                     onClick={onSolicitarReabertura}
                     disabled={reabrindo}
-                    className="w-full h-12 rounded-2xl border border-border bg-muted text-foreground font-semibold flex items-center justify-center gap-2 text-sm hover:bg-muted/80 transition-colors disabled:opacity-50"
+                    className={`w-full h-12 rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm disabled:opacity-50 ${caixaSurface.secondaryBtn}`}
                     style={{ minHeight: '48px' }}
                   >
                     <RotateCcw className="w-4 h-4" />
@@ -593,12 +517,12 @@ export default function VisualizadorCaixa({
           <TabsContent value="vendas" className={`${caixaTabPanel} ${caixaTabPanelPad} space-y-3`}>
             <div className="max-w-4xl mx-auto space-y-4 pb-4">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="flex rounded-2xl bg-muted/50 p-1 gap-1">
+                <div className={`flex rounded-2xl p-1 gap-1 ${caixaChipTrack}`}>
                   {!modoFechado && (
                     <button
                       type="button"
                       onClick={() => setVendasView('aguardando')}
-                      className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${vendasView === 'aguardando' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
+                      className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${vendasView === 'aguardando' ? caixaChipActive : caixaChipInactive}`}
                     >
                       Aguardando ({rascunhosAguardando.length})
                     </button>
@@ -606,7 +530,7 @@ export default function VisualizadorCaixa({
                   <button
                     type="button"
                     onClick={() => setVendasView('consulta')}
-                    className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${vendasView === 'consulta' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
+                    className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${vendasView === 'consulta' ? caixaChipActive : caixaChipInactive}`}
                   >
                     Consulta ({vendasFinalizadas.length})
                   </button>
@@ -614,18 +538,18 @@ export default function VisualizadorCaixa({
                 <button
                   type="button"
                   onClick={refreshCaixa}
-                  className="p-2 hover:bg-muted rounded-xl transition-colors self-end sm:self-auto"
+                  className="p-2 hover:bg-muted dark:hover:bg-[rgba(99,107,47,0.14)] rounded-xl transition-colors self-end sm:self-auto"
                   style={{ minWidth: '44px', minHeight: '44px' }}
                   title="Atualizar"
                 >
-                  <RefreshCw className="w-5 h-5 text-muted-foreground" />
+                  <RefreshCw className="w-5 h-5 text-muted-foreground dark:text-[#A8B56E]" />
                 </button>
               </div>
 
               {vendasView === 'consulta' || modoFechado ? (
                 <ConsultaVendasCaixa
                   vendasFinalizadas={vendasFinalizadas}
-                  onVerDetalhes={setVendaDetalhada}
+                  metaPorPedidoId={substituicoesCtx?.metaPorPedidoId}
                 />
               ) : rascunhosAguardando.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16">
@@ -676,6 +600,7 @@ export default function VisualizadorCaixa({
               )}
             </div>
           </TabsContent>
+          </div>
 
         </Tabs>
       </div>
@@ -703,6 +628,13 @@ export default function VisualizadorCaixa({
         vendasFinalizadas={vendasFinalizadas}
         movimentos={movimentos}
         formatValor={formatValor}
+      />
+      <VendasFormaPagamentoDialog
+        open={!!formaPagamentoDialog}
+        onOpenChange={(open) => { if (!open) setFormaPagamentoDialog(null); }}
+        formaPagamentoKey={formaPagamentoDialog}
+        vendasFinalizadas={vendasFinalizadas}
+        metaPorPedidoId={substituicoesCtx?.metaPorPedidoId}
       />
 
       {rascunhoDetalhesTab && (

@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { ArrowLeft, Sparkles, TrendingUp, DollarSign, Package, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { P38PageHeader } from '@/components/layout/P38PageHeader';
 import { useToast } from '@/components/ui/use-toast';
 
 export default function OtimizacaoEstoqueIA() {
@@ -232,13 +233,11 @@ JSON:
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="h-10 w-10">
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-purple-600" />
-                <h1 className="text-lg font-medium text-foreground">Otimização de Estoque com IA</h1>
-              </div>
-              <p className="text-sm text-muted-foreground">Classificação ABC e distribuição inteligente</p>
-            </div>
+            <P38PageHeader
+              variant="compact"
+              title="Otimização de Estoque com IA"
+              description="Classificação ABC e distribuição inteligente"
+            />
           </div>
         </div>
       </div>

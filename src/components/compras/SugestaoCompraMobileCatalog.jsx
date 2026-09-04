@@ -80,9 +80,13 @@ function AbcdBadge({ letter }) {
 function EstoqueUnCol({ quantidade, unidade, stockTone = 'success' }) {
   return (
     <AxisColShell>
-      <span className={cn('absolute left-0 top-3.5 h-1.5 w-1.5 rounded-full', accentDotClass(stockTone))} aria-hidden />
-      <p className={cn(BODY_TEXT, 'tabular-nums leading-none text-foreground')}>{fmtN(quantidade)}</p>
-      <p className={cn(BODY_TEXT, 'mt-1.5 uppercase text-muted-foreground leading-none truncate')}>{unidade}</p>
+      <div className="flex items-start justify-end gap-1 min-w-0">
+        <span className={cn('mt-1 h-1.5 w-1.5 shrink-0 rounded-full', accentDotClass(stockTone))} aria-hidden />
+        <div className="min-w-0 text-right">
+          <p className={cn(BODY_TEXT, 'tabular-nums leading-none text-foreground')}>{fmtN(quantidade)}</p>
+          <p className={cn(BODY_TEXT, 'mt-1.5 uppercase text-muted-foreground leading-none truncate')}>{unidade}</p>
+        </div>
+      </div>
     </AxisColShell>
   );
 }
@@ -300,7 +304,7 @@ export function SugestaoCompraMobileScrollShell({ chrome, children }) {
   return (
     <div
       ref={scrollRef}
-      className="flex flex-col flex-1 min-h-0 h-full w-full min-w-0 max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y pb-[calc(var(--p38-bottom-nav-total,0px)+5.25rem)]"
+      className="flex flex-col flex-1 min-h-0 h-full w-full min-w-0 max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y pb-[5.25rem]"
       style={{ WebkitOverflowScrolling: 'touch' }}
     >
       {chrome}

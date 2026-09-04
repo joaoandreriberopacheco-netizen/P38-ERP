@@ -1,9 +1,9 @@
-import { hydrateEmbarquesLinhasEmLote } from '@/lib/embarqueLogisticaHelpers';
 import {
   buildRecebidosPorPedidoProdutoFromEmbarques,
   hydratePedidosCompraItens,
   pedidoCompraAprovadoNaoConcluido,
 } from '@/lib/sugestaoCompraEstoquePendente';
+import { fetchEmbarquesPorPedidos, hydrateEmbarquesFromSql } from '@/lib/fetchEmbarqueItens';
 
 /** Status logísticos em aberto — alinhado a `pedidoCompraAprovadoNaoConcluido`. */
 export const PEDIDO_COMPRA_STATUS_QUERY_ESTOQUE = [
@@ -22,7 +22,6 @@ export const PEDIDO_COMPRA_STATUS_QUERY_ESTOQUE = [
 
 const PEDIDOS_RECENTES_LIMIT = 1200;
 const EMBARQUES_LIMIT = 2000;
-const EMBARQUE_PEDIDO_CHUNK = 40;
 
 function dedupePedidosPorId(pedidos = []) {
   const porId = new Map();
@@ -53,21 +52,8 @@ function dedupeEmbarquesPorId(embarques = []) {
   return [...porId.values()];
 }
 
-async function fetchEmbarquesForPedidoIds(base44, pedidoIds = []) {
-  const unique = [...new Set((pedidoIds || []).filter(Boolean))];
-  if (!unique.length || !base44?.entities?.Embarque?.filter) return [];
-
-  const chunks = [];
-  for (let i = 0; i < unique.length; i += EMBARQUE_PEDIDO_CHUNK) {
-    chunks.push(unique.slice(i, i + EMBARQUE_PEDIDO_CHUNK));
-  }
-
-  const rows = await Promise.all(
-    chunks.map((chunk) =>
-      base44.entities.Embarque.filter({ pedido_compra_id: { $in: chunk } }).catch(() => []),
-    ),
-  );
-  return rows.flat().filter((embarque) => embarque?.id);
+export async function fetchEmbarquesForPedidoIds(base44, pedidoIds = []) {
+  return fetchEmbarquesPorPedidos(base44, pedidoIds);
 }
 
 /**
@@ -108,12 +94,8 @@ export async function fetchPedidosCompraParaSugestaoEstoque(base44) {
     base44,
     pedidosAbertos.map((pedido) => pedido.id),
   );
-  let embarquesTodos = dedupeEmbarquesPorId([...(embarques || []), ...embarquesExtras]);
-  embarquesTodos = await hydrateEmbarquesLinhasEmLote(
-    base44,
-    embarquesTodos,
-    pedidosAbertos.map((pedido) => pedido.id),
-  );
+  const embarquesBrutos = dedupeEmbarquesPorId([...(embarques || []), ...embarquesExtras]);
+  const embarquesTodos = await hydrateEmbarquesFromSql(base44, embarquesBrutos);
   const recebidosPorPedidoProduto = buildRecebidosPorPedidoProdutoFromEmbarques(embarquesTodos, pedidosTodos);
 
   return {

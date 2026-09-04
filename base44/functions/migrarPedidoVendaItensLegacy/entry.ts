@@ -99,7 +99,9 @@ Deno.serve(async (req) => {
 
     for(const pedido of candidatos){
       try{
-        const itensLeg = Array.isArray(pedido?.itens)?pedido.itens:[];
+        const itensLeg = Array.isArray(pedido?.itens) && pedido.itens.length
+          ? pedido.itens
+          : (Array.isArray(pedido?.dados?.itens) ? pedido.dados.itens : []);
         if(!itensLeg.length){stats.pedidos_sem_itens++;continue;}
 
         const linhas = [];
@@ -125,13 +127,12 @@ Deno.serve(async (req) => {
           stats.itens_criados++;
         }
 
-        const espelho=criadas.map(toMirror);
-        const subtotal=round6(espelho.reduce((a,it)=>a+asNumber(it.total,0),0));
-        const desc=asNumber(pedido?.valor_desconto,0);
-        const frete=asNumber(pedido?.valor_frete,0);
-        const valorTotal=round6(subtotal-desc+frete);
+        const subtotal = round6(criadas.reduce((a, it) => a + asNumber(it.total, 0), 0));
+        const desc = asNumber(pedido?.valor_desconto, 0);
+        const frete = asNumber(pedido?.valor_frete, 0);
+        const valorTotal = round6(subtotal - desc + frete);
         await sleep(200);
-        await base44.asServiceRole.entities.PedidoVenda.update(pedido.id,{itens:espelho,subtotal,valor_total:valorTotal});
+        await base44.asServiceRole.entities.PedidoVenda.update(pedido.id, { subtotal, valor_total: valorTotal });
 
         stats.pedidos_processados++;
         await sleep(300);

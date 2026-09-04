@@ -4,20 +4,22 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import AgefinPrevisaoDetalheDrawer from '@/components/agefin-previsao/AgefinPrevisaoDetalheDrawer';
 import AgefinParcelamentoDialog from '@/components/agefin-previsao/AgefinParcelamentoDialog';
+import AgefinSerieDialog from '@/components/agefin-previsao/AgefinSerieDialog';
 import FolhaCentrosCustoDialog from '@/components/folha-previsao/FolhaCentrosCustoDialog';
+import FolhaCentroCustoDragOverlay from '@/components/folha-previsao/FolhaCentroCustoDragOverlay';
 import AgefinImportador from '@/components/agefin/AgefinImportador';
 
-export function PlanejamentoFab({ onCentros, onImportar, onNovoLancamento }) {
+export function PlanejamentoFab({ onCentros, onImportar, onNovaConta }) {
   const [fabOpen, setFabOpen] = useState(false);
 
   return (
-    <div className="fixed right-4 z-[55] bottom-[calc(var(--p38-bottom-nav-h,0px)+1rem)] lg:bottom-8 lg:right-8">
+    <div className="fixed right-4 z-[55] flex flex-col items-end gap-2 bottom-[var(--p38-scroll-pad-below-nav)] transition-[bottom] duration-300 ease-out desktop-layout:bottom-6 lg:right-8">
       {fabOpen && (
-        <div className="mb-2 flex flex-col items-end gap-2">
+        <div className="mb-2 flex w-[min(calc(100vw-1.5rem),16.5rem)] flex-col items-stretch gap-2">
           <Button
             variant="secondary"
             size="sm"
-            className="rounded-full shadow-md"
+            className="rounded-full shadow-md justify-center"
             onClick={() => {
               setFabOpen(false);
               onCentros();
@@ -28,7 +30,7 @@ export function PlanejamentoFab({ onCentros, onImportar, onNovoLancamento }) {
           <Button
             variant="secondary"
             size="sm"
-            className="rounded-full shadow-md"
+            className="rounded-full shadow-md justify-center"
             onClick={() => {
               setFabOpen(false);
               onImportar();
@@ -38,17 +40,22 @@ export function PlanejamentoFab({ onCentros, onImportar, onNovoLancamento }) {
           </Button>
           <Button
             size="sm"
-            className="rounded-full shadow-md"
+            className="rounded-full shadow-md justify-center"
             onClick={() => {
               setFabOpen(false);
-              onNovoLancamento();
+              onNovaConta();
             }}
           >
-            Novo lançamento financeiro
+            Nova conta
           </Button>
         </div>
       )}
-      <Button size="icon" className="h-14 w-14 rounded-full shadow-lg" onClick={() => setFabOpen((v) => !v)}>
+      <Button
+        size="icon"
+        className="h-14 w-14 rounded-full shadow-lg"
+        onClick={() => setFabOpen((v) => !v)}
+        aria-label={fabOpen ? 'Fechar menu' : 'Abrir menu'}
+      >
         <Plus className="h-6 w-6" />
       </Button>
     </div>
@@ -59,13 +66,29 @@ export default function PlanejamentoDialogs({
   selectedComp,
   selectedModelo,
   onCloseSelected,
+  centrosRegistrados,
+  centrosCustoRegistros,
+  categorias,
+  onCategoriasChange,
+  onCentrosChange,
+  serieDialog,
+  onCloseSerieDialog,
+  onSaveSerie,
+  saving,
   parcelamentoDialog,
   onCloseParcelamentoDialog,
   onCriarParcelamento,
   salvandoParcelamento,
+  competenciaMes,
   centroDialogOpen,
   onCloseCentroDialog,
   onCentrosChanged,
+  draggingSerieId,
+  serieArrastando,
+  dropCentroAtual,
+  onHoverCentro,
+  onLeaveCentro,
+  onDropCentro,
   showImportador,
   onCloseImportador,
   importadorLancamentoId,
@@ -112,7 +135,30 @@ export default function PlanejamentoDialogs({
         saving={salvandoParcelamento}
       />
 
+      <AgefinSerieDialog
+        open={Boolean(serieDialog)}
+        onClose={onCloseSerieDialog}
+        serie={serieDialog}
+        categorias={categorias}
+        centrosCustoRegistros={centrosCustoRegistros}
+        onCategoriasChange={onCategoriasChange}
+        onCentrosChange={onCentrosChange}
+        onSave={onSaveSerie}
+        saving={saving}
+        competenciaMes={competenciaMes}
+      />
+
       <FolhaCentrosCustoDialog open={centroDialogOpen} onClose={onCloseCentroDialog} onChanged={onCentrosChanged} />
+
+      <FolhaCentroCustoDragOverlay
+        open={Boolean(draggingSerieId)}
+        centros={centrosRegistrados}
+        pessoaNome={serieArrastando?.nome}
+        dropCentroAtual={dropCentroAtual}
+        onHoverCentro={onHoverCentro}
+        onLeaveCentro={(chave) => onLeaveCentro(chave)}
+        onDropCentro={onDropCentro}
+      />
 
       <Dialog open={showImportador} onOpenChange={(open) => !open && onCloseImportador()}>
         <DialogContent className="flex min-h-0 max-h-[92vh] w-full max-w-2xl flex-col gap-0 overflow-hidden rounded-3xl border-0 p-0 shadow-xl">

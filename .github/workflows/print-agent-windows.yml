@@ -1,0 +1,42 @@
+# Deploy produção Vercel — build com env vars dos GitHub Secrets (Supabase P38).
+#
+# Gera P38-Instalar-Agente.exe e P38-Iniciar-Agente.exe (artefacto para a loja).
+
+name: Print Agent Windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/p38-print-agent/**'
+      - '.github/workflows/print-agent-windows.yml'
+
+jobs:
+  build-exe:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Gravar ligação P38 no instalador (cliente)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
+        run: node packages/p38-print-agent/scripts/write-release-defaults.mjs
+
+      - name: Build Windows executables
+        run: node packages/p38-print-agent/scripts/build-windows-exe.mjs
+
+      - name: Upload release folder
+        uses: actions/upload-artifact@v4
+        with:
+          name: p38-print-agent-windows
+          path: packages/p38-print-agent/release/
+          retention-days: 90

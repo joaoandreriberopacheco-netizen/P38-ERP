@@ -12,6 +12,8 @@ import {
   CLASSIFICACAO_DESPESA_FOLHA_LABELS,
   formatCurrency,
   extrairSalarioBase,
+  formatDataBr,
+  parseDataIso,
 } from '@/lib/folhaPrevisaoCalculos';
 
 export default function FolhaPrevisaoModeloRow({
@@ -21,6 +23,7 @@ export default function FolhaPrevisaoModeloRow({
   onDelete,
   striped = false,
   showTitle = true,
+  showCentroCusto = true,
 }) {
   const tipo = modelo.tipo_vinculo || 'funcionario';
   const salarioBase = extrairSalarioBase(modelo);
@@ -34,6 +37,7 @@ export default function FolhaPrevisaoModeloRow({
     ? CLASSIFICACAO_DESPESA_FOLHA.DIRETA
     : CLASSIFICACAO_DESPESA_FOLHA.INDIRETA;
   const centroCusto = String(modelo.centro_custo || '').trim();
+  const dataEntrada = parseDataIso(modelo.data_entrada);
 
   const resumoPrincipal =
     tipo === 'socio'
@@ -47,10 +51,15 @@ export default function FolhaPrevisaoModeloRow({
   const meta = (
     <>
       <span>{tipo === 'socio' ? 'Sócio' : 'Funcionário'}</span>
+      {dataEntrada && (
+        <span className="text-foreground/80 print:text-black/80">
+          Entrada {formatDataBr(dataEntrada)}
+        </span>
+      )}
       <P38StatusLabel tone={classificacaoDespesa === CLASSIFICACAO_DESPESA_FOLHA.DIRETA ? 'success' : 'warning'}>
         {classificacaoDespesa === CLASSIFICACAO_DESPESA_FOLHA.DIRETA ? 'Direta' : 'Indireta'}
       </P38StatusLabel>
-      <span>CC {centroCusto || 'não informado'}</span>
+      {showCentroCusto && <span>CC {centroCusto || 'não informado'}</span>}
       {!modelo.ativo && <P38StatusLabel tone="muted">Inativo</P38StatusLabel>}
     </>
   );
@@ -66,16 +75,12 @@ export default function FolhaPrevisaoModeloRow({
       )}
       title={showTitle ? <span className="truncate text-foreground print:text-black">{nome}</span> : null}
       subtitle={`${resumoPrincipal}${extras.length ? ` · ${extras.join(' · ')}` : ''}`}
-      meta={
-        showTitle ? (
-          meta
-        ) : (
-          <>
-            <span className="text-foreground print:text-black">{resumoPrincipal}</span>
-            {extras.length > 0 && <span className="text-foreground/80 print:text-black/80">{extras.join(' · ')}</span>}
-          </>
-        )
-      }
+      meta={showTitle ? meta : (
+        <>
+          <span className="text-foreground print:text-black">{resumoPrincipal}</span>
+          {extras.length > 0 && <span className="text-foreground/80 print:text-black/80">{extras.join(' · ')}</span>}
+        </>
+      )}
       value={<span className="hidden sm:inline">{formatCurrency(tipo === 'socio' ? retiradaFixa : salarioBase)}</span>}
       valueSub={
         <span className="text-muted-foreground hidden sm:inline">

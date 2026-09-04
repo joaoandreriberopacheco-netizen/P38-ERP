@@ -18,6 +18,8 @@ import {
   provisaoMensalPorFrequencia,
   valorAnualEquivalente,
   dataVencimentoReferenciaSerie,
+  serieEhParcelada,
+  dataVencimentoNaCompetencia,
 } from '@/lib/agefinPrevisaoCalculos';
 import {
   calcularTotaisCompetencia,
@@ -32,6 +34,7 @@ import {
   lancamentoMatchCategoria,
   montarVisoesBudgets,
   calcularTotaisBudgets,
+  BUDGET_MODULO_LABEL,
 } from '@/lib/budgetCalculos';
 import {
   lancamentoCancelado,
@@ -41,6 +44,15 @@ import {
   lancamentoElegivelPautaMes,
   lancamentoPago,
 } from '@/lib/agefinConsultaFilters';
+import {
+  competenciaExcluidaDoTotal,
+  montarCompetenciasVisaoComParcelas,
+} from '@/lib/agefinParcelamentoCalculos';
+import {
+  grupoSerieEhParcelado,
+  lancamentoCobreParcelaVirtual,
+  lancamentoEntraPautaAgefinPrevisao,
+} from '@/lib/agefinPautaPlanejamento';
 
 const GRUPO = {
   FIXAS_RECORRENTES: 'fixas_recorrentes',
@@ -114,7 +126,112 @@ function labelValorParcela(frequencia) {
   return `Valor ${f.toLowerCase()}`;
 }
 
-function montarLinhasFixas(competencia, modelosAgefin, lancamentosAgefin, lancamentosRecorrentes = []) {
+function montarLinhasFixasPrevisaoMes(
+  competencia,
+  modelosAgefin,
+  lancamentosAgefin,
+  lancamentosRecorrentes = [],
+  parcelamentos = [],
+  overridesPorSerie = {},
+) {
+  const frequenciasPorGrupo = mapaFrequenciaPorGrupoLancamento(lancamentosRecorrentes);
+  const modelosMap = Object.fromEntries(
+    (modelosAgefin || []).filter((m) => m?.id).map((m) => [m.id, m]),
+  );
+  const competencias = montarCompetenciasVisaoComParcelas(
+    competencia,
+    modelosAgefin,
+    lancamentosAgefin,
+    parcelamentos,
+    lancamentosRecorrentes,
+    overridesPorSerie,
+  );
+
+  const recorrentes = [];
+  const naoMensais = [];
+  const vistos = new Set();
+
+  for (const comp of competencias) {
+    if (competenciaExcluidaDoTotal(comp) || comp._modoParcela) continue;
+    const modelo = modelosMap[comp.serie_id];
+    if (!modelo) continue;
+    if (grupoSerieEhParcelado(modelo, lancamentosRecorrentes)) continue;
+    if (vistos.has(modelo.id)) continue;
+    vistos.add(modelo.id);
+
+    const frequencia = frequenciaEfetivaSerie(modelo, frequenciasPorGrupo);
+    const mensal = ehFrequenciaMensal(frequencia);
+    const valorParcela = valorEfetivoCompetencia(comp, modelo);
+    if (valorParcela <= 0) continue;
+
+    const centroCusto = comp.centro_custo || modelo.centro_custo || '';
+    const categoria = limparCategoria(comp.categoria_nome || modelo.categoria_nome || '');
+    const dataVencimento = mensal
+      ? dataVencimentoCompetencia(comp, modelo)
+      : dataVencimentoReferenciaSerie(modelo, competencia);
+    const nome = comp.serie_nome || modelo.nome;
+    const venceNesteMes = serieDeveAparecerNaCompetencia(modelo, competencia, frequenciasPorGrupo);
+
+    if (mensal) {
+      recorrentes.push(
+        linhaItem({
+          id: `fixa-${modelo.id}`,
+          grupo: GRUPO.FIXAS_RECORRENTES,
+          nome,
+          detalhe: '',
+          valor: valorParcela,
+          link: `/PlanejamentoFinanceiro?competencia=${competencia}`,
+          centroCusto,
+          categoria,
+          dataVencimento,
+        }),
+      );
+    } else {
+      naoMensais.push(
+        linhaItem({
+          id: `nao-mensal-${modelo.id}`,
+          grupo: GRUPO.FIXAS_NAO_MENSAIS,
+          nome,
+          detalhe: '',
+          valor: provisaoMensalPorFrequencia(valorParcela, frequencia),
+          valorSecundario: valorParcela,
+          valorSecundarioLabel: venceNesteMes ? 'Vence neste mês' : labelValorParcela(frequencia),
+          link: `/PlanejamentoFinanceiro?competencia=${competencia}`,
+          destaque: venceNesteMes,
+          centroCusto,
+          categoria,
+          frequencia,
+          dataVencimento,
+        }),
+      );
+    }
+  }
+
+  return { recorrentes, naoMensais };
+}
+
+function montarLinhasFixas(
+  competencia,
+  modelosAgefin,
+  lancamentosAgefin,
+  lancamentosRecorrentes = [],
+  {
+    fonte = 'template',
+    parcelamentos = [],
+    overridesPorSerie = {},
+  } = {},
+) {
+  if (fonte === 'previsao_mes') {
+    return montarLinhasFixasPrevisaoMes(
+      competencia,
+      modelosAgefin,
+      lancamentosAgefin,
+      lancamentosRecorrentes,
+      parcelamentos,
+      overridesPorSerie,
+    );
+  }
+
   const frequenciasPorGrupo = mapaFrequenciaPorGrupoLancamento(lancamentosRecorrentes);
   const competencias = montarCompetenciasAgefin(competencia, modelosAgefin, lancamentosAgefin);
   const competenciasMap = Object.fromEntries(competencias.map((comp) => [comp.serie_id, comp]));
@@ -124,6 +241,7 @@ function montarLinhasFixas(competencia, modelosAgefin, lancamentosAgefin, lancam
 
   for (const modelo of modelosAgefin || []) {
     if (!serieEstaAtivaNaCompetencia(modelo, competencia)) continue;
+    if (grupoSerieEhParcelado(modelo, lancamentosRecorrentes)) continue;
 
     const frequencia = frequenciaEfetivaSerie(modelo, frequenciasPorGrupo);
     const mensal = ehFrequenciaMensal(frequencia);
@@ -310,7 +428,7 @@ function montarLinhasBudgets(competencia, modelos, competencias, lancamentos) {
     linhaItem({
       id: `budget-${v.modelo?.id}`,
       grupo: GRUPO.BUDGETS,
-      nome: v.modelo?.nome || 'Budget',
+      nome: v.modelo?.nome || 'Gasto sem vencimento',
       detalhe: '',
       valor: v.orcado || 0,
       valorSecundario: v.realizado || 0,
@@ -355,7 +473,10 @@ function montarLinhasPauta({
   modelosBudget,
 }) {
   const gruposFixas = new Set(
-    (modelosAgefin || []).map((modelo) => modelo?.grupo_lancamento_id).filter(Boolean),
+    (modelosAgefin || [])
+      .filter((modelo) => !serieEhParcelada(modelo))
+      .map((modelo) => modelo?.grupo_lancamento_id)
+      .filter(Boolean),
   );
   const gruposFolha = new Set(
     [...(modelosFolha || []), ...(competenciasFolha || [])]
@@ -367,6 +488,9 @@ function montarLinhasPauta({
     .filter((lancamento) => {
       if (String(lancamento.data_vencimento || '').slice(0, 7) !== competencia) return false;
       if (!lancamentoElegivelPautaMes(lancamento)) return false;
+
+      const viaPlanejamento = lancamentoEntraPautaAgefinPrevisao(lancamento, modelosAgefin);
+      if (viaPlanejamento) return true;
 
       const tags = tagsLancamento(lancamento);
       if (tags.includes('agefin_previsao') || tags.includes('folha_previsao')) return false;
@@ -393,7 +517,7 @@ function montarLinhasPauta({
         nome: String(lancamento.descricao || '').trim() || 'Conta sem descrição',
         detalhe: '',
         valor: valorLancamento(lancamento),
-        link: `/AgefinConsulta?competencia=${competencia}`,
+        link: `/SuperAgefin?competencia=${competencia}`,
         destaque: frete || !lancamentoPago(lancamento),
         centroCusto,
         categoria,
@@ -410,6 +534,77 @@ function montarLinhasPauta({
       if (cmpData !== 0) return cmpData;
       return compararNome(a.nome, b.nome);
     });
+}
+
+function montarLinhasParcelasVirtuaisPauta({
+  competencia,
+  modelosAgefin = [],
+  parcelamentos = [],
+  lancamentosVencimento = [],
+}) {
+  const mes = String(competencia || '').slice(0, 7);
+  const modelosMap = Object.fromEntries(
+    (modelosAgefin || []).filter((m) => m?.id).map((m) => [m.id, m]),
+  );
+  const linhas = [];
+
+  for (const parc of parcelamentos || []) {
+    if (parc?.ativo === false) continue;
+    const modelo = modelosMap[parc.serie_id];
+    if (!modelo) continue;
+
+    for (const parcela of parc.parcelas || []) {
+      if (String(parcela.competencia || '').slice(0, 7) !== mes) continue;
+      if (lancamentoCobreParcelaVirtual(lancamentosVencimento, modelo, parcela)) continue;
+
+      const valor = Number(parcela.valor) || 0;
+      if (valor <= 0) continue;
+
+      const total = parc.total_parcelas || parc.parcelas?.length || 1;
+      const numero = parcela.numero || 1;
+      const dia = Number(parcela.dia_vencimento) || Number(modelo.dia_vencimento) || 10;
+      const dataVencimento =
+        parcela.data_vencimento || dataVencimentoNaCompetencia(parcela.competencia, dia);
+
+      linhas.push(
+        linhaItem({
+          id: `pauta-parc-${parc.id}-${numero}`,
+          grupo: GRUPO.PONTUAIS,
+          nome: `${modelo.nome || 'Conta parcelada'} (${numero}/${total})`,
+          detalhe: modelo.terceiro_nome || '',
+          valor,
+          link: `/PlanejamentoFinanceiro?competencia=${competencia}`,
+          destaque: true,
+          centroCusto: modelo.centro_custo || '',
+          categoria: limparCategoria(modelo.categoria_nome || ''),
+          dataVencimento,
+          tipoPauta: 'parcela_planejamento',
+          entraNoTotal: true,
+        }),
+      );
+    }
+  }
+
+  return linhas.sort((a, b) => {
+    const cmpData = (a.dataVencimento || '9999-12-31').localeCompare(b.dataVencimento || '9999-12-31');
+    if (cmpData !== 0) return cmpData;
+    return compararNome(a.nome, b.nome);
+  });
+}
+
+function mesclarLinhasPauta(...listas) {
+  const map = new Map();
+  for (const lista of listas) {
+    for (const item of lista || []) {
+      if (!item?.id) continue;
+      map.set(item.id, item);
+    }
+  }
+  return [...map.values()].sort((a, b) => {
+    const cmpData = (a.dataVencimento || '9999-12-31').localeCompare(b.dataVencimento || '9999-12-31');
+    if (cmpData !== 0) return cmpData;
+    return compararNome(a.nome, b.nome);
+  });
 }
 
 function nomeGrupo(valor, fallback) {
@@ -599,7 +794,7 @@ const GRUPO_LABELS = {
   [GRUPO.FIXAS_NAO_MENSAIS]: 'Provisão mensal — IPTU, IPVA, alvarás e similares',
   [GRUPO.FOLHA]: 'Folha de pagamento',
   [GRUPO.FOLHA_PROVISOES]: 'Provisões de folha',
-  [GRUPO.BUDGETS]: 'Budgets',
+  [GRUPO.BUDGETS]: BUDGET_MODULO_LABEL,
   [GRUPO.PONTUAIS]: 'Pauta do mês — boletos e ocasionais',
 };
 
@@ -661,25 +856,41 @@ export function montarPlanoFinanceiroConsolidado({
   lancamentosMes = [],
   lancamentosVencimento = [],
   lancamentosRecorrentesAgefin = [],
+  parcelamentosAgefin = [],
   lucroBruto = 0,
   margemDetalhe = null,
+  fonteFixas = 'template',
+  overridesAgefinPorSerie = {},
 }) {
   const { recorrentes, naoMensais } = montarLinhasFixas(
     competencia,
     modelosAgefin,
     lancamentosAgefin,
     lancamentosRecorrentesAgefin,
+    {
+      fonte: fonteFixas,
+      parcelamentos: parcelamentosAgefin,
+      overridesPorSerie: overridesAgefinPorSerie,
+    },
   );
   const { folha, provisoes } = montarLinhasFolha(competencia, modelosFolha, competenciasFolha);
   const budgets = montarLinhasBudgets(competencia, modelosBudget, competenciasBudget, lancamentosMes);
-  const pauta = montarLinhasPauta({
-    competencia,
-    lancamentosVencimento,
-    modelosAgefin,
-    modelosFolha,
-    competenciasFolha,
-    modelosBudget,
-  });
+  const pauta = mesclarLinhasPauta(
+    montarLinhasPauta({
+      competencia,
+      lancamentosVencimento,
+      modelosAgefin,
+      modelosFolha,
+      competenciasFolha,
+      modelosBudget,
+    }),
+    montarLinhasParcelasVirtuaisPauta({
+      competencia,
+      modelosAgefin,
+      parcelamentos: parcelamentosAgefin,
+      lancamentosVencimento,
+    }),
+  );
 
   const subtotalFixasRecorrentes = somaLinhas(recorrentes);
   const subtotalNaoMensaisDiluido = somaLinhas(naoMensais);

@@ -2,9 +2,9 @@ import React from 'react';
 import { ChevronLeft, ChevronRight, Repeat2, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { P38HelpPopover } from '@/components/ui/p38-help-popover';
-import FinanceiroResumoBar from '@/components/financeiro/fluxo/FinanceiroResumoBar';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from '@/components/financeiro/fluxo/FinanceiroListaMeta';
-import { P38_KPI_SHELL, P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
+import { formatFinanceiroValor } from '@/components/financeiro/fluxo/FinanceiroListaShared';
+import { P38_ACCENT, P38_KPI_SHELL, P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
 import { formatCompetenciaLabel } from '@/lib/agefinPrevisaoCalculos';
 import { cn } from '@/lib/utils';
 
@@ -73,19 +73,33 @@ export default function AgefinPrevisaoCabecalho({
   }
 
   return (
-    <div className={cn(P38_KPI_SHELL, 'space-y-3')}>
-      <div className="flex items-stretch gap-2">
-        <div className={cn('flex flex-1 items-center rounded-xl px-0.5', P38_FIELD_SURFACE)}>
-          <Button variant="ghost" size="icon" className="shrink-0" onClick={onMesAnterior}>
+    <div className={cn(P38_KPI_SHELL, 'space-y-2.5 sm:space-y-3 min-w-0')}>
+      <div className="flex items-stretch gap-2 min-w-0">
+        <div className={cn('flex flex-1 min-w-0 items-center rounded-xl px-0.5', P38_FIELD_SURFACE)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 shrink-0"
+            onClick={onMesAnterior}
+            aria-label="Mês anterior"
+          >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1 min-w-0 px-1 py-2 text-center">
-            <p className="text-sm font-semibold uppercase tracking-wide text-foreground sm:text-base">
+            <p className="text-sm font-semibold uppercase tracking-wide text-foreground sm:text-base truncate">
               {competenciaLabel}
             </p>
-            <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">{statusMes}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug line-clamp-2">
+              {statusMes}
+            </p>
           </div>
-          <Button variant="ghost" size="icon" className="shrink-0" onClick={onMesProximo}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 shrink-0"
+            onClick={onMesProximo}
+            aria-label="Próximo mês"
+          >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
@@ -115,19 +129,26 @@ export default function AgefinPrevisaoCabecalho({
         </Button>
       </div>
 
-      <div className="space-y-2 border-t border-border/40 pt-3">
-        <FinanceiroResumoBar
-          receitas={0}
-          despesas={totais?.total || 0}
-          variacao={-(totais?.total || 0)}
-          saldo={totais?.total || 0}
-          saldoComSinal
-          receitasLabel="—"
-          despesasLabel="Previsto"
-          variacaoLabel="Total mês"
-          saldoLabel="Comprometido"
+      <div className="space-y-2 border-t border-border/40 pt-2.5 sm:pt-3 min-w-0">
+        <div className="rounded-xl bg-secondary/30 px-3 py-3 dark:bg-[#383e47]/40 sm:px-4 sm:py-3.5">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:text-[11px]">
+            Total previsto no mês
+          </p>
+          <p
+            className={cn(
+              'mt-1 font-semibold tabular-nums leading-none tracking-tight',
+              'text-[clamp(1.375rem,5.5vw,1.875rem)]',
+              (totais?.total || 0) > 0 ? 'text-red-600 dark:text-red-400' : P38_ACCENT,
+            )}
+          >
+            −{formatFinanceiroValor(totais?.total || 0)}
+          </p>
+        </div>
+        <FinanceiroListaMeta
+          total={count}
+          totalLabel={count === 1 ? 'conta' : 'contas'}
+          summaryChips={chips}
         />
-        <FinanceiroListaMeta count={count} chips={chips} />
       </div>
     </div>
   );

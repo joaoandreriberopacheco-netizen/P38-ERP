@@ -4,8 +4,6 @@ import { cn } from '@/components/utils';
 
 const DEFAULT_OVERSCAN = 8;
 
-const measureItem = (element) => element?.getBoundingClientRect().height ?? 0;
-
 export function VirtualizedList({
   items,
   estimateSize = 120,
@@ -24,8 +22,11 @@ export function VirtualizedList({
     getScrollElement: () => parentRef.current,
     estimateSize: () => estimateSize,
     getItemKey: (index) => getItemKey?.(safeItems[index], index) ?? safeItems[index]?.id ?? index,
-    measureElement: measureItem,
     overscan,
+    measureElement:
+      typeof window !== 'undefined'
+        ? (element) => element?.getBoundingClientRect().height ?? estimateSize
+        : undefined,
   });
 
   if (safeItems.length === 0) {

@@ -14,6 +14,7 @@ import {
   sincronizarLancamentoFinanceiro,
   subscribeSeriesStorageChanges,
 } from '@/lib/agefinPrevisaoService';
+import { MODO_CADASTRO_SERIE } from '@/lib/agefinPrevisaoCalculos';
 import {
   criarParcelamento,
   listarParcelamentos,
@@ -21,6 +22,10 @@ import {
   removerParcelamento,
 } from '@/lib/agefinParcelamentoService';
 import { parcelamentoAfetaSerieNoMes, montarCompetenciasVisaoComParcelas } from '@/lib/agefinParcelamentoCalculos';
+import {
+  listarOverridesCompetenciaMes,
+  mapaOverridesCompetenciaMes,
+} from '@/lib/agefinCompetenciaMesService';
 import { invalidarCacheLancamentosFinanceiros } from '@/lib/lancamentoFinanceiroCache';
 import { AGEFIN_PREVISAO_ROOT, agefinQueryKeys } from '../constants/queryKeys';
 
@@ -103,9 +108,20 @@ export function usePlanejamentoActions({
   );
 
   const recarregarVisaoMes = useCallback(async () => {
-    const lancs = await listarLancamentosCompetencia(competenciaMes);
-    const parcs = await listarParcelamentos();
-    return montarCompetenciasVisaoComParcelas(competenciaMes, modelos, lancs, parcs);
+    const [lancs, parcs, overrides] = await Promise.all([
+      listarLancamentosCompetencia(competenciaMes),
+      listarParcelamentos(),
+      listarOverridesCompetenciaMes(),
+    ]);
+    const overridesPorSerie = mapaOverridesCompetenciaMes(overrides, competenciaMes);
+    return montarCompetenciasVisaoComParcelas(
+      competenciaMes,
+      modelos,
+      lancs,
+      parcs,
+      [],
+      overridesPorSerie,
+    );
   }, [competenciaMes, modelos]);
 
   const handleAbrirMes = async () => {
@@ -160,16 +176,44 @@ export function usePlanejamentoActions({
   const handleSaveSerie = async (payload) => {
     setSaving(true);
     try {
-      await salvarSerie(payload);
+      const isParcelada = payload.modo_cadastro === MODO_CADASTRO_SERIE.PARCELADA;
+      const competenciaOrigem =
+        String(payload.competencia_inicio_parcelas || competenciaMes || '').slice(0, 7) ||
+        competenciaMes;
+
+      const serieSalva = await salvarSerie(
+        {
+          ...payload,
+          modo_cadastro: isParcelada ? MODO_CADASTRO_SERIE.PARCELADA : MODO_CADASTRO_SERIE.RECORRENTE,
+        },
+        payload.id ? { competenciaMinima: competenciaMes } : {},
+      );
+
+      if (isParcelada && payload._criarParcelamento) {
+        await criarParcelamento({
+          serieId: serieSalva.id,
+          competenciaOrigem,
+          valorOriginal: Number(payload.valor_previsto) || 0,
+          jurosMulta: 0,
+          totalParcelas: Math.max(2, Number(payload.total_parcelas) || 2),
+          diaVencimento: Number(payload.dia_vencimento) || 10,
+          modelo: serieSalva,
+        });
+        await queryClient.invalidateQueries({ queryKey: agefinQueryKeys.parcelamentos });
+      }
+
       setSerieDialog(null);
       invalidate();
       const freq = payload.frequencia || 'Mensal';
       toast({
-        title: 'Conta salva',
-        description:
-          freq === 'Anual'
-            ? 'Conta anual cadastrada — aparece no bloco Anual e no mês de vencimento.'
-            : 'Ela já entra na programação e na projeção.',
+        title: isParcelada ? 'Conta parcelada salva' : payload.id ? 'Cadastro atualizado' : 'Conta salva',
+        description: isParcelada
+          ? `${payload.total_parcelas || 2} parcelas a partir de ${formatCompetenciaLabel(competenciaOrigem)}.`
+          : payload.id
+            ? `A partir de ${formatCompetenciaLabel(competenciaMes)} — meses anteriores não mudam.`
+            : freq === 'Anual'
+              ? 'Conta anual cadastrada — aparece no bloco Anual e no mês de vencimento.'
+              : 'Ela já entra na programação e na projeção.',
       });
     } catch (e) {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
@@ -297,13 +341,15 @@ export function usePlanejamentoActions({
         diaVencimento,
       });
       refreshDepoisDeLancamentos();
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: agefinQueryKeys.lancamentos(competenciaMes) }),
+        queryClient.refetchQueries({ queryKey: agefinQueryKeys.overridesCompetencia }),
+      ]);
       const visao = await recarregarVisaoMes();
       refreshSelectedComp(visao);
       toast({
         title: 'Salvo',
-        description: selectedComp?.lancamento_id
-          ? 'Valor e vencimento atualizados no planejamento e no financeiro.'
-          : 'Valor e vencimento gravados no cadastro.',
+        description: 'Valor e vencimento gravados só neste mês.',
       });
     } catch (e) {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });

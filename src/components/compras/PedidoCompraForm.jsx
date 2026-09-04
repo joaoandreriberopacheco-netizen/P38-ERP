@@ -26,6 +26,7 @@ import { useCompactShell } from '@/hooks/use-breakpoint';
 import { useProdutosListQuery, useTerceirosListQuery } from '@/hooks/useP38Entities';
 import { addDays, format } from 'date-fns';
 import { agora, dataHoje, formatarLogTime } from '@/components/utils/dateUtils';
+import { cn } from '@/components/utils';
 import { registrarTransicao } from './transicaoHelper';
 import { buildBypassAuthPayload } from '@/components/auth/operacaoAuthFlags';
 import MobileProductSelector from './MobileProductSelector';
@@ -33,6 +34,8 @@ import AtualizarPrecosDialog from './AtualizarPrecosDialog';
 import PendenciasPedido from './PendenciasPedido';
 import LogsPedidoCompra from './LogsPedidoCompra';
 import PedidoCompraFAB from './PedidoCompraFAB.jsx';
+import { P38TourFab } from '@/components/ui/p38-tour';
+import { buildPedidoCompraFormTour } from './comprasEmbarquesOnboarding';
 import ImportadorPedidoCompra from './ImportadorPedidoCompra.jsx';
 import BannerStatusPedido from './BannerStatusPedido.jsx';
 import AnexosPedidoCompra from './AnexosPedidoCompra.jsx';
@@ -42,13 +45,21 @@ import PainelCentralFinanceiroPedido from './PainelCentralFinanceiroPedido.jsx';
 import PedidoCompraLogisticaTab from './PedidoCompraLogisticaTab.jsx';
 import AbaRecepção from './AbaRecepção.jsx';
 import { filterEmbarquesVisiveisParaPedido } from './embarqueFilters';
+import { refreshPedidoCompraComLogistica } from '@/lib/fetchPedidoCompraItens';
 import {
   calcValorTotalPedidoCompra,
   cancelarLancamentosNaoPagosPedidoCompra,
   criarLancamentoAjustePedidoCompra,
+  getPedidoCompraDisplayStatusFinanceiro,
+  getPedidoCompraDisplayStatusFinanceiroLabel,
   listarLancamentosPedidoCompra,
   temLancamentoPagoParaPedido,
+  evidenciaAprovacaoFinanceiraProcessada,
 } from '@/lib/pedidoCompraFinanceiro';
+import {
+  pedidoAguardandoAprovacaoFinanceira,
+  sincronizarPedidoCompraAprovacaoFinanceira,
+} from '@/lib/aprovarPedidoCompraFinanceiro';
 import {
   pickDefaultPurchaseUnit,
   normalizePurchaseItemToCommercial,
@@ -61,11 +72,44 @@ import {
   resolveDescontoPctCompraProduto,
   syncItemDescontoApresentacao,
   calcTotalItemCompraPedido,
+  normalizePedidoCompraItemCustoLiquidoParaPersist,
 } from '@/lib/productUnits';
 import { savePedidoCompraItem } from '@/functions/savePedidoCompraItem';
 import { uploadAnexoParaPedidoCompra } from '@/lib/uploadAnexoReferencia';
+import { mergeLoteIntoItems, parseLoteQuantidade } from '@/lib/catalogLoteUtils';
+import {
+  calcularResumoNecessidadeDetalhe,
+  resolverEmbarqueNecessidadeContexto,
+} from '@/lib/pedidoCompraNecessidade';
+import {
+  COMPRAS_BTN_CITRUS,
+  COMPRAS_BTN_PRIMARY,
+  COMPRAS_DIVIDER_TOP,
+  COMPRAS_DROPDOWN,
+  COMPRAS_DROPDOWN_ITEM,
+  COMPRAS_FIELD,
+  COMPRAS_FIELD_H12,
+  COMPRAS_FORM_HEADER,
+  COMPRAS_FORM_ROOT,
+  COMPRAS_HEADER_ACCENT,
+  COMPRAS_SELECT_HIGHLIGHT,
+  COMPRAS_SEP,
+  COMPRAS_SUBHEADER,
+  COMPRAS_TAB,
+  COMPRAS_TABS_BAR,
+} from '@/lib/comprasP38Theme';
+import { P38_PAGE_KICKER, P38_PAGE_SUBTITLE, P38_PAGE_TITLE } from '@/lib/p38FormTypography';
+import { valorEmbarqueSplit } from '@/lib/pedidoCompraValorExibicao';
 
-export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefresh, abaInicial = 'dados-gerais', autoOpenImporter = false }) {
+export default function PedidoCompraForm({
+  pedido,
+  onSave,
+  onClose,
+  onPedidoRefresh,
+  abaInicial = 'dados-gerais',
+  autoOpenImporter = false,
+  embarqueContextoId = null,
+}) {
   const isPhone = useCompactShell();
   const { data: produtosCached, refetch: refetchProdutosCatalog } = useProdutosListQuery();
   const { data: terceirosCached } = useTerceirosListQuery();
@@ -151,10 +195,49 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
   const valorTotalBaseEdicaoRef = useRef(calcValorTotalPedidoCompra(pedido || {}));
   const [pedidoLogistica, setPedidoLogistica] = useState(pedido);
   const [abaPedidoDesktop, setAbaPedidoDesktop] = useState(abaInicial);
+
+  const pedidoCompraTourSteps = useMemo(
+    () => buildPedidoCompraFormTour({ setAba: setAbaPedidoDesktop }),
+    [],
+  );
   const [lancamentosRefreshKey, setLancamentosRefreshKey] = useState(0);
+  const [lancamentosPedido, setLancamentosPedido] = useState([]);
   const { toast } = useToast();
 
   const pedidoAtual = pedidoLogistica || pedido;
+  const statusFinanceiroHeader = getPedidoCompraDisplayStatusFinanceiroLabel(
+    getPedidoCompraDisplayStatusFinanceiro(pedidoAtual || {}, lancamentosPedido),
+  );
+
+  const produtosMapBasico = useMemo(() => {
+    const map = {};
+    (produtosCached || []).forEach((produto) => {
+      if (produto?.id) map[produto.id] = produto;
+    });
+    return map;
+  }, [produtosCached]);
+
+  const embarqueNecessidadeContexto = useMemo(
+    () => resolverEmbarqueNecessidadeContexto(pedidoAtual, embarqueContextoId, produtosMapBasico),
+    [pedidoAtual, embarqueContextoId, produtosMapBasico],
+  );
+
+  const resumoNecessidadeDetalhe = useMemo(() => {
+    if (!embarqueNecessidadeContexto) return null;
+    return calcularResumoNecessidadeDetalhe(
+      pedidoAtual,
+      embarqueNecessidadeContexto,
+      pedidoAtual?._embarques || [],
+      produtosMapBasico,
+    );
+  }, [pedidoAtual, embarqueNecessidadeContexto, produtosMapBasico]);
+
+  const valorEmbarqueContexto = useMemo(() => {
+    if (!embarqueContextoId || !pedidoAtual) return null;
+    const embarque = (pedidoAtual._embarques || []).find((e) => e.id === embarqueContextoId);
+    if (!embarque) return null;
+    return valorEmbarqueSplit(pedidoAtual, embarque, produtosMapBasico);
+  }, [embarqueContextoId, pedidoAtual, produtosMapBasico]);
 
   const handlePedidoFinanceiroAtualizado = async () => {
     if (onPedidoRefresh) {
@@ -172,6 +255,41 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
   useEffect(() => {
     if (abaInicial) setAbaPedidoDesktop(abaInicial);
   }, [abaInicial]);
+
+  useEffect(() => {
+    if (!pedido?.id) {
+      setLancamentosPedido([]);
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      const lancs = await listarLancamentosPedidoCompra(base44, pedido.id);
+      if (cancelled) return;
+      setLancamentosPedido(lancs);
+
+      if (!pedidoAguardandoAprovacaoFinanceira(pedido, lancs)) return;
+
+      const { synced } = await sincronizarPedidoCompraAprovacaoFinanceira({
+        base44,
+        pedido,
+        lancamentos: lancs,
+      });
+      if (!cancelled && synced) {
+        const [atualizado] = await base44.entities.PedidoCompra.filter({ id: pedido.id });
+        if (atualizado) {
+          setFormData((prev) => ({ ...prev, ...atualizado }));
+          setPedidoLogistica((prev) => ({ ...(prev || {}), ...atualizado }));
+        }
+      }
+    })().catch(() => {
+      if (!cancelled) setLancamentosPedido([]);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pedido?.id, pedido?.status, pedido?.status_aprovacao_financeira, lancamentosRefreshKey]);
 
   useEffect(() => {
     if (pedido) {
@@ -278,8 +396,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
         anexoImportUploadedRef.current = true;
         pendingAnexoImportRef.current = null;
         toast({
-          title: 'PDF anexado ao pedido',
-          description: `Documento classificado como ${pending.tipoDocumentoAnexo || 'Comprovante'}.`,
+          title: 'Documento anexado ao pedido',
+          description: `Arquivo classificado como ${pending.tipoDocumentoAnexo || 'Comprovante'}.`,
         });
       } catch (anexoErr) {
         console.warn('Anexo PDF (importação pedido):', anexoErr);
@@ -565,6 +683,62 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
     setFormData(newData);
   };
 
+  const handleAddItemsBatch = (incoming = [], productsSource) => {
+    if (!incoming.length) return;
+    const catalog = productsSource?.length ? productsSource : produtos;
+
+    const calculateItemTotals = (item) => {
+      const qty = parseFloat(item.quantidade) || 0;
+      const fatorConversao = parseFloat(item.fator_conversao) || 1;
+      const synced = syncItemDescontoApresentacao({
+        ...item,
+        quantidade_base: qty * fatorConversao,
+      });
+      const cost = roundToTwoDecimals(parseFloat(synced.custo_unitario) || 0);
+      const descUnit = roundToTwoDecimals(parseFloat(synced.valor_desconto_item) || 0);
+      const custoFinalUnitario = roundToTwoDecimals(cost - descUnit);
+
+      return {
+        ...synced,
+        subtotal: roundToTwoDecimals(qty * fatorConversao * cost),
+        total: calcTotalItemCompraPedido(synced),
+        custo_final_unitario: custoFinalUnitario,
+        ...normalizeItemToCanonicalFactorOne({
+          ...synced,
+          custo_final_unitario: custoFinalUnitario,
+        }, 'custo'),
+      };
+    };
+
+    const buildFromProduct = (product, quantidade) => {
+      const qty = parseLoteQuantidade(quantidade);
+      const pu = pickDefaultPurchaseUnit(product);
+      const fatorPu = pu?.fator_conversao ?? 1;
+      const custoF1 = pu
+        ? custoApresentacaoParaFator1(pu.valor_unitario ?? 0, fatorPu)
+        : (product?.valor_compra || 0);
+      const base = {
+        produto_id: product.id,
+        produto_nome: product.nome,
+        codigo_produto: product.codigo_interno || product.codigo_barras || '',
+        quantidade: qty,
+        unidade_medida: pu?.unidade || product.unidade_compra || 'UN',
+        fator_conversao: fatorPu,
+        custo_unitario: custoF1,
+        valor_desconto_item: resolveValorDescontoCompraPadraoFator1(product, custoF1),
+        desconto_pct_item: resolveDescontoPctCompraProduto(product, custoF1),
+        observacao_item: '',
+      };
+      return calculateItemTotals(base);
+    };
+
+    const merged = mergeLoteIntoItems(formData.itens, incoming, buildFromProduct, catalog);
+    const recalc = merged.map((item) => calculateItemTotals(item));
+    const newData = { ...formData, itens: recalc };
+    saveToHistory(newData);
+    setFormData(newData);
+  };
+
   const handleExportModel = async () => {
     try {
       toast({ title: "Gerando planilha...", description: "Aguarde o download." });
@@ -830,8 +1004,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
   const isAprovado = pedidoAtual && (pedidoAtual.status === 'Aprovado' || pedidoAtual.status === 'Aguardando Recepção');
 
   const isLocked = pedidoAtual && (
-    pedidoAtual.status === 'Aguardando Aprovação Financeira' ||
-    pedidoAtual.status_aprovacao_financeira === 'Aguardando Aprovação Financeira' ||
+    pedidoAguardandoAprovacaoFinanceira(pedidoAtual, lancamentosPedido) ||
+    evidenciaAprovacaoFinanceiraProcessada(pedidoAtual, lancamentosPedido) ||
     pedidoAtual.status_aprovacao_financeira === 'Aprovado' ||
     pedidoAtual.status_aprovacao_financeira === 'Aprovado Financeiramente' ||
     pedidoAtual.status_aprovacao_financeira === 'Rejeitado' ||
@@ -984,29 +1158,36 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
         );
       }
 
-      // ── Sincroniza linhas canonicas em PedidoCompraItem ──
-      // O servico replaceAll persiste cada linha com produto_unidade_id, recompoe
-      // o espelho `PedidoCompra.itens[]` e atualiza `valor_total`. Os erros nao
-      // bloqueiam o save legado — apenas geram um aviso pra o usuario.
+      // ── Sincroniza linhas canónicas em PedidoCompraItem (SQL) ──
+      // replaceAll persiste cada linha; recomporPedido actualiza só totais (sem espelho JSON).
       if (pedidoId && Array.isArray(dataToSave?.itens)) {
         try {
           const itensCanonicos = dataToSave.itens.map((it, idx) => {
             const synced = syncItemDescontoApresentacao(it);
             const totalLinha = calcTotalItemCompraPedido(synced);
-            const descontoF1 =
-              Number(synced?.valor_desconto_item ?? synced?.desconto_unitario) || 0;
+            const normalizado = normalizePedidoCompraItemCustoLiquidoParaPersist({
+              ...synced,
+              custo_unitario_fator1: Number(synced?.custo_unitario) || 0,
+              quantidade_comercial: Number(synced?.quantidade) || 0,
+              quantidade_base: Number(synced?.quantidade_base) || 0,
+              fator_aplicado: Number(synced?.fator_conversao) || 1,
+              frete_unitario_fator1: Number(synced?.custo_frete_unitario) || 0,
+              outros_unitario_fator1: Number(synced?.custo_outros_unitario) || 0,
+              desconto_unitario_fator1: Number(synced?.valor_desconto_item ?? synced?.desconto_unitario) || 0,
+              total: Number(synced?.total) > 0 ? Number(synced.total) : totalLinha,
+            });
             return {
               id: synced?.pedido_compra_item_id || synced?.id || undefined,
               produto_id: synced?.produto_id || '',
               produto_unidade_id: synced?.produto_unidade_id || '',
               unidade_sigla: synced?.unidade_medida || synced?.unidade_apresentacao || '',
-              quantidade_comercial: Number(synced?.quantidade) || 0,
-              custo_unitario_fator1: Number(synced?.custo_unitario) || 0,
-              frete_unitario_fator1: Number(synced?.custo_frete_unitario) || 0,
-              outros_unitario_fator1: Number(synced?.custo_outros_unitario) || 0,
-              desconto_unitario_fator1: descontoF1,
-              valor_desconto_item: descontoF1,
-              total: Number(synced?.total) > 0 ? Number(synced.total) : totalLinha,
+              quantidade_comercial: (normalizado.quantidade_comercial ?? Number(synced?.quantidade)) || 0,
+              custo_unitario_fator1: normalizado.custo_unitario_fator1,
+              frete_unitario_fator1: normalizado.frete_unitario_fator1 ?? 0,
+              outros_unitario_fator1: normalizado.outros_unitario_fator1 ?? 0,
+              desconto_unitario_fator1: 0,
+              valor_desconto_item: 0,
+              total: normalizado.total ?? totalLinha,
               quantidade_vinculada: Number(synced?.quantidade_vinculada) || 0,
               ordem: idx,
               observacoes: typeof synced?.observacoes === 'string' ? synced.observacoes : '',
@@ -1031,7 +1212,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
           console.warn('Sincronia canonica de PedidoCompraItem falhou:', canonicalErr?.message || canonicalErr);
           toast({
             title: 'Aviso de sincronia canonica',
-            description: 'O pedido foi salvo, mas a entidade canonica PedidoCompraItem nao pode ser sincronizada. O espelho legado segue valido. Detalhe: ' + (canonicalErr?.message || ''),
+            description: 'O pedido foi salvo, mas a entidade canonica PedidoCompraItem nao pode ser sincronizada. Detalhe: ' + (canonicalErr?.message || ''),
           });
         }
       }
@@ -1192,45 +1373,112 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
 
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-card dark:text-foreground overflow-hidden">
+    <div className={cn(COMPRAS_FORM_ROOT, 'dark:text-foreground')}>
       {/* Alerta de Bloqueio Desktop */}
-      {isLocked && <BannerStatusPedido pedido={pedido} isMobile={isPhone} />}
-      {/* Header compacto */}
-      <div className="flex-shrink-0 px-4 py-4 flex items-center gap-3 border-b border-border/40 relative">
-        <span className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-teal-400/60 via-teal-300/40 to-transparent rounded-t" />
-        <Button variant="ghost" size="icon" onClick={handleCloseWithProtection} className="h-10 w-10">
-          <X className="w-5 h-5" />
-        </Button>
-        <div className="flex-1 flex items-center justify-between min-w-0">
-          <span className="text-sm font-semibold text-foreground truncate">
-            {pedido?.numero || 'Novo Pedido'}
-          </span>
-          <span className="text-sm text-muted-foreground whitespace-nowrap ml-4">
-            {formData.itens.length} item(s) • {formatCurrency(valorTotal)}
-          </span>
-        </div>
-        {pedido?.id && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" title="Relatórios">
-                <Printer className="w-4 h-4" />
+      {isLocked && (
+        <BannerStatusPedido pedido={pedidoAtual} lancamentos={lancamentosPedido} isMobile={isPhone} />
+      )}
+      {/* Header — grid mobile: kicker + ícones; título; valores em linha própria (sem overlap) */}
+      <div className={cn(COMPRAS_FORM_HEADER, 'relative overflow-visible !flex-col !items-stretch !gap-0 !px-0 !py-0')}>
+        <span className={COMPRAS_HEADER_ACCENT} />
+        <div className="px-4 py-3 md:py-4 min-w-0" data-tour="pedido-header">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto_auto] gap-x-2 gap-y-1.5 items-center">
+            <p className={cn(P38_PAGE_KICKER, 'row-start-1 col-start-1 truncate min-w-0')}>
+              Pedido de compra
+            </p>
+            <div className="flex items-center justify-end gap-0.5 shrink-0 row-start-1 col-start-2">
+              <P38TourFab
+                steps={pedidoCompraTourSteps}
+                label="Tour: formulário do pedido"
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleCloseWithProtection}
+                className="h-9 w-9 sm:h-10 sm:w-10 shrink-0"
+                data-pulse-sensor="pedidos-compra.detalhe-voltar"
+                aria-label="Voltar"
+              >
+                <X className="w-5 h-5" />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="dark:bg-muted">
-              <DropdownMenuItem onClick={() => handlePrintReport('pedido')}>
-                Relatório do Pedido
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handlePrintReport('precificacao')}>
-                Análise de Precificação
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handlePrintReport('pendencias')}>
-                Relatório de Pendências
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-
-
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10 shrink-0" title="Mais opções">
+                    <MoreVertical className="w-5 h-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className={COMPRAS_DROPDOWN}>
+                  <DropdownMenuItem
+                    disabled={!pedido?.id}
+                    onClick={() => setAbaPedidoDesktop('pendencias')}
+                  >
+                    <AlertCircle className="w-4 h-4 mr-2" />
+                    Pendências
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={!pedido?.id}
+                    onClick={() => setAbaPedidoDesktop('logs')}
+                  >
+                    <History className="w-4 h-4 mr-2" />
+                    Logs
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem disabled={!pedido?.id} onClick={() => handlePrintReport('pedido')}>
+                    <Printer className="w-4 h-4 mr-2" />
+                    Relatório do Pedido
+                  </DropdownMenuItem>
+                  <DropdownMenuItem disabled={!pedido?.id} onClick={() => handlePrintReport('precificacao')}>
+                    <Printer className="w-4 h-4 mr-2" />
+                    Análise de Precificação
+                  </DropdownMenuItem>
+                  <DropdownMenuItem disabled={!pedido?.id} onClick={() => handlePrintReport('pendencias')}>
+                    <Printer className="w-4 h-4 mr-2" />
+                    Relatório de Pendências
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <div className="row-start-2 col-span-2 min-w-0 flex flex-wrap items-center gap-x-2 gap-y-1">
+              <h2
+                className={cn(P38_PAGE_TITLE, 'text-lg md:text-xl leading-tight truncate min-w-0 max-w-full')}
+                data-pulse-sensor="pedidos-compra.detalhe-titulo"
+              >
+                {pedido?.numero || 'Novo pedido'}
+              </h2>
+              {pedido?.id && statusFinanceiroHeader && statusFinanceiroHeader !== 'Rascunho' && (
+                <Badge
+                  variant="secondary"
+                  className={
+                    statusFinanceiroHeader === 'Aprovado'
+                      ? 'bg-lime-100 text-lime-800 dark:bg-lime-900/30 dark:text-lime-300 shrink-0'
+                      : statusFinanceiroHeader === 'Aguard. Pgto'
+                        ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 shrink-0'
+                        : 'shrink-0'
+                  }
+                >
+                  {statusFinanceiroHeader}
+                </Badge>
+              )}
+            </div>
+            <p className={cn(P38_PAGE_SUBTITLE, 'row-start-3 col-span-2 text-xs sm:text-sm tabular-nums min-w-0 break-words leading-snug')}>
+              {resumoNecessidadeDetalhe ? (
+                <>
+                  {resumoNecessidadeDetalhe.qtdItens}{' '}
+                  {resumoNecessidadeDetalhe.qtdItens === 1 ? 'item' : 'itens'}{' '}
+                  ({formatCurrency(resumoNecessidadeDetalhe.valorTotal)})
+                </>
+              ) : valorEmbarqueContexto != null ? (
+                <>
+                  Embarque {formatCurrency(valorEmbarqueContexto)} · pedido {formatCurrency(valorTotal)}
+                </>
+              ) : (
+                <>
+                  {formData.itens.length} item(s) · {formatCurrency(valorTotal)}
+                </>
+              )}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Dialog de rascunho */}
@@ -1257,7 +1505,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
               Começar do zero
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-background hover:bg-primary dark:bg-card dark:hover:bg-muted dark:text-foreground rounded-xl h-10"
+              className={cn(COMPRAS_BTN_PRIMARY, 'rounded-xl h-10')}
               onClick={() => {
                 if (pendingDraft?.data) {
                   isRestoringDraftRef.current = true;
@@ -1277,48 +1525,49 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
       </AlertDialog>
 
       {/* DESKTOP: Tabs */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Tabs value={abaPedidoDesktop} onValueChange={setAbaPedidoDesktop} className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="flex-shrink-0 bg-transparent border-b border-border/40 rounded-none h-auto p-0 flex w-full">
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <Tabs value={abaPedidoDesktop} onValueChange={setAbaPedidoDesktop} className="flex-1 min-h-0 overflow-hidden flex flex-col">
+          <TabsList className={COMPRAS_TABS_BAR} data-tour="pedido-tabs">
             {[
               { value: 'dados-gerais', icon: <FileText className="w-4 h-4 flex-shrink-0" />, short: 'Geral', disabled: false },
               { value: 'itens',        icon: <ShoppingCart className="w-4 h-4 flex-shrink-0" />, short: 'Itens', disabled: false },
               { value: 'pagamento',    icon: <DollarSign className="w-4 h-4 flex-shrink-0" />, short: 'Fin.', disabled: false },
               { value: 'logistica',    icon: <Ship className="w-4 h-4 flex-shrink-0" />, short: 'Log', disabled: false },
               { value: 'recepcao',     icon: <Package className="w-4 h-4 flex-shrink-0" />, short: 'Rec', disabled: !pedido?.id },
-              { value: 'pendencias',   icon: <AlertCircle className="w-4 h-4 flex-shrink-0" />, short: 'Pend', disabled: !pedido?.id },
-              { value: 'logs',         icon: <History className="w-4 h-4 flex-shrink-0" />, short: 'Logs', disabled: !pedido?.id },
             ].map(tab => (
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
                 disabled={tab.disabled}
-                className="flex-1 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent data-[state=active]:border-teal-500 dark:data-[state=active]:border-teal-400 data-[state=active]:text-teal-600 dark:data-[state=active]:text-teal-300 rounded-none py-2 px-1 text-muted-foreground disabled:opacity-30 transition-colors min-w-0"
+                className={COMPRAS_TAB}
+                data-pulse-sensor={tab.value === 'logistica' ? 'pedidos-compra.tab-logistica' : undefined}
               >
                 {tab.icon}
-                <span className="text-[9px] font-semibold tracking-wider hidden xs:block" style={{display: 'none'}}>{tab.short}</span>
-                <span
-                  className="text-[9px] font-semibold tracking-wider leading-none"
-                  style={{ fontSize: '9px' }}
-                >
+                <span className="text-[10px] font-light tracking-wider leading-none uppercase">
                   {tab.short}
                 </span>
               </TabsTrigger>
             ))}
           </TabsList>
 
-          <div className="flex-1 overflow-y-auto p-6">
-            <TabsContent value="dados-gerais" className="mt-0 space-y-6">
+          {(abaPedidoDesktop === 'pendencias' || abaPedidoDesktop === 'logs') && (
+            <div className={COMPRAS_SUBHEADER}>
+              {abaPedidoDesktop === 'pendencias' ? 'Pendências' : 'Logs'}
+            </div>
+          )}
+
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-6 touch-pan-y">
+            <TabsContent value="dados-gerais" className="mt-0 space-y-6" data-tour="pedido-tab-dados-gerais">
               <div className="grid grid-cols-12 gap-x-6 gap-y-6">
                 {/* Fornecedor */}
                 <div className="col-span-12 lg:col-span-6">
-                  <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Fornecedor *</Label>
+                  <Label className="text-sm font-light text-muted-foreground mb-2 block">Fornecedor *</Label>
                   <Select value={formData.fornecedor_id} onValueChange={handleFornecedorChange} disabled={isLocked}>
-                    <SelectTrigger className="bg-muted/50 border-0 h-12 text-sm shadow-sm rounded-xl text-foreground">
+                    <SelectTrigger className={COMPRAS_FIELD_H12}>
                       <SelectValue placeholder="Selecione o fornecedor..." />
                     </SelectTrigger>
                     <SelectContent className="dark:bg-muted border-0 shadow-lg z-[9999] max-h-[300px]">
-                      <div className="sticky top-0 bg-muted/50 p-2 border-b border-border/40 z-10">
+                      <div className={cn('sticky top-0 bg-card p-2 z-10', COMPRAS_SEP)}>
                         <div className="relative">
                           <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                           <Input
@@ -1362,12 +1611,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
                         <SelectItem 
                           key={f.id} 
                           value={f.id}
-                          className={idx === selectedFornecedorIndex ? 'bg-teal-50 dark:bg-teal-900/20' : ''}
+                          className={idx === selectedFornecedorIndex ? COMPRAS_SELECT_HIGHLIGHT : ''}
                         >
                           {f.nome}
                         </SelectItem>
                       ))}
-                      <div className="border-t border-border/40 p-2">
+                      <div className={cn('p-2', COMPRAS_DIVIDER_TOP)}>
                         <Button
                           type="button"
                           variant="ghost"
@@ -1387,9 +1636,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
 
                 {/* Tags */}
                 <div className="col-span-12 lg:col-span-6">
-                  <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Tags</Label>
+                  <Label className="text-sm font-light text-muted-foreground mb-2 block">Tags</Label>
                   <Input 
-                    className="bg-muted/50 border-0 h-12 text-sm shadow-sm rounded-xl text-foreground placeholder:text-muted-foreground" 
+                    className={cn(COMPRAS_FIELD_H12, 'placeholder:text-muted-foreground')} 
                     placeholder="Ex: Urgente, Reposição..."
                     value={formData.tags?.join(', ') || ''} 
                     onChange={e => handleChange('tags', e.target.value.split(',').map(t => t.trim()).filter(Boolean))} 
@@ -1398,10 +1647,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
                 </div>
                 
                 <div className="col-span-12 md:col-span-6 lg:col-span-3">
-                  <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Data do Pedido</Label>
+                  <Label className="text-sm font-light text-muted-foreground mb-2 block">Data do Pedido</Label>
                   <Input
                     type="date"
-                    className="bg-muted/50 border-0 h-12 text-sm shadow-sm rounded-xl text-foreground"
+                    className={COMPRAS_FIELD_H12}
                     value={formData.data_emissao || ''}
                     onChange={e => handleChange('data_emissao', e.target.value)}
                     disabled={isLocked}
@@ -1409,10 +1658,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
                 </div>
 
                 <div className="col-span-12 md:col-span-6 lg:col-span-3">
-                  <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Previsão de Entrega</Label>
+                  <Label className="text-sm font-light text-muted-foreground mb-2 block">Previsão de Entrega</Label>
                   <Input
                     type="date"
-                    className="bg-muted/50 border-0 h-12 text-sm shadow-sm rounded-xl text-foreground"
+                    className={COMPRAS_FIELD_H12}
                     value={formData.data_prevista_entrega || ''}
                     onChange={e => handleChange('data_prevista_entrega', e.target.value)}
                     disabled={isLocked}
@@ -1421,9 +1670,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
 
                 {/* Observação em linha inteira */}
                 <div className="col-span-12">
-                  <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Observações</Label>
+                  <Label className="text-sm font-light text-muted-foreground mb-2 block">Observações</Label>
                   <Textarea 
-                    className="bg-muted/50 border-0 shadow-sm resize-none rounded-xl text-foreground placeholder:text-muted-foreground" 
+                    className={cn(COMPRAS_FIELD, 'shadow-sm resize-none placeholder:text-muted-foreground')} 
                     placeholder="Observações do pedido..."
                     rows={3}
                     value={formData.observacoes} 
@@ -1437,11 +1686,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
             </TabsContent>
 
             {/* ABA: ITENS — usa o mesmo seletor estilo PDV */}
-            <TabsContent value="itens" className="mt-0 h-full -mx-6 -mt-0">
+            <TabsContent value="itens" className="mt-0 h-full -mx-6 -mt-0" data-tour="pedido-tab-itens">
               <MobileProductSelector
                 items={formData.itens}
                 products={produtos}
                 onAddItem={handleAddItem}
+                onAddItemsBatch={handleAddItemsBatch}
                 onUpdateItem={handleItemChange}
                 onRemoveItem={handleRemoveItem}
                 formatCurrency={formatCurrency}
@@ -1455,12 +1705,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
             </TabsContent>
 
           {/* ABA: PAGAMENTO */}
-          <TabsContent value="pagamento" className="mt-0 space-y-8">
+          <TabsContent value="pagamento" className="mt-0 space-y-8" data-tour="pedido-tab-pagamento">
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Forma de Pagamento *</Label>
+                <Label className="text-sm font-light text-muted-foreground mb-2 block">Forma de Pagamento *</Label>
                 <Select value={formData.forma_pagamento_compra} onValueChange={v => handleChange('forma_pagamento_compra', v)}>
-                  <SelectTrigger className="bg-muted/50 border-0 h-12 shadow-sm rounded-xl">
+                  <SelectTrigger className={COMPRAS_FIELD_H12}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="dark:bg-muted border-0 shadow-lg z-[9999]">
@@ -1471,12 +1721,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
               </div>
               
               <div>
-                <Label className="text-sm font-semibold text-muted-foreground mb-2 block">
+                <Label className="text-sm font-light text-muted-foreground mb-2 block">
                   {formData.forma_pagamento_compra === 'À Vista' ? 'Data de Pagamento' : 'Primeiro Vencimento'}
                 </Label>
                 <Input 
                   type="date" 
-                  className="bg-muted/50 border-0 h-12 shadow-sm rounded-xl"
+                  className={COMPRAS_FIELD_H12}
                   value={formData.data_primeiro_vencimento} 
                   onChange={e => handleChange('data_primeiro_vencimento', e.target.value)} 
                   disabled={isLocked}
@@ -1487,22 +1737,22 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
             {formData.forma_pagamento_compra === 'Parcelado' && (
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Número de Parcelas</Label>
+                  <Label className="text-sm font-light text-muted-foreground mb-2 block">Número de Parcelas</Label>
                   <Input 
                     type="number" 
                     min="1"
-                    className="bg-muted/50 border-0 h-12 shadow-sm rounded-xl"
+                    className={COMPRAS_FIELD_H12}
                     value={formData.num_parcelas} 
                     onChange={e => handleChange('num_parcelas', parseInt(e.target.value) || 1)} 
                     disabled={isLocked}
                   />
                 </div>
                 <div>
-                  <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Intervalo entre Parcelas (dias)</Label>
+                  <Label className="text-sm font-light text-muted-foreground mb-2 block">Intervalo entre Parcelas (dias)</Label>
                   <Input 
                     type="number" 
                     min="1"
-                    className="bg-muted/50 border-0 h-12 shadow-sm rounded-xl" 
+                    className={COMPRAS_FIELD_H12} 
                     value={formData.intervalo_parcelas_dias} 
                     onChange={e => handleChange('intervalo_parcelas_dias', parseInt(e.target.value) || 30)} 
                     disabled={isLocked}
@@ -1512,9 +1762,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
             )}
 
             <div>
-              <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Observações de Pagamento</Label>
+              <Label className="text-sm font-light text-muted-foreground mb-2 block">Observações de Pagamento</Label>
               <Textarea 
-                className="bg-muted/50 border-0 shadow-sm resize-none rounded-xl" 
+                className={cn(COMPRAS_FIELD, 'shadow-sm resize-none')} 
                 placeholder="Ex: Pagar via PIX, transferência, observações sobre o pagamento..."
                 rows={3}
                 value={formData.condicoes_pagamento} 
@@ -1524,10 +1774,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
             </div>
 
             {/* Central financeira + lançamentos */}
-            <div className="pt-6 border-t border-border/40 space-y-6">
+            <div className={cn('pt-6 space-y-6', COMPRAS_DIVIDER_TOP)}>
               <div className="text-right">
                 <span className="text-xs text-muted-foreground block mb-0.5">Total do Pedido</span>
-                <span className="text-2xl font-bold text-foreground dark:text-foreground">{formatCurrency(valorTotal)}</span>
+                <span className="text-2xl font-light text-foreground dark:text-foreground">{formatCurrency(valorTotal)}</span>
               </div>
 
               {pedido?.id && (
@@ -1547,7 +1797,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
             </TabsContent>
 
           {/* ABA: LOGÍSTICA */}
-          <TabsContent value="logistica" className="mt-0">
+          <TabsContent value="logistica" className="mt-0" data-tour="pedido-tab-logistica">
             {pedido?.id ? (
               <PedidoCompraLogisticaTab
                 pedido={pedidoLogistica || pedido}
@@ -1555,16 +1805,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
                 onPedidoUpdated={async () => {
                   const pedidoId = (pedidoLogistica || pedido)?.id;
                   if (!pedidoId) return;
-                  const [atualizado, embarquesAtualizados] = await Promise.all([
-                    base44.entities.PedidoCompra.filter({ id: pedidoId }),
-                    base44.entities.Embarque.filter({ pedido_compra_id: pedidoId })
-                  ]);
-                  if (atualizado?.[0]) {
-                    const embarquesVisiveis = filterEmbarquesVisiveisParaPedido(embarquesAtualizados || []);
-                    const pedidoCompleto = { ...atualizado[0], _embarques: embarquesVisiveis };
-                    setPedidoLogistica(pedidoCompleto);
-                    setFormData(prev => ({ ...prev, ...pedidoCompleto }));
-                  }
+                  const pedidoCompleto = await refreshPedidoCompraComLogistica(base44, pedidoId, {
+                    filterEmbarques: filterEmbarquesVisiveisParaPedido,
+                  });
+                  if (!pedidoCompleto) return;
+                  setPedidoLogistica(pedidoCompleto);
+                  setFormData((prev) => ({ ...prev, ...pedidoCompleto }));
                 }}
               />
             ) : (
@@ -1575,9 +1821,15 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
           </TabsContent>
 
           {/* ABA: RECEPÇÃO */}
-          <TabsContent value="recepcao" className="mt-0">
+          <TabsContent value="recepcao" className="mt-0" data-tour="pedido-tab-recepcao">
             {pedido?.id ? (
-              <AbaRecepção pedido={pedidoLogistica || pedido} />
+              <AbaRecepção
+                pedido={pedidoLogistica || pedido}
+                onPedidoUpdated={(pedidoCompleto) => {
+                  setPedidoLogistica(pedidoCompleto);
+                  setFormData((prev) => ({ ...prev, ...pedidoCompleto }));
+                }}
+              />
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <p className="text-sm text-muted-foreground">Salve o pedido primeiro para registrar recebimentos.</p>
@@ -1594,7 +1846,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
 
             {/* ABA: LOGS */}
             <TabsContent value="logs" className="mt-0">
-              <LogsPedidoCompra pedidoId={pedido?.id} />
+              <LogsPedidoCompra pedidoId={pedido?.id} pedido={pedido} />
             </TabsContent>
           </div>
         </Tabs>
@@ -1631,6 +1883,11 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
             };
             if (pedido?.id) {
               void enviarAnexoImportacaoPendente(pedido.id, pedido.numero, pendingAnexoImportRef.current);
+            } else {
+              toast({
+                title: 'Documento guardado para anexo',
+                description: `O ${anexoFonte.type?.startsWith('image/') ? 'arquivo de imagem' : 'PDF'} será anexado ao pedido quando você salvar.`,
+              });
             }
           }
           setFormData(prev => {
@@ -1714,39 +1971,39 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
            </DialogHeader>
            <div className="space-y-4">
              <div>
-               <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Nome *</Label>
+               <Label className="text-sm font-light text-muted-foreground mb-2 block">Nome *</Label>
                <Input
                  placeholder="Nome do fornecedor"
                  value={novoFornecedor.nome}
                  onChange={e => setNovoFornecedor({...novoFornecedor, nome: e.target.value})}
-                 className="bg-muted/50 border-0 h-12 shadow-sm rounded-xl text-foreground"
+                 className={COMPRAS_FIELD_H12}
                  />
                  </div>
                  <div>
-                 <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Email</Label>
+                 <Label className="text-sm font-light text-muted-foreground mb-2 block">Email</Label>
                  <Input
                  placeholder="email@fornecedor.com"
                  value={novoFornecedor.email}
                  onChange={e => setNovoFornecedor({...novoFornecedor, email: e.target.value})}
-                 className="bg-muted/50 border-0 h-12 shadow-sm rounded-xl text-foreground"
+                 className={COMPRAS_FIELD_H12}
                  />
                  </div>
                  <div>
-                 <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Telefone</Label>
+                 <Label className="text-sm font-light text-muted-foreground mb-2 block">Telefone</Label>
                <Input
                  placeholder="(00) 00000-0000"
                  value={novoFornecedor.telefone}
                  onChange={e => setNovoFornecedor({...novoFornecedor, telefone: e.target.value})}
-                 className="bg-muted/50 border-0 h-12 shadow-sm rounded-xl text-foreground"
+                 className={COMPRAS_FIELD_H12}
                  />
                  </div>
                  <div>
-                 <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Endereço</Label>
+                 <Label className="text-sm font-light text-muted-foreground mb-2 block">Endereço</Label>
                  <Input
                  placeholder="Endereço completo"
                  value={novoFornecedor.endereco}
                  onChange={e => setNovoFornecedor({...novoFornecedor, endereco: e.target.value})}
-                 className="bg-muted/50 border-0 h-12 shadow-sm rounded-xl text-foreground"
+                 className={COMPRAS_FIELD_H12}
                  />
                  </div>
                  </div>
@@ -1760,7 +2017,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
                </Button>
                <Button
                onClick={handleCreateFornecedor}
-               className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-400 text-white rounded-xl h-12"
+               className={cn(COMPRAS_BTN_CITRUS, 'h-12')}
              >
                Criar
              </Button>

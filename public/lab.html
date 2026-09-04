@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>P38 — Contribuição para quem constrói plataforma de varejo</title>
+  <meta name="description" content="Tradução de problemas reais do varejo brasileiro — estoque, financeiro, catálogo e operação no chão. Ativo técnico para quem quer equipar seus usuários com ferramenta que luta junto, não contra." />
+  <link rel="icon" type="image/png" href="/brand/p38-app-icon.png" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="robots" content="noindex" />
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --surface-2: #1f1f1f;
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #ececec;
+      --muted: #9a9a9a;
+      --dim: #666;
+      --max: 920px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: url('/brand/p38-lightning-silhouette.svg') no-repeat 85% 42%;
+      background-size: min(72vw, 680px);
+      opacity: 0.055;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+    a:hover { color: #fff; }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 0 1.25rem;
+    }
+
+    /* Header */
+    header {
+      padding: 1.25rem 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .logo:hover { color: #fff; text-decoration: none; }
+
+    .logo img { width: 28px; height: 28px; border-radius: 6px; }
+
+    .btn {
+      display: inline-block;
+      background: var(--text);
+      color: var(--bg);
+      font-weight: 600;
+      padding: 0.55rem 1.1rem;
+      border-radius: 4px;
+      text-decoration: none;
+      font-size: 0.8125rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      border: 1px solid var(--text);
+      white-space: nowrap;
+    }
+
+    .btn:hover { background: #fff; border-color: #fff; color: var(--bg); text-decoration: none; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    .btn-ghost:hover { background: var(--surface-2); color: #fff; }
+
+    /* Hero */
+    .hero { padding: 3.5rem 0 2.5rem; }
+
+    .eyebrow {
+      font-size: 0.6875rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 1.25rem;
+    }
+
+    .hero h1 {
+      font-size: clamp(1.85rem, 5.5vw, 2.75rem);
+      line-height: 1.15;
+      font-weight: 700;
+      max-width: 20ch;
+      letter-spacing: -0.02em;
+    }
+
+    .hero .lead {
+      margin-top: 1.35rem;
+      color: var(--muted);
+      font-size: 1.0625rem;
+      max-width: 52ch;
+    }
+
+    .hero .lead strong { color: var(--text); font-weight: 600; }
+
+    .hero-cta {
+      margin-top: 2rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .hero-note {
+      margin-top: 1.5rem;
+      font-size: 0.8125rem;
+      color: var(--dim);
+      max-width: 48ch;
+    }
+
+    /* Sections */
+    section { padding: 2.5rem 0; border-top: 1px solid var(--border); }
+
+    section h2 {
+      font-size: 0.6875rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 1.25rem;
+    }
+
+    section h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.75rem;
+      max-width: 36ch;
+    }
+
+    .prose { color: var(--muted); font-size: 0.9375rem; max-width: 58ch; }
+    .prose p + p { margin-top: 0.85rem; }
+
+    /* Two flows */
+    .flows {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    @media (max-width: 640px) { .flows { grid-template-columns: 1fr; } }
+
+    .flow-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.25rem;
+    }
+
+    .flow-card h4 {
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    .flow-card p { font-size: 0.875rem; color: var(--muted); }
+
+    /* Grid cards */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.15rem;
+    }
+
+    .card h4 {
+      font-size: 0.6875rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text);
+      margin-bottom: 0.45rem;
+    }
+
+    .card p { font-size: 0.8125rem; color: var(--muted); }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.625rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.45rem;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--dim);
+      margin-bottom: 0.5rem;
+    }
+
+    /* Catalog types */
+    .catalog-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    @media (max-width: 720px) { .catalog-row { grid-template-columns: 1fr; } }
+
+    .catalog-item {
+      border-left: 2px solid var(--border);
+      padding: 0 0 0 1rem;
+    }
+
+    .catalog-item h4 {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+    }
+
+    .catalog-item .tag {
+      font-size: 0.6875rem;
+      color: var(--dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .catalog-item p {
+      font-size: 0.8125rem;
+      color: var(--muted);
+      margin-top: 0.5rem;
+    }
+
+    /* Screenshot placeholders */
+    .shots {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    @media (max-width: 640px) { .shots { grid-template-columns: 1fr; } }
+
+    .shot {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .shot-ui {
+      height: 140px;
+      background: linear-gradient(165deg, var(--surface-2) 0%, #111 100%);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-end;
+      padding: 1rem;
+      position: relative;
+    }
+
+    .shot-ui::before {
+      content: '';
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      height: 6px;
+      background: var(--border);
+      border-radius: 2px;
+    }
+
+    .shot-bars {
+      display: flex;
+      gap: 4px;
+      align-items: flex-end;
+      height: 48px;
+      width: 100%;
+    }
+
+    .shot-bars span {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 2px 2px 0 0;
+    }
+
+    .shot-bars span:nth-child(2) { height: 70%; }
+    .shot-bars span:nth-child(1) { height: 45%; }
+    .shot-bars span:nth-child(3) { height: 90%; }
+    .shot-bars span:nth-child(4) { height: 55%; }
+
+    .shot-cap {
+      padding: 0.85rem 1rem;
+      font-size: 0.8125rem;
+      color: var(--muted);
+    }
+
+    .shot-cap strong { display: block; color: var(--text); font-weight: 600; font-size: 0.875rem; margin-bottom: 0.2rem; }
+
+    /* Spec table */
+    .specs {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: 0.875rem;
+    }
+
+    .specs th,
+    .specs td {
+      text-align: left;
+      padding: 0.65rem 0;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    .specs th {
+      color: var(--dim);
+      font-weight: 500;
+      width: 38%;
+      font-size: 0.8125rem;
+    }
+
+    .specs td { color: var(--muted); }
+
+    /* Why P38 — isolated section */
+    .why-p38 {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .why-p38 p {
+      font-size: 0.875rem;
+      color: var(--muted);
+      max-width: 58ch;
+    }
+
+    .why-p38 p + p { margin-top: 0.75rem; }
+
+    /* CTA block */
+    .cta-block {
+      text-align: center;
+      padding: 3rem 0 2rem;
+    }
+
+    .cta-block h2 {
+      font-size: 1.35rem;
+      letter-spacing: -0.01em;
+      text-transform: none;
+      color: var(--text);
+      margin-bottom: 0.75rem;
+    }
+
+    .cta-block p {
+      color: var(--muted);
+      font-size: 0.9375rem;
+      max-width: 42ch;
+      margin: 0 auto 1.5rem;
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem 0 2.5rem;
+      font-size: 0.75rem;
+      color: var(--dim);
+      text-align: center;
+    }
+
+    footer a { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <a class="logo" href="/lab.html">
+        <img src="/brand/p38-icon.svg" alt="" width="28" height="28" />
+        P38
+      </a>
+      <a class="btn" href="mailto:contato@p38erp.com.br?subject=Memorando%20confidencial%20P38">Solicitar memorando</a>
+    </header>
+
+    <section class="hero">
+      <p class="eyebrow">Contribuição · varejo brasileiro</p>
+      <h1>Para quem improvisa e leva o problema na cara</h1>
+      <p class="lead">
+        O lojista brasileiro controla <strong>duas coisas ao mesmo tempo</strong>: o fluxo da mercadoria e o fluxo do dinheiro.
+        Quando a ferramenta não acompanha, o vendedor vira refém — preso no balcão, no PDA ruim, no sistema que não fala a língua de quem vende.
+      </p>
+      <p class="lead" style="margin-top: 1rem;">
+        O P38 não compete com Omie, Conta Azul ou Kite. <strong>Luta contra os problemas reais</strong> do chão de loja —
+        e oferece, a quem constrói plataforma, uma tradução pronta de anos no varejo.
+      </p>
+      <div class="hero-cta">
+        <a class="btn" href="mailto:contato@p38erp.com.br?subject=Memorando%20confidencial%20P38">Solicitar memorando confidencial</a>
+        <a class="btn btn-ghost" href="#traduzido">O que está traduzido</a>
+      </div>
+      <p class="hero-note">
+        Acesso ao código e ambiente de produção apenas após acordo de confidencialidade e alinhamento de intenção de aquisição ou licença. Sem demonstração pública.
+      </p>
+    </section>
+
+    <section id="fluxos">
+      <h2>Dois fluxos, um pulso</h2>
+      <h3>Mercadoria e financeiro no mesmo ritmo</h3>
+      <p class="prose">
+        O lojista não vive só de estoque parado na prateleira. Vive do que está chegando, do que vai faltar, do que compromete o caixa.
+        Um dos pontos mais fortes do sistema é manter esses dois mundos alinhados — sem silo, sem planilha paralela.
+      </p>
+      <div class="flows">
+        <div class="flow-card">
+          <h4>Fluxo da mercadoria</h4>
+          <p>Estoque físico, pedidos de compra, visão do que está a caminho. Você sabe o que tem e o que vem — antes da ruptura bater na porta.</p>
+        </div>
+        <div class="flow-card">
+          <h4>Fluxo financeiro</h4>
+          <p>Caixa, compromissos, previsão. O dinheiro acompanha a mercadoria — não três dias depois, no relatório que ninguém tem coragem de abrir.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="chao">
+      <h2>No chão de loja</h2>
+      <h3>O vendedor não precisa de mais um ERP. Precisa de parar de ser presa.</h3>
+      <p class="prose">
+        Quem vende no varejo conhece a cena: PDA que trava, UX complicada, cadastro que não ajuda na hora H.
+        Já testei grandes softwares — a unidade mobile de venda, muitas vezes, é um peso morto.
+        O vendedor improvisa, leva na coragem, e a ferramenta some quando mais precisa.
+      </p>
+      <p class="prose" style="margin-top: 0.85rem;">
+        O P38 nasceu dessa dor. Não para substituir marcas que você já conhece — mas para mostrar como uma plataforma
+        pode <strong>equipar seu usuário</strong> a reagir, reposicionar e vender com o que a realidade exige.
+      </p>
+    </section>
+
+    <section id="traduzido">
+      <h2>O que está traduzido</h2>
+      <h3>Tempo e insight de domínio — já codificados</h3>
+      <p class="prose">
+        Prévia visual do ativo. Dados sensíveis omitidos. Acesso completo sob NDA.
+      </p>
+      <div class="shots">
+        <div class="shot">
+          <div class="shot-ui"><div class="shot-bars"><span></span><span></span><span></span><span></span></div></div>
+          <div class="shot-cap">
+            <strong>Estoque + compras</strong>
+            Controle do físico e do que está chegando. Pedidos de compra alinhados para você enxergar o pipeline.
+          </div>
+        </div>
+        <div class="shot">
+          <div class="shot-ui"><div class="shot-bars"><span></span><span></span><span></span><span></span></div></div>
+          <div class="shot-cap">
+            <strong>Previsão e reposição</strong>
+            <span class="badge">Em evolução</span>
+            Capacidade de olhar o reposicionamento antes do problema — em finalização nos próximos dias.
+          </div>
+        </div>
+        <div class="shot">
+          <div class="shot-ui"><div class="shot-bars"><span></span><span></span><span></span><span></span></div></div>
+          <div class="shot-cap">
+            <strong>Operação mobile</strong>
+            PDV, turno, fluxo no chão — pensado para quem vende de pé, não só para quem fecha planilha sentado.
+          </div>
+        </div>
+        <div class="shot">
+          <div class="shot-ui"><div class="shot-bars"><span></span><span></span><span></span><span></span></div></div>
+          <div class="shot-cap">
+            <strong>Planejamento financeiro</strong>
+            Visão de altitude para o dono e o gerente — margem, fluxo, decisão no dia, não só no fim do mês.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="catalogo">
+      <h2>Catálogo com inteligência</h2>
+      <h3>Menos SKU gritando, mais mix que vende</h3>
+      <p class="prose">
+        O comprador da loja abre o cadastro e vê milhares de itens competindo por atenção — fadiga mental pura.
+        O P38 classifica produtos pelo <strong>comportamento</strong>, não só pelo código de barras — e ajuda a montar o mix
+        a partir de insight, não de cadastro infinito.
+      </p>
+      <div class="catalog-row">
+        <div class="catalog-item">
+          <p class="tag">Comportamento</p>
+          <h4>Solo</h4>
+          <p>Cimento, itens que se vendem sozinhos. Controle direto, sem dependência de kit.</p>
+        </div>
+        <div class="catalog-item">
+          <p class="tag">Comportamento</p>
+          <h4>Mix</h4>
+          <p>Conexões, conjuntos — você precisa de todos juntos. O sistema trata como unidade lógica.</p>
+        </div>
+        <div class="catalog-item">
+          <p class="tag">Comportamento</p>
+          <h4>Portfólio</h4>
+          <p>Cerâmica, porcelanato, tinta — cliente chega aberto. Alta permutabilidade; o vendedor cria oportunidade.</p>
+        </div>
+      </div>
+      <p class="prose" style="margin-top: 1.5rem;">
+        Você não cadastra “porcelanato 60×60 bege acetinado anti-derrapante SKU #48291”.
+        Cadastra a <strong>linha</strong> — porcelanato econômico anti-derrapante —, os modelos dentro dela, e os SKUs onde fazem sentido.
+        O sistema gera o template para você construir o mix — em construção, com visão de comportamento por linha e formato.
+      </p>
+    </section>
+
+    <section id="para-quem">
+      <h2>Para quem é</h2>
+      <h3>Contribuição para quem constrói plataforma</h3>
+      <div class="grid">
+        <div class="card">
+          <h4>Software house</h4>
+          <p>Acelere o que seus usuários precisam no terreno — sem redescobrir o varejo do zero.</p>
+        </div>
+        <div class="card">
+          <h4>Grupo de varejo</h4>
+          <p>Insight de operação real, catálogo e fluxos já pensados para o lojista brasileiro.</p>
+        </div>
+        <div class="card">
+          <h4>Investidor técnico</h4>
+          <p>Ativo com código, documentação de migração e MVP validado em negócio real — não slide deck.</p>
+        </div>
+      </div>
+      <p class="prose" style="margin-top: 1.25rem;">
+        Meu negócio principal é outro. O P38 é legado: uma forma de transmitir o que custou anos construir
+        para quem quiser levar essa visão ao varejo nacional — com coragem, improviso e ferramenta que acompanha.
+      </p>
+    </section>
+
+    <section id="especificacoes">
+      <h2>Especificações do ativo</h2>
+      <table class="specs">
+        <tr><th>Módulos</th><td>Caixa · Supply · Financeiro · Gestão</td></tr>
+        <tr><th>Stack</th><td>Next.js · Supabase · Postgres</td></tr>
+        <tr><th>Domínio</th><td>54+ migrações · Edge Functions · documentação de migração</td></tr>
+        <tr><th>Operação</th><td>MVP validado em negócio real</td></tr>
+        <tr><th>Acesso</th><td>Sob NDA — memorando técnico, sessão de arquitetura, proposta de licença ou aquisição</td></tr>
+        <tr><th>Não inclui</th><td>SaaS multi-tenant maduro · fiscal integrado · suporte enterprise · demonstração pública</td></tr>
+      </table>
+    </section>
+
+    <section id="porque-p38">
+      <h2>Por que P38</h2>
+      <div class="why-p38">
+        <p>
+          O nome vem de uma ideia pessoal de altitude, precisão e desempenho — a mesma busca quando nenhum software
+          falava a língua de quem vende no chão. A silhueta do avião nesta página é só identidade visual; não é a tese do produto.
+        </p>
+        <p>
+          A tese é mais simples e mais brasileira: o lojista improvisa, leva o problema na cara, e merece uma ferramenta
+          que lute junto — mercadoria e dinheiro alinhados, catálogo que pensa como o vendedor pensa, mobile que não trava na hora da venda.
+        </p>
+      </div>
+    </section>
+
+    <div class="cta-block">
+      <h2>Solicitar memorando confidencial</h2>
+      <p>Interesse em aquisição, licença ou conversa técnica sobre o ativo P38.</p>
+      <a class="btn" href="mailto:contato@p38erp.com.br?subject=Memorando%20confidencial%20P38&amp;body=Ol%C3%A1%2C%20tenho%20interesse%20no%20memorando%20t%C3%A9cnico%20do%20P38.%0A%0ANome%20%2F%20empresa%3A%20%0A%0A">Enviar e-mail</a>
+    </div>
+
+    <footer>
+      P38 · ativo técnico · varejo brasileiro<br />
+      <a href="/landing.html">Apresentação comercial</a>
+    </footer>
+  </div>
+</body>
+</html>

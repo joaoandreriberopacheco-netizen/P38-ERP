@@ -13,16 +13,17 @@ import {
 import { P38MobileLine, P38StatusLabel } from '@/components/ui/p38-mobile-line';
 import { cn } from '@/lib/utils';
 import { P38_CHIP_INACTIVE, P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
-import { formatCompetenciaLabel, getCompetenciaAtual, shiftCompetencia } from '@/lib/budgetCalculos';
+import { formatCompetenciaLabel, getCompetenciaAtual, shiftCompetencia, BUDGET_MODULO_LABEL } from '@/lib/budgetCalculos';
 import {
   listarModelos as listarModelosBudget,
   listarCompetencias as listarCompetenciasBudget,
   listarLancamentosMes,
   listarLancamentosVencimentoMes,
-  obterLucroBrutoCompetencia,
 } from '@/lib/budgetService';
+import { useLucroBrutoCompetencia } from '@/hooks/useLucroBrutoCompetencia';
 import { listarModelos as listarModelosFolha, listarCompetencias as listarCompetenciasFolha } from '@/lib/folhaPrevisaoService';
 import { listarModelos as listarModelosAgefin, listarLancamentosCompetencia, listarLancamentosRecorrentes } from '@/lib/agefinPrevisaoService';
+import { listarParcelamentos } from '@/lib/agefinParcelamentoService';
 import { montarPlanoFinanceiroConsolidado } from '@/lib/planoFinanceiroConsolidado';
 import { gerarRelatorioVisaoFinanceira } from '@/functions/gerarRelatorioVisaoFinanceira';
 import { dataHoje } from '@/components/utils/dateUtils';
@@ -622,7 +623,7 @@ function TabelaResumoPlano({ resumo, margemDetalhe }) {
           </tr>
           <LinhaResumo label="Contas fixas (recorrentes)" valor={resumo.fixasRecorrentes} tipo="subtrai" />
           <LinhaResumo label="Folha de pagamento" valor={resumo.folha} tipo="subtrai" />
-          <LinhaResumo label="Budgets" valor={resumo.budgets} tipo="subtrai" />
+          <LinhaResumo label={BUDGET_MODULO_LABEL} valor={resumo.budgets} tipo="subtrai" />
           {resumo.pontuaisExtraPlano > 0 ? (
             <LinhaResumo
               label="Pauta do mês (fora do plano fixo)"
@@ -717,6 +718,12 @@ export default function VisaoFinanceiraPlano() {
     staleTime: 60_000,
   });
 
+  const { data: parcelamentosAgefin = [], isLoading: loadingParcelamentosAgefin } = useQuery({
+    queryKey: ['agefin-previsao', 'parcelamentos'],
+    queryFn: listarParcelamentos,
+    staleTime: 60_000,
+  });
+
   const { data: modelosFolha = [], isLoading: loadingFolha } = useQuery({
     queryKey: ['visao-financeira', 'folha-modelos'],
     queryFn: listarModelosFolha,
@@ -759,11 +766,7 @@ export default function VisaoFinanceiraPlano() {
     staleTime: 60_000,
   });
 
-  const { data: lucroBrutoMes, isLoading: loadingLucroBruto } = useQuery({
-    queryKey: ['visao-financeira', 'lucro-bruto', competencia],
-    queryFn: () => obterLucroBrutoCompetencia(competencia),
-    staleTime: 60_000,
-  });
+  const { data: lucroBrutoMes, isLoading: loadingLucroBruto } = useLucroBrutoCompetencia(competencia);
 
   const plano = useMemo(
     () =>
@@ -778,6 +781,7 @@ export default function VisaoFinanceiraPlano() {
         lancamentosMes,
         lancamentosVencimento,
         lancamentosRecorrentesAgefin,
+        parcelamentosAgefin,
         lucroBruto: lucroBrutoMes?.lucro_bruto || 0,
         margemDetalhe: lucroBrutoMes,
       }),
@@ -792,6 +796,7 @@ export default function VisaoFinanceiraPlano() {
       lancamentosMes,
       lancamentosVencimento,
       lancamentosRecorrentesAgefin,
+      parcelamentosAgefin,
       lucroBrutoMes,
     ],
   );
@@ -804,6 +809,7 @@ export default function VisaoFinanceiraPlano() {
     loadingCompetenciasBudget ||
     loadingLancamentosAgefin ||
     loadingRecorrentesAgefin ||
+    loadingParcelamentosAgefin ||
     loadingLancamentosMes ||
     loadingLancamentosVencimento;
   const lucroBrutoCarregando = loadingLucroBruto && !lucroBrutoMes;
@@ -931,7 +937,7 @@ export default function VisaoFinanceiraPlano() {
       ) : plano.grupos.every((g) => !(g.items || []).length) ? (
         <FinanceiroListaEstado
           vazio
-          vazioMensagem="Cadastre contas fixas, folha, budgets ou contas a pagar para ver a consolidação."
+          vazioMensagem={`Cadastre contas fixas, folha, ${BUDGET_MODULO_LABEL.toLowerCase()} ou contas a pagar para ver a consolidação.`}
         />
       ) : modo === 'resumo' ? (
         <TabelaResumoPlano resumo={resumo} margemDetalhe={plano.margemDetalhe} />

@@ -3,8 +3,47 @@ import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
 import { filterEmbarquesVisiveisParaPedido } from '@/components/compras/embarqueFilters';
+import { refreshPedidoCompraComLogistica } from '@/lib/fetchPedidoCompraItens';
+import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
+import { gerarNumeroSequencial } from '@/lib/gerarNumeroSequencial';
+import {
+  listarLancamentosPedidoCompra,
+  pedidoStatusIndicaAguardandoAprovacaoFinanceira,
+  pedidoPrecisaSincronizarAprovacaoFinanceira,
+} from '@/lib/pedidoCompraFinanceiro';
+import { sincronizarPedidoCompraAprovacaoFinanceira } from '@/lib/aprovarPedidoCompraFinanceiro';
 import { normalizeItemToCanonicalFactorOne } from '@/lib/productUnits';
-import { hydrateEmbarquesLinhasDesdeCanonical } from '@/lib/embarqueLogisticaHelpers';
+import { format } from 'date-fns';
+import { isBase44BypassEnabled } from '@/integrations/p38/providers';
+
+/** Fixture só em bypass — Pulso shipping valida aba Logística sem BD real. */
+const PULSE_FIXTURE_PEDIDO_ID = 'pulse-fixture-pedido';
+
+function buildPulseFixturePedido() {
+  return {
+    id: PULSE_FIXTURE_PEDIDO_ID,
+    numero: 'PULSE-FIX',
+    fornecedor_id: 'pulse-fornecedor',
+    fornecedor_nome: 'Fornecedor Pulso',
+    status: 'Rascunho',
+    forma_pagamento_compra: 'À Vista',
+    data_emissao: format(new Date(), 'yyyy-MM-dd'),
+    itens: [
+      {
+        produto_id: 'pulse-prod-1',
+        produto_nome: 'Produto fixture',
+        quantidade_base: 10,
+        quantidade: 10,
+        unidade_medida: 'UN',
+        fator_conversao: 1,
+        custo_unitario: 1,
+        subtotal: 10,
+        total: 10,
+      },
+    ],
+    _embarques: [],
+  };
+}
 
 /**
  * Página inteira de detalhe/criação de Pedido de Compra — fullscreen em todos os viewports.
@@ -16,6 +55,7 @@ export default function PedidoCompraDetalhe() {
   const [loading, setLoading] = useState(true);
   const [autoOpenImporter, setAutoOpenImporter] = useState(false);
   const [abaInicial, setAbaInicial] = useState('dados-gerais');
+  const [embarqueContextoId, setEmbarqueContextoId] = useState(null);
 
   const loadPedidoComVerdade = useCallback(async (id, keepLoading = false) => {
     if (!id || id === 'novo') {
@@ -24,12 +64,16 @@ export default function PedidoCompraDetalhe() {
       return null;
     }
 
+    if (id === PULSE_FIXTURE_PEDIDO_ID && isBase44BypassEnabled()) {
+      const fixture = buildPulseFixturePedido();
+      setPedido(fixture);
+      setLoading(false);
+      return fixture;
+    }
+
     if (keepLoading) setLoading(true);
 
-    const [pedidoRes, embarquesRes] = await Promise.all([
-      base44.entities.PedidoCompra.filter({ id }),
-      base44.entities.Embarque.filter({ pedido_compra_id: id })
-    ]);
+    const pedidoRes = await base44.entities.PedidoCompra.filter({ id });
 
     const pedidoBase = pedidoRes?.[0] || null;
     if (!pedidoBase) {
@@ -38,20 +82,43 @@ export default function PedidoCompraDetalhe() {
       return null;
     }
 
-    let embarques = filterEmbarquesVisiveisParaPedido(embarquesRes || []);
-    embarques = await hydrateEmbarquesLinhasDesdeCanonical(base44, pedidoBase.id, embarques);
-    const ultimoEmbarque = [...embarques]
+    const pedidoComItens = await refreshPedidoCompraComLogistica(base44, pedidoBase.id, {
+      filterEmbarques: filterEmbarquesVisiveisParaPedido,
+    });
+    if (!pedidoComItens) {
+      setPedido(null);
+      setLoading(false);
+      return null;
+    }
+
+    const embarquesFinais = pedidoComItens._embarques || [];
+    const ultimoEmbarque = [...embarquesFinais]
       .filter((emb) => emb.status !== 'Concluído')
       .sort((a, b) => new Date(a.eta || a.created_date) - new Date(b.eta || b.created_date))[0]
-      || [...embarques].sort((a, b) => new Date(b.updated_date || b.created_date) - new Date(a.updated_date || a.created_date))[0]
+      || [...embarquesFinais].sort((a, b) => new Date(b.updated_date || b.created_date) - new Date(a.updated_date || a.created_date))[0]
       || null;
 
     const pedidoComVerdade = {
-      ...pedidoBase,
-      _embarques: embarques,
+      ...pedidoComItens,
+      _embarques: embarquesFinais,
       _embarque_principal: ultimoEmbarque,
-      data_prevista_entrega: ultimoEmbarque?.eta ? String(ultimoEmbarque.eta).slice(0, 10) : pedidoBase.data_prevista_entrega,
+      data_prevista_entrega: ultimoEmbarque?.eta ? String(ultimoEmbarque.eta).slice(0, 10) : pedidoComItens.data_prevista_entrega,
     };
+
+    if (pedidoStatusIndicaAguardandoAprovacaoFinanceira(pedidoComVerdade)) {
+      const lancs = await listarLancamentosPedidoCompra(base44, pedidoComVerdade.id);
+      if (pedidoPrecisaSincronizarAprovacaoFinanceira(pedidoComVerdade, lancs)) {
+        await sincronizarPedidoCompraAprovacaoFinanceira({
+          base44,
+          pedido: pedidoComVerdade,
+          lancamentos: lancs,
+        });
+        const [atualizado] = await base44.entities.PedidoCompra.filter({ id: pedidoComVerdade.id });
+        if (atualizado) {
+          Object.assign(pedidoComVerdade, atualizado);
+        }
+      }
+    }
 
     setPedido(pedidoComVerdade);
     setLoading(false);
@@ -64,6 +131,7 @@ export default function PedidoCompraDetalhe() {
     setAutoOpenImporter(params.get('autoImportador') === '1');
     const tab = params.get('tab');
     if (tab === 'pagamento' || tab === 'financeiro') setAbaInicial('pagamento');
+    setEmbarqueContextoId(params.get('embarque'));
     loadPedidoComVerdade(id, false);
   }, [loadPedidoComVerdade]);
 
@@ -92,10 +160,9 @@ export default function PedidoCompraDetalhe() {
     if (sanitizedData.id) {
       const atual = await base44.entities.PedidoCompra.filter({ id: sanitizedData.id });
       const pedidoAtual = atual?.[0] || {};
-      saved = await base44.entities.PedidoCompra.update(sanitizedData.id, {
+      saved = await base44.entities.PedidoCompra.update(sanitizedData.id, omitPedidoCompraEspelho({
         ...pedidoAtual,
         ...sanitizedData,
-        embarques_registrados: sanitizedData.embarques_registrados ?? pedidoAtual.embarques_registrados,
         status_embarque: sanitizedData.status_embarque ?? pedidoAtual.status_embarque,
         status_recebimento_geral: sanitizedData.status_recebimento_geral ?? pedidoAtual.status_recebimento_geral,
         data_despacho: sanitizedData.data_despacho ?? pedidoAtual.data_despacho,
@@ -103,12 +170,11 @@ export default function PedidoCompraDetalhe() {
         conferencia_id: sanitizedData.conferencia_id ?? pedidoAtual.conferencia_id,
         manifesto_entrada_id: sanitizedData.manifesto_entrada_id ?? pedidoAtual.manifesto_entrada_id,
         tem_divergencias: sanitizedData.tem_divergencias ?? pedidoAtual.tem_divergencias,
-      });
+      }));
     } else {
-      const { id: _id, ...newPedido } = sanitizedData;
+      const { id: _id, ...newPedido } = omitPedidoCompraEspelho(sanitizedData);
       if (!newPedido.numero) {
-        const resp = await base44.functions.invoke('gerarNumeroSequencial', { tipo: 'PC' });
-        newPedido.numero = resp?.data?.numero;
+        newPedido.numero = await gerarNumeroSequencial('PC');
       }
       saved = await base44.entities.PedidoCompra.create(newPedido);
     }
@@ -130,15 +196,14 @@ export default function PedidoCompraDetalhe() {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-card">
+      <div className="p38-fullscreen-panel flex items-center justify-center bg-card">
         <div className="w-8 h-8 border-4 border-border/40 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-card overflow-hidden z-50">
-      <PedidoCompraForm
+    <PedidoCompraForm
         pedido={pedido}
         onSave={handleSave}
         onClose={handleClose}
@@ -148,7 +213,7 @@ export default function PedidoCompraDetalhe() {
         }}
         abaInicial={abaInicial}
         autoOpenImporter={autoOpenImporter}
+        embarqueContextoId={embarqueContextoId}
       />
-    </div>
   );
 }

@@ -1,0 +1,40 @@
+# Referência mobile — Planejamento financeiro (aprovada por João André)
+
+## Porquê existe esta regra
+
+Em 2026-07-29, João André validou **explicitamente** a paleta e o feeling da ecrã **Planejamento financeiro** no telemóvel (modo escuro): contraste limão × carvão, hierarquia calma, CTAs claros, lista legível. Pediu que esta impressão ficasse **registada** para inspirar outras ecrãs mobile — não deixar o “melhor ecrã” perder-se no tempo.
+
+**Ecrã de referência (produção):** https://p-38erp.vercel.app/PlanejamentoFinanceiro  
+**Código âncora:** `src/features/planejamento-financeiro-v2/` + tokens em `src/components/financeiro/fluxo/financeiroP38.js` + paleta em `src/lib/p38Palette.js` / `src/lib/p38ThemeSurfaces.js`.
+
+Documento irmão (rollout geral): [`docs/p38-mobile-rollout.md`](docs/p38-mobile-rollout.md) — secção “Referência viva — Planejamento”.
+
+## O que copiar (feeling)
+
+1. **Fundo carvão** (`#1f1d22` / `bg-background` no dark) — atmosfera estável, não “dashboard neon”.
+2. **Limão P38** (`#a4ce33`) só no que importa: CTA principal (ex. Abrir mês), FAB `+`, valores positivos, tab/estado activo com parcimónia.
+3. **Despesas / saídas** em coral-vermelho suave — legível, sem gritar.
+4. **Superfícies** `P38_FIELD_SURFACE` / `P38_KPI_SHELL` — painéis arredondados, sem cartões com sombra pesada em cascata.
+5. **Chips de estado** pequenos (com boleto / sem boleto) — cor semântica, não decoração.
+6. **Tipografia DIN 1451** — títulos e labels em caixa alta com tracking leve; meta em `muted-foreground`.
+7. **Uma composição por zona** — cabeçalho + abas + bloco do mês + resumo + filtros + lista; sem poluir o primeiro ecrã com widgets extras.
+8. **Toque** — botões ~40–44px, abas em grelha 3 colunas no telemóvel, FAB limão acima da bottom nav.
+
+## O que NÃO fazer ao “inspirar-se”
+
+- Não pintar tudo de limão (ícones, cada linha, cada borda).
+- Não reintroduzir temas genéricos AI (roxo-indigo, cream+terracotta, glow multi-camada).
+- Não trocar a paleta canónica por hex soltos novos — usar tokens (`p38Palette`, `financeiroP38`, `p38-identity.css`).
+- Não sacrificar legibilidade por “wow”: a beleza desta ecrã vem do **contraste certo + calma**.
+
+## Quando aplicar
+
+- Novas ecrãs **financeiras / planeamento / listas operacionais** no mobile.
+- Refactors de UI mobile onde o utilizador peça “como o Planejamento” ou “a paleta bonita”.
+- Em dúvida: abrir a ecrã de referência e alinhar tokens existentes — não inventar um segundo visual system.
+
+## Relação com Margem
+
+- **Relatório de Margem** continua a referência de **linhas densas / grelha** (`P38MobileLine`, divisores finos).
+- **Planejamento** é a referência de **composição + paleta + CTA + calma financeira** no dark mobile.
+- Os dois partilham a mesma paleta mediterrânea; diferem no *job* visual (dados densos vs. planeamento/ação).

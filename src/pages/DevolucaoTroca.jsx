@@ -5,8 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { P38MobileLine, P38MobileLineList, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
-import { ArrowLeft, Search, Printer, CheckCircle2, Minus, Plus, Camera, X } from 'lucide-react';
+import { ArrowLeft, Search, Printer, CheckCircle2, Camera, X } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import QuantidadeFracionadaInput from '@/components/vendas/QuantidadeFracionadaInput';
 import { format } from 'date-fns';
 import { createPageUrl } from '@/components/utils';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
@@ -18,6 +19,9 @@ import {
   formatValorBRL,
   pedidoItemKey,
 } from '@/lib/creditoDevolucaoTroca';
+import { criarRascunhoTrocaParaCaixa } from '@/lib/rascunhoTrocaCaixa';
+import { hydratePedidoVendaParaDevolucao } from '@/lib/fetchPedidoVendaItens';
+import { formatQuantidadeDisplay } from '@/lib/parseQuantidadeInput';
 
 function tituloModulo(tipo) {
   if (tipo === 'Troca') return 'Troca de Produto';
@@ -40,17 +44,28 @@ function BuscarPedidoStep({ onFound }) {
       p.numero?.toUpperCase() === termo ||
       p.numero?.toUpperCase().includes(termo)
     );
-    setBuscando(false);
     if (!encontrado) {
+      setBuscando(false);
       toast({ title: 'Pedido não encontrado', variant: 'destructive' });
       return;
     }
     const statusOk = ['Financeiro OK', 'Em Separação', 'Em Rota de Entrega', 'Pedido Concluído'];
     if (!statusOk.includes(encontrado.status)) {
+      setBuscando(false);
       toast({ title: 'Este pedido não pode ser devolvido', description: `Status: ${encontrado.status}`, variant: 'destructive' });
       return;
     }
-    onFound(encontrado);
+    const pedidoComItens = await hydratePedidoVendaParaDevolucao(base44, encontrado);
+    setBuscando(false);
+    if (!Array.isArray(pedidoComItens.itens) || pedidoComItens.itens.length === 0) {
+      toast({
+        title: 'Pedido sem itens',
+        description: 'Não foi possível carregar os produtos deste pedido para devolução ou troca.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    onFound(pedidoComItens);
   };
 
   return (
@@ -59,6 +74,7 @@ function BuscarPedidoStep({ onFound }) {
         <p className="text-sm text-muted-foreground mb-4">Informe o número do pedido de venda</p>
         <div className="flex gap-3">
           <Input
+            data-pulse-sensor="devolucao-troca.busca-pedido"
             autoFocus
             placeholder="Ex: PV-00042"
             value={numeroPedido}
@@ -80,7 +96,6 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
   const [qtds, setQtds] = useState(
     Object.fromEntries((pedido.itens || []).map((i) => [pedidoItemKey(i), 0]))
   );
-  const [focusedKey, setFocusedKey] = useState(null);
   const [formaReembolso, setFormaReembolso] = useState('Vale Troca');
   const [aguardaSubstituto, setAguardaSubstituto] = useState(false);
   const [motivo, setMotivo] = useState('');
@@ -176,7 +191,7 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium">{item.produto_nome}</div>
                   <div className="text-xs text-muted-foreground mt-0.5">
-                    {item.quantidade}x ·{' '}
+                    {formatQuantidadeDisplay(item.quantidade)}x ·{' '}
                     {temDesconto ? (
                       <>
                         <span className="line-through">{formatValorBRL(unitLista)}</span>{' '}
@@ -189,39 +204,11 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setQtds(prev => ({ ...prev, [key]: Math.max(0, (prev[key] || 0) - 1) }))}
-                    className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center active:scale-95 transition-transform"
-                  >
-                    <Minus className="w-4 h-4 text-muted-foreground" />
-                  </button>
-                  <input
-                    autoComplete="off"
-                    type="number"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    min={0}
-                    max={item.quantidade}
-                    value={focusedKey === key ? (qtd === 0 ? '' : qtd) : qtd}
-                    onFocus={(e) => { setFocusedKey(key); e.target.select(); }}
-                    onBlur={() => setFocusedKey(null)}
-                    onChange={(e) => {
-                      const v = parseInt(e.target.value) || 0;
-                      setQtds(prev => ({ ...prev, [key]: Math.min(item.quantidade, Math.max(0, v)) }));
-                    }}
-                    className={`w-14 text-center text-base font-bold tabular-nums rounded-lg border-0 bg-transparent focus:bg-blue-50 dark:focus:bg-blue-900/20 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 transition-all ${qtd > 0 ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'}`}
-                    style={{ minHeight: '36px' }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setQtds(prev => ({ ...prev, [key]: Math.min(item.quantidade, (prev[key] || 0) + 1) }))}
-                    className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center active:scale-95 transition-transform"
-                  >
-                    <Plus className="w-4 h-4 text-muted-foreground" />
-                  </button>
-                </div>
+                <QuantidadeFracionadaInput
+                  value={qtd}
+                  max={item.quantidade}
+                  onChange={(next) => setQtds((prev) => ({ ...prev, [key]: next }))}
+                />
               </P38MobileLine>
             );
           })}
@@ -370,6 +357,13 @@ function ComprovanteStep({ resultado, onClose }) {
           <small>O código permanece válido enquanto houver saldo</small>
         </div>` : ''}
       ${resultado.diferencaPagar > 0 ? `<div class="row"><span>A pagar no caixa:</span><b>R$ ${resultado.diferencaPagar.toFixed(2).replace('.', ',')}</b></div>` : ''}
+      ${resultado.senhaAtendimento ? `
+        <div class="dashed"></div>
+        <div class="alert" style="background:#fffbeb;border-color:#fcd34d">
+          <b>SENHA CAIXA: ${resultado.senhaAtendimento.slice(-4)}</b><br/>
+          <small>${resultado.senhaAtendimento}</small><br/>
+          <small>Apresente no caixa para homologar o pagamento</small>
+        </div>` : ''}
       <div class="dashed"></div>
       ${resultado.motivo ? `<p><small>Motivo: ${resultado.motivo}</small></p>` : ''}
       <div class="center"><small>Não é documento fiscal</small></div>
@@ -461,10 +455,19 @@ function ComprovanteStep({ resultado, onClose }) {
         )}
 
         {resultado.diferencaPagar > 0 && (
-          <div className="px-5 py-3 border-t border-border/40 bg-amber-50 dark:bg-amber-900/20">
+          <div className="px-5 py-3 border-t border-border/40 bg-amber-50 dark:bg-amber-900/20 space-y-2">
             <p className="text-sm text-amber-900 dark:text-amber-200 text-center">
               Cliente deve pagar <strong>{formatValorBRL(resultado.diferencaPagar)}</strong> no caixa.
             </p>
+            {resultado.senhaAtendimento && (
+              <div className="rounded-xl bg-card px-3 py-3 text-center">
+                <p className="text-xs text-muted-foreground">Senha enviada à fila do caixa</p>
+                <p className="text-2xl font-bold font-mono text-foreground">
+                  {resultado.senhaAtendimento.slice(-4)}
+                </p>
+                <p className="text-xs text-muted-foreground">{resultado.senhaAtendimento}</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -483,7 +486,7 @@ function ComprovanteStep({ resultado, onClose }) {
         <button onClick={onClose} className="flex-1 h-14 bg-muted text-foreground/90 rounded-2xl font-medium text-base">
           Fechar
         </button>
-        <button onClick={imprimir} className="flex-1 h-14 rounded-2xl font-medium text-white bg-background dark:bg-card dark:text-foreground flex items-center justify-center gap-2 text-base">
+        <button onClick={imprimir} className="flex-1 h-14 rounded-2xl font-medium bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground flex items-center justify-center gap-2 text-base">
           <Printer className="w-4 h-4" /> Imprimir
         </button>
       </div>
@@ -819,6 +822,26 @@ export default function DevolucaoTrocaPage() {
         }
       }
 
+      let rascunhoCaixa = null;
+      if (diferencaPagar > 0) {
+        rascunhoCaixa = await criarRascunhoTrocaParaCaixa({
+          pedido,
+          itensSubstitutos,
+          creditoDevolucao,
+          valorSubstitutos,
+          diferencaPagar,
+          numeroDev,
+          operador: user,
+          motivo,
+        });
+        if (rascunhoCaixa?.senha_atendimento) {
+          toast({
+            title: 'Senha enviada ao caixa',
+            description: `Senha ${rascunhoCaixa.senha_atendimento.slice(-4)} aguardando homologação no PDV Caixa.`,
+          });
+        }
+      }
+
       setResultado({
         numero: numeroDev,
         pedidoNumero: pedido.numero,
@@ -831,6 +854,7 @@ export default function DevolucaoTrocaPage() {
         valeValor: saldoVale,
         formaReembolso,
         valeCode: valeCodigo,
+        senhaAtendimento: rascunhoCaixa?.senha_atendimento || null,
         motivo,
         tipo: 'Troca',
       });

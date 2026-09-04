@@ -16,7 +16,7 @@ function ProdutoRow({ nome, quantidade, unidade, meta, striped }) {
     <div
       className={cn(
         p38Table.mobileLineThin,
-        'flex min-w-0 border-l-4 border-l-primary/60',
+        'flex min-w-0 border-l-primary/55',
         striped && 'bg-secondary/15 dark:bg-secondary/20',
       )}
     >

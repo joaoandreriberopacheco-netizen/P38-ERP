@@ -82,6 +82,17 @@ export function perfilResolvidoParaUsuario(user, perfilCarregado) {
   return perfilCarregado ?? getCachedUserSession()?.perfilDeAcesso ?? null;
 }
 
+/** Configurações exige permissão explícita no kit (perfil + overrides), salvo role técnico admin. */
+export function podeAcessarConfiguracoes(user, perfilCarregado) {
+  if (!user) return false;
+  if (user.role === 'admin') return true;
+  if (usuarioLegadoSemMatrizPerfil(user)) return false;
+  const perfil = perfilResolvidoParaUsuario(user, perfilCarregado);
+  if (user.perfil_acesso_id && !perfil) return false;
+  const perm = resolverPermissoes(perfil, user.override_permissoes);
+  return perm?.configuracoes?.acesso === true;
+}
+
 export function podeVisualizarCatalogoProdutos(user, perfilCarregado) {
   if (!user) return false;
   if (user.role === 'admin') return true;
@@ -104,9 +115,13 @@ export function idsAtalhosHomePermitidos(user, perfilCarregado, itensAtivos) {
 
   const perfil = perfilResolvidoParaUsuario(user, perfilCarregado);
   if (user.perfil_acesso_id && !perfil) return [];
-  if (perfilTemEscopoTotal(perfil)) return itensAtivos.map((a) => a.id);
-
   const perm = resolverPermissoes(perfil, user.override_permissoes);
+  if (perfilTemEscopoTotal(perfil)) {
+    return itensAtivos
+      .filter((a) => (a.id !== 'configuracoes' ? true : perm?.configuracoes?.acesso === true))
+      .map((a) => a.id);
+  }
+
   return itensAtivos
     .filter((a) => !a.permissaoCheck || a.permissaoCheck(perm))
     .map((a) => a.id);

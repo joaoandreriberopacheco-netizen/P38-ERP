@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,8 +15,11 @@ import {
   Clock
 } from 'lucide-react';
 
+import { filterPedidosVendaElegiblesKpi } from '@/lib/pedidoVendaEligibility';
+import { resolveValorPedidoVenda } from '@/lib/financialUtils';
 import { format, startOfDay, startOfMonth, subDays } from 'date-fns';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+const DashboardVendedorVendasChart = lazy(() => import('@/components/dashboard/DashboardVendedorVendasChart'));
 
 const dateKey = (value) => format(value instanceof Date ? value : new Date(value), 'yyyy-MM-dd');
 
@@ -42,18 +45,22 @@ export default function DashboardVendedor() {
 
       // Vendas de hoje
       const hoje = dateKey(startOfDay(new Date()));
-      const vendasHj = await base44.entities.PedidoVenda.filter({
-        vendedor_id: user.id,
-        created_date: { $gte: hoje }
-      });
+      const vendasHj = filterPedidosVendaElegiblesKpi(
+        await base44.entities.PedidoVenda.filter({
+          vendedor_id: user.id,
+          created_date: { $gte: hoje },
+        }),
+      );
       setVendasHoje(vendasHj);
 
       // Vendas do mês
       const inicioMes = dateKey(startOfMonth(new Date()));
-      const vendasM = await base44.entities.PedidoVenda.filter({
-        vendedor_id: user.id,
-        created_date: { $gte: inicioMes }
-      });
+      const vendasM = filterPedidosVendaElegiblesKpi(
+        await base44.entities.PedidoVenda.filter({
+          vendedor_id: user.id,
+          created_date: { $gte: inicioMes },
+        }),
+      );
       setVendasMes(vendasM);
 
       // Tabela de preço (buscar a configurada para este vendedor)
@@ -79,8 +86,8 @@ export default function DashboardVendedor() {
     }
   };
 
-  const totalVendasHoje = vendasHoje.reduce((acc, v) => acc + (v.valor_total || 0), 0);
-  const totalVendasMes = vendasMes.reduce((acc, v) => acc + (v.valor_total || 0), 0);
+  const totalVendasHoje = vendasHoje.reduce((acc, v) => acc + resolveValorPedidoVenda(v), 0);
+  const totalVendasMes = vendasMes.reduce((acc, v) => acc + resolveValorPedidoVenda(v), 0);
   const percentualMeta = (totalVendasMes / metaMensal) * 100;
 
   // Dados para gráfico mensal
@@ -90,7 +97,7 @@ export default function DashboardVendedor() {
       const dia = subDays(new Date(), i);
       const diaKey = dateKey(dia);
       const vendasDia = vendasMes.filter((v) => dateKey(v.created_date) === diaKey);
-      const total = vendasDia.reduce((acc, v) => acc + (v.valor_total || 0), 0);
+      const total = vendasDia.reduce((acc, v) => acc + resolveValorPedidoVenda(v), 0);
       dias.push({
         dia: format(dia, 'dd/MM'),
         valor: total,
@@ -189,32 +196,13 @@ export default function DashboardVendedor() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-5">
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={vendasPorDia}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="dia" tick={{ fill: '#6b7280', fontSize: 12 }} />
-                <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                  formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                />
-                <Bar dataKey="valor" fill="#3b82f6" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-            <div className="mt-4 p-3 bg-background/50 rounded-lg">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Meta do Mês</span>
-                <span className="font-semibold text-foreground">
-                  R$ {metaMensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </span>
-              </div>
-              <div className="w-full bg-muted rounded-full h-2 mt-2">
-                <div 
-                  className="bg-purple-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${Math.min(percentualMeta, 100)}%` }}
-                />
-              </div>
-            </div>
+            <Suspense fallback={<div className="h-[200px] animate-pulse rounded-lg bg-muted" />}>
+              <DashboardVendedorVendasChart
+                data={vendasPorDia}
+                metaMensal={metaMensal}
+                percentualMeta={percentualMeta}
+              />
+            </Suspense>
           </CardContent>
         </Card>
 

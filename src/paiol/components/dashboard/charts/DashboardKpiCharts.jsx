@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   CartesianGrid,
   Cell,
@@ -12,8 +12,10 @@ import {
   YAxis,
 } from 'recharts';
 import { p38Dashboard } from '@/lib/p38DashboardSurfaces';
+import { DONUT_GAUGE_RADII } from '@/lib/dashboardKpiConfig';
 import {
   buildCartesianGridProps,
+  buildDashboardYDomain,
   buildXAxisProps,
   buildYAxisProps,
   DASHBOARD_CHART_MARGIN,
@@ -33,6 +35,31 @@ export function formatDashboardCurrency(value) {
   return BRL.format(value);
 }
 
+/** Média diária compacta para legenda — ex.: 2,1k */
+export function formatDashboardDailyRate(value) {
+  if (!Number.isFinite(value) || value === 0) return '0';
+  const abs = Math.abs(value);
+  const sign = value < 0 ? '-' : '';
+  if (abs >= 1_000_000) {
+    return `${sign}${(abs / 1_000_000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M`;
+  }
+  if (abs >= 1_000) {
+    return `${sign}${(abs / 1_000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}k`;
+  }
+  return `${sign}${Math.round(abs).toLocaleString('pt-BR')}`;
+}
+
+export function AccumulatedLegendLine({ label, total, dailyAvg, titleClassName }) {
+  return (
+    <span>
+      {label}: <strong className={titleClassName}>{formatDashboardCurrency(total)}</strong>
+      <span className="text-muted-foreground ml-1.5">
+        ({formatDashboardDailyRate(dailyAvg)} dia)
+      </span>
+    </span>
+  );
+}
+
 const DEFAULT_SERIES_LABELS = {
   lucro: 'Lucro acumulado',
   valor: 'Venda acumulada',
@@ -50,6 +77,12 @@ export function AcumuladoKpiChart({
   const chartTheme = useDashboardChartTheme();
   const hasBreakEven = data.some((point) => Number(point.breakEven) > 0);
   const hasMeta = data.some((point) => Number(point.meta) > 0);
+  const yDomain = useMemo(() => {
+    const keys = [valueKey];
+    if (hasBreakEven) keys.push('breakEven');
+    if (hasMeta) keys.push('meta');
+    return buildDashboardYDomain(data, keys);
+  }, [data, valueKey, hasBreakEven, hasMeta]);
 
   return (
     <div className={innerSurfaceClassName}>
@@ -57,7 +90,7 @@ export function AcumuladoKpiChart({
         <LineChart data={data} margin={DASHBOARD_CHART_MARGIN.line}>
           <CartesianGrid {...buildCartesianGridProps(chartTheme)} />
           <XAxis {...buildXAxisProps(chartTheme, { dataKey: xKey })} />
-          <YAxis {...buildYAxisProps(chartTheme)} />
+          <YAxis {...buildYAxisProps(chartTheme, { domain: yDomain, width: 44 })} />
           <Tooltip
             formatter={(value, name) => [BRL.format(Number(value || 0)), seriesLabels[name] || name]}
             contentStyle={chartTheme.tooltip.contentStyle}
@@ -115,6 +148,9 @@ export function LucroAcumuladoChart({ data, innerSurfaceClassName }) {
 }
 
 function DonutGauge({ ring, label, actualLabel, targetLabel, actualValue, targetValue }) {
+  const radii = DONUT_GAUGE_RADII.sm;
+  const isAboveTarget = ring.percent > 100;
+
   return (
     <div className={p38Dashboard.stat}>
       <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">{label}</p>
@@ -124,8 +160,8 @@ function DonutGauge({ ring, label, actualLabel, targetLabel, actualValue, target
             <PieChart>
               <Pie
                 data={ring.ringData}
-                innerRadius={28}
-                outerRadius={42}
+                innerRadius={radii.inner}
+                outerRadius={radii.outer}
                 dataKey="value"
                 startAngle={90}
                 endAngle={-270}
@@ -139,8 +175,8 @@ function DonutGauge({ ring, label, actualLabel, targetLabel, actualValue, target
               {ring.ringOverflowData.length > 0 ? (
                 <Pie
                   data={ring.ringOverflowData}
-                  innerRadius={22}
-                  outerRadius={26}
+                  innerRadius={radii.overflowInner}
+                  outerRadius={radii.overflowOuter}
                   dataKey="value"
                   startAngle={90}
                   endAngle={-270}
@@ -156,7 +192,9 @@ function DonutGauge({ ring, label, actualLabel, targetLabel, actualValue, target
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <span className="text-[10px] text-muted-foreground uppercase">%</span>
-            <span className={`text-sm font-bold ${p38Dashboard.title}`}>{ring.percent.toFixed(0)}%</span>
+            <span className={`text-sm font-bold ${isAboveTarget ? p38Dashboard.percentAbove : p38Dashboard.title}`}>
+              {ring.percent.toFixed(0)}%
+            </span>
           </div>
         </div>
         <div className="space-y-1 text-[10px]">

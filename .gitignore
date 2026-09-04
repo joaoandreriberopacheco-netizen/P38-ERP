@@ -12,9 +12,15 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+.vercel
 node_modules
+
+# Exportações locais (dados do catálogo — não versionar)
+artifacts/
+monitoring/
 dist
 dist-ssr
+.next
 *.local
 
 # Editor directories and files
@@ -30,6 +36,10 @@ dist-ssr
 
 # Export local da fila Flare (pode conter dados sensíveis)
 docs/flare-export/flare-pending.json
+docs/pulse/corridor-report.json
+docs/pulse/shipping-report.json
+docs/pulse/sensors-report.json
+docs/pulse/pulse-diario-summary.json
 
 # Relatórios de auditoria com dados financeiros reais
 docs/audit/
@@ -40,10 +50,29 @@ docs/reference-a29-erp/checkout/
 # Cache local de scripts (inferência, fragmentos gerados)
 scripts/.cache/
 
+# Espelho legacy gerado localmente (npm run mirror:pack-legacy) — não versionar
+mirror/legacy/
+
+# Índice do overlay visual (feature removida)
+src/generated/catalog-overlay-index.json
+
 # Ficheiro mestre de chaves P38 (João cola tudo aqui no Cloud — NUNCA commitar)
 secrets/p38-chaves.txt
 secrets/p38-chaves.local.txt
 
+# Artefactos temporários de agentes / sessões (nunca versionar)
+_mcp*
+.cursor-tmp-mcp-*
+
+# Imports locais / enriquecimento Formigres (imagens + CSV gerados)
+docs/imports-local/
+
 .env
 base44/.app.jsonc
 supabase/.temp/
+
+# P38 Print Agent — builds Windows (.exe)
+packages/p38-print-agent/dist/
+packages/p38-print-agent/release/
+# defaults com anon key (gerado no CI)
+packages/p38-print-agent/defaults.p38.mjs

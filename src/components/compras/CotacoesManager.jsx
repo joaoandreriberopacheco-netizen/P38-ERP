@@ -1,174 +1,750 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useToast } from "@/components/ui/use-toast";
-import { FileText, Plus, Trophy, CheckCircle, UploadCloud, AlertCircle, Camera, Trash2, Search, Minus } from 'lucide-react';
-import { format } from 'date-fns';
+import { useToast } from '@/components/ui/use-toast';
+import { createPageUrl } from '@/components/utils';
+import { dataHoje } from '@/components/utils/dateUtils';
+import { calcTotalItemCompraPedido, syncItemDescontoApresentacao } from '@/lib/productUnits';
+import { roundToTwoDecimals } from '@/lib/financialUtils';
 import ImportadorCotacaoPDF from './ImportadorCotacaoPDF';
 import ImportadorListaFoto from './ImportadorListaFoto';
-import { dataHoje } from '@/components/utils/dateUtils';
-import { pickDefaultPurchaseUnit } from '@/lib/productUnits';
-import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
+import CotacaoExpressHub from './cotacao-express/CotacaoExpressHub';
+import CotacaoExpressMontagem from './cotacao-express/CotacaoExpressMontagem';
+import CotacaoExpressDisputa from './cotacao-express/CotacaoExpressDisputa';
+import CotacaoExpressAprovar from './cotacao-express/CotacaoExpressAprovar';
+import CotacaoFornecedorExportDialog from './cotacao-express/CotacaoFornecedorExportDialog';
 import {
-  P38MobileLine,
-  P38MobileLineList,
-  P38StatusLabel,
-  p38AccentKeyFromTone,
-  p38StatusTone,
-} from '@/components/ui/p38-mobile-line';
-
-function cotacaoAccent(status) {
-  if (status === 'Finalizada') return 'success';
-  if (status === 'Em Análise') return 'info';
-  return 'muted';
-}
+  enrichCotacaoItensComCatalogo,
+  exportCotacaoFornecedorHtml,
+  exportCotacaoFornecedorPdf,
+} from '@/lib/cotacaoExpressFornecedorReport';
+import {
+  buildResumoAprovacao,
+  cotacaoItemToSelectorItem,
+  COTACAO_STATUS_ANALISE,
+  COTACAO_STATUS_FINALIZADA,
+  COTACAO_STATUS_RASCUNHO,
+  gerarProximoNumeroCotacao,
+  mergeCotacaoItemsByProduct,
+  selectorItemToCotacaoItem,
+  sincronizarRegistrosDisputa,
+  sortCotacaoItensAlfabeticamente,
+} from '@/lib/cotacaoExpressUtils';
+import { gerarNumeroSequencial } from '@/lib/gerarNumeroSequencial';
+import { mergeLoteIntoItems, parseLoteQuantidade } from '@/lib/catalogLoteUtils';
+import { fetchProdutosAtivos } from '@/lib/fetchProdutosAtivos';
 
 export default function CotacoesManager() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const [view, setView] = useState('hub');
+  const [hubView, setHubView] = useState('abertas');
   const [cotacoes, setCotacoes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCotacao, setSelectedCotacao] = useState(null);
   const [fornecedores, setFornecedores] = useState([]);
+  const [produtosCatalogo, setProdutosCatalogo] = useState([]);
+  const [selectorItems, setSelectorItems] = useState([]);
+  const [precosInput, setPrecosInput] = useState({});
+  const [registrosDisputa, setRegistrosDisputa] = useState([]);
+  const [pedidosGerados, setPedidosGerados] = useState([]);
+
   const [isImportadorOpen, setIsImportadorOpen] = useState(false);
   const [isImportadorFotoOpen, setIsImportadorFotoOpen] = useState(false);
   const [targetCotacaoImportacaoLista, setTargetCotacaoImportacaoLista] = useState(null);
-  const [isNovaCotacaoOpen, setIsNovaCotacaoOpen] = useState(false);
-  const [novaCotacaoTitulo, setNovaCotacaoTitulo] = useState('');
-  const [produtosCatalogo, setProdutosCatalogo] = useState([]);
-  const [manualSearch, setManualSearch] = useState('');
-  const [manualCart, setManualCart] = useState([]);
-  const { toast } = useToast();
+  const [criando, setCriando] = useState(false);
+  const [salvando, setSalvando] = useState(false);
+  const [abrindoDisputa, setAbrindoDisputa] = useState(false);
+  const [gerandoPedidos, setGerandoPedidos] = useState(false);
+  const [dadosEmpresa, setDadosEmpresa] = useState(null);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportandoSolicitacao, setExportandoSolicitacao] = useState(false);
 
-  const [precosInput, setPrecosInput] = useState({});
-  const [isAnaliseDialogOpen, setIsAnaliseDialogOpen] = useState(false);
-
-  const mapCotacaoItemsToManualCart = (cotacao) => (
-    (cotacao?.itens || []).map((item) => ({
-      produto_id: item.produto_id,
-      produto_nome: item.produto_nome,
-      quantidade: item.quantidade || 1,
-      unidade: item.unidade || 'UN'
-    }))
+  const produtosMap = useMemo(
+    () => Object.fromEntries(produtosCatalogo.map((p) => [p.id, p])),
+    [produtosCatalogo],
+  );
+  const produtosCatalogoRef = useRef(produtosCatalogo);
+  useEffect(() => {
+    produtosCatalogoRef.current = produtosCatalogo;
+  }, [produtosCatalogo]);
+  const fornecedoresMap = useMemo(
+    () => Object.fromEntries(fornecedores.map((f) => [f.id, f])),
+    [fornecedores],
   );
 
-  const mergeCotacaoItemsByProduct = (currentItems = [], incomingItems = []) => {
-    const merged = new Map();
-    [...currentItems, ...incomingItems].forEach((item) => {
-      const key = item.produto_id;
-      const previous = merged.get(key);
-      const qty = parseFloat(item.quantidade) || 0;
-      if (!previous) {
-        merged.set(key, { ...item, quantidade: qty });
-        return;
-      }
-      merged.set(key, {
-        ...previous,
-        quantidade: (parseFloat(previous.quantidade) || 0) + qty
-      });
-    });
-    return Array.from(merged.values()).filter((item) => (parseFloat(item.quantidade) || 0) > 0);
-  };
+  const resumoAprovacao = useMemo(() => {
+    if (!selectedCotacao) return null;
+    return buildResumoAprovacao(selectedCotacao, fornecedoresMap, produtosMap);
+  }, [selectedCotacao, fornecedoresMap, produtosMap]);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  const cotacaoExibicao = useMemo(() => {
+    if (!selectedCotacao) return null;
+    return {
+      ...selectedCotacao,
+      itens: sortCotacaoItensAlfabeticamente(selectedCotacao.itens || []),
+    };
+  }, [selectedCotacao]);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [cotacoesData, fornecedoresData] = await Promise.all([
+      const [cotacoesData, fornecedoresData, produtosData, empresaData] = await Promise.all([
         base44.entities.Cotacao.list('-created_date'),
-        base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] })
+        base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] }),
+        fetchProdutosAtivos(),
+        base44.entities.DadosEmpresa.list().catch(() => []),
       ]);
       setCotacoes(cotacoesData);
       setFornecedores(fornecedoresData);
-      const produtosData = await base44.entities.Produto.filter({ tipo: 'Produto', ativo: true });
       setProdutosCatalogo(produtosData);
+      setDadosEmpresa(empresaData?.[0] || null);
     } catch (error) {
-      console.error("Erro ao carregar dados:", error);
+      console.error('Erro ao carregar dados:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const handleCreatePedido = async (cotacao) => {
-    const itensVencedores = cotacao.respostas.filter(r => r.vencedor);
-    
-    if (itensVencedores.length === 0) {
-      toast({ title: "Nenhum vencedor", description: "Selecione os itens vencedores antes de gerar pedido.", variant: "destructive" });
-      return;
-    }
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-    const itensPorFornecedor = {};
-    itensVencedores.forEach(resp => {
-      if (!itensPorFornecedor[resp.fornecedor_id]) {
-        itensPorFornecedor[resp.fornecedor_id] = [];
-      }
-      const itemOriginal = cotacao.itens.find(i => i.produto_id === resp.produto_id);
-      if (itemOriginal) {
-        itensPorFornecedor[resp.fornecedor_id].push({
-          produto_id: resp.produto_id,
-          produto_nome: itemOriginal.produto_nome,
-          quantidade: resp.quantidade_ofertada || itemOriginal.quantidade,
-          custo_unitario: resp.preco_unitario,
-          total: (resp.quantidade_ofertada || itemOriginal.quantidade) * resp.preco_unitario
-        });
-      }
-    });
-
-    try {
-      const allPOs = await base44.entities.PedidoCompra.list();
-      let nextNumber = (allPOs.length > 0 ? Math.max(...allPOs.map(p => parseInt(p.numero?.split('-')[1] || 0))) : 0) + 1;
-
-      for (const fornecedorId in itensPorFornecedor) {
-        const itens = itensPorFornecedor[fornecedorId];
-        const fornecedor = fornecedores.find(f => f.id === fornecedorId);
-        const total = itens.reduce((sum, i) => sum + i.total, 0);
-
-        await base44.entities.PedidoCompra.create({
-          numero: `PC-${String(nextNumber++).padStart(5, '0')}`,
-          fornecedor_id: fornecedorId,
-          fornecedor_nome: fornecedor?.nome || 'Desconhecido',
-          status: 'Rascunho',
-          itens: itens,
-          valor_total: total,
-          observacoes: `Gerado a partir da Cotação ${cotacao.numero}`
-        });
-      }
-
-      await base44.entities.Cotacao.update(cotacao.id, { status: 'Finalizada' });
-      toast({ title: "Sucesso", description: "Pedidos de compra gerados com sucesso!", className: "bg-green-100 text-green-800" });
-      loadData();
-    } catch (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
-    }
-  };
-
-  const handleUpdatePreco = (fornecedorId, produtoId, valor) => {
-    setPrecosInput(prev => ({
-      ...prev,
-      [`${fornecedorId}_${produtoId}`]: valor
-    }));
-  };
-
-  const filteredManualProducts = useMemo(() => {
-    if (!manualSearch.trim()) return [];
-    return filterAndSortProducts(produtosCatalogo, manualSearch);
-  }, [manualSearch, produtosCatalogo]);
-
-  const handleOpenAnaliseCotacao = (cotacao) => {
-    setSelectedCotacao(cotacao);
+  const refreshCotacao = async (cotacaoId) => {
+    const updated = await base44.entities.Cotacao.get(cotacaoId);
+    setSelectedCotacao(updated);
+    setRegistrosDisputa(sincronizarRegistrosDisputa(updated, produtosMap));
     const inputs = {};
-    cotacao.respostas?.forEach(r => {
+    updated.respostas?.forEach((r) => {
       inputs[`${r.fornecedor_id}_${r.produto_id}`] = r.preco_unitario;
     });
     setPrecosInput(inputs);
-    setManualSearch('');
-    setManualCart(mapCotacaoItemsToManualCart(cotacao));
+    setSelectorItems(
+      sortCotacaoItensAlfabeticamente(
+        (updated.itens || []).map((item) => cotacaoItemToSelectorItem(item, produtosMap[item.produto_id])),
+      ),
+    );
+    return updated;
+  };
+
+  const syncSelectorFromCotacao = (cotacao) => {
+    setSelectorItems(
+      sortCotacaoItensAlfabeticamente(
+        (cotacao?.itens || []).map((item) => cotacaoItemToSelectorItem(item, produtosMap[item.produto_id])),
+      ),
+    );
+  };
+
+  const handleAbrirCotacao = (cotacao) => {
+    setSelectedCotacao(cotacao);
+    setPedidosGerados([]);
+    const inputs = {};
+    cotacao.respostas?.forEach((r) => {
+      inputs[`${r.fornecedor_id}_${r.produto_id}`] = r.preco_unitario;
+    });
+    setPrecosInput(inputs);
+    setRegistrosDisputa(sincronizarRegistrosDisputa(cotacao, produtosMap));
+    syncSelectorFromCotacao(cotacao);
+
+    if (cotacao.status === COTACAO_STATUS_RASCUNHO) {
+      setView('montagem');
+    } else if (cotacao.status === COTACAO_STATUS_ANALISE) {
+      setView('disputa');
+    } else {
+      setHubView('concluidas');
+      setView('hub');
+    }
+  };
+
+  const handleNovaCotacao = async () => {
+    const titulo = window.prompt('Título da cotação:', `Cotação ${new Date().toLocaleDateString('pt-BR')}`);
+    if (!titulo?.trim()) return;
+
+    setCriando(true);
+    try {
+      const numero = await gerarProximoNumeroCotacao(base44);
+      const nova = await base44.entities.Cotacao.create({
+        numero,
+        titulo: titulo.trim(),
+        status: COTACAO_STATUS_RASCUNHO,
+        data_abertura: dataHoje(),
+        itens: [],
+        fornecedores: [],
+        respostas: [],
+        registros_disputa: [],
+      });
+      await loadData();
+      handleAbrirCotacao(nova);
+      toast({ title: 'Cotação criada', className: 'bg-green-100 text-green-800' });
+    } catch (error) {
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    } finally {
+      setCriando(false);
+    }
+  };
+
+  const handleDeleteCotacao = async (cotacao) => {
+    const ok = window.confirm(`Excluir a cotação "${cotacao.titulo}"? Essa ação não pode ser desfeita.`);
+    if (!ok) return;
+    try {
+      await base44.entities.Cotacao.delete(cotacao.id);
+      if (selectedCotacao?.id === cotacao.id) {
+        setSelectedCotacao(null);
+        setView('hub');
+      }
+      toast({ title: 'Cotação excluída', className: 'bg-green-100 text-green-800' });
+      loadData();
+    } catch (error) {
+      toast({ title: 'Erro ao excluir', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleSalvarItens = async () => {
+    if (!selectedCotacao) return;
+    setSalvando(true);
+    try {
+      const itensValidos = sortCotacaoItensAlfabeticamente(
+        selectorItems
+          .map(selectorItemToCotacaoItem)
+          .filter((item) => (parseFloat(item.quantidade) || 0) > 0),
+      );
+
+      if (itensValidos.length === 0) {
+        toast({ title: 'Sem itens válidos', description: 'Adicione pelo menos um item.', variant: 'destructive' });
+        return;
+      }
+
+      await base44.entities.Cotacao.update(selectedCotacao.id, { itens: itensValidos });
+      toast({ title: 'Itens salvos', className: 'bg-green-100 text-green-800' });
+      await loadData();
+      await refreshCotacao(selectedCotacao.id);
+    } catch (error) {
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const handleAbrirDisputa = async () => {
+    if (!selectedCotacao) return;
+    if (selectorItems.length === 0) {
+      toast({ title: 'Sem itens', description: 'Adicione itens antes de abrir a disputa.', variant: 'destructive' });
+      return;
+    }
+
+    setAbrindoDisputa(true);
+    try {
+      const itensValidos = sortCotacaoItensAlfabeticamente(
+        selectorItems
+          .map(selectorItemToCotacaoItem)
+          .filter((item) => (parseFloat(item.quantidade) || 0) > 0),
+      );
+
+      await base44.entities.Cotacao.update(selectedCotacao.id, {
+        itens: itensValidos,
+        status: COTACAO_STATUS_ANALISE,
+      });
+      toast({
+        title: 'Disputa aberta',
+        description: 'Importe propostas (OCR) ou adicione fornecedores manualmente.',
+        className: 'bg-blue-100 text-blue-800',
+      });
+      await loadData();
+      await refreshCotacao(selectedCotacao.id);
+      setView('disputa');
+      setExportDialogOpen(true);
+    } catch (error) {
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    } finally {
+      setAbrindoDisputa(false);
+    }
+  };
+
+  const buildExportPayload = useCallback((fornecedorDestino = null) => {
+    const cotacaoEnriquecida = enrichCotacaoItensComCatalogo(
+      {
+        ...selectedCotacao,
+        itens: selectorItems.length > 0
+          ? selectorItems.map(selectorItemToCotacaoItem).filter((i) => (parseFloat(i.quantidade) || 0) > 0)
+          : selectedCotacao?.itens || [],
+      },
+      produtosMap,
+    );
+    return {
+      cotacao: cotacaoEnriquecida,
+      empresa: dadosEmpresa,
+      fornecedor: fornecedorDestino,
+    };
+  }, [selectedCotacao, selectorItems, produtosMap, dadosEmpresa]);
+
+  const handleExportSolicitacaoHtml = async (fornecedorDestino) => {
+    if (!selectedCotacao) return;
+    setExportandoSolicitacao(true);
+    try {
+      await exportCotacaoFornecedorHtml(buildExportPayload(fornecedorDestino));
+      toast({ title: 'HTML gerado', description: 'Compartilhe ou salve o arquivo.', className: 'bg-green-100 text-green-800' });
+    } catch (error) {
+      toast({ title: 'Erro ao gerar HTML', description: error.message, variant: 'destructive' });
+    } finally {
+      setExportandoSolicitacao(false);
+    }
+  };
+
+  const handleExportSolicitacaoPdf = async (fornecedorDestino) => {
+    if (!selectedCotacao) return;
+    setExportandoSolicitacao(true);
+    try {
+      await exportCotacaoFornecedorPdf(buildExportPayload(fornecedorDestino));
+      toast({ title: 'PDF gerado', description: 'Documento A4 pronto para enviar.', className: 'bg-green-100 text-green-800' });
+    } catch (error) {
+      toast({ title: 'Erro ao gerar PDF', description: error.message, variant: 'destructive' });
+    } finally {
+      setExportandoSolicitacao(false);
+    }
+  };
+
+  const buildSelectorItemFromProduct = useCallback((product, quantidade = 1) => {
+    const qty = parseLoteQuantidade(quantidade);
+    return cotacaoItemToSelectorItem(
+      { produto_id: product.id, produto_nome: product.nome, quantidade: qty },
+      product,
+    );
+  }, []);
+
+  const handleAddItem = (payload = null) => {
+    if (!payload) return;
+
+    // Item completo vindo do MobileProductSelector (tela de edição / modo rápido)
+    if (payload.produto_id && (payload.unidade_medida != null || payload.quantidade_base != null)) {
+      setSelectorItems((prev) => {
+        const idx = prev.findIndex((i) => i.produto_id === payload.produto_id);
+        if (idx >= 0) {
+          const next = [...prev];
+          const merged = { ...next[idx], ...payload };
+          const fator = parseFloat(merged.fator_conversao) || 1;
+          const qty = parseFloat(merged.quantidade) || 0;
+          merged.quantidade_base = roundToTwoDecimals(qty * fator);
+          next[idx] = merged;
+          return sortCotacaoItensAlfabeticamente(next);
+        }
+        return sortCotacaoItensAlfabeticamente([...prev, payload]);
+      });
+      return;
+    }
+
+    const productId = payload.produto_id || payload.id;
+    if (!productId) return;
+
+    const catalog = produtosCatalogoRef.current;
+    const product = catalog.find((p) => p.id === productId) || payload;
+    const qty = parseLoteQuantidade(payload.quantidade ?? 1);
+
+    setSelectorItems((prev) => {
+      const idx = prev.findIndex((i) => i.produto_id === productId);
+      if (idx >= 0) {
+        const next = [...prev];
+        const fator = parseFloat(next[idx].fator_conversao) || 1;
+        const newQty = (parseFloat(next[idx].quantidade) || 0) + qty;
+        let merged = syncItemDescontoApresentacao({
+          ...next[idx],
+          quantidade: newQty,
+          quantidade_base: roundToTwoDecimals(newQty * fator),
+        });
+        merged = { ...merged, total: calcTotalItemCompraPedido(merged) };
+        next[idx] = merged;
+        return sortCotacaoItensAlfabeticamente(next);
+      }
+      if (!product?.id && !product?.nome) return prev;
+      const resolved = product.id
+        ? buildSelectorItemFromProduct(product, qty)
+        : {
+            produto_id: productId,
+            produto_nome: payload.produto_nome || product.nome || 'Produto',
+            quantidade: qty,
+            unidade_medida: payload.unidade || payload.unidade_medida || 'UN',
+            fator_conversao: 1,
+            quantidade_base: qty,
+            custo_unitario: 0,
+            valor_desconto_item: 0,
+            desconto_pct_item: 0,
+            total: 0,
+          };
+      return sortCotacaoItensAlfabeticamente([...prev, resolved]);
+    });
+  };
+
+  const handleAddItemsBatch = useCallback((incoming = [], productsSource) => {
+    if (!incoming.length) return 0;
+    const catalog = productsSource?.length ? productsSource : produtosCatalogoRef.current;
+    let mergedCount = 0;
+
+    setSelectorItems((prev) => {
+      const beforeIds = new Set(prev.map((i) => i.produto_id).filter(Boolean));
+      const next = mergeLoteIntoItems(
+        prev,
+        incoming,
+        (product, qty) => buildSelectorItemFromProduct(product, qty),
+        catalog,
+      );
+      const validIncoming = incoming.filter((row) => catalog.some((p) => p.id === row.produto_id));
+      mergedCount = validIncoming.length;
+      const afterIds = new Set(next.map((i) => i.produto_id).filter(Boolean));
+      if (afterIds.size === beforeIds.size && validIncoming.length > 0) {
+        // Todos já existiam — qty foi somada
+        mergedCount = validIncoming.length;
+      } else if (afterIds.size > beforeIds.size) {
+        mergedCount = Math.max(validIncoming.length, afterIds.size - beforeIds.size);
+      }
+      return sortCotacaoItensAlfabeticamente(next);
+    });
+
+    const skipped = incoming.length - incoming.filter((row) =>
+      catalog.some((p) => p.id === row.produto_id)).length;
+    if (mergedCount > 0) {
+      toast({
+        title: 'Carrinho atualizado',
+        description: `${mergedCount} produto(s) adicionado(s) ao carrinho.`,
+        className: 'bg-green-100 text-green-800',
+      });
+    } else if (skipped > 0) {
+      toast({
+        title: 'Não foi possível adicionar',
+        description: 'Catálogo ainda a carregar ou produto não encontrado. Tente de novo.',
+        variant: 'destructive',
+      });
+    }
+    return mergedCount;
+  }, [buildSelectorItemFromProduct, toast]);
+
+  const handleUpdateItem = (index, field, value) => {
+    setSelectorItems((prev) => {
+      const next = [...prev];
+      const item = { ...next[index] };
+      if (typeof field === 'object' && field !== null) {
+        Object.assign(item, field);
+      } else {
+        item[field] = value;
+      }
+      const fator = parseFloat(item.fator_conversao) || 1;
+      const qty = parseFloat(item.quantidade) || 0;
+      item.quantidade_base = roundToTwoDecimals(qty * fator);
+      item = syncItemDescontoApresentacao(item);
+      item.total = calcTotalItemCompraPedido(item);
+      next[index] = item;
+      return sortCotacaoItensAlfabeticamente(next);
+    });
+  };
+
+  const handleRemoveItem = (index) => {
+    setSelectorItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUpdatePreco = (fornecedorId, produtoId, valor) => {
+    setPrecosInput((prev) => ({
+      ...prev,
+      [`${fornecedorId}_${produtoId}`]: valor,
+    }));
+  };
+
+  const handleSalvarPrecos = async () => {
+    if (!selectedCotacao) return;
+    setSalvando(true);
+    try {
+      const novasRespostas = [];
+      const fornecedoresCotacao = selectedCotacao.fornecedores || [];
+
+      fornecedoresCotacao.forEach((f) => {
+        (selectedCotacao.itens || []).forEach((item) => {
+          const key = `${f.fornecedor_id}_${item.produto_id}`;
+          const preco = parseFloat(precosInput[key]);
+          if (!isNaN(preco) && preco > 0) {
+            const respExistente = selectedCotacao.respostas?.find(
+              (r) => r.fornecedor_id === f.fornecedor_id && r.produto_id === item.produto_id,
+            );
+            novasRespostas.push({
+              fornecedor_id: f.fornecedor_id,
+              produto_id: item.produto_id,
+              preco_unitario: preco,
+              marca: respExistente?.marca || '',
+              observacao: respExistente?.observacao || '',
+              quantidade_ofertada: respExistente?.quantidade_ofertada,
+              vencedor: respExistente?.vencedor || false,
+            });
+          }
+        });
+      });
+
+      const outrasRespostas = (selectedCotacao.respostas || []).filter((r) => {
+        const key = `${r.fornecedor_id}_${r.produto_id}`;
+        const preco = parseFloat(precosInput[key]);
+        return isNaN(preco) || preco <= 0;
+      });
+
+      const todasRespostas = [...outrasRespostas, ...novasRespostas];
+      const registros = sincronizarRegistrosDisputa(
+        { ...selectedCotacao, respostas: todasRespostas },
+        produtosMap,
+      );
+
+      await base44.entities.Cotacao.update(selectedCotacao.id, {
+        respostas: todasRespostas,
+        registros_disputa: registros,
+        status: COTACAO_STATUS_ANALISE,
+      });
+
+      setRegistrosDisputa(registros);
+      toast({ title: 'Preços atualizados', className: 'bg-green-100 text-green-800' });
+      await loadData();
+      await refreshCotacao(selectedCotacao.id);
+    } catch (error) {
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const handleToggleVencedor = async (respostaRef) => {
+    if (!selectedCotacao) return;
+    const novasRespostas = (selectedCotacao.respostas || []).map((r) => {
+      if (r.produto_id === respostaRef.produto_id) {
+        if (r.fornecedor_id === respostaRef.fornecedor_id) {
+          return { ...r, vencedor: !r.vencedor };
+        }
+        return { ...r, vencedor: false };
+      }
+      return r;
+    });
+
+    if (!novasRespostas.find((r) => r.fornecedor_id === respostaRef.fornecedor_id && r.produto_id === respostaRef.produto_id)) {
+      const preco = parseFloat(precosInput[`${respostaRef.fornecedor_id}_${respostaRef.produto_id}`]) || 0;
+      novasRespostas.push({
+        fornecedor_id: respostaRef.fornecedor_id,
+        produto_id: respostaRef.produto_id,
+        preco_unitario: preco,
+        vencedor: true,
+        marca: '',
+        observacao: '',
+      });
+      novasRespostas.forEach((r) => {
+        if (r.produto_id === respostaRef.produto_id && r.fornecedor_id !== respostaRef.fornecedor_id) {
+          r.vencedor = false;
+        }
+      });
+    }
+
+    await base44.entities.Cotacao.update(selectedCotacao.id, { respostas: novasRespostas });
+    await loadData();
+    await refreshCotacao(selectedCotacao.id);
+  };
+
+  const handleAdicionarFornecedor = async (fornecedor) => {
+    if (!selectedCotacao) return;
+    const jaExiste = selectedCotacao.fornecedores?.some((f) => f.fornecedor_id === fornecedor.id);
+    if (jaExiste) return;
+
+    const novosFornecedores = [
+      ...(selectedCotacao.fornecedores || []),
+      {
+        fornecedor_id: fornecedor.id,
+        fornecedor_nome: fornecedor.nome,
+        email: fornecedor.email || '',
+        status_envio: 'Pendente',
+      },
+    ];
+
+    await base44.entities.Cotacao.update(selectedCotacao.id, { fornecedores: novosFornecedores });
+    toast({ title: 'Fornecedor adicionado', className: 'bg-green-100 text-green-800' });
+    await loadData();
+    await refreshCotacao(selectedCotacao.id);
+  };
+
+  const handleAdicionarRegistro = async (registro) => {
+    if (!selectedCotacao) return;
+    const manuais = [
+      { ...registro, id: registro.id || `manual-${Date.now()}` },
+      ...(selectedCotacao.registros_disputa || []).filter((r) => !r.automatico),
+    ];
+    const auto = sincronizarRegistrosDisputa(selectedCotacao, produtosMap).filter((r) => r.automatico);
+    const merged = [...manuais, ...auto];
+    await base44.entities.Cotacao.update(selectedCotacao.id, { registros_disputa: merged });
+    setRegistrosDisputa(merged);
+    toast({ title: 'Registro salvo' });
+    await refreshCotacao(selectedCotacao.id);
+  };
+
+  const handleConfirmarGeracao = async () => {
+    if (!selectedCotacao) return;
+    const itensVencedores = (selectedCotacao.respostas || []).filter((r) => r.vencedor);
+
+    if (itensVencedores.length === 0) {
+      toast({ title: 'Nenhum vencedor', description: 'Selecione os itens vencedores.', variant: 'destructive' });
+      return;
+    }
+
+    setGerandoPedidos(true);
+    try {
+      const itensPorFornecedor = {};
+      itensVencedores.forEach((resp) => {
+        if (!itensPorFornecedor[resp.fornecedor_id]) {
+          itensPorFornecedor[resp.fornecedor_id] = [];
+        }
+        const itemOriginal = selectedCotacao.itens.find((i) => i.produto_id === resp.produto_id);
+        if (itemOriginal) {
+          const qty = parseFloat(resp.quantidade_ofertada) || parseFloat(itemOriginal.quantidade) || 0;
+          const preco = parseFloat(resp.preco_unitario) || 0;
+          itensPorFornecedor[resp.fornecedor_id].push({
+            produto_id: resp.produto_id,
+            produto_nome: itemOriginal.produto_nome,
+            quantidade: qty,
+            custo_unitario: preco,
+            total: qty * preco,
+          });
+        }
+      });
+
+      const criados = [];
+
+      for (const fornecedorId of Object.keys(itensPorFornecedor)) {
+        const itens = itensPorFornecedor[fornecedorId];
+        const fornecedor = fornecedoresMap[fornecedorId];
+        const total = itens.reduce((sum, i) => sum + i.total, 0);
+        const numero = await gerarNumeroSequencial('PC');
+
+        const po = await base44.entities.PedidoCompra.create({
+          numero,
+          fornecedor_id: fornecedorId,
+          fornecedor_nome: fornecedor?.nome || 'Desconhecido',
+          status: 'Rascunho',
+          itens,
+          valor_total: total,
+          observacoes: `Gerado a partir da Cotação ${selectedCotacao.numero}`,
+        });
+        criados.push(po);
+      }
+
+      await base44.entities.Cotacao.update(selectedCotacao.id, { status: COTACAO_STATUS_FINALIZADA });
+      setPedidosGerados(criados);
+      toast({
+        title: 'Pedidos gerados',
+        description: `${criados.length} pedido(s) criado(s) em rascunho.`,
+        className: 'bg-green-100 text-green-800',
+      });
+      await loadData();
+    } catch (error) {
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    } finally {
+      setGerandoPedidos(false);
+    }
+  };
+
+  const handleImportComplete = async (fornecedorId, respostasImportadas, descontoGlobal) => {
+    const fornecedoresAtualizados = await base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] });
+    setFornecedores(fornecedoresAtualizados);
+
+    const outrasRespostas = selectedCotacao.respostas?.filter((r) => r.fornecedor_id !== fornecedorId) || [];
+    const novasRespostasDesteFornecedor = [...respostasImportadas];
+    const todasRespostas = [...outrasRespostas, ...novasRespostasDesteFornecedor];
+
+    const fornecedorNome = fornecedoresAtualizados.find((f) => f.id === fornecedorId)?.nome || 'Novo';
+    const cotacaoAtualizada = {
+      ...selectedCotacao,
+      respostas: todasRespostas,
+      fornecedores: [
+        ...(selectedCotacao.fornecedores?.filter((f) => f.fornecedor_id !== fornecedorId) || []),
+        {
+          fornecedor_id: fornecedorId,
+          fornecedor_nome: fornecedorNome,
+          email: '',
+          status_envio: 'Respondido',
+        },
+      ],
+    };
+
+    const registros = sincronizarRegistrosDisputa(cotacaoAtualizada, produtosMap);
+
+    await base44.entities.Cotacao.update(selectedCotacao.id, {
+      respostas: todasRespostas,
+      status: COTACAO_STATUS_ANALISE,
+      fornecedores: cotacaoAtualizada.fornecedores,
+      registros_disputa: registros,
+    });
+
+    const inputs = { ...precosInput };
+    novasRespostasDesteFornecedor.forEach((r) => {
+      inputs[`${r.fornecedor_id}_${r.produto_id}`] = r.preco_unitario;
+    });
+    setPrecosInput(inputs);
+    setRegistrosDisputa(registros);
+
+    await loadData();
+    await refreshCotacao(selectedCotacao.id);
+
+    if (descontoGlobal > 0) {
+      toast({
+        title: 'Desconto global aplicado',
+        description: `R$ ${descontoGlobal} rateado nos preços unitários.`,
+        duration: 5000,
+      });
+    }
+  };
+
+  const handleImportFotoComplete = async (novosItens) => {
+    try {
+      if (targetCotacaoImportacaoLista?.id) {
+        const itensMesclados = mergeCotacaoItemsByProduct(
+          targetCotacaoImportacaoLista.itens || [],
+          novosItens || [],
+        );
+        await base44.entities.Cotacao.update(targetCotacaoImportacaoLista.id, { itens: itensMesclados });
+        toast({
+          title: 'Itens importados',
+          description: `${novosItens.length} itens mesclados na cotação.`,
+          className: 'bg-green-100 text-green-800',
+        });
+        await loadData();
+        const updated = await refreshCotacao(targetCotacaoImportacaoLista.id);
+        setView(updated.status === COTACAO_STATUS_RASCUNHO ? 'montagem' : 'disputa');
+        return;
+      }
+
+      const numero = await gerarProximoNumeroCotacao(base44);
+      const novaCotacao = {
+        numero,
+        titulo: `Cotação via OCR - ${new Date().toLocaleDateString('pt-BR')}`,
+        status: COTACAO_STATUS_RASCUNHO,
+        data_abertura: dataHoje(),
+        itens: novosItens,
+        fornecedores: [],
+        respostas: [],
+        registros_disputa: [],
+      };
+
+      const criada = await base44.entities.Cotacao.create(novaCotacao);
+      toast({
+        title: 'Cotação criada',
+        description: `${novosItens.length} itens importados.`,
+        className: 'bg-green-100 text-green-800',
+      });
+      await loadData();
+      handleAbrirCotacao(criada);
+    } catch (error) {
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    } finally {
+      setTargetCotacaoImportacaoLista(null);
+    }
+  };
+
+  const handleVoltarHub = () => {
+    setSelectedCotacao(null);
+    setPedidosGerados([]);
+    setView('hub');
+    loadData();
+  };
+
+  const handleOpenImportadorLista = () => {
+    setTargetCotacaoImportacaoLista(selectedCotacao);
+    setIsImportadorFotoOpen(true);
   };
 
   const handleOpenImportadorListaGlobal = () => {
@@ -176,669 +752,94 @@ export default function CotacoesManager() {
     setIsImportadorFotoOpen(true);
   };
 
-  const handleOpenImportadorListaEmCotacao = () => {
-    if (!selectedCotacao) return;
-    setTargetCotacaoImportacaoLista(selectedCotacao);
-    setIsImportadorFotoOpen(true);
-  };
-
-  const handleAddManualProduct = (produto) => {
-    setManualCart((prev) => {
-      const index = prev.findIndex((item) => item.produto_id === produto.id);
-      if (index >= 0) {
-        const next = [...prev];
-        next[index] = {
-          ...next[index],
-          quantidade: (parseFloat(next[index].quantidade) || 0) + 1
-        };
-        return next;
-      }
-      const pu = pickDefaultPurchaseUnit(produto);
-      const unidade = pu?.unidade || produto.unidade_principal || 'UN';
-      const fator = pu?.fator_conversao ?? 1;
-      return [
-        ...prev,
-        {
-          produto_id: produto.id,
-          produto_nome: produto.nome,
-          quantidade: 1,
-          unidade,
-          fator_conversao: fator,
-        },
-      ];
-    });
-  };
-
-  const handleManualQtyChange = (produtoId, nextValue) => {
-    setManualCart((prev) => prev.map((item) => (
-      item.produto_id === produtoId
-        ? { ...item, quantidade: nextValue }
-        : item
-    )));
-  };
-
-  const handleRemoveManualItem = (produtoId) => {
-    setManualCart((prev) => prev.filter((item) => item.produto_id !== produtoId));
-  };
-
-  const handleSaveManualItems = async () => {
-    if (!selectedCotacao) return;
-    const itensValidos = manualCart
-      .map((item) => ({ ...item, quantidade: parseFloat(item.quantidade) || 0 }))
-      .filter((item) => item.quantidade > 0);
-
-    if (itensValidos.length === 0) {
-      toast({ title: "Sem itens válidos", description: "Adicione pelo menos um item com quantidade.", variant: "destructive" });
-      return;
-    }
-
-    await base44.entities.Cotacao.update(selectedCotacao.id, { itens: itensValidos });
-    toast({ title: "Itens atualizados", className: "bg-green-100 text-green-800" });
-    await loadData();
-    const updated = await base44.entities.Cotacao.get(selectedCotacao.id);
-    setSelectedCotacao(updated);
-    setManualCart(mapCotacaoItemsToManualCart(updated));
-  };
-
-  const handleAbrirCompeticao = async () => {
-    if (!selectedCotacao) return;
-    if ((selectedCotacao.itens?.length || 0) === 0) {
-      toast({ title: "Sem itens", description: "Adicione itens antes de abrir a competição.", variant: "destructive" });
-      return;
-    }
-    if (selectedCotacao.status !== 'Rascunho') return;
-
-    try {
-      await base44.entities.Cotacao.update(selectedCotacao.id, { status: 'Em Análise' });
-      toast({ title: "Competição aberta", description: "Agora você pode coletar respostas e comparar preços.", className: "bg-blue-100 text-blue-800" });
-      await loadData();
-      const updated = await base44.entities.Cotacao.get(selectedCotacao.id);
-      handleOpenAnaliseCotacao(updated);
-    } catch (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
-    }
-  };
-
-  const handleDeleteCotacao = async (cotacao) => {
-    const confirmDelete = window.confirm(`Excluir a cotação "${cotacao.titulo}"? Essa ação não pode ser desfeita.`);
-    if (!confirmDelete) return;
-    try {
-      await base44.entities.Cotacao.delete(cotacao.id);
-      toast({ title: "Cotação excluída", className: "bg-green-100 text-green-800" });
-      if (selectedCotacao?.id === cotacao.id) {
-        setSelectedCotacao(null);
-      }
-      loadData();
-    } catch (error) {
-      toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
-    }
-  };
-
-  const handleImportComplete = async (fornecedorId, respostasImportadas, descontoGlobal) => {
-    // 1. Atualizar lista de fornecedores (caso tenha sido criado um novo)
-    const fornecedoresAtualizados = await base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] });
-    setFornecedores(fornecedoresAtualizados);
-
-    // 2. Mesclar respostas
-    // Primeiro, pegamos as respostas existentes que NÃO são deste fornecedor
-    const outrasRespostas = selectedCotacao.respostas?.filter(r => r.fornecedor_id !== fornecedorId) || [];
-    
-    // Agora pegamos as respostas existentes DESTE fornecedor para manter marcas/obs se não forem sobrescritas (embora a importação traga tudo)
-    // Na verdade, a importação deve prevalecer. Vamos combinar:
-    // Se o item não veio na importação, mantemos o antigo? Não, geralmente PDF é o estado atual.
-    // Mas vamos manter itens que o PDF não mencionou por segurança?
-    // O Importador retorna apenas os itens que foram "match".
-    
-    const respostasAntigasDesteFornecedor = selectedCotacao.respostas?.filter(r => r.fornecedor_id === fornecedorId) || [];
-    
-    // Mesclagem inteligente:
-    const novasRespostasDesteFornecedor = [...respostasImportadas];
-    
-    // Se quiser manter itens que o PDF ignorou, descomente abaixo. Mas melhor confiar na importação.
-    // respostasAntigasDesteFornecedor.forEach(old => {
-    //    if (!novasRespostasDesteFornecedor.find(n => n.produto_id === old.produto_id)) {
-    //        novasRespostasDesteFornecedor.push(old);
-    //    }
-    // });
-
-    const todasRespostas = [...outrasRespostas, ...novasRespostasDesteFornecedor];
-
-    // Atualizar a Cotação
-    await base44.entities.Cotacao.update(selectedCotacao.id, { 
-        respostas: todasRespostas, 
-        status: 'Em Análise',
-        // Se quisermos adicionar o fornecedor à lista de convidados da cotação se ele não estiver lá:
-        fornecedores: [
-            ...(selectedCotacao.fornecedores?.filter(f => f.fornecedor_id !== fornecedorId) || []),
-            {
-                fornecedor_id: fornecedorId,
-                fornecedor_nome: fornecedoresAtualizados.find(f => f.id === fornecedorId)?.nome || 'Novo',
-                email: '',
-                status_envio: 'Respondido'
-            }
-        ]
-    });
-
-    // Atualizar inputs locais e recarregar
-    const inputs = { ...precosInput };
-    novasRespostasDesteFornecedor.forEach(r => {
-        inputs[`${r.fornecedor_id}_${r.produto_id}`] = r.preco_unitario;
-    });
-    setPrecosInput(inputs);
-    
-    loadData();
-    const updated = await base44.entities.Cotacao.get(selectedCotacao.id);
-    setSelectedCotacao(updated);
-
-    if (descontoGlobal > 0) {
-        toast({ title: "Desconto Global Aplicado", description: `O desconto de R$ ${descontoGlobal} foi rateado nos preços unitários.`, duration: 5000 });
-    }
-  };
-
-  const handleSaveRespostas = async () => {
-    if (!selectedCotacao) return;
-
-    const novasRespostas = [];
-    selectedCotacao.fornecedores.forEach(f => {
-      selectedCotacao.itens.forEach(item => {
-        const key = `${f.fornecedor_id}_${item.produto_id}`;
-        const preco = parseFloat(precosInput[key]);
-        if (!isNaN(preco) && preco > 0) {
-          const respExistente = selectedCotacao.respostas?.find(r => r.fornecedor_id === f.fornecedor_id && r.produto_id === item.produto_id);
-          novasRespostas.push({
-            fornecedor_id: f.fornecedor_id,
-            produto_id: item.produto_id,
-            preco_unitario: preco,
-            marca: respExistente?.marca || '',
-            observacao: respExistente?.observacao || '',
-            vencedor: respExistente?.vencedor || false
-          });
-        }
-      });
-    });
-
-    await base44.entities.Cotacao.update(selectedCotacao.id, { respostas: novasRespostas, status: 'Em Análise' });
-    toast({ title: "Preços atualizados", className: "bg-green-100 text-green-800" });
-    loadData();
-  };
-
-  const toggleVencedor = async (cotacao, resposta) => {
-    const novasRespostas = cotacao.respostas.map(r => {
-      if (r.produto_id === resposta.produto_id) {
-        if (r.fornecedor_id === resposta.fornecedor_id) {
-          return { ...r, vencedor: !r.vencedor };
-        } else {
-          return { ...r, vencedor: false };
-        }
-      }
-      return r;
-    });
-    
-    await base44.entities.Cotacao.update(cotacao.id, { respostas: novasRespostas });
-    loadData();
-    const updated = await base44.entities.Cotacao.get(cotacao.id);
-    setSelectedCotacao(updated);
-  };
-
-  const handleImportFotoComplete = async (novosItens) => {
-    try {
-        if (targetCotacaoImportacaoLista?.id) {
-            const itensMesclados = mergeCotacaoItemsByProduct(targetCotacaoImportacaoLista.itens || [], novosItens || []);
-            await base44.entities.Cotacao.update(targetCotacaoImportacaoLista.id, { itens: itensMesclados });
-            toast({
-                title: "Itens importados",
-                description: `${novosItens.length} itens processados e mesclados na cotação.`,
-                className: "bg-green-100 text-green-800"
-            });
-            await loadData();
-            const updated = await base44.entities.Cotacao.get(targetCotacaoImportacaoLista.id);
-            handleOpenAnaliseCotacao(updated);
-            return;
-        }
-
-        const allCots = await base44.entities.Cotacao.list();
-        let nextNumber = (allCots.length > 0 ? Math.max(...allCots.map(c => parseInt(c.numero?.split('-')[1] || 0))) : 0) + 1;
-
-        const novaCotacao = {
-            numero: `COT-${String(nextNumber++).padStart(5, '0')}`,
-            titulo: `Cotação via Foto - ${new Date().toLocaleDateString()}`,
-            status: 'Rascunho',
-            data_abertura: dataHoje(),
-            itens: novosItens,
-            fornecedores: [], // Inicialmente sem fornecedores
-            respostas: []
-        };
-
-        await base44.entities.Cotacao.create(novaCotacao);
-        
-        toast({
-            title: "Cotação Criada!",
-            description: `${novosItens.length} itens importados da foto com sucesso.`,
-            className: "bg-green-100 text-green-800"
-        });
-        
-        loadData();
-    } catch (error) {
-        console.error(error);
-        toast({ title: "Erro ao criar cotação", description: error.message, variant: "destructive" });
-    } finally {
-        setTargetCotacaoImportacaoLista(null);
-    }
-  };
-
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center pb-4 border-b border-border/40">
-        <div>
-          <h3 className="text-lg font-light text-foreground flex items-center gap-2">
-            <FileText className="w-5 h-5 text-muted-foreground" />
-            Cotações
-          </h3>
-          <p className="text-sm text-muted-foreground font-light">
-            Análise de preços e concorrência
-          </p>
+    <>
+      {view === 'hub' ? (
+        <div className="flex h-full min-h-0 flex-1 flex-col">
+        <CotacaoExpressHub
+          cotacoes={cotacoes}
+          loading={isLoading}
+          hubView={hubView}
+          onHubViewChange={setHubView}
+          onNovaCotacao={handleNovaCotacao}
+          onImportarFoto={handleOpenImportadorListaGlobal}
+          onAbrirCotacao={handleAbrirCotacao}
+          onExcluirCotacao={handleDeleteCotacao}
+          criando={criando}
+        />
         </div>
-        <div className="flex flex-col sm:flex-row gap-2">
-            <Button 
-                variant="outline"
-                className="border-dashed border-purple-300 text-purple-700 bg-purple-50 hover:bg-purple-100"
-                onClick={handleOpenImportadorListaGlobal}
-            >
-                <Camera className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">Importar Foto</span>
-            </Button>
-            <Dialog open={isNovaCotacaoOpen} onOpenChange={setIsNovaCotacaoOpen}>
-                <DialogTrigger asChild>
-                    <Button className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg shadow-sm font-normal">
-                        <Plus className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">Nova Cotação</span>
-                    </Button>
-                </DialogTrigger>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Nova Cotação</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                        <div>
-                            <Label>Título da Cotação</Label>
-                            <Input 
-                                value={novaCotacaoTitulo} 
-                                onChange={(e) => setNovaCotacaoTitulo(e.target.value)}
-                                placeholder="Ex: Compra de Cimento Mensal"
-                            />
-                        </div>
-                        <Button onClick={async () => {
-                            if (!novaCotacaoTitulo) return;
-                            try {
-                                const allCots = await base44.entities.Cotacao.list();
-                                let nextNumber = (allCots.length > 0 ? Math.max(...allCots.map(c => parseInt(c.numero?.split('-')[1] || 0))) : 0) + 1;
-
-                                const nova = await base44.entities.Cotacao.create({
-                                    numero: `COT-${String(nextNumber).padStart(5, '0')}`,
-                                    titulo: novaCotacaoTitulo,
-                                    status: 'Rascunho',
-                                    data_abertura: dataHoje(),
-                                    itens: [],
-                                    fornecedores: [],
-                                    respostas: []
-                                });
-                                
-                                toast({ title: "Cotação criada", className: "bg-green-100 text-green-800" });
-                                setIsNovaCotacaoOpen(false);
-                                setNovaCotacaoTitulo('');
-                                loadData();
-                                
-                                // Abrir para edição imediatamente
-                                setTimeout(() => {
-                                    handleOpenAnaliseCotacao(nova);
-                                }, 500);
-                            } catch (e) {
-                                toast({ title: "Erro", description: e.message, variant: "destructive" });
-                            }
-                        }} className="w-full bg-teal-600 hover:bg-teal-700 text-white">
-                            Criar Cotação
-                        </Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
-        </div>
-      </div>
-
-      <div className="grid gap-3">
-        {cotacoes.length === 0 ? (
-          <div className="text-center py-12 bg-card rounded-xl border border-border/40">
-            <FileText className="w-12 h-12 mx-auto text-muted-foreground dark:text-muted-foreground mb-3" />
-            <p className="text-muted-foreground">Nenhuma cotação encontrada</p>
-          </div>
-        ) : (
-          <>
-            <P38MobileLineList className="desktop-layout:hidden">
-              {cotacoes.map((cotacao, index) => (
-                <P38MobileLine
-                  key={cotacao.id}
-                  striped={index % 2 === 1}
-                  accent={p38AccentKeyFromTone(cotacaoAccent(cotacao.status))}
-                  onClick={() => handleOpenAnaliseCotacao(cotacao)}
-                  title={cotacao.titulo}
-                  subtitle={cotacao.numero}
-                  meta={
-                    <>
-                      <P38StatusLabel tone={p38StatusTone(cotacao.status)}>{cotacao.status}</P38StatusLabel>
-                      <span>{cotacao.fornecedores?.length || 0} forn.</span>
-                    </>
-                  }
-                  value={`${cotacao.itens?.length || 0} prod.`}
-                  valueSub={
-                    cotacao.data_abertura
-                      ? format(new Date(cotacao.data_abertura), 'dd/MM/yyyy')
-                      : '—'
-                  }
-                />
-              ))}
-            </P38MobileLineList>
-            <div className="hidden desktop-layout:grid gap-3">
-          {cotacoes.map(cotacao => (
-            <div key={cotacao.id} className="bg-card rounded-xl border border-border/40 p-4 transition-all hover:border-teal-200">
-            <div className="flex flex-col gap-3">
-              <div className="flex justify-between items-start">
-                  <div className="flex flex-col">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-medium text-foreground dark:text-foreground">{cotacao.titulo}</h4>
-                      </div>
-                      <span className="text-xs font-mono text-muted-foreground mt-0.5">{cotacao.numero}</span>
-                  </div>
-                  <Badge className={`border-0 font-normal px-2 py-0.5 text-[10px] ${
-                      cotacao.status === 'Finalizada' ? 'bg-emerald-50 text-emerald-700' : 
-                      cotacao.status === 'Em Análise' ? 'bg-blue-50 text-blue-700' : 
-                      'bg-muted text-muted-foreground'
-                  }`}>{cotacao.status}</Badge>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2 py-3 border-t border-border/30 dark:border-border/40">
-                  <div className="text-center sm:text-left">
-                      <p className="text-[10px] text-muted-foreground uppercase mb-0.5">Produtos</p>
-                      <p className="text-sm text-foreground/90">{cotacao.itens?.length || 0}</p>
-                  </div>
-                  <div className="text-center sm:text-left">
-                      <p className="text-[10px] text-muted-foreground uppercase mb-0.5">Fornecedores</p>
-                      <p className="text-sm text-foreground/90">{cotacao.fornecedores?.length || 0}</p>
-                  </div>
-                  <div className="text-center sm:text-left">
-                      <p className="text-[10px] text-muted-foreground uppercase mb-0.5">Data</p>
-                      <p className="text-sm text-foreground/90">
-                           {cotacao.data_abertura ? format(new Date(cotacao.data_abertura), 'dd/MM/yyyy') : '-'}
-                      </p>
-                  </div>
-              </div>
-
-              <div className="pt-2 border-t border-border/30 dark:border-border/40">
-                  <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" className="w-full border-border/40 text-muted-foreground hover:text-teal-600 hover:bg-teal-50 h-9 text-sm font-normal" onClick={() => handleOpenAnaliseCotacao(cotacao)}>
-                                <Trophy className="w-4 h-4 mr-2" />
-                                {cotacao.status === 'Rascunho' ? 'Montar Lista' : 'Analisar & Preços'}
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="w-[96vw] max-w-[96vw] sm:!max-w-[95vw] sm:!w-[95vw] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
-                            <DialogHeader>
-                                <DialogTitle className="text-lg sm:text-xl font-light">
-                                  {selectedCotacao?.status === 'Rascunho' ? `Montagem da Cotação: ${cotacao.titulo}` : `Análise de Cotação: ${cotacao.titulo}`}
-                                </DialogTitle>
-                            </DialogHeader>
-                            
-                            {selectedCotacao?.status === 'Rascunho' && (
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4 bg-muted/40 p-3 rounded-lg border border-border/40">
-                                <div className="space-y-2">
-                                    <Label className="text-xs">Selecionar Produto</Label>
-                                    <div className="relative">
-                                      <Search className="w-4 h-4 text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2" />
-                                      <Input
-                                        value={manualSearch}
-                                        onChange={(e) => setManualSearch(e.target.value)}
-                                        placeholder="Buscar por nome, código, barras ou marca..."
-                                        className="h-9 text-sm bg-card pl-8"
-                                      />
-                                    </div>
-                                    <div className="max-h-72 overflow-y-auto rounded-md border bg-card">
-                                      {filteredManualProducts.length === 0 ? (
-                                        <p className="text-xs text-muted-foreground p-3">Digite para buscar produtos.</p>
-                                      ) : (
-                                        filteredManualProducts.map((produto) => (
-                                          <button
-                                            key={produto.id}
-                                            type="button"
-                                            className="w-full text-left px-3 py-2 border-b last:border-b-0 hover:bg-muted/40"
-                                            onClick={() => handleAddManualProduct(produto)}
-                                          >
-                                            <p className="text-sm text-foreground">{produto.nome}</p>
-                                            <p className="text-[11px] text-muted-foreground">
-                                              {(produto.codigo_interno || produto.codigo_barras || 'Sem código')} • {produto.unidade_principal || 'UN'}
-                                            </p>
-                                          </button>
-                                        ))
-                                      )}
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                  <div className="flex items-center justify-between">
-                                    <Label className="text-xs">Carrinho da Cotação</Label>
-                                    <span className="text-xs text-muted-foreground">{manualCart.length} itens</span>
-                                  </div>
-                                  <div className="max-h-72 overflow-y-auto rounded-md border bg-card">
-                                    {manualCart.length === 0 ? (
-                                      <p className="text-xs text-muted-foreground p-3">Nenhum item adicionado.</p>
-                                    ) : (
-                                      manualCart.map((item) => (
-                                        <div key={item.produto_id} className="px-3 py-2 border-b last:border-b-0">
-                                          <div className="flex items-start justify-between gap-2">
-                                            <p className="text-sm text-foreground">{item.produto_nome}</p>
-                                            <button type="button" onClick={() => handleRemoveManualItem(item.produto_id)} className="text-red-500 hover:text-red-700">
-                                              <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
-                                          </div>
-                                          <div className="flex items-center gap-2 mt-2">
-                                            <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleManualQtyChange(item.produto_id, Math.max(0, (parseFloat(item.quantidade) || 0) - 1))}>
-                                              <Minus className="w-3 h-3" />
-                                            </Button>
-                                            <Input
-                                              value={item.quantidade}
-                                              type="number"
-                                              className="h-7 text-xs w-20"
-                                              onChange={(e) => handleManualQtyChange(item.produto_id, e.target.value)}
-                                            />
-                                            <span className="text-xs text-muted-foreground">{item.unidade || 'UN'}</span>
-                                            <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleManualQtyChange(item.produto_id, (parseFloat(item.quantidade) || 0) + 1)}>
-                                              <Plus className="w-3 h-3" />
-                                            </Button>
-                                          </div>
-                                        </div>
-                                      ))
-                                    )}
-                                  </div>
-                                  <Button size="sm" className="h-8 bg-blue-600 text-white w-full" onClick={handleSaveManualItems}>
-                                    <Plus className="w-4 h-4 mr-1" /> Salvar Itens no Carrinho
-                                  </Button>
-                                </div>
-                            </div>
-                            )}
-
-                            {selectedCotacao?.status !== 'Rascunho' ? (
-                            <div className="border rounded-lg overflow-x-auto mt-4 min-w-0">
-                              <Table>
-                                  <TableHeader className="bg-muted/40">
-                                      <TableRow>
-                                          <TableHead className="w-[300px]">Produto</TableHead>
-                                          {cotacao.fornecedores?.map(f => (
-                                              <TableHead key={f.fornecedor_id} className="text-center min-w-[120px]">
-                                                  {f.fornecedor_nome}
-                                              </TableHead>
-                                          ))}
-                                      </TableRow>
-                                  </TableHeader>
-                                  <TableBody>
-                                      {cotacao.itens?.map(item => (
-                                          <TableRow key={item.produto_id}>
-                                              <TableCell>
-                                                  <div className="font-medium">{item.produto_nome}</div>
-                                                  <div className="text-xs text-muted-foreground">{item.quantidade} {item.unidade}</div>
-                                              </TableCell>
-                                              {cotacao.fornecedores?.map(f => {
-                                                  const resposta = cotacao.respostas?.find(r => r.fornecedor_id === f.fornecedor_id && r.produto_id === item.produto_id);
-                                                  const isVencedor = resposta?.vencedor;
-                                                  const menorPreco = cotacao.respostas
-                                                      ?.filter(r => r.produto_id === item.produto_id && r.preco_unitario > 0)
-                                                      .sort((a,b) => a.preco_unitario - b.preco_unitario)[0]?.preco_unitario;
-                                                  const isMenor = resposta?.preco_unitario > 0 && resposta?.preco_unitario === menorPreco;
-                                                  const qtdDiferente = resposta?.quantidade_ofertada && resposta?.quantidade_ofertada !== item.quantidade;
-
-                                                  return (
-                                                      <TableCell key={f.fornecedor_id} className="text-center p-2">
-                                                          <div className={`p-2 rounded border transition-colors ${isVencedor ? 'bg-green-50 border-green-200' : 'border-transparent hover:bg-muted/40'}`}>
-                                                              <Input 
-                                                                  type="number" 
-                                                                  className={`h-8 text-center bg-transparent border-border/40 ${isMenor && !isVencedor ? 'text-green-600 font-bold' : ''}`}
-                                                                  placeholder="R$ 0,00"
-                                                                  value={precosInput[`${f.fornecedor_id}_${item.produto_id}`] || ''}
-                                                                  onChange={(e) => handleUpdatePreco(f.fornecedor_id, item.produto_id, e.target.value)}
-                                                              />
-                                                              {qtdDiferente && (
-                                                                <div className="text-[10px] text-amber-600 mt-1 font-medium flex items-center justify-center gap-1" title="Quantidade ofertada diferente da solicitada">
-                                                                    <AlertCircle className="w-3 h-3" />
-                                                                    Qtd: {resposta.quantidade_ofertada}
-                                                                </div>
-                                                              )}
-                                                              {precosInput[`${f.fornecedor_id}_${item.produto_id}`] > 0 && (
-                                                                  <Button 
-                                                                      variant="ghost" 
-                                                                      size="sm" 
-                                                                      className={`mt-1 h-6 w-full text-[10px] ${isVencedor ? 'bg-green-200 text-green-800' : 'text-muted-foreground hover:text-green-600'}`}
-                                                                      onClick={() => toggleVencedor(cotacao, {fornecedor_id: f.fornecedor_id, produto_id: item.produto_id})}
-                                                                  >
-                                                                      {isVencedor ? 'Vencedor' : 'Marcar Vencedor'}
-                                                                  </Button>
-                                                              )}
-                                                          </div>
-                                                      </TableCell>
-                                                  );
-                                              })}
-                                          </TableRow>
-                                      ))}
-                                  </TableBody>
-                              </Table>
-                            </div>
-                            ) : (
-                              <div className="rounded-lg border border-blue-100 bg-blue-50/60 p-3 text-sm text-blue-800">
-                                A cotação está em montagem. Salve os itens e abra a competição para coletar respostas de fornecedores.
-                              </div>
-                            )}
-
-                            <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center mt-6 pt-4 border-t border-border/40">
-                                {selectedCotacao?.status === 'Rascunho' ? (
-                                  <>
-                                    <Button
-                                      variant="ghost"
-                                      className="text-purple-700 hover:text-purple-800 hover:bg-purple-50"
-                                      onClick={handleOpenImportadorListaEmCotacao}
-                                    >
-                                      <Camera className="w-4 h-4 mr-2" />
-                                      Importar Lista (Foto/PDF)
-                                    </Button>
-                                    <Button className="bg-teal-600 hover:bg-teal-700 text-white" onClick={handleAbrirCompeticao}>
-                                      Abrir Competição
-                                    </Button>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Button 
-                                        variant="ghost" 
-                                        className="text-teal-600 hover:text-teal-700 hover:bg-teal-50"
-                                        onClick={() => setIsImportadorOpen(true)}
-                                    >
-                                        <UploadCloud className="w-4 h-4 mr-2" />
-                                        Importar Resposta (PDF)
-                                    </Button>
-                                    <div className="flex gap-2">
-                                        <Button variant="outline" onClick={() => handleSaveRespostas()}>Salvar Preços</Button>
-                                    </div>
-                                  </>
-                                )}
-                            </div>
-                        </DialogContent>
-                    </Dialog>
-
-
-
-                    <div className="flex gap-2 ml-auto">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="rounded-lg font-normal text-red-600 border-red-200 hover:bg-red-50"
-                        onClick={() => handleDeleteCotacao(cotacao)}
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Excluir
-                      </Button>
-                      {cotacao.status !== 'Finalizada' && (
-                          <Button 
-                              size="sm" 
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-normal"
-                              onClick={() => handleCreatePedido(cotacao)}
-                          >
-                              <CheckCircle className="w-4 h-4 mr-2" />
-                              Gerar Pedidos
-                          </Button>
-                      )}
-                    </div>
-                </div>
-              </div>
-            </div>
-          ))}
-            </div>
-          </>
-        )}
-      </div>
-
-      <Dialog
-        open={isAnaliseDialogOpen && !!selectedCotacao}
-        onOpenChange={(open) => {
-          setIsAnaliseDialogOpen(open);
-          if (!open) setSelectedCotacao(null);
-        }}
-      >
-        {selectedCotacao && (
-          <DialogContent className="w-[96vw] max-w-[96vw] sm:!max-w-[95vw] sm:!w-[95vw] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
-            <DialogHeader>
-              <DialogTitle className="text-lg sm:text-xl font-light">
-                {selectedCotacao.status === 'Rascunho'
-                  ? `Montagem da Cotação: ${selectedCotacao.titulo}`
-                  : `Análise de Cotação: ${selectedCotacao.titulo}`}
-              </DialogTitle>
-            </DialogHeader>
-            <p className="text-sm text-muted-foreground mb-4">
-              {selectedCotacao.itens?.length || 0} produtos · {selectedCotacao.fornecedores?.length || 0} fornecedores
-            </p>
-            <Button
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground mb-2"
-              onClick={() => setIsAnaliseDialogOpen(false)}
-            >
-              <Trophy className="w-4 h-4 mr-2 inline" />
-              {selectedCotacao.status === 'Rascunho' ? 'Montar lista' : 'Analisar preços'}
-            </Button>
-            <p className="text-xs text-muted-foreground text-center">
-              Use um ecrã maior para edição completa de fornecedores e preços, ou rode em modo paisagem.
-            </p>
-          </DialogContent>
-        )}
-      </Dialog>
-
-      {selectedCotacao && (
-        <ImportadorCotacaoPDF 
-            isOpen={isImportadorOpen}
-            onClose={() => setIsImportadorOpen(false)}
-            cotacao={selectedCotacao}
-            onImportComplete={handleImportComplete}
+      ) : (
+    <div className="flex h-full min-h-[min(70dvh,720px)] flex-col overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm desktop-layout:min-h-[560px]">
+      {view === 'montagem' && selectedCotacao && cotacaoExibicao && (
+        <CotacaoExpressMontagem
+          cotacao={cotacaoExibicao}
+          selectorItems={selectorItems}
+          produtos={produtosCatalogo}
+          salvando={salvando}
+          abrindoDisputa={abrindoDisputa}
+          onVoltar={handleVoltarHub}
+          onAddItem={handleAddItem}
+          onAddItemsBatch={handleAddItemsBatch}
+          onUpdateItem={handleUpdateItem}
+          onRemoveItem={handleRemoveItem}
+          onProductCreated={(p) => setProdutosCatalogo((prev) => [...prev, p])}
+          onSalvarItens={handleSalvarItens}
+          onImportarLista={handleOpenImportadorLista}
+          onAbrirDisputa={handleAbrirDisputa}
+          onExportarSolicitacao={() => setExportDialogOpen(true)}
         />
       )}
 
-      <ImportadorListaFoto 
+      {view === 'disputa' && selectedCotacao && cotacaoExibicao && (
+        <CotacaoExpressDisputa
+          cotacao={cotacaoExibicao}
+          produtosMap={produtosMap}
+          fornecedoresDisponiveis={fornecedores}
+          precosInput={precosInput}
+          registrosDisputa={registrosDisputa}
+          salvando={salvando}
+          onVoltar={() => {
+            if (selectedCotacao.status === COTACAO_STATUS_RASCUNHO) {
+              setView('montagem');
+            } else {
+              handleVoltarHub();
+            }
+          }}
+          onUpdatePreco={handleUpdatePreco}
+          onToggleVencedor={handleToggleVencedor}
+          onSalvarPrecos={handleSalvarPrecos}
+          onImportarResposta={() => setIsImportadorOpen(true)}
+          onAdicionarFornecedor={handleAdicionarFornecedor}
+          onAdicionarRegistro={handleAdicionarRegistro}
+          onIrAprovar={() => setView('aprovar')}
+          onExportarSolicitacao={() => setExportDialogOpen(true)}
+        />
+      )}
+
+      {view === 'aprovar' && selectedCotacao && cotacaoExibicao && (
+        <CotacaoExpressAprovar
+          cotacao={cotacaoExibicao}
+          resumo={resumoAprovacao}
+          gerando={gerandoPedidos}
+          pedidosGerados={pedidosGerados}
+          onVoltar={() => (pedidosGerados.length > 0 ? handleVoltarHub() : setView('disputa'))}
+          onConfirmarGeracao={handleConfirmarGeracao}
+          onVerPedido={() => navigate(createPageUrl('PedidosCompra'))}
+        />
+      )}
+    </div>
+      )}
+
+      {selectedCotacao && (
+        <ImportadorCotacaoPDF
+          isOpen={isImportadorOpen}
+          onClose={() => setIsImportadorOpen(false)}
+          cotacao={selectedCotacao}
+          onImportComplete={handleImportComplete}
+        />
+      )}
+
+      <ImportadorListaFoto
         isOpen={isImportadorFotoOpen}
         mode={targetCotacaoImportacaoLista ? 'merge' : 'create'}
         onClose={() => {
@@ -847,6 +848,16 @@ export default function CotacoesManager() {
         }}
         onImportComplete={handleImportFotoComplete}
       />
-    </div>
+
+      <CotacaoFornecedorExportDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        cotacao={cotacaoExibicao || selectedCotacao}
+        fornecedoresOpcoes={selectedCotacao?.fornecedores || []}
+        exporting={exportandoSolicitacao}
+        onExportHtml={handleExportSolicitacaoHtml}
+        onExportPdf={handleExportSolicitacaoPdf}
+      />
+    </>
   );
 }

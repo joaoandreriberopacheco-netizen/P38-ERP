@@ -45,9 +45,9 @@ const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2,
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 
 const CATALOGO_MOBILE_VALUES_GRID = 'grid grid-cols-3 gap-x-1.5 min-w-0';
-const CATALOGO_MOBILE_BODY_TEXT = 'font-din-1451 text-base tablet-landscape:text-lg font-light leading-none';
+const CATALOGO_MOBILE_BODY_TEXT = 'font-din-1451 text-base tablet-landscape:text-lg font-normal leading-none';
 /** Mesmo tamanho dos valores da tabela; cor mais suave para distinguir rótulos. */
-const CATALOGO_MOBILE_HEADER_LABEL = `${CATALOGO_MOBILE_BODY_TEXT} uppercase tracking-tight text-right text-muted-foreground min-w-0`;
+const CATALOGO_MOBILE_HEADER_LABEL = `${CATALOGO_MOBILE_BODY_TEXT} uppercase tracking-tight text-right text-foreground/70 dark:text-muted-foreground min-w-0`;
 /** Largura fixa da coluna qtd/un — eixo da linha divisória sagrada (nunca se move). */
 const CATALOGO_MOBILE_QTD_W = '3.25rem';
 const CATALOG_ROW_PL = 'pl-2.5';
@@ -63,7 +63,7 @@ const CATALOG_INDENT_STEP = 12;
 const CATALOGO_MOBILE_DESC_MIN_H = 'min-h-[3.75rem]';
 const CATALOGO_MOBILE_DESC_GAP = 'mb-2.5';
 const CATALOGO_MOBILE_NOME_TYPO =
-  'text-[12px] font-light leading-relaxed uppercase break-words [overflow-wrap:anywhere]';
+  'text-[13px] font-normal leading-relaxed uppercase break-words [overflow-wrap:anywhere]';
 const CATALOGO_MOBILE_ROW_H_GROUP = 118;
 const CATALOGO_MOBILE_ROW_H_SKU = 196;
 
@@ -81,8 +81,17 @@ const CATALOG_MOBILE_SKU_SURFACE = {
 
 const CatalogoMobileScrollContext = createContext(null);
 
-export function useCatalogoMobileScrollRef() {
+/** Elemento que faz scroll (contentor flex do catálogo mobile). */
+export function useCatalogoMobileScrollElement() {
   return useContext(CatalogoMobileScrollContext);
+}
+
+/** @deprecated Preferir useCatalogoMobileScrollElement — mantido para compat. */
+export function useCatalogoMobileScrollRef() {
+  const scrollElement = useCatalogoMobileScrollElement();
+  const scrollRef = useRef(null);
+  scrollRef.current = scrollElement;
+  return scrollRef;
 }
 
 /** Mesma diagramação do relatório de margem mobile (2×3 valores). */
@@ -142,7 +151,7 @@ function CatalogoMobileSacredAxis({ className = '' }) {
     <div
       className={cn(
         'pointer-events-none absolute inset-y-0 z-[10] w-0',
-        'border-l border-border/50 dark:border-white/20',
+        'border-l border-border/40 dark:border-white/20',
         className,
       )}
       style={{ left: CATALOG_AXIS_LEFT }}
@@ -206,13 +215,17 @@ function CatalogoMobileQtdUnCol({
 
   return (
     <CatalogoMobileQtdColShell>
-      <span className={`absolute left-0 top-3.5 w-1.5 h-1.5 rounded-full ${dotClass}`} aria-hidden />
-      <p className={qtyClass}>
-        {virtualActive ? '~' : ''}{fmtN(quantidade)}
-      </p>
-      <p className={`${CATALOGO_MOBILE_BODY_TEXT} uppercase text-muted-foreground mt-1.5 leading-none truncate ${emphasis ? 'font-medium' : ''}`}>
-        {unidade}
-      </p>
+      <div className="flex items-start justify-end gap-1 min-w-0">
+        <span className={`mt-1 w-1.5 h-1.5 shrink-0 rounded-full ${dotClass}`} aria-hidden />
+        <div className="min-w-0 text-right">
+          <p className={qtyClass}>
+            {virtualActive ? '~' : ''}{fmtN(quantidade)}
+          </p>
+          <p className={`${CATALOGO_MOBILE_BODY_TEXT} uppercase text-muted-foreground mt-1.5 leading-none truncate ${emphasis ? 'font-medium' : ''}`}>
+            {unidade}
+          </p>
+        </div>
+      </div>
     </CatalogoMobileQtdColShell>
   );
 }
@@ -237,12 +250,12 @@ function catalogoSkuSurfaceClass(row, underOpenGroup = false) {
 }
 function catalogoMetricValueClass(key) {
   if (key === 'markup') {
-    return `${MARGIN_ACCENT_VALUE} font-normal`;
+    return `${MARGIN_ACCENT_VALUE} font-medium`;
   }
   if (key === 'valorCompra' || key === 'custoCalculado') {
-    return 'text-muted-foreground font-light';
+    return 'text-foreground/75 font-normal dark:text-muted-foreground dark:font-light';
   }
-  return 'text-foreground/90 font-light';
+  return 'text-foreground font-normal dark:text-foreground/90 dark:font-light';
 }
 
 function buildUnitOptions(produto) {
@@ -548,11 +561,11 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing, catalo
             style={{ paddingLeft: catalogContentPadAfterLine(row.level ?? 1) }}
           >
             <div className="mb-1 flex items-center gap-1.5">
-              <span className="text-[9px] font-semibold uppercase tracking-wide text-primary/80 dark:text-[#a4ce33]/90">
+              <span className="text-[9px] font-semibold uppercase tracking-wide text-[#a8942e] dark:text-[#a4ce33]/90">
                 SKU
               </span>
               {p.codigo_interno && (
-                <span className="text-[10px] font-mono truncate text-muted-foreground">
+                <span className="text-[10px] font-mono truncate text-foreground/75 dark:text-muted-foreground">
                   #{p.codigo_interno}
                 </span>
               )}
@@ -790,17 +803,17 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle,
   );
 });
 
-function useCatalogColumnHeaderPin(scrollRef) {
+function useCatalogColumnHeaderPin(scrollElement) {
   const sentinelRef = useRef(null);
   const [pinned, setPinned] = useState(false);
   const [pinFrame, setPinFrame] = useState({ top: 0, left: 0, width: 0 });
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
-    if (!sentinel) return;
+    if (!sentinel || !scrollElement) return;
 
     const sync = () => {
-      const scrollEl = scrollRef.current;
+      const scrollEl = scrollElement;
       const sentinelRect = sentinel.getBoundingClientRect();
       const usesInnerScroll = Boolean(
         scrollEl && scrollEl.scrollHeight > scrollEl.clientHeight + 1,
@@ -820,7 +833,7 @@ function useCatalogColumnHeaderPin(scrollRef) {
       });
     };
 
-    const scrollEl = scrollRef.current;
+    const scrollEl = scrollElement;
     scrollEl?.addEventListener('scroll', sync, { passive: true });
     window.addEventListener('scroll', sync, { passive: true });
     window.addEventListener('resize', sync);
@@ -839,24 +852,31 @@ function useCatalogColumnHeaderPin(scrollRef) {
       window.removeEventListener('orientationchange', sync);
       resizeObserver.disconnect();
     };
-  }, [scrollRef]);
+  }, [scrollElement]);
 
   return { sentinelRef, pinned, pinFrame };
 }
 
-/** Scroll mobile: amarelo (catalogChrome) some; azul (colunas) fixa ao atingir o topo. */
+/** Catálogo mobile — amarelo some ao rolar; colunas fixam no topo (scroll flex, não caixa com maxHeight). */
 export function CatalogoMobileScrollShell({ catalogChrome, children }) {
   const scrollRef = useRef(null);
-  const { sentinelRef, pinned, pinFrame } = useCatalogColumnHeaderPin(scrollRef);
+  const [scrollElement, setScrollElement] = useState(null);
+  const { sentinelRef, pinned, pinFrame } = useCatalogColumnHeaderPin(scrollElement);
   const pinStyle = pinned
     ? { top: pinFrame.top, left: pinFrame.left, width: pinFrame.width }
     : null;
 
+  useLayoutEffect(() => {
+    setScrollElement(scrollRef.current);
+    const frame = window.requestAnimationFrame(() => setScrollElement(scrollRef.current));
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
   return (
-    <CatalogoMobileScrollContext.Provider value={scrollRef}>
+    <CatalogoMobileScrollContext.Provider value={scrollElement}>
       <div
         ref={scrollRef}
-        className="flex flex-col flex-1 min-h-0 h-full w-full overflow-y-auto overscroll-y-contain touch-pan-y pb-[var(--p38-scroll-pad-below-nav)]"
+        className="flex flex-1 min-h-0 w-full min-w-0 flex-col p38-stage-panel-scroll overflow-x-hidden touch-pan-y pb-[var(--p38-scroll-pad-below-nav)]"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {catalogChrome}
@@ -878,13 +898,14 @@ export function CatalogoMobileScrollShell({ catalogChrome, children }) {
 }
 
 // ── Componente principal ───────────────────────────────────────────────────────
-export default function MobileHierarquica({ produtos, onEdit, groupByCategory = false, masterLevel = 2, sortOrder = 'az', onExpandedKeysChange, catalogFilters = null, salesVelocityMap = {}, catalogStockContext = null }) {
-  const scrollRef = useCatalogoMobileScrollRef();
+export default function MobileHierarquica({ produtos, onEdit, groupByCategory = false, masterLevel = 2, sortOrder = 'az', onExpandedKeysChange, catalogFilters = null, salesVelocityMap = {}, catalogStockContext = null, flatList = false }) {
+  const scrollElement = useCatalogoMobileScrollElement();
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [pricingProduto, setPricingProduto] = useState(null);
   const pendingScrollRestoreRef = useRef(null);
 
-  const rawTree = useCatalogTreeGrid(produtos, { groupByCategory });
+  const effectiveGroupByCategory = flatList ? false : groupByCategory;
+  const rawTree = useCatalogTreeGrid(produtos, { groupByCategory: effectiveGroupByCategory });
   const tree = useMemo(
     () =>
       pruneTreeForGroupAnalysis(rawTree, {
@@ -895,8 +916,8 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
     [rawTree, catalogFilters, salesVelocityMap, catalogStockContext],
   );
   const produtosStructureSig = useMemo(
-    () => catalogProdutosStructureSig(produtos, { groupByCategory }),
-    [produtos, groupByCategory]
+    () => catalogProdutosStructureSig(produtos, { groupByCategory: effectiveGroupByCategory }),
+    [produtos, effectiveGroupByCategory]
   );
   const groupAnalysisSig = useMemo(
     () => catalogGroupAnalysisSig(catalogFilters),
@@ -909,12 +930,13 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
 
   // Reinicia expansão só quando filtros/hierarquia mudam — não a cada rebuild por ABCD/IEP ou preços.
   useEffect(() => {
+    const level = flatList ? TREE_GRID_EXPAND_ALL_LEVEL : masterLevel;
     setExpandedKeys(
-      resolveExpandedKeysForMasterLevel(tree, masterLevel, groupByCategory),
+      resolveExpandedKeysForMasterLevel(tree, level, effectiveGroupByCategory),
     );
-    const scrollEl = scrollRef?.current;
+    const scrollEl = scrollElement;
     if (scrollEl) scrollEl.scrollTop = 0;
-  }, [produtosStructureSig, groupByCategory, masterLevel, groupAnalysisSig, scrollRef, tree]);
+  }, [produtosStructureSig, effectiveGroupByCategory, masterLevel, groupAnalysisSig, scrollElement, tree, flatList]);
 
   useEffect(() => {
     onExpandedKeysChange?.(expandedKeys);
@@ -924,8 +946,12 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
     const all = mergeAdjacentDuplicateGroupHeaders(
       flattenTree(tree, expandedKeys, '', 0, sortOrder, flattenOptions),
     );
-    return all.filter(r => !(r.type === 'group' && r.count === 0));
-  }, [tree, expandedKeys, sortOrder, flattenOptions]);
+    const filtered = all.filter(r => !(r.type === 'group' && r.count === 0));
+    if (!flatList) return filtered;
+    return filtered
+      .filter((r) => r.type === 'sku')
+      .map((r) => ({ ...r, level: 1 }));
+  }, [tree, expandedKeys, sortOrder, flattenOptions, flatList]);
 
   const shouldVirtualizeRows = rows.length >= CATALOGO_VIRTUALIZE_MIN_ROWS;
 
@@ -934,11 +960,15 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
     [rows]
   );
 
+  const scrollRef = useRef(scrollElement);
+  scrollRef.current = scrollElement;
+
   const virtualRows = useVirtualRows({
     itemCount: rows.length,
     estimateSize: estimateRowSize,
     overscan: 6,
     scrollElementRef: scrollRef,
+    scrollElement,
   });
 
   const visibleRows = useMemo(
@@ -950,18 +980,18 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
   const paddingBottom = shouldVirtualizeRows ? virtualRows.paddingBottom : 0;
 
   useLayoutEffect(() => {
-    const scrollEl = scrollRef?.current;
+    const scrollEl = scrollElement;
     if (scrollEl) pendingScrollRestoreRef.current = scrollEl.scrollTop;
-  }, [expandedKeys, rows.length, scrollRef]);
+  }, [expandedKeys, rows.length, scrollElement]);
 
   useLayoutEffect(() => {
-    const scrollEl = scrollRef?.current;
+    const scrollEl = scrollElement;
     const top = pendingScrollRestoreRef.current;
     if (scrollEl != null && top != null) {
       scrollEl.scrollTop = top;
       pendingScrollRestoreRef.current = null;
     }
-  }, [expandedKeys, rows.length, scrollRef]);
+  }, [expandedKeys, rows.length, scrollElement]);
 
   const handleToggle = useCallback((key) => {
     setExpandedKeys(prev => {
@@ -972,14 +1002,14 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
   }, []);
 
   const handleExpandAll = useCallback(() => {
-    pendingScrollRestoreRef.current = scrollRef?.current?.scrollTop ?? 0;
+    pendingScrollRestoreRef.current = scrollElement?.scrollTop ?? 0;
     setExpandedKeys(resolveExpandedKeysForMasterLevel(tree, TREE_GRID_EXPAND_ALL_LEVEL, groupByCategory));
-  }, [tree, groupByCategory, scrollRef]);
+  }, [tree, groupByCategory, scrollElement]);
 
   const handleCollapseAll = useCallback(() => {
-    pendingScrollRestoreRef.current = scrollRef?.current?.scrollTop ?? 0;
+    pendingScrollRestoreRef.current = scrollElement?.scrollTop ?? 0;
     setExpandedKeys(resolveExpandedKeysForMasterLevel(tree, 1, groupByCategory));
-  }, [tree, groupByCategory, scrollRef]);
+  }, [tree, groupByCategory, scrollElement]);
 
   if (produtos.length === 0) {
     return (
@@ -995,10 +1025,12 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
 
   return (
     <div className="w-full min-w-0 max-w-full">
-      <CatalogoMobileTreeToolbar
-        onExpandAll={handleExpandAll}
-        onCollapseAll={handleCollapseAll}
-      />
+      {!flatList ? (
+        <CatalogoMobileTreeToolbar
+          onExpandAll={handleExpandAll}
+          onCollapseAll={handleCollapseAll}
+        />
+      ) : null}
       <div className="relative border-x border-t-0 border-border/40 dark:border-white/10">
         <CatalogoMobileSacredAxis />
         <div className="relative border-b border-border/40 dark:border-white/10 bg-background">

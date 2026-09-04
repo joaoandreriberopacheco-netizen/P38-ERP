@@ -9,7 +9,7 @@ import {
 import { p38Keys } from '@/lib/p38QueryConfig';
 import { format, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { buildFluvialEvents, formatDate, FLUVIAL_DEFAULT_PERIOD, eventoTemDataNoPeriodo, getFluvialPeriodLabel, getFluvialTimelineDate } from '@/components/logistica-sandbox/fluvialDataUtils';
+import { applyFluvialOcupacaoProjection, buildFluvialEvents, formatDate, FLUVIAL_DEFAULT_PERIOD, FLUVIAL_DEFAULT_VIEW_MODE, eventoTemDataNoPeriodo, getFluvialPeriodLabel, getFluvialTimelineDate, getFluvialViewModeLabel } from '@/components/logistica-sandbox/fluvialDataUtils';
 import LogisticaSandboxHeader from '@/components/logistica-sandbox/LogisticaSandboxHeader';
 import RouteModeToggle from '@/components/logistica-sandbox/RouteModeToggle';
 import TimelineDatePicker from '@/components/logistica-sandbox/TimelineDatePicker';
@@ -23,13 +23,12 @@ import BoatsTab from '@/components/logistica-sandbox/BoatsTab';
 import ItinerarioFluvialMobile from '@/components/logistica-sandbox/mobile/ItinerarioFluvialMobile';
 import FreteDetailPanel from '@/components/logistica-sandbox/FreteDetailPanel';
 import FluvialActionFab from '@/components/logistica-sandbox/FluvialActionFab';
-import FluvialFilterBar from '@/components/logistica-sandbox/FluvialFilterBar';
 
 export default function ItinerarioFluvial() {
   const [routeType, setRouteType] = useState('Fluvial');
   const [selectedEvento, setSelectedEvento] = useState(null);
   const [simulationDate, setSimulationDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [viewMode, setViewMode] = useState('saida_manaus');
+  const [viewMode, setViewMode] = useState(FLUVIAL_DEFAULT_VIEW_MODE);
   const [isMobile, setIsMobile] = useState(false);
   const [freteSearchQuery, setFreteSearchQuery] = useState('');
   const [embarqueLinkFilter, setEmbarqueLinkFilter] = useState('todos');
@@ -58,42 +57,10 @@ export default function ItinerarioFluvial() {
     lancamentosFinanceiros,
   }), [eventosLogisticos, embarques, lancamentosFinanceiros]);
 
-  const eventos = useMemo(() => {
-    const simulationBaseDate = new Date(`${simulationDate}T12:00:00`);
-    const hojeReal = new Date();
-    const hojeRealBase = new Date(hojeReal.getFullYear(), hojeReal.getMonth(), hojeReal.getDate(), 12, 0, 0, 0);
-
-    return eventosBase.map((item) => {
-      const saidaManaus = item.data_saida_origem;
-      const chegadaManaus = item.data_chegada_manaus;
-      const inicioReal = chegadaManaus ? new Date(`${chegadaManaus}T00:00:00`) : null;
-      const saidaReal = saidaManaus ? new Date(`${saidaManaus}T00:00:00`) : null;
-
-      let ocupacaoPercentualDinamica = item.ocupacao_percentual || 0;
-
-      if (!inicioReal || !saidaReal) {
-        ocupacaoPercentualDinamica = 0;
-      } else {
-        const aindaNaoComecouNoReal = hojeRealBase < inicioReal;
-        const aindaNaoComecouNoSimulador = simulationBaseDate < inicioReal;
-
-        if (aindaNaoComecouNoReal || aindaNaoComecouNoSimulador) {
-          ocupacaoPercentualDinamica = 0;
-        } else if (simulationBaseDate >= saidaReal) {
-          ocupacaoPercentualDinamica = 100;
-        } else {
-          const diasTotais = Math.max(1, Math.round((saidaReal - inicioReal) / (1000 * 60 * 60 * 24)));
-          const diasCorridos = Math.max(0, Math.round((simulationBaseDate - inicioReal) / (1000 * 60 * 60 * 24)));
-          ocupacaoPercentualDinamica = Math.max(0, Math.min(100, Math.round((diasCorridos / diasTotais) * 100)));
-        }
-      }
-
-      return {
-        ...item,
-        ocupacao_percentual_dinamica: ocupacaoPercentualDinamica,
-      };
-    });
-  }, [eventosBase, simulationDate]);
+  const eventos = useMemo(
+    () => applyFluvialOcupacaoProjection(eventosBase, simulationDate),
+    [eventosBase, simulationDate],
+  );
 
   React.useEffect(() => {
     setSelectedEvento(null);
@@ -173,11 +140,7 @@ export default function ItinerarioFluvial() {
     }
   };
 
-  const viewModeLabel = viewMode === 'chegada_manaus'
-    ? 'Chegada Manaus'
-    : viewMode === 'chegada_tabatinga'
-      ? 'Chegada Tabatinga'
-      : 'Saída Manaus';
+  const viewModeLabel = getFluvialViewModeLabel(viewMode, { short: true });
 
 
   const freteEventos = useMemo(() => {
@@ -215,14 +178,6 @@ export default function ItinerarioFluvial() {
 
         {routeType === 'Fluvial' ? (
            <>
-             <FluvialFilterBar
-               periodoFiltro={periodoFiltro}
-               onPeriodoFiltroChange={setPeriodoFiltro}
-               embarqueLinkFilter={embarqueLinkFilter}
-               onEmbarqueLinkFilterChange={setEmbarqueLinkFilter}
-               totalViagens={totalViagensFiltradas}
-               totalCarregadas={totalViagensCarregadas}
-             />
              <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-5">
                <div className="bg-transparent space-y-1 max-h-[calc(100vh-190px)] overflow-y-auto overflow-x-hidden pr-2 min-w-0">
                  {timelineCarregando ? (
@@ -269,10 +224,14 @@ export default function ItinerarioFluvial() {
              </div>
              <FluvialActionFab 
                onScrollToToday={handleScrollToToday}
+               viewMode={viewMode}
+               onViewModeChange={setViewMode}
                periodoFiltro={periodoFiltro}
                onPeriodoFiltroChange={setPeriodoFiltro}
                embarqueLinkFilter={embarqueLinkFilter}
                onEmbarqueLinkFilterChange={setEmbarqueLinkFilter}
+               totalViagens={totalViagensFiltradas}
+               totalCarregadas={totalViagensCarregadas}
              />
            </>
         ) : routeType === 'Fretes' ? (

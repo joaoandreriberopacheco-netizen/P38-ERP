@@ -1,0 +1,107 @@
+# Pulso — debugger automático diário (trem + shipping).
+#
+# Agenda: todos os dias 05:00 Tabatinga (America/Rio_Branco, UTC-5) = 10:00 UTC.
+# Disparo manual: Actions → "Pulso diário" → Run workflow
+#
+# Notificação João André: issue GitHub (label pulse-diario) e/ou WhatsApp (CallMeBot).
+# WhatsApp secrets: PULSE_NOTIFY_WHATSAPP_PHONE + PULSE_NOTIFY_CALLMEBOT_APIKEY
+# Telegram opcional: PULSE_NOTIFY_TELEGRAM_BOT_TOKEN + PULSE_NOTIFY_TELEGRAM_CHAT_ID
+
+name: Pulso diário
+
+concurrency:
+  group: pulse-diario
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+on:
+  schedule:
+    # 10:00 UTC = 05:00 Tabatinga (UTC-5)
+    - cron: '0 10 * * *'
+  workflow_dispatch:
+    inputs:
+      skip_refresh:
+        description: 'Saltar refresh do roteiro (manifestos já actualizados)'
+        type: boolean
+        default: false
+      simular_falha_vendas_gestao:
+        description: 'TESTE: quebrar Gestão de vendas de propósito (notificação)'
+        type: boolean
+        default: false
+
+jobs:
+  trem-e-shipping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next (placeholder env + bypass auth)
+        env:
+          NEXT_PUBLIC_P38_PROVIDER: supabase
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ci1wbGFjZWhvbGRlcg
+          NEXT_PUBLIC_P38_USE_SUPABASE_AUTH: 'false'
+          NEXT_PUBLIC_P38_BYPASS_BASE44: 'true'
+          NEXT_PUBLIC_PULSE_TEST_BREAK_VENDAS_GESTAO: ${{ github.event.inputs.simular_falha_vendas_gestao == true && 'true' || 'false' }}
+          VITE_P38_PROVIDER: supabase
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ci1wbGFjZWhvbGRlcg
+          VITE_P38_USE_SUPABASE_AUTH: 'false'
+          VITE_P38_BYPASS_BASE44: 'true'
+        run: npm run build
+
+      - name: Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Label digest Pulso
+        run: gh label create pulse-diario --color "0E8A16" --description "Digest Pulso diário" 2>/dev/null || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pulso diário — trem + shipping + notificação
+        env:
+          NEXT_PUBLIC_P38_PROVIDER: supabase
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ci1wbGFjZWhvbGRlcg
+          NEXT_PUBLIC_P38_USE_SUPABASE_AUTH: 'false'
+          NEXT_PUBLIC_P38_BYPASS_BASE44: 'true'
+          VITE_P38_PROVIDER: supabase
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ci1wbGFjZWhvbGRlcg
+          VITE_P38_USE_SUPABASE_AUTH: 'false'
+          VITE_P38_BYPASS_BASE44: 'true'
+          PULSE_NOTIFY_TELEGRAM_BOT_TOKEN: ${{ secrets.PULSE_NOTIFY_TELEGRAM_BOT_TOKEN }}
+          PULSE_NOTIFY_TELEGRAM_CHAT_ID: ${{ secrets.PULSE_NOTIFY_TELEGRAM_CHAT_ID }}
+          PULSE_NOTIFY_WHATSAPP_PHONE: ${{ secrets.PULSE_NOTIFY_WHATSAPP_PHONE }}
+          PULSE_NOTIFY_CALLMEBOT_APIKEY: ${{ secrets.PULSE_NOTIFY_CALLMEBOT_APIKEY }}
+        run: |
+          EXTRA=""
+          if [ "${{ github.event.inputs.skip_refresh }}" = "true" ]; then
+            EXTRA="--skip-refresh"
+          fi
+          npm run pulse:diario -- $EXTRA
+
+      - name: Upload relatórios Pulso
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pulse-diario-reports
+          path: |
+            docs/pulse/pulse-diario-summary.json
+            docs/pulse/sensors-report.json
+            docs/pulse/shipping-report.json
+          retention-days: 7
+          if-no-files-found: ignore

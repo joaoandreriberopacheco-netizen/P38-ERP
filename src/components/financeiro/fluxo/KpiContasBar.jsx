@@ -19,14 +19,15 @@ function KpiSegment({ icon: Icon, value, valueClass, iconClass }) {
 }
 
 /** Faixa compacta — Caixas e Bancos (saldo, contas, conciliação, negativas). */
-export default function KpiContasBar({ kpis }) {
+export default function KpiContasBar({ kpis, saldosProntos = false }) {
+  const saldoExibir = saldosProntos && kpis.saldoTotal != null;
   const saldoPos = (kpis.saldoTotal ?? 0) >= 0;
   const posClass = P38_ACCENT;
   const negClass = 'text-red-600 dark:text-red-400';
   const warnClass = 'text-amber-600 dark:text-amber-400';
 
   const title = [
-    `Saldo ${formatKpiValor(kpis.saldoTotal)}`,
+    saldoExibir ? `Saldo ${formatKpiValor(kpis.saldoTotal)}` : 'Saldo a calcular',
     `${kpis.qtdTotal} conta${kpis.qtdTotal !== 1 ? 's' : ''}`,
     kpis.pendencias > 0 ? `${kpis.pendencias} pendente(s)` : null,
     kpis.negativas > 0 ? `${kpis.negativas} negativa(s)` : null,
@@ -36,13 +37,13 @@ export default function KpiContasBar({ kpis }) {
 
   return (
     <div
-      className="flex min-w-0 items-center gap-2 md:gap-3 md:overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] md:[&::-webkit-scrollbar]:hidden"
+      className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 md:flex-nowrap md:gap-3 md:overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] md:[&::-webkit-scrollbar]:hidden"
       title={title}
     >
       <KpiSegment
         icon={Wallet}
-        value={formatKpiValor(kpis.saldoTotal)}
-        valueClass={saldoPos ? posClass : negClass}
+        value={saldoExibir ? formatKpiValor(kpis.saldoTotal) : '…'}
+        valueClass={saldoExibir ? (saldoPos ? posClass : negClass) : 'text-muted-foreground animate-pulse'}
       />
       <span className="shrink-0 text-muted-foreground/35" aria-hidden>
         ·

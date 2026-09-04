@@ -253,6 +253,7 @@ export default function ControleEntregas() {
               <div className="relative">
                 <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
+                  data-pulse-sensor="controle-entregas.busca-cliente"
                   placeholder="BUSCAR..."
                   value={filtros.cliente}
                   onChange={(e) => setFiltros({ ...filtros, cliente: e.target.value })}

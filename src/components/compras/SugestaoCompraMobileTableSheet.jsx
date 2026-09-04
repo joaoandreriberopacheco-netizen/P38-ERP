@@ -1,29 +1,16 @@
 import React, { useEffect } from 'react';
-import { X, RotateCw } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SugestaoCompraMobileTable from '@/components/compras/SugestaoCompraMobileTable';
-import { useIsPhone } from '@/hooks/use-breakpoint';
+import { applyPreferredOrientation } from '@/lib/portraitOrientationLock';
 
-async function tryLockLandscape() {
-  try {
-    await screen.orientation?.lock?.('landscape');
-  } catch {
-    /* iOS / browser sem suporte — utilizador gira manualmente */
-  }
-}
-
-function tryUnlockOrientation() {
-  try {
-    screen.orientation?.unlock?.();
-  } catch {
-    /* ignore */
-  }
-}
-
+/**
+ * Tabela comparativa em fullscreen no telemóvel.
+ * Respeita a preferência de orientação do menu Perfil.
+ */
 export default function SugestaoCompraMobileTableSheet({
   open,
   onClose,
-  isLandscape,
   linhas,
   selectedItems,
   onToggleSelected,
@@ -31,18 +18,16 @@ export default function SugestaoCompraMobileTableSheet({
   onQuantidadeLinhaChange,
   renderFornecedorSelect,
 }) {
-  const isPhone = useIsPhone();
-
   useEffect(() => {
     if (!open) return undefined;
-    if (isPhone) tryLockLandscape();
+    applyPreferredOrientation();
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = prevOverflow;
-      if (isPhone) tryUnlockOrientation();
+      applyPreferredOrientation();
     };
-  }, [open, isPhone]);
+  }, [open]);
 
   if (!open) return null;
 
@@ -69,15 +54,6 @@ export default function SugestaoCompraMobileTableSheet({
           <p className="text-[10px] text-muted-foreground">{linhas.length} itens</p>
         </div>
       </header>
-
-      {!isLandscape && isPhone ? (
-        <div className="shrink-0 flex items-center gap-2 border-b border-teal-200/50 bg-teal-50/80 dark:bg-teal-950/30 dark:border-teal-800/40 px-3 py-2">
-          <RotateCw className="h-4 w-4 shrink-0 text-teal-700 dark:text-teal-300" />
-          <p className="text-[11px] leading-snug text-teal-900 dark:text-teal-100">
-            Gire o celular na horizontal para ver mais colunas. Deslize para os lados se precisar.
-          </p>
-        </div>
-      ) : null}
 
       <div className="flex-1 min-h-0 min-w-0 w-full overflow-hidden p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         <SugestaoCompraMobileTable

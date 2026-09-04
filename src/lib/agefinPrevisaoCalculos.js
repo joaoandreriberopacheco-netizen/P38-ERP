@@ -3,6 +3,7 @@
  */
 
 import { tagsOrigemBoleto } from '@/lib/agefinLancamentosRecorrencia';
+import { aplicarOverrideCompetencia } from '@/lib/agefinCompetenciaMesService';
 import { lancamentoPago, lancamentoCancelado, lancamentoVencidoOuAtrasado } from '@/lib/agefinConsultaFilters';
 
 export const SITUACAO_SERIE = {
@@ -22,6 +23,12 @@ export const FREQUENCIA_SERIE = {
   TRIMESTRAL: 'Trimestral',
   SEMESTRAL: 'Semestral',
   ANUAL: 'Anual',
+  PARCELADA: 'Parcelada',
+};
+
+export const MODO_CADASTRO_SERIE = {
+  RECORRENTE: 'recorrente',
+  PARCELADA: 'parcelada',
 };
 
 export const FREQUENCIAS_SERIE_OPCOES = [
@@ -31,6 +38,10 @@ export const FREQUENCIAS_SERIE_OPCOES = [
   FREQUENCIA_SERIE.SEMESTRAL,
   FREQUENCIA_SERIE.ANUAL,
 ];
+
+export function serieEhParcelada(modelo) {
+  return String(modelo?.modo_cadastro || '').toLowerCase() === MODO_CADASTRO_SERIE.PARCELADA;
+}
 
 export const MESES_VENCIMENTO_LABELS = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -43,6 +54,7 @@ export const ORDEM_FREQUENCIAS_CONTAS_FIXAS = [
   FREQUENCIA_SERIE.TRIMESTRAL,
   FREQUENCIA_SERIE.SEMESTRAL,
   FREQUENCIA_SERIE.ANUAL,
+  FREQUENCIA_SERIE.PARCELADA,
 ];
 
 export const DESCRICAO_FREQUENCIA_SERIE = {
@@ -51,6 +63,8 @@ export const DESCRICAO_FREQUENCIA_SERIE = {
   [FREQUENCIA_SERIE.TRIMESTRAL]: 'A cada 3 meses, a partir do mês de referência.',
   [FREQUENCIA_SERIE.SEMESTRAL]: 'A cada 6 meses, a partir do mês de referência.',
   [FREQUENCIA_SERIE.ANUAL]: 'Uma vez por ano, no mês de vencimento escolhido.',
+  [FREQUENCIA_SERIE.PARCELADA]:
+    'Valor total dividido em parcelas — cada parcela aparece no mês correspondente.',
 };
 
 export function normalizarFrequenciaSerie(frequencia) {
@@ -170,6 +184,10 @@ export function dataVencimentoReferenciaSerie(modelo, competencia) {
 }
 
 export function labelFrequenciaSerie(modelo) {
+  if (serieEhParcelada(modelo)) {
+    const total = Number(modelo?.total_parcelas) || 0;
+    return total > 0 ? `Parcelada (${total}x)` : FREQUENCIA_SERIE.PARCELADA;
+  }
   return normalizarFrequenciaSerie(modelo?.frequencia);
 }
 
@@ -180,8 +198,12 @@ export function tagFrequenciaSerie(modelo) {
 }
 
 export function labelValorSerie(modelo) {
-  const f = modelo?.frequencia || FREQUENCIA_SERIE.MENSAL;
   const v = formatCurrency(modelo?.valor_previsto);
+  if (serieEhParcelada(modelo)) {
+    const total = Number(modelo?.total_parcelas) || 0;
+    return total > 0 ? `${v} em ${total} parcelas` : `${v} parcelado`;
+  }
+  const f = modelo?.frequencia || FREQUENCIA_SERIE.MENSAL;
   if (f === FREQUENCIA_SERIE.ANUAL) return `${v}/ano`;
   if (f === FREQUENCIA_SERIE.MENSAL) return `${v}/mês`;
   return `${v} · ${f}`;
@@ -197,6 +219,7 @@ export function mesCompetenciaNum(competencia) {
  */
 export function serieDeveAparecerNaCompetencia(modelo, competencia, frequenciasPorGrupo = {}) {
   if (!serieEstaAtivaNaCompetencia(modelo, competencia)) return false;
+  if (serieEhParcelada(modelo)) return false;
   const f = frequenciaEfetivaSerie(modelo, frequenciasPorGrupo);
   const mesRef = Math.min(12, Math.max(1, Number(modelo.mes_vencimento) || 1));
   const mes = mesCompetenciaNum(competencia);
@@ -313,7 +336,9 @@ export function agruparSeriesPorFrequenciaEGrupo(
   for (const f of ORDEM_FREQUENCIAS_CONTAS_FIXAS) porFreq[f] = [];
 
   for (const serie of series || []) {
-    const freq = frequenciaEfetivaSerie(serie, frequenciasPorGrupo);
+    const freq = serieEhParcelada(serie)
+      ? FREQUENCIA_SERIE.PARCELADA
+      : frequenciaEfetivaSerie(serie, frequenciasPorGrupo);
     if (!porFreq[freq]) porFreq[freq] = [];
     porFreq[freq].push(serie);
   }
@@ -538,8 +563,15 @@ export function competenciaFromLancamento(lf, modelo, competencia) {
 
 /**
  * Mescla lançamentos do mês (fonte AGEFIN / LancamentoFinanceiro) com linhas de planejamento.
+ * overridesPorSerie: ajustes manuais por competência (sem alterar o template).
  */
-export function montarCompetenciasVisao(competenciaMes, modelos, lancamentosMes = [], lancamentosRecorrentes = []) {
+export function montarCompetenciasVisao(
+  competenciaMes,
+  modelos,
+  lancamentosMes = [],
+  lancamentosRecorrentes = [],
+  overridesPorSerie = {},
+) {
   const frequenciasPorGrupo = mapaFrequenciaPorGrupoLancamento(lancamentosRecorrentes);
   const byKey = new Map();
   const lfByGrupo = {};
@@ -578,6 +610,12 @@ export function montarCompetenciasVisao(competenciaMes, modelos, lancamentosMes 
     }
   }
 
+  for (const [key, comp] of byKey.entries()) {
+    const override = overridesPorSerie?.[comp.serie_id];
+    if (!override) continue;
+    byKey.set(key, aplicarOverrideCompetencia(comp, override));
+  }
+
   return [...byKey.values()].sort((a, b) =>
     (a.serie_nome || '').localeCompare(b.serie_nome || '', 'pt-BR'),
   );
@@ -608,6 +646,7 @@ export function filtrarCompetenciasPrevisao(competencias, { busca = '', centro =
 export function dataVencimentoCompetencia(comp, modelo) {
   const lf = comp?._lancamento;
   if (lf?.data_vencimento) return String(lf.data_vencimento).slice(0, 10);
+  if (comp?._overrideDataVencimento) return String(comp._overrideDataVencimento).slice(0, 10);
   const dia = Number(modelo?.dia_vencimento ?? comp?.dia_vencimento) || 10;
   return dataVencimentoNaCompetencia(comp?.competencia, dia);
 }
@@ -819,6 +858,10 @@ export function calcularProjecaoAgefin(modelos, competenciaInicio, lancamentos =
 }
 
 export function criarSerieComDefaults(partial = {}) {
+  const modoCadastro =
+    String(partial.modo_cadastro || '').toLowerCase() === MODO_CADASTRO_SERIE.PARCELADA
+      ? MODO_CADASTRO_SERIE.PARCELADA
+      : MODO_CADASTRO_SERIE.RECORRENTE;
   const frequencia = normalizarFrequenciaSerie(partial.frequencia || FREQUENCIA_SERIE.MENSAL);
   return {
     id: partial.id || gerarSerieId(),
@@ -828,9 +871,19 @@ export function criarSerieComDefaults(partial = {}) {
     categoria_id: partial.categoria_id || '',
     categoria_nome: partial.categoria_nome || '',
     centro_custo: partial.centro_custo || '',
+    centro_custo_id: partial.centro_custo_id || '',
     valor_previsto: Number(partial.valor_previsto) || 0,
     dia_vencimento: Number(partial.dia_vencimento) || 10,
     frequencia,
+    modo_cadastro: modoCadastro,
+    total_parcelas:
+      modoCadastro === MODO_CADASTRO_SERIE.PARCELADA
+        ? Math.max(2, Number(partial.total_parcelas) || 2)
+        : null,
+    competencia_inicio_parcelas:
+      modoCadastro === MODO_CADASTRO_SERIE.PARCELADA
+        ? String(partial.competencia_inicio_parcelas || '').slice(0, 7) || null
+        : null,
     mes_vencimento: Math.min(12, Math.max(1, Number(partial.mes_vencimento) || new Date().getMonth() + 1)),
     grupo_lancamento_id: partial.grupo_lancamento_id || gerarGrupoLancamentoId(),
     ativo: partial.ativo !== false,

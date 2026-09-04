@@ -3,12 +3,17 @@ import { useState } from 'react';
 import { cn } from '@/components/utils';
 import { ABCD_FILTER_VALUES } from '@/lib/filterProdutos';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  PRODUTOS_CHIP_ACTIVE,
+  PRODUTOS_CHIP_IDLE,
+  PRODUTOS_CHIP_SHELL,
+  PRODUTOS_DROPDOWN_MENU,
+  PRODUTOS_FILTER_OPEN,
+  PRODUTOS_ICON_BTN,
+} from '@/lib/produtosP38Theme';
 
 const CHIP_BASE =
   'h-8 min-w-[2rem] px-2 rounded-lg text-xs font-semibold transition-colors border border-transparent';
-const CHIP_ACTIVE =
-  'bg-[#4a5240] text-white border-[#4a5240] dark:bg-[#a4ce33] dark:text-[#1f1d22] dark:border-[#a4ce33]';
-const CHIP_IDLE = 'bg-muted/80 text-muted-foreground hover:bg-muted active:bg-muted';
 
 function mobileAbcdSummary(abcd) {
   const current = abcd || 'all';
@@ -18,11 +23,11 @@ function mobileAbcdSummary(abcd) {
 
 function AbcdChipRow({ current, onChange, className = '' }) {
   return (
-    <div className={cn('flex items-center gap-0.5 rounded-xl bg-muted p-0.5', className)} role="group">
+    <div className={cn(PRODUTOS_CHIP_SHELL, className)} role="group">
       <button
         type="button"
         onClick={() => onChange('all')}
-        className={cn(CHIP_BASE, 'px-2.5 font-medium flex-1', current === 'all' ? CHIP_ACTIVE : CHIP_IDLE)}
+        className={cn(CHIP_BASE, 'px-2.5 font-medium flex-1', current === 'all' ? PRODUTOS_CHIP_ACTIVE : PRODUTOS_CHIP_IDLE)}
         title="Todas as classes ABCD"
         aria-pressed={current === 'all'}
       >
@@ -33,7 +38,7 @@ function AbcdChipRow({ current, onChange, className = '' }) {
           key={value}
           type="button"
           onClick={() => onChange(value)}
-          className={cn(CHIP_BASE, 'flex-1', current === value ? CHIP_ACTIVE : CHIP_IDLE)}
+          className={cn(CHIP_BASE, 'flex-1', current === value ? PRODUTOS_CHIP_ACTIVE : PRODUTOS_CHIP_IDLE)}
           title={`Classe ${value}`}
           aria-pressed={current === value}
         >
@@ -63,10 +68,10 @@ export default function ProdutosAbcdQuickFilter({ abcd = 'all', onChange }) {
           <button
             type="button"
             className={cn(
-              'desktop-layout:hidden flex h-10 max-w-[7.5rem] flex-shrink-0 items-center gap-1 rounded-xl bg-muted/80 px-2.5 text-left transition-colors',
-              isActive
-                ? 'text-[#4a5240] ring-2 ring-[#4a5240]/40 dark:text-[#a4ce33] dark:ring-[#a4ce33]/40'
-                : 'text-muted-foreground',
+              'desktop-layout:hidden flex h-10 max-w-[7.5rem] flex-shrink-0 items-center gap-1 rounded-xl px-2.5 text-left transition-colors',
+              PRODUTOS_ICON_BTN,
+              isActive && PRODUTOS_FILTER_OPEN,
+              isActive ? 'text-[#a8942e] dark:text-[#a4ce33]' : 'text-muted-foreground',
             )}
             title={`Curva ABCD: ${summary.detail}`}
             aria-label={`Curva ABCD: ${summary.detail}`}
@@ -81,7 +86,7 @@ export default function ProdutosAbcdQuickFilter({ abcd = 'all', onChange }) {
         <PopoverContent
           align="start"
           sideOffset={6}
-          className="w-[min(17.5rem,calc(100vw-1.5rem))] rounded-xl border-border/40 bg-card p-3 shadow-lg dark:bg-muted dark:border-border/40"
+          className={cn('w-[min(17.5rem,calc(100vw-1.5rem))] rounded-xl p-3', PRODUTOS_DROPDOWN_MENU)}
         >
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
             Curva ABCD

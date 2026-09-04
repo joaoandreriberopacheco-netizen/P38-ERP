@@ -2,6 +2,7 @@ import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Ship, TrendingUp, ShoppingCart } from 'lucide-react';
 import { createPageUrl } from '@/components/utils';
+import { P38PageHeader } from '@/components/layout/P38PageHeader';
 import { Link } from 'react-router-dom';
 
 export default function OperacoesPage() {
@@ -9,8 +10,11 @@ export default function OperacoesPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header - SEM CORES */}
       <div className="pb-4 border-b border-border/40">
-        <h1 className="text-2xl font-medium text-foreground mb-1">Operações</h1>
-        <p className="text-sm text-muted-foreground">Logística, vendas e compras</p>
+        <P38PageHeader
+          variant="page"
+          title="Operações"
+          description="Logística, vendas e compras"
+        />
       </div>
 
       {/* Links Rápidos - SEM CORES */}

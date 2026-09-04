@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
+import { P38PageHeader } from '@/components/layout/P38PageHeader';
 import NovaConferenciaDialog from "@/components/estoque/auditoria/NovaConferenciaDialog.jsx";
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38StatusTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 
@@ -52,11 +53,13 @@ export default function ConferenciaEstoque() {
     <div className="min-h-screen bg-card w-full max-w-full overflow-x-hidden">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-card/80 dark:bg-background/80 backdrop-blur-sm border-b border-border/40 px-4 py-3 flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold font-glacial text-foreground">Conferência de Estoque</h1>
-          <p className="text-xs text-muted-foreground">{conferencias.length} conferência{conferencias.length !== 1 ? "s" : ""}</p>
-        </div>
+        <P38PageHeader
+          variant="compact"
+          title="Conferência de Estoque"
+          description={`${conferencias.length} conferência${conferencias.length !== 1 ? 's' : ''}`}
+        />
         <Button
+          data-pulse-sensor="conferencia-estoque.nova"
           onClick={() => setShowNova(true)}
           className="bg-card text-card-foreground rounded-xl h-9 px-4 text-sm font-medium shadow-none"
         >

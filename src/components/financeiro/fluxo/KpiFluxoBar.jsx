@@ -12,6 +12,7 @@ export default function KpiFluxoBar({
   saldoPrevisto,
   aReceber = 0,
   aPagar = 0,
+  saldosCarteiraProntos = false,
 }) {
   return (
     <div className="space-y-2">
@@ -20,6 +21,7 @@ export default function KpiFluxoBar({
         despesas={kpis.saiu}
         variacao={kpis.saldo}
         saldo={kpis.saldoContas}
+        saldoPronto={saldosCarteiraProntos}
         periodoLabel={periodoLabel}
         className="pb-0.5 md:pb-0.5"
       />

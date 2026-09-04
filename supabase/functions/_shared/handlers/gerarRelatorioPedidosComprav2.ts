@@ -584,7 +584,9 @@ const getTotalItensAjustadoPedido = (pedido, produtosMap = {}) => {
 };
 
 const getValorRelatorio = (pedido, produtosMap = {}) => {
-  const valorConhecidoPedido = Number(pedido._display_valor ?? pedido.valor_pendente_entrega ?? pedido.valor_total);
+  const valorConhecidoPedido = Number(
+    pedido._consulta_valor ?? pedido._display_valor ?? pedido.valor_pendente_entrega ?? pedido.valor_total,
+  );
   if (Number.isFinite(valorConhecidoPedido) && valorConhecidoPedido > 0) return valorConhecidoPedido;
 
   const totalItensAjustado = getTotalItensAjustadoPedido(pedido, produtosMap);
@@ -1361,7 +1363,7 @@ export async function handle(req: Request, base44: Awaited<ReturnType<typeof cre
         valor_total: getValorRelatorio(pedido, produtosMap)
       };
       drawPedidoHeaderCompacto(pedidoParaHeader);
-      const embarque = pedido._embarque || (pedido.embarques_registrados || [])[0] || null;
+      const embarque = pedido._embarque || null;
       const itensEfetivos = itensTela;
       doc.setFontSize(8);
       doc.setTextColor(...C.muted);

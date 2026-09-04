@@ -496,7 +496,7 @@ export default function ConferenciaCega({ pedido, isOpen, onClose, onSuccess }) 
                           </div>
 
                           {(precisaLote || precisaSerial) && (
-                            <div className="pl-4 border-l-2 border-indigo-200 space-y-2">
+                            <div className="pl-4 border-l border-indigo-200 space-y-2">
                               <div className="flex items-center justify-between">
                                 <Label className="text-xs text-indigo-700">
                                   {produto.controla_lote && 'Lote'}

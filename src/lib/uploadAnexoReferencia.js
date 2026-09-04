@@ -1,6 +1,8 @@
 /**
- * Upload de ficheiro para o pipeline de anexos (Drive) numa referência.
+ * Upload de ficheiro para o pipeline de anexos numa referência.
  */
+import { getSupabaseBrowserClient, isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
+import { uploadAnexoDriveSupabase } from '@/lib/anexosSupabase';
 
 export function fileBlobToBase64(blob) {
   return new Promise((resolve, reject) => {
@@ -11,10 +13,21 @@ export function fileBlobToBase64(blob) {
   });
 }
 
-export async function uploadAnexoParaLancamentoFinanceiro(base44, { file, lancamentoId, descricao = '', tipoDocumento = 'Boleto', origem = 'varejosync' }) {
+async function invokeUploadAnexoDrive(base44Client, payload) {
+  if (isSupabaseBrowserConfigured()) {
+    const supabase = getSupabaseBrowserClient();
+    if (supabase) {
+      await uploadAnexoDriveSupabase({ supabase, body: payload });
+      return;
+    }
+  }
+  await base44Client.functions.invoke('uploadAnexoDrive', payload);
+}
+
+export async function uploadAnexoParaLancamentoFinanceiro(base44Client, { file, lancamentoId, descricao = '', tipoDocumento = 'Boleto', origem = 'varejosync' }) {
   if (!file || !lancamentoId) return;
   const base64 = await fileBlobToBase64(file);
-  await base44.functions.invoke('uploadAnexoDrive', {
+  await invokeUploadAnexoDrive(base44Client, {
     file_base64: base64,
     file_name: file.name || 'documento.pdf',
     file_type: file.type || 'application/pdf',
@@ -28,12 +41,12 @@ export async function uploadAnexoParaLancamentoFinanceiro(base44, { file, lancam
 }
 
 export async function uploadAnexoParaPedidoCompra(
-  base44,
+  base44Client,
   { file, pedidoId, pedidoNumero = '', tipoDocumento = 'Comprovante', origem = 'varejosync' }
 ) {
   if (!file || !pedidoId) return;
   const base64 = await fileBlobToBase64(file);
-  await base44.functions.invoke('uploadAnexoDrive', {
+  await invokeUploadAnexoDrive(base44Client, {
     file_base64: base64,
     file_name: file.name || 'documento.pdf',
     file_type: file.type || 'application/pdf',
@@ -46,10 +59,10 @@ export async function uploadAnexoParaPedidoCompra(
   });
 }
 
-export async function uploadAnexoParaContaPrevista(base44, { file, contaPrevistaId, descricao = '', tipoDocumento = 'Boleto', origem = 'varejosync' }) {
+export async function uploadAnexoParaContaPrevista(base44Client, { file, contaPrevistaId, descricao = '', tipoDocumento = 'Boleto', origem = 'varejosync' }) {
   if (!file || !contaPrevistaId) return;
   const base64 = await fileBlobToBase64(file);
-  await base44.functions.invoke('uploadAnexoDrive', {
+  await invokeUploadAnexoDrive(base44Client, {
     file_base64: base64,
     file_name: file.name || 'documento.pdf',
     file_type: file.type || 'application/pdf',

@@ -49,42 +49,57 @@ import { format } from 'date-fns';
 import LiberacaoEntrega from './LiberacaoEntrega';
 import SeletorCaixaPDV from './SeletorCaixaPDV';
 import AutorizacoesEstornoPendentes from './AutorizacoesEstornoPendentes';
+import ReforcosPendentesCaixa from './ReforcosPendentesCaixa';
 import { processarVendaCaixa } from '@/functions/processarVendaCaixa';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 import ConfirmarImpressaoDialog from '@/components/vendas/ConfirmarImpressaoDialog';
 import { roundToTwoDecimals, resolveValorPedidoVenda, pagamentosCobremTotal } from '@/lib/financialUtils';
+import { handleCentavosMaskKeyDown } from '@/lib/inputFocusUtils';
 import {
   descricaoPadraoVale,
   listarPessoasFolhaParaVale,
   montarTagsValeFolha,
   registrarValeNoFolhaAposLancamento,
 } from '@/lib/folhaValeFluxo';
-import { getPrazoLiquidacaoMaquininha } from '@/lib/pagamentoPedidoVendaFinanceiro';
+import { getPrazoLiquidacaoMaquininha, calcularValoresCartao } from '@/lib/pagamentoPedidoVendaFinanceiro';
 import {
+  appendTurnoArrayId,
   caixaTurnoQueryKey,
   fetchCaixaTurnoSnapshot,
   CAIXA_IDLE_SYNC_AFTER_MS,
   CAIXA_IDLE_SYNC_TICK_MS,
+  CAIXA_LIVE_POLL_MS,
   CAIXA_SUBSCRIBE_DEBOUNCE_MS,
 } from '@/lib/caixaTurnoData';
+import { findTurnoAbertoParaCaixa } from '@/lib/turnoCaixaAberto';
 import {
   CAIXA_PRINT,
   CAIXA_TOAST_SUCCESS,
   caixaClasses,
+  caixaChipActive,
+  caixaChipInactive,
+  caixaChipTrack,
+  caixaConsultaCard,
+  caixaDesktopTabTrigger,
+  caixaFieldSurface,
+  caixaKpiShell,
   caixaMain,
   caixaMobileTabBar,
+  caixaMobileTabTrigger,
+  caixaMobileTabsList,
   caixaShell,
   caixaTabPanel,
   caixaTabPanelPad,
   caixaTabPanelPadInLayout,
   caixaTabsRoot,
   caixaTypo,
-  conferenciaTone,
   movimentoTone,
 } from '@/lib/caixaP38Theme';
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 import CaixaMovimentacoesTurno from '@/components/vendas/caixa/CaixaMovimentacoesTurno';
+import CaixaRecebimentosTurno from '@/components/vendas/caixa/CaixaRecebimentosTurno';
 import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
+import VendasFormaPagamentoDialog from '@/components/vendas/caixa/VendasFormaPagamentoDialog';
 import { CaixaOverlayStackProvider } from '@/components/vendas/caixa/CaixaOverlayStackContext';
 import { cleanupQuickAccessPortalLayers } from '@/lib/quickAccessOverlay';
 import { getCachedUserSession } from '@/lib/userSessionCache';
@@ -170,13 +185,16 @@ export default function PDVCaixa({
   overlayMode = false,
   onClose,
   initialActiveTab = 'balanco',
-  initialVendasView = 'aguardando',
+  initialVendasView = 'consulta',
 } = {}) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const isMobileShell = useCompactShell();
   const inAppLayout = isMobileShell && !overlayMode;
   const tabPanelPad = inAppLayout ? caixaTabPanelPadInLayout : caixaTabPanelPad;
+  const mainClassName = caixaMain;
+  const tabsRootClassName = caixaTabsRoot;
+  const tabPanelClassName = caixaTabPanel;
   const fechamentoSectionRef = useRef(null);
   const handleClose = () => {
     if (overlayMode && onClose) {
@@ -244,9 +262,6 @@ export default function PDVCaixa({
     moeda005: 0
   });
   const [recebimentosDinheiro, setRecebimentosDinheiro] = useState('');
-  const [recebimentosPix, setRecebimentosPix] = useState('');
-  const [recebimentosCredito, setRecebimentosCredito] = useState('');
-  const [recebimentosDebito, setRecebimentosDebito] = useState('');
 
   const [pagamentosDinheiro, setPagamentosDinheiro] = useState(0);
   const [pagamentosPix, setPagamentosPix] = useState(0);
@@ -271,15 +286,26 @@ export default function PDVCaixa({
   const [inputVale, setInputVale] = useState('');
   const [inputContaPagar, setInputContaPagar] = useState('');
 
-  // Refs para os inputs
-  const inputRefs = {
-    dinheiro: React.useRef(null),
-    pix: React.useRef(null),
-    debito: React.useRef(null),
-    credito: React.useRef(null),
-    vale: React.useRef(null),
-    contaPagar: React.useRef(null),
-  };
+  // Refs estáveis — o objeto não pode ser recriado cada render (quebrava foco no pagamento)
+  const dinheiroInputRef = React.useRef(null);
+  const pixInputRef = React.useRef(null);
+  const debitoInputRef = React.useRef(null);
+  const creditoInputRef = React.useRef(null);
+  const valeInputRef = React.useRef(null);
+  const contaPagarInputRef = React.useRef(null);
+  const inputRefs = useMemo(
+    () => ({
+      dinheiro: dinheiroInputRef,
+      pix: pixInputRef,
+      debito: debitoInputRef,
+      credito: creditoInputRef,
+      vale: valeInputRef,
+      contaPagar: contaPagarInputRef,
+    }),
+    []
+  );
+  const conferenciaDinheiroFocusedRef = useRef(false);
+  const conferenciaDinheiroEditadoRef = useRef(false);
 
   const [showLiberacaoEntrega, setShowLiberacaoEntrega] = useState(false);
   const [vendaFinalizada, setVendaFinalizada] = useState(null);
@@ -302,6 +328,7 @@ export default function PDVCaixa({
   const [showDespesaDialog, setShowDespesaDialog] = useState(false);
   const [salvandoDespesa, setSalvandoDespesa] = useState(false);
   const [showSaldoConsolidadoDialog, setShowSaldoConsolidadoDialog] = useState(false);
+  const [formaPagamentoDialog, setFormaPagamentoDialog] = useState(null);
   const [showGerenciarMovimentoDialog, setShowGerenciarMovimentoDialog] = useState(false);
   const [movimentoSelecionado, setMovimentoSelecionado] = useState(null);
   const [valorDespesa, setValorDespesa] = useState('');
@@ -351,6 +378,9 @@ export default function PDVCaixa({
   const hasSnapshotRef = useRef(false);
   const subscribeDebounceRef = useRef(null);
   const idleSyncBlockedRef = useRef(false);
+  const rascunhosCountRef = useRef(0);
+  const [ultimaAtualizacao, setUltimaAtualizacao] = useState(null);
+  const [atualizandoSilencioso, setAtualizandoSilencioso] = useState(false);
 
   // Renamed stats to caixaData and updated structure based on outline
   const [caixaData, setCaixaData] = useState({
@@ -394,45 +424,15 @@ export default function PDVCaixa({
   };
 
   // Máscara de valor - digita números e formata automaticamente (centavos -> reais)
-  const aplicarMascaraValor = (valorAtual, tecla) => {
-    // Remove tudo que não é número
-    let numeros = valorAtual.replace(/\D/g, '');
-
-    // Adiciona o novo dígito
-    if (/^\d$/.test(tecla)) {
-      numeros += tecla;
-    }
-
-    // Converte para número e divide por 100 (centavos)
-    const valor = parseInt(numeros) / 100;
-    return formatarValorExibicao(valor);
-  };
-
   const handleInputMascara = (e, setInput, setValor) => {
+    const handled = handleCentavosMaskKeyDown(e, {
+      setInput,
+      setValor,
+      formatDisplay: formatarValorExibicao,
+    });
+    if (handled) return;
+
     const tecla = e.key;
-
-    // Backspace - remove último dígito
-    if (tecla === 'Backspace') {
-      e.preventDefault();
-      let numeros = e.target.value.replace(/\D/g, '');
-      numeros = numeros.slice(0, -1) || '0';
-      const valor = parseInt(numeros) / 100;
-      setInput(formatarValorExibicao(valor));
-      setValor(valor);
-      return;
-    }
-
-    // Só aceita números
-    if (/^\d$/.test(tecla)) {
-      e.preventDefault();
-      const novoValor = aplicarMascaraValor(e.target.value, tecla);
-      setInput(novoValor);
-      const valorNumerico = parseFloat(novoValor.replace(/\./g, '').replace(',', '.'));
-      setValor(valorNumerico);
-      return;
-    }
-
-    // Navegação
     if (tecla === 'ArrowUp' || tecla === 'ArrowDown') {
       handleNavegacaoPagamento(e);
     }
@@ -493,9 +493,6 @@ export default function PDVCaixa({
       setFormaPagamentoAtiva(0);
       setMaquininhaDebito(null);
       setMaquininhaCredito(null);
-
-      // Auto-focus no primeiro input
-      setTimeout(() => inputRefs.dinheiro.current?.focus(), 100);
     }
   }, [pedidoSelecionado]);
 
@@ -597,6 +594,8 @@ export default function PDVCaixa({
 
     const queryKey = [...caixaTurnoQueryKey(turno.id, caixa.id), 'live', 'sem-itens'];
 
+    if (silent) setAtualizandoSilencioso(true);
+
     try {
       if (force) {
         await queryClient.invalidateQueries({ queryKey: caixaTurnoQueryKey(turno.id, caixa.id) });
@@ -613,7 +612,20 @@ export default function PDVCaixa({
           }),
         staleTime: force ? 0 : 30_000,
       });
+
+      const newRascunhosCount = snapshot.rascunhosAguardando?.length ?? 0;
+      if (silent && hasSnapshotRef.current && newRascunhosCount > rascunhosCountRef.current) {
+        const diff = newRascunhosCount - rascunhosCountRef.current;
+        toast({
+          title: diff === 1 ? 'Nova venda na fila!' : `${diff} novas vendas na fila!`,
+          className: CAIXA_TOAST_SUCCESS,
+          duration: 3000,
+        });
+      }
+      rascunhosCountRef.current = newRascunhosCount;
+
       applySnapshot(snapshot);
+      setUltimaAtualizacao(new Date());
     } catch (error) {
       console.error('❌ Erro ao carregar dados:', error);
       const suppressToast =
@@ -626,6 +638,8 @@ export default function PDVCaixa({
           variant: 'destructive',
         });
       }
+    } finally {
+      if (silent) setAtualizandoSilencioso(false);
     }
   }, [caixaSelecionado, turnoAtivo, queryClient, applySnapshot, toast]);
 
@@ -651,6 +665,7 @@ export default function PDVCaixa({
     showSangriasDialog ||
     showDespesasDialog ||
     showSaldoConsolidadoDialog ||
+    formaPagamentoDialog != null ||
     showGerenciarMovimentoDialog ||
     showLiberacaoEntrega ||
     showComprovanteDespesa ||
@@ -688,6 +703,31 @@ export default function PDVCaixa({
     return () => window.clearInterval(tick);
   }, [showSeletorCaixa, turnoAtivo?.id, caixaSelecionado?.id]);
 
+  // Atualização automática: polling + refetch ao voltar à aba (subscribe é no-op no Supabase).
+  useEffect(() => {
+    if (showSeletorCaixa || !turnoAtivo?.id || !caixaSelecionado?.id) return undefined;
+
+    const poll = () => {
+      if (idleSyncBlockedRef.current) return;
+      const run = loadDataRef.current;
+      if (typeof run === 'function') {
+        void run(undefined, undefined, { silent: true });
+      }
+    };
+
+    const id = window.setInterval(poll, CAIXA_LIVE_POLL_MS);
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') poll();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [showSeletorCaixa, turnoAtivo?.id, caixaSelecionado?.id]);
+
   const handleAbrirPedido = (pedido) => {
     if (modoVisualizacao) {
       toast({
@@ -704,11 +744,14 @@ export default function PDVCaixa({
   const handleSelecionarCaixa = (caixa, turno, somenteLeitura) => {
     lastUserActivityAtRef.current = Date.now();
     hasSnapshotRef.current = false;
+    rascunhosCountRef.current = 0;
+    setUltimaAtualizacao(null);
     setCaixaSelecionado(caixa);
     setTurnoAtivo(turno);
     setModoVisualizacao(somenteLeitura);
     setShowSeletorCaixa(false);
     setContaCaixaPDV(caixa);
+    conferenciaDinheiroEditadoRef.current = false;
     if (turno) {
       loadData(caixa, turno);
     }
@@ -792,6 +835,7 @@ export default function PDVCaixa({
        if (pagamentosDebito > 0) pagamentosArray.push({
          forma_pagamento: 'Cartão de Débito',
          valor: pagamentosDebito,
+         valor_liquido_recebido: calcularValoresCartao(pagamentosDebito, maquininhaDebito?.taxa || 0).liquido,
          parcelas: 1,
          maquininha_id: maquininhaDebito?.maquininha?.id,
          maquininha_nome: maquininhaDebito?.maquininha?.nome,
@@ -804,6 +848,7 @@ export default function PDVCaixa({
        if (pagamentosCredito > 0) pagamentosArray.push({
          forma_pagamento: 'Cartão de Crédito',
          valor: pagamentosCredito,
+         valor_liquido_recebido: calcularValoresCartao(pagamentosCredito, maquininhaCredito?.taxa || 0).liquido,
          parcelas: parcelasCredito,
          maquininha_id: maquininhaCredito?.maquininha?.id,
          maquininha_nome: maquininhaCredito?.maquininha?.nome,
@@ -841,10 +886,21 @@ export default function PDVCaixa({
       }
 
       // ── CHAMADA AO BACKEND (atômico + selo frio + número único) ──
+      let turnoIdProcessamento = turnoAtivo?.id;
+      if (contaCaixaPDV?.id) {
+        const turnoCanonico = await findTurnoAbertoParaCaixa(contaCaixaPDV.id);
+        if (turnoCanonico?.id) {
+          if (turnoCanonico.id !== turnoIdProcessamento) {
+            setTurnoAtivo(turnoCanonico);
+          }
+          turnoIdProcessamento = turnoCanonico.id;
+        }
+      }
+
       const { data } = await processarVendaCaixa({
         rascunho_id: pedidoSelecionado.id,
         pagamentos: pagamentosArray,
-        turno_id: turnoAtivo?.id,
+        turno_id: turnoIdProcessamento,
         conta_caixa_id: contaCaixaPDV?.id,
         saldo_atual_caixa: contaCaixaPDV?.saldo_atual,
         config_venda: configVenda ? { fluxo_venda_padrao: configVenda.fluxo_venda_padrao, auto_delivery_balcao: configVenda.auto_delivery_balcao } : null,
@@ -915,7 +971,7 @@ export default function PDVCaixa({
       setVendaFinalizada({
         ...rascunhoProcessado,
         ...pedidoVenda,
-        itens: pedidoVenda.itens?.length ? pedidoVenda.itens : rascunhoProcessado.itens,
+        itens: rascunhoProcessado.itens?.length ? rascunhoProcessado.itens : (pedidoVenda.itens || []),
         pagamentos: pagamentosArray,
       });
       setShowConfirmarImpressao(true);
@@ -1009,9 +1065,7 @@ export default function PDVCaixa({
         observacoes: `Despesa registrada via PDV Caixa por ${currentUser?.full_name}`
       });
       if (turnoAtivo) {
-        await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
-          despesas_ids: [...(turnoAtivo.despesas_ids || []), lancamento.id]
-        });
+        await appendTurnoArrayId(base44, turnoAtivo.id, 'despesas_ids', lancamento.id);
       }
 
       if (isValeFolhaDespesa && valeFolhaModeloIdDespesa && lancamento?.id) {
@@ -1090,9 +1144,7 @@ export default function PDVCaixa({
 
       // Atualizar turno com despesa
       if (turnoAtivo) {
-        await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
-          despesas_ids: [...(turnoAtivo.despesas_ids || []), lancamento.id]
-        });
+        await appendTurnoArrayId(base44, turnoAtivo.id, 'despesas_ids', lancamento.id);
       }
 
       toast({
@@ -1176,9 +1228,7 @@ export default function PDVCaixa({
       });
 
       if (turnoAtivo) {
-        await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
-          movimentos_ids: [...(turnoAtivo.movimentos_ids || []), movimento.id]
-        });
+        await appendTurnoArrayId(base44, turnoAtivo.id, 'movimentos_ids', movimento.id);
       }
 
       setMovimentoCriado(movimento);
@@ -1192,16 +1242,15 @@ export default function PDVCaixa({
         conta_id: contaCaixaPDV.id,
         turno_caixa_id: turnoAtivo?.id,
         usuario_responsavel_id: currentUser.id,
-        usuario_responsavel_nome: currentUser.full_name
+        usuario_responsavel_nome: currentUser.full_name,
+        status_registro: 'Ativo',
       });
 
       setMovimentoCriado(movimento);
 
       // Atualizar turno com movimento
       if (turnoAtivo) {
-        await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
-          movimentos_ids: [...(turnoAtivo.movimentos_ids || []), movimento.id]
-        });
+        await appendTurnoArrayId(base44, turnoAtivo.id, 'movimentos_ids', movimento.id);
       }
       }
 
@@ -1244,7 +1293,8 @@ export default function PDVCaixa({
   };
 
   useEffect(() => {
-    // Auto-preencher recebimentos: Dinheiro = Liquidez - (PIX + Crédito + Débito + Vale)
+    if (conferenciaDinheiroFocusedRef.current || conferenciaDinheiroEditadoRef.current) return;
+    // Auto-preencher conferência: Dinheiro = Liquidez - (PIX + Crédito + Débito + Vale)
     const dinheiroCalculado = roundToTwoDecimals(
       caixaData.liquidez -
         (caixaData.recebimentos?.pix || 0) -
@@ -1253,9 +1303,6 @@ export default function PDVCaixa({
         (caixaData.recebimentos?.vale || 0)
     );
     setRecebimentosDinheiro(formatarValorExibicao(dinheiroCalculado));
-    setRecebimentosPix(formatarValorExibicao(caixaData.recebimentos?.pix || 0));
-    setRecebimentosCredito(formatarValorExibicao(caixaData.recebimentos?.credito || 0));
-    setRecebimentosDebito(formatarValorExibicao(caixaData.recebimentos?.debito || 0));
   }, [caixaData]);
 
   const handleFecharCaixa = async () => {
@@ -1365,6 +1412,14 @@ export default function PDVCaixa({
     return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
+  const dinheiroNaGaveta = roundToTwoDecimals(
+    (caixaData.liquidez || 0) -
+      (caixaData.recebimentos?.pix || 0) -
+      (caixaData.recebimentos?.credito || 0) -
+      (caixaData.recebimentos?.debito || 0) -
+      (caixaData.recebimentos?.vale || 0),
+  );
+
   const movimentosTimelineItems = useMemo(() => {
     const itensMovimentos = movimentos.map(m => ({
       id: m.id,
@@ -1401,9 +1456,11 @@ export default function PDVCaixa({
 
   const screenShellBg = overlayMode ? 'bg-muted dark:bg-background' : 'bg-muted/40 dark:bg-background';
 
-  const rootClassName = overlayMode || inAppLayout
-    ? `h-full min-h-0 flex flex-col ${screenShellBg} ${caixaTypo.screen}`
-    : `${caixaShell} ${screenShellBg} ${caixaTypo.screen}`;
+  const rootClassName = overlayMode
+    ? `flex flex-col h-full min-h-0 ${screenShellBg} ${caixaTypo.screen}`
+    : inAppLayout
+      ? `flex flex-col flex-1 min-h-0 h-full overflow-hidden w-full max-w-7xl mx-auto ${screenShellBg} ${caixaTypo.screen}`
+      : `${caixaShell} ${screenShellBg} ${caixaTypo.screen}`;
 
   return (
     <CaixaOverlayStackProvider active={overlayMode}>
@@ -1427,8 +1484,17 @@ export default function PDVCaixa({
         />
       )}
 
+      {turnoAtivo && contaCaixaPDV && !modoVisualizacao && (
+        <ReforcosPendentesCaixa
+          turnoAtivo={turnoAtivo}
+          contaCaixa={contaCaixaPDV}
+          currentUser={currentUser}
+          onConfirmado={() => loadData(undefined, undefined, { force: true })}
+        />
+      )}
+
       {/* Header Minimalista */}
-      <div className="flex-shrink-0 bg-card dark:bg-card border-b border-border/40 dark:border-border/40 px-4 py-3 flex items-center justify-between">
+      <div className="flex-shrink-0 bg-card dark:bg-background border-b border-border/40 dark:border-white/10 px-4 py-3 flex items-center justify-between">
         <button
           type="button"
           onClick={handleClose}
@@ -1437,13 +1503,17 @@ export default function PDVCaixa({
           <ArrowLeft className="w-6 h-6 text-foreground/90 dark:text-muted-foreground" />
         </button>
         
-        <div className="flex-1 text-center">
-          <h1 className={`${caixaTypo.title} text-foreground dark:text-white`}>
+        <div className="flex-1 text-center min-w-0 px-2">
+          <h1 className={`${caixaTypo.title} text-foreground dark:text-white`} data-pulse-sensor="pdv-caixa.titulo">
             {caixaSelecionado?.nome || 'Caixa'}
           </h1>
-          {modoVisualizacao && (
+          {modoVisualizacao ? (
             <p className={`${caixaTypo.labelSm} text-amber-600 dark:text-amber-400`}>Somente visualização</p>
-          )}
+          ) : ultimaAtualizacao ? (
+            <p className={`${caixaTypo.labelSm} text-muted-foreground dark:text-muted-foreground truncate`}>
+              Atualizado · {format(ultimaAtualizacao, 'HH:mm:ss')}
+            </p>
+          ) : null}
         </div>
         
         <div className="flex items-center gap-2">
@@ -1452,7 +1522,7 @@ export default function PDVCaixa({
             className="p-2 hover:bg-muted dark:hover:bg-muted rounded-lg transition-colors"
             style={{ minWidth: '44px', minHeight: '44px' }}
             title="Atualizar (F7)">
-            <RefreshCw className="w-5 h-5 text-muted-foreground dark:text-muted-foreground" />
+            <RefreshCw className={`w-5 h-5 text-muted-foreground dark:text-muted-foreground ${atualizandoSilencioso ? 'animate-spin' : ''}`} />
           </button>
           <div className="text-sm text-muted-foreground dark:text-muted-foreground flex items-center gap-1">
             <Clock className="w-4 h-4" />
@@ -1462,7 +1532,7 @@ export default function PDVCaixa({
       </div>
 
       {/* Conteúdo Principal */}
-      <div className={`${caixaMain} relative ${screenShellBg}`}>
+      <div className={`${mainClassName} relative ${screenShellBg}`}>
         {!caixaSelecionado ? (
           <div className="h-full flex items-center justify-center">
             <div className="text-center text-muted-foreground dark:text-muted-foreground">
@@ -1473,18 +1543,18 @@ export default function PDVCaixa({
         ) : view === 'dashboard' &&
         <>
             {/* Desktop e Mobile - Sistema de Abas Unificado */}
-              <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="balanco" className={caixaTabsRoot}>
+              <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="balanco" className={tabsRootClassName}>
                 {/* Abas mobile — abaixo do header; bottom nav fica no shell global */}
-                <TabsList className={`${caixaMobileTabBar} grid grid-cols-3 h-14 bg-card dark:bg-card border-b border-border/40 dark:border-border/40 rounded-none p-0`}>
-                  <TabsTrigger value="balanco" className="flex flex-col items-center justify-center gap-0.5 data-[state=active]:bg-muted/40 dark:data-[state=active]:bg-muted h-full rounded-none border-0">
+                <TabsList className={`${caixaMobileTabBar} ${caixaMobileTabsList}`}>
+                  <TabsTrigger value="balanco" className={caixaMobileTabTrigger}>
                     <PieChart className="w-5 h-5" />
                     <span className={caixaTypo.labelSm}>Balanço</span>
                   </TabsTrigger>
-                  <TabsTrigger value="vendas" className="flex flex-col items-center justify-center gap-0.5 data-[state=active]:bg-muted/40 dark:data-[state=active]:bg-muted h-full rounded-none border-0">
+                  <TabsTrigger value="vendas" data-pulse-sensor="pdv-caixa.tab-vendas" className={caixaMobileTabTrigger}>
                     <ShoppingCart className="w-5 h-5" />
                     <span className={caixaTypo.labelSm}>Vendas</span>
                   </TabsTrigger>
-                  <TabsTrigger value="movimentos" className="flex flex-col items-center justify-center gap-0.5 data-[state=active]:bg-muted/40 dark:data-[state=active]:bg-muted h-full rounded-none border-0">
+                  <TabsTrigger value="movimentos" className={caixaMobileTabTrigger}>
                     <Wallet className="w-5 h-5" />
                     <span className={caixaTypo.labelSm}>Movimentos</span>
                   </TabsTrigger>
@@ -1493,42 +1563,43 @@ export default function PDVCaixa({
                 {/* KPIs Superiores - Apenas Desktop */}
                 <div className="hidden md:block p-4 pb-0">
                   <div className="grid grid-cols-2 gap-3 max-w-4xl mx-auto">
-                    <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm">
-                     <div className="text-xs text-muted-foreground dark:text-muted-foreground mb-2">Saldo do Turno</div>
+                    <div className={caixaKpiShell}>
+                     <div className="text-xs text-muted-foreground mb-2">Saldo do Turno</div>
                      <div className="text-3xl font-bold text-foreground dark:text-white font-glacial">
                        {formatValor(caixaData.liquidez)}
                      </div>
                      <div className="text-xs text-muted-foreground dark:text-muted-foreground mt-1">Inicial + vendas + reforços − recolhimentos</div>
                     </div>
-                    <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm">
-                      <div className="text-xs text-muted-foreground dark:text-muted-foreground mb-2">Dinheiro na Gaveta</div>
+                    <div className={caixaKpiShell}>
+                      <div className="text-xs text-muted-foreground mb-2">Dinheiro na Gaveta</div>
                       <div className="text-3xl font-bold text-foreground dark:text-white font-glacial">
-                        {formatValor(caixaData.liquidez - (caixaData.recebimentos?.pix || 0) - (caixaData.recebimentos?.credito || 0) - (caixaData.recebimentos?.debito || 0) - (caixaData.recebimentos?.vale || 0))}
+                        {formatValor(dinheiroNaGaveta)}
                       </div>
-                      <div className="text-xs text-muted-foreground dark:text-muted-foreground mt-1">Liquidez − (PIX + Crédito + Débito + Vale)</div>
+                      <div className="text-xs text-muted-foreground mt-1">Liquidez − (PIX + Crédito + Débito + Vale)</div>
                     </div>
                   </div>
                 </div>
 
                 {/* Tabs Navigation - Desktop */}
-                <div className="hidden md:block border-b border-border/40 dark:border-border/40 px-4">
+                <div className="hidden md:block border-b border-border/40 dark:border-white/10 px-4 bg-background">
                   <TabsList className="h-auto bg-transparent border-0 gap-1 justify-start max-w-4xl mx-auto p-0">
-                    <TabsTrigger value="balanco" className="flex items-center gap-2 data-[state=active]:bg-card dark:data-[state=active]:bg-card data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+                    <TabsTrigger value="balanco" className={caixaDesktopTabTrigger}>
                       <PieChart className="w-4 h-4" />
                       <span className={caixaTypo.tab}>Balanço</span>
                     </TabsTrigger>
-                    <TabsTrigger value="vendas" className="flex items-center gap-2 data-[state=active]:bg-card dark:data-[state=active]:bg-card data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+                    <TabsTrigger value="vendas" data-pulse-sensor="pdv-caixa.tab-vendas" className={caixaDesktopTabTrigger}>
                       <Receipt className="w-4 h-4" />
                       <span className={caixaTypo.tab}>Vendas</span>
                     </TabsTrigger>
-                    <TabsTrigger value="movimentos" className="flex items-center gap-2 data-[state=active]:bg-card dark:data-[state=active]:bg-card data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+                    <TabsTrigger value="movimentos" className={caixaDesktopTabTrigger}>
                       <Wallet className="w-4 h-4" />
                       <span className={caixaTypo.tab}>Movimentos</span>
                     </TabsTrigger>
                   </TabsList>
                 </div>
 
-                <TabsContent value="balanco" data-caixa-tab-scroll className={`${caixaTabPanel} ${tabPanelPad}`}>
+                <div className="relative flex-1 min-h-0 h-0 overflow-hidden">
+                <TabsContent value="balanco" data-caixa-tab-scroll className={`${tabPanelClassName} ${tabPanelPad}`}>
                   <div className="max-w-4xl mx-auto space-y-4 pb-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <CaixaMovimentacoesTurno
@@ -1546,115 +1617,29 @@ export default function PDVCaixa({
                   onLiquidez={() => setShowSaldoConsolidadoDialog(true)}
                 />
 
-                {/* Recebimentos do Turno */}
-                <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm">
-                  <h3 className={`${caixaTypo.title} mb-4 text-foreground dark:text-white`}>
-                    Recebimentos do Turno
-                  </h3>
-                  <div className="space-y-2">
-                    {/* Dinheiro - campo editável clicável (bloqueado em modo visualização) */}
-                    <div
-                      className={`flex items-center justify-between py-2 px-3 rounded-xl ${modoVisualizacao ? 'bg-muted dark:bg-card' : 'bg-muted/40 dark:bg-muted/50 cursor-pointer hover:bg-muted dark:hover:bg-muted'} transition-colors group`}
-                      onClick={() => {
-                        if (modoVisualizacao) return;
-                        const el = document.getElementById('input-dinheiro-conferido');
-                        el?.focus();
-                        el?.select();
-                      }}>
-                      <div>
-                        <span className={caixaTypo.label}>Dinheiro</span>
-                        <p className={caixaTypo.meta}>{modoVisualizacao ? 'somente leitura' : 'toque para conferir'}</p>
-                      </div>
-                      <input autoComplete="off"
-                        id="input-dinheiro-conferido"
-                        type="text"
-                        inputMode="decimal"
-                        value={recebimentosDinheiro}
-                        onChange={(e) => !modoVisualizacao && setRecebimentosDinheiro(e.target.value)}
-                        onFocus={(e) => e.target.select()}
-                        disabled={modoVisualizacao}
-                        className={`w-36 text-right text-lg font-bold bg-transparent border-0 focus:outline-none text-foreground dark:text-white ${modoVisualizacao ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
-                        placeholder={formatarValorExibicao(caixaData.saldoAtual || 0)}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between py-2 px-3">
-                      <span className={caixaTypo.label}>PIX</span>
-                      <CaixaValorDisplay valor={caixaData.recebimentos.pix} tone="neutral" signed={false} size="md" />
-                    </div>
-                    <div className="flex items-center justify-between py-2 px-3">
-                      <span className={caixaTypo.label}>Cartão Crédito</span>
-                      <CaixaValorDisplay valor={caixaData.recebimentos.credito || 0} tone="neutral" signed={false} size="md" />
-                    </div>
-                    <div className="flex items-center justify-between py-2 px-3">
-                      <span className={caixaTypo.label}>Cartão Débito</span>
-                      <CaixaValorDisplay valor={caixaData.recebimentos.debito || 0} tone="neutral" signed={false} size="md" />
-                    </div>
-                    {(caixaData.recebimentos.vale || 0) > 0 && (
-                     <div className="flex items-center justify-between py-2 px-3">
-                       <div className="flex items-center gap-2">
-                         <span className={caixaTypo.label}>Vale Troca</span>
-                         <span className={`text-xs px-1.5 py-0.5 rounded ${caixaClasses('success').pill}`}>não monetário</span>
-                       </div>
-                       <CaixaValorDisplay valor={caixaData.recebimentos.vale || 0} tone="neutral" signed={false} size="md" />
-                     </div>
-                    )}
-                    {(caixaData.recebimentos.fiado || 0) > 0 && (
-                     <div className="flex items-center justify-between py-2 px-3">
-                       <div className="flex items-center gap-2">
-                         <span className={caixaTypo.label}>Conta a Pagar</span>
-                         <span className={`text-xs px-1.5 py-0.5 rounded ${caixaClasses('warning').pill}`}>a receber</span>
-                       </div>
-                       <CaixaValorDisplay valor={caixaData.recebimentos.fiado || 0} tone="warning" signed={false} size="md" />
-                     </div>
-                    )}
-
-                    {/* Total e Diferença */}
-                    <div className="pt-3 mt-1 border-t border-border/40 dark:border-border/40 space-y-3">
-                      {(() => {
-                        const dinheiroConferido = roundToTwoDecimals(
-                          parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0
-                        );
-                        // Total conferido = dinheiro(conferido) + pix + crédito + débito (fiado não entra — é a receber)
-                        const totalConferido = roundToTwoDecimals(
-                          dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0)
-                        );
-                        // Esperado = liquidez (já exclui fiado e vale)
-                        const esperado = roundToTwoDecimals(caixaData.liquidez - (caixaData.recebimentos.vale || 0));
-                        const diferenca = roundToTwoDecimals(totalConferido - esperado);
-                        const temDiferenca = Math.abs(diferenca) > 0.01;
-
-                        return (
-                          <>
-                            <div className="flex items-center justify-between px-1">
-                              <span className={caixaTypo.section}>Total Conferido</span>
-                              <CaixaValorDisplay valor={totalConferido} tone="neutral" signed={false} size="lg" />
-                            </div>
-                            <div className={`p-4 rounded-xl transition-colors ${caixaClasses(conferenciaTone({ temDiferenca, diferenca })).panel}`}>
-                              <div className="flex items-center justify-between">
-                                <span className={`text-sm font-medium ${caixaClasses(conferenciaTone({ temDiferenca, diferenca })).panelText}`}>
-                                  {!temDiferenca ? '✓ Confere' : diferenca > 0 ? 'Sobrando' : 'Faltando'}
-                                </span>
-                                <CaixaValorDisplay
-                                  valor={!temDiferenca ? 0 : Math.abs(diferenca)}
-                                  tone={conferenciaTone({ temDiferenca, diferenca })}
-                                  signed={temDiferenca}
-                                  size="lg"
-                                />
-                              </div>
-                              {temDiferenca && (
-                                <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1">
-                                  Esperado: {formatValor(esperado)}
-                                </p>
-                              )}
-                            </div>
-                          </>
-                        );
-                      })()}
-                    </div>
-                  </div>
-                </div>
+                <CaixaRecebimentosTurno
+                  dinheiroNaGaveta={dinheiroNaGaveta}
+                  recebimentos={caixaData.recebimentos}
+                  fiado={caixaData.recebimentos?.fiado || 0}
+                  liquidez={caixaData.liquidez}
+                  modoConferenciaAtivo={!modoVisualizacao}
+                  modoVisualizacao={modoVisualizacao}
+                  recebimentosDinheiro={recebimentosDinheiro}
+                  onRecebimentosDinheiroChange={(e) => {
+                    if (modoVisualizacao) return;
+                    conferenciaDinheiroEditadoRef.current = true;
+                    setRecebimentosDinheiro(e.target.value);
+                  }}
+                  onRecebimentosDinheiroFocus={() => {
+                    conferenciaDinheiroFocusedRef.current = true;
+                  }}
+                  onRecebimentosDinheiroBlur={() => {
+                    conferenciaDinheiroFocusedRef.current = false;
+                  }}
+                  dinheiroPlaceholder={formatarValorExibicao(caixaData.saldoAtual || 0)}
+                  formatValor={formatValor}
+                  onVerFormaPagamento={setFormaPagamentoDialog}
+                />
                 </div>
                 </div>
 
@@ -1759,7 +1744,7 @@ export default function PDVCaixa({
                        }
                      };
                      return (
-                       <div ref={fechamentoSectionRef} id="secao-fechamento-caixa" className="bg-card dark:bg-card rounded-2xl p-4 shadow-sm max-w-4xl mx-auto">
+                       <div ref={fechamentoSectionRef} id="secao-fechamento-caixa" className={`${caixaFieldSurface} rounded-2xl p-4 max-w-4xl mx-auto`}>
                          <div className="flex items-center justify-between mb-3">
                            <h3 className="text-sm font-semibold text-foreground/90 dark:text-muted-foreground">Fechamento de Caixa</h3>
                            {!temDiferenca ? (
@@ -1773,7 +1758,7 @@ export default function PDVCaixa({
                              <Printer className="w-4 h-4" /> Imprimir
                            </button>
                            <FechamentoCaixaButton
-                             caixaData={{ ...caixaData, saldoAtual: dinheiroConferido }}
+                             caixaData={caixaData}
                              recebimentosDinheiro={recebimentosDinheiro}
                              turnoAtivo={turnoAtivo}
                              currentUser={currentUser}
@@ -1790,21 +1775,21 @@ export default function PDVCaixa({
                      })()}
                  </TabsContent>
 
-                 <TabsContent value="vendas" data-caixa-tab-scroll className={`${caixaTabPanel} ${tabPanelPad} space-y-3`}>
+                 <TabsContent value="vendas" data-caixa-tab-scroll className={`${tabPanelClassName} ${tabPanelPad} space-y-3`}>
                    <div className="max-w-4xl mx-auto space-y-4">
                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                       <div className="flex rounded-2xl bg-muted/50 p-1 gap-1">
+                       <div className={`flex rounded-2xl p-1 gap-1 ${caixaChipTrack}`}>
                          <button
                            type="button"
                            onClick={() => setVendasView('aguardando')}
-                           className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${vendasView === 'aguardando' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
+                           className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${vendasView === 'aguardando' ? caixaChipActive : caixaChipInactive}`}
                          >
                            Aguardando ({rascunhosAguardando.length})
                          </button>
                          <button
                            type="button"
                            onClick={() => setVendasView('consulta')}
-                           className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${vendasView === 'consulta' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
+                           className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${vendasView === 'consulta' ? caixaChipActive : caixaChipInactive}`}
                          >
                            Consulta ({vendasFinalizadas.length})
                          </button>
@@ -1813,15 +1798,15 @@ export default function PDVCaixa({
                          onClick={() => { loadData(undefined, undefined, { force: true }); toast({ title: "✓ Atualizado!", className: CAIXA_TOAST_SUCCESS, duration: 1000 }); }}
                          className="p-2 hover:bg-muted dark:hover:bg-muted rounded-xl transition-colors self-end sm:self-auto"
                          style={{ minWidth: '44px', minHeight: '44px' }}
-                         title="Atualizar">
-                         <RefreshCw className="w-5 h-5 text-muted-foreground dark:text-muted-foreground" />
+                         title="Atualizar (automático a cada 30s)">
+                         <RefreshCw className={`w-5 h-5 text-muted-foreground dark:text-muted-foreground ${atualizandoSilencioso ? 'animate-spin' : ''}`} />
                        </button>
                      </div>
 
                     {vendasView === 'consulta' ? (
                       <ConsultaVendasCaixa
                         vendasFinalizadas={vendasFinalizadas}
-                        onVerDetalhes={setVendaDetalhada}
+                        metaPorPedidoId={substituicoesCtx?.metaPorPedidoId}
                       />
                     ) : rascunhosAguardando.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-16">
@@ -1851,7 +1836,7 @@ export default function PDVCaixa({
                             </div>
                             </TabsContent>
 
-                <TabsContent value="movimentos" data-caixa-tab-scroll className={`${caixaTabPanel} ${tabPanelPad} space-y-3`}>
+                <TabsContent value="movimentos" data-caixa-tab-scroll className={`${tabPanelClassName} ${tabPanelPad} space-y-3`}>
                   <div className="max-w-4xl mx-auto space-y-3">
                     {/* Botões de ação */}
                     <div className="grid grid-cols-3 gap-2">
@@ -1902,6 +1887,8 @@ export default function PDVCaixa({
                   </div>
                 </TabsContent>
 
+                </div>
+
                 </Tabs>
                 </>
                 }
@@ -1916,9 +1903,13 @@ export default function PDVCaixa({
           />
         )}
 
+        {(isDialogOpen && pedidoSelecionado) && (
         <ConfirmarPagamentoDialog
           open={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
+          onOpenChange={(nextOpen) => {
+            setIsDialogOpen(nextOpen);
+            if (!nextOpen) setPedidoSelecionado(null);
+          }}
           pedidoSelecionado={pedidoSelecionado}
           pagamentosDinheiro={pagamentosDinheiro}
           setPagamentosDinheiro={setPagamentosDinheiro}
@@ -1971,6 +1962,7 @@ export default function PDVCaixa({
           toast={toast}
           base44={base44}
         />
+        )}
 
         {/* Dialogs extraídos */}
         <MovimentoDialog
@@ -2048,6 +2040,13 @@ export default function PDVCaixa({
           formatValor={formatValor}
         />
 
+        <VendasFormaPagamentoDialog
+          open={!!formaPagamentoDialog}
+          onOpenChange={(open) => { if (!open) setFormaPagamentoDialog(null); }}
+          formaPagamentoKey={formaPagamentoDialog}
+          vendasFinalizadas={vendasFinalizadas}
+          metaPorPedidoId={substituicoesCtx?.metaPorPedidoId}
+        />
         <VendasTurnoDialog
           open={showVendasDialog} onOpenChange={setShowVendasDialog}
           vendasFinalizadas={vendasFinalizadas} turnoAtivo={turnoAtivo}

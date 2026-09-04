@@ -6,11 +6,9 @@ export function formatCaixaR(v) {
   return `R$ ${(Math.round((v || 0) * 100) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-const SIGN_CLASS = {
-  success: p38Accent.success.text,
-  danger: p38Accent.danger.text,
-  info: p38Accent.info.text,
-};
+/** Sufixo +/− à direita — oliva suave no escuro para entradas; só saída (−) em vermelho */
+const SIGN_CLASS_PLUS = 'text-muted-foreground dark:text-[#8F9A5C]';
+const SIGN_CLASS_MINUS = p38Accent.danger.text;
 
 const SIZE_CLASS = {
   sm: 'text-base font-semibold',
@@ -19,9 +17,9 @@ const SIZE_CLASS = {
 };
 
 /**
- * @param {'success'|'danger'|'info'|'neutral'} tone
- * @param {boolean} signed — exibe +/− (como fluxo de caixa)
- * @param {boolean} reserveSignSpace — coluna fixa para alinhar decimais entre linhas
+ * @param {'success'|'danger'|'info'|'warning'|'neutral'} tone
+ * @param {boolean} signed — exibe +/− à direita do valor
+ * @param {boolean} reserveSignSpace — coluna fixa à direita para alinhar decimais entre linhas
  */
 export default function CaixaValorDisplay({
   valor,
@@ -34,26 +32,22 @@ export default function CaixaValorDisplay({
   const n = Math.abs(Number(valor) || 0);
   const sizeCls = SIZE_CLASS[size] || SIZE_CLASS.md;
   const showSign = signed && tone !== 'neutral';
-  const isEntrada = tone === 'success' || tone === 'info';
+  const isEntrada = tone === 'success' || tone === 'info' || tone === 'warning';
   const sign = showSign ? (isEntrada ? '+' : '−') : '+';
   const signClass = showSign
-    ? (tone === 'info'
-      ? SIGN_CLASS.info
-      : isEntrada
-        ? SIGN_CLASS.success
-        : SIGN_CLASS.danger)
+    ? (sign === '−' ? SIGN_CLASS_MINUS : SIGN_CLASS_PLUS)
     : '';
 
   if (reserveSignSpace || showSign) {
     return (
       <span className={`inline-flex items-baseline justify-end tabular-nums ${sizeCls} ${className}`}>
+        <span>{formatCaixaR(n)}</span>
         <span
-          className={`w-[0.75em] shrink-0 text-right ${showSign ? signClass : 'invisible select-none'}`}
+          className={`w-[0.75em] shrink-0 text-left pl-0.5 ${showSign ? signClass : 'invisible select-none'}`}
           aria-hidden={!showSign}
         >
           {sign}
         </span>
-        <span>{formatCaixaR(n)}</span>
       </span>
     );
   }

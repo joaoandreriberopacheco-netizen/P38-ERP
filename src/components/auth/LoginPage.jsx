@@ -189,6 +189,7 @@ export default function LoginPage() {
                   id="login-username"
                   type="text"
                   autoComplete="username"
+                  data-pulse-sensor="login.campo-utilizador"
                   value={login}
                   onChange={(ev) => setLogin(ev.target.value)}
                   placeholder="Ex: joao, admin…"
@@ -197,23 +198,32 @@ export default function LoginPage() {
                 />
               </div>
               <div className="space-y-2">
-                <label
-                  htmlFor="login-password"
-                  className="text-xs font-medium uppercase tracking-[0.16em] text-neutral-600 dark:text-neutral-400"
-                >
-                  Senha
-                </label>
+                <div className="flex items-center justify-between gap-2">
+                  <label
+                    htmlFor="login-password"
+                    className="text-xs font-medium uppercase tracking-[0.16em] text-neutral-600 dark:text-neutral-400"
+                  >
+                    Senha
+                  </label>
+                  <Link
+                    to="/esqueci-senha"
+                    className="text-xs text-neutral-500 underline-offset-4 hover:underline dark:text-neutral-400"
+                  >
+                    Esqueci a senha
+                  </Link>
+                </div>
                 <Input
                   id="login-password"
                   type="password"
                   autoComplete="current-password"
+                  data-pulse-sensor="login.campo-senha"
                   value={password}
                   onChange={(ev) => setPassword(ev.target.value)}
                   className={`h-11 ${authFieldClass}`}
                   required
                 />
               </div>
-              <Button type="submit" className={`h-11 w-full ${authButtonClass}`} disabled={busy}>
+              <Button type="submit" className={`h-11 w-full ${authButtonClass}`} disabled={busy} data-pulse-sensor="login.botao-entrar">
                 {submitting ? 'A entrar…' : 'Entrar'}
               </Button>
             </form>

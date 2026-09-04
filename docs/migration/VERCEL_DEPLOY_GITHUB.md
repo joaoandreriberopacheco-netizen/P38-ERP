@@ -9,9 +9,9 @@ O workflow **Vercel Deploy** (`.github/workflows/vercel-deploy.yml`) faz build c
 | `VERCEL_TOKEN` | [vercel.com/account/tokens](https://vercel.com/account/tokens) |
 | `VERCEL_ORG_ID` | Vercel → Settings → General (Team ID ou User ID) |
 | `VERCEL_PROJECT_ID` | Projecto → Settings → General → Project ID |
-| `VITE_SUPABASE_URL` | `https://zhonvxkkqabfdyehyxpu.supabase.co` (P38) |
-| `VITE_SUPABASE_ANON_KEY` | Supabase → Project Settings → API → anon public |
-| `SUPABASE_ANON_KEY` | Alias aceite no workflow (mesmo valor que acima) |
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://zhonvxkkqabfdyehyxpu.supabase.co` (P38) — **canónico Next.js** |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Project Settings → API → anon public |
+| `VITE_SUPABASE_*` | Fallback legado (dev Vite); o workflow aceita se `NEXT_PUBLIC_*` não existir |
 
 Opcional: `VITE_P38_USE_SUPABASE_AUTH` = `true` quando login Supabase estiver activo.
 
@@ -19,6 +19,17 @@ Opcional: `VITE_P38_USE_SUPABASE_AUTH` = `true` quando login Supabase estiver ac
 
 - **Automático:** qualquer push na `main` (workflow corre sempre)
 - **Manual:** Actions → **Vercel Deploy** → Run workflow
+
+## Preview antes de produção
+
+O workflow **Vercel Preview** (`.github/workflows/vercel-preview.yml`) publica uma **URL temporária** para testar no telemóvel **antes** do merge:
+
+- **Automático:** em cada PR para `main` (comenta/atualiza o link no PR + **Job summary** com botão clicável no final do build)
+- **Manual:** Actions → **Vercel Preview** → Run workflow (útil numa branch sem PR)
+
+No final do job, abre o separador **Summary** na corrida do GitHub Actions — há um link **👉 Abrir preview no browser**.
+
+Usa os **mesmos secrets** do deploy de produção. A produção (`p-38erp.vercel.app`) **não muda** até merge na `main` + workflow **Vercel Deploy**.
 
 ## Porque não usar só o deploy Git da Vercel
 

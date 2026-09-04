@@ -1,25 +1,97 @@
-# varejosync (P38 / Base44)
+# P38 ERP
 
-## Dois repositórios, papéis diferentes (evitar confusão)
+**ERP vertical para varejo e distribuição** — operação no telemóvel, pulso do negócio em qualquer lugar.
 
-| Onde | Papel |
-|------|--------|
-| **`varejosync` (este repo)** | Código que o **Base44** costuma construir quando o projecto está ligado a este GitHub (`p38.base44.app`, funções em `base44/`, UI Vite). **Correcções que precisam entrar no hosted Base44** devem ser commitadas **aqui** para o pipeline Git → Base44 apanhar. |
-| **`a29-erp` (monorepo)** | Schema Drizzle, `packages/*`, `ops/supabase`, e uma cópia de referência em **`legacy/varejosync`** (snapshot; não substitui por si só o deploy Base44 se o remote canónico for este repo). |
-
-Enquanto o negócio operar no Base44 com sync por Git, tratar **este** repositório como fonte da UI/funções que essa stack publica. Alinhar mudanças grandes com `docs/` no monorepo **a29-erp** quando tocarem migração Supabase ou política de dados.
-
-## Exportar UI para o a29-erp (`legacy/varejosync`)
-
-O monorepo **a29-erp** mantém um snapshot em `legacy/varejosync/`. Para actualizar a partir deste repo:
-
-```bash
-npm run mirror:pack
-npm run mirror:push -- ../a29-erp
-```
-
-Detalhes: [`mirror/README.md`](./mirror/README.md).
+| | |
+|--|--|
+| **Repositório** | [github.com/joaoandreriberopacheco-netizen/P38-ERP](https://github.com/joaoandreriberopacheco-netizen/P38-ERP) |
+| **Produção** | [p-38erp.vercel.app](https://p-38erp.vercel.app) |
+| **Apresentação** | [/landing.html](https://p-38erp.vercel.app/landing.html) |
+| **Catálogo B2B Tintão (Formigres)** | [catalogo-tintao-formigres.vercel.app](https://catalogo-tintao-formigres.vercel.app/) — projecto isolado · regenerar: `npm run catalogo:publicar-tintao` |
+| **Stack** | Next.js 15 · Supabase (Postgres) · Vercel |
 
 ---
 
-*Título anterior: Base44 App.*
+## O que é
+
+Sistema integrado para quem **opera e manda** no mesmo negócio:
+
+- **Vendas** — PDV, caixa, vendedor, auto-atendimento, turnos
+- **Compras** — cotações, pedidos, sugestão de compra, conferência na entrada
+- **Estoque** — armazenagem, auditoria, separação, metas de reabastecimento
+- **Financeiro** — fluxo de caixa, aprovações, planejamento, margem
+- **Logística** — entregas, expedição, itinerário fluvial
+- **Gestão** — relatórios, painel gerente, IEP/ABC
+
+Desenhado **mobile-first** para vendedor, conferente e dono que acumula várias funções.
+
+---
+
+## Arquitectura
+
+```
+Utilizador → Vercel (Next.js) → Supabase (dados + Edge Functions)
+```
+
+| Camada | Local |
+|--------|--------|
+| Frontend (produção) | `app/` — Next.js App Router |
+| Páginas partilhadas | `src/pages/` — lazy-loaded pelo Next |
+| Backend | `supabase/migrations/` + `supabase/functions/` |
+| Legado Vite/Base44 | `legacy/` — só desenvolvimento local, não produção |
+
+---
+
+## Desenvolvimento
+
+```bash
+npm ci
+npm run dev          # Next.js — http://localhost:3000
+npm run build        # Build de produção (validação local)
+npm run secrets:audit
+```
+
+Variáveis: copiar `.env.example` → `.env.local`. Guia completo em [`docs/migration/P38_CONFIGURAR_SECRETS_PASSO_A_PASSO.md`](docs/migration/P38_CONFIGURAR_SECRETS_PASSO_A_PASSO.md).
+
+| Comando | Uso |
+|---------|-----|
+| `npm run dev` | Servidor Next local |
+| `npm run build` | Build + verificação de toolchain |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | TypeScript |
+| `npm run supabase:deploy` | Migrações + Edge Functions (CI ou local com secrets) |
+
+---
+
+## Deploy
+
+Push na `main` → GitHub Actions **Vercel Deploy** (build com secrets) + **Supabase Deploy** (quando `supabase/**` muda).
+
+**Testar antes de produção:** abrir PR para `main` → workflow **Vercel Preview** gera URL temporária. Guia: [`docs/PREVIEW_ANTES_PRODUCAO.md`](docs/PREVIEW_ANTES_PRODUCAO.md).
+
+- Secrets canónicos: [`docs/migration/P38_SECRETS_CANONICOS.md`](docs/migration/P38_SECRETS_CANONICOS.md)
+- Continuidade operacional: [`docs/migration/P38_CONTINUIDADE_OPERACIONAL.md`](docs/migration/P38_CONTINUIDADE_OPERACIONAL.md)
+
+---
+
+## Documentação
+
+| Documento | Conteúdo |
+|-----------|----------|
+| [`docs/PROFISSIONALIZACAO_P38.md`](docs/PROFISSIONALIZACAO_P38.md) | Plano de maturidade (fases 1–3) |
+| [`docs/SENTRY_SETUP.md`](docs/SENTRY_SETUP.md) | Monitorização de erros (opcional) |
+| [`docs/STAGING_SETUP.md`](docs/STAGING_SETUP.md) | Ambiente de homologação |
+| [`docs/PILOTO_EXTERNO_CHECKLIST.md`](docs/PILOTO_EXTERNO_CHECKLIST.md) | Primeiro cliente piloto |
+| [`docs/P38_MODULOS_E_PERFIS.md`](docs/P38_MODULOS_E_PERFIS.md) | Módulos e perfis de utilizador |
+| [`docs/p38-mobile-rollout.md`](docs/p38-mobile-rollout.md) | Padrões mobile |
+| [`AGENTS.md`](AGENTS.md) | Guia para agentes de IA / desenvolvimento |
+
+---
+
+## Repositório relacionado
+
+Espelho UI local opcional: `npm run mirror:pack` — ver [`mirror/README.md`](mirror/README.md). (Ambiente Mana/a29-erp removido ago/2026.)
+
+---
+
+*P38 — o varejo não vive no escritório.*

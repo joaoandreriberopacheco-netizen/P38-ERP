@@ -17,8 +17,15 @@ import { runOperacaoAuthBypass } from '@/components/auth/runOperacaoAuthBypass';
 import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
 import AprovacaoPedidoMobile from '@/components/compras/AprovacaoPedidoMobile';
 import {
+  aprovarPedidoCompraFinanceiro,
+  pedidoAguardandoAprovacaoFinanceira,
+  rejeitarPedidoCompraFinanceiro,
+  sincronizarPedidoCompraAprovacaoFinanceira,
+} from '@/lib/aprovarPedidoCompraFinanceiro';
+import {
   cancelarLancamentosNaoPagosPedidoCompra,
   listarLancamentosPedidoCompra,
+  pedidoPrecisaSincronizarAprovacaoFinanceira,
   temLancamentoPagoParaPedido,
   calcValorTotalPedidoCompra,
 } from '@/lib/pedidoCompraFinanceiro';
@@ -73,22 +80,36 @@ export default function FinanceiroAprovacoesPage() {
       })
     ]);
 
-    // Para cada pedido, buscar os lançamentos financeiros associados
     const transactionsData = await Promise.all(
       pedidosData.map(async (pedido) => {
-        const lancamentos = await base44.entities.LancamentoFinanceiro.filter({
-          referencia_id: pedido.id,
-          referencia_tipo: 'PedidoCompra'
-        });
+        const lancamentos = await listarLancamentosPedidoCompra(base44, pedido.id);
         return {
           ...pedido,
           lancamentos_financeiros: lancamentos,
-          valor_total_lancamentos: lancamentos.reduce((sum, l) => sum + (l.valor || 0), 0)
+          valor_total_lancamentos: lancamentos.reduce((sum, l) => sum + (l.valor || 0), 0),
         };
-      })
+      }),
     );
 
-    setPendingTransactions(transactionsData);
+    let transactionsFiltradas = transactionsData;
+    if (activeTab === 'pendentes') {
+      const pendentes = [];
+      for (const pedido of transactionsData) {
+        const lancs = pedido.lancamentos_financeiros || [];
+        if (pedidoAguardandoAprovacaoFinanceira(pedido, lancs)) {
+          pendentes.push(pedido);
+        } else if (pedidoPrecisaSincronizarAprovacaoFinanceira(pedido, lancs)) {
+          await sincronizarPedidoCompraAprovacaoFinanceira({
+            base44,
+            pedido,
+            lancamentos: lancs,
+          });
+        }
+      }
+      transactionsFiltradas = pendentes;
+    }
+
+    setPendingTransactions(transactionsFiltradas);
     setContas(contasData);
     setSolicitacoesEdicao(solicitacoesData);
     setIsLoading(false);
@@ -148,36 +169,21 @@ export default function FinanceiroAprovacoesPage() {
           });
           return;
         }
-        const authNote = `\n[Aprovado Financeiramente: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`;
-        
-        // Atualizar pedido
-        await base44.entities.PedidoCompra.update(pedido.id, {
-          status: 'Aguardando Recepção',
-          status_aprovacao_financeira: 'Aprovado Financeiramente',
-          data_aprovacao_financeira: new Date().toISOString(),
-          conta_pagamento_id: contaId,
-          historico: (pedido.historico || '') + authNote
+        const contaNome = contas.find((c) => c.id === contaId)?.nome || '';
+        const resultado = await aprovarPedidoCompraFinanceiro({
+          base44,
+          pedido,
+          contaId,
+          contaNome,
+          authData,
         });
-
-        // Atualizar todos os lançamentos financeiros associados
-        const lancamentos = await base44.entities.LancamentoFinanceiro.filter({
-          referencia_id: pedido.id,
-          referencia_tipo: 'PedidoCompra'
-        });
-
-        await Promise.all(
-          lancamentos.map(lancamento =>
-            base44.entities.LancamentoFinanceiro.update(lancamento.id, {
-              status: 'Em Aberto',
-              conta_pagamento_id: contaId
-            })
-          )
-        );
 
         toast({
-          title: "✓ Pagamento aprovado",
-          description: "Pedido aprovado. Logística liberada.",
-          className: "bg-muted text-foreground"
+          title: resultado.aprovacaoJaRealizada ? 'Aprovação financeira já constava' : '✓ Pagamento aprovado',
+          description: resultado.aprovacaoJaRealizada
+            ? 'O pedido já tinha lançamentos processados. Status de aprovação financeira alinhado.'
+            : 'Pedido aprovado. Logística liberada.',
+          className: 'bg-muted text-foreground',
         });
       } else if (tipoAcao === 'reject') {
         const pedido = pedidoOverride ?? selectedTransaction;
@@ -191,33 +197,12 @@ export default function FinanceiroAprovacoesPage() {
           return;
         }
 
-        // Atualizar pedido
-        await base44.entities.PedidoCompra.update(pedido.id, {
-          status: 'Cancelado',
-          status_aprovacao_financeira: 'Rejeitado Financeiramente',
-          motivo_rejeicao_financeira: motivo,
-          data_rejeicao_financeira: new Date().toISOString(),
-          historico: (pedido.historico || '') + `\n[Rejeitado Financeiramente: ${motivo} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`
-        });
-
-        // Cancelar todos os lançamentos financeiros associados
-        const lancamentos = await base44.entities.LancamentoFinanceiro.filter({
-          referencia_id: pedido.id,
-          referencia_tipo: 'PedidoCompra'
-        });
-
-        await Promise.all(
-          lancamentos.map(lancamento =>
-            base44.entities.LancamentoFinanceiro.update(lancamento.id, {
-              status: 'Cancelado'
-            })
-          )
-        );
+        await rejeitarPedidoCompraFinanceiro({ base44, pedido, motivo, authData });
 
         toast({
-          title: "Pedido rejeitado",
-          description: "Feedback registrado para o setor de compras.",
-          variant: "destructive"
+          title: 'Pedido rejeitado',
+          description: 'Feedback registrado para o setor de compras.',
+          variant: 'destructive',
         });
       }
 

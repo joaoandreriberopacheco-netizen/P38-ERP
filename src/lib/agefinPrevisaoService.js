@@ -19,6 +19,7 @@ import {
   normalizarFrequenciaSerie,
   FREQUENCIA_SERIE,
   serieDeveAparecerNaCompetencia,
+  serieEhParcelada,
   serieEstaAtivaNaCompetencia,
 } from '@/lib/agefinPrevisaoCalculos';
 import { listarCentrosCustoRegistros } from '@/lib/folhaPrevisaoService';
@@ -39,6 +40,7 @@ import {
   lancamentoEntraEmContasFixas,
 } from '@/lib/agefinConsultaData';
 import { competenciaParaIntervalo } from '@/lib/relatorioMargemCalculos';
+import { salvarOverrideCompetenciaMes } from '@/lib/agefinCompetenciaMesService';
 
 export { listarCentrosCustoRegistros };
 
@@ -249,6 +251,7 @@ function aplicarOverlaySerie(serie, overlay) {
         ? Number(overlay.valor_previsto)
         : serie.valor_previsto,
     centro_custo: overlay.centro_custo || serie.centro_custo,
+    centro_custo_id: overlay.centro_custo_id || serie.centro_custo_id,
     observacoes: overlay.observacoes || serie.observacoes,
     situacao: overlay.situacao || serie.situacao,
     data_encerramento: overlay.data_encerramento || serie.data_encerramento,
@@ -600,15 +603,19 @@ async function listarLancamentosGrupoSerie(modelo) {
 }
 
 /** Grava alterações da série no LancamentoFinanceiro (fonte da AGEFIN). */
-async function sincronizarSerieNoFinanceiro(modelo) {
+async function sincronizarSerieNoFinanceiro(modelo, { competenciaMinima } = {}) {
   if (!modelo?.grupo_lancamento_id || modelo.ativo === false) return { atualizados: 0, criados: 0 };
 
+  const corte = String(competenciaMinima || getCompetenciaAtual()).slice(0, 7);
   const rows = await listarLancamentosGrupoSerie(modelo);
   const abertos = rows.filter((lf) => !lancamentoPago(lf) && !lancamentoCancelado(lf));
   const freq = normalizarFrequenciaSerie(modelo.frequencia);
   let atualizados = 0;
 
   for (const lf of rows) {
+    const mesLf = mesReferenciaLancamento(lf);
+    if (mesLf && mesLf < corte) continue;
+
     if (lancamentoCancelado(lf)) continue;
     const aberto = !lancamentoPago(lf);
     if (!aberto) {
@@ -637,6 +644,8 @@ async function sincronizarSerieNoFinanceiro(modelo) {
       data_vencimento: ven,
       categoria: modelo.categoria_nome || lf.categoria,
       categoria_id: modelo.categoria_id || lf.categoria_id,
+      centro_custo: modelo.centro_custo || lf.centro_custo || '',
+      centro_custo_id: modelo.centro_custo_id || lf.centro_custo_id || '',
       referencia_id: serieIdFromGrupoLancamento(modelo.grupo_lancamento_id) || modelo.id,
       is_recorrente: true,
       frequencia_recorrencia: freq,
@@ -646,7 +655,7 @@ async function sincronizarSerieNoFinanceiro(modelo) {
   }
 
   let criados = 0;
-  if (!rows.length) {
+  if (!rows.length && !serieEhParcelada(modelo)) {
     const compAtual = getCompetenciaAtual();
     const comp =
       serieDeveAparecerNaCompetencia(modelo, compAtual) ? compAtual : competenciaAncoraSerie(modelo, compAtual);
@@ -677,7 +686,7 @@ async function cancelarLancamentosAbertosDaSerie(modelo) {
   return { cancelados };
 }
 
-export async function salvarSerie(payload) {
+export async function salvarSerie(payload, { competenciaMinima } = {}) {
   const existente = payload.id
     ? (await obterSeriesParaEdicao()).find((s) => s.id === payload.id)
     : null;
@@ -690,7 +699,14 @@ export async function salvarSerie(payload) {
     grupo_lancamento_id: grupoId,
   });
 
-  await sincronizarSerieNoFinanceiro(body);
+  const corte =
+    competenciaMinima != null
+      ? String(competenciaMinima).slice(0, 7)
+      : existente
+        ? getCompetenciaAtual()
+        : undefined;
+
+  await sincronizarSerieNoFinanceiro(body, { competenciaMinima: corte });
 
   let entityRow = null;
   try {
@@ -734,12 +750,31 @@ export async function removerSerie(serieId, serieMeta = null) {
   invalidarCacheLancamentosFinanceiros();
 }
 
-export async function atualizarCentroCustoSerie(serieId, centroCusto) {
+export async function atualizarCentroCustoSerie(serieId, centroCusto, centroCustoId = '') {
   const existente = (await obterSeriesParaEdicao()).find((s) => s.id === serieId);
   if (!existente) throw new Error('Conta não encontrada.');
+
+  let idResolvido = centroCustoId || '';
+  const nome =
+    centroCusto === '__sem__' || centroCusto === '__none__' ? '' : String(centroCusto || '').trim();
+
+  if (!idResolvido && nome) {
+    try {
+      const centros = await listarCentrosCustoRegistros();
+      const match = (centros || []).find(
+        (c) =>
+          String(c.nome || '').toLocaleLowerCase('pt-BR') === nome.toLocaleLowerCase('pt-BR'),
+      );
+      idResolvido = match?.id || '';
+    } catch {
+      /* ignore */
+    }
+  }
+
   const atualizada = criarSerieComDefaults({
     ...existente,
-    centro_custo: centroCusto || '',
+    centro_custo: nome,
+    centro_custo_id: nome ? idResolvido : '',
   });
   await persistirSeriesModelo([atualizada]);
   await sincronizarSerieNoFinanceiro(atualizada);
@@ -803,6 +838,8 @@ function payloadLancamentoAuto(modelo, competencia) {
     status_conciliacao: 'N/A',
     categoria: modelo.categoria_nome || undefined,
     categoria_id: modelo.categoria_id || undefined,
+    centro_custo: String(modelo.centro_custo || '').trim() || undefined,
+    centro_custo_id: modelo.centro_custo_id || undefined,
     referencia_tipo: 'Manual',
     referencia_id: serieIdFromGrupoLancamento(modelo.grupo_lancamento_id) || modelo.id,
     observacoes: `Competência ${competencia} — aberta pelo planejamento financeiro. Conta financeira será definida na execução.`,
@@ -963,42 +1000,97 @@ export function podeEditarCompetencia(comp) {
 }
 
 /**
+ * Grava valor/vencimento só na competência do mês (lançamento financeiro).
+ * Não altera o template (cadastro da série).
+ */
+async function gravarLancamentoCompetenciaManual({
+  modelo,
+  competencia,
+  valor,
+  dataVencimento,
+  lancamentoId = null,
+}) {
+  const comp = String(competencia || '').slice(0, 7);
+  if (!comp) throw new Error('Competência inválida.');
+  const valorNum = Number(valor) || 0;
+  const ven =
+    (dataVencimento || '').slice(0, 10) ||
+    dataVencimentoNaCompetencia(comp, modelo?.dia_vencimento);
+
+  let lf = null;
+  if (lancamentoId) {
+    try {
+      lf = await base44.entities.LancamentoFinanceiro.get(lancamentoId);
+    } catch {
+      lf = null;
+    }
+  }
+  if (!lf) lf = await buscarLancamentoMes(modelo, comp);
+  if (!lf && modelo?.id) {
+    lf = await buscarLancamentoMesPorSerie(modelo, comp);
+  }
+
+  if (!lf) {
+    const grupoId = modelo?.grupo_lancamento_id || gerarGrupoLancamentoId();
+    lf = await base44.entities.LancamentoFinanceiro.create({
+      ...payloadLancamentoAuto({ ...modelo, grupo_lancamento_id: grupoId }, comp),
+      valor: valorNum,
+      valor_liquido: valorNum,
+      data_vencimento: ven,
+    });
+    invalidarCacheLancamentosFinanceiros();
+    return lf;
+  }
+
+  const tags = new Set([...(lf.tags || []), 'conta_pagar']);
+  tags.delete(TAG_LF_GERADO_AUTO);
+  const atualizado = await base44.entities.LancamentoFinanceiro.update(lf.id, {
+    valor: valorNum,
+    valor_liquido: valorNum,
+    data_vencimento: ven,
+    tags: [...tags],
+  });
+  invalidarCacheLancamentosFinanceiros();
+  return atualizado;
+}
+
+async function buscarLancamentoMesPorSerie(modelo, competencia) {
+  if (!modelo?.id) return null;
+  const rows = await base44.entities.LancamentoFinanceiro.filter({
+    referencia_id: modelo.id,
+  }).catch(() => []);
+  return (rows || []).find((lf) => mesReferenciaLancamento(lf) === competencia) || null;
+}
+
+/**
  * Atualiza valor e vencimento manualmente (sem ler o boleto).
- * — Com lançamento: grava no LancamentoFinanceiro.
- * — Em planejamento: grava no modelo (cadastro da série).
+ * Grava só na competência do mês — o template (cadastro) não muda.
  */
 export async function atualizarCompetenciaManual({ competencia, modelo, valor, dataVencimento, diaVencimento }) {
   const valorNum = Number(valor) || 0;
   if (valorNum < 0) throw new Error('O valor não pode ser negativo.');
+  if (!modelo?.id) throw new Error('Conta não encontrada.');
 
-  if (competencia?.lancamento_id) {
-    const lf = await base44.entities.LancamentoFinanceiro.get(competencia.lancamento_id);
-    const tags = new Set([...(lf?.tags || []), 'conta_pagar']);
-    tags.delete(TAG_LF_GERADO_AUTO);
-    const ven = (dataVencimento || '').slice(0, 10) || lf?.data_vencimento;
-    const atualizado = await base44.entities.LancamentoFinanceiro.update(competencia.lancamento_id, {
-      valor: valorNum,
-      valor_liquido: valorNum,
-      data_vencimento: ven,
-      tags: [...tags],
-    });
-    if (modelo?.id) {
-      const dia = Number(diaVencimento) || Number((ven || '').slice(8, 10)) || Number(modelo.dia_vencimento) || 10;
-      await salvarSerie({
-        ...modelo,
-        valor_previsto: valorNum,
-        dia_vencimento: dia,
-      });
-    }
-    return atualizado;
-  }
+  const comp = String(competencia?.competencia || '').slice(0, 7);
+  if (!comp) throw new Error('Competência inválida.');
 
-  if (!modelo?.id) throw new Error('Abra o mês antes de editar o valor desta conta.');
+  const ven =
+    (dataVencimento || '').slice(0, 10) ||
+    dataVencimentoNaCompetencia(comp, Number(diaVencimento) || Number(modelo.dia_vencimento) || 10);
 
-  const dia = Number(diaVencimento) || Number(modelo.dia_vencimento) || 10;
-  return salvarSerie({
-    ...modelo,
-    valor_previsto: valorNum,
-    dia_vencimento: dia,
+  await salvarOverrideCompetenciaMes({
+    serieId: modelo.id,
+    competencia: comp,
+    valor: valorNum,
+    dataVencimento: ven,
+    diaVencimento: Number(diaVencimento) || Number((ven || '').slice(8, 10)) || Number(modelo.dia_vencimento) || 10,
+  });
+
+  return gravarLancamentoCompetenciaManual({
+    modelo,
+    competencia: comp,
+    valor: valorNum,
+    dataVencimento: ven,
+    lancamentoId: competencia?.lancamento_id || null,
   });
 }

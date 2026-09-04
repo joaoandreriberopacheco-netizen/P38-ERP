@@ -1,14 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { P38PageHeader } from '@/components/layout/P38PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
-import { TrendingUp, ShoppingCart, Warehouse, DollarSign, Download, FileText, ChevronRight, BarChart3, LayoutTemplate, ClipboardPenLine } from 'lucide-react';
+import { TrendingUp, ShoppingCart, Warehouse, DollarSign, Download, FileText, ChevronRight, BarChart3, ClipboardPenLine } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import RelatorioPerformance from './RelatorioPerformance';
 import SeletorProdutoRPP from '@/components/relatorios/SeletorProdutoRPP';
-import GestaoTemplates from './GestaoTemplates';
+import { usePermissoesUsuario } from '@/hooks/usePermissoesUsuario';
 
 export default function RelatoriosPage() {
+  const { tem: podePerm } = usePermissoesUsuario();
+  const podeVendas = podePerm('relatorios.relatorio_vendas', 'relatorios.acesso');
+  const podeEstoque = podePerm('relatorios.relatorio_estoque', 'relatorios.acesso');
+  const podeFinanceiro = podePerm('relatorios.relatorio_financeiro', 'relatorios.acesso');
+  const podeMargem = podePerm('relatorios.relatorio_margem', 'relatorios.acesso');
+  const podeGeral = podePerm('relatorios.acesso');
+
+  const defaultTab = useMemo(() => {
+    if (podeVendas) return 'vendas';
+    if (podeGeral) return 'gerenciais';
+    if (podeEstoque) return 'estoque';
+    if (podeFinanceiro) return 'financeiro';
+    return 'vendas';
+  }, [podeVendas, podeGeral, podeEstoque, podeFinanceiro]);
+
   const [showSeletor, setShowSeletor] = useState(false);
   const [showRPP, setShowRPP] = useState(false);
   const [dadosProdutoSelecionado, setDadosProdutoSelecionado] = useState(null);
@@ -70,6 +86,13 @@ export default function RelatoriosPage() {
       nome: "Markup & Margem", 
       descricao: "Análise de markup e margem de contribuição",
       icon: TrendingUp,
+      highlight: true
+    },
+    { 
+      id: 'preco-justo',
+      nome: "Preço Justo (Simulador)", 
+      descricao: "Backtest de markup global 40% com subsídio KVI × pisos × conveniência",
+      icon: BarChart3,
       highlight: true
     },
   ];
@@ -215,78 +238,90 @@ export default function RelatoriosPage() {
     <div className="w-full pb-6">
       {/* Header */}
       <div className="px-4 md:px-6 py-6 md:py-8 bg-card border-b border-border/40">
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">
-          Relatórios
-        </h1>
-        <p className="text-sm md:text-base text-muted-foreground">
-          Acesse análises estratégicas e operacionais do seu negócio.
-        </p>
+        <P38PageHeader
+          variant="page"
+          title="Relatórios"
+          description="Acesse análises estratégicas e operacionais do seu negócio."
+        />
       </div>
 
       {/* Tabs Navigation */}
-      <Tabs defaultValue="vendas" className="w-full">
+      <Tabs defaultValue={defaultTab} className="w-full">
         <div className="sticky top-0 z-20 bg-card border-b border-border/40">
           <div className="px-4 md:px-6">
             <TabsList className="w-full h-auto justify-start gap-2 md:gap-4 bg-transparent p-0 border-b border-border/40">
+              {podeVendas && (
               <TabsTrigger 
                 value="vendas" 
+                data-pulse-sensor="relatorios.tab-vendas"
                 className="px-0 py-3 text-xs md:text-sm font-medium border-b-2 border-transparent data-[state=active]:border-green-500 data-[state=active]:text-green-600 dark:data-[state=active]:text-green-400 rounded-none"
               >
                 Vendas
               </TabsTrigger>
+              )}
+              {podeGeral && (
               <TabsTrigger 
                 value="gerenciais" 
                 className="px-0 py-3 text-xs md:text-sm font-medium border-b-2 border-transparent data-[state=active]:border-green-500 data-[state=active]:text-green-600 dark:data-[state=active]:text-green-400 rounded-none"
               >
                 Gerenciais
               </TabsTrigger>
+              )}
+              {podeEstoque && (
               <TabsTrigger 
                 value="estoque" 
                 className="px-0 py-3 text-xs md:text-sm font-medium border-b-2 border-transparent data-[state=active]:border-green-500 data-[state=active]:text-green-600 dark:data-[state=active]:text-green-400 rounded-none"
               >
                 Estoque
               </TabsTrigger>
+              )}
+              {podeGeral && (
               <TabsTrigger 
                 value="compras" 
                 className="px-0 py-3 text-xs md:text-sm font-medium border-b-2 border-transparent data-[state=active]:border-green-500 data-[state=active]:text-green-600 dark:data-[state=active]:text-green-400 rounded-none"
               >
                 Compras
               </TabsTrigger>
+              )}
+              {podeFinanceiro && (
               <TabsTrigger 
                 value="financeiro" 
                 className="px-0 py-3 text-xs md:text-sm font-medium border-b-2 border-transparent data-[state=active]:border-green-500 data-[state=active]:text-green-600 dark:data-[state=active]:text-green-400 rounded-none"
               >
                 Financeiro
               </TabsTrigger>
-              <TabsTrigger 
-                value="templates" 
-                className="px-0 py-3 text-xs md:text-sm font-medium border-b-2 border-transparent data-[state=active]:border-green-500 data-[state=active]:text-green-600 dark:data-[state=active]:text-green-400 rounded-none flex items-center gap-1"
-              >
-                <LayoutTemplate className="w-3.5 h-3.5" />
-                Templates
-              </TabsTrigger>
+              )}
             </TabsList>
           </div>
         </div>
 
         {/* Tab Contents */}
         <div className="px-4 md:px-6 py-6 md:py-8">
+          {podeVendas && (
           <TabsContent value="vendas" className="space-y-3">
             <div className="grid grid-cols-1 gap-3">
-              {relatoriosVendas.map((rel) => (
+              {relatoriosVendas.filter((rel) => {
+                if (rel.id === 'markup-margem') return podeMargem;
+                if (rel.id === 'preco-justo') return podeVendas;
+                return true;
+              }).map((rel) => (
                 <RelatorioCard 
                   key={rel.id} 
                   relatorio={rel}
                   onClickAbrir={(id) => {
                     if (id === 'markup-margem') {
                       window.location.href = '/RelatorioMargem';
+                    } else if (id === 'preco-justo') {
+                      window.location.href = '/PrecoJustoDashboard';
                     }
                   }}
                 />
               ))}
             </div>
           </TabsContent>
+          )}
 
+          {podeGeral && (
           <TabsContent value="gerenciais" className="space-y-3">
             <div className="grid grid-cols-1 gap-3">
               {relatoriosGerenciais.map((rel) => (
@@ -294,7 +329,9 @@ export default function RelatoriosPage() {
               ))}
             </div>
           </TabsContent>
+          )}
 
+          {podeEstoque && (
           <TabsContent value="estoque" className="space-y-3">
             <div className="grid grid-cols-1 gap-3">
               {relatoriosEstoque.map((rel) => (
@@ -316,7 +353,9 @@ export default function RelatoriosPage() {
               ))}
             </div>
           </TabsContent>
+          )}
 
+          {podeGeral && (
           <TabsContent value="compras" className="space-y-3">
             <div className="grid grid-cols-1 gap-3">
               {relatoriosCompras.map((rel) => (
@@ -324,7 +363,9 @@ export default function RelatoriosPage() {
               ))}
             </div>
           </TabsContent>
+          )}
 
+          {podeFinanceiro && (
           <TabsContent value="financeiro" className="space-y-3">
             <div className="grid grid-cols-1 gap-3">
               {relatoriosFinanceiros.map((rel) => (
@@ -332,10 +373,7 @@ export default function RelatoriosPage() {
               ))}
             </div>
           </TabsContent>
-
-          <TabsContent value="templates" className="-mx-4 md:-mx-6">
-            <GestaoTemplates />
-          </TabsContent>
+          )}
         </div>
       </Tabs>
 

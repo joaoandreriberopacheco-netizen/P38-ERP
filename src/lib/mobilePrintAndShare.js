@@ -2,6 +2,7 @@
  * Mobile/tablet: popups e `window.print()` em iframe costumam falhar ou ser bloqueados.
  * Preferimos PDF/HTML via blob + Web Share API ou download.
  */
+import { CUPOM_LARGURA_IMPRESSAO_MM, CUPOM_MARGEM_LATERAL_MM, CUPOM_PAPEL_MM } from '@/lib/cupomTermicoConstants';
 export function shouldUseMobileDocumentExport() {
   if (typeof window === 'undefined') return false;
   try {
@@ -45,7 +46,7 @@ export async function shareOrDownloadBlob(blob, filename, mimeType, title) {
 }
 
 /**
- * Mesma lógica dos comprovantes: captura do DOM → PDF (80mm ou A4).
+ * Mesma lógica dos comprovantes: captura do DOM → PDF (térmica 60mm útil ou A4).
  */
 async function loadPdfCaptureLibs() {
   const [html2canvasModule, jspdfModule] = await Promise.all([
@@ -80,10 +81,11 @@ export async function renderElementToPdfBlob(element, { formato = '80mm' } = {})
     const imgH = pageW / ratio;
     pdf.addImage(imgData, 'PNG', 0, 0, pageW, Math.min(imgH, pageH));
   } else {
-    const widthMm = 80;
+    const widthMm = CUPOM_LARGURA_IMPRESSAO_MM;
+    const pageWidthMm = CUPOM_PAPEL_MM;
     const heightMm = (canvas.height / canvas.width) * widthMm;
-    pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [widthMm, heightMm] });
-    pdf.addImage(imgData, 'PNG', 0, 0, widthMm, heightMm);
+    pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pageWidthMm, heightMm] });
+    pdf.addImage(imgData, 'PNG', CUPOM_MARGEM_LATERAL_MM, 0, widthMm, heightMm);
   }
   return pdf.output('blob');
 }

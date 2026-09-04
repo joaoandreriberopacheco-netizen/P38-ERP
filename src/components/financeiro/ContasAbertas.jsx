@@ -36,6 +36,7 @@ import {
   lancamentoPassaFiltroContasAbertas,
 } from '@/lib/lancamentoFinanceiroStatus';
 import { sincronizarSaldosContasFinanceiras } from '@/lib/sincronizarSaldoContasFinanceiras';
+import { sincronizarPedidosCompraPorLancamentos } from '@/lib/aprovarPedidoCompraFinanceiro';
 import {
   dataFinanceiraKey,
   hojeFinanceiroStr,
@@ -410,6 +411,12 @@ function useContasAbertasModel(onOpenImportador, shared) {
         movimentos: snapshot?.movs ?? movimentos,
         contaIds: contaIdsAfetados,
       });
+
+      try {
+        await sincronizarPedidosCompraPorLancamentos(base44, sucessos);
+      } catch {
+        /* não bloqueia pagamento em lote */
+      }
 
       const descricaoSucesso = erros.length > 0
         ? `${sucessos.length} de ${itensLote.length} lançamento(s) pago(s) — ${erros.length} falha(s)`

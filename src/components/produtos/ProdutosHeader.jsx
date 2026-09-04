@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,19 +8,37 @@ import { createPageUrl } from '@/components/utils';
 import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter, Percent, Loader2, Tag, Tags, LayoutGrid, TrendingUp, Gauge } from 'lucide-react';
 import { DEFAULT_PRODUTO_FILTERS, ABCD_FILTER_VALUES, ABCD_FILTER_LABELS } from '@/lib/filterProdutos';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
+import CatalogSearchInput from '@/components/produtos/CatalogSearchInput';
 import ProdutosSomentePositivosToggle from '@/components/produtos/ProdutosSomentePositivosToggle';
 import ProdutosEstoqueVirtualToggle from '@/components/produtos/ProdutosEstoqueVirtualToggle';
 import ProdutosAnaliseAgrupamentoControl from '@/components/produtos/ProdutosAnaliseAgrupamentoControl';
 import ProdutosAbcdQuickFilter from '@/components/produtos/ProdutosAbcdQuickFilter';
 import ProdutosNumericMetricFilter from '@/components/produtos/ProdutosNumericMetricFilter';
+import HierarquiaPortalEntry from '@/components/hierarquia-portal/HierarquiaPortalEntry';
+import ModeloCatalogoEntry from '@/components/modelo-catalogo/ModeloCatalogoEntry';
+import CadastroProdutoV2Entry from '@/components/cadastro-produto-v2/CadastroProdutoV2Entry';
 import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
 import ProdutosTreeByCategoryToggle from '@/components/produtos/ProdutosTreeByCategoryToggle';
 import ProdutosMobileFiltersSheet from '@/components/produtos/ProdutosMobileFiltersSheet';
 import { useCompactShell } from '@/hooks/use-breakpoint';
 import { cn } from '@/components/utils';
+import {
+  PRODUTOS_DROPDOWN_ITEM,
+  PRODUTOS_DROPDOWN_MENU,
+  PRODUTOS_FILTER_BADGE,
+  PRODUTOS_FILTER_OPEN,
+  PRODUTOS_FILTER_PANEL,
+  PRODUTOS_ICON_ACCENT,
+  PRODUTOS_ICON_BTN,
+  PRODUTOS_PAGE_HEADER,
+  PRODUTOS_SEARCH_INPUT,
+  PRODUTOS_SEARCH_SHELL,
+} from '@/lib/produtosP38Theme';
+import { P38_SHELL_DESC, P38_SHELL_TITLE } from '@/lib/p38FormTypography';
 
-export default function ProdutosHeader({
+function ProdutosHeader({
   stats,
+  podeVerCusto = true,
   filters,
   categorias,
   fornecedores,
@@ -35,7 +54,7 @@ export default function ProdutosHeader({
   handleAddNew,
   setFilters,
   formatarNumero,
-  filteredProdutos = [],
+  hasFilteredProdutos = false,
   treeLevel,
   setTreeLevel,
   sortOrder = 'az',
@@ -52,27 +71,32 @@ export default function ProdutosHeader({
   onOpenCatalogTagPrint,
   onOpenMassTag,
   onOpenMassCategory,
-  onOpenMassMarkup,
+  onOpenMassPrecificacao,
   onOpenPontosPedido,
   groupTreeByCategory = false,
   onGroupTreeByCategoryChange,
   estoqueVirtualCarregando = false,
   estoqueVirtualErro = false,
+  onClearFilters,
 }) {
   const isMobileLayout = useCompactShell();
   const quantidadeOperador = filters.quantidadeOperador || 'all';
 
   const clearFilters = () => {
+    if (onClearFilters) {
+      onClearFilters();
+      return;
+    }
     setFilters({ ...DEFAULT_PRODUTO_FILTERS });
   };
 
   return (
-    <div className="flex-none bg-background border-b border-border/40 w-full min-w-0">
+    <div className={PRODUTOS_PAGE_HEADER}>
       <div className="w-full min-w-0 px-3 py-2 space-y-2">
         <div className="flex items-center gap-2">
           <div className="flex-1 min-w-0">
-            <h1 className="text-sm font-semibold text-foreground truncate font-glacial">Catálogo</h1>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground min-w-0">
+            <h1 className={cn(P38_SHELL_TITLE, 'truncate')}>Catálogo</h1>
+            <div className={cn(P38_SHELL_DESC, 'flex flex-wrap items-center gap-x-3 gap-y-0.5 min-w-0')}>
               {isSummaryFiltered && (
                 <Filter
                   className="w-3 h-3 p38-text-accent flex-shrink-0"
@@ -80,15 +104,20 @@ export default function ProdutosHeader({
                 />
               )}
               <span className="truncate">{stats.total} produtos</span>
-              <span className="truncate">
-                R$ {formatarNumero(stats.valorEstoqueAtivo || 0)}
-                {filters.estoqueVirtual ? ' ~' : ''}
-              </span>
+              {podeVerCusto && (
+                <span className="truncate">
+                  R$ {formatarNumero(stats.valorEstoqueAtivo || 0)}
+                  {filters.estoqueVirtual ? ' ~' : ''}
+                </span>
+              )}
               {stats.abaixoMinimo > 0 && <span className="text-red-500 flex-shrink-0">{stats.abaixoMinimo} abaixo mín.</span>}
             </div>
           </div>
 
           <div className="flex items-center gap-1 flex-shrink-0 min-w-0 max-w-[58vw] sm:max-w-none overflow-x-auto overscroll-x-contain">
+            <CadastroProdutoV2Entry size="icon" className="h-9 w-9 px-0" variant="ghost" />
+            <HierarquiaPortalEntry size="icon" className="h-9 w-9 px-0" variant="ghost" />
+            <ModeloCatalogoEntry size="icon" className="h-9 w-9 px-0" variant="ghost" />
             <Button
               type="button"
               variant="ghost"
@@ -116,13 +145,13 @@ export default function ProdutosHeader({
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="dark:bg-muted dark:border-border/40">
+              <DropdownMenuContent align="end" className={PRODUTOS_DROPDOWN_MENU}>
                 <DropdownMenuItem
                   onClick={() => {
                     window.setTimeout(() => onGerarRelatorioEstoque?.(), 0);
                   }}
                   className={cn(
-                    'dark:text-foreground dark:hover:bg-primary/90 text-sm',
+                    cn('text-sm', PRODUTOS_DROPDOWN_ITEM),
                     gerandoRelatorioEstoque && 'pointer-events-none opacity-50',
                   )}
                 >
@@ -134,7 +163,7 @@ export default function ProdutosHeader({
                     window.setTimeout(() => onGerarRelatorioVendas?.('30d'), 0);
                   }}
                   className={cn(
-                    'dark:text-foreground dark:hover:bg-primary/90 text-sm',
+                    cn('text-sm', PRODUTOS_DROPDOWN_ITEM),
                     gerandoRelatorioVendas && 'pointer-events-none opacity-50',
                   )}
                 >
@@ -146,7 +175,7 @@ export default function ProdutosHeader({
                     window.setTimeout(() => onGerarRelatorioVendas?.('60d'), 0);
                   }}
                   className={cn(
-                    'dark:text-foreground dark:hover:bg-primary/90 text-sm',
+                    cn('text-sm', PRODUTOS_DROPDOWN_ITEM),
                     gerandoRelatorioVendas && 'pointer-events-none opacity-50',
                   )}
                 >
@@ -158,7 +187,7 @@ export default function ProdutosHeader({
                     window.setTimeout(() => onGerarRelatorioVendasV2?.(), 0);
                   }}
                   className={cn(
-                    'dark:text-foreground dark:hover:bg-primary/90 text-sm',
+                    cn('text-sm', PRODUTOS_DROPDOWN_ITEM),
                     gerandoRelatorioVendasV2 && 'pointer-events-none opacity-50',
                   )}
                 >
@@ -169,7 +198,7 @@ export default function ProdutosHeader({
                   onClick={() => {
                     window.setTimeout(() => onOpenCatalogTagPrint?.(), 0);
                   }}
-                  className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
+                  className={cn('text-sm', PRODUTOS_DROPDOWN_ITEM)}
                 >
                   <Tags className="w-4 h-4 mr-2 p38-text-accent" />
                   Etiquetas em PDF A4
@@ -179,7 +208,7 @@ export default function ProdutosHeader({
                     window.setTimeout(() => onGerarRelatorioIep?.(), 0);
                   }}
                   className={cn(
-                    'dark:text-foreground dark:hover:bg-primary/90 text-sm',
+                    cn('text-sm', PRODUTOS_DROPDOWN_ITEM),
                     gerandoRelatorioIep && 'pointer-events-none opacity-50',
                   )}
                 >
@@ -203,7 +232,7 @@ export default function ProdutosHeader({
               className="h-9 w-9 flex-shrink-0"
               title="Classificar categorias com IA"
               onClick={() => onOpenMassCategory?.()}
-              disabled={filteredProdutos.length === 0}
+              disabled={!hasFilteredProdutos}
             >
               <LayoutGrid className="w-4 h-4 p38-text-accent" />
             </Button>
@@ -217,26 +246,26 @@ export default function ProdutosHeader({
                     <Upload className="w-4 h-4 text-muted-foreground" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="dark:bg-muted dark:border-border/40">
-                  {filteredProdutos.length > 0 && (
+                <DropdownMenuContent align="end" className={PRODUTOS_DROPDOWN_MENU}>
+                  {hasFilteredProdutos && (
                     <DropdownMenuItem
                       onClick={() => {
-                        window.setTimeout(() => onOpenMassMarkup?.(), 0);
+                        window.setTimeout(() => onOpenMassPrecificacao?.(), 0);
                       }}
-                      className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
+                      className={cn('text-sm', PRODUTOS_DROPDOWN_ITEM)}
                     >
-                      <Percent className="w-4 h-4 mr-2 p38-text-accent" />Aplicar markup aos filtrados
+                      <SlidersHorizontal className="w-4 h-4 mr-2 p38-text-accent" />Ajustar precificação nos filtrados
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem onClick={handleBaixarTemplateUnificado} className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
+                  <DropdownMenuItem onClick={handleBaixarTemplateUnificado} className={cn('text-sm', PRODUTOS_DROPDOWN_ITEM)}>
                     <Download className="w-4 h-4 mr-2" />Template
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
+                  <DropdownMenuItem asChild className={cn('text-sm', PRODUTOS_DROPDOWN_ITEM)}>
                     <Link to={createPageUrl('ImportacaoProdutos')}>
                       <Upload className="w-4 h-4 mr-2" />Importar CSV
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setIsMassImageUploaderOpen(true)} className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
+                  <DropdownMenuItem onClick={() => setIsMassImageUploaderOpen(true)} className={cn('text-sm', PRODUTOS_DROPDOWN_ITEM)}>
                     <ImageIcon className="w-4 h-4 mr-2" />Importar Imagens
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -247,23 +276,23 @@ export default function ProdutosHeader({
                     <Sparkles className="w-4 h-4 p38-text-accent" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="dark:bg-muted dark:border-border/40">
-                  {filteredProdutos.length > 0 && (
+                <DropdownMenuContent align="end" className={PRODUTOS_DROPDOWN_MENU}>
+                  {hasFilteredProdutos && (
                     <DropdownMenuItem
                       onClick={() => {
                         window.setTimeout(() => onOpenMassTag?.(), 0);
                       }}
-                      className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
+                      className={cn('text-sm', PRODUTOS_DROPDOWN_ITEM)}
                     >
                       <Sparkles className="w-4 h-4 mr-2 p38-text-accent" />Tagificação em Massa
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem asChild className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
+                  <DropdownMenuItem asChild className={cn('text-sm', PRODUTOS_DROPDOWN_ITEM)}>
                     <Link to={createPageUrl('OtimizacaoEstoqueIA')}>
                       <Sparkles className="w-4 h-4 mr-2 p38-text-accent" />Otimizar Estoque
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
+                  <DropdownMenuItem asChild className={cn('text-sm', PRODUTOS_DROPDOWN_ITEM)}>
                     <Link to={createPageUrl('EstimativaEmbalagensIA')}>
                       <Wand2 className="w-4 h-4 mr-2 p38-text-accent" />Estimar Embalagens
                     </Link>
@@ -279,13 +308,14 @@ export default function ProdutosHeader({
 
         {/* Busca larga no topo; atalhos e filtros logo abaixo (sem scroll horizontal). */}
         <div className="flex flex-col gap-2 min-w-0">
-          <div className="relative w-full min-w-0">
+          <div className={cn('relative w-full min-w-0', PRODUTOS_SEARCH_SHELL)}>
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none desktop-layout:left-3" />
-            <Input
+            <CatalogSearchInput
+              data-pulse-sensor="produtos.busca"
               placeholder="Nome ou descrição (espaço ou ; para combinar). XXmolhadas ou XXj- filtra por categoria..."
-              className="border-none bg-muted h-10 desktop-layout:h-11 text-sm pl-9 desktop-layout:pl-10 text-foreground/90 shadow-none focus-visible:ring-0 w-full min-w-0 rounded-xl"
+              className={PRODUTOS_SEARCH_INPUT}
               value={filters.searchTerm}
-              onChange={e => handleFilterChange('searchTerm', e.target.value)}
+              onChange={(value) => handleFilterChange('searchTerm', value)}
             />
           </div>
           <div className="flex flex-wrap items-center gap-1.5 desktop-layout:gap-2 min-w-0">
@@ -295,18 +325,13 @@ export default function ProdutosHeader({
               abcd={filters.abcd}
               onChange={(value) => handleFilterChange('abcd', value)}
             />
-            <ProdutosTreeByCategoryToggle
-              checked={groupTreeByCategory}
-              onChange={onGroupTreeByCategoryChange}
-              className="desktop-layout:hidden"
-            />
-            {filteredProdutos.length > 0 && (
+            {hasFilteredProdutos && (
               <>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-10 w-10 flex-shrink-0 rounded-xl bg-muted desktop-layout:hidden"
+                  className={cn('h-10 w-10 flex-shrink-0', PRODUTOS_ICON_BTN, 'desktop-layout:hidden')}
                   onClick={() => onOpenMassCategory?.()}
                   title="Classificar categorias com IA"
                   aria-label="Classificar categorias com IA"
@@ -327,7 +352,7 @@ export default function ProdutosHeader({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-10 w-10 flex-shrink-0 rounded-xl bg-muted desktop-layout:hidden"
+                  className={cn('h-10 w-10 flex-shrink-0', PRODUTOS_ICON_BTN, 'desktop-layout:hidden')}
                   onClick={() => onOpenMassTag?.()}
                   title="Tagificação em massa com IA"
                   aria-label="Tagificação em massa com IA"
@@ -348,22 +373,22 @@ export default function ProdutosHeader({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-10 w-10 flex-shrink-0 rounded-xl bg-muted desktop-layout:hidden"
-                  onClick={() => onOpenMassMarkup?.()}
-                  title="Aplicar markup aos produtos do filtro atual"
-                  aria-label="Aplicar markup aos produtos do filtro atual"
+                  className={cn('h-10 w-10 flex-shrink-0', PRODUTOS_ICON_BTN, 'desktop-layout:hidden')}
+                  onClick={() => onOpenMassPrecificacao?.()}
+                  title="Ajustar precificação nos produtos do filtro atual"
+                  aria-label="Ajustar precificação nos produtos do filtro atual"
                 >
-                  <Percent className="w-4 h-4 p38-text-accent" />
+                  <SlidersHorizontal className="w-4 h-4 p38-text-accent" />
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   className="hidden desktop-layout:inline-flex h-10 flex-shrink-0 gap-1.5 rounded-xl text-xs font-medium border-[#4a5240]/30 dark:border-[#a4ce33]/30"
-                  onClick={() => onOpenMassMarkup?.()}
-                  title="Aplicar markup aos produtos do filtro atual"
+                  onClick={() => onOpenMassPrecificacao?.()}
+                  title="Ajustar precificação nos produtos do filtro atual"
                 >
-                  <Percent className="w-3.5 h-3.5 p38-text-accent" />
-                  Markup
+                  <SlidersHorizontal className="w-3.5 h-3.5 p38-text-accent" />
+                  Precificação
                 </Button>
               </>
             )}
@@ -371,20 +396,25 @@ export default function ProdutosHeader({
               variant="ghost"
               size="icon"
               className={cn(
-                'h-10 w-10 flex-shrink-0 rounded-xl relative bg-muted',
-                isFilterOpen && 'ring-2 ring-[#4a5240]/40 dark:ring-[#a4ce33]/40',
-                activeFilterCount > 0 && 'text-[#4a5240] dark:text-[#a4ce33]',
+                'h-10 w-10 flex-shrink-0 rounded-xl relative',
+                PRODUTOS_ICON_BTN,
+                isFilterOpen && PRODUTOS_FILTER_OPEN,
+                activeFilterCount > 0 && 'text-[#a8942e] dark:text-[#a4ce33]',
               )}
               onClick={() => setIsFilterOpen(v => !v)}
               title="Mais filtros"
             >
               <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
-              {activeFilterCount > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-muted text-foreground text-[10px] rounded-full flex items-center justify-center font-bold">{activeFilterCount}</span>}
+              {activeFilterCount > 0 && (
+                <span className={cn('absolute -top-0.5 -right-0.5 w-4 h-4 text-[10px] rounded-full flex items-center justify-center font-bold', PRODUTOS_FILTER_BADGE)}>
+                  {activeFilterCount}
+                </span>
+              )}
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="h-10 w-10 flex-shrink-0 rounded-xl bg-muted"
+              className={cn('h-10 w-10 flex-shrink-0', PRODUTOS_ICON_BTN)}
               onClick={() => setIsColumnSelectorOpen(true)}
               title="Colunas"
             >
@@ -397,13 +427,13 @@ export default function ProdutosHeader({
           <div className="hidden desktop-layout:flex desktop-layout:flex-col desktop-layout:gap-3 desktop-layout:pb-1 min-w-0">
             {/* Visualização da árvore */}
             <div className="grid grid-cols-4 gap-2 min-w-0">
-              <div className="col-span-2 flex items-center gap-2 bg-muted rounded-lg px-3 h-9 min-w-0">
+              <div className={cn('col-span-2 flex items-center gap-2 px-3 h-9 min-w-0', PRODUTOS_FILTER_PANEL)}>
                 <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground flex-shrink-0">
                   Nível TreeGrid
                 </span>
                 <LevelControl level={treeLevel} onChange={setTreeLevel} />
               </div>
-              <div className="col-span-2 flex items-center gap-2 bg-muted rounded-lg px-3 h-9 min-w-0">
+              <div className={cn('col-span-2 flex items-center gap-2 px-3 h-9 min-w-0', PRODUTOS_FILTER_PANEL)}>
                 <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground flex-shrink-0">
                   Agrupamento
                 </span>
@@ -425,30 +455,30 @@ export default function ProdutosHeader({
             {/* Cadastro e classificação */}
             <div className="grid grid-cols-4 gap-2 min-w-0">
               <Select value={filters.categoria} onValueChange={v => handleFilterChange('categoria', v)}>
-                <SelectTrigger className="bg-muted border-none h-9 text-xs rounded-lg">
+                <SelectTrigger className="bg-card border-0 shadow-sm h-9 text-xs rounded-lg">
                   <SelectValue placeholder="Categoria" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-muted dark:border-border/40">
+                <SelectContent className={PRODUTOS_DROPDOWN_MENU}>
                   <SelectItem value="all" className="text-xs">Todas as categorias</SelectItem>
                   {categorias.map(cat => <SelectItem key={cat} value={cat} className="text-xs">{cat}</SelectItem>)}
                 </SelectContent>
               </Select>
 
               <Select value={filters.fornecedorId} onValueChange={v => handleFilterChange('fornecedorId', v)}>
-                <SelectTrigger className="bg-muted border-none h-9 text-xs rounded-lg">
+                <SelectTrigger className="bg-card border-0 shadow-sm h-9 text-xs rounded-lg">
                   <SelectValue placeholder="Fornecedor" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-muted dark:border-border/40">
+                <SelectContent className={PRODUTOS_DROPDOWN_MENU}>
                   <SelectItem value="all" className="text-xs">Todos os fornecedores</SelectItem>
                   {fornecedores.map(f => <SelectItem key={f.id} value={f.id} className="text-xs">{f.nome}</SelectItem>)}
                 </SelectContent>
               </Select>
 
               <Select value={filters.unidadeVitrine || 'all'} onValueChange={(v) => handleFilterChange('unidadeVitrine', v)}>
-                <SelectTrigger className="bg-muted border-none h-9 text-xs rounded-lg">
+                <SelectTrigger className="bg-card border-0 shadow-sm h-9 text-xs rounded-lg">
                   <SelectValue placeholder="Unidade vitrine" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-muted dark:border-border/40">
+                <SelectContent className={PRODUTOS_DROPDOWN_MENU}>
                   <SelectItem value="all" className="text-xs">Todas as unidades</SelectItem>
                   {unidadesVitrine.map((sigla) => (
                     <SelectItem key={sigla} value={sigla} className="text-xs">
@@ -459,10 +489,10 @@ export default function ProdutosHeader({
               </Select>
 
               <Select value={filters.statusEstoque} onValueChange={v => handleFilterChange('statusEstoque', v)}>
-                <SelectTrigger className="bg-muted border-none h-9 text-xs rounded-lg">
+                <SelectTrigger className="bg-card border-0 shadow-sm h-9 text-xs rounded-lg">
                   <SelectValue placeholder="Status do estoque" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-muted dark:border-border/40">
+                <SelectContent className={PRODUTOS_DROPDOWN_MENU}>
                   <SelectItem value="all" className="text-xs">Todos os status</SelectItem>
                   <SelectItem value="ok" className="text-xs">OK</SelectItem>
                   <SelectItem value="baixo" className="text-xs">Baixo</SelectItem>
@@ -472,10 +502,10 @@ export default function ProdutosHeader({
               </Select>
 
               <Select value={filters.ativoStatus || 'all'} onValueChange={v => handleFilterChange('ativoStatus', v)}>
-                <SelectTrigger className="bg-muted border-none h-9 text-xs rounded-lg">
+                <SelectTrigger className="bg-card border-0 shadow-sm h-9 text-xs rounded-lg">
                   <SelectValue placeholder="Ativos/Inativos" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-muted dark:border-border/40">
+                <SelectContent className={PRODUTOS_DROPDOWN_MENU}>
                   <SelectItem value="all" className="text-xs">Ativos e inativos</SelectItem>
                   <SelectItem value="ativos" className="text-xs">Somente ativos</SelectItem>
                   <SelectItem value="inativos" className="text-xs">Somente inativos</SelectItem>
@@ -483,10 +513,10 @@ export default function ProdutosHeader({
               </Select>
 
               <Select value={filters.cadastroIncompleto} onValueChange={v => handleFilterChange('cadastroIncompleto', v)}>
-                <SelectTrigger className="bg-muted border-none h-9 text-xs rounded-lg">
+                <SelectTrigger className="bg-card border-0 shadow-sm h-9 text-xs rounded-lg">
                   <SelectValue placeholder="Cadastro" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-muted dark:border-border/40">
+                <SelectContent className={PRODUTOS_DROPDOWN_MENU}>
                   <SelectItem value="all" className="text-xs">Todos os cadastros</SelectItem>
                   <SelectItem value="incompleto" className="text-xs">Incompleto</SelectItem>
                   <SelectItem value="completo" className="text-xs">Completo</SelectItem>
@@ -494,10 +524,10 @@ export default function ProdutosHeader({
               </Select>
 
               <Select value={filters.abcd || 'all'} onValueChange={v => handleFilterChange('abcd', v)}>
-                <SelectTrigger className="bg-muted border-none h-9 text-xs rounded-lg">
+                <SelectTrigger className="bg-card border-0 shadow-sm h-9 text-xs rounded-lg">
                   <SelectValue placeholder="Curva ABCD" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-muted dark:border-border/40">
+                <SelectContent className={PRODUTOS_DROPDOWN_MENU}>
                   <SelectItem value="all" className="text-xs">Todas as classes</SelectItem>
                   {ABCD_FILTER_VALUES.map((value) => (
                     <SelectItem key={value} value={value} className="text-xs">
@@ -509,14 +539,14 @@ export default function ProdutosHeader({
 
               <Input
                 placeholder="Filtrar por tag..."
-                className="bg-muted/80 border-none h-9 text-xs rounded-lg"
+                className="bg-card border-0 shadow-sm h-9 text-xs rounded-lg"
                 value={filters.tag || ''}
                 onChange={e => handleFilterChange('tag', e.target.value)}
               />
             </div>
 
             {/* Filtros numéricos: estoque + duas métricas */}
-            <div className="rounded-lg border border-border/30 bg-muted/15 p-2.5 space-y-2.5 min-w-0">
+            <div className={cn(PRODUTOS_FILTER_PANEL, 'p-2.5 space-y-2.5 min-w-0')}>
               <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Filtros numéricos
                 {filters.estoqueVirtual ? (
@@ -555,10 +585,10 @@ export default function ProdutosHeader({
                       quantidadeValorAte: v === 'between' ? prev.quantidadeValorAte : '',
                     }))}
                   >
-                    <SelectTrigger className="bg-muted/80 border-none h-9 text-xs rounded-lg min-w-0 flex-1">
+                    <SelectTrigger className="bg-card border-0 shadow-sm h-9 text-xs rounded-lg min-w-0 flex-1">
                       <SelectValue placeholder="Quantidade" />
                     </SelectTrigger>
-                    <SelectContent className="dark:bg-muted dark:border-border/40">
+                    <SelectContent className={PRODUTOS_DROPDOWN_MENU}>
                       <SelectItem value="all" className="text-xs">Qualquer quantidade</SelectItem>
                       <SelectItem value="gt" className="text-xs">Maior que</SelectItem>
                       <SelectItem value="gte" className="text-xs">Maior ou igual a</SelectItem>
@@ -573,7 +603,7 @@ export default function ProdutosHeader({
                     inputMode="decimal"
                     placeholder={quantidadeOperador === 'between' ? 'De' : 'Qtd.'}
                     disabled={quantidadeOperador === 'all'}
-                    className="bg-muted/80 border-none h-9 text-xs rounded-lg disabled:opacity-50 w-full min-w-[4.5rem] flex-[0.7]"
+                    className="bg-card border-0 shadow-sm h-9 text-xs rounded-lg disabled:opacity-50 w-full min-w-[4.5rem] flex-[0.7]"
                     value={filters.quantidadeValor || ''}
                     onChange={e => handleFilterChange('quantidadeValor', e.target.value)}
                   />
@@ -582,7 +612,7 @@ export default function ProdutosHeader({
                     <Input
                       inputMode="decimal"
                       placeholder="Até"
-                      className="bg-muted/80 border-none h-9 text-xs rounded-lg w-full min-w-[4.5rem] flex-[0.7]"
+                      className="bg-card border-0 shadow-sm h-9 text-xs rounded-lg w-full min-w-[4.5rem] flex-[0.7]"
                       value={filters.quantidadeValorAte || ''}
                       onChange={e => handleFilterChange('quantidadeValorAte', e.target.value)}
                     />
@@ -652,3 +682,5 @@ export default function ProdutosHeader({
     </div>
   );
 }
+
+export default memo(ProdutosHeader);

@@ -28,6 +28,14 @@ export default function AnexosModalIntegrado({
     return null;
   }, [referencias, uploadTarget]);
 
+  const pedidoId = useMemo(() => {
+    if (uploadTarget?.referencia_tipo === 'PedidoCompra' && uploadTarget?.referencia_id) {
+      return uploadTarget.referencia_id;
+    }
+    const pedidoRef = referencias.find((ref) => ref.referencia_tipo === 'PedidoCompra');
+    return pedidoRef?.referencia_id || null;
+  }, [referencias, uploadTarget]);
+
   const refsKey = referencias
     .map((r) => `${r.referencia_tipo}:${r.referencia_id}`)
     .sort()
@@ -113,6 +121,7 @@ export default function AnexosModalIntegrado({
         onDelete={handleDelete}
         uploading={uploading}
         referenciaNomero={referenciaNomero}
+        pedidoId={pedidoId}
         readOnly={readOnly}
       />
     </div>

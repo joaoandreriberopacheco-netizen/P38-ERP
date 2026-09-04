@@ -140,12 +140,12 @@ export default function QuickBudgetFlowItemEditor({
 
       <div className="flex gap-3">
         {stage === 'quantity' && (
-          <Button onClick={onNext} className="flex-1 h-12 rounded-2xl bg-background hover:bg-primary dark:bg-card dark:text-foreground shadow-none">
+          <Button onClick={onNext} className="flex-1 h-12 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground shadow-none">
             <ArrowRight className="w-4 h-4 mr-2" /> Próximo
           </Button>
         )}
         {stage === 'price' && (
-          <Button onClick={onSave} className="flex-1 h-12 rounded-2xl bg-background hover:bg-primary dark:bg-card dark:text-foreground shadow-none">
+          <Button onClick={onSave} className="flex-1 h-12 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground shadow-none">
             <ShoppingCart className="w-4 h-4 mr-2" /> Salvar carrinho
           </Button>
         )}

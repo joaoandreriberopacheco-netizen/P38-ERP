@@ -12,7 +12,7 @@ export const PRODUTO_COLUMNS = [
   'estoque_ideal', 'estoque_maximo', 'estoque_avariado', 'unidade_principal', 'unidade_vitrine',
   'unidades_por_pacote', 'unidades_alternativas', 'fornecedor_padrao_id', 'fornecedor_padrao_codigo',
   'custo_frete_padrao', 'custo_outros_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao',
-  'desconto_compra_padrao', 'controla_serial', 'controla_lote', 'controla_validade', 'peso_kg',
+  'desconto_compra_padrao', 'avaria_percentual', 'controla_serial', 'controla_lote', 'controla_validade', 'peso_kg',
   'volume_cm3', 'dimensoes_cm', 'ativo', 'tempo_reposicao_dias', 'venda_media_dia',
   'metas_estoque_atualizado_em', 'metas_estoque_dias_com_estoque', 'metas_estoque_unidade_compra',
   'metas_estoque_outliers_descartados', 'metas_estoque_quantidade_limpa_90d', 'estoque_trava_manual',
@@ -27,8 +27,10 @@ export const TERCEIRO_COLUMNS = [
 export const LANCAMENTO_FINANCEIRO_COLUMNS = [
   'tipo', 'descricao', 'terceiro_id', 'terceiro_nome', 'valor', 'valor_liquido', 'data_vencimento',
   'data_pagamento', 'data_liquidacao_prevista', 'data_liquidacao_efetiva', 'data_lancamento',
-  'status', 'status_conciliacao', 'categoria', 'categoria_id', 'conta_financeira_id',
-  'conta_financeira_nome', 'forma_pagamento', 'forma_pagamento_id', 'forma_pagamento_tipo',
+  'status', 'status_conciliacao', 'categoria', 'categoria_id', 'centro_custo', 'centro_custo_id',
+  'conta_financeira_id',
+  'conta_financeira_nome', 'conta_destino_id', 'conta_destino_nome', 'forma_pagamento',
+  'forma_pagamento_id', 'forma_pagamento_tipo',
   'turno_caixa_id', 'grupo_lancamento_id', 'is_recorrente', 'is_custo_mercadoria',
   'frequencia_recorrencia', 'data_fim_recorrencia', 'numero_parcelas_total', 'parcela_atual',
   'pedido_compra_vinculado_id', 'pedido_compra_vinculado_numero', 'referencia_tipo',
@@ -84,7 +86,7 @@ export const MOVIMENTOS_CAIXA_COLUMNS = [
   'numero', 'tipo', 'valor', 'valor_original', 'status_registro', 'conta_id', 'turno_caixa_id',
   'usuario_responsavel_id', 'usuario_responsavel_nome', 'observacao', 'observacao_original',
   'motivo_ajuste', 'editado_por_nome', 'editado_em', 'cancelado_em', 'cancelado_por_nome',
-  'historico_ajustes',
+  'historico_ajustes', 'lancamento_financeiro_id',
 ];
 
 export const FORMAS_DE_PAGAMENTO_COLUMNS = [
@@ -257,7 +259,8 @@ export const TABLE_PROMOTION_MANIFEST = {
   transportadora: ['ativo', 'nome', 'saida_referencia', 'cnpj', 'contato', 'email', 'telefone', 'observacoes'],
   usuario: [
     'caixas_pdv_autorizados_ids', 'email', 'full_name', 'role', 'login', 'auth_ativado', 'nickname',
-    'perfil', 'perfil_acesso_id', 'perfil_acesso_nome', 'tabela_preco_id', 'tabela_preco_nome',
+    'perfil', 'perfil_acesso_id', 'perfil_acesso_nome', 'override_permissoes',
+    'tabela_preco_id', 'tabela_preco_nome',
   ],
   vale_compra: [
     'cliente_id', 'cliente_nome', 'codigo', 'historico_uso', 'origem_tipo', 'pedido_origem_id',
@@ -265,8 +268,8 @@ export const TABLE_PROMOTION_MANIFEST = {
   ],
   venda_perdida: ['data_registro', 'motivo', 'origem', 'produto_nome', 'quantidade_desejada', 'vendedor_id'],
   folha_previsao_modelo: [
-    'nome', 'descricao', 'ativo', 'colaborador_id', 'colaborador_nome', 'centro_custo',
-    'classificacao_despesa', 'custo_direto', 'data_desligamento', 'decimo_mes_parcela_1',
+    'nome', 'descricao', 'ativo', 'colaborador_id', 'colaborador_nome', 'centro_custo', 'centro_custo_id',
+    'classificacao_despesa', 'custo_direto', 'data_desligamento', 'data_entrada', 'decimo_mes_parcela_1',
     'decimo_mes_parcela_2', 'decimo_percentual_parcela', 'decimo_terceiro_ativo', 'dia_vencimento',
     'ferias_programadas', 'retirada_frequencia', 'retirada_valor_fixo', 'rubricas', 'situacao',
     'tipo_vinculo', 'valor_rescisao_previsto',
@@ -277,8 +280,8 @@ export const TABLE_PROMOTION_MANIFEST = {
   ],
   folha_centro_custo: ['nome', 'ativo', 'ordem'],
   budget_modelo: [
-    'nome', 'ativo', 'categoria_id', 'categoria_nome', 'centro_custo', 'ciclo_dias', 'modo_estimativa',
-    'observacoes', 'ordem', 'usa_dias_uteis', 'valor_entrada',
+    'nome', 'ativo', 'categoria_id', 'categoria_nome', 'centro_custo', 'centro_custo_id', 'ciclo_dias',
+    'modo_estimativa', 'observacoes', 'ordem', 'usa_dias_uteis', 'valor_entrada',
   ],
   budget_competencia: ['modelo_id', 'competencia', 'status', 'linhas', 'total'],
   perfil_de_acesso: ['nome', 'descricao', 'ativo', 'cor', 'menu_compacto', 'permissoes'],

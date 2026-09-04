@@ -29,3 +29,28 @@ export function randomPassword(length = 32): string {
   crypto.getRandomValues(bytes);
   return Array.from(bytes, (b) => (b % 36).toString(36)).join('');
 }
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Email operacional do utilizador (não o sintético @login.p38.internal). */
+export function resolveUsuarioOperationalEmail(row: {
+  email?: string | null;
+  dados?: Record<string, unknown> | null;
+}): string | null {
+  const candidates = [row.email, row.dados?.email];
+  for (const raw of candidates) {
+    const email = String(raw || '').trim().toLowerCase();
+    if (!email || !EMAIL_RE.test(email)) continue;
+    if (email.endsWith(`@${P38_LOGIN_EMAIL_DOMAIN}`)) continue;
+    return email;
+  }
+  return null;
+}
+
+export function maskOperationalEmail(email: string): string {
+  const [local, domain] = email.split('@');
+  if (!domain) return '***';
+  if (local.length <= 1) return `*@${domain}`;
+  if (local.length === 2) return `${local[0]}*@${domain}`;
+  return `${local[0]}${'*'.repeat(Math.min(local.length - 2, 4))}${local.slice(-1)}@${domain}`;
+}

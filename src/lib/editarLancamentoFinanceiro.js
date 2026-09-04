@@ -1,3 +1,4 @@
+import { sincronizarPedidosCompraPorLancamentos } from '@/lib/aprovarPedidoCompraFinanceiro';
 import { base44 as defaultClient } from '@/api/base44Client';
 import { dataHoje, datetimeLocalParaISO, vencimentoComMesmoDiaNoMes } from '@/components/utils/dateUtils';
 import { lancamentoMesmoRamoRecorrencia } from '@/lib/agefinLancamentosRecorrencia';
@@ -51,6 +52,8 @@ export async function salvarEdicaoLancamentoFinanceiro({
   observacoes = '',
   categoria,
   categoriaId,
+  centroCusto = '',
+  centroCustoId = '',
   tags,
   contaId,
   realizado,
@@ -79,6 +82,8 @@ export async function salvarEdicaoLancamentoFinanceiro({
     data_vencimento: venAtual,
     categoria: normalizeDataText(categoria),
     categoria_id: categoriaId || '',
+    centro_custo: normalizeDataText(centroCusto || ''),
+    centro_custo_id: centroCustoId || '',
     tags: tags || [],
   };
 
@@ -88,6 +93,8 @@ export async function salvarEdicaoLancamentoFinanceiro({
     (lancamento.data_vencimento || '').slice(0, 10) !== venAtual ||
     (lancamento.observacoes || '') !== cadastroPayload.observacoes ||
     (lancamento.categoria || '') !== cadastroPayload.categoria ||
+    (lancamento.centro_custo || '') !== cadastroPayload.centro_custo ||
+    (lancamento.centro_custo_id || '') !== cadastroPayload.centro_custo_id ||
     JSON.stringify(lancamento.tags || []) !== JSON.stringify(tags || []);
 
   const conta = contas.find((c) => c.id === contaId);
@@ -178,6 +185,13 @@ export async function salvarEdicaoLancamentoFinanceiro({
       }
     }
     await sincronizarSaldosAposAlteracao(base44, [contaId, ...alvos.map((l) => l.conta_financeira_id)]);
+    if (pagamentoDirty && realizado) {
+      try {
+        await sincronizarPedidosCompraPorLancamentos(base44, alvos);
+      } catch {
+        /* não bloqueia pagamento */
+      }
+    }
     const updated = alvos.find((l) => l.id === lancamento.id) || lancamento;
     return { updated, changed: true, batchCount: alvos.length };
   }
@@ -226,6 +240,15 @@ export async function salvarEdicaoLancamentoFinanceiro({
       /* não bloqueia edição do lançamento */
     }
   }
+
+  if (pagamentoDirty && realizado) {
+    try {
+      await sincronizarPedidosCompraPorLancamentos(base44, [updated || { ...lancamento, ...baseUpdate }]);
+    } catch {
+      /* não bloqueia pagamento */
+    }
+  }
+
   return { updated, changed: true };
 }
 

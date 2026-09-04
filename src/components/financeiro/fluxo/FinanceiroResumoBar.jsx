@@ -24,7 +24,7 @@ function ResumoGridCell({ icon: Icon, value, valueClass, iconClass, label }) {
       <Icon className={cn('h-3.5 w-3.5 shrink-0', iconClass ?? valueClass)} aria-hidden />
       <span
         className={cn(
-          'w-full truncate text-center text-[10px] font-semibold leading-tight tabular-nums sm:text-[11px]',
+          'w-full text-center text-[9px] font-semibold leading-tight tabular-nums whitespace-nowrap sm:text-[10px] md:text-[11px]',
           valueClass,
         )}
       >
@@ -48,6 +48,7 @@ export default function FinanceiroResumoBar({
   despesas = 0,
   variacao,
   saldo,
+  saldoPronto = true,
   saldoComSinal = false,
   periodoLabel,
   variant = 'default',
@@ -60,19 +61,30 @@ export default function FinanceiroResumoBar({
   const negClass = 'text-red-600 dark:text-red-400';
   const isBalancoDia = variant === 'balancoDia';
 
-  const saldoDisplay =
-    saldo != null
+  const saldoCarregando = !saldoPronto;
+  const saldoExibir = saldoPronto && saldo != null ? saldo : null;
+  const saldoDisplay = saldoCarregando
+    ? '…'
+    : saldoExibir != null
       ? saldoComSinal
-        ? `${saldo >= 0 ? '+' : '−'}${formatKpiValor(Math.abs(saldo))}`
-        : formatKpiValor(saldo)
+        ? `${saldoExibir >= 0 ? '+' : '−'}${formatKpiValor(Math.abs(saldoExibir))}`
+        : formatKpiValor(saldoExibir)
       : null;
+  const saldoSegmentClass = saldoCarregando
+    ? 'text-muted-foreground animate-pulse'
+    : 'text-foreground';
+  const saldoIconClass = saldoCarregando ? 'text-muted-foreground' : 'text-foreground/70';
 
   const title = [
     periodoLabel ? `Período: ${periodoLabel}` : null,
     `Receitas ${formatKpiValor(receitas)}`,
     `Despesas ${formatKpiValor(despesas)}`,
     `Variação ${variacaoPos ? '+' : '−'}${formatKpiValor(Math.abs(variacaoVal))}`,
-    saldo != null ? `Saldo ${saldoComSinal ? saldoDisplay : formatKpiValor(saldo)}` : null,
+    saldoCarregando
+      ? 'Saldo a calcular'
+      : saldoExibir != null
+        ? `Saldo ${saldoComSinal ? saldoDisplay : formatKpiValor(saldoExibir)}`
+        : null,
   ]
     .filter(Boolean)
     .join(' · ');
@@ -83,7 +95,7 @@ export default function FinanceiroResumoBar({
         {/* Mobile: 3 colunas fixas — leitura vertical estável ao rolar */}
         <div
           className={cn(
-            'grid w-full grid-cols-3 gap-2 rounded-lg px-2 py-3 md:hidden',
+            'grid w-full grid-cols-3 gap-1.5 rounded-lg px-1 py-3 md:hidden',
             className,
           )}
           title={title}
@@ -100,12 +112,12 @@ export default function FinanceiroResumoBar({
             valueClass={despesas > 0 ? negClass : 'text-muted-foreground/70'}
             label={labels.despesas}
           />
-          {saldoDisplay != null ? (
+          {(saldoDisplay != null || saldoCarregando) ? (
             <ResumoGridCell
               icon={Wallet}
-              value={saldoDisplay}
-              valueClass="text-foreground"
-              iconClass="text-foreground/70"
+              value={saldoDisplay ?? '…'}
+              valueClass={saldoSegmentClass}
+              iconClass={saldoIconClass}
               label={labels.saldo}
             />
           ) : (
@@ -139,16 +151,16 @@ export default function FinanceiroResumoBar({
             value={`${variacaoPos ? '+' : '−'}${formatKpiValor(Math.abs(variacaoVal))}`}
             valueClass={variacaoPos ? posClass : negClass}
           />
-          {saldoDisplay != null && (
+          {(saldoDisplay != null || saldoCarregando) && (
             <>
               <span className="shrink-0 text-muted-foreground/35" aria-hidden>
                 ·
               </span>
               <ResumoSegment
                 icon={Wallet}
-                value={saldoDisplay}
-                valueClass="text-foreground"
-                iconClass="text-foreground/70"
+                value={saldoDisplay ?? '…'}
+                valueClass={saldoSegmentClass}
+                iconClass={saldoIconClass}
               />
             </>
           )}
@@ -189,16 +201,16 @@ export default function FinanceiroResumoBar({
           valueClass={variacaoPos ? posClass : negClass}
         />
       </span>
-      {saldoDisplay != null && (
+      {(saldoDisplay != null || saldoCarregando) && (
         <>
           <span className="shrink-0 text-muted-foreground/35" aria-hidden>
             ·
           </span>
           <ResumoSegment
             icon={Wallet}
-            value={saldoDisplay}
-            valueClass="text-foreground"
-            iconClass="text-foreground/70"
+            value={saldoDisplay ?? '…'}
+            valueClass={saldoSegmentClass}
+            iconClass={saldoIconClass}
           />
         </>
       )}

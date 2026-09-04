@@ -138,7 +138,7 @@ export default function SolicitarEdicaoPDV({ pedido, currentUser, isAdmin, isOpe
                 <button
                   onClick={handleEnviar}
                   disabled={!motivo.trim() || loading}
-                  className="flex-1 h-12 rounded-xl bg-background dark:bg-muted text-white text-sm font-semibold disabled:opacity-40"
+                  className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-semibold disabled:opacity-40"
                 >
                   {loading ? 'Enviando...' : 'Solicitar'}
                 </button>

@@ -1,15 +1,25 @@
 /**
- * Classe ABCD no catálogo — valor calculado ao vivo (enrichProdutosComIep)
- * ou trava manual no cadastro.
+ * Classe ABCD — fonte canónica: coluna `produto.abcd` no SQL (job IEP / cadastro).
+ * O enrich ao vivo só preenche métricas IEP; não substitui a curva gravada.
  */
 
-export function resolveProdutoAbcdClasse(produto) {
+const CURVAS_VALIDAS = new Set(['A', 'B', 'C', 'D', 'E']);
+
+/** Curva gravada no cadastro (Supabase) — usar antes de qualquer cálculo ao vivo. */
+export function resolveCadastroAbcdClasse(produto) {
   if (!produto) return '';
   if (produto.iep_trava_manual) {
     const locked = String(produto.iep_classe || produto.abcd || '').toUpperCase().trim();
-    if (locked) return locked;
+    if (CURVAS_VALIDAS.has(locked)) return locked;
   }
-  return String(produto.abcd || produto.iep_classe || '').toUpperCase().trim();
+  const cadastro = String(produto.abcd || '').toUpperCase().trim();
+  return CURVAS_VALIDAS.has(cadastro) ? cadastro : '';
+}
+
+export function resolveProdutoAbcdClasse(produto) {
+  const cadastro = resolveCadastroAbcdClasse(produto);
+  if (cadastro) return cadastro;
+  return String(produto?.iep_classe || '').toUpperCase().trim();
 }
 
 export function produtoMatchesAbcdFilter(produto, abcdFilter) {

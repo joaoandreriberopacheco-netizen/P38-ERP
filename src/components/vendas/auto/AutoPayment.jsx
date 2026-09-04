@@ -5,11 +5,25 @@ import { CreditCard, Smartphone, ArrowLeft, Loader2, Printer, CheckCircle } from
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import SimuladorCartaoSheet from '@/components/vendas/SimuladorCartaoSheet';
+import {
+  AUTO_COVER_CLASS,
+  AUTO_HEADER_CLASS,
+  AUTO_PRIMARY_BTN,
+  AUTO_SHELL_BG,
+  AUTO_SURFACE_CLASS,
+  AUTO_CARD_HOVER,
+  AUTO_ACCENT_TEXT,
+  AUTO_ACCENT_BG,
+  formatAutoMoney,
+} from './autoAtendimentoUi';
+import { omitPedidoVendaEspelho } from '@/lib/omitEspelhoPersist';
+import { syncPedidoVendaItens } from '@/lib/syncPedidoVendaItens';
 
 export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
   const [processing, setProcessing] = useState(false);
   const [method, setMethod] = useState(null); // 'credit', 'debit', 'pix'
   const [pedidoFinalizado, setPedidoFinalizado] = useState(null);
+  const [itensCupom, setItensCupom] = useState([]);
   const [showSimulador, setShowSimulador] = useState(false);
   const { toast } = useToast();
 
@@ -29,7 +43,15 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
         const randomNum = Math.floor(Math.random() * 10000);
         const numeroPedido = `AUTO-${randomNum}`;
 
-        const pedidoData = {
+        const itensLegado = carrinho.map(item => ({
+            produto_id: item.produto_id,
+            produto_nome: item.produto_nome,
+            quantidade: item.quantidade,
+            preco_unitario_praticado: item.preco_unitario_praticado,
+            total: item.total
+          }));
+
+        const pedidoData = omitPedidoVendaEspelho({
           numero: numeroPedido,
           tipo: 'PDV Autosserviço',
           cliente_id: cliente?.id,
@@ -37,13 +59,6 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
           vendedor_id: user.id, // Atribui ao usuário logado (totem)
           vendedor_nome: 'Totem Autosserviço',
           status: 'Finalizado',
-          itens: carrinho.map(item => ({
-            produto_id: item.produto_id,
-            produto_nome: item.produto_nome,
-            quantidade: item.quantidade,
-            preco_unitario_praticado: item.preco_unitario_praticado,
-            total: item.total
-          })),
           valor_total: total,
           pagamentos: [{
             forma_pagamento: selectedMethod === 'pix' ? 'PIX' : selectedMethod === 'credit' ? 'Cartão de Crédito' : 'Cartão de Débito',
@@ -51,9 +66,17 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
             parcelas: 1
           }],
           origem: 'Totem'
-        };
+        });
 
         const pedido = await base44.entities.PedidoVenda.create(pedidoData);
+
+        try {
+          await syncPedidoVendaItens(pedido.id, itensLegado);
+        } catch (canonicalErr) {
+          console.warn('Sincronia PedidoVendaItem falhou:', canonicalErr?.message || canonicalErr);
+        }
+
+        setItensCupom(itensLegado);
         setPedidoFinalizado(pedido);
         // onSuccess(pedido); // Movido para depois da impressão
       } catch (error) {
@@ -93,7 +116,7 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
               </div>
               
               <div className="space-y-2 mb-4">
-                {pedidoFinalizado.itens.map((item, idx) => (
+                {itensCupom.map((item, idx) => (
                   <div key={idx} className="flex justify-between">
                     <span className="truncate flex-1 pr-4">{item.quantidade}x {item.produto_nome}</span>
                     <span>{item.total.toFixed(2)}</span>
@@ -114,7 +137,7 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
 
             <Button 
               onClick={() => onSuccess(pedidoFinalizado)}
-              className="w-full h-14 text-lg font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl mb-3"
+              className={`w-full h-14 text-lg font-bold rounded-xl mb-3 ${AUTO_PRIMARY_BTN}`}
             >
               <Printer className="w-5 h-5 mr-2" />
               Imprimir e Finalizar
@@ -134,22 +157,22 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
   return (
     <>
     <motion.div 
-      className="flex-1 flex flex-col bg-background"
+      className={`flex-1 flex flex-col ${AUTO_SHELL_BG}`}
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
     >
-      <div className="p-6 border-b border-border/40 bg-card flex items-center justify-between">
-        <Button variant="ghost" onClick={onBack} disabled={processing}>
+      <div className={AUTO_HEADER_CLASS}>
+        <Button variant="ghost" onClick={onBack} disabled={processing} className="text-white hover:bg-indigo-700 hover:text-white">
           <ArrowLeft className="w-5 h-5 mr-2" /> Voltar
         </Button>
-        <h2 className="text-xl font-bold">Pagamento</h2>
-        <div className="w-20"></div> {/* Spacer */}
+        <h2 className="text-lg font-bold">Pagamento</h2>
+        <div className="w-16" />
       </div>
 
       <div className="flex-1 flex flex-col md:flex-row">
         {/* Resumo */}
-        <div className="w-full md:w-1/3 p-8 bg-card border-r border-border/40">
+        <div className={`w-full md:w-1/3 p-8 ${AUTO_SURFACE_CLASS} border-r border-border/40 dark:border-border/40`}>
           <h3 className="text-lg font-semibold mb-6">Resumo do Pedido</h3>
           <div className="space-y-4 mb-8">
             {carrinho.map(item => (
@@ -164,25 +187,25 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
                   )}
                 </div>
                 <span className="text-muted-foreground flex-1 truncate">{item.quantidade}x {item.produto_nome}</span>
-                <span className="font-medium flex-shrink-0">R$ {item.total.toFixed(2)}</span>
+              <span className="font-medium flex-shrink-0 text-[#4a5240] dark:text-[#a4ce33]">R$ {item.total.toFixed(2)}</span>
               </div>
             ))}
           </div>
           <div className="border-t border-border/40 pt-6">
             <div className="flex justify-between items-center text-2xl font-bold">
               <span>Total</span>
-              <span className="text-emerald-600">R$ {total.toFixed(2)}</span>
+              <span className="text-[#4a5240] dark:text-[#a4ce33]">R$ {total.toFixed(2)}</span>
             </div>
           </div>
         </div>
 
         {/* Métodos de Pagamento */}
-        <div className="flex-1 p-8 flex flex-col justify-center items-center bg-background">
+        <div className={`flex-1 p-8 flex flex-col justify-center items-center ${AUTO_SHELL_BG}`}>
           {processing ? (
             <div className="text-center">
               <div className="relative w-24 h-24 mx-auto mb-8">
                 <div className="absolute inset-0 border-4 border-border/40 rounded-full"></div>
-                <div className="absolute inset-0 border-4 border-indigo-600 rounded-full border-t-transparent animate-spin"></div>
+                <div className="absolute inset-0 border-4 border-[#4a5240] rounded-full border-t-transparent animate-spin"></div>
               </div>
               <h3 className="text-2xl font-bold mb-2">Processando Pagamento...</h3>
               <p className="text-muted-foreground">Siga as instruções na maquininha de cartão</p>
@@ -202,10 +225,10 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
               
               <button
                 onClick={() => handleProcessPayment('credit')}
-                className="w-full p-6 bg-card hover:bg-indigo-50 dark:hover:bg-primary/90 border-2 border-transparent hover:border-indigo-500 rounded-2xl shadow-sm transition-all flex items-center gap-4 group"
+                className={`w-full p-6 ${AUTO_SURFACE_CLASS} ${AUTO_CARD_HOVER} border-2 border-transparent flex items-center gap-4 group`}
               >
-                <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center group-hover:bg-indigo-200">
-                  <CreditCard className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                <div className={`w-12 h-12 ${AUTO_ACCENT_BG} rounded-full flex items-center justify-center group-hover:bg-muted dark:group-hover:bg-[#383e47]`}>
+                  <CreditCard className={`w-6 h-6 ${AUTO_ACCENT_TEXT}`} />
                 </div>
                 <div className="text-left">
                   <p className="font-bold text-lg">Cartão de Crédito</p>
@@ -215,10 +238,10 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
 
               <button
                 onClick={() => handleProcessPayment('debit')}
-                className="w-full p-6 bg-card hover:bg-indigo-50 dark:hover:bg-primary/90 border-2 border-transparent hover:border-indigo-500 rounded-2xl shadow-sm transition-all flex items-center gap-4 group"
+                className={`w-full p-6 ${AUTO_SURFACE_CLASS} ${AUTO_CARD_HOVER} border-2 border-transparent flex items-center gap-4 group`}
               >
-                <div className="w-12 h-12 bg-teal-100 dark:bg-teal-900/50 rounded-full flex items-center justify-center group-hover:bg-teal-200">
-                  <CreditCard className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+                <div className="w-12 h-12 bg-[#e8b824]/15 rounded-full flex items-center justify-center group-hover:bg-[#e8b824]/25">
+                  <CreditCard className="w-6 h-6 text-[#c99710] dark:text-[#e8b824]" />
                 </div>
                 <div className="text-left">
                   <p className="font-bold text-lg">Cartão de Débito</p>
@@ -228,10 +251,10 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
 
               <button
                 onClick={() => handleProcessPayment('pix')}
-                className="w-full p-6 bg-card hover:bg-indigo-50 dark:hover:bg-primary/90 border-2 border-transparent hover:border-indigo-500 rounded-2xl shadow-sm transition-all flex items-center gap-4 group"
+                className={`w-full p-6 ${AUTO_SURFACE_CLASS} ${AUTO_CARD_HOVER} border-2 border-transparent flex items-center gap-4 group`}
               >
-                <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center group-hover:bg-emerald-200">
-                  <Smartphone className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                <div className={`w-12 h-12 ${AUTO_ACCENT_BG} rounded-full flex items-center justify-center group-hover:bg-muted dark:group-hover:bg-[#383e47]`}>
+                  <Smartphone className={`w-6 h-6 ${AUTO_ACCENT_TEXT}`} />
                 </div>
                 <div className="text-left">
                   <p className="font-bold text-lg">PIX</p>

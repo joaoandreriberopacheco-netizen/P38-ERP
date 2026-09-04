@@ -1,11 +1,13 @@
-import { getSupabaseBrowserClient, normalizeSupabaseProjectUrl } from '@/lib/supabaseBrowserClient';
+import { getSupabaseBrowserClient, normalizeSupabaseProjectUrl, resolveP38AccessToken } from '@/lib/supabaseBrowserClient';
+
+import { p38PublicEnv } from '@/lib/p38PublicEnv';
 
 function resolveFunctionUrls() {
   const urls = [];
   if (typeof window !== 'undefined' && window.location?.origin) {
     urls.push(`${window.location.origin}/api/auth-p38`);
   }
-  const base = normalizeSupabaseProjectUrl(import.meta.env.VITE_SUPABASE_URL || '');
+  const base = normalizeSupabaseProjectUrl(p38PublicEnv('VITE_SUPABASE_URL') || '');
   if (base) {
     urls.push(`${base}/functions/v1/p38-auth`);
   }
@@ -13,7 +15,7 @@ function resolveFunctionUrls() {
 }
 
 function resolveAnonKey() {
-  return String(import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
+  return String(p38PublicEnv('VITE_SUPABASE_ANON_KEY') || '').trim();
 }
 
 function isSameOriginProxy(url) {
@@ -79,8 +81,7 @@ export async function invokeP38Auth(body, { authorized = false } = {}) {
   let sessionToken = null;
   if (authorized) {
     if (!supabase) throw new Error('Supabase não configurado.');
-    const { data } = await supabase.auth.getSession();
-    sessionToken = data?.session?.access_token;
+    sessionToken = await resolveP38AccessToken(supabase);
     if (!sessionToken) throw new Error('Sessão ausente.');
   }
 
@@ -160,4 +161,12 @@ export async function activateP38User({ login, password }) {
 
 export async function createP38UserAsAdmin(payload) {
   return invokeP38Auth({ op: 'create_user', ...payload }, { authorized: true });
+}
+
+export async function requestP38PasswordReset({ login, app_origin }) {
+  return invokeP38Auth({
+    op: 'request_password_reset',
+    login,
+    app_origin,
+  });
 }

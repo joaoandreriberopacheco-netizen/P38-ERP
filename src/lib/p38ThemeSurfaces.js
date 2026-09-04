@@ -1,7 +1,7 @@
 /**
  * Superfícies P38 — alinhado ao Relatório de Margem mobile (screenshot) e tokens em index.css.
  * Escuro: carvão #1f1d22, cartão #2d333b, busca #26262e, cabeçalho tabela #383e47, limão #a4ce33.
- * Claro: fundo suave + acento verde oliva.
+ * Claro: branco puro + carvão + amarelo suco (acento); escuro: carvão + limão.
  */
 
 export const P38_THEME = {
@@ -24,60 +24,80 @@ export const P38_THEME = {
     accent: '#a4ce33',
   },
   light: {
-    bg: '#f7f8f5',
+    bg: '#ffffff',
     headerBg: '#ffffff',
-    searchBg: '#f0f2ec',
+    searchBg: '#ffffff',
     cardBg: '#ffffff',
-    tableHeaderBg: '#e8ebe3',
-    text: '#2a2f28',
-    textMuted: '#5c6358',
-    textSub: '#434a40',
-    iconColor: '#5a6250',
-    chevron: '#8b9285',
-    divider: '#dce0d4',
-    btnBg: 'rgba(74, 82, 64, 0.08)',
-    backBg: '#f0f2ec',
-    closeBg: '#e8ebe3',
-    closeColor: '#434a40',
+    tableHeaderBg: '#fafafa',
+    text: '#242424',
+    textMuted: '#6b6b6b',
+    textSub: '#404040',
+    iconColor: '#5c5c5c',
+    chevron: '#8a8a8a',
+    divider: 'rgba(0,0,0,0.08)',
+    btnBg: 'rgba(0,0,0,0.04)',
+    backBg: '#ffffff',
+    closeBg: '#f5f5f5',
+    closeColor: '#404040',
     accent: '#4a5240',
-    citrus: '#f07a1a',
+    citrus: '#e8b824',
     citrusYellow: '#e8b824',
   },
 };
 
-/** Acentos semânticos — uso pontual (status, lucro, alertas). */
+/** Cores de status — paleta aprovada (embarques / alertas operacionais). */
+export const P38_CYAN_SEA = '#4ECDC4';
+export const P38_AGUARDANDO_ORANGE = '#D96F55';
+
+/** Acentos semânticos — uso pontual (status, lucro, alertas). Tom suave para leitura prolongada. */
 export const p38Accent = {
   success: {
     solid: '#4a5240',
     solidDark: '#a4ce33',
-    text: 'text-[#4a5240] dark:text-[#a4ce33]',
-    dot: 'bg-[#4a5240] dark:bg-[#a4ce33]',
-    border: 'border-l-[#4a5240] dark:border-l-[#a4ce33]',
+    text: 'text-[#3a4232] dark:text-[#a4ce33]/85',
+    dot: 'bg-[#4a5240] dark:bg-[#a4ce33]/70',
+    border: 'border-l-[#4a5240] dark:border-l-[#a4ce33]/55',
+  },
+  /** Pedido aprovado — verde vivo no claro (mesmo padrão dos demais acentos). */
+  aprovado: {
+    solid: '#84cc16',
+    solidDark: '#a4ce33',
+    text: 'text-lime-700 dark:text-[#a4ce33]',
+    dot: 'bg-lime-500 dark:bg-[#a4ce33]/70',
+    border: 'border-l-lime-500 dark:border-l-[#a4ce33]/55',
   },
   warning: {
-    solid: '#d97706',
-    solidDark: '#fbbf24',
-    text: 'text-amber-600 dark:text-amber-400',
-    dot: 'bg-amber-500 dark:bg-amber-400',
-    border: 'border-l-amber-500 dark:border-l-amber-400',
+    solid: P38_AGUARDANDO_ORANGE,
+    solidDark: P38_AGUARDANDO_ORANGE,
+    text: 'text-[#9c4228] dark:text-[#D96F55]',
+    dot: 'bg-[#D96F55] dark:bg-[#D96F55]',
+    border: 'border-l-[#D96F55] dark:border-l-[#D96F55]',
   },
   info: {
-    solid: '#0891b2',
-    solidDark: '#22d3ee',
-    text: 'text-cyan-600 dark:text-cyan-400',
-    dot: 'bg-cyan-500 dark:bg-cyan-400',
-    border: 'border-l-cyan-500 dark:border-l-cyan-400',
+    solid: P38_CYAN_SEA,
+    solidDark: P38_CYAN_SEA,
+    text: 'text-[#1a7a73] dark:text-[#4ECDC4]',
+    dot: 'bg-[#4ECDC4] dark:bg-[#4ECDC4]',
+    border: 'border-l-[#4ECDC4] dark:border-l-[#4ECDC4]',
+  },
+  /** Amarelo suco — embarques / consulta no modo claro (substitui ciano operacional). */
+  citrus: {
+    solid: '#e8b824',
+    solidDark: '#a4ce33',
+    text: 'text-[#a8942e] dark:text-[#a4ce33]',
+    dot: 'bg-[#e8b824] dark:bg-[#a4ce33]',
+    border: 'border-l-[#e8b824] dark:border-l-[#a4ce33]',
   },
   danger: {
-    solid: '#dc2626',
-    solidDark: '#f87171',
-    text: 'text-red-600 dark:text-red-400',
-    dot: 'bg-red-500 dark:bg-red-400',
-    border: 'border-l-red-500 dark:border-l-red-400',
+    solid: '#b91c1c',
+    solidDark: '#dc2626',
+    text: 'text-red-700 dark:text-red-500',
+    dot: 'bg-red-600 dark:bg-red-600/70',
+    border: 'border-l-red-600 dark:border-l-red-600/55',
   },
   muted: {
     text: 'text-muted-foreground',
-    dot: 'bg-muted-foreground/50 dark:bg-muted-foreground/60',
+    dot: 'bg-muted-foreground/45 dark:bg-muted-foreground/50',
     border: 'border-l-border dark:border-l-border',
   },
 };
@@ -102,6 +122,6 @@ export function p38SidebarColors(isDark) {
     sectionLabel: t.textMuted,
     subBorder: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
     accent: t.accent,
-    accentMuted: isDark ? 'rgba(164,206,51,0.35)' : 'rgba(99,107,51,0.45)',
+    accentMuted: isDark ? 'rgba(164,206,51,0.35)' : 'rgba(232,184,36,0.28)',
   };
 }

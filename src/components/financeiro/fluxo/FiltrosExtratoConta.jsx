@@ -30,6 +30,7 @@ export default function FiltrosExtratoConta({
       search={search}
       onSearch={onSearch}
       searchPlaceholder="Buscar movimentação..."
+      pulseSensorId="extrato-conta.busca"
       filtersOpen={filtersOpen}
       onFiltersOpenChange={onFiltersOpenChange}
       hasActiveFilters={hasActiveFilters}

@@ -4,7 +4,7 @@ import { P38HelpPopover } from '@/components/ui/p38-help-popover';
 import { formatFinanceiroValor } from '@/components/financeiro/fluxo/FinanceiroListaShared';
 import { cn } from '@/lib/utils';
 import { P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
-import { formatCompetenciaLabel } from '@/lib/budgetCalculos';
+import { BUDGET_MODULO_LABEL, formatCompetenciaLabel } from '@/lib/budgetCalculos';
 
 function CelulaValor({ valor, positivo, className }) {
   const n = Number(valor) || 0;
@@ -130,7 +130,7 @@ export default function BudgetPlanoCompleto({
       },
       {
         key: 'budgets',
-        label: 'Budgets',
+        label: BUDGET_MODULO_LABEL,
         planejado: totaisBudgets?.orcado || 0,
         realizado: totaisBudgets?.realizado || 0,
         link: `/Budgets?aba=acompanhamento&competencia=${competencia}`,

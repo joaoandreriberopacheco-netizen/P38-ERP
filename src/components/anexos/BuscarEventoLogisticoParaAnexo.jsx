@@ -335,7 +335,7 @@ export default function BuscarEventoLogisticoParaAnexo({ onSelecionar, onVoltar,
           type="button"
           onClick={() => onSelecionar(selecionado)}
           disabled={uploadando}
-          className="mt-auto flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-background text-sm font-semibold text-white dark:bg-card dark:text-foreground"
+          className="mt-auto flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90 dark:bg-card dark:text-foreground"
         >
           {uploadando ? (
             <>

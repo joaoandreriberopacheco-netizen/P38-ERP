@@ -1,9 +1,8 @@
 /**
  * Regras alinhadas a base44/functions/processarVendaCaixa/entry.ts para receitas de PedidoVenda.
  *
- * Nota sobre PagamentoCartaoDetalhe / gerarLancamentosCartao: o fluxo PDV atual cria
- * LancamentoFinanceiro diretamente (receita única com valor líquido já deduzido da taxa).
- * Registros em PagamentoCartaoDetalhe vêm de outro pipeline; não duplicar aqui.
+ * Cartão no PDV: pedido/comprovante no valor nominal (face); lançamento financeiro só no líquido.
+ * Taxa fica visível no card da venda (interno) — sem despesa automática no fluxo.
  */
 
 import { roundToTwoDecimals } from '@/lib/financialUtils';
@@ -44,23 +43,45 @@ export function isCartaoForma(forma) {
   return forma === 'Cartão de Débito' || forma === 'Cartão de Crédito';
 }
 
+export function calcularValoresCartao(valorBruto, taxaPct = 0) {
+  const bruto = roundToTwoDecimals(parseFloat(valorBruto) || 0);
+  const taxa = Number(taxaPct) || 0;
+  const liquido = roundToTwoDecimals(bruto * (1 - taxa / 100));
+  const tarifa = roundToTwoDecimals(bruto - liquido);
+  return { bruto, liquido, tarifa, taxa };
+}
+
+/** Líquido recebido pela empresa após taxa da maquininha (face permanece em `valor`). */
+export function resolveValorLiquidoPagamento(pag) {
+  if (pag?.valor_liquido_recebido != null && pag.valor_liquido_recebido !== '') {
+    return roundToTwoDecimals(pag.valor_liquido_recebido);
+  }
+  if (isCartaoForma(pag?.forma_pagamento)) {
+    return calcularValoresCartao(pag.valor, pag.taxa_maquininha || 0).liquido;
+  }
+  return roundToTwoDecimals(parseFloat(pag?.valor) || 0);
+}
+
 /**
  * Monta objeto de pagamento de cartão igual ao PDVCaixa.handleFinalizarVenda.
  */
 export function buildPagamentoCartaoFromSelecao(forma, valor, dados) {
   const v = roundToTwoDecimals(parseFloat(valor) || 0);
   const m = dados?.maquininha;
+  const taxa = dados.taxa || 0;
+  const liquido = calcularValoresCartao(v, taxa).liquido;
   if (forma === 'Cartão de Débito') {
     return {
       forma_pagamento: 'Cartão de Débito',
       valor: v,
+      valor_liquido_recebido: liquido,
       parcelas: 1,
       maquininha_id: m?.id,
       maquininha_nome: m?.nome,
       maquininha_conta_id: m?.conta_destino_id,
       maquininha_conta_nome: m?.conta_destino_nome,
       bandeira: dados.bandeira,
-      taxa_maquininha: dados.taxa || 0,
+      taxa_maquininha: taxa,
       prazo_maquininha_dias: dados.prazo_dias ?? getPrazoLiquidacaoMaquininha(),
     };
   }
@@ -69,13 +90,14 @@ export function buildPagamentoCartaoFromSelecao(forma, valor, dados) {
     return {
       forma_pagamento: 'Cartão de Crédito',
       valor: v,
+      valor_liquido_recebido: liquido,
       parcelas,
       maquininha_id: m?.id,
       maquininha_nome: m?.nome,
       maquininha_conta_id: m?.conta_destino_id,
       maquininha_conta_nome: m?.conta_destino_nome,
       bandeira: dados.bandeira,
-      taxa_maquininha: dados.taxa || 0,
+      taxa_maquininha: taxa,
       prazo_maquininha_dias: dados.prazo_dias ?? getPrazoLiquidacaoMaquininha(),
     };
   }
@@ -187,9 +209,8 @@ export async function rebuildReceitasLancamentosPedidoVenda(
     }
 
     if (isCartaoForma(pag.forma_pagamento)) {
-      const taxa = pag.taxa_maquininha || 0;
-      const valorBruto = valor;
-      const valorLiquido = roundToTwoDecimals(valorBruto * (1 - taxa / 100));
+      const { bruto: valorBruto, liquido: valorLiquido, taxa } =
+        calcularValoresCartao(valor, pag.taxa_maquininha || 0);
       const prazoDias = pag.prazo_maquininha_dias ?? getPrazoLiquidacaoMaquininha();
       const dataVencimento = addDiasUteis(hoje, prazoDias);
       const isCredito = pag.forma_pagamento === 'Cartão de Crédito';
@@ -207,7 +228,7 @@ export async function rebuildReceitasLancamentosPedidoVenda(
         descricao,
         terceiro_id: clienteId,
         terceiro_nome: clienteNome,
-        valor: valorBruto,
+        valor: valorLiquido,
         valor_liquido: valorLiquido,
         data_vencimento: dataVencimento,
         data_liquidacao_prevista: dataVencimento,
@@ -230,6 +251,8 @@ export async function rebuildReceitasLancamentosPedidoVenda(
           bandeira,
           taxa_pct: taxa,
           parcelas,
+          valor_nominal: valorBruto,
+          valor_liquido: valorLiquido,
           data_venda: hoje,
         }),
       });

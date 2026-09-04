@@ -6,7 +6,8 @@ import { ArrowLeft, Printer, Receipt, Eye, ArrowDownUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { formatarDataHora } from '@/components/utils/dateUtils';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
-import { formatarDiferencaSubstituicao } from '@/lib/substituicoesVendaCaixa';
+import { formatarDiferencaSubstituicao, partitionVendasConsultaCaixa } from '@/lib/substituicoesVendaCaixa';
+import TrocaCaixaCard from '@/components/vendas/caixa/TrocaCaixaCard';
 import { CAIXA_PRINT, caixaClasses } from '@/lib/caixaP38Theme';
 import FormaPagamentoBadges from '@/components/vendas/FormaPagamentoBadges';
 
@@ -52,7 +53,7 @@ function VendaTurnoCard({ venda, meta, formatValor, onVerDetalhes, compact }) {
             <div className="flex items-center gap-2 flex-wrap mb-1">
               <span className="text-sm font-semibold text-foreground">{venda.numero}</span>
               <span className="text-xs text-muted-foreground">{fmtHora(venda.created_date)}</span>
-              <FormaPagamentoBadges pagamentos={venda.pagamentos} size="xs" />
+              <FormaPagamentoBadges pagamentos={venda.pagamentos} size="xs" palette="caixa" />
               {isSubstituto && (
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-300">
                   Substituição
@@ -90,7 +91,7 @@ function VendaTurnoCard({ venda, meta, formatValor, onVerDetalhes, compact }) {
           <div className="flex items-center gap-2 flex-wrap mb-2">
             <span className="text-sm font-semibold text-foreground">{venda.numero}</span>
             <span className="text-xs text-muted-foreground">{fmtHora(venda.created_date)}</span>
-            <FormaPagamentoBadges pagamentos={venda.pagamentos} size="xs" />
+            <FormaPagamentoBadges pagamentos={venda.pagamentos} size="xs" palette="caixa" />
             {isSubstituto && (
               <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-300">
                 Substituição
@@ -139,6 +140,7 @@ export default function VendasTurnoDialog({
 }) {
   const qtdSub = caixaData?.qtdSubstituicoes || 0;
   const valorNaoSoma = caixaData?.valorSubstituidoNaoSoma || 0;
+  const { trocas, normais } = partitionVendasConsultaCaixa(vendasFinalizadas, metaPorPedidoId);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -250,8 +252,28 @@ export default function VendasTurnoDialog({
                   </div>
                 </div>
               )}
+              {trocas.length > 0 && (
+                <div className="mb-4 space-y-3">
+                  <p className="text-xs font-semibold px-1 text-muted-foreground">
+                    Trocas ({trocas.length})
+                  </p>
+                  {trocas.map((venda) => (
+                    <TrocaCaixaCard
+                      key={venda.id}
+                      venda={venda}
+                      meta={metaPorPedidoId[venda.id]}
+                      onVerDetalhes={onVerDetalhes}
+                    />
+                  ))}
+                </div>
+              )}
+              {normais.length > 0 && trocas.length > 0 && (
+                <p className="text-xs font-semibold px-1 text-muted-foreground mb-2">
+                  Vendas ({normais.length})
+                </p>
+              )}
               <VirtualizedList
-                items={vendasFinalizadas}
+                items={normais}
                 estimateSize={132}
                 className="hidden md:block h-[calc(100vh-190px)] pr-1"
                 contentClassName="max-w-4xl mx-auto"
@@ -267,8 +289,28 @@ export default function VendasTurnoDialog({
                     />
                 )}
               />
+              {trocas.length > 0 && (
+                <div className="mb-4 space-y-3">
+                  <p className="text-xs font-semibold px-1 text-muted-foreground">
+                    Trocas ({trocas.length})
+                  </p>
+                  {trocas.map((venda) => (
+                    <TrocaCaixaCard
+                      key={venda.id}
+                      venda={venda}
+                      meta={metaPorPedidoId[venda.id]}
+                      onVerDetalhes={onVerDetalhes}
+                    />
+                  ))}
+                </div>
+              )}
+              {normais.length > 0 && trocas.length > 0 && (
+                <p className="text-xs font-semibold px-1 text-muted-foreground mb-2">
+                  Vendas ({normais.length})
+                </p>
+              )}
               <VirtualizedList
-                items={vendasFinalizadas}
+                items={normais}
                 estimateSize={150}
                 className="md:hidden h-[calc(100vh-190px)] pr-1"
                 itemClassName="pb-3"

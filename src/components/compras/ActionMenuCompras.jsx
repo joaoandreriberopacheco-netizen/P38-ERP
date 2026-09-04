@@ -121,8 +121,10 @@ export default function ActionMenuCompras({ onNovopedido, onImportarNF, onDownlo
         <button
           onClick={() => setIsOpen(prev => !prev)}
           className={`h-14 w-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 ${
-            isOpen ? 'bg-muted dark:bg-muted/400 rotate-45' : 'bg-background dark:bg-muted'
-          } text-white`}
+            isOpen
+              ? 'bg-muted text-foreground dark:bg-muted/400 dark:text-foreground rotate-45'
+              : 'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]'
+          }`}
           style={{ position: 'absolute', left: 3, top: 3 }}
         >
           {isOpen ? <X className="w-6 h-6" /> : <Plus className="w-6 h-6" />}

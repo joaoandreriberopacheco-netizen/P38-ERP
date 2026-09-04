@@ -8,7 +8,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/use-toast';
 import { Upload, Loader2, Check, X, ArrowLeft, Package, FileText, Camera, Sparkles } from 'lucide-react';
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
-import { buildProdutoMatchingPromptBase } from '@/components/compras/productMatchingUtils';
+import {
+  buildEfficientPedidoCompraPrompt,
+  findLocalBestFornecedorMatch,
+  getProdutoLabel,
+  resolveOcrProductMatch,
+} from '@/components/compras/productMatchingUtils';
 import {
   buildPurchaseUnitOptions,
   pickDefaultPurchaseUnit,
@@ -17,7 +22,15 @@ import {
   normalizePurchaseItemToCommercial,
 } from '@/lib/productUnits';
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
-import { consumirArquivoPedidoImportDoBridge } from '@/lib/torrePedidoImportBridge';
+import {
+  guardarArquivoParaPedidoImport,
+  lerArquivoPedidoImportDoBridge,
+  limparArquivoPedidoImportBridge,
+} from '@/lib/torrePedidoImportBridge';
+import { buildLlmTelemetryContext } from '@/lib/p38LlmTelemetry';
+import { useCompactShell } from '@/hooks/use-breakpoint';
+import ImportadorOcrItemCard from '@/components/compras/ImportadorOcrItemCard';
+import { cn } from '@/lib/utils';
 
 export default function ImportadorPedidoCompra({
   isOpen,
@@ -50,6 +63,7 @@ export default function ImportadorPedidoCompra({
   /** Só repor estado ao passar de fechado → aberto; enquanto o modal fica aberto não limpar (senão some o PDF a meio do fluxo). */
   const modalEstavaAbertoRef = useRef(false);
   const { toast } = useToast();
+  const isMobile = useCompactShell();
 
   useEffect(() => {
     if (!isOpen) {
@@ -64,16 +78,21 @@ export default function ImportadorPedidoCompra({
     }
     modalEstavaAbertoRef.current = true;
 
+    const temArquivoBridge = !!lerArquivoPedidoImportDoBridge();
+    const temArquivoMemoria = !!selectedFileRef.current;
+
     setMode('pdf');
-    setStep('upload');
+    setStep(temArquivoBridge || temArquivoMemoria ? 'discount' : 'upload');
     setItems([]);
-    setSelectedFile(null);
-    selectedFileRef.current = null;
+    if (!temArquivoBridge && !selectedFileRef.current) {
+      setSelectedFile(null);
+      selectedFileRef.current = null;
+    }
     setAdjustMode('desconto');
     setDiscountValue('0');
     setFornecedorInfo({ id: '', nome: '', cnpj: '' });
     Promise.all([
-      base44.entities.Produto.list(),
+      base44.entities.Produto.filter({ tipo: 'Produto', ativo: true }),
       base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] })
     ]).then(([prods, fns]) => {
       setProdutos(prods);
@@ -116,23 +135,39 @@ export default function ImportadorPedidoCompra({
     return produtos.find((produto) => produto.id === item.produto_id_match) || null;
   };
 
-  const handleProdutoCriadoNoImportador = (novoProduto, itemIndex) => {
+  const handleProdutoCriadoNoImportador = async (novoProduto, itemIndex) => {
     if (!novoProduto?.id) return;
+
+    let produtoCompleto = novoProduto;
+    try {
+      const fresh = await base44.entities.Produto.get(novoProduto.id);
+      if (fresh?.id) produtoCompleto = fresh;
+    } catch {
+      // mantém o objeto devolvido pelo formulário
+    }
+
+    const label = produtoCompleto.nome || produtoCompleto.campo_hierarquico_1 || '';
+
     setProdutos((prev) => {
-      if (prev.some((produto) => produto.id === novoProduto.id)) return prev;
-      return [...prev, novoProduto];
+      const semDuplicado = prev.filter((produto) => produto.id !== produtoCompleto.id);
+      return [...semDuplicado, produtoCompleto];
     });
+
     if (typeof itemIndex === 'number') {
       setItems((prev) => prev.map((item, currentIndex) => (
         currentIndex === itemIndex
           ? {
               ...item,
-              produto_id_match: novoProduto.id,
-              selected_product_id: novoProduto.id,
+              produto_id_match: produtoCompleto.id,
+              selected_product_id: produtoCompleto.id,
+              confianca: 'alta',
               ignored: false,
             }
           : item
       )));
+      if (label) {
+        setProductSearch((prev) => ({ ...prev, [itemIndex]: label }));
+      }
     }
   };
 
@@ -152,6 +187,7 @@ export default function ImportadorPedidoCompra({
   const discountNumber = parseFloat(discountValue) || 0;
 
   const isAcrescimo = adjustMode === 'acrescimo';
+  const arquivoAtivo = selectedFile || selectedFileRef.current;
   // Sync adjustMode → discountType (always percentage for now)
   const effectiveDiscountType = isAcrescimo ? 'acrescimo_percentual' : 'percentual';
 
@@ -162,6 +198,20 @@ export default function ImportadorPedidoCompra({
     if (effectiveDiscountType === 'acrescimo_percentual') return original + (original * discountNumber / 100);
     return original;
   };
+
+  const reviewResumo = useMemo(() => {
+    const ativos = items.filter((item) => !item.ignored);
+    const totalEstimado = ativos.reduce((sum, item) => {
+      const qty = Number(item.quantidade) || 1;
+      return sum + qty * getDiscountedUnitPrice(item);
+    }, 0);
+    const vinculados = ativos.filter((item) => item.selected_product_id && item.selected_product_id !== 'create_new').length;
+    return {
+      totalItens: ativos.length,
+      vinculados,
+      totalEstimado,
+    };
+  }, [items, discountNumber, effectiveDiscountType]);
 
   const processSelectedFile = async () => {
     const arquivo =
@@ -191,82 +241,119 @@ export default function ImportadorPedidoCompra({
       setProcessingStep(2);
       setProcessingStatus('Lendo documento');
 
-      const promptBase = `${buildProdutoMatchingPromptBase({ produtos, fornecedores })}
+      let catalogoProdutos = produtos;
+      let listaFornecedores = fornecedores;
+      if (!catalogoProdutos.length || !listaFornecedores.length) {
+        const [prods, fns] = await Promise.all([
+          catalogoProdutos.length
+            ? Promise.resolve(catalogoProdutos)
+            : base44.entities.Produto.filter({ tipo: 'Produto', ativo: true }),
+          listaFornecedores.length
+            ? Promise.resolve(listaFornecedores)
+            : base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] }),
+        ]);
+        catalogoProdutos = prods;
+        listaFornecedores = fns;
+        setProdutos(prods);
+        setFornecedores(fns);
+      }
 
-Retorne JSON:
-{
-  "fornecedor": {"nome_identificado": "string", "cnpj_identificado": "string", "id_match": "id ou vazio"},
-  "itens": [{
-    "descricao": "descrição original",
-    "codigo": "código no documento",
-    "marca": "marca se visível",
-    "quantidade": number,
-    "preco_unitario": number,
-    "unidade_medida_documento": "sigla opcional ex.: M2, M², CX, PAC, UN — como no documento",
-    "produto_id_match": "id exato do catálogo ou vazio",
-    "confianca": "alta|media|baixa"
-  }]
-}`;
+      const matchingSchema = {
+        type: 'object',
+        properties: {
+          fornecedor: {
+            type: 'object',
+            properties: {
+              nome_identificado: { type: 'string' },
+              cnpj_identificado: { type: 'string' },
+              id_match: { type: 'string' },
+            },
+          },
+          itens: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                descricao: { type: 'string' },
+                codigo: { type: 'string' },
+                marca: { type: 'string' },
+                quantidade: { type: 'number' },
+                preco_unitario: { type: 'number' },
+                unidade_medida_documento: { type: 'string' },
+                produto_id_match: { type: 'string' },
+                confianca: { type: 'string' },
+              },
+            },
+          },
+        },
+      };
 
-      const prompt = mode === 'pdf'
-        ? `Analise este PDF de orçamento/pedido de fornecedor.\nPreserve acentos e caracteres do português nos campos textuais.\n${promptBase}`
-        : `Analise esta imagem de lista de compra.\nPreserve acentos e caracteres do português nos campos textuais.\n${promptBase}`;
+      const prompt = buildEfficientPedidoCompraPrompt({
+        produtos: catalogoProdutos,
+        fornecedores: listaFornecedores,
+        mode,
+      });
 
       setProcessingStep(3);
-      setProcessingStatus('Identificando itens');
+      setProcessingStatus('Identificando itens e catálogo');
 
       const aiRes = await base44.integrations.Core.InvokeLLM({
         prompt,
         file_urls: [fileUrl],
-        response_json_schema: {
-          type: 'object',
-          properties: {
-            fornecedor: {
-              type: 'object',
-              properties: {
-                nome_identificado: { type: 'string' },
-                cnpj_identificado: { type: 'string' },
-                id_match: { type: 'string' }
-              }
-            },
-            itens: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  descricao: { type: 'string' },
-                  codigo: { type: 'string' },
-                  marca: { type: 'string' },
-                  quantidade: { type: 'number' },
-                  preco_unitario: { type: 'number' },
-                  unidade_medida_documento: { type: 'string' },
-                  produto_id_match: { type: 'string' },
-                  confianca: { type: 'string' }
-                }
-              }
-            }
-          }
-        }
+        telemetry: buildLlmTelemetryContext({
+          source: 'import_pedido_compra',
+          catalogProductCount: catalogoProdutos.length,
+          fileCount: 1,
+        }),
+        response_json_schema: matchingSchema,
       });
 
       setProcessingStep(4);
       setProcessingStatus('Identificando fornecedor');
 
       const result = typeof aiRes === 'string' ? JSON.parse(aiRes) : aiRes;
+      const fornecedorIds = new Set(listaFornecedores.map((f) => f.id));
+      const fornecedorIdLlm = result.fornecedor?.id_match;
+      const fornecedorMatch = fornecedorIdLlm && fornecedorIds.has(fornecedorIdLlm)
+        ? listaFornecedores.find((f) => f.id === fornecedorIdLlm)
+        : findLocalBestFornecedorMatch(
+          {
+            nome: result.fornecedor?.nome_identificado,
+            cnpj: result.fornecedor?.cnpj_identificado,
+          },
+          listaFornecedores,
+        );
       setFornecedorInfo({
-        id: result.fornecedor?.id_match || 'new',
+        id: fornecedorMatch?.id || 'new',
         nome: result.fornecedor?.nome_identificado || '',
-        cnpj: result.fornecedor?.cnpj_identificado || ''
+        cnpj: result.fornecedor?.cnpj_identificado || '',
       });
       setProcessingStep(5);
-      setProcessingStatus('Buscando correspondências no catálogo');
+      setProcessingStatus('Validando correspondências');
 
-      setItems((result.itens || []).map(item => ({
-        ...item,
-        selected_product_id: item.produto_id_match || '',
-        ignored: false
-      })));
-      setProductSearch({});
+      const mappedItems = (result.itens || []).map((item) => {
+        const resolved = resolveOcrProductMatch(
+          item,
+          catalogoProdutos,
+          item.produto_id_match,
+        );
+        return {
+          ...item,
+          produto_id_match: resolved.produto_id_match,
+          selected_product_id: resolved.selected_product_id,
+          confianca: resolved.confianca,
+          ignored: false,
+        };
+      });
+      const initialSearch = {};
+      mappedItems.forEach((item, index) => {
+        const id = item.selected_product_id || item.produto_id_match;
+        if (!id || id === 'create_new') return;
+        const produto = catalogoProdutos.find((p) => p.id === id);
+        if (produto) initialSearch[index] = getProdutoLabel(produto);
+      });
+      setItems(mappedItems);
+      setProductSearch(initialSearch);
       setStep('review');
     } catch (error) {
       toast({ title: 'Erro na análise', description: error.message, variant: 'destructive' });
@@ -286,6 +373,16 @@ Retorne JSON:
       selectedFileRef.current = file;
       setSelectedFile(file);
       if (opts.assumePdf) setMode('pdf');
+      try {
+        await guardarArquivoParaPedidoImport(
+          file,
+          file.name,
+          file.type,
+          tipoDocumentoTorreRef.current || 'Comprovante',
+        );
+      } catch (bridgeErr) {
+        console.warn('[ImportadorPedido] não foi possível guardar cópia do PDF:', bridgeErr);
+      }
       setStep('discount');
     } catch (err) {
       toast({
@@ -306,13 +403,14 @@ Retorne JSON:
   /** PDF guardado na Torre (sessionStorage) + cópia opcional para clipboard ao navegar */
   useEffect(() => {
     if (!isOpen) return;
-    const fromTorre = consumirArquivoPedidoImportDoBridge();
+    const fromTorre = lerArquivoPedidoImportDoBridge();
     if (!fromTorre?.file) return;
     arquivoDaTorreRef.current = true;
     tipoDocumentoTorreRef.current = fromTorre.tipoDocumento || 'Comprovante';
-    void aplicarArquivoSelecionado(fromTorre.file, { assumePdf: true }).finally(() => {
-      onLaunchPdfFilePickerConsumed?.();
-    });
+    void aplicarArquivoSelecionado(fromTorre.file, { assumePdf: true })
+      .finally(() => {
+        onLaunchPdfFilePickerConsumed?.();
+      });
   }, [isOpen]);
 
   /** Novo pedido via ?autoImportador=1 sem ficheiro da Torre: abre o seletor de PDF */
@@ -398,6 +496,8 @@ Retorne JSON:
           fator_conversao: fator,
           quantidade_base: calculateBaseQuantity(qtd, fator),
           custo_unitario: custoFator1,
+          custo_unitario_apresentacao: precoAjustado,
+          custo_final_unitario_apresentacao: precoAjustado,
           total: totalEconomico,
           valor_desconto_item: 0,
           observacao_item: `${mode === 'pdf' ? 'Importado via PDF' : 'Importado via foto'}${discountNumber ? ` • ${isAcrescimo ? 'acréscimo' : 'desconto'} ${discountNumber}%` : ''}`
@@ -412,6 +512,7 @@ Retorne JSON:
         anexoFonte: selectedFileRef.current,
         tipoDocumentoAnexo: tipoDocumentoTorreRef.current || 'Comprovante',
       });
+      limparArquivoPedidoImportBridge();
       onClose();
       toast({ title: 'Itens importados com sucesso' });
     } catch (error) {
@@ -430,11 +531,17 @@ Retorne JSON:
               <X className="w-4 h-4" />
             </Button>
             <div>
-              <p className="font-glacial text-lg text-foreground">Importar novo pedido</p>
-              <p className="text-xs text-muted-foreground">Lê PDF e boas imagens para preencher os itens</p>
+              <p className="font-glacial text-lg text-foreground">
+                {step === 'review' && isMobile ? 'Revisar itens' : 'Importar novo pedido'}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {step === 'review' && isMobile
+                  ? 'Vincule cada linha ao catálogo'
+                  : 'Lê PDF e boas imagens para preencher os itens'}
+              </p>
             </div>
           </div>
-          {step === 'review' && (
+          {step === 'review' && !isMobile && (
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -455,7 +562,7 @@ Retorne JSON:
         </div>
       </div>
 
-      <div className="p-4 md:p-6 max-w-5xl mx-auto">
+      <div className={cn('p-4 md:p-6 max-w-5xl mx-auto', step === 'review' && isMobile && 'pb-32')}>
         {step === 'upload' && (
           <div className="space-y-4">
             <div className="flex gap-2">
@@ -509,6 +616,19 @@ Retorne JSON:
 
         {step === 'discount' && (
           <div className="flex flex-col h-[calc(100vh-80px)]">
+            {arquivoAtivo ? (
+              <div className="mb-4 flex items-center gap-3 rounded-2xl border border-border/40 bg-muted/40 px-4 py-3 dark:bg-muted/30">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-card shadow-sm">
+                  <FileText className="h-5 w-5 text-primary" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-foreground">{arquivoAtivo.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    PDF guardado · {(arquivoAtivo.size / 1024).toFixed(0)} KB
+                  </p>
+                </div>
+              </div>
+            ) : null}
             {/* Tab switcher */}
             <div className="rounded-2xl bg-muted p-1 flex gap-1 mb-6">
               <button
@@ -591,7 +711,7 @@ Retorne JSON:
                 <Button variant="outline" onClick={() => { selectedFileRef.current = null; setSelectedFile(null); setStep('upload'); }} className="h-12 px-5 rounded-2xl border-0 shadow-sm">
                   <ArrowLeft className="w-4 h-4" />
                 </Button>
-                <Button onClick={processSelectedFile} className="h-12 px-8 rounded-2xl shadow-sm bg-background dark:bg-card dark:text-foreground text-white gap-2">
+                <Button onClick={processSelectedFile} className="h-12 px-8 rounded-2xl shadow-sm bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
                   Buscar Itens
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </Button>
@@ -613,11 +733,40 @@ Retorne JSON:
 
         {step === 'review' && (
           <div className="space-y-4">
+            {isMobile ? (
+              <div className="rounded-2xl border border-border/50 bg-muted/30 p-4 space-y-3">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    Revisão do pedido
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Confira cada linha do documento e vincule ao produto do catálogo.
+                  </p>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="rounded-xl bg-card/80 px-2 py-3">
+                    <p className="text-lg font-bold tabular-nums text-foreground">{reviewResumo.totalItens}</p>
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Itens</p>
+                  </div>
+                  <div className="rounded-xl bg-card/80 px-2 py-3">
+                    <p className="text-lg font-bold tabular-nums text-foreground">{reviewResumo.vinculados}</p>
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Vinculados</p>
+                  </div>
+                  <div className="rounded-xl bg-card/80 px-2 py-3">
+                    <p className="text-lg font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
+                      R$ {formatCurrency(reviewResumo.totalEstimado)}
+                    </p>
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Total</p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
             <div className="grid gap-4 md:grid-cols-3">
               <div className="rounded-3xl bg-muted/50/60 p-5 shadow-sm md:col-span-2">
                 <Label className="text-xs text-muted-foreground mb-2 block">Fornecedor</Label>
                 <Select value={fornecedorInfo.id || 'new'} onValueChange={(value) => setFornecedorInfo(prev => ({ ...prev, id: value }))}>
-                  <SelectTrigger className="h-14 border-0 rounded-2xl bg-card shadow-sm text-base text-foreground dark:text-white">
+                  <SelectTrigger className={cn('border-0 rounded-2xl bg-card shadow-sm text-foreground dark:text-white', isMobile ? 'h-14 text-base' : 'h-14 text-base')}>
                     <SelectValue placeholder="Selecionar fornecedor" />
                   </SelectTrigger>
                   <SelectContent>
@@ -630,30 +779,54 @@ Retorne JSON:
                 <>
                   <div className="rounded-2xl bg-muted/50/60 p-4 shadow-sm">
                     <Label className="text-xs text-muted-foreground mb-2 block">Nome</Label>
-                    <Input value={fornecedorInfo.nome} onChange={(e) => setFornecedorInfo(prev => ({ ...prev, nome: e.target.value }))} className="border-0 bg-card shadow-sm" />
+                    <Input value={fornecedorInfo.nome} onChange={(e) => setFornecedorInfo(prev => ({ ...prev, nome: e.target.value }))} className={cn('border-0 bg-card shadow-sm', isMobile && 'h-12 text-base')} />
                   </div>
                   <div className="rounded-2xl bg-muted/50/60 p-4 shadow-sm">
                     <Label className="text-xs text-muted-foreground mb-2 block">CNPJ</Label>
-                    <Input value={fornecedorInfo.cnpj} onChange={(e) => setFornecedorInfo(prev => ({ ...prev, cnpj: e.target.value }))} className="border-0 bg-card shadow-sm" />
+                    <Input value={fornecedorInfo.cnpj} onChange={(e) => setFornecedorInfo(prev => ({ ...prev, cnpj: e.target.value }))} className={cn('border-0 bg-card shadow-sm', isMobile && 'h-12 text-base')} />
                   </div>
                 </>
               )}
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground px-1">
-                <Package className="w-4 h-4" />
-                <span>{items.length} itens identificados</span>
-              </div>
-              {items.map((item, index) => (
+              {!isMobile ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground px-1">
+                  <Package className="w-4 h-4" />
+                  <span>{items.length} itens identificados</span>
+                </div>
+              ) : null}
+
+              {isMobile ? (
+                <div className="rounded-2xl border border-border/50 bg-card/40">
+                  {items.map((item, index) => (
+                    <ImportadorOcrItemCard
+                      key={index}
+                      item={item}
+                      index={index}
+                      isAcrescimo={isAcrescimo}
+                      discountNumber={discountNumber}
+                      getDiscountedUnitPrice={getDiscountedUnitPrice}
+                      formatCurrency={formatCurrency}
+                      produtos={produtos}
+                      getSuggestedProduct={getSuggestedProduct}
+                      setItems={setItems}
+                      setProductSearch={setProductSearch}
+                      productSearch={productSearch}
+                      onProductCreated={(novoProduto) => handleProdutoCriadoNoImportador(novoProduto, index)}
+                      resolverUnidadeCompra={resolverUnidadeCompra}
+                      textoEquivEstoque={textoEquivEstoque}
+                    />
+                  ))}
+                </div>
+              ) : (
+                items.map((item, index) => (
                 <div key={index} className={`rounded-2xl transition-all ${
                   item.ignored ? 'opacity-40' : ''
                 } ${
                   index % 2 === 0 ? 'bg-card/60' : 'bg-muted/40/80 dark:bg-background/60'
                 } shadow-sm`}>
-                  {/* Card inner padding */}
                   <div className="p-4">
-                    {/* Linha superior: checkbox + descrição do doc + preço */}
                     <div className="flex items-start gap-3 mb-3">
                       <div className="pt-0.5 flex-none">
                         <Checkbox checked={!item.ignored} onCheckedChange={(checked) => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, ignored: !checked } : current))} />
@@ -677,7 +850,6 @@ Retorne JSON:
                         <p className="text-xs text-muted-foreground">= R$ {formatCurrency((item.quantidade || 1) * getDiscountedUnitPrice(item))}</p>
                       </div>
                     </div>
-                    {/* Linha inferior: busca no catálogo (desktop: alinhada; mobile: full width) */}
                     <div className="pl-7 space-y-1">
                       <ProductSearchInputPDV
                         item={item}
@@ -704,11 +876,44 @@ Retorne JSON:
                     </div>
                   </div>
                 </div>
-              ))}
+              ))
+              )}
             </div>
           </div>
         )}
       </div>
+
+      {step === 'review' && isMobile ? (
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/60 bg-card/95 backdrop-blur px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(0,0,0,0.08)]">
+          <div className="mx-auto flex max-w-5xl items-center gap-3">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                selectedFileRef.current = null;
+                setSelectedFile(null);
+                setStep('upload');
+              }}
+              className="h-12 w-12 shrink-0 rounded-2xl border-0 shadow-sm"
+              aria-label="Voltar"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                Total estimado
+              </p>
+              <p className="text-lg font-bold tabular-nums text-foreground">
+                R$ {formatCurrency(reviewResumo.totalEstimado)}
+              </p>
+            </div>
+            <Button onClick={handleConfirm} className="h-12 shrink-0 rounded-2xl px-5 shadow-sm">
+              <Check className="w-4 h-4 mr-2" />
+              Confirmar
+            </Button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

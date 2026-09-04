@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { P38PageHeader } from '@/components/layout/P38PageHeader';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -317,10 +318,11 @@ export default function ConferenciaVolumes() {
             <div className="w-14 h-14 rounded-xl bg-muted flex items-center justify-center">
               <Package className="w-7 h-7 text-foreground/90" />
             </div>
-            <div className="flex-1">
-              <h1 className="text-xl font-semibold text-foreground">Conferência de Volumes</h1>
-              <p className="text-sm text-muted-foreground">Registre os volumes recebidos</p>
-            </div>
+        <P38PageHeader
+          variant="page"
+          title="Conferência de Volumes"
+          description="Registre os volumes recebidos"
+        />
           </div>
 
           <div className="bg-muted/40 border border-border/40 dark:border-white/10 rounded-lg p-4">
@@ -461,7 +463,7 @@ export default function ConferenciaVolumes() {
             <Button
               onClick={handleFinalizar}
               disabled={finalizando}
-              className="flex-1 h-12 bg-background hover:bg-primary dark:bg-muted dark:hover:bg-muted shadow-lg"
+              className="flex-1 h-12 bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-muted dark:hover:bg-muted/90 dark:text-foreground shadow-lg"
             >
               {finalizando ? (
                 <>
@@ -544,7 +546,7 @@ export default function ConferenciaVolumes() {
                 )}
                 <Button
                   onClick={handleAvancarEtapa}
-                  className="flex-1 bg-background hover:bg-primary dark:bg-muted"
+                  className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-muted dark:text-foreground"
                 >
                   {divergencias.length > 0 ? 'Salvar com Divergências' : 'Prosseguir'}
                 </Button>
@@ -584,7 +586,7 @@ export default function ConferenciaVolumes() {
                 </Button>
                 <Button
                   onClick={handleAvancarEtapa}
-                  className="flex-1 bg-background hover:bg-primary"
+                  className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
                 >
                   Avançar
                 </Button>
@@ -612,7 +614,7 @@ export default function ConferenciaVolumes() {
                   </div>
                   <Button
                     onClick={tirarFoto}
-                    className="w-full bg-background hover:bg-primary"
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     <Camera className="w-4 h-4 mr-2" />
                     Tirar Foto

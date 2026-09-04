@@ -3,6 +3,7 @@ import { X, Search, Plus, Minus, Trash2, FileText, Printer, Package } from 'luci
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
+import ProdutoThumb from '@/components/produtos/ProdutoThumb';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
@@ -156,7 +157,7 @@ function CupomImpressao({ itens, calcularPreco, tabelaSelecionada, onClose }) {
 
           <Button
             onClick={handlePrint}
-            className="w-full bg-primary hover:bg-background dark:bg-muted dark:hover:bg-muted dark:text-foreground text-white h-11 rounded-xl gap-2"
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-muted dark:hover:bg-muted dark:text-foreground h-11 rounded-xl gap-2"
           >
             <Printer className="w-4 h-4" />
             Imprimir / Salvar PDF
@@ -172,11 +173,7 @@ function ItemCarrinho({ item, calcularPreco, onChangeQtd, onRemove }) {
   const preco = calcularPreco(item.produto);
   return (
     <div className="flex items-center gap-3 py-2.5 px-3 border-b border-border/40">
-      <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-        {item.produto.imagem_url
-          ? <img src={item.produto.imagem_url} alt="" className="w-full h-full object-cover" />
-          : <Package className="w-3.5 h-3.5 text-muted-foreground" />}
-      </div>
+      <ProdutoThumb produto={item.produto} size="sm" roundedClassName="rounded-lg" className="w-8 h-8" asDiv />
       <div className="flex-1 min-w-0">
         <p className="text-[11px] text-foreground/90 leading-snug uppercase truncate">{item.produto.nome}</p>
         <p className="text-[10px] text-muted-foreground">R$ {fmtR(preco)} × {fmtN(item.qtd)} = <span className="font-semibold text-muted-foreground">R$ {fmtR(preco * item.qtd)}</span></p>
@@ -304,11 +301,7 @@ export default function OrcamentoSheet({ produtos, calcularPreco, tabelaSelecion
                       onClick={() => addProduto(p)}
                       className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-muted/40 dark:hover:bg-muted/50 active:bg-muted transition-colors"
                     >
-                      <div className="w-9 h-9 bg-muted rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-                        {p.imagem_url
-                          ? <img src={p.imagem_url} alt="" className="w-full h-full object-cover" />
-                          : <Package className="w-4 h-4 text-muted-foreground dark:text-muted-foreground" />}
-                      </div>
+                      <ProdutoThumb produto={p} size="xs" roundedClassName="rounded-lg" asDiv />
                       <div className="flex-1 min-w-0">
                         <p className="text-[11px] font-normal text-foreground/90 uppercase leading-snug truncate">{p.nome}</p>
                         {p.codigo_interno && (
@@ -369,7 +362,7 @@ export default function OrcamentoSheet({ produtos, calcularPreco, tabelaSelecion
             </div>
             <Button
               onClick={() => setShowCupom(true)}
-              className="w-full bg-primary hover:bg-background dark:bg-muted dark:hover:bg-muted dark:text-foreground text-white h-11 rounded-xl gap-2"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-muted dark:hover:bg-muted dark:text-foreground h-11 rounded-xl gap-2"
             >
               <FileText className="w-4 h-4" />
               Gerar Orçamento

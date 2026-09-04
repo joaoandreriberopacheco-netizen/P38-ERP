@@ -92,7 +92,14 @@ const deriveEmbarqueItem = (embarque: any, produto: any, pedidoCompraItem: any, 
     errors.push(`produto_unidade_id ${input.produto_unidade_id} nao encontrado em Produto.unidades[]`);
   }
   const u = resolvido.unidade;
-  const fator = asNumber(u?.fator_conversao, 1) || 1;
+  const fatorInput = asNumber(input?.fator_aplicado ?? input?.fator_apresentacao, 0);
+  const fatorUnidade = asNumber(u?.fator_conversao, 1) || 1;
+  const siglaInput = normalizeSigla(input?.unidade_sigla || input?.unidade_medida || input?.unidade_apresentacao);
+  const siglaUnidade = normalizeSigla(u?.sigla);
+  const fator =
+    fatorInput > 0 && siglaInput && (siglaInput === siglaUnidade || !resolvido.found)
+      ? fatorInput
+      : fatorUnidade;
 
   const qPedida = asNumber(input?.quantidade_pedida_comercial ?? input?.quantidade_pedida, 0);
   const qEmbarcada = asNumber(input?.quantidade_embarcada_comercial ?? input?.quantidade_embarcada, 0);
@@ -128,27 +135,48 @@ const deriveEmbarqueItem = (embarque: any, produto: any, pedidoCompraItem: any, 
   };
 };
 
-const itemToLegacyMirror = (item: any) => ({
-  produto_id: item?.produto_id || '',
-  produto_nome: item?.produto_nome || '',
-  produto_unidade_id: item?.produto_unidade_id || '',
-  quantidade_pedida: asNumber(item?.quantidade_pedida_comercial, 0),
-  quantidade_embarcada: asNumber(item?.quantidade_embarcada_comercial, 0),
-  quantidade_recebida: asNumber(item?.quantidade_recebida_comercial, 0),
-  unidade_medida: item?.unidade_sigla || 'UN',
-  divergencia_tipo: item?.divergencia_tipo || 'Nenhuma',
-  produto_id_recebido_diferente: item?.produto_id_recebido_diferente || '',
-  produto_nome_recebido_diferente: item?.produto_nome_recebido_diferente || '',
-  acordo_financeiro_lancamento_id: item?.acordo_financeiro_lancamento_id || '',
-  embarque_item_id: item?.id || undefined,
-});
+const itemToLegacyMirror = (item: any) => {
+  const fator = asNumber(item?.fator_aplicado, 0) || 1;
+  const unidade = item?.unidade_sigla || 'UN';
+  const qPedCom = asNumber(item?.quantidade_pedida_comercial, 0);
+  const qEmbCom = asNumber(item?.quantidade_embarcada_comercial, 0);
+  const qRecCom = asNumber(item?.quantidade_recebida_comercial, 0);
+  const qPedBase = asNumber(item?.quantidade_pedida_base, 0);
+  const qEmbBase = asNumber(item?.quantidade_embarcada_base, 0);
+  const qRecBase = asNumber(item?.quantidade_recebida_base, 0);
+
+  return {
+    produto_id: item?.produto_id || '',
+    produto_nome: item?.produto_nome || '',
+    produto_unidade_id: item?.produto_unidade_id || '',
+    pedido_compra_item_id: item?.pedido_compra_item_id || '',
+    fator_aplicado: fator,
+    fator_apresentacao: fator,
+    fator_conversao: fator,
+    quantidade_pedida: qPedCom,
+    quantidade_embarcada: qEmbCom,
+    quantidade_recebida: qRecCom,
+    quantidade_pedida_base: qPedBase || undefined,
+    quantidade_embarcada_base: qEmbBase || undefined,
+    quantidade_recebida_base: qRecBase || undefined,
+    quantidade_pedida_apresentacao: qPedCom,
+    quantidade_embarcada_apresentacao: qEmbCom,
+    quantidade_recebida_apresentacao: qRecCom,
+    unidade_medida: unidade,
+    unidade_apresentacao: unidade,
+    unidade_sigla: unidade,
+    divergencia_tipo: item?.divergencia_tipo || 'Nenhuma',
+    produto_id_recebido_diferente: item?.produto_id_recebido_diferente || '',
+    produto_nome_recebido_diferente: item?.produto_nome_recebido_diferente || '',
+    acordo_financeiro_lancamento_id: item?.acordo_financeiro_lancamento_id || '',
+    embarque_item_id: item?.id || undefined,
+  };
+};
 
 const recomporEmbarque = async (base44: any, embarqueId: string) => {
   const linhas = await base44.asServiceRole.entities.EmbarqueItem.filter({ embarque_id: embarqueId });
-  const ordenadas = (linhas || []).slice().sort((a: any, b: any) => asNumber(a.ordem, 0) - asNumber(b.ordem, 0));
-  const espelho = ordenadas.map(itemToLegacyMirror);
-  await base44.asServiceRole.entities.Embarque.update(embarqueId, { itens: espelho });
-  return { itens_count: espelho.length };
+  const count = Array.isArray(linhas) ? linhas.length : 0;
+  return { itens_count: count, espelho_json: false };
 };
 
 const fetchProduto = async (base44: any, id: string) => {

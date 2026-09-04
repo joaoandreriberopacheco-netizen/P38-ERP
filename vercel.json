@@ -3,21 +3,11 @@
   "git": {
     "deploymentEnabled": false
   },
-  "framework": "vite",
-  "buildCommand": "npm run build:raw",
-  "outputDirectory": "dist",
+  "framework": "nextjs",
+  "buildCommand": "node scripts/generate-next-page-registry.mjs && node scripts/write-p38-build-info.mjs && next build",
   "installCommand": "npm ci",
   "ignoreCommand": "bash scripts/vercel-ignore-git-build.sh",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
   "headers": [
-    {
-      "source": "/assets/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
-      ]
-    },
     {
       "source": "/(.*)",
       "headers": [

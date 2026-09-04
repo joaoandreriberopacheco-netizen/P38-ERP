@@ -7,6 +7,9 @@ import { createPageUrl } from '@/utils';
 
 export const STORAGE_PEDIDO_IMPORT_BRIDGE = 'p38_pedido_import_torre_v1';
 
+/** Cache em memória — evita perder o ficheiro se o importador remontar (ex.: React Strict Mode). */
+let bridgePayloadCache = null;
+
 /** Entrada da Torre: { file, nome, tipo } */
 export async function navegarParaNovoPedidoImport(arquivoEntry, tipoDocumento = 'Comprovante') {
   try {
@@ -32,16 +35,15 @@ export function guardarArquivoParaPedidoImport(file, nome, tipo, tipoDocumento =
       try {
         const dataUrl = String(reader.result || '');
         const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
-        sessionStorage.setItem(
-          STORAGE_PEDIDO_IMPORT_BRIDGE,
-          JSON.stringify({
-            nome: nome || file.name || 'documento',
-            tipo: tipo || file.type || 'application/octet-stream',
-            tipoDocumento: String(tipoDocumento || 'Comprovante').trim() || 'Comprovante',
-            base64,
-            ts: Date.now(),
-          })
-        );
+        const payload = {
+          nome: nome || file.name || 'documento',
+          tipo: tipo || file.type || 'application/octet-stream',
+          tipoDocumento: String(tipoDocumento || 'Comprovante').trim() || 'Comprovante',
+          base64,
+          ts: Date.now(),
+        };
+        bridgePayloadCache = payload;
+        sessionStorage.setItem(STORAGE_PEDIDO_IMPORT_BRIDGE, JSON.stringify(payload));
         resolve(true);
       } catch (e) {
         reject(e);
@@ -78,38 +80,69 @@ export async function copiarArquivoParaClipboardOpcional(file) {
 }
 
 /**
- * Lê e remove. Devolve { file, tipoDocumento } ou null.
+ * Lê payload bruto (cache → sessionStorage). Não remove até `limparArquivoPedidoImportBridge`.
  */
 const TTL_MS = 30 * 60 * 1000;
 
-export function consumirArquivoPedidoImportDoBridge() {
+function lerPayloadPedidoImportBridge() {
   try {
+    if (bridgePayloadCache) return bridgePayloadCache;
     const raw = sessionStorage.getItem(STORAGE_PEDIDO_IMPORT_BRIDGE);
     if (!raw) return null;
-    sessionStorage.removeItem(STORAGE_PEDIDO_IMPORT_BRIDGE);
     const parsed = JSON.parse(raw);
-    const { nome, tipo, base64, ts, tipoDocumento } = parsed;
+    const { ts } = parsed;
     if (ts && Date.now() - Number(ts) > TTL_MS) {
+      limparArquivoPedidoImportBridge();
       return null;
     }
-    if (!base64) return null;
-    const bin = atob(base64);
-    const bytes = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    const blob = new Blob([bytes], { type: tipo || 'application/octet-stream' });
-    const safeName = nome || 'documento.pdf';
-    const file = new File([blob], safeName, {
-      type: tipo || blob.type || 'application/octet-stream',
-      lastModified: Date.now(),
-    });
-    return {
-      file,
-      tipoDocumento: String(tipoDocumento || 'Comprovante').trim() || 'Comprovante',
-    };
+    bridgePayloadCache = parsed;
+    return parsed;
   } catch {
-    try {
-      sessionStorage.removeItem(STORAGE_PEDIDO_IMPORT_BRIDGE);
-    } catch (_) {}
+    limparArquivoPedidoImportBridge();
     return null;
   }
+}
+
+function payloadParaArquivoImport({ nome, tipo, base64, tipoDocumento }) {
+  if (!base64) return null;
+  const bin = atob(base64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const blob = new Blob([bytes], { type: tipo || 'application/octet-stream' });
+  const safeName = nome || 'documento.pdf';
+  const file = new File([blob], safeName, {
+    type: tipo || blob.type || 'application/octet-stream',
+    lastModified: Date.now(),
+  });
+  return {
+    file,
+    tipoDocumento: String(tipoDocumento || 'Comprovante').trim() || 'Comprovante',
+  };
+}
+
+/** Remove ponte (sessionStorage + cache). Chamar após o ficheiro estar aplicado no importador. */
+export function limparArquivoPedidoImportBridge() {
+  bridgePayloadCache = null;
+  try {
+    sessionStorage.removeItem(STORAGE_PEDIDO_IMPORT_BRIDGE);
+  } catch (_) {}
+}
+
+/**
+ * Lê sem remover — seguro para remount do importador.
+ */
+export function lerArquivoPedidoImportDoBridge() {
+  const parsed = lerPayloadPedidoImportBridge();
+  if (!parsed) return null;
+  return payloadParaArquivoImport(parsed);
+}
+
+/**
+ * Lê e remove. Devolve { file, tipoDocumento } ou null.
+ */
+export function consumirArquivoPedidoImportDoBridge() {
+  const parsed = lerPayloadPedidoImportBridge();
+  if (!parsed) return null;
+  limparArquivoPedidoImportBridge();
+  return payloadParaArquivoImport(parsed);
 }

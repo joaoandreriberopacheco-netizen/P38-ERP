@@ -147,17 +147,38 @@ export function resolveP38Secrets() {
   const legacy = resolveLegacySupabaseSecret();
   const aliasesUsed = [];
 
+  const nextPublicSupabaseUrl = trim(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  const nextPublicSupabaseAnonKey = trim(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
   let viteSupabaseUrl =
-    trim(process.env.VITE_SUPABASE_URL) || trim(process.env.SUPABASE_URL);
-  if (!trim(process.env.VITE_SUPABASE_URL) && trim(process.env.SUPABASE_URL)) {
-    aliasesUsed.push('SUPABASE_URL→VITE_SUPABASE_URL');
+    nextPublicSupabaseUrl ||
+    trim(process.env.VITE_SUPABASE_URL) ||
+    trim(process.env.SUPABASE_URL);
+  if (!nextPublicSupabaseUrl && trim(process.env.VITE_SUPABASE_URL)) {
+    aliasesUsed.push('VITE_SUPABASE_URL→NEXT_PUBLIC_SUPABASE_URL (preferir NEXT_PUBLIC no deploy)');
+  }
+  if (!nextPublicSupabaseUrl && !trim(process.env.VITE_SUPABASE_URL) && trim(process.env.SUPABASE_URL)) {
+    aliasesUsed.push('SUPABASE_URL→NEXT_PUBLIC_SUPABASE_URL');
   }
 
   let viteSupabaseAnonKey =
-    trim(process.env.VITE_SUPABASE_ANON_KEY) || trim(process.env.SUPABASE_ANON_KEY);
-  if (!trim(process.env.VITE_SUPABASE_ANON_KEY) && trim(process.env.SUPABASE_ANON_KEY)) {
-    aliasesUsed.push('SUPABASE_ANON_KEY→VITE_SUPABASE_ANON_KEY');
+    nextPublicSupabaseAnonKey ||
+    trim(process.env.VITE_SUPABASE_ANON_KEY) ||
+    trim(process.env.SUPABASE_ANON_KEY);
+  if (!nextPublicSupabaseAnonKey && trim(process.env.VITE_SUPABASE_ANON_KEY)) {
+    aliasesUsed.push('VITE_SUPABASE_ANON_KEY→NEXT_PUBLIC_SUPABASE_ANON_KEY (preferir NEXT_PUBLIC no deploy)');
   }
+  if (
+    !nextPublicSupabaseAnonKey &&
+    !trim(process.env.VITE_SUPABASE_ANON_KEY) &&
+    trim(process.env.SUPABASE_ANON_KEY)
+  ) {
+    aliasesUsed.push('SUPABASE_ANON_KEY→NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  }
+
+  /** URL/chave canónicas — Next.js produção; VITE_* só fallback legado. */
+  const supabaseUrl = viteSupabaseUrl;
+  const supabaseAnonKey = viteSupabaseAnonKey;
 
   let databaseUrl = trim(process.env.DATABASE_URL) || legacy.databaseUrl || '';
   if (!trim(process.env.DATABASE_URL) && legacy.databaseUrl) {
@@ -178,18 +199,22 @@ export function resolveP38Secrets() {
 
   let projectRef =
     trim(process.env.SUPABASE_PROJECT_REF) ||
-    parseProjectRefFromSupabaseUrl(viteSupabaseUrl) ||
+    parseProjectRefFromSupabaseUrl(supabaseUrl) ||
     parseProjectRefFromDatabaseUrl(databaseUrl) ||
     null;
 
   let p38AuthUrl = trim(process.env.P38_AUTH_URL);
-  if (!p38AuthUrl && viteSupabaseUrl) {
-    p38AuthUrl = `${viteSupabaseUrl.replace(/\/$/, '')}/functions/v1/p38-auth`;
+  if (!p38AuthUrl && supabaseUrl) {
+    p38AuthUrl = `${supabaseUrl.replace(/\/$/, '')}/functions/v1/p38-auth`;
   }
 
   return {
-    viteSupabaseUrl,
-    viteSupabaseAnonKey,
+    nextPublicSupabaseUrl,
+    nextPublicSupabaseAnonKey,
+    supabaseUrl,
+    supabaseAnonKey,
+    viteSupabaseUrl: supabaseUrl,
+    viteSupabaseAnonKey: supabaseAnonKey,
     databaseUrl,
     accessToken,
     serviceRoleKey,
@@ -216,7 +241,7 @@ export function maskPresence(name, value) {
  * @param {ReturnType<typeof resolveP38Secrets>} secrets
  */
 export function checkProjectRefAlignment(secrets) {
-  const refFromVite = parseProjectRefFromSupabaseUrl(secrets.viteSupabaseUrl);
+  const refFromVite = parseProjectRefFromSupabaseUrl(secrets.supabaseUrl);
   const refFromDb = parseProjectRefFromDatabaseUrl(secrets.databaseUrl);
   const issues = [];
 
@@ -224,7 +249,7 @@ export function checkProjectRefAlignment(secrets) {
     issues.push({
       level: 'error',
       code: 'REF_MISMATCH',
-      message: `DATABASE_URL (${refFromDb}) ≠ VITE_SUPABASE_URL (${refFromVite}) — devem ser o MESMO projecto Supabase.`,
+      message: `DATABASE_URL (${refFromDb}) ≠ NEXT_PUBLIC_SUPABASE_URL (${refFromVite}) — devem ser o MESMO projecto Supabase.`,
     });
   } else if (!refFromVite && refFromDb && refFromDb !== P38_CANONICAL_PROJECT_REF) {
     issues.push({
@@ -250,7 +275,7 @@ export function checkProjectRefAlignment(secrets) {
     issues.push({
       level: 'error',
       code: 'REF_EXPLICIT_MISMATCH',
-      message: `SUPABASE_PROJECT_REF (${secrets.projectRef}) ≠ VITE_SUPABASE_URL (${refFromVite}).`,
+      message: `SUPABASE_PROJECT_REF (${secrets.projectRef}) ≠ NEXT_PUBLIC_SUPABASE_URL (${refFromVite}).`,
     });
   }
 

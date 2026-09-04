@@ -1,5 +1,8 @@
 import { format, subDays, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { normalizeEventoTransportadoraFields, resolveTransportadoraFromRecord } from '@/lib/resolveTransportadora';
+import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
+import { calcValorCargaEmbarque } from '@/lib/embarqueValorFinanceiro';
 
 export const FLUVIAL_DEFAULT_PERIOD = '30d';
 export const FLUVIAL_FETCH_WINDOW_ALL_DAYS = 365;
@@ -10,6 +13,20 @@ export const FLUVIAL_PERIOD_OPTIONS = [
   { id: '90d', label: '±90 dias', dias: 90 },
   { id: 'todas', label: 'Todas', dias: null },
 ];
+
+export const FLUVIAL_VIEW_MODES = [
+  { value: 'saida_manaus', label: 'Saída de Manaus', shortLabel: 'Saída Manaus' },
+  { value: 'chegada_tabatinga', label: 'Chegada em Tabatinga', shortLabel: 'Chegada Tabatinga' },
+  { value: 'chegada_manaus', label: 'Chegada em Manaus', shortLabel: 'Chegada Manaus' },
+];
+
+export const FLUVIAL_DEFAULT_VIEW_MODE = 'saida_manaus';
+
+export function getFluvialViewModeLabel(viewMode, { short = false } = {}) {
+  const option = FLUVIAL_VIEW_MODES.find((item) => item.value === viewMode);
+  if (!option) return short ? 'Saída Manaus' : 'Saída de Manaus';
+  return short ? option.shortLabel : option.label;
+}
 
 export function normalizeFluvialDateKey(value) {
   if (!value) return null;
@@ -37,11 +54,12 @@ export function normalizeEventoLogisticoRecord(item) {
     item.data_chegada_manaus || item.data_retorno_origem || item.previsao_retorno,
   );
 
+  const withTransportadora = normalizeEventoTransportadoraFields(item);
+
   return {
-    ...item,
+    ...withTransportadora,
     codigo: item.codigo || item.lancamento_financeiro_numero || (item.id ? String(item.id).slice(0, 8) : null),
-    embarcacao_nome: item.embarcacao_nome || item.nome || item.transportadora,
-    transportadora_nome: item.transportadora_nome || item.transportadora || item.embarcacao_nome,
+    embarcacao_nome: withTransportadora.embarcacao_nome || item.nome || item.transportadora,
     data_saida_origem: dataSaida || item.data_saida_origem,
     data_referencia: normalizeFluvialDateKey(item.data_referencia) || dataSaida,
     data_chegada_destino: chegadaDestino || item.data_chegada_destino,
@@ -164,6 +182,78 @@ function parseStableDate(value) {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+/**
+ * Referência de capacidade relativa entre viagens (maior carga vinculada no lote).
+ */
+export function getFluvialCargaCapacityReference(eventos = []) {
+  return (eventos || []).reduce((max, evento) => {
+    const valor = Number(evento?.valor_total_carga) || 0;
+    return valor > max ? valor : max;
+  }, 0);
+}
+
+function resolveFluvialCargoPercentual(evento, capacityRef = 0) {
+  const valorCarga = Number(evento?.valor_total_carga) || 0;
+  if (valorCarga <= 0) return 0;
+
+  const ref = capacityRef > 0 ? capacityRef : valorCarga;
+  return Math.min(100, Math.round((valorCarga / ref) * 100));
+}
+
+/**
+ * Projeção de ocupação na data simulada (ponto futuro no filtro).
+ * Usa apenas a data simulada — não bloqueia por "hoje" real ainda não ter chegado a viagem.
+ */
+export function projectFluvialOcupacaoPercentual(evento, simulationDateKey, { capacityRef } = {}) {
+  const simulationDate = parseStableDate(normalizeFluvialDateKey(simulationDateKey));
+  if (!simulationDate || !evento) return 0;
+
+  const chegadaManaus = parseStableDate(evento.data_chegada_manaus);
+  const saidaManaus = parseStableDate(evento.data_saida_origem);
+  const storedOcupacao = Number(evento.ocupacao_percentual);
+  const hasStored = Number.isFinite(storedOcupacao) && storedOcupacao > 0;
+
+  if (!chegadaManaus || !saidaManaus) {
+    return hasStored ? Math.min(100, Math.round(storedOcupacao)) : 0;
+  }
+
+  if (simulationDate < chegadaManaus) {
+    return 0;
+  }
+
+  const cargoPercent = resolveFluvialCargoPercentual(evento, capacityRef);
+
+  let targetLoad = 100;
+  if (hasStored) {
+    targetLoad = Math.min(100, Math.round(storedOcupacao));
+  } else if (cargoPercent > 0) {
+    targetLoad = cargoPercent;
+  }
+
+  const diasTotais = Math.max(1, Math.round((saidaManaus - chegadaManaus) / MS_PER_DAY));
+  const diasCorridos = Math.max(0, Math.round((simulationDate - chegadaManaus) / MS_PER_DAY));
+  const timePercent = Math.max(0, Math.min(100, Math.round((diasCorridos / diasTotais) * 100)));
+
+  if (simulationDate >= saidaManaus) {
+    return targetLoad;
+  }
+
+  return Math.min(targetLoad, Math.round((targetLoad * timePercent) / 100));
+}
+
+/** Enriquece eventos com ocupacao_percentual_dinamica conforme data do simulador. */
+export function applyFluvialOcupacaoProjection(eventos, simulationDateKey) {
+  const list = eventos || [];
+  const capacityRef = getFluvialCargaCapacityReference(list);
+
+  return list.map((item) => ({
+    ...item,
+    ocupacao_percentual_dinamica: projectFluvialOcupacaoPercentual(item, simulationDateKey, { capacityRef }),
+  }));
+}
+
 export function formatDate(value) {
   if (!value) return '-';
   const parsed = parseStableDate(value);
@@ -243,20 +333,18 @@ export function buildFluvialEvents({ eventosLogisticos = [], embarques = [], lan
           fornecedoresMap.set(key, { fornecedor_nome: key, itens: [] });
         }
         const group = fornecedoresMap.get(key);
-        (embarque.itens || []).forEach((itemEmbarque) => {
+        getEmbarqueItensLinhas(embarque).forEach((itemEmbarque) => {
           group.itens.push(itemEmbarque);
         });
       });
 
       const resumoFornecedores = Array.from(fornecedoresMap.values());
       const valorTotalCarga = embarquesRelacionados.reduce((total, embarque) => {
-        const pedidoItens = mapaPedidosItens[embarque.pedido_compra_id] || {};
-        return total + (embarque.itens || []).reduce((sum, itemEmbarque) => {
-          const quantidade = itemEmbarque.quantidade_embarcada ?? itemEmbarque.quantidade_pedida ?? itemEmbarque.quantidade ?? 0;
-          const itemPedido = pedidoItens[itemEmbarque.produto_id] || {};
-          const custo = Number(itemEmbarque.custo_unitario ?? itemPedido.custo_unitario ?? 0) || 0;
-          return sum + (quantidade * custo);
-        }, 0);
+        const pedidoId = embarque.pedido_compra_id;
+        const itensMap = pedidoId ? mapaPedidosItens[pedidoId] : null;
+        const pedido = embarque._pedido_compra
+          || (itensMap ? { id: pedidoId, itens: Object.values(itensMap) } : { itens: [] });
+        return total + calcValorCargaEmbarque(pedido, embarque, {});
       }, 0);
       const totalEmbarquesAtivos = embarquesRelacionados.filter((emb) => getEmbarqueLifecycleStatus(emb) === 'ativo').length;
       const totalEmbarquesConcluidos = embarquesRelacionados.filter((emb) => getEmbarqueLifecycleStatus(emb) === 'finalizado').length;
@@ -298,7 +386,7 @@ export function buildFluvialEvents({ eventosLogisticos = [], embarques = [], lan
 export function buildBoatViewModels({ transportadoras = [], eventos = [] }) {
   const eventosPorTransportadora = new Map();
   (eventos || []).forEach((evento) => {
-    const transportadoraId = evento.transportadora_id;
+    const transportadoraId = resolveTransportadoraFromRecord(evento).transportadora_id;
     if (!transportadoraId) return;
     if (!eventosPorTransportadora.has(transportadoraId)) {
       eventosPorTransportadora.set(transportadoraId, []);

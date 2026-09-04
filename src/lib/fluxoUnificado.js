@@ -1,6 +1,7 @@
 import { sortLancamentosPorDescricao } from '@/lib/financialUtils';
 import { consolidarTransferenciasListaFluxo } from '@/lib/gruposMovimentacaoConta';
-import { lancamentoPertenceContasSelecionadas, isTransferenciaEntreContas } from '@/lib/saldoContaFinanceira';
+import { passaFiltroTiposLancamento } from '@/lib/filtroTipoFinanceiro';
+import { lancamentoPertenceContasSelecionadas } from '@/lib/saldoContaFinanceira';
 import {
   getDataAncoraFluxoKey,
   getValorContaAberta,
@@ -58,11 +59,7 @@ export function filtrarProgramadasFluxo(lancs, {
 
     if (contasSel.length && !lancamentoPertenceContasSelecionadas(l, contasSel, contasById)) return false;
 
-    if (tiposSel.length) {
-      const matchTipo = tiposSel.includes(l.tipo);
-      const matchTransf = tiposSel.includes('Transferência') && isTransferenciaEntreContas(l);
-      if (!matchTipo && !matchTransf) return false;
-    }
+    if (!passaFiltroTiposLancamento(l, tiposSel)) return false;
 
     if (cmvOnly && !l.is_custo_mercadoria) return false;
     if (search && !lancamentoPassaBuscaFluxo(l, search, contasAtivas, contasById)) return false;
@@ -107,7 +104,12 @@ export function calcularKpisProgramadas(programadas, hojeKey = dataHoje()) {
 }
 
 /** Insere lançamentos programados nos grupos do fluxo (por data de vencimento). */
-export function mesclarProgramadasNosGrupos(grupos = [], programadas = [], ordemLancamentos = 'desc') {
+export function mesclarProgramadasNosGrupos(
+  grupos = [],
+  programadas = [],
+  ordemLancamentos = 'desc',
+  { movimentos = [] } = {},
+) {
   if (!programadas.length) return grupos;
 
   const porDia = new Map();
@@ -121,19 +123,22 @@ export function mesclarProgramadasNosGrupos(grupos = [], programadas = [], ordem
 
   porDia.forEach((items, k) => {
     const ordenados = sortLancamentosPorDescricao(items);
-    const consolidados = consolidarTransferenciasListaFluxo(ordenados).map((l) => ({
+    const consolidados = consolidarTransferenciasListaFluxo(ordenados, { movimentos }).map((l) => ({
       ...l,
       _isProgramada: true,
     }));
 
     if (gruposMap.has(k)) {
       const grupo = gruposMap.get(k);
-      grupo.items = [...grupo.items, ...consolidados];
+      grupo.items = sortLancamentosPorDescricao(
+        [...grupo.items, ...consolidados],
+        ordemLancamentos,
+      );
     } else {
       gruposMap.set(k, {
         k,
         label: null,
-        items: consolidados,
+        items: sortLancamentosPorDescricao(consolidados, ordemLancamentos),
         totais: { r: 0, d: 0, entrou: 0, saiu: 0, liquido: 0, liquidoOperacional: 0 },
         _somenteProgramadas: true,
       });

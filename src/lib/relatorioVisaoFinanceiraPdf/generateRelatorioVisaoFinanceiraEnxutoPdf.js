@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { registerJsPdfDin1451Fonts, normalizePdfText } from '@/lib/jspdfNotoFont';
+import { BUDGET_MODULO_LABEL } from '@/lib/budgetCalculos';
 
 const COLOR = {
   black: [0, 0, 0],
@@ -327,7 +328,7 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
   drawResumoSecao('Despesas planejadas por camada');
   drawResumoLinha('Contas fixas mensais (recorrentes)', resumo.fixasRecorrentes, { prefix: '− ' });
   drawResumoLinha('Folha de pagamento', resumo.folha, { prefix: '− ' });
-  drawResumoLinha('Budgets', resumo.budgets, { prefix: '− ' });
+  drawResumoLinha(BUDGET_MODULO_LABEL, resumo.budgets, { prefix: '− ' });
   if (number(resumo.pontuaisExtraPlano) > 0) {
     drawResumoLinha('Pauta do mês (fora do plano fixo)', resumo.pontuaisExtraPlano, {
       prefix: '− ',

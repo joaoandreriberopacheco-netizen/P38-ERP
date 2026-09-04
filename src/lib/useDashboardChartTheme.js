@@ -1,26 +1,27 @@
 import { useEffect, useState } from 'react';
+import { P38_LIGHT_HEX } from '@/lib/p38LightTheme';
 
 const LIGHT = {
-  tick: { fontSize: 11, fill: '#434a40', fontWeight: 600 },
-  axisTickY: { fontSize: 9, fill: '#9aa094', fontWeight: 400 },
-  axisTickX: { fontSize: 9, fill: '#a8afa4', fontWeight: 400 },
-  grid: 'rgba(74, 82, 64, 0.07)',
-  cursor: 'rgba(74, 82, 64, 0.06)',
-  pieStroke: '#ffffff',
+  tick: { fontSize: 11, fill: P38_LIGHT_HEX.textSub, fontWeight: 600 },
+  axisTickY: { fontSize: 9, fill: '#9ca3af', fontWeight: 400 },
+  axisTickX: { fontSize: 9, fill: '#b0b0b0', fontWeight: 400 },
+  grid: 'rgba(0, 0, 0, 0.06)',
+  cursor: 'rgba(0, 0, 0, 0.04)',
+  pieStroke: P38_LIGHT_HEX.bg,
   tooltip: {
     contentStyle: {
       backgroundColor: 'rgba(255, 255, 255, 0.98)',
-      border: '1px solid rgba(74, 82, 64, 0.18)',
+      border: `1px solid ${P38_LIGHT_HEX.border}`,
       borderRadius: 10,
-      color: '#2a2f28',
-      boxShadow: '0 8px 20px rgba(74, 82, 64, 0.12)',
+      color: P38_LIGHT_HEX.text,
+      boxShadow: '0 8px 20px rgba(0, 0, 0, 0.08)',
     },
-    labelStyle: { color: '#2a2f28', fontWeight: 700 },
-    itemStyle: { color: '#5c6358' },
+    labelStyle: { color: P38_LIGHT_HEX.text, fontWeight: 700 },
+    itemStyle: { color: P38_LIGHT_HEX.textMuted },
   },
-  linePrimary: '#6b7a52',
+  linePrimary: P38_LIGHT_HEX.citrusYellow,
   lineBreakEven: '#dc2626',
-  lineMeta: '#4a5240',
+  lineMeta: P38_LIGHT_HEX.oliveMuted,
 };
 
 const DARK = {

@@ -188,7 +188,7 @@ function ProdutoCell({ row, isExpanded, onToggle }) {
         <div className="flex flex-col min-w-0 w-full ml-5 gap-0.5">
           <span className={cn(
             'text-xs uppercase break-words leading-snug',
-            isPrimeiroNivel ? 'font-semibold text-foreground/90' : 'text-muted-foreground',
+            isPrimeiroNivel ? 'font-semibold text-foreground/90 dark:text-muted-foreground' : 'text-muted-foreground',
           )}>
             {label}
           </span>
