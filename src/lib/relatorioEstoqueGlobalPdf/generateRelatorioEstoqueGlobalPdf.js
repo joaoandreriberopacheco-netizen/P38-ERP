@@ -24,7 +24,7 @@ import {
 } from '@/lib/comprasEmbarqueCards';
 import { buildConsultaItensEmbarque } from '@/lib/consultaComprasEmbarques';
 
-export const PDF_BUILD = 'estoque-reuniao-v21';
+export const PDF_BUILD = 'estoque-reuniao-v22';
 
 const BRL_KPI = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -104,14 +104,16 @@ const TABLE_LIMITS = {
 };
 
 const LAYOUT = {
-  blockGapBefore: 6,
+  blockGapBefore: 5,
   sectionTitleH: 5.2,
   titleToTable: 4.8,
-  sectionGapAfter: 9,
-  sectionGapBetween: 7,
+  sectionGapAfter: 7,
+  sectionGapBetween: 6,
 };
 
-const FOOTER_RESERVE = 15;
+/** Espaço reservado no fim da página para rodapé + respiro mínimo (mm). */
+const FOOTER_RESERVE = 10;
+const FOOTER_TEXT_OFFSET = 6.5;
 
 const ABCD_ORDER = ['A', 'B', 'C', 'D', 'E'];
 const CERAMICA_H1 = new Set(['PISO', 'CERAMICA', 'REVESTIMENTO']);
@@ -1122,10 +1124,10 @@ function fitsOnPage(startY, blockHeight, pageH, reserve = FOOTER_RESERVE) {
 }
 
 function drawPageFooter(doc, fontFamily, normalizePdfText, M, CW, pageH, leftLabel, rightLabel) {
-  const footerY = pageH - 10;
+  const footerY = pageH - FOOTER_TEXT_OFFSET;
   doc.setDrawColor(...COLORS.line);
   doc.setLineWidth(GRID.lineWidth);
-  doc.line(M, footerY - 4, M + CW, footerY - 4);
+  doc.line(M, footerY - 3, M + CW, footerY - 3);
   doc.setFont(fontFamily, 'normal');
   doc.setFontSize(FONT.footer);
   setTextColor(doc, COLORS.muted);
@@ -1379,7 +1381,7 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
     ],
   });
 
-  const block2ReserveMm = 150;
+  const block2ReserveMm = 145;
   const block1TableY = sectionTitleEndY(y);
   const maxBlock1Height = pageH - FOOTER_RESERVE - block1TableY - block2ReserveMm - LAYOUT.sectionGapBetween * 2;
 
