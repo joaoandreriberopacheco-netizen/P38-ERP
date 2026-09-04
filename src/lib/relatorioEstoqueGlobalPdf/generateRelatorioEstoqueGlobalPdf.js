@@ -19,7 +19,7 @@ import {
 } from '@/lib/comprasEmbarqueCards';
 import { buildConsultaItensEmbarque } from '@/lib/consultaComprasEmbarques';
 
-export const PDF_BUILD = 'estoque-reuniao-v14';
+export const PDF_BUILD = 'estoque-reuniao-v15';
 
 const BRL_KPI = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -1001,20 +1001,47 @@ function drawTwoColumnBlock(doc, fontFamily, normalizePdfText, layout, y, leftCf
   return Math.max(leftEnd, rightEnd) + LAYOUT.sectionGapAfter;
 }
 
+function drawFullWidthTableBlock(doc, fontFamily, normalizePdfText, layout, y, {
+  title,
+  columns,
+  rawRows,
+  rows,
+  toDisplay,
+  consolidate,
+  maxHeight,
+  pageH,
+}) {
+  const { M, CW } = layout;
+  const sectionY = y + LAYOUT.blockGapBefore;
+  const tableY = drawSectionTitle(doc, fontFamily, normalizePdfText, M, sectionY, title) + LAYOUT.titleToTable;
+  const tableMaxHeight = maxHeight ?? availableTableHeight(pageH, tableY);
+  const displayRows = rawRows
+    ? fitTableRows(rawRows, toDisplay, columns, tableMaxHeight, consolidate)
+    : (rows || []);
+  const tableEnd = drawGridTable(doc, fontFamily, {
+    x: M,
+    y: tableY,
+    width: CW,
+    columns,
+    rows: displayRows,
+  });
+  return tableEnd + LAYOUT.sectionGapAfter;
+}
+
 function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
   const { M, CW, pageH } = layout;
   let y = M;
   const text = (str, x, yy, opts = {}) => doc.text(normalizePdfText(str), x, yy, opts);
 
   const familiasColumns = [
-    { key: 'letra', label: 'CL.', width: 0.07, align: 'center' },
-    { key: 'familia', label: 'FAMÍLIA', width: 0.30, align: 'left' },
-    { key: 'quantidade', label: 'QTD', width: 0.35, align: 'left', splitQuantity: true },
-    { key: 'valor', label: 'R$', width: 0.28, align: 'right' },
+    { key: 'letra', label: 'CL.', width: 0.06, align: 'center' },
+    { key: 'familia', label: 'FAMÍLIA', width: 0.46, align: 'left' },
+    { key: 'quantidade', label: 'QTD', width: 0.26, align: 'left', splitQuantity: true },
+    { key: 'valor', label: 'R$', width: 0.22, align: 'right' },
   ];
   const abcdColumns = [
-    { key: 'letra', label: 'CL.', width: 0.20, align: 'center' },
-    { key: 'valor', label: 'R$', width: 0.80, align: 'right' },
+    { key: 'letra', label: 'CL.', width: 0.10, align: 'center' },
+    { key: 'valor', label: 'R$', width: 0.90, align: 'right' },
   ];
 
   doc.setFont(fontFamily, 'heavy');
@@ -1057,11 +1084,21 @@ function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
   doc.line(M, y, M + CW, y);
   y += LAYOUT.sectionGapBetween;
 
-  const maxTwoColHeight = availableTableHeight(pageH, sectionTitleEndY(y));
+  const abcdStripMm = GRID.headerH + ABCD_ORDER.length * GRID.rowH + 4;
+  y = drawFullWidthTableBlock(doc, fontFamily, normalizePdfText, layout, y, {
+    title: 'Por curva ABCD (nível 1)',
+    columns: abcdColumns,
+    rawRows: data.porAbcd,
+    toDisplay: (row) => ({
+      letra: row.letra,
+      valor: fmtTabValor(row.valor),
+    }),
+    maxHeight: abcdStripMm,
+    pageH,
+  });
 
-  y = drawTwoColumnBlock(doc, fontFamily, normalizePdfText, layout, y, {
+  drawFullWidthTableBlock(doc, fontFamily, normalizePdfText, layout, y, {
     title: 'Resumo por família (nível 1)',
-    widthRatio: 0.64,
     columns: familiasColumns,
     rawRows: data.grupos,
     toDisplay: (g) => ({
@@ -1080,16 +1117,8 @@ function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
         valor: sumValorRows(tail),
       }),
     },
-    maxHeight: maxTwoColHeight,
-  }, {
-    title: 'Por curva ABCD (nível 1)',
-    columns: abcdColumns,
-    rawRows: data.porAbcd,
-    toDisplay: (row) => ({
-      letra: row.letra,
-      valor: fmtTabValor(row.valor),
-    }),
-  }, pageH);
+    pageH,
+  });
 
   drawPageFooter(
     doc,
