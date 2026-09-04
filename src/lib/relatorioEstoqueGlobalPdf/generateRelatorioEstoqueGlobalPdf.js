@@ -19,7 +19,7 @@ import {
 } from '@/lib/comprasEmbarqueCards';
 import { buildConsultaItensEmbarque } from '@/lib/consultaComprasEmbarques';
 
-export const PDF_BUILD = 'estoque-reuniao-v15';
+export const PDF_BUILD = 'estoque-reuniao-v16';
 
 const BRL_KPI = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -1191,10 +1191,10 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
     title: 'Embarques em trânsito',
     widthRatio: 0.56,
     columns: [
-      { key: 'eta', label: 'ETA', width: 0.13, align: 'left' },
-      { key: 'transportadora', label: 'TRANSPORTADORA', width: 0.34, align: 'left' },
-      { key: 'volumes', label: 'VOL.', width: 0.14, align: 'right' },
-      { key: 'valor', label: 'VALOR (R$)', width: 0.39, align: 'right' },
+      { key: 'eta', label: 'ETA', width: 0.18, align: 'left' },
+      { key: 'transportadora', label: 'TRANSPORTADORA', width: 0.36, align: 'left' },
+      { key: 'volumes', label: 'VOL.', width: 0.13, align: 'right' },
+      { key: 'valor', label: 'R$', width: 0.33, align: 'right' },
     ],
     rawRows: transito.embarquesPorEtaTransportadora,
     toDisplay: (row) => ({
