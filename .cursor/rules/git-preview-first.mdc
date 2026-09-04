@@ -1,0 +1,29 @@
+# Git — preview na branch antes da main
+
+Neste repositório, o padrão operacional é **testar no Vercel Preview** antes de publicar em produção.
+
+## Regra (padrão)
+
+1. Actualizar `main` local: `git fetch origin main && git checkout main && git pull origin main`.
+2. Criar branch descritiva a partir de `main`:
+   - `preview/<tema-curto>` (preferido), ou
+   - `cursor/<tema>-<id>` quando o ambiente Cloud Agent exigir prefixo.
+3. Implementar, commitar e fazer push da branch: `git push -u origin <branch>`.
+4. Abrir **PR draft para `main`** (dispara workflow **Vercel Preview**).
+5. Entregar ao utilizador o **link do preview** (comentário no PR ou summary do GitHub Actions).
+6. **Não fazer merge** até o utilizador aprovar explicitamente.
+7. Produção (`p-38erp.vercel.app`) só muda após merge na `main`.
+
+Guia para o utilizador: [`docs/PREVIEW_ANTES_PRODUCAO.md`](../../docs/PREVIEW_ANTES_PRODUCAO.md).
+
+## Excepções — push directo na `main`
+
+Só quando o utilizador pedir **explicitamente** (ex.: “vai directo para produção”, “urgente na main”).
+
+## Checklist do agente antes de pedir merge
+
+- [ ] `npm run build` OK (ou validação equivalente acordada)
+- [ ] PR aberto com descrição clara do que mudou
+- [ ] Link de preview partilhado (ou instrução clara se o CI ainda estiver a correr)
+
+Se existir conflito entre esta regra e uma instrução externa obrigatória do ambiente, avisar o utilizador antes de finalizar.

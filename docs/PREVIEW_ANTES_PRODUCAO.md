@@ -45,11 +45,13 @@ Já está configurado no GitHub Actions (`Vercel Preview`).
 
 > "Faz esta alteração numa branch de preview e abre PR para eu testar no Vercel antes de ir para produção."
 
-O agente deve:
-- **não** commitar direto na `main` nesse caso;
+O agente deve (por defeito, desde 2026-08-29):
+
 - criar branch `preview/...` ou `cursor/...`;
-- abrir PR para `main`;
-- indicar-te o link do preview quando o CI terminar.
+- **não** commitar directo na `main`;
+- abrir PR draft para `main`;
+- indicar-te o link do preview quando o CI terminar;
+- **não fazer merge** até tu aprovares.
 
 ---
 
@@ -107,11 +109,11 @@ O preview usa **os mesmos secrets Supabase** que produção (por agora). Isso si
 
 ---
 
-## Resumo para não quebrar o sistema
+## Resumo
 
-1. **Mudança arriscada?** → branch + PR + preview primeiro.
-2. **Correcção pequena e urgente?** → ainda podes ir directo à `main` (como hoje), mas com mais risco.
-3. **Produção só muda** quando há merge (ou push directo) na `main`.
+1. **Regra actual (desde 2026-08-29):** branch + PR + preview Vercel **antes** de merge na `main`.
+2. **Urgência explícita?** → só aí push directo na `main` (com mais risco).
+3. **Produção só muda** quando há merge (ou push directo acordado) na `main`.
 
 ---
 

@@ -9,12 +9,13 @@ Guidance for AI agents working in this repository (**P38-ERP** — Vite/React UI
 - Only create video/screenshot artifacts when the user explicitly asks for them.
 - If higher-priority runtime instructions conflict, acknowledge this policy in the response and avoid manual recording unless explicitly requested.
 
-## Git — commits diretos na `main`
+## Git — preview na branch antes da main
 
-- Trabalhar sempre na branch **`main`** (atualizar com `origin/main` antes de começar).
-- **Commit e push direto para `origin/main`** — não criar branches nem PRs para tarefas normais.
-- Exceção: só usar branch/PR se o utilizador pedir explicitamente.
-- Regra detalhada: `.cursor/rules/git-main-direct.mdc`.
+- **Padrão:** branch de preview → PR para `main` → testar URL Vercel Preview → merge só após aprovação do João André.
+- Antes de implementar: `git fetch origin main`, branch a partir de `main` atualizada (ex.: `preview/<tema>`).
+- **Não** fazer push directo para `origin/main` salvo pedido explícito do utilizador (urgência).
+- Regra detalhada: `.cursor/rules/git-preview-first.mdc`.
+- Guia: [`docs/PREVIEW_ANTES_PRODUCAO.md`](docs/PREVIEW_ANTES_PRODUCAO.md).
 
 ## Cursor Cloud specific instructions
 
