@@ -1,10 +1,13 @@
 import { base44 } from '@/api/base44Client';
+import { format } from 'date-fns';
+import { inicioDiaSistemaISO, fimDiaSistemaISO } from '@/components/utils/dateUtils';
 import {
   iso90DiasAtras,
   isoDiasAtrasDateKey,
   pedidoDentroJanela90d,
   pedidoElegivelIep,
 } from '@/lib/calcularIepProdutos';
+import { competenciaParaIntervalo } from '@/lib/relatorioMargemCalculos';
 import { STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA } from '@/lib/pdvCaixaTurnoVendas';
 
 const PEDIDO_IDS_CHUNK = 40;
@@ -349,6 +352,30 @@ async function fetchAllPedidosVendaList() {
  */
 export async function fetchPedidosVendaParaMargem() {
   const pedidos = (await fetchAllPedidosVendaList()).filter(pedidoElegivelMargemConsulta);
+  const dataKey = isoDiasAtrasDateKey(365);
+  return hidratarPedidosSemItens(pedidos, dataKey);
+}
+
+/** Vendas de uma competência (YYYY-MM) — evita carregar todo o histórico na margem. */
+export async function fetchPedidosVendaParaMargemCompetencia(competencia) {
+  const intervalo = competenciaParaIntervalo(competencia);
+  if (!intervalo) return [];
+
+  const dataInicio = format(intervalo.from, 'yyyy-MM-dd');
+  const dataFim = format(intervalo.to, 'yyyy-MM-dd');
+
+  const pedidosRaw = await base44.entities.PedidoVenda.filter(
+    {
+      created_date: {
+        $gte: inicioDiaSistemaISO(dataInicio),
+        $lte: fimDiaSistemaISO(dataFim),
+      },
+    },
+    '-created_date',
+    5000,
+  ).catch(() => []);
+
+  const pedidos = (Array.isArray(pedidosRaw) ? pedidosRaw : []).filter(pedidoElegivelMargemConsulta);
   const dataKey = isoDiasAtrasDateKey(365);
   return hidratarPedidosSemItens(pedidos, dataKey);
 }

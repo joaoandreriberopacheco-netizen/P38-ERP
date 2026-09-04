@@ -71,6 +71,7 @@ export default function VendasTab({ enabled = true } = {}) {
       pedidosOrigemTroca: rawData.pedidosOrigemTroca,
       kpiConfig: rawData.kpiConfig,
       selectedMonthKey,
+      sealedMonths: rawData.sealedMonths,
     });
   }, [rawData, selectedMonthKey]);
 

@@ -25,6 +25,10 @@ import {
   countWorkingDaysUpToCalendarDay,
   getDailyMetaFromMonthly,
 } from '@/lib/dashboardKpiConfig';
+import {
+  isSaleCoveredBySealedMonth,
+  mergeSealedVendasIntoBuckets,
+} from '@/lib/dashboardMargemVendasSealed';
 
 const RING_COLORS = {
   primary: '#c4d068',
@@ -55,6 +59,7 @@ function buildMonthlyAndDailyBuckets(monthBuckets6) {
 
 /**
  * Agrega pedidos elegíveis ao Margem por mês/dia (lucro, venda líquida, custo).
+ * sealedMonths: payloads do Postgres (até ontem) — pedidos cobertos não são reprocessados.
  */
 export function computeDashboardVendasMetricsMargem({
   pedidos,
@@ -63,6 +68,7 @@ export function computeDashboardVendasMetricsMargem({
   pedidosOrigemTroca = {},
   kpiConfig,
   selectedMonthKey,
+  sealedMonths = {},
 }) {
   const monthBuckets6 = getMonthBucketsEndingAt(selectedMonthKey, 6);
   const [y, m] = selectedMonthKey.split('-').map(Number);
@@ -76,13 +82,19 @@ export function computeDashboardVendasMetricsMargem({
   }, {});
 
   const indiceTrocas = buildIndiceDevolucaoTrocaMargem(devolucoesTroca);
-  const { salesByMonthDay, profitByMonthDay, monthlyTotals } = buildMonthlyAndDailyBuckets(monthBuckets6);
+  const sealedBucketData = Object.keys(sealedMonths || {}).length
+    ? mergeSealedVendasIntoBuckets(monthBuckets6, sealedMonths)
+    : buildMonthlyAndDailyBuckets(monthBuckets6);
+  const { salesByMonthDay, profitByMonthDay, monthlyTotals } = sealedBucketData;
 
   const eligibleSales = (Array.isArray(pedidos) ? pedidos : []).filter((sale) => {
     if (!pedidoElegivelMargem(sale)) return false;
     const saleDate = getDataVendaMargem(sale);
     if (!saleDate) return false;
-    return !isBefore(saleDate, windowStart) && !isAfter(saleDate, windowEnd);
+    if (isBefore(saleDate, windowStart) || isAfter(saleDate, windowEnd)) return false;
+    const monthKey = format(saleDate, 'yyyy-MM');
+    if (isSaleCoveredBySealedMonth(saleDate, monthKey, sealedMonths)) return false;
+    return true;
   });
 
   eligibleSales.forEach((sale) => {

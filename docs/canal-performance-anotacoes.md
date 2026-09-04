@@ -126,9 +126,10 @@ Meta saudável LCP: **&lt; 2,5 s**. INP (~152 ms) está aceitável — o gargalo
 
 ### Fase 2 — Completar dashboard + margem
 
-- [ ] **Dashboard VendasTab** — ler `sealedMonths.payload`; calcular só delta de hoje.
-- [ ] **Dashboard EstoqueTab** — mesmo padrão incremental.
-- [ ] **Margem / Budgets / Dízimo** — eliminar fallback “todos os pedidos”; persistir snapshot na primeira vez.
+- [x] **Dashboard VendasTab** — `sealedMonths.payload` preenche buckets; só pedidos de hoje são reprocessados; catálogo leve quando há snapshots.
+- [x] **fetchDashboardVendas** — janela totalmente selada busca só pedidos de hoje (não a janela inteira).
+- [x] **Dashboard EstoqueTab** — cache do tab 5 min (movimentos até ontem já em segmento ∞).
+- [x] **Margem / Budgets / Dízimo** — `fetchPedidosVendaParaMargemCompetencia` por mês; snapshot só em mês fechado; cache por competência.
 
 ### Fase 3 — Hub de anotações generalizado
 

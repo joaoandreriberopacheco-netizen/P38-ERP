@@ -31,7 +31,8 @@ export function getDashboardVendasStaleTime(selectedMonthKey) {
 }
 
 export function getDashboardEstoqueStaleTime() {
-  return 2 * 60 * 1000;
+  /** Movimentos até ontem ficam em segmento ∞; o tab inteiro pode reutilizar 5 min. */
+  return 5 * 60 * 1000;
 }
 
 export function getOntemDateKey() {

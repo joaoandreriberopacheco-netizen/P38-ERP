@@ -199,21 +199,9 @@ export async function fetchDashboardVendasPeriodo({
   let pedidos;
 
   if (allMonthsSealed) {
-    pedidos = await ensurePedidosSegment(
-      queryClient,
-      `window-${dataInicio}_${dataFim}`,
-      dataInicio,
-      dataFim,
-      CLOSED_SEGMENT_STALE,
-    );
-    if (plan.hoje) {
-      const hojePedidos = await fetchPedidosVendaHydratedRange(
-        plan.hoje.dataInicio,
-        plan.hoje.dataFim,
-        500,
-      );
-      pedidos = mergePedidosById(pedidos, hojePedidos);
-    }
+    pedidos = plan.hoje
+      ? await fetchPedidosVendaHydratedRange(plan.hoje.dataInicio, plan.hoje.dataFim, 500)
+      : [];
   } else if (isVendasWindowFullyClosed(selectedMonthKey, months)) {
     pedidos = await ensurePedidosSegment(
       queryClient,

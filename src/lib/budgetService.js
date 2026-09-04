@@ -7,12 +7,16 @@ import {
   lancamentoElegivelBudget,
 } from '@/lib/budgetCalculos';
 import { calcularLucroBrutoCompetencia, competenciaParaIntervalo } from '@/lib/relatorioMargemCalculos';
-import { fetchPedidosOrigemTrocaMargem, fetchPedidosVendaParaMargem } from '@/lib/fetchPedidosVenda90d';
+import {
+  fetchPedidosOrigemTrocaMargem,
+  fetchPedidosVendaParaMargemCompetencia,
+} from '@/lib/fetchPedidosVenda90d';
 import { fetchAllProdutosCatalogo } from '@/lib/fetchProdutosAtivos';
 import { P38_STALE_TIME } from '@/lib/p38QueryConfig';
 import {
   gravarMargemCompetenciaSnapshot,
   lerMargemCompetenciaSnapshot,
+  competenciaMargemPodeUsarSnapshot,
 } from '@/lib/margemCompetenciaSnapshot';
 import { listarCentrosCustoRegistros } from '@/lib/folhaPrevisaoService';
 import {
@@ -22,18 +26,27 @@ import {
 
 export { listarCentrosCustoRegistros };
 
-/** Cache em memória dos dados brutos da margem (vendas, produtos, trocas). */
-let margemBaseCache = null;
-let margemBaseCacheAt = 0;
+/** Cache em memória por competência (evita refetch no mesmo mês durante 2 min). */
+const margemCompetenciaCache = new Map();
 
-async function obterDadosBaseMargem() {
+function cacheKeyMargem(competencia) {
+  return String(competencia || '').slice(0, 7);
+}
+
+async function obterDadosMargemCompetencia(competencia) {
+  const prefix = cacheKeyMargem(competencia);
+  if (!prefix) {
+    return { sales: [], products: [], devolucoesTroca: [], pedidosOrigemTroca: {} };
+  }
+
+  const cached = margemCompetenciaCache.get(prefix);
   const now = Date.now();
-  if (margemBaseCache && now - margemBaseCacheAt < P38_STALE_TIME) {
-    return margemBaseCache;
+  if (cached && now - cached.at < P38_STALE_TIME) {
+    return cached.data;
   }
 
   const [sales, products, devolucoes] = await Promise.all([
-    fetchPedidosVendaParaMargem(),
+    fetchPedidosVendaParaMargemCompetencia(prefix),
     fetchAllProdutosCatalogo(),
     base44.entities.DevolucaoTroca.list(),
   ]);
@@ -41,15 +54,14 @@ async function obterDadosBaseMargem() {
   const devolucoesTroca = Array.isArray(devolucoes) ? devolucoes : [];
   const pedidosOrigemTroca = await fetchPedidosOrigemTrocaMargem(devolucoesTroca);
 
-  margemBaseCache = { sales, products, devolucoesTroca, pedidosOrigemTroca };
-  margemBaseCacheAt = now;
-  return margemBaseCache;
+  const data = { sales, products, devolucoesTroca, pedidosOrigemTroca };
+  margemCompetenciaCache.set(prefix, { at: now, data });
+  return data;
 }
 
 /** Invalida cache em memória após alterações em vendas/produtos. */
 export function invalidarCacheMargemBase() {
-  margemBaseCache = null;
-  margemBaseCacheAt = 0;
+  margemCompetenciaCache.clear();
 }
 
 const DADOS_EMPRESA_MODELOS_KEY = 'budget_modelos';
@@ -372,7 +384,8 @@ export async function obterLucroBrutoCompetencia(competencia) {
   const snapshot = await lerMargemCompetenciaSnapshot(prefix);
   if (snapshot) return snapshot;
 
-  const { sales, products, devolucoesTroca, pedidosOrigemTroca } = await obterDadosBaseMargem();
+  const { sales, products, devolucoesTroca, pedidosOrigemTroca } =
+    await obterDadosMargemCompetencia(prefix);
 
   const resultado = calcularLucroBrutoCompetencia(
     sales,
@@ -382,7 +395,9 @@ export async function obterLucroBrutoCompetencia(competencia) {
     pedidosOrigemTroca,
   );
 
-  await gravarMargemCompetenciaSnapshot(prefix, resultado);
+  if (competenciaMargemPodeUsarSnapshot(prefix)) {
+    await gravarMargemCompetenciaSnapshot(prefix, resultado);
+  }
 
   return resultado;
 }
