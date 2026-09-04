@@ -24,7 +24,7 @@ import {
 } from '@/lib/comprasEmbarqueCards';
 import { buildConsultaItensEmbarque } from '@/lib/consultaComprasEmbarques';
 
-export const PDF_BUILD = 'estoque-reuniao-v20';
+export const PDF_BUILD = 'estoque-reuniao-v21';
 
 const BRL_KPI = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -1240,10 +1240,68 @@ function drawAbcdComposicaoPair(doc, fontFamily, normalizePdfText, layout, y, {
   }, pageH);
 }
 
+function drawPageHeroHeader(doc, fontFamily, normalizePdfText, layout, y, {
+  title,
+  subtitleLines = [],
+  kpiLabel,
+  kpiValue,
+  kpiNotes = [],
+  titleWidthRatio = 0.50,
+}) {
+  const { M, CW } = layout;
+  const gap = 6;
+  const leftWidth = (CW - gap) * titleWidthRatio;
+  const rightEdge = M + CW;
+  const startY = y;
+
+  doc.setFont(fontFamily, 'heavy');
+  doc.setFontSize(FONT.title);
+  setTextColor(doc, COLORS.ink);
+  doc.text(normalizePdfText(title), M, startY);
+
+  let leftY = startY + 7;
+  doc.setFont(fontFamily, 'normal');
+  doc.setFontSize(FONT.subtitle);
+  setTextColor(doc, COLORS.muted);
+  for (const line of subtitleLines) {
+    doc.text(normalizePdfText(line), M, leftY, { maxWidth: leftWidth });
+    leftY += 4;
+  }
+
+  let rightY = startY + 1;
+  doc.setFont(fontFamily, 'normal');
+  doc.setFontSize(FONT.kpiLabel);
+  setTextColor(doc, COLORS.muted);
+  doc.text(normalizePdfText(kpiLabel), rightEdge, rightY, { align: 'right', maxWidth: CW - leftWidth - gap });
+  rightY += 5.5;
+
+  doc.setFont(fontFamily, 'heavy');
+  doc.setFontSize(FONT.kpi);
+  setTextColor(doc, COLORS.ink);
+  doc.text(normalizePdfText(kpiValue), rightEdge, rightY, { align: 'right' });
+  rightY += 6.5;
+
+  doc.setFont(fontFamily, 'normal');
+  doc.setFontSize(FONT.subtitle);
+  setTextColor(doc, COLORS.muted);
+  for (const note of kpiNotes) {
+    doc.text(normalizePdfText(note), rightEdge, rightY, {
+      align: 'right',
+      maxWidth: CW - leftWidth - gap,
+    });
+    rightY += 4;
+  }
+
+  const endY = Math.max(leftY, rightY) + 3;
+  doc.setDrawColor(...COLORS.line);
+  doc.setLineWidth(GRID.lineWidth);
+  doc.line(M, endY, M + CW, endY);
+  return endY + LAYOUT.sectionGapBetween;
+}
+
 function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
   const { M, CW, pageH } = layout;
   let y = M;
-  const text = (str, x, yy, opts = {}) => doc.text(normalizePdfText(str), x, yy, opts);
 
   const familiasColumns = [
     { key: 'letra', label: 'CL.', width: 0.06, align: 'center' },
@@ -1252,45 +1310,16 @@ function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
     { key: 'valor', label: 'R$', width: 0.22, align: 'right' },
   ];
 
-  doc.setFont(fontFamily, 'heavy');
-  doc.setFontSize(FONT.title);
-  setTextColor(doc, COLORS.ink);
-  text('Estoque físico', M, y);
-  y += 7;
-
-  doc.setFont(fontFamily, 'normal');
-  doc.setFontSize(FONT.subtitle);
-  setTextColor(doc, COLORS.muted);
-  text('O que está no armazém hoje — pronto para vender ou separar', M, y);
-  y += 4;
-  text(`Atualizado em ${data.geradoEm} (Tabatinga)`, M, y);
-  y += 7;
-
-  doc.setDrawColor(...COLORS.line);
-  doc.setLineWidth(GRID.lineWidth);
-  doc.line(M, y, M + CW, y);
-  y += 8;
-
-  doc.setFont(fontFamily, 'normal');
-  doc.setFontSize(FONT.kpiLabel);
-  setTextColor(doc, COLORS.muted);
-  text('VALOR TOTAL EM ESTOQUE (CUSTO)', M, y);
-  y += 6;
-
-  doc.setFont(fontFamily, 'heavy');
-  doc.setFontSize(FONT.kpi);
-  setTextColor(doc, COLORS.ink);
-  text(BRL_KPI.format(data.total), M, y);
-  y += 6;
-
-  doc.setFont(fontFamily, 'normal');
-  doc.setFontSize(FONT.subtitle);
-  setTextColor(doc, COLORS.muted);
-  text(`${QTD.format(data.skusCom)} referências com saldo positivo`, M, y);
-  y += 8;
-
-  doc.line(M, y, M + CW, y);
-  y += LAYOUT.sectionGapBetween;
+  y = drawPageHeroHeader(doc, fontFamily, normalizePdfText, layout, y, {
+    title: 'Estoque físico',
+    subtitleLines: [
+      'O que está no armazém hoje — pronto para vender ou separar',
+      `Atualizado em ${data.geradoEm} (Tabatinga)`,
+    ],
+    kpiLabel: 'VALOR TOTAL EM ESTOQUE (CUSTO)',
+    kpiValue: BRL_KPI.format(data.total),
+    kpiNotes: [`${QTD.format(data.skusCom)} referências com saldo positivo`],
+  });
 
   y = drawAbcdComposicaoPair(doc, fontFamily, normalizePdfText, layout, y, {
     porAbcd: data.porAbcd,
@@ -1335,55 +1364,22 @@ function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
 function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) {
   const { M, CW, pageH } = layout;
   let y = M;
-  const text = (str, x, yy, opts = {}) => doc.text(normalizePdfText(str), x, yy, opts);
 
-  doc.setFont(fontFamily, 'heavy');
-  doc.setFontSize(FONT.title);
-  setTextColor(doc, COLORS.ink);
-  text('Estoque em trânsito', M, y);
-  y += 7;
+  y = drawPageHeroHeader(doc, fontFamily, normalizePdfText, layout, y, {
+    title: 'Estoque em trânsito',
+    subtitleLines: [
+      'Compras aprovadas que ainda não entraram no armazém',
+      `Atualizado em ${transito.geradoEm} (Tabatinga)`,
+    ],
+    kpiLabel: 'VALOR TOTAL EM TRÂNSITO (CUSTO)',
+    kpiValue: BRL_KPI.format(transito.totalTransito),
+    kpiNotes: [
+      `${QTD.format(transito.pedidosAbertos)} pedidos · ${QTD.format(transito.embarquesTransito)} embarques · ${QTD.format(transito.volumesTotal)} volumes`,
+      'Compras com financeiro aprovado e pedido ainda não concluído',
+    ],
+  });
 
-  doc.setFont(fontFamily, 'normal');
-  doc.setFontSize(FONT.subtitle);
-  setTextColor(doc, COLORS.muted);
-  text('Compras aprovadas que ainda não entraram no armazém', M, y);
-  y += 4;
-  text(`Atualizado em ${transito.geradoEm} (Tabatinga)`, M, y);
-  y += 7;
-
-  doc.setDrawColor(...COLORS.line);
-  doc.setLineWidth(GRID.lineWidth);
-  doc.line(M, y, M + CW, y);
-  y += 8;
-
-  doc.setFont(fontFamily, 'normal');
-  doc.setFontSize(FONT.kpiLabel);
-  setTextColor(doc, COLORS.muted);
-  text('VALOR TOTAL EM TRÂNSITO (CUSTO)', M, y);
-  y += 6;
-
-  doc.setFont(fontFamily, 'heavy');
-  doc.setFontSize(FONT.kpi);
-  setTextColor(doc, COLORS.ink);
-  text(BRL_KPI.format(transito.totalTransito), M, y);
-  y += 6;
-
-  doc.setFont(fontFamily, 'normal');
-  doc.setFontSize(FONT.subtitle);
-  setTextColor(doc, COLORS.muted);
-  text(
-    `${QTD.format(transito.pedidosAbertos)} pedidos · ${QTD.format(transito.embarquesTransito)} embarques · ${QTD.format(transito.volumesTotal)} volumes`,
-    M,
-    y,
-  );
-  y += 4;
-  text('Compras com financeiro aprovado e pedido ainda não concluído', M, y);
-  y += 8;
-
-  doc.line(M, y, M + CW, y);
-  y += LAYOUT.sectionGapBetween;
-
-  const block2ReserveMm = 158;
+  const block2ReserveMm = 150;
   const block1TableY = sectionTitleEndY(y);
   const maxBlock1Height = pageH - FOOTER_RESERVE - block1TableY - block2ReserveMm - LAYOUT.sectionGapBetween * 2;
 
