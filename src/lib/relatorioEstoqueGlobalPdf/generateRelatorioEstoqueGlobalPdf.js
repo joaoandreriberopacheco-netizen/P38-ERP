@@ -1,12 +1,16 @@
 import { jsPDF } from 'jspdf';
-import { resolveProdutoCustoUnitarioBase, sumCatalogTransitStockValue } from '@/lib/catalogStockTotals';
-import { formatEstoqueApresentacao, formatQuantidadeCatalogoApresentacao } from '@/lib/productUnits';
+import { resolveProdutoCustoUnitarioBase } from '@/lib/catalogStockTotals';
+import { formatEstoqueApresentacao } from '@/lib/productUnits';
 import { registerJsPdfBarlowFonts, normalizePdfText } from '@/lib/jspdfNotoFont';
 import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
-import { resolveQuantidadeBaseItemEmbarque, quantidadePendenteItemPedidoCompra, pedidoCompraTotalmenteRecebido } from '@/lib/sugestaoCompraEstoquePendente';
-import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
+import {
+  filtrarCardsEmbarqueEmTransito,
+  materializePedidosCompraView,
+  valorPendenteCardEmbarque,
+} from '@/lib/comprasEmbarqueCards';
+import { buildConsultaItensEmbarque } from '@/lib/consultaComprasEmbarques';
 
-export const PDF_BUILD = 'estoque-reuniao-v9';
+export const PDF_BUILD = 'estoque-reuniao-v10';
 
 const BRL_KPI = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -144,22 +148,14 @@ function normalizarFornecedorRelatorio(nome) {
   return text;
 }
 
-function recebidosPorProdutoDoPedido(pedido, recebidosPorPedidoProduto = {}) {
-  const pedidoKey = String(pedido?.id || '');
-  return recebidosPorPedidoProduto[pedidoKey] || {};
-}
-
-function valorPendentePedidoCompra(pedido, recebidosPorPedidoProduto, produtoMap, resolveProdutoCustoUnitarioBase) {
-  const recebidos = recebidosPorProdutoDoPedido(pedido, recebidosPorPedidoProduto);
-  if (pedidoCompraTotalmenteRecebido(pedido, recebidos)) return 0;
-  let total = 0;
-  for (const item of pedido?.itens || []) {
-    const pendente = quantidadePendenteItemPedidoCompra(item, recebidos);
-    if (pendente <= 0) continue;
-    const produto = produtoMap.get(String(item.produto_id));
-    total += pendente * resolveProdutoCustoUnitarioBase(produto || {});
+function buildProdutosLookup(produtos) {
+  const lookup = {};
+  for (const produto of produtos) {
+    if (!produto?.id) continue;
+    lookup[produto.id] = produto;
+    lookup[String(produto.id)] = produto;
   }
-  return total;
+  return lookup;
 }
 
 function buildAbcdDominantePorH1(produtos, resolveProdutoAbcdClasse, valorFn) {
@@ -297,131 +293,68 @@ function countVolumesEmbarque(embarque = {}) {
   return linhas.length > 0 ? linhas.length : 1;
 }
 
-function resolvePedidoItemParaEmbarque(pedido = {}, item = {}) {
-  const itens = Array.isArray(pedido?.itens) ? pedido.itens : [];
-  if (!itens.length) return null;
-  if (item?.pedido_compra_item_id) {
-    const porId = itens.find(
-      (linha) => linha.pedido_compra_item_id === item.pedido_compra_item_id || linha.id === item.pedido_compra_item_id,
-    );
-    if (porId) return porId;
-  }
-  if (item?.produto_id) {
-    return itens.find((linha) => linha.produto_id === item.produto_id) || null;
-  }
-  return null;
-}
-
-function resolveQuantidadeBaseRecebidaItemEmbarque(item = {}, pedidoItem = null, embarque = null, resolveQuantidadeBaseItemEmbarque) {
-  const recebidaBase = Number(item.quantidade_recebida_base);
-  if (Number.isFinite(recebidaBase) && recebidaBase > 0) return recebidaBase;
-
-  let recebida = Number(item.quantidade_recebida ?? item.quantidade_recebida_comercial) || 0;
-  if (recebida <= 0 && embarque) {
-    const statusReceb = String(embarque?.status_recebimento || '').trim().toLowerCase();
-    const statusEmb = String(embarque?.status || '').trim().toLowerCase();
-    const embarqueConcluido = statusReceb === 'recebido ok' || statusReceb === 'com divergencia' || statusEmb === 'concluido';
-    if (embarqueConcluido) {
-      recebida = Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || Number(item.quantidade) || 0;
-    }
-  }
-  if (recebida <= 0) return 0;
-
-  return resolveQuantidadeBaseItemEmbarque(
-    {
-      ...item,
-      quantidade_embarcada: recebida,
-      quantidade_pedida: recebida,
-      quantidade: recebida,
-    },
-    pedidoItem,
-  );
-}
-
-function valorPendenteEmbarque(embarque, pedido, produtoMap, resolveProdutoCustoUnitarioBase, helpers) {
-  const { getEmbarqueItensLinhas, resolveQuantidadeBaseItemEmbarque } = helpers;
-  let total = 0;
-  for (const item of getEmbarqueItensLinhas(embarque)) {
-    const pedidoItem = pedido ? resolvePedidoItemParaEmbarque(pedido, item) : null;
-    const embarcadoBase = resolveQuantidadeBaseItemEmbarque(item, pedidoItem);
-    const recebidoBase = resolveQuantidadeBaseRecebidaItemEmbarque(
-      item,
-      pedidoItem,
-      embarque,
-      resolveQuantidadeBaseItemEmbarque,
-    );
-    const pendenteBase = Math.max(0, embarcadoBase - recebidoBase);
-    if (pendenteBase <= 0) continue;
-    const produto = produtoMap.get(String(item.produto_id));
-    total += pendenteBase * resolveProdutoCustoUnitarioBase(produto || {});
-  }
-  return total;
-}
-
 function buildResumoTransitoData(
   produtos,
   compraContext,
   {
-    resolveProdutoCustoUnitarioBase,
     resolveProdutoAbcdClasse,
-    sumCatalogTransitStockValue,
-    formatQuantidadeCatalogoApresentacao,
   },
 ) {
-  const {
-    getEmbarqueItensLinhas,
-    resolveQuantidadeBaseItemEmbarque,
-    pedidosMap,
-    pedidosAbertos,
-    embarquesHydrated,
-    embarquesTransito,
-    recebidosPorPedidoProduto,
-    buildPendenteAprovadoFinanceiroPorProduto,
-  } = compraContext;
+  const { pedidosAbertos, embarquesHydrated } = compraContext;
 
+  const produtosMap = buildProdutosLookup(produtos);
   const produtoMap = new Map(produtos.map((produto) => [String(produto.id), produto]));
-  const pendentePorProduto = buildPendenteAprovadoFinanceiroPorProduto(
-    pedidosAbertos,
-    recebidosPorPedidoProduto,
-    { embarques: embarquesHydrated, pedidosParaEmbarque: [...pedidosMap.values()] },
+  const { cardsDeEmbarque } = materializePedidosCompraView(pedidosAbertos, embarquesHydrated, produtosMap);
+  const cardsEmTransito = filtrarCardsEmbarqueEmTransito(cardsDeEmbarque)
+    .filter((card) => valorPendenteCardEmbarque(card, produtosMap) > 0);
+
+  const valorPorProduto = {};
+  const familiaTransitoAgg = new Map();
+
+  for (const card of cardsEmTransito) {
+    const itens = buildConsultaItensEmbarque(card, produtosMap, { modo: 'pendente' });
+    for (const item of itens) {
+      const produtoId = String(item.produto_id || '');
+      const produto = produtoMap.get(produtoId);
+      const valor = Number(item.valor_total_item) || Number(item.total) || 0;
+      const qtd = Number(item.quantidade) || 0;
+      const unidade = String(item.unidade_medida || 'UN').toUpperCase();
+      if (valor <= 0) continue;
+
+      valorPorProduto[produtoId] = (valorPorProduto[produtoId] || 0) + valor;
+
+      const familia = familiaH1Relatorio(produto?.campo_hierarquico_1);
+      if (!familiaTransitoAgg.has(familia)) {
+        familiaTransitoAgg.set(familia, { familia, valor: 0, units: new Map() });
+      }
+      const agg = familiaTransitoAgg.get(familia);
+      agg.valor += valor;
+      if (qtd > 0) agg.units.set(unidade, (agg.units.get(unidade) || 0) + qtd);
+    }
+  }
+
+  const valorTransitoProduto = (produto) => valorPorProduto[String(produto.id)] || 0;
+  const produtosEmTransito = produtos.filter((produto) => valorTransitoProduto(produto) > 0);
+  const totalTransito = cardsEmTransito.reduce(
+    (sum, card) => sum + valorPendenteCardEmbarque(card, produtosMap),
+    0,
   );
 
-  const valorTransitoProduto = (produto) => {
-    const pendenteBase = Number(pendentePorProduto[String(produto.id)] || 0);
-    if (pendenteBase <= 0) return 0;
-    return pendenteBase * resolveProdutoCustoUnitarioBase(produto);
-  };
+  const abcdPorH1 = buildAbcdDominantePorH1(produtosEmTransito, resolveProdutoAbcdClasse, valorTransitoProduto);
+  const valorPorAbcd = aggregateValorPorAbcdH1(produtosEmTransito, abcdPorH1, valorTransitoProduto);
 
-  const totalTransito = sumCatalogTransitStockValue(produtos, pendentePorProduto);
-  const abcdPorH1 = buildAbcdDominantePorH1(produtos, resolveProdutoAbcdClasse, valorTransitoProduto);
-  const valorPorAbcd = aggregateValorPorAbcdH1(produtos, abcdPorH1, valorTransitoProduto);
-
-  const helpers = { getEmbarqueItensLinhas, resolveQuantidadeBaseItemEmbarque };
-  const embarquesDetalhe = embarquesTransito
-    .map((embarque) => {
-      const pedido = pedidosMap.get(String(embarque.pedido_compra_id));
-      if (!pedido) return null;
-      const recebidos = recebidosPorProdutoDoPedido(pedido, recebidosPorPedidoProduto);
-      if (pedidoCompraTotalmenteRecebido(pedido, recebidos)) return null;
-
-      const valorEmbarque = valorPendenteEmbarque(embarque, pedido, produtoMap, resolveProdutoCustoUnitarioBase, helpers);
-      const valorPedido = valorPendentePedidoCompra(pedido, recebidosPorPedidoProduto, produtoMap, resolveProdutoCustoUnitarioBase);
-      const transportadoraNome = String(embarque.transportadora_nome || '').trim();
-      const semTransportadora = !transportadoraNome;
-      const valor = semTransportadora ? valorPedido : valorEmbarque;
-      if (valor <= 0) return null;
-
-      const eta = formatEta(embarque.eta || pedido?.data_prevista_entrega);
-      const transportadora = transportadoraNome || 'Sem transportadora';
-      return {
-        eta,
-        transportadora,
-        volumes: countVolumesEmbarque(embarque),
-        valor,
-        sortEta: eta === '—' ? '9999' : eta,
-      };
-    })
-    .filter(Boolean);
+  const embarquesDetalhe = cardsEmTransito.map((card) => {
+    const embarque = card._embarque || {};
+    const eta = formatEta(embarque.eta || card.data_prevista_entrega);
+    const transportadora = String(embarque.transportadora_nome || '').trim() || 'Sem transportadora';
+    return {
+      eta,
+      transportadora,
+      volumes: countVolumesEmbarque(embarque),
+      valor: valorPendenteCardEmbarque(card, produtosMap),
+      sortEta: eta === '—' ? '9999' : eta,
+    };
+  });
 
   const embarquesEtaTransportadoraAgg = new Map();
   for (const row of embarquesDetalhe) {
@@ -443,55 +376,20 @@ function buildResumoTransitoData(
   const embarquesPorEtaTransportadora = [...embarquesEtaTransportadoraAgg.values()]
     .sort((a, b) => a.sortEta.localeCompare(b.sortEta) || b.valor - a.valor);
 
-  const pedidosComEmbarqueTransito = new Set(
-    embarquesTransito.map((embarque) => String(embarque.pedido_compra_id)),
-  );
-  let valorAEmbarcar = 0;
-  let pedidosAEmbarcar = 0;
-  for (const pedido of pedidosAbertos) {
-    if (pedidosComEmbarqueTransito.has(String(pedido.id))) continue;
-    const valor = valorPendentePedidoCompra(pedido, recebidosPorPedidoProduto, produtoMap, resolveProdutoCustoUnitarioBase);
-    if (valor <= 0) continue;
-    valorAEmbarcar += valor;
-    pedidosAEmbarcar += 1;
-  }
-  if (valorAEmbarcar > 0) {
-    embarquesPorEtaTransportadora.push({
-      eta: '—',
-      transportadora: `A embarcar (${QTD.format(pedidosAEmbarcar)} ped.)`,
-      volumes: pedidosAEmbarcar,
-      valor: valorAEmbarcar,
-      sortEta: '9998',
-    });
-    embarquesPorEtaTransportadora.sort((a, b) => a.sortEta.localeCompare(b.sortEta) || b.valor - a.valor);
-  }
-
   const volumesTotal = embarquesDetalhe.reduce((sum, row) => sum + row.volumes, 0);
 
   const fornecedorAgg = new Map();
-  for (const pedido of pedidosAbertos) {
-    const valor = valorPendentePedidoCompra(pedido, recebidosPorPedidoProduto, produtoMap, resolveProdutoCustoUnitarioBase);
+  for (const card of cardsEmTransito) {
+    const valor = valorPendenteCardEmbarque(card, produtosMap);
     if (valor <= 0) continue;
-    const key = normalizarFornecedorRelatorio(pedido.fornecedor_nome);
-    if (!fornecedorAgg.has(key)) {
-      fornecedorAgg.set(key, { fornecedor: key, embarques: 0, volumes: 0, valor: 0 });
-    }
-    const agg = fornecedorAgg.get(key);
-    agg.valor += valor;
-  }
-
-  for (const embarque of embarquesTransito) {
-    const pedido = pedidosMap.get(String(embarque.pedido_compra_id));
-    if (!pedido) continue;
-    const recebidos = recebidosPorProdutoDoPedido(pedido, recebidosPorPedidoProduto);
-    if (pedidoCompraTotalmenteRecebido(pedido, recebidos)) continue;
-    const key = normalizarFornecedorRelatorio(embarque.fornecedor_nome || pedido?.fornecedor_nome);
+    const key = normalizarFornecedorRelatorio(card.fornecedor_nome || card._display_fornecedor);
     if (!fornecedorAgg.has(key)) {
       fornecedorAgg.set(key, { fornecedor: key, embarques: 0, volumes: 0, valor: 0 });
     }
     const agg = fornecedorAgg.get(key);
     agg.embarques += 1;
-    agg.volumes += countVolumesEmbarque(embarque);
+    agg.valor += valor;
+    agg.volumes += countVolumesEmbarque(card._embarque);
   }
 
   const porFornecedor = [...fornecedorAgg.values()]
@@ -505,7 +403,7 @@ function buildResumoTransitoData(
     }));
 
   const familiaAgg = new Map();
-  for (const produto of produtos) {
+  for (const produto of produtosEmTransito) {
     const valor = valorTransitoProduto(produto);
     if (valor <= 0) continue;
     const familia = familiaH1Relatorio(produto.campo_hierarquico_1);
@@ -532,24 +430,6 @@ function buildResumoTransitoData(
     custoMedioTexto: '—',
   }));
 
-  const familiaTransitoAgg = new Map();
-  for (const [produtoId, pendenteBase] of Object.entries(pendentePorProduto)) {
-    const produto = produtoMap.get(String(produtoId));
-    if (!produto || pendenteBase <= 0) continue;
-    const familia = familiaH1Relatorio(produto.campo_hierarquico_1);
-    const apresent = formatQuantidadeCatalogoApresentacao(produto, pendenteBase);
-    const qtd = Number(apresent?.quantidade) || 0;
-    const unidade = apresent?.sigla || String(produto.unidade_principal || 'UN').toUpperCase();
-    const valor = pendenteBase * resolveProdutoCustoUnitarioBase(produto);
-    if (valor <= 0 || qtd <= 0) continue;
-    if (!familiaTransitoAgg.has(familia)) {
-      familiaTransitoAgg.set(familia, { familia, valor: 0, units: new Map() });
-    }
-    const agg = familiaTransitoAgg.get(familia);
-    agg.valor += valor;
-    agg.units.set(unidade, (agg.units.get(unidade) || 0) + qtd);
-  }
-
   const porFamiliaMaiores = [...familiaTransitoAgg.values()]
     .map((agg) => {
       const unidades = [...agg.units.entries()]
@@ -570,10 +450,12 @@ function buildResumoTransitoData(
     .filter((row) => row.valor > 0)
     .sort((a, b) => b.valor - a.valor);
 
+  const pedidosEmTransito = new Set(cardsEmTransito.map((card) => String(card.id)));
+
   return {
     totalTransito,
-    pedidosAbertos: pedidosAbertos.length,
-    embarquesTransito: embarquesDetalhe.length,
+    pedidosAbertos: pedidosEmTransito.size,
+    embarquesTransito: cardsEmTransito.length,
     volumesTotal,
     embarquesPorEtaTransportadora,
     porFornecedor,
@@ -1209,10 +1091,7 @@ export async function generateRelatorioEstoqueGlobalPdf({ produtos, compraContex
     resolveProdutoAbcdClasse,
   });
   const transito = buildResumoTransitoData(produtos, compraContext, {
-    resolveProdutoCustoUnitarioBase,
     resolveProdutoAbcdClasse,
-    sumCatalogTransitStockValue,
-    formatQuantidadeCatalogoApresentacao,
   });
   transito.geradoEm = fisico.geradoEm;
 

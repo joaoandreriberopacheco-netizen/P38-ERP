@@ -50,18 +50,11 @@ function groupRowsByField(rows, field) {
   return map;
 }
 
-function pciToLegacy(row) {
-  return {
-    id: row.id,
-    produto_id: row.produto_id,
-    produto_nome: row.produto_nome,
-    quantidade: row.quantidade_comercial,
-    quantidade_comercial: row.quantidade_comercial,
-    quantidade_base: row.quantidade_base,
-    fator_conversao: row.fator_aplicado,
-    fator_aplicado: row.fator_aplicado,
-    unidade_medida: row.unidade_sigla,
-  };
+function pciToLegacyRows(rows) {
+  return rows.map((row) => ({
+    ...row,
+    pedido_compra_item_id: row.id,
+  }));
 }
 
 function embarqueEmTransito(embarque = {}) {
@@ -73,8 +66,9 @@ function embarqueEmTransito(embarque = {}) {
   return true;
 }
 
-async function fetchCompraContextNode(pendenteLib, embarqueLib, embarqueContract) {
+async function fetchCompraContextNode(pendenteLib, embarqueLib, embarqueContract, pciLib) {
   const { rebuildEmbarqueItensMirror } = embarqueContract;
+  const { linhasPedidoCompraToLegacyItens } = pciLib;
   const { getEmbarqueItensLinhas } = embarqueLib;
   const {
     buildRecebidosPorPedidoProdutoFromEmbarques,
@@ -95,7 +89,7 @@ async function fetchCompraContextNode(pendenteLib, embarqueLib, embarqueContract
 
   const pedidosHydrated = pedidos.map((pedido) => ({
     ...pedido,
-    itens: (pciByPedido.get(String(pedido.id)) || []).map(pciToLegacy),
+    itens: linhasPedidoCompraToLegacyItens(pciToLegacyRows(pciByPedido.get(String(pedido.id)) || [])),
   }));
 
   const embarquesHydrated = embarques.map((embarque) => ({
@@ -137,9 +131,10 @@ async function main() {
     const pendenteLib = await server.ssrLoadModule('/src/lib/sugestaoCompraEstoquePendente.js');
     const embarqueLib = await server.ssrLoadModule('/src/lib/fetchEmbarqueItens.js');
     const embarqueContract = await server.ssrLoadModule('/src/lib/embarqueItemContract.js');
+    const pciLib = await server.ssrLoadModule('/src/lib/fetchPedidoCompraItens.js');
 
     const produtos = await fetchSupabaseTable('produto', '&ativo=eq.true');
-    const compraContext = await fetchCompraContextNode(pendenteLib, embarqueLib, embarqueContract);
+    const compraContext = await fetchCompraContextNode(pendenteLib, embarqueLib, embarqueContract, pciLib);
     const resposta = await pdfLib.generateRelatorioEstoqueGlobalPdf({ produtos, compraContext });
 
     const fisicoData = pdfLib.buildResumoData(produtos, {
@@ -148,10 +143,7 @@ async function main() {
       resolveProdutoAbcdClasse: abcdLib.resolveProdutoAbcdClasse,
     });
     const transitoData = pdfLib.buildResumoTransitoData(produtos, compraContext, {
-      resolveProdutoCustoUnitarioBase: stock.resolveProdutoCustoUnitarioBase,
       resolveProdutoAbcdClasse: abcdLib.resolveProdutoAbcdClasse,
-      sumCatalogTransitStockValue: stock.sumCatalogTransitStockValue,
-      formatQuantidadeCatalogoApresentacao: unitsLib.formatQuantidadeCatalogoApresentacao,
     });
 
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
