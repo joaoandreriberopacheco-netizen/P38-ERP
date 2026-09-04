@@ -16,7 +16,6 @@ import {
   listPortalLinhas,
 } from '@/lib/hierarquiaPortal/buildPortalModel';
 import {
-  buildPortalSupplyHierarchy,
   enrichSupplyLinesWithMetrics,
 } from '@/lib/hierarquiaPortal/buildPortalSupplyHierarchy';
 import {
@@ -44,7 +43,7 @@ import {
   HIERARQUIA_PORTAL_PILOTO_LINHAS,
 } from '@/config/hierarquiaPortalFlags';
 import { MODELO_PILOTO_LINHAS_PLANEADAS } from '@/config/modeloCatalogoFlags';
-import { SMART_SUPPLY_PORTAL_PREVIEW_LABEL } from '@/config/smartSupplyFlags';
+import { matchesLinhaTipoFilter } from '@/lib/smartSupply/linhaTipoFilter';
 
 const PORTAL_TABS = ['cadastro', 'hierarquia', 'supply', 'reserva'];
 
@@ -194,7 +193,7 @@ function HierarquiaPortalInner() {
   const filteredSupply = useMemo(() => {
     let lines = tab === 'reserva' ? supplyLinesReserva : supplyLines;
     if (filtroLinha) lines = lines.filter((l) => l.linha_codigo === filtroLinha);
-    if (filtroTipos?.size) lines = lines.filter((l) => filtroTipos.has(l.linha_tipo));
+    if (filtroTipos?.size) lines = lines.filter((l) => matchesLinhaTipoFilter(l.linha_tipo, filtroTipos));
     const q = (portalFilters.searchTerm || '').trim().toLowerCase();
     if (q) {
       lines = lines.filter(
@@ -212,17 +211,13 @@ function HierarquiaPortalInner() {
     [filteredSupply],
   );
 
-  const filteredHierarchy = useMemo(
-    () => buildPortalSupplyHierarchy(filteredSupply, velocityMap),
-    [filteredSupply, velocityMap],
-  );
-
   const tipoCounts = useMemo(() => {
-    const counts = { solo: 0, mix: 0, portfolio: 0 };
+    const counts = { solo: 0, mix: 0, portfolio: 0, portfolio_kit: 0 };
     const source = tab === 'supply' ? supplyLines : linhas;
     for (const l of source) {
       const tipo = l.linha_tipo ?? l.tipo;
-      if (counts[tipo] != null) counts[tipo] += 1;
+      if (tipo === 'portfolio_kit') counts.portfolio_kit += 1;
+      else if (counts[tipo] != null) counts[tipo] += 1;
     }
     return counts;
   }, [linhas, supplyLines, tab]);
@@ -388,10 +383,11 @@ function HierarquiaPortalInner() {
           />
         ) : tab === 'supply' ? (
           <PortalSmartSupplyPanel
-            hierarchy={filteredHierarchy}
+            supplyLines={filteredSupply}
             flatLines={filteredSupply}
             somenteAlerta={somenteAlerta}
             loadingVelocity={loadingVelocity}
+            velocityMap={velocityMap}
           />
         ) : (
           <PortalReservaPanel

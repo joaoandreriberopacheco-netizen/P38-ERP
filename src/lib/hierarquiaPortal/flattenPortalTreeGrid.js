@@ -3,7 +3,7 @@ import {
   montarNomePortalSku,
   montarSubtituloPortalSku,
 } from '@/lib/hierarquiaPortal/montarNomePortalSku';
-import { portalEstoqueGrupo } from '@/lib/hierarquiaPortal/portalStockFormat';
+import { matchesLinhaTipoFilter } from '@/lib/smartSupply/linhaTipoFilter';
 
 function filterTree(tree, filtroLinha, filtroTipos, search) {
   const q = search.trim().toLowerCase();
@@ -13,7 +13,7 @@ function filterTree(tree, filtroLinha, filtroTipos, search) {
     .map((cat) => ({
       ...cat,
       linhas: cat.linhas
-        .filter((lin) => (!filtroLinha || lin.linha_codigo === filtroLinha) && tipos.has(lin.linha_tipo))
+        .filter((lin) => (!filtroLinha || lin.linha_codigo === filtroLinha) && matchesLinhaTipoFilter(lin.linha_tipo, tipos))
         .map((lin) => {
           if (!q) return lin;
           const matchLin = lin.linha_nome.toLowerCase().includes(q);
