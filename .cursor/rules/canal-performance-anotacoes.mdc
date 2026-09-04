@@ -1,0 +1,41 @@
+---
+description: Canal de performance e hub de anotações — usar branch cursor/canal-performance-anotacoes-2ef5, não main
+alwaysApply: true
+---
+
+# Canal de performance (branch dedicada)
+
+Pedido explícito do João André (set/2026): otimizações de performance, cache e “anotações” **não vão para produção** até merge aprovado.
+
+## Branch obrigatória para este trabalho
+
+```
+cursor/canal-performance-anotacoes-2ef5
+```
+
+Antes de editar ficheiros para performance/cache/snapshots/anotações:
+
+1. `git fetch origin main`
+2. `git checkout cursor/canal-performance-anotacoes-2ef5`
+3. `git pull origin cursor/canal-performance-anotacoes-2ef5`
+4. `git merge origin/main` (alinhar com o rio)
+5. Commit e push **só nesta branch**
+
+## Escopo que pertence ao canal
+
+- Lentidão, LCP, carregamentos repetidos, Web Analytics / Speed Insights.
+- React Query `staleTime`, prefetch, cache partilhado.
+- Snapshots, `dashboard_kpi_*`, `margem_competencia_snapshot`, hub de anotações.
+- Páginas: PDVVendedor, PedidosCompra, Produtos, VendasGestao, Home, Dashboard.
+
+## Fora do canal
+
+Correções urgentes, features de negócio não relacionadas, flares → **`main`** (regra habitual).
+
+## Documentação completa
+
+[`docs/canal-performance-anotacoes.md`](../../docs/canal-performance-anotacoes.md)
+
+## Produção
+
+**Nunca** merge na `main` sem aprovação explícita. Usar PR + Vercel Preview ([`docs/PREVIEW_ANTES_PRODUCAO.md`](../../docs/PREVIEW_ANTES_PRODUCAO.md)).

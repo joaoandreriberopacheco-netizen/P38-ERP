@@ -16,6 +16,16 @@ Guidance for AI agents working in this repository (**P38-ERP** — Vite/React UI
 - Exceção: só usar branch/PR se o utilizador pedir explicitamente.
 - Regra detalhada: `.cursor/rules/git-main-direct.mdc`.
 
+### Canal de performance (exceção activa — não mergear sem aprovação)
+
+Trabalho de **performance, cache, snapshots / “anotações”** vai na branch dedicada — **não na `main`**:
+
+- **Branch:** `cursor/canal-performance-anotacoes-2ef5`
+- **Doc:** [`docs/canal-performance-anotacoes.md`](docs/canal-performance-anotacoes.md)
+- **Regra agente:** `.cursor/rules/canal-performance-anotacoes.mdc`
+- Antes de implementar: `git checkout cursor/canal-performance-anotacoes-2ef5` + `git merge origin/main`
+- Produção só muda após PR aprovado + merge na `main`.
+
 ## Cursor Cloud specific instructions
 
 ### Stack

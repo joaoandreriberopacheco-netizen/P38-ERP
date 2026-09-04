@@ -17,6 +17,7 @@ Criar branch separada apenas quando:
 2. o utilizador quiser **ver a mudança no Vercel antes de produção** (preview) — ver [`docs/PREVIEW_ANTES_PRODUCAO.md`](../../docs/PREVIEW_ANTES_PRODUCAO.md);
 3. a plataforma/agente impuser uma regra de branch que não possa ser ignorada;
 4. a alteração for experimental e o utilizador pedir para não afetar `main`.
+5. **canal de performance / anotações** — branch `cursor/canal-performance-anotacoes-2ef5` (ver [`docs/canal-performance-anotacoes.md`](../../docs/canal-performance-anotacoes.md)).
 
 ### Preview antes de produção (fluxo preferido quando há risco)
 
