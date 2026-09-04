@@ -30,6 +30,9 @@ jobs:
           set -euo pipefail
           CANAL_BRANCH="cursor/canal-performance-anotacoes-2ef5"
 
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
           git fetch origin main
           git fetch origin "${CANAL_BRANCH}" || {
             echo "Branch ${CANAL_BRANCH} ainda não existe no remoto — ignorar sync."
