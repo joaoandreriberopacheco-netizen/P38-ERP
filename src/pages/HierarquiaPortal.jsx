@@ -44,6 +44,11 @@ import {
 } from '@/config/hierarquiaPortalFlags';
 import { MODELO_PILOTO_LINHAS_PLANEADAS } from '@/config/modeloCatalogoFlags';
 import { matchesLinhaTipoFilter } from '@/lib/smartSupply/linhaTipoFilter';
+import {
+  NOVO_ECOSSISTEMA_SUBTITLE,
+  NOVO_ECOSSISTEMA_TITLE,
+} from '@/config/novoEcosistemaFlags';
+import { SMART_SUPPLY_PORTAL_PREVIEW_LABEL } from '@/config/smartSupplyFlags';
 
 const PORTAL_TABS = ['cadastro', 'hierarquia', 'supply', 'reserva'];
 
@@ -263,10 +268,10 @@ function HierarquiaPortalInner() {
                 </Link>
               </Button>
               <h1 className="text-xl md:text-2xl font-semibold font-glacial text-foreground">
-                Portal hierarquia — piloto cerâmica
+                {NOVO_ECOSSISTEMA_TITLE}
               </h1>
               <p className="text-sm text-muted-foreground max-w-3xl hidden md:block">
-                LINHA → produto compra → grade de SKUs (eixos). Hierarquia · SMART SUPPLY · reserva 12 pos.
+                {NOVO_ECOSSISTEMA_SUBTITLE}
               </p>
             </div>
             <div className="rounded-lg border border-violet-500/40 bg-violet-50/80 dark:bg-violet-950/30 px-3 py-2 text-xs text-violet-900 dark:text-violet-100 max-w-sm space-y-1 shrink-0">
@@ -371,7 +376,7 @@ function HierarquiaPortalInner() {
         ) : loading ? (
           <div className="flex items-center justify-center py-16 text-muted-foreground gap-2">
             <Loader2 className="h-5 w-5 animate-spin" />
-            Montando piloto cerâmica…
+            Montando {NOVO_ECOSSISTEMA_TITLE}…
           </div>
         ) : tab === 'hierarquia' ? (
           <PortalTreeGrid

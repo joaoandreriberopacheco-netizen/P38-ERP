@@ -231,7 +231,7 @@ export const ALL_MENU_ITEMS = [
           p?.estoque?.compras?.conferencia === true || p?.estoque?.compras?.pedidos === true
       },
       {
-        name: 'Portal catálogo',
+        name: 'Novo Ecosistema',
         page: 'HierarquiaPortal',
         icon: Sparkles,
         permissaoCheck: (p) =>

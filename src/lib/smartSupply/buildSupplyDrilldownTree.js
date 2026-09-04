@@ -19,10 +19,8 @@ function pcKey(row) {
 }
 
 function enrichLine(base, velocityMap) {
-  const withSkus = {
-    ...base,
-    skus: base.skus.map((s) => enrichPortalSkuMetrics(s, velocityMap)),
-  };
+  const skus = (base.skus || []).map((s) => enrichPortalSkuMetrics(s, velocityMap));
+  const withSkus = { ...base, skus };
   withSkus.metrics = computePortalGroupMetrics(withSkus.skus, velocityMap);
   return enrichPortalSupplyLineCeramica(withSkus);
 }
@@ -39,24 +37,25 @@ function makeNode(kind, key, label, extra = {}) {
 }
 
 function attachMetrics(node, lines, velocityMap) {
-  const allSkus = lines.flatMap((l) => l.skus || []);
+  const safeLines = (lines || []).filter(Boolean);
+  const allSkus = safeLines.flatMap((l) => l.skus || []);
   const metrics = computePortalGroupMetrics(allSkus, velocityMap);
-  const alertas = lines.filter((l) => l.alerta).length;
-  const saldaveis = lines.filter((l) => l.saldavel).length;
-  const zerados = lines.reduce((n, l) => n + (l.zerados || 0), 0);
+  const alertas = safeLines.filter((l) => l.alerta).length;
+  const saldaveis = safeLines.filter((l) => l.saldavel).length;
+  const zerados = safeLines.reduce((n, l) => n + (l.zerados || 0), 0);
   return {
     ...node,
     metrics,
     resumo: {
-      esquadras_total: lines.length,
+      esquadras_total: safeLines.length,
       esquadras_saldaveis: saldaveis,
       esquadras_alerta: alertas,
       sku_total: allSkus.length,
       zerados,
     },
     alerta: alertas > 0 || metrics.ponto_negativo || zerados > 0,
-    saldavel: saldaveis === lines.length && lines.length > 0 && zerados === 0,
-    lines,
+    saldavel: saldaveis === safeLines.length && safeLines.length > 0 && zerados === 0,
+    lines: safeLines,
   };
 }
 
@@ -65,8 +64,13 @@ function buildEsquadraNodes(lines, velocityMap) {
     const enriched = enrichLine(line, velocityMap);
     return makeNode('esquadra', enriched.key, enriched.produto_compra_nome, {
       line: enriched,
-      skuNodes: enriched.skus.map((s) =>
-        makeNode('sku', s.produto?.id || s.produto?.codigo_interno, s.produto?.nome || '', { sku: s, line: enriched }),
+      skuNodes: (enriched.skus || []).map((s, idx) =>
+        makeNode(
+          'sku',
+          `sku-${enriched.key}-${s.produto?.id || s.produto?.codigo_interno || idx}`,
+          s.produto?.nome || s.novo_sku || '(SKU)',
+          { sku: s, line: enriched },
+        ),
       ),
     });
   });
