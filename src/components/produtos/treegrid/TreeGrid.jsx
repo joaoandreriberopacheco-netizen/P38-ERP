@@ -158,8 +158,6 @@ export { TREE_GRID_EXPAND_ALL_LEVEL };
 
 const HIER_STEP = 20;    // recuo por nível hierárquico (filhos vs pais/solteiros)
 const CELL_PAD = 4;
-const PRODUTO_STICKY_SHADOW = 'shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)] dark:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.45)]';
-
 function VirtualPaddingRow({ height, produtoWidth, activeCols }) {
   if (height <= 0) return null;
   const padStyle = { height, padding: 0, border: 0, lineHeight: 0, fontSize: 0 };
@@ -530,7 +528,7 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
       onClick={() => onToggle(row.key)}
     >
       <td
-        className={cn(CATALOG_PRODUTO_STICKY_CELL, PRODUTO_STICKY_SHADOW, 'py-2 px-2 align-top')}
+        className={cn(CATALOG_PRODUTO_STICKY_CELL, 'py-2 px-2 align-top')}
         style={{ left: 0, ...produtoCellStyle }}
       >
         <CatalogProdutoCell
@@ -569,7 +567,7 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, p
   return (
     <tr className={cn(p38Table.row, 'group')}>
       <td
-        className={cn(CATALOG_PRODUTO_STICKY_CELL, PRODUTO_STICKY_SHADOW, 'py-2 px-2 align-top')}
+        className={cn(CATALOG_PRODUTO_STICKY_CELL, 'py-2 px-2 align-top')}
         style={{ left: 0, ...produtoCellStyle }}
       >
         <div className="flex items-start gap-1 min-w-0 w-full">
@@ -776,9 +774,9 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
         >
           {/* thead sticky no topo durante scroll vertical */}
           <thead className={p38Table.headerSolid}>
-            <tr className="border-b border-border/40 dark:border-white/10">
+            <tr>
               <th
-                className={cn(CATALOG_PRODUTO_STICKY_HEAD, PRODUTO_STICKY_SHADOW, p38Table.head, CATALOG_ROW_LABEL_CLASS, "text-left py-2")}
+                className={cn(CATALOG_PRODUTO_STICKY_HEAD, p38Table.head, CATALOG_ROW_LABEL_CLASS, "text-left py-2")}
                 style={{ left: 0, paddingLeft: 8, paddingRight: 8, ...produtoCellStyle }}
               >
                 Produto

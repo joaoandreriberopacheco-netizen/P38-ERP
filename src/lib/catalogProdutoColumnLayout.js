@@ -90,7 +90,7 @@ export function catalogProdutoColStyle(width) {
 
 /** Classes para coluna Produto sticky — acima da sidebar recolhida ao rolar. */
 export const CATALOG_PRODUTO_STICKY_HEAD =
-  'p38-catalog-sticky-left sticky left-0 z-[45] bg-background border-r border-border/40 dark:border-white/10 [transform:translateZ(0)] [backface-visibility:hidden]';
+  'p38-catalog-sticky-left sticky left-0 z-[45] bg-background [transform:translateZ(0)] [backface-visibility:hidden]';
 
 export const CATALOG_PRODUTO_STICKY_CELL =
-  'p38-catalog-sticky-left sticky left-0 z-[35] bg-background border-r border-border/40 dark:border-white/10 [transform:translateZ(0)] [backface-visibility:hidden]';
+  'p38-catalog-sticky-left sticky left-0 z-[35] bg-background [transform:translateZ(0)] [backface-visibility:hidden]';

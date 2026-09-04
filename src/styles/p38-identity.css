@@ -534,6 +534,19 @@
     isolation: isolate;
   }
 
+  /* Grade com linhas finas (vista plana + TreeGrid) — sem sombra na coluna sticky */
+  .p38-catalog-table-scroll table th,
+  .p38-catalog-table-scroll table td {
+    border-right: 1px solid hsl(var(--border) / 0.4);
+    border-bottom: 1px solid hsl(var(--border) / 0.35);
+  }
+
+  .dark .p38-catalog-table-scroll table th,
+  .dark .p38-catalog-table-scroll table td {
+    border-right-color: hsl(0 0% 100% / 0.1);
+    border-bottom-color: hsl(0 0% 100% / 0.1);
+  }
+
   .p38-catalog-sticky-left {
     background-color: hsl(var(--background));
   }

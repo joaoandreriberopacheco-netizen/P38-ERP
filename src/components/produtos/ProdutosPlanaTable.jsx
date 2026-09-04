@@ -11,8 +11,6 @@ import { p38Table } from '@/lib/p38TableSurfaces';
 import { catalogProdutoColStyle, computeCatalogProdutoColWidth, estimateCatalogProdutoRowHeight, CATALOG_PRODUTO_STICKY_CELL, CATALOG_PRODUTO_STICKY_HEAD } from '@/lib/catalogProdutoColumnLayout';
 import { cn } from '@/components/utils';
 
-const PRODUTO_STICKY_SHADOW = 'shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)] dark:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.45)]';
-
 const CATALOG_ROW_LABEL_CLASS =
   'text-xs font-semibold text-foreground/90 dark:text-foreground whitespace-nowrap uppercase tracking-wide';
 
@@ -343,11 +341,10 @@ function ProdutosPlanaTable({
         style={{ borderCollapse: 'separate', borderSpacing: 0, tableLayout: 'fixed', minWidth: '100%' }}
       >
         <thead className={p38Table.headerSolid}>
-          <tr className="border-b border-border/40 dark:border-white/10">
+          <tr>
             <th
               className={cn(
                 CATALOG_PRODUTO_STICKY_HEAD,
-                PRODUTO_STICKY_SHADOW,
                 p38Table.head,
                 CATALOG_ROW_LABEL_CLASS,
                 'text-left py-2',
@@ -383,7 +380,7 @@ function ProdutosPlanaTable({
             return (
               <tr key={produto.id} className={cn(p38Table.row, 'group')}>
                 <td
-                  className={cn(CATALOG_PRODUTO_STICKY_CELL, PRODUTO_STICKY_SHADOW, 'py-2 px-2 align-top')}
+                  className={cn(CATALOG_PRODUTO_STICKY_CELL, 'py-2 px-2 align-top')}
                   style={{ left: 0, ...produtoCellStyle }}
                 >
                   <div className="flex items-start gap-1 min-w-0 w-full">
