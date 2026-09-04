@@ -157,7 +157,7 @@ function buildResumoData(produtos, { resolveProdutoCustoUnitarioBase, formatEsto
         ? unidades.map(({ u, q }) => `${QTD.format(q)} ${u}`).join(' + ')
         : '—',
       custoMedio,
-      custoMedioTexto: custoMedio != null ? `${BRL_UNIT.format(custoMedio)}/${principal.u}` : '—',
+      custoMedioTexto: custoMedio != null ? BRL_UNIT.format(custoMedio) : '—',
     };
   }
 
@@ -191,14 +191,13 @@ function buildResumoData(produtos, { resolveProdutoCustoUnitarioBase, formatEsto
     .sort((a, b) => b.qtd - a.qtd);
 
   const destaques = [];
-  const pushDestaque = (label, grupo, detalhe = '') => {
+  const pushDestaque = (label, grupo) => {
     if (!grupo) return;
     destaques.push({
       label,
       quantidadePartes: grupo.quantidadePartes,
       custoMedio: grupo.custoMedioTexto,
       valor: BRL.format(grupo.valor),
-      detalhe,
     });
   };
 
@@ -210,9 +209,8 @@ function buildResumoData(produtos, { resolveProdutoCustoUnitarioBase, formatEsto
     destaques.push({
       label: 'Blocos',
       quantidadePartes: [{ numero: QTD_CELL.format(totalBlocos), unidade: 'UN' }],
-      custoMedio: totalBlocos > 0 ? `${BRL_UNIT.format(totalValor / totalBlocos)}/UN` : '—',
+      custoMedio: totalBlocos > 0 ? BRL_UNIT.format(totalValor / totalBlocos) : '—',
       valor: BRL.format(totalValor),
-      detalhe: blocos.map((b) => `${QTD.format(b.qtd)} (${b.nome})`).join(' · '),
     });
   }
   pushDestaque('Estribos', grupos.find((g) => g.label === 'Estribos'));
@@ -225,9 +223,8 @@ function buildResumoData(produtos, { resolveProdutoCustoUnitarioBase, formatEsto
     destaques.push({
       label: "Caixa d'água",
       quantidadePartes: [{ numero: QTD_CELL.format(totalCx), unidade: 'UN' }],
-      custoMedio: totalCx > 0 ? `${BRL_UNIT.format(totalValor / totalCx)}/UN` : '—',
+      custoMedio: totalCx > 0 ? BRL_UNIT.format(totalValor / totalCx) : '—',
       valor: BRL.format(totalValor),
-      detalhe: caixas.map((c) => `${QTD.format(c.qtd)}× ${c.nome}`).join(' · '),
     });
   }
 
@@ -470,11 +467,10 @@ async function drawPdf(data, registerJsPdfBarlowFonts, normalizePdfText) {
   y += 6;
 
   const destaqueColumns = [
-    { key: 'label', label: 'ITEM', width: 0.28, align: 'left' },
+    { key: 'label', label: 'ITEM', width: 0.36, align: 'left' },
     { key: 'quantidade', label: 'QUANTIDADE', width: 0.22, align: 'left', splitQuantity: true },
     { key: 'custoMedio', label: 'CUSTO MÉDIO', width: 0.22, align: 'right' },
-    { key: 'valor', label: 'VALOR', width: 0.14, align: 'right' },
-    { key: 'detalhe', label: 'DETALHE', width: 0.14, align: 'left' },
+    { key: 'valor', label: 'VALOR', width: 0.20, align: 'right' },
   ];
 
   const destaqueRows = data.destaques.map((d) => ({
@@ -482,7 +478,6 @@ async function drawPdf(data, registerJsPdfBarlowFonts, normalizePdfText) {
     quantidadePartes: d.quantidadePartes,
     custoMedio: d.custoMedio,
     valor: d.valor,
-    detalhe: d.detalhe || '—',
   }));
 
   y = drawGridTable(doc, fontFamily, {
