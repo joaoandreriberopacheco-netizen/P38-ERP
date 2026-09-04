@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Gera PDF de 2 páginas — estoque físico + em trânsito (reunião).
- * Estilo: Barlow, linhas finas em grid, tipografia generosa.
+ * Estilo: Barlow, grid fino — tipografia alinhada ao relatório enxuto de compras.
  *
  * Uso: node scripts/gerar-resumo-estoque-fisico-pdf.mjs [--out=/caminho/arquivo.pdf]
  */
@@ -40,25 +40,36 @@ const COLORS = {
   accent: [39, 39, 42],
 };
 
+/** Alinhado a `generateRelatorioSugestaoCompraPdf` (ENXUTO). */
 const FONT = {
-  title: 22,
-  subtitle: 12.5,
-  kpi: 28,
-  kpiLabel: 11,
-  section: 13,
-  tableHead: 10,
-  tableRow: 11.5,
-  footer: 9.5,
+  title: 15,
+  subtitle: 10,
+  kpi: 14.5,
+  kpiLabel: 8.2,
+  section: 11.5,
+  tableHead: 9,
+  tableRow: 9.2,
+  tableRowSmall: 8.2,
+  footer: 8.5,
 };
 
 const GRID = {
   lineWidth: 0.1,
-  rowH: 7.2,
-  headerH: 8,
-  padX: 2.4,
-  padY: 5.2,
+  rowH: 5.1,
+  headerH: 6.6,
+  padX: 2,
+  padY: 3.6,
   qtySplitRatio: 0.62,
-  qtyLineStep: 4.1,
+  qtyLineStep: 3.5,
+};
+
+const TABLE_LIMITS = {
+  familias: 9,
+  embarques: 7,
+  fornecedores: 6,
+  familiasTransito: 7,
+  produtos: 6,
+  destaques: 8,
 };
 
 function parseOutArg(argv) {
@@ -180,6 +191,31 @@ function rowsTabelaAbcd(valorPorLetra) {
       valor: valorPorLetra[letra] || 0,
     }))
     .filter((row) => row.valor > 0);
+}
+
+function labelOutros(count, tipo) {
+  const n = Number(count) || 0;
+  if (n <= 0) return 'Outros';
+  return `Outros — representam ${QTD.format(n)} ${tipo}`;
+}
+
+function sumValorRows(rows, key = 'valor') {
+  return (rows || []).reduce((sum, row) => sum + (Number(row[key]) || 0), 0);
+}
+
+function consolidateTopRows(rows, maxRows, { tipo, labelKey, valorKey = 'valor', mapOutros }) {
+  const list = Array.isArray(rows) ? rows : [];
+  if (list.length <= maxRows) return list;
+  const headCount = Math.max(1, maxRows - 1);
+  const head = list.slice(0, headCount);
+  const tail = list.slice(headCount);
+  const outros = mapOutros
+    ? mapOutros(tail)
+    : {
+      [labelKey]: labelOutros(tail.length, tipo),
+      [valorKey]: sumValorRows(tail, valorKey),
+    };
+  return [...head, outros];
 }
 
 function formatEta(value) {
@@ -428,7 +464,6 @@ function buildResumoTransitoData(
 
   const porFamiliaH1 = [...familiaAgg.values()]
     .sort((a, b) => b.valor - a.valor)
-    .slice(0, 10)
     .map((row) => ({
       familia: row.familia,
       letra: row.letra,
@@ -459,8 +494,7 @@ function buildResumoTransitoData(
       };
     })
     .filter(Boolean)
-    .sort((a, b) => b.valor - a.valor)
-    .slice(0, 8);
+    .sort((a, b) => b.valor - a.valor);
 
   return {
     totalTransito,
@@ -591,8 +625,7 @@ function buildResumoData(produtos, { resolveProdutoCustoUnitarioBase, formatEsto
         letra: abcdPorH1.get(agg.label) || 'E',
       };
     })
-    .sort((a, b) => b.valor - a.valor)
-    .slice(0, 14);
+    .sort((a, b) => b.valor - a.valor);
 
   const gruposMatchers = matchers
     .map((m) => sumGroup(m.fn, m.label))
@@ -692,7 +725,7 @@ function getQuantityPartes(row) {
 
 function measureQuantityRowHeight(partes) {
   const lines = Math.max(1, partes.length);
-  return Math.max(GRID.rowH, lines * GRID.qtyLineStep + 2.6);
+  return Math.max(GRID.rowH, lines * GRID.qtyLineStep + 1.8);
 }
 
 function columnOffsetX(x, colWidths, index) {
@@ -821,7 +854,7 @@ function drawSectionTitle(doc, fontFamily, normalizePdfText, x, y, title) {
   doc.setFontSize(FONT.section);
   setTextColor(doc, COLORS.ink);
   doc.text(normalizePdfText(title), x, y);
-  return y + 6;
+  return y + 4.5;
 }
 
 function drawTwoColumnBlock(doc, fontFamily, normalizePdfText, layout, y, leftCfg, rightCfg) {
@@ -851,7 +884,7 @@ function drawTwoColumnBlock(doc, fontFamily, normalizePdfText, layout, y, leftCf
     rows: rightCfg.rows,
   });
 
-  return Math.max(leftEnd, rightEnd) + 7;
+  return Math.max(leftEnd, rightEnd) + 5;
 }
 
 function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
@@ -859,45 +892,56 @@ function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
   let y = M;
   const text = (str, x, yy, opts = {}) => doc.text(normalizePdfText(str), x, yy, opts);
 
+  const familiasGrupos = consolidateTopRows(data.grupos, TABLE_LIMITS.familias, {
+    tipo: 'famílias',
+    labelKey: 'label',
+    mapOutros: (tail) => ({
+      label: labelOutros(tail.length, 'famílias'),
+      letra: '—',
+      quantidadePartes: [{ numero: '—', unidade: '' }],
+      valor: sumValorRows(tail),
+    }),
+  });
+
   doc.setFont(fontFamily, 'heavy');
   doc.setFontSize(FONT.title);
   setTextColor(doc, COLORS.ink);
   text('Estoque físico', M, y);
-  y += 9;
-
-  doc.setFont(fontFamily, 'normal');
-  doc.setFontSize(FONT.subtitle);
-  setTextColor(doc, COLORS.muted);
-  text('O que está no armazém hoje — pronto para vender ou separar', M, y);
-  y += 5;
-  text(`Atualizado em ${data.geradoEm} (Tabatinga)`, M, y);
-  y += 10;
-
-  doc.setDrawColor(...COLORS.line);
-  doc.setLineWidth(GRID.lineWidth);
-  doc.line(M, y, M + CW, y);
-  y += 11;
-
-  doc.setFont(fontFamily, 'normal');
-  doc.setFontSize(FONT.kpiLabel);
-  setTextColor(doc, COLORS.muted);
-  text('VALOR TOTAL EM ESTOQUE (CUSTO)', M, y);
-  y += 10;
-
-  doc.setFont(fontFamily, 'heavy');
-  doc.setFontSize(FONT.kpi);
-  setTextColor(doc, COLORS.ink);
-  text(BRL.format(data.total), M, y);
   y += 7;
 
   doc.setFont(fontFamily, 'normal');
   doc.setFontSize(FONT.subtitle);
   setTextColor(doc, COLORS.muted);
+  text('O que está no armazém hoje — pronto para vender ou separar', M, y);
+  y += 4;
+  text(`Atualizado em ${data.geradoEm} (Tabatinga)`, M, y);
+  y += 7;
+
+  doc.setDrawColor(...COLORS.line);
+  doc.setLineWidth(GRID.lineWidth);
+  doc.line(M, y, M + CW, y);
+  y += 8;
+
+  doc.setFont(fontFamily, 'normal');
+  doc.setFontSize(FONT.kpiLabel);
+  setTextColor(doc, COLORS.muted);
+  text('VALOR TOTAL EM ESTOQUE (CUSTO)', M, y);
+  y += 6;
+
+  doc.setFont(fontFamily, 'heavy');
+  doc.setFontSize(FONT.kpi);
+  setTextColor(doc, COLORS.ink);
+  text(BRL.format(data.total), M, y);
+  y += 6;
+
+  doc.setFont(fontFamily, 'normal');
+  doc.setFontSize(FONT.subtitle);
+  setTextColor(doc, COLORS.muted);
   text(`${QTD.format(data.skusCom)} referências com saldo positivo`, M, y);
-  y += 11;
+  y += 8;
 
   doc.line(M, y, M + CW, y);
-  y += 9;
+  y += 7;
 
   y = drawTwoColumnBlock(doc, fontFamily, normalizePdfText, layout, y, {
     title: 'Resumo por família (nível 1)',
@@ -907,8 +951,8 @@ function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
       { key: 'quantidade', label: 'QUANTIDADE', width: 0.28, align: 'left', splitQuantity: true },
       { key: 'valor', label: 'VALOR', width: 0.30, align: 'right' },
     ],
-    rows: data.grupos.map((g) => ({
-      familia: `${g.label} (${g.letra})`,
+    rows: familiasGrupos.map((g) => ({
+      familia: g.letra === '—' ? g.label : `${g.label} (${g.letra})`,
       quantidadePartes: g.quantidadePartes,
       valor: BRL.format(g.valor),
     })),
@@ -960,53 +1004,94 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
   const { M, CW, pageH } = layout;
   let y = M;
   const text = (str, x, yy, opts = {}) => doc.text(normalizePdfText(str), x, yy, opts);
-  const embarquesRows = transito.embarques.slice(0, 9);
+
+  const embarquesRows = consolidateTopRows(transito.embarques, TABLE_LIMITS.embarques, {
+    tipo: 'embarques',
+    labelKey: 'codigo',
+    mapOutros: (tail) => ({
+      codigo: '—',
+      fornecedor: labelOutros(tail.length, 'embarques'),
+      eta: '—',
+      valor: sumValorRows(tail),
+    }),
+  });
+
+  const fornecedorRows = consolidateTopRows(transito.porFornecedor, TABLE_LIMITS.fornecedores, {
+    tipo: 'fornecedores',
+    labelKey: 'fornecedor',
+    mapOutros: (tail) => ({
+      fornecedor: labelOutros(tail.length, 'fornecedores'),
+      quantidadePartes: [{ numero: '—', unidade: '' }],
+      valor: sumValorRows(tail),
+    }),
+  });
+
+  const familiasTransitoRows = consolidateTopRows(transito.porFamiliaH1, TABLE_LIMITS.familiasTransito, {
+    tipo: 'famílias',
+    labelKey: 'familia',
+    mapOutros: (tail) => ({
+      familia: labelOutros(tail.length, 'famílias'),
+      letra: '—',
+      valor: sumValorRows(tail),
+    }),
+  });
+
+  const produtoRows = consolidateTopRows(transito.porProduto, TABLE_LIMITS.produtos, {
+    tipo: 'itens',
+    labelKey: 'produto',
+    mapOutros: (tail) => ({
+      produto: labelOutros(tail.length, 'itens'),
+      quantidadePartes: [{ numero: '—', unidade: '' }],
+      custoMedioTexto: '—',
+      valor: sumValorRows(tail),
+    }),
+  });
 
   doc.setFont(fontFamily, 'heavy');
   doc.setFontSize(FONT.title);
   setTextColor(doc, COLORS.ink);
   text('Estoque em trânsito', M, y);
-  y += 9;
-
-  doc.setFont(fontFamily, 'normal');
-  doc.setFontSize(FONT.subtitle);
-  setTextColor(doc, COLORS.muted);
-  text('Compras aprovadas que ainda não entraram no armazém', M, y);
-  y += 5;
-  text(`Atualizado em ${transito.geradoEm} (Tabatinga)`, M, y);
-  y += 10;
-
-  doc.setDrawColor(...COLORS.line);
-  doc.setLineWidth(GRID.lineWidth);
-  doc.line(M, y, M + CW, y);
-  y += 11;
-
-  doc.setFont(fontFamily, 'normal');
-  doc.setFontSize(FONT.kpiLabel);
-  setTextColor(doc, COLORS.muted);
-  text('VALOR TOTAL EM TRÂNSITO (CUSTO)', M, y);
-  y += 10;
-
-  doc.setFont(fontFamily, 'heavy');
-  doc.setFontSize(FONT.kpi);
-  setTextColor(doc, COLORS.ink);
-  text(BRL.format(transito.totalTransito), M, y);
   y += 7;
 
   doc.setFont(fontFamily, 'normal');
   doc.setFontSize(FONT.subtitle);
   setTextColor(doc, COLORS.muted);
+  text('Compras aprovadas que ainda não entraram no armazém', M, y);
+  y += 4;
+  text(`Atualizado em ${transito.geradoEm} (Tabatinga)`, M, y);
+  y += 7;
+
+  doc.setDrawColor(...COLORS.line);
+  doc.setLineWidth(GRID.lineWidth);
+  doc.line(M, y, M + CW, y);
+  y += 8;
+
+  doc.setFont(fontFamily, 'normal');
+  doc.setFontSize(FONT.kpiLabel);
+  setTextColor(doc, COLORS.muted);
+  text('VALOR TOTAL EM TRÂNSITO (CUSTO)', M, y);
+  y += 6;
+
+  doc.setFont(fontFamily, 'heavy');
+  doc.setFontSize(FONT.kpi);
+  setTextColor(doc, COLORS.ink);
+  text(BRL.format(transito.totalTransito), M, y);
+  y += 6;
+
+  doc.setFont(fontFamily, 'normal');
+  doc.setFontSize(FONT.subtitle);
+  setTextColor(doc, COLORS.muted);
   text(
-    `${QTD.format(transito.pedidosAbertos)} pedidos em aberto · ${QTD.format(transito.embarquesTransito)} embarques viajando · ${QTD.format(transito.volumesTotal)} volumes`,
+    `${QTD.format(transito.pedidosAbertos)} pedidos · ${QTD.format(transito.embarquesTransito)} embarques · ${QTD.format(transito.volumesTotal)} volumes`,
     M,
     y,
   );
-  y += 5;
-  text('Valor inclui pedidos aprovados ainda não recebidos (embarcados ou aguardando embarque)', M, y);
-  y += 11;
+  y += 4;
+  text('Inclui aprovado aguardando embarque e embarcado não recebido', M, y);
+  y += 8;
 
   doc.line(M, y, M + CW, y);
-  y += 9;
+  y += 7;
 
   y = drawTwoColumnBlock(doc, fontFamily, normalizePdfText, layout, y, {
     title: 'Embarques em trânsito',
@@ -1030,7 +1115,7 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
       { key: 'quantidade', label: 'EMB.', width: 0.18, align: 'left', splitQuantity: true },
       { key: 'valor', label: 'VALOR', width: 0.34, align: 'right' },
     ],
-    rows: transito.porFornecedor.map((row) => ({
+    rows: fornecedorRows.map((row) => ({
       fornecedor: row.fornecedor,
       quantidadePartes: row.quantidadePartes,
       valor: BRL.format(row.valor),
@@ -1055,7 +1140,7 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
       { key: 'letra', label: 'CL.', width: 0.10, align: 'left' },
       { key: 'valor', label: 'VALOR', width: 0.38, align: 'right' },
     ],
-    rows: transito.porFamiliaH1.map((row) => ({
+    rows: familiasTransitoRows.map((row) => ({
       familia: row.familia,
       letra: row.letra,
       valor: BRL.format(row.valor),
@@ -1074,7 +1159,7 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
       { key: 'custoMedio', label: 'CUSTO MÉDIO', width: 0.22, align: 'right' },
       { key: 'valor', label: 'VALOR', width: 0.20, align: 'right' },
     ],
-    rows: transito.porProduto.map((row) => ({
+    rows: produtoRows.map((row) => ({
       produto: row.produto,
       quantidadePartes: row.quantidadePartes,
       custoMedio: row.custoMedioTexto,
@@ -1099,7 +1184,7 @@ async function drawPdf({ fisico, transito }, registerJsPdfBarlowFonts, normalize
   const fontFamily = await registerJsPdfBarlowFonts(doc);
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  const layout = { M: 14, CW: pageW - 28, pageH };
+  const layout = { M: 12, CW: pageW - 24, pageH };
 
   drawPage1Fisico(doc, fontFamily, normalizePdfText, fisico, layout);
   doc.addPage();
