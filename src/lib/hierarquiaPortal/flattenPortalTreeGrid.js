@@ -4,6 +4,7 @@ import {
   montarSubtituloPortalSku,
 } from '@/lib/hierarquiaPortal/montarNomePortalSku';
 import { matchesLinhaTipoFilter } from '@/lib/smartSupply/linhaTipoFilter';
+import { portalEstoqueGrupo } from '@/lib/hierarquiaPortal/portalStockFormat';
 
 function filterTree(tree, filtroLinha, filtroTipos, search) {
   const q = search.trim().toLowerCase();
