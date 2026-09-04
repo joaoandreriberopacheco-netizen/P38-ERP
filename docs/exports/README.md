@@ -63,3 +63,17 @@ https://github.com/joaoandreriberopacheco-netizen/P38-ERP/raw/main/docs/exports/
 | [P38-linhas-catalogo-por-categoria.csv](./P38-linhas-catalogo-por-categoria.csv) | Mesmo em CSV |
 
 Regenerar: `npm run export:linhas-categoria`
+
+---
+
+## Smart Supply — FORRO PVC (portfólio + kit)
+
+| Recurso | Descrição |
+|---------|-----------|
+| [../smart-supply/EXCEL-FORRO-PVC.md](../smart-supply/EXCEL-FORRO-PVC.md) | Colunas `faixa` · `modelo_portfolio` · `kit_papel` |
+| [../smart-supply/FUNIL-DRILLDOWN.md](../smart-supply/FUNIL-DRILLDOWN.md) | Funil 5 vs 6 níveis |
+| [P38-forro-pvc-smart-supply-exemplo.csv](./P38-forro-pvc-smart-supply-exemplo.csv) | Piloto (9 linhas, merge no manifest) |
+
+`npm run portal:excel-manifest`
+
+---
