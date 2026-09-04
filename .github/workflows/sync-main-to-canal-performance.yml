@@ -40,7 +40,19 @@ jobs:
           }
 
           git checkout "${CANAL_BRANCH}"
-          git merge origin/main -m "chore: sync main → canal performance [auto]"
+          if ! git merge origin/main -m "chore: sync main → canal performance [auto]"; then
+            echo "::warning::Conflitos no merge — preferindo main nos ficheiros em conflito."
+            CONFLICTED=$(git diff --name-only --diff-filter=U)
+            if [ -z "${CONFLICTED}" ]; then
+              echo "::error::Merge falhou sem ficheiros em conflito listados."
+              exit 1
+            fi
+            for f in ${CONFLICTED}; do
+              git checkout --theirs "${f}"
+              git add "${f}"
+            done
+            git commit -m "chore: sync main → canal performance [auto; conflitos → main]"
+          fi
 
           if git diff --quiet origin/"${CANAL_BRANCH}"..HEAD; then
             echo "Canal já estava alinhado com main — nada a enviar."
