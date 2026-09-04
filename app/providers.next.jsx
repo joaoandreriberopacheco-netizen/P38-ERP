@@ -16,6 +16,11 @@ const SpeedInsights = dynamic(
   { ssr: false },
 );
 
+const Analytics = dynamic(
+  () => import('@vercel/analytics/next').then((mod) => ({ default: mod.Analytics })),
+  { ssr: false },
+);
+
 function P38MonitoringBoot() {
   useEffect(() => {
     initP38Monitoring();
@@ -37,6 +42,7 @@ export function Providers({ children }) {
         <P38MonitoringBoot />
         <P38OrientationBoot />
         <DeferredMount waitForIdle>
+          <Analytics />
           <SpeedInsights />
         </DeferredMount>
       </QueryClientProvider>
