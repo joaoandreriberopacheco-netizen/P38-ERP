@@ -64,13 +64,16 @@ const GRID = {
 };
 
 const TABLE_LIMITS = {
-  familias: 9,
-  embarques: 7,
-  fornecedores: 6,
-  familiasTransito: 7,
-  produtos: 6,
-  destaques: 8,
+  familias: 7,
+  embarques: 5,
+  fornecedores: 5,
+  familiasTransito: 6,
+  produtos: 4,
+  destaques: 7,
 };
+
+const FOOTER_RESERVE = 15;
+const PDF_BUILD = 'estoque-reuniao-v3';
 
 function parseOutArg(argv) {
   const hit = argv.find((a) => a.startsWith('--out='));
@@ -837,8 +840,20 @@ function drawGridTable(doc, fontFamily, {
   return y + tableH;
 }
 
+function estimateGridTableHeight(rows, columns) {
+  const qtyColIndex = columns.findIndex((c) => c.splitQuantity);
+  const bodyHeights = (rows || []).map((row) => (
+    qtyColIndex >= 0 ? measureQuantityRowHeight(getQuantityPartes(row)) : GRID.rowH
+  ));
+  return GRID.headerH + bodyHeights.reduce((sum, height) => sum + height, 0);
+}
+
+function fitsOnPage(startY, blockHeight, pageH, reserve = FOOTER_RESERVE) {
+  return startY + blockHeight <= pageH - reserve;
+}
+
 function drawPageFooter(doc, fontFamily, normalizePdfText, M, CW, pageH, leftLabel, rightLabel) {
-  const footerY = pageH - 12;
+  const footerY = pageH - 10;
   doc.setDrawColor(...COLORS.line);
   doc.setLineWidth(GRID.lineWidth);
   doc.line(M, footerY - 4, M + CW, footerY - 4);
@@ -970,23 +985,37 @@ function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
 
   y = drawSectionTitle(doc, fontFamily, normalizePdfText, M, y, 'Destaques');
 
-  drawGridTable(doc, fontFamily, {
-    x: M,
-    y,
-    width: CW,
-    columns: [
-      { key: 'label', label: 'ITEM', width: 0.36, align: 'left' },
-      { key: 'quantidade', label: 'QUANTIDADE', width: 0.22, align: 'left', splitQuantity: true },
-      { key: 'custoMedio', label: 'CUSTO MÉDIO', width: 0.22, align: 'right' },
-      { key: 'valor', label: 'VALOR', width: 0.20, align: 'right' },
-    ],
-    rows: data.destaques.map((d) => ({
+  const destaquesColumns = [
+    { key: 'label', label: 'ITEM', width: 0.40, align: 'left' },
+    { key: 'quantidade', label: 'QUANTIDADE', width: 0.24, align: 'left', splitQuantity: true },
+    { key: 'custoMedio', label: 'CUSTO MÉDIO', width: 0.18, align: 'right' },
+    { key: 'valor', label: 'VALOR', width: 0.18, align: 'right' },
+  ];
+  const destaquesRows = data.destaques.slice(0, TABLE_LIMITS.destaques);
+  const destaquesHeight = estimateGridTableHeight(
+    destaquesRows.map((d) => ({
       label: d.label,
       quantidadePartes: d.quantidadePartes,
       custoMedio: d.custoMedio,
       valor: d.valor,
     })),
-  });
+    destaquesColumns,
+  ) + 4.5;
+
+  if (fitsOnPage(y, destaquesHeight, pageH)) {
+    drawGridTable(doc, fontFamily, {
+      x: M,
+      y,
+      width: CW,
+      columns: destaquesColumns,
+      rows: destaquesRows.map((d) => ({
+        label: d.label,
+        quantidadePartes: d.quantidadePartes,
+        custoMedio: d.custoMedio,
+        valor: d.valor,
+      })),
+    });
+  }
 
   drawPageFooter(
     doc,
@@ -995,7 +1024,7 @@ function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
     M,
     CW,
     pageH,
-    'P38 · Estoque físico · página 1',
+    `P38 · Estoque físico · p.1 · ${PDF_BUILD}`,
     'Famílias e curva ABCD no nível hierárquico 1',
   );
 }
@@ -1124,7 +1153,7 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
 
   y = drawTwoColumnBlock(doc, fontFamily, normalizePdfText, layout, y, {
     title: 'Por curva ABCD (nível 1)',
-    widthRatio: 0.34,
+    widthRatio: 0.30,
     columns: [
       { key: 'letra', label: 'CLASSE', width: 0.28, align: 'left' },
       { key: 'valor', label: 'VALOR', width: 0.72, align: 'right' },
@@ -1134,38 +1163,41 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
       valor: BRL.format(row.valor),
     })),
   }, {
-    title: 'Por família chegando (nível 1)',
+    title: 'Por produto (maiores valores)',
     columns: [
-      { key: 'familia', label: 'FAMÍLIA', width: 0.52, align: 'left' },
-      { key: 'letra', label: 'CL.', width: 0.10, align: 'left' },
-      { key: 'valor', label: 'VALOR', width: 0.38, align: 'right' },
-    ],
-    rows: familiasTransitoRows.map((row) => ({
-      familia: row.familia,
-      letra: row.letra,
-      valor: BRL.format(row.valor),
-    })),
-  });
-
-  y = drawSectionTitle(doc, fontFamily, normalizePdfText, M, y, 'Por produto (maiores valores)');
-
-  drawGridTable(doc, fontFamily, {
-    x: M,
-    y,
-    width: CW,
-    columns: [
-      { key: 'produto', label: 'PRODUTO', width: 0.36, align: 'left' },
-      { key: 'quantidade', label: 'QUANTIDADE', width: 0.22, align: 'left', splitQuantity: true },
-      { key: 'custoMedio', label: 'CUSTO MÉDIO', width: 0.22, align: 'right' },
-      { key: 'valor', label: 'VALOR', width: 0.20, align: 'right' },
+      { key: 'produto', label: 'PRODUTO', width: 0.52, align: 'left' },
+      { key: 'quantidade', label: 'QTD', width: 0.20, align: 'left', splitQuantity: true },
+      { key: 'valor', label: 'VALOR', width: 0.28, align: 'right' },
     ],
     rows: produtoRows.map((row) => ({
       produto: row.produto,
       quantidadePartes: row.quantidadePartes,
-      custoMedio: row.custoMedioTexto,
       valor: BRL.format(row.valor),
     })),
   });
+
+  const familiaColumns = [
+    { key: 'familia', label: 'FAMÍLIA', width: 0.52, align: 'left' },
+    { key: 'letra', label: 'CL.', width: 0.10, align: 'left' },
+    { key: 'valor', label: 'VALOR', width: 0.38, align: 'right' },
+  ];
+  const familiaRows = familiasTransitoRows.map((row) => ({
+    familia: row.familia,
+    letra: row.letra,
+    valor: BRL.format(row.valor),
+  }));
+  const familiaBlockHeight = estimateGridTableHeight(familiaRows, familiaColumns) + 4.5;
+
+  if (fitsOnPage(y, familiaBlockHeight, pageH)) {
+    y = drawSectionTitle(doc, fontFamily, normalizePdfText, M, y, 'Por família chegando (nível 1)');
+    drawGridTable(doc, fontFamily, {
+      x: M,
+      y,
+      width: CW,
+      columns: familiaColumns,
+      rows: familiaRows,
+    });
+  }
 
   drawPageFooter(
     doc,
@@ -1174,7 +1206,7 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
     M,
     CW,
     pageH,
-    'P38 · Estoque em trânsito · página 2',
+    `P38 · Estoque em trânsito · p.2 · ${PDF_BUILD}`,
     'Curva ABCD consolidada por família (campo hierárquico nível 1)',
   );
 }
