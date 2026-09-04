@@ -19,7 +19,7 @@ import {
 } from '@/lib/comprasEmbarqueCards';
 import { buildConsultaItensEmbarque } from '@/lib/consultaComprasEmbarques';
 
-export const PDF_BUILD = 'estoque-reuniao-v11';
+export const PDF_BUILD = 'estoque-reuniao-v12';
 
 const BRL_KPI = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -52,6 +52,7 @@ const BRL_UNIT = new Intl.NumberFormat('pt-BR', {
 });
 
 const QTD = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
+const VOL_INT = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
 const QTD_CELL = new Intl.NumberFormat('pt-BR', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
@@ -71,9 +72,9 @@ const FONT = {
   kpi: 14.5,
   kpiLabel: 8.2,
   section: 11.5,
-  tableHead: 9.8,
-  tableRow: 10,
-  tableRowSmall: 8.8,
+  tableHead: 9,
+  tableRow: 9,
+  tableRowSmall: 8.5,
   footer: 8.5,
 };
 
@@ -81,12 +82,13 @@ const GRID = {
   lineWidth: 0.1,
   rowH: 6.1,
   headerH: 7.4,
-  padX: 2,
+  padX: 2.2,
   padY: 2.4,
   cellPadTop: 4.1,
   headerPadTop: 5.2,
-  qtyMinUnitBandMm: 8.5,
-  qtyLineStep: 3.7,
+  qtyMinUnitBandMm: 13,
+  qtyMinNumBandMm: 16,
+  qtyLineStep: 3.5,
 };
 
 const TABLE_LIMITS = {
@@ -682,12 +684,87 @@ function measureTableQtyUnitWidth(doc, rows, fontFamily, rowStyle) {
   return max;
 }
 
-function computeQtySplitX(qtyX, colWidth, qtyNumberWidth, qtyUnitWidth) {
-  const minUnitBand = Math.max(GRID.qtyMinUnitBandMm, qtyUnitWidth + GRID.padX * 2);
-  const numBand = qtyNumberWidth + GRID.padX * 2 + 1.2;
-  const desired = qtyX + numBand;
-  const maxSplit = qtyX + colWidth - minUnitBand;
-  return Math.min(desired, Math.max(qtyX + GRID.padX * 2, maxSplit));
+function truncateTextToFit(doc, text, maxWidth, { allowTruncate = true } = {}) {
+  const raw = String(text ?? '—');
+  if (maxWidth <= 0) return '';
+  if (!allowTruncate || doc.getTextWidth(raw) <= maxWidth) return raw;
+  let clipped = raw;
+  const ellipsis = '…';
+  while (clipped.length > 0 && doc.getTextWidth(`${clipped}${ellipsis}`) > maxWidth) {
+    clipped = clipped.slice(0, -1);
+  }
+  return clipped ? `${clipped}${ellipsis}` : ellipsis;
+}
+
+function resolveQtyBands(colWidth, qtyNumberWidth, qtyUnitWidth) {
+  let unitBand = Math.max(GRID.qtyMinUnitBandMm, qtyUnitWidth + GRID.padX * 2);
+  let numBand = colWidth - unitBand;
+  const minNumBand = Math.max(GRID.qtyMinNumBandMm, qtyNumberWidth + GRID.padX * 2 + 0.8);
+  if (numBand < minNumBand) {
+    numBand = Math.min(colWidth - GRID.qtyMinUnitBandMm, minNumBand);
+    unitBand = colWidth - numBand;
+  }
+  return {
+    splitOffset: numBand,
+    numMaxW: Math.max(4, numBand - GRID.padX * 2),
+    unitMaxW: Math.max(4, unitBand - GRID.padX * 2),
+  };
+}
+
+function drawCellText(doc, fontFamily, {
+  text,
+  x,
+  y,
+  width,
+  align = 'left',
+  style = 'normal',
+  fontSize = FONT.tableRow,
+  color = COLORS.ink,
+  bold = false,
+  allowTruncate = true,
+}) {
+  doc.setFont(fontFamily, bold ? 'bold' : style);
+  doc.setFontSize(fontSize);
+  setTextColor(doc, color);
+  const maxW = Math.max(0, width - GRID.padX * 2);
+  const fitted = truncateTextToFit(doc, text, maxW, { allowTruncate });
+  const cellX = align === 'right'
+    ? x + width - GRID.padX
+    : align === 'center'
+      ? x + width / 2
+      : x + GRID.padX;
+  doc.text(fitted, cellX, y, { align, baseline: 'top' });
+}
+
+function drawSplitQuantityRow(doc, fontFamily, {
+  parte,
+  qtyX,
+  qtySplitX,
+  colWidth,
+  bands,
+  lineY,
+  rowStyle,
+}) {
+  const unitBand = colWidth - bands.splitOffset;
+  drawCellText(doc, fontFamily, {
+    text: parte.numero ?? '—',
+    x: qtyX,
+    y: lineY,
+    width: bands.splitOffset,
+    align: 'right',
+    style: rowStyle,
+    color: COLORS.muted,
+  });
+  drawCellText(doc, fontFamily, {
+    text: parte.unidade ?? '',
+    x: qtySplitX,
+    y: lineY,
+    width: unitBand,
+    align: 'left',
+    style: rowStyle,
+    color: COLORS.muted,
+    allowTruncate: false,
+  });
 }
 
 function columnOffsetX(x, colWidths, index) {
@@ -719,14 +796,11 @@ function drawGridTable(doc, fontFamily, {
   const qtyUnitWidth = qtyColIndex >= 0
     ? measureTableQtyUnitWidth(doc, rows, fontFamily, rowStyle)
     : 0;
-  const qtySplitX = qtyColIndex >= 0
-    ? computeQtySplitX(
-      columnOffsetX(x, colWidths, qtyColIndex),
-      colWidths[qtyColIndex],
-      qtyNumberWidth,
-      qtyUnitWidth,
-    )
-    : 0;
+  const qtyBands = qtyColIndex >= 0
+    ? resolveQtyBands(colWidths[qtyColIndex], qtyNumberWidth, qtyUnitWidth)
+    : null;
+  const qtyX = qtyColIndex >= 0 ? columnOffsetX(x, colWidths, qtyColIndex) : 0;
+  const qtySplitX = qtyBands ? qtyX + qtyBands.splitOffset : 0;
 
   drawGridLines(doc, x, y, width, rowHeights, colWidths);
 
@@ -743,16 +817,41 @@ function drawGridTable(doc, fontFamily, {
   let cursorX = x;
   for (let i = 0; i < columns.length; i += 1) {
     const col = columns[i];
-    if (col.splitQuantity) {
-      doc.text('QTD', qtySplitX - GRID.padX, y + GRID.headerPadTop, { align: 'right', baseline: 'top' });
-      doc.text('UN', qtySplitX + GRID.padX, y + GRID.headerPadTop, { align: 'left', baseline: 'top' });
-    } else {
-      const cellX = col.align === 'right'
-        ? cursorX + colWidths[i] - GRID.padX
-        : col.align === 'center'
-          ? cursorX + colWidths[i] / 2
-          : cursorX + GRID.padX;
-      doc.text(col.label, cellX, y + GRID.headerPadTop, { align: col.align || 'left', baseline: 'top' });
+    if (col.splitQuantity && qtyBands) {
+      drawCellText(doc, fontFamily, {
+        text: 'QTD',
+        x: qtyX,
+        y: y + GRID.headerPadTop,
+        width: qtyBands.splitOffset,
+        align: 'right',
+        style: headerStyle,
+        fontSize: FONT.tableHead,
+        color: COLORS.muted,
+        allowTruncate: false,
+      });
+      drawCellText(doc, fontFamily, {
+        text: 'UN',
+        x: qtySplitX,
+        y: y + GRID.headerPadTop,
+        width: colWidths[qtyColIndex] - qtyBands.splitOffset,
+        align: 'left',
+        style: headerStyle,
+        fontSize: FONT.tableHead,
+        color: COLORS.muted,
+        allowTruncate: false,
+      });
+    } else if (!col.splitQuantity) {
+      drawCellText(doc, fontFamily, {
+        text: col.label,
+        x: cursorX,
+        y: y + GRID.headerPadTop,
+        width: colWidths[i],
+        align: col.align || 'left',
+        style: headerStyle,
+        fontSize: FONT.tableHead,
+        color: COLORS.muted,
+        allowTruncate: false,
+      });
     }
     cursorX += colWidths[i];
   }
@@ -769,39 +868,37 @@ function drawGridTable(doc, fontFamily, {
 
     for (let i = 0; i < columns.length; i += 1) {
       const col = columns[i];
-      if (col.splitQuantity) {
+      if (col.splitQuantity && qtyBands) {
         const partes = getQuantityPartes(row);
         let lineY = textTop;
-        setTextColor(doc, COLORS.muted);
         for (const parte of partes) {
-          const numero = String(parte.numero ?? '—');
-          const numeroX = qtySplitX - GRID.padX - (qtyNumberWidth - doc.getTextWidth(numero));
-          doc.text(numero, numeroX, lineY, { align: 'left', baseline: 'top' });
-          doc.text(String(parte.unidade ?? ''), qtySplitX + GRID.padX, lineY, { align: 'left', baseline: 'top' });
+          drawSplitQuantityRow(doc, fontFamily, {
+            parte,
+            qtyX,
+            qtySplitX,
+            colWidth: colWidths[qtyColIndex],
+            bands: qtyBands,
+            lineY,
+            rowStyle,
+          });
           lineY += GRID.qtyLineStep;
         }
       } else {
         const raw = row[col.key] ?? '—';
-        const text = String(raw);
-        const maxW = colWidths[i] - GRID.padX * 2;
-        const lines = doc.splitTextToSize(text, maxW);
-        const line = lines[0] || '—';
-        const cellX = col.align === 'right'
-          ? cursorX + colWidths[i] - GRID.padX
-          : col.align === 'center'
-            ? cursorX + colWidths[i] / 2
-            : cursorX + GRID.padX;
-        setTextColor(
-          doc,
-          col.key === 'valor'
+        drawCellText(doc, fontFamily, {
+          text: raw,
+          x: cursorX,
+          y: textTop,
+          width: colWidths[i],
+          align: col.align || 'left',
+          style: rowStyle,
+          color: col.key === 'valor'
             ? COLORS.accent
             : col.key === 'custoMedio' || col.key === 'precoMedio'
               ? COLORS.muted
               : COLORS.ink,
-        );
-        if (col.key === 'valor') doc.setFont(fontFamily, 'bold');
-        doc.text(line, cellX, textTop, { align: col.align || 'left', baseline: 'top' });
-        if (col.key === 'valor') doc.setFont(fontFamily, rowStyle);
+          bold: col.key === 'valor',
+        });
       }
       cursorX += colWidths[i];
     }
@@ -891,14 +988,14 @@ function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
   const text = (str, x, yy, opts = {}) => doc.text(normalizePdfText(str), x, yy, opts);
 
   const familiasColumns = [
-    { key: 'letra', label: 'CL.', width: 0.08, align: 'center' },
-    { key: 'familia', label: 'FAMÍLIA', width: 0.33, align: 'left' },
-    { key: 'quantidade', label: 'QTD', width: 0.32, align: 'left', splitQuantity: true },
-    { key: 'valor', label: 'R$', width: 0.27, align: 'right' },
+    { key: 'letra', label: 'CL.', width: 0.07, align: 'center' },
+    { key: 'familia', label: 'FAMÍLIA', width: 0.30, align: 'left' },
+    { key: 'quantidade', label: 'QTD', width: 0.35, align: 'left', splitQuantity: true },
+    { key: 'valor', label: 'R$', width: 0.28, align: 'right' },
   ];
   const abcdColumns = [
-    { key: 'letra', label: 'CLASSE', width: 0.24, align: 'left' },
-    { key: 'valor', label: 'R$', width: 0.76, align: 'right' },
+    { key: 'letra', label: 'CL.', width: 0.20, align: 'center' },
+    { key: 'valor', label: 'R$', width: 0.80, align: 'right' },
   ];
 
   doc.setFont(fontFamily, 'heavy');
@@ -1052,16 +1149,16 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
     title: 'Embarques em trânsito',
     widthRatio: 0.56,
     columns: [
-      { key: 'eta', label: 'ETA', width: 0.14, align: 'left' },
-      { key: 'transportadora', label: 'TRANSPORTADORA', width: 0.38, align: 'left' },
+      { key: 'eta', label: 'ETA', width: 0.13, align: 'left' },
+      { key: 'transportadora', label: 'TRANSPORTADORA', width: 0.34, align: 'left' },
       { key: 'volumes', label: 'VOL.', width: 0.14, align: 'right' },
-      { key: 'valor', label: 'VALOR (R$)', width: 0.34, align: 'right' },
+      { key: 'valor', label: 'VALOR (R$)', width: 0.39, align: 'right' },
     ],
     rawRows: transito.embarquesPorEtaTransportadora,
     toDisplay: (row) => ({
       eta: row.eta,
       transportadora: row.transportadora,
-      volumes: QTD.format(row.volumes),
+      volumes: VOL_INT.format(row.volumes),
       valor: fmtTabValor(row.valor),
     }),
     consolidate: {
@@ -1070,7 +1167,7 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
       mapOutros: (tail) => ({
         eta: '—',
         transportadora: labelOutros(tail.length),
-        volumes: QTD.format(tail.reduce((sum, row) => sum + (Number(row.volumes) || 0), 0)),
+        volumes: VOL_INT.format(tail.reduce((sum, row) => sum + (Number(row.volumes) || 0), 0)),
         valor: sumValorRows(tail),
       }),
     },
@@ -1078,9 +1175,9 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
   }, {
     title: 'Por fornecedor',
     columns: [
-      { key: 'fornecedor', label: 'FORNECEDOR', width: 0.50, align: 'left' },
-      { key: 'embarques', label: 'EMB.', width: 0.12, align: 'right' },
-      { key: 'valor', label: 'R$', width: 0.38, align: 'right' },
+      { key: 'fornecedor', label: 'FORNECEDOR', width: 0.46, align: 'left' },
+      { key: 'embarques', label: 'EMB.', width: 0.10, align: 'right' },
+      { key: 'valor', label: 'R$', width: 0.44, align: 'right' },
     ],
     rawRows: transito.porFornecedor,
     toDisplay: (row) => ({
@@ -1107,8 +1204,8 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
     title: 'Por curva ABCD (nível 1)',
     widthRatio: 0.30,
     columns: [
-      { key: 'letra', label: 'CLASSE', width: 0.28, align: 'left' },
-      { key: 'valor', label: 'R$', width: 0.72, align: 'right' },
+      { key: 'letra', label: 'CL.', width: 0.22, align: 'center' },
+      { key: 'valor', label: 'R$', width: 0.78, align: 'right' },
     ],
     rawRows: transito.porAbcd,
     toDisplay: (row) => ({
@@ -1119,10 +1216,10 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
   }, {
     title: 'Por família (maiores valores)',
     columns: [
-      { key: 'familia', label: 'PRODUTO', width: 0.36, align: 'left' },
-      { key: 'quantidade', label: 'QUANT.', width: 0.24, align: 'left', splitQuantity: true },
+      { key: 'familia', label: 'PRODUTO', width: 0.32, align: 'left' },
+      { key: 'quantidade', label: 'QUANT.', width: 0.26, align: 'left', splitQuantity: true },
       { key: 'precoMedio', label: 'PREÇO MÉD.', width: 0.20, align: 'right' },
-      { key: 'valor', label: 'R$', width: 0.20, align: 'right' },
+      { key: 'valor', label: 'R$', width: 0.22, align: 'right' },
     ],
     rawRows: transito.porFamiliaMaiores,
     toDisplay: (row) => ({
