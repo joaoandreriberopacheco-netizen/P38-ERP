@@ -6,7 +6,7 @@ import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
 import { resolveQuantidadeBaseItemEmbarque } from '@/lib/sugestaoCompraEstoquePendente';
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 
-export const PDF_BUILD = 'estoque-reuniao-v6';
+export const PDF_BUILD = 'estoque-reuniao-v7';
 
 const BRL_KPI = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -361,37 +361,57 @@ function buildResumoTransitoData(
   const valorPorAbcd = aggregateValorPorAbcdH1(produtos, abcdPorH1, valorTransitoProduto);
 
   const helpers = { getEmbarqueItensLinhas, resolveQuantidadeBaseItemEmbarque };
-  const embarques = embarquesTransito
+  const embarquesDetalhe = embarquesTransito
     .map((embarque) => {
       const pedido = pedidosMap.get(String(embarque.pedido_compra_id));
       const valor = valorPendenteEmbarque(embarque, pedido, produtoMap, resolveProdutoCustoUnitarioBase, helpers);
+      const eta = formatEta(embarque.eta || pedido?.data_prevista_entrega);
+      const transportadora = String(embarque.transportadora_nome || '').trim() || 'Sem transportadora';
       return {
-        codigo: codigoEmbarque(embarque, pedido),
-        fornecedor: normalizarFornecedorRelatorio(embarque.fornecedor_nome || pedido?.fornecedor_nome),
-        eta: formatEta(embarque.eta || pedido?.data_prevista_entrega),
+        eta,
+        transportadora,
         volumes: countVolumesEmbarque(embarque),
         valor,
+        sortEta: eta === '—' ? '9999' : eta,
       };
     })
-    .filter((row) => row.valor > 0)
-    .sort((a, b) => {
-      const etaA = a.eta === '—' ? '9999' : a.eta;
-      const etaB = b.eta === '—' ? '9999' : b.eta;
-      return etaA.localeCompare(etaB) || b.valor - a.valor;
-    });
+    .filter((row) => row.valor > 0);
 
-  const volumesTotal = embarques.reduce((sum, row) => sum + row.volumes, 0);
+  const embarquesEtaTransportadoraAgg = new Map();
+  for (const row of embarquesDetalhe) {
+    const key = `${row.sortEta}|${row.transportadora}`;
+    if (!embarquesEtaTransportadoraAgg.has(key)) {
+      embarquesEtaTransportadoraAgg.set(key, {
+        eta: row.eta,
+        transportadora: row.transportadora,
+        volumes: 0,
+        valor: 0,
+        sortEta: row.sortEta,
+      });
+    }
+    const agg = embarquesEtaTransportadoraAgg.get(key);
+    agg.volumes += row.volumes;
+    agg.valor += row.valor;
+  }
+
+  const embarquesPorEtaTransportadora = [...embarquesEtaTransportadoraAgg.values()]
+    .sort((a, b) => a.sortEta.localeCompare(b.sortEta) || b.valor - a.valor);
+
+  const volumesTotal = embarquesDetalhe.reduce((sum, row) => sum + row.volumes, 0);
 
   const fornecedorAgg = new Map();
-  for (const row of embarques) {
-    const key = normalizarFornecedorRelatorio(row.fornecedor);
+  for (const embarque of embarquesTransito) {
+    const pedido = pedidosMap.get(String(embarque.pedido_compra_id));
+    const valor = valorPendenteEmbarque(embarque, pedido, produtoMap, resolveProdutoCustoUnitarioBase, helpers);
+    if (valor <= 0) continue;
+    const key = normalizarFornecedorRelatorio(embarque.fornecedor_nome || pedido?.fornecedor_nome);
     if (!fornecedorAgg.has(key)) {
       fornecedorAgg.set(key, { fornecedor: key, embarques: 0, volumes: 0, valor: 0 });
     }
     const agg = fornecedorAgg.get(key);
     agg.embarques += 1;
-    agg.volumes += row.volumes;
-    agg.valor += row.valor;
+    agg.volumes += countVolumesEmbarque(embarque);
+    agg.valor += valor;
   }
 
   const porFornecedor = [...fornecedorAgg.values()]
@@ -473,9 +493,9 @@ function buildResumoTransitoData(
   return {
     totalTransito,
     pedidosAbertos: pedidosAbertos.length,
-    embarquesTransito: embarques.length,
+    embarquesTransito: embarquesDetalhe.length,
     volumesTotal,
-    embarques,
+    embarquesPorEtaTransportadora,
     porFornecedor,
     porFamiliaH1,
     porAbcd,
@@ -939,25 +959,25 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
     title: 'Embarques em trânsito',
     widthRatio: 0.56,
     columns: [
-      { key: 'codigo', label: 'EMBARQUE', width: 0.20, align: 'left' },
-      { key: 'fornecedor', label: 'FORNECEDOR', width: 0.34, align: 'left' },
       { key: 'eta', label: 'ETA', width: 0.18, align: 'left' },
-      { key: 'valor', label: 'R$', width: 0.28, align: 'right' },
+      { key: 'transportadora', label: 'TRANSPORTADORA', width: 0.36, align: 'left' },
+      { key: 'volumes', label: 'VOLUMES', width: 0.16, align: 'right' },
+      { key: 'valor', label: 'VALOR (R$)', width: 0.30, align: 'right' },
     ],
-    rawRows: transito.embarques,
+    rawRows: transito.embarquesPorEtaTransportadora,
     toDisplay: (row) => ({
-      codigo: row.codigo,
-      fornecedor: row.fornecedor,
       eta: row.eta,
+      transportadora: row.transportadora,
+      volumes: QTD.format(row.volumes),
       valor: fmtTabValor(row.valor),
     }),
     consolidate: {
       tipo: 'embarques',
-      labelKey: 'codigo',
+      labelKey: 'transportadora',
       mapOutros: (tail) => ({
-        codigo: '—',
-        fornecedor: labelOutros(tail.length, 'embarques'),
         eta: '—',
+        transportadora: labelOutros(tail.length, 'embarques'),
+        volumes: QTD.format(tail.reduce((sum, row) => sum + (Number(row.volumes) || 0), 0)),
         valor: sumValorRows(tail),
       }),
     },
