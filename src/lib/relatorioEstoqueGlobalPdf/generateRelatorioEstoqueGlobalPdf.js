@@ -19,7 +19,7 @@ import {
 } from '@/lib/comprasEmbarqueCards';
 import { buildConsultaItensEmbarque } from '@/lib/consultaComprasEmbarques';
 
-export const PDF_BUILD = 'estoque-reuniao-v13';
+export const PDF_BUILD = 'estoque-reuniao-v14';
 
 const BRL_KPI = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -1154,15 +1154,9 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
   doc.line(M, y, M + CW, y);
   y += LAYOUT.sectionGapBetween;
 
-  const familiaColumns = [
-    { key: 'familia', label: 'FAMÍLIA', width: 0.52, align: 'left' },
-    { key: 'letra', label: 'CL.', width: 0.10, align: 'left' },
-    { key: 'valor', label: 'R$', width: 0.38, align: 'right' },
-  ];
-  const block2ReserveMm = 72;
-  const familiaReserveMm = 52;
+  const block2ReserveMm = 108;
   const block1TableY = sectionTitleEndY(y);
-  const maxBlock1Height = pageH - FOOTER_RESERVE - block1TableY - block2ReserveMm - familiaReserveMm - LAYOUT.sectionGapBetween * 2;
+  const maxBlock1Height = pageH - FOOTER_RESERVE - block1TableY - block2ReserveMm - LAYOUT.sectionGapBetween * 2;
 
   y = drawTwoColumnBlock(doc, fontFamily, normalizePdfText, layout, y, {
     title: 'Embarques em trânsito',
@@ -1217,11 +1211,11 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
   }, pageH);
 
   const block2TableY = sectionTitleEndY(y);
-  const maxBlock2Height = pageH - FOOTER_RESERVE - familiaReserveMm - block2TableY - LAYOUT.sectionGapBetween;
+  const maxBlock2Height = pageH - FOOTER_RESERVE - block2TableY - LAYOUT.sectionGapAfter;
 
   y = drawTwoColumnBlock(doc, fontFamily, normalizePdfText, layout, y, {
     title: 'Por curva ABCD (nível 1)',
-    widthRatio: 0.30,
+    widthRatio: 0.24,
     columns: [
       { key: 'letra', label: 'CL.', width: 0.22, align: 'center' },
       { key: 'valor', label: 'R$', width: 0.78, align: 'right' },
@@ -1235,8 +1229,8 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
   }, {
     title: 'Por família (maiores valores)',
     columns: [
-      { key: 'familia', label: 'PRODUTO', width: 0.32, align: 'left' },
-      { key: 'quantidade', label: 'QUANT.', width: 0.26, align: 'left', splitQuantity: true },
+      { key: 'familia', label: 'PRODUTO', width: 0.34, align: 'left' },
+      { key: 'quantidade', label: 'QUANT.', width: 0.24, align: 'left', splitQuantity: true },
       { key: 'precoMedio', label: 'PREÇO MÉD.', width: 0.20, align: 'right' },
       { key: 'valor', label: 'R$', width: 0.22, align: 'right' },
     ],
@@ -1260,37 +1254,6 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
     maxHeight: maxBlock2Height,
   }, pageH);
 
-  y += LAYOUT.sectionGapBetween;
-  y = drawSectionTitle(doc, fontFamily, normalizePdfText, M, y, 'Por família chegando (nível 1)') + LAYOUT.titleToTable;
-
-  const familiaRows = fitTableRows(
-    transito.porFamiliaH1,
-    (row) => ({
-      familia: row.familia,
-      letra: row.letra,
-      valor: fmtTabValor(row.valor),
-    }),
-    familiaColumns,
-    availableTableHeight(pageH, y),
-    {
-      tipo: 'famílias',
-      labelKey: 'familia',
-      mapOutros: (tail) => ({
-        familia: labelOutros(tail.length),
-        letra: '—',
-        valor: sumValorRows(tail),
-      }),
-    },
-  );
-
-  drawGridTable(doc, fontFamily, {
-    x: M,
-    y,
-    width: CW,
-    columns: familiaColumns,
-    rows: familiaRows,
-  });
-
   drawPageFooter(
     doc,
     fontFamily,
@@ -1299,7 +1262,7 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
     CW,
     pageH,
     `P38 · Estoque em trânsito · p.2 · ${PDF_BUILD}`,
-    'Curva ABCD consolidada por família (campo hierárquico nível 1)',
+    'Embarques, fornecedores e famílias em trânsito',
   );
 }
 
