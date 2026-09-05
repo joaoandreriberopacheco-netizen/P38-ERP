@@ -24,6 +24,20 @@ function getScrollTop(target) {
   return 0;
 }
 
+/** Margem para ignorar jitter no fim/início do scroll interno. */
+const SCROLL_EDGE_PX = 12;
+
+function isAtScrollBottom(element) {
+  if (!(element instanceof Element)) return false;
+  const max = element.scrollHeight - element.clientHeight;
+  return max > 0 && element.scrollTop >= max - SCROLL_EDGE_PX;
+}
+
+function isAtScrollTop(element, threshold = SCROLL_EDGE_PX) {
+  if (!(element instanceof Element)) return false;
+  return element.scrollTop <= threshold;
+}
+
 function isVerticallyScrollable(element) {
   if (!(element instanceof Element)) return false;
   if (element.scrollHeight <= element.clientHeight + 1) return false;
@@ -84,6 +98,11 @@ export function useBottomNavScrollVisibility(enabled = true) {
 
       const delta = y - lastYRef.current;
       if (Math.abs(delta) < MIN_DELTA) return;
+
+      if (!isDocument && target instanceof Element) {
+        if (isAtScrollBottom(target) && delta > 0) return;
+        if (isAtScrollTop(target) && delta < 0) return;
+      }
 
       if (y <= HIDE_AFTER_Y) {
         setVisible(true);

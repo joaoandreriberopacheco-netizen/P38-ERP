@@ -119,6 +119,7 @@ export default function Layout({ children, currentPageName }) {
   const bottomNavScrollEnabled =
     isMobile &&
     !isFullscreen &&
+    !usesFullViewportShell &&
     !showMobileMenu &&
     !searchOverlayOpen &&
     !showMobileUserMenu &&

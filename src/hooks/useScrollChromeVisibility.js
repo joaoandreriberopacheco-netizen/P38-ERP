@@ -6,6 +6,8 @@ const DEFAULT_HIDE_AFTER_Y = 56;
 const DEFAULT_REVEAL_NEAR_TOP_Y = 24;
 /** Ignorar micro-movimentos (touch jitter). */
 const DEFAULT_MIN_DELTA = 10;
+/** Margem no fim/início do scroll — evita “turbulência” ao chegar ao fundo. */
+const SCROLL_EDGE_PX = 12;
 /** Scroll up acumulado (~1 ecrã) para reexibir no modo long-up. */
 const DEFAULT_REVEAL_AFTER_UP_PX = 420;
 
@@ -53,13 +55,19 @@ export function useScrollChromeVisibility(enabled = true, options = {}) {
 
     const onScroll = () => {
       const y = scrollEl.scrollTop;
+      const maxY = scrollEl.scrollHeight - scrollEl.clientHeight;
       const delta = y - lastYRef.current;
       if (Math.abs(delta) < minDelta) return;
 
-      if (y <= revealNearTopY) {
+      const atBottom = maxY > 0 && y >= maxY - SCROLL_EDGE_PX;
+      const atTop = y <= revealNearTopY;
+      if (atBottom && delta > 0) return;
+      if (atTop && delta < 0) return;
+
+      if (atTop) {
         setVisible(true);
         accumulatedUpRef.current = 0;
-      } else if (delta > 0 && y > hideAfterY) {
+      } else if (delta > 0 && y > hideAfterY && !atBottom) {
         setVisible(false);
         accumulatedUpRef.current = 0;
       } else if (delta < 0 && revealMode !== 'top-only') {
