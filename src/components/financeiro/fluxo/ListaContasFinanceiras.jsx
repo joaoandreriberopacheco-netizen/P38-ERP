@@ -18,6 +18,7 @@ export default function ListaContasFinanceiras({
   return (
     <FinanceiroListaEstado
       loading={loading}
+      loadingMessage="Carregando contas e saldos…"
       vazio={!loading && grupos.length === 0}
       vazioMensagem="Nenhuma conta encontrada"
       vazioIcon={Wallet}

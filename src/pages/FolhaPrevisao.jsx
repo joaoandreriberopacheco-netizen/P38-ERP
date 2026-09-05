@@ -614,6 +614,7 @@ export default function FolhaPrevisaoPage() {
 
           <FinanceiroListaEstado
             loading={loadingComp || loadingModelos}
+            loadingMessage="Carregando previsão da folha…"
             vazio={!loadingComp && !loadingModelos && competenciasExibidas.length === 0}
             vazioMensagem={
               filtroBusca || filtroCentro !== '__todos__'
@@ -673,6 +674,7 @@ export default function FolhaPrevisaoPage() {
 
           <FinanceiroListaEstado
             loading={loadingModelos}
+            loadingMessage="Carregando pessoas da folha…"
             vazio={!loadingModelos && pessoasFiltradas.length === 0}
             vazioMensagem="Nenhuma pessoa cadastrada na folha."
             vazioIcon={Users}

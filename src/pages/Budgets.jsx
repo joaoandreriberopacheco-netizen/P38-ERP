@@ -508,6 +508,7 @@ export default function BudgetsPage() {
 
           <FinanceiroListaEstado
             loading={loadingModelos}
+            loadingMessage="Carregando gastos cadastrados…"
             vazio={!loadingModelos && modelosCadastro.length === 0}
             vazioMensagem={`Nenhum ${BUDGET_MODULO_LABEL.toLowerCase()} cadastrado.`}
             vazioIcon={Target}
@@ -557,6 +558,7 @@ export default function BudgetsPage() {
 
           <FinanceiroListaEstado
             loading={loadingModelos || loadingLanc}
+            loadingMessage="Carregando acompanhamento do mês…"
             vazio={!loadingModelos && visoesFiltradas.length === 0}
             vazioMensagem={
               modelos.filter((m) => m.ativo !== false).length === 0

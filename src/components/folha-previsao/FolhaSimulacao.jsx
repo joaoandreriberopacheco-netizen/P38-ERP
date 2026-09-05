@@ -226,6 +226,7 @@ export default function FolhaSimulacao({
 
       <FinanceiroListaEstado
         loading={loading}
+        loadingMessage="Carregando simulação da folha…"
         vazio={!loading && pessoasBase.length === 0}
         vazioMensagem="Cadastre pessoas na aba Pessoas para simular cortes."
         vazioIcon={Scissors}

@@ -74,6 +74,7 @@ import {
 } from '@/components/financeiro/fluxo/financeiroP38';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from '@/components/financeiro/fluxo/FinanceiroListaMeta';
 import { FinanceiroListaEstado } from '@/components/financeiro/fluxo/FinanceiroListaShared';
+import P38ModuleLoadingOverlay from '@/components/ui/P38ModuleLoadingOverlay';
 import {
   measureVirtualItem,
   P38_VIRTUAL_LIST_MAX_HEIGHT,
@@ -1161,6 +1162,12 @@ export default function SuperAgefin() {
           </div>
         )}
 
+        <div className="relative">
+          <P38ModuleLoadingOverlay
+            open={loading}
+            message="Carregando contas a pagar…"
+          />
+          <div className={cn(loading && 'pointer-events-none select-none opacity-25')}>
         <div className="grid grid-cols-2 gap-1.5 md:grid-cols-4 md:gap-2">
           <KpiCard label="Total (filtro)" value={formatCurrency(kpis.totalValue)} tone="danger" />
           <KpiCard label="Pago" value={formatCurrency(kpis.paidValue)} tone="success" />
@@ -1170,6 +1177,7 @@ export default function SuperAgefin() {
 
         <FinanceiroListaEstado
           loading={loading}
+          loadingMessage="Carregando contas a pagar…"
           vazio={!loading && contasOrdenadas.length === 0}
           vazioMensagem="Nenhuma conta a pagar encontrada para esse mês e filtros."
         >
@@ -1210,6 +1218,8 @@ export default function SuperAgefin() {
             </div>
           )}
         </FinanceiroListaEstado>
+          </div>
+        </div>
       </div>
 
       {modoSelecao && (

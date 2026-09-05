@@ -16,6 +16,7 @@ export default function ProjecaoTab({
     <div className="space-y-3 min-w-0">
       <FinanceiroListaEstado
         loading={loading}
+        loadingMessage="Carregando projeção de 12 meses…"
         vazio={semModelos}
         vazioMensagem="Cadastre contas fixas pelo botão + para ver a projeção de 12 meses."
         vazioIcon={TrendingUp}

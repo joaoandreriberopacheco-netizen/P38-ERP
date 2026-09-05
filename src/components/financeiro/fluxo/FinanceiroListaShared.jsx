@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import { P38_FIELD_SURFACE } from './financeiroP38';
 import FinanceiroResumoBar from './FinanceiroResumoBar';
+import P38ModuleLoadingOverlay from '@/components/ui/P38ModuleLoadingOverlay';
 
 /** Rótulo de grupo — Hoje/Ontem ou data curta (mesmo padrão Fluxo e Contas). */
 export function formatFinanceiroGrupoLabel(k, hStr, oStr) {
@@ -171,13 +172,15 @@ export function FinanceiroGrupo({
 
 export function FinanceiroListaEstado({
   loading,
+  loadingPresentation = 'overlay',
+  loadingMessage = 'Carregando…',
   vazio,
   vazioMensagem,
   vazioIcon: VazioIcon,
   flushBottom = false,
   children,
 }) {
-  if (loading) {
+  if (loading && loadingPresentation === 'skeleton') {
     return (
       <div className="space-y-2">
         {[1, 2, 3, 4, 5].map((i) => (
@@ -187,7 +190,7 @@ export function FinanceiroListaEstado({
     );
   }
 
-  if (vazio) {
+  if (vazio && !loading) {
     return (
       <div className="flex flex-col items-center gap-2 rounded-xl border border-border/40 bg-card py-12 dark:border-white/10 dark:bg-[#26262e]/40">
         {VazioIcon && <VazioIcon className="h-9 w-9 text-muted-foreground/40" />}
@@ -196,9 +199,24 @@ export function FinanceiroListaEstado({
     );
   }
 
+  const showOverlay = loading && loadingPresentation === 'overlay';
+
   return (
-    <div className={cn('min-w-0 w-full max-w-full space-y-2 overflow-x-hidden', flushBottom ? 'pb-0' : 'pb-24 md:pb-2')}>
-      {children}
+    <div
+      className={cn(
+        'relative min-w-0 w-full max-w-full',
+        flushBottom ? 'pb-0' : 'pb-24 md:pb-2',
+      )}
+    >
+      <P38ModuleLoadingOverlay open={showOverlay} message={loadingMessage} />
+      <div
+        className={cn(
+          'min-w-0 w-full max-w-full space-y-2 overflow-x-hidden',
+          showOverlay && 'pointer-events-none select-none opacity-25',
+        )}
+      >
+        {children}
+      </div>
     </div>
   );
 }

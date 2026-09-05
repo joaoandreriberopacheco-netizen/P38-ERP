@@ -76,6 +76,7 @@ export default function ContasFixasTab({
 
       <FinanceiroListaEstado
         loading={loading}
+        loadingMessage="Carregando séries e contas fixas…"
         vazio={!loading && seriesAtivas.length === 0}
         vazioMensagem="Nenhuma série / conta fixa cadastrada."
         vazioIcon={Repeat2}

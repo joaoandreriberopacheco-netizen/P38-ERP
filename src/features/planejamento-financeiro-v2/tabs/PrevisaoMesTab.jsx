@@ -116,6 +116,7 @@ export default function PrevisaoMesTab({
 
       <FinanceiroListaEstado
         loading={loading}
+        loadingMessage="Carregando previsão do mês…"
         vazio={!loading && competenciasExibidas.length === 0}
         vazioMensagem={
           !semFiltros

@@ -51,6 +51,7 @@ import {
   GestaoContasPane,
 } from './GestaoContasFinanceiras';
 import AgefinImportador from '../agefin/AgefinImportador';
+import P38ModuleLoadingOverlay from '@/components/ui/P38ModuleLoadingOverlay';
 import ConciliacaoBancaria from './ConciliacaoBancaria';
 import PagamentoLoteDialog from './PagamentoLoteDialog';
 import FluxoToggleProgramadas from './fluxo/FluxoToggleProgramadas';
@@ -894,7 +895,12 @@ export default function ExecucaoOrcamentaria() {
           </div>
 
           {aba === 'fluxo' && (
-            <div className="min-w-0">
+            <div className="relative min-w-0">
+              <P38ModuleLoadingOverlay
+                open={loading}
+                message="Carregando saldos e movimentações…"
+              />
+              <div className={cn(loading && 'pointer-events-none select-none opacity-25')}>
               <KpiFluxoBar
                 kpis={kpis}
                 periodoLabel={periodoLabel}
@@ -904,6 +910,7 @@ export default function ExecucaoOrcamentaria() {
                 aPagar={kpisProgramadas.aPagar}
                 saldosCarteiraProntos={saldosCarteiraProntos}
               />
+              </div>
             </div>
           )}
 
@@ -924,7 +931,12 @@ export default function ExecucaoOrcamentaria() {
       </div>
 
       {aba === 'fluxo' && (
-        <>
+        <div className="relative min-h-[min(48vh,480px)]">
+          <P38ModuleLoadingOverlay
+            open={loading}
+            message="Carregando lançamentos e saldos…"
+          />
+          <div className={cn('space-y-3', loading && 'pointer-events-none select-none opacity-25')}>
           <FluxoToggleProgramadas
             checked={mostrarProgramadas}
             onCheckedChange={handleToggleProgramadas}
@@ -1049,7 +1061,7 @@ export default function ExecucaoOrcamentaria() {
 
           <ListaLancamentos
             grupos={gruposExibicao}
-            loading={loading}
+            loading={false}
             emSelecao={lote.modoSelecaoLote}
             selecionados={lote.selectedIds}
             onToggleSelecionado={lote.handleToggleSelecionado}
@@ -1089,7 +1101,8 @@ export default function ExecucaoOrcamentaria() {
               }}
             />
           )}
-        </>
+          </div>
+        </div>
       )}
 
       {(aba === 'fluxo' || fabOpen || showNovoFluxo) && (
