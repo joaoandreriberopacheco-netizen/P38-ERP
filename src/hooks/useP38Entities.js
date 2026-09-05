@@ -172,7 +172,7 @@ export function useClientesPdvQuery(options = {}) {
 }
 
 export function usePedidosCompraGestaoInicialQuery(options = {}) {
-  const { enabled = true, ...rest } = options;
+  const { enabled = true, fetchFilters = {}, ...rest } = options;
   const queryClient = useQueryClient();
   const resumoQuery = useQuery({
     queryKey: [...p38Keys.all, 'compras-anotacao-resumo'],
@@ -182,10 +182,11 @@ export function usePedidosCompraGestaoInicialQuery(options = {}) {
     enabled,
   });
   const comprasVersion = resumoQuery.data?.comprasVersion ?? 'v0';
+  const fetchFiltersKey = JSON.stringify(fetchFilters);
 
   const listaQuery = useQuery({
-    queryKey: [...p38Keys.pedidosCompraGestaoInicial(), comprasVersion, 'lista'],
-    queryFn: () => fetchPedidosCompraGestaoListaRapida(base44),
+    queryKey: [...p38Keys.pedidosCompraGestaoInicial(), comprasVersion, 'lista', fetchFiltersKey],
+    queryFn: () => fetchPedidosCompraGestaoListaRapida(base44, fetchFilters),
     staleTime: P38_STALE_TIME,
     gcTime: P38_GC_TIME,
     enabled,
@@ -193,8 +194,8 @@ export function usePedidosCompraGestaoInicialQuery(options = {}) {
   });
 
   const completoQuery = useQuery({
-    queryKey: [...p38Keys.pedidosCompraGestaoInicial(), comprasVersion, 'completo'],
-    queryFn: () => fetchPedidosCompraGestaoCompleto(base44, { deferSyncAprovacao: true }),
+    queryKey: [...p38Keys.pedidosCompraGestaoInicial(), comprasVersion, 'completo', fetchFiltersKey],
+    queryFn: () => fetchPedidosCompraGestaoCompleto(base44, { deferSyncAprovacao: true, fetchFilters }),
     staleTime: P38_STALE_TIME,
     gcTime: P38_GC_TIME,
     enabled: enabled && Boolean(listaQuery.data),
@@ -202,17 +203,18 @@ export function usePedidosCompraGestaoInicialQuery(options = {}) {
   });
 
   useQuery({
-    queryKey: [...p38Keys.pedidosCompraGestaoInicial(), comprasVersion, 'sync-aprovacao'],
+    queryKey: [...p38Keys.pedidosCompraGestaoInicial(), comprasVersion, 'sync-aprovacao', fetchFiltersKey],
     queryFn: async () => {
       const current = queryClient.getQueryData([
         ...p38Keys.pedidosCompraGestaoInicial(),
         comprasVersion,
         'completo',
+        fetchFiltersKey,
       ]);
       if (!current?.pedidos?.length) return null;
       const pedidosSync = await sincronizarPedidosCompraAprovacaoPendente(base44, current.pedidos);
       queryClient.setQueryData(
-        [...p38Keys.pedidosCompraGestaoInicial(), comprasVersion, 'completo'],
+        [...p38Keys.pedidosCompraGestaoInicial(), comprasVersion, 'completo', fetchFiltersKey],
         (old) => (old ? { ...old, pedidos: pedidosSync, needsSyncAprovacao: false } : old),
       );
       return pedidosSync;

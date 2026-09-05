@@ -9,6 +9,14 @@ export function filtroComprasStatusSelInicial() {
   return FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT ? ['__nao_concluido__'] : [];
 }
 
+/** Parâmetros de fetch alinhados aos toggles de visibilidade da lista. */
+export function buildComprasGestaoFetchFilters({
+  somenteNaoConcluidos = FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT,
+  ultimos30Dias = FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT,
+} = {}) {
+  return { somenteNaoConcluidos, ultimos30Dias };
+}
+
 /**
  * Visibilidade padrão da lista de embarques (ao abrir a tela):
  * - Últimos 30 dias: ligado.

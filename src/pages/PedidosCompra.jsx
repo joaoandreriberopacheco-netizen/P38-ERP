@@ -68,6 +68,7 @@ import { toLocalDateKey, formatarSoData, dataHoje } from '@/components/utils/dat
 import {
   FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT,
   FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT,
+  buildComprasGestaoFetchFilters,
   filtroComprasStatusSelInicial,
   passaFiltroVisibilidadePedidosCompra,
 } from '@/lib/filtroVisibilidadePedidosCompra';
@@ -265,14 +266,21 @@ export default function PedidosCompraPage() {
   });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const gestaoQuery = usePedidosCompraGestaoInicialQuery();
+  const [filtroUltimos30Dias, setFiltroUltimos30Dias] = useState(FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT);
+  const [filtroSomenteNaoConcluidos, setFiltroSomenteNaoConcluidos] = useState(FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT);
+  const comprasFetchFilters = useMemo(
+    () => buildComprasGestaoFetchFilters({
+      somenteNaoConcluidos: filtroSomenteNaoConcluidos,
+      ultimos30Dias: filtroUltimos30Dias,
+    }),
+    [filtroSomenteNaoConcluidos, filtroUltimos30Dias],
+  );
+  const gestaoQuery = usePedidosCompraGestaoInicialQuery({ fetchFilters: comprasFetchFilters });
   const [pedidos, setPedidos] = useState([]);
   const [embarques, setEmbarques] = useState([]);
   const [produtosMap, setProdutosMap] = useState({});
   const [search, setSearch] = useState('');
   const [statusSel, setStatusSel] = useState(filtroComprasStatusSelInicial);
-  const [filtroUltimos30Dias, setFiltroUltimos30Dias] = useState(FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT);
-  const [filtroSomenteNaoConcluidos, setFiltroSomenteNaoConcluidos] = useState(FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT);
   const [tagsSel, setTagsSel] = useState([]);
   const [dataInicial, setDataInicial] = useState('');
   const [dataFinal, setDataFinal] = useState('');

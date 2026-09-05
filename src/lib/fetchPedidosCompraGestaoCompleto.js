@@ -12,8 +12,8 @@ import { sincronizarPedidosCompraAprovacaoPendente } from '@/lib/fetchPedidosCom
 /**
  * Lista rápida — só fetch inicial Base44 (Fase 8 paint antes da vitrine/financeiro).
  */
-export async function fetchPedidosCompraGestaoListaRapida(base44) {
-  const gestao = await fetchPedidosCompraGestaoInicial(base44);
+export async function fetchPedidosCompraGestaoListaRapida(base44, filters = {}) {
+  const gestao = await fetchPedidosCompraGestaoInicial(base44, filters);
   return {
     pedidos: gestao.pedidos,
     embarques: gestao.embarques,
@@ -29,8 +29,8 @@ export async function fetchPedidosCompraGestaoListaRapida(base44) {
  * @param {{ deferSyncAprovacao?: boolean }} options
  */
 export async function fetchPedidosCompraGestaoCompleto(base44, options = {}) {
-  const { deferSyncAprovacao = true } = options;
-  const gestao = await fetchPedidosCompraGestaoInicial(base44);
+  const { deferSyncAprovacao = true, fetchFilters = {} } = options;
+  const gestao = await fetchPedidosCompraGestaoInicial(base44, fetchFilters);
 
   const pcs = gestao.pedidos;
   const embarquesHeaders = gestao.embarques;

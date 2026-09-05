@@ -1,5 +1,9 @@
 import { inicioDiaSistemaISO, dataMenosDiasSistema } from '@/components/utils/dateUtils';
-import { FILTRO_COMPRAS_JANELA_DIAS } from '@/lib/filtroVisibilidadePedidosCompra';
+import {
+  FILTRO_COMPRAS_JANELA_DIAS,
+  FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT,
+  FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT,
+} from '@/lib/filtroVisibilidadePedidosCompra';
 import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
 import { fetchEmbarquesPorPedidos } from '@/lib/fetchEmbarqueItens';
 
@@ -21,38 +25,64 @@ async function fetchPedidosByIds(base44, ids = []) {
 }
 
 /**
- * Pedidos + embarques para a lista de compras (filtro padrão: últimos 30 dias + em aberto).
- * Embarques vêm por pedido_id ($in) + janela recente, para não perder ETA/transportadora.
+ * Pedidos + embarques para a lista de compras.
+ * Respeita filtros de visibilidade (evita carregar concluídos quando «Não concluídos» está ativo).
+ * @param {{ somenteNaoConcluidos?: boolean, ultimos30Dias?: boolean }} filters
  */
-export async function fetchPedidosCompraGestaoInicial(base44) {
+export async function fetchPedidosCompraGestaoInicial(base44, filters = {}) {
+  const somenteNaoConcluidos = filters.somenteNaoConcluidos ?? FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT;
+  const ultimos30Dias = filters.ultimos30Dias ?? FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT;
   const limite30 = dataMenosDiasSistema(FILTRO_COMPRAS_JANELA_DIAS);
   const inicio30 = inicioDiaSistemaISO(limite30);
 
-  const [recentes, abertos, embarquesRecentes] = await Promise.all([
-    base44.entities.PedidoCompra.filter(
-      { created_date: { $gte: inicio30 } },
-      '-created_date',
-    ).catch(() => []),
-    base44.entities.PedidoCompra.filter(
+  let pcsRaw = [];
+
+  if (somenteNaoConcluidos) {
+    const abertos = await base44.entities.PedidoCompra.filter(
       { status: { $ne: 'Concluído' } },
       '-created_date',
       400,
-    ).catch(() => []),
-    base44.entities.Embarque.filter(
+    ).catch(() => []);
+    pcsRaw = dedupePorId(abertos || []);
+  } else if (ultimos30Dias) {
+    const recentes = await base44.entities.PedidoCompra.filter(
       { created_date: { $gte: inicio30 } },
       '-created_date',
-      600,
-    ).catch(() => []),
-  ]);
+    ).catch(() => []);
+    pcsRaw = dedupePorId(recentes || []);
+  } else {
+    const [recentes, abertos] = await Promise.all([
+      base44.entities.PedidoCompra.filter(
+        { created_date: { $gte: inicio30 } },
+        '-created_date',
+      ).catch(() => []),
+      base44.entities.PedidoCompra.filter(
+        { status: { $ne: 'Concluído' } },
+        '-created_date',
+        400,
+      ).catch(() => []),
+    ]);
+    pcsRaw = dedupePorId([...(recentes || []), ...(abertos || [])]);
+  }
 
-  let pcsRaw = dedupePorId([...(recentes || []), ...(abertos || [])]);
   const pedidoIds = pcsRaw.map((p) => p.id).filter(Boolean);
 
-  const embarquesPorPedido = pedidoIds.length
-    ? await fetchEmbarquesPorPedidos(base44, pedidoIds)
-    : [];
-
-  const embarquesDbRaw = dedupePorId([...(embarquesRecentes || []), ...embarquesPorPedido]);
+  let embarquesDbRaw = [];
+  if (somenteNaoConcluidos) {
+    embarquesDbRaw = pedidoIds.length
+      ? await fetchEmbarquesPorPedidos(base44, pedidoIds)
+      : [];
+  } else {
+    const [embarquesRecentes, embarquesPorPedido] = await Promise.all([
+      base44.entities.Embarque.filter(
+        { created_date: { $gte: inicio30 } },
+        '-created_date',
+        600,
+      ).catch(() => []),
+      pedidoIds.length ? fetchEmbarquesPorPedidos(base44, pedidoIds) : Promise.resolve([]),
+    ]);
+    embarquesDbRaw = dedupePorId([...(embarquesRecentes || []), ...(embarquesPorPedido || [])]);
+  }
 
   const pedidoIdsConhecidos = new Set(pcsRaw.map((p) => p.id));
   const missingPedidoIds = [
