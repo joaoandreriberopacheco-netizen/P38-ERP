@@ -67,6 +67,11 @@ export async function fetchPedidosVendaGestaoHeaders({
     return sortGestaoRows(partial.headers, sort);
   }
 
+  // Anotação mensal incompleta/desatualizada: busca live o período inteiro (ex.: esta semana).
+  if (partial?.pastComplete === false) {
+    return sortGestaoRows(await fetchLivePedidosHeaders(dataInicio, dataFim, sort), sort);
+  }
+
   if (partial?.liveRange) {
     const live = await fetchLivePedidosHeaders(
       partial.liveRange.dataInicio,
@@ -96,6 +101,10 @@ export async function fetchRascunhosPedidoVendaGestaoHeaders({
   const partial = await readVendasGestaoAnotacaoPartial(dataInicio, dataFim);
   if (partial?.complete) {
     return sortGestaoRows(partial.rascunhos, sort);
+  }
+
+  if (partial?.pastComplete === false) {
+    return sortGestaoRows(await fetchLiveRascunhosHeaders(dataInicio, dataFim, sort), sort);
   }
 
   if (partial?.liveRange) {

@@ -4,7 +4,7 @@
  */
 
 import { getSupabaseBrowserClient, isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
-import { dataHoje, dataMenosDiasSistema } from '@/components/utils/dateUtils';
+import { boundsMesCivil, dataHoje, dataMenosDiasSistema } from '@/components/utils/dateUtils';
 
 export const P38_ANOTACAO_DOMAINS = {
   HOME: 'home',
@@ -158,6 +158,25 @@ function normalizeGestaoRascunho(row = {}) {
   };
 }
 
+function gestaoAnotacaoMonthRequiredEnd(monthKey, pastStart, pastEnd) {
+  const monthStart = `${monthKey}-01`;
+  if (pastEnd < monthStart) return null;
+
+  const [year, month] = monthKey.split('-').map(Number);
+  const { end: monthEnd } = boundsMesCivil(year, month - 1);
+  const overlapStart = pastStart > monthStart ? pastStart : monthStart;
+  const overlapEnd = pastEnd < monthEnd ? pastEnd : monthEnd;
+  if (overlapStart > overlapEnd) return null;
+  return overlapEnd;
+}
+
+function isGestaoAnotacaoMonthFresh(payload, monthKey, pastStart, pastEnd) {
+  const requiredEnd = gestaoAnotacaoMonthRequiredEnd(monthKey, pastStart, pastEnd);
+  if (!requiredEnd) return true;
+  const closedThrough = String(payload?.closedThrough || '').slice(0, 10);
+  return closedThrough >= requiredEnd;
+}
+
 function splitGestaoRangeAteOntem(dataInicio, dataFim) {
   const hoje = dataHoje();
   const ontem = dataMenosDiasSistema(1);
@@ -182,7 +201,7 @@ function splitGestaoRangeAteOntem(dataInicio, dataFim) {
 
 /**
  * Cabeçalhos parciais de gestão — passado até ontem (anotação) + só hoje live.
- * @returns {Promise<{ headers: object[], rascunhos: object[], liveRange: object|null, complete: boolean }|null>}
+ * @returns {Promise<{ headers: object[], rascunhos: object[], liveRange: object|null, pastComplete: boolean, complete: boolean }|null>}
  */
 export async function readVendasGestaoAnotacaoPartial(dataInicio, dataFim) {
   if (!dataInicio || !dataFim) return null;
@@ -201,9 +220,9 @@ export async function readVendasGestaoAnotacaoPartial(dataInicio, dataFim) {
       pastComplete = true;
       for (const key of monthKeys) {
         const payload = map.get(key);
-        if (!payload) {
+        if (!isGestaoAnotacaoMonthFresh(payload, key, pastStart, pastEnd)) {
           pastComplete = false;
-          continue;
+          if (!payload) continue;
         }
         headers.push(
           ...filterHeadersByRange(payload.headers, pastStart, pastEnd).map(normalizeGestaoHeader),
@@ -219,6 +238,7 @@ export async function readVendasGestaoAnotacaoPartial(dataInicio, dataFim) {
     headers,
     rascunhos,
     liveRange,
+    pastComplete,
     complete: !liveRange && pastComplete,
   };
 }
