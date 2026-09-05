@@ -52,6 +52,44 @@ async function fetchLiveRascunhosHeaders(dataInicio, dataFim, sort) {
   return normalizeListResult(rows);
 }
 
+/**
+ * Passado selado na anotação + só hoje live; se o cache do passado estiver incompleto,
+ * busca live do buraco (ex.: dia 1–4 do mês) e mantém cabeçalhos parciais de outros meses.
+ */
+async function resolveGestaoRowsFromPartial(
+  partial,
+  dataInicio,
+  dataFim,
+  sort,
+  fetchLive,
+  getSealedRows,
+) {
+  if (!partial) {
+    return sortGestaoRows(await fetchLive(dataInicio, dataFim, sort), sort);
+  }
+
+  const sealedRows = getSealedRows(partial);
+  const { pastComplete, pastGapRange, liveRange } = partial;
+
+  if (partial.complete) {
+    return sortGestaoRows(sealedRows, sort);
+  }
+
+  if (pastComplete && liveRange) {
+    const live = await fetchLive(liveRange.dataInicio, liveRange.dataFim, sort);
+    return sortGestaoRows(mergeGestaoRowsById(sealedRows, live), sort);
+  }
+
+  if (pastComplete && !liveRange) {
+    return sortGestaoRows(sealedRows, sort);
+  }
+
+  const liveStart = pastGapRange?.dataInicio ?? dataInicio;
+  const liveEnd = liveRange?.dataFim ?? pastGapRange?.dataFim ?? dataFim;
+  const live = await fetchLive(liveStart, liveEnd, sort);
+  return sortGestaoRows(mergeGestaoRowsById(sealedRows, live), sort);
+}
+
 /** Cabeçalhos de pedidos de venda no período — sem hidratar itens (Gestão de Vendas). */
 export async function fetchPedidosVendaGestaoHeaders({
   dataInicio,
@@ -63,29 +101,14 @@ export async function fetchPedidosVendaGestaoHeaders({
   }
 
   const partial = await readVendasGestaoAnotacaoPartial(dataInicio, dataFim);
-  if (partial?.complete) {
-    return sortGestaoRows(partial.headers, sort);
-  }
-
-  // Anotação mensal incompleta/desatualizada: busca live o período inteiro (ex.: esta semana).
-  if (partial?.pastComplete === false) {
-    return sortGestaoRows(await fetchLivePedidosHeaders(dataInicio, dataFim, sort), sort);
-  }
-
-  if (partial?.liveRange) {
-    const live = await fetchLivePedidosHeaders(
-      partial.liveRange.dataInicio,
-      partial.liveRange.dataFim,
-      sort,
-    );
-    return sortGestaoRows(mergeGestaoRowsById(partial.headers, live), sort);
-  }
-
-  if (partial?.headers?.length) {
-    return sortGestaoRows(partial.headers, sort);
-  }
-
-  return fetchLivePedidosHeaders(dataInicio, dataFim, sort);
+  return resolveGestaoRowsFromPartial(
+    partial,
+    dataInicio,
+    dataFim,
+    sort,
+    fetchLivePedidosHeaders,
+    (p) => p.headers ?? [],
+  );
 }
 
 /** Cabeçalhos de rascunhos no período — sem hidratar itens (Gestão de Vendas). */
@@ -99,26 +122,12 @@ export async function fetchRascunhosPedidoVendaGestaoHeaders({
   }
 
   const partial = await readVendasGestaoAnotacaoPartial(dataInicio, dataFim);
-  if (partial?.complete) {
-    return sortGestaoRows(partial.rascunhos, sort);
-  }
-
-  if (partial?.pastComplete === false) {
-    return sortGestaoRows(await fetchLiveRascunhosHeaders(dataInicio, dataFim, sort), sort);
-  }
-
-  if (partial?.liveRange) {
-    const live = await fetchLiveRascunhosHeaders(
-      partial.liveRange.dataInicio,
-      partial.liveRange.dataFim,
-      sort,
-    );
-    return sortGestaoRows(mergeGestaoRowsById(partial.rascunhos, live), sort);
-  }
-
-  if (partial?.rascunhos?.length) {
-    return sortGestaoRows(partial.rascunhos, sort);
-  }
-
-  return fetchLiveRascunhosHeaders(dataInicio, dataFim, sort);
+  return resolveGestaoRowsFromPartial(
+    partial,
+    dataInicio,
+    dataFim,
+    sort,
+    fetchLiveRascunhosHeaders,
+    (p) => p.rascunhos ?? [],
+  );
 }

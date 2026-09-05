@@ -201,12 +201,14 @@ function splitGestaoRangeAteOntem(dataInicio, dataFim) {
 
 /**
  * Cabeçalhos parciais de gestão — passado até ontem (anotação) + só hoje live.
- * @returns {Promise<{ headers: object[], rascunhos: object[], liveRange: object|null, pastComplete: boolean, complete: boolean }|null>}
+ * @returns {Promise<{ headers: object[], rascunhos: object[], liveRange: object|null, pastGapRange: object|null, pastComplete: boolean, complete: boolean }|null>}
  */
 export async function readVendasGestaoAnotacaoPartial(dataInicio, dataFim) {
   if (!dataInicio || !dataFim) return null;
 
   const { pastStart, pastEnd, liveRange } = splitGestaoRangeAteOntem(dataInicio, dataFim);
+  const pastGapRange =
+    pastStart && pastEnd ? { dataInicio: pastStart, dataFim: pastEnd } : null;
   const headers = [];
   const rascunhos = [];
   let pastComplete = !pastStart;
@@ -238,6 +240,7 @@ export async function readVendasGestaoAnotacaoPartial(dataInicio, dataFim) {
     headers,
     rascunhos,
     liveRange,
+    pastGapRange,
     pastComplete,
     complete: !liveRange && pastComplete,
   };
