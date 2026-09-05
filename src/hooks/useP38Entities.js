@@ -24,9 +24,10 @@ import { keepPreviousData } from '@tanstack/react-query';
 export { fetchPedidosVenda90d, fetchDadosVendaAbcd90d };
 import { unifyLogisticaEventos } from '@/components/logistica-sandbox/fluvialDataUtils';
 import { dataHoje } from '@/components/utils/dateUtils';
-import { filterProdutosDisponiveisPdv } from '@/lib/hierarquiaPortal/produtoPdvDisponibilidade';
 import { getGestaoDateRangeStaleTime } from '@/lib/p38GestaoCache';
 import { fetchPedidosCompraGestaoCompleto } from '@/lib/fetchPedidosCompraGestaoCompleto';
+import { sincronizarPedidosCompraAprovacaoPendente } from '@/lib/fetchPedidosCompraGestaoSync';
+import { fetchProdutosPdvCatalogo, searchClientesPdv } from '@/lib/fetchPdvCatalogo';
 import { readCatalogoAnotacaoVersion, readComprasAnotacaoResumo } from '@/lib/p38AnotacaoApi';
 
 const entityQueryDefaults = {
@@ -125,18 +126,37 @@ export function useCatalogoAnotacaoVersionQuery(options = {}) {
   });
 }
 
-/** Catálogo activo PDV — partilhado entre visitas (2 min). */
-export function useProdutosAtivosPdvQuery(options = {}) {
+/** Catálogo PDV — Supabase SQL (Fase 7) com fallback Base44; cache 2 min. */
+export function useProdutosPdvCatalogoQuery(options = {}) {
   const { enabled = true, ...rest } = options;
   const versionQuery = useCatalogoAnotacaoVersionQuery({ enabled });
   const catalogVersion = versionQuery.data ?? 'v0';
 
   return useQuery({
-    queryKey: [...p38Keys.produtosAtivosPdv(), catalogVersion],
-    queryFn: fetchProdutosAtivosPdv,
-    select: (data) => filterProdutosDisponiveisPdv(data ?? []),
+    queryKey: [...p38Keys.produtosAtivosPdv(), 'sql', catalogVersion],
+    queryFn: fetchProdutosPdvCatalogo,
     enabled,
     ...entityQueryDefaults,
+    ...rest,
+  });
+}
+
+/** @deprecated Preferir useProdutosPdvCatalogoQuery */
+export function useProdutosAtivosPdvQuery(options = {}) {
+  return useProdutosPdvCatalogoQuery(options);
+}
+
+/** Busca de clientes PDV sob demanda (≥2 caracteres). */
+export function useClientesPdvSearchQuery(term, options = {}) {
+  const trimmed = String(term || '').trim();
+  const { enabled = true, ...rest } = options;
+
+  return useQuery({
+    queryKey: [...p38Keys.clientesPdv(), 'search', trimmed],
+    queryFn: () => searchClientesPdv(trimmed),
+    enabled: enabled && trimmed.length >= 2,
+    staleTime: 60 * 1000,
+    gcTime: P38_GC_TIME,
     ...rest,
   });
 }
@@ -144,7 +164,8 @@ export function useProdutosAtivosPdvQuery(options = {}) {
 export function useClientesPdvQuery(options = {}) {
   return useQuery({
     queryKey: p38Keys.clientesPdv(),
-    queryFn: fetchClientesPdv,
+    queryFn: () => searchClientesPdv(''),
+    enabled: false,
     ...entityQueryDefaults,
     ...options,
   });
@@ -152,6 +173,7 @@ export function useClientesPdvQuery(options = {}) {
 
 export function usePedidosCompraGestaoInicialQuery(options = {}) {
   const { enabled = true, ...rest } = options;
+  const queryClient = useQueryClient();
   const resumoQuery = useQuery({
     queryKey: [...p38Keys.all, 'compras-anotacao-resumo'],
     queryFn: readComprasAnotacaoResumo,
@@ -161,14 +183,33 @@ export function usePedidosCompraGestaoInicialQuery(options = {}) {
   });
   const comprasVersion = resumoQuery.data?.comprasVersion ?? 'v0';
 
-  return useQuery({
+  const mainQuery = useQuery({
     queryKey: [...p38Keys.pedidosCompraGestaoInicial(), comprasVersion],
-    queryFn: () => fetchPedidosCompraGestaoCompleto(base44),
+    queryFn: () => fetchPedidosCompraGestaoCompleto(base44, { deferSyncAprovacao: true }),
     staleTime: P38_STALE_TIME,
     gcTime: P38_GC_TIME,
     enabled,
     ...rest,
   });
+
+  useQuery({
+    queryKey: [...p38Keys.pedidosCompraGestaoInicial(), comprasVersion, 'sync-aprovacao'],
+    queryFn: async () => {
+      const current = queryClient.getQueryData([...p38Keys.pedidosCompraGestaoInicial(), comprasVersion]);
+      if (!current?.pedidos?.length) return null;
+      const pedidosSync = await sincronizarPedidosCompraAprovacaoPendente(base44, current.pedidos);
+      queryClient.setQueryData(
+        [...p38Keys.pedidosCompraGestaoInicial(), comprasVersion],
+        (old) => (old ? { ...old, pedidos: pedidosSync, needsSyncAprovacao: false } : old),
+      );
+      return pedidosSync;
+    },
+    enabled: enabled && Boolean(mainQuery.data?.needsSyncAprovacao),
+    staleTime: Number.POSITIVE_INFINITY,
+    gcTime: P38_GC_TIME,
+  });
+
+  return mainQuery;
 }
 
 export function usePedidosVenda90dQuery(options = {}) {

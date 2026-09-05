@@ -4,17 +4,18 @@ import { carregarProdutosMap } from '@/lib/embarqueVitrineHelpers';
 import { materializePedidosCompraView, getBorrowedStatus } from '@/lib/comprasEmbarqueCards';
 import {
   enriquecerPedidosCompraGestaoFinanceiro,
-  listarLancamentosPedidoCompra,
-  pedidoPrecisaSincronizarAprovacaoFinanceira,
   pedidoStatusIndicaAguardandoAprovacaoFinanceira,
 } from '@/lib/pedidoCompraFinanceiro';
-import { sincronizarPedidoCompraAprovacaoFinanceira } from '@/lib/aprovarPedidoCompraFinanceiro';
+
+import { sincronizarPedidosCompraAprovacaoPendente } from '@/lib/fetchPedidosCompraGestaoSync';
 
 /**
  * Carga inicial da gestão de compras (pedidos + embarques + vitrine).
  * Partilhável via React Query entre visitas ao ecrã.
+ * @param {{ deferSyncAprovacao?: boolean }} options
  */
-export async function fetchPedidosCompraGestaoCompleto(base44) {
+export async function fetchPedidosCompraGestaoCompleto(base44, options = {}) {
+  const { deferSyncAprovacao = true } = options;
   const gestao = await fetchPedidosCompraGestaoInicial(base44);
 
   const pcs = gestao.pedidos;
@@ -30,26 +31,15 @@ export async function fetchPedidosCompraGestaoCompleto(base44) {
   const produtosMap = await carregarProdutosMap(produtoIds.map((id) => ({ produto_id: id })));
   const refinado = materializePedidosCompraView(pcs, embarquesDb, produtosMap);
 
-  for (const pedido of refinado.pedidosComResumoReal) {
-    if (!pedidoStatusIndicaAguardandoAprovacaoFinanceira(pedido)) continue;
-    try {
-      const lancs = await listarLancamentosPedidoCompra(base44, pedido.id);
-      if (!pedidoPrecisaSincronizarAprovacaoFinanceira(pedido, lancs)) continue;
-      await sincronizarPedidoCompraAprovacaoFinanceira({ base44, pedido, lancamentos: lancs });
-      const [atualizado] = await base44.entities.PedidoCompra.filter({ id: pedido.id });
-      if (atualizado) {
-        pedido.status = atualizado.status;
-        pedido.status_aprovacao_financeira = atualizado.status_aprovacao_financeira;
-        pedido.data_aprovacao_financeira = atualizado.data_aprovacao_financeira;
-      }
-    } catch {
-      /* exibição segue com enriquecimento abaixo */
-    }
+  let pedidosBase = refinado.pedidosComResumoReal;
+
+  if (!deferSyncAprovacao) {
+    pedidosBase = await sincronizarPedidosCompraAprovacaoPendente(base44, pedidosBase);
   }
 
   const { pedidos: pedidosFin, cards: cardsFin } = await enriquecerPedidosCompraGestaoFinanceiro(
     base44,
-    refinado.pedidosComResumoReal,
+    pedidosBase,
     refinado.cardsDeEmbarque,
   );
   const embarques = cardsFin.map((card) => ({
@@ -57,5 +47,13 @@ export async function fetchPedidosCompraGestaoCompleto(base44) {
     _display_status: getBorrowedStatus(card, card._embarque, produtosMap, card._embarques || []),
   }));
 
-  return { pedidos: pedidosFin, embarques, produtosMap };
+  const needsSyncAprovacao = deferSyncAprovacao
+    && pedidosBase.some((pedido) => pedidoStatusIndicaAguardandoAprovacaoFinanceira(pedido));
+
+  return {
+    pedidos: pedidosFin,
+    embarques,
+    produtosMap,
+    needsSyncAprovacao,
+  };
 }

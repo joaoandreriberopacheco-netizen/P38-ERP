@@ -212,13 +212,30 @@ npm run dashboard:celulas-sanity
 npm run anotacao:vendas-gestao-backfill
 ```
 
-### Fase 7 — Publicar + páginas operacionais (próxima)
+### Fase 7 — Compras + PDV (LCP operacional)
+
+- [x] **Compras** — sync de aprovação financeira em background (`deferSyncAprovacao`); lista pinta antes do loop sequencial.
+- [x] **PDV** — catálogo via RPC `pdv_catalogo_read` (lazy no focus da busca); clientes só com ≥2 caracteres (`pdv_clientes_search`).
+- [x] **PDV barcode** — `fetchProdutoPdvPorCodigo` sem carregar catálogo completo.
+- [x] Migration `084_fase7_compras_pdv.sql`.
+- [ ] **Medir LCP** no preview (`/PedidosCompra`, `/PDVVendedor`).
+- [ ] Merge PR canal → `main` (após LCP aprovado).
+
+**Comandos Fase 7:**
+
+```bash
+npm run db:apply-migrations
+npm run build
+```
+
+### Fase 8 — Publicar + restantes rotas lentas (próxima)
 
 1. Merge PR canal → `main` (após LCP aprovado no preview).
-2. **Compras** — lista inicial só com metadados `compras:gestao-resumo` + fetch incremental.
-3. **PDV** — invalidação por `catalogVersion` já existe; medir impacto.
-4. **Pulse diário** — incluir `dashboard:celulas-sanity` no workflow opcional.
-5. **Margem / Budgets / Dízimo** — competência fechada via células `vendas:YYYY-MM`.
+2. **Home / /** — auth/perfil duplicado (`auth.me`, `PerfilDeAcesso.list()`).
+3. **Produtos** — lista completa + IEP 90d.
+4. **Compras** — paint inicial só com `compras:gestao-resumo` (sem fetch pesado).
+5. **Pulse diário** — incluir `dashboard:celulas-sanity` no workflow opcional.
+6. **Margem / Budgets / Dízimo** — competência fechada via células `vendas:YYYY-MM`.
 
 ### Onde mais aplicar células (roadmap)
 

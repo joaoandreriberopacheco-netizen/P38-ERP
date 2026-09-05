@@ -48,7 +48,8 @@ import {
 import ProdutoThumb from '@/components/produtos/ProdutoThumb';
 import { consumirOrcamentoParaPdv } from '@/lib/orcamentoRapidoPdvBridge';
 import { usePermissoesUsuario } from '@/hooks/usePermissoesUsuario';
-import { useProdutosAtivosPdvQuery, useClientesPdvQuery } from '@/hooks/useP38Entities';
+import { useProdutosPdvCatalogoQuery, useClientesPdvSearchQuery } from '@/hooks/useP38Entities';
+import { fetchProdutoPdvPorCodigo } from '@/lib/fetchPdvCatalogo';
 
 export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   const navigate = useNavigate();
@@ -71,22 +72,25 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [quantidadeAtual, setQuantidadeAtual] = useState(''); // Changed from quantidadeInput
-  const produtosQuery = useProdutosAtivosPdvQuery();
-  const clientesQuery = useClientesPdvQuery();
+  const [catalogoPdvEnabled, setCatalogoPdvEnabled] = useState(false);
+  const [showClienteDialog, setShowClienteDialog] = useState(false);
+  const [buscaCliente, setBuscaCliente] = useState('');
+  const produtosQuery = useProdutosPdvCatalogoQuery({ enabled: catalogoPdvEnabled });
+  const clientesSearchQuery = useClientesPdvSearchQuery(buscaCliente, {
+    enabled: showClienteDialog,
+  });
   const produtos = produtosQuery.data ?? [];
   const [clientesNovos, setClientesNovos] = useState([]);
   const clientes = useMemo(() => {
-    const base = clientesQuery.data ?? [];
+    const base = clientesSearchQuery.data ?? [];
     const ids = new Set(base.map((c) => c.id));
     const extras = clientesNovos.filter((c) => c?.id && !ids.has(c.id));
     return [...base, ...extras];
-  }, [clientesQuery.data, clientesNovos]);
+  }, [clientesSearchQuery.data, clientesNovos]);
   const [currentUser, setCurrentUser] = useState(null);
   const [tabelaPreco, setTabelaPreco] = useState(null);
-  const [showClienteDialog, setShowClienteDialog] = useState(false);
   const [showNovoClienteForm, setShowNovoClienteForm] = useState(false);
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
-  const [buscaCliente, setBuscaCliente] = useState('');
   const [clientesFiltrados, setClientesFiltrados] = useState([]);
   const [novoCliente, setNovoCliente] = useState({
     nome: '',
@@ -497,22 +501,16 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
     }
   }, [buscaProduto, produtos]);
 
-  // Busca automática de clientes
+  // Busca automática de clientes (servidor quando ≥2 caracteres)
   useEffect(() => {
     if (buscaCliente.trim().length >= 2) {
-      const termo = buscaCliente.toLowerCase();
-      const resultados = clientes.filter((c) =>
-      c.nome?.toLowerCase().includes(termo) ||
-      c.cpf_cnpj?.toLowerCase().includes(termo) ||
-      c.telefone?.toLowerCase().includes(termo)
-      );
-      setClientesFiltrados(resultados);
-      setClienteSelecionadoIndex(0); // Reset index quando filtrar
+      setClientesFiltrados(clientesSearchQuery.data ?? []);
+      setClienteSelecionadoIndex(0);
     } else {
       setClientesFiltrados([]);
       setClienteSelecionadoIndex(0);
     }
-  }, [buscaCliente, clientes]);
+  }, [buscaCliente, clientesSearchQuery.data]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -1183,6 +1181,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                   className="w-full pl-12 pr-14 bg-card dark:bg-secondary border-0 outline-none ring-0 shadow-sm rounded-2xl text-foreground h-14 text-base focus:ring-0 focus:border-transparent focus:outline-none focus-visible:ring-0 focus-visible:outline-none active:outline-none appearance-none [-webkit-tap-highlight-color:transparent] placeholder:text-muted-foreground"
                   value={buscaProduto}
                   onChange={(e) => setBuscaProduto(e.target.value)}
+                  onFocus={() => setCatalogoPdvEnabled(true)}
                   onKeyDown={handleKeyDown}
                   autoFocus={false} />
                   <Button type="button" variant="ghost" size="icon" onClick={() => setShowBarcodeScanner(true)}
@@ -1996,12 +1995,16 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
       <BarcodeScanner
         open={showBarcodeScanner}
         onClose={() => setShowBarcodeScanner(false)}
-        onScan={(code) => {
+        onScan={async (code) => {
+          setCatalogoPdvEnabled(true);
           setBuscaProduto(code);
           setShowBarcodeScanner(false);
-          const produto = produtos.find((p) =>
-          p.codigo_barras === code || productCodesMatch(p.codigo_interno, code)
+          let produto = produtos.find((p) =>
+            p.codigo_barras === code || productCodesMatch(p.codigo_interno, code),
           );
+          if (!produto) {
+            produto = await fetchProdutoPdvPorCodigo(code);
+          }
           if (produto) {
             handleSelecionarProduto(produto);
           }

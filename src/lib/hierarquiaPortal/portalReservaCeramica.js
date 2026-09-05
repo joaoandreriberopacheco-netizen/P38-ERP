@@ -33,6 +33,7 @@ function hasLegacyReservaTag(produto) {
 /** Reserva do portal — flag em portal_catalog (não altera public.produto). */
 export function isProdutoReservaPortal(produto) {
   if (!produto) return false;
+  if (produto.reserva_portal === true) return true;
   if (isProdutoReservaPortalSync(produto)) return true;
   return hasLegacyReservaTag(produto);
 }
