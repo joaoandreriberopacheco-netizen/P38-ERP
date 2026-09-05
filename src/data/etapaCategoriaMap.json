@@ -1,0 +1,21 @@
+{
+  "version": "2026-08-20",
+  "nota": "Categorias ERP legadas renomeadas para etapa de obra. Subfolha Etapas no Excel core. SKU usa etapa do core quando existir; senão etapa desta tabela.",
+  "legenda_linha": {
+    "·N": "núcleo do pathway (ex.: cimento na alvenaria)",
+    "·C": "complemento (ex.: aditivo plastificante)",
+    "·R": "receita pronta (ex.: argamassa AC-2)"
+  },
+  "mapa": [
+    { "categoria_erp": "A - MATERIAIS BÁSICOS", "etapa": "1 — Estrutura / alvenaria", "etapa_codigo": "1" },
+    { "categoria_erp": "B - COBERTURAS E FORROS", "etapa": "2 — Cobertura", "etapa_codigo": "2" },
+    { "categoria_erp": "C - HIDRÁULICA BRUTA", "etapa": "3 — Instalações brutas", "etapa_codigo": "3" },
+    { "categoria_erp": "D - ELÉTRICA BRUTA", "etapa": "3 — Instalações brutas", "etapa_codigo": "3" },
+    { "categoria_erp": "E - PISOS E REVESTIMENTOS", "etapa": "4 — Revestimentos", "etapa_codigo": "4" },
+    { "categoria_erp": "F - ESQUADRIAS E FERRAGENS", "etapa": "6 — Acabamento seco", "etapa_codigo": "6" },
+    { "categoria_erp": "G - PINTURA E QUÍMICOS", "etapa": "6 — Acabamento seco", "etapa_codigo": "6" },
+    { "categoria_erp": "H - ACABAMENTOS PARA ÁREAS MOLHADAS", "etapa": "5 — Áreas molhadas", "etapa_codigo": "5" },
+    { "categoria_erp": "I - ILUMINAÇÃO E ACABAMENTOS", "etapa": "7 — Instalação elétrica", "etapa_codigo": "7" },
+    { "categoria_erp": "J - FERRAMENTAS E CONSUMÍVEIS", "etapa": "8 — Transversal", "etapa_codigo": "8" }
+  ]
+}
