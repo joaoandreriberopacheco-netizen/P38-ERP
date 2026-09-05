@@ -41,6 +41,21 @@ try {
     params
   );
 
+  const devolucaoNumeros = [...new Set(rows.map((r) => String(r.devolucao_numero || '')).filter(Boolean))];
+  let devolucoesJaProcessadas = new Set();
+
+  if (devolucaoNumeros.length > 0) {
+    const { rows: processadas } = await client.query(
+      `SELECT DISTINCT devolucao_numero
+       FROM autorizacao_estorno
+       WHERE status = 'Processado' AND devolucao_numero = ANY($1::text[])`,
+      [devolucaoNumeros]
+    );
+    devolucoesJaProcessadas = new Set(
+      processadas.map((r) => String(r.devolucao_numero || '')).filter(Boolean)
+    );
+  }
+
   const grupos = new Map();
   for (const row of rows) {
     const key = String(row.devolucao_numero || row.numero || row.id);
@@ -52,6 +67,14 @@ try {
   const cancelar = [];
 
   for (const [devolucaoNumero, lista] of grupos) {
+    if (devolucoesJaProcessadas.has(devolucaoNumero)) {
+      cancelar.push(...lista);
+      console.log(
+        `Devolução ${devolucaoNumero}: já tem estorno Processado → cancelar ${lista.length} pendente(s) duplicada(s)`
+      );
+      continue;
+    }
+
     if (lista.length <= 1) {
       manter.push(lista[0]);
       continue;
@@ -66,9 +89,14 @@ try {
   const resumo = {
     modo: apply ? 'apply' : 'dry-run',
     filtro_data: filterDate || 'todas',
+    devolucoes_ja_processadas: [...devolucoesJaProcessadas],
     pendentes_total: rows.length,
     grupos_com_duplicata: cancelar.length > 0 ? grupos.size - manter.length + cancelar.length : 0,
-    manter: manter.length,
+    manter: manter.map((r) => ({
+      id: r.id,
+      devolucao_numero: r.devolucao_numero,
+      valor_autorizado: r.valor_autorizado,
+    })),
     cancelar: cancelar.length,
     ids_cancelar: cancelar.map((r) => r.id),
   };
