@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -76,7 +76,7 @@ function BuscarPedidoStep({ onFound, onClose }) {
 }
 
 // Step 2: Selecionar itens e forma de reembolso
-function SelecionarItensStep({ pedido, tipo, onConfirm }) {
+function SelecionarItensStep({ pedido, tipo, onConfirm, submitting = false }) {
   const [qtds, setQtds] = useState(
     Object.fromEntries((pedido.itens || []).map(i => [i.produto_id + '_' + i.produto_nome, 0]))
   );
@@ -172,11 +172,14 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
       </div>
 
       <Button
-        disabled={itensSelecionados.length === 0 || totalDevolvido === 0}
-        onClick={() => onConfirm({ itensSelecionados, qtds, formaReembolso, motivo, totalDevolvido })}
+        disabled={submitting || itensSelecionados.length === 0 || totalDevolvido === 0}
+        onClick={() => {
+          if (submitting) return;
+          onConfirm({ itensSelecionados, qtds, formaReembolso, motivo, totalDevolvido });
+        }}
         className="w-full h-14 bg-card text-card-foreground rounded-2xl font-semibold text-base"
         style={{ minHeight: 56 }}>
-        Confirmar {tipo}
+        {submitting ? 'Processando...' : `Confirmar ${tipo}`}
       </Button>
     </div>
   );
@@ -277,6 +280,7 @@ export default function DevolucaoTrocaDialog({ open, onClose, tipo = 'Devoluçã
   const [pedido, setPedido] = useState(null);
   const [resultado, setResultado] = useState(null);
   const [processando, setProcessando] = useState(false);
+  const confirmandoRef = useRef(false);
   const { toast } = useToast();
 
   const handleClose = () => {
@@ -287,6 +291,8 @@ export default function DevolucaoTrocaDialog({ open, onClose, tipo = 'Devoluçã
   };
 
   const handleConfirm = async ({ itensSelecionados, qtds, formaReembolso, motivo, totalDevolvido }) => {
+    if (confirmandoRef.current) return;
+    confirmandoRef.current = true;
     setProcessando(true);
     try {
       const user = await base44.auth.me();
@@ -417,8 +423,10 @@ export default function DevolucaoTrocaDialog({ open, onClose, tipo = 'Devoluçã
       setStep('comprovante');
     } catch (error) {
       toast({ title: 'Erro ao processar', description: error.message, variant: 'destructive' });
+    } finally {
+      confirmandoRef.current = false;
+      setProcessando(false);
     }
-    setProcessando(false);
   };
 
   return (
@@ -445,7 +453,7 @@ export default function DevolucaoTrocaDialog({ open, onClose, tipo = 'Devoluçã
             </div>
           )}
           {step === 'buscar' && <BuscarPedidoStep onFound={p => { setPedido(p); setStep('itens'); }} onClose={handleClose} />}
-          {step === 'itens' && pedido && <SelecionarItensStep pedido={pedido} tipo={tipo} onConfirm={handleConfirm} />}
+          {step === 'itens' && pedido && <SelecionarItensStep pedido={pedido} tipo={tipo} onConfirm={handleConfirm} submitting={processando} />}
           {step === 'comprovante' && resultado && <ComprovanteStep resultado={resultado} onClose={handleClose} />}
         </div>
       </DialogContent>

@@ -6,9 +6,7 @@ function pedidoTurnoCaixaId(pedido) {
 }
 
 function turnoEstaAberto(turno) {
-  if (!turno) return false;
-  if (turno.status === 'Aberto') return true;
-  return !turno.data_fechamento;
+  return turno?.status === 'Aberto' && !turno?.data_fechamento;
 }
 
 /**
@@ -82,6 +80,18 @@ export async function criarAutorizacaoEstornoDevolucao({
 
   if (pendentes.length > 0) {
     return pendentes[0];
+  }
+
+  const duplicataPedido = await base44.entities.AutorizacaoEstorno.filter({
+    pedido_origem_numero: pedido.numero,
+    status: 'Pendente',
+    forma_reembolso: 'Dinheiro',
+  });
+  const pendentesPedido = (Array.isArray(duplicataPedido) ? duplicataPedido : duplicataPedido?.id ? [duplicataPedido] : [])
+    .filter((a) => Math.abs(Number(a.valor_autorizado || 0) - Number(totalDevolvido || 0)) < 0.01);
+
+  if (pendentesPedido.length > 0) {
+    return pendentesPedido[0];
   }
 
   const turnoDestino = await resolverTurnoDestinoEstornoDevolucao(pedido);

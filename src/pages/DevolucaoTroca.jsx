@@ -93,7 +93,7 @@ function BuscarPedidoStep({ onFound }) {
 }
 
 // Step 2: Selecionar itens, forma de reembolso, fotos
-function SelecionarItensStep({ pedido, tipo, onConfirm }) {
+function SelecionarItensStep({ pedido, tipo, onConfirm, submitting = false }) {
   const [qtds, setQtds] = useState(
     Object.fromEntries((pedido.itens || []).map((i) => [pedidoItemKey(i), 0]))
   );
@@ -141,6 +141,7 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
   };
 
   const handleConfirmarClick = () => {
+    if (submitting) return;
     if (uploadingFotos) {
       toast({ title: 'Aguarde o upload das fotos', variant: 'destructive' });
       return;
@@ -312,11 +313,11 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
           <span className="text-2xl font-bold text-red-600 dark:text-red-400 font-glacial">{formatValorBRL(totalDevolvido)}</span>
         </div>
         <Button
-          disabled={itensSelecionados.length === 0 || totalDevolvido === 0}
+          disabled={submitting || itensSelecionados.length === 0 || totalDevolvido === 0}
           onClick={handleConfirmarClick}
           className="w-full max-w-lg mx-auto block h-14 bg-card text-card-foreground rounded-2xl font-semibold text-base"
         >
-          Confirmar {tipo}
+          {submitting ? 'Processando...' : `Confirmar ${tipo}`}
         </Button>
       </div>
     </div>
@@ -502,6 +503,7 @@ export default function DevolucaoTrocaPage() {
   const [pedido, setPedido] = useState(null);
   const [resultado, setResultado] = useState(null);
   const [processando, setProcessando] = useState(false);
+  const confirmandoRef = useRef(false);
   const { toast } = useToast();
 
   const handleClose = () => {
@@ -517,6 +519,8 @@ export default function DevolucaoTrocaPage() {
     fotosUrls,
     aguardaSubstituto,
   }) => {
+    if (confirmandoRef.current) return;
+    confirmandoRef.current = true;
     setProcessando(true);
     try {
     const user = await base44.auth.me();
@@ -652,8 +656,10 @@ export default function DevolucaoTrocaPage() {
     setStep('comprovante');
     } catch (error) {
       toast({ title: 'Erro ao processar', description: error.message, variant: 'destructive' });
+    } finally {
+      confirmandoRef.current = false;
+      setProcessando(false);
     }
-    setProcessando(false);
   };
 
   const handleConfirmTroca = async ({
@@ -881,7 +887,7 @@ export default function DevolucaoTrocaPage() {
           <SelecionarTrocaStep pedido={pedido} onConfirm={handleConfirmTroca} />
         )}
         {step === 'itens' && pedido && tipo !== 'Troca' && (
-          <SelecionarItensStep pedido={pedido} tipo={tipo} onConfirm={handleConfirm} />
+          <SelecionarItensStep pedido={pedido} tipo={tipo} onConfirm={handleConfirm} submitting={processando} />
         )}
         {step === 'comprovante' && resultado && <ComprovanteStep resultado={resultado} onClose={handleClose} />}
       </div>
