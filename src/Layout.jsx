@@ -41,6 +41,7 @@ const MOBILE_FULL_VIEWPORT_PAGES = new Set([
   'TabelaPrecosConsulta',
   'Compras',
   'PedidosCompra',
+  'VendasGestao',
 ]);
 
 /** Desktop: catálogo/relatórios densos ocupam altura do viewport. */
@@ -57,6 +58,7 @@ const DESKTOP_FULL_HEIGHT_PAGES = new Set([
   'TabelaPrecosConsulta',
   'Compras',
   'PedidosCompra',
+  'VendasGestao',
 ]);
 
 /** Rotas PDV no mobile: mantêm GlacialBottomNav (atalho rápido em overlay continua fullscreen). */

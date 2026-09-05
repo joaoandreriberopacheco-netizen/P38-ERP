@@ -50,7 +50,7 @@ export const p38Table = {
     'relative flex-shrink-0 border-b border-border/35 dark:border-white/10 bg-muted dark:bg-background text-foreground shadow-sm before:absolute before:top-0 before:inset-x-0 before:h-px before:bg-gradient-to-r before:from-[#e8b824]/35 before:via-[#4a5240]/14 before:to-transparent dark:before:from-[#a4ce33]/80 dark:before:via-[#a4ce33]/40 dark:before:to-transparent',
   /** Mesma linha com barra lateral semântica mais fina (1px) — financeiro */
   mobileLineThin: 'border-b border-border/35 dark:border-white/10 border-l py-3 pr-14 pl-3 sm:pr-4 sm:pl-4 min-w-0 bg-background font-din-1451',
-  mobileLineInteractive: 'active:bg-secondary/30 cursor-pointer select-none min-h-[52px] tablet-portrait:min-h-[60px] touch-pan-y',
+  mobileLineInteractive: 'active:bg-secondary/30 cursor-pointer select-none min-h-[52px] tablet-portrait:min-h-[60px] touch-pan-y touch-manipulation',
   mobileLineTitle: 'font-din-1451 font-medium text-sm sm:text-base tablet-portrait:text-lg uppercase tracking-wide text-foreground leading-snug line-clamp-2 break-words',
   mobileLineSubtitle: 'text-[11px] sm:text-xs tablet-portrait:text-sm text-foreground/70 dark:text-muted-foreground line-clamp-2 break-words mt-0.5 font-din-1451',
   mobileLineMeta: 'text-xs tablet-portrait:text-sm uppercase tracking-wide text-foreground/65 dark:text-muted-foreground font-din-1451',

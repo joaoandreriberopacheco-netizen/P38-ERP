@@ -479,7 +479,9 @@ function VendasGestaoPage() {
   }
 
   const isPhone = useCompactShell();
-  const { chromeVisible, scrollRef, scrollEl } = useScrollChromeVisibility(isPhone);
+  const { chromeVisible, scrollRef, scrollEl } = useScrollChromeVisibility(isPhone, {
+    revealMode: 'top-only',
+  });
   const { invalidateHomeKpis } = useP38QueryInvalidation();
   const [dataInicio, setDataInicio] = useState(() => getPeriodoMesCorrente().start);
   const [dataFim, setDataFim] = useState(() => getPeriodoMesCorrente().end);
@@ -855,7 +857,7 @@ function VendasGestaoPage() {
             </div>
           </P38ScrollChromeCollapse>
 
-          <div className="shrink-0 px-4 pb-2">
+          <div className="shrink-0 z-10 border-b border-border/25 bg-background/95 px-4 pb-2 backdrop-blur-sm">
             <div className="flex items-center gap-2 min-w-0">
               <div className="relative flex-1 min-w-0">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -989,7 +991,7 @@ function VendasGestaoPage() {
                     </button>
                   )}
                 </div>
-                <div className="rounded-2xl bg-muted dark:bg-muted p-3 space-y-2 max-h-48 overflow-y-auto">
+                <div className="rounded-2xl bg-muted dark:bg-muted p-3 space-y-2 max-h-48 p38-stage-panel-scroll overflow-y-auto">
                   {formasPagamentoOpcoes.map((forma) => {
                     const checked = formasPagamentoFiltro.includes(forma);
                     return (
@@ -1056,7 +1058,7 @@ function VendasGestaoPage() {
         ref={scrollRef}
         className={cn(
           isPhone
-            ? 'flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y px-4 pb-4'
+            ? 'flex-1 min-h-0 min-w-0 p38-stage-panel-scroll overflow-x-hidden touch-pan-y px-4 p38-scroll-pad-fab'
             : undefined,
         )}
       >
