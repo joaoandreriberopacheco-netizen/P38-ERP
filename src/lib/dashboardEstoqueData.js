@@ -29,6 +29,12 @@ import {
   getOntemDateKey,
   mergeMovimentosById,
 } from '@/lib/dashboardIncrementalCache';
+import { getCurrentMonthKey } from '@/lib/dashboardVendasPeriod';
+import {
+  buildEstoqueHistoricoFromCelulas,
+  buildEstoqueResumoFromCelulas,
+  readDashboardCelulasEstoque,
+} from '@/lib/dashboardCelulasApi';
 import {
   buildEstoqueFisicoPorProdutoNoFimDoMes,
   getMarcaMensalEstoque,
@@ -432,8 +438,50 @@ function buildQualityPayload(produtosComAbcdCatalogo, pendentePorProdutoCatalogo
   };
 }
 
+async function fetchTransitOverlayFromCompras(queryClient) {
+  const sugestaoEstoqueData = await ensureCached(
+    queryClient,
+    p38Keys.pedidosCompraSugestao(),
+    () => fetchPedidosCompraParaSugestaoEstoque(base44),
+    P38_STALE_TIME,
+  ).catch(() => null);
+
+  if (!sugestaoEstoqueData) return { sugestaoEstoqueData: null, transitOverlay: null };
+
+  const produtos = await ensureCached(queryClient, p38Keys.produtos(), () => fetchProdutosList());
+  const produtosLista = Array.isArray(produtos) ? produtos : [];
+  const pendentePorProdutoCatalogo = buildPendenteAprovadoFinanceiroPorProduto(
+    sugestaoEstoqueData.pedidosAbertos,
+    sugestaoEstoqueData.recebidosPorPedidoProduto,
+    {
+      embarques: sugestaoEstoqueData.embarques,
+      pedidosParaEmbarque: sugestaoEstoqueData.pedidosTodos,
+    },
+  );
+
+  const { transitoFinanceiroAprovado } = computeEstoqueLocalizacaoValores(
+    produtosLista,
+    pendentePorProdutoCatalogo,
+  );
+
+  return {
+    sugestaoEstoqueData,
+    transitOverlay: { transitoFinanceiroAprovado },
+    produtosLista,
+    pendentePorProdutoCatalogo,
+  };
+}
+
 /** Cards rápidos: qualidade + localização (sem movimentos nem CMV). */
 export async function fetchDashboardEstoqueResumo(queryClient) {
+  const celulas = await readDashboardCelulasEstoque(getCurrentMonthKey(), 6);
+
+  if (celulas?.complete && celulas?.resumo?.estoqueFisico != null) {
+    const { transitOverlay } = await fetchTransitOverlayFromCompras(queryClient);
+    const fromCelulas = buildEstoqueResumoFromCelulas(celulas, transitOverlay);
+    if (fromCelulas) return fromCelulas;
+  }
+
   const [produtos, sugestaoEstoqueData] = await Promise.all([
     ensureCached(queryClient, p38Keys.produtos(), () => fetchProdutosList()),
     ensureCached(
@@ -461,6 +509,10 @@ export async function fetchDashboardEstoqueResumo(queryClient) {
 
 /** Gráficos pesados: nível mensal + razão de abastecimento. */
 export async function fetchDashboardEstoqueHistorico(queryClient) {
+  const celulas = await readDashboardCelulasEstoque(getCurrentMonthKey(), 6);
+  const fromCelulas = buildEstoqueHistoricoFromCelulas(celulas);
+  if (fromCelulas) return fromCelulas;
+
   const monthBuckets = getMonthBuckets();
   const supplyMonthBuckets = getSupplyMonthBuckets();
   const startDate = monthBuckets[0]?.start;

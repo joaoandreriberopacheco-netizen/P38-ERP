@@ -12,6 +12,10 @@ import {
   sealedMonthsFromSnapshotMap,
 } from '@/lib/dashboardKpiSnapshotApi';
 import {
+  mergeSealedMonthsFromCelulas,
+  readDashboardCelulasVendas,
+} from '@/lib/dashboardCelulasApi';
+import {
   isMonthFullyClosed,
   isVendasWindowFullyClosed,
   mergePedidosById,
@@ -188,9 +192,23 @@ export async function fetchDashboardVendasPeriodo({
     return { pedidos: [], productCostMap: new Map(), sealedMonths: {} };
   }
 
-  const snapshotMap = await fetchDashboardVendasSnapshotsForWindow(selectedMonthKey, months);
-  const sealedMonthKeys = new Set(planSealedMonthKeys(snapshotMap, selectedMonthKey, months));
-  const sealedMonths = sealedMonthsFromSnapshotMap(snapshotMap);
+  const [snapshotMap, celulasVendas] = await Promise.all([
+    fetchDashboardVendasSnapshotsForWindow(selectedMonthKey, months),
+    readDashboardCelulasVendas(selectedMonthKey, months),
+  ]);
+
+  const sealedMonthsFromKpi = sealedMonthsFromSnapshotMap(snapshotMap);
+  const sealedMonths = mergeSealedMonthsFromCelulas(
+    celulasVendas?.complete ? celulasVendas.sealedMonths : (celulasVendas?.sealedMonths || {}),
+    sealedMonthsFromKpi,
+  );
+
+  const sealedMonthKeys = new Set([
+    ...planSealedMonthKeys(snapshotMap, selectedMonthKey, months),
+    ...getMonthBucketsEndingAt(selectedMonthKey, months)
+      .map((b) => b.key)
+      .filter((key) => Boolean(sealedMonths[key]?.monthlyTotals)),
+  ]);
 
   const buckets = getMonthBucketsEndingAt(selectedMonthKey, months);
   const allMonthsSealed = buckets.length > 0 && buckets.every((b) => sealedMonthKeys.has(b.key));

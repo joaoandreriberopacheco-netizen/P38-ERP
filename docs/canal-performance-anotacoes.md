@@ -149,9 +149,50 @@ Meta saudável LCP: **&lt; 2,5 s**. INP (~152 ms) está aceitável — o gargalo
 - [x] **Vendas** — eliminar `fetchAllProdutosCatalogo` (catálogo leve sempre via `productCostMap`).
 - [x] **Vendas** — paralelizar fetch (pedidos + config + devoluções em `Promise.all`).
 - [x] **Vendas** — batch `$in` em `fetchPedidosOrigemTrocaMargem` (antes N+1).
+- [x] **Vendas** — omitir devoluções/trocas quando snapshots cobrem a janela e hoje não tem troca.
+- [x] **Vendas** — prefetch ao abrir o Dashboard (antes de clicar na aba).
 - [x] **Dashboard shell** — lazy-load `VendasTab`/`EstoqueTab`, tab inicial = Vendas, sem `auth.me()` duplicado.
-- [x] **Estoque** — cache do tab 15 min (era 5 min).
-- [ ] **Estoque** — snapshots server-side (próximo passo; tab mais pesado).
+- [x] **Estoque** — carregamento progressivo (qualidade/localização ~2–3 s; gráficos pesados depois).
+- [x] **Estoque** — CMV sem hidratação completa; cache de lançamentos 30 min.
+- [x] **Estoque** — células pré-calculadas (`dashboard_celulas`) com fallback live.
+
+### Fase 5 — Células Excel (job noturno + leitura rápida)
+
+**Analogia:** como numa folha Excel, cada célula guarda o valor já calculado. O gráfico **lê**; só o job noturno (ou `dirty`) **recalcula**.
+
+| Célula (`ref_key`) | Conteúdo | Job |
+|--------------------|----------|-----|
+| `vendas:YYYY-MM` | Payload de `dashboard_kpi_mensal` (margem, totais) | `p38_celula_compute_vendas_mes` |
+| `estoque:supply:YYYY-MM` | CMV pago vs vendido | `p38_celula_compute_estoque_supply_mes` |
+| `estoque:nivel:YYYY-MM` | Nível físico fim de mês | `p38_celula_compute_estoque_nivel_mes` |
+| `estoque:resumo` | Qualidade ABCD + estoque físico | `p38_celula_compute_estoque_resumo` |
+
+**Ficheiros:** migration `080_dashboard_celulas.sql`, `src/lib/dashboardCelulasApi.js`, integração em `fetchDashboardVendas.js` e `dashboardEstoqueData.js`.
+
+**Leitura no browser:** RPC `dashboard_celulas_window_read` — fallback silencioso para cálculo live se Supabase vazio ou migration não aplicada.
+
+**Primeira vez em produção (após deploy Supabase):**
+
+```sql
+select public.p38_dashboard_celulas_backfill(null, 6);
+```
+
+Ou via Edge Function `fechar-dashboard-kpi` / cron `job_fechar_p38_anotacao_ontem` (05:05 UTC).
+
+**Trânsito financeiro:** célula `estoque:resumo` grava só estoque físico; o overlay de compras em trânsito continua live (leve) no resumo.
+
+### Onde mais aplicar células (roadmap)
+
+| Área | Domínio / peça existente | Célula sugerida |
+|------|--------------------------|-----------------|
+| Relatório de Margem | `margem_competencia_snapshot` | Já parcial — alinhar com `vendas:YYYY-MM` |
+| Home KPIs | `p38_anotacao` domain `home` | `home:YYYY-MM-DD` (já no job 079) |
+| Vendas Gestão | domain `vendas_gestao` | Headers/resumo por mês |
+| Pedidos Compra | domain `compras` | Resumo pendente/recebido |
+| PDV / catálogo | domain `catalogo` | `catalogVersion` + totais leves |
+| Produtos / IEP / ABCD | — | Totais mensais por curva |
+| Planejamento financeiro | Budgets / Dízimo | Competência fechada por mês |
+| Pulse (validação) | sensores E2E | Comparar células vs live (não substituir trem) |
 
 ---
 
