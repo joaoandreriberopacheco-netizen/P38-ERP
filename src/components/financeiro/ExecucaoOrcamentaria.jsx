@@ -197,7 +197,7 @@ export default function ExecucaoOrcamentaria() {
   const { s: ds, e: de } = useMemo(() => dateRange(periodo, cs, ce), [periodo, cs, ce]);
 
   const isCompactShell = useCompactShell();
-  const { chromeVisible, scrollRef } = useScrollChromeVisibility(isCompactShell, {
+  const { chromeVisible, scrollRef, scrollEl } = useScrollChromeVisibility(isCompactShell, {
     revealMode: 'top-only',
   });
 
@@ -205,6 +205,11 @@ export default function ExecucaoOrcamentaria() {
     if (!isCompactShell) return;
     setAba((prev) => (ABAS_SO_DESKTOP.has(prev) ? 'caixas' : prev));
   }, [isCompactShell]);
+
+  useEffect(() => {
+    if (!isCompactShell || !scrollEl) return;
+    scrollEl.scrollTop = 0;
+  }, [aba, isCompactShell, scrollEl]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -1018,7 +1023,6 @@ export default function ExecucaoOrcamentaria() {
       )}
 
       {caixasAtiva && <GestaoContasKpis compact={isCompactShell} />}
-      {planejamentoAtiva && <PlanejamentoFinanceiroPage />}
     </div>
   );
 
@@ -1215,6 +1219,7 @@ export default function ExecucaoOrcamentaria() {
             {fluxoFiltrosBar}
           </div>
           <div
+            key={`fluxo-scroll-${aba}`}
             ref={scrollRef}
             className="relative flex-1 min-h-0 min-w-0 p38-stage-panel-scroll overflow-x-hidden touch-pan-y p38-scroll-pad-fab"
           >
@@ -1340,6 +1345,7 @@ export default function ExecucaoOrcamentaria() {
       {caixasAtiva && (
         <div className={cn(isCompactShell && 'flex min-h-0 flex-1 flex-col overflow-hidden')}>
           <GestaoContasPane
+            key={`caixas-scroll-${aba}`}
             mobileShell={isCompactShell}
             listScrollRef={isCompactShell ? scrollRef : null}
           />
@@ -1349,6 +1355,8 @@ export default function ExecucaoOrcamentaria() {
       {folhaAtiva && <FolhaPrevisaoPage />}
 
       {budgetsAtiva && <BudgetsPage />}
+
+      {planejamentoAtiva && <PlanejamentoFinanceiroPage />}
 
       {planejamentoAtiva && (
         <Dialog open={showImportadorAgefin} onOpenChange={setShowImportadorAgefin}>
