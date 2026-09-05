@@ -40,8 +40,8 @@ export default function FinanceiroFiltrosShell({
         filtersOpen && 'border-b border-border/40 dark:border-white/10 md:border-b-0',
       )}
     >
-      <div className="flex min-w-0 flex-col gap-2 md:flex-row md:items-center md:gap-1.5">
-        <div className={cn('flex h-10 w-full min-w-0 items-center gap-2 rounded-lg px-3 md:flex-1', P38_SEARCH)}>
+      <div className="flex min-w-0 items-center gap-1.5">
+        <div className={cn('flex h-10 min-w-0 flex-1 items-center gap-2 rounded-lg px-3', P38_SEARCH)}>
           <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
           <input
             autoComplete="off"
@@ -58,7 +58,7 @@ export default function FinanceiroFiltrosShell({
           )}
         </div>
 
-        <div className="flex shrink-0 items-center justify-start gap-2 md:self-auto">
+        <div className="flex shrink-0 items-center gap-1.5">
           <CollapsibleTrigger asChild>
             <button
               type="button"
