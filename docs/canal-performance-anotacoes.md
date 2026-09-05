@@ -173,13 +173,25 @@ Meta saudável LCP: **&lt; 2,5 s**. INP (~152 ms) está aceitável — o gargalo
 
 **Primeira vez em produção (após deploy Supabase):**
 
-```sql
-select public.p38_dashboard_celulas_backfill(null, 6);
+```bash
+npm run dashboard:celulas-backfill
+# ou SQL: select public.p38_dashboard_celulas_backfill(null, 6);
 ```
 
 Ou via Edge Function `fechar-dashboard-kpi` / cron `job_fechar_p38_anotacao_ontem` (05:05 UTC).
 
 **Trânsito financeiro:** célula `estoque:resumo` grava só estoque físico; o overlay de compras em trânsito continua live (leve) no resumo.
+
+### Fase 6 — Validar ganho + expandir células (próxima)
+
+1. **Medir** — comparar LCP no preview (Vendas &lt; 3 s, Estoque &lt; 5 s com células populadas).
+2. **Pulse sanity** — script ou sensor que compara 1 mês de célula vs cálculo live (tolerância %).
+3. **Expandir domínios** (prioridade negócio):
+   - **Home** — KPIs diários já no job 079; ligar `Home.jsx` à leitura de células.
+   - **Vendas Gestão** — headers por mês (`vendas_gestao`) para abrir lista sem refetch.
+   - **Compras** — resumo pendente/recebido (`compras`).
+4. **Margem** — unificar `margem_competencia_snapshot` com `vendas:YYYY-MM`.
+5. **Merge canal → `main`** — quando preview aprovado e Pulse verde.
 
 ### Onde mais aplicar células (roadmap)
 

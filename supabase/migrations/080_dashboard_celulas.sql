@@ -64,7 +64,7 @@ begin
     and lf.data_pagamento between v_start and v_end;
 
   select coalesce(sum(
-    coalesce(pvi.quantidade_base, pvi.quantidade, 0)
+    coalesce(pvi.quantidade_base, 0)
     * coalesce(pvi.custo_unitario_momento, p.preco_custo_calculado, 0)
   ), 0)
   into v_cmv_vendido
