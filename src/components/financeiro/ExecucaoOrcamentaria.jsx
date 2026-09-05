@@ -40,6 +40,7 @@ import NovoLancamentoDialog from './NovoLancamentoDialog';
 import LancamentoDetalheDialog from './LancamentoDetalheDialog';
 import FiltrosFluxoCaixa, { PERIODO_LABELS } from './fluxo/FiltrosFluxoCaixa';
 import FinanceiroPillTabs from './fluxo/FinanceiroPillTabs';
+import FinanceiroAbaIconTabs from './fluxo/FinanceiroAbaIconTabs';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from './fluxo/FinanceiroListaMeta';
 import KpiFluxoBar from './fluxo/KpiFluxoBar';
 import ContasSaldoPicker from './fluxo/ContasSaldoPicker';
@@ -865,6 +866,57 @@ export default function ExecucaoOrcamentaria() {
     if (!next) lote.sairModoLote();
   }, [lote.sairModoLote]);
 
+  const fluxoMetaChips = isCompactShell ? (
+    <>
+      {periodo !== 'mes' && (
+        <FinanceiroSummaryChip>{PERIODO_LABELS[periodo] || periodo}</FinanceiroSummaryChip>
+      )}
+      {contas.length > 0 && contasSel.length > 0 && contasSel.length < contas.length && (
+        <FinanceiroSummaryChip>
+          {contasSel.length} conta{contasSel.length > 1 ? 's' : ''}
+        </FinanceiroSummaryChip>
+      )}
+      {tiposSel.length > 0 && (
+        <FinanceiroSummaryChip>{tiposSel.join(', ')}</FinanceiroSummaryChip>
+      )}
+      {statusSel.length > 0 && (
+        <FinanceiroSummaryChip>{statusSel.length} status</FinanceiroSummaryChip>
+      )}
+      {pendentes && <FinanceiroSummaryChip>Conciliação</FinanceiroSummaryChip>}
+      {cmvOnly && <FinanceiroSummaryChip>CMV</FinanceiroSummaryChip>}
+      {mostrarHistoricoAnterior && (
+        <FinanceiroSummaryChip>Histórico completo</FinanceiroSummaryChip>
+      )}
+    </>
+  ) : (
+    <>
+      {mostrarProgramadas && (
+        <FinanceiroSummaryChip className="text-amber-700 dark:text-amber-400">
+          Com programadas
+        </FinanceiroSummaryChip>
+      )}
+      {periodo !== 'mes' && (
+        <FinanceiroSummaryChip>{PERIODO_LABELS[periodo] || periodo}</FinanceiroSummaryChip>
+      )}
+      {contas.length > 0 && contasSel.length > 0 && contasSel.length < contas.length && (
+        <FinanceiroSummaryChip>
+          {contasSel.length} conta{contasSel.length > 1 ? 's' : ''}
+        </FinanceiroSummaryChip>
+      )}
+      {tiposSel.length > 0 && (
+        <FinanceiroSummaryChip>{tiposSel.join(', ')}</FinanceiroSummaryChip>
+      )}
+      {statusSel.length > 0 && (
+        <FinanceiroSummaryChip>{statusSel.length} status</FinanceiroSummaryChip>
+      )}
+      {pendentes && <FinanceiroSummaryChip>Conciliação</FinanceiroSummaryChip>}
+      {cmvOnly && <FinanceiroSummaryChip>CMV</FinanceiroSummaryChip>}
+      {mostrarHistoricoAnterior && (
+        <FinanceiroSummaryChip>Histórico completo</FinanceiroSummaryChip>
+      )}
+    </>
+  );
+
   const financeiroHeaderInner = (
     <div className="flex flex-col gap-2">
       <div className="flex min-w-0 items-center gap-2">
@@ -874,24 +926,61 @@ export default function ExecucaoOrcamentaria() {
         >
           Financeiro
         </h1>
-        {aba === 'fluxo' && (
-          <TooltipProvider delayDuration={300}>
-            <div className="flex shrink-0 items-center gap-0.5 no-pdf-capture overflow-x-auto overscroll-x-contain touch-pan-x no-scrollbar">
+        {isCompactShell ? (
+          <div className="flex shrink-0 items-center gap-1.5">
+            <FinanceiroAbaIconTabs
+              value={aba}
+              onChange={setAba}
+              items={abasPrincipais}
+            />
+            {aba === 'fluxo' && (
+              <TooltipProvider delayDuration={300}>
+                <div className="flex shrink-0 items-center gap-0.5 no-pdf-capture overflow-x-auto overscroll-x-contain touch-pan-x no-scrollbar">
+                  <ContasSaldoPicker
+                    variant="icon"
+                    contas={contasSaldoOpcoes}
+                    sel={contasSaldoSel}
+                    onSel={atualizarContasSaldoSel}
+                  />
+                  <TipoFiltroBar sel={tiposSel} onSel={setTiposSel} />
+                  <FinanceiroToolbarIcon
+                    label="Relatórios — balancete e extrato"
+                    onClick={abrirMenuRelatorios}
+                  >
+                    <Printer className="w-4 h-4 text-foreground/90" />
+                  </FinanceiroToolbarIcon>
+                </div>
+              </TooltipProvider>
+            )}
+            {caixasAtiva && (
               <ContasSaldoPicker
                 variant="icon"
                 contas={contasSaldoOpcoes}
                 sel={contasSaldoSel}
                 onSel={atualizarContasSaldoSel}
               />
-              <TipoFiltroBar sel={tiposSel} onSel={setTiposSel} />
-              <FinanceiroToolbarIcon
-                label="Relatórios — balancete e extrato"
-                onClick={abrirMenuRelatorios}
-              >
-                <Printer className="w-4 h-4 text-foreground/90" />
-              </FinanceiroToolbarIcon>
-            </div>
-          </TooltipProvider>
+            )}
+          </div>
+        ) : (
+          aba === 'fluxo' && (
+            <TooltipProvider delayDuration={300}>
+              <div className="flex shrink-0 items-center gap-0.5 no-pdf-capture overflow-x-auto overscroll-x-contain touch-pan-x no-scrollbar">
+                <ContasSaldoPicker
+                  variant="icon"
+                  contas={contasSaldoOpcoes}
+                  sel={contasSaldoSel}
+                  onSel={atualizarContasSaldoSel}
+                />
+                <TipoFiltroBar sel={tiposSel} onSel={setTiposSel} />
+                <FinanceiroToolbarIcon
+                  label="Relatórios — balancete e extrato"
+                  onClick={abrirMenuRelatorios}
+                >
+                  <Printer className="w-4 h-4 text-foreground/90" />
+                </FinanceiroToolbarIcon>
+              </div>
+            </TooltipProvider>
+          )
         )}
       </div>
 
@@ -915,18 +1004,20 @@ export default function ExecucaoOrcamentaria() {
         </div>
       )}
 
-      <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:gap-3">
-        <FinanceiroPillTabs
-          stretch
-          compact
-          value={aba}
-          onChange={setAba}
-          items={abasPrincipais}
-          className="md:w-auto md:shrink-0"
-        />
-      </div>
+      {!isCompactShell && (
+        <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:gap-3">
+          <FinanceiroPillTabs
+            stretch
+            compact
+            value={aba}
+            onChange={setAba}
+            items={abasPrincipais}
+            className="md:w-auto md:shrink-0"
+          />
+        </div>
+      )}
 
-      {caixasAtiva && <GestaoContasKpis />}
+      {caixasAtiva && <GestaoContasKpis compact={isCompactShell} />}
       {planejamentoAtiva && <PlanejamentoFinanceiroPage />}
     </div>
   );
@@ -1016,34 +1107,7 @@ export default function ExecucaoOrcamentaria() {
           setCmvOnly(false);
           setSearch('');
         }}
-        summaryChips={
-          <>
-            {mostrarProgramadas && (
-              <FinanceiroSummaryChip className="text-amber-700 dark:text-amber-400">
-                Com programadas
-              </FinanceiroSummaryChip>
-            )}
-            {periodo !== 'mes' && (
-              <FinanceiroSummaryChip>{PERIODO_LABELS[periodo] || periodo}</FinanceiroSummaryChip>
-            )}
-            {contas.length > 0 && contasSel.length > 0 && contasSel.length < contas.length && (
-              <FinanceiroSummaryChip>
-                {contasSel.length} conta{contasSel.length > 1 ? 's' : ''}
-              </FinanceiroSummaryChip>
-            )}
-            {tiposSel.length > 0 && (
-              <FinanceiroSummaryChip>{tiposSel.join(', ')}</FinanceiroSummaryChip>
-            )}
-            {statusSel.length > 0 && (
-              <FinanceiroSummaryChip>{statusSel.length} status</FinanceiroSummaryChip>
-            )}
-            {pendentes && <FinanceiroSummaryChip>Conciliação</FinanceiroSummaryChip>}
-            {cmvOnly && <FinanceiroSummaryChip>CMV</FinanceiroSummaryChip>}
-            {mostrarHistoricoAnterior && (
-              <FinanceiroSummaryChip>Histórico completo</FinanceiroSummaryChip>
-            )}
-          </>
-        }
+        summaryChips={fluxoMetaChips}
         extraActions={mostrarProgramadas ? (
           <button
             type="button"
@@ -1121,7 +1185,7 @@ export default function ExecucaoOrcamentaria() {
       {/* Header unificado — título, KPIs do fluxo, abas */}
       {isCompactShell ? (
         <P38ScrollChromeCollapse visible={chromeVisible} enabled className="shrink-0">
-          <div className="min-w-0 max-w-full space-y-2">
+          <div className="min-w-0 max-w-full space-y-2 px-4 pb-2">
             {financeiroHeaderInner}
           </div>
         </P38ScrollChromeCollapse>
@@ -1147,7 +1211,7 @@ export default function ExecucaoOrcamentaria() {
 
       {aba === 'fluxo' && isCompactShell && (
         <>
-          <div className="shrink-0 z-10 space-y-3 border-b border-border/25 bg-background/95 backdrop-blur-sm">
+          <div className="shrink-0 z-10 space-y-2 border-b border-border/25 bg-background/95 px-4 pb-2 backdrop-blur-sm">
             {fluxoFiltrosBar}
           </div>
           <div

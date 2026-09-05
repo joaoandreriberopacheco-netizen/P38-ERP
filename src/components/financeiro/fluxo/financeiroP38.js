@@ -29,3 +29,12 @@ export const P38_ACCENT = 'text-[#a8942e] dark:text-[#a4ce33]';
 /** Mobile: busca + ícones fixos ao rolar; desktop sem sticky. */
 export const P38_FILTROS_STICKY =
   'sticky top-0 z-30 bg-background/95 py-2 backdrop-blur-sm md:static md:z-auto md:bg-transparent md:py-0 md:backdrop-blur-none';
+
+/** Abas Contas / Fluxo — ícones ao lado do título (mobile). */
+export const FINANCEIRO_ABA_TAB_GROUP =
+  'flex shrink-0 items-center gap-0.5 rounded-xl bg-muted/80 p-0.5 dark:bg-muted';
+export const FINANCEIRO_ABA_TAB_BTN =
+  'flex h-11 w-11 shrink-0 items-center justify-center rounded-lg transition-all';
+export const FINANCEIRO_ABA_TAB_ACTIVE =
+  'bg-[#4a5240] text-white dark:bg-[#636B2F] dark:text-[#A8B56E]';
+export const FINANCEIRO_ABA_TAB_IDLE = 'text-muted-foreground hover:text-foreground/90';

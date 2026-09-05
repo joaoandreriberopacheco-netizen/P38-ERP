@@ -414,20 +414,22 @@ function GestaoContasProvider({ shared, children }) {
 }
 
 /** KPIs — faixa compacta (mobile e desktop). */
-export function GestaoContasKpis() {
+export function GestaoContasKpis({ compact = false }) {
   const m = useContext(GestaoContasCtx);
   if (!m) return null;
   return (
-    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+    <div className={cn('flex min-w-0 items-center gap-2', !compact && 'flex-col gap-2 sm:flex-row sm:items-center sm:gap-3')}>
       <div className="min-w-0 flex-1">
         <KpiContasBar kpis={m.kpis} saldosProntos={m.saldosProntos} />
       </div>
-      <ContasSaldoPicker
-        contas={m.contasSaldoOpcoes}
-        sel={m.contasSaldoSel}
-        onSel={m.atualizarContasSaldoSel}
-        className="self-start"
-      />
+      {!compact && (
+        <ContasSaldoPicker
+          contas={m.contasSaldoOpcoes}
+          sel={m.contasSaldoSel}
+          onSel={m.atualizarContasSaldoSel}
+          className="self-start"
+        />
+      )}
     </div>
   );
 }
@@ -504,6 +506,8 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
     />
   );
 
+  const showMetaOnMobile = hasActiveFilters || !!search;
+
   const metaBlock = (
     <FinanceiroListaMeta
       total={filtrados.length}
@@ -516,25 +520,41 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
         setSearch('');
       }}
       summaryChips={
-        <>
-          {tipoFiltro !== 'todos' && tipoLabel && (
-            <FinanceiroSummaryChip>{tipoLabel}</FinanceiroSummaryChip>
-          )}
-          {statusLabel && <FinanceiroSummaryChip>{statusLabel}</FinanceiroSummaryChip>}
-          {somentePendencias && (
-            <FinanceiroSummaryChip className="text-amber-700 dark:text-amber-400">
-              Conciliação
-            </FinanceiroSummaryChip>
-          )}
-          {!mostrarHistoricoAnterior && (
-            <FinanceiroSummaryChip>
-              Saldos desde {formatarSoData(dataCorteHistorico)}
-            </FinanceiroSummaryChip>
-          )}
-          {mostrarHistoricoAnterior && (
-            <FinanceiroSummaryChip>Histórico completo</FinanceiroSummaryChip>
-          )}
-        </>
+        mobileShell ? (
+          <>
+            {tipoFiltro !== 'todos' && tipoLabel && (
+              <FinanceiroSummaryChip>{tipoLabel}</FinanceiroSummaryChip>
+            )}
+            {statusFiltro !== 'ativas' && statusLabel && (
+              <FinanceiroSummaryChip>{statusLabel}</FinanceiroSummaryChip>
+            )}
+            {somentePendencias && (
+              <FinanceiroSummaryChip className="text-amber-700 dark:text-amber-400">
+                Conciliação
+              </FinanceiroSummaryChip>
+            )}
+          </>
+        ) : (
+          <>
+            {tipoFiltro !== 'todos' && tipoLabel && (
+              <FinanceiroSummaryChip>{tipoLabel}</FinanceiroSummaryChip>
+            )}
+            {statusLabel && <FinanceiroSummaryChip>{statusLabel}</FinanceiroSummaryChip>}
+            {somentePendencias && (
+              <FinanceiroSummaryChip className="text-amber-700 dark:text-amber-400">
+                Conciliação
+              </FinanceiroSummaryChip>
+            )}
+            {!mostrarHistoricoAnterior && (
+              <FinanceiroSummaryChip>
+                Saldos desde {formatarSoData(dataCorteHistorico)}
+              </FinanceiroSummaryChip>
+            )}
+            {mostrarHistoricoAnterior && (
+              <FinanceiroSummaryChip>Histórico completo</FinanceiroSummaryChip>
+            )}
+          </>
+        )
       }
     />
   );
@@ -719,9 +739,9 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
   if (mobileShell) {
     return (
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="shrink-0 z-10 space-y-3 border-b border-border/25 bg-background/95 backdrop-blur-sm">
+        <div className="shrink-0 z-10 space-y-2 border-b border-border/25 bg-background/95 px-4 pb-2 backdrop-blur-sm">
           {filtrosBlock}
-          {metaBlock}
+          {showMetaOnMobile ? metaBlock : null}
         </div>
         <div
           ref={listScrollRef}
