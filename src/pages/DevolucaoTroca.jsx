@@ -22,6 +22,7 @@ import {
 import { criarRascunhoTrocaParaCaixa } from '@/lib/rascunhoTrocaCaixa';
 import { hydratePedidoVendaParaDevolucao } from '@/lib/fetchPedidoVendaItens';
 import { formatQuantidadeDisplay } from '@/lib/parseQuantidadeInput';
+import { criarAutorizacaoEstornoDevolucao } from '@/lib/autorizacaoEstornoDevolucao';
 
 function tituloModulo(tipo) {
   if (tipo === 'Troca') return 'Troca de Produto';
@@ -605,28 +606,14 @@ export default function DevolucaoTrocaPage() {
     }
 
     if (formaReembolso === 'Dinheiro') {
-      const todosEstornos = await base44.entities.AutorizacaoEstorno.list();
-      const nextEstorno = (todosEstornos.length > 0 ? Math.max(...todosEstornos.map(a => parseInt(a.numero?.split('-')[1] || 0) || 0)) : 0) + 1;
-      const numeroEstorno = `AE-${String(nextEstorno).padStart(5, '0')}`;
-      const todossTurnos = await base44.entities.TurnoCaixa.list();
-      const turnosAtivos = todossTurnos.filter(t => !t.data_fechamento);
-      for (const turno of turnosAtivos) {
-        await base44.entities.AutorizacaoEstorno.create({
-          numero: numeroEstorno,
-          devolucao_id: numeroDev,
-          devolucao_numero: numeroDev,
-          pedido_origem_numero: pedido.numero,
-          cliente_nome: pedido.cliente_nome,
-          valor_autorizado: totalDevolvido,
-          forma_reembolso: 'Dinheiro',
-          motivo: `${tipo}${motivo ? ` - ${motivo}` : ''}`,
-          turno_caixa_destino_id: turno.id,
-          turno_caixa_destino_numero: turno.numero,
-          gerente_aprovador_id: user?.id,
-          gerente_aprovador_nome: user?.full_name,
-          status: 'Pendente',
-        });
-      }
+      await criarAutorizacaoEstornoDevolucao({
+        pedido,
+        numeroDev,
+        totalDevolvido,
+        tipo,
+        motivo,
+        user,
+      });
     } else if (formaReembolso === 'PIX') {
       const contas = await base44.entities.ContasFinanceiras.list();
       const caixaGeral = contas.find(c => c.is_caixa_geral) || contas[0];

@@ -8,6 +8,7 @@ import { ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel } from '@/components/ui/p38-mobile-line';
+import { cancelarAutorizacoesEstornoDuplicadas } from '@/lib/autorizacaoEstornoDevolucao';
 
 export default function AutorizacoesEstornoPendentes({ turnoAtivo, contaCaixa, currentUser }) {
   const [autorizacoes, setAutorizacoes] = useState([]);
@@ -70,6 +71,12 @@ export default function AutorizacoesEstornoPendentes({ turnoAtivo, contaCaixa, c
         caixa_operador_id: currentUser.id,
         caixa_operador_nome: currentUser.full_name,
       });
+
+      // Cancelar duplicatas pendentes da mesma devolução (legado/bug)
+      await cancelarAutorizacoesEstornoDuplicadas(
+        selectedAuth.devolucao_numero,
+        selectedAuth.id
+      );
 
       // Debitar do saldo do caixa (buscar saldo atual direto do banco para evitar stale)
       const contaAtualizada = await base44.entities.ContasFinanceiras.get(contaCaixa.id);
