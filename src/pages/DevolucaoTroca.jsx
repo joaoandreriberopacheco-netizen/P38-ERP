@@ -22,6 +22,7 @@ import {
 import { criarRascunhoTrocaParaCaixa } from '@/lib/rascunhoTrocaCaixa';
 import { hydratePedidoVendaParaDevolucao } from '@/lib/fetchPedidoVendaItens';
 import { formatQuantidadeDisplay } from '@/lib/parseQuantidadeInput';
+import { criarAutorizacaoEstornoDevolucao } from '@/lib/autorizacaoEstornoDevolucao';
 
 function tituloModulo(tipo) {
   if (tipo === 'Troca') return 'Troca de Produto';
@@ -92,7 +93,7 @@ function BuscarPedidoStep({ onFound }) {
 }
 
 // Step 2: Selecionar itens, forma de reembolso, fotos
-function SelecionarItensStep({ pedido, tipo, onConfirm }) {
+function SelecionarItensStep({ pedido, tipo, onConfirm, submitting = false }) {
   const [qtds, setQtds] = useState(
     Object.fromEntries((pedido.itens || []).map((i) => [pedidoItemKey(i), 0]))
   );
@@ -140,6 +141,7 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
   };
 
   const handleConfirmarClick = () => {
+    if (submitting) return;
     if (uploadingFotos) {
       toast({ title: 'Aguarde o upload das fotos', variant: 'destructive' });
       return;
@@ -311,11 +313,11 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
           <span className="text-2xl font-bold text-red-600 dark:text-red-400 font-glacial">{formatValorBRL(totalDevolvido)}</span>
         </div>
         <Button
-          disabled={itensSelecionados.length === 0 || totalDevolvido === 0}
+          disabled={submitting || itensSelecionados.length === 0 || totalDevolvido === 0}
           onClick={handleConfirmarClick}
           className="w-full max-w-lg mx-auto block h-14 bg-card text-card-foreground rounded-2xl font-semibold text-base"
         >
-          Confirmar {tipo}
+          {submitting ? 'Processando...' : `Confirmar ${tipo}`}
         </Button>
       </div>
     </div>
@@ -501,6 +503,7 @@ export default function DevolucaoTrocaPage() {
   const [pedido, setPedido] = useState(null);
   const [resultado, setResultado] = useState(null);
   const [processando, setProcessando] = useState(false);
+  const confirmandoRef = useRef(false);
   const { toast } = useToast();
 
   const handleClose = () => {
@@ -516,6 +519,8 @@ export default function DevolucaoTrocaPage() {
     fotosUrls,
     aguardaSubstituto,
   }) => {
+    if (confirmandoRef.current) return;
+    confirmandoRef.current = true;
     setProcessando(true);
     try {
     const user = await base44.auth.me();
@@ -605,28 +610,14 @@ export default function DevolucaoTrocaPage() {
     }
 
     if (formaReembolso === 'Dinheiro') {
-      const todosEstornos = await base44.entities.AutorizacaoEstorno.list();
-      const nextEstorno = (todosEstornos.length > 0 ? Math.max(...todosEstornos.map(a => parseInt(a.numero?.split('-')[1] || 0) || 0)) : 0) + 1;
-      const numeroEstorno = `AE-${String(nextEstorno).padStart(5, '0')}`;
-      const todossTurnos = await base44.entities.TurnoCaixa.list();
-      const turnosAtivos = todossTurnos.filter(t => !t.data_fechamento);
-      for (const turno of turnosAtivos) {
-        await base44.entities.AutorizacaoEstorno.create({
-          numero: numeroEstorno,
-          devolucao_id: numeroDev,
-          devolucao_numero: numeroDev,
-          pedido_origem_numero: pedido.numero,
-          cliente_nome: pedido.cliente_nome,
-          valor_autorizado: totalDevolvido,
-          forma_reembolso: 'Dinheiro',
-          motivo: `${tipo}${motivo ? ` - ${motivo}` : ''}`,
-          turno_caixa_destino_id: turno.id,
-          turno_caixa_destino_numero: turno.numero,
-          gerente_aprovador_id: user?.id,
-          gerente_aprovador_nome: user?.full_name,
-          status: 'Pendente',
-        });
-      }
+      await criarAutorizacaoEstornoDevolucao({
+        pedido,
+        numeroDev,
+        totalDevolvido,
+        tipo,
+        motivo,
+        user,
+      });
     } else if (formaReembolso === 'PIX') {
       const contas = await base44.entities.ContasFinanceiras.list();
       const caixaGeral = contas.find(c => c.is_caixa_geral) || contas[0];
@@ -665,8 +656,10 @@ export default function DevolucaoTrocaPage() {
     setStep('comprovante');
     } catch (error) {
       toast({ title: 'Erro ao processar', description: error.message, variant: 'destructive' });
+    } finally {
+      confirmandoRef.current = false;
+      setProcessando(false);
     }
-    setProcessando(false);
   };
 
   const handleConfirmTroca = async ({
@@ -894,7 +887,7 @@ export default function DevolucaoTrocaPage() {
           <SelecionarTrocaStep pedido={pedido} onConfirm={handleConfirmTroca} />
         )}
         {step === 'itens' && pedido && tipo !== 'Troca' && (
-          <SelecionarItensStep pedido={pedido} tipo={tipo} onConfirm={handleConfirm} />
+          <SelecionarItensStep pedido={pedido} tipo={tipo} onConfirm={handleConfirm} submitting={processando} />
         )}
         {step === 'comprovante' && resultado && <ComprovanteStep resultado={resultado} onClose={handleClose} />}
       </div>

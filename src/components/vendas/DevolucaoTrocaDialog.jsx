@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import { hydratePedidoVendaParaDevolucao } from '@/lib/fetchPedidoVendaItens';
 import { formatQuantidadeDisplay } from '@/lib/parseQuantidadeInput';
+import { criarAutorizacaoEstornoDevolucao } from '@/lib/autorizacaoEstornoDevolucao';
 
 // Step 1: Buscar pedido
 function BuscarPedidoStep({ onFound, onClose }) {
@@ -75,7 +76,7 @@ function BuscarPedidoStep({ onFound, onClose }) {
 }
 
 // Step 2: Selecionar itens e forma de reembolso
-function SelecionarItensStep({ pedido, tipo, onConfirm }) {
+function SelecionarItensStep({ pedido, tipo, onConfirm, submitting = false }) {
   const [qtds, setQtds] = useState(
     Object.fromEntries((pedido.itens || []).map(i => [i.produto_id + '_' + i.produto_nome, 0]))
   );
@@ -171,11 +172,14 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
       </div>
 
       <Button
-        disabled={itensSelecionados.length === 0 || totalDevolvido === 0}
-        onClick={() => onConfirm({ itensSelecionados, qtds, formaReembolso, motivo, totalDevolvido })}
+        disabled={submitting || itensSelecionados.length === 0 || totalDevolvido === 0}
+        onClick={() => {
+          if (submitting) return;
+          onConfirm({ itensSelecionados, qtds, formaReembolso, motivo, totalDevolvido });
+        }}
         className="w-full h-14 bg-card text-card-foreground rounded-2xl font-semibold text-base"
         style={{ minHeight: 56 }}>
-        Confirmar {tipo}
+        {submitting ? 'Processando...' : `Confirmar ${tipo}`}
       </Button>
     </div>
   );
@@ -276,6 +280,7 @@ export default function DevolucaoTrocaDialog({ open, onClose, tipo = 'Devoluçã
   const [pedido, setPedido] = useState(null);
   const [resultado, setResultado] = useState(null);
   const [processando, setProcessando] = useState(false);
+  const confirmandoRef = useRef(false);
   const { toast } = useToast();
 
   const handleClose = () => {
@@ -286,6 +291,8 @@ export default function DevolucaoTrocaDialog({ open, onClose, tipo = 'Devoluçã
   };
 
   const handleConfirm = async ({ itensSelecionados, qtds, formaReembolso, motivo, totalDevolvido }) => {
+    if (confirmandoRef.current) return;
+    confirmandoRef.current = true;
     setProcessando(true);
     try {
       const user = await base44.auth.me();
@@ -367,34 +374,16 @@ export default function DevolucaoTrocaDialog({ open, onClose, tipo = 'Devoluçã
         }
       }
 
-      // Se reembolso em Dinheiro, criar AutorizacaoEstorno para o caixa processar
+      // Se reembolso em Dinheiro, criar uma única AutorizacaoEstorno para o caixa processar
       if (formaReembolso === 'Dinheiro') {
-        const todosEstornos = await base44.entities.AutorizacaoEstorno.list();
-        const nextEstorno = (todosEstornos.length > 0 ? Math.max(...todosEstornos.map(a => parseInt(a.numero?.split('-')[1] || 0) || 0)) : 0) + 1;
-        const numeroEstorno = `AE-${String(nextEstorno).padStart(5, '0')}`;
-        
-        // Buscar turnos ativos para enviar a autorização
-        const todossTurnos = await base44.entities.TurnoCaixa.list();
-        const turnosAtivos = todossTurnos.filter(t => !t.data_fechamento);
-        
-        // Criar autorização para cada turno ativo
-        for (const turno of turnosAtivos) {
-          await base44.entities.AutorizacaoEstorno.create({
-            numero: numeroEstorno,
-            devolucao_id: numeroDev,
-            devolucao_numero: numeroDev,
-            pedido_origem_numero: pedido.numero,
-            cliente_nome: pedido.cliente_nome,
-            valor_autorizado: totalDevolvido,
-            forma_reembolso: 'Dinheiro',
-            motivo: tipo + (motivo ? ` - ${motivo}` : ''),
-            turno_caixa_destino_id: turno.id,
-            turno_caixa_destino_numero: turno.numero,
-            gerente_aprovador_id: user?.id,
-            gerente_aprovador_nome: user?.full_name,
-            status: 'Pendente',
-          });
-        }
+        await criarAutorizacaoEstornoDevolucao({
+          pedido,
+          numeroDev,
+          totalDevolvido,
+          tipo,
+          motivo,
+          user,
+        });
       } else if (formaReembolso === 'PIX') {
         // PIX: criar lançamento financeiro imediatamente
         const contas = await base44.entities.ContasFinanceiras.list();
@@ -434,8 +423,10 @@ export default function DevolucaoTrocaDialog({ open, onClose, tipo = 'Devoluçã
       setStep('comprovante');
     } catch (error) {
       toast({ title: 'Erro ao processar', description: error.message, variant: 'destructive' });
+    } finally {
+      confirmandoRef.current = false;
+      setProcessando(false);
     }
-    setProcessando(false);
   };
 
   return (
@@ -462,7 +453,7 @@ export default function DevolucaoTrocaDialog({ open, onClose, tipo = 'Devoluçã
             </div>
           )}
           {step === 'buscar' && <BuscarPedidoStep onFound={p => { setPedido(p); setStep('itens'); }} onClose={handleClose} />}
-          {step === 'itens' && pedido && <SelecionarItensStep pedido={pedido} tipo={tipo} onConfirm={handleConfirm} />}
+          {step === 'itens' && pedido && <SelecionarItensStep pedido={pedido} tipo={tipo} onConfirm={handleConfirm} submitting={processando} />}
           {step === 'comprovante' && resultado && <ComprovanteStep resultado={resultado} onClose={handleClose} />}
         </div>
       </DialogContent>
