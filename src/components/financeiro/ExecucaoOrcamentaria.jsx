@@ -913,14 +913,14 @@ export default function ExecucaoOrcamentaria() {
           Financeiro
         </h1>
         {isCompactShell ? (
-          <div className="flex shrink-0 items-center gap-1.5">
-            <FinanceiroAbaIconTabs
-              value={aba}
-              onChange={setAba}
-              items={abasPrincipais}
-            />
-            {aba === 'fluxo' && (
-              <TooltipProvider delayDuration={300}>
+          <TooltipProvider delayDuration={300}>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <FinanceiroAbaIconTabs
+                value={aba}
+                onChange={setAba}
+                items={abasPrincipais}
+              />
+              {aba === 'fluxo' && (
                 <div className="flex shrink-0 items-center gap-0.5 no-pdf-capture overflow-x-auto overscroll-x-contain touch-pan-x no-scrollbar">
                   <ContasSaldoPicker
                     variant="icon"
@@ -936,17 +936,17 @@ export default function ExecucaoOrcamentaria() {
                     <Printer className="w-4 h-4 text-foreground/90" />
                   </FinanceiroToolbarIcon>
                 </div>
-              </TooltipProvider>
-            )}
-            {caixasAtiva && (
-              <ContasSaldoPicker
-                variant="icon"
-                contas={contasSaldoOpcoes}
-                sel={contasSaldoSel}
-                onSel={atualizarContasSaldoSel}
-              />
-            )}
-          </div>
+              )}
+              {caixasAtiva && (
+                <ContasSaldoPicker
+                  variant="icon"
+                  contas={contasSaldoOpcoes}
+                  sel={contasSaldoSel}
+                  onSel={atualizarContasSaldoSel}
+                />
+              )}
+            </div>
+          </TooltipProvider>
         ) : (
           aba === 'fluxo' && (
             <TooltipProvider delayDuration={300}>
