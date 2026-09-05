@@ -433,7 +433,7 @@ export function GestaoContasKpis() {
 }
 
 /** Filtros + meta + lista + FAB + diálogos. */
-export function GestaoContasPane() {
+export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) {
   const m = useContext(GestaoContasCtx);
   if (!m) return null;
 
@@ -484,71 +484,77 @@ export function GestaoContasPane() {
   const tipoLabel = TIPOS_CONTA.find((t) => t.v === tipoFiltro)?.l;
   const statusLabel = statusFiltro === 'inativas' ? 'Inativas' : statusFiltro === 'todas' ? 'Todas' : null;
 
-  return (
+  const filtrosBlock = (
+    <FiltrosContasFinanceiras
+      search={search}
+      onSearch={setSearch}
+      filtersOpen={filtersOpen}
+      onFiltersOpenChange={setFiltersOpen}
+      tipoFiltro={tipoFiltro}
+      onTipoFiltro={setTipoFiltro}
+      statusFiltro={statusFiltro}
+      onStatusFiltro={setStatusFiltro}
+      somentePendencias={somentePendencias}
+      onSomentePendencias={setSomentePendencias}
+      totalPendencias={totalPendencias}
+      mostrarHistoricoAnterior={mostrarHistoricoAnterior}
+      dataCorteHistorico={dataCorteHistorico}
+      onMostrarHistoricoAnterior={(v) => atualizarCorteHistorico(v, dataCorteHistorico)}
+      onDataCorteHistorico={(v) => atualizarCorteHistorico(mostrarHistoricoAnterior, v || DATA_CORTE_HISTORICO_PADRAO)}
+    />
+  );
+
+  const metaBlock = (
+    <FinanceiroListaMeta
+      total={filtrados.length}
+      totalLabel={filtrados.length === 1 ? 'conta' : 'contas'}
+      hasActiveFilters={hasActiveFilters || !!search}
+      onLimparFiltros={() => {
+        setTipoFiltro('todos');
+        setStatusFiltro('ativas');
+        setSomentePendencias(false);
+        setSearch('');
+      }}
+      summaryChips={
+        <>
+          {tipoFiltro !== 'todos' && tipoLabel && (
+            <FinanceiroSummaryChip>{tipoLabel}</FinanceiroSummaryChip>
+          )}
+          {statusLabel && <FinanceiroSummaryChip>{statusLabel}</FinanceiroSummaryChip>}
+          {somentePendencias && (
+            <FinanceiroSummaryChip className="text-amber-700 dark:text-amber-400">
+              Conciliação
+            </FinanceiroSummaryChip>
+          )}
+          {!mostrarHistoricoAnterior && (
+            <FinanceiroSummaryChip>
+              Saldos desde {formatarSoData(dataCorteHistorico)}
+            </FinanceiroSummaryChip>
+          )}
+          {mostrarHistoricoAnterior && (
+            <FinanceiroSummaryChip>Histórico completo</FinanceiroSummaryChip>
+          )}
+        </>
+      }
+    />
+  );
+
+  const listaBlock = (
+    <ListaContasFinanceiras
+      grupos={grupos}
+      loading={loading}
+      pendenciasMap={pendenciasConciliacao}
+      saldosCalculados={saldosCalculados}
+      saldosProntos={saldosProntos}
+      onExtrato={handleExtrato}
+      onEdit={handleEdit}
+      onAjuste={handleAjuste}
+      onConciliar={setConciliacaoConta}
+    />
+  );
+
+  const fabAndDialogs = (
     <>
-      <FiltrosContasFinanceiras
-        search={search}
-        onSearch={setSearch}
-        filtersOpen={filtersOpen}
-        onFiltersOpenChange={setFiltersOpen}
-        tipoFiltro={tipoFiltro}
-        onTipoFiltro={setTipoFiltro}
-        statusFiltro={statusFiltro}
-        onStatusFiltro={setStatusFiltro}
-        somentePendencias={somentePendencias}
-        onSomentePendencias={setSomentePendencias}
-        totalPendencias={totalPendencias}
-        mostrarHistoricoAnterior={mostrarHistoricoAnterior}
-        dataCorteHistorico={dataCorteHistorico}
-        onMostrarHistoricoAnterior={(v) => atualizarCorteHistorico(v, dataCorteHistorico)}
-        onDataCorteHistorico={(v) => atualizarCorteHistorico(mostrarHistoricoAnterior, v || DATA_CORTE_HISTORICO_PADRAO)}
-      />
-
-      <FinanceiroListaMeta
-        total={filtrados.length}
-        totalLabel={filtrados.length === 1 ? 'conta' : 'contas'}
-        hasActiveFilters={hasActiveFilters || !!search}
-        onLimparFiltros={() => {
-          setTipoFiltro('todos');
-          setStatusFiltro('ativas');
-          setSomentePendencias(false);
-          setSearch('');
-        }}
-        summaryChips={
-          <>
-            {tipoFiltro !== 'todos' && tipoLabel && (
-              <FinanceiroSummaryChip>{tipoLabel}</FinanceiroSummaryChip>
-            )}
-            {statusLabel && <FinanceiroSummaryChip>{statusLabel}</FinanceiroSummaryChip>}
-                {somentePendencias && (
-                  <FinanceiroSummaryChip className="text-amber-700 dark:text-amber-400">
-                    Conciliação
-                  </FinanceiroSummaryChip>
-                )}
-                {!mostrarHistoricoAnterior && (
-                  <FinanceiroSummaryChip>
-                    Saldos desde {formatarSoData(dataCorteHistorico)}
-                  </FinanceiroSummaryChip>
-                )}
-                {mostrarHistoricoAnterior && (
-                  <FinanceiroSummaryChip>Histórico completo</FinanceiroSummaryChip>
-                )}
-              </>
-        }
-      />
-
-      <ListaContasFinanceiras
-        grupos={grupos}
-        loading={loading}
-        pendenciasMap={pendenciasConciliacao}
-        saldosCalculados={saldosCalculados}
-        saldosProntos={saldosProntos}
-        onExtrato={handleExtrato}
-        onEdit={handleEdit}
-        onAjuste={handleAjuste}
-        onConciliar={setConciliacaoConta}
-      />
-
       {fabOpen && (
         <div
           className="fixed inset-0 z-[54] bg-muted/55 backdrop-blur-[2px]"
@@ -707,6 +713,33 @@ export function GestaoContasPane() {
           </div>
         </DialogContent>
       </Dialog>
+    </>
+  );
+
+  if (mobileShell) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="shrink-0 z-10 space-y-3 border-b border-border/25 bg-background/95 backdrop-blur-sm">
+          {filtrosBlock}
+          {metaBlock}
+        </div>
+        <div
+          ref={listScrollRef}
+          className="flex-1 min-h-0 min-w-0 p38-stage-panel-scroll overflow-x-hidden touch-pan-y p38-scroll-pad-fab"
+        >
+          {listaBlock}
+        </div>
+        {fabAndDialogs}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {filtrosBlock}
+      {metaBlock}
+      {listaBlock}
+      {fabAndDialogs}
     </>
   );
 }

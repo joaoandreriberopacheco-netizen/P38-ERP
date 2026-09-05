@@ -42,6 +42,7 @@ const MOBILE_FULL_VIEWPORT_PAGES = new Set([
   'Compras',
   'PedidosCompra',
   'VendasGestao',
+  'FluxoCaixa',
 ]);
 
 /** Desktop: catálogo/relatórios densos ocupam altura do viewport. */
@@ -59,6 +60,7 @@ const DESKTOP_FULL_HEIGHT_PAGES = new Set([
   'Compras',
   'PedidosCompra',
   'VendasGestao',
+  'FluxoCaixa',
 ]);
 
 /** Rotas PDV no mobile: mantêm GlacialBottomNav (atalho rápido em overlay continua fullscreen). */

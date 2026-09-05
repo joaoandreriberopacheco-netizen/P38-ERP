@@ -66,6 +66,8 @@ import { CONCILIACAO_LOTE_TAMANHO } from '@/lib/conciliacaoEmLote';
 import { consumirArquivoLancamentoTorreDoBridge, temFluxoLancamentoTorreAtivo, concluirFluxoTorreCompartilhamento } from '@/lib/torreLancamentoBridge';
 import { uploadAnexoParaLancamentoFinanceiro } from '@/lib/uploadAnexoReferencia';
 import { resolveViewportLayout, useCompactShell } from '@/hooks/use-breakpoint';
+import { useScrollChromeVisibility } from '@/hooks/useScrollChromeVisibility';
+import { P38ScrollChromeCollapse } from '@/components/layout/P38ScrollChromeCollapse';
 import {
   calcularKpisProgramadas,
   calcularSaldoPrevisto,
@@ -194,6 +196,9 @@ export default function ExecucaoOrcamentaria() {
   const { s: ds, e: de } = useMemo(() => dateRange(periodo, cs, ce), [periodo, cs, ce]);
 
   const isCompactShell = useCompactShell();
+  const { chromeVisible, scrollRef } = useScrollChromeVisibility(isCompactShell, {
+    revealMode: 'top-only',
+  });
 
   useEffect(() => {
     if (!isCompactShell) return;
@@ -860,249 +865,305 @@ export default function ExecucaoOrcamentaria() {
     if (!next) lote.sairModoLote();
   }, [lote.sairModoLote]);
 
-  return (
-    <GestaoContasEmbedded active={caixasAtiva} shared={financeiroShared}>
-    <div className="w-full min-w-0 max-w-full space-y-3 pb-[var(--p38-scroll-pad-below-nav)] font-din-1451">
-      {/* Header unificado — título, KPIs do fluxo, abas */}
-      <div className="min-w-0 max-w-full space-y-2">
-        <div className="flex flex-col gap-2">
-          <div className="flex min-w-0 items-center gap-2">
-            <h1
-              className={cn(P38_PAGE_TITLE, 'min-w-0 flex-1 truncate text-lg md:text-2xl font-glacial leading-none')}
-              data-pulse-sensor="fluxo-caixa.titulo"
-            >
-              Financeiro
-            </h1>
-            {aba === 'fluxo' && (
-              <TooltipProvider delayDuration={300}>
-                <div className="flex shrink-0 items-center gap-0.5 no-pdf-capture">
-                  <ContasSaldoPicker
-                    variant="icon"
-                    contas={contasSaldoOpcoes}
-                    sel={contasSaldoSel}
-                    onSel={atualizarContasSaldoSel}
-                  />
-                  <TipoFiltroBar sel={tiposSel} onSel={setTiposSel} />
-                  <FinanceiroToolbarIcon
-                    label="Relatórios — balancete e extrato"
-                    onClick={abrirMenuRelatorios}
-                  >
-                    <Printer className="w-4 h-4 text-foreground/90" />
-                  </FinanceiroToolbarIcon>
-                </div>
-              </TooltipProvider>
-            )}
-          </div>
-
-          {aba === 'fluxo' && (
-            <div className="relative min-w-0">
-              <P38ModuleLoadingOverlay
-                open={loading}
-                message="Carregando saldos e movimentações…"
+  const financeiroHeaderInner = (
+    <div className="flex flex-col gap-2">
+      <div className="flex min-w-0 items-center gap-2">
+        <h1
+          className={cn(P38_PAGE_TITLE, 'min-w-0 flex-1 truncate text-lg md:text-2xl font-glacial leading-none')}
+          data-pulse-sensor="fluxo-caixa.titulo"
+        >
+          Financeiro
+        </h1>
+        {aba === 'fluxo' && (
+          <TooltipProvider delayDuration={300}>
+            <div className="flex shrink-0 items-center gap-0.5 no-pdf-capture overflow-x-auto overscroll-x-contain touch-pan-x no-scrollbar">
+              <ContasSaldoPicker
+                variant="icon"
+                contas={contasSaldoOpcoes}
+                sel={contasSaldoSel}
+                onSel={atualizarContasSaldoSel}
               />
-              <div className={cn(loading && 'pointer-events-none select-none opacity-25')}>
-              <KpiFluxoBar
-                kpis={kpis}
-                periodoLabel={periodoLabel}
-                mostrarProgramadas={mostrarProgramadas}
-                saldoPrevisto={saldoPrevisto}
-                aReceber={kpisProgramadas.aReceber}
-                aPagar={kpisProgramadas.aPagar}
-                saldosCarteiraProntos={saldosCarteiraProntos}
-              />
-              </div>
+              <TipoFiltroBar sel={tiposSel} onSel={setTiposSel} />
+              <FinanceiroToolbarIcon
+                label="Relatórios — balancete e extrato"
+                onClick={abrirMenuRelatorios}
+              >
+                <Printer className="w-4 h-4 text-foreground/90" />
+              </FinanceiroToolbarIcon>
             </div>
-          )}
-
-          <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:gap-3">
-            <FinanceiroPillTabs
-              stretch
-              compact
-              value={aba}
-              onChange={setAba}
-              items={abasPrincipais}
-              className="md:w-auto md:shrink-0"
-            />
-          </div>
-
-          {caixasAtiva && <GestaoContasKpis />}
-          {planejamentoAtiva && <PlanejamentoFinanceiroPage />}
-        </div>
+          </TooltipProvider>
+        )}
       </div>
 
       {aba === 'fluxo' && (
+        <div className="relative min-w-0">
+          <P38ModuleLoadingOverlay
+            open={loading}
+            message="Carregando saldos e movimentações…"
+          />
+          <div className={cn(loading && 'pointer-events-none select-none opacity-25')}>
+            <KpiFluxoBar
+              kpis={kpis}
+              periodoLabel={periodoLabel}
+              mostrarProgramadas={mostrarProgramadas}
+              saldoPrevisto={saldoPrevisto}
+              aReceber={kpisProgramadas.aReceber}
+              aPagar={kpisProgramadas.aPagar}
+              saldosCarteiraProntos={saldosCarteiraProntos}
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:gap-3">
+        <FinanceiroPillTabs
+          stretch
+          compact
+          value={aba}
+          onChange={setAba}
+          items={abasPrincipais}
+          className="md:w-auto md:shrink-0"
+        />
+      </div>
+
+      {caixasAtiva && <GestaoContasKpis />}
+      {planejamentoAtiva && <PlanejamentoFinanceiroPage />}
+    </div>
+  );
+
+  const fluxoLoteBanner = lote.modoSelecaoLote ? (
+    <div className="min-w-0 overflow-hidden rounded-xl border border-border/40 bg-card/60 p-3 dark:border-white/10 dark:bg-[#26262e]/80">
+      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-foreground">Pagamento em lote</p>
+          <p className="truncate text-xs text-muted-foreground">
+            {lote.lancamentosSelecionados.length} de {lote.idsSelecionaveis.length} programada(s) selecionada(s)
+          </p>
+          {lote.lancamentosSelecionados.length > CONCILIACAO_LOTE_TAMANHO && (
+            <p className="text-[10px] text-muted-foreground">
+              Serão processados em {Math.ceil(lote.lancamentosSelecionados.length / CONCILIACAO_LOTE_TAMANHO)} lotes de {CONCILIACAO_LOTE_TAMANHO}
+            </p>
+          )}
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={lote.handleSelecionarTodos}
+            disabled={lote.idsSelecionaveis.length === 0}
+            className="h-9 rounded-xl px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary/80 disabled:opacity-40"
+          >
+            {lote.todosSelecionados ? 'Limpar tudo' : 'Selecionar filtradas'}
+          </button>
+          <button
+            type="button"
+            onClick={() => lote.setShowPagamentoLote(true)}
+            disabled={lote.lancamentosSelecionados.length === 0}
+            className="h-9 shrink-0 rounded-xl bg-[#4a5240] px-4 text-sm font-medium text-white disabled:opacity-40 dark:bg-[#a4ce33] dark:text-[#1f1d22]"
+          >
+            Continuar
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
+  const fluxoFiltrosBar = (
+    <>
+      <FluxoToggleProgramadas
+        checked={mostrarProgramadas}
+        onCheckedChange={handleToggleProgramadas}
+      />
+
+      <FiltrosFluxoCaixa
+        search={search}
+        onSearch={setSearch}
+        periodo={periodo}
+        onPeriodo={setPeriodo}
+        customStart={cs}
+        customEnd={ce}
+        onCustom={(k, v) => (k === 'start' ? setCs(v) : setCe(v))}
+        contas={contasAtivas}
+        contasSel={contasSel}
+        onContasSel={setContasSel}
+        statusSel={statusSel}
+        onStatusSel={setStatusSel}
+        pendentes={pendentes}
+        onPendentes={setPendentes}
+        cmvOnly={cmvOnly}
+        onCmvOnly={setCmvOnly}
+        onOpenConciliacao={abrirConciliacao}
+        conciliacaoPendente={totalPend}
+        ordemLancamentos={ordemLancamentos}
+        onOrdemLancamentosChange={setOrdemLancamentos}
+        mostrarHistoricoAnterior={mostrarHistoricoAnterior}
+        dataCorteHistorico={dataCorteHistorico}
+        onMostrarHistoricoAnterior={(v) => atualizarCorteHistorico(v, dataCorteHistorico)}
+        onDataCorteHistorico={(v) => atualizarCorteHistorico(mostrarHistoricoAnterior, v || DATA_CORTE_HISTORICO_PADRAO)}
+      />
+
+      <FinanceiroListaMeta
+        total={contarItensGrupos(gruposExibicao)}
+        totalLabel={contarItensGrupos(gruposExibicao) === 1 ? 'lançamento' : 'lançamentos'}
+        hasActiveFilters={hasActiveFilters}
+        onLimparFiltros={() => {
+          setPeriodo('mes');
+          setCs('');
+          setCe('');
+          setTiposSel([]);
+          setContasSel(contasAtivas.map((conta) => conta.id));
+          setStatusSel([]);
+          setPendentes(false);
+          setCmvOnly(false);
+          setSearch('');
+        }}
+        summaryChips={
+          <>
+            {mostrarProgramadas && (
+              <FinanceiroSummaryChip className="text-amber-700 dark:text-amber-400">
+                Com programadas
+              </FinanceiroSummaryChip>
+            )}
+            {periodo !== 'mes' && (
+              <FinanceiroSummaryChip>{PERIODO_LABELS[periodo] || periodo}</FinanceiroSummaryChip>
+            )}
+            {contas.length > 0 && contasSel.length > 0 && contasSel.length < contas.length && (
+              <FinanceiroSummaryChip>
+                {contasSel.length} conta{contasSel.length > 1 ? 's' : ''}
+              </FinanceiroSummaryChip>
+            )}
+            {tiposSel.length > 0 && (
+              <FinanceiroSummaryChip>{tiposSel.join(', ')}</FinanceiroSummaryChip>
+            )}
+            {statusSel.length > 0 && (
+              <FinanceiroSummaryChip>{statusSel.length} status</FinanceiroSummaryChip>
+            )}
+            {pendentes && <FinanceiroSummaryChip>Conciliação</FinanceiroSummaryChip>}
+            {cmvOnly && <FinanceiroSummaryChip>CMV</FinanceiroSummaryChip>}
+            {mostrarHistoricoAnterior && (
+              <FinanceiroSummaryChip>Histórico completo</FinanceiroSummaryChip>
+            )}
+          </>
+        }
+        extraActions={mostrarProgramadas ? (
+          <button
+            type="button"
+            onClick={lote.entrarModoPagarLote}
+            className={`rounded-full px-2 py-0.5 text-[10px] transition-colors ${lote.modoSelecaoLote ? 'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]' : 'bg-secondary/80 text-muted-foreground dark:bg-[#383e47]'}`}
+          >
+            {lote.modoSelecaoLote ? 'Cancelar lote' : 'Pagar em lote'}
+          </button>
+        ) : null}
+      />
+
+      {fluxoLoteBanner}
+    </>
+  );
+
+  const fluxoLista = (
+    <ListaLancamentos
+      grupos={gruposExibicao}
+      loading={false}
+      emSelecao={lote.modoSelecaoLote}
+      selecionados={lote.selectedIds}
+      onToggleSelecionado={lote.handleToggleSelecionado}
+      onRow={(l) => {
+        if (l.origem === 'movimento') return;
+        setDetalhe(l);
+      }}
+    />
+  );
+
+  const fluxoDialogs = (
+    <>
+      <PagamentoLoteDialog
+        open={lote.showPagamentoLote}
+        onOpenChange={lote.setShowPagamentoLote}
+        contas={contasAtivas}
+        contaId={lote.contaLoteId}
+        setContaId={lote.setContaLoteId}
+        dataPagamento={lote.dataPagamentoLote}
+        setDataPagamento={lote.setDataPagamentoLote}
+        selecionados={lote.lancamentosSelecionados}
+        onConfirm={lote.handleConfirmarPagamentoLote}
+        loading={lote.processingLote}
+        progresso={lote.progressoLote}
+        tamanhoLote={CONCILIACAO_LOTE_TAMANHO}
+      />
+
+      {detalhe && (
+        <LancamentoDetalheDialog
+          lancamento={detalhe}
+          onClose={() => setDetalhe(null)}
+          onEdit={(l) => {
+            setDetalhe(null);
+            setEditando(l);
+            setShowNovoFluxo(true);
+          }}
+          onSaved={async () => {
+            await recarregarAposSalvar();
+            setDetalhe(null);
+          }}
+        />
+      )}
+    </>
+  );
+
+  return (
+    <GestaoContasEmbedded active={caixasAtiva} shared={financeiroShared}>
+    <div
+      className={cn(
+        'w-full min-w-0 max-w-full font-din-1451',
+        isCompactShell
+          ? 'flex flex-col h-full min-h-0 overflow-hidden'
+          : 'space-y-3 pb-[var(--p38-scroll-pad-below-nav)]',
+      )}
+    >
+      {/* Header unificado — título, KPIs do fluxo, abas */}
+      {isCompactShell ? (
+        <P38ScrollChromeCollapse visible={chromeVisible} enabled className="shrink-0">
+          <div className="min-w-0 max-w-full space-y-2">
+            {financeiroHeaderInner}
+          </div>
+        </P38ScrollChromeCollapse>
+      ) : (
+        <div className="min-w-0 max-w-full space-y-2">
+          {financeiroHeaderInner}
+        </div>
+      )}
+
+      {aba === 'fluxo' && !isCompactShell && (
         <div className="relative min-h-[min(48vh,480px)]">
           <P38ModuleLoadingOverlay
             open={loading}
             message="Carregando lançamentos e saldos…"
           />
           <div className={cn('space-y-3', loading && 'pointer-events-none select-none opacity-25')}>
-          <FluxoToggleProgramadas
-            checked={mostrarProgramadas}
-            onCheckedChange={handleToggleProgramadas}
-          />
-
-          <FiltrosFluxoCaixa
-            search={search}
-            onSearch={setSearch}
-            periodo={periodo}
-            onPeriodo={setPeriodo}
-            customStart={cs}
-            customEnd={ce}
-            onCustom={(k, v) => (k === 'start' ? setCs(v) : setCe(v))}
-            contas={contasAtivas}
-            contasSel={contasSel}
-            onContasSel={setContasSel}
-            statusSel={statusSel}
-            onStatusSel={setStatusSel}
-            pendentes={pendentes}
-            onPendentes={setPendentes}
-            cmvOnly={cmvOnly}
-            onCmvOnly={setCmvOnly}
-            onOpenConciliacao={abrirConciliacao}
-            conciliacaoPendente={totalPend}
-            ordemLancamentos={ordemLancamentos}
-            onOrdemLancamentosChange={setOrdemLancamentos}
-            mostrarHistoricoAnterior={mostrarHistoricoAnterior}
-            dataCorteHistorico={dataCorteHistorico}
-            onMostrarHistoricoAnterior={(v) => atualizarCorteHistorico(v, dataCorteHistorico)}
-            onDataCorteHistorico={(v) => atualizarCorteHistorico(mostrarHistoricoAnterior, v || DATA_CORTE_HISTORICO_PADRAO)}
-          />
-
-          <FinanceiroListaMeta
-            total={contarItensGrupos(gruposExibicao)}
-            totalLabel={contarItensGrupos(gruposExibicao) === 1 ? 'lançamento' : 'lançamentos'}
-            hasActiveFilters={hasActiveFilters}
-            onLimparFiltros={() => {
-              setPeriodo('mes');
-              setCs('');
-              setCe('');
-              setTiposSel([]);
-              setContasSel(contasAtivas.map((conta) => conta.id));
-              setStatusSel([]);
-              setPendentes(false);
-              setCmvOnly(false);
-              setSearch('');
-            }}
-            summaryChips={
-              <>
-                {mostrarProgramadas && (
-                  <FinanceiroSummaryChip className="text-amber-700 dark:text-amber-400">
-                    Com programadas
-                  </FinanceiroSummaryChip>
-                )}
-                {periodo !== 'mes' && (
-                  <FinanceiroSummaryChip>{PERIODO_LABELS[periodo] || periodo}</FinanceiroSummaryChip>
-                )}
-                {contas.length > 0 && contasSel.length > 0 && contasSel.length < contas.length && (
-                  <FinanceiroSummaryChip>
-                    {contasSel.length} conta{contasSel.length > 1 ? 's' : ''}
-                  </FinanceiroSummaryChip>
-                )}
-                {tiposSel.length > 0 && (
-                  <FinanceiroSummaryChip>{tiposSel.join(', ')}</FinanceiroSummaryChip>
-                )}
-                {statusSel.length > 0 && (
-                  <FinanceiroSummaryChip>{statusSel.length} status</FinanceiroSummaryChip>
-                )}
-                {pendentes && <FinanceiroSummaryChip>Conciliação</FinanceiroSummaryChip>}
-                {cmvOnly && <FinanceiroSummaryChip>CMV</FinanceiroSummaryChip>}
-                {mostrarHistoricoAnterior && (
-                  <FinanceiroSummaryChip>Histórico completo</FinanceiroSummaryChip>
-                )}
-              </>
-            }
-            extraActions={mostrarProgramadas ? (
-              <button
-                type="button"
-                onClick={lote.entrarModoPagarLote}
-                className={`rounded-full px-2 py-0.5 text-[10px] transition-colors ${lote.modoSelecaoLote ? 'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]' : 'bg-secondary/80 text-muted-foreground dark:bg-[#383e47]'}`}
-              >
-                {lote.modoSelecaoLote ? 'Cancelar lote' : 'Pagar em lote'}
-              </button>
-            ) : null}
-          />
-
-          {lote.modoSelecaoLote && (
-            <div className="min-w-0 overflow-hidden rounded-xl border border-border/40 bg-card/60 p-3 dark:border-white/10 dark:bg-[#26262e]/80">
-              <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-foreground">Pagamento em lote</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {lote.lancamentosSelecionados.length} de {lote.idsSelecionaveis.length} programada(s) selecionada(s)
-                  </p>
-                  {lote.lancamentosSelecionados.length > CONCILIACAO_LOTE_TAMANHO && (
-                    <p className="text-[10px] text-muted-foreground">
-                      Serão processados em {Math.ceil(lote.lancamentosSelecionados.length / CONCILIACAO_LOTE_TAMANHO)} lotes de {CONCILIACAO_LOTE_TAMANHO}
-                    </p>
-                  )}
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={lote.handleSelecionarTodos}
-                    disabled={lote.idsSelecionaveis.length === 0}
-                    className="h-9 rounded-xl px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary/80 disabled:opacity-40"
-                  >
-                    {lote.todosSelecionados ? 'Limpar tudo' : 'Selecionar filtradas'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => lote.setShowPagamentoLote(true)}
-                    disabled={lote.lancamentosSelecionados.length === 0}
-                    className="h-9 shrink-0 rounded-xl bg-[#4a5240] px-4 text-sm font-medium text-white disabled:opacity-40 dark:bg-[#a4ce33] dark:text-[#1f1d22]"
-                  >
-                    Continuar
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <ListaLancamentos
-            grupos={gruposExibicao}
-            loading={false}
-            emSelecao={lote.modoSelecaoLote}
-            selecionados={lote.selectedIds}
-            onToggleSelecionado={lote.handleToggleSelecionado}
-            onRow={(l) => {
-              if (l.origem === 'movimento') return;
-              setDetalhe(l);
-            }}
-          />
-
-          <PagamentoLoteDialog
-            open={lote.showPagamentoLote}
-            onOpenChange={lote.setShowPagamentoLote}
-            contas={contasAtivas}
-            contaId={lote.contaLoteId}
-            setContaId={lote.setContaLoteId}
-            dataPagamento={lote.dataPagamentoLote}
-            setDataPagamento={lote.setDataPagamentoLote}
-            selecionados={lote.lancamentosSelecionados}
-            onConfirm={lote.handleConfirmarPagamentoLote}
-            loading={lote.processingLote}
-            progresso={lote.progressoLote}
-            tamanhoLote={CONCILIACAO_LOTE_TAMANHO}
-          />
-
-          {detalhe && (
-            <LancamentoDetalheDialog
-              lancamento={detalhe}
-              onClose={() => setDetalhe(null)}
-              onEdit={(l) => {
-                setDetalhe(null);
-                setEditando(l);
-                setShowNovoFluxo(true);
-              }}
-              onSaved={async () => {
-                await recarregarAposSalvar();
-                setDetalhe(null);
-              }}
-            />
-          )}
+            {fluxoFiltrosBar}
+            {fluxoLista}
+            {fluxoDialogs}
           </div>
         </div>
+      )}
+
+      {aba === 'fluxo' && isCompactShell && (
+        <>
+          <div className="shrink-0 z-10 space-y-3 border-b border-border/25 bg-background/95 backdrop-blur-sm">
+            {fluxoFiltrosBar}
+          </div>
+          <div
+            ref={scrollRef}
+            className="relative flex-1 min-h-0 min-w-0 p38-stage-panel-scroll overflow-x-hidden touch-pan-y p38-scroll-pad-fab"
+          >
+            <P38ModuleLoadingOverlay
+              open={loading}
+              message="Carregando lançamentos e saldos…"
+            />
+            <div className={cn(loading && 'pointer-events-none select-none opacity-25')}>
+              {fluxoLista}
+            </div>
+          </div>
+          {fluxoDialogs}
+        </>
       )}
 
       {(aba === 'fluxo' || fabOpen || showNovoFluxo) && (
@@ -1212,7 +1273,14 @@ export default function ExecucaoOrcamentaria() {
         </>
       )}
 
-      {caixasAtiva && <GestaoContasPane />}
+      {caixasAtiva && (
+        <div className={cn(isCompactShell && 'flex min-h-0 flex-1 flex-col overflow-hidden')}>
+          <GestaoContasPane
+            mobileShell={isCompactShell}
+            listScrollRef={isCompactShell ? scrollRef : null}
+          />
+        </div>
+      )}
 
       {folhaAtiva && <FolhaPrevisaoPage />}
 

@@ -28,7 +28,7 @@ export default function LancamentoItem({ lancamento, onClick }) {
   return (
     <button
       onClick={() => onClick && onClick(lancamento)}
-      className="w-full max-w-full overflow-hidden flex items-center gap-3 px-4 py-3.5 hover:bg-muted/40 dark:hover:bg-muted/50 transition-colors text-left active:scale-[0.99]"
+      className="w-full max-w-full overflow-hidden flex items-center gap-3 px-4 py-3.5 hover:bg-muted/40 dark:hover:bg-muted/50 transition-colors text-left active:scale-[0.99] touch-manipulation"
     >
       {/* Ícone */}
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
