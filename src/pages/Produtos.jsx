@@ -46,7 +46,7 @@ import {
   normalizeCatalogSalesWindow,
   buildCatalogSalesVelocityMap,
 } from '@/lib/catalogSalesVelocity';
-import { filtersNeedSalesVelocity } from '@/lib/catalogNumericFilters';
+import { filtersNeedIep, filtersNeedSalesVelocity } from '@/lib/catalogNumericFilters';
 import { createCatalogStockContext } from '@/lib/catalogEstoqueVirtual';
 import { fetchPedidosCompraParaSugestaoEstoque } from '@/lib/fetchPedidosCompraParaSugestaoEstoque';
 import { buildPendenteAprovadoFinanceiroPorProduto } from '@/lib/sugestaoCompraEstoquePendente';
@@ -55,6 +55,7 @@ import { sumCatalogStockTotals, lineEstoqueQuantidade, lineValorCustoTotal } fro
 import {
   loadCatalogProdutoColumns,
   saveCatalogProdutoColumns,
+  CATALOG_IEP_PRODUTO_COLUMNS,
 } from '@/lib/catalogProdutoColumnsStorage';
 import { compareProdutosForCatalogSort } from '@/lib/catalogProdutoPerformance';
 import { useDesktopContent } from '@/hooks/use-breakpoint';
@@ -225,7 +226,15 @@ function ProdutosPageContent() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isDesktop = useDesktopContent();
-  const { data: produtosQuery, refetch: refetchProdutos } = useProdutosComIepQuery();
+
+  const needsIepMetrics = useMemo(() => {
+    if (visibleColumns.some((col) => CATALOG_IEP_PRODUTO_COLUMNS.includes(col))) return true;
+    return filtersNeedIep(filters);
+  }, [visibleColumns, filters]);
+
+  const { data: produtosQuery, refetch: refetchProdutos } = useProdutosComIepQuery({
+    needsIep: needsIepMetrics,
+  });
   const { data: fornecedoresQuery, refetch: refetchFornecedores } = useFornecedoresQuery();
 
   /** Evita que um `Produto.get` antigo (ex.: abertura do formulário) sobrescreva o estado após save/`loadData`. */

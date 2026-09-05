@@ -228,14 +228,28 @@ npm run db:apply-migrations
 npm run build
 ```
 
-### Fase 8 — Publicar + restantes rotas lentas (próxima)
+### Fase 8 — Home, Produtos, Compras (rotas lentas)
+
+- [x] **Home / Layout** — cache de sessão 10 min; sem `auth.me` duplicado quando cache fresco; Home deixa de usar `PerfilDeAcesso.list()`.
+- [x] **PageAccessGuard** — validação síncrona a partir do cache.
+- [x] **MobileUserMenu** — usa `sessionUser` do Layout (sem `auth.me` extra).
+- [x] **Produtos** — IEP 90d só quando colunas/filtros IEP visíveis; dedup pedidos 90d com cache `dadosVendaAbcd90d`.
+- [x] **Compras** — paint com lista rápida (`fetchPedidosCompraGestaoListaRapida`); vitrine/financeiro em background.
+- [x] **Pulse diário** — `dashboard:celulas-sanity` opcional quando `DATABASE_URL` disponível.
+- [ ] **Margem / Budgets / Dízimo** — competência fechada via células `vendas:YYYY-MM`.
+- [ ] Merge PR canal → `main` (após LCP aprovado no preview).
+
+**Comandos Fase 8:**
+
+```bash
+npm run build
+```
+
+### Fase 9 — Publicar (próxima)
 
 1. Merge PR canal → `main` (após LCP aprovado no preview).
-2. **Home / /** — auth/perfil duplicado (`auth.me`, `PerfilDeAcesso.list()`).
-3. **Produtos** — lista completa + IEP 90d.
-4. **Compras** — paint inicial só com `compras:gestao-resumo` (sem fetch pesado).
-5. **Pulse diário** — incluir `dashboard:celulas-sanity` no workflow opcional.
-6. **Margem / Budgets / Dízimo** — competência fechada via células `vendas:YYYY-MM`.
+2. **Margem / Budgets / Dízimo** — alinhar snapshots com células `vendas:YYYY-MM`.
+3. Medir LCP final no preview vs produção.
 
 ### Onde mais aplicar células (roadmap)
 

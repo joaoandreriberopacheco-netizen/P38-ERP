@@ -25,7 +25,7 @@ export { fetchPedidosVenda90d, fetchDadosVendaAbcd90d };
 import { unifyLogisticaEventos } from '@/components/logistica-sandbox/fluvialDataUtils';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { getGestaoDateRangeStaleTime } from '@/lib/p38GestaoCache';
-import { fetchPedidosCompraGestaoCompleto } from '@/lib/fetchPedidosCompraGestaoCompleto';
+import { fetchPedidosCompraGestaoCompleto, fetchPedidosCompraGestaoListaRapida } from '@/lib/fetchPedidosCompraGestaoCompleto';
 import { sincronizarPedidosCompraAprovacaoPendente } from '@/lib/fetchPedidosCompraGestaoSync';
 import { fetchProdutosPdvCatalogo, searchClientesPdv } from '@/lib/fetchPdvCatalogo';
 import { readCatalogoAnotacaoVersion, readComprasAnotacaoResumo } from '@/lib/p38AnotacaoApi';
@@ -183,41 +183,69 @@ export function usePedidosCompraGestaoInicialQuery(options = {}) {
   });
   const comprasVersion = resumoQuery.data?.comprasVersion ?? 'v0';
 
-  const mainQuery = useQuery({
-    queryKey: [...p38Keys.pedidosCompraGestaoInicial(), comprasVersion],
-    queryFn: () => fetchPedidosCompraGestaoCompleto(base44, { deferSyncAprovacao: true }),
+  const listaQuery = useQuery({
+    queryKey: [...p38Keys.pedidosCompraGestaoInicial(), comprasVersion, 'lista'],
+    queryFn: () => fetchPedidosCompraGestaoListaRapida(base44),
     staleTime: P38_STALE_TIME,
     gcTime: P38_GC_TIME,
     enabled,
     ...rest,
   });
 
+  const completoQuery = useQuery({
+    queryKey: [...p38Keys.pedidosCompraGestaoInicial(), comprasVersion, 'completo'],
+    queryFn: () => fetchPedidosCompraGestaoCompleto(base44, { deferSyncAprovacao: true }),
+    staleTime: P38_STALE_TIME,
+    gcTime: P38_GC_TIME,
+    enabled: enabled && Boolean(listaQuery.data),
+    ...rest,
+  });
+
   useQuery({
     queryKey: [...p38Keys.pedidosCompraGestaoInicial(), comprasVersion, 'sync-aprovacao'],
     queryFn: async () => {
-      const current = queryClient.getQueryData([...p38Keys.pedidosCompraGestaoInicial(), comprasVersion]);
+      const current = queryClient.getQueryData([
+        ...p38Keys.pedidosCompraGestaoInicial(),
+        comprasVersion,
+        'completo',
+      ]);
       if (!current?.pedidos?.length) return null;
       const pedidosSync = await sincronizarPedidosCompraAprovacaoPendente(base44, current.pedidos);
       queryClient.setQueryData(
-        [...p38Keys.pedidosCompraGestaoInicial(), comprasVersion],
+        [...p38Keys.pedidosCompraGestaoInicial(), comprasVersion, 'completo'],
         (old) => (old ? { ...old, pedidos: pedidosSync, needsSyncAprovacao: false } : old),
       );
       return pedidosSync;
     },
-    enabled: enabled && Boolean(mainQuery.data?.needsSyncAprovacao),
+    enabled: enabled && Boolean(completoQuery.data?.needsSyncAprovacao),
     staleTime: Number.POSITIVE_INFINITY,
     gcTime: P38_GC_TIME,
   });
 
-  return mainQuery;
+  const data = completoQuery.data ?? listaQuery.data;
+  const isLoading = listaQuery.isLoading && !data;
+
+  return {
+    ...listaQuery,
+    data,
+    isLoading,
+    isFetching: listaQuery.isFetching || completoQuery.isFetching,
+    isEnriching: Boolean(listaQuery.data && completoQuery.isFetching && !completoQuery.data),
+    resumoCompras: resumoQuery.data,
+  };
 }
 
 export function usePedidosVenda90dQuery(options = {}) {
+  const queryClient = useQueryClient();
+  const cachedPedidos = queryClient.getQueryData(p38Keys.dadosVendaAbcd90d())?.pedidos90d;
+
   return useQuery({
     queryKey: p38Keys.pedidosVenda90d(),
     queryFn: fetchPedidosVenda90d,
     staleTime: 10 * 60 * 1000,
     gcTime: P38_GC_TIME,
+    enabled: (options.enabled ?? true) && !cachedPedidos?.length,
+    placeholderData: cachedPedidos,
     ...options,
   });
 }
@@ -236,26 +264,27 @@ export function useDadosVendaAbcd90dQuery(options = {}) {
 /** Catálogo — métricas IEP ao vivo; curva ABCD vem do cadastro SQL (`produto.abcd`). */
 export function useProdutosComIepQuery(options = {}) {
   const sort = options.sort ?? '-created_date';
-  const { sort: _sort, ...rest } = options;
+  const { sort: _sort, needsIep = true, ...rest } = options;
   const produtosQuery = useProdutosListQuery({ sort, ...rest });
   const vendasQuery = useDadosVendaAbcd90dQuery({
-    enabled: (rest.enabled ?? true) && Boolean(produtosQuery.data?.length),
+    enabled: (rest.enabled ?? true) && needsIep && Boolean(produtosQuery.data?.length),
   });
 
   const data = useMemo(() => {
     if (!produtosQuery.data?.length) return produtosQuery.data ?? [];
+    if (!needsIep) return produtosQuery.data;
     const vendas = vendasQuery.data;
     if (!vendas?.pedidos90d) {
       return produtosQuery.data;
     }
     return enrichProdutosComIep(produtosQuery.data, vendas);
-  }, [produtosQuery.data, vendasQuery.data]);
+  }, [produtosQuery.data, vendasQuery.data, needsIep]);
 
   return {
     ...produtosQuery,
     data,
-    isLoading: produtosQuery.isLoading || vendasQuery.isLoading,
-    isFetching: produtosQuery.isFetching || vendasQuery.isFetching,
+    isLoading: produtosQuery.isLoading || (needsIep && vendasQuery.isLoading),
+    isFetching: produtosQuery.isFetching || (needsIep && vendasQuery.isFetching),
   };
 }
 

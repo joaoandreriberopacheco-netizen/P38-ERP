@@ -1,15 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { getCachedUserSession } from '@/lib/userSessionCache';
+import { getCachedUserSession, isCachedUserSessionFresh } from '@/lib/userSessionCache';
 import { podeAcessarPagina } from '@/lib/pagePermissions';
 import AccessDeniedScreen from '@/components/guard/AccessDeniedScreen';
+
+function resolveAccessFromCache(pageName) {
+  const cached = getCachedUserSession();
+  if (!cached?.user) return null;
+  return podeAcessarPagina(cached.user, cached.perfilDeAcesso, pageName);
+}
 
 /**
  * Guarda de rota — impede acesso direto, botão voltar e links profundos
  * a páginas fora do kit do utilizador.
  */
 export default function PageAccessGuard({ pageName, children }) {
-  const [acessoPermitido, setAcessoPermitido] = useState(null);
+  const [acessoPermitido, setAcessoPermitido] = useState(() => resolveAccessFromCache(pageName));
 
   useEffect(() => {
     let cancelled = false;
@@ -20,7 +26,7 @@ export default function PageAccessGuard({ pageName, children }) {
         const userCached = cached?.user;
         if (userCached && podeAcessarPagina(userCached, cached?.perfilDeAcesso, pageName)) {
           if (!cancelled) setAcessoPermitido(true);
-          return;
+          if (isCachedUserSessionFresh()) return;
         }
 
         const user = await base44.auth.me();

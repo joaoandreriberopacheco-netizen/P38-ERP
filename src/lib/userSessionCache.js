@@ -8,7 +8,8 @@
 const SESSION_KEY = 'p38_user_session';
 const TTL = 10 * 60 * 1000;
 
-let memCache = null;
+/** @type {{ data: { user: object, perfilDeAcesso: object|null }, timestamp: number } | null} */
+let memCacheEntry = null;
 
 function readStorage() {
   try {
@@ -19,38 +20,56 @@ function readStorage() {
       sessionStorage.removeItem(SESSION_KEY);
       return null;
     }
-    return parsed.data;
+    return { data: parsed.data, timestamp: parsed.timestamp };
   } catch {
     return null;
   }
 }
 
 function writeStorage(data) {
+  const timestamp = Date.now();
   try {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ data, timestamp: Date.now() }));
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ data, timestamp }));
   } catch {
     // Falha silenciosa
   }
+  return timestamp;
 }
 
 export function getCachedUserSession() {
-  if (memCache) return memCache;
+  if (memCacheEntry && Date.now() - memCacheEntry.timestamp <= TTL) {
+    return memCacheEntry.data;
+  }
   const stored = readStorage();
   if (stored) {
-    memCache = stored;
-    return stored;
+    memCacheEntry = stored;
+    return stored.data;
   }
+  memCacheEntry = null;
   return null;
+}
+
+/** Sessão em cache ainda válida (evita auth.me + perfil no LCP). */
+export function isCachedUserSessionFresh() {
+  if (memCacheEntry && Date.now() - memCacheEntry.timestamp <= TTL) {
+    return Boolean(memCacheEntry.data?.user);
+  }
+  const stored = readStorage();
+  if (stored?.data?.user) {
+    memCacheEntry = stored;
+    return true;
+  }
+  return false;
 }
 
 export function setCachedUserSession(user, perfilDeAcesso) {
   const data = { user, perfilDeAcesso };
-  memCache = data;
-  writeStorage(data);
+  const timestamp = writeStorage(data);
+  memCacheEntry = { data, timestamp };
 }
 
 export function clearUserSessionCache() {
-  memCache = null;
+  memCacheEntry = null;
   try {
     sessionStorage.removeItem(SESSION_KEY);
   } catch {

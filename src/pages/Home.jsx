@@ -17,7 +17,7 @@ import HomeQuickActionLink, {
   HomeSalesSummaryLazy,
 } from '@/components/home/HomeQuickActionLink';
 import HomeBuildStamp from '@/components/home/HomeBuildStamp';
-import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCache';
+import { getCachedUserSession, isCachedUserSessionFresh, setCachedUserSession } from '@/lib/userSessionCache';
 import {
   resolverPermissoes,
   idsAtalhosHomePermitidos,
@@ -35,8 +35,9 @@ const PersonalizarHomeDialog = React.lazy(() => import('@/components/home/Person
 
 export default function HomePage() {
   const queryClient = useQueryClient();
-  const [currentUser, setCurrentUser] = useState(null);
-  const [perfilDeAcesso, setPerfilDeAcesso] = useState(null);
+  const cachedSession = getCachedUserSession();
+  const [currentUser, setCurrentUser] = useState(cachedSession?.user ?? null);
+  const [perfilDeAcesso, setPerfilDeAcesso] = useState(cachedSession?.perfilDeAcesso ?? null);
   const [quickActionIds, setQuickActionIds] = useState([]);
   const [showPersonalizar, setShowPersonalizar] = useState(false);
 
@@ -95,34 +96,6 @@ export default function HomePage() {
   }, [podeVerResumoVendas, queryClient]);
 
   useEffect(() => {
-    const loadUser = async () => {
-      const cached = getCachedUserSession();
-      if (cached?.user) {
-        setCurrentUser(cached.user);
-        if (cached.perfilDeAcesso) setPerfilDeAcesso(cached.perfilDeAcesso);
-        applyQuickActions(cached.user, cached.perfilDeAcesso);
-      }
-
-      try {
-        const user = await base44.auth.me();
-        let perfil = null;
-        if (user?.perfil_acesso_id) {
-          try {
-            const perfis = await base44.entities.PerfilDeAcesso.list();
-            perfil = perfis.find((p) => p.id === user.perfil_acesso_id) || null;
-          } catch (e) {
-            console.warn('Perfil de acesso não encontrado:', e);
-          }
-        }
-        setCurrentUser(user);
-        setPerfilDeAcesso(perfil);
-        setCachedUserSession(user, perfil);
-        applyQuickActions(user, perfil);
-      } catch (error) {
-        console.error('Erro ao carregar usuário:', error);
-      }
-    };
-
     const applyQuickActions = (user, perfil) => {
       if (perfil) {
         const podePersonalizarAtalhos = perfil.permissoes?.homepage?.atalhos_personalizados;
@@ -148,7 +121,38 @@ export default function HomePage() {
       }
     };
 
+    const cached = getCachedUserSession();
+    if (cached?.user) {
+      setCurrentUser(cached.user);
+      if (cached.perfilDeAcesso) setPerfilDeAcesso(cached.perfilDeAcesso);
+      applyQuickActions(cached.user, cached.perfilDeAcesso);
+    }
+
+    if (isCachedUserSessionFresh()) return undefined;
+
+    const loadUser = async () => {
+      try {
+        const user = await base44.auth.me();
+        let perfil = null;
+        if (user?.perfil_acesso_id) {
+          try {
+            const perfis = await base44.entities.PerfilDeAcesso.filter({ id: user.perfil_acesso_id });
+            perfil = perfis?.[0] || null;
+          } catch (e) {
+            console.warn('Perfil de acesso não encontrado:', e);
+          }
+        }
+        setCurrentUser(user);
+        setPerfilDeAcesso(perfil);
+        setCachedUserSession(user, perfil);
+        applyQuickActions(user, perfil);
+      } catch (error) {
+        console.error('Erro ao carregar usuário:', error);
+      }
+    };
+
     loadUser();
+    return undefined;
   }, []);
 
   const quickActions = quickActionIds

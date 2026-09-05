@@ -1,7 +1,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { flushSync } from 'react-dom';
 import { useLocation } from 'react-router-dom';
-import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCache';
+import { getCachedUserSession, isCachedUserSessionFresh, setCachedUserSession } from '@/lib/userSessionCache';
 
 import { base44, p38 } from '@/api/base44Client';
 import FontScaleInitializer from '@/components/accessibility/FontScaleInitializer';
@@ -73,13 +73,14 @@ export default function Layout({ children, currentPageName }) {
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useCompactShell();
   const forceLandscape = useForceLandscape();
-  const [currentUser, setCurrentUser] = useState(null);
+  const cachedSession = getCachedUserSession();
+  const [currentUser, setCurrentUser] = useState(cachedSession?.user ?? null);
   const [darkMode, setDarkMode] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState({});
   const [loadError, setLoadError] = useState(null);
-  const [isLoadingUser, setIsLoadingUser] = useState(true);
+  const [isLoadingUser, setIsLoadingUser] = useState(() => !isCachedUserSessionFresh());
   const [searchOverlayOpen, setSearchOverlayOpen] = useState(false);
-  const [perfilDeAcesso, setPerfilDeAcesso] = useState(null);
+  const [perfilDeAcesso, setPerfilDeAcesso] = useState(cachedSession?.perfilDeAcesso ?? null);
   const [showPinSetup, setShowPinSetup] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
@@ -137,6 +138,16 @@ export default function Layout({ children, currentPageName }) {
   }, []);
 
   const loadUser = async () => {
+    if (isCachedUserSessionFresh()) {
+      const cached = getCachedUserSession();
+      if (cached?.user) {
+        setCurrentUser(cached.user);
+        if (cached.perfilDeAcesso) setPerfilDeAcesso(cached.perfilDeAcesso);
+      }
+      setIsLoadingUser(false);
+      return;
+    }
+
     try {
       const user = await p38.auth.me();
       if (user) {
@@ -511,6 +522,7 @@ export default function Layout({ children, currentPageName }) {
             externalOpen={showMobileUserMenu}
             onExternalClose={() => setShowMobileUserMenu(false)}
             showConfiguracoesLink={showConfiguracoesLink}
+            sessionUser={currentUser}
           />
         )}
       </div>

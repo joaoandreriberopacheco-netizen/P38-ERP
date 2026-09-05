@@ -120,6 +120,18 @@ Opções:
     shipping = { ok: false, attempts: [{ attempt: 0, ok: false, skipped: true }] };
   }
 
+  let celulasSanity = { ok: true, skipped: true };
+  if (process.env.DATABASE_URL) {
+    console.log('\n[pulse:diario] Células dashboard — sanity check…');
+    const ok = runPulseScript('dashboard:celulas-sanity');
+    celulasSanity = { ok, skipped: false };
+    if (!ok) {
+      console.warn('[pulse:diario] dashboard:celulas-sanity falhou (não bloqueia trem/shipping).');
+    }
+  } else {
+    console.log('[pulse:diario] dashboard:celulas-sanity ignorado — DATABASE_URL em falta.');
+  }
+
   const sensorsReport = readReport(SENSORS_REPORT);
   const shippingReport = readReport(SHIPPING_REPORT);
 
@@ -154,6 +166,7 @@ Opções:
       attempts: shipping.attempts,
       failures: failuresFromShipping(shippingReport),
     },
+    celulasSanity,
     autoFixes,
     workflowUrl: process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_RUN_ID
       ? `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`

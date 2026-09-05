@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/components/utils';
 import { User, LogOut, Settings, Sun, Moon, X, HelpCircle, Shield, RotateCw, Lock } from 'lucide-react';
 import PinSetupDialog from '@/components/auth/PinSetupDialog';
@@ -9,19 +8,27 @@ import FontScaleControl from '@/components/accessibility/FontScaleControl';
 import { usePreferredOrientation } from '@/hooks/usePreferredOrientation';
 import { useForceLandscape } from '@/hooks/useForceLandscape';
 import { getP38PortalRoot } from '@/lib/p38PortalRoot';
+import { getCachedUserSession } from '@/lib/userSessionCache';
 import { pulseSensor } from '@/lib/pulseSensor';
 
-export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen, onExternalClose, showConfiguracoesLink = false }) {
+export default function MobileUserMenu({
+  darkMode,
+  toggleDarkMode,
+  externalOpen,
+  onExternalClose,
+  showConfiguracoesLink = false,
+  sessionUser = null,
+}) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => sessionUser ?? getCachedUserSession()?.user ?? null);
   const [showPin, setShowPin] = useState(false);
   const { rotationUnlocked, toggle: toggleRotationLock } = usePreferredOrientation();
   const forceLandscape = useForceLandscape();
 
   useEffect(() => {
-    base44.auth.me().then(u => u && setUser(u)).catch(() => {});
-  }, []);
+    if (sessionUser) setUser(sessionUser);
+  }, [sessionUser]);
 
   // Suporte a abertura externa (pelo BottomNav)
   useEffect(() => {

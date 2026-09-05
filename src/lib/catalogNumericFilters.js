@@ -137,6 +137,30 @@ export function filtersNeedSalesVelocity(filters) {
   return false;
 }
 
+const CATALOG_IEP_METRIC_FIELDS = [
+  'iep_score',
+  'iep_score_nivel_1',
+  'iep_score_nivel_2',
+  'iep_score_nivel_3',
+  'iep_score_nivel_4',
+  'iep_score_nivel_5',
+];
+
+export function catalogMetricNeedsIep(campo) {
+  return CATALOG_IEP_METRIC_FIELDS.includes(campo);
+}
+
+export function filtersNeedIep(filters) {
+  if (!filters) return false;
+  for (const slot of [1, 2]) {
+    const { campo } = getCatalogMetricFilterKeys(slot);
+    if (hasActiveCatalogMetricFilter(filters, slot) && catalogMetricNeedsIep(filters[campo])) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function getProdutoNumericMetricValue(produto, campo, { salesVelocityMap = {}, catalogStockContext = null } = {}) {
   if (!produto || !campo || campo === 'all') return null;
   const cat = getCatalogoComercialView(produto);

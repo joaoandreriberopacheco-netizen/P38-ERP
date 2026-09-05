@@ -1,3 +1,14 @@
+/** Colunas que exigem fetch 90d + enrichProdutosComIep no mount. */
+export const CATALOG_IEP_PRODUTO_COLUMNS = [
+  'iep_score',
+  'iep_codigo_comportamento',
+  'iep_score_nivel_1',
+  'iep_score_nivel_2',
+  'iep_score_nivel_3',
+  'iep_score_nivel_4',
+  'iep_score_nivel_5',
+];
+
 export const DEFAULT_CATALOG_PRODUTO_COLUMNS = [
   'status',
   'fornecedor',
