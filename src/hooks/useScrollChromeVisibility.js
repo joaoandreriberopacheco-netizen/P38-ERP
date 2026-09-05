@@ -61,13 +61,20 @@ export function useScrollChromeVisibility(enabled = true, options = {}) {
 
       const atBottom = maxY > 0 && y >= maxY - SCROLL_EDGE_PX;
       const atTop = y <= revealNearTopY;
-      if (atBottom && delta > 0) return;
-      if (atTop && delta < 0) return;
 
       if (atTop) {
         setVisible(true);
         accumulatedUpRef.current = 0;
-      } else if (delta > 0 && y > hideAfterY && !atBottom) {
+        lastYRef.current = y;
+        return;
+      }
+
+      if (atBottom && delta > 0) {
+        lastYRef.current = y;
+        return;
+      }
+
+      if (delta > 0 && y > hideAfterY) {
         setVisible(false);
         accumulatedUpRef.current = 0;
       } else if (delta < 0 && revealMode !== 'top-only') {

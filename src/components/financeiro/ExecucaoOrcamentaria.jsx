@@ -194,7 +194,7 @@ export default function ExecucaoOrcamentaria() {
 
   const isCompactShell = useCompactShell();
   const { chromeVisible, scrollRef, scrollEl } = useScrollChromeVisibility(isCompactShell, {
-    revealMode: 'top-only',
+    revealMode: 'immediate-up',
   });
 
   useEffect(() => {

@@ -33,11 +33,6 @@ function isAtScrollBottom(element) {
   return max > 0 && element.scrollTop >= max - SCROLL_EDGE_PX;
 }
 
-function isAtScrollTop(element, threshold = SCROLL_EDGE_PX) {
-  if (!(element instanceof Element)) return false;
-  return element.scrollTop <= threshold;
-}
-
 function isVerticallyScrollable(element) {
   if (!(element instanceof Element)) return false;
   if (element.scrollHeight <= element.clientHeight + 1) return false;
@@ -100,8 +95,10 @@ export function useBottomNavScrollVisibility(enabled = true) {
       if (Math.abs(delta) < MIN_DELTA) return;
 
       if (!isDocument && target instanceof Element) {
-        if (isAtScrollBottom(target) && delta > 0) return;
-        if (isAtScrollTop(target) && delta < 0) return;
+        if (isAtScrollBottom(target) && delta > 0) {
+          lastYRef.current = y;
+          return;
+        }
       }
 
       if (y <= HIDE_AFTER_Y) {
