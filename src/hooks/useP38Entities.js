@@ -27,6 +27,7 @@ import { dataHoje } from '@/components/utils/dateUtils';
 import { filterProdutosDisponiveisPdv } from '@/lib/hierarquiaPortal/produtoPdvDisponibilidade';
 import { getGestaoDateRangeStaleTime } from '@/lib/p38GestaoCache';
 import { fetchPedidosCompraGestaoCompleto } from '@/lib/fetchPedidosCompraGestaoCompleto';
+import { readCatalogoAnotacaoVersion, readComprasAnotacaoResumo } from '@/lib/p38AnotacaoApi';
 
 const entityQueryDefaults = {
   staleTime: P38_STALE_TIME,
@@ -111,14 +112,32 @@ export function useProdutosListQuery(options = {}) {
   });
 }
 
+/** Versão do catálogo (anotação Supabase) — invalida cache PDV quando produtos mudam. */
+export function useCatalogoAnotacaoVersionQuery(options = {}) {
+  const { enabled = true, ...rest } = options;
+  return useQuery({
+    queryKey: [...p38Keys.all, 'catalogo-anotacao-version'],
+    queryFn: readCatalogoAnotacaoVersion,
+    staleTime: 2 * 60 * 1000,
+    gcTime: P38_GC_TIME,
+    enabled,
+    ...rest,
+  });
+}
+
 /** Catálogo activo PDV — partilhado entre visitas (2 min). */
 export function useProdutosAtivosPdvQuery(options = {}) {
+  const { enabled = true, ...rest } = options;
+  const versionQuery = useCatalogoAnotacaoVersionQuery({ enabled });
+  const catalogVersion = versionQuery.data ?? 'v0';
+
   return useQuery({
-    queryKey: p38Keys.produtosAtivosPdv(),
+    queryKey: [...p38Keys.produtosAtivosPdv(), catalogVersion],
     queryFn: fetchProdutosAtivosPdv,
     select: (data) => filterProdutosDisponiveisPdv(data ?? []),
+    enabled,
     ...entityQueryDefaults,
-    ...options,
+    ...rest,
   });
 }
 
@@ -132,12 +151,23 @@ export function useClientesPdvQuery(options = {}) {
 }
 
 export function usePedidosCompraGestaoInicialQuery(options = {}) {
+  const { enabled = true, ...rest } = options;
+  const resumoQuery = useQuery({
+    queryKey: [...p38Keys.all, 'compras-anotacao-resumo'],
+    queryFn: readComprasAnotacaoResumo,
+    staleTime: 2 * 60 * 1000,
+    gcTime: P38_GC_TIME,
+    enabled,
+  });
+  const comprasVersion = resumoQuery.data?.comprasVersion ?? 'v0';
+
   return useQuery({
-    queryKey: p38Keys.pedidosCompraGestaoInicial(),
+    queryKey: [...p38Keys.pedidosCompraGestaoInicial(), comprasVersion],
     queryFn: () => fetchPedidosCompraGestaoCompleto(base44),
     staleTime: P38_STALE_TIME,
     gcTime: P38_GC_TIME,
-    ...options,
+    enabled,
+    ...rest,
   });
 }
 

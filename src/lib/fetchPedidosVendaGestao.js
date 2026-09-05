@@ -1,5 +1,6 @@
 import { base44 } from '@/api/base44Client';
 import { inicioDiaSistemaISO, fimDiaSistemaISO } from '@/components/utils/dateUtils';
+import { readVendasGestaoAnotacaoForRange } from '@/lib/p38AnotacaoApi';
 
 const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -30,6 +31,12 @@ export async function fetchPedidosVendaGestaoHeaders({
   if (!isValidGestaoDateKey(dataInicio) || !isValidGestaoDateKey(dataFim)) {
     return [];
   }
+
+  const sealed = await readVendasGestaoAnotacaoForRange(dataInicio, dataFim);
+  if (sealed?.complete) {
+    return sealed.headers;
+  }
+
   const created_date = buildCreatedDateFilter(dataInicio, dataFim);
   if (!created_date) {
     return [];
@@ -47,6 +54,12 @@ export async function fetchRascunhosPedidoVendaGestaoHeaders({
   if (!isValidGestaoDateKey(dataInicio) || !isValidGestaoDateKey(dataFim)) {
     return [];
   }
+
+  const sealed = await readVendasGestaoAnotacaoForRange(dataInicio, dataFim);
+  if (sealed?.complete) {
+    return sealed.rascunhos;
+  }
+
   const created_date = buildCreatedDateFilter(dataInicio, dataFim);
   if (!created_date) {
     return [];

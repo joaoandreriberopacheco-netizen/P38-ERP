@@ -133,9 +133,10 @@ Meta saudável LCP: **&lt; 2,5 s**. INP (~152 ms) está aceitável — o gargalo
 
 ### Fase 3 — Hub de anotações generalizado
 
-- [ ] Tabela/RPC genérica `p38_anotacao` (domain, ref_key, payload, version).
-- [ ] Expandir job noturno + flags `dirty` em edições retroativas.
-- [ ] Domínios: catálogo, vendas gestão, compras, home KPIs.
+- [x] Tabela/RPC genérica `p38_anotacao` (domain, ref_key, payload, version) — migration `079`.
+- [x] Expandir job noturno + flags `dirty` em edições retroativas (produto, compras, vendas).
+- [x] Domínios: catálogo (`catalogVersion` no PDV), vendas gestão (headers por mês), compras (resumo cache), home KPIs (dias selados).
+- [x] Cliente `src/lib/p38AnotacaoApi.js` com fallback silencioso.
 
 ### Validação
 
