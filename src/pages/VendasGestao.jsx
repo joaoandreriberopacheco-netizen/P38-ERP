@@ -36,7 +36,7 @@ import {
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import VendasPeriodoFiltro from '@/components/vendas/VendasPeriodoFiltro';
-import { getPeriodoMesCorrente } from '@/lib/vendasPeriodoFiltro';
+import { getVendasGestaoPeriodoPadrao } from '@/lib/vendasPeriodoFiltro';
 import ValesTrocaTab from '@/components/vendas/ValesTrocaTab';
 import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
 import FormaPagamentoBadges from '@/components/vendas/FormaPagamentoBadges';
@@ -483,9 +483,9 @@ function VendasGestaoPage() {
     revealMode: 'top-only',
   });
   const { invalidateHomeKpis } = useP38QueryInvalidation();
-  const [dataInicio, setDataInicio] = useState(() => getPeriodoMesCorrente().start);
-  const [dataFim, setDataFim] = useState(() => getPeriodoMesCorrente().end);
-  const [periodoPreset, setPeriodoPreset] = useState('mes_atual');
+  const [dataInicio, setDataInicio] = useState(() => getVendasGestaoPeriodoPadrao().start);
+  const [dataFim, setDataFim] = useState(() => getVendasGestaoPeriodoPadrao().end);
+  const [periodoPreset, setPeriodoPreset] = useState(() => getVendasGestaoPeriodoPadrao().preset);
   const {
     data: pedidos = [],
     isLoading: pedidosLoading,
@@ -801,10 +801,10 @@ function VendasGestaoPage() {
     setSearchTerm('');
     setStatusFiltro('todos');
     setFormasPagamentoFiltro([]);
-    const { start, end } = getPeriodoMesCorrente();
+    const { start, end, preset } = getVendasGestaoPeriodoPadrao();
     setDataInicio(start);
     setDataFim(end);
-    setPeriodoPreset('mes_atual');
+    setPeriodoPreset(preset);
   };
 
   return (

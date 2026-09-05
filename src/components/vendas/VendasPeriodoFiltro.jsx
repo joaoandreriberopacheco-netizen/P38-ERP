@@ -4,7 +4,7 @@ import { P38_CHIP_ACTIVE, P38_CHIP_INACTIVE } from '@/components/financeiro/flux
 import { isValidGestaoDateKey } from '@/lib/fetchPedidosVendaGestao';
 import {
   PERIODOS_VENDAS,
-  getPeriodoMesCorrente,
+  getVendasGestaoPeriodoPadrao,
   getVendasPeriodoRange,
 } from '@/lib/vendasPeriodoFiltro';
 
@@ -49,8 +49,8 @@ export default function VendasPeriodoFiltro({
             onDateRangeChange(inicio, fim);
           }}
           onClear={() => {
-            const { start, end } = getPeriodoMesCorrente();
-            onPeriodoPresetChange('mes_atual');
+            const { start, end, preset } = getVendasGestaoPeriodoPadrao();
+            onPeriodoPresetChange(preset);
             onDateRangeChange(start, end);
           }}
         />
