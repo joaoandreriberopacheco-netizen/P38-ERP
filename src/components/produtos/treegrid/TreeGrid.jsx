@@ -337,6 +337,9 @@ function skuCellValue(colId, produto, margem, lastro, markup, salesVelocityMap =
     case 'inventario_valorizado':return <span className="text-xs text-muted-foreground tabular-nums">{lastro > 0 ? fmtR(lastro) : '—'}</span>;
     case 'estoque_atual': {
       const est = resolveCatalogEstoqueExibicao(produto, catalogStockContext);
+      if (est.pendenteCarregando) {
+        return <span className="text-xs text-muted-foreground tabular-nums">—</span>;
+      }
       return (
         <span
           className="text-xs text-muted-foreground tabular-nums"
@@ -430,6 +433,7 @@ function groupCellValue(colId, row, salesVelocityMap = {}, catalogStockContext =
     case 'estoque_atual': {
       const skus = collectSkus(row.node);
       const disp = aggregateCatalogEstoqueExibicao(skus, catalogStockContext);
+      if (disp.mode === 'loading') return dash();
       if (disp.mode === 'empty') return dash();
       if (disp.mode === 'mixed') {
         return (

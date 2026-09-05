@@ -1,10 +1,15 @@
 import { formatEstoqueApresentacao, formatQuantidadeCatalogoApresentacao } from '@/lib/productUnits';
 
-export function createCatalogStockContext(estoqueVirtual = false, pendentePorProduto = {}) {
+export function createCatalogStockContext(estoqueVirtual = false, pendentePorProduto = {}, options = {}) {
   return {
     estoqueVirtual: estoqueVirtual === true,
     pendentePorProduto: pendentePorProduto || {},
+    pendenteCarregando: options.pendenteCarregando === true,
   };
+}
+
+export function isCatalogEstoqueVirtualPendenteCarregando(catalogStockContext) {
+  return isCatalogEstoqueVirtualAtivo(catalogStockContext) && catalogStockContext?.pendenteCarregando === true;
 }
 
 export function isCatalogEstoqueVirtualAtivo(catalogStockContext) {
@@ -45,6 +50,18 @@ export function resolveCatalogEstoqueExibicao(produto, catalogStockContext = nul
       fisico: fisico.quantidade,
       pendente: 0,
       virtual: false,
+      pendenteCarregando: false,
+    };
+  }
+
+  if (isCatalogEstoqueVirtualPendenteCarregando(catalogStockContext)) {
+    return {
+      ...fisico,
+      quantidade: null,
+      fisico: fisico.quantidade,
+      pendente: null,
+      virtual: true,
+      pendenteCarregando: true,
     };
   }
 
@@ -74,6 +91,10 @@ export function resolveCatalogEstoqueExibicao(produto, catalogStockContext = nul
 /** Soma estoque de SKUs para linhas de grupo (respeita estoque virtual). */
 export function aggregateCatalogEstoqueExibicao(skus = [], catalogStockContext = null) {
   if (!skus?.length) return { mode: 'empty', quantidade: 0 };
+
+  if (isCatalogEstoqueVirtualPendenteCarregando(catalogStockContext)) {
+    return { mode: 'loading', quantidade: null, virtual: true, pendenteCarregando: true };
+  }
 
   const rows = skus.map((sku) => resolveCatalogEstoqueExibicao(sku, catalogStockContext));
   const units = [...new Set(rows.map((row) => row.unidade).filter(Boolean))];

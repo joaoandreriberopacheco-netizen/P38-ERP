@@ -106,8 +106,9 @@ function ProdutosHeader({
               <span className="truncate">{stats.total} produtos</span>
               {podeVerCusto && (
                 <span className="truncate">
-                  R$ {formatarNumero(stats.valorEstoqueAtivo || 0)}
-                  {filters.estoqueVirtual ? ' ~' : ''}
+                  {stats.estoqueVirtualCarregando
+                    ? '—'
+                    : `R$ ${formatarNumero(stats.valorEstoqueAtivo || 0)}${filters.estoqueVirtual ? ' ~' : ''}`}
                 </span>
               )}
               {stats.abaixoMinimo > 0 && <span className="text-red-500 flex-shrink-0">{stats.abaixoMinimo} abaixo mín.</span>}

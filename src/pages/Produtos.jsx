@@ -52,6 +52,7 @@ import { fetchPedidosCompraParaSugestaoEstoque } from '@/lib/fetchPedidosCompraP
 import { buildPendenteAprovadoFinanceiroPorProduto } from '@/lib/sugestaoCompraEstoquePendente';
 import { saveCatalogProdutoFilters } from '@/lib/catalogProdutoFiltersStorage';
 import { sumCatalogStockTotals, lineEstoqueQuantidade, lineValorCustoTotal } from '@/lib/catalogStockTotals';
+import { isCatalogEstoqueVirtualPendenteCarregando } from '@/lib/catalogEstoqueVirtual';
 import {
   loadCatalogProdutoColumns,
   saveCatalogProdutoColumns,
@@ -145,6 +146,16 @@ function calculateProdutoStats(produtosList, catalogStockContext = null) {
   list.forEach((p) => {
     if (p.estoque_atual <= p.estoque_minimo && p.ativo) abaixoMin++;
   });
+
+  if (isCatalogEstoqueVirtualPendenteCarregando(catalogStockContext)) {
+    return {
+      total: list.length,
+      valorEstoque: null,
+      valorEstoqueAtivo: null,
+      abaixoMinimo: abaixoMin,
+      estoqueVirtualCarregando: true,
+    };
+  }
 
   const totals = sumCatalogStockTotals(list, catalogStockContext);
   let valorEstoqueAtivo = 0;
@@ -1168,7 +1179,7 @@ function ProdutosPageContent() {
 
   const estoqueVirtualAtivo = filters.estoqueVirtual === true;
 
-  const { data: pendentePorProduto = {} } = useQuery({
+  const { data: pendentePorProduto = {}, isLoading: pendenteEstoqueLoading, isFetching: pendenteEstoqueFetching } = useQuery({
     queryKey: ['catalogo', 'pendente-estoque'],
     enabled: estoqueVirtualAtivo,
     staleTime: 5 * 60 * 1000,
@@ -1182,9 +1193,14 @@ function ProdutosPageContent() {
     },
   });
 
+  const estoqueVirtualPendenteCarregando = estoqueVirtualAtivo
+    && (pendenteEstoqueLoading || pendenteEstoqueFetching);
+
   const catalogStockContext = useMemo(
-    () => createCatalogStockContext(estoqueVirtualAtivo, pendentePorProduto),
-    [estoqueVirtualAtivo, pendentePorProduto],
+    () => createCatalogStockContext(estoqueVirtualAtivo, pendentePorProduto, {
+      pendenteCarregando: estoqueVirtualPendenteCarregando,
+    }),
+    [estoqueVirtualAtivo, pendentePorProduto, estoqueVirtualPendenteCarregando],
   );
 
   const needsSalesVelocity = useMemo(() => {
