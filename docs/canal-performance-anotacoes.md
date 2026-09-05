@@ -144,6 +144,15 @@ Meta saudável LCP: **&lt; 2,5 s**. INP (~152 ms) está aceitável — o gargalo
 - Comparar LCP no Vercel Preview vs produção (Speed Insights).
 - Pulso opcional: `npm run pulse:corridor` no preview.
 
+### Fase 4 — Dashboard mais rápido (pós Fase 3)
+
+- [x] **Vendas** — eliminar `fetchAllProdutosCatalogo` (catálogo leve sempre via `productCostMap`).
+- [x] **Vendas** — paralelizar fetch (pedidos + config + devoluções em `Promise.all`).
+- [x] **Vendas** — batch `$in` em `fetchPedidosOrigemTrocaMargem` (antes N+1).
+- [x] **Dashboard shell** — lazy-load `VendasTab`/`EstoqueTab`, tab inicial = Vendas, sem `auth.me()` duplicado.
+- [x] **Estoque** — cache do tab 15 min (era 5 min).
+- [ ] **Estoque** — snapshots server-side (próximo passo; tab mais pesado).
+
 ---
 
 ## Manter o canal atualizado
