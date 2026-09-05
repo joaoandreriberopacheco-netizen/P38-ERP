@@ -396,25 +396,29 @@ export async function fetchPedidosOrigemTrocaMargem(devolucoes = []) {
   if (!ids.length) return map;
 
   const dataKey = isoDiasAtrasDateKey(3650);
-  const CONCURRENCY = 8;
+  const CHUNK_SIZE = 40;
 
-  async function fetchOne(id) {
+  for (let i = 0; i < ids.length; i += CHUNK_SIZE) {
+    const chunk = ids.slice(i, i + CHUNK_SIZE);
     try {
-      const batch = await base44.entities.PedidoVenda.filter({ id });
-      const pedido = rowsFromApi(batch)[0];
-      if (!pedido) return null;
-      const [hidratado] = await hidratarPedidosSemItens([pedido], dataKey);
-      return hidratado ? [String(id), hidratado] : null;
+      const batch = await base44.entities.PedidoVenda.filter({ id: { $in: chunk } });
+      const rows = rowsFromApi(batch);
+      const hidratados = await hidratarPedidosSemItens(rows, dataKey);
+      for (const pedido of hidratados) {
+        if (pedido?.id) map[String(pedido.id)] = pedido;
+      }
     } catch {
-      return null;
-    }
-  }
-
-  for (let i = 0; i < ids.length; i += CONCURRENCY) {
-    const chunk = ids.slice(i, i + CONCURRENCY);
-    const results = await Promise.all(chunk.map(fetchOne));
-    for (const entry of results) {
-      if (entry) map[entry[0]] = entry[1];
+      for (const id of chunk) {
+        try {
+          const batch = await base44.entities.PedidoVenda.filter({ id });
+          const pedido = rowsFromApi(batch)[0];
+          if (!pedido) continue;
+          const [hidratado] = await hidratarPedidosSemItens([pedido], dataKey);
+          if (hidratado) map[String(id)] = hidratado;
+        } catch {
+          /* skip */
+        }
+      }
     }
   }
 

@@ -1,36 +1,59 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { base44 } from '@/api/base44Client';
+import React, { useState, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
 import { BarChart3, TrendingUp, ShoppingCart, Package, DollarSign } from 'lucide-react';
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
 import P38Logo from '@/components/brand/P38Logo';
 import GeralTab from '@/paiol/components/dashboard/tabs/GeralTab';
-import VendasTab from '@/paiol/components/dashboard/tabs/VendasTab';
 import ComprasTab from '@/paiol/components/dashboard/tabs/ComprasTab';
-import EstoqueTab from '@/paiol/components/dashboard/tabs/EstoqueTab';
 import FinanceiroTab from '@/paiol/components/dashboard/tabs/FinanceiroTab';
 import DashboardVendedor from '@/pages/DashboardVendedor';
 import DashboardCaixa from '@/pages/DashboardCaixa';
 import { P38_SHELL_DESC, P38_SHELL_TITLE } from '@/lib/p38FormTypography';
 import { usePermissoesUsuario } from '@/hooks/usePermissoesUsuario';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const VendasTab = lazy(() => import('@/paiol/components/dashboard/tabs/VendasTab'));
+const EstoqueTab = lazy(() => import('@/paiol/components/dashboard/tabs/EstoqueTab'));
+
+function DashboardTabSkeleton() {
+  return (
+    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4" aria-busy="true">
+      {[1, 2].map((card) => (
+        <div key={card} className="rounded-xl border border-border/40 bg-card p-6 space-y-3">
+          <Skeleton className="h-5 w-48" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function DashboardPage() {
-  const { tem: podePerm } = usePermissoesUsuario();
+  const { tem: podePerm, user: currentUser } = usePermissoesUsuario();
   const podeKpisVendas = podePerm('dashboard.ver_kpis_vendas', 'dashboard.acesso');
   const podeKpisEstoque = podePerm('dashboard.ver_kpis_estoque', 'dashboard.acesso');
   const podeKpisFinanceiro = podePerm('dashboard.ver_kpis_financeiro', 'dashboard.acesso');
   const podeKpisGeral = podePerm('dashboard.acesso');
 
   const defaultTab = useMemo(() => {
-    if (podeKpisGeral) return 'geral';
     if (podeKpisVendas) return 'vendas';
     if (podeKpisEstoque) return 'estoque';
     if (podeKpisFinanceiro) return 'financeiro';
+    if (podeKpisGeral) return 'geral';
     return 'geral';
   }, [podeKpisGeral, podeKpisVendas, podeKpisEstoque, podeKpisFinanceiro]);
 
   const [activeTab, setActiveTab] = useState(defaultTab);
-  const [visitedTabs, setVisitedTabs] = useState(() => new Set(['geral']));
-  const [currentUser, setCurrentUser] = useState(null);
+  const [visitedTabs, setVisitedTabs] = useState(() => new Set([defaultTab]));
+
+  useEffect(() => {
+    setVisitedTabs((prev) => {
+      if (prev.has(defaultTab)) return prev;
+      const next = new Set(prev);
+      next.add(defaultTab);
+      return next;
+    });
+    setActiveTab((prev) => (prev === 'geral' && defaultTab !== 'geral' ? defaultTab : prev));
+  }, [defaultTab]);
 
   const handleTabSelect = useCallback((tab) => {
     setActiveTab(tab);
@@ -40,18 +63,6 @@ export default function DashboardPage() {
       next.add(tab);
       return next;
     });
-  }, []);
-
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const user = await base44.auth.me();
-        setCurrentUser(user);
-      } catch (error) {
-        console.error("Erro ao carregar usuário:", error);
-      }
-    };
-    loadUser();
   }, []);
 
   const perfilLower = currentUser?.perfil?.toLowerCase() || '';
@@ -97,7 +108,9 @@ export default function DashboardPage() {
         )}
         {podeKpisVendas && visitedTabs.has('vendas') && (
           <div hidden={activeTab !== 'vendas'}>
-            <VendasTab enabled={visitedTabs.has('vendas')} />
+            <Suspense fallback={<DashboardTabSkeleton />}>
+              <VendasTab enabled={visitedTabs.has('vendas')} />
+            </Suspense>
           </div>
         )}
         {podeKpisGeral && visitedTabs.has('compras') && (
@@ -107,7 +120,9 @@ export default function DashboardPage() {
         )}
         {podeKpisEstoque && visitedTabs.has('estoque') && (
           <div hidden={activeTab !== 'estoque'}>
-            <EstoqueTab enabled={visitedTabs.has('estoque')} />
+            <Suspense fallback={<DashboardTabSkeleton />}>
+              <EstoqueTab enabled={visitedTabs.has('estoque')} />
+            </Suspense>
           </div>
         )}
         {podeKpisFinanceiro && visitedTabs.has('financeiro') && (

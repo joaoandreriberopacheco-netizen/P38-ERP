@@ -41,7 +41,7 @@ function monthWindowKeys(selectedMonthKey, months = 6) {
   };
 }
 
-async function fetchProdutosCustoPorIds(produtoIds = []) {
+export async function fetchProdutosCustoPorIds(produtoIds = []) {
   const unique = [...new Set((produtoIds || []).filter(Boolean))];
   if (!unique.length) return new Map();
 

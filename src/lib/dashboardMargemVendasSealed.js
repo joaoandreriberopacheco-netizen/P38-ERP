@@ -79,6 +79,6 @@ export function buildProdutosMargemFromCostMap(productCostMap) {
   if (!productCostMap?.size) return [];
   return [...productCostMap.entries()].map(([id, cost]) => ({
     id,
-    custo_total_unitario_base: Number(cost) || 0,
+    preco_custo_calculado: Number(cost) || 0,
   }));
 }
