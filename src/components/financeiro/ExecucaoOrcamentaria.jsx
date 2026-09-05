@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { format, subDays } from 'date-fns';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
@@ -32,9 +34,6 @@ import { dataHoje, formatarSoData, toLocalDateKey } from '@/components/utils/dat
 import { Plus, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Printer } from 'lucide-react';
 import FluxoCaixaPrintDialog from './FluxoCaixaPrintDialog';
 import CorteDiarioDialog from './corte-diario/CorteDiarioDialog';
-import FolhaPrevisaoPage from '@/pages/FolhaPrevisao';
-import PlanejamentoFinanceiroPage from '@/pages/PlanejamentoFinanceiro';
-import BudgetsPage from '@/pages/Budgets';
 import { gerarExtratoFluxoCaixa } from '@/functions/gerarExtratoFluxoCaixa';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
 import LancamentoDetalheDialog from './LancamentoDetalheDialog';
@@ -51,7 +50,6 @@ import {
   GestaoContasKpis,
   GestaoContasPane,
 } from './GestaoContasFinanceiras';
-import AgefinImportador from '../agefin/AgefinImportador';
 import P38ModuleLoadingOverlay from '@/components/ui/P38ModuleLoadingOverlay';
 import ConciliacaoBancaria from './ConciliacaoBancaria';
 import PagamentoLoteDialog from './PagamentoLoteDialog';
@@ -98,9 +96,19 @@ import {
   contasVisiveisFluxo,
   idsFiltroContasFluxo,
 } from '@/lib/buscaFluxoCaixa';
-import { BUDGET_MODULO_LABEL } from '@/lib/budgetCalculos';
 
-// ─── utils ────────────────────────────────────────────────────────────────────
+/** Só Contas e Fluxo — Folha, Budgets e Planejamento têm páginas próprias no menu. */
+const ABAS_FINANCEIRO = [
+  { value: 'caixas', label: 'Caixas e Bancos', shortLabel: 'Contas' },
+  { value: 'fluxo', label: 'Fluxo de Caixa', shortLabel: 'Fluxo' },
+];
+
+const ABA_LEGACY_PAGE = {
+  folha: 'FolhaPrevisao',
+  budgets: 'Budgets',
+  planejamento: 'PlanejamentoFinanceiro',
+  agefin: 'PlanejamentoFinanceiro',
+};
 function parseDateKey(dateKey) {
   return new Date(`${dateKey}T12:00:00-05:00`);
 }
@@ -113,18 +121,6 @@ const FAB_ITEMS = [
   { tipo: 'Transferência', icon: ArrowRightLeft, label: 'Transf.' },
 ];
 
-const ABAS_FINANCEIRO_DESKTOP = [
-  { value: 'caixas', label: 'Caixas e Bancos', shortLabel: 'Contas' },
-  { value: 'fluxo', label: 'Fluxo de Caixa', shortLabel: 'Fluxo' },
-  { value: 'folha', label: 'Folha (previsão)', shortLabel: 'Folha' },
-  { value: 'budgets', label: BUDGET_MODULO_LABEL, shortLabel: 'Gastos' },
-  { value: 'planejamento', label: 'Planejamento', shortLabel: 'Plan.' },
-];
-
-const ABAS_FINANCEIRO_MOBILE = ABAS_FINANCEIRO_DESKTOP.slice(0, 2);
-
-const ABAS_SO_DESKTOP = new Set(['folha', 'budgets', 'planejamento']);
-
 function abaFinanceiroInicial() {
   if (typeof window === 'undefined') return 'caixas';
   const layout = resolveViewportLayout(window.innerWidth, window.innerHeight);
@@ -133,6 +129,7 @@ function abaFinanceiroInicial() {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function ExecucaoOrcamentaria() {
+  const navigate = useNavigate();
   const [lancs, setLancs] = useState([]);
   const [movimentos, setMovimentos] = useState([]);
   /** Base completa para saldo da carteira (período filtrado não basta). */
@@ -165,7 +162,6 @@ export default function ExecucaoOrcamentaria() {
   });
   const [corteDiarioInitial, setCorteDiarioInitial] = useState(null);
   const [aba, setAba] = useState(abaFinanceiroInicial);
-  const [showImportadorAgefin, setShowImportadorAgefin] = useState(false);
   const [mostrarProgramadas, setMostrarProgramadas] = useState(
     () => lerPreferenciasFluxoUnificado().mostrarProgramadas,
   );
@@ -202,11 +198,6 @@ export default function ExecucaoOrcamentaria() {
   });
 
   useEffect(() => {
-    if (!isCompactShell) return;
-    setAba((prev) => (ABAS_SO_DESKTOP.has(prev) ? 'caixas' : prev));
-  }, [isCompactShell]);
-
-  useEffect(() => {
     if (!isCompactShell || !scrollEl) return;
     scrollEl.scrollTop = 0;
   }, [aba, isCompactShell, scrollEl]);
@@ -214,21 +205,14 @@ export default function ExecucaoOrcamentaria() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const abaParam = params.get('aba');
-    const layoutMobile = typeof window !== 'undefined'
-      && resolveViewportLayout(window.innerWidth, window.innerHeight) === 'mobile';
-    if (abaParam === 'folha') {
-      setAba(layoutMobile ? 'caixas' : 'folha');
-    } else if (abaParam === 'budgets') {
-      setAba(layoutMobile ? 'caixas' : 'budgets');
-    } else if (abaParam === 'planejamento' || abaParam === 'agefin') {
-      setAba(layoutMobile ? 'caixas' : 'planejamento');
-    }
-    if (abaParam === 'folha' || abaParam === 'budgets' || abaParam === 'planejamento' || abaParam === 'agefin') {
+    const legacyPage = abaParam ? ABA_LEGACY_PAGE[abaParam] : null;
+    if (legacyPage) {
       params.delete('aba');
-      const next = params.toString();
-      window.history.replaceState({}, '', next ? `${window.location.pathname}?${next}` : window.location.pathname);
+      const qs = params.toString();
+      navigate(`${createPageUrl(legacyPage)}${qs ? `?${qs}` : ''}`, { replace: true });
+      return;
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     // Ler params de URL e abrir dialog ou seletor de tipo (atalho PWA ?novo=1)
@@ -838,9 +822,6 @@ export default function ExecucaoOrcamentaria() {
   }, [buildGruposComFiltros, contasAtivas.length]);
 
   const caixasAtiva = aba === 'caixas';
-  const planejamentoAtiva = aba === 'planejamento';
-  const folhaAtiva = aba === 'folha';
-  const budgetsAtiva = aba === 'budgets';
   const contasSaldoOpcoes = useMemo(
     () => contasAtivas.filter((c) => !isContaTransicao(c)),
     [contasAtivas],
@@ -863,7 +844,7 @@ export default function ExecucaoOrcamentaria() {
     [lancs, movimentos, lancsSaldo, movsSaldo, contas, contasAtivas, loading, contasSaldoSel, atualizarContasSaldoSel, contasSaldoOpcoes],
   );
 
-  const abasPrincipais = isCompactShell ? ABAS_FINANCEIRO_MOBILE : ABAS_FINANCEIRO_DESKTOP;
+  const abasPrincipais = ABAS_FINANCEIRO;
 
   const handleToggleProgramadas = useCallback((next) => {
     setMostrarProgramadas(next);
@@ -1350,32 +1331,6 @@ export default function ExecucaoOrcamentaria() {
             listScrollRef={isCompactShell ? scrollRef : null}
           />
         </div>
-      )}
-
-      {folhaAtiva && <FolhaPrevisaoPage />}
-
-      {budgetsAtiva && <BudgetsPage />}
-
-      {planejamentoAtiva && <PlanejamentoFinanceiroPage />}
-
-      {planejamentoAtiva && (
-        <Dialog open={showImportadorAgefin} onOpenChange={setShowImportadorAgefin}>
-          <DialogContent className="flex h-[100dvh] min-h-0 w-screen max-w-none flex-col overflow-hidden rounded-none border-0 bg-card/95 p-0 shadow-xl backdrop-blur-xl dark:bg-card/95 md:h-auto md:max-h-[92vh] md:w-[min(42rem,calc(100vw-2rem))] md:max-w-2xl md:rounded-3xl">
-            <DialogHeader className="shrink-0 px-5 pt-5 pb-3 border-b border-border/40">
-              <DialogTitle className="text-foreground">Importar conta</DialogTitle>
-            </DialogHeader>
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden overscroll-none">
-              <AgefinImportador
-                onSuccess={(_, options) => {
-                  load();
-                  if (options?.close) {
-                    setShowImportadorAgefin(false);
-                  }
-                }}
-              />
-            </div>
-          </DialogContent>
-        </Dialog>
       )}
 
       <FluxoCaixaPrintDialog
