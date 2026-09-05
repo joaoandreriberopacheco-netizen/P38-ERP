@@ -6,6 +6,7 @@
 import { getSupabaseBrowserClient, isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
 import { getMonthBucketsEndingAt } from '@/lib/dashboardVendasPeriod';
 import { getMonthBuckets, getSupplyMonthBuckets } from '@/lib/dashboardEstoqueData';
+import { sumCatalogTransitStockValueByAbcd } from '@/lib/catalogStockTotals';
 
 const QUALITY_ORDER = ['A', 'B', 'C', 'D', 'E'];
 const QUALITY_LABELS = {
@@ -75,6 +76,50 @@ export async function readDashboardCelulasEstoque(selectedMonthKey, months = 6) 
   }
 }
 
+function buildQualityDistributionGeral(
+  qualityDistribution,
+  produtosLista = [],
+  pendentePorProduto = {},
+  transitoFinanceiroAprovado = 0,
+) {
+  if (produtosLista.length && Object.keys(pendentePorProduto).length) {
+    const transitByAbcd = sumCatalogTransitStockValueByAbcd(produtosLista, pendentePorProduto);
+    const totalGeral = QUALITY_ORDER.reduce((sum, key) => {
+      const fisico = qualityDistribution.find((bucket) => bucket.key === key)?.valor ?? 0;
+      return sum + fisico + (transitByAbcd[key] || 0);
+    }, 0);
+    return QUALITY_ORDER.map((key) => {
+      const valorFisico = qualityDistribution.find((bucket) => bucket.key === key)?.valor ?? 0;
+      const valor = valorFisico + (transitByAbcd[key] || 0);
+      const share = totalGeral > 0 ? valor / totalGeral : 0;
+      const base = qualityDistribution.find((bucket) => bucket.key === key);
+      return {
+        ...base,
+        valor,
+        share,
+        percentText: PERCENT.format(share),
+      };
+    });
+  }
+
+  const estoqueFisico = qualityDistribution.reduce((sum, bucket) => sum + Number(bucket.valor || 0), 0);
+  if (transitoFinanceiroAprovado > 0 && estoqueFisico > 0) {
+    const totalGeral = estoqueFisico + transitoFinanceiroAprovado;
+    return qualityDistribution.map((bucket) => {
+      const valor = bucket.valor + (transitoFinanceiroAprovado * (bucket.share || 0));
+      const share = totalGeral > 0 ? valor / totalGeral : 0;
+      return {
+        ...bucket,
+        valor,
+        share,
+        percentText: PERCENT.format(share),
+      };
+    });
+  }
+
+  return qualityDistribution.map((bucket) => ({ ...bucket }));
+}
+
 function mapQualityFromCelula(qualityByAbcd = {}) {
   const accumulator = { A: 0, B: 0, C: 0, D: 0, E: 0 };
   for (const key of QUALITY_ORDER) {
@@ -95,25 +140,31 @@ function mapQualityFromCelula(qualityByAbcd = {}) {
     };
   });
 
-  const qualityDistributionGeral = qualityDistribution.map((bucket) => ({
-    ...bucket,
-    percentText: bucket.percentText,
-  }));
-
-  return { qualityDistribution, qualityDistributionGeral };
+  return { qualityDistribution };
 }
 
 /**
  * Converte resumo de células + trânsito live (compras) para métricas da EstoqueTab.
  */
-export function buildEstoqueResumoFromCelulas(celulasData, transitOverlay = null) {
+export function buildEstoqueResumoFromCelulas(
+  celulasData,
+  transitOverlay = null,
+  produtosLista = [],
+  pendentePorProduto = {},
+) {
   const resumo = celulasData?.resumo;
   if (resumo?.estoqueFisico == null && !resumo?.qualityByAbcd) return null;
 
-  const { qualityDistribution, qualityDistributionGeral } = mapQualityFromCelula(resumo.qualityByAbcd || {});
+  const { qualityDistribution } = mapQualityFromCelula(resumo.qualityByAbcd || {});
   const estoqueFisico = Number(resumo.estoqueFisico) || 0;
   const transitoFinanceiroAprovado = Number(transitOverlay?.transitoFinanceiroAprovado ?? resumo.transitoFinanceiroAprovado) || 0;
   const totalLocalizacao = estoqueFisico + transitoFinanceiroAprovado;
+  const qualityDistributionGeral = buildQualityDistributionGeral(
+    qualityDistribution,
+    produtosLista,
+    pendentePorProduto,
+    transitoFinanceiroAprovado,
+  );
 
   return {
     qualityDistribution,
@@ -123,6 +174,19 @@ export function buildEstoqueResumoFromCelulas(celulasData, transitOverlay = null
     totalLocalizacao,
     fromCelulas: true,
   };
+}
+
+/** Atualiza barra do mês corrente com estoque virtual (trânsito aprovado). */
+export function patchEstoqueHistoricoVirtualMesAtual(historico, totalLocalizacao, estoqueFisico) {
+  if (!historico?.nivelEstoqueSeries?.length) return historico;
+  const series = [...historico.nivelEstoqueSeries];
+  const lastIdx = series.length - 1;
+  series[lastIdx] = {
+    ...series[lastIdx],
+    valorFisico: estoqueFisico,
+    valorGeral: totalLocalizacao,
+  };
+  return { ...historico, nivelEstoqueSeries: series };
 }
 
 /**

@@ -33,6 +33,7 @@ import { getCurrentMonthKey } from '@/lib/dashboardVendasPeriod';
 import {
   buildEstoqueHistoricoFromCelulas,
   buildEstoqueResumoFromCelulas,
+  patchEstoqueHistoricoVirtualMesAtual,
   readDashboardCelulasEstoque,
 } from '@/lib/dashboardCelulasApi';
 import {
@@ -477,8 +478,13 @@ export async function fetchDashboardEstoqueResumo(queryClient) {
   const celulas = await readDashboardCelulasEstoque(getCurrentMonthKey(), 6);
 
   if (celulas?.complete && celulas?.resumo?.estoqueFisico != null) {
-    const { transitOverlay } = await fetchTransitOverlayFromCompras(queryClient);
-    const fromCelulas = buildEstoqueResumoFromCelulas(celulas, transitOverlay);
+    const { transitOverlay, produtosLista, pendentePorProdutoCatalogo } = await fetchTransitOverlayFromCompras(queryClient);
+    const fromCelulas = buildEstoqueResumoFromCelulas(
+      celulas,
+      transitOverlay,
+      produtosLista,
+      pendentePorProdutoCatalogo,
+    );
     if (fromCelulas) return fromCelulas;
   }
 
@@ -510,8 +516,16 @@ export async function fetchDashboardEstoqueResumo(queryClient) {
 /** Gráficos pesados: nível mensal + razão de abastecimento. */
 export async function fetchDashboardEstoqueHistorico(queryClient) {
   const celulas = await readDashboardCelulasEstoque(getCurrentMonthKey(), 6);
-  const fromCelulas = buildEstoqueHistoricoFromCelulas(celulas);
-  if (fromCelulas) return fromCelulas;
+  let fromCelulas = buildEstoqueHistoricoFromCelulas(celulas);
+  if (fromCelulas) {
+    const { transitOverlay, produtosLista, pendentePorProdutoCatalogo } = await fetchTransitOverlayFromCompras(queryClient);
+    const { totalLocalizacao, estoqueFisico } = computeEstoqueLocalizacaoValores(
+      produtosLista,
+      pendentePorProdutoCatalogo,
+    );
+    fromCelulas = patchEstoqueHistoricoVirtualMesAtual(fromCelulas, totalLocalizacao, estoqueFisico);
+    return fromCelulas;
+  }
 
   const monthBuckets = getMonthBuckets();
   const supplyMonthBuckets = getSupplyMonthBuckets();
