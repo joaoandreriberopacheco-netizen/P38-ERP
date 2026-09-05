@@ -15,9 +15,9 @@ const DEFAULT_REVEAL_AFTER_UP_PX = 420;
  * Mostra/esconde chrome superior conforme direção do scroll num contentor interno.
  *
  * Modos (melhores práticas leitura mobile):
- * - `top-only` — só reaparece ao chegar ao topo (menos invasivo; padrão Embarques)
+ * - `top-only` — só reaparece ao chegar ao topo da lista
  * - `long-up` — topo OU ~420px acumulados para cima
- * - `immediate-up` — qualquer scroll para cima (legado)
+ * - `immediate-up` — qualquer scroll para cima (listas mobile: Embarques, Financeiro, Vendas)
  *
  * @param {boolean} enabled
  * @param {{
@@ -57,17 +57,18 @@ export function useScrollChromeVisibility(enabled = true, options = {}) {
       const y = scrollEl.scrollTop;
       const maxY = scrollEl.scrollHeight - scrollEl.clientHeight;
       const delta = y - lastYRef.current;
-      if (Math.abs(delta) < minDelta) return;
-
       const atBottom = maxY > 0 && y >= maxY - SCROLL_EDGE_PX;
       const atTop = y <= revealNearTopY;
 
+      // Topo/fundo primeiro — mesmo com micro-movimento (evita header preso ao chegar no início)
       if (atTop) {
         setVisible(true);
         accumulatedUpRef.current = 0;
         lastYRef.current = y;
         return;
       }
+
+      if (Math.abs(delta) < minDelta) return;
 
       if (atBottom && delta > 0) {
         lastYRef.current = y;

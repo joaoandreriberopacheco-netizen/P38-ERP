@@ -480,7 +480,7 @@ function VendasGestaoPage() {
 
   const isPhone = useCompactShell();
   const { chromeVisible, scrollRef, scrollEl } = useScrollChromeVisibility(isPhone, {
-    revealMode: 'top-only',
+    revealMode: 'immediate-up',
   });
   const { invalidateHomeKpis } = useP38QueryInvalidation();
   const [dataInicio, setDataInicio] = useState(() => getVendasGestaoPeriodoPadrao().start);

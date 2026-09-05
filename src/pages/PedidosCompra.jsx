@@ -262,7 +262,7 @@ function ComprasViewTabsInline({ activeView, onSelect, dataTour }) {
 export default function PedidosCompraPage() {
   const isPhone = useCompactShell();
   const { chromeVisible, scrollRef } = useScrollChromeVisibility(isPhone, {
-    revealMode: 'top-only',
+    revealMode: 'immediate-up',
   });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
