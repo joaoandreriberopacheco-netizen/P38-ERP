@@ -329,6 +329,12 @@ html[data-p38-bottom-nav-hidden] {
     transition: padding-bottom 0.3s ease-out;
   }
 
+  /* Lista com FAB fixo (nav já docked no flex — só folga para o botão +) */
+  .p38-scroll-pad-fab {
+    padding-bottom: calc(var(--p38-fab-size) + var(--p38-fab-gap) + 1rem);
+    transition: padding-bottom 0.3s ease-out;
+  }
+
   /* Scroll oculto de propósito (tabs horizontais, carrosséis) */
   .no-scrollbar,
   .scrollbar-hide {

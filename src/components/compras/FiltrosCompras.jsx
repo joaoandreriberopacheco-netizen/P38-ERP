@@ -688,7 +688,7 @@ export default function FiltrosCompras({
               ) : null}
             </DrawerHeader>
 
-            <div className="overflow-y-auto pb-4 -mx-1 px-1 max-h-[calc(92vh-9rem)]">
+            <div className="p38-stage-panel-scroll overflow-y-auto pb-4 -mx-1 px-1 max-h-[calc(92vh-9rem)]">
               <FiltrosComprasPainel {...painelProps} layout="drawer" />
             </div>
 

@@ -40,17 +40,22 @@ export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentP
     }
   };
 
+  const dockedHidden = docked && !visible;
+
   return (
     <nav 
       className={cn(
-        docked ? 'relative shrink-0 w-full' : 'fixed bottom-0 left-0 right-0',
+        docked
+          ? 'relative shrink-0 w-full max-h-[calc(68px+env(safe-area-inset-bottom,0px))]'
+          : 'fixed bottom-0 left-0 right-0',
         'z-50 sidebar-shell:hidden bg-background/96 backdrop-blur-xl border-t border-border/80 font-din-1451',
-        'transition-transform duration-300 ease-out will-change-transform',
-        !visible && 'translate-y-full pointer-events-none'
+        'transition-[transform,max-height,opacity,border-color] duration-300 ease-out will-change-transform',
+        dockedHidden && 'max-h-0 overflow-hidden border-transparent opacity-0 pointer-events-none',
+        !docked && !visible && 'translate-y-full pointer-events-none',
       )}
       style={{ 
-        paddingBottom: skipSafeArea ? 0 : 'env(safe-area-inset-bottom)',
-        boxShadow: '0 -6px 24px -12px rgba(0,0,0,0.18)'
+        paddingBottom: dockedHidden || skipSafeArea ? 0 : 'env(safe-area-inset-bottom)',
+        boxShadow: dockedHidden ? 'none' : '0 -6px 24px -12px rgba(0,0,0,0.18)',
       }}
       aria-hidden={!visible}
     >

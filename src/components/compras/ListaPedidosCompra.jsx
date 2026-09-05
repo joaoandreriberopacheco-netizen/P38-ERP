@@ -211,7 +211,7 @@ function EmbarqueListaCard({
             }
           }}
           className={cn(
-            'w-full text-left hover:bg-muted/20 transition-colors min-w-0 py-3 pr-1 pl-2 cursor-pointer border-l',
+            'w-full text-left hover:bg-muted/20 active:bg-muted/30 transition-colors min-w-0 py-3 pr-1 pl-2 cursor-pointer border-l touch-manipulation',
             EMBARQUE_HIER.sep,
             comprasStatusBorderClass(displayStatus, pedido.status),
           )}
@@ -334,7 +334,7 @@ function GrupoDia({ label, groupDate, groupCarrier, pedidos, onEdit, onDelete, s
         type="button"
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          'w-full min-w-0 text-left overflow-hidden flex items-start gap-2 py-2.5',
+          'w-full min-w-0 text-left overflow-hidden flex items-start gap-2 py-2.5 touch-manipulation active:bg-muted/15',
           EMBARQUE_HIER.sep,
         )}
       >

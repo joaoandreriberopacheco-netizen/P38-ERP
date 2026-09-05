@@ -681,7 +681,7 @@ export default function PedidosCompraPage() {
                 </div>
                 {activeView === 'embarques' || activeView === 'consulta' ? (
                   <div
-                    className="flex items-center gap-2 justify-end flex-nowrap max-w-full overflow-x-auto"
+                    className="flex items-center gap-2 justify-end flex-nowrap max-w-full overflow-x-auto overscroll-x-contain touch-pan-x no-scrollbar"
                     data-tour={activeView === 'consulta' ? 'consulta-relatorios' : 'embarques-operacoes'}
                   >
                     <P38TourFab
@@ -731,7 +731,10 @@ export default function PedidosCompraPage() {
             </div>
           </P38ScrollChromeCollapse>
 
-          <div className="shrink-0 px-4 pb-2" data-tour={activeView === 'consulta' ? 'consulta-filtros' : 'embarques-filtros'}>
+          <div
+            className="shrink-0 z-10 border-b border-border/25 bg-background/95 px-4 pb-2 backdrop-blur-sm"
+            data-tour={activeView === 'consulta' ? 'consulta-filtros' : 'embarques-filtros'}
+          >
             <FiltrosCompras
               mobileLeading={(
                 <ComprasViewTabsInline
@@ -774,7 +777,7 @@ export default function PedidosCompraPage() {
 
           <div
             ref={scrollRef}
-            className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y px-4 pb-4"
+            className="flex-1 min-h-0 min-w-0 p38-stage-panel-scroll overflow-x-hidden touch-pan-y px-4 p38-scroll-pad-fab"
           >
             {activeView === 'embarques' ? (
               <div data-tour="embarques-lista">
