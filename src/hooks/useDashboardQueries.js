@@ -2,8 +2,9 @@ import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-quer
 import { base44 } from '@/api/base44Client';
 import { fetchDashboardVendasPeriodo, fetchProdutosCustoPorIds } from '@/lib/fetchDashboardVendas';
 import { fetchPedidosOrigemTrocaMargem } from '@/lib/fetchPedidosVenda90d';
-import { buildProdutosMargemFromCostMap } from '@/lib/dashboardMargemVendasSealed';
+import { buildProdutosMargemFromCostMap, isMonthCoveredAteOntem } from '@/lib/dashboardMargemVendasSealed';
 import { getDashboardEstoqueStaleTime, getDashboardVendasStaleTime } from '@/lib/dashboardIncrementalCache';
+import { getMonthBucketsEndingAt } from '@/lib/dashboardVendasPeriod';
 import { normalizeDashboardKpiConfig } from '@/lib/dashboardKpiConfig';
 import {
   fetchDashboardEstoqueHistorico,
@@ -44,8 +45,10 @@ function pedidosPrecisamDevolucoesTroca(pedidos = []) {
   });
 }
 
-function sealedMonthsCobreJanela(sealedMonths = {}, minMonths = 4) {
-  return Object.keys(sealedMonths || {}).length >= minMonths;
+function passadoAteOntemCobertoPorSnapshots(sealedMonths = {}, selectedMonthKey, months = 6) {
+  const buckets = getMonthBucketsEndingAt(selectedMonthKey, months);
+  if (!buckets.length) return false;
+  return buckets.every((b) => isMonthCoveredAteOntem(b.key, sealedMonths));
 }
 
 async function ensureConfiguracoesVenda(queryClient) {
@@ -65,7 +68,8 @@ export async function fetchDashboardVendasBundle(selectedMonthKey, queryClient) 
 
   const pedidos = dashboardData.pedidos || [];
   const podeOmitirDevolucoes =
-    sealedMonthsCobreJanela(dashboardData.sealedMonths) && !pedidosPrecisamDevolucoesTroca(pedidos);
+    passadoAteOntemCobertoPorSnapshots(dashboardData.sealedMonths, selectedMonthKey)
+    && !pedidosPrecisamDevolucoesTroca(pedidos);
 
   let devolucoes = [];
   let pedidosOrigemTroca = {};

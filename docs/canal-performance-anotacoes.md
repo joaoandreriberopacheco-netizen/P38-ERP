@@ -193,6 +193,33 @@ Ou via Edge Function `fechar-dashboard-kpi` / cron `job_fechar_p38_anotacao_onte
 4. **Margem** — unificar `margem_competencia_snapshot` com `vendas:YYYY-MM`.
 5. **Merge canal → `main`** — quando preview aprovado e Pulse verde.
 
+### Fase 6 — Validar ganho + expandir (em curso)
+
+- [x] **Sanity** — `npm run dashboard:celulas-sanity` (célula `vendas:YYYY-MM` vs `dashboard_kpi_mensal`).
+- [x] **Home** — RPC `home_kpi_read` (SQL Postgres; fallback Base44).
+- [x] **Vendas Gestão** — merge híbrido (**passado até ontem** da anotação + **só hoje** live).
+- [x] **Backfill vendas_gestao** — `npm run anotacao:vendas-gestao-backfill`.
+- [ ] **Medir LCP** no preview vs produção.
+- [ ] **Compras** — evitar fetch pesado quando `compras:gestao-resumo` bater.
+- [ ] **Margem** — unificar snapshot com `vendas:YYYY-MM`.
+- [ ] **Merge canal → `main`**.
+
+**Comandos Fase 6:**
+
+```bash
+npm run db:apply-migrations
+npm run dashboard:celulas-sanity
+npm run anotacao:vendas-gestao-backfill
+```
+
+### Fase 7 — Publicar + páginas operacionais (próxima)
+
+1. Merge PR canal → `main` (após LCP aprovado no preview).
+2. **Compras** — lista inicial só com metadados `compras:gestao-resumo` + fetch incremental.
+3. **PDV** — invalidação por `catalogVersion` já existe; medir impacto.
+4. **Pulse diário** — incluir `dashboard:celulas-sanity` no workflow opcional.
+5. **Margem / Budgets / Dízimo** — competência fechada via células `vendas:YYYY-MM`.
+
 ### Onde mais aplicar células (roadmap)
 
 | Área | Domínio / peça existente | Célula sugerida |

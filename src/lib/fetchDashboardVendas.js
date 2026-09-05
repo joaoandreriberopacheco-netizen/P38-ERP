@@ -8,9 +8,9 @@ import {
 } from '@/lib/dashboardVendasPeriod';
 import {
   fetchDashboardVendasSnapshotsForWindow,
-  planSealedMonthKeys,
   sealedMonthsFromSnapshotMap,
 } from '@/lib/dashboardKpiSnapshotApi';
+import { isMonthCoveredAteOntem } from '@/lib/dashboardMargemVendasSealed';
 import {
   mergeSealedMonthsFromCelulas,
   readDashboardCelulasVendas,
@@ -199,24 +199,24 @@ export async function fetchDashboardVendasPeriodo({
 
   const sealedMonthsFromKpi = sealedMonthsFromSnapshotMap(snapshotMap);
   const sealedMonths = mergeSealedMonthsFromCelulas(
-    celulasVendas?.complete ? celulasVendas.sealedMonths : (celulasVendas?.sealedMonths || {}),
+    celulasVendas?.sealedMonths || {},
     sealedMonthsFromKpi,
   );
 
-  const sealedMonthKeys = new Set([
-    ...planSealedMonthKeys(snapshotMap, selectedMonthKey, months),
-    ...getMonthBucketsEndingAt(selectedMonthKey, months)
+  const sealedMonthKeys = new Set(
+    getMonthBucketsEndingAt(selectedMonthKey, months)
       .map((b) => b.key)
-      .filter((key) => Boolean(sealedMonths[key]?.monthlyTotals)),
-  ]);
+      .filter((key) => isMonthCoveredAteOntem(key, sealedMonths)),
+  );
 
   const buckets = getMonthBucketsEndingAt(selectedMonthKey, months);
-  const allMonthsSealed = buckets.length > 0 && buckets.every((b) => sealedMonthKeys.has(b.key));
+  const passadoCoberto = buckets.length > 0
+    && buckets.every((b) => isMonthCoveredAteOntem(b.key, sealedMonths));
   const plan = planDashboardVendasFetchRanges(selectedMonthKey, months);
 
   let pedidos;
 
-  if (allMonthsSealed) {
+  if (passadoCoberto) {
     pedidos = plan.hoje
       ? await fetchPedidosVendaHydratedRange(plan.hoje.dataInicio, plan.hoje.dataFim, 500)
       : [];

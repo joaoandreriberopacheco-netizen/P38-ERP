@@ -1,6 +1,6 @@
 import { base44 } from '@/api/base44Client';
 import { inicioDiaSistemaISO, fimDiaSistemaISO } from '@/components/utils/dateUtils';
-import { readVendasGestaoAnotacaoForRange } from '@/lib/p38AnotacaoApi';
+import { readVendasGestaoAnotacaoPartial } from '@/lib/p38AnotacaoApi';
 
 const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -22,6 +22,36 @@ function normalizeListResult(rows) {
   return Array.isArray(rows) ? rows : [];
 }
 
+function sortGestaoRows(rows, sort = '-created_date') {
+  const list = [...rows];
+  if (sort === '-created_date') {
+    list.sort((a, b) => String(b.created_date || '').localeCompare(String(a.created_date || '')));
+  }
+  return list;
+}
+
+function mergeGestaoRowsById(sealed = [], live = []) {
+  const byId = new Map();
+  for (const row of [...sealed, ...live]) {
+    if (row?.id) byId.set(row.id, row);
+  }
+  return [...byId.values()];
+}
+
+async function fetchLivePedidosHeaders(dataInicio, dataFim, sort) {
+  const created_date = buildCreatedDateFilter(dataInicio, dataFim);
+  if (!created_date) return [];
+  const rows = await base44.entities.PedidoVenda.filter({ created_date }, sort);
+  return normalizeListResult(rows);
+}
+
+async function fetchLiveRascunhosHeaders(dataInicio, dataFim, sort) {
+  const created_date = buildCreatedDateFilter(dataInicio, dataFim);
+  if (!created_date) return [];
+  const rows = await base44.entities.RascunhoPedidoVenda.filter({ created_date }, sort);
+  return normalizeListResult(rows);
+}
+
 /** Cabeçalhos de pedidos de venda no período — sem hidratar itens (Gestão de Vendas). */
 export async function fetchPedidosVendaGestaoHeaders({
   dataInicio,
@@ -32,17 +62,25 @@ export async function fetchPedidosVendaGestaoHeaders({
     return [];
   }
 
-  const sealed = await readVendasGestaoAnotacaoForRange(dataInicio, dataFim);
-  if (sealed?.complete) {
-    return sealed.headers;
+  const partial = await readVendasGestaoAnotacaoPartial(dataInicio, dataFim);
+  if (partial?.complete) {
+    return sortGestaoRows(partial.headers, sort);
   }
 
-  const created_date = buildCreatedDateFilter(dataInicio, dataFim);
-  if (!created_date) {
-    return [];
+  if (partial?.liveRange) {
+    const live = await fetchLivePedidosHeaders(
+      partial.liveRange.dataInicio,
+      partial.liveRange.dataFim,
+      sort,
+    );
+    return sortGestaoRows(mergeGestaoRowsById(partial.headers, live), sort);
   }
-  const rows = await base44.entities.PedidoVenda.filter({ created_date }, sort);
-  return normalizeListResult(rows);
+
+  if (partial?.headers?.length) {
+    return sortGestaoRows(partial.headers, sort);
+  }
+
+  return fetchLivePedidosHeaders(dataInicio, dataFim, sort);
 }
 
 /** Cabeçalhos de rascunhos no período — sem hidratar itens (Gestão de Vendas). */
@@ -55,15 +93,23 @@ export async function fetchRascunhosPedidoVendaGestaoHeaders({
     return [];
   }
 
-  const sealed = await readVendasGestaoAnotacaoForRange(dataInicio, dataFim);
-  if (sealed?.complete) {
-    return sealed.rascunhos;
+  const partial = await readVendasGestaoAnotacaoPartial(dataInicio, dataFim);
+  if (partial?.complete) {
+    return sortGestaoRows(partial.rascunhos, sort);
   }
 
-  const created_date = buildCreatedDateFilter(dataInicio, dataFim);
-  if (!created_date) {
-    return [];
+  if (partial?.liveRange) {
+    const live = await fetchLiveRascunhosHeaders(
+      partial.liveRange.dataInicio,
+      partial.liveRange.dataFim,
+      sort,
+    );
+    return sortGestaoRows(mergeGestaoRowsById(partial.rascunhos, live), sort);
   }
-  const rows = await base44.entities.RascunhoPedidoVenda.filter({ created_date }, sort);
-  return normalizeListResult(rows);
+
+  if (partial?.rascunhos?.length) {
+    return sortGestaoRows(partial.rascunhos, sort);
+  }
+
+  return fetchLiveRascunhosHeaders(dataInicio, dataFim, sort);
 }

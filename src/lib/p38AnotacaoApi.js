@@ -5,7 +5,6 @@
 
 import { getSupabaseBrowserClient, isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
 import { dataHoje, dataMenosDiasSistema } from '@/components/utils/dateUtils';
-import { isGestaoPeriodoFechado } from '@/lib/p38GestaoCache';
 
 export const P38_ANOTACAO_DOMAINS = {
   HOME: 'home',
@@ -78,6 +77,28 @@ export async function readHomeAnotacao(dateKey) {
   return { vendasHoje, valorVendasHoje };
 }
 
+/**
+ * Home KPI via Supabase SQL (Fase 6) — anotação selada ou cálculo live no Postgres.
+ * @returns {Promise<{ vendasHoje: number, valorVendasHoje: number }|null>}
+ */
+export async function readHomeKpi(dateKey) {
+  if (!dateKey || !isSupabaseBrowserConfigured()) return null;
+
+  try {
+    const supabase = getSupabaseBrowserClient();
+    const { data, error } = await supabase.rpc('home_kpi_read', {
+      p_date_key: dateKey,
+    });
+    if (error || !data?.dateKey) return null;
+    return {
+      vendasHoje: Number(data.vendasHoje) || 0,
+      valorVendasHoje: Number(data.valorVendasHoje) || 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /** Versão do catálogo para invalidar cache React Query do PDV. */
 export async function readCatalogoAnotacaoVersion() {
   const row = await readP38Anotacao(P38_ANOTACAO_DOMAINS.CATALOGO, 'current');
@@ -118,36 +139,101 @@ function filterHeadersByRange(headers, dataInicio, dataFim) {
   });
 }
 
+function normalizeGestaoHeader(row = {}) {
+  return {
+    ...row,
+    valor_total: row.valor_total ?? row.total ?? 0,
+    total: row.total ?? row.valor_total ?? 0,
+    pagamentos: row.pagamentos ?? row.dados?.pagamentos ?? [],
+    vendedor_nome: row.vendedor_nome ?? row.dados?.vendedor_nome ?? null,
+  };
+}
+
+function normalizeGestaoRascunho(row = {}) {
+  return {
+    ...row,
+    valor_total: row.valor_total ?? row.total ?? 0,
+    senha_atendimento: row.senha_atendimento ?? row.dados?.senha_atendimento ?? null,
+    vendedor_nome: row.vendedor_nome ?? row.dados?.vendedor_nome ?? null,
+  };
+}
+
+function splitGestaoRangeAteOntem(dataInicio, dataFim) {
+  const hoje = dataHoje();
+  const ontem = dataMenosDiasSistema(1);
+
+  let pastStart = null;
+  let pastEnd = null;
+  if (dataInicio <= ontem) {
+    pastStart = dataInicio;
+    pastEnd = dataFim <= ontem ? dataFim : ontem;
+  }
+
+  let liveRange = null;
+  if (dataFim >= hoje) {
+    const liveStart = dataInicio > hoje ? dataInicio : hoje;
+    if (liveStart <= dataFim) {
+      liveRange = { dataInicio: liveStart, dataFim };
+    }
+  }
+
+  return { pastStart, pastEnd, liveRange };
+}
+
 /**
- * Cabeçalhos de gestão de vendas a partir de anotações mensais seladas.
- * @returns {Promise<{ headers: object[], rascunhos: object[], complete: boolean }|null>}
+ * Cabeçalhos parciais de gestão — passado até ontem (anotação) + só hoje live.
+ * @returns {Promise<{ headers: object[], rascunhos: object[], liveRange: object|null, complete: boolean }|null>}
  */
-export async function readVendasGestaoAnotacaoForRange(dataInicio, dataFim) {
-  if (!dataInicio || !dataFim || !isGestaoPeriodoFechado(dataFim)) return null;
+export async function readVendasGestaoAnotacaoPartial(dataInicio, dataFim) {
+  if (!dataInicio || !dataFim) return null;
 
-  const monthKeys = monthKeysBetween(dataInicio, dataFim);
-  if (!monthKeys.length) return null;
-
-  const currentMonth = dataHoje().slice(0, 7);
-  const sealedKeys = monthKeys.filter((k) => k < currentMonth || isGestaoPeriodoFechado(dataFim));
-  if (!sealedKeys.length) return null;
-
-  const map = await readP38AnotacaoMany(P38_ANOTACAO_DOMAINS.VENDAS_GESTAO, sealedKeys);
-  if (!map.size) return null;
-
+  const { pastStart, pastEnd, liveRange } = splitGestaoRangeAteOntem(dataInicio, dataFim);
   const headers = [];
   const rascunhos = [];
-  for (const key of sealedKeys) {
-    const payload = map.get(key);
-    if (!payload) return null;
-    headers.push(...filterHeadersByRange(payload.headers, dataInicio, dataFim));
-    rascunhos.push(...filterHeadersByRange(payload.rascunhos, dataInicio, dataFim));
+  let pastComplete = !pastStart;
+
+  if (pastStart && pastEnd) {
+    const monthKeys = monthKeysBetween(pastStart, pastEnd);
+    if (!monthKeys.length) {
+      pastComplete = true;
+    } else {
+      const map = await readP38AnotacaoMany(P38_ANOTACAO_DOMAINS.VENDAS_GESTAO, monthKeys);
+      pastComplete = true;
+      for (const key of monthKeys) {
+        const payload = map.get(key);
+        if (!payload) {
+          pastComplete = false;
+          continue;
+        }
+        headers.push(
+          ...filterHeadersByRange(payload.headers, pastStart, pastEnd).map(normalizeGestaoHeader),
+        );
+        rascunhos.push(
+          ...filterHeadersByRange(payload.rascunhos, pastStart, pastEnd).map(normalizeGestaoRascunho),
+        );
+      }
+    }
   }
 
   return {
     headers,
     rascunhos,
-    complete: sealedKeys.length === monthKeys.length,
+    liveRange,
+    complete: !liveRange && pastComplete,
+  };
+}
+
+/**
+ * Cabeçalhos de gestão de vendas a partir de anotações mensais seladas.
+ * @returns {Promise<{ headers: object[], rascunhos: object[], complete: boolean }|null>}
+ */
+export async function readVendasGestaoAnotacaoForRange(dataInicio, dataFim) {
+  const partial = await readVendasGestaoAnotacaoPartial(dataInicio, dataFim);
+  if (!partial?.complete) return null;
+  return {
+    headers: partial.headers,
+    rascunhos: partial.rascunhos,
+    complete: true,
   };
 }
 

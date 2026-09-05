@@ -5,6 +5,7 @@
 
 import { format, getDate } from 'date-fns';
 import { getCurrentMonthKey } from '@/lib/dashboardVendasPeriod';
+import { getOntemDateKey } from '@/lib/dashboardIncrementalCache';
 
 function emptyMonthlyTotals() {
   return {
@@ -56,6 +57,20 @@ export function mergeSealedVendasIntoBuckets(monthBuckets6, sealedMonths = {}) {
   }
 
   return { salesByMonthDay, profitByMonthDay, monthlyTotals };
+}
+
+/** Mês coberto por snapshot/célula até ontem (passado); mês corrente exige closedThrough ≥ ontem. */
+export function isMonthCoveredAteOntem(monthKey, sealedMonths = {}) {
+  const seal = sealedMonths[monthKey];
+  if (!seal?.monthlyTotals) return false;
+
+  const currentKey = getCurrentMonthKey();
+  if (monthKey < currentKey) return true;
+  if (monthKey > currentKey) return false;
+
+  const ontem = getOntemDateKey();
+  const closedThrough = String(seal.closedThrough || '').slice(0, 10);
+  return closedThrough >= ontem;
 }
 
 /** Venda já contabilizada no snapshot (não somar de novo a partir dos pedidos). */

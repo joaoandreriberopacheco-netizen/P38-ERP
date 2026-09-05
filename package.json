@@ -88,6 +88,8 @@
     "estoque:atualizar-metas": "node scripts/invoke-atualizar-metas-estoque.mjs",
     "dashboard:kpi-backfill": "node scripts/dashboard-kpi-backfill.mjs",
     "dashboard:celulas-backfill": "node scripts/dashboard-celulas-backfill.mjs",
+    "dashboard:celulas-sanity": "node scripts/dashboard-celulas-sanity.mjs",
+    "anotacao:vendas-gestao-backfill": "node scripts/anotacao-vendas-gestao-backfill.mjs",
     "abcd:limpar": "node scripts/limpar-abcd-job-produtos.mjs",
     "abcd:limpar-console": "node scripts/limpar-abcd-job-console.mjs",
     "reserva:listar": "node scripts/reativar-reserva-portal.mjs",

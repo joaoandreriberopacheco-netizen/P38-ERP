@@ -1,10 +1,10 @@
-import { dataMenosDiasSistema } from '@/components/utils/dateUtils';
+import { dataHoje } from '@/components/utils/dateUtils';
 import { isValidGestaoDateKey } from '@/lib/fetchPedidosVendaGestao';
 
-/** Período civilmente fechado: data fim anterior a ontem (Tabatinga). */
+/** Período sem hoje: passado até ontem (Tabatinga). */
 export function isGestaoPeriodoFechado(dataFim) {
   if (!isValidGestaoDateKey(dataFim)) return false;
-  return dataFim < dataMenosDiasSistema(1);
+  return dataFim < dataHoje();
 }
 
 /** staleTime React Query para listas de gestão por intervalo de datas. */

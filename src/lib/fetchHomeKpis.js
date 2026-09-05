@@ -2,7 +2,7 @@ import { base44 } from '@/api/base44Client';
 import { inicioDiaSistemaISO, fimDiaSistemaISO, dataHoje } from '@/components/utils/dateUtils';
 import { resolveValorPedidoVenda, roundToTwoDecimals } from '@/lib/financialUtils';
 import { filterPedidosVendaElegiblesKpi } from '@/lib/pedidoVendaEligibility';
-import { readHomeAnotacao } from '@/lib/p38AnotacaoApi';
+import { readHomeKpi } from '@/lib/p38AnotacaoApi';
 
 const PEDIDO_VENDA = () => base44.entities.PedidoVenda;
 
@@ -16,13 +16,12 @@ function somarVendasHoje(pedidos = []) {
   };
 }
 
-/** Vendas do dia civil (Tabatinga) — só pedidos de hoje, sem hidratar itens. */
+/** Vendas do dia civil (Tabatinga) — Supabase SQL (Fase 6) com fallback Base44. */
 export async function fetchHomeVendasHoje(dateKey) {
   const key = dateKey || dataHoje();
-  if (key < dataHoje()) {
-    const sealed = await readHomeAnotacao(key);
-    if (sealed) return sealed;
-  }
+
+  const fromSupabase = await readHomeKpi(key);
+  if (fromSupabase) return fromSupabase;
 
   const pedidosHoje = await PEDIDO_VENDA().filter({
     created_date: {
