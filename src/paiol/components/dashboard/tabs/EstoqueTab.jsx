@@ -10,7 +10,7 @@ import {
   DASHBOARD_CHART_MARGIN,
 } from '@/lib/dashboardChartLayout';
 import { useDashboardChartTheme } from '@/lib/useDashboardChartTheme';
-import { useDashboardEstoqueQuery } from '@/hooks/useDashboardQueries';
+import { useDashboardEstoqueHistoricoQuery, useDashboardEstoqueResumoQuery } from '@/hooks/useDashboardQueries';
 import { AlertCircle, Gauge, Layers, Package, Truck } from 'lucide-react';
 import {
   Bar,
@@ -84,7 +84,11 @@ function getSupplyOverflowColorByStatus(status) {
 
 export default function EstoqueTab({ enabled = true } = {}) {
   const chartTheme = useDashboardChartTheme();
-  const { data: metrics, isLoading, error } = useDashboardEstoqueQuery({ enabled });
+  const resumoQuery = useDashboardEstoqueResumoQuery({ enabled });
+  const historicoQuery = useDashboardEstoqueHistoricoQuery({ enabled });
+  const metrics = resumoQuery.data
+    ? { ...resumoQuery.data, ...(historicoQuery.data || {}) }
+    : null;
   const [incluirTransitoQualidade, setIncluirTransitoQualidade] = useState(false);
   const [incluirEstoqueVirtualNivel, setIncluirEstoqueVirtualNivel] = useState(false);
   const [isMobile, setIsMobile] = useState(() => {
@@ -99,7 +103,7 @@ export default function EstoqueTab({ enabled = true } = {}) {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  if (isLoading) {
+  if (resumoQuery.isLoading && !metrics) {
     return (
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         {[1, 2, 3, 4].map((card) => (
@@ -117,7 +121,7 @@ export default function EstoqueTab({ enabled = true } = {}) {
     );
   }
 
-  if (error || !metrics) {
+  if (resumoQuery.error || historicoQuery.error) {
     return (
       <Card className="border border-red-200 dark:border-red-900/40 bg-card shadow-sm">
         <CardContent className="p-6 flex items-start gap-3">
@@ -140,6 +144,8 @@ export default function EstoqueTab({ enabled = true } = {}) {
     : metrics.qualityDistribution;
   const totalQualidade = qualityBase.reduce((sum, bucket) => sum + Number(bucket.valor || 0), 0);
   const nivelEstoqueSeries = metrics.nivelEstoqueSeries || [];
+  const supplyByMonth = metrics.supplyByMonth || [];
+  const historicoPendente = historicoQuery.isLoading && !historicoQuery.data;
   const nivelEstoqueChartData = nivelEstoqueSeries.map((entry, idx) => {
     const isCurrentMonth = idx === nivelEstoqueSeries.length - 1;
     const valorFisico = Number(entry.valorFisico ?? entry.valor);
@@ -176,11 +182,15 @@ export default function EstoqueTab({ enabled = true } = {}) {
                   onCheckedChange={setIncluirEstoqueVirtualNivel}
                   aria-label="Incluir estoque virtual no nível de estoque"
                   className="scale-[0.85]"
+                  disabled={historicoPendente}
                 />
               </label>
             </div>
           </CardHeader>
           <CardContent className="pt-1">
+            {historicoPendente ? (
+              <Skeleton className="h-[220px] sm:h-[210px] w-full rounded-xl" aria-busy="true" />
+            ) : (
             <div className={`h-[220px] sm:h-[210px] rounded-xl px-1 py-1.5 ${p38Dashboard.inner}`}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
@@ -220,6 +230,8 @@ export default function EstoqueTab({ enabled = true } = {}) {
                 </BarChart>
               </ResponsiveContainer>
             </div>
+            )}
+            {!historicoPendente ? (
             <div className={`mt-2 flex items-center justify-between text-[10px] ${p38Dashboard.legend}`}>
               <span className="flex items-center gap-1.5">
                 <span className="inline-block h-[2px] w-5 rounded-full bg-[#9eb851]" />
@@ -227,6 +239,7 @@ export default function EstoqueTab({ enabled = true } = {}) {
               </span>
               <span className={`font-semibold ${p38Dashboard.title}`}>{formatShort(nivelEstoqueAtual)}</span>
             </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -238,8 +251,15 @@ export default function EstoqueTab({ enabled = true } = {}) {
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
+            {historicoPendente ? (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {[1, 2, 3].map((slot) => (
+                  <Skeleton key={slot} className="h-44 w-full rounded-xl" aria-busy="true" />
+                ))}
+              </div>
+            ) : (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              {metrics.supplyByMonth.map((monthSupply) => {
+              {supplyByMonth.map((monthSupply) => {
                 const supplyColor = getSupplyColorByStatus(monthSupply.status);
                 const overflowColor = getSupplyOverflowColorByStatus(monthSupply.status);
                 const ratioPercent = Math.max(monthSupply.ratioPercent, 0);
@@ -321,6 +341,7 @@ export default function EstoqueTab({ enabled = true } = {}) {
                 );
               })}
             </div>
+            )}
           </CardContent>
         </Card>
       </div>

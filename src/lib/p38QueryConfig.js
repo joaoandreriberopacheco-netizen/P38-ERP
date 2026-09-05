@@ -23,6 +23,17 @@ export const p38Keys = {
   dashboardVendas: (monthKey) => [...p38Keys.all, 'dashboard', 'vendas', monthKey],
   dashboardVendasPedidosSegment: (segmentKey) => [...p38Keys.all, 'dashboard', 'vendas', 'segment', segmentKey],
   dashboardEstoque: () => [...p38Keys.all, 'dashboard', 'estoque'],
+  dashboardEstoqueResumo: () => [...p38Keys.all, 'dashboard', 'estoque', 'resumo'],
+  dashboardEstoqueHistorico: () => [...p38Keys.all, 'dashboard', 'estoque', 'historico'],
+  dashboardConfigVenda: () => [...p38Keys.all, 'dashboard', 'config-venda'],
+  dashboardEstoqueLancamentosCmv: (supplyStartISO, supplyEndISO) => [
+    ...p38Keys.all,
+    'dashboard',
+    'estoque',
+    'lancamentos-cmv',
+    supplyStartISO,
+    supplyEndISO,
+  ],
   dashboardEstoqueMovimentosAteOntem: (ontemKey, startISO) => [
     ...p38Keys.all,
     'dashboard',

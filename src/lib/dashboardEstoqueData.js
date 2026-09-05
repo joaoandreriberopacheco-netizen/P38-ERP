@@ -1,9 +1,12 @@
 import { subMonths, startOfMonth, endOfMonth, format, isAfter, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { base44 } from '@/api/base44Client';
-import { enrichProdutosComIep, pedidoElegivelIep } from '@/lib/calcularIepProdutos';
+import { enrichProdutosComIep } from '@/lib/calcularIepProdutos';
 import { fetchDadosVendaAbcd90d } from '@/lib/fetchPedidosVenda90d';
-import { hydratePedidosVendaItensFromSql } from '@/lib/fetchPedidoVendaItens';
+import {
+  fetchPedidoVendaItensPorPedidos,
+  linhasPedidoVendaToLegacyItens,
+} from '@/lib/fetchPedidoVendaItens';
 import {
   buildPendenteAprovadoFinanceiroPorProduto,
   buildRecebidosPorPedidoProdutoFromEmbarques,
@@ -313,8 +316,255 @@ async function fetchPedidosVendaParaRazaoAbastecimento(supplyStartISO, supplyEnd
   ).catch(() => []);
 
   const pedidosLista = Array.isArray(pedidosRaw) ? pedidosRaw : [];
-  const elegibles = pedidosLista.filter(pedidoElegivelIep);
-  return hydratePedidosVendaItensFromSql(base44, elegibles);
+  const elegibles = pedidosLista.filter(pedidoVendaContaNoCMV);
+  if (!elegibles.length) return [];
+
+  const itensByPedido = await fetchPedidoVendaItensPorPedidos(
+    base44,
+    elegibles.map((pedido) => pedido.id).filter(Boolean),
+  );
+
+  return elegibles.map((pedido) => ({
+    ...pedido,
+    itens: linhasPedidoVendaToLegacyItens(itensByPedido.get(pedido.id) || []),
+  }));
+}
+
+async function fetchLancamentosCmvCached(queryClient, supplyStartISO, supplyEndISO) {
+  const fetchRows = () =>
+    base44.entities.LancamentoFinanceiro.filter(
+      {
+        tipo: 'Despesa',
+        is_custo_mercadoria: true,
+        data_pagamento: { $gte: supplyStartISO, $lte: supplyEndISO },
+      },
+      '-data_pagamento',
+      20000,
+    ).catch(() => []);
+
+  return ensureCached(
+    queryClient,
+    p38Keys.dashboardEstoqueLancamentosCmv(supplyStartISO, supplyEndISO),
+    fetchRows,
+    30 * 60 * 1000,
+  );
+}
+
+const QUALITY_COLORS = {
+  A: '#abc85a',
+  B: '#7f9850',
+  C: '#6f82a1',
+  D: '#8f6f63',
+  E: '#64748b',
+};
+
+function buildQualityPayload(produtosComAbcdCatalogo, pendentePorProdutoCatalogo) {
+  const qualityAccumulator = { A: 0, B: 0, C: 0, D: 0, E: 0 };
+  const qualityTransitRawAccumulator = sumCatalogTransitStockValueByAbcd(
+    produtosComAbcdCatalogo,
+    pendentePorProdutoCatalogo,
+    QUALITY_ORDER,
+  );
+
+  produtosComAbcdCatalogo.forEach((produto) => {
+    if (!produto?.ativo) return;
+    const custoUnitario = resolveProdutoCustoUnitarioBase(produto);
+    const estoqueAtual = Number(produto.estoque_atual || 0);
+    const estoqueGerencial = Math.max(0, estoqueAtual);
+    const valorEstoque = estoqueGerencial * custoUnitario;
+    const curva = resolveProdutoAbcdClasse(produto);
+    if (QUALITY_ORDER.includes(curva)) {
+      qualityAccumulator[curva] += valorEstoque;
+    }
+  });
+
+  const { estoqueFisico, transitoFinanceiroAprovado, totalLocalizacao } = computeEstoqueLocalizacaoValores(
+    produtosComAbcdCatalogo,
+    pendentePorProdutoCatalogo,
+  );
+
+  const qualityTotal = QUALITY_ORDER.reduce((sum, key) => sum + qualityAccumulator[key], 0);
+  const qualityDistribution = QUALITY_ORDER.map((key) => {
+    const valor = qualityAccumulator[key];
+    const share = qualityTotal > 0 ? valor / qualityTotal : 0;
+    return {
+      key,
+      label: QUALITY_LABELS[key],
+      valor,
+      share,
+      percentText: PERCENT.format(share),
+      color: QUALITY_COLORS[key],
+    };
+  });
+
+  const qualityDistributionGeral = QUALITY_ORDER.map((key) => {
+    const valorFisico = qualityAccumulator[key];
+    const valorTransito = Number(qualityTransitRawAccumulator[key] || 0);
+    const valor = valorFisico + valorTransito;
+    return {
+      key,
+      label: QUALITY_LABELS[key],
+      valor,
+      color: QUALITY_COLORS[key],
+    };
+  });
+
+  const qualityTotalGeral = qualityDistributionGeral.reduce(
+    (sum, bucket) => sum + Number(bucket.valor || 0),
+    0,
+  );
+
+  const qualityDistributionGeralComPct = qualityDistributionGeral.map((bucket) => {
+    const share = qualityTotalGeral > 0 ? bucket.valor / qualityTotalGeral : 0;
+    return {
+      ...bucket,
+      share,
+      percentText: PERCENT.format(share),
+    };
+  });
+
+  return {
+    qualityDistribution,
+    qualityDistributionGeral: qualityDistributionGeralComPct,
+    estoqueFisico,
+    transitoFinanceiroAprovado,
+    totalLocalizacao,
+  };
+}
+
+/** Cards rápidos: qualidade + localização (sem movimentos nem CMV). */
+export async function fetchDashboardEstoqueResumo(queryClient) {
+  const [produtos, sugestaoEstoqueData] = await Promise.all([
+    ensureCached(queryClient, p38Keys.produtos(), () => fetchProdutosList()),
+    ensureCached(
+      queryClient,
+      p38Keys.pedidosCompraSugestao(),
+      () => fetchPedidosCompraParaSugestaoEstoque(base44),
+      P38_STALE_TIME,
+    ).catch(() => null),
+  ]);
+
+  const produtosLista = Array.isArray(produtos) ? produtos : [];
+  const pendentePorProdutoCatalogo = sugestaoEstoqueData
+    ? buildPendenteAprovadoFinanceiroPorProduto(
+      sugestaoEstoqueData.pedidosAbertos,
+      sugestaoEstoqueData.recebidosPorPedidoProduto,
+      {
+        embarques: sugestaoEstoqueData.embarques,
+        pedidosParaEmbarque: sugestaoEstoqueData.pedidosTodos,
+      },
+    )
+    : {};
+
+  return buildQualityPayload(produtosLista, pendentePorProdutoCatalogo);
+}
+
+/** Gráficos pesados: nível mensal + razão de abastecimento. */
+export async function fetchDashboardEstoqueHistorico(queryClient) {
+  const monthBuckets = getMonthBuckets();
+  const supplyMonthBuckets = getSupplyMonthBuckets();
+  const startDate = monthBuckets[0]?.start;
+  const endDate = monthBuckets[monthBuckets.length - 1]?.end;
+  const nivelEstoqueStartDate = monthBuckets[0]?.start || startDate;
+  const supplyStartISO = format(supplyMonthBuckets[0]?.start || startDate, 'yyyy-MM-dd');
+  const supplyEndISO = format(supplyMonthBuckets[supplyMonthBuckets.length - 1]?.end || endDate, 'yyyy-MM-dd');
+  const endISO = format(endDate, 'yyyy-MM-dd');
+  const nivelStartISO = format(nivelEstoqueStartDate, 'yyyy-MM-dd');
+
+  const [produtos, movimentacoesEstoqueRaw, lancamentosFinanceiros, pedidosVenda, sugestaoEstoqueData] =
+    await Promise.all([
+      ensureCached(queryClient, p38Keys.produtos(), () => fetchProdutosList()),
+      fetchMovimentacoesIncremental(queryClient, nivelStartISO, endISO),
+      fetchLancamentosCmvCached(queryClient, supplyStartISO, supplyEndISO),
+      fetchPedidosVendaParaRazaoAbastecimento(supplyStartISO, supplyEndISO),
+      ensureCached(
+        queryClient,
+        p38Keys.pedidosCompraSugestao(),
+        () => fetchPedidosCompraParaSugestaoEstoque(base44),
+        P38_STALE_TIME,
+      ).catch(() => null),
+    ]);
+
+  const pedidosCompraLista = Array.isArray(sugestaoEstoqueData?.pedidosTodos)
+    ? sugestaoEstoqueData.pedidosTodos
+    : [];
+  const embarquesCompraLista = Array.isArray(sugestaoEstoqueData?.embarques)
+    ? sugestaoEstoqueData.embarques
+    : [];
+  const produtosLista = Array.isArray(produtos) ? produtos : [];
+  const pendentePorProdutoCatalogo = sugestaoEstoqueData
+    ? buildPendenteAprovadoFinanceiroPorProduto(
+      sugestaoEstoqueData.pedidosAbertos,
+      sugestaoEstoqueData.recebidosPorPedidoProduto,
+      {
+        embarques: sugestaoEstoqueData.embarques,
+        pedidosParaEmbarque: sugestaoEstoqueData.pedidosTodos,
+      },
+    )
+    : {};
+
+  const movimentacoesEstoqueLista = Array.isArray(movimentacoesEstoqueRaw)
+    ? movimentacoesEstoqueRaw.filter((movimento) => {
+      const date = getMovimentoDate(movimento);
+      if (!date) return false;
+      return !isBefore(date, nivelEstoqueStartDate);
+    })
+    : [];
+
+  const skuBase = new Map(
+    produtosLista.map((produto) => [
+      produto.id,
+      {
+        estoqueAtual: Number(produto.estoque_atual || 0),
+        custoAtual: Number(resolveCustoTotalUnitBaseProduto(produto)),
+      },
+    ]),
+  );
+
+  const movimentosReconstrucao = movimentacoesEstoqueLista
+    .filter((movimento) => movimentoContaNaReconstrucaoEstoque(movimento))
+    .map((movimento) => ({
+      skuId: movimento.produto_id,
+      date: getMovimentoDate(movimento),
+      deltaQuantidade: getMovimentoDeltaReconstrucao(movimento),
+    }))
+    .filter((movimento) => movimento.skuId && movimento.date && movimento.deltaQuantidade !== 0);
+
+  const custoProdutoMap = new Map(
+    produtosLista.map((produto) => [produto.id, Number(resolveCustoTotalUnitBaseProduto(produto))]),
+  );
+
+  const nivelEstoqueSeries = buildNivelEstoqueSeries({
+    monthBuckets,
+    produtosComAbcd: produtosLista,
+    skuBase,
+    movimentosReconstrucao,
+    pedidosCompraLista,
+    embarquesCompraLista,
+    pendentePorProdutoAtual: pendentePorProdutoCatalogo,
+  });
+
+  const lancamentosLista = Array.isArray(lancamentosFinanceiros) ? lancamentosFinanceiros : [];
+  const pedidosVendaLista = Array.isArray(pedidosVenda) ? pedidosVenda : [];
+  const cmvEfetivoByMonth = bucketLancamentosPorMes(lancamentosLista, supplyMonthBuckets);
+  const cmvVendidoByMonth = bucketCmvVendidoPorMes(pedidosVendaLista, supplyMonthBuckets, custoProdutoMap);
+
+  const supplyByMonth = supplyMonthBuckets.map((bucket) => {
+    const cmvEfetivo = cmvEfetivoByMonth.get(bucket.key) || 0;
+    const cmvVendido = cmvVendidoByMonth.get(bucket.key) || 0;
+    const ratioPercent = cmvVendido > 0 ? (cmvEfetivo / cmvVendido) * 100 : 0;
+    return {
+      key: bucket.key,
+      label: bucket.label,
+      cmvEfetivo,
+      cmvVendido,
+      ratioPercent,
+      diff: cmvEfetivo - cmvVendido,
+      status: getSupplyStatus(ratioPercent),
+    };
+  });
+
+  return { nivelEstoqueSeries, supplyByMonth };
 }
 
 async function fetchMovimentacoesIncremental(queryClient, nivelStartISO, endISO) {
@@ -368,48 +618,12 @@ async function fetchMovimentacoesIncremental(queryClient, nivelStartISO, endISO)
 }
 
 /**
- * Carrega e calcula métricas do dashboard de estoque.
- * Reutiliza cache React Query de produtos; movimentos até ontem + hoje; ABCD opcional.
+ * Carrega e calcula métricas do dashboard de estoque (resumo + histórico).
  */
 export async function fetchDashboardEstoqueMetrics(queryClient, options = {}) {
   const { includeAbcdEnrichment = false } = options;
-  const monthBuckets = getMonthBuckets();
-  const supplyMonthBuckets = getSupplyMonthBuckets();
-
-  const startDate = monthBuckets[0]?.start;
-  const endDate = monthBuckets[monthBuckets.length - 1]?.end;
-  const nivelEstoqueStartDate = monthBuckets[0]?.start || startDate;
-
-  const supplyStartISO = format(supplyMonthBuckets[0]?.start || startDate, 'yyyy-MM-dd');
-  const supplyEndISO = format(supplyMonthBuckets[supplyMonthBuckets.length - 1]?.end || endDate, 'yyyy-MM-dd');
-  const endISO = format(endDate, 'yyyy-MM-dd');
-  const nivelStartISO = format(nivelEstoqueStartDate, 'yyyy-MM-dd');
-
-  const [produtos, movimentacoesEstoqueRaw, lancamentosFinanceiros, pedidosVenda, sugestaoEstoqueData] =
-    await Promise.all([
-      ensureCached(queryClient, p38Keys.produtos(), () => fetchProdutosList()),
-      fetchMovimentacoesIncremental(queryClient, nivelStartISO, endISO),
-      base44.entities.LancamentoFinanceiro.filter(
-        {
-          tipo: 'Despesa',
-          is_custo_mercadoria: true,
-          data_pagamento: { $gte: supplyStartISO, $lte: supplyEndISO },
-        },
-        '-data_pagamento',
-        20000,
-      ),
-      fetchPedidosVendaParaRazaoAbastecimento(supplyStartISO, supplyEndISO),
-      ensureCached(
-        queryClient,
-        p38Keys.pedidosCompraSugestao(),
-        () => fetchPedidosCompraParaSugestaoEstoque(base44),
-        P38_STALE_TIME,
-      ).catch(() => null),
-    ]);
-
-  let dadosVendaAbcd90d = null;
   if (includeAbcdEnrichment) {
-    dadosVendaAbcd90d = await ensureCached(
+    await ensureCached(
       queryClient,
       p38Keys.dadosVendaAbcd90d(),
       () => fetchDadosVendaAbcd90d(),
@@ -417,172 +631,10 @@ export async function fetchDashboardEstoqueMetrics(queryClient, options = {}) {
     ).catch(() => null);
   }
 
-  const pedidosCompraLista = Array.isArray(sugestaoEstoqueData?.pedidosTodos)
-    ? sugestaoEstoqueData.pedidosTodos
-    : [];
-  const embarquesCompraLista = Array.isArray(sugestaoEstoqueData?.embarques)
-    ? sugestaoEstoqueData.embarques
-    : [];
+  const [resumo, historico] = await Promise.all([
+    fetchDashboardEstoqueResumo(queryClient),
+    fetchDashboardEstoqueHistorico(queryClient),
+  ]);
 
-  const produtosLista = Array.isArray(produtos) ? produtos : [];
-  const produtosComAbcdCatalogo = Array.isArray(dadosVendaAbcd90d?.pedidos90d)
-    ? enrichProdutosComIep(produtosLista, dadosVendaAbcd90d)
-    : produtosLista;
-
-  const movimentacoesEstoqueLista = Array.isArray(movimentacoesEstoqueRaw)
-    ? movimentacoesEstoqueRaw.filter((movimento) => {
-      const date = getMovimentoDate(movimento);
-      if (!date) return false;
-      return !isBefore(date, nivelEstoqueStartDate);
-    })
-    : [];
-
-  const lancamentosLista = Array.isArray(lancamentosFinanceiros) ? lancamentosFinanceiros : [];
-  const pedidosVendaLista = Array.isArray(pedidosVenda) ? pedidosVenda : [];
-
-  const pendentePorProdutoCatalogo = sugestaoEstoqueData
-    ? buildPendenteAprovadoFinanceiroPorProduto(
-      sugestaoEstoqueData.pedidosAbertos,
-      sugestaoEstoqueData.recebidosPorPedidoProduto,
-      {
-        embarques: sugestaoEstoqueData.embarques,
-        pedidosParaEmbarque: sugestaoEstoqueData.pedidosTodos,
-      },
-    )
-    : {};
-
-  const qualityAccumulator = { A: 0, B: 0, C: 0, D: 0, E: 0 };
-  const qualityTransitRawAccumulator = sumCatalogTransitStockValueByAbcd(
-    produtosComAbcdCatalogo,
-    pendentePorProdutoCatalogo,
-    QUALITY_ORDER,
-  );
-
-  produtosComAbcdCatalogo.forEach((produto) => {
-    if (!produto?.ativo) return;
-    const custoUnitario = resolveProdutoCustoUnitarioBase(produto);
-    const estoqueAtual = Number(produto.estoque_atual || 0);
-    const estoqueGerencial = Math.max(0, estoqueAtual);
-    const valorEstoque = estoqueGerencial * custoUnitario;
-
-    const curva = resolveProdutoAbcdClasse(produto);
-    if (QUALITY_ORDER.includes(curva)) {
-      qualityAccumulator[curva] += valorEstoque;
-    }
-  });
-
-  const skuBase = new Map(
-    produtosLista.map((produto) => [
-      produto.id,
-      {
-        estoqueAtual: Number(produto.estoque_atual || 0),
-        custoAtual: Number(resolveCustoTotalUnitBaseProduto(produto)),
-      },
-    ]),
-  );
-
-  const movimentosReconstrucao = movimentacoesEstoqueLista
-    .filter((movimento) => movimentoContaNaReconstrucaoEstoque(movimento))
-    .map((movimento) => ({
-      skuId: movimento.produto_id,
-      date: getMovimentoDate(movimento),
-      deltaQuantidade: getMovimentoDeltaReconstrucao(movimento),
-    }))
-    .filter((movimento) => movimento.skuId && movimento.date && movimento.deltaQuantidade !== 0);
-
-  const custoProdutoMap = new Map(
-    produtosLista.map((produto) => [produto.id, Number(resolveCustoTotalUnitBaseProduto(produto))]),
-  );
-
-  const nivelEstoqueSeries = buildNivelEstoqueSeries({
-    monthBuckets,
-    produtosComAbcd: produtosComAbcdCatalogo,
-    skuBase,
-    movimentosReconstrucao,
-    pedidosCompraLista,
-    embarquesCompraLista,
-    pendentePorProdutoAtual: pendentePorProdutoCatalogo,
-  });
-
-  const cmvEfetivoByMonth = bucketLancamentosPorMes(lancamentosLista, supplyMonthBuckets);
-  const cmvVendidoByMonth = bucketCmvVendidoPorMes(pedidosVendaLista, supplyMonthBuckets, custoProdutoMap);
-
-  const supplyByMonth = supplyMonthBuckets.map((bucket) => {
-    const cmvEfetivo = cmvEfetivoByMonth.get(bucket.key) || 0;
-    const cmvVendido = cmvVendidoByMonth.get(bucket.key) || 0;
-    const ratioPercent = cmvVendido > 0 ? (cmvEfetivo / cmvVendido) * 100 : 0;
-    return {
-      key: bucket.key,
-      label: bucket.label,
-      cmvEfetivo,
-      cmvVendido,
-      ratioPercent,
-      diff: cmvEfetivo - cmvVendido,
-      status: getSupplyStatus(ratioPercent),
-    };
-  });
-
-  const { estoqueFisico, transitoFinanceiroAprovado, totalLocalizacao } = computeEstoqueLocalizacaoValores(
-    produtosComAbcdCatalogo,
-    pendentePorProdutoCatalogo,
-  );
-
-  const qualityTotal = QUALITY_ORDER.reduce((sum, key) => sum + qualityAccumulator[key], 0);
-
-  const QUALITY_COLORS = {
-    A: '#abc85a',
-    B: '#7f9850',
-    C: '#6f82a1',
-    D: '#8f6f63',
-    E: '#64748b',
-  };
-
-  const qualityDistribution = QUALITY_ORDER.map((key) => {
-    const valor = qualityAccumulator[key];
-    const share = qualityTotal > 0 ? valor / qualityTotal : 0;
-    return {
-      key,
-      label: QUALITY_LABELS[key],
-      valor,
-      share,
-      percentText: PERCENT.format(share),
-      color: QUALITY_COLORS[key],
-    };
-  });
-
-  const qualityDistributionGeral = QUALITY_ORDER.map((key) => {
-    const valorFisico = qualityAccumulator[key];
-    const valorTransito = Number(qualityTransitRawAccumulator[key] || 0);
-    const valor = valorFisico + valorTransito;
-    return {
-      key,
-      label: QUALITY_LABELS[key],
-      valor,
-      color: QUALITY_COLORS[key],
-    };
-  });
-
-  const qualityTotalGeral = qualityDistributionGeral.reduce(
-    (sum, bucket) => sum + Number(bucket.valor || 0),
-    0,
-  );
-
-  const qualityDistributionGeralComPct = qualityDistributionGeral.map((bucket) => {
-    const share = qualityTotalGeral > 0 ? bucket.valor / qualityTotalGeral : 0;
-    return {
-      ...bucket,
-      share,
-      percentText: PERCENT.format(share),
-    };
-  });
-
-  return {
-    nivelEstoqueSeries,
-    supplyByMonth,
-    qualityDistribution,
-    qualityDistributionGeral: qualityDistributionGeralComPct,
-    estoqueFisico,
-    transitoFinanceiroAprovado,
-    totalLocalizacao,
-  };
+  return { ...resumo, ...historico };
 }

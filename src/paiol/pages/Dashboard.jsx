@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { BarChart3, TrendingUp, ShoppingCart, Package, DollarSign } from 'lucide-react';
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
 import P38Logo from '@/components/brand/P38Logo';
@@ -10,6 +11,10 @@ import DashboardCaixa from '@/pages/DashboardCaixa';
 import { P38_SHELL_DESC, P38_SHELL_TITLE } from '@/lib/p38FormTypography';
 import { usePermissoesUsuario } from '@/hooks/usePermissoesUsuario';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getCurrentMonthKey } from '@/lib/dashboardVendasPeriod';
+import { getDashboardVendasStaleTime } from '@/lib/dashboardIncrementalCache';
+import { fetchDashboardVendasBundle } from '@/hooks/useDashboardQueries';
+import { p38Keys } from '@/lib/p38QueryConfig';
 
 const VendasTab = lazy(() => import('@/paiol/components/dashboard/tabs/VendasTab'));
 const EstoqueTab = lazy(() => import('@/paiol/components/dashboard/tabs/EstoqueTab'));
@@ -28,6 +33,7 @@ function DashboardTabSkeleton() {
 }
 
 export default function DashboardPage() {
+  const queryClient = useQueryClient();
   const { tem: podePerm, user: currentUser } = usePermissoesUsuario();
   const podeKpisVendas = podePerm('dashboard.ver_kpis_vendas', 'dashboard.acesso');
   const podeKpisEstoque = podePerm('dashboard.ver_kpis_estoque', 'dashboard.acesso');
@@ -54,6 +60,17 @@ export default function DashboardPage() {
     });
     setActiveTab((prev) => (prev === 'geral' && defaultTab !== 'geral' ? defaultTab : prev));
   }, [defaultTab]);
+
+  useEffect(() => {
+    if (!podeKpisVendas) return undefined;
+    const monthKey = getCurrentMonthKey();
+    queryClient.prefetchQuery({
+      queryKey: p38Keys.dashboardVendas(monthKey),
+      queryFn: () => fetchDashboardVendasBundle(monthKey, queryClient),
+      staleTime: getDashboardVendasStaleTime(monthKey),
+    });
+    return undefined;
+  }, [podeKpisVendas, queryClient]);
 
   const handleTabSelect = useCallback((tab) => {
     setActiveTab(tab);
