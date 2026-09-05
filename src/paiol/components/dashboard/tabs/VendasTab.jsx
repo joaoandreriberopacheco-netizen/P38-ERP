@@ -22,14 +22,12 @@ import {
   DASHBOARD_CHART_MARGIN,
 } from '@/lib/dashboardChartLayout';
 import { useDashboardChartTheme } from '@/lib/useDashboardChartTheme';
-import { DONUT_GAUGE_RADII } from '@/lib/dashboardKpiConfig';
+import P38RoscaGauge from '@/components/ui/P38RoscaGauge';
 import {
   BarChart,
   Bar,
   CartesianGrid,
   Cell,
-  Pie,
-  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -231,46 +229,22 @@ export default function VendasTab({ enabled = true } = {}) {
             <CardContent className="pt-1">
               <div className={p38Dashboard.innerPanel}>
                 <div className="grid grid-cols-1 sm:grid-cols-[150px,1fr] gap-2.5 items-center">
-                  <div className="h-[140px] relative">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={metrics.lucroKpi.ringData}
-                          innerRadius={DONUT_GAUGE_RADII.lg.inner}
-                          outerRadius={DONUT_GAUGE_RADII.lg.outer}
-                          dataKey="value"
-                          startAngle={90}
-                          endAngle={-270}
-                          strokeWidth={0}
-                          cornerRadius={2}
-                        >
-                          {metrics.lucroKpi.ringData.map((entry) => (
-                            <Cell key={entry.name} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        {metrics.lucroKpi.ringOverflow > 0 ? (
-                          <Pie
-                            data={metrics.lucroKpi.ringOverflowData}
-                            innerRadius={DONUT_GAUGE_RADII.lg.overflowInner}
-                            outerRadius={DONUT_GAUGE_RADII.lg.overflowOuter}
-                            dataKey="value"
-                            startAngle={90}
-                            endAngle={-270}
-                            strokeWidth={0}
-                            cornerRadius={2}
-                          >
-                            {metrics.lucroKpi.ringOverflowData.map((entry) => (
-                              <Cell key={entry.name} fill={entry.color} />
-                            ))}
-                          </Pie>
-                        ) : null}
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                      <span className="text-[11px] text-muted-foreground uppercase tracking-wide">Sel/Ant</span>
-                      <span className="text-lg font-bold text-foreground">{metrics.lucroKpi.ratioPercent.toFixed(1)}%</span>
-                    </div>
-                  </div>
+                  <P38RoscaGauge
+                    size="lg"
+                    ring={{
+                      percent: metrics.lucroKpi.ratioPercent,
+                      ringData: metrics.lucroKpi.ringData,
+                      ringOverflowData: metrics.lucroKpi.ringOverflowData,
+                    }}
+                    showPercent={false}
+                    showCenterPlate
+                    className="h-[140px]"
+                  >
+                    <span className="text-[11px] text-muted-foreground uppercase tracking-wide">Sel/Ant</span>
+                    <span className="text-lg font-bold text-foreground tabular-nums">
+                      {metrics.lucroKpi.ratioPercent.toFixed(1)}%
+                    </span>
+                  </P38RoscaGauge>
 
                   <div className="space-y-1.5">
                     <div className={p38Dashboard.stat}>

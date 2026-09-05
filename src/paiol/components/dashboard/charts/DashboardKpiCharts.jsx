@@ -1,18 +1,15 @@
 import React, { useMemo } from 'react';
 import {
   CartesianGrid,
-  Cell,
   Line,
   LineChart,
-  Pie,
-  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
 import { p38Dashboard } from '@/lib/p38DashboardSurfaces';
-import { DONUT_GAUGE_RADII } from '@/lib/dashboardKpiConfig';
+import P38RoscaGauge from '@/components/ui/P38RoscaGauge';
 import {
   buildCartesianGridProps,
   buildDashboardYDomain,
@@ -148,55 +145,19 @@ export function LucroAcumuladoChart({ data, innerSurfaceClassName }) {
 }
 
 function DonutGauge({ ring, label, actualLabel, targetLabel, actualValue, targetValue }) {
-  const radii = DONUT_GAUGE_RADII.sm;
   const isAboveTarget = ring.percent > 100;
 
   return (
     <div className={p38Dashboard.stat}>
       <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">{label}</p>
       <div className="grid grid-cols-[96px,1fr] gap-2 items-center">
-        <div className="h-[96px] relative">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={ring.ringData}
-                innerRadius={radii.inner}
-                outerRadius={radii.outer}
-                dataKey="value"
-                startAngle={90}
-                endAngle={-270}
-                strokeWidth={0}
-                cornerRadius={2}
-              >
-                {ring.ringData.map((entry) => (
-                  <Cell key={`${label}-${entry.name}`} fill={entry.color} />
-                ))}
-              </Pie>
-              {ring.ringOverflowData.length > 0 ? (
-                <Pie
-                  data={ring.ringOverflowData}
-                  innerRadius={radii.overflowInner}
-                  outerRadius={radii.overflowOuter}
-                  dataKey="value"
-                  startAngle={90}
-                  endAngle={-270}
-                  strokeWidth={0}
-                  cornerRadius={2}
-                >
-                  {ring.ringOverflowData.map((entry) => (
-                    <Cell key={`${label}-overflow-${entry.name}`} fill={entry.color} />
-                  ))}
-                </Pie>
-              ) : null}
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-[10px] text-muted-foreground uppercase">%</span>
-            <span className={`text-sm font-bold ${isAboveTarget ? p38Dashboard.percentAbove : p38Dashboard.title}`}>
-              {ring.percent.toFixed(0)}%
-            </span>
-          </div>
-        </div>
+        <P38RoscaGauge
+          size="sm"
+          ring={ring}
+          showCenterPlate
+          percentDigits={0}
+          className="h-[96px]"
+        />
         <div className="space-y-1 text-[10px]">
           <div>
             <p className="text-muted-foreground uppercase">{actualLabel}</p>
@@ -204,7 +165,9 @@ function DonutGauge({ ring, label, actualLabel, targetLabel, actualValue, target
           </div>
           <div>
             <p className="text-muted-foreground uppercase">{targetLabel}</p>
-            <p className={p38Dashboard.textStrong}>{formatDashboardCurrency(targetValue)}</p>
+            <p className={isAboveTarget ? p38Dashboard.percentAbove : p38Dashboard.textStrong}>
+              {formatDashboardCurrency(targetValue)}
+            </p>
           </div>
         </div>
       </div>

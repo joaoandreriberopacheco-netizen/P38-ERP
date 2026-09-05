@@ -11,14 +11,18 @@ import {
 } from '@/lib/dashboardChartLayout';
 import { useDashboardChartTheme } from '@/lib/useDashboardChartTheme';
 import { useDashboardEstoqueHistoricoQuery, useDashboardEstoqueResumoQuery } from '@/hooks/useDashboardQueries';
+import P38RoscaGauge from '@/components/ui/P38RoscaGauge';
+import {
+  P38_ROSCA_LOCATION_COLORS,
+  P38_ROSCA_QUALITY_COLORS,
+  getP38RoscaScenarioStatus,
+} from '@/lib/p38RoscaGauge';
 import { AlertCircle, Gauge, Layers, Package, Truck } from 'lucide-react';
 import {
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
-  Pie,
-  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -31,28 +35,9 @@ const BRL = new Intl.NumberFormat('pt-BR', {
   maximumFractionDigits: 0,
 });
 
-const QUALITY_COLORS = {
-  A: '#c4d068',
-  B: '#9aaa62',
-  C: '#8a9470',
-  D: '#9a8878',
-  E: '#94949c',
-};
+const QUALITY_COLORS = P38_ROSCA_QUALITY_COLORS;
 
-const SUPPLY_RING_COLORS = {
-  healthy: '#c4d068',
-  healthyDark: '#a8b856',
-  high: '#b8c078',
-  highDark: '#9aaa62',
-  low: '#8a9470',
-  lowDark: '#727a62',
-  muted: '#d8d8d8',
-};
-
-const LOCATION_COLORS = {
-  fisico: '#c4d068',
-  transito: '#8a9470',
-};
+const LOCATION_COLORS = P38_ROSCA_LOCATION_COLORS;
 
 const STOCK_BAR_COLORS = ['#ddd48a', '#d4cc80', '#cbc474', '#c2bc6a', '#b9b460', '#b0ac58'];
 
@@ -61,25 +46,6 @@ function formatShort(value) {
   if (Math.abs(value) >= 1_000_000) return `R$ ${(value / 1_000_000).toFixed(1)}M`;
   if (Math.abs(value) >= 1_000) return `R$ ${(value / 1_000).toFixed(1)}K`;
   return BRL.format(value);
-}
-
-function getSupplyStatus(percentage) {
-  if (!Number.isFinite(percentage) || percentage === 0) return 'healthy';
-  if (percentage > 105) return 'high';
-  if (percentage < 95) return 'low';
-  return 'healthy';
-}
-
-function getSupplyColorByStatus(status) {
-  if (status === 'high') return SUPPLY_RING_COLORS.high;
-  if (status === 'low') return SUPPLY_RING_COLORS.low;
-  return SUPPLY_RING_COLORS.healthy;
-}
-
-function getSupplyOverflowColorByStatus(status) {
-  if (status === 'high') return SUPPLY_RING_COLORS.highDark;
-  if (status === 'low') return SUPPLY_RING_COLORS.lowDark;
-  return SUPPLY_RING_COLORS.healthyDark;
 }
 
 export default function EstoqueTab({ enabled = true } = {}) {
@@ -260,67 +226,19 @@ export default function EstoqueTab({ enabled = true } = {}) {
             ) : (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {supplyByMonth.map((monthSupply) => {
-                const supplyColor = getSupplyColorByStatus(monthSupply.status);
-                const overflowColor = getSupplyOverflowColorByStatus(monthSupply.status);
-                const ratioPercent = Math.max(monthSupply.ratioPercent, 0);
-                const primaryFill = Math.min(ratioPercent, 100);
-                const overflowFill = Math.min(Math.max(ratioPercent - 100, 0), 100);
-                const primaryRingData = [
-                  { name: 'Razão', value: primaryFill, color: supplyColor },
-                  {
-                    name: 'Restante',
-                    value: Math.max(100 - primaryFill, 0),
-                    color: SUPPLY_RING_COLORS.muted,
-                  },
-                ];
-                const hasOverflow = overflowFill > 0;
-                const overflowRingData = [
-                  { name: 'Excedente', value: overflowFill, color: overflowColor },
-                  { name: 'ExcedenteRestante', value: Math.max(100 - overflowFill, 0), color: 'transparent' },
-                ];
+                const scenario = getP38RoscaScenarioStatus(monthSupply.ratioPercent);
 
                 return (
                   <div key={monthSupply.key} className={`rounded-xl p-2 min-h-44 sm:min-h-0 ${p38Dashboard.inner}`}>
                     <p className="text-[10px] font-semibold text-muted-foreground tracking-wide mb-1">{monthSupply.label}</p>
-                    <div className="h-[108px] sm:h-[120px] relative">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={primaryRingData}
-                            innerRadius={28}
-                            outerRadius={42}
-                            dataKey="value"
-                            startAngle={90}
-                            endAngle={-270}
-                            strokeWidth={0}
-                            cornerRadius={2}
-                          >
-                            {primaryRingData.map((entry) => (
-                              <Cell key={entry.name} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          {hasOverflow ? (
-                            <Pie
-                              data={overflowRingData}
-                              innerRadius={22}
-                              outerRadius={26}
-                              dataKey="value"
-                              startAngle={90}
-                              endAngle={-270}
-                              strokeWidth={0}
-                              cornerRadius={2}
-                            >
-                              {overflowRingData.map((entry) => (
-                                <Cell key={entry.name} fill={entry.color} />
-                              ))}
-                            </Pie>
-                          ) : null}
-                        </PieChart>
-                      </ResponsiveContainer>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span className="text-base sm:text-lg font-bold text-foreground">{monthSupply.ratioPercent.toFixed(1)}%</span>
-                      </div>
-                    </div>
+                    <P38RoscaGauge
+                      size="xs"
+                      percent={monthSupply.ratioPercent}
+                      scenario={scenario}
+                      showCenterPlate
+                      percentDigits={1}
+                      className="h-[108px] sm:h-[120px]"
+                    />
                     <div className="space-y-1">
                       <p className="text-[9px] text-muted-foreground flex items-center justify-between gap-1.5">
                         <span className="flex items-center gap-1.5">
@@ -367,39 +285,15 @@ export default function EstoqueTab({ enabled = true } = {}) {
           </CardHeader>
           <CardContent className="pt-1">
             <div className={`h-[170px] md:h-[180px] relative rounded-xl px-2 py-1 ${p38Dashboard.inner}`}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={[{ name: 'track', value: 100 }]}
-                    dataKey="value"
-                    startAngle={180}
-                    endAngle={0}
-                    innerRadius={56}
-                    outerRadius={84}
-                    strokeWidth={0}
-                    cornerRadius={3}
-                  >
-                    <Cell fill="rgba(148,163,184,0.15)" />
-                  </Pie>
-                  <Pie
-                    data={qualityHalfDonutData}
-                    dataKey="value"
-                    startAngle={180}
-                    endAngle={0}
-                    innerRadius={56}
-                    outerRadius={84}
-                    strokeWidth={0}
-                  >
-                    {qualityHalfDonutData.map((entry) => (
-                      <Cell key={entry.name} fill={entry.color} stroke={chartTheme.pieStroke} strokeWidth={2} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pt-5">
-                <span className="text-[11px] tracking-wide uppercase text-muted-foreground">Total</span>
-                <span className="text-lg font-semibold text-foreground tabular-nums">{BRL.format(totalQualidade)}</span>
-              </div>
+              <P38RoscaGauge
+                variant="half"
+                size="half"
+                segments={qualityHalfDonutData}
+                centerLabel="Total"
+                centerValue={BRL.format(totalQualidade)}
+                showPercent={false}
+                className="h-full"
+              />
             </div>
             <div className="grid grid-cols-2 gap-2 mt-1.5">
               {qualityHalfDonutData.map((entry) => (
@@ -424,41 +318,15 @@ export default function EstoqueTab({ enabled = true } = {}) {
           </CardHeader>
           <CardContent className="pt-1">
             <div className={`h-[170px] md:h-[180px] relative rounded-xl px-2 py-1 ${p38Dashboard.inner}`}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={[{ name: 'track', value: 100 }]}
-                    dataKey="value"
-                    startAngle={180}
-                    endAngle={0}
-                    innerRadius={56}
-                    outerRadius={84}
-                    strokeWidth={0}
-                    cornerRadius={3}
-                  >
-                    <Cell fill="rgba(148,163,184,0.15)" />
-                  </Pie>
-                  <Pie
-                    data={locationHalfDonutData}
-                    dataKey="value"
-                    startAngle={180}
-                    endAngle={0}
-                    innerRadius={56}
-                    outerRadius={84}
-                    strokeWidth={0}
-                  >
-                    {locationHalfDonutData.map((entry) => (
-                      <Cell key={entry.name} fill={entry.color} stroke={chartTheme.pieStroke} strokeWidth={3} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pt-5">
-                <span className="text-[11px] tracking-wide uppercase text-muted-foreground">Total</span>
-                <span className="text-lg font-semibold text-foreground tabular-nums">
-                  {BRL.format(metrics.totalLocalizacao)}
-                </span>
-              </div>
+              <P38RoscaGauge
+                variant="half"
+                size="half"
+                segments={locationHalfDonutData}
+                centerLabel="Total"
+                centerValue={BRL.format(metrics.totalLocalizacao)}
+                showPercent={false}
+                className="h-full"
+              />
             </div>
             <div className="grid grid-cols-2 gap-2 mt-1.5">
               {locationHalfDonutData.map((entry) => (

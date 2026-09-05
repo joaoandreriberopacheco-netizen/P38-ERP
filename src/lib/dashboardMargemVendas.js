@@ -29,13 +29,9 @@ import {
   isSaleCoveredBySealedMonth,
   mergeSealedVendasIntoBuckets,
 } from '@/lib/dashboardMargemVendasSealed';
+import { P38_ROSCA_COLORS } from '@/lib/p38RoscaGauge';
 
-const RING_COLORS = {
-  primary: '#c4d068',
-  primaryDark: '#a8b856',
-  secondary: '#8a9470',
-  muted: '#d8d8d8',
-};
+const RING_COLORS = P38_ROSCA_COLORS;
 
 function buildMonthlyAndDailyBuckets(monthBuckets6) {
   const salesByMonthDay = {};
