@@ -22,8 +22,11 @@ export default function P38ModuleLoadingOverlay({
       aria-live="polite"
       aria-busy="true"
     >
+      <div
+        className="h-10 w-10 rounded-full border-[3px] border-muted border-t-p38-olive dark:border-t-p38-lime animate-spin"
+        aria-hidden="true"
+      />
       <p className="text-sm font-medium text-foreground/85">{message}</p>
-      <div className="h-1.5 w-56 rounded-full bg-muted animate-pulse" />
     </div>
   );
 }
