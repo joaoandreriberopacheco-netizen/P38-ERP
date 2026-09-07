@@ -1,0 +1,36 @@
+# Envia PDFs Consórcio Missionário CBA via WhatsApp (texto) + Telegram (anexos).
+# Disparo manual: Actions → "Enviar Consórcio CBA" → Run workflow
+
+name: Enviar Consórcio CBA
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Verificar PDFs
+        run: |
+          ls -lh exports/*.pdf
+          test -f exports/consorcio_missionario_RESUMO_1pagina.pdf
+          test -f exports/consorcio_missionario_ESCOPO_lideranca_CBA.pdf
+          test -f exports/consorcio_missionario_cba_proposta.pdf
+
+      - name: Enviar WhatsApp + Telegram
+        env:
+          PULSE_NOTIFY_WHATSAPP_PHONE: ${{ secrets.PULSE_NOTIFY_WHATSAPP_PHONE }}
+          PULSE_NOTIFY_CALLMEBOT_APIKEY: ${{ secrets.PULSE_NOTIFY_CALLMEBOT_APIKEY }}
+          PULSE_NOTIFY_TELEGRAM_BOT_TOKEN: ${{ secrets.PULSE_NOTIFY_TELEGRAM_BOT_TOKEN }}
+          PULSE_NOTIFY_TELEGRAM_CHAT_ID: ${{ secrets.PULSE_NOTIFY_TELEGRAM_CHAT_ID }}
+        run: node scripts/send-consorcio-cba-notify.mjs
