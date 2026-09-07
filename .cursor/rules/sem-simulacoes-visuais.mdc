@@ -4,12 +4,13 @@ Quando o utilizador **não pedir explicitamente** um asset visual:
 
 - **Não** gerar imagens (`GenerateImage`) para demonstrar UI, mockups ou “como ficou”.
 - **Não** gravar vídeo de ecrã (`RecordScreen`) para simular testes manuais ou walkthroughs.
-- **Não** criar screenshots ou gravações só para “mostrar que funciona”.
+- **Não** criar screenshots ou gravações só para “mostrar que funciona” (consomem muito crédito).
 
 ## Em vez disso
 
 - Validar com **comandos** (`npm run build`, `npm run lint`, testes quando existirem).
 - Descrever alterações em **texto** e, se útil, **citações de código**.
+- Para revisão visual: **link da branch / PR** (ou preview), para o utilizador abrir e ver como ficou.
 - Testes manuais no browser só quando forem **necessários** para reproduzir um bug — sem gravar vídeo por defeito.
 
 ## Exceção
