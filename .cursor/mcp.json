@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "whapi-whatsapp": {
+      "command": "npx",
+      "args": ["-y", "whapi-mcp-optimal@latest"],
+      "env": {
+        "API_TOKEN": "${env:WHAPI_API_TOKEN}"
+      }
+    }
+  }
+}
