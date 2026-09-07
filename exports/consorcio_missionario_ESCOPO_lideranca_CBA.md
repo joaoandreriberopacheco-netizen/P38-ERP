@@ -8,7 +8,7 @@
 
 ## 1. Capa / propósito
 
-Este documento apresenta o **escopo proposto** do **Consórcio Missionário CBA** — um programa cooperativo **novo**, ainda **inexistente** na convenção, para que a mesa diretora, o departamento de Missões Evangélicas (ME), tesouraria e pastores de associação possam **avaliar, ajustar e decidir** se a CBA avança com um piloto. O consórcio criaria uma **fonte adicional de recursos** (contribuição mensal por igreja filiada, escalonada por porte) destinada exclusivamente a **projetos missionários aprovados** — não a salários — ampliando a capacidade de **expor o evangelho** em comunidades do Amazonas que ainda não conhecem Jesus de forma regular. O programa **complementa** a Campanha ME (~R$ 420 mil) e **não a substitui**.
+Este documento apresenta o **escopo proposto** do **Consórcio Missionário CBA** — um programa cooperativo **novo**, ainda **inexistente** na convenção, para que a mesa diretora, o departamento de Missões Evangélicas (ME), tesouraria e pastores de associação possam **avaliar, ajustar e decidir** se a CBA avança com o programa em **Fase 0** (escuta/estudo) e **Fase 1** (implementação para valer). O consórcio criaria uma **fonte adicional de recursos** (contribuição mensal por igreja filiada, escalonada por porte) destinada exclusivamente a **projetos missionários aprovados** — não a salários — ampliando a capacidade de **expor o evangelho** em comunidades do Amazonas que ainda não conhecem Jesus de forma regular. O programa **complementa** a Campanha ME (~R$ 420 mil) e **não a substitui**.
 
 **Base de dados:** 311 igrejas filiadas, 65 missionários (ME 2026), 62 municípios no estado.
 
@@ -57,7 +57,7 @@ Este documento apresenta o **escopo proposto** do **Consórcio Missionário CBA*
 ### Dentro do escopo (in)
 
 - Definição de **faixas de contribuição** por porte de igreja (P1–P5: R$ 80–350/mês).
-- **Adesão voluntária** das igrejas filiadas, com meta de **70% no piloto**.
+- **Adesão voluntária** das igrejas filiadas, com meta de **70% na Fase 1** (implementação).
 - **Fundo centralizado** administrado pela CBA (conta dedicada, comitê gestor).
 - **Pacotes de projeto** aprovados antes da contemplação:
   - **R$ 20.000** — missionário em regime **integral** (tempo completo em campo).
@@ -66,7 +66,7 @@ Este documento apresenta o **escopo proposto** do **Consórcio Missionário CBA*
 - **Rodadas**: quando os 65 missionários forem contemplados uma vez, inicia-se **nova rodada** (na 2ª rodada, prioridade a projetos de **atualização/ampliação**).
 - **Prestação de contas** (notas, fotos, relatório de uso) e **relatório mensal** de campo para manter elegibilidade.
 - **Comunicação pública** dos projetos contemplados (nome, região, resumo do projeto — sem expor dados sensíveis de comunidades).
-- **Piloto de 12 meses** com avaliação formal ao final.
+- **Fase 0** (escuta e estudo) e **Fase 1** (implementação para valer), com **revisão periódica** pela liderança em assembleia — sem prazo automático de encerramento tipo “piloto”.
 
 ### Fora do escopo (out)
 
@@ -172,7 +172,7 @@ Missionários em regime **parcial** concorrem a pacote de **R$ 12.000**, com a m
 | Regularidade | Inadimplência prolongada pode implicar **pausa** na participação, sem penalizar missionários já contemplados. |
 | Transparência | Igreja recebe **extrato trimestral** do fundo e comunicados dos projetos contemplados. |
 | Engajamento | Incentivo a **oração** e apoio voluntário esporádico aos projetos divulgados — sem obrigação de viagem. |
-| Representação | Associações ajudam na **cobrança e na meta de adesão** (piloto: 70%). |
+| Representação | Associações ajudam na **cobrança e na meta de adesão** (Fase 1: meta 70%). |
 
 ### Estrutura sugerida
 
@@ -229,7 +229,7 @@ O programa mede sucesso pela **ampliação da exposição regular ao evangelho**
 
 | Risco | Impacto | Mitigação |
 |-------|---------|-----------|
-| Baixa adesão das igrejas | Menos projetos; frustração no campo | Piloto 12 meses; meta 70%; mobilização via associações; comunicação clara (“não substitui ME”) |
+| Baixa adesão das igrejas | Menos projetos; frustração no campo | Fase 0 de escuta antes da cobrança; meta 70% na Fase 1; mobilização via associações; comunicação clara (“não substitui ME”) |
 | R$ 20 mil insuficiente para kit completo novo | Projeto incompleto | Flexibilizar para usado/revisado, complemento local ou projeto menor (R$ 12 mil); segunda rodada para ampliação |
 | Sorteio visto como “sorte” injusta | Desconfiança | Duas etapas com rotação regional; regras publicadas; exclusão até completar rodada |
 | Falta de relatório mensal | Perda de vínculo com o campo | Elegibilidade condicionada; coordenação ME acompanha |
@@ -242,11 +242,12 @@ O programa mede sucesso pela **ampliação da exposição regular ao evangelho**
 
 ## 11. Fases propostas
 
-| Fase | Duração | Atividades | Entregável |
-|------|---------|------------|------------|
-| **A — Exploração com liderança** | 1–2 meses | Workshops com presidência, ME, tesouraria e associações; validação de portes e valores; ajuste do regulamento | Regulamento preliminar aprovado para consulta |
-| **B — Piloto** | 12 meses | Adesão das igrejas (meta 70%); arrecadação; aprovação de projetos; sorteios mensais; relatórios e prestação de contas | Contemplações realizadas; extratos publicados |
-| **C — Avaliação** | 1–2 meses após o piloto | Análise de adesão, impacto (exposição), equilíbrio regional, custo administrativo | Recomendação: continuar, ajustar ou encerrar; decisão em assembleia |
+| Fase | Duração indicativa | Atividades | Entregável |
+|------|-------------------|------------|------------|
+| **Fase 0 — Escuta e estudo** | 1–2 meses (flexível) | Workshops com presidência, ME, tesouraria e associações; conversas com igrejas e missionários; validação de portes e valores; ajuste do regulamento | Regulamento preliminar aprovado para consulta |
+| **Fase 1 — Implementação** | Contínua, com revisão periódica | Adesão das igrejas (meta 70%); arrecadação; aprovação de projetos; sorteios mensais; relatórios e prestação de contas **para valer** | Contemplações realizadas; extratos publicados; indicadores de exposição e operação acompanhados em assembleia |
+
+Não há “piloto de 12 meses” com encerramento automático: a **Fase 0** garante escuta antes da cobrança; a **Fase 1** é o programa em funcionamento pleno, sujeito a ajustes deliberados pela liderança.
 
 ---
 
@@ -258,7 +259,7 @@ O programa mede sucesso pela **ampliação da exposição regular ao evangelho**
 - **Aprovar a mecânica** do sorteio em duas etapas (região → missionário) e as regras de **rodada**?
 - **Definir o comitê gestor** e o fluxo de aprovação de projetos?
 - **Estabelecer** relatório mensal e prestação de contas como **condição** de elegibilidade?
-- **Autorizar piloto de 12 meses** com meta de **70% de adesão**?
+- **Autorizar Fase 0** (escuta/estudo) e **Fase 1** (implementação) com meta de **70% de adesão** na Fase 1?
 - **Definir** se o primeiro sorteio ocorre após 3 meses de fundo mínimo?
 - **Aprovar comunicação** pública dos projetos contemplados (formato e canais)?
 - **Decidir data** de apresentação às associações e calendário de assembleia para regulamento definitivo?
@@ -273,6 +274,8 @@ O programa mede sucesso pela **ampliação da exposição regular ao evangelho**
 | [`exports/consorcio_missionario_cba_proposta.md`](consorcio_missionario_cba_proposta.md) | Proposta técnica detalhada (kits, cotações, governança) |
 | [`exports/build_consorcio_cba.py`](build_consorcio_cba.py) | Script que gera/atualiza cenários e folhas do Excel |
 | [`exports/consorcio_missionario_RESUMO_1pagina.md`](consorcio_missionario_RESUMO_1pagina.md) | Resumo executivo de uma página |
+| [`exports/Consorcio Missionario/`](Consorcio%20Missionario/) | Folhetos por público (igreja local, missionário integral/parcial, liderança CBA) — MD + PDF; ver `README.md` e `00_indice.md` |
+| [`exports/consorcio_missionario_infografico.html`](consorcio_missionario_infografico.html) | Infográfico visual do fluxo do programa |
 
 ---
 
