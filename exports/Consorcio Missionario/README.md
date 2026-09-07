@@ -52,7 +52,7 @@ Abra no navegador para apresentações; não há cópia duplicada nesta pasta �
 
 | Fase | O que é |
 |------|---------|
-| **Fase 0 — Escuta e estudo** | Conversas com associações, igrejas piloto de diálogo e missionários; ajuste de regulamento e portes. **Sem arrecadação obrigatória ainda.** |
+| **Fase 0 — Escuta e estudo** | Conversas com associações, igrejas convidadas para as primeiras conversas e missionários; ajuste de regulamento e portes. **Sem arrecadação obrigatória ainda.** |
 | **Fase 1 — Implementação** | Adesão das igrejas, conta do fundo, aprovação de projetos, sorteios mensais, relatórios e prestação de contas. Programa a correr **para valer**, com revisão periódica pela liderança. |
 
 Não há linguagem de “piloto de 3 ou 12 meses”: o compromisso é **ouvir bem (Fase 0)** e **implementar com seriedade (Fase 1)**.

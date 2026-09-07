@@ -42,6 +42,8 @@ A associação e a CBA definem o porte da sua igreja com critérios objetivos (c
 | **Apoio pontual** | Doações extras, materiais ou ajuda local quando fizer sentido — sempre **voluntário**. |
 | **Antes e depois do sorteio** | A igreja pode **conhecer e divulgar** projetos regionais na sua área, criando vínculo **antes** da contemplação e **celebrando** depois. |
 
+Antes de qualquer sorteio, a sua região pode conhecer os missionários e os projetos em preparação — oração e vínculo antes da contemplação. O sorteio escolhe quem recebe o pacote neste mês, não apaga a parceria local.
+
 **Importante:** o programa **não promete** número de conversões. Promete **exposição** — mais presença, mais visitas, mais oportunidade de ouvir o evangelho.
 
 ---
@@ -53,6 +55,8 @@ A associação e a CBA definem o porte da sua igreja com critérios objetivos (c
 3. **Sorteio mensal em duas etapas:** primeiro sorteia-se a **macroregião** (cada região passa uma vez por ciclo); depois o **missionário elegível** na região.
 4. O contemplado executa, **presta contas** e manda **relatório mensal**.
 5. Quando os 65 missionários forem contemplados uma vez, abre-se **nova rodada**.
+
+O primeiro sorteio só acontece depois de alguns meses a juntar fundo (para não começar "no vermelho"). Depois disso, em média 2 a 3 missionários por mês podem ser contemplados — por isso a paciência faz parte do programa, não é falha.
 
 ---
 

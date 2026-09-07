@@ -84,6 +84,7 @@ Não se trata de experimento com prazo curto de encerramento automático: é **o
 - [ ] Definir **comitê gestor** e fluxo de aprovação de projetos?
 - [ ] Estabelecer relatório mensal e prestação de contas como **condição** de elegibilidade?
 - [ ] Autorizar **Fase 0** (escuta) e calendário de **Fase 1** (implementação)?
+- [ ] Definir meta de adesão na Fase 1 (referência: 70% das igrejas filiadas)?
 - [ ] Aprovar comunicação pública dos projetos contemplados?
 - [ ] Definir data de apresentação às associações e assembleia para regulamento definitivo?
 
