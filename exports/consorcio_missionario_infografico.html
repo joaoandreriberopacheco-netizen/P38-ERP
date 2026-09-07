@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Consórcio Missionário CBA — Infográfico</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&display=swap');
+
+    :root {
+      --cba-navy: #0c2d5a;
+      --cba-blue: #1a4f8c;
+      --cba-sky: #2d6cb5;
+      --cba-gold: #c9a227;
+      --cba-gold-light: #f0d878;
+      --cba-cream: #f8f6f0;
+      --cba-white: #ffffff;
+      --cba-text: #1a2b3c;
+      --cba-muted: #4a5f73;
+      --shadow: 0 4px 24px rgba(12, 45, 90, 0.12);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
+      background: #e8edf3;
+      color: var(--cba-text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .infographic {
+      width: 1080px;
+      min-height: 1520px;
+      margin: 0 auto;
+      background: linear-gradient(165deg, var(--cba-cream) 0%, #eef3f9 45%, #e4ecf6 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .infographic::before {
+      content: '';
+      position: absolute;
+      top: -120px;
+      right: -80px;
+      width: 420px;
+      height: 420px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(201, 162, 39, 0.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .infographic::after {
+      content: '';
+      position: absolute;
+      bottom: 200px;
+      left: -100px;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(26, 79, 140, 0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, var(--cba-navy) 0%, var(--cba-blue) 55%, var(--cba-sky) 100%);
+      color: var(--cba-white);
+      padding: 44px 48px 40px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .logo-badge {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      background: linear-gradient(145deg, var(--cba-gold) 0%, var(--cba-gold-light) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 22px;
+      color: var(--cba-navy);
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .header-org {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      opacity: 0.9;
+    }
+
+    .header h1 {
+      font-size: 42px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    .header-tagline {
+      font-size: 20px;
+      line-height: 1.45;
+      opacity: 0.95;
+      max-width: 900px;
+      font-weight: 400;
+    }
+
+    .header-tagline strong {
+      color: var(--cba-gold-light);
+      font-weight: 700;
+    }
+
+    .badge-new {
+      display: inline-block;
+      background: var(--cba-gold);
+      color: var(--cba-navy);
+      font-size: 13px;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-right: 8px;
+      vertical-align: middle;
+      letter-spacing: 0.06em;
+    }
+
+    /* Content grid */
+    .content {
+      padding: 36px 40px 28px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .section {
+      background: var(--cba-white);
+      border-radius: 16px;
+      padding: 24px 28px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      border-left: 5px solid var(--cba-blue);
+    }
+
+    .section.gold { border-left-color: var(--cba-gold); }
+    .section.navy { border-left-color: var(--cba-navy); }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .section-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--cba-blue), var(--cba-sky));
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .section.gold .section-icon {
+      background: linear-gradient(135deg, var(--cba-gold), var(--cba-gold-light));
+      color: var(--cba-navy);
+    }
+
+    .section h2 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--cba-navy);
+      letter-spacing: -0.01em;
+    }
+
+    .section p, .section li {
+      font-size: 17px;
+      line-height: 1.5;
+      color: var(--cba-text);
+    }
+
+    .section ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .section li {
+      padding: 6px 0 6px 28px;
+      position: relative;
+    }
+
+    .section li::before {
+      content: '▸';
+      position: absolute;
+      left: 4px;
+      color: var(--cba-gold);
+      font-weight: 700;
+    }
+
+    /* Two column layout */
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .row-2 .section { margin-bottom: 0; }
+
+    /* How it works - steps */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .step {
+      background: linear-gradient(180deg, #f0f5fb 0%, #e8f0f8 100%);
+      border-radius: 12px;
+      padding: 16px 12px;
+      text-align: center;
+      border: 1px solid rgba(26, 79, 140, 0.12);
+    }
+
+    .step-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--cba-blue);
+      color: white;
+      font-weight: 800;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 10px;
+    }
+
+    .step p {
+      font-size: 13.5px;
+      line-height: 1.35;
+      color: var(--cba-text);
+      font-weight: 600;
+    }
+
+    .lottery-flow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 18px;
+      padding: 16px;
+      background: linear-gradient(90deg, rgba(12,45,90,0.06), rgba(201,162,39,0.1));
+      border-radius: 12px;
+    }
+
+    .lottery-box {
+      background: var(--cba-navy);
+      color: white;
+      padding: 14px 20px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      text-align: center;
+      min-width: 140px;
+    }
+
+    .lottery-arrow {
+      font-size: 28px;
+      color: var(--cba-gold);
+      font-weight: 800;
+    }
+
+    /* Stats grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 8px;
+    }
+
+    .stat-card {
+      background: linear-gradient(145deg, var(--cba-navy) 0%, var(--cba-blue) 100%);
+      color: white;
+      border-radius: 14px;
+      padding: 18px 16px;
+      text-align: center;
+    }
+
+    .stat-card.gold {
+      background: linear-gradient(145deg, #8a6d12 0%, var(--cba-gold) 100%);
+      color: var(--cba-navy);
+    }
+
+    .stat-card.light {
+      background: linear-gradient(145deg, #e8f0f8 0%, #d4e4f4 100%);
+      color: var(--cba-navy);
+      border: 1px solid rgba(26, 79, 140, 0.15);
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      font-weight: 600;
+      opacity: 0.9;
+      line-height: 1.3;
+    }
+
+    .stat-card.light .stat-label { opacity: 0.75; }
+
+    /* Impact highlight */
+    .impact-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .impact-yes, .impact-no {
+      border-radius: 12px;
+      padding: 16px 18px;
+    }
+
+    .impact-yes {
+      background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+      border: 2px solid #4caf50;
+    }
+
+    .impact-no {
+      background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+      border: 2px solid #ff9800;
+    }
+
+    .impact-yes h3, .impact-no h3 {
+      font-size: 15px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .impact-yes h3 { color: #2e7d32; }
+    .impact-no h3 { color: #e65100; }
+
+    .impact-yes p, .impact-no p {
+      font-size: 15px;
+      line-height: 1.4;
+    }
+
+    /* Project packages */
+    .packages {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+    }
+
+    .package {
+      flex: 1;
+      background: linear-gradient(135deg, var(--cba-navy), var(--cba-blue));
+      color: white;
+      border-radius: 12px;
+      padding: 18px;
+      text-align: center;
+    }
+
+    .package.partial {
+      background: linear-gradient(135deg, #5a4a0f, var(--cba-gold));
+      color: var(--cba-navy);
+    }
+
+    .package-value {
+      font-size: 32px;
+      font-weight: 800;
+    }
+
+    .package-type {
+      font-size: 14px;
+      font-weight: 700;
+      margin-top: 4px;
+      opacity: 0.9;
+    }
+
+    .package-desc {
+      font-size: 13px;
+      margin-top: 8px;
+      opacity: 0.85;
+      line-height: 1.35;
+    }
+
+    /* Next step */
+    .next-step {
+      background: linear-gradient(135deg, var(--cba-navy) 0%, #153a6e 100%);
+      color: white;
+      border-radius: 16px;
+      padding: 24px 28px;
+      margin-bottom: 16px;
+      border-left: none;
+      box-shadow: var(--shadow);
+    }
+
+    .next-step h2 {
+      color: var(--cba-gold-light);
+      font-size: 22px;
+      margin-bottom: 12px;
+    }
+
+    .next-step ul { margin-top: 8px; }
+
+    .next-step li {
+      font-size: 16px;
+      color: rgba(255,255,255,0.95);
+      padding-left: 24px;
+    }
+
+    .next-step li::before { color: var(--cba-gold); }
+
+    /* ME complement bar */
+    .me-bar {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: white;
+      border-radius: 12px;
+      padding: 16px 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      border: 2px solid var(--cba-gold);
+    }
+
+    .me-bar-icon {
+      font-size: 32px;
+      flex-shrink: 0;
+    }
+
+    .me-bar p {
+      font-size: 16px;
+      line-height: 1.45;
+      color: var(--cba-text);
+    }
+
+    .me-bar strong { color: var(--cba-navy); }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 16px 40px 28px;
+      font-size: 13px;
+      color: var(--cba-muted);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      position: relative;
+      z-index: 1;
+    }
+
+    .footer-line {
+      width: 80px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--cba-gold), var(--cba-blue));
+      margin: 0 auto 12px;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="infographic" id="infographic">
+    <header class="header">
+      <div class="header-top">
+        <div class="logo-badge">CBA</div>
+        <div class="header-org">Convenção Batista do Amazonas</div>
+      </div>
+      <h1>Consórcio Missionário CBA</h1>
+      <p class="header-tagline">
+        <span class="badge-new">NOVO</span>
+        Programa cooperativo em que <strong>311 igrejas</strong> contribuem com
+        <strong>R$ 80–350/mês</strong> (por porte) para financiar
+        <strong>projetos aprovados</strong> — não salário — ampliando a
+        <strong>exposição ao evangelho</strong> no Amazonas.
+      </p>
+    </header>
+
+    <div class="content">
+      <div class="me-bar">
+        <div class="me-bar-icon">➕</div>
+        <p>
+          <strong>Complementa a Campanha ME</strong> (~R$ 420 mil/ano) —
+          <strong>não substitui</strong>. Camada adicional para “doses de impacto” no campo.
+        </p>
+      </div>
+
+      <div class="row-2">
+        <section class="section">
+          <div class="section-title">
+            <div class="section-icon">?</div>
+            <h2>O quê</h2>
+          </div>
+          <p style="margin-bottom: 12px;">
+            Fonte <strong>nova</strong> de financiamento cooperativo para projetos missionários aprovados — equipamento, logística, saúde, formação.
+          </p>
+          <div class="packages">
+            <div class="package">
+              <div class="package-value">R$ 20 mil</div>
+              <div class="package-type">Missionário integral</div>
+              <div class="package-desc">Projetos flexíveis: barco/motor, reforma, PEP, idosos, formação de líderes</div>
+            </div>
+            <div class="package partial">
+              <div class="package-value">R$ 12 mil</div>
+              <div class="package-type">Missionário parcial</div>
+              <div class="package-desc">Mesma lógica — “doses de impacto” aprovadas pelo comitê</div>
+            </div>
+          </div>
+          <p style="margin-top: 14px; font-size: 15px; color: var(--cba-muted);">
+            <strong>Não é salário.</strong> Recurso vai para projeto específico com prestação de contas.
+          </p>
+        </section>
+
+        <section class="section gold">
+          <div class="section-title">
+            <div class="section-icon">📊</div>
+            <h2>Impacto</h2>
+          </div>
+          <p style="margin-bottom: 12px; font-weight: 600;">
+            Indicador central: <strong>EXPOSIÇÃO</strong> — pessoas e comunidades que não têm contato regular com o evangelho.
+          </p>
+          <div class="impact-box">
+            <div class="impact-yes">
+              <h3>✓ Medimos</h3>
+              <p>Comunidades alcançadas, frequência de presença, alcance habilitado pelo projeto, horas de campo.</p>
+            </div>
+            <div class="impact-no">
+              <h3>✗ Não como meta</h3>
+              <p>Conversões ou batismos não são exigência contratual (podem ser celebrados, mas não são alvo do programa).</p>
+            </div>
+          </div>
+          <p style="margin-top: 14px; font-size: 15px;">
+            <strong>Engajamento local:</strong> visibilidade dos projetos, oração e apoio voluntário das igrejas.
+          </p>
+        </section>
+      </div>
+
+      <section class="section navy">
+        <div class="section-title">
+          <div class="section-icon">⚙</div>
+          <h2>Como funciona</h2>
+        </div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <p>Igreja adere e contribui mensalmente conforme porte (P1–P5)</p>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <p>Missionário apresenta projeto; comitê aprova <strong>antes</strong> do sorteio</p>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <p>Sorteio mensal em 2 etapas (região → missionário)</p>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <p>Contemplado executa, presta contas e envia relatório mensal</p>
+          </div>
+          <div class="step">
+            <div class="step-num">5</div>
+            <p>Após os 65 contemplados: <strong>nova rodada</strong> (atualização/ampliação)</p>
+          </div>
+        </div>
+        <div class="lottery-flow">
+          <div class="lottery-box">Etapa 1<br><span style="font-size:13px;opacity:0.85">Rotação de macroregião</span></div>
+          <div class="lottery-arrow">→</div>
+          <div class="lottery-box" style="background: var(--cba-gold); color: var(--cba-navy);">Etapa 2<br><span style="font-size:13px;opacity:0.85">Missionário elegível na região</span></div>
+        </div>
+        <p style="margin-top: 14px; font-size: 15px; text-align: center; color: var(--cba-muted);">
+          Sessão pública · Relatório mensal obrigatório para manter elegibilidade
+        </p>
+      </section>
+
+      <section class="section">
+        <div class="section-title">
+          <div class="section-icon">#</div>
+          <h2>Números-chave</h2>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value">311</div>
+            <div class="stat-label">igrejas filiadas<br>62 municípios</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">65</div>
+            <div class="stat-label">missionários ME<br>(2026)</div>
+          </div>
+          <div class="stat-card gold">
+            <div class="stat-value">R$ 80–350</div>
+            <div class="stat-label">contribuição mensal<br>por porte de igreja</div>
+          </div>
+          <div class="stat-card light">
+            <div class="stat-value">2–3</div>
+            <div class="stat-label">contemplações/mês<br>(cenário moderado 85%)</div>
+          </div>
+          <div class="stat-card light">
+            <div class="stat-value">~20 meses</div>
+            <div class="stat-label">1ª rodada completa<br>(65 missionários)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">~R$ 650 mil</div>
+            <div class="stat-label">arrecadação anual<br>(cenário moderado)</div>
+          </div>
+        </div>
+        <p style="margin-top: 14px; font-size: 14px; text-align: center; color: var(--cba-muted);">
+          Piloto sugerido: 12 meses · meta 70% adesão · 1º sorteio após 3 meses de fundo mínimo
+        </p>
+      </section>
+
+      <section class="next-step">
+        <h2>Próximo passo</h2>
+        <ul>
+          <li>Validar escopo e regulamento com a liderança CBA</li>
+          <li>Decidir comitê gestor e pacotes (R$ 20 mil / R$ 12 mil)</li>
+          <li>Aprovar piloto de 12 meses com meta de 70% de adesão</li>
+          <li>Definir calendário de apresentação às associações regionais</li>
+        </ul>
+      </section>
+    </div>
+
+    <footer class="footer">
+      <div class="footer-line"></div>
+      Convenção Batista do Amazonas — proposta em exploração · Setembro 2026
+    </footer>
+  </div>
+</body>
+</html>
