@@ -135,11 +135,24 @@ export function cellStr(value) {
 
 /** Compacta comp2/comp3: se comp2 vazio, comp3 passa para comp2. */
 const SUFIXOS_PRODUTO_CONEXAO = new Set(['CURTA', 'LONGA', 'MISTA', 'MISTO', 'ESGOTO']);
+const COMPRIMENTOS_VERGALHAO = /^(0?6M|12M)$/i;
 
 function comp1ContainsToken(comp1, token) {
   const c1 = norm(comp1);
   const t = norm(token);
   return c1 === t || c1.endsWith(` ${t}`) || c1.includes(` ${t} `) || c1.startsWith(`${t} `);
+}
+
+function isVergalhao(comp1 = '') {
+  return norm(comp1) === 'VERGALHAO';
+}
+
+function mergeSufixoProduto(c1, c2, c3) {
+  if (!c2) return { comp1: c1, comp2: c2, comp3: c3 };
+  if (!comp1ContainsToken(c1, c2)) {
+    c1 = `${c1} ${c2}`.trim();
+  }
+  return { comp1: c1, comp2: c3, comp3: '' };
 }
 
 export function normalizeComponentes(comp1, comp2, comp3) {
@@ -149,11 +162,12 @@ export function normalizeComponentes(comp1, comp2, comp3) {
 
   // Conexões: sufixo do produto (ex. CURTA em CURVA ESGOTO) entra no comp1; medida fica no comp2.
   if (c2 && SUFIXOS_PRODUTO_CONEXAO.has(norm(c2))) {
-    if (!comp1ContainsToken(c1, c2)) {
-      c1 = `${c1} ${c2}`.trim();
-    }
-    c2 = c3;
-    c3 = '';
+    ({ comp1: c1, comp2: c2, comp3: c3 } = mergeSufixoProduto(c1, c2, c3));
+  }
+
+  // Vergalhão: 12M / 06M são produtos de compra distintos; diâmetro fica no comp2.
+  if (isVergalhao(c1) && c2 && COMPRIMENTOS_VERGALHAO.test(c2.trim())) {
+    ({ comp1: c1, comp2: c2, comp3: c3 } = mergeSufixoProduto(c1, c2, c3));
   }
 
   if (!c2 && c3) {
