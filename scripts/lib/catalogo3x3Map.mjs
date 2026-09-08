@@ -147,6 +147,24 @@ function isVergalhao(comp1 = '') {
   return norm(comp1) === 'VERGALHAO';
 }
 
+/** Reservatório (não adaptador, caixa de descarga, elétrica…). */
+function isCaixaDAguaReservatorio(comp1 = '') {
+  const c1 = norm(comp1).replace(/['\s]+/g, ' ').trim();
+  return c1 === 'CAIXA D AGUA';
+}
+
+function mergeMarcaComp1(c1, c2, c3, marca) {
+  if (marca && !comp1ContainsToken(c1, marca)) {
+    c1 = `${c1} ${marca}`.trim();
+  }
+  if (marca && norm(c3) === norm(marca)) c3 = '';
+  if (marca && norm(c2) === norm(marca)) {
+    c2 = c3;
+    c3 = '';
+  }
+  return { comp1: c1, comp2: c2, comp3: c3 };
+}
+
 function mergeSufixoProduto(c1, c2, c3) {
   if (!c2) return { comp1: c1, comp2: c2, comp3: c3 };
   if (!comp1ContainsToken(c1, c2)) {
@@ -168,6 +186,11 @@ export function normalizeComponentes(comp1, comp2, comp3) {
   // Vergalhão: 12M / 06M são produtos de compra distintos; diâmetro fica no comp2.
   if (isVergalhao(c1) && c2 && COMPRIMENTOS_VERGALHAO.test(c2.trim())) {
     ({ comp1: c1, comp2: c2, comp3: c3 } = mergeSufixoProduto(c1, c2, c3));
+  }
+
+  // Caixas d'água — produto de compra canónico: CAIXA D'ÁGUA FORTLEV; volume no comp2.
+  if (isCaixaDAguaReservatorio(c1)) {
+    ({ comp1: c1, comp2: c2, comp3: c3 } = mergeMarcaComp1(c1, c2, c3, 'FORTLEV'));
   }
 
   if (!c2 && c3) {

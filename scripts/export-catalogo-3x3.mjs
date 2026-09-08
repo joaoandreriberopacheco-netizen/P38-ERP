@@ -124,6 +124,7 @@ function buildReadme(wb, stats) {
     ['Elétrica (acab.)', 'Sub Iluminação · Pontos elétricos'],
     ['Ambiente', 'Coluna opcional (Banheiro · Cozinha…) — não entra no drill-down'],
     ['Descontinuados', 'Ex.: CAIXA D\'ÁGUA GREEN — fora do catálogo activo'],
+    ['Caixas d\'água', 'Produto compra: CAIXA D\'ÁGUA FORTLEV · comp2 = volume (310 L…)'],
     ['Abas', ''],
     ['2 · ETAPA · CATEGORIA · SUB · LINHA', 'Caminhos únicos com código A01AB'],
     ['3 · Visão unificada', 'Acabamentos hidráulica/elétrica fundidos em Instalações'],
