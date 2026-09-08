@@ -108,7 +108,7 @@ function buildReadme(wb, stats) {
     ['Etapas', ''],
     ['Edificações', 'Alvenaria, cobertura (forro PVC → Acabamentos)'],
     ['Instalações', '01. Hidráulica · 02. Elétrica (Infra, Padrão, Quadro…)'],
-    ['Acabamentos', 'Revestimentos, forro, pintura, portas, banheiro, elétrica visível'],
+    ['Acabamentos', 'Revestimentos, forro, pintura, portas, banheiro (torneiras, louças, cubas), lâmpadas e tomadas'],
     ['Transversal', 'Itens transversais da obra'],
     ['', ''],
     ['Abas', ''],

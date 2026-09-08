@@ -42,7 +42,7 @@ function pcMatch(row, patterns = []) {
 }
 
 const CORES_HID = new Set(['ESGOTO', 'AGUA_FRIA_SOLDAVEL', 'AGUA_FRIA_ROSCAVEL', 'HIDRAULICA_GERAL']);
-const CORES_ELE = new Set(['PADRAO_ELETRICO', 'INFRA_ELETRICA', 'QUADRO_ELETRICO', 'PONTOS_ELETRICOS', 'ILUMINACAO']);
+const CORES_ELE_INSTALACAO = new Set(['PADRAO_ELETRICO', 'INFRA_ELETRICA', 'QUADRO_ELETRICO']);
 
 const ETAPAS_EDIFICACOES = new Set([
   '1 — Estrutura / alvenaria',
@@ -86,6 +86,80 @@ export function isBanheiro(row) {
   return etapa === '5 — Áreas molhadas' || core === 'BANHEIRO';
 }
 
+/** Peças visíveis de banheiro/cozinha — acabamento (não instalação bruta). */
+export function isTorneira(row) {
+  return pcMatch(row, ['TORNEIRA']);
+}
+
+export function isCuba(row) {
+  const pc = norm(row.produto_compra);
+  return pc.startsWith('CUBA') || pc.includes('CUBA DE APOIO') || pc.includes('CUBA EMBUTIR');
+}
+
+export function isLoucasSanitarias(row) {
+  if (pcMatch(row, [
+    'VASO SANITARIO',
+    'VASO SANITÁRIO',
+    'PRIVADA',
+    'ASSENTO SANITARIO',
+    'ASSENTO SANITÁRIO',
+    'CAIXA DE DESCARGA',
+    'MICTORIO',
+    'MICTÓRIO',
+    'PIA',
+    'LAVATORIO',
+    'LAVATÓRIO',
+    'BANHEIRA',
+    'TANQUE DECORALITA',
+  ])) return true;
+  return norm(linhaBase(row.linha)).includes('LOUCA') || norm(linhaBase(row.linha)).includes('LOUÇA');
+}
+
+export function isChuveiroAcabamento(row) {
+  return pcMatch(row, ['CHUVEIRO', 'DUCHA HIGIENICA', 'DUCHA HIGIÊNICA', 'AQUECEDOR'])
+    && !pcMatch(row, ['RESISTÊNCIA', 'RESISTENCIA']);
+}
+
+/** Lâmpadas, tomadas, interruptores — acabamento visível (não infra/quadro). */
+export function isAcabamentoEletricoVisivel(row) {
+  if (pcMatch(row, ['CAIXINHA DE LUZ', 'CAIXA DE LUZ', 'PLACA CEGA', 'TAPA-FURO'])) return false;
+  if (pcMatch(row, [
+    'TOMADA',
+    'INTERRUPTOR',
+    'LAMPADA',
+    'LÁMPADA',
+    'LUMINÁRIA',
+    'LUMINARIA',
+    'PLAFON',
+    'SPOT LED',
+    'PLUG MACHO',
+    'PLUG FEMEA',
+    'PLUG FÊMEA',
+  ])) return true;
+  const core = String(row.core ?? '').trim();
+  return core === 'ILUMINACAO' || core === 'PONTOS_ELETRICOS';
+}
+
+export function deriveLinhaEletricaVisivel(row) {
+  const pc = norm(row.produto_compra);
+  if (pc.includes('TOMADA')) return 'Tomadas';
+  if (pc.includes('INTERRUPTOR')) return 'Interruptores';
+  if (pc.includes('LAMPADA') || pc.includes('LÂMPADA')) return 'Lâmpadas';
+  if (pc.includes('LUMINÁRIA') || pc.includes('LUMINARIA') || pc.includes('PLAFON') || pc.includes('SPOT')) {
+    return 'Luminárias';
+  }
+  const core = String(row.core ?? '').trim();
+  if (core === 'ILUMINACAO') return 'Lâmpadas';
+  if (core === 'PONTOS_ELETRICOS') return 'Tomadas';
+  return 'Pontos visíveis';
+}
+
+export function deriveLinhaBanheiro(row) {
+  if (isChuveiroAcabamento(row)) return 'Chuveiros';
+  if (norm(linhaBase(row.linha)).includes('METAL')) return 'Metais sanitários';
+  return 'Acessórios';
+}
+
 export function isImpermeabilizacao(row) {
   return String(row.core ?? '').trim() === 'IMPERMEABILIZACAO';
 }
@@ -100,12 +174,13 @@ export function isHidraulica(row) {
 
 export function isEletricaInstalacao(row) {
   if (isHidraulica(row)) return false;
+  if (isAcabamentoEletricoVisivel(row)) return false;
   const etapa = String(row.etapa ?? '').trim();
   const core = String(row.core ?? '').trim();
   const linha = linhaBase(row.linha);
-  if (CORES_ELE.has(core)) return true;
+  if (CORES_ELE_INSTALACAO.has(core)) return true;
   if (etapa === '3 — Instalações brutas' && ['ELETRODUTO', 'FIOS ELÉTRICOS', 'MATERIAL ELÉTRICO'].includes(linha)) return true;
-  if (etapa === '7 — Instalação elétrica') return true;
+  if (etapa === '7 — Instalação elétrica' && ['ELETRODUTO', 'FIOS ELÉTRICOS', 'MATERIAL ELÉTRICO'].includes(linha)) return true;
   if (pcMatch(row, [
     'CAIXINHA DE LUZ',
     'CAIXA DE LUZ',
@@ -117,14 +192,6 @@ export function isEletricaInstalacao(row) {
     'FIO PARALELO',
   ])) return true;
   return false;
-}
-
-export function isEletricaVisivel(row) {
-  if (isEletricaInstalacao(row)) return false;
-  if (pcMatch(row, ['TOMADA', 'INTERRUPTOR', 'LAMPADA', 'LÂMPADA', 'LUMINÁRIA', 'LUMINARIA', 'PLAFON'])) return true;
-  const core = String(row.core ?? '').trim();
-  return ['ILUMINACAO', 'PONTOS_ELETRICOS'].includes(core)
-    && !pcMatch(row, ['CAIXINHA DE LUZ', 'CAIXA DE LUZ', 'PLACA CEGA', 'TAPA-FURO']);
 }
 
 export function isEdificacoes(row) {
@@ -227,11 +294,28 @@ export function classify3x3(row, abHit) {
   if (isImpermeabilizacao(row)) {
     return { etapa: ETAPA.ACABAMENTOS, categoria: '06. Impermeabilização', linha: 'Impermeabilização' };
   }
-  if (isBanheiro(row)) {
-    return { etapa: ETAPA.ACABAMENTOS, categoria: '05. Áreas molhadas', linha: 'Banheiro' };
+  if (isAcabamentoEletricoVisivel(row)) {
+    return {
+      etapa: ETAPA.ACABAMENTOS,
+      categoria: '08. Elétrica visível',
+      linha: deriveLinhaEletricaVisivel(row),
+    };
   }
-  if (isEletricaVisivel(row)) {
-    return { etapa: ETAPA.ACABAMENTOS, categoria: '07. Elétrica visível', linha: 'Pontos visíveis' };
+  if (isTorneira(row)) {
+    return { etapa: ETAPA.ACABAMENTOS, categoria: '05. Banheiro', linha: 'Torneiras' };
+  }
+  if (isCuba(row)) {
+    return { etapa: ETAPA.ACABAMENTOS, categoria: '05. Banheiro', linha: 'Cubas' };
+  }
+  if (isLoucasSanitarias(row)) {
+    return { etapa: ETAPA.ACABAMENTOS, categoria: '05. Banheiro', linha: 'Louças sanitárias' };
+  }
+  if (isBanheiro(row)) {
+    return {
+      etapa: ETAPA.ACABAMENTOS,
+      categoria: '05. Banheiro',
+      linha: deriveLinhaBanheiro(row),
+    };
   }
 
   // Instalações — hidráulica antes de elétrica
