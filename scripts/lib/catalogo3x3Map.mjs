@@ -252,19 +252,33 @@ function linhaFromAbSubEletrica(subBloco) {
   return 'Infraestrutura';
 }
 
+const LINHAS_CANOS_CONEXOES = new Set(['Soldável', 'Esgoto', 'Roscável', 'Eletroduto']);
+
+/** Canos e conexões — prefixo c&c (hidráulica soldável/esgoto/roscável + elétrica eletroduto). */
+export function linhaComPrefixoCnc(linha) {
+  if (LINHAS_CANOS_CONEXOES.has(linha)) return `c&c ${linha}`;
+  return linha;
+}
+
+/** @deprecated use linhaComPrefixoCnc */
+export function linhaHidraulicaComPrefixo(linha) {
+  return linhaComPrefixoCnc(linha);
+}
+
 export function deriveLinhaEletrica(row, abHit) {
+  let linha;
   if (pcMatch(row, ['DISJUNTOR', 'QUADRO DE DISTRIB', 'QUADRO DE DISTRIBUIÇÃO', 'QUADRO DE DISTRIBUICAO'])) {
-    return 'Quadros e disjuntores';
-  }
-  if (pcMatch(row, [
+    linha = 'Quadros e disjuntores';
+  } else if (pcMatch(row, [
     'ELETRODUTO',
     'BUCHA ELETRODUTO',
     'CURVA ELETRODUTO',
     'ARRUELA ELETRODUTO',
     'LUVA ELETRODUTO',
     'ADAPTADOR ELETRODUTO',
-  ])) return 'Eletroduto';
-  if (pcMatch(row, [
+  ])) {
+    linha = 'Eletroduto';
+  } else if (pcMatch(row, [
     'FIO ELÉTRICO',
     'FIO PARALELO',
     'CABO FLEX',
@@ -272,10 +286,13 @@ export function deriveLinhaEletrica(row, abHit) {
     'CABO DE FORÇA',
     'CABO MULTIPOLAR',
     'CABO',
-  ])) return 'Fios e cabos';
-  if (pcMatch(row, ['CONDUITE'])) return 'Conduítes';
-  if (pcMatch(row, ['CAIXINHA DE LUZ', 'CAIXA DE LUZ', 'PLACA CEGA', 'TAPA-FURO'])) return 'Caixas de espera';
-  if (pcMatch(row, [
+  ])) {
+    linha = 'Fios e cabos';
+  } else if (pcMatch(row, ['CONDUITE'])) {
+    linha = 'Conduítes';
+  } else if (pcMatch(row, ['CAIXINHA DE LUZ', 'CAIXA DE LUZ', 'PLACA CEGA', 'TAPA-FURO'])) {
+    linha = 'Caixas de espera';
+  } else if (pcMatch(row, [
     'PONTALETE',
     'ISOLADOR',
     'BENJAMIN',
@@ -283,29 +300,26 @@ export function deriveLinhaEletrica(row, abHit) {
     'DR ',
     'PADRAO DE ENTRADA',
     'PADRÃO DE ENTRADA',
-  ])) return 'Padrão de entrada';
-  if (pcMatch(row, ['BORNE', 'CONECTOR', 'EMENDA', 'TERMINAL', 'LIGAÇÃO', 'LIGACAO', 'REGLET'])) return 'Ligações';
-
-  if (abHit?.sub && isAbEletrica(abHit)) return linhaFromAbSubEletrica(abHit.sub);
-
-  const core = String(row.core ?? '').trim();
-  if (core === 'PADRAO_ELETRICO') return 'Padrão de entrada';
-  if (core === 'QUADRO_ELETRICO') return 'Quadros e disjuntores';
-  if (core === 'INFRA_ELETRICA') {
-    const lb = linhaBase(row.linha);
-    if (lb === 'ELETRODUTO') return 'Eletroduto';
-    if (lb === 'FIOS ELÉTRICOS') return 'Fios e cabos';
-    return 'Infraestrutura';
+  ])) {
+    linha = 'Padrão de entrada';
+  } else if (pcMatch(row, ['BORNE', 'CONECTOR', 'EMENDA', 'TERMINAL', 'LIGAÇÃO', 'LIGACAO', 'REGLET'])) {
+    linha = 'Ligações';
+  } else if (abHit?.sub && isAbEletrica(abHit)) {
+    linha = linhaFromAbSubEletrica(abHit.sub);
+  } else {
+    const core = String(row.core ?? '').trim();
+    if (core === 'PADRAO_ELETRICO') linha = 'Padrão de entrada';
+    else if (core === 'QUADRO_ELETRICO') linha = 'Quadros e disjuntores';
+    else if (core === 'INFRA_ELETRICA') {
+      const lb = linhaBase(row.linha);
+      if (lb === 'ELETRODUTO') linha = 'Eletroduto';
+      else if (lb === 'FIOS ELÉTRICOS') linha = 'Fios e cabos';
+      else linha = 'Infraestrutura';
+    } else {
+      linha = 'Infraestrutura';
+    }
   }
-  return 'Infraestrutura';
-}
-
-const LINHAS_HID_CANOS_CONEXOES = new Set(['Soldável', 'Esgoto', 'Roscável']);
-
-/** Canos e conexões — prefixo c&c nas linhas soldável, esgoto e roscável. */
-export function linhaHidraulicaComPrefixo(linha) {
-  if (LINHAS_HID_CANOS_CONEXOES.has(linha)) return `c&c ${linha}`;
-  return linha;
+  return linhaComPrefixoCnc(linha);
 }
 
 export function deriveLinhaHidraulica(row, abHit) {
@@ -327,7 +341,7 @@ export function deriveLinhaHidraulica(row, abHit) {
     else if (pcMatch(row, ["CAIXA D'ÁGUA", 'CAIXA D AGUA', 'ADAPTADOR CAIXA', 'POÇO', 'POCO'])) linha = 'Captação';
     else linha = 'Componentes';
   }
-  return linhaHidraulicaComPrefixo(linha);
+  return linhaComPrefixoCnc(linha);
 }
 
 export function deriveCategoriaEdificacoes(row) {

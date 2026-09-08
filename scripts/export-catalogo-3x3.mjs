@@ -111,7 +111,7 @@ function buildReadme(wb, stats) {
     ['', ''],
     ['Etapas (prefixo ordena)', ''],
     ['a. Edificações', 'Alvenaria, cobertura (forro PVC → c. Acabamentos)'],
-    ['b. Instalações', '01. Hidráulica (c&c = canos e conexões: soldável, esgoto, roscável) · 02. Elétrica'],
+    ['b. Instalações', '01. Hidráulica · 02. Elétrica — linhas c&c = canos e conexões (soldável, esgoto, roscável, eletroduto)'],
     ['c. Acabamentos', 'Revestimentos, forro, pintura, portas, 07. Iluminação, 08. Pontos elétricos, 05. Banheiro'],
     ['d. Transversal', 'Itens transversais da obra'],
     ['', ''],
