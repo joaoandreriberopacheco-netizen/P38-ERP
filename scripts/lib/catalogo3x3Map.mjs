@@ -9,13 +9,22 @@ export const CATEGORIA_ACAB = {
   FORRO: '02. Forro',
   PINTURA: '03. Pintura',
   PORTAS: '04. Portas',
-  TORNEIRAS: '05. Torneiras',
-  CUBAS: '06. Cubas',
-  LOUCAS: '07. Louças sanitárias',
-  CHUVEIROS: '08. Chuveiros',
-  METAIS: '09. Metais e acessórios',
-  ILUMINACAO: '10. Iluminação',
-  PONTOS_ELETRICOS: '11. Pontos elétricos',
+  HIDRAULICA: '05. Hidráulica',
+  ELETRICA: '06. Elétrica',
+};
+
+/** Subcategorias de acabamento — função (não ambiente). */
+export const SUB_ACAB_HID = {
+  PONTOS_AGUA: 'Pontos de água',
+  CUBAS: 'Cubas',
+  LOUCAS: 'Louças sanitárias',
+  CHUVEIROS: 'Chuveiros',
+  METAIS: 'Metais e acessórios',
+};
+
+export const SUB_ACAB_ELE = {
+  ILUMINACAO: 'Iluminação',
+  PONTOS_ELETRICOS: 'Pontos elétricos',
 };
 
 export const ETAPA = {
@@ -26,17 +35,19 @@ export const ETAPA = {
   DIVERSOS: 'e. Diversos',
 };
 
-const CATEGORIAS_UNIFICAR_HID = new Set([
-  CATEGORIA_ACAB.TORNEIRAS,
-  CATEGORIA_ACAB.CUBAS,
-  CATEGORIA_ACAB.LOUCAS,
-  CATEGORIA_ACAB.CHUVEIROS,
-  CATEGORIA_ACAB.METAIS,
-]);
-const CATEGORIAS_UNIFICAR_ELE = new Set([
-  CATEGORIA_ACAB.ILUMINACAO,
-  CATEGORIA_ACAB.PONTOS_ELETRICOS,
-]);
+const CATEGORIAS_UNIFICAR_HID = new Set([CATEGORIA_ACAB.HIDRAULICA]);
+const CATEGORIAS_UNIFICAR_ELE = new Set([CATEGORIA_ACAB.ELETRICA]);
+
+/** Linha intermédia 3×3: subcategoria|linha (expandTo4x3 faz o split). */
+function acabLinha(subcategoria, linha) {
+  return `${subcategoria}|${linha}`;
+}
+
+function parseAcabLinha(linha = '') {
+  const parts = String(linha ?? '').split('|');
+  if (parts.length !== 2) return null;
+  return { subcategoria: parts[0].trim(), linha: parts[1].trim() };
+}
 
 export function etapaSemPrefixo(etapa = '') {
   return String(etapa ?? '').replace(/^[a-e]\.\s*/i, '').trim();
@@ -222,6 +233,38 @@ export function deriveLinhaTorneira(row) {
   return 'Torneira banheiro';
 }
 
+/** Gama comercial — Premium vs Pop (47 torneiras no core). */
+export function deriveLinhaTorneiraGama(row) {
+  const pc = norm(row.produto_compra);
+  if (
+    pc.includes('MONOCOMANDO')
+    || pc.includes('COZINHA')
+    || pc.includes('PURIFICADOR')
+    || pc.includes('BICA')
+  ) {
+    return 'Torneiras Premium';
+  }
+  return 'Torneiras Pop';
+}
+
+export function deriveAmbiente(row) {
+  if (isTorneira(row)) {
+    const lb = deriveLinhaTorneira(row);
+    if (lb.includes('cozinha')) return 'Cozinha';
+    if (lb.includes('serviço')) return 'Área de serviço';
+    return 'Banheiro';
+  }
+  if (isCuba(row)) return isCubaCozinha(row) ? 'Cozinha' : 'Banheiro';
+  if (isLoucasSanitarias(row)) {
+    const pc = norm(row.produto_compra);
+    if (pc.includes('TANQUE')) return 'Área de serviço';
+    return 'Banheiro';
+  }
+  if (isChuveiroAcabamento(row)) return 'Banheiro';
+  if (isBanheiro(row)) return 'Banheiro';
+  return '';
+}
+
 export function deriveLinhaCuba(row) {
   if (isCubaCozinha(row)) return 'Cuba cozinha';
   return 'Cuba banheiro';
@@ -238,8 +281,8 @@ export function deriveLinhaChuveiro() {
 }
 
 export function deriveLinhaMetais(row) {
-  if (norm(linhaBase(row.linha)).includes('METAL')) return 'Metais banheiro';
-  return 'Acessórios banheiro';
+  if (norm(linhaBase(row.linha)).includes('METAL')) return 'Metais sanitários';
+  return 'Acessórios';
 }
 
 export function isLoucasSanitarias(row) {
@@ -578,50 +621,50 @@ export function classify3x3(row, abHit) {
   if (isIluminacao(row)) {
     return {
       etapa: ETAPA.ACABAMENTOS,
-      categoria: CATEGORIA_ACAB.ILUMINACAO,
-      linha: deriveLinhaIluminacao(row),
+      categoria: CATEGORIA_ACAB.ELETRICA,
+      linha: acabLinha(SUB_ACAB_ELE.ILUMINACAO, deriveLinhaIluminacao(row)),
     };
   }
   if (isPontosEletricos(row)) {
     return {
       etapa: ETAPA.ACABAMENTOS,
-      categoria: CATEGORIA_ACAB.PONTOS_ELETRICOS,
-      linha: deriveLinhaPontosEletricos(row),
+      categoria: CATEGORIA_ACAB.ELETRICA,
+      linha: acabLinha(SUB_ACAB_ELE.PONTOS_ELETRICOS, deriveLinhaPontosEletricos(row)),
     };
   }
   if (isTorneira(row)) {
     return {
       etapa: ETAPA.ACABAMENTOS,
-      categoria: CATEGORIA_ACAB.TORNEIRAS,
-      linha: deriveLinhaTorneira(row),
+      categoria: CATEGORIA_ACAB.HIDRAULICA,
+      linha: acabLinha(SUB_ACAB_HID.PONTOS_AGUA, deriveLinhaTorneiraGama(row)),
     };
   }
   if (isCuba(row)) {
     return {
       etapa: ETAPA.ACABAMENTOS,
-      categoria: CATEGORIA_ACAB.CUBAS,
-      linha: deriveLinhaCuba(row),
+      categoria: CATEGORIA_ACAB.HIDRAULICA,
+      linha: acabLinha(SUB_ACAB_HID.CUBAS, SUB_ACAB_HID.CUBAS),
     };
   }
   if (isLoucasSanitarias(row)) {
     return {
       etapa: ETAPA.ACABAMENTOS,
-      categoria: CATEGORIA_ACAB.LOUCAS,
-      linha: deriveLinhaLoucas(row),
+      categoria: CATEGORIA_ACAB.HIDRAULICA,
+      linha: acabLinha(SUB_ACAB_HID.LOUCAS, SUB_ACAB_HID.LOUCAS),
     };
   }
   if (isChuveiroAcabamento(row)) {
     return {
       etapa: ETAPA.ACABAMENTOS,
-      categoria: CATEGORIA_ACAB.CHUVEIROS,
-      linha: deriveLinhaChuveiro(),
+      categoria: CATEGORIA_ACAB.HIDRAULICA,
+      linha: acabLinha(SUB_ACAB_HID.CHUVEIROS, SUB_ACAB_HID.CHUVEIROS),
     };
   }
   if (isBanheiro(row)) {
     return {
       etapa: ETAPA.ACABAMENTOS,
-      categoria: CATEGORIA_ACAB.METAIS,
-      linha: deriveLinhaMetais(row),
+      categoria: CATEGORIA_ACAB.HIDRAULICA,
+      linha: acabLinha(SUB_ACAB_HID.METAIS, deriveLinhaMetais(row)),
     };
   }
 
@@ -716,21 +759,9 @@ export function expandTo4x3({ etapa, categoria, linha }) {
   if (categoria === CATEGORIA_ACAB.PORTAS) {
     return { subcategoria: 'Esquadrias', linha: lb };
   }
-  if (lb === 'Torneira banheiro') return { subcategoria: 'Banheiro', linha: 'Torneiras' };
-  if (lb === 'Torneira cozinha') return { subcategoria: 'Cozinha', linha: 'Torneiras' };
-  if (lb === 'Torneira área de serviço') return { subcategoria: 'Área de serviço', linha: 'Torneiras' };
-  if (lb === 'Cuba banheiro') return { subcategoria: 'Banheiro', linha: 'Cubas' };
-  if (lb === 'Cuba cozinha') return { subcategoria: 'Cozinha', linha: 'Cubas' };
-  if (lb === 'Louça banheiro') return { subcategoria: 'Banheiro', linha: 'Louças sanitárias' };
-  if (lb === 'Louça área de serviço') return { subcategoria: 'Área de serviço', linha: 'Louças sanitárias' };
-  if (lb === 'Chuveiro banheiro') return { subcategoria: 'Banheiro', linha: 'Chuveiros' };
-  if (lb === 'Metais banheiro') return { subcategoria: 'Banheiro', linha: 'Metais sanitários' };
-  if (lb === 'Acessórios banheiro') return { subcategoria: 'Banheiro', linha: 'Acessórios' };
-  if (categoria === CATEGORIA_ACAB.ILUMINACAO) {
-    return { subcategoria: 'Iluminação', linha: lb };
-  }
-  if (categoria === CATEGORIA_ACAB.PONTOS_ELETRICOS) {
-    return { subcategoria: 'Pontos', linha: lb };
+  if (categoria === CATEGORIA_ACAB.HIDRAULICA || categoria === CATEGORIA_ACAB.ELETRICA) {
+    const parsed = parseAcabLinha(lb);
+    if (parsed) return parsed;
   }
   if (categoria === '02. Cobertura') {
     return { subcategoria: 'Cobertura', linha: lb };
@@ -843,6 +874,7 @@ export function to4x3(row, abHit) {
     etapa_origem: cellStr(row.etapa),
     core_origem: cellStr(row.core),
     linha_origem: cellStr(row.linha),
+    ambiente: deriveAmbiente(row),
     categoria_3x: legacy3.categoria,
     linha_3x: legacy3.linha,
   };

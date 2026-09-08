@@ -114,10 +114,13 @@ function buildReadme(wb, stats) {
     ['Etapas (prefixo ordena)', ''],
     ['A / a. Edificações', 'Alvenaria · sub: Materiais / Estrutura / Aditivos'],
     ['B / b. Instalações', 'Hidráulica · Elétrica — sub c&c = Canos e conexões'],
-    ['C / c. Acabamentos', 'Por peça · sub = ambiente (Banheiro · Cozinha…) · linha = tipo'],
+    ['C / c. Acabamentos', 'Domínio: 05 Hidráulica · 06 Elétrica — sub = função · linha = gama'],
     ['D / d. Transversal', 'Itens transversais da obra'],
     ['', ''],
     ['Revestimentos', 'Sub Assentamento · linhas Cerâmica · Argamassa · Rejunte'],
+    ['Hidráulica (acab.)', 'Sub Pontos de água · linhas Torneiras Premium / Torneiras Pop'],
+    ['Elétrica (acab.)', 'Sub Iluminação · Pontos elétricos'],
+    ['Ambiente', 'Coluna opcional (Banheiro · Cozinha…) — não entra no drill-down'],
     ['Abas', ''],
     ['2 · ETAPA · CATEGORIA · SUB · LINHA', 'Caminhos únicos com código A01AB'],
     ['3 · Visão unificada', 'Acabamentos hidráulica/elétrica fundidos em Instalações'],
@@ -182,7 +185,8 @@ const CATALOG_HEADERS = [
   { key: 'etapa_origem', width: 24 },
   { key: 'core_origem', width: 22 },
   { key: 'linha_origem', width: 22 },
-  { key: 'linha_3x', width: 22 },
+  { key: 'ambiente', width: 18 },
+  { key: 'linha_3x', width: 28 },
 ];
 
 function attachPathMeta4(row, registry, fields = {
@@ -290,6 +294,7 @@ async function main() {
       etapa_origem: row.etapa_origem,
       core_origem: row.core_origem,
       linha_origem: row.linha_origem,
+      ambiente: row.ambiente,
       linha_3x: row.linha_3x,
     }, codigos));
 
@@ -390,13 +395,14 @@ async function main() {
     ['legenda', 'texto', '—', 'Caminho legível', 'Edificações · Alvenaria · Estrutura · Armaduras'],
     ['etapa', 'texto', 'Filtro / Linha', 'Nível 1 — prefixo a./b./c.', 'a. Edificações'],
     ['categoria', 'texto', 'Linha', 'Nível 2', '01. Alvenaria'],
-    ['subcategoria', 'texto', 'Linha', 'Nível 3', 'Canos e conexões · Banheiro'],
-    ['linha', 'texto', 'Linha', 'Nível 4 — família', 'Soldável · Torneiras'],
+    ['subcategoria', 'texto', 'Linha', 'Nível 3', 'Pontos de água · Canos e conexões'],
+    ['linha', 'texto', 'Linha', 'Nível 4 — família / gama', 'Torneiras Premium · Soldável'],
     ['comp1', 'texto', 'Coluna', 'Produto de compra', 'Estribo'],
     ['comp2', 'texto', 'Coluna', 'Variante principal', '7×17'],
     ['comp3', 'texto', 'Coluna', 'Variante secundária', '(vazio)'],
     ['qtd_sku', 'número', 'Valores', 'Sempre 1', '1'],
-    ['linha_3x', 'texto', 'Filtro', 'Linha legado 3×3 (auditoria)', 'Torneira banheiro'],
+    ['ambiente', 'texto', 'Filtro', 'Banheiro · Cozinha (fora do drill)', 'Banheiro'],
+    ['linha_3x', 'texto', 'Filtro', 'Linha intermédia 3×3 (auditoria)', 'Pontos de água|Torneiras Premium'],
   ];
 
   metaRows.forEach((vals, i) => {
