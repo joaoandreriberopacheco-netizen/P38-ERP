@@ -300,22 +300,34 @@ export function deriveLinhaEletrica(row, abHit) {
   return 'Infraestrutura';
 }
 
+const LINHAS_HID_CANOS_CONEXOES = new Set(['Soldável', 'Esgoto', 'Roscável']);
+
+/** Canos e conexões — prefixo c&c nas linhas soldável, esgoto e roscável. */
+export function linhaHidraulicaComPrefixo(linha) {
+  if (LINHAS_HID_CANOS_CONEXOES.has(linha)) return `c&c ${linha}`;
+  return linha;
+}
+
 export function deriveLinhaHidraulica(row, abHit) {
+  let linha;
   if (abHit?.sub && isAbHidraulica(abHit)) {
     const s = String(abHit.sub);
-    if (/01|Soldável/i.test(s)) return 'Soldável';
-    if (/02|Esgoto/i.test(s)) return 'Esgoto';
-    if (/03|Roscável/i.test(s)) return 'Roscável';
-    if (/04|Captação/i.test(s)) return 'Captação';
-    if (/05|Componentes/i.test(s)) return 'Componentes';
+    if (/01|Soldável/i.test(s)) linha = 'Soldável';
+    else if (/02|Esgoto/i.test(s)) linha = 'Esgoto';
+    else if (/03|Roscável/i.test(s)) linha = 'Roscável';
+    else if (/04|Captação/i.test(s)) linha = 'Captação';
+    else if (/05|Componentes/i.test(s)) linha = 'Componentes';
   }
-  const core = String(row.core ?? '').trim();
-  const linha = linhaBase(row.linha);
-  if (core === 'AGUA_FRIA_SOLDAVEL' || linha === 'SOLDÁVEL') return 'Soldável';
-  if (core === 'ESGOTO' || linha === 'ESGOTO') return 'Esgoto';
-  if (core === 'AGUA_FRIA_ROSCAVEL' || linha === 'ROSCÁVEL') return 'Roscável';
-  if (pcMatch(row, ["CAIXA D'ÁGUA", 'CAIXA D AGUA', 'ADAPTADOR CAIXA', 'POÇO', 'POCO'])) return 'Captação';
-  return 'Componentes';
+  if (!linha) {
+    const core = String(row.core ?? '').trim();
+    const lb = linhaBase(row.linha);
+    if (core === 'AGUA_FRIA_SOLDAVEL' || lb === 'SOLDÁVEL') linha = 'Soldável';
+    else if (core === 'ESGOTO' || lb === 'ESGOTO') linha = 'Esgoto';
+    else if (core === 'AGUA_FRIA_ROSCAVEL' || lb === 'ROSCÁVEL') linha = 'Roscável';
+    else if (pcMatch(row, ["CAIXA D'ÁGUA", 'CAIXA D AGUA', 'ADAPTADOR CAIXA', 'POÇO', 'POCO'])) linha = 'Captação';
+    else linha = 'Componentes';
+  }
+  return linhaHidraulicaComPrefixo(linha);
 }
 
 export function deriveCategoriaEdificacoes(row) {
