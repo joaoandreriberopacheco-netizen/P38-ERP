@@ -584,6 +584,18 @@ export function isAdaptadorCaixaAgua(row) {
   return pcMatch(row, ["ADAPTADOR CAIXA D'ÁGUA", 'ADAPTADOR CAIXA D AGUA', 'ADAPTADOR CAIXA']);
 }
 
+/** Caixas d'água marca GREEN — descontinuadas (substituídas por FORTLEV no mix). */
+export function isCaixaAguaGreen(row) {
+  if (!pcMatch(row, ["CAIXA D'ÁGUA", 'CAIXA D AGUA'])) return false;
+  const sku = norm(row.sku_atual || row.novo_sku || '');
+  return sku.includes('GREEN');
+}
+
+/** SKUs excluídos do catálogo activo (descontinuados). */
+export function isSkuDescontinuado(row) {
+  return isCaixaAguaGreen(row);
+}
+
 export function deriveLinhaHidraulica(row, abHit) {
   let linha;
   if (isAdaptadorCaixaAgua(row)) {

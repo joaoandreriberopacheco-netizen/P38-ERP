@@ -18,6 +18,7 @@ import {
   buildCodigosCaminho4x,
   lookupCodigoCaminho4x,
   legendaCaminho4x,
+  isSkuDescontinuado,
 } from './lib/catalogo3x3Map.mjs';
 
 const EXPORTS = path.join(process.cwd(), 'docs', 'exports');
@@ -101,6 +102,7 @@ function buildReadme(wb, stats) {
   const lines = [
     ['Gerado em', stats.generatedAt],
     ['SKUs', stats.skuCount],
+    ['Descontinuados excluídos', stats.descontinuadosExcluidos],
     ['Caminhos drill-down (completo)', stats.drillPaths],
     ['Caminhos visão unificada', stats.unifiedDrillPaths],
     ['Padrões componente (×3)', stats.compPatterns],
@@ -121,6 +123,7 @@ function buildReadme(wb, stats) {
     ['Hidráulica (acab.)', 'Sub Pontos de água · linhas Torneiras Premium / Torneiras Pop'],
     ['Elétrica (acab.)', 'Sub Iluminação · Pontos elétricos'],
     ['Ambiente', 'Coluna opcional (Banheiro · Cozinha…) — não entra no drill-down'],
+    ['Descontinuados', 'Ex.: CAIXA D\'ÁGUA GREEN — fora do catálogo activo'],
     ['Abas', ''],
     ['2 · ETAPA · CATEGORIA · SUB · LINHA', 'Caminhos únicos com código A01AB'],
     ['3 · Visão unificada', 'Acabamentos hidráulica/elétrica fundidos em Instalações'],
@@ -225,7 +228,9 @@ function aggregateDrill(skus, pick) {
 
 async function main() {
   const abLookup = await loadAbLookup();
-  const catalogRows = await loadCatalogRows();
+  const allRows = await loadCatalogRows();
+  const descontinuados = allRows.filter((row) => isSkuDescontinuado(row));
+  const catalogRows = allRows.filter((row) => !isSkuDescontinuado(row));
 
   const skus = catalogRows.map((row) => {
     const cod = cellStr(row.codigo_interno).toUpperCase();
@@ -348,6 +353,7 @@ async function main() {
   buildReadme(wb, {
     generatedAt: new Date().toISOString(),
     skuCount: factRows.length,
+    descontinuadosExcluidos: descontinuados.length,
     drillPaths: drillRows.length,
     unifiedDrillPaths: unifiedDrillRows.length,
     compPatterns: compRows.length,
@@ -424,6 +430,9 @@ async function main() {
   }
 
   console.log(`[export:catalogo-4x3] ${factRows.length} SKUs → ${OUT}`);
+  if (descontinuados.length) {
+    console.log(`  · Descontinuados excluídos: ${descontinuados.length} (ex.: CAIXA D'ÁGUA GREEN)`);
+  }
   console.log(`  · ETAPA·CATEGORIA·SUB·LINHA: ${drillRows.length} caminhos`);
   console.log(`  · Visão unificada: ${unifiedDrillRows.length} caminhos`);
   console.log(`  · Componentes ×3: ${compRows.length} padrões`);
