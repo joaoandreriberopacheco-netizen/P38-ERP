@@ -6,10 +6,12 @@
  *
  * Abas:
  *   1. README
- *   2. ETAPA · CATEGORIA · LINHA — caminhos drill-down únicos
- *   3. Componentes ×3   — padrões de nome SKU (Comp1 | Comp2 | Comp3)
- *   4. Catálogo 3×3     — um SKU por linha
- *   5. Pivot — metadados — guia para tabela dinâmica
+ *   2. ETAPA · CATEGORIA · LINHA — caminhos drill-down únicos (com prefixo a./b./c.)
+ *   3. Visão unificada — caminhos com Acabamentos de domínio colapsado em Instalações
+ *   4. Componentes ×3   — padrões de nome SKU (Comp1 | Comp2 | Comp3)
+ *   5. Catálogo 3×3     — um SKU por linha (modelo completo)
+ *   6. Catálogo unificado — mesmo catálogo com etapa_u / categoria_u / linha_u
+ *   7. Pivot — metadados — guia para tabela dinâmica
  *
  * Fonte: docs/exports/P38-sku-hierarquia-core.xlsx (+ enriquecimento ab.xlsx)
  */
@@ -98,24 +100,28 @@ function buildReadme(wb, stats) {
   const lines = [
     ['Gerado em', stats.generatedAt],
     ['SKUs', stats.skuCount],
-    ['Caminhos drill-down', stats.drillPaths],
+    ['Caminhos drill-down (completo)', stats.drillPaths],
+    ['Caminhos visão unificada', stats.unifiedDrillPaths],
     ['Padrões componente (×3)', stats.compPatterns],
     ['', ''],
     ['Modelo', ''],
-    ['Drill-down (3 colunas)', 'ETAPA > CATEGORIA > LINHA  (ex.: Edificações > 01. Alvenaria > Armaduras)'],
+    ['Drill-down (3 colunas)', 'ETAPA > CATEGORIA > LINHA  (ex.: a. Edificações > 01. Alvenaria > Armaduras)'],
     ['Componente SKU (3 colunas)', 'comp1 | comp2 | comp3  (ex.: Estribo | 7×17 | vazio)'],
+    ['Visão unificada (opcional)', 'Aba 3 e Catálogo unificado — junta hidráulica/elétrica de acabamento com instalação'],
     ['', ''],
-    ['Etapas', ''],
-    ['Edificações', 'Alvenaria, cobertura (forro PVC → Acabamentos)'],
-    ['Instalações', '01. Hidráulica · 02. Elétrica (Infra, Padrão, Quadro…)'],
-    ['Acabamentos', 'Revestimentos, forro, pintura, portas, banheiro (torneiras, louças, cubas), lâmpadas e tomadas'],
-    ['Transversal', 'Itens transversais da obra'],
+    ['Etapas (prefixo ordena)', ''],
+    ['a. Edificações', 'Alvenaria, cobertura (forro PVC → c. Acabamentos)'],
+    ['b. Instalações', '01. Hidráulica · 02. Elétrica (eletroduto, fios, quadros, ligações…)'],
+    ['c. Acabamentos', 'Revestimentos, forro, pintura, portas, 07. Iluminação, 08. Pontos elétricos, 05. Banheiro'],
+    ['d. Transversal', 'Itens transversais da obra'],
     ['', ''],
     ['Abas', ''],
-    ['2 · ETAPA · CATEGORIA · LINHA', 'Dimensão navegação — caminhos únicos'],
-    ['3 · Componentes ×3', 'Dimensão identidade — padrões únicos Comp1+Comp2+Comp3'],
-    ['4 · Catálogo 3×3', 'Facto — um SKU por linha (monitor Smart Supply)'],
-    ['5 · Pivot — metadados', 'Campos, tipos e sugestões para tabela dinâmica'],
+    ['2 · ETAPA · CATEGORIA · LINHA', 'Modelo completo — caminhos únicos com prefixo a./b./c.'],
+    ['3 · Visão unificada', 'Caminhos com banheiro/iluminação/pontos fundidos em b. Instalações'],
+    ['4 · Componentes ×3', 'Dimensão identidade — padrões únicos Comp1+Comp2+Comp3'],
+    ['5 · Catálogo 3×3', 'Facto — um SKU por linha (modelo completo)'],
+    ['6 · Catálogo unificado', 'Facto — colunas etapa_u / categoria_u / linha_u para monitor sem camada c.'],
+    ['7 · Pivot — metadados', 'Campos, tipos e sugestões para tabela dinâmica'],
     ['', ''],
     ['Regenerar', 'npm run export:catalogo-3x3'],
     ['Fonte', 'P38-sku-hierarquia-core.xlsx + P38-sku-hierarquia-ab.xlsx'],
@@ -221,6 +227,53 @@ async function main() {
       linha_origem: row.linha_origem,
     }));
 
+  const unifiedDrillMap = new Map();
+  for (const row of skus3x3) {
+    const k = key3(row.etapa_u, row.categoria_u, row.linha_u);
+    if (!unifiedDrillMap.has(k)) {
+      unifiedDrillMap.set(k, {
+        etapa: row.etapa_u,
+        categoria: row.categoria_u,
+        linha: row.linha_u,
+        skus: 0,
+        produtos_compra: new Set(),
+      });
+    }
+    const e = unifiedDrillMap.get(k);
+    e.skus += 1;
+    if (row.comp1) e.produtos_compra.add(row.comp1);
+  }
+  const unifiedDrillRows = [...unifiedDrillMap.values()]
+    .sort((a, b) => key3(a.etapa, a.categoria, a.linha).localeCompare(key3(b.etapa, b.categoria, b.linha)))
+    .map((e) => ({
+      etapa: e.etapa,
+      categoria: e.categoria,
+      linha: e.linha,
+      skus: e.skus,
+      produtos_compra: e.produtos_compra.size,
+      caminho: `${e.etapa} > ${e.categoria} > ${e.linha}`,
+    }));
+
+  const unifiedFactRows = skus3x3
+    .sort((a, b) => key3(a.etapa_u, a.categoria_u, a.linha_u, a.comp1).localeCompare(key3(b.etapa_u, b.categoria_u, b.linha_u, b.comp1)))
+    .map((row) => ({
+      etapa: row.etapa_u,
+      categoria: row.categoria_u,
+      linha: row.linha_u,
+      comp1: row.comp1,
+      comp2: row.comp2,
+      comp3: row.comp3,
+      codigo_interno: row.codigo_interno,
+      novo_sku: row.novo_sku,
+      sku_atual: row.sku_atual,
+      caminho: `${row.etapa_u} > ${row.categoria_u} > ${row.linha_u}`,
+      rotulo_componente: [row.comp1, row.comp2, row.comp3].filter(Boolean).join(' · '),
+      qtd_sku: 1,
+      etapa_origem: row.etapa,
+      categoria_origem: row.categoria,
+      linha_origem: row.linha,
+    }));
+
   const wb = new ExcelJS.Workbook();
   wb.creator = 'P38 export:catalogo-3x3';
   wb.created = new Date();
@@ -230,6 +283,7 @@ async function main() {
     generatedAt: new Date().toISOString(),
     skuCount: factRows.length,
     drillPaths: drillRows.length,
+    unifiedDrillPaths: unifiedDrillRows.length,
     compPatterns: compRows.length,
   });
 
@@ -245,6 +299,20 @@ async function main() {
     ],
     drillRows,
     'FF4A5240',
+  );
+
+  writeSheet(
+    wb.addWorksheet('Visão unificada'),
+    [
+      { key: 'etapa', width: 20 },
+      { key: 'categoria', width: 28 },
+      { key: 'linha', width: 28 },
+      { key: 'caminho', width: 52 },
+      { key: 'skus', width: 10 },
+      { key: 'produtos_compra', width: 16 },
+    ],
+    unifiedDrillRows,
+    'FF1E3A5F',
   );
 
   writeSheet(
@@ -284,6 +352,29 @@ async function main() {
     'FF2D5016',
   );
 
+  writeSheet(
+    wb.addWorksheet('Catálogo unificado'),
+    [
+      { key: 'etapa', width: 18 },
+      { key: 'categoria', width: 24 },
+      { key: 'linha', width: 24 },
+      { key: 'comp1', width: 28 },
+      { key: 'comp2', width: 20 },
+      { key: 'comp3', width: 16 },
+      { key: 'codigo_interno', width: 14 },
+      { key: 'novo_sku', width: 42 },
+      { key: 'caminho', width: 48 },
+      { key: 'rotulo_componente', width: 40 },
+      { key: 'qtd_sku', width: 10 },
+      { key: 'sku_atual', width: 36 },
+      { key: 'etapa_origem', width: 18 },
+      { key: 'categoria_origem', width: 22 },
+      { key: 'linha_origem', width: 22 },
+    ],
+    unifiedFactRows,
+    'FF1E3A5F',
+  );
+
   const pivotWs = wb.addWorksheet('Pivot — metadados');
   pivotWs.columns = [{ width: 22 }, { width: 14 }, { width: 18 }, { width: 48 }, { width: 24 }];
 
@@ -295,9 +386,9 @@ async function main() {
   styleHeader(metaHeaders, 'FF6B7280');
 
   const metaRows = [
-    ['etapa', 'texto', 'Filtro / Linha', 'Macro-etapa (nível 1)', 'Edificações'],
-    ['categoria', 'texto', 'Linha', 'Sub-ramo (nível 2)', '01. Alvenaria · 02. Elétrica'],
-    ['linha', 'texto', 'Linha', 'Família operacional (nível 3)', 'Armaduras · Infra · Soldável'],
+    ['etapa', 'texto', 'Filtro / Linha', 'Macro-etapa (nível 1) — prefixo a./b./c.', 'a. Edificações'],
+    ['categoria', 'texto', 'Linha', 'Sub-ramo (nível 2)', '01. Alvenaria · 07. Iluminação'],
+    ['linha', 'texto', 'Linha', 'Família operacional (nível 3)', 'Armaduras · Eletroduto · Lâmpadas'],
     ['comp1', 'texto', 'Coluna', 'Produto de compra / peça', 'Estribo'],
     ['comp2', 'texto', 'Coluna', 'Variante principal (medida, cor…)', '7×17'],
     ['comp3', 'texto', 'Coluna', 'Variante secundária ou marca', '(vazio)'],
@@ -323,6 +414,7 @@ async function main() {
 
   const sugestoes = [
     'Monitor por corredor: Linhas = etapa + categoria + linha · Valores = Σ qtd_sku',
+    'Visão unificada: usar aba Catálogo unificado (hidráulica/elétrica de acabamento junta com instalação)',
     'Produtos por etapa: Linhas = etapa · Colunas = comp1 · Valores = Σ qtd_sku',
     'Variantes: Linhas = comp1 · Colunas = comp2 · Filtro = linha · Valores = Σ qtd_sku',
     'Auditoria legado: Linhas = core_origem · Colunas = linha_origem · Filtro = etapa',
@@ -345,6 +437,7 @@ async function main() {
 
   console.log(`[export:catalogo-3x3] ${factRows.length} SKUs → ${OUT}`);
   console.log(`  · ETAPA·CATEGORIA·LINHA: ${drillRows.length} caminhos`);
+  console.log(`  · Visão unificada: ${unifiedDrillRows.length} caminhos`);
   console.log(`  · Componentes ×3: ${compRows.length} padrões`);
   console.log(`  · Abas: ${wb.worksheets.map((w) => w.name).join(', ')}`);
 }

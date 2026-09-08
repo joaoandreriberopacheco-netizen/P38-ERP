@@ -1,16 +1,23 @@
 /**
  * Modelo 3×3: ETAPA > CATEGORIA > LINHA + Comp1·Comp2·Comp3
  *
- * Etapas (Cat drill 1): Edificações · Instalações · Acabamentos · Transversal
+ * Etapas (drill 1): a. Edificações · b. Instalações · c. Acabamentos · d. Transversal
  */
 
 export const ETAPA = {
-  EDIFICACOES: 'Edificações',
-  INSTALACOES: 'Instalações',
-  ACABAMENTOS: 'Acabamentos',
-  TRANSVERSAL: 'Transversal',
-  DIVERSOS: 'Diversos',
+  EDIFICACOES: 'a. Edificações',
+  INSTALACOES: 'b. Instalações',
+  ACABAMENTOS: 'c. Acabamentos',
+  TRANSVERSAL: 'd. Transversal',
+  DIVERSOS: 'e. Diversos',
 };
+
+const CATEGORIAS_UNIFICAR_HID = new Set(['05. Banheiro']);
+const CATEGORIAS_UNIFICAR_ELE = new Set(['07. Iluminação', '08. Pontos elétricos']);
+
+export function etapaSemPrefixo(etapa = '') {
+  return String(etapa ?? '').replace(/^[a-e]\.\s*/i, '').trim();
+}
 
 export function linhaBase(linha = '') {
   return String(linha ?? '').replace(/·[NRC]$/i, '').trim();
@@ -86,7 +93,6 @@ export function isBanheiro(row) {
   return etapa === '5 — Áreas molhadas' || core === 'BANHEIRO';
 }
 
-/** Peças visíveis de banheiro/cozinha — acabamento (não instalação bruta). */
 export function isTorneira(row) {
   return pcMatch(row, ['TORNEIRA']);
 }
@@ -120,12 +126,10 @@ export function isChuveiroAcabamento(row) {
     && !pcMatch(row, ['RESISTÊNCIA', 'RESISTENCIA']);
 }
 
-/** Lâmpadas, tomadas, interruptores — acabamento visível (não infra/quadro). */
-export function isAcabamentoEletricoVisivel(row) {
+/** Lâmpadas, luminárias, plugs — acabamento visível de iluminação. */
+export function isIluminacao(row) {
   if (pcMatch(row, ['CAIXINHA DE LUZ', 'CAIXA DE LUZ', 'PLACA CEGA', 'TAPA-FURO'])) return false;
   if (pcMatch(row, [
-    'TOMADA',
-    'INTERRUPTOR',
     'LAMPADA',
     'LÁMPADA',
     'LUMINÁRIA',
@@ -137,21 +141,43 @@ export function isAcabamentoEletricoVisivel(row) {
     'PLUG FÊMEA',
   ])) return true;
   const core = String(row.core ?? '').trim();
-  return core === 'ILUMINACAO' || core === 'PONTOS_ELETRICOS';
+  const lb = norm(linhaBase(row.linha));
+  return core === 'ILUMINACAO' || lb.includes('ILUMIN');
 }
 
-export function deriveLinhaEletricaVisivel(row) {
+/** Tomadas e interruptores — acabamento visível de pontos. */
+export function isPontosEletricos(row) {
+  if (pcMatch(row, ['CAIXINHA DE LUZ', 'CAIXA DE LUZ', 'PLACA CEGA', 'TAPA-FURO'])) return false;
+  if (pcMatch(row, ['TOMADA', 'INTERRUPTOR'])) return true;
+  const core = String(row.core ?? '').trim();
+  return core === 'PONTOS_ELETRICOS';
+}
+
+/** @deprecated use isIluminacao / isPontosEletricos */
+export function isAcabamentoEletricoVisivel(row) {
+  return isIluminacao(row) || isPontosEletricos(row);
+}
+
+export function deriveLinhaIluminacao(row) {
   const pc = norm(row.produto_compra);
-  if (pc.includes('TOMADA')) return 'Tomadas';
-  if (pc.includes('INTERRUPTOR')) return 'Interruptores';
   if (pc.includes('LAMPADA') || pc.includes('LÂMPADA')) return 'Lâmpadas';
   if (pc.includes('LUMINÁRIA') || pc.includes('LUMINARIA') || pc.includes('PLAFON') || pc.includes('SPOT')) {
     return 'Luminárias';
   }
+  if (pc.includes('PLUG')) return 'Plugs e acessórios';
   const core = String(row.core ?? '').trim();
   if (core === 'ILUMINACAO') return 'Lâmpadas';
+  return 'Iluminação';
+}
+
+export function deriveLinhaPontosEletricos(row) {
+  const pc = norm(row.produto_compra);
+  if (pc.includes('TOMADA') && pc.includes('INTERRUPTOR')) return 'Combinados';
+  if (pc.includes('TOMADA')) return 'Tomadas';
+  if (pc.includes('INTERRUPTOR')) return 'Interruptores';
+  const core = String(row.core ?? '').trim();
   if (core === 'PONTOS_ELETRICOS') return 'Tomadas';
-  return 'Pontos visíveis';
+  return 'Pontos elétricos';
 }
 
 export function deriveLinhaBanheiro(row) {
@@ -174,7 +200,7 @@ export function isHidraulica(row) {
 
 export function isEletricaInstalacao(row) {
   if (isHidraulica(row)) return false;
-  if (isAcabamentoEletricoVisivel(row)) return false;
+  if (isIluminacao(row) || isPontosEletricos(row)) return false;
   const etapa = String(row.etapa ?? '').trim();
   const core = String(row.core ?? '').trim();
   const linha = linhaBase(row.linha);
@@ -186,10 +212,18 @@ export function isEletricaInstalacao(row) {
     'CAIXA DE LUZ',
     'DISJUNTOR',
     'ELETRODUTO',
-    'FIOS ELÉTRICOS',
-    'CABO FLEX',
+    'CONDUITE',
     'FIO ELÉTRICO',
     'FIO PARALELO',
+    'CABO FLEX',
+    'CABO PP',
+    'QUADRO DE DISTRIB',
+    'PONTALETE',
+    'ISOLADOR',
+    'BORNE',
+    'CONECTOR',
+    'TERMINAL',
+    'EMENDA',
   ])) return true;
   return false;
 }
@@ -211,22 +245,59 @@ function isAbEletrica(abHit) {
 
 function linhaFromAbSubEletrica(subBloco) {
   const s = String(subBloco ?? '');
-  if (/06|Padrão/i.test(s)) return 'Padrão';
-  if (/07|Infra/i.test(s)) return 'Infra';
-  if (/08|Quadro/i.test(s)) return 'Quadro';
+  if (/06|Padrão/i.test(s)) return 'Padrão de entrada';
+  if (/07|Infra/i.test(s)) return 'Infraestrutura';
+  if (/08|Quadro/i.test(s)) return 'Quadros e disjuntores';
   if (/09|Caixas/i.test(s)) return 'Caixas de espera';
-  return 'Infra';
+  return 'Infraestrutura';
 }
 
 export function deriveLinhaEletrica(row, abHit) {
-  if (abHit?.sub && isAbEletrica(abHit)) return linhaFromAbSubEletrica(abHit.sub);
-  const core = String(row.core ?? '').trim();
-  if (core === 'PADRAO_ELETRICO') return 'Padrão';
-  if (core === 'QUADRO_ELETRICO') return 'Quadro';
-  if (core === 'INFRA_ELETRICA' || ['ELETRODUTO', 'FIOS ELÉTRICOS'].includes(linhaBase(row.linha))) return 'Infra';
+  if (pcMatch(row, ['DISJUNTOR', 'QUADRO DE DISTRIB', 'QUADRO DE DISTRIBUIÇÃO', 'QUADRO DE DISTRIBUICAO'])) {
+    return 'Quadros e disjuntores';
+  }
+  if (pcMatch(row, [
+    'ELETRODUTO',
+    'BUCHA ELETRODUTO',
+    'CURVA ELETRODUTO',
+    'ARRUELA ELETRODUTO',
+    'LUVA ELETRODUTO',
+    'ADAPTADOR ELETRODUTO',
+  ])) return 'Eletroduto';
+  if (pcMatch(row, [
+    'FIO ELÉTRICO',
+    'FIO PARALELO',
+    'CABO FLEX',
+    'CABO PP',
+    'CABO DE FORÇA',
+    'CABO MULTIPOLAR',
+    'CABO',
+  ])) return 'Fios e cabos';
+  if (pcMatch(row, ['CONDUITE'])) return 'Conduítes';
   if (pcMatch(row, ['CAIXINHA DE LUZ', 'CAIXA DE LUZ', 'PLACA CEGA', 'TAPA-FURO'])) return 'Caixas de espera';
-  if (core === 'PONTOS_ELETRICOS') return 'Caixas de espera';
-  return 'Infra';
+  if (pcMatch(row, [
+    'PONTALETE',
+    'ISOLADOR',
+    'BENJAMIN',
+    'HASTE ATERR',
+    'DR ',
+    'PADRAO DE ENTRADA',
+    'PADRÃO DE ENTRADA',
+  ])) return 'Padrão de entrada';
+  if (pcMatch(row, ['BORNE', 'CONECTOR', 'EMENDA', 'TERMINAL', 'LIGAÇÃO', 'LIGACAO', 'REGLET'])) return 'Ligações';
+
+  if (abHit?.sub && isAbEletrica(abHit)) return linhaFromAbSubEletrica(abHit.sub);
+
+  const core = String(row.core ?? '').trim();
+  if (core === 'PADRAO_ELETRICO') return 'Padrão de entrada';
+  if (core === 'QUADRO_ELETRICO') return 'Quadros e disjuntores';
+  if (core === 'INFRA_ELETRICA') {
+    const lb = linhaBase(row.linha);
+    if (lb === 'ELETRODUTO') return 'Eletroduto';
+    if (lb === 'FIOS ELÉTRICOS') return 'Fios e cabos';
+    return 'Infraestrutura';
+  }
+  return 'Infraestrutura';
 }
 
 export function deriveLinhaHidraulica(row, abHit) {
@@ -270,6 +341,33 @@ export function deriveLinhaEdificacoes(row) {
 }
 
 /**
+ * Colapsa acabamentos de domínio (banheiro, iluminação, pontos) para Instalações.
+ * Revestimentos, forro, pintura, portas e impermeabilização mantêm c. Acabamentos.
+ *
+ * @param {{ etapa: string, categoria: string, linha: string }} classified
+ */
+export function unify3x3(classified) {
+  const base = etapaSemPrefixo(classified.etapa);
+  if (base === 'Acabamentos') {
+    if (CATEGORIAS_UNIFICAR_HID.has(classified.categoria)) {
+      return {
+        etapa: ETAPA.INSTALACOES,
+        categoria: '01. Hidráulica',
+        linha: classified.linha,
+      };
+    }
+    if (CATEGORIAS_UNIFICAR_ELE.has(classified.categoria)) {
+      return {
+        etapa: ETAPA.INSTALACOES,
+        categoria: '02. Elétrica',
+        linha: classified.linha,
+      };
+    }
+  }
+  return { ...classified };
+}
+
+/**
  * @param {object} row
  * @param {{ bloco?: string, sub?: string, core?: string }} [abHit]
  * @returns {{ etapa: string, categoria: string, linha: string }}
@@ -294,11 +392,18 @@ export function classify3x3(row, abHit) {
   if (isImpermeabilizacao(row)) {
     return { etapa: ETAPA.ACABAMENTOS, categoria: '06. Impermeabilização', linha: 'Impermeabilização' };
   }
-  if (isAcabamentoEletricoVisivel(row)) {
+  if (isIluminacao(row)) {
     return {
       etapa: ETAPA.ACABAMENTOS,
-      categoria: '08. Elétrica visível',
-      linha: deriveLinhaEletricaVisivel(row),
+      categoria: '07. Iluminação',
+      linha: deriveLinhaIluminacao(row),
+    };
+  }
+  if (isPontosEletricos(row)) {
+    return {
+      etapa: ETAPA.ACABAMENTOS,
+      categoria: '08. Pontos elétricos',
+      linha: deriveLinhaPontosEletricos(row),
     };
   }
   if (isTorneira(row)) {
@@ -318,7 +423,6 @@ export function classify3x3(row, abHit) {
     };
   }
 
-  // Instalações — hidráulica antes de elétrica
   if (isHidraulica(row) || isAbHidraulica(abHit)) {
     return {
       etapa: ETAPA.INSTALACOES,
@@ -356,11 +460,13 @@ export function classify3x3(row, abHit) {
 
 /** @param {object} row @param {{ bloco?: string, sub?: string, core?: string }} [abHit] */
 export function to3x3(row, abHit) {
-  const { etapa, categoria, linha } = classify3x3(row, abHit);
+  const classified = classify3x3(row, abHit);
+  const unified = unify3x3(classified);
   return {
-    etapa,
-    categoria,
-    linha,
+    ...classified,
+    etapa_u: unified.etapa,
+    categoria_u: unified.categoria,
+    linha_u: unified.linha,
     comp1: cellStr(row.produto_compra),
     comp2: cellStr(row.eixo_a),
     comp3: cellStr(row.eixo_b),
