@@ -134,10 +134,28 @@ export function cellStr(value) {
 }
 
 /** Compacta comp2/comp3: se comp2 vazio, comp3 passa para comp2. */
+const SUFIXOS_PRODUTO_CONEXAO = new Set(['CURTA', 'LONGA', 'MISTA', 'MISTO', 'ESGOTO']);
+
+function comp1ContainsToken(comp1, token) {
+  const c1 = norm(comp1);
+  const t = norm(token);
+  return c1 === t || c1.endsWith(` ${t}`) || c1.includes(` ${t} `) || c1.startsWith(`${t} `);
+}
+
 export function normalizeComponentes(comp1, comp2, comp3) {
   let c1 = cellStr(comp1);
   let c2 = cellStr(comp2);
   let c3 = cellStr(comp3);
+
+  // Conexões: sufixo do produto (ex. CURTA em CURVA ESGOTO) entra no comp1; medida fica no comp2.
+  if (c2 && SUFIXOS_PRODUTO_CONEXAO.has(norm(c2))) {
+    if (!comp1ContainsToken(c1, c2)) {
+      c1 = `${c1} ${c2}`.trim();
+    }
+    c2 = c3;
+    c3 = '';
+  }
+
   if (!c2 && c3) {
     c2 = c3;
     c3 = '';
