@@ -106,6 +106,7 @@
     "export:analise-linhas": "node scripts/export-catalogo-analise-linhas.mjs",
     "export:linhas-mestre": "node scripts/export-linhas-mestre.mjs",
     "export:catalogo-skus": "node scripts/export-catalogo-skus.mjs",
+    "export:sku-hierarquia-unificado": "node scripts/export-sku-hierarquia-unificado.mjs",
     "export:conta-azul": "node scripts/export-catalogo-conta-azul.mjs",
     "portal:excel-manifest": "node scripts/build-portal-excel-manifest.mjs",
     "modelo:seed-ceramica": "node scripts/seed-modelo-catalogo-ceramica.mjs",

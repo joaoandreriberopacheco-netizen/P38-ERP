@@ -63,3 +63,28 @@ https://github.com/joaoandreriberopacheco-netizen/P38-ERP/raw/main/docs/exports/
 | [P38-linhas-catalogo-por-categoria.csv](./P38-linhas-catalogo-por-categoria.csv) | Mesmo em CSV |
 
 Regenerar: `npm run export:linhas-categoria`
+
+---
+
+## Estudo hierarquia — Excel unificado (hidráulica + elétrica + benchmark)
+
+Um único ficheiro com **aba README** (índice) e todas as folhas do estudo A/B/C, catálogo core e benchmark Leroy Merlin.
+
+| Ficheiro | Descrição |
+|----------|-----------|
+| [P38-sku-hierarquia-unificado.xlsx](./P38-sku-hierarquia-unificado.xlsx) | README + Resumo + A/B/C + Catálogo core + Benchmark elétrica + legendas |
+
+**Download directo:**  
+https://github.com/joaoandreriberopacheco-netizen/P38-ERP/raw/main/docs/exports/P38-sku-hierarquia-unificado.xlsx
+
+Fontes (mantidas em `docs/exports/` para regenerar):
+
+- `P38-sku-hierarquia-ab.xlsx`
+- `P38-sku-hierarquia-core.xlsx`
+- `P38-eletrica-benchmark-lm.xlsx`
+
+Regenerar:
+
+```bash
+npm run export:sku-hierarquia-unificado
+```
