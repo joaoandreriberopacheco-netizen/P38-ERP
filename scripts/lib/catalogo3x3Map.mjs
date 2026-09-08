@@ -14,9 +14,8 @@ export const CATEGORIA_ACAB = {
   LOUCAS: '07. Louças sanitárias',
   CHUVEIROS: '08. Chuveiros',
   METAIS: '09. Metais e acessórios',
-  IMPERMEABILIZACAO: '10. Impermeabilização',
-  ILUMINACAO: '11. Iluminação',
-  PONTOS_ELETRICOS: '12. Pontos elétricos',
+  ILUMINACAO: '10. Iluminação',
+  PONTOS_ELETRICOS: '11. Pontos elétricos',
 };
 
 export const ETAPA = {
@@ -180,7 +179,7 @@ export function isPerfilForro(row) {
 export function isPintura(row) {
   const core = String(row.core ?? '').trim();
   if (core === 'PINTURA_OBRA') return true;
-  if (pcMatch(row, ['TINTA', 'THINNER', 'LATEX', 'LÁTEX', 'ESMALTE', 'VERNIZ', 'ADITIVO PLASTIFICANTE'])) return true;
+  if (pcMatch(row, ['TINTA', 'THINNER', 'LATEX', 'LÁTEX', 'ESMALTE', 'VERNIZ'])) return true;
   const lb = norm(linhaBase(row.linha));
   return lb.includes('PINTURA') || lb === 'THINNER';
 }
@@ -320,8 +319,20 @@ export function deriveLinhaPontosEletricos(row) {
   return 'Pontos elétricos';
 }
 
+export function isAditivosImpermeabilizante(row) {
+  if (String(row.core ?? '').trim() === 'IMPERMEABILIZACAO') return true;
+  return pcMatch(row, [
+    'IMPERMEABILIZANTE',
+    'MANTA LÍQUIDA',
+    'MANTA LIQUIDA',
+    'VEDACIT',
+    'ADITIVO PLASTIFICANTE',
+  ]);
+}
+
+/** @deprecated use isAditivosImpermeabilizante */
 export function isImpermeabilizacao(row) {
-  return String(row.core ?? '').trim() === 'IMPERMEABILIZACAO';
+  return isAditivosImpermeabilizante(row);
 }
 
 export function isHidraulica(row) {
@@ -502,7 +513,7 @@ export function deriveLinhaEdificacoes(row) {
 
 /**
  * Colapsa acabamentos de domínio (banheiro, iluminação, pontos) para Instalações.
- * Revestimentos, forro, pintura, portas e impermeabilização mantêm c. Acabamentos.
+ * Revestimentos, forro, pintura, portas mantêm c. Acabamentos.
  *
  * @param {{ etapa: string, categoria: string, linha: string }} classified
  */
@@ -540,6 +551,13 @@ export function classify3x3(row, abHit) {
       linha: deriveLinhaRevestimentos(row),
     };
   }
+  if (isAditivosImpermeabilizante(row)) {
+    return {
+      etapa: ETAPA.EDIFICACOES,
+      categoria: '01. Alvenaria',
+      linha: 'Aditivos e impermeabilizante',
+    };
+  }
   if (isForro(row)) {
     return {
       etapa: ETAPA.ACABAMENTOS,
@@ -552,13 +570,6 @@ export function classify3x3(row, abHit) {
   }
   if (isPortasEsquadrias(row)) {
     return { etapa: ETAPA.ACABAMENTOS, categoria: CATEGORIA_ACAB.PORTAS, linha: 'Esquadrias' };
-  }
-  if (isImpermeabilizacao(row)) {
-    return {
-      etapa: ETAPA.ACABAMENTOS,
-      categoria: CATEGORIA_ACAB.IMPERMEABILIZACAO,
-      linha: 'Impermeabilização',
-    };
   }
   if (isIluminacao(row)) {
     return {

@@ -117,7 +117,7 @@ function buildReadme(wb, stats) {
     ['Visão unificada (opcional)', 'Aba 3 e Catálogo unificado — junta hidráulica/elétrica de acabamento com instalação'],
     ['', ''],
     ['Etapas (prefixo ordena)', ''],
-    ['A / a. Edificações', 'Alvenaria, cobertura (forro PVC → c. Acabamentos)'],
+    ['A / a. Edificações', 'Alvenaria (incl. aditivos e impermeabilizante), cobertura'],
     ['B / b. Instalações', '01. Hidráulica · 02. Elétrica — linhas c&c = canos e conexões'],
     ['C / c. Acabamentos', 'Por peça (Torneiras, Cubas, Louças…) · linha = ambiente (banheiro · cozinha)'],
     ['D / d. Transversal', 'Itens transversais da obra'],
