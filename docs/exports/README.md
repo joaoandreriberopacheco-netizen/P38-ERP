@@ -85,8 +85,10 @@ npm run export:catalogo-3x3
 
 Modelo:
 
-- **Cat1 → Cat2 → Cat3** — ex.: `A. Edificações > 01. Alvenaria > a. Armaduras`
-- **Comp1 | Comp2 | Comp3** — ex.: `Estribo | 7×17 | (vazio)`
+- **ETAPA > CATEGORIA > LINHA** — ex.: `Edificações > 01. Alvenaria > Armaduras`
+- **comp1 | comp2 | comp3** — ex.: `Estribo | 7×17 | (vazio)`
+
+Etapas: **Edificações** · **Instalações** · **Acabamentos** · **Transversal**
 
 ---
 

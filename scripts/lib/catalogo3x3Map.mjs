@@ -1,6 +1,16 @@
 /**
- * Mapeamento estudo → modelo 3×3 (Cat1·Cat2·Cat3 + Comp1·Comp2·Comp3).
+ * Modelo 3×3: ETAPA > CATEGORIA > LINHA + Comp1·Comp2·Comp3
+ *
+ * Etapas (Cat drill 1): Edificações · Instalações · Acabamentos · Transversal
  */
+
+export const ETAPA = {
+  EDIFICACOES: 'Edificações',
+  INSTALACOES: 'Instalações',
+  ACABAMENTOS: 'Acabamentos',
+  TRANSVERSAL: 'Transversal',
+  DIVERSOS: 'Diversos',
+};
 
 export function linhaBase(linha = '') {
   return String(linha ?? '').replace(/·[NRC]$/i, '').trim();
@@ -12,51 +22,6 @@ export function cellStr(value) {
   return String(value).trim();
 }
 
-/** @param {string} etapa */
-export function etapaToCat2(etapa) {
-  const raw = String(etapa ?? '').trim();
-  if (!raw) return '(sem sub-bloco)';
-  const m = raw.match(/^(\d+)\s*[—–-]\s*(.+)$/);
-  if (!m) return raw;
-  const num = m[1].padStart(2, '0');
-  let name = m[2].trim();
-  if (name === 'Estrutura / alvenaria') name = 'Alvenaria';
-  if (name === 'Instalação elétrica') name = 'Instalação elétrica';
-  return `${num}. ${name}`;
-}
-
-const CORE_CAT3 = {
-  ARMADURA: 'a. Armaduras',
-  ALVENARIA: 'a. Alvenaria',
-  ASSENTAMENTO_CERAMICA: 'a. Cerâmica',
-  PINTURA_OBRA: 'a. Pintura',
-  COBERTURA: 'a. Cobertura',
-  IMPERMEABILIZACAO: 'a. Impermeabilização',
-  ESQUADRIAS: 'a. Esquadrias',
-  AGUA_FRIA_SOLDAVEL: 'a. Soldável',
-  ESGOTO: 'a. Esgoto',
-  AGUA_FRIA_ROSCAVEL: 'a. Roscável',
-  HIDRAULICA_GERAL: 'a. Hidráulica geral',
-  PADRAO_ELETRICO: 'a. Padrão elétrico',
-  INFRA_ELETRICA: 'a. Infra elétrica',
-  QUADRO_ELETRICO: 'a. Quadro elétrico',
-  ILUMINACAO: 'a. Iluminação',
-  PONTOS_ELETRICOS: 'a. Pontos elétricos',
-  BANHEIRO: 'a. Banheiro',
-  FIXACAO: 'a. Fixação',
-  FERRAGEM_GERAL: 'a. Ferragem',
-};
-
-const ETAPAS_A = new Set([
-  '1 — Estrutura / alvenaria',
-  '2 — Cobertura',
-  '4 — Revestimentos',
-  '6 — Acabamento seco',
-]);
-
-const CORES_HID = new Set(['ESGOTO', 'AGUA_FRIA_SOLDAVEL', 'AGUA_FRIA_ROSCAVEL', 'HIDRAULICA_GERAL']);
-const CORES_ELE = new Set(['PADRAO_ELETRICO', 'INFRA_ELETRICA', 'QUADRO_ELETRICO', 'PONTOS_ELETRICOS', 'ILUMINACAO']);
-
 function norm(s) {
   return String(s ?? '')
     .normalize('NFD')
@@ -65,136 +30,256 @@ function norm(s) {
     .toUpperCase();
 }
 
+/** Match exact token or produto/sku phrase — evita falso positivo (ex.: DR dentro de HIDRÁULICA). */
 function pcMatch(row, patterns = []) {
   const pc = norm(row.produto_compra);
   const sku = norm(row.sku_atual || row.novo_sku);
+  const linha = norm(linhaBase(row.linha));
   return patterns.some((p) => {
     const n = norm(p);
-    return pc.includes(n) || sku.includes(n);
+    return pc.includes(n) || sku.includes(n) || linha === n || linha.startsWith(`${n} `);
   });
 }
 
-/** @param {{ etapa?: string, core?: string, linha?: string, produto_compra?: string }} row */
-export function deriveCat2B(row) {
-  const core = String(row.core ?? '').trim();
-  const linha = linhaBase(row.linha);
+const CORES_HID = new Set(['ESGOTO', 'AGUA_FRIA_SOLDAVEL', 'AGUA_FRIA_ROSCAVEL', 'HIDRAULICA_GERAL']);
+const CORES_ELE = new Set(['PADRAO_ELETRICO', 'INFRA_ELETRICA', 'QUADRO_ELETRICO', 'PONTOS_ELETRICOS', 'ILUMINACAO']);
 
-  if (core === 'AGUA_FRIA_SOLDAVEL' || linha === 'SOLDÁVEL') return '01. Soldável';
-  if (core === 'ESGOTO' || linha === 'ESGOTO') return '02. Esgoto';
-  if (core === 'AGUA_FRIA_ROSCAVEL' || linha === 'ROSCÁVEL') return '03. Roscável';
-  if (pcMatch(row, ["CAIXA D'ÁGUA", 'CAIXA D AGUA', 'ADAPTADOR CAIXA', 'POÇO', 'POCO'])) return '04. Captação';
-  if (core === 'PADRAO_ELETRICO') return '06. Padrão de entrada';
-  if (core === 'INFRA_ELETRICA' || ['ELETRODUTO', 'FIOS ELÉTRICOS'].includes(linha)) return '07. Infra elétrica';
-  if (core === 'QUADRO_ELETRICO') return '08. Quadro e proteção';
-  if (pcMatch(row, ['CAIXINHA DE LUZ', 'CAIXA DE LUZ', 'PLACA CEGA', 'TAPA-FURO'])) return '09. Caixas de espera';
-  if (core === 'HIDRAULICA_GERAL' || linha === 'HIDRÁULICA') return '05. Componentes';
-  if (CORES_ELE.has(core)) return '07. Infra elétrica';
-  return etapaToCat2(row.etapa);
-}
+const ETAPAS_EDIFICACOES = new Set([
+  '1 — Estrutura / alvenaria',
+  '2 — Cobertura',
+]);
 
-/** @param {{ etapa?: string, core?: string, linha?: string, produto_compra?: string, sku_atual?: string, novo_sku?: string }} row */
-export function deriveCat1(row) {
+export function isRevestimentos(row) {
   const etapa = String(row.etapa ?? '').trim();
   const core = String(row.core ?? '').trim();
-
-  if (ETAPAS_A.has(etapa)) return 'A. Edificações';
-  if (etapa === '5 — Áreas molhadas' || core === 'BANHEIRO') return 'C. Acabamentos';
-  if (etapa === '8 — Transversal') return 'T. Transversal';
-  if (etapa === '3 — Instalações brutas' || etapa === '7 — Instalação elétrica') return 'B. Instalações';
-  if (CORES_HID.has(core) || CORES_ELE.has(core)) return 'B. Instalações';
-  if (['ILUMINACAO', 'PONTOS_ELETRICOS'].includes(core) && etapa.includes('Acabamento')) return 'C. Acabamentos';
-  if (!etapa && !core) return 'D. Diversos';
-  if (ETAPAS_A.has(etapa) || ['4 — Revestimentos', '6 — Acabamento seco'].includes(etapa)) return 'A. Edificações';
-  return 'D. Diversos';
+  return etapa === '4 — Revestimentos' || core === 'ASSENTAMENTO_CERAMICA';
 }
 
-/** @param {{ core?: string, linha?: string, produto_compra?: string }} row */
-export function deriveCat3(row) {
+export function isForro(row) {
+  if (pcMatch(row, ['FORRO PVC', 'PERFIL DE PVC', 'PERFIL PVC'])) return true;
+  return norm(linhaBase(row.linha)).includes('FORRO');
+}
+
+export function isPerfilForro(row) {
+  return pcMatch(row, ['PERFIL DE PVC', 'PERFIL PVC']);
+}
+
+export function isPintura(row) {
   const core = String(row.core ?? '').trim();
-  if (core && CORE_CAT3[core]) return CORE_CAT3[core];
+  if (core === 'PINTURA_OBRA') return true;
+  if (pcMatch(row, ['TINTA', 'THINNER', 'LATEX', 'LÁTEX', 'ESMALTE', 'VERNIZ', 'ADITIVO PLASTIFICANTE'])) return true;
+  const lb = norm(linhaBase(row.linha));
+  return lb.includes('PINTURA') || lb === 'THINNER';
+}
+
+export function isPortasEsquadrias(row) {
+  const core = String(row.core ?? '').trim();
+  if (core === 'ESQUADRIAS') return true;
+  if (pcMatch(row, ['PORTA MADEIRA', 'PORTA MDF', 'DOBRADIÇA', 'DOBRADICA', 'FECHADURA', 'MACANETA', 'MAÇANETA'])) return true;
+  if (norm(row.produto_compra).startsWith('PORTA ') && !norm(row.produto_compra).includes('PORTA-CADEADO')) return true;
+  return norm(linhaBase(row.linha)).includes('ESQUADRIA');
+}
+
+export function isBanheiro(row) {
+  const etapa = String(row.etapa ?? '').trim();
+  const core = String(row.core ?? '').trim();
+  return etapa === '5 — Áreas molhadas' || core === 'BANHEIRO';
+}
+
+export function isImpermeabilizacao(row) {
+  return String(row.core ?? '').trim() === 'IMPERMEABILIZACAO';
+}
+
+export function isHidraulica(row) {
+  const core = String(row.core ?? '').trim();
   const linha = linhaBase(row.linha);
-  if (linha && linha !== 'DIVERSOS') {
-    const label = linha.charAt(0) + linha.slice(1).toLowerCase();
-    return `a. ${label}`;
+  if (CORES_HID.has(core)) return true;
+  if (['SOLDÁVEL', 'ESGOTO', 'ROSCÁVEL', 'HIDRÁULICA'].includes(linha)) return true;
+  return false;
+}
+
+export function isEletricaInstalacao(row) {
+  if (isHidraulica(row)) return false;
+  const etapa = String(row.etapa ?? '').trim();
+  const core = String(row.core ?? '').trim();
+  const linha = linhaBase(row.linha);
+  if (CORES_ELE.has(core)) return true;
+  if (etapa === '3 — Instalações brutas' && ['ELETRODUTO', 'FIOS ELÉTRICOS', 'MATERIAL ELÉTRICO'].includes(linha)) return true;
+  if (etapa === '7 — Instalação elétrica') return true;
+  if (pcMatch(row, [
+    'CAIXINHA DE LUZ',
+    'CAIXA DE LUZ',
+    'DISJUNTOR',
+    'ELETRODUTO',
+    'FIOS ELÉTRICOS',
+    'CABO FLEX',
+    'FIO ELÉTRICO',
+    'FIO PARALELO',
+  ])) return true;
+  return false;
+}
+
+export function isEletricaVisivel(row) {
+  if (isEletricaInstalacao(row)) return false;
+  if (pcMatch(row, ['TOMADA', 'INTERRUPTOR', 'LAMPADA', 'LÂMPADA', 'LUMINÁRIA', 'LUMINARIA', 'PLAFON'])) return true;
+  const core = String(row.core ?? '').trim();
+  return ['ILUMINACAO', 'PONTOS_ELETRICOS'].includes(core)
+    && !pcMatch(row, ['CAIXINHA DE LUZ', 'CAIXA DE LUZ', 'PLACA CEGA', 'TAPA-FURO']);
+}
+
+export function isEdificacoes(row) {
+  const etapa = String(row.etapa ?? '').trim();
+  if (!ETAPAS_EDIFICACOES.has(etapa)) return false;
+  return !isForro(row);
+}
+
+function isAbHidraulica(abHit) {
+  return abHit?.sub && /0[1-5]|Soldável|Esgoto|Roscável|Captação|Componentes/i.test(abHit.sub)
+    && !/0[6-9]|Padrão|Quadro|Caixas/i.test(abHit.sub);
+}
+
+function isAbEletrica(abHit) {
+  return abHit?.sub && /0[6-9]|Padrão|Infra|Quadro|Caixas/i.test(abHit.sub);
+}
+
+function linhaFromAbSubEletrica(subBloco) {
+  const s = String(subBloco ?? '');
+  if (/06|Padrão/i.test(s)) return 'Padrão';
+  if (/07|Infra/i.test(s)) return 'Infra';
+  if (/08|Quadro/i.test(s)) return 'Quadro';
+  if (/09|Caixas/i.test(s)) return 'Caixas de espera';
+  return 'Infra';
+}
+
+export function deriveLinhaEletrica(row, abHit) {
+  if (abHit?.sub && isAbEletrica(abHit)) return linhaFromAbSubEletrica(abHit.sub);
+  const core = String(row.core ?? '').trim();
+  if (core === 'PADRAO_ELETRICO') return 'Padrão';
+  if (core === 'QUADRO_ELETRICO') return 'Quadro';
+  if (core === 'INFRA_ELETRICA' || ['ELETRODUTO', 'FIOS ELÉTRICOS'].includes(linhaBase(row.linha))) return 'Infra';
+  if (pcMatch(row, ['CAIXINHA DE LUZ', 'CAIXA DE LUZ', 'PLACA CEGA', 'TAPA-FURO'])) return 'Caixas de espera';
+  if (core === 'PONTOS_ELETRICOS') return 'Caixas de espera';
+  return 'Infra';
+}
+
+export function deriveLinhaHidraulica(row, abHit) {
+  if (abHit?.sub && isAbHidraulica(abHit)) {
+    const s = String(abHit.sub);
+    if (/01|Soldável/i.test(s)) return 'Soldável';
+    if (/02|Esgoto/i.test(s)) return 'Esgoto';
+    if (/03|Roscável/i.test(s)) return 'Roscável';
+    if (/04|Captação/i.test(s)) return 'Captação';
+    if (/05|Componentes/i.test(s)) return 'Componentes';
   }
-  const pc = String(row.produto_compra ?? '').trim();
-  if (pc) return `a. ${pc.charAt(0)}${pc.slice(1).toLowerCase()}`;
-  return '(sem família)';
+  const core = String(row.core ?? '').trim();
+  const linha = linhaBase(row.linha);
+  if (core === 'AGUA_FRIA_SOLDAVEL' || linha === 'SOLDÁVEL') return 'Soldável';
+  if (core === 'ESGOTO' || linha === 'ESGOTO') return 'Esgoto';
+  if (core === 'AGUA_FRIA_ROSCAVEL' || linha === 'ROSCÁVEL') return 'Roscável';
+  if (pcMatch(row, ["CAIXA D'ÁGUA", 'CAIXA D AGUA', 'ADAPTADOR CAIXA', 'POÇO', 'POCO'])) return 'Captação';
+  return 'Componentes';
 }
 
-/** Normaliza bloco vindo do Excel estudo (A — Edificações → A. Edificações). */
-export function normalizeCat1(bloco) {
-  const s = String(bloco ?? '').trim();
-  if (!s) return '';
-  return s
-    .replace(/^A\s*[—–-]\s*/i, 'A. ')
-    .replace(/^B\s*[—–-]\s*/i, 'B. ')
-    .replace(/^C\s*[—–-]\s*/i, 'C. ')
-    .replace(/^T\s*[—–-]\s*/i, 'T. ')
-    .replace(/^D\s*[—–-]\s*/i, 'D. ')
-    .replace('Edificações', 'Edificações')
-    .replace('Instalações', 'Instalações');
+export function deriveCategoriaEdificacoes(row) {
+  const etapa = String(row.etapa ?? '').trim();
+  if (etapa === '1 — Estrutura / alvenaria') return '01. Alvenaria';
+  if (etapa === '2 — Cobertura') return '02. Cobertura';
+  return '01. Alvenaria';
 }
 
-/** Normaliza sub_bloco (A1 Estrutura → 01. Alvenaria quando aplicável). */
-export function normalizeCat2(subBloco, etapa) {
-  const s = String(subBloco ?? '').trim();
-  if (!s) return etapaToCat2(etapa);
-  if (/^A1\b/i.test(s)) return '01. Alvenaria';
-  if (/^A2\b/i.test(s)) return '02. Cobertura';
-  if (/^A4\b/i.test(s)) return '04. Revestimentos';
-  if (/^A6\b/i.test(s)) return '06. Acabamento seco';
-  if (/^B0(\d)/i.test(s)) return s.replace(/^B0(\d+)\s*[—–-]\s*/i, '0$1. ');
-  if (/^C5\b/i.test(s)) return '05. Áreas molhadas';
-  if (/^(\d+)\s*[—–-]\s*/.test(s)) {
-    return s.replace(/^(\d+)\s*[—–-]\s*/i, (_, d) => `${String(d).padStart(2, '0')}. `);
+export function deriveLinhaEdificacoes(row) {
+  const core = String(row.core ?? '').trim();
+  const map = {
+    ARMADURA: 'Armaduras',
+    ALVENARIA: 'Alvenaria',
+    COBERTURA: 'Cobertura',
+    FERRAGEM_GERAL: 'Ferragem',
+    FIXACAO: 'Fixação',
+  };
+  if (map[core]) return map[core];
+  const lb = linhaBase(row.linha);
+  if (lb && lb !== 'DIVERSOS') return lb.charAt(0) + lb.slice(1).toLowerCase();
+  return '(sem linha)';
+}
+
+/**
+ * @param {object} row
+ * @param {{ bloco?: string, sub?: string, core?: string }} [abHit]
+ * @returns {{ etapa: string, categoria: string, linha: string }}
+ */
+export function classify3x3(row, abHit) {
+  if (isRevestimentos(row)) {
+    return { etapa: ETAPA.ACABAMENTOS, categoria: '01. Revestimentos', linha: 'Cerâmica' };
   }
-  if (/^\d/.test(s)) return s;
-  return etapaToCat2(etapa) || s;
+  if (isForro(row)) {
+    return {
+      etapa: ETAPA.ACABAMENTOS,
+      categoria: '02. Forro',
+      linha: isPerfilForro(row) ? 'Perfis' : 'Forro PVC',
+    };
+  }
+  if (isPintura(row)) {
+    return { etapa: ETAPA.ACABAMENTOS, categoria: '03. Pintura', linha: 'Pintura' };
+  }
+  if (isPortasEsquadrias(row)) {
+    return { etapa: ETAPA.ACABAMENTOS, categoria: '04. Portas', linha: 'Esquadrias' };
+  }
+  if (isImpermeabilizacao(row)) {
+    return { etapa: ETAPA.ACABAMENTOS, categoria: '06. Impermeabilização', linha: 'Impermeabilização' };
+  }
+  if (isBanheiro(row)) {
+    return { etapa: ETAPA.ACABAMENTOS, categoria: '05. Áreas molhadas', linha: 'Banheiro' };
+  }
+  if (isEletricaVisivel(row)) {
+    return { etapa: ETAPA.ACABAMENTOS, categoria: '07. Elétrica visível', linha: 'Pontos visíveis' };
+  }
+
+  // Instalações — hidráulica antes de elétrica
+  if (isHidraulica(row) || isAbHidraulica(abHit)) {
+    return {
+      etapa: ETAPA.INSTALACOES,
+      categoria: '01. Hidráulica',
+      linha: deriveLinhaHidraulica(row, abHit),
+    };
+  }
+
+  if (isEletricaInstalacao(row) || isAbEletrica(abHit)) {
+    return {
+      etapa: ETAPA.INSTALACOES,
+      categoria: '02. Elétrica',
+      linha: deriveLinhaEletrica(row, abHit),
+    };
+  }
+
+  if (isEdificacoes(row) || (abHit?.bloco && String(abHit.bloco).startsWith('A'))) {
+    return {
+      etapa: ETAPA.EDIFICACOES,
+      categoria: deriveCategoriaEdificacoes(row),
+      linha: deriveLinhaEdificacoes(row),
+    };
+  }
+
+  if (String(row.etapa ?? '').trim() === '8 — Transversal') {
+    return {
+      etapa: ETAPA.TRANSVERSAL,
+      categoria: '01. Transversal',
+      linha: deriveLinhaEdificacoes(row),
+    };
+  }
+
+  return { etapa: ETAPA.DIVERSOS, categoria: '(sem categoria)', linha: '(sem linha)' };
 }
 
-/** @param {{ core?: string }} row */
-export function deriveCat3FromCoreCode(core) {
-  const c = String(core ?? '').trim();
-  if (CORE_CAT3[c]) return CORE_CAT3[c];
-  if (!c) return '';
-  const words = c.toLowerCase().split('_').join(' ');
-  return `a. ${words.charAt(0).toUpperCase()}${words.slice(1)}`;
-}
-
-/** @param {object} row */
+/** @param {object} row @param {{ bloco?: string, sub?: string, core?: string }} [abHit] */
 export function to3x3(row, abHit) {
-  const comp1 = cellStr(row.produto_compra);
-  const comp2 = cellStr(row.eixo_a);
-  const comp3 = cellStr(row.eixo_b);
-
-  let cat1;
-  let cat2;
-  let cat3;
-
-  if (abHit?.bloco) {
-    cat1 = normalizeCat1(abHit.bloco);
-    cat2 = normalizeCat2(abHit.sub, row.etapa);
-    cat3 = deriveCat3FromCoreCode(abHit.core) || deriveCat3(row);
-  } else {
-    cat1 = deriveCat1(row);
-    cat2 = cat1.startsWith('B.')
-      ? deriveCat2B(row)
-      : cat1 === 'C. Acabamentos'
-        ? '05. Áreas molhadas'
-        : cat1 === 'T. Transversal'
-          ? '08. Transversal'
-          : etapaToCat2(row.etapa);
-    cat3 = deriveCat3(row);
-  }
-
+  const { etapa, categoria, linha } = classify3x3(row, abHit);
   return {
-    cat1,
-    cat2,
-    cat3,
-    comp1,
-    comp2,
-    comp3,
+    etapa,
+    categoria,
+    linha,
+    comp1: cellStr(row.produto_compra),
+    comp2: cellStr(row.eixo_a),
+    comp3: cellStr(row.eixo_b),
     codigo_interno: cellStr(row.codigo_interno).toUpperCase(),
     novo_sku: cellStr(row.novo_sku),
     sku_atual: cellStr(row.sku_atual),
