@@ -1,17 +1,11 @@
 #!/usr/bin/env node
 /**
- * Excel catálogo modelo 3×3 — monitor Smart Supply / Novo Ecosistema.
+ * Excel catálogo modelo 4×3 — monitor Smart Supply / Novo Ecosistema.
  *
- *   npm run export:catalogo-3x3
+ *   npm run export:catalogo-4x3
+ *   npm run export:catalogo-3x3  (alias)
  *
- * Abas:
- *   1. README
- *   2. ETAPA · CATEGORIA · LINHA — caminhos drill-down únicos (com prefixo a./b./c.)
- *   3. Visão unificada — caminhos com Acabamentos de domínio colapsado em Instalações
- *   4. Componentes ×3   — padrões de nome SKU (Comp1 | Comp2 | Comp3)
- *   5. Catálogo 3×3     — um SKU por linha (modelo completo)
- *   6. Catálogo unificado — mesmo catálogo com etapa_u / categoria_u / linha_u
- *   7. Pivot — metadados — guia para tabela dinâmica
+ * Drill-down: ETAPA · CATEGORIA · SUBCATEGORIA · LINHA + comp1 · comp2 · comp3
  *
  * Fonte: docs/exports/P38-sku-hierarquia-core.xlsx (+ enriquecimento ab.xlsx)
  */
@@ -20,16 +14,17 @@ import path from 'node:path';
 import ExcelJS from 'exceljs';
 import {
   cellStr,
-  to3x3,
-  buildCodigosCaminho3x,
-  lookupCodigoCaminho,
-  legendaCaminho3x,
+  to4x3,
+  buildCodigosCaminho4x,
+  lookupCodigoCaminho4x,
+  legendaCaminho4x,
 } from './lib/catalogo3x3Map.mjs';
 
 const EXPORTS = path.join(process.cwd(), 'docs', 'exports');
 const CORE_PATH = path.join(EXPORTS, 'P38-sku-hierarquia-core.xlsx');
 const AB_PATH = path.join(EXPORTS, 'P38-sku-hierarquia-ab.xlsx');
-const OUT = path.join(EXPORTS, 'P38-catalogo-3x3.xlsx');
+const OUT = path.join(EXPORTS, 'P38-catalogo-4x3.xlsx');
+const OUT_LEGACY = path.join(EXPORTS, 'P38-catalogo-3x3.xlsx');
 
 function styleHeader(row, color = 'FF2D5016') {
   row.font = { bold: true, color: { argb: 'FFFFFFFF' } };
@@ -37,7 +32,7 @@ function styleHeader(row, color = 'FF2D5016') {
   row.alignment = { vertical: 'middle', wrapText: true };
 }
 
-function key3(...parts) {
+function keyPath(...parts) {
   return parts.map((p) => String(p ?? '').trim()).join('\x00');
 }
 
@@ -100,7 +95,7 @@ function buildReadme(wb, stats) {
   const ws = wb.getWorksheet('README') || wb.addWorksheet('README');
   ws.columns = [{ width: 4 }, { width: 30 }, { width: 58 }];
 
-  ws.getCell('B2').value = 'P38 — Catálogo modelo 3×3';
+  ws.getCell('B2').value = 'P38 — Catálogo modelo 4×3';
   ws.getCell('B2').font = { bold: true, size: 16, color: { argb: 'FF2D5016' } };
 
   const lines = [
@@ -111,27 +106,27 @@ function buildReadme(wb, stats) {
     ['Padrões componente (×3)', stats.compPatterns],
     ['', ''],
     ['Modelo', ''],
-    ['Drill-down (3 colunas)', 'ETAPA > CATEGORIA > LINHA  (ex.: a. Edificações > 01. Alvenaria > Armaduras)'],
-    ['Código caminho 3×3', 'Formato A01B — A=etapa · 01=categoria · B=linha (ex.: A01B = Edificações · Alvenaria · Armaduras)'],
+    ['Drill-down (4 colunas)', 'ETAPA > CATEGORIA > SUBCATEGORIA > LINHA'],
+    ['Código caminho 4×3', 'Formato A01AB — A=etapa · 01=categoria · A=subcategoria · B=linha'],
     ['Componente SKU (3 colunas)', 'comp1 | comp2 | comp3  (ex.: Estribo | 7×17 | vazio)'],
-    ['Visão unificada (opcional)', 'Aba 3 e Catálogo unificado — junta hidráulica/elétrica de acabamento com instalação'],
+    ['Visão unificada (opcional)', 'Junta acabamentos de domínio em b. Instalações'],
     ['', ''],
     ['Etapas (prefixo ordena)', ''],
-    ['A / a. Edificações', 'Alvenaria (incl. aditivos e impermeabilizante), cobertura'],
-    ['B / b. Instalações', '01. Hidráulica · 02. Elétrica — linhas c&c = canos e conexões'],
-    ['C / c. Acabamentos', 'Por peça (Torneiras, Cubas, Louças…) · linha = ambiente (banheiro · cozinha)'],
+    ['A / a. Edificações', 'Alvenaria · sub: Materiais / Estrutura / Aditivos'],
+    ['B / b. Instalações', 'Hidráulica · Elétrica — sub c&c = Canos e conexões'],
+    ['C / c. Acabamentos', 'Por peça · sub = ambiente (Banheiro · Cozinha…) · linha = tipo'],
     ['D / d. Transversal', 'Itens transversais da obra'],
     ['', ''],
-    ['Revestimentos', 'Cerâmica + Argamassa + Rejunte na mesma categoria 01. Revestimentos'],
+    ['Revestimentos', 'Sub Assentamento · linhas Cerâmica · Argamassa · Rejunte'],
     ['Abas', ''],
-    ['2 · ETAPA · CATEGORIA · LINHA', 'Modelo completo — caminhos únicos com prefixo a./b./c.'],
-    ['3 · Visão unificada', 'Caminhos com banheiro/iluminação/pontos fundidos em b. Instalações'],
-    ['4 · Componentes ×3', 'Dimensão identidade — padrões únicos Comp1+Comp2+Comp3'],
-    ['5 · Catálogo 3×3', 'Facto — um SKU por linha (modelo completo)'],
-    ['6 · Catálogo unificado', 'Facto — colunas etapa_u / categoria_u / linha_u para monitor sem camada c.'],
-    ['7 · Pivot — metadados', 'Campos, tipos e sugestões para tabela dinâmica'],
+    ['2 · ETAPA · CATEGORIA · SUB · LINHA', 'Caminhos únicos com código A01AB'],
+    ['3 · Visão unificada', 'Acabamentos hidráulica/elétrica fundidos em Instalações'],
+    ['4 · Componentes ×3', 'Padrões Comp1+Comp2+Comp3'],
+    ['5 · Catálogo 4×3', 'Um SKU por linha — modelo completo'],
+    ['6 · Catálogo unificado', 'Colunas etapa_u … linha_u'],
+    ['7 · Pivot — metadados', 'Guia tabela dinâmica'],
     ['', ''],
-    ['Regenerar', 'npm run export:catalogo-3x3'],
+    ['Regenerar', 'npm run export:catalogo-4x3'],
     ['Fonte', 'P38-sku-hierarquia-core.xlsx + P38-sku-hierarquia-ab.xlsx'],
     ['Tags', 'Fase posterior — não incluídas neste Excel'],
   ];
@@ -150,80 +145,123 @@ function writeSheet(ws, headers, dataRows, headerColor = 'FF2D5016') {
   styleHeader(ws.getRow(1), headerColor);
   for (const row of dataRows) ws.addRow(row);
   if (dataRows.length) {
-    ws.autoFilter = { from: 'A1', to: `${String.fromCharCode(64 + headers.length)}${dataRows.length + 1}` };
+    const col = Math.min(headers.length, 26);
+    ws.autoFilter = { from: 'A1', to: `${String.fromCharCode(64 + col)}${dataRows.length + 1}` };
   }
   ws.views = [{ state: 'frozen', ySplit: 1 }];
 }
 
-function attachPathMeta(row, registry, fields = { etapa: 'etapa', categoria: 'categoria', linha: 'linha' }) {
+const DRILL_HEADERS = [
+  { key: 'codigo_4x', width: 10 },
+  { key: 'legenda', width: 52 },
+  { key: 'etapa', width: 18 },
+  { key: 'categoria', width: 26 },
+  { key: 'subcategoria', width: 22 },
+  { key: 'linha', width: 24 },
+  { key: 'caminho', width: 58 },
+  { key: 'skus', width: 10 },
+  { key: 'produtos_compra', width: 16 },
+];
+
+const CATALOG_HEADERS = [
+  { key: 'codigo_4x', width: 10 },
+  { key: 'legenda', width: 48 },
+  { key: 'etapa', width: 16 },
+  { key: 'categoria', width: 22 },
+  { key: 'subcategoria', width: 20 },
+  { key: 'linha', width: 22 },
+  { key: 'comp1', width: 28 },
+  { key: 'comp2', width: 20 },
+  { key: 'comp3', width: 16 },
+  { key: 'codigo_interno', width: 14 },
+  { key: 'novo_sku', width: 42 },
+  { key: 'caminho', width: 52 },
+  { key: 'rotulo_componente', width: 40 },
+  { key: 'qtd_sku', width: 10 },
+  { key: 'sku_atual', width: 36 },
+  { key: 'etapa_origem', width: 24 },
+  { key: 'core_origem', width: 22 },
+  { key: 'linha_origem', width: 22 },
+  { key: 'linha_3x', width: 22 },
+];
+
+function attachPathMeta4(row, registry, fields = {
+  etapa: 'etapa',
+  categoria: 'categoria',
+  subcategoria: 'subcategoria',
+  linha: 'linha',
+}) {
   const etapa = row[fields.etapa];
   const categoria = row[fields.categoria];
+  const subcategoria = row[fields.subcategoria];
   const linha = row[fields.linha];
-  const codigo_3x = lookupCodigoCaminho(registry, etapa, categoria, linha);
+  const caminho = `${etapa} > ${categoria} > ${subcategoria} > ${linha}`;
   return {
-    codigo_3x,
-    legenda: legendaCaminho3x(etapa, categoria, linha),
+    codigo_4x: lookupCodigoCaminho4x(registry, etapa, categoria, subcategoria, linha),
+    legenda: legendaCaminho4x(etapa, categoria, subcategoria, linha),
+    caminho,
     ...row,
   };
+}
+
+function aggregateDrill(skus, pick) {
+  const map = new Map();
+  for (const row of skus) {
+    const p = pick(row);
+    const k = keyPath(p.etapa, p.categoria, p.subcategoria, p.linha);
+    if (!map.has(k)) {
+      map.set(k, { ...p, skus: 0, produtos_compra: new Set() });
+    }
+    const e = map.get(k);
+    e.skus += 1;
+    if (row.comp1) e.produtos_compra.add(row.comp1);
+  }
+  return map;
 }
 
 async function main() {
   const abLookup = await loadAbLookup();
   const catalogRows = await loadCatalogRows();
 
-  const skus3x3 = catalogRows.map((row) => {
+  const skus = catalogRows.map((row) => {
     const cod = cellStr(row.codigo_interno).toUpperCase();
-    return to3x3(row, abLookup.get(cod));
+    return to4x3(row, abLookup.get(cod));
   });
 
-  // --- Dimensão ETAPA > CATEGORIA > LINHA ---
-  const drillMap = new Map();
-  for (const row of skus3x3) {
-    const k = key3(row.etapa, row.categoria, row.linha);
-    if (!drillMap.has(k)) {
-      drillMap.set(k, {
-        etapa: row.etapa,
-        categoria: row.categoria,
-        linha: row.linha,
-        skus: 0,
-        produtos_compra: new Set(),
-      });
-    }
-    const e = drillMap.get(k);
-    e.skus += 1;
-    if (row.comp1) e.produtos_compra.add(row.comp1);
-  }
-  const codigos3x = buildCodigosCaminho3x([...drillMap.values()]);
+  const drillMap = aggregateDrill(skus, (row) => ({
+    etapa: row.etapa,
+    categoria: row.categoria,
+    subcategoria: row.subcategoria,
+    linha: row.linha,
+  }));
+  const codigos = buildCodigosCaminho4x([...drillMap.values()]);
+
+  const sortPath = (a, b) => keyPath(a.etapa, a.categoria, a.subcategoria, a.linha)
+    .localeCompare(keyPath(b.etapa, b.categoria, b.subcategoria, b.linha));
 
   const drillRows = [...drillMap.values()]
-    .sort((a, b) => key3(a.etapa, a.categoria, a.linha).localeCompare(key3(b.etapa, b.categoria, b.linha)))
-    .map((e) =>
-      attachPathMeta(
-        {
-          etapa: e.etapa,
-          categoria: e.categoria,
-          linha: e.linha,
-          skus: e.skus,
-          produtos_compra: e.produtos_compra.size,
-          caminho: `${e.etapa} > ${e.categoria} > ${e.linha}`,
-        },
-        codigos3x,
-      ),
-    );
+    .sort(sortPath)
+    .map((e) => attachPathMeta4({
+      etapa: e.etapa,
+      categoria: e.categoria,
+      subcategoria: e.subcategoria,
+      linha: e.linha,
+      skus: e.skus,
+      produtos_compra: e.produtos_compra.size,
+    }, codigos));
 
-  // --- Dimensão componentes ×3 ---
   const compMap = new Map();
-  for (const row of skus3x3) {
-    const k = key3(row.comp1, row.comp2, row.comp3);
+  for (const row of skus) {
+    const k = keyPath(row.comp1, row.comp2, row.comp3);
     if (!compMap.has(k)) {
       compMap.set(k, { comp1: row.comp1, comp2: row.comp2, comp3: row.comp3, skus: 0, caminhos: new Set() });
     }
     const e = compMap.get(k);
     e.skus += 1;
-    e.caminhos.add(`${row.etapa} > ${row.categoria} > ${row.linha}`);
+    e.caminhos.add(`${row.etapa} > ${row.categoria} > ${row.subcategoria} > ${row.linha}`);
   }
   const compRows = [...compMap.values()]
-    .sort((a, b) => b.skus - a.skus || key3(a.comp1, a.comp2, a.comp3).localeCompare(key3(b.comp1, b.comp2, b.comp3)))
+    .sort((a, b) => b.skus - a.skus || keyPath(a.comp1, a.comp2, a.comp3).localeCompare(keyPath(b.comp1, b.comp2, b.comp3)))
     .map((e) => ({
       comp1: e.comp1,
       comp2: e.comp2,
@@ -233,94 +271,72 @@ async function main() {
       rotulo: [e.comp1, e.comp2, e.comp3].filter(Boolean).join(' · '),
     }));
 
-  // --- Facto catálogo ---
-  const factRows = skus3x3
-    .sort((a, b) => key3(a.etapa, a.categoria, a.linha, a.comp1).localeCompare(key3(b.etapa, b.categoria, b.linha, b.comp1)))
-    .map((row) =>
-      attachPathMeta(
-        {
-          etapa: row.etapa,
-          categoria: row.categoria,
-          linha: row.linha,
-          comp1: row.comp1,
-          comp2: row.comp2,
-          comp3: row.comp3,
-          codigo_interno: row.codigo_interno,
-          novo_sku: row.novo_sku,
-          sku_atual: row.sku_atual,
-          caminho: `${row.etapa} > ${row.categoria} > ${row.linha}`,
-          rotulo_componente: [row.comp1, row.comp2, row.comp3].filter(Boolean).join(' · '),
-          qtd_sku: 1,
-          etapa_origem: row.etapa_origem,
-          core_origem: row.core_origem,
-          linha_origem: row.linha_origem,
-        },
-        codigos3x,
-      ),
-    );
+  const factRows = skus
+    .sort((a, b) => keyPath(a.etapa, a.categoria, a.subcategoria, a.linha, a.comp1)
+      .localeCompare(keyPath(b.etapa, b.categoria, b.subcategoria, b.linha, b.comp1)))
+    .map((row) => attachPathMeta4({
+      etapa: row.etapa,
+      categoria: row.categoria,
+      subcategoria: row.subcategoria,
+      linha: row.linha,
+      comp1: row.comp1,
+      comp2: row.comp2,
+      comp3: row.comp3,
+      codigo_interno: row.codigo_interno,
+      novo_sku: row.novo_sku,
+      sku_atual: row.sku_atual,
+      rotulo_componente: [row.comp1, row.comp2, row.comp3].filter(Boolean).join(' · '),
+      qtd_sku: 1,
+      etapa_origem: row.etapa_origem,
+      core_origem: row.core_origem,
+      linha_origem: row.linha_origem,
+      linha_3x: row.linha_3x,
+    }, codigos));
 
-  const unifiedDrillMap = new Map();
-  for (const row of skus3x3) {
-    const k = key3(row.etapa_u, row.categoria_u, row.linha_u);
-    if (!unifiedDrillMap.has(k)) {
-      unifiedDrillMap.set(k, {
-        etapa: row.etapa_u,
-        categoria: row.categoria_u,
-        linha: row.linha_u,
-        skus: 0,
-        produtos_compra: new Set(),
-      });
-    }
-    const e = unifiedDrillMap.get(k);
-    e.skus += 1;
-    if (row.comp1) e.produtos_compra.add(row.comp1);
-  }
-  const codigosU = buildCodigosCaminho3x([...unifiedDrillMap.values()]);
+  const unifiedDrillMap = aggregateDrill(skus, (row) => ({
+    etapa: row.etapa_u,
+    categoria: row.categoria_u,
+    subcategoria: row.subcategoria_u,
+    linha: row.linha_u,
+  }));
+  const codigosU = buildCodigosCaminho4x([...unifiedDrillMap.values()]);
 
   const unifiedDrillRows = [...unifiedDrillMap.values()]
-    .sort((a, b) => key3(a.etapa, a.categoria, a.linha).localeCompare(key3(b.etapa, b.categoria, b.linha)))
-    .map((e) =>
-      attachPathMeta(
-        {
-          etapa: e.etapa,
-          categoria: e.categoria,
-          linha: e.linha,
-          skus: e.skus,
-          produtos_compra: e.produtos_compra.size,
-          caminho: `${e.etapa} > ${e.categoria} > ${e.linha}`,
-        },
-        codigosU,
-      ),
-    );
+    .sort(sortPath)
+    .map((e) => attachPathMeta4({
+      etapa: e.etapa,
+      categoria: e.categoria,
+      subcategoria: e.subcategoria,
+      linha: e.linha,
+      skus: e.skus,
+      produtos_compra: e.produtos_compra.size,
+    }, codigosU));
 
-  const unifiedFactRows = skus3x3
-    .sort((a, b) => key3(a.etapa_u, a.categoria_u, a.linha_u, a.comp1).localeCompare(key3(b.etapa_u, b.categoria_u, b.linha_u, b.comp1)))
-    .map((row) =>
-      attachPathMeta(
-        {
-          etapa: row.etapa_u,
-          categoria: row.categoria_u,
-          linha: row.linha_u,
-          comp1: row.comp1,
-          comp2: row.comp2,
-          comp3: row.comp3,
-          codigo_interno: row.codigo_interno,
-          novo_sku: row.novo_sku,
-          sku_atual: row.sku_atual,
-          caminho: `${row.etapa_u} > ${row.categoria_u} > ${row.linha_u}`,
-          rotulo_componente: [row.comp1, row.comp2, row.comp3].filter(Boolean).join(' · '),
-          qtd_sku: 1,
-          etapa_origem: row.etapa,
-          categoria_origem: row.categoria,
-          linha_origem: row.linha,
-        },
-        codigosU,
-        { etapa: 'etapa', categoria: 'categoria', linha: 'linha' },
-      ),
-    );
+  const unifiedFactRows = skus
+    .sort((a, b) => keyPath(a.etapa_u, a.categoria_u, a.subcategoria_u, a.linha_u, a.comp1)
+      .localeCompare(keyPath(b.etapa_u, b.categoria_u, b.subcategoria_u, b.linha_u, b.comp1)))
+    .map((row) => attachPathMeta4({
+      etapa: row.etapa_u,
+      categoria: row.categoria_u,
+      subcategoria: row.subcategoria_u,
+      linha: row.linha_u,
+      comp1: row.comp1,
+      comp2: row.comp2,
+      comp3: row.comp3,
+      codigo_interno: row.codigo_interno,
+      novo_sku: row.novo_sku,
+      sku_atual: row.sku_atual,
+      rotulo_componente: [row.comp1, row.comp2, row.comp3].filter(Boolean).join(' · '),
+      qtd_sku: 1,
+      etapa_origem: row.etapa,
+      categoria_origem: row.categoria,
+      subcategoria_origem: row.subcategoria,
+      linha_origem: row.linha,
+      linha_3x: row.linha_3x,
+    }, codigosU));
 
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'P38 export:catalogo-3x3';
+  wb.creator = 'P38 export:catalogo-4x3';
   wb.created = new Date();
 
   wb.addWorksheet('README');
@@ -332,38 +348,8 @@ async function main() {
     compPatterns: compRows.length,
   });
 
-  writeSheet(
-    wb.addWorksheet('ETAPA · CATEGORIA · LINHA'),
-    [
-      { key: 'codigo_3x', width: 10 },
-      { key: 'legenda', width: 44 },
-      { key: 'etapa', width: 18 },
-      { key: 'categoria', width: 28 },
-      { key: 'linha', width: 28 },
-      { key: 'caminho', width: 52 },
-      { key: 'skus', width: 10 },
-      { key: 'produtos_compra', width: 16 },
-    ],
-    drillRows,
-    'FF4A5240',
-  );
-
-  writeSheet(
-    wb.addWorksheet('Visão unificada'),
-    [
-      { key: 'codigo_3x', width: 10 },
-      { key: 'legenda', width: 44 },
-      { key: 'etapa', width: 20 },
-      { key: 'categoria', width: 28 },
-      { key: 'linha', width: 28 },
-      { key: 'caminho', width: 52 },
-      { key: 'skus', width: 10 },
-      { key: 'produtos_compra', width: 16 },
-    ],
-    unifiedDrillRows,
-    'FF1E3A5F',
-  );
-
+  writeSheet(wb.addWorksheet('ETAPA · CATEGORIA · SUB · LINHA'), DRILL_HEADERS, drillRows, 'FF4A5240');
+  writeSheet(wb.addWorksheet('Visão unificada'), DRILL_HEADERS, unifiedDrillRows, 'FF1E3A5F');
   writeSheet(
     wb.addWorksheet('Componentes ×3'),
     [
@@ -377,61 +363,22 @@ async function main() {
     compRows,
     'FF4A5240',
   );
-
-  writeSheet(
-    wb.addWorksheet('Catálogo 3×3'),
-    [
-      { key: 'codigo_3x', width: 10 },
-      { key: 'legenda', width: 40 },
-      { key: 'etapa', width: 16 },
-      { key: 'categoria', width: 24 },
-      { key: 'linha', width: 22 },
-      { key: 'comp1', width: 28 },
-      { key: 'comp2', width: 20 },
-      { key: 'comp3', width: 16 },
-      { key: 'codigo_interno', width: 14 },
-      { key: 'novo_sku', width: 42 },
-      { key: 'caminho', width: 48 },
-      { key: 'rotulo_componente', width: 40 },
-      { key: 'qtd_sku', width: 10 },
-      { key: 'sku_atual', width: 36 },
-      { key: 'etapa_origem', width: 24 },
-      { key: 'core_origem', width: 22 },
-      { key: 'linha_origem', width: 22 },
-    ],
-    factRows,
-    'FF2D5016',
-  );
-
+  writeSheet(wb.addWorksheet('Catálogo 4×3'), CATALOG_HEADERS, factRows, 'FF2D5016');
   writeSheet(
     wb.addWorksheet('Catálogo unificado'),
     [
-      { key: 'codigo_3x', width: 10 },
-      { key: 'legenda', width: 40 },
-      { key: 'etapa', width: 18 },
-      { key: 'categoria', width: 24 },
-      { key: 'linha', width: 24 },
-      { key: 'comp1', width: 28 },
-      { key: 'comp2', width: 20 },
-      { key: 'comp3', width: 16 },
-      { key: 'codigo_interno', width: 14 },
-      { key: 'novo_sku', width: 42 },
-      { key: 'caminho', width: 48 },
-      { key: 'rotulo_componente', width: 40 },
-      { key: 'qtd_sku', width: 10 },
-      { key: 'sku_atual', width: 36 },
-      { key: 'etapa_origem', width: 18 },
+      ...CATALOG_HEADERS.slice(0, 6),
+      ...CATALOG_HEADERS.slice(6),
       { key: 'categoria_origem', width: 22 },
-      { key: 'linha_origem', width: 22 },
-    ],
+      { key: 'subcategoria_origem', width: 22 },
+    ].filter((h, i, arr) => arr.findIndex((x) => x.key === h.key) === i),
     unifiedFactRows,
     'FF1E3A5F',
   );
 
   const pivotWs = wb.addWorksheet('Pivot — metadados');
   pivotWs.columns = [{ width: 22 }, { width: 14 }, { width: 18 }, { width: 48 }, { width: 24 }];
-
-  pivotWs.getCell('B2').value = 'Metadados — Tabela dinâmica (aba Catálogo 3×3)';
+  pivotWs.getCell('B2').value = 'Metadados — Tabela dinâmica (aba Catálogo 4×3)';
   pivotWs.getCell('B2').font = { bold: true, size: 13 };
 
   const metaHeaders = pivotWs.getRow(4);
@@ -439,22 +386,17 @@ async function main() {
   styleHeader(metaHeaders, 'FF6B7280');
 
   const metaRows = [
-    ['codigo_3x', 'texto', 'Filtro / Linha', 'Código do caminho ETAPA·CATEGORIA·LINHA', 'A01B'],
-    ['legenda', 'texto', '—', 'Caminho legível sem prefixos a./b./c.', 'Edificações · Alvenaria · Armaduras'],
-    ['etapa', 'texto', 'Filtro / Linha', 'Macro-etapa (nível 1) — prefixo a./b./c.', 'a. Edificações'],
-    ['categoria', 'texto', 'Linha', 'Sub-ramo (nível 2)', '01. Alvenaria · 07. Iluminação'],
-    ['linha', 'texto', 'Linha', 'Família operacional (nível 3)', 'Armaduras · Eletroduto · Lâmpadas'],
-    ['comp1', 'texto', 'Coluna', 'Produto de compra / peça', 'Estribo'],
-    ['comp2', 'texto', 'Coluna', 'Variante principal (medida, cor…)', '7×17'],
-    ['comp3', 'texto', 'Coluna', 'Variante secundária ou marca', '(vazio)'],
-    ['codigo_interno', 'texto', 'Filtro', 'ID único P38', 'S58-EAP'],
-    ['novo_sku', 'texto', '—', 'Nome comercial sugerido', ''],
-    ['caminho', 'texto', '—', 'ETAPA > CATEGORIA > LINHA concatenado', ''],
-    ['rotulo_componente', 'texto', '—', 'comp1 · comp2 · comp3 concatenado', ''],
-    ['qtd_sku', 'número', 'Valores', 'Sempre 1 — usar Σ para contar SKUs', '1'],
-    ['etapa_origem', 'texto', 'Filtro', 'Campo legado estudo (auditoria)', '1 — Estrutura / alvenaria'],
-    ['core_origem', 'texto', 'Filtro', 'Core legado estudo (auditoria)', 'ARMADURA'],
-    ['linha_origem', 'texto', 'Filtro', 'LINHA legado (auditoria)', 'MATERIAIS BÁSICOS·N'],
+    ['codigo_4x', 'texto', 'Filtro / Linha', 'Código A01AB', 'A01AB'],
+    ['legenda', 'texto', '—', 'Caminho legível', 'Edificações · Alvenaria · Estrutura · Armaduras'],
+    ['etapa', 'texto', 'Filtro / Linha', 'Nível 1 — prefixo a./b./c.', 'a. Edificações'],
+    ['categoria', 'texto', 'Linha', 'Nível 2', '01. Alvenaria'],
+    ['subcategoria', 'texto', 'Linha', 'Nível 3', 'Canos e conexões · Banheiro'],
+    ['linha', 'texto', 'Linha', 'Nível 4 — família', 'Soldável · Torneiras'],
+    ['comp1', 'texto', 'Coluna', 'Produto de compra', 'Estribo'],
+    ['comp2', 'texto', 'Coluna', 'Variante principal', '7×17'],
+    ['comp3', 'texto', 'Coluna', 'Variante secundária', '(vazio)'],
+    ['qtd_sku', 'número', 'Valores', 'Sempre 1', '1'],
+    ['linha_3x', 'texto', 'Filtro', 'Linha legado 3×3 (auditoria)', 'Torneira banheiro'],
   ];
 
   metaRows.forEach((vals, i) => {
@@ -463,38 +405,23 @@ async function main() {
     row.alignment = { wrapText: true, vertical: 'top' };
   });
 
-  const sugRow = 5 + metaRows.length + 2;
-  pivotWs.getCell(`B${sugRow}`).value = 'Sugestões de pivot';
-  pivotWs.getCell(`B${sugRow}`).font = { bold: true };
-
-  const sugestoes = [
-    'Monitor por corredor: Linhas = etapa + categoria + linha · Valores = Σ qtd_sku',
-    'Visão unificada: usar aba Catálogo unificado (hidráulica/elétrica de acabamento junta com instalação)',
-    'Produtos por etapa: Linhas = etapa · Colunas = comp1 · Valores = Σ qtd_sku',
-    'Variantes: Linhas = comp1 · Colunas = comp2 · Filtro = linha · Valores = Σ qtd_sku',
-    'Auditoria legado: Linhas = core_origem · Colunas = linha_origem · Filtro = etapa',
-  ];
-  sugestoes.forEach((s, i) => {
-    pivotWs.getCell(`B${sugRow + 1 + i}`).value = `${i + 1}. ${s}`;
-    pivotWs.getCell(`B${sugRow + 1 + i}`).alignment = { wrapText: true };
-  });
-
   pivotWs.views = [{ state: 'frozen', ySplit: 4 }];
 
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   await wb.xlsx.writeFile(OUT);
+  fs.copyFileSync(OUT, OUT_LEGACY);
 
   try {
-    fs.copyFileSync(OUT, '/opt/cursor/artifacts/P38-catalogo-3x3.xlsx');
+    fs.copyFileSync(OUT, '/opt/cursor/artifacts/P38-catalogo-4x3.xlsx');
   } catch {
     /* ok */
   }
 
-  console.log(`[export:catalogo-3x3] ${factRows.length} SKUs → ${OUT}`);
-  console.log(`  · ETAPA·CATEGORIA·LINHA: ${drillRows.length} caminhos`);
+  console.log(`[export:catalogo-4x3] ${factRows.length} SKUs → ${OUT}`);
+  console.log(`  · ETAPA·CATEGORIA·SUB·LINHA: ${drillRows.length} caminhos`);
   console.log(`  · Visão unificada: ${unifiedDrillRows.length} caminhos`);
   console.log(`  · Componentes ×3: ${compRows.length} padrões`);
-  console.log(`  · Abas: ${wb.worksheets.map((w) => w.name).join(', ')}`);
+  console.log(`  · Cópia legado: ${OUT_LEGACY}`);
 }
 
 main().catch((err) => {

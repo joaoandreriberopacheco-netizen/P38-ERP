@@ -660,6 +660,194 @@ export function classify3x3(row, abHit) {
   return { etapa: ETAPA.DIVERSOS, categoria: '(sem categoria)', linha: '(sem linha)' };
 }
 
+function stripPrefixoCnc(linha = '') {
+  return String(linha).replace(/^c&c\s+/i, '').trim();
+}
+
+/** Expande classificação 3×3 para subcategoria + linha (modelo 4×3). */
+export function expandTo4x3({ etapa, categoria, linha }) {
+  const lb = String(linha ?? '').trim();
+
+  if (lb === 'Aditivos e impermeabilizante') {
+    return { subcategoria: 'Aditivos', linha: 'Impermeabilizante' };
+  }
+  if (categoria === '01. Alvenaria' && lb === 'Alvenaria') {
+    return { subcategoria: 'Materiais', linha: 'Alvenaria' };
+  }
+  if (categoria === '01. Alvenaria' && lb === 'Armaduras') {
+    return { subcategoria: 'Estrutura', linha: 'Armaduras' };
+  }
+  if (categoria === '01. Hidráulica' && lb.startsWith('c&c')) {
+    return { subcategoria: 'Canos e conexões', linha: stripPrefixoCnc(lb) };
+  }
+  if (categoria === '01. Hidráulica') {
+    return { subcategoria: lb, linha: lb };
+  }
+  if (categoria === '02. Elétrica' && (lb.startsWith('c&c') || lb === 'Conduítes')) {
+    return {
+      subcategoria: 'Canos e conexões',
+      linha: lb.startsWith('c&c') ? stripPrefixoCnc(lb) : lb,
+    };
+  }
+  if (categoria === '02. Elétrica' && lb === 'Fios e cabos') {
+    return { subcategoria: 'Condutores', linha: 'Fios e cabos' };
+  }
+  if (categoria === '02. Elétrica' && lb === 'Quadros e disjuntores') {
+    return { subcategoria: 'Quadros', linha: 'Quadros e disjuntores' };
+  }
+  if (categoria === '02. Elétrica' && lb === 'Caixas de espera') {
+    return { subcategoria: 'Infra de pontos', linha: 'Caixas de espera' };
+  }
+  if (categoria === '02. Elétrica' && lb === 'Padrão de entrada') {
+    return { subcategoria: 'Padrão', linha: 'Padrão de entrada' };
+  }
+  if (categoria === '02. Elétrica') {
+    return { subcategoria: lb, linha: lb };
+  }
+  if (categoria === CATEGORIA_ACAB.REVESTIMENTOS) {
+    return { subcategoria: 'Assentamento', linha: lb };
+  }
+  if (categoria === CATEGORIA_ACAB.FORRO) {
+    return { subcategoria: 'Forro', linha: lb };
+  }
+  if (categoria === CATEGORIA_ACAB.PINTURA) {
+    return { subcategoria: 'Pintura', linha: lb };
+  }
+  if (categoria === CATEGORIA_ACAB.PORTAS) {
+    return { subcategoria: 'Esquadrias', linha: lb };
+  }
+  if (lb === 'Torneira banheiro') return { subcategoria: 'Banheiro', linha: 'Torneiras' };
+  if (lb === 'Torneira cozinha') return { subcategoria: 'Cozinha', linha: 'Torneiras' };
+  if (lb === 'Torneira área de serviço') return { subcategoria: 'Área de serviço', linha: 'Torneiras' };
+  if (lb === 'Cuba banheiro') return { subcategoria: 'Banheiro', linha: 'Cubas' };
+  if (lb === 'Cuba cozinha') return { subcategoria: 'Cozinha', linha: 'Cubas' };
+  if (lb === 'Louça banheiro') return { subcategoria: 'Banheiro', linha: 'Louças sanitárias' };
+  if (lb === 'Louça área de serviço') return { subcategoria: 'Área de serviço', linha: 'Louças sanitárias' };
+  if (lb === 'Chuveiro banheiro') return { subcategoria: 'Banheiro', linha: 'Chuveiros' };
+  if (lb === 'Metais banheiro') return { subcategoria: 'Banheiro', linha: 'Metais sanitários' };
+  if (lb === 'Acessórios banheiro') return { subcategoria: 'Banheiro', linha: 'Acessórios' };
+  if (categoria === CATEGORIA_ACAB.ILUMINACAO) {
+    return { subcategoria: 'Iluminação', linha: lb };
+  }
+  if (categoria === CATEGORIA_ACAB.PONTOS_ELETRICOS) {
+    return { subcategoria: 'Pontos', linha: lb };
+  }
+  if (categoria === '02. Cobertura') {
+    return { subcategoria: 'Cobertura', linha: lb };
+  }
+  if (categoria === '01. Transversal') {
+    return { subcategoria: 'Transversal', linha: lb };
+  }
+  if (categoria === '(sem categoria)') {
+    return { subcategoria: '(sem subcategoria)', linha: lb };
+  }
+  return { subcategoria: categoriaSemPrefixo(categoria), linha: lb };
+}
+
+export function classify4x3(row, abHit) {
+  const base = classify3x3(row, abHit);
+  const expanded = expandTo4x3(base);
+  return {
+    etapa: base.etapa,
+    categoria: base.categoria,
+    subcategoria: expanded.subcategoria,
+    linha: expanded.linha,
+  };
+}
+
+export function legendaCaminho4x(etapa, categoria, subcategoria, linha) {
+  const e = etapaSemPrefixo(etapa);
+  const c = categoriaSemPrefixo(categoria);
+  return `${e} · ${c} · ${subcategoria} · ${linha}`;
+}
+
+export function pathKey4(etapa, categoria, subcategoria, linha) {
+  return [etapa, categoria, subcategoria, linha].map((p) => String(p ?? '').trim()).join('\x00');
+}
+
+export function buildCodigosCaminho4x(paths) {
+  const byEtapaCat = new Map();
+  for (const p of paths) {
+    const gk = pathKey(p.etapa, p.categoria);
+    if (!byEtapaCat.has(gk)) byEtapaCat.set(gk, []);
+    byEtapaCat.get(gk).push(p);
+  }
+
+  const registry = new Map();
+  for (const grupo of byEtapaCat.values()) {
+    const subs = [...new Set(grupo.map((p) => p.subcategoria))].sort((a, b) =>
+      String(a).localeCompare(String(b), 'pt-BR', { sensitivity: 'base' }),
+    );
+    subs.forEach((sub, si) => {
+      const linhas = [...new Set(grupo.filter((p) => p.subcategoria === sub).map((p) => p.linha))].sort((a, b) =>
+        String(a).localeCompare(String(b), 'pt-BR', { sensitivity: 'base' }),
+      );
+      linhas.forEach((linha, li) => {
+        const sample = grupo.find((p) => p.subcategoria === sub && p.linha === linha);
+        const codigo = `${etapaCodigoLetra(sample.etapa)}${categoriaCodigoNumero(sample.categoria)}${linhaCodigoLetra(si)}${linhaCodigoLetra(li)}`;
+        registry.set(pathKey4(sample.etapa, sample.categoria, sub, linha), codigo);
+      });
+    });
+  }
+  return registry;
+}
+
+export function lookupCodigoCaminho4x(registry, etapa, categoria, subcategoria, linha) {
+  return registry.get(pathKey4(etapa, categoria, subcategoria, linha)) ?? '';
+}
+
+/**
+ * Colapsa acabamentos de domínio para Instalações (modelo 4×3).
+ * @param {{ etapa: string, categoria: string, subcategoria: string, linha: string }} classified
+ */
+export function unify4x3(classified) {
+  const base = etapaSemPrefixo(classified.etapa);
+  if (base === 'Acabamentos') {
+    if (CATEGORIAS_UNIFICAR_HID.has(classified.categoria)) {
+      return {
+        etapa: ETAPA.INSTALACOES,
+        categoria: '01. Hidráulica',
+        subcategoria: classified.subcategoria,
+        linha: classified.linha,
+      };
+    }
+    if (CATEGORIAS_UNIFICAR_ELE.has(classified.categoria)) {
+      return {
+        etapa: ETAPA.INSTALACOES,
+        categoria: '02. Elétrica',
+        subcategoria: classified.subcategoria,
+        linha: classified.linha,
+      };
+    }
+  }
+  return { ...classified };
+}
+
+/** @param {object} row @param {{ bloco?: string, sub?: string, core?: string }} [abHit] */
+export function to4x3(row, abHit) {
+  const classified = classify4x3(row, abHit);
+  const unified = unify4x3(classified);
+  const legacy3 = classify3x3(row, abHit);
+  return {
+    ...classified,
+    etapa_u: unified.etapa,
+    categoria_u: unified.categoria,
+    subcategoria_u: unified.subcategoria,
+    linha_u: unified.linha,
+    comp1: cellStr(row.produto_compra),
+    comp2: cellStr(row.eixo_a),
+    comp3: cellStr(row.eixo_b),
+    codigo_interno: cellStr(row.codigo_interno).toUpperCase(),
+    novo_sku: cellStr(row.novo_sku),
+    sku_atual: cellStr(row.sku_atual),
+    etapa_origem: cellStr(row.etapa),
+    core_origem: cellStr(row.core),
+    linha_origem: cellStr(row.linha),
+    categoria_3x: legacy3.categoria,
+    linha_3x: legacy3.linha,
+  };
+}
+
 /** @param {object} row @param {{ bloco?: string, sub?: string, core?: string }} [abHit] */
 export function to3x3(row, abHit) {
   const classified = classify3x3(row, abHit);
