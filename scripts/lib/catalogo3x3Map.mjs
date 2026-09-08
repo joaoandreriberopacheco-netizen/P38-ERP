@@ -4,6 +4,21 @@
  * Etapas (drill 1): a. Edificações · b. Instalações · c. Acabamentos · d. Transversal
  */
 
+export const CATEGORIA_ACAB = {
+  REVESTIMENTOS: '01. Revestimentos',
+  FORRO: '02. Forro',
+  PINTURA: '03. Pintura',
+  PORTAS: '04. Portas',
+  TORNEIRAS: '05. Torneiras',
+  CUBAS: '06. Cubas',
+  LOUCAS: '07. Louças sanitárias',
+  CHUVEIROS: '08. Chuveiros',
+  METAIS: '09. Metais e acessórios',
+  IMPERMEABILIZACAO: '10. Impermeabilização',
+  ILUMINACAO: '11. Iluminação',
+  PONTOS_ELETRICOS: '12. Pontos elétricos',
+};
+
 export const ETAPA = {
   EDIFICACOES: 'a. Edificações',
   INSTALACOES: 'b. Instalações',
@@ -12,8 +27,17 @@ export const ETAPA = {
   DIVERSOS: 'e. Diversos',
 };
 
-const CATEGORIAS_UNIFICAR_HID = new Set(['05. Banheiro']);
-const CATEGORIAS_UNIFICAR_ELE = new Set(['07. Iluminação', '08. Pontos elétricos']);
+const CATEGORIAS_UNIFICAR_HID = new Set([
+  CATEGORIA_ACAB.TORNEIRAS,
+  CATEGORIA_ACAB.CUBAS,
+  CATEGORIA_ACAB.LOUCAS,
+  CATEGORIA_ACAB.CHUVEIROS,
+  CATEGORIA_ACAB.METAIS,
+]);
+const CATEGORIAS_UNIFICAR_ELE = new Set([
+  CATEGORIA_ACAB.ILUMINACAO,
+  CATEGORIA_ACAB.PONTOS_ELETRICOS,
+]);
 
 export function etapaSemPrefixo(etapa = '') {
   return String(etapa ?? '').replace(/^[a-e]\.\s*/i, '').trim();
@@ -126,7 +150,19 @@ const ETAPAS_EDIFICACOES = new Set([
   '2 — Cobertura',
 ]);
 
+export function isArgamassaRejunte(row) {
+  return pcMatch(row, ['ARGAMASSA', 'REJUNTE', 'LIMPADOR DE REJUNTE']);
+}
+
+export function deriveLinhaRevestimentos(row) {
+  const pc = norm(row.produto_compra);
+  if (pc.includes('ARGAMASSA')) return 'Argamassa';
+  if (pc.includes('REJUNTE') || pc.includes('LIMPADOR DE REJUNTE')) return 'Rejunte';
+  return 'Cerâmica';
+}
+
 export function isRevestimentos(row) {
+  if (isArgamassaRejunte(row)) return true;
   const etapa = String(row.etapa ?? '').trim();
   const core = String(row.core ?? '').trim();
   return etapa === '4 — Revestimentos' || core === 'ASSENTAMENTO_CERAMICA';
@@ -169,7 +205,42 @@ export function isTorneira(row) {
 
 export function isCuba(row) {
   const pc = norm(row.produto_compra);
+  if (pc.startsWith('PIA') && !pc.includes('LAVATORIO') && !pc.includes('LAVATÓRIO')) return true;
   return pc.startsWith('CUBA') || pc.includes('CUBA DE APOIO') || pc.includes('CUBA EMBUTIR');
+}
+
+export function isCubaCozinha(row) {
+  const pc = norm(row.produto_compra);
+  const eixo = norm(row.eixo_a);
+  const blob = `${pc} ${eixo}`;
+  return blob.includes('INOX') || blob.includes('COZINHA') || pc.startsWith('PIA');
+}
+
+export function deriveLinhaTorneira(row) {
+  const pc = norm(row.produto_compra);
+  if (pc.includes('COZINHA') || pc.includes('PURIFICADOR')) return 'Torneira cozinha';
+  if (pc.includes('TANQUE') || pc.includes('PLASTICA')) return 'Torneira área de serviço';
+  return 'Torneira banheiro';
+}
+
+export function deriveLinhaCuba(row) {
+  if (isCubaCozinha(row)) return 'Cuba cozinha';
+  return 'Cuba banheiro';
+}
+
+export function deriveLinhaLoucas(row) {
+  const pc = norm(row.produto_compra);
+  if (pc.includes('TANQUE')) return 'Louça área de serviço';
+  return 'Louça banheiro';
+}
+
+export function deriveLinhaChuveiro() {
+  return 'Chuveiro banheiro';
+}
+
+export function deriveLinhaMetais(row) {
+  if (norm(linhaBase(row.linha)).includes('METAL')) return 'Metais banheiro';
+  return 'Acessórios banheiro';
 }
 
 export function isLoucasSanitarias(row) {
@@ -182,7 +253,6 @@ export function isLoucasSanitarias(row) {
     'CAIXA DE DESCARGA',
     'MICTORIO',
     'MICTÓRIO',
-    'PIA',
     'LAVATORIO',
     'LAVATÓRIO',
     'BANHEIRA',
@@ -248,12 +318,6 @@ export function deriveLinhaPontosEletricos(row) {
   const core = String(row.core ?? '').trim();
   if (core === 'PONTOS_ELETRICOS') return 'Tomadas';
   return 'Pontos elétricos';
-}
-
-export function deriveLinhaBanheiro(row) {
-  if (isChuveiroAcabamento(row)) return 'Chuveiros';
-  if (norm(linhaBase(row.linha)).includes('METAL')) return 'Metais sanitários';
-  return 'Acessórios';
 }
 
 export function isImpermeabilizacao(row) {
@@ -470,52 +534,79 @@ export function unify3x3(classified) {
  */
 export function classify3x3(row, abHit) {
   if (isRevestimentos(row)) {
-    return { etapa: ETAPA.ACABAMENTOS, categoria: '01. Revestimentos', linha: 'Cerâmica' };
+    return {
+      etapa: ETAPA.ACABAMENTOS,
+      categoria: CATEGORIA_ACAB.REVESTIMENTOS,
+      linha: deriveLinhaRevestimentos(row),
+    };
   }
   if (isForro(row)) {
     return {
       etapa: ETAPA.ACABAMENTOS,
-      categoria: '02. Forro',
+      categoria: CATEGORIA_ACAB.FORRO,
       linha: isPerfilForro(row) ? 'Perfis' : 'Forro PVC',
     };
   }
   if (isPintura(row)) {
-    return { etapa: ETAPA.ACABAMENTOS, categoria: '03. Pintura', linha: 'Pintura' };
+    return { etapa: ETAPA.ACABAMENTOS, categoria: CATEGORIA_ACAB.PINTURA, linha: 'Pintura' };
   }
   if (isPortasEsquadrias(row)) {
-    return { etapa: ETAPA.ACABAMENTOS, categoria: '04. Portas', linha: 'Esquadrias' };
+    return { etapa: ETAPA.ACABAMENTOS, categoria: CATEGORIA_ACAB.PORTAS, linha: 'Esquadrias' };
   }
   if (isImpermeabilizacao(row)) {
-    return { etapa: ETAPA.ACABAMENTOS, categoria: '06. Impermeabilização', linha: 'Impermeabilização' };
+    return {
+      etapa: ETAPA.ACABAMENTOS,
+      categoria: CATEGORIA_ACAB.IMPERMEABILIZACAO,
+      linha: 'Impermeabilização',
+    };
   }
   if (isIluminacao(row)) {
     return {
       etapa: ETAPA.ACABAMENTOS,
-      categoria: '07. Iluminação',
+      categoria: CATEGORIA_ACAB.ILUMINACAO,
       linha: deriveLinhaIluminacao(row),
     };
   }
   if (isPontosEletricos(row)) {
     return {
       etapa: ETAPA.ACABAMENTOS,
-      categoria: '08. Pontos elétricos',
+      categoria: CATEGORIA_ACAB.PONTOS_ELETRICOS,
       linha: deriveLinhaPontosEletricos(row),
     };
   }
   if (isTorneira(row)) {
-    return { etapa: ETAPA.ACABAMENTOS, categoria: '05. Banheiro', linha: 'Torneiras' };
+    return {
+      etapa: ETAPA.ACABAMENTOS,
+      categoria: CATEGORIA_ACAB.TORNEIRAS,
+      linha: deriveLinhaTorneira(row),
+    };
   }
   if (isCuba(row)) {
-    return { etapa: ETAPA.ACABAMENTOS, categoria: '05. Banheiro', linha: 'Cubas' };
+    return {
+      etapa: ETAPA.ACABAMENTOS,
+      categoria: CATEGORIA_ACAB.CUBAS,
+      linha: deriveLinhaCuba(row),
+    };
   }
   if (isLoucasSanitarias(row)) {
-    return { etapa: ETAPA.ACABAMENTOS, categoria: '05. Banheiro', linha: 'Louças sanitárias' };
+    return {
+      etapa: ETAPA.ACABAMENTOS,
+      categoria: CATEGORIA_ACAB.LOUCAS,
+      linha: deriveLinhaLoucas(row),
+    };
+  }
+  if (isChuveiroAcabamento(row)) {
+    return {
+      etapa: ETAPA.ACABAMENTOS,
+      categoria: CATEGORIA_ACAB.CHUVEIROS,
+      linha: deriveLinhaChuveiro(),
+    };
   }
   if (isBanheiro(row)) {
     return {
       etapa: ETAPA.ACABAMENTOS,
-      categoria: '05. Banheiro',
-      linha: deriveLinhaBanheiro(row),
+      categoria: CATEGORIA_ACAB.METAIS,
+      linha: deriveLinhaMetais(row),
     };
   }
 

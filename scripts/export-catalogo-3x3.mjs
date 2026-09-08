@@ -119,9 +119,10 @@ function buildReadme(wb, stats) {
     ['Etapas (prefixo ordena)', ''],
     ['A / a. Edificações', 'Alvenaria, cobertura (forro PVC → c. Acabamentos)'],
     ['B / b. Instalações', '01. Hidráulica · 02. Elétrica — linhas c&c = canos e conexões'],
-    ['C / c. Acabamentos', 'Revestimentos, forro, pintura, iluminação, banheiro…'],
+    ['C / c. Acabamentos', 'Por peça (Torneiras, Cubas, Louças…) · linha = ambiente (banheiro · cozinha)'],
     ['D / d. Transversal', 'Itens transversais da obra'],
     ['', ''],
+    ['Revestimentos', 'Cerâmica + Argamassa + Rejunte na mesma categoria 01. Revestimentos'],
     ['Abas', ''],
     ['2 · ETAPA · CATEGORIA · LINHA', 'Modelo completo — caminhos únicos com prefixo a./b./c.'],
     ['3 · Visão unificada', 'Caminhos com banheiro/iluminação/pontos fundidos em b. Instalações'],
@@ -139,7 +140,7 @@ function buildReadme(wb, stats) {
   for (const [a, b] of lines) {
     ws.getCell(`B${r}`).value = a;
     ws.getCell(`C${r}`).value = b;
-    if (a === 'Modelo' || a === 'Abas') ws.getCell(`B${r}`).font = { bold: true };
+    if (a === 'Modelo' || a === 'Abas' || a === 'Revestimentos') ws.getCell(`B${r}`).font = { bold: true };
     r += 1;
   }
 }
