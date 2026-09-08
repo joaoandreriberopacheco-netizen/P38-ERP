@@ -66,7 +66,31 @@ Regenerar: `npm run export:linhas-categoria`
 
 ---
 
-## Estudo hierarquia — Excel unificado (hidráulica + elétrica + benchmark)
+## Catálogo modelo 3×3 — monitor Smart Supply
+
+Excel canónico para **drill-down 3×3** (categorias + componentes SKU). Tags ficam para fase posterior.
+
+| Ficheiro | Descrição |
+|----------|-----------|
+| [P38-catalogo-3x3.xlsx](./P38-catalogo-3x3.xlsx) | README · Categorias 3× · Componentes ×3 · Catálogo 3×3 · Pivot metadados |
+
+**Download directo:**  
+https://github.com/joaoandreriberopacheco-netizen/P38-ERP/raw/main/docs/exports/P38-catalogo-3x3.xlsx
+
+Regenerar:
+
+```bash
+npm run export:catalogo-3x3
+```
+
+Modelo:
+
+- **Cat1 → Cat2 → Cat3** — ex.: `A. Edificações > 01. Alvenaria > a. Armaduras`
+- **Comp1 | Comp2 | Comp3** — ex.: `Estribo | 7×17 | (vazio)`
+
+---
+
+## Estudo hierarquia — Excel unificado (legado multi-aba)
 
 Um único ficheiro com **aba README** (índice) e todas as folhas do estudo A/B/C, catálogo core e benchmark Leroy Merlin.
 
