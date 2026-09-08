@@ -299,24 +299,28 @@ export function isAcabamentoEletricoVisivel(row) {
 
 export function deriveLinhaIluminacao(row) {
   const pc = norm(row.produto_compra);
-  if (pc.includes('LAMPADA') || pc.includes('LÂMPADA')) return 'Lâmpadas';
-  if (pc.includes('LUMINÁRIA') || pc.includes('LUMINARIA') || pc.includes('PLAFON') || pc.includes('SPOT')) {
-    return 'Luminárias';
-  }
   if (pc.includes('PLUG')) return 'Plugs e acessórios';
+  if (
+    pc.includes('LAMPADA')
+    || pc.includes('LÂMPADA')
+    || pc.includes('LUMINÁRIA')
+    || pc.includes('LUMINARIA')
+    || pc.includes('PLAFON')
+    || pc.includes('SPOT')
+  ) {
+    return 'Lâmpadas e luminárias';
+  }
   const core = String(row.core ?? '').trim();
-  if (core === 'ILUMINACAO') return 'Lâmpadas';
-  return 'Iluminação';
+  if (core === 'ILUMINACAO') return 'Lâmpadas e luminárias';
+  return 'Lâmpadas e luminárias';
 }
 
 export function deriveLinhaPontosEletricos(row) {
   const pc = norm(row.produto_compra);
-  if (pc.includes('TOMADA') && pc.includes('INTERRUPTOR')) return 'Combinados';
-  if (pc.includes('TOMADA')) return 'Tomadas';
-  if (pc.includes('INTERRUPTOR')) return 'Interruptores';
+  if (pc.includes('TOMADA') || pc.includes('INTERRUPTOR')) return 'Interruptores e tomadas';
   const core = String(row.core ?? '').trim();
-  if (core === 'PONTOS_ELETRICOS') return 'Tomadas';
-  return 'Pontos elétricos';
+  if (core === 'PONTOS_ELETRICOS') return 'Interruptores e tomadas';
+  return 'Interruptores e tomadas';
 }
 
 export function isAditivosImpermeabilizante(row) {
