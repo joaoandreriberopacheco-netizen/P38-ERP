@@ -18,7 +18,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import ExcelJS from 'exceljs';
-import { cellStr, to3x3 } from './lib/catalogo3x3Map.mjs';
+import {
+  cellStr,
+  to3x3,
+  buildCodigosCaminho3x,
+  lookupCodigoCaminho,
+  legendaCaminho3x,
+} from './lib/catalogo3x3Map.mjs';
 
 const EXPORTS = path.join(process.cwd(), 'docs', 'exports');
 const CORE_PATH = path.join(EXPORTS, 'P38-sku-hierarquia-core.xlsx');
@@ -106,14 +112,15 @@ function buildReadme(wb, stats) {
     ['', ''],
     ['Modelo', ''],
     ['Drill-down (3 colunas)', 'ETAPA > CATEGORIA > LINHA  (ex.: a. Edificações > 01. Alvenaria > Armaduras)'],
+    ['Código caminho 3×3', 'Formato A01B — A=etapa · 01=categoria · B=linha (ex.: A01B = Edificações · Alvenaria · Armaduras)'],
     ['Componente SKU (3 colunas)', 'comp1 | comp2 | comp3  (ex.: Estribo | 7×17 | vazio)'],
     ['Visão unificada (opcional)', 'Aba 3 e Catálogo unificado — junta hidráulica/elétrica de acabamento com instalação'],
     ['', ''],
     ['Etapas (prefixo ordena)', ''],
-    ['a. Edificações', 'Alvenaria, cobertura (forro PVC → c. Acabamentos)'],
-    ['b. Instalações', '01. Hidráulica · 02. Elétrica — linhas c&c = canos e conexões (soldável, esgoto, roscável, eletroduto)'],
-    ['c. Acabamentos', 'Revestimentos, forro, pintura, portas, 07. Iluminação, 08. Pontos elétricos, 05. Banheiro'],
-    ['d. Transversal', 'Itens transversais da obra'],
+    ['A / a. Edificações', 'Alvenaria, cobertura (forro PVC → c. Acabamentos)'],
+    ['B / b. Instalações', '01. Hidráulica · 02. Elétrica — linhas c&c = canos e conexões'],
+    ['C / c. Acabamentos', 'Revestimentos, forro, pintura, iluminação, banheiro…'],
+    ['D / d. Transversal', 'Itens transversais da obra'],
     ['', ''],
     ['Abas', ''],
     ['2 · ETAPA · CATEGORIA · LINHA', 'Modelo completo — caminhos únicos com prefixo a./b./c.'],
@@ -147,6 +154,18 @@ function writeSheet(ws, headers, dataRows, headerColor = 'FF2D5016') {
   ws.views = [{ state: 'frozen', ySplit: 1 }];
 }
 
+function attachPathMeta(row, registry, fields = { etapa: 'etapa', categoria: 'categoria', linha: 'linha' }) {
+  const etapa = row[fields.etapa];
+  const categoria = row[fields.categoria];
+  const linha = row[fields.linha];
+  const codigo_3x = lookupCodigoCaminho(registry, etapa, categoria, linha);
+  return {
+    codigo_3x,
+    legenda: legendaCaminho3x(etapa, categoria, linha),
+    ...row,
+  };
+}
+
 async function main() {
   const abLookup = await loadAbLookup();
   const catalogRows = await loadCatalogRows();
@@ -173,16 +192,23 @@ async function main() {
     e.skus += 1;
     if (row.comp1) e.produtos_compra.add(row.comp1);
   }
+  const codigos3x = buildCodigosCaminho3x([...drillMap.values()]);
+
   const drillRows = [...drillMap.values()]
     .sort((a, b) => key3(a.etapa, a.categoria, a.linha).localeCompare(key3(b.etapa, b.categoria, b.linha)))
-    .map((e) => ({
-      etapa: e.etapa,
-      categoria: e.categoria,
-      linha: e.linha,
-      skus: e.skus,
-      produtos_compra: e.produtos_compra.size,
-      caminho: `${e.etapa} > ${e.categoria} > ${e.linha}`,
-    }));
+    .map((e) =>
+      attachPathMeta(
+        {
+          etapa: e.etapa,
+          categoria: e.categoria,
+          linha: e.linha,
+          skus: e.skus,
+          produtos_compra: e.produtos_compra.size,
+          caminho: `${e.etapa} > ${e.categoria} > ${e.linha}`,
+        },
+        codigos3x,
+      ),
+    );
 
   // --- Dimensão componentes ×3 ---
   const compMap = new Map();
@@ -209,23 +235,28 @@ async function main() {
   // --- Facto catálogo ---
   const factRows = skus3x3
     .sort((a, b) => key3(a.etapa, a.categoria, a.linha, a.comp1).localeCompare(key3(b.etapa, b.categoria, b.linha, b.comp1)))
-    .map((row) => ({
-      etapa: row.etapa,
-      categoria: row.categoria,
-      linha: row.linha,
-      comp1: row.comp1,
-      comp2: row.comp2,
-      comp3: row.comp3,
-      codigo_interno: row.codigo_interno,
-      novo_sku: row.novo_sku,
-      sku_atual: row.sku_atual,
-      caminho: `${row.etapa} > ${row.categoria} > ${row.linha}`,
-      rotulo_componente: [row.comp1, row.comp2, row.comp3].filter(Boolean).join(' · '),
-      qtd_sku: 1,
-      etapa_origem: row.etapa_origem,
-      core_origem: row.core_origem,
-      linha_origem: row.linha_origem,
-    }));
+    .map((row) =>
+      attachPathMeta(
+        {
+          etapa: row.etapa,
+          categoria: row.categoria,
+          linha: row.linha,
+          comp1: row.comp1,
+          comp2: row.comp2,
+          comp3: row.comp3,
+          codigo_interno: row.codigo_interno,
+          novo_sku: row.novo_sku,
+          sku_atual: row.sku_atual,
+          caminho: `${row.etapa} > ${row.categoria} > ${row.linha}`,
+          rotulo_componente: [row.comp1, row.comp2, row.comp3].filter(Boolean).join(' · '),
+          qtd_sku: 1,
+          etapa_origem: row.etapa_origem,
+          core_origem: row.core_origem,
+          linha_origem: row.linha_origem,
+        },
+        codigos3x,
+      ),
+    );
 
   const unifiedDrillMap = new Map();
   for (const row of skus3x3) {
@@ -243,36 +274,49 @@ async function main() {
     e.skus += 1;
     if (row.comp1) e.produtos_compra.add(row.comp1);
   }
+  const codigosU = buildCodigosCaminho3x([...unifiedDrillMap.values()]);
+
   const unifiedDrillRows = [...unifiedDrillMap.values()]
     .sort((a, b) => key3(a.etapa, a.categoria, a.linha).localeCompare(key3(b.etapa, b.categoria, b.linha)))
-    .map((e) => ({
-      etapa: e.etapa,
-      categoria: e.categoria,
-      linha: e.linha,
-      skus: e.skus,
-      produtos_compra: e.produtos_compra.size,
-      caminho: `${e.etapa} > ${e.categoria} > ${e.linha}`,
-    }));
+    .map((e) =>
+      attachPathMeta(
+        {
+          etapa: e.etapa,
+          categoria: e.categoria,
+          linha: e.linha,
+          skus: e.skus,
+          produtos_compra: e.produtos_compra.size,
+          caminho: `${e.etapa} > ${e.categoria} > ${e.linha}`,
+        },
+        codigosU,
+      ),
+    );
 
   const unifiedFactRows = skus3x3
     .sort((a, b) => key3(a.etapa_u, a.categoria_u, a.linha_u, a.comp1).localeCompare(key3(b.etapa_u, b.categoria_u, b.linha_u, b.comp1)))
-    .map((row) => ({
-      etapa: row.etapa_u,
-      categoria: row.categoria_u,
-      linha: row.linha_u,
-      comp1: row.comp1,
-      comp2: row.comp2,
-      comp3: row.comp3,
-      codigo_interno: row.codigo_interno,
-      novo_sku: row.novo_sku,
-      sku_atual: row.sku_atual,
-      caminho: `${row.etapa_u} > ${row.categoria_u} > ${row.linha_u}`,
-      rotulo_componente: [row.comp1, row.comp2, row.comp3].filter(Boolean).join(' · '),
-      qtd_sku: 1,
-      etapa_origem: row.etapa,
-      categoria_origem: row.categoria,
-      linha_origem: row.linha,
-    }));
+    .map((row) =>
+      attachPathMeta(
+        {
+          etapa: row.etapa_u,
+          categoria: row.categoria_u,
+          linha: row.linha_u,
+          comp1: row.comp1,
+          comp2: row.comp2,
+          comp3: row.comp3,
+          codigo_interno: row.codigo_interno,
+          novo_sku: row.novo_sku,
+          sku_atual: row.sku_atual,
+          caminho: `${row.etapa_u} > ${row.categoria_u} > ${row.linha_u}`,
+          rotulo_componente: [row.comp1, row.comp2, row.comp3].filter(Boolean).join(' · '),
+          qtd_sku: 1,
+          etapa_origem: row.etapa,
+          categoria_origem: row.categoria,
+          linha_origem: row.linha,
+        },
+        codigosU,
+        { etapa: 'etapa', categoria: 'categoria', linha: 'linha' },
+      ),
+    );
 
   const wb = new ExcelJS.Workbook();
   wb.creator = 'P38 export:catalogo-3x3';
@@ -290,6 +334,8 @@ async function main() {
   writeSheet(
     wb.addWorksheet('ETAPA · CATEGORIA · LINHA'),
     [
+      { key: 'codigo_3x', width: 10 },
+      { key: 'legenda', width: 44 },
       { key: 'etapa', width: 18 },
       { key: 'categoria', width: 28 },
       { key: 'linha', width: 28 },
@@ -304,6 +350,8 @@ async function main() {
   writeSheet(
     wb.addWorksheet('Visão unificada'),
     [
+      { key: 'codigo_3x', width: 10 },
+      { key: 'legenda', width: 44 },
       { key: 'etapa', width: 20 },
       { key: 'categoria', width: 28 },
       { key: 'linha', width: 28 },
@@ -332,6 +380,8 @@ async function main() {
   writeSheet(
     wb.addWorksheet('Catálogo 3×3'),
     [
+      { key: 'codigo_3x', width: 10 },
+      { key: 'legenda', width: 40 },
       { key: 'etapa', width: 16 },
       { key: 'categoria', width: 24 },
       { key: 'linha', width: 22 },
@@ -355,6 +405,8 @@ async function main() {
   writeSheet(
     wb.addWorksheet('Catálogo unificado'),
     [
+      { key: 'codigo_3x', width: 10 },
+      { key: 'legenda', width: 40 },
       { key: 'etapa', width: 18 },
       { key: 'categoria', width: 24 },
       { key: 'linha', width: 24 },
@@ -386,6 +438,8 @@ async function main() {
   styleHeader(metaHeaders, 'FF6B7280');
 
   const metaRows = [
+    ['codigo_3x', 'texto', 'Filtro / Linha', 'Código do caminho ETAPA·CATEGORIA·LINHA', 'A01B'],
+    ['legenda', 'texto', '—', 'Caminho legível sem prefixos a./b./c.', 'Edificações · Alvenaria · Armaduras'],
     ['etapa', 'texto', 'Filtro / Linha', 'Macro-etapa (nível 1) — prefixo a./b./c.', 'a. Edificações'],
     ['categoria', 'texto', 'Linha', 'Sub-ramo (nível 2)', '01. Alvenaria · 07. Iluminação'],
     ['linha', 'texto', 'Linha', 'Família operacional (nível 3)', 'Armaduras · Eletroduto · Lâmpadas'],

@@ -19,6 +19,76 @@ export function etapaSemPrefixo(etapa = '') {
   return String(etapa ?? '').replace(/^[a-e]\.\s*/i, '').trim();
 }
 
+const ETAPA_CODIGO_LETRA = {
+  Edificações: 'A',
+  Instalações: 'B',
+  Acabamentos: 'C',
+  Transversal: 'D',
+  Diversos: 'E',
+};
+
+export function pathKey(etapa, categoria, linha) {
+  return [etapa, categoria, linha].map((p) => String(p ?? '').trim()).join('\x00');
+}
+
+export function categoriaSemPrefixo(categoria = '') {
+  return String(categoria ?? '').replace(/^\d+\.\s*/, '').trim() || String(categoria ?? '').trim();
+}
+
+/** Legenda legível: Edificações · Alvenaria · Armaduras */
+export function legendaCaminho3x(etapa, categoria, linha) {
+  const e = etapaSemPrefixo(etapa);
+  const c = categoriaSemPrefixo(categoria);
+  return `${e} · ${c} · ${linha}`;
+}
+
+function etapaCodigoLetra(etapa) {
+  return ETAPA_CODIGO_LETRA[etapaSemPrefixo(etapa)] ?? 'Z';
+}
+
+function categoriaCodigoNumero(categoria) {
+  const m = String(categoria ?? '').match(/^(\d{2})\./);
+  if (m) return m[1];
+  return '00';
+}
+
+function linhaCodigoLetra(indice) {
+  const i = Math.max(0, Math.min(25, indice));
+  return String.fromCharCode(65 + i);
+}
+
+/**
+ * Gera códigos A01B para caminhos ETAPA · CATEGORIA · LINHA.
+ * A = etapa · 01 = categoria · B = linha (ordem alfabética dentro da categoria).
+ *
+ * @param {Array<{ etapa: string, categoria: string, linha: string }>} paths
+ * @returns {Map<string, string>}
+ */
+export function buildCodigosCaminho3x(paths) {
+  const porGrupo = new Map();
+  for (const p of paths) {
+    const gk = pathKey(p.etapa, p.categoria);
+    if (!porGrupo.has(gk)) porGrupo.set(gk, []);
+    porGrupo.get(gk).push(p);
+  }
+
+  const registry = new Map();
+  for (const grupo of porGrupo.values()) {
+    const ordenado = [...grupo].sort((a, b) =>
+      String(a.linha).localeCompare(String(b.linha), 'pt-BR', { sensitivity: 'base' }),
+    );
+    ordenado.forEach((p, i) => {
+      const codigo = `${etapaCodigoLetra(p.etapa)}${categoriaCodigoNumero(p.categoria)}${linhaCodigoLetra(i)}`;
+      registry.set(pathKey(p.etapa, p.categoria, p.linha), codigo);
+    });
+  }
+  return registry;
+}
+
+export function lookupCodigoCaminho(registry, etapa, categoria, linha) {
+  return registry.get(pathKey(etapa, categoria, linha)) ?? '';
+}
+
 export function linhaBase(linha = '') {
   return String(linha ?? '').replace(/·[NRC]$/i, '').trim();
 }
